@@ -1,76 +1,77 @@
+<शैली गुरु>
 /*
  *  linux/drivers/video/tgafb.c -- DEC 21030 TGA frame buffer device
  *
  *	Copyright (C) 1995 Jay Estabrook
  *	Copyright (C) 1997 Geert Uytterhoeven
  *	Copyright (C) 1999,2000 Martin Lucina, Tom Zerucha
- *	Copyright (C) 2002 Richard Henderson
+ *	Copyright (C) 2002 Riअक्षरd Henderson
  *	Copyright (C) 2006, 2007  Maciej W. Rozycki
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the main directory of this archive for
+ *  License. See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
 
-#include <linux/bitrev.h>
-#include <linux/compiler.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/selection.h>
-#include <linux/string.h>
-#include <linux/tc.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/selection.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/tc.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include <video/tgafb.h>
+#समावेश <video/tgafb.h>
 
-#ifdef CONFIG_TC
-#define TGA_BUS_TC(dev) (dev->bus == &tc_bus_type)
-#else
-#define TGA_BUS_TC(dev) 0
-#endif
+#अगर_घोषित CONFIG_TC
+#घोषणा TGA_BUS_TC(dev) (dev->bus == &tc_bus_type)
+#अन्यथा
+#घोषणा TGA_BUS_TC(dev) 0
+#पूर्ण_अगर
 
 /*
  * Local functions.
  */
 
-static int tgafb_check_var(struct fb_var_screeninfo *, struct fb_info *);
-static int tgafb_set_par(struct fb_info *);
-static void tgafb_set_pll(struct tga_par *, int);
-static int tgafb_setcolreg(unsigned, unsigned, unsigned, unsigned,
-			   unsigned, struct fb_info *);
-static int tgafb_blank(int, struct fb_info *);
-static void tgafb_init_fix(struct fb_info *);
+अटल पूर्णांक tgafb_check_var(काष्ठा fb_var_screeninfo *, काष्ठा fb_info *);
+अटल पूर्णांक tgafb_set_par(काष्ठा fb_info *);
+अटल व्योम tgafb_set_pll(काष्ठा tga_par *, पूर्णांक);
+अटल पूर्णांक tgafb_setcolreg(अचिन्हित, अचिन्हित, अचिन्हित, अचिन्हित,
+			   अचिन्हित, काष्ठा fb_info *);
+अटल पूर्णांक tgafb_blank(पूर्णांक, काष्ठा fb_info *);
+अटल व्योम tgafb_init_fix(काष्ठा fb_info *);
 
-static void tgafb_imageblit(struct fb_info *, const struct fb_image *);
-static void tgafb_fillrect(struct fb_info *, const struct fb_fillrect *);
-static void tgafb_copyarea(struct fb_info *, const struct fb_copyarea *);
-static int tgafb_pan_display(struct fb_var_screeninfo *var, struct fb_info *info);
+अटल व्योम tgafb_imageblit(काष्ठा fb_info *, स्थिर काष्ठा fb_image *);
+अटल व्योम tgafb_fillrect(काष्ठा fb_info *, स्थिर काष्ठा fb_fillrect *);
+अटल व्योम tgafb_copyarea(काष्ठा fb_info *, स्थिर काष्ठा fb_copyarea *);
+अटल पूर्णांक tgafb_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info);
 
-static int tgafb_register(struct device *dev);
-static void tgafb_unregister(struct device *dev);
+अटल पूर्णांक tgafb_रेजिस्टर(काष्ठा device *dev);
+अटल व्योम tgafb_unरेजिस्टर(काष्ठा device *dev);
 
-static const char *mode_option;
-static const char *mode_option_pci = "640x480@60";
-static const char *mode_option_tc = "1280x1024@72";
+अटल स्थिर अक्षर *mode_option;
+अटल स्थिर अक्षर *mode_option_pci = "640x480@60";
+अटल स्थिर अक्षर *mode_option_tc = "1280x1024@72";
 
 
-static struct pci_driver tgafb_pci_driver;
-static struct tc_driver tgafb_tc_driver;
+अटल काष्ठा pci_driver tgafb_pci_driver;
+अटल काष्ठा tc_driver tgafb_tc_driver;
 
 /*
  *  Frame buffer operations
  */
 
-static const struct fb_ops tgafb_ops = {
+अटल स्थिर काष्ठा fb_ops tgafb_ops = अणु
 	.owner			= THIS_MODULE,
 	.fb_check_var		= tgafb_check_var,
 	.fb_set_par		= tgafb_set_par,
@@ -80,163 +81,163 @@ static const struct fb_ops tgafb_ops = {
 	.fb_fillrect		= tgafb_fillrect,
 	.fb_copyarea		= tgafb_copyarea,
 	.fb_imageblit		= tgafb_imageblit,
-};
+पूर्ण;
 
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 /*
  *  PCI registration operations
  */
-static int tgafb_pci_register(struct pci_dev *, const struct pci_device_id *);
-static void tgafb_pci_unregister(struct pci_dev *);
+अटल पूर्णांक tgafb_pci_रेजिस्टर(काष्ठा pci_dev *, स्थिर काष्ठा pci_device_id *);
+अटल व्योम tgafb_pci_unरेजिस्टर(काष्ठा pci_dev *);
 
-static struct pci_device_id const tgafb_pci_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_DEC, PCI_DEVICE_ID_DEC_TGA) },
-	{ }
-};
+अटल काष्ठा pci_device_id स्थिर tgafb_pci_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DEC, PCI_DEVICE_ID_DEC_TGA) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, tgafb_pci_table);
 
-static struct pci_driver tgafb_pci_driver = {
+अटल काष्ठा pci_driver tgafb_pci_driver = अणु
 	.name			= "tgafb",
 	.id_table		= tgafb_pci_table,
-	.probe			= tgafb_pci_register,
-	.remove			= tgafb_pci_unregister,
-};
+	.probe			= tgafb_pci_रेजिस्टर,
+	.हटाओ			= tgafb_pci_unरेजिस्टर,
+पूर्ण;
 
-static int tgafb_pci_register(struct pci_dev *pdev,
-			      const struct pci_device_id *ent)
-{
-	return tgafb_register(&pdev->dev);
-}
+अटल पूर्णांक tgafb_pci_रेजिस्टर(काष्ठा pci_dev *pdev,
+			      स्थिर काष्ठा pci_device_id *ent)
+अणु
+	वापस tgafb_रेजिस्टर(&pdev->dev);
+पूर्ण
 
-static void tgafb_pci_unregister(struct pci_dev *pdev)
-{
-	tgafb_unregister(&pdev->dev);
-}
-#endif /* CONFIG_PCI */
+अटल व्योम tgafb_pci_unरेजिस्टर(काष्ठा pci_dev *pdev)
+अणु
+	tgafb_unरेजिस्टर(&pdev->dev);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifdef CONFIG_TC
+#अगर_घोषित CONFIG_TC
 /*
  *  TC registration operations
  */
-static int tgafb_tc_register(struct device *);
-static int tgafb_tc_unregister(struct device *);
+अटल पूर्णांक tgafb_tc_रेजिस्टर(काष्ठा device *);
+अटल पूर्णांक tgafb_tc_unरेजिस्टर(काष्ठा device *);
 
-static struct tc_device_id const tgafb_tc_table[] = {
-	{ "DEC     ", "PMAGD-AA" },
-	{ "DEC     ", "PMAGD   " },
-	{ }
-};
+अटल काष्ठा tc_device_id स्थिर tgafb_tc_table[] = अणु
+	अणु "DEC     ", "PMAGD-AA" पूर्ण,
+	अणु "DEC     ", "PMAGD   " पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(tc, tgafb_tc_table);
 
-static struct tc_driver tgafb_tc_driver = {
+अटल काष्ठा tc_driver tgafb_tc_driver = अणु
 	.id_table		= tgafb_tc_table,
-	.driver			= {
+	.driver			= अणु
 		.name		= "tgafb",
 		.bus		= &tc_bus_type,
-		.probe		= tgafb_tc_register,
-		.remove		= tgafb_tc_unregister,
-	},
-};
+		.probe		= tgafb_tc_रेजिस्टर,
+		.हटाओ		= tgafb_tc_unरेजिस्टर,
+	पूर्ण,
+पूर्ण;
 
-static int tgafb_tc_register(struct device *dev)
-{
-	int status = tgafb_register(dev);
-	if (!status)
+अटल पूर्णांक tgafb_tc_रेजिस्टर(काष्ठा device *dev)
+अणु
+	पूर्णांक status = tgafb_रेजिस्टर(dev);
+	अगर (!status)
 		get_device(dev);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int tgafb_tc_unregister(struct device *dev)
-{
+अटल पूर्णांक tgafb_tc_unरेजिस्टर(काष्ठा device *dev)
+अणु
 	put_device(dev);
-	tgafb_unregister(dev);
-	return 0;
-}
-#endif /* CONFIG_TC */
+	tgafb_unरेजिस्टर(dev);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TC */
 
 
 /**
  *      tgafb_check_var - Optional function.  Validates a var passed in.
- *      @var: frame buffer variable screen structure
- *      @info: frame buffer structure that represents a single frame buffer
+ *      @var: frame buffer variable screen काष्ठाure
+ *      @info: frame buffer काष्ठाure that represents a single frame buffer
  */
-static int
-tgafb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	struct tga_par *par = (struct tga_par *)info->par;
+अटल पूर्णांक
+tgafb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *)info->par;
 
-	if (par->tga_type == TGA_TYPE_8PLANE) {
-		if (var->bits_per_pixel != 8)
-			return -EINVAL;
-	} else {
-		if (var->bits_per_pixel != 32)
-			return -EINVAL;
-	}
+	अगर (par->tga_type == TGA_TYPE_8PLANE) अणु
+		अगर (var->bits_per_pixel != 8)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (var->bits_per_pixel != 32)
+			वापस -EINVAL;
+	पूर्ण
 	var->red.length = var->green.length = var->blue.length = 8;
-	if (var->bits_per_pixel == 32) {
+	अगर (var->bits_per_pixel == 32) अणु
 		var->red.offset = 16;
 		var->green.offset = 8;
 		var->blue.offset = 0;
-	}
+	पूर्ण
 
-	if (var->xres_virtual != var->xres || var->yres_virtual != var->yres)
-		return -EINVAL;
-	if (var->xres * var->yres * (var->bits_per_pixel >> 3) > info->fix.smem_len)
-		return -EINVAL;
-	if (var->nonstd)
-		return -EINVAL;
-	if (1000000000 / var->pixclock > TGA_PLL_MAX_FREQ)
-		return -EINVAL;
-	if ((var->vmode & FB_VMODE_MASK) != FB_VMODE_NONINTERLACED)
-		return -EINVAL;
+	अगर (var->xres_भव != var->xres || var->yres_भव != var->yres)
+		वापस -EINVAL;
+	अगर (var->xres * var->yres * (var->bits_per_pixel >> 3) > info->fix.smem_len)
+		वापस -EINVAL;
+	अगर (var->nonstd)
+		वापस -EINVAL;
+	अगर (1000000000 / var->pixघड़ी > TGA_PLL_MAX_FREQ)
+		वापस -EINVAL;
+	अगर ((var->vmode & FB_VMODE_MASK) != FB_VMODE_NONINTERLACED)
+		वापस -EINVAL;
 
 	/* Some of the acceleration routines assume the line width is
 	   a multiple of 8 bytes.  */
-	if (var->xres * (par->tga_type == TGA_TYPE_8PLANE ? 1 : 4) % 8)
-		return -EINVAL;
+	अगर (var->xres * (par->tga_type == TGA_TYPE_8PLANE ? 1 : 4) % 8)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *      tgafb_set_par - Optional function.  Alters the hardware state.
- *      @info: frame buffer structure that represents a single frame buffer
+ *      @info: frame buffer काष्ठाure that represents a single frame buffer
  */
-static int
-tgafb_set_par(struct fb_info *info)
-{
-	static unsigned int const deep_presets[4] = {
+अटल पूर्णांक
+tgafb_set_par(काष्ठा fb_info *info)
+अणु
+	अटल अचिन्हित पूर्णांक स्थिर deep_presets[4] = अणु
 		0x00004000,
 		0x0000440d,
 		0xffffffff,
 		0x0000441d
-	};
-	static unsigned int const rasterop_presets[4] = {
+	पूर्ण;
+	अटल अचिन्हित पूर्णांक स्थिर rasterop_presets[4] = अणु
 		0x00000003,
 		0x00000303,
 		0xffffffff,
 		0x00000303
-	};
-	static unsigned int const mode_presets[4] = {
+	पूर्ण;
+	अटल अचिन्हित पूर्णांक स्थिर mode_presets[4] = अणु
 		0x00000000,
 		0x00000300,
 		0xffffffff,
 		0x00000300
-	};
-	static unsigned int const base_addr_presets[4] = {
+	पूर्ण;
+	अटल अचिन्हित पूर्णांक स्थिर base_addr_presets[4] = अणु
 		0x00000000,
 		0x00000001,
 		0xffffffff,
 		0x00000001
-	};
+	पूर्ण;
 
-	struct tga_par *par = (struct tga_par *) info->par;
-	int tga_bus_pci = dev_is_pci(par->dev);
-	int tga_bus_tc = TGA_BUS_TC(par->dev);
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
+	पूर्णांक tga_bus_pci = dev_is_pci(par->dev);
+	पूर्णांक tga_bus_tc = TGA_BUS_TC(par->dev);
 	u32 htimings, vtimings, pll_freq;
 	u8 tga_type;
-	int i;
+	पूर्णांक i;
 
 	/* Encode video timings.  */
 	htimings = (((info->var.xres/4) & TGA_HORIZ_ACT_LSB)
@@ -249,9 +250,9 @@ tgafb_set_par(struct fb_info *info)
 	htimings |= ((info->var.left_margin/4) << 21) & TGA_HORIZ_BP;
 	vtimings |= (info->var.upper_margin << 22) & TGA_VERT_BP;
 
-	if (info->var.sync & FB_SYNC_HOR_HIGH_ACT)
+	अगर (info->var.sync & FB_SYNC_HOR_HIGH_ACT)
 		htimings |= TGA_HORIZ_POLARITY;
-	if (info->var.sync & FB_SYNC_VERT_HIGH_ACT)
+	अगर (info->var.sync & FB_SYNC_VERT_HIGH_ACT)
 		vtimings |= TGA_VERT_POLARITY;
 
 	par->htimings = htimings;
@@ -262,7 +263,7 @@ tgafb_set_par(struct fb_info *info)
 	/* Store other useful values in par.  */
 	par->xres = info->var.xres;
 	par->yres = info->var.yres;
-	par->pll_freq = pll_freq = 1000000000 / info->var.pixclock;
+	par->pll_freq = pll_freq = 1000000000 / info->var.pixघड़ी;
 	par->bits_per_pixel = info->var.bits_per_pixel;
 	info->fix.line_length = par->xres * (par->bits_per_pixel >> 3);
 
@@ -271,26 +272,26 @@ tgafb_set_par(struct fb_info *info)
 	/* First, disable video.  */
 	TGA_WRITE_REG(par, TGA_VALID_VIDEO | TGA_VALID_BLANK, TGA_VALID_REG);
 
-	/* Write the DEEP register.  */
-	while (TGA_READ_REG(par, TGA_CMD_STAT_REG) & 1) /* wait for not busy */
-		continue;
+	/* Write the DEEP रेजिस्टर.  */
+	जबतक (TGA_READ_REG(par, TGA_CMD_STAT_REG) & 1) /* रुको क्रम not busy */
+		जारी;
 	mb();
 	TGA_WRITE_REG(par, deep_presets[tga_type] |
 			   (par->sync_on_green ? 0x0 : 0x00010000),
 		      TGA_DEEP_REG);
-	while (TGA_READ_REG(par, TGA_CMD_STAT_REG) & 1) /* wait for not busy */
-		continue;
+	जबतक (TGA_READ_REG(par, TGA_CMD_STAT_REG) & 1) /* रुको क्रम not busy */
+		जारी;
 	mb();
 
-	/* Write some more registers.  */
+	/* Write some more रेजिस्टरs.  */
 	TGA_WRITE_REG(par, rasterop_presets[tga_type], TGA_RASTEROP_REG);
 	TGA_WRITE_REG(par, mode_presets[tga_type], TGA_MODE_REG);
 	TGA_WRITE_REG(par, base_addr_presets[tga_type], TGA_BASE_ADDR_REG);
 
-	/* Calculate & write the PLL.  */
+	/* Calculate & ग_लिखो the PLL.  */
 	tgafb_set_pll(par, pll_freq);
 
-	/* Write some more registers.  */
+	/* Write some more रेजिस्टरs.  */
 	TGA_WRITE_REG(par, 0xffffffff, TGA_PLANEMASK_REG);
 	TGA_WRITE_REG(par, 0xffffffff, TGA_PIXELMASK_REG);
 
@@ -299,22 +300,22 @@ tgafb_set_par(struct fb_info *info)
 	TGA_WRITE_REG(par, vtimings, TGA_VERT_REG);
 
 	/* Initialise RAMDAC. */
-	if (tga_type == TGA_TYPE_8PLANE && tga_bus_pci) {
+	अगर (tga_type == TGA_TYPE_8PLANE && tga_bus_pci) अणु
 
-		/* Init BT485 RAMDAC registers.  */
+		/* Init BT485 RAMDAC रेजिस्टरs.  */
 		BT485_WRITE(par, 0xa2 | (par->sync_on_green ? 0x8 : 0x0),
 			    BT485_CMD_0);
 		BT485_WRITE(par, 0x01, BT485_ADDR_PAL_WRITE);
 		BT485_WRITE(par, 0x14, BT485_CMD_3); /* cursor 64x64 */
 		BT485_WRITE(par, 0x40, BT485_CMD_1);
-		BT485_WRITE(par, 0x20, BT485_CMD_2); /* cursor off, for now */
+		BT485_WRITE(par, 0x20, BT485_CMD_2); /* cursor off, क्रम now */
 		BT485_WRITE(par, 0xff, BT485_PIXEL_MASK);
 
-		/* Fill palette registers.  */
+		/* Fill palette रेजिस्टरs.  */
 		BT485_WRITE(par, 0x00, BT485_ADDR_PAL_WRITE);
 		TGA_WRITE_REG(par, BT485_DATA_PAL, TGA_RAMDAC_SETUP_REG);
 
-		for (i = 0; i < 256 * 3; i += 4) {
+		क्रम (i = 0; i < 256 * 3; i += 4) अणु
 			TGA_WRITE_REG(par, 0x55 | (BT485_DATA_PAL << 8),
 				      TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00 | (BT485_DATA_PAL << 8),
@@ -323,11 +324,11 @@ tgafb_set_par(struct fb_info *info)
 				      TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00 | (BT485_DATA_PAL << 8),
 				      TGA_RAMDAC_REG);
-		}
+		पूर्ण
 
-	} else if (tga_type == TGA_TYPE_8PLANE && tga_bus_tc) {
+	पूर्ण अन्यथा अगर (tga_type == TGA_TYPE_8PLANE && tga_bus_tc) अणु
 
-		/* Init BT459 RAMDAC registers.  */
+		/* Init BT459 RAMDAC रेजिस्टरs.  */
 		BT459_WRITE(par, BT459_REG_ACC, BT459_CMD_REG_0, 0x40);
 		BT459_WRITE(par, BT459_REG_ACC, BT459_CMD_REG_1, 0x00);
 		BT459_WRITE(par, BT459_REG_ACC, BT459_CMD_REG_2,
@@ -339,16 +340,16 @@ tgafb_set_par(struct fb_info *info)
 		BT459_LOAD_ADDR(par, 0x0000);
 		TGA_WRITE_REG(par, BT459_PALETTE << 2, TGA_RAMDAC_SETUP_REG);
 
-		for (i = 0; i < 256 * 3; i += 4) {
+		क्रम (i = 0; i < 256 * 3; i += 4) अणु
 			TGA_WRITE_REG(par, 0x55, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
-		}
+		पूर्ण
 
-	} else { /* 24-plane or 24plusZ */
+	पूर्ण अन्यथा अणु /* 24-plane or 24plusZ */
 
-		/* Init BT463 RAMDAC registers.  */
+		/* Init BT463 RAMDAC रेजिस्टरs.  */
 		BT463_WRITE(par, BT463_REG_ACC, BT463_CMD_REG_0, 0x40);
 		BT463_WRITE(par, BT463_REG_ACC, BT463_CMD_REG_1, 0x08);
 		BT463_WRITE(par, BT463_REG_ACC, BT463_CMD_REG_2,
@@ -368,98 +369,98 @@ tgafb_set_par(struct fb_info *info)
 		BT463_LOAD_ADDR(par, 0x0000);
 		TGA_WRITE_REG(par, BT463_PALETTE << 2, TGA_RAMDAC_SETUP_REG);
 
-#ifdef CONFIG_HW_CONSOLE
-		for (i = 0; i < 16; i++) {
-			int j = color_table[i];
+#अगर_घोषित CONFIG_HW_CONSOLE
+		क्रम (i = 0; i < 16; i++) अणु
+			पूर्णांक j = color_table[i];
 
-			TGA_WRITE_REG(par, default_red[j], TGA_RAMDAC_REG);
-			TGA_WRITE_REG(par, default_grn[j], TGA_RAMDAC_REG);
-			TGA_WRITE_REG(par, default_blu[j], TGA_RAMDAC_REG);
-		}
-		for (i = 0; i < 512 * 3; i += 4) {
-#else
-		for (i = 0; i < 528 * 3; i += 4) {
-#endif
+			TGA_WRITE_REG(par, शेष_red[j], TGA_RAMDAC_REG);
+			TGA_WRITE_REG(par, शेष_grn[j], TGA_RAMDAC_REG);
+			TGA_WRITE_REG(par, शेष_blu[j], TGA_RAMDAC_REG);
+		पूर्ण
+		क्रम (i = 0; i < 512 * 3; i += 4) अणु
+#अन्यथा
+		क्रम (i = 0; i < 528 * 3; i += 4) अणु
+#पूर्ण_अगर
 			TGA_WRITE_REG(par, 0x55, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
-		}
+		पूर्ण
 
-		/* Fill window type table after start of vertical retrace.  */
-		while (!(TGA_READ_REG(par, TGA_INTR_STAT_REG) & 0x01))
-			continue;
+		/* Fill winकरोw type table after start of vertical retrace.  */
+		जबतक (!(TGA_READ_REG(par, TGA_INTR_STAT_REG) & 0x01))
+			जारी;
 		TGA_WRITE_REG(par, 0x01, TGA_INTR_STAT_REG);
 		mb();
-		while (!(TGA_READ_REG(par, TGA_INTR_STAT_REG) & 0x01))
-			continue;
+		जबतक (!(TGA_READ_REG(par, TGA_INTR_STAT_REG) & 0x01))
+			जारी;
 		TGA_WRITE_REG(par, 0x01, TGA_INTR_STAT_REG);
 
 		BT463_LOAD_ADDR(par, BT463_WINDOW_TYPE_BASE);
 		TGA_WRITE_REG(par, BT463_REG_ACC << 2, TGA_RAMDAC_SETUP_REG);
 
-		for (i = 0; i < 16; i++) {
+		क्रम (i = 0; i < 16; i++) अणु
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x01, TGA_RAMDAC_REG);
 			TGA_WRITE_REG(par, 0x00, TGA_RAMDAC_REG);
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	/* Finally, enable video scan (and pray for the monitor... :-) */
+	/* Finally, enable video scan (and pray क्रम the monitor... :-) */
 	TGA_WRITE_REG(par, TGA_VALID_VIDEO, TGA_VALID_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DIFFCHECK(X)							  \
-do {									  \
-	if (m <= 0x3f) {						  \
-		int delta = f - (TGA_PLL_BASE_FREQ * (X)) / (r << shift); \
-		if (delta < 0)						  \
+#घोषणा DIFFCHECK(X)							  \
+करो अणु									  \
+	अगर (m <= 0x3f) अणु						  \
+		पूर्णांक delta = f - (TGA_PLL_BASE_FREQ * (X)) / (r << shअगरt); \
+		अगर (delta < 0)						  \
 			delta = -delta;					  \
-		if (delta < min_diff)					  \
-			min_diff = delta, vm = m, va = a, vr = r;	  \
-	}								  \
-} while (0)
+		अगर (delta < min_dअगरf)					  \
+			min_dअगरf = delta, vm = m, va = a, vr = r;	  \
+	पूर्ण								  \
+पूर्ण जबतक (0)
 
-static void
-tgafb_set_pll(struct tga_par *par, int f)
-{
-	int n, shift, base, min_diff, target;
-	int r,a,m,vm = 34, va = 1, vr = 30;
+अटल व्योम
+tgafb_set_pll(काष्ठा tga_par *par, पूर्णांक f)
+अणु
+	पूर्णांक n, shअगरt, base, min_dअगरf, target;
+	पूर्णांक r,a,m,vm = 34, va = 1, vr = 30;
 
-	for (r = 0 ; r < 12 ; r++)
+	क्रम (r = 0 ; r < 12 ; r++)
 		TGA_WRITE_REG(par, !r, TGA_CLOCK_REG);
 
-	if (f > TGA_PLL_MAX_FREQ)
+	अगर (f > TGA_PLL_MAX_FREQ)
 		f = TGA_PLL_MAX_FREQ;
 
-	if (f >= TGA_PLL_MAX_FREQ / 2)
-		shift = 0;
-	else if (f >= TGA_PLL_MAX_FREQ / 4)
-		shift = 1;
-	else
-		shift = 2;
+	अगर (f >= TGA_PLL_MAX_FREQ / 2)
+		shअगरt = 0;
+	अन्यथा अगर (f >= TGA_PLL_MAX_FREQ / 4)
+		shअगरt = 1;
+	अन्यथा
+		shअगरt = 2;
 
-	TGA_WRITE_REG(par, shift & 1, TGA_CLOCK_REG);
-	TGA_WRITE_REG(par, shift >> 1, TGA_CLOCK_REG);
+	TGA_WRITE_REG(par, shअगरt & 1, TGA_CLOCK_REG);
+	TGA_WRITE_REG(par, shअगरt >> 1, TGA_CLOCK_REG);
 
-	for (r = 0 ; r < 10 ; r++)
+	क्रम (r = 0 ; r < 10 ; r++)
 		TGA_WRITE_REG(par, 0, TGA_CLOCK_REG);
 
-	if (f <= 120000) {
+	अगर (f <= 120000) अणु
 		TGA_WRITE_REG(par, 0, TGA_CLOCK_REG);
 		TGA_WRITE_REG(par, 0, TGA_CLOCK_REG);
-	}
-	else if (f <= 200000) {
+	पूर्ण
+	अन्यथा अगर (f <= 200000) अणु
 		TGA_WRITE_REG(par, 1, TGA_CLOCK_REG);
 		TGA_WRITE_REG(par, 0, TGA_CLOCK_REG);
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		TGA_WRITE_REG(par, 0, TGA_CLOCK_REG);
 		TGA_WRITE_REG(par, 1, TGA_CLOCK_REG);
-	}
+	पूर्ण
 
 	TGA_WRITE_REG(par, 1, TGA_CLOCK_REG);
 	TGA_WRITE_REG(par, 0, TGA_CLOCK_REG);
@@ -468,102 +469,102 @@ tgafb_set_pll(struct tga_par *par, int f)
 	TGA_WRITE_REG(par, 0, TGA_CLOCK_REG);
 	TGA_WRITE_REG(par, 1, TGA_CLOCK_REG);
 
-	target = (f << shift) / TGA_PLL_BASE_FREQ;
-	min_diff = TGA_PLL_MAX_FREQ;
+	target = (f << shअगरt) / TGA_PLL_BASE_FREQ;
+	min_dअगरf = TGA_PLL_MAX_FREQ;
 
 	r = 7 / target;
-	if (!r) r = 1;
+	अगर (!r) r = 1;
 
 	base = target * r;
-	while (base < 449) {
-		for (n = base < 7 ? 7 : base; n < base + target && n < 449; n++) {
+	जबतक (base < 449) अणु
+		क्रम (n = base < 7 ? 7 : base; n < base + target && n < 449; n++) अणु
 			m = ((n + 3) / 7) - 1;
 			a = 0;
 			DIFFCHECK((m + 1) * 7);
 			m++;
 			DIFFCHECK((m + 1) * 7);
 			m = (n / 6) - 1;
-			if ((a = n % 6))
+			अगर ((a = n % 6))
 				DIFFCHECK(n);
-		}
+		पूर्ण
 		r++;
 		base += target;
-	}
+	पूर्ण
 
 	vr--;
 
-	for (r = 0; r < 8; r++)
+	क्रम (r = 0; r < 8; r++)
 		TGA_WRITE_REG(par, (vm >> r) & 1, TGA_CLOCK_REG);
-	for (r = 0; r < 8 ; r++)
+	क्रम (r = 0; r < 8 ; r++)
 		TGA_WRITE_REG(par, (va >> r) & 1, TGA_CLOCK_REG);
-	for (r = 0; r < 7 ; r++)
+	क्रम (r = 0; r < 7 ; r++)
 		TGA_WRITE_REG(par, (vr >> r) & 1, TGA_CLOCK_REG);
 	TGA_WRITE_REG(par, ((vr >> 7) & 1)|2, TGA_CLOCK_REG);
-}
+पूर्ण
 
 
 /**
- *      tgafb_setcolreg - Optional function. Sets a color register.
+ *      tgafb_setcolreg - Optional function. Sets a color रेजिस्टर.
  *      @regno: boolean, 0 copy local, 1 get_user() function
- *      @red: frame buffer colormap structure
+ *      @red: frame buffer colormap काष्ठाure
  *      @green: The green value which can be up to 16 bits wide
  *      @blue:  The blue value which can be up to 16 bits wide.
  *      @transp: If supported the alpha value which can be up to 16 bits wide.
- *      @info: frame buffer info structure
+ *      @info: frame buffer info काष्ठाure
  */
-static int
-tgafb_setcolreg(unsigned regno, unsigned red, unsigned green, unsigned blue,
-		unsigned transp, struct fb_info *info)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
-	int tga_bus_pci = dev_is_pci(par->dev);
-	int tga_bus_tc = TGA_BUS_TC(par->dev);
+अटल पूर्णांक
+tgafb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green, अचिन्हित blue,
+		अचिन्हित transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
+	पूर्णांक tga_bus_pci = dev_is_pci(par->dev);
+	पूर्णांक tga_bus_tc = TGA_BUS_TC(par->dev);
 
-	if (regno > 255)
-		return 1;
+	अगर (regno > 255)
+		वापस 1;
 	red >>= 8;
 	green >>= 8;
 	blue >>= 8;
 
-	if (par->tga_type == TGA_TYPE_8PLANE && tga_bus_pci) {
+	अगर (par->tga_type == TGA_TYPE_8PLANE && tga_bus_pci) अणु
 		BT485_WRITE(par, regno, BT485_ADDR_PAL_WRITE);
 		TGA_WRITE_REG(par, BT485_DATA_PAL, TGA_RAMDAC_SETUP_REG);
 		TGA_WRITE_REG(par, red|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
 		TGA_WRITE_REG(par, green|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
 		TGA_WRITE_REG(par, blue|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
-	} else if (par->tga_type == TGA_TYPE_8PLANE && tga_bus_tc) {
+	पूर्ण अन्यथा अगर (par->tga_type == TGA_TYPE_8PLANE && tga_bus_tc) अणु
 		BT459_LOAD_ADDR(par, regno);
 		TGA_WRITE_REG(par, BT459_PALETTE << 2, TGA_RAMDAC_SETUP_REG);
 		TGA_WRITE_REG(par, red, TGA_RAMDAC_REG);
 		TGA_WRITE_REG(par, green, TGA_RAMDAC_REG);
 		TGA_WRITE_REG(par, blue, TGA_RAMDAC_REG);
-	} else {
-		if (regno < 16) {
+	पूर्ण अन्यथा अणु
+		अगर (regno < 16) अणु
 			u32 value = (regno << 16) | (regno << 8) | regno;
-			((u32 *)info->pseudo_palette)[regno] = value;
-		}
+			((u32 *)info->pseuकरो_palette)[regno] = value;
+		पूर्ण
 		BT463_LOAD_ADDR(par, regno);
 		TGA_WRITE_REG(par, BT463_PALETTE << 2, TGA_RAMDAC_SETUP_REG);
 		TGA_WRITE_REG(par, red, TGA_RAMDAC_REG);
 		TGA_WRITE_REG(par, green, TGA_RAMDAC_REG);
 		TGA_WRITE_REG(par, blue, TGA_RAMDAC_REG);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
  *      tgafb_blank - Optional function.  Blanks the display.
  *      @blank: the blank mode we want.
- *      @info: frame buffer structure that represents a single frame buffer
+ *      @info: frame buffer काष्ठाure that represents a single frame buffer
  */
-static int
-tgafb_blank(int blank, struct fb_info *info)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
+अटल पूर्णांक
+tgafb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
 	u32 vhcr, vvcr, vvvr;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 
@@ -572,60 +573,60 @@ tgafb_blank(int blank, struct fb_info *info)
 	vvvr = TGA_READ_REG(par, TGA_VALID_REG);
 	vvvr &= ~(TGA_VALID_VIDEO | TGA_VALID_BLANK);
 
-	switch (blank) {
-	case FB_BLANK_UNBLANK: /* Unblanking */
-		if (par->vesa_blanked) {
+	चयन (blank) अणु
+	हाल FB_BLANK_UNBLANK: /* Unblanking */
+		अगर (par->vesa_blanked) अणु
 			TGA_WRITE_REG(par, vhcr & 0xbfffffff, TGA_HORIZ_REG);
 			TGA_WRITE_REG(par, vvcr & 0xbfffffff, TGA_VERT_REG);
 			par->vesa_blanked = 0;
-		}
+		पूर्ण
 		TGA_WRITE_REG(par, vvvr | TGA_VALID_VIDEO, TGA_VALID_REG);
-		break;
+		अवरोध;
 
-	case FB_BLANK_NORMAL: /* Normal blanking */
+	हाल FB_BLANK_NORMAL: /* Normal blanking */
 		TGA_WRITE_REG(par, vvvr | TGA_VALID_VIDEO | TGA_VALID_BLANK,
 			      TGA_VALID_REG);
-		break;
+		अवरोध;
 
-	case FB_BLANK_VSYNC_SUSPEND: /* VESA blank (vsync off) */
+	हाल FB_BLANK_VSYNC_SUSPEND: /* VESA blank (vsync off) */
 		TGA_WRITE_REG(par, vvcr | 0x40000000, TGA_VERT_REG);
 		TGA_WRITE_REG(par, vvvr | TGA_VALID_BLANK, TGA_VALID_REG);
 		par->vesa_blanked = 1;
-		break;
+		अवरोध;
 
-	case FB_BLANK_HSYNC_SUSPEND: /* VESA blank (hsync off) */
+	हाल FB_BLANK_HSYNC_SUSPEND: /* VESA blank (hsync off) */
 		TGA_WRITE_REG(par, vhcr | 0x40000000, TGA_HORIZ_REG);
 		TGA_WRITE_REG(par, vvvr | TGA_VALID_BLANK, TGA_VALID_REG);
 		par->vesa_blanked = 1;
-		break;
+		अवरोध;
 
-	case FB_BLANK_POWERDOWN: /* Poweroff */
+	हाल FB_BLANK_POWERDOWN: /* Poweroff */
 		TGA_WRITE_REG(par, vhcr | 0x40000000, TGA_HORIZ_REG);
 		TGA_WRITE_REG(par, vvcr | 0x40000000, TGA_VERT_REG);
 		TGA_WRITE_REG(par, vvvr | TGA_VALID_BLANK, TGA_VALID_REG);
 		par->vesa_blanked = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	local_irq_restore(flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *  Acceleration.
  */
 
-static void
-tgafb_mono_imageblit(struct fb_info *info, const struct fb_image *image)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
+अटल व्योम
+tgafb_mono_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
 	u32 fgcolor, bgcolor, dx, dy, width, height, vxres, vyres, pixelmask;
-	unsigned long rincr, line_length, shift, pos, is8bpp;
-	unsigned long i, j;
-	const unsigned char *data;
-	void __iomem *regs_base;
-	void __iomem *fb_base;
+	अचिन्हित दीर्घ rincr, line_length, shअगरt, pos, is8bpp;
+	अचिन्हित दीर्घ i, j;
+	स्थिर अचिन्हित अक्षर *data;
+	व्योम __iomem *regs_base;
+	व्योम __iomem *fb_base;
 
 	is8bpp = info->var.bits_per_pixel == 8;
 
@@ -633,226 +634,226 @@ tgafb_mono_imageblit(struct fb_info *info, const struct fb_image *image)
 	dy = image->dy;
 	width = image->width;
 	height = image->height;
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
 	line_length = info->fix.line_length;
 	rincr = (width + 7) / 8;
 
-	/* A shift below cannot cope with.  */
-	if (unlikely(width == 0))
-		return;
+	/* A shअगरt below cannot cope with.  */
+	अगर (unlikely(width == 0))
+		वापस;
 	/* Crop the image to the screen.  */
-	if (dx > vxres || dy > vyres)
-		return;
-	if (dx + width > vxres)
+	अगर (dx > vxres || dy > vyres)
+		वापस;
+	अगर (dx + width > vxres)
 		width = vxres - dx;
-	if (dy + height > vyres)
+	अगर (dy + height > vyres)
 		height = vyres - dy;
 
 	regs_base = par->tga_regs_base;
 	fb_base = par->tga_fb_base;
 
 	/* Expand the color values to fill 32-bits.  */
-	/* ??? Would be nice to notice colour changes elsewhere, so
-	   that we can do this only when necessary.  */
+	/* ??? Would be nice to notice colour changes अन्यथाwhere, so
+	   that we can करो this only when necessary.  */
 	fgcolor = image->fg_color;
 	bgcolor = image->bg_color;
-	if (is8bpp) {
+	अगर (is8bpp) अणु
 		fgcolor |= fgcolor << 8;
 		fgcolor |= fgcolor << 16;
 		bgcolor |= bgcolor << 8;
 		bgcolor |= bgcolor << 16;
-	} else {
-		if (fgcolor < 16)
-			fgcolor = ((u32 *)info->pseudo_palette)[fgcolor];
-		if (bgcolor < 16)
-			bgcolor = ((u32 *)info->pseudo_palette)[bgcolor];
-	}
-	__raw_writel(fgcolor, regs_base + TGA_FOREGROUND_REG);
-	__raw_writel(bgcolor, regs_base + TGA_BACKGROUND_REG);
+	पूर्ण अन्यथा अणु
+		अगर (fgcolor < 16)
+			fgcolor = ((u32 *)info->pseuकरो_palette)[fgcolor];
+		अगर (bgcolor < 16)
+			bgcolor = ((u32 *)info->pseuकरो_palette)[bgcolor];
+	पूर्ण
+	__raw_ग_लिखोl(fgcolor, regs_base + TGA_FOREGROUND_REG);
+	__raw_ग_लिखोl(bgcolor, regs_base + TGA_BACKGROUND_REG);
 
-	/* Acquire proper alignment; set up the PIXELMASK register
-	   so that we only write the proper character cell.  */
+	/* Acquire proper alignment; set up the PIXELMASK रेजिस्टर
+	   so that we only ग_लिखो the proper अक्षरacter cell.  */
 	pos = dy * line_length;
-	if (is8bpp) {
+	अगर (is8bpp) अणु
 		pos += dx;
-		shift = pos & 3;
+		shअगरt = pos & 3;
 		pos &= -4;
-	} else {
+	पूर्ण अन्यथा अणु
 		pos += dx * 4;
-		shift = (pos & 7) >> 2;
+		shअगरt = (pos & 7) >> 2;
 		pos &= -8;
-	}
+	पूर्ण
 
-	data = (const unsigned char *) image->data;
+	data = (स्थिर अचिन्हित अक्षर *) image->data;
 
 	/* Enable opaque stipple mode.  */
-	__raw_writel((is8bpp
+	__raw_ग_लिखोl((is8bpp
 		      ? TGA_MODE_SBM_8BPP | TGA_MODE_OPAQUE_STIPPLE
 		      : TGA_MODE_SBM_24BPP | TGA_MODE_OPAQUE_STIPPLE),
 		     regs_base + TGA_MODE_REG);
 
-	if (width + shift <= 32) {
-		unsigned long bwidth;
+	अगर (width + shअगरt <= 32) अणु
+		अचिन्हित दीर्घ bwidth;
 
-		/* Handle common case of imaging a single character, in
+		/* Handle common हाल of imaging a single अक्षरacter, in
 		   a font less than or 32 pixels wide.  */
 
-		/* Avoid a shift by 32; width > 0 implied.  */
+		/* Aव्योम a shअगरt by 32; width > 0 implied.  */
 		pixelmask = (2ul << (width - 1)) - 1;
-		pixelmask <<= shift;
-		__raw_writel(pixelmask, regs_base + TGA_PIXELMASK_REG);
+		pixelmask <<= shअगरt;
+		__raw_ग_लिखोl(pixelmask, regs_base + TGA_PIXELMASK_REG);
 		wmb();
 
 		bwidth = (width + 7) / 8;
 
-		for (i = 0; i < height; ++i) {
+		क्रम (i = 0; i < height; ++i) अणु
 			u32 mask = 0;
 
 			/* The image data is bit big endian; we need
 			   little endian.  */
-			for (j = 0; j < bwidth; ++j)
+			क्रम (j = 0; j < bwidth; ++j)
 				mask |= bitrev8(data[j]) << (j * 8);
 
-			__raw_writel(mask << shift, fb_base + pos);
+			__raw_ग_लिखोl(mask << shअगरt, fb_base + pos);
 
 			pos += line_length;
 			data += rincr;
-		}
+		पूर्ण
 		wmb();
-		__raw_writel(0xffffffff, regs_base + TGA_PIXELMASK_REG);
-	} else if (shift == 0) {
-		unsigned long pos0 = pos;
-		const unsigned char *data0 = data;
-		unsigned long bincr = (is8bpp ? 8 : 8*4);
-		unsigned long bwidth;
+		__raw_ग_लिखोl(0xffffffff, regs_base + TGA_PIXELMASK_REG);
+	पूर्ण अन्यथा अगर (shअगरt == 0) अणु
+		अचिन्हित दीर्घ pos0 = pos;
+		स्थिर अचिन्हित अक्षर *data0 = data;
+		अचिन्हित दीर्घ bincr = (is8bpp ? 8 : 8*4);
+		अचिन्हित दीर्घ bwidth;
 
-		/* Handle another common case in which accel_putcs
-		   generates a large bitmap, which happens to be aligned.
-		   Allow the tail to be misaligned.  This case is 
-		   interesting because we've not got to hold partial
+		/* Handle another common हाल in which accel_अ_दोs
+		   generates a large biपंचांगap, which happens to be aligned.
+		   Allow the tail to be misaligned.  This हाल is 
+		   पूर्णांकeresting because we've not got to hold partial
 		   bytes across the words being written.  */
 
 		wmb();
 
 		bwidth = (width / 8) & -4;
-		for (i = 0; i < height; ++i) {
-			for (j = 0; j < bwidth; j += 4) {
+		क्रम (i = 0; i < height; ++i) अणु
+			क्रम (j = 0; j < bwidth; j += 4) अणु
 				u32 mask = 0;
 				mask |= bitrev8(data[j+0]) << (0 * 8);
 				mask |= bitrev8(data[j+1]) << (1 * 8);
 				mask |= bitrev8(data[j+2]) << (2 * 8);
 				mask |= bitrev8(data[j+3]) << (3 * 8);
-				__raw_writel(mask, fb_base + pos + j*bincr);
-			}
+				__raw_ग_लिखोl(mask, fb_base + pos + j*bincr);
+			पूर्ण
 			pos += line_length;
 			data += rincr;
-		}
+		पूर्ण
 		wmb();
 
 		pixelmask = (1ul << (width & 31)) - 1;
-		if (pixelmask) {
-			__raw_writel(pixelmask, regs_base + TGA_PIXELMASK_REG);
+		अगर (pixelmask) अणु
+			__raw_ग_लिखोl(pixelmask, regs_base + TGA_PIXELMASK_REG);
 			wmb();
 
 			pos = pos0 + bwidth*bincr;
 			data = data0 + bwidth;
 			bwidth = ((width & 31) + 7) / 8;
 
-			for (i = 0; i < height; ++i) {
+			क्रम (i = 0; i < height; ++i) अणु
 				u32 mask = 0;
-				for (j = 0; j < bwidth; ++j)
+				क्रम (j = 0; j < bwidth; ++j)
 					mask |= bitrev8(data[j]) << (j * 8);
-				__raw_writel(mask, fb_base + pos);
+				__raw_ग_लिखोl(mask, fb_base + pos);
 				pos += line_length;
 				data += rincr;
-			}
+			पूर्ण
 			wmb();
-			__raw_writel(0xffffffff, regs_base + TGA_PIXELMASK_REG);
-		}
-	} else {
-		unsigned long pos0 = pos;
-		const unsigned char *data0 = data;
-		unsigned long bincr = (is8bpp ? 8 : 8*4);
-		unsigned long bwidth;
+			__raw_ग_लिखोl(0xffffffff, regs_base + TGA_PIXELMASK_REG);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ pos0 = pos;
+		स्थिर अचिन्हित अक्षर *data0 = data;
+		अचिन्हित दीर्घ bincr = (is8bpp ? 8 : 8*4);
+		अचिन्हित दीर्घ bwidth;
 
-		/* Finally, handle the generic case of misaligned start.
-		   Here we split the write into 16-bit spans.  This allows
+		/* Finally, handle the generic हाल of misaligned start.
+		   Here we split the ग_लिखो पूर्णांकo 16-bit spans.  This allows
 		   us to use only one pixel mask, instead of four as would
 		   be required by writing 24-bit spans.  */
 
-		pixelmask = 0xffff << shift;
-		__raw_writel(pixelmask, regs_base + TGA_PIXELMASK_REG);
+		pixelmask = 0xffff << shअगरt;
+		__raw_ग_लिखोl(pixelmask, regs_base + TGA_PIXELMASK_REG);
 		wmb();
 
 		bwidth = (width / 8) & -2;
-		for (i = 0; i < height; ++i) {
-			for (j = 0; j < bwidth; j += 2) {
+		क्रम (i = 0; i < height; ++i) अणु
+			क्रम (j = 0; j < bwidth; j += 2) अणु
 				u32 mask = 0;
 				mask |= bitrev8(data[j+0]) << (0 * 8);
 				mask |= bitrev8(data[j+1]) << (1 * 8);
-				mask <<= shift;
-				__raw_writel(mask, fb_base + pos + j*bincr);
-			}
+				mask <<= shअगरt;
+				__raw_ग_लिखोl(mask, fb_base + pos + j*bincr);
+			पूर्ण
 			pos += line_length;
 			data += rincr;
-		}
+		पूर्ण
 		wmb();
 
-		pixelmask = ((1ul << (width & 15)) - 1) << shift;
-		if (pixelmask) {
-			__raw_writel(pixelmask, regs_base + TGA_PIXELMASK_REG);
+		pixelmask = ((1ul << (width & 15)) - 1) << shअगरt;
+		अगर (pixelmask) अणु
+			__raw_ग_लिखोl(pixelmask, regs_base + TGA_PIXELMASK_REG);
 			wmb();
 
 			pos = pos0 + bwidth*bincr;
 			data = data0 + bwidth;
 			bwidth = (width & 15) > 8;
 
-			for (i = 0; i < height; ++i) {
+			क्रम (i = 0; i < height; ++i) अणु
 				u32 mask = bitrev8(data[0]);
-				if (bwidth)
+				अगर (bwidth)
 					mask |= bitrev8(data[1]) << 8;
-				mask <<= shift;
-				__raw_writel(mask, fb_base + pos);
+				mask <<= shअगरt;
+				__raw_ग_लिखोl(mask, fb_base + pos);
 				pos += line_length;
 				data += rincr;
-			}
+			पूर्ण
 			wmb();
-		}
-		__raw_writel(0xffffffff, regs_base + TGA_PIXELMASK_REG);
-	}
+		पूर्ण
+		__raw_ग_लिखोl(0xffffffff, regs_base + TGA_PIXELMASK_REG);
+	पूर्ण
 
 	/* Disable opaque stipple mode.  */
-	__raw_writel((is8bpp
+	__raw_ग_लिखोl((is8bpp
 		      ? TGA_MODE_SBM_8BPP | TGA_MODE_SIMPLE
 		      : TGA_MODE_SBM_24BPP | TGA_MODE_SIMPLE),
 		     regs_base + TGA_MODE_REG);
-}
+पूर्ण
 
-static void
-tgafb_clut_imageblit(struct fb_info *info, const struct fb_image *image)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
+अटल व्योम
+tgafb_clut_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
 	u32 color, dx, dy, width, height, vxres, vyres;
-	u32 *palette = ((u32 *)info->pseudo_palette);
-	unsigned long pos, line_length, i, j;
-	const unsigned char *data;
-	void __iomem *fb_base;
+	u32 *palette = ((u32 *)info->pseuकरो_palette);
+	अचिन्हित दीर्घ pos, line_length, i, j;
+	स्थिर अचिन्हित अक्षर *data;
+	व्योम __iomem *fb_base;
 
 	dx = image->dx;
 	dy = image->dy;
 	width = image->width;
 	height = image->height;
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
 	line_length = info->fix.line_length;
 
 	/* Crop the image to the screen.  */
-	if (dx > vxres || dy > vyres)
-		return;
-	if (dx + width > vxres)
+	अगर (dx > vxres || dy > vyres)
+		वापस;
+	अगर (dx + width > vxres)
 		width = vxres - dx;
-	if (dy + height > vyres)
+	अगर (dy + height > vyres)
 		height = vyres - dy;
 
 	fb_base = par->tga_fb_base;
@@ -861,86 +862,86 @@ tgafb_clut_imageblit(struct fb_info *info, const struct fb_image *image)
 	data = image->data;
 
 	/* Now copy the image, color_expanding via the palette. */
-	for (i = 0; i < height; i++) {
-		for (j = 0; j < width; j++) {
+	क्रम (i = 0; i < height; i++) अणु
+		क्रम (j = 0; j < width; j++) अणु
 			color = palette[*data++];
-			__raw_writel(color, fb_base + pos + j*4);
-		}
+			__raw_ग_लिखोl(color, fb_base + pos + j*4);
+		पूर्ण
 		pos += line_length;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- *      tgafb_imageblit - REQUIRED function. Can use generic routines if
+ *      tgafb_imageblit - REQUIRED function. Can use generic routines अगर
  *                        non acclerated hardware and packed pixel based.
- *                        Copies a image from system memory to the screen.
+ *                        Copies a image from प्रणाली memory to the screen.
  *
- *      @info: frame buffer structure that represents a single frame buffer
- *      @image: structure defining the image.
+ *      @info: frame buffer काष्ठाure that represents a single frame buffer
+ *      @image: काष्ठाure defining the image.
  */
-static void
-tgafb_imageblit(struct fb_info *info, const struct fb_image *image)
-{
-	unsigned int is8bpp = info->var.bits_per_pixel == 8;
+अटल व्योम
+tgafb_imageblit(काष्ठा fb_info *info, स्थिर काष्ठा fb_image *image)
+अणु
+	अचिन्हित पूर्णांक is8bpp = info->var.bits_per_pixel == 8;
 
-	/* If a mono image, regardless of FB depth, go do it. */
-	if (image->depth == 1) {
+	/* If a mono image, regardless of FB depth, go करो it. */
+	अगर (image->depth == 1) अणु
 		tgafb_mono_imageblit(info, image);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* For copies that aren't pixel expansion, there's little we
-	   can do better than the generic code.  */
-	/* ??? There is a DMA write mode; I wonder if that could be
+	   can करो better than the generic code.  */
+	/* ??? There is a DMA ग_लिखो mode; I wonder अगर that could be
 	   made to pull the data from the image buffer...  */
-	if (image->depth == info->var.bits_per_pixel) {
+	अगर (image->depth == info->var.bits_per_pixel) अणु
 		cfb_imageblit(info, image);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* If 24-plane FB and the image is 8-plane with CLUT, we can do it. */
-	if (!is8bpp && image->depth == 8) {
+	/* If 24-plane FB and the image is 8-plane with CLUT, we can करो it. */
+	अगर (!is8bpp && image->depth == 8) अणु
 		tgafb_clut_imageblit(info, image);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Silently return... */
-}
+	/* Silently वापस... */
+पूर्ण
 
 /**
- *      tgafb_fillrect - REQUIRED function. Can use generic routines if 
+ *      tgafb_fillrect - REQUIRED function. Can use generic routines अगर 
  *                       non acclerated hardware and packed pixel based.
  *                       Draws a rectangle on the screen.               
  *
- *      @info: frame buffer structure that represents a single frame buffer
- *      @rect: structure defining the rectagle and operation.
+ *      @info: frame buffer काष्ठाure that represents a single frame buffer
+ *      @rect: काष्ठाure defining the rectagle and operation.
  */
-static void
-tgafb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
-	int is8bpp = info->var.bits_per_pixel == 8;
+अटल व्योम
+tgafb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
+	पूर्णांक is8bpp = info->var.bits_per_pixel == 8;
 	u32 dx, dy, width, height, vxres, vyres, color;
-	unsigned long pos, align, line_length, i, j;
-	void __iomem *regs_base;
-	void __iomem *fb_base;
+	अचिन्हित दीर्घ pos, align, line_length, i, j;
+	व्योम __iomem *regs_base;
+	व्योम __iomem *fb_base;
 
 	dx = rect->dx;
 	dy = rect->dy;
 	width = rect->width;
 	height = rect->height;
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
 	line_length = info->fix.line_length;
 	regs_base = par->tga_regs_base;
 	fb_base = par->tga_fb_base;
 
 	/* Crop the rectangle to the screen.  */
-	if (dx > vxres || dy > vyres || !width || !height)
-		return;
-	if (dx + width > vxres)
+	अगर (dx > vxres || dy > vyres || !width || !height)
+		वापस;
+	अगर (dx + width > vxres)
 		width = vxres - dx;
-	if (dy + height > vyres)
+	अगर (dy + height > vyres)
 		height = vyres - dy;
 
 	pos = dy * line_length + dx * (is8bpp ? 1 : 4);
@@ -948,38 +949,38 @@ tgafb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 	/* ??? We could implement ROP_XOR with opaque fill mode
 	   and a RasterOp setting of GXxor, but as far as I can
 	   tell, this mode is not actually used in the kernel.
-	   Thus I am ignoring it for now.  */
-	if (rect->rop != ROP_COPY) {
+	   Thus I am ignoring it क्रम now.  */
+	अगर (rect->rop != ROP_COPY) अणु
 		cfb_fillrect(info, rect);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Expand the color value to fill 8 pixels.  */
 	color = rect->color;
-	if (is8bpp) {
+	अगर (is8bpp) अणु
 		color |= color << 8;
 		color |= color << 16;
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR0_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR1_REG);
-	} else {
-		if (color < 16)
-			color = ((u32 *)info->pseudo_palette)[color];
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR0_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR1_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR2_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR3_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR4_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR5_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR6_REG);
-		__raw_writel(color, regs_base + TGA_BLOCK_COLOR7_REG);
-	}
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR0_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR1_REG);
+	पूर्ण अन्यथा अणु
+		अगर (color < 16)
+			color = ((u32 *)info->pseuकरो_palette)[color];
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR0_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR1_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR2_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR3_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR4_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR5_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR6_REG);
+		__raw_ग_लिखोl(color, regs_base + TGA_BLOCK_COLOR7_REG);
+	पूर्ण
 
-	/* The DATA register holds the fill mask for block fill mode.
+	/* The DATA रेजिस्टर holds the fill mask क्रम block fill mode.
 	   Since we're not stippling, this is all ones.  */
-	__raw_writel(0xffffffff, regs_base + TGA_DATA_REG);
+	__raw_ग_लिखोl(0xffffffff, regs_base + TGA_DATA_REG);
 
 	/* Enable block fill mode.  */
-	__raw_writel((is8bpp
+	__raw_ग_लिखोl((is8bpp
 		      ? TGA_MODE_SBM_8BPP | TGA_MODE_BLOCK_FILL
 		      : TGA_MODE_SBM_24BPP | TGA_MODE_BLOCK_FILL),
 		     regs_base + TGA_MODE_REG);
@@ -987,274 +988,274 @@ tgafb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 
 	/* We can fill 2k pixels per operation.  Notice blocks that fit
 	   the width of the screen so that we can take advantage of this
-	   and fill more than one line per write.  */
-	if (width == line_length) {
+	   and fill more than one line per ग_लिखो.  */
+	अगर (width == line_length) अणु
 		width *= height;
 		height = 1;
-	}
+	पूर्ण
 
-	/* The write into the frame buffer must be aligned to 4 bytes,
+	/* The ग_लिखो पूर्णांकo the frame buffer must be aligned to 4 bytes,
 	   but we are allowed to encode the offset within the word in
 	   the data word written.  */
 	align = (pos & 3) << 16;
 	pos &= -4;
 
-	if (width <= 2048) {
+	अगर (width <= 2048) अणु
 		u32 data;
 
 		data = (width - 1) | align;
 
-		for (i = 0; i < height; ++i) {
-			__raw_writel(data, fb_base + pos);
+		क्रम (i = 0; i < height; ++i) अणु
+			__raw_ग_लिखोl(data, fb_base + pos);
 			pos += line_length;
-		}
-	} else {
-		unsigned long Bpp = (is8bpp ? 1 : 4);
-		unsigned long nwidth = width & -2048;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ Bpp = (is8bpp ? 1 : 4);
+		अचिन्हित दीर्घ nwidth = width & -2048;
 		u32 fdata, ldata;
 
 		fdata = (2048 - 1) | align;
 		ldata = ((width & 2047) - 1) | align;
 
-		for (i = 0; i < height; ++i) {
-			for (j = 0; j < nwidth; j += 2048)
-				__raw_writel(fdata, fb_base + pos + j*Bpp);
-			if (j < width)
-				__raw_writel(ldata, fb_base + pos + j*Bpp);
+		क्रम (i = 0; i < height; ++i) अणु
+			क्रम (j = 0; j < nwidth; j += 2048)
+				__raw_ग_लिखोl(fdata, fb_base + pos + j*Bpp);
+			अगर (j < width)
+				__raw_ग_लिखोl(ldata, fb_base + pos + j*Bpp);
 			pos += line_length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	wmb();
 
 	/* Disable block fill mode.  */
-	__raw_writel((is8bpp
+	__raw_ग_लिखोl((is8bpp
 		      ? TGA_MODE_SBM_8BPP | TGA_MODE_SIMPLE
 		      : TGA_MODE_SBM_24BPP | TGA_MODE_SIMPLE),
 		     regs_base + TGA_MODE_REG);
-}
+पूर्ण
 
 /*
- *      tgafb_copyarea - REQUIRED function. Can use generic routines if
+ *      tgafb_copyarea - REQUIRED function. Can use generic routines अगर
  *                       non acclerated hardware and packed pixel based.
  *                       Copies on area of the screen to another area.
  *
- *      @info: frame buffer structure that represents a single frame buffer
- *      @area: structure defining the source and destination.
+ *      @info: frame buffer काष्ठाure that represents a single frame buffer
+ *      @area: काष्ठाure defining the source and destination.
  */
 
-/* Handle the special case of copying entire lines, e.g. during scrolling.
-   We can avoid a lot of needless computation in this case.  In the 8bpp
-   case we need to use the COPY64 registers instead of mask writes into 
-   the frame buffer to achieve maximum performance.  */
+/* Handle the special हाल of copying entire lines, e.g. during scrolling.
+   We can aव्योम a lot of needless computation in this हाल.  In the 8bpp
+   हाल we need to use the COPY64 रेजिस्टरs instead of mask ग_लिखोs पूर्णांकo 
+   the frame buffer to achieve maximum perक्रमmance.  */
 
-static inline void
-copyarea_line_8bpp(struct fb_info *info, u32 dy, u32 sy,
+अटल अंतरभूत व्योम
+copyarea_line_8bpp(काष्ठा fb_info *info, u32 dy, u32 sy,
 		   u32 height, u32 width)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
-	void __iomem *tga_regs = par->tga_regs_base;
-	unsigned long dpos, spos, i, n64;
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
+	व्योम __iomem *tga_regs = par->tga_regs_base;
+	अचिन्हित दीर्घ dpos, spos, i, n64;
 
-	/* Set up the MODE and PIXELSHIFT registers.  */
-	__raw_writel(TGA_MODE_SBM_8BPP | TGA_MODE_COPY, tga_regs+TGA_MODE_REG);
-	__raw_writel(0, tga_regs+TGA_PIXELSHIFT_REG);
+	/* Set up the MODE and PIXELSHIFT रेजिस्टरs.  */
+	__raw_ग_लिखोl(TGA_MODE_SBM_8BPP | TGA_MODE_COPY, tga_regs+TGA_MODE_REG);
+	__raw_ग_लिखोl(0, tga_regs+TGA_PIXELSHIFT_REG);
 	wmb();
 
 	n64 = (height * width) / 64;
 
-	if (sy < dy) {
+	अगर (sy < dy) अणु
 		spos = (sy + height) * width;
 		dpos = (dy + height) * width;
 
-		for (i = 0; i < n64; ++i) {
+		क्रम (i = 0; i < n64; ++i) अणु
 			spos -= 64;
 			dpos -= 64;
-			__raw_writel(spos, tga_regs+TGA_COPY64_SRC);
+			__raw_ग_लिखोl(spos, tga_regs+TGA_COPY64_SRC);
 			wmb();
-			__raw_writel(dpos, tga_regs+TGA_COPY64_DST);
+			__raw_ग_लिखोl(dpos, tga_regs+TGA_COPY64_DST);
 			wmb();
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		spos = sy * width;
 		dpos = dy * width;
 
-		for (i = 0; i < n64; ++i) {
-			__raw_writel(spos, tga_regs+TGA_COPY64_SRC);
+		क्रम (i = 0; i < n64; ++i) अणु
+			__raw_ग_लिखोl(spos, tga_regs+TGA_COPY64_SRC);
 			wmb();
-			__raw_writel(dpos, tga_regs+TGA_COPY64_DST);
+			__raw_ग_लिखोl(dpos, tga_regs+TGA_COPY64_DST);
 			wmb();
 			spos += 64;
 			dpos += 64;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Reset the MODE register to normal.  */
-	__raw_writel(TGA_MODE_SBM_8BPP|TGA_MODE_SIMPLE, tga_regs+TGA_MODE_REG);
-}
+	/* Reset the MODE रेजिस्टर to normal.  */
+	__raw_ग_लिखोl(TGA_MODE_SBM_8BPP|TGA_MODE_SIMPLE, tga_regs+TGA_MODE_REG);
+पूर्ण
 
-static inline void
-copyarea_line_32bpp(struct fb_info *info, u32 dy, u32 sy,
+अटल अंतरभूत व्योम
+copyarea_line_32bpp(काष्ठा fb_info *info, u32 dy, u32 sy,
 		    u32 height, u32 width)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
-	void __iomem *tga_regs = par->tga_regs_base;
-	void __iomem *tga_fb = par->tga_fb_base;
-	void __iomem *src;
-	void __iomem *dst;
-	unsigned long i, n16;
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
+	व्योम __iomem *tga_regs = par->tga_regs_base;
+	व्योम __iomem *tga_fb = par->tga_fb_base;
+	व्योम __iomem *src;
+	व्योम __iomem *dst;
+	अचिन्हित दीर्घ i, n16;
 
-	/* Set up the MODE and PIXELSHIFT registers.  */
-	__raw_writel(TGA_MODE_SBM_24BPP | TGA_MODE_COPY, tga_regs+TGA_MODE_REG);
-	__raw_writel(0, tga_regs+TGA_PIXELSHIFT_REG);
+	/* Set up the MODE and PIXELSHIFT रेजिस्टरs.  */
+	__raw_ग_लिखोl(TGA_MODE_SBM_24BPP | TGA_MODE_COPY, tga_regs+TGA_MODE_REG);
+	__raw_ग_लिखोl(0, tga_regs+TGA_PIXELSHIFT_REG);
 	wmb();
 
 	n16 = (height * width) / 16;
 
-	if (sy < dy) {
+	अगर (sy < dy) अणु
 		src = tga_fb + (sy + height) * width * 4;
 		dst = tga_fb + (dy + height) * width * 4;
 
-		for (i = 0; i < n16; ++i) {
+		क्रम (i = 0; i < n16; ++i) अणु
 			src -= 64;
 			dst -= 64;
-			__raw_writel(0xffff, src);
+			__raw_ग_लिखोl(0xffff, src);
 			wmb();
-			__raw_writel(0xffff, dst);
+			__raw_ग_लिखोl(0xffff, dst);
 			wmb();
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		src = tga_fb + sy * width * 4;
 		dst = tga_fb + dy * width * 4;
 
-		for (i = 0; i < n16; ++i) {
-			__raw_writel(0xffff, src);
+		क्रम (i = 0; i < n16; ++i) अणु
+			__raw_ग_लिखोl(0xffff, src);
 			wmb();
-			__raw_writel(0xffff, dst);
+			__raw_ग_लिखोl(0xffff, dst);
 			wmb();
 			src += 64;
 			dst += 64;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Reset the MODE register to normal.  */
-	__raw_writel(TGA_MODE_SBM_24BPP|TGA_MODE_SIMPLE, tga_regs+TGA_MODE_REG);
-}
+	/* Reset the MODE रेजिस्टर to normal.  */
+	__raw_ग_लिखोl(TGA_MODE_SBM_24BPP|TGA_MODE_SIMPLE, tga_regs+TGA_MODE_REG);
+पूर्ण
 
-/* The (almost) general case of backward copy in 8bpp mode.  */
-static inline void
-copyarea_8bpp(struct fb_info *info, u32 dx, u32 dy, u32 sx, u32 sy,
+/* The (almost) general हाल of backward copy in 8bpp mode.  */
+अटल अंतरभूत व्योम
+copyarea_8bpp(काष्ठा fb_info *info, u32 dx, u32 dy, u32 sx, u32 sy,
 	      u32 height, u32 width, u32 line_length,
-	      const struct fb_copyarea *area)
-{
-	struct tga_par *par = (struct tga_par *) info->par;
-	unsigned i, yincr;
-	int depos, sepos, backward, last_step, step;
+	      स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *) info->par;
+	अचिन्हित i, yincr;
+	पूर्णांक depos, sepos, backward, last_step, step;
 	u32 mask_last;
-	unsigned n32;
-	void __iomem *tga_regs;
-	void __iomem *tga_fb;
+	अचिन्हित n32;
+	व्योम __iomem *tga_regs;
+	व्योम __iomem *tga_fb;
 
-	/* Do acceleration only if we are aligned on 8 pixels */
-	if ((dx | sx | width) & 7) {
+	/* Do acceleration only अगर we are aligned on 8 pixels */
+	अगर ((dx | sx | width) & 7) अणु
 		cfb_copyarea(info, area);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	yincr = line_length;
-	if (dy > sy) {
+	अगर (dy > sy) अणु
 		dy += height - 1;
 		sy += height - 1;
 		yincr = -yincr;
-	}
+	पूर्ण
 	backward = dy == sy && dx > sx && dx < sx + width;
 
 	/* Compute the offsets and alignments in the frame buffer.
-	   More than anything else, these control how we do copies.  */
+	   More than anything अन्यथा, these control how we करो copies.  */
 	depos = dy * line_length + dx;
 	sepos = sy * line_length + sx;
-	if (backward) {
+	अगर (backward) अणु
 		depos += width;
 		sepos += width;
-	}
+	पूर्ण
 
-	/* Next copy full words at a time.  */
+	/* Next copy full words at a समय.  */
 	n32 = width / 32;
 	last_step = width % 32;
 
 	/* Finally copy the unaligned head of the span.  */
 	mask_last = (1ul << last_step) - 1;
 
-	if (!backward) {
+	अगर (!backward) अणु
 		step = 32;
 		last_step = 32;
-	} else {
+	पूर्ण अन्यथा अणु
 		step = -32;
 		last_step = -last_step;
 		sepos -= 32;
 		depos -= 32;
-	}
+	पूर्ण
 
 	tga_regs = par->tga_regs_base;
 	tga_fb = par->tga_fb_base;
 
-	/* Set up the MODE and PIXELSHIFT registers.  */
-	__raw_writel(TGA_MODE_SBM_8BPP|TGA_MODE_COPY, tga_regs+TGA_MODE_REG);
-	__raw_writel(0, tga_regs+TGA_PIXELSHIFT_REG);
+	/* Set up the MODE and PIXELSHIFT रेजिस्टरs.  */
+	__raw_ग_लिखोl(TGA_MODE_SBM_8BPP|TGA_MODE_COPY, tga_regs+TGA_MODE_REG);
+	__raw_ग_लिखोl(0, tga_regs+TGA_PIXELSHIFT_REG);
 	wmb();
 
-	for (i = 0; i < height; ++i) {
-		unsigned long j;
-		void __iomem *sfb;
-		void __iomem *dfb;
+	क्रम (i = 0; i < height; ++i) अणु
+		अचिन्हित दीर्घ j;
+		व्योम __iomem *sfb;
+		व्योम __iomem *dfb;
 
 		sfb = tga_fb + sepos;
 		dfb = tga_fb + depos;
 
-		for (j = 0; j < n32; j++) {
-			if (j < 2 && j + 1 < n32 && !backward &&
-			    !(((unsigned long)sfb | (unsigned long)dfb) & 63)) {
-				do {
-					__raw_writel(sfb - tga_fb, tga_regs+TGA_COPY64_SRC);
+		क्रम (j = 0; j < n32; j++) अणु
+			अगर (j < 2 && j + 1 < n32 && !backward &&
+			    !(((अचिन्हित दीर्घ)sfb | (अचिन्हित दीर्घ)dfb) & 63)) अणु
+				करो अणु
+					__raw_ग_लिखोl(sfb - tga_fb, tga_regs+TGA_COPY64_SRC);
 					wmb();
-					__raw_writel(dfb - tga_fb, tga_regs+TGA_COPY64_DST);
+					__raw_ग_लिखोl(dfb - tga_fb, tga_regs+TGA_COPY64_DST);
 					wmb();
 					sfb += 64;
 					dfb += 64;
 					j += 2;
-				} while (j + 1 < n32);
+				पूर्ण जबतक (j + 1 < n32);
 				j--;
-				continue;
-			}
-			__raw_writel(0xffffffff, sfb);
+				जारी;
+			पूर्ण
+			__raw_ग_लिखोl(0xffffffff, sfb);
 			wmb();
-			__raw_writel(0xffffffff, dfb);
+			__raw_ग_लिखोl(0xffffffff, dfb);
 			wmb();
 			sfb += step;
 			dfb += step;
-		}
+		पूर्ण
 
-		if (mask_last) {
+		अगर (mask_last) अणु
 			sfb += last_step - step;
 			dfb += last_step - step;
-			__raw_writel(mask_last, sfb);
+			__raw_ग_लिखोl(mask_last, sfb);
 			wmb();
-			__raw_writel(mask_last, dfb);
+			__raw_ग_लिखोl(mask_last, dfb);
 			wmb();
-		}
+		पूर्ण
 
 		sepos += yincr;
 		depos += yincr;
-	}
+	पूर्ण
 
-	/* Reset the MODE register to normal.  */
-	__raw_writel(TGA_MODE_SBM_8BPP|TGA_MODE_SIMPLE, tga_regs+TGA_MODE_REG);
-}
+	/* Reset the MODE रेजिस्टर to normal.  */
+	__raw_ग_लिखोl(TGA_MODE_SBM_8BPP|TGA_MODE_SIMPLE, tga_regs+TGA_MODE_REG);
+पूर्ण
 
-static void
-tgafb_copyarea(struct fb_info *info, const struct fb_copyarea *area) 
-{
-	unsigned long dx, dy, width, height, sx, sy, vxres, vyres;
-	unsigned long line_length, bpp;
+अटल व्योम
+tgafb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area) 
+अणु
+	अचिन्हित दीर्घ dx, dy, width, height, sx, sy, vxres, vyres;
+	अचिन्हित दीर्घ line_length, bpp;
 
 	dx = area->dx;
 	dy = area->dy;
@@ -1262,99 +1263,99 @@ tgafb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
 	height = area->height;
 	sx = area->sx;
 	sy = area->sy;
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
 	line_length = info->fix.line_length;
 
-	/* The top left corners must be in the virtual screen.  */
-	if (dx > vxres || sx > vxres || dy > vyres || sy > vyres)
-		return;
+	/* The top left corners must be in the भव screen.  */
+	अगर (dx > vxres || sx > vxres || dy > vyres || sy > vyres)
+		वापस;
 
 	/* Clip the destination.  */
-	if (dx + width > vxres)
+	अगर (dx + width > vxres)
 		width = vxres - dx;
-	if (dy + height > vyres)
+	अगर (dy + height > vyres)
 		height = vyres - dy;
 
-	/* The source must be completely inside the virtual screen.  */
-	if (sx + width > vxres || sy + height > vyres)
-		return;
+	/* The source must be completely inside the भव screen.  */
+	अगर (sx + width > vxres || sy + height > vyres)
+		वापस;
 
 	bpp = info->var.bits_per_pixel;
 
 	/* Detect copies of the entire line.  */
-	if (!(line_length & 63) && width * (bpp >> 3) == line_length) {
-		if (bpp == 8)
+	अगर (!(line_length & 63) && width * (bpp >> 3) == line_length) अणु
+		अगर (bpp == 8)
 			copyarea_line_8bpp(info, dy, sy, height, width);
-		else
+		अन्यथा
 			copyarea_line_32bpp(info, dy, sy, height, width);
-	}
+	पूर्ण
 
-	/* ??? The documentation is unclear to me exactly how the pixelshift
-	   register works in 32bpp mode.  Since I don't have hardware to test,
-	   give up for now and fall back on the generic routines.  */
-	else if (bpp == 32)
+	/* ??? The करोcumentation is unclear to me exactly how the pixelshअगरt
+	   रेजिस्टर works in 32bpp mode.  Since I करोn't have hardware to test,
+	   give up क्रम now and fall back on the generic routines.  */
+	अन्यथा अगर (bpp == 32)
 		cfb_copyarea(info, area);
 
-	else
+	अन्यथा
 		copyarea_8bpp(info, dx, dy, sx, sy, height,
 			      width, line_length, area);
-}
+पूर्ण
 
 
 /*
  *  Initialisation
  */
 
-static void
-tgafb_init_fix(struct fb_info *info)
-{
-	struct tga_par *par = (struct tga_par *)info->par;
-	int tga_bus_pci = dev_is_pci(par->dev);
-	int tga_bus_tc = TGA_BUS_TC(par->dev);
+अटल व्योम
+tgafb_init_fix(काष्ठा fb_info *info)
+अणु
+	काष्ठा tga_par *par = (काष्ठा tga_par *)info->par;
+	पूर्णांक tga_bus_pci = dev_is_pci(par->dev);
+	पूर्णांक tga_bus_tc = TGA_BUS_TC(par->dev);
 	u8 tga_type = par->tga_type;
-	const char *tga_type_name = NULL;
-	unsigned memory_size;
+	स्थिर अक्षर *tga_type_name = शून्य;
+	अचिन्हित memory_size;
 
-	switch (tga_type) {
-	case TGA_TYPE_8PLANE:
-		if (tga_bus_pci)
+	चयन (tga_type) अणु
+	हाल TGA_TYPE_8PLANE:
+		अगर (tga_bus_pci)
 			tga_type_name = "Digital ZLXp-E1";
-		if (tga_bus_tc)
+		अगर (tga_bus_tc)
 			tga_type_name = "Digital ZLX-E1";
 		memory_size = 2097152;
-		break;
-	case TGA_TYPE_24PLANE:
-		if (tga_bus_pci)
+		अवरोध;
+	हाल TGA_TYPE_24PLANE:
+		अगर (tga_bus_pci)
 			tga_type_name = "Digital ZLXp-E2";
-		if (tga_bus_tc)
+		अगर (tga_bus_tc)
 			tga_type_name = "Digital ZLX-E2";
 		memory_size = 8388608;
-		break;
-	case TGA_TYPE_24PLUSZ:
-		if (tga_bus_pci)
+		अवरोध;
+	हाल TGA_TYPE_24PLUSZ:
+		अगर (tga_bus_pci)
 			tga_type_name = "Digital ZLXp-E3";
-		if (tga_bus_tc)
+		अगर (tga_bus_tc)
 			tga_type_name = "Digital ZLX-E3";
 		memory_size = 16777216;
-		break;
-	}
-	if (!tga_type_name) {
+		अवरोध;
+	पूर्ण
+	अगर (!tga_type_name) अणु
 		tga_type_name = "Unknown";
 		memory_size = 16777216;
-	}
+	पूर्ण
 
-	strlcpy(info->fix.id, tga_type_name, sizeof(info->fix.id));
+	strlcpy(info->fix.id, tga_type_name, माप(info->fix.id));
 
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.type_aux = 0;
 	info->fix.visual = (tga_type == TGA_TYPE_8PLANE
 			    ? FB_VISUAL_PSEUDOCOLOR
-			    : FB_VISUAL_DIRECTCOLOR);
+			    : FB_VISUAL_सूचीECTCOLOR);
 
-	info->fix.smem_start = (size_t) par->tga_fb_base;
+	info->fix.smem_start = (माप_प्रकार) par->tga_fb_base;
 	info->fix.smem_len = memory_size;
-	info->fix.mmio_start = (size_t) par->tga_regs_base;
+	info->fix.mmio_start = (माप_प्रकार) par->tga_regs_base;
 	info->fix.mmio_len = 512;
 
 	info->fix.xpanstep = 0;
@@ -1365,98 +1366,98 @@ tgafb_init_fix(struct fb_info *info)
 
 	/*
 	 * These are needed by fb_set_logo_truepalette(), so we
-	 * set them here for 24-plane cards.
+	 * set them here क्रम 24-plane cards.
 	 */
-	if (tga_type != TGA_TYPE_8PLANE) {
+	अगर (tga_type != TGA_TYPE_8PLANE) अणु
 		info->var.red.length = 8;
 		info->var.green.length = 8;
 		info->var.blue.length = 8;
 		info->var.red.offset = 16;
 		info->var.green.offset = 8;
 		info->var.blue.offset = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tgafb_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	/* We just use this to catch switches out of graphics mode. */
-	tgafb_set_par(info); /* A bit of overkill for BASE_ADDR reset. */
-	return 0;
-}
+अटल पूर्णांक tgafb_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	/* We just use this to catch चयनes out of graphics mode. */
+	tgafb_set_par(info); /* A bit of overसमाप्त क्रम BASE_ADDR reset. */
+	वापस 0;
+पूर्ण
 
-static int tgafb_register(struct device *dev)
-{
-	static const struct fb_videomode modedb_tc = {
+अटल पूर्णांक tgafb_रेजिस्टर(काष्ठा device *dev)
+अणु
+	अटल स्थिर काष्ठा fb_videomode modedb_tc = अणु
 		/* 1280x1024 @ 72 Hz, 76.8 kHz hsync */
 		"1280x1024@72", 0, 1280, 1024, 7645, 224, 28, 33, 3, 160, 3,
 		FB_SYNC_ON_GREEN, FB_VMODE_NONINTERLACED
-	};
+	पूर्ण;
 
-	static unsigned int const fb_offset_presets[4] = {
+	अटल अचिन्हित पूर्णांक स्थिर fb_offset_presets[4] = अणु
 		TGA_8PLANE_FB_OFFSET,
 		TGA_24PLANE_FB_OFFSET,
 		0xffffffff,
 		TGA_24PLUSZ_FB_OFFSET
-	};
+	पूर्ण;
 
-	const struct fb_videomode *modedb_tga = NULL;
-	resource_size_t bar0_start = 0, bar0_len = 0;
-	const char *mode_option_tga = NULL;
-	int tga_bus_pci = dev_is_pci(dev);
-	int tga_bus_tc = TGA_BUS_TC(dev);
-	unsigned int modedbsize_tga = 0;
-	void __iomem *mem_base;
-	struct fb_info *info;
-	struct tga_par *par;
+	स्थिर काष्ठा fb_videomode *modedb_tga = शून्य;
+	resource_माप_प्रकार bar0_start = 0, bar0_len = 0;
+	स्थिर अक्षर *mode_option_tga = शून्य;
+	पूर्णांक tga_bus_pci = dev_is_pci(dev);
+	पूर्णांक tga_bus_tc = TGA_BUS_TC(dev);
+	अचिन्हित पूर्णांक modedbमाप_प्रकारga = 0;
+	व्योम __iomem *mem_base;
+	काष्ठा fb_info *info;
+	काष्ठा tga_par *par;
 	u8 tga_type;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/* Enable device in PCI config.  */
-	if (tga_bus_pci && pci_enable_device(to_pci_dev(dev))) {
-		printk(KERN_ERR "tgafb: Cannot enable PCI device\n");
-		return -ENODEV;
-	}
+	अगर (tga_bus_pci && pci_enable_device(to_pci_dev(dev))) अणु
+		prपूर्णांकk(KERN_ERR "tgafb: Cannot enable PCI device\n");
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Allocate the fb and par structures.  */
-	info = framebuffer_alloc(sizeof(struct tga_par), dev);
-	if (!info)
-		return -ENOMEM;
+	/* Allocate the fb and par काष्ठाures.  */
+	info = framebuffer_alloc(माप(काष्ठा tga_par), dev);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	par = info->par;
 	dev_set_drvdata(dev, info);
 
 	/* Request the mem regions.  */
 	ret = -ENODEV;
-	if (tga_bus_pci) {
+	अगर (tga_bus_pci) अणु
 		bar0_start = pci_resource_start(to_pci_dev(dev), 0);
 		bar0_len = pci_resource_len(to_pci_dev(dev), 0);
-	}
-	if (tga_bus_tc) {
+	पूर्ण
+	अगर (tga_bus_tc) अणु
 		bar0_start = to_tc_dev(dev)->resource.start;
 		bar0_len = to_tc_dev(dev)->resource.end - bar0_start + 1;
-	}
-	if (!request_mem_region (bar0_start, bar0_len, "tgafb")) {
-		printk(KERN_ERR "tgafb: cannot reserve FB region\n");
-		goto err0;
-	}
+	पूर्ण
+	अगर (!request_mem_region (bar0_start, bar0_len, "tgafb")) अणु
+		prपूर्णांकk(KERN_ERR "tgafb: cannot reserve FB region\n");
+		जाओ err0;
+	पूर्ण
 
 	/* Map the framebuffer.  */
 	mem_base = ioremap(bar0_start, bar0_len);
-	if (!mem_base) {
-		printk(KERN_ERR "tgafb: Cannot map MMIO\n");
-		goto err1;
-	}
+	अगर (!mem_base) अणु
+		prपूर्णांकk(KERN_ERR "tgafb: Cannot map MMIO\n");
+		जाओ err1;
+	पूर्ण
 
 	/* Grab info about the card.  */
-	tga_type = (readl(mem_base) >> 12) & 0x0f;
+	tga_type = (पढ़ोl(mem_base) >> 12) & 0x0f;
 	par->dev = dev;
 	par->tga_mem_base = mem_base;
 	par->tga_fb_base = mem_base + fb_offset_presets[tga_type];
 	par->tga_regs_base = mem_base + TGA_REGS_OFFSET;
 	par->tga_type = tga_type;
-	if (tga_bus_pci)
+	अगर (tga_bus_pci)
 		par->tga_chip_rev = (to_pci_dev(dev))->revision;
-	if (tga_bus_tc)
+	अगर (tga_bus_tc)
 		par->tga_chip_rev = TGA_READ_REG(par, TGA_START_REG) & 0xff;
 
 	/* Setup framebuffer.  */
@@ -1464,149 +1465,149 @@ static int tgafb_register(struct device *dev)
 		      FBINFO_HWACCEL_IMAGEBLIT | FBINFO_HWACCEL_FILLRECT;
 	info->fbops = &tgafb_ops;
 	info->screen_base = par->tga_fb_base;
-	info->pseudo_palette = par->palette;
+	info->pseuकरो_palette = par->palette;
 
-	/* This should give a reasonable default video mode.  */
-	if (tga_bus_pci) {
+	/* This should give a reasonable शेष video mode.  */
+	अगर (tga_bus_pci) अणु
 		mode_option_tga = mode_option_pci;
-	}
-	if (tga_bus_tc) {
+	पूर्ण
+	अगर (tga_bus_tc) अणु
 		mode_option_tga = mode_option_tc;
 		modedb_tga = &modedb_tc;
-		modedbsize_tga = 1;
-	}
+		modedbमाप_प्रकारga = 1;
+	पूर्ण
 
 	tgafb_init_fix(info);
 
 	ret = fb_find_mode(&info->var, info,
 			   mode_option ? mode_option : mode_option_tga,
-			   modedb_tga, modedbsize_tga, NULL,
+			   modedb_tga, modedbमाप_प्रकारga, शून्य,
 			   tga_type == TGA_TYPE_8PLANE ? 8 : 32);
-	if (ret == 0 || ret == 4) {
-		printk(KERN_ERR "tgafb: Could not find valid video mode\n");
+	अगर (ret == 0 || ret == 4) अणु
+		prपूर्णांकk(KERN_ERR "tgafb: Could not find valid video mode\n");
 		ret = -EINVAL;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	if (fb_alloc_cmap(&info->cmap, 256, 0)) {
-		printk(KERN_ERR "tgafb: Could not allocate color map\n");
+	अगर (fb_alloc_cmap(&info->cmap, 256, 0)) अणु
+		prपूर्णांकk(KERN_ERR "tgafb: Could not allocate color map\n");
 		ret = -ENOMEM;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	tgafb_set_par(info);
 
-	if (register_framebuffer(info) < 0) {
-		printk(KERN_ERR "tgafb: Could not register framebuffer\n");
+	अगर (रेजिस्टर_framebuffer(info) < 0) अणु
+		prपूर्णांकk(KERN_ERR "tgafb: Could not register framebuffer\n");
 		ret = -EINVAL;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	if (tga_bus_pci) {
+	अगर (tga_bus_pci) अणु
 		pr_info("tgafb: DC21030 [TGA] detected, rev=0x%02x\n",
 			par->tga_chip_rev);
 		pr_info("tgafb: at PCI bus %d, device %d, function %d\n",
 			to_pci_dev(dev)->bus->number,
 			PCI_SLOT(to_pci_dev(dev)->devfn),
 			PCI_FUNC(to_pci_dev(dev)->devfn));
-	}
-	if (tga_bus_tc)
+	पूर्ण
+	अगर (tga_bus_tc)
 		pr_info("tgafb: SFB+ detected, rev=0x%02x\n",
 			par->tga_chip_rev);
 	fb_info(info, "%s frame buffer device at 0x%lx\n",
-		info->fix.id, (long)bar0_start);
+		info->fix.id, (दीर्घ)bar0_start);
 
-	return 0;
+	वापस 0;
 
  err2:
 	fb_dealloc_cmap(&info->cmap);
  err1:
-	if (mem_base)
+	अगर (mem_base)
 		iounmap(mem_base);
 	release_mem_region(bar0_start, bar0_len);
  err0:
 	framebuffer_release(info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tgafb_unregister(struct device *dev)
-{
-	resource_size_t bar0_start = 0, bar0_len = 0;
-	int tga_bus_pci = dev_is_pci(dev);
-	int tga_bus_tc = TGA_BUS_TC(dev);
-	struct fb_info *info = NULL;
-	struct tga_par *par;
+अटल व्योम tgafb_unरेजिस्टर(काष्ठा device *dev)
+अणु
+	resource_माप_प्रकार bar0_start = 0, bar0_len = 0;
+	पूर्णांक tga_bus_pci = dev_is_pci(dev);
+	पूर्णांक tga_bus_tc = TGA_BUS_TC(dev);
+	काष्ठा fb_info *info = शून्य;
+	काष्ठा tga_par *par;
 
 	info = dev_get_drvdata(dev);
-	if (!info)
-		return;
+	अगर (!info)
+		वापस;
 
 	par = info->par;
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	fb_dealloc_cmap(&info->cmap);
 	iounmap(par->tga_mem_base);
-	if (tga_bus_pci) {
+	अगर (tga_bus_pci) अणु
 		bar0_start = pci_resource_start(to_pci_dev(dev), 0);
 		bar0_len = pci_resource_len(to_pci_dev(dev), 0);
-	}
-	if (tga_bus_tc) {
+	पूर्ण
+	अगर (tga_bus_tc) अणु
 		bar0_start = to_tc_dev(dev)->resource.start;
 		bar0_len = to_tc_dev(dev)->resource.end - bar0_start + 1;
-	}
+	पूर्ण
 	release_mem_region(bar0_start, bar0_len);
 	framebuffer_release(info);
-}
+पूर्ण
 
-static void tgafb_exit(void)
-{
-	tc_unregister_driver(&tgafb_tc_driver);
-	pci_unregister_driver(&tgafb_pci_driver);
-}
+अटल व्योम tgafb_निकास(व्योम)
+अणु
+	tc_unरेजिस्टर_driver(&tgafb_tc_driver);
+	pci_unरेजिस्टर_driver(&tgafb_pci_driver);
+पूर्ण
 
-#ifndef MODULE
-static int tgafb_setup(char *arg)
-{
-	char *this_opt;
+#अगर_अघोषित MODULE
+अटल पूर्णांक tgafb_setup(अक्षर *arg)
+अणु
+	अक्षर *this_opt;
 
-	if (arg && *arg) {
-		while ((this_opt = strsep(&arg, ","))) {
-			if (!*this_opt)
-				continue;
-			if (!strncmp(this_opt, "mode:", 5))
+	अगर (arg && *arg) अणु
+		जबतक ((this_opt = strsep(&arg, ","))) अणु
+			अगर (!*this_opt)
+				जारी;
+			अगर (!म_भेदन(this_opt, "mode:", 5))
 				mode_option = this_opt+5;
-			else
-				printk(KERN_ERR
+			अन्यथा
+				prपूर्णांकk(KERN_ERR
 				       "tgafb: unknown parameter %s\n",
 				       this_opt);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-#endif /* !MODULE */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* !MODULE */
 
-static int tgafb_init(void)
-{
-	int status;
-#ifndef MODULE
-	char *option = NULL;
+अटल पूर्णांक tgafb_init(व्योम)
+अणु
+	पूर्णांक status;
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("tgafb", &option))
-		return -ENODEV;
+	अगर (fb_get_options("tgafb", &option))
+		वापस -ENODEV;
 	tgafb_setup(option);
-#endif
-	status = pci_register_driver(&tgafb_pci_driver);
-	if (!status)
-		status = tc_register_driver(&tgafb_tc_driver);
-	return status;
-}
+#पूर्ण_अगर
+	status = pci_रेजिस्टर_driver(&tgafb_pci_driver);
+	अगर (!status)
+		status = tc_रेजिस्टर_driver(&tgafb_tc_driver);
+	वापस status;
+पूर्ण
 
 /*
  *  Modularisation
  */
 
 module_init(tgafb_init);
-module_exit(tgafb_exit);
+module_निकास(tgafb_निकास);
 
 MODULE_DESCRIPTION("Framebuffer driver for TGA/SFB+ chipset");
 MODULE_LICENSE("GPL");

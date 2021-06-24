@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2016 Texas Instruments, Inc.
  */
 
-#ifndef __OMAPDSS_PDATA_H
-#define __OMAPDSS_PDATA_H
+#अगर_अघोषित __OMAPDSS_PDATA_H
+#घोषणा __OMAPDSS_PDATA_H
 
-enum omapdss_version {
+क्रमागत omapdss_version अणु
 	OMAPDSS_VER_UNKNOWN = 0,
 	OMAPDSS_VER_OMAP24xx,
 	OMAPDSS_VER_OMAP34xx_ES1,	/* OMAP3430 ES1.0, 2.0 */
@@ -19,14 +20,14 @@ enum omapdss_version {
 	OMAPDSS_VER_OMAP5,
 	OMAPDSS_VER_AM43xx,
 	OMAPDSS_VER_DRA7xx,
-};
+पूर्ण;
 
-/* Board specific data */
-struct omap_dss_board_info {
-	int (*dsi_enable_pads)(int dsi_id, unsigned int lane_mask);
-	void (*dsi_disable_pads)(int dsi_id, unsigned int lane_mask);
-	int (*set_min_bus_tput)(struct device *dev, unsigned long r);
-	enum omapdss_version version;
-};
+/* Board specअगरic data */
+काष्ठा omap_dss_board_info अणु
+	पूर्णांक (*dsi_enable_pads)(पूर्णांक dsi_id, अचिन्हित पूर्णांक lane_mask);
+	व्योम (*dsi_disable_pads)(पूर्णांक dsi_id, अचिन्हित पूर्णांक lane_mask);
+	पूर्णांक (*set_min_bus_tput)(काष्ठा device *dev, अचिन्हित दीर्घ r);
+	क्रमागत omapdss_version version;
+पूर्ण;
 
-#endif /* __OMAPDSS_PDATA_H */
+#पूर्ण_अगर /* __OMAPDSS_PDATA_H */

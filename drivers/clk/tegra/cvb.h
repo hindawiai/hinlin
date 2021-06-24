@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Utility functions for parsing Tegra CVB voltage tables
+ * Utility functions क्रम parsing Tegra CVB voltage tables
  */
 
-#ifndef __DRIVERS_CLK_TEGRA_CVB_H
-#define __DRIVERS_CLK_TEGRA_CVB_H
+#अगर_अघोषित __DRIVERS_CLK_TEGRA_CVB_H
+#घोषणा __DRIVERS_CLK_TEGRA_CVB_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct device;
+काष्ठा device;
 
-#define MAX_DVFS_FREQS	40
+#घोषणा MAX_DVFS_FREQS	40
 
-struct rail_alignment {
-	int offset_uv;
-	int step_uv;
-};
+काष्ठा rail_alignment अणु
+	पूर्णांक offset_uv;
+	पूर्णांक step_uv;
+पूर्ण;
 
-struct cvb_coefficients {
-	int c0;
-	int c1;
-	int c2;
-};
+काष्ठा cvb_coefficients अणु
+	पूर्णांक c0;
+	पूर्णांक c1;
+	पूर्णांक c2;
+पूर्ण;
 
-struct cvb_table_freq_entry {
-	unsigned long freq;
-	struct cvb_coefficients coefficients;
-};
+काष्ठा cvb_table_freq_entry अणु
+	अचिन्हित दीर्घ freq;
+	काष्ठा cvb_coefficients coefficients;
+पूर्ण;
 
-struct cvb_cpu_dfll_data {
+काष्ठा cvb_cpu_dfll_data अणु
 	u32 tune0_low;
 	u32 tune0_high;
 	u32 tune1;
-	unsigned int tune_high_min_millivolts;
-};
+	अचिन्हित पूर्णांक tune_high_min_millivolts;
+पूर्ण;
 
-struct cvb_table {
-	int speedo_id;
-	int process_id;
+काष्ठा cvb_table अणु
+	पूर्णांक speeकरो_id;
+	पूर्णांक process_id;
 
-	int min_millivolts;
-	int max_millivolts;
+	पूर्णांक min_millivolts;
+	पूर्णांक max_millivolts;
 
-	int speedo_scale;
-	int voltage_scale;
-	struct cvb_table_freq_entry entries[MAX_DVFS_FREQS];
-	struct cvb_cpu_dfll_data cpu_dfll_data;
-};
+	पूर्णांक speeकरो_scale;
+	पूर्णांक voltage_scale;
+	काष्ठा cvb_table_freq_entry entries[MAX_DVFS_FREQS];
+	काष्ठा cvb_cpu_dfll_data cpu_dfll_data;
+पूर्ण;
 
-const struct cvb_table *
-tegra_cvb_add_opp_table(struct device *dev, const struct cvb_table *cvb_tables,
-			size_t count, struct rail_alignment *align,
-			int process_id, int speedo_id, int speedo_value,
-			unsigned long max_freq);
-void tegra_cvb_remove_opp_table(struct device *dev,
-				const struct cvb_table *table,
-				unsigned long max_freq);
+स्थिर काष्ठा cvb_table *
+tegra_cvb_add_opp_table(काष्ठा device *dev, स्थिर काष्ठा cvb_table *cvb_tables,
+			माप_प्रकार count, काष्ठा rail_alignment *align,
+			पूर्णांक process_id, पूर्णांक speeकरो_id, पूर्णांक speeकरो_value,
+			अचिन्हित दीर्घ max_freq);
+व्योम tegra_cvb_हटाओ_opp_table(काष्ठा device *dev,
+				स्थिर काष्ठा cvb_table *table,
+				अचिन्हित दीर्घ max_freq);
 
-#endif
+#पूर्ण_अगर

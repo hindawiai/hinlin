@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * apei.h - ACPI Platform Error Interface
+ * apei.h - ACPI Platक्रमm Error Interface
  */
 
-#ifndef ACPI_APEI_H
-#define ACPI_APEI_H
+#अगर_अघोषित ACPI_APEI_H
+#घोषणा ACPI_APEI_H
 
-#include <linux/acpi.h>
-#include <linux/cper.h>
-#include <asm/ioctls.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/cper.h>
+#समावेश <यंत्र/ioctls.h>
 
-#define APEI_ERST_INVALID_RECORD_ID	0xffffffffffffffffULL
+#घोषणा APEI_ERST_INVALID_RECORD_ID	0xffffffffffffffffULL
 
-#define APEI_ERST_CLEAR_RECORD		_IOW('E', 1, u64)
-#define APEI_ERST_GET_RECORD_COUNT	_IOR('E', 2, u32)
+#घोषणा APEI_ERST_CLEAR_RECORD		_IOW('E', 1, u64)
+#घोषणा APEI_ERST_GET_RECORD_COUNT	_IOR('E', 2, u32)
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-enum hest_status {
+क्रमागत hest_status अणु
 	HEST_ENABLED,
 	HEST_DISABLED,
 	HEST_NOT_FOUND,
-};
+पूर्ण;
 
-extern int hest_disable;
-extern int erst_disable;
-#ifdef CONFIG_ACPI_APEI_GHES
-extern bool ghes_disable;
-#else
-#define ghes_disable 1
-#endif
+बाह्य पूर्णांक hest_disable;
+बाह्य पूर्णांक erst_disable;
+#अगर_घोषित CONFIG_ACPI_APEI_GHES
+बाह्य bool ghes_disable;
+#अन्यथा
+#घोषणा ghes_disable 1
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI_APEI
-void __init acpi_hest_init(void);
-#else
-static inline void acpi_hest_init(void) { return; }
-#endif
+#अगर_घोषित CONFIG_ACPI_APEI
+व्योम __init acpi_hest_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_hest_init(व्योम) अणु वापस; पूर्ण
+#पूर्ण_अगर
 
-typedef int (*apei_hest_func_t)(struct acpi_hest_header *hest_hdr, void *data);
-int apei_hest_parse(apei_hest_func_t func, void *data);
+प्रकार पूर्णांक (*apei_hest_func_t)(काष्ठा acpi_hest_header *hest_hdr, व्योम *data);
+पूर्णांक apei_hest_parse(apei_hest_func_t func, व्योम *data);
 
-int erst_write(const struct cper_record_header *record);
-ssize_t erst_get_record_count(void);
-int erst_get_record_id_begin(int *pos);
-int erst_get_record_id_next(int *pos, u64 *record_id);
-void erst_get_record_id_end(void);
-ssize_t erst_read(u64 record_id, struct cper_record_header *record,
-		  size_t buflen);
-int erst_clear(u64 record_id);
+पूर्णांक erst_ग_लिखो(स्थिर काष्ठा cper_record_header *record);
+sमाप_प्रकार erst_get_record_count(व्योम);
+पूर्णांक erst_get_record_id_begin(पूर्णांक *pos);
+पूर्णांक erst_get_record_id_next(पूर्णांक *pos, u64 *record_id);
+व्योम erst_get_record_id_end(व्योम);
+sमाप_प्रकार erst_पढ़ो(u64 record_id, काष्ठा cper_record_header *record,
+		  माप_प्रकार buflen);
+पूर्णांक erst_clear(u64 record_id);
 
-int arch_apei_enable_cmcff(struct acpi_hest_header *hest_hdr, void *data);
-void arch_apei_report_mem_error(int sev, struct cper_sec_mem_err *mem_err);
+पूर्णांक arch_apei_enable_cmcff(काष्ठा acpi_hest_header *hest_hdr, व्योम *data);
+व्योम arch_apei_report_mem_error(पूर्णांक sev, काष्ठा cper_sec_mem_err *mem_err);
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

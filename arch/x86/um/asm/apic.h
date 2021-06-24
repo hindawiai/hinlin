@@ -1,4 +1,5 @@
-#ifndef __UM_APIC_H
-#define __UM_APIC_H
+<शैली गुरु>
+#अगर_अघोषित __UM_APIC_H
+#घोषणा __UM_APIC_H
 
-#endif
+#पूर्ण_अगर

@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // BQ25980 Battery Charger Driver
 // Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com/
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/gpio/consumer.h>
-#include <linux/power_supply.h>
-#include <linux/regmap.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/moduleparam.h>
-#include <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/slab.h>
 
-#include "bq25980_charger.h"
+#समावेश "bq25980_charger.h"
 
-struct bq25980_state {
+काष्ठा bq25980_state अणु
 	bool dischg;
 	bool ovp;
 	bool ocp;
@@ -33,49 +34,49 @@ struct bq25980_state {
 	u32 vbat_adc;
 	u32 vsys_adc;
 	u32 ibat_adc;
-};
+पूर्ण;
 
-enum bq25980_id {
+क्रमागत bq25980_id अणु
 	BQ25980,
 	BQ25975,
 	BQ25960,
-};
+पूर्ण;
 
-struct bq25980_chip_info {
+काष्ठा bq25980_chip_info अणु
 
-	int model_id;
+	पूर्णांक model_id;
 
-	const struct regmap_config *regmap_config;
+	स्थिर काष्ठा regmap_config *regmap_config;
 
-	int busocp_def;
-	int busocp_sc_max;
-	int busocp_byp_max;
-	int busocp_sc_min;
-	int busocp_byp_min;
+	पूर्णांक busocp_def;
+	पूर्णांक busocp_sc_max;
+	पूर्णांक busocp_byp_max;
+	पूर्णांक busocp_sc_min;
+	पूर्णांक busocp_byp_min;
 
-	int busovp_sc_def;
-	int busovp_byp_def;
-	int busovp_sc_step;
+	पूर्णांक busovp_sc_def;
+	पूर्णांक busovp_byp_def;
+	पूर्णांक busovp_sc_step;
 
-	int busovp_sc_offset;
-	int busovp_byp_step;
-	int busovp_byp_offset;
-	int busovp_sc_min;
-	int busovp_sc_max;
-	int busovp_byp_min;
-	int busovp_byp_max;
+	पूर्णांक busovp_sc_offset;
+	पूर्णांक busovp_byp_step;
+	पूर्णांक busovp_byp_offset;
+	पूर्णांक busovp_sc_min;
+	पूर्णांक busovp_sc_max;
+	पूर्णांक busovp_byp_min;
+	पूर्णांक busovp_byp_max;
 
-	int batovp_def;
-	int batovp_max;
-	int batovp_min;
-	int batovp_step;
-	int batovp_offset;
+	पूर्णांक batovp_def;
+	पूर्णांक batovp_max;
+	पूर्णांक batovp_min;
+	पूर्णांक batovp_step;
+	पूर्णांक batovp_offset;
 
-	int batocp_def;
-	int batocp_max;
-};
+	पूर्णांक batocp_def;
+	पूर्णांक batocp_max;
+पूर्ण;
 
-struct bq25980_init_data {
+काष्ठा bq25980_init_data अणु
 	u32 ichg;
 	u32 bypass_ilim;
 	u32 sc_ilim;
@@ -86,309 +87,309 @@ struct bq25980_init_data {
 	u32 sc_vlim;
 	u32 ichg_max;
 	u32 vreg_max;
-};
+पूर्ण;
 
-struct bq25980_device {
-	struct i2c_client *client;
-	struct device *dev;
-	struct power_supply *charger;
-	struct power_supply *battery;
-	struct mutex lock;
-	struct regmap *regmap;
+काष्ठा bq25980_device अणु
+	काष्ठा i2c_client *client;
+	काष्ठा device *dev;
+	काष्ठा घातer_supply *अक्षरger;
+	काष्ठा घातer_supply *battery;
+	काष्ठा mutex lock;
+	काष्ठा regmap *regmap;
 
-	char model_name[I2C_NAME_SIZE];
+	अक्षर model_name[I2C_NAME_SIZE];
 
-	struct bq25980_init_data init_data;
-	const struct bq25980_chip_info *chip_info;
-	struct bq25980_state state;
-	int watchdog_timer;
-};
+	काष्ठा bq25980_init_data init_data;
+	स्थिर काष्ठा bq25980_chip_info *chip_info;
+	काष्ठा bq25980_state state;
+	पूर्णांक watchकरोg_समयr;
+पूर्ण;
 
-static struct reg_default bq25980_reg_defs[] = {
-	{BQ25980_BATOVP, 0x5A},
-	{BQ25980_BATOVP_ALM, 0x46},
-	{BQ25980_BATOCP, 0x51},
-	{BQ25980_BATOCP_ALM, 0x50},
-	{BQ25980_BATUCP_ALM, 0x28},
-	{BQ25980_CHRGR_CTRL_1, 0x0},
-	{BQ25980_BUSOVP, 0x26},
-	{BQ25980_BUSOVP_ALM, 0x22},
-	{BQ25980_BUSOCP, 0xD},
-	{BQ25980_BUSOCP_ALM, 0xC},
-	{BQ25980_TEMP_CONTROL, 0x30},
-	{BQ25980_TDIE_ALM, 0xC8},
-	{BQ25980_TSBUS_FLT, 0x15},
-	{BQ25980_TSBAT_FLG, 0x15},
-	{BQ25980_VAC_CONTROL, 0x0},
-	{BQ25980_CHRGR_CTRL_2, 0x0},
-	{BQ25980_CHRGR_CTRL_3, 0x20},
-	{BQ25980_CHRGR_CTRL_4, 0x1D},
-	{BQ25980_CHRGR_CTRL_5, 0x18},
-	{BQ25980_STAT1, 0x0},
-	{BQ25980_STAT2, 0x0},
-	{BQ25980_STAT3, 0x0},
-	{BQ25980_STAT4, 0x0},
-	{BQ25980_STAT5, 0x0},
-	{BQ25980_FLAG1, 0x0},
-	{BQ25980_FLAG2, 0x0},
-	{BQ25980_FLAG3, 0x0},
-	{BQ25980_FLAG4, 0x0},
-	{BQ25980_FLAG5, 0x0},
-	{BQ25980_MASK1, 0x0},
-	{BQ25980_MASK2, 0x0},
-	{BQ25980_MASK3, 0x0},
-	{BQ25980_MASK4, 0x0},
-	{BQ25980_MASK5, 0x0},
-	{BQ25980_DEVICE_INFO, 0x8},
-	{BQ25980_ADC_CONTROL1, 0x0},
-	{BQ25980_ADC_CONTROL2, 0x0},
-	{BQ25980_IBUS_ADC_LSB, 0x0},
-	{BQ25980_IBUS_ADC_MSB, 0x0},
-	{BQ25980_VBUS_ADC_LSB, 0x0},
-	{BQ25980_VBUS_ADC_MSB, 0x0},
-	{BQ25980_VAC1_ADC_LSB, 0x0},
-	{BQ25980_VAC2_ADC_LSB, 0x0},
-	{BQ25980_VOUT_ADC_LSB, 0x0},
-	{BQ25980_VBAT_ADC_LSB, 0x0},
-	{BQ25980_IBAT_ADC_MSB, 0x0},
-	{BQ25980_IBAT_ADC_LSB, 0x0},
-	{BQ25980_TSBUS_ADC_LSB, 0x0},
-	{BQ25980_TSBAT_ADC_LSB, 0x0},
-	{BQ25980_TDIE_ADC_LSB, 0x0},
-	{BQ25980_DEGLITCH_TIME, 0x0},
-	{BQ25980_CHRGR_CTRL_6, 0x0},
-};
+अटल काष्ठा reg_शेष bq25980_reg_defs[] = अणु
+	अणुBQ25980_BATOVP, 0x5Aपूर्ण,
+	अणुBQ25980_BATOVP_ALM, 0x46पूर्ण,
+	अणुBQ25980_BATOCP, 0x51पूर्ण,
+	अणुBQ25980_BATOCP_ALM, 0x50पूर्ण,
+	अणुBQ25980_BATUCP_ALM, 0x28पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_1, 0x0पूर्ण,
+	अणुBQ25980_BUSOVP, 0x26पूर्ण,
+	अणुBQ25980_BUSOVP_ALM, 0x22पूर्ण,
+	अणुBQ25980_BUSOCP, 0xDपूर्ण,
+	अणुBQ25980_BUSOCP_ALM, 0xCपूर्ण,
+	अणुBQ25980_TEMP_CONTROL, 0x30पूर्ण,
+	अणुBQ25980_TDIE_ALM, 0xC8पूर्ण,
+	अणुBQ25980_TSBUS_FLT, 0x15पूर्ण,
+	अणुBQ25980_TSBAT_FLG, 0x15पूर्ण,
+	अणुBQ25980_VAC_CONTROL, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_2, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_3, 0x20पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_4, 0x1Dपूर्ण,
+	अणुBQ25980_CHRGR_CTRL_5, 0x18पूर्ण,
+	अणुBQ25980_STAT1, 0x0पूर्ण,
+	अणुBQ25980_STAT2, 0x0पूर्ण,
+	अणुBQ25980_STAT3, 0x0पूर्ण,
+	अणुBQ25980_STAT4, 0x0पूर्ण,
+	अणुBQ25980_STAT5, 0x0पूर्ण,
+	अणुBQ25980_FLAG1, 0x0पूर्ण,
+	अणुBQ25980_FLAG2, 0x0पूर्ण,
+	अणुBQ25980_FLAG3, 0x0पूर्ण,
+	अणुBQ25980_FLAG4, 0x0पूर्ण,
+	अणुBQ25980_FLAG5, 0x0पूर्ण,
+	अणुBQ25980_MASK1, 0x0पूर्ण,
+	अणुBQ25980_MASK2, 0x0पूर्ण,
+	अणुBQ25980_MASK3, 0x0पूर्ण,
+	अणुBQ25980_MASK4, 0x0पूर्ण,
+	अणुBQ25980_MASK5, 0x0पूर्ण,
+	अणुBQ25980_DEVICE_INFO, 0x8पूर्ण,
+	अणुBQ25980_ADC_CONTROL1, 0x0पूर्ण,
+	अणुBQ25980_ADC_CONTROL2, 0x0पूर्ण,
+	अणुBQ25980_IBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_IBUS_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_VBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VBUS_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_VAC1_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VAC2_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VOUT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_IBAT_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_IBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TSBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TSBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TDIE_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_DEGLITCH_TIME, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_6, 0x0पूर्ण,
+पूर्ण;
 
-static struct reg_default bq25975_reg_defs[] = {
-	{BQ25980_BATOVP, 0x5A},
-	{BQ25980_BATOVP_ALM, 0x46},
-	{BQ25980_BATOCP, 0x51},
-	{BQ25980_BATOCP_ALM, 0x50},
-	{BQ25980_BATUCP_ALM, 0x28},
-	{BQ25980_CHRGR_CTRL_1, 0x0},
-	{BQ25980_BUSOVP, 0x26},
-	{BQ25980_BUSOVP_ALM, 0x22},
-	{BQ25980_BUSOCP, 0xD},
-	{BQ25980_BUSOCP_ALM, 0xC},
-	{BQ25980_TEMP_CONTROL, 0x30},
-	{BQ25980_TDIE_ALM, 0xC8},
-	{BQ25980_TSBUS_FLT, 0x15},
-	{BQ25980_TSBAT_FLG, 0x15},
-	{BQ25980_VAC_CONTROL, 0x0},
-	{BQ25980_CHRGR_CTRL_2, 0x0},
-	{BQ25980_CHRGR_CTRL_3, 0x20},
-	{BQ25980_CHRGR_CTRL_4, 0x1D},
-	{BQ25980_CHRGR_CTRL_5, 0x18},
-	{BQ25980_STAT1, 0x0},
-	{BQ25980_STAT2, 0x0},
-	{BQ25980_STAT3, 0x0},
-	{BQ25980_STAT4, 0x0},
-	{BQ25980_STAT5, 0x0},
-	{BQ25980_FLAG1, 0x0},
-	{BQ25980_FLAG2, 0x0},
-	{BQ25980_FLAG3, 0x0},
-	{BQ25980_FLAG4, 0x0},
-	{BQ25980_FLAG5, 0x0},
-	{BQ25980_MASK1, 0x0},
-	{BQ25980_MASK2, 0x0},
-	{BQ25980_MASK3, 0x0},
-	{BQ25980_MASK4, 0x0},
-	{BQ25980_MASK5, 0x0},
-	{BQ25980_DEVICE_INFO, 0x8},
-	{BQ25980_ADC_CONTROL1, 0x0},
-	{BQ25980_ADC_CONTROL2, 0x0},
-	{BQ25980_IBUS_ADC_LSB, 0x0},
-	{BQ25980_IBUS_ADC_MSB, 0x0},
-	{BQ25980_VBUS_ADC_LSB, 0x0},
-	{BQ25980_VBUS_ADC_MSB, 0x0},
-	{BQ25980_VAC1_ADC_LSB, 0x0},
-	{BQ25980_VAC2_ADC_LSB, 0x0},
-	{BQ25980_VOUT_ADC_LSB, 0x0},
-	{BQ25980_VBAT_ADC_LSB, 0x0},
-	{BQ25980_IBAT_ADC_MSB, 0x0},
-	{BQ25980_IBAT_ADC_LSB, 0x0},
-	{BQ25980_TSBUS_ADC_LSB, 0x0},
-	{BQ25980_TSBAT_ADC_LSB, 0x0},
-	{BQ25980_TDIE_ADC_LSB, 0x0},
-	{BQ25980_DEGLITCH_TIME, 0x0},
-	{BQ25980_CHRGR_CTRL_6, 0x0},
-};
+अटल काष्ठा reg_शेष bq25975_reg_defs[] = अणु
+	अणुBQ25980_BATOVP, 0x5Aपूर्ण,
+	अणुBQ25980_BATOVP_ALM, 0x46पूर्ण,
+	अणुBQ25980_BATOCP, 0x51पूर्ण,
+	अणुBQ25980_BATOCP_ALM, 0x50पूर्ण,
+	अणुBQ25980_BATUCP_ALM, 0x28पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_1, 0x0पूर्ण,
+	अणुBQ25980_BUSOVP, 0x26पूर्ण,
+	अणुBQ25980_BUSOVP_ALM, 0x22पूर्ण,
+	अणुBQ25980_BUSOCP, 0xDपूर्ण,
+	अणुBQ25980_BUSOCP_ALM, 0xCपूर्ण,
+	अणुBQ25980_TEMP_CONTROL, 0x30पूर्ण,
+	अणुBQ25980_TDIE_ALM, 0xC8पूर्ण,
+	अणुBQ25980_TSBUS_FLT, 0x15पूर्ण,
+	अणुBQ25980_TSBAT_FLG, 0x15पूर्ण,
+	अणुBQ25980_VAC_CONTROL, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_2, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_3, 0x20पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_4, 0x1Dपूर्ण,
+	अणुBQ25980_CHRGR_CTRL_5, 0x18पूर्ण,
+	अणुBQ25980_STAT1, 0x0पूर्ण,
+	अणुBQ25980_STAT2, 0x0पूर्ण,
+	अणुBQ25980_STAT3, 0x0पूर्ण,
+	अणुBQ25980_STAT4, 0x0पूर्ण,
+	अणुBQ25980_STAT5, 0x0पूर्ण,
+	अणुBQ25980_FLAG1, 0x0पूर्ण,
+	अणुBQ25980_FLAG2, 0x0पूर्ण,
+	अणुBQ25980_FLAG3, 0x0पूर्ण,
+	अणुBQ25980_FLAG4, 0x0पूर्ण,
+	अणुBQ25980_FLAG5, 0x0पूर्ण,
+	अणुBQ25980_MASK1, 0x0पूर्ण,
+	अणुBQ25980_MASK2, 0x0पूर्ण,
+	अणुBQ25980_MASK3, 0x0पूर्ण,
+	अणुBQ25980_MASK4, 0x0पूर्ण,
+	अणुBQ25980_MASK5, 0x0पूर्ण,
+	अणुBQ25980_DEVICE_INFO, 0x8पूर्ण,
+	अणुBQ25980_ADC_CONTROL1, 0x0पूर्ण,
+	अणुBQ25980_ADC_CONTROL2, 0x0पूर्ण,
+	अणुBQ25980_IBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_IBUS_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_VBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VBUS_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_VAC1_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VAC2_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VOUT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_IBAT_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_IBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TSBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TSBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TDIE_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_DEGLITCH_TIME, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_6, 0x0पूर्ण,
+पूर्ण;
 
-static struct reg_default bq25960_reg_defs[] = {
-	{BQ25980_BATOVP, 0x5A},
-	{BQ25980_BATOVP_ALM, 0x46},
-	{BQ25980_BATOCP, 0x51},
-	{BQ25980_BATOCP_ALM, 0x50},
-	{BQ25980_BATUCP_ALM, 0x28},
-	{BQ25980_CHRGR_CTRL_1, 0x0},
-	{BQ25980_BUSOVP, 0x26},
-	{BQ25980_BUSOVP_ALM, 0x22},
-	{BQ25980_BUSOCP, 0xD},
-	{BQ25980_BUSOCP_ALM, 0xC},
-	{BQ25980_TEMP_CONTROL, 0x30},
-	{BQ25980_TDIE_ALM, 0xC8},
-	{BQ25980_TSBUS_FLT, 0x15},
-	{BQ25980_TSBAT_FLG, 0x15},
-	{BQ25980_VAC_CONTROL, 0x0},
-	{BQ25980_CHRGR_CTRL_2, 0x0},
-	{BQ25980_CHRGR_CTRL_3, 0x20},
-	{BQ25980_CHRGR_CTRL_4, 0x1D},
-	{BQ25980_CHRGR_CTRL_5, 0x18},
-	{BQ25980_STAT1, 0x0},
-	{BQ25980_STAT2, 0x0},
-	{BQ25980_STAT3, 0x0},
-	{BQ25980_STAT4, 0x0},
-	{BQ25980_STAT5, 0x0},
-	{BQ25980_FLAG1, 0x0},
-	{BQ25980_FLAG2, 0x0},
-	{BQ25980_FLAG3, 0x0},
-	{BQ25980_FLAG4, 0x0},
-	{BQ25980_FLAG5, 0x0},
-	{BQ25980_MASK1, 0x0},
-	{BQ25980_MASK2, 0x0},
-	{BQ25980_MASK3, 0x0},
-	{BQ25980_MASK4, 0x0},
-	{BQ25980_MASK5, 0x0},
-	{BQ25980_DEVICE_INFO, 0x8},
-	{BQ25980_ADC_CONTROL1, 0x0},
-	{BQ25980_ADC_CONTROL2, 0x0},
-	{BQ25980_IBUS_ADC_LSB, 0x0},
-	{BQ25980_IBUS_ADC_MSB, 0x0},
-	{BQ25980_VBUS_ADC_LSB, 0x0},
-	{BQ25980_VBUS_ADC_MSB, 0x0},
-	{BQ25980_VAC1_ADC_LSB, 0x0},
-	{BQ25980_VAC2_ADC_LSB, 0x0},
-	{BQ25980_VOUT_ADC_LSB, 0x0},
-	{BQ25980_VBAT_ADC_LSB, 0x0},
-	{BQ25980_IBAT_ADC_MSB, 0x0},
-	{BQ25980_IBAT_ADC_LSB, 0x0},
-	{BQ25980_TSBUS_ADC_LSB, 0x0},
-	{BQ25980_TSBAT_ADC_LSB, 0x0},
-	{BQ25980_TDIE_ADC_LSB, 0x0},
-	{BQ25980_DEGLITCH_TIME, 0x0},
-	{BQ25980_CHRGR_CTRL_6, 0x0},
-};
+अटल काष्ठा reg_शेष bq25960_reg_defs[] = अणु
+	अणुBQ25980_BATOVP, 0x5Aपूर्ण,
+	अणुBQ25980_BATOVP_ALM, 0x46पूर्ण,
+	अणुBQ25980_BATOCP, 0x51पूर्ण,
+	अणुBQ25980_BATOCP_ALM, 0x50पूर्ण,
+	अणुBQ25980_BATUCP_ALM, 0x28पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_1, 0x0पूर्ण,
+	अणुBQ25980_BUSOVP, 0x26पूर्ण,
+	अणुBQ25980_BUSOVP_ALM, 0x22पूर्ण,
+	अणुBQ25980_BUSOCP, 0xDपूर्ण,
+	अणुBQ25980_BUSOCP_ALM, 0xCपूर्ण,
+	अणुBQ25980_TEMP_CONTROL, 0x30पूर्ण,
+	अणुBQ25980_TDIE_ALM, 0xC8पूर्ण,
+	अणुBQ25980_TSBUS_FLT, 0x15पूर्ण,
+	अणुBQ25980_TSBAT_FLG, 0x15पूर्ण,
+	अणुBQ25980_VAC_CONTROL, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_2, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_3, 0x20पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_4, 0x1Dपूर्ण,
+	अणुBQ25980_CHRGR_CTRL_5, 0x18पूर्ण,
+	अणुBQ25980_STAT1, 0x0पूर्ण,
+	अणुBQ25980_STAT2, 0x0पूर्ण,
+	अणुBQ25980_STAT3, 0x0पूर्ण,
+	अणुBQ25980_STAT4, 0x0पूर्ण,
+	अणुBQ25980_STAT5, 0x0पूर्ण,
+	अणुBQ25980_FLAG1, 0x0पूर्ण,
+	अणुBQ25980_FLAG2, 0x0पूर्ण,
+	अणुBQ25980_FLAG3, 0x0पूर्ण,
+	अणुBQ25980_FLAG4, 0x0पूर्ण,
+	अणुBQ25980_FLAG5, 0x0पूर्ण,
+	अणुBQ25980_MASK1, 0x0पूर्ण,
+	अणुBQ25980_MASK2, 0x0पूर्ण,
+	अणुBQ25980_MASK3, 0x0पूर्ण,
+	अणुBQ25980_MASK4, 0x0पूर्ण,
+	अणुBQ25980_MASK5, 0x0पूर्ण,
+	अणुBQ25980_DEVICE_INFO, 0x8पूर्ण,
+	अणुBQ25980_ADC_CONTROL1, 0x0पूर्ण,
+	अणुBQ25980_ADC_CONTROL2, 0x0पूर्ण,
+	अणुBQ25980_IBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_IBUS_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_VBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VBUS_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_VAC1_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VAC2_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VOUT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_VBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_IBAT_ADC_MSB, 0x0पूर्ण,
+	अणुBQ25980_IBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TSBUS_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TSBAT_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_TDIE_ADC_LSB, 0x0पूर्ण,
+	अणुBQ25980_DEGLITCH_TIME, 0x0पूर्ण,
+	अणुBQ25980_CHRGR_CTRL_6, 0x0पूर्ण,
+पूर्ण;
 
-static int bq25980_watchdog_time[BQ25980_NUM_WD_VAL] = {5000, 10000, 50000,
-							300000};
+अटल पूर्णांक bq25980_watchकरोg_समय[BQ25980_NUM_WD_VAL] = अणु5000, 10000, 50000,
+							300000पूर्ण;
 
-static int bq25980_get_input_curr_lim(struct bq25980_device *bq)
-{
-	unsigned int busocp_reg_code;
-	int ret;
+अटल पूर्णांक bq25980_get_input_curr_lim(काष्ठा bq25980_device *bq)
+अणु
+	अचिन्हित पूर्णांक busocp_reg_code;
+	पूर्णांक ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_BUSOCP, &busocp_reg_code);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_BUSOCP, &busocp_reg_code);
+	अगर (ret)
+		वापस ret;
 
-	return (busocp_reg_code * BQ25980_BUSOCP_STEP_uA) + BQ25980_BUSOCP_OFFSET_uA;
-}
+	वापस (busocp_reg_code * BQ25980_BUSOCP_STEP_uA) + BQ25980_BUSOCP_OFFSET_uA;
+पूर्ण
 
-static int bq25980_set_hiz(struct bq25980_device *bq, int setting)
-{
-	return regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_2,
+अटल पूर्णांक bq25980_set_hiz(काष्ठा bq25980_device *bq, पूर्णांक setting)
+अणु
+	वापस regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_2,
 			BQ25980_EN_HIZ, setting);
-}
+पूर्ण
 
-static int bq25980_set_input_curr_lim(struct bq25980_device *bq, int busocp)
-{
-	unsigned int busocp_reg_code;
-	int ret;
+अटल पूर्णांक bq25980_set_input_curr_lim(काष्ठा bq25980_device *bq, पूर्णांक busocp)
+अणु
+	अचिन्हित पूर्णांक busocp_reg_code;
+	पूर्णांक ret;
 
-	if (!busocp)
-		return bq25980_set_hiz(bq, BQ25980_ENABLE_HIZ);
+	अगर (!busocp)
+		वापस bq25980_set_hiz(bq, BQ25980_ENABLE_HIZ);
 
 	bq25980_set_hiz(bq, BQ25980_DISABLE_HIZ);
 
-	if (busocp < BQ25980_BUSOCP_MIN_uA)
+	अगर (busocp < BQ25980_BUSOCP_MIN_uA)
 		busocp = BQ25980_BUSOCP_MIN_uA;
 
-	if (bq->state.bypass)
+	अगर (bq->state.bypass)
 		busocp = min(busocp, bq->chip_info->busocp_sc_max);
-	else
+	अन्यथा
 		busocp = min(busocp, bq->chip_info->busocp_byp_max);
 
 	busocp_reg_code = (busocp - BQ25980_BUSOCP_OFFSET_uA)
 						/ BQ25980_BUSOCP_STEP_uA;
 
-	ret = regmap_write(bq->regmap, BQ25980_BUSOCP, busocp_reg_code);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(bq->regmap, BQ25980_BUSOCP, busocp_reg_code);
+	अगर (ret)
+		वापस ret;
 
-	return regmap_write(bq->regmap, BQ25980_BUSOCP_ALM, busocp_reg_code);
-}
+	वापस regmap_ग_लिखो(bq->regmap, BQ25980_BUSOCP_ALM, busocp_reg_code);
+पूर्ण
 
-static int bq25980_get_input_volt_lim(struct bq25980_device *bq)
-{
-	unsigned int busovp_reg_code;
-	unsigned int busovp_offset;
-	unsigned int busovp_step;
-	int ret;
+अटल पूर्णांक bq25980_get_input_volt_lim(काष्ठा bq25980_device *bq)
+अणु
+	अचिन्हित पूर्णांक busovp_reg_code;
+	अचिन्हित पूर्णांक busovp_offset;
+	अचिन्हित पूर्णांक busovp_step;
+	पूर्णांक ret;
 
-	if (bq->state.bypass) {
+	अगर (bq->state.bypass) अणु
 		busovp_step = bq->chip_info->busovp_byp_step;
 		busovp_offset = bq->chip_info->busovp_byp_offset;
-	} else {
+	पूर्ण अन्यथा अणु
 		busovp_step = bq->chip_info->busovp_sc_step;
 		busovp_offset = bq->chip_info->busovp_sc_offset;
-	}
+	पूर्ण
 
-	ret = regmap_read(bq->regmap, BQ25980_BUSOVP, &busovp_reg_code);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_BUSOVP, &busovp_reg_code);
+	अगर (ret)
+		वापस ret;
 
-	return (busovp_reg_code * busovp_step) + busovp_offset;
-}
+	वापस (busovp_reg_code * busovp_step) + busovp_offset;
+पूर्ण
 
-static int bq25980_set_input_volt_lim(struct bq25980_device *bq, int busovp)
-{
-	unsigned int busovp_reg_code;
-	unsigned int busovp_step;
-	unsigned int busovp_offset;
-	int ret;
+अटल पूर्णांक bq25980_set_input_volt_lim(काष्ठा bq25980_device *bq, पूर्णांक busovp)
+अणु
+	अचिन्हित पूर्णांक busovp_reg_code;
+	अचिन्हित पूर्णांक busovp_step;
+	अचिन्हित पूर्णांक busovp_offset;
+	पूर्णांक ret;
 
-	if (bq->state.bypass) {
+	अगर (bq->state.bypass) अणु
 		busovp_step = bq->chip_info->busovp_byp_step;
 		busovp_offset = bq->chip_info->busovp_byp_offset;
-		if (busovp > bq->chip_info->busovp_byp_max)
+		अगर (busovp > bq->chip_info->busovp_byp_max)
 			busovp = bq->chip_info->busovp_byp_max;
-		else if (busovp < bq->chip_info->busovp_byp_min)
+		अन्यथा अगर (busovp < bq->chip_info->busovp_byp_min)
 			busovp = bq->chip_info->busovp_byp_min;
-	} else {
+	पूर्ण अन्यथा अणु
 		busovp_step = bq->chip_info->busovp_sc_step;
 		busovp_offset = bq->chip_info->busovp_sc_offset;
-		if (busovp > bq->chip_info->busovp_sc_max)
+		अगर (busovp > bq->chip_info->busovp_sc_max)
 			busovp = bq->chip_info->busovp_sc_max;
-		else if (busovp < bq->chip_info->busovp_sc_min)
+		अन्यथा अगर (busovp < bq->chip_info->busovp_sc_min)
 			busovp = bq->chip_info->busovp_sc_min;
-	}
+	पूर्ण
 
 	busovp_reg_code = (busovp - busovp_offset) / busovp_step;
 
-	ret = regmap_write(bq->regmap, BQ25980_BUSOVP, busovp_reg_code);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(bq->regmap, BQ25980_BUSOVP, busovp_reg_code);
+	अगर (ret)
+		वापस ret;
 
-	return regmap_write(bq->regmap, BQ25980_BUSOVP_ALM, busovp_reg_code);
-}
+	वापस regmap_ग_लिखो(bq->regmap, BQ25980_BUSOVP_ALM, busovp_reg_code);
+पूर्ण
 
-static int bq25980_get_const_charge_curr(struct bq25980_device *bq)
-{
-	unsigned int batocp_reg_code;
-	int ret;
+अटल पूर्णांक bq25980_get_स्थिर_अक्षरge_curr(काष्ठा bq25980_device *bq)
+अणु
+	अचिन्हित पूर्णांक batocp_reg_code;
+	पूर्णांक ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_BATOCP, &batocp_reg_code);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_BATOCP, &batocp_reg_code);
+	अगर (ret)
+		वापस ret;
 
-	return (batocp_reg_code & BQ25980_BATOCP_MASK) *
+	वापस (batocp_reg_code & BQ25980_BATOCP_MASK) *
 						BQ25980_BATOCP_STEP_uA;
-}
+पूर्ण
 
-static int bq25980_set_const_charge_curr(struct bq25980_device *bq, int batocp)
-{
-	unsigned int batocp_reg_code;
-	int ret;
+अटल पूर्णांक bq25980_set_स्थिर_अक्षरge_curr(काष्ठा bq25980_device *bq, पूर्णांक batocp)
+अणु
+	अचिन्हित पूर्णांक batocp_reg_code;
+	पूर्णांक ret;
 
 	batocp = max(batocp, BQ25980_BATOCP_MIN_uA);
 	batocp = min(batocp, bq->chip_info->batocp_max);
@@ -397,199 +398,199 @@ static int bq25980_set_const_charge_curr(struct bq25980_device *bq, int batocp)
 
 	ret = regmap_update_bits(bq->regmap, BQ25980_BATOCP,
 				BQ25980_BATOCP_MASK, batocp_reg_code);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return regmap_update_bits(bq->regmap, BQ25980_BATOCP_ALM,
+	वापस regmap_update_bits(bq->regmap, BQ25980_BATOCP_ALM,
 				BQ25980_BATOCP_MASK, batocp_reg_code);
-}
+पूर्ण
 
-static int bq25980_get_const_charge_volt(struct bq25980_device *bq)
-{
-	unsigned int batovp_reg_code;
-	int ret;
+अटल पूर्णांक bq25980_get_स्थिर_अक्षरge_volt(काष्ठा bq25980_device *bq)
+अणु
+	अचिन्हित पूर्णांक batovp_reg_code;
+	पूर्णांक ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_BATOVP, &batovp_reg_code);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_BATOVP, &batovp_reg_code);
+	अगर (ret)
+		वापस ret;
 
-	return ((batovp_reg_code * bq->chip_info->batovp_step) +
+	वापस ((batovp_reg_code * bq->chip_info->batovp_step) +
 			bq->chip_info->batovp_offset);
-}
+पूर्ण
 
-static int bq25980_set_const_charge_volt(struct bq25980_device *bq, int batovp)
-{
-	unsigned int batovp_reg_code;
-	int ret;
+अटल पूर्णांक bq25980_set_स्थिर_अक्षरge_volt(काष्ठा bq25980_device *bq, पूर्णांक batovp)
+अणु
+	अचिन्हित पूर्णांक batovp_reg_code;
+	पूर्णांक ret;
 
-	if (batovp < bq->chip_info->batovp_min)
+	अगर (batovp < bq->chip_info->batovp_min)
 		batovp = bq->chip_info->batovp_min;
 
-	if (batovp > bq->chip_info->batovp_max)
+	अगर (batovp > bq->chip_info->batovp_max)
 		batovp = bq->chip_info->batovp_max;
 
 	batovp_reg_code = (batovp - bq->chip_info->batovp_offset) /
 						bq->chip_info->batovp_step;
 
-	ret = regmap_write(bq->regmap, BQ25980_BATOVP, batovp_reg_code);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(bq->regmap, BQ25980_BATOVP, batovp_reg_code);
+	अगर (ret)
+		वापस ret;
 
-	return regmap_write(bq->regmap, BQ25980_BATOVP_ALM, batovp_reg_code);
-}
+	वापस regmap_ग_लिखो(bq->regmap, BQ25980_BATOVP_ALM, batovp_reg_code);
+पूर्ण
 
-static int bq25980_set_bypass(struct bq25980_device *bq, bool en_bypass)
-{
-	int ret;
+अटल पूर्णांक bq25980_set_bypass(काष्ठा bq25980_device *bq, bool en_bypass)
+अणु
+	पूर्णांक ret;
 
-	if (en_bypass)
+	अगर (en_bypass)
 		ret = regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_2,
 					BQ25980_EN_BYPASS, BQ25980_EN_BYPASS);
-	else
+	अन्यथा
 		ret = regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_2,
 					BQ25980_EN_BYPASS, en_bypass);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	bq->state.bypass = en_bypass;
 
-	return bq->state.bypass;
-}
+	वापस bq->state.bypass;
+पूर्ण
 
-static int bq25980_set_chg_en(struct bq25980_device *bq, bool en_chg)
-{
-	int ret;
+अटल पूर्णांक bq25980_set_chg_en(काष्ठा bq25980_device *bq, bool en_chg)
+अणु
+	पूर्णांक ret;
 
-	if (en_chg)
+	अगर (en_chg)
 		ret = regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_2,
 					BQ25980_CHG_EN, BQ25980_CHG_EN);
-	else
+	अन्यथा
 		ret = regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_2,
 					BQ25980_CHG_EN, en_chg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	bq->state.ce = en_chg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25980_get_adc_ibus(struct bq25980_device *bq)
-{
-	int ibus_adc_lsb, ibus_adc_msb;
+अटल पूर्णांक bq25980_get_adc_ibus(काष्ठा bq25980_device *bq)
+अणु
+	पूर्णांक ibus_adc_lsb, ibus_adc_msb;
 	u16 ibus_adc;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_IBUS_ADC_MSB, &ibus_adc_msb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_IBUS_ADC_MSB, &ibus_adc_msb);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_IBUS_ADC_LSB, &ibus_adc_lsb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_IBUS_ADC_LSB, &ibus_adc_lsb);
+	अगर (ret)
+		वापस ret;
 
 	ibus_adc = (ibus_adc_msb << 8) | ibus_adc_lsb;
 
-	if (ibus_adc_msb & BQ25980_ADC_POLARITY_BIT)
-		return ((ibus_adc ^ 0xffff) + 1) * BQ25980_ADC_CURR_STEP_uA;
+	अगर (ibus_adc_msb & BQ25980_ADC_POLARITY_BIT)
+		वापस ((ibus_adc ^ 0xffff) + 1) * BQ25980_ADC_CURR_STEP_uA;
 
-	return ibus_adc * BQ25980_ADC_CURR_STEP_uA;
-}
+	वापस ibus_adc * BQ25980_ADC_CURR_STEP_uA;
+पूर्ण
 
-static int bq25980_get_adc_vbus(struct bq25980_device *bq)
-{
-	int vbus_adc_lsb, vbus_adc_msb;
+अटल पूर्णांक bq25980_get_adc_vbus(काष्ठा bq25980_device *bq)
+अणु
+	पूर्णांक vbus_adc_lsb, vbus_adc_msb;
 	u16 vbus_adc;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_VBUS_ADC_MSB, &vbus_adc_msb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_VBUS_ADC_MSB, &vbus_adc_msb);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_VBUS_ADC_LSB, &vbus_adc_lsb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_VBUS_ADC_LSB, &vbus_adc_lsb);
+	अगर (ret)
+		वापस ret;
 
 	vbus_adc = (vbus_adc_msb << 8) | vbus_adc_lsb;
 
-	return vbus_adc * BQ25980_ADC_VOLT_STEP_uV;
-}
+	वापस vbus_adc * BQ25980_ADC_VOLT_STEP_uV;
+पूर्ण
 
-static int bq25980_get_ibat_adc(struct bq25980_device *bq)
-{
-	int ret;
-	int ibat_adc_lsb, ibat_adc_msb;
-	int ibat_adc;
+अटल पूर्णांक bq25980_get_ibat_adc(काष्ठा bq25980_device *bq)
+अणु
+	पूर्णांक ret;
+	पूर्णांक ibat_adc_lsb, ibat_adc_msb;
+	पूर्णांक ibat_adc;
 
-	ret = regmap_read(bq->regmap, BQ25980_IBAT_ADC_MSB, &ibat_adc_msb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_IBAT_ADC_MSB, &ibat_adc_msb);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_IBAT_ADC_LSB, &ibat_adc_lsb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_IBAT_ADC_LSB, &ibat_adc_lsb);
+	अगर (ret)
+		वापस ret;
 
 	ibat_adc = (ibat_adc_msb << 8) | ibat_adc_lsb;
 
-	if (ibat_adc_msb & BQ25980_ADC_POLARITY_BIT)
-		return ((ibat_adc ^ 0xffff) + 1) * BQ25980_ADC_CURR_STEP_uA;
+	अगर (ibat_adc_msb & BQ25980_ADC_POLARITY_BIT)
+		वापस ((ibat_adc ^ 0xffff) + 1) * BQ25980_ADC_CURR_STEP_uA;
 
-	return ibat_adc * BQ25980_ADC_CURR_STEP_uA;
-}
+	वापस ibat_adc * BQ25980_ADC_CURR_STEP_uA;
+पूर्ण
 
-static int bq25980_get_adc_vbat(struct bq25980_device *bq)
-{
-	int vsys_adc_lsb, vsys_adc_msb;
+अटल पूर्णांक bq25980_get_adc_vbat(काष्ठा bq25980_device *bq)
+अणु
+	पूर्णांक vsys_adc_lsb, vsys_adc_msb;
 	u16 vsys_adc;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_VBAT_ADC_MSB, &vsys_adc_msb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_VBAT_ADC_MSB, &vsys_adc_msb);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_VBAT_ADC_LSB, &vsys_adc_lsb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_VBAT_ADC_LSB, &vsys_adc_lsb);
+	अगर (ret)
+		वापस ret;
 
 	vsys_adc = (vsys_adc_msb << 8) | vsys_adc_lsb;
 
-	return vsys_adc * BQ25980_ADC_VOLT_STEP_uV;
-}
+	वापस vsys_adc * BQ25980_ADC_VOLT_STEP_uV;
+पूर्ण
 
-static int bq25980_get_state(struct bq25980_device *bq,
-				struct bq25980_state *state)
-{
-	unsigned int chg_ctrl_2;
-	unsigned int stat1;
-	unsigned int stat2;
-	unsigned int stat3;
-	unsigned int stat4;
-	unsigned int ibat_adc_msb;
-	int ret;
+अटल पूर्णांक bq25980_get_state(काष्ठा bq25980_device *bq,
+				काष्ठा bq25980_state *state)
+अणु
+	अचिन्हित पूर्णांक chg_ctrl_2;
+	अचिन्हित पूर्णांक stat1;
+	अचिन्हित पूर्णांक stat2;
+	अचिन्हित पूर्णांक stat3;
+	अचिन्हित पूर्णांक stat4;
+	अचिन्हित पूर्णांक ibat_adc_msb;
+	पूर्णांक ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_STAT1, &stat1);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_STAT1, &stat1);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_STAT2, &stat2);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_STAT2, &stat2);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_STAT3, &stat3);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_STAT3, &stat3);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_STAT4, &stat4);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_STAT4, &stat4);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_CHRGR_CTRL_2, &chg_ctrl_2);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_CHRGR_CTRL_2, &chg_ctrl_2);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_read(bq->regmap, BQ25980_IBAT_ADC_MSB, &ibat_adc_msb);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bq->regmap, BQ25980_IBAT_ADC_MSB, &ibat_adc_msb);
+	अगर (ret)
+		वापस ret;
 
 	state->dischg = ibat_adc_msb & BQ25980_ADC_POLARITY_BIT;
 	state->ovp = (stat1 & BQ25980_STAT1_OVP_MASK) |
@@ -603,221 +604,221 @@ static int bq25980_get_state(struct bq25980_device *bq,
 	state->hiz = chg_ctrl_2 & BQ25980_EN_HIZ;
 	state->bypass = chg_ctrl_2 & BQ25980_EN_BYPASS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25980_get_battery_property(struct power_supply *psy,
-				enum power_supply_property psp,
-				union power_supply_propval *val)
-{
-	struct bq25980_device *bq = power_supply_get_drvdata(psy);
-	int ret = 0;
+अटल पूर्णांक bq25980_get_battery_property(काष्ठा घातer_supply *psy,
+				क्रमागत घातer_supply_property psp,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा bq25980_device *bq = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = 0;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
-		val->intval = bq->init_data.ichg_max;
-		break;
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
+		val->पूर्णांकval = bq->init_data.ichg_max;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
-		val->intval = bq->init_data.vreg_max;
-		break;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+		val->पूर्णांकval = bq->init_data.vreg_max;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
 		ret = bq25980_get_ibat_adc(bq);
-		val->intval = ret;
-		break;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		ret = bq25980_get_adc_vbat(bq);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		val->intval = ret;
-		break;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bq25980_set_charger_property(struct power_supply *psy,
-		enum power_supply_property prop,
-		const union power_supply_propval *val)
-{
-	struct bq25980_device *bq = power_supply_get_drvdata(psy);
-	int ret = -EINVAL;
+अटल पूर्णांक bq25980_set_अक्षरger_property(काष्ठा घातer_supply *psy,
+		क्रमागत घातer_supply_property prop,
+		स्थिर जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा bq25980_device *bq = घातer_supply_get_drvdata(psy);
+	पूर्णांक ret = -EINVAL;
 
-	switch (prop) {
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-		ret = bq25980_set_input_curr_lim(bq, val->intval);
-		if (ret)
-			return ret;
-		break;
+	चयन (prop) अणु
+	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+		ret = bq25980_set_input_curr_lim(bq, val->पूर्णांकval);
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT:
-		ret = bq25980_set_input_volt_lim(bq, val->intval);
-		if (ret)
-			return ret;
-		break;
+	हाल POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT:
+		ret = bq25980_set_input_volt_lim(bq, val->पूर्णांकval);
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		ret = bq25980_set_bypass(bq, val->intval);
-		if (ret)
-			return ret;
-		break;
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		ret = bq25980_set_bypass(bq, val->पूर्णांकval);
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_STATUS:
-		ret = bq25980_set_chg_en(bq, val->intval);
-		if (ret)
-			return ret;
-		break;
+	हाल POWER_SUPPLY_PROP_STATUS:
+		ret = bq25980_set_chg_en(bq, val->पूर्णांकval);
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		ret = bq25980_set_const_charge_curr(bq, val->intval);
-		if (ret)
-			return ret;
-		break;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		ret = bq25980_set_स्थिर_अक्षरge_curr(bq, val->पूर्णांकval);
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		ret = bq25980_set_const_charge_volt(bq, val->intval);
-		if (ret)
-			return ret;
-		break;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		ret = bq25980_set_स्थिर_अक्षरge_volt(bq, val->पूर्णांकval);
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bq25980_get_charger_property(struct power_supply *psy,
-				enum power_supply_property psp,
-				union power_supply_propval *val)
-{
-	struct bq25980_device *bq = power_supply_get_drvdata(psy);
-	struct bq25980_state state;
-	int ret = 0;
+अटल पूर्णांक bq25980_get_अक्षरger_property(काष्ठा घातer_supply *psy,
+				क्रमागत घातer_supply_property psp,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा bq25980_device *bq = घातer_supply_get_drvdata(psy);
+	काष्ठा bq25980_state state;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&bq->lock);
 	ret = bq25980_get_state(bq, &state);
 	mutex_unlock(&bq->lock);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_MANUFACTURER:
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_MANUFACTURER:
 		val->strval = BQ25980_MANUFACTURER;
-		break;
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = bq->model_name;
-		break;
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = state.online;
-		break;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = state.online;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT:
+	हाल POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT:
 		ret = bq25980_get_input_volt_lim(bq);
-		if (ret < 0)
-			return ret;
-		val->intval = ret;
-		break;
+		अगर (ret < 0)
+			वापस ret;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
 		ret = bq25980_get_input_curr_lim(bq);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		val->intval = ret;
-		break;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_HEALTH:
-		val->intval = POWER_SUPPLY_HEALTH_GOOD;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
 
-		if (state.tflt)
-			val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		else if (state.ovp)
-			val->intval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
-		else if (state.ocp)
-			val->intval = POWER_SUPPLY_HEALTH_OVERCURRENT;
-		else if (state.wdt)
-			val->intval =
+		अगर (state.tflt)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		अन्यथा अगर (state.ovp)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
+		अन्यथा अगर (state.ocp)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERCURRENT;
+		अन्यथा अगर (state.wdt)
+			val->पूर्णांकval =
 				POWER_SUPPLY_HEALTH_WATCHDOG_TIMER_EXPIRE;
-		break;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_STATUS:
-		val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
+	हाल POWER_SUPPLY_PROP_STATUS:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
 
-		if ((state.ce) && (!state.hiz))
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		else if (state.dischg)
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-		else if (!state.ce)
-			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		break;
+		अगर ((state.ce) && (!state.hiz))
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+		अन्यथा अगर (state.dischg)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
+		अन्यथा अगर (!state.ce)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		val->intval = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
 
-		if (!state.ce)
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
-		else if (state.bypass)
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
-		else if (!state.bypass)
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_STANDARD;
-		break;
+		अगर (!state.ce)
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_NONE;
+		अन्यथा अगर (state.bypass)
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+		अन्यथा अगर (!state.bypass)
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_STANDARD;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
 		ret = bq25980_get_adc_ibus(bq);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		val->intval = ret;
-		break;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		ret = bq25980_get_adc_vbus(bq);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		val->intval = ret;
-		break;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		ret = bq25980_get_const_charge_curr(bq);
-		if (ret < 0)
-			return ret;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		ret = bq25980_get_स्थिर_अक्षरge_curr(bq);
+		अगर (ret < 0)
+			वापस ret;
 
-		val->intval = ret;
-		break;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-		ret = bq25980_get_const_charge_volt(bq);
-		if (ret < 0)
-			return ret;
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		ret = bq25980_get_स्थिर_अक्षरge_volt(bq);
+		अगर (ret < 0)
+			वापस ret;
 
-		val->intval = ret;
-		break;
+		val->पूर्णांकval = ret;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool bq25980_state_changed(struct bq25980_device *bq,
-				  struct bq25980_state *new_state)
-{
-	struct bq25980_state old_state;
+अटल bool bq25980_state_changed(काष्ठा bq25980_device *bq,
+				  काष्ठा bq25980_state *new_state)
+अणु
+	काष्ठा bq25980_state old_state;
 
 	mutex_lock(&bq->lock);
 	old_state = bq->state;
 	mutex_unlock(&bq->lock);
 
-	return (old_state.dischg != new_state->dischg ||
+	वापस (old_state.dischg != new_state->dischg ||
 		old_state.ovp != new_state->ovp ||
 		old_state.ocp != new_state->ocp ||
 		old_state.online != new_state->online ||
@@ -826,32 +827,32 @@ static bool bq25980_state_changed(struct bq25980_device *bq,
 		old_state.ce != new_state->ce ||
 		old_state.hiz != new_state->hiz ||
 		old_state.bypass != new_state->bypass);
-}
+पूर्ण
 
-static irqreturn_t bq25980_irq_handler_thread(int irq, void *private)
-{
-	struct bq25980_device *bq = private;
-	struct bq25980_state state;
-	int ret;
+अटल irqवापस_t bq25980_irq_handler_thपढ़ो(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा bq25980_device *bq = निजी;
+	काष्ठा bq25980_state state;
+	पूर्णांक ret;
 
 	ret = bq25980_get_state(bq, &state);
-	if (ret < 0)
-		goto irq_out;
+	अगर (ret < 0)
+		जाओ irq_out;
 
-	if (!bq25980_state_changed(bq, &state))
-		goto irq_out;
+	अगर (!bq25980_state_changed(bq, &state))
+		जाओ irq_out;
 
 	mutex_lock(&bq->lock);
 	bq->state = state;
 	mutex_unlock(&bq->lock);
 
-	power_supply_changed(bq->charger);
+	घातer_supply_changed(bq->अक्षरger);
 
 irq_out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static enum power_supply_property bq25980_power_supply_props[] = {
+अटल क्रमागत घातer_supply_property bq25980_घातer_supply_props[] = अणु
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_STATUS,
@@ -864,102 +865,102 @@ static enum power_supply_property bq25980_power_supply_props[] = {
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
-};
+पूर्ण;
 
-static enum power_supply_property bq25980_battery_props[] = {
+अटल क्रमागत घातer_supply_property bq25980_battery_props[] = अणु
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
-};
+पूर्ण;
 
-static char *bq25980_charger_supplied_to[] = {
+अटल अक्षर *bq25980_अक्षरger_supplied_to[] = अणु
 	"main-battery",
-};
+पूर्ण;
 
-static int bq25980_property_is_writeable(struct power_supply *psy,
-					 enum power_supply_property prop)
-{
-	switch (prop) {
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-	case POWER_SUPPLY_PROP_STATUS:
-	case POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल पूर्णांक bq25980_property_is_ग_लिखोable(काष्ठा घातer_supply *psy,
+					 क्रमागत घातer_supply_property prop)
+अणु
+	चयन (prop) अणु
+	हाल POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT:
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+	हाल POWER_SUPPLY_PROP_STATUS:
+	हाल POWER_SUPPLY_PROP_INPUT_VOLTAGE_LIMIT:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct power_supply_desc bq25980_power_supply_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc bq25980_घातer_supply_desc = अणु
 	.name = "bq25980-charger",
 	.type = POWER_SUPPLY_TYPE_MAINS,
-	.properties = bq25980_power_supply_props,
-	.num_properties = ARRAY_SIZE(bq25980_power_supply_props),
-	.get_property = bq25980_get_charger_property,
-	.set_property = bq25980_set_charger_property,
-	.property_is_writeable = bq25980_property_is_writeable,
-};
+	.properties = bq25980_घातer_supply_props,
+	.num_properties = ARRAY_SIZE(bq25980_घातer_supply_props),
+	.get_property = bq25980_get_अक्षरger_property,
+	.set_property = bq25980_set_अक्षरger_property,
+	.property_is_ग_लिखोable = bq25980_property_is_ग_लिखोable,
+पूर्ण;
 
-static struct power_supply_desc bq25980_battery_desc = {
+अटल काष्ठा घातer_supply_desc bq25980_battery_desc = अणु
 	.name			= "bq25980-battery",
 	.type			= POWER_SUPPLY_TYPE_BATTERY,
 	.get_property		= bq25980_get_battery_property,
 	.properties		= bq25980_battery_props,
 	.num_properties		= ARRAY_SIZE(bq25980_battery_props),
-	.property_is_writeable	= bq25980_property_is_writeable,
-};
+	.property_is_ग_लिखोable	= bq25980_property_is_ग_लिखोable,
+पूर्ण;
 
 
-static bool bq25980_is_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case BQ25980_CHRGR_CTRL_2:
-	case BQ25980_STAT1...BQ25980_FLAG5:
-	case BQ25980_ADC_CONTROL1...BQ25980_TDIE_ADC_LSB:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool bq25980_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल BQ25980_CHRGR_CTRL_2:
+	हाल BQ25980_STAT1...BQ25980_FLAG5:
+	हाल BQ25980_ADC_CONTROL1...BQ25980_TDIE_ADC_LSB:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config bq25980_regmap_config = {
+अटल स्थिर काष्ठा regmap_config bq25980_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = BQ25980_CHRGR_CTRL_6,
-	.reg_defaults	= bq25980_reg_defs,
-	.num_reg_defaults = ARRAY_SIZE(bq25980_reg_defs),
+	.max_रेजिस्टर = BQ25980_CHRGR_CTRL_6,
+	.reg_शेषs	= bq25980_reg_defs,
+	.num_reg_शेषs = ARRAY_SIZE(bq25980_reg_defs),
 	.cache_type = REGCACHE_RBTREE,
-	.volatile_reg = bq25980_is_volatile_reg,
-};
+	.अस्थिर_reg = bq25980_is_अस्थिर_reg,
+पूर्ण;
 
-static const struct regmap_config bq25975_regmap_config = {
+अटल स्थिर काष्ठा regmap_config bq25975_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = BQ25980_CHRGR_CTRL_6,
-	.reg_defaults	= bq25975_reg_defs,
-	.num_reg_defaults = ARRAY_SIZE(bq25975_reg_defs),
+	.max_रेजिस्टर = BQ25980_CHRGR_CTRL_6,
+	.reg_शेषs	= bq25975_reg_defs,
+	.num_reg_शेषs = ARRAY_SIZE(bq25975_reg_defs),
 	.cache_type = REGCACHE_RBTREE,
-	.volatile_reg = bq25980_is_volatile_reg,
-};
+	.अस्थिर_reg = bq25980_is_अस्थिर_reg,
+पूर्ण;
 
-static const struct regmap_config bq25960_regmap_config = {
+अटल स्थिर काष्ठा regmap_config bq25960_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = BQ25980_CHRGR_CTRL_6,
-	.reg_defaults	= bq25960_reg_defs,
-	.num_reg_defaults = ARRAY_SIZE(bq25960_reg_defs),
+	.max_रेजिस्टर = BQ25980_CHRGR_CTRL_6,
+	.reg_शेषs	= bq25960_reg_defs,
+	.num_reg_शेषs = ARRAY_SIZE(bq25960_reg_defs),
 	.cache_type = REGCACHE_RBTREE,
-	.volatile_reg = bq25980_is_volatile_reg,
-};
+	.अस्थिर_reg = bq25980_is_अस्थिर_reg,
+पूर्ण;
 
-static const struct bq25980_chip_info bq25980_chip_info_tbl[] = {
-	[BQ25980] = {
+अटल स्थिर काष्ठा bq25980_chip_info bq25980_chip_info_tbl[] = अणु
+	[BQ25980] = अणु
 		.model_id = BQ25980,
 		.regmap_config = &bq25980_regmap_config,
 
@@ -988,9 +989,9 @@ static const struct bq25980_chip_info bq25980_chip_info_tbl[] = {
 
 		.batocp_def = BQ25980_BATOCP_DFLT_uA,
 		.batocp_max = BQ25980_BATOCP_MAX_uA,
-	},
+	पूर्ण,
 
-	[BQ25975] = {
+	[BQ25975] = अणु
 		.model_id = BQ25975,
 		.regmap_config = &bq25975_regmap_config,
 
@@ -1019,9 +1020,9 @@ static const struct bq25980_chip_info bq25980_chip_info_tbl[] = {
 
 		.batocp_def = BQ25980_BATOCP_DFLT_uA,
 		.batocp_max = BQ25980_BATOCP_MAX_uA,
-	},
+	पूर्ण,
 
-	[BQ25960] = {
+	[BQ25960] = अणु
 		.model_id = BQ25960,
 		.regmap_config = &bq25960_regmap_config,
 
@@ -1050,246 +1051,246 @@ static const struct bq25980_chip_info bq25980_chip_info_tbl[] = {
 
 		.batocp_def = BQ25960_BATOCP_DFLT_uA,
 		.batocp_max = BQ25960_BATOCP_MAX_uA,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int bq25980_power_supply_init(struct bq25980_device *bq,
-							struct device *dev)
-{
-	struct power_supply_config psy_cfg = { .drv_data = bq,
-						.of_node = dev->of_node, };
+अटल पूर्णांक bq25980_घातer_supply_init(काष्ठा bq25980_device *bq,
+							काष्ठा device *dev)
+अणु
+	काष्ठा घातer_supply_config psy_cfg = अणु .drv_data = bq,
+						.of_node = dev->of_node, पूर्ण;
 
-	psy_cfg.supplied_to = bq25980_charger_supplied_to;
-	psy_cfg.num_supplicants = ARRAY_SIZE(bq25980_charger_supplied_to);
+	psy_cfg.supplied_to = bq25980_अक्षरger_supplied_to;
+	psy_cfg.num_supplicants = ARRAY_SIZE(bq25980_अक्षरger_supplied_to);
 
-	bq->charger = devm_power_supply_register(bq->dev,
-						 &bq25980_power_supply_desc,
+	bq->अक्षरger = devm_घातer_supply_रेजिस्टर(bq->dev,
+						 &bq25980_घातer_supply_desc,
 						 &psy_cfg);
-	if (IS_ERR(bq->charger))
-		return -EINVAL;
+	अगर (IS_ERR(bq->अक्षरger))
+		वापस -EINVAL;
 
-	bq->battery = devm_power_supply_register(bq->dev,
+	bq->battery = devm_घातer_supply_रेजिस्टर(bq->dev,
 						      &bq25980_battery_desc,
 						      &psy_cfg);
-	if (IS_ERR(bq->battery))
-		return -EINVAL;
+	अगर (IS_ERR(bq->battery))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25980_hw_init(struct bq25980_device *bq)
-{
-	struct power_supply_battery_info bat_info = { };
-	int wd_reg_val = BQ25980_WATCHDOG_DIS;
-	int wd_max_val = BQ25980_NUM_WD_VAL - 1;
-	int ret = 0;
-	int curr_val;
-	int volt_val;
-	int i;
+अटल पूर्णांक bq25980_hw_init(काष्ठा bq25980_device *bq)
+अणु
+	काष्ठा घातer_supply_battery_info bat_info = अणु पूर्ण;
+	पूर्णांक wd_reg_val = BQ25980_WATCHDOG_DIS;
+	पूर्णांक wd_max_val = BQ25980_NUM_WD_VAL - 1;
+	पूर्णांक ret = 0;
+	पूर्णांक curr_val;
+	पूर्णांक volt_val;
+	पूर्णांक i;
 
-	if (bq->watchdog_timer) {
-		if (bq->watchdog_timer >= bq25980_watchdog_time[wd_max_val])
+	अगर (bq->watchकरोg_समयr) अणु
+		अगर (bq->watchकरोg_समयr >= bq25980_watchकरोg_समय[wd_max_val])
 			wd_reg_val = wd_max_val;
-		else {
-			for (i = 0; i < wd_max_val; i++) {
-				if (bq->watchdog_timer > bq25980_watchdog_time[i] &&
-				    bq->watchdog_timer < bq25980_watchdog_time[i + 1]) {
+		अन्यथा अणु
+			क्रम (i = 0; i < wd_max_val; i++) अणु
+				अगर (bq->watchकरोg_समयr > bq25980_watchकरोg_समय[i] &&
+				    bq->watchकरोg_समयr < bq25980_watchकरोg_समय[i + 1]) अणु
 					wd_reg_val = i;
-					break;
-				}
-			}
-		}
-	}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ret = regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_3,
 				 BQ25980_WATCHDOG_MASK, wd_reg_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = power_supply_get_battery_info(bq->charger, &bat_info);
-	if (ret) {
+	ret = घातer_supply_get_battery_info(bq->अक्षरger, &bat_info);
+	अगर (ret) अणु
 		dev_warn(bq->dev, "battery info missing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	bq->init_data.ichg_max = bat_info.constant_charge_current_max_ua;
-	bq->init_data.vreg_max = bat_info.constant_charge_voltage_max_uv;
+	bq->init_data.ichg_max = bat_info.स्थिरant_अक्षरge_current_max_ua;
+	bq->init_data.vreg_max = bat_info.स्थिरant_अक्षरge_voltage_max_uv;
 
-	if (bq->state.bypass) {
+	अगर (bq->state.bypass) अणु
 		ret = regmap_update_bits(bq->regmap, BQ25980_CHRGR_CTRL_2,
 					BQ25980_EN_BYPASS, BQ25980_EN_BYPASS);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		curr_val = bq->init_data.bypass_ilim;
 		volt_val = bq->init_data.bypass_vlim;
-	} else {
+	पूर्ण अन्यथा अणु
 		curr_val = bq->init_data.sc_ilim;
 		volt_val = bq->init_data.sc_vlim;
-	}
+	पूर्ण
 
 	ret = bq25980_set_input_curr_lim(bq, curr_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = bq25980_set_input_volt_lim(bq, volt_val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return regmap_update_bits(bq->regmap, BQ25980_ADC_CONTROL1,
+	वापस regmap_update_bits(bq->regmap, BQ25980_ADC_CONTROL1,
 				 BQ25980_ADC_EN, BQ25980_ADC_EN);
-}
+पूर्ण
 
-static int bq25980_parse_dt(struct bq25980_device *bq)
-{
-	int ret;
+अटल पूर्णांक bq25980_parse_dt(काष्ठा bq25980_device *bq)
+अणु
+	पूर्णांक ret;
 
-	ret = device_property_read_u32(bq->dev, "ti,watchdog-timeout-ms",
-				       &bq->watchdog_timer);
-	if (ret)
-		bq->watchdog_timer = BQ25980_WATCHDOG_MIN;
+	ret = device_property_पढ़ो_u32(bq->dev, "ti,watchdog-timeout-ms",
+				       &bq->watchकरोg_समयr);
+	अगर (ret)
+		bq->watchकरोg_समयr = BQ25980_WATCHDOG_MIN;
 
-	if (bq->watchdog_timer > BQ25980_WATCHDOG_MAX ||
-	    bq->watchdog_timer < BQ25980_WATCHDOG_MIN)
-		return -EINVAL;
+	अगर (bq->watchकरोg_समयr > BQ25980_WATCHDOG_MAX ||
+	    bq->watchकरोg_समयr < BQ25980_WATCHDOG_MIN)
+		वापस -EINVAL;
 
-	ret = device_property_read_u32(bq->dev,
+	ret = device_property_पढ़ो_u32(bq->dev,
 				       "ti,sc-ovp-limit-microvolt",
 				       &bq->init_data.sc_vlim);
-	if (ret)
+	अगर (ret)
 		bq->init_data.sc_vlim = bq->chip_info->busovp_sc_def;
 
-	if (bq->init_data.sc_vlim > bq->chip_info->busovp_sc_max ||
-	    bq->init_data.sc_vlim < bq->chip_info->busovp_sc_min) {
+	अगर (bq->init_data.sc_vlim > bq->chip_info->busovp_sc_max ||
+	    bq->init_data.sc_vlim < bq->chip_info->busovp_sc_min) अणु
 		dev_err(bq->dev, "SC ovp limit is out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = device_property_read_u32(bq->dev,
+	ret = device_property_पढ़ो_u32(bq->dev,
 				       "ti,sc-ocp-limit-microamp",
 				       &bq->init_data.sc_ilim);
-	if (ret)
+	अगर (ret)
 		bq->init_data.sc_ilim = bq->chip_info->busocp_def;
 
-	if (bq->init_data.sc_ilim > bq->chip_info->busocp_sc_max ||
-	    bq->init_data.sc_ilim < bq->chip_info->busocp_sc_min) {
+	अगर (bq->init_data.sc_ilim > bq->chip_info->busocp_sc_max ||
+	    bq->init_data.sc_ilim < bq->chip_info->busocp_sc_min) अणु
 		dev_err(bq->dev, "SC ocp limit is out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = device_property_read_u32(bq->dev,
+	ret = device_property_पढ़ो_u32(bq->dev,
 				       "ti,bypass-ovp-limit-microvolt",
 				       &bq->init_data.bypass_vlim);
-	if (ret)
+	अगर (ret)
 		bq->init_data.bypass_vlim = bq->chip_info->busovp_byp_def;
 
-	if (bq->init_data.bypass_vlim > bq->chip_info->busovp_byp_max ||
-	    bq->init_data.bypass_vlim < bq->chip_info->busovp_byp_min) {
+	अगर (bq->init_data.bypass_vlim > bq->chip_info->busovp_byp_max ||
+	    bq->init_data.bypass_vlim < bq->chip_info->busovp_byp_min) अणु
 		dev_err(bq->dev, "Bypass ovp limit is out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = device_property_read_u32(bq->dev,
+	ret = device_property_पढ़ो_u32(bq->dev,
 				       "ti,bypass-ocp-limit-microamp",
 				       &bq->init_data.bypass_ilim);
-	if (ret)
+	अगर (ret)
 		bq->init_data.bypass_ilim = bq->chip_info->busocp_def;
 
-	if (bq->init_data.bypass_ilim > bq->chip_info->busocp_byp_max ||
-	    bq->init_data.bypass_ilim < bq->chip_info->busocp_byp_min) {
+	अगर (bq->init_data.bypass_ilim > bq->chip_info->busocp_byp_max ||
+	    bq->init_data.bypass_ilim < bq->chip_info->busocp_byp_min) अणु
 		dev_err(bq->dev, "Bypass ocp limit is out of range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 
-	bq->state.bypass = device_property_read_bool(bq->dev,
+	bq->state.bypass = device_property_पढ़ो_bool(bq->dev,
 						      "ti,bypass-enable");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bq25980_probe(struct i2c_client *client,
-			 const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct bq25980_device *bq;
-	int ret;
+अटल पूर्णांक bq25980_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा bq25980_device *bq;
+	पूर्णांक ret;
 
-	bq = devm_kzalloc(dev, sizeof(*bq), GFP_KERNEL);
-	if (!bq)
-		return -ENOMEM;
+	bq = devm_kzalloc(dev, माप(*bq), GFP_KERNEL);
+	अगर (!bq)
+		वापस -ENOMEM;
 
 	bq->client = client;
 	bq->dev = dev;
 
 	mutex_init(&bq->lock);
 
-	strncpy(bq->model_name, id->name, I2C_NAME_SIZE);
+	म_नकलन(bq->model_name, id->name, I2C_NAME_SIZE);
 	bq->chip_info = &bq25980_chip_info_tbl[id->driver_data];
 
 	bq->regmap = devm_regmap_init_i2c(client,
 					  bq->chip_info->regmap_config);
-	if (IS_ERR(bq->regmap)) {
+	अगर (IS_ERR(bq->regmap)) अणु
 		dev_err(dev, "Failed to allocate register map\n");
-		return PTR_ERR(bq->regmap);
-	}
+		वापस PTR_ERR(bq->regmap);
+	पूर्ण
 
 	i2c_set_clientdata(client, bq);
 
 	ret = bq25980_parse_dt(bq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read device tree properties%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (client->irq) {
-		ret = devm_request_threaded_irq(dev, client->irq, NULL,
-						bq25980_irq_handler_thread,
+	अगर (client->irq) अणु
+		ret = devm_request_thपढ़ोed_irq(dev, client->irq, शून्य,
+						bq25980_irq_handler_thपढ़ो,
 						IRQF_TRIGGER_FALLING |
 						IRQF_ONESHOT,
 						dev_name(&client->dev), bq);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = bq25980_power_supply_init(bq, dev);
-	if (ret) {
+	ret = bq25980_घातer_supply_init(bq, dev);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register power supply\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = bq25980_hw_init(bq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot initialize the chip.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id bq25980_i2c_ids[] = {
-	{ "bq25980", BQ25980 },
-	{ "bq25975", BQ25975 },
-	{ "bq25960", BQ25960 },
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id bq25980_i2c_ids[] = अणु
+	अणु "bq25980", BQ25980 पूर्ण,
+	अणु "bq25975", BQ25975 पूर्ण,
+	अणु "bq25960", BQ25960 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, bq25980_i2c_ids);
 
-static const struct of_device_id bq25980_of_match[] = {
-	{ .compatible = "ti,bq25980", .data = (void *)BQ25980 },
-	{ .compatible = "ti,bq25975", .data = (void *)BQ25975 },
-	{ .compatible = "ti,bq25960", .data = (void *)BQ25960 },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id bq25980_of_match[] = अणु
+	अणु .compatible = "ti,bq25980", .data = (व्योम *)BQ25980 पूर्ण,
+	अणु .compatible = "ti,bq25975", .data = (व्योम *)BQ25975 पूर्ण,
+	अणु .compatible = "ti,bq25960", .data = (व्योम *)BQ25960 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bq25980_of_match);
 
-static struct i2c_driver bq25980_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver bq25980_driver = अणु
+	.driver = अणु
 		.name = "bq25980-charger",
 		.of_match_table = bq25980_of_match,
-	},
+	पूर्ण,
 	.probe = bq25980_probe,
 	.id_table = bq25980_i2c_ids,
-};
+पूर्ण;
 module_i2c_driver(bq25980_driver);
 
 MODULE_AUTHOR("Dan Murphy <dmurphy@ti.com>");

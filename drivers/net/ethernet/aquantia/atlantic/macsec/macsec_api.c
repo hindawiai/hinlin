@@ -1,274 +1,275 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Atlantic Network Driver
  * Copyright (C) 2020 Marvell International Ltd.
  */
 
-#include "macsec_api.h"
-#include <linux/mdio.h>
-#include "MSS_Ingress_registers.h"
-#include "MSS_Egress_registers.h"
-#include "aq_phy.h"
+#समावेश "macsec_api.h"
+#समावेश <linux/mdपन.स>
+#समावेश "MSS_Ingress_registers.h"
+#समावेश "MSS_Egress_registers.h"
+#समावेश "aq_phy.h"
 
-#define AQ_API_CALL_SAFE(func, ...)                                            \
-({                                                                             \
-	int ret;                                                               \
-	do {                                                                   \
+#घोषणा AQ_API_CALL_SAFE(func, ...)                                            \
+(अणु                                                                             \
+	पूर्णांक ret;                                                               \
+	करो अणु                                                                   \
 		ret = aq_mss_mdio_sem_get(hw);                                 \
-		if (unlikely(ret))                                             \
-			break;                                                 \
+		अगर (unlikely(ret))                                             \
+			अवरोध;                                                 \
 									       \
 		ret = func(__VA_ARGS__);                                       \
 									       \
 		aq_mss_mdio_sem_put(hw);                                       \
-	} while (0);                                                           \
+	पूर्ण जबतक (0);                                                           \
 	ret;                                                                   \
-})
+पूर्ण)
 
 /*******************************************************************************
  *                               MDIO wrappers
  ******************************************************************************/
-static int aq_mss_mdio_sem_get(struct aq_hw_s *hw)
-{
+अटल पूर्णांक aq_mss_mdio_sem_get(काष्ठा aq_hw_s *hw)
+अणु
 	u32 val;
 
-	return readx_poll_timeout_atomic(hw_atl_sem_mdio_get, hw, val,
+	वापस पढ़ोx_poll_समयout_atomic(hw_atl_sem_mdio_get, hw, val,
 					 val == 1U, 10U, 100000U);
-}
+पूर्ण
 
-static void aq_mss_mdio_sem_put(struct aq_hw_s *hw)
-{
+अटल व्योम aq_mss_mdio_sem_put(काष्ठा aq_hw_s *hw)
+अणु
 	hw_atl_reg_glb_cpu_sem_set(hw, 1U, HW_ATL_FW_SM_MDIO);
-}
+पूर्ण
 
-static int aq_mss_mdio_read(struct aq_hw_s *hw, u16 mmd, u16 addr, u16 *data)
-{
-	*data = aq_mdio_read_word(hw, mmd, addr);
-	return (*data != 0xffff) ? 0 : -ETIME;
-}
+अटल पूर्णांक aq_mss_mdio_पढ़ो(काष्ठा aq_hw_s *hw, u16 mmd, u16 addr, u16 *data)
+अणु
+	*data = aq_mdio_पढ़ो_word(hw, mmd, addr);
+	वापस (*data != 0xffff) ? 0 : -ETIME;
+पूर्ण
 
-static int aq_mss_mdio_write(struct aq_hw_s *hw, u16 mmd, u16 addr, u16 data)
-{
-	aq_mdio_write_word(hw, mmd, addr, data);
-	return 0;
-}
+अटल पूर्णांक aq_mss_mdio_ग_लिखो(काष्ठा aq_hw_s *hw, u16 mmd, u16 addr, u16 data)
+अणु
+	aq_mdio_ग_लिखो_word(hw, mmd, addr, data);
+	वापस 0;
+पूर्ण
 
 /*******************************************************************************
  *                          MACSEC config and status
  ******************************************************************************/
 
-static int set_raw_ingress_record(struct aq_hw_s *hw, u16 *packed_record,
+अटल पूर्णांक set_raw_ingress_record(काष्ठा aq_hw_s *hw, u16 *packed_record,
 				  u8 num_words, u8 table_id,
 				  u16 table_index)
-{
-	struct mss_ingress_lut_addr_ctl_register lut_sel_reg;
-	struct mss_ingress_lut_ctl_register lut_op_reg;
+अणु
+	काष्ठा mss_ingress_lut_addr_ctl_रेजिस्टर lut_sel_reg;
+	काष्ठा mss_ingress_lut_ctl_रेजिस्टर lut_op_reg;
 
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	/* NOTE: MSS registers must always be read/written as adjacent pairs.
-	 * For instance, to write either or both 1E.80A0 and 80A1, we have to:
+	/* NOTE: MSS रेजिस्टरs must always be पढ़ो/written as adjacent pairs.
+	 * For instance, to ग_लिखो either or both 1E.80A0 and 80A1, we have to:
 	 * 1. Write 1E.80A0 first
-	 * 2. Then write 1E.80A1
+	 * 2. Then ग_लिखो 1E.80A1
 	 *
-	 * For HHD devices: These writes need to be performed consecutively, and
-	 * to ensure this we use the PIF mailbox to delegate the reads/writes to
+	 * For HHD devices: These ग_लिखोs need to be perक्रमmed consecutively, and
+	 * to ensure this we use the PIF mailbox to delegate the पढ़ोs/ग_लिखोs to
 	 * the FW.
 	 *
 	 * For EUR devices: Not need to use the PIF mailbox; it is safe to
-	 * write to the registers directly.
+	 * ग_लिखो to the रेजिस्टरs directly.
 	 */
 
-	/* Write the packed record words to the data buffer registers. */
-	for (i = 0; i < num_words; i += 2) {
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	/* Write the packed record words to the data buffer रेजिस्टरs. */
+	क्रम (i = 0; i < num_words; i += 2) अणु
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				  MSS_INGRESS_LUT_DATA_CTL_REGISTER_ADDR + i,
 				  packed_record[i]);
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				  MSS_INGRESS_LUT_DATA_CTL_REGISTER_ADDR + i +
 					  1,
 				  packed_record[i + 1]);
-	}
+	पूर्ण
 
-	/* Clear out the unused data buffer registers. */
-	for (i = num_words; i < 24; i += 2) {
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	/* Clear out the unused data buffer रेजिस्टरs. */
+	क्रम (i = num_words; i < 24; i += 2) अणु
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				  MSS_INGRESS_LUT_DATA_CTL_REGISTER_ADDR + i,
 				  0);
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 			MSS_INGRESS_LUT_DATA_CTL_REGISTER_ADDR + i + 1, 0);
-	}
+	पूर्ण
 
-	/* Select the table and row index to write to */
+	/* Select the table and row index to ग_लिखो to */
 	lut_sel_reg.bits_0.lut_select = table_id;
 	lut_sel_reg.bits_0.lut_addr = table_index;
 
-	lut_op_reg.bits_0.lut_read = 0;
-	lut_op_reg.bits_0.lut_write = 1;
+	lut_op_reg.bits_0.lut_पढ़ो = 0;
+	lut_op_reg.bits_0.lut_ग_लिखो = 1;
 
-	aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 			  MSS_INGRESS_LUT_ADDR_CTL_REGISTER_ADDR,
 			  lut_sel_reg.word_0);
-	aq_mss_mdio_write(hw, MDIO_MMD_VEND1, MSS_INGRESS_LUT_CTL_REGISTER_ADDR,
+	aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1, MSS_INGRESS_LUT_CTL_REGISTER_ADDR,
 			  lut_op_reg.word_0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/*! Read the specified Ingress LUT table row.
+/*! Read the specअगरied Ingress LUT table row.
  *  packed_record - [OUT] The table row data (raw).
  */
-static int get_raw_ingress_record(struct aq_hw_s *hw, u16 *packed_record,
+अटल पूर्णांक get_raw_ingress_record(काष्ठा aq_hw_s *hw, u16 *packed_record,
 				  u8 num_words, u8 table_id,
 				  u16 table_index)
-{
-	struct mss_ingress_lut_addr_ctl_register lut_sel_reg;
-	struct mss_ingress_lut_ctl_register lut_op_reg;
-	int ret;
+अणु
+	काष्ठा mss_ingress_lut_addr_ctl_रेजिस्टर lut_sel_reg;
+	काष्ठा mss_ingress_lut_ctl_रेजिस्टर lut_op_reg;
+	पूर्णांक ret;
 
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	/* Select the table and row index to read */
+	/* Select the table and row index to पढ़ो */
 	lut_sel_reg.bits_0.lut_select = table_id;
 	lut_sel_reg.bits_0.lut_addr = table_index;
 
-	lut_op_reg.bits_0.lut_read = 1;
-	lut_op_reg.bits_0.lut_write = 0;
+	lut_op_reg.bits_0.lut_पढ़ो = 1;
+	lut_op_reg.bits_0.lut_ग_लिखो = 0;
 
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_LUT_ADDR_CTL_REGISTER_ADDR,
 				lut_sel_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_LUT_CTL_REGISTER_ADDR,
 				lut_op_reg.word_0);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	memset(packed_record, 0, sizeof(u16) * num_words);
+	स_रखो(packed_record, 0, माप(u16) * num_words);
 
-	for (i = 0; i < num_words; i += 2) {
-		ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	क्रम (i = 0; i < num_words; i += 2) अणु
+		ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 				       MSS_INGRESS_LUT_DATA_CTL_REGISTER_ADDR +
 					       i,
 				       &packed_record[i]);
-		if (unlikely(ret))
-			return ret;
-		ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+		अगर (unlikely(ret))
+			वापस ret;
+		ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 				       MSS_INGRESS_LUT_DATA_CTL_REGISTER_ADDR +
 					       i + 1,
 				       &packed_record[i + 1]);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/*! Write packed_record to the specified Egress LUT table row. */
-static int set_raw_egress_record(struct aq_hw_s *hw, u16 *packed_record,
+/*! Write packed_record to the specअगरied Egress LUT table row. */
+अटल पूर्णांक set_raw_egress_record(काष्ठा aq_hw_s *hw, u16 *packed_record,
 				 u8 num_words, u8 table_id,
 				 u16 table_index)
-{
-	struct mss_egress_lut_addr_ctl_register lut_sel_reg;
-	struct mss_egress_lut_ctl_register lut_op_reg;
+अणु
+	काष्ठा mss_egress_lut_addr_ctl_रेजिस्टर lut_sel_reg;
+	काष्ठा mss_egress_lut_ctl_रेजिस्टर lut_op_reg;
 
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	/* Write the packed record words to the data buffer registers. */
-	for (i = 0; i < num_words; i += 2) {
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	/* Write the packed record words to the data buffer रेजिस्टरs. */
+	क्रम (i = 0; i < num_words; i += 2) अणु
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				  MSS_EGRESS_LUT_DATA_CTL_REGISTER_ADDR + i,
 				  packed_record[i]);
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				  MSS_EGRESS_LUT_DATA_CTL_REGISTER_ADDR + i + 1,
 				  packed_record[i + 1]);
-	}
+	पूर्ण
 
-	/* Clear out the unused data buffer registers. */
-	for (i = num_words; i < 28; i += 2) {
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	/* Clear out the unused data buffer रेजिस्टरs. */
+	क्रम (i = num_words; i < 28; i += 2) अणु
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				  MSS_EGRESS_LUT_DATA_CTL_REGISTER_ADDR + i, 0);
-		aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+		aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				  MSS_EGRESS_LUT_DATA_CTL_REGISTER_ADDR + i + 1,
 				  0);
-	}
+	पूर्ण
 
-	/* Select the table and row index to write to */
+	/* Select the table and row index to ग_लिखो to */
 	lut_sel_reg.bits_0.lut_select = table_id;
 	lut_sel_reg.bits_0.lut_addr = table_index;
 
-	lut_op_reg.bits_0.lut_read = 0;
-	lut_op_reg.bits_0.lut_write = 1;
+	lut_op_reg.bits_0.lut_पढ़ो = 0;
+	lut_op_reg.bits_0.lut_ग_लिखो = 1;
 
-	aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 			  MSS_EGRESS_LUT_ADDR_CTL_REGISTER_ADDR,
 			  lut_sel_reg.word_0);
-	aq_mss_mdio_write(hw, MDIO_MMD_VEND1, MSS_EGRESS_LUT_CTL_REGISTER_ADDR,
+	aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1, MSS_EGRESS_LUT_CTL_REGISTER_ADDR,
 			  lut_op_reg.word_0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_raw_egress_record(struct aq_hw_s *hw, u16 *packed_record,
+अटल पूर्णांक get_raw_egress_record(काष्ठा aq_hw_s *hw, u16 *packed_record,
 				 u8 num_words, u8 table_id,
 				 u16 table_index)
-{
-	struct mss_egress_lut_addr_ctl_register lut_sel_reg;
-	struct mss_egress_lut_ctl_register lut_op_reg;
-	int ret;
+अणु
+	काष्ठा mss_egress_lut_addr_ctl_रेजिस्टर lut_sel_reg;
+	काष्ठा mss_egress_lut_ctl_रेजिस्टर lut_op_reg;
+	पूर्णांक ret;
 
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	/* Select the table and row index to read */
+	/* Select the table and row index to पढ़ो */
 	lut_sel_reg.bits_0.lut_select = table_id;
 	lut_sel_reg.bits_0.lut_addr = table_index;
 
-	lut_op_reg.bits_0.lut_read = 1;
-	lut_op_reg.bits_0.lut_write = 0;
+	lut_op_reg.bits_0.lut_पढ़ो = 1;
+	lut_op_reg.bits_0.lut_ग_लिखो = 0;
 
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_LUT_ADDR_CTL_REGISTER_ADDR,
 				lut_sel_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_LUT_CTL_REGISTER_ADDR,
 				lut_op_reg.word_0);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	memset(packed_record, 0, sizeof(u16) * num_words);
+	स_रखो(packed_record, 0, माप(u16) * num_words);
 
-	for (i = 0; i < num_words; i += 2) {
-		ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	क्रम (i = 0; i < num_words; i += 2) अणु
+		ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 				       MSS_EGRESS_LUT_DATA_CTL_REGISTER_ADDR +
 					       i,
 				       &packed_record[i]);
-		if (unlikely(ret))
-			return ret;
-		ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+		अगर (unlikely(ret))
+			वापस ret;
+		ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 				       MSS_EGRESS_LUT_DATA_CTL_REGISTER_ADDR +
 					       i + 1,
 				       &packed_record[i + 1]);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-set_ingress_prectlf_record(struct aq_hw_s *hw,
-			   const struct aq_mss_ingress_prectlf_record *rec,
+अटल पूर्णांक
+set_ingress_prectlf_record(काष्ठा aq_hw_s *hw,
+			   स्थिर काष्ठा aq_mss_ingress_prectlf_record *rec,
 			   u16 table_index)
-{
+अणु
 	u16 packed_record[6];
 
-	if (table_index >= NUMROWS_INGRESSPRECTLFRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPRECTLFRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 6);
+	स_रखो(packed_record, 0, माप(u16) * 6);
 
 	packed_record[0] = rec->sa_da[0] & 0xFFFF;
 	packed_record[1] = (rec->sa_da[0] >> 16) & 0xFFFF;
@@ -278,48 +279,48 @@ set_ingress_prectlf_record(struct aq_hw_s *hw,
 	packed_record[5] = rec->match_type & 0xF;
 	packed_record[5] |= (rec->action & 0x1) << 4;
 
-	return set_raw_ingress_record(hw, packed_record, 6, 0,
+	वापस set_raw_ingress_record(hw, packed_record, 6, 0,
 				      ROWOFFSET_INGRESSPRECTLFRECORD +
 					      table_index);
-}
+पूर्ण
 
-int aq_mss_set_ingress_prectlf_record(struct aq_hw_s *hw,
-	const struct aq_mss_ingress_prectlf_record *rec,
+पूर्णांक aq_mss_set_ingress_prectlf_record(काष्ठा aq_hw_s *hw,
+	स्थिर काष्ठा aq_mss_ingress_prectlf_record *rec,
 	u16 table_index)
-{
-	return AQ_API_CALL_SAFE(set_ingress_prectlf_record, hw, rec,
+अणु
+	वापस AQ_API_CALL_SAFE(set_ingress_prectlf_record, hw, rec,
 				table_index);
-}
+पूर्ण
 
-static int get_ingress_prectlf_record(struct aq_hw_s *hw,
-				      struct aq_mss_ingress_prectlf_record *rec,
+अटल पूर्णांक get_ingress_prectlf_record(काष्ठा aq_hw_s *hw,
+				      काष्ठा aq_mss_ingress_prectlf_record *rec,
 				      u16 table_index)
-{
+अणु
 	u16 packed_record[6];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_INGRESSPRECTLFRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPRECTLFRECORD)
+		वापस -EINVAL;
 
-	/* If the row that we want to read is odd, first read the previous even
-	 * row, throw that value away, and finally read the desired row.
-	 * This is a workaround for EUR devices that allows us to read
+	/* If the row that we want to पढ़ो is odd, first पढ़ो the previous even
+	 * row, throw that value away, and finally पढ़ो the desired row.
+	 * This is a workaround क्रम EUR devices that allows us to पढ़ो
 	 * odd-numbered rows.  For HHD devices: this workaround will not work,
-	 * so don't bother; odd-numbered rows are not readable.
+	 * so करोn't bother; odd-numbered rows are not पढ़ोable.
 	 */
-	if ((table_index % 2) > 0) {
+	अगर ((table_index % 2) > 0) अणु
 		ret = get_raw_ingress_record(hw, packed_record, 6, 0,
 					     ROWOFFSET_INGRESSPRECTLFRECORD +
 						     table_index - 1);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
 	ret = get_raw_ingress_record(hw, packed_record, 6, 0,
 				     ROWOFFSET_INGRESSPRECTLFRECORD +
 					     table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->sa_da[0] = packed_record[0];
 	rec->sa_da[0] |= packed_record[1] << 16;
@@ -334,30 +335,30 @@ static int get_ingress_prectlf_record(struct aq_hw_s *hw,
 
 	rec->action = (packed_record[5] >> 4) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_prectlf_record(struct aq_hw_s *hw,
-				      struct aq_mss_ingress_prectlf_record *rec,
+पूर्णांक aq_mss_get_ingress_prectlf_record(काष्ठा aq_hw_s *hw,
+				      काष्ठा aq_mss_ingress_prectlf_record *rec,
 				      u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_ingress_prectlf_record, hw, rec,
+	वापस AQ_API_CALL_SAFE(get_ingress_prectlf_record, hw, rec,
 				table_index);
-}
+पूर्ण
 
-static int
-set_ingress_preclass_record(struct aq_hw_s *hw,
-			    const struct aq_mss_ingress_preclass_record *rec,
+अटल पूर्णांक
+set_ingress_preclass_record(काष्ठा aq_hw_s *hw,
+			    स्थिर काष्ठा aq_mss_ingress_preclass_record *rec,
 			    u16 table_index)
-{
+अणु
 	u16 packed_record[20];
 
-	if (table_index >= NUMROWS_INGRESSPRECLASSRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPRECLASSRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 20);
+	स_रखो(packed_record, 0, माप(u16) * 20);
 
 	packed_record[0] = rec->sci[0] & 0xFFFF;
 	packed_record[1] = (rec->sci[0] >> 16) & 0xFFFF;
@@ -428,50 +429,50 @@ set_ingress_preclass_record(struct aq_hw_s *hw,
 
 	packed_record[19] |= (rec->valid & 0x1) << 7;
 
-	return set_raw_ingress_record(hw, packed_record, 20, 1,
+	वापस set_raw_ingress_record(hw, packed_record, 20, 1,
 				      ROWOFFSET_INGRESSPRECLASSRECORD +
 					      table_index);
-}
+पूर्ण
 
-int aq_mss_set_ingress_preclass_record(struct aq_hw_s *hw,
-	const struct aq_mss_ingress_preclass_record *rec,
+पूर्णांक aq_mss_set_ingress_preclass_record(काष्ठा aq_hw_s *hw,
+	स्थिर काष्ठा aq_mss_ingress_preclass_record *rec,
 	u16 table_index)
-{
-	int err = AQ_API_CALL_SAFE(set_ingress_preclass_record, hw, rec,
+अणु
+	पूर्णांक err = AQ_API_CALL_SAFE(set_ingress_preclass_record, hw, rec,
 				   table_index);
 
 	WARN_ONCE(err, "%s failed with %d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-get_ingress_preclass_record(struct aq_hw_s *hw,
-			    struct aq_mss_ingress_preclass_record *rec,
+अटल पूर्णांक
+get_ingress_preclass_record(काष्ठा aq_hw_s *hw,
+			    काष्ठा aq_mss_ingress_preclass_record *rec,
 			    u16 table_index)
-{
+अणु
 	u16 packed_record[20];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_INGRESSPRECLASSRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPRECLASSRECORD)
+		वापस -EINVAL;
 
-	/* If the row that we want to read is odd, first read the previous even
-	 * row, throw that value away, and finally read the desired row.
+	/* If the row that we want to पढ़ो is odd, first पढ़ो the previous even
+	 * row, throw that value away, and finally पढ़ो the desired row.
 	 */
-	if ((table_index % 2) > 0) {
+	अगर ((table_index % 2) > 0) अणु
 		ret = get_raw_ingress_record(hw, packed_record, 20, 1,
 					     ROWOFFSET_INGRESSPRECLASSRECORD +
 						     table_index - 1);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
 	ret = get_raw_ingress_record(hw, packed_record, 20, 1,
 				     ROWOFFSET_INGRESSPRECLASSRECORD +
 					     table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->sci[0] = packed_record[0];
 	rec->sci[0] |= packed_record[1] << 16;
@@ -542,43 +543,43 @@ get_ingress_preclass_record(struct aq_hw_s *hw,
 
 	rec->valid = (packed_record[19] >> 7) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_preclass_record(struct aq_hw_s *hw,
-	struct aq_mss_ingress_preclass_record *rec,
+पूर्णांक aq_mss_get_ingress_preclass_record(काष्ठा aq_hw_s *hw,
+	काष्ठा aq_mss_ingress_preclass_record *rec,
 	u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_ingress_preclass_record, hw, rec,
+	वापस AQ_API_CALL_SAFE(get_ingress_preclass_record, hw, rec,
 				table_index);
-}
+पूर्ण
 
-static int set_ingress_sc_record(struct aq_hw_s *hw,
-				 const struct aq_mss_ingress_sc_record *rec,
+अटल पूर्णांक set_ingress_sc_record(काष्ठा aq_hw_s *hw,
+				 स्थिर काष्ठा aq_mss_ingress_sc_record *rec,
 				 u16 table_index)
-{
+अणु
 	u16 packed_record[8];
 
-	if (table_index >= NUMROWS_INGRESSSCRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSSCRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 8);
+	स_रखो(packed_record, 0, माप(u16) * 8);
 
-	packed_record[0] = rec->stop_time & 0xFFFF;
-	packed_record[1] = (rec->stop_time >> 16) & 0xFFFF;
+	packed_record[0] = rec->stop_समय & 0xFFFF;
+	packed_record[1] = (rec->stop_समय >> 16) & 0xFFFF;
 
-	packed_record[2] = rec->start_time & 0xFFFF;
-	packed_record[3] = (rec->start_time >> 16) & 0xFFFF;
+	packed_record[2] = rec->start_समय & 0xFFFF;
+	packed_record[3] = (rec->start_समय >> 16) & 0xFFFF;
 
 	packed_record[4] = rec->validate_frames & 0x3;
 
 	packed_record[4] |= (rec->replay_protect & 0x1) << 2;
 
-	packed_record[4] |= (rec->anti_replay_window & 0x1FFF) << 3;
-	packed_record[5] = (rec->anti_replay_window >> 13) & 0xFFFF;
-	packed_record[6] = (rec->anti_replay_window >> 29) & 0x7;
+	packed_record[4] |= (rec->anti_replay_winकरोw & 0x1FFF) << 3;
+	packed_record[5] = (rec->anti_replay_winकरोw >> 13) & 0xFFFF;
+	packed_record[6] = (rec->anti_replay_winकरोw >> 29) & 0x7;
 
 	packed_record[6] |= (rec->receiving & 0x1) << 3;
 
@@ -591,49 +592,49 @@ static int set_ingress_sc_record(struct aq_hw_s *hw,
 
 	packed_record[7] |= (rec->valid & 0x1) << 15;
 
-	return set_raw_ingress_record(hw, packed_record, 8, 3,
+	वापस set_raw_ingress_record(hw, packed_record, 8, 3,
 				      ROWOFFSET_INGRESSSCRECORD + table_index);
-}
+पूर्ण
 
-int aq_mss_set_ingress_sc_record(struct aq_hw_s *hw,
-				 const struct aq_mss_ingress_sc_record *rec,
+पूर्णांक aq_mss_set_ingress_sc_record(काष्ठा aq_hw_s *hw,
+				 स्थिर काष्ठा aq_mss_ingress_sc_record *rec,
 				 u16 table_index)
-{
-	int err = AQ_API_CALL_SAFE(set_ingress_sc_record, hw, rec, table_index);
+अणु
+	पूर्णांक err = AQ_API_CALL_SAFE(set_ingress_sc_record, hw, rec, table_index);
 
 	WARN_ONCE(err, "%s failed with %d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int get_ingress_sc_record(struct aq_hw_s *hw,
-				 struct aq_mss_ingress_sc_record *rec,
+अटल पूर्णांक get_ingress_sc_record(काष्ठा aq_hw_s *hw,
+				 काष्ठा aq_mss_ingress_sc_record *rec,
 				 u16 table_index)
-{
+अणु
 	u16 packed_record[8];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_INGRESSSCRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSSCRECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_ingress_record(hw, packed_record, 8, 3,
 				     ROWOFFSET_INGRESSSCRECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	rec->stop_time = packed_record[0];
-	rec->stop_time |= packed_record[1] << 16;
+	rec->stop_समय = packed_record[0];
+	rec->stop_समय |= packed_record[1] << 16;
 
-	rec->start_time = packed_record[2];
-	rec->start_time |= packed_record[3] << 16;
+	rec->start_समय = packed_record[2];
+	rec->start_समय |= packed_record[3] << 16;
 
 	rec->validate_frames = packed_record[4] & 0x3;
 
 	rec->replay_protect = (packed_record[4] >> 2) & 0x1;
 
-	rec->anti_replay_window = (packed_record[4] >> 3) & 0x1FFF;
-	rec->anti_replay_window |= packed_record[5] << 13;
-	rec->anti_replay_window |= (packed_record[6] & 0x7) << 29;
+	rec->anti_replay_winकरोw = (packed_record[4] >> 3) & 0x1FFF;
+	rec->anti_replay_winकरोw |= packed_record[5] << 13;
+	rec->anti_replay_winकरोw |= (packed_record[6] & 0x7) << 29;
 
 	rec->receiving = (packed_record[6] >> 3) & 0x1;
 
@@ -646,34 +647,34 @@ static int get_ingress_sc_record(struct aq_hw_s *hw,
 
 	rec->valid = (packed_record[7] >> 15) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_sc_record(struct aq_hw_s *hw,
-				 struct aq_mss_ingress_sc_record *rec,
+पूर्णांक aq_mss_get_ingress_sc_record(काष्ठा aq_hw_s *hw,
+				 काष्ठा aq_mss_ingress_sc_record *rec,
 				 u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_ingress_sc_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_ingress_sc_record, hw, rec, table_index);
+पूर्ण
 
-static int set_ingress_sa_record(struct aq_hw_s *hw,
-				 const struct aq_mss_ingress_sa_record *rec,
+अटल पूर्णांक set_ingress_sa_record(काष्ठा aq_hw_s *hw,
+				 स्थिर काष्ठा aq_mss_ingress_sa_record *rec,
 				 u16 table_index)
-{
+अणु
 	u16 packed_record[8];
 
-	if (table_index >= NUMROWS_INGRESSSARECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSSARECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 8);
+	स_रखो(packed_record, 0, माप(u16) * 8);
 
-	packed_record[0] = rec->stop_time & 0xFFFF;
-	packed_record[1] = (rec->stop_time >> 16) & 0xFFFF;
+	packed_record[0] = rec->stop_समय & 0xFFFF;
+	packed_record[1] = (rec->stop_समय >> 16) & 0xFFFF;
 
-	packed_record[2] = rec->start_time & 0xFFFF;
-	packed_record[3] = (rec->start_time >> 16) & 0xFFFF;
+	packed_record[2] = rec->start_समय & 0xFFFF;
+	packed_record[3] = (rec->start_समय >> 16) & 0xFFFF;
 
 	packed_record[4] = rec->next_pn & 0xFFFF;
 	packed_record[5] = (rec->next_pn >> 16) & 0xFFFF;
@@ -689,41 +690,41 @@ static int set_ingress_sa_record(struct aq_hw_s *hw,
 
 	packed_record[7] |= (rec->valid & 0x1) << 15;
 
-	return set_raw_ingress_record(hw, packed_record, 8, 3,
+	वापस set_raw_ingress_record(hw, packed_record, 8, 3,
 				      ROWOFFSET_INGRESSSARECORD + table_index);
-}
+पूर्ण
 
-int aq_mss_set_ingress_sa_record(struct aq_hw_s *hw,
-				 const struct aq_mss_ingress_sa_record *rec,
+पूर्णांक aq_mss_set_ingress_sa_record(काष्ठा aq_hw_s *hw,
+				 स्थिर काष्ठा aq_mss_ingress_sa_record *rec,
 				 u16 table_index)
-{
-	int err = AQ_API_CALL_SAFE(set_ingress_sa_record, hw, rec, table_index);
+अणु
+	पूर्णांक err = AQ_API_CALL_SAFE(set_ingress_sa_record, hw, rec, table_index);
 
 	WARN_ONCE(err, "%s failed with %d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int get_ingress_sa_record(struct aq_hw_s *hw,
-				 struct aq_mss_ingress_sa_record *rec,
+अटल पूर्णांक get_ingress_sa_record(काष्ठा aq_hw_s *hw,
+				 काष्ठा aq_mss_ingress_sa_record *rec,
 				 u16 table_index)
-{
+अणु
 	u16 packed_record[8];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_INGRESSSARECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSSARECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_ingress_record(hw, packed_record, 8, 3,
 				     ROWOFFSET_INGRESSSARECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	rec->stop_time = packed_record[0];
-	rec->stop_time |= packed_record[1] << 16;
+	rec->stop_समय = packed_record[0];
+	rec->stop_समय |= packed_record[1] << 16;
 
-	rec->start_time = packed_record[2];
-	rec->start_time |= packed_record[3] << 16;
+	rec->start_समय = packed_record[2];
+	rec->start_समय |= packed_record[3] << 16;
 
 	rec->next_pn = packed_record[4];
 	rec->next_pn |= packed_record[5] << 16;
@@ -739,29 +740,29 @@ static int get_ingress_sa_record(struct aq_hw_s *hw,
 
 	rec->valid = (packed_record[7] >> 15) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_sa_record(struct aq_hw_s *hw,
-				 struct aq_mss_ingress_sa_record *rec,
+पूर्णांक aq_mss_get_ingress_sa_record(काष्ठा aq_hw_s *hw,
+				 काष्ठा aq_mss_ingress_sa_record *rec,
 				 u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_ingress_sa_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_ingress_sa_record, hw, rec, table_index);
+पूर्ण
 
-static int
-set_ingress_sakey_record(struct aq_hw_s *hw,
-			 const struct aq_mss_ingress_sakey_record *rec,
+अटल पूर्णांक
+set_ingress_sakey_record(काष्ठा aq_hw_s *hw,
+			 स्थिर काष्ठा aq_mss_ingress_sakey_record *rec,
 			 u16 table_index)
-{
+अणु
 	u16 packed_record[18];
 
-	if (table_index >= NUMROWS_INGRESSSAKEYRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSSAKEYRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 18);
+	स_रखो(packed_record, 0, माप(u16) * 18);
 
 	packed_record[0] = rec->key[0] & 0xFFFF;
 	packed_record[1] = (rec->key[0] >> 16) & 0xFFFF;
@@ -789,38 +790,38 @@ set_ingress_sakey_record(struct aq_hw_s *hw,
 
 	packed_record[16] = rec->key_len & 0x3;
 
-	return set_raw_ingress_record(hw, packed_record, 18, 2,
+	वापस set_raw_ingress_record(hw, packed_record, 18, 2,
 				      ROWOFFSET_INGRESSSAKEYRECORD +
 					      table_index);
-}
+पूर्ण
 
-int aq_mss_set_ingress_sakey_record(struct aq_hw_s *hw,
-	const struct aq_mss_ingress_sakey_record *rec,
+पूर्णांक aq_mss_set_ingress_sakey_record(काष्ठा aq_hw_s *hw,
+	स्थिर काष्ठा aq_mss_ingress_sakey_record *rec,
 	u16 table_index)
-{
-	int err = AQ_API_CALL_SAFE(set_ingress_sakey_record, hw, rec,
+अणु
+	पूर्णांक err = AQ_API_CALL_SAFE(set_ingress_sakey_record, hw, rec,
 				   table_index);
 
 	WARN_ONCE(err, "%s failed with %d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int get_ingress_sakey_record(struct aq_hw_s *hw,
-				    struct aq_mss_ingress_sakey_record *rec,
+अटल पूर्णांक get_ingress_sakey_record(काष्ठा aq_hw_s *hw,
+				    काष्ठा aq_mss_ingress_sakey_record *rec,
 				    u16 table_index)
-{
+अणु
 	u16 packed_record[18];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_INGRESSSAKEYRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSSAKEYRECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_ingress_record(hw, packed_record, 18, 2,
 				     ROWOFFSET_INGRESSSAKEYRECORD +
 					     table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->key[0] = packed_record[0];
 	rec->key[0] |= packed_record[1] << 16;
@@ -848,29 +849,29 @@ static int get_ingress_sakey_record(struct aq_hw_s *hw,
 
 	rec->key_len = packed_record[16] & 0x3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_sakey_record(struct aq_hw_s *hw,
-				    struct aq_mss_ingress_sakey_record *rec,
+पूर्णांक aq_mss_get_ingress_sakey_record(काष्ठा aq_hw_s *hw,
+				    काष्ठा aq_mss_ingress_sakey_record *rec,
 				    u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_ingress_sakey_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_ingress_sakey_record, hw, rec, table_index);
+पूर्ण
 
-static int
-set_ingress_postclass_record(struct aq_hw_s *hw,
-			     const struct aq_mss_ingress_postclass_record *rec,
+अटल पूर्णांक
+set_ingress_postclass_record(काष्ठा aq_hw_s *hw,
+			     स्थिर काष्ठा aq_mss_ingress_postclass_record *rec,
 			     u16 table_index)
-{
+अणु
 	u16 packed_record[8];
 
-	if (table_index >= NUMROWS_INGRESSPOSTCLASSRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPOSTCLASSRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 8);
+	स_रखो(packed_record, 0, माप(u16) * 8);
 
 	packed_record[0] = rec->byte0 & 0xFF;
 
@@ -935,46 +936,46 @@ set_ingress_postclass_record(struct aq_hw_s *hw,
 
 	packed_record[7] |= (rec->valid & 0x1) << 15;
 
-	return set_raw_ingress_record(hw, packed_record, 8, 4,
+	वापस set_raw_ingress_record(hw, packed_record, 8, 4,
 				      ROWOFFSET_INGRESSPOSTCLASSRECORD +
 					      table_index);
-}
+पूर्ण
 
-int aq_mss_set_ingress_postclass_record(struct aq_hw_s *hw,
-	const struct aq_mss_ingress_postclass_record *rec,
+पूर्णांक aq_mss_set_ingress_postclass_record(काष्ठा aq_hw_s *hw,
+	स्थिर काष्ठा aq_mss_ingress_postclass_record *rec,
 	u16 table_index)
-{
-	return AQ_API_CALL_SAFE(set_ingress_postclass_record, hw, rec,
+अणु
+	वापस AQ_API_CALL_SAFE(set_ingress_postclass_record, hw, rec,
 				table_index);
-}
+पूर्ण
 
-static int
-get_ingress_postclass_record(struct aq_hw_s *hw,
-			     struct aq_mss_ingress_postclass_record *rec,
+अटल पूर्णांक
+get_ingress_postclass_record(काष्ठा aq_hw_s *hw,
+			     काष्ठा aq_mss_ingress_postclass_record *rec,
 			     u16 table_index)
-{
+अणु
 	u16 packed_record[8];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_INGRESSPOSTCLASSRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPOSTCLASSRECORD)
+		वापस -EINVAL;
 
-	/* If the row that we want to read is odd, first read the previous even
-	 * row, throw that value away, and finally read the desired row.
+	/* If the row that we want to पढ़ो is odd, first पढ़ो the previous even
+	 * row, throw that value away, and finally पढ़ो the desired row.
 	 */
-	if ((table_index % 2) > 0) {
+	अगर ((table_index % 2) > 0) अणु
 		ret = get_raw_ingress_record(hw, packed_record, 8, 4,
 					     ROWOFFSET_INGRESSPOSTCLASSRECORD +
 						     table_index - 1);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
 	ret = get_raw_ingress_record(hw, packed_record, 8, 4,
 				     ROWOFFSET_INGRESSPOSTCLASSRECORD +
 					     table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->byte0 = packed_record[0] & 0xFF;
 
@@ -1039,30 +1040,30 @@ get_ingress_postclass_record(struct aq_hw_s *hw,
 
 	rec->valid = (packed_record[7] >> 15) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_postclass_record(struct aq_hw_s *hw,
-	struct aq_mss_ingress_postclass_record *rec,
+पूर्णांक aq_mss_get_ingress_postclass_record(काष्ठा aq_hw_s *hw,
+	काष्ठा aq_mss_ingress_postclass_record *rec,
 	u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_ingress_postclass_record, hw, rec,
+	वापस AQ_API_CALL_SAFE(get_ingress_postclass_record, hw, rec,
 				table_index);
-}
+पूर्ण
 
-static int
-set_ingress_postctlf_record(struct aq_hw_s *hw,
-			    const struct aq_mss_ingress_postctlf_record *rec,
+अटल पूर्णांक
+set_ingress_postctlf_record(काष्ठा aq_hw_s *hw,
+			    स्थिर काष्ठा aq_mss_ingress_postctlf_record *rec,
 			    u16 table_index)
-{
+अणु
 	u16 packed_record[6];
 
-	if (table_index >= NUMROWS_INGRESSPOSTCTLFRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPOSTCTLFRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 6);
+	स_रखो(packed_record, 0, माप(u16) * 6);
 
 	packed_record[0] = rec->sa_da[0] & 0xFFFF;
 	packed_record[1] = (rec->sa_da[0] >> 16) & 0xFFFF;
@@ -1077,46 +1078,46 @@ set_ingress_postctlf_record(struct aq_hw_s *hw,
 
 	packed_record[5] |= (rec->action & 0x1) << 4;
 
-	return set_raw_ingress_record(hw, packed_record, 6, 5,
+	वापस set_raw_ingress_record(hw, packed_record, 6, 5,
 				      ROWOFFSET_INGRESSPOSTCTLFRECORD +
 					      table_index);
-}
+पूर्ण
 
-int aq_mss_set_ingress_postctlf_record(struct aq_hw_s *hw,
-	const struct aq_mss_ingress_postctlf_record *rec,
+पूर्णांक aq_mss_set_ingress_postctlf_record(काष्ठा aq_hw_s *hw,
+	स्थिर काष्ठा aq_mss_ingress_postctlf_record *rec,
 	u16 table_index)
-{
-	return AQ_API_CALL_SAFE(set_ingress_postctlf_record, hw, rec,
+अणु
+	वापस AQ_API_CALL_SAFE(set_ingress_postctlf_record, hw, rec,
 				table_index);
-}
+पूर्ण
 
-static int
-get_ingress_postctlf_record(struct aq_hw_s *hw,
-			    struct aq_mss_ingress_postctlf_record *rec,
+अटल पूर्णांक
+get_ingress_postctlf_record(काष्ठा aq_hw_s *hw,
+			    काष्ठा aq_mss_ingress_postctlf_record *rec,
 			    u16 table_index)
-{
+अणु
 	u16 packed_record[6];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_INGRESSPOSTCTLFRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_INGRESSPOSTCTLFRECORD)
+		वापस -EINVAL;
 
-	/* If the row that we want to read is odd, first read the previous even
-	 * row, throw that value away, and finally read the desired row.
+	/* If the row that we want to पढ़ो is odd, first पढ़ो the previous even
+	 * row, throw that value away, and finally पढ़ो the desired row.
 	 */
-	if ((table_index % 2) > 0) {
+	अगर ((table_index % 2) > 0) अणु
 		ret = get_raw_ingress_record(hw, packed_record, 6, 5,
 					     ROWOFFSET_INGRESSPOSTCTLFRECORD +
 						     table_index - 1);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
 	ret = get_raw_ingress_record(hw, packed_record, 6, 5,
 				     ROWOFFSET_INGRESSPOSTCTLFRECORD +
 					     table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->sa_da[0] = packed_record[0];
 	rec->sa_da[0] |= packed_record[1] << 16;
@@ -1131,29 +1132,29 @@ get_ingress_postctlf_record(struct aq_hw_s *hw,
 
 	rec->action = (packed_record[5] >> 4) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_postctlf_record(struct aq_hw_s *hw,
-	struct aq_mss_ingress_postctlf_record *rec,
+पूर्णांक aq_mss_get_ingress_postctlf_record(काष्ठा aq_hw_s *hw,
+	काष्ठा aq_mss_ingress_postctlf_record *rec,
 	u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_ingress_postctlf_record, hw, rec,
+	वापस AQ_API_CALL_SAFE(get_ingress_postctlf_record, hw, rec,
 				table_index);
-}
+पूर्ण
 
-static int set_egress_ctlf_record(struct aq_hw_s *hw,
-				  const struct aq_mss_egress_ctlf_record *rec,
+अटल पूर्णांक set_egress_ctlf_record(काष्ठा aq_hw_s *hw,
+				  स्थिर काष्ठा aq_mss_egress_ctlf_record *rec,
 				  u16 table_index)
-{
+अणु
 	u16 packed_record[6];
 
-	if (table_index >= NUMROWS_EGRESSCTLFRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSCTLFRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 6);
+	स_रखो(packed_record, 0, माप(u16) * 6);
 
 	packed_record[0] = rec->sa_da[0] & 0xFFFF;
 	packed_record[1] = (rec->sa_da[0] >> 16) & 0xFFFF;
@@ -1168,42 +1169,42 @@ static int set_egress_ctlf_record(struct aq_hw_s *hw,
 
 	packed_record[5] |= (rec->action & 0x1) << 4;
 
-	return set_raw_egress_record(hw, packed_record, 6, 0,
+	वापस set_raw_egress_record(hw, packed_record, 6, 0,
 				     ROWOFFSET_EGRESSCTLFRECORD + table_index);
-}
+पूर्ण
 
-int aq_mss_set_egress_ctlf_record(struct aq_hw_s *hw,
-				  const struct aq_mss_egress_ctlf_record *rec,
+पूर्णांक aq_mss_set_egress_ctlf_record(काष्ठा aq_hw_s *hw,
+				  स्थिर काष्ठा aq_mss_egress_ctlf_record *rec,
 				  u16 table_index)
-{
-	return AQ_API_CALL_SAFE(set_egress_ctlf_record, hw, rec, table_index);
-}
+अणु
+	वापस AQ_API_CALL_SAFE(set_egress_ctlf_record, hw, rec, table_index);
+पूर्ण
 
-static int get_egress_ctlf_record(struct aq_hw_s *hw,
-				  struct aq_mss_egress_ctlf_record *rec,
+अटल पूर्णांक get_egress_ctlf_record(काष्ठा aq_hw_s *hw,
+				  काष्ठा aq_mss_egress_ctlf_record *rec,
 				  u16 table_index)
-{
+अणु
 	u16 packed_record[6];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_EGRESSCTLFRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSCTLFRECORD)
+		वापस -EINVAL;
 
-	/* If the row that we want to read is odd, first read the previous even
-	 * row, throw that value away, and finally read the desired row.
+	/* If the row that we want to पढ़ो is odd, first पढ़ो the previous even
+	 * row, throw that value away, and finally पढ़ो the desired row.
 	 */
-	if ((table_index % 2) > 0) {
+	अगर ((table_index % 2) > 0) अणु
 		ret = get_raw_egress_record(hw, packed_record, 6, 0,
 					    ROWOFFSET_EGRESSCTLFRECORD +
 						    table_index - 1);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
 	ret = get_raw_egress_record(hw, packed_record, 6, 0,
 				    ROWOFFSET_EGRESSCTLFRECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->sa_da[0] = packed_record[0];
 	rec->sa_da[0] |= packed_record[1] << 16;
@@ -1218,28 +1219,28 @@ static int get_egress_ctlf_record(struct aq_hw_s *hw,
 
 	rec->action = (packed_record[5] >> 4) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_ctlf_record(struct aq_hw_s *hw,
-				  struct aq_mss_egress_ctlf_record *rec,
+पूर्णांक aq_mss_get_egress_ctlf_record(काष्ठा aq_hw_s *hw,
+				  काष्ठा aq_mss_egress_ctlf_record *rec,
 				  u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_egress_ctlf_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_ctlf_record, hw, rec, table_index);
+पूर्ण
 
-static int set_egress_class_record(struct aq_hw_s *hw,
-				   const struct aq_mss_egress_class_record *rec,
+अटल पूर्णांक set_egress_class_record(काष्ठा aq_hw_s *hw,
+				   स्थिर काष्ठा aq_mss_egress_class_record *rec,
 				   u16 table_index)
-{
+अणु
 	u16 packed_record[28];
 
-	if (table_index >= NUMROWS_EGRESSCLASSRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSCLASSRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 28);
+	स_रखो(packed_record, 0, माप(u16) * 28);
 
 	packed_record[0] = rec->vlan_id & 0xFFF;
 
@@ -1337,7 +1338,7 @@ static int set_egress_class_record(struct aq_hw_s *hw,
 	packed_record[24] |= (rec->pn_mask & 0x3) << 14;
 	packed_record[25] = (rec->pn_mask >> 2) & 0x3;
 
-	packed_record[25] |= (rec->eight02dot2 & 0x1) << 2;
+	packed_record[25] |= (rec->eight02करोt2 & 0x1) << 2;
 
 	packed_record[25] |= (rec->tci_sc & 0x1) << 3;
 
@@ -1355,42 +1356,42 @@ static int set_egress_class_record(struct aq_hw_s *hw,
 
 	packed_record[26] = (rec->valid & 0x1) << 3;
 
-	return set_raw_egress_record(hw, packed_record, 28, 1,
+	वापस set_raw_egress_record(hw, packed_record, 28, 1,
 				     ROWOFFSET_EGRESSCLASSRECORD + table_index);
-}
+पूर्ण
 
-int aq_mss_set_egress_class_record(struct aq_hw_s *hw,
-				   const struct aq_mss_egress_class_record *rec,
+पूर्णांक aq_mss_set_egress_class_record(काष्ठा aq_hw_s *hw,
+				   स्थिर काष्ठा aq_mss_egress_class_record *rec,
 				   u16 table_index)
-{
-	return AQ_API_CALL_SAFE(set_egress_class_record, hw, rec, table_index);
-}
+अणु
+	वापस AQ_API_CALL_SAFE(set_egress_class_record, hw, rec, table_index);
+पूर्ण
 
-static int get_egress_class_record(struct aq_hw_s *hw,
-				   struct aq_mss_egress_class_record *rec,
+अटल पूर्णांक get_egress_class_record(काष्ठा aq_hw_s *hw,
+				   काष्ठा aq_mss_egress_class_record *rec,
 				   u16 table_index)
-{
+अणु
 	u16 packed_record[28];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_EGRESSCLASSRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSCLASSRECORD)
+		वापस -EINVAL;
 
-	/* If the row that we want to read is odd, first read the previous even
-	 * row, throw that value away, and finally read the desired row.
+	/* If the row that we want to पढ़ो is odd, first पढ़ो the previous even
+	 * row, throw that value away, and finally पढ़ो the desired row.
 	 */
-	if ((table_index % 2) > 0) {
+	अगर ((table_index % 2) > 0) अणु
 		ret = get_raw_egress_record(hw, packed_record, 28, 1,
 					    ROWOFFSET_EGRESSCLASSRECORD +
 						    table_index - 1);
-		if (unlikely(ret))
-			return ret;
-	}
+		अगर (unlikely(ret))
+			वापस ret;
+	पूर्ण
 
 	ret = get_raw_egress_record(hw, packed_record, 28, 1,
 				    ROWOFFSET_EGRESSCLASSRECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->vlan_id = packed_record[0] & 0xFFF;
 
@@ -1488,7 +1489,7 @@ static int get_egress_class_record(struct aq_hw_s *hw,
 	rec->pn_mask = (packed_record[24] >> 14) & 0x3;
 	rec->pn_mask |= (packed_record[25] & 0x3) << 2;
 
-	rec->eight02dot2 = (packed_record[25] >> 2) & 0x1;
+	rec->eight02करोt2 = (packed_record[25] >> 2) & 0x1;
 
 	rec->tci_sc = (packed_record[25] >> 3) & 0x1;
 
@@ -1506,34 +1507,34 @@ static int get_egress_class_record(struct aq_hw_s *hw,
 
 	rec->valid = (packed_record[26] >> 3) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_class_record(struct aq_hw_s *hw,
-				   struct aq_mss_egress_class_record *rec,
+पूर्णांक aq_mss_get_egress_class_record(काष्ठा aq_hw_s *hw,
+				   काष्ठा aq_mss_egress_class_record *rec,
 				   u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_egress_class_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_class_record, hw, rec, table_index);
+पूर्ण
 
-static int set_egress_sc_record(struct aq_hw_s *hw,
-				const struct aq_mss_egress_sc_record *rec,
+अटल पूर्णांक set_egress_sc_record(काष्ठा aq_hw_s *hw,
+				स्थिर काष्ठा aq_mss_egress_sc_record *rec,
 				u16 table_index)
-{
+अणु
 	u16 packed_record[8];
 
-	if (table_index >= NUMROWS_EGRESSSCRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSSCRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 8);
+	स_रखो(packed_record, 0, माप(u16) * 8);
 
-	packed_record[0] = rec->start_time & 0xFFFF;
-	packed_record[1] = (rec->start_time >> 16) & 0xFFFF;
+	packed_record[0] = rec->start_समय & 0xFFFF;
+	packed_record[1] = (rec->start_समय >> 16) & 0xFFFF;
 
-	packed_record[2] = rec->stop_time & 0xFFFF;
-	packed_record[3] = (rec->stop_time >> 16) & 0xFFFF;
+	packed_record[2] = rec->stop_समय & 0xFFFF;
+	packed_record[3] = (rec->stop_समय >> 16) & 0xFFFF;
 
 	packed_record[4] = rec->curr_an & 0x3;
 
@@ -1554,37 +1555,37 @@ static int set_egress_sc_record(struct aq_hw_s *hw,
 
 	packed_record[7] = (rec->valid & 0x1) << 15;
 
-	return set_raw_egress_record(hw, packed_record, 8, 2,
+	वापस set_raw_egress_record(hw, packed_record, 8, 2,
 				     ROWOFFSET_EGRESSSCRECORD + table_index);
-}
+पूर्ण
 
-int aq_mss_set_egress_sc_record(struct aq_hw_s *hw,
-				const struct aq_mss_egress_sc_record *rec,
+पूर्णांक aq_mss_set_egress_sc_record(काष्ठा aq_hw_s *hw,
+				स्थिर काष्ठा aq_mss_egress_sc_record *rec,
 				u16 table_index)
-{
-	return AQ_API_CALL_SAFE(set_egress_sc_record, hw, rec, table_index);
-}
+अणु
+	वापस AQ_API_CALL_SAFE(set_egress_sc_record, hw, rec, table_index);
+पूर्ण
 
-static int get_egress_sc_record(struct aq_hw_s *hw,
-				struct aq_mss_egress_sc_record *rec,
+अटल पूर्णांक get_egress_sc_record(काष्ठा aq_hw_s *hw,
+				काष्ठा aq_mss_egress_sc_record *rec,
 				u16 table_index)
-{
+अणु
 	u16 packed_record[8];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_EGRESSSCRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSSCRECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_egress_record(hw, packed_record, 8, 2,
 				    ROWOFFSET_EGRESSSCRECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	rec->start_time = packed_record[0];
-	rec->start_time |= packed_record[1] << 16;
+	rec->start_समय = packed_record[0];
+	rec->start_समय |= packed_record[1] << 16;
 
-	rec->stop_time = packed_record[2];
-	rec->stop_time |= packed_record[3] << 16;
+	rec->stop_समय = packed_record[2];
+	rec->stop_समय |= packed_record[3] << 16;
 
 	rec->curr_an = packed_record[4] & 0x3;
 
@@ -1605,34 +1606,34 @@ static int get_egress_sc_record(struct aq_hw_s *hw,
 
 	rec->valid = (packed_record[7] >> 15) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_sc_record(struct aq_hw_s *hw,
-				struct aq_mss_egress_sc_record *rec,
+पूर्णांक aq_mss_get_egress_sc_record(काष्ठा aq_hw_s *hw,
+				काष्ठा aq_mss_egress_sc_record *rec,
 				u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_egress_sc_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_sc_record, hw, rec, table_index);
+पूर्ण
 
-static int set_egress_sa_record(struct aq_hw_s *hw,
-				const struct aq_mss_egress_sa_record *rec,
+अटल पूर्णांक set_egress_sa_record(काष्ठा aq_hw_s *hw,
+				स्थिर काष्ठा aq_mss_egress_sa_record *rec,
 				u16 table_index)
-{
+अणु
 	u16 packed_record[8];
 
-	if (table_index >= NUMROWS_EGRESSSARECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSSARECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 8);
+	स_रखो(packed_record, 0, माप(u16) * 8);
 
-	packed_record[0] = rec->start_time & 0xFFFF;
-	packed_record[1] = (rec->start_time >> 16) & 0xFFFF;
+	packed_record[0] = rec->start_समय & 0xFFFF;
+	packed_record[1] = (rec->start_समय >> 16) & 0xFFFF;
 
-	packed_record[2] = rec->stop_time & 0xFFFF;
-	packed_record[3] = (rec->stop_time >> 16) & 0xFFFF;
+	packed_record[2] = rec->stop_समय & 0xFFFF;
+	packed_record[3] = (rec->stop_समय >> 16) & 0xFFFF;
 
 	packed_record[4] = rec->next_pn & 0xFFFF;
 	packed_record[5] = (rec->next_pn >> 16) & 0xFFFF;
@@ -1643,41 +1644,41 @@ static int set_egress_sa_record(struct aq_hw_s *hw,
 
 	packed_record[7] = (rec->valid & 0x1) << 15;
 
-	return set_raw_egress_record(hw, packed_record, 8, 2,
+	वापस set_raw_egress_record(hw, packed_record, 8, 2,
 				     ROWOFFSET_EGRESSSARECORD + table_index);
-}
+पूर्ण
 
-int aq_mss_set_egress_sa_record(struct aq_hw_s *hw,
-				const struct aq_mss_egress_sa_record *rec,
+पूर्णांक aq_mss_set_egress_sa_record(काष्ठा aq_hw_s *hw,
+				स्थिर काष्ठा aq_mss_egress_sa_record *rec,
 				u16 table_index)
-{
-	int err = AQ_API_CALL_SAFE(set_egress_sa_record, hw, rec, table_index);
+अणु
+	पूर्णांक err = AQ_API_CALL_SAFE(set_egress_sa_record, hw, rec, table_index);
 
 	WARN_ONCE(err, "%s failed with %d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int get_egress_sa_record(struct aq_hw_s *hw,
-				struct aq_mss_egress_sa_record *rec,
+अटल पूर्णांक get_egress_sa_record(काष्ठा aq_hw_s *hw,
+				काष्ठा aq_mss_egress_sa_record *rec,
 				u16 table_index)
-{
+अणु
 	u16 packed_record[8];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_EGRESSSARECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSSARECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_egress_record(hw, packed_record, 8, 2,
 				    ROWOFFSET_EGRESSSARECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	rec->start_time = packed_record[0];
-	rec->start_time |= packed_record[1] << 16;
+	rec->start_समय = packed_record[0];
+	rec->start_समय |= packed_record[1] << 16;
 
-	rec->stop_time = packed_record[2];
-	rec->stop_time |= packed_record[3] << 16;
+	rec->stop_समय = packed_record[2];
+	rec->stop_समय |= packed_record[3] << 16;
 
 	rec->next_pn = packed_record[4];
 	rec->next_pn |= packed_record[5] << 16;
@@ -1688,29 +1689,29 @@ static int get_egress_sa_record(struct aq_hw_s *hw,
 
 	rec->valid = (packed_record[7] >> 15) & 0x1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_sa_record(struct aq_hw_s *hw,
-				struct aq_mss_egress_sa_record *rec,
+पूर्णांक aq_mss_get_egress_sa_record(काष्ठा aq_hw_s *hw,
+				काष्ठा aq_mss_egress_sa_record *rec,
 				u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_egress_sa_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_sa_record, hw, rec, table_index);
+पूर्ण
 
-static int set_egress_sakey_record(struct aq_hw_s *hw,
-				   const struct aq_mss_egress_sakey_record *rec,
+अटल पूर्णांक set_egress_sakey_record(काष्ठा aq_hw_s *hw,
+				   स्थिर काष्ठा aq_mss_egress_sakey_record *rec,
 				   u16 table_index)
-{
+अणु
 	u16 packed_record[16];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_EGRESSSAKEYRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSSAKEYRECORD)
+		वापस -EINVAL;
 
-	memset(packed_record, 0, sizeof(u16) * 16);
+	स_रखो(packed_record, 0, माप(u16) * 16);
 
 	packed_record[0] = rec->key[0] & 0xFFFF;
 	packed_record[1] = (rec->key[0] >> 16) & 0xFFFF;
@@ -1738,48 +1739,48 @@ static int set_egress_sakey_record(struct aq_hw_s *hw,
 
 	ret = set_raw_egress_record(hw, packed_record, 8, 2,
 				    ROWOFFSET_EGRESSSAKEYRECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	ret = set_raw_egress_record(hw, packed_record + 8, 8, 2,
 				    ROWOFFSET_EGRESSSAKEYRECORD + table_index -
 					    32);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_set_egress_sakey_record(struct aq_hw_s *hw,
-				   const struct aq_mss_egress_sakey_record *rec,
+पूर्णांक aq_mss_set_egress_sakey_record(काष्ठा aq_hw_s *hw,
+				   स्थिर काष्ठा aq_mss_egress_sakey_record *rec,
 				   u16 table_index)
-{
-	int err = AQ_API_CALL_SAFE(set_egress_sakey_record, hw, rec,
+अणु
+	पूर्णांक err = AQ_API_CALL_SAFE(set_egress_sakey_record, hw, rec,
 				   table_index);
 
 	WARN_ONCE(err, "%s failed with %d\n", __func__, err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int get_egress_sakey_record(struct aq_hw_s *hw,
-				   struct aq_mss_egress_sakey_record *rec,
+अटल पूर्णांक get_egress_sakey_record(काष्ठा aq_hw_s *hw,
+				   काष्ठा aq_mss_egress_sakey_record *rec,
 				   u16 table_index)
-{
+अणु
 	u16 packed_record[16];
-	int ret;
+	पूर्णांक ret;
 
-	if (table_index >= NUMROWS_EGRESSSAKEYRECORD)
-		return -EINVAL;
+	अगर (table_index >= NUMROWS_EGRESSSAKEYRECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_egress_record(hw, packed_record, 8, 2,
 				    ROWOFFSET_EGRESSSAKEYRECORD + table_index);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	ret = get_raw_egress_record(hw, packed_record + 8, 8, 2,
 				    ROWOFFSET_EGRESSSAKEYRECORD + table_index -
 					    32);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	rec->key[0] = packed_record[0];
 	rec->key[0] |= packed_record[1] << 16;
@@ -1805,261 +1806,261 @@ static int get_egress_sakey_record(struct aq_hw_s *hw,
 	rec->key[7] = packed_record[14];
 	rec->key[7] |= packed_record[15] << 16;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_sakey_record(struct aq_hw_s *hw,
-				   struct aq_mss_egress_sakey_record *rec,
+पूर्णांक aq_mss_get_egress_sakey_record(काष्ठा aq_hw_s *hw,
+				   काष्ठा aq_mss_egress_sakey_record *rec,
 				   u16 table_index)
-{
-	memset(rec, 0, sizeof(*rec));
+अणु
+	स_रखो(rec, 0, माप(*rec));
 
-	return AQ_API_CALL_SAFE(get_egress_sakey_record, hw, rec, table_index);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_sakey_record, hw, rec, table_index);
+पूर्ण
 
-static int get_egress_sc_counters(struct aq_hw_s *hw,
-				  struct aq_mss_egress_sc_counters *counters,
+अटल पूर्णांक get_egress_sc_counters(काष्ठा aq_hw_s *hw,
+				  काष्ठा aq_mss_egress_sc_counters *counters,
 				  u16 sc_index)
-{
+अणु
 	u16 packed_record[4];
-	int ret;
+	पूर्णांक ret;
 
-	if (sc_index >= NUMROWS_EGRESSSCRECORD)
-		return -EINVAL;
+	अगर (sc_index >= NUMROWS_EGRESSSCRECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sc_index * 8 + 4);
-	if (unlikely(ret))
-		return ret;
-	counters->sc_protected_pkts[0] =
+	अगर (unlikely(ret))
+		वापस ret;
+	counters->sc_रक्षित_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
-	counters->sc_protected_pkts[1] =
+	counters->sc_रक्षित_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sc_index * 8 + 5);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->sc_encrypted_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->sc_encrypted_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sc_index * 8 + 6);
-	if (unlikely(ret))
-		return ret;
-	counters->sc_protected_octets[0] =
+	अगर (unlikely(ret))
+		वापस ret;
+	counters->sc_रक्षित_octets[0] =
 		packed_record[0] | (packed_record[1] << 16);
-	counters->sc_protected_octets[1] =
+	counters->sc_रक्षित_octets[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sc_index * 8 + 7);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->sc_encrypted_octets[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->sc_encrypted_octets[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_sc_counters(struct aq_hw_s *hw,
-				  struct aq_mss_egress_sc_counters *counters,
+पूर्णांक aq_mss_get_egress_sc_counters(काष्ठा aq_hw_s *hw,
+				  काष्ठा aq_mss_egress_sc_counters *counters,
 				  u16 sc_index)
-{
-	memset(counters, 0, sizeof(*counters));
+अणु
+	स_रखो(counters, 0, माप(*counters));
 
-	return AQ_API_CALL_SAFE(get_egress_sc_counters, hw, counters, sc_index);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_sc_counters, hw, counters, sc_index);
+पूर्ण
 
-static int get_egress_sa_counters(struct aq_hw_s *hw,
-				  struct aq_mss_egress_sa_counters *counters,
+अटल पूर्णांक get_egress_sa_counters(काष्ठा aq_hw_s *hw,
+				  काष्ठा aq_mss_egress_sa_counters *counters,
 				  u16 sa_index)
-{
+अणु
 	u16 packed_record[4];
-	int ret;
+	पूर्णांक ret;
 
-	if (sa_index >= NUMROWS_EGRESSSARECORD)
-		return -EINVAL;
+	अगर (sa_index >= NUMROWS_EGRESSSARECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sa_index * 8 + 0);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->sa_hit_drop_redirect[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->sa_hit_drop_redirect[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sa_index * 8 + 1);
-	if (unlikely(ret))
-		return ret;
-	counters->sa_protected2_pkts[0] =
+	अगर (unlikely(ret))
+		वापस ret;
+	counters->sa_रक्षित2_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
-	counters->sa_protected2_pkts[1] =
+	counters->sa_रक्षित2_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sa_index * 8 + 2);
-	if (unlikely(ret))
-		return ret;
-	counters->sa_protected_pkts[0] =
+	अगर (unlikely(ret))
+		वापस ret;
+	counters->sa_रक्षित_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
-	counters->sa_protected_pkts[1] =
+	counters->sa_रक्षित_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, sa_index * 8 + 3);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->sa_encrypted_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->sa_encrypted_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_sa_counters(struct aq_hw_s *hw,
-				  struct aq_mss_egress_sa_counters *counters,
+पूर्णांक aq_mss_get_egress_sa_counters(काष्ठा aq_hw_s *hw,
+				  काष्ठा aq_mss_egress_sa_counters *counters,
 				  u16 sa_index)
-{
-	memset(counters, 0, sizeof(*counters));
+अणु
+	स_रखो(counters, 0, माप(*counters));
 
-	return AQ_API_CALL_SAFE(get_egress_sa_counters, hw, counters, sa_index);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_sa_counters, hw, counters, sa_index);
+पूर्ण
 
-static int
-get_egress_common_counters(struct aq_hw_s *hw,
-			   struct aq_mss_egress_common_counters *counters)
-{
+अटल पूर्णांक
+get_egress_common_counters(काष्ठा aq_hw_s *hw,
+			   काष्ठा aq_mss_egress_common_counters *counters)
+अणु
 	u16 packed_record[4];
-	int ret;
+	पूर्णांक ret;
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, 256 + 0);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ctl_pkt[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->ctl_pkt[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, 256 + 1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unknown_sa_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->unknown_sa_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, 256 + 2);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->untagged_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->untagged_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, 256 + 3);
-	if (unlikely(ret))
-		return ret;
-	counters->too_long[0] = packed_record[0] | (packed_record[1] << 16);
-	counters->too_long[1] = packed_record[2] | (packed_record[3] << 16);
+	अगर (unlikely(ret))
+		वापस ret;
+	counters->too_दीर्घ[0] = packed_record[0] | (packed_record[1] << 16);
+	counters->too_दीर्घ[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, 256 + 4);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ecc_error_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->ecc_error_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_egress_record(hw, packed_record, 4, 3, 256 + 5);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unctrl_hit_drop_redir[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->unctrl_hit_drop_redir[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_common_counters(struct aq_hw_s *hw,
-	struct aq_mss_egress_common_counters *counters)
-{
-	memset(counters, 0, sizeof(*counters));
+पूर्णांक aq_mss_get_egress_common_counters(काष्ठा aq_hw_s *hw,
+	काष्ठा aq_mss_egress_common_counters *counters)
+अणु
+	स_रखो(counters, 0, माप(*counters));
 
-	return AQ_API_CALL_SAFE(get_egress_common_counters, hw, counters);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_common_counters, hw, counters);
+पूर्ण
 
-static int clear_egress_counters(struct aq_hw_s *hw)
-{
-	struct mss_egress_ctl_register ctl_reg;
-	int ret;
+अटल पूर्णांक clear_egress_counters(काष्ठा aq_hw_s *hw)
+अणु
+	काष्ठा mss_egress_ctl_रेजिस्टर ctl_reg;
+	पूर्णांक ret;
 
-	memset(&ctl_reg, 0, sizeof(ctl_reg));
+	स_रखो(&ctl_reg, 0, माप(ctl_reg));
 
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1, MSS_EGRESS_CTL_REGISTER_ADDR,
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1, MSS_EGRESS_CTL_REGISTER_ADDR,
 			       &ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 			       MSS_EGRESS_CTL_REGISTER_ADDR + 4,
 			       &ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	/* Toggle the Egress MIB clear bit 0->1->0 */
 	ctl_reg.bits_0.clear_counter = 0;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_CTL_REGISTER_ADDR, ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_CTL_REGISTER_ADDR + 4,
 				ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	ctl_reg.bits_0.clear_counter = 1;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_CTL_REGISTER_ADDR, ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_CTL_REGISTER_ADDR + 4,
 				ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	ctl_reg.bits_0.clear_counter = 0;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_CTL_REGISTER_ADDR, ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_CTL_REGISTER_ADDR + 4,
 				ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_clear_egress_counters(struct aq_hw_s *hw)
-{
-	return AQ_API_CALL_SAFE(clear_egress_counters, hw);
-}
+पूर्णांक aq_mss_clear_egress_counters(काष्ठा aq_hw_s *hw)
+अणु
+	वापस AQ_API_CALL_SAFE(clear_egress_counters, hw);
+पूर्ण
 
-static int get_ingress_sa_counters(struct aq_hw_s *hw,
-				   struct aq_mss_ingress_sa_counters *counters,
+अटल पूर्णांक get_ingress_sa_counters(काष्ठा aq_hw_s *hw,
+				   काष्ठा aq_mss_ingress_sa_counters *counters,
 				   u16 sa_index)
-{
+अणु
 	u16 packed_record[4];
-	int ret;
+	पूर्णांक ret;
 
-	if (sa_index >= NUMROWS_INGRESSSARECORD)
-		return -EINVAL;
+	अगर (sa_index >= NUMROWS_INGRESSSARECORD)
+		वापस -EINVAL;
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 0);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->untagged_hit_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->untagged_hit_pkts[1] =
@@ -2067,8 +2068,8 @@ static int get_ingress_sa_counters(struct aq_hw_s *hw,
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ctrl_hit_drop_redir_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->ctrl_hit_drop_redir_pkts[1] =
@@ -2076,22 +2077,22 @@ static int get_ingress_sa_counters(struct aq_hw_s *hw,
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 2);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->not_using_sa[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->not_using_sa[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 3);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unused_sa[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->unused_sa[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 4);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->not_valid_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->not_valid_pkts[1] =
@@ -2099,36 +2100,36 @@ static int get_ingress_sa_counters(struct aq_hw_s *hw,
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 5);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->invalid_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->invalid_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 6);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ok_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->ok_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 7);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->late_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->late_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 8);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->delayed_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->delayed_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 9);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unchecked_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->unchecked_pkts[1] =
@@ -2136,8 +2137,8 @@ static int get_ingress_sa_counters(struct aq_hw_s *hw,
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 10);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->validated_octets[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->validated_octets[1] =
@@ -2145,329 +2146,329 @@ static int get_ingress_sa_counters(struct aq_hw_s *hw,
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6,
 				     sa_index * 12 + 11);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->decrypted_octets[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->decrypted_octets[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_sa_counters(struct aq_hw_s *hw,
-				   struct aq_mss_ingress_sa_counters *counters,
+पूर्णांक aq_mss_get_ingress_sa_counters(काष्ठा aq_hw_s *hw,
+				   काष्ठा aq_mss_ingress_sa_counters *counters,
 				   u16 sa_index)
-{
-	memset(counters, 0, sizeof(*counters));
+अणु
+	स_रखो(counters, 0, माप(*counters));
 
-	return AQ_API_CALL_SAFE(get_ingress_sa_counters, hw, counters,
+	वापस AQ_API_CALL_SAFE(get_ingress_sa_counters, hw, counters,
 				sa_index);
-}
+पूर्ण
 
-static int
-get_ingress_common_counters(struct aq_hw_s *hw,
-			    struct aq_mss_ingress_common_counters *counters)
-{
+अटल पूर्णांक
+get_ingress_common_counters(काष्ठा aq_hw_s *hw,
+			    काष्ठा aq_mss_ingress_common_counters *counters)
+अणु
 	u16 packed_record[4];
-	int ret;
+	पूर्णांक ret;
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 0);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ctl_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->ctl_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->tagged_miss_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->tagged_miss_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 2);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->untagged_miss_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->untagged_miss_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 3);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->notag_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->notag_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 4);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->untagged_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->untagged_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 5);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->bad_tag_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->bad_tag_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 6);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->no_sci_pkts[0] = packed_record[0] | (packed_record[1] << 16);
 	counters->no_sci_pkts[1] = packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 7);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unknown_sci_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->unknown_sci_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 8);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ctrl_prt_pass_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->ctrl_prt_pass_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 9);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unctrl_prt_pass_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->unctrl_prt_pass_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 10);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ctrl_prt_fail_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->ctrl_prt_fail_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 11);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unctrl_prt_fail_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->unctrl_prt_fail_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 12);
-	if (unlikely(ret))
-		return ret;
-	counters->too_long_pkts[0] =
+	अगर (unlikely(ret))
+		वापस ret;
+	counters->too_दीर्घ_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
-	counters->too_long_pkts[1] =
+	counters->too_दीर्घ_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 13);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->igpoc_ctl_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->igpoc_ctl_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 14);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->ecc_error_pkts[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->ecc_error_pkts[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
 	ret = get_raw_ingress_record(hw, packed_record, 4, 6, 385 + 15);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 	counters->unctrl_hit_drop_redir[0] =
 		packed_record[0] | (packed_record[1] << 16);
 	counters->unctrl_hit_drop_redir[1] =
 		packed_record[2] | (packed_record[3] << 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_ingress_common_counters(struct aq_hw_s *hw,
-	struct aq_mss_ingress_common_counters *counters)
-{
-	memset(counters, 0, sizeof(*counters));
+पूर्णांक aq_mss_get_ingress_common_counters(काष्ठा aq_hw_s *hw,
+	काष्ठा aq_mss_ingress_common_counters *counters)
+अणु
+	स_रखो(counters, 0, माप(*counters));
 
-	return AQ_API_CALL_SAFE(get_ingress_common_counters, hw, counters);
-}
+	वापस AQ_API_CALL_SAFE(get_ingress_common_counters, hw, counters);
+पूर्ण
 
-static int clear_ingress_counters(struct aq_hw_s *hw)
-{
-	struct mss_ingress_ctl_register ctl_reg;
-	int ret;
+अटल पूर्णांक clear_ingress_counters(काष्ठा aq_hw_s *hw)
+अणु
+	काष्ठा mss_ingress_ctl_रेजिस्टर ctl_reg;
+	पूर्णांक ret;
 
-	memset(&ctl_reg, 0, sizeof(ctl_reg));
+	स_रखो(&ctl_reg, 0, माप(ctl_reg));
 
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 			       MSS_INGRESS_CTL_REGISTER_ADDR, &ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 			       MSS_INGRESS_CTL_REGISTER_ADDR + 4,
 			       &ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	/* Toggle the Ingress MIB clear bit 0->1->0 */
 	ctl_reg.bits_0.clear_count = 0;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_CTL_REGISTER_ADDR, ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_CTL_REGISTER_ADDR + 4,
 				ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	ctl_reg.bits_0.clear_count = 1;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_CTL_REGISTER_ADDR, ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_CTL_REGISTER_ADDR + 4,
 				ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	ctl_reg.bits_0.clear_count = 0;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_CTL_REGISTER_ADDR, ctl_reg.word_0);
-	if (unlikely(ret))
-		return ret;
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	अगर (unlikely(ret))
+		वापस ret;
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_INGRESS_CTL_REGISTER_ADDR + 4,
 				ctl_reg.word_1);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_clear_ingress_counters(struct aq_hw_s *hw)
-{
-	return AQ_API_CALL_SAFE(clear_ingress_counters, hw);
-}
+पूर्णांक aq_mss_clear_ingress_counters(काष्ठा aq_hw_s *hw)
+अणु
+	वापस AQ_API_CALL_SAFE(clear_ingress_counters, hw);
+पूर्ण
 
-static int get_egress_sa_expired(struct aq_hw_s *hw, u32 *expired)
-{
+अटल पूर्णांक get_egress_sa_expired(काष्ठा aq_hw_s *hw, u32 *expired)
+अणु
 	u16 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 			       MSS_EGRESS_SA_EXPIRED_STATUS_REGISTER_ADDR,
 			       &val);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	*expired = val;
 
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 			       MSS_EGRESS_SA_EXPIRED_STATUS_REGISTER_ADDR + 1,
 			       &val);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	*expired |= val << 16;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_sa_expired(struct aq_hw_s *hw, u32 *expired)
-{
+पूर्णांक aq_mss_get_egress_sa_expired(काष्ठा aq_hw_s *hw, u32 *expired)
+अणु
 	*expired = 0;
 
-	return AQ_API_CALL_SAFE(get_egress_sa_expired, hw, expired);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_sa_expired, hw, expired);
+पूर्ण
 
-static int get_egress_sa_threshold_expired(struct aq_hw_s *hw,
+अटल पूर्णांक get_egress_sa_threshold_expired(काष्ठा aq_hw_s *hw,
 					   u32 *expired)
-{
+अणु
 	u16 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 		MSS_EGRESS_SA_THRESHOLD_EXPIRED_STATUS_REGISTER_ADDR, &val);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	*expired = val;
 
-	ret = aq_mss_mdio_read(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_पढ़ो(hw, MDIO_MMD_VEND1,
 		MSS_EGRESS_SA_THRESHOLD_EXPIRED_STATUS_REGISTER_ADDR + 1, &val);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	*expired |= val << 16;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_get_egress_sa_threshold_expired(struct aq_hw_s *hw,
+पूर्णांक aq_mss_get_egress_sa_threshold_expired(काष्ठा aq_hw_s *hw,
 					   u32 *expired)
-{
+अणु
 	*expired = 0;
 
-	return AQ_API_CALL_SAFE(get_egress_sa_threshold_expired, hw, expired);
-}
+	वापस AQ_API_CALL_SAFE(get_egress_sa_threshold_expired, hw, expired);
+पूर्ण
 
-static int set_egress_sa_expired(struct aq_hw_s *hw, u32 expired)
-{
-	int ret;
+अटल पूर्णांक set_egress_sa_expired(काष्ठा aq_hw_s *hw, u32 expired)
+अणु
+	पूर्णांक ret;
 
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_SA_EXPIRED_STATUS_REGISTER_ADDR,
 				expired & 0xFFFF);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 				MSS_EGRESS_SA_EXPIRED_STATUS_REGISTER_ADDR + 1,
 				expired >> 16);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_set_egress_sa_expired(struct aq_hw_s *hw, u32 expired)
-{
-	return AQ_API_CALL_SAFE(set_egress_sa_expired, hw, expired);
-}
+पूर्णांक aq_mss_set_egress_sa_expired(काष्ठा aq_hw_s *hw, u32 expired)
+अणु
+	वापस AQ_API_CALL_SAFE(set_egress_sa_expired, hw, expired);
+पूर्ण
 
-static int set_egress_sa_threshold_expired(struct aq_hw_s *hw, u32 expired)
-{
-	int ret;
+अटल पूर्णांक set_egress_sa_threshold_expired(काष्ठा aq_hw_s *hw, u32 expired)
+अणु
+	पूर्णांक ret;
 
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 		MSS_EGRESS_SA_THRESHOLD_EXPIRED_STATUS_REGISTER_ADDR,
 		expired & 0xFFFF);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	ret = aq_mss_mdio_write(hw, MDIO_MMD_VEND1,
+	ret = aq_mss_mdio_ग_लिखो(hw, MDIO_MMD_VEND1,
 		MSS_EGRESS_SA_THRESHOLD_EXPIRED_STATUS_REGISTER_ADDR + 1,
 		expired >> 16);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aq_mss_set_egress_sa_threshold_expired(struct aq_hw_s *hw, u32 expired)
-{
-	return AQ_API_CALL_SAFE(set_egress_sa_threshold_expired, hw, expired);
-}
+पूर्णांक aq_mss_set_egress_sa_threshold_expired(काष्ठा aq_hw_s *hw, u32 expired)
+अणु
+	वापस AQ_API_CALL_SAFE(set_egress_sa_threshold_expired, hw, expired);
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * STMicroelectronics pressures driver
  *
@@ -8,13 +9,13 @@
  * v. 1.0.0
  */
 
-#ifndef ST_PRESS_H
-#define ST_PRESS_H
+#अगर_अघोषित ST_PRESS_H
+#घोषणा ST_PRESS_H
 
-#include <linux/types.h>
-#include <linux/iio/common/st_sensors.h>
+#समावेश <linux/types.h>
+#समावेश <linux/iio/common/st_sensors.h>
 
-enum st_press_type {
+क्रमागत st_press_type अणु
 	LPS001WP,
 	LPS25H,
 	LPS331AP,
@@ -23,43 +24,43 @@ enum st_press_type {
 	LPS35HW,
 	LPS22HH,
 	ST_PRESS_MAX,
-};
+पूर्ण;
 
-#define LPS001WP_PRESS_DEV_NAME		"lps001wp"
-#define LPS25H_PRESS_DEV_NAME		"lps25h"
-#define LPS331AP_PRESS_DEV_NAME		"lps331ap"
-#define LPS22HB_PRESS_DEV_NAME		"lps22hb"
-#define LPS33HW_PRESS_DEV_NAME		"lps33hw"
-#define LPS35HW_PRESS_DEV_NAME		"lps35hw"
-#define LPS22HH_PRESS_DEV_NAME		"lps22hh"
+#घोषणा LPS001WP_PRESS_DEV_NAME		"lps001wp"
+#घोषणा LPS25H_PRESS_DEV_NAME		"lps25h"
+#घोषणा LPS331AP_PRESS_DEV_NAME		"lps331ap"
+#घोषणा LPS22HB_PRESS_DEV_NAME		"lps22hb"
+#घोषणा LPS33HW_PRESS_DEV_NAME		"lps33hw"
+#घोषणा LPS35HW_PRESS_DEV_NAME		"lps35hw"
+#घोषणा LPS22HH_PRESS_DEV_NAME		"lps22hh"
 
 /**
- * struct st_sensors_platform_data - default press platform data
- * @drdy_int_pin: default press DRDY is available on INT1 pin.
+ * काष्ठा st_sensors_platक्रमm_data - शेष press platक्रमm data
+ * @drdy_पूर्णांक_pin: शेष press DRDY is available on INT1 pin.
  */
-static __maybe_unused const struct st_sensors_platform_data default_press_pdata = {
-	.drdy_int_pin = 1,
-};
+अटल __maybe_unused स्थिर काष्ठा st_sensors_platक्रमm_data शेष_press_pdata = अणु
+	.drdy_पूर्णांक_pin = 1,
+पूर्ण;
 
-const struct st_sensor_settings *st_press_get_settings(const char *name);
-int st_press_common_probe(struct iio_dev *indio_dev);
-void st_press_common_remove(struct iio_dev *indio_dev);
+स्थिर काष्ठा st_sensor_settings *st_press_get_settings(स्थिर अक्षर *name);
+पूर्णांक st_press_common_probe(काष्ठा iio_dev *indio_dev);
+व्योम st_press_common_हटाओ(काष्ठा iio_dev *indio_dev);
 
-#ifdef CONFIG_IIO_BUFFER
-int st_press_allocate_ring(struct iio_dev *indio_dev);
-void st_press_deallocate_ring(struct iio_dev *indio_dev);
-int st_press_trig_set_state(struct iio_trigger *trig, bool state);
-#define ST_PRESS_TRIGGER_SET_STATE (&st_press_trig_set_state)
-#else /* CONFIG_IIO_BUFFER */
-static inline int st_press_allocate_ring(struct iio_dev *indio_dev)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_IIO_BUFFER
+पूर्णांक st_press_allocate_ring(काष्ठा iio_dev *indio_dev);
+व्योम st_press_deallocate_ring(काष्ठा iio_dev *indio_dev);
+पूर्णांक st_press_trig_set_state(काष्ठा iio_trigger *trig, bool state);
+#घोषणा ST_PRESS_TRIGGER_SET_STATE (&st_press_trig_set_state)
+#अन्यथा /* CONFIG_IIO_BUFFER */
+अटल अंतरभूत पूर्णांक st_press_allocate_ring(काष्ठा iio_dev *indio_dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void st_press_deallocate_ring(struct iio_dev *indio_dev)
-{
-}
-#define ST_PRESS_TRIGGER_SET_STATE NULL
-#endif /* CONFIG_IIO_BUFFER */
+अटल अंतरभूत व्योम st_press_deallocate_ring(काष्ठा iio_dev *indio_dev)
+अणु
+पूर्ण
+#घोषणा ST_PRESS_TRIGGER_SET_STATE शून्य
+#पूर्ण_अगर /* CONFIG_IIO_BUFFER */
 
-#endif /* ST_PRESS_H */
+#पूर्ण_अगर /* ST_PRESS_H */

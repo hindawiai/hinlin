@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 
-#ifndef __ARMADA_AP_CP_HELPER_H
-#define __ARMADA_AP_CP_HELPER_H
+#अगर_अघोषित __ARMADA_AP_CP_HELPER_H
+#घोषणा __ARMADA_AP_CP_HELPER_H
 
-struct device;
-struct device_node;
+काष्ठा device;
+काष्ठा device_node;
 
-char *ap_cp_unique_name(struct device *dev, struct device_node *np,
-			const char *name);
-#endif
+अक्षर *ap_cp_unique_name(काष्ठा device *dev, काष्ठा device_node *np,
+			स्थिर अक्षर *name);
+#पूर्ण_अगर

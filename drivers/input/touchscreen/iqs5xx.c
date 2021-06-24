@@ -1,711 +1,712 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Azoteq IQS550/572/525 Trackpad/Touchscreen Controller
  *
  * Copyright (C) 2018 Jeff LaBundy <jeff@labundy.com>
  *
  * These devices require firmware exported from a PC-based configuration tool
- * made available by the vendor. Firmware files may be pushed to the device's
- * nonvolatile memory by writing the filename to the 'fw_file' sysfs control.
+ * made available by the venकरोr. Firmware files may be pushed to the device's
+ * nonअस्थिर memory by writing the filename to the 'fw_file' sysfs control.
  *
  * Link to PC-based configuration tool and datasheet: https://www.azoteq.com/
  */
 
-#include <linux/bits.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/firmware.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/input/mt.h>
-#include <linux/input/touchscreen.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/slab.h>
-#include <asm/unaligned.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/input/touchscreen.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/unaligned.h>
 
-#define IQS5XX_FW_FILE_LEN	64
-#define IQS5XX_NUM_RETRIES	10
-#define IQS5XX_NUM_CONTACTS	5
-#define IQS5XX_WR_BYTES_MAX	2
+#घोषणा IQS5XX_FW_खाता_LEN	64
+#घोषणा IQS5XX_NUM_RETRIES	10
+#घोषणा IQS5XX_NUM_CONTACTS	5
+#घोषणा IQS5XX_WR_BYTES_MAX	2
 
-#define IQS5XX_PROD_NUM_IQS550	40
-#define IQS5XX_PROD_NUM_IQS572	58
-#define IQS5XX_PROD_NUM_IQS525	52
+#घोषणा IQS5XX_PROD_NUM_IQS550	40
+#घोषणा IQS5XX_PROD_NUM_IQS572	58
+#घोषणा IQS5XX_PROD_NUM_IQS525	52
 
-#define IQS5XX_SHOW_RESET	BIT(7)
-#define IQS5XX_ACK_RESET	BIT(7)
+#घोषणा IQS5XX_SHOW_RESET	BIT(7)
+#घोषणा IQS5XX_ACK_RESET	BIT(7)
 
-#define IQS5XX_SUSPEND		BIT(0)
-#define IQS5XX_RESUME		0
+#घोषणा IQS5XX_SUSPEND		BIT(0)
+#घोषणा IQS5XX_RESUME		0
 
-#define IQS5XX_SETUP_COMPLETE	BIT(6)
-#define IQS5XX_WDT		BIT(5)
-#define IQS5XX_ALP_REATI	BIT(3)
-#define IQS5XX_REATI		BIT(2)
+#घोषणा IQS5XX_SETUP_COMPLETE	BIT(6)
+#घोषणा IQS5XX_WDT		BIT(5)
+#घोषणा IQS5XX_ALP_REATI	BIT(3)
+#घोषणा IQS5XX_REATI		BIT(2)
 
-#define IQS5XX_TP_EVENT		BIT(2)
-#define IQS5XX_EVENT_MODE	BIT(0)
+#घोषणा IQS5XX_TP_EVENT		BIT(2)
+#घोषणा IQS5XX_EVENT_MODE	BIT(0)
 
-#define IQS5XX_PROD_NUM		0x0000
-#define IQS5XX_SYS_INFO0	0x000F
-#define IQS5XX_SYS_INFO1	0x0010
-#define IQS5XX_SYS_CTRL0	0x0431
-#define IQS5XX_SYS_CTRL1	0x0432
-#define IQS5XX_SYS_CFG0		0x058E
-#define IQS5XX_SYS_CFG1		0x058F
-#define IQS5XX_X_RES		0x066E
-#define IQS5XX_Y_RES		0x0670
-#define IQS5XX_EXP_FILE		0x0677
-#define IQS5XX_CHKSM		0x83C0
-#define IQS5XX_APP		0x8400
-#define IQS5XX_CSTM		0xBE00
-#define IQS5XX_PMAP_END		0xBFFF
-#define IQS5XX_END_COMM		0xEEEE
+#घोषणा IQS5XX_PROD_NUM		0x0000
+#घोषणा IQS5XX_SYS_INFO0	0x000F
+#घोषणा IQS5XX_SYS_INFO1	0x0010
+#घोषणा IQS5XX_SYS_CTRL0	0x0431
+#घोषणा IQS5XX_SYS_CTRL1	0x0432
+#घोषणा IQS5XX_SYS_CFG0		0x058E
+#घोषणा IQS5XX_SYS_CFG1		0x058F
+#घोषणा IQS5XX_X_RES		0x066E
+#घोषणा IQS5XX_Y_RES		0x0670
+#घोषणा IQS5XX_EXP_खाता		0x0677
+#घोषणा IQS5XX_CHKSM		0x83C0
+#घोषणा IQS5XX_APP		0x8400
+#घोषणा IQS5XX_CSTM		0xBE00
+#घोषणा IQS5XX_PMAP_END		0xBFFF
+#घोषणा IQS5XX_END_COMM		0xEEEE
 
-#define IQS5XX_CHKSM_LEN	(IQS5XX_APP - IQS5XX_CHKSM)
-#define IQS5XX_APP_LEN		(IQS5XX_CSTM - IQS5XX_APP)
-#define IQS5XX_CSTM_LEN		(IQS5XX_PMAP_END + 1 - IQS5XX_CSTM)
-#define IQS5XX_PMAP_LEN		(IQS5XX_PMAP_END + 1 - IQS5XX_CHKSM)
+#घोषणा IQS5XX_CHKSM_LEN	(IQS5XX_APP - IQS5XX_CHKSM)
+#घोषणा IQS5XX_APP_LEN		(IQS5XX_CSTM - IQS5XX_APP)
+#घोषणा IQS5XX_CSTM_LEN		(IQS5XX_PMAP_END + 1 - IQS5XX_CSTM)
+#घोषणा IQS5XX_PMAP_LEN		(IQS5XX_PMAP_END + 1 - IQS5XX_CHKSM)
 
-#define IQS5XX_REC_HDR_LEN	4
-#define IQS5XX_REC_LEN_MAX	255
-#define IQS5XX_REC_TYPE_DATA	0x00
-#define IQS5XX_REC_TYPE_EOF	0x01
+#घोषणा IQS5XX_REC_HDR_LEN	4
+#घोषणा IQS5XX_REC_LEN_MAX	255
+#घोषणा IQS5XX_REC_TYPE_DATA	0x00
+#घोषणा IQS5XX_REC_TYPE_खातापूर्ण	0x01
 
-#define IQS5XX_BL_ADDR_MASK	0x40
-#define IQS5XX_BL_CMD_VER	0x00
-#define IQS5XX_BL_CMD_READ	0x01
-#define IQS5XX_BL_CMD_EXEC	0x02
-#define IQS5XX_BL_CMD_CRC	0x03
-#define IQS5XX_BL_BLK_LEN_MAX	64
-#define IQS5XX_BL_ID		0x0200
-#define IQS5XX_BL_STATUS_NONE	0xEE
-#define IQS5XX_BL_CRC_PASS	0x00
-#define IQS5XX_BL_CRC_FAIL	0x01
-#define IQS5XX_BL_ATTEMPTS	3
+#घोषणा IQS5XX_BL_ADDR_MASK	0x40
+#घोषणा IQS5XX_BL_CMD_VER	0x00
+#घोषणा IQS5XX_BL_CMD_READ	0x01
+#घोषणा IQS5XX_BL_CMD_EXEC	0x02
+#घोषणा IQS5XX_BL_CMD_CRC	0x03
+#घोषणा IQS5XX_BL_BLK_LEN_MAX	64
+#घोषणा IQS5XX_BL_ID		0x0200
+#घोषणा IQS5XX_BL_STATUS_NONE	0xEE
+#घोषणा IQS5XX_BL_CRC_PASS	0x00
+#घोषणा IQS5XX_BL_CRC_FAIL	0x01
+#घोषणा IQS5XX_BL_ATTEMPTS	3
 
-struct iqs5xx_dev_id_info {
+काष्ठा iqs5xx_dev_id_info अणु
 	__be16 prod_num;
 	__be16 proj_num;
 	u8 major_ver;
 	u8 minor_ver;
 	u8 bl_status;
-} __packed;
+पूर्ण __packed;
 
-struct iqs5xx_ihex_rec {
-	char start;
-	char len[2];
-	char addr[4];
-	char type[2];
-	char data[2];
-} __packed;
+काष्ठा iqs5xx_ihex_rec अणु
+	अक्षर start;
+	अक्षर len[2];
+	अक्षर addr[4];
+	अक्षर type[2];
+	अक्षर data[2];
+पूर्ण __packed;
 
-struct iqs5xx_touch_data {
-	__be16 abs_x;
-	__be16 abs_y;
+काष्ठा iqs5xx_touch_data अणु
+	__be16 असल_x;
+	__be16 असल_y;
 	__be16 strength;
 	u8 area;
-} __packed;
+पूर्ण __packed;
 
-struct iqs5xx_status {
+काष्ठा iqs5xx_status अणु
 	u8 sys_info[2];
 	u8 num_active;
 	__be16 rel_x;
 	__be16 rel_y;
-	struct iqs5xx_touch_data touch_data[IQS5XX_NUM_CONTACTS];
-} __packed;
+	काष्ठा iqs5xx_touch_data touch_data[IQS5XX_NUM_CONTACTS];
+पूर्ण __packed;
 
-struct iqs5xx_private {
-	struct i2c_client *client;
-	struct input_dev *input;
-	struct gpio_desc *reset_gpio;
-	struct touchscreen_properties prop;
-	struct mutex lock;
-	struct iqs5xx_dev_id_info dev_id_info;
+काष्ठा iqs5xx_निजी अणु
+	काष्ठा i2c_client *client;
+	काष्ठा input_dev *input;
+	काष्ठा gpio_desc *reset_gpio;
+	काष्ठा touchscreen_properties prop;
+	काष्ठा mutex lock;
+	काष्ठा iqs5xx_dev_id_info dev_id_info;
 	u8 exp_file[2];
-};
+पूर्ण;
 
-static int iqs5xx_read_burst(struct i2c_client *client,
-			     u16 reg, void *val, u16 len)
-{
+अटल पूर्णांक iqs5xx_पढ़ो_burst(काष्ठा i2c_client *client,
+			     u16 reg, व्योम *val, u16 len)
+अणु
 	__be16 reg_buf = cpu_to_be16(reg);
-	int ret, i;
-	struct i2c_msg msg[] = {
-		{
+	पूर्णांक ret, i;
+	काष्ठा i2c_msg msg[] = अणु
+		अणु
 			.addr = client->addr,
 			.flags = 0,
-			.len = sizeof(reg_buf),
+			.len = माप(reg_buf),
 			.buf = (u8 *)&reg_buf,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = client->addr,
 			.flags = I2C_M_RD,
 			.len = len,
 			.buf = (u8 *)val,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
 	/*
-	 * The first addressing attempt outside of a communication window fails
-	 * and must be retried, after which the device clock stretches until it
+	 * The first addressing attempt outside of a communication winकरोw fails
+	 * and must be retried, after which the device घड़ी stretches until it
 	 * is available.
 	 */
-	for (i = 0; i < IQS5XX_NUM_RETRIES; i++) {
+	क्रम (i = 0; i < IQS5XX_NUM_RETRIES; i++) अणु
 		ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
-		if (ret == ARRAY_SIZE(msg))
-			return 0;
+		अगर (ret == ARRAY_SIZE(msg))
+			वापस 0;
 
 		usleep_range(200, 300);
-	}
+	पूर्ण
 
-	if (ret >= 0)
+	अगर (ret >= 0)
 		ret = -EIO;
 
 	dev_err(&client->dev, "Failed to read from address 0x%04X: %d\n",
 		reg, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs5xx_read_word(struct i2c_client *client, u16 reg, u16 *val)
-{
+अटल पूर्णांक iqs5xx_पढ़ो_word(काष्ठा i2c_client *client, u16 reg, u16 *val)
+अणु
 	__be16 val_buf;
-	int error;
+	पूर्णांक error;
 
-	error = iqs5xx_read_burst(client, reg, &val_buf, sizeof(val_buf));
-	if (error)
-		return error;
+	error = iqs5xx_पढ़ो_burst(client, reg, &val_buf, माप(val_buf));
+	अगर (error)
+		वापस error;
 
 	*val = be16_to_cpu(val_buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iqs5xx_write_burst(struct i2c_client *client,
-			      u16 reg, const void *val, u16 len)
-{
-	int ret, i;
-	u16 mlen = sizeof(reg) + len;
-	u8 mbuf[sizeof(reg) + IQS5XX_WR_BYTES_MAX];
+अटल पूर्णांक iqs5xx_ग_लिखो_burst(काष्ठा i2c_client *client,
+			      u16 reg, स्थिर व्योम *val, u16 len)
+अणु
+	पूर्णांक ret, i;
+	u16 mlen = माप(reg) + len;
+	u8 mbuf[माप(reg) + IQS5XX_WR_BYTES_MAX];
 
-	if (len > IQS5XX_WR_BYTES_MAX)
-		return -EINVAL;
+	अगर (len > IQS5XX_WR_BYTES_MAX)
+		वापस -EINVAL;
 
 	put_unaligned_be16(reg, mbuf);
-	memcpy(mbuf + sizeof(reg), val, len);
+	स_नकल(mbuf + माप(reg), val, len);
 
 	/*
-	 * The first addressing attempt outside of a communication window fails
-	 * and must be retried, after which the device clock stretches until it
+	 * The first addressing attempt outside of a communication winकरोw fails
+	 * and must be retried, after which the device घड़ी stretches until it
 	 * is available.
 	 */
-	for (i = 0; i < IQS5XX_NUM_RETRIES; i++) {
+	क्रम (i = 0; i < IQS5XX_NUM_RETRIES; i++) अणु
 		ret = i2c_master_send(client, mbuf, mlen);
-		if (ret == mlen)
-			return 0;
+		अगर (ret == mlen)
+			वापस 0;
 
 		usleep_range(200, 300);
-	}
+	पूर्ण
 
-	if (ret >= 0)
+	अगर (ret >= 0)
 		ret = -EIO;
 
 	dev_err(&client->dev, "Failed to write to address 0x%04X: %d\n",
 		reg, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs5xx_write_word(struct i2c_client *client, u16 reg, u16 val)
-{
+अटल पूर्णांक iqs5xx_ग_लिखो_word(काष्ठा i2c_client *client, u16 reg, u16 val)
+अणु
 	__be16 val_buf = cpu_to_be16(val);
 
-	return iqs5xx_write_burst(client, reg, &val_buf, sizeof(val_buf));
-}
+	वापस iqs5xx_ग_लिखो_burst(client, reg, &val_buf, माप(val_buf));
+पूर्ण
 
-static int iqs5xx_write_byte(struct i2c_client *client, u16 reg, u8 val)
-{
-	return iqs5xx_write_burst(client, reg, &val, sizeof(val));
-}
+अटल पूर्णांक iqs5xx_ग_लिखो_byte(काष्ठा i2c_client *client, u16 reg, u8 val)
+अणु
+	वापस iqs5xx_ग_लिखो_burst(client, reg, &val, माप(val));
+पूर्ण
 
-static void iqs5xx_reset(struct i2c_client *client)
-{
-	struct iqs5xx_private *iqs5xx = i2c_get_clientdata(client);
+अटल व्योम iqs5xx_reset(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = i2c_get_clientdata(client);
 
 	gpiod_set_value_cansleep(iqs5xx->reset_gpio, 1);
 	usleep_range(200, 300);
 
 	gpiod_set_value_cansleep(iqs5xx->reset_gpio, 0);
-}
+पूर्ण
 
-static int iqs5xx_bl_cmd(struct i2c_client *client, u8 bl_cmd, u16 bl_addr)
-{
-	struct i2c_msg msg;
-	int ret;
-	u8 mbuf[sizeof(bl_cmd) + sizeof(bl_addr)];
+अटल पूर्णांक iqs5xx_bl_cmd(काष्ठा i2c_client *client, u8 bl_cmd, u16 bl_addr)
+अणु
+	काष्ठा i2c_msg msg;
+	पूर्णांक ret;
+	u8 mbuf[माप(bl_cmd) + माप(bl_addr)];
 
 	msg.addr = client->addr ^ IQS5XX_BL_ADDR_MASK;
 	msg.flags = 0;
-	msg.len = sizeof(bl_cmd);
+	msg.len = माप(bl_cmd);
 	msg.buf = mbuf;
 
 	*mbuf = bl_cmd;
 
-	switch (bl_cmd) {
-	case IQS5XX_BL_CMD_VER:
-	case IQS5XX_BL_CMD_CRC:
-	case IQS5XX_BL_CMD_EXEC:
-		break;
-	case IQS5XX_BL_CMD_READ:
-		msg.len += sizeof(bl_addr);
-		put_unaligned_be16(bl_addr, mbuf + sizeof(bl_cmd));
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (bl_cmd) अणु
+	हाल IQS5XX_BL_CMD_VER:
+	हाल IQS5XX_BL_CMD_CRC:
+	हाल IQS5XX_BL_CMD_EXEC:
+		अवरोध;
+	हाल IQS5XX_BL_CMD_READ:
+		msg.len += माप(bl_addr);
+		put_unaligned_be16(bl_addr, mbuf + माप(bl_cmd));
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	if (ret != 1)
-		goto msg_fail;
+	अगर (ret != 1)
+		जाओ msg_fail;
 
-	switch (bl_cmd) {
-	case IQS5XX_BL_CMD_VER:
-		msg.len = sizeof(u16);
-		break;
-	case IQS5XX_BL_CMD_CRC:
-		msg.len = sizeof(u8);
+	चयन (bl_cmd) अणु
+	हाल IQS5XX_BL_CMD_VER:
+		msg.len = माप(u16);
+		अवरोध;
+	हाल IQS5XX_BL_CMD_CRC:
+		msg.len = माप(u8);
 		/*
 		 * This delay saves the bus controller the trouble of having to
-		 * tolerate a relatively long clock-stretching period while the
+		 * tolerate a relatively दीर्घ घड़ी-stretching period जबतक the
 		 * CRC is calculated.
 		 */
 		msleep(50);
-		break;
-	case IQS5XX_BL_CMD_EXEC:
+		अवरोध;
+	हाल IQS5XX_BL_CMD_EXEC:
 		usleep_range(10000, 10100);
 		fallthrough;
-	default:
-		return 0;
-	}
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	msg.flags = I2C_M_RD;
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
-	if (ret != 1)
-		goto msg_fail;
+	अगर (ret != 1)
+		जाओ msg_fail;
 
-	if (bl_cmd == IQS5XX_BL_CMD_VER &&
-	    get_unaligned_be16(mbuf) != IQS5XX_BL_ID) {
+	अगर (bl_cmd == IQS5XX_BL_CMD_VER &&
+	    get_unaligned_be16(mbuf) != IQS5XX_BL_ID) अणु
 		dev_err(&client->dev, "Unrecognized bootloader ID: 0x%04X\n",
 			get_unaligned_be16(mbuf));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (bl_cmd == IQS5XX_BL_CMD_CRC && *mbuf != IQS5XX_BL_CRC_PASS) {
+	अगर (bl_cmd == IQS5XX_BL_CMD_CRC && *mbuf != IQS5XX_BL_CRC_PASS) अणु
 		dev_err(&client->dev, "Bootloader CRC failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 msg_fail:
-	if (ret >= 0)
+	अगर (ret >= 0)
 		ret = -EIO;
 
-	if (bl_cmd != IQS5XX_BL_CMD_VER)
+	अगर (bl_cmd != IQS5XX_BL_CMD_VER)
 		dev_err(&client->dev,
 			"Unsuccessful bootloader command 0x%02X: %d\n",
 			bl_cmd, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs5xx_bl_open(struct i2c_client *client)
-{
-	int error, i, j;
+अटल पूर्णांक iqs5xx_bl_खोलो(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक error, i, j;
 
 	/*
-	 * The device opens a bootloader polling window for 2 ms following the
+	 * The device खोलोs a bootloader polling winकरोw क्रम 2 ms following the
 	 * release of reset. If the host cannot establish communication during
-	 * this time frame, it must cycle reset again.
+	 * this समय frame, it must cycle reset again.
 	 */
-	for (i = 0; i < IQS5XX_BL_ATTEMPTS; i++) {
+	क्रम (i = 0; i < IQS5XX_BL_ATTEMPTS; i++) अणु
 		iqs5xx_reset(client);
 		usleep_range(350, 400);
 
-		for (j = 0; j < IQS5XX_NUM_RETRIES; j++) {
+		क्रम (j = 0; j < IQS5XX_NUM_RETRIES; j++) अणु
 			error = iqs5xx_bl_cmd(client, IQS5XX_BL_CMD_VER, 0);
-			if (!error)
+			अगर (!error)
 				usleep_range(10000, 10100);
-			else if (error != -EINVAL)
-				continue;
+			अन्यथा अगर (error != -EINVAL)
+				जारी;
 
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
 	dev_err(&client->dev, "Failed to open bootloader: %d\n", error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int iqs5xx_bl_write(struct i2c_client *client,
+अटल पूर्णांक iqs5xx_bl_ग_लिखो(काष्ठा i2c_client *client,
 			   u16 bl_addr, u8 *pmap_data, u16 pmap_len)
-{
-	struct i2c_msg msg;
-	int ret, i;
-	u8 mbuf[sizeof(bl_addr) + IQS5XX_BL_BLK_LEN_MAX];
+अणु
+	काष्ठा i2c_msg msg;
+	पूर्णांक ret, i;
+	u8 mbuf[माप(bl_addr) + IQS5XX_BL_BLK_LEN_MAX];
 
-	if (pmap_len % IQS5XX_BL_BLK_LEN_MAX)
-		return -EINVAL;
+	अगर (pmap_len % IQS5XX_BL_BLK_LEN_MAX)
+		वापस -EINVAL;
 
 	msg.addr = client->addr ^ IQS5XX_BL_ADDR_MASK;
 	msg.flags = 0;
-	msg.len = sizeof(mbuf);
+	msg.len = माप(mbuf);
 	msg.buf = mbuf;
 
-	for (i = 0; i < pmap_len; i += IQS5XX_BL_BLK_LEN_MAX) {
+	क्रम (i = 0; i < pmap_len; i += IQS5XX_BL_BLK_LEN_MAX) अणु
 		put_unaligned_be16(bl_addr + i, mbuf);
-		memcpy(mbuf + sizeof(bl_addr), pmap_data + i,
-		       sizeof(mbuf) - sizeof(bl_addr));
+		स_नकल(mbuf + माप(bl_addr), pmap_data + i,
+		       माप(mbuf) - माप(bl_addr));
 
 		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (ret != 1)
-			goto msg_fail;
+		अगर (ret != 1)
+			जाओ msg_fail;
 
 		usleep_range(10000, 10100);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 msg_fail:
-	if (ret >= 0)
+	अगर (ret >= 0)
 		ret = -EIO;
 
 	dev_err(&client->dev, "Failed to write block at address 0x%04X: %d\n",
 		bl_addr + i, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs5xx_bl_verify(struct i2c_client *client,
+अटल पूर्णांक iqs5xx_bl_verअगरy(काष्ठा i2c_client *client,
 			    u16 bl_addr, u8 *pmap_data, u16 pmap_len)
-{
-	struct i2c_msg msg;
-	int ret, i;
+अणु
+	काष्ठा i2c_msg msg;
+	पूर्णांक ret, i;
 	u8 bl_data[IQS5XX_BL_BLK_LEN_MAX];
 
-	if (pmap_len % IQS5XX_BL_BLK_LEN_MAX)
-		return -EINVAL;
+	अगर (pmap_len % IQS5XX_BL_BLK_LEN_MAX)
+		वापस -EINVAL;
 
 	msg.addr = client->addr ^ IQS5XX_BL_ADDR_MASK;
 	msg.flags = I2C_M_RD;
-	msg.len = sizeof(bl_data);
+	msg.len = माप(bl_data);
 	msg.buf = bl_data;
 
-	for (i = 0; i < pmap_len; i += IQS5XX_BL_BLK_LEN_MAX) {
+	क्रम (i = 0; i < pmap_len; i += IQS5XX_BL_BLK_LEN_MAX) अणु
 		ret = iqs5xx_bl_cmd(client, IQS5XX_BL_CMD_READ, bl_addr + i);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (ret != 1)
-			goto msg_fail;
+		अगर (ret != 1)
+			जाओ msg_fail;
 
-		if (memcmp(bl_data, pmap_data + i, sizeof(bl_data))) {
+		अगर (स_भेद(bl_data, pmap_data + i, माप(bl_data))) अणु
 			dev_err(&client->dev,
 				"Failed to verify block at address 0x%04X\n",
 				bl_addr + i);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 msg_fail:
-	if (ret >= 0)
+	अगर (ret >= 0)
 		ret = -EIO;
 
 	dev_err(&client->dev, "Failed to read block at address 0x%04X: %d\n",
 		bl_addr + i, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iqs5xx_set_state(struct i2c_client *client, u8 state)
-{
-	struct iqs5xx_private *iqs5xx = i2c_get_clientdata(client);
-	int error1, error2;
+अटल पूर्णांक iqs5xx_set_state(काष्ठा i2c_client *client, u8 state)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = i2c_get_clientdata(client);
+	पूर्णांक error1, error2;
 
-	if (!iqs5xx->dev_id_info.bl_status)
-		return 0;
+	अगर (!iqs5xx->dev_id_info.bl_status)
+		वापस 0;
 
 	mutex_lock(&iqs5xx->lock);
 
 	/*
-	 * Addressing the device outside of a communication window prompts it
-	 * to assert the RDY output, so disable the interrupt line to prevent
-	 * the handler from servicing a false interrupt.
+	 * Addressing the device outside of a communication winकरोw prompts it
+	 * to निश्चित the RDY output, so disable the पूर्णांकerrupt line to prevent
+	 * the handler from servicing a false पूर्णांकerrupt.
 	 */
 	disable_irq(client->irq);
 
-	error1 = iqs5xx_write_byte(client, IQS5XX_SYS_CTRL1, state);
-	error2 = iqs5xx_write_byte(client, IQS5XX_END_COMM, 0);
+	error1 = iqs5xx_ग_लिखो_byte(client, IQS5XX_SYS_CTRL1, state);
+	error2 = iqs5xx_ग_लिखो_byte(client, IQS5XX_END_COMM, 0);
 
 	usleep_range(50, 100);
 	enable_irq(client->irq);
 
 	mutex_unlock(&iqs5xx->lock);
 
-	if (error1)
-		return error1;
+	अगर (error1)
+		वापस error1;
 
-	return error2;
-}
+	वापस error2;
+पूर्ण
 
-static int iqs5xx_open(struct input_dev *input)
-{
-	struct iqs5xx_private *iqs5xx = input_get_drvdata(input);
+अटल पूर्णांक iqs5xx_खोलो(काष्ठा input_dev *input)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = input_get_drvdata(input);
 
-	return iqs5xx_set_state(iqs5xx->client, IQS5XX_RESUME);
-}
+	वापस iqs5xx_set_state(iqs5xx->client, IQS5XX_RESUME);
+पूर्ण
 
-static void iqs5xx_close(struct input_dev *input)
-{
-	struct iqs5xx_private *iqs5xx = input_get_drvdata(input);
+अटल व्योम iqs5xx_बंद(काष्ठा input_dev *input)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = input_get_drvdata(input);
 
 	iqs5xx_set_state(iqs5xx->client, IQS5XX_SUSPEND);
-}
+पूर्ण
 
-static int iqs5xx_axis_init(struct i2c_client *client)
-{
-	struct iqs5xx_private *iqs5xx = i2c_get_clientdata(client);
-	struct touchscreen_properties *prop = &iqs5xx->prop;
-	struct input_dev *input;
+अटल पूर्णांक iqs5xx_axis_init(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = i2c_get_clientdata(client);
+	काष्ठा touchscreen_properties *prop = &iqs5xx->prop;
+	काष्ठा input_dev *input;
 	u16 max_x, max_y;
-	int error;
+	पूर्णांक error;
 
-	if (!iqs5xx->input) {
+	अगर (!iqs5xx->input) अणु
 		input = devm_input_allocate_device(&client->dev);
-		if (!input)
-			return -ENOMEM;
+		अगर (!input)
+			वापस -ENOMEM;
 
 		input->name = client->name;
 		input->id.bustype = BUS_I2C;
-		input->open = iqs5xx_open;
-		input->close = iqs5xx_close;
+		input->खोलो = iqs5xx_खोलो;
+		input->बंद = iqs5xx_बंद;
 
 		input_set_drvdata(input, iqs5xx);
 		iqs5xx->input = input;
-	}
+	पूर्ण
 
-	error = iqs5xx_read_word(client, IQS5XX_X_RES, &max_x);
-	if (error)
-		return error;
+	error = iqs5xx_पढ़ो_word(client, IQS5XX_X_RES, &max_x);
+	अगर (error)
+		वापस error;
 
-	error = iqs5xx_read_word(client, IQS5XX_Y_RES, &max_y);
-	if (error)
-		return error;
+	error = iqs5xx_पढ़ो_word(client, IQS5XX_Y_RES, &max_y);
+	अगर (error)
+		वापस error;
 
-	input_set_abs_params(iqs5xx->input, ABS_MT_POSITION_X, 0, max_x, 0, 0);
-	input_set_abs_params(iqs5xx->input, ABS_MT_POSITION_Y, 0, max_y, 0, 0);
-	input_set_abs_params(iqs5xx->input, ABS_MT_PRESSURE, 0, U16_MAX, 0, 0);
+	input_set_असल_params(iqs5xx->input, ABS_MT_POSITION_X, 0, max_x, 0, 0);
+	input_set_असल_params(iqs5xx->input, ABS_MT_POSITION_Y, 0, max_y, 0, 0);
+	input_set_असल_params(iqs5xx->input, ABS_MT_PRESSURE, 0, U16_MAX, 0, 0);
 
 	touchscreen_parse_properties(iqs5xx->input, true, prop);
 
 	/*
-	 * The device reserves 0xFFFF for coordinates that correspond to slots
+	 * The device reserves 0xFFFF क्रम coordinates that correspond to slots
 	 * which are not in a state of touch.
 	 */
-	if (prop->max_x >= U16_MAX || prop->max_y >= U16_MAX) {
+	अगर (prop->max_x >= U16_MAX || prop->max_y >= U16_MAX) अणु
 		dev_err(&client->dev, "Invalid touchscreen size: %u*%u\n",
 			prop->max_x, prop->max_y);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (prop->max_x != max_x) {
-		error = iqs5xx_write_word(client, IQS5XX_X_RES, prop->max_x);
-		if (error)
-			return error;
-	}
+	अगर (prop->max_x != max_x) अणु
+		error = iqs5xx_ग_लिखो_word(client, IQS5XX_X_RES, prop->max_x);
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	if (prop->max_y != max_y) {
-		error = iqs5xx_write_word(client, IQS5XX_Y_RES, prop->max_y);
-		if (error)
-			return error;
-	}
+	अगर (prop->max_y != max_y) अणु
+		error = iqs5xx_ग_लिखो_word(client, IQS5XX_Y_RES, prop->max_y);
+		अगर (error)
+			वापस error;
+	पूर्ण
 
 	error = input_mt_init_slots(iqs5xx->input, IQS5XX_NUM_CONTACTS,
-				    INPUT_MT_DIRECT);
-	if (error)
+				    INPUT_MT_सूचीECT);
+	अगर (error)
 		dev_err(&client->dev, "Failed to initialize slots: %d\n",
 			error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int iqs5xx_dev_init(struct i2c_client *client)
-{
-	struct iqs5xx_private *iqs5xx = i2c_get_clientdata(client);
-	struct iqs5xx_dev_id_info *dev_id_info;
-	int error;
-	u8 buf[sizeof(*dev_id_info) + 1];
+अटल पूर्णांक iqs5xx_dev_init(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = i2c_get_clientdata(client);
+	काष्ठा iqs5xx_dev_id_info *dev_id_info;
+	पूर्णांक error;
+	u8 buf[माप(*dev_id_info) + 1];
 
-	error = iqs5xx_read_burst(client, IQS5XX_PROD_NUM,
-				  &buf[1], sizeof(*dev_id_info));
-	if (error)
-		return iqs5xx_bl_open(client);
+	error = iqs5xx_पढ़ो_burst(client, IQS5XX_PROD_NUM,
+				  &buf[1], माप(*dev_id_info));
+	अगर (error)
+		वापस iqs5xx_bl_खोलो(client);
 
 	/*
 	 * A000 and B000 devices use 8-bit and 16-bit addressing, respectively.
-	 * Querying an A000 device's version information with 16-bit addressing
-	 * gives the appearance that the data is shifted by one byte; a nonzero
-	 * leading array element suggests this could be the case (in which case
+	 * Querying an A000 device's version inक्रमmation with 16-bit addressing
+	 * gives the appearance that the data is shअगरted by one byte; a nonzero
+	 * leading array element suggests this could be the हाल (in which हाल
 	 * the missing zero is prepended).
 	 */
 	buf[0] = 0;
-	dev_id_info = (struct iqs5xx_dev_id_info *)&buf[buf[1] ? 0 : 1];
+	dev_id_info = (काष्ठा iqs5xx_dev_id_info *)&buf[buf[1] ? 0 : 1];
 
-	switch (be16_to_cpu(dev_id_info->prod_num)) {
-	case IQS5XX_PROD_NUM_IQS550:
-	case IQS5XX_PROD_NUM_IQS572:
-	case IQS5XX_PROD_NUM_IQS525:
-		break;
-	default:
+	चयन (be16_to_cpu(dev_id_info->prod_num)) अणु
+	हाल IQS5XX_PROD_NUM_IQS550:
+	हाल IQS5XX_PROD_NUM_IQS572:
+	हाल IQS5XX_PROD_NUM_IQS525:
+		अवरोध;
+	शेष:
 		dev_err(&client->dev, "Unrecognized product number: %u\n",
 			be16_to_cpu(dev_id_info->prod_num));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * With the product number recognized yet shifted by one byte, open the
-	 * bootloader and wait for user space to convert the A000 device into a
+	 * With the product number recognized yet shअगरted by one byte, खोलो the
+	 * bootloader and रुको क्रम user space to convert the A000 device पूर्णांकo a
 	 * B000 device via new firmware.
 	 */
-	if (buf[1]) {
+	अगर (buf[1]) अणु
 		dev_err(&client->dev, "Opening bootloader for A000 device\n");
-		return iqs5xx_bl_open(client);
-	}
+		वापस iqs5xx_bl_खोलो(client);
+	पूर्ण
 
-	error = iqs5xx_read_burst(client, IQS5XX_EXP_FILE,
-				  iqs5xx->exp_file, sizeof(iqs5xx->exp_file));
-	if (error)
-		return error;
+	error = iqs5xx_पढ़ो_burst(client, IQS5XX_EXP_खाता,
+				  iqs5xx->exp_file, माप(iqs5xx->exp_file));
+	अगर (error)
+		वापस error;
 
 	error = iqs5xx_axis_init(client);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = iqs5xx_write_byte(client, IQS5XX_SYS_CTRL0, IQS5XX_ACK_RESET);
-	if (error)
-		return error;
+	error = iqs5xx_ग_लिखो_byte(client, IQS5XX_SYS_CTRL0, IQS5XX_ACK_RESET);
+	अगर (error)
+		वापस error;
 
-	error = iqs5xx_write_byte(client, IQS5XX_SYS_CFG0,
+	error = iqs5xx_ग_लिखो_byte(client, IQS5XX_SYS_CFG0,
 				  IQS5XX_SETUP_COMPLETE | IQS5XX_WDT |
 				  IQS5XX_ALP_REATI | IQS5XX_REATI);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = iqs5xx_write_byte(client, IQS5XX_SYS_CFG1,
+	error = iqs5xx_ग_लिखो_byte(client, IQS5XX_SYS_CFG1,
 				  IQS5XX_TP_EVENT | IQS5XX_EVENT_MODE);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = iqs5xx_write_byte(client, IQS5XX_END_COMM, 0);
-	if (error)
-		return error;
+	error = iqs5xx_ग_लिखो_byte(client, IQS5XX_END_COMM, 0);
+	अगर (error)
+		वापस error;
 
 	iqs5xx->dev_id_info = *dev_id_info;
 
 	/*
-	 * The following delay allows ATI to complete before the open and close
-	 * callbacks are free to elicit I2C communication. Any attempts to read
-	 * from or write to the device during this time may face extended clock
+	 * The following delay allows ATI to complete beक्रमe the खोलो and बंद
+	 * callbacks are मुक्त to elicit I2C communication. Any attempts to पढ़ो
+	 * from or ग_लिखो to the device during this समय may face extended घड़ी
 	 * stretching and prompt the I2C controller to report an error.
 	 */
 	msleep(250);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t iqs5xx_irq(int irq, void *data)
-{
-	struct iqs5xx_private *iqs5xx = data;
-	struct iqs5xx_status status;
-	struct i2c_client *client = iqs5xx->client;
-	struct input_dev *input = iqs5xx->input;
-	int error, i;
+अटल irqवापस_t iqs5xx_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = data;
+	काष्ठा iqs5xx_status status;
+	काष्ठा i2c_client *client = iqs5xx->client;
+	काष्ठा input_dev *input = iqs5xx->input;
+	पूर्णांक error, i;
 
 	/*
-	 * This check is purely a precaution, as the device does not assert the
+	 * This check is purely a precaution, as the device करोes not निश्चित the
 	 * RDY output during bootloader mode. If the device operates outside of
 	 * bootloader mode, the input device is guaranteed to be allocated.
 	 */
-	if (!iqs5xx->dev_id_info.bl_status)
-		return IRQ_NONE;
+	अगर (!iqs5xx->dev_id_info.bl_status)
+		वापस IRQ_NONE;
 
-	error = iqs5xx_read_burst(client, IQS5XX_SYS_INFO0,
-				  &status, sizeof(status));
-	if (error)
-		return IRQ_NONE;
+	error = iqs5xx_पढ़ो_burst(client, IQS5XX_SYS_INFO0,
+				  &status, माप(status));
+	अगर (error)
+		वापस IRQ_NONE;
 
-	if (status.sys_info[0] & IQS5XX_SHOW_RESET) {
+	अगर (status.sys_info[0] & IQS5XX_SHOW_RESET) अणु
 		dev_err(&client->dev, "Unexpected device reset\n");
 
 		error = iqs5xx_dev_init(client);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&client->dev,
 				"Failed to re-initialize device: %d\n", error);
-			return IRQ_NONE;
-		}
+			वापस IRQ_NONE;
+		पूर्ण
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(status.touch_data); i++) {
-		struct iqs5xx_touch_data *touch_data = &status.touch_data[i];
+	क्रम (i = 0; i < ARRAY_SIZE(status.touch_data); i++) अणु
+		काष्ठा iqs5xx_touch_data *touch_data = &status.touch_data[i];
 		u16 pressure = be16_to_cpu(touch_data->strength);
 
 		input_mt_slot(input, i);
-		if (input_mt_report_slot_state(input, MT_TOOL_FINGER,
-					       pressure != 0)) {
+		अगर (input_mt_report_slot_state(input, MT_TOOL_FINGER,
+					       pressure != 0)) अणु
 			touchscreen_report_pos(iqs5xx->input, &iqs5xx->prop,
-					       be16_to_cpu(touch_data->abs_x),
-					       be16_to_cpu(touch_data->abs_y),
+					       be16_to_cpu(touch_data->असल_x),
+					       be16_to_cpu(touch_data->असल_y),
 					       true);
-			input_report_abs(input, ABS_MT_PRESSURE, pressure);
-		}
-	}
+			input_report_असल(input, ABS_MT_PRESSURE, pressure);
+		पूर्ण
+	पूर्ण
 
 	input_mt_sync_frame(input);
 	input_sync(input);
 
-	error = iqs5xx_write_byte(client, IQS5XX_END_COMM, 0);
-	if (error)
-		return IRQ_NONE;
+	error = iqs5xx_ग_लिखो_byte(client, IQS5XX_END_COMM, 0);
+	अगर (error)
+		वापस IRQ_NONE;
 
 	/*
-	 * Once the communication window is closed, a small delay is added to
-	 * ensure the device's RDY output has been deasserted by the time the
-	 * interrupt handler returns.
+	 * Once the communication winकरोw is बंदd, a small delay is added to
+	 * ensure the device's RDY output has been deनिश्चितed by the समय the
+	 * पूर्णांकerrupt handler वापसs.
 	 */
 	usleep_range(50, 100);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int iqs5xx_fw_file_parse(struct i2c_client *client,
-				const char *fw_file, u8 *pmap)
-{
-	const struct firmware *fw;
-	struct iqs5xx_ihex_rec *rec;
-	size_t pos = 0;
-	int error, i;
+अटल पूर्णांक iqs5xx_fw_file_parse(काष्ठा i2c_client *client,
+				स्थिर अक्षर *fw_file, u8 *pmap)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा iqs5xx_ihex_rec *rec;
+	माप_प्रकार pos = 0;
+	पूर्णांक error, i;
 	u16 rec_num = 1;
 	u16 rec_addr;
 	u8 rec_len, rec_type, rec_chksm, chksm;
@@ -713,163 +714,163 @@ static int iqs5xx_fw_file_parse(struct i2c_client *client,
 	u8 rec_data[IQS5XX_REC_LEN_MAX];
 
 	/*
-	 * Firmware exported from the vendor's configuration tool deviates from
-	 * standard ihex as follows: (1) the checksum for records corresponding
+	 * Firmware exported from the venकरोr's configuration tool deviates from
+	 * standard ihex as follows: (1) the checksum क्रम records corresponding
 	 * to user-exported settings is not recalculated, and (2) an address of
-	 * 0xFFFF is used for the EOF record.
+	 * 0xFFFF is used क्रम the खातापूर्ण record.
 	 *
 	 * Because the ihex2fw tool tolerates neither (1) nor (2), the slightly
 	 * nonstandard ihex firmware is parsed directly by the driver.
 	 */
 	error = request_firmware(&fw, fw_file, &client->dev);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to request firmware %s: %d\n",
 			fw_file, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	do {
-		if (pos + sizeof(*rec) > fw->size) {
+	करो अणु
+		अगर (pos + माप(*rec) > fw->size) अणु
 			dev_err(&client->dev, "Insufficient firmware size\n");
 			error = -EINVAL;
-			break;
-		}
-		rec = (struct iqs5xx_ihex_rec *)(fw->data + pos);
-		pos += sizeof(*rec);
+			अवरोध;
+		पूर्ण
+		rec = (काष्ठा iqs5xx_ihex_rec *)(fw->data + pos);
+		pos += माप(*rec);
 
-		if (rec->start != ':') {
+		अगर (rec->start != ':') अणु
 			dev_err(&client->dev, "Invalid start at record %u\n",
 				rec_num);
 			error = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		error = hex2bin(rec_hdr, rec->len, sizeof(rec_hdr));
-		if (error) {
+		error = hex2bin(rec_hdr, rec->len, माप(rec_hdr));
+		अगर (error) अणु
 			dev_err(&client->dev, "Invalid header at record %u\n",
 				rec_num);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rec_len = *rec_hdr;
-		rec_addr = get_unaligned_be16(rec_hdr + sizeof(rec_len));
-		rec_type = *(rec_hdr + sizeof(rec_len) + sizeof(rec_addr));
+		rec_addr = get_unaligned_be16(rec_hdr + माप(rec_len));
+		rec_type = *(rec_hdr + माप(rec_len) + माप(rec_addr));
 
-		if (pos + rec_len * 2 > fw->size) {
+		अगर (pos + rec_len * 2 > fw->size) अणु
 			dev_err(&client->dev, "Insufficient firmware size\n");
 			error = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pos += (rec_len * 2);
 
 		error = hex2bin(rec_data, rec->data, rec_len);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&client->dev, "Invalid data at record %u\n",
 				rec_num);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		error = hex2bin(&rec_chksm,
-				rec->data + rec_len * 2, sizeof(rec_chksm));
-		if (error) {
+				rec->data + rec_len * 2, माप(rec_chksm));
+		अगर (error) अणु
 			dev_err(&client->dev, "Invalid checksum at record %u\n",
 				rec_num);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		chksm = 0;
-		for (i = 0; i < sizeof(rec_hdr); i++)
+		क्रम (i = 0; i < माप(rec_hdr); i++)
 			chksm += rec_hdr[i];
-		for (i = 0; i < rec_len; i++)
+		क्रम (i = 0; i < rec_len; i++)
 			chksm += rec_data[i];
 		chksm = ~chksm + 1;
 
-		if (chksm != rec_chksm && rec_addr < IQS5XX_CSTM) {
+		अगर (chksm != rec_chksm && rec_addr < IQS5XX_CSTM) अणु
 			dev_err(&client->dev,
 				"Incorrect checksum at record %u\n",
 				rec_num);
 			error = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (rec_type) {
-		case IQS5XX_REC_TYPE_DATA:
-			if (rec_addr < IQS5XX_CHKSM ||
-			    rec_addr > IQS5XX_PMAP_END) {
+		चयन (rec_type) अणु
+		हाल IQS5XX_REC_TYPE_DATA:
+			अगर (rec_addr < IQS5XX_CHKSM ||
+			    rec_addr > IQS5XX_PMAP_END) अणु
 				dev_err(&client->dev,
 					"Invalid address at record %u\n",
 					rec_num);
 				error = -EINVAL;
-			} else {
-				memcpy(pmap + rec_addr - IQS5XX_CHKSM,
+			पूर्ण अन्यथा अणु
+				स_नकल(pmap + rec_addr - IQS5XX_CHKSM,
 				       rec_data, rec_len);
-			}
-			break;
-		case IQS5XX_REC_TYPE_EOF:
-			break;
-		default:
+			पूर्ण
+			अवरोध;
+		हाल IQS5XX_REC_TYPE_खातापूर्ण:
+			अवरोध;
+		शेष:
 			dev_err(&client->dev, "Invalid type at record %u\n",
 				rec_num);
 			error = -EINVAL;
-		}
+		पूर्ण
 
-		if (error)
-			break;
+		अगर (error)
+			अवरोध;
 
 		rec_num++;
-		while (pos < fw->size) {
-			if (*(fw->data + pos) == ':')
-				break;
+		जबतक (pos < fw->size) अणु
+			अगर (*(fw->data + pos) == ':')
+				अवरोध;
 			pos++;
-		}
-	} while (rec_type != IQS5XX_REC_TYPE_EOF);
+		पूर्ण
+	पूर्ण जबतक (rec_type != IQS5XX_REC_TYPE_खातापूर्ण);
 
 	release_firmware(fw);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int iqs5xx_fw_file_write(struct i2c_client *client, const char *fw_file)
-{
-	struct iqs5xx_private *iqs5xx = i2c_get_clientdata(client);
-	int error, error_init = 0;
+अटल पूर्णांक iqs5xx_fw_file_ग_लिखो(काष्ठा i2c_client *client, स्थिर अक्षर *fw_file)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = i2c_get_clientdata(client);
+	पूर्णांक error, error_init = 0;
 	u8 *pmap;
 
 	pmap = kzalloc(IQS5XX_PMAP_LEN, GFP_KERNEL);
-	if (!pmap)
-		return -ENOMEM;
+	अगर (!pmap)
+		वापस -ENOMEM;
 
 	error = iqs5xx_fw_file_parse(client, fw_file, pmap);
-	if (error)
-		goto err_kfree;
+	अगर (error)
+		जाओ err_kमुक्त;
 
 	mutex_lock(&iqs5xx->lock);
 
 	/*
-	 * Disable the interrupt line in case the first attempt(s) to enter the
-	 * bootloader don't happen quickly enough, in which case the device may
-	 * assert the RDY output until the next attempt.
+	 * Disable the पूर्णांकerrupt line in हाल the first attempt(s) to enter the
+	 * bootloader करोn't happen quickly enough, in which हाल the device may
+	 * निश्चित the RDY output until the next attempt.
 	 */
 	disable_irq(client->irq);
 
 	iqs5xx->dev_id_info.bl_status = 0;
 
 	error = iqs5xx_bl_cmd(client, IQS5XX_BL_CMD_VER, 0);
-	if (error) {
-		error = iqs5xx_bl_open(client);
-		if (error)
-			goto err_reset;
-	}
+	अगर (error) अणु
+		error = iqs5xx_bl_खोलो(client);
+		अगर (error)
+			जाओ err_reset;
+	पूर्ण
 
-	error = iqs5xx_bl_write(client, IQS5XX_CHKSM, pmap, IQS5XX_PMAP_LEN);
-	if (error)
-		goto err_reset;
+	error = iqs5xx_bl_ग_लिखो(client, IQS5XX_CHKSM, pmap, IQS5XX_PMAP_LEN);
+	अगर (error)
+		जाओ err_reset;
 
 	error = iqs5xx_bl_cmd(client, IQS5XX_BL_CMD_CRC, 0);
-	if (error)
-		goto err_reset;
+	अगर (error)
+		जाओ err_reset;
 
-	error = iqs5xx_bl_verify(client, IQS5XX_CSTM,
+	error = iqs5xx_bl_verअगरy(client, IQS5XX_CSTM,
 				 pmap + IQS5XX_CHKSM_LEN + IQS5XX_APP_LEN,
 				 IQS5XX_CSTM_LEN);
 
@@ -878,224 +879,224 @@ err_reset:
 	usleep_range(15000, 15100);
 
 	error_init = iqs5xx_dev_init(client);
-	if (!iqs5xx->dev_id_info.bl_status)
+	अगर (!iqs5xx->dev_id_info.bl_status)
 		error_init = error_init ? : -EINVAL;
 
 	enable_irq(client->irq);
 
 	mutex_unlock(&iqs5xx->lock);
 
-err_kfree:
-	kfree(pmap);
+err_kमुक्त:
+	kमुक्त(pmap);
 
-	return error ? : error_init;
-}
+	वापस error ? : error_init;
+पूर्ण
 
-static ssize_t fw_file_store(struct device *dev,
-			     struct device_attribute *attr, const char *buf,
-			     size_t count)
-{
-	struct iqs5xx_private *iqs5xx = dev_get_drvdata(dev);
-	struct i2c_client *client = iqs5xx->client;
-	size_t len = count;
+अटल sमाप_प्रकार fw_file_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+			     माप_प्रकार count)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = iqs5xx->client;
+	माप_प्रकार len = count;
 	bool input_reg = !iqs5xx->input;
-	char fw_file[IQS5XX_FW_FILE_LEN + 1];
-	int error;
+	अक्षर fw_file[IQS5XX_FW_खाता_LEN + 1];
+	पूर्णांक error;
 
-	if (!len)
-		return -EINVAL;
+	अगर (!len)
+		वापस -EINVAL;
 
-	if (buf[len - 1] == '\n')
+	अगर (buf[len - 1] == '\n')
 		len--;
 
-	if (len > IQS5XX_FW_FILE_LEN)
-		return -ENAMETOOLONG;
+	अगर (len > IQS5XX_FW_खाता_LEN)
+		वापस -ENAMETOOLONG;
 
-	memcpy(fw_file, buf, len);
+	स_नकल(fw_file, buf, len);
 	fw_file[len] = '\0';
 
-	error = iqs5xx_fw_file_write(client, fw_file);
-	if (error)
-		return error;
+	error = iqs5xx_fw_file_ग_लिखो(client, fw_file);
+	अगर (error)
+		वापस error;
 
 	/*
-	 * If the input device was not allocated already, it is guaranteed to
-	 * be allocated by this point and can finally be registered.
+	 * If the input device was not allocated alपढ़ोy, it is guaranteed to
+	 * be allocated by this poपूर्णांक and can finally be रेजिस्टरed.
 	 */
-	if (input_reg) {
-		error = input_register_device(iqs5xx->input);
-		if (error) {
+	अगर (input_reg) अणु
+		error = input_रेजिस्टर_device(iqs5xx->input);
+		अगर (error) अणु
 			dev_err(&client->dev,
 				"Failed to register device: %d\n",
 				error);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t fw_info_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct iqs5xx_private *iqs5xx = dev_get_drvdata(dev);
+अटल sमाप_प्रकार fw_info_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = dev_get_drvdata(dev);
 
-	if (!iqs5xx->dev_id_info.bl_status)
-		return -ENODATA;
+	अगर (!iqs5xx->dev_id_info.bl_status)
+		वापस -ENODATA;
 
-	return scnprintf(buf, PAGE_SIZE, "%u.%u.%u.%u:%u.%u\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u.%u.%u.%u:%u.%u\n",
 			 be16_to_cpu(iqs5xx->dev_id_info.prod_num),
 			 be16_to_cpu(iqs5xx->dev_id_info.proj_num),
 			 iqs5xx->dev_id_info.major_ver,
 			 iqs5xx->dev_id_info.minor_ver,
 			 iqs5xx->exp_file[0], iqs5xx->exp_file[1]);
-}
+पूर्ण
 
-static DEVICE_ATTR_WO(fw_file);
-static DEVICE_ATTR_RO(fw_info);
+अटल DEVICE_ATTR_WO(fw_file);
+अटल DEVICE_ATTR_RO(fw_info);
 
-static struct attribute *iqs5xx_attrs[] = {
+अटल काष्ठा attribute *iqs5xx_attrs[] = अणु
 	&dev_attr_fw_file.attr,
 	&dev_attr_fw_info.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static umode_t iqs5xx_attr_is_visible(struct kobject *kobj,
-				      struct attribute *attr, int i)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct iqs5xx_private *iqs5xx = dev_get_drvdata(dev);
+अटल umode_t iqs5xx_attr_is_visible(काष्ठा kobject *kobj,
+				      काष्ठा attribute *attr, पूर्णांक i)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा iqs5xx_निजी *iqs5xx = dev_get_drvdata(dev);
 
-	if (attr == &dev_attr_fw_file.attr &&
+	अगर (attr == &dev_attr_fw_file.attr &&
 	    (iqs5xx->dev_id_info.bl_status == IQS5XX_BL_STATUS_NONE ||
 	    !iqs5xx->reset_gpio))
-		return 0;
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
-static const struct attribute_group iqs5xx_attr_group = {
+अटल स्थिर काष्ठा attribute_group iqs5xx_attr_group = अणु
 	.is_visible = iqs5xx_attr_is_visible,
 	.attrs = iqs5xx_attrs,
-};
+पूर्ण;
 
-static int __maybe_unused iqs5xx_suspend(struct device *dev)
-{
-	struct iqs5xx_private *iqs5xx = dev_get_drvdata(dev);
-	struct input_dev *input = iqs5xx->input;
-	int error = 0;
+अटल पूर्णांक __maybe_unused iqs5xx_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = dev_get_drvdata(dev);
+	काष्ठा input_dev *input = iqs5xx->input;
+	पूर्णांक error = 0;
 
-	if (!input || device_may_wakeup(dev))
-		return error;
+	अगर (!input || device_may_wakeup(dev))
+		वापस error;
 
 	mutex_lock(&input->mutex);
 
-	if (input_device_enabled(input))
+	अगर (input_device_enabled(input))
 		error = iqs5xx_set_state(iqs5xx->client, IQS5XX_SUSPEND);
 
 	mutex_unlock(&input->mutex);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int __maybe_unused iqs5xx_resume(struct device *dev)
-{
-	struct iqs5xx_private *iqs5xx = dev_get_drvdata(dev);
-	struct input_dev *input = iqs5xx->input;
-	int error = 0;
+अटल पूर्णांक __maybe_unused iqs5xx_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx = dev_get_drvdata(dev);
+	काष्ठा input_dev *input = iqs5xx->input;
+	पूर्णांक error = 0;
 
-	if (!input || device_may_wakeup(dev))
-		return error;
+	अगर (!input || device_may_wakeup(dev))
+		वापस error;
 
 	mutex_lock(&input->mutex);
 
-	if (input_device_enabled(input))
+	अगर (input_device_enabled(input))
 		error = iqs5xx_set_state(iqs5xx->client, IQS5XX_RESUME);
 
 	mutex_unlock(&input->mutex);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(iqs5xx_pm, iqs5xx_suspend, iqs5xx_resume);
+अटल SIMPLE_DEV_PM_OPS(iqs5xx_pm, iqs5xx_suspend, iqs5xx_resume);
 
-static int iqs5xx_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct iqs5xx_private *iqs5xx;
-	int error;
+अटल पूर्णांक iqs5xx_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा iqs5xx_निजी *iqs5xx;
+	पूर्णांक error;
 
-	iqs5xx = devm_kzalloc(&client->dev, sizeof(*iqs5xx), GFP_KERNEL);
-	if (!iqs5xx)
-		return -ENOMEM;
+	iqs5xx = devm_kzalloc(&client->dev, माप(*iqs5xx), GFP_KERNEL);
+	अगर (!iqs5xx)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, iqs5xx);
 	iqs5xx->client = client;
 
 	iqs5xx->reset_gpio = devm_gpiod_get_optional(&client->dev,
 						     "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(iqs5xx->reset_gpio)) {
+	अगर (IS_ERR(iqs5xx->reset_gpio)) अणु
 		error = PTR_ERR(iqs5xx->reset_gpio);
 		dev_err(&client->dev, "Failed to request GPIO: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	mutex_init(&iqs5xx->lock);
 
 	error = iqs5xx_dev_init(client);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = devm_request_threaded_irq(&client->dev, client->irq,
-					  NULL, iqs5xx_irq, IRQF_ONESHOT,
+	error = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+					  शून्य, iqs5xx_irq, IRQF_ONESHOT,
 					  client->name, iqs5xx);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to request IRQ: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_device_add_group(&client->dev, &iqs5xx_attr_group);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "Failed to add attributes: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (iqs5xx->input) {
-		error = input_register_device(iqs5xx->input);
-		if (error)
+	अगर (iqs5xx->input) अणु
+		error = input_रेजिस्टर_device(iqs5xx->input);
+		अगर (error)
 			dev_err(&client->dev,
 				"Failed to register device: %d\n",
 				error);
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct i2c_device_id iqs5xx_id[] = {
-	{ "iqs550", 0 },
-	{ "iqs572", 1 },
-	{ "iqs525", 2 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id iqs5xx_id[] = अणु
+	अणु "iqs550", 0 पूर्ण,
+	अणु "iqs572", 1 पूर्ण,
+	अणु "iqs525", 2 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, iqs5xx_id);
 
-static const struct of_device_id iqs5xx_of_match[] = {
-	{ .compatible = "azoteq,iqs550" },
-	{ .compatible = "azoteq,iqs572" },
-	{ .compatible = "azoteq,iqs525" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id iqs5xx_of_match[] = अणु
+	अणु .compatible = "azoteq,iqs550" पूर्ण,
+	अणु .compatible = "azoteq,iqs572" पूर्ण,
+	अणु .compatible = "azoteq,iqs525" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, iqs5xx_of_match);
 
-static struct i2c_driver iqs5xx_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver iqs5xx_i2c_driver = अणु
+	.driver = अणु
 		.name		= "iqs5xx",
 		.of_match_table	= iqs5xx_of_match,
 		.pm		= &iqs5xx_pm,
-	},
+	पूर्ण,
 	.id_table	= iqs5xx_id,
 	.probe		= iqs5xx_probe,
-};
+पूर्ण;
 module_i2c_driver(iqs5xx_i2c_driver);
 
 MODULE_AUTHOR("Jeff LaBundy <jeff@labundy.com>");

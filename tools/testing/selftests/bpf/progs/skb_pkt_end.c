@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0
-#define BPF_NO_PRESERVE_ACCESS_INDEX
-#include <vmlinux.h>
-#include <bpf/bpf_core_read.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा BPF_NO_PRESERVE_ACCESS_INDEX
+#समावेश <vmlinux.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
+#समावेश <bpf/bpf_helpers.h>
 
-#define INLINE __always_inline
+#घोषणा INLINE __always_अंतरभूत
 
-#define skb_shorter(skb, len) ((void *)(long)(skb)->data + (len) > (void *)(long)skb->data_end)
+#घोषणा skb_लघुer(skb, len) ((व्योम *)(दीर्घ)(skb)->data + (len) > (व्योम *)(दीर्घ)skb->data_end)
 
-#define ETH_IPV4_TCP_SIZE (14 + sizeof(struct iphdr) + sizeof(struct tcphdr))
+#घोषणा ETH_IPV4_TCP_SIZE (14 + माप(काष्ठा iphdr) + माप(काष्ठा tcphdr))
 
-static INLINE struct iphdr *get_iphdr(struct __sk_buff *skb)
-{
-	struct iphdr *ip = NULL;
-	struct ethhdr *eth;
+अटल INLINE काष्ठा iphdr *get_iphdr(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा iphdr *ip = शून्य;
+	काष्ठा ethhdr *eth;
 
-	if (skb_shorter(skb, ETH_IPV4_TCP_SIZE))
-		goto out;
+	अगर (skb_लघुer(skb, ETH_IPV4_TCP_SIZE))
+		जाओ out;
 
-	eth = (void *)(long)skb->data;
-	ip = (void *)(eth + 1);
+	eth = (व्योम *)(दीर्घ)skb->data;
+	ip = (व्योम *)(eth + 1);
 
 out:
-	return ip;
-}
+	वापस ip;
+पूर्ण
 
 SEC("classifier/cls")
-int main_prog(struct __sk_buff *skb)
-{
-	struct iphdr *ip = NULL;
-	struct tcphdr *tcp;
+पूर्णांक मुख्य_prog(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा iphdr *ip = शून्य;
+	काष्ठा tcphdr *tcp;
 	__u8 proto = 0;
 
-	if (!(ip = get_iphdr(skb)))
-		goto out;
+	अगर (!(ip = get_iphdr(skb)))
+		जाओ out;
 
 	proto = ip->protocol;
 
-	if (proto != IPPROTO_TCP)
-		goto out;
+	अगर (proto != IPPROTO_TCP)
+		जाओ out;
 
-	tcp = (void*)(ip + 1);
-	if (tcp->dest != 0)
-		goto out;
-	if (!tcp)
-		goto out;
+	tcp = (व्योम*)(ip + 1);
+	अगर (tcp->dest != 0)
+		जाओ out;
+	अगर (!tcp)
+		जाओ out;
 
-	return tcp->urg_ptr;
+	वापस tcp->urg_ptr;
 out:
-	return -1;
-}
-char _license[] SEC("license") = "GPL";
+	वापस -1;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

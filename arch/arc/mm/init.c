@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/memblock.h>
-#ifdef CONFIG_BLK_DEV_INITRD
-#include <linux/initrd.h>
-#endif
-#include <linux/of_fdt.h>
-#include <linux/swap.h>
-#include <linux/module.h>
-#include <linux/highmem.h>
-#include <asm/page.h>
-#include <asm/sections.h>
-#include <asm/arcregs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/memblock.h>
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+#समावेश <linux/initrd.h>
+#पूर्ण_अगर
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/arcregs.h>
 
 pgd_t swapper_pg_dir[PTRS_PER_PGD] __aligned(PAGE_SIZE);
-char empty_zero_page[PAGE_SIZE] __aligned(PAGE_SIZE);
+अक्षर empty_zero_page[PAGE_SIZE] __aligned(PAGE_SIZE);
 EXPORT_SYMBOL(empty_zero_page);
 
-static const unsigned long low_mem_start = CONFIG_LINUX_RAM_BASE;
-static unsigned long low_mem_sz;
+अटल स्थिर अचिन्हित दीर्घ low_mem_start = CONFIG_LINUX_RAM_BASE;
+अटल अचिन्हित दीर्घ low_mem_sz;
 
-#ifdef CONFIG_HIGHMEM
-static unsigned long min_high_pfn, max_high_pfn;
-static phys_addr_t high_mem_start;
-static phys_addr_t high_mem_sz;
-unsigned long arch_pfn_offset;
+#अगर_घोषित CONFIG_HIGHMEM
+अटल अचिन्हित दीर्घ min_high_pfn, max_high_pfn;
+अटल phys_addr_t high_mem_start;
+अटल phys_addr_t high_mem_sz;
+अचिन्हित दीर्घ arch_pfn_offset;
 EXPORT_SYMBOL(arch_pfn_offset);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_DISCONTIGMEM
-struct pglist_data node_data[MAX_NUMNODES] __read_mostly;
+#अगर_घोषित CONFIG_DISCONTIGMEM
+काष्ठा pglist_data node_data[MAX_NUMNODES] __पढ़ो_mostly;
 EXPORT_SYMBOL(node_data);
-#endif
+#पूर्ण_अगर
 
-long __init arc_get_mem_sz(void)
-{
-	return low_mem_sz;
-}
+दीर्घ __init arc_get_mem_sz(व्योम)
+अणु
+	वापस low_mem_sz;
+पूर्ण
 
 /* User can over-ride above with "mem=nnn[KkMm]" in cmdline */
-static int __init setup_mem_sz(char *str)
-{
-	low_mem_sz = memparse(str, NULL) & PAGE_MASK;
+अटल पूर्णांक __init setup_mem_sz(अक्षर *str)
+अणु
+	low_mem_sz = memparse(str, शून्य) & PAGE_MASK;
 
 	/* early console might not be setup yet - it will show up later */
 	pr_info("\"mem=%s\": mem sz set to %ldM\n", str, TO_MB(low_mem_sz));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("mem", setup_mem_sz);
 
-void __init early_init_dt_add_memory_arch(u64 base, u64 size)
-{
-	int in_use = 0;
+व्योम __init early_init_dt_add_memory_arch(u64 base, u64 size)
+अणु
+	पूर्णांक in_use = 0;
 
-	if (!low_mem_sz) {
-		if (base != low_mem_start)
+	अगर (!low_mem_sz) अणु
+		अगर (base != low_mem_start)
 			panic("CONFIG_LINUX_RAM_BASE != DT memory { }");
 
 		low_mem_sz = size;
 		in_use = 1;
 		memblock_add_node(base, size, 0);
-	} else {
-#ifdef CONFIG_HIGHMEM
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_HIGHMEM
 		high_mem_start = base;
 		high_mem_sz = size;
 		in_use = 1;
 		memblock_add_node(base, size, 1);
 		memblock_reserve(base, size);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	pr_info("Memory @ %llx [%lldM] %s\n",
 		base, TO_MB(size), !in_use ? "Not used":"");
-}
+पूर्ण
 
-bool arch_has_descending_max_zone_pfns(void)
-{
-	return !IS_ENABLED(CONFIG_ARC_HAS_PAE40);
-}
+bool arch_has_descending_max_zone_pfns(व्योम)
+अणु
+	वापस !IS_ENABLED(CONFIG_ARC_HAS_PAE40);
+पूर्ण
 
 /*
  * First memory setup routine called from setup_arch()
  * 1. setup swapper's mm @init_mm
- * 2. Count the pages we have and setup bootmem allocator
+ * 2. Count the pages we have and setup booपंचांगem allocator
  * 3. zone setup
  */
-void __init setup_arch_memory(void)
-{
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0 };
+व्योम __init setup_arch_memory(व्योम)
+अणु
+	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु 0 पूर्ण;
 
-	init_mm.start_code = (unsigned long)_text;
-	init_mm.end_code = (unsigned long)_etext;
-	init_mm.end_data = (unsigned long)_edata;
-	init_mm.brk = (unsigned long)_end;
+	init_mm.start_code = (अचिन्हित दीर्घ)_text;
+	init_mm.end_code = (अचिन्हित दीर्घ)_etext;
+	init_mm.end_data = (अचिन्हित दीर्घ)_edata;
+	init_mm.brk = (अचिन्हित दीर्घ)_end;
 
-	/* first page of system - kernel .vector starts here */
+	/* first page of प्रणाली - kernel .vector starts here */
 	min_low_pfn = virt_to_pfn(CONFIG_LINUX_RAM_BASE);
 
 	/* Last usable page of low mem */
 	max_low_pfn = max_pfn = PFN_DOWN(low_mem_start + low_mem_sz);
 
-	/*------------- bootmem allocator setup -----------------------*/
+	/*------------- booपंचांगem allocator setup -----------------------*/
 
 	/*
-	 * seed the bootmem allocator after any DT memory node parsing or
+	 * seed the booपंचांगem allocator after any DT memory node parsing or
 	 * "mem=xxx" cmdline overrides have potentially updated @arc_mem_sz
 	 *
 	 * Only low mem is added, otherwise we have crashes when allocating
 	 * mem_map[] itself. NO_BOOTMEM allocates mem_map[] at the end of
 	 * avail memory, ending in highmem with a > 32-bit address. However
-	 * it then tries to memset it with a truncaed 32-bit handle, causing
+	 * it then tries to स_रखो it with a truncaed 32-bit handle, causing
 	 * the crash
 	 */
 
 	memblock_reserve(CONFIG_LINUX_LINK_BASE,
 			 __pa(_end) - CONFIG_LINUX_LINK_BASE);
 
-#ifdef CONFIG_BLK_DEV_INITRD
-	if (phys_initrd_size) {
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अगर (phys_initrd_size) अणु
 		memblock_reserve(phys_initrd_start, phys_initrd_size);
-		initrd_start = (unsigned long)__va(phys_initrd_start);
+		initrd_start = (अचिन्हित दीर्घ)__va(phys_initrd_start);
 		initrd_end = initrd_start + phys_initrd_size;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	early_init_fdt_reserve_self();
 	early_init_fdt_scan_reserved_mem();
@@ -137,7 +138,7 @@ void __init setup_arch_memory(void)
 	/*----------------- node/zones setup --------------------------*/
 	max_zone_pfn[ZONE_NORMAL] = max_low_pfn;
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 	/*
 	 * Populate a new node with highmem
 	 *
@@ -148,68 +149,68 @@ void __init setup_arch_memory(void)
 	 * Thus HIGHMEM on ARC is imlemented with DISCONTIGMEM.
 	 *
 	 * DISCONTIGMEM in turns requires multiple nodes. node 0 above is
-	 * populated with normal memory zone while node 1 only has highmem
+	 * populated with normal memory zone जबतक node 1 only has highmem
 	 */
-#ifdef CONFIG_DISCONTIGMEM
+#अगर_घोषित CONFIG_DISCONTIGMEM
 	node_set_online(1);
-#endif
+#पूर्ण_अगर
 
 	min_high_pfn = PFN_DOWN(high_mem_start);
 	max_high_pfn = PFN_DOWN(high_mem_start + high_mem_sz);
 
 	/*
-	 * max_high_pfn should be ok here for both HIGHMEM and HIGHMEM+PAE.
+	 * max_high_pfn should be ok here क्रम both HIGHMEM and HIGHMEM+PAE.
 	 * For HIGHMEM without PAE max_high_pfn should be less than
-	 * min_low_pfn to guarantee that these two regions don't overlap.
-	 * For PAE case highmem is greater than lowmem, so it is natural
+	 * min_low_pfn to guarantee that these two regions करोn't overlap.
+	 * For PAE हाल highmem is greater than lowmem, so it is natural
 	 * to use max_high_pfn.
 	 *
-	 * In both cases, holes should be handled by pfn_valid().
+	 * In both हालs, holes should be handled by pfn_valid().
 	 */
 	max_zone_pfn[ZONE_HIGHMEM] = max_high_pfn;
 
-	high_memory = (void *)(min_high_pfn << PAGE_SHIFT);
+	high_memory = (व्योम *)(min_high_pfn << PAGE_SHIFT);
 
 	arch_pfn_offset = min(min_low_pfn, min_high_pfn);
 	kmap_init();
 
-#else /* CONFIG_HIGHMEM */
+#अन्यथा /* CONFIG_HIGHMEM */
 	/* pfn_valid() uses this when FLATMEM=y and HIGHMEM=n */
 	max_mapnr = max_low_pfn - min_low_pfn;
 
-#endif /* CONFIG_HIGHMEM */
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
-	free_area_init(max_zone_pfn);
-}
+	मुक्त_area_init(max_zone_pfn);
+पूर्ण
 
-static void __init highmem_init(void)
-{
-#ifdef CONFIG_HIGHMEM
-	unsigned long tmp;
+अटल व्योम __init highmem_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_HIGHMEM
+	अचिन्हित दीर्घ पंचांगp;
 
-	memblock_free(high_mem_start, high_mem_sz);
-	for (tmp = min_high_pfn; tmp < max_high_pfn; tmp++)
-		free_highmem_page(pfn_to_page(tmp));
-#endif
-}
+	memblock_मुक्त(high_mem_start, high_mem_sz);
+	क्रम (पंचांगp = min_high_pfn; पंचांगp < max_high_pfn; पंचांगp++)
+		मुक्त_highmem_page(pfn_to_page(पंचांगp));
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * mem_init - initializes memory
  *
- * Frees up bootmem
+ * Frees up booपंचांगem
  * Calculates and displays memory available/used
  */
-void __init mem_init(void)
-{
-	memblock_free_all();
+व्योम __init mem_init(व्योम)
+अणु
+	memblock_मुक्त_all();
 	highmem_init();
-}
+पूर्ण
 
-#ifdef CONFIG_HIGHMEM
-int pfn_valid(unsigned long pfn)
-{
-	return (pfn >= min_high_pfn && pfn <= max_high_pfn) ||
+#अगर_घोषित CONFIG_HIGHMEM
+पूर्णांक pfn_valid(अचिन्हित दीर्घ pfn)
+अणु
+	वापस (pfn >= min_high_pfn && pfn <= max_high_pfn) ||
 		(pfn >= min_low_pfn && pfn <= max_low_pfn);
-}
+पूर्ण
 EXPORT_SYMBOL(pfn_valid);
-#endif
+#पूर्ण_अगर

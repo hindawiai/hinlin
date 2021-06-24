@@ -1,522 +1,523 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * builtin-timechart.c - make an svg timechart of system activity
+ * builtin-समयअक्षरt.c - make an svg समयअक्षरt of प्रणाली activity
  *
  * (C) Copyright 2009 Intel Corporation
  *
  * Authors:
- *     Arjan van de Ven <arjan@linux.intel.com>
+ *     Arjan van de Ven <arjan@linux.पूर्णांकel.com>
  */
 
-#include <errno.h>
-#include <inttypes.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
 
-#include "builtin.h"
-#include "util/color.h"
-#include <linux/list.h>
-#include "util/evlist.h" // for struct evsel_str_handler
-#include "util/evsel.h"
-#include <linux/kernel.h>
-#include <linux/rbtree.h>
-#include <linux/time64.h>
-#include <linux/zalloc.h>
-#include "util/symbol.h"
-#include "util/thread.h"
-#include "util/callchain.h"
+#समावेश "builtin.h"
+#समावेश "util/color.h"
+#समावेश <linux/list.h>
+#समावेश "util/evlist.h" // क्रम काष्ठा evsel_str_handler
+#समावेश "util/evsel.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/समय64.h>
+#समावेश <linux/zभाग.स>
+#समावेश "util/symbol.h"
+#समावेश "util/thread.h"
+#समावेश "util/callchain.h"
 
-#include "perf.h"
-#include "util/header.h"
-#include <subcmd/pager.h>
-#include <subcmd/parse-options.h>
-#include "util/parse-events.h"
-#include "util/event.h"
-#include "util/session.h"
-#include "util/svghelper.h"
-#include "util/tool.h"
-#include "util/data.h"
-#include "util/debug.h"
-#include <linux/err.h>
+#समावेश "perf.h"
+#समावेश "util/header.h"
+#समावेश <subcmd/pager.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश "util/parse-events.h"
+#समावेश "util/event.h"
+#समावेश "util/session.h"
+#समावेश "util/svghelper.h"
+#समावेश "util/tool.h"
+#समावेश "util/data.h"
+#समावेश "util/debug.h"
+#समावेश <linux/err.h>
 
-#ifdef LACKS_OPEN_MEMSTREAM_PROTOTYPE
-FILE *open_memstream(char **ptr, size_t *sizeloc);
-#endif
+#अगर_घोषित LACKS_OPEN_MEMSTREAM_PROTOTYPE
+खाता *खोलो_memstream(अक्षर **ptr, माप_प्रकार *sizeloc);
+#पूर्ण_अगर
 
-#define SUPPORT_OLD_POWER_EVENTS 1
-#define PWR_EVENT_EXIT -1
+#घोषणा SUPPORT_OLD_POWER_EVENTS 1
+#घोषणा PWR_EVENT_EXIT -1
 
-struct per_pid;
-struct power_event;
-struct wake_event;
+काष्ठा per_pid;
+काष्ठा घातer_event;
+काष्ठा wake_event;
 
-struct timechart {
-	struct perf_tool	tool;
-	struct per_pid		*all_data;
-	struct power_event	*power_events;
-	struct wake_event	*wake_events;
-	int			proc_num;
-	unsigned int		numcpus;
+काष्ठा समयअक्षरt अणु
+	काष्ठा perf_tool	tool;
+	काष्ठा per_pid		*all_data;
+	काष्ठा घातer_event	*घातer_events;
+	काष्ठा wake_event	*wake_events;
+	पूर्णांक			proc_num;
+	अचिन्हित पूर्णांक		numcpus;
 	u64			min_freq,	/* Lowest CPU frequency seen */
 				max_freq,	/* Highest CPU frequency seen */
 				turbo_frequency,
-				first_time, last_time;
-	bool			power_only,
+				first_समय, last_समय;
+	bool			घातer_only,
 				tasks_only,
 				with_backtrace,
 				topology;
-	bool			force;
+	bool			क्रमce;
 	/* IO related settings */
 	bool			io_only,
 				skip_eagain;
 	u64			io_events;
-	u64			min_time,
+	u64			min_समय,
 				merge_dist;
-};
+पूर्ण;
 
-struct per_pidcomm;
-struct cpu_sample;
-struct io_sample;
+काष्ठा per_pidcomm;
+काष्ठा cpu_sample;
+काष्ठा io_sample;
 
 /*
- * Datastructure layout:
- * We keep an list of "pid"s, matching the kernels notion of a task struct.
+ * Dataकाष्ठाure layout:
+ * We keep an list of "pid"s, matching the kernels notion of a task काष्ठा.
  * Each "pid" entry, has a list of "comm"s.
- *	this is because we want to track different programs different, while
+ *	this is because we want to track dअगरferent programs dअगरferent, जबतक
  *	exec will reuse the original pid (by design).
  * Each comm has a list of samples that will be used to draw
  * final graph.
  */
 
-struct per_pid {
-	struct per_pid *next;
+काष्ठा per_pid अणु
+	काष्ठा per_pid *next;
 
-	int		pid;
-	int		ppid;
+	पूर्णांक		pid;
+	पूर्णांक		ppid;
 
-	u64		start_time;
-	u64		end_time;
-	u64		total_time;
+	u64		start_समय;
+	u64		end_समय;
+	u64		total_समय;
 	u64		total_bytes;
-	int		display;
+	पूर्णांक		display;
 
-	struct per_pidcomm *all;
-	struct per_pidcomm *current;
-};
+	काष्ठा per_pidcomm *all;
+	काष्ठा per_pidcomm *current;
+पूर्ण;
 
 
-struct per_pidcomm {
-	struct per_pidcomm *next;
+काष्ठा per_pidcomm अणु
+	काष्ठा per_pidcomm *next;
 
-	u64		start_time;
-	u64		end_time;
-	u64		total_time;
+	u64		start_समय;
+	u64		end_समय;
+	u64		total_समय;
 	u64		max_bytes;
 	u64		total_bytes;
 
-	int		Y;
-	int		display;
+	पूर्णांक		Y;
+	पूर्णांक		display;
 
-	long		state;
+	दीर्घ		state;
 	u64		state_since;
 
-	char		*comm;
+	अक्षर		*comm;
 
-	struct cpu_sample *samples;
-	struct io_sample  *io_samples;
-};
+	काष्ठा cpu_sample *samples;
+	काष्ठा io_sample  *io_samples;
+पूर्ण;
 
-struct sample_wrapper {
-	struct sample_wrapper *next;
+काष्ठा sample_wrapper अणु
+	काष्ठा sample_wrapper *next;
 
-	u64		timestamp;
-	unsigned char	data[];
-};
+	u64		बारtamp;
+	अचिन्हित अक्षर	data[];
+पूर्ण;
 
-#define TYPE_NONE	0
-#define TYPE_RUNNING	1
-#define TYPE_WAITING	2
-#define TYPE_BLOCKED	3
+#घोषणा TYPE_NONE	0
+#घोषणा TYPE_RUNNING	1
+#घोषणा TYPE_WAITING	2
+#घोषणा TYPE_BLOCKED	3
 
-struct cpu_sample {
-	struct cpu_sample *next;
+काष्ठा cpu_sample अणु
+	काष्ठा cpu_sample *next;
 
-	u64 start_time;
-	u64 end_time;
-	int type;
-	int cpu;
-	const char *backtrace;
-};
+	u64 start_समय;
+	u64 end_समय;
+	पूर्णांक type;
+	पूर्णांक cpu;
+	स्थिर अक्षर *backtrace;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	IOTYPE_READ,
 	IOTYPE_WRITE,
 	IOTYPE_SYNC,
 	IOTYPE_TX,
 	IOTYPE_RX,
 	IOTYPE_POLL,
-};
+पूर्ण;
 
-struct io_sample {
-	struct io_sample *next;
+काष्ठा io_sample अणु
+	काष्ठा io_sample *next;
 
-	u64 start_time;
-	u64 end_time;
+	u64 start_समय;
+	u64 end_समय;
 	u64 bytes;
-	int type;
-	int fd;
-	int err;
-	int merges;
-};
+	पूर्णांक type;
+	पूर्णांक fd;
+	पूर्णांक err;
+	पूर्णांक merges;
+पूर्ण;
 
-#define CSTATE 1
-#define PSTATE 2
+#घोषणा CSTATE 1
+#घोषणा PSTATE 2
 
-struct power_event {
-	struct power_event *next;
-	int type;
-	int state;
-	u64 start_time;
-	u64 end_time;
-	int cpu;
-};
+काष्ठा घातer_event अणु
+	काष्ठा घातer_event *next;
+	पूर्णांक type;
+	पूर्णांक state;
+	u64 start_समय;
+	u64 end_समय;
+	पूर्णांक cpu;
+पूर्ण;
 
-struct wake_event {
-	struct wake_event *next;
-	int waker;
-	int wakee;
-	u64 time;
-	const char *backtrace;
-};
+काष्ठा wake_event अणु
+	काष्ठा wake_event *next;
+	पूर्णांक waker;
+	पूर्णांक wakee;
+	u64 समय;
+	स्थिर अक्षर *backtrace;
+पूर्ण;
 
-struct process_filter {
-	char			*name;
-	int			pid;
-	struct process_filter	*next;
-};
+काष्ठा process_filter अणु
+	अक्षर			*name;
+	पूर्णांक			pid;
+	काष्ठा process_filter	*next;
+पूर्ण;
 
-static struct process_filter *process_filter;
+अटल काष्ठा process_filter *process_filter;
 
 
-static struct per_pid *find_create_pid(struct timechart *tchart, int pid)
-{
-	struct per_pid *cursor = tchart->all_data;
+अटल काष्ठा per_pid *find_create_pid(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक pid)
+अणु
+	काष्ठा per_pid *cursor = tअक्षरt->all_data;
 
-	while (cursor) {
-		if (cursor->pid == pid)
-			return cursor;
+	जबतक (cursor) अणु
+		अगर (cursor->pid == pid)
+			वापस cursor;
 		cursor = cursor->next;
-	}
-	cursor = zalloc(sizeof(*cursor));
-	assert(cursor != NULL);
+	पूर्ण
+	cursor = zalloc(माप(*cursor));
+	निश्चित(cursor != शून्य);
 	cursor->pid = pid;
-	cursor->next = tchart->all_data;
-	tchart->all_data = cursor;
-	return cursor;
-}
+	cursor->next = tअक्षरt->all_data;
+	tअक्षरt->all_data = cursor;
+	वापस cursor;
+पूर्ण
 
-static void pid_set_comm(struct timechart *tchart, int pid, char *comm)
-{
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	p = find_create_pid(tchart, pid);
+अटल व्योम pid_set_comm(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक pid, अक्षर *comm)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	p = find_create_pid(tअक्षरt, pid);
 	c = p->all;
-	while (c) {
-		if (c->comm && strcmp(c->comm, comm) == 0) {
+	जबतक (c) अणु
+		अगर (c->comm && म_भेद(c->comm, comm) == 0) अणु
 			p->current = c;
-			return;
-		}
-		if (!c->comm) {
+			वापस;
+		पूर्ण
+		अगर (!c->comm) अणु
 			c->comm = strdup(comm);
 			p->current = c;
-			return;
-		}
+			वापस;
+		पूर्ण
 		c = c->next;
-	}
-	c = zalloc(sizeof(*c));
-	assert(c != NULL);
+	पूर्ण
+	c = zalloc(माप(*c));
+	निश्चित(c != शून्य);
 	c->comm = strdup(comm);
 	p->current = c;
 	c->next = p->all;
 	p->all = c;
-}
+पूर्ण
 
-static void pid_fork(struct timechart *tchart, int pid, int ppid, u64 timestamp)
-{
-	struct per_pid *p, *pp;
-	p = find_create_pid(tchart, pid);
-	pp = find_create_pid(tchart, ppid);
+अटल व्योम pid_विभाजन(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक pid, पूर्णांक ppid, u64 बारtamp)
+अणु
+	काष्ठा per_pid *p, *pp;
+	p = find_create_pid(tअक्षरt, pid);
+	pp = find_create_pid(tअक्षरt, ppid);
 	p->ppid = ppid;
-	if (pp->current && pp->current->comm && !p->current)
-		pid_set_comm(tchart, pid, pp->current->comm);
+	अगर (pp->current && pp->current->comm && !p->current)
+		pid_set_comm(tअक्षरt, pid, pp->current->comm);
 
-	p->start_time = timestamp;
-	if (p->current && !p->current->start_time) {
-		p->current->start_time = timestamp;
-		p->current->state_since = timestamp;
-	}
-}
+	p->start_समय = बारtamp;
+	अगर (p->current && !p->current->start_समय) अणु
+		p->current->start_समय = बारtamp;
+		p->current->state_since = बारtamp;
+	पूर्ण
+पूर्ण
 
-static void pid_exit(struct timechart *tchart, int pid, u64 timestamp)
-{
-	struct per_pid *p;
-	p = find_create_pid(tchart, pid);
-	p->end_time = timestamp;
-	if (p->current)
-		p->current->end_time = timestamp;
-}
+अटल व्योम pid_निकास(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक pid, u64 बारtamp)
+अणु
+	काष्ठा per_pid *p;
+	p = find_create_pid(tअक्षरt, pid);
+	p->end_समय = बारtamp;
+	अगर (p->current)
+		p->current->end_समय = बारtamp;
+पूर्ण
 
-static void pid_put_sample(struct timechart *tchart, int pid, int type,
-			   unsigned int cpu, u64 start, u64 end,
-			   const char *backtrace)
-{
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	struct cpu_sample *sample;
+अटल व्योम pid_put_sample(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक pid, पूर्णांक type,
+			   अचिन्हित पूर्णांक cpu, u64 start, u64 end,
+			   स्थिर अक्षर *backtrace)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	काष्ठा cpu_sample *sample;
 
-	p = find_create_pid(tchart, pid);
+	p = find_create_pid(tअक्षरt, pid);
 	c = p->current;
-	if (!c) {
-		c = zalloc(sizeof(*c));
-		assert(c != NULL);
+	अगर (!c) अणु
+		c = zalloc(माप(*c));
+		निश्चित(c != शून्य);
 		p->current = c;
 		c->next = p->all;
 		p->all = c;
-	}
+	पूर्ण
 
-	sample = zalloc(sizeof(*sample));
-	assert(sample != NULL);
-	sample->start_time = start;
-	sample->end_time = end;
+	sample = zalloc(माप(*sample));
+	निश्चित(sample != शून्य);
+	sample->start_समय = start;
+	sample->end_समय = end;
 	sample->type = type;
 	sample->next = c->samples;
 	sample->cpu = cpu;
 	sample->backtrace = backtrace;
 	c->samples = sample;
 
-	if (sample->type == TYPE_RUNNING && end > start && start > 0) {
-		c->total_time += (end-start);
-		p->total_time += (end-start);
-	}
+	अगर (sample->type == TYPE_RUNNING && end > start && start > 0) अणु
+		c->total_समय += (end-start);
+		p->total_समय += (end-start);
+	पूर्ण
 
-	if (c->start_time == 0 || c->start_time > start)
-		c->start_time = start;
-	if (p->start_time == 0 || p->start_time > start)
-		p->start_time = start;
-}
+	अगर (c->start_समय == 0 || c->start_समय > start)
+		c->start_समय = start;
+	अगर (p->start_समय == 0 || p->start_समय > start)
+		p->start_समय = start;
+पूर्ण
 
-#define MAX_CPUS 4096
+#घोषणा MAX_CPUS 4096
 
-static u64 cpus_cstate_start_times[MAX_CPUS];
-static int cpus_cstate_state[MAX_CPUS];
-static u64 cpus_pstate_start_times[MAX_CPUS];
-static u64 cpus_pstate_state[MAX_CPUS];
+अटल u64 cpus_cstate_start_बार[MAX_CPUS];
+अटल पूर्णांक cpus_cstate_state[MAX_CPUS];
+अटल u64 cpus_pstate_start_बार[MAX_CPUS];
+अटल u64 cpus_pstate_state[MAX_CPUS];
 
-static int process_comm_event(struct perf_tool *tool,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct timechart *tchart = container_of(tool, struct timechart, tool);
-	pid_set_comm(tchart, event->comm.tid, event->comm.comm);
-	return 0;
-}
+अटल पूर्णांक process_comm_event(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा समयअक्षरt *tअक्षरt = container_of(tool, काष्ठा समयअक्षरt, tool);
+	pid_set_comm(tअक्षरt, event->comm.tid, event->comm.comm);
+	वापस 0;
+पूर्ण
 
-static int process_fork_event(struct perf_tool *tool,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct timechart *tchart = container_of(tool, struct timechart, tool);
-	pid_fork(tchart, event->fork.pid, event->fork.ppid, event->fork.time);
-	return 0;
-}
+अटल पूर्णांक process_विभाजन_event(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा समयअक्षरt *tअक्षरt = container_of(tool, काष्ठा समयअक्षरt, tool);
+	pid_विभाजन(tअक्षरt, event->विभाजन.pid, event->विभाजन.ppid, event->विभाजन.समय);
+	वापस 0;
+पूर्ण
 
-static int process_exit_event(struct perf_tool *tool,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	struct timechart *tchart = container_of(tool, struct timechart, tool);
-	pid_exit(tchart, event->fork.pid, event->fork.time);
-	return 0;
-}
+अटल पूर्णांक process_निकास_event(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा समयअक्षरt *tअक्षरt = container_of(tool, काष्ठा समयअक्षरt, tool);
+	pid_निकास(tअक्षरt, event->विभाजन.pid, event->विभाजन.समय);
+	वापस 0;
+पूर्ण
 
-#ifdef SUPPORT_OLD_POWER_EVENTS
-static int use_old_power_events;
-#endif
+#अगर_घोषित SUPPORT_OLD_POWER_EVENTS
+अटल पूर्णांक use_old_घातer_events;
+#पूर्ण_अगर
 
-static void c_state_start(int cpu, u64 timestamp, int state)
-{
-	cpus_cstate_start_times[cpu] = timestamp;
+अटल व्योम c_state_start(पूर्णांक cpu, u64 बारtamp, पूर्णांक state)
+अणु
+	cpus_cstate_start_बार[cpu] = बारtamp;
 	cpus_cstate_state[cpu] = state;
-}
+पूर्ण
 
-static void c_state_end(struct timechart *tchart, int cpu, u64 timestamp)
-{
-	struct power_event *pwr = zalloc(sizeof(*pwr));
+अटल व्योम c_state_end(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक cpu, u64 बारtamp)
+अणु
+	काष्ठा घातer_event *pwr = zalloc(माप(*pwr));
 
-	if (!pwr)
-		return;
+	अगर (!pwr)
+		वापस;
 
 	pwr->state = cpus_cstate_state[cpu];
-	pwr->start_time = cpus_cstate_start_times[cpu];
-	pwr->end_time = timestamp;
+	pwr->start_समय = cpus_cstate_start_बार[cpu];
+	pwr->end_समय = बारtamp;
 	pwr->cpu = cpu;
 	pwr->type = CSTATE;
-	pwr->next = tchart->power_events;
+	pwr->next = tअक्षरt->घातer_events;
 
-	tchart->power_events = pwr;
-}
+	tअक्षरt->घातer_events = pwr;
+पूर्ण
 
-static void p_state_change(struct timechart *tchart, int cpu, u64 timestamp, u64 new_freq)
-{
-	struct power_event *pwr;
+अटल व्योम p_state_change(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक cpu, u64 बारtamp, u64 new_freq)
+अणु
+	काष्ठा घातer_event *pwr;
 
-	if (new_freq > 8000000) /* detect invalid data */
-		return;
+	अगर (new_freq > 8000000) /* detect invalid data */
+		वापस;
 
-	pwr = zalloc(sizeof(*pwr));
-	if (!pwr)
-		return;
+	pwr = zalloc(माप(*pwr));
+	अगर (!pwr)
+		वापस;
 
 	pwr->state = cpus_pstate_state[cpu];
-	pwr->start_time = cpus_pstate_start_times[cpu];
-	pwr->end_time = timestamp;
+	pwr->start_समय = cpus_pstate_start_बार[cpu];
+	pwr->end_समय = बारtamp;
 	pwr->cpu = cpu;
 	pwr->type = PSTATE;
-	pwr->next = tchart->power_events;
+	pwr->next = tअक्षरt->घातer_events;
 
-	if (!pwr->start_time)
-		pwr->start_time = tchart->first_time;
+	अगर (!pwr->start_समय)
+		pwr->start_समय = tअक्षरt->first_समय;
 
-	tchart->power_events = pwr;
+	tअक्षरt->घातer_events = pwr;
 
 	cpus_pstate_state[cpu] = new_freq;
-	cpus_pstate_start_times[cpu] = timestamp;
+	cpus_pstate_start_बार[cpu] = बारtamp;
 
-	if ((u64)new_freq > tchart->max_freq)
-		tchart->max_freq = new_freq;
+	अगर ((u64)new_freq > tअक्षरt->max_freq)
+		tअक्षरt->max_freq = new_freq;
 
-	if (new_freq < tchart->min_freq || tchart->min_freq == 0)
-		tchart->min_freq = new_freq;
+	अगर (new_freq < tअक्षरt->min_freq || tअक्षरt->min_freq == 0)
+		tअक्षरt->min_freq = new_freq;
 
-	if (new_freq == tchart->max_freq - 1000)
-		tchart->turbo_frequency = tchart->max_freq;
-}
+	अगर (new_freq == tअक्षरt->max_freq - 1000)
+		tअक्षरt->turbo_frequency = tअक्षरt->max_freq;
+पूर्ण
 
-static void sched_wakeup(struct timechart *tchart, int cpu, u64 timestamp,
-			 int waker, int wakee, u8 flags, const char *backtrace)
-{
-	struct per_pid *p;
-	struct wake_event *we = zalloc(sizeof(*we));
+अटल व्योम sched_wakeup(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक cpu, u64 बारtamp,
+			 पूर्णांक waker, पूर्णांक wakee, u8 flags, स्थिर अक्षर *backtrace)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा wake_event *we = zalloc(माप(*we));
 
-	if (!we)
-		return;
+	अगर (!we)
+		वापस;
 
-	we->time = timestamp;
+	we->समय = बारtamp;
 	we->waker = waker;
 	we->backtrace = backtrace;
 
-	if ((flags & TRACE_FLAG_HARDIRQ) || (flags & TRACE_FLAG_SOFTIRQ))
+	अगर ((flags & TRACE_FLAG_HARसूचीQ) || (flags & TRACE_FLAG_SOFTIRQ))
 		we->waker = -1;
 
 	we->wakee = wakee;
-	we->next = tchart->wake_events;
-	tchart->wake_events = we;
-	p = find_create_pid(tchart, we->wakee);
+	we->next = tअक्षरt->wake_events;
+	tअक्षरt->wake_events = we;
+	p = find_create_pid(tअक्षरt, we->wakee);
 
-	if (p && p->current && p->current->state == TYPE_NONE) {
-		p->current->state_since = timestamp;
+	अगर (p && p->current && p->current->state == TYPE_NONE) अणु
+		p->current->state_since = बारtamp;
 		p->current->state = TYPE_WAITING;
-	}
-	if (p && p->current && p->current->state == TYPE_BLOCKED) {
-		pid_put_sample(tchart, p->pid, p->current->state, cpu,
-			       p->current->state_since, timestamp, NULL);
-		p->current->state_since = timestamp;
+	पूर्ण
+	अगर (p && p->current && p->current->state == TYPE_BLOCKED) अणु
+		pid_put_sample(tअक्षरt, p->pid, p->current->state, cpu,
+			       p->current->state_since, बारtamp, शून्य);
+		p->current->state_since = बारtamp;
 		p->current->state = TYPE_WAITING;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sched_switch(struct timechart *tchart, int cpu, u64 timestamp,
-			 int prev_pid, int next_pid, u64 prev_state,
-			 const char *backtrace)
-{
-	struct per_pid *p = NULL, *prev_p;
+अटल व्योम sched_चयन(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक cpu, u64 बारtamp,
+			 पूर्णांक prev_pid, पूर्णांक next_pid, u64 prev_state,
+			 स्थिर अक्षर *backtrace)
+अणु
+	काष्ठा per_pid *p = शून्य, *prev_p;
 
-	prev_p = find_create_pid(tchart, prev_pid);
+	prev_p = find_create_pid(tअक्षरt, prev_pid);
 
-	p = find_create_pid(tchart, next_pid);
+	p = find_create_pid(tअक्षरt, next_pid);
 
-	if (prev_p->current && prev_p->current->state != TYPE_NONE)
-		pid_put_sample(tchart, prev_pid, TYPE_RUNNING, cpu,
-			       prev_p->current->state_since, timestamp,
+	अगर (prev_p->current && prev_p->current->state != TYPE_NONE)
+		pid_put_sample(tअक्षरt, prev_pid, TYPE_RUNNING, cpu,
+			       prev_p->current->state_since, बारtamp,
 			       backtrace);
-	if (p && p->current) {
-		if (p->current->state != TYPE_NONE)
-			pid_put_sample(tchart, next_pid, p->current->state, cpu,
-				       p->current->state_since, timestamp,
+	अगर (p && p->current) अणु
+		अगर (p->current->state != TYPE_NONE)
+			pid_put_sample(tअक्षरt, next_pid, p->current->state, cpu,
+				       p->current->state_since, बारtamp,
 				       backtrace);
 
-		p->current->state_since = timestamp;
+		p->current->state_since = बारtamp;
 		p->current->state = TYPE_RUNNING;
-	}
+	पूर्ण
 
-	if (prev_p->current) {
+	अगर (prev_p->current) अणु
 		prev_p->current->state = TYPE_NONE;
-		prev_p->current->state_since = timestamp;
-		if (prev_state & 2)
+		prev_p->current->state_since = बारtamp;
+		अगर (prev_state & 2)
 			prev_p->current->state = TYPE_BLOCKED;
-		if (prev_state == 0)
+		अगर (prev_state == 0)
 			prev_p->current->state = TYPE_WAITING;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const char *cat_backtrace(union perf_event *event,
-				 struct perf_sample *sample,
-				 struct machine *machine)
-{
-	struct addr_location al;
-	unsigned int i;
-	char *p = NULL;
-	size_t p_len;
+अटल स्थिर अक्षर *cat_backtrace(जोड़ perf_event *event,
+				 काष्ठा perf_sample *sample,
+				 काष्ठा machine *machine)
+अणु
+	काष्ठा addr_location al;
+	अचिन्हित पूर्णांक i;
+	अक्षर *p = शून्य;
+	माप_प्रकार p_len;
 	u8 cpumode = PERF_RECORD_MISC_USER;
-	struct addr_location tal;
-	struct ip_callchain *chain = sample->callchain;
-	FILE *f = open_memstream(&p, &p_len);
+	काष्ठा addr_location tal;
+	काष्ठा ip_callchain *chain = sample->callchain;
+	खाता *f = खोलो_memstream(&p, &p_len);
 
-	if (!f) {
-		perror("open_memstream error");
-		return NULL;
-	}
+	अगर (!f) अणु
+		लिखो_त्रुटि("open_memstream error");
+		वापस शून्य;
+	पूर्ण
 
-	if (!chain)
-		goto exit;
+	अगर (!chain)
+		जाओ निकास;
 
-	if (machine__resolve(machine, &al, sample) < 0) {
-		fprintf(stderr, "problem processing %d event, skipping it.\n",
+	अगर (machine__resolve(machine, &al, sample) < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "problem processing %d event, skipping it.\n",
 			event->header.type);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	for (i = 0; i < chain->nr; i++) {
+	क्रम (i = 0; i < chain->nr; i++) अणु
 		u64 ip;
 
-		if (callchain_param.order == ORDER_CALLEE)
+		अगर (callchain_param.order == ORDER_CALLEE)
 			ip = chain->ips[i];
-		else
+		अन्यथा
 			ip = chain->ips[chain->nr - i - 1];
 
-		if (ip >= PERF_CONTEXT_MAX) {
-			switch (ip) {
-			case PERF_CONTEXT_HV:
+		अगर (ip >= PERF_CONTEXT_MAX) अणु
+			चयन (ip) अणु
+			हाल PERF_CONTEXT_HV:
 				cpumode = PERF_RECORD_MISC_HYPERVISOR;
-				break;
-			case PERF_CONTEXT_KERNEL:
+				अवरोध;
+			हाल PERF_CONTEXT_KERNEL:
 				cpumode = PERF_RECORD_MISC_KERNEL;
-				break;
-			case PERF_CONTEXT_USER:
+				अवरोध;
+			हाल PERF_CONTEXT_USER:
 				cpumode = PERF_RECORD_MISC_USER;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				pr_debug("invalid callchain context: "
 					 "%"PRId64"\n", (s64) ip);
 
@@ -524,1133 +525,1133 @@ static const char *cat_backtrace(union perf_event *event,
 				 * It seems the callchain is corrupted.
 				 * Discard all.
 				 */
-				zfree(&p);
-				goto exit_put;
-			}
-			continue;
-		}
+				zमुक्त(&p);
+				जाओ निकास_put;
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		tal.filtered = 0;
-		if (thread__find_symbol(al.thread, cpumode, ip, &tal))
-			fprintf(f, "..... %016" PRIx64 " %s\n", ip, tal.sym->name);
-		else
-			fprintf(f, "..... %016" PRIx64 "\n", ip);
-	}
-exit_put:
+		अगर (thपढ़ो__find_symbol(al.thपढ़ो, cpumode, ip, &tal))
+			ख_लिखो(f, "..... %016" PRIx64 " %s\n", ip, tal.sym->name);
+		अन्यथा
+			ख_लिखो(f, "..... %016" PRIx64 "\n", ip);
+	पूर्ण
+निकास_put:
 	addr_location__put(&al);
-exit:
-	fclose(f);
+निकास:
+	ख_बंद(f);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-typedef int (*tracepoint_handler)(struct timechart *tchart,
-				  struct evsel *evsel,
-				  struct perf_sample *sample,
-				  const char *backtrace);
+प्रकार पूर्णांक (*tracepoपूर्णांक_handler)(काष्ठा समयअक्षरt *tअक्षरt,
+				  काष्ठा evsel *evsel,
+				  काष्ठा perf_sample *sample,
+				  स्थिर अक्षर *backtrace);
 
-static int process_sample_event(struct perf_tool *tool,
-				union perf_event *event,
-				struct perf_sample *sample,
-				struct evsel *evsel,
-				struct machine *machine)
-{
-	struct timechart *tchart = container_of(tool, struct timechart, tool);
+अटल पूर्णांक process_sample_event(काष्ठा perf_tool *tool,
+				जोड़ perf_event *event,
+				काष्ठा perf_sample *sample,
+				काष्ठा evsel *evsel,
+				काष्ठा machine *machine)
+अणु
+	काष्ठा समयअक्षरt *tअक्षरt = container_of(tool, काष्ठा समयअक्षरt, tool);
 
-	if (evsel->core.attr.sample_type & PERF_SAMPLE_TIME) {
-		if (!tchart->first_time || tchart->first_time > sample->time)
-			tchart->first_time = sample->time;
-		if (tchart->last_time < sample->time)
-			tchart->last_time = sample->time;
-	}
+	अगर (evsel->core.attr.sample_type & PERF_SAMPLE_TIME) अणु
+		अगर (!tअक्षरt->first_समय || tअक्षरt->first_समय > sample->समय)
+			tअक्षरt->first_समय = sample->समय;
+		अगर (tअक्षरt->last_समय < sample->समय)
+			tअक्षरt->last_समय = sample->समय;
+	पूर्ण
 
-	if (evsel->handler != NULL) {
-		tracepoint_handler f = evsel->handler;
-		return f(tchart, evsel, sample,
+	अगर (evsel->handler != शून्य) अणु
+		tracepoपूर्णांक_handler f = evsel->handler;
+		वापस f(tअक्षरt, evsel, sample,
 			 cat_backtrace(event, sample, machine));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-process_sample_cpu_idle(struct timechart *tchart __maybe_unused,
-			struct evsel *evsel,
-			struct perf_sample *sample,
-			const char *backtrace __maybe_unused)
-{
-	u32 state  = evsel__intval(evsel, sample, "state");
-	u32 cpu_id = evsel__intval(evsel, sample, "cpu_id");
+अटल पूर्णांक
+process_sample_cpu_idle(काष्ठा समयअक्षरt *tअक्षरt __maybe_unused,
+			काष्ठा evsel *evsel,
+			काष्ठा perf_sample *sample,
+			स्थिर अक्षर *backtrace __maybe_unused)
+अणु
+	u32 state  = evsel__पूर्णांकval(evsel, sample, "state");
+	u32 cpu_id = evsel__पूर्णांकval(evsel, sample, "cpu_id");
 
-	if (state == (u32)PWR_EVENT_EXIT)
-		c_state_end(tchart, cpu_id, sample->time);
-	else
-		c_state_start(cpu_id, sample->time, state);
-	return 0;
-}
+	अगर (state == (u32)PWR_EVENT_EXIT)
+		c_state_end(tअक्षरt, cpu_id, sample->समय);
+	अन्यथा
+		c_state_start(cpu_id, sample->समय, state);
+	वापस 0;
+पूर्ण
 
-static int
-process_sample_cpu_frequency(struct timechart *tchart,
-			     struct evsel *evsel,
-			     struct perf_sample *sample,
-			     const char *backtrace __maybe_unused)
-{
-	u32 state  = evsel__intval(evsel, sample, "state");
-	u32 cpu_id = evsel__intval(evsel, sample, "cpu_id");
+अटल पूर्णांक
+process_sample_cpu_frequency(काष्ठा समयअक्षरt *tअक्षरt,
+			     काष्ठा evsel *evsel,
+			     काष्ठा perf_sample *sample,
+			     स्थिर अक्षर *backtrace __maybe_unused)
+अणु
+	u32 state  = evsel__पूर्णांकval(evsel, sample, "state");
+	u32 cpu_id = evsel__पूर्णांकval(evsel, sample, "cpu_id");
 
-	p_state_change(tchart, cpu_id, sample->time, state);
-	return 0;
-}
+	p_state_change(tअक्षरt, cpu_id, sample->समय, state);
+	वापस 0;
+पूर्ण
 
-static int
-process_sample_sched_wakeup(struct timechart *tchart,
-			    struct evsel *evsel,
-			    struct perf_sample *sample,
-			    const char *backtrace)
-{
-	u8 flags  = evsel__intval(evsel, sample, "common_flags");
-	int waker = evsel__intval(evsel, sample, "common_pid");
-	int wakee = evsel__intval(evsel, sample, "pid");
+अटल पूर्णांक
+process_sample_sched_wakeup(काष्ठा समयअक्षरt *tअक्षरt,
+			    काष्ठा evsel *evsel,
+			    काष्ठा perf_sample *sample,
+			    स्थिर अक्षर *backtrace)
+अणु
+	u8 flags  = evsel__पूर्णांकval(evsel, sample, "common_flags");
+	पूर्णांक waker = evsel__पूर्णांकval(evsel, sample, "common_pid");
+	पूर्णांक wakee = evsel__पूर्णांकval(evsel, sample, "pid");
 
-	sched_wakeup(tchart, sample->cpu, sample->time, waker, wakee, flags, backtrace);
-	return 0;
-}
+	sched_wakeup(tअक्षरt, sample->cpu, sample->समय, waker, wakee, flags, backtrace);
+	वापस 0;
+पूर्ण
 
-static int
-process_sample_sched_switch(struct timechart *tchart,
-			    struct evsel *evsel,
-			    struct perf_sample *sample,
-			    const char *backtrace)
-{
-	int prev_pid   = evsel__intval(evsel, sample, "prev_pid");
-	int next_pid   = evsel__intval(evsel, sample, "next_pid");
-	u64 prev_state = evsel__intval(evsel, sample, "prev_state");
+अटल पूर्णांक
+process_sample_sched_चयन(काष्ठा समयअक्षरt *tअक्षरt,
+			    काष्ठा evsel *evsel,
+			    काष्ठा perf_sample *sample,
+			    स्थिर अक्षर *backtrace)
+अणु
+	पूर्णांक prev_pid   = evsel__पूर्णांकval(evsel, sample, "prev_pid");
+	पूर्णांक next_pid   = evsel__पूर्णांकval(evsel, sample, "next_pid");
+	u64 prev_state = evsel__पूर्णांकval(evsel, sample, "prev_state");
 
-	sched_switch(tchart, sample->cpu, sample->time, prev_pid, next_pid,
+	sched_चयन(tअक्षरt, sample->cpu, sample->समय, prev_pid, next_pid,
 		     prev_state, backtrace);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef SUPPORT_OLD_POWER_EVENTS
-static int
-process_sample_power_start(struct timechart *tchart __maybe_unused,
-			   struct evsel *evsel,
-			   struct perf_sample *sample,
-			   const char *backtrace __maybe_unused)
-{
-	u64 cpu_id = evsel__intval(evsel, sample, "cpu_id");
-	u64 value  = evsel__intval(evsel, sample, "value");
+#अगर_घोषित SUPPORT_OLD_POWER_EVENTS
+अटल पूर्णांक
+process_sample_घातer_start(काष्ठा समयअक्षरt *tअक्षरt __maybe_unused,
+			   काष्ठा evsel *evsel,
+			   काष्ठा perf_sample *sample,
+			   स्थिर अक्षर *backtrace __maybe_unused)
+अणु
+	u64 cpu_id = evsel__पूर्णांकval(evsel, sample, "cpu_id");
+	u64 value  = evsel__पूर्णांकval(evsel, sample, "value");
 
-	c_state_start(cpu_id, sample->time, value);
-	return 0;
-}
+	c_state_start(cpu_id, sample->समय, value);
+	वापस 0;
+पूर्ण
 
-static int
-process_sample_power_end(struct timechart *tchart,
-			 struct evsel *evsel __maybe_unused,
-			 struct perf_sample *sample,
-			 const char *backtrace __maybe_unused)
-{
-	c_state_end(tchart, sample->cpu, sample->time);
-	return 0;
-}
+अटल पूर्णांक
+process_sample_घातer_end(काष्ठा समयअक्षरt *tअक्षरt,
+			 काष्ठा evsel *evsel __maybe_unused,
+			 काष्ठा perf_sample *sample,
+			 स्थिर अक्षर *backtrace __maybe_unused)
+अणु
+	c_state_end(tअक्षरt, sample->cpu, sample->समय);
+	वापस 0;
+पूर्ण
 
-static int
-process_sample_power_frequency(struct timechart *tchart,
-			       struct evsel *evsel,
-			       struct perf_sample *sample,
-			       const char *backtrace __maybe_unused)
-{
-	u64 cpu_id = evsel__intval(evsel, sample, "cpu_id");
-	u64 value  = evsel__intval(evsel, sample, "value");
+अटल पूर्णांक
+process_sample_घातer_frequency(काष्ठा समयअक्षरt *tअक्षरt,
+			       काष्ठा evsel *evsel,
+			       काष्ठा perf_sample *sample,
+			       स्थिर अक्षर *backtrace __maybe_unused)
+अणु
+	u64 cpu_id = evsel__पूर्णांकval(evsel, sample, "cpu_id");
+	u64 value  = evsel__पूर्णांकval(evsel, sample, "value");
 
-	p_state_change(tchart, cpu_id, sample->time, value);
-	return 0;
-}
-#endif /* SUPPORT_OLD_POWER_EVENTS */
+	p_state_change(tअक्षरt, cpu_id, sample->समय, value);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* SUPPORT_OLD_POWER_EVENTS */
 
 /*
  * After the last sample we need to wrap up the current C/P state
- * and close out each CPU for these.
+ * and बंद out each CPU क्रम these.
  */
-static void end_sample_processing(struct timechart *tchart)
-{
+अटल व्योम end_sample_processing(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
 	u64 cpu;
-	struct power_event *pwr;
+	काष्ठा घातer_event *pwr;
 
-	for (cpu = 0; cpu <= tchart->numcpus; cpu++) {
+	क्रम (cpu = 0; cpu <= tअक्षरt->numcpus; cpu++) अणु
 		/* C state */
-#if 0
-		pwr = zalloc(sizeof(*pwr));
-		if (!pwr)
-			return;
+#अगर 0
+		pwr = zalloc(माप(*pwr));
+		अगर (!pwr)
+			वापस;
 
 		pwr->state = cpus_cstate_state[cpu];
-		pwr->start_time = cpus_cstate_start_times[cpu];
-		pwr->end_time = tchart->last_time;
+		pwr->start_समय = cpus_cstate_start_बार[cpu];
+		pwr->end_समय = tअक्षरt->last_समय;
 		pwr->cpu = cpu;
 		pwr->type = CSTATE;
-		pwr->next = tchart->power_events;
+		pwr->next = tअक्षरt->घातer_events;
 
-		tchart->power_events = pwr;
-#endif
+		tअक्षरt->घातer_events = pwr;
+#पूर्ण_अगर
 		/* P state */
 
-		pwr = zalloc(sizeof(*pwr));
-		if (!pwr)
-			return;
+		pwr = zalloc(माप(*pwr));
+		अगर (!pwr)
+			वापस;
 
 		pwr->state = cpus_pstate_state[cpu];
-		pwr->start_time = cpus_pstate_start_times[cpu];
-		pwr->end_time = tchart->last_time;
+		pwr->start_समय = cpus_pstate_start_बार[cpu];
+		pwr->end_समय = tअक्षरt->last_समय;
 		pwr->cpu = cpu;
 		pwr->type = PSTATE;
-		pwr->next = tchart->power_events;
+		pwr->next = tअक्षरt->घातer_events;
 
-		if (!pwr->start_time)
-			pwr->start_time = tchart->first_time;
-		if (!pwr->state)
-			pwr->state = tchart->min_freq;
-		tchart->power_events = pwr;
-	}
-}
+		अगर (!pwr->start_समय)
+			pwr->start_समय = tअक्षरt->first_समय;
+		अगर (!pwr->state)
+			pwr->state = tअक्षरt->min_freq;
+		tअक्षरt->घातer_events = pwr;
+	पूर्ण
+पूर्ण
 
-static int pid_begin_io_sample(struct timechart *tchart, int pid, int type,
-			       u64 start, int fd)
-{
-	struct per_pid *p = find_create_pid(tchart, pid);
-	struct per_pidcomm *c = p->current;
-	struct io_sample *sample;
-	struct io_sample *prev;
+अटल पूर्णांक pid_begin_io_sample(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक pid, पूर्णांक type,
+			       u64 start, पूर्णांक fd)
+अणु
+	काष्ठा per_pid *p = find_create_pid(tअक्षरt, pid);
+	काष्ठा per_pidcomm *c = p->current;
+	काष्ठा io_sample *sample;
+	काष्ठा io_sample *prev;
 
-	if (!c) {
-		c = zalloc(sizeof(*c));
-		if (!c)
-			return -ENOMEM;
+	अगर (!c) अणु
+		c = zalloc(माप(*c));
+		अगर (!c)
+			वापस -ENOMEM;
 		p->current = c;
 		c->next = p->all;
 		p->all = c;
-	}
+	पूर्ण
 
 	prev = c->io_samples;
 
-	if (prev && prev->start_time && !prev->end_time) {
+	अगर (prev && prev->start_समय && !prev->end_समय) अणु
 		pr_warning("Skip invalid start event: "
 			   "previous event already started!\n");
 
-		/* remove previous event that has been started,
-		 * we are not sure we will ever get an end for it */
+		/* हटाओ previous event that has been started,
+		 * we are not sure we will ever get an end क्रम it */
 		c->io_samples = prev->next;
-		free(prev);
-		return 0;
-	}
+		मुक्त(prev);
+		वापस 0;
+	पूर्ण
 
-	sample = zalloc(sizeof(*sample));
-	if (!sample)
-		return -ENOMEM;
-	sample->start_time = start;
+	sample = zalloc(माप(*sample));
+	अगर (!sample)
+		वापस -ENOMEM;
+	sample->start_समय = start;
 	sample->type = type;
 	sample->fd = fd;
 	sample->next = c->io_samples;
 	c->io_samples = sample;
 
-	if (c->start_time == 0 || c->start_time > start)
-		c->start_time = start;
+	अगर (c->start_समय == 0 || c->start_समय > start)
+		c->start_समय = start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pid_end_io_sample(struct timechart *tchart, int pid, int type,
-			     u64 end, long ret)
-{
-	struct per_pid *p = find_create_pid(tchart, pid);
-	struct per_pidcomm *c = p->current;
-	struct io_sample *sample, *prev;
+अटल पूर्णांक pid_end_io_sample(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक pid, पूर्णांक type,
+			     u64 end, दीर्घ ret)
+अणु
+	काष्ठा per_pid *p = find_create_pid(tअक्षरt, pid);
+	काष्ठा per_pidcomm *c = p->current;
+	काष्ठा io_sample *sample, *prev;
 
-	if (!c) {
+	अगर (!c) अणु
 		pr_warning("Invalid pidcomm!\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	sample = c->io_samples;
 
-	if (!sample) /* skip partially captured events */
-		return 0;
+	अगर (!sample) /* skip partially captured events */
+		वापस 0;
 
-	if (sample->end_time) {
+	अगर (sample->end_समय) अणु
 		pr_warning("Skip invalid end event: "
 			   "previous event already ended!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sample->type != type) {
+	अगर (sample->type != type) अणु
 		pr_warning("Skip invalid end event: invalid event type!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	sample->end_time = end;
+	sample->end_समय = end;
 	prev = sample->next;
 
 	/* we want to be able to see small and fast transfers, so make them
-	 * at least min_time long, but don't overlap them */
-	if (sample->end_time - sample->start_time < tchart->min_time)
-		sample->end_time = sample->start_time + tchart->min_time;
-	if (prev && sample->start_time < prev->end_time) {
-		if (prev->err) /* try to make errors more visible */
-			sample->start_time = prev->end_time;
-		else
-			prev->end_time = sample->start_time;
-	}
+	 * at least min_समय दीर्घ, but करोn't overlap them */
+	अगर (sample->end_समय - sample->start_समय < tअक्षरt->min_समय)
+		sample->end_समय = sample->start_समय + tअक्षरt->min_समय;
+	अगर (prev && sample->start_समय < prev->end_समय) अणु
+		अगर (prev->err) /* try to make errors more visible */
+			sample->start_समय = prev->end_समय;
+		अन्यथा
+			prev->end_समय = sample->start_समय;
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		sample->err = ret;
-	} else if (type == IOTYPE_READ || type == IOTYPE_WRITE ||
-		   type == IOTYPE_TX || type == IOTYPE_RX) {
+	पूर्ण अन्यथा अगर (type == IOTYPE_READ || type == IOTYPE_WRITE ||
+		   type == IOTYPE_TX || type == IOTYPE_RX) अणु
 
-		if ((u64)ret > c->max_bytes)
+		अगर ((u64)ret > c->max_bytes)
 			c->max_bytes = ret;
 
 		c->total_bytes += ret;
 		p->total_bytes += ret;
 		sample->bytes = ret;
-	}
+	पूर्ण
 
-	/* merge two requests to make svg smaller and render-friendly */
-	if (prev &&
+	/* merge two requests to make svg smaller and render-मित्रly */
+	अगर (prev &&
 	    prev->type == sample->type &&
 	    prev->err == sample->err &&
 	    prev->fd == sample->fd &&
-	    prev->end_time + tchart->merge_dist >= sample->start_time) {
+	    prev->end_समय + tअक्षरt->merge_dist >= sample->start_समय) अणु
 
 		sample->bytes += prev->bytes;
 		sample->merges += prev->merges + 1;
 
-		sample->start_time = prev->start_time;
+		sample->start_समय = prev->start_समय;
 		sample->next = prev->next;
-		free(prev);
+		मुक्त(prev);
 
-		if (!sample->err && sample->bytes > c->max_bytes)
+		अगर (!sample->err && sample->bytes > c->max_bytes)
 			c->max_bytes = sample->bytes;
-	}
+	पूर्ण
 
-	tchart->io_events++;
+	tअक्षरt->io_events++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-process_enter_read(struct timechart *tchart,
-		   struct evsel *evsel,
-		   struct perf_sample *sample)
-{
-	long fd = evsel__intval(evsel, sample, "fd");
-	return pid_begin_io_sample(tchart, sample->tid, IOTYPE_READ,
-				   sample->time, fd);
-}
+अटल पूर्णांक
+process_enter_पढ़ो(काष्ठा समयअक्षरt *tअक्षरt,
+		   काष्ठा evsel *evsel,
+		   काष्ठा perf_sample *sample)
+अणु
+	दीर्घ fd = evsel__पूर्णांकval(evsel, sample, "fd");
+	वापस pid_begin_io_sample(tअक्षरt, sample->tid, IOTYPE_READ,
+				   sample->समय, fd);
+पूर्ण
 
-static int
-process_exit_read(struct timechart *tchart,
-		  struct evsel *evsel,
-		  struct perf_sample *sample)
-{
-	long ret = evsel__intval(evsel, sample, "ret");
-	return pid_end_io_sample(tchart, sample->tid, IOTYPE_READ,
-				 sample->time, ret);
-}
+अटल पूर्णांक
+process_निकास_पढ़ो(काष्ठा समयअक्षरt *tअक्षरt,
+		  काष्ठा evsel *evsel,
+		  काष्ठा perf_sample *sample)
+अणु
+	दीर्घ ret = evsel__पूर्णांकval(evsel, sample, "ret");
+	वापस pid_end_io_sample(tअक्षरt, sample->tid, IOTYPE_READ,
+				 sample->समय, ret);
+पूर्ण
 
-static int
-process_enter_write(struct timechart *tchart,
-		    struct evsel *evsel,
-		    struct perf_sample *sample)
-{
-	long fd = evsel__intval(evsel, sample, "fd");
-	return pid_begin_io_sample(tchart, sample->tid, IOTYPE_WRITE,
-				   sample->time, fd);
-}
+अटल पूर्णांक
+process_enter_ग_लिखो(काष्ठा समयअक्षरt *tअक्षरt,
+		    काष्ठा evsel *evsel,
+		    काष्ठा perf_sample *sample)
+अणु
+	दीर्घ fd = evsel__पूर्णांकval(evsel, sample, "fd");
+	वापस pid_begin_io_sample(tअक्षरt, sample->tid, IOTYPE_WRITE,
+				   sample->समय, fd);
+पूर्ण
 
-static int
-process_exit_write(struct timechart *tchart,
-		   struct evsel *evsel,
-		   struct perf_sample *sample)
-{
-	long ret = evsel__intval(evsel, sample, "ret");
-	return pid_end_io_sample(tchart, sample->tid, IOTYPE_WRITE,
-				 sample->time, ret);
-}
+अटल पूर्णांक
+process_निकास_ग_लिखो(काष्ठा समयअक्षरt *tअक्षरt,
+		   काष्ठा evsel *evsel,
+		   काष्ठा perf_sample *sample)
+अणु
+	दीर्घ ret = evsel__पूर्णांकval(evsel, sample, "ret");
+	वापस pid_end_io_sample(tअक्षरt, sample->tid, IOTYPE_WRITE,
+				 sample->समय, ret);
+पूर्ण
 
-static int
-process_enter_sync(struct timechart *tchart,
-		   struct evsel *evsel,
-		   struct perf_sample *sample)
-{
-	long fd = evsel__intval(evsel, sample, "fd");
-	return pid_begin_io_sample(tchart, sample->tid, IOTYPE_SYNC,
-				   sample->time, fd);
-}
+अटल पूर्णांक
+process_enter_sync(काष्ठा समयअक्षरt *tअक्षरt,
+		   काष्ठा evsel *evsel,
+		   काष्ठा perf_sample *sample)
+अणु
+	दीर्घ fd = evsel__पूर्णांकval(evsel, sample, "fd");
+	वापस pid_begin_io_sample(tअक्षरt, sample->tid, IOTYPE_SYNC,
+				   sample->समय, fd);
+पूर्ण
 
-static int
-process_exit_sync(struct timechart *tchart,
-		  struct evsel *evsel,
-		  struct perf_sample *sample)
-{
-	long ret = evsel__intval(evsel, sample, "ret");
-	return pid_end_io_sample(tchart, sample->tid, IOTYPE_SYNC,
-				 sample->time, ret);
-}
+अटल पूर्णांक
+process_निकास_sync(काष्ठा समयअक्षरt *tअक्षरt,
+		  काष्ठा evsel *evsel,
+		  काष्ठा perf_sample *sample)
+अणु
+	दीर्घ ret = evsel__पूर्णांकval(evsel, sample, "ret");
+	वापस pid_end_io_sample(tअक्षरt, sample->tid, IOTYPE_SYNC,
+				 sample->समय, ret);
+पूर्ण
 
-static int
-process_enter_tx(struct timechart *tchart,
-		 struct evsel *evsel,
-		 struct perf_sample *sample)
-{
-	long fd = evsel__intval(evsel, sample, "fd");
-	return pid_begin_io_sample(tchart, sample->tid, IOTYPE_TX,
-				   sample->time, fd);
-}
+अटल पूर्णांक
+process_enter_tx(काष्ठा समयअक्षरt *tअक्षरt,
+		 काष्ठा evsel *evsel,
+		 काष्ठा perf_sample *sample)
+अणु
+	दीर्घ fd = evsel__पूर्णांकval(evsel, sample, "fd");
+	वापस pid_begin_io_sample(tअक्षरt, sample->tid, IOTYPE_TX,
+				   sample->समय, fd);
+पूर्ण
 
-static int
-process_exit_tx(struct timechart *tchart,
-		struct evsel *evsel,
-		struct perf_sample *sample)
-{
-	long ret = evsel__intval(evsel, sample, "ret");
-	return pid_end_io_sample(tchart, sample->tid, IOTYPE_TX,
-				 sample->time, ret);
-}
+अटल पूर्णांक
+process_निकास_tx(काष्ठा समयअक्षरt *tअक्षरt,
+		काष्ठा evsel *evsel,
+		काष्ठा perf_sample *sample)
+अणु
+	दीर्घ ret = evsel__पूर्णांकval(evsel, sample, "ret");
+	वापस pid_end_io_sample(tअक्षरt, sample->tid, IOTYPE_TX,
+				 sample->समय, ret);
+पूर्ण
 
-static int
-process_enter_rx(struct timechart *tchart,
-		 struct evsel *evsel,
-		 struct perf_sample *sample)
-{
-	long fd = evsel__intval(evsel, sample, "fd");
-	return pid_begin_io_sample(tchart, sample->tid, IOTYPE_RX,
-				   sample->time, fd);
-}
+अटल पूर्णांक
+process_enter_rx(काष्ठा समयअक्षरt *tअक्षरt,
+		 काष्ठा evsel *evsel,
+		 काष्ठा perf_sample *sample)
+अणु
+	दीर्घ fd = evsel__पूर्णांकval(evsel, sample, "fd");
+	वापस pid_begin_io_sample(tअक्षरt, sample->tid, IOTYPE_RX,
+				   sample->समय, fd);
+पूर्ण
 
-static int
-process_exit_rx(struct timechart *tchart,
-		struct evsel *evsel,
-		struct perf_sample *sample)
-{
-	long ret = evsel__intval(evsel, sample, "ret");
-	return pid_end_io_sample(tchart, sample->tid, IOTYPE_RX,
-				 sample->time, ret);
-}
+अटल पूर्णांक
+process_निकास_rx(काष्ठा समयअक्षरt *tअक्षरt,
+		काष्ठा evsel *evsel,
+		काष्ठा perf_sample *sample)
+अणु
+	दीर्घ ret = evsel__पूर्णांकval(evsel, sample, "ret");
+	वापस pid_end_io_sample(tअक्षरt, sample->tid, IOTYPE_RX,
+				 sample->समय, ret);
+पूर्ण
 
-static int
-process_enter_poll(struct timechart *tchart,
-		   struct evsel *evsel,
-		   struct perf_sample *sample)
-{
-	long fd = evsel__intval(evsel, sample, "fd");
-	return pid_begin_io_sample(tchart, sample->tid, IOTYPE_POLL,
-				   sample->time, fd);
-}
+अटल पूर्णांक
+process_enter_poll(काष्ठा समयअक्षरt *tअक्षरt,
+		   काष्ठा evsel *evsel,
+		   काष्ठा perf_sample *sample)
+अणु
+	दीर्घ fd = evsel__पूर्णांकval(evsel, sample, "fd");
+	वापस pid_begin_io_sample(tअक्षरt, sample->tid, IOTYPE_POLL,
+				   sample->समय, fd);
+पूर्ण
 
-static int
-process_exit_poll(struct timechart *tchart,
-		  struct evsel *evsel,
-		  struct perf_sample *sample)
-{
-	long ret = evsel__intval(evsel, sample, "ret");
-	return pid_end_io_sample(tchart, sample->tid, IOTYPE_POLL,
-				 sample->time, ret);
-}
+अटल पूर्णांक
+process_निकास_poll(काष्ठा समयअक्षरt *tअक्षरt,
+		  काष्ठा evsel *evsel,
+		  काष्ठा perf_sample *sample)
+अणु
+	दीर्घ ret = evsel__पूर्णांकval(evsel, sample, "ret");
+	वापस pid_end_io_sample(tअक्षरt, sample->tid, IOTYPE_POLL,
+				 sample->समय, ret);
+पूर्ण
 
 /*
- * Sort the pid datastructure
+ * Sort the pid dataकाष्ठाure
  */
-static void sort_pids(struct timechart *tchart)
-{
-	struct per_pid *new_list, *p, *cursor, *prev;
+अटल व्योम sort_pids(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
+	काष्ठा per_pid *new_list, *p, *cursor, *prev;
 	/* sort by ppid first, then by pid, lowest to highest */
 
-	new_list = NULL;
+	new_list = शून्य;
 
-	while (tchart->all_data) {
-		p = tchart->all_data;
-		tchart->all_data = p->next;
-		p->next = NULL;
+	जबतक (tअक्षरt->all_data) अणु
+		p = tअक्षरt->all_data;
+		tअक्षरt->all_data = p->next;
+		p->next = शून्य;
 
-		if (new_list == NULL) {
+		अगर (new_list == शून्य) अणु
 			new_list = p;
-			p->next = NULL;
-			continue;
-		}
-		prev = NULL;
+			p->next = शून्य;
+			जारी;
+		पूर्ण
+		prev = शून्य;
 		cursor = new_list;
-		while (cursor) {
-			if (cursor->ppid > p->ppid ||
-				(cursor->ppid == p->ppid && cursor->pid > p->pid)) {
-				/* must insert before */
-				if (prev) {
+		जबतक (cursor) अणु
+			अगर (cursor->ppid > p->ppid ||
+				(cursor->ppid == p->ppid && cursor->pid > p->pid)) अणु
+				/* must insert beक्रमe */
+				अगर (prev) अणु
 					p->next = prev->next;
 					prev->next = p;
-					cursor = NULL;
-					continue;
-				} else {
+					cursor = शून्य;
+					जारी;
+				पूर्ण अन्यथा अणु
 					p->next = new_list;
 					new_list = p;
-					cursor = NULL;
-					continue;
-				}
-			}
+					cursor = शून्य;
+					जारी;
+				पूर्ण
+			पूर्ण
 
 			prev = cursor;
 			cursor = cursor->next;
-			if (!cursor)
+			अगर (!cursor)
 				prev->next = p;
-		}
-	}
-	tchart->all_data = new_list;
-}
+		पूर्ण
+	पूर्ण
+	tअक्षरt->all_data = new_list;
+पूर्ण
 
 
-static void draw_c_p_states(struct timechart *tchart)
-{
-	struct power_event *pwr;
-	pwr = tchart->power_events;
+अटल व्योम draw_c_p_states(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
+	काष्ठा घातer_event *pwr;
+	pwr = tअक्षरt->घातer_events;
 
 	/*
 	 * two pass drawing so that the P state bars are on top of the C state blocks
 	 */
-	while (pwr) {
-		if (pwr->type == CSTATE)
-			svg_cstate(pwr->cpu, pwr->start_time, pwr->end_time, pwr->state);
+	जबतक (pwr) अणु
+		अगर (pwr->type == CSTATE)
+			svg_cstate(pwr->cpu, pwr->start_समय, pwr->end_समय, pwr->state);
 		pwr = pwr->next;
-	}
+	पूर्ण
 
-	pwr = tchart->power_events;
-	while (pwr) {
-		if (pwr->type == PSTATE) {
-			if (!pwr->state)
-				pwr->state = tchart->min_freq;
-			svg_pstate(pwr->cpu, pwr->start_time, pwr->end_time, pwr->state);
-		}
+	pwr = tअक्षरt->घातer_events;
+	जबतक (pwr) अणु
+		अगर (pwr->type == PSTATE) अणु
+			अगर (!pwr->state)
+				pwr->state = tअक्षरt->min_freq;
+			svg_pstate(pwr->cpu, pwr->start_समय, pwr->end_समय, pwr->state);
+		पूर्ण
 		pwr = pwr->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void draw_wakeups(struct timechart *tchart)
-{
-	struct wake_event *we;
-	struct per_pid *p;
-	struct per_pidcomm *c;
+अटल व्योम draw_wakeups(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
+	काष्ठा wake_event *we;
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
 
-	we = tchart->wake_events;
-	while (we) {
-		int from = 0, to = 0;
-		char *task_from = NULL, *task_to = NULL;
+	we = tअक्षरt->wake_events;
+	जबतक (we) अणु
+		पूर्णांक from = 0, to = 0;
+		अक्षर *task_from = शून्य, *task_to = शून्य;
 
 		/* locate the column of the waker and wakee */
-		p = tchart->all_data;
-		while (p) {
-			if (p->pid == we->waker || p->pid == we->wakee) {
+		p = tअक्षरt->all_data;
+		जबतक (p) अणु
+			अगर (p->pid == we->waker || p->pid == we->wakee) अणु
 				c = p->all;
-				while (c) {
-					if (c->Y && c->start_time <= we->time && c->end_time >= we->time) {
-						if (p->pid == we->waker && !from) {
+				जबतक (c) अणु
+					अगर (c->Y && c->start_समय <= we->समय && c->end_समय >= we->समय) अणु
+						अगर (p->pid == we->waker && !from) अणु
 							from = c->Y;
 							task_from = strdup(c->comm);
-						}
-						if (p->pid == we->wakee && !to) {
+						पूर्ण
+						अगर (p->pid == we->wakee && !to) अणु
 							to = c->Y;
 							task_to = strdup(c->comm);
-						}
-					}
+						पूर्ण
+					पूर्ण
 					c = c->next;
-				}
+				पूर्ण
 				c = p->all;
-				while (c) {
-					if (p->pid == we->waker && !from) {
+				जबतक (c) अणु
+					अगर (p->pid == we->waker && !from) अणु
 						from = c->Y;
 						task_from = strdup(c->comm);
-					}
-					if (p->pid == we->wakee && !to) {
+					पूर्ण
+					अगर (p->pid == we->wakee && !to) अणु
 						to = c->Y;
 						task_to = strdup(c->comm);
-					}
+					पूर्ण
 					c = c->next;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			p = p->next;
-		}
+		पूर्ण
 
-		if (!task_from) {
-			task_from = malloc(40);
-			sprintf(task_from, "[%i]", we->waker);
-		}
-		if (!task_to) {
-			task_to = malloc(40);
-			sprintf(task_to, "[%i]", we->wakee);
-		}
+		अगर (!task_from) अणु
+			task_from = दो_स्मृति(40);
+			प्र_लिखो(task_from, "[%i]", we->waker);
+		पूर्ण
+		अगर (!task_to) अणु
+			task_to = दो_स्मृति(40);
+			प्र_लिखो(task_to, "[%i]", we->wakee);
+		पूर्ण
 
-		if (we->waker == -1)
-			svg_interrupt(we->time, to, we->backtrace);
-		else if (from && to && abs(from - to) == 1)
-			svg_wakeline(we->time, from, to, we->backtrace);
-		else
-			svg_partial_wakeline(we->time, from, task_from, to,
+		अगर (we->waker == -1)
+			svg_पूर्णांकerrupt(we->समय, to, we->backtrace);
+		अन्यथा अगर (from && to && असल(from - to) == 1)
+			svg_wakeline(we->समय, from, to, we->backtrace);
+		अन्यथा
+			svg_partial_wakeline(we->समय, from, task_from, to,
 					     task_to, we->backtrace);
 		we = we->next;
 
-		free(task_from);
-		free(task_to);
-	}
-}
+		मुक्त(task_from);
+		मुक्त(task_to);
+	पूर्ण
+पूर्ण
 
-static void draw_cpu_usage(struct timechart *tchart)
-{
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	struct cpu_sample *sample;
-	p = tchart->all_data;
-	while (p) {
+अटल व्योम draw_cpu_usage(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	काष्ठा cpu_sample *sample;
+	p = tअक्षरt->all_data;
+	जबतक (p) अणु
 		c = p->all;
-		while (c) {
+		जबतक (c) अणु
 			sample = c->samples;
-			while (sample) {
-				if (sample->type == TYPE_RUNNING) {
+			जबतक (sample) अणु
+				अगर (sample->type == TYPE_RUNNING) अणु
 					svg_process(sample->cpu,
-						    sample->start_time,
-						    sample->end_time,
+						    sample->start_समय,
+						    sample->end_समय,
 						    p->pid,
 						    c->comm,
 						    sample->backtrace);
-				}
+				पूर्ण
 
 				sample = sample->next;
-			}
+			पूर्ण
 			c = c->next;
-		}
+		पूर्ण
 		p = p->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void draw_io_bars(struct timechart *tchart)
-{
-	const char *suf;
-	double bytes;
-	char comm[256];
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	struct io_sample *sample;
-	int Y = 1;
+अटल व्योम draw_io_bars(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
+	स्थिर अक्षर *suf;
+	द्विगुन bytes;
+	अक्षर comm[256];
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	काष्ठा io_sample *sample;
+	पूर्णांक Y = 1;
 
-	p = tchart->all_data;
-	while (p) {
+	p = tअक्षरt->all_data;
+	जबतक (p) अणु
 		c = p->all;
-		while (c) {
-			if (!c->display) {
+		जबतक (c) अणु
+			अगर (!c->display) अणु
 				c->Y = 0;
 				c = c->next;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			svg_box(Y, c->start_time, c->end_time, "process3");
+			svg_box(Y, c->start_समय, c->end_समय, "process3");
 			sample = c->io_samples;
-			for (sample = c->io_samples; sample; sample = sample->next) {
-				double h = (double)sample->bytes / c->max_bytes;
+			क्रम (sample = c->io_samples; sample; sample = sample->next) अणु
+				द्विगुन h = (द्विगुन)sample->bytes / c->max_bytes;
 
-				if (tchart->skip_eagain &&
+				अगर (tअक्षरt->skip_eagain &&
 				    sample->err == -EAGAIN)
-					continue;
+					जारी;
 
-				if (sample->err)
+				अगर (sample->err)
 					h = 1;
 
-				if (sample->type == IOTYPE_SYNC)
+				अगर (sample->type == IOTYPE_SYNC)
 					svg_fbox(Y,
-						sample->start_time,
-						sample->end_time,
+						sample->start_समय,
+						sample->end_समय,
 						1,
 						sample->err ? "error" : "sync",
 						sample->fd,
 						sample->err,
 						sample->merges);
-				else if (sample->type == IOTYPE_POLL)
+				अन्यथा अगर (sample->type == IOTYPE_POLL)
 					svg_fbox(Y,
-						sample->start_time,
-						sample->end_time,
+						sample->start_समय,
+						sample->end_समय,
 						1,
 						sample->err ? "error" : "poll",
 						sample->fd,
 						sample->err,
 						sample->merges);
-				else if (sample->type == IOTYPE_READ)
+				अन्यथा अगर (sample->type == IOTYPE_READ)
 					svg_ubox(Y,
-						sample->start_time,
-						sample->end_time,
+						sample->start_समय,
+						sample->end_समय,
 						h,
 						sample->err ? "error" : "disk",
 						sample->fd,
 						sample->err,
 						sample->merges);
-				else if (sample->type == IOTYPE_WRITE)
+				अन्यथा अगर (sample->type == IOTYPE_WRITE)
 					svg_lbox(Y,
-						sample->start_time,
-						sample->end_time,
+						sample->start_समय,
+						sample->end_समय,
 						h,
 						sample->err ? "error" : "disk",
 						sample->fd,
 						sample->err,
 						sample->merges);
-				else if (sample->type == IOTYPE_RX)
+				अन्यथा अगर (sample->type == IOTYPE_RX)
 					svg_ubox(Y,
-						sample->start_time,
-						sample->end_time,
+						sample->start_समय,
+						sample->end_समय,
 						h,
 						sample->err ? "error" : "net",
 						sample->fd,
 						sample->err,
 						sample->merges);
-				else if (sample->type == IOTYPE_TX)
+				अन्यथा अगर (sample->type == IOTYPE_TX)
 					svg_lbox(Y,
-						sample->start_time,
-						sample->end_time,
+						sample->start_समय,
+						sample->end_समय,
 						h,
 						sample->err ? "error" : "net",
 						sample->fd,
 						sample->err,
 						sample->merges);
-			}
+			पूर्ण
 
 			suf = "";
 			bytes = c->total_bytes;
-			if (bytes > 1024) {
+			अगर (bytes > 1024) अणु
 				bytes = bytes / 1024;
 				suf = "K";
-			}
-			if (bytes > 1024) {
+			पूर्ण
+			अगर (bytes > 1024) अणु
 				bytes = bytes / 1024;
 				suf = "M";
-			}
-			if (bytes > 1024) {
+			पूर्ण
+			अगर (bytes > 1024) अणु
 				bytes = bytes / 1024;
 				suf = "G";
-			}
+			पूर्ण
 
 
-			sprintf(comm, "%s:%i (%3.1f %sbytes)", c->comm ?: "", p->pid, bytes, suf);
-			svg_text(Y, c->start_time, comm);
+			प्र_लिखो(comm, "%s:%i (%3.1f %sbytes)", c->comm ?: "", p->pid, bytes, suf);
+			svg_text(Y, c->start_समय, comm);
 
 			c->Y = Y;
 			Y++;
 			c = c->next;
-		}
+		पूर्ण
 		p = p->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void draw_process_bars(struct timechart *tchart)
-{
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	struct cpu_sample *sample;
-	int Y = 0;
+अटल व्योम draw_process_bars(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	काष्ठा cpu_sample *sample;
+	पूर्णांक Y = 0;
 
-	Y = 2 * tchart->numcpus + 2;
+	Y = 2 * tअक्षरt->numcpus + 2;
 
-	p = tchart->all_data;
-	while (p) {
+	p = tअक्षरt->all_data;
+	जबतक (p) अणु
 		c = p->all;
-		while (c) {
-			if (!c->display) {
+		जबतक (c) अणु
+			अगर (!c->display) अणु
 				c->Y = 0;
 				c = c->next;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			svg_box(Y, c->start_time, c->end_time, "process");
+			svg_box(Y, c->start_समय, c->end_समय, "process");
 			sample = c->samples;
-			while (sample) {
-				if (sample->type == TYPE_RUNNING)
+			जबतक (sample) अणु
+				अगर (sample->type == TYPE_RUNNING)
 					svg_running(Y, sample->cpu,
-						    sample->start_time,
-						    sample->end_time,
+						    sample->start_समय,
+						    sample->end_समय,
 						    sample->backtrace);
-				if (sample->type == TYPE_BLOCKED)
+				अगर (sample->type == TYPE_BLOCKED)
 					svg_blocked(Y, sample->cpu,
-						    sample->start_time,
-						    sample->end_time,
+						    sample->start_समय,
+						    sample->end_समय,
 						    sample->backtrace);
-				if (sample->type == TYPE_WAITING)
-					svg_waiting(Y, sample->cpu,
-						    sample->start_time,
-						    sample->end_time,
+				अगर (sample->type == TYPE_WAITING)
+					svg_रुकोing(Y, sample->cpu,
+						    sample->start_समय,
+						    sample->end_समय,
 						    sample->backtrace);
 				sample = sample->next;
-			}
+			पूर्ण
 
-			if (c->comm) {
-				char comm[256];
-				if (c->total_time > 5000000000) /* 5 seconds */
-					sprintf(comm, "%s:%i (%2.2fs)", c->comm, p->pid, c->total_time / (double)NSEC_PER_SEC);
-				else
-					sprintf(comm, "%s:%i (%3.1fms)", c->comm, p->pid, c->total_time / (double)NSEC_PER_MSEC);
+			अगर (c->comm) अणु
+				अक्षर comm[256];
+				अगर (c->total_समय > 5000000000) /* 5 seconds */
+					प्र_लिखो(comm, "%s:%i (%2.2fs)", c->comm, p->pid, c->total_समय / (द्विगुन)NSEC_PER_SEC);
+				अन्यथा
+					प्र_लिखो(comm, "%s:%i (%3.1fms)", c->comm, p->pid, c->total_समय / (द्विगुन)NSEC_PER_MSEC);
 
-				svg_text(Y, c->start_time, comm);
-			}
+				svg_text(Y, c->start_समय, comm);
+			पूर्ण
 			c->Y = Y;
 			Y++;
 			c = c->next;
-		}
+		पूर्ण
 		p = p->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void add_process_filter(const char *string)
-{
-	int pid = strtoull(string, NULL, 10);
-	struct process_filter *filt = malloc(sizeof(*filt));
+अटल व्योम add_process_filter(स्थिर अक्षर *string)
+अणु
+	पूर्णांक pid = म_से_अदीर्घl(string, शून्य, 10);
+	काष्ठा process_filter *filt = दो_स्मृति(माप(*filt));
 
-	if (!filt)
-		return;
+	अगर (!filt)
+		वापस;
 
 	filt->name = strdup(string);
 	filt->pid  = pid;
 	filt->next = process_filter;
 
 	process_filter = filt;
-}
+पूर्ण
 
-static int passes_filter(struct per_pid *p, struct per_pidcomm *c)
-{
-	struct process_filter *filt;
-	if (!process_filter)
-		return 1;
+अटल पूर्णांक passes_filter(काष्ठा per_pid *p, काष्ठा per_pidcomm *c)
+अणु
+	काष्ठा process_filter *filt;
+	अगर (!process_filter)
+		वापस 1;
 
 	filt = process_filter;
-	while (filt) {
-		if (filt->pid && p->pid == filt->pid)
-			return 1;
-		if (strcmp(filt->name, c->comm) == 0)
-			return 1;
+	जबतक (filt) अणु
+		अगर (filt->pid && p->pid == filt->pid)
+			वापस 1;
+		अगर (म_भेद(filt->name, c->comm) == 0)
+			वापस 1;
 		filt = filt->next;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int determine_display_tasks_filtered(struct timechart *tchart)
-{
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	int count = 0;
+अटल पूर्णांक determine_display_tasks_filtered(काष्ठा समयअक्षरt *tअक्षरt)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	पूर्णांक count = 0;
 
-	p = tchart->all_data;
-	while (p) {
+	p = tअक्षरt->all_data;
+	जबतक (p) अणु
 		p->display = 0;
-		if (p->start_time == 1)
-			p->start_time = tchart->first_time;
+		अगर (p->start_समय == 1)
+			p->start_समय = tअक्षरt->first_समय;
 
-		/* no exit marker, task kept running to the end */
-		if (p->end_time == 0)
-			p->end_time = tchart->last_time;
+		/* no निकास marker, task kept running to the end */
+		अगर (p->end_समय == 0)
+			p->end_समय = tअक्षरt->last_समय;
 
 		c = p->all;
 
-		while (c) {
+		जबतक (c) अणु
 			c->display = 0;
 
-			if (c->start_time == 1)
-				c->start_time = tchart->first_time;
+			अगर (c->start_समय == 1)
+				c->start_समय = tअक्षरt->first_समय;
 
-			if (passes_filter(p, c)) {
+			अगर (passes_filter(p, c)) अणु
 				c->display = 1;
 				p->display = 1;
 				count++;
-			}
+			पूर्ण
 
-			if (c->end_time == 0)
-				c->end_time = tchart->last_time;
+			अगर (c->end_समय == 0)
+				c->end_समय = tअक्षरt->last_समय;
 
 			c = c->next;
-		}
+		पूर्ण
 		p = p->next;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static int determine_display_tasks(struct timechart *tchart, u64 threshold)
-{
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	int count = 0;
+अटल पूर्णांक determine_display_tasks(काष्ठा समयअक्षरt *tअक्षरt, u64 threshold)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	पूर्णांक count = 0;
 
-	p = tchart->all_data;
-	while (p) {
+	p = tअक्षरt->all_data;
+	जबतक (p) अणु
 		p->display = 0;
-		if (p->start_time == 1)
-			p->start_time = tchart->first_time;
+		अगर (p->start_समय == 1)
+			p->start_समय = tअक्षरt->first_समय;
 
-		/* no exit marker, task kept running to the end */
-		if (p->end_time == 0)
-			p->end_time = tchart->last_time;
-		if (p->total_time >= threshold)
+		/* no निकास marker, task kept running to the end */
+		अगर (p->end_समय == 0)
+			p->end_समय = tअक्षरt->last_समय;
+		अगर (p->total_समय >= threshold)
 			p->display = 1;
 
 		c = p->all;
 
-		while (c) {
+		जबतक (c) अणु
 			c->display = 0;
 
-			if (c->start_time == 1)
-				c->start_time = tchart->first_time;
+			अगर (c->start_समय == 1)
+				c->start_समय = tअक्षरt->first_समय;
 
-			if (c->total_time >= threshold) {
+			अगर (c->total_समय >= threshold) अणु
 				c->display = 1;
 				count++;
-			}
+			पूर्ण
 
-			if (c->end_time == 0)
-				c->end_time = tchart->last_time;
+			अगर (c->end_समय == 0)
+				c->end_समय = tअक्षरt->last_समय;
 
 			c = c->next;
-		}
+		पूर्ण
 		p = p->next;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static int determine_display_io_tasks(struct timechart *timechart, u64 threshold)
-{
-	struct per_pid *p;
-	struct per_pidcomm *c;
-	int count = 0;
+अटल पूर्णांक determine_display_io_tasks(काष्ठा समयअक्षरt *समयअक्षरt, u64 threshold)
+अणु
+	काष्ठा per_pid *p;
+	काष्ठा per_pidcomm *c;
+	पूर्णांक count = 0;
 
-	p = timechart->all_data;
-	while (p) {
-		/* no exit marker, task kept running to the end */
-		if (p->end_time == 0)
-			p->end_time = timechart->last_time;
+	p = समयअक्षरt->all_data;
+	जबतक (p) अणु
+		/* no निकास marker, task kept running to the end */
+		अगर (p->end_समय == 0)
+			p->end_समय = समयअक्षरt->last_समय;
 
 		c = p->all;
 
-		while (c) {
+		जबतक (c) अणु
 			c->display = 0;
 
-			if (c->total_bytes >= threshold) {
+			अगर (c->total_bytes >= threshold) अणु
 				c->display = 1;
 				count++;
-			}
+			पूर्ण
 
-			if (c->end_time == 0)
-				c->end_time = timechart->last_time;
+			अगर (c->end_समय == 0)
+				c->end_समय = समयअक्षरt->last_समय;
 
 			c = c->next;
-		}
+		पूर्ण
 		p = p->next;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-#define BYTES_THRESH (1 * 1024 * 1024)
-#define TIME_THRESH 10000000
+#घोषणा BYTES_THRESH (1 * 1024 * 1024)
+#घोषणा TIME_THRESH 10000000
 
-static void write_svg_file(struct timechart *tchart, const char *filename)
-{
+अटल व्योम ग_लिखो_svg_file(काष्ठा समयअक्षरt *tअक्षरt, स्थिर अक्षर *filename)
+अणु
 	u64 i;
-	int count;
-	int thresh = tchart->io_events ? BYTES_THRESH : TIME_THRESH;
+	पूर्णांक count;
+	पूर्णांक thresh = tअक्षरt->io_events ? BYTES_THRESH : TIME_THRESH;
 
-	if (tchart->power_only)
-		tchart->proc_num = 0;
+	अगर (tअक्षरt->घातer_only)
+		tअक्षरt->proc_num = 0;
 
 	/* We'd like to show at least proc_num tasks;
-	 * be less picky if we have fewer */
-	do {
-		if (process_filter)
-			count = determine_display_tasks_filtered(tchart);
-		else if (tchart->io_events)
-			count = determine_display_io_tasks(tchart, thresh);
-		else
-			count = determine_display_tasks(tchart, thresh);
+	 * be less picky अगर we have fewer */
+	करो अणु
+		अगर (process_filter)
+			count = determine_display_tasks_filtered(tअक्षरt);
+		अन्यथा अगर (tअक्षरt->io_events)
+			count = determine_display_io_tasks(tअक्षरt, thresh);
+		अन्यथा
+			count = determine_display_tasks(tअक्षरt, thresh);
 		thresh /= 10;
-	} while (!process_filter && thresh && count < tchart->proc_num);
+	पूर्ण जबतक (!process_filter && thresh && count < tअक्षरt->proc_num);
 
-	if (!tchart->proc_num)
+	अगर (!tअक्षरt->proc_num)
 		count = 0;
 
-	if (tchart->io_events) {
-		open_svg(filename, 0, count, tchart->first_time, tchart->last_time);
+	अगर (tअक्षरt->io_events) अणु
+		खोलो_svg(filename, 0, count, tअक्षरt->first_समय, tअक्षरt->last_समय);
 
-		svg_time_grid(0.5);
+		svg_समय_grid(0.5);
 		svg_io_legenda();
 
-		draw_io_bars(tchart);
-	} else {
-		open_svg(filename, tchart->numcpus, count, tchart->first_time, tchart->last_time);
+		draw_io_bars(tअक्षरt);
+	पूर्ण अन्यथा अणु
+		खोलो_svg(filename, tअक्षरt->numcpus, count, tअक्षरt->first_समय, tअक्षरt->last_समय);
 
-		svg_time_grid(0);
+		svg_समय_grid(0);
 
 		svg_legenda();
 
-		for (i = 0; i < tchart->numcpus; i++)
-			svg_cpu_box(i, tchart->max_freq, tchart->turbo_frequency);
+		क्रम (i = 0; i < tअक्षरt->numcpus; i++)
+			svg_cpu_box(i, tअक्षरt->max_freq, tअक्षरt->turbo_frequency);
 
-		draw_cpu_usage(tchart);
-		if (tchart->proc_num)
-			draw_process_bars(tchart);
-		if (!tchart->tasks_only)
-			draw_c_p_states(tchart);
-		if (tchart->proc_num)
-			draw_wakeups(tchart);
-	}
+		draw_cpu_usage(tअक्षरt);
+		अगर (tअक्षरt->proc_num)
+			draw_process_bars(tअक्षरt);
+		अगर (!tअक्षरt->tasks_only)
+			draw_c_p_states(tअक्षरt);
+		अगर (tअक्षरt->proc_num)
+			draw_wakeups(tअक्षरt);
+	पूर्ण
 
-	svg_close();
-}
+	svg_बंद();
+पूर्ण
 
-static int process_header(struct perf_file_section *section __maybe_unused,
-			  struct perf_header *ph,
-			  int feat,
-			  int fd __maybe_unused,
-			  void *data)
-{
-	struct timechart *tchart = data;
+अटल पूर्णांक process_header(काष्ठा perf_file_section *section __maybe_unused,
+			  काष्ठा perf_header *ph,
+			  पूर्णांक feat,
+			  पूर्णांक fd __maybe_unused,
+			  व्योम *data)
+अणु
+	काष्ठा समयअक्षरt *tअक्षरt = data;
 
-	switch (feat) {
-	case HEADER_NRCPUS:
-		tchart->numcpus = ph->env.nr_cpus_avail;
-		break;
+	चयन (feat) अणु
+	हाल HEADER_NRCPUS:
+		tअक्षरt->numcpus = ph->env.nr_cpus_avail;
+		अवरोध;
 
-	case HEADER_CPU_TOPOLOGY:
-		if (!tchart->topology)
-			break;
+	हाल HEADER_CPU_TOPOLOGY:
+		अगर (!tअक्षरt->topology)
+			अवरोध;
 
-		if (svg_build_topology_map(&ph->env))
-			fprintf(stderr, "problem building topology\n");
-		break;
+		अगर (svg_build_topology_map(&ph->env))
+			ख_लिखो(मानक_त्रुटि, "problem building topology\n");
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __cmd_timechart(struct timechart *tchart, const char *output_name)
-{
-	const struct evsel_str_handler power_tracepoints[] = {
-		{ "power:cpu_idle",		process_sample_cpu_idle },
-		{ "power:cpu_frequency",	process_sample_cpu_frequency },
-		{ "sched:sched_wakeup",		process_sample_sched_wakeup },
-		{ "sched:sched_switch",		process_sample_sched_switch },
-#ifdef SUPPORT_OLD_POWER_EVENTS
-		{ "power:power_start",		process_sample_power_start },
-		{ "power:power_end",		process_sample_power_end },
-		{ "power:power_frequency",	process_sample_power_frequency },
-#endif
+अटल पूर्णांक __cmd_समयअक्षरt(काष्ठा समयअक्षरt *tअक्षरt, स्थिर अक्षर *output_name)
+अणु
+	स्थिर काष्ठा evsel_str_handler घातer_tracepoपूर्णांकs[] = अणु
+		अणु "power:cpu_idle",		process_sample_cpu_idle पूर्ण,
+		अणु "power:cpu_frequency",	process_sample_cpu_frequency पूर्ण,
+		अणु "sched:sched_wakeup",		process_sample_sched_wakeup पूर्ण,
+		अणु "sched:sched_switch",		process_sample_sched_चयन पूर्ण,
+#अगर_घोषित SUPPORT_OLD_POWER_EVENTS
+		अणु "power:power_start",		process_sample_घातer_start पूर्ण,
+		अणु "power:power_end",		process_sample_घातer_end पूर्ण,
+		अणु "power:power_frequency",	process_sample_घातer_frequency पूर्ण,
+#पूर्ण_अगर
 
-		{ "syscalls:sys_enter_read",		process_enter_read },
-		{ "syscalls:sys_enter_pread64",		process_enter_read },
-		{ "syscalls:sys_enter_readv",		process_enter_read },
-		{ "syscalls:sys_enter_preadv",		process_enter_read },
-		{ "syscalls:sys_enter_write",		process_enter_write },
-		{ "syscalls:sys_enter_pwrite64",	process_enter_write },
-		{ "syscalls:sys_enter_writev",		process_enter_write },
-		{ "syscalls:sys_enter_pwritev",		process_enter_write },
-		{ "syscalls:sys_enter_sync",		process_enter_sync },
-		{ "syscalls:sys_enter_sync_file_range",	process_enter_sync },
-		{ "syscalls:sys_enter_fsync",		process_enter_sync },
-		{ "syscalls:sys_enter_msync",		process_enter_sync },
-		{ "syscalls:sys_enter_recvfrom",	process_enter_rx },
-		{ "syscalls:sys_enter_recvmmsg",	process_enter_rx },
-		{ "syscalls:sys_enter_recvmsg",		process_enter_rx },
-		{ "syscalls:sys_enter_sendto",		process_enter_tx },
-		{ "syscalls:sys_enter_sendmsg",		process_enter_tx },
-		{ "syscalls:sys_enter_sendmmsg",	process_enter_tx },
-		{ "syscalls:sys_enter_epoll_pwait",	process_enter_poll },
-		{ "syscalls:sys_enter_epoll_wait",	process_enter_poll },
-		{ "syscalls:sys_enter_poll",		process_enter_poll },
-		{ "syscalls:sys_enter_ppoll",		process_enter_poll },
-		{ "syscalls:sys_enter_pselect6",	process_enter_poll },
-		{ "syscalls:sys_enter_select",		process_enter_poll },
+		अणु "syscalls:sys_enter_read",		process_enter_पढ़ो पूर्ण,
+		अणु "syscalls:sys_enter_pread64",		process_enter_पढ़ो पूर्ण,
+		अणु "syscalls:sys_enter_readv",		process_enter_पढ़ो पूर्ण,
+		अणु "syscalls:sys_enter_preadv",		process_enter_पढ़ो पूर्ण,
+		अणु "syscalls:sys_enter_write",		process_enter_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_enter_pwrite64",	process_enter_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_enter_writev",		process_enter_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_enter_pwritev",		process_enter_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_enter_sync",		process_enter_sync पूर्ण,
+		अणु "syscalls:sys_enter_sync_file_range",	process_enter_sync पूर्ण,
+		अणु "syscalls:sys_enter_fsync",		process_enter_sync पूर्ण,
+		अणु "syscalls:sys_enter_msync",		process_enter_sync पूर्ण,
+		अणु "syscalls:sys_enter_recvfrom",	process_enter_rx पूर्ण,
+		अणु "syscalls:sys_enter_recvmmsg",	process_enter_rx पूर्ण,
+		अणु "syscalls:sys_enter_recvmsg",		process_enter_rx पूर्ण,
+		अणु "syscalls:sys_enter_sendto",		process_enter_tx पूर्ण,
+		अणु "syscalls:sys_enter_sendmsg",		process_enter_tx पूर्ण,
+		अणु "syscalls:sys_enter_sendmmsg",	process_enter_tx पूर्ण,
+		अणु "syscalls:sys_enter_epoll_pwait",	process_enter_poll पूर्ण,
+		अणु "syscalls:sys_enter_epoll_wait",	process_enter_poll पूर्ण,
+		अणु "syscalls:sys_enter_poll",		process_enter_poll पूर्ण,
+		अणु "syscalls:sys_enter_ppoll",		process_enter_poll पूर्ण,
+		अणु "syscalls:sys_enter_pselect6",	process_enter_poll पूर्ण,
+		अणु "syscalls:sys_enter_select",		process_enter_poll पूर्ण,
 
-		{ "syscalls:sys_exit_read",		process_exit_read },
-		{ "syscalls:sys_exit_pread64",		process_exit_read },
-		{ "syscalls:sys_exit_readv",		process_exit_read },
-		{ "syscalls:sys_exit_preadv",		process_exit_read },
-		{ "syscalls:sys_exit_write",		process_exit_write },
-		{ "syscalls:sys_exit_pwrite64",		process_exit_write },
-		{ "syscalls:sys_exit_writev",		process_exit_write },
-		{ "syscalls:sys_exit_pwritev",		process_exit_write },
-		{ "syscalls:sys_exit_sync",		process_exit_sync },
-		{ "syscalls:sys_exit_sync_file_range",	process_exit_sync },
-		{ "syscalls:sys_exit_fsync",		process_exit_sync },
-		{ "syscalls:sys_exit_msync",		process_exit_sync },
-		{ "syscalls:sys_exit_recvfrom",		process_exit_rx },
-		{ "syscalls:sys_exit_recvmmsg",		process_exit_rx },
-		{ "syscalls:sys_exit_recvmsg",		process_exit_rx },
-		{ "syscalls:sys_exit_sendto",		process_exit_tx },
-		{ "syscalls:sys_exit_sendmsg",		process_exit_tx },
-		{ "syscalls:sys_exit_sendmmsg",		process_exit_tx },
-		{ "syscalls:sys_exit_epoll_pwait",	process_exit_poll },
-		{ "syscalls:sys_exit_epoll_wait",	process_exit_poll },
-		{ "syscalls:sys_exit_poll",		process_exit_poll },
-		{ "syscalls:sys_exit_ppoll",		process_exit_poll },
-		{ "syscalls:sys_exit_pselect6",		process_exit_poll },
-		{ "syscalls:sys_exit_select",		process_exit_poll },
-	};
-	struct perf_data data = {
+		अणु "syscalls:sys_exit_read",		process_निकास_पढ़ो पूर्ण,
+		अणु "syscalls:sys_exit_pread64",		process_निकास_पढ़ो पूर्ण,
+		अणु "syscalls:sys_exit_readv",		process_निकास_पढ़ो पूर्ण,
+		अणु "syscalls:sys_exit_preadv",		process_निकास_पढ़ो पूर्ण,
+		अणु "syscalls:sys_exit_write",		process_निकास_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_exit_pwrite64",		process_निकास_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_exit_writev",		process_निकास_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_exit_pwritev",		process_निकास_ग_लिखो पूर्ण,
+		अणु "syscalls:sys_exit_sync",		process_निकास_sync पूर्ण,
+		अणु "syscalls:sys_exit_sync_file_range",	process_निकास_sync पूर्ण,
+		अणु "syscalls:sys_exit_fsync",		process_निकास_sync पूर्ण,
+		अणु "syscalls:sys_exit_msync",		process_निकास_sync पूर्ण,
+		अणु "syscalls:sys_exit_recvfrom",		process_निकास_rx पूर्ण,
+		अणु "syscalls:sys_exit_recvmmsg",		process_निकास_rx पूर्ण,
+		अणु "syscalls:sys_exit_recvmsg",		process_निकास_rx पूर्ण,
+		अणु "syscalls:sys_exit_sendto",		process_निकास_tx पूर्ण,
+		अणु "syscalls:sys_exit_sendmsg",		process_निकास_tx पूर्ण,
+		अणु "syscalls:sys_exit_sendmmsg",		process_निकास_tx पूर्ण,
+		अणु "syscalls:sys_exit_epoll_pwait",	process_निकास_poll पूर्ण,
+		अणु "syscalls:sys_exit_epoll_wait",	process_निकास_poll पूर्ण,
+		अणु "syscalls:sys_exit_poll",		process_निकास_poll पूर्ण,
+		अणु "syscalls:sys_exit_ppoll",		process_निकास_poll पूर्ण,
+		अणु "syscalls:sys_exit_pselect6",		process_निकास_poll पूर्ण,
+		अणु "syscalls:sys_exit_select",		process_निकास_poll पूर्ण,
+	पूर्ण;
+	काष्ठा perf_data data = अणु
 		.path  = input_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.force = tchart->force,
-	};
+		.क्रमce = tअक्षरt->क्रमce,
+	पूर्ण;
 
-	struct perf_session *session = perf_session__new(&data, false,
-							 &tchart->tool);
-	int ret = -EINVAL;
+	काष्ठा perf_session *session = perf_session__new(&data, false,
+							 &tअक्षरt->tool);
+	पूर्णांक ret = -EINVAL;
 
-	if (IS_ERR(session))
-		return PTR_ERR(session);
+	अगर (IS_ERR(session))
+		वापस PTR_ERR(session);
 
 	symbol__init(&session->header.env);
 
-	(void)perf_header__process_sections(&session->header,
+	(व्योम)perf_header__process_sections(&session->header,
 					    perf_data__fd(session->data),
-					    tchart,
+					    tअक्षरt,
 					    process_header);
 
-	if (!perf_session__has_traces(session, "timechart record"))
-		goto out_delete;
+	अगर (!perf_session__has_traces(session, "timechart record"))
+		जाओ out_delete;
 
-	if (perf_session__set_tracepoints_handlers(session,
-						   power_tracepoints)) {
+	अगर (perf_session__set_tracepoपूर्णांकs_handlers(session,
+						   घातer_tracepoपूर्णांकs)) अणु
 		pr_err("Initializing session tracepoint handlers failed\n");
-		goto out_delete;
-	}
+		जाओ out_delete;
+	पूर्ण
 
 	ret = perf_session__process_events(session);
-	if (ret)
-		goto out_delete;
+	अगर (ret)
+		जाओ out_delete;
 
-	end_sample_processing(tchart);
+	end_sample_processing(tअक्षरt);
 
-	sort_pids(tchart);
+	sort_pids(tअक्षरt);
 
-	write_svg_file(tchart, output_name);
+	ग_लिखो_svg_file(tअक्षरt, output_name);
 
 	pr_info("Written %2.1f seconds of trace to %s.\n",
-		(tchart->last_time - tchart->first_time) / (double)NSEC_PER_SEC, output_name);
+		(tअक्षरt->last_समय - tअक्षरt->first_समय) / (द्विगुन)NSEC_PER_SEC, output_name);
 out_delete:
 	perf_session__delete(session);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int timechart__io_record(int argc, const char **argv)
-{
-	unsigned int rec_argc, i;
-	const char **rec_argv;
-	const char **p;
-	char *filter = NULL;
+अटल पूर्णांक समयअक्षरt__io_record(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक rec_argc, i;
+	स्थिर अक्षर **rec_argv;
+	स्थिर अक्षर **p;
+	अक्षर *filter = शून्य;
 
-	const char * const common_args[] = {
+	स्थिर अक्षर * स्थिर common_args[] = अणु
 		"record", "-a", "-R", "-c", "1",
-	};
-	unsigned int common_args_nr = ARRAY_SIZE(common_args);
+	पूर्ण;
+	अचिन्हित पूर्णांक common_args_nr = ARRAY_SIZE(common_args);
 
-	const char * const disk_events[] = {
+	स्थिर अक्षर * स्थिर disk_events[] = अणु
 		"syscalls:sys_enter_read",
 		"syscalls:sys_enter_pread64",
 		"syscalls:sys_enter_readv",
@@ -1676,10 +1677,10 @@ static int timechart__io_record(int argc, const char **argv)
 		"syscalls:sys_exit_sync_file_range",
 		"syscalls:sys_exit_fsync",
 		"syscalls:sys_exit_msync",
-	};
-	unsigned int disk_events_nr = ARRAY_SIZE(disk_events);
+	पूर्ण;
+	अचिन्हित पूर्णांक disk_events_nr = ARRAY_SIZE(disk_events);
 
-	const char * const net_events[] = {
+	स्थिर अक्षर * स्थिर net_events[] = अणु
 		"syscalls:sys_enter_recvfrom",
 		"syscalls:sys_enter_recvmmsg",
 		"syscalls:sys_enter_recvmsg",
@@ -1693,10 +1694,10 @@ static int timechart__io_record(int argc, const char **argv)
 		"syscalls:sys_exit_sendto",
 		"syscalls:sys_exit_sendmsg",
 		"syscalls:sys_exit_sendmmsg",
-	};
-	unsigned int net_events_nr = ARRAY_SIZE(net_events);
+	पूर्ण;
+	अचिन्हित पूर्णांक net_events_nr = ARRAY_SIZE(net_events);
 
-	const char * const poll_events[] = {
+	स्थिर अक्षर * स्थिर poll_events[] = अणु
 		"syscalls:sys_enter_epoll_pwait",
 		"syscalls:sys_enter_epoll_wait",
 		"syscalls:sys_enter_poll",
@@ -1710,298 +1711,298 @@ static int timechart__io_record(int argc, const char **argv)
 		"syscalls:sys_exit_ppoll",
 		"syscalls:sys_exit_pselect6",
 		"syscalls:sys_exit_select",
-	};
-	unsigned int poll_events_nr = ARRAY_SIZE(poll_events);
+	पूर्ण;
+	अचिन्हित पूर्णांक poll_events_nr = ARRAY_SIZE(poll_events);
 
 	rec_argc = common_args_nr +
 		disk_events_nr * 4 +
 		net_events_nr * 4 +
 		poll_events_nr * 4 +
 		argc;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
 
-	if (rec_argv == NULL)
-		return -ENOMEM;
+	अगर (rec_argv == शून्य)
+		वापस -ENOMEM;
 
-	if (asprintf(&filter, "common_pid != %d", getpid()) < 0) {
-		free(rec_argv);
-		return -ENOMEM;
-	}
+	अगर (aप्र_लिखो(&filter, "common_pid != %d", getpid()) < 0) अणु
+		मुक्त(rec_argv);
+		वापस -ENOMEM;
+	पूर्ण
 
 	p = rec_argv;
-	for (i = 0; i < common_args_nr; i++)
+	क्रम (i = 0; i < common_args_nr; i++)
 		*p++ = strdup(common_args[i]);
 
-	for (i = 0; i < disk_events_nr; i++) {
-		if (!is_valid_tracepoint(disk_events[i])) {
+	क्रम (i = 0; i < disk_events_nr; i++) अणु
+		अगर (!is_valid_tracepoपूर्णांक(disk_events[i])) अणु
 			rec_argc -= 4;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		*p++ = "-e";
 		*p++ = strdup(disk_events[i]);
 		*p++ = "--filter";
 		*p++ = filter;
-	}
-	for (i = 0; i < net_events_nr; i++) {
-		if (!is_valid_tracepoint(net_events[i])) {
+	पूर्ण
+	क्रम (i = 0; i < net_events_nr; i++) अणु
+		अगर (!is_valid_tracepoपूर्णांक(net_events[i])) अणु
 			rec_argc -= 4;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		*p++ = "-e";
 		*p++ = strdup(net_events[i]);
 		*p++ = "--filter";
 		*p++ = filter;
-	}
-	for (i = 0; i < poll_events_nr; i++) {
-		if (!is_valid_tracepoint(poll_events[i])) {
+	पूर्ण
+	क्रम (i = 0; i < poll_events_nr; i++) अणु
+		अगर (!is_valid_tracepoपूर्णांक(poll_events[i])) अणु
 			rec_argc -= 4;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		*p++ = "-e";
 		*p++ = strdup(poll_events[i]);
 		*p++ = "--filter";
 		*p++ = filter;
-	}
+	पूर्ण
 
-	for (i = 0; i < (unsigned int)argc; i++)
+	क्रम (i = 0; i < (अचिन्हित पूर्णांक)argc; i++)
 		*p++ = argv[i];
 
-	return cmd_record(rec_argc, rec_argv);
-}
+	वापस cmd_record(rec_argc, rec_argv);
+पूर्ण
 
 
-static int timechart__record(struct timechart *tchart, int argc, const char **argv)
-{
-	unsigned int rec_argc, i, j;
-	const char **rec_argv;
-	const char **p;
-	unsigned int record_elems;
+अटल पूर्णांक समयअक्षरt__record(काष्ठा समयअक्षरt *tअक्षरt, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अचिन्हित पूर्णांक rec_argc, i, j;
+	स्थिर अक्षर **rec_argv;
+	स्थिर अक्षर **p;
+	अचिन्हित पूर्णांक record_elems;
 
-	const char * const common_args[] = {
+	स्थिर अक्षर * स्थिर common_args[] = अणु
 		"record", "-a", "-R", "-c", "1",
-	};
-	unsigned int common_args_nr = ARRAY_SIZE(common_args);
+	पूर्ण;
+	अचिन्हित पूर्णांक common_args_nr = ARRAY_SIZE(common_args);
 
-	const char * const backtrace_args[] = {
+	स्थिर अक्षर * स्थिर backtrace_args[] = अणु
 		"-g",
-	};
-	unsigned int backtrace_args_no = ARRAY_SIZE(backtrace_args);
+	पूर्ण;
+	अचिन्हित पूर्णांक backtrace_args_no = ARRAY_SIZE(backtrace_args);
 
-	const char * const power_args[] = {
+	स्थिर अक्षर * स्थिर घातer_args[] = अणु
 		"-e", "power:cpu_frequency",
 		"-e", "power:cpu_idle",
-	};
-	unsigned int power_args_nr = ARRAY_SIZE(power_args);
+	पूर्ण;
+	अचिन्हित पूर्णांक घातer_args_nr = ARRAY_SIZE(घातer_args);
 
-	const char * const old_power_args[] = {
-#ifdef SUPPORT_OLD_POWER_EVENTS
+	स्थिर अक्षर * स्थिर old_घातer_args[] = अणु
+#अगर_घोषित SUPPORT_OLD_POWER_EVENTS
 		"-e", "power:power_start",
 		"-e", "power:power_end",
 		"-e", "power:power_frequency",
-#endif
-	};
-	unsigned int old_power_args_nr = ARRAY_SIZE(old_power_args);
+#पूर्ण_अगर
+	पूर्ण;
+	अचिन्हित पूर्णांक old_घातer_args_nr = ARRAY_SIZE(old_घातer_args);
 
-	const char * const tasks_args[] = {
+	स्थिर अक्षर * स्थिर tasks_args[] = अणु
 		"-e", "sched:sched_wakeup",
 		"-e", "sched:sched_switch",
-	};
-	unsigned int tasks_args_nr = ARRAY_SIZE(tasks_args);
+	पूर्ण;
+	अचिन्हित पूर्णांक tasks_args_nr = ARRAY_SIZE(tasks_args);
 
-#ifdef SUPPORT_OLD_POWER_EVENTS
-	if (!is_valid_tracepoint("power:cpu_idle") &&
-	    is_valid_tracepoint("power:power_start")) {
-		use_old_power_events = 1;
-		power_args_nr = 0;
-	} else {
-		old_power_args_nr = 0;
-	}
-#endif
+#अगर_घोषित SUPPORT_OLD_POWER_EVENTS
+	अगर (!is_valid_tracepoपूर्णांक("power:cpu_idle") &&
+	    is_valid_tracepoपूर्णांक("power:power_start")) अणु
+		use_old_घातer_events = 1;
+		घातer_args_nr = 0;
+	पूर्ण अन्यथा अणु
+		old_घातer_args_nr = 0;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (tchart->power_only)
+	अगर (tअक्षरt->घातer_only)
 		tasks_args_nr = 0;
 
-	if (tchart->tasks_only) {
-		power_args_nr = 0;
-		old_power_args_nr = 0;
-	}
+	अगर (tअक्षरt->tasks_only) अणु
+		घातer_args_nr = 0;
+		old_घातer_args_nr = 0;
+	पूर्ण
 
-	if (!tchart->with_backtrace)
+	अगर (!tअक्षरt->with_backtrace)
 		backtrace_args_no = 0;
 
 	record_elems = common_args_nr + tasks_args_nr +
-		power_args_nr + old_power_args_nr + backtrace_args_no;
+		घातer_args_nr + old_घातer_args_nr + backtrace_args_no;
 
 	rec_argc = record_elems + argc;
-	rec_argv = calloc(rec_argc + 1, sizeof(char *));
+	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
 
-	if (rec_argv == NULL)
-		return -ENOMEM;
+	अगर (rec_argv == शून्य)
+		वापस -ENOMEM;
 
 	p = rec_argv;
-	for (i = 0; i < common_args_nr; i++)
+	क्रम (i = 0; i < common_args_nr; i++)
 		*p++ = strdup(common_args[i]);
 
-	for (i = 0; i < backtrace_args_no; i++)
+	क्रम (i = 0; i < backtrace_args_no; i++)
 		*p++ = strdup(backtrace_args[i]);
 
-	for (i = 0; i < tasks_args_nr; i++)
+	क्रम (i = 0; i < tasks_args_nr; i++)
 		*p++ = strdup(tasks_args[i]);
 
-	for (i = 0; i < power_args_nr; i++)
-		*p++ = strdup(power_args[i]);
+	क्रम (i = 0; i < घातer_args_nr; i++)
+		*p++ = strdup(घातer_args[i]);
 
-	for (i = 0; i < old_power_args_nr; i++)
-		*p++ = strdup(old_power_args[i]);
+	क्रम (i = 0; i < old_घातer_args_nr; i++)
+		*p++ = strdup(old_घातer_args[i]);
 
-	for (j = 0; j < (unsigned int)argc; j++)
+	क्रम (j = 0; j < (अचिन्हित पूर्णांक)argc; j++)
 		*p++ = argv[j];
 
-	return cmd_record(rec_argc, rec_argv);
-}
+	वापस cmd_record(rec_argc, rec_argv);
+पूर्ण
 
-static int
-parse_process(const struct option *opt __maybe_unused, const char *arg,
-	      int __maybe_unused unset)
-{
-	if (arg)
+अटल पूर्णांक
+parse_process(स्थिर काष्ठा option *opt __maybe_unused, स्थिर अक्षर *arg,
+	      पूर्णांक __maybe_unused unset)
+अणु
+	अगर (arg)
 		add_process_filter(arg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parse_highlight(const struct option *opt __maybe_unused, const char *arg,
-		int __maybe_unused unset)
-{
-	unsigned long duration = strtoul(arg, NULL, 0);
+अटल पूर्णांक
+parse_highlight(स्थिर काष्ठा option *opt __maybe_unused, स्थिर अक्षर *arg,
+		पूर्णांक __maybe_unused unset)
+अणु
+	अचिन्हित दीर्घ duration = म_से_अदीर्घ(arg, शून्य, 0);
 
-	if (svg_highlight || svg_highlight_name)
-		return -1;
+	अगर (svg_highlight || svg_highlight_name)
+		वापस -1;
 
-	if (duration)
+	अगर (duration)
 		svg_highlight = duration;
-	else
+	अन्यथा
 		svg_highlight_name = strdup(arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-parse_time(const struct option *opt, const char *arg, int __maybe_unused unset)
-{
-	char unit = 'n';
+अटल पूर्णांक
+parse_समय(स्थिर काष्ठा option *opt, स्थिर अक्षर *arg, पूर्णांक __maybe_unused unset)
+अणु
+	अक्षर unit = 'n';
 	u64 *value = opt->value;
 
-	if (sscanf(arg, "%" PRIu64 "%cs", value, &unit) > 0) {
-		switch (unit) {
-		case 'm':
+	अगर (माला_पूछो(arg, "%" PRIu64 "%cs", value, &unit) > 0) अणु
+		चयन (unit) अणु
+		हाल 'm':
 			*value *= NSEC_PER_MSEC;
-			break;
-		case 'u':
+			अवरोध;
+		हाल 'u':
 			*value *= NSEC_PER_USEC;
-			break;
-		case 'n':
-			break;
-		default:
-			return -1;
-		}
-	}
+			अवरोध;
+		हाल 'n':
+			अवरोध;
+		शेष:
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cmd_timechart(int argc, const char **argv)
-{
-	struct timechart tchart = {
-		.tool = {
+पूर्णांक cmd_समयअक्षरt(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा समयअक्षरt tअक्षरt = अणु
+		.tool = अणु
 			.comm		 = process_comm_event,
-			.fork		 = process_fork_event,
-			.exit		 = process_exit_event,
+			.विभाजन		 = process_विभाजन_event,
+			.निकास		 = process_निकास_event,
 			.sample		 = process_sample_event,
 			.ordered_events	 = true,
-		},
+		पूर्ण,
 		.proc_num = 15,
-		.min_time = NSEC_PER_MSEC,
+		.min_समय = NSEC_PER_MSEC,
 		.merge_dist = 1000,
-	};
-	const char *output_name = "output.svg";
-	const struct option timechart_common_options[] = {
-	OPT_BOOLEAN('P', "power-only", &tchart.power_only, "output power data only"),
-	OPT_BOOLEAN('T', "tasks-only", &tchart.tasks_only, "output processes data only"),
+	पूर्ण;
+	स्थिर अक्षर *output_name = "output.svg";
+	स्थिर काष्ठा option समयअक्षरt_common_options[] = अणु
+	OPT_BOOLEAN('P', "power-only", &tअक्षरt.घातer_only, "output power data only"),
+	OPT_BOOLEAN('T', "tasks-only", &tअक्षरt.tasks_only, "output processes data only"),
 	OPT_END()
-	};
-	const struct option timechart_options[] = {
+	पूर्ण;
+	स्थिर काष्ठा option समयअक्षरt_options[] = अणु
 	OPT_STRING('i', "input", &input_name, "file", "input file name"),
 	OPT_STRING('o', "output", &output_name, "file", "output file name"),
 	OPT_INTEGER('w', "width", &svg_page_width, "page width"),
-	OPT_CALLBACK(0, "highlight", NULL, "duration or task name",
+	OPT_CALLBACK(0, "highlight", शून्य, "duration or task name",
 		      "highlight tasks. Pass duration in ns or process name.",
 		       parse_highlight),
-	OPT_CALLBACK('p', "process", NULL, "process",
+	OPT_CALLBACK('p', "process", शून्य, "process",
 		      "process selector. Pass a pid or process name.",
 		       parse_process),
-	OPT_CALLBACK(0, "symfs", NULL, "directory",
+	OPT_CALLBACK(0, "symfs", शून्य, "directory",
 		     "Look for files with symbols relative to this directory",
 		     symbol__config_symfs),
-	OPT_INTEGER('n', "proc-num", &tchart.proc_num,
+	OPT_INTEGER('n', "proc-num", &tअक्षरt.proc_num,
 		    "min. number of tasks to print"),
-	OPT_BOOLEAN('t', "topology", &tchart.topology,
+	OPT_BOOLEAN('t', "topology", &tअक्षरt.topology,
 		    "sort CPUs according to topology"),
-	OPT_BOOLEAN(0, "io-skip-eagain", &tchart.skip_eagain,
+	OPT_BOOLEAN(0, "io-skip-eagain", &tअक्षरt.skip_eagain,
 		    "skip EAGAIN errors"),
-	OPT_CALLBACK(0, "io-min-time", &tchart.min_time, "time",
+	OPT_CALLBACK(0, "io-min-time", &tअक्षरt.min_समय, "time",
 		     "all IO faster than min-time will visually appear longer",
-		     parse_time),
-	OPT_CALLBACK(0, "io-merge-dist", &tchart.merge_dist, "time",
+		     parse_समय),
+	OPT_CALLBACK(0, "io-merge-dist", &tअक्षरt.merge_dist, "time",
 		     "merge events that are merge-dist us apart",
-		     parse_time),
-	OPT_BOOLEAN('f', "force", &tchart.force, "don't complain, do it"),
-	OPT_PARENT(timechart_common_options),
-	};
-	const char * const timechart_subcommands[] = { "record", NULL };
-	const char *timechart_usage[] = {
+		     parse_समय),
+	OPT_BOOLEAN('f', "force", &tchart.force, "don't complain, करो it"),
+	OPT_PARENT(समयअक्षरt_common_options),
+	पूर्ण;
+	स्थिर अक्षर * स्थिर समयअक्षरt_subcommands[] = अणु "record", शून्य पूर्ण;
+	स्थिर अक्षर *समयअक्षरt_usage[] = अणु
 		"perf timechart [<options>] {record}",
-		NULL
-	};
-	const struct option timechart_record_options[] = {
-	OPT_BOOLEAN('I', "io-only", &tchart.io_only,
+		शून्य
+	पूर्ण;
+	स्थिर काष्ठा option समयअक्षरt_record_options[] = अणु
+	OPT_BOOLEAN('I', "io-only", &tअक्षरt.io_only,
 		    "record only IO data"),
-	OPT_BOOLEAN('g', "callchain", &tchart.with_backtrace, "record callchain"),
-	OPT_PARENT(timechart_common_options),
-	};
-	const char * const timechart_record_usage[] = {
+	OPT_BOOLEAN('g', "callchain", &tअक्षरt.with_backtrace, "record callchain"),
+	OPT_PARENT(समयअक्षरt_common_options),
+	पूर्ण;
+	स्थिर अक्षर * स्थिर समयअक्षरt_record_usage[] = अणु
 		"perf timechart record [<options>]",
-		NULL
-	};
-	argc = parse_options_subcommand(argc, argv, timechart_options, timechart_subcommands,
-			timechart_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+		शून्य
+	पूर्ण;
+	argc = parse_options_subcommand(argc, argv, समयअक्षरt_options, समयअक्षरt_subcommands,
+			समयअक्षरt_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (tchart.power_only && tchart.tasks_only) {
+	अगर (tअक्षरt.घातer_only && tअक्षरt.tasks_only) अणु
 		pr_err("-P and -T options cannot be used at the same time.\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (argc && !strncmp(argv[0], "rec", 3)) {
-		argc = parse_options(argc, argv, timechart_record_options,
-				     timechart_record_usage,
+	अगर (argc && !म_भेदन(argv[0], "rec", 3)) अणु
+		argc = parse_options(argc, argv, समयअक्षरt_record_options,
+				     समयअक्षरt_record_usage,
 				     PARSE_OPT_STOP_AT_NON_OPTION);
 
-		if (tchart.power_only && tchart.tasks_only) {
+		अगर (tअक्षरt.घातer_only && tअक्षरt.tasks_only) अणु
 			pr_err("-P and -T options cannot be used at the same time.\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if (tchart.io_only)
-			return timechart__io_record(argc, argv);
-		else
-			return timechart__record(&tchart, argc, argv);
-	} else if (argc)
-		usage_with_options(timechart_usage, timechart_options);
+		अगर (tअक्षरt.io_only)
+			वापस समयअक्षरt__io_record(argc, argv);
+		अन्यथा
+			वापस समयअक्षरt__record(&tअक्षरt, argc, argv);
+	पूर्ण अन्यथा अगर (argc)
+		usage_with_options(समयअक्षरt_usage, समयअक्षरt_options);
 
 	setup_pager();
 
-	return __cmd_timechart(&tchart, output_name);
-}
+	वापस __cmd_समयअक्षरt(&tअक्षरt, output_name);
+पूर्ण

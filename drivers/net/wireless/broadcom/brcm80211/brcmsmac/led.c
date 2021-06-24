@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <net/mac80211.h>
-#include <linux/bcma/bcma_driver_chipcommon.h>
-#include <linux/gpio/driver.h>
-#include <linux/gpio/machine.h>
-#include <linux/gpio/consumer.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <net/mac80211.h>
+#समावेश <linux/bcma/bcma_driver_chipcommon.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/gpio/consumer.h>
 
-#include "mac80211_if.h"
-#include "pub.h"
-#include "main.h"
-#include "led.h"
+#समावेश "mac80211_if.h"
+#समावेश "pub.h"
+#समावेश "main.h"
+#समावेश "led.h"
 
 	/* number of leds */
-#define  BRCMS_LED_NO		4
+#घोषणा  BRCMS_LED_NO		4
 	/* behavior mask */
-#define  BRCMS_LED_BEH_MASK	0x7f
+#घोषणा  BRCMS_LED_BEH_MASK	0x7f
 	/* activelow (polarity) bit */
-#define  BRCMS_LED_AL_MASK	0x80
+#घोषणा  BRCMS_LED_AL_MASK	0x80
 	/* radio enabled */
-#define  BRCMS_LED_RADIO	3
+#घोषणा  BRCMS_LED_RADIO	3
 
-static void brcms_radio_led_ctrl(struct brcms_info *wl, bool state)
-{
-	if (!wl->radio_led.gpiod)
-		return;
+अटल व्योम brcms_radio_led_ctrl(काष्ठा brcms_info *wl, bool state)
+अणु
+	अगर (!wl->radio_led.gpiod)
+		वापस;
 
-	if (state)
+	अगर (state)
 		gpiod_set_value(wl->radio_led.gpiod, 1);
-	else
+	अन्यथा
 		gpiod_set_value(wl->radio_led.gpiod, 0);
-}
+पूर्ण
 
 
-/* Callback from the LED subsystem. */
-static void brcms_led_brightness_set(struct led_classdev *led_dev,
-				   enum led_brightness brightness)
-{
-	struct brcms_info *wl = container_of(led_dev,
-		struct brcms_info, led_dev);
+/* Callback from the LED subप्रणाली. */
+अटल व्योम brcms_led_brightness_set(काष्ठा led_classdev *led_dev,
+				   क्रमागत led_brightness brightness)
+अणु
+	काष्ठा brcms_info *wl = container_of(led_dev,
+		काष्ठा brcms_info, led_dev);
 	brcms_radio_led_ctrl(wl, brightness);
-}
+पूर्ण
 
-void brcms_led_unregister(struct brcms_info *wl)
-{
-	if (wl->led_dev.dev)
-		led_classdev_unregister(&wl->led_dev);
-	if (wl->radio_led.gpiod)
-		gpiochip_free_own_desc(wl->radio_led.gpiod);
-}
+व्योम brcms_led_unरेजिस्टर(काष्ठा brcms_info *wl)
+अणु
+	अगर (wl->led_dev.dev)
+		led_classdev_unरेजिस्टर(&wl->led_dev);
+	अगर (wl->radio_led.gpiod)
+		gpiochip_मुक्त_own_desc(wl->radio_led.gpiod);
+पूर्ण
 
-int brcms_led_register(struct brcms_info *wl)
-{
-	int i, err;
-	struct brcms_led *radio_led = &wl->radio_led;
+पूर्णांक brcms_led_रेजिस्टर(काष्ठा brcms_info *wl)
+अणु
+	पूर्णांक i, err;
+	काष्ठा brcms_led *radio_led = &wl->radio_led;
 	/* get CC core */
-	struct bcma_drv_cc *cc_drv  = &wl->wlc->hw->d11core->bus->drv_cc;
-	struct gpio_chip *bcma_gpio = &cc_drv->gpio;
-	struct ssb_sprom *sprom = &wl->wlc->hw->d11core->bus->sprom;
-	u8 *leds[] = { &sprom->gpio0,
+	काष्ठा bcma_drv_cc *cc_drv  = &wl->wlc->hw->d11core->bus->drv_cc;
+	काष्ठा gpio_chip *bcma_gpio = &cc_drv->gpio;
+	काष्ठा ssb_sprom *sprom = &wl->wlc->hw->d11core->bus->sprom;
+	u8 *leds[] = अणु &sprom->gpio0,
 		&sprom->gpio1,
 		&sprom->gpio2,
-		&sprom->gpio3 };
-	int hwnum = -1;
-	enum gpio_lookup_flags lflags = GPIO_ACTIVE_HIGH;
+		&sprom->gpio3 पूर्ण;
+	पूर्णांक hwnum = -1;
+	क्रमागत gpio_lookup_flags lflags = GPIO_ACTIVE_HIGH;
 
-	if (!bcma_gpio || !gpio_is_valid(bcma_gpio->base))
-		return -ENODEV;
+	अगर (!bcma_gpio || !gpio_is_valid(bcma_gpio->base))
+		वापस -ENODEV;
 
 	/* find radio enabled LED */
-	for (i = 0; i < BRCMS_LED_NO; i++) {
+	क्रम (i = 0; i < BRCMS_LED_NO; i++) अणु
 		u8 led = *leds[i];
-		if ((led & BRCMS_LED_BEH_MASK) == BRCMS_LED_RADIO) {
+		अगर ((led & BRCMS_LED_BEH_MASK) == BRCMS_LED_RADIO) अणु
 			hwnum = i;
-			if (led & BRCMS_LED_AL_MASK)
+			अगर (led & BRCMS_LED_AL_MASK)
 				lflags = GPIO_ACTIVE_LOW;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* No LED, bail out */
-	if (hwnum == -1)
-		return -ENODEV;
+	अगर (hwnum == -1)
+		वापस -ENODEV;
 
 	/* Try to obtain this LED GPIO line */
 	radio_led->gpiod = gpiochip_request_own_desc(bcma_gpio, hwnum,
 						     "radio on", lflags,
 						     GPIOD_OUT_LOW);
 
-	if (IS_ERR(radio_led->gpiod)) {
+	अगर (IS_ERR(radio_led->gpiod)) अणु
 		err = PTR_ERR(radio_led->gpiod);
 		wiphy_err(wl->wiphy, "requesting led GPIO failed (err: %d)\n",
 			  err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	snprintf(wl->radio_led.name, sizeof(wl->radio_led.name),
+	snम_लिखो(wl->radio_led.name, माप(wl->radio_led.name),
 		 "brcmsmac-%s:radio", wiphy_name(wl->wiphy));
 
 	wl->led_dev.name = wl->radio_led.name;
-	wl->led_dev.default_trigger =
+	wl->led_dev.शेष_trigger =
 		ieee80211_get_radio_led_name(wl->pub->ieee_hw);
 	wl->led_dev.brightness_set = brcms_led_brightness_set;
-	err = led_classdev_register(wiphy_dev(wl->wiphy), &wl->led_dev);
+	err = led_classdev_रेजिस्टर(wiphy_dev(wl->wiphy), &wl->led_dev);
 
-	if (err) {
+	अगर (err) अणु
 		wiphy_err(wl->wiphy, "cannot register led device: %s (err: %d)\n",
 			  wl->radio_led.name, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	wiphy_info(wl->wiphy, "registered radio enabled led device: %s\n",
 		   wl->radio_led.name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

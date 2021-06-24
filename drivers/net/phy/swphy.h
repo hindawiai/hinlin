@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef SWPHY_H
-#define SWPHY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित SWPHY_H
+#घोषणा SWPHY_H
 
-struct fixed_phy_status;
+काष्ठा fixed_phy_status;
 
-int swphy_validate_state(const struct fixed_phy_status *state);
-int swphy_read_reg(int reg, const struct fixed_phy_status *state);
+पूर्णांक swphy_validate_state(स्थिर काष्ठा fixed_phy_status *state);
+पूर्णांक swphy_पढ़ो_reg(पूर्णांक reg, स्थिर काष्ठा fixed_phy_status *state);
 
-#endif
+#पूर्ण_अगर

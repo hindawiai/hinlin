@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XEN_SMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XEN_SMP_H
 
-#ifdef CONFIG_SMP
-extern void xen_send_IPI_mask(const struct cpumask *mask,
-			      int vector);
-extern void xen_send_IPI_mask_allbutself(const struct cpumask *mask,
-				int vector);
-extern void xen_send_IPI_allbutself(int vector);
-extern void xen_send_IPI_all(int vector);
-extern void xen_send_IPI_self(int vector);
+#अगर_घोषित CONFIG_SMP
+बाह्य व्योम xen_send_IPI_mask(स्थिर काष्ठा cpumask *mask,
+			      पूर्णांक vector);
+बाह्य व्योम xen_send_IPI_mask_allbutself(स्थिर काष्ठा cpumask *mask,
+				पूर्णांक vector);
+बाह्य व्योम xen_send_IPI_allbutself(पूर्णांक vector);
+बाह्य व्योम xen_send_IPI_all(पूर्णांक vector);
+बाह्य व्योम xen_send_IPI_self(पूर्णांक vector);
 
-extern int xen_smp_intr_init(unsigned int cpu);
-extern void xen_smp_intr_free(unsigned int cpu);
-int xen_smp_intr_init_pv(unsigned int cpu);
-void xen_smp_intr_free_pv(unsigned int cpu);
+बाह्य पूर्णांक xen_smp_पूर्णांकr_init(अचिन्हित पूर्णांक cpu);
+बाह्य व्योम xen_smp_पूर्णांकr_मुक्त(अचिन्हित पूर्णांक cpu);
+पूर्णांक xen_smp_पूर्णांकr_init_pv(अचिन्हित पूर्णांक cpu);
+व्योम xen_smp_पूर्णांकr_मुक्त_pv(अचिन्हित पूर्णांक cpu);
 
-void xen_smp_cpus_done(unsigned int max_cpus);
+व्योम xen_smp_cpus_करोne(अचिन्हित पूर्णांक max_cpus);
 
-void xen_smp_send_reschedule(int cpu);
-void xen_smp_send_call_function_ipi(const struct cpumask *mask);
-void xen_smp_send_call_function_single_ipi(int cpu);
+व्योम xen_smp_send_reschedule(पूर्णांक cpu);
+व्योम xen_smp_send_call_function_ipi(स्थिर काष्ठा cpumask *mask);
+व्योम xen_smp_send_call_function_single_ipi(पूर्णांक cpu);
 
-struct xen_common_irq {
-	int irq;
-	char *name;
-};
-#else /* CONFIG_SMP */
+काष्ठा xen_common_irq अणु
+	पूर्णांक irq;
+	अक्षर *name;
+पूर्ण;
+#अन्यथा /* CONFIG_SMP */
 
-static inline int xen_smp_intr_init(unsigned int cpu)
-{
-	return 0;
-}
-static inline void xen_smp_intr_free(unsigned int cpu) {}
+अटल अंतरभूत पूर्णांक xen_smp_पूर्णांकr_init(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम xen_smp_पूर्णांकr_मुक्त(अचिन्हित पूर्णांक cpu) अणुपूर्ण
 
-static inline int xen_smp_intr_init_pv(unsigned int cpu)
-{
-	return 0;
-}
-static inline void xen_smp_intr_free_pv(unsigned int cpu) {}
-#endif /* CONFIG_SMP */
+अटल अंतरभूत पूर्णांक xen_smp_पूर्णांकr_init_pv(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम xen_smp_पूर्णांकr_मुक्त_pv(अचिन्हित पूर्णांक cpu) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-#endif
+#पूर्ण_अगर

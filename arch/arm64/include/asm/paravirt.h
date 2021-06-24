@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_ARM64_PARAVIRT_H
-#define _ASM_ARM64_PARAVIRT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_ARM64_PARAVIRT_H
+#घोषणा _ASM_ARM64_PARAVIRT_H
 
-#ifdef CONFIG_PARAVIRT
-#include <linux/static_call_types.h>
+#अगर_घोषित CONFIG_PARAVIRT
+#समावेश <linux/अटल_call_types.h>
 
-struct static_key;
-extern struct static_key paravirt_steal_enabled;
-extern struct static_key paravirt_steal_rq_enabled;
+काष्ठा अटल_key;
+बाह्य काष्ठा अटल_key paravirt_steal_enabled;
+बाह्य काष्ठा अटल_key paravirt_steal_rq_enabled;
 
-u64 dummy_steal_clock(int cpu);
+u64 dummy_steal_घड़ी(पूर्णांक cpu);
 
-DECLARE_STATIC_CALL(pv_steal_clock, dummy_steal_clock);
+DECLARE_STATIC_CALL(pv_steal_घड़ी, dummy_steal_घड़ी);
 
-static inline u64 paravirt_steal_clock(int cpu)
-{
-	return static_call(pv_steal_clock)(cpu);
-}
+अटल अंतरभूत u64 paravirt_steal_घड़ी(पूर्णांक cpu)
+अणु
+	वापस अटल_call(pv_steal_घड़ी)(cpu);
+पूर्ण
 
-int __init pv_time_init(void);
+पूर्णांक __init pv_समय_init(व्योम);
 
-#else
+#अन्यथा
 
-#define pv_time_init() do {} while (0)
+#घोषणा pv_समय_init() करो अणुपूर्ण जबतक (0)
 
-#endif // CONFIG_PARAVIRT
+#पूर्ण_अगर // CONFIG_PARAVIRT
 
-#endif
+#पूर्ण_अगर

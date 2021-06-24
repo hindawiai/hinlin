@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/mm.h>
-#include <linux/slab.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
 
-static struct kmem_cache *pgd_cachep;
-#if PAGETABLE_LEVELS > 2
-static struct kmem_cache *pmd_cachep;
-#endif
+अटल काष्ठा kmem_cache *pgd_cachep;
+#अगर PAGETABLE_LEVELS > 2
+अटल काष्ठा kmem_cache *pmd_cachep;
+#पूर्ण_अगर
 
-void pgd_ctor(void *x)
-{
+व्योम pgd_ctor(व्योम *x)
+अणु
 	pgd_t *pgd = x;
 
-	memset(pgd, 0, USER_PTRS_PER_PGD * sizeof(pgd_t));
-	memcpy(pgd + USER_PTRS_PER_PGD,
+	स_रखो(pgd, 0, USER_PTRS_PER_PGD * माप(pgd_t));
+	स_नकल(pgd + USER_PTRS_PER_PGD,
 	       swapper_pg_dir + USER_PTRS_PER_PGD,
-	       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
-}
+	       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * माप(pgd_t));
+पूर्ण
 
-void pgtable_cache_init(void)
-{
+व्योम pgtable_cache_init(व्योम)
+अणु
 	pgd_cachep = kmem_cache_create("pgd_cache",
 				       PTRS_PER_PGD * (1<<PTE_MAGNITUDE),
 				       PAGE_SIZE, SLAB_PANIC, pgd_ctor);
-#if PAGETABLE_LEVELS > 2
+#अगर PAGETABLE_LEVELS > 2
 	pmd_cachep = kmem_cache_create("pmd_cache",
 				       PTRS_PER_PMD * (1<<PTE_MAGNITUDE),
-				       PAGE_SIZE, SLAB_PANIC, NULL);
-#endif
-}
+				       PAGE_SIZE, SLAB_PANIC, शून्य);
+#पूर्ण_अगर
+पूर्ण
 
-pgd_t *pgd_alloc(struct mm_struct *mm)
-{
-	return kmem_cache_alloc(pgd_cachep, GFP_KERNEL);
-}
+pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस kmem_cache_alloc(pgd_cachep, GFP_KERNEL);
+पूर्ण
 
-void pgd_free(struct mm_struct *mm, pgd_t *pgd)
-{
-	kmem_cache_free(pgd_cachep, pgd);
-}
+व्योम pgd_मुक्त(काष्ठा mm_काष्ठा *mm, pgd_t *pgd)
+अणु
+	kmem_cache_मुक्त(pgd_cachep, pgd);
+पूर्ण
 
-#if PAGETABLE_LEVELS > 2
-void pud_populate(struct mm_struct *mm, pud_t *pud, pmd_t *pmd)
-{
-	set_pud(pud, __pud((unsigned long)pmd));
-}
+#अगर PAGETABLE_LEVELS > 2
+व्योम pud_populate(काष्ठा mm_काष्ठा *mm, pud_t *pud, pmd_t *pmd)
+अणु
+	set_pud(pud, __pud((अचिन्हित दीर्घ)pmd));
+पूर्ण
 
-pmd_t *pmd_alloc_one(struct mm_struct *mm, unsigned long address)
-{
-	return kmem_cache_alloc(pmd_cachep, GFP_KERNEL | __GFP_ZERO);
-}
+pmd_t *pmd_alloc_one(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ address)
+अणु
+	वापस kmem_cache_alloc(pmd_cachep, GFP_KERNEL | __GFP_ZERO);
+पूर्ण
 
-void pmd_free(struct mm_struct *mm, pmd_t *pmd)
-{
-	kmem_cache_free(pmd_cachep, pmd);
-}
-#endif /* PAGETABLE_LEVELS > 2 */
+व्योम pmd_मुक्त(काष्ठा mm_काष्ठा *mm, pmd_t *pmd)
+अणु
+	kmem_cache_मुक्त(pmd_cachep, pmd);
+पूर्ण
+#पूर्ण_अगर /* PAGETABLE_LEVELS > 2 */

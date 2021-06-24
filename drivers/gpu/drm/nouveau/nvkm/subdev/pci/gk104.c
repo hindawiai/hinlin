@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Karol Herbst <nouveau@karolherbst.de>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,189 +22,189 @@
  *
  * Authors: Karol Herbst <nouveau@karolherbst.de>
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-static int
-gk104_pcie_version_supported(struct nvkm_pci *pci)
-{
-	return (nvkm_rd32(pci->subdev.device, 0x8c1c0) & 0x4) == 0x4 ? 2 : 1;
-}
+अटल पूर्णांक
+gk104_pcie_version_supported(काष्ठा nvkm_pci *pci)
+अणु
+	वापस (nvkm_rd32(pci->subdev.device, 0x8c1c0) & 0x4) == 0x4 ? 2 : 1;
+पूर्ण
 
-static void
-gk104_pcie_set_cap_speed(struct nvkm_pci *pci, enum nvkm_pcie_speed speed)
-{
-	struct nvkm_device *device = pci->subdev.device;
+अटल व्योम
+gk104_pcie_set_cap_speed(काष्ठा nvkm_pci *pci, क्रमागत nvkm_pcie_speed speed)
+अणु
+	काष्ठा nvkm_device *device = pci->subdev.device;
 
-	switch (speed) {
-	case NVKM_PCIE_SPEED_2_5:
+	चयन (speed) अणु
+	हाल NVKM_PCIE_SPEED_2_5:
 		gf100_pcie_set_cap_speed(pci, false);
 		nvkm_mask(device, 0x8c1c0, 0x30000, 0x10000);
-		break;
-	case NVKM_PCIE_SPEED_5_0:
+		अवरोध;
+	हाल NVKM_PCIE_SPEED_5_0:
 		gf100_pcie_set_cap_speed(pci, true);
 		nvkm_mask(device, 0x8c1c0, 0x30000, 0x20000);
-		break;
-	case NVKM_PCIE_SPEED_8_0:
+		अवरोध;
+	हाल NVKM_PCIE_SPEED_8_0:
 		gf100_pcie_set_cap_speed(pci, true);
 		nvkm_mask(device, 0x8c1c0, 0x30000, 0x30000);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static enum nvkm_pcie_speed
-gk104_pcie_cap_speed(struct nvkm_pci *pci)
-{
-	int speed = gf100_pcie_cap_speed(pci);
+अटल क्रमागत nvkm_pcie_speed
+gk104_pcie_cap_speed(काष्ठा nvkm_pci *pci)
+अणु
+	पूर्णांक speed = gf100_pcie_cap_speed(pci);
 
-	if (speed == 0)
-		return NVKM_PCIE_SPEED_2_5;
+	अगर (speed == 0)
+		वापस NVKM_PCIE_SPEED_2_5;
 
-	if (speed >= 1) {
-		int speed2 = nvkm_rd32(pci->subdev.device, 0x8c1c0) & 0x30000;
-		switch (speed2) {
-		case 0x00000:
-		case 0x10000:
-			return NVKM_PCIE_SPEED_2_5;
-		case 0x20000:
-			return NVKM_PCIE_SPEED_5_0;
-		case 0x30000:
-			return NVKM_PCIE_SPEED_8_0;
-		}
-	}
+	अगर (speed >= 1) अणु
+		पूर्णांक speed2 = nvkm_rd32(pci->subdev.device, 0x8c1c0) & 0x30000;
+		चयन (speed2) अणु
+		हाल 0x00000:
+		हाल 0x10000:
+			वापस NVKM_PCIE_SPEED_2_5;
+		हाल 0x20000:
+			वापस NVKM_PCIE_SPEED_5_0;
+		हाल 0x30000:
+			वापस NVKM_PCIE_SPEED_8_0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void
-gk104_pcie_set_lnkctl_speed(struct nvkm_pci *pci, enum nvkm_pcie_speed speed)
-{
+अटल व्योम
+gk104_pcie_set_lnkctl_speed(काष्ठा nvkm_pci *pci, क्रमागत nvkm_pcie_speed speed)
+अणु
 	u8 reg_v = 0;
-	switch (speed) {
-	case NVKM_PCIE_SPEED_2_5:
+	चयन (speed) अणु
+	हाल NVKM_PCIE_SPEED_2_5:
 		reg_v = 1;
-		break;
-	case NVKM_PCIE_SPEED_5_0:
+		अवरोध;
+	हाल NVKM_PCIE_SPEED_5_0:
 		reg_v = 2;
-		break;
-	case NVKM_PCIE_SPEED_8_0:
+		अवरोध;
+	हाल NVKM_PCIE_SPEED_8_0:
 		reg_v = 3;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	nvkm_pci_mask(pci, 0xa8, 0x3, reg_v);
-}
+पूर्ण
 
-static enum nvkm_pcie_speed
-gk104_pcie_lnkctl_speed(struct nvkm_pci *pci)
-{
+अटल क्रमागत nvkm_pcie_speed
+gk104_pcie_lnkctl_speed(काष्ठा nvkm_pci *pci)
+अणु
 	u8 reg_v = nvkm_pci_rd32(pci, 0xa8) & 0x3;
-	switch (reg_v) {
-	case 0:
-	case 1:
-		return NVKM_PCIE_SPEED_2_5;
-	case 2:
-		return NVKM_PCIE_SPEED_5_0;
-	case 3:
-		return NVKM_PCIE_SPEED_8_0;
-	}
-	return -1;
-}
+	चयन (reg_v) अणु
+	हाल 0:
+	हाल 1:
+		वापस NVKM_PCIE_SPEED_2_5;
+	हाल 2:
+		वापस NVKM_PCIE_SPEED_5_0;
+	हाल 3:
+		वापस NVKM_PCIE_SPEED_8_0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static enum nvkm_pcie_speed
-gk104_pcie_max_speed(struct nvkm_pci *pci)
-{
+अटल क्रमागत nvkm_pcie_speed
+gk104_pcie_max_speed(काष्ठा nvkm_pci *pci)
+अणु
 	u32 max_speed = nvkm_rd32(pci->subdev.device, 0x8c1c0) & 0x300000;
-	switch (max_speed) {
-	case 0x000000:
-		return NVKM_PCIE_SPEED_8_0;
-	case 0x100000:
-		return NVKM_PCIE_SPEED_5_0;
-	case 0x200000:
-		return NVKM_PCIE_SPEED_2_5;
-	}
-	return NVKM_PCIE_SPEED_2_5;
-}
+	चयन (max_speed) अणु
+	हाल 0x000000:
+		वापस NVKM_PCIE_SPEED_8_0;
+	हाल 0x100000:
+		वापस NVKM_PCIE_SPEED_5_0;
+	हाल 0x200000:
+		वापस NVKM_PCIE_SPEED_2_5;
+	पूर्ण
+	वापस NVKM_PCIE_SPEED_2_5;
+पूर्ण
 
-static void
-gk104_pcie_set_link_speed(struct nvkm_pci *pci, enum nvkm_pcie_speed speed)
-{
-	struct nvkm_device *device = pci->subdev.device;
+अटल व्योम
+gk104_pcie_set_link_speed(काष्ठा nvkm_pci *pci, क्रमागत nvkm_pcie_speed speed)
+अणु
+	काष्ठा nvkm_device *device = pci->subdev.device;
 	u32 mask_value;
 
-	switch (speed) {
-	case NVKM_PCIE_SPEED_8_0:
+	चयन (speed) अणु
+	हाल NVKM_PCIE_SPEED_8_0:
 		mask_value = 0x00000;
-		break;
-	case NVKM_PCIE_SPEED_5_0:
+		अवरोध;
+	हाल NVKM_PCIE_SPEED_5_0:
 		mask_value = 0x40000;
-		break;
-	case NVKM_PCIE_SPEED_2_5:
-	default:
+		अवरोध;
+	हाल NVKM_PCIE_SPEED_2_5:
+	शेष:
 		mask_value = 0x80000;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	nvkm_mask(device, 0x8c040, 0xc0000, mask_value);
 	nvkm_mask(device, 0x8c040, 0x1, 0x1);
-}
+पूर्ण
 
-static int
-gk104_pcie_init(struct nvkm_pci * pci)
-{
-	enum nvkm_pcie_speed lnkctl_speed, max_speed, cap_speed;
-	struct nvkm_subdev *subdev = &pci->subdev;
+अटल पूर्णांक
+gk104_pcie_init(काष्ठा nvkm_pci * pci)
+अणु
+	क्रमागत nvkm_pcie_speed lnkctl_speed, max_speed, cap_speed;
+	काष्ठा nvkm_subdev *subdev = &pci->subdev;
 
-	if (gf100_pcie_version(pci) < 2)
-		return 0;
+	अगर (gf100_pcie_version(pci) < 2)
+		वापस 0;
 
 	lnkctl_speed = gk104_pcie_lnkctl_speed(pci);
 	max_speed = gk104_pcie_max_speed(pci);
 	cap_speed = gk104_pcie_cap_speed(pci);
 
-	if (cap_speed != max_speed) {
+	अगर (cap_speed != max_speed) अणु
 		nvkm_trace(subdev, "adjusting cap to max speed\n");
 		gk104_pcie_set_cap_speed(pci, max_speed);
 		cap_speed = gk104_pcie_cap_speed(pci);
-		if (cap_speed != max_speed)
+		अगर (cap_speed != max_speed)
 			nvkm_warn(subdev, "failed to adjust cap speed\n");
-	}
+	पूर्ण
 
-	if (lnkctl_speed != max_speed) {
+	अगर (lnkctl_speed != max_speed) अणु
 		nvkm_debug(subdev, "adjusting lnkctl to max speed\n");
 		gk104_pcie_set_lnkctl_speed(pci, max_speed);
 		lnkctl_speed = gk104_pcie_lnkctl_speed(pci);
-		if (lnkctl_speed != max_speed)
+		अगर (lnkctl_speed != max_speed)
 			nvkm_error(subdev, "failed to adjust lnkctl speed\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gk104_pcie_set_link(struct nvkm_pci *pci, enum nvkm_pcie_speed speed, u8 width)
-{
-	struct nvkm_subdev *subdev = &pci->subdev;
-	enum nvkm_pcie_speed lnk_ctl_speed = gk104_pcie_lnkctl_speed(pci);
-	enum nvkm_pcie_speed lnk_cap_speed = gk104_pcie_cap_speed(pci);
+अटल पूर्णांक
+gk104_pcie_set_link(काष्ठा nvkm_pci *pci, क्रमागत nvkm_pcie_speed speed, u8 width)
+अणु
+	काष्ठा nvkm_subdev *subdev = &pci->subdev;
+	क्रमागत nvkm_pcie_speed lnk_ctl_speed = gk104_pcie_lnkctl_speed(pci);
+	क्रमागत nvkm_pcie_speed lnk_cap_speed = gk104_pcie_cap_speed(pci);
 
-	if (speed > lnk_cap_speed) {
+	अगर (speed > lnk_cap_speed) अणु
 		speed = lnk_cap_speed;
 		nvkm_warn(subdev, "dropping requested speed due too low cap"
 			  " speed\n");
-	}
+	पूर्ण
 
-	if (speed > lnk_ctl_speed) {
+	अगर (speed > lnk_ctl_speed) अणु
 		speed = lnk_ctl_speed;
 		nvkm_warn(subdev, "dropping requested speed due too low"
 			  " lnkctl speed\n");
-	}
+	पूर्ण
 
 	gk104_pcie_set_link_speed(pci, speed);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct nvkm_pci_func
-gk104_pci_func = {
+अटल स्थिर काष्ठा nvkm_pci_func
+gk104_pci_func = अणु
 	.init = g84_pci_init,
 	.rd32 = nv40_pci_rd32,
 	.wr08 = nv40_pci_wr08,
@@ -219,11 +220,11 @@ gk104_pci_func = {
 	.pcie.set_version = gf100_pcie_set_version,
 	.pcie.version = gf100_pcie_version,
 	.pcie.version_supported = gk104_pcie_version_supported,
-};
+पूर्ण;
 
-int
-gk104_pci_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_pci **ppci)
-{
-	return nvkm_pci_new_(&gk104_pci_func, device, type, inst, ppci);
-}
+पूर्णांक
+gk104_pci_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_pci **ppci)
+अणु
+	वापस nvkm_pci_new_(&gk104_pci_func, device, type, inst, ppci);
+पूर्ण

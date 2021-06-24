@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -7,7 +8,7 @@
  *
  * Purpose: handle WMAC/802.3/802.11 rx & tx functions
  *
- * Author: Lyndon Chen
+ * Author: Lynकरोn Chen
  *
  * Date: May 20, 2003
  *
@@ -21,8 +22,8 @@
  *      s_uGetDataDuration - get tx data required duration
  *      s_uFillDataHead- fulfill tx data duration header
  *      s_uGetRTSCTSDuration- get rtx/cts required duration
- *      get_rtscts_time- get rts/cts reserved time
- *      s_uGetTxRsvTime- get frame reserved time
+ *      get_rtscts_समय- get rts/cts reserved समय
+ *      s_uGetTxRsvTime- get frame reserved समय
  *      s_vFillCTSHead- fulfill CTS ctl header
  *      s_vFillFragParameter- Set fragment ctl parameter.
  *      s_vFillRTSHead- fulfill RTS ctl header
@@ -35,12 +36,12 @@
  *
  */
 
-#include "device.h"
-#include "rxtx.h"
-#include "card.h"
-#include "mac.h"
-#include "baseband.h"
-#include "rf.h"
+#समावेश "device.h"
+#समावेश "rxtx.h"
+#समावेश "card.h"
+#समावेश "mac.h"
+#समावेश "baseband.h"
+#समावेश "rf.h"
 
 /*---------------------  Static Definitions -------------------------*/
 
@@ -51,406 +52,406 @@
 /*---------------------  Static Functions  --------------------------*/
 
 /*---------------------  Static Definitions -------------------------*/
-/* if packet size < 256 -> in-direct send
+/* अगर packet size < 256 -> in-direct send
  * vpacket size >= 256 -> direct send
  */
-#define CRITICAL_PACKET_LEN      256
+#घोषणा CRITICAL_PACKET_LEN      256
 
-static const unsigned short wTimeStampOff[2][MAX_RATE] = {
-	{384, 288, 226, 209, 54, 43, 37, 31, 28, 25, 24, 23}, /* Long Preamble */
-	{384, 192, 130, 113, 54, 43, 37, 31, 28, 25, 24, 23}, /* Short Preamble */
-};
+अटल स्थिर अचिन्हित लघु wTimeStampOff[2][MAX_RATE] = अणु
+	अणु384, 288, 226, 209, 54, 43, 37, 31, 28, 25, 24, 23पूर्ण, /* Long Preamble */
+	अणु384, 192, 130, 113, 54, 43, 37, 31, 28, 25, 24, 23पूर्ण, /* Short Preamble */
+पूर्ण;
 
-static const unsigned short wFB_Opt0[2][5] = {
-	{RATE_12M, RATE_18M, RATE_24M, RATE_36M, RATE_48M}, /* fallback_rate0 */
-	{RATE_12M, RATE_12M, RATE_18M, RATE_24M, RATE_36M}, /* fallback_rate1 */
-};
+अटल स्थिर अचिन्हित लघु wFB_Opt0[2][5] = अणु
+	अणुRATE_12M, RATE_18M, RATE_24M, RATE_36M, RATE_48Mपूर्ण, /* fallback_rate0 */
+	अणुRATE_12M, RATE_12M, RATE_18M, RATE_24M, RATE_36Mपूर्ण, /* fallback_rate1 */
+पूर्ण;
 
-static const unsigned short wFB_Opt1[2][5] = {
-	{RATE_12M, RATE_18M, RATE_24M, RATE_24M, RATE_36M}, /* fallback_rate0 */
-	{RATE_6M,  RATE_6M,  RATE_12M, RATE_12M, RATE_18M}, /* fallback_rate1 */
-};
+अटल स्थिर अचिन्हित लघु wFB_Opt1[2][5] = अणु
+	अणुRATE_12M, RATE_18M, RATE_24M, RATE_24M, RATE_36Mपूर्ण, /* fallback_rate0 */
+	अणुRATE_6M,  RATE_6M,  RATE_12M, RATE_12M, RATE_18Mपूर्ण, /* fallback_rate1 */
+पूर्ण;
 
-#define RTSDUR_BB       0
-#define RTSDUR_BA       1
-#define RTSDUR_AA       2
-#define CTSDUR_BA       3
-#define RTSDUR_BA_F0    4
-#define RTSDUR_AA_F0    5
-#define RTSDUR_BA_F1    6
-#define RTSDUR_AA_F1    7
-#define CTSDUR_BA_F0    8
-#define CTSDUR_BA_F1    9
-#define DATADUR_B       10
-#define DATADUR_A       11
-#define DATADUR_A_F0    12
-#define DATADUR_A_F1    13
+#घोषणा RTSDUR_BB       0
+#घोषणा RTSDUR_BA       1
+#घोषणा RTSDUR_AA       2
+#घोषणा CTSDUR_BA       3
+#घोषणा RTSDUR_BA_F0    4
+#घोषणा RTSDUR_AA_F0    5
+#घोषणा RTSDUR_BA_F1    6
+#घोषणा RTSDUR_AA_F1    7
+#घोषणा CTSDUR_BA_F0    8
+#घोषणा CTSDUR_BA_F1    9
+#घोषणा DATADUR_B       10
+#घोषणा DATADUR_A       11
+#घोषणा DATADUR_A_F0    12
+#घोषणा DATADUR_A_F1    13
 
 /*---------------------  Static Functions  --------------------------*/
-static
-void
+अटल
+व्योम
 s_vFillRTSHead(
-	struct vnt_private *pDevice,
-	unsigned char byPktType,
-	void *pvRTS,
-	unsigned int	cbFrameLength,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byPktType,
+	व्योम *pvRTS,
+	अचिन्हित पूर्णांक	cbFrameLength,
 	bool bNeedAck,
 	bool bDisCRC,
-	struct ieee80211_hdr *hdr,
-	unsigned short wCurrentRate,
-	unsigned char byFBOption
+	काष्ठा ieee80211_hdr *hdr,
+	अचिन्हित लघु wCurrentRate,
+	अचिन्हित अक्षर byFBOption
 );
 
-static
-void
+अटल
+व्योम
 s_vGenerateTxParameter(
-	struct vnt_private *pDevice,
-	unsigned char byPktType,
-	struct vnt_tx_fifo_head *,
-	void *pvRrvTime,
-	void *pvRTS,
-	void *pvCTS,
-	unsigned int	cbFrameSize,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byPktType,
+	काष्ठा vnt_tx_fअगरo_head *,
+	व्योम *pvRrvTime,
+	व्योम *pvRTS,
+	व्योम *pvCTS,
+	अचिन्हित पूर्णांक	cbFrameSize,
 	bool bNeedACK,
-	unsigned int	uDMAIdx,
-	void *psEthHeader,
-	unsigned short wCurrentRate
+	अचिन्हित पूर्णांक	uDMAIdx,
+	व्योम *psEthHeader,
+	अचिन्हित लघु wCurrentRate
 );
 
-static unsigned int
-s_cbFillTxBufHead(struct vnt_private *pDevice, unsigned char byPktType,
-		  unsigned char *pbyTxBufferAddr,
-		  unsigned int uDMAIdx, struct vnt_tx_desc *pHeadTD,
-		  unsigned int uNodeIndex);
+अटल अचिन्हित पूर्णांक
+s_cbFillTxBufHead(काष्ठा vnt_निजी *pDevice, अचिन्हित अक्षर byPktType,
+		  अचिन्हित अक्षर *pbyTxBufferAddr,
+		  अचिन्हित पूर्णांक uDMAIdx, काष्ठा vnt_tx_desc *pHeadTD,
+		  अचिन्हित पूर्णांक uNodeIndex);
 
-static
+अटल
 __le16
 s_uFillDataHead(
-	struct vnt_private *pDevice,
-	unsigned char byPktType,
-	void *pTxDataHead,
-	unsigned int cbFrameLength,
-	unsigned int uDMAIdx,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byPktType,
+	व्योम *pTxDataHead,
+	अचिन्हित पूर्णांक cbFrameLength,
+	अचिन्हित पूर्णांक uDMAIdx,
 	bool bNeedAck,
-	unsigned int uFragIdx,
-	unsigned int cbLastFragmentSize,
-	unsigned int uMACfragNum,
-	unsigned char byFBOption,
-	unsigned short wCurrentRate,
+	अचिन्हित पूर्णांक uFragIdx,
+	अचिन्हित पूर्णांक cbLastFragmentSize,
+	अचिन्हित पूर्णांक uMACfragNum,
+	अचिन्हित अक्षर byFBOption,
+	अचिन्हित लघु wCurrentRate,
 	bool is_pspoll
 );
 
 /*---------------------  Export Variables  --------------------------*/
 
-static __le16 vnt_time_stamp_off(struct vnt_private *priv, u16 rate)
-{
-	return cpu_to_le16(wTimeStampOff[priv->byPreambleType % 2]
+अटल __le16 vnt_समय_stamp_off(काष्ठा vnt_निजी *priv, u16 rate)
+अणु
+	वापस cpu_to_le16(wTimeStampOff[priv->byPreambleType % 2]
 							[rate % MAX_RATE]);
-}
+पूर्ण
 
 /* byPktType : PK_TYPE_11A     0
  * PK_TYPE_11B     1
  * PK_TYPE_11GB    2
  * PK_TYPE_11GA    3
  */
-static
-unsigned int
+अटल
+अचिन्हित पूर्णांक
 s_uGetTxRsvTime(
-	struct vnt_private *pDevice,
-	unsigned char byPktType,
-	unsigned int cbFrameLength,
-	unsigned short wRate,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byPktType,
+	अचिन्हित पूर्णांक cbFrameLength,
+	अचिन्हित लघु wRate,
 	bool bNeedAck
 )
-{
-	unsigned int uDataTime, uAckTime;
+अणु
+	अचिन्हित पूर्णांक uDataTime, uAckTime;
 
-	uDataTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, cbFrameLength, wRate);
+	uDataTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, cbFrameLength, wRate);
 
-	if (!bNeedAck)
-		return uDataTime;
+	अगर (!bNeedAck)
+		वापस uDataTime;
 
 	/*
 	 * CCK mode  - 11b
 	 * OFDM mode - 11g 2.4G & 11a 5G
 	 */
-	uAckTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14,
+	uAckTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14,
 				     byPktType == PK_TYPE_11B ?
 				     pDevice->byTopCCKBasicRate :
 				     pDevice->byTopOFDMBasicRate);
 
-	return uDataTime + pDevice->uSIFS + uAckTime;
-}
+	वापस uDataTime + pDevice->uSIFS + uAckTime;
+पूर्ण
 
-static __le16 vnt_rxtx_rsvtime_le16(struct vnt_private *priv, u8 pkt_type,
+अटल __le16 vnt_rxtx_rsvसमय_le16(काष्ठा vnt_निजी *priv, u8 pkt_type,
 				    u32 frame_length, u16 rate, bool need_ack)
-{
-	return cpu_to_le16((u16)s_uGetTxRsvTime(priv, pkt_type,
+अणु
+	वापस cpu_to_le16((u16)s_uGetTxRsvTime(priv, pkt_type,
 						frame_length, rate, need_ack));
-}
+पूर्ण
 
 /* byFreqType: 0=>5GHZ 1=>2.4GHZ */
-static __le16 get_rtscts_time(struct vnt_private *priv,
-			      unsigned char rts_rsvtype,
-			      unsigned char pkt_type,
-			      unsigned int frame_length,
-			      unsigned short current_rate)
-{
-	unsigned int rrv_time = 0;
-	unsigned int rts_time = 0;
-	unsigned int cts_time = 0;
-	unsigned int ack_time = 0;
-	unsigned int data_time = 0;
+अटल __le16 get_rtscts_समय(काष्ठा vnt_निजी *priv,
+			      अचिन्हित अक्षर rts_rsvtype,
+			      अचिन्हित अक्षर pkt_type,
+			      अचिन्हित पूर्णांक frame_length,
+			      अचिन्हित लघु current_rate)
+अणु
+	अचिन्हित पूर्णांक rrv_समय = 0;
+	अचिन्हित पूर्णांक rts_समय = 0;
+	अचिन्हित पूर्णांक cts_समय = 0;
+	अचिन्हित पूर्णांक ack_समय = 0;
+	अचिन्हित पूर्णांक data_समय = 0;
 
-	data_time = bb_get_frame_time(priv->byPreambleType, pkt_type, frame_length, current_rate);
-	if (rts_rsvtype == 0) { /* RTSTxRrvTime_bb */
-		rts_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 20, priv->byTopCCKBasicRate);
-		ack_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 14, priv->byTopCCKBasicRate);
-		cts_time = ack_time;
-	} else if (rts_rsvtype == 1) { /* RTSTxRrvTime_ba, only in 2.4GHZ */
-		rts_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 20, priv->byTopCCKBasicRate);
-		cts_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 14, priv->byTopCCKBasicRate);
-		ack_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 14, priv->byTopOFDMBasicRate);
-	} else if (rts_rsvtype == 2) { /* RTSTxRrvTime_aa */
-		rts_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 20, priv->byTopOFDMBasicRate);
-		ack_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 14, priv->byTopOFDMBasicRate);
-		cts_time = ack_time;
-	} else if (rts_rsvtype == 3) { /* CTSTxRrvTime_ba, only in 2.4GHZ */
-		cts_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 14, priv->byTopCCKBasicRate);
-		ack_time = bb_get_frame_time(priv->byPreambleType, pkt_type, 14, priv->byTopOFDMBasicRate);
-		rrv_time = cts_time + ack_time + data_time + 2 * priv->uSIFS;
-		return cpu_to_le16((u16)rrv_time);
-	}
+	data_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, frame_length, current_rate);
+	अगर (rts_rsvtype == 0) अणु /* RTSTxRrvTime_bb */
+		rts_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 20, priv->byTopCCKBasicRate);
+		ack_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 14, priv->byTopCCKBasicRate);
+		cts_समय = ack_समय;
+	पूर्ण अन्यथा अगर (rts_rsvtype == 1) अणु /* RTSTxRrvTime_ba, only in 2.4GHZ */
+		rts_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 20, priv->byTopCCKBasicRate);
+		cts_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 14, priv->byTopCCKBasicRate);
+		ack_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 14, priv->byTopOFDMBasicRate);
+	पूर्ण अन्यथा अगर (rts_rsvtype == 2) अणु /* RTSTxRrvTime_aa */
+		rts_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 20, priv->byTopOFDMBasicRate);
+		ack_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 14, priv->byTopOFDMBasicRate);
+		cts_समय = ack_समय;
+	पूर्ण अन्यथा अगर (rts_rsvtype == 3) अणु /* CTSTxRrvTime_ba, only in 2.4GHZ */
+		cts_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 14, priv->byTopCCKBasicRate);
+		ack_समय = bb_get_frame_समय(priv->byPreambleType, pkt_type, 14, priv->byTopOFDMBasicRate);
+		rrv_समय = cts_समय + ack_समय + data_समय + 2 * priv->uSIFS;
+		वापस cpu_to_le16((u16)rrv_समय);
+	पूर्ण
 
 	/* RTSRrvTime */
-	rrv_time = rts_time + cts_time + ack_time + data_time + 3 * priv->uSIFS;
-	return cpu_to_le16((u16)rrv_time);
-}
+	rrv_समय = rts_समय + cts_समय + ack_समय + data_समय + 3 * priv->uSIFS;
+	वापस cpu_to_le16((u16)rrv_समय);
+पूर्ण
 
 /* byFreqType 0: 5GHz, 1:2.4Ghz */
-static
-unsigned int
+अटल
+अचिन्हित पूर्णांक
 s_uGetDataDuration(
-	struct vnt_private *pDevice,
-	unsigned char byDurType,
-	unsigned int cbFrameLength,
-	unsigned char byPktType,
-	unsigned short wRate,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byDurType,
+	अचिन्हित पूर्णांक cbFrameLength,
+	अचिन्हित अक्षर byPktType,
+	अचिन्हित लघु wRate,
 	bool bNeedAck,
-	unsigned int uFragIdx,
-	unsigned int cbLastFragmentSize,
-	unsigned int uMACfragNum,
-	unsigned char byFBOption
+	अचिन्हित पूर्णांक uFragIdx,
+	अचिन्हित पूर्णांक cbLastFragmentSize,
+	अचिन्हित पूर्णांक uMACfragNum,
+	अचिन्हित अक्षर byFBOption
 )
-{
+अणु
 	bool bLastFrag = false;
-	unsigned int uAckTime = 0, uNextPktTime = 0, len;
+	अचिन्हित पूर्णांक uAckTime = 0, uNextPktTime = 0, len;
 
-	if (uFragIdx == (uMACfragNum - 1))
+	अगर (uFragIdx == (uMACfragNum - 1))
 		bLastFrag = true;
 
-	if (uFragIdx == (uMACfragNum - 2))
+	अगर (uFragIdx == (uMACfragNum - 2))
 		len = cbLastFragmentSize;
-	else
+	अन्यथा
 		len = cbFrameLength;
 
-	switch (byDurType) {
-	case DATADUR_B:    /* DATADUR_B */
-		if (bNeedAck) {
-			uAckTime = bb_get_frame_time(pDevice->byPreambleType,
+	चयन (byDurType) अणु
+	हाल DATADUR_B:    /* DATADUR_B */
+		अगर (bNeedAck) अणु
+			uAckTime = bb_get_frame_समय(pDevice->byPreambleType,
 						     byPktType, 14,
 						     pDevice->byTopCCKBasicRate);
-		}
+		पूर्ण
 		/* Non Frag or Last Frag */
-		if ((uMACfragNum == 1) || bLastFrag) {
-			if (!bNeedAck)
-				return 0;
-		} else {
+		अगर ((uMACfragNum == 1) || bLastFrag) अणु
+			अगर (!bNeedAck)
+				वापस 0;
+		पूर्ण अन्यथा अणु
 			/* First Frag or Mid Frag */
 			uNextPktTime = s_uGetTxRsvTime(pDevice, byPktType,
 						       len, wRate, bNeedAck);
-		}
+		पूर्ण
 
-		return pDevice->uSIFS + uAckTime + uNextPktTime;
+		वापस pDevice->uSIFS + uAckTime + uNextPktTime;
 
-	case DATADUR_A:    /* DATADUR_A */
-		if (bNeedAck) {
-			uAckTime = bb_get_frame_time(pDevice->byPreambleType,
+	हाल DATADUR_A:    /* DATADUR_A */
+		अगर (bNeedAck) अणु
+			uAckTime = bb_get_frame_समय(pDevice->byPreambleType,
 						     byPktType, 14,
 						     pDevice->byTopOFDMBasicRate);
-		}
+		पूर्ण
 		/* Non Frag or Last Frag */
-		if ((uMACfragNum == 1) || bLastFrag) {
-			if (!bNeedAck)
-				return 0;
-		} else {
+		अगर ((uMACfragNum == 1) || bLastFrag) अणु
+			अगर (!bNeedAck)
+				वापस 0;
+		पूर्ण अन्यथा अणु
 			/* First Frag or Mid Frag */
 			uNextPktTime = s_uGetTxRsvTime(pDevice, byPktType,
 						       len, wRate, bNeedAck);
-		}
+		पूर्ण
 
-		return pDevice->uSIFS + uAckTime + uNextPktTime;
+		वापस pDevice->uSIFS + uAckTime + uNextPktTime;
 
-	case DATADUR_A_F0:    /* DATADUR_A_F0 */
-	case DATADUR_A_F1:    /* DATADUR_A_F1 */
-		if (bNeedAck) {
-			uAckTime = bb_get_frame_time(pDevice->byPreambleType,
+	हाल DATADUR_A_F0:    /* DATADUR_A_F0 */
+	हाल DATADUR_A_F1:    /* DATADUR_A_F1 */
+		अगर (bNeedAck) अणु
+			uAckTime = bb_get_frame_समय(pDevice->byPreambleType,
 						     byPktType, 14,
 						     pDevice->byTopOFDMBasicRate);
-		}
+		पूर्ण
 		/* Non Frag or Last Frag */
-		if ((uMACfragNum == 1) || bLastFrag) {
-			if (!bNeedAck)
-				return 0;
-		} else {
+		अगर ((uMACfragNum == 1) || bLastFrag) अणु
+			अगर (!bNeedAck)
+				वापस 0;
+		पूर्ण अन्यथा अणु
 			/* First Frag or Mid Frag */
-			if (wRate < RATE_18M)
+			अगर (wRate < RATE_18M)
 				wRate = RATE_18M;
-			else if (wRate > RATE_54M)
+			अन्यथा अगर (wRate > RATE_54M)
 				wRate = RATE_54M;
 
 			wRate -= RATE_18M;
 
-			if (byFBOption == AUTO_FB_0)
+			अगर (byFBOption == AUTO_FB_0)
 				wRate = wFB_Opt0[FB_RATE0][wRate];
-			else
+			अन्यथा
 				wRate = wFB_Opt1[FB_RATE0][wRate];
 
 			uNextPktTime = s_uGetTxRsvTime(pDevice, byPktType,
 						       len, wRate, bNeedAck);
-		}
+		पूर्ण
 
-		return pDevice->uSIFS + uAckTime + uNextPktTime;
+		वापस pDevice->uSIFS + uAckTime + uNextPktTime;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* byFreqType: 0=>5GHZ 1=>2.4GHZ */
-static
+अटल
 __le16
 s_uGetRTSCTSDuration(
-	struct vnt_private *pDevice,
-	unsigned char byDurType,
-	unsigned int cbFrameLength,
-	unsigned char byPktType,
-	unsigned short wRate,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byDurType,
+	अचिन्हित पूर्णांक cbFrameLength,
+	अचिन्हित अक्षर byPktType,
+	अचिन्हित लघु wRate,
 	bool bNeedAck,
-	unsigned char byFBOption
+	अचिन्हित अक्षर byFBOption
 )
-{
-	unsigned int uCTSTime = 0, uDurTime = 0;
+अणु
+	अचिन्हित पूर्णांक uCTSTime = 0, uDurTime = 0;
 
-	switch (byDurType) {
-	case RTSDUR_BB:    /* RTSDuration_bb */
-		uCTSTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
+	चयन (byDurType) अणु
+	हाल RTSDUR_BB:    /* RTSDuration_bb */
+		uCTSTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
 		uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wRate, bNeedAck);
-		break;
+		अवरोध;
 
-	case RTSDUR_BA:    /* RTSDuration_ba */
-		uCTSTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
+	हाल RTSDUR_BA:    /* RTSDuration_ba */
+		uCTSTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
 		uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wRate, bNeedAck);
-		break;
+		अवरोध;
 
-	case RTSDUR_AA:    /* RTSDuration_aa */
-		uCTSTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14, pDevice->byTopOFDMBasicRate);
+	हाल RTSDUR_AA:    /* RTSDuration_aa */
+		uCTSTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14, pDevice->byTopOFDMBasicRate);
 		uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wRate, bNeedAck);
-		break;
+		अवरोध;
 
-	case CTSDUR_BA:    /* CTSDuration_ba */
+	हाल CTSDUR_BA:    /* CTSDuration_ba */
 		uDurTime = pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wRate, bNeedAck);
-		break;
+		अवरोध;
 
-	case RTSDUR_BA_F0: /* RTSDuration_ba_f0 */
-		uCTSTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
-		if ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+	हाल RTSDUR_BA_F0: /* RTSDuration_ba_f0 */
+		uCTSTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
+		अगर ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt0[FB_RATE0][wRate - RATE_18M], bNeedAck);
-		else if ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+		अन्यथा अगर ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt1[FB_RATE0][wRate - RATE_18M], bNeedAck);
 
-		break;
+		अवरोध;
 
-	case RTSDUR_AA_F0: /* RTSDuration_aa_f0 */
-		uCTSTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14, pDevice->byTopOFDMBasicRate);
-		if ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+	हाल RTSDUR_AA_F0: /* RTSDuration_aa_f0 */
+		uCTSTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14, pDevice->byTopOFDMBasicRate);
+		अगर ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt0[FB_RATE0][wRate - RATE_18M], bNeedAck);
-		else if ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+		अन्यथा अगर ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt1[FB_RATE0][wRate - RATE_18M], bNeedAck);
 
-		break;
+		अवरोध;
 
-	case RTSDUR_BA_F1: /* RTSDuration_ba_f1 */
-		uCTSTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
-		if ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+	हाल RTSDUR_BA_F1: /* RTSDuration_ba_f1 */
+		uCTSTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14, pDevice->byTopCCKBasicRate);
+		अगर ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt0[FB_RATE1][wRate - RATE_18M], bNeedAck);
-		else if ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+		अन्यथा अगर ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt1[FB_RATE1][wRate - RATE_18M], bNeedAck);
 
-		break;
+		अवरोध;
 
-	case RTSDUR_AA_F1: /* RTSDuration_aa_f1 */
-		uCTSTime = bb_get_frame_time(pDevice->byPreambleType, byPktType, 14, pDevice->byTopOFDMBasicRate);
-		if ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+	हाल RTSDUR_AA_F1: /* RTSDuration_aa_f1 */
+		uCTSTime = bb_get_frame_समय(pDevice->byPreambleType, byPktType, 14, pDevice->byTopOFDMBasicRate);
+		अगर ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt0[FB_RATE1][wRate - RATE_18M], bNeedAck);
-		else if ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+		अन्यथा अगर ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = uCTSTime + 2 * pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt1[FB_RATE1][wRate - RATE_18M], bNeedAck);
 
-		break;
+		अवरोध;
 
-	case CTSDUR_BA_F0: /* CTSDuration_ba_f0 */
-		if ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+	हाल CTSDUR_BA_F0: /* CTSDuration_ba_f0 */
+		अगर ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt0[FB_RATE0][wRate - RATE_18M], bNeedAck);
-		else if ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+		अन्यथा अगर ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt1[FB_RATE0][wRate - RATE_18M], bNeedAck);
 
-		break;
+		अवरोध;
 
-	case CTSDUR_BA_F1: /* CTSDuration_ba_f1 */
-		if ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+	हाल CTSDUR_BA_F1: /* CTSDuration_ba_f1 */
+		अगर ((byFBOption == AUTO_FB_0) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt0[FB_RATE1][wRate - RATE_18M], bNeedAck);
-		else if ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
+		अन्यथा अगर ((byFBOption == AUTO_FB_1) && (wRate >= RATE_18M) && (wRate <= RATE_54M))
 			uDurTime = pDevice->uSIFS + s_uGetTxRsvTime(pDevice, byPktType, cbFrameLength, wFB_Opt1[FB_RATE1][wRate - RATE_18M], bNeedAck);
 
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return cpu_to_le16((u16)uDurTime);
-}
+	वापस cpu_to_le16((u16)uDurTime);
+पूर्ण
 
-static
+अटल
 __le16
 s_uFillDataHead(
-	struct vnt_private *pDevice,
-	unsigned char byPktType,
-	void *pTxDataHead,
-	unsigned int cbFrameLength,
-	unsigned int uDMAIdx,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byPktType,
+	व्योम *pTxDataHead,
+	अचिन्हित पूर्णांक cbFrameLength,
+	अचिन्हित पूर्णांक uDMAIdx,
 	bool bNeedAck,
-	unsigned int uFragIdx,
-	unsigned int cbLastFragmentSize,
-	unsigned int uMACfragNum,
-	unsigned char byFBOption,
-	unsigned short wCurrentRate,
+	अचिन्हित पूर्णांक uFragIdx,
+	अचिन्हित पूर्णांक cbLastFragmentSize,
+	अचिन्हित पूर्णांक uMACfragNum,
+	अचिन्हित अक्षर byFBOption,
+	अचिन्हित लघु wCurrentRate,
 	bool is_pspoll
 )
-{
-	struct vnt_tx_datahead_ab *buf = pTxDataHead;
+अणु
+	काष्ठा vnt_tx_datahead_ab *buf = pTxDataHead;
 
-	if (!pTxDataHead)
-		return 0;
+	अगर (!pTxDataHead)
+		वापस 0;
 
-	if (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) {
+	अगर (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) अणु
 		/* Auto Fallback */
-		struct vnt_tx_datahead_g_fb *buf = pTxDataHead;
+		काष्ठा vnt_tx_datahead_g_fb *buf = pTxDataHead;
 
-		if (byFBOption == AUTO_FB_NONE) {
-			struct vnt_tx_datahead_g *buf = pTxDataHead;
+		अगर (byFBOption == AUTO_FB_NONE) अणु
+			काष्ठा vnt_tx_datahead_g *buf = pTxDataHead;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, cbFrameLength, wCurrentRate,
 					  byPktType, &buf->a);
@@ -459,12 +460,12 @@ s_uFillDataHead(
 					  pDevice->byTopCCKBasicRate,
 					  PK_TYPE_11B, &buf->b);
 
-			if (is_pspoll) {
+			अगर (is_pspoll) अणु
 				__le16 dur = cpu_to_le16(pDevice->current_aid | BIT(14) | BIT(15));
 
 				buf->duration_a = dur;
 				buf->duration_b = dur;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Get Duration and TimeStamp */
 				buf->duration_a =
 					cpu_to_le16((u16)s_uGetDataDuration(pDevice, DATADUR_A, cbFrameLength,
@@ -476,13 +477,13 @@ s_uFillDataHead(
 									    PK_TYPE_11B, pDevice->byTopCCKBasicRate,
 									    bNeedAck, uFragIdx, cbLastFragmentSize,
 									    uMACfragNum, byFBOption));
-			}
+			पूर्ण
 
-			buf->time_stamp_off_a = vnt_time_stamp_off(pDevice, wCurrentRate);
-			buf->time_stamp_off_b = vnt_time_stamp_off(pDevice, pDevice->byTopCCKBasicRate);
+			buf->समय_stamp_off_a = vnt_समय_stamp_off(pDevice, wCurrentRate);
+			buf->समय_stamp_off_b = vnt_समय_stamp_off(pDevice, pDevice->byTopCCKBasicRate);
 
-			return buf->duration_a;
-		}
+			वापस buf->duration_a;
+		पूर्ण
 
 		/* Get SignalField, ServiceField & Length */
 		vnt_get_phy_field(pDevice, cbFrameLength, wCurrentRate,
@@ -501,17 +502,17 @@ s_uFillDataHead(
 		buf->duration_a_f1 = cpu_to_le16((u16)s_uGetDataDuration(pDevice, DATADUR_A_F1, cbFrameLength, byPktType,
 									 wCurrentRate, bNeedAck, uFragIdx, cbLastFragmentSize, uMACfragNum, byFBOption));
 
-		buf->time_stamp_off_a = vnt_time_stamp_off(pDevice, wCurrentRate);
-		buf->time_stamp_off_b = vnt_time_stamp_off(pDevice, pDevice->byTopCCKBasicRate);
+		buf->समय_stamp_off_a = vnt_समय_stamp_off(pDevice, wCurrentRate);
+		buf->समय_stamp_off_b = vnt_समय_stamp_off(pDevice, pDevice->byTopCCKBasicRate);
 
-		return buf->duration_a;
-		  /* if (byFBOption == AUTO_FB_NONE) */
-	} else if (byPktType == PK_TYPE_11A) {
-		struct vnt_tx_datahead_ab *buf = pTxDataHead;
+		वापस buf->duration_a;
+		  /* अगर (byFBOption == AUTO_FB_NONE) */
+	पूर्ण अन्यथा अगर (byPktType == PK_TYPE_11A) अणु
+		काष्ठा vnt_tx_datahead_ab *buf = pTxDataHead;
 
-		if (byFBOption != AUTO_FB_NONE) {
+		अगर (byFBOption != AUTO_FB_NONE) अणु
 			/* Auto Fallback */
-			struct vnt_tx_datahead_a_fb *buf = pTxDataHead;
+			काष्ठा vnt_tx_datahead_a_fb *buf = pTxDataHead;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, cbFrameLength, wCurrentRate,
 					  byPktType, &buf->a);
@@ -523,85 +524,85 @@ s_uFillDataHead(
 									       wCurrentRate, bNeedAck, uFragIdx, cbLastFragmentSize, uMACfragNum, byFBOption));
 			buf->duration_f1 = cpu_to_le16((u16)s_uGetDataDuration(pDevice, DATADUR_A_F1, cbFrameLength, byPktType,
 										wCurrentRate, bNeedAck, uFragIdx, cbLastFragmentSize, uMACfragNum, byFBOption));
-			buf->time_stamp_off = vnt_time_stamp_off(pDevice, wCurrentRate);
-			return buf->duration;
-		}
+			buf->समय_stamp_off = vnt_समय_stamp_off(pDevice, wCurrentRate);
+			वापस buf->duration;
+		पूर्ण
 
 		/* Get SignalField, ServiceField & Length */
 		vnt_get_phy_field(pDevice, cbFrameLength, wCurrentRate,
 				  byPktType, &buf->ab);
 
-		if (is_pspoll) {
+		अगर (is_pspoll) अणु
 			__le16 dur = cpu_to_le16(pDevice->current_aid | BIT(14) | BIT(15));
 
 			buf->duration = dur;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Get Duration and TimeStampOff */
 			buf->duration =
 				cpu_to_le16((u16)s_uGetDataDuration(pDevice, DATADUR_A, cbFrameLength, byPktType,
 								    wCurrentRate, bNeedAck, uFragIdx,
 								    cbLastFragmentSize, uMACfragNum,
 								    byFBOption));
-		}
+		पूर्ण
 
-		buf->time_stamp_off = vnt_time_stamp_off(pDevice, wCurrentRate);
-		return buf->duration;
-	}
+		buf->समय_stamp_off = vnt_समय_stamp_off(pDevice, wCurrentRate);
+		वापस buf->duration;
+	पूर्ण
 
 	/* Get SignalField, ServiceField & Length */
 	vnt_get_phy_field(pDevice, cbFrameLength, wCurrentRate,
 			  byPktType, &buf->ab);
 
-	if (is_pspoll) {
+	अगर (is_pspoll) अणु
 		__le16 dur = cpu_to_le16(pDevice->current_aid | BIT(14) | BIT(15));
 
 		buf->duration = dur;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Get Duration and TimeStampOff */
 		buf->duration =
 			cpu_to_le16((u16)s_uGetDataDuration(pDevice, DATADUR_B, cbFrameLength, byPktType,
 							    wCurrentRate, bNeedAck, uFragIdx,
 							    cbLastFragmentSize, uMACfragNum,
 							    byFBOption));
-	}
+	पूर्ण
 
-	buf->time_stamp_off = vnt_time_stamp_off(pDevice, wCurrentRate);
-	return buf->duration;
-}
+	buf->समय_stamp_off = vnt_समय_stamp_off(pDevice, wCurrentRate);
+	वापस buf->duration;
+पूर्ण
 
-static
-void
+अटल
+व्योम
 s_vFillRTSHead(
-	struct vnt_private *pDevice,
-	unsigned char byPktType,
-	void *pvRTS,
-	unsigned int cbFrameLength,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byPktType,
+	व्योम *pvRTS,
+	अचिन्हित पूर्णांक cbFrameLength,
 	bool bNeedAck,
 	bool bDisCRC,
-	struct ieee80211_hdr *hdr,
-	unsigned short wCurrentRate,
-	unsigned char byFBOption
+	काष्ठा ieee80211_hdr *hdr,
+	अचिन्हित लघु wCurrentRate,
+	अचिन्हित अक्षर byFBOption
 )
-{
-	unsigned int uRTSFrameLen = 20;
+अणु
+	अचिन्हित पूर्णांक uRTSFrameLen = 20;
 
-	if (!pvRTS)
-		return;
+	अगर (!pvRTS)
+		वापस;
 
-	if (bDisCRC) {
-		/* When CRCDIS bit is on, H/W forgot to generate FCS for
-		 * RTS frame, in this case we need to decrease its length by 4.
+	अगर (bDisCRC) अणु
+		/* When CRCDIS bit is on, H/W क्रमgot to generate FCS क्रम
+		 * RTS frame, in this हाल we need to decrease its length by 4.
 		 */
 		uRTSFrameLen -= 4;
-	}
+	पूर्ण
 
-	/* Note: So far RTSHead doesn't appear in ATIM & Beacom DMA,
-	 * so we don't need to take them into account.
-	 * Otherwise, we need to modify codes for them.
+	/* Note: So far RTSHead करोesn't appear in ATIM & Beacom DMA,
+	 * so we करोn't need to take them पूर्णांकo account.
+	 * Otherwise, we need to modअगरy codes क्रम them.
 	 */
-	if (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) {
-		if (byFBOption == AUTO_FB_NONE) {
-			struct vnt_rts_g *buf = pvRTS;
+	अगर (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) अणु
+		अगर (byFBOption == AUTO_FB_NONE) अणु
+			काष्ठा vnt_rts_g *buf = pvRTS;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, uRTSFrameLen,
 					  pDevice->byTopCCKBasicRate,
@@ -635,8 +636,8 @@ s_vFillRTSHead(
 
 			ether_addr_copy(buf->data.ra, hdr->addr1);
 			ether_addr_copy(buf->data.ta, hdr->addr2);
-		} else {
-			struct vnt_rts_g_fb *buf = pvRTS;
+		पूर्ण अन्यथा अणु
+			काष्ठा vnt_rts_g_fb *buf = pvRTS;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, uRTSFrameLen,
 					  pDevice->byTopCCKBasicRate,
@@ -689,10 +690,10 @@ s_vFillRTSHead(
 
 			ether_addr_copy(buf->data.ra, hdr->addr1);
 			ether_addr_copy(buf->data.ta, hdr->addr2);
-		} /* if (byFBOption == AUTO_FB_NONE) */
-	} else if (byPktType == PK_TYPE_11A) {
-		if (byFBOption == AUTO_FB_NONE) {
-			struct vnt_rts_ab *buf = pvRTS;
+		पूर्ण /* अगर (byFBOption == AUTO_FB_NONE) */
+	पूर्ण अन्यथा अगर (byPktType == PK_TYPE_11A) अणु
+		अगर (byFBOption == AUTO_FB_NONE) अणु
+			काष्ठा vnt_rts_ab *buf = pvRTS;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, uRTSFrameLen,
 					  pDevice->byTopOFDMBasicRate,
@@ -711,8 +712,8 @@ s_vFillRTSHead(
 
 			ether_addr_copy(buf->data.ra, hdr->addr1);
 			ether_addr_copy(buf->data.ta, hdr->addr2);
-		} else {
-			struct vnt_rts_a_fb *buf = pvRTS;
+		पूर्ण अन्यथा अणु
+			काष्ठा vnt_rts_a_fb *buf = pvRTS;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, uRTSFrameLen,
 					  pDevice->byTopOFDMBasicRate,
@@ -741,9 +742,9 @@ s_vFillRTSHead(
 
 			ether_addr_copy(buf->data.ra, hdr->addr1);
 			ether_addr_copy(buf->data.ta, hdr->addr2);
-		}
-	} else if (byPktType == PK_TYPE_11B) {
-		struct vnt_rts_ab *buf = pvRTS;
+		पूर्ण
+	पूर्ण अन्यथा अगर (byPktType == PK_TYPE_11B) अणु
+		काष्ठा vnt_rts_ab *buf = pvRTS;
 		/* Get SignalField, ServiceField & Length */
 		vnt_get_phy_field(pDevice, uRTSFrameLen,
 				  pDevice->byTopCCKBasicRate,
@@ -761,39 +762,39 @@ s_vFillRTSHead(
 
 		ether_addr_copy(buf->data.ra, hdr->addr1);
 		ether_addr_copy(buf->data.ta, hdr->addr2);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static
-void
+अटल
+व्योम
 s_vFillCTSHead(
-	struct vnt_private *pDevice,
-	unsigned int uDMAIdx,
-	unsigned char byPktType,
-	void *pvCTS,
-	unsigned int cbFrameLength,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित पूर्णांक uDMAIdx,
+	अचिन्हित अक्षर byPktType,
+	व्योम *pvCTS,
+	अचिन्हित पूर्णांक cbFrameLength,
 	bool bNeedAck,
 	bool bDisCRC,
-	unsigned short wCurrentRate,
-	unsigned char byFBOption
+	अचिन्हित लघु wCurrentRate,
+	अचिन्हित अक्षर byFBOption
 )
-{
-	unsigned int uCTSFrameLen = 14;
+अणु
+	अचिन्हित पूर्णांक uCTSFrameLen = 14;
 
-	if (!pvCTS)
-		return;
+	अगर (!pvCTS)
+		वापस;
 
-	if (bDisCRC) {
-		/* When CRCDIS bit is on, H/W forgot to generate FCS for
-		 * CTS frame, in this case we need to decrease its length by 4.
+	अगर (bDisCRC) अणु
+		/* When CRCDIS bit is on, H/W क्रमgot to generate FCS क्रम
+		 * CTS frame, in this हाल we need to decrease its length by 4.
 		 */
 		uCTSFrameLen -= 4;
-	}
+	पूर्ण
 
-	if (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) {
-		if (byFBOption != AUTO_FB_NONE && uDMAIdx != TYPE_ATIMDMA && uDMAIdx != TYPE_BEACONDMA) {
+	अगर (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) अणु
+		अगर (byFBOption != AUTO_FB_NONE && uDMAIdx != TYPE_ATIMDMA && uDMAIdx != TYPE_BEACONDMA) अणु
 			/* Auto Fall back */
-			struct vnt_cts_fb *buf = pvCTS;
+			काष्ठा vnt_cts_fb *buf = pvCTS;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, uCTSFrameLen,
 					  pDevice->byTopCCKBasicRate,
@@ -830,8 +831,8 @@ s_vFillCTSHead(
 
 			ether_addr_copy(buf->data.ra,
 					pDevice->abyCurrentNetAddr);
-		} else { /* if (byFBOption != AUTO_FB_NONE && uDMAIdx != TYPE_ATIMDMA && uDMAIdx != TYPE_BEACONDMA) */
-			struct vnt_cts *buf = pvCTS;
+		पूर्ण अन्यथा अणु /* अगर (byFBOption != AUTO_FB_NONE && uDMAIdx != TYPE_ATIMDMA && uDMAIdx != TYPE_BEACONDMA) */
+			काष्ठा vnt_cts *buf = pvCTS;
 			/* Get SignalField, ServiceField & Length */
 			vnt_get_phy_field(pDevice, uCTSFrameLen,
 					  pDevice->byTopCCKBasicRate,
@@ -854,18 +855,18 @@ s_vFillCTSHead(
 			buf->reserved2 = 0x0;
 			ether_addr_copy(buf->data.ra,
 					pDevice->abyCurrentNetAddr);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  *
  * Description:
- *      Generate FIFO control for MAC & Baseband controller
+ *      Generate FIFO control क्रम MAC & Baseband controller
  *
  * Parameters:
  *  In:
- *      pDevice         - Pointer to adapter
+ *      pDevice         - Poपूर्णांकer to adapter
  *      pTxDataHead     - Transmit Data Buffer
  *      pTxBufHead      - pTxBufHead
  *      pvRrvTime        - pvRrvTime
@@ -880,249 +881,249 @@ s_vFillCTSHead(
  * Return Value: none
  *
  -
- * unsigned int cbFrameSize, Hdr+Payload+FCS
+ * अचिन्हित पूर्णांक cbFrameSize, Hdr+Payload+FCS
  */
-static
-void
+अटल
+व्योम
 s_vGenerateTxParameter(
-	struct vnt_private *pDevice,
-	unsigned char byPktType,
-	struct vnt_tx_fifo_head *tx_buffer_head,
-	void *pvRrvTime,
-	void *pvRTS,
-	void *pvCTS,
-	unsigned int cbFrameSize,
+	काष्ठा vnt_निजी *pDevice,
+	अचिन्हित अक्षर byPktType,
+	काष्ठा vnt_tx_fअगरo_head *tx_buffer_head,
+	व्योम *pvRrvTime,
+	व्योम *pvRTS,
+	व्योम *pvCTS,
+	अचिन्हित पूर्णांक cbFrameSize,
 	bool bNeedACK,
-	unsigned int uDMAIdx,
-	void *psEthHeader,
-	unsigned short wCurrentRate
+	अचिन्हित पूर्णांक uDMAIdx,
+	व्योम *psEthHeader,
+	अचिन्हित लघु wCurrentRate
 )
-{
-	u16 fifo_ctl = le16_to_cpu(tx_buffer_head->fifo_ctl);
+अणु
+	u16 fअगरo_ctl = le16_to_cpu(tx_buffer_head->fअगरo_ctl);
 	bool bDisCRC = false;
-	unsigned char byFBOption = AUTO_FB_NONE;
+	अचिन्हित अक्षर byFBOption = AUTO_FB_NONE;
 
 	tx_buffer_head->current_rate = cpu_to_le16(wCurrentRate);
 
-	if (fifo_ctl & FIFOCTL_CRCDIS)
+	अगर (fअगरo_ctl & FIFOCTL_CRCDIS)
 		bDisCRC = true;
 
-	if (fifo_ctl & FIFOCTL_AUTO_FB_0)
+	अगर (fअगरo_ctl & FIFOCTL_AUTO_FB_0)
 		byFBOption = AUTO_FB_0;
-	else if (fifo_ctl & FIFOCTL_AUTO_FB_1)
+	अन्यथा अगर (fअगरo_ctl & FIFOCTL_AUTO_FB_1)
 		byFBOption = AUTO_FB_1;
 
-	if (!pvRrvTime)
-		return;
+	अगर (!pvRrvTime)
+		वापस;
 
-	if (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) {
-		if (pvRTS) { /* RTS_need */
+	अगर (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) अणु
+		अगर (pvRTS) अणु /* RTS_need */
 			/* Fill RsvTime */
-			struct vnt_rrv_time_rts *buf = pvRrvTime;
+			काष्ठा vnt_rrv_समय_rts *buf = pvRrvTime;
 
-			buf->rts_rrv_time_aa = get_rtscts_time(pDevice, 2, byPktType, cbFrameSize, wCurrentRate);
-			buf->rts_rrv_time_ba = get_rtscts_time(pDevice, 1, byPktType, cbFrameSize, wCurrentRate);
-			buf->rts_rrv_time_bb = get_rtscts_time(pDevice, 0, byPktType, cbFrameSize, wCurrentRate);
-			buf->rrv_time_a = vnt_rxtx_rsvtime_le16(pDevice, byPktType, cbFrameSize, wCurrentRate, bNeedACK);
-			buf->rrv_time_b = vnt_rxtx_rsvtime_le16(pDevice, PK_TYPE_11B, cbFrameSize, pDevice->byTopCCKBasicRate, bNeedACK);
+			buf->rts_rrv_समय_aa = get_rtscts_समय(pDevice, 2, byPktType, cbFrameSize, wCurrentRate);
+			buf->rts_rrv_समय_ba = get_rtscts_समय(pDevice, 1, byPktType, cbFrameSize, wCurrentRate);
+			buf->rts_rrv_समय_bb = get_rtscts_समय(pDevice, 0, byPktType, cbFrameSize, wCurrentRate);
+			buf->rrv_समय_a = vnt_rxtx_rsvसमय_le16(pDevice, byPktType, cbFrameSize, wCurrentRate, bNeedACK);
+			buf->rrv_समय_b = vnt_rxtx_rsvसमय_le16(pDevice, PK_TYPE_11B, cbFrameSize, pDevice->byTopCCKBasicRate, bNeedACK);
 
 			s_vFillRTSHead(pDevice, byPktType, pvRTS, cbFrameSize, bNeedACK, bDisCRC, psEthHeader, wCurrentRate, byFBOption);
-		} else {/* RTS_needless, PCF mode */
-			struct vnt_rrv_time_cts *buf = pvRrvTime;
+		पूर्ण अन्यथा अणु/* RTS_needless, PCF mode */
+			काष्ठा vnt_rrv_समय_cts *buf = pvRrvTime;
 
-			buf->rrv_time_a = vnt_rxtx_rsvtime_le16(pDevice, byPktType, cbFrameSize, wCurrentRate, bNeedACK);
-			buf->rrv_time_b = vnt_rxtx_rsvtime_le16(pDevice, PK_TYPE_11B, cbFrameSize, pDevice->byTopCCKBasicRate, bNeedACK);
-			buf->cts_rrv_time_ba = get_rtscts_time(pDevice, 3, byPktType, cbFrameSize, wCurrentRate);
+			buf->rrv_समय_a = vnt_rxtx_rsvसमय_le16(pDevice, byPktType, cbFrameSize, wCurrentRate, bNeedACK);
+			buf->rrv_समय_b = vnt_rxtx_rsvसमय_le16(pDevice, PK_TYPE_11B, cbFrameSize, pDevice->byTopCCKBasicRate, bNeedACK);
+			buf->cts_rrv_समय_ba = get_rtscts_समय(pDevice, 3, byPktType, cbFrameSize, wCurrentRate);
 
 			/* Fill CTS */
 			s_vFillCTSHead(pDevice, uDMAIdx, byPktType, pvCTS, cbFrameSize, bNeedACK, bDisCRC, wCurrentRate, byFBOption);
-		}
-	} else if (byPktType == PK_TYPE_11A) {
-		if (pvRTS) {/* RTS_need, non PCF mode */
-			struct vnt_rrv_time_ab *buf = pvRrvTime;
+		पूर्ण
+	पूर्ण अन्यथा अगर (byPktType == PK_TYPE_11A) अणु
+		अगर (pvRTS) अणु/* RTS_need, non PCF mode */
+			काष्ठा vnt_rrv_समय_ab *buf = pvRrvTime;
 
-			buf->rts_rrv_time = get_rtscts_time(pDevice, 2, byPktType, cbFrameSize, wCurrentRate);
-			buf->rrv_time = vnt_rxtx_rsvtime_le16(pDevice, byPktType, cbFrameSize, wCurrentRate, bNeedACK);
-
-			/* Fill RTS */
-			s_vFillRTSHead(pDevice, byPktType, pvRTS, cbFrameSize, bNeedACK, bDisCRC, psEthHeader, wCurrentRate, byFBOption);
-		} else if (!pvRTS) {/* RTS_needless, non PCF mode */
-			struct vnt_rrv_time_ab *buf = pvRrvTime;
-
-			buf->rrv_time = vnt_rxtx_rsvtime_le16(pDevice, PK_TYPE_11A, cbFrameSize, wCurrentRate, bNeedACK);
-		}
-	} else if (byPktType == PK_TYPE_11B) {
-		if (pvRTS) {/* RTS_need, non PCF mode */
-			struct vnt_rrv_time_ab *buf = pvRrvTime;
-
-			buf->rts_rrv_time = get_rtscts_time(pDevice, 0, byPktType, cbFrameSize, wCurrentRate);
-			buf->rrv_time = vnt_rxtx_rsvtime_le16(pDevice, PK_TYPE_11B, cbFrameSize, wCurrentRate, bNeedACK);
+			buf->rts_rrv_समय = get_rtscts_समय(pDevice, 2, byPktType, cbFrameSize, wCurrentRate);
+			buf->rrv_समय = vnt_rxtx_rsvसमय_le16(pDevice, byPktType, cbFrameSize, wCurrentRate, bNeedACK);
 
 			/* Fill RTS */
 			s_vFillRTSHead(pDevice, byPktType, pvRTS, cbFrameSize, bNeedACK, bDisCRC, psEthHeader, wCurrentRate, byFBOption);
-		} else { /* RTS_needless, non PCF mode */
-			struct vnt_rrv_time_ab *buf = pvRrvTime;
+		पूर्ण अन्यथा अगर (!pvRTS) अणु/* RTS_needless, non PCF mode */
+			काष्ठा vnt_rrv_समय_ab *buf = pvRrvTime;
 
-			buf->rrv_time = vnt_rxtx_rsvtime_le16(pDevice, PK_TYPE_11B, cbFrameSize, wCurrentRate, bNeedACK);
-		}
-	}
-}
+			buf->rrv_समय = vnt_rxtx_rsvसमय_le16(pDevice, PK_TYPE_11A, cbFrameSize, wCurrentRate, bNeedACK);
+		पूर्ण
+	पूर्ण अन्यथा अगर (byPktType == PK_TYPE_11B) अणु
+		अगर (pvRTS) अणु/* RTS_need, non PCF mode */
+			काष्ठा vnt_rrv_समय_ab *buf = pvRrvTime;
 
-static unsigned int
-s_cbFillTxBufHead(struct vnt_private *pDevice, unsigned char byPktType,
-		  unsigned char *pbyTxBufferAddr,
-		  unsigned int uDMAIdx, struct vnt_tx_desc *pHeadTD,
-		  unsigned int is_pspoll)
-{
-	struct vnt_td_info *td_info = pHeadTD->td_info;
-	struct sk_buff *skb = td_info->skb;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
-	struct vnt_tx_fifo_head *tx_buffer_head =
-			(struct vnt_tx_fifo_head *)td_info->buf;
-	u16 fifo_ctl = le16_to_cpu(tx_buffer_head->fifo_ctl);
-	unsigned int cbFrameSize;
+			buf->rts_rrv_समय = get_rtscts_समय(pDevice, 0, byPktType, cbFrameSize, wCurrentRate);
+			buf->rrv_समय = vnt_rxtx_rsvसमय_le16(pDevice, PK_TYPE_11B, cbFrameSize, wCurrentRate, bNeedACK);
+
+			/* Fill RTS */
+			s_vFillRTSHead(pDevice, byPktType, pvRTS, cbFrameSize, bNeedACK, bDisCRC, psEthHeader, wCurrentRate, byFBOption);
+		पूर्ण अन्यथा अणु /* RTS_needless, non PCF mode */
+			काष्ठा vnt_rrv_समय_ab *buf = pvRrvTime;
+
+			buf->rrv_समय = vnt_rxtx_rsvसमय_le16(pDevice, PK_TYPE_11B, cbFrameSize, wCurrentRate, bNeedACK);
+		पूर्ण
+	पूर्ण
+पूर्ण
+
+अटल अचिन्हित पूर्णांक
+s_cbFillTxBufHead(काष्ठा vnt_निजी *pDevice, अचिन्हित अक्षर byPktType,
+		  अचिन्हित अक्षर *pbyTxBufferAddr,
+		  अचिन्हित पूर्णांक uDMAIdx, काष्ठा vnt_tx_desc *pHeadTD,
+		  अचिन्हित पूर्णांक is_pspoll)
+अणु
+	काष्ठा vnt_td_info *td_info = pHeadTD->td_info;
+	काष्ठा sk_buff *skb = td_info->skb;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
+	काष्ठा vnt_tx_fअगरo_head *tx_buffer_head =
+			(काष्ठा vnt_tx_fअगरo_head *)td_info->buf;
+	u16 fअगरo_ctl = le16_to_cpu(tx_buffer_head->fअगरo_ctl);
+	अचिन्हित पूर्णांक cbFrameSize;
 	__le16 uDuration;
-	unsigned char *pbyBuffer;
-	unsigned int uLength = 0;
-	unsigned int cbMICHDR = 0;
-	unsigned int uMACfragNum = 1;
-	unsigned int uPadding = 0;
-	unsigned int cbReqCount = 0;
-	bool bNeedACK = (bool)(fifo_ctl & FIFOCTL_NEEDACK);
-	bool bRTS = (bool)(fifo_ctl & FIFOCTL_RTS);
-	struct vnt_tx_desc *ptdCurr;
-	unsigned int cbHeaderLength = 0;
-	void *pvRrvTime = NULL;
-	struct vnt_mic_hdr *pMICHDR = NULL;
-	void *pvRTS = NULL;
-	void *pvCTS = NULL;
-	void *pvTxDataHd = NULL;
-	unsigned short wTxBufSize;   /* FFinfo size */
-	unsigned char byFBOption = AUTO_FB_NONE;
+	अचिन्हित अक्षर *pbyBuffer;
+	अचिन्हित पूर्णांक uLength = 0;
+	अचिन्हित पूर्णांक cbMICHDR = 0;
+	अचिन्हित पूर्णांक uMACfragNum = 1;
+	अचिन्हित पूर्णांक uPadding = 0;
+	अचिन्हित पूर्णांक cbReqCount = 0;
+	bool bNeedACK = (bool)(fअगरo_ctl & FIFOCTL_NEEDACK);
+	bool bRTS = (bool)(fअगरo_ctl & FIFOCTL_RTS);
+	काष्ठा vnt_tx_desc *ptdCurr;
+	अचिन्हित पूर्णांक cbHeaderLength = 0;
+	व्योम *pvRrvTime = शून्य;
+	काष्ठा vnt_mic_hdr *pMICHDR = शून्य;
+	व्योम *pvRTS = शून्य;
+	व्योम *pvCTS = शून्य;
+	व्योम *pvTxDataHd = शून्य;
+	अचिन्हित लघु wTxBufSize;   /* FFinfo size */
+	अचिन्हित अक्षर byFBOption = AUTO_FB_NONE;
 
 	cbFrameSize = skb->len + 4;
 
-	if (info->control.hw_key) {
-		switch (info->control.hw_key->cipher) {
-		case WLAN_CIPHER_SUITE_CCMP:
-			cbMICHDR = sizeof(struct vnt_mic_hdr);
-			break;
-		default:
-			break;
-		}
+	अगर (info->control.hw_key) अणु
+		चयन (info->control.hw_key->cipher) अणु
+		हाल WLAN_CIPHER_SUITE_CCMP:
+			cbMICHDR = माप(काष्ठा vnt_mic_hdr);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
 		cbFrameSize += info->control.hw_key->icv_len;
 
-		if (pDevice->byLocalID > REV_ID_VT3253_A1) {
+		अगर (pDevice->byLocalID > REV_ID_VT3253_A1) अणु
 			/* MAC Header should be padding 0 to DW alignment. */
 			uPadding = 4 - (ieee80211_get_hdrlen_from_skb(skb) % 4);
 			uPadding %= 4;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Use for AUTO FALL BACK
+	 * Use क्रम AUTO FALL BACK
 	 */
-	if (fifo_ctl & FIFOCTL_AUTO_FB_0)
+	अगर (fअगरo_ctl & FIFOCTL_AUTO_FB_0)
 		byFBOption = AUTO_FB_0;
-	else if (fifo_ctl & FIFOCTL_AUTO_FB_1)
+	अन्यथा अगर (fअगरo_ctl & FIFOCTL_AUTO_FB_1)
 		byFBOption = AUTO_FB_1;
 
 	/* Set RrvTime/RTS/CTS Buffer */
-	wTxBufSize = sizeof(struct vnt_tx_fifo_head);
-	if (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) {/* 802.11g packet */
+	wTxBufSize = माप(काष्ठा vnt_tx_fअगरo_head);
+	अगर (byPktType == PK_TYPE_11GB || byPktType == PK_TYPE_11GA) अणु/* 802.11g packet */
 
-		if (byFBOption == AUTO_FB_NONE) {
-			if (bRTS) {/* RTS_need */
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_rts));
-				pvRTS = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_rts) + cbMICHDR);
-				pvCTS = NULL;
-				pvTxDataHd = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_rts) +
-							cbMICHDR + sizeof(struct vnt_rts_g));
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_rts) +
-							cbMICHDR + sizeof(struct vnt_rts_g) +
-							sizeof(struct vnt_tx_datahead_g);
-			} else { /* RTS_needless */
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_cts));
-				pvRTS = NULL;
-				pvCTS = (void *) (pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_cts) + cbMICHDR);
-				pvTxDataHd = (void *)(pbyTxBufferAddr + wTxBufSize +
-						sizeof(struct vnt_rrv_time_cts) + cbMICHDR + sizeof(struct vnt_cts));
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_cts) +
-							cbMICHDR + sizeof(struct vnt_cts) + sizeof(struct vnt_tx_datahead_g);
-			}
-		} else {
+		अगर (byFBOption == AUTO_FB_NONE) अणु
+			अगर (bRTS) अणु/* RTS_need */
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts));
+				pvRTS = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts) + cbMICHDR);
+				pvCTS = शून्य;
+				pvTxDataHd = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts) +
+							cbMICHDR + माप(काष्ठा vnt_rts_g));
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts) +
+							cbMICHDR + माप(काष्ठा vnt_rts_g) +
+							माप(काष्ठा vnt_tx_datahead_g);
+			पूर्ण अन्यथा अणु /* RTS_needless */
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_cts));
+				pvRTS = शून्य;
+				pvCTS = (व्योम *) (pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_cts) + cbMICHDR);
+				pvTxDataHd = (व्योम *)(pbyTxBufferAddr + wTxBufSize +
+						माप(काष्ठा vnt_rrv_समय_cts) + cbMICHDR + माप(काष्ठा vnt_cts));
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_cts) +
+							cbMICHDR + माप(काष्ठा vnt_cts) + माप(काष्ठा vnt_tx_datahead_g);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Auto Fall Back */
-			if (bRTS) {/* RTS_need */
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_rts));
-				pvRTS = (void *) (pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_rts) + cbMICHDR);
-				pvCTS = NULL;
-				pvTxDataHd = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_rts) +
-					cbMICHDR + sizeof(struct vnt_rts_g_fb));
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_rts) +
-					cbMICHDR + sizeof(struct vnt_rts_g_fb) + sizeof(struct vnt_tx_datahead_g_fb);
-			} else { /* RTS_needless */
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_cts));
-				pvRTS = NULL;
-				pvCTS = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_cts) + cbMICHDR);
-				pvTxDataHd = (void  *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_cts) +
-					cbMICHDR + sizeof(struct vnt_cts_fb));
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_cts) +
-					cbMICHDR + sizeof(struct vnt_cts_fb) + sizeof(struct vnt_tx_datahead_g_fb);
-			}
-		} /* Auto Fall Back */
-	} else {/* 802.11a/b packet */
+			अगर (bRTS) अणु/* RTS_need */
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts));
+				pvRTS = (व्योम *) (pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts) + cbMICHDR);
+				pvCTS = शून्य;
+				pvTxDataHd = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts) +
+					cbMICHDR + माप(काष्ठा vnt_rts_g_fb));
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_rts) +
+					cbMICHDR + माप(काष्ठा vnt_rts_g_fb) + माप(काष्ठा vnt_tx_datahead_g_fb);
+			पूर्ण अन्यथा अणु /* RTS_needless */
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_cts));
+				pvRTS = शून्य;
+				pvCTS = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_cts) + cbMICHDR);
+				pvTxDataHd = (व्योम  *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_cts) +
+					cbMICHDR + माप(काष्ठा vnt_cts_fb));
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_cts) +
+					cbMICHDR + माप(काष्ठा vnt_cts_fb) + माप(काष्ठा vnt_tx_datahead_g_fb);
+			पूर्ण
+		पूर्ण /* Auto Fall Back */
+	पूर्ण अन्यथा अणु/* 802.11a/b packet */
 
-		if (byFBOption == AUTO_FB_NONE) {
-			if (bRTS) {
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab));
-				pvRTS = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab) + cbMICHDR);
-				pvCTS = NULL;
-				pvTxDataHd = (void *)(pbyTxBufferAddr + wTxBufSize +
-					sizeof(struct vnt_rrv_time_ab) + cbMICHDR + sizeof(struct vnt_rts_ab));
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_ab) +
-					cbMICHDR + sizeof(struct vnt_rts_ab) + sizeof(struct vnt_tx_datahead_ab);
-			} else { /* RTS_needless, need MICHDR */
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab));
-				pvRTS = NULL;
-				pvCTS = NULL;
-				pvTxDataHd = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab) + cbMICHDR);
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_ab) +
-					cbMICHDR + sizeof(struct vnt_tx_datahead_ab);
-			}
-		} else {
+		अगर (byFBOption == AUTO_FB_NONE) अणु
+			अगर (bRTS) अणु
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab));
+				pvRTS = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) + cbMICHDR);
+				pvCTS = शून्य;
+				pvTxDataHd = (व्योम *)(pbyTxBufferAddr + wTxBufSize +
+					माप(काष्ठा vnt_rrv_समय_ab) + cbMICHDR + माप(काष्ठा vnt_rts_ab));
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) +
+					cbMICHDR + माप(काष्ठा vnt_rts_ab) + माप(काष्ठा vnt_tx_datahead_ab);
+			पूर्ण अन्यथा अणु /* RTS_needless, need MICHDR */
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab));
+				pvRTS = शून्य;
+				pvCTS = शून्य;
+				pvTxDataHd = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) + cbMICHDR);
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) +
+					cbMICHDR + माप(काष्ठा vnt_tx_datahead_ab);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Auto Fall Back */
-			if (bRTS) { /* RTS_need */
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab));
-				pvRTS = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab) + cbMICHDR);
-				pvCTS = NULL;
-				pvTxDataHd = (void *)(pbyTxBufferAddr + wTxBufSize +
-					sizeof(struct vnt_rrv_time_ab) + cbMICHDR + sizeof(struct vnt_rts_a_fb));
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_ab) +
-					cbMICHDR + sizeof(struct vnt_rts_a_fb) + sizeof(struct vnt_tx_datahead_a_fb);
-			} else { /* RTS_needless */
-				pvRrvTime = (void *)(pbyTxBufferAddr + wTxBufSize);
-				pMICHDR = (struct vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab));
-				pvRTS = NULL;
-				pvCTS = NULL;
-				pvTxDataHd = (void *)(pbyTxBufferAddr + wTxBufSize + sizeof(struct vnt_rrv_time_ab) + cbMICHDR);
-				cbHeaderLength = wTxBufSize + sizeof(struct vnt_rrv_time_ab) +
-					cbMICHDR + sizeof(struct vnt_tx_datahead_a_fb);
-			}
-		} /* Auto Fall Back */
-	}
+			अगर (bRTS) अणु /* RTS_need */
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab));
+				pvRTS = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) + cbMICHDR);
+				pvCTS = शून्य;
+				pvTxDataHd = (व्योम *)(pbyTxBufferAddr + wTxBufSize +
+					माप(काष्ठा vnt_rrv_समय_ab) + cbMICHDR + माप(काष्ठा vnt_rts_a_fb));
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) +
+					cbMICHDR + माप(काष्ठा vnt_rts_a_fb) + माप(काष्ठा vnt_tx_datahead_a_fb);
+			पूर्ण अन्यथा अणु /* RTS_needless */
+				pvRrvTime = (व्योम *)(pbyTxBufferAddr + wTxBufSize);
+				pMICHDR = (काष्ठा vnt_mic_hdr *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab));
+				pvRTS = शून्य;
+				pvCTS = शून्य;
+				pvTxDataHd = (व्योम *)(pbyTxBufferAddr + wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) + cbMICHDR);
+				cbHeaderLength = wTxBufSize + माप(काष्ठा vnt_rrv_समय_ab) +
+					cbMICHDR + माप(काष्ठा vnt_tx_datahead_a_fb);
+			पूर्ण
+		पूर्ण /* Auto Fall Back */
+	पूर्ण
 
 	td_info->mic_hdr = pMICHDR;
 
-	memset((void *)(pbyTxBufferAddr + wTxBufSize), 0, (cbHeaderLength - wTxBufSize));
+	स_रखो((व्योम *)(pbyTxBufferAddr + wTxBufSize), 0, (cbHeaderLength - wTxBufSize));
 
 	/* Fill FIFO,RrvTime,RTS,and CTS */
 	s_vGenerateTxParameter(pDevice, byPktType, tx_buffer_head, pvRrvTime, pvRTS, pvCTS,
@@ -1134,24 +1135,24 @@ s_cbFillTxBufHead(struct vnt_private *pDevice, unsigned char byPktType,
 	hdr->duration_id = uDuration;
 
 	cbReqCount = cbHeaderLength + uPadding + skb->len;
-	pbyBuffer = (unsigned char *)pHeadTD->td_info->buf;
+	pbyBuffer = (अचिन्हित अक्षर *)pHeadTD->td_info->buf;
 	uLength = cbHeaderLength + uPadding;
 
-	/* Copy the Packet into a tx Buffer */
-	memcpy((pbyBuffer + uLength), skb->data, skb->len);
+	/* Copy the Packet पूर्णांकo a tx Buffer */
+	स_नकल((pbyBuffer + uLength), skb->data, skb->len);
 
 	ptdCurr = pHeadTD;
 
 	ptdCurr->td_info->req_count = (u16)cbReqCount;
 
-	return cbHeaderLength;
-}
+	वापस cbHeaderLength;
+पूर्ण
 
-static void vnt_fill_txkey(struct ieee80211_hdr *hdr, u8 *key_buffer,
-			   struct ieee80211_key_conf *tx_key,
-			   struct sk_buff *skb,	u16 payload_len,
-			   struct vnt_mic_hdr *mic_hdr)
-{
+अटल व्योम vnt_fill_txkey(काष्ठा ieee80211_hdr *hdr, u8 *key_buffer,
+			   काष्ठा ieee80211_key_conf *tx_key,
+			   काष्ठा sk_buff *skb,	u16 payload_len,
+			   काष्ठा vnt_mic_hdr *mic_hdr)
+अणु
 	u64 pn64;
 	u8 *iv = ((u8 *)hdr + ieee80211_get_hdrlen_from_skb(skb));
 
@@ -1159,33 +1160,33 @@ static void vnt_fill_txkey(struct ieee80211_hdr *hdr, u8 *key_buffer,
 	payload_len -= ieee80211_get_hdrlen_from_skb(skb);
 	payload_len -= tx_key->icv_len;
 
-	switch (tx_key->cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
-		memcpy(key_buffer, iv, 3);
-		memcpy(key_buffer + 3, tx_key->key, tx_key->keylen);
+	चयन (tx_key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
+	हाल WLAN_CIPHER_SUITE_WEP104:
+		स_नकल(key_buffer, iv, 3);
+		स_नकल(key_buffer + 3, tx_key->key, tx_key->keylen);
 
-		if (tx_key->keylen == WLAN_KEY_LEN_WEP40) {
-			memcpy(key_buffer + 8, iv, 3);
-			memcpy(key_buffer + 11,
+		अगर (tx_key->keylen == WLAN_KEY_LEN_WEP40) अणु
+			स_नकल(key_buffer + 8, iv, 3);
+			स_नकल(key_buffer + 11,
 			       tx_key->key, WLAN_KEY_LEN_WEP40);
-		}
+		पूर्ण
 
-		break;
-	case WLAN_CIPHER_SUITE_TKIP:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_TKIP:
 		ieee80211_get_tkip_p2k(tx_key, skb, key_buffer);
 
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
 
-		if (!mic_hdr)
-			return;
+		अगर (!mic_hdr)
+			वापस;
 
 		mic_hdr->id = 0x59;
 		mic_hdr->payload_len = cpu_to_be16(payload_len);
 		ether_addr_copy(mic_hdr->mic_addr2, hdr->addr2);
 
-		pn64 = atomic64_read(&tx_key->tx_pn);
+		pn64 = atomic64_पढ़ो(&tx_key->tx_pn);
 		mic_hdr->ccmp_pn[5] = pn64;
 		mic_hdr->ccmp_pn[4] = pn64 >> 8;
 		mic_hdr->ccmp_pn[3] = pn64 >> 16;
@@ -1193,9 +1194,9 @@ static void vnt_fill_txkey(struct ieee80211_hdr *hdr, u8 *key_buffer,
 		mic_hdr->ccmp_pn[1] = pn64 >> 32;
 		mic_hdr->ccmp_pn[0] = pn64 >> 40;
 
-		if (ieee80211_has_a4(hdr->frame_control))
+		अगर (ieee80211_has_a4(hdr->frame_control))
 			mic_hdr->hlen = cpu_to_be16(28);
-		else
+		अन्यथा
 			mic_hdr->hlen = cpu_to_be16(22);
 
 		ether_addr_copy(mic_hdr->addr1, hdr->addr1);
@@ -1207,260 +1208,260 @@ static void vnt_fill_txkey(struct ieee80211_hdr *hdr, u8 *key_buffer,
 		mic_hdr->seq_ctrl = cpu_to_le16(
 				le16_to_cpu(hdr->seq_ctrl) & 0xf);
 
-		if (ieee80211_has_a4(hdr->frame_control))
+		अगर (ieee80211_has_a4(hdr->frame_control))
 			ether_addr_copy(mic_hdr->addr4, hdr->addr4);
 
-		memcpy(key_buffer, tx_key->key, WLAN_KEY_LEN_CCMP);
+		स_नकल(key_buffer, tx_key->key, WLAN_KEY_LEN_CCMP);
 
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-int vnt_generate_fifo_header(struct vnt_private *priv, u32 dma_idx,
-			     struct vnt_tx_desc *head_td, struct sk_buff *skb)
-{
-	struct vnt_td_info *td_info = head_td->td_info;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct ieee80211_tx_rate *tx_rate = &info->control.rates[0];
-	struct ieee80211_rate *rate;
-	struct ieee80211_key_conf *tx_key;
-	struct ieee80211_hdr *hdr;
-	struct vnt_tx_fifo_head *tx_buffer_head =
-			(struct vnt_tx_fifo_head *)td_info->buf;
+पूर्णांक vnt_generate_fअगरo_header(काष्ठा vnt_निजी *priv, u32 dma_idx,
+			     काष्ठा vnt_tx_desc *head_td, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vnt_td_info *td_info = head_td->td_info;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा ieee80211_tx_rate *tx_rate = &info->control.rates[0];
+	काष्ठा ieee80211_rate *rate;
+	काष्ठा ieee80211_key_conf *tx_key;
+	काष्ठा ieee80211_hdr *hdr;
+	काष्ठा vnt_tx_fअगरo_head *tx_buffer_head =
+			(काष्ठा vnt_tx_fअगरo_head *)td_info->buf;
 	u16 tx_body_size = skb->len, current_rate;
 	u8 pkt_type;
 	bool is_pspoll = false;
 
-	memset(tx_buffer_head, 0, sizeof(*tx_buffer_head));
+	स_रखो(tx_buffer_head, 0, माप(*tx_buffer_head));
 
-	hdr = (struct ieee80211_hdr *)(skb->data);
+	hdr = (काष्ठा ieee80211_hdr *)(skb->data);
 
 	rate = ieee80211_get_tx_rate(priv->hw, info);
 
 	current_rate = rate->hw_value;
-	if (priv->wCurrentRate != current_rate &&
-	    !(priv->hw->conf.flags & IEEE80211_CONF_OFFCHANNEL)) {
+	अगर (priv->wCurrentRate != current_rate &&
+	    !(priv->hw->conf.flags & IEEE80211_CONF_OFFCHANNEL)) अणु
 		priv->wCurrentRate = current_rate;
 
 		RFbSetPower(priv, priv->wCurrentRate,
 			    priv->hw->conf.chandef.chan->hw_value);
-	}
+	पूर्ण
 
-	if (current_rate > RATE_11M) {
-		if (info->band == NL80211_BAND_5GHZ) {
+	अगर (current_rate > RATE_11M) अणु
+		अगर (info->band == NL80211_BAND_5GHZ) अणु
 			pkt_type = PK_TYPE_11A;
-		} else {
-			if (tx_rate->flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
+		पूर्ण अन्यथा अणु
+			अगर (tx_rate->flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
 				pkt_type = PK_TYPE_11GB;
-			else
+			अन्यथा
 				pkt_type = PK_TYPE_11GA;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pkt_type = PK_TYPE_11B;
-	}
+	पूर्ण
 
-	/*Set fifo controls */
-	if (pkt_type == PK_TYPE_11A)
-		tx_buffer_head->fifo_ctl = 0;
-	else if (pkt_type == PK_TYPE_11B)
-		tx_buffer_head->fifo_ctl = cpu_to_le16(FIFOCTL_11B);
-	else if (pkt_type == PK_TYPE_11GB)
-		tx_buffer_head->fifo_ctl = cpu_to_le16(FIFOCTL_11GB);
-	else if (pkt_type == PK_TYPE_11GA)
-		tx_buffer_head->fifo_ctl = cpu_to_le16(FIFOCTL_11GA);
+	/*Set fअगरo controls */
+	अगर (pkt_type == PK_TYPE_11A)
+		tx_buffer_head->fअगरo_ctl = 0;
+	अन्यथा अगर (pkt_type == PK_TYPE_11B)
+		tx_buffer_head->fअगरo_ctl = cpu_to_le16(FIFOCTL_11B);
+	अन्यथा अगर (pkt_type == PK_TYPE_11GB)
+		tx_buffer_head->fअगरo_ctl = cpu_to_le16(FIFOCTL_11GB);
+	अन्यथा अगर (pkt_type == PK_TYPE_11GA)
+		tx_buffer_head->fअगरo_ctl = cpu_to_le16(FIFOCTL_11GA);
 
-	/* generate interrupt */
-	tx_buffer_head->fifo_ctl |= cpu_to_le16(FIFOCTL_GENINT);
+	/* generate पूर्णांकerrupt */
+	tx_buffer_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_GENINT);
 
-	if (!ieee80211_is_data(hdr->frame_control)) {
-		tx_buffer_head->fifo_ctl |= cpu_to_le16(FIFOCTL_TMOEN);
-		tx_buffer_head->fifo_ctl |= cpu_to_le16(FIFOCTL_ISDMA0);
-		tx_buffer_head->time_stamp =
+	अगर (!ieee80211_is_data(hdr->frame_control)) अणु
+		tx_buffer_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_TMOEN);
+		tx_buffer_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_ISDMA0);
+		tx_buffer_head->समय_stamp =
 			cpu_to_le16(DEFAULT_MGN_LIFETIME_RES_64us);
-	} else {
-		tx_buffer_head->time_stamp =
+	पूर्ण अन्यथा अणु
+		tx_buffer_head->समय_stamp =
 			cpu_to_le16(DEFAULT_MSDU_LIFETIME_RES_64us);
-	}
+	पूर्ण
 
-	if (!(info->flags & IEEE80211_TX_CTL_NO_ACK))
-		tx_buffer_head->fifo_ctl |= cpu_to_le16(FIFOCTL_NEEDACK);
+	अगर (!(info->flags & IEEE80211_TX_CTL_NO_ACK))
+		tx_buffer_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_NEEDACK);
 
-	if (ieee80211_has_retry(hdr->frame_control))
-		tx_buffer_head->fifo_ctl |= cpu_to_le16(FIFOCTL_LRETRY);
+	अगर (ieee80211_has_retry(hdr->frame_control))
+		tx_buffer_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_LRETRY);
 
-	if (tx_rate->flags & IEEE80211_TX_RC_USE_SHORT_PREAMBLE)
+	अगर (tx_rate->flags & IEEE80211_TX_RC_USE_SHORT_PREAMBLE)
 		priv->byPreambleType = PREAMBLE_SHORT;
-	else
+	अन्यथा
 		priv->byPreambleType = PREAMBLE_LONG;
 
-	if (tx_rate->flags & IEEE80211_TX_RC_USE_RTS_CTS)
-		tx_buffer_head->fifo_ctl |= cpu_to_le16(FIFOCTL_RTS);
+	अगर (tx_rate->flags & IEEE80211_TX_RC_USE_RTS_CTS)
+		tx_buffer_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_RTS);
 
-	if (ieee80211_has_a4(hdr->frame_control)) {
-		tx_buffer_head->fifo_ctl |= cpu_to_le16(FIFOCTL_LHEAD);
+	अगर (ieee80211_has_a4(hdr->frame_control)) अणु
+		tx_buffer_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_LHEAD);
 		priv->bLongHeader = true;
-	}
+	पूर्ण
 
-	if (info->flags & IEEE80211_TX_CTL_NO_PS_BUFFER)
+	अगर (info->flags & IEEE80211_TX_CTL_NO_PS_BUFFER)
 		is_pspoll = true;
 
 	tx_buffer_head->frag_ctl =
 			cpu_to_le16(ieee80211_get_hdrlen_from_skb(skb) << 10);
 
-	if (info->control.hw_key) {
+	अगर (info->control.hw_key) अणु
 		tx_key = info->control.hw_key;
 
-		switch (info->control.hw_key->cipher) {
-		case WLAN_CIPHER_SUITE_WEP40:
-		case WLAN_CIPHER_SUITE_WEP104:
+		चयन (info->control.hw_key->cipher) अणु
+		हाल WLAN_CIPHER_SUITE_WEP40:
+		हाल WLAN_CIPHER_SUITE_WEP104:
 			tx_buffer_head->frag_ctl |= cpu_to_le16(FRAGCTL_LEGACY);
-			break;
-		case WLAN_CIPHER_SUITE_TKIP:
+			अवरोध;
+		हाल WLAN_CIPHER_SUITE_TKIP:
 			tx_buffer_head->frag_ctl |= cpu_to_le16(FRAGCTL_TKIP);
-			break;
-		case WLAN_CIPHER_SUITE_CCMP:
+			अवरोध;
+		हाल WLAN_CIPHER_SUITE_CCMP:
 			tx_buffer_head->frag_ctl |= cpu_to_le16(FRAGCTL_AES);
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	tx_buffer_head->current_rate = cpu_to_le16(current_rate);
 
 	/* legacy rates TODO use ieee80211_tx_rate */
-	if (current_rate >= RATE_18M && ieee80211_is_data(hdr->frame_control)) {
-		if (priv->byAutoFBCtrl == AUTO_FB_0)
-			tx_buffer_head->fifo_ctl |=
+	अगर (current_rate >= RATE_18M && ieee80211_is_data(hdr->frame_control)) अणु
+		अगर (priv->byAutoFBCtrl == AUTO_FB_0)
+			tx_buffer_head->fअगरo_ctl |=
 						cpu_to_le16(FIFOCTL_AUTO_FB_0);
-		else if (priv->byAutoFBCtrl == AUTO_FB_1)
-			tx_buffer_head->fifo_ctl |=
+		अन्यथा अगर (priv->byAutoFBCtrl == AUTO_FB_1)
+			tx_buffer_head->fअगरo_ctl |=
 						cpu_to_le16(FIFOCTL_AUTO_FB_1);
-	}
+	पूर्ण
 
 	tx_buffer_head->frag_ctl |= cpu_to_le16(FRAGCTL_NONFRAG);
 
 	s_cbFillTxBufHead(priv, pkt_type, (u8 *)tx_buffer_head,
 			  dma_idx, head_td, is_pspoll);
 
-	if (info->control.hw_key) {
+	अगर (info->control.hw_key) अणु
 		tx_key = info->control.hw_key;
-		if (tx_key->keylen > 0)
+		अगर (tx_key->keylen > 0)
 			vnt_fill_txkey(hdr, tx_buffer_head->tx_key,
 				       tx_key, skb, tx_body_size,
 				       td_info->mic_hdr);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vnt_beacon_xmit(struct vnt_private *priv,
-			   struct sk_buff *skb)
-{
-	struct vnt_tx_short_buf_head *short_head =
-		(struct vnt_tx_short_buf_head *)priv->tx_beacon_bufs;
-	struct ieee80211_mgmt *mgmt_hdr = (struct ieee80211_mgmt *)
-				(priv->tx_beacon_bufs + sizeof(*short_head));
-	struct ieee80211_tx_info *info;
+अटल पूर्णांक vnt_beacon_xmit(काष्ठा vnt_निजी *priv,
+			   काष्ठा sk_buff *skb)
+अणु
+	काष्ठा vnt_tx_लघु_buf_head *लघु_head =
+		(काष्ठा vnt_tx_लघु_buf_head *)priv->tx_beacon_bufs;
+	काष्ठा ieee80211_mgmt *mgmt_hdr = (काष्ठा ieee80211_mgmt *)
+				(priv->tx_beacon_bufs + माप(*लघु_head));
+	काष्ठा ieee80211_tx_info *info;
 	u32 frame_size = skb->len + 4;
 	u16 current_rate;
 
-	memset(priv->tx_beacon_bufs, 0, sizeof(*short_head));
+	स_रखो(priv->tx_beacon_bufs, 0, माप(*लघु_head));
 
-	if (priv->byBBType == BB_TYPE_11A) {
+	अगर (priv->byBBType == BB_TYPE_11A) अणु
 		current_rate = RATE_6M;
 
 		/* Get SignalField,ServiceField,Length */
 		vnt_get_phy_field(priv, frame_size, current_rate,
-				  PK_TYPE_11A, &short_head->ab);
+				  PK_TYPE_11A, &लघु_head->ab);
 
 		/* Get Duration and TimeStampOff */
-		short_head->duration =
+		लघु_head->duration =
 			cpu_to_le16((u16)s_uGetDataDuration(priv, DATADUR_B,
 				    frame_size, PK_TYPE_11A, current_rate,
 				    false, 0, 0, 1, AUTO_FB_NONE));
 
-		short_head->time_stamp_off =
-				vnt_time_stamp_off(priv, current_rate);
-	} else {
+		लघु_head->समय_stamp_off =
+				vnt_समय_stamp_off(priv, current_rate);
+	पूर्ण अन्यथा अणु
 		current_rate = RATE_1M;
-		short_head->fifo_ctl |= cpu_to_le16(FIFOCTL_11B);
+		लघु_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_11B);
 
 		/* Get SignalField,ServiceField,Length */
 		vnt_get_phy_field(priv, frame_size, current_rate,
-				  PK_TYPE_11B, &short_head->ab);
+				  PK_TYPE_11B, &लघु_head->ab);
 
 		/* Get Duration and TimeStampOff */
-		short_head->duration =
+		लघु_head->duration =
 			cpu_to_le16((u16)s_uGetDataDuration(priv, DATADUR_B,
 				    frame_size, PK_TYPE_11B, current_rate,
 				    false, 0, 0, 1, AUTO_FB_NONE));
 
-		short_head->time_stamp_off =
-			vnt_time_stamp_off(priv, current_rate);
-	}
+		लघु_head->समय_stamp_off =
+			vnt_समय_stamp_off(priv, current_rate);
+	पूर्ण
 
-	short_head->fifo_ctl |= cpu_to_le16(FIFOCTL_GENINT);
+	लघु_head->fअगरo_ctl |= cpu_to_le16(FIFOCTL_GENINT);
 
 	/* Copy Beacon */
-	memcpy(mgmt_hdr, skb->data, skb->len);
+	स_नकल(mgmt_hdr, skb->data, skb->len);
 
-	/* time stamp always 0 */
-	mgmt_hdr->u.beacon.timestamp = 0;
+	/* समय stamp always 0 */
+	mgmt_hdr->u.beacon.बारtamp = 0;
 
 	info = IEEE80211_SKB_CB(skb);
-	if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) {
-		struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)mgmt_hdr;
+	अगर (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) अणु
+		काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)mgmt_hdr;
 
 		hdr->duration_id = 0;
 		hdr->seq_ctrl = cpu_to_le16(priv->wSeqCounter << 4);
-	}
+	पूर्ण
 
 	priv->wSeqCounter++;
-	if (priv->wSeqCounter > 0x0fff)
+	अगर (priv->wSeqCounter > 0x0fff)
 		priv->wSeqCounter = 0;
 
-	priv->wBCNBufLen = sizeof(*short_head) + skb->len;
+	priv->wBCNBufLen = माप(*लघु_head) + skb->len;
 
 	MACvSetCurrBCNTxDescAddr(priv->PortOffset, priv->tx_beacon_dma);
 
 	MACvSetCurrBCNLength(priv->PortOffset, priv->wBCNBufLen);
-	/* Set auto Transmit on */
+	/* Set स्वतः Transmit on */
 	MACvRegBitsOn(priv->PortOffset, MAC_REG_TCR, TCR_AUTOBCNTX);
 	/* Poll Transmit the adapter */
 	MACvTransmitBCN(priv->PortOffset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vnt_beacon_make(struct vnt_private *priv, struct ieee80211_vif *vif)
-{
-	struct sk_buff *beacon;
+पूर्णांक vnt_beacon_make(काष्ठा vnt_निजी *priv, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा sk_buff *beacon;
 
-	beacon = ieee80211_beacon_get(priv->hw, vif);
-	if (!beacon)
-		return -ENOMEM;
+	beacon = ieee80211_beacon_get(priv->hw, vअगर);
+	अगर (!beacon)
+		वापस -ENOMEM;
 
-	if (vnt_beacon_xmit(priv, beacon)) {
-		ieee80211_free_txskb(priv->hw, beacon);
-		return -ENODEV;
-	}
+	अगर (vnt_beacon_xmit(priv, beacon)) अणु
+		ieee80211_मुक्त_txskb(priv->hw, beacon);
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vnt_beacon_enable(struct vnt_private *priv, struct ieee80211_vif *vif,
-		      struct ieee80211_bss_conf *conf)
-{
+पूर्णांक vnt_beacon_enable(काष्ठा vnt_निजी *priv, काष्ठा ieee80211_vअगर *vअगर,
+		      काष्ठा ieee80211_bss_conf *conf)
+अणु
 	VNSvOutPortB(priv->PortOffset + MAC_REG_TFTCTL, TFTCTL_TSFCNTRST);
 
 	VNSvOutPortB(priv->PortOffset + MAC_REG_TFTCTL, TFTCTL_TSFCNTREN);
 
-	CARDvSetFirstNextTBTT(priv, conf->beacon_int);
+	CARDvSetFirstNextTBTT(priv, conf->beacon_पूर्णांक);
 
-	CARDbSetBeaconPeriod(priv, conf->beacon_int);
+	CARDbSetBeaconPeriod(priv, conf->beacon_पूर्णांक);
 
-	return vnt_beacon_make(priv, vif);
-}
+	वापस vnt_beacon_make(priv, vअगर);
+पूर्ण

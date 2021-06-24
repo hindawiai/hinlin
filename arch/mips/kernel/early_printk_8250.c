@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  8250/16550-type serial ports prom_putchar()
+ *  8250/16550-type serial ports prom_अक्षर_दो()
  *
  *  Copyright (C) 2010  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/io.h>
-#include <linux/serial_core.h>
-#include <linux/serial_reg.h>
-#include <asm/setup.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <यंत्र/setup.h>
 
-static void __iomem *serial8250_base;
-static unsigned int serial8250_reg_shift;
-static unsigned int serial8250_tx_timeout;
+अटल व्योम __iomem *serial8250_base;
+अटल अचिन्हित पूर्णांक serial8250_reg_shअगरt;
+अटल अचिन्हित पूर्णांक serial8250_tx_समयout;
 
-void setup_8250_early_printk_port(unsigned long base, unsigned int reg_shift,
-				  unsigned int timeout)
-{
-	serial8250_base = (void __iomem *)base;
-	serial8250_reg_shift = reg_shift;
-	serial8250_tx_timeout = timeout;
-}
+व्योम setup_8250_early_prपूर्णांकk_port(अचिन्हित दीर्घ base, अचिन्हित पूर्णांक reg_shअगरt,
+				  अचिन्हित पूर्णांक समयout)
+अणु
+	serial8250_base = (व्योम __iomem *)base;
+	serial8250_reg_shअगरt = reg_shअगरt;
+	serial8250_tx_समयout = समयout;
+पूर्ण
 
-static inline u8 serial_in(int offset)
-{
-	return readb(serial8250_base + (offset << serial8250_reg_shift));
-}
+अटल अंतरभूत u8 serial_in(पूर्णांक offset)
+अणु
+	वापस पढ़ोb(serial8250_base + (offset << serial8250_reg_shअगरt));
+पूर्ण
 
-static inline void serial_out(int offset, char value)
-{
-	writeb(value, serial8250_base + (offset << serial8250_reg_shift));
-}
+अटल अंतरभूत व्योम serial_out(पूर्णांक offset, अक्षर value)
+अणु
+	ग_लिखोb(value, serial8250_base + (offset << serial8250_reg_shअगरt));
+पूर्ण
 
-void prom_putchar(char c)
-{
-	unsigned int timeout;
-	int status, bits;
+व्योम prom_अक्षर_दो(अक्षर c)
+अणु
+	अचिन्हित पूर्णांक समयout;
+	पूर्णांक status, bits;
 
-	if (!serial8250_base)
-		return;
+	अगर (!serial8250_base)
+		वापस;
 
-	timeout = serial8250_tx_timeout;
+	समयout = serial8250_tx_समयout;
 	bits = UART_LSR_TEMT | UART_LSR_THRE;
 
-	do {
+	करो अणु
 		status = serial_in(UART_LSR);
 
-		if (--timeout == 0)
-			break;
-	} while ((status & bits) != bits);
+		अगर (--समयout == 0)
+			अवरोध;
+	पूर्ण जबतक ((status & bits) != bits);
 
-	if (timeout)
+	अगर (समयout)
 		serial_out(UART_TX, c);
-}
+पूर्ण

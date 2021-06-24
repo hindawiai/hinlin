@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * FPGA Bridge Driver for FPGA Management Engine (FME)
+ * FPGA Bridge Driver क्रम FPGA Management Engine (FME)
  *
  * Copyright (C) 2017-2018 Intel Corporation, Inc.
  *
  * Authors:
- *   Wu Hao <hao.wu@intel.com>
- *   Joseph Grecco <joe.grecco@intel.com>
- *   Enno Luebbers <enno.luebbers@intel.com>
- *   Tim Whisonant <tim.whisonant@intel.com>
- *   Ananda Ravuri <ananda.ravuri@intel.com>
- *   Henry Mitchel <henry.mitchel@intel.com>
+ *   Wu Hao <hao.wu@पूर्णांकel.com>
+ *   Joseph Grecco <joe.grecco@पूर्णांकel.com>
+ *   Enno Luebbers <enno.luebbers@पूर्णांकel.com>
+ *   Tim Whisonant <tim.whisonant@पूर्णांकel.com>
+ *   Ananda Ravuri <ananda.ravuri@पूर्णांकel.com>
+ *   Henry Mitchel <henry.mitchel@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/fpga/fpga-bridge.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fpga/fpga-bridge.h>
 
-#include "dfl.h"
-#include "dfl-fme-pr.h"
+#समावेश "dfl.h"
+#समावेश "dfl-fme-pr.h"
 
-struct fme_br_priv {
-	struct dfl_fme_br_pdata *pdata;
-	struct dfl_fpga_port_ops *port_ops;
-	struct platform_device *port_pdev;
-};
+काष्ठा fme_br_priv अणु
+	काष्ठा dfl_fme_br_pdata *pdata;
+	काष्ठा dfl_fpga_port_ops *port_ops;
+	काष्ठा platक्रमm_device *port_pdev;
+पूर्ण;
 
-static int fme_bridge_enable_set(struct fpga_bridge *bridge, bool enable)
-{
-	struct fme_br_priv *priv = bridge->priv;
-	struct platform_device *port_pdev;
-	struct dfl_fpga_port_ops *ops;
+अटल पूर्णांक fme_bridge_enable_set(काष्ठा fpga_bridge *bridge, bool enable)
+अणु
+	काष्ठा fme_br_priv *priv = bridge->priv;
+	काष्ठा platक्रमm_device *port_pdev;
+	काष्ठा dfl_fpga_port_ops *ops;
 
-	if (!priv->port_pdev) {
+	अगर (!priv->port_pdev) अणु
 		port_pdev = dfl_fpga_cdev_find_port(priv->pdata->cdev,
 						    &priv->pdata->port_id,
 						    dfl_fpga_check_port_id);
-		if (!port_pdev)
-			return -ENODEV;
+		अगर (!port_pdev)
+			वापस -ENODEV;
 
 		priv->port_pdev = port_pdev;
-	}
+	पूर्ण
 
-	if (priv->port_pdev && !priv->port_ops) {
+	अगर (priv->port_pdev && !priv->port_ops) अणु
 		ops = dfl_fpga_port_ops_get(priv->port_pdev);
-		if (!ops || !ops->enable_set)
-			return -ENOENT;
+		अगर (!ops || !ops->enable_set)
+			वापस -ENOENT;
 
 		priv->port_ops = ops;
-	}
+	पूर्ण
 
-	return priv->port_ops->enable_set(priv->port_pdev, enable);
-}
+	वापस priv->port_ops->enable_set(priv->port_pdev, enable);
+पूर्ण
 
-static const struct fpga_bridge_ops fme_bridge_ops = {
+अटल स्थिर काष्ठा fpga_bridge_ops fme_bridge_ops = अणु
 	.enable_set = fme_bridge_enable_set,
-};
+पूर्ण;
 
-static int fme_br_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct fme_br_priv *priv;
-	struct fpga_bridge *br;
+अटल पूर्णांक fme_br_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा fme_br_priv *priv;
+	काष्ठा fpga_bridge *br;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->pdata = dev_get_platdata(dev);
 
 	br = devm_fpga_bridge_create(dev, "DFL FPGA FME Bridge",
 				     &fme_bridge_ops, priv);
-	if (!br)
-		return -ENOMEM;
+	अगर (!br)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, br);
+	platक्रमm_set_drvdata(pdev, br);
 
-	return fpga_bridge_register(br);
-}
+	वापस fpga_bridge_रेजिस्टर(br);
+पूर्ण
 
-static int fme_br_remove(struct platform_device *pdev)
-{
-	struct fpga_bridge *br = platform_get_drvdata(pdev);
-	struct fme_br_priv *priv = br->priv;
+अटल पूर्णांक fme_br_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fpga_bridge *br = platक्रमm_get_drvdata(pdev);
+	काष्ठा fme_br_priv *priv = br->priv;
 
-	fpga_bridge_unregister(br);
+	fpga_bridge_unरेजिस्टर(br);
 
-	if (priv->port_pdev)
+	अगर (priv->port_pdev)
 		put_device(&priv->port_pdev->dev);
-	if (priv->port_ops)
+	अगर (priv->port_ops)
 		dfl_fpga_port_ops_put(priv->port_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver fme_br_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver fme_br_driver = अणु
+	.driver	= अणु
 		.name    = DFL_FPGA_FME_BRIDGE,
-	},
+	पूर्ण,
 	.probe   = fme_br_probe,
-	.remove  = fme_br_remove,
-};
+	.हटाओ  = fme_br_हटाओ,
+पूर्ण;
 
-module_platform_driver(fme_br_driver);
+module_platक्रमm_driver(fme_br_driver);
 
 MODULE_DESCRIPTION("FPGA Bridge for DFL FPGA Management Engine");
 MODULE_AUTHOR("Intel Corporation");

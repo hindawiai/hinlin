@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Line 6 Linux USB driver
  *
@@ -6,19 +7,19 @@
  *                         Emil Myhrman (emil.myhrman@gmail.com)
  */
 
-#include <linux/wait.h>
-#include <linux/usb.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/leds.h>
-#include <sound/core.h>
-#include <sound/control.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/leds.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
 
-#include "capture.h"
-#include "driver.h"
-#include "playback.h"
+#समावेश "capture.h"
+#समावेश "driver.h"
+#समावेश "playback.h"
 
-enum line6_device_type {
+क्रमागत line6_device_type अणु
 	LINE6_GUITARPORT,
 	LINE6_PODSTUDIO_GX,
 	LINE6_PODSTUDIO_UX1,
@@ -26,23 +27,23 @@ enum line6_device_type {
 	LINE6_TONEPORT_GX,
 	LINE6_TONEPORT_UX1,
 	LINE6_TONEPORT_UX2,
-};
+पूर्ण;
 
-struct usb_line6_toneport;
+काष्ठा usb_line6_toneport;
 
-struct toneport_led {
-	struct led_classdev dev;
-	char name[64];
-	struct usb_line6_toneport *toneport;
-	bool registered;
-};
+काष्ठा toneport_led अणु
+	काष्ठा led_classdev dev;
+	अक्षर name[64];
+	काष्ठा usb_line6_toneport *toneport;
+	bool रेजिस्टरed;
+पूर्ण;
 
-struct usb_line6_toneport {
+काष्ठा usb_line6_toneport अणु
 	/* Generic Line 6 USB data */
-	struct usb_line6 line6;
+	काष्ठा usb_line6 line6;
 
 	/* Source selector */
-	int source;
+	पूर्णांक source;
 
 	/* Serial number of device */
 	u32 serial_number;
@@ -51,34 +52,34 @@ struct usb_line6_toneport {
 	u8 firmware_version;
 
 	/* Device type */
-	enum line6_device_type type;
+	क्रमागत line6_device_type type;
 
 	/* LED instances */
-	struct toneport_led leds[2];
-};
+	काष्ठा toneport_led leds[2];
+पूर्ण;
 
-#define line6_to_toneport(x) container_of(x, struct usb_line6_toneport, line6)
+#घोषणा line6_to_toneport(x) container_of(x, काष्ठा usb_line6_toneport, line6)
 
-static int toneport_send_cmd(struct usb_device *usbdev, int cmd1, int cmd2);
+अटल पूर्णांक toneport_send_cmd(काष्ठा usb_device *usbdev, पूर्णांक cmd1, पूर्णांक cmd2);
 
-#define TONEPORT_PCM_DELAY 1
+#घोषणा TONEPORT_PCM_DELAY 1
 
-static const struct snd_ratden toneport_ratden = {
+अटल स्थिर काष्ठा snd_ratden toneport_ratden = अणु
 	.num_min = 44100,
 	.num_max = 44100,
 	.num_step = 1,
 	.den = 1
-};
+पूर्ण;
 
-static struct line6_pcm_properties toneport_pcm_properties = {
-	.playback_hw = {
+अटल काष्ठा line6_pcm_properties toneport_pcm_properties = अणु
+	.playback_hw = अणु
 				  .info = (SNDRV_PCM_INFO_MMAP |
 					   SNDRV_PCM_INFO_INTERLEAVED |
 					   SNDRV_PCM_INFO_BLOCK_TRANSFER |
 					   SNDRV_PCM_INFO_MMAP_VALID |
 					   SNDRV_PCM_INFO_PAUSE |
 					   SNDRV_PCM_INFO_SYNC_START),
-				  .formats = SNDRV_PCM_FMTBIT_S16_LE,
+				  .क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
 				  .rates = SNDRV_PCM_RATE_KNOT,
 				  .rate_min = 44100,
 				  .rate_max = 44100,
@@ -88,14 +89,14 @@ static struct line6_pcm_properties toneport_pcm_properties = {
 				  .period_bytes_min = 64,
 				  .period_bytes_max = 8192,
 				  .periods_min = 1,
-				  .periods_max = 1024},
-	.capture_hw = {
+				  .periods_max = 1024पूर्ण,
+	.capture_hw = अणु
 				 .info = (SNDRV_PCM_INFO_MMAP |
 					  SNDRV_PCM_INFO_INTERLEAVED |
 					  SNDRV_PCM_INFO_BLOCK_TRANSFER |
 					  SNDRV_PCM_INFO_MMAP_VALID |
 					  SNDRV_PCM_INFO_SYNC_START),
-				 .formats = SNDRV_PCM_FMTBIT_S16_LE,
+				 .क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
 				 .rates = SNDRV_PCM_RATE_KNOT,
 				 .rate_min = 44100,
 				 .rate_max = 44100,
@@ -105,390 +106,390 @@ static struct line6_pcm_properties toneport_pcm_properties = {
 				 .period_bytes_min = 64,
 				 .period_bytes_max = 8192,
 				 .periods_min = 1,
-				 .periods_max = 1024},
-	.rates = {
+				 .periods_max = 1024पूर्ण,
+	.rates = अणु
 			    .nrats = 1,
-			    .rats = &toneport_ratden},
+			    .rats = &toneport_ratdenपूर्ण,
 	.bytes_per_channel = 2
-};
+पूर्ण;
 
-static const struct {
-	const char *name;
-	int code;
-} toneport_source_info[] = {
-	{"Microphone", 0x0a01},
-	{"Line", 0x0801},
-	{"Instrument", 0x0b01},
-	{"Inst & Mic", 0x0901}
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+	पूर्णांक code;
+पूर्ण toneport_source_info[] = अणु
+	अणु"Microphone", 0x0a01पूर्ण,
+	अणु"Line", 0x0801पूर्ण,
+	अणु"Instrument", 0x0b01पूर्ण,
+	अणु"Inst & Mic", 0x0901पूर्ण
+पूर्ण;
 
-static int toneport_send_cmd(struct usb_device *usbdev, int cmd1, int cmd2)
-{
-	int ret;
+अटल पूर्णांक toneport_send_cmd(काष्ठा usb_device *usbdev, पूर्णांक cmd1, पूर्णांक cmd2)
+अणु
+	पूर्णांक ret;
 
 	ret = usb_control_msg_send(usbdev, 0, 0x67,
-				   USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_OUT,
-				   cmd1, cmd2, NULL, 0, LINE6_TIMEOUT * HZ,
+				   USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_OUT,
+				   cmd1, cmd2, शून्य, 0, LINE6_TIMEOUT * HZ,
 				   GFP_KERNEL);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&usbdev->dev, "send failed (error %d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* monitor info callback */
-static int snd_toneport_monitor_info(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_toneport_monitor_info(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 256;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 256;
+	वापस 0;
+पूर्ण
 
 /* monitor get callback */
-static int snd_toneport_monitor_get(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक snd_toneport_monitor_get(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.integer.value[0] = line6pcm->volume_monitor;
-	return 0;
-}
+	ucontrol->value.पूर्णांकeger.value[0] = line6pcm->volume_monitor;
+	वापस 0;
+पूर्ण
 
 /* monitor put callback */
-static int snd_toneport_monitor_put(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
-	int err;
+अटल पूर्णांक snd_toneport_monitor_put(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
+	पूर्णांक err;
 
-	if (ucontrol->value.integer.value[0] == line6pcm->volume_monitor)
-		return 0;
+	अगर (ucontrol->value.पूर्णांकeger.value[0] == line6pcm->volume_monitor)
+		वापस 0;
 
-	line6pcm->volume_monitor = ucontrol->value.integer.value[0];
+	line6pcm->volume_monitor = ucontrol->value.पूर्णांकeger.value[0];
 
-	if (line6pcm->volume_monitor > 0) {
+	अगर (line6pcm->volume_monitor > 0) अणु
 		err = line6_pcm_acquire(line6pcm, LINE6_STREAM_MONITOR, true);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			line6pcm->volume_monitor = 0;
 			line6_pcm_release(line6pcm, LINE6_STREAM_MONITOR);
-			return err;
-		}
-	} else {
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		line6_pcm_release(line6pcm, LINE6_STREAM_MONITOR);
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* source info callback */
-static int snd_toneport_source_info(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_info *uinfo)
-{
-	const int size = ARRAY_SIZE(toneport_source_info);
+अटल पूर्णांक snd_toneport_source_info(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	स्थिर पूर्णांक size = ARRAY_SIZE(toneport_source_info);
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
 	uinfo->count = 1;
-	uinfo->value.enumerated.items = size;
+	uinfo->value.क्रमागतerated.items = size;
 
-	if (uinfo->value.enumerated.item >= size)
-		uinfo->value.enumerated.item = size - 1;
+	अगर (uinfo->value.क्रमागतerated.item >= size)
+		uinfo->value.क्रमागतerated.item = size - 1;
 
-	strcpy(uinfo->value.enumerated.name,
-	       toneport_source_info[uinfo->value.enumerated.item].name);
+	म_नकल(uinfo->value.क्रमागतerated.name,
+	       toneport_source_info[uinfo->value.क्रमागतerated.item].name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* source get callback */
-static int snd_toneport_source_get(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
-	struct usb_line6_toneport *toneport = line6_to_toneport(line6pcm->line6);
+अटल पूर्णांक snd_toneport_source_get(काष्ठा snd_kcontrol *kcontrol,
+				   काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
+	काष्ठा usb_line6_toneport *toneport = line6_to_toneport(line6pcm->line6);
 
-	ucontrol->value.enumerated.item[0] = toneport->source;
-	return 0;
-}
+	ucontrol->value.क्रमागतerated.item[0] = toneport->source;
+	वापस 0;
+पूर्ण
 
 /* source put callback */
-static int snd_toneport_source_put(struct snd_kcontrol *kcontrol,
-				   struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
-	struct usb_line6_toneport *toneport = line6_to_toneport(line6pcm->line6);
-	unsigned int source;
+अटल पूर्णांक snd_toneport_source_put(काष्ठा snd_kcontrol *kcontrol,
+				   काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_line6_pcm *line6pcm = snd_kcontrol_chip(kcontrol);
+	काष्ठा usb_line6_toneport *toneport = line6_to_toneport(line6pcm->line6);
+	अचिन्हित पूर्णांक source;
 
-	source = ucontrol->value.enumerated.item[0];
-	if (source >= ARRAY_SIZE(toneport_source_info))
-		return -EINVAL;
-	if (source == toneport->source)
-		return 0;
+	source = ucontrol->value.क्रमागतerated.item[0];
+	अगर (source >= ARRAY_SIZE(toneport_source_info))
+		वापस -EINVAL;
+	अगर (source == toneport->source)
+		वापस 0;
 
 	toneport->source = source;
 	toneport_send_cmd(toneport->line6.usbdev,
 			  toneport_source_info[source].code, 0x0000);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void toneport_startup(struct usb_line6 *line6)
-{
+अटल व्योम toneport_startup(काष्ठा usb_line6 *line6)
+अणु
 	line6_pcm_acquire(line6->line6pcm, LINE6_STREAM_MONITOR, true);
-}
+पूर्ण
 
 /* control definition */
-static const struct snd_kcontrol_new toneport_control_monitor = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new toneport_control_monitor = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Monitor Playback Volume",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 	.info = snd_toneport_monitor_info,
 	.get = snd_toneport_monitor_get,
 	.put = snd_toneport_monitor_put
-};
+पूर्ण;
 
 /* source selector definition */
-static const struct snd_kcontrol_new toneport_control_source = {
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new toneport_control_source = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "PCM Capture Source",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 	.info = snd_toneport_source_info,
 	.get = snd_toneport_source_get,
 	.put = snd_toneport_source_put
-};
+पूर्ण;
 
 /*
 	For the led on Guitarport.
 	Brightness goes from 0x00 to 0x26. Set a value above this to have led
 	blink.
-	(void cmd_0x02(byte red, byte green)
+	(व्योम cmd_0x02(byte red, byte green)
 */
 
-static bool toneport_has_led(struct usb_line6_toneport *toneport)
-{
-	switch (toneport->type) {
-	case LINE6_GUITARPORT:
-	case LINE6_TONEPORT_GX:
-	/* add your device here if you are missing support for the LEDs */
-		return true;
+अटल bool toneport_has_led(काष्ठा usb_line6_toneport *toneport)
+अणु
+	चयन (toneport->type) अणु
+	हाल LINE6_GUITARPORT:
+	हाल LINE6_TONEPORT_GX:
+	/* add your device here अगर you are missing support क्रम the LEDs */
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const char * const toneport_led_colors[2] = { "red", "green" };
-static const int toneport_led_init_vals[2] = { 0x00, 0x26 };
+अटल स्थिर अक्षर * स्थिर toneport_led_colors[2] = अणु "red", "green" पूर्ण;
+अटल स्थिर पूर्णांक toneport_led_init_vals[2] = अणु 0x00, 0x26 पूर्ण;
 
-static void toneport_update_led(struct usb_line6_toneport *toneport)
-{
+अटल व्योम toneport_update_led(काष्ठा usb_line6_toneport *toneport)
+अणु
 	toneport_send_cmd(toneport->line6.usbdev,
 			  (toneport->leds[0].dev.brightness << 8) | 0x0002,
 			  toneport->leds[1].dev.brightness);
-}
+पूर्ण
 
-static void toneport_led_brightness_set(struct led_classdev *led_cdev,
-					enum led_brightness brightness)
-{
-	struct toneport_led *leds =
-		container_of(led_cdev, struct toneport_led, dev);
+अटल व्योम toneport_led_brightness_set(काष्ठा led_classdev *led_cdev,
+					क्रमागत led_brightness brightness)
+अणु
+	काष्ठा toneport_led *leds =
+		container_of(led_cdev, काष्ठा toneport_led, dev);
 	toneport_update_led(leds->toneport);
-}
+पूर्ण
 
-static int toneport_init_leds(struct usb_line6_toneport *toneport)
-{
-	struct device *dev = &toneport->line6.usbdev->dev;
-	int i, err;
+अटल पूर्णांक toneport_init_leds(काष्ठा usb_line6_toneport *toneport)
+अणु
+	काष्ठा device *dev = &toneport->line6.usbdev->dev;
+	पूर्णांक i, err;
 
-	for (i = 0; i < 2; i++) {
-		struct toneport_led *led = &toneport->leds[i];
-		struct led_classdev *leddev = &led->dev;
+	क्रम (i = 0; i < 2; i++) अणु
+		काष्ठा toneport_led *led = &toneport->leds[i];
+		काष्ठा led_classdev *leddev = &led->dev;
 
 		led->toneport = toneport;
-		snprintf(led->name, sizeof(led->name), "%s::%s",
+		snम_लिखो(led->name, माप(led->name), "%s::%s",
 			 dev_name(dev), toneport_led_colors[i]);
 		leddev->name = led->name;
 		leddev->brightness = toneport_led_init_vals[i];
 		leddev->max_brightness = 0x26;
 		leddev->brightness_set = toneport_led_brightness_set;
-		err = led_classdev_register(dev, leddev);
-		if (err)
-			return err;
-		led->registered = true;
-	}
+		err = led_classdev_रेजिस्टर(dev, leddev);
+		अगर (err)
+			वापस err;
+		led->रेजिस्टरed = true;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void toneport_remove_leds(struct usb_line6_toneport *toneport)
-{
-	struct toneport_led *led;
-	int i;
+अटल व्योम toneport_हटाओ_leds(काष्ठा usb_line6_toneport *toneport)
+अणु
+	काष्ठा toneport_led *led;
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		led = &toneport->leds[i];
-		if (!led->registered)
-			break;
-		led_classdev_unregister(&led->dev);
-		led->registered = false;
-	}
-}
+		अगर (!led->रेजिस्टरed)
+			अवरोध;
+		led_classdev_unरेजिस्टर(&led->dev);
+		led->रेजिस्टरed = false;
+	पूर्ण
+पूर्ण
 
-static bool toneport_has_source_select(struct usb_line6_toneport *toneport)
-{
-	switch (toneport->type) {
-	case LINE6_TONEPORT_UX1:
-	case LINE6_TONEPORT_UX2:
-	case LINE6_PODSTUDIO_UX1:
-	case LINE6_PODSTUDIO_UX2:
-		return true;
+अटल bool toneport_has_source_select(काष्ठा usb_line6_toneport *toneport)
+अणु
+	चयन (toneport->type) अणु
+	हाल LINE6_TONEPORT_UX1:
+	हाल LINE6_TONEPORT_UX2:
+	हाल LINE6_PODSTUDIO_UX1:
+	हाल LINE6_PODSTUDIO_UX2:
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /*
 	Setup Toneport device.
 */
-static int toneport_setup(struct usb_line6_toneport *toneport)
-{
+अटल पूर्णांक toneport_setup(काष्ठा usb_line6_toneport *toneport)
+अणु
 	u32 *ticks;
-	struct usb_line6 *line6 = &toneport->line6;
-	struct usb_device *usbdev = line6->usbdev;
+	काष्ठा usb_line6 *line6 = &toneport->line6;
+	काष्ठा usb_device *usbdev = line6->usbdev;
 
-	ticks = kmalloc(sizeof(*ticks), GFP_KERNEL);
-	if (!ticks)
-		return -ENOMEM;
+	ticks = kदो_स्मृति(माप(*ticks), GFP_KERNEL);
+	अगर (!ticks)
+		वापस -ENOMEM;
 
-	/* sync time on device with host: */
-	/* note: 32-bit timestamps overflow in year 2106 */
-	*ticks = (u32)ktime_get_real_seconds();
-	line6_write_data(line6, 0x80c6, ticks, 4);
-	kfree(ticks);
+	/* sync समय on device with host: */
+	/* note: 32-bit बारtamps overflow in year 2106 */
+	*ticks = (u32)kसमय_get_real_seconds();
+	line6_ग_लिखो_data(line6, 0x80c6, ticks, 4);
+	kमुक्त(ticks);
 
 	/* enable device: */
 	toneport_send_cmd(usbdev, 0x0301, 0x0000);
 
 	/* initialize source select: */
-	if (toneport_has_source_select(toneport))
+	अगर (toneport_has_source_select(toneport))
 		toneport_send_cmd(usbdev,
 				  toneport_source_info[toneport->source].code,
 				  0x0000);
 
-	if (toneport_has_led(toneport))
+	अगर (toneport_has_led(toneport))
 		toneport_update_led(toneport);
 
 	schedule_delayed_work(&toneport->line6.startup_work,
-			      msecs_to_jiffies(TONEPORT_PCM_DELAY * 1000));
-	return 0;
-}
+			      msecs_to_jअगरfies(TONEPORT_PCM_DELAY * 1000));
+	वापस 0;
+पूर्ण
 
 /*
 	Toneport device disconnected.
 */
-static void line6_toneport_disconnect(struct usb_line6 *line6)
-{
-	struct usb_line6_toneport *toneport = line6_to_toneport(line6);
+अटल व्योम line6_toneport_disconnect(काष्ठा usb_line6 *line6)
+अणु
+	काष्ठा usb_line6_toneport *toneport = line6_to_toneport(line6);
 
-	if (toneport_has_led(toneport))
-		toneport_remove_leds(toneport);
-}
+	अगर (toneport_has_led(toneport))
+		toneport_हटाओ_leds(toneport);
+पूर्ण
 
 
 /*
 	 Try to init Toneport device.
 */
-static int toneport_init(struct usb_line6 *line6,
-			 const struct usb_device_id *id)
-{
-	int err;
-	struct usb_line6_toneport *toneport = line6_to_toneport(line6);
+अटल पूर्णांक toneport_init(काष्ठा usb_line6 *line6,
+			 स्थिर काष्ठा usb_device_id *id)
+अणु
+	पूर्णांक err;
+	काष्ठा usb_line6_toneport *toneport = line6_to_toneport(line6);
 
 	toneport->type = id->driver_info;
 
 	line6->disconnect = line6_toneport_disconnect;
 	line6->startup = toneport_startup;
 
-	/* initialize PCM subsystem: */
+	/* initialize PCM subप्रणाली: */
 	err = line6_init_pcm(line6, &toneport_pcm_properties);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* register monitor control: */
+	/* रेजिस्टर monitor control: */
 	err = snd_ctl_add(line6->card,
 			  snd_ctl_new1(&toneport_control_monitor,
 				       line6->line6pcm));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* register source select control: */
-	if (toneport_has_source_select(toneport)) {
+	/* रेजिस्टर source select control: */
+	अगर (toneport_has_source_select(toneport)) अणु
 		err =
 		    snd_ctl_add(line6->card,
 				snd_ctl_new1(&toneport_control_source,
 					     line6->line6pcm));
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	line6_read_serial_number(line6, &toneport->serial_number);
-	line6_read_data(line6, 0x80c2, &toneport->firmware_version, 1);
+	line6_पढ़ो_serial_number(line6, &toneport->serial_number);
+	line6_पढ़ो_data(line6, 0x80c2, &toneport->firmware_version, 1);
 
-	if (toneport_has_led(toneport)) {
+	अगर (toneport_has_led(toneport)) अणु
 		err = toneport_init_leds(toneport);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = toneport_setup(toneport);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* register audio system: */
-	return snd_card_register(line6->card);
-}
+	/* रेजिस्टर audio प्रणाली: */
+	वापस snd_card_रेजिस्टर(line6->card);
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /*
 	Resume Toneport device after reset.
 */
-static int toneport_reset_resume(struct usb_interface *interface)
-{
-	int err;
+अटल पूर्णांक toneport_reset_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	पूर्णांक err;
 
-	err = toneport_setup(usb_get_intfdata(interface));
-	if (err)
-		return err;
-	return line6_resume(interface);
-}
-#endif
+	err = toneport_setup(usb_get_पूर्णांकfdata(पूर्णांकerface));
+	अगर (err)
+		वापस err;
+	वापस line6_resume(पूर्णांकerface);
+पूर्ण
+#पूर्ण_अगर
 
-#define LINE6_DEVICE(prod) USB_DEVICE(0x0e41, prod)
-#define LINE6_IF_NUM(prod, n) USB_DEVICE_INTERFACE_NUMBER(0x0e41, prod, n)
+#घोषणा LINE6_DEVICE(prod) USB_DEVICE(0x0e41, prod)
+#घोषणा LINE6_IF_NUM(prod, n) USB_DEVICE_INTERFACE_NUMBER(0x0e41, prod, n)
 
 /* table of devices that work with this driver */
-static const struct usb_device_id toneport_id_table[] = {
-	{ LINE6_DEVICE(0x4750),    .driver_info = LINE6_GUITARPORT },
-	{ LINE6_DEVICE(0x4153),    .driver_info = LINE6_PODSTUDIO_GX },
-	{ LINE6_DEVICE(0x4150),    .driver_info = LINE6_PODSTUDIO_UX1 },
-	{ LINE6_IF_NUM(0x4151, 0), .driver_info = LINE6_PODSTUDIO_UX2 },
-	{ LINE6_DEVICE(0x4147),    .driver_info = LINE6_TONEPORT_GX },
-	{ LINE6_DEVICE(0x4141),    .driver_info = LINE6_TONEPORT_UX1 },
-	{ LINE6_IF_NUM(0x4142, 0), .driver_info = LINE6_TONEPORT_UX2 },
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id toneport_id_table[] = अणु
+	अणु LINE6_DEVICE(0x4750),    .driver_info = LINE6_GUITARPORT पूर्ण,
+	अणु LINE6_DEVICE(0x4153),    .driver_info = LINE6_PODSTUDIO_GX पूर्ण,
+	अणु LINE6_DEVICE(0x4150),    .driver_info = LINE6_PODSTUDIO_UX1 पूर्ण,
+	अणु LINE6_IF_NUM(0x4151, 0), .driver_info = LINE6_PODSTUDIO_UX2 पूर्ण,
+	अणु LINE6_DEVICE(0x4147),    .driver_info = LINE6_TONEPORT_GX पूर्ण,
+	अणु LINE6_DEVICE(0x4141),    .driver_info = LINE6_TONEPORT_UX1 पूर्ण,
+	अणु LINE6_IF_NUM(0x4142, 0), .driver_info = LINE6_TONEPORT_UX2 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, toneport_id_table);
 
-static const struct line6_properties toneport_properties_table[] = {
-	[LINE6_GUITARPORT] = {
+अटल स्थिर काष्ठा line6_properties toneport_properties_table[] = अणु
+	[LINE6_GUITARPORT] = अणु
 		.id = "GuitarPort",
 		.name = "GuitarPort",
 		.capabilities	= LINE6_CAP_PCM,
@@ -496,8 +497,8 @@ static const struct line6_properties toneport_properties_table[] = {
 		/* no control channel */
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	},
-	[LINE6_PODSTUDIO_GX] = {
+	पूर्ण,
+	[LINE6_PODSTUDIO_GX] = अणु
 		.id = "PODStudioGX",
 		.name = "POD Studio GX",
 		.capabilities	= LINE6_CAP_PCM,
@@ -505,8 +506,8 @@ static const struct line6_properties toneport_properties_table[] = {
 		/* no control channel */
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	},
-	[LINE6_PODSTUDIO_UX1] = {
+	पूर्ण,
+	[LINE6_PODSTUDIO_UX1] = अणु
 		.id = "PODStudioUX1",
 		.name = "POD Studio UX1",
 		.capabilities	= LINE6_CAP_PCM,
@@ -514,17 +515,17 @@ static const struct line6_properties toneport_properties_table[] = {
 		/* no control channel */
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	},
-	[LINE6_PODSTUDIO_UX2] = {
+	पूर्ण,
+	[LINE6_PODSTUDIO_UX2] = अणु
 		.id = "PODStudioUX2",
 		.name = "POD Studio UX2",
 		.capabilities	= LINE6_CAP_PCM,
-		.altsetting = 2,  /* defaults to 44.1kHz, 16-bit */
+		.altsetting = 2,  /* शेषs to 44.1kHz, 16-bit */
 		/* no control channel */
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	},
-	[LINE6_TONEPORT_GX] = {
+	पूर्ण,
+	[LINE6_TONEPORT_GX] = अणु
 		.id = "TonePortGX",
 		.name = "TonePort GX",
 		.capabilities	= LINE6_CAP_PCM,
@@ -532,8 +533,8 @@ static const struct line6_properties toneport_properties_table[] = {
 		/* no control channel */
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	},
-	[LINE6_TONEPORT_UX1] = {
+	पूर्ण,
+	[LINE6_TONEPORT_UX1] = अणु
 		.id = "TonePortUX1",
 		.name = "TonePort UX1",
 		.capabilities	= LINE6_CAP_PCM,
@@ -541,40 +542,40 @@ static const struct line6_properties toneport_properties_table[] = {
 		/* no control channel */
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	},
-	[LINE6_TONEPORT_UX2] = {
+	पूर्ण,
+	[LINE6_TONEPORT_UX2] = अणु
 		.id = "TonePortUX2",
 		.name = "TonePort UX2",
 		.capabilities	= LINE6_CAP_PCM,
-		.altsetting = 2,  /* defaults to 44.1kHz, 16-bit */
+		.altsetting = 2,  /* शेषs to 44.1kHz, 16-bit */
 		/* no control channel */
 		.ep_audio_r = 0x82,
 		.ep_audio_w = 0x01,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
 	Probe USB device.
 */
-static int toneport_probe(struct usb_interface *interface,
-			  const struct usb_device_id *id)
-{
-	return line6_probe(interface, id, "Line6-TonePort",
+अटल पूर्णांक toneport_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+			  स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस line6_probe(पूर्णांकerface, id, "Line6-TonePort",
 			   &toneport_properties_table[id->driver_info],
-			   toneport_init, sizeof(struct usb_line6_toneport));
-}
+			   toneport_init, माप(काष्ठा usb_line6_toneport));
+पूर्ण
 
-static struct usb_driver toneport_driver = {
+अटल काष्ठा usb_driver toneport_driver = अणु
 	.name = KBUILD_MODNAME,
 	.probe = toneport_probe,
 	.disconnect = line6_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend = line6_suspend,
 	.resume = line6_resume,
 	.reset_resume = toneport_reset_resume,
-#endif
+#पूर्ण_अगर
 	.id_table = toneport_id_table,
-};
+पूर्ण;
 
 module_usb_driver(toneport_driver);
 

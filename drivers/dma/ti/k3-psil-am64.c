@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2020 Texas Instruments Incorporated - https://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include "k3-psil-priv.h"
+#समावेश "k3-psil-priv.h"
 
-#define PSIL_PDMA_XY_TR(x)					\
-	{							\
-		.thread_id = x,					\
-		.ep_config = {					\
+#घोषणा PSIL_PDMA_XY_TR(x)					\
+	अणु							\
+		.thपढ़ो_id = x,					\
+		.ep_config = अणु					\
 			.ep_type = PSIL_EP_PDMA_XY,		\
 			.mapped_channel_id = -1,		\
-			.default_flow_id = -1,			\
-		},						\
-	}
+			.शेष_flow_id = -1,			\
+		पूर्ण,						\
+	पूर्ण
 
-#define PSIL_PDMA_XY_PKT(x)					\
-	{							\
-		.thread_id = x,					\
-		.ep_config = {					\
+#घोषणा PSIL_PDMA_XY_PKT(x)					\
+	अणु							\
+		.thपढ़ो_id = x,					\
+		.ep_config = अणु					\
 			.ep_type = PSIL_EP_PDMA_XY,		\
 			.mapped_channel_id = -1,		\
-			.default_flow_id = -1,			\
+			.शेष_flow_id = -1,			\
 			.pkt_mode = 1,				\
-		},						\
-	}
+		पूर्ण,						\
+	पूर्ण
 
-#define PSIL_ETHERNET(x, ch, flow_base, flow_cnt)		\
-	{							\
-		.thread_id = x,					\
-		.ep_config = {					\
+#घोषणा PSIL_ETHERNET(x, ch, flow_base, flow_cnt)		\
+	अणु							\
+		.thपढ़ो_id = x,					\
+		.ep_config = अणु					\
 			.ep_type = PSIL_EP_NATIVE,		\
 			.pkt_mode = 1,				\
 			.needs_epib = 1,			\
@@ -40,14 +41,14 @@
 			.mapped_channel_id = ch,		\
 			.flow_start = flow_base,		\
 			.flow_num = flow_cnt,			\
-			.default_flow_id = flow_base,		\
-		},						\
-	}
+			.शेष_flow_id = flow_base,		\
+		पूर्ण,						\
+	पूर्ण
 
-#define PSIL_SAUL(x, ch, flow_base, flow_cnt, default_flow, tx)	\
-	{							\
-		.thread_id = x,					\
-		.ep_config = {					\
+#घोषणा PSIL_SAUL(x, ch, flow_base, flow_cnt, शेष_flow, tx)	\
+	अणु							\
+		.thपढ़ो_id = x,					\
+		.ep_config = अणु					\
 			.ep_type = PSIL_EP_NATIVE,		\
 			.pkt_mode = 1,				\
 			.needs_epib = 1,			\
@@ -55,13 +56,13 @@
 			.mapped_channel_id = ch,		\
 			.flow_start = flow_base,		\
 			.flow_num = flow_cnt,			\
-			.default_flow_id = default_flow,	\
+			.शेष_flow_id = शेष_flow,	\
 			.notdpkt = tx,				\
-		},						\
-	}
+		पूर्ण,						\
+	पूर्ण
 
-/* PSI-L source thread IDs, used for RX (DMA_DEV_TO_MEM) */
-static struct psil_ep am64_src_ep_map[] = {
+/* PSI-L source thपढ़ो IDs, used क्रम RX (DMA_DEV_TO_MEM) */
+अटल काष्ठा psil_ep am64_src_ep_map[] = अणु
 	/* SAUL */
 	PSIL_SAUL(0x4000, 17, 32, 8, 32, 0),
 	PSIL_SAUL(0x4001, 18, 32, 8, 33, 0),
@@ -113,10 +114,10 @@ static struct psil_ep am64_src_ep_map[] = {
 	PSIL_PDMA_XY_TR(0x4410),
 	/* CPSW2 */
 	PSIL_ETHERNET(0x4500, 16, 16, 16),
-};
+पूर्ण;
 
-/* PSI-L destination thread IDs, used for TX (DMA_MEM_TO_DEV) */
-static struct psil_ep am64_dst_ep_map[] = {
+/* PSI-L destination thपढ़ो IDs, used क्रम TX (DMA_MEM_TO_DEV) */
+अटल काष्ठा psil_ep am64_dst_ep_map[] = अणु
 	/* SAUL */
 	PSIL_SAUL(0xc000, 24, 80, 8, 80, 1),
 	PSIL_SAUL(0xc001, 25, 88, 8, 88, 1),
@@ -147,12 +148,12 @@ static struct psil_ep am64_dst_ep_map[] = {
 	PSIL_ETHERNET(0xc505, 21, 56, 8),
 	PSIL_ETHERNET(0xc506, 22, 64, 8),
 	PSIL_ETHERNET(0xc507, 23, 72, 8),
-};
+पूर्ण;
 
-struct psil_ep_map am64_ep_map = {
+काष्ठा psil_ep_map am64_ep_map = अणु
 	.name = "am64",
 	.src = am64_src_ep_map,
 	.src_count = ARRAY_SIZE(am64_src_ep_map),
 	.dst = am64_dst_ep_map,
 	.dst_count = ARRAY_SIZE(am64_dst_ep_map),
-};
+पूर्ण;

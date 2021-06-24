@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __HAL_DATA_H__
-#define __HAL_DATA_H__
+#अगर_अघोषित __HAL_DATA_H__
+#घोषणा __HAL_DATA_H__
 
-#include "odm_precomp.h"
-#include <hal_btcoex.h>
+#समावेश "odm_precomp.h"
+#समावेश <hal_btcoex.h>
 
-#include <hal_sdio.h>
+#समावेश <hal_sdपन.स>
 
 /*  */
 /*  <Roger_Notes> For RTL8723 WiFi/BT/GPS multi-function configuration. 2010.10.06. */
 /*  */
-enum rt_multi_func {
+क्रमागत rt_multi_func अणु
 	RT_MULTI_FUNC_NONE	= 0x00,
 	RT_MULTI_FUNC_WIFI	= 0x01,
 	RT_MULTI_FUNC_BT		= 0x02,
 	RT_MULTI_FUNC_GPS	= 0x04,
-};
+पूर्ण;
 /*  */
 /*  <Roger_Notes> For RTL8723 WiFi PDn/GPIO polarity control configuration. 2010.10.08. */
 /*  */
-enum rt_polarity_ctl {
+क्रमागत rt_polarity_ctl अणु
 	RT_POLARITY_LOW_ACT	= 0,
 	RT_POLARITY_HIGH_ACT	= 1,
-};
+पूर्ण;
 
 /*  For RTL8723 regulator mode. by tynli. 2011.01.14. */
-enum rt_regulator_mode {
+क्रमागत rt_regulator_mode अणु
 	RT_SWITCHING_REGULATOR	= 0,
 	RT_LDO_REGULATOR	= 1,
-};
+पूर्ण;
 
-enum rt_ampdu_burst {
+क्रमागत rt_ampdu_burst अणु
 	RT_AMPDU_BURST_NONE	= 0,
 	RT_AMPDU_BURST_92D	= 1,
 	RT_AMPDU_BURST_88E	= 2,
@@ -44,22 +45,22 @@ enum rt_ampdu_burst {
 	RT_AMPDU_BURST_8812_12	= 5,
 	RT_AMPDU_BURST_8812_15	= 6,
 	RT_AMPDU_BURST_8723B	= 7,
-};
+पूर्ण;
 
-#define CHANNEL_MAX_NUMBER		(14 + 24 + 21)	/*  14 is the max channel number */
-#define CHANNEL_MAX_NUMBER_2G		14
-#define CHANNEL_MAX_NUMBER_5G		54			/*  Please refer to "phy_GetChnlGroup8812A" and "Hal_ReadTxPowerInfo8812A" */
-#define CHANNEL_MAX_NUMBER_5G_80M	7
-#define MAX_PG_GROUP			13
+#घोषणा CHANNEL_MAX_NUMBER		(14 + 24 + 21)	/*  14 is the max channel number */
+#घोषणा CHANNEL_MAX_NUMBER_2G		14
+#घोषणा CHANNEL_MAX_NUMBER_5G		54			/*  Please refer to "phy_GetChnlGroup8812A" and "Hal_ReadTxPowerInfo8812A" */
+#घोषणा CHANNEL_MAX_NUMBER_5G_80M	7
+#घोषणा MAX_PG_GROUP			13
 
 /*  Tx Power Limit Table Size */
-#define MAX_REGULATION_NUM			4
-#define MAX_2_4G_BANDWIDTH_NUM			4
-#define MAX_RATE_SECTION_NUM			10
-#define MAX_5G_BANDWIDTH_NUM			4
+#घोषणा MAX_REGULATION_NUM			4
+#घोषणा MAX_2_4G_BANDWIDTH_NUM			4
+#घोषणा MAX_RATE_SECTION_NUM			10
+#घोषणा MAX_5G_BANDWIDTH_NUM			4
 
-#define MAX_BASE_NUM_IN_PHY_REG_PG_2_4G		10 /*   CCK:1, OFDM:1, HT:4, VHT:4 */
-#define MAX_BASE_NUM_IN_PHY_REG_PG_5G		9 /*  OFDM:1, HT:4, VHT:4 */
+#घोषणा MAX_BASE_NUM_IN_PHY_REG_PG_2_4G		10 /*   CCK:1, OFDM:1, HT:4, VHT:4 */
+#घोषणा MAX_BASE_NUM_IN_PHY_REG_PG_5G		9 /*  OFDM:1, HT:4, VHT:4 */
 
 
 /*  duplicate code, will move to ODM ######### */
@@ -71,50 +72,50 @@ enum rt_ampdu_burst {
 /* define HP_THERMAL_NUM		8 */
 /*  duplicate code, will move to ODM ######### */
 
-enum {
+क्रमागत अणु
 	SINGLEMAC_SINGLEPHY,	/* SMSP */
 	DUALMAC_DUALPHY,		/* DMDP */
 	DUALMAC_SINGLEPHY,	/* DMSP */
-};
+पूर्ण;
 
-#define PAGE_SIZE_128	128
-#define PAGE_SIZE_256	256
-#define PAGE_SIZE_512	512
+#घोषणा PAGE_SIZE_128	128
+#घोषणा PAGE_SIZE_256	256
+#घोषणा PAGE_SIZE_512	512
 
-struct dm_priv {
+काष्ठा dm_priv अणु
 	u8 DM_Type;
 
-#define DYNAMIC_FUNC_BT BIT0
+#घोषणा DYNAMIC_FUNC_BT BIT0
 
 	u8 DMFlag;
 	u8 InitDMFlag;
 	/* u8   RSVD_1; */
 
 	u32 InitODMFlag;
-	/*  Upper and Lower Signal threshold for Rate Adaptive */
-	int	UndecoratedSmoothedPWDB;
-	int	UndecoratedSmoothedCCK;
-	int	EntryMinUndecoratedSmoothedPWDB;
-	int	EntryMaxUndecoratedSmoothedPWDB;
-	int	MinUndecoratedPWDBForDM;
-	int	LastMinUndecoratedPWDBForDM;
+	/*  Upper and Lower Signal threshold क्रम Rate Adaptive */
+	पूर्णांक	UndecoratedSmoothedPWDB;
+	पूर्णांक	UndecoratedSmoothedCCK;
+	पूर्णांक	EntryMinUndecoratedSmoothedPWDB;
+	पूर्णांक	EntryMaxUndecoratedSmoothedPWDB;
+	पूर्णांक	MinUndecoratedPWDBForDM;
+	पूर्णांक	LastMinUndecoratedPWDBForDM;
 
 	s32	UndecoratedSmoothedBeacon;
 
 /*  duplicate code, will move to ODM ######### */
-	/* for High Power */
+	/* क्रम High Power */
 	u8 bDynamicTxPowerEnable;
 	u8 LastDTPLvl;
-	u8 DynamicTxHighPowerLvl;/* Add by Jacken Tx Power Control for Near/Far Range 2008/03/06 */
+	u8 DynamicTxHighPowerLvl;/* Add by Jacken Tx Power Control क्रम Near/Far Range 2008/03/06 */
 
-	/* for tx power tracking */
+	/* क्रम tx घातer tracking */
 	u8 bTXPowerTracking;
 	u8 TXPowercount;
 	u8 bTXPowerTrackingInit;
-	u8 TxPowerTrackControl;	/* for mp mode, turn off txpwrtracking as default */
+	u8 TxPowerTrackControl;	/* क्रम mp mode, turn off txpwrtracking as शेष */
 	u8 TM_Trigger;
 
-	u8 ThermalMeter[2];				/*  ThermalMeter, index 0 for RFIC0, and 1 for RFIC1 */
+	u8 ThermalMeter[2];				/*  ThermalMeter, index 0 क्रम RFIC0, and 1 क्रम RFIC1 */
 	u8 ThermalValue;
 	u8 ThermalValue_LCK;
 	u8 ThermalValue_IQK;
@@ -122,18 +123,18 @@ struct dm_priv {
 	u8 bRfPiEnable;
 	/* u8   RSVD_2; */
 
-	/* for APK */
+	/* क्रम APK */
 	u32 APKoutput[2][2];	/* path A/B; output1_1a/output1_2a */
-	u8 bAPKdone;
+	u8 bAPKकरोne;
 	u8 bAPKThermalMeterIgnore;
-	u8 bDPdone;
+	u8 bDPकरोne;
 	u8 bDPPathAOK;
 	u8 bDPPathBOK;
 	/* u8   RSVD_3; */
 	/* u8   RSVD_4; */
 	/* u8   RSVD_5; */
 
-	/* for IQK */
+	/* क्रम IQK */
 	u32 ADDA_backup[IQK_ADDA_REG_NUM];
 	u32 IQK_MAC_backup[IQK_MAC_REG_NUM];
 	u32 IQK_BB_backup_recover[9];
@@ -144,7 +145,7 @@ struct dm_priv {
 
 	u8 bCCKinCH14;
 	u8 CCK_index;
-	u8 bDoneTxpower;
+	u8 bDoneTxघातer;
 	u8 CCK_index_HP;
 
 	u8 OFDM_index_HP[2];
@@ -152,27 +153,27 @@ struct dm_priv {
 	u8 ThermalValue_HP_index;
 	/* u8   RSVD_6; */
 
-	/* for TxPwrTracking2 */
+	/* क्रम TxPwrTracking2 */
 	s32	RegE94;
 	s32  RegE9C;
 	s32	RegEB4;
 	s32	RegEBC;
 
-	u32 TXPowerTrackingCallbackCnt;	/* cosa add for debug */
+	u32 TXPowerTrackingCallbackCnt;	/* cosa add क्रम debug */
 
 	u32 prv_traffic_idx; /*  edca turbo */
 /*  duplicate code, will move to ODM ######### */
 
-	/*  Add for Reading Initial Data Rate SEL Register 0x484 during watchdog. Using for fill tx desc. 2011.3.21 by Thomas */
+	/*  Add क्रम Reading Initial Data Rate SEL Register 0x484 during watchकरोg. Using क्रम fill tx desc. 2011.3.21 by Thomas */
 	u8 INIDATA_RATE[32];
-};
+पूर्ण;
 
 
-struct hal_com_data {
-	struct hal_version VersionID;
-	enum rt_multi_func MultiFunc; /*  For multi-function consideration. */
-	enum rt_polarity_ctl PolarityCtl; /*  For Wifi PDn Polarity control. */
-	enum rt_regulator_mode	RegulatorMode; /*  switching regulator or LDO */
+काष्ठा hal_com_data अणु
+	काष्ठा hal_version VersionID;
+	क्रमागत rt_multi_func MultiFunc; /*  For multi-function consideration. */
+	क्रमागत rt_polarity_ctl PolarityCtl; /*  For Wअगरi PDn Polarity control. */
+	क्रमागत rt_regulator_mode	RegulatorMode; /*  चयनing regulator or LDO */
 
 	u16 FirmwareVersion;
 	u16 FirmwareVersionRev;
@@ -180,14 +181,14 @@ struct hal_com_data {
 	u16 FirmwareSignature;
 
 	/* current WIFI_PHY values */
-	enum wireless_mode CurrentWirelessMode;
-	enum channel_width CurrentChannelBW;
-	enum band_type CurrentBandType;	/* 0:2.4G, 1:5G */
-	enum band_type BandSet;
+	क्रमागत wireless_mode CurrentWirelessMode;
+	क्रमागत channel_width CurrentChannelBW;
+	क्रमागत band_type CurrentBandType;	/* 0:2.4G, 1:5G */
+	क्रमागत band_type BandSet;
 	u8 CurrentChannel;
 	u8 CurrentCenterFrequencyIndex1;
 	u8 nCur40MhzPrimeSC;/*  Control channel sub-carrier */
-	u8 nCur80MhzPrimeSC;   /* used for primary 40MHz of 80MHz mode */
+	u8 nCur80MhzPrimeSC;   /* used क्रम primary 40MHz of 80MHz mode */
 
 	u16 CustomerID;
 	u16 BasicRateSet;
@@ -226,23 +227,23 @@ struct hal_com_data {
 	bool		EepromOrEfuse;
 	u8 		EfuseUsedPercentage;
 	u16 			EfuseUsedBytes;
-	struct efuse_hal		EfuseHal;
+	काष्ठा efuse_hal		EfuseHal;
 
 	/* 3 [2.4G] */
 	u8 Index24G_CCK_Base[MAX_RF_PATH][CHANNEL_MAX_NUMBER];
 	u8 Index24G_BW40_Base[MAX_RF_PATH][CHANNEL_MAX_NUMBER];
 	/* If only one tx, only BW20 and OFDM are used. */
-	s8	CCK_24G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
-	s8	OFDM_24G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
-	s8	BW20_24G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
-	s8	BW40_24G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	CCK_24G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	OFDM_24G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	BW20_24G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	BW40_24G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
 	/* 3 [5G] */
 	u8 Index5G_BW40_Base[MAX_RF_PATH][CHANNEL_MAX_NUMBER];
 	u8 Index5G_BW80_Base[MAX_RF_PATH][CHANNEL_MAX_NUMBER_5G_80M];
-	s8	OFDM_5G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
-	s8	BW20_5G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
-	s8	BW40_5G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
-	s8	BW80_5G_Diff[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	OFDM_5G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	BW20_5G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	BW40_5G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
+	s8	BW80_5G_Dअगरf[MAX_RF_PATH][MAX_TX_COUNT];
 
 	u8 Regulation2_4G;
 	u8 Regulation5G;
@@ -250,9 +251,9 @@ struct hal_com_data {
 	u8 TxPwrInPercentage;
 
 	u8 TxPwrCalibrateRate;
-	/*  TX power by rate table at most 4RF path. */
-	/*  The register is */
-	/*  VHT TX power by rate off setArray = */
+	/*  TX घातer by rate table at most 4RF path. */
+	/*  The रेजिस्टर is */
+	/*  VHT TX घातer by rate off setArray = */
 	/*  Band:-2G&5G = 0 / 1 */
 	/*  RF: at most 4*4 = ABCD = 0/1/2/3 */
 	/*  CCK = 0 OFDM = 1/2 HT-MCS 0-15 =3/4/56 VHT =7/8/9/10/11 */
@@ -268,17 +269,17 @@ struct hal_com_data {
 	u8 TxPwrLevelCck[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];
 	u8 TxPwrLevelHT40_1S[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];	/*  For HT 40MHZ pwr */
 	u8 TxPwrLevelHT40_2S[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];	/*  For HT 40MHZ pwr */
-	s8	TxPwrHt20Diff[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];/*  HT 20<->40 Pwr diff */
-	u8 TxPwrLegacyHtDiff[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];/*  For HT<->legacy pwr diff */
+	s8	TxPwrHt20Dअगरf[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];/*  HT 20<->40 Pwr dअगरf */
+	u8 TxPwrLegacyHtDअगरf[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];/*  For HT<->legacy pwr dअगरf */
 
-	/*  Power Limit Table for 2.4G */
+	/*  Power Limit Table क्रम 2.4G */
 	s8	TxPwrLimit_2_4G[MAX_REGULATION_NUM]
 						[MAX_2_4G_BANDWIDTH_NUM]
 	                                [MAX_RATE_SECTION_NUM]
 	                                [CHANNEL_MAX_NUMBER_2G]
 						[MAX_RF_PATH_NUM];
 
-	/*  Power Limit Table for 5G */
+	/*  Power Limit Table क्रम 5G */
 	s8	TxPwrLimit_5G[MAX_REGULATION_NUM]
 						[MAX_5G_BANDWIDTH_NUM]
 						[MAX_RATE_SECTION_NUM]
@@ -286,7 +287,7 @@ struct hal_com_data {
 						[MAX_RF_PATH_NUM];
 
 
-	/*  Store the original power by rate value of the base of each rate section of rf path A & B */
+	/*  Store the original घातer by rate value of the base of each rate section of rf path A & B */
 	u8 TxPwrByRateBase2_4G[TX_PWR_BY_RATE_NUM_RF]
 						[TX_PWR_BY_RATE_NUM_RF]
 						[MAX_BASE_NUM_IN_PHY_REG_PG_2_4G];
@@ -294,7 +295,7 @@ struct hal_com_data {
 						[TX_PWR_BY_RATE_NUM_RF]
 						[MAX_BASE_NUM_IN_PHY_REG_PG_5G];
 
-	/*  For power group */
+	/*  For घातer group */
 	u8 PwrGroupHT20[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];
 	u8 PwrGroupHT40[RF_PATH_MAX_92C_88E][CHANNEL_MAX_NUMBER];
 
@@ -302,14 +303,14 @@ struct hal_com_data {
 
 
 	u8 PGMaxGroup;
-	u8 LegacyHTTxPowerDiff;/*  Legacy to HT rate power diff */
+	u8 LegacyHTTxPowerDअगरf;/*  Legacy to HT rate घातer dअगरf */
 	/*  The current Tx Power Level */
 	u8 CurrentCckTxPwrIdx;
 	u8 CurrentOfdm24GTxPwrIdx;
 	u8 CurrentBW2024GTxPwrIdx;
 	u8 CurrentBW4024GTxPwrIdx;
 
-	/*  Read/write are allow for following hardware information variables */
+	/*  Read/ग_लिखो are allow क्रम following hardware inक्रमmation variables */
 	u8 pwrGroupCnt;
 	u32 MCSTxPowerLevelOriginalOffset[MAX_PG_GROUP][16];
 	u32 CCKTxPowerLevelOriginalOffset;
@@ -341,20 +342,20 @@ struct hal_com_data {
 	bool		bChnlBWInitialized;
 	bool		bNeedIQK;
 
-	u8 bLedOpenDrain; /*  Support Open-drain arrangement for controlling the LED. Added by Roger, 2009.10.16. */
-	u8 TxPowerTrackControl; /* for mp mode, turn off txpwrtracking as default */
-	u8 b1x1RecvCombine;	/*  for 1T1R receive combining */
+	u8 bLedOpenDrain; /*  Support Open-drain arrangement क्रम controlling the LED. Added by Roger, 2009.10.16. */
+	u8 TxPowerTrackControl; /* क्रम mp mode, turn off txpwrtracking as शेष */
+	u8 b1x1RecvCombine;	/*  क्रम 1T1R receive combining */
 
-	u32 AcParam_BE; /* Original parameter for BE, use for EDCA turbo. */
+	u32 AcParam_BE; /* Original parameter क्रम BE, use क्रम EDCA turbo. */
 
-	struct bb_register_def PHYRegDef[4];	/* Radio A/B/C/D */
+	काष्ठा bb_रेजिस्टर_def PHYRegDef[4];	/* Radio A/B/C/D */
 
 	u32 RfRegChnlVal[2];
 
 	/* RDG enable */
 	bool	 bRDGEnable;
 
-	/* for host message to fw */
+	/* क्रम host message to fw */
 	u8 LastHMEBoxNum;
 
 	u8 fw_ractrl;
@@ -372,45 +373,45 @@ struct hal_com_data {
 	u8 AntDivCfg;
 	u8 AntDetection;
 	u8 TRxAntDivType;
-	u8 ant_path; /* for 8723B s0/s1 selection */
+	u8 ant_path; /* क्रम 8723B s0/s1 selection */
 
-	u8 u1ForcedIgiLb;			/*  forced IGI lower bound */
+	u8 u1ForcedIgiLb;			/*  क्रमced IGI lower bound */
 
-	u8 bDumpRxPkt;/* for debug */
-	u8 bDumpTxPkt;/* for debug */
+	u8 bDumpRxPkt;/* क्रम debug */
+	u8 bDumpTxPkt;/* क्रम debug */
 	u8 FwRsvdPageStartOffset; /* 2010.06.23. Added by tynli. Reserve page start offset except beacon in TxQ. */
 
-	/*  2010/08/09 MH Add CU power down mode. */
-	bool		pwrdown;
+	/*  2010/08/09 MH Add CU घातer करोwn mode. */
+	bool		pwrकरोwn;
 
-	/*  Add for dual MAC  0--Mac0 1--Mac1 */
-	u32 interfaceIndex;
+	/*  Add क्रम dual MAC  0--Mac0 1--Mac1 */
+	u32 पूर्णांकerfaceIndex;
 
 	u8 OutEpQueueSel;
 	u8 OutEpNumber;
 
-	/*  2010/12/10 MH Add for USB aggregation mode dynamic scheme. */
+	/*  2010/12/10 MH Add क्रम USB aggregation mode dynamic scheme. */
 	bool		UsbRxHighSpeedMode;
 
-	/*  2010/11/22 MH Add for slim combo debug mode selective. */
-	/*  This is used for fix the drawback of CU TSMC-A/UMC-A cut. HW auto suspend ability. Close BT clock. */
+	/*  2010/11/22 MH Add क्रम slim combo debug mode selective. */
+	/*  This is used क्रम fix the drawback of CU TSMC-A/UMC-A cut. HW स्वतः suspend ability. Close BT घड़ी. */
 	bool		SlimComboDbg;
 
 	/* u8 AMPDUDensity; */
 
-	/*  Auto FSM to Turn On, include clock, isolation, power control for MAC only */
+	/*  Auto FSM to Turn On, include घड़ी, isolation, घातer control क्रम MAC only */
 	u8 bMacPwrCtrlOn;
 
 	u8 RegIQKFWOffload;
-	struct submit_ctx	iqk_sctx;
+	काष्ठा submit_ctx	iqk_sctx;
 
-	enum rt_ampdu_burst	AMPDUBurstMode; /* 92C maybe not use, but for compile successfully */
+	क्रमागत rt_ampdu_burst	AMPDUBurstMode; /* 92C maybe not use, but क्रम compile successfully */
 
 	u32 		sdio_himr;
 	u32 		sdio_hisr;
 
 	/*  SDIO Tx FIFO related. */
-	/*  HIQ, MID, LOW, PUB free pages; padapter->xmitpriv.free_txpg */
+	/*  HIQ, MID, LOW, PUB मुक्त pages; padapter->xmitpriv.मुक्त_txpg */
 	u8 	SdioTxFIFOFreePage[SDIO_TX_FREE_PG_QUEUE];
 	spinlock_t		SdioTxFIFOFreePageLock;
 	u8 	SdioTxOQTMaxFreeSpace;
@@ -421,22 +422,22 @@ struct hal_com_data {
 	u8 	SdioRxFIFOCnt;
 	u16 		SdioRxFIFOSize;
 
-	u32 		sdio_tx_max_len[SDIO_MAX_TX_QUEUE];/*  H, N, L, used for sdio tx aggregation max length per queue */
+	u32 		sdio_tx_max_len[SDIO_MAX_TX_QUEUE];/*  H, N, L, used क्रम sdio tx aggregation max length per queue */
 
-	struct dm_priv dmpriv;
-	struct dm_odm_t		odmpriv;
+	काष्ठा dm_priv dmpriv;
+	काष्ठा dm_odm_t		odmpriv;
 
 	/*  For bluetooth co-existance */
-	struct bt_coexist		bt_coexist;
+	काष्ठा bt_coexist		bt_coexist;
 
-	/*  Interrupt related register information. */
+	/*  Interrupt related रेजिस्टर inक्रमmation. */
 	u32 		SysIntrStatus;
 	u32 		SysIntrMask;
-};
+पूर्ण;
 
-#define GET_HAL_DATA(__padapter)	((struct hal_com_data *)((__padapter)->HalData))
-#define GET_HAL_RFPATH_NUM(__padapter) (((struct hal_com_data *)((__padapter)->HalData))->NumTotalRFPath)
-#define RT_GetInterfaceSelection(_Adapter)	(GET_HAL_DATA(_Adapter)->InterfaceSel)
-#define GET_RF_TYPE(__padapter)		(GET_HAL_DATA(__padapter)->rf_type)
+#घोषणा GET_HAL_DATA(__padapter)	((काष्ठा hal_com_data *)((__padapter)->HalData))
+#घोषणा GET_HAL_RFPATH_NUM(__padapter) (((काष्ठा hal_com_data *)((__padapter)->HalData))->NumTotalRFPath)
+#घोषणा RT_GetInterfaceSelection(_Adapter)	(GET_HAL_DATA(_Adapter)->InterfaceSel)
+#घोषणा GET_RF_TYPE(__padapter)		(GET_HAL_DATA(__padapter)->rf_type)
 
-#endif /* __HAL_DATA_H__ */
+#पूर्ण_अगर /* __HAL_DATA_H__ */

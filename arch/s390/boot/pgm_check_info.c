@@ -1,181 +1,182 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <asm/stacktrace.h>
-#include <asm/boot_data.h>
-#include <asm/lowcore.h>
-#include <asm/setup.h>
-#include <asm/sclp.h>
-#include <asm/uv.h>
-#include <stdarg.h>
-#include "boot.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/boot_data.h>
+#समावेश <यंत्र/lowcore.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/sclp.h>
+#समावेश <यंत्र/uv.h>
+#समावेश <मानकतर्क.स>
+#समावेश "boot.h"
 
-const char hex_asc[] = "0123456789abcdef";
+स्थिर अक्षर hex_asc[] = "0123456789abcdef";
 
-static char *as_hex(char *dst, unsigned long val, int pad)
-{
-	char *p, *end = p = dst + max(pad, (int)__fls(val | 1) / 4 + 1);
+अटल अक्षर *as_hex(अक्षर *dst, अचिन्हित दीर्घ val, पूर्णांक pad)
+अणु
+	अक्षर *p, *end = p = dst + max(pad, (पूर्णांक)__fls(val | 1) / 4 + 1);
 
-	for (*p-- = 0; p >= dst; val >>= 4)
+	क्रम (*p-- = 0; p >= dst; val >>= 4)
 		*p-- = hex_asc[val & 0x0f];
-	return end;
-}
+	वापस end;
+पूर्ण
 
-static char *symstart(char *p)
-{
-	while (*p)
+अटल अक्षर *symstart(अक्षर *p)
+अणु
+	जबतक (*p)
 		p--;
-	return p + 1;
-}
+	वापस p + 1;
+पूर्ण
 
-extern char _decompressor_syms_start[], _decompressor_syms_end[];
-static noinline char *findsym(unsigned long ip, unsigned short *off, unsigned short *len)
-{
-	/* symbol entries are in a form "10000 c4 startup\0" */
-	char *a = _decompressor_syms_start;
-	char *b = _decompressor_syms_end;
-	unsigned long start;
-	unsigned long size;
-	char *pivot;
-	char *endp;
+बाह्य अक्षर _decompressor_syms_start[], _decompressor_syms_end[];
+अटल noअंतरभूत अक्षर *findsym(अचिन्हित दीर्घ ip, अचिन्हित लघु *off, अचिन्हित लघु *len)
+अणु
+	/* symbol entries are in a क्रमm "10000 c4 startup\0" */
+	अक्षर *a = _decompressor_syms_start;
+	अक्षर *b = _decompressor_syms_end;
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ size;
+	अक्षर *pivot;
+	अक्षर *endp;
 
-	while (a < b) {
+	जबतक (a < b) अणु
 		pivot = symstart(a + (b - a) / 2);
-		start = simple_strtoull(pivot, &endp, 16);
-		size = simple_strtoull(endp + 1, &endp, 16);
-		if (ip < start) {
+		start = simple_म_से_अदीर्घl(pivot, &endp, 16);
+		size = simple_म_से_अदीर्घl(endp + 1, &endp, 16);
+		अगर (ip < start) अणु
 			b = pivot;
-			continue;
-		}
-		if (ip > start + size) {
-			a = pivot + strlen(pivot) + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
+		अगर (ip > start + size) अणु
+			a = pivot + म_माप(pivot) + 1;
+			जारी;
+		पूर्ण
 		*off = ip - start;
 		*len = size;
-		return endp + 1;
-	}
-	return NULL;
-}
+		वापस endp + 1;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static noinline char *strsym(void *ip)
-{
-	static char buf[64];
-	unsigned short off;
-	unsigned short len;
-	char *p;
+अटल noअंतरभूत अक्षर *strsym(व्योम *ip)
+अणु
+	अटल अक्षर buf[64];
+	अचिन्हित लघु off;
+	अचिन्हित लघु len;
+	अक्षर *p;
 
-	p = findsym((unsigned long)ip, &off, &len);
-	if (p) {
-		strncpy(buf, p, sizeof(buf));
-		/* reserve 15 bytes for offset/len in symbol+0x1234/0x1234 */
-		p = buf + strnlen(buf, sizeof(buf) - 15);
-		strcpy(p, "+0x");
+	p = findsym((अचिन्हित दीर्घ)ip, &off, &len);
+	अगर (p) अणु
+		म_नकलन(buf, p, माप(buf));
+		/* reserve 15 bytes क्रम offset/len in symbol+0x1234/0x1234 */
+		p = buf + strnlen(buf, माप(buf) - 15);
+		म_नकल(p, "+0x");
 		p = as_hex(p + 3, off, 0);
-		strcpy(p, "/0x");
+		म_नकल(p, "/0x");
 		as_hex(p + 3, len, 0);
-	} else {
-		as_hex(buf, (unsigned long)ip, 16);
-	}
-	return buf;
-}
+	पूर्ण अन्यथा अणु
+		as_hex(buf, (अचिन्हित दीर्घ)ip, 16);
+	पूर्ण
+	वापस buf;
+पूर्ण
 
-void decompressor_printk(const char *fmt, ...)
-{
-	char buf[1024] = { 0 };
-	char *end = buf + sizeof(buf) - 1; /* make sure buf is 0 terminated */
-	unsigned long pad;
-	char *p = buf;
-	va_list args;
+व्योम decompressor_prपूर्णांकk(स्थिर अक्षर *fmt, ...)
+अणु
+	अक्षर buf[1024] = अणु 0 पूर्ण;
+	अक्षर *end = buf + माप(buf) - 1; /* make sure buf is 0 terminated */
+	अचिन्हित दीर्घ pad;
+	अक्षर *p = buf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
-	for (; p < end && *fmt; fmt++) {
-		if (*fmt != '%') {
+	बहु_शुरू(args, fmt);
+	क्रम (; p < end && *fmt; fmt++) अणु
+		अगर (*fmt != '%') अणु
 			*p++ = *fmt;
-			continue;
-		}
-		pad = isdigit(*++fmt) ? simple_strtol(fmt, (char **)&fmt, 10) : 0;
-		switch (*fmt) {
-		case 's':
-			p = buf + strlcat(buf, va_arg(args, char *), sizeof(buf));
-			break;
-		case 'p':
-			if (*++fmt != 'S')
-				goto out;
-			p = buf + strlcat(buf, strsym(va_arg(args, void *)), sizeof(buf));
-			break;
-		case 'l':
-			if (*++fmt != 'x' || end - p <= max(sizeof(long) * 2, pad))
-				goto out;
-			p = as_hex(p, va_arg(args, unsigned long), pad);
-			break;
-		case 'x':
-			if (end - p <= max(sizeof(int) * 2, pad))
-				goto out;
-			p = as_hex(p, va_arg(args, unsigned int), pad);
-			break;
-		default:
-			goto out;
-		}
-	}
+			जारी;
+		पूर्ण
+		pad = है_अंक(*++fmt) ? simple_म_से_दीर्घ(fmt, (अक्षर **)&fmt, 10) : 0;
+		चयन (*fmt) अणु
+		हाल 's':
+			p = buf + strlcat(buf, बहु_तर्क(args, अक्षर *), माप(buf));
+			अवरोध;
+		हाल 'p':
+			अगर (*++fmt != 'S')
+				जाओ out;
+			p = buf + strlcat(buf, strsym(बहु_तर्क(args, व्योम *)), माप(buf));
+			अवरोध;
+		हाल 'l':
+			अगर (*++fmt != 'x' || end - p <= max(माप(दीर्घ) * 2, pad))
+				जाओ out;
+			p = as_hex(p, बहु_तर्क(args, अचिन्हित दीर्घ), pad);
+			अवरोध;
+		हाल 'x':
+			अगर (end - p <= max(माप(पूर्णांक) * 2, pad))
+				जाओ out;
+			p = as_hex(p, बहु_तर्क(args, अचिन्हित पूर्णांक), pad);
+			अवरोध;
+		शेष:
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	va_end(args);
-	sclp_early_printk(buf);
-}
+	बहु_पूर्ण(args);
+	sclp_early_prपूर्णांकk(buf);
+पूर्ण
 
-static noinline void print_stacktrace(void)
-{
-	struct stack_info boot_stack = { STACK_TYPE_TASK, BOOT_STACK_OFFSET,
-					 BOOT_STACK_OFFSET + BOOT_STACK_SIZE };
-	unsigned long sp = S390_lowcore.gpregs_save_area[15];
+अटल noअंतरभूत व्योम prपूर्णांक_stacktrace(व्योम)
+अणु
+	काष्ठा stack_info boot_stack = अणु STACK_TYPE_TASK, BOOT_STACK_OFFSET,
+					 BOOT_STACK_OFFSET + BOOT_STACK_SIZE पूर्ण;
+	अचिन्हित दीर्घ sp = S390_lowcore.gpregs_save_area[15];
 	bool first = true;
 
-	decompressor_printk("Call Trace:\n");
-	while (!(sp & 0x7) && on_stack(&boot_stack, sp, sizeof(struct stack_frame))) {
-		struct stack_frame *sf = (struct stack_frame *)sp;
+	decompressor_prपूर्णांकk("Call Trace:\n");
+	जबतक (!(sp & 0x7) && on_stack(&boot_stack, sp, माप(काष्ठा stack_frame))) अणु
+		काष्ठा stack_frame *sf = (काष्ठा stack_frame *)sp;
 
-		decompressor_printk(first ? "(sp:%016lx [<%016lx>] %pS)\n" :
+		decompressor_prपूर्णांकk(first ? "(sp:%016lx [<%016lx>] %pS)\n" :
 					    " sp:%016lx [<%016lx>] %pS\n",
-				    sp, sf->gprs[8], (void *)sf->gprs[8]);
-		if (sf->back_chain <= sp)
-			break;
+				    sp, sf->gprs[8], (व्योम *)sf->gprs[8]);
+		अगर (sf->back_chain <= sp)
+			अवरोध;
 		sp = sf->back_chain;
 		first = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void print_pgm_check_info(void)
-{
-	unsigned long *gpregs = (unsigned long *)S390_lowcore.gpregs_save_area;
-	struct psw_bits *psw = &psw_bits(S390_lowcore.psw_save_area);
+व्योम prपूर्णांक_pgm_check_info(व्योम)
+अणु
+	अचिन्हित दीर्घ *gpregs = (अचिन्हित दीर्घ *)S390_lowcore.gpregs_save_area;
+	काष्ठा psw_bits *psw = &psw_bits(S390_lowcore.psw_save_area);
 
-	decompressor_printk("Linux version %s\n", kernel_version);
-	if (!is_prot_virt_guest() && early_command_line[0])
-		decompressor_printk("Kernel command line: %s\n", early_command_line);
-	decompressor_printk("Kernel fault: interruption code %04x ilc:%x\n",
+	decompressor_prपूर्णांकk("Linux version %s\n", kernel_version);
+	अगर (!is_prot_virt_guest() && early_command_line[0])
+		decompressor_prपूर्णांकk("Kernel command line: %s\n", early_command_line);
+	decompressor_prपूर्णांकk("Kernel fault: interruption code %04x ilc:%x\n",
 			    S390_lowcore.pgm_code, S390_lowcore.pgm_ilc >> 1);
-	if (kaslr_enabled)
-		decompressor_printk("Kernel random base: %lx\n", __kaslr_offset);
-	decompressor_printk("PSW : %016lx %016lx (%pS)\n",
+	अगर (kaslr_enabled)
+		decompressor_prपूर्णांकk("Kernel random base: %lx\n", __kaslr_offset);
+	decompressor_prपूर्णांकk("PSW : %016lx %016lx (%pS)\n",
 			    S390_lowcore.psw_save_area.mask,
 			    S390_lowcore.psw_save_area.addr,
-			    (void *)S390_lowcore.psw_save_area.addr);
-	decompressor_printk(
+			    (व्योम *)S390_lowcore.psw_save_area.addr);
+	decompressor_prपूर्णांकk(
 		"      R:%x T:%x IO:%x EX:%x Key:%x M:%x W:%x P:%x AS:%x CC:%x PM:%x RI:%x EA:%x\n",
 		psw->per, psw->dat, psw->io, psw->ext, psw->key, psw->mcheck,
-		psw->wait, psw->pstate, psw->as, psw->cc, psw->pm, psw->ri,
+		psw->रुको, psw->pstate, psw->as, psw->cc, psw->pm, psw->ri,
 		psw->eaba);
-	decompressor_printk("GPRS: %016lx %016lx %016lx %016lx\n",
+	decompressor_prपूर्णांकk("GPRS: %016lx %016lx %016lx %016lx\n",
 			    gpregs[0], gpregs[1], gpregs[2], gpregs[3]);
-	decompressor_printk("      %016lx %016lx %016lx %016lx\n",
+	decompressor_prपूर्णांकk("      %016lx %016lx %016lx %016lx\n",
 			    gpregs[4], gpregs[5], gpregs[6], gpregs[7]);
-	decompressor_printk("      %016lx %016lx %016lx %016lx\n",
+	decompressor_prपूर्णांकk("      %016lx %016lx %016lx %016lx\n",
 			    gpregs[8], gpregs[9], gpregs[10], gpregs[11]);
-	decompressor_printk("      %016lx %016lx %016lx %016lx\n",
+	decompressor_prपूर्णांकk("      %016lx %016lx %016lx %016lx\n",
 			    gpregs[12], gpregs[13], gpregs[14], gpregs[15]);
-	print_stacktrace();
-	decompressor_printk("Last Breaking-Event-Address:\n");
-	decompressor_printk(" [<%016lx>] %pS\n", (unsigned long)S390_lowcore.breaking_event_addr,
-			    (void *)S390_lowcore.breaking_event_addr);
-}
+	prपूर्णांक_stacktrace();
+	decompressor_prपूर्णांकk("Last Breaking-Event-Address:\n");
+	decompressor_prपूर्णांकk(" [<%016lx>] %pS\n", (अचिन्हित दीर्घ)S390_lowcore.अवरोधing_event_addr,
+			    (व्योम *)S390_lowcore.अवरोधing_event_addr);
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * omap_fbdev.h -- OMAP DRM FBDEV Compatibility
  *
@@ -6,22 +7,22 @@
  * Author: Rob Clark <rob@ti.com>
  */
 
-#ifndef __OMAPDRM_FBDEV_H__
-#define __OMAPDRM_FBDEV_H__
+#अगर_अघोषित __OMAPDRM_FBDEV_H__
+#घोषणा __OMAPDRM_FBDEV_H__
 
-struct drm_device;
-struct drm_fb_helper;
+काष्ठा drm_device;
+काष्ठा drm_fb_helper;
 
-#ifdef CONFIG_DRM_FBDEV_EMULATION
-void omap_fbdev_init(struct drm_device *dev);
-void omap_fbdev_fini(struct drm_device *dev);
-#else
-static inline void omap_fbdev_init(struct drm_device *dev)
-{
-}
-static inline void omap_fbdev_fini(struct drm_device *dev)
-{
-}
-#endif
+#अगर_घोषित CONFIG_DRM_FBDEV_EMULATION
+व्योम omap_fbdev_init(काष्ठा drm_device *dev);
+व्योम omap_fbdev_fini(काष्ठा drm_device *dev);
+#अन्यथा
+अटल अंतरभूत व्योम omap_fbdev_init(काष्ठा drm_device *dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम omap_fbdev_fini(काष्ठा drm_device *dev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __OMAPDRM_FBDEV_H__ */
+#पूर्ण_अगर /* __OMAPDRM_FBDEV_H__ */

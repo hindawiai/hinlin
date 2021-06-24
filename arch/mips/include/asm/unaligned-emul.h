@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_MIPS_UNALIGNED_EMUL_H
-#define _ASM_MIPS_UNALIGNED_EMUL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_MIPS_UNALIGNED_EMUL_H
+#घोषणा _ASM_MIPS_UNALIGNED_EMUL_H
 
-#include <asm/asm.h>
+#समावेश <यंत्र/यंत्र.h>
 
-#ifdef __BIG_ENDIAN
-#define  _LoadHW(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (".set\tnoat\n"        \
+#अगर_घोषित __BIG_ENDIAN
+#घोषणा  _LoadHW(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (".set\tnoat\n"        \
 		"1:\t"type##_lb("%0", "0(%2)")"\n"  \
 		"2:\t"type##_lbu("$1", "1(%2)")"\n\t"\
 		"sll\t%0, 0x8\n\t"                  \
@@ -25,12 +26,12 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#ifndef CONFIG_CPU_NO_LOAD_STORE_LR
-#define  _LoadW(addr, value, res, type)   \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अगर_अघोषित CONFIG_CPU_NO_LOAD_STORE_LR
+#घोषणा  _LoadW(addr, value, res, type)   \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\t"type##_lwl("%0", "(%2)")"\n"   \
 		"2:\t"type##_lwr("%0", "3(%2)")"\n\t"\
 		"li\t%1, 0\n"                       \
@@ -46,13 +47,13 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#else /* CONFIG_CPU_NO_LOAD_STORE_LR */
-/* For CPUs without lwl instruction */
-#define  _LoadW(addr, value, res, type) \
-do {                                                \
-	__asm__ __volatile__ (			    \
+#अन्यथा /* CONFIG_CPU_NO_LOAD_STORE_LR */
+/* For CPUs without lwl inकाष्ठाion */
+#घोषणा  _LoadW(addr, value, res, type) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (			    \
 		".set\tpush\n"			    \
 		".set\tnoat\n\t"		    \
 		"1:"type##_lb("%0", "0(%2)")"\n\t"  \
@@ -81,13 +82,13 @@ do {                                                \
 		".previous"			    \
 		: "=&r" (value), "=r" (res)	    \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* CONFIG_CPU_NO_LOAD_STORE_LR */
+#पूर्ण_अगर /* CONFIG_CPU_NO_LOAD_STORE_LR */
 
-#define  _LoadHWU(addr, value, res, type) \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _LoadHWU(addr, value, res, type) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tnoat\n"                      \
 		"1:\t"type##_lbu("%0", "0(%2)")"\n" \
 		"2:\t"type##_lbu("$1", "1(%2)")"\n\t"\
@@ -107,12 +108,12 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#ifndef CONFIG_CPU_NO_LOAD_STORE_LR
-#define  _LoadWU(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अगर_अघोषित CONFIG_CPU_NO_LOAD_STORE_LR
+#घोषणा  _LoadWU(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\t"type##_lwl("%0", "(%2)")"\n"  \
 		"2:\t"type##_lwr("%0", "3(%2)")"\n\t"\
 		"dsll\t%0, %0, 32\n\t"              \
@@ -130,11 +131,11 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _LoadDW(addr, value, res)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _LoadDW(addr, value, res)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\tldl\t%0, (%2)\n"               \
 		"2:\tldr\t%0, 7(%2)\n\t"            \
 		"li\t%1, 0\n"                       \
@@ -150,13 +151,13 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#else /* CONFIG_CPU_NO_LOAD_STORE_LR */
-/* For CPUs without lwl and ldl instructions */
-#define  _LoadWU(addr, value, res, type) \
-do {                                                \
-	__asm__ __volatile__ (			    \
+#अन्यथा /* CONFIG_CPU_NO_LOAD_STORE_LR */
+/* For CPUs without lwl and ldl inकाष्ठाions */
+#घोषणा  _LoadWU(addr, value, res, type) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (			    \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:"type##_lbu("%0", "0(%2)")"\n\t" \
@@ -185,11 +186,11 @@ do {                                                \
 		".previous"			    \
 		: "=&r" (value), "=r" (res)	    \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _LoadDW(addr, value, res)  \
-do {                                                \
-	__asm__ __volatile__ (			    \
+#घोषणा  _LoadDW(addr, value, res)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (			    \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:lb\t%0, 0(%2)\n\t"		    \
@@ -234,14 +235,14 @@ do {                                                \
 		".previous"			    \
 		: "=&r" (value), "=r" (res)	    \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* CONFIG_CPU_NO_LOAD_STORE_LR */
+#पूर्ण_अगर /* CONFIG_CPU_NO_LOAD_STORE_LR */
 
 
-#define  _StoreHW(addr, value, res, type) \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _StoreHW(addr, value, res, type) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tnoat\n"                      \
 		"1:\t"type##_sb("%1", "1(%2)")"\n"  \
 		"srl\t$1, %1, 0x8\n"                \
@@ -260,12 +261,12 @@ do {                                                \
 		".previous"                         \
 		: "=r" (res)                        \
 		: "r" (value), "r" (addr), "i" (-EFAULT));\
-} while (0)
+पूर्ण जबतक (0)
 
-#ifndef CONFIG_CPU_NO_LOAD_STORE_LR
-#define  _StoreW(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अगर_अघोषित CONFIG_CPU_NO_LOAD_STORE_LR
+#घोषणा  _StoreW(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\t"type##_swl("%1", "(%2)")"\n"  \
 		"2:\t"type##_swr("%1", "3(%2)")"\n\t"\
 		"li\t%0, 0\n"                       \
@@ -281,11 +282,11 @@ do {                                                \
 		".previous"                         \
 		: "=r" (res)                                \
 		: "r" (value), "r" (addr), "i" (-EFAULT));  \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _StoreDW(addr, value, res) \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _StoreDW(addr, value, res) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\tsdl\t%1,(%2)\n"                \
 		"2:\tsdr\t%1, 7(%2)\n\t"            \
 		"li\t%0, 0\n"                       \
@@ -301,12 +302,12 @@ do {                                                \
 		".previous"                         \
 		: "=r" (res)                                \
 		: "r" (value), "r" (addr), "i" (-EFAULT));  \
-} while (0)
+पूर्ण जबतक (0)
 
-#else /* CONFIG_CPU_NO_LOAD_STORE_LR */
-#define  _StoreW(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अन्यथा /* CONFIG_CPU_NO_LOAD_STORE_LR */
+#घोषणा  _StoreW(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:"type##_sb("%1", "3(%2)")"\n\t"  \
@@ -333,11 +334,11 @@ do {                                                \
 		: "=&r" (res)				    \
 		: "r" (value), "r" (addr), "i" (-EFAULT)    \
 		: "memory");                                \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _StoreDW(addr, value, res) \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _StoreDW(addr, value, res) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:sb\t%1, 7(%2)\n\t"		    \
@@ -377,15 +378,15 @@ do {                                                \
 		: "=&r" (res)				    \
 		: "r" (value), "r" (addr), "i" (-EFAULT)    \
 		: "memory");                                \
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* CONFIG_CPU_NO_LOAD_STORE_LR */
+#पूर्ण_अगर /* CONFIG_CPU_NO_LOAD_STORE_LR */
 
-#else /* __BIG_ENDIAN */
+#अन्यथा /* __BIG_ENDIAN */
 
-#define  _LoadHW(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (".set\tnoat\n"        \
+#घोषणा  _LoadHW(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (".set\tnoat\n"        \
 		"1:\t"type##_lb("%0", "1(%2)")"\n"  \
 		"2:\t"type##_lbu("$1", "0(%2)")"\n\t"\
 		"sll\t%0, 0x8\n\t"                  \
@@ -403,12 +404,12 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#ifndef CONFIG_CPU_NO_LOAD_STORE_LR
-#define  _LoadW(addr, value, res, type)   \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अगर_अघोषित CONFIG_CPU_NO_LOAD_STORE_LR
+#घोषणा  _LoadW(addr, value, res, type)   \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\t"type##_lwl("%0", "3(%2)")"\n" \
 		"2:\t"type##_lwr("%0", "(%2)")"\n\t"\
 		"li\t%1, 0\n"                       \
@@ -424,13 +425,13 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#else /* CONFIG_CPU_NO_LOAD_STORE_LR */
-/* For CPUs without lwl instruction */
-#define  _LoadW(addr, value, res, type) \
-do {                                                \
-	__asm__ __volatile__ (			    \
+#अन्यथा /* CONFIG_CPU_NO_LOAD_STORE_LR */
+/* For CPUs without lwl inकाष्ठाion */
+#घोषणा  _LoadW(addr, value, res, type) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (			    \
 		".set\tpush\n"			    \
 		".set\tnoat\n\t"		    \
 		"1:"type##_lb("%0", "3(%2)")"\n\t"  \
@@ -459,14 +460,14 @@ do {                                                \
 		".previous"			    \
 		: "=&r" (value), "=r" (res)	    \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* CONFIG_CPU_NO_LOAD_STORE_LR */
+#पूर्ण_अगर /* CONFIG_CPU_NO_LOAD_STORE_LR */
 
 
-#define  _LoadHWU(addr, value, res, type) \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _LoadHWU(addr, value, res, type) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tnoat\n"                      \
 		"1:\t"type##_lbu("%0", "1(%2)")"\n" \
 		"2:\t"type##_lbu("$1", "0(%2)")"\n\t"\
@@ -486,12 +487,12 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#ifndef CONFIG_CPU_NO_LOAD_STORE_LR
-#define  _LoadWU(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अगर_अघोषित CONFIG_CPU_NO_LOAD_STORE_LR
+#घोषणा  _LoadWU(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\t"type##_lwl("%0", "3(%2)")"\n" \
 		"2:\t"type##_lwr("%0", "(%2)")"\n\t"\
 		"dsll\t%0, %0, 32\n\t"              \
@@ -509,11 +510,11 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _LoadDW(addr, value, res)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _LoadDW(addr, value, res)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\tldl\t%0, 7(%2)\n"              \
 		"2:\tldr\t%0, (%2)\n\t"             \
 		"li\t%1, 0\n"                       \
@@ -529,13 +530,13 @@ do {                                                \
 		".previous"                         \
 		: "=&r" (value), "=r" (res)         \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#else /* CONFIG_CPU_NO_LOAD_STORE_LR */
-/* For CPUs without lwl and ldl instructions */
-#define  _LoadWU(addr, value, res, type) \
-do {                                                \
-	__asm__ __volatile__ (			    \
+#अन्यथा /* CONFIG_CPU_NO_LOAD_STORE_LR */
+/* For CPUs without lwl and ldl inकाष्ठाions */
+#घोषणा  _LoadWU(addr, value, res, type) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (			    \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:"type##_lbu("%0", "3(%2)")"\n\t" \
@@ -564,11 +565,11 @@ do {                                                \
 		".previous"			    \
 		: "=&r" (value), "=r" (res)	    \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _LoadDW(addr, value, res)  \
-do {                                                \
-	__asm__ __volatile__ (			    \
+#घोषणा  _LoadDW(addr, value, res)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (			    \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:lb\t%0, 7(%2)\n\t"		    \
@@ -613,12 +614,12 @@ do {                                                \
 		".previous"			    \
 		: "=&r" (value), "=r" (res)	    \
 		: "r" (addr), "i" (-EFAULT));       \
-} while (0)
-#endif /* CONFIG_CPU_NO_LOAD_STORE_LR */
+पूर्ण जबतक (0)
+#पूर्ण_अगर /* CONFIG_CPU_NO_LOAD_STORE_LR */
 
-#define  _StoreHW(addr, value, res, type) \
-do {                                                 \
-	__asm__ __volatile__ (                      \
+#घोषणा  _StoreHW(addr, value, res, type) \
+करो अणु                                                 \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tnoat\n"                      \
 		"1:\t"type##_sb("%1", "0(%2)")"\n"  \
 		"srl\t$1,%1, 0x8\n"                 \
@@ -637,12 +638,12 @@ do {                                                 \
 		".previous"                         \
 		: "=r" (res)                        \
 		: "r" (value), "r" (addr), "i" (-EFAULT));\
-} while (0)
+पूर्ण जबतक (0)
 
-#ifndef CONFIG_CPU_NO_LOAD_STORE_LR
-#define  _StoreW(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अगर_अघोषित CONFIG_CPU_NO_LOAD_STORE_LR
+#घोषणा  _StoreW(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\t"type##_swl("%1", "3(%2)")"\n" \
 		"2:\t"type##_swr("%1", "(%2)")"\n\t"\
 		"li\t%0, 0\n"                       \
@@ -658,11 +659,11 @@ do {                                                \
 		".previous"                         \
 		: "=r" (res)                                \
 		: "r" (value), "r" (addr), "i" (-EFAULT));  \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _StoreDW(addr, value, res) \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _StoreDW(addr, value, res) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		"1:\tsdl\t%1, 7(%2)\n"              \
 		"2:\tsdr\t%1, (%2)\n\t"             \
 		"li\t%0, 0\n"                       \
@@ -678,13 +679,13 @@ do {                                                \
 		".previous"                         \
 		: "=r" (res)                                \
 		: "r" (value), "r" (addr), "i" (-EFAULT));  \
-} while (0)
+पूर्ण जबतक (0)
 
-#else /* CONFIG_CPU_NO_LOAD_STORE_LR */
-/* For CPUs without swl and sdl instructions */
-#define  _StoreW(addr, value, res, type)  \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#अन्यथा /* CONFIG_CPU_NO_LOAD_STORE_LR */
+/* For CPUs without swl and sdl inकाष्ठाions */
+#घोषणा  _StoreW(addr, value, res, type)  \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:"type##_sb("%1", "0(%2)")"\n\t"  \
@@ -711,11 +712,11 @@ do {                                                \
 		: "=&r" (res)				    \
 		: "r" (value), "r" (addr), "i" (-EFAULT)    \
 		: "memory");                                \
-} while (0)
+पूर्ण जबतक (0)
 
-#define  _StoreDW(addr, value, res) \
-do {                                                \
-	__asm__ __volatile__ (                      \
+#घोषणा  _StoreDW(addr, value, res) \
+करो अणु                                                \
+	__यंत्र__ __अस्थिर__ (                      \
 		".set\tpush\n\t"		    \
 		".set\tnoat\n\t"		    \
 		"1:sb\t%1, 0(%2)\n\t"		    \
@@ -755,25 +756,25 @@ do {                                                \
 		: "=&r" (res)				    \
 		: "r" (value), "r" (addr), "i" (-EFAULT)    \
 		: "memory");                                \
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* CONFIG_CPU_NO_LOAD_STORE_LR */
-#endif
+#पूर्ण_अगर /* CONFIG_CPU_NO_LOAD_STORE_LR */
+#पूर्ण_अगर
 
-#define LoadHWU(addr, value, res)	_LoadHWU(addr, value, res, kernel)
-#define LoadHWUE(addr, value, res)	_LoadHWU(addr, value, res, user)
-#define LoadWU(addr, value, res)	_LoadWU(addr, value, res, kernel)
-#define LoadWUE(addr, value, res)	_LoadWU(addr, value, res, user)
-#define LoadHW(addr, value, res)	_LoadHW(addr, value, res, kernel)
-#define LoadHWE(addr, value, res)	_LoadHW(addr, value, res, user)
-#define LoadW(addr, value, res)		_LoadW(addr, value, res, kernel)
-#define LoadWE(addr, value, res)	_LoadW(addr, value, res, user)
-#define LoadDW(addr, value, res)	_LoadDW(addr, value, res)
+#घोषणा LoadHWU(addr, value, res)	_LoadHWU(addr, value, res, kernel)
+#घोषणा LoadHWUE(addr, value, res)	_LoadHWU(addr, value, res, user)
+#घोषणा LoadWU(addr, value, res)	_LoadWU(addr, value, res, kernel)
+#घोषणा LoadWUE(addr, value, res)	_LoadWU(addr, value, res, user)
+#घोषणा LoadHW(addr, value, res)	_LoadHW(addr, value, res, kernel)
+#घोषणा LoadHWE(addr, value, res)	_LoadHW(addr, value, res, user)
+#घोषणा LoadW(addr, value, res)		_LoadW(addr, value, res, kernel)
+#घोषणा LoadWE(addr, value, res)	_LoadW(addr, value, res, user)
+#घोषणा LoadDW(addr, value, res)	_LoadDW(addr, value, res)
 
-#define StoreHW(addr, value, res)	_StoreHW(addr, value, res, kernel)
-#define StoreHWE(addr, value, res)	_StoreHW(addr, value, res, user)
-#define StoreW(addr, value, res)	_StoreW(addr, value, res, kernel)
-#define StoreWE(addr, value, res)	_StoreW(addr, value, res, user)
-#define StoreDW(addr, value, res)	_StoreDW(addr, value, res)
+#घोषणा StoreHW(addr, value, res)	_StoreHW(addr, value, res, kernel)
+#घोषणा StoreHWE(addr, value, res)	_StoreHW(addr, value, res, user)
+#घोषणा StoreW(addr, value, res)	_StoreW(addr, value, res, kernel)
+#घोषणा StoreWE(addr, value, res)	_StoreW(addr, value, res, user)
+#घोषणा StoreDW(addr, value, res)	_StoreDW(addr, value, res)
 
-#endif /* _ASM_MIPS_UNALIGNED_EMUL_H */
+#पूर्ण_अगर /* _ASM_MIPS_UNALIGNED_EMUL_H */

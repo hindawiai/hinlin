@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -29,43 +30,43 @@
 /**
  * DOC: Interrupt Handling
  *
- * Interrupts generated within GPU hardware raise interrupt requests that are
- * passed to amdgpu IRQ handler which is responsible for detecting source and
- * type of the interrupt and dispatching matching handlers. If handling an
- * interrupt requires calling kernel functions that may sleep processing is
+ * Interrupts generated within GPU hardware उठाओ पूर्णांकerrupt requests that are
+ * passed to amdgpu IRQ handler which is responsible क्रम detecting source and
+ * type of the पूर्णांकerrupt and dispatching matching handlers. If handling an
+ * पूर्णांकerrupt requires calling kernel functions that may sleep processing is
  * dispatched to work handlers.
  *
  * If MSI functionality is not disabled by module parameter then MSI
  * support will be enabled.
  *
- * For GPU interrupt sources that may be driven by another driver, IRQ domain
- * support is used (with mapping between virtual and hardware IRQs).
+ * For GPU पूर्णांकerrupt sources that may be driven by another driver, IRQ करोमुख्य
+ * support is used (with mapping between भव and hardware IRQs).
  */
 
-#include <linux/irq.h>
-#include <linux/pci.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_irq.h>
-#include <drm/drm_vblank.h>
-#include <drm/amdgpu_drm.h>
-#include "amdgpu.h"
-#include "amdgpu_ih.h"
-#include "atom.h"
-#include "amdgpu_connectors.h"
-#include "amdgpu_trace.h"
-#include "amdgpu_amdkfd.h"
-#include "amdgpu_ras.h"
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_irq.h>
+#समावेश <drm/drm_vblank.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_ih.h"
+#समावेश "atom.h"
+#समावेश "amdgpu_connectors.h"
+#समावेश "amdgpu_trace.h"
+#समावेश "amdgpu_amdkfd.h"
+#समावेश "amdgpu_ras.h"
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#ifdef CONFIG_DRM_AMD_DC
-#include "amdgpu_dm_irq.h"
-#endif
+#अगर_घोषित CONFIG_DRM_AMD_DC
+#समावेश "amdgpu_dm_irq.h"
+#पूर्ण_अगर
 
-#define AMDGPU_WAIT_IDLE_TIMEOUT 200
+#घोषणा AMDGPU_WAIT_IDLE_TIMEOUT 200
 
-const char *soc15_ih_clientid_name[] = {
+स्थिर अक्षर *soc15_ih_clientid_name[] = अणु
 	"IH",
 	"SDMA2 or ACP",
 	"ATHUB",
@@ -98,17 +99,17 @@ const char *soc15_ih_clientid_name[] = {
 	"UTCL2LOG",
 	"MP0",
 	"MP1"
-};
+पूर्ण;
 
 /**
- * amdgpu_hotplug_work_func - work handler for display hotplug event
+ * amdgpu_hotplug_work_func - work handler क्रम display hotplug event
  *
- * @work: work struct pointer
+ * @work: work काष्ठा poपूर्णांकer
  *
  * This is the hotplug event work handler (all ASICs).
- * The work gets scheduled from the IRQ handler if there
- * was a hotplug interrupt.  It walks through the connector table
- * and calls hotplug handler for each connector. After this, it sends
+ * The work माला_लो scheduled from the IRQ handler अगर there
+ * was a hotplug पूर्णांकerrupt.  It walks through the connector table
+ * and calls hotplug handler क्रम each connector. After this, it sends
  * a DRM hotplug event to alert userspace.
  *
  * This design approach is required in order to defer hotplug event handling
@@ -116,351 +117,351 @@ const char *soc15_ih_clientid_name[] = {
  * mutexes which cannot be locked in an IRQ handler (since &mutex_lock may
  * sleep).
  */
-static void amdgpu_hotplug_work_func(struct work_struct *work)
-{
-	struct amdgpu_device *adev = container_of(work, struct amdgpu_device,
+अटल व्योम amdgpu_hotplug_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdgpu_device *adev = container_of(work, काष्ठा amdgpu_device,
 						  hotplug_work);
-	struct drm_device *dev = adev_to_drm(adev);
-	struct drm_mode_config *mode_config = &dev->mode_config;
-	struct drm_connector *connector;
-	struct drm_connector_list_iter iter;
+	काष्ठा drm_device *dev = adev_to_drm(adev);
+	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_connector_list_iter iter;
 
 	mutex_lock(&mode_config->mutex);
 	drm_connector_list_iter_begin(dev, &iter);
-	drm_for_each_connector_iter(connector, &iter)
+	drm_क्रम_each_connector_iter(connector, &iter)
 		amdgpu_connector_hotplug(connector);
 	drm_connector_list_iter_end(&iter);
 	mutex_unlock(&mode_config->mutex);
-	/* Just fire off a uevent and let userspace tell us what to do */
+	/* Just fire off a uevent and let userspace tell us what to करो */
 	drm_helper_hpd_irq_event(dev);
-}
+पूर्ण
 
 /**
- * amdgpu_irq_disable_all - disable *all* interrupts
+ * amdgpu_irq_disable_all - disable *all* पूर्णांकerrupts
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Disable all types of interrupts from all sources.
+ * Disable all types of पूर्णांकerrupts from all sources.
  */
-void amdgpu_irq_disable_all(struct amdgpu_device *adev)
-{
-	unsigned long irqflags;
-	unsigned i, j, k;
-	int r;
+व्योम amdgpu_irq_disable_all(काष्ठा amdgpu_device *adev)
+अणु
+	अचिन्हित दीर्घ irqflags;
+	अचिन्हित i, j, k;
+	पूर्णांक r;
 
 	spin_lock_irqsave(&adev->irq.lock, irqflags);
-	for (i = 0; i < AMDGPU_IRQ_CLIENTID_MAX; ++i) {
-		if (!adev->irq.client[i].sources)
-			continue;
+	क्रम (i = 0; i < AMDGPU_IRQ_CLIENTID_MAX; ++i) अणु
+		अगर (!adev->irq.client[i].sources)
+			जारी;
 
-		for (j = 0; j < AMDGPU_MAX_IRQ_SRC_ID; ++j) {
-			struct amdgpu_irq_src *src = adev->irq.client[i].sources[j];
+		क्रम (j = 0; j < AMDGPU_MAX_IRQ_SRC_ID; ++j) अणु
+			काष्ठा amdgpu_irq_src *src = adev->irq.client[i].sources[j];
 
-			if (!src || !src->funcs->set || !src->num_types)
-				continue;
+			अगर (!src || !src->funcs->set || !src->num_types)
+				जारी;
 
-			for (k = 0; k < src->num_types; ++k) {
+			क्रम (k = 0; k < src->num_types; ++k) अणु
 				atomic_set(&src->enabled_types[k], 0);
 				r = src->funcs->set(adev, src, k,
 						    AMDGPU_IRQ_STATE_DISABLE);
-				if (r)
+				अगर (r)
 					DRM_ERROR("error disabling interrupt (%d)\n",
 						  r);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&adev->irq.lock, irqflags);
-}
+पूर्ण
 
 /**
  * amdgpu_irq_handler - IRQ handler
  *
  * @irq: IRQ number (unused)
- * @arg: pointer to DRM device
+ * @arg: poपूर्णांकer to DRM device
  *
- * IRQ handler for amdgpu driver (all ASICs).
+ * IRQ handler क्रम amdgpu driver (all ASICs).
  *
  * Returns:
- * result of handling the IRQ, as defined by &irqreturn_t
+ * result of handling the IRQ, as defined by &irqवापस_t
  */
-irqreturn_t amdgpu_irq_handler(int irq, void *arg)
-{
-	struct drm_device *dev = (struct drm_device *) arg;
-	struct amdgpu_device *adev = drm_to_adev(dev);
-	irqreturn_t ret;
+irqवापस_t amdgpu_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा drm_device *dev = (काष्ठा drm_device *) arg;
+	काष्ठा amdgpu_device *adev = drm_to_adev(dev);
+	irqवापस_t ret;
 
 	ret = amdgpu_ih_process(adev, &adev->irq.ih);
-	if (ret == IRQ_HANDLED)
-		pm_runtime_mark_last_busy(dev->dev);
+	अगर (ret == IRQ_HANDLED)
+		pm_runसमय_mark_last_busy(dev->dev);
 
-	/* For the hardware that cannot enable bif ring for both ras_controller_irq
+	/* For the hardware that cannot enable bअगर ring क्रम both ras_controller_irq
          * and ras_err_evnet_athub_irq ih cookies, the driver has to poll status
-	 * register to check whether the interrupt is triggered or not, and properly
-	 * ack the interrupt if it is there
+	 * रेजिस्टर to check whether the पूर्णांकerrupt is triggered or not, and properly
+	 * ack the पूर्णांकerrupt अगर it is there
 	 */
-	if (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__PCIE_BIF)) {
-		if (adev->nbio.ras_funcs &&
-		    adev->nbio.ras_funcs->handle_ras_controller_intr_no_bifring)
-			adev->nbio.ras_funcs->handle_ras_controller_intr_no_bifring(adev);
+	अगर (amdgpu_ras_is_supported(adev, AMDGPU_RAS_BLOCK__PCIE_BIF)) अणु
+		अगर (adev->nbio.ras_funcs &&
+		    adev->nbio.ras_funcs->handle_ras_controller_पूर्णांकr_no_bअगरring)
+			adev->nbio.ras_funcs->handle_ras_controller_पूर्णांकr_no_bअगरring(adev);
 
-		if (adev->nbio.ras_funcs &&
-		    adev->nbio.ras_funcs->handle_ras_err_event_athub_intr_no_bifring)
-			adev->nbio.ras_funcs->handle_ras_err_event_athub_intr_no_bifring(adev);
-	}
+		अगर (adev->nbio.ras_funcs &&
+		    adev->nbio.ras_funcs->handle_ras_err_event_athub_पूर्णांकr_no_bअगरring)
+			adev->nbio.ras_funcs->handle_ras_err_event_athub_पूर्णांकr_no_bअगरring(adev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * amdgpu_irq_handle_ih1 - kick of processing for IH1
+ * amdgpu_irq_handle_ih1 - kick of processing क्रम IH1
  *
- * @work: work structure in struct amdgpu_irq
+ * @work: work काष्ठाure in काष्ठा amdgpu_irq
  *
  * Kick of processing IH ring 1.
  */
-static void amdgpu_irq_handle_ih1(struct work_struct *work)
-{
-	struct amdgpu_device *adev = container_of(work, struct amdgpu_device,
+अटल व्योम amdgpu_irq_handle_ih1(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdgpu_device *adev = container_of(work, काष्ठा amdgpu_device,
 						  irq.ih1_work);
 
 	amdgpu_ih_process(adev, &adev->irq.ih1);
-}
+पूर्ण
 
 /**
- * amdgpu_irq_handle_ih2 - kick of processing for IH2
+ * amdgpu_irq_handle_ih2 - kick of processing क्रम IH2
  *
- * @work: work structure in struct amdgpu_irq
+ * @work: work काष्ठाure in काष्ठा amdgpu_irq
  *
  * Kick of processing IH ring 2.
  */
-static void amdgpu_irq_handle_ih2(struct work_struct *work)
-{
-	struct amdgpu_device *adev = container_of(work, struct amdgpu_device,
+अटल व्योम amdgpu_irq_handle_ih2(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdgpu_device *adev = container_of(work, काष्ठा amdgpu_device,
 						  irq.ih2_work);
 
 	amdgpu_ih_process(adev, &adev->irq.ih2);
-}
+पूर्ण
 
 /**
- * amdgpu_irq_handle_ih_soft - kick of processing for ih_soft
+ * amdgpu_irq_handle_ih_soft - kick of processing क्रम ih_soft
  *
- * @work: work structure in struct amdgpu_irq
+ * @work: work काष्ठाure in काष्ठा amdgpu_irq
  *
  * Kick of processing IH soft ring.
  */
-static void amdgpu_irq_handle_ih_soft(struct work_struct *work)
-{
-	struct amdgpu_device *adev = container_of(work, struct amdgpu_device,
+अटल व्योम amdgpu_irq_handle_ih_soft(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा amdgpu_device *adev = container_of(work, काष्ठा amdgpu_device,
 						  irq.ih_soft_work);
 
 	amdgpu_ih_process(adev, &adev->irq.ih_soft);
-}
+पूर्ण
 
 /**
  * amdgpu_msi_ok - check whether MSI functionality is enabled
  *
- * @adev: amdgpu device pointer (unused)
+ * @adev: amdgpu device poपूर्णांकer (unused)
  *
  * Checks whether MSI functionality has been disabled via module parameter
  * (all ASICs).
  *
  * Returns:
- * *true* if MSIs are allowed to be enabled or *false* otherwise
+ * *true* अगर MSIs are allowed to be enabled or *false* otherwise
  */
-static bool amdgpu_msi_ok(struct amdgpu_device *adev)
-{
-	if (amdgpu_msi == 1)
-		return true;
-	else if (amdgpu_msi == 0)
-		return false;
+अटल bool amdgpu_msi_ok(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (amdgpu_msi == 1)
+		वापस true;
+	अन्यथा अगर (amdgpu_msi == 0)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * amdgpu_irq_init - initialize interrupt handling
+ * amdgpu_irq_init - initialize पूर्णांकerrupt handling
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Sets up work functions for hotplug and reset interrupts, enables MSI
- * functionality, initializes vblank, hotplug and reset interrupt handling.
+ * Sets up work functions क्रम hotplug and reset पूर्णांकerrupts, enables MSI
+ * functionality, initializes vblank, hotplug and reset पूर्णांकerrupt handling.
  *
  * Returns:
  * 0 on success or error code on failure
  */
-int amdgpu_irq_init(struct amdgpu_device *adev)
-{
-	int r = 0;
+पूर्णांक amdgpu_irq_init(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r = 0;
 
 	spin_lock_init(&adev->irq.lock);
 
-	/* Enable MSI if not disabled by module parameter */
+	/* Enable MSI अगर not disabled by module parameter */
 	adev->irq.msi_enabled = false;
 
-	if (amdgpu_msi_ok(adev)) {
-		int nvec = pci_msix_vec_count(adev->pdev);
-		unsigned int flags;
+	अगर (amdgpu_msi_ok(adev)) अणु
+		पूर्णांक nvec = pci_msix_vec_count(adev->pdev);
+		अचिन्हित पूर्णांक flags;
 
-		if (nvec <= 0) {
+		अगर (nvec <= 0) अणु
 			flags = PCI_IRQ_MSI;
-		} else {
+		पूर्ण अन्यथा अणु
 			flags = PCI_IRQ_MSI | PCI_IRQ_MSIX;
-		}
+		पूर्ण
 		/* we only need one vector */
 		nvec = pci_alloc_irq_vectors(adev->pdev, 1, 1, flags);
-		if (nvec > 0) {
+		अगर (nvec > 0) अणु
 			adev->irq.msi_enabled = true;
 			dev_dbg(adev->dev, "using MSI/MSI-X.\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!amdgpu_device_has_dc_support(adev)) {
-		if (!adev->enable_virtual_display)
-			/* Disable vblank IRQs aggressively for power-saving */
-			/* XXX: can this be enabled for DC? */
+	अगर (!amdgpu_device_has_dc_support(adev)) अणु
+		अगर (!adev->enable_भव_display)
+			/* Disable vblank IRQs aggressively क्रम घातer-saving */
+			/* XXX: can this be enabled क्रम DC? */
 			adev_to_drm(adev)->vblank_disable_immediate = true;
 
 		r = drm_vblank_init(adev_to_drm(adev), adev->mode_info.num_crtc);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
 		/* Pre-DCE11 */
 		INIT_WORK(&adev->hotplug_work,
 				amdgpu_hotplug_work_func);
-	}
+	पूर्ण
 
 	INIT_WORK(&adev->irq.ih1_work, amdgpu_irq_handle_ih1);
 	INIT_WORK(&adev->irq.ih2_work, amdgpu_irq_handle_ih2);
 	INIT_WORK(&adev->irq.ih_soft_work, amdgpu_irq_handle_ih_soft);
 
 	adev->irq.installed = true;
-	/* Use vector 0 for MSI-X */
+	/* Use vector 0 क्रम MSI-X */
 	r = drm_irq_install(adev_to_drm(adev), pci_irq_vector(adev->pdev, 0));
-	if (r) {
+	अगर (r) अणु
 		adev->irq.installed = false;
-		if (!amdgpu_device_has_dc_support(adev))
+		अगर (!amdgpu_device_has_dc_support(adev))
 			flush_work(&adev->hotplug_work);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	adev_to_drm(adev)->max_vblank_count = 0x00ffffff;
 
 	DRM_DEBUG("amdgpu: irq initialized.\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_irq_fini - shut down interrupt handling
+ * amdgpu_irq_fini - shut करोwn पूर्णांकerrupt handling
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Tears down work functions for hotplug and reset interrupts, disables MSI
- * functionality, shuts down vblank, hotplug and reset interrupt handling,
- * turns off interrupts from all sources (all ASICs).
+ * Tears करोwn work functions क्रम hotplug and reset पूर्णांकerrupts, disables MSI
+ * functionality, shuts करोwn vblank, hotplug and reset पूर्णांकerrupt handling,
+ * turns off पूर्णांकerrupts from all sources (all ASICs).
  */
-void amdgpu_irq_fini(struct amdgpu_device *adev)
-{
-	unsigned i, j;
+व्योम amdgpu_irq_fini(काष्ठा amdgpu_device *adev)
+अणु
+	अचिन्हित i, j;
 
-	if (adev->irq.installed) {
+	अगर (adev->irq.installed) अणु
 		drm_irq_uninstall(adev_to_drm(adev));
 		adev->irq.installed = false;
-		if (adev->irq.msi_enabled)
-			pci_free_irq_vectors(adev->pdev);
-		if (!amdgpu_device_has_dc_support(adev))
+		अगर (adev->irq.msi_enabled)
+			pci_मुक्त_irq_vectors(adev->pdev);
+		अगर (!amdgpu_device_has_dc_support(adev))
 			flush_work(&adev->hotplug_work);
-	}
+	पूर्ण
 
-	for (i = 0; i < AMDGPU_IRQ_CLIENTID_MAX; ++i) {
-		if (!adev->irq.client[i].sources)
-			continue;
+	क्रम (i = 0; i < AMDGPU_IRQ_CLIENTID_MAX; ++i) अणु
+		अगर (!adev->irq.client[i].sources)
+			जारी;
 
-		for (j = 0; j < AMDGPU_MAX_IRQ_SRC_ID; ++j) {
-			struct amdgpu_irq_src *src = adev->irq.client[i].sources[j];
+		क्रम (j = 0; j < AMDGPU_MAX_IRQ_SRC_ID; ++j) अणु
+			काष्ठा amdgpu_irq_src *src = adev->irq.client[i].sources[j];
 
-			if (!src)
-				continue;
+			अगर (!src)
+				जारी;
 
-			kfree(src->enabled_types);
-			src->enabled_types = NULL;
-		}
-		kfree(adev->irq.client[i].sources);
-		adev->irq.client[i].sources = NULL;
-	}
-}
+			kमुक्त(src->enabled_types);
+			src->enabled_types = शून्य;
+		पूर्ण
+		kमुक्त(adev->irq.client[i].sources);
+		adev->irq.client[i].sources = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * amdgpu_irq_add_id - register IRQ source
+ * amdgpu_irq_add_id - रेजिस्टर IRQ source
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  * @client_id: client id
  * @src_id: source id
- * @source: IRQ source pointer
+ * @source: IRQ source poपूर्णांकer
  *
  * Registers IRQ source on a client.
  *
  * Returns:
  * 0 on success or error code otherwise
  */
-int amdgpu_irq_add_id(struct amdgpu_device *adev,
-		      unsigned client_id, unsigned src_id,
-		      struct amdgpu_irq_src *source)
-{
-	if (client_id >= AMDGPU_IRQ_CLIENTID_MAX)
-		return -EINVAL;
+पूर्णांक amdgpu_irq_add_id(काष्ठा amdgpu_device *adev,
+		      अचिन्हित client_id, अचिन्हित src_id,
+		      काष्ठा amdgpu_irq_src *source)
+अणु
+	अगर (client_id >= AMDGPU_IRQ_CLIENTID_MAX)
+		वापस -EINVAL;
 
-	if (src_id >= AMDGPU_MAX_IRQ_SRC_ID)
-		return -EINVAL;
+	अगर (src_id >= AMDGPU_MAX_IRQ_SRC_ID)
+		वापस -EINVAL;
 
-	if (!source->funcs)
-		return -EINVAL;
+	अगर (!source->funcs)
+		वापस -EINVAL;
 
-	if (!adev->irq.client[client_id].sources) {
+	अगर (!adev->irq.client[client_id].sources) अणु
 		adev->irq.client[client_id].sources =
-			kcalloc(AMDGPU_MAX_IRQ_SRC_ID,
-				sizeof(struct amdgpu_irq_src *),
+			kसुस्मृति(AMDGPU_MAX_IRQ_SRC_ID,
+				माप(काष्ठा amdgpu_irq_src *),
 				GFP_KERNEL);
-		if (!adev->irq.client[client_id].sources)
-			return -ENOMEM;
-	}
+		अगर (!adev->irq.client[client_id].sources)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (adev->irq.client[client_id].sources[src_id] != NULL)
-		return -EINVAL;
+	अगर (adev->irq.client[client_id].sources[src_id] != शून्य)
+		वापस -EINVAL;
 
-	if (source->num_types && !source->enabled_types) {
+	अगर (source->num_types && !source->enabled_types) अणु
 		atomic_t *types;
 
-		types = kcalloc(source->num_types, sizeof(atomic_t),
+		types = kसुस्मृति(source->num_types, माप(atomic_t),
 				GFP_KERNEL);
-		if (!types)
-			return -ENOMEM;
+		अगर (!types)
+			वापस -ENOMEM;
 
 		source->enabled_types = types;
-	}
+	पूर्ण
 
 	adev->irq.client[client_id].sources[src_id] = source;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_irq_dispatch - dispatch IRQ to IP blocks
  *
- * @adev: amdgpu device pointer
- * @ih: interrupt ring instance
+ * @adev: amdgpu device poपूर्णांकer
+ * @ih: पूर्णांकerrupt ring instance
  *
  * Dispatches IRQ to IP blocks.
  */
-void amdgpu_irq_dispatch(struct amdgpu_device *adev,
-			 struct amdgpu_ih_ring *ih)
-{
+व्योम amdgpu_irq_dispatch(काष्ठा amdgpu_device *adev,
+			 काष्ठा amdgpu_ih_ring *ih)
+अणु
 	u32 ring_index = ih->rptr >> 2;
-	struct amdgpu_iv_entry entry;
-	unsigned client_id, src_id;
-	struct amdgpu_irq_src *src;
+	काष्ठा amdgpu_iv_entry entry;
+	अचिन्हित client_id, src_id;
+	काष्ठा amdgpu_irq_src *src;
 	bool handled = false;
-	int r;
+	पूर्णांक r;
 
 	entry.ih = ih;
-	entry.iv_entry = (const uint32_t *)&ih->ring[ring_index];
+	entry.iv_entry = (स्थिर uपूर्णांक32_t *)&ih->ring[ring_index];
 	amdgpu_ih_decode_iv(adev, &entry);
 
 	trace_amdgpu_iv(ih - &adev->irq.ih, &entry);
@@ -468,301 +469,301 @@ void amdgpu_irq_dispatch(struct amdgpu_device *adev,
 	client_id = entry.client_id;
 	src_id = entry.src_id;
 
-	if (client_id >= AMDGPU_IRQ_CLIENTID_MAX) {
+	अगर (client_id >= AMDGPU_IRQ_CLIENTID_MAX) अणु
 		DRM_DEBUG("Invalid client_id in IV: %d\n", client_id);
 
-	} else	if (src_id >= AMDGPU_MAX_IRQ_SRC_ID) {
+	पूर्ण अन्यथा	अगर (src_id >= AMDGPU_MAX_IRQ_SRC_ID) अणु
 		DRM_DEBUG("Invalid src_id in IV: %d\n", src_id);
 
-	} else if ((client_id == AMDGPU_IRQ_CLIENTID_LEGACY) &&
-		   adev->irq.virq[src_id]) {
-		generic_handle_irq(irq_find_mapping(adev->irq.domain, src_id));
+	पूर्ण अन्यथा अगर ((client_id == AMDGPU_IRQ_CLIENTID_LEGACY) &&
+		   adev->irq.virq[src_id]) अणु
+		generic_handle_irq(irq_find_mapping(adev->irq.करोमुख्य, src_id));
 
-	} else if (!adev->irq.client[client_id].sources) {
+	पूर्ण अन्यथा अगर (!adev->irq.client[client_id].sources) अणु
 		DRM_DEBUG("Unregistered interrupt client_id: %d src_id: %d\n",
 			  client_id, src_id);
 
-	} else if ((src = adev->irq.client[client_id].sources[src_id])) {
+	पूर्ण अन्यथा अगर ((src = adev->irq.client[client_id].sources[src_id])) अणु
 		r = src->funcs->process(adev, src, &entry);
-		if (r < 0)
+		अगर (r < 0)
 			DRM_ERROR("error processing interrupt (%d)\n", r);
-		else if (r)
+		अन्यथा अगर (r)
 			handled = true;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		DRM_DEBUG("Unhandled interrupt src_id: %d\n", src_id);
-	}
+	पूर्ण
 
-	/* Send it to amdkfd as well if it isn't already handled */
-	if (!handled)
-		amdgpu_amdkfd_interrupt(adev, entry.iv_entry);
-}
+	/* Send it to amdkfd as well अगर it isn't alपढ़ोy handled */
+	अगर (!handled)
+		amdgpu_amdkfd_पूर्णांकerrupt(adev, entry.iv_entry);
+पूर्ण
 
 /**
  * amdgpu_irq_delegate - delegate IV to soft IH ring
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  * @entry: IV entry
  * @num_dw: size of IV
  *
  * Delegate the IV to the soft IH ring and schedule processing of it. Used
- * if the hardware delegation to IH1 or IH2 doesn't work for some reason.
+ * अगर the hardware delegation to IH1 or IH2 करोesn't work क्रम some reason.
  */
-void amdgpu_irq_delegate(struct amdgpu_device *adev,
-			 struct amdgpu_iv_entry *entry,
-			 unsigned int num_dw)
-{
-	amdgpu_ih_ring_write(&adev->irq.ih_soft, entry->iv_entry, num_dw);
+व्योम amdgpu_irq_delegate(काष्ठा amdgpu_device *adev,
+			 काष्ठा amdgpu_iv_entry *entry,
+			 अचिन्हित पूर्णांक num_dw)
+अणु
+	amdgpu_ih_ring_ग_लिखो(&adev->irq.ih_soft, entry->iv_entry, num_dw);
 	schedule_work(&adev->irq.ih_soft_work);
-}
+पूर्ण
 
 /**
- * amdgpu_irq_update - update hardware interrupt state
+ * amdgpu_irq_update - update hardware पूर्णांकerrupt state
  *
- * @adev: amdgpu device pointer
- * @src: interrupt source pointer
- * @type: type of interrupt
+ * @adev: amdgpu device poपूर्णांकer
+ * @src: पूर्णांकerrupt source poपूर्णांकer
+ * @type: type of पूर्णांकerrupt
  *
- * Updates interrupt state for the specific source (all ASICs).
+ * Updates पूर्णांकerrupt state क्रम the specअगरic source (all ASICs).
  */
-int amdgpu_irq_update(struct amdgpu_device *adev,
-			     struct amdgpu_irq_src *src, unsigned type)
-{
-	unsigned long irqflags;
-	enum amdgpu_interrupt_state state;
-	int r;
+पूर्णांक amdgpu_irq_update(काष्ठा amdgpu_device *adev,
+			     काष्ठा amdgpu_irq_src *src, अचिन्हित type)
+अणु
+	अचिन्हित दीर्घ irqflags;
+	क्रमागत amdgpu_पूर्णांकerrupt_state state;
+	पूर्णांक r;
 
 	spin_lock_irqsave(&adev->irq.lock, irqflags);
 
 	/* We need to determine after taking the lock, otherwise
-	   we might disable just enabled interrupts again */
-	if (amdgpu_irq_enabled(adev, src, type))
+	   we might disable just enabled पूर्णांकerrupts again */
+	अगर (amdgpu_irq_enabled(adev, src, type))
 		state = AMDGPU_IRQ_STATE_ENABLE;
-	else
+	अन्यथा
 		state = AMDGPU_IRQ_STATE_DISABLE;
 
 	r = src->funcs->set(adev, src, type, state);
 	spin_unlock_irqrestore(&adev->irq.lock, irqflags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * amdgpu_irq_gpu_reset_resume_helper - update interrupt states on all sources
+ * amdgpu_irq_gpu_reset_resume_helper - update पूर्णांकerrupt states on all sources
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Updates state of all types of interrupts on all sources on resume after
+ * Updates state of all types of पूर्णांकerrupts on all sources on resume after
  * reset.
  */
-void amdgpu_irq_gpu_reset_resume_helper(struct amdgpu_device *adev)
-{
-	int i, j, k;
+व्योम amdgpu_irq_gpu_reset_resume_helper(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i, j, k;
 
-	for (i = 0; i < AMDGPU_IRQ_CLIENTID_MAX; ++i) {
-		if (!adev->irq.client[i].sources)
-			continue;
+	क्रम (i = 0; i < AMDGPU_IRQ_CLIENTID_MAX; ++i) अणु
+		अगर (!adev->irq.client[i].sources)
+			जारी;
 
-		for (j = 0; j < AMDGPU_MAX_IRQ_SRC_ID; ++j) {
-			struct amdgpu_irq_src *src = adev->irq.client[i].sources[j];
+		क्रम (j = 0; j < AMDGPU_MAX_IRQ_SRC_ID; ++j) अणु
+			काष्ठा amdgpu_irq_src *src = adev->irq.client[i].sources[j];
 
-			if (!src || !src->funcs || !src->funcs->set)
-				continue;
-			for (k = 0; k < src->num_types; k++)
+			अगर (!src || !src->funcs || !src->funcs->set)
+				जारी;
+			क्रम (k = 0; k < src->num_types; k++)
 				amdgpu_irq_update(adev, src, k);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * amdgpu_irq_get - enable interrupt
+ * amdgpu_irq_get - enable पूर्णांकerrupt
  *
- * @adev: amdgpu device pointer
- * @src: interrupt source pointer
- * @type: type of interrupt
+ * @adev: amdgpu device poपूर्णांकer
+ * @src: पूर्णांकerrupt source poपूर्णांकer
+ * @type: type of पूर्णांकerrupt
  *
- * Enables specified type of interrupt on the specified source (all ASICs).
+ * Enables specअगरied type of पूर्णांकerrupt on the specअगरied source (all ASICs).
  *
  * Returns:
  * 0 on success or error code otherwise
  */
-int amdgpu_irq_get(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
-		   unsigned type)
-{
-	if (!adev_to_drm(adev)->irq_enabled)
-		return -ENOENT;
+पूर्णांक amdgpu_irq_get(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *src,
+		   अचिन्हित type)
+अणु
+	अगर (!adev_to_drm(adev)->irq_enabled)
+		वापस -ENOENT;
 
-	if (type >= src->num_types)
-		return -EINVAL;
+	अगर (type >= src->num_types)
+		वापस -EINVAL;
 
-	if (!src->enabled_types || !src->funcs->set)
-		return -EINVAL;
+	अगर (!src->enabled_types || !src->funcs->set)
+		वापस -EINVAL;
 
-	if (atomic_inc_return(&src->enabled_types[type]) == 1)
-		return amdgpu_irq_update(adev, src, type);
+	अगर (atomic_inc_वापस(&src->enabled_types[type]) == 1)
+		वापस amdgpu_irq_update(adev, src, type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_irq_put - disable interrupt
+ * amdgpu_irq_put - disable पूर्णांकerrupt
  *
- * @adev: amdgpu device pointer
- * @src: interrupt source pointer
- * @type: type of interrupt
+ * @adev: amdgpu device poपूर्णांकer
+ * @src: पूर्णांकerrupt source poपूर्णांकer
+ * @type: type of पूर्णांकerrupt
  *
- * Enables specified type of interrupt on the specified source (all ASICs).
+ * Enables specअगरied type of पूर्णांकerrupt on the specअगरied source (all ASICs).
  *
  * Returns:
  * 0 on success or error code otherwise
  */
-int amdgpu_irq_put(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
-		   unsigned type)
-{
-	if (!adev_to_drm(adev)->irq_enabled)
-		return -ENOENT;
+पूर्णांक amdgpu_irq_put(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *src,
+		   अचिन्हित type)
+अणु
+	अगर (!adev_to_drm(adev)->irq_enabled)
+		वापस -ENOENT;
 
-	if (type >= src->num_types)
-		return -EINVAL;
+	अगर (type >= src->num_types)
+		वापस -EINVAL;
 
-	if (!src->enabled_types || !src->funcs->set)
-		return -EINVAL;
+	अगर (!src->enabled_types || !src->funcs->set)
+		वापस -EINVAL;
 
-	if (atomic_dec_and_test(&src->enabled_types[type]))
-		return amdgpu_irq_update(adev, src, type);
+	अगर (atomic_dec_and_test(&src->enabled_types[type]))
+		वापस amdgpu_irq_update(adev, src, type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_irq_enabled - check whether interrupt is enabled or not
+ * amdgpu_irq_enabled - check whether पूर्णांकerrupt is enabled or not
  *
- * @adev: amdgpu device pointer
- * @src: interrupt source pointer
- * @type: type of interrupt
+ * @adev: amdgpu device poपूर्णांकer
+ * @src: पूर्णांकerrupt source poपूर्णांकer
+ * @type: type of पूर्णांकerrupt
  *
- * Checks whether the given type of interrupt is enabled on the given source.
+ * Checks whether the given type of पूर्णांकerrupt is enabled on the given source.
  *
  * Returns:
- * *true* if interrupt is enabled, *false* if interrupt is disabled or on
+ * *true* अगर पूर्णांकerrupt is enabled, *false* अगर पूर्णांकerrupt is disabled or on
  * invalid parameters
  */
-bool amdgpu_irq_enabled(struct amdgpu_device *adev, struct amdgpu_irq_src *src,
-			unsigned type)
-{
-	if (!adev_to_drm(adev)->irq_enabled)
-		return false;
+bool amdgpu_irq_enabled(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_irq_src *src,
+			अचिन्हित type)
+अणु
+	अगर (!adev_to_drm(adev)->irq_enabled)
+		वापस false;
 
-	if (type >= src->num_types)
-		return false;
+	अगर (type >= src->num_types)
+		वापस false;
 
-	if (!src->enabled_types || !src->funcs->set)
-		return false;
+	अगर (!src->enabled_types || !src->funcs->set)
+		वापस false;
 
-	return !!atomic_read(&src->enabled_types[type]);
-}
+	वापस !!atomic_पढ़ो(&src->enabled_types[type]);
+पूर्ण
 
 /* XXX: Generic IRQ handling */
-static void amdgpu_irq_mask(struct irq_data *irqd)
-{
+अटल व्योम amdgpu_irq_mask(काष्ठा irq_data *irqd)
+अणु
 	/* XXX */
-}
+पूर्ण
 
-static void amdgpu_irq_unmask(struct irq_data *irqd)
-{
+अटल व्योम amdgpu_irq_unmask(काष्ठा irq_data *irqd)
+अणु
 	/* XXX */
-}
+पूर्ण
 
-/* amdgpu hardware interrupt chip descriptor */
-static struct irq_chip amdgpu_irq_chip = {
+/* amdgpu hardware पूर्णांकerrupt chip descriptor */
+अटल काष्ठा irq_chip amdgpu_irq_chip = अणु
 	.name = "amdgpu-ih",
 	.irq_mask = amdgpu_irq_mask,
 	.irq_unmask = amdgpu_irq_unmask,
-};
+पूर्ण;
 
 /**
- * amdgpu_irqdomain_map - create mapping between virtual and hardware IRQ numbers
+ * amdgpu_irqकरोमुख्य_map - create mapping between भव and hardware IRQ numbers
  *
- * @d: amdgpu IRQ domain pointer (unused)
- * @irq: virtual IRQ number
+ * @d: amdgpu IRQ करोमुख्य poपूर्णांकer (unused)
+ * @irq: भव IRQ number
  * @hwirq: hardware irq number
  *
- * Current implementation assigns simple interrupt handler to the given virtual
+ * Current implementation assigns simple पूर्णांकerrupt handler to the given भव
  * IRQ.
  *
  * Returns:
  * 0 on success or error code otherwise
  */
-static int amdgpu_irqdomain_map(struct irq_domain *d,
-				unsigned int irq, irq_hw_number_t hwirq)
-{
-	if (hwirq >= AMDGPU_MAX_IRQ_SRC_ID)
-		return -EPERM;
+अटल पूर्णांक amdgpu_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d,
+				अचिन्हित पूर्णांक irq, irq_hw_number_t hwirq)
+अणु
+	अगर (hwirq >= AMDGPU_MAX_IRQ_SRC_ID)
+		वापस -EPERM;
 
 	irq_set_chip_and_handler(irq,
 				 &amdgpu_irq_chip, handle_simple_irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Implementation of methods for amdgpu IRQ domain */
-static const struct irq_domain_ops amdgpu_hw_irqdomain_ops = {
-	.map = amdgpu_irqdomain_map,
-};
+/* Implementation of methods क्रम amdgpu IRQ करोमुख्य */
+अटल स्थिर काष्ठा irq_करोमुख्य_ops amdgpu_hw_irqकरोमुख्य_ops = अणु
+	.map = amdgpu_irqकरोमुख्य_map,
+पूर्ण;
 
 /**
- * amdgpu_irq_add_domain - create a linear IRQ domain
+ * amdgpu_irq_add_करोमुख्य - create a linear IRQ करोमुख्य
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Creates an IRQ domain for GPU interrupt sources
+ * Creates an IRQ करोमुख्य क्रम GPU पूर्णांकerrupt sources
  * that may be driven by another driver (e.g., ACP).
  *
  * Returns:
  * 0 on success or error code otherwise
  */
-int amdgpu_irq_add_domain(struct amdgpu_device *adev)
-{
-	adev->irq.domain = irq_domain_add_linear(NULL, AMDGPU_MAX_IRQ_SRC_ID,
-						 &amdgpu_hw_irqdomain_ops, adev);
-	if (!adev->irq.domain) {
+पूर्णांक amdgpu_irq_add_करोमुख्य(काष्ठा amdgpu_device *adev)
+अणु
+	adev->irq.करोमुख्य = irq_करोमुख्य_add_linear(शून्य, AMDGPU_MAX_IRQ_SRC_ID,
+						 &amdgpu_hw_irqकरोमुख्य_ops, adev);
+	अगर (!adev->irq.करोमुख्य) अणु
 		DRM_ERROR("GPU irq add domain failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_irq_remove_domain - remove the IRQ domain
+ * amdgpu_irq_हटाओ_करोमुख्य - हटाओ the IRQ करोमुख्य
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Removes the IRQ domain for GPU interrupt sources
+ * Removes the IRQ करोमुख्य क्रम GPU पूर्णांकerrupt sources
  * that may be driven by another driver (e.g., ACP).
  */
-void amdgpu_irq_remove_domain(struct amdgpu_device *adev)
-{
-	if (adev->irq.domain) {
-		irq_domain_remove(adev->irq.domain);
-		adev->irq.domain = NULL;
-	}
-}
+व्योम amdgpu_irq_हटाओ_करोमुख्य(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->irq.करोमुख्य) अणु
+		irq_करोमुख्य_हटाओ(adev->irq.करोमुख्य);
+		adev->irq.करोमुख्य = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * amdgpu_irq_create_mapping - create mapping between domain Linux IRQs
+ * amdgpu_irq_create_mapping - create mapping between करोमुख्य Linux IRQs
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  * @src_id: IH source id
  *
- * Creates mapping between a domain IRQ (GPU IH src id) and a Linux IRQ
- * Use this for components that generate a GPU interrupt, but are driven
- * by a different driver (e.g., ACP).
+ * Creates mapping between a करोमुख्य IRQ (GPU IH src id) and a Linux IRQ
+ * Use this क्रम components that generate a GPU पूर्णांकerrupt, but are driven
+ * by a dअगरferent driver (e.g., ACP).
  *
  * Returns:
  * Linux IRQ
  */
-unsigned amdgpu_irq_create_mapping(struct amdgpu_device *adev, unsigned src_id)
-{
-	adev->irq.virq[src_id] = irq_create_mapping(adev->irq.domain, src_id);
+अचिन्हित amdgpu_irq_create_mapping(काष्ठा amdgpu_device *adev, अचिन्हित src_id)
+अणु
+	adev->irq.virq[src_id] = irq_create_mapping(adev->irq.करोमुख्य, src_id);
 
-	return adev->irq.virq[src_id];
-}
+	वापस adev->irq.virq[src_id];
+पूर्ण

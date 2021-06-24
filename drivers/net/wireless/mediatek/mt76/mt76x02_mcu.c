@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/firmware.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/delay.h>
 
-#include "mt76x02_mcu.h"
+#समावेश "mt76x02_mcu.h"
 
-int mt76x02_mcu_parse_response(struct mt76_dev *mdev, int cmd,
-			       struct sk_buff *skb, int seq)
-{
-	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
+पूर्णांक mt76x02_mcu_parse_response(काष्ठा mt76_dev *mdev, पूर्णांक cmd,
+			       काष्ठा sk_buff *skb, पूर्णांक seq)
+अणु
+	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
 	u32 *rxfce;
 
-	if (!skb) {
+	अगर (!skb) अणु
 		dev_err(mdev->dev, "MCU message %02x (seq %d) timed out\n",
-			abs(cmd), seq);
-		dev->mcu_timeout = 1;
-		return -ETIMEDOUT;
-	}
+			असल(cmd), seq);
+		dev->mcu_समयout = 1;
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	rxfce = (u32 *)skb->cb;
-	if (seq != FIELD_GET(MT_RX_FCE_INFO_CMD_SEQ, *rxfce))
-		return -EAGAIN;
+	अगर (seq != FIELD_GET(MT_RX_FCE_INFO_CMD_SEQ, *rxfce))
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_mcu_parse_response);
 
-int mt76x02_mcu_msg_send(struct mt76_dev *mdev, int cmd, const void *data,
-			 int len, bool wait_resp)
-{
-	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
-	unsigned long expires = jiffies + HZ;
-	struct sk_buff *skb;
+पूर्णांक mt76x02_mcu_msg_send(काष्ठा mt76_dev *mdev, पूर्णांक cmd, स्थिर व्योम *data,
+			 पूर्णांक len, bool रुको_resp)
+अणु
+	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
+	अचिन्हित दीर्घ expires = jअगरfies + HZ;
+	काष्ठा sk_buff *skb;
 	u32 tx_info;
-	int ret;
+	पूर्णांक ret;
 	u8 seq;
 
-	if (dev->mcu_timeout)
-		return -EIO;
+	अगर (dev->mcu_समयout)
+		वापस -EIO;
 
 	skb = mt76_mcu_msg_alloc(mdev, data, len);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	mutex_lock(&mdev->mcu.mutex);
 
 	seq = ++mdev->mcu.msg_seq & 0xf;
-	if (!seq)
+	अगर (!seq)
 		seq = ++mdev->mcu.msg_seq & 0xf;
 
 	tx_info = MT_MCU_MSG_TYPE_CMD |
@@ -61,111 +62,111 @@ int mt76x02_mcu_msg_send(struct mt76_dev *mdev, int cmd, const void *data,
 		  FIELD_PREP(MT_MCU_MSG_LEN, skb->len);
 
 	ret = mt76_tx_queue_skb_raw(dev, mdev->q_mcu[MT_MCUQ_WM], skb, tx_info);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	while (wait_resp) {
+	जबतक (रुको_resp) अणु
 		skb = mt76_mcu_get_response(&dev->mt76, expires);
 		ret = mt76x02_mcu_parse_response(mdev, cmd, skb, seq);
-		dev_kfree_skb(skb);
-		if (ret != -EAGAIN)
-			break;
-	}
+		dev_kमुक्त_skb(skb);
+		अगर (ret != -EAGAIN)
+			अवरोध;
+	पूर्ण
 
 out:
 	mutex_unlock(&mdev->mcu.mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_mcu_msg_send);
 
-int mt76x02_mcu_function_select(struct mt76x02_dev *dev, enum mcu_function func,
+पूर्णांक mt76x02_mcu_function_select(काष्ठा mt76x02_dev *dev, क्रमागत mcu_function func,
 				u32 val)
-{
-	struct {
+अणु
+	काष्ठा अणु
 		__le32 id;
 		__le32 value;
-	} __packed __aligned(4) msg = {
+	पूर्ण __packed __aligned(4) msg = अणु
 		.id = cpu_to_le32(func),
 		.value = cpu_to_le32(val),
-	};
-	bool wait = false;
+	पूर्ण;
+	bool रुको = false;
 
-	if (func != Q_SELECT)
-		wait = true;
+	अगर (func != Q_SELECT)
+		रुको = true;
 
-	return mt76_mcu_send_msg(&dev->mt76, CMD_FUN_SET_OP, &msg,
-				 sizeof(msg), wait);
-}
+	वापस mt76_mcu_send_msg(&dev->mt76, CMD_FUN_SET_OP, &msg,
+				 माप(msg), रुको);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_mcu_function_select);
 
-int mt76x02_mcu_set_radio_state(struct mt76x02_dev *dev, bool on)
-{
-	struct {
+पूर्णांक mt76x02_mcu_set_radio_state(काष्ठा mt76x02_dev *dev, bool on)
+अणु
+	काष्ठा अणु
 		__le32 mode;
 		__le32 level;
-	} __packed __aligned(4) msg = {
+	पूर्ण __packed __aligned(4) msg = अणु
 		.mode = cpu_to_le32(on ? RADIO_ON : RADIO_OFF),
 		.level = cpu_to_le32(0),
-	};
+	पूर्ण;
 
-	return mt76_mcu_send_msg(&dev->mt76, CMD_POWER_SAVING_OP, &msg,
-				 sizeof(msg), false);
-}
+	वापस mt76_mcu_send_msg(&dev->mt76, CMD_POWER_SAVING_OP, &msg,
+				 माप(msg), false);
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_mcu_set_radio_state);
 
-int mt76x02_mcu_calibrate(struct mt76x02_dev *dev, int type, u32 param)
-{
-	struct {
+पूर्णांक mt76x02_mcu_calibrate(काष्ठा mt76x02_dev *dev, पूर्णांक type, u32 param)
+अणु
+	काष्ठा अणु
 		__le32 id;
 		__le32 value;
-	} __packed __aligned(4) msg = {
+	पूर्ण __packed __aligned(4) msg = अणु
 		.id = cpu_to_le32(type),
 		.value = cpu_to_le32(param),
-	};
+	पूर्ण;
 	bool is_mt76x2e = mt76_is_mmio(&dev->mt76) && is_mt76x2(dev);
-	int ret;
+	पूर्णांक ret;
 
-	if (is_mt76x2e)
+	अगर (is_mt76x2e)
 		mt76_rmw(dev, MT_MCU_COM_REG0, BIT(31), 0);
 
 	ret = mt76_mcu_send_msg(&dev->mt76, CMD_CALIBRATION_OP, &msg,
-				sizeof(msg), true);
-	if (ret)
-		return ret;
+				माप(msg), true);
+	अगर (ret)
+		वापस ret;
 
-	if (is_mt76x2e &&
+	अगर (is_mt76x2e &&
 	    WARN_ON(!mt76_poll_msec(dev, MT_MCU_COM_REG0,
 				    BIT(31), BIT(31), 100)))
-		return -ETIMEDOUT;
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_mcu_calibrate);
 
-int mt76x02_mcu_cleanup(struct mt76x02_dev *dev)
-{
-	struct sk_buff *skb;
+पूर्णांक mt76x02_mcu_cleanup(काष्ठा mt76x02_dev *dev)
+अणु
+	काष्ठा sk_buff *skb;
 
 	mt76_wr(dev, MT_MCU_INT_LEVEL, 1);
 	usleep_range(20000, 30000);
 
-	while ((skb = skb_dequeue(&dev->mt76.mcu.res_q)) != NULL)
-		dev_kfree_skb(skb);
+	जबतक ((skb = skb_dequeue(&dev->mt76.mcu.res_q)) != शून्य)
+		dev_kमुक्त_skb(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_mcu_cleanup);
 
-void mt76x02_set_ethtool_fwver(struct mt76x02_dev *dev,
-			       const struct mt76x02_fw_header *h)
-{
+व्योम mt76x02_set_ethtool_fwver(काष्ठा mt76x02_dev *dev,
+			       स्थिर काष्ठा mt76x02_fw_header *h)
+अणु
 	u16 bld = le16_to_cpu(h->build_ver);
 	u16 ver = le16_to_cpu(h->fw_ver);
 
-	snprintf(dev->mt76.hw->wiphy->fw_version,
-		 sizeof(dev->mt76.hw->wiphy->fw_version),
+	snम_लिखो(dev->mt76.hw->wiphy->fw_version,
+		 माप(dev->mt76.hw->wiphy->fw_version),
 		 "%d.%d.%02d-b%x",
 		 (ver >> 12) & 0xf, (ver >> 8) & 0xf, ver & 0xf, bld);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76x02_set_ethtool_fwver);

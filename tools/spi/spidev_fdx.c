@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <fcntl.h>
+#समावेश <माला.स>
 
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
 
-#include <linux/types.h>
-#include <linux/spi/spidev.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spi/spidev.h>
 
 
-static int verbose;
+अटल पूर्णांक verbose;
 
-static void do_read(int fd, int len)
-{
-	unsigned char	buf[32], *bp;
-	int		status;
+अटल व्योम करो_पढ़ो(पूर्णांक fd, पूर्णांक len)
+अणु
+	अचिन्हित अक्षर	buf[32], *bp;
+	पूर्णांक		status;
 
-	/* read at least 2 bytes, no more than 32 */
-	if (len < 2)
+	/* पढ़ो at least 2 bytes, no more than 32 */
+	अगर (len < 2)
 		len = 2;
-	else if (len > sizeof(buf))
-		len = sizeof(buf);
-	memset(buf, 0, sizeof buf);
+	अन्यथा अगर (len > माप(buf))
+		len = माप(buf);
+	स_रखो(buf, 0, माप buf);
 
-	status = read(fd, buf, len);
-	if (status < 0) {
-		perror("read");
-		return;
-	}
-	if (status != len) {
-		fprintf(stderr, "short read\n");
-		return;
-	}
+	status = पढ़ो(fd, buf, len);
+	अगर (status < 0) अणु
+		लिखो_त्रुटि("read");
+		वापस;
+	पूर्ण
+	अगर (status != len) अणु
+		ख_लिखो(मानक_त्रुटि, "short read\n");
+		वापस;
+	पूर्ण
 
-	printf("read(%2d, %2d): %02x %02x,", len, status,
+	म_लिखो("read(%2d, %2d): %02x %02x,", len, status,
 		buf[0], buf[1]);
 	status -= 2;
 	bp = buf + 2;
-	while (status-- > 0)
-		printf(" %02x", *bp++);
-	printf("\n");
-}
+	जबतक (status-- > 0)
+		म_लिखो(" %02x", *bp++);
+	म_लिखो("\n");
+पूर्ण
 
-static void do_msg(int fd, int len)
-{
-	struct spi_ioc_transfer	xfer[2];
-	unsigned char		buf[32], *bp;
-	int			status;
+अटल व्योम करो_msg(पूर्णांक fd, पूर्णांक len)
+अणु
+	काष्ठा spi_ioc_transfer	xfer[2];
+	अचिन्हित अक्षर		buf[32], *bp;
+	पूर्णांक			status;
 
-	memset(xfer, 0, sizeof xfer);
-	memset(buf, 0, sizeof buf);
+	स_रखो(xfer, 0, माप xfer);
+	स_रखो(buf, 0, माप buf);
 
-	if (len > sizeof buf)
-		len = sizeof buf;
+	अगर (len > माप buf)
+		len = माप buf;
 
 	buf[0] = 0xaa;
-	xfer[0].tx_buf = (unsigned long)buf;
+	xfer[0].tx_buf = (अचिन्हित दीर्घ)buf;
 	xfer[0].len = 1;
 
-	xfer[1].rx_buf = (unsigned long) buf;
+	xfer[1].rx_buf = (अचिन्हित दीर्घ) buf;
 	xfer[1].len = len;
 
 	status = ioctl(fd, SPI_IOC_MESSAGE(2), xfer);
-	if (status < 0) {
-		perror("SPI_IOC_MESSAGE");
-		return;
-	}
+	अगर (status < 0) अणु
+		लिखो_त्रुटि("SPI_IOC_MESSAGE");
+		वापस;
+	पूर्ण
 
-	printf("response(%2d, %2d): ", len, status);
-	for (bp = buf; len; len--)
-		printf(" %02x", *bp++);
-	printf("\n");
-}
+	म_लिखो("response(%2d, %2d): ", len, status);
+	क्रम (bp = buf; len; len--)
+		म_लिखो(" %02x", *bp++);
+	म_लिखो("\n");
+पूर्ण
 
-static void dumpstat(const char *name, int fd)
-{
+अटल व्योम dumpstat(स्थिर अक्षर *name, पूर्णांक fd)
+अणु
 	__u8	lsb, bits;
 	__u32	mode, speed;
 
-	if (ioctl(fd, SPI_IOC_RD_MODE32, &mode) < 0) {
-		perror("SPI rd_mode");
-		return;
-	}
-	if (ioctl(fd, SPI_IOC_RD_LSB_FIRST, &lsb) < 0) {
-		perror("SPI rd_lsb_fist");
-		return;
-	}
-	if (ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits) < 0) {
-		perror("SPI bits_per_word");
-		return;
-	}
-	if (ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed) < 0) {
-		perror("SPI max_speed_hz");
-		return;
-	}
+	अगर (ioctl(fd, SPI_IOC_RD_MODE32, &mode) < 0) अणु
+		लिखो_त्रुटि("SPI rd_mode");
+		वापस;
+	पूर्ण
+	अगर (ioctl(fd, SPI_IOC_RD_LSB_FIRST, &lsb) < 0) अणु
+		लिखो_त्रुटि("SPI rd_lsb_fist");
+		वापस;
+	पूर्ण
+	अगर (ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits) < 0) अणु
+		लिखो_त्रुटि("SPI bits_per_word");
+		वापस;
+	पूर्ण
+	अगर (ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed) < 0) अणु
+		लिखो_त्रुटि("SPI max_speed_hz");
+		वापस;
+	पूर्ण
 
-	printf("%s: spi mode 0x%x, %d bits %sper word, %d Hz max\n",
+	म_लिखो("%s: spi mode 0x%x, %d bits %sper word, %d Hz max\n",
 		name, mode, bits, lsb ? "(lsb first) " : "", speed);
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int		c;
-	int		readcount = 0;
-	int		msglen = 0;
-	int		fd;
-	const char	*name;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक		c;
+	पूर्णांक		पढ़ोcount = 0;
+	पूर्णांक		msglen = 0;
+	पूर्णांक		fd;
+	स्थिर अक्षर	*name;
 
-	while ((c = getopt(argc, argv, "hm:r:v")) != EOF) {
-		switch (c) {
-		case 'm':
-			msglen = atoi(optarg);
-			if (msglen < 0)
-				goto usage;
-			continue;
-		case 'r':
-			readcount = atoi(optarg);
-			if (readcount < 0)
-				goto usage;
-			continue;
-		case 'v':
+	जबतक ((c = getopt(argc, argv, "hm:r:v")) != खातापूर्ण) अणु
+		चयन (c) अणु
+		हाल 'm':
+			msglen = म_से_प(optarg);
+			अगर (msglen < 0)
+				जाओ usage;
+			जारी;
+		हाल 'r':
+			पढ़ोcount = म_से_प(optarg);
+			अगर (पढ़ोcount < 0)
+				जाओ usage;
+			जारी;
+		हाल 'v':
 			verbose++;
-			continue;
-		case 'h':
-		case '?':
+			जारी;
+		हाल 'h':
+		हाल '?':
 usage:
-			fprintf(stderr,
+			ख_लिखो(मानक_त्रुटि,
 				"usage: %s [-h] [-m N] [-r N] /dev/spidevB.D\n",
 				argv[0]);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	if ((optind + 1) != argc)
-		goto usage;
+	अगर ((optind + 1) != argc)
+		जाओ usage;
 	name = argv[optind];
 
-	fd = open(name, O_RDWR);
-	if (fd < 0) {
-		perror("open");
-		return 1;
-	}
+	fd = खोलो(name, O_RDWR);
+	अगर (fd < 0) अणु
+		लिखो_त्रुटि("open");
+		वापस 1;
+	पूर्ण
 
 	dumpstat(name, fd);
 
-	if (msglen)
-		do_msg(fd, msglen);
+	अगर (msglen)
+		करो_msg(fd, msglen);
 
-	if (readcount)
-		do_read(fd, readcount);
+	अगर (पढ़ोcount)
+		करो_पढ़ो(fd, पढ़ोcount);
 
-	close(fd);
-	return 0;
-}
+	बंद(fd);
+	वापस 0;
+पूर्ण

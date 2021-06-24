@@ -1,563 +1,564 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Jaroslav Kysela <perex@perex.cz>
 
-#include <linux/acpi.h>
-#include <linux/bits.h>
-#include <linux/dmi.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/soundwire/sdw.h>
-#include <linux/soundwire/sdw_intel.h>
-#include <sound/core.h>
-#include <sound/intel-dsp-config.h>
-#include <sound/intel-nhlt.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश <linux/soundwire/sdw_पूर्णांकel.h>
+#समावेश <sound/core.h>
+#समावेश <sound/पूर्णांकel-dsp-config.h>
+#समावेश <sound/पूर्णांकel-nhlt.h>
 
-static int dsp_driver;
+अटल पूर्णांक dsp_driver;
 
-module_param(dsp_driver, int, 0444);
+module_param(dsp_driver, पूर्णांक, 0444);
 MODULE_PARM_DESC(dsp_driver, "Force the DSP driver for Intel DSP (0=auto, 1=legacy, 2=SST, 3=SOF)");
 
-#define FLAG_SST			BIT(0)
-#define FLAG_SOF			BIT(1)
-#define FLAG_SST_ONLY_IF_DMIC		BIT(15)
-#define FLAG_SOF_ONLY_IF_DMIC		BIT(16)
-#define FLAG_SOF_ONLY_IF_SOUNDWIRE	BIT(17)
+#घोषणा FLAG_SST			BIT(0)
+#घोषणा FLAG_SOF			BIT(1)
+#घोषणा FLAG_SST_ONLY_IF_DMIC		BIT(15)
+#घोषणा FLAG_SOF_ONLY_IF_DMIC		BIT(16)
+#घोषणा FLAG_SOF_ONLY_IF_SOUNDWIRE	BIT(17)
 
-#define FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE (FLAG_SOF_ONLY_IF_DMIC | \
+#घोषणा FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE (FLAG_SOF_ONLY_IF_DMIC | \
 					    FLAG_SOF_ONLY_IF_SOUNDWIRE)
 
-struct config_entry {
+काष्ठा config_entry अणु
 	u32 flags;
 	u16 device;
 	u8 acpi_hid[ACPI_ID_LEN];
-	const struct dmi_system_id *dmi_table;
-};
+	स्थिर काष्ठा dmi_प्रणाली_id *dmi_table;
+पूर्ण;
 
 /*
  * configuration table
  * - the order of similar PCI ID entries is important!
  * - the first successful match will win
  */
-static const struct config_entry config_table[] = {
-/* Merrifield */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_MERRIFIELD)
-	{
+अटल स्थिर काष्ठा config_entry config_table[] = अणु
+/* Merrअगरield */
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_MERRIFIELD)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x119a,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 /* Broxton-T */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_APOLLOLAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_APOLLOLAKE)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x1a98,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 /*
  * Apollolake (Broxton-P)
  * the legacy HDAudio driver is used except on Up Squared (SOF) and
  * Chromebooks (SST)
  */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_APOLLOLAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_APOLLOLAKE)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x5a98,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Up Squared",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "AAEON"),
 					DMI_MATCH(DMI_BOARD_NAME, "UP-APL01"),
-				}
-			},
-			{}
-		}
-	},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_APL)
-	{
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_APL)
+	अणु
 		.flags = FLAG_SST,
 		.device = 0x5a98,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-#endif
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+#पूर्ण_अगर
 /*
- * Skylake and Kabylake use legacy HDAudio driver except for Google
+ * Skylake and Kabylake use legacy HDAudio driver except क्रम Google
  * Chromebooks (SST)
  */
 
-/* Sunrise Point-LP */
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKL)
-	{
+/* Sunrise Poपूर्णांक-LP */
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_SKL)
+	अणु
 		.flags = FLAG_SST,
 		.device = 0x9d70,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SST | FLAG_SST_ONLY_IF_DMIC,
 		.device = 0x9d70,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 /* Kabylake-LP */
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_KBL)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_KBL)
+	अणु
 		.flags = FLAG_SST,
 		.device = 0x9d71,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SST | FLAG_SST_ONLY_IF_DMIC,
 		.device = 0x9d71,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
 /*
- * Geminilake uses legacy HDAudio driver except for Google
+ * Geminilake uses legacy HDAudio driver except क्रम Google
  * Chromebooks
  */
 /* Geminilake */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_GEMINILAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_GEMINILAKE)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x3198,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-#endif
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+#पूर्ण_अगर
 
 /*
  * CoffeeLake, CannonLake, CometLake, IceLake, TigerLake use legacy
- * HDAudio driver except for Google Chromebooks and when DMICs are
- * present. Two cases are required since Coreboot does not expose NHLT
+ * HDAudio driver except क्रम Google Chromebooks and when DMICs are
+ * present. Two हालs are required since Coreboot करोes not expose NHLT
  * tables.
  *
- * When the Chromebook quirk is not present, it's based on information
+ * When the Chromebook quirk is not present, it's based on inक्रमmation
  * that no such device exists. When the quirk is present, it could be
- * either based on product information or a placeholder.
+ * either based on product inक्रमmation or a placeholder.
  */
 
 /* Cannonlake */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_CANNONLAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_CANNONLAKE)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x9dc8,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x9dc8,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
 /* Coffelake */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_COFFEELAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_COFFEELAKE)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0xa348,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0xa348,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_COMETLAKE)
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_COMETLAKE)
 /* Cometlake-LP */
-	{
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x02c8,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{
-				.matches = {
+				पूर्ण
+			पूर्ण,
+			अणु
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc"),
 					DMI_EXACT_MATCH(DMI_PRODUCT_SKU, "09C6")
-				},
-			},
-			{
+				पूर्ण,
+			पूर्ण,
+			अणु
 				/* early version of SKU 09C6 */
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc"),
 					DMI_EXACT_MATCH(DMI_PRODUCT_SKU, "0983")
-				},
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण,
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x02c8,
-	},
+	पूर्ण,
 /* Cometlake-H */
-	{
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x06c8,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
-				.matches = {
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc"),
 					DMI_EXACT_MATCH(DMI_PRODUCT_SKU, "098F"),
-				},
-			},
-			{
-				.matches = {
+				पूर्ण,
+			पूर्ण,
+			अणु
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Dell Inc"),
 					DMI_EXACT_MATCH(DMI_PRODUCT_SKU, "0990"),
-				},
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण,
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x06c8,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
 /* Icelake */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_ICELAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_ICELAKE)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0x34c8,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x34c8,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
 /* Tigerlake */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_TIGERLAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_TIGERLAKE)
+	अणु
 		.flags = FLAG_SOF,
 		.device = 0xa0c8,
-		.dmi_table = (const struct dmi_system_id []) {
-			{
+		.dmi_table = (स्थिर काष्ठा dmi_प्रणाली_id []) अणु
+			अणु
 				.ident = "Google Chromebooks",
-				.matches = {
+				.matches = अणु
 					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
-				}
-			},
-			{}
-		}
-	},
-	{
+				पूर्ण
+			पूर्ण,
+			अणुपूर्ण
+		पूर्ण
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0xa0c8,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x43c8,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
 /* Elkhart Lake */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_ELKHARTLAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_ELKHARTLAKE)
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC,
 		.device = 0x4b55,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
 /* Alder Lake */
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_ALDERLAKE)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_ALDERLAKE)
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x7ad0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x51c8,
-	},
-	{
+	पूर्ण,
+	अणु
 		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
 		.device = 0x51cc,
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 
-};
+पूर्ण;
 
-static const struct config_entry *snd_intel_dsp_find_config
-		(struct pci_dev *pci, const struct config_entry *table, u32 len)
-{
+अटल स्थिर काष्ठा config_entry *snd_पूर्णांकel_dsp_find_config
+		(काष्ठा pci_dev *pci, स्थिर काष्ठा config_entry *table, u32 len)
+अणु
 	u16 device;
 
 	device = pci->device;
-	for (; len > 0; len--, table++) {
-		if (table->device != device)
-			continue;
-		if (table->dmi_table && !dmi_check_system(table->dmi_table))
-			continue;
-		return table;
-	}
-	return NULL;
-}
+	क्रम (; len > 0; len--, table++) अणु
+		अगर (table->device != device)
+			जारी;
+		अगर (table->dmi_table && !dmi_check_प्रणाली(table->dmi_table))
+			जारी;
+		वापस table;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int snd_intel_dsp_check_dmic(struct pci_dev *pci)
-{
-	struct nhlt_acpi_table *nhlt;
-	int ret = 0;
+अटल पूर्णांक snd_पूर्णांकel_dsp_check_dmic(काष्ठा pci_dev *pci)
+अणु
+	काष्ठा nhlt_acpi_table *nhlt;
+	पूर्णांक ret = 0;
 
-	nhlt = intel_nhlt_init(&pci->dev);
-	if (nhlt) {
-		if (intel_nhlt_get_dmic_geo(&pci->dev, nhlt))
+	nhlt = पूर्णांकel_nhlt_init(&pci->dev);
+	अगर (nhlt) अणु
+		अगर (पूर्णांकel_nhlt_get_dmic_geo(&pci->dev, nhlt))
 			ret = 1;
-		intel_nhlt_free(nhlt);
-	}
-	return ret;
-}
+		पूर्णांकel_nhlt_मुक्त(nhlt);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_INTEL_SOUNDWIRE)
-static int snd_intel_dsp_check_soundwire(struct pci_dev *pci)
-{
-	struct sdw_intel_acpi_info info;
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_INTEL_SOUNDWIRE)
+अटल पूर्णांक snd_पूर्णांकel_dsp_check_soundwire(काष्ठा pci_dev *pci)
+अणु
+	काष्ठा sdw_पूर्णांकel_acpi_info info;
 	acpi_handle handle;
-	int ret;
+	पूर्णांक ret;
 
 	handle = ACPI_HANDLE(&pci->dev);
 
-	ret = sdw_intel_acpi_scan(handle, &info);
-	if (ret < 0)
-		return ret;
+	ret = sdw_पूर्णांकel_acpi_scan(handle, &info);
+	अगर (ret < 0)
+		वापस ret;
 
-	return info.link_mask;
-}
-#else
-static int snd_intel_dsp_check_soundwire(struct pci_dev *pci)
-{
-	return 0;
-}
-#endif
+	वापस info.link_mask;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक snd_पूर्णांकel_dsp_check_soundwire(काष्ठा pci_dev *pci)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int snd_intel_dsp_driver_probe(struct pci_dev *pci)
-{
-	const struct config_entry *cfg;
+पूर्णांक snd_पूर्णांकel_dsp_driver_probe(काष्ठा pci_dev *pci)
+अणु
+	स्थिर काष्ठा config_entry *cfg;
 
-	/* Intel vendor only */
-	if (pci->vendor != 0x8086)
-		return SND_INTEL_DSP_DRIVER_ANY;
-
-	/*
-	 * Legacy devices don't have a PCI-based DSP and use HDaudio
-	 * for HDMI/DP support, ignore kernel parameter
-	 */
-	switch (pci->device) {
-	case 0x160c: /* Broadwell */
-	case 0x0a0c: /* Haswell */
-	case 0x0c0c:
-	case 0x0d0c:
-	case 0x0f04: /* Baytrail */
-	case 0x2284: /* Braswell */
-		return SND_INTEL_DSP_DRIVER_ANY;
-	}
-
-	if (dsp_driver > 0 && dsp_driver <= SND_INTEL_DSP_DRIVER_LAST)
-		return dsp_driver;
+	/* Intel venकरोr only */
+	अगर (pci->venकरोr != 0x8086)
+		वापस SND_INTEL_DSP_DRIVER_ANY;
 
 	/*
-	 * detect DSP by checking class/subclass/prog-id information
-	 * class=04 subclass 03 prog-if 00: no DSP, use legacy driver
-	 * class=04 subclass 01 prog-if 00: DSP is present
-	 *  (and may be required e.g. for DMIC or SSP support)
-	 * class=04 subclass 03 prog-if 80: use DSP or legacy mode
+	 * Legacy devices करोn't have a PCI-based DSP and use HDaudio
+	 * क्रम HDMI/DP support, ignore kernel parameter
 	 */
-	if (pci->class == 0x040300)
-		return SND_INTEL_DSP_DRIVER_LEGACY;
-	if (pci->class != 0x040100 && pci->class != 0x040380) {
+	चयन (pci->device) अणु
+	हाल 0x160c: /* Broadwell */
+	हाल 0x0a0c: /* Haswell */
+	हाल 0x0c0c:
+	हाल 0x0d0c:
+	हाल 0x0f04: /* Baytrail */
+	हाल 0x2284: /* Braswell */
+		वापस SND_INTEL_DSP_DRIVER_ANY;
+	पूर्ण
+
+	अगर (dsp_driver > 0 && dsp_driver <= SND_INTEL_DSP_DRIVER_LAST)
+		वापस dsp_driver;
+
+	/*
+	 * detect DSP by checking class/subclass/prog-id inक्रमmation
+	 * class=04 subclass 03 prog-अगर 00: no DSP, use legacy driver
+	 * class=04 subclass 01 prog-अगर 00: DSP is present
+	 *  (and may be required e.g. क्रम DMIC or SSP support)
+	 * class=04 subclass 03 prog-अगर 80: use DSP or legacy mode
+	 */
+	अगर (pci->class == 0x040300)
+		वापस SND_INTEL_DSP_DRIVER_LEGACY;
+	अगर (pci->class != 0x040100 && pci->class != 0x040380) अणु
 		dev_err(&pci->dev, "Unknown PCI class/subclass/prog-if information (0x%06x) found, selecting HDAudio legacy driver\n", pci->class);
-		return SND_INTEL_DSP_DRIVER_LEGACY;
-	}
+		वापस SND_INTEL_DSP_DRIVER_LEGACY;
+	पूर्ण
 
 	dev_info(&pci->dev, "DSP detected with PCI class/subclass/prog-if info 0x%06x\n", pci->class);
 
-	/* find the configuration for the specific device */
-	cfg = snd_intel_dsp_find_config(pci, config_table, ARRAY_SIZE(config_table));
-	if (!cfg)
-		return SND_INTEL_DSP_DRIVER_ANY;
+	/* find the configuration क्रम the specअगरic device */
+	cfg = snd_पूर्णांकel_dsp_find_config(pci, config_table, ARRAY_SIZE(config_table));
+	अगर (!cfg)
+		वापस SND_INTEL_DSP_DRIVER_ANY;
 
-	if (cfg->flags & FLAG_SOF) {
-		if (cfg->flags & FLAG_SOF_ONLY_IF_SOUNDWIRE &&
-		    snd_intel_dsp_check_soundwire(pci) > 0) {
+	अगर (cfg->flags & FLAG_SOF) अणु
+		अगर (cfg->flags & FLAG_SOF_ONLY_IF_SOUNDWIRE &&
+		    snd_पूर्णांकel_dsp_check_soundwire(pci) > 0) अणु
 			dev_info(&pci->dev, "SoundWire enabled on CannonLake+ platform, using SOF driver\n");
-			return SND_INTEL_DSP_DRIVER_SOF;
-		}
-		if (cfg->flags & FLAG_SOF_ONLY_IF_DMIC &&
-		    snd_intel_dsp_check_dmic(pci)) {
+			वापस SND_INTEL_DSP_DRIVER_SOF;
+		पूर्ण
+		अगर (cfg->flags & FLAG_SOF_ONLY_IF_DMIC &&
+		    snd_पूर्णांकel_dsp_check_dmic(pci)) अणु
 			dev_info(&pci->dev, "Digital mics found on Skylake+ platform, using SOF driver\n");
-			return SND_INTEL_DSP_DRIVER_SOF;
-		}
-		if (!(cfg->flags & FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE))
-			return SND_INTEL_DSP_DRIVER_SOF;
-	}
+			वापस SND_INTEL_DSP_DRIVER_SOF;
+		पूर्ण
+		अगर (!(cfg->flags & FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE))
+			वापस SND_INTEL_DSP_DRIVER_SOF;
+	पूर्ण
 
 
-	if (cfg->flags & FLAG_SST) {
-		if (cfg->flags & FLAG_SST_ONLY_IF_DMIC) {
-			if (snd_intel_dsp_check_dmic(pci)) {
+	अगर (cfg->flags & FLAG_SST) अणु
+		अगर (cfg->flags & FLAG_SST_ONLY_IF_DMIC) अणु
+			अगर (snd_पूर्णांकel_dsp_check_dmic(pci)) अणु
 				dev_info(&pci->dev, "Digital mics found on Skylake+ platform, using SST driver\n");
-				return SND_INTEL_DSP_DRIVER_SST;
-			}
-		} else {
-			return SND_INTEL_DSP_DRIVER_SST;
-		}
-	}
+				वापस SND_INTEL_DSP_DRIVER_SST;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			वापस SND_INTEL_DSP_DRIVER_SST;
+		पूर्ण
+	पूर्ण
 
-	return SND_INTEL_DSP_DRIVER_LEGACY;
-}
-EXPORT_SYMBOL_GPL(snd_intel_dsp_driver_probe);
+	वापस SND_INTEL_DSP_DRIVER_LEGACY;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_पूर्णांकel_dsp_driver_probe);
 
-/* Should we default to SOF or SST for BYT/CHT ? */
-#if IS_ENABLED(CONFIG_SND_INTEL_BYT_PREFER_SOF) || \
+/* Should we शेष to SOF or SST क्रम BYT/CHT ? */
+#अगर IS_ENABLED(CONFIG_SND_INTEL_BYT_PREFER_SOF) || \
     !IS_ENABLED(CONFIG_SND_SST_ATOM_HIFI2_PLATFORM_ACPI)
-#define FLAG_SST_OR_SOF_BYT	FLAG_SOF
-#else
-#define FLAG_SST_OR_SOF_BYT	FLAG_SST
-#endif
+#घोषणा FLAG_SST_OR_SOF_BYT	FLAG_SOF
+#अन्यथा
+#घोषणा FLAG_SST_OR_SOF_BYT	FLAG_SST
+#पूर्ण_अगर
 
 /*
  * configuration table
  * - the order of similar ACPI ID entries is important!
  * - the first successful match will win
  */
-static const struct config_entry acpi_config_table[] = {
-#if IS_ENABLED(CONFIG_SND_SST_ATOM_HIFI2_PLATFORM_ACPI) || \
+अटल स्थिर काष्ठा config_entry acpi_config_table[] = अणु
+#अगर IS_ENABLED(CONFIG_SND_SST_ATOM_HIFI2_PLATFORM_ACPI) || \
     IS_ENABLED(CONFIG_SND_SOC_SOF_BAYTRAIL)
 /* BayTrail */
-	{
+	अणु
 		.flags = FLAG_SST_OR_SOF_BYT,
 		.acpi_hid = "80860F28",
-	},
+	पूर्ण,
 /* CherryTrail */
-	{
+	अणु
 		.flags = FLAG_SST_OR_SOF_BYT,
 		.acpi_hid = "808622A8",
-	},
-#endif
+	पूर्ण,
+#पूर्ण_अगर
 /* Broadwell */
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_CATPT)
-	{
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_CATPT)
+	अणु
 		.flags = FLAG_SST,
 		.acpi_hid = "INT3438"
-	},
-#endif
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_BROADWELL)
-	{
+	पूर्ण,
+#पूर्ण_अगर
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_BROADWELL)
+	अणु
 		.flags = FLAG_SOF,
 		.acpi_hid = "INT3438"
-	},
-#endif
-/* Haswell - not supported by SOF but added for consistency */
-#if IS_ENABLED(CONFIG_SND_SOC_INTEL_CATPT)
-	{
+	पूर्ण,
+#पूर्ण_अगर
+/* Haswell - not supported by SOF but added क्रम consistency */
+#अगर IS_ENABLED(CONFIG_SND_SOC_INTEL_CATPT)
+	अणु
 		.flags = FLAG_SST,
 		.acpi_hid = "INT33C8"
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct config_entry *snd_intel_acpi_dsp_find_config(const u8 acpi_hid[ACPI_ID_LEN],
-								 const struct config_entry *table,
+अटल स्थिर काष्ठा config_entry *snd_पूर्णांकel_acpi_dsp_find_config(स्थिर u8 acpi_hid[ACPI_ID_LEN],
+								 स्थिर काष्ठा config_entry *table,
 								 u32 len)
-{
-	for (; len > 0; len--, table++) {
-		if (memcmp(table->acpi_hid, acpi_hid, ACPI_ID_LEN))
-			continue;
-		if (table->dmi_table && !dmi_check_system(table->dmi_table))
-			continue;
-		return table;
-	}
-	return NULL;
-}
+अणु
+	क्रम (; len > 0; len--, table++) अणु
+		अगर (स_भेद(table->acpi_hid, acpi_hid, ACPI_ID_LEN))
+			जारी;
+		अगर (table->dmi_table && !dmi_check_प्रणाली(table->dmi_table))
+			जारी;
+		वापस table;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int snd_intel_acpi_dsp_driver_probe(struct device *dev, const u8 acpi_hid[ACPI_ID_LEN])
-{
-	const struct config_entry *cfg;
+पूर्णांक snd_पूर्णांकel_acpi_dsp_driver_probe(काष्ठा device *dev, स्थिर u8 acpi_hid[ACPI_ID_LEN])
+अणु
+	स्थिर काष्ठा config_entry *cfg;
 
-	if (dsp_driver > SND_INTEL_DSP_DRIVER_LEGACY && dsp_driver <= SND_INTEL_DSP_DRIVER_LAST)
-		return dsp_driver;
+	अगर (dsp_driver > SND_INTEL_DSP_DRIVER_LEGACY && dsp_driver <= SND_INTEL_DSP_DRIVER_LAST)
+		वापस dsp_driver;
 
-	if (dsp_driver == SND_INTEL_DSP_DRIVER_LEGACY) {
+	अगर (dsp_driver == SND_INTEL_DSP_DRIVER_LEGACY) अणु
 		dev_warn(dev, "dsp_driver parameter %d not supported, using automatic detection\n",
 			 SND_INTEL_DSP_DRIVER_LEGACY);
-	}
+	पूर्ण
 
-	/* find the configuration for the specific device */
-	cfg = snd_intel_acpi_dsp_find_config(acpi_hid,  acpi_config_table,
+	/* find the configuration क्रम the specअगरic device */
+	cfg = snd_पूर्णांकel_acpi_dsp_find_config(acpi_hid,  acpi_config_table,
 					     ARRAY_SIZE(acpi_config_table));
-	if (!cfg)
-		return SND_INTEL_DSP_DRIVER_ANY;
+	अगर (!cfg)
+		वापस SND_INTEL_DSP_DRIVER_ANY;
 
-	if (cfg->flags & FLAG_SST)
-		return SND_INTEL_DSP_DRIVER_SST;
+	अगर (cfg->flags & FLAG_SST)
+		वापस SND_INTEL_DSP_DRIVER_SST;
 
-	if (cfg->flags & FLAG_SOF)
-		return SND_INTEL_DSP_DRIVER_SOF;
+	अगर (cfg->flags & FLAG_SOF)
+		वापस SND_INTEL_DSP_DRIVER_SOF;
 
-	return SND_INTEL_DSP_DRIVER_SST;
-}
-EXPORT_SYMBOL_GPL(snd_intel_acpi_dsp_driver_probe);
+	वापस SND_INTEL_DSP_DRIVER_SST;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_पूर्णांकel_acpi_dsp_driver_probe);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Intel DSP config driver");

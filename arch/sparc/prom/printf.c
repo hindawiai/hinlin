@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * printf.c:  Internal prom library printf facility.
+ * म_लिखो.c:  Internal prom library म_लिखो facility.
  *
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  * Copyright (C) 1997 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  * Copyright (c) 2002 Pete Zaitcev (zaitcev@yahoo.com)
  *
- * We used to warn all over the code: DO NOT USE prom_printf(),
- * and yet people do. Anton's banking code was outputting banks
- * with prom_printf for most of the 2.4 lifetime. Since an effective
- * stick is not available, we deployed a carrot: an early printk
+ * We used to warn all over the code: DO NOT USE prom_म_लिखो(),
+ * and yet people करो. Anton's banking code was outputting banks
+ * with prom_म_लिखो क्रम most of the 2.4 lअगरeसमय. Since an effective
+ * stick is not available, we deployed a carrot: an early prपूर्णांकk
  * through PROM by means of -p boot option. This ought to fix it.
- * USE printk; if you need, deploy -p.
+ * USE prपूर्णांकk; अगर you need, deploy -p.
  */
 
-#include <linux/kernel.h>
-#include <linux/compiler.h>
-#include <linux/spinlock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/openprom.h>
-#include <asm/oplib.h>
+#समावेश <यंत्र/खोलोprom.h>
+#समावेश <यंत्र/oplib.h>
 
-#define CONSOLE_WRITE_BUF_SIZE	1024
+#घोषणा CONSOLE_WRITE_BUF_SIZE	1024
 
-static char ppbuf[1024];
-static char console_write_buf[CONSOLE_WRITE_BUF_SIZE];
-static DEFINE_RAW_SPINLOCK(console_write_lock);
+अटल अक्षर ppbuf[1024];
+अटल अक्षर console_ग_लिखो_buf[CONSOLE_WRITE_BUF_SIZE];
+अटल DEFINE_RAW_SPINLOCK(console_ग_लिखो_lock);
 
-void notrace prom_write(const char *buf, unsigned int n)
-{
-	unsigned int dest_len;
-	unsigned long flags;
-	char *dest;
+व्योम notrace prom_ग_लिखो(स्थिर अक्षर *buf, अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित पूर्णांक dest_len;
+	अचिन्हित दीर्घ flags;
+	अक्षर *dest;
 
-	dest = console_write_buf;
-	raw_spin_lock_irqsave(&console_write_lock, flags);
+	dest = console_ग_लिखो_buf;
+	raw_spin_lock_irqsave(&console_ग_लिखो_lock, flags);
 
 	dest_len = 0;
-	while (n-- != 0) {
-		char ch = *buf++;
-		if (ch == '\n') {
+	जबतक (n-- != 0) अणु
+		अक्षर ch = *buf++;
+		अगर (ch == '\n') अणु
 			*dest++ = '\r';
 			dest_len++;
-		}
+		पूर्ण
 		*dest++ = ch;
 		dest_len++;
-		if (dest_len >= CONSOLE_WRITE_BUF_SIZE - 1) {
-			prom_console_write_buf(console_write_buf, dest_len);
-			dest = console_write_buf;
+		अगर (dest_len >= CONSOLE_WRITE_BUF_SIZE - 1) अणु
+			prom_console_ग_लिखो_buf(console_ग_लिखो_buf, dest_len);
+			dest = console_ग_लिखो_buf;
 			dest_len = 0;
-		}
-	}
-	if (dest_len)
-		prom_console_write_buf(console_write_buf, dest_len);
+		पूर्ण
+	पूर्ण
+	अगर (dest_len)
+		prom_console_ग_लिखो_buf(console_ग_लिखो_buf, dest_len);
 
-	raw_spin_unlock_irqrestore(&console_write_lock, flags);
-}
+	raw_spin_unlock_irqrestore(&console_ग_लिखो_lock, flags);
+पूर्ण
 
-void notrace prom_printf(const char *fmt, ...)
-{
-	va_list args;
-	int i;
+व्योम notrace prom_म_लिखो(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i;
 
-	va_start(args, fmt);
-	i = vscnprintf(ppbuf, sizeof(ppbuf), fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	i = vscnम_लिखो(ppbuf, माप(ppbuf), fmt, args);
+	बहु_पूर्ण(args);
 
-	prom_write(ppbuf, i);
-}
+	prom_ग_लिखो(ppbuf, i);
+पूर्ण

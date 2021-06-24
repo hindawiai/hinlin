@@ -1,222 +1,223 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2015-16 Golden Delicious Computers
  *
  * Author: Nikolaus Schaller <hns@goldelico.com>
  *
- * LED driver for the IS31FL319{0,1,3,6,9} to drive 1, 3, 6 or 9 light
+ * LED driver क्रम the IS31FL319अणु0,1,3,6,9पूर्ण to drive 1, 3, 6 or 9 light
  * effect LEDs.
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
 
-/* register numbers */
-#define IS31FL319X_SHUTDOWN		0x00
-#define IS31FL319X_CTRL1		0x01
-#define IS31FL319X_CTRL2		0x02
-#define IS31FL319X_CONFIG1		0x03
-#define IS31FL319X_CONFIG2		0x04
-#define IS31FL319X_RAMP_MODE		0x05
-#define IS31FL319X_BREATH_MASK		0x06
-#define IS31FL319X_PWM(channel)		(0x07 + channel)
-#define IS31FL319X_DATA_UPDATE		0x10
-#define IS31FL319X_T0(channel)		(0x11 + channel)
-#define IS31FL319X_T123_1		0x1a
-#define IS31FL319X_T123_2		0x1b
-#define IS31FL319X_T123_3		0x1c
-#define IS31FL319X_T4(channel)		(0x1d + channel)
-#define IS31FL319X_TIME_UPDATE		0x26
-#define IS31FL319X_RESET		0xff
+/* रेजिस्टर numbers */
+#घोषणा IS31FL319X_SHUTDOWN		0x00
+#घोषणा IS31FL319X_CTRL1		0x01
+#घोषणा IS31FL319X_CTRL2		0x02
+#घोषणा IS31FL319X_CONFIG1		0x03
+#घोषणा IS31FL319X_CONFIG2		0x04
+#घोषणा IS31FL319X_RAMP_MODE		0x05
+#घोषणा IS31FL319X_BREATH_MASK		0x06
+#घोषणा IS31FL319X_PWM(channel)		(0x07 + channel)
+#घोषणा IS31FL319X_DATA_UPDATE		0x10
+#घोषणा IS31FL319X_T0(channel)		(0x11 + channel)
+#घोषणा IS31FL319X_T123_1		0x1a
+#घोषणा IS31FL319X_T123_2		0x1b
+#घोषणा IS31FL319X_T123_3		0x1c
+#घोषणा IS31FL319X_T4(channel)		(0x1d + channel)
+#घोषणा IS31FL319X_TIME_UPDATE		0x26
+#घोषणा IS31FL319X_RESET		0xff
 
-#define IS31FL319X_REG_CNT		(IS31FL319X_RESET + 1)
+#घोषणा IS31FL319X_REG_CNT		(IS31FL319X_RESET + 1)
 
-#define IS31FL319X_MAX_LEDS		9
+#घोषणा IS31FL319X_MAX_LEDS		9
 
-/* CS (Current Setting) in CONFIG2 register */
-#define IS31FL319X_CONFIG2_CS_SHIFT	4
-#define IS31FL319X_CONFIG2_CS_MASK	0x7
-#define IS31FL319X_CONFIG2_CS_STEP_REF	12
+/* CS (Current Setting) in CONFIG2 रेजिस्टर */
+#घोषणा IS31FL319X_CONFIG2_CS_SHIFT	4
+#घोषणा IS31FL319X_CONFIG2_CS_MASK	0x7
+#घोषणा IS31FL319X_CONFIG2_CS_STEP_REF	12
 
-#define IS31FL319X_CURRENT_MIN		((u32)5000)
-#define IS31FL319X_CURRENT_MAX		((u32)40000)
-#define IS31FL319X_CURRENT_STEP		((u32)5000)
-#define IS31FL319X_CURRENT_DEFAULT	((u32)20000)
+#घोषणा IS31FL319X_CURRENT_MIN		((u32)5000)
+#घोषणा IS31FL319X_CURRENT_MAX		((u32)40000)
+#घोषणा IS31FL319X_CURRENT_STEP		((u32)5000)
+#घोषणा IS31FL319X_CURRENT_DEFAULT	((u32)20000)
 
-/* Audio gain in CONFIG2 register */
-#define IS31FL319X_AUDIO_GAIN_DB_MAX	((u32)21)
-#define IS31FL319X_AUDIO_GAIN_DB_STEP	((u32)3)
+/* Audio gain in CONFIG2 रेजिस्टर */
+#घोषणा IS31FL319X_AUDIO_GAIN_DB_MAX	((u32)21)
+#घोषणा IS31FL319X_AUDIO_GAIN_DB_STEP	((u32)3)
 
 /*
- * regmap is used as a cache of chip's register space,
- * to avoid reading back brightness values from chip,
+ * regmap is used as a cache of chip's रेजिस्टर space,
+ * to aव्योम पढ़ोing back brightness values from chip,
  * which is known to hang.
  */
-struct is31fl319x_chip {
-	const struct is31fl319x_chipdef *cdef;
-	struct i2c_client               *client;
-	struct gpio_desc		*shutdown_gpio;
-	struct regmap                   *regmap;
-	struct mutex                    lock;
+काष्ठा is31fl319x_chip अणु
+	स्थिर काष्ठा is31fl319x_chipdef *cdef;
+	काष्ठा i2c_client               *client;
+	काष्ठा gpio_desc		*shutकरोwn_gpio;
+	काष्ठा regmap                   *regmap;
+	काष्ठा mutex                    lock;
 	u32                             audio_gain_db;
 
-	struct is31fl319x_led {
-		struct is31fl319x_chip  *chip;
-		struct led_classdev     cdev;
+	काष्ठा is31fl319x_led अणु
+		काष्ठा is31fl319x_chip  *chip;
+		काष्ठा led_classdev     cdev;
 		u32                     max_microamp;
 		bool                    configured;
-	} leds[IS31FL319X_MAX_LEDS];
-};
+	पूर्ण leds[IS31FL319X_MAX_LEDS];
+पूर्ण;
 
-struct is31fl319x_chipdef {
-	int num_leds;
-};
+काष्ठा is31fl319x_chipdef अणु
+	पूर्णांक num_leds;
+पूर्ण;
 
-static const struct is31fl319x_chipdef is31fl3190_cdef = {
+अटल स्थिर काष्ठा is31fl319x_chipdef is31fl3190_cdef = अणु
 	.num_leds = 1,
-};
+पूर्ण;
 
-static const struct is31fl319x_chipdef is31fl3193_cdef = {
+अटल स्थिर काष्ठा is31fl319x_chipdef is31fl3193_cdef = अणु
 	.num_leds = 3,
-};
+पूर्ण;
 
-static const struct is31fl319x_chipdef is31fl3196_cdef = {
+अटल स्थिर काष्ठा is31fl319x_chipdef is31fl3196_cdef = अणु
 	.num_leds = 6,
-};
+पूर्ण;
 
-static const struct is31fl319x_chipdef is31fl3199_cdef = {
+अटल स्थिर काष्ठा is31fl319x_chipdef is31fl3199_cdef = अणु
 	.num_leds = 9,
-};
+पूर्ण;
 
-static const struct of_device_id of_is31fl319x_match[] = {
-	{ .compatible = "issi,is31fl3190", .data = &is31fl3190_cdef, },
-	{ .compatible = "issi,is31fl3191", .data = &is31fl3190_cdef, },
-	{ .compatible = "issi,is31fl3193", .data = &is31fl3193_cdef, },
-	{ .compatible = "issi,is31fl3196", .data = &is31fl3196_cdef, },
-	{ .compatible = "issi,is31fl3199", .data = &is31fl3199_cdef, },
-	{ .compatible = "si-en,sn3199",    .data = &is31fl3199_cdef, },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id of_is31fl319x_match[] = अणु
+	अणु .compatible = "issi,is31fl3190", .data = &is31fl3190_cdef, पूर्ण,
+	अणु .compatible = "issi,is31fl3191", .data = &is31fl3190_cdef, पूर्ण,
+	अणु .compatible = "issi,is31fl3193", .data = &is31fl3193_cdef, पूर्ण,
+	अणु .compatible = "issi,is31fl3196", .data = &is31fl3196_cdef, पूर्ण,
+	अणु .compatible = "issi,is31fl3199", .data = &is31fl3199_cdef, पूर्ण,
+	अणु .compatible = "si-en,sn3199",    .data = &is31fl3199_cdef, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_is31fl319x_match);
 
-static int is31fl319x_brightness_set(struct led_classdev *cdev,
-				     enum led_brightness brightness)
-{
-	struct is31fl319x_led *led = container_of(cdev, struct is31fl319x_led,
+अटल पूर्णांक is31fl319x_brightness_set(काष्ठा led_classdev *cdev,
+				     क्रमागत led_brightness brightness)
+अणु
+	काष्ठा is31fl319x_led *led = container_of(cdev, काष्ठा is31fl319x_led,
 						  cdev);
-	struct is31fl319x_chip *is31 = led->chip;
-	int chan = led - is31->leds;
-	int ret;
-	int i;
+	काष्ठा is31fl319x_chip *is31 = led->chip;
+	पूर्णांक chan = led - is31->leds;
+	पूर्णांक ret;
+	पूर्णांक i;
 	u8 ctrl1 = 0, ctrl2 = 0;
 
 	dev_dbg(&is31->client->dev, "%s %d: %d\n", __func__, chan, brightness);
 
 	mutex_lock(&is31->lock);
 
-	/* update PWM register */
-	ret = regmap_write(is31->regmap, IS31FL319X_PWM(chan), brightness);
-	if (ret < 0)
-		goto out;
+	/* update PWM रेजिस्टर */
+	ret = regmap_ग_लिखो(is31->regmap, IS31FL319X_PWM(chan), brightness);
+	अगर (ret < 0)
+		जाओ out;
 
-	/* read current brightness of all PWM channels */
-	for (i = 0; i < is31->cdef->num_leds; i++) {
-		unsigned int pwm_value;
+	/* पढ़ो current brightness of all PWM channels */
+	क्रम (i = 0; i < is31->cdef->num_leds; i++) अणु
+		अचिन्हित पूर्णांक pwm_value;
 		bool on;
 
 		/*
 		 * since neither cdev nor the chip can provide
-		 * the current setting, we read from the regmap cache
+		 * the current setting, we पढ़ो from the regmap cache
 		 */
 
-		ret = regmap_read(is31->regmap, IS31FL319X_PWM(i), &pwm_value);
+		ret = regmap_पढ़ो(is31->regmap, IS31FL319X_PWM(i), &pwm_value);
 		dev_dbg(&is31->client->dev, "%s read %d: ret=%d: %d\n",
 			__func__, i, ret, pwm_value);
 		on = ret >= 0 && pwm_value > LED_OFF;
 
-		if (i < 3)
+		अगर (i < 3)
 			ctrl1 |= on << i;       /* 0..2 => bit 0..2 */
-		else if (i < 6)
+		अन्यथा अगर (i < 6)
 			ctrl1 |= on << (i + 1); /* 3..5 => bit 4..6 */
-		else
+		अन्यथा
 			ctrl2 |= on << (i - 6); /* 6..8 => bit 0..2 */
-	}
+	पूर्ण
 
-	if (ctrl1 > 0 || ctrl2 > 0) {
+	अगर (ctrl1 > 0 || ctrl2 > 0) अणु
 		dev_dbg(&is31->client->dev, "power up %02x %02x\n",
 			ctrl1, ctrl2);
-		regmap_write(is31->regmap, IS31FL319X_CTRL1, ctrl1);
-		regmap_write(is31->regmap, IS31FL319X_CTRL2, ctrl2);
+		regmap_ग_लिखो(is31->regmap, IS31FL319X_CTRL1, ctrl1);
+		regmap_ग_लिखो(is31->regmap, IS31FL319X_CTRL2, ctrl2);
 		/* update PWMs */
-		regmap_write(is31->regmap, IS31FL319X_DATA_UPDATE, 0x00);
-		/* enable chip from shut down */
-		ret = regmap_write(is31->regmap, IS31FL319X_SHUTDOWN, 0x01);
-	} else {
+		regmap_ग_लिखो(is31->regmap, IS31FL319X_DATA_UPDATE, 0x00);
+		/* enable chip from shut करोwn */
+		ret = regmap_ग_लिखो(is31->regmap, IS31FL319X_SHUTDOWN, 0x01);
+	पूर्ण अन्यथा अणु
 		dev_dbg(&is31->client->dev, "power down\n");
-		/* shut down (no need to clear CTRL1/2) */
-		ret = regmap_write(is31->regmap, IS31FL319X_SHUTDOWN, 0x00);
-	}
+		/* shut करोwn (no need to clear CTRL1/2) */
+		ret = regmap_ग_लिखो(is31->regmap, IS31FL319X_SHUTDOWN, 0x00);
+	पूर्ण
 
 out:
 	mutex_unlock(&is31->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int is31fl319x_parse_child_dt(const struct device *dev,
-				     const struct device_node *child,
-				     struct is31fl319x_led *led)
-{
-	struct led_classdev *cdev = &led->cdev;
-	int ret;
+अटल पूर्णांक is31fl319x_parse_child_dt(स्थिर काष्ठा device *dev,
+				     स्थिर काष्ठा device_node *child,
+				     काष्ठा is31fl319x_led *led)
+अणु
+	काष्ठा led_classdev *cdev = &led->cdev;
+	पूर्णांक ret;
 
-	if (of_property_read_string(child, "label", &cdev->name))
+	अगर (of_property_पढ़ो_string(child, "label", &cdev->name))
 		cdev->name = child->name;
 
-	ret = of_property_read_string(child, "linux,default-trigger",
-				      &cdev->default_trigger);
-	if (ret < 0 && ret != -EINVAL) /* is optional */
-		return ret;
+	ret = of_property_पढ़ो_string(child, "linux,default-trigger",
+				      &cdev->शेष_trigger);
+	अगर (ret < 0 && ret != -EINVAL) /* is optional */
+		वापस ret;
 
 	led->max_microamp = IS31FL319X_CURRENT_DEFAULT;
-	ret = of_property_read_u32(child, "led-max-microamp",
+	ret = of_property_पढ़ो_u32(child, "led-max-microamp",
 				   &led->max_microamp);
-	if (!ret) {
-		if (led->max_microamp < IS31FL319X_CURRENT_MIN)
-			return -EINVAL;	/* not supported */
+	अगर (!ret) अणु
+		अगर (led->max_microamp < IS31FL319X_CURRENT_MIN)
+			वापस -EINVAL;	/* not supported */
 		led->max_microamp = min(led->max_microamp,
 					  IS31FL319X_CURRENT_MAX);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int is31fl319x_parse_dt(struct device *dev,
-			       struct is31fl319x_chip *is31)
-{
-	struct device_node *np = dev_of_node(dev), *child;
-	int count;
-	int ret;
+अटल पूर्णांक is31fl319x_parse_dt(काष्ठा device *dev,
+			       काष्ठा is31fl319x_chip *is31)
+अणु
+	काष्ठा device_node *np = dev_of_node(dev), *child;
+	पूर्णांक count;
+	पूर्णांक ret;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	is31->shutdown_gpio = devm_gpiod_get_optional(dev,
+	is31->shutकरोwn_gpio = devm_gpiod_get_optional(dev,
 						"shutdown",
 						GPIOD_OUT_HIGH);
-	if (IS_ERR(is31->shutdown_gpio)) {
-		ret = PTR_ERR(is31->shutdown_gpio);
+	अगर (IS_ERR(is31->shutकरोwn_gpio)) अणु
+		ret = PTR_ERR(is31->shutकरोwn_gpio);
 		dev_err(dev, "Failed to get shutdown gpio: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	is31->cdef = device_get_match_data(dev);
 
@@ -224,228 +225,228 @@ static int is31fl319x_parse_dt(struct device *dev,
 
 	dev_dbg(dev, "probing with %d leds defined in DT\n", count);
 
-	if (!count || count > is31->cdef->num_leds) {
+	अगर (!count || count > is31->cdef->num_leds) अणु
 		dev_err(dev, "Number of leds defined must be between 1 and %u\n",
 			is31->cdef->num_leds);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for_each_available_child_of_node(np, child) {
-		struct is31fl319x_led *led;
+	क्रम_each_available_child_of_node(np, child) अणु
+		काष्ठा is31fl319x_led *led;
 		u32 reg;
 
-		ret = of_property_read_u32(child, "reg", &reg);
-		if (ret) {
+		ret = of_property_पढ़ो_u32(child, "reg", &reg);
+		अगर (ret) अणु
 			dev_err(dev, "Failed to read led 'reg' property\n");
-			goto put_child_node;
-		}
+			जाओ put_child_node;
+		पूर्ण
 
-		if (reg < 1 || reg > is31->cdef->num_leds) {
+		अगर (reg < 1 || reg > is31->cdef->num_leds) अणु
 			dev_err(dev, "invalid led reg %u\n", reg);
 			ret = -EINVAL;
-			goto put_child_node;
-		}
+			जाओ put_child_node;
+		पूर्ण
 
 		led = &is31->leds[reg - 1];
 
-		if (led->configured) {
+		अगर (led->configured) अणु
 			dev_err(dev, "led %u is already configured\n", reg);
 			ret = -EINVAL;
-			goto put_child_node;
-		}
+			जाओ put_child_node;
+		पूर्ण
 
 		ret = is31fl319x_parse_child_dt(dev, child, led);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "led %u DT parsing failed\n", reg);
-			goto put_child_node;
-		}
+			जाओ put_child_node;
+		पूर्ण
 
 		led->configured = true;
-	}
+	पूर्ण
 
 	is31->audio_gain_db = 0;
-	ret = of_property_read_u32(np, "audio-gain-db", &is31->audio_gain_db);
-	if (!ret)
+	ret = of_property_पढ़ो_u32(np, "audio-gain-db", &is31->audio_gain_db);
+	अगर (!ret)
 		is31->audio_gain_db = min(is31->audio_gain_db,
 					  IS31FL319X_AUDIO_GAIN_DB_MAX);
 
-	return 0;
+	वापस 0;
 
 put_child_node:
 	of_node_put(child);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool is31fl319x_readable_reg(struct device *dev, unsigned int reg)
-{ /* we have no readable registers */
-	return false;
-}
+अटल bool is31fl319x_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु /* we have no पढ़ोable रेजिस्टरs */
+	वापस false;
+पूर्ण
 
-static bool is31fl319x_volatile_reg(struct device *dev, unsigned int reg)
-{ /* volatile registers are not cached */
-	switch (reg) {
-	case IS31FL319X_DATA_UPDATE:
-	case IS31FL319X_TIME_UPDATE:
-	case IS31FL319X_RESET:
-		return true; /* always write-through */
-	default:
-		return false;
-	}
-}
+अटल bool is31fl319x_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु /* अस्थिर रेजिस्टरs are not cached */
+	चयन (reg) अणु
+	हाल IS31FL319X_DATA_UPDATE:
+	हाल IS31FL319X_TIME_UPDATE:
+	हाल IS31FL319X_RESET:
+		वापस true; /* always ग_लिखो-through */
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct reg_default is31fl319x_reg_defaults[] = {
-	{ IS31FL319X_CONFIG1, 0x00},
-	{ IS31FL319X_CONFIG2, 0x00},
-	{ IS31FL319X_PWM(0), 0x00},
-	{ IS31FL319X_PWM(1), 0x00},
-	{ IS31FL319X_PWM(2), 0x00},
-	{ IS31FL319X_PWM(3), 0x00},
-	{ IS31FL319X_PWM(4), 0x00},
-	{ IS31FL319X_PWM(5), 0x00},
-	{ IS31FL319X_PWM(6), 0x00},
-	{ IS31FL319X_PWM(7), 0x00},
-	{ IS31FL319X_PWM(8), 0x00},
-};
+अटल स्थिर काष्ठा reg_शेष is31fl319x_reg_शेषs[] = अणु
+	अणु IS31FL319X_CONFIG1, 0x00पूर्ण,
+	अणु IS31FL319X_CONFIG2, 0x00पूर्ण,
+	अणु IS31FL319X_PWM(0), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(1), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(2), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(3), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(4), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(5), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(6), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(7), 0x00पूर्ण,
+	अणु IS31FL319X_PWM(8), 0x00पूर्ण,
+पूर्ण;
 
-static struct regmap_config regmap_config = {
+अटल काष्ठा regmap_config regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = IS31FL319X_REG_CNT,
+	.max_रेजिस्टर = IS31FL319X_REG_CNT,
 	.cache_type = REGCACHE_FLAT,
-	.readable_reg = is31fl319x_readable_reg,
-	.volatile_reg = is31fl319x_volatile_reg,
-	.reg_defaults = is31fl319x_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(is31fl319x_reg_defaults),
-};
+	.पढ़ोable_reg = is31fl319x_पढ़ोable_reg,
+	.अस्थिर_reg = is31fl319x_अस्थिर_reg,
+	.reg_शेषs = is31fl319x_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(is31fl319x_reg_शेषs),
+पूर्ण;
 
-static inline int is31fl319x_microamp_to_cs(struct device *dev, u32 microamp)
-{ /* round down to nearest supported value (range check done by caller) */
+अटल अंतरभूत पूर्णांक is31fl319x_microamp_to_cs(काष्ठा device *dev, u32 microamp)
+अणु /* round करोwn to nearest supported value (range check करोne by caller) */
 	u32 step = microamp / IS31FL319X_CURRENT_STEP;
 
-	return ((IS31FL319X_CONFIG2_CS_STEP_REF - step) &
+	वापस ((IS31FL319X_CONFIG2_CS_STEP_REF - step) &
 		IS31FL319X_CONFIG2_CS_MASK) <<
 		IS31FL319X_CONFIG2_CS_SHIFT; /* CS encoding */
-}
+पूर्ण
 
-static inline int is31fl319x_db_to_gain(u32 dezibel)
-{ /* round down to nearest supported value (range check done by caller) */
-	return dezibel / IS31FL319X_AUDIO_GAIN_DB_STEP;
-}
+अटल अंतरभूत पूर्णांक is31fl319x_db_to_gain(u32 dezibel)
+अणु /* round करोwn to nearest supported value (range check करोne by caller) */
+	वापस dezibel / IS31FL319X_AUDIO_GAIN_DB_STEP;
+पूर्ण
 
-static int is31fl319x_probe(struct i2c_client *client,
-			    const struct i2c_device_id *id)
-{
-	struct is31fl319x_chip *is31;
-	struct device *dev = &client->dev;
-	int err;
-	int i = 0;
+अटल पूर्णांक is31fl319x_probe(काष्ठा i2c_client *client,
+			    स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा is31fl319x_chip *is31;
+	काष्ठा device *dev = &client->dev;
+	पूर्णांक err;
+	पूर्णांक i = 0;
 	u32 aggregated_led_microamp = IS31FL319X_CURRENT_MAX;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-		return -EIO;
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+		वापस -EIO;
 
-	is31 = devm_kzalloc(&client->dev, sizeof(*is31), GFP_KERNEL);
-	if (!is31)
-		return -ENOMEM;
+	is31 = devm_kzalloc(&client->dev, माप(*is31), GFP_KERNEL);
+	अगर (!is31)
+		वापस -ENOMEM;
 
 	mutex_init(&is31->lock);
 
 	err = is31fl319x_parse_dt(&client->dev, is31);
-	if (err)
-		goto free_mutex;
+	अगर (err)
+		जाओ मुक्त_mutex;
 
-	if (is31->shutdown_gpio) {
-		gpiod_direction_output(is31->shutdown_gpio, 0);
+	अगर (is31->shutकरोwn_gpio) अणु
+		gpiod_direction_output(is31->shutकरोwn_gpio, 0);
 		mdelay(5);
-		gpiod_direction_output(is31->shutdown_gpio, 1);
-	}
+		gpiod_direction_output(is31->shutकरोwn_gpio, 1);
+	पूर्ण
 
 	is31->client = client;
 	is31->regmap = devm_regmap_init_i2c(client, &regmap_config);
-	if (IS_ERR(is31->regmap)) {
+	अगर (IS_ERR(is31->regmap)) अणु
 		dev_err(&client->dev, "failed to allocate register map\n");
 		err = PTR_ERR(is31->regmap);
-		goto free_mutex;
-	}
+		जाओ मुक्त_mutex;
+	पूर्ण
 
 	i2c_set_clientdata(client, is31);
 
-	/* check for write-reply from chip (we can't read any registers) */
-	err = regmap_write(is31->regmap, IS31FL319X_RESET, 0x00);
-	if (err < 0) {
+	/* check क्रम ग_लिखो-reply from chip (we can't पढ़ो any रेजिस्टरs) */
+	err = regmap_ग_लिखो(is31->regmap, IS31FL319X_RESET, 0x00);
+	अगर (err < 0) अणु
 		dev_err(&client->dev, "no response from chip write: err = %d\n",
 			err);
-		err = -EIO; /* does not answer */
-		goto free_mutex;
-	}
+		err = -EIO; /* करोes not answer */
+		जाओ मुक्त_mutex;
+	पूर्ण
 
 	/*
 	 * Kernel conventions require per-LED led-max-microamp property.
-	 * But the chip does not allow to limit individual LEDs.
-	 * So we take minimum from all subnodes for safety of hardware.
+	 * But the chip करोes not allow to limit inभागidual LEDs.
+	 * So we take minimum from all subnodes क्रम safety of hardware.
 	 */
-	for (i = 0; i < is31->cdef->num_leds; i++)
-		if (is31->leds[i].configured &&
+	क्रम (i = 0; i < is31->cdef->num_leds; i++)
+		अगर (is31->leds[i].configured &&
 		    is31->leds[i].max_microamp < aggregated_led_microamp)
 			aggregated_led_microamp = is31->leds[i].max_microamp;
 
-	regmap_write(is31->regmap, IS31FL319X_CONFIG2,
+	regmap_ग_लिखो(is31->regmap, IS31FL319X_CONFIG2,
 		     is31fl319x_microamp_to_cs(dev, aggregated_led_microamp) |
 		     is31fl319x_db_to_gain(is31->audio_gain_db));
 
-	for (i = 0; i < is31->cdef->num_leds; i++) {
-		struct is31fl319x_led *led = &is31->leds[i];
+	क्रम (i = 0; i < is31->cdef->num_leds; i++) अणु
+		काष्ठा is31fl319x_led *led = &is31->leds[i];
 
-		if (!led->configured)
-			continue;
+		अगर (!led->configured)
+			जारी;
 
 		led->chip = is31;
 		led->cdev.brightness_set_blocking = is31fl319x_brightness_set;
 
-		err = devm_led_classdev_register(&client->dev, &led->cdev);
-		if (err < 0)
-			goto free_mutex;
-	}
+		err = devm_led_classdev_रेजिस्टर(&client->dev, &led->cdev);
+		अगर (err < 0)
+			जाओ मुक्त_mutex;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_mutex:
+मुक्त_mutex:
 	mutex_destroy(&is31->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int is31fl319x_remove(struct i2c_client *client)
-{
-	struct is31fl319x_chip *is31 = i2c_get_clientdata(client);
+अटल पूर्णांक is31fl319x_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा is31fl319x_chip *is31 = i2c_get_clientdata(client);
 
 	mutex_destroy(&is31->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * i2c-core (and modalias) requires that id_table be properly filled,
- * even though it is not used for DeviceTree based instantiation.
+ * even though it is not used क्रम DeviceTree based instantiation.
  */
-static const struct i2c_device_id is31fl319x_id[] = {
-	{ "is31fl3190" },
-	{ "is31fl3191" },
-	{ "is31fl3193" },
-	{ "is31fl3196" },
-	{ "is31fl3199" },
-	{ "sn3199" },
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id is31fl319x_id[] = अणु
+	अणु "is31fl3190" पूर्ण,
+	अणु "is31fl3191" पूर्ण,
+	अणु "is31fl3193" पूर्ण,
+	अणु "is31fl3196" पूर्ण,
+	अणु "is31fl3199" पूर्ण,
+	अणु "sn3199" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, is31fl319x_id);
 
-static struct i2c_driver is31fl319x_driver = {
-	.driver   = {
+अटल काष्ठा i2c_driver is31fl319x_driver = अणु
+	.driver   = अणु
 		.name           = "leds-is31fl319x",
 		.of_match_table = of_match_ptr(of_is31fl319x_match),
-	},
+	पूर्ण,
 	.probe    = is31fl319x_probe,
-	.remove   = is31fl319x_remove,
+	.हटाओ   = is31fl319x_हटाओ,
 	.id_table = is31fl319x_id,
-};
+पूर्ण;
 
 module_i2c_driver(is31fl319x_driver);
 

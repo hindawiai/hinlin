@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- * SPU info structures
+ * SPU info काष्ठाures
  *
  * (C) Copyright 2006 IBM Corp.
  *
  * Author: Dwayne Grant McConnell <decimal@us.ibm.com>
  */
 
-#ifndef _UAPI_SPU_INFO_H
-#define _UAPI_SPU_INFO_H
+#अगर_अघोषित _UAPI_SPU_INFO_H
+#घोषणा _UAPI_SPU_INFO_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#ifndef __KERNEL__
-struct mfc_cq_sr {
+#अगर_अघोषित __KERNEL__
+काष्ठा mfc_cq_sr अणु
 	__u64 mfc_cq_data0_RW;
 	__u64 mfc_cq_data1_RW;
 	__u64 mfc_cq_data2_RW;
 	__u64 mfc_cq_data3_RW;
-};
-#endif /* __KERNEL__ */
+पूर्ण;
+#पूर्ण_अगर /* __KERNEL__ */
 
-struct spu_dma_info {
+काष्ठा spu_dma_info अणु
 	__u64 dma_info_type;
 	__u64 dma_info_mask;
 	__u64 dma_info_status;
-	__u64 dma_info_stall_and_notify;
+	__u64 dma_info_stall_and_notअगरy;
 	__u64 dma_info_atomic_command_status;
-	struct mfc_cq_sr dma_info_command_data[16];
-};
+	काष्ठा mfc_cq_sr dma_info_command_data[16];
+पूर्ण;
 
-struct spu_proxydma_info {
+काष्ठा spu_proxydma_info अणु
 	__u64 proxydma_info_type;
 	__u64 proxydma_info_mask;
 	__u64 proxydma_info_status;
-	struct mfc_cq_sr proxydma_info_command_data[8];
-};
+	काष्ठा mfc_cq_sr proxydma_info_command_data[8];
+पूर्ण;
 
-#endif /* _UAPI_SPU_INFO_H */
+#पूर्ण_अगर /* _UAPI_SPU_INFO_H */

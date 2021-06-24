@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * ifile.h - NILFS inode file
+ * अगरile.h - NILFS inode file
  *
  * Copyright (C) 2006-2008 Nippon Telegraph and Telephone Corporation.
  *
@@ -9,37 +10,37 @@
  *
  */
 
-#ifndef _NILFS_IFILE_H
-#define _NILFS_IFILE_H
+#अगर_अघोषित _NILFS_Iखाता_H
+#घोषणा _NILFS_Iखाता_H
 
-#include <linux/fs.h>
-#include <linux/buffer_head.h>
-#include "mdt.h"
-#include "alloc.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/buffer_head.h>
+#समावेश "mdt.h"
+#समावेश "alloc.h"
 
 
-static inline struct nilfs_inode *
-nilfs_ifile_map_inode(struct inode *ifile, ino_t ino, struct buffer_head *ibh)
-{
-	void *kaddr = kmap(ibh->b_page);
+अटल अंतरभूत काष्ठा nilfs_inode *
+nilfs_अगरile_map_inode(काष्ठा inode *अगरile, ino_t ino, काष्ठा buffer_head *ibh)
+अणु
+	व्योम *kaddr = kmap(ibh->b_page);
 
-	return nilfs_palloc_block_get_entry(ifile, ino, ibh, kaddr);
-}
+	वापस nilfs_palloc_block_get_entry(अगरile, ino, ibh, kaddr);
+पूर्ण
 
-static inline void nilfs_ifile_unmap_inode(struct inode *ifile, ino_t ino,
-					   struct buffer_head *ibh)
-{
+अटल अंतरभूत व्योम nilfs_अगरile_unmap_inode(काष्ठा inode *अगरile, ino_t ino,
+					   काष्ठा buffer_head *ibh)
+अणु
 	kunmap(ibh->b_page);
-}
+पूर्ण
 
-int nilfs_ifile_create_inode(struct inode *, ino_t *, struct buffer_head **);
-int nilfs_ifile_delete_inode(struct inode *, ino_t);
-int nilfs_ifile_get_inode_block(struct inode *, ino_t, struct buffer_head **);
+पूर्णांक nilfs_अगरile_create_inode(काष्ठा inode *, ino_t *, काष्ठा buffer_head **);
+पूर्णांक nilfs_अगरile_delete_inode(काष्ठा inode *, ino_t);
+पूर्णांक nilfs_अगरile_get_inode_block(काष्ठा inode *, ino_t, काष्ठा buffer_head **);
 
-int nilfs_ifile_count_free_inodes(struct inode *, u64 *, u64 *);
+पूर्णांक nilfs_अगरile_count_मुक्त_inodes(काष्ठा inode *, u64 *, u64 *);
 
-int nilfs_ifile_read(struct super_block *sb, struct nilfs_root *root,
-		     size_t inode_size, struct nilfs_inode *raw_inode,
-		     struct inode **inodep);
+पूर्णांक nilfs_अगरile_पढ़ो(काष्ठा super_block *sb, काष्ठा nilfs_root *root,
+		     माप_प्रकार inode_size, काष्ठा nilfs_inode *raw_inode,
+		     काष्ठा inode **inodep);
 
-#endif	/* _NILFS_IFILE_H */
+#पूर्ण_अगर	/* _NILFS_Iखाता_H */

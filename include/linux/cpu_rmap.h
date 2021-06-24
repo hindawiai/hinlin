@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef __LINUX_CPU_RMAP_H
-#define __LINUX_CPU_RMAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित __LINUX_CPU_RMAP_H
+#घोषणा __LINUX_CPU_RMAP_H
 
 /*
  * cpu_rmap.c: CPU affinity reverse-map support
  * Copyright 2011 Solarflare Communications Inc.
  */
 
-#include <linux/cpumask.h>
-#include <linux/gfp.h>
-#include <linux/slab.h>
-#include <linux/kref.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kref.h>
 
 /**
- * struct cpu_rmap - CPU affinity reverse-map
- * @refcount: kref for object
+ * काष्ठा cpu_rmap - CPU affinity reverse-map
+ * @refcount: kref क्रम object
  * @size: Number of objects to be reverse-mapped
  * @used: Number of objects added
- * @obj: Pointer to array of object pointers
+ * @obj: Poपूर्णांकer to array of object poपूर्णांकers
  * @near: For each CPU, the index and distance to the nearest object,
  *      based on affinity masks
  */
-struct cpu_rmap {
-	struct kref	refcount;
+काष्ठा cpu_rmap अणु
+	काष्ठा kref	refcount;
 	u16		size, used;
-	void		**obj;
-	struct {
+	व्योम		**obj;
+	काष्ठा अणु
 		u16	index;
 		u16	dist;
-	}		near[];
-};
-#define CPU_RMAP_DIST_INF 0xffff
+	पूर्ण		near[];
+पूर्ण;
+#घोषणा CPU_RMAP_DIST_INF 0xffff
 
-extern struct cpu_rmap *alloc_cpu_rmap(unsigned int size, gfp_t flags);
-extern int cpu_rmap_put(struct cpu_rmap *rmap);
+बाह्य काष्ठा cpu_rmap *alloc_cpu_rmap(अचिन्हित पूर्णांक size, gfp_t flags);
+बाह्य पूर्णांक cpu_rmap_put(काष्ठा cpu_rmap *rmap);
 
-extern int cpu_rmap_add(struct cpu_rmap *rmap, void *obj);
-extern int cpu_rmap_update(struct cpu_rmap *rmap, u16 index,
-			   const struct cpumask *affinity);
+बाह्य पूर्णांक cpu_rmap_add(काष्ठा cpu_rmap *rmap, व्योम *obj);
+बाह्य पूर्णांक cpu_rmap_update(काष्ठा cpu_rmap *rmap, u16 index,
+			   स्थिर काष्ठा cpumask *affinity);
 
-static inline u16 cpu_rmap_lookup_index(struct cpu_rmap *rmap, unsigned int cpu)
-{
-	return rmap->near[cpu].index;
-}
+अटल अंतरभूत u16 cpu_rmap_lookup_index(काष्ठा cpu_rmap *rmap, अचिन्हित पूर्णांक cpu)
+अणु
+	वापस rmap->near[cpu].index;
+पूर्ण
 
-static inline void *cpu_rmap_lookup_obj(struct cpu_rmap *rmap, unsigned int cpu)
-{
-	return rmap->obj[rmap->near[cpu].index];
-}
+अटल अंतरभूत व्योम *cpu_rmap_lookup_obj(काष्ठा cpu_rmap *rmap, अचिन्हित पूर्णांक cpu)
+अणु
+	वापस rmap->obj[rmap->near[cpu].index];
+पूर्ण
 
 /**
- * alloc_irq_cpu_rmap - allocate CPU affinity reverse-map for IRQs
+ * alloc_irq_cpu_rmap - allocate CPU affinity reverse-map क्रम IRQs
  * @size: Number of objects to be mapped
  *
  * Must be called in process context.
  */
-static inline struct cpu_rmap *alloc_irq_cpu_rmap(unsigned int size)
-{
-	return alloc_cpu_rmap(size, GFP_KERNEL);
-}
-extern void free_irq_cpu_rmap(struct cpu_rmap *rmap);
+अटल अंतरभूत काष्ठा cpu_rmap *alloc_irq_cpu_rmap(अचिन्हित पूर्णांक size)
+अणु
+	वापस alloc_cpu_rmap(size, GFP_KERNEL);
+पूर्ण
+बाह्य व्योम मुक्त_irq_cpu_rmap(काष्ठा cpu_rmap *rmap);
 
-extern int irq_cpu_rmap_add(struct cpu_rmap *rmap, int irq);
+बाह्य पूर्णांक irq_cpu_rmap_add(काष्ठा cpu_rmap *rmap, पूर्णांक irq);
 
-#endif /* __LINUX_CPU_RMAP_H */
+#पूर्ण_अगर /* __LINUX_CPU_RMAP_H */

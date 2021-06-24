@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2016 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,154 +33,154 @@
  * SOFTWARE.
  */
 
-#include <net/tc_act/tc_gact.h>
-#include <net/tc_act/tc_mirred.h>
+#समावेश <net/tc_act/tc_gact.h>
+#समावेश <net/tc_act/tc_mirred.h>
 
-#include "cxgb4.h"
-#include "cxgb4_filter.h"
-#include "cxgb4_tc_u32_parse.h"
-#include "cxgb4_tc_u32.h"
+#समावेश "cxgb4.h"
+#समावेश "cxgb4_filter.h"
+#समावेश "cxgb4_tc_u32_parse.h"
+#समावेश "cxgb4_tc_u32.h"
 
-/* Fill ch_filter_specification with parsed match value/mask pair. */
-static int fill_match_fields(struct adapter *adap,
-			     struct ch_filter_specification *fs,
-			     struct tc_cls_u32_offload *cls,
-			     const struct cxgb4_match_field *entry,
+/* Fill ch_filter_specअगरication with parsed match value/mask pair. */
+अटल पूर्णांक fill_match_fields(काष्ठा adapter *adap,
+			     काष्ठा ch_filter_specअगरication *fs,
+			     काष्ठा tc_cls_u32_offload *cls,
+			     स्थिर काष्ठा cxgb4_match_field *entry,
 			     bool next_header)
-{
-	unsigned int i, j;
+अणु
+	अचिन्हित पूर्णांक i, j;
 	__be32 val, mask;
-	int off, err;
+	पूर्णांक off, err;
 	bool found;
 
-	for (i = 0; i < cls->knode.sel->nkeys; i++) {
+	क्रम (i = 0; i < cls->knode.sel->nkeys; i++) अणु
 		off = cls->knode.sel->keys[i].off;
 		val = cls->knode.sel->keys[i].val;
 		mask = cls->knode.sel->keys[i].mask;
 
-		if (next_header) {
+		अगर (next_header) अणु
 			/* For next headers, parse only keys with offmask */
-			if (!cls->knode.sel->keys[i].offmask)
-				continue;
-		} else {
-			/* For the remaining, parse only keys without offmask */
-			if (cls->knode.sel->keys[i].offmask)
-				continue;
-		}
+			अगर (!cls->knode.sel->keys[i].offmask)
+				जारी;
+		पूर्ण अन्यथा अणु
+			/* For the reमुख्यing, parse only keys without offmask */
+			अगर (cls->knode.sel->keys[i].offmask)
+				जारी;
+		पूर्ण
 
 		found = false;
 
-		for (j = 0; entry[j].val; j++) {
-			if (off == entry[j].off) {
+		क्रम (j = 0; entry[j].val; j++) अणु
+			अगर (off == entry[j].off) अणु
 				found = true;
 				err = entry[j].val(fs, val, mask);
-				if (err)
-					return err;
-				break;
-			}
-		}
+				अगर (err)
+					वापस err;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!found)
-			return -EINVAL;
-	}
+		अगर (!found)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Fill ch_filter_specification with parsed action. */
-static int fill_action_fields(struct adapter *adap,
-			      struct ch_filter_specification *fs,
-			      struct tc_cls_u32_offload *cls)
-{
-	unsigned int num_actions = 0;
-	const struct tc_action *a;
-	struct tcf_exts *exts;
-	int i;
+/* Fill ch_filter_specअगरication with parsed action. */
+अटल पूर्णांक fill_action_fields(काष्ठा adapter *adap,
+			      काष्ठा ch_filter_specअगरication *fs,
+			      काष्ठा tc_cls_u32_offload *cls)
+अणु
+	अचिन्हित पूर्णांक num_actions = 0;
+	स्थिर काष्ठा tc_action *a;
+	काष्ठा tcf_exts *exts;
+	पूर्णांक i;
 
 	exts = cls->knode.exts;
-	if (!tcf_exts_has_actions(exts))
-		return -EINVAL;
+	अगर (!tcf_exts_has_actions(exts))
+		वापस -EINVAL;
 
-	tcf_exts_for_each_action(i, a, exts) {
+	tcf_exts_क्रम_each_action(i, a, exts) अणु
 		/* Don't allow more than one action per rule. */
-		if (num_actions)
-			return -EINVAL;
+		अगर (num_actions)
+			वापस -EINVAL;
 
 		/* Drop in hardware. */
-		if (is_tcf_gact_shot(a)) {
+		अगर (is_tcf_gact_shot(a)) अणु
 			fs->action = FILTER_DROP;
 			num_actions++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Re-direct to specified port in hardware. */
-		if (is_tcf_mirred_egress_redirect(a)) {
-			struct net_device *n_dev, *target_dev;
+		/* Re-direct to specअगरied port in hardware. */
+		अगर (is_tcf_mirred_egress_redirect(a)) अणु
+			काष्ठा net_device *n_dev, *target_dev;
 			bool found = false;
-			unsigned int i;
+			अचिन्हित पूर्णांक i;
 
 			target_dev = tcf_mirred_dev(a);
-			for_each_port(adap, i) {
+			क्रम_each_port(adap, i) अणु
 				n_dev = adap->port[i];
-				if (target_dev == n_dev) {
+				अगर (target_dev == n_dev) अणु
 					fs->action = FILTER_SWITCH;
 					fs->eport = i;
 					found = true;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-			/* Interface doesn't belong to any port of
+			/* Interface करोesn't beदीर्घ to any port of
 			 * the underlying hardware.
 			 */
-			if (!found)
-				return -EINVAL;
+			अगर (!found)
+				वापस -EINVAL;
 
 			num_actions++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Un-supported action. */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cxgb4_config_knode(struct net_device *dev, struct tc_cls_u32_offload *cls)
-{
-	const struct cxgb4_match_field *start, *link_start = NULL;
-	struct netlink_ext_ack *extack = cls->common.extack;
-	struct adapter *adapter = netdev2adap(dev);
+पूर्णांक cxgb4_config_knode(काष्ठा net_device *dev, काष्ठा tc_cls_u32_offload *cls)
+अणु
+	स्थिर काष्ठा cxgb4_match_field *start, *link_start = शून्य;
+	काष्ठा netlink_ext_ack *extack = cls->common.extack;
+	काष्ठा adapter *adapter = netdev2adap(dev);
 	__be16 protocol = cls->common.protocol;
-	struct ch_filter_specification fs;
-	struct cxgb4_tc_u32_table *t;
-	struct cxgb4_link *link;
+	काष्ठा ch_filter_specअगरication fs;
+	काष्ठा cxgb4_tc_u32_table *t;
+	काष्ठा cxgb4_link *link;
 	u32 uhtid, link_uhtid;
 	bool is_ipv6 = false;
 	u8 inet_family;
-	int filter_id;
-	int ret;
+	पूर्णांक filter_id;
+	पूर्णांक ret;
 
-	if (!can_tc_u32_offload(dev))
-		return -EOPNOTSUPP;
+	अगर (!can_tc_u32_offload(dev))
+		वापस -EOPNOTSUPP;
 
-	if (protocol != htons(ETH_P_IP) && protocol != htons(ETH_P_IPV6))
-		return -EOPNOTSUPP;
+	अगर (protocol != htons(ETH_P_IP) && protocol != htons(ETH_P_IPV6))
+		वापस -EOPNOTSUPP;
 
 	inet_family = (protocol == htons(ETH_P_IPV6)) ? PF_INET6 : PF_INET;
 
-	/* Get a free filter entry TID, where we can insert this new
-	 * rule. Only insert rule if its prio doesn't conflict with
+	/* Get a मुक्त filter entry TID, where we can insert this new
+	 * rule. Only insert rule अगर its prio करोesn't conflict with
 	 * existing rules.
 	 */
-	filter_id = cxgb4_get_free_ftid(dev, inet_family, false,
+	filter_id = cxgb4_get_मुक्त_ftid(dev, inet_family, false,
 					TC_U32_NODE(cls->knode.handle));
-	if (filter_id < 0) {
+	अगर (filter_id < 0) अणु
 		NL_SET_ERR_MSG_MOD(extack,
 				   "No free LETCAM index available");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	t = adapter->tc_u32;
 	uhtid = TC_U32_USERHTID(cls->knode.handle);
@@ -188,137 +189,137 @@ int cxgb4_config_knode(struct net_device *dev, struct tc_cls_u32_offload *cls)
 	/* Ensure that uhtid is either root u32 (i.e. 0x800)
 	 * or a a valid linked bucket.
 	 */
-	if (uhtid != 0x800 && uhtid >= t->size)
-		return -EINVAL;
+	अगर (uhtid != 0x800 && uhtid >= t->size)
+		वापस -EINVAL;
 
-	/* Ensure link handle uhtid is sane, if specified. */
-	if (link_uhtid >= t->size)
-		return -EINVAL;
+	/* Ensure link handle uhtid is sane, अगर specअगरied. */
+	अगर (link_uhtid >= t->size)
+		वापस -EINVAL;
 
-	memset(&fs, 0, sizeof(fs));
+	स_रखो(&fs, 0, माप(fs));
 
-	if (filter_id < adapter->tids.nhpftids)
+	अगर (filter_id < adapter->tids.nhpftids)
 		fs.prio = 1;
 	fs.tc_prio = cls->common.prio;
 	fs.tc_cookie = cls->knode.handle;
 
-	if (protocol == htons(ETH_P_IPV6)) {
+	अगर (protocol == htons(ETH_P_IPV6)) अणु
 		start = cxgb4_ipv6_fields;
 		is_ipv6 = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		start = cxgb4_ipv4_fields;
 		is_ipv6 = false;
-	}
+	पूर्ण
 
-	if (uhtid != 0x800) {
-		/* Link must exist from root node before insertion. */
-		if (!t->table[uhtid - 1].link_handle)
-			return -EINVAL;
+	अगर (uhtid != 0x800) अणु
+		/* Link must exist from root node beक्रमe insertion. */
+		अगर (!t->table[uhtid - 1].link_handle)
+			वापस -EINVAL;
 
 		/* Link must have a valid supported next header. */
 		link_start = t->table[uhtid - 1].match_field;
-		if (!link_start)
-			return -EINVAL;
-	}
+		अगर (!link_start)
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Parse links and record them for subsequent jumps to valid
+	/* Parse links and record them क्रम subsequent jumps to valid
 	 * next headers.
 	 */
-	if (link_uhtid) {
-		const struct cxgb4_next_header *next;
+	अगर (link_uhtid) अणु
+		स्थिर काष्ठा cxgb4_next_header *next;
 		bool found = false;
-		unsigned int i, j;
+		अचिन्हित पूर्णांक i, j;
 		__be32 val, mask;
-		int off;
+		पूर्णांक off;
 
-		if (t->table[link_uhtid - 1].link_handle) {
+		अगर (t->table[link_uhtid - 1].link_handle) अणु
 			dev_err(adapter->pdev_dev,
 				"Link handle exists for: 0x%x\n",
 				link_uhtid);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		next = is_ipv6 ? cxgb4_ipv6_jumps : cxgb4_ipv4_jumps;
 
 		/* Try to find matches that allow jumps to next header. */
-		for (i = 0; next[i].jump; i++) {
-			if (next[i].sel.offoff != cls->knode.sel->offoff ||
-			    next[i].sel.offshift != cls->knode.sel->offshift ||
+		क्रम (i = 0; next[i].jump; i++) अणु
+			अगर (next[i].sel.offoff != cls->knode.sel->offoff ||
+			    next[i].sel.offshअगरt != cls->knode.sel->offshअगरt ||
 			    next[i].sel.offmask != cls->knode.sel->offmask ||
 			    next[i].sel.off != cls->knode.sel->off)
-				continue;
+				जारी;
 
 			/* Found a possible candidate.  Find a key that
 			 * matches the corresponding offset, value, and
 			 * mask to jump to next header.
 			 */
-			for (j = 0; j < cls->knode.sel->nkeys; j++) {
+			क्रम (j = 0; j < cls->knode.sel->nkeys; j++) अणु
 				off = cls->knode.sel->keys[j].off;
 				val = cls->knode.sel->keys[j].val;
 				mask = cls->knode.sel->keys[j].mask;
 
-				if (next[i].key.off == off &&
+				अगर (next[i].key.off == off &&
 				    next[i].key.val == val &&
-				    next[i].key.mask == mask) {
+				    next[i].key.mask == mask) अणु
 					found = true;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-			if (!found)
-				continue; /* Try next candidate. */
+			अगर (!found)
+				जारी; /* Try next candidate. */
 
 			/* Candidate to jump to next header found.
-			 * Translate all keys to internal specification
+			 * Translate all keys to पूर्णांकernal specअगरication
 			 * and store them in jump table. This spec is copied
 			 * later to set the actual filters.
 			 */
 			ret = fill_match_fields(adapter, &fs, cls,
 						start, false);
-			if (ret)
-				goto out;
+			अगर (ret)
+				जाओ out;
 
 			link = &t->table[link_uhtid - 1];
 			link->match_field = next[i].jump;
 			link->link_handle = cls->knode.handle;
-			memcpy(&link->fs, &fs, sizeof(fs));
-			break;
-		}
+			स_नकल(&link->fs, &fs, माप(fs));
+			अवरोध;
+		पूर्ण
 
 		/* No candidate found to jump to next header. */
-		if (!found)
-			return -EINVAL;
+		अगर (!found)
+			वापस -EINVAL;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Fill ch_filter_specification match fields to be shipped to hardware.
-	 * Copy the linked spec (if any) first.  And then update the spec as
+	/* Fill ch_filter_specअगरication match fields to be shipped to hardware.
+	 * Copy the linked spec (अगर any) first.  And then update the spec as
 	 * needed.
 	 */
-	if (uhtid != 0x800 && t->table[uhtid - 1].link_handle) {
-		/* Copy linked ch_filter_specification */
-		memcpy(&fs, &t->table[uhtid - 1].fs, sizeof(fs));
+	अगर (uhtid != 0x800 && t->table[uhtid - 1].link_handle) अणु
+		/* Copy linked ch_filter_specअगरication */
+		स_नकल(&fs, &t->table[uhtid - 1].fs, माप(fs));
 		ret = fill_match_fields(adapter, &fs, cls,
 					link_start, true);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = fill_match_fields(adapter, &fs, cls, start, false);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	/* Fill ch_filter_specification action fields to be shipped to
+	/* Fill ch_filter_specअगरication action fields to be shipped to
 	 * hardware.
 	 */
 	ret = fill_action_fields(adapter, &fs, cls);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* The filter spec has been completely built from the info
-	 * provided from u32.  We now set some default fields in the
-	 * spec for sanity.
+	 * provided from u32.  We now set some शेष fields in the
+	 * spec क्रम sanity.
 	 */
 
 	/* Match only packets coming from the ingress port where this
@@ -335,87 +336,87 @@ int cxgb4_config_knode(struct net_device *dev, struct tc_cls_u32_offload *cls)
 
 	/* Set the filter */
 	ret = cxgb4_set_filter(dev, filter_id, &fs);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* If this is a linked bucket, then set the corresponding
-	 * entry in the bitmap to mark it as belonging to this linked
+	 * entry in the biपंचांगap to mark it as beदीर्घing to this linked
 	 * bucket.
 	 */
-	if (uhtid != 0x800 && t->table[uhtid - 1].link_handle)
+	अगर (uhtid != 0x800 && t->table[uhtid - 1].link_handle)
 		set_bit(filter_id, t->table[uhtid - 1].tid_map);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgb4_delete_knode(struct net_device *dev, struct tc_cls_u32_offload *cls)
-{
-	struct adapter *adapter = netdev2adap(dev);
-	unsigned int filter_id, max_tids, i, j;
-	struct cxgb4_link *link = NULL;
-	struct cxgb4_tc_u32_table *t;
-	struct filter_entry *f;
+पूर्णांक cxgb4_delete_knode(काष्ठा net_device *dev, काष्ठा tc_cls_u32_offload *cls)
+अणु
+	काष्ठा adapter *adapter = netdev2adap(dev);
+	अचिन्हित पूर्णांक filter_id, max_tids, i, j;
+	काष्ठा cxgb4_link *link = शून्य;
+	काष्ठा cxgb4_tc_u32_table *t;
+	काष्ठा filter_entry *f;
 	bool found = false;
 	u32 handle, uhtid;
 	u8 nslots;
-	int ret;
+	पूर्णांक ret;
 
-	if (!can_tc_u32_offload(dev))
-		return -EOPNOTSUPP;
+	अगर (!can_tc_u32_offload(dev))
+		वापस -EOPNOTSUPP;
 
 	/* Fetch the location to delete the filter. */
 	max_tids = adapter->tids.nhpftids + adapter->tids.nftids;
 
 	spin_lock_bh(&adapter->tids.ftid_lock);
 	filter_id = 0;
-	while (filter_id < max_tids) {
-		if (filter_id < adapter->tids.nhpftids) {
+	जबतक (filter_id < max_tids) अणु
+		अगर (filter_id < adapter->tids.nhpftids) अणु
 			i = filter_id;
 			f = &adapter->tids.hpftid_tab[i];
-			if (f->valid && f->fs.tc_cookie == cls->knode.handle) {
+			अगर (f->valid && f->fs.tc_cookie == cls->knode.handle) अणु
 				found = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			i = find_next_bit(adapter->tids.hpftid_bmap,
 					  adapter->tids.nhpftids, i + 1);
-			if (i >= adapter->tids.nhpftids) {
+			अगर (i >= adapter->tids.nhpftids) अणु
 				filter_id = adapter->tids.nhpftids;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			filter_id = i;
-		} else {
+		पूर्ण अन्यथा अणु
 			i = filter_id - adapter->tids.nhpftids;
 			f = &adapter->tids.ftid_tab[i];
-			if (f->valid && f->fs.tc_cookie == cls->knode.handle) {
+			अगर (f->valid && f->fs.tc_cookie == cls->knode.handle) अणु
 				found = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			i = find_next_bit(adapter->tids.ftid_bmap,
 					  adapter->tids.nftids, i + 1);
-			if (i >= adapter->tids.nftids)
-				break;
+			अगर (i >= adapter->tids.nftids)
+				अवरोध;
 
 			filter_id = i + adapter->tids.nhpftids;
-		}
+		पूर्ण
 
 		nslots = 0;
-		if (f->fs.type) {
+		अगर (f->fs.type) अणु
 			nslots++;
-			if (CHELSIO_CHIP_VERSION(adapter->params.chip) <
+			अगर (CHELSIO_CHIP_VERSION(adapter->params.chip) <
 			    CHELSIO_T6)
 				nslots += 2;
-		}
+		पूर्ण
 
 		filter_id += nslots;
-	}
+	पूर्ण
 	spin_unlock_bh(&adapter->tids.ftid_lock);
 
-	if (!found)
-		return -ERANGE;
+	अगर (!found)
+		वापस -दुस्फल;
 
 	t = adapter->tc_u32;
 	handle = cls->knode.handle;
@@ -424,109 +425,109 @@ int cxgb4_delete_knode(struct net_device *dev, struct tc_cls_u32_offload *cls)
 	/* Ensure that uhtid is either root u32 (i.e. 0x800)
 	 * or a a valid linked bucket.
 	 */
-	if (uhtid != 0x800 && uhtid >= t->size)
-		return -EINVAL;
+	अगर (uhtid != 0x800 && uhtid >= t->size)
+		वापस -EINVAL;
 
-	/* Delete the specified filter */
-	if (uhtid != 0x800) {
+	/* Delete the specअगरied filter */
+	अगर (uhtid != 0x800) अणु
 		link = &t->table[uhtid - 1];
-		if (!link->link_handle)
-			return -EINVAL;
+		अगर (!link->link_handle)
+			वापस -EINVAL;
 
-		if (!test_bit(filter_id, link->tid_map))
-			return -EINVAL;
-	}
+		अगर (!test_bit(filter_id, link->tid_map))
+			वापस -EINVAL;
+	पूर्ण
 
-	ret = cxgb4_del_filter(dev, filter_id, NULL);
-	if (ret)
-		goto out;
+	ret = cxgb4_del_filter(dev, filter_id, शून्य);
+	अगर (ret)
+		जाओ out;
 
-	if (link)
+	अगर (link)
 		clear_bit(filter_id, link->tid_map);
 
 	/* If a link is being deleted, then delete all filters
 	 * associated with the link.
 	 */
-	for (i = 0; i < t->size; i++) {
+	क्रम (i = 0; i < t->size; i++) अणु
 		link = &t->table[i];
 
-		if (link->link_handle == handle) {
-			for (j = 0; j < max_tids; j++) {
-				if (!test_bit(j, link->tid_map))
-					continue;
+		अगर (link->link_handle == handle) अणु
+			क्रम (j = 0; j < max_tids; j++) अणु
+				अगर (!test_bit(j, link->tid_map))
+					जारी;
 
-				ret = __cxgb4_del_filter(dev, j, NULL, NULL);
-				if (ret)
-					goto out;
+				ret = __cxgb4_del_filter(dev, j, शून्य, शून्य);
+				अगर (ret)
+					जाओ out;
 
 				clear_bit(j, link->tid_map);
-			}
+			पूर्ण
 
 			/* Clear the link state */
-			link->match_field = NULL;
+			link->match_field = शून्य;
 			link->link_handle = 0;
-			memset(&link->fs, 0, sizeof(link->fs));
-			break;
-		}
-	}
+			स_रखो(&link->fs, 0, माप(link->fs));
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void cxgb4_cleanup_tc_u32(struct adapter *adap)
-{
-	struct cxgb4_tc_u32_table *t;
-	unsigned int i;
+व्योम cxgb4_cleanup_tc_u32(काष्ठा adapter *adap)
+अणु
+	काष्ठा cxgb4_tc_u32_table *t;
+	अचिन्हित पूर्णांक i;
 
-	if (!adap->tc_u32)
-		return;
+	अगर (!adap->tc_u32)
+		वापस;
 
 	/* Free up all allocated memory. */
 	t = adap->tc_u32;
-	for (i = 0; i < t->size; i++) {
-		struct cxgb4_link *link = &t->table[i];
+	क्रम (i = 0; i < t->size; i++) अणु
+		काष्ठा cxgb4_link *link = &t->table[i];
 
-		kvfree(link->tid_map);
-	}
-	kvfree(adap->tc_u32);
-}
+		kvमुक्त(link->tid_map);
+	पूर्ण
+	kvमुक्त(adap->tc_u32);
+पूर्ण
 
-struct cxgb4_tc_u32_table *cxgb4_init_tc_u32(struct adapter *adap)
-{
-	unsigned int max_tids = adap->tids.nftids + adap->tids.nhpftids;
-	struct cxgb4_tc_u32_table *t;
-	unsigned int i;
+काष्ठा cxgb4_tc_u32_table *cxgb4_init_tc_u32(काष्ठा adapter *adap)
+अणु
+	अचिन्हित पूर्णांक max_tids = adap->tids.nftids + adap->tids.nhpftids;
+	काष्ठा cxgb4_tc_u32_table *t;
+	अचिन्हित पूर्णांक i;
 
-	if (!max_tids)
-		return NULL;
+	अगर (!max_tids)
+		वापस शून्य;
 
-	t = kvzalloc(struct_size(t, table, max_tids), GFP_KERNEL);
-	if (!t)
-		return NULL;
+	t = kvzalloc(काष्ठा_size(t, table, max_tids), GFP_KERNEL);
+	अगर (!t)
+		वापस शून्य;
 
 	t->size = max_tids;
 
-	for (i = 0; i < t->size; i++) {
-		struct cxgb4_link *link = &t->table[i];
-		unsigned int bmap_size;
+	क्रम (i = 0; i < t->size; i++) अणु
+		काष्ठा cxgb4_link *link = &t->table[i];
+		अचिन्हित पूर्णांक bmap_size;
 
 		bmap_size = BITS_TO_LONGS(max_tids);
-		link->tid_map = kvcalloc(bmap_size, sizeof(unsigned long),
+		link->tid_map = kvसुस्मृति(bmap_size, माप(अचिन्हित दीर्घ),
 					 GFP_KERNEL);
-		if (!link->tid_map)
-			goto out_no_mem;
-		bitmap_zero(link->tid_map, max_tids);
-	}
+		अगर (!link->tid_map)
+			जाओ out_no_mem;
+		biपंचांगap_zero(link->tid_map, max_tids);
+	पूर्ण
 
-	return t;
+	वापस t;
 
 out_no_mem:
-	for (i = 0; i < t->size; i++) {
-		struct cxgb4_link *link = &t->table[i];
-		kvfree(link->tid_map);
-	}
-	kvfree(t);
+	क्रम (i = 0; i < t->size; i++) अणु
+		काष्ठा cxgb4_link *link = &t->table[i];
+		kvमुक्त(link->tid_map);
+	पूर्ण
+	kvमुक्त(t);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

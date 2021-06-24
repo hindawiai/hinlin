@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright(c) 2018 Linus Torvalds. All rights reserved.
 // Copyright(c) 2018 Alexei Starovoitov. All rights reserved.
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 
-#ifndef _LINUX_NOSPEC_H
-#define _LINUX_NOSPEC_H
+#अगर_अघोषित _LINUX_NOSPEC_H
+#घोषणा _LINUX_NOSPEC_H
 
-#include <linux/compiler.h>
-#include <asm/barrier.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/barrier.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
 /**
  * array_index_mask_nospec() - generate a ~0 mask when index < size, 0 otherwise
@@ -18,53 +19,53 @@ struct task_struct;
  *
  * When @index is out of bounds (@index >= @size), the sign bit will be
  * set.  Extend the sign bit to all bits and invert, giving a result of
- * zero for an out of bounds index, or ~0 if within bounds [0, @size).
+ * zero क्रम an out of bounds index, or ~0 अगर within bounds [0, @size).
  */
-#ifndef array_index_mask_nospec
-static inline unsigned long array_index_mask_nospec(unsigned long index,
-						    unsigned long size)
-{
+#अगर_अघोषित array_index_mask_nospec
+अटल अंतरभूत अचिन्हित दीर्घ array_index_mask_nospec(अचिन्हित दीर्घ index,
+						    अचिन्हित दीर्घ size)
+अणु
 	/*
-	 * Always calculate and emit the mask even if the compiler
-	 * thinks the mask is not needed. The compiler does not take
-	 * into account the value of @index under speculation.
+	 * Always calculate and emit the mask even अगर the compiler
+	 * thinks the mask is not needed. The compiler करोes not take
+	 * पूर्णांकo account the value of @index under speculation.
 	 */
 	OPTIMIZER_HIDE_VAR(index);
-	return ~(long)(index | (size - 1UL - index)) >> (BITS_PER_LONG - 1);
-}
-#endif
+	वापस ~(दीर्घ)(index | (size - 1UL - index)) >> (BITS_PER_LONG - 1);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * array_index_nospec - sanitize an array index after a bounds check
  *
  * For a code sequence like:
  *
- *     if (index < size) {
+ *     अगर (index < size) अणु
  *         index = array_index_nospec(index, size);
  *         val = array[index];
- *     }
+ *     पूर्ण
  *
- * ...if the CPU speculates past the bounds check then
+ * ...अगर the CPU speculates past the bounds check then
  * array_index_nospec() will clamp the index within the range of [0,
  * size).
  */
-#define array_index_nospec(index, size)					\
-({									\
+#घोषणा array_index_nospec(index, size)					\
+(अणु									\
 	typeof(index) _i = (index);					\
 	typeof(size) _s = (size);					\
-	unsigned long _mask = array_index_mask_nospec(_i, _s);		\
+	अचिन्हित दीर्घ _mask = array_index_mask_nospec(_i, _s);		\
 									\
-	BUILD_BUG_ON(sizeof(_i) > sizeof(long));			\
-	BUILD_BUG_ON(sizeof(_s) > sizeof(long));			\
+	BUILD_BUG_ON(माप(_i) > माप(दीर्घ));			\
+	BUILD_BUG_ON(माप(_s) > माप(दीर्घ));			\
 									\
 	(typeof(_i)) (_i & _mask);					\
-})
+पूर्ण)
 
 /* Speculation control prctl */
-int arch_prctl_spec_ctrl_get(struct task_struct *task, unsigned long which);
-int arch_prctl_spec_ctrl_set(struct task_struct *task, unsigned long which,
-			     unsigned long ctrl);
-/* Speculation control for seccomp enforced mitigation */
-void arch_seccomp_spec_mitigate(struct task_struct *task);
+पूर्णांक arch_prctl_spec_ctrl_get(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ which);
+पूर्णांक arch_prctl_spec_ctrl_set(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ which,
+			     अचिन्हित दीर्घ ctrl);
+/* Speculation control क्रम seccomp enक्रमced mitigation */
+व्योम arch_seccomp_spec_mitigate(काष्ठा task_काष्ठा *task);
 
-#endif /* _LINUX_NOSPEC_H */
+#पूर्ण_अगर /* _LINUX_NOSPEC_H */

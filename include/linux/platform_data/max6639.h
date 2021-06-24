@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MAX6639_H
-#define _LINUX_MAX6639_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MAX6639_H
+#घोषणा _LINUX_MAX6639_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-/* platform data for the MAX6639 temperature sensor and fan control */
+/* platक्रमm data क्रम the MAX6639 temperature sensor and fan control */
 
-struct max6639_platform_data {
-	bool pwm_polarity;	/* Polarity low (0) or high (1, default) */
-	int ppr;		/* Pulses per rotation 1..4 (default == 2) */
-	int rpm_range;		/* 2000, 4000 (default), 8000 or 16000 */
-};
+काष्ठा max6639_platक्रमm_data अणु
+	bool pwm_polarity;	/* Polarity low (0) or high (1, शेष) */
+	पूर्णांक ppr;		/* Pulses per rotation 1..4 (शेष == 2) */
+	पूर्णांक rpm_range;		/* 2000, 4000 (शेष), 8000 or 16000 */
+पूर्ण;
 
-#endif /* _LINUX_MAX6639_H */
+#पूर्ण_अगर /* _LINUX_MAX6639_H */

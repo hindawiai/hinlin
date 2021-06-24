@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * cpia CPiA (1) gspca driver
  *
@@ -12,242 +13,242 @@
  * (C) Copyright 2000 STMicroelectronics
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define MODULE_NAME "cpia1"
+#घोषणा MODULE_NAME "cpia1"
 
-#include <linux/input.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/input.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include "gspca.h"
+#समावेश "gspca.h"
 
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");
 MODULE_DESCRIPTION("Vision CPiA");
 MODULE_LICENSE("GPL");
 
-/* constant value's */
-#define MAGIC_0		0x19
-#define MAGIC_1		0x68
-#define DATA_IN		0xc0
-#define DATA_OUT	0x40
-#define VIDEOSIZE_QCIF	0	/* 176x144 */
-#define VIDEOSIZE_CIF	1	/* 352x288 */
-#define SUBSAMPLE_420	0
-#define SUBSAMPLE_422	1
-#define YUVORDER_YUYV	0
-#define YUVORDER_UYVY	1
-#define NOT_COMPRESSED	0
-#define COMPRESSED	1
-#define NO_DECIMATION	0
-#define DECIMATION_ENAB	1
-#define EOI		0xff	/* End Of Image */
-#define EOL		0xfd	/* End Of Line */
-#define FRAME_HEADER_SIZE	64
+/* स्थिरant value's */
+#घोषणा MAGIC_0		0x19
+#घोषणा MAGIC_1		0x68
+#घोषणा DATA_IN		0xc0
+#घोषणा DATA_OUT	0x40
+#घोषणा VIDEOSIZE_QCIF	0	/* 176x144 */
+#घोषणा VIDEOSIZE_CIF	1	/* 352x288 */
+#घोषणा SUBSAMPLE_420	0
+#घोषणा SUBSAMPLE_422	1
+#घोषणा YUVORDER_YUYV	0
+#घोषणा YUVORDER_UYVY	1
+#घोषणा NOT_COMPRESSED	0
+#घोषणा COMPRESSED	1
+#घोषणा NO_DECIMATION	0
+#घोषणा DECIMATION_ENAB	1
+#घोषणा EOI		0xff	/* End Of Image */
+#घोषणा EOL		0xfd	/* End Of Line */
+#घोषणा FRAME_HEADER_SIZE	64
 
 /* Image grab modes */
-#define CPIA_GRAB_SINGLE	0
-#define CPIA_GRAB_CONTINEOUS	1
+#घोषणा CPIA_GRAB_SINGLE	0
+#घोषणा CPIA_GRAB_CONTINEOUS	1
 
 /* Compression parameters */
-#define CPIA_COMPRESSION_NONE	0
-#define CPIA_COMPRESSION_AUTO	1
-#define CPIA_COMPRESSION_MANUAL	2
-#define CPIA_COMPRESSION_TARGET_QUALITY         0
-#define CPIA_COMPRESSION_TARGET_FRAMERATE       1
+#घोषणा CPIA_COMPRESSION_NONE	0
+#घोषणा CPIA_COMPRESSION_AUTO	1
+#घोषणा CPIA_COMPRESSION_MANUAL	2
+#घोषणा CPIA_COMPRESSION_TARGET_QUALITY         0
+#घोषणा CPIA_COMPRESSION_TARGET_FRAMERATE       1
 
-/* Return offsets for GetCameraState */
-#define SYSTEMSTATE	0
-#define GRABSTATE	1
-#define STREAMSTATE	2
-#define FATALERROR	3
-#define CMDERROR	4
-#define DEBUGFLAGS	5
-#define VPSTATUS	6
-#define ERRORCODE	7
+/* Return offsets क्रम GetCameraState */
+#घोषणा SYSTEMSTATE	0
+#घोषणा GRABSTATE	1
+#घोषणा STREAMSTATE	2
+#घोषणा FATALERROR	3
+#घोषणा CMDERROR	4
+#घोषणा DEBUGFLAGS	5
+#घोषणा VPSTATUS	6
+#घोषणा ERRORCODE	7
 
 /* SystemState */
-#define UNINITIALISED_STATE	0
-#define PASS_THROUGH_STATE	1
-#define LO_POWER_STATE		2
-#define HI_POWER_STATE		3
-#define WARM_BOOT_STATE		4
+#घोषणा UNINITIALISED_STATE	0
+#घोषणा PASS_THROUGH_STATE	1
+#घोषणा LO_POWER_STATE		2
+#घोषणा HI_POWER_STATE		3
+#घोषणा WARM_BOOT_STATE		4
 
 /* GrabState */
-#define GRAB_IDLE		0
-#define GRAB_ACTIVE		1
-#define GRAB_DONE		2
+#घोषणा GRAB_IDLE		0
+#घोषणा GRAB_ACTIVE		1
+#घोषणा GRAB_DONE		2
 
 /* StreamState */
-#define STREAM_NOT_READY	0
-#define STREAM_READY		1
-#define STREAM_OPEN		2
-#define STREAM_PAUSED		3
-#define STREAM_FINISHED		4
+#घोषणा STREAM_NOT_READY	0
+#घोषणा STREAM_READY		1
+#घोषणा STREAM_OPEN		2
+#घोषणा STREAM_PAUSED		3
+#घोषणा STREAM_FINISHED		4
 
 /* Fatal Error, CmdError, and DebugFlags */
-#define CPIA_FLAG	  1
-#define SYSTEM_FLAG	  2
-#define INT_CTRL_FLAG	  4
-#define PROCESS_FLAG	  8
-#define COM_FLAG	 16
-#define VP_CTRL_FLAG	 32
-#define CAPTURE_FLAG	 64
-#define DEBUG_FLAG	128
+#घोषणा CPIA_FLAG	  1
+#घोषणा SYSTEM_FLAG	  2
+#घोषणा INT_CTRL_FLAG	  4
+#घोषणा PROCESS_FLAG	  8
+#घोषणा COM_FLAG	 16
+#घोषणा VP_CTRL_FLAG	 32
+#घोषणा CAPTURE_FLAG	 64
+#घोषणा DEBUG_FLAG	128
 
 /* VPStatus */
-#define VP_STATE_OK			0x00
+#घोषणा VP_STATE_OK			0x00
 
-#define VP_STATE_FAILED_VIDEOINIT	0x01
-#define VP_STATE_FAILED_AECACBINIT	0x02
-#define VP_STATE_AEC_MAX		0x04
-#define VP_STATE_ACB_BMAX		0x08
+#घोषणा VP_STATE_FAILED_VIDEOINIT	0x01
+#घोषणा VP_STATE_FAILED_AECACBINIT	0x02
+#घोषणा VP_STATE_AEC_MAX		0x04
+#घोषणा VP_STATE_ACB_BMAX		0x08
 
-#define VP_STATE_ACB_RMIN		0x10
-#define VP_STATE_ACB_GMIN		0x20
-#define VP_STATE_ACB_RMAX		0x40
-#define VP_STATE_ACB_GMAX		0x80
+#घोषणा VP_STATE_ACB_RMIN		0x10
+#घोषणा VP_STATE_ACB_GMIN		0x20
+#घोषणा VP_STATE_ACB_RMAX		0x40
+#घोषणा VP_STATE_ACB_GMAX		0x80
 
-/* default (minimum) compensation values */
-#define COMP_RED        220
-#define COMP_GREEN1     214
-#define COMP_GREEN2     COMP_GREEN1
-#define COMP_BLUE       230
+/* शेष (minimum) compensation values */
+#घोषणा COMP_RED        220
+#घोषणा COMP_GREEN1     214
+#घोषणा COMP_GREEN2     COMP_GREEN1
+#घोषणा COMP_BLUE       230
 
 /* exposure status */
-#define EXPOSURE_VERY_LIGHT 0
-#define EXPOSURE_LIGHT      1
-#define EXPOSURE_NORMAL     2
-#define EXPOSURE_DARK       3
-#define EXPOSURE_VERY_DARK  4
+#घोषणा EXPOSURE_VERY_LIGHT 0
+#घोषणा EXPOSURE_LIGHT      1
+#घोषणा EXPOSURE_NORMAL     2
+#घोषणा EXPOSURE_DARK       3
+#घोषणा EXPOSURE_VERY_DARK  4
 
-#define CPIA_MODULE_CPIA			(0 << 5)
-#define CPIA_MODULE_SYSTEM			(1 << 5)
-#define CPIA_MODULE_VP_CTRL			(5 << 5)
-#define CPIA_MODULE_CAPTURE			(6 << 5)
-#define CPIA_MODULE_DEBUG			(7 << 5)
+#घोषणा CPIA_MODULE_CPIA			(0 << 5)
+#घोषणा CPIA_MODULE_SYSTEM			(1 << 5)
+#घोषणा CPIA_MODULE_VP_CTRL			(5 << 5)
+#घोषणा CPIA_MODULE_CAPTURE			(6 << 5)
+#घोषणा CPIA_MODULE_DEBUG			(7 << 5)
 
-#define INPUT (DATA_IN << 8)
-#define OUTPUT (DATA_OUT << 8)
+#घोषणा INPUT (DATA_IN << 8)
+#घोषणा OUTPUT (DATA_OUT << 8)
 
-#define CPIA_COMMAND_GetCPIAVersion	(INPUT | CPIA_MODULE_CPIA | 1)
-#define CPIA_COMMAND_GetPnPID		(INPUT | CPIA_MODULE_CPIA | 2)
-#define CPIA_COMMAND_GetCameraStatus	(INPUT | CPIA_MODULE_CPIA | 3)
-#define CPIA_COMMAND_GotoHiPower	(OUTPUT | CPIA_MODULE_CPIA | 4)
-#define CPIA_COMMAND_GotoLoPower	(OUTPUT | CPIA_MODULE_CPIA | 5)
-#define CPIA_COMMAND_GotoSuspend	(OUTPUT | CPIA_MODULE_CPIA | 7)
-#define CPIA_COMMAND_GotoPassThrough	(OUTPUT | CPIA_MODULE_CPIA | 8)
-#define CPIA_COMMAND_ModifyCameraStatus	(OUTPUT | CPIA_MODULE_CPIA | 10)
+#घोषणा CPIA_COMMAND_GetCPIAVersion	(INPUT | CPIA_MODULE_CPIA | 1)
+#घोषणा CPIA_COMMAND_GetPnPID		(INPUT | CPIA_MODULE_CPIA | 2)
+#घोषणा CPIA_COMMAND_GetCameraStatus	(INPUT | CPIA_MODULE_CPIA | 3)
+#घोषणा CPIA_COMMAND_GotoHiPower	(OUTPUT | CPIA_MODULE_CPIA | 4)
+#घोषणा CPIA_COMMAND_GotoLoPower	(OUTPUT | CPIA_MODULE_CPIA | 5)
+#घोषणा CPIA_COMMAND_GotoSuspend	(OUTPUT | CPIA_MODULE_CPIA | 7)
+#घोषणा CPIA_COMMAND_GotoPassThrough	(OUTPUT | CPIA_MODULE_CPIA | 8)
+#घोषणा CPIA_COMMAND_ModअगरyCameraStatus	(OUTPUT | CPIA_MODULE_CPIA | 10)
 
-#define CPIA_COMMAND_ReadVCRegs		(INPUT | CPIA_MODULE_SYSTEM | 1)
-#define CPIA_COMMAND_WriteVCReg		(OUTPUT | CPIA_MODULE_SYSTEM | 2)
-#define CPIA_COMMAND_ReadMCPorts	(INPUT | CPIA_MODULE_SYSTEM | 3)
-#define CPIA_COMMAND_WriteMCPort	(OUTPUT | CPIA_MODULE_SYSTEM | 4)
-#define CPIA_COMMAND_SetBaudRate	(OUTPUT | CPIA_MODULE_SYSTEM | 5)
-#define CPIA_COMMAND_SetECPTiming	(OUTPUT | CPIA_MODULE_SYSTEM | 6)
-#define CPIA_COMMAND_ReadIDATA		(INPUT | CPIA_MODULE_SYSTEM | 7)
-#define CPIA_COMMAND_WriteIDATA		(OUTPUT | CPIA_MODULE_SYSTEM | 8)
-#define CPIA_COMMAND_GenericCall	(OUTPUT | CPIA_MODULE_SYSTEM | 9)
-#define CPIA_COMMAND_I2CStart		(OUTPUT | CPIA_MODULE_SYSTEM | 10)
-#define CPIA_COMMAND_I2CStop		(OUTPUT | CPIA_MODULE_SYSTEM | 11)
-#define CPIA_COMMAND_I2CWrite		(OUTPUT | CPIA_MODULE_SYSTEM | 12)
-#define CPIA_COMMAND_I2CRead		(INPUT | CPIA_MODULE_SYSTEM | 13)
+#घोषणा CPIA_COMMAND_ReadVCRegs		(INPUT | CPIA_MODULE_SYSTEM | 1)
+#घोषणा CPIA_COMMAND_WriteVCReg		(OUTPUT | CPIA_MODULE_SYSTEM | 2)
+#घोषणा CPIA_COMMAND_ReadMCPorts	(INPUT | CPIA_MODULE_SYSTEM | 3)
+#घोषणा CPIA_COMMAND_WriteMCPort	(OUTPUT | CPIA_MODULE_SYSTEM | 4)
+#घोषणा CPIA_COMMAND_SetBaudRate	(OUTPUT | CPIA_MODULE_SYSTEM | 5)
+#घोषणा CPIA_COMMAND_SetECPTiming	(OUTPUT | CPIA_MODULE_SYSTEM | 6)
+#घोषणा CPIA_COMMAND_ReadIDATA		(INPUT | CPIA_MODULE_SYSTEM | 7)
+#घोषणा CPIA_COMMAND_WriteIDATA		(OUTPUT | CPIA_MODULE_SYSTEM | 8)
+#घोषणा CPIA_COMMAND_GenericCall	(OUTPUT | CPIA_MODULE_SYSTEM | 9)
+#घोषणा CPIA_COMMAND_I2CStart		(OUTPUT | CPIA_MODULE_SYSTEM | 10)
+#घोषणा CPIA_COMMAND_I2CStop		(OUTPUT | CPIA_MODULE_SYSTEM | 11)
+#घोषणा CPIA_COMMAND_I2CWrite		(OUTPUT | CPIA_MODULE_SYSTEM | 12)
+#घोषणा CPIA_COMMAND_I2CRead		(INPUT | CPIA_MODULE_SYSTEM | 13)
 
-#define CPIA_COMMAND_GetVPVersion	(INPUT | CPIA_MODULE_VP_CTRL | 1)
-#define CPIA_COMMAND_ResetFrameCounter	(INPUT | CPIA_MODULE_VP_CTRL | 2)
-#define CPIA_COMMAND_SetColourParams	(OUTPUT | CPIA_MODULE_VP_CTRL | 3)
-#define CPIA_COMMAND_SetExposure	(OUTPUT | CPIA_MODULE_VP_CTRL | 4)
-#define CPIA_COMMAND_SetColourBalance	(OUTPUT | CPIA_MODULE_VP_CTRL | 6)
-#define CPIA_COMMAND_SetSensorFPS	(OUTPUT | CPIA_MODULE_VP_CTRL | 7)
-#define CPIA_COMMAND_SetVPDefaults	(OUTPUT | CPIA_MODULE_VP_CTRL | 8)
-#define CPIA_COMMAND_SetApcor		(OUTPUT | CPIA_MODULE_VP_CTRL | 9)
-#define CPIA_COMMAND_SetFlickerCtrl	(OUTPUT | CPIA_MODULE_VP_CTRL | 10)
-#define CPIA_COMMAND_SetVLOffset	(OUTPUT | CPIA_MODULE_VP_CTRL | 11)
-#define CPIA_COMMAND_GetColourParams	(INPUT | CPIA_MODULE_VP_CTRL | 16)
-#define CPIA_COMMAND_GetColourBalance	(INPUT | CPIA_MODULE_VP_CTRL | 17)
-#define CPIA_COMMAND_GetExposure	(INPUT | CPIA_MODULE_VP_CTRL | 18)
-#define CPIA_COMMAND_SetSensorMatrix	(OUTPUT | CPIA_MODULE_VP_CTRL | 19)
-#define CPIA_COMMAND_ColourBars		(OUTPUT | CPIA_MODULE_VP_CTRL | 25)
-#define CPIA_COMMAND_ReadVPRegs		(INPUT | CPIA_MODULE_VP_CTRL | 30)
-#define CPIA_COMMAND_WriteVPReg		(OUTPUT | CPIA_MODULE_VP_CTRL | 31)
+#घोषणा CPIA_COMMAND_GetVPVersion	(INPUT | CPIA_MODULE_VP_CTRL | 1)
+#घोषणा CPIA_COMMAND_ResetFrameCounter	(INPUT | CPIA_MODULE_VP_CTRL | 2)
+#घोषणा CPIA_COMMAND_SetColourParams	(OUTPUT | CPIA_MODULE_VP_CTRL | 3)
+#घोषणा CPIA_COMMAND_SetExposure	(OUTPUT | CPIA_MODULE_VP_CTRL | 4)
+#घोषणा CPIA_COMMAND_SetColourBalance	(OUTPUT | CPIA_MODULE_VP_CTRL | 6)
+#घोषणा CPIA_COMMAND_SetSensorFPS	(OUTPUT | CPIA_MODULE_VP_CTRL | 7)
+#घोषणा CPIA_COMMAND_SetVPDefaults	(OUTPUT | CPIA_MODULE_VP_CTRL | 8)
+#घोषणा CPIA_COMMAND_SetApcor		(OUTPUT | CPIA_MODULE_VP_CTRL | 9)
+#घोषणा CPIA_COMMAND_SetFlickerCtrl	(OUTPUT | CPIA_MODULE_VP_CTRL | 10)
+#घोषणा CPIA_COMMAND_SetVLOffset	(OUTPUT | CPIA_MODULE_VP_CTRL | 11)
+#घोषणा CPIA_COMMAND_GetColourParams	(INPUT | CPIA_MODULE_VP_CTRL | 16)
+#घोषणा CPIA_COMMAND_GetColourBalance	(INPUT | CPIA_MODULE_VP_CTRL | 17)
+#घोषणा CPIA_COMMAND_GetExposure	(INPUT | CPIA_MODULE_VP_CTRL | 18)
+#घोषणा CPIA_COMMAND_SetSensorMatrix	(OUTPUT | CPIA_MODULE_VP_CTRL | 19)
+#घोषणा CPIA_COMMAND_ColourBars		(OUTPUT | CPIA_MODULE_VP_CTRL | 25)
+#घोषणा CPIA_COMMAND_ReadVPRegs		(INPUT | CPIA_MODULE_VP_CTRL | 30)
+#घोषणा CPIA_COMMAND_WriteVPReg		(OUTPUT | CPIA_MODULE_VP_CTRL | 31)
 
-#define CPIA_COMMAND_GrabFrame		(OUTPUT | CPIA_MODULE_CAPTURE | 1)
-#define CPIA_COMMAND_UploadFrame	(OUTPUT | CPIA_MODULE_CAPTURE | 2)
-#define CPIA_COMMAND_SetGrabMode	(OUTPUT | CPIA_MODULE_CAPTURE | 3)
-#define CPIA_COMMAND_InitStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 4)
-#define CPIA_COMMAND_FiniStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 5)
-#define CPIA_COMMAND_StartStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 6)
-#define CPIA_COMMAND_EndStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 7)
-#define CPIA_COMMAND_SetFormat		(OUTPUT | CPIA_MODULE_CAPTURE | 8)
-#define CPIA_COMMAND_SetROI		(OUTPUT | CPIA_MODULE_CAPTURE | 9)
-#define CPIA_COMMAND_SetCompression	(OUTPUT | CPIA_MODULE_CAPTURE | 10)
-#define CPIA_COMMAND_SetCompressionTarget (OUTPUT | CPIA_MODULE_CAPTURE | 11)
-#define CPIA_COMMAND_SetYUVThresh	(OUTPUT | CPIA_MODULE_CAPTURE | 12)
-#define CPIA_COMMAND_SetCompressionParams (OUTPUT | CPIA_MODULE_CAPTURE | 13)
-#define CPIA_COMMAND_DiscardFrame	(OUTPUT | CPIA_MODULE_CAPTURE | 14)
-#define CPIA_COMMAND_GrabReset		(OUTPUT | CPIA_MODULE_CAPTURE | 15)
+#घोषणा CPIA_COMMAND_GrabFrame		(OUTPUT | CPIA_MODULE_CAPTURE | 1)
+#घोषणा CPIA_COMMAND_UploadFrame	(OUTPUT | CPIA_MODULE_CAPTURE | 2)
+#घोषणा CPIA_COMMAND_SetGrabMode	(OUTPUT | CPIA_MODULE_CAPTURE | 3)
+#घोषणा CPIA_COMMAND_InitStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 4)
+#घोषणा CPIA_COMMAND_FiniStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 5)
+#घोषणा CPIA_COMMAND_StartStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 6)
+#घोषणा CPIA_COMMAND_EndStreamCap	(OUTPUT | CPIA_MODULE_CAPTURE | 7)
+#घोषणा CPIA_COMMAND_SetFormat		(OUTPUT | CPIA_MODULE_CAPTURE | 8)
+#घोषणा CPIA_COMMAND_SetROI		(OUTPUT | CPIA_MODULE_CAPTURE | 9)
+#घोषणा CPIA_COMMAND_SetCompression	(OUTPUT | CPIA_MODULE_CAPTURE | 10)
+#घोषणा CPIA_COMMAND_SetCompressionTarget (OUTPUT | CPIA_MODULE_CAPTURE | 11)
+#घोषणा CPIA_COMMAND_SetYUVThresh	(OUTPUT | CPIA_MODULE_CAPTURE | 12)
+#घोषणा CPIA_COMMAND_SetCompressionParams (OUTPUT | CPIA_MODULE_CAPTURE | 13)
+#घोषणा CPIA_COMMAND_DiscardFrame	(OUTPUT | CPIA_MODULE_CAPTURE | 14)
+#घोषणा CPIA_COMMAND_GrabReset		(OUTPUT | CPIA_MODULE_CAPTURE | 15)
 
-#define CPIA_COMMAND_OutputRS232	(OUTPUT | CPIA_MODULE_DEBUG | 1)
-#define CPIA_COMMAND_AbortProcess	(OUTPUT | CPIA_MODULE_DEBUG | 4)
-#define CPIA_COMMAND_SetDramPage	(OUTPUT | CPIA_MODULE_DEBUG | 5)
-#define CPIA_COMMAND_StartDramUpload	(OUTPUT | CPIA_MODULE_DEBUG | 6)
-#define CPIA_COMMAND_StartDummyDtream	(OUTPUT | CPIA_MODULE_DEBUG | 8)
-#define CPIA_COMMAND_AbortStream	(OUTPUT | CPIA_MODULE_DEBUG | 9)
-#define CPIA_COMMAND_DownloadDRAM	(OUTPUT | CPIA_MODULE_DEBUG | 10)
-#define CPIA_COMMAND_Null		(OUTPUT | CPIA_MODULE_DEBUG | 11)
+#घोषणा CPIA_COMMAND_OutputRS232	(OUTPUT | CPIA_MODULE_DEBUG | 1)
+#घोषणा CPIA_COMMAND_AbortProcess	(OUTPUT | CPIA_MODULE_DEBUG | 4)
+#घोषणा CPIA_COMMAND_SetDramPage	(OUTPUT | CPIA_MODULE_DEBUG | 5)
+#घोषणा CPIA_COMMAND_StartDramUpload	(OUTPUT | CPIA_MODULE_DEBUG | 6)
+#घोषणा CPIA_COMMAND_StartDummyDtream	(OUTPUT | CPIA_MODULE_DEBUG | 8)
+#घोषणा CPIA_COMMAND_AbortStream	(OUTPUT | CPIA_MODULE_DEBUG | 9)
+#घोषणा CPIA_COMMAND_DownloadDRAM	(OUTPUT | CPIA_MODULE_DEBUG | 10)
+#घोषणा CPIA_COMMAND_Null		(OUTPUT | CPIA_MODULE_DEBUG | 11)
 
-#define ROUND_UP_EXP_FOR_FLICKER 15
+#घोषणा ROUND_UP_EXP_FOR_FLICKER 15
 
-/* Constants for automatic frame rate adjustment */
-#define MAX_EXP       302
-#define MAX_EXP_102   255
-#define LOW_EXP       140
-#define VERY_LOW_EXP   70
-#define TC             94
-#define	EXP_ACC_DARK   50
-#define	EXP_ACC_LIGHT  90
-#define HIGH_COMP_102 160
-#define MAX_COMP      239
-#define DARK_TIME       3
-#define LIGHT_TIME      3
+/* Constants क्रम स्वतःmatic frame rate adjusपंचांगent */
+#घोषणा MAX_EXP       302
+#घोषणा MAX_EXP_102   255
+#घोषणा LOW_EXP       140
+#घोषणा VERY_LOW_EXP   70
+#घोषणा TC             94
+#घोषणा	EXP_ACC_DARK   50
+#घोषणा	EXP_ACC_LIGHT  90
+#घोषणा HIGH_COMP_102 160
+#घोषणा MAX_COMP      239
+#घोषणा DARK_TIME       3
+#घोषणा LIGHT_TIME      3
 
-#define FIRMWARE_VERSION(x, y) (sd->params.version.firmwareVersion == (x) && \
+#घोषणा FIRMWARE_VERSION(x, y) (sd->params.version.firmwareVersion == (x) && \
 				sd->params.version.firmwareRevision == (y))
 
-#define CPIA1_CID_COMP_TARGET (V4L2_CTRL_CLASS_USER + 0x1000)
-#define BRIGHTNESS_DEF 50
-#define CONTRAST_DEF 48
-#define SATURATION_DEF 50
-#define FREQ_DEF V4L2_CID_POWER_LINE_FREQUENCY_50HZ
-#define ILLUMINATORS_1_DEF 0
-#define ILLUMINATORS_2_DEF 0
-#define COMP_TARGET_DEF CPIA_COMPRESSION_TARGET_QUALITY
+#घोषणा CPIA1_CID_COMP_TARGET (V4L2_CTRL_CLASS_USER + 0x1000)
+#घोषणा BRIGHTNESS_DEF 50
+#घोषणा CONTRAST_DEF 48
+#घोषणा SATURATION_DEF 50
+#घोषणा FREQ_DEF V4L2_CID_POWER_LINE_FREQUENCY_50HZ
+#घोषणा ILLUMINATORS_1_DEF 0
+#घोषणा ILLUMINATORS_2_DEF 0
+#घोषणा COMP_TARGET_DEF CPIA_COMPRESSION_TARGET_QUALITY
 
 /* Developer's Guide Table 5 p 3-34
- * indexed by [mains][sensorFps.baserate][sensorFps.divisor]*/
-static u8 flicker_jumps[2][2][4] =
-{ { { 76, 38, 19, 9 }, { 92, 46, 23, 11 } },
-  { { 64, 32, 16, 8 }, { 76, 38, 19, 9} }
-};
+ * indexed by [मुख्यs][sensorFps.baserate][sensorFps.भागisor]*/
+अटल u8 flicker_jumps[2][2][4] =
+अणु अणु अणु 76, 38, 19, 9 पूर्ण, अणु 92, 46, 23, 11 पूर्ण पूर्ण,
+  अणु अणु 64, 32, 16, 8 पूर्ण, अणु 76, 38, 19, 9पूर्ण पूर्ण
+पूर्ण;
 
-struct cam_params {
-	struct {
+काष्ठा cam_params अणु
+	काष्ठा अणु
 		u8 firmwareVersion;
 		u8 firmwareRevision;
 		u8 vcVersion;
 		u8 vcRevision;
-	} version;
-	struct {
-		u16 vendor;
+	पूर्ण version;
+	काष्ठा अणु
+		u16 venकरोr;
 		u16 product;
 		u16 deviceRevision;
-	} pnpID;
-	struct {
+	पूर्ण pnpID;
+	काष्ठा अणु
 		u8 vpVersion;
 		u8 vpRevision;
 		u16 cameraHeadID;
-	} vpVersion;
-	struct {
-		u8 systemState;
+	पूर्ण vpVersion;
+	काष्ठा अणु
+		u8 प्रणालीState;
 		u8 grabState;
 		u8 streamState;
 		u8 fatalError;
@@ -255,13 +256,13 @@ struct cam_params {
 		u8 debugFlags;
 		u8 vpStatus;
 		u8 errorCode;
-	} status;
-	struct {
+	पूर्ण status;
+	काष्ठा अणु
 		u8 brightness;
 		u8 contrast;
 		u8 saturation;
-	} colourParams;
-	struct {
+	पूर्ण colourParams;
+	काष्ठा अणु
 		u8 gainMode;
 		u8 expMode;
 		u8 compMode;
@@ -274,119 +275,119 @@ struct cam_params {
 		u8 green1Comp;
 		u8 green2Comp;
 		u8 blueComp;
-	} exposure;
-	struct {
+	पूर्ण exposure;
+	काष्ठा अणु
 		u8 balanceMode;
 		u8 redGain;
 		u8 greenGain;
 		u8 blueGain;
-	} colourBalance;
-	struct {
-		u8 divisor;
+	पूर्ण colourBalance;
+	काष्ठा अणु
+		u8 भागisor;
 		u8 baserate;
-	} sensorFps;
-	struct {
+	पूर्ण sensorFps;
+	काष्ठा अणु
 		u8 gain1;
 		u8 gain2;
 		u8 gain4;
 		u8 gain8;
-	} apcor;
-	struct {
+	पूर्ण apcor;
+	काष्ठा अणु
 		u8 disabled;
 		u8 flickerMode;
 		u8 coarseJump;
 		u8 allowableOverExposure;
-	} flickerControl;
-	struct {
+	पूर्ण flickerControl;
+	काष्ठा अणु
 		u8 gain1;
 		u8 gain2;
 		u8 gain4;
 		u8 gain8;
-	} vlOffset;
-	struct {
+	पूर्ण vlOffset;
+	काष्ठा अणु
 		u8 mode;
 		u8 decimation;
-	} compression;
-	struct {
+	पूर्ण compression;
+	काष्ठा अणु
 		u8 frTargeting;
 		u8 targetFR;
 		u8 targetQ;
-	} compressionTarget;
-	struct {
+	पूर्ण compressionTarget;
+	काष्ठा अणु
 		u8 yThreshold;
 		u8 uvThreshold;
-	} yuvThreshold;
-	struct {
+	पूर्ण yuvThreshold;
+	काष्ठा अणु
 		u8 hysteresis;
 		u8 threshMax;
 		u8 smallStep;
 		u8 largeStep;
 		u8 decimationHysteresis;
-		u8 frDiffStepThresh;
-		u8 qDiffStepThresh;
+		u8 frDअगरfStepThresh;
+		u8 qDअगरfStepThresh;
 		u8 decimationThreshMod;
-	} compressionParams;
-	struct {
+	पूर्ण compressionParams;
+	काष्ठा अणु
 		u8 videoSize;		/* CIF/QCIF */
 		u8 subSample;
 		u8 yuvOrder;
-	} format;
-	struct {                        /* Intel QX3 specific data */
+	पूर्ण क्रमmat;
+	काष्ठा अणु                        /* Intel QX3 specअगरic data */
 		u8 qx3_detected;        /* a QX3 is present */
 		u8 toplight;            /* top light lit , R/W */
 		u8 bottomlight;         /* bottom light lit, R/W */
 		u8 button;              /* snapshot button pressed (R/O) */
 		u8 cradled;             /* microscope is in cradle (R/O) */
-	} qx3;
-	struct {
+	पूर्ण qx3;
+	काष्ठा अणु
 		u8 colStart;		/* skip first 8*colStart pixels */
 		u8 colEnd;		/* finish at 8*colEnd pixels */
 		u8 rowStart;		/* skip first 4*rowStart lines */
 		u8 rowEnd;		/* finish at 4*rowEnd lines */
-	} roi;
+	पूर्ण roi;
 	u8 ecpTiming;
 	u8 streamStartLine;
-};
+पूर्ण;
 
-/* specific webcam descriptor */
-struct sd {
-	struct gspca_dev gspca_dev;		/* !! must be the first item */
-	struct cam_params params;		/* camera settings */
+/* specअगरic webcam descriptor */
+काष्ठा sd अणु
+	काष्ठा gspca_dev gspca_dev;		/* !! must be the first item */
+	काष्ठा cam_params params;		/* camera settings */
 
 	atomic_t cam_exposure;
 	atomic_t fps;
-	int exposure_count;
+	पूर्णांक exposure_count;
 	u8 exposure_status;
-	struct v4l2_ctrl *freq;
-	u8 mainsFreq;				/* 0 = 50hz, 1 = 60hz */
+	काष्ठा v4l2_ctrl *freq;
+	u8 मुख्यsFreq;				/* 0 = 50hz, 1 = 60hz */
 	u8 first_frame;
-};
+पूर्ण;
 
-static const struct v4l2_pix_format mode[] = {
-	{160, 120, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
+अटल स्थिर काष्ठा v4l2_pix_क्रमmat mode[] = अणु
+	अणु160, 120, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
 		/* The sizeimage is trial and error, as with low framerates
 		   the camera will pad out usb frames, making the image
 		   data larger then strictly necessary */
 		.bytesperline = 160,
 		.sizeimage = 65536,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 3},
-	{176, 144, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
+		.priv = 3पूर्ण,
+	अणु176, 144, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
 		.bytesperline = 172,
 		.sizeimage = 65536,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 2},
-	{320, 240, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
+		.priv = 2पूर्ण,
+	अणु320, 240, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
 		.bytesperline = 320,
 		.sizeimage = 262144,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 1},
-	{352, 288, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
+		.priv = 1पूर्ण,
+	अणु352, 288, V4L2_PIX_FMT_CPIA1, V4L2_FIELD_NONE,
 		.bytesperline = 352,
 		.sizeimage = 262144,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-		.priv = 0},
-};
+		.priv = 0पूर्ण,
+पूर्ण;
 
 /**********************************************************************
  *
@@ -394,25 +395,25 @@ static const struct v4l2_pix_format mode[] = {
  *
  **********************************************************************/
 
-static int cpia_usb_transferCmd(struct gspca_dev *gspca_dev, u8 *command)
-{
+अटल पूर्णांक cpia_usb_transferCmd(काष्ठा gspca_dev *gspca_dev, u8 *command)
+अणु
 	u8 requesttype;
-	unsigned int pipe;
-	int ret, databytes = command[6] | (command[7] << 8);
-	/* Sometimes we see spurious EPIPE errors */
-	int retries = 3;
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक ret, databytes = command[6] | (command[7] << 8);
+	/* Someबार we see spurious EPIPE errors */
+	पूर्णांक retries = 3;
 
-	if (command[0] == DATA_IN) {
+	अगर (command[0] == DATA_IN) अणु
 		pipe = usb_rcvctrlpipe(gspca_dev->dev, 0);
-		requesttype = USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE;
-	} else if (command[0] == DATA_OUT) {
+		requesttype = USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE;
+	पूर्ण अन्यथा अगर (command[0] == DATA_OUT) अणु
 		pipe = usb_sndctrlpipe(gspca_dev->dev, 0);
 		requesttype = USB_TYPE_VENDOR | USB_RECIP_DEVICE;
-	} else {
+	पूर्ण अन्यथा अणु
 		gspca_err(gspca_dev, "Unexpected first byte of command: %x\n",
 			  command[0]);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 retry:
 	ret = usb_control_msg(gspca_dev->dev, pipe,
@@ -422,43 +423,43 @@ retry:
 			      command[4] | (command[5] << 8),
 			      gspca_dev->usb_buf, databytes, 1000);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		pr_err("usb_control_msg %02x, error %d\n", command[1], ret);
 
-	if (ret == -EPIPE && retries > 0) {
+	अगर (ret == -EPIPE && retries > 0) अणु
 		retries--;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return (ret < 0) ? ret : 0;
-}
+	वापस (ret < 0) ? ret : 0;
+पूर्ण
 
 /* send an arbitrary command to the camera */
-static int do_command(struct gspca_dev *gspca_dev, u16 command,
+अटल पूर्णांक करो_command(काष्ठा gspca_dev *gspca_dev, u16 command,
 		      u8 a, u8 b, u8 c, u8 d)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int ret, datasize;
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक ret, datasize;
 	u8 cmd[8];
 
-	switch (command) {
-	case CPIA_COMMAND_GetCPIAVersion:
-	case CPIA_COMMAND_GetPnPID:
-	case CPIA_COMMAND_GetCameraStatus:
-	case CPIA_COMMAND_GetVPVersion:
-	case CPIA_COMMAND_GetColourParams:
-	case CPIA_COMMAND_GetColourBalance:
-	case CPIA_COMMAND_GetExposure:
+	चयन (command) अणु
+	हाल CPIA_COMMAND_GetCPIAVersion:
+	हाल CPIA_COMMAND_GetPnPID:
+	हाल CPIA_COMMAND_GetCameraStatus:
+	हाल CPIA_COMMAND_GetVPVersion:
+	हाल CPIA_COMMAND_GetColourParams:
+	हाल CPIA_COMMAND_GetColourBalance:
+	हाल CPIA_COMMAND_GetExposure:
 		datasize = 8;
-		break;
-	case CPIA_COMMAND_ReadMCPorts:
-	case CPIA_COMMAND_ReadVCRegs:
+		अवरोध;
+	हाल CPIA_COMMAND_ReadMCPorts:
+	हाल CPIA_COMMAND_ReadVCRegs:
 		datasize = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		datasize = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cmd[0] = command >> 8;
 	cmd[1] = command & 0xff;
@@ -470,26 +471,26 @@ static int do_command(struct gspca_dev *gspca_dev, u16 command,
 	cmd[7] = 0;
 
 	ret = cpia_usb_transferCmd(gspca_dev, cmd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (command) {
-	case CPIA_COMMAND_GetCPIAVersion:
+	चयन (command) अणु
+	हाल CPIA_COMMAND_GetCPIAVersion:
 		sd->params.version.firmwareVersion = gspca_dev->usb_buf[0];
 		sd->params.version.firmwareRevision = gspca_dev->usb_buf[1];
 		sd->params.version.vcVersion = gspca_dev->usb_buf[2];
 		sd->params.version.vcRevision = gspca_dev->usb_buf[3];
-		break;
-	case CPIA_COMMAND_GetPnPID:
-		sd->params.pnpID.vendor =
+		अवरोध;
+	हाल CPIA_COMMAND_GetPnPID:
+		sd->params.pnpID.venकरोr =
 			gspca_dev->usb_buf[0] | (gspca_dev->usb_buf[1] << 8);
 		sd->params.pnpID.product =
 			gspca_dev->usb_buf[2] | (gspca_dev->usb_buf[3] << 8);
 		sd->params.pnpID.deviceRevision =
 			gspca_dev->usb_buf[4] | (gspca_dev->usb_buf[5] << 8);
-		break;
-	case CPIA_COMMAND_GetCameraStatus:
-		sd->params.status.systemState = gspca_dev->usb_buf[0];
+		अवरोध;
+	हाल CPIA_COMMAND_GetCameraStatus:
+		sd->params.status.प्रणालीState = gspca_dev->usb_buf[0];
 		sd->params.status.grabState = gspca_dev->usb_buf[1];
 		sd->params.status.streamState = gspca_dev->usb_buf[2];
 		sd->params.status.fatalError = gspca_dev->usb_buf[3];
@@ -497,24 +498,24 @@ static int do_command(struct gspca_dev *gspca_dev, u16 command,
 		sd->params.status.debugFlags = gspca_dev->usb_buf[5];
 		sd->params.status.vpStatus = gspca_dev->usb_buf[6];
 		sd->params.status.errorCode = gspca_dev->usb_buf[7];
-		break;
-	case CPIA_COMMAND_GetVPVersion:
+		अवरोध;
+	हाल CPIA_COMMAND_GetVPVersion:
 		sd->params.vpVersion.vpVersion = gspca_dev->usb_buf[0];
 		sd->params.vpVersion.vpRevision = gspca_dev->usb_buf[1];
 		sd->params.vpVersion.cameraHeadID =
 			gspca_dev->usb_buf[2] | (gspca_dev->usb_buf[3] << 8);
-		break;
-	case CPIA_COMMAND_GetColourParams:
+		अवरोध;
+	हाल CPIA_COMMAND_GetColourParams:
 		sd->params.colourParams.brightness = gspca_dev->usb_buf[0];
 		sd->params.colourParams.contrast = gspca_dev->usb_buf[1];
 		sd->params.colourParams.saturation = gspca_dev->usb_buf[2];
-		break;
-	case CPIA_COMMAND_GetColourBalance:
+		अवरोध;
+	हाल CPIA_COMMAND_GetColourBalance:
 		sd->params.colourBalance.redGain = gspca_dev->usb_buf[0];
 		sd->params.colourBalance.greenGain = gspca_dev->usb_buf[1];
 		sd->params.colourBalance.blueGain = gspca_dev->usb_buf[2];
-		break;
-	case CPIA_COMMAND_GetExposure:
+		अवरोध;
+	हाल CPIA_COMMAND_GetExposure:
 		sd->params.exposure.gain = gspca_dev->usb_buf[0];
 		sd->params.exposure.fineExp = gspca_dev->usb_buf[1];
 		sd->params.exposure.coarseExpLo = gspca_dev->usb_buf[2];
@@ -523,44 +524,44 @@ static int do_command(struct gspca_dev *gspca_dev, u16 command,
 		sd->params.exposure.green1Comp = gspca_dev->usb_buf[5];
 		sd->params.exposure.green2Comp = gspca_dev->usb_buf[6];
 		sd->params.exposure.blueComp = gspca_dev->usb_buf[7];
-		break;
+		अवरोध;
 
-	case CPIA_COMMAND_ReadMCPorts:
+	हाल CPIA_COMMAND_ReadMCPorts:
 		/* test button press */
 		a = ((gspca_dev->usb_buf[1] & 0x02) == 0);
-		if (a != sd->params.qx3.button) {
-#if IS_ENABLED(CONFIG_INPUT)
+		अगर (a != sd->params.qx3.button) अणु
+#अगर IS_ENABLED(CONFIG_INPUT)
 			input_report_key(gspca_dev->input_dev, KEY_CAMERA, a);
 			input_sync(gspca_dev->input_dev);
-#endif
+#पूर्ण_अगर
 			sd->params.qx3.button = a;
-		}
-		if (sd->params.qx3.button) {
+		पूर्ण
+		अगर (sd->params.qx3.button) अणु
 			/* button pressed - unlock the latch */
-			ret = do_command(gspca_dev, CPIA_COMMAND_WriteMCPort,
+			ret = करो_command(gspca_dev, CPIA_COMMAND_WriteMCPort,
 				   3, 0xdf, 0xdf, 0);
-			if (ret)
-				return ret;
-			ret = do_command(gspca_dev, CPIA_COMMAND_WriteMCPort,
+			अगर (ret)
+				वापस ret;
+			ret = करो_command(gspca_dev, CPIA_COMMAND_WriteMCPort,
 				   3, 0xff, 0xff, 0);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
 		/* test whether microscope is cradled */
 		sd->params.qx3.cradled = ((gspca_dev->usb_buf[2] & 0x40) == 0);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* send a command to the camera with an additional data transaction */
-static int do_command_extended(struct gspca_dev *gspca_dev, u16 command,
+अटल पूर्णांक करो_command_extended(काष्ठा gspca_dev *gspca_dev, u16 command,
 			       u8 a, u8 b, u8 c, u8 d,
 			       u8 e, u8 f, u8 g, u8 h,
 			       u8 i, u8 j, u8 k, u8 l)
-{
+अणु
 	u8 cmd[8];
 
 	cmd[0] = command >> 8;
@@ -580,11 +581,11 @@ static int do_command_extended(struct gspca_dev *gspca_dev, u16 command,
 	gspca_dev->usb_buf[6] = k;
 	gspca_dev->usb_buf[7] = l;
 
-	return cpia_usb_transferCmd(gspca_dev, cmd);
-}
+	वापस cpia_usb_transferCmd(gspca_dev, cmd);
+पूर्ण
 
 /*  find_over_exposure
- *  Finds a suitable value of OverExposure for use with SetFlickerCtrl
+ *  Finds a suitable value of OverExposure क्रम use with SetFlickerCtrl
  *  Some calculation is required because this value changes with the brightness
  *  set with SetColourParameters
  *
@@ -592,36 +593,36 @@ static int do_command_extended(struct gspca_dev *gspca_dev, u16 command,
  *
  *  Returns: OverExposure value to use with SetFlickerCtrl
  */
-#define FLICKER_MAX_EXPOSURE                    250
-#define FLICKER_ALLOWABLE_OVER_EXPOSURE         146
-#define FLICKER_BRIGHTNESS_CONSTANT             59
-static int find_over_exposure(int brightness)
-{
-	int MaxAllowableOverExposure, OverExposure;
+#घोषणा FLICKER_MAX_EXPOSURE                    250
+#घोषणा FLICKER_ALLOWABLE_OVER_EXPOSURE         146
+#घोषणा FLICKER_BRIGHTNESS_CONSTANT             59
+अटल पूर्णांक find_over_exposure(पूर्णांक brightness)
+अणु
+	पूर्णांक MaxAllowableOverExposure, OverExposure;
 
 	MaxAllowableOverExposure = FLICKER_MAX_EXPOSURE - brightness -
 				   FLICKER_BRIGHTNESS_CONSTANT;
 
-	if (MaxAllowableOverExposure < FLICKER_ALLOWABLE_OVER_EXPOSURE)
+	अगर (MaxAllowableOverExposure < FLICKER_ALLOWABLE_OVER_EXPOSURE)
 		OverExposure = MaxAllowableOverExposure;
-	else
+	अन्यथा
 		OverExposure = FLICKER_ALLOWABLE_OVER_EXPOSURE;
 
-	return OverExposure;
-}
-#undef FLICKER_MAX_EXPOSURE
-#undef FLICKER_ALLOWABLE_OVER_EXPOSURE
-#undef FLICKER_BRIGHTNESS_CONSTANT
+	वापस OverExposure;
+पूर्ण
+#अघोषित FLICKER_MAX_EXPOSURE
+#अघोषित FLICKER_ALLOWABLE_OVER_EXPOSURE
+#अघोषित FLICKER_BRIGHTNESS_CONSTANT
 
-/* initialise cam_data structure  */
-static void reset_camera_params(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	struct cam_params *params = &sd->params;
+/* initialise cam_data काष्ठाure  */
+अटल व्योम reset_camera_params(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	काष्ठा cam_params *params = &sd->params;
 
-	/* The following parameter values are the defaults from
+	/* The following parameter values are the शेषs from
 	 * "Software Developer's Guide for CPiA Cameras".  Any changes
-	 * to the defaults are noted in comments. */
+	 * to the शेषs are noted in comments. */
 	params->colourParams.brightness = BRIGHTNESS_DEF;
 	params->colourParams.contrast = CONTRAST_DEF;
 	params->colourParams.saturation = SATURATION_DEF;
@@ -654,185 +655,185 @@ static void reset_camera_params(struct gspca_dev *gspca_dev)
 	params->compressionParams.smallStep = 1;
 	params->compressionParams.largeStep = 3;
 	params->compressionParams.decimationHysteresis = 2;
-	params->compressionParams.frDiffStepThresh = 5;
-	params->compressionParams.qDiffStepThresh = 3;
+	params->compressionParams.frDअगरfStepThresh = 5;
+	params->compressionParams.qDअगरfStepThresh = 3;
 	params->compressionParams.decimationThreshMod = 2;
-	/* End of default values from Software Developer's Guide */
+	/* End of शेष values from Software Developer's Guide */
 
 	/* Set Sensor FPS to 15fps. This seems better than 30fps
-	 * for indoor lighting. */
-	params->sensorFps.divisor = 1;
+	 * क्रम inकरोor lighting. */
+	params->sensorFps.भागisor = 1;
 	params->sensorFps.baserate = 1;
 
 	params->flickerControl.flickerMode = 0;
 	params->flickerControl.disabled = 1;
 	params->flickerControl.coarseJump =
-		flicker_jumps[sd->mainsFreq]
+		flicker_jumps[sd->मुख्यsFreq]
 			     [params->sensorFps.baserate]
-			     [params->sensorFps.divisor];
+			     [params->sensorFps.भागisor];
 	params->flickerControl.allowableOverExposure =
 		find_over_exposure(params->colourParams.brightness);
 
-	params->yuvThreshold.yThreshold = 6; /* From windows driver */
-	params->yuvThreshold.uvThreshold = 6; /* From windows driver */
+	params->yuvThreshold.yThreshold = 6; /* From winकरोws driver */
+	params->yuvThreshold.uvThreshold = 6; /* From winकरोws driver */
 
-	params->format.subSample = SUBSAMPLE_420;
-	params->format.yuvOrder = YUVORDER_YUYV;
+	params->क्रमmat.subSample = SUBSAMPLE_420;
+	params->क्रमmat.yuvOrder = YUVORDER_YUYV;
 
 	params->compression.mode = CPIA_COMPRESSION_AUTO;
 	params->compression.decimation = NO_DECIMATION;
 
 	params->compressionTarget.frTargeting = COMP_TARGET_DEF;
-	params->compressionTarget.targetFR = 15; /* From windows driver */
-	params->compressionTarget.targetQ = 5; /* From windows driver */
+	params->compressionTarget.targetFR = 15; /* From winकरोws driver */
+	params->compressionTarget.targetQ = 5; /* From winकरोws driver */
 
 	params->qx3.qx3_detected = 0;
 	params->qx3.toplight = 0;
 	params->qx3.bottomlight = 0;
 	params->qx3.button = 0;
 	params->qx3.cradled = 0;
-}
+पूर्ण
 
-static void printstatus(struct gspca_dev *gspca_dev, struct cam_params *params)
-{
+अटल व्योम prपूर्णांकstatus(काष्ठा gspca_dev *gspca_dev, काष्ठा cam_params *params)
+अणु
 	gspca_dbg(gspca_dev, D_PROBE, "status: %02x %02x %02x %02x %02x %02x %02x %02x\n",
-		  params->status.systemState, params->status.grabState,
+		  params->status.प्रणालीState, params->status.grabState,
 		  params->status.streamState, params->status.fatalError,
 		  params->status.cmdError, params->status.debugFlags,
 		  params->status.vpStatus, params->status.errorCode);
-}
+पूर्ण
 
-static int goto_low_power(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int ret;
+अटल पूर्णांक जाओ_low_घातer(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक ret;
 
-	ret = do_command(gspca_dev, CPIA_COMMAND_GotoLoPower, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GotoLoPower, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
-	ret = do_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
-	if (sd->params.status.systemState != LO_POWER_STATE) {
-		if (sd->params.status.systemState != WARM_BOOT_STATE) {
+	अगर (sd->params.status.प्रणालीState != LO_POWER_STATE) अणु
+		अगर (sd->params.status.प्रणालीState != WARM_BOOT_STATE) अणु
 			gspca_err(gspca_dev, "unexpected state after lo power cmd: %02x\n",
-				  sd->params.status.systemState);
-			printstatus(gspca_dev, &sd->params);
-		}
-		return -EIO;
-	}
+				  sd->params.status.प्रणालीState);
+			prपूर्णांकstatus(gspca_dev, &sd->params);
+		पूर्ण
+		वापस -EIO;
+	पूर्ण
 
 	gspca_dbg(gspca_dev, D_CONF, "camera now in LOW power state\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int goto_high_power(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int ret;
+अटल पूर्णांक जाओ_high_घातer(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक ret;
 
-	ret = do_command(gspca_dev, CPIA_COMMAND_GotoHiPower, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GotoHiPower, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
-	msleep_interruptible(40);	/* windows driver does it too */
+	msleep_पूर्णांकerruptible(40);	/* winकरोws driver करोes it too */
 
-	if (signal_pending(current))
-		return -EINTR;
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
 
-	ret = do_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
-	if (sd->params.status.systemState != HI_POWER_STATE) {
+	अगर (sd->params.status.प्रणालीState != HI_POWER_STATE) अणु
 		gspca_err(gspca_dev, "unexpected state after hi power cmd: %02x\n",
-			  sd->params.status.systemState);
-		printstatus(gspca_dev, &sd->params);
-		return -EIO;
-	}
+			  sd->params.status.प्रणालीState);
+		prपूर्णांकstatus(gspca_dev, &sd->params);
+		वापस -EIO;
+	पूर्ण
 
 	gspca_dbg(gspca_dev, D_CONF, "camera now in HIGH power state\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_version_information(struct gspca_dev *gspca_dev)
-{
-	int ret;
+अटल पूर्णांक get_version_inक्रमmation(काष्ठा gspca_dev *gspca_dev)
+अणु
+	पूर्णांक ret;
 
 	/* GetCPIAVersion */
-	ret = do_command(gspca_dev, CPIA_COMMAND_GetCPIAVersion, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GetCPIAVersion, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
 	/* GetPnPID */
-	return do_command(gspca_dev, CPIA_COMMAND_GetPnPID, 0, 0, 0, 0);
-}
+	वापस करो_command(gspca_dev, CPIA_COMMAND_GetPnPID, 0, 0, 0, 0);
+पूर्ण
 
-static int save_camera_state(struct gspca_dev *gspca_dev)
-{
-	int ret;
+अटल पूर्णांक save_camera_state(काष्ठा gspca_dev *gspca_dev)
+अणु
+	पूर्णांक ret;
 
-	ret = do_command(gspca_dev, CPIA_COMMAND_GetColourBalance, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GetColourBalance, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
-	return do_command(gspca_dev, CPIA_COMMAND_GetExposure, 0, 0, 0, 0);
-}
+	वापस करो_command(gspca_dev, CPIA_COMMAND_GetExposure, 0, 0, 0, 0);
+पूर्ण
 
-static int command_setformat(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int ret;
+अटल पूर्णांक command_setक्रमmat(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक ret;
 
-	ret = do_command(gspca_dev, CPIA_COMMAND_SetFormat,
-			 sd->params.format.videoSize,
-			 sd->params.format.subSample,
-			 sd->params.format.yuvOrder, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_SetFormat,
+			 sd->params.क्रमmat.videoSize,
+			 sd->params.क्रमmat.subSample,
+			 sd->params.क्रमmat.yuvOrder, 0);
+	अगर (ret)
+		वापस ret;
 
-	return do_command(gspca_dev, CPIA_COMMAND_SetROI,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetROI,
 			  sd->params.roi.colStart, sd->params.roi.colEnd,
 			  sd->params.roi.rowStart, sd->params.roi.rowEnd);
-}
+पूर्ण
 
-static int command_setcolourparams(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	return do_command(gspca_dev, CPIA_COMMAND_SetColourParams,
+अटल पूर्णांक command_setcolourparams(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetColourParams,
 			  sd->params.colourParams.brightness,
 			  sd->params.colourParams.contrast,
 			  sd->params.colourParams.saturation, 0);
-}
+पूर्ण
 
-static int command_setapcor(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	return do_command(gspca_dev, CPIA_COMMAND_SetApcor,
+अटल पूर्णांक command_setapcor(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetApcor,
 			  sd->params.apcor.gain1,
 			  sd->params.apcor.gain2,
 			  sd->params.apcor.gain4,
 			  sd->params.apcor.gain8);
-}
+पूर्ण
 
-static int command_setvloffset(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	return do_command(gspca_dev, CPIA_COMMAND_SetVLOffset,
+अटल पूर्णांक command_setvloffset(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetVLOffset,
 			  sd->params.vlOffset.gain1,
 			  sd->params.vlOffset.gain2,
 			  sd->params.vlOffset.gain4,
 			  sd->params.vlOffset.gain8);
-}
+पूर्ण
 
-static int command_setexposure(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int ret;
+अटल पूर्णांक command_setexposure(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक ret;
 
-	ret = do_command_extended(gspca_dev, CPIA_COMMAND_SetExposure,
+	ret = करो_command_extended(gspca_dev, CPIA_COMMAND_SetExposure,
 				  sd->params.exposure.gainMode,
 				  1,
 				  sd->params.exposure.compMode,
@@ -845,11 +846,11 @@ static int command_setexposure(struct gspca_dev *gspca_dev)
 				  sd->params.exposure.green1Comp,
 				  sd->params.exposure.green2Comp,
 				  sd->params.exposure.blueComp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (sd->params.exposure.expMode != 1) {
-		ret = do_command_extended(gspca_dev, CPIA_COMMAND_SetExposure,
+	अगर (sd->params.exposure.expMode != 1) अणु
+		ret = करो_command_extended(gspca_dev, CPIA_COMMAND_SetExposure,
 					  0,
 					  sd->params.exposure.expMode,
 					  0, 0,
@@ -858,65 +859,65 @@ static int command_setexposure(struct gspca_dev *gspca_dev)
 					  sd->params.exposure.coarseExpLo,
 					  sd->params.exposure.coarseExpHi,
 					  0, 0, 0, 0);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int command_setcolourbalance(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setcolourbalance(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	if (sd->params.colourBalance.balanceMode == 1) {
-		int ret;
+	अगर (sd->params.colourBalance.balanceMode == 1) अणु
+		पूर्णांक ret;
 
-		ret = do_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
+		ret = करो_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
 				 1,
 				 sd->params.colourBalance.redGain,
 				 sd->params.colourBalance.greenGain,
 				 sd->params.colourBalance.blueGain);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return do_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
+		वापस करो_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
 				  3, 0, 0, 0);
-	}
-	if (sd->params.colourBalance.balanceMode == 2) {
-		return do_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
+	पूर्ण
+	अगर (sd->params.colourBalance.balanceMode == 2) अणु
+		वापस करो_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
 				  2, 0, 0, 0);
-	}
-	if (sd->params.colourBalance.balanceMode == 3) {
-		return do_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
+	पूर्ण
+	अगर (sd->params.colourBalance.balanceMode == 3) अणु
+		वापस करो_command(gspca_dev, CPIA_COMMAND_SetColourBalance,
 				  3, 0, 0, 0);
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int command_setcompressiontarget(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setcompressiontarget(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command(gspca_dev, CPIA_COMMAND_SetCompressionTarget,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetCompressionTarget,
 			  sd->params.compressionTarget.frTargeting,
 			  sd->params.compressionTarget.targetFR,
 			  sd->params.compressionTarget.targetQ, 0);
-}
+पूर्ण
 
-static int command_setyuvtresh(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setyuvtresh(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command(gspca_dev, CPIA_COMMAND_SetYUVThresh,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetYUVThresh,
 			  sd->params.yuvThreshold.yThreshold,
 			  sd->params.yuvThreshold.uvThreshold, 0, 0);
-}
+पूर्ण
 
-static int command_setcompressionparams(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setcompressionparams(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command_extended(gspca_dev,
+	वापस करो_command_extended(gspca_dev,
 			    CPIA_COMMAND_SetCompressionParams,
 			    0, 0, 0, 0,
 			    sd->params.compressionParams.hysteresis,
@@ -924,126 +925,126 @@ static int command_setcompressionparams(struct gspca_dev *gspca_dev)
 			    sd->params.compressionParams.smallStep,
 			    sd->params.compressionParams.largeStep,
 			    sd->params.compressionParams.decimationHysteresis,
-			    sd->params.compressionParams.frDiffStepThresh,
-			    sd->params.compressionParams.qDiffStepThresh,
+			    sd->params.compressionParams.frDअगरfStepThresh,
+			    sd->params.compressionParams.qDअगरfStepThresh,
 			    sd->params.compressionParams.decimationThreshMod);
-}
+पूर्ण
 
-static int command_setcompression(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setcompression(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command(gspca_dev, CPIA_COMMAND_SetCompression,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetCompression,
 			  sd->params.compression.mode,
 			  sd->params.compression.decimation, 0, 0);
-}
+पूर्ण
 
-static int command_setsensorfps(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setsensorfps(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command(gspca_dev, CPIA_COMMAND_SetSensorFPS,
-			  sd->params.sensorFps.divisor,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetSensorFPS,
+			  sd->params.sensorFps.भागisor,
 			  sd->params.sensorFps.baserate, 0, 0);
-}
+पूर्ण
 
-static int command_setflickerctrl(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setflickerctrl(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command(gspca_dev, CPIA_COMMAND_SetFlickerCtrl,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetFlickerCtrl,
 			  sd->params.flickerControl.flickerMode,
 			  sd->params.flickerControl.coarseJump,
 			  sd->params.flickerControl.allowableOverExposure,
 			  0);
-}
+पूर्ण
 
-static int command_setecptiming(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_setecptiming(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command(gspca_dev, CPIA_COMMAND_SetECPTiming,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_SetECPTiming,
 			  sd->params.ecpTiming, 0, 0, 0);
-}
+पूर्ण
 
-static int command_pause(struct gspca_dev *gspca_dev)
-{
-	return do_command(gspca_dev, CPIA_COMMAND_EndStreamCap, 0, 0, 0, 0);
-}
+अटल पूर्णांक command_छोड़ो(काष्ठा gspca_dev *gspca_dev)
+अणु
+	वापस करो_command(gspca_dev, CPIA_COMMAND_EndStreamCap, 0, 0, 0, 0);
+पूर्ण
 
-static int command_resume(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल पूर्णांक command_resume(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	return do_command(gspca_dev, CPIA_COMMAND_InitStreamCap,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_InitStreamCap,
 			  0, sd->params.streamStartLine, 0, 0);
-}
+पूर्ण
 
-static int command_setlights(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int ret, p1, p2;
+अटल पूर्णांक command_setlights(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक ret, p1, p2;
 
 	p1 = (sd->params.qx3.bottomlight == 0) << 1;
 	p2 = (sd->params.qx3.toplight == 0) << 3;
 
-	ret = do_command(gspca_dev, CPIA_COMMAND_WriteVCReg,
+	ret = करो_command(gspca_dev, CPIA_COMMAND_WriteVCReg,
 			 0x90, 0x8f, 0x50, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return do_command(gspca_dev, CPIA_COMMAND_WriteMCPort, 2, 0,
+	वापस करो_command(gspca_dev, CPIA_COMMAND_WriteMCPort, 2, 0,
 			  p1 | p2 | 0xe0, 0);
-}
+पूर्ण
 
-static int set_flicker(struct gspca_dev *gspca_dev, int on, int apply)
-{
-	/* Everything in here is from the Windows driver */
-/* define for compgain calculation */
-#if 0
-#define COMPGAIN(base, curexp, newexp) \
-    (u8) ((((float) base - 128.0) * ((float) curexp / (float) newexp)) + 128.5)
-#define EXP_FROM_COMP(basecomp, curcomp, curexp) \
-    (u16)((float)curexp * (float)(u8)(curcomp + 128) / \
-    (float)(u8)(basecomp - 128))
-#else
-  /* equivalent functions without floating point math */
-#define COMPGAIN(base, curexp, newexp) \
+अटल पूर्णांक set_flicker(काष्ठा gspca_dev *gspca_dev, पूर्णांक on, पूर्णांक apply)
+अणु
+	/* Everything in here is from the Winकरोws driver */
+/* define क्रम compgain calculation */
+#अगर 0
+#घोषणा COMPGAIN(base, curexp, newexp) \
+    (u8) ((((भग्न) base - 128.0) * ((भग्न) curexp / (भग्न) newexp)) + 128.5)
+#घोषणा EXP_FROM_COMP(basecomp, curcomp, curexp) \
+    (u16)((भग्न)curexp * (भग्न)(u8)(curcomp + 128) / \
+    (भग्न)(u8)(basecomp - 128))
+#अन्यथा
+  /* equivalent functions without भग्नing poपूर्णांक math */
+#घोषणा COMPGAIN(base, curexp, newexp) \
     (u8)(128 + (((u32)(2*(base-128)*curexp + newexp)) / (2 * newexp)))
-#define EXP_FROM_COMP(basecomp, curcomp, curexp) \
+#घोषणा EXP_FROM_COMP(basecomp, curcomp, curexp) \
     (u16)(((u32)(curexp * (u8)(curcomp + 128)) / (u8)(basecomp - 128)))
-#endif
+#पूर्ण_अगर
 
-	struct sd *sd = (struct sd *) gspca_dev;
-	int currentexp = sd->params.exposure.coarseExpLo +
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक currentexp = sd->params.exposure.coarseExpLo +
 			 sd->params.exposure.coarseExpHi * 256;
-	int ret, startexp;
+	पूर्णांक ret, startexp;
 
-	if (on) {
-		int cj = sd->params.flickerControl.coarseJump;
+	अगर (on) अणु
+		पूर्णांक cj = sd->params.flickerControl.coarseJump;
 		sd->params.flickerControl.flickerMode = 1;
 		sd->params.flickerControl.disabled = 0;
-		if (sd->params.exposure.expMode != 2) {
+		अगर (sd->params.exposure.expMode != 2) अणु
 			sd->params.exposure.expMode = 2;
 			sd->exposure_status = EXPOSURE_NORMAL;
-		}
+		पूर्ण
 		currentexp = currentexp << sd->params.exposure.gain;
 		sd->params.exposure.gain = 0;
-		/* round down current exposure to nearest value */
+		/* round करोwn current exposure to nearest value */
 		startexp = (currentexp + ROUND_UP_EXP_FOR_FLICKER) / cj;
-		if (startexp < 1)
+		अगर (startexp < 1)
 			startexp = 1;
 		startexp = (startexp * cj) - 1;
-		if (FIRMWARE_VERSION(1, 2))
-			while (startexp > MAX_EXP_102)
+		अगर (FIRMWARE_VERSION(1, 2))
+			जबतक (startexp > MAX_EXP_102)
 				startexp -= cj;
-		else
-			while (startexp > MAX_EXP)
+		अन्यथा
+			जबतक (startexp > MAX_EXP)
 				startexp -= cj;
 		sd->params.exposure.coarseExpLo = startexp & 0xff;
 		sd->params.exposure.coarseExpHi = startexp >> 8;
-		if (currentexp > startexp) {
-			if (currentexp > (2 * startexp))
+		अगर (currentexp > startexp) अणु
+			अगर (currentexp > (2 * startexp))
 				currentexp = 2 * startexp;
 			sd->params.exposure.redComp =
 				COMPGAIN(COMP_RED, currentexp, startexp);
@@ -1053,25 +1054,25 @@ static int set_flicker(struct gspca_dev *gspca_dev, int on, int apply)
 				COMPGAIN(COMP_GREEN2, currentexp, startexp);
 			sd->params.exposure.blueComp =
 				COMPGAIN(COMP_BLUE, currentexp, startexp);
-		} else {
+		पूर्ण अन्यथा अणु
 			sd->params.exposure.redComp = COMP_RED;
 			sd->params.exposure.green1Comp = COMP_GREEN1;
 			sd->params.exposure.green2Comp = COMP_GREEN2;
 			sd->params.exposure.blueComp = COMP_BLUE;
-		}
-		if (FIRMWARE_VERSION(1, 2))
+		पूर्ण
+		अगर (FIRMWARE_VERSION(1, 2))
 			sd->params.exposure.compMode = 0;
-		else
+		अन्यथा
 			sd->params.exposure.compMode = 1;
 
 		sd->params.apcor.gain1 = 0x18;
 		sd->params.apcor.gain2 = 0x18;
 		sd->params.apcor.gain4 = 0x16;
 		sd->params.apcor.gain8 = 0x14;
-	} else {
+	पूर्ण अन्यथा अणु
 		sd->params.flickerControl.flickerMode = 0;
 		sd->params.flickerControl.disabled = 1;
-		/* Average equivalent coarse for each comp channel */
+		/* Average equivalent coarse क्रम each comp channel */
 		startexp = EXP_FROM_COMP(COMP_RED,
 				sd->params.exposure.redComp, currentexp);
 		startexp += EXP_FROM_COMP(COMP_GREEN1,
@@ -1081,14 +1082,14 @@ static int set_flicker(struct gspca_dev *gspca_dev, int on, int apply)
 		startexp += EXP_FROM_COMP(COMP_BLUE,
 				sd->params.exposure.blueComp, currentexp);
 		startexp = startexp >> 2;
-		while (startexp > MAX_EXP && sd->params.exposure.gain <
-		       sd->params.exposure.gainMode - 1) {
+		जबतक (startexp > MAX_EXP && sd->params.exposure.gain <
+		       sd->params.exposure.gainMode - 1) अणु
 			startexp = startexp >> 1;
 			++sd->params.exposure.gain;
-		}
-		if (FIRMWARE_VERSION(1, 2) && startexp > MAX_EXP_102)
+		पूर्ण
+		अगर (FIRMWARE_VERSION(1, 2) && startexp > MAX_EXP_102)
 			startexp = MAX_EXP_102;
-		if (startexp > MAX_EXP)
+		अगर (startexp > MAX_EXP)
 			startexp = MAX_EXP;
 		sd->params.exposure.coarseExpLo = startexp & 0xff;
 		sd->params.exposure.coarseExpHi = startexp >> 8;
@@ -1101,46 +1102,46 @@ static int set_flicker(struct gspca_dev *gspca_dev, int on, int apply)
 		sd->params.apcor.gain2 = 0x16;
 		sd->params.apcor.gain4 = 0x24;
 		sd->params.apcor.gain8 = 0x34;
-	}
+	पूर्ण
 	sd->params.vlOffset.gain1 = 20;
 	sd->params.vlOffset.gain2 = 24;
 	sd->params.vlOffset.gain4 = 26;
 	sd->params.vlOffset.gain8 = 26;
 
-	if (apply) {
+	अगर (apply) अणु
 		ret = command_setexposure(gspca_dev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = command_setapcor(gspca_dev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = command_setvloffset(gspca_dev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = command_setflickerctrl(gspca_dev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-#undef EXP_FROM_COMP
-#undef COMPGAIN
-}
+	वापस 0;
+#अघोषित EXP_FROM_COMP
+#अघोषित COMPGAIN
+पूर्ण
 
-/* monitor the exposure and adjust the sensor frame rate if needed */
-static void monitor_exposure(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+/* monitor the exposure and adjust the sensor frame rate अगर needed */
+अटल व्योम monitor_exposure(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 	u8 exp_acc, bcomp, cmd[8];
-	int ret, light_exp, dark_exp, very_dark_exp;
-	int old_exposure, new_exposure, framerate;
-	int setfps = 0, setexp = 0, setflicker = 0;
+	पूर्णांक ret, light_exp, dark_exp, very_dark_exp;
+	पूर्णांक old_exposure, new_exposure, framerate;
+	पूर्णांक setfps = 0, setexp = 0, setflicker = 0;
 
-	/* get necessary stats and register settings from camera */
-	/* do_command can't handle this, so do it ourselves */
+	/* get necessary stats and रेजिस्टर settings from camera */
+	/* करो_command can't handle this, so करो it ourselves */
 	cmd[0] = CPIA_COMMAND_ReadVPRegs >> 8;
 	cmd[1] = CPIA_COMMAND_ReadVPRegs & 0xff;
 	cmd[2] = 30;
@@ -1150,146 +1151,146 @@ static void monitor_exposure(struct gspca_dev *gspca_dev)
 	cmd[6] = 8;
 	cmd[7] = 0;
 	ret = cpia_usb_transferCmd(gspca_dev, cmd);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("ReadVPRegs(30,4,9,8) - failed: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 	exp_acc = gspca_dev->usb_buf[0];
 	bcomp = gspca_dev->usb_buf[1];
 
 	light_exp = sd->params.colourParams.brightness +
 		    TC - 50 + EXP_ACC_LIGHT;
-	if (light_exp > 255)
+	अगर (light_exp > 255)
 		light_exp = 255;
 	dark_exp = sd->params.colourParams.brightness +
 		   TC - 50 - EXP_ACC_DARK;
-	if (dark_exp < 0)
+	अगर (dark_exp < 0)
 		dark_exp = 0;
 	very_dark_exp = dark_exp / 2;
 
 	old_exposure = sd->params.exposure.coarseExpHi * 256 +
 		       sd->params.exposure.coarseExpLo;
 
-	if (!sd->params.flickerControl.disabled) {
+	अगर (!sd->params.flickerControl.disabled) अणु
 		/* Flicker control on */
-		int max_comp = FIRMWARE_VERSION(1, 2) ? MAX_COMP :
+		पूर्णांक max_comp = FIRMWARE_VERSION(1, 2) ? MAX_COMP :
 							HIGH_COMP_102;
 		bcomp += 128;	/* decode */
-		if (bcomp >= max_comp && exp_acc < dark_exp) {
+		अगर (bcomp >= max_comp && exp_acc < dark_exp) अणु
 			/* dark */
-			if (exp_acc < very_dark_exp) {
+			अगर (exp_acc < very_dark_exp) अणु
 				/* very dark */
-				if (sd->exposure_status == EXPOSURE_VERY_DARK)
+				अगर (sd->exposure_status == EXPOSURE_VERY_DARK)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status =
 						EXPOSURE_VERY_DARK;
 					sd->exposure_count = 1;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* just dark */
-				if (sd->exposure_status == EXPOSURE_DARK)
+				अगर (sd->exposure_status == EXPOSURE_DARK)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status = EXPOSURE_DARK;
 					sd->exposure_count = 1;
-				}
-			}
-		} else if (old_exposure <= LOW_EXP || exp_acc > light_exp) {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अगर (old_exposure <= LOW_EXP || exp_acc > light_exp) अणु
 			/* light */
-			if (old_exposure <= VERY_LOW_EXP) {
+			अगर (old_exposure <= VERY_LOW_EXP) अणु
 				/* very light */
-				if (sd->exposure_status == EXPOSURE_VERY_LIGHT)
+				अगर (sd->exposure_status == EXPOSURE_VERY_LIGHT)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status =
 						EXPOSURE_VERY_LIGHT;
 					sd->exposure_count = 1;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* just light */
-				if (sd->exposure_status == EXPOSURE_LIGHT)
+				अगर (sd->exposure_status == EXPOSURE_LIGHT)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status = EXPOSURE_LIGHT;
 					sd->exposure_count = 1;
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* not dark or light */
 			sd->exposure_status = EXPOSURE_NORMAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Flicker control off */
-		if (old_exposure >= MAX_EXP && exp_acc < dark_exp) {
+		अगर (old_exposure >= MAX_EXP && exp_acc < dark_exp) अणु
 			/* dark */
-			if (exp_acc < very_dark_exp) {
+			अगर (exp_acc < very_dark_exp) अणु
 				/* very dark */
-				if (sd->exposure_status == EXPOSURE_VERY_DARK)
+				अगर (sd->exposure_status == EXPOSURE_VERY_DARK)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status =
 						EXPOSURE_VERY_DARK;
 					sd->exposure_count = 1;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* just dark */
-				if (sd->exposure_status == EXPOSURE_DARK)
+				अगर (sd->exposure_status == EXPOSURE_DARK)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status = EXPOSURE_DARK;
 					sd->exposure_count = 1;
-				}
-			}
-		} else if (old_exposure <= LOW_EXP || exp_acc > light_exp) {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अगर (old_exposure <= LOW_EXP || exp_acc > light_exp) अणु
 			/* light */
-			if (old_exposure <= VERY_LOW_EXP) {
+			अगर (old_exposure <= VERY_LOW_EXP) अणु
 				/* very light */
-				if (sd->exposure_status == EXPOSURE_VERY_LIGHT)
+				अगर (sd->exposure_status == EXPOSURE_VERY_LIGHT)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status =
 						EXPOSURE_VERY_LIGHT;
 					sd->exposure_count = 1;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* just light */
-				if (sd->exposure_status == EXPOSURE_LIGHT)
+				अगर (sd->exposure_status == EXPOSURE_LIGHT)
 					++sd->exposure_count;
-				else {
+				अन्यथा अणु
 					sd->exposure_status = EXPOSURE_LIGHT;
 					sd->exposure_count = 1;
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* not dark or light */
 			sd->exposure_status = EXPOSURE_NORMAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	framerate = atomic_read(&sd->fps);
-	if (framerate > 30 || framerate < 1)
+	framerate = atomic_पढ़ो(&sd->fps);
+	अगर (framerate > 30 || framerate < 1)
 		framerate = 1;
 
-	if (!sd->params.flickerControl.disabled) {
+	अगर (!sd->params.flickerControl.disabled) अणु
 		/* Flicker control on */
-		if ((sd->exposure_status == EXPOSURE_VERY_DARK ||
+		अगर ((sd->exposure_status == EXPOSURE_VERY_DARK ||
 		     sd->exposure_status == EXPOSURE_DARK) &&
 		    sd->exposure_count >= DARK_TIME * framerate &&
-		    sd->params.sensorFps.divisor < 2) {
+		    sd->params.sensorFps.भागisor < 2) अणु
 
-			/* dark for too long */
-			++sd->params.sensorFps.divisor;
+			/* dark क्रम too दीर्घ */
+			++sd->params.sensorFps.भागisor;
 			setfps = 1;
 
 			sd->params.flickerControl.coarseJump =
-				flicker_jumps[sd->mainsFreq]
+				flicker_jumps[sd->मुख्यsFreq]
 					     [sd->params.sensorFps.baserate]
-					     [sd->params.sensorFps.divisor];
+					     [sd->params.sensorFps.भागisor];
 			setflicker = 1;
 
 			new_exposure = sd->params.flickerControl.coarseJump-1;
-			while (new_exposure < old_exposure / 2)
+			जबतक (new_exposure < old_exposure / 2)
 				new_exposure +=
 					sd->params.flickerControl.coarseJump;
 			sd->params.exposure.coarseExpLo = new_exposure & 0xff;
@@ -1298,25 +1299,25 @@ static void monitor_exposure(struct gspca_dev *gspca_dev)
 			sd->exposure_status = EXPOSURE_NORMAL;
 			gspca_dbg(gspca_dev, D_CONF, "Automatically decreasing sensor_fps\n");
 
-		} else if ((sd->exposure_status == EXPOSURE_VERY_LIGHT ||
+		पूर्ण अन्यथा अगर ((sd->exposure_status == EXPOSURE_VERY_LIGHT ||
 			    sd->exposure_status == EXPOSURE_LIGHT) &&
 			   sd->exposure_count >= LIGHT_TIME * framerate &&
-			   sd->params.sensorFps.divisor > 0) {
+			   sd->params.sensorFps.भागisor > 0) अणु
 
-			/* light for too long */
-			int max_exp = FIRMWARE_VERSION(1, 2) ? MAX_EXP_102 :
+			/* light क्रम too दीर्घ */
+			पूर्णांक max_exp = FIRMWARE_VERSION(1, 2) ? MAX_EXP_102 :
 							       MAX_EXP;
-			--sd->params.sensorFps.divisor;
+			--sd->params.sensorFps.भागisor;
 			setfps = 1;
 
 			sd->params.flickerControl.coarseJump =
-				flicker_jumps[sd->mainsFreq]
+				flicker_jumps[sd->मुख्यsFreq]
 					     [sd->params.sensorFps.baserate]
-					     [sd->params.sensorFps.divisor];
+					     [sd->params.sensorFps.भागisor];
 			setflicker = 1;
 
 			new_exposure = sd->params.flickerControl.coarseJump-1;
-			while (new_exposure < 2 * old_exposure &&
+			जबतक (new_exposure < 2 * old_exposure &&
 			       new_exposure +
 			       sd->params.flickerControl.coarseJump < max_exp)
 				new_exposure +=
@@ -1326,75 +1327,75 @@ static void monitor_exposure(struct gspca_dev *gspca_dev)
 			setexp = 1;
 			sd->exposure_status = EXPOSURE_NORMAL;
 			gspca_dbg(gspca_dev, D_CONF, "Automatically increasing sensor_fps\n");
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Flicker control off */
-		if ((sd->exposure_status == EXPOSURE_VERY_DARK ||
+		अगर ((sd->exposure_status == EXPOSURE_VERY_DARK ||
 		     sd->exposure_status == EXPOSURE_DARK) &&
 		    sd->exposure_count >= DARK_TIME * framerate &&
-		    sd->params.sensorFps.divisor < 2) {
+		    sd->params.sensorFps.भागisor < 2) अणु
 
-			/* dark for too long */
-			++sd->params.sensorFps.divisor;
+			/* dark क्रम too दीर्घ */
+			++sd->params.sensorFps.भागisor;
 			setfps = 1;
 
-			if (sd->params.exposure.gain > 0) {
+			अगर (sd->params.exposure.gain > 0) अणु
 				--sd->params.exposure.gain;
 				setexp = 1;
-			}
+			पूर्ण
 			sd->exposure_status = EXPOSURE_NORMAL;
 			gspca_dbg(gspca_dev, D_CONF, "Automatically decreasing sensor_fps\n");
 
-		} else if ((sd->exposure_status == EXPOSURE_VERY_LIGHT ||
+		पूर्ण अन्यथा अगर ((sd->exposure_status == EXPOSURE_VERY_LIGHT ||
 			    sd->exposure_status == EXPOSURE_LIGHT) &&
 			   sd->exposure_count >= LIGHT_TIME * framerate &&
-			   sd->params.sensorFps.divisor > 0) {
+			   sd->params.sensorFps.भागisor > 0) अणु
 
-			/* light for too long */
-			--sd->params.sensorFps.divisor;
+			/* light क्रम too दीर्घ */
+			--sd->params.sensorFps.भागisor;
 			setfps = 1;
 
-			if (sd->params.exposure.gain <
-			    sd->params.exposure.gainMode - 1) {
+			अगर (sd->params.exposure.gain <
+			    sd->params.exposure.gainMode - 1) अणु
 				++sd->params.exposure.gain;
 				setexp = 1;
-			}
+			पूर्ण
 			sd->exposure_status = EXPOSURE_NORMAL;
 			gspca_dbg(gspca_dev, D_CONF, "Automatically increasing sensor_fps\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (setexp)
+	अगर (setexp)
 		command_setexposure(gspca_dev);
 
-	if (setfps)
+	अगर (setfps)
 		command_setsensorfps(gspca_dev);
 
-	if (setflicker)
+	अगर (setflicker)
 		command_setflickerctrl(gspca_dev);
-}
+पूर्ण
 
 /*-----------------------------------------------------------------*/
-/* if flicker is switched off, this function switches it back on.It checks,
-   however, that conditions are suitable before restarting it.
-   This should only be called for firmware version 1.2.
+/* अगर flicker is चयनed off, this function चयनes it back on.It checks,
+   however, that conditions are suitable beक्रमe restarting it.
+   This should only be called क्रम firmware version 1.2.
 
    It also adjust the colour balance when an exposure step is detected - as
-   long as flicker is running
+   दीर्घ as flicker is running
 */
-static void restart_flicker(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int cam_exposure, old_exp;
+अटल व्योम restart_flicker(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक cam_exposure, old_exp;
 
-	if (!FIRMWARE_VERSION(1, 2))
-		return;
+	अगर (!FIRMWARE_VERSION(1, 2))
+		वापस;
 
-	cam_exposure = atomic_read(&sd->cam_exposure);
+	cam_exposure = atomic_पढ़ो(&sd->cam_exposure);
 
-	if (sd->params.flickerControl.flickerMode == 0 ||
+	अगर (sd->params.flickerControl.flickerMode == 0 ||
 	    cam_exposure == 0)
-		return;
+		वापस;
 
 	old_exp = sd->params.exposure.coarseExpLo +
 		  sd->params.exposure.coarseExpHi*256;
@@ -1403,148 +1404,148 @@ static void restart_flicker(struct gspca_dev *gspca_dev)
 	  flicker exposure value
 	*/
 	cam_exposure %= sd->params.flickerControl.coarseJump;
-	if (!sd->params.flickerControl.disabled &&
-	    cam_exposure <= sd->params.flickerControl.coarseJump - 3) {
-		/* Flicker control auto-disabled */
+	अगर (!sd->params.flickerControl.disabled &&
+	    cam_exposure <= sd->params.flickerControl.coarseJump - 3) अणु
+		/* Flicker control स्वतः-disabled */
 		sd->params.flickerControl.disabled = 1;
-	}
+	पूर्ण
 
-	if (sd->params.flickerControl.disabled &&
+	अगर (sd->params.flickerControl.disabled &&
 	    old_exp > sd->params.flickerControl.coarseJump +
-		      ROUND_UP_EXP_FOR_FLICKER) {
-		/* exposure is now high enough to switch
+		      ROUND_UP_EXP_FOR_FLICKER) अणु
+		/* exposure is now high enough to चयन
 		   flicker control back on */
 		set_flicker(gspca_dev, 1, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* this function is called at probe time */
-static int sd_config(struct gspca_dev *gspca_dev,
-			const struct usb_device_id *id)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	struct cam *cam;
+/* this function is called at probe समय */
+अटल पूर्णांक sd_config(काष्ठा gspca_dev *gspca_dev,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	काष्ठा cam *cam;
 
-	sd->mainsFreq = FREQ_DEF == V4L2_CID_POWER_LINE_FREQUENCY_60HZ;
+	sd->मुख्यsFreq = FREQ_DEF == V4L2_CID_POWER_LINE_FREQUENCY_60HZ;
 	reset_camera_params(gspca_dev);
 
 	gspca_dbg(gspca_dev, D_PROBE, "cpia CPiA camera detected (vid/pid 0x%04X:0x%04X)\n",
-		  id->idVendor, id->idProduct);
+		  id->idVenकरोr, id->idProduct);
 
 	cam = &gspca_dev->cam;
 	cam->cam_mode = mode;
 	cam->nmodes = ARRAY_SIZE(mode);
 
-	goto_low_power(gspca_dev);
+	जाओ_low_घातer(gspca_dev);
 	/* Check the firmware version. */
 	sd->params.version.firmwareVersion = 0;
-	get_version_information(gspca_dev);
-	if (sd->params.version.firmwareVersion != 1) {
+	get_version_inक्रमmation(gspca_dev);
+	अगर (sd->params.version.firmwareVersion != 1) अणु
 		gspca_err(gspca_dev, "only firmware version 1 is supported (got: %d)\n",
 			  sd->params.version.firmwareVersion);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* A bug in firmware 1-02 limits gainMode to 2 */
-	if (sd->params.version.firmwareRevision <= 2 &&
-	    sd->params.exposure.gainMode > 2) {
+	अगर (sd->params.version.firmwareRevision <= 2 &&
+	    sd->params.exposure.gainMode > 2) अणु
 		sd->params.exposure.gainMode = 2;
-	}
+	पूर्ण
 
 	/* set QX3 detected flag */
-	sd->params.qx3.qx3_detected = (sd->params.pnpID.vendor == 0x0813 &&
+	sd->params.qx3.qx3_detected = (sd->params.pnpID.venकरोr == 0x0813 &&
 				       sd->params.pnpID.product == 0x0001);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -- start the camera -- */
-static int sd_start(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int priv, ret;
+अटल पूर्णांक sd_start(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक priv, ret;
 
-	/* Start the camera in low power mode */
-	if (goto_low_power(gspca_dev)) {
-		if (sd->params.status.systemState != WARM_BOOT_STATE) {
+	/* Start the camera in low घातer mode */
+	अगर (जाओ_low_घातer(gspca_dev)) अणु
+		अगर (sd->params.status.प्रणालीState != WARM_BOOT_STATE) अणु
 			gspca_err(gspca_dev, "unexpected systemstate: %02x\n",
-				  sd->params.status.systemState);
-			printstatus(gspca_dev, &sd->params);
-			return -ENODEV;
-		}
+				  sd->params.status.प्रणालीState);
+			prपूर्णांकstatus(gspca_dev, &sd->params);
+			वापस -ENODEV;
+		पूर्ण
 
 		/* FIXME: this is just dirty trial and error */
-		ret = goto_high_power(gspca_dev);
-		if (ret)
-			return ret;
+		ret = जाओ_high_घातer(gspca_dev);
+		अगर (ret)
+			वापस ret;
 
-		ret = do_command(gspca_dev, CPIA_COMMAND_DiscardFrame,
+		ret = करो_command(gspca_dev, CPIA_COMMAND_DiscardFrame,
 				 0, 0, 0, 0);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = goto_low_power(gspca_dev);
-		if (ret)
-			return ret;
-	}
+		ret = जाओ_low_घातer(gspca_dev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* procedure described in developer's guide p3-28 */
 
 	/* Check the firmware version. */
 	sd->params.version.firmwareVersion = 0;
-	get_version_information(gspca_dev);
+	get_version_inक्रमmation(gspca_dev);
 
-	/* The fatal error checking should be done after
-	 * the camera powers up (developer's guide p 3-38) */
+	/* The fatal error checking should be करोne after
+	 * the camera घातers up (developer's guide p 3-38) */
 
-	/* Set streamState before transition to high power to avoid bug
+	/* Set streamState beक्रमe transition to high घातer to aव्योम bug
 	 * in firmware 1-02 */
-	ret = do_command(gspca_dev, CPIA_COMMAND_ModifyCameraStatus,
+	ret = करो_command(gspca_dev, CPIA_COMMAND_ModअगरyCameraStatus,
 			 STREAMSTATE, 0, STREAM_NOT_READY, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* GotoHiPower */
-	ret = goto_high_power(gspca_dev);
-	if (ret)
-		return ret;
+	ret = जाओ_high_घातer(gspca_dev);
+	अगर (ret)
+		वापस ret;
 
 	/* Check the camera status */
-	ret = do_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
-	if (sd->params.status.fatalError) {
+	अगर (sd->params.status.fatalError) अणु
 		gspca_err(gspca_dev, "fatal_error: %04x, vp_status: %04x\n",
 			  sd->params.status.fatalError,
 			  sd->params.status.vpStatus);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* VPVersion can't be retrieved before the camera is in HiPower,
-	 * so get it here instead of in get_version_information. */
-	ret = do_command(gspca_dev, CPIA_COMMAND_GetVPVersion, 0, 0, 0, 0);
-	if (ret)
-		return ret;
+	/* VPVersion can't be retrieved beक्रमe the camera is in HiPower,
+	 * so get it here instead of in get_version_inक्रमmation. */
+	ret = करो_command(gspca_dev, CPIA_COMMAND_GetVPVersion, 0, 0, 0, 0);
+	अगर (ret)
+		वापस ret;
 
 	/* Determine video mode settings */
 	sd->params.streamStartLine = 120;
 
 	priv = gspca_dev->cam.cam_mode[gspca_dev->curr_mode].priv;
-	if (priv & 0x01) { /* crop */
+	अगर (priv & 0x01) अणु /* crop */
 		sd->params.roi.colStart = 2;
 		sd->params.roi.rowStart = 6;
-	} else {
+	पूर्ण अन्यथा अणु
 		sd->params.roi.colStart = 0;
 		sd->params.roi.rowStart = 0;
-	}
+	पूर्ण
 
-	if (priv & 0x02) { /* quarter */
-		sd->params.format.videoSize = VIDEOSIZE_QCIF;
+	अगर (priv & 0x02) अणु /* quarter */
+		sd->params.क्रमmat.videoSize = VIDEOSIZE_QCIF;
 		sd->params.roi.colStart /= 2;
 		sd->params.roi.rowStart /= 2;
 		sd->params.streamStartLine /= 2;
-	} else
-		sd->params.format.videoSize = VIDEOSIZE_CIF;
+	पूर्ण अन्यथा
+		sd->params.क्रमmat.videoSize = VIDEOSIZE_CIF;
 
 	sd->params.roi.colEnd = sd->params.roi.colStart +
 				(gspca_dev->pixfmt.width >> 3);
@@ -1552,60 +1553,60 @@ static int sd_start(struct gspca_dev *gspca_dev)
 				(gspca_dev->pixfmt.height >> 2);
 
 	/* And now set the camera to a known state */
-	ret = do_command(gspca_dev, CPIA_COMMAND_SetGrabMode,
+	ret = करो_command(gspca_dev, CPIA_COMMAND_SetGrabMode,
 			 CPIA_GRAB_CONTINEOUS, 0, 0, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	/* We start with compression disabled, as we need one uncompressed
 	   frame to handle later compressed frames */
-	ret = do_command(gspca_dev, CPIA_COMMAND_SetCompression,
+	ret = करो_command(gspca_dev, CPIA_COMMAND_SetCompression,
 			 CPIA_COMPRESSION_NONE,
 			 NO_DECIMATION, 0, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setcompressiontarget(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setcolourparams(gspca_dev);
-	if (ret)
-		return ret;
-	ret = command_setformat(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
+	ret = command_setक्रमmat(gspca_dev);
+	अगर (ret)
+		वापस ret;
 	ret = command_setyuvtresh(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setecptiming(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setcompressionparams(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setexposure(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setcolourbalance(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setsensorfps(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setapcor(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setflickerctrl(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = command_setvloffset(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Start stream */
 	ret = command_resume(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Wait 6 frames before turning compression on for the sensor to get
+	/* Wait 6 frames beक्रमe turning compression on क्रम the sensor to get
 	   all settings and AEC/ACB to settle */
 	sd->first_frame = 6;
 	sd->exposure_status = EXPOSURE_NORMAL;
@@ -1613,52 +1614,52 @@ static int sd_start(struct gspca_dev *gspca_dev)
 	atomic_set(&sd->cam_exposure, 0);
 	atomic_set(&sd->fps, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sd_stopN(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd __maybe_unused = (struct sd *) gspca_dev;
+अटल व्योम sd_stopN(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd __maybe_unused = (काष्ठा sd *) gspca_dev;
 
-	command_pause(gspca_dev);
+	command_छोड़ो(gspca_dev);
 
-	/* save camera state for later open (developers guide ch 3.5.3) */
+	/* save camera state क्रम later खोलो (developers guide ch 3.5.3) */
 	save_camera_state(gspca_dev);
 
 	/* GotoLoPower */
-	goto_low_power(gspca_dev);
+	जाओ_low_घातer(gspca_dev);
 
 	/* Update the camera status */
-	do_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
+	करो_command(gspca_dev, CPIA_COMMAND_GetCameraStatus, 0, 0, 0, 0);
 
-#if IS_ENABLED(CONFIG_INPUT)
+#अगर IS_ENABLED(CONFIG_INPUT)
 	/* If the last button state is pressed, release it now! */
-	if (sd->params.qx3.button) {
+	अगर (sd->params.qx3.button) अणु
 		/* The camera latch will hold the pressed state until we reset
-		   the latch, so we do not reset sd->params.qx3.button now, to
-		   avoid a false keypress being reported the next sd_start */
+		   the latch, so we करो not reset sd->params.qx3.button now, to
+		   aव्योम a false keypress being reported the next sd_start */
 		input_report_key(gspca_dev->input_dev, KEY_CAMERA, 0);
 		input_sync(gspca_dev->input_dev);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-/* this function is called at probe and resume time */
-static int sd_init(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int ret;
+/* this function is called at probe and resume समय */
+अटल पूर्णांक sd_init(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक ret;
 
 	/* Start / Stop the camera to make sure we are talking to
-	   a supported camera, and to get some information from it
-	   to print. */
+	   a supported camera, and to get some inक्रमmation from it
+	   to prपूर्णांक. */
 	ret = sd_start(gspca_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Ensure the QX3 illuminators' states are restored upon resume,
-	   or disable the illuminator controls, if this isn't a QX3 */
-	if (sd->params.qx3.qx3_detected)
+	   or disable the illuminator controls, अगर this isn't a QX3 */
+	अगर (sd->params.qx3.qx3_detected)
 		command_setlights(gspca_dev);
 
 	sd_stopN(gspca_dev);
@@ -1669,149 +1670,149 @@ static int sd_init(struct gspca_dev *gspca_dev)
 		  sd->params.version.vcVersion,
 		  sd->params.version.vcRevision);
 	gspca_dbg(gspca_dev, D_PROBE, "CPIA PnP-ID:              %04x:%04x:%04x",
-		  sd->params.pnpID.vendor, sd->params.pnpID.product,
+		  sd->params.pnpID.venकरोr, sd->params.pnpID.product,
 		  sd->params.pnpID.deviceRevision);
 	gspca_dbg(gspca_dev, D_PROBE, "VP-Version:               %d.%d %04x",
 		  sd->params.vpVersion.vpVersion,
 		  sd->params.vpVersion.vpRevision,
 		  sd->params.vpVersion.cameraHeadID);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sd_pkt_scan(struct gspca_dev *gspca_dev,
+अटल व्योम sd_pkt_scan(काष्ठा gspca_dev *gspca_dev,
 			u8 *data,
-			int len)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+			पूर्णांक len)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	/* Check for SOF */
-	if (len >= 64 &&
+	/* Check क्रम SOF */
+	अगर (len >= 64 &&
 	    data[0] == MAGIC_0 && data[1] == MAGIC_1 &&
-	    data[16] == sd->params.format.videoSize &&
-	    data[17] == sd->params.format.subSample &&
-	    data[18] == sd->params.format.yuvOrder &&
+	    data[16] == sd->params.क्रमmat.videoSize &&
+	    data[17] == sd->params.क्रमmat.subSample &&
+	    data[18] == sd->params.क्रमmat.yuvOrder &&
 	    data[24] == sd->params.roi.colStart &&
 	    data[25] == sd->params.roi.colEnd &&
 	    data[26] == sd->params.roi.rowStart &&
-	    data[27] == sd->params.roi.rowEnd) {
+	    data[27] == sd->params.roi.rowEnd) अणु
 		u8 *image;
 
 		atomic_set(&sd->cam_exposure, data[39] * 2);
 		atomic_set(&sd->fps, data[41]);
 
-		/* Check for proper EOF for last frame */
+		/* Check क्रम proper खातापूर्ण क्रम last frame */
 		image = gspca_dev->image;
-		if (image != NULL &&
+		अगर (image != शून्य &&
 		    gspca_dev->image_len > 4 &&
 		    image[gspca_dev->image_len - 4] == 0xff &&
 		    image[gspca_dev->image_len - 3] == 0xff &&
 		    image[gspca_dev->image_len - 2] == 0xff &&
 		    image[gspca_dev->image_len - 1] == 0xff)
 			gspca_frame_add(gspca_dev, LAST_PACKET,
-						NULL, 0);
+						शून्य, 0);
 
 		gspca_frame_add(gspca_dev, FIRST_PACKET, data, len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	gspca_frame_add(gspca_dev, INTER_PACKET, data, len);
-}
+पूर्ण
 
-static void sd_dq_callback(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल व्योम sd_dq_callback(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
 	/* Set the normal compression settings once we have captured a
 	   few uncompressed frames (and AEC has hopefully settled) */
-	if (sd->first_frame) {
+	अगर (sd->first_frame) अणु
 		sd->first_frame--;
-		if (sd->first_frame == 0)
+		अगर (sd->first_frame == 0)
 			command_setcompression(gspca_dev);
-	}
+	पूर्ण
 
-	/* Switch flicker control back on if it got turned off */
+	/* Switch flicker control back on अगर it got turned off */
 	restart_flicker(gspca_dev);
 
 	/* If AEC is enabled, monitor the exposure and
-	   adjust the sensor frame rate if needed */
-	if (sd->params.exposure.expMode == 2)
+	   adjust the sensor frame rate अगर needed */
+	अगर (sd->params.exposure.expMode == 2)
 		monitor_exposure(gspca_dev);
 
 	/* Update our knowledge of the camera state */
-	do_command(gspca_dev, CPIA_COMMAND_GetExposure, 0, 0, 0, 0);
-	do_command(gspca_dev, CPIA_COMMAND_ReadMCPorts, 0, 0, 0, 0);
-}
+	करो_command(gspca_dev, CPIA_COMMAND_GetExposure, 0, 0, 0, 0);
+	करो_command(gspca_dev, CPIA_COMMAND_ReadMCPorts, 0, 0, 0, 0);
+पूर्ण
 
-static int sd_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct gspca_dev *gspca_dev =
-		container_of(ctrl->handler, struct gspca_dev, ctrl_handler);
-	struct sd *sd = (struct sd *)gspca_dev;
+अटल पूर्णांक sd_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा gspca_dev *gspca_dev =
+		container_of(ctrl->handler, काष्ठा gspca_dev, ctrl_handler);
+	काष्ठा sd *sd = (काष्ठा sd *)gspca_dev;
 
 	gspca_dev->usb_err = 0;
 
-	if (!gspca_dev->streaming && ctrl->id != V4L2_CID_POWER_LINE_FREQUENCY)
-		return 0;
+	अगर (!gspca_dev->streaming && ctrl->id != V4L2_CID_POWER_LINE_FREQUENCY)
+		वापस 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
 		sd->params.colourParams.brightness = ctrl->val;
 		sd->params.flickerControl.allowableOverExposure =
 			find_over_exposure(sd->params.colourParams.brightness);
 		gspca_dev->usb_err = command_setcolourparams(gspca_dev);
-		if (!gspca_dev->usb_err)
+		अगर (!gspca_dev->usb_err)
 			gspca_dev->usb_err = command_setflickerctrl(gspca_dev);
-		break;
-	case V4L2_CID_CONTRAST:
+		अवरोध;
+	हाल V4L2_CID_CONTRAST:
 		sd->params.colourParams.contrast = ctrl->val;
 		gspca_dev->usb_err = command_setcolourparams(gspca_dev);
-		break;
-	case V4L2_CID_SATURATION:
+		अवरोध;
+	हाल V4L2_CID_SATURATION:
 		sd->params.colourParams.saturation = ctrl->val;
 		gspca_dev->usb_err = command_setcolourparams(gspca_dev);
-		break;
-	case V4L2_CID_POWER_LINE_FREQUENCY:
-		sd->mainsFreq = ctrl->val == V4L2_CID_POWER_LINE_FREQUENCY_60HZ;
+		अवरोध;
+	हाल V4L2_CID_POWER_LINE_FREQUENCY:
+		sd->मुख्यsFreq = ctrl->val == V4L2_CID_POWER_LINE_FREQUENCY_60HZ;
 		sd->params.flickerControl.coarseJump =
-			flicker_jumps[sd->mainsFreq]
+			flicker_jumps[sd->मुख्यsFreq]
 			[sd->params.sensorFps.baserate]
-			[sd->params.sensorFps.divisor];
+			[sd->params.sensorFps.भागisor];
 
 		gspca_dev->usb_err = set_flicker(gspca_dev,
 			ctrl->val != V4L2_CID_POWER_LINE_FREQUENCY_DISABLED,
 			gspca_dev->streaming);
-		break;
-	case V4L2_CID_ILLUMINATORS_1:
+		अवरोध;
+	हाल V4L2_CID_ILLUMINATORS_1:
 		sd->params.qx3.bottomlight = ctrl->val;
 		gspca_dev->usb_err = command_setlights(gspca_dev);
-		break;
-	case V4L2_CID_ILLUMINATORS_2:
+		अवरोध;
+	हाल V4L2_CID_ILLUMINATORS_2:
 		sd->params.qx3.toplight = ctrl->val;
 		gspca_dev->usb_err = command_setlights(gspca_dev);
-		break;
-	case CPIA1_CID_COMP_TARGET:
+		अवरोध;
+	हाल CPIA1_CID_COMP_TARGET:
 		sd->params.compressionTarget.frTargeting = ctrl->val;
 		gspca_dev->usb_err = command_setcompressiontarget(gspca_dev);
-		break;
-	}
-	return gspca_dev->usb_err;
-}
+		अवरोध;
+	पूर्ण
+	वापस gspca_dev->usb_err;
+पूर्ण
 
-static const struct v4l2_ctrl_ops sd_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops sd_ctrl_ops = अणु
 	.s_ctrl = sd_s_ctrl,
-};
+पूर्ण;
 
-static int sd_init_controls(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *)gspca_dev;
-	struct v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
-	static const char * const comp_target_menu[] = {
+अटल पूर्णांक sd_init_controls(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *)gspca_dev;
+	काष्ठा v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
+	अटल स्थिर अक्षर * स्थिर comp_target_menu[] = अणु
 		"Quality",
 		"Framerate",
-		NULL
-	};
-	static const struct v4l2_ctrl_config comp_target = {
+		शून्य
+	पूर्ण;
+	अटल स्थिर काष्ठा v4l2_ctrl_config comp_target = अणु
 		.ops = &sd_ctrl_ops,
 		.id = CPIA1_CID_COMP_TARGET,
 		.type = V4L2_CTRL_TYPE_MENU,
@@ -1819,7 +1820,7 @@ static int sd_init_controls(struct gspca_dev *gspca_dev)
 		.qmenu = comp_target_menu,
 		.max = 1,
 		.def = COMP_TARGET_DEF,
-	};
+	पूर्ण;
 
 	gspca_dev->vdev.ctrl_handler = hdl;
 	v4l2_ctrl_handler_init(hdl, 7);
@@ -1833,25 +1834,25 @@ static int sd_init_controls(struct gspca_dev *gspca_dev)
 			V4L2_CID_POWER_LINE_FREQUENCY,
 			V4L2_CID_POWER_LINE_FREQUENCY_60HZ, 0,
 			FREQ_DEF);
-	if (sd->params.qx3.qx3_detected) {
+	अगर (sd->params.qx3.qx3_detected) अणु
 		v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 				V4L2_CID_ILLUMINATORS_1, 0, 1, 1,
 				ILLUMINATORS_1_DEF);
 		v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 				V4L2_CID_ILLUMINATORS_2, 0, 1, 1,
 				ILLUMINATORS_2_DEF);
-	}
-	v4l2_ctrl_new_custom(hdl, &comp_target, NULL);
+	पूर्ण
+	v4l2_ctrl_new_custom(hdl, &comp_target, शून्य);
 
-	if (hdl->error) {
+	अगर (hdl->error) अणु
 		pr_err("Could not initialize controls\n");
-		return hdl->error;
-	}
-	return 0;
-}
+		वापस hdl->error;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* sub-driver description */
-static const struct sd_desc sd_desc = {
+अटल स्थिर काष्ठा sd_desc sd_desc = अणु
 	.name = MODULE_NAME,
 	.config = sd_config,
 	.init = sd_init,
@@ -1860,37 +1861,37 @@ static const struct sd_desc sd_desc = {
 	.stopN = sd_stopN,
 	.dq_callback = sd_dq_callback,
 	.pkt_scan = sd_pkt_scan,
-#if IS_ENABLED(CONFIG_INPUT)
+#अगर IS_ENABLED(CONFIG_INPUT)
 	.other_input = 1,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /* -- module initialisation -- */
-static const struct usb_device_id device_table[] = {
-	{USB_DEVICE(0x0553, 0x0002)},
-	{USB_DEVICE(0x0813, 0x0001)},
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
+	अणुUSB_DEVICE(0x0553, 0x0002)पूर्ण,
+	अणुUSB_DEVICE(0x0813, 0x0001)पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, device_table);
 
 /* -- device connect -- */
-static int sd_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	return gspca_dev_probe(intf, id, &sd_desc, sizeof(struct sd),
+अटल पूर्णांक sd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस gspca_dev_probe(पूर्णांकf, id, &sd_desc, माप(काष्ठा sd),
 				THIS_MODULE);
-}
+पूर्ण
 
-static struct usb_driver sd_driver = {
+अटल काष्ठा usb_driver sd_driver = अणु
 	.name = MODULE_NAME,
 	.id_table = device_table,
 	.probe = sd_probe,
 	.disconnect = gspca_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_usb_driver(sd_driver);

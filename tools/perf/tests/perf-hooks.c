@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <signal.h>
-#include <stdlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
 
-#include "tests.h"
-#include "debug.h"
-#include "perf-hooks.h"
+#समावेश "tests.h"
+#समावेश "debug.h"
+#समावेश "perf-hooks.h"
 
-static void sigsegv_handler(int sig __maybe_unused)
-{
+अटल व्योम sigsegv_handler(पूर्णांक sig __maybe_unused)
+अणु
 	pr_debug("SIGSEGV is observed as expected, try to recover.\n");
 	perf_hooks__recover();
-	signal(SIGSEGV, SIG_DFL);
-	raise(SIGSEGV);
-	exit(-1);
-}
+	संकेत(संक_अंश, संक_पूर्व);
+	उठाओ(संक_अंश);
+	निकास(-1);
+पूर्ण
 
 
-static void the_hook(void *_hook_flags)
-{
-	int *hook_flags = _hook_flags;
+अटल व्योम the_hook(व्योम *_hook_flags)
+अणु
+	पूर्णांक *hook_flags = _hook_flags;
 
 	*hook_flags = 1234;
 
 	/* Generate a segfault, test perf_hooks__recover */
-	raise(SIGSEGV);
-}
+	उठाओ(संक_अंश);
+पूर्ण
 
-int test__perf_hooks(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	int hook_flags = 0;
+पूर्णांक test__perf_hooks(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	पूर्णांक hook_flags = 0;
 
-	signal(SIGSEGV, sigsegv_handler);
+	संकेत(संक_अंश, sigsegv_handler);
 	perf_hooks__set_hook("test", the_hook, &hook_flags);
 	perf_hooks__invoke_test();
 
 	/* hook is triggered? */
-	if (hook_flags != 1234) {
+	अगर (hook_flags != 1234) अणु
 		pr_debug("Setting failed: %d (%p)\n", hook_flags, &hook_flags);
-		return TEST_FAIL;
-	}
+		वापस TEST_FAIL;
+	पूर्ण
 
-	/* the buggy hook is removed? */
-	if (perf_hooks__get_hook("test"))
-		return TEST_FAIL;
-	return TEST_OK;
-}
+	/* the buggy hook is हटाओd? */
+	अगर (perf_hooks__get_hook("test"))
+		वापस TEST_FAIL;
+	वापस TEST_OK;
+पूर्ण

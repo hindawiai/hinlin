@@ -1,468 +1,469 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2017-2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#include <linux/module.h>
-#include <linux/buffer_head.h>
-#include <linux/statfs.h>
-#include <linux/parser.h>
-#include <linux/seq_file.h>
-#include <linux/crc32c.h>
-#include <linux/fs_context.h>
-#include <linux/fs_parser.h>
-#include "xattr.h"
+#समावेश <linux/module.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/crc32c.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/fs_parser.h>
+#समावेश "xattr.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/erofs.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/erofs.h>
 
-static struct kmem_cache *erofs_inode_cachep __read_mostly;
+अटल काष्ठा kmem_cache *erofs_inode_cachep __पढ़ो_mostly;
 
-void _erofs_err(struct super_block *sb, const char *function,
-		const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम _erofs_err(काष्ठा super_block *sb, स्थिर अक्षर *function,
+		स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	pr_err("(device %s): %s: %pV", sb->s_id, function, &vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-void _erofs_info(struct super_block *sb, const char *function,
-		 const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम _erofs_info(काष्ठा super_block *sb, स्थिर अक्षर *function,
+		 स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	pr_info("(device %s): %pV", sb->s_id, &vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-static int erofs_superblock_csum_verify(struct super_block *sb, void *sbdata)
-{
-	struct erofs_super_block *dsb;
+अटल पूर्णांक erofs_superblock_csum_verअगरy(काष्ठा super_block *sb, व्योम *sbdata)
+अणु
+	काष्ठा erofs_super_block *dsb;
 	u32 expected_crc, crc;
 
 	dsb = kmemdup(sbdata + EROFS_SUPER_OFFSET,
 		      EROFS_BLKSIZ - EROFS_SUPER_OFFSET, GFP_KERNEL);
-	if (!dsb)
-		return -ENOMEM;
+	अगर (!dsb)
+		वापस -ENOMEM;
 
 	expected_crc = le32_to_cpu(dsb->checksum);
 	dsb->checksum = 0;
-	/* to allow for x86 boot sectors and other oddities. */
+	/* to allow क्रम x86 boot sectors and other oddities. */
 	crc = crc32c(~0, dsb, EROFS_BLKSIZ - EROFS_SUPER_OFFSET);
-	kfree(dsb);
+	kमुक्त(dsb);
 
-	if (crc != expected_crc) {
+	अगर (crc != expected_crc) अणु
 		erofs_err(sb, "invalid checksum 0x%08x, 0x%08x expected",
 			  crc, expected_crc);
-		return -EBADMSG;
-	}
-	return 0;
-}
+		वापस -EBADMSG;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void erofs_inode_init_once(void *ptr)
-{
-	struct erofs_inode *vi = ptr;
+अटल व्योम erofs_inode_init_once(व्योम *ptr)
+अणु
+	काष्ठा erofs_inode *vi = ptr;
 
 	inode_init_once(&vi->vfs_inode);
-}
+पूर्ण
 
-static struct inode *erofs_alloc_inode(struct super_block *sb)
-{
-	struct erofs_inode *vi =
+अटल काष्ठा inode *erofs_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा erofs_inode *vi =
 		kmem_cache_alloc(erofs_inode_cachep, GFP_KERNEL);
 
-	if (!vi)
-		return NULL;
+	अगर (!vi)
+		वापस शून्य;
 
 	/* zero out everything except vfs_inode */
-	memset(vi, 0, offsetof(struct erofs_inode, vfs_inode));
-	return &vi->vfs_inode;
-}
+	स_रखो(vi, 0, दुरत्व(काष्ठा erofs_inode, vfs_inode));
+	वापस &vi->vfs_inode;
+पूर्ण
 
-static void erofs_free_inode(struct inode *inode)
-{
-	struct erofs_inode *vi = EROFS_I(inode);
+अटल व्योम erofs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा erofs_inode *vi = EROFS_I(inode);
 
 	/* be careful of RCU symlink path */
-	if (inode->i_op == &erofs_fast_symlink_iops)
-		kfree(inode->i_link);
-	kfree(vi->xattr_shared_xattrs);
+	अगर (inode->i_op == &erofs_fast_symlink_iops)
+		kमुक्त(inode->i_link);
+	kमुक्त(vi->xattr_shared_xattrs);
 
-	kmem_cache_free(erofs_inode_cachep, vi);
-}
+	kmem_cache_मुक्त(erofs_inode_cachep, vi);
+पूर्ण
 
-static bool check_layout_compatibility(struct super_block *sb,
-				       struct erofs_super_block *dsb)
-{
-	const unsigned int feature = le32_to_cpu(dsb->feature_incompat);
+अटल bool check_layout_compatibility(काष्ठा super_block *sb,
+				       काष्ठा erofs_super_block *dsb)
+अणु
+	स्थिर अचिन्हित पूर्णांक feature = le32_to_cpu(dsb->feature_incompat);
 
 	EROFS_SB(sb)->feature_incompat = feature;
 
-	/* check if current kernel meets all mandatory requirements */
-	if (feature & (~EROFS_ALL_FEATURE_INCOMPAT)) {
+	/* check अगर current kernel meets all mandatory requirements */
+	अगर (feature & (~EROFS_ALL_FEATURE_INCOMPAT)) अणु
 		erofs_err(sb,
 			  "unidentified incompatible feature %x, please upgrade kernel version",
 			   feature & ~EROFS_ALL_FEATURE_INCOMPAT);
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-#ifdef CONFIG_EROFS_FS_ZIP
-/* read variable-sized metadata, offset will be aligned by 4-byte */
-static void *erofs_read_metadata(struct super_block *sb, struct page **pagep,
-				 erofs_off_t *offset, int *lengthp)
-{
-	struct page *page = *pagep;
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+/* पढ़ो variable-sized metadata, offset will be aligned by 4-byte */
+अटल व्योम *erofs_पढ़ो_metadata(काष्ठा super_block *sb, काष्ठा page **pagep,
+				 erofs_off_t *offset, पूर्णांक *lengthp)
+अणु
+	काष्ठा page *page = *pagep;
 	u8 *buffer, *ptr;
-	int len, i, cnt;
+	पूर्णांक len, i, cnt;
 	erofs_blk_t blk;
 
 	*offset = round_up(*offset, 4);
 	blk = erofs_blknr(*offset);
 
-	if (!page || page->index != blk) {
-		if (page) {
+	अगर (!page || page->index != blk) अणु
+		अगर (page) अणु
 			unlock_page(page);
 			put_page(page);
-		}
+		पूर्ण
 		page = erofs_get_meta_page(sb, blk);
-		if (IS_ERR(page))
-			goto err_nullpage;
-	}
+		अगर (IS_ERR(page))
+			जाओ err_nullpage;
+	पूर्ण
 
 	ptr = kmap(page);
 	len = le16_to_cpu(*(__le16 *)&ptr[erofs_blkoff(*offset)]);
-	if (!len)
+	अगर (!len)
 		len = U16_MAX + 1;
-	buffer = kmalloc(len, GFP_KERNEL);
-	if (!buffer) {
+	buffer = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!buffer) अणु
 		buffer = ERR_PTR(-ENOMEM);
-		goto out;
-	}
-	*offset += sizeof(__le16);
+		जाओ out;
+	पूर्ण
+	*offset += माप(__le16);
 	*lengthp = len;
 
-	for (i = 0; i < len; i += cnt) {
-		cnt = min(EROFS_BLKSIZ - (int)erofs_blkoff(*offset), len - i);
+	क्रम (i = 0; i < len; i += cnt) अणु
+		cnt = min(EROFS_BLKSIZ - (पूर्णांक)erofs_blkoff(*offset), len - i);
 		blk = erofs_blknr(*offset);
 
-		if (!page || page->index != blk) {
-			if (page) {
+		अगर (!page || page->index != blk) अणु
+			अगर (page) अणु
 				kunmap(page);
 				unlock_page(page);
 				put_page(page);
-			}
+			पूर्ण
 			page = erofs_get_meta_page(sb, blk);
-			if (IS_ERR(page)) {
-				kfree(buffer);
-				goto err_nullpage;
-			}
+			अगर (IS_ERR(page)) अणु
+				kमुक्त(buffer);
+				जाओ err_nullpage;
+			पूर्ण
 			ptr = kmap(page);
-		}
-		memcpy(buffer + i, ptr + erofs_blkoff(*offset), cnt);
+		पूर्ण
+		स_नकल(buffer + i, ptr + erofs_blkoff(*offset), cnt);
 		*offset += cnt;
-	}
+	पूर्ण
 out:
 	kunmap(page);
 	*pagep = page;
-	return buffer;
+	वापस buffer;
 err_nullpage:
-	*pagep = NULL;
-	return page;
-}
+	*pagep = शून्य;
+	वापस page;
+पूर्ण
 
-static int erofs_load_compr_cfgs(struct super_block *sb,
-				 struct erofs_super_block *dsb)
-{
-	struct erofs_sb_info *sbi;
-	struct page *page;
-	unsigned int algs, alg;
+अटल पूर्णांक erofs_load_compr_cfgs(काष्ठा super_block *sb,
+				 काष्ठा erofs_super_block *dsb)
+अणु
+	काष्ठा erofs_sb_info *sbi;
+	काष्ठा page *page;
+	अचिन्हित पूर्णांक algs, alg;
 	erofs_off_t offset;
-	int size, ret;
+	पूर्णांक size, ret;
 
 	sbi = EROFS_SB(sb);
 	sbi->available_compr_algs = le16_to_cpu(dsb->u1.available_compr_algs);
 
-	if (sbi->available_compr_algs & ~Z_EROFS_ALL_COMPR_ALGS) {
+	अगर (sbi->available_compr_algs & ~Z_EROFS_ALL_COMPR_ALGS) अणु
 		erofs_err(sb, "try to load compressed fs with unsupported algorithms %x",
 			  sbi->available_compr_algs & ~Z_EROFS_ALL_COMPR_ALGS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	offset = EROFS_SUPER_OFFSET + sbi->sb_size;
-	page = NULL;
+	page = शून्य;
 	alg = 0;
 	ret = 0;
 
-	for (algs = sbi->available_compr_algs; algs; algs >>= 1, ++alg) {
-		void *data;
+	क्रम (algs = sbi->available_compr_algs; algs; algs >>= 1, ++alg) अणु
+		व्योम *data;
 
-		if (!(algs & 1))
-			continue;
+		अगर (!(algs & 1))
+			जारी;
 
-		data = erofs_read_metadata(sb, &page, &offset, &size);
-		if (IS_ERR(data)) {
+		data = erofs_पढ़ो_metadata(sb, &page, &offset, &size);
+		अगर (IS_ERR(data)) अणु
 			ret = PTR_ERR(data);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		switch (alg) {
-		case Z_EROFS_COMPRESSION_LZ4:
+		चयन (alg) अणु
+		हाल Z_EROFS_COMPRESSION_LZ4:
 			ret = z_erofs_load_lz4_config(sb, dsb, data, size);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			DBG_BUGON(1);
 			ret = -EFAULT;
-		}
-		kfree(data);
-		if (ret)
-			goto err;
-	}
+		पूर्ण
+		kमुक्त(data);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 err:
-	if (page) {
+	अगर (page) अणु
 		unlock_page(page);
 		put_page(page);
-	}
-	return ret;
-}
-#else
-static int erofs_load_compr_cfgs(struct super_block *sb,
-				 struct erofs_super_block *dsb)
-{
-	if (dsb->u1.available_compr_algs) {
+	पूर्ण
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक erofs_load_compr_cfgs(काष्ठा super_block *sb,
+				 काष्ठा erofs_super_block *dsb)
+अणु
+	अगर (dsb->u1.available_compr_algs) अणु
 		erofs_err(sb, "try to load compressed fs when compression is disabled");
-		return -EINVAL;
-	}
-	return 0;
-}
-#endif
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int erofs_read_superblock(struct super_block *sb)
-{
-	struct erofs_sb_info *sbi;
-	struct page *page;
-	struct erofs_super_block *dsb;
-	unsigned int blkszbits;
-	void *data;
-	int ret;
+अटल पूर्णांक erofs_पढ़ो_superblock(काष्ठा super_block *sb)
+अणु
+	काष्ठा erofs_sb_info *sbi;
+	काष्ठा page *page;
+	काष्ठा erofs_super_block *dsb;
+	अचिन्हित पूर्णांक blkszbits;
+	व्योम *data;
+	पूर्णांक ret;
 
-	page = read_mapping_page(sb->s_bdev->bd_inode->i_mapping, 0, NULL);
-	if (IS_ERR(page)) {
+	page = पढ़ो_mapping_page(sb->s_bdev->bd_inode->i_mapping, 0, शून्य);
+	अगर (IS_ERR(page)) अणु
 		erofs_err(sb, "cannot read erofs superblock");
-		return PTR_ERR(page);
-	}
+		वापस PTR_ERR(page);
+	पूर्ण
 
 	sbi = EROFS_SB(sb);
 
 	data = kmap(page);
-	dsb = (struct erofs_super_block *)(data + EROFS_SUPER_OFFSET);
+	dsb = (काष्ठा erofs_super_block *)(data + EROFS_SUPER_OFFSET);
 
 	ret = -EINVAL;
-	if (le32_to_cpu(dsb->magic) != EROFS_SUPER_MAGIC_V1) {
+	अगर (le32_to_cpu(dsb->magic) != EROFS_SUPER_MAGIC_V1) अणु
 		erofs_err(sb, "cannot find valid erofs superblock");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sbi->feature_compat = le32_to_cpu(dsb->feature_compat);
-	if (erofs_sb_has_sb_chksum(sbi)) {
-		ret = erofs_superblock_csum_verify(sb, data);
-		if (ret)
-			goto out;
-	}
+	अगर (erofs_sb_has_sb_chksum(sbi)) अणु
+		ret = erofs_superblock_csum_verअगरy(sb, data);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	blkszbits = dsb->blkszbits;
 	/* 9(512 bytes) + LOG_SECTORS_PER_BLOCK == LOG_BLOCK_SIZE */
-	if (blkszbits != LOG_BLOCK_SIZE) {
+	अगर (blkszbits != LOG_BLOCK_SIZE) अणु
 		erofs_err(sb, "blkszbits %u isn't supported on this platform",
 			  blkszbits);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!check_layout_compatibility(sb, dsb))
-		goto out;
+	अगर (!check_layout_compatibility(sb, dsb))
+		जाओ out;
 
 	sbi->sb_size = 128 + dsb->sb_extslots * EROFS_SB_EXTSLOT_SIZE;
-	if (sbi->sb_size > EROFS_BLKSIZ) {
+	अगर (sbi->sb_size > EROFS_BLKSIZ) अणु
 		erofs_err(sb, "invalid sb_extslots %u (more than a fs block)",
 			  sbi->sb_size);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	sbi->blocks = le32_to_cpu(dsb->blocks);
 	sbi->meta_blkaddr = le32_to_cpu(dsb->meta_blkaddr);
-#ifdef CONFIG_EROFS_FS_XATTR
+#अगर_घोषित CONFIG_EROFS_FS_XATTR
 	sbi->xattr_blkaddr = le32_to_cpu(dsb->xattr_blkaddr);
-#endif
-	sbi->islotbits = ilog2(sizeof(struct erofs_inode_compact));
+#पूर्ण_अगर
+	sbi->islotbits = ilog2(माप(काष्ठा erofs_inode_compact));
 	sbi->root_nid = le16_to_cpu(dsb->root_nid);
 	sbi->inos = le64_to_cpu(dsb->inos);
 
-	sbi->build_time = le64_to_cpu(dsb->build_time);
-	sbi->build_time_nsec = le32_to_cpu(dsb->build_time_nsec);
+	sbi->build_समय = le64_to_cpu(dsb->build_समय);
+	sbi->build_समय_nsec = le32_to_cpu(dsb->build_समय_nsec);
 
-	memcpy(&sb->s_uuid, dsb->uuid, sizeof(dsb->uuid));
+	स_नकल(&sb->s_uuid, dsb->uuid, माप(dsb->uuid));
 
 	ret = strscpy(sbi->volume_name, dsb->volume_name,
-		      sizeof(dsb->volume_name));
-	if (ret < 0) {	/* -E2BIG */
+		      माप(dsb->volume_name));
+	अगर (ret < 0) अणु	/* -E2BIG */
 		erofs_err(sb, "bad volume name without NIL terminator");
 		ret = -EFSCORRUPTED;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* parse on-disk compression configurations */
-	if (erofs_sb_has_compr_cfgs(sbi))
+	अगर (erofs_sb_has_compr_cfgs(sbi))
 		ret = erofs_load_compr_cfgs(sb, dsb);
-	else
-		ret = z_erofs_load_lz4_config(sb, dsb, NULL, 0);
+	अन्यथा
+		ret = z_erofs_load_lz4_config(sb, dsb, शून्य, 0);
 out:
 	kunmap(page);
 	put_page(page);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* set up default EROFS parameters */
-static void erofs_default_options(struct erofs_fs_context *ctx)
-{
-#ifdef CONFIG_EROFS_FS_ZIP
+/* set up शेष EROFS parameters */
+अटल व्योम erofs_शेष_options(काष्ठा erofs_fs_context *ctx)
+अणु
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
 	ctx->cache_strategy = EROFS_ZIP_CACHE_READAROUND;
 	ctx->max_sync_decompress_pages = 3;
-	ctx->readahead_sync_decompress = false;
-#endif
-#ifdef CONFIG_EROFS_FS_XATTR
+	ctx->पढ़ोahead_sync_decompress = false;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EROFS_FS_XATTR
 	set_opt(ctx, XATTR_USER);
-#endif
-#ifdef CONFIG_EROFS_FS_POSIX_ACL
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EROFS_FS_POSIX_ACL
 	set_opt(ctx, POSIX_ACL);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-enum {
+क्रमागत अणु
 	Opt_user_xattr,
 	Opt_acl,
 	Opt_cache_strategy,
 	Opt_err
-};
+पूर्ण;
 
-static const struct constant_table erofs_param_cache_strategy[] = {
-	{"disabled",	EROFS_ZIP_CACHE_DISABLED},
-	{"readahead",	EROFS_ZIP_CACHE_READAHEAD},
-	{"readaround",	EROFS_ZIP_CACHE_READAROUND},
-	{}
-};
+अटल स्थिर काष्ठा स्थिरant_table erofs_param_cache_strategy[] = अणु
+	अणु"disabled",	EROFS_ZIP_CACHE_DISABLEDपूर्ण,
+	अणु"readahead",	EROFS_ZIP_CACHE_READAHEADपूर्ण,
+	अणु"readaround",	EROFS_ZIP_CACHE_READAROUNDपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct fs_parameter_spec erofs_fs_parameters[] = {
+अटल स्थिर काष्ठा fs_parameter_spec erofs_fs_parameters[] = अणु
 	fsparam_flag_no("user_xattr",	Opt_user_xattr),
 	fsparam_flag_no("acl",		Opt_acl),
-	fsparam_enum("cache_strategy",	Opt_cache_strategy,
+	fsparam_क्रमागत("cache_strategy",	Opt_cache_strategy,
 		     erofs_param_cache_strategy),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static int erofs_fc_parse_param(struct fs_context *fc,
-				struct fs_parameter *param)
-{
-	struct erofs_fs_context *ctx __maybe_unused = fc->fs_private;
-	struct fs_parse_result result;
-	int opt;
+अटल पूर्णांक erofs_fc_parse_param(काष्ठा fs_context *fc,
+				काष्ठा fs_parameter *param)
+अणु
+	काष्ठा erofs_fs_context *ctx __maybe_unused = fc->fs_निजी;
+	काष्ठा fs_parse_result result;
+	पूर्णांक opt;
 
 	opt = fs_parse(fc, erofs_fs_parameters, param, &result);
-	if (opt < 0)
-		return opt;
+	अगर (opt < 0)
+		वापस opt;
 
-	switch (opt) {
-	case Opt_user_xattr:
-#ifdef CONFIG_EROFS_FS_XATTR
-		if (result.boolean)
+	चयन (opt) अणु
+	हाल Opt_user_xattr:
+#अगर_घोषित CONFIG_EROFS_FS_XATTR
+		अगर (result.boolean)
 			set_opt(ctx, XATTR_USER);
-		else
+		अन्यथा
 			clear_opt(ctx, XATTR_USER);
-#else
+#अन्यथा
 		errorfc(fc, "{,no}user_xattr options not supported");
-#endif
-		break;
-	case Opt_acl:
-#ifdef CONFIG_EROFS_FS_POSIX_ACL
-		if (result.boolean)
+#पूर्ण_अगर
+		अवरोध;
+	हाल Opt_acl:
+#अगर_घोषित CONFIG_EROFS_FS_POSIX_ACL
+		अगर (result.boolean)
 			set_opt(ctx, POSIX_ACL);
-		else
+		अन्यथा
 			clear_opt(ctx, POSIX_ACL);
-#else
+#अन्यथा
 		errorfc(fc, "{,no}acl options not supported");
-#endif
-		break;
-	case Opt_cache_strategy:
-#ifdef CONFIG_EROFS_FS_ZIP
-		ctx->cache_strategy = result.uint_32;
-#else
+#पूर्ण_अगर
+		अवरोध;
+	हाल Opt_cache_strategy:
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+		ctx->cache_strategy = result.uपूर्णांक_32;
+#अन्यथा
 		errorfc(fc, "compression not supported, cache_strategy ignored");
-#endif
-		break;
-	default:
-		return -ENOPARAM;
-	}
-	return 0;
-}
+#पूर्ण_अगर
+		अवरोध;
+	शेष:
+		वापस -ENOPARAM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_EROFS_FS_ZIP
-static const struct address_space_operations managed_cache_aops;
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+अटल स्थिर काष्ठा address_space_operations managed_cache_aops;
 
-static int erofs_managed_cache_releasepage(struct page *page, gfp_t gfp_mask)
-{
-	int ret = 1;	/* 0 - busy */
-	struct address_space *const mapping = page->mapping;
+अटल पूर्णांक erofs_managed_cache_releasepage(काष्ठा page *page, gfp_t gfp_mask)
+अणु
+	पूर्णांक ret = 1;	/* 0 - busy */
+	काष्ठा address_space *स्थिर mapping = page->mapping;
 
 	DBG_BUGON(!PageLocked(page));
 	DBG_BUGON(mapping->a_ops != &managed_cache_aops);
 
-	if (PagePrivate(page))
-		ret = erofs_try_to_free_cached_page(mapping, page);
+	अगर (PagePrivate(page))
+		ret = erofs_try_to_मुक्त_cached_page(mapping, page);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void erofs_managed_cache_invalidatepage(struct page *page,
-					       unsigned int offset,
-					       unsigned int length)
-{
-	const unsigned int stop = length + offset;
+अटल व्योम erofs_managed_cache_invalidatepage(काष्ठा page *page,
+					       अचिन्हित पूर्णांक offset,
+					       अचिन्हित पूर्णांक length)
+अणु
+	स्थिर अचिन्हित पूर्णांक stop = length + offset;
 
 	DBG_BUGON(!PageLocked(page));
 
-	/* Check for potential overflow in debug mode */
+	/* Check क्रम potential overflow in debug mode */
 	DBG_BUGON(stop > PAGE_SIZE || stop < length);
 
-	if (offset == 0 && stop == PAGE_SIZE)
-		while (!erofs_managed_cache_releasepage(page, GFP_NOFS))
+	अगर (offset == 0 && stop == PAGE_SIZE)
+		जबतक (!erofs_managed_cache_releasepage(page, GFP_NOFS))
 			cond_resched();
-}
+पूर्ण
 
-static const struct address_space_operations managed_cache_aops = {
+अटल स्थिर काष्ठा address_space_operations managed_cache_aops = अणु
 	.releasepage = erofs_managed_cache_releasepage,
 	.invalidatepage = erofs_managed_cache_invalidatepage,
-};
+पूर्ण;
 
-static int erofs_init_managed_cache(struct super_block *sb)
-{
-	struct erofs_sb_info *const sbi = EROFS_SB(sb);
-	struct inode *const inode = new_inode(sb);
+अटल पूर्णांक erofs_init_managed_cache(काष्ठा super_block *sb)
+अणु
+	काष्ठा erofs_sb_info *स्थिर sbi = EROFS_SB(sb);
+	काष्ठा inode *स्थिर inode = new_inode(sb);
 
-	if (!inode)
-		return -ENOMEM;
+	अगर (!inode)
+		वापस -ENOMEM;
 
 	set_nlink(inode, 1);
 	inode->i_size = OFFSET_MAX;
@@ -471,282 +472,282 @@ static int erofs_init_managed_cache(struct super_block *sb)
 	mapping_set_gfp_mask(inode->i_mapping,
 			     GFP_NOFS | __GFP_HIGHMEM | __GFP_MOVABLE);
 	sbi->managed_cache = inode;
-	return 0;
-}
-#else
-static int erofs_init_managed_cache(struct super_block *sb) { return 0; }
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक erofs_init_managed_cache(काष्ठा super_block *sb) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-static int erofs_fc_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	struct inode *inode;
-	struct erofs_sb_info *sbi;
-	struct erofs_fs_context *ctx = fc->fs_private;
-	int err;
+अटल पूर्णांक erofs_fc_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा erofs_sb_info *sbi;
+	काष्ठा erofs_fs_context *ctx = fc->fs_निजी;
+	पूर्णांक err;
 
 	sb->s_magic = EROFS_SUPER_MAGIC;
 
-	if (!sb_set_blocksize(sb, EROFS_BLKSIZ)) {
+	अगर (!sb_set_blocksize(sb, EROFS_BLKSIZ)) अणु
 		erofs_err(sb, "failed to set erofs blksize");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
-	if (!sbi)
-		return -ENOMEM;
+	sbi = kzalloc(माप(*sbi), GFP_KERNEL);
+	अगर (!sbi)
+		वापस -ENOMEM;
 
 	sb->s_fs_info = sbi;
-	err = erofs_read_superblock(sb);
-	if (err)
-		return err;
+	err = erofs_पढ़ो_superblock(sb);
+	अगर (err)
+		वापस err;
 
 	sb->s_flags |= SB_RDONLY | SB_NOATIME;
-	sb->s_maxbytes = MAX_LFS_FILESIZE;
-	sb->s_time_gran = 1;
+	sb->s_maxbytes = MAX_LFS_खाताSIZE;
+	sb->s_समय_gran = 1;
 
 	sb->s_op = &erofs_sops;
 	sb->s_xattr = erofs_xattr_handlers;
 
-	if (test_opt(ctx, POSIX_ACL))
+	अगर (test_opt(ctx, POSIX_ACL))
 		sb->s_flags |= SB_POSIXACL;
-	else
+	अन्यथा
 		sb->s_flags &= ~SB_POSIXACL;
 
 	sbi->ctx = *ctx;
 
-#ifdef CONFIG_EROFS_FS_ZIP
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
 	xa_init(&sbi->managed_pslots);
-#endif
+#पूर्ण_अगर
 
 	/* get the root inode */
 	inode = erofs_iget(sb, ROOT_NID(sbi), true);
-	if (IS_ERR(inode))
-		return PTR_ERR(inode);
+	अगर (IS_ERR(inode))
+		वापस PTR_ERR(inode);
 
-	if (!S_ISDIR(inode->i_mode)) {
+	अगर (!S_ISसूची(inode->i_mode)) अणु
 		erofs_err(sb, "rootino(nid %llu) is not a directory(i_mode %o)",
 			  ROOT_NID(sbi), inode->i_mode);
 		iput(inode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sb->s_root = d_make_root(inode);
-	if (!sb->s_root)
-		return -ENOMEM;
+	अगर (!sb->s_root)
+		वापस -ENOMEM;
 
-	erofs_shrinker_register(sb);
-	/* sb->s_umount is already locked, SB_ACTIVE and SB_BORN are not set */
+	erofs_shrinker_रेजिस्टर(sb);
+	/* sb->s_umount is alपढ़ोy locked, SB_ACTIVE and SB_BORN are not set */
 	err = erofs_init_managed_cache(sb);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	erofs_info(sb, "mounted with root inode @ nid %llu.", ROOT_NID(sbi));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erofs_fc_get_tree(struct fs_context *fc)
-{
-	return get_tree_bdev(fc, erofs_fc_fill_super);
-}
+अटल पूर्णांक erofs_fc_get_tree(काष्ठा fs_context *fc)
+अणु
+	वापस get_tree_bdev(fc, erofs_fc_fill_super);
+पूर्ण
 
-static int erofs_fc_reconfigure(struct fs_context *fc)
-{
-	struct super_block *sb = fc->root->d_sb;
-	struct erofs_sb_info *sbi = EROFS_SB(sb);
-	struct erofs_fs_context *ctx = fc->fs_private;
+अटल पूर्णांक erofs_fc_reconfigure(काष्ठा fs_context *fc)
+अणु
+	काष्ठा super_block *sb = fc->root->d_sb;
+	काष्ठा erofs_sb_info *sbi = EROFS_SB(sb);
+	काष्ठा erofs_fs_context *ctx = fc->fs_निजी;
 
-	DBG_BUGON(!sb_rdonly(sb));
+	DBG_BUGON(!sb_rकरोnly(sb));
 
-	if (test_opt(ctx, POSIX_ACL))
+	अगर (test_opt(ctx, POSIX_ACL))
 		fc->sb_flags |= SB_POSIXACL;
-	else
+	अन्यथा
 		fc->sb_flags &= ~SB_POSIXACL;
 
 	sbi->ctx = *ctx;
 
 	fc->sb_flags |= SB_RDONLY;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void erofs_fc_free(struct fs_context *fc)
-{
-	kfree(fc->fs_private);
-}
+अटल व्योम erofs_fc_मुक्त(काष्ठा fs_context *fc)
+अणु
+	kमुक्त(fc->fs_निजी);
+पूर्ण
 
-static const struct fs_context_operations erofs_context_ops = {
+अटल स्थिर काष्ठा fs_context_operations erofs_context_ops = अणु
 	.parse_param	= erofs_fc_parse_param,
 	.get_tree       = erofs_fc_get_tree,
 	.reconfigure    = erofs_fc_reconfigure,
-	.free		= erofs_fc_free,
-};
+	.मुक्त		= erofs_fc_मुक्त,
+पूर्ण;
 
-static int erofs_init_fs_context(struct fs_context *fc)
-{
-	fc->fs_private = kzalloc(sizeof(struct erofs_fs_context), GFP_KERNEL);
-	if (!fc->fs_private)
-		return -ENOMEM;
+अटल पूर्णांक erofs_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	fc->fs_निजी = kzalloc(माप(काष्ठा erofs_fs_context), GFP_KERNEL);
+	अगर (!fc->fs_निजी)
+		वापस -ENOMEM;
 
-	/* set default mount options */
-	erofs_default_options(fc->fs_private);
+	/* set शेष mount options */
+	erofs_शेष_options(fc->fs_निजी);
 
 	fc->ops = &erofs_context_ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * could be triggered after deactivate_locked_super()
  * is called, thus including umount and failed to initialize.
  */
-static void erofs_kill_sb(struct super_block *sb)
-{
-	struct erofs_sb_info *sbi;
+अटल व्योम erofs_समाप्त_sb(काष्ठा super_block *sb)
+अणु
+	काष्ठा erofs_sb_info *sbi;
 
 	WARN_ON(sb->s_magic != EROFS_SUPER_MAGIC);
 
-	kill_block_super(sb);
+	समाप्त_block_super(sb);
 
 	sbi = EROFS_SB(sb);
-	if (!sbi)
-		return;
-	kfree(sbi);
-	sb->s_fs_info = NULL;
-}
+	अगर (!sbi)
+		वापस;
+	kमुक्त(sbi);
+	sb->s_fs_info = शून्य;
+पूर्ण
 
-/* called when ->s_root is non-NULL */
-static void erofs_put_super(struct super_block *sb)
-{
-	struct erofs_sb_info *const sbi = EROFS_SB(sb);
+/* called when ->s_root is non-शून्य */
+अटल व्योम erofs_put_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा erofs_sb_info *स्थिर sbi = EROFS_SB(sb);
 
 	DBG_BUGON(!sbi);
 
-	erofs_shrinker_unregister(sb);
-#ifdef CONFIG_EROFS_FS_ZIP
+	erofs_shrinker_unरेजिस्टर(sb);
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
 	iput(sbi->managed_cache);
-	sbi->managed_cache = NULL;
-#endif
-}
+	sbi->managed_cache = शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-static struct file_system_type erofs_fs_type = {
+अटल काष्ठा file_प्रणाली_type erofs_fs_type = अणु
 	.owner          = THIS_MODULE,
 	.name           = "erofs",
 	.init_fs_context = erofs_init_fs_context,
-	.kill_sb        = erofs_kill_sb,
+	.समाप्त_sb        = erofs_समाप्त_sb,
 	.fs_flags       = FS_REQUIRES_DEV,
-};
+पूर्ण;
 MODULE_ALIAS_FS("erofs");
 
-static int __init erofs_module_init(void)
-{
-	int err;
+अटल पूर्णांक __init erofs_module_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	erofs_check_ondisk_layout_definitions();
 
 	erofs_inode_cachep = kmem_cache_create("erofs_inode",
-					       sizeof(struct erofs_inode), 0,
+					       माप(काष्ठा erofs_inode), 0,
 					       SLAB_RECLAIM_ACCOUNT,
 					       erofs_inode_init_once);
-	if (!erofs_inode_cachep) {
+	अगर (!erofs_inode_cachep) अणु
 		err = -ENOMEM;
-		goto icache_err;
-	}
+		जाओ icache_err;
+	पूर्ण
 
 	err = erofs_init_shrinker();
-	if (err)
-		goto shrinker_err;
+	अगर (err)
+		जाओ shrinker_err;
 
 	erofs_pcpubuf_init();
-	err = z_erofs_init_zip_subsystem();
-	if (err)
-		goto zip_err;
+	err = z_erofs_init_zip_subप्रणाली();
+	अगर (err)
+		जाओ zip_err;
 
-	err = register_filesystem(&erofs_fs_type);
-	if (err)
-		goto fs_err;
+	err = रेजिस्टर_fileप्रणाली(&erofs_fs_type);
+	अगर (err)
+		जाओ fs_err;
 
-	return 0;
+	वापस 0;
 
 fs_err:
-	z_erofs_exit_zip_subsystem();
+	z_erofs_निकास_zip_subप्रणाली();
 zip_err:
-	erofs_exit_shrinker();
+	erofs_निकास_shrinker();
 shrinker_err:
 	kmem_cache_destroy(erofs_inode_cachep);
 icache_err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit erofs_module_exit(void)
-{
-	unregister_filesystem(&erofs_fs_type);
-	z_erofs_exit_zip_subsystem();
-	erofs_exit_shrinker();
+अटल व्योम __निकास erofs_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_fileप्रणाली(&erofs_fs_type);
+	z_erofs_निकास_zip_subप्रणाली();
+	erofs_निकास_shrinker();
 
-	/* Ensure all RCU free inodes are safe before cache is destroyed. */
+	/* Ensure all RCU मुक्त inodes are safe beक्रमe cache is destroyed. */
 	rcu_barrier();
 	kmem_cache_destroy(erofs_inode_cachep);
-	erofs_pcpubuf_exit();
-}
+	erofs_pcpubuf_निकास();
+पूर्ण
 
-/* get filesystem statistics */
-static int erofs_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct super_block *sb = dentry->d_sb;
-	struct erofs_sb_info *sbi = EROFS_SB(sb);
+/* get fileप्रणाली statistics */
+अटल पूर्णांक erofs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा super_block *sb = dentry->d_sb;
+	काष्ठा erofs_sb_info *sbi = EROFS_SB(sb);
 	u64 id = huge_encode_dev(sb->s_bdev->bd_dev);
 
 	buf->f_type = sb->s_magic;
 	buf->f_bsize = EROFS_BLKSIZ;
 	buf->f_blocks = sbi->blocks;
-	buf->f_bfree = buf->f_bavail = 0;
+	buf->f_bमुक्त = buf->f_bavail = 0;
 
-	buf->f_files = ULLONG_MAX;
-	buf->f_ffree = ULLONG_MAX - sbi->inos;
+	buf->f_files = ULदीर्घ_उच्च;
+	buf->f_fमुक्त = ULदीर्घ_उच्च - sbi->inos;
 
 	buf->f_namelen = EROFS_NAME_LEN;
 
 	buf->f_fsid    = u64_to_fsid(id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erofs_show_options(struct seq_file *seq, struct dentry *root)
-{
-	struct erofs_sb_info *sbi __maybe_unused = EROFS_SB(root->d_sb);
-	struct erofs_fs_context *ctx __maybe_unused = &sbi->ctx;
+अटल पूर्णांक erofs_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
+अणु
+	काष्ठा erofs_sb_info *sbi __maybe_unused = EROFS_SB(root->d_sb);
+	काष्ठा erofs_fs_context *ctx __maybe_unused = &sbi->ctx;
 
-#ifdef CONFIG_EROFS_FS_XATTR
-	if (test_opt(ctx, XATTR_USER))
-		seq_puts(seq, ",user_xattr");
-	else
-		seq_puts(seq, ",nouser_xattr");
-#endif
-#ifdef CONFIG_EROFS_FS_POSIX_ACL
-	if (test_opt(ctx, POSIX_ACL))
-		seq_puts(seq, ",acl");
-	else
-		seq_puts(seq, ",noacl");
-#endif
-#ifdef CONFIG_EROFS_FS_ZIP
-	if (ctx->cache_strategy == EROFS_ZIP_CACHE_DISABLED)
-		seq_puts(seq, ",cache_strategy=disabled");
-	else if (ctx->cache_strategy == EROFS_ZIP_CACHE_READAHEAD)
-		seq_puts(seq, ",cache_strategy=readahead");
-	else if (ctx->cache_strategy == EROFS_ZIP_CACHE_READAROUND)
-		seq_puts(seq, ",cache_strategy=readaround");
-#endif
-	return 0;
-}
+#अगर_घोषित CONFIG_EROFS_FS_XATTR
+	अगर (test_opt(ctx, XATTR_USER))
+		seq_माला_दो(seq, ",user_xattr");
+	अन्यथा
+		seq_माला_दो(seq, ",nouser_xattr");
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EROFS_FS_POSIX_ACL
+	अगर (test_opt(ctx, POSIX_ACL))
+		seq_माला_दो(seq, ",acl");
+	अन्यथा
+		seq_माला_दो(seq, ",noacl");
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EROFS_FS_ZIP
+	अगर (ctx->cache_strategy == EROFS_ZIP_CACHE_DISABLED)
+		seq_माला_दो(seq, ",cache_strategy=disabled");
+	अन्यथा अगर (ctx->cache_strategy == EROFS_ZIP_CACHE_READAHEAD)
+		seq_माला_दो(seq, ",cache_strategy=readahead");
+	अन्यथा अगर (ctx->cache_strategy == EROFS_ZIP_CACHE_READAROUND)
+		seq_माला_दो(seq, ",cache_strategy=readaround");
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-const struct super_operations erofs_sops = {
+स्थिर काष्ठा super_operations erofs_sops = अणु
 	.put_super = erofs_put_super,
 	.alloc_inode = erofs_alloc_inode,
-	.free_inode = erofs_free_inode,
+	.मुक्त_inode = erofs_मुक्त_inode,
 	.statfs = erofs_statfs,
 	.show_options = erofs_show_options,
-};
+पूर्ण;
 
 module_init(erofs_module_init);
-module_exit(erofs_module_exit);
+module_निकास(erofs_module_निकास);
 
 MODULE_DESCRIPTION("Enhanced ROM File System");
 MODULE_AUTHOR("Gao Xiang, Chao Yu, Miao Xie, CONSUMER BG, HUAWEI Inc.");

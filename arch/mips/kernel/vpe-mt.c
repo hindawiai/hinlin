@@ -1,49 +1,50 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2004, 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
 
-#include <asm/mipsregs.h>
-#include <asm/mipsmtregs.h>
-#include <asm/mips_mt.h>
-#include <asm/vpe.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/mipsmtregs.h>
+#समावेश <यंत्र/mips_mt.h>
+#समावेश <यंत्र/vpe.h>
 
-static int major;
+अटल पूर्णांक major;
 
 /* The number of TCs and VPEs physically available on the core */
-static int hw_tcs, hw_vpes;
+अटल पूर्णांक hw_tcs, hw_vpes;
 
 /* We are prepared so configure and start the VPE... */
-int vpe_run(struct vpe *v)
-{
-	unsigned long flags, val, dmt_flag;
-	struct vpe_notifications *notifier;
-	unsigned int vpeflags;
-	struct tc *t;
+पूर्णांक vpe_run(काष्ठा vpe *v)
+अणु
+	अचिन्हित दीर्घ flags, val, dmt_flag;
+	काष्ठा vpe_notअगरications *notअगरier;
+	अचिन्हित पूर्णांक vpeflags;
+	काष्ठा tc *t;
 
 	/* check we are the Master VPE */
 	local_irq_save(flags);
-	val = read_c0_vpeconf0();
-	if (!(val & VPECONF0_MVP)) {
+	val = पढ़ो_c0_vpeconf0();
+	अगर (!(val & VPECONF0_MVP)) अणु
 		pr_warn("VPE loader: only Master VPE's are able to config MT\n");
 		local_irq_restore(flags);
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	dmt_flag = dmt();
 	vpeflags = dvpe();
 
-	if (list_empty(&v->tc)) {
+	अगर (list_empty(&v->tc)) अणु
 		evpe(vpeflags);
 		emt(dmt_flag);
 		local_irq_restore(flags);
@@ -51,10 +52,10 @@ int vpe_run(struct vpe *v)
 		pr_warn("VPE loader: No TC's associated with VPE %d\n",
 			v->minor);
 
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
-	t = list_first_entry(&v->tc, struct tc, tc);
+	t = list_first_entry(&v->tc, काष्ठा tc, tc);
 
 	/* Put MVPE's into 'configuration state' */
 	set_c0_mvpcontrol(MVPCONTROL_VPC);
@@ -62,8 +63,8 @@ int vpe_run(struct vpe *v)
 	settc(t->index);
 
 	/* should check it is halted, and not activated */
-	if ((read_tc_c0_tcstatus() & TCSTATUS_A) ||
-	   !(read_tc_c0_tchalt() & TCHALT_H)) {
+	अगर ((पढ़ो_tc_c0_tcstatus() & TCSTATUS_A) ||
+	   !(पढ़ो_tc_c0_tchalt() & TCHALT_H)) अणु
 		evpe(vpeflags);
 		emt(dmt_flag);
 		local_irq_restore(flags);
@@ -71,25 +72,25 @@ int vpe_run(struct vpe *v)
 		pr_warn("VPE loader: TC %d is already active!\n",
 			t->index);
 
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
 	/*
 	 * Write the address we want it to start running from in the TCPC
-	 * register.
+	 * रेजिस्टर.
 	 */
-	write_tc_c0_tcrestart((unsigned long)v->__start);
-	write_tc_c0_tccontext((unsigned long)0);
+	ग_लिखो_tc_c0_tcrestart((अचिन्हित दीर्घ)v->__start);
+	ग_लिखो_tc_c0_tccontext((अचिन्हित दीर्घ)0);
 
 	/*
-	 * Mark the TC as activated, not interrupt exempt and not dynamically
+	 * Mark the TC as activated, not पूर्णांकerrupt exempt and not dynamically
 	 * allocatable
 	 */
-	val = read_tc_c0_tcstatus();
+	val = पढ़ो_tc_c0_tcstatus();
 	val = (val & ~(TCSTATUS_DA | TCSTATUS_IXMT)) | TCSTATUS_A;
-	write_tc_c0_tcstatus(val);
+	ग_लिखो_tc_c0_tcstatus(val);
 
-	write_tc_c0_tchalt(read_tc_c0_tchalt() & ~TCHALT_H);
+	ग_लिखो_tc_c0_tchalt(पढ़ो_tc_c0_tchalt() & ~TCHALT_H);
 
 	/*
 	 * The sde-kit passes 'memsize' to __start in $a3, so set something
@@ -102,53 +103,53 @@ int vpe_run(struct vpe *v)
 	/* set up VPE1 */
 	/*
 	 * bind the TC to VPE 1 as late as possible so we only have the final
-	 * VPE registers to set up, and so an EJTAG probe can trigger on it
+	 * VPE रेजिस्टरs to set up, and so an EJTAG probe can trigger on it
 	 */
-	write_tc_c0_tcbind((read_tc_c0_tcbind() & ~TCBIND_CURVPE) | 1);
+	ग_लिखो_tc_c0_tcbind((पढ़ो_tc_c0_tcbind() & ~TCBIND_CURVPE) | 1);
 
-	write_vpe_c0_vpeconf0(read_vpe_c0_vpeconf0() & ~(VPECONF0_VPA));
+	ग_लिखो_vpe_c0_vpeconf0(पढ़ो_vpe_c0_vpeconf0() & ~(VPECONF0_VPA));
 
 	back_to_back_c0_hazard();
 
-	/* Set up the XTC bit in vpeconf0 to point at our tc */
-	write_vpe_c0_vpeconf0((read_vpe_c0_vpeconf0() & ~(VPECONF0_XTC))
+	/* Set up the XTC bit in vpeconf0 to poपूर्णांक at our tc */
+	ग_लिखो_vpe_c0_vpeconf0((पढ़ो_vpe_c0_vpeconf0() & ~(VPECONF0_XTC))
 			      | (t->index << VPECONF0_XTC_SHIFT));
 
 	back_to_back_c0_hazard();
 
 	/* enable this VPE */
-	write_vpe_c0_vpeconf0(read_vpe_c0_vpeconf0() | VPECONF0_VPA);
+	ग_लिखो_vpe_c0_vpeconf0(पढ़ो_vpe_c0_vpeconf0() | VPECONF0_VPA);
 
 	/* clear out any left overs from a previous program */
-	write_vpe_c0_status(0);
-	write_vpe_c0_cause(0);
+	ग_लिखो_vpe_c0_status(0);
+	ग_लिखो_vpe_c0_cause(0);
 
-	/* take system out of configuration state */
+	/* take प्रणाली out of configuration state */
 	clear_c0_mvpcontrol(MVPCONTROL_VPC);
 
 	/*
 	 * SMVP kernels manage VPE enable independently, but uniprocessor
-	 * kernels need to turn it on, even if that wasn't the pre-dvpe() state.
+	 * kernels need to turn it on, even अगर that wasn't the pre-dvpe() state.
 	 */
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	evpe(vpeflags);
-#else
+#अन्यथा
 	evpe(EVPE_ENABLE);
-#endif
+#पूर्ण_अगर
 	emt(dmt_flag);
 	local_irq_restore(flags);
 
-	list_for_each_entry(notifier, &v->notify, list)
-		notifier->start(VPE_MODULE_MINOR);
+	list_क्रम_each_entry(notअगरier, &v->notअगरy, list)
+		notअगरier->start(VPE_MODULE_MINOR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cleanup_tc(struct tc *tc)
-{
-	unsigned long flags;
-	unsigned int mtflags, vpflags;
-	int tmp;
+व्योम cleanup_tc(काष्ठा tc *tc)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mtflags, vpflags;
+	पूर्णांक पंचांगp;
 
 	local_irq_save(flags);
 	mtflags = dmt();
@@ -157,82 +158,82 @@ void cleanup_tc(struct tc *tc)
 	set_c0_mvpcontrol(MVPCONTROL_VPC);
 
 	settc(tc->index);
-	tmp = read_tc_c0_tcstatus();
+	पंचांगp = पढ़ो_tc_c0_tcstatus();
 
 	/* mark not allocated and not dynamically allocatable */
-	tmp &= ~(TCSTATUS_A | TCSTATUS_DA);
-	tmp |= TCSTATUS_IXMT;	/* interrupt exempt */
-	write_tc_c0_tcstatus(tmp);
+	पंचांगp &= ~(TCSTATUS_A | TCSTATUS_DA);
+	पंचांगp |= TCSTATUS_IXMT;	/* पूर्णांकerrupt exempt */
+	ग_लिखो_tc_c0_tcstatus(पंचांगp);
 
-	write_tc_c0_tchalt(TCHALT_H);
+	ग_लिखो_tc_c0_tchalt(TCHALT_H);
 	mips_ihb();
 
 	clear_c0_mvpcontrol(MVPCONTROL_VPC);
 	evpe(vpflags);
 	emt(mtflags);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-/* module wrapper entry points */
+/* module wrapper entry poपूर्णांकs */
 /* give me a vpe */
-void *vpe_alloc(void)
-{
-	int i;
-	struct vpe *v;
+व्योम *vpe_alloc(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा vpe *v;
 
 	/* find a vpe */
-	for (i = 1; i < MAX_VPES; i++) {
+	क्रम (i = 1; i < MAX_VPES; i++) अणु
 		v = get_vpe(i);
-		if (v != NULL) {
+		अगर (v != शून्य) अणु
 			v->state = VPE_STATE_INUSE;
-			return v;
-		}
-	}
-	return NULL;
-}
+			वापस v;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vpe_alloc);
 
 /* start running from here */
-int vpe_start(void *vpe, unsigned long start)
-{
-	struct vpe *v = vpe;
+पूर्णांक vpe_start(व्योम *vpe, अचिन्हित दीर्घ start)
+अणु
+	काष्ठा vpe *v = vpe;
 
 	v->__start = start;
-	return vpe_run(v);
-}
+	वापस vpe_run(v);
+पूर्ण
 EXPORT_SYMBOL(vpe_start);
 
-/* halt it for now */
-int vpe_stop(void *vpe)
-{
-	struct vpe *v = vpe;
-	struct tc *t;
-	unsigned int evpe_flags;
+/* halt it क्रम now */
+पूर्णांक vpe_stop(व्योम *vpe)
+अणु
+	काष्ठा vpe *v = vpe;
+	काष्ठा tc *t;
+	अचिन्हित पूर्णांक evpe_flags;
 
 	evpe_flags = dvpe();
 
-	t = list_entry(v->tc.next, struct tc, tc);
-	if (t != NULL) {
+	t = list_entry(v->tc.next, काष्ठा tc, tc);
+	अगर (t != शून्य) अणु
 		settc(t->index);
-		write_vpe_c0_vpeconf0(read_vpe_c0_vpeconf0() & ~VPECONF0_VPA);
-	}
+		ग_लिखो_vpe_c0_vpeconf0(पढ़ो_vpe_c0_vpeconf0() & ~VPECONF0_VPA);
+	पूर्ण
 
 	evpe(evpe_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vpe_stop);
 
-/* I've done with it thank you */
-int vpe_free(void *vpe)
-{
-	struct vpe *v = vpe;
-	struct tc *t;
-	unsigned int evpe_flags;
+/* I've करोne with it thank you */
+पूर्णांक vpe_मुक्त(व्योम *vpe)
+अणु
+	काष्ठा vpe *v = vpe;
+	काष्ठा tc *t;
+	अचिन्हित पूर्णांक evpe_flags;
 
-	t = list_entry(v->tc.next, struct tc, tc);
-	if (t == NULL)
-		return -ENOEXEC;
+	t = list_entry(v->tc.next, काष्ठा tc, tc);
+	अगर (t == शून्य)
+		वापस -ENOEXEC;
 
 	evpe_flags = dvpe();
 
@@ -240,140 +241,140 @@ int vpe_free(void *vpe)
 	set_c0_mvpcontrol(MVPCONTROL_VPC);
 
 	settc(t->index);
-	write_vpe_c0_vpeconf0(read_vpe_c0_vpeconf0() & ~VPECONF0_VPA);
+	ग_लिखो_vpe_c0_vpeconf0(पढ़ो_vpe_c0_vpeconf0() & ~VPECONF0_VPA);
 
 	/* halt the TC */
-	write_tc_c0_tchalt(TCHALT_H);
+	ग_लिखो_tc_c0_tchalt(TCHALT_H);
 	mips_ihb();
 
 	/* mark the TC unallocated */
-	write_tc_c0_tcstatus(read_tc_c0_tcstatus() & ~TCSTATUS_A);
+	ग_लिखो_tc_c0_tcstatus(पढ़ो_tc_c0_tcstatus() & ~TCSTATUS_A);
 
 	v->state = VPE_STATE_UNUSED;
 
 	clear_c0_mvpcontrol(MVPCONTROL_VPC);
 	evpe(evpe_flags);
 
-	return 0;
-}
-EXPORT_SYMBOL(vpe_free);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(vpe_मुक्त);
 
-static ssize_t store_kill(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t len)
-{
-	struct vpe *vpe = get_vpe(aprp_cpu_index());
-	struct vpe_notifications *notifier;
+अटल sमाप_प्रकार store_समाप्त(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा vpe *vpe = get_vpe(aprp_cpu_index());
+	काष्ठा vpe_notअगरications *notअगरier;
 
-	list_for_each_entry(notifier, &vpe->notify, list)
-		notifier->stop(aprp_cpu_index());
+	list_क्रम_each_entry(notअगरier, &vpe->notअगरy, list)
+		notअगरier->stop(aprp_cpu_index());
 
 	release_progmem(vpe->load_addr);
 	cleanup_tc(get_tc(aprp_cpu_index()));
 	vpe_stop(vpe);
-	vpe_free(vpe);
+	vpe_मुक्त(vpe);
 
-	return len;
-}
-static DEVICE_ATTR(kill, S_IWUSR, NULL, store_kill);
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR(समाप्त, S_IWUSR, शून्य, store_समाप्त);
 
-static ssize_t ntcs_show(struct device *cd, struct device_attribute *attr,
-			 char *buf)
-{
-	struct vpe *vpe = get_vpe(aprp_cpu_index());
+अटल sमाप_प्रकार ntcs_show(काष्ठा device *cd, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा vpe *vpe = get_vpe(aprp_cpu_index());
 
-	return sprintf(buf, "%d\n", vpe->ntcs);
-}
+	वापस प्र_लिखो(buf, "%d\n", vpe->ntcs);
+पूर्ण
 
-static ssize_t ntcs_store(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t len)
-{
-	struct vpe *vpe = get_vpe(aprp_cpu_index());
-	unsigned long new;
-	int ret;
+अटल sमाप_प्रकार ntcs_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा vpe *vpe = get_vpe(aprp_cpu_index());
+	अचिन्हित दीर्घ new;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 0, &new);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &new);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (new == 0 || new > (hw_tcs - aprp_cpu_index()))
-		return -EINVAL;
+	अगर (new == 0 || new > (hw_tcs - aprp_cpu_index()))
+		वापस -EINVAL;
 
 	vpe->ntcs = new;
 
-	return len;
-}
-static DEVICE_ATTR_RW(ntcs);
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR_RW(ntcs);
 
-static struct attribute *vpe_attrs[] = {
-	&dev_attr_kill.attr,
+अटल काष्ठा attribute *vpe_attrs[] = अणु
+	&dev_attr_समाप्त.attr,
 	&dev_attr_ntcs.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(vpe);
 
-static void vpe_device_release(struct device *cd)
-{
-	kfree(cd);
-}
+अटल व्योम vpe_device_release(काष्ठा device *cd)
+अणु
+	kमुक्त(cd);
+पूर्ण
 
-static struct class vpe_class = {
+अटल काष्ठा class vpe_class = अणु
 	.name = "vpe",
 	.owner = THIS_MODULE,
 	.dev_release = vpe_device_release,
 	.dev_groups = vpe_groups,
-};
+पूर्ण;
 
-static struct device vpe_device;
+अटल काष्ठा device vpe_device;
 
-int __init vpe_module_init(void)
-{
-	unsigned int mtflags, vpflags;
-	unsigned long flags, val;
-	struct vpe *v = NULL;
-	struct tc *t;
-	int tc, err;
+पूर्णांक __init vpe_module_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक mtflags, vpflags;
+	अचिन्हित दीर्घ flags, val;
+	काष्ठा vpe *v = शून्य;
+	काष्ठा tc *t;
+	पूर्णांक tc, err;
 
-	if (!cpu_has_mipsmt) {
+	अगर (!cpu_has_mipsmt) अणु
 		pr_warn("VPE loader: not a MIPS MT capable processor\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (vpelimit == 0) {
+	अगर (vpelimit == 0) अणु
 		pr_warn("No VPEs reserved for AP/SP, not initialize VPE loader\n"
 			"Pass maxvpes=<n> argument as kernel argument\n");
 
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (aprp_cpu_index() == 0) {
+	अगर (aprp_cpu_index() == 0) अणु
 		pr_warn("No TCs reserved for AP/SP, not initialize VPE loader\n"
 			"Pass maxtcs=<n> argument as kernel argument\n");
 
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	major = register_chrdev(0, VPE_MODULE_NAME, &vpe_fops);
-	if (major < 0) {
+	major = रेजिस्टर_chrdev(0, VPE_MODULE_NAME, &vpe_fops);
+	अगर (major < 0) अणु
 		pr_warn("VPE loader: unable to register character device\n");
-		return major;
-	}
+		वापस major;
+	पूर्ण
 
-	err = class_register(&vpe_class);
-	if (err) {
+	err = class_रेजिस्टर(&vpe_class);
+	अगर (err) अणु
 		pr_err("vpe_class registration failed\n");
-		goto out_chrdev;
-	}
+		जाओ out_chrdev;
+	पूर्ण
 
 	device_initialize(&vpe_device);
 	vpe_device.class	= &vpe_class;
-	vpe_device.parent	= NULL;
+	vpe_device.parent	= शून्य;
 	dev_set_name(&vpe_device, "vpe1");
 	vpe_device.devt = MKDEV(major, VPE_MODULE_MINOR);
 	err = device_add(&vpe_device);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Adding vpe_device failed\n");
-		goto out_class;
-	}
+		जाओ out_class;
+	पूर्ण
 
 	local_irq_save(flags);
 	mtflags = dmt();
@@ -382,13 +383,13 @@ int __init vpe_module_init(void)
 	/* Put MVPE's into 'configuration state' */
 	set_c0_mvpcontrol(MVPCONTROL_VPC);
 
-	val = read_c0_mvpconf0();
+	val = पढ़ो_c0_mvpconf0();
 	hw_tcs = (val & MVPCONF0_PTC) + 1;
 	hw_vpes = ((val & MVPCONF0_PVPE) >> MVPCONF0_PVPE_SHIFT) + 1;
 
-	for (tc = aprp_cpu_index(); tc < hw_tcs; tc++) {
+	क्रम (tc = aprp_cpu_index(); tc < hw_tcs; tc++) अणु
 		/*
-		 * Must re-enable multithreading temporarily or in case we
+		 * Must re-enable multithपढ़ोing temporarily or in हाल we
 		 * reschedule send IPIs or similar we might hang.
 		 */
 		clear_c0_mvpcontrol(MVPCONTROL_VPC);
@@ -396,10 +397,10 @@ int __init vpe_module_init(void)
 		emt(mtflags);
 		local_irq_restore(flags);
 		t = alloc_tc(tc);
-		if (!t) {
+		अगर (!t) अणु
 			err = -ENOMEM;
-			goto out_dev;
-		}
+			जाओ out_dev;
+		पूर्ण
 
 		local_irq_save(flags);
 		mtflags = dmt();
@@ -407,14 +408,14 @@ int __init vpe_module_init(void)
 		set_c0_mvpcontrol(MVPCONTROL_VPC);
 
 		/* VPE's */
-		if (tc < hw_tcs) {
+		अगर (tc < hw_tcs) अणु
 			settc(tc);
 
 			v = alloc_vpe(tc);
-			if (v == NULL) {
+			अगर (v == शून्य) अणु
 				pr_warn("VPE: unable to allocate VPE\n");
-				goto out_reenable;
-			}
+				जाओ out_reenable;
+			पूर्ण
 
 			v->ntcs = hw_tcs - aprp_cpu_index();
 
@@ -422,66 +423,66 @@ int __init vpe_module_init(void)
 			list_add(&t->tc, &v->tc);
 
 			/* deactivate all but vpe0 */
-			if (tc >= aprp_cpu_index()) {
-				unsigned long tmp = read_vpe_c0_vpeconf0();
+			अगर (tc >= aprp_cpu_index()) अणु
+				अचिन्हित दीर्घ पंचांगp = पढ़ो_vpe_c0_vpeconf0();
 
-				tmp &= ~VPECONF0_VPA;
+				पंचांगp &= ~VPECONF0_VPA;
 
 				/* master VPE */
-				tmp |= VPECONF0_MVP;
-				write_vpe_c0_vpeconf0(tmp);
-			}
+				पंचांगp |= VPECONF0_MVP;
+				ग_लिखो_vpe_c0_vpeconf0(पंचांगp);
+			पूर्ण
 
-			/* disable multi-threading with TC's */
-			write_vpe_c0_vpecontrol(read_vpe_c0_vpecontrol() &
+			/* disable multi-thपढ़ोing with TC's */
+			ग_लिखो_vpe_c0_vpecontrol(पढ़ो_vpe_c0_vpecontrol() &
 						~VPECONTROL_TE);
 
-			if (tc >= vpelimit) {
+			अगर (tc >= vpelimit) अणु
 				/*
 				 * Set config to be the same as vpe0,
 				 * particularly kseg0 coherency alg
 				 */
-				write_vpe_c0_config(read_c0_config());
-			}
-		}
+				ग_लिखो_vpe_c0_config(पढ़ो_c0_config());
+			पूर्ण
+		पूर्ण
 
 		/* TC's */
 		t->pvpe = v;	/* set the parent vpe */
 
-		if (tc >= aprp_cpu_index()) {
-			unsigned long tmp;
+		अगर (tc >= aprp_cpu_index()) अणु
+			अचिन्हित दीर्घ पंचांगp;
 
 			settc(tc);
 
 			/*
-			 * A TC that is bound to any other VPE gets bound to
+			 * A TC that is bound to any other VPE माला_लो bound to
 			 * VPE0, ideally I'd like to make it homeless but it
-			 * doesn't appear to let me bind a TC to a non-existent
+			 * करोesn't appear to let me bind a TC to a non-existent
 			 * VPE. Which is perfectly reasonable.
 			 *
 			 * The (un)bound state is visible to an EJTAG probe so
-			 * may notify GDB...
+			 * may notअगरy GDB...
 			 */
-			tmp = read_tc_c0_tcbind();
-			if (tmp & TCBIND_CURVPE) {
+			पंचांगp = पढ़ो_tc_c0_tcbind();
+			अगर (पंचांगp & TCBIND_CURVPE) अणु
 				/* tc is bound >vpe0 */
-				write_tc_c0_tcbind(tmp & ~TCBIND_CURVPE);
+				ग_लिखो_tc_c0_tcbind(पंचांगp & ~TCBIND_CURVPE);
 
 				t->pvpe = get_vpe(0);	/* set the parent vpe */
-			}
+			पूर्ण
 
 			/* halt the TC */
-			write_tc_c0_tchalt(TCHALT_H);
+			ग_लिखो_tc_c0_tchalt(TCHALT_H);
 			mips_ihb();
 
-			tmp = read_tc_c0_tcstatus();
+			पंचांगp = पढ़ो_tc_c0_tcstatus();
 
 			/* mark not activated and not dynamically allocatable */
-			tmp &= ~(TCSTATUS_A | TCSTATUS_DA);
-			tmp |= TCSTATUS_IXMT;	/* interrupt exempt */
-			write_tc_c0_tcstatus(tmp);
-		}
-	}
+			पंचांगp &= ~(TCSTATUS_A | TCSTATUS_DA);
+			पंचांगp |= TCSTATUS_IXMT;	/* पूर्णांकerrupt exempt */
+			ग_लिखो_tc_c0_tcstatus(पंचांगp);
+		पूर्ण
+	पूर्ण
 
 out_reenable:
 	/* release config state */
@@ -491,31 +492,31 @@ out_reenable:
 	emt(mtflags);
 	local_irq_restore(flags);
 
-	return 0;
+	वापस 0;
 
 out_dev:
 	device_del(&vpe_device);
 
 out_class:
-	class_unregister(&vpe_class);
+	class_unरेजिस्टर(&vpe_class);
 
 out_chrdev:
-	unregister_chrdev(major, VPE_MODULE_NAME);
+	unरेजिस्टर_chrdev(major, VPE_MODULE_NAME);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void __exit vpe_module_exit(void)
-{
-	struct vpe *v, *n;
+व्योम __निकास vpe_module_निकास(व्योम)
+अणु
+	काष्ठा vpe *v, *n;
 
 	device_del(&vpe_device);
-	class_unregister(&vpe_class);
-	unregister_chrdev(major, VPE_MODULE_NAME);
+	class_unरेजिस्टर(&vpe_class);
+	unरेजिस्टर_chrdev(major, VPE_MODULE_NAME);
 
 	/* No locking needed here */
-	list_for_each_entry_safe(v, n, &vpecontrol.vpe_list, list) {
-		if (v->state != VPE_STATE_UNUSED)
+	list_क्रम_each_entry_safe(v, n, &vpecontrol.vpe_list, list) अणु
+		अगर (v->state != VPE_STATE_UNUSED)
 			release_vpe(v);
-	}
-}
+	पूर्ण
+पूर्ण

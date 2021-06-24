@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -7,33 +8,33 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * Check for obligatory CPU features and abort if the features are not
+ * Check क्रम obligatory CPU features and पात अगर the features are not
  * present.  This code should be compilable as 16-, 32- or 64-bit
- * code, so be very careful with types and inline assembly.
+ * code, so be very careful with types and अंतरभूत assembly.
  *
  * This code should not contain any messages; that requires an
  * additional wrapper.
  *
- * As written, this code is not safe for inclusion into the kernel
+ * As written, this code is not safe क्रम inclusion पूर्णांकo the kernel
  * proper (after FPU initialization, in particular).
  */
 
-#ifdef _SETUP
+#अगर_घोषित _SETUP
 # include "boot.h"
-#endif
-#include <linux/types.h>
-#include <asm/intel-family.h>
-#include <asm/processor-flags.h>
-#include <asm/required-features.h>
-#include <asm/msr-index.h>
-#include "string.h"
+#पूर्ण_अगर
+#समावेश <linux/types.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/processor-flags.h>
+#समावेश <यंत्र/required-features.h>
+#समावेश <यंत्र/msr-index.h>
+#समावेश "string.h"
 
-static u32 err_flags[NCAPINTS];
+अटल u32 err_flags[NCAPINTS];
 
-static const int req_level = CONFIG_X86_MINIMUM_CPU_FAMILY;
+अटल स्थिर पूर्णांक req_level = CONFIG_X86_MINIMUM_CPU_FAMILY;
 
-static const u32 req_flags[NCAPINTS] =
-{
+अटल स्थिर u32 req_flags[NCAPINTS] =
+अणु
 	REQUIRED_MASK0,
 	REQUIRED_MASK1,
 	0, /* REQUIRED_MASK2 not implemented in this file */
@@ -51,177 +52,177 @@ static const u32 req_flags[NCAPINTS] =
 	0, /* REQUIRED_MASK14 not implemented in this file */
 	0, /* REQUIRED_MASK15 not implemented in this file */
 	REQUIRED_MASK16,
-};
+पूर्ण;
 
-#define A32(a, b, c, d) (((d) << 24)+((c) << 16)+((b) << 8)+(a))
+#घोषणा A32(a, b, c, d) (((d) << 24)+((c) << 16)+((b) << 8)+(a))
 
-static int is_amd(void)
-{
-	return cpu_vendor[0] == A32('A', 'u', 't', 'h') &&
-	       cpu_vendor[1] == A32('e', 'n', 't', 'i') &&
-	       cpu_vendor[2] == A32('c', 'A', 'M', 'D');
-}
+अटल पूर्णांक is_amd(व्योम)
+अणु
+	वापस cpu_venकरोr[0] == A32('A', 'u', 't', 'h') &&
+	       cpu_venकरोr[1] == A32('e', 'n', 't', 'i') &&
+	       cpu_venकरोr[2] == A32('c', 'A', 'M', 'D');
+पूर्ण
 
-static int is_centaur(void)
-{
-	return cpu_vendor[0] == A32('C', 'e', 'n', 't') &&
-	       cpu_vendor[1] == A32('a', 'u', 'r', 'H') &&
-	       cpu_vendor[2] == A32('a', 'u', 'l', 's');
-}
+अटल पूर्णांक is_centaur(व्योम)
+अणु
+	वापस cpu_venकरोr[0] == A32('C', 'e', 'n', 't') &&
+	       cpu_venकरोr[1] == A32('a', 'u', 'r', 'H') &&
+	       cpu_venकरोr[2] == A32('a', 'u', 'l', 's');
+पूर्ण
 
-static int is_transmeta(void)
-{
-	return cpu_vendor[0] == A32('G', 'e', 'n', 'u') &&
-	       cpu_vendor[1] == A32('i', 'n', 'e', 'T') &&
-	       cpu_vendor[2] == A32('M', 'x', '8', '6');
-}
+अटल पूर्णांक is_transmeta(व्योम)
+अणु
+	वापस cpu_venकरोr[0] == A32('G', 'e', 'n', 'u') &&
+	       cpu_venकरोr[1] == A32('i', 'n', 'e', 'T') &&
+	       cpu_venकरोr[2] == A32('M', 'x', '8', '6');
+पूर्ण
 
-static int is_intel(void)
-{
-	return cpu_vendor[0] == A32('G', 'e', 'n', 'u') &&
-	       cpu_vendor[1] == A32('i', 'n', 'e', 'I') &&
-	       cpu_vendor[2] == A32('n', 't', 'e', 'l');
-}
+अटल पूर्णांक is_पूर्णांकel(व्योम)
+अणु
+	वापस cpu_venकरोr[0] == A32('G', 'e', 'n', 'u') &&
+	       cpu_venकरोr[1] == A32('i', 'n', 'e', 'I') &&
+	       cpu_venकरोr[2] == A32('n', 't', 'e', 'l');
+पूर्ण
 
-/* Returns a bitmask of which words we have error bits in */
-static int check_cpuflags(void)
-{
+/* Returns a biपंचांगask of which words we have error bits in */
+अटल पूर्णांक check_cpuflags(व्योम)
+अणु
 	u32 err;
-	int i;
+	पूर्णांक i;
 
 	err = 0;
-	for (i = 0; i < NCAPINTS; i++) {
+	क्रम (i = 0; i < NCAPINTS; i++) अणु
 		err_flags[i] = req_flags[i] & ~cpu.flags[i];
-		if (err_flags[i])
+		अगर (err_flags[i])
 			err |= 1 << i;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Returns -1 on error.
  *
  * *cpu_level is set to the current CPU level; *req_level to the required
- * level.  x86-64 is considered level 64 for this purpose.
+ * level.  x86-64 is considered level 64 क्रम this purpose.
  *
- * *err_flags_ptr is set to the flags error array if there are flags missing.
+ * *err_flags_ptr is set to the flags error array अगर there are flags missing.
  */
-int check_cpu(int *cpu_level_ptr, int *req_level_ptr, u32 **err_flags_ptr)
-{
-	int err;
+पूर्णांक check_cpu(पूर्णांक *cpu_level_ptr, पूर्णांक *req_level_ptr, u32 **err_flags_ptr)
+अणु
+	पूर्णांक err;
 
-	memset(&cpu.flags, 0, sizeof(cpu.flags));
+	स_रखो(&cpu.flags, 0, माप(cpu.flags));
 	cpu.level = 3;
 
-	if (has_eflag(X86_EFLAGS_AC))
+	अगर (has_eflag(X86_EFLAGS_AC))
 		cpu.level = 4;
 
 	get_cpuflags();
 	err = check_cpuflags();
 
-	if (test_bit(X86_FEATURE_LM, cpu.flags))
+	अगर (test_bit(X86_FEATURE_LM, cpu.flags))
 		cpu.level = 64;
 
-	if (err == 0x01 &&
+	अगर (err == 0x01 &&
 	    !(err_flags[0] &
 	      ~((1 << X86_FEATURE_XMM)|(1 << X86_FEATURE_XMM2))) &&
-	    is_amd()) {
+	    is_amd()) अणु
 		/* If this is an AMD and we're only missing SSE+SSE2, try to
 		   turn them on */
 
 		u32 ecx = MSR_K7_HWCR;
 		u32 eax, edx;
 
-		asm("rdmsr" : "=a" (eax), "=d" (edx) : "c" (ecx));
+		यंत्र("rdmsr" : "=a" (eax), "=d" (edx) : "c" (ecx));
 		eax &= ~(1 << 15);
-		asm("wrmsr" : : "a" (eax), "d" (edx), "c" (ecx));
+		यंत्र("wrmsr" : : "a" (eax), "d" (edx), "c" (ecx));
 
 		get_cpuflags();	/* Make sure it really did something */
 		err = check_cpuflags();
-	} else if (err == 0x01 &&
+	पूर्ण अन्यथा अगर (err == 0x01 &&
 		   !(err_flags[0] & ~(1 << X86_FEATURE_CX8)) &&
-		   is_centaur() && cpu.model >= 6) {
+		   is_centaur() && cpu.model >= 6) अणु
 		/* If this is a VIA C3, we might have to enable CX8
 		   explicitly */
 
 		u32 ecx = MSR_VIA_FCR;
 		u32 eax, edx;
 
-		asm("rdmsr" : "=a" (eax), "=d" (edx) : "c" (ecx));
+		यंत्र("rdmsr" : "=a" (eax), "=d" (edx) : "c" (ecx));
 		eax |= (1<<1)|(1<<7);
-		asm("wrmsr" : : "a" (eax), "d" (edx), "c" (ecx));
+		यंत्र("wrmsr" : : "a" (eax), "d" (edx), "c" (ecx));
 
 		set_bit(X86_FEATURE_CX8, cpu.flags);
 		err = check_cpuflags();
-	} else if (err == 0x01 && is_transmeta()) {
+	पूर्ण अन्यथा अगर (err == 0x01 && is_transmeta()) अणु
 		/* Transmeta might have masked feature bits in word 0 */
 
 		u32 ecx = 0x80860004;
 		u32 eax, edx;
 		u32 level = 1;
 
-		asm("rdmsr" : "=a" (eax), "=d" (edx) : "c" (ecx));
-		asm("wrmsr" : : "a" (~0), "d" (edx), "c" (ecx));
-		asm("cpuid"
+		यंत्र("rdmsr" : "=a" (eax), "=d" (edx) : "c" (ecx));
+		यंत्र("wrmsr" : : "a" (~0), "d" (edx), "c" (ecx));
+		यंत्र("cpuid"
 		    : "+a" (level), "=d" (cpu.flags[0])
 		    : : "ecx", "ebx");
-		asm("wrmsr" : : "a" (eax), "d" (edx), "c" (ecx));
+		यंत्र("wrmsr" : : "a" (eax), "d" (edx), "c" (ecx));
 
 		err = check_cpuflags();
-	} else if (err == 0x01 &&
+	पूर्ण अन्यथा अगर (err == 0x01 &&
 		   !(err_flags[0] & ~(1 << X86_FEATURE_PAE)) &&
-		   is_intel() && cpu.level == 6 &&
-		   (cpu.model == 9 || cpu.model == 13)) {
-		/* PAE is disabled on this Pentium M but can be forced */
-		if (cmdline_find_option_bool("forcepae")) {
-			puts("WARNING: Forcing PAE in CPU flags\n");
+		   is_पूर्णांकel() && cpu.level == 6 &&
+		   (cpu.model == 9 || cpu.model == 13)) अणु
+		/* PAE is disabled on this Pentium M but can be क्रमced */
+		अगर (cmdline_find_option_bool("forcepae")) अणु
+			माला_दो("WARNING: Forcing PAE in CPU flags\n");
 			set_bit(X86_FEATURE_PAE, cpu.flags);
 			err = check_cpuflags();
-		}
-		else {
-			puts("WARNING: PAE disabled. Use parameter 'forcepae' to enable at your own risk!\n");
-		}
-	}
-	if (!err)
+		पूर्ण
+		अन्यथा अणु
+			माला_दो("WARNING: PAE disabled. Use parameter 'forcepae' to enable at your own risk!\n");
+		पूर्ण
+	पूर्ण
+	अगर (!err)
 		err = check_knl_erratum();
 
-	if (err_flags_ptr)
-		*err_flags_ptr = err ? err_flags : NULL;
-	if (cpu_level_ptr)
+	अगर (err_flags_ptr)
+		*err_flags_ptr = err ? err_flags : शून्य;
+	अगर (cpu_level_ptr)
 		*cpu_level_ptr = cpu.level;
-	if (req_level_ptr)
+	अगर (req_level_ptr)
 		*req_level_ptr = req_level;
 
-	return (cpu.level < req_level || err) ? -1 : 0;
-}
+	वापस (cpu.level < req_level || err) ? -1 : 0;
+पूर्ण
 
-int check_knl_erratum(void)
-{
+पूर्णांक check_knl_erratum(व्योम)
+अणु
 	/*
-	 * First check for the affected model/family:
+	 * First check क्रम the affected model/family:
 	 */
-	if (!is_intel() ||
+	अगर (!is_पूर्णांकel() ||
 	    cpu.family != 6 ||
 	    cpu.model != INTEL_FAM6_XEON_PHI_KNL)
-		return 0;
+		वापस 0;
 
 	/*
 	 * This erratum affects the Accessed/Dirty bits, and can
 	 * cause stray bits to be set in !Present PTEs.  We have
 	 * enough bits in our 64-bit PTEs (which we have on real
-	 * 64-bit mode or PAE) to avoid using these troublesome
-	 * bits.  But, we do not have enough space in our 32-bit
+	 * 64-bit mode or PAE) to aव्योम using these troublesome
+	 * bits.  But, we करो not have enough space in our 32-bit
 	 * PTEs.  So, refuse to run on 32-bit non-PAE kernels.
 	 */
-	if (IS_ENABLED(CONFIG_X86_64) || IS_ENABLED(CONFIG_X86_PAE))
-		return 0;
+	अगर (IS_ENABLED(CONFIG_X86_64) || IS_ENABLED(CONFIG_X86_PAE))
+		वापस 0;
 
-	puts("This 32-bit kernel can not run on this Xeon Phi x200\n"
+	माला_दो("This 32-bit kernel can not run on this Xeon Phi x200\n"
 	     "processor due to a processor erratum.  Use a 64-bit\n"
 	     "kernel, or enable PAE in this 32-bit kernel.\n\n");
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 

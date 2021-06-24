@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * LP5521/LP5523/LP55231/LP5562 Common Driver
  *
@@ -9,700 +10,700 @@
  * Derived from leds-lp5521.c, leds-lp5523.c
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/firmware.h>
-#include <linux/i2c.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/platform_data/leds-lp55xx.h>
-#include <linux/slab.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/leds-lp55xx.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gpio/consumer.h>
 
-#include "leds-lp55xx-common.h"
+#समावेश "leds-lp55xx-common.h"
 
-/* External clock rate */
-#define LP55XX_CLK_32K			32768
+/* External घड़ी rate */
+#घोषणा LP55XX_CLK_32K			32768
 
-static struct lp55xx_led *cdev_to_lp55xx_led(struct led_classdev *cdev)
-{
-	return container_of(cdev, struct lp55xx_led, cdev);
-}
+अटल काष्ठा lp55xx_led *cdev_to_lp55xx_led(काष्ठा led_classdev *cdev)
+अणु
+	वापस container_of(cdev, काष्ठा lp55xx_led, cdev);
+पूर्ण
 
-static struct lp55xx_led *dev_to_lp55xx_led(struct device *dev)
-{
-	return cdev_to_lp55xx_led(dev_get_drvdata(dev));
-}
+अटल काष्ठा lp55xx_led *dev_to_lp55xx_led(काष्ठा device *dev)
+अणु
+	वापस cdev_to_lp55xx_led(dev_get_drvdata(dev));
+पूर्ण
 
-static struct lp55xx_led *mcled_cdev_to_led(struct led_classdev_mc *mc_cdev)
-{
-	return container_of(mc_cdev, struct lp55xx_led, mc_cdev);
-}
+अटल काष्ठा lp55xx_led *mcled_cdev_to_led(काष्ठा led_classdev_mc *mc_cdev)
+अणु
+	वापस container_of(mc_cdev, काष्ठा lp55xx_led, mc_cdev);
+पूर्ण
 
-static void lp55xx_reset_device(struct lp55xx_chip *chip)
-{
-	struct lp55xx_device_config *cfg = chip->cfg;
+अटल व्योम lp55xx_reset_device(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा lp55xx_device_config *cfg = chip->cfg;
 	u8 addr = cfg->reset.addr;
 	u8 val  = cfg->reset.val;
 
 	/* no error checking here because no ACK from the device after reset */
-	lp55xx_write(chip, addr, val);
-}
+	lp55xx_ग_लिखो(chip, addr, val);
+पूर्ण
 
-static int lp55xx_detect_device(struct lp55xx_chip *chip)
-{
-	struct lp55xx_device_config *cfg = chip->cfg;
+अटल पूर्णांक lp55xx_detect_device(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा lp55xx_device_config *cfg = chip->cfg;
 	u8 addr = cfg->enable.addr;
 	u8 val  = cfg->enable.val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lp55xx_write(chip, addr, val);
-	if (ret)
-		return ret;
+	ret = lp55xx_ग_लिखो(chip, addr, val);
+	अगर (ret)
+		वापस ret;
 
 	usleep_range(1000, 2000);
 
-	ret = lp55xx_read(chip, addr, &val);
-	if (ret)
-		return ret;
+	ret = lp55xx_पढ़ो(chip, addr, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val != cfg->enable.val)
-		return -ENODEV;
+	अगर (val != cfg->enable.val)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp55xx_post_init_device(struct lp55xx_chip *chip)
-{
-	struct lp55xx_device_config *cfg = chip->cfg;
+अटल पूर्णांक lp55xx_post_init_device(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा lp55xx_device_config *cfg = chip->cfg;
 
-	if (!cfg->post_init_device)
-		return 0;
+	अगर (!cfg->post_init_device)
+		वापस 0;
 
-	return cfg->post_init_device(chip);
-}
+	वापस cfg->post_init_device(chip);
+पूर्ण
 
-static ssize_t led_current_show(struct device *dev,
-			    struct device_attribute *attr,
-			    char *buf)
-{
-	struct lp55xx_led *led = dev_to_lp55xx_led(dev);
+अटल sमाप_प्रकार led_current_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा lp55xx_led *led = dev_to_lp55xx_led(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", led->led_current);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", led->led_current);
+पूर्ण
 
-static ssize_t led_current_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t len)
-{
-	struct lp55xx_led *led = dev_to_lp55xx_led(dev);
-	struct lp55xx_chip *chip = led->chip;
-	unsigned long curr;
+अटल sमाप_प्रकार led_current_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा lp55xx_led *led = dev_to_lp55xx_led(dev);
+	काष्ठा lp55xx_chip *chip = led->chip;
+	अचिन्हित दीर्घ curr;
 
-	if (kstrtoul(buf, 0, &curr))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &curr))
+		वापस -EINVAL;
 
-	if (curr > led->max_current)
-		return -EINVAL;
+	अगर (curr > led->max_current)
+		वापस -EINVAL;
 
-	if (!chip->cfg->set_led_current)
-		return len;
+	अगर (!chip->cfg->set_led_current)
+		वापस len;
 
 	mutex_lock(&chip->lock);
 	chip->cfg->set_led_current(led, (u8)curr);
 	mutex_unlock(&chip->lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t max_current_show(struct device *dev,
-			    struct device_attribute *attr,
-			    char *buf)
-{
-	struct lp55xx_led *led = dev_to_lp55xx_led(dev);
+अटल sमाप_प्रकार max_current_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा lp55xx_led *led = dev_to_lp55xx_led(dev);
 
-	return scnprintf(buf, PAGE_SIZE, "%d\n", led->max_current);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", led->max_current);
+पूर्ण
 
-static DEVICE_ATTR_RW(led_current);
-static DEVICE_ATTR_RO(max_current);
+अटल DEVICE_ATTR_RW(led_current);
+अटल DEVICE_ATTR_RO(max_current);
 
-static struct attribute *lp55xx_led_attrs[] = {
+अटल काष्ठा attribute *lp55xx_led_attrs[] = अणु
 	&dev_attr_led_current.attr,
 	&dev_attr_max_current.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(lp55xx_led);
 
-static int lp55xx_set_mc_brightness(struct led_classdev *cdev,
-				    enum led_brightness brightness)
-{
-	struct led_classdev_mc *mc_dev = lcdev_to_mccdev(cdev);
-	struct lp55xx_led *led = mcled_cdev_to_led(mc_dev);
-	struct lp55xx_device_config *cfg = led->chip->cfg;
+अटल पूर्णांक lp55xx_set_mc_brightness(काष्ठा led_classdev *cdev,
+				    क्रमागत led_brightness brightness)
+अणु
+	काष्ठा led_classdev_mc *mc_dev = lcdev_to_mccdev(cdev);
+	काष्ठा lp55xx_led *led = mcled_cdev_to_led(mc_dev);
+	काष्ठा lp55xx_device_config *cfg = led->chip->cfg;
 
 	led_mc_calc_color_components(&led->mc_cdev, brightness);
-	return cfg->multicolor_brightness_fn(led);
+	वापस cfg->multicolor_brightness_fn(led);
 
-}
+पूर्ण
 
-static int lp55xx_set_brightness(struct led_classdev *cdev,
-			     enum led_brightness brightness)
-{
-	struct lp55xx_led *led = cdev_to_lp55xx_led(cdev);
-	struct lp55xx_device_config *cfg = led->chip->cfg;
+अटल पूर्णांक lp55xx_set_brightness(काष्ठा led_classdev *cdev,
+			     क्रमागत led_brightness brightness)
+अणु
+	काष्ठा lp55xx_led *led = cdev_to_lp55xx_led(cdev);
+	काष्ठा lp55xx_device_config *cfg = led->chip->cfg;
 
 	led->brightness = (u8)brightness;
-	return cfg->brightness_fn(led);
-}
+	वापस cfg->brightness_fn(led);
+पूर्ण
 
-static int lp55xx_init_led(struct lp55xx_led *led,
-			struct lp55xx_chip *chip, int chan)
-{
-	struct lp55xx_platform_data *pdata = chip->pdata;
-	struct lp55xx_device_config *cfg = chip->cfg;
-	struct device *dev = &chip->cl->dev;
-	int max_channel = cfg->max_channel;
-	struct mc_subled *mc_led_info;
-	struct led_classdev *led_cdev;
-	char name[32];
-	int i, j = 0;
-	int ret;
+अटल पूर्णांक lp55xx_init_led(काष्ठा lp55xx_led *led,
+			काष्ठा lp55xx_chip *chip, पूर्णांक chan)
+अणु
+	काष्ठा lp55xx_platक्रमm_data *pdata = chip->pdata;
+	काष्ठा lp55xx_device_config *cfg = chip->cfg;
+	काष्ठा device *dev = &chip->cl->dev;
+	पूर्णांक max_channel = cfg->max_channel;
+	काष्ठा mc_subled *mc_led_info;
+	काष्ठा led_classdev *led_cdev;
+	अक्षर name[32];
+	पूर्णांक i, j = 0;
+	पूर्णांक ret;
 
-	if (chan >= max_channel) {
+	अगर (chan >= max_channel) अणु
 		dev_err(dev, "invalid channel: %d / %d\n", chan, max_channel);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pdata->led_config[chan].led_current == 0)
-		return 0;
+	अगर (pdata->led_config[chan].led_current == 0)
+		वापस 0;
 
-	if (pdata->led_config[chan].name) {
+	अगर (pdata->led_config[chan].name) अणु
 		led->cdev.name = pdata->led_config[chan].name;
-	} else {
-		snprintf(name, sizeof(name), "%s:channel%d",
+	पूर्ण अन्यथा अणु
+		snम_लिखो(name, माप(name), "%s:channel%d",
 			pdata->label ? : chip->cl->name, chan);
 		led->cdev.name = name;
-	}
+	पूर्ण
 
-	if (pdata->led_config[chan].num_colors > 1) {
-		mc_led_info = devm_kcalloc(dev,
+	अगर (pdata->led_config[chan].num_colors > 1) अणु
+		mc_led_info = devm_kसुस्मृति(dev,
 					   pdata->led_config[chan].num_colors,
-					   sizeof(*mc_led_info), GFP_KERNEL);
-		if (!mc_led_info)
-			return -ENOMEM;
+					   माप(*mc_led_info), GFP_KERNEL);
+		अगर (!mc_led_info)
+			वापस -ENOMEM;
 
 		led_cdev = &led->mc_cdev.led_cdev;
 		led_cdev->name = led->cdev.name;
 		led_cdev->brightness_set_blocking = lp55xx_set_mc_brightness;
 		led->mc_cdev.num_colors = pdata->led_config[chan].num_colors;
-		for (i = 0; i < led->mc_cdev.num_colors; i++) {
+		क्रम (i = 0; i < led->mc_cdev.num_colors; i++) अणु
 			mc_led_info[i].color_index =
 				pdata->led_config[chan].color_id[i];
 			mc_led_info[i].channel =
 					pdata->led_config[chan].output_num[i];
 			j++;
-		}
+		पूर्ण
 
 		led->mc_cdev.subled_info = mc_led_info;
-	} else {
+	पूर्ण अन्यथा अणु
 		led->cdev.brightness_set_blocking = lp55xx_set_brightness;
-	}
+	पूर्ण
 
 	led->cdev.groups = lp55xx_led_groups;
-	led->cdev.default_trigger = pdata->led_config[chan].default_trigger;
+	led->cdev.शेष_trigger = pdata->led_config[chan].शेष_trigger;
 	led->led_current = pdata->led_config[chan].led_current;
 	led->max_current = pdata->led_config[chan].max_current;
 	led->chan_nr = pdata->led_config[chan].chan_nr;
 
-	if (led->chan_nr >= max_channel) {
+	अगर (led->chan_nr >= max_channel) अणु
 		dev_err(dev, "Use channel numbers between 0 and %d\n",
 			max_channel - 1);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pdata->led_config[chan].num_colors > 1)
-		ret = devm_led_classdev_multicolor_register(dev, &led->mc_cdev);
-	else
-		ret = devm_led_classdev_register(dev, &led->cdev);
+	अगर (pdata->led_config[chan].num_colors > 1)
+		ret = devm_led_classdev_multicolor_रेजिस्टर(dev, &led->mc_cdev);
+	अन्यथा
+		ret = devm_led_classdev_रेजिस्टर(dev, &led->cdev);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "led register err: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp55xx_firmware_loaded(const struct firmware *fw, void *context)
-{
-	struct lp55xx_chip *chip = context;
-	struct device *dev = &chip->cl->dev;
-	enum lp55xx_engine_index idx = chip->engine_idx;
+अटल व्योम lp55xx_firmware_loaded(स्थिर काष्ठा firmware *fw, व्योम *context)
+अणु
+	काष्ठा lp55xx_chip *chip = context;
+	काष्ठा device *dev = &chip->cl->dev;
+	क्रमागत lp55xx_engine_index idx = chip->engine_idx;
 
-	if (!fw) {
+	अगर (!fw) अणु
 		dev_err(dev, "firmware request failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* handling firmware data is chip dependent */
 	mutex_lock(&chip->lock);
 
 	chip->engines[idx - 1].mode = LP55XX_ENGINE_LOAD;
 	chip->fw = fw;
-	if (chip->cfg->firmware_cb)
+	अगर (chip->cfg->firmware_cb)
 		chip->cfg->firmware_cb(chip);
 
 	mutex_unlock(&chip->lock);
 
-	/* firmware should be released for other channel use */
+	/* firmware should be released क्रम other channel use */
 	release_firmware(chip->fw);
-	chip->fw = NULL;
-}
+	chip->fw = शून्य;
+पूर्ण
 
-static int lp55xx_request_firmware(struct lp55xx_chip *chip)
-{
-	const char *name = chip->cl->name;
-	struct device *dev = &chip->cl->dev;
+अटल पूर्णांक lp55xx_request_firmware(काष्ठा lp55xx_chip *chip)
+अणु
+	स्थिर अक्षर *name = chip->cl->name;
+	काष्ठा device *dev = &chip->cl->dev;
 
-	return request_firmware_nowait(THIS_MODULE, false, name, dev,
+	वापस request_firmware_noरुको(THIS_MODULE, false, name, dev,
 				GFP_KERNEL, chip, lp55xx_firmware_loaded);
-}
+पूर्ण
 
-static ssize_t select_engine_show(struct device *dev,
-			    struct device_attribute *attr,
-			    char *buf)
-{
-	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
-	struct lp55xx_chip *chip = led->chip;
+अटल sमाप_प्रकार select_engine_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा lp55xx_chip *chip = led->chip;
 
-	return sprintf(buf, "%d\n", chip->engine_idx);
-}
+	वापस प्र_लिखो(buf, "%d\n", chip->engine_idx);
+पूर्ण
 
-static ssize_t select_engine_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t len)
-{
-	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
-	struct lp55xx_chip *chip = led->chip;
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार select_engine_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा lp55xx_chip *chip = led->chip;
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	/* select the engine to be run */
 
-	switch (val) {
-	case LP55XX_ENGINE_1:
-	case LP55XX_ENGINE_2:
-	case LP55XX_ENGINE_3:
+	चयन (val) अणु
+	हाल LP55XX_ENGINE_1:
+	हाल LP55XX_ENGINE_2:
+	हाल LP55XX_ENGINE_3:
 		mutex_lock(&chip->lock);
 		chip->engine_idx = val;
 		ret = lp55xx_request_firmware(chip);
 		mutex_unlock(&chip->lock);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "%lu: invalid engine index. (1, 2, 3)\n", val);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "request firmware err: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static inline void lp55xx_run_engine(struct lp55xx_chip *chip, bool start)
-{
-	if (chip->cfg->run_engine)
+अटल अंतरभूत व्योम lp55xx_run_engine(काष्ठा lp55xx_chip *chip, bool start)
+अणु
+	अगर (chip->cfg->run_engine)
 		chip->cfg->run_engine(chip, start);
-}
+पूर्ण
 
-static ssize_t run_engine_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t len)
-{
-	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
-	struct lp55xx_chip *chip = led->chip;
-	unsigned long val;
+अटल sमाप_प्रकार run_engine_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा lp55xx_chip *chip = led->chip;
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	/* run or stop the selected engine */
 
-	if (val <= 0) {
+	अगर (val <= 0) अणु
 		lp55xx_run_engine(chip, false);
-		return len;
-	}
+		वापस len;
+	पूर्ण
 
 	mutex_lock(&chip->lock);
 	lp55xx_run_engine(chip, true);
 	mutex_unlock(&chip->lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR_RW(select_engine);
-static DEVICE_ATTR_WO(run_engine);
+अटल DEVICE_ATTR_RW(select_engine);
+अटल DEVICE_ATTR_WO(run_engine);
 
-static struct attribute *lp55xx_engine_attributes[] = {
+अटल काष्ठा attribute *lp55xx_engine_attributes[] = अणु
 	&dev_attr_select_engine.attr,
 	&dev_attr_run_engine.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group lp55xx_engine_attr_group = {
+अटल स्थिर काष्ठा attribute_group lp55xx_engine_attr_group = अणु
 	.attrs = lp55xx_engine_attributes,
-};
+पूर्ण;
 
-int lp55xx_write(struct lp55xx_chip *chip, u8 reg, u8 val)
-{
-	return i2c_smbus_write_byte_data(chip->cl, reg, val);
-}
-EXPORT_SYMBOL_GPL(lp55xx_write);
+पूर्णांक lp55xx_ग_लिखो(काष्ठा lp55xx_chip *chip, u8 reg, u8 val)
+अणु
+	वापस i2c_smbus_ग_लिखो_byte_data(chip->cl, reg, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(lp55xx_ग_लिखो);
 
-int lp55xx_read(struct lp55xx_chip *chip, u8 reg, u8 *val)
-{
+पूर्णांक lp55xx_पढ़ो(काष्ठा lp55xx_chip *chip, u8 reg, u8 *val)
+अणु
 	s32 ret;
 
-	ret = i2c_smbus_read_byte_data(chip->cl, reg);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_byte_data(chip->cl, reg);
+	अगर (ret < 0)
+		वापस ret;
 
 	*val = ret;
-	return 0;
-}
-EXPORT_SYMBOL_GPL(lp55xx_read);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(lp55xx_पढ़ो);
 
-int lp55xx_update_bits(struct lp55xx_chip *chip, u8 reg, u8 mask, u8 val)
-{
-	int ret;
-	u8 tmp;
+पूर्णांक lp55xx_update_bits(काष्ठा lp55xx_chip *chip, u8 reg, u8 mask, u8 val)
+अणु
+	पूर्णांक ret;
+	u8 पंचांगp;
 
-	ret = lp55xx_read(chip, reg, &tmp);
-	if (ret)
-		return ret;
+	ret = lp55xx_पढ़ो(chip, reg, &पंचांगp);
+	अगर (ret)
+		वापस ret;
 
-	tmp &= ~mask;
-	tmp |= val & mask;
+	पंचांगp &= ~mask;
+	पंचांगp |= val & mask;
 
-	return lp55xx_write(chip, reg, tmp);
-}
+	वापस lp55xx_ग_लिखो(chip, reg, पंचांगp);
+पूर्ण
 EXPORT_SYMBOL_GPL(lp55xx_update_bits);
 
-bool lp55xx_is_extclk_used(struct lp55xx_chip *chip)
-{
-	struct clk *clk;
-	int err;
+bool lp55xx_is_extclk_used(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा clk *clk;
+	पूर्णांक err;
 
 	clk = devm_clk_get(&chip->cl->dev, "32k_clk");
-	if (IS_ERR(clk))
-		goto use_internal_clk;
+	अगर (IS_ERR(clk))
+		जाओ use_पूर्णांकernal_clk;
 
 	err = clk_prepare_enable(clk);
-	if (err)
-		goto use_internal_clk;
+	अगर (err)
+		जाओ use_पूर्णांकernal_clk;
 
-	if (clk_get_rate(clk) != LP55XX_CLK_32K) {
+	अगर (clk_get_rate(clk) != LP55XX_CLK_32K) अणु
 		clk_disable_unprepare(clk);
-		goto use_internal_clk;
-	}
+		जाओ use_पूर्णांकernal_clk;
+	पूर्ण
 
 	dev_info(&chip->cl->dev, "%dHz external clock used\n",	LP55XX_CLK_32K);
 
 	chip->clk = clk;
-	return true;
+	वापस true;
 
-use_internal_clk:
+use_पूर्णांकernal_clk:
 	dev_info(&chip->cl->dev, "internal clock used\n");
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(lp55xx_is_extclk_used);
 
-int lp55xx_init_device(struct lp55xx_chip *chip)
-{
-	struct lp55xx_platform_data *pdata;
-	struct lp55xx_device_config *cfg;
-	struct device *dev = &chip->cl->dev;
-	int ret = 0;
+पूर्णांक lp55xx_init_device(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा lp55xx_platक्रमm_data *pdata;
+	काष्ठा lp55xx_device_config *cfg;
+	काष्ठा device *dev = &chip->cl->dev;
+	पूर्णांक ret = 0;
 
 	WARN_ON(!chip);
 
 	pdata = chip->pdata;
 	cfg = chip->cfg;
 
-	if (!pdata || !cfg)
-		return -EINVAL;
+	अगर (!pdata || !cfg)
+		वापस -EINVAL;
 
-	if (pdata->enable_gpiod) {
+	अगर (pdata->enable_gpiod) अणु
 		gpiod_set_consumer_name(pdata->enable_gpiod, "LP55xx enable");
 		gpiod_set_value(pdata->enable_gpiod, 0);
-		usleep_range(1000, 2000); /* Keep enable down at least 1ms */
+		usleep_range(1000, 2000); /* Keep enable करोwn at least 1ms */
 		gpiod_set_value(pdata->enable_gpiod, 1);
-		usleep_range(1000, 2000); /* 500us abs min. */
-	}
+		usleep_range(1000, 2000); /* 500us असल min. */
+	पूर्ण
 
 	lp55xx_reset_device(chip);
 
 	/*
 	 * Exact value is not available. 10 - 20ms
-	 * appears to be enough for reset.
+	 * appears to be enough क्रम reset.
 	 */
 	usleep_range(10000, 20000);
 
 	ret = lp55xx_detect_device(chip);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "device detection err: %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* chip specific initialization */
+	/* chip specअगरic initialization */
 	ret = lp55xx_post_init_device(chip);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "post init device err: %d\n", ret);
-		goto err_post_init;
-	}
+		जाओ err_post_init;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_post_init:
 	lp55xx_deinit_device(chip);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(lp55xx_init_device);
 
-void lp55xx_deinit_device(struct lp55xx_chip *chip)
-{
-	struct lp55xx_platform_data *pdata = chip->pdata;
+व्योम lp55xx_deinit_device(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा lp55xx_platक्रमm_data *pdata = chip->pdata;
 
-	if (chip->clk)
+	अगर (chip->clk)
 		clk_disable_unprepare(chip->clk);
 
-	if (pdata->enable_gpiod)
+	अगर (pdata->enable_gpiod)
 		gpiod_set_value(pdata->enable_gpiod, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(lp55xx_deinit_device);
 
-int lp55xx_register_leds(struct lp55xx_led *led, struct lp55xx_chip *chip)
-{
-	struct lp55xx_platform_data *pdata = chip->pdata;
-	struct lp55xx_device_config *cfg = chip->cfg;
-	int num_channels = pdata->num_channels;
-	struct lp55xx_led *each;
+पूर्णांक lp55xx_रेजिस्टर_leds(काष्ठा lp55xx_led *led, काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा lp55xx_platक्रमm_data *pdata = chip->pdata;
+	काष्ठा lp55xx_device_config *cfg = chip->cfg;
+	पूर्णांक num_channels = pdata->num_channels;
+	काष्ठा lp55xx_led *each;
 	u8 led_current;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!cfg->brightness_fn) {
+	अगर (!cfg->brightness_fn) अणु
 		dev_err(&chip->cl->dev, "empty brightness configuration\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < num_channels; i++) {
+	क्रम (i = 0; i < num_channels; i++) अणु
 
-		/* do not initialize channels that are not connected */
-		if (pdata->led_config[i].led_current == 0)
-			continue;
+		/* करो not initialize channels that are not connected */
+		अगर (pdata->led_config[i].led_current == 0)
+			जारी;
 
 		led_current = pdata->led_config[i].led_current;
 		each = led + i;
 		ret = lp55xx_init_led(each, chip, i);
-		if (ret)
-			goto err_init_led;
+		अगर (ret)
+			जाओ err_init_led;
 
 		chip->num_leds++;
 		each->chip = chip;
 
 		/* setting led current at each channel */
-		if (cfg->set_led_current)
+		अगर (cfg->set_led_current)
 			cfg->set_led_current(each, led_current);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_init_led:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(lp55xx_register_leds);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(lp55xx_रेजिस्टर_leds);
 
-int lp55xx_register_sysfs(struct lp55xx_chip *chip)
-{
-	struct device *dev = &chip->cl->dev;
-	struct lp55xx_device_config *cfg = chip->cfg;
-	int ret;
+पूर्णांक lp55xx_रेजिस्टर_sysfs(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा device *dev = &chip->cl->dev;
+	काष्ठा lp55xx_device_config *cfg = chip->cfg;
+	पूर्णांक ret;
 
-	if (!cfg->run_engine || !cfg->firmware_cb)
-		goto dev_specific_attrs;
+	अगर (!cfg->run_engine || !cfg->firmware_cb)
+		जाओ dev_specअगरic_attrs;
 
 	ret = sysfs_create_group(&dev->kobj, &lp55xx_engine_attr_group);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-dev_specific_attrs:
-	return cfg->dev_attr_group ?
+dev_specअगरic_attrs:
+	वापस cfg->dev_attr_group ?
 		sysfs_create_group(&dev->kobj, cfg->dev_attr_group) : 0;
-}
-EXPORT_SYMBOL_GPL(lp55xx_register_sysfs);
+पूर्ण
+EXPORT_SYMBOL_GPL(lp55xx_रेजिस्टर_sysfs);
 
-void lp55xx_unregister_sysfs(struct lp55xx_chip *chip)
-{
-	struct device *dev = &chip->cl->dev;
-	struct lp55xx_device_config *cfg = chip->cfg;
+व्योम lp55xx_unरेजिस्टर_sysfs(काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा device *dev = &chip->cl->dev;
+	काष्ठा lp55xx_device_config *cfg = chip->cfg;
 
-	if (cfg->dev_attr_group)
-		sysfs_remove_group(&dev->kobj, cfg->dev_attr_group);
+	अगर (cfg->dev_attr_group)
+		sysfs_हटाओ_group(&dev->kobj, cfg->dev_attr_group);
 
-	sysfs_remove_group(&dev->kobj, &lp55xx_engine_attr_group);
-}
-EXPORT_SYMBOL_GPL(lp55xx_unregister_sysfs);
+	sysfs_हटाओ_group(&dev->kobj, &lp55xx_engine_attr_group);
+पूर्ण
+EXPORT_SYMBOL_GPL(lp55xx_unरेजिस्टर_sysfs);
 
-static int lp55xx_parse_common_child(struct device_node *np,
-				     struct lp55xx_led_config *cfg,
-				     int led_number, int *chan_nr)
-{
-	int ret;
+अटल पूर्णांक lp55xx_parse_common_child(काष्ठा device_node *np,
+				     काष्ठा lp55xx_led_config *cfg,
+				     पूर्णांक led_number, पूर्णांक *chan_nr)
+अणु
+	पूर्णांक ret;
 
-	of_property_read_string(np, "chan-name",
+	of_property_पढ़ो_string(np, "chan-name",
 				&cfg[led_number].name);
-	of_property_read_u8(np, "led-cur",
+	of_property_पढ़ो_u8(np, "led-cur",
 			    &cfg[led_number].led_current);
-	of_property_read_u8(np, "max-cur",
+	of_property_पढ़ो_u8(np, "max-cur",
 			    &cfg[led_number].max_current);
 
-	ret = of_property_read_u32(np, "reg", chan_nr);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32(np, "reg", chan_nr);
+	अगर (ret)
+		वापस ret;
 
-	if (*chan_nr < 0 || *chan_nr > cfg->max_channel)
-		return -EINVAL;
+	अगर (*chan_nr < 0 || *chan_nr > cfg->max_channel)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp55xx_parse_multi_led_child(struct device_node *child,
-					 struct lp55xx_led_config *cfg,
-					 int child_number, int color_number)
-{
-	int chan_nr, color_id, ret;
+अटल पूर्णांक lp55xx_parse_multi_led_child(काष्ठा device_node *child,
+					 काष्ठा lp55xx_led_config *cfg,
+					 पूर्णांक child_number, पूर्णांक color_number)
+अणु
+	पूर्णांक chan_nr, color_id, ret;
 
 	ret = lp55xx_parse_common_child(child, cfg, child_number, &chan_nr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = of_property_read_u32(child, "color", &color_id);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32(child, "color", &color_id);
+	अगर (ret)
+		वापस ret;
 
 	cfg[child_number].color_id[color_number] = color_id;
 	cfg[child_number].output_num[color_number] = chan_nr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp55xx_parse_multi_led(struct device_node *np,
-				  struct lp55xx_led_config *cfg,
-				  int child_number)
-{
-	struct device_node *child;
-	int num_colors = 0, ret;
+अटल पूर्णांक lp55xx_parse_multi_led(काष्ठा device_node *np,
+				  काष्ठा lp55xx_led_config *cfg,
+				  पूर्णांक child_number)
+अणु
+	काष्ठा device_node *child;
+	पूर्णांक num_colors = 0, ret;
 
-	for_each_available_child_of_node(np, child) {
+	क्रम_each_available_child_of_node(np, child) अणु
 		ret = lp55xx_parse_multi_led_child(child, cfg, child_number,
 						   num_colors);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(child);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		num_colors++;
-	}
+	पूर्ण
 
 	cfg[child_number].num_colors = num_colors;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp55xx_parse_logical_led(struct device_node *np,
-				   struct lp55xx_led_config *cfg,
-				   int child_number)
-{
-	int led_color, ret;
-	int chan_nr = 0;
+अटल पूर्णांक lp55xx_parse_logical_led(काष्ठा device_node *np,
+				   काष्ठा lp55xx_led_config *cfg,
+				   पूर्णांक child_number)
+अणु
+	पूर्णांक led_color, ret;
+	पूर्णांक chan_nr = 0;
 
-	cfg[child_number].default_trigger =
-		of_get_property(np, "linux,default-trigger", NULL);
+	cfg[child_number].शेष_trigger =
+		of_get_property(np, "linux,default-trigger", शून्य);
 
-	ret = of_property_read_u32(np, "color", &led_color);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32(np, "color", &led_color);
+	अगर (ret)
+		वापस ret;
 
-	if (led_color == LED_COLOR_ID_RGB)
-		return lp55xx_parse_multi_led(np, cfg, child_number);
+	अगर (led_color == LED_COLOR_ID_RGB)
+		वापस lp55xx_parse_multi_led(np, cfg, child_number);
 
 	ret =  lp55xx_parse_common_child(np, cfg, child_number, &chan_nr);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	cfg[child_number].chan_nr = chan_nr;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct lp55xx_platform_data *lp55xx_of_populate_pdata(struct device *dev,
-						      struct device_node *np,
-						      struct lp55xx_chip *chip)
-{
-	struct device_node *child;
-	struct lp55xx_platform_data *pdata;
-	struct lp55xx_led_config *cfg;
-	int num_channels;
-	int i = 0;
-	int ret;
+काष्ठा lp55xx_platक्रमm_data *lp55xx_of_populate_pdata(काष्ठा device *dev,
+						      काष्ठा device_node *np,
+						      काष्ठा lp55xx_chip *chip)
+अणु
+	काष्ठा device_node *child;
+	काष्ठा lp55xx_platक्रमm_data *pdata;
+	काष्ठा lp55xx_led_config *cfg;
+	पूर्णांक num_channels;
+	पूर्णांक i = 0;
+	पूर्णांक ret;
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
 	num_channels = of_get_available_child_count(np);
-	if (num_channels == 0) {
+	अगर (num_channels == 0) अणु
 		dev_err(dev, "no LED channels\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	cfg = devm_kcalloc(dev, num_channels, sizeof(*cfg), GFP_KERNEL);
-	if (!cfg)
-		return ERR_PTR(-ENOMEM);
+	cfg = devm_kसुस्मृति(dev, num_channels, माप(*cfg), GFP_KERNEL);
+	अगर (!cfg)
+		वापस ERR_PTR(-ENOMEM);
 
 	pdata->led_config = &cfg[0];
 	pdata->num_channels = num_channels;
 	cfg->max_channel = chip->cfg->max_channel;
 
-	for_each_available_child_of_node(np, child) {
+	क्रम_each_available_child_of_node(np, child) अणु
 		ret = lp55xx_parse_logical_led(child, cfg, i);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(child);
-			return ERR_PTR(-EINVAL);
-		}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 		i++;
-	}
+	पूर्ण
 
-	of_property_read_string(np, "label", &pdata->label);
-	of_property_read_u8(np, "clock-mode", &pdata->clock_mode);
+	of_property_पढ़ो_string(np, "label", &pdata->label);
+	of_property_पढ़ो_u8(np, "clock-mode", &pdata->घड़ी_mode);
 
 	pdata->enable_gpiod = devm_gpiod_get_optional(dev, "enable",
 						      GPIOD_ASIS);
-	if (IS_ERR(pdata->enable_gpiod))
-		return ERR_CAST(pdata->enable_gpiod);
+	अगर (IS_ERR(pdata->enable_gpiod))
+		वापस ERR_CAST(pdata->enable_gpiod);
 
-	/* LP8501 specific */
-	of_property_read_u8(np, "pwr-sel", (u8 *)&pdata->pwr_sel);
+	/* LP8501 specअगरic */
+	of_property_पढ़ो_u8(np, "pwr-sel", (u8 *)&pdata->pwr_sel);
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 EXPORT_SYMBOL_GPL(lp55xx_of_populate_pdata);
 
 MODULE_AUTHOR("Milo Kim <milo.kim@ti.com>");

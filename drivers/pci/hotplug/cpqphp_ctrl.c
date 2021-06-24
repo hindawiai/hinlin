@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Compaq Hot Plug Controller Driver
  *
  * Copyright (C) 1995,2001 Compaq Computer Corporation
- * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
  * Copyright (C) 2001 IBM Corp.
  *
  * All rights reserved.
@@ -12,68 +13,68 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/wait.h>
-#include <linux/pci.h>
-#include <linux/pci_hotplug.h>
-#include <linux/kthread.h>
-#include "cpqphp.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_hotplug.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश "cpqphp.h"
 
-static u32 configure_new_device(struct controller *ctrl, struct pci_func *func,
-			u8 behind_bridge, struct resource_lists *resources);
-static int configure_new_function(struct controller *ctrl, struct pci_func *func,
-			u8 behind_bridge, struct resource_lists *resources);
-static void interrupt_event_handler(struct controller *ctrl);
+अटल u32 configure_new_device(काष्ठा controller *ctrl, काष्ठा pci_func *func,
+			u8 behind_bridge, काष्ठा resource_lists *resources);
+अटल पूर्णांक configure_new_function(काष्ठा controller *ctrl, काष्ठा pci_func *func,
+			u8 behind_bridge, काष्ठा resource_lists *resources);
+अटल व्योम पूर्णांकerrupt_event_handler(काष्ठा controller *ctrl);
 
 
-static struct task_struct *cpqhp_event_thread;
-static struct timer_list *pushbutton_pending;	/* = NULL */
+अटल काष्ठा task_काष्ठा *cpqhp_event_thपढ़ो;
+अटल काष्ठा समयr_list *pushbutton_pending;	/* = शून्य */
 
-/* delay is in jiffies to wait for */
-static void long_delay(int delay)
-{
+/* delay is in jअगरfies to रुको क्रम */
+अटल व्योम दीर्घ_delay(पूर्णांक delay)
+अणु
 	/*
-	 * XXX(hch): if someone is bored please convert all callers
-	 * to call msleep_interruptible directly.  They really want
-	 * to specify timeouts in natural units and spend a lot of
-	 * effort converting them to jiffies..
+	 * XXX(hch): अगर someone is bored please convert all callers
+	 * to call msleep_पूर्णांकerruptible directly.  They really want
+	 * to specअगरy समयouts in natural units and spend a lot of
+	 * efक्रमt converting them to jअगरfies..
 	 */
-	msleep_interruptible(jiffies_to_msecs(delay));
-}
+	msleep_पूर्णांकerruptible(jअगरfies_to_msecs(delay));
+पूर्ण
 
 
-/* FIXME: The following line needs to be somewhere else... */
-#define WRONG_BUS_FREQUENCY 0x07
-static u8 handle_switch_change(u8 change, struct controller *ctrl)
-{
-	int hp_slot;
+/* FIXME: The following line needs to be somewhere अन्यथा... */
+#घोषणा WRONG_BUS_FREQUENCY 0x07
+अटल u8 handle_चयन_change(u8 change, काष्ठा controller *ctrl)
+अणु
+	पूर्णांक hp_slot;
 	u8 rc = 0;
 	u16 temp_word;
-	struct pci_func *func;
-	struct event_info *taskInfo;
+	काष्ठा pci_func *func;
+	काष्ठा event_info *taskInfo;
 
-	if (!change)
-		return 0;
+	अगर (!change)
+		वापस 0;
 
 	/* Switch Change */
 	dbg("cpqsbd:  Switch interrupt received.\n");
 
-	for (hp_slot = 0; hp_slot < 6; hp_slot++) {
-		if (change & (0x1L << hp_slot)) {
+	क्रम (hp_slot = 0; hp_slot < 6; hp_slot++) अणु
+		अगर (change & (0x1L << hp_slot)) अणु
 			/*
 			 * this one changed.
 			 */
 			func = cpqhp_slot_find(ctrl->bus,
 				(hp_slot + ctrl->slot_device_offset), 0);
 
-			/* this is the structure that tells the worker thread
-			 * what to do
+			/* this is the काष्ठाure that tells the worker thपढ़ो
+			 * what to करो
 			 */
 			taskInfo = &(ctrl->event_queue[ctrl->next_event]);
 			ctrl->next_event = (ctrl->next_event + 1) % 10;
@@ -81,61 +82,61 @@ static u8 handle_switch_change(u8 change, struct controller *ctrl)
 
 			rc++;
 
-			temp_word = ctrl->ctrl_int_comp >> 16;
+			temp_word = ctrl->ctrl_पूर्णांक_comp >> 16;
 			func->presence_save = (temp_word >> hp_slot) & 0x01;
 			func->presence_save |= (temp_word >> (hp_slot + 7)) & 0x02;
 
-			if (ctrl->ctrl_int_comp & (0x1L << hp_slot)) {
+			अगर (ctrl->ctrl_पूर्णांक_comp & (0x1L << hp_slot)) अणु
 				/*
-				 * Switch opened
+				 * Switch खोलोed
 				 */
 
-				func->switch_save = 0;
+				func->चयन_save = 0;
 
 				taskInfo->event_type = INT_SWITCH_OPEN;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
-				 * Switch closed
+				 * Switch बंदd
 				 */
 
-				func->switch_save = 0x10;
+				func->चयन_save = 0x10;
 
 				taskInfo->event_type = INT_SWITCH_CLOSE;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * cpqhp_find_slot - find the struct slot of given device
+ * cpqhp_find_slot - find the काष्ठा slot of given device
  * @ctrl: scan lots of this controller
  * @device: the device id to find
  */
-static struct slot *cpqhp_find_slot(struct controller *ctrl, u8 device)
-{
-	struct slot *slot = ctrl->slot;
+अटल काष्ठा slot *cpqhp_find_slot(काष्ठा controller *ctrl, u8 device)
+अणु
+	काष्ठा slot *slot = ctrl->slot;
 
-	while (slot && (slot->device != device))
+	जबतक (slot && (slot->device != device))
 		slot = slot->next;
 
-	return slot;
-}
+	वापस slot;
+पूर्ण
 
 
-static u8 handle_presence_change(u16 change, struct controller *ctrl)
-{
-	int hp_slot;
+अटल u8 handle_presence_change(u16 change, काष्ठा controller *ctrl)
+अणु
+	पूर्णांक hp_slot;
 	u8 rc = 0;
 	u8 temp_byte;
 	u16 temp_word;
-	struct pci_func *func;
-	struct event_info *taskInfo;
-	struct slot *p_slot;
+	काष्ठा pci_func *func;
+	काष्ठा event_info *taskInfo;
+	काष्ठा slot *p_slot;
 
-	if (!change)
-		return 0;
+	अगर (!change)
+		वापस 0;
 
 	/*
 	 * Presence Change
@@ -143,8 +144,8 @@ static u8 handle_presence_change(u16 change, struct controller *ctrl)
 	dbg("cpqsbd:  Presence/Notify input change.\n");
 	dbg("         Changed bits are 0x%4.4x\n", change);
 
-	for (hp_slot = 0; hp_slot < 6; hp_slot++) {
-		if (change & (0x0101 << hp_slot)) {
+	क्रम (hp_slot = 0; hp_slot < 6; hp_slot++) अणु
+		अगर (change & (0x0101 << hp_slot)) अणु
 			/*
 			 * this one changed.
 			 */
@@ -157,85 +158,85 @@ static u8 handle_presence_change(u16 change, struct controller *ctrl)
 
 			rc++;
 
-			p_slot = cpqhp_find_slot(ctrl, hp_slot + (readb(ctrl->hpc_reg + SLOT_MASK) >> 4));
-			if (!p_slot)
-				return 0;
+			p_slot = cpqhp_find_slot(ctrl, hp_slot + (पढ़ोb(ctrl->hpc_reg + SLOT_MASK) >> 4));
+			अगर (!p_slot)
+				वापस 0;
 
-			/* If the switch closed, must be a button
+			/* If the चयन बंदd, must be a button
 			 * If not in button mode, nevermind
 			 */
-			if (func->switch_save && (ctrl->push_button == 1)) {
-				temp_word = ctrl->ctrl_int_comp >> 16;
+			अगर (func->चयन_save && (ctrl->push_button == 1)) अणु
+				temp_word = ctrl->ctrl_पूर्णांक_comp >> 16;
 				temp_byte = (temp_word >> hp_slot) & 0x01;
 				temp_byte |= (temp_word >> (hp_slot + 7)) & 0x02;
 
-				if (temp_byte != func->presence_save) {
+				अगर (temp_byte != func->presence_save) अणु
 					/*
-					 * button Pressed (doesn't do anything)
+					 * button Pressed (करोesn't करो anything)
 					 */
 					dbg("hp_slot %d button pressed\n", hp_slot);
 					taskInfo->event_type = INT_BUTTON_PRESS;
-				} else {
+				पूर्ण अन्यथा अणु
 					/*
 					 * button Released - TAKE ACTION!!!!
 					 */
 					dbg("hp_slot %d button released\n", hp_slot);
 					taskInfo->event_type = INT_BUTTON_RELEASE;
 
-					/* Cancel if we are still blinking */
-					if ((p_slot->state == BLINKINGON_STATE)
-					    || (p_slot->state == BLINKINGOFF_STATE)) {
+					/* Cancel अगर we are still blinking */
+					अगर ((p_slot->state == BLINKINGON_STATE)
+					    || (p_slot->state == BLINKINGOFF_STATE)) अणु
 						taskInfo->event_type = INT_BUTTON_CANCEL;
 						dbg("hp_slot %d button cancel\n", hp_slot);
-					} else if ((p_slot->state == POWERON_STATE)
-						   || (p_slot->state == POWEROFF_STATE)) {
+					पूर्ण अन्यथा अगर ((p_slot->state == POWERON_STATE)
+						   || (p_slot->state == POWEROFF_STATE)) अणु
 						/* info(msg_button_ignore, p_slot->number); */
 						taskInfo->event_type = INT_BUTTON_IGNORE;
 						dbg("hp_slot %d button ignore\n", hp_slot);
-					}
-				}
-			} else {
-				/* Switch is open, assume a presence change
+					पूर्ण
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				/* Switch is खोलो, assume a presence change
 				 * Save the presence state
 				 */
-				temp_word = ctrl->ctrl_int_comp >> 16;
+				temp_word = ctrl->ctrl_पूर्णांक_comp >> 16;
 				func->presence_save = (temp_word >> hp_slot) & 0x01;
 				func->presence_save |= (temp_word >> (hp_slot + 7)) & 0x02;
 
-				if ((!(ctrl->ctrl_int_comp & (0x010000 << hp_slot))) ||
-				    (!(ctrl->ctrl_int_comp & (0x01000000 << hp_slot)))) {
+				अगर ((!(ctrl->ctrl_पूर्णांक_comp & (0x010000 << hp_slot))) ||
+				    (!(ctrl->ctrl_पूर्णांक_comp & (0x01000000 << hp_slot)))) अणु
 					/* Present */
 					taskInfo->event_type = INT_PRESENCE_ON;
-				} else {
+				पूर्ण अन्यथा अणु
 					/* Not Present */
 					taskInfo->event_type = INT_PRESENCE_OFF;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-static u8 handle_power_fault(u8 change, struct controller *ctrl)
-{
-	int hp_slot;
+अटल u8 handle_घातer_fault(u8 change, काष्ठा controller *ctrl)
+अणु
+	पूर्णांक hp_slot;
 	u8 rc = 0;
-	struct pci_func *func;
-	struct event_info *taskInfo;
+	काष्ठा pci_func *func;
+	काष्ठा event_info *taskInfo;
 
-	if (!change)
-		return 0;
+	अगर (!change)
+		वापस 0;
 
 	/*
-	 * power fault
+	 * घातer fault
 	 */
 
 	info("power fault interrupt\n");
 
-	for (hp_slot = 0; hp_slot < 6; hp_slot++) {
-		if (change & (0x01 << hp_slot)) {
+	क्रम (hp_slot = 0; hp_slot < 6; hp_slot++) अणु
+		अगर (change & (0x01 << hp_slot)) अणु
 			/*
 			 * this one changed.
 			 */
@@ -248,20 +249,20 @@ static u8 handle_power_fault(u8 change, struct controller *ctrl)
 
 			rc++;
 
-			if (ctrl->ctrl_int_comp & (0x00000100 << hp_slot)) {
+			अगर (ctrl->ctrl_पूर्णांक_comp & (0x00000100 << hp_slot)) अणु
 				/*
-				 * power fault Cleared
+				 * घातer fault Cleared
 				 */
 				func->status = 0x00;
 
 				taskInfo->event_type = INT_POWER_FAULT_CLEAR;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
-				 * power fault
+				 * घातer fault
 				 */
 				taskInfo->event_type = INT_POWER_FAULT;
 
-				if (ctrl->rev < 4) {
+				अगर (ctrl->rev < 4) अणु
 					amber_LED_on(ctrl, hp_slot);
 					green_LED_off(ctrl, hp_slot);
 					set_SOGO(ctrl);
@@ -269,153 +270,153 @@ static u8 handle_power_fault(u8 change, struct controller *ctrl)
 					/* this is a fatal condition, we want
 					 * to crash the machine to protect from
 					 * data corruption. simulated_NMI
-					 * shouldn't ever return */
+					 * shouldn't ever वापस */
 					/* FIXME
 					simulated_NMI(hp_slot, ctrl); */
 
 					/* The following code causes a software
-					 * crash just in case simulated_NMI did
-					 * return */
+					 * crash just in हाल simulated_NMI did
+					 * वापस */
 					/*FIXME
-					panic(msg_power_fault); */
-				} else {
-					/* set power fault status for this board */
+					panic(msg_घातer_fault); */
+				पूर्ण अन्यथा अणु
+					/* set घातer fault status क्रम this board */
 					func->status = 0xFF;
 					info("power fault bit %x set\n", hp_slot);
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /**
  * sort_by_size - sort nodes on the list by their length, smallest first.
  * @head: list to sort
  */
-static int sort_by_size(struct pci_resource **head)
-{
-	struct pci_resource *current_res;
-	struct pci_resource *next_res;
-	int out_of_order = 1;
+अटल पूर्णांक sort_by_size(काष्ठा pci_resource **head)
+अणु
+	काष्ठा pci_resource *current_res;
+	काष्ठा pci_resource *next_res;
+	पूर्णांक out_of_order = 1;
 
-	if (!(*head))
-		return 1;
+	अगर (!(*head))
+		वापस 1;
 
-	if (!((*head)->next))
-		return 0;
+	अगर (!((*head)->next))
+		वापस 0;
 
-	while (out_of_order) {
+	जबतक (out_of_order) अणु
 		out_of_order = 0;
 
-		/* Special case for swapping list head */
-		if (((*head)->next) &&
-		    ((*head)->length > (*head)->next->length)) {
+		/* Special हाल क्रम swapping list head */
+		अगर (((*head)->next) &&
+		    ((*head)->length > (*head)->next->length)) अणु
 			out_of_order++;
 			current_res = *head;
 			*head = (*head)->next;
 			current_res->next = (*head)->next;
 			(*head)->next = current_res;
-		}
+		पूर्ण
 
 		current_res = *head;
 
-		while (current_res->next && current_res->next->next) {
-			if (current_res->next->length > current_res->next->next->length) {
+		जबतक (current_res->next && current_res->next->next) अणु
+			अगर (current_res->next->length > current_res->next->next->length) अणु
 				out_of_order++;
 				next_res = current_res->next;
 				current_res->next = current_res->next->next;
 				current_res = current_res->next;
 				next_res->next = current_res->next;
 				current_res->next = next_res;
-			} else
+			पूर्ण अन्यथा
 				current_res = current_res->next;
-		}
-	}  /* End of out_of_order loop */
+		पूर्ण
+	पूर्ण  /* End of out_of_order loop */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
  * sort_by_max_size - sort nodes on the list by their length, largest first.
  * @head: list to sort
  */
-static int sort_by_max_size(struct pci_resource **head)
-{
-	struct pci_resource *current_res;
-	struct pci_resource *next_res;
-	int out_of_order = 1;
+अटल पूर्णांक sort_by_max_size(काष्ठा pci_resource **head)
+अणु
+	काष्ठा pci_resource *current_res;
+	काष्ठा pci_resource *next_res;
+	पूर्णांक out_of_order = 1;
 
-	if (!(*head))
-		return 1;
+	अगर (!(*head))
+		वापस 1;
 
-	if (!((*head)->next))
-		return 0;
+	अगर (!((*head)->next))
+		वापस 0;
 
-	while (out_of_order) {
+	जबतक (out_of_order) अणु
 		out_of_order = 0;
 
-		/* Special case for swapping list head */
-		if (((*head)->next) &&
-		    ((*head)->length < (*head)->next->length)) {
+		/* Special हाल क्रम swapping list head */
+		अगर (((*head)->next) &&
+		    ((*head)->length < (*head)->next->length)) अणु
 			out_of_order++;
 			current_res = *head;
 			*head = (*head)->next;
 			current_res->next = (*head)->next;
 			(*head)->next = current_res;
-		}
+		पूर्ण
 
 		current_res = *head;
 
-		while (current_res->next && current_res->next->next) {
-			if (current_res->next->length < current_res->next->next->length) {
+		जबतक (current_res->next && current_res->next->next) अणु
+			अगर (current_res->next->length < current_res->next->next->length) अणु
 				out_of_order++;
 				next_res = current_res->next;
 				current_res->next = current_res->next->next;
 				current_res = current_res->next;
 				next_res->next = current_res->next;
 				current_res->next = next_res;
-			} else
+			पूर्ण अन्यथा
 				current_res = current_res->next;
-		}
-	}  /* End of out_of_order loop */
+		पूर्ण
+	पूर्ण  /* End of out_of_order loop */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * do_pre_bridge_resource_split - find node of resources that are unused
+ * करो_pre_bridge_resource_split - find node of resources that are unused
  * @head: new list head
  * @orig_head: original list head
  * @alignment: max node size (?)
  */
-static struct pci_resource *do_pre_bridge_resource_split(struct pci_resource **head,
-				struct pci_resource **orig_head, u32 alignment)
-{
-	struct pci_resource *prevnode = NULL;
-	struct pci_resource *node;
-	struct pci_resource *split_node;
+अटल काष्ठा pci_resource *करो_pre_bridge_resource_split(काष्ठा pci_resource **head,
+				काष्ठा pci_resource **orig_head, u32 alignment)
+अणु
+	काष्ठा pci_resource *prevnode = शून्य;
+	काष्ठा pci_resource *node;
+	काष्ठा pci_resource *split_node;
 	u32 rc;
 	u32 temp_dword;
 	dbg("do_pre_bridge_resource_split\n");
 
-	if (!(*head) || !(*orig_head))
-		return NULL;
+	अगर (!(*head) || !(*orig_head))
+		वापस शून्य;
 
 	rc = cpqhp_resource_sort_and_combine(head);
 
-	if (rc)
-		return NULL;
+	अगर (rc)
+		वापस शून्य;
 
-	if ((*head)->base != (*orig_head)->base)
-		return NULL;
+	अगर ((*head)->base != (*orig_head)->base)
+		वापस शून्य;
 
-	if ((*head)->length == (*orig_head)->length)
-		return NULL;
+	अगर ((*head)->length == (*orig_head)->length)
+		वापस शून्य;
 
 
 	/* If we got here, there the bridge requires some of the resource, but
@@ -424,14 +425,14 @@ static struct pci_resource *do_pre_bridge_resource_split(struct pci_resource **h
 
 	node = *head;
 
-	if (node->length & (alignment - 1)) {
+	अगर (node->length & (alignment - 1)) अणु
 		/* this one isn't an aligned length, so we'll make a new entry
 		 * and split it up.
 		 */
-		split_node = kmalloc(sizeof(*split_node), GFP_KERNEL);
+		split_node = kदो_स्मृति(माप(*split_node), GFP_KERNEL);
 
-		if (!split_node)
-			return NULL;
+		अगर (!split_node)
+			वापस शून्य;
 
 		temp_dword = (node->length | (alignment-1)) + 1 - alignment;
 
@@ -444,119 +445,119 @@ static struct pci_resource *do_pre_bridge_resource_split(struct pci_resource **h
 		/* Put it in the list */
 		*head = split_node;
 		split_node->next = node;
-	}
+	पूर्ण
 
-	if (node->length < alignment)
-		return NULL;
+	अगर (node->length < alignment)
+		वापस शून्य;
 
 	/* Now unlink it */
-	if (*head == node) {
+	अगर (*head == node) अणु
 		*head = node->next;
-	} else {
+	पूर्ण अन्यथा अणु
 		prevnode = *head;
-		while (prevnode->next != node)
+		जबतक (prevnode->next != node)
 			prevnode = prevnode->next;
 
 		prevnode->next = node->next;
-	}
-	node->next = NULL;
+	पूर्ण
+	node->next = शून्य;
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
 
 /**
- * do_bridge_resource_split - find one node of resources that aren't in use
+ * करो_bridge_resource_split - find one node of resources that aren't in use
  * @head: list head
  * @alignment: max node size (?)
  */
-static struct pci_resource *do_bridge_resource_split(struct pci_resource **head, u32 alignment)
-{
-	struct pci_resource *prevnode = NULL;
-	struct pci_resource *node;
+अटल काष्ठा pci_resource *करो_bridge_resource_split(काष्ठा pci_resource **head, u32 alignment)
+अणु
+	काष्ठा pci_resource *prevnode = शून्य;
+	काष्ठा pci_resource *node;
 	u32 rc;
 	u32 temp_dword;
 
 	rc = cpqhp_resource_sort_and_combine(head);
 
-	if (rc)
-		return NULL;
+	अगर (rc)
+		वापस शून्य;
 
 	node = *head;
 
-	while (node->next) {
+	जबतक (node->next) अणु
 		prevnode = node;
 		node = node->next;
-		kfree(prevnode);
-	}
+		kमुक्त(prevnode);
+	पूर्ण
 
-	if (node->length < alignment)
-		goto error;
+	अगर (node->length < alignment)
+		जाओ error;
 
-	if (node->base & (alignment - 1)) {
-		/* Short circuit if adjusted size is too small */
+	अगर (node->base & (alignment - 1)) अणु
+		/* Short circuit अगर adjusted size is too small */
 		temp_dword = (node->base | (alignment-1)) + 1;
-		if ((node->length - (temp_dword - node->base)) < alignment)
-			goto error;
+		अगर ((node->length - (temp_dword - node->base)) < alignment)
+			जाओ error;
 
 		node->length -= (temp_dword - node->base);
 		node->base = temp_dword;
-	}
+	पूर्ण
 
-	if (node->length & (alignment - 1))
+	अगर (node->length & (alignment - 1))
 		/* There's stuff in use after this node */
-		goto error;
+		जाओ error;
 
-	return node;
+	वापस node;
 error:
-	kfree(node);
-	return NULL;
-}
+	kमुक्त(node);
+	वापस शून्य;
+पूर्ण
 
 
 /**
- * get_io_resource - find first node of given size not in ISA aliasing window.
+ * get_io_resource - find first node of given size not in ISA aliasing winकरोw.
  * @head: list to search
- * @size: size of node to find, must be a power of two.
+ * @size: size of node to find, must be a घातer of two.
  *
- * Description: This function sorts the resource list by size and then returns
- * returns the first node of "size" length that is not in the ISA aliasing
- * window.  If it finds a node larger than "size" it will split it up.
+ * Description: This function sorts the resource list by size and then वापसs
+ * वापसs the first node of "size" length that is not in the ISA aliasing
+ * winकरोw.  If it finds a node larger than "size" it will split it up.
  */
-static struct pci_resource *get_io_resource(struct pci_resource **head, u32 size)
-{
-	struct pci_resource *prevnode;
-	struct pci_resource *node;
-	struct pci_resource *split_node;
+अटल काष्ठा pci_resource *get_io_resource(काष्ठा pci_resource **head, u32 size)
+अणु
+	काष्ठा pci_resource *prevnode;
+	काष्ठा pci_resource *node;
+	काष्ठा pci_resource *split_node;
 	u32 temp_dword;
 
-	if (!(*head))
-		return NULL;
+	अगर (!(*head))
+		वापस शून्य;
 
-	if (cpqhp_resource_sort_and_combine(head))
-		return NULL;
+	अगर (cpqhp_resource_sort_and_combine(head))
+		वापस शून्य;
 
-	if (sort_by_size(head))
-		return NULL;
+	अगर (sort_by_size(head))
+		वापस शून्य;
 
-	for (node = *head; node; node = node->next) {
-		if (node->length < size)
-			continue;
+	क्रम (node = *head; node; node = node->next) अणु
+		अगर (node->length < size)
+			जारी;
 
-		if (node->base & (size - 1)) {
+		अगर (node->base & (size - 1)) अणु
 			/* this one isn't base aligned properly
 			 * so we'll make a new entry and split it up
 			 */
 			temp_dword = (node->base | (size-1)) + 1;
 
-			/* Short circuit if adjusted size is too small */
-			if ((node->length - (temp_dword - node->base)) < size)
-				continue;
+			/* Short circuit अगर adjusted size is too small */
+			अगर ((node->length - (temp_dword - node->base)) < size)
+				जारी;
 
-			split_node = kmalloc(sizeof(*split_node), GFP_KERNEL);
+			split_node = kदो_स्मृति(माप(*split_node), GFP_KERNEL);
 
-			if (!split_node)
-				return NULL;
+			अगर (!split_node)
+				वापस शून्य;
 
 			split_node->base = node->base;
 			split_node->length = temp_dword - node->base;
@@ -566,17 +567,17 @@ static struct pci_resource *get_io_resource(struct pci_resource **head, u32 size
 			/* Put it in the list */
 			split_node->next = node->next;
 			node->next = split_node;
-		} /* End of non-aligned base */
+		पूर्ण /* End of non-aligned base */
 
-		/* Don't need to check if too small since we already did */
-		if (node->length > size) {
-			/* this one is longer than we need
+		/* Don't need to check अगर too small since we alपढ़ोy did */
+		अगर (node->length > size) अणु
+			/* this one is दीर्घer than we need
 			 * so we'll make a new entry and split it up
 			 */
-			split_node = kmalloc(sizeof(*split_node), GFP_KERNEL);
+			split_node = kदो_स्मृति(माप(*split_node), GFP_KERNEL);
 
-			if (!split_node)
-				return NULL;
+			अगर (!split_node)
+				वापस शून्य;
 
 			split_node->base = node->base + size;
 			split_node->length = node->length - size;
@@ -585,30 +586,30 @@ static struct pci_resource *get_io_resource(struct pci_resource **head, u32 size
 			/* Put it in the list */
 			split_node->next = node->next;
 			node->next = split_node;
-		}  /* End of too big on top end */
+		पूर्ण  /* End of too big on top end */
 
 		/* For IO make sure it's not in the ISA aliasing space */
-		if (node->base & 0x300L)
-			continue;
+		अगर (node->base & 0x300L)
+			जारी;
 
 		/* If we got here, then it is the right size
-		 * Now take it out of the list and break
+		 * Now take it out of the list and अवरोध
 		 */
-		if (*head == node) {
+		अगर (*head == node) अणु
 			*head = node->next;
-		} else {
+		पूर्ण अन्यथा अणु
 			prevnode = *head;
-			while (prevnode->next != node)
+			जबतक (prevnode->next != node)
 				prevnode = prevnode->next;
 
 			prevnode->next = node->next;
-		}
-		node->next = NULL;
-		break;
-	}
+		पूर्ण
+		node->next = शून्य;
+		अवरोध;
+	पूर्ण
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
 
 /**
@@ -617,43 +618,43 @@ static struct pci_resource *get_io_resource(struct pci_resource **head, u32 size
  * @size: the minimum size of the node to find
  *
  * Description: Gets the largest node that is at least "size" big from the
- * list pointed to by head.  It aligns the node on top and bottom
- * to "size" alignment before returning it.
+ * list poपूर्णांकed to by head.  It aligns the node on top and bottom
+ * to "size" alignment beक्रमe वापसing it.
  */
-static struct pci_resource *get_max_resource(struct pci_resource **head, u32 size)
-{
-	struct pci_resource *max;
-	struct pci_resource *temp;
-	struct pci_resource *split_node;
+अटल काष्ठा pci_resource *get_max_resource(काष्ठा pci_resource **head, u32 size)
+अणु
+	काष्ठा pci_resource *max;
+	काष्ठा pci_resource *temp;
+	काष्ठा pci_resource *split_node;
 	u32 temp_dword;
 
-	if (cpqhp_resource_sort_and_combine(head))
-		return NULL;
+	अगर (cpqhp_resource_sort_and_combine(head))
+		वापस शून्य;
 
-	if (sort_by_max_size(head))
-		return NULL;
+	अगर (sort_by_max_size(head))
+		वापस शून्य;
 
-	for (max = *head; max; max = max->next) {
+	क्रम (max = *head; max; max = max->next) अणु
 		/* If not big enough we could probably just bail,
-		 * instead we'll continue to the next.
+		 * instead we'll जारी to the next.
 		 */
-		if (max->length < size)
-			continue;
+		अगर (max->length < size)
+			जारी;
 
-		if (max->base & (size - 1)) {
+		अगर (max->base & (size - 1)) अणु
 			/* this one isn't base aligned properly
 			 * so we'll make a new entry and split it up
 			 */
 			temp_dword = (max->base | (size-1)) + 1;
 
-			/* Short circuit if adjusted size is too small */
-			if ((max->length - (temp_dword - max->base)) < size)
-				continue;
+			/* Short circuit अगर adjusted size is too small */
+			अगर ((max->length - (temp_dword - max->base)) < size)
+				जारी;
 
-			split_node = kmalloc(sizeof(*split_node), GFP_KERNEL);
+			split_node = kदो_स्मृति(माप(*split_node), GFP_KERNEL);
 
-			if (!split_node)
-				return NULL;
+			अगर (!split_node)
+				वापस शून्य;
 
 			split_node->base = max->base;
 			split_node->length = temp_dword - max->base;
@@ -662,16 +663,16 @@ static struct pci_resource *get_max_resource(struct pci_resource **head, u32 siz
 
 			split_node->next = max->next;
 			max->next = split_node;
-		}
+		पूर्ण
 
-		if ((max->base + max->length) & (size - 1)) {
+		अगर ((max->base + max->length) & (size - 1)) अणु
 			/* this one isn't end aligned properly at the top
 			 * so we'll make a new entry and split it up
 			 */
-			split_node = kmalloc(sizeof(*split_node), GFP_KERNEL);
+			split_node = kदो_स्मृति(माप(*split_node), GFP_KERNEL);
 
-			if (!split_node)
-				return NULL;
+			अगर (!split_node)
+				वापस शून्य;
 			temp_dword = ((max->base + max->length) & ~(size - 1));
 			split_node->base = temp_dword;
 			split_node->length = max->length + max->base
@@ -680,77 +681,77 @@ static struct pci_resource *get_max_resource(struct pci_resource **head, u32 siz
 
 			split_node->next = max->next;
 			max->next = split_node;
-		}
+		पूर्ण
 
 		/* Make sure it didn't shrink too much when we aligned it */
-		if (max->length < size)
-			continue;
+		अगर (max->length < size)
+			जारी;
 
 		/* Now take it out of the list */
 		temp = *head;
-		if (temp == max) {
+		अगर (temp == max) अणु
 			*head = max->next;
-		} else {
-			while (temp && temp->next != max)
+		पूर्ण अन्यथा अणु
+			जबतक (temp && temp->next != max)
 				temp = temp->next;
 
-			if (temp)
+			अगर (temp)
 				temp->next = max->next;
-		}
+		पूर्ण
 
-		max->next = NULL;
-		break;
-	}
+		max->next = शून्य;
+		अवरोध;
+	पूर्ण
 
-	return max;
-}
+	वापस max;
+पूर्ण
 
 
 /**
  * get_resource - find resource of given size and split up larger ones.
- * @head: the list to search for resources
+ * @head: the list to search क्रम resources
  * @size: the size limit to use
  *
  * Description: This function sorts the resource list by size and then
- * returns the first node of "size" length.  If it finds a node
+ * वापसs the first node of "size" length.  If it finds a node
  * larger than "size" it will split it up.
  *
- * size must be a power of two.
+ * size must be a घातer of two.
  */
-static struct pci_resource *get_resource(struct pci_resource **head, u32 size)
-{
-	struct pci_resource *prevnode;
-	struct pci_resource *node;
-	struct pci_resource *split_node;
+अटल काष्ठा pci_resource *get_resource(काष्ठा pci_resource **head, u32 size)
+अणु
+	काष्ठा pci_resource *prevnode;
+	काष्ठा pci_resource *node;
+	काष्ठा pci_resource *split_node;
 	u32 temp_dword;
 
-	if (cpqhp_resource_sort_and_combine(head))
-		return NULL;
+	अगर (cpqhp_resource_sort_and_combine(head))
+		वापस शून्य;
 
-	if (sort_by_size(head))
-		return NULL;
+	अगर (sort_by_size(head))
+		वापस शून्य;
 
-	for (node = *head; node; node = node->next) {
+	क्रम (node = *head; node; node = node->next) अणु
 		dbg("%s: req_size =%x node=%p, base=%x, length=%x\n",
 		    __func__, size, node, node->base, node->length);
-		if (node->length < size)
-			continue;
+		अगर (node->length < size)
+			जारी;
 
-		if (node->base & (size - 1)) {
+		अगर (node->base & (size - 1)) अणु
 			dbg("%s: not aligned\n", __func__);
 			/* this one isn't base aligned properly
 			 * so we'll make a new entry and split it up
 			 */
 			temp_dword = (node->base | (size-1)) + 1;
 
-			/* Short circuit if adjusted size is too small */
-			if ((node->length - (temp_dword - node->base)) < size)
-				continue;
+			/* Short circuit अगर adjusted size is too small */
+			अगर ((node->length - (temp_dword - node->base)) < size)
+				जारी;
 
-			split_node = kmalloc(sizeof(*split_node), GFP_KERNEL);
+			split_node = kदो_स्मृति(माप(*split_node), GFP_KERNEL);
 
-			if (!split_node)
-				return NULL;
+			अगर (!split_node)
+				वापस शून्य;
 
 			split_node->base = node->base;
 			split_node->length = temp_dword - node->base;
@@ -759,18 +760,18 @@ static struct pci_resource *get_resource(struct pci_resource **head, u32 size)
 
 			split_node->next = node->next;
 			node->next = split_node;
-		} /* End of non-aligned base */
+		पूर्ण /* End of non-aligned base */
 
-		/* Don't need to check if too small since we already did */
-		if (node->length > size) {
+		/* Don't need to check अगर too small since we alपढ़ोy did */
+		अगर (node->length > size) अणु
 			dbg("%s: too big\n", __func__);
-			/* this one is longer than we need
+			/* this one is दीर्घer than we need
 			 * so we'll make a new entry and split it up
 			 */
-			split_node = kmalloc(sizeof(*split_node), GFP_KERNEL);
+			split_node = kदो_स्मृति(माप(*split_node), GFP_KERNEL);
 
-			if (!split_node)
-				return NULL;
+			अगर (!split_node)
+				वापस शून्य;
 
 			split_node->base = node->base + size;
 			split_node->length = node->length - size;
@@ -779,25 +780,25 @@ static struct pci_resource *get_resource(struct pci_resource **head, u32 size)
 			/* Put it in the list */
 			split_node->next = node->next;
 			node->next = split_node;
-		}  /* End of too big on top end */
+		पूर्ण  /* End of too big on top end */
 
 		dbg("%s: got one!!!\n", __func__);
 		/* If we got here, then it is the right size
 		 * Now take it out of the list */
-		if (*head == node) {
+		अगर (*head == node) अणु
 			*head = node->next;
-		} else {
+		पूर्ण अन्यथा अणु
 			prevnode = *head;
-			while (prevnode->next != node)
+			जबतक (prevnode->next != node)
 				prevnode = prevnode->next;
 
 			prevnode->next = node->next;
-		}
-		node->next = NULL;
-		break;
-	}
-	return node;
-}
+		पूर्ण
+		node->next = शून्य;
+		अवरोध;
+	पूर्ण
+	वापस node;
+पूर्ण
 
 
 /**
@@ -805,455 +806,455 @@ static struct pci_resource *get_resource(struct pci_resource **head, u32 size)
  * @head: the list to sort and clean up
  *
  * Description: Sorts all of the nodes in the list in ascending order by
- * their base addresses.  Also does garbage collection by
+ * their base addresses.  Also करोes garbage collection by
  * combining adjacent nodes.
  *
- * Returns %0 if success.
+ * Returns %0 अगर success.
  */
-int cpqhp_resource_sort_and_combine(struct pci_resource **head)
-{
-	struct pci_resource *node1;
-	struct pci_resource *node2;
-	int out_of_order = 1;
+पूर्णांक cpqhp_resource_sort_and_combine(काष्ठा pci_resource **head)
+अणु
+	काष्ठा pci_resource *node1;
+	काष्ठा pci_resource *node2;
+	पूर्णांक out_of_order = 1;
 
 	dbg("%s: head = %p, *head = %p\n", __func__, head, *head);
 
-	if (!(*head))
-		return 1;
+	अगर (!(*head))
+		वापस 1;
 
 	dbg("*head->next = %p\n", (*head)->next);
 
-	if (!(*head)->next)
-		return 0;	/* only one item on the list, already sorted! */
+	अगर (!(*head)->next)
+		वापस 0;	/* only one item on the list, alपढ़ोy sorted! */
 
 	dbg("*head->base = 0x%x\n", (*head)->base);
 	dbg("*head->next->base = 0x%x\n", (*head)->next->base);
-	while (out_of_order) {
+	जबतक (out_of_order) अणु
 		out_of_order = 0;
 
-		/* Special case for swapping list head */
-		if (((*head)->next) &&
-		    ((*head)->base > (*head)->next->base)) {
+		/* Special हाल क्रम swapping list head */
+		अगर (((*head)->next) &&
+		    ((*head)->base > (*head)->next->base)) अणु
 			node1 = *head;
 			(*head) = (*head)->next;
 			node1->next = (*head)->next;
 			(*head)->next = node1;
 			out_of_order++;
-		}
+		पूर्ण
 
 		node1 = (*head);
 
-		while (node1->next && node1->next->next) {
-			if (node1->next->base > node1->next->next->base) {
+		जबतक (node1->next && node1->next->next) अणु
+			अगर (node1->next->base > node1->next->next->base) अणु
 				out_of_order++;
 				node2 = node1->next;
 				node1->next = node1->next->next;
 				node1 = node1->next;
 				node2->next = node1->next;
 				node1->next = node2;
-			} else
+			पूर्ण अन्यथा
 				node1 = node1->next;
-		}
-	}  /* End of out_of_order loop */
+		पूर्ण
+	पूर्ण  /* End of out_of_order loop */
 
 	node1 = *head;
 
-	while (node1 && node1->next) {
-		if ((node1->base + node1->length) == node1->next->base) {
+	जबतक (node1 && node1->next) अणु
+		अगर ((node1->base + node1->length) == node1->next->base) अणु
 			/* Combine */
 			dbg("8..\n");
 			node1->length += node1->next->length;
 			node2 = node1->next;
 			node1->next = node1->next->next;
-			kfree(node2);
-		} else
+			kमुक्त(node2);
+		पूर्ण अन्यथा
 			node1 = node1->next;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-irqreturn_t cpqhp_ctrl_intr(int IRQ, void *data)
-{
-	struct controller *ctrl = data;
+irqवापस_t cpqhp_ctrl_पूर्णांकr(पूर्णांक IRQ, व्योम *data)
+अणु
+	काष्ठा controller *ctrl = data;
 	u8 schedule_flag = 0;
 	u8 reset;
 	u16 misc;
-	u32 Diff;
+	u32 Dअगरf;
 	u32 temp_dword;
 
 
-	misc = readw(ctrl->hpc_reg + MISC);
+	misc = पढ़ोw(ctrl->hpc_reg + MISC);
 	/*
-	 * Check to see if it was our interrupt
+	 * Check to see अगर it was our पूर्णांकerrupt
 	 */
-	if (!(misc & 0x000C))
-		return IRQ_NONE;
+	अगर (!(misc & 0x000C))
+		वापस IRQ_NONE;
 
-	if (misc & 0x0004) {
+	अगर (misc & 0x0004) अणु
 		/*
-		 * Serial Output interrupt Pending
+		 * Serial Output पूर्णांकerrupt Pending
 		 */
 
-		/* Clear the interrupt */
+		/* Clear the पूर्णांकerrupt */
 		misc |= 0x0004;
-		writew(misc, ctrl->hpc_reg + MISC);
+		ग_लिखोw(misc, ctrl->hpc_reg + MISC);
 
-		/* Read to clear posted writes */
-		misc = readw(ctrl->hpc_reg + MISC);
+		/* Read to clear posted ग_लिखोs */
+		misc = पढ़ोw(ctrl->hpc_reg + MISC);
 
 		dbg("%s - waking up\n", __func__);
-		wake_up_interruptible(&ctrl->queue);
-	}
+		wake_up_पूर्णांकerruptible(&ctrl->queue);
+	पूर्ण
 
-	if (misc & 0x0008) {
-		/* General-interrupt-input interrupt Pending */
-		Diff = readl(ctrl->hpc_reg + INT_INPUT_CLEAR) ^ ctrl->ctrl_int_comp;
+	अगर (misc & 0x0008) अणु
+		/* General-पूर्णांकerrupt-input पूर्णांकerrupt Pending */
+		Dअगरf = पढ़ोl(ctrl->hpc_reg + INT_INPUT_CLEAR) ^ ctrl->ctrl_पूर्णांक_comp;
 
-		ctrl->ctrl_int_comp = readl(ctrl->hpc_reg + INT_INPUT_CLEAR);
+		ctrl->ctrl_पूर्णांक_comp = पढ़ोl(ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-		/* Clear the interrupt */
-		writel(Diff, ctrl->hpc_reg + INT_INPUT_CLEAR);
+		/* Clear the पूर्णांकerrupt */
+		ग_लिखोl(Dअगरf, ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-		/* Read it back to clear any posted writes */
-		temp_dword = readl(ctrl->hpc_reg + INT_INPUT_CLEAR);
+		/* Read it back to clear any posted ग_लिखोs */
+		temp_dword = पढ़ोl(ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-		if (!Diff)
-			/* Clear all interrupts */
-			writel(0xFFFFFFFF, ctrl->hpc_reg + INT_INPUT_CLEAR);
+		अगर (!Dअगरf)
+			/* Clear all पूर्णांकerrupts */
+			ग_लिखोl(0xFFFFFFFF, ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-		schedule_flag += handle_switch_change((u8)(Diff & 0xFFL), ctrl);
-		schedule_flag += handle_presence_change((u16)((Diff & 0xFFFF0000L) >> 16), ctrl);
-		schedule_flag += handle_power_fault((u8)((Diff & 0xFF00L) >> 8), ctrl);
-	}
+		schedule_flag += handle_चयन_change((u8)(Dअगरf & 0xFFL), ctrl);
+		schedule_flag += handle_presence_change((u16)((Dअगरf & 0xFFFF0000L) >> 16), ctrl);
+		schedule_flag += handle_घातer_fault((u8)((Dअगरf & 0xFF00L) >> 8), ctrl);
+	पूर्ण
 
-	reset = readb(ctrl->hpc_reg + RESET_FREQ_MODE);
-	if (reset & 0x40) {
+	reset = पढ़ोb(ctrl->hpc_reg + RESET_FREQ_MODE);
+	अगर (reset & 0x40) अणु
 		/* Bus reset has completed */
 		reset &= 0xCF;
-		writeb(reset, ctrl->hpc_reg + RESET_FREQ_MODE);
-		reset = readb(ctrl->hpc_reg + RESET_FREQ_MODE);
-		wake_up_interruptible(&ctrl->queue);
-	}
+		ग_लिखोb(reset, ctrl->hpc_reg + RESET_FREQ_MODE);
+		reset = पढ़ोb(ctrl->hpc_reg + RESET_FREQ_MODE);
+		wake_up_पूर्णांकerruptible(&ctrl->queue);
+	पूर्ण
 
-	if (schedule_flag) {
-		wake_up_process(cpqhp_event_thread);
+	अगर (schedule_flag) अणु
+		wake_up_process(cpqhp_event_thपढ़ो);
 		dbg("Waking even thread");
-	}
-	return IRQ_HANDLED;
-}
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
 /**
  * cpqhp_slot_create - Creates a node and adds it to the proper bus.
  * @busnumber: bus where new node is to be located
  *
- * Returns pointer to the new node or %NULL if unsuccessful.
+ * Returns poपूर्णांकer to the new node or %शून्य अगर unsuccessful.
  */
-struct pci_func *cpqhp_slot_create(u8 busnumber)
-{
-	struct pci_func *new_slot;
-	struct pci_func *next;
+काष्ठा pci_func *cpqhp_slot_create(u8 busnumber)
+अणु
+	काष्ठा pci_func *new_slot;
+	काष्ठा pci_func *next;
 
-	new_slot = kzalloc(sizeof(*new_slot), GFP_KERNEL);
-	if (new_slot == NULL)
-		return new_slot;
+	new_slot = kzalloc(माप(*new_slot), GFP_KERNEL);
+	अगर (new_slot == शून्य)
+		वापस new_slot;
 
-	new_slot->next = NULL;
+	new_slot->next = शून्य;
 	new_slot->configured = 1;
 
-	if (cpqhp_slot_list[busnumber] == NULL) {
+	अगर (cpqhp_slot_list[busnumber] == शून्य) अणु
 		cpqhp_slot_list[busnumber] = new_slot;
-	} else {
+	पूर्ण अन्यथा अणु
 		next = cpqhp_slot_list[busnumber];
-		while (next->next != NULL)
+		जबतक (next->next != शून्य)
 			next = next->next;
 		next->next = new_slot;
-	}
-	return new_slot;
-}
+	पूर्ण
+	वापस new_slot;
+पूर्ण
 
 
 /**
- * slot_remove - Removes a node from the linked list of slots.
- * @old_slot: slot to remove
+ * slot_हटाओ - Removes a node from the linked list of slots.
+ * @old_slot: slot to हटाओ
  *
- * Returns %0 if successful, !0 otherwise.
+ * Returns %0 अगर successful, !0 otherwise.
  */
-static int slot_remove(struct pci_func *old_slot)
-{
-	struct pci_func *next;
+अटल पूर्णांक slot_हटाओ(काष्ठा pci_func *old_slot)
+अणु
+	काष्ठा pci_func *next;
 
-	if (old_slot == NULL)
-		return 1;
+	अगर (old_slot == शून्य)
+		वापस 1;
 
 	next = cpqhp_slot_list[old_slot->bus];
-	if (next == NULL)
-		return 1;
+	अगर (next == शून्य)
+		वापस 1;
 
-	if (next == old_slot) {
+	अगर (next == old_slot) अणु
 		cpqhp_slot_list[old_slot->bus] = old_slot->next;
 		cpqhp_destroy_board_resources(old_slot);
-		kfree(old_slot);
-		return 0;
-	}
+		kमुक्त(old_slot);
+		वापस 0;
+	पूर्ण
 
-	while ((next->next != old_slot) && (next->next != NULL))
+	जबतक ((next->next != old_slot) && (next->next != शून्य))
 		next = next->next;
 
-	if (next->next == old_slot) {
+	अगर (next->next == old_slot) अणु
 		next->next = old_slot->next;
 		cpqhp_destroy_board_resources(old_slot);
-		kfree(old_slot);
-		return 0;
-	} else
-		return 2;
-}
+		kमुक्त(old_slot);
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस 2;
+पूर्ण
 
 
 /**
- * bridge_slot_remove - Removes a node from the linked list of slots.
- * @bridge: bridge to remove
+ * bridge_slot_हटाओ - Removes a node from the linked list of slots.
+ * @bridge: bridge to हटाओ
  *
- * Returns %0 if successful, !0 otherwise.
+ * Returns %0 अगर successful, !0 otherwise.
  */
-static int bridge_slot_remove(struct pci_func *bridge)
-{
+अटल पूर्णांक bridge_slot_हटाओ(काष्ठा pci_func *bridge)
+अणु
 	u8 subordinateBus, secondaryBus;
 	u8 tempBus;
-	struct pci_func *next;
+	काष्ठा pci_func *next;
 
 	secondaryBus = (bridge->config_space[0x06] >> 8) & 0xFF;
 	subordinateBus = (bridge->config_space[0x06] >> 16) & 0xFF;
 
-	for (tempBus = secondaryBus; tempBus <= subordinateBus; tempBus++) {
+	क्रम (tempBus = secondaryBus; tempBus <= subordinateBus; tempBus++) अणु
 		next = cpqhp_slot_list[tempBus];
 
-		while (!slot_remove(next))
+		जबतक (!slot_हटाओ(next))
 			next = cpqhp_slot_list[tempBus];
-	}
+	पूर्ण
 
 	next = cpqhp_slot_list[bridge->bus];
 
-	if (next == NULL)
-		return 1;
+	अगर (next == शून्य)
+		वापस 1;
 
-	if (next == bridge) {
+	अगर (next == bridge) अणु
 		cpqhp_slot_list[bridge->bus] = bridge->next;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while ((next->next != bridge) && (next->next != NULL))
+	जबतक ((next->next != bridge) && (next->next != शून्य))
 		next = next->next;
 
-	if (next->next != bridge)
-		return 2;
+	अगर (next->next != bridge)
+		वापस 2;
 	next->next = bridge->next;
 out:
-	kfree(bridge);
-	return 0;
-}
+	kमुक्त(bridge);
+	वापस 0;
+पूर्ण
 
 
 /**
- * cpqhp_slot_find - Looks for a node by bus, and device, multiple functions accessed
+ * cpqhp_slot_find - Looks क्रम a node by bus, and device, multiple functions accessed
  * @bus: bus to find
  * @device: device to find
- * @index: is %0 for first function found, %1 for the second...
+ * @index: is %0 क्रम first function found, %1 क्रम the second...
  *
- * Returns pointer to the node if successful, %NULL otherwise.
+ * Returns poपूर्णांकer to the node अगर successful, %शून्य otherwise.
  */
-struct pci_func *cpqhp_slot_find(u8 bus, u8 device, u8 index)
-{
-	int found = -1;
-	struct pci_func *func;
+काष्ठा pci_func *cpqhp_slot_find(u8 bus, u8 device, u8 index)
+अणु
+	पूर्णांक found = -1;
+	काष्ठा pci_func *func;
 
 	func = cpqhp_slot_list[bus];
 
-	if ((func == NULL) || ((func->device == device) && (index == 0)))
-		return func;
+	अगर ((func == शून्य) || ((func->device == device) && (index == 0)))
+		वापस func;
 
-	if (func->device == device)
+	अगर (func->device == device)
 		found++;
 
-	while (func->next != NULL) {
+	जबतक (func->next != शून्य) अणु
 		func = func->next;
 
-		if (func->device == device)
+		अगर (func->device == device)
 			found++;
 
-		if (found == index)
-			return func;
-	}
+		अगर (found == index)
+			वापस func;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
-/* DJZ: I don't think is_bridge will work as is.
+/* DJZ: I करोn't think is_bridge will work as is.
  * FIXME */
-static int is_bridge(struct pci_func *func)
-{
+अटल पूर्णांक is_bridge(काष्ठा pci_func *func)
+अणु
 	/* Check the header type */
-	if (((func->config_space[0x03] >> 16) & 0xFF) == 0x01)
-		return 1;
-	else
-		return 0;
-}
+	अगर (((func->config_space[0x03] >> 16) & 0xFF) == 0x01)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 
 /**
- * set_controller_speed - set the frequency and/or mode of a specific controller segment.
- * @ctrl: controller to change frequency/mode for.
+ * set_controller_speed - set the frequency and/or mode of a specअगरic controller segment.
+ * @ctrl: controller to change frequency/mode क्रम.
  * @adapter_speed: the speed of the adapter we want to match.
  * @hp_slot: the slot number where the adapter is installed.
  *
- * Returns %0 if we successfully change frequency and/or mode to match the
+ * Returns %0 अगर we successfully change frequency and/or mode to match the
  * adapter speed.
  */
-static u8 set_controller_speed(struct controller *ctrl, u8 adapter_speed, u8 hp_slot)
-{
-	struct slot *slot;
-	struct pci_bus *bus = ctrl->pci_bus;
+अटल u8 set_controller_speed(काष्ठा controller *ctrl, u8 adapter_speed, u8 hp_slot)
+अणु
+	काष्ठा slot *slot;
+	काष्ठा pci_bus *bus = ctrl->pci_bus;
 	u8 reg;
-	u8 slot_power = readb(ctrl->hpc_reg + SLOT_POWER);
+	u8 slot_घातer = पढ़ोb(ctrl->hpc_reg + SLOT_POWER);
 	u16 reg16;
-	u32 leds = readl(ctrl->hpc_reg + LED_CONTROL);
+	u32 leds = पढ़ोl(ctrl->hpc_reg + LED_CONTROL);
 
-	if (bus->cur_bus_speed == adapter_speed)
-		return 0;
+	अगर (bus->cur_bus_speed == adapter_speed)
+		वापस 0;
 
-	/* We don't allow freq/mode changes if we find another adapter running
+	/* We करोn't allow freq/mode changes अगर we find another adapter running
 	 * in another slot on this controller
 	 */
-	for (slot = ctrl->slot; slot; slot = slot->next) {
-		if (slot->device == (hp_slot + ctrl->slot_device_offset))
-			continue;
-		if (get_presence_status(ctrl, slot) == 0)
-			continue;
+	क्रम (slot = ctrl->slot; slot; slot = slot->next) अणु
+		अगर (slot->device == (hp_slot + ctrl->slot_device_offset))
+			जारी;
+		अगर (get_presence_status(ctrl, slot) == 0)
+			जारी;
 		/* If another adapter is running on the same segment but at a
 		 * lower speed/mode, we allow the new adapter to function at
-		 * this rate if supported
+		 * this rate अगर supported
 		 */
-		if (bus->cur_bus_speed < adapter_speed)
-			return 0;
+		अगर (bus->cur_bus_speed < adapter_speed)
+			वापस 0;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* If the controller doesn't support freq/mode changes and the
+	/* If the controller करोesn't support freq/mode changes and the
 	 * controller is running at a higher mode, we bail
 	 */
-	if ((bus->cur_bus_speed > adapter_speed) && (!ctrl->pcix_speed_capability))
-		return 1;
+	अगर ((bus->cur_bus_speed > adapter_speed) && (!ctrl->pcix_speed_capability))
+		वापस 1;
 
-	/* But we allow the adapter to run at a lower rate if possible */
-	if ((bus->cur_bus_speed < adapter_speed) && (!ctrl->pcix_speed_capability))
-		return 0;
+	/* But we allow the adapter to run at a lower rate अगर possible */
+	अगर ((bus->cur_bus_speed < adapter_speed) && (!ctrl->pcix_speed_capability))
+		वापस 0;
 
 	/* We try to set the max speed supported by both the adapter and
 	 * controller
 	 */
-	if (bus->max_bus_speed < adapter_speed) {
-		if (bus->cur_bus_speed == bus->max_bus_speed)
-			return 0;
+	अगर (bus->max_bus_speed < adapter_speed) अणु
+		अगर (bus->cur_bus_speed == bus->max_bus_speed)
+			वापस 0;
 		adapter_speed = bus->max_bus_speed;
-	}
+	पूर्ण
 
-	writel(0x0L, ctrl->hpc_reg + LED_CONTROL);
-	writeb(0x00, ctrl->hpc_reg + SLOT_ENABLE);
+	ग_लिखोl(0x0L, ctrl->hpc_reg + LED_CONTROL);
+	ग_लिखोb(0x00, ctrl->hpc_reg + SLOT_ENABLE);
 
 	set_SOGO(ctrl);
-	wait_for_ctrl_irq(ctrl);
+	रुको_क्रम_ctrl_irq(ctrl);
 
-	if (adapter_speed != PCI_SPEED_133MHz_PCIX)
+	अगर (adapter_speed != PCI_SPEED_133MHz_PCIX)
 		reg = 0xF5;
-	else
+	अन्यथा
 		reg = 0xF4;
-	pci_write_config_byte(ctrl->pci_dev, 0x41, reg);
+	pci_ग_लिखो_config_byte(ctrl->pci_dev, 0x41, reg);
 
-	reg16 = readw(ctrl->hpc_reg + NEXT_CURR_FREQ);
+	reg16 = पढ़ोw(ctrl->hpc_reg + NEXT_CURR_FREQ);
 	reg16 &= ~0x000F;
-	switch (adapter_speed) {
-		case(PCI_SPEED_133MHz_PCIX):
+	चयन (adapter_speed) अणु
+		हाल(PCI_SPEED_133MHz_PCIX):
 			reg = 0x75;
 			reg16 |= 0xB;
-			break;
-		case(PCI_SPEED_100MHz_PCIX):
+			अवरोध;
+		हाल(PCI_SPEED_100MHz_PCIX):
 			reg = 0x74;
 			reg16 |= 0xA;
-			break;
-		case(PCI_SPEED_66MHz_PCIX):
+			अवरोध;
+		हाल(PCI_SPEED_66MHz_PCIX):
 			reg = 0x73;
 			reg16 |= 0x9;
-			break;
-		case(PCI_SPEED_66MHz):
+			अवरोध;
+		हाल(PCI_SPEED_66MHz):
 			reg = 0x73;
 			reg16 |= 0x1;
-			break;
-		default: /* 33MHz PCI 2.2 */
+			अवरोध;
+		शेष: /* 33MHz PCI 2.2 */
 			reg = 0x71;
-			break;
+			अवरोध;
 
-	}
+	पूर्ण
 	reg16 |= 0xB << 12;
-	writew(reg16, ctrl->hpc_reg + NEXT_CURR_FREQ);
+	ग_लिखोw(reg16, ctrl->hpc_reg + NEXT_CURR_FREQ);
 
 	mdelay(5);
 
-	/* Reenable interrupts */
-	writel(0, ctrl->hpc_reg + INT_MASK);
+	/* Reenable पूर्णांकerrupts */
+	ग_लिखोl(0, ctrl->hpc_reg + INT_MASK);
 
-	pci_write_config_byte(ctrl->pci_dev, 0x41, reg);
+	pci_ग_लिखो_config_byte(ctrl->pci_dev, 0x41, reg);
 
 	/* Restart state machine */
 	reg = ~0xF;
-	pci_read_config_byte(ctrl->pci_dev, 0x43, &reg);
-	pci_write_config_byte(ctrl->pci_dev, 0x43, reg);
+	pci_पढ़ो_config_byte(ctrl->pci_dev, 0x43, &reg);
+	pci_ग_लिखो_config_byte(ctrl->pci_dev, 0x43, reg);
 
-	/* Only if mode change...*/
-	if (((bus->cur_bus_speed == PCI_SPEED_66MHz) && (adapter_speed == PCI_SPEED_66MHz_PCIX)) ||
+	/* Only अगर mode change...*/
+	अगर (((bus->cur_bus_speed == PCI_SPEED_66MHz) && (adapter_speed == PCI_SPEED_66MHz_PCIX)) ||
 		((bus->cur_bus_speed == PCI_SPEED_66MHz_PCIX) && (adapter_speed == PCI_SPEED_66MHz)))
 			set_SOGO(ctrl);
 
-	wait_for_ctrl_irq(ctrl);
+	रुको_क्रम_ctrl_irq(ctrl);
 	mdelay(1100);
 
 	/* Restore LED/Slot state */
-	writel(leds, ctrl->hpc_reg + LED_CONTROL);
-	writeb(slot_power, ctrl->hpc_reg + SLOT_ENABLE);
+	ग_लिखोl(leds, ctrl->hpc_reg + LED_CONTROL);
+	ग_लिखोb(slot_घातer, ctrl->hpc_reg + SLOT_ENABLE);
 
 	set_SOGO(ctrl);
-	wait_for_ctrl_irq(ctrl);
+	रुको_क्रम_ctrl_irq(ctrl);
 
 	bus->cur_bus_speed = adapter_speed;
 	slot = cpqhp_find_slot(ctrl, hp_slot + ctrl->slot_device_offset);
 
 	info("Successfully changed frequency/mode for adapter in slot %d\n",
 			slot->number);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* the following routines constitute the bulk of the
+/* the following routines स्थिरitute the bulk of the
  * hotplug controller logic
  */
 
 
 /**
- * board_replaced - Called after a board has been replaced in the system.
- * @func: PCI device/function information
+ * board_replaced - Called after a board has been replaced in the प्रणाली.
+ * @func: PCI device/function inक्रमmation
  * @ctrl: hotplug controller
  *
- * This is only used if we don't have resources for hot add.
- * Turns power on for the board.
- * Checks to see if board is the same.
+ * This is only used अगर we करोn't have resources क्रम hot add.
+ * Turns घातer on क्रम the board.
+ * Checks to see अगर board is the same.
  * If board is same, reconfigures it.
  * If board isn't same, turns it back off.
  */
-static u32 board_replaced(struct pci_func *func, struct controller *ctrl)
-{
-	struct pci_bus *bus = ctrl->pci_bus;
+अटल u32 board_replaced(काष्ठा pci_func *func, काष्ठा controller *ctrl)
+अणु
+	काष्ठा pci_bus *bus = ctrl->pci_bus;
 	u8 hp_slot;
 	u8 temp_byte;
 	u8 adapter_speed;
@@ -1262,54 +1263,54 @@ static u32 board_replaced(struct pci_func *func, struct controller *ctrl)
 	hp_slot = func->device - ctrl->slot_device_offset;
 
 	/*
-	 * The switch is open.
+	 * The चयन is खोलो.
 	 */
-	if (readl(ctrl->hpc_reg + INT_INPUT_CLEAR) & (0x01L << hp_slot))
+	अगर (पढ़ोl(ctrl->hpc_reg + INT_INPUT_CLEAR) & (0x01L << hp_slot))
 		rc = INTERLOCK_OPEN;
 	/*
-	 * The board is already on
+	 * The board is alपढ़ोy on
 	 */
-	else if (is_slot_enabled(ctrl, hp_slot))
+	अन्यथा अगर (is_slot_enabled(ctrl, hp_slot))
 		rc = CARD_FUNCTIONING;
-	else {
+	अन्यथा अणु
 		mutex_lock(&ctrl->crit_sect);
 
 		/* turn on board without attaching to the bus */
-		enable_slot_power(ctrl, hp_slot);
+		enable_slot_घातer(ctrl, hp_slot);
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
 
-		/* Change bits in slot power register to force another shift out
-		 * NOTE: this is to work around the timer bug */
-		temp_byte = readb(ctrl->hpc_reg + SLOT_POWER);
-		writeb(0x00, ctrl->hpc_reg + SLOT_POWER);
-		writeb(temp_byte, ctrl->hpc_reg + SLOT_POWER);
+		/* Change bits in slot घातer रेजिस्टर to क्रमce another shअगरt out
+		 * NOTE: this is to work around the समयr bug */
+		temp_byte = पढ़ोb(ctrl->hpc_reg + SLOT_POWER);
+		ग_लिखोb(0x00, ctrl->hpc_reg + SLOT_POWER);
+		ग_लिखोb(temp_byte, ctrl->hpc_reg + SLOT_POWER);
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
 
 		adapter_speed = get_adapter_speed(ctrl, hp_slot);
-		if (bus->cur_bus_speed != adapter_speed)
-			if (set_controller_speed(ctrl, adapter_speed, hp_slot))
+		अगर (bus->cur_bus_speed != adapter_speed)
+			अगर (set_controller_speed(ctrl, adapter_speed, hp_slot))
 				rc = WRONG_BUS_FREQUENCY;
 
 		/* turn off board without attaching to the bus */
-		disable_slot_power(ctrl, hp_slot);
+		disable_slot_घातer(ctrl, hp_slot);
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
 
 		mutex_unlock(&ctrl->crit_sect);
 
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		mutex_lock(&ctrl->crit_sect);
 
@@ -1320,31 +1321,31 @@ static u32 board_replaced(struct pci_func *func, struct controller *ctrl)
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
 
 		mutex_unlock(&ctrl->crit_sect);
 
-		/* Wait for ~1 second because of hot plug spec */
-		long_delay(1*HZ);
+		/* Wait क्रम ~1 second because of hot plug spec */
+		दीर्घ_delay(1*HZ);
 
-		/* Check for a power fault */
-		if (func->status == 0xFF) {
-			/* power fault occurred, but it was benign */
+		/* Check क्रम a घातer fault */
+		अगर (func->status == 0xFF) अणु
+			/* घातer fault occurred, but it was benign */
 			rc = POWER_FAILURE;
 			func->status = 0;
-		} else
+		पूर्ण अन्यथा
 			rc = cpqhp_valid_replace(ctrl, func);
 
-		if (!rc) {
+		अगर (!rc) अणु
 			/* It must be the same board */
 
 			rc = cpqhp_configure_board(ctrl, func);
 
 			/* If configuration fails, turn it off
-			 * Get slot won't work for devices behind
-			 * bridges, but in this case it will always be
-			 * called for the "base" bus/dev/func of an
+			 * Get slot won't work क्रम devices behind
+			 * bridges, but in this हाल it will always be
+			 * called क्रम the "base" bus/dev/func of an
 			 * adapter.
 			 */
 
@@ -1356,21 +1357,21 @@ static u32 board_replaced(struct pci_func *func, struct controller *ctrl)
 
 			set_SOGO(ctrl);
 
-			/* Wait for SOBS to be unset */
-			wait_for_ctrl_irq(ctrl);
+			/* Wait क्रम SOBS to be unset */
+			रुको_क्रम_ctrl_irq(ctrl);
 
 			mutex_unlock(&ctrl->crit_sect);
 
-			if (rc)
-				return rc;
-			else
-				return 1;
+			अगर (rc)
+				वापस rc;
+			अन्यथा
+				वापस 1;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Something is wrong
 
-			 * Get slot won't work for devices behind bridges, but
-			 * in this case it will always be called for the "base"
+			 * Get slot won't work क्रम devices behind bridges, but
+			 * in this हाल it will always be called क्रम the "base"
 			 * bus/dev/func of an adapter.
 			 */
 
@@ -1382,38 +1383,38 @@ static u32 board_replaced(struct pci_func *func, struct controller *ctrl)
 
 			set_SOGO(ctrl);
 
-			/* Wait for SOBS to be unset */
-			wait_for_ctrl_irq(ctrl);
+			/* Wait क्रम SOBS to be unset */
+			रुको_क्रम_ctrl_irq(ctrl);
 
 			mutex_unlock(&ctrl->crit_sect);
-		}
+		पूर्ण
 
-	}
-	return rc;
+	पूर्ण
+	वापस rc;
 
-}
+पूर्ण
 
 
 /**
- * board_added - Called after a board has been added to the system.
+ * board_added - Called after a board has been added to the प्रणाली.
  * @func: PCI device/function info
  * @ctrl: hotplug controller
  *
- * Turns power on for the board.
+ * Turns घातer on क्रम the board.
  * Configures board.
  */
-static u32 board_added(struct pci_func *func, struct controller *ctrl)
-{
+अटल u32 board_added(काष्ठा pci_func *func, काष्ठा controller *ctrl)
+अणु
 	u8 hp_slot;
 	u8 temp_byte;
 	u8 adapter_speed;
-	int index;
-	u32 temp_register = 0xFFFFFFFF;
+	पूर्णांक index;
+	u32 temp_रेजिस्टर = 0xFFFFFFFF;
 	u32 rc = 0;
-	struct pci_func *new_slot = NULL;
-	struct pci_bus *bus = ctrl->pci_bus;
-	struct slot *p_slot;
-	struct resource_lists res_lists;
+	काष्ठा pci_func *new_slot = शून्य;
+	काष्ठा pci_bus *bus = ctrl->pci_bus;
+	काष्ठा slot *p_slot;
+	काष्ठा resource_lists res_lists;
 
 	hp_slot = func->device - ctrl->slot_device_offset;
 	dbg("%s: func->device, slot_offset, hp_slot = %d, %d ,%d\n",
@@ -1422,42 +1423,42 @@ static u32 board_added(struct pci_func *func, struct controller *ctrl)
 	mutex_lock(&ctrl->crit_sect);
 
 	/* turn on board without attaching to the bus */
-	enable_slot_power(ctrl, hp_slot);
+	enable_slot_घातer(ctrl, hp_slot);
 
 	set_SOGO(ctrl);
 
-	/* Wait for SOBS to be unset */
-	wait_for_ctrl_irq(ctrl);
+	/* Wait क्रम SOBS to be unset */
+	रुको_क्रम_ctrl_irq(ctrl);
 
-	/* Change bits in slot power register to force another shift out
-	 * NOTE: this is to work around the timer bug
+	/* Change bits in slot घातer रेजिस्टर to क्रमce another shअगरt out
+	 * NOTE: this is to work around the समयr bug
 	 */
-	temp_byte = readb(ctrl->hpc_reg + SLOT_POWER);
-	writeb(0x00, ctrl->hpc_reg + SLOT_POWER);
-	writeb(temp_byte, ctrl->hpc_reg + SLOT_POWER);
+	temp_byte = पढ़ोb(ctrl->hpc_reg + SLOT_POWER);
+	ग_लिखोb(0x00, ctrl->hpc_reg + SLOT_POWER);
+	ग_लिखोb(temp_byte, ctrl->hpc_reg + SLOT_POWER);
 
 	set_SOGO(ctrl);
 
-	/* Wait for SOBS to be unset */
-	wait_for_ctrl_irq(ctrl);
+	/* Wait क्रम SOBS to be unset */
+	रुको_क्रम_ctrl_irq(ctrl);
 
 	adapter_speed = get_adapter_speed(ctrl, hp_slot);
-	if (bus->cur_bus_speed != adapter_speed)
-		if (set_controller_speed(ctrl, adapter_speed, hp_slot))
+	अगर (bus->cur_bus_speed != adapter_speed)
+		अगर (set_controller_speed(ctrl, adapter_speed, hp_slot))
 			rc = WRONG_BUS_FREQUENCY;
 
 	/* turn off board without attaching to the bus */
-	disable_slot_power(ctrl, hp_slot);
+	disable_slot_घातer(ctrl, hp_slot);
 
 	set_SOGO(ctrl);
 
-	/* Wait for SOBS to be unset */
-	wait_for_ctrl_irq(ctrl);
+	/* Wait क्रम SOBS to be unset */
+	रुको_क्रम_ctrl_irq(ctrl);
 
 	mutex_unlock(&ctrl->crit_sect);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	p_slot = cpqhp_find_slot(ctrl, hp_slot + ctrl->slot_device_offset);
 
@@ -1479,51 +1480,51 @@ static u32 board_added(struct pci_func *func, struct controller *ctrl)
 	dbg("%s: before set_SOGO\n", __func__);
 	set_SOGO(ctrl);
 
-	/* Wait for SOBS to be unset */
+	/* Wait क्रम SOBS to be unset */
 	dbg("%s: before wait_for_ctrl_irq\n", __func__);
-	wait_for_ctrl_irq(ctrl);
+	रुको_क्रम_ctrl_irq(ctrl);
 	dbg("%s: after wait_for_ctrl_irq\n", __func__);
 
 	dbg("%s: before up\n", __func__);
 	mutex_unlock(&ctrl->crit_sect);
 	dbg("%s: after up\n", __func__);
 
-	/* Wait for ~1 second because of hot plug spec */
+	/* Wait क्रम ~1 second because of hot plug spec */
 	dbg("%s: before long_delay\n", __func__);
-	long_delay(1*HZ);
+	दीर्घ_delay(1*HZ);
 	dbg("%s: after long_delay\n", __func__);
 
 	dbg("%s: func status = %x\n", __func__, func->status);
-	/* Check for a power fault */
-	if (func->status == 0xFF) {
-		/* power fault occurred, but it was benign */
-		temp_register = 0xFFFFFFFF;
-		dbg("%s: temp register set to %x by power fault\n", __func__, temp_register);
+	/* Check क्रम a घातer fault */
+	अगर (func->status == 0xFF) अणु
+		/* घातer fault occurred, but it was benign */
+		temp_रेजिस्टर = 0xFFFFFFFF;
+		dbg("%s: temp register set to %x by power fault\n", __func__, temp_रेजिस्टर);
 		rc = POWER_FAILURE;
 		func->status = 0;
-	} else {
-		/* Get vendor/device ID u32 */
+	पूर्ण अन्यथा अणु
+		/* Get venकरोr/device ID u32 */
 		ctrl->pci_bus->number = func->bus;
-		rc = pci_bus_read_config_dword(ctrl->pci_bus, PCI_DEVFN(func->device, func->function), PCI_VENDOR_ID, &temp_register);
+		rc = pci_bus_पढ़ो_config_dword(ctrl->pci_bus, PCI_DEVFN(func->device, func->function), PCI_VENDOR_ID, &temp_रेजिस्टर);
 		dbg("%s: pci_read_config_dword returns %d\n", __func__, rc);
-		dbg("%s: temp_register is %x\n", __func__, temp_register);
+		dbg("%s: temp_register is %x\n", __func__, temp_रेजिस्टर);
 
-		if (rc != 0) {
+		अगर (rc != 0) अणु
 			/* Something's wrong here */
-			temp_register = 0xFFFFFFFF;
-			dbg("%s: temp register set to %x by error\n", __func__, temp_register);
-		}
-		/* Preset return code.  It will be changed later if things go okay. */
+			temp_रेजिस्टर = 0xFFFFFFFF;
+			dbg("%s: temp register set to %x by error\n", __func__, temp_रेजिस्टर);
+		पूर्ण
+		/* Preset वापस code.  It will be changed later अगर things go okay. */
 		rc = NO_ADAPTER_PRESENT;
-	}
+	पूर्ण
 
 	/* All F's is an empty slot or an invalid board */
-	if (temp_register != 0xFFFFFFFF) {
+	अगर (temp_रेजिस्टर != 0xFFFFFFFF) अणु
 		res_lists.io_head = ctrl->io_head;
 		res_lists.mem_head = ctrl->mem_head;
 		res_lists.p_mem_head = ctrl->p_mem_head;
 		res_lists.bus_head = ctrl->bus_head;
-		res_lists.irqs = NULL;
+		res_lists.irqs = शून्य;
 
 		rc = configure_new_device(ctrl, func, 0, &res_lists);
 
@@ -1538,7 +1539,7 @@ static u32 board_added(struct pci_func *func, struct controller *ctrl)
 		cpqhp_resource_sort_and_combine(&(ctrl->io_head));
 		cpqhp_resource_sort_and_combine(&(ctrl->bus_head));
 
-		if (rc) {
+		अगर (rc) अणु
 			mutex_lock(&ctrl->crit_sect);
 
 			amber_LED_on(ctrl, hp_slot);
@@ -1547,29 +1548,29 @@ static u32 board_added(struct pci_func *func, struct controller *ctrl)
 
 			set_SOGO(ctrl);
 
-			/* Wait for SOBS to be unset */
-			wait_for_ctrl_irq(ctrl);
+			/* Wait क्रम SOBS to be unset */
+			रुको_क्रम_ctrl_irq(ctrl);
 
 			mutex_unlock(&ctrl->crit_sect);
-			return rc;
-		} else {
+			वापस rc;
+		पूर्ण अन्यथा अणु
 			cpqhp_save_slot_config(ctrl, func);
-		}
+		पूर्ण
 
 
 		func->status = 0;
-		func->switch_save = 0x10;
+		func->चयन_save = 0x10;
 		func->is_a_board = 0x01;
 
-		/* next, we will instantiate the linux pci_dev structures (with
-		 * appropriate driver notification, if already present) */
+		/* next, we will instantiate the linux pci_dev काष्ठाures (with
+		 * appropriate driver notअगरication, अगर alपढ़ोy present) */
 		dbg("%s: configure linux pci_dev structure\n", __func__);
 		index = 0;
-		do {
+		करो अणु
 			new_slot = cpqhp_slot_find(ctrl->bus, func->device, index++);
-			if (new_slot && !new_slot->pci_dev)
+			अगर (new_slot && !new_slot->pci_dev)
 				cpqhp_configure_device(ctrl, new_slot);
-		} while (new_slot);
+		पूर्ण जबतक (new_slot);
 
 		mutex_lock(&ctrl->crit_sect);
 
@@ -1577,11 +1578,11 @@ static u32 board_added(struct pci_func *func, struct controller *ctrl)
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
 
 		mutex_unlock(&ctrl->crit_sect);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&ctrl->crit_sect);
 
 		amber_LED_on(ctrl, hp_slot);
@@ -1590,67 +1591,67 @@ static u32 board_added(struct pci_func *func, struct controller *ctrl)
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
 
 		mutex_unlock(&ctrl->crit_sect);
 
-		return rc;
-	}
-	return 0;
-}
+		वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /**
- * remove_board - Turns off slot and LEDs
+ * हटाओ_board - Turns off slot and LEDs
  * @func: PCI device/function info
  * @replace_flag: whether replacing or adding a new device
  * @ctrl: target controller
  */
-static u32 remove_board(struct pci_func *func, u32 replace_flag, struct controller *ctrl)
-{
-	int index;
+अटल u32 हटाओ_board(काष्ठा pci_func *func, u32 replace_flag, काष्ठा controller *ctrl)
+अणु
+	पूर्णांक index;
 	u8 skip = 0;
 	u8 device;
 	u8 hp_slot;
 	u8 temp_byte;
 	u32 rc;
-	struct resource_lists res_lists;
-	struct pci_func *temp_func;
+	काष्ठा resource_lists res_lists;
+	काष्ठा pci_func *temp_func;
 
-	if (cpqhp_unconfigure_device(func))
-		return 1;
+	अगर (cpqhp_unconfigure_device(func))
+		वापस 1;
 
 	device = func->device;
 
 	hp_slot = func->device - ctrl->slot_device_offset;
 	dbg("In %s, hp_slot = %d\n", __func__, hp_slot);
 
-	/* When we get here, it is safe to change base address registers.
-	 * We will attempt to save the base address register lengths */
-	if (replace_flag || !ctrl->add_support)
+	/* When we get here, it is safe to change base address रेजिस्टरs.
+	 * We will attempt to save the base address रेजिस्टर lengths */
+	अगर (replace_flag || !ctrl->add_support)
 		rc = cpqhp_save_base_addr_length(ctrl, func);
-	else if (!func->bus_head && !func->mem_head &&
-		 !func->p_mem_head && !func->io_head) {
-		/* Here we check to see if we've saved any of the board's
-		 * resources already.  If so, we'll skip the attempt to
+	अन्यथा अगर (!func->bus_head && !func->mem_head &&
+		 !func->p_mem_head && !func->io_head) अणु
+		/* Here we check to see अगर we've saved any of the board's
+		 * resources alपढ़ोy.  If so, we'll skip the attempt to
 		 * determine what's being used. */
 		index = 0;
 		temp_func = cpqhp_slot_find(func->bus, func->device, index++);
-		while (temp_func) {
-			if (temp_func->bus_head || temp_func->mem_head
-			    || temp_func->p_mem_head || temp_func->io_head) {
+		जबतक (temp_func) अणु
+			अगर (temp_func->bus_head || temp_func->mem_head
+			    || temp_func->p_mem_head || temp_func->io_head) अणु
 				skip = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			temp_func = cpqhp_slot_find(temp_func->bus, temp_func->device, index++);
-		}
+		पूर्ण
 
-		if (!skip)
+		अगर (!skip)
 			rc = cpqhp_save_used_resources(ctrl, func);
-	}
-	/* Change status to shutdown */
-	if (func->is_a_board)
+	पूर्ण
+	/* Change status to shutकरोwn */
+	अगर (func->is_a_board)
 		func->status = 0x01;
 	func->configured = 0;
 
@@ -1661,24 +1662,24 @@ static u32 remove_board(struct pci_func *func, u32 replace_flag, struct controll
 
 	set_SOGO(ctrl);
 
-	/* turn off SERR for slot */
-	temp_byte = readb(ctrl->hpc_reg + SLOT_SERR);
+	/* turn off SERR क्रम slot */
+	temp_byte = पढ़ोb(ctrl->hpc_reg + SLOT_SERR);
 	temp_byte &= ~(0x01 << hp_slot);
-	writeb(temp_byte, ctrl->hpc_reg + SLOT_SERR);
+	ग_लिखोb(temp_byte, ctrl->hpc_reg + SLOT_SERR);
 
-	/* Wait for SOBS to be unset */
-	wait_for_ctrl_irq(ctrl);
+	/* Wait क्रम SOBS to be unset */
+	रुको_क्रम_ctrl_irq(ctrl);
 
 	mutex_unlock(&ctrl->crit_sect);
 
-	if (!replace_flag && ctrl->add_support) {
-		while (func) {
+	अगर (!replace_flag && ctrl->add_support) अणु
+		जबतक (func) अणु
 			res_lists.io_head = ctrl->io_head;
 			res_lists.mem_head = ctrl->mem_head;
 			res_lists.p_mem_head = ctrl->p_mem_head;
 			res_lists.bus_head = ctrl->bus_head;
 
-			cpqhp_return_board_resources(func, &res_lists);
+			cpqhp_वापस_board_resources(func, &res_lists);
 
 			ctrl->io_head = res_lists.io_head;
 			ctrl->mem_head = res_lists.mem_head;
@@ -1690,126 +1691,126 @@ static u32 remove_board(struct pci_func *func, u32 replace_flag, struct controll
 			cpqhp_resource_sort_and_combine(&(ctrl->io_head));
 			cpqhp_resource_sort_and_combine(&(ctrl->bus_head));
 
-			if (is_bridge(func)) {
-				bridge_slot_remove(func);
-			} else
-				slot_remove(func);
+			अगर (is_bridge(func)) अणु
+				bridge_slot_हटाओ(func);
+			पूर्ण अन्यथा
+				slot_हटाओ(func);
 
 			func = cpqhp_slot_find(ctrl->bus, device, 0);
-		}
+		पूर्ण
 
-		/* Setup slot structure with entry for empty slot */
+		/* Setup slot काष्ठाure with entry क्रम empty slot */
 		func = cpqhp_slot_create(ctrl->bus);
 
-		if (func == NULL)
-			return 1;
+		अगर (func == शून्य)
+			वापस 1;
 
 		func->bus = ctrl->bus;
 		func->device = device;
 		func->function = 0;
 		func->configured = 0;
-		func->switch_save = 0x10;
+		func->चयन_save = 0x10;
 		func->is_a_board = 0;
-		func->p_task_event = NULL;
-	}
+		func->p_task_event = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pushbutton_helper_thread(struct timer_list *t)
-{
+अटल व्योम pushbutton_helper_thपढ़ो(काष्ठा समयr_list *t)
+अणु
 	pushbutton_pending = t;
 
-	wake_up_process(cpqhp_event_thread);
-}
+	wake_up_process(cpqhp_event_thपढ़ो);
+पूर्ण
 
 
-/* this is the main worker thread */
-static int event_thread(void *data)
-{
-	struct controller *ctrl;
+/* this is the मुख्य worker thपढ़ो */
+अटल पूर्णांक event_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा controller *ctrl;
 
-	while (1) {
+	जबतक (1) अणु
 		dbg("!!!!event_thread sleeping\n");
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule();
 
-		if (kthread_should_stop())
-			break;
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 		/* Do stuff here */
-		if (pushbutton_pending)
-			cpqhp_pushbutton_thread(pushbutton_pending);
-		else
-			for (ctrl = cpqhp_ctrl_list; ctrl; ctrl = ctrl->next)
-				interrupt_event_handler(ctrl);
-	}
+		अगर (pushbutton_pending)
+			cpqhp_pushbutton_thपढ़ो(pushbutton_pending);
+		अन्यथा
+			क्रम (ctrl = cpqhp_ctrl_list; ctrl; ctrl = ctrl->next)
+				पूर्णांकerrupt_event_handler(ctrl);
+	पूर्ण
 	dbg("event_thread signals exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cpqhp_event_start_thread(void)
-{
-	cpqhp_event_thread = kthread_run(event_thread, NULL, "phpd_event");
-	if (IS_ERR(cpqhp_event_thread)) {
+पूर्णांक cpqhp_event_start_thपढ़ो(व्योम)
+अणु
+	cpqhp_event_thपढ़ो = kthपढ़ो_run(event_thपढ़ो, शून्य, "phpd_event");
+	अगर (IS_ERR(cpqhp_event_thपढ़ो)) अणु
 		err("Can't start up our event thread\n");
-		return PTR_ERR(cpqhp_event_thread);
-	}
+		वापस PTR_ERR(cpqhp_event_thपढ़ो);
+	पूर्ण
 
-	return 0;
-}
-
-
-void cpqhp_event_stop_thread(void)
-{
-	kthread_stop(cpqhp_event_thread);
-}
+	वापस 0;
+पूर्ण
 
 
-static void interrupt_event_handler(struct controller *ctrl)
-{
-	int loop = 0;
-	int change = 1;
-	struct pci_func *func;
+व्योम cpqhp_event_stop_thपढ़ो(व्योम)
+अणु
+	kthपढ़ो_stop(cpqhp_event_thपढ़ो);
+पूर्ण
+
+
+अटल व्योम पूर्णांकerrupt_event_handler(काष्ठा controller *ctrl)
+अणु
+	पूर्णांक loop = 0;
+	पूर्णांक change = 1;
+	काष्ठा pci_func *func;
 	u8 hp_slot;
-	struct slot *p_slot;
+	काष्ठा slot *p_slot;
 
-	while (change) {
+	जबतक (change) अणु
 		change = 0;
 
-		for (loop = 0; loop < 10; loop++) {
+		क्रम (loop = 0; loop < 10; loop++) अणु
 			/* dbg("loop %d\n", loop); */
-			if (ctrl->event_queue[loop].event_type != 0) {
+			अगर (ctrl->event_queue[loop].event_type != 0) अणु
 				hp_slot = ctrl->event_queue[loop].hp_slot;
 
 				func = cpqhp_slot_find(ctrl->bus, (hp_slot + ctrl->slot_device_offset), 0);
-				if (!func)
-					return;
+				अगर (!func)
+					वापस;
 
 				p_slot = cpqhp_find_slot(ctrl, hp_slot + ctrl->slot_device_offset);
-				if (!p_slot)
-					return;
+				अगर (!p_slot)
+					वापस;
 
 				dbg("hp_slot %d, func %p, p_slot %p\n",
 				    hp_slot, func, p_slot);
 
-				if (ctrl->event_queue[loop].event_type == INT_BUTTON_PRESS) {
+				अगर (ctrl->event_queue[loop].event_type == INT_BUTTON_PRESS) अणु
 					dbg("button pressed\n");
-				} else if (ctrl->event_queue[loop].event_type ==
-					   INT_BUTTON_CANCEL) {
+				पूर्ण अन्यथा अगर (ctrl->event_queue[loop].event_type ==
+					   INT_BUTTON_CANCEL) अणु
 					dbg("button cancel\n");
-					del_timer(&p_slot->task_event);
+					del_समयr(&p_slot->task_event);
 
 					mutex_lock(&ctrl->crit_sect);
 
-					if (p_slot->state == BLINKINGOFF_STATE) {
+					अगर (p_slot->state == BLINKINGOFF_STATE) अणु
 						/* slot is on */
 						dbg("turn on green LED\n");
 						green_LED_on(ctrl, hp_slot);
-					} else if (p_slot->state == BLINKINGON_STATE) {
+					पूर्ण अन्यथा अगर (p_slot->state == BLINKINGON_STATE) अणु
 						/* slot is off */
 						dbg("turn off green LED\n");
 						green_LED_off(ctrl, hp_slot);
-					}
+					पूर्ण
 
 					info(msg_button_cancel, p_slot->number);
 
@@ -1819,24 +1820,24 @@ static void interrupt_event_handler(struct controller *ctrl)
 
 					set_SOGO(ctrl);
 
-					/* Wait for SOBS to be unset */
-					wait_for_ctrl_irq(ctrl);
+					/* Wait क्रम SOBS to be unset */
+					रुको_क्रम_ctrl_irq(ctrl);
 
 					mutex_unlock(&ctrl->crit_sect);
-				}
+				पूर्ण
 				/*** button Released (No action on press...) */
-				else if (ctrl->event_queue[loop].event_type == INT_BUTTON_RELEASE) {
+				अन्यथा अगर (ctrl->event_queue[loop].event_type == INT_BUTTON_RELEASE) अणु
 					dbg("button release\n");
 
-					if (is_slot_enabled(ctrl, hp_slot)) {
+					अगर (is_slot_enabled(ctrl, hp_slot)) अणु
 						dbg("slot is on\n");
 						p_slot->state = BLINKINGOFF_STATE;
 						info(msg_button_off, p_slot->number);
-					} else {
+					पूर्ण अन्यथा अणु
 						dbg("slot is off\n");
 						p_slot->state = BLINKINGON_STATE;
 						info(msg_button_on, p_slot->number);
-					}
+					पूर्ण
 					mutex_lock(&ctrl->crit_sect);
 
 					dbg("blink green LED and turn off amber\n");
@@ -1846,136 +1847,136 @@ static void interrupt_event_handler(struct controller *ctrl)
 
 					set_SOGO(ctrl);
 
-					/* Wait for SOBS to be unset */
-					wait_for_ctrl_irq(ctrl);
+					/* Wait क्रम SOBS to be unset */
+					रुको_क्रम_ctrl_irq(ctrl);
 
 					mutex_unlock(&ctrl->crit_sect);
-					timer_setup(&p_slot->task_event,
-						    pushbutton_helper_thread,
+					समयr_setup(&p_slot->task_event,
+						    pushbutton_helper_thपढ़ो,
 						    0);
 					p_slot->hp_slot = hp_slot;
 					p_slot->ctrl = ctrl;
 /*					p_slot->physical_slot = physical_slot; */
-					p_slot->task_event.expires = jiffies + 5 * HZ;   /* 5 second delay */
+					p_slot->task_event.expires = jअगरfies + 5 * HZ;   /* 5 second delay */
 
 					dbg("add_timer p_slot = %p\n", p_slot);
-					add_timer(&p_slot->task_event);
-				}
+					add_समयr(&p_slot->task_event);
+				पूर्ण
 				/***********POWER FAULT */
-				else if (ctrl->event_queue[loop].event_type == INT_POWER_FAULT) {
+				अन्यथा अगर (ctrl->event_queue[loop].event_type == INT_POWER_FAULT) अणु
 					dbg("power fault\n");
-				}
+				पूर्ण
 
 				ctrl->event_queue[loop].event_type = 0;
 
 				change = 1;
-			}
-		}		/* End of FOR loop */
-	}
-}
+			पूर्ण
+		पूर्ण		/* End of FOR loop */
+	पूर्ण
+पूर्ण
 
 
 /**
- * cpqhp_pushbutton_thread - handle pushbutton events
- * @slot: target slot (struct)
+ * cpqhp_pushbutton_thपढ़ो - handle pushbutton events
+ * @slot: target slot (काष्ठा)
  *
- * Scheduled procedure to handle blocking stuff for the pushbuttons.
- * Handles all pending events and exits.
+ * Scheduled procedure to handle blocking stuff क्रम the pushbuttons.
+ * Handles all pending events and निकासs.
  */
-void cpqhp_pushbutton_thread(struct timer_list *t)
-{
+व्योम cpqhp_pushbutton_thपढ़ो(काष्ठा समयr_list *t)
+अणु
 	u8 hp_slot;
 	u8 device;
-	struct pci_func *func;
-	struct slot *p_slot = from_timer(p_slot, t, task_event);
-	struct controller *ctrl = (struct controller *) p_slot->ctrl;
+	काष्ठा pci_func *func;
+	काष्ठा slot *p_slot = from_समयr(p_slot, t, task_event);
+	काष्ठा controller *ctrl = (काष्ठा controller *) p_slot->ctrl;
 
-	pushbutton_pending = NULL;
+	pushbutton_pending = शून्य;
 	hp_slot = p_slot->hp_slot;
 
 	device = p_slot->device;
 
-	if (is_slot_enabled(ctrl, hp_slot)) {
+	अगर (is_slot_enabled(ctrl, hp_slot)) अणु
 		p_slot->state = POWEROFF_STATE;
-		/* power Down board */
+		/* घातer Down board */
 		func = cpqhp_slot_find(p_slot->bus, p_slot->device, 0);
 		dbg("In power_down_board, func = %p, ctrl = %p\n", func, ctrl);
-		if (!func) {
+		अगर (!func) अणु
 			dbg("Error! func NULL in %s\n", __func__);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (cpqhp_process_SS(ctrl, func) != 0) {
+		अगर (cpqhp_process_SS(ctrl, func) != 0) अणु
 			amber_LED_on(ctrl, hp_slot);
 			green_LED_on(ctrl, hp_slot);
 
 			set_SOGO(ctrl);
 
-			/* Wait for SOBS to be unset */
-			wait_for_ctrl_irq(ctrl);
-		}
+			/* Wait क्रम SOBS to be unset */
+			रुको_क्रम_ctrl_irq(ctrl);
+		पूर्ण
 
 		p_slot->state = STATIC_STATE;
-	} else {
+	पूर्ण अन्यथा अणु
 		p_slot->state = POWERON_STATE;
 		/* slot is off */
 
 		func = cpqhp_slot_find(p_slot->bus, p_slot->device, 0);
 		dbg("In add_board, func = %p, ctrl = %p\n", func, ctrl);
-		if (!func) {
+		अगर (!func) अणु
 			dbg("Error! func NULL in %s\n", __func__);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (ctrl != NULL) {
-			if (cpqhp_process_SI(ctrl, func) != 0) {
+		अगर (ctrl != शून्य) अणु
+			अगर (cpqhp_process_SI(ctrl, func) != 0) अणु
 				amber_LED_on(ctrl, hp_slot);
 				green_LED_off(ctrl, hp_slot);
 
 				set_SOGO(ctrl);
 
-				/* Wait for SOBS to be unset */
-				wait_for_ctrl_irq(ctrl);
-			}
-		}
+				/* Wait क्रम SOBS to be unset */
+				रुको_क्रम_ctrl_irq(ctrl);
+			पूर्ण
+		पूर्ण
 
 		p_slot->state = STATIC_STATE;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-int cpqhp_process_SI(struct controller *ctrl, struct pci_func *func)
-{
+पूर्णांक cpqhp_process_SI(काष्ठा controller *ctrl, काष्ठा pci_func *func)
+अणु
 	u8 device, hp_slot;
 	u16 temp_word;
 	u32 tempdword;
-	int rc;
-	struct slot *p_slot;
-	int physical_slot = 0;
+	पूर्णांक rc;
+	काष्ठा slot *p_slot;
+	पूर्णांक physical_slot = 0;
 
 	tempdword = 0;
 
 	device = func->device;
 	hp_slot = device - ctrl->slot_device_offset;
 	p_slot = cpqhp_find_slot(ctrl, device);
-	if (p_slot)
+	अगर (p_slot)
 		physical_slot = p_slot->number;
 
-	/* Check to see if the interlock is closed */
-	tempdword = readl(ctrl->hpc_reg + INT_INPUT_CLEAR);
+	/* Check to see अगर the पूर्णांकerlock is बंदd */
+	tempdword = पढ़ोl(ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-	if (tempdword & (0x01 << hp_slot))
-		return 1;
+	अगर (tempdword & (0x01 << hp_slot))
+		वापस 1;
 
-	if (func->is_a_board) {
+	अगर (func->is_a_board) अणु
 		rc = board_replaced(func, ctrl);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* add board */
-		slot_remove(func);
+		slot_हटाओ(func);
 
 		func = cpqhp_slot_create(ctrl->bus);
-		if (func == NULL)
-			return 1;
+		अगर (func == शून्य)
+			वापस 1;
 
 		func->bus = ctrl->bus;
 		func->device = device;
@@ -1983,29 +1984,29 @@ int cpqhp_process_SI(struct controller *ctrl, struct pci_func *func)
 		func->configured = 0;
 		func->is_a_board = 1;
 
-		/* We have to save the presence info for these slots */
-		temp_word = ctrl->ctrl_int_comp >> 16;
+		/* We have to save the presence info क्रम these slots */
+		temp_word = ctrl->ctrl_पूर्णांक_comp >> 16;
 		func->presence_save = (temp_word >> hp_slot) & 0x01;
 		func->presence_save |= (temp_word >> (hp_slot + 7)) & 0x02;
 
-		if (ctrl->ctrl_int_comp & (0x1L << hp_slot)) {
-			func->switch_save = 0;
-		} else {
-			func->switch_save = 0x10;
-		}
+		अगर (ctrl->ctrl_पूर्णांक_comp & (0x1L << hp_slot)) अणु
+			func->चयन_save = 0;
+		पूर्ण अन्यथा अणु
+			func->चयन_save = 0x10;
+		पूर्ण
 
 		rc = board_added(func, ctrl);
-		if (rc) {
-			if (is_bridge(func)) {
-				bridge_slot_remove(func);
-			} else
-				slot_remove(func);
+		अगर (rc) अणु
+			अगर (is_bridge(func)) अणु
+				bridge_slot_हटाओ(func);
+			पूर्ण अन्यथा
+				slot_हटाओ(func);
 
-			/* Setup slot structure with entry for empty slot */
+			/* Setup slot काष्ठाure with entry क्रम empty slot */
 			func = cpqhp_slot_create(ctrl->bus);
 
-			if (func == NULL)
-				return 1;
+			अगर (func == शून्य)
+				वापस 1;
 
 			func->bus = ctrl->bus;
 			func->device = device;
@@ -2013,119 +2014,119 @@ int cpqhp_process_SI(struct controller *ctrl, struct pci_func *func)
 			func->configured = 0;
 			func->is_a_board = 0;
 
-			/* We have to save the presence info for these slots */
-			temp_word = ctrl->ctrl_int_comp >> 16;
+			/* We have to save the presence info क्रम these slots */
+			temp_word = ctrl->ctrl_पूर्णांक_comp >> 16;
 			func->presence_save = (temp_word >> hp_slot) & 0x01;
 			func->presence_save |=
 			(temp_word >> (hp_slot + 7)) & 0x02;
 
-			if (ctrl->ctrl_int_comp & (0x1L << hp_slot)) {
-				func->switch_save = 0;
-			} else {
-				func->switch_save = 0x10;
-			}
-		}
-	}
+			अगर (ctrl->ctrl_पूर्णांक_comp & (0x1L << hp_slot)) अणु
+				func->चयन_save = 0;
+			पूर्ण अन्यथा अणु
+				func->चयन_save = 0x10;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (rc)
+	अगर (rc)
 		dbg("%s: rc = %d\n", __func__, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-int cpqhp_process_SS(struct controller *ctrl, struct pci_func *func)
-{
+पूर्णांक cpqhp_process_SS(काष्ठा controller *ctrl, काष्ठा pci_func *func)
+अणु
 	u8 device, class_code, header_type, BCR;
 	u8 index = 0;
 	u8 replace_flag;
 	u32 rc = 0;
-	unsigned int devfn;
-	struct slot *p_slot;
-	struct pci_bus *pci_bus = ctrl->pci_bus;
-	int physical_slot = 0;
+	अचिन्हित पूर्णांक devfn;
+	काष्ठा slot *p_slot;
+	काष्ठा pci_bus *pci_bus = ctrl->pci_bus;
+	पूर्णांक physical_slot = 0;
 
 	device = func->device;
 	func = cpqhp_slot_find(ctrl->bus, device, index++);
 	p_slot = cpqhp_find_slot(ctrl, device);
-	if (p_slot)
+	अगर (p_slot)
 		physical_slot = p_slot->number;
 
 	/* Make sure there are no video controllers here */
-	while (func && !rc) {
+	जबतक (func && !rc) अणु
 		pci_bus->number = func->bus;
 		devfn = PCI_DEVFN(func->device, func->function);
 
 		/* Check the Class Code */
-		rc = pci_bus_read_config_byte(pci_bus, devfn, 0x0B, &class_code);
-		if (rc)
-			return rc;
+		rc = pci_bus_पढ़ो_config_byte(pci_bus, devfn, 0x0B, &class_code);
+		अगर (rc)
+			वापस rc;
 
-		if (class_code == PCI_BASE_CLASS_DISPLAY) {
+		अगर (class_code == PCI_BASE_CLASS_DISPLAY) अणु
 			/* Display/Video adapter (not supported) */
 			rc = REMOVE_NOT_SUPPORTED;
-		} else {
-			/* See if it's a bridge */
-			rc = pci_bus_read_config_byte(pci_bus, devfn, PCI_HEADER_TYPE, &header_type);
-			if (rc)
-				return rc;
+		पूर्ण अन्यथा अणु
+			/* See अगर it's a bridge */
+			rc = pci_bus_पढ़ो_config_byte(pci_bus, devfn, PCI_HEADER_TYPE, &header_type);
+			अगर (rc)
+				वापस rc;
 
 			/* If it's a bridge, check the VGA Enable bit */
-			if ((header_type & 0x7F) == PCI_HEADER_TYPE_BRIDGE) {
-				rc = pci_bus_read_config_byte(pci_bus, devfn, PCI_BRIDGE_CONTROL, &BCR);
-				if (rc)
-					return rc;
+			अगर ((header_type & 0x7F) == PCI_HEADER_TYPE_BRIDGE) अणु
+				rc = pci_bus_पढ़ो_config_byte(pci_bus, devfn, PCI_BRIDGE_CONTROL, &BCR);
+				अगर (rc)
+					वापस rc;
 
-				/* If the VGA Enable bit is set, remove isn't
+				/* If the VGA Enable bit is set, हटाओ isn't
 				 * supported */
-				if (BCR & PCI_BRIDGE_CTL_VGA)
+				अगर (BCR & PCI_BRIDGE_CTL_VGA)
 					rc = REMOVE_NOT_SUPPORTED;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		func = cpqhp_slot_find(ctrl->bus, device, index++);
-	}
+	पूर्ण
 
 	func = cpqhp_slot_find(ctrl->bus, device, 0);
-	if ((func != NULL) && !rc) {
-		/* FIXME: Replace flag should be passed into process_SS */
+	अगर ((func != शून्य) && !rc) अणु
+		/* FIXME: Replace flag should be passed पूर्णांकo process_SS */
 		replace_flag = !(ctrl->add_support);
-		rc = remove_board(func, replace_flag, ctrl);
-	} else if (!rc) {
+		rc = हटाओ_board(func, replace_flag, ctrl);
+	पूर्ण अन्यथा अगर (!rc) अणु
 		rc = 1;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * switch_leds - switch the leds, go from one site to the other.
+ * चयन_leds - चयन the leds, go from one site to the other.
  * @ctrl: controller to use
  * @num_of_slots: number of slots to use
  * @work_LED: LED control value
  * @direction: 1 to start from the left side, 0 to start right.
  */
-static void switch_leds(struct controller *ctrl, const int num_of_slots,
-			u32 *work_LED, const int direction)
-{
-	int loop;
+अटल व्योम चयन_leds(काष्ठा controller *ctrl, स्थिर पूर्णांक num_of_slots,
+			u32 *work_LED, स्थिर पूर्णांक direction)
+अणु
+	पूर्णांक loop;
 
-	for (loop = 0; loop < num_of_slots; loop++) {
-		if (direction)
+	क्रम (loop = 0; loop < num_of_slots; loop++) अणु
+		अगर (direction)
 			*work_LED = *work_LED >> 1;
-		else
+		अन्यथा
 			*work_LED = *work_LED << 1;
-		writel(*work_LED, ctrl->hpc_reg + LED_CONTROL);
+		ग_लिखोl(*work_LED, ctrl->hpc_reg + LED_CONTROL);
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOGO interrupt */
-		wait_for_ctrl_irq(ctrl);
+		/* Wait क्रम SOGO पूर्णांकerrupt */
+		रुको_क्रम_ctrl_irq(ctrl);
 
-		/* Get ready for next iteration */
-		long_delay((2*HZ)/10);
-	}
-}
+		/* Get पढ़ोy क्रम next iteration */
+		दीर्घ_delay((2*HZ)/10);
+	पूर्ण
+पूर्ण
 
 /**
  * cpqhp_hardware_test - runs hardware tests
@@ -2134,153 +2135,153 @@ static void switch_leds(struct controller *ctrl, const int num_of_slots,
  *
  * For hot plug ctrl folks to play with.
  */
-int cpqhp_hardware_test(struct controller *ctrl, int test_num)
-{
+पूर्णांक cpqhp_hardware_test(काष्ठा controller *ctrl, पूर्णांक test_num)
+अणु
 	u32 save_LED;
 	u32 work_LED;
-	int loop;
-	int num_of_slots;
+	पूर्णांक loop;
+	पूर्णांक num_of_slots;
 
-	num_of_slots = readb(ctrl->hpc_reg + SLOT_MASK) & 0x0f;
+	num_of_slots = पढ़ोb(ctrl->hpc_reg + SLOT_MASK) & 0x0f;
 
-	switch (test_num) {
-	case 1:
+	चयन (test_num) अणु
+	हाल 1:
 		/* Do stuff here! */
 
 		/* Do that funky LED thing */
 		/* so we can restore them later */
-		save_LED = readl(ctrl->hpc_reg + LED_CONTROL);
+		save_LED = पढ़ोl(ctrl->hpc_reg + LED_CONTROL);
 		work_LED = 0x01010101;
-		switch_leds(ctrl, num_of_slots, &work_LED, 0);
-		switch_leds(ctrl, num_of_slots, &work_LED, 1);
-		switch_leds(ctrl, num_of_slots, &work_LED, 0);
-		switch_leds(ctrl, num_of_slots, &work_LED, 1);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 0);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 1);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 0);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 1);
 
 		work_LED = 0x01010000;
-		writel(work_LED, ctrl->hpc_reg + LED_CONTROL);
-		switch_leds(ctrl, num_of_slots, &work_LED, 0);
-		switch_leds(ctrl, num_of_slots, &work_LED, 1);
+		ग_लिखोl(work_LED, ctrl->hpc_reg + LED_CONTROL);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 0);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 1);
 		work_LED = 0x00000101;
-		writel(work_LED, ctrl->hpc_reg + LED_CONTROL);
-		switch_leds(ctrl, num_of_slots, &work_LED, 0);
-		switch_leds(ctrl, num_of_slots, &work_LED, 1);
+		ग_लिखोl(work_LED, ctrl->hpc_reg + LED_CONTROL);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 0);
+		चयन_leds(ctrl, num_of_slots, &work_LED, 1);
 
 		work_LED = 0x01010000;
-		writel(work_LED, ctrl->hpc_reg + LED_CONTROL);
-		for (loop = 0; loop < num_of_slots; loop++) {
+		ग_लिखोl(work_LED, ctrl->hpc_reg + LED_CONTROL);
+		क्रम (loop = 0; loop < num_of_slots; loop++) अणु
 			set_SOGO(ctrl);
 
-			/* Wait for SOGO interrupt */
-			wait_for_ctrl_irq(ctrl);
+			/* Wait क्रम SOGO पूर्णांकerrupt */
+			रुको_क्रम_ctrl_irq(ctrl);
 
-			/* Get ready for next iteration */
-			long_delay((3*HZ)/10);
+			/* Get पढ़ोy क्रम next iteration */
+			दीर्घ_delay((3*HZ)/10);
 			work_LED = work_LED >> 16;
-			writel(work_LED, ctrl->hpc_reg + LED_CONTROL);
+			ग_लिखोl(work_LED, ctrl->hpc_reg + LED_CONTROL);
 
 			set_SOGO(ctrl);
 
-			/* Wait for SOGO interrupt */
-			wait_for_ctrl_irq(ctrl);
+			/* Wait क्रम SOGO पूर्णांकerrupt */
+			रुको_क्रम_ctrl_irq(ctrl);
 
-			/* Get ready for next iteration */
-			long_delay((3*HZ)/10);
+			/* Get पढ़ोy क्रम next iteration */
+			दीर्घ_delay((3*HZ)/10);
 			work_LED = work_LED << 16;
-			writel(work_LED, ctrl->hpc_reg + LED_CONTROL);
+			ग_लिखोl(work_LED, ctrl->hpc_reg + LED_CONTROL);
 			work_LED = work_LED << 1;
-			writel(work_LED, ctrl->hpc_reg + LED_CONTROL);
-		}
+			ग_लिखोl(work_LED, ctrl->hpc_reg + LED_CONTROL);
+		पूर्ण
 
 		/* put it back the way it was */
-		writel(save_LED, ctrl->hpc_reg + LED_CONTROL);
+		ग_लिखोl(save_LED, ctrl->hpc_reg + LED_CONTROL);
 
 		set_SOGO(ctrl);
 
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
-		break;
-	case 2:
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
+		अवरोध;
+	हाल 2:
 		/* Do other stuff here! */
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		/* and more... */
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /**
- * configure_new_device - Configures the PCI header information of one board.
- * @ctrl: pointer to controller structure
- * @func: pointer to function structure
- * @behind_bridge: 1 if this is a recursive call, 0 if not
- * @resources: pointer to set of resource lists
+ * configure_new_device - Configures the PCI header inक्रमmation of one board.
+ * @ctrl: poपूर्णांकer to controller काष्ठाure
+ * @func: poपूर्णांकer to function काष्ठाure
+ * @behind_bridge: 1 अगर this is a recursive call, 0 अगर not
+ * @resources: poपूर्णांकer to set of resource lists
  *
- * Returns 0 if success.
+ * Returns 0 अगर success.
  */
-static u32 configure_new_device(struct controller  *ctrl, struct pci_func  *func,
-				 u8 behind_bridge, struct resource_lists  *resources)
-{
+अटल u32 configure_new_device(काष्ठा controller  *ctrl, काष्ठा pci_func  *func,
+				 u8 behind_bridge, काष्ठा resource_lists  *resources)
+अणु
 	u8 temp_byte, function, max_functions, stop_it;
-	int rc;
+	पूर्णांक rc;
 	u32 ID;
-	struct pci_func *new_slot;
-	int index;
+	काष्ठा pci_func *new_slot;
+	पूर्णांक index;
 
 	new_slot = func;
 
 	dbg("%s\n", __func__);
-	/* Check for Multi-function device */
+	/* Check क्रम Multi-function device */
 	ctrl->pci_bus->number = func->bus;
-	rc = pci_bus_read_config_byte(ctrl->pci_bus, PCI_DEVFN(func->device, func->function), 0x0E, &temp_byte);
-	if (rc) {
+	rc = pci_bus_पढ़ो_config_byte(ctrl->pci_bus, PCI_DEVFN(func->device, func->function), 0x0E, &temp_byte);
+	अगर (rc) अणु
 		dbg("%s: rc = %d\n", __func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (temp_byte & 0x80)	/* Multi-function device */
+	अगर (temp_byte & 0x80)	/* Multi-function device */
 		max_functions = 8;
-	else
+	अन्यथा
 		max_functions = 1;
 
 	function = 0;
 
-	do {
+	करो अणु
 		rc = configure_new_function(ctrl, new_slot, behind_bridge, resources);
 
-		if (rc) {
+		अगर (rc) अणु
 			dbg("configure_new_function failed %d\n", rc);
 			index = 0;
 
-			while (new_slot) {
+			जबतक (new_slot) अणु
 				new_slot = cpqhp_slot_find(new_slot->bus, new_slot->device, index++);
 
-				if (new_slot)
-					cpqhp_return_board_resources(new_slot, resources);
-			}
+				अगर (new_slot)
+					cpqhp_वापस_board_resources(new_slot, resources);
+			पूर्ण
 
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
 		function++;
 
 		stop_it = 0;
 
 		/* The following loop skips to the next present function
-		 * and creates a board structure */
+		 * and creates a board काष्ठाure */
 
-		while ((function < max_functions) && (!stop_it)) {
-			pci_bus_read_config_dword(ctrl->pci_bus, PCI_DEVFN(func->device, function), 0x00, &ID);
+		जबतक ((function < max_functions) && (!stop_it)) अणु
+			pci_bus_पढ़ो_config_dword(ctrl->pci_bus, PCI_DEVFN(func->device, function), 0x00, &ID);
 
-			if (ID == 0xFFFFFFFF) {
+			अगर (ID == 0xFFFFFFFF) अणु
 				function++;
-			} else {
-				/* Setup slot structure. */
+			पूर्ण अन्यथा अणु
+				/* Setup slot काष्ठाure. */
 				new_slot = cpqhp_slot_create(func->bus);
 
-				if (new_slot == NULL)
-					return 1;
+				अगर (new_slot == शून्य)
+					वापस 1;
 
 				new_slot->bus = func->bus;
 				new_slot->device = func->device;
@@ -2289,37 +2290,37 @@ static u32 configure_new_device(struct controller  *ctrl, struct pci_func  *func
 				new_slot->status = 0;
 
 				stop_it++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	} while (function < max_functions);
+	पूर्ण जबतक (function < max_functions);
 	dbg("returning from configure_new_device\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * Configuration logic that involves the hotplug data structures and
+ * Configuration logic that involves the hotplug data काष्ठाures and
  * their bookkeeping
  */
 
 
 /**
- * configure_new_function - Configures the PCI header information of one device
- * @ctrl: pointer to controller structure
- * @func: pointer to function structure
- * @behind_bridge: 1 if this is a recursive call, 0 if not
- * @resources: pointer to set of resource lists
+ * configure_new_function - Configures the PCI header inक्रमmation of one device
+ * @ctrl: poपूर्णांकer to controller काष्ठाure
+ * @func: poपूर्णांकer to function काष्ठाure
+ * @behind_bridge: 1 अगर this is a recursive call, 0 अगर not
+ * @resources: poपूर्णांकer to set of resource lists
  *
- * Calls itself recursively for bridged devices.
- * Returns 0 if success.
+ * Calls itself recursively क्रम bridged devices.
+ * Returns 0 अगर success.
  */
-static int configure_new_function(struct controller *ctrl, struct pci_func *func,
+अटल पूर्णांक configure_new_function(काष्ठा controller *ctrl, काष्ठा pci_func *func,
 				   u8 behind_bridge,
-				   struct resource_lists *resources)
-{
-	int cloop;
+				   काष्ठा resource_lists *resources)
+अणु
+	पूर्णांक cloop;
 	u8 IRQ = 0;
 	u8 temp_byte;
 	u8 device;
@@ -2328,86 +2329,86 @@ static int configure_new_function(struct controller *ctrl, struct pci_func *func
 	u16 temp_word;
 	u32 temp_dword;
 	u32 rc;
-	u32 temp_register;
+	u32 temp_रेजिस्टर;
 	u32 base;
 	u32 ID;
-	unsigned int devfn;
-	struct pci_resource *mem_node;
-	struct pci_resource *p_mem_node;
-	struct pci_resource *io_node;
-	struct pci_resource *bus_node;
-	struct pci_resource *hold_mem_node;
-	struct pci_resource *hold_p_mem_node;
-	struct pci_resource *hold_IO_node;
-	struct pci_resource *hold_bus_node;
-	struct irq_mapping irqs;
-	struct pci_func *new_slot;
-	struct pci_bus *pci_bus;
-	struct resource_lists temp_resources;
+	अचिन्हित पूर्णांक devfn;
+	काष्ठा pci_resource *mem_node;
+	काष्ठा pci_resource *p_mem_node;
+	काष्ठा pci_resource *io_node;
+	काष्ठा pci_resource *bus_node;
+	काष्ठा pci_resource *hold_mem_node;
+	काष्ठा pci_resource *hold_p_mem_node;
+	काष्ठा pci_resource *hold_IO_node;
+	काष्ठा pci_resource *hold_bus_node;
+	काष्ठा irq_mapping irqs;
+	काष्ठा pci_func *new_slot;
+	काष्ठा pci_bus *pci_bus;
+	काष्ठा resource_lists temp_resources;
 
 	pci_bus = ctrl->pci_bus;
 	pci_bus->number = func->bus;
 	devfn = PCI_DEVFN(func->device, func->function);
 
-	/* Check for Bridge */
-	rc = pci_bus_read_config_byte(pci_bus, devfn, PCI_HEADER_TYPE, &temp_byte);
-	if (rc)
-		return rc;
+	/* Check क्रम Bridge */
+	rc = pci_bus_पढ़ो_config_byte(pci_bus, devfn, PCI_HEADER_TYPE, &temp_byte);
+	अगर (rc)
+		वापस rc;
 
-	if ((temp_byte & 0x7F) == PCI_HEADER_TYPE_BRIDGE) {
+	अगर ((temp_byte & 0x7F) == PCI_HEADER_TYPE_BRIDGE) अणु
 		/* set Primary bus */
 		dbg("set Primary bus = %d\n", func->bus);
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_PRIMARY_BUS, func->bus);
-		if (rc)
-			return rc;
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_PRIMARY_BUS, func->bus);
+		अगर (rc)
+			वापस rc;
 
 		/* find range of buses to use */
 		dbg("find ranges of buses to use\n");
 		bus_node = get_max_resource(&(resources->bus_head), 1);
 
-		/* If we don't have any buses to allocate, we can't continue */
-		if (!bus_node)
-			return -ENOMEM;
+		/* If we करोn't have any buses to allocate, we can't जारी */
+		अगर (!bus_node)
+			वापस -ENOMEM;
 
 		/* set Secondary bus */
 		temp_byte = bus_node->base;
 		dbg("set Secondary bus = %d\n", bus_node->base);
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_SECONDARY_BUS, temp_byte);
-		if (rc)
-			return rc;
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_SECONDARY_BUS, temp_byte);
+		अगर (rc)
+			वापस rc;
 
 		/* set subordinate bus */
 		temp_byte = bus_node->base + bus_node->length - 1;
 		dbg("set subordinate bus = %d\n", bus_node->base + bus_node->length - 1);
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_SUBORDINATE_BUS, temp_byte);
-		if (rc)
-			return rc;
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_SUBORDINATE_BUS, temp_byte);
+		अगर (rc)
+			वापस rc;
 
 		/* set subordinate Latency Timer and base Latency Timer */
 		temp_byte = 0x40;
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_SEC_LATENCY_TIMER, temp_byte);
-		if (rc)
-			return rc;
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_LATENCY_TIMER, temp_byte);
-		if (rc)
-			return rc;
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_SEC_LATENCY_TIMER, temp_byte);
+		अगर (rc)
+			वापस rc;
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_LATENCY_TIMER, temp_byte);
+		अगर (rc)
+			वापस rc;
 
 		/* set Cache Line size */
 		temp_byte = 0x08;
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_CACHE_LINE_SIZE, temp_byte);
-		if (rc)
-			return rc;
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_CACHE_LINE_SIZE, temp_byte);
+		अगर (rc)
+			वापस rc;
 
-		/* Setup the IO, memory, and prefetchable windows */
+		/* Setup the IO, memory, and prefetchable winकरोws */
 		io_node = get_max_resource(&(resources->io_head), 0x1000);
-		if (!io_node)
-			return -ENOMEM;
+		अगर (!io_node)
+			वापस -ENOMEM;
 		mem_node = get_max_resource(&(resources->mem_head), 0x100000);
-		if (!mem_node)
-			return -ENOMEM;
+		अगर (!mem_node)
+			वापस -ENOMEM;
 		p_mem_node = get_max_resource(&(resources->p_mem_head), 0x100000);
-		if (!p_mem_node)
-			return -ENOMEM;
+		अगर (!p_mem_node)
+			वापस -ENOMEM;
 		dbg("Setup the IO, memory, and prefetchable windows\n");
 		dbg("io_node\n");
 		dbg("(base, len, next) (%x, %x, %p)\n", io_node->base,
@@ -2420,111 +2421,111 @@ static int configure_new_function(struct controller *ctrl, struct pci_func *func
 					p_mem_node->length, p_mem_node->next);
 
 		/* set up the IRQ info */
-		if (!resources->irqs) {
+		अगर (!resources->irqs) अणु
 			irqs.barber_pole = 0;
-			irqs.interrupt[0] = 0;
-			irqs.interrupt[1] = 0;
-			irqs.interrupt[2] = 0;
-			irqs.interrupt[3] = 0;
+			irqs.पूर्णांकerrupt[0] = 0;
+			irqs.पूर्णांकerrupt[1] = 0;
+			irqs.पूर्णांकerrupt[2] = 0;
+			irqs.पूर्णांकerrupt[3] = 0;
 			irqs.valid_INT = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			irqs.barber_pole = resources->irqs->barber_pole;
-			irqs.interrupt[0] = resources->irqs->interrupt[0];
-			irqs.interrupt[1] = resources->irqs->interrupt[1];
-			irqs.interrupt[2] = resources->irqs->interrupt[2];
-			irqs.interrupt[3] = resources->irqs->interrupt[3];
+			irqs.पूर्णांकerrupt[0] = resources->irqs->पूर्णांकerrupt[0];
+			irqs.पूर्णांकerrupt[1] = resources->irqs->पूर्णांकerrupt[1];
+			irqs.पूर्णांकerrupt[2] = resources->irqs->पूर्णांकerrupt[2];
+			irqs.पूर्णांकerrupt[3] = resources->irqs->पूर्णांकerrupt[3];
 			irqs.valid_INT = resources->irqs->valid_INT;
-		}
+		पूर्ण
 
 		/* set up resource lists that are now aligned on top and bottom
-		 * for anything behind the bridge. */
+		 * क्रम anything behind the bridge. */
 		temp_resources.bus_head = bus_node;
 		temp_resources.io_head = io_node;
 		temp_resources.mem_head = mem_node;
 		temp_resources.p_mem_head = p_mem_node;
 		temp_resources.irqs = &irqs;
 
-		/* Make copies of the nodes we are going to pass down so that
-		 * if there is a problem,we can just use these to free resources
+		/* Make copies of the nodes we are going to pass करोwn so that
+		 * अगर there is a problem,we can just use these to मुक्त resources
 		 */
-		hold_bus_node = kmalloc(sizeof(*hold_bus_node), GFP_KERNEL);
-		hold_IO_node = kmalloc(sizeof(*hold_IO_node), GFP_KERNEL);
-		hold_mem_node = kmalloc(sizeof(*hold_mem_node), GFP_KERNEL);
-		hold_p_mem_node = kmalloc(sizeof(*hold_p_mem_node), GFP_KERNEL);
+		hold_bus_node = kदो_स्मृति(माप(*hold_bus_node), GFP_KERNEL);
+		hold_IO_node = kदो_स्मृति(माप(*hold_IO_node), GFP_KERNEL);
+		hold_mem_node = kदो_स्मृति(माप(*hold_mem_node), GFP_KERNEL);
+		hold_p_mem_node = kदो_स्मृति(माप(*hold_p_mem_node), GFP_KERNEL);
 
-		if (!hold_bus_node || !hold_IO_node || !hold_mem_node || !hold_p_mem_node) {
-			kfree(hold_bus_node);
-			kfree(hold_IO_node);
-			kfree(hold_mem_node);
-			kfree(hold_p_mem_node);
+		अगर (!hold_bus_node || !hold_IO_node || !hold_mem_node || !hold_p_mem_node) अणु
+			kमुक्त(hold_bus_node);
+			kमुक्त(hold_IO_node);
+			kमुक्त(hold_mem_node);
+			kमुक्त(hold_p_mem_node);
 
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
-		memcpy(hold_bus_node, bus_node, sizeof(struct pci_resource));
+		स_नकल(hold_bus_node, bus_node, माप(काष्ठा pci_resource));
 
 		bus_node->base += 1;
 		bus_node->length -= 1;
-		bus_node->next = NULL;
+		bus_node->next = शून्य;
 
 		/* If we have IO resources copy them and fill in the bridge's
-		 * IO range registers */
-		memcpy(hold_IO_node, io_node, sizeof(struct pci_resource));
-		io_node->next = NULL;
+		 * IO range रेजिस्टरs */
+		स_नकल(hold_IO_node, io_node, माप(काष्ठा pci_resource));
+		io_node->next = शून्य;
 
-		/* set IO base and Limit registers */
+		/* set IO base and Limit रेजिस्टरs */
 		temp_byte = io_node->base >> 8;
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_IO_BASE, temp_byte);
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_IO_BASE, temp_byte);
 
 		temp_byte = (io_node->base + io_node->length - 1) >> 8;
-		rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_IO_LIMIT, temp_byte);
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_IO_LIMIT, temp_byte);
 
 		/* Copy the memory resources and fill in the bridge's memory
-		 * range registers.
+		 * range रेजिस्टरs.
 		 */
-		memcpy(hold_mem_node, mem_node, sizeof(struct pci_resource));
-		mem_node->next = NULL;
+		स_नकल(hold_mem_node, mem_node, माप(काष्ठा pci_resource));
+		mem_node->next = शून्य;
 
-		/* set Mem base and Limit registers */
+		/* set Mem base and Limit रेजिस्टरs */
 		temp_word = mem_node->base >> 16;
-		rc = pci_bus_write_config_word(pci_bus, devfn, PCI_MEMORY_BASE, temp_word);
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_MEMORY_BASE, temp_word);
 
 		temp_word = (mem_node->base + mem_node->length - 1) >> 16;
-		rc = pci_bus_write_config_word(pci_bus, devfn, PCI_MEMORY_LIMIT, temp_word);
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_MEMORY_LIMIT, temp_word);
 
-		memcpy(hold_p_mem_node, p_mem_node, sizeof(struct pci_resource));
-		p_mem_node->next = NULL;
+		स_नकल(hold_p_mem_node, p_mem_node, माप(काष्ठा pci_resource));
+		p_mem_node->next = शून्य;
 
-		/* set Pre Mem base and Limit registers */
+		/* set Pre Mem base and Limit रेजिस्टरs */
 		temp_word = p_mem_node->base >> 16;
-		rc = pci_bus_write_config_word(pci_bus, devfn, PCI_PREF_MEMORY_BASE, temp_word);
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_PREF_MEMORY_BASE, temp_word);
 
 		temp_word = (p_mem_node->base + p_mem_node->length - 1) >> 16;
-		rc = pci_bus_write_config_word(pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, temp_word);
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, temp_word);
 
-		/* Adjust this to compensate for extra adjustment in first loop
+		/* Adjust this to compensate क्रम extra adjusपंचांगent in first loop
 		 */
 		irqs.barber_pole--;
 
 		rc = 0;
 
 		/* Here we actually find the devices and configure them */
-		for (device = 0; (device <= 0x1F) && !rc; device++) {
+		क्रम (device = 0; (device <= 0x1F) && !rc; device++) अणु
 			irqs.barber_pole = (irqs.barber_pole + 1) & 0x03;
 
 			ID = 0xFFFFFFFF;
 			pci_bus->number = hold_bus_node->base;
-			pci_bus_read_config_dword(pci_bus, PCI_DEVFN(device, 0), 0x00, &ID);
+			pci_bus_पढ़ो_config_dword(pci_bus, PCI_DEVFN(device, 0), 0x00, &ID);
 			pci_bus->number = func->bus;
 
-			if (ID != 0xFFFFFFFF) {	  /*  device present */
-				/* Setup slot structure. */
+			अगर (ID != 0xFFFFFFFF) अणु	  /*  device present */
+				/* Setup slot काष्ठाure. */
 				new_slot = cpqhp_slot_create(hold_bus_node->base);
 
-				if (new_slot == NULL) {
+				अगर (new_slot == शून्य) अणु
 					rc = -ENOMEM;
-					continue;
-				}
+					जारी;
+				पूर्ण
 
 				new_slot->bus = hold_bus_node->base;
 				new_slot->device = device;
@@ -2534,33 +2535,33 @@ static int configure_new_function(struct controller *ctrl, struct pci_func *func
 
 				rc = configure_new_device(ctrl, new_slot, 1, &temp_resources);
 				dbg("configure_new_device rc=0x%x\n", rc);
-			}	/* End of IF (device in slot?) */
-		}		/* End of FOR loop */
+			पूर्ण	/* End of IF (device in slot?) */
+		पूर्ण		/* End of FOR loop */
 
-		if (rc)
-			goto free_and_out;
-		/* save the interrupt routing information */
-		if (resources->irqs) {
-			resources->irqs->interrupt[0] = irqs.interrupt[0];
-			resources->irqs->interrupt[1] = irqs.interrupt[1];
-			resources->irqs->interrupt[2] = irqs.interrupt[2];
-			resources->irqs->interrupt[3] = irqs.interrupt[3];
+		अगर (rc)
+			जाओ मुक्त_and_out;
+		/* save the पूर्णांकerrupt routing inक्रमmation */
+		अगर (resources->irqs) अणु
+			resources->irqs->पूर्णांकerrupt[0] = irqs.पूर्णांकerrupt[0];
+			resources->irqs->पूर्णांकerrupt[1] = irqs.पूर्णांकerrupt[1];
+			resources->irqs->पूर्णांकerrupt[2] = irqs.पूर्णांकerrupt[2];
+			resources->irqs->पूर्णांकerrupt[3] = irqs.पूर्णांकerrupt[3];
 			resources->irqs->valid_INT = irqs.valid_INT;
-		} else if (!behind_bridge) {
-			/* We need to hook up the interrupts here */
-			for (cloop = 0; cloop < 4; cloop++) {
-				if (irqs.valid_INT & (0x01 << cloop)) {
+		पूर्ण अन्यथा अगर (!behind_bridge) अणु
+			/* We need to hook up the पूर्णांकerrupts here */
+			क्रम (cloop = 0; cloop < 4; cloop++) अणु
+				अगर (irqs.valid_INT & (0x01 << cloop)) अणु
 					rc = cpqhp_set_irq(func->bus, func->device,
-							   cloop + 1, irqs.interrupt[cloop]);
-					if (rc)
-						goto free_and_out;
-				}
-			}	/* end of for loop */
-		}
+							   cloop + 1, irqs.पूर्णांकerrupt[cloop]);
+					अगर (rc)
+						जाओ मुक्त_and_out;
+				पूर्ण
+			पूर्ण	/* end of क्रम loop */
+		पूर्ण
 		/* Return unused bus resources
-		 * First use the temporary node to store information for
+		 * First use the temporary node to store inक्रमmation क्रम
 		 * the board */
-		if (bus_node && temp_resources.bus_head) {
+		अगर (bus_node && temp_resources.bus_head) अणु
 			hold_bus_node->length = bus_node->base - hold_bus_node->base;
 
 			hold_bus_node->next = func->bus_head;
@@ -2569,172 +2570,172 @@ static int configure_new_function(struct controller *ctrl, struct pci_func *func
 			temp_byte = temp_resources.bus_head->base - 1;
 
 			/* set subordinate bus */
-			rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_SUBORDINATE_BUS, temp_byte);
+			rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_SUBORDINATE_BUS, temp_byte);
 
-			if (temp_resources.bus_head->length == 0) {
-				kfree(temp_resources.bus_head);
-				temp_resources.bus_head = NULL;
-			} else {
-				return_resource(&(resources->bus_head), temp_resources.bus_head);
-			}
-		}
+			अगर (temp_resources.bus_head->length == 0) अणु
+				kमुक्त(temp_resources.bus_head);
+				temp_resources.bus_head = शून्य;
+			पूर्ण अन्यथा अणु
+				वापस_resource(&(resources->bus_head), temp_resources.bus_head);
+			पूर्ण
+		पूर्ण
 
 		/* If we have IO space available and there is some left,
-		 * return the unused portion */
-		if (hold_IO_node && temp_resources.io_head) {
-			io_node = do_pre_bridge_resource_split(&(temp_resources.io_head),
+		 * वापस the unused portion */
+		अगर (hold_IO_node && temp_resources.io_head) अणु
+			io_node = करो_pre_bridge_resource_split(&(temp_resources.io_head),
 							       &hold_IO_node, 0x1000);
 
-			/* Check if we were able to split something off */
-			if (io_node) {
+			/* Check अगर we were able to split something off */
+			अगर (io_node) अणु
 				hold_IO_node->base = io_node->base + io_node->length;
 
 				temp_byte = (hold_IO_node->base) >> 8;
-				rc = pci_bus_write_config_word(pci_bus, devfn, PCI_IO_BASE, temp_byte);
+				rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_IO_BASE, temp_byte);
 
-				return_resource(&(resources->io_head), io_node);
-			}
+				वापस_resource(&(resources->io_head), io_node);
+			पूर्ण
 
-			io_node = do_bridge_resource_split(&(temp_resources.io_head), 0x1000);
+			io_node = करो_bridge_resource_split(&(temp_resources.io_head), 0x1000);
 
-			/* Check if we were able to split something off */
-			if (io_node) {
+			/* Check अगर we were able to split something off */
+			अगर (io_node) अणु
 				/* First use the temporary node to store
-				 * information for the board */
+				 * inक्रमmation क्रम the board */
 				hold_IO_node->length = io_node->base - hold_IO_node->base;
 
 				/* If we used any, add it to the board's list */
-				if (hold_IO_node->length) {
+				अगर (hold_IO_node->length) अणु
 					hold_IO_node->next = func->io_head;
 					func->io_head = hold_IO_node;
 
 					temp_byte = (io_node->base - 1) >> 8;
-					rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_IO_LIMIT, temp_byte);
+					rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_IO_LIMIT, temp_byte);
 
-					return_resource(&(resources->io_head), io_node);
-				} else {
-					/* it doesn't need any IO */
+					वापस_resource(&(resources->io_head), io_node);
+				पूर्ण अन्यथा अणु
+					/* it करोesn't need any IO */
 					temp_word = 0x0000;
-					rc = pci_bus_write_config_word(pci_bus, devfn, PCI_IO_LIMIT, temp_word);
+					rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_IO_LIMIT, temp_word);
 
-					return_resource(&(resources->io_head), io_node);
-					kfree(hold_IO_node);
-				}
-			} else {
+					वापस_resource(&(resources->io_head), io_node);
+					kमुक्त(hold_IO_node);
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* it used most of the range */
 				hold_IO_node->next = func->io_head;
 				func->io_head = hold_IO_node;
-			}
-		} else if (hold_IO_node) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (hold_IO_node) अणु
 			/* it used the whole range */
 			hold_IO_node->next = func->io_head;
 			func->io_head = hold_IO_node;
-		}
+		पूर्ण
 		/* If we have memory space available and there is some left,
-		 * return the unused portion */
-		if (hold_mem_node && temp_resources.mem_head) {
-			mem_node = do_pre_bridge_resource_split(&(temp_resources.  mem_head),
+		 * वापस the unused portion */
+		अगर (hold_mem_node && temp_resources.mem_head) अणु
+			mem_node = करो_pre_bridge_resource_split(&(temp_resources.  mem_head),
 								&hold_mem_node, 0x100000);
 
-			/* Check if we were able to split something off */
-			if (mem_node) {
+			/* Check अगर we were able to split something off */
+			अगर (mem_node) अणु
 				hold_mem_node->base = mem_node->base + mem_node->length;
 
 				temp_word = (hold_mem_node->base) >> 16;
-				rc = pci_bus_write_config_word(pci_bus, devfn, PCI_MEMORY_BASE, temp_word);
+				rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_MEMORY_BASE, temp_word);
 
-				return_resource(&(resources->mem_head), mem_node);
-			}
+				वापस_resource(&(resources->mem_head), mem_node);
+			पूर्ण
 
-			mem_node = do_bridge_resource_split(&(temp_resources.mem_head), 0x100000);
+			mem_node = करो_bridge_resource_split(&(temp_resources.mem_head), 0x100000);
 
-			/* Check if we were able to split something off */
-			if (mem_node) {
+			/* Check अगर we were able to split something off */
+			अगर (mem_node) अणु
 				/* First use the temporary node to store
-				 * information for the board */
+				 * inक्रमmation क्रम the board */
 				hold_mem_node->length = mem_node->base - hold_mem_node->base;
 
-				if (hold_mem_node->length) {
+				अगर (hold_mem_node->length) अणु
 					hold_mem_node->next = func->mem_head;
 					func->mem_head = hold_mem_node;
 
 					/* configure end address */
 					temp_word = (mem_node->base - 1) >> 16;
-					rc = pci_bus_write_config_word(pci_bus, devfn, PCI_MEMORY_LIMIT, temp_word);
+					rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_MEMORY_LIMIT, temp_word);
 
 					/* Return unused resources to the pool */
-					return_resource(&(resources->mem_head), mem_node);
-				} else {
-					/* it doesn't need any Mem */
+					वापस_resource(&(resources->mem_head), mem_node);
+				पूर्ण अन्यथा अणु
+					/* it करोesn't need any Mem */
 					temp_word = 0x0000;
-					rc = pci_bus_write_config_word(pci_bus, devfn, PCI_MEMORY_LIMIT, temp_word);
+					rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_MEMORY_LIMIT, temp_word);
 
-					return_resource(&(resources->mem_head), mem_node);
-					kfree(hold_mem_node);
-				}
-			} else {
+					वापस_resource(&(resources->mem_head), mem_node);
+					kमुक्त(hold_mem_node);
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* it used most of the range */
 				hold_mem_node->next = func->mem_head;
 				func->mem_head = hold_mem_node;
-			}
-		} else if (hold_mem_node) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (hold_mem_node) अणु
 			/* it used the whole range */
 			hold_mem_node->next = func->mem_head;
 			func->mem_head = hold_mem_node;
-		}
+		पूर्ण
 		/* If we have prefetchable memory space available and there
-		 * is some left at the end, return the unused portion */
-		if (temp_resources.p_mem_head) {
-			p_mem_node = do_pre_bridge_resource_split(&(temp_resources.p_mem_head),
+		 * is some left at the end, वापस the unused portion */
+		अगर (temp_resources.p_mem_head) अणु
+			p_mem_node = करो_pre_bridge_resource_split(&(temp_resources.p_mem_head),
 								  &hold_p_mem_node, 0x100000);
 
-			/* Check if we were able to split something off */
-			if (p_mem_node) {
+			/* Check अगर we were able to split something off */
+			अगर (p_mem_node) अणु
 				hold_p_mem_node->base = p_mem_node->base + p_mem_node->length;
 
 				temp_word = (hold_p_mem_node->base) >> 16;
-				rc = pci_bus_write_config_word(pci_bus, devfn, PCI_PREF_MEMORY_BASE, temp_word);
+				rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_PREF_MEMORY_BASE, temp_word);
 
-				return_resource(&(resources->p_mem_head), p_mem_node);
-			}
+				वापस_resource(&(resources->p_mem_head), p_mem_node);
+			पूर्ण
 
-			p_mem_node = do_bridge_resource_split(&(temp_resources.p_mem_head), 0x100000);
+			p_mem_node = करो_bridge_resource_split(&(temp_resources.p_mem_head), 0x100000);
 
-			/* Check if we were able to split something off */
-			if (p_mem_node) {
+			/* Check अगर we were able to split something off */
+			अगर (p_mem_node) अणु
 				/* First use the temporary node to store
-				 * information for the board */
+				 * inक्रमmation क्रम the board */
 				hold_p_mem_node->length = p_mem_node->base - hold_p_mem_node->base;
 
 				/* If we used any, add it to the board's list */
-				if (hold_p_mem_node->length) {
+				अगर (hold_p_mem_node->length) अणु
 					hold_p_mem_node->next = func->p_mem_head;
 					func->p_mem_head = hold_p_mem_node;
 
 					temp_word = (p_mem_node->base - 1) >> 16;
-					rc = pci_bus_write_config_word(pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, temp_word);
+					rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, temp_word);
 
-					return_resource(&(resources->p_mem_head), p_mem_node);
-				} else {
-					/* it doesn't need any PMem */
+					वापस_resource(&(resources->p_mem_head), p_mem_node);
+				पूर्ण अन्यथा अणु
+					/* it करोesn't need any PMem */
 					temp_word = 0x0000;
-					rc = pci_bus_write_config_word(pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, temp_word);
+					rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_PREF_MEMORY_LIMIT, temp_word);
 
-					return_resource(&(resources->p_mem_head), p_mem_node);
-					kfree(hold_p_mem_node);
-				}
-			} else {
+					वापस_resource(&(resources->p_mem_head), p_mem_node);
+					kमुक्त(hold_p_mem_node);
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* it used the most of the range */
 				hold_p_mem_node->next = func->p_mem_head;
 				func->p_mem_head = hold_p_mem_node;
-			}
-		} else if (hold_p_mem_node) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (hold_p_mem_node) अणु
 			/* it used the whole range */
 			hold_p_mem_node->next = func->p_mem_head;
 			func->p_mem_head = hold_p_mem_node;
-		}
+		पूर्ण
 		/* We should be configuring an IRQ and the bridge's base address
-		 * registers if it needs them.  Although we have never seen such
+		 * रेजिस्टरs अगर it needs them.  Although we have never seen such
 		 * a device */
 
 		/* enable card */
@@ -2744,43 +2745,43 @@ static int configure_new_function(struct controller *ctrl, struct pci_func *func
 					 *   PCI_COMMAND_INVALIDATE |
 					 *   PCI_COMMAND_PARITY |
 					 *   PCI_COMMAND_SERR */
-		rc = pci_bus_write_config_word(pci_bus, devfn, PCI_COMMAND, command);
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_COMMAND, command);
 
 		/* set Bridge Control Register */
 		command = 0x07;		/* = PCI_BRIDGE_CTL_PARITY |
 					 *   PCI_BRIDGE_CTL_SERR |
 					 *   PCI_BRIDGE_CTL_NO_ISA */
-		rc = pci_bus_write_config_word(pci_bus, devfn, PCI_BRIDGE_CONTROL, command);
-	} else if ((temp_byte & 0x7F) == PCI_HEADER_TYPE_NORMAL) {
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn, PCI_BRIDGE_CONTROL, command);
+	पूर्ण अन्यथा अगर ((temp_byte & 0x7F) == PCI_HEADER_TYPE_NORMAL) अणु
 		/* Standard device */
-		rc = pci_bus_read_config_byte(pci_bus, devfn, 0x0B, &class_code);
+		rc = pci_bus_पढ़ो_config_byte(pci_bus, devfn, 0x0B, &class_code);
 
-		if (class_code == PCI_BASE_CLASS_DISPLAY) {
+		अगर (class_code == PCI_BASE_CLASS_DISPLAY) अणु
 			/* Display (video) adapter (not supported) */
-			return DEVICE_TYPE_NOT_SUPPORTED;
-		}
+			वापस DEVICE_TYPE_NOT_SUPPORTED;
+		पूर्ण
 		/* Figure out IO and memory needs */
-		for (cloop = 0x10; cloop <= 0x24; cloop += 4) {
-			temp_register = 0xFFFFFFFF;
+		क्रम (cloop = 0x10; cloop <= 0x24; cloop += 4) अणु
+			temp_रेजिस्टर = 0xFFFFFFFF;
 
 			dbg("CND: bus=%d, devfn=%d, offset=%d\n", pci_bus->number, devfn, cloop);
-			rc = pci_bus_write_config_dword(pci_bus, devfn, cloop, temp_register);
+			rc = pci_bus_ग_लिखो_config_dword(pci_bus, devfn, cloop, temp_रेजिस्टर);
 
-			rc = pci_bus_read_config_dword(pci_bus, devfn, cloop, &temp_register);
-			dbg("CND: base = 0x%x\n", temp_register);
+			rc = pci_bus_पढ़ो_config_dword(pci_bus, devfn, cloop, &temp_रेजिस्टर);
+			dbg("CND: base = 0x%x\n", temp_रेजिस्टर);
 
-			if (temp_register) {	  /* If this register is implemented */
-				if ((temp_register & 0x03L) == 0x01) {
+			अगर (temp_रेजिस्टर) अणु	  /* If this रेजिस्टर is implemented */
+				अगर ((temp_रेजिस्टर & 0x03L) == 0x01) अणु
 					/* Map IO */
 
 					/* set base = amount of IO space */
-					base = temp_register & 0xFFFFFFFC;
+					base = temp_रेजिस्टर & 0xFFFFFFFC;
 					base = ~base + 1;
 
 					dbg("CND:      length = 0x%x\n", base);
 					io_node = get_io_resource(&(resources->io_head), base);
-					if (!io_node)
-						return -ENOMEM;
+					अगर (!io_node)
+						वापस -ENOMEM;
 					dbg("Got io_node start = %8.8x, length = %8.8x next (%p)\n",
 					    io_node->base, io_node->length, io_node->next);
 					dbg("func (%p) io_head (%p)\n", func, func->io_head);
@@ -2789,110 +2790,110 @@ static int configure_new_function(struct controller *ctrl, struct pci_func *func
 					base = io_node->base;
 					io_node->next = func->io_head;
 					func->io_head = io_node;
-				} else if ((temp_register & 0x0BL) == 0x08) {
+				पूर्ण अन्यथा अगर ((temp_रेजिस्टर & 0x0BL) == 0x08) अणु
 					/* Map prefetchable memory */
-					base = temp_register & 0xFFFFFFF0;
+					base = temp_रेजिस्टर & 0xFFFFFFF0;
 					base = ~base + 1;
 
 					dbg("CND:      length = 0x%x\n", base);
 					p_mem_node = get_resource(&(resources->p_mem_head), base);
 
 					/* allocate the resource to the board */
-					if (p_mem_node) {
+					अगर (p_mem_node) अणु
 						base = p_mem_node->base;
 
 						p_mem_node->next = func->p_mem_head;
 						func->p_mem_head = p_mem_node;
-					} else
-						return -ENOMEM;
-				} else if ((temp_register & 0x0BL) == 0x00) {
+					पूर्ण अन्यथा
+						वापस -ENOMEM;
+				पूर्ण अन्यथा अगर ((temp_रेजिस्टर & 0x0BL) == 0x00) अणु
 					/* Map memory */
-					base = temp_register & 0xFFFFFFF0;
+					base = temp_रेजिस्टर & 0xFFFFFFF0;
 					base = ~base + 1;
 
 					dbg("CND:      length = 0x%x\n", base);
 					mem_node = get_resource(&(resources->mem_head), base);
 
 					/* allocate the resource to the board */
-					if (mem_node) {
+					अगर (mem_node) अणु
 						base = mem_node->base;
 
 						mem_node->next = func->mem_head;
 						func->mem_head = mem_node;
-					} else
-						return -ENOMEM;
-				} else {
+					पूर्ण अन्यथा
+						वापस -ENOMEM;
+				पूर्ण अन्यथा अणु
 					/* Reserved bits or requesting space below 1M */
-					return NOT_ENOUGH_RESOURCES;
-				}
+					वापस NOT_ENOUGH_RESOURCES;
+				पूर्ण
 
-				rc = pci_bus_write_config_dword(pci_bus, devfn, cloop, base);
+				rc = pci_bus_ग_लिखो_config_dword(pci_bus, devfn, cloop, base);
 
-				/* Check for 64-bit base */
-				if ((temp_register & 0x07L) == 0x04) {
+				/* Check क्रम 64-bit base */
+				अगर ((temp_रेजिस्टर & 0x07L) == 0x04) अणु
 					cloop += 4;
 
 					/* Upper 32 bits of address always zero
-					 * on today's systems */
+					 * on today's प्रणालीs */
 					/* FIXME this is probably not true on
 					 * Alpha and ia64??? */
 					base = 0;
-					rc = pci_bus_write_config_dword(pci_bus, devfn, cloop, base);
-				}
-			}
-		}		/* End of base register loop */
-		if (cpqhp_legacy_mode) {
-			/* Figure out which interrupt pin this function uses */
-			rc = pci_bus_read_config_byte(pci_bus, devfn,
+					rc = pci_bus_ग_लिखो_config_dword(pci_bus, devfn, cloop, base);
+				पूर्ण
+			पूर्ण
+		पूर्ण		/* End of base रेजिस्टर loop */
+		अगर (cpqhp_legacy_mode) अणु
+			/* Figure out which पूर्णांकerrupt pin this function uses */
+			rc = pci_bus_पढ़ो_config_byte(pci_bus, devfn,
 				PCI_INTERRUPT_PIN, &temp_byte);
 
-			/* If this function needs an interrupt and we are behind
+			/* If this function needs an पूर्णांकerrupt and we are behind
 			 * a bridge and the pin is tied to something that's
-			 * already mapped, set this one the same */
-			if (temp_byte && resources->irqs &&
+			 * alपढ़ोy mapped, set this one the same */
+			अगर (temp_byte && resources->irqs &&
 			    (resources->irqs->valid_INT &
-			     (0x01 << ((temp_byte + resources->irqs->barber_pole - 1) & 0x03)))) {
-				/* We have to share with something already set up */
-				IRQ = resources->irqs->interrupt[(temp_byte +
+			     (0x01 << ((temp_byte + resources->irqs->barber_pole - 1) & 0x03)))) अणु
+				/* We have to share with something alपढ़ोy set up */
+				IRQ = resources->irqs->पूर्णांकerrupt[(temp_byte +
 					resources->irqs->barber_pole - 1) & 0x03];
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Program IRQ based on card type */
-				rc = pci_bus_read_config_byte(pci_bus, devfn, 0x0B, &class_code);
+				rc = pci_bus_पढ़ो_config_byte(pci_bus, devfn, 0x0B, &class_code);
 
-				if (class_code == PCI_BASE_CLASS_STORAGE)
+				अगर (class_code == PCI_BASE_CLASS_STORAGE)
 					IRQ = cpqhp_disk_irq;
-				else
+				अन्यथा
 					IRQ = cpqhp_nic_irq;
-			}
+			पूर्ण
 
 			/* IRQ Line */
-			rc = pci_bus_write_config_byte(pci_bus, devfn, PCI_INTERRUPT_LINE, IRQ);
-		}
+			rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn, PCI_INTERRUPT_LINE, IRQ);
+		पूर्ण
 
-		if (!behind_bridge) {
+		अगर (!behind_bridge) अणु
 			rc = cpqhp_set_irq(func->bus, func->device, temp_byte, IRQ);
-			if (rc)
-				return 1;
-		} else {
-			/* TBD - this code may also belong in the other clause
+			अगर (rc)
+				वापस 1;
+		पूर्ण अन्यथा अणु
+			/* TBD - this code may also beदीर्घ in the other clause
 			 * of this If statement */
-			resources->irqs->interrupt[(temp_byte + resources->irqs->barber_pole - 1) & 0x03] = IRQ;
+			resources->irqs->पूर्णांकerrupt[(temp_byte + resources->irqs->barber_pole - 1) & 0x03] = IRQ;
 			resources->irqs->valid_INT |= 0x01 << (temp_byte + resources->irqs->barber_pole - 1) & 0x03;
-		}
+		पूर्ण
 
 		/* Latency Timer */
 		temp_byte = 0x40;
-		rc = pci_bus_write_config_byte(pci_bus, devfn,
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn,
 					PCI_LATENCY_TIMER, temp_byte);
 
 		/* Cache Line size */
 		temp_byte = 0x08;
-		rc = pci_bus_write_config_byte(pci_bus, devfn,
+		rc = pci_bus_ग_लिखो_config_byte(pci_bus, devfn,
 					PCI_CACHE_LINE_SIZE, temp_byte);
 
 		/* disable ROM base Address */
 		temp_dword = 0x00L;
-		rc = pci_bus_write_config_word(pci_bus, devfn,
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn,
 					PCI_ROM_ADDRESS, temp_dword);
 
 		/* enable card */
@@ -2902,22 +2903,22 @@ static int configure_new_function(struct controller *ctrl, struct pci_func *func
 					 *   PCI_COMMAND_INVALIDATE |
 					 *   PCI_COMMAND_PARITY |
 					 *   PCI_COMMAND_SERR */
-		rc = pci_bus_write_config_word(pci_bus, devfn,
+		rc = pci_bus_ग_लिखो_config_word(pci_bus, devfn,
 					PCI_COMMAND, temp_word);
-	} else {		/* End of Not-A-Bridge else */
+	पूर्ण अन्यथा अणु		/* End of Not-A-Bridge अन्यथा */
 		/* It's some strange type of PCI adapter (Cardbus?) */
-		return DEVICE_TYPE_NOT_SUPPORTED;
-	}
+		वापस DEVICE_TYPE_NOT_SUPPORTED;
+	पूर्ण
 
 	func->configured = 1;
 
-	return 0;
-free_and_out:
+	वापस 0;
+मुक्त_and_out:
 	cpqhp_destroy_resource_list(&temp_resources);
 
-	return_resource(&(resources->bus_head), hold_bus_node);
-	return_resource(&(resources->io_head), hold_IO_node);
-	return_resource(&(resources->mem_head), hold_mem_node);
-	return_resource(&(resources->p_mem_head), hold_p_mem_node);
-	return rc;
-}
+	वापस_resource(&(resources->bus_head), hold_bus_node);
+	वापस_resource(&(resources->io_head), hold_IO_node);
+	वापस_resource(&(resources->mem_head), hold_mem_node);
+	वापस_resource(&(resources->p_mem_head), hold_p_mem_node);
+	वापस rc;
+पूर्ण

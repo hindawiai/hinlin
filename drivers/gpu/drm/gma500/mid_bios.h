@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /**************************************************************************
  * Copyright (c) 2011, Intel Corporation.
  * All Rights Reserved.
  *
  **************************************************************************/
-struct drm_device;
+काष्ठा drm_device;
 
-extern int mid_chip_setup(struct drm_device *dev);
+बाह्य पूर्णांक mid_chip_setup(काष्ठा drm_device *dev);
 

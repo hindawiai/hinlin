@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Amanda extension for IP connection tracking
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Amanda extension क्रम IP connection tracking
  *
- * (C) 2002 by Brian J. Murrell <netfilter@interlinx.bc.ca>
+ * (C) 2002 by Brian J. Murrell <netfilter@पूर्णांकerlinx.bc.ca>
  * based on HW's ip_conntrack_irc.c as well as other modules
  * (C) 2006 Patrick McHardy <kaber@trash.net>
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/textsearch.h>
-#include <linux/skbuff.h>
-#include <linux/in.h>
-#include <linux/udp.h>
-#include <linux/netfilter.h>
-#include <linux/gfp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/textsearch.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/in.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/gfp.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_expect.h>
-#include <net/netfilter/nf_conntrack_ecache.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <linux/netfilter/nf_conntrack_amanda.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_expect.h>
+#समावेश <net/netfilter/nf_conntrack_ecache.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <linux/netfilter/nf_conntrack_amanda.h>
 
-static unsigned int master_timeout __read_mostly = 300;
-static char *ts_algo = "kmp";
+अटल अचिन्हित पूर्णांक master_समयout __पढ़ो_mostly = 300;
+अटल अक्षर *ts_algo = "kmp";
 
-#define HELPER_NAME "amanda"
+#घोषणा HELPER_NAME "amanda"
 
 MODULE_AUTHOR("Brian J. Murrell <netfilter@interlinx.bc.ca>");
 MODULE_DESCRIPTION("Amanda connection tracking module");
@@ -32,151 +33,151 @@ MODULE_LICENSE("GPL");
 MODULE_ALIAS("ip_conntrack_amanda");
 MODULE_ALIAS_NFCT_HELPER(HELPER_NAME);
 
-module_param(master_timeout, uint, 0600);
-MODULE_PARM_DESC(master_timeout, "timeout for the master connection");
-module_param(ts_algo, charp, 0400);
+module_param(master_समयout, uपूर्णांक, 0600);
+MODULE_PARM_DESC(master_समयout, "timeout for the master connection");
+module_param(ts_algo, अक्षरp, 0400);
 MODULE_PARM_DESC(ts_algo, "textsearch algorithm to use (default kmp)");
 
-unsigned int (*nf_nat_amanda_hook)(struct sk_buff *skb,
-				   enum ip_conntrack_info ctinfo,
-				   unsigned int protoff,
-				   unsigned int matchoff,
-				   unsigned int matchlen,
-				   struct nf_conntrack_expect *exp)
-				   __read_mostly;
+अचिन्हित पूर्णांक (*nf_nat_amanda_hook)(काष्ठा sk_buff *skb,
+				   क्रमागत ip_conntrack_info ctinfo,
+				   अचिन्हित पूर्णांक protoff,
+				   अचिन्हित पूर्णांक matchoff,
+				   अचिन्हित पूर्णांक matchlen,
+				   काष्ठा nf_conntrack_expect *exp)
+				   __पढ़ो_mostly;
 EXPORT_SYMBOL_GPL(nf_nat_amanda_hook);
 
-enum amanda_strings {
+क्रमागत amanda_strings अणु
 	SEARCH_CONNECT,
 	SEARCH_NEWLINE,
 	SEARCH_DATA,
 	SEARCH_MESG,
 	SEARCH_INDEX,
 	SEARCH_STATE,
-};
+पूर्ण;
 
-static struct {
-	const char		*string;
-	size_t			len;
-	struct ts_config	*ts;
-} search[] __read_mostly = {
-	[SEARCH_CONNECT] = {
+अटल काष्ठा अणु
+	स्थिर अक्षर		*string;
+	माप_प्रकार			len;
+	काष्ठा ts_config	*ts;
+पूर्ण search[] __पढ़ो_mostly = अणु
+	[SEARCH_CONNECT] = अणु
 		.string	= "CONNECT ",
 		.len	= 8,
-	},
-	[SEARCH_NEWLINE] = {
+	पूर्ण,
+	[SEARCH_NEWLINE] = अणु
 		.string	= "\n",
 		.len	= 1,
-	},
-	[SEARCH_DATA] = {
+	पूर्ण,
+	[SEARCH_DATA] = अणु
 		.string	= "DATA ",
 		.len	= 5,
-	},
-	[SEARCH_MESG] = {
+	पूर्ण,
+	[SEARCH_MESG] = अणु
 		.string	= "MESG ",
 		.len	= 5,
-	},
-	[SEARCH_INDEX] = {
+	पूर्ण,
+	[SEARCH_INDEX] = अणु
 		.string = "INDEX ",
 		.len	= 6,
-	},
-	[SEARCH_STATE] = {
+	पूर्ण,
+	[SEARCH_STATE] = अणु
 		.string = "STATE ",
 		.len	= 6,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int amanda_help(struct sk_buff *skb,
-		       unsigned int protoff,
-		       struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo)
-{
-	struct nf_conntrack_expect *exp;
-	struct nf_conntrack_tuple *tuple;
-	unsigned int dataoff, start, stop, off, i;
-	char pbuf[sizeof("65535")], *tmp;
-	u_int16_t len;
+अटल पूर्णांक amanda_help(काष्ठा sk_buff *skb,
+		       अचिन्हित पूर्णांक protoff,
+		       काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo)
+अणु
+	काष्ठा nf_conntrack_expect *exp;
+	काष्ठा nf_conntrack_tuple *tuple;
+	अचिन्हित पूर्णांक dataoff, start, stop, off, i;
+	अक्षर pbuf[माप("65535")], *पंचांगp;
+	u_पूर्णांक16_t len;
 	__be16 port;
-	int ret = NF_ACCEPT;
+	पूर्णांक ret = NF_ACCEPT;
 	typeof(nf_nat_amanda_hook) nf_nat_amanda;
 
 	/* Only look at packets from the Amanda server */
-	if (CTINFO2DIR(ctinfo) == IP_CT_DIR_ORIGINAL)
-		return NF_ACCEPT;
+	अगर (CTINFO2सूची(ctinfo) == IP_CT_सूची_ORIGINAL)
+		वापस NF_ACCEPT;
 
-	/* increase the UDP timeout of the master connection as replies from
+	/* increase the UDP समयout of the master connection as replies from
 	 * Amanda clients to the server can be quite delayed */
-	nf_ct_refresh(ct, skb, master_timeout * HZ);
+	nf_ct_refresh(ct, skb, master_समयout * HZ);
 
 	/* No data? */
-	dataoff = protoff + sizeof(struct udphdr);
-	if (dataoff >= skb->len) {
+	dataoff = protoff + माप(काष्ठा udphdr);
+	अगर (dataoff >= skb->len) अणु
 		net_err_ratelimited("amanda_help: skblen = %u\n", skb->len);
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 
 	start = skb_find_text(skb, dataoff, skb->len,
 			      search[SEARCH_CONNECT].ts);
-	if (start == UINT_MAX)
-		goto out;
+	अगर (start == अच_पूर्णांक_उच्च)
+		जाओ out;
 	start += dataoff + search[SEARCH_CONNECT].len;
 
 	stop = skb_find_text(skb, start, skb->len,
 			     search[SEARCH_NEWLINE].ts);
-	if (stop == UINT_MAX)
-		goto out;
+	अगर (stop == अच_पूर्णांक_उच्च)
+		जाओ out;
 	stop += start;
 
-	for (i = SEARCH_DATA; i <= SEARCH_STATE; i++) {
+	क्रम (i = SEARCH_DATA; i <= SEARCH_STATE; i++) अणु
 		off = skb_find_text(skb, start, stop, search[i].ts);
-		if (off == UINT_MAX)
-			continue;
+		अगर (off == अच_पूर्णांक_उच्च)
+			जारी;
 		off += start + search[i].len;
 
-		len = min_t(unsigned int, sizeof(pbuf) - 1, stop - off);
-		if (skb_copy_bits(skb, off, pbuf, len))
-			break;
+		len = min_t(अचिन्हित पूर्णांक, माप(pbuf) - 1, stop - off);
+		अगर (skb_copy_bits(skb, off, pbuf, len))
+			अवरोध;
 		pbuf[len] = '\0';
 
-		port = htons(simple_strtoul(pbuf, &tmp, 10));
-		len = tmp - pbuf;
-		if (port == 0 || len > 5)
-			break;
+		port = htons(simple_म_से_अदीर्घ(pbuf, &पंचांगp, 10));
+		len = पंचांगp - pbuf;
+		अगर (port == 0 || len > 5)
+			अवरोध;
 
 		exp = nf_ct_expect_alloc(ct);
-		if (exp == NULL) {
+		अगर (exp == शून्य) अणु
 			nf_ct_helper_log(skb, ct, "cannot alloc expectation");
 			ret = NF_DROP;
-			goto out;
-		}
-		tuple = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
+			जाओ out;
+		पूर्ण
+		tuple = &ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple;
 		nf_ct_expect_init(exp, NF_CT_EXPECT_CLASS_DEFAULT,
 				  nf_ct_l3num(ct),
 				  &tuple->src.u3, &tuple->dst.u3,
-				  IPPROTO_TCP, NULL, &port);
+				  IPPROTO_TCP, शून्य, &port);
 
 		nf_nat_amanda = rcu_dereference(nf_nat_amanda_hook);
-		if (nf_nat_amanda && ct->status & IPS_NAT_MASK)
+		अगर (nf_nat_amanda && ct->status & IPS_NAT_MASK)
 			ret = nf_nat_amanda(skb, ctinfo, protoff,
 					    off - dataoff, len, exp);
-		else if (nf_ct_expect_related(exp, 0) != 0) {
+		अन्यथा अगर (nf_ct_expect_related(exp, 0) != 0) अणु
 			nf_ct_helper_log(skb, ct, "cannot add expectation");
 			ret = NF_DROP;
-		}
+		पूर्ण
 		nf_ct_expect_put(exp);
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nf_conntrack_expect_policy amanda_exp_policy = {
+अटल स्थिर काष्ठा nf_conntrack_expect_policy amanda_exp_policy = अणु
 	.max_expected		= 4,
-	.timeout		= 180,
-};
+	.समयout		= 180,
+पूर्ण;
 
-static struct nf_conntrack_helper amanda_helper[2] __read_mostly = {
-	{
+अटल काष्ठा nf_conntrack_helper amanda_helper[2] __पढ़ो_mostly = अणु
+	अणु
 		.name			= HELPER_NAME,
 		.me			= THIS_MODULE,
 		.help			= amanda_help,
@@ -185,8 +186,8 @@ static struct nf_conntrack_helper amanda_helper[2] __read_mostly = {
 		.tuple.dst.protonum	= IPPROTO_UDP,
 		.expect_policy		= &amanda_exp_policy,
 		.nat_mod_name		= NF_NAT_HELPER_NAME(HELPER_NAME),
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "amanda",
 		.me			= THIS_MODULE,
 		.help			= amanda_help,
@@ -195,46 +196,46 @@ static struct nf_conntrack_helper amanda_helper[2] __read_mostly = {
 		.tuple.dst.protonum	= IPPROTO_UDP,
 		.expect_policy		= &amanda_exp_policy,
 		.nat_mod_name		= NF_NAT_HELPER_NAME(HELPER_NAME),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __exit nf_conntrack_amanda_fini(void)
-{
-	int i;
+अटल व्योम __निकास nf_conntrack_amanda_fini(व्योम)
+अणु
+	पूर्णांक i;
 
-	nf_conntrack_helpers_unregister(amanda_helper,
+	nf_conntrack_helpers_unरेजिस्टर(amanda_helper,
 					ARRAY_SIZE(amanda_helper));
-	for (i = 0; i < ARRAY_SIZE(search); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(search); i++)
 		textsearch_destroy(search[i].ts);
-}
+पूर्ण
 
-static int __init nf_conntrack_amanda_init(void)
-{
-	int ret, i;
+अटल पूर्णांक __init nf_conntrack_amanda_init(व्योम)
+अणु
+	पूर्णांक ret, i;
 
 	NF_CT_HELPER_BUILD_BUG_ON(0);
 
-	for (i = 0; i < ARRAY_SIZE(search); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(search); i++) अणु
 		search[i].ts = textsearch_prepare(ts_algo, search[i].string,
 						  search[i].len,
 						  GFP_KERNEL, TS_AUTOLOAD);
-		if (IS_ERR(search[i].ts)) {
+		अगर (IS_ERR(search[i].ts)) अणु
 			ret = PTR_ERR(search[i].ts);
-			goto err1;
-		}
-	}
-	ret = nf_conntrack_helpers_register(amanda_helper,
+			जाओ err1;
+		पूर्ण
+	पूर्ण
+	ret = nf_conntrack_helpers_रेजिस्टर(amanda_helper,
 					    ARRAY_SIZE(amanda_helper));
-	if (ret < 0)
-		goto err1;
-	return 0;
+	अगर (ret < 0)
+		जाओ err1;
+	वापस 0;
 
 err1:
-	while (--i >= 0)
+	जबतक (--i >= 0)
 		textsearch_destroy(search[i].ts);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 module_init(nf_conntrack_amanda_init);
-module_exit(nf_conntrack_amanda_fini);
+module_निकास(nf_conntrack_amanda_fini);

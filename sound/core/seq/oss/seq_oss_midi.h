@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OSS compatible sequencer driver
  *
- * midi device information
+ * midi device inक्रमmation
  *
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#ifndef __SEQ_OSS_MIDI_H
-#define __SEQ_OSS_MIDI_H
+#अगर_अघोषित __SEQ_OSS_MIDI_H
+#घोषणा __SEQ_OSS_MIDI_H
 
-#include "seq_oss_device.h"
-#include <sound/seq_oss_legacy.h>
+#समावेश "seq_oss_device.h"
+#समावेश <sound/seq_oss_legacy.h>
 
-int snd_seq_oss_midi_lookup_ports(int client);
-int snd_seq_oss_midi_check_new_port(struct snd_seq_port_info *pinfo);
-int snd_seq_oss_midi_check_exit_port(int client, int port);
-void snd_seq_oss_midi_clear_all(void);
+पूर्णांक snd_seq_oss_midi_lookup_ports(पूर्णांक client);
+पूर्णांक snd_seq_oss_midi_check_new_port(काष्ठा snd_seq_port_info *pinfo);
+पूर्णांक snd_seq_oss_midi_check_निकास_port(पूर्णांक client, पूर्णांक port);
+व्योम snd_seq_oss_midi_clear_all(व्योम);
 
-void snd_seq_oss_midi_setup(struct seq_oss_devinfo *dp);
-void snd_seq_oss_midi_cleanup(struct seq_oss_devinfo *dp);
+व्योम snd_seq_oss_midi_setup(काष्ठा seq_oss_devinfo *dp);
+व्योम snd_seq_oss_midi_cleanup(काष्ठा seq_oss_devinfo *dp);
 
-int snd_seq_oss_midi_open(struct seq_oss_devinfo *dp, int dev, int file_mode);
-void snd_seq_oss_midi_open_all(struct seq_oss_devinfo *dp, int file_mode);
-int snd_seq_oss_midi_close(struct seq_oss_devinfo *dp, int dev);
-void snd_seq_oss_midi_reset(struct seq_oss_devinfo *dp, int dev);
-int snd_seq_oss_midi_putc(struct seq_oss_devinfo *dp, int dev, unsigned char c,
-			  struct snd_seq_event *ev);
-int snd_seq_oss_midi_input(struct snd_seq_event *ev, int direct, void *private);
-int snd_seq_oss_midi_filemode(struct seq_oss_devinfo *dp, int dev);
-int snd_seq_oss_midi_make_info(struct seq_oss_devinfo *dp, int dev, struct midi_info *inf);
-void snd_seq_oss_midi_get_addr(struct seq_oss_devinfo *dp, int dev, struct snd_seq_addr *addr);
+पूर्णांक snd_seq_oss_midi_खोलो(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, पूर्णांक file_mode);
+व्योम snd_seq_oss_midi_खोलो_all(काष्ठा seq_oss_devinfo *dp, पूर्णांक file_mode);
+पूर्णांक snd_seq_oss_midi_बंद(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev);
+व्योम snd_seq_oss_midi_reset(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev);
+पूर्णांक snd_seq_oss_midi_अ_दो(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, अचिन्हित अक्षर c,
+			  काष्ठा snd_seq_event *ev);
+पूर्णांक snd_seq_oss_midi_input(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी);
+पूर्णांक snd_seq_oss_midi_filemode(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev);
+पूर्णांक snd_seq_oss_midi_make_info(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, काष्ठा midi_info *inf);
+व्योम snd_seq_oss_midi_get_addr(काष्ठा seq_oss_devinfo *dp, पूर्णांक dev, काष्ठा snd_seq_addr *addr);
 
-#endif
+#पूर्ण_अगर

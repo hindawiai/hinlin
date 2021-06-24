@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    Copyright IBM Corp. 2007, 2011
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/gfp.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/smp.h>
-#include <linux/spinlock.h>
-#include <linux/rcupdate.h>
-#include <linux/slab.h>
-#include <linux/swapops.h>
-#include <linux/sysctl.h>
-#include <linux/ksm.h>
-#include <linux/mman.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/ksm.h>
+#समावेश <linux/mman.h>
 
-#include <asm/tlb.h>
-#include <asm/tlbflush.h>
-#include <asm/mmu_context.h>
-#include <asm/page-states.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/page-states.h>
 
-pgprot_t pgprot_writecombine(pgprot_t prot)
-{
+pgprot_t pgprot_ग_लिखोcombine(pgprot_t prot)
+अणु
 	/*
-	 * mio_wb_bit_mask may be set on a different CPU, but it is only set
-	 * once at init and only read afterwards.
+	 * mio_wb_bit_mask may be set on a dअगरferent CPU, but it is only set
+	 * once at init and only पढ़ो afterwards.
 	 */
-	return __pgprot(pgprot_val(prot) | mio_wb_bit_mask);
-}
-EXPORT_SYMBOL_GPL(pgprot_writecombine);
+	वापस __pgprot(pgprot_val(prot) | mio_wb_bit_mask);
+पूर्ण
+EXPORT_SYMBOL_GPL(pgprot_ग_लिखोcombine);
 
-pgprot_t pgprot_writethrough(pgprot_t prot)
-{
+pgprot_t pgprot_ग_लिखोthrough(pgprot_t prot)
+अणु
 	/*
-	 * mio_wb_bit_mask may be set on a different CPU, but it is only set
-	 * once at init and only read afterwards.
+	 * mio_wb_bit_mask may be set on a dअगरferent CPU, but it is only set
+	 * once at init and only पढ़ो afterwards.
 	 */
-	return __pgprot(pgprot_val(prot) & ~mio_wb_bit_mask);
-}
-EXPORT_SYMBOL_GPL(pgprot_writethrough);
+	वापस __pgprot(pgprot_val(prot) & ~mio_wb_bit_mask);
+पूर्ण
+EXPORT_SYMBOL_GPL(pgprot_ग_लिखोthrough);
 
-static inline void ptep_ipte_local(struct mm_struct *mm, unsigned long addr,
-				   pte_t *ptep, int nodat)
-{
-	unsigned long opt, asce;
+अटल अंतरभूत व्योम ptep_ipte_local(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+				   pte_t *ptep, पूर्णांक nodat)
+अणु
+	अचिन्हित दीर्घ opt, asce;
 
-	if (MACHINE_HAS_TLB_GUEST) {
+	अगर (MACHINE_HAS_TLB_GUEST) अणु
 		opt = 0;
 		asce = READ_ONCE(mm->context.gmap_asce);
-		if (asce == 0UL || nodat)
+		अगर (asce == 0UL || nodat)
 			opt |= IPTE_NODAT;
-		if (asce != -1UL) {
+		अगर (asce != -1UL) अणु
 			asce = asce ? : mm->context.asce;
 			opt |= IPTE_GUEST_ASCE;
-		}
+		पूर्ण
 		__ptep_ipte(addr, ptep, opt, asce, IPTE_LOCAL);
-	} else {
+	पूर्ण अन्यथा अणु
 		__ptep_ipte(addr, ptep, 0, 0, IPTE_LOCAL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void ptep_ipte_global(struct mm_struct *mm, unsigned long addr,
-				    pte_t *ptep, int nodat)
-{
-	unsigned long opt, asce;
+अटल अंतरभूत व्योम ptep_ipte_global(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+				    pte_t *ptep, पूर्णांक nodat)
+अणु
+	अचिन्हित दीर्घ opt, asce;
 
-	if (MACHINE_HAS_TLB_GUEST) {
+	अगर (MACHINE_HAS_TLB_GUEST) अणु
 		opt = 0;
 		asce = READ_ONCE(mm->context.gmap_asce);
-		if (asce == 0UL || nodat)
+		अगर (asce == 0UL || nodat)
 			opt |= IPTE_NODAT;
-		if (asce != -1UL) {
+		अगर (asce != -1UL) अणु
 			asce = asce ? : mm->context.asce;
 			opt |= IPTE_GUEST_ASCE;
-		}
+		पूर्ण
 		__ptep_ipte(addr, ptep, opt, asce, IPTE_GLOBAL);
-	} else {
+	पूर्ण अन्यथा अणु
 		__ptep_ipte(addr, ptep, 0, 0, IPTE_GLOBAL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline pte_t ptep_flush_direct(struct mm_struct *mm,
-				      unsigned long addr, pte_t *ptep,
-				      int nodat)
-{
+अटल अंतरभूत pte_t ptep_flush_direct(काष्ठा mm_काष्ठा *mm,
+				      अचिन्हित दीर्घ addr, pte_t *ptep,
+				      पूर्णांक nodat)
+अणु
 	pte_t old;
 
 	old = *ptep;
-	if (unlikely(pte_val(old) & _PAGE_INVALID))
-		return old;
+	अगर (unlikely(pte_val(old) & _PAGE_INVALID))
+		वापस old;
 	atomic_inc(&mm->context.flush_count);
-	if (MACHINE_HAS_TLB_LC &&
+	अगर (MACHINE_HAS_TLB_LC &&
 	    cpumask_equal(mm_cpumask(mm), cpumask_of(smp_processor_id())))
 		ptep_ipte_local(mm, addr, ptep, nodat);
-	else
+	अन्यथा
 		ptep_ipte_global(mm, addr, ptep, nodat);
 	atomic_dec(&mm->context.flush_count);
-	return old;
-}
+	वापस old;
+पूर्ण
 
-static inline pte_t ptep_flush_lazy(struct mm_struct *mm,
-				    unsigned long addr, pte_t *ptep,
-				    int nodat)
-{
+अटल अंतरभूत pte_t ptep_flush_lazy(काष्ठा mm_काष्ठा *mm,
+				    अचिन्हित दीर्घ addr, pte_t *ptep,
+				    पूर्णांक nodat)
+अणु
 	pte_t old;
 
 	old = *ptep;
-	if (unlikely(pte_val(old) & _PAGE_INVALID))
-		return old;
+	अगर (unlikely(pte_val(old) & _PAGE_INVALID))
+		वापस old;
 	atomic_inc(&mm->context.flush_count);
-	if (cpumask_equal(&mm->context.cpu_attach_mask,
-			  cpumask_of(smp_processor_id()))) {
+	अगर (cpumask_equal(&mm->context.cpu_attach_mask,
+			  cpumask_of(smp_processor_id()))) अणु
 		pte_val(*ptep) |= _PAGE_INVALID;
 		mm->context.flush_mm = 1;
-	} else
+	पूर्ण अन्यथा
 		ptep_ipte_global(mm, addr, ptep, nodat);
 	atomic_dec(&mm->context.flush_count);
-	return old;
-}
+	वापस old;
+पूर्ण
 
-static inline pgste_t pgste_get_lock(pte_t *ptep)
-{
-	unsigned long new = 0;
-#ifdef CONFIG_PGSTE
-	unsigned long old;
+अटल अंतरभूत pgste_t pgste_get_lock(pte_t *ptep)
+अणु
+	अचिन्हित दीर्घ new = 0;
+#अगर_घोषित CONFIG_PGSTE
+	अचिन्हित दीर्घ old;
 
-	asm(
+	यंत्र(
 		"	lg	%0,%2\n"
 		"0:	lgr	%1,%0\n"
 		"	nihh	%0,0xff7f\n"	/* clear PCL bit in old */
@@ -138,159 +139,159 @@ static inline pgste_t pgste_get_lock(pte_t *ptep)
 		"	jl	0b\n"
 		: "=&d" (old), "=&d" (new), "=Q" (ptep[PTRS_PER_PTE])
 		: "Q" (ptep[PTRS_PER_PTE]) : "cc", "memory");
-#endif
-	return __pgste(new);
-}
+#पूर्ण_अगर
+	वापस __pgste(new);
+पूर्ण
 
-static inline void pgste_set_unlock(pte_t *ptep, pgste_t pgste)
-{
-#ifdef CONFIG_PGSTE
-	asm(
+अटल अंतरभूत व्योम pgste_set_unlock(pte_t *ptep, pgste_t pgste)
+अणु
+#अगर_घोषित CONFIG_PGSTE
+	यंत्र(
 		"	nihh	%1,0xff7f\n"	/* clear PCL bit */
 		"	stg	%1,%0\n"
 		: "=Q" (ptep[PTRS_PER_PTE])
 		: "d" (pgste_val(pgste)), "Q" (ptep[PTRS_PER_PTE])
 		: "cc", "memory");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline pgste_t pgste_get(pte_t *ptep)
-{
-	unsigned long pgste = 0;
-#ifdef CONFIG_PGSTE
-	pgste = *(unsigned long *)(ptep + PTRS_PER_PTE);
-#endif
-	return __pgste(pgste);
-}
+अटल अंतरभूत pgste_t pgste_get(pte_t *ptep)
+अणु
+	अचिन्हित दीर्घ pgste = 0;
+#अगर_घोषित CONFIG_PGSTE
+	pgste = *(अचिन्हित दीर्घ *)(ptep + PTRS_PER_PTE);
+#पूर्ण_अगर
+	वापस __pgste(pgste);
+पूर्ण
 
-static inline void pgste_set(pte_t *ptep, pgste_t pgste)
-{
-#ifdef CONFIG_PGSTE
+अटल अंतरभूत व्योम pgste_set(pte_t *ptep, pgste_t pgste)
+अणु
+#अगर_घोषित CONFIG_PGSTE
 	*(pgste_t *)(ptep + PTRS_PER_PTE) = pgste;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline pgste_t pgste_update_all(pte_t pte, pgste_t pgste,
-				       struct mm_struct *mm)
-{
-#ifdef CONFIG_PGSTE
-	unsigned long address, bits, skey;
+अटल अंतरभूत pgste_t pgste_update_all(pte_t pte, pgste_t pgste,
+				       काष्ठा mm_काष्ठा *mm)
+अणु
+#अगर_घोषित CONFIG_PGSTE
+	अचिन्हित दीर्घ address, bits, skey;
 
-	if (!mm_uses_skeys(mm) || pte_val(pte) & _PAGE_INVALID)
-		return pgste;
+	अगर (!mm_uses_skeys(mm) || pte_val(pte) & _PAGE_INVALID)
+		वापस pgste;
 	address = pte_val(pte) & PAGE_MASK;
-	skey = (unsigned long) page_get_storage_key(address);
+	skey = (अचिन्हित दीर्घ) page_get_storage_key(address);
 	bits = skey & (_PAGE_CHANGED | _PAGE_REFERENCED);
 	/* Transfer page changed & referenced bit to guest bits in pgste */
 	pgste_val(pgste) |= bits << 48;		/* GR bit & GC bit */
 	/* Copy page access key and fetch protection bit to pgste */
 	pgste_val(pgste) &= ~(PGSTE_ACC_BITS | PGSTE_FP_BIT);
 	pgste_val(pgste) |= (skey & (_PAGE_ACC_BITS | _PAGE_FP_BIT)) << 56;
-#endif
-	return pgste;
+#पूर्ण_अगर
+	वापस pgste;
 
-}
+पूर्ण
 
-static inline void pgste_set_key(pte_t *ptep, pgste_t pgste, pte_t entry,
-				 struct mm_struct *mm)
-{
-#ifdef CONFIG_PGSTE
-	unsigned long address;
-	unsigned long nkey;
+अटल अंतरभूत व्योम pgste_set_key(pte_t *ptep, pgste_t pgste, pte_t entry,
+				 काष्ठा mm_काष्ठा *mm)
+अणु
+#अगर_घोषित CONFIG_PGSTE
+	अचिन्हित दीर्घ address;
+	अचिन्हित दीर्घ nkey;
 
-	if (!mm_uses_skeys(mm) || pte_val(entry) & _PAGE_INVALID)
-		return;
+	अगर (!mm_uses_skeys(mm) || pte_val(entry) & _PAGE_INVALID)
+		वापस;
 	VM_BUG_ON(!(pte_val(*ptep) & _PAGE_INVALID));
 	address = pte_val(entry) & PAGE_MASK;
 	/*
 	 * Set page access key and fetch protection bit from pgste.
-	 * The guest C/R information is still in the PGSTE, set real
+	 * The guest C/R inक्रमmation is still in the PGSTE, set real
 	 * key C/R to 0.
 	 */
 	nkey = (pgste_val(pgste) & (PGSTE_ACC_BITS | PGSTE_FP_BIT)) >> 56;
 	nkey |= (pgste_val(pgste) & (PGSTE_GR_BIT | PGSTE_GC_BIT)) >> 48;
 	page_set_storage_key(address, nkey, 0);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline pgste_t pgste_set_pte(pte_t *ptep, pgste_t pgste, pte_t entry)
-{
-#ifdef CONFIG_PGSTE
-	if ((pte_val(entry) & _PAGE_PRESENT) &&
+अटल अंतरभूत pgste_t pgste_set_pte(pte_t *ptep, pgste_t pgste, pte_t entry)
+अणु
+#अगर_घोषित CONFIG_PGSTE
+	अगर ((pte_val(entry) & _PAGE_PRESENT) &&
 	    (pte_val(entry) & _PAGE_WRITE) &&
-	    !(pte_val(entry) & _PAGE_INVALID)) {
-		if (!MACHINE_HAS_ESOP) {
+	    !(pte_val(entry) & _PAGE_INVALID)) अणु
+		अगर (!MACHINE_HAS_ESOP) अणु
 			/*
-			 * Without enhanced suppression-on-protection force
-			 * the dirty bit on for all writable ptes.
+			 * Without enhanced suppression-on-protection क्रमce
+			 * the dirty bit on क्रम all writable ptes.
 			 */
-			pte_val(entry) |= _PAGE_DIRTY;
+			pte_val(entry) |= _PAGE_सूचीTY;
 			pte_val(entry) &= ~_PAGE_PROTECT;
-		}
-		if (!(pte_val(entry) & _PAGE_PROTECT))
-			/* This pte allows write access, set user-dirty */
+		पूर्ण
+		अगर (!(pte_val(entry) & _PAGE_PROTECT))
+			/* This pte allows ग_लिखो access, set user-dirty */
 			pgste_val(pgste) |= PGSTE_UC_BIT;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	*ptep = entry;
-	return pgste;
-}
+	वापस pgste;
+पूर्ण
 
-static inline pgste_t pgste_pte_notify(struct mm_struct *mm,
-				       unsigned long addr,
+अटल अंतरभूत pgste_t pgste_pte_notअगरy(काष्ठा mm_काष्ठा *mm,
+				       अचिन्हित दीर्घ addr,
 				       pte_t *ptep, pgste_t pgste)
-{
-#ifdef CONFIG_PGSTE
-	unsigned long bits;
+अणु
+#अगर_घोषित CONFIG_PGSTE
+	अचिन्हित दीर्घ bits;
 
 	bits = pgste_val(pgste) & (PGSTE_IN_BIT | PGSTE_VSIE_BIT);
-	if (bits) {
+	अगर (bits) अणु
 		pgste_val(pgste) ^= bits;
-		ptep_notify(mm, addr, ptep, bits);
-	}
-#endif
-	return pgste;
-}
+		ptep_notअगरy(mm, addr, ptep, bits);
+	पूर्ण
+#पूर्ण_अगर
+	वापस pgste;
+पूर्ण
 
-static inline pgste_t ptep_xchg_start(struct mm_struct *mm,
-				      unsigned long addr, pte_t *ptep)
-{
+अटल अंतरभूत pgste_t ptep_xchg_start(काष्ठा mm_काष्ठा *mm,
+				      अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
 	pgste_t pgste = __pgste(0);
 
-	if (mm_has_pgste(mm)) {
+	अगर (mm_has_pgste(mm)) अणु
 		pgste = pgste_get_lock(ptep);
-		pgste = pgste_pte_notify(mm, addr, ptep, pgste);
-	}
-	return pgste;
-}
+		pgste = pgste_pte_notअगरy(mm, addr, ptep, pgste);
+	पूर्ण
+	वापस pgste;
+पूर्ण
 
-static inline pte_t ptep_xchg_commit(struct mm_struct *mm,
-				    unsigned long addr, pte_t *ptep,
+अटल अंतरभूत pte_t ptep_xchg_commit(काष्ठा mm_काष्ठा *mm,
+				    अचिन्हित दीर्घ addr, pte_t *ptep,
 				    pgste_t pgste, pte_t old, pte_t new)
-{
-	if (mm_has_pgste(mm)) {
-		if (pte_val(old) & _PAGE_INVALID)
+अणु
+	अगर (mm_has_pgste(mm)) अणु
+		अगर (pte_val(old) & _PAGE_INVALID)
 			pgste_set_key(ptep, pgste, new, mm);
-		if (pte_val(new) & _PAGE_INVALID) {
+		अगर (pte_val(new) & _PAGE_INVALID) अणु
 			pgste = pgste_update_all(old, pgste, mm);
-			if ((pgste_val(pgste) & _PGSTE_GPS_USAGE_MASK) ==
+			अगर ((pgste_val(pgste) & _PGSTE_GPS_USAGE_MASK) ==
 			    _PGSTE_GPS_USAGE_UNUSED)
 				pte_val(old) |= _PAGE_UNUSED;
-		}
+		पूर्ण
 		pgste = pgste_set_pte(ptep, pgste, new);
 		pgste_set_unlock(ptep, pgste);
-	} else {
+	पूर्ण अन्यथा अणु
 		*ptep = new;
-	}
-	return old;
-}
+	पूर्ण
+	वापस old;
+पूर्ण
 
-pte_t ptep_xchg_direct(struct mm_struct *mm, unsigned long addr,
+pte_t ptep_xchg_direct(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		       pte_t *ptep, pte_t new)
-{
+अणु
 	pgste_t pgste;
 	pte_t old;
-	int nodat;
+	पूर्णांक nodat;
 
 	preempt_disable();
 	pgste = ptep_xchg_start(mm, addr, ptep);
@@ -298,16 +299,16 @@ pte_t ptep_xchg_direct(struct mm_struct *mm, unsigned long addr,
 	old = ptep_flush_direct(mm, addr, ptep, nodat);
 	old = ptep_xchg_commit(mm, addr, ptep, pgste, old, new);
 	preempt_enable();
-	return old;
-}
+	वापस old;
+पूर्ण
 EXPORT_SYMBOL(ptep_xchg_direct);
 
-pte_t ptep_xchg_lazy(struct mm_struct *mm, unsigned long addr,
+pte_t ptep_xchg_lazy(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		     pte_t *ptep, pte_t new)
-{
+अणु
 	pgste_t pgste;
 	pte_t old;
-	int nodat;
+	पूर्णांक nodat;
 
 	preempt_disable();
 	pgste = ptep_xchg_start(mm, addr, ptep);
@@ -315,122 +316,122 @@ pte_t ptep_xchg_lazy(struct mm_struct *mm, unsigned long addr,
 	old = ptep_flush_lazy(mm, addr, ptep, nodat);
 	old = ptep_xchg_commit(mm, addr, ptep, pgste, old, new);
 	preempt_enable();
-	return old;
-}
+	वापस old;
+पूर्ण
 EXPORT_SYMBOL(ptep_xchg_lazy);
 
-pte_t ptep_modify_prot_start(struct vm_area_struct *vma, unsigned long addr,
+pte_t ptep_modअगरy_prot_start(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 			     pte_t *ptep)
-{
+अणु
 	pgste_t pgste;
 	pte_t old;
-	int nodat;
-	struct mm_struct *mm = vma->vm_mm;
+	पूर्णांक nodat;
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 
 	preempt_disable();
 	pgste = ptep_xchg_start(mm, addr, ptep);
 	nodat = !!(pgste_val(pgste) & _PGSTE_GPS_NODAT);
 	old = ptep_flush_lazy(mm, addr, ptep, nodat);
-	if (mm_has_pgste(mm)) {
+	अगर (mm_has_pgste(mm)) अणु
 		pgste = pgste_update_all(old, pgste, mm);
 		pgste_set(ptep, pgste);
-	}
-	return old;
-}
+	पूर्ण
+	वापस old;
+पूर्ण
 
-void ptep_modify_prot_commit(struct vm_area_struct *vma, unsigned long addr,
+व्योम ptep_modअगरy_prot_commit(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 			     pte_t *ptep, pte_t old_pte, pte_t pte)
-{
+अणु
 	pgste_t pgste;
-	struct mm_struct *mm = vma->vm_mm;
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 
-	if (!MACHINE_HAS_NX)
+	अगर (!MACHINE_HAS_NX)
 		pte_val(pte) &= ~_PAGE_NOEXEC;
-	if (mm_has_pgste(mm)) {
+	अगर (mm_has_pgste(mm)) अणु
 		pgste = pgste_get(ptep);
 		pgste_set_key(ptep, pgste, pte, mm);
 		pgste = pgste_set_pte(ptep, pgste, pte);
 		pgste_set_unlock(ptep, pgste);
-	} else {
+	पूर्ण अन्यथा अणु
 		*ptep = pte;
-	}
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
-static inline void pmdp_idte_local(struct mm_struct *mm,
-				   unsigned long addr, pmd_t *pmdp)
-{
-	if (MACHINE_HAS_TLB_GUEST)
+अटल अंतरभूत व्योम pmdp_idte_local(काष्ठा mm_काष्ठा *mm,
+				   अचिन्हित दीर्घ addr, pmd_t *pmdp)
+अणु
+	अगर (MACHINE_HAS_TLB_GUEST)
 		__pmdp_idte(addr, pmdp, IDTE_NODAT | IDTE_GUEST_ASCE,
 			    mm->context.asce, IDTE_LOCAL);
-	else
+	अन्यथा
 		__pmdp_idte(addr, pmdp, 0, 0, IDTE_LOCAL);
-	if (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
+	अगर (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
 		gmap_pmdp_idte_local(mm, addr);
-}
+पूर्ण
 
-static inline void pmdp_idte_global(struct mm_struct *mm,
-				    unsigned long addr, pmd_t *pmdp)
-{
-	if (MACHINE_HAS_TLB_GUEST) {
+अटल अंतरभूत व्योम pmdp_idte_global(काष्ठा mm_काष्ठा *mm,
+				    अचिन्हित दीर्घ addr, pmd_t *pmdp)
+अणु
+	अगर (MACHINE_HAS_TLB_GUEST) अणु
 		__pmdp_idte(addr, pmdp, IDTE_NODAT | IDTE_GUEST_ASCE,
 			    mm->context.asce, IDTE_GLOBAL);
-		if (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
+		अगर (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
 			gmap_pmdp_idte_global(mm, addr);
-	} else if (MACHINE_HAS_IDTE) {
+	पूर्ण अन्यथा अगर (MACHINE_HAS_IDTE) अणु
 		__pmdp_idte(addr, pmdp, 0, 0, IDTE_GLOBAL);
-		if (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
+		अगर (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
 			gmap_pmdp_idte_global(mm, addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		__pmdp_csp(pmdp);
-		if (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
+		अगर (mm_has_pgste(mm) && mm->context.allow_gmap_hpage_1m)
 			gmap_pmdp_csp(mm, addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline pmd_t pmdp_flush_direct(struct mm_struct *mm,
-				      unsigned long addr, pmd_t *pmdp)
-{
+अटल अंतरभूत pmd_t pmdp_flush_direct(काष्ठा mm_काष्ठा *mm,
+				      अचिन्हित दीर्घ addr, pmd_t *pmdp)
+अणु
 	pmd_t old;
 
 	old = *pmdp;
-	if (pmd_val(old) & _SEGMENT_ENTRY_INVALID)
-		return old;
+	अगर (pmd_val(old) & _SEGMENT_ENTRY_INVALID)
+		वापस old;
 	atomic_inc(&mm->context.flush_count);
-	if (MACHINE_HAS_TLB_LC &&
+	अगर (MACHINE_HAS_TLB_LC &&
 	    cpumask_equal(mm_cpumask(mm), cpumask_of(smp_processor_id())))
 		pmdp_idte_local(mm, addr, pmdp);
-	else
+	अन्यथा
 		pmdp_idte_global(mm, addr, pmdp);
 	atomic_dec(&mm->context.flush_count);
-	return old;
-}
+	वापस old;
+पूर्ण
 
-static inline pmd_t pmdp_flush_lazy(struct mm_struct *mm,
-				    unsigned long addr, pmd_t *pmdp)
-{
+अटल अंतरभूत pmd_t pmdp_flush_lazy(काष्ठा mm_काष्ठा *mm,
+				    अचिन्हित दीर्घ addr, pmd_t *pmdp)
+अणु
 	pmd_t old;
 
 	old = *pmdp;
-	if (pmd_val(old) & _SEGMENT_ENTRY_INVALID)
-		return old;
+	अगर (pmd_val(old) & _SEGMENT_ENTRY_INVALID)
+		वापस old;
 	atomic_inc(&mm->context.flush_count);
-	if (cpumask_equal(&mm->context.cpu_attach_mask,
-			  cpumask_of(smp_processor_id()))) {
+	अगर (cpumask_equal(&mm->context.cpu_attach_mask,
+			  cpumask_of(smp_processor_id()))) अणु
 		pmd_val(*pmdp) |= _SEGMENT_ENTRY_INVALID;
 		mm->context.flush_mm = 1;
-		if (mm_has_pgste(mm))
+		अगर (mm_has_pgste(mm))
 			gmap_pmdp_invalidate(mm, addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		pmdp_idte_global(mm, addr, pmdp);
-	}
+	पूर्ण
 	atomic_dec(&mm->context.flush_count);
-	return old;
-}
+	वापस old;
+पूर्ण
 
-#ifdef CONFIG_PGSTE
-static pmd_t *pmd_alloc_map(struct mm_struct *mm, unsigned long addr)
-{
+#अगर_घोषित CONFIG_PGSTE
+अटल pmd_t *pmd_alloc_map(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -438,147 +439,147 @@ static pmd_t *pmd_alloc_map(struct mm_struct *mm, unsigned long addr)
 
 	pgd = pgd_offset(mm, addr);
 	p4d = p4d_alloc(mm, pgd, addr);
-	if (!p4d)
-		return NULL;
+	अगर (!p4d)
+		वापस शून्य;
 	pud = pud_alloc(mm, p4d, addr);
-	if (!pud)
-		return NULL;
+	अगर (!pud)
+		वापस शून्य;
 	pmd = pmd_alloc(mm, pud, addr);
-	return pmd;
-}
-#endif
+	वापस pmd;
+पूर्ण
+#पूर्ण_अगर
 
-pmd_t pmdp_xchg_direct(struct mm_struct *mm, unsigned long addr,
+pmd_t pmdp_xchg_direct(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		       pmd_t *pmdp, pmd_t new)
-{
+अणु
 	pmd_t old;
 
 	preempt_disable();
 	old = pmdp_flush_direct(mm, addr, pmdp);
 	*pmdp = new;
 	preempt_enable();
-	return old;
-}
+	वापस old;
+पूर्ण
 EXPORT_SYMBOL(pmdp_xchg_direct);
 
-pmd_t pmdp_xchg_lazy(struct mm_struct *mm, unsigned long addr,
+pmd_t pmdp_xchg_lazy(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		     pmd_t *pmdp, pmd_t new)
-{
+अणु
 	pmd_t old;
 
 	preempt_disable();
 	old = pmdp_flush_lazy(mm, addr, pmdp);
 	*pmdp = new;
 	preempt_enable();
-	return old;
-}
+	वापस old;
+पूर्ण
 EXPORT_SYMBOL(pmdp_xchg_lazy);
 
-static inline void pudp_idte_local(struct mm_struct *mm,
-				   unsigned long addr, pud_t *pudp)
-{
-	if (MACHINE_HAS_TLB_GUEST)
+अटल अंतरभूत व्योम pudp_idte_local(काष्ठा mm_काष्ठा *mm,
+				   अचिन्हित दीर्घ addr, pud_t *pudp)
+अणु
+	अगर (MACHINE_HAS_TLB_GUEST)
 		__pudp_idte(addr, pudp, IDTE_NODAT | IDTE_GUEST_ASCE,
 			    mm->context.asce, IDTE_LOCAL);
-	else
+	अन्यथा
 		__pudp_idte(addr, pudp, 0, 0, IDTE_LOCAL);
-}
+पूर्ण
 
-static inline void pudp_idte_global(struct mm_struct *mm,
-				    unsigned long addr, pud_t *pudp)
-{
-	if (MACHINE_HAS_TLB_GUEST)
+अटल अंतरभूत व्योम pudp_idte_global(काष्ठा mm_काष्ठा *mm,
+				    अचिन्हित दीर्घ addr, pud_t *pudp)
+अणु
+	अगर (MACHINE_HAS_TLB_GUEST)
 		__pudp_idte(addr, pudp, IDTE_NODAT | IDTE_GUEST_ASCE,
 			    mm->context.asce, IDTE_GLOBAL);
-	else if (MACHINE_HAS_IDTE)
+	अन्यथा अगर (MACHINE_HAS_IDTE)
 		__pudp_idte(addr, pudp, 0, 0, IDTE_GLOBAL);
-	else
+	अन्यथा
 		/*
-		 * Invalid bit position is the same for pmd and pud, so we can
+		 * Invalid bit position is the same क्रम pmd and pud, so we can
 		 * re-use _pmd_csp() here
 		 */
 		__pmdp_csp((pmd_t *) pudp);
-}
+पूर्ण
 
-static inline pud_t pudp_flush_direct(struct mm_struct *mm,
-				      unsigned long addr, pud_t *pudp)
-{
+अटल अंतरभूत pud_t pudp_flush_direct(काष्ठा mm_काष्ठा *mm,
+				      अचिन्हित दीर्घ addr, pud_t *pudp)
+अणु
 	pud_t old;
 
 	old = *pudp;
-	if (pud_val(old) & _REGION_ENTRY_INVALID)
-		return old;
+	अगर (pud_val(old) & _REGION_ENTRY_INVALID)
+		वापस old;
 	atomic_inc(&mm->context.flush_count);
-	if (MACHINE_HAS_TLB_LC &&
+	अगर (MACHINE_HAS_TLB_LC &&
 	    cpumask_equal(mm_cpumask(mm), cpumask_of(smp_processor_id())))
 		pudp_idte_local(mm, addr, pudp);
-	else
+	अन्यथा
 		pudp_idte_global(mm, addr, pudp);
 	atomic_dec(&mm->context.flush_count);
-	return old;
-}
+	वापस old;
+पूर्ण
 
-pud_t pudp_xchg_direct(struct mm_struct *mm, unsigned long addr,
+pud_t pudp_xchg_direct(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		       pud_t *pudp, pud_t new)
-{
+अणु
 	pud_t old;
 
 	preempt_disable();
 	old = pudp_flush_direct(mm, addr, pudp);
 	*pudp = new;
 	preempt_enable();
-	return old;
-}
+	वापस old;
+पूर्ण
 EXPORT_SYMBOL(pudp_xchg_direct);
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-void pgtable_trans_huge_deposit(struct mm_struct *mm, pmd_t *pmdp,
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+व्योम pgtable_trans_huge_deposit(काष्ठा mm_काष्ठा *mm, pmd_t *pmdp,
 				pgtable_t pgtable)
-{
-	struct list_head *lh = (struct list_head *) pgtable;
+अणु
+	काष्ठा list_head *lh = (काष्ठा list_head *) pgtable;
 
-	assert_spin_locked(pmd_lockptr(mm, pmdp));
+	निश्चित_spin_locked(pmd_lockptr(mm, pmdp));
 
 	/* FIFO */
-	if (!pmd_huge_pte(mm, pmdp))
+	अगर (!pmd_huge_pte(mm, pmdp))
 		INIT_LIST_HEAD(lh);
-	else
-		list_add(lh, (struct list_head *) pmd_huge_pte(mm, pmdp));
+	अन्यथा
+		list_add(lh, (काष्ठा list_head *) pmd_huge_pte(mm, pmdp));
 	pmd_huge_pte(mm, pmdp) = pgtable;
-}
+पूर्ण
 
-pgtable_t pgtable_trans_huge_withdraw(struct mm_struct *mm, pmd_t *pmdp)
-{
-	struct list_head *lh;
+pgtable_t pgtable_trans_huge_withdraw(काष्ठा mm_काष्ठा *mm, pmd_t *pmdp)
+अणु
+	काष्ठा list_head *lh;
 	pgtable_t pgtable;
 	pte_t *ptep;
 
-	assert_spin_locked(pmd_lockptr(mm, pmdp));
+	निश्चित_spin_locked(pmd_lockptr(mm, pmdp));
 
 	/* FIFO */
 	pgtable = pmd_huge_pte(mm, pmdp);
-	lh = (struct list_head *) pgtable;
-	if (list_empty(lh))
-		pmd_huge_pte(mm, pmdp) = NULL;
-	else {
+	lh = (काष्ठा list_head *) pgtable;
+	अगर (list_empty(lh))
+		pmd_huge_pte(mm, pmdp) = शून्य;
+	अन्यथा अणु
 		pmd_huge_pte(mm, pmdp) = (pgtable_t) lh->next;
 		list_del(lh);
-	}
+	पूर्ण
 	ptep = (pte_t *) pgtable;
 	pte_val(*ptep) = _PAGE_INVALID;
 	ptep++;
 	pte_val(*ptep) = _PAGE_INVALID;
-	return pgtable;
-}
-#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
+	वापस pgtable;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TRANSPARENT_HUGEPAGE */
 
-#ifdef CONFIG_PGSTE
-void ptep_set_pte_at(struct mm_struct *mm, unsigned long addr,
+#अगर_घोषित CONFIG_PGSTE
+व्योम ptep_set_pte_at(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		     pte_t *ptep, pte_t entry)
-{
+अणु
 	pgste_t pgste;
 
-	/* the mm_has_pgste() check is done in set_pte_at() */
+	/* the mm_has_pgste() check is करोne in set_pte_at() */
 	preempt_disable();
 	pgste = pgste_get_lock(ptep);
 	pgste_val(pgste) &= ~_PGSTE_GPS_ZERO;
@@ -586,10 +587,10 @@ void ptep_set_pte_at(struct mm_struct *mm, unsigned long addr,
 	pgste = pgste_set_pte(ptep, pgste, entry);
 	pgste_set_unlock(ptep, pgste);
 	preempt_enable();
-}
+पूर्ण
 
-void ptep_set_notify(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
-{
+व्योम ptep_set_notअगरy(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
 	pgste_t pgste;
 
 	preempt_disable();
@@ -597,111 +598,111 @@ void ptep_set_notify(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
 	pgste_val(pgste) |= PGSTE_IN_BIT;
 	pgste_set_unlock(ptep, pgste);
 	preempt_enable();
-}
+पूर्ण
 
 /**
- * ptep_force_prot - change access rights of a locked pte
- * @mm: pointer to the process mm_struct
- * @addr: virtual address in the guest address space
- * @ptep: pointer to the page table entry
+ * ptep_क्रमce_prot - change access rights of a locked pte
+ * @mm: poपूर्णांकer to the process mm_काष्ठा
+ * @addr: भव address in the guest address space
+ * @ptep: poपूर्णांकer to the page table entry
  * @prot: indicates guest access rights: PROT_NONE, PROT_READ or PROT_WRITE
- * @bit: pgste bit to set (e.g. for notification)
+ * @bit: pgste bit to set (e.g. क्रम notअगरication)
  *
- * Returns 0 if the access rights were changed and -EAGAIN if the current
+ * Returns 0 अगर the access rights were changed and -EAGAIN अगर the current
  * and requested access rights are incompatible.
  */
-int ptep_force_prot(struct mm_struct *mm, unsigned long addr,
-		    pte_t *ptep, int prot, unsigned long bit)
-{
+पूर्णांक ptep_क्रमce_prot(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+		    pte_t *ptep, पूर्णांक prot, अचिन्हित दीर्घ bit)
+अणु
 	pte_t entry;
 	pgste_t pgste;
-	int pte_i, pte_p, nodat;
+	पूर्णांक pte_i, pte_p, nodat;
 
 	pgste = pgste_get_lock(ptep);
 	entry = *ptep;
 	/* Check pte entry after all locks have been acquired */
 	pte_i = pte_val(entry) & _PAGE_INVALID;
 	pte_p = pte_val(entry) & _PAGE_PROTECT;
-	if ((pte_i && (prot != PROT_NONE)) ||
-	    (pte_p && (prot & PROT_WRITE))) {
+	अगर ((pte_i && (prot != PROT_NONE)) ||
+	    (pte_p && (prot & PROT_WRITE))) अणु
 		pgste_set_unlock(ptep, pgste);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 	/* Change access rights and set pgste bit */
 	nodat = !!(pgste_val(pgste) & _PGSTE_GPS_NODAT);
-	if (prot == PROT_NONE && !pte_i) {
+	अगर (prot == PROT_NONE && !pte_i) अणु
 		ptep_flush_direct(mm, addr, ptep, nodat);
 		pgste = pgste_update_all(entry, pgste, mm);
 		pte_val(entry) |= _PAGE_INVALID;
-	}
-	if (prot == PROT_READ && !pte_p) {
+	पूर्ण
+	अगर (prot == PROT_READ && !pte_p) अणु
 		ptep_flush_direct(mm, addr, ptep, nodat);
 		pte_val(entry) &= ~_PAGE_INVALID;
 		pte_val(entry) |= _PAGE_PROTECT;
-	}
+	पूर्ण
 	pgste_val(pgste) |= bit;
 	pgste = pgste_set_pte(ptep, pgste, entry);
 	pgste_set_unlock(ptep, pgste);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ptep_shadow_pte(struct mm_struct *mm, unsigned long saddr,
+पूर्णांक ptep_shaकरोw_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ saddr,
 		    pte_t *sptep, pte_t *tptep, pte_t pte)
-{
+अणु
 	pgste_t spgste, tpgste;
 	pte_t spte, tpte;
-	int rc = -EAGAIN;
+	पूर्णांक rc = -EAGAIN;
 
-	if (!(pte_val(*tptep) & _PAGE_INVALID))
-		return 0;	/* already shadowed */
+	अगर (!(pte_val(*tptep) & _PAGE_INVALID))
+		वापस 0;	/* alपढ़ोy shaकरोwed */
 	spgste = pgste_get_lock(sptep);
 	spte = *sptep;
-	if (!(pte_val(spte) & _PAGE_INVALID) &&
+	अगर (!(pte_val(spte) & _PAGE_INVALID) &&
 	    !((pte_val(spte) & _PAGE_PROTECT) &&
-	      !(pte_val(pte) & _PAGE_PROTECT))) {
+	      !(pte_val(pte) & _PAGE_PROTECT))) अणु
 		pgste_val(spgste) |= PGSTE_VSIE_BIT;
 		tpgste = pgste_get_lock(tptep);
 		pte_val(tpte) = (pte_val(spte) & PAGE_MASK) |
 				(pte_val(pte) & _PAGE_PROTECT);
-		/* don't touch the storage key - it belongs to parent pgste */
+		/* करोn't touch the storage key - it beदीर्घs to parent pgste */
 		tpgste = pgste_set_pte(tptep, tpgste, tpte);
 		pgste_set_unlock(tptep, tpgste);
 		rc = 1;
-	}
+	पूर्ण
 	pgste_set_unlock(sptep, spgste);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void ptep_unshadow_pte(struct mm_struct *mm, unsigned long saddr, pte_t *ptep)
-{
+व्योम ptep_unshaकरोw_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ saddr, pte_t *ptep)
+अणु
 	pgste_t pgste;
-	int nodat;
+	पूर्णांक nodat;
 
 	pgste = pgste_get_lock(ptep);
-	/* notifier is called by the caller */
+	/* notअगरier is called by the caller */
 	nodat = !!(pgste_val(pgste) & _PGSTE_GPS_NODAT);
 	ptep_flush_direct(mm, saddr, ptep, nodat);
-	/* don't touch the storage key - it belongs to parent pgste */
+	/* करोn't touch the storage key - it beदीर्घs to parent pgste */
 	pgste = pgste_set_pte(ptep, pgste, __pte(_PAGE_INVALID));
 	pgste_set_unlock(ptep, pgste);
-}
+पूर्ण
 
-static void ptep_zap_swap_entry(struct mm_struct *mm, swp_entry_t entry)
-{
-	if (!non_swap_entry(entry))
+अटल व्योम ptep_zap_swap_entry(काष्ठा mm_काष्ठा *mm, swp_entry_t entry)
+अणु
+	अगर (!non_swap_entry(entry))
 		dec_mm_counter(mm, MM_SWAPENTS);
-	else if (is_migration_entry(entry)) {
-		struct page *page = migration_entry_to_page(entry);
+	अन्यथा अगर (is_migration_entry(entry)) अणु
+		काष्ठा page *page = migration_entry_to_page(entry);
 
 		dec_mm_counter(mm, mm_counter(page));
-	}
-	free_swap_and_cache(entry);
-}
+	पूर्ण
+	मुक्त_swap_and_cache(entry);
+पूर्ण
 
-void ptep_zap_unused(struct mm_struct *mm, unsigned long addr,
-		     pte_t *ptep, int reset)
-{
-	unsigned long pgstev;
+व्योम ptep_zap_unused(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+		     pte_t *ptep, पूर्णांक reset)
+अणु
+	अचिन्हित दीर्घ pgstev;
 	pgste_t pgste;
 	pte_t pte;
 
@@ -710,21 +711,21 @@ void ptep_zap_unused(struct mm_struct *mm, unsigned long addr,
 	pgste = pgste_get_lock(ptep);
 	pgstev = pgste_val(pgste);
 	pte = *ptep;
-	if (!reset && pte_swap(pte) &&
+	अगर (!reset && pte_swap(pte) &&
 	    ((pgstev & _PGSTE_GPS_USAGE_MASK) == _PGSTE_GPS_USAGE_UNUSED ||
-	     (pgstev & _PGSTE_GPS_ZERO))) {
+	     (pgstev & _PGSTE_GPS_ZERO))) अणु
 		ptep_zap_swap_entry(mm, pte_to_swp_entry(pte));
 		pte_clear(mm, addr, ptep);
-	}
-	if (reset)
+	पूर्ण
+	अगर (reset)
 		pgste_val(pgste) &= ~_PGSTE_GPS_USAGE_MASK;
 	pgste_set_unlock(ptep, pgste);
 	preempt_enable();
-}
+पूर्ण
 
-void ptep_zap_key(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
-{
-	unsigned long ptev;
+व्योम ptep_zap_key(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
+	अचिन्हित दीर्घ ptev;
 	pgste_t pgste;
 
 	/* Clear storage key ACC and F, but set R/C */
@@ -733,62 +734,62 @@ void ptep_zap_key(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
 	pgste_val(pgste) &= ~(PGSTE_ACC_BITS | PGSTE_FP_BIT);
 	pgste_val(pgste) |= PGSTE_GR_BIT | PGSTE_GC_BIT;
 	ptev = pte_val(*ptep);
-	if (!(ptev & _PAGE_INVALID) && (ptev & _PAGE_WRITE))
+	अगर (!(ptev & _PAGE_INVALID) && (ptev & _PAGE_WRITE))
 		page_set_storage_key(ptev & PAGE_MASK, PAGE_DEFAULT_KEY, 1);
 	pgste_set_unlock(ptep, pgste);
 	preempt_enable();
-}
+पूर्ण
 
 /*
- * Test and reset if a guest page is dirty
+ * Test and reset अगर a guest page is dirty
  */
-bool ptep_test_and_clear_uc(struct mm_struct *mm, unsigned long addr,
+bool ptep_test_and_clear_uc(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		       pte_t *ptep)
-{
+अणु
 	pgste_t pgste;
 	pte_t pte;
 	bool dirty;
-	int nodat;
+	पूर्णांक nodat;
 
 	pgste = pgste_get_lock(ptep);
 	dirty = !!(pgste_val(pgste) & PGSTE_UC_BIT);
 	pgste_val(pgste) &= ~PGSTE_UC_BIT;
 	pte = *ptep;
-	if (dirty && (pte_val(pte) & _PAGE_PRESENT)) {
-		pgste = pgste_pte_notify(mm, addr, ptep, pgste);
+	अगर (dirty && (pte_val(pte) & _PAGE_PRESENT)) अणु
+		pgste = pgste_pte_notअगरy(mm, addr, ptep, pgste);
 		nodat = !!(pgste_val(pgste) & _PGSTE_GPS_NODAT);
 		ptep_ipte_global(mm, addr, ptep, nodat);
-		if (MACHINE_HAS_ESOP || !(pte_val(pte) & _PAGE_WRITE))
+		अगर (MACHINE_HAS_ESOP || !(pte_val(pte) & _PAGE_WRITE))
 			pte_val(pte) |= _PAGE_PROTECT;
-		else
+		अन्यथा
 			pte_val(pte) |= _PAGE_INVALID;
 		*ptep = pte;
-	}
+	पूर्ण
 	pgste_set_unlock(ptep, pgste);
-	return dirty;
-}
+	वापस dirty;
+पूर्ण
 EXPORT_SYMBOL_GPL(ptep_test_and_clear_uc);
 
-int set_guest_storage_key(struct mm_struct *mm, unsigned long addr,
-			  unsigned char key, bool nq)
-{
-	unsigned long keyul, paddr;
+पूर्णांक set_guest_storage_key(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+			  अचिन्हित अक्षर key, bool nq)
+अणु
+	अचिन्हित दीर्घ keyul, paddr;
 	spinlock_t *ptl;
 	pgste_t old, new;
 	pmd_t *pmdp;
 	pte_t *ptep;
 
 	pmdp = pmd_alloc_map(mm, addr);
-	if (unlikely(!pmdp))
-		return -EFAULT;
+	अगर (unlikely(!pmdp))
+		वापस -EFAULT;
 
 	ptl = pmd_lock(mm, pmdp);
-	if (!pmd_present(*pmdp)) {
+	अगर (!pmd_present(*pmdp)) अणु
 		spin_unlock(ptl);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (pmd_large(*pmdp)) {
+	अगर (pmd_large(*pmdp)) अणु
 		paddr = pmd_val(*pmdp) & HPAGE_MASK;
 		paddr |= addr & ~HPAGE_MASK;
 		/*
@@ -797,305 +798,305 @@ int set_guest_storage_key(struct mm_struct *mm, unsigned long addr,
 		 */
 		page_set_storage_key(paddr, key, 1);
 		spin_unlock(ptl);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock(ptl);
 
 	ptep = pte_alloc_map_lock(mm, pmdp, addr, &ptl);
-	if (unlikely(!ptep))
-		return -EFAULT;
+	अगर (unlikely(!ptep))
+		वापस -EFAULT;
 
 	new = old = pgste_get_lock(ptep);
 	pgste_val(new) &= ~(PGSTE_GR_BIT | PGSTE_GC_BIT |
 			    PGSTE_ACC_BITS | PGSTE_FP_BIT);
-	keyul = (unsigned long) key;
+	keyul = (अचिन्हित दीर्घ) key;
 	pgste_val(new) |= (keyul & (_PAGE_CHANGED | _PAGE_REFERENCED)) << 48;
 	pgste_val(new) |= (keyul & (_PAGE_ACC_BITS | _PAGE_FP_BIT)) << 56;
-	if (!(pte_val(*ptep) & _PAGE_INVALID)) {
-		unsigned long bits, skey;
+	अगर (!(pte_val(*ptep) & _PAGE_INVALID)) अणु
+		अचिन्हित दीर्घ bits, skey;
 
 		paddr = pte_val(*ptep) & PAGE_MASK;
-		skey = (unsigned long) page_get_storage_key(paddr);
+		skey = (अचिन्हित दीर्घ) page_get_storage_key(paddr);
 		bits = skey & (_PAGE_CHANGED | _PAGE_REFERENCED);
 		skey = key & (_PAGE_ACC_BITS | _PAGE_FP_BIT);
 		/* Set storage key ACC and FP */
 		page_set_storage_key(paddr, skey, !nq);
-		/* Merge host changed & referenced into pgste  */
+		/* Merge host changed & referenced पूर्णांकo pgste  */
 		pgste_val(new) |= bits << 52;
-	}
+	पूर्ण
 	/* changing the guest storage key is considered a change of the page */
-	if ((pgste_val(new) ^ pgste_val(old)) &
+	अगर ((pgste_val(new) ^ pgste_val(old)) &
 	    (PGSTE_ACC_BITS | PGSTE_FP_BIT | PGSTE_GR_BIT | PGSTE_GC_BIT))
 		pgste_val(new) |= PGSTE_UC_BIT;
 
 	pgste_set_unlock(ptep, new);
 	pte_unmap_unlock(ptep, ptl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(set_guest_storage_key);
 
 /**
  * Conditionally set a guest storage key (handling csske).
- * oldkey will be updated when either mr or mc is set and a pointer is given.
+ * oldkey will be updated when either mr or mc is set and a poपूर्णांकer is given.
  *
- * Returns 0 if a guests storage key update wasn't necessary, 1 if the guest
+ * Returns 0 अगर a guests storage key update wasn't necessary, 1 अगर the guest
  * storage key was updated and -EFAULT on access errors.
  */
-int cond_set_guest_storage_key(struct mm_struct *mm, unsigned long addr,
-			       unsigned char key, unsigned char *oldkey,
+पूर्णांक cond_set_guest_storage_key(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+			       अचिन्हित अक्षर key, अचिन्हित अक्षर *oldkey,
 			       bool nq, bool mr, bool mc)
-{
-	unsigned char tmp, mask = _PAGE_ACC_BITS | _PAGE_FP_BIT;
-	int rc;
+अणु
+	अचिन्हित अक्षर पंचांगp, mask = _PAGE_ACC_BITS | _PAGE_FP_BIT;
+	पूर्णांक rc;
 
 	/* we can drop the pgste lock between getting and setting the key */
-	if (mr | mc) {
-		rc = get_guest_storage_key(current->mm, addr, &tmp);
-		if (rc)
-			return rc;
-		if (oldkey)
-			*oldkey = tmp;
-		if (!mr)
+	अगर (mr | mc) अणु
+		rc = get_guest_storage_key(current->mm, addr, &पंचांगp);
+		अगर (rc)
+			वापस rc;
+		अगर (oldkey)
+			*oldkey = पंचांगp;
+		अगर (!mr)
 			mask |= _PAGE_REFERENCED;
-		if (!mc)
+		अगर (!mc)
 			mask |= _PAGE_CHANGED;
-		if (!((tmp ^ key) & mask))
-			return 0;
-	}
+		अगर (!((पंचांगp ^ key) & mask))
+			वापस 0;
+	पूर्ण
 	rc = set_guest_storage_key(current->mm, addr, key, nq);
-	return rc < 0 ? rc : 1;
-}
+	वापस rc < 0 ? rc : 1;
+पूर्ण
 EXPORT_SYMBOL(cond_set_guest_storage_key);
 
 /**
- * Reset a guest reference bit (rrbe), returning the reference and changed bit.
+ * Reset a guest reference bit (rrbe), वापसing the reference and changed bit.
  *
- * Returns < 0 in case of error, otherwise the cc to be reported to the guest.
+ * Returns < 0 in हाल of error, otherwise the cc to be reported to the guest.
  */
-int reset_guest_reference_bit(struct mm_struct *mm, unsigned long addr)
-{
+पूर्णांक reset_guest_reference_bit(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
 	spinlock_t *ptl;
-	unsigned long paddr;
+	अचिन्हित दीर्घ paddr;
 	pgste_t old, new;
 	pmd_t *pmdp;
 	pte_t *ptep;
-	int cc = 0;
+	पूर्णांक cc = 0;
 
 	pmdp = pmd_alloc_map(mm, addr);
-	if (unlikely(!pmdp))
-		return -EFAULT;
+	अगर (unlikely(!pmdp))
+		वापस -EFAULT;
 
 	ptl = pmd_lock(mm, pmdp);
-	if (!pmd_present(*pmdp)) {
+	अगर (!pmd_present(*pmdp)) अणु
 		spin_unlock(ptl);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (pmd_large(*pmdp)) {
+	अगर (pmd_large(*pmdp)) अणु
 		paddr = pmd_val(*pmdp) & HPAGE_MASK;
 		paddr |= addr & ~HPAGE_MASK;
 		cc = page_reset_referenced(paddr);
 		spin_unlock(ptl);
-		return cc;
-	}
+		वापस cc;
+	पूर्ण
 	spin_unlock(ptl);
 
 	ptep = pte_alloc_map_lock(mm, pmdp, addr, &ptl);
-	if (unlikely(!ptep))
-		return -EFAULT;
+	अगर (unlikely(!ptep))
+		वापस -EFAULT;
 
 	new = old = pgste_get_lock(ptep);
 	/* Reset guest reference bit only */
 	pgste_val(new) &= ~PGSTE_GR_BIT;
 
-	if (!(pte_val(*ptep) & _PAGE_INVALID)) {
+	अगर (!(pte_val(*ptep) & _PAGE_INVALID)) अणु
 		paddr = pte_val(*ptep) & PAGE_MASK;
 		cc = page_reset_referenced(paddr);
-		/* Merge real referenced bit into host-set */
-		pgste_val(new) |= ((unsigned long) cc << 53) & PGSTE_HR_BIT;
-	}
+		/* Merge real referenced bit पूर्णांकo host-set */
+		pgste_val(new) |= ((अचिन्हित दीर्घ) cc << 53) & PGSTE_HR_BIT;
+	पूर्ण
 	/* Reflect guest's logical view, not physical */
 	cc |= (pgste_val(old) & (PGSTE_GR_BIT | PGSTE_GC_BIT)) >> 49;
 	/* Changing the guest storage key is considered a change of the page */
-	if ((pgste_val(new) ^ pgste_val(old)) & PGSTE_GR_BIT)
+	अगर ((pgste_val(new) ^ pgste_val(old)) & PGSTE_GR_BIT)
 		pgste_val(new) |= PGSTE_UC_BIT;
 
 	pgste_set_unlock(ptep, new);
 	pte_unmap_unlock(ptep, ptl);
-	return cc;
-}
+	वापस cc;
+पूर्ण
 EXPORT_SYMBOL(reset_guest_reference_bit);
 
-int get_guest_storage_key(struct mm_struct *mm, unsigned long addr,
-			  unsigned char *key)
-{
-	unsigned long paddr;
+पूर्णांक get_guest_storage_key(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
+			  अचिन्हित अक्षर *key)
+अणु
+	अचिन्हित दीर्घ paddr;
 	spinlock_t *ptl;
 	pgste_t pgste;
 	pmd_t *pmdp;
 	pte_t *ptep;
 
 	pmdp = pmd_alloc_map(mm, addr);
-	if (unlikely(!pmdp))
-		return -EFAULT;
+	अगर (unlikely(!pmdp))
+		वापस -EFAULT;
 
 	ptl = pmd_lock(mm, pmdp);
-	if (!pmd_present(*pmdp)) {
+	अगर (!pmd_present(*pmdp)) अणु
 		/* Not yet mapped memory has a zero key */
 		spin_unlock(ptl);
 		*key = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (pmd_large(*pmdp)) {
+	अगर (pmd_large(*pmdp)) अणु
 		paddr = pmd_val(*pmdp) & HPAGE_MASK;
 		paddr |= addr & ~HPAGE_MASK;
 		*key = page_get_storage_key(paddr);
 		spin_unlock(ptl);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock(ptl);
 
 	ptep = pte_alloc_map_lock(mm, pmdp, addr, &ptl);
-	if (unlikely(!ptep))
-		return -EFAULT;
+	अगर (unlikely(!ptep))
+		वापस -EFAULT;
 
 	pgste = pgste_get_lock(ptep);
 	*key = (pgste_val(pgste) & (PGSTE_ACC_BITS | PGSTE_FP_BIT)) >> 56;
 	paddr = pte_val(*ptep) & PAGE_MASK;
-	if (!(pte_val(*ptep) & _PAGE_INVALID))
+	अगर (!(pte_val(*ptep) & _PAGE_INVALID))
 		*key = page_get_storage_key(paddr);
 	/* Reflect guest's logical view, not physical */
 	*key |= (pgste_val(pgste) & (PGSTE_GR_BIT | PGSTE_GC_BIT)) >> 48;
 	pgste_set_unlock(ptep, pgste);
 	pte_unmap_unlock(ptep, ptl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(get_guest_storage_key);
 
 /**
- * pgste_perform_essa - perform ESSA actions on the PGSTE.
- * @mm: the memory context. It must have PGSTEs, no check is performed here!
- * @hva: the host virtual address of the page whose PGSTE is to be processed
- * @orc: the specific action to perform, see the ESSA_SET_* macros.
- * @oldpte: the PTE will be saved there if the pointer is not NULL.
- * @oldpgste: the old PGSTE will be saved there if the pointer is not NULL.
+ * pgste_perक्रमm_essa - perक्रमm ESSA actions on the PGSTE.
+ * @mm: the memory context. It must have PGSTEs, no check is perक्रमmed here!
+ * @hva: the host भव address of the page whose PGSTE is to be processed
+ * @orc: the specअगरic action to perक्रमm, see the ESSA_SET_* macros.
+ * @oldpte: the PTE will be saved there अगर the poपूर्णांकer is not शून्य.
+ * @oldpgste: the old PGSTE will be saved there अगर the poपूर्णांकer is not शून्य.
  *
- * Return: 1 if the page is to be added to the CBRL, otherwise 0,
- *	   or < 0 in case of error. -EINVAL is returned for invalid values
- *	   of orc, -EFAULT for invalid addresses.
+ * Return: 1 अगर the page is to be added to the CBRL, otherwise 0,
+ *	   or < 0 in हाल of error. -EINVAL is वापसed क्रम invalid values
+ *	   of orc, -EFAULT क्रम invalid addresses.
  */
-int pgste_perform_essa(struct mm_struct *mm, unsigned long hva, int orc,
-			unsigned long *oldpte, unsigned long *oldpgste)
-{
-	unsigned long pgstev;
+पूर्णांक pgste_perक्रमm_essa(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ hva, पूर्णांक orc,
+			अचिन्हित दीर्घ *oldpte, अचिन्हित दीर्घ *oldpgste)
+अणु
+	अचिन्हित दीर्घ pgstev;
 	spinlock_t *ptl;
 	pgste_t pgste;
 	pte_t *ptep;
-	int res = 0;
+	पूर्णांक res = 0;
 
 	WARN_ON_ONCE(orc > ESSA_MAX);
-	if (unlikely(orc > ESSA_MAX))
-		return -EINVAL;
+	अगर (unlikely(orc > ESSA_MAX))
+		वापस -EINVAL;
 	ptep = get_locked_pte(mm, hva, &ptl);
-	if (unlikely(!ptep))
-		return -EFAULT;
+	अगर (unlikely(!ptep))
+		वापस -EFAULT;
 	pgste = pgste_get_lock(ptep);
 	pgstev = pgste_val(pgste);
-	if (oldpte)
+	अगर (oldpte)
 		*oldpte = pte_val(*ptep);
-	if (oldpgste)
+	अगर (oldpgste)
 		*oldpgste = pgstev;
 
-	switch (orc) {
-	case ESSA_GET_STATE:
-		break;
-	case ESSA_SET_STABLE:
+	चयन (orc) अणु
+	हाल ESSA_GET_STATE:
+		अवरोध;
+	हाल ESSA_SET_STABLE:
 		pgstev &= ~(_PGSTE_GPS_USAGE_MASK | _PGSTE_GPS_NODAT);
 		pgstev |= _PGSTE_GPS_USAGE_STABLE;
-		break;
-	case ESSA_SET_UNUSED:
+		अवरोध;
+	हाल ESSA_SET_UNUSED:
 		pgstev &= ~_PGSTE_GPS_USAGE_MASK;
 		pgstev |= _PGSTE_GPS_USAGE_UNUSED;
-		if (pte_val(*ptep) & _PAGE_INVALID)
+		अगर (pte_val(*ptep) & _PAGE_INVALID)
 			res = 1;
-		break;
-	case ESSA_SET_VOLATILE:
+		अवरोध;
+	हाल ESSA_SET_VOLATILE:
 		pgstev &= ~_PGSTE_GPS_USAGE_MASK;
 		pgstev |= _PGSTE_GPS_USAGE_VOLATILE;
-		if (pte_val(*ptep) & _PAGE_INVALID)
+		अगर (pte_val(*ptep) & _PAGE_INVALID)
 			res = 1;
-		break;
-	case ESSA_SET_POT_VOLATILE:
+		अवरोध;
+	हाल ESSA_SET_POT_VOLATILE:
 		pgstev &= ~_PGSTE_GPS_USAGE_MASK;
-		if (!(pte_val(*ptep) & _PAGE_INVALID)) {
+		अगर (!(pte_val(*ptep) & _PAGE_INVALID)) अणु
 			pgstev |= _PGSTE_GPS_USAGE_POT_VOLATILE;
-			break;
-		}
-		if (pgstev & _PGSTE_GPS_ZERO) {
+			अवरोध;
+		पूर्ण
+		अगर (pgstev & _PGSTE_GPS_ZERO) अणु
 			pgstev |= _PGSTE_GPS_USAGE_VOLATILE;
-			break;
-		}
-		if (!(pgstev & PGSTE_GC_BIT)) {
+			अवरोध;
+		पूर्ण
+		अगर (!(pgstev & PGSTE_GC_BIT)) अणु
 			pgstev |= _PGSTE_GPS_USAGE_VOLATILE;
 			res = 1;
-			break;
-		}
-		break;
-	case ESSA_SET_STABLE_RESIDENT:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल ESSA_SET_STABLE_RESIDENT:
 		pgstev &= ~_PGSTE_GPS_USAGE_MASK;
 		pgstev |= _PGSTE_GPS_USAGE_STABLE;
 		/*
-		 * Since the resident state can go away any time after this
+		 * Since the resident state can go away any समय after this
 		 * call, we will not make this page resident. We can revisit
-		 * this decision if a guest will ever start using this.
+		 * this decision अगर a guest will ever start using this.
 		 */
-		break;
-	case ESSA_SET_STABLE_IF_RESIDENT:
-		if (!(pte_val(*ptep) & _PAGE_INVALID)) {
+		अवरोध;
+	हाल ESSA_SET_STABLE_IF_RESIDENT:
+		अगर (!(pte_val(*ptep) & _PAGE_INVALID)) अणु
 			pgstev &= ~_PGSTE_GPS_USAGE_MASK;
 			pgstev |= _PGSTE_GPS_USAGE_STABLE;
-		}
-		break;
-	case ESSA_SET_STABLE_NODAT:
+		पूर्ण
+		अवरोध;
+	हाल ESSA_SET_STABLE_NODAT:
 		pgstev &= ~_PGSTE_GPS_USAGE_MASK;
 		pgstev |= _PGSTE_GPS_USAGE_STABLE | _PGSTE_GPS_NODAT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* we should never get here! */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/* If we are discarding a page, set it to logical zero */
-	if (res)
+	अगर (res)
 		pgstev |= _PGSTE_GPS_ZERO;
 
 	pgste_val(pgste) = pgstev;
 	pgste_set_unlock(ptep, pgste);
 	pte_unmap_unlock(ptep, ptl);
-	return res;
-}
-EXPORT_SYMBOL(pgste_perform_essa);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(pgste_perक्रमm_essa);
 
 /**
- * set_pgste_bits - set specific PGSTE bits.
- * @mm: the memory context. It must have PGSTEs, no check is performed here!
- * @hva: the host virtual address of the page whose PGSTE is to be processed
- * @bits: a bitmask representing the bits that will be touched
+ * set_pgste_bits - set specअगरic PGSTE bits.
+ * @mm: the memory context. It must have PGSTEs, no check is perक्रमmed here!
+ * @hva: the host भव address of the page whose PGSTE is to be processed
+ * @bits: a biपंचांगask representing the bits that will be touched
  * @value: the values of the bits to be written. Only the bits in the mask
  *	   will be written.
  *
- * Return: 0 on success, < 0 in case of error.
+ * Return: 0 on success, < 0 in हाल of error.
  */
-int set_pgste_bits(struct mm_struct *mm, unsigned long hva,
-			unsigned long bits, unsigned long value)
-{
+पूर्णांक set_pgste_bits(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ hva,
+			अचिन्हित दीर्घ bits, अचिन्हित दीर्घ value)
+अणु
 	spinlock_t *ptl;
 	pgste_t new;
 	pte_t *ptep;
 
 	ptep = get_locked_pte(mm, hva, &ptl);
-	if (unlikely(!ptep))
-		return -EFAULT;
+	अगर (unlikely(!ptep))
+		वापस -EFAULT;
 	new = pgste_get_lock(ptep);
 
 	pgste_val(new) &= ~bits;
@@ -1103,29 +1104,29 @@ int set_pgste_bits(struct mm_struct *mm, unsigned long hva,
 
 	pgste_set_unlock(ptep, new);
 	pte_unmap_unlock(ptep, ptl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(set_pgste_bits);
 
 /**
- * get_pgste - get the current PGSTE for the given address.
- * @mm: the memory context. It must have PGSTEs, no check is performed here!
- * @hva: the host virtual address of the page whose PGSTE is to be processed
- * @pgstep: will be written with the current PGSTE for the given address.
+ * get_pgste - get the current PGSTE क्रम the given address.
+ * @mm: the memory context. It must have PGSTEs, no check is perक्रमmed here!
+ * @hva: the host भव address of the page whose PGSTE is to be processed
+ * @pgstep: will be written with the current PGSTE क्रम the given address.
  *
- * Return: 0 on success, < 0 in case of error.
+ * Return: 0 on success, < 0 in हाल of error.
  */
-int get_pgste(struct mm_struct *mm, unsigned long hva, unsigned long *pgstep)
-{
+पूर्णांक get_pgste(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ hva, अचिन्हित दीर्घ *pgstep)
+अणु
 	spinlock_t *ptl;
 	pte_t *ptep;
 
 	ptep = get_locked_pte(mm, hva, &ptl);
-	if (unlikely(!ptep))
-		return -EFAULT;
+	अगर (unlikely(!ptep))
+		वापस -EFAULT;
 	*pgstep = pgste_val(pgste_get(ptep));
 	pte_unmap_unlock(ptep, ptl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(get_pgste);
-#endif
+#पूर्ण_अगर

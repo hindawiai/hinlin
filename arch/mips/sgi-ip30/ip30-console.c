@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-#include <asm/sn/ioc3.h>
+#समावेश <यंत्र/sn/ioc3.h>
 
-static inline struct ioc3_uartregs *console_uart(void)
-{
-	struct ioc3 *ioc3;
+अटल अंतरभूत काष्ठा ioc3_uartregs *console_uart(व्योम)
+अणु
+	काष्ठा ioc3 *ioc3;
 
-	ioc3 = (struct ioc3 *)((void *)(0x900000001f600000));
-	return &ioc3->sregs.uarta;
-}
+	ioc3 = (काष्ठा ioc3 *)((व्योम *)(0x900000001f600000));
+	वापस &ioc3->sregs.uarta;
+पूर्ण
 
-void prom_putchar(char c)
-{
-	struct ioc3_uartregs *uart = console_uart();
+व्योम prom_अक्षर_दो(अक्षर c)
+अणु
+	काष्ठा ioc3_uartregs *uart = console_uart();
 
-	while ((readb(&uart->iu_lsr) & 0x20) == 0)
+	जबतक ((पढ़ोb(&uart->iu_lsr) & 0x20) == 0)
 		cpu_relax();
 
-	writeb(c, &uart->iu_thr);
-}
+	ग_लिखोb(c, &uart->iu_thr);
+पूर्ण

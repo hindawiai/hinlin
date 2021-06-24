@@ -1,245 +1,246 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * ALSA SoC Voice Codec Interface for TI DAVINCI processor
+ * ALSA SoC Voice Codec Interface क्रम TI DAVINCI processor
  *
  * Copyright (C) 2010 Texas Instruments.
  *
  * Author: Miguel Aguilar <miguel.aguilar@ridgerun.com>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/mfd/davinci_voicecodec.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/davinci_voicecodec.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/initval.h>
-#include <sound/soc.h>
-#include <sound/dmaengine_pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/dmaengine_pcm.h>
 
-#include "edma-pcm.h"
-#include "davinci-i2s.h"
+#समावेश "edma-pcm.h"
+#समावेश "davinci-i2s.h"
 
-#define MOD_REG_BIT(val, mask, set) do { \
-	if (set) { \
+#घोषणा MOD_REG_BIT(val, mask, set) करो अणु \
+	अगर (set) अणु \
 		val |= mask; \
-	} else { \
+	पूर्ण अन्यथा अणु \
 		val &= ~mask; \
-	} \
-} while (0)
+	पूर्ण \
+पूर्ण जबतक (0)
 
-struct davinci_vcif_dev {
-	struct davinci_vc *davinci_vc;
-	struct snd_dmaengine_dai_dma_data dma_data[2];
-	int dma_request[2];
-};
+काष्ठा davinci_vcअगर_dev अणु
+	काष्ठा davinci_vc *davinci_vc;
+	काष्ठा snd_dmaengine_dai_dma_data dma_data[2];
+	पूर्णांक dma_request[2];
+पूर्ण;
 
-static void davinci_vcif_start(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct davinci_vcif_dev *davinci_vcif_dev =
+अटल व्योम davinci_vcअगर_start(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा davinci_vcअगर_dev *davinci_vcअगर_dev =
 			snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
-	struct davinci_vc *davinci_vc = davinci_vcif_dev->davinci_vc;
+	काष्ठा davinci_vc *davinci_vc = davinci_vcअगर_dev->davinci_vc;
 	u32 w;
 
 	/* Start the sample generator and enable transmitter/receiver */
-	w = readl(davinci_vc->base + DAVINCI_VC_CTRL);
+	w = पढ़ोl(davinci_vc->base + DAVINCI_VC_CTRL);
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RSTDAC, 0);
-	else
+	अन्यथा
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RSTADC, 0);
 
-	writel(w, davinci_vc->base + DAVINCI_VC_CTRL);
-}
+	ग_लिखोl(w, davinci_vc->base + DAVINCI_VC_CTRL);
+पूर्ण
 
-static void davinci_vcif_stop(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct davinci_vcif_dev *davinci_vcif_dev =
+अटल व्योम davinci_vcअगर_stop(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा davinci_vcअगर_dev *davinci_vcअगर_dev =
 			snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
-	struct davinci_vc *davinci_vc = davinci_vcif_dev->davinci_vc;
+	काष्ठा davinci_vc *davinci_vc = davinci_vcअगर_dev->davinci_vc;
 	u32 w;
 
 	/* Reset transmitter/receiver and sample rate/frame sync generators */
-	w = readl(davinci_vc->base + DAVINCI_VC_CTRL);
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	w = पढ़ोl(davinci_vc->base + DAVINCI_VC_CTRL);
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RSTDAC, 1);
-	else
+	अन्यथा
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RSTADC, 1);
 
-	writel(w, davinci_vc->base + DAVINCI_VC_CTRL);
-}
+	ग_लिखोl(w, davinci_vc->base + DAVINCI_VC_CTRL);
+पूर्ण
 
-static int davinci_vcif_hw_params(struct snd_pcm_substream *substream,
-				  struct snd_pcm_hw_params *params,
-				  struct snd_soc_dai *dai)
-{
-	struct davinci_vcif_dev *davinci_vcif_dev = snd_soc_dai_get_drvdata(dai);
-	struct davinci_vc *davinci_vc = davinci_vcif_dev->davinci_vc;
+अटल पूर्णांक davinci_vcअगर_hw_params(काष्ठा snd_pcm_substream *substream,
+				  काष्ठा snd_pcm_hw_params *params,
+				  काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा davinci_vcअगर_dev *davinci_vcअगर_dev = snd_soc_dai_get_drvdata(dai);
+	काष्ठा davinci_vc *davinci_vc = davinci_vcअगर_dev->davinci_vc;
 	u32 w;
 
-	/* Restart the codec before setup */
-	davinci_vcif_stop(substream);
-	davinci_vcif_start(substream);
+	/* Restart the codec beक्रमe setup */
+	davinci_vcअगर_stop(substream);
+	davinci_vcअगर_start(substream);
 
 	/* General line settings */
-	writel(DAVINCI_VC_CTRL_MASK, davinci_vc->base + DAVINCI_VC_CTRL);
+	ग_लिखोl(DAVINCI_VC_CTRL_MASK, davinci_vc->base + DAVINCI_VC_CTRL);
 
-	writel(DAVINCI_VC_INT_MASK, davinci_vc->base + DAVINCI_VC_INTCLR);
+	ग_लिखोl(DAVINCI_VC_INT_MASK, davinci_vc->base + DAVINCI_VC_INTCLR);
 
-	writel(DAVINCI_VC_INT_MASK, davinci_vc->base + DAVINCI_VC_INTEN);
+	ग_लिखोl(DAVINCI_VC_INT_MASK, davinci_vc->base + DAVINCI_VC_INTEN);
 
-	w = readl(davinci_vc->base + DAVINCI_VC_CTRL);
+	w = पढ़ोl(davinci_vc->base + DAVINCI_VC_CTRL);
 
 	/* Determine xfer data type */
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_U8:
+	चयन (params_क्रमmat(params)) अणु
+	हाल SNDRV_PCM_FORMAT_U8:
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RD_BITS_8 |
 			    DAVINCI_VC_CTRL_RD_UNSIGNED |
 			    DAVINCI_VC_CTRL_WD_BITS_8 |
 			    DAVINCI_VC_CTRL_WD_UNSIGNED, 1);
-		break;
-	case SNDRV_PCM_FORMAT_S8:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S8:
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RD_BITS_8 |
 			    DAVINCI_VC_CTRL_WD_BITS_8, 1);
 
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RD_UNSIGNED |
 			    DAVINCI_VC_CTRL_WD_UNSIGNED, 0);
-		break;
-	case SNDRV_PCM_FORMAT_S16_LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		MOD_REG_BIT(w, DAVINCI_VC_CTRL_RD_BITS_8 |
 			    DAVINCI_VC_CTRL_RD_UNSIGNED |
 			    DAVINCI_VC_CTRL_WD_BITS_8 |
 			    DAVINCI_VC_CTRL_WD_UNSIGNED, 0);
-		break;
-	default:
-		printk(KERN_WARNING "davinci-vcif: unsupported PCM format");
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_WARNING "davinci-vcif: unsupported PCM format");
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(w, davinci_vc->base + DAVINCI_VC_CTRL);
+	ग_लिखोl(w, davinci_vc->base + DAVINCI_VC_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int davinci_vcif_trigger(struct snd_pcm_substream *substream, int cmd,
-				struct snd_soc_dai *dai)
-{
-	int ret = 0;
+अटल पूर्णांक davinci_vcअगर_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		davinci_vcif_start(substream);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		davinci_vcif_stop(substream);
-		break;
-	default:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		davinci_vcअगर_start(substream);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		davinci_vcअगर_stop(substream);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define DAVINCI_VCIF_RATES	SNDRV_PCM_RATE_8000_48000
+#घोषणा DAVINCI_VCIF_RATES	SNDRV_PCM_RATE_8000_48000
 
-static const struct snd_soc_dai_ops davinci_vcif_dai_ops = {
-	.trigger	= davinci_vcif_trigger,
-	.hw_params	= davinci_vcif_hw_params,
-};
+अटल स्थिर काष्ठा snd_soc_dai_ops davinci_vcअगर_dai_ops = अणु
+	.trigger	= davinci_vcअगर_trigger,
+	.hw_params	= davinci_vcअगर_hw_params,
+पूर्ण;
 
-static int davinci_vcif_dai_probe(struct snd_soc_dai *dai)
-{
-	struct davinci_vcif_dev *dev = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक davinci_vcअगर_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा davinci_vcअगर_dev *dev = snd_soc_dai_get_drvdata(dai);
 
 	dai->playback_dma_data = &dev->dma_data[SNDRV_PCM_STREAM_PLAYBACK];
 	dai->capture_dma_data = &dev->dma_data[SNDRV_PCM_STREAM_CAPTURE];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct snd_soc_dai_driver davinci_vcif_dai = {
-	.probe = davinci_vcif_dai_probe,
-	.playback = {
+अटल काष्ठा snd_soc_dai_driver davinci_vcअगर_dai = अणु
+	.probe = davinci_vcअगर_dai_probe,
+	.playback = अणु
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = DAVINCI_VCIF_RATES,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
-	.capture = {
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,पूर्ण,
+	.capture = अणु
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = DAVINCI_VCIF_RATES,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
-	.ops = &davinci_vcif_dai_ops,
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,पूर्ण,
+	.ops = &davinci_vcअगर_dai_ops,
 
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver davinci_vcif_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver davinci_vcअगर_component = अणु
 	.name		= "davinci-vcif",
-};
+पूर्ण;
 
-static int davinci_vcif_probe(struct platform_device *pdev)
-{
-	struct davinci_vc *davinci_vc = pdev->dev.platform_data;
-	struct davinci_vcif_dev *davinci_vcif_dev;
-	int ret;
+अटल पूर्णांक davinci_vcअगर_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा davinci_vc *davinci_vc = pdev->dev.platक्रमm_data;
+	काष्ठा davinci_vcअगर_dev *davinci_vcअगर_dev;
+	पूर्णांक ret;
 
-	davinci_vcif_dev = devm_kzalloc(&pdev->dev,
-					sizeof(struct davinci_vcif_dev),
+	davinci_vcअगर_dev = devm_kzalloc(&pdev->dev,
+					माप(काष्ठा davinci_vcअगर_dev),
 					GFP_KERNEL);
-	if (!davinci_vcif_dev)
-		return -ENOMEM;
+	अगर (!davinci_vcअगर_dev)
+		वापस -ENOMEM;
 
 	/* DMA tx params */
-	davinci_vcif_dev->davinci_vc = davinci_vc;
-	davinci_vcif_dev->dma_data[SNDRV_PCM_STREAM_PLAYBACK].filter_data =
-				&davinci_vc->davinci_vcif.dma_tx_channel;
-	davinci_vcif_dev->dma_data[SNDRV_PCM_STREAM_PLAYBACK].addr =
-				davinci_vc->davinci_vcif.dma_tx_addr;
+	davinci_vcअगर_dev->davinci_vc = davinci_vc;
+	davinci_vcअगर_dev->dma_data[SNDRV_PCM_STREAM_PLAYBACK].filter_data =
+				&davinci_vc->davinci_vcअगर.dma_tx_channel;
+	davinci_vcअगर_dev->dma_data[SNDRV_PCM_STREAM_PLAYBACK].addr =
+				davinci_vc->davinci_vcअगर.dma_tx_addr;
 
 	/* DMA rx params */
-	davinci_vcif_dev->dma_data[SNDRV_PCM_STREAM_CAPTURE].filter_data =
-				&davinci_vc->davinci_vcif.dma_rx_channel;
-	davinci_vcif_dev->dma_data[SNDRV_PCM_STREAM_CAPTURE].addr =
-				davinci_vc->davinci_vcif.dma_rx_addr;
+	davinci_vcअगर_dev->dma_data[SNDRV_PCM_STREAM_CAPTURE].filter_data =
+				&davinci_vc->davinci_vcअगर.dma_rx_channel;
+	davinci_vcअगर_dev->dma_data[SNDRV_PCM_STREAM_CAPTURE].addr =
+				davinci_vc->davinci_vcअगर.dma_rx_addr;
 
-	dev_set_drvdata(&pdev->dev, davinci_vcif_dev);
+	dev_set_drvdata(&pdev->dev, davinci_vcअगर_dev);
 
-	ret = devm_snd_soc_register_component(&pdev->dev,
-					      &davinci_vcif_component,
-					      &davinci_vcif_dai, 1);
-	if (ret != 0) {
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+					      &davinci_vcअगर_component,
+					      &davinci_vcअगर_dai, 1);
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "could not register dai\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = edma_pcm_platform_register(&pdev->dev);
-	if (ret) {
+	ret = edma_pcm_platक्रमm_रेजिस्टर(&pdev->dev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "register PCM failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver davinci_vcif_driver = {
-	.probe		= davinci_vcif_probe,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver davinci_vcअगर_driver = अणु
+	.probe		= davinci_vcअगर_probe,
+	.driver		= अणु
 		.name	= "davinci-vcif",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(davinci_vcif_driver);
+module_platक्रमm_driver(davinci_vcअगर_driver);
 
 MODULE_AUTHOR("Miguel Aguilar");
 MODULE_DESCRIPTION("Texas Instruments DaVinci ASoC Voice Codec Interface");

@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Intel Lynxpoint PCH pinctrl/GPIO driver
+ * Intel Lynxpoपूर्णांक PCH pinctrl/GPIO driver
  *
  * Copyright (c) 2012, 2019, Intel Corporation
- * Authors: Mathias Nyman <mathias.nyman@linux.intel.com>
- *          Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ * Authors: Mathias Nyman <mathias.nyman@linux.पूर्णांकel.com>
+ *          Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/bitops.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
 
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define COMMUNITY(p, n)			\
-	{				\
+#घोषणा COMMUNITY(p, n)			\
+	अणु				\
 		.pin_base	= (p),	\
 		.npins		= (n),	\
-	}
+	पूर्ण
 
-static const struct pinctrl_pin_desc lptlp_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc lptlp_pins[] = अणु
 	PINCTRL_PIN(0, "GP0_UART1_RXD"),
 	PINCTRL_PIN(1, "GP1_UART1_TXD"),
 	PINCTRL_PIN(2, "GP2_UART1_RTSB"),
@@ -128,313 +129,313 @@ static const struct pinctrl_pin_desc lptlp_pins[] = {
 	PINCTRL_PIN(92, "GP92_UART0_TXD"),
 	PINCTRL_PIN(93, "GP93_UART0_RTSB"),
 	PINCTRL_PIN(94, "GP94_UART0_CTSB"),
-};
+पूर्ण;
 
-static const struct intel_community lptlp_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community lptlp_communities[] = अणु
 	COMMUNITY(0, 95),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data lptlp_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data lptlp_soc_data = अणु
 	.pins		= lptlp_pins,
 	.npins		= ARRAY_SIZE(lptlp_pins),
 	.communities	= lptlp_communities,
 	.ncommunities	= ARRAY_SIZE(lptlp_communities),
-};
+पूर्ण;
 
-/* LynxPoint chipset has support for 95 GPIO pins */
+/* LynxPoपूर्णांक chipset has support क्रम 95 GPIO pins */
 
-#define LP_NUM_GPIO	95
+#घोषणा LP_NUM_GPIO	95
 
-/* Bitmapped register offsets */
-#define LP_ACPI_OWNED	0x00 /* Bitmap, set by bios, 0: pin reserved for ACPI */
-#define LP_IRQ2IOXAPIC	0x10 /* Bitmap, set by bios, 1: pin routed to IOxAPIC */
-#define LP_GC		0x7C /* set APIC IRQ to IRQ14 or IRQ15 for all pins */
-#define LP_INT_STAT	0x80
-#define LP_INT_ENABLE	0x90
+/* Biपंचांगapped रेजिस्टर offsets */
+#घोषणा LP_ACPI_OWNED	0x00 /* Biपंचांगap, set by bios, 0: pin reserved क्रम ACPI */
+#घोषणा LP_IRQ2IOXAPIC	0x10 /* Biपंचांगap, set by bios, 1: pin routed to IOxAPIC */
+#घोषणा LP_GC		0x7C /* set APIC IRQ to IRQ14 or IRQ15 क्रम all pins */
+#घोषणा LP_INT_STAT	0x80
+#घोषणा LP_INT_ENABLE	0x90
 
-/* Each pin has two 32 bit config registers, starting at 0x100 */
-#define LP_CONFIG1	0x100
-#define LP_CONFIG2	0x104
+/* Each pin has two 32 bit config रेजिस्टरs, starting at 0x100 */
+#घोषणा LP_CONFIG1	0x100
+#घोषणा LP_CONFIG2	0x104
 
 /* LP_CONFIG1 reg bits */
-#define OUT_LVL_BIT	BIT(31)
-#define IN_LVL_BIT	BIT(30)
-#define TRIG_SEL_BIT	BIT(4) /* 0: Edge, 1: Level */
-#define INT_INV_BIT	BIT(3) /* Invert interrupt triggering */
-#define DIR_BIT		BIT(2) /* 0: Output, 1: Input */
-#define USE_SEL_MASK	GENMASK(1, 0)	/* 0: Native, 1: GPIO, ... */
-#define USE_SEL_NATIVE	(0 << 0)
-#define USE_SEL_GPIO	(1 << 0)
+#घोषणा OUT_LVL_BIT	BIT(31)
+#घोषणा IN_LVL_BIT	BIT(30)
+#घोषणा TRIG_SEL_BIT	BIT(4) /* 0: Edge, 1: Level */
+#घोषणा INT_INV_BIT	BIT(3) /* Invert पूर्णांकerrupt triggering */
+#घोषणा सूची_BIT		BIT(2) /* 0: Output, 1: Input */
+#घोषणा USE_SEL_MASK	GENMASK(1, 0)	/* 0: Native, 1: GPIO, ... */
+#घोषणा USE_SEL_NATIVE	(0 << 0)
+#घोषणा USE_SEL_GPIO	(1 << 0)
 
 /* LP_CONFIG2 reg bits */
-#define GPINDIS_BIT	BIT(2) /* disable input sensing */
-#define GPIWP_MASK	GENMASK(1, 0)	/* weak pull options */
-#define GPIWP_NONE	0		/* none */
-#define GPIWP_DOWN	1		/* weak pull down */
-#define GPIWP_UP	2		/* weak pull up */
+#घोषणा GPINDIS_BIT	BIT(2) /* disable input sensing */
+#घोषणा GPIWP_MASK	GENMASK(1, 0)	/* weak pull options */
+#घोषणा GPIWP_NONE	0		/* none */
+#घोषणा GPIWP_DOWN	1		/* weak pull करोwn */
+#घोषणा GPIWP_UP	2		/* weak pull up */
 
 /*
- * Lynxpoint gpios are controlled through both bitmapped registers and
- * per gpio specific registers. The bitmapped registers are in chunks of
- * 3 x 32bit registers to cover all 95 GPIOs
+ * Lynxpoपूर्णांक gpios are controlled through both biपंचांगapped रेजिस्टरs and
+ * per gpio specअगरic रेजिस्टरs. The biपंचांगapped रेजिस्टरs are in chunks of
+ * 3 x 32bit रेजिस्टरs to cover all 95 GPIOs
  *
- * per gpio specific registers consist of two 32bit registers per gpio
+ * per gpio specअगरic रेजिस्टरs consist of two 32bit रेजिस्टरs per gpio
  * (LP_CONFIG1 and LP_CONFIG2), with 95 GPIOs there's a total of
- * 190 config registers.
+ * 190 config रेजिस्टरs.
  *
- * A simplified view of the register layout look like this:
+ * A simplअगरied view of the रेजिस्टर layout look like this:
  *
- * LP_ACPI_OWNED[31:0] gpio ownerships for gpios 0-31  (bitmapped registers)
- * LP_ACPI_OWNED[63:32] gpio ownerships for gpios 32-63
- * LP_ACPI_OWNED[94:64] gpio ownerships for gpios 63-94
+ * LP_ACPI_OWNED[31:0] gpio ownerships क्रम gpios 0-31  (biपंचांगapped रेजिस्टरs)
+ * LP_ACPI_OWNED[63:32] gpio ownerships क्रम gpios 32-63
+ * LP_ACPI_OWNED[94:64] gpio ownerships क्रम gpios 63-94
  * ...
  * LP_INT_ENABLE[31:0] ...
  * LP_INT_ENABLE[63:32] ...
  * LP_INT_ENABLE[94:64] ...
- * LP0_CONFIG1 (gpio 0) config1 reg for gpio 0 (per gpio registers)
- * LP0_CONFIG2 (gpio 0) config2 reg for gpio 0
- * LP1_CONFIG1 (gpio 1) config1 reg for gpio 1
- * LP1_CONFIG2 (gpio 1) config2 reg for gpio 1
+ * LP0_CONFIG1 (gpio 0) config1 reg क्रम gpio 0 (per gpio रेजिस्टरs)
+ * LP0_CONFIG2 (gpio 0) config2 reg क्रम gpio 0
+ * LP1_CONFIG1 (gpio 1) config1 reg क्रम gpio 1
+ * LP1_CONFIG2 (gpio 1) config2 reg क्रम gpio 1
  * LP2_CONFIG1 (gpio 2) ...
  * LP2_CONFIG2 (gpio 2) ...
  * ...
  * LP94_CONFIG1 (gpio 94) ...
  * LP94_CONFIG2 (gpio 94) ...
  *
- * IOxAPIC redirection map applies only for gpio 8-10, 13-14, 45-55.
+ * IOxAPIC redirection map applies only क्रम gpio 8-10, 13-14, 45-55.
  */
 
-static struct intel_community *lp_get_community(struct intel_pinctrl *lg,
-						unsigned int pin)
-{
-	struct intel_community *comm;
-	int i;
+अटल काष्ठा पूर्णांकel_community *lp_get_community(काष्ठा पूर्णांकel_pinctrl *lg,
+						अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा पूर्णांकel_community *comm;
+	पूर्णांक i;
 
-	for (i = 0; i < lg->ncommunities; i++) {
+	क्रम (i = 0; i < lg->ncommunities; i++) अणु
 		comm = &lg->communities[i];
-		if (pin < comm->pin_base + comm->npins && pin >= comm->pin_base)
-			return comm;
-	}
+		अगर (pin < comm->pin_base + comm->npins && pin >= comm->pin_base)
+			वापस comm;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __iomem *lp_gpio_reg(struct gpio_chip *chip, unsigned int offset,
-				 int reg)
-{
-	struct intel_pinctrl *lg = gpiochip_get_data(chip);
-	struct intel_community *comm;
-	int reg_offset;
+अटल व्योम __iomem *lp_gpio_reg(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+				 पूर्णांक reg)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(chip);
+	काष्ठा पूर्णांकel_community *comm;
+	पूर्णांक reg_offset;
 
 	comm = lp_get_community(lg, offset);
-	if (!comm)
-		return NULL;
+	अगर (!comm)
+		वापस शून्य;
 
 	offset -= comm->pin_base;
 
-	if (reg == LP_CONFIG1 || reg == LP_CONFIG2)
-		/* per gpio specific config registers */
+	अगर (reg == LP_CONFIG1 || reg == LP_CONFIG2)
+		/* per gpio specअगरic config रेजिस्टरs */
 		reg_offset = offset * 8;
-	else
-		/* bitmapped registers */
+	अन्यथा
+		/* biपंचांगapped रेजिस्टरs */
 		reg_offset = (offset / 32) * 4;
 
-	return comm->regs + reg_offset + reg;
-}
+	वापस comm->regs + reg_offset + reg;
+पूर्ण
 
-static bool lp_gpio_acpi_use(struct intel_pinctrl *lg, unsigned int pin)
-{
-	void __iomem *acpi_use;
+अटल bool lp_gpio_acpi_use(काष्ठा पूर्णांकel_pinctrl *lg, अचिन्हित पूर्णांक pin)
+अणु
+	व्योम __iomem *acpi_use;
 
 	acpi_use = lp_gpio_reg(&lg->chip, pin, LP_ACPI_OWNED);
-	if (!acpi_use)
-		return true;
+	अगर (!acpi_use)
+		वापस true;
 
-	return !(ioread32(acpi_use) & BIT(pin % 32));
-}
+	वापस !(ioपढ़ो32(acpi_use) & BIT(pin % 32));
+पूर्ण
 
-static bool lp_gpio_ioxapic_use(struct gpio_chip *chip, unsigned int offset)
-{
-	void __iomem *ioxapic_use = lp_gpio_reg(chip, offset, LP_IRQ2IOXAPIC);
+अटल bool lp_gpio_ioxapic_use(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	व्योम __iomem *ioxapic_use = lp_gpio_reg(chip, offset, LP_IRQ2IOXAPIC);
 	u32 value;
 
-	value = ioread32(ioxapic_use);
+	value = ioपढ़ो32(ioxapic_use);
 
-	if (offset >= 8 && offset <= 10)
-		return !!(value & BIT(offset -  8 + 0));
-	if (offset >= 13 && offset <= 14)
-		return !!(value & BIT(offset - 13 + 3));
-	if (offset >= 45 && offset <= 55)
-		return !!(value & BIT(offset - 45 + 5));
+	अगर (offset >= 8 && offset <= 10)
+		वापस !!(value & BIT(offset -  8 + 0));
+	अगर (offset >= 13 && offset <= 14)
+		वापस !!(value & BIT(offset - 13 + 3));
+	अगर (offset >= 45 && offset <= 55)
+		वापस !!(value & BIT(offset - 45 + 5));
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int lp_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक lp_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
 
-	return lg->soc->ngroups;
-}
+	वापस lg->soc->ngroups;
+पूर्ण
 
-static const char *lp_get_group_name(struct pinctrl_dev *pctldev,
-				     unsigned int selector)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *lp_get_group_name(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
 
-	return lg->soc->groups[selector].name;
-}
+	वापस lg->soc->groups[selector].name;
+पूर्ण
 
-static int lp_get_group_pins(struct pinctrl_dev *pctldev,
-			     unsigned int selector,
-			     const unsigned int **pins,
-			     unsigned int *num_pins)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक lp_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+			     अचिन्हित पूर्णांक selector,
+			     स्थिर अचिन्हित पूर्णांक **pins,
+			     अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins		= lg->soc->groups[selector].pins;
 	*num_pins	= lg->soc->groups[selector].npins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp_pin_dbg_show(struct pinctrl_dev *pctldev, struct seq_file *s,
-			    unsigned int pin)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
-	void __iomem *reg = lp_gpio_reg(&lg->chip, pin, LP_CONFIG1);
-	void __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
+अटल व्योम lp_pin_dbg_show(काष्ठा pinctrl_dev *pctldev, काष्ठा seq_file *s,
+			    अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+	व्योम __iomem *reg = lp_gpio_reg(&lg->chip, pin, LP_CONFIG1);
+	व्योम __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
 	u32 value, mode;
 
-	value = ioread32(reg);
+	value = ioपढ़ो32(reg);
 
 	mode = value & USE_SEL_MASK;
-	if (mode == USE_SEL_GPIO)
-		seq_puts(s, "GPIO ");
-	else
-		seq_printf(s, "mode %d ", mode);
+	अगर (mode == USE_SEL_GPIO)
+		seq_माला_दो(s, "GPIO ");
+	अन्यथा
+		seq_म_लिखो(s, "mode %d ", mode);
 
-	seq_printf(s, "0x%08x 0x%08x", value, ioread32(conf2));
+	seq_म_लिखो(s, "0x%08x 0x%08x", value, ioपढ़ो32(conf2));
 
-	if (lp_gpio_acpi_use(lg, pin))
-		seq_puts(s, " [ACPI]");
-}
+	अगर (lp_gpio_acpi_use(lg, pin))
+		seq_माला_दो(s, " [ACPI]");
+पूर्ण
 
-static const struct pinctrl_ops lptlp_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops lptlp_pinctrl_ops = अणु
 	.get_groups_count	= lp_get_groups_count,
 	.get_group_name		= lp_get_group_name,
 	.get_group_pins		= lp_get_group_pins,
 	.pin_dbg_show		= lp_pin_dbg_show,
-};
+पूर्ण;
 
-static int lp_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक lp_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
 
-	return lg->soc->nfunctions;
-}
+	वापस lg->soc->nfunctions;
+पूर्ण
 
-static const char *lp_get_function_name(struct pinctrl_dev *pctldev,
-					unsigned int selector)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *lp_get_function_name(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
 
-	return lg->soc->functions[selector].name;
-}
+	वापस lg->soc->functions[selector].name;
+पूर्ण
 
-static int lp_get_function_groups(struct pinctrl_dev *pctldev,
-				  unsigned int selector,
-				  const char * const **groups,
-				  unsigned int *num_groups)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक lp_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक selector,
+				  स्थिर अक्षर * स्थिर **groups,
+				  अचिन्हित पूर्णांक *num_groups)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups		= lg->soc->functions[selector].groups;
 	*num_groups	= lg->soc->functions[selector].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp_pinmux_set_mux(struct pinctrl_dev *pctldev,
-			     unsigned int function, unsigned int group)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
-	const struct intel_pingroup *grp = &lg->soc->groups[group];
-	unsigned long flags;
-	int i;
+अटल पूर्णांक lp_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+			     अचिन्हित पूर्णांक function, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा पूर्णांकel_pingroup *grp = &lg->soc->groups[group];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
 
-	/* Now enable the mux setting for each pin in the group */
-	for (i = 0; i < grp->npins; i++) {
-		void __iomem *reg = lp_gpio_reg(&lg->chip, grp->pins[i], LP_CONFIG1);
+	/* Now enable the mux setting क्रम each pin in the group */
+	क्रम (i = 0; i < grp->npins; i++) अणु
+		व्योम __iomem *reg = lp_gpio_reg(&lg->chip, grp->pins[i], LP_CONFIG1);
 		u32 value;
 
-		value = ioread32(reg);
+		value = ioपढ़ो32(reg);
 
 		value &= ~USE_SEL_MASK;
-		if (grp->modes)
+		अगर (grp->modes)
 			value |= grp->modes[i];
-		else
+		अन्यथा
 			value |= grp->mode;
 
-		iowrite32(value, reg);
-	}
+		ioग_लिखो32(value, reg);
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp_gpio_enable_input(void __iomem *reg)
-{
-	iowrite32(ioread32(reg) & ~GPINDIS_BIT, reg);
-}
+अटल व्योम lp_gpio_enable_input(व्योम __iomem *reg)
+अणु
+	ioग_लिखो32(ioपढ़ो32(reg) & ~GPINDIS_BIT, reg);
+पूर्ण
 
-static void lp_gpio_disable_input(void __iomem *reg)
-{
-	iowrite32(ioread32(reg) | GPINDIS_BIT, reg);
-}
+अटल व्योम lp_gpio_disable_input(व्योम __iomem *reg)
+अणु
+	ioग_लिखो32(ioपढ़ो32(reg) | GPINDIS_BIT, reg);
+पूर्ण
 
-static int lp_gpio_request_enable(struct pinctrl_dev *pctldev,
-				  struct pinctrl_gpio_range *range,
-				  unsigned int pin)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
-	void __iomem *reg = lp_gpio_reg(&lg->chip, pin, LP_CONFIG1);
-	void __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
-	unsigned long flags;
+अटल पूर्णांक lp_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+				  काष्ठा pinctrl_gpio_range *range,
+				  अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+	व्योम __iomem *reg = lp_gpio_reg(&lg->chip, pin, LP_CONFIG1);
+	व्योम __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	pm_runtime_get(lg->dev);
+	pm_runसमय_get(lg->dev);
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
 
 	/*
-	 * Reconfigure pin to GPIO mode if needed and issue a warning,
+	 * Reconfigure pin to GPIO mode अगर needed and issue a warning,
 	 * since we expect firmware to configure it properly.
 	 */
-	value = ioread32(reg);
-	if ((value & USE_SEL_MASK) != USE_SEL_GPIO) {
-		iowrite32((value & USE_SEL_MASK) | USE_SEL_GPIO, reg);
+	value = ioपढ़ो32(reg);
+	अगर ((value & USE_SEL_MASK) != USE_SEL_GPIO) अणु
+		ioग_लिखो32((value & USE_SEL_MASK) | USE_SEL_GPIO, reg);
 		dev_warn(lg->dev, FW_BUG "pin %u forcibly reconfigured as GPIO\n", pin);
-	}
+	पूर्ण
 
 	/* Enable input sensing */
 	lp_gpio_enable_input(conf2);
 
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp_gpio_disable_free(struct pinctrl_dev *pctldev,
-				 struct pinctrl_gpio_range *range,
-				 unsigned int pin)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
-	void __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
-	unsigned long flags;
+अटल व्योम lp_gpio_disable_मुक्त(काष्ठा pinctrl_dev *pctldev,
+				 काष्ठा pinctrl_gpio_range *range,
+				 अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+	व्योम __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
 
@@ -443,323 +444,323 @@ static void lp_gpio_disable_free(struct pinctrl_dev *pctldev,
 
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
 
-	pm_runtime_put(lg->dev);
-}
+	pm_runसमय_put(lg->dev);
+पूर्ण
 
-static int lp_gpio_set_direction(struct pinctrl_dev *pctldev,
-				 struct pinctrl_gpio_range *range,
-				 unsigned int pin, bool input)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
-	void __iomem *reg = lp_gpio_reg(&lg->chip, pin, LP_CONFIG1);
-	unsigned long flags;
+अटल पूर्णांक lp_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+				 काष्ठा pinctrl_gpio_range *range,
+				 अचिन्हित पूर्णांक pin, bool input)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+	व्योम __iomem *reg = lp_gpio_reg(&lg->chip, pin, LP_CONFIG1);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
 
-	value = ioread32(reg);
-	value &= ~DIR_BIT;
-	if (input) {
-		value |= DIR_BIT;
-	} else {
+	value = ioपढ़ो32(reg);
+	value &= ~सूची_BIT;
+	अगर (input) अणु
+		value |= सूची_BIT;
+	पूर्ण अन्यथा अणु
 		/*
-		 * Before making any direction modifications, do a check if GPIO
-		 * is set for direct IRQ. On Lynxpoint, setting GPIO to output
-		 * does not make sense, so let's at least warn the caller before
+		 * Beक्रमe making any direction modअगरications, करो a check अगर GPIO
+		 * is set क्रम direct IRQ. On Lynxpoपूर्णांक, setting GPIO to output
+		 * करोes not make sense, so let's at least warn the caller beक्रमe
 		 * they shoot themselves in the foot.
 		 */
 		WARN(lp_gpio_ioxapic_use(&lg->chip, pin),
 		     "Potential Error: Setting GPIO to output with IOxAPIC redirection");
-	}
-	iowrite32(value, reg);
+	पूर्ण
+	ioग_लिखो32(value, reg);
 
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops lptlp_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops lptlp_pinmux_ops = अणु
 	.get_functions_count	= lp_get_functions_count,
 	.get_function_name	= lp_get_function_name,
 	.get_function_groups	= lp_get_function_groups,
 	.set_mux		= lp_pinmux_set_mux,
 	.gpio_request_enable	= lp_gpio_request_enable,
-	.gpio_disable_free	= lp_gpio_disable_free,
+	.gpio_disable_मुक्त	= lp_gpio_disable_मुक्त,
 	.gpio_set_direction	= lp_gpio_set_direction,
-};
+पूर्ण;
 
-static int lp_pin_config_get(struct pinctrl_dev *pctldev, unsigned int pin,
-			     unsigned long *config)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
-	void __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	unsigned long flags;
+अटल पूर्णांक lp_pin_config_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			     अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+	व्योम __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	अचिन्हित दीर्घ flags;
 	u32 value, pull;
 	u16 arg;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
-	value = ioread32(conf2);
+	value = ioपढ़ो32(conf2);
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
 
 	pull = value & GPIWP_MASK;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (pull != GPIWP_NONE)
-			return -EINVAL;
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (pull != GPIWP_NONE)
+			वापस -EINVAL;
 		arg = 0;
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (pull != GPIWP_DOWN)
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (pull != GPIWP_DOWN)
+			वापस -EINVAL;
 
 		arg = 1;
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (pull != GPIWP_UP)
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (pull != GPIWP_UP)
+			वापस -EINVAL;
 
 		arg = 1;
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp_pin_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			     unsigned long *configs, unsigned int num_configs)
-{
-	struct intel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
-	void __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
-	enum pin_config_param param;
-	unsigned long flags;
-	int i, ret = 0;
+अटल पूर्णांक lp_pin_config_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			     अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = pinctrl_dev_get_drvdata(pctldev);
+	व्योम __iomem *conf2 = lp_gpio_reg(&lg->chip, pin, LP_CONFIG2);
+	क्रमागत pin_config_param param;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, ret = 0;
 	u32 value;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
 
-	value = ioread32(conf2);
+	value = ioपढ़ो32(conf2);
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_DISABLE:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			value &= ~GPIWP_MASK;
 			value |= GPIWP_NONE;
-			break;
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			value &= ~GPIWP_MASK;
 			value |= GPIWP_DOWN;
-			break;
-		case PIN_CONFIG_BIAS_PULL_UP:
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			value &= ~GPIWP_MASK;
 			value |= GPIWP_UP;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -ENOTSUPP;
-		}
+		पूर्ण
 
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	if (!ret)
-		iowrite32(value, conf2);
+	अगर (!ret)
+		ioग_लिखो32(value, conf2);
 
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pinconf_ops lptlp_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops lptlp_pinconf_ops = अणु
 	.is_generic	= true,
 	.pin_config_get	= lp_pin_config_get,
 	.pin_config_set	= lp_pin_config_set,
-};
+पूर्ण;
 
-static const struct pinctrl_desc lptlp_pinctrl_desc = {
+अटल स्थिर काष्ठा pinctrl_desc lptlp_pinctrl_desc = अणु
 	.pctlops	= &lptlp_pinctrl_ops,
 	.pmxops		= &lptlp_pinmux_ops,
 	.confops	= &lptlp_pinconf_ops,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int lp_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	void __iomem *reg = lp_gpio_reg(chip, offset, LP_CONFIG1);
-	return !!(ioread32(reg) & IN_LVL_BIT);
-}
+अटल पूर्णांक lp_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	व्योम __iomem *reg = lp_gpio_reg(chip, offset, LP_CONFIG1);
+	वापस !!(ioपढ़ो32(reg) & IN_LVL_BIT);
+पूर्ण
 
-static void lp_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
-{
-	struct intel_pinctrl *lg = gpiochip_get_data(chip);
-	void __iomem *reg = lp_gpio_reg(chip, offset, LP_CONFIG1);
-	unsigned long flags;
+अटल व्योम lp_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(chip);
+	व्योम __iomem *reg = lp_gpio_reg(chip, offset, LP_CONFIG1);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
 
-	if (value)
-		iowrite32(ioread32(reg) | OUT_LVL_BIT, reg);
-	else
-		iowrite32(ioread32(reg) & ~OUT_LVL_BIT, reg);
+	अगर (value)
+		ioग_लिखो32(ioपढ़ो32(reg) | OUT_LVL_BIT, reg);
+	अन्यथा
+		ioग_लिखो32(ioपढ़ो32(reg) & ~OUT_LVL_BIT, reg);
 
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
-}
+पूर्ण
 
-static int lp_gpio_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	return pinctrl_gpio_direction_input(chip->base + offset);
-}
+अटल पूर्णांक lp_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + offset);
+पूर्ण
 
-static int lp_gpio_direction_output(struct gpio_chip *chip, unsigned int offset,
-				    int value)
-{
+अटल पूर्णांक lp_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+				    पूर्णांक value)
+अणु
 	lp_gpio_set(chip, offset, value);
 
-	return pinctrl_gpio_direction_output(chip->base + offset);
-}
+	वापस pinctrl_gpio_direction_output(chip->base + offset);
+पूर्ण
 
-static int lp_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	void __iomem *reg = lp_gpio_reg(chip, offset, LP_CONFIG1);
+अटल पूर्णांक lp_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	व्योम __iomem *reg = lp_gpio_reg(chip, offset, LP_CONFIG1);
 
-	if (ioread32(reg) & DIR_BIT)
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (ioपढ़ो32(reg) & सूची_BIT)
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static void lp_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct irq_data *data = irq_desc_get_irq_data(desc);
-	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
-	struct intel_pinctrl *lg = gpiochip_get_data(gc);
-	struct irq_chip *chip = irq_data_get_irq_chip(data);
-	void __iomem *reg, *ena;
-	unsigned long pending;
+अटल व्योम lp_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
+	काष्ठा gpio_chip *gc = irq_desc_get_handler_data(desc);
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(gc);
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
+	व्योम __iomem *reg, *ena;
+	अचिन्हित दीर्घ pending;
 	u32 base, pin;
 
-	/* check from GPIO controller which pin triggered the interrupt */
-	for (base = 0; base < lg->chip.ngpio; base += 32) {
+	/* check from GPIO controller which pin triggered the पूर्णांकerrupt */
+	क्रम (base = 0; base < lg->chip.ngpio; base += 32) अणु
 		reg = lp_gpio_reg(&lg->chip, base, LP_INT_STAT);
 		ena = lp_gpio_reg(&lg->chip, base, LP_INT_ENABLE);
 
-		/* Only interrupts that are enabled */
-		pending = ioread32(reg) & ioread32(ena);
+		/* Only पूर्णांकerrupts that are enabled */
+		pending = ioपढ़ो32(reg) & ioपढ़ो32(ena);
 
-		for_each_set_bit(pin, &pending, 32) {
-			unsigned int irq;
+		क्रम_each_set_bit(pin, &pending, 32) अणु
+			अचिन्हित पूर्णांक irq;
 
-			irq = irq_find_mapping(lg->chip.irq.domain, base + pin);
+			irq = irq_find_mapping(lg->chip.irq.करोमुख्य, base + pin);
 			generic_handle_irq(irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	chip->irq_eoi(data);
-}
+पूर्ण
 
-static void lp_irq_ack(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *lg = gpiochip_get_data(gc);
+अटल व्योम lp_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(gc);
 	u32 hwirq = irqd_to_hwirq(d);
-	void __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_INT_STAT);
-	unsigned long flags;
+	व्योम __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_INT_STAT);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
-	iowrite32(BIT(hwirq % 32), reg);
+	ioग_लिखो32(BIT(hwirq % 32), reg);
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
-}
+पूर्ण
 
-static void lp_irq_unmask(struct irq_data *d)
-{
-}
+अटल व्योम lp_irq_unmask(काष्ठा irq_data *d)
+अणु
+पूर्ण
 
-static void lp_irq_mask(struct irq_data *d)
-{
-}
+अटल व्योम lp_irq_mask(काष्ठा irq_data *d)
+अणु
+पूर्ण
 
-static void lp_irq_enable(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *lg = gpiochip_get_data(gc);
+अटल व्योम lp_irq_enable(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(gc);
 	u32 hwirq = irqd_to_hwirq(d);
-	void __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_INT_ENABLE);
-	unsigned long flags;
+	व्योम __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_INT_ENABLE);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
-	iowrite32(ioread32(reg) | BIT(hwirq % 32), reg);
+	ioग_लिखो32(ioपढ़ो32(reg) | BIT(hwirq % 32), reg);
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
-}
+पूर्ण
 
-static void lp_irq_disable(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *lg = gpiochip_get_data(gc);
+अटल व्योम lp_irq_disable(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(gc);
 	u32 hwirq = irqd_to_hwirq(d);
-	void __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_INT_ENABLE);
-	unsigned long flags;
+	व्योम __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_INT_ENABLE);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
-	iowrite32(ioread32(reg) & ~BIT(hwirq % 32), reg);
+	ioग_लिखो32(ioपढ़ो32(reg) & ~BIT(hwirq % 32), reg);
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
-}
+पूर्ण
 
-static int lp_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	struct intel_pinctrl *lg = gpiochip_get_data(gc);
+अटल पूर्णांक lp_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(gc);
 	u32 hwirq = irqd_to_hwirq(d);
-	void __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_CONFIG1);
-	unsigned long flags;
+	व्योम __iomem *reg = lp_gpio_reg(&lg->chip, hwirq, LP_CONFIG1);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	if (hwirq >= lg->chip.ngpio)
-		return -EINVAL;
+	अगर (hwirq >= lg->chip.ngpio)
+		वापस -EINVAL;
 
-	/* Fail if BIOS reserved pin for ACPI use */
-	if (lp_gpio_acpi_use(lg, hwirq)) {
+	/* Fail अगर BIOS reserved pin क्रम ACPI use */
+	अगर (lp_gpio_acpi_use(lg, hwirq)) अणु
 		dev_err(lg->dev, "pin %u can't be used as IRQ\n", hwirq);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&lg->lock, flags);
-	value = ioread32(reg);
+	value = ioपढ़ो32(reg);
 
-	/* set both TRIG_SEL and INV bits to 0 for rising edge */
-	if (type & IRQ_TYPE_EDGE_RISING)
+	/* set both TRIG_SEL and INV bits to 0 क्रम rising edge */
+	अगर (type & IRQ_TYPE_EDGE_RISING)
 		value &= ~(TRIG_SEL_BIT | INT_INV_BIT);
 
-	/* TRIG_SEL bit 0, INV bit 1 for falling edge */
-	if (type & IRQ_TYPE_EDGE_FALLING)
+	/* TRIG_SEL bit 0, INV bit 1 क्रम falling edge */
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
 		value = (value | INT_INV_BIT) & ~TRIG_SEL_BIT;
 
-	/* TRIG_SEL bit 1, INV bit 0 for level low */
-	if (type & IRQ_TYPE_LEVEL_LOW)
+	/* TRIG_SEL bit 1, INV bit 0 क्रम level low */
+	अगर (type & IRQ_TYPE_LEVEL_LOW)
 		value = (value | TRIG_SEL_BIT) & ~INT_INV_BIT;
 
-	/* TRIG_SEL bit 1, INV bit 1 for level high */
-	if (type & IRQ_TYPE_LEVEL_HIGH)
+	/* TRIG_SEL bit 1, INV bit 1 क्रम level high */
+	अगर (type & IRQ_TYPE_LEVEL_HIGH)
 		value |= TRIG_SEL_BIT | INT_INV_BIT;
 
-	iowrite32(value, reg);
+	ioग_लिखो32(value, reg);
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(d, handle_edge_irq);
-	else if (type & IRQ_TYPE_LEVEL_MASK)
+	अन्यथा अगर (type & IRQ_TYPE_LEVEL_MASK)
 		irq_set_handler_locked(d, handle_level_irq);
 
 	raw_spin_unlock_irqrestore(&lg->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip lp_irqchip = {
+अटल काष्ठा irq_chip lp_irqchip = अणु
 	.name = "LP-GPIO",
 	.irq_ack = lp_irq_ack,
 	.irq_mask = lp_irq_mask,
@@ -768,100 +769,100 @@ static struct irq_chip lp_irqchip = {
 	.irq_disable = lp_irq_disable,
 	.irq_set_type = lp_irq_set_type,
 	.flags = IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
-static int lp_gpio_irq_init_hw(struct gpio_chip *chip)
-{
-	struct intel_pinctrl *lg = gpiochip_get_data(chip);
-	void __iomem *reg;
-	unsigned int base;
+अटल पूर्णांक lp_gpio_irq_init_hw(काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(chip);
+	व्योम __iomem *reg;
+	अचिन्हित पूर्णांक base;
 
-	for (base = 0; base < lg->chip.ngpio; base += 32) {
-		/* disable gpio pin interrupts */
+	क्रम (base = 0; base < lg->chip.ngpio; base += 32) अणु
+		/* disable gpio pin पूर्णांकerrupts */
 		reg = lp_gpio_reg(&lg->chip, base, LP_INT_ENABLE);
-		iowrite32(0, reg);
-		/* Clear interrupt status register */
+		ioग_लिखो32(0, reg);
+		/* Clear पूर्णांकerrupt status रेजिस्टर */
 		reg = lp_gpio_reg(&lg->chip, base, LP_INT_STAT);
-		iowrite32(0xffffffff, reg);
-	}
+		ioग_लिखो32(0xffffffff, reg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp_gpio_add_pin_ranges(struct gpio_chip *chip)
-{
-	struct intel_pinctrl *lg = gpiochip_get_data(chip);
-	struct device *dev = lg->dev;
-	int ret;
+अटल पूर्णांक lp_gpio_add_pin_ranges(काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = gpiochip_get_data(chip);
+	काष्ठा device *dev = lg->dev;
+	पूर्णांक ret;
 
 	ret = gpiochip_add_pin_range(chip, dev_name(dev), 0, 0, lg->soc->npins);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "failed to add GPIO pin range\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lp_gpio_probe(struct platform_device *pdev)
-{
-	const struct intel_pinctrl_soc_data *soc;
-	struct intel_pinctrl *lg;
-	struct gpio_chip *gc;
-	struct device *dev = &pdev->dev;
-	struct resource *io_rc;
-	void __iomem *regs;
-	unsigned int i;
-	int irq, ret;
+अटल पूर्णांक lp_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *soc;
+	काष्ठा पूर्णांकel_pinctrl *lg;
+	काष्ठा gpio_chip *gc;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *io_rc;
+	व्योम __iomem *regs;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक irq, ret;
 
-	soc = (const struct intel_pinctrl_soc_data *)device_get_match_data(dev);
-	if (!soc)
-		return -ENODEV;
+	soc = (स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data *)device_get_match_data(dev);
+	अगर (!soc)
+		वापस -ENODEV;
 
-	lg = devm_kzalloc(dev, sizeof(*lg), GFP_KERNEL);
-	if (!lg)
-		return -ENOMEM;
+	lg = devm_kzalloc(dev, माप(*lg), GFP_KERNEL);
+	अगर (!lg)
+		वापस -ENOMEM;
 
 	lg->dev = dev;
 	lg->soc = soc;
 
 	lg->ncommunities = lg->soc->ncommunities;
-	lg->communities = devm_kcalloc(dev, lg->ncommunities,
-				       sizeof(*lg->communities), GFP_KERNEL);
-	if (!lg->communities)
-		return -ENOMEM;
+	lg->communities = devm_kसुस्मृति(dev, lg->ncommunities,
+				       माप(*lg->communities), GFP_KERNEL);
+	अगर (!lg->communities)
+		वापस -ENOMEM;
 
 	lg->pctldesc           = lptlp_pinctrl_desc;
 	lg->pctldesc.name      = dev_name(dev);
 	lg->pctldesc.pins      = lg->soc->pins;
 	lg->pctldesc.npins     = lg->soc->npins;
 
-	lg->pctldev = devm_pinctrl_register(dev, &lg->pctldesc, lg);
-	if (IS_ERR(lg->pctldev)) {
+	lg->pctldev = devm_pinctrl_रेजिस्टर(dev, &lg->pctldesc, lg);
+	अगर (IS_ERR(lg->pctldev)) अणु
 		dev_err(dev, "failed to register pinctrl driver\n");
-		return PTR_ERR(lg->pctldev);
-	}
+		वापस PTR_ERR(lg->pctldev);
+	पूर्ण
 
-	platform_set_drvdata(pdev, lg);
+	platक्रमm_set_drvdata(pdev, lg);
 
-	io_rc = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!io_rc) {
+	io_rc = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!io_rc) अणु
 		dev_err(dev, "missing IO resources\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	regs = devm_ioport_map(dev, io_rc->start, resource_size(io_rc));
-	if (!regs) {
+	अगर (!regs) अणु
 		dev_err(dev, "failed mapping IO region %pR\n", &io_rc);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	for (i = 0; i < lg->soc->ncommunities; i++) {
-		struct intel_community *comm = &lg->communities[i];
+	क्रम (i = 0; i < lg->soc->ncommunities; i++) अणु
+		काष्ठा पूर्णांकel_community *comm = &lg->communities[i];
 
 		*comm = lg->soc->communities[i];
 
 		comm->regs = regs;
 		comm->pad_regs = regs + 0x100;
-	}
+	पूर्ण
 
 	raw_spin_lock_init(&lg->lock);
 
@@ -869,7 +870,7 @@ static int lp_gpio_probe(struct platform_device *pdev)
 	gc->label = dev_name(dev);
 	gc->owner = THIS_MODULE;
 	gc->request = gpiochip_generic_request;
-	gc->free = gpiochip_generic_free;
+	gc->मुक्त = gpiochip_generic_मुक्त;
 	gc->direction_input = lp_gpio_direction_input;
 	gc->direction_output = lp_gpio_direction_output;
 	gc->get = lp_gpio_get;
@@ -882,101 +883,101 @@ static int lp_gpio_probe(struct platform_device *pdev)
 	gc->add_pin_ranges = lp_gpio_add_pin_ranges;
 	gc->parent = dev;
 
-	/* set up interrupts  */
-	irq = platform_get_irq_optional(pdev, 0);
-	if (irq > 0) {
-		struct gpio_irq_chip *girq;
+	/* set up पूर्णांकerrupts  */
+	irq = platक्रमm_get_irq_optional(pdev, 0);
+	अगर (irq > 0) अणु
+		काष्ठा gpio_irq_chip *girq;
 
 		girq = &gc->irq;
 		girq->chip = &lp_irqchip;
 		girq->init_hw = lp_gpio_irq_init_hw;
 		girq->parent_handler = lp_gpio_irq_handler;
 		girq->num_parents = 1;
-		girq->parents = devm_kcalloc(dev, girq->num_parents,
-					     sizeof(*girq->parents),
+		girq->parents = devm_kसुस्मृति(dev, girq->num_parents,
+					     माप(*girq->parents),
 					     GFP_KERNEL);
-		if (!girq->parents)
-			return -ENOMEM;
+		अगर (!girq->parents)
+			वापस -ENOMEM;
 		girq->parents[0] = irq;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_bad_irq;
-	}
+	पूर्ण
 
 	ret = devm_gpiochip_add_data(dev, gc, lg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed adding lp-gpio chip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp_gpio_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
-	return 0;
-}
+अटल पूर्णांक lp_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
+	वापस 0;
+पूर्ण
 
-static int lp_gpio_runtime_suspend(struct device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक lp_gpio_runसमय_suspend(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int lp_gpio_runtime_resume(struct device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक lp_gpio_runसमय_resume(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int lp_gpio_resume(struct device *dev)
-{
-	struct intel_pinctrl *lg = dev_get_drvdata(dev);
-	struct gpio_chip *chip = &lg->chip;
-	const char *dummy;
-	int i;
+अटल पूर्णांक lp_gpio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा पूर्णांकel_pinctrl *lg = dev_get_drvdata(dev);
+	काष्ठा gpio_chip *chip = &lg->chip;
+	स्थिर अक्षर *dummy;
+	पूर्णांक i;
 
 	/* on some hardware suspend clears input sensing, re-enable it here */
-	for_each_requested_gpio(chip, i, dummy)
+	क्रम_each_requested_gpio(chip, i, dummy)
 		lp_gpio_enable_input(lp_gpio_reg(chip, i, LP_CONFIG2));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops lp_gpio_pm_ops = {
-	.runtime_suspend = lp_gpio_runtime_suspend,
-	.runtime_resume = lp_gpio_runtime_resume,
+अटल स्थिर काष्ठा dev_pm_ops lp_gpio_pm_ops = अणु
+	.runसमय_suspend = lp_gpio_runसमय_suspend,
+	.runसमय_resume = lp_gpio_runसमय_resume,
 	.resume = lp_gpio_resume,
-};
+पूर्ण;
 
-static const struct acpi_device_id lynxpoint_gpio_acpi_match[] = {
-	{ "INT33C7", (kernel_ulong_t)&lptlp_soc_data },
-	{ "INT3437", (kernel_ulong_t)&lptlp_soc_data },
-	{ }
-};
-MODULE_DEVICE_TABLE(acpi, lynxpoint_gpio_acpi_match);
+अटल स्थिर काष्ठा acpi_device_id lynxpoपूर्णांक_gpio_acpi_match[] = अणु
+	अणु "INT33C7", (kernel_uदीर्घ_t)&lptlp_soc_data पूर्ण,
+	अणु "INT3437", (kernel_uदीर्घ_t)&lptlp_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(acpi, lynxpoपूर्णांक_gpio_acpi_match);
 
-static struct platform_driver lp_gpio_driver = {
+अटल काष्ठा platक्रमm_driver lp_gpio_driver = अणु
 	.probe          = lp_gpio_probe,
-	.remove         = lp_gpio_remove,
-	.driver         = {
+	.हटाओ         = lp_gpio_हटाओ,
+	.driver         = अणु
 		.name   = "lp_gpio",
 		.pm	= &lp_gpio_pm_ops,
-		.acpi_match_table = lynxpoint_gpio_acpi_match,
-	},
-};
+		.acpi_match_table = lynxpoपूर्णांक_gpio_acpi_match,
+	पूर्ण,
+पूर्ण;
 
-static int __init lp_gpio_init(void)
-{
-	return platform_driver_register(&lp_gpio_driver);
-}
+अटल पूर्णांक __init lp_gpio_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&lp_gpio_driver);
+पूर्ण
 subsys_initcall(lp_gpio_init);
 
-static void __exit lp_gpio_exit(void)
-{
-	platform_driver_unregister(&lp_gpio_driver);
-}
-module_exit(lp_gpio_exit);
+अटल व्योम __निकास lp_gpio_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&lp_gpio_driver);
+पूर्ण
+module_निकास(lp_gpio_निकास);
 
 MODULE_AUTHOR("Mathias Nyman (Intel)");
 MODULE_AUTHOR("Andy Shevchenko (Intel)");

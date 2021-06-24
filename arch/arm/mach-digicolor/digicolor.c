@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Support for Conexant Digicolor SoCs
+ * Support क्रम Conexant Digicolor SoCs
 */
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-static const char *const digicolor_dt_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर digicolor_dt_compat[] __initस्थिर = अणु
 	"cnxt,cx92755",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(DIGICOLOR, "Conexant Digicolor (Flattened Device Tree)")
 	.dt_compat	= digicolor_dt_compat,

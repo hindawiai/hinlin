@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * irqchip for the Faraday Technology FTINTC010 Copyright (C) 2017 Linus
+ * irqchip क्रम the Faraday Technology FTINTC010 Copyright (C) 2017 Linus
  * Walleij <linus.walleij@linaro.org>
  *
  * Based on arch/arm/mach-gemini/irq.c
  * Copyright (C) 2001-2006 Storlink, Corp.
  * Copyright (C) 2008-2009 Paulius Zaleckas <paulius.zaleckas@gmail.com>
  */
-#include <linux/bitops.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <linux/irqchip.h>
-#include <linux/irqchip/versatile-fpga.h>
-#include <linux/irqdomain.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/cpu.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqchip/versatile-fpga.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/cpu.h>
 
-#include <asm/exception.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#define FT010_NUM_IRQS 32
+#घोषणा FT010_NUM_IRQS 32
 
-#define FT010_IRQ_SOURCE(base_addr)	(base_addr + 0x00)
-#define FT010_IRQ_MASK(base_addr)	(base_addr + 0x04)
-#define FT010_IRQ_CLEAR(base_addr)	(base_addr + 0x08)
+#घोषणा FT010_IRQ_SOURCE(base_addr)	(base_addr + 0x00)
+#घोषणा FT010_IRQ_MASK(base_addr)	(base_addr + 0x04)
+#घोषणा FT010_IRQ_CLEAR(base_addr)	(base_addr + 0x08)
 /* Selects level- or edge-triggered */
-#define FT010_IRQ_MODE(base_addr)	(base_addr + 0x0C)
+#घोषणा FT010_IRQ_MODE(base_addr)	(base_addr + 0x0C)
 /* Selects active low/high or falling/rising edge */
-#define FT010_IRQ_POLARITY(base_addr)	(base_addr + 0x10)
-#define FT010_IRQ_STATUS(base_addr)	(base_addr + 0x14)
-#define FT010_FIQ_SOURCE(base_addr)	(base_addr + 0x20)
-#define FT010_FIQ_MASK(base_addr)	(base_addr + 0x24)
-#define FT010_FIQ_CLEAR(base_addr)	(base_addr + 0x28)
-#define FT010_FIQ_MODE(base_addr)	(base_addr + 0x2C)
-#define FT010_FIQ_POLARITY(base_addr)	(base_addr + 0x30)
-#define FT010_FIQ_STATUS(base_addr)	(base_addr + 0x34)
+#घोषणा FT010_IRQ_POLARITY(base_addr)	(base_addr + 0x10)
+#घोषणा FT010_IRQ_STATUS(base_addr)	(base_addr + 0x14)
+#घोषणा FT010_FIQ_SOURCE(base_addr)	(base_addr + 0x20)
+#घोषणा FT010_FIQ_MASK(base_addr)	(base_addr + 0x24)
+#घोषणा FT010_FIQ_CLEAR(base_addr)	(base_addr + 0x28)
+#घोषणा FT010_FIQ_MODE(base_addr)	(base_addr + 0x2C)
+#घोषणा FT010_FIQ_POLARITY(base_addr)	(base_addr + 0x30)
+#घोषणा FT010_FIQ_STATUS(base_addr)	(base_addr + 0x34)
 
 /**
- * struct ft010_irq_data - irq data container for the Faraday IRQ controller
- * @base: memory offset in virtual memory
- * @chip: chip container for this instance
- * @domain: IRQ domain for this instance
+ * काष्ठा ft010_irq_data - irq data container क्रम the Faraday IRQ controller
+ * @base: memory offset in भव memory
+ * @chip: chip container क्रम this instance
+ * @करोमुख्य: IRQ करोमुख्य क्रम this instance
  */
-struct ft010_irq_data {
-	void __iomem *base;
-	struct irq_chip chip;
-	struct irq_domain *domain;
-};
+काष्ठा ft010_irq_data अणु
+	व्योम __iomem *base;
+	काष्ठा irq_chip chip;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
+पूर्ण;
 
-static void ft010_irq_mask(struct irq_data *d)
-{
-	struct ft010_irq_data *f = irq_data_get_irq_chip_data(d);
-	unsigned int mask;
+अटल व्योम ft010_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा ft010_irq_data *f = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक mask;
 
-	mask = readl(FT010_IRQ_MASK(f->base));
+	mask = पढ़ोl(FT010_IRQ_MASK(f->base));
 	mask &= ~BIT(irqd_to_hwirq(d));
-	writel(mask, FT010_IRQ_MASK(f->base));
-}
+	ग_लिखोl(mask, FT010_IRQ_MASK(f->base));
+पूर्ण
 
-static void ft010_irq_unmask(struct irq_data *d)
-{
-	struct ft010_irq_data *f = irq_data_get_irq_chip_data(d);
-	unsigned int mask;
+अटल व्योम ft010_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा ft010_irq_data *f = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक mask;
 
-	mask = readl(FT010_IRQ_MASK(f->base));
+	mask = पढ़ोl(FT010_IRQ_MASK(f->base));
 	mask |= BIT(irqd_to_hwirq(d));
-	writel(mask, FT010_IRQ_MASK(f->base));
-}
+	ग_लिखोl(mask, FT010_IRQ_MASK(f->base));
+पूर्ण
 
-static void ft010_irq_ack(struct irq_data *d)
-{
-	struct ft010_irq_data *f = irq_data_get_irq_chip_data(d);
+अटल व्योम ft010_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा ft010_irq_data *f = irq_data_get_irq_chip_data(d);
 
-	writel(BIT(irqd_to_hwirq(d)), FT010_IRQ_CLEAR(f->base));
-}
+	ग_लिखोl(BIT(irqd_to_hwirq(d)), FT010_IRQ_CLEAR(f->base));
+पूर्ण
 
-static int ft010_irq_set_type(struct irq_data *d, unsigned int trigger)
-{
-	struct ft010_irq_data *f = irq_data_get_irq_chip_data(d);
-	int offset = irqd_to_hwirq(d);
+अटल पूर्णांक ft010_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक trigger)
+अणु
+	काष्ठा ft010_irq_data *f = irq_data_get_irq_chip_data(d);
+	पूर्णांक offset = irqd_to_hwirq(d);
 	u32 mode, polarity;
 
-	mode = readl(FT010_IRQ_MODE(f->base));
-	polarity = readl(FT010_IRQ_POLARITY(f->base));
+	mode = पढ़ोl(FT010_IRQ_MODE(f->base));
+	polarity = पढ़ोl(FT010_IRQ_POLARITY(f->base));
 
-	if (trigger & (IRQ_TYPE_LEVEL_LOW)) {
+	अगर (trigger & (IRQ_TYPE_LEVEL_LOW)) अणु
 		irq_set_handler_locked(d, handle_level_irq);
 		mode &= ~BIT(offset);
 		polarity |= BIT(offset);
-	} else if (trigger & (IRQ_TYPE_LEVEL_HIGH)) {
+	पूर्ण अन्यथा अगर (trigger & (IRQ_TYPE_LEVEL_HIGH)) अणु
 		irq_set_handler_locked(d, handle_level_irq);
 		mode &= ~BIT(offset);
 		polarity &= ~BIT(offset);
-	} else if (trigger & IRQ_TYPE_EDGE_FALLING) {
+	पूर्ण अन्यथा अगर (trigger & IRQ_TYPE_EDGE_FALLING) अणु
 		irq_set_handler_locked(d, handle_edge_irq);
 		mode |= BIT(offset);
 		polarity |= BIT(offset);
-	} else if (trigger & IRQ_TYPE_EDGE_RISING) {
+	पूर्ण अन्यथा अगर (trigger & IRQ_TYPE_EDGE_RISING) अणु
 		irq_set_handler_locked(d, handle_edge_irq);
 		mode |= BIT(offset);
 		polarity &= ~BIT(offset);
-	} else {
+	पूर्ण अन्यथा अणु
 		irq_set_handler_locked(d, handle_bad_irq);
 		pr_warn("Faraday IRQ: no supported trigger selected for line %d\n",
 			offset);
-	}
+	पूर्ण
 
-	writel(mode, FT010_IRQ_MODE(f->base));
-	writel(polarity, FT010_IRQ_POLARITY(f->base));
+	ग_लिखोl(mode, FT010_IRQ_MODE(f->base));
+	ग_लिखोl(polarity, FT010_IRQ_POLARITY(f->base));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip ft010_irq_chip = {
+अटल काष्ठा irq_chip ft010_irq_chip = अणु
 	.name		= "FTINTC010",
 	.irq_ack	= ft010_irq_ack,
 	.irq_mask	= ft010_irq_mask,
 	.irq_unmask	= ft010_irq_unmask,
 	.irq_set_type	= ft010_irq_set_type,
-};
+पूर्ण;
 
-/* Local static for the IRQ entry call */
-static struct ft010_irq_data firq;
+/* Local अटल क्रम the IRQ entry call */
+अटल काष्ठा ft010_irq_data firq;
 
-asmlinkage void __exception_irq_entry ft010_irqchip_handle_irq(struct pt_regs *regs)
-{
-	struct ft010_irq_data *f = &firq;
-	int irq;
+यंत्रlinkage व्योम __exception_irq_entry ft010_irqchip_handle_irq(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा ft010_irq_data *f = &firq;
+	पूर्णांक irq;
 	u32 status;
 
-	while ((status = readl(FT010_IRQ_STATUS(f->base)))) {
+	जबतक ((status = पढ़ोl(FT010_IRQ_STATUS(f->base)))) अणु
 		irq = ffs(status) - 1;
-		handle_domain_irq(f->domain, irq, regs);
-	}
-}
+		handle_करोमुख्य_irq(f->करोमुख्य, irq, regs);
+	पूर्ण
+पूर्ण
 
-static int ft010_irqdomain_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक ft010_irqकरोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 				irq_hw_number_t hwirq)
-{
-	struct ft010_irq_data *f = d->host_data;
+अणु
+	काष्ठा ft010_irq_data *f = d->host_data;
 
 	irq_set_chip_data(irq, f);
-	/* All IRQs should set up their type, flags as bad by default */
+	/* All IRQs should set up their type, flags as bad by शेष */
 	irq_set_chip_and_handler(irq, &ft010_irq_chip, handle_bad_irq);
 	irq_set_probe(irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ft010_irqdomain_unmap(struct irq_domain *d, unsigned int irq)
-{
-	irq_set_chip_and_handler(irq, NULL, NULL);
-	irq_set_chip_data(irq, NULL);
-}
+अटल व्योम ft010_irqकरोमुख्य_unmap(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq)
+अणु
+	irq_set_chip_and_handler(irq, शून्य, शून्य);
+	irq_set_chip_data(irq, शून्य);
+पूर्ण
 
-static const struct irq_domain_ops ft010_irqdomain_ops = {
-	.map = ft010_irqdomain_map,
-	.unmap = ft010_irqdomain_unmap,
-	.xlate = irq_domain_xlate_onetwocell,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops ft010_irqकरोमुख्य_ops = अणु
+	.map = ft010_irqकरोमुख्य_map,
+	.unmap = ft010_irqकरोमुख्य_unmap,
+	.xlate = irq_करोमुख्य_xlate_onetwocell,
+पूर्ण;
 
-int __init ft010_of_init_irq(struct device_node *node,
-			      struct device_node *parent)
-{
-	struct ft010_irq_data *f = &firq;
+पूर्णांक __init ft010_of_init_irq(काष्ठा device_node *node,
+			      काष्ठा device_node *parent)
+अणु
+	काष्ठा ft010_irq_data *f = &firq;
 
 	/*
-	 * Disable the idle handler by default since it is buggy
+	 * Disable the idle handler by शेष since it is buggy
 	 * For more info see arch/arm/mach-gemini/idle.c
 	 */
 	cpu_idle_poll_ctrl(true);
@@ -177,16 +178,16 @@ int __init ft010_of_init_irq(struct device_node *node,
 	f->base = of_iomap(node, 0);
 	WARN(!f->base, "unable to map gemini irq registers\n");
 
-	/* Disable all interrupts */
-	writel(0, FT010_IRQ_MASK(f->base));
-	writel(0, FT010_FIQ_MASK(f->base));
+	/* Disable all पूर्णांकerrupts */
+	ग_लिखोl(0, FT010_IRQ_MASK(f->base));
+	ग_लिखोl(0, FT010_FIQ_MASK(f->base));
 
-	f->domain = irq_domain_add_simple(node, FT010_NUM_IRQS, 0,
-					  &ft010_irqdomain_ops, f);
+	f->करोमुख्य = irq_करोमुख्य_add_simple(node, FT010_NUM_IRQS, 0,
+					  &ft010_irqकरोमुख्य_ops, f);
 	set_handle_irq(ft010_irqchip_handle_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 IRQCHIP_DECLARE(faraday, "faraday,ftintc010",
 		ft010_of_init_irq);
 IRQCHIP_DECLARE(gemini, "cortina,gemini-interrupt-controller",

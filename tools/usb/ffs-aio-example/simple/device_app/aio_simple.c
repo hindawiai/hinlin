@@ -1,16 +1,17 @@
+<शैली गुरु>
 /*
- * This is free and unencumbered software released into the public domain.
+ * This is मुक्त and unencumbered software released पूर्णांकo the खुला करोमुख्य.
  *
- * Anyone is free to copy, modify, publish, use, compile, sell, or
- * distribute this software, either in source code form or as a compiled
- * binary, for any purpose, commercial or non-commercial, and by any
+ * Anyone is मुक्त to copy, modअगरy, publish, use, compile, sell, or
+ * distribute this software, either in source code क्रमm or as a compiled
+ * binary, क्रम any purpose, commercial or non-commercial, and by any
  * means.
  *
  * In jurisdictions that recognize copyright laws, the author or authors
- * of this software dedicate any and all copyright interest in the
- * software to the public domain. We make this dedication for the benefit
- * of the public at large and to the detriment of our heirs and
- * successors. We intend this dedication to be an overt act of
+ * of this software dedicate any and all copyright पूर्णांकerest in the
+ * software to the खुला करोमुख्य. We make this dedication क्रम the benefit
+ * of the खुला at large and to the detriment of our heirs and
+ * successors. We पूर्णांकend this dedication to be an overt act of
  * relinquishment in perpetuity of all present and future rights to this
  * software under copyright law.
  *
@@ -22,125 +23,125 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * For more information, please refer to <http://unlicense.org/>
+ * For more inक्रमmation, please refer to <http://unlicense.org/>
  */
 
-#define _BSD_SOURCE /* for endian.h */
+#घोषणा _BSD_SOURCE /* क्रम endian.h */
 
-#include <endian.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/poll.h>
-#include <unistd.h>
-#include <stdbool.h>
-#include <sys/eventfd.h>
+#समावेश <endian.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <मानकतर्क.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश <sys/poll.h>
+#समावेश <unistd.h>
+#समावेश <stdbool.h>
+#समावेश <sys/eventfd.h>
 
-#include "libaio.h"
-#define IOCB_FLAG_RESFD         (1 << 0)
+#समावेश "libaio.h"
+#घोषणा IOCB_FLAG_RESFD         (1 << 0)
 
-#include <linux/usb/functionfs.h>
+#समावेश <linux/usb/functionfs.h>
 
-#define BUF_LEN		8192
+#घोषणा BUF_LEN		8192
 
 /******************** Descriptors and Strings *******************************/
 
-static const struct {
-	struct usb_functionfs_descs_head_v2 header;
+अटल स्थिर काष्ठा अणु
+	काष्ठा usb_functionfs_descs_head_v2 header;
 	__le32 fs_count;
 	__le32 hs_count;
-	struct {
-		struct usb_interface_descriptor intf;
-		struct usb_endpoint_descriptor_no_audio bulk_sink;
-		struct usb_endpoint_descriptor_no_audio bulk_source;
-	} __attribute__ ((__packed__)) fs_descs, hs_descs;
-} __attribute__ ((__packed__)) descriptors = {
-	.header = {
+	काष्ठा अणु
+		काष्ठा usb_पूर्णांकerface_descriptor पूर्णांकf;
+		काष्ठा usb_endpoपूर्णांक_descriptor_no_audio bulk_sink;
+		काष्ठा usb_endpoपूर्णांक_descriptor_no_audio bulk_source;
+	पूर्ण __attribute__ ((__packed__)) fs_descs, hs_descs;
+पूर्ण __attribute__ ((__packed__)) descriptors = अणु
+	.header = अणु
 		.magic = htole32(FUNCTIONFS_DESCRIPTORS_MAGIC_V2),
 		.flags = htole32(FUNCTIONFS_HAS_FS_DESC |
 				     FUNCTIONFS_HAS_HS_DESC),
-		.length = htole32(sizeof(descriptors)),
-	},
+		.length = htole32(माप(descriptors)),
+	पूर्ण,
 	.fs_count = htole32(3),
-	.fs_descs = {
-		.intf = {
-			.bLength = sizeof(descriptors.fs_descs.intf),
+	.fs_descs = अणु
+		.पूर्णांकf = अणु
+			.bLength = माप(descriptors.fs_descs.पूर्णांकf),
 			.bDescriptorType = USB_DT_INTERFACE,
-			.bNumEndpoints = 2,
+			.bNumEndpoपूर्णांकs = 2,
 			.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
 			.iInterface = 1,
-		},
-		.bulk_sink = {
-			.bLength = sizeof(descriptors.fs_descs.bulk_sink),
+		पूर्ण,
+		.bulk_sink = अणु
+			.bLength = माप(descriptors.fs_descs.bulk_sink),
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 1 | USB_DIR_IN,
+			.bEndpoपूर्णांकAddress = 1 | USB_सूची_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
-		},
-		.bulk_source = {
-			.bLength = sizeof(descriptors.fs_descs.bulk_source),
+		पूर्ण,
+		.bulk_source = अणु
+			.bLength = माप(descriptors.fs_descs.bulk_source),
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 2 | USB_DIR_OUT,
+			.bEndpoपूर्णांकAddress = 2 | USB_सूची_OUT,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.hs_count = htole32(3),
-	.hs_descs = {
-		.intf = {
-			.bLength = sizeof(descriptors.hs_descs.intf),
+	.hs_descs = अणु
+		.पूर्णांकf = अणु
+			.bLength = माप(descriptors.hs_descs.पूर्णांकf),
 			.bDescriptorType = USB_DT_INTERFACE,
-			.bNumEndpoints = 2,
+			.bNumEndpoपूर्णांकs = 2,
 			.bInterfaceClass = USB_CLASS_VENDOR_SPEC,
 			.iInterface = 1,
-		},
-		.bulk_sink = {
-			.bLength = sizeof(descriptors.hs_descs.bulk_sink),
+		पूर्ण,
+		.bulk_sink = अणु
+			.bLength = माप(descriptors.hs_descs.bulk_sink),
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 1 | USB_DIR_IN,
+			.bEndpoपूर्णांकAddress = 1 | USB_सूची_IN,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = htole16(512),
-		},
-		.bulk_source = {
-			.bLength = sizeof(descriptors.hs_descs.bulk_source),
+		पूर्ण,
+		.bulk_source = अणु
+			.bLength = माप(descriptors.hs_descs.bulk_source),
 			.bDescriptorType = USB_DT_ENDPOINT,
-			.bEndpointAddress = 2 | USB_DIR_OUT,
+			.bEndpoपूर्णांकAddress = 2 | USB_सूची_OUT,
 			.bmAttributes = USB_ENDPOINT_XFER_BULK,
 			.wMaxPacketSize = htole16(512),
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#define STR_INTERFACE "AIO Test"
+#घोषणा STR_INTERFACE "AIO Test"
 
-static const struct {
-	struct usb_functionfs_strings_head header;
-	struct {
+अटल स्थिर काष्ठा अणु
+	काष्ठा usb_functionfs_strings_head header;
+	काष्ठा अणु
 		__le16 code;
-		const char str1[sizeof(STR_INTERFACE)];
-	} __attribute__ ((__packed__)) lang0;
-} __attribute__ ((__packed__)) strings = {
-	.header = {
+		स्थिर अक्षर str1[माप(STR_INTERFACE)];
+	पूर्ण __attribute__ ((__packed__)) lang0;
+पूर्ण __attribute__ ((__packed__)) strings = अणु
+	.header = अणु
 		.magic = htole32(FUNCTIONFS_STRINGS_MAGIC),
-		.length = htole32(sizeof(strings)),
+		.length = htole32(माप(strings)),
 		.str_count = htole32(1),
 		.lang_count = htole32(1),
-	},
-	.lang0 = {
+	पूर्ण,
+	.lang0 = अणु
 		htole16(0x0409), /* en-us */
 		STR_INTERFACE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/******************** Endpoints handling *******************************/
+/******************** Endpoपूर्णांकs handling *******************************/
 
-static void display_event(struct usb_functionfs_event *event)
-{
-	static const char *const names[] = {
+अटल व्योम display_event(काष्ठा usb_functionfs_event *event)
+अणु
+	अटल स्थिर अक्षर *स्थिर names[] = अणु
 		[FUNCTIONFS_BIND] = "BIND",
 		[FUNCTIONFS_UNBIND] = "UNBIND",
 		[FUNCTIONFS_ENABLE] = "ENABLE",
@@ -148,221 +149,221 @@ static void display_event(struct usb_functionfs_event *event)
 		[FUNCTIONFS_SETUP] = "SETUP",
 		[FUNCTIONFS_SUSPEND] = "SUSPEND",
 		[FUNCTIONFS_RESUME] = "RESUME",
-	};
-	switch (event->type) {
-	case FUNCTIONFS_BIND:
-	case FUNCTIONFS_UNBIND:
-	case FUNCTIONFS_ENABLE:
-	case FUNCTIONFS_DISABLE:
-	case FUNCTIONFS_SETUP:
-	case FUNCTIONFS_SUSPEND:
-	case FUNCTIONFS_RESUME:
-		printf("Event %s\n", names[event->type]);
-	}
-}
+	पूर्ण;
+	चयन (event->type) अणु
+	हाल FUNCTIONFS_BIND:
+	हाल FUNCTIONFS_UNBIND:
+	हाल FUNCTIONFS_ENABLE:
+	हाल FUNCTIONFS_DISABLE:
+	हाल FUNCTIONFS_SETUP:
+	हाल FUNCTIONFS_SUSPEND:
+	हाल FUNCTIONFS_RESUME:
+		म_लिखो("Event %s\n", names[event->type]);
+	पूर्ण
+पूर्ण
 
-static void handle_ep0(int ep0, bool *ready)
-{
-	struct usb_functionfs_event event;
-	int ret;
+अटल व्योम handle_ep0(पूर्णांक ep0, bool *पढ़ोy)
+अणु
+	काष्ठा usb_functionfs_event event;
+	पूर्णांक ret;
 
-	struct pollfd pfds[1];
+	काष्ठा pollfd pfds[1];
 	pfds[0].fd = ep0;
 	pfds[0].events = POLLIN;
 
 	ret = poll(pfds, 1, 0);
 
-	if (ret && (pfds[0].revents & POLLIN)) {
-		ret = read(ep0, &event, sizeof(event));
-		if (!ret) {
-			perror("unable to read event from ep0");
-			return;
-		}
+	अगर (ret && (pfds[0].revents & POLLIN)) अणु
+		ret = पढ़ो(ep0, &event, माप(event));
+		अगर (!ret) अणु
+			लिखो_त्रुटि("unable to read event from ep0");
+			वापस;
+		पूर्ण
 		display_event(&event);
-		switch (event.type) {
-		case FUNCTIONFS_SETUP:
-			if (event.u.setup.bRequestType & USB_DIR_IN)
-				write(ep0, NULL, 0);
-			else
-				read(ep0, NULL, 0);
-			break;
+		चयन (event.type) अणु
+		हाल FUNCTIONFS_SETUP:
+			अगर (event.u.setup.bRequestType & USB_सूची_IN)
+				ग_लिखो(ep0, शून्य, 0);
+			अन्यथा
+				पढ़ो(ep0, शून्य, 0);
+			अवरोध;
 
-		case FUNCTIONFS_ENABLE:
-			*ready = true;
-			break;
+		हाल FUNCTIONFS_ENABLE:
+			*पढ़ोy = true;
+			अवरोध;
 
-		case FUNCTIONFS_DISABLE:
-			*ready = false;
-			break;
+		हाल FUNCTIONFS_DISABLE:
+			*पढ़ोy = false;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
-}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	int i, ret;
-	char *ep_path;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक i, ret;
+	अक्षर *ep_path;
 
-	int ep0;
-	int ep[2];
+	पूर्णांक ep0;
+	पूर्णांक ep[2];
 
 	io_context_t ctx;
 
-	int evfd;
+	पूर्णांक evfd;
 	fd_set rfds;
 
-	char *buf_in, *buf_out;
-	struct iocb *iocb_in, *iocb_out;
-	int req_in = 0, req_out = 0;
-	bool ready;
+	अक्षर *buf_in, *buf_out;
+	काष्ठा iocb *iocb_in, *iocb_out;
+	पूर्णांक req_in = 0, req_out = 0;
+	bool पढ़ोy;
 
-	if (argc != 2) {
-		printf("ffs directory not specified!\n");
-		return 1;
-	}
+	अगर (argc != 2) अणु
+		म_लिखो("ffs directory not specified!\n");
+		वापस 1;
+	पूर्ण
 
-	ep_path = malloc(strlen(argv[1]) + 4 /* "/ep#" */ + 1 /* '\0' */);
-	if (!ep_path) {
-		perror("malloc");
-		return 1;
-	}
+	ep_path = दो_स्मृति(म_माप(argv[1]) + 4 /* "/ep#" */ + 1 /* '\0' */);
+	अगर (!ep_path) अणु
+		लिखो_त्रुटि("malloc");
+		वापस 1;
+	पूर्ण
 
-	/* open endpoint files */
-	sprintf(ep_path, "%s/ep0", argv[1]);
-	ep0 = open(ep_path, O_RDWR);
-	if (ep0 < 0) {
-		perror("unable to open ep0");
-		return 1;
-	}
-	if (write(ep0, &descriptors, sizeof(descriptors)) < 0) {
-		perror("unable do write descriptors");
-		return 1;
-	}
-	if (write(ep0, &strings, sizeof(strings)) < 0) {
-		perror("unable to write strings");
-		return 1;
-	}
-	for (i = 0; i < 2; ++i) {
-		sprintf(ep_path, "%s/ep%d", argv[1], i+1);
-		ep[i] = open(ep_path, O_RDWR);
-		if (ep[i] < 0) {
-			printf("unable to open ep%d: %s\n", i+1,
-			       strerror(errno));
-			return 1;
-		}
-	}
+	/* खोलो endpoपूर्णांक files */
+	प्र_लिखो(ep_path, "%s/ep0", argv[1]);
+	ep0 = खोलो(ep_path, O_RDWR);
+	अगर (ep0 < 0) अणु
+		लिखो_त्रुटि("unable to open ep0");
+		वापस 1;
+	पूर्ण
+	अगर (ग_लिखो(ep0, &descriptors, माप(descriptors)) < 0) अणु
+		लिखो_त्रुटि("unable do write descriptors");
+		वापस 1;
+	पूर्ण
+	अगर (ग_लिखो(ep0, &strings, माप(strings)) < 0) अणु
+		लिखो_त्रुटि("unable to write strings");
+		वापस 1;
+	पूर्ण
+	क्रम (i = 0; i < 2; ++i) अणु
+		प्र_लिखो(ep_path, "%s/ep%d", argv[1], i+1);
+		ep[i] = खोलो(ep_path, O_RDWR);
+		अगर (ep[i] < 0) अणु
+			म_लिखो("unable to open ep%d: %s\n", i+1,
+			       म_त्रुटि(त्रुटि_सं));
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	free(ep_path);
+	मुक्त(ep_path);
 
-	memset(&ctx, 0, sizeof(ctx));
+	स_रखो(&ctx, 0, माप(ctx));
 	/* setup aio context to handle up to 2 requests */
-	if (io_setup(2, &ctx) < 0) {
-		perror("unable to setup aio");
-		return 1;
-	}
+	अगर (io_setup(2, &ctx) < 0) अणु
+		लिखो_त्रुटि("unable to setup aio");
+		वापस 1;
+	पूर्ण
 
 	evfd = eventfd(0, 0);
-	if (evfd < 0) {
-		perror("unable to open eventfd");
-		return 1;
-	}
+	अगर (evfd < 0) अणु
+		लिखो_त्रुटि("unable to open eventfd");
+		वापस 1;
+	पूर्ण
 
 	/* alloc buffers and requests */
-	buf_in = malloc(BUF_LEN);
-	buf_out = malloc(BUF_LEN);
-	iocb_in = malloc(sizeof(*iocb_in));
-	iocb_out = malloc(sizeof(*iocb_out));
+	buf_in = दो_स्मृति(BUF_LEN);
+	buf_out = दो_स्मृति(BUF_LEN);
+	iocb_in = दो_स्मृति(माप(*iocb_in));
+	iocb_out = दो_स्मृति(माप(*iocb_out));
 
-	while (1) {
+	जबतक (1) अणु
 		FD_ZERO(&rfds);
 		FD_SET(ep0, &rfds);
 		FD_SET(evfd, &rfds);
 
 		ret = select(((ep0 > evfd) ? ep0 : evfd)+1,
-			     &rfds, NULL, NULL, NULL);
-		if (ret < 0) {
-			if (errno == EINTR)
-				continue;
-			perror("select");
-			break;
-		}
+			     &rfds, शून्य, शून्य, शून्य);
+		अगर (ret < 0) अणु
+			अगर (त्रुटि_सं == EINTR)
+				जारी;
+			लिखो_त्रुटि("select");
+			अवरोध;
+		पूर्ण
 
-		if (FD_ISSET(ep0, &rfds))
-			handle_ep0(ep0, &ready);
+		अगर (FD_ISSET(ep0, &rfds))
+			handle_ep0(ep0, &पढ़ोy);
 
-		/* we are waiting for function ENABLE */
-		if (!ready)
-			continue;
+		/* we are रुकोing क्रम function ENABLE */
+		अगर (!पढ़ोy)
+			जारी;
 
-		/* if something was submitted we wait for event */
-		if (FD_ISSET(evfd, &rfds)) {
-			uint64_t ev_cnt;
-			ret = read(evfd, &ev_cnt, sizeof(ev_cnt));
-			if (ret < 0) {
-				perror("unable to read eventfd");
-				break;
-			}
+		/* अगर something was submitted we रुको क्रम event */
+		अगर (FD_ISSET(evfd, &rfds)) अणु
+			uपूर्णांक64_t ev_cnt;
+			ret = पढ़ो(evfd, &ev_cnt, माप(ev_cnt));
+			अगर (ret < 0) अणु
+				लिखो_त्रुटि("unable to read eventfd");
+				अवरोध;
+			पूर्ण
 
-			struct io_event e[2];
-			/* we wait for one event */
-			ret = io_getevents(ctx, 1, 2, e, NULL);
-			/* if we got event */
-			for (i = 0; i < ret; ++i) {
-				if (e[i].obj->aio_fildes == ep[0]) {
-					printf("ev=in; ret=%lu\n", e[i].res);
+			काष्ठा io_event e[2];
+			/* we रुको क्रम one event */
+			ret = io_getevents(ctx, 1, 2, e, शून्य);
+			/* अगर we got event */
+			क्रम (i = 0; i < ret; ++i) अणु
+				अगर (e[i].obj->aio_fildes == ep[0]) अणु
+					म_लिखो("ev=in; ret=%lu\n", e[i].res);
 					req_in = 0;
-				} else if (e[i].obj->aio_fildes == ep[1]) {
-					printf("ev=out; ret=%lu\n", e[i].res);
+				पूर्ण अन्यथा अगर (e[i].obj->aio_fildes == ep[1]) अणु
+					म_लिखो("ev=out; ret=%lu\n", e[i].res);
 					req_out = 0;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (!req_in) { /* if IN transfer not requested*/
-			/* prepare write request */
-			io_prep_pwrite(iocb_in, ep[0], buf_in, BUF_LEN, 0);
-			/* enable eventfd notification */
+		अगर (!req_in) अणु /* अगर IN transfer not requested*/
+			/* prepare ग_लिखो request */
+			io_prep_pग_लिखो(iocb_in, ep[0], buf_in, BUF_LEN, 0);
+			/* enable eventfd notअगरication */
 			iocb_in->u.c.flags |= IOCB_FLAG_RESFD;
 			iocb_in->u.c.resfd = evfd;
 			/* submit table of requests */
 			ret = io_submit(ctx, 1, &iocb_in);
-			if (ret >= 0) { /* if ret > 0 request is queued */
+			अगर (ret >= 0) अणु /* अगर ret > 0 request is queued */
 				req_in = 1;
-				printf("submit: in\n");
-			} else
-				perror("unable to submit request");
-		}
-		if (!req_out) { /* if OUT transfer not requested */
-			/* prepare read request */
-			io_prep_pread(iocb_out, ep[1], buf_out, BUF_LEN, 0);
-			/* enable eventfs notification */
+				म_लिखो("submit: in\n");
+			पूर्ण अन्यथा
+				लिखो_त्रुटि("unable to submit request");
+		पूर्ण
+		अगर (!req_out) अणु /* अगर OUT transfer not requested */
+			/* prepare पढ़ो request */
+			io_prep_pपढ़ो(iocb_out, ep[1], buf_out, BUF_LEN, 0);
+			/* enable eventfs notअगरication */
 			iocb_out->u.c.flags |= IOCB_FLAG_RESFD;
 			iocb_out->u.c.resfd = evfd;
 			/* submit table of requests */
 			ret = io_submit(ctx, 1, &iocb_out);
-			if (ret >= 0) { /* if ret > 0 request is queued */
+			अगर (ret >= 0) अणु /* अगर ret > 0 request is queued */
 				req_out = 1;
-				printf("submit: out\n");
-			} else
-				perror("unable to submit request");
-		}
-	}
+				म_लिखो("submit: out\n");
+			पूर्ण अन्यथा
+				लिखो_त्रुटि("unable to submit request");
+		पूर्ण
+	पूर्ण
 
-	/* free resources */
+	/* मुक्त resources */
 
 	io_destroy(ctx);
 
-	free(buf_in);
-	free(buf_out);
-	free(iocb_in);
-	free(iocb_out);
+	मुक्त(buf_in);
+	मुक्त(buf_out);
+	मुक्त(iocb_in);
+	मुक्त(iocb_out);
 
-	for (i = 0; i < 2; ++i)
-		close(ep[i]);
-	close(ep0);
+	क्रम (i = 0; i < 2; ++i)
+		बंद(ep[i]);
+	बंद(ep0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,564 +1,565 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "qlge.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "qlge.h"
 
-int qlge_unpause_mpi_risc(struct qlge_adapter *qdev)
-{
-	u32 tmp;
+पूर्णांक qlge_unछोड़ो_mpi_risc(काष्ठा qlge_adapter *qdev)
+अणु
+	u32 पंचांगp;
 
-	/* Un-pause the RISC */
-	tmp = qlge_read32(qdev, CSR);
-	if (!(tmp & CSR_RP))
-		return -EIO;
+	/* Un-छोड़ो the RISC */
+	पंचांगp = qlge_पढ़ो32(qdev, CSR);
+	अगर (!(पंचांगp & CSR_RP))
+		वापस -EIO;
 
-	qlge_write32(qdev, CSR, CSR_CMD_CLR_PAUSE);
-	return 0;
-}
+	qlge_ग_लिखो32(qdev, CSR, CSR_CMD_CLR_PAUSE);
+	वापस 0;
+पूर्ण
 
-int qlge_pause_mpi_risc(struct qlge_adapter *qdev)
-{
-	u32 tmp;
-	int count;
+पूर्णांक qlge_छोड़ो_mpi_risc(काष्ठा qlge_adapter *qdev)
+अणु
+	u32 पंचांगp;
+	पूर्णांक count;
 
 	/* Pause the RISC */
-	qlge_write32(qdev, CSR, CSR_CMD_SET_PAUSE);
-	for (count = UDELAY_COUNT; count; count--) {
-		tmp = qlge_read32(qdev, CSR);
-		if (tmp & CSR_RP)
-			break;
+	qlge_ग_लिखो32(qdev, CSR, CSR_CMD_SET_PAUSE);
+	क्रम (count = UDELAY_COUNT; count; count--) अणु
+		पंचांगp = qlge_पढ़ो32(qdev, CSR);
+		अगर (पंचांगp & CSR_RP)
+			अवरोध;
 		mdelay(UDELAY_DELAY);
-	}
-	return (count == 0) ? -ETIMEDOUT : 0;
-}
+	पूर्ण
+	वापस (count == 0) ? -ETIMEDOUT : 0;
+पूर्ण
 
-int qlge_hard_reset_mpi_risc(struct qlge_adapter *qdev)
-{
-	u32 tmp;
-	int count;
+पूर्णांक qlge_hard_reset_mpi_risc(काष्ठा qlge_adapter *qdev)
+अणु
+	u32 पंचांगp;
+	पूर्णांक count;
 
 	/* Reset the RISC */
-	qlge_write32(qdev, CSR, CSR_CMD_SET_RST);
-	for (count = UDELAY_COUNT; count; count--) {
-		tmp = qlge_read32(qdev, CSR);
-		if (tmp & CSR_RR) {
-			qlge_write32(qdev, CSR, CSR_CMD_CLR_RST);
-			break;
-		}
+	qlge_ग_लिखो32(qdev, CSR, CSR_CMD_SET_RST);
+	क्रम (count = UDELAY_COUNT; count; count--) अणु
+		पंचांगp = qlge_पढ़ो32(qdev, CSR);
+		अगर (पंचांगp & CSR_RR) अणु
+			qlge_ग_लिखो32(qdev, CSR, CSR_CMD_CLR_RST);
+			अवरोध;
+		पूर्ण
 		mdelay(UDELAY_DELAY);
-	}
-	return (count == 0) ? -ETIMEDOUT : 0;
-}
+	पूर्ण
+	वापस (count == 0) ? -ETIMEDOUT : 0;
+पूर्ण
 
-int qlge_read_mpi_reg(struct qlge_adapter *qdev, u32 reg, u32 *data)
-{
-	int status;
-	/* wait for reg to come ready */
-	status = qlge_wait_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
-	if (status)
-		goto exit;
-	/* set up for reg read */
-	qlge_write32(qdev, PROC_ADDR, reg | PROC_ADDR_R);
-	/* wait for reg to come ready */
-	status = qlge_wait_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
-	if (status)
-		goto exit;
+पूर्णांक qlge_पढ़ो_mpi_reg(काष्ठा qlge_adapter *qdev, u32 reg, u32 *data)
+अणु
+	पूर्णांक status;
+	/* रुको क्रम reg to come पढ़ोy */
+	status = qlge_रुको_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
+	अगर (status)
+		जाओ निकास;
+	/* set up क्रम reg पढ़ो */
+	qlge_ग_लिखो32(qdev, PROC_ADDR, reg | PROC_ADDR_R);
+	/* रुको क्रम reg to come पढ़ोy */
+	status = qlge_रुको_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
+	अगर (status)
+		जाओ निकास;
 	/* get the data */
-	*data = qlge_read32(qdev, PROC_DATA);
-exit:
-	return status;
-}
+	*data = qlge_पढ़ो32(qdev, PROC_DATA);
+निकास:
+	वापस status;
+पूर्ण
 
-int qlge_write_mpi_reg(struct qlge_adapter *qdev, u32 reg, u32 data)
-{
-	int status = 0;
-	/* wait for reg to come ready */
-	status = qlge_wait_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
-	if (status)
-		goto exit;
-	/* write the data to the data reg */
-	qlge_write32(qdev, PROC_DATA, data);
-	/* trigger the write */
-	qlge_write32(qdev, PROC_ADDR, reg);
-	/* wait for reg to come ready */
-	status = qlge_wait_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
-	if (status)
-		goto exit;
-exit:
-	return status;
-}
+पूर्णांक qlge_ग_लिखो_mpi_reg(काष्ठा qlge_adapter *qdev, u32 reg, u32 data)
+अणु
+	पूर्णांक status = 0;
+	/* रुको क्रम reg to come पढ़ोy */
+	status = qlge_रुको_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
+	अगर (status)
+		जाओ निकास;
+	/* ग_लिखो the data to the data reg */
+	qlge_ग_लिखो32(qdev, PROC_DATA, data);
+	/* trigger the ग_लिखो */
+	qlge_ग_लिखो32(qdev, PROC_ADDR, reg);
+	/* रुको क्रम reg to come पढ़ोy */
+	status = qlge_रुको_reg_rdy(qdev, PROC_ADDR, PROC_ADDR_RDY, PROC_ADDR_ERR);
+	अगर (status)
+		जाओ निकास;
+निकास:
+	वापस status;
+पूर्ण
 
-int qlge_soft_reset_mpi_risc(struct qlge_adapter *qdev)
-{
-	return qlge_write_mpi_reg(qdev, 0x00001010, 1);
-}
+पूर्णांक qlge_soft_reset_mpi_risc(काष्ठा qlge_adapter *qdev)
+अणु
+	वापस qlge_ग_लिखो_mpi_reg(qdev, 0x00001010, 1);
+पूर्ण
 
-/* Determine if we are in charge of the firmware. If
- * we are the lower of the 2 NIC pcie functions, or if
+/* Determine अगर we are in अक्षरge of the firmware. If
+ * we are the lower of the 2 NIC pcie functions, or अगर
  * we are the higher function and the lower function
  * is not enabled.
  */
-int qlge_own_firmware(struct qlge_adapter *qdev)
-{
+पूर्णांक qlge_own_firmware(काष्ठा qlge_adapter *qdev)
+अणु
 	u32 temp;
 
 	/* If we are the lower of the 2 NIC functions
-	 * on the chip the we are responsible for
+	 * on the chip the we are responsible क्रम
 	 * core dump and firmware reset after an error.
 	 */
-	if (qdev->func < qdev->alt_func)
-		return 1;
+	अगर (qdev->func < qdev->alt_func)
+		वापस 1;
 
 	/* If we are the higher of the 2 NIC functions
 	 * on the chip and the lower function is not
-	 * enabled, then we are responsible for
+	 * enabled, then we are responsible क्रम
 	 * core dump and firmware reset after an error.
 	 */
-	temp =  qlge_read32(qdev, STS);
-	if (!(temp & (1 << (8 + qdev->alt_func))))
-		return 1;
+	temp =  qlge_पढ़ो32(qdev, STS);
+	अगर (!(temp & (1 << (8 + qdev->alt_func))))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qlge_get_mb_sts(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int i, status;
+अटल पूर्णांक qlge_get_mb_sts(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक i, status;
 
 	status = qlge_sem_spinlock(qdev, SEM_PROC_REG_MASK);
-	if (status)
-		return -EBUSY;
-	for (i = 0; i < mbcp->out_count; i++) {
+	अगर (status)
+		वापस -EBUSY;
+	क्रम (i = 0; i < mbcp->out_count; i++) अणु
 		status =
-		    qlge_read_mpi_reg(qdev, qdev->mailbox_out + i,
+		    qlge_पढ़ो_mpi_reg(qdev, qdev->mailbox_out + i,
 				      &mbcp->mbox_out[i]);
-		if (status) {
-			netif_err(qdev, drv, qdev->ndev, "Failed mailbox read.\n");
-			break;
-		}
-	}
-	qlge_sem_unlock(qdev, SEM_PROC_REG_MASK);	/* does flush too */
-	return status;
-}
+		अगर (status) अणु
+			netअगर_err(qdev, drv, qdev->ndev, "Failed mailbox read.\n");
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	qlge_sem_unlock(qdev, SEM_PROC_REG_MASK);	/* करोes flush too */
+	वापस status;
+पूर्ण
 
-/* Wait for a single mailbox command to complete.
+/* Wait क्रम a single mailbox command to complete.
  * Returns zero on success.
  */
-static int qlge_wait_mbx_cmd_cmplt(struct qlge_adapter *qdev)
-{
-	int count;
+अटल पूर्णांक qlge_रुको_mbx_cmd_cmplt(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक count;
 	u32 value;
 
-	for (count = 100; count; count--) {
-		value = qlge_read32(qdev, STS);
-		if (value & STS_PI)
-			return 0;
+	क्रम (count = 100; count; count--) अणु
+		value = qlge_पढ़ो32(qdev, STS);
+		अगर (value & STS_PI)
+			वापस 0;
 		mdelay(UDELAY_DELAY); /* 100ms */
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /* Execute a single mailbox command.
  * Caller must hold PROC_ADDR semaphore.
  */
-static int qlge_exec_mb_cmd(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int i, status;
+अटल पूर्णांक qlge_exec_mb_cmd(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक i, status;
 
 	/*
 	 * Make sure there's nothing pending.
 	 * This shouldn't happen.
 	 */
-	if (qlge_read32(qdev, CSR) & CSR_HRI)
-		return -EIO;
+	अगर (qlge_पढ़ो32(qdev, CSR) & CSR_HRI)
+		वापस -EIO;
 
 	status = qlge_sem_spinlock(qdev, SEM_PROC_REG_MASK);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
 	/*
 	 * Fill the outbound mailboxes.
 	 */
-	for (i = 0; i < mbcp->in_count; i++) {
-		status = qlge_write_mpi_reg(qdev, qdev->mailbox_in + i,
+	क्रम (i = 0; i < mbcp->in_count; i++) अणु
+		status = qlge_ग_लिखो_mpi_reg(qdev, qdev->mailbox_in + i,
 					    mbcp->mbox_in[i]);
-		if (status)
-			goto end;
-	}
+		अगर (status)
+			जाओ end;
+	पूर्ण
 	/*
 	 * Wake up the MPI firmware.
 	 */
-	qlge_write32(qdev, CSR, CSR_CMD_SET_H2R_INT);
+	qlge_ग_लिखो32(qdev, CSR, CSR_CMD_SET_H2R_INT);
 end:
 	qlge_sem_unlock(qdev, SEM_PROC_REG_MASK);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* We are being asked by firmware to accept
  * a change to the port.  This is only
- * a change to max frame sizes (Tx/Rx), pause
+ * a change to max frame sizes (Tx/Rx), छोड़ो
  * parameters, or loopback mode. We wake up a worker
  * to handler processing this since a mailbox command
  * will need to be sent to ACK the request.
  */
-static int qlge_idc_req_aen(struct qlge_adapter *qdev)
-{
-	int status;
-	struct mbox_params *mbcp = &qdev->idc_mbc;
+अटल पूर्णांक qlge_idc_req_aen(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक status;
+	काष्ठा mbox_params *mbcp = &qdev->idc_mbc;
 
-	netif_err(qdev, drv, qdev->ndev, "Enter!\n");
-	/* Get the status data and start up a thread to
+	netअगर_err(qdev, drv, qdev->ndev, "Enter!\n");
+	/* Get the status data and start up a thपढ़ो to
 	 * handle the request.
 	 */
 	mbcp->out_count = 4;
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Could not read MPI, resetting ASIC!\n");
 		qlge_queue_asic_error(qdev);
-	} else	{
+	पूर्ण अन्यथा	अणु
 		/* Begin polled mode early so
-		 * we don't get another interrupt
+		 * we करोn't get another पूर्णांकerrupt
 		 * when we leave mpi_worker.
 		 */
-		qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
+		qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
 		queue_delayed_work(qdev->workqueue, &qdev->mpi_idc_work, 0);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-/* Process an inter-device event completion.
- * If good, signal the caller's completion.
+/* Process an पूर्णांकer-device event completion.
+ * If good, संकेत the caller's completion.
  */
-static int qlge_idc_cmplt_aen(struct qlge_adapter *qdev)
-{
-	int status;
-	struct mbox_params *mbcp = &qdev->idc_mbc;
+अटल पूर्णांक qlge_idc_cmplt_aen(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक status;
+	काष्ठा mbox_params *mbcp = &qdev->idc_mbc;
 
 	mbcp->out_count = 4;
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Could not read MPI, resetting RISC!\n");
 		qlge_queue_fw_error(qdev);
-	} else {
-		/* Wake up the sleeping mpi_idc_work thread that is
-		 * waiting for this event.
+	पूर्ण अन्यथा अणु
+		/* Wake up the sleeping mpi_idc_work thपढ़ो that is
+		 * रुकोing क्रम this event.
 		 */
 		complete(&qdev->ide_completion);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static void qlge_link_up(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
+अटल व्योम qlge_link_up(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
 
 	mbcp->out_count = 2;
 
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "%s: Could not get mailbox status.\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	qdev->link_status = mbcp->mbox_out[1];
-	netif_err(qdev, drv, qdev->ndev, "Link Up.\n");
+	netअगर_err(qdev, drv, qdev->ndev, "Link Up.\n");
 
 	/* If we're coming back from an IDC event
 	 * then set up the CAM and frame routing.
 	 */
-	if (test_bit(QL_CAM_RT_SET, &qdev->flags)) {
+	अगर (test_bit(QL_CAM_RT_SET, &qdev->flags)) अणु
 		status = qlge_cam_route_initialize(qdev);
-		if (status) {
-			netif_err(qdev, ifup, qdev->ndev,
+		अगर (status) अणु
+			netअगर_err(qdev, अगरup, qdev->ndev,
 				  "Failed to init CAM/Routing tables.\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		clear_bit(QL_CAM_RT_SET, &qdev->flags);
-	}
+	पूर्ण
 
 	/* Queue up a worker to check the frame
-	 * size information, and fix it if it's not
+	 * size inक्रमmation, and fix it अगर it's not
 	 * to our liking.
 	 */
-	if (!test_bit(QL_PORT_CFG, &qdev->flags)) {
-		netif_err(qdev, drv, qdev->ndev, "Queue Port Config Worker!\n");
+	अगर (!test_bit(QL_PORT_CFG, &qdev->flags)) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Queue Port Config Worker!\n");
 		set_bit(QL_PORT_CFG, &qdev->flags);
 		/* Begin polled mode early so
-		 * we don't get another interrupt
+		 * we करोn't get another पूर्णांकerrupt
 		 * when we leave mpi_worker dpc.
 		 */
-		qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
+		qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
 		queue_delayed_work(qdev->workqueue,
 				   &qdev->mpi_port_cfg_work, 0);
-	}
+	पूर्ण
 
 	qlge_link_on(qdev);
-}
+पूर्ण
 
-static void qlge_link_down(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
+अटल व्योम qlge_link_करोwn(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
 
 	mbcp->out_count = 3;
 
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status)
-		netif_err(qdev, drv, qdev->ndev, "Link down AEN broken!\n");
+	अगर (status)
+		netअगर_err(qdev, drv, qdev->ndev, "Link down AEN broken!\n");
 
 	qlge_link_off(qdev);
-}
+पूर्ण
 
-static int qlge_sfp_in(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
+अटल पूर्णांक qlge_sfp_in(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
 
 	mbcp->out_count = 5;
 
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status)
-		netif_err(qdev, drv, qdev->ndev, "SFP in AEN broken!\n");
-	else
-		netif_err(qdev, drv, qdev->ndev, "SFP insertion detected.\n");
+	अगर (status)
+		netअगर_err(qdev, drv, qdev->ndev, "SFP in AEN broken!\n");
+	अन्यथा
+		netअगर_err(qdev, drv, qdev->ndev, "SFP insertion detected.\n");
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int qlge_sfp_out(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
+अटल पूर्णांक qlge_sfp_out(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
 
 	mbcp->out_count = 1;
 
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status)
-		netif_err(qdev, drv, qdev->ndev, "SFP out AEN broken!\n");
-	else
-		netif_err(qdev, drv, qdev->ndev, "SFP removal detected.\n");
+	अगर (status)
+		netअगर_err(qdev, drv, qdev->ndev, "SFP out AEN broken!\n");
+	अन्यथा
+		netअगर_err(qdev, drv, qdev->ndev, "SFP removal detected.\n");
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int qlge_aen_lost(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
+अटल पूर्णांक qlge_aen_lost(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
 
 	mbcp->out_count = 6;
 
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev, "Lost AEN broken!\n");
-	} else {
-		int i;
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Lost AEN broken!\n");
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
 
-		netif_err(qdev, drv, qdev->ndev, "Lost AEN detected.\n");
-		for (i = 0; i < mbcp->out_count; i++)
-			netif_err(qdev, drv, qdev->ndev, "mbox_out[%d] = 0x%.08x.\n",
+		netअगर_err(qdev, drv, qdev->ndev, "Lost AEN detected.\n");
+		क्रम (i = 0; i < mbcp->out_count; i++)
+			netअगर_err(qdev, drv, qdev->ndev, "mbox_out[%d] = 0x%.08x.\n",
 				  i, mbcp->mbox_out[i]);
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void qlge_init_fw_done(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
+अटल व्योम qlge_init_fw_करोne(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
 
 	mbcp->out_count = 2;
 
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev, "Firmware did not initialize!\n");
-	} else {
-		netif_err(qdev, drv, qdev->ndev, "Firmware Revision  = 0x%.08x.\n",
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Firmware did not initialize!\n");
+	पूर्ण अन्यथा अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Firmware Revision  = 0x%.08x.\n",
 			  mbcp->mbox_out[1]);
 		qdev->fw_rev_id = mbcp->mbox_out[1];
 		status = qlge_cam_route_initialize(qdev);
-		if (status)
-			netif_err(qdev, ifup, qdev->ndev,
+		अगर (status)
+			netअगर_err(qdev, अगरup, qdev->ndev,
 				  "Failed to init CAM/Routing tables.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Process an async event and clear it unless it's an
  * error condition.
- *  This can get called iteratively from the mpi_work thread
- *  when events arrive via an interrupt.
- *  It also gets called when a mailbox command is polling for
+ *  This can get called iteratively from the mpi_work thपढ़ो
+ *  when events arrive via an पूर्णांकerrupt.
+ *  It also माला_लो called when a mailbox command is polling क्रम
  *  it's completion.
  */
-static int qlge_mpi_handler(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
-	int orig_count = mbcp->out_count;
+अटल पूर्णांक qlge_mpi_handler(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
+	पूर्णांक orig_count = mbcp->out_count;
 
-	/* Just get mailbox zero for now. */
+	/* Just get mailbox zero क्रम now. */
 	mbcp->out_count = 1;
 	status = qlge_get_mb_sts(qdev, mbcp);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Could not read MPI, resetting ASIC!\n");
 		qlge_queue_asic_error(qdev);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	switch (mbcp->mbox_out[0]) {
-		/* This case is only active when we arrive here
+	चयन (mbcp->mbox_out[0]) अणु
+		/* This हाल is only active when we arrive here
 		 * as a result of issuing a mailbox command to
 		 * the firmware.
 		 */
-	case MB_CMD_STS_INTRMDT:
-	case MB_CMD_STS_GOOD:
-	case MB_CMD_STS_INVLD_CMD:
-	case MB_CMD_STS_XFC_ERR:
-	case MB_CMD_STS_CSUM_ERR:
-	case MB_CMD_STS_ERR:
-	case MB_CMD_STS_PARAM_ERR:
-		/* We can only get mailbox status if we're polling from an
+	हाल MB_CMD_STS_INTRMDT:
+	हाल MB_CMD_STS_GOOD:
+	हाल MB_CMD_STS_INVLD_CMD:
+	हाल MB_CMD_STS_XFC_ERR:
+	हाल MB_CMD_STS_CSUM_ERR:
+	हाल MB_CMD_STS_ERR:
+	हाल MB_CMD_STS_PARAM_ERR:
+		/* We can only get mailbox status अगर we're polling from an
 		 * unfinished command.  Get the rest of the status data and
-		 * return back to the caller.
-		 * We only end up here when we're polling for a mailbox
+		 * वापस back to the caller.
+		 * We only end up here when we're polling क्रम a mailbox
 		 * command completion.
 		 */
 		mbcp->out_count = orig_count;
 		status = qlge_get_mb_sts(qdev, mbcp);
-		return status;
+		वापस status;
 
 		/* We are being asked by firmware to accept
 		 * a change to the port.  This is only
-		 * a change to max frame sizes (Tx/Rx), pause
+		 * a change to max frame sizes (Tx/Rx), छोड़ो
 		 * parameters, or loopback mode.
 		 */
-	case AEN_IDC_REQ:
+	हाल AEN_IDC_REQ:
 		status = qlge_idc_req_aen(qdev);
-		break;
+		अवरोध;
 
 		/* Process and inbound IDC event.
 		 * This will happen when we're trying to
-		 * change tx/rx max frame size, change pause
+		 * change tx/rx max frame size, change छोड़ो
 		 * parameters or loopback mode.
 		 */
-	case AEN_IDC_CMPLT:
-	case AEN_IDC_EXT:
+	हाल AEN_IDC_CMPLT:
+	हाल AEN_IDC_EXT:
 		status = qlge_idc_cmplt_aen(qdev);
-		break;
+		अवरोध;
 
-	case AEN_LINK_UP:
+	हाल AEN_LINK_UP:
 		qlge_link_up(qdev, mbcp);
-		break;
+		अवरोध;
 
-	case AEN_LINK_DOWN:
-		qlge_link_down(qdev, mbcp);
-		break;
+	हाल AEN_LINK_DOWN:
+		qlge_link_करोwn(qdev, mbcp);
+		अवरोध;
 
-	case AEN_FW_INIT_DONE:
+	हाल AEN_FW_INIT_DONE:
 		/* If we're in process on executing the firmware,
 		 * then convert the status to normal mailbox status.
 		 */
-		if (mbcp->mbox_in[0] == MB_CMD_EX_FW) {
+		अगर (mbcp->mbox_in[0] == MB_CMD_EX_FW) अणु
 			mbcp->out_count = orig_count;
 			status = qlge_get_mb_sts(qdev, mbcp);
 			mbcp->mbox_out[0] = MB_CMD_STS_GOOD;
-			return status;
-		}
-		qlge_init_fw_done(qdev, mbcp);
-		break;
+			वापस status;
+		पूर्ण
+		qlge_init_fw_करोne(qdev, mbcp);
+		अवरोध;
 
-	case AEN_AEN_SFP_IN:
+	हाल AEN_AEN_SFP_IN:
 		qlge_sfp_in(qdev, mbcp);
-		break;
+		अवरोध;
 
-	case AEN_AEN_SFP_OUT:
+	हाल AEN_AEN_SFP_OUT:
 		qlge_sfp_out(qdev, mbcp);
-		break;
+		अवरोध;
 
-		/* This event can arrive at boot time or after an
-		 * MPI reset if the firmware failed to initialize.
+		/* This event can arrive at boot समय or after an
+		 * MPI reset अगर the firmware failed to initialize.
 		 */
-	case AEN_FW_INIT_FAIL:
+	हाल AEN_FW_INIT_FAIL:
 		/* If we're in process on executing the firmware,
 		 * then convert the status to normal mailbox status.
 		 */
-		if (mbcp->mbox_in[0] == MB_CMD_EX_FW) {
+		अगर (mbcp->mbox_in[0] == MB_CMD_EX_FW) अणु
 			mbcp->out_count = orig_count;
 			status = qlge_get_mb_sts(qdev, mbcp);
 			mbcp->mbox_out[0] = MB_CMD_STS_ERR;
-			return status;
-		}
-		netif_err(qdev, drv, qdev->ndev,
+			वापस status;
+		पूर्ण
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Firmware initialization failed.\n");
 		status = -EIO;
 		qlge_queue_fw_error(qdev);
-		break;
+		अवरोध;
 
-	case AEN_SYS_ERR:
-		netif_err(qdev, drv, qdev->ndev, "System Error.\n");
+	हाल AEN_SYS_ERR:
+		netअगर_err(qdev, drv, qdev->ndev, "System Error.\n");
 		qlge_queue_fw_error(qdev);
 		status = -EIO;
-		break;
+		अवरोध;
 
-	case AEN_AEN_LOST:
+	हाल AEN_AEN_LOST:
 		qlge_aen_lost(qdev, mbcp);
-		break;
+		अवरोध;
 
-	case AEN_DCBX_CHG:
+	हाल AEN_DCBX_CHG:
 		/* Need to support AEN 8110 */
-		break;
-	default:
-		netif_err(qdev, drv, qdev->ndev,
+		अवरोध;
+	शेष:
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Unsupported AE %.08x.\n", mbcp->mbox_out[0]);
 		/* Clear the MPI firmware status. */
-	}
+	पूर्ण
 end:
-	qlge_write32(qdev, CSR, CSR_CMD_CLR_R2PCI_INT);
+	qlge_ग_लिखो32(qdev, CSR, CSR_CMD_CLR_R2PCI_INT);
 	/* Restore the original mailbox count to
-	 * what the caller asked for.  This can get
-	 * changed when a mailbox command is waiting
-	 * for a response and an AEN arrives and
+	 * what the caller asked क्रम.  This can get
+	 * changed when a mailbox command is रुकोing
+	 * क्रम a response and an AEN arrives and
 	 * is handled.
 	 */
 	mbcp->out_count = orig_count;
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* Execute a single mailbox command.
- * mbcp is a pointer to an array of u32.  Each
- * element in the array contains the value for it's
- * respective mailbox register.
+ * mbcp is a poपूर्णांकer to an array of u32.  Each
+ * element in the array contains the value क्रम it's
+ * respective mailbox रेजिस्टर.
  */
-static int qlge_mailbox_command(struct qlge_adapter *qdev, struct mbox_params *mbcp)
-{
-	int status;
-	unsigned long count;
+अटल पूर्णांक qlge_mailbox_command(काष्ठा qlge_adapter *qdev, काष्ठा mbox_params *mbcp)
+अणु
+	पूर्णांक status;
+	अचिन्हित दीर्घ count;
 
 	mutex_lock(&qdev->mpi_mutex);
 
-	/* Begin polled mode for MPI */
-	qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
+	/* Begin polled mode क्रम MPI */
+	qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
 
-	/* Load the mailbox registers and wake up MPI RISC. */
+	/* Load the mailbox रेजिस्टरs and wake up MPI RISC. */
 	status = qlge_exec_mb_cmd(qdev, mbcp);
-	if (status)
-		goto end;
+	अगर (status)
+		जाओ end;
 
 	/* If we're generating a system error, then there's nothing
-	 * to wait for.
+	 * to रुको क्रम.
 	 */
-	if (mbcp->mbox_in[0] == MB_CMD_MAKE_SYS_ERR)
-		goto end;
+	अगर (mbcp->mbox_in[0] == MB_CMD_MAKE_SYS_ERR)
+		जाओ end;
 
-	/* Wait for the command to complete. We loop
-	 * here because some AEN might arrive while
-	 * we're waiting for the mailbox command to
+	/* Wait क्रम the command to complete. We loop
+	 * here because some AEN might arrive जबतक
+	 * we're रुकोing क्रम the mailbox command to
 	 * complete. If more than 5 seconds expire we can
 	 * assume something is wrong.
 	 */
-	count = jiffies + HZ * MAILBOX_TIMEOUT;
-	do {
-		/* Wait for the interrupt to come in. */
-		status = qlge_wait_mbx_cmd_cmplt(qdev);
-		if (status)
-			continue;
+	count = jअगरfies + HZ * MAILBOX_TIMEOUT;
+	करो अणु
+		/* Wait क्रम the पूर्णांकerrupt to come in. */
+		status = qlge_रुको_mbx_cmd_cmplt(qdev);
+		अगर (status)
+			जारी;
 
 		/* Process the event.  If it's an AEN, it
 		 * will be handled in-line or a worker
@@ -566,56 +567,56 @@ static int qlge_mailbox_command(struct qlge_adapter *qdev, struct mbox_params *m
 		 * we will catch it below.
 		 */
 		status = qlge_mpi_handler(qdev, mbcp);
-		if (status)
-			goto end;
+		अगर (status)
+			जाओ end;
 
-		/* It's either the completion for our mailbox
+		/* It's either the completion क्रम our mailbox
 		 * command complete or an AEN.  If it's our
 		 * completion then get out.
 		 */
-		if (((mbcp->mbox_out[0] & 0x0000f000) ==
+		अगर (((mbcp->mbox_out[0] & 0x0000f000) ==
 		     MB_CMD_STS_GOOD) ||
 		    ((mbcp->mbox_out[0] & 0x0000f000) ==
 		     MB_CMD_STS_INTRMDT))
-			goto done;
-	} while (time_before(jiffies, count));
+			जाओ करोne;
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, count));
 
-	netif_err(qdev, drv, qdev->ndev,
+	netअगर_err(qdev, drv, qdev->ndev,
 		  "Timed out waiting for mailbox complete.\n");
 	status = -ETIMEDOUT;
-	goto end;
+	जाओ end;
 
-done:
+करोne:
 
-	/* Now we can clear the interrupt condition
+	/* Now we can clear the पूर्णांकerrupt condition
 	 * and look at our status.
 	 */
-	qlge_write32(qdev, CSR, CSR_CMD_CLR_R2PCI_INT);
+	qlge_ग_लिखो32(qdev, CSR, CSR_CMD_CLR_R2PCI_INT);
 
-	if (((mbcp->mbox_out[0] & 0x0000f000) !=
+	अगर (((mbcp->mbox_out[0] & 0x0000f000) !=
 	     MB_CMD_STS_GOOD) &&
 	    ((mbcp->mbox_out[0] & 0x0000f000) !=
-	     MB_CMD_STS_INTRMDT)) {
+	     MB_CMD_STS_INTRMDT)) अणु
 		status = -EIO;
-	}
+	पूर्ण
 end:
-	/* End polled mode for MPI */
-	qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16) | INTR_MASK_PI);
+	/* End polled mode क्रम MPI */
+	qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16) | INTR_MASK_PI);
 	mutex_unlock(&qdev->mpi_mutex);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* Get MPI firmware version. This will be used for
- * driver banner and for ethtool info.
+/* Get MPI firmware version. This will be used क्रम
+ * driver banner and क्रम ethtool info.
  * Returns zero on success.
  */
-int qlge_mb_about_fw(struct qlge_adapter *qdev)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status = 0;
+पूर्णांक qlge_mb_about_fw(काष्ठा qlge_adapter *qdev)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status = 0;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 1;
 	mbcp->out_count = 3;
@@ -623,31 +624,31 @@ int qlge_mb_about_fw(struct qlge_adapter *qdev)
 	mbcp->mbox_in[0] = MB_CMD_ABOUT_FW;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Failed about firmware command\n");
 		status = -EIO;
-	}
+	पूर्ण
 
 	/* Store the firmware version */
 	qdev->fw_rev_id = mbcp->mbox_out[1];
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* Get functional state for MPI firmware.
+/* Get functional state क्रम MPI firmware.
  * Returns zero on success.
  */
-int qlge_mb_get_fw_state(struct qlge_adapter *qdev)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status = 0;
+पूर्णांक qlge_mb_get_fw_state(काष्ठा qlge_adapter *qdev)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status = 0;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 1;
 	mbcp->out_count = 2;
@@ -655,38 +656,38 @@ int qlge_mb_get_fw_state(struct qlge_adapter *qdev)
 	mbcp->mbox_in[0] = MB_CMD_GET_FW_STATE;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Failed Get Firmware State.\n");
 		status = -EIO;
-	}
+	पूर्ण
 
 	/* If bit zero is set in mbx 1 then the firmware is
 	 * running, but not initialized.  This should never
 	 * happen.
 	 */
-	if (mbcp->mbox_out[1] & 1) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[1] & 1) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Firmware waiting for initialization.\n");
 		status = -EIO;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* Send and ACK mailbox command to the firmware to
- * let it continue with the change.
+ * let it जारी with the change.
  */
-static int qlge_mb_idc_ack(struct qlge_adapter *qdev)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status = 0;
+अटल पूर्णांक qlge_mb_idc_ack(काष्ठा qlge_adapter *qdev)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status = 0;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 5;
 	mbcp->out_count = 1;
@@ -698,27 +699,27 @@ static int qlge_mb_idc_ack(struct qlge_adapter *qdev)
 	mbcp->mbox_in[4] = qdev->idc_mbc.mbox_out[4];
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev, "Failed IDC ACK send.\n");
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Failed IDC ACK send.\n");
 		status = -EIO;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /* Get link settings and maximum frame size settings
- * for the current port.
+ * क्रम the current port.
  * Most likely will block.
  */
-int qlge_mb_set_port_cfg(struct qlge_adapter *qdev)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status = 0;
+पूर्णांक qlge_mb_set_port_cfg(काष्ठा qlge_adapter *qdev)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status = 0;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 3;
 	mbcp->out_count = 1;
@@ -728,28 +729,28 @@ int qlge_mb_set_port_cfg(struct qlge_adapter *qdev)
 	mbcp->mbox_in[2] = qdev->max_frame_size;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] == MB_CMD_STS_INTRMDT) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] == MB_CMD_STS_INTRMDT) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Port Config sent, wait for IDC.\n");
-	} else	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev,
+	पूर्ण अन्यथा	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Failed Set Port Configuration.\n");
 		status = -EIO;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static int qlge_mb_dump_ram(struct qlge_adapter *qdev, u64 req_dma, u32 addr,
+अटल पूर्णांक qlge_mb_dump_ram(काष्ठा qlge_adapter *qdev, u64 req_dma, u32 addr,
 			    u32 size)
-{
-	int status = 0;
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
+अणु
+	पूर्णांक status = 0;
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 9;
 	mbcp->out_count = 1;
@@ -765,50 +766,50 @@ static int qlge_mb_dump_ram(struct qlge_adapter *qdev, u64 req_dma, u32 addr,
 	mbcp->mbox_in[8] = MSW(addr);
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev, "Failed to dump risc RAM.\n");
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Failed to dump risc RAM.\n");
 		status = -EIO;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /* Issue a mailbox command to dump RISC RAM. */
-int qlge_dump_risc_ram_area(struct qlge_adapter *qdev, void *buf,
-			    u32 ram_addr, int word_count)
-{
-	int status;
-	char *my_buf;
+पूर्णांक qlge_dump_risc_ram_area(काष्ठा qlge_adapter *qdev, व्योम *buf,
+			    u32 ram_addr, पूर्णांक word_count)
+अणु
+	पूर्णांक status;
+	अक्षर *my_buf;
 	dma_addr_t buf_dma;
 
 	my_buf = dma_alloc_coherent(&qdev->pdev->dev,
-				    word_count * sizeof(u32), &buf_dma,
+				    word_count * माप(u32), &buf_dma,
 				    GFP_ATOMIC);
-	if (!my_buf)
-		return -EIO;
+	अगर (!my_buf)
+		वापस -EIO;
 
 	status = qlge_mb_dump_ram(qdev, buf_dma, ram_addr, word_count);
-	if (!status)
-		memcpy(buf, my_buf, word_count * sizeof(u32));
+	अगर (!status)
+		स_नकल(buf, my_buf, word_count * माप(u32));
 
-	dma_free_coherent(&qdev->pdev->dev, word_count * sizeof(u32), my_buf,
+	dma_मुक्त_coherent(&qdev->pdev->dev, word_count * माप(u32), my_buf,
 			  buf_dma);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* Get link settings and maximum frame size settings
- * for the current port.
+ * क्रम the current port.
  * Most likely will block.
  */
-int qlge_mb_get_port_cfg(struct qlge_adapter *qdev)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status = 0;
+पूर्णांक qlge_mb_get_port_cfg(काष्ठा qlge_adapter *qdev)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status = 0;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 1;
 	mbcp->out_count = 3;
@@ -816,29 +817,29 @@ int qlge_mb_get_port_cfg(struct qlge_adapter *qdev)
 	mbcp->mbox_in[0] = MB_CMD_GET_PORT_CFG;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Failed Get Port Configuration.\n");
 		status = -EIO;
-	} else	{
-		netif_printk(qdev, drv, KERN_DEBUG, qdev->ndev,
+	पूर्ण अन्यथा	अणु
+		netअगर_prपूर्णांकk(qdev, drv, KERN_DEBUG, qdev->ndev,
 			     "Passed Get Port Configuration.\n");
 		qdev->link_config = mbcp->mbox_out[1];
 		qdev->max_frame_size = mbcp->mbox_out[2];
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-int qlge_mb_wol_mode(struct qlge_adapter *qdev, u32 wol)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status;
+पूर्णांक qlge_mb_wol_mode(काष्ठा qlge_adapter *qdev, u32 wol)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 2;
 	mbcp->out_count = 1;
@@ -847,30 +848,30 @@ int qlge_mb_wol_mode(struct qlge_adapter *qdev, u32 wol)
 	mbcp->mbox_in[1] = wol;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev, "Failed to set WOL mode.\n");
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Failed to set WOL mode.\n");
 		status = -EIO;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-int qlge_mb_wol_set_magic(struct qlge_adapter *qdev, u32 enable_wol)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status;
+पूर्णांक qlge_mb_wol_set_magic(काष्ठा qlge_adapter *qdev, u32 enable_wol)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status;
 	u8 *addr = qdev->ndev->dev_addr;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 8;
 	mbcp->out_count = 1;
 
 	mbcp->mbox_in[0] = MB_CMD_SET_WOL_MAGIC;
-	if (enable_wol) {
+	अगर (enable_wol) अणु
 		mbcp->mbox_in[1] = (u32)addr[0];
 		mbcp->mbox_in[2] = (u32)addr[1];
 		mbcp->mbox_in[3] = (u32)addr[2];
@@ -878,7 +879,7 @@ int qlge_mb_wol_set_magic(struct qlge_adapter *qdev, u32 enable_wol)
 		mbcp->mbox_in[5] = (u32)addr[4];
 		mbcp->mbox_in[6] = (u32)addr[5];
 		mbcp->mbox_in[7] = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		mbcp->mbox_in[1] = 0;
 		mbcp->mbox_in[2] = 1;
 		mbcp->mbox_in[3] = 1;
@@ -886,74 +887,74 @@ int qlge_mb_wol_set_magic(struct qlge_adapter *qdev, u32 enable_wol)
 		mbcp->mbox_in[5] = 1;
 		mbcp->mbox_in[6] = 1;
 		mbcp->mbox_in[7] = 0;
-	}
+	पूर्ण
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev, "Failed to set WOL mode.\n");
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Failed to set WOL mode.\n");
 		status = -EIO;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /* IDC - Inter Device Communication...
  * Some firmware commands require consent of adjacent FCOE
- * function.  This function waits for the OK, or a
- * counter-request for a little more time.i
- * The firmware will complete the request if the other
- * function doesn't respond.
+ * function.  This function रुकोs क्रम the OK, or a
+ * counter-request क्रम a little more समय.i
+ * The firmware will complete the request अगर the other
+ * function करोesn't respond.
  */
-static int qlge_idc_wait(struct qlge_adapter *qdev)
-{
-	int status = -ETIMEDOUT;
-	struct mbox_params *mbcp = &qdev->idc_mbc;
-	long wait_time;
+अटल पूर्णांक qlge_idc_रुको(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक status = -ETIMEDOUT;
+	काष्ठा mbox_params *mbcp = &qdev->idc_mbc;
+	दीर्घ रुको_समय;
 
-	for (wait_time = 1 * HZ; wait_time;) {
-		/* Wait here for the command to complete
+	क्रम (रुको_समय = 1 * HZ; रुको_समय;) अणु
+		/* Wait here क्रम the command to complete
 		 * via the IDC process.
 		 */
-		wait_time =
-			wait_for_completion_timeout(&qdev->ide_completion,
-						    wait_time);
-		if (!wait_time) {
-			netif_err(qdev, drv, qdev->ndev, "IDC Timeout.\n");
-			break;
-		}
+		रुको_समय =
+			रुको_क्रम_completion_समयout(&qdev->ide_completion,
+						    रुको_समय);
+		अगर (!रुको_समय) अणु
+			netअगर_err(qdev, drv, qdev->ndev, "IDC Timeout.\n");
+			अवरोध;
+		पूर्ण
 		/* Now examine the response from the IDC process.
-		 * We might have a good completion or a request for
-		 * more wait time.
+		 * We might have a good completion or a request क्रम
+		 * more रुको समय.
 		 */
-		if (mbcp->mbox_out[0] == AEN_IDC_EXT) {
-			netif_err(qdev, drv, qdev->ndev,
+		अगर (mbcp->mbox_out[0] == AEN_IDC_EXT) अणु
+			netअगर_err(qdev, drv, qdev->ndev,
 				  "IDC Time Extension from function.\n");
-			wait_time += (mbcp->mbox_out[1] >> 8) & 0x0000000f;
-		} else if (mbcp->mbox_out[0] == AEN_IDC_CMPLT) {
-			netif_err(qdev, drv, qdev->ndev, "IDC Success.\n");
+			रुको_समय += (mbcp->mbox_out[1] >> 8) & 0x0000000f;
+		पूर्ण अन्यथा अगर (mbcp->mbox_out[0] == AEN_IDC_CMPLT) अणु
+			netअगर_err(qdev, drv, qdev->ndev, "IDC Success.\n");
 			status = 0;
-			break;
-		} else {
-			netif_err(qdev, drv, qdev->ndev,
+			अवरोध;
+		पूर्ण अन्यथा अणु
+			netअगर_err(qdev, drv, qdev->ndev,
 				  "IDC: Invalid State 0x%.04x.\n",
 				  mbcp->mbox_out[0]);
 			status = -EIO;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int qlge_mb_set_led_cfg(struct qlge_adapter *qdev, u32 led_config)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status;
+पूर्णांक qlge_mb_set_led_cfg(काष्ठा qlge_adapter *qdev, u32 led_config)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 2;
 	mbcp->out_count = 1;
@@ -962,25 +963,25 @@ int qlge_mb_set_led_cfg(struct qlge_adapter *qdev, u32 led_config)
 	mbcp->mbox_in[1] = led_config;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Failed to set LED Configuration.\n");
 		status = -EIO;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int qlge_mb_get_led_cfg(struct qlge_adapter *qdev)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status;
+पूर्णांक qlge_mb_get_led_cfg(काष्ठा qlge_adapter *qdev)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 1;
 	mbcp->out_count = 2;
@@ -988,26 +989,26 @@ int qlge_mb_get_led_cfg(struct qlge_adapter *qdev)
 	mbcp->mbox_in[0] = MB_CMD_GET_LED_CFG;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] != MB_CMD_STS_GOOD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Failed to get LED Configuration.\n");
 		status = -EIO;
-	} else {
+	पूर्ण अन्यथा अणु
 		qdev->led_config = mbcp->mbox_out[1];
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-int qlge_mb_set_mgmnt_traffic_ctl(struct qlge_adapter *qdev, u32 control)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status;
+पूर्णांक qlge_mb_set_mgmnt_traffic_ctl(काष्ठा qlge_adapter *qdev, u32 control)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 
 	mbcp->in_count = 1;
 	mbcp->out_count = 2;
@@ -1016,35 +1017,35 @@ int qlge_mb_set_mgmnt_traffic_ctl(struct qlge_adapter *qdev, u32 control)
 	mbcp->mbox_in[1] = control;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] == MB_CMD_STS_GOOD)
-		return status;
+	अगर (mbcp->mbox_out[0] == MB_CMD_STS_GOOD)
+		वापस status;
 
-	if (mbcp->mbox_out[0] == MB_CMD_STS_INVLD_CMD) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] == MB_CMD_STS_INVLD_CMD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Command not supported by firmware.\n");
 		status = -EINVAL;
-	} else if (mbcp->mbox_out[0] == MB_CMD_STS_ERR) {
+	पूर्ण अन्यथा अगर (mbcp->mbox_out[0] == MB_CMD_STS_ERR) अणु
 		/* This indicates that the firmware is
-		 * already in the state we are trying to
+		 * alपढ़ोy in the state we are trying to
 		 * change it to.
 		 */
-		netif_err(qdev, drv, qdev->ndev,
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Command parameters make no change.\n");
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /* Returns a negative error code or the mailbox command status. */
-static int qlge_mb_get_mgmnt_traffic_ctl(struct qlge_adapter *qdev, u32 *control)
-{
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int status;
+अटल पूर्णांक qlge_mb_get_mgmnt_traffic_ctl(काष्ठा qlge_adapter *qdev, u32 *control)
+अणु
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक status;
 
-	memset(mbcp, 0, sizeof(struct mbox_params));
+	स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 	*control = 0;
 
 	mbcp->in_count = 1;
@@ -1053,221 +1054,221 @@ static int qlge_mb_get_mgmnt_traffic_ctl(struct qlge_adapter *qdev, u32 *control
 	mbcp->mbox_in[0] = MB_CMD_GET_MGMNT_TFK_CTL;
 
 	status = qlge_mailbox_command(qdev, mbcp);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (mbcp->mbox_out[0] == MB_CMD_STS_GOOD) {
+	अगर (mbcp->mbox_out[0] == MB_CMD_STS_GOOD) अणु
 		*control = mbcp->mbox_in[1];
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	if (mbcp->mbox_out[0] == MB_CMD_STS_INVLD_CMD) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (mbcp->mbox_out[0] == MB_CMD_STS_INVLD_CMD) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Command not supported by firmware.\n");
 		status = -EINVAL;
-	} else if (mbcp->mbox_out[0] == MB_CMD_STS_ERR) {
-		netif_err(qdev, drv, qdev->ndev,
+	पूर्ण अन्यथा अगर (mbcp->mbox_out[0] == MB_CMD_STS_ERR) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Failed to get MPI traffic control.\n");
 		status = -EIO;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-int qlge_wait_fifo_empty(struct qlge_adapter *qdev)
-{
-	int count;
-	u32 mgmnt_fifo_empty;
-	u32 nic_fifo_empty;
+पूर्णांक qlge_रुको_fअगरo_empty(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक count;
+	u32 mgmnt_fअगरo_empty;
+	u32 nic_fअगरo_empty;
 
-	for (count = 6; count; count--) {
-		nic_fifo_empty = qlge_read32(qdev, STS) & STS_NFE;
-		qlge_mb_get_mgmnt_traffic_ctl(qdev, &mgmnt_fifo_empty);
-		mgmnt_fifo_empty &= MB_GET_MPI_TFK_FIFO_EMPTY;
-		if (nic_fifo_empty && mgmnt_fifo_empty)
-			return 0;
+	क्रम (count = 6; count; count--) अणु
+		nic_fअगरo_empty = qlge_पढ़ो32(qdev, STS) & STS_NFE;
+		qlge_mb_get_mgmnt_traffic_ctl(qdev, &mgmnt_fअगरo_empty);
+		mgmnt_fअगरo_empty &= MB_GET_MPI_TFK_FIFO_EMPTY;
+		अगर (nic_fअगरo_empty && mgmnt_fअगरo_empty)
+			वापस 0;
 		msleep(100);
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-/* API called in work thread context to set new TX/RX
+/* API called in work thपढ़ो context to set new TX/RX
  * maximum frame size values to match MTU.
  */
-static int qlge_set_port_cfg(struct qlge_adapter *qdev)
-{
-	int status;
+अटल पूर्णांक qlge_set_port_cfg(काष्ठा qlge_adapter *qdev)
+अणु
+	पूर्णांक status;
 
 	status = qlge_mb_set_port_cfg(qdev);
-	if (status)
-		return status;
-	status = qlge_idc_wait(qdev);
-	return status;
-}
+	अगर (status)
+		वापस status;
+	status = qlge_idc_रुको(qdev);
+	वापस status;
+पूर्ण
 
-/* The following routines are worker threads that process
- * events that may sleep waiting for completion.
+/* The following routines are worker thपढ़ोs that process
+ * events that may sleep रुकोing क्रम completion.
  */
 
-/* This thread gets the maximum TX and RX frame size values
- * from the firmware and, if necessary, changes them to match
+/* This thपढ़ो माला_लो the maximum TX and RX frame size values
+ * from the firmware and, अगर necessary, changes them to match
  * the MTU setting.
  */
-void qlge_mpi_port_cfg_work(struct work_struct *work)
-{
-	struct qlge_adapter *qdev =
-		container_of(work, struct qlge_adapter, mpi_port_cfg_work.work);
-	int status;
+व्योम qlge_mpi_port_cfg_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qlge_adapter *qdev =
+		container_of(work, काष्ठा qlge_adapter, mpi_port_cfg_work.work);
+	पूर्णांक status;
 
 	status = qlge_mb_get_port_cfg(qdev);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Bug: Failed to get port config data.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (qdev->link_config & CFG_JUMBO_FRAME_SIZE &&
+	अगर (qdev->link_config & CFG_JUMBO_FRAME_SIZE &&
 	    qdev->max_frame_size == CFG_DEFAULT_MAX_FRAME_SIZE)
-		goto end;
+		जाओ end;
 
 	qdev->link_config |=	CFG_JUMBO_FRAME_SIZE;
 	qdev->max_frame_size = CFG_DEFAULT_MAX_FRAME_SIZE;
 	status = qlge_set_port_cfg(qdev);
-	if (status) {
-		netif_err(qdev, drv, qdev->ndev,
+	अगर (status) अणु
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Bug: Failed to set port config data.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 end:
 	clear_bit(QL_PORT_CFG, &qdev->flags);
-	return;
+	वापस;
 err:
 	qlge_queue_fw_error(qdev);
-	goto end;
-}
+	जाओ end;
+पूर्ण
 
-/* Process an inter-device request.  This is issues by
+/* Process an पूर्णांकer-device request.  This is issues by
  * the firmware in response to another function requesting
  * a change to the port. We set a flag to indicate a change
  * has been made and then send a mailbox command ACKing
  * the change request.
  */
-void qlge_mpi_idc_work(struct work_struct *work)
-{
-	struct qlge_adapter *qdev =
-		container_of(work, struct qlge_adapter, mpi_idc_work.work);
-	int status;
-	struct mbox_params *mbcp = &qdev->idc_mbc;
+व्योम qlge_mpi_idc_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qlge_adapter *qdev =
+		container_of(work, काष्ठा qlge_adapter, mpi_idc_work.work);
+	पूर्णांक status;
+	काष्ठा mbox_params *mbcp = &qdev->idc_mbc;
 	u32 aen;
-	int timeout;
+	पूर्णांक समयout;
 
 	aen = mbcp->mbox_out[1] >> 16;
-	timeout = (mbcp->mbox_out[1] >> 8) & 0xf;
+	समयout = (mbcp->mbox_out[1] >> 8) & 0xf;
 
-	switch (aen) {
-	default:
-		netif_err(qdev, drv, qdev->ndev,
+	चयन (aen) अणु
+	शेष:
+		netअगर_err(qdev, drv, qdev->ndev,
 			  "Bug: Unhandled IDC action.\n");
-		break;
-	case MB_CMD_PORT_RESET:
-	case MB_CMD_STOP_FW:
+		अवरोध;
+	हाल MB_CMD_PORT_RESET:
+	हाल MB_CMD_STOP_FW:
 		qlge_link_off(qdev);
 		fallthrough;
-	case MB_CMD_SET_PORT_CFG:
+	हाल MB_CMD_SET_PORT_CFG:
 		/* Signal the resulting link up AEN
 		 * that the frame routing and mac addr
 		 * needs to be set.
 		 */
 		set_bit(QL_CAM_RT_SET, &qdev->flags);
-		/* Do ACK if required */
-		if (timeout) {
+		/* Do ACK अगर required */
+		अगर (समयout) अणु
 			status = qlge_mb_idc_ack(qdev);
-			if (status)
-				netif_err(qdev, drv, qdev->ndev,
+			अगर (status)
+				netअगर_err(qdev, drv, qdev->ndev,
 					  "Bug: No pending IDC!\n");
-		} else {
-			netif_printk(qdev, drv, KERN_DEBUG, qdev->ndev,
+		पूर्ण अन्यथा अणु
+			netअगर_prपूर्णांकk(qdev, drv, KERN_DEBUG, qdev->ndev,
 				     "IDC ACK not required\n");
 			status = 0; /* success */
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
 		/* These sub-commands issued by another (FCoE)
-		 * function are requesting to do an operation
+		 * function are requesting to करो an operation
 		 * on the shared resource (MPI environment).
-		 * We currently don't issue these so we just
+		 * We currently करोn't issue these so we just
 		 * ACK the request.
 		 */
-	case MB_CMD_IOP_RESTART_MPI:
-	case MB_CMD_IOP_PREP_LINK_DOWN:
+	हाल MB_CMD_IOP_RESTART_MPI:
+	हाल MB_CMD_IOP_PREP_LINK_DOWN:
 		/* Drop the link, reload the routing
 		 * table when link comes up.
 		 */
 		qlge_link_off(qdev);
 		set_bit(QL_CAM_RT_SET, &qdev->flags);
 		fallthrough;
-	case MB_CMD_IOP_DVR_START:
-	case MB_CMD_IOP_FLASH_ACC:
-	case MB_CMD_IOP_CORE_DUMP_MPI:
-	case MB_CMD_IOP_PREP_UPDATE_MPI:
-	case MB_CMD_IOP_COMP_UPDATE_MPI:
-	case MB_CMD_IOP_NONE:	/*  an IDC without params */
-		/* Do ACK if required */
-		if (timeout) {
+	हाल MB_CMD_IOP_DVR_START:
+	हाल MB_CMD_IOP_FLASH_ACC:
+	हाल MB_CMD_IOP_CORE_DUMP_MPI:
+	हाल MB_CMD_IOP_PREP_UPDATE_MPI:
+	हाल MB_CMD_IOP_COMP_UPDATE_MPI:
+	हाल MB_CMD_IOP_NONE:	/*  an IDC without params */
+		/* Do ACK अगर required */
+		अगर (समयout) अणु
 			status = qlge_mb_idc_ack(qdev);
-			if (status)
-				netif_err(qdev, drv, qdev->ndev,
+			अगर (status)
+				netअगर_err(qdev, drv, qdev->ndev,
 					  "Bug: No pending IDC!\n");
-		} else {
-			netif_printk(qdev, drv, KERN_DEBUG, qdev->ndev,
+		पूर्ण अन्यथा अणु
+			netअगर_prपूर्णांकk(qdev, drv, KERN_DEBUG, qdev->ndev,
 				     "IDC ACK not required\n");
 			status = 0; /* success */
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void qlge_mpi_work(struct work_struct *work)
-{
-	struct qlge_adapter *qdev =
-		container_of(work, struct qlge_adapter, mpi_work.work);
-	struct mbox_params mbc;
-	struct mbox_params *mbcp = &mbc;
-	int err = 0;
+व्योम qlge_mpi_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qlge_adapter *qdev =
+		container_of(work, काष्ठा qlge_adapter, mpi_work.work);
+	काष्ठा mbox_params mbc;
+	काष्ठा mbox_params *mbcp = &mbc;
+	पूर्णांक err = 0;
 
 	mutex_lock(&qdev->mpi_mutex);
-	/* Begin polled mode for MPI */
-	qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
+	/* Begin polled mode क्रम MPI */
+	qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16));
 
-	while (qlge_read32(qdev, STS) & STS_PI) {
-		memset(mbcp, 0, sizeof(struct mbox_params));
+	जबतक (qlge_पढ़ो32(qdev, STS) & STS_PI) अणु
+		स_रखो(mbcp, 0, माप(काष्ठा mbox_params));
 		mbcp->out_count = 1;
-		/* Don't continue if an async event
+		/* Don't जारी अगर an async event
 		 * did not complete properly.
 		 */
 		err = qlge_mpi_handler(qdev, mbcp);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	/* End polled mode for MPI */
-	qlge_write32(qdev, INTR_MASK, (INTR_MASK_PI << 16) | INTR_MASK_PI);
+	/* End polled mode क्रम MPI */
+	qlge_ग_लिखो32(qdev, INTR_MASK, (INTR_MASK_PI << 16) | INTR_MASK_PI);
 	mutex_unlock(&qdev->mpi_mutex);
-}
+पूर्ण
 
-void qlge_mpi_reset_work(struct work_struct *work)
-{
-	struct qlge_adapter *qdev =
-		container_of(work, struct qlge_adapter, mpi_reset_work.work);
+व्योम qlge_mpi_reset_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा qlge_adapter *qdev =
+		container_of(work, काष्ठा qlge_adapter, mpi_reset_work.work);
 	cancel_delayed_work_sync(&qdev->mpi_work);
 	cancel_delayed_work_sync(&qdev->mpi_port_cfg_work);
 	cancel_delayed_work_sync(&qdev->mpi_idc_work);
-	/* If we're not the dominant NIC function,
-	 * then there is nothing to do.
+	/* If we're not the करोminant NIC function,
+	 * then there is nothing to करो.
 	 */
-	if (!qlge_own_firmware(qdev)) {
-		netif_err(qdev, drv, qdev->ndev, "Don't own firmware!\n");
-		return;
-	}
+	अगर (!qlge_own_firmware(qdev)) अणु
+		netअगर_err(qdev, drv, qdev->ndev, "Don't own firmware!\n");
+		वापस;
+	पूर्ण
 
 	qlge_soft_reset_mpi_risc(qdev);
-}
+पूर्ण

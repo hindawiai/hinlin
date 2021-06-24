@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2020-2021 Intel Corporation
  */
-#include <net/tso.h>
-#include <linux/tcp.h>
+#समावेश <net/tso.h>
+#समावेश <linux/tcp.h>
 
-#include "iwl-debug.h"
-#include "iwl-io.h"
-#include "fw/api/tx.h"
-#include "queue/tx.h"
-#include "iwl-fh.h"
-#include "iwl-scd.h"
-#include <linux/dmapool.h>
+#समावेश "iwl-debug.h"
+#समावेश "iwl-io.h"
+#समावेश "fw/api/tx.h"
+#समावेश "queue/tx.h"
+#समावेश "iwl-fh.h"
+#समावेश "iwl-scd.h"
+#समावेश <linux/dmapool.h>
 
 /*
  * iwl_txq_update_byte_tbl - Set up entry in Tx byte-count array
  */
-static void iwl_pcie_gen2_update_byte_tbl(struct iwl_trans *trans,
-					  struct iwl_txq *txq, u16 byte_cnt,
-					  int num_tbs)
-{
-	int idx = iwl_txq_get_cmd_index(txq, txq->write_ptr);
+अटल व्योम iwl_pcie_gen2_update_byte_tbl(काष्ठा iwl_trans *trans,
+					  काष्ठा iwl_txq *txq, u16 byte_cnt,
+					  पूर्णांक num_tbs)
+अणु
+	पूर्णांक idx = iwl_txq_get_cmd_index(txq, txq->ग_लिखो_ptr);
 	u8 filled_tfd_size, num_fetch_chunks;
 	u16 len = byte_cnt;
 	__le16 bc_ent;
 
-	if (WARN(idx >= txq->n_window, "%d >= %d\n", idx, txq->n_window))
-		return;
+	अगर (WARN(idx >= txq->n_winकरोw, "%d >= %d\n", idx, txq->n_winकरोw))
+		वापस;
 
-	filled_tfd_size = offsetof(struct iwl_tfh_tfd, tbs) +
-			  num_tbs * sizeof(struct iwl_tfh_tb);
+	filled_tfd_size = दुरत्व(काष्ठा iwl_tfh_tfd, tbs) +
+			  num_tbs * माप(काष्ठा iwl_tfh_tb);
 	/*
 	 * filled_tfd_size contains the number of filled bytes in the TFD.
 	 * Dividing it by 64 will give the number of chunks to fetch
-	 * to SRAM- 0 for one chunk, 1 for 2 and so on.
-	 * If, for example, TFD contains only 3 TBs then 32 bytes
+	 * to SRAM- 0 क्रम one chunk, 1 क्रम 2 and so on.
+	 * If, क्रम example, TFD contains only 3 TBs then 32 bytes
 	 * of the TFD are used, and only one chunk of 64 bytes should
 	 * be fetched
 	 */
 	num_fetch_chunks = DIV_ROUND_UP(filled_tfd_size, 64) - 1;
 
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) {
-		struct iwl_gen3_bc_tbl *scd_bc_tbl_gen3 = txq->bc_tbl.addr;
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) अणु
+		काष्ठा iwl_gen3_bc_tbl *scd_bc_tbl_gen3 = txq->bc_tbl.addr;
 
 		/* Starting from AX210, the HW expects bytes */
 		WARN_ON(trans->txqs.bc_table_dword);
 		WARN_ON(len > 0x3FFF);
 		bc_ent = cpu_to_le16(len | (num_fetch_chunks << 14));
 		scd_bc_tbl_gen3->tfd_offset[idx] = bc_ent;
-	} else {
-		struct iwlagn_scd_bc_tbl *scd_bc_tbl = txq->bc_tbl.addr;
+	पूर्ण अन्यथा अणु
+		काष्ठा iwlagn_scd_bc_tbl *scd_bc_tbl = txq->bc_tbl.addr;
 
-		/* Before AX210, the HW expects DW */
+		/* Beक्रमe AX210, the HW expects DW */
 		WARN_ON(!trans->txqs.bc_table_dword);
 		len = DIV_ROUND_UP(len, 4);
 		WARN_ON(len > 0xFFF);
 		bc_ent = cpu_to_le16(len | (num_fetch_chunks << 12));
 		scd_bc_tbl->tfd_offset[idx] = bc_ent;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * iwl_txq_inc_wr_ptr - Send new write index to hardware
+ * iwl_txq_inc_wr_ptr - Send new ग_लिखो index to hardware
  */
-void iwl_txq_inc_wr_ptr(struct iwl_trans *trans, struct iwl_txq *txq)
-{
-	lockdep_assert_held(&txq->lock);
+व्योम iwl_txq_inc_wr_ptr(काष्ठा iwl_trans *trans, काष्ठा iwl_txq *txq)
+अणु
+	lockdep_निश्चित_held(&txq->lock);
 
-	IWL_DEBUG_TX(trans, "Q:%d WR: 0x%x\n", txq->id, txq->write_ptr);
+	IWL_DEBUG_TX(trans, "Q:%d WR: 0x%x\n", txq->id, txq->ग_लिखो_ptr);
 
 	/*
-	 * if not in power-save mode, uCode will never sleep when we're
+	 * अगर not in घातer-save mode, uCode will never sleep when we're
 	 * trying to tx (during RFKILL, we're not trying to tx).
 	 */
-	iwl_write32(trans, HBUS_TARG_WRPTR, txq->write_ptr | (txq->id << 16));
-}
+	iwl_ग_लिखो32(trans, HBUS_TARG_WRPTR, txq->ग_लिखो_ptr | (txq->id << 16));
+पूर्ण
 
-static u8 iwl_txq_gen2_get_num_tbs(struct iwl_trans *trans,
-				   struct iwl_tfh_tfd *tfd)
-{
-	return le16_to_cpu(tfd->num_tbs) & 0x1f;
-}
+अटल u8 iwl_txq_gen2_get_num_tbs(काष्ठा iwl_trans *trans,
+				   काष्ठा iwl_tfh_tfd *tfd)
+अणु
+	वापस le16_to_cpu(tfd->num_tbs) & 0x1f;
+पूर्ण
 
-void iwl_txq_gen2_tfd_unmap(struct iwl_trans *trans, struct iwl_cmd_meta *meta,
-			    struct iwl_tfh_tfd *tfd)
-{
-	int i, num_tbs;
+व्योम iwl_txq_gen2_tfd_unmap(काष्ठा iwl_trans *trans, काष्ठा iwl_cmd_meta *meta,
+			    काष्ठा iwl_tfh_tfd *tfd)
+अणु
+	पूर्णांक i, num_tbs;
 
 	/* Sanity check on number of chunks */
 	num_tbs = iwl_txq_gen2_get_num_tbs(trans, tfd);
 
-	if (num_tbs > trans->txqs.tfd.max_tbs) {
+	अगर (num_tbs > trans->txqs.tfd.max_tbs) अणु
 		IWL_ERR(trans, "Too many chunks: %i\n", num_tbs);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* first TB is never freed - it's the bidirectional DMA data */
-	for (i = 1; i < num_tbs; i++) {
-		if (meta->tbs & BIT(i))
+	/* first TB is never मुक्तd - it's the bidirectional DMA data */
+	क्रम (i = 1; i < num_tbs; i++) अणु
+		अगर (meta->tbs & BIT(i))
 			dma_unmap_page(trans->dev,
 				       le64_to_cpu(tfd->tbs[i].addr),
 				       le16_to_cpu(tfd->tbs[i].tb_len),
 				       DMA_TO_DEVICE);
-		else
+		अन्यथा
 			dma_unmap_single(trans->dev,
 					 le64_to_cpu(tfd->tbs[i].addr),
 					 le16_to_cpu(tfd->tbs[i].tb_len),
 					 DMA_TO_DEVICE);
-	}
+	पूर्ण
 
 	tfd->num_tbs = 0;
-}
+पूर्ण
 
-void iwl_txq_gen2_free_tfd(struct iwl_trans *trans, struct iwl_txq *txq)
-{
+व्योम iwl_txq_gen2_मुक्त_tfd(काष्ठा iwl_trans *trans, काष्ठा iwl_txq *txq)
+अणु
 	/* rd_ptr is bounded by TFD_QUEUE_SIZE_MAX and
-	 * idx is bounded by n_window
+	 * idx is bounded by n_winकरोw
 	 */
-	int idx = iwl_txq_get_cmd_index(txq, txq->read_ptr);
-	struct sk_buff *skb;
+	पूर्णांक idx = iwl_txq_get_cmd_index(txq, txq->पढ़ो_ptr);
+	काष्ठा sk_buff *skb;
 
-	lockdep_assert_held(&txq->lock);
+	lockdep_निश्चित_held(&txq->lock);
 
-	if (!txq->entries)
-		return;
+	अगर (!txq->entries)
+		वापस;
 
 	iwl_txq_gen2_tfd_unmap(trans, &txq->entries[idx].meta,
 			       iwl_txq_get_tfd(trans, txq, idx));
@@ -131,214 +132,214 @@ void iwl_txq_gen2_free_tfd(struct iwl_trans *trans, struct iwl_txq *txq)
 	skb = txq->entries[idx].skb;
 
 	/* Can be called from irqs-disabled context
-	 * If skb is not NULL, it means that the whole queue is being
-	 * freed and that the queue is not empty - free the skb
+	 * If skb is not शून्य, it means that the whole queue is being
+	 * मुक्तd and that the queue is not empty - मुक्त the skb
 	 */
-	if (skb) {
-		iwl_op_mode_free_skb(trans->op_mode, skb);
-		txq->entries[idx].skb = NULL;
-	}
-}
+	अगर (skb) अणु
+		iwl_op_mode_मुक्त_skb(trans->op_mode, skb);
+		txq->entries[idx].skb = शून्य;
+	पूर्ण
+पूर्ण
 
-int iwl_txq_gen2_set_tb(struct iwl_trans *trans, struct iwl_tfh_tfd *tfd,
+पूर्णांक iwl_txq_gen2_set_tb(काष्ठा iwl_trans *trans, काष्ठा iwl_tfh_tfd *tfd,
 			dma_addr_t addr, u16 len)
-{
-	int idx = iwl_txq_gen2_get_num_tbs(trans, tfd);
-	struct iwl_tfh_tb *tb;
+अणु
+	पूर्णांक idx = iwl_txq_gen2_get_num_tbs(trans, tfd);
+	काष्ठा iwl_tfh_tb *tb;
 
 	/*
 	 * Only WARN here so we know about the issue, but we mess up our
-	 * unmap path because not every place currently checks for errors
-	 * returned from this function - it can only return an error if
+	 * unmap path because not every place currently checks क्रम errors
+	 * वापसed from this function - it can only वापस an error अगर
 	 * there's no more space, and so when we know there is enough we
-	 * don't always check ...
+	 * करोn't always check ...
 	 */
 	WARN(iwl_txq_crosses_4g_boundary(addr, len),
 	     "possible DMA problem with iova:0x%llx, len:%d\n",
-	     (unsigned long long)addr, len);
+	     (अचिन्हित दीर्घ दीर्घ)addr, len);
 
-	if (WARN_ON(idx >= IWL_TFH_NUM_TBS))
-		return -EINVAL;
+	अगर (WARN_ON(idx >= IWL_TFH_NUM_TBS))
+		वापस -EINVAL;
 	tb = &tfd->tbs[idx];
 
-	/* Each TFD can point to a maximum max_tbs Tx buffers */
-	if (le16_to_cpu(tfd->num_tbs) >= trans->txqs.tfd.max_tbs) {
+	/* Each TFD can poपूर्णांक to a maximum max_tbs Tx buffers */
+	अगर (le16_to_cpu(tfd->num_tbs) >= trans->txqs.tfd.max_tbs) अणु
 		IWL_ERR(trans, "Error can not send more than %d chunks\n",
 			trans->txqs.tfd.max_tbs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	put_unaligned_le64(addr, &tb->addr);
 	tb->tb_len = cpu_to_le16(len);
 
 	tfd->num_tbs = cpu_to_le16(idx + 1);
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static struct page *get_workaround_page(struct iwl_trans *trans,
-					struct sk_buff *skb)
-{
-	struct page **page_ptr;
-	struct page *ret;
+अटल काष्ठा page *get_workaround_page(काष्ठा iwl_trans *trans,
+					काष्ठा sk_buff *skb)
+अणु
+	काष्ठा page **page_ptr;
+	काष्ठा page *ret;
 
-	page_ptr = (void *)((u8 *)skb->cb + trans->txqs.page_offs);
+	page_ptr = (व्योम *)((u8 *)skb->cb + trans->txqs.page_offs);
 
 	ret = alloc_page(GFP_ATOMIC);
-	if (!ret)
-		return NULL;
+	अगर (!ret)
+		वापस शून्य;
 
-	/* set the chaining pointer to the previous page if there */
-	*(void **)(page_address(ret) + PAGE_SIZE - sizeof(void *)) = *page_ptr;
+	/* set the chaining poपूर्णांकer to the previous page अगर there */
+	*(व्योम **)(page_address(ret) + PAGE_SIZE - माप(व्योम *)) = *page_ptr;
 	*page_ptr = ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Add a TB and if needed apply the FH HW bug workaround;
- * meta != NULL indicates that it's a page mapping and we
+ * Add a TB and अगर needed apply the FH HW bug workaround;
+ * meta != शून्य indicates that it's a page mapping and we
  * need to dma_unmap_page() and set the meta->tbs bit in
- * this case.
+ * this हाल.
  */
-static int iwl_txq_gen2_set_tb_with_wa(struct iwl_trans *trans,
-				       struct sk_buff *skb,
-				       struct iwl_tfh_tfd *tfd,
-				       dma_addr_t phys, void *virt,
-				       u16 len, struct iwl_cmd_meta *meta)
-{
+अटल पूर्णांक iwl_txq_gen2_set_tb_with_wa(काष्ठा iwl_trans *trans,
+				       काष्ठा sk_buff *skb,
+				       काष्ठा iwl_tfh_tfd *tfd,
+				       dma_addr_t phys, व्योम *virt,
+				       u16 len, काष्ठा iwl_cmd_meta *meta)
+अणु
 	dma_addr_t oldphys = phys;
-	struct page *page;
-	int ret;
+	काष्ठा page *page;
+	पूर्णांक ret;
 
-	if (unlikely(dma_mapping_error(trans->dev, phys)))
-		return -ENOMEM;
+	अगर (unlikely(dma_mapping_error(trans->dev, phys)))
+		वापस -ENOMEM;
 
-	if (likely(!iwl_txq_crosses_4g_boundary(phys, len))) {
+	अगर (likely(!iwl_txq_crosses_4g_boundary(phys, len))) अणु
 		ret = iwl_txq_gen2_set_tb(trans, tfd, phys, len);
 
-		if (ret < 0)
-			goto unmap;
+		अगर (ret < 0)
+			जाओ unmap;
 
-		if (meta)
+		अगर (meta)
 			meta->tbs |= BIT(ret);
 
 		ret = 0;
-		goto trace;
-	}
+		जाओ trace;
+	पूर्ण
 
 	/*
 	 * Work around a hardware bug. If (as expressed in the
 	 * condition above) the TB ends on a 32-bit boundary,
 	 * then the next TB may be accessed with the wrong
 	 * address.
-	 * To work around it, copy the data elsewhere and make
-	 * a new mapping for it so the device will not fail.
+	 * To work around it, copy the data अन्यथाwhere and make
+	 * a new mapping क्रम it so the device will not fail.
 	 */
 
-	if (WARN_ON(len > PAGE_SIZE - sizeof(void *))) {
+	अगर (WARN_ON(len > PAGE_SIZE - माप(व्योम *))) अणु
 		ret = -ENOBUFS;
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
 	page = get_workaround_page(trans, skb);
-	if (!page) {
+	अगर (!page) अणु
 		ret = -ENOMEM;
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
-	memcpy(page_address(page), virt, len);
+	स_नकल(page_address(page), virt, len);
 
 	phys = dma_map_single(trans->dev, page_address(page), len,
 			      DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(trans->dev, phys)))
-		return -ENOMEM;
+	अगर (unlikely(dma_mapping_error(trans->dev, phys)))
+		वापस -ENOMEM;
 	ret = iwl_txq_gen2_set_tb(trans, tfd, phys, len);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		/* unmap the new allocation as single */
 		oldphys = phys;
-		meta = NULL;
-		goto unmap;
-	}
+		meta = शून्य;
+		जाओ unmap;
+	पूर्ण
 	IWL_WARN(trans,
 		 "TB bug workaround: copied %d bytes from 0x%llx to 0x%llx\n",
-		 len, (unsigned long long)oldphys, (unsigned long long)phys);
+		 len, (अचिन्हित दीर्घ दीर्घ)oldphys, (अचिन्हित दीर्घ दीर्घ)phys);
 
 	ret = 0;
 unmap:
-	if (meta)
+	अगर (meta)
 		dma_unmap_page(trans->dev, oldphys, len, DMA_TO_DEVICE);
-	else
+	अन्यथा
 		dma_unmap_single(trans->dev, oldphys, len, DMA_TO_DEVICE);
 trace:
-	trace_iwlwifi_dev_tx_tb(trans->dev, skb, virt, phys, len);
+	trace_iwlwअगरi_dev_tx_tb(trans->dev, skb, virt, phys, len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_INET
-struct iwl_tso_hdr_page *get_page_hdr(struct iwl_trans *trans, size_t len,
-				      struct sk_buff *skb)
-{
-	struct iwl_tso_hdr_page *p = this_cpu_ptr(trans->txqs.tso_hdr_page);
-	struct page **page_ptr;
+#अगर_घोषित CONFIG_INET
+काष्ठा iwl_tso_hdr_page *get_page_hdr(काष्ठा iwl_trans *trans, माप_प्रकार len,
+				      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा iwl_tso_hdr_page *p = this_cpu_ptr(trans->txqs.tso_hdr_page);
+	काष्ठा page **page_ptr;
 
-	page_ptr = (void *)((u8 *)skb->cb + trans->txqs.page_offs);
+	page_ptr = (व्योम *)((u8 *)skb->cb + trans->txqs.page_offs);
 
-	if (WARN_ON(*page_ptr))
-		return NULL;
+	अगर (WARN_ON(*page_ptr))
+		वापस शून्य;
 
-	if (!p->page)
-		goto alloc;
+	अगर (!p->page)
+		जाओ alloc;
 
 	/*
-	 * Check if there's enough room on this page
+	 * Check अगर there's enough room on this page
 	 *
-	 * Note that we put a page chaining pointer *last* in the
-	 * page - we need it somewhere, and if it's there then we
-	 * avoid DMA mapping the last bits of the page which may
+	 * Note that we put a page chaining poपूर्णांकer *last* in the
+	 * page - we need it somewhere, and अगर it's there then we
+	 * aव्योम DMA mapping the last bits of the page which may
 	 * trigger the 32-bit boundary hardware bug.
 	 *
 	 * (see also get_workaround_page() in tx-gen2.c)
 	 */
-	if (p->pos + len < (u8 *)page_address(p->page) + PAGE_SIZE -
-			   sizeof(void *))
-		goto out;
+	अगर (p->pos + len < (u8 *)page_address(p->page) + PAGE_SIZE -
+			   माप(व्योम *))
+		जाओ out;
 
-	/* We don't have enough room on this page, get a new one. */
-	__free_page(p->page);
+	/* We करोn't have enough room on this page, get a new one. */
+	__मुक्त_page(p->page);
 
 alloc:
 	p->page = alloc_page(GFP_ATOMIC);
-	if (!p->page)
-		return NULL;
+	अगर (!p->page)
+		वापस शून्य;
 	p->pos = page_address(p->page);
-	/* set the chaining pointer to NULL */
-	*(void **)(page_address(p->page) + PAGE_SIZE - sizeof(void *)) = NULL;
+	/* set the chaining poपूर्णांकer to शून्य */
+	*(व्योम **)(page_address(p->page) + PAGE_SIZE - माप(व्योम *)) = शून्य;
 out:
 	*page_ptr = p->page;
 	get_page(p->page);
-	return p;
-}
-#endif
+	वापस p;
+पूर्ण
+#पूर्ण_अगर
 
-static int iwl_txq_gen2_build_amsdu(struct iwl_trans *trans,
-				    struct sk_buff *skb,
-				    struct iwl_tfh_tfd *tfd, int start_len,
+अटल पूर्णांक iwl_txq_gen2_build_amsdu(काष्ठा iwl_trans *trans,
+				    काष्ठा sk_buff *skb,
+				    काष्ठा iwl_tfh_tfd *tfd, पूर्णांक start_len,
 				    u8 hdr_len,
-				    struct iwl_device_tx_cmd *dev_cmd)
-{
-#ifdef CONFIG_INET
-	struct iwl_tx_cmd_gen2 *tx_cmd = (void *)dev_cmd->payload;
-	struct ieee80211_hdr *hdr = (void *)skb->data;
-	unsigned int snap_ip_tcp_hdrlen, ip_hdrlen, total_len, hdr_room;
-	unsigned int mss = skb_shinfo(skb)->gso_size;
+				    काष्ठा iwl_device_tx_cmd *dev_cmd)
+अणु
+#अगर_घोषित CONFIG_INET
+	काष्ठा iwl_tx_cmd_gen2 *tx_cmd = (व्योम *)dev_cmd->payload;
+	काष्ठा ieee80211_hdr *hdr = (व्योम *)skb->data;
+	अचिन्हित पूर्णांक snap_ip_tcp_hdrlen, ip_hdrlen, total_len, hdr_room;
+	अचिन्हित पूर्णांक mss = skb_shinfo(skb)->gso_size;
 	u16 length, amsdu_pad;
 	u8 *start_hdr;
-	struct iwl_tso_hdr_page *hdr_page;
-	struct tso_t tso;
+	काष्ठा iwl_tso_hdr_page *hdr_page;
+	काष्ठा tso_t tso;
 
-	trace_iwlwifi_dev_tx(trans->dev, skb, tfd, sizeof(*tfd),
+	trace_iwlwअगरi_dev_tx(trans->dev, skb, tfd, माप(*tfd),
 			     &dev_cmd->hdr, start_len, 0);
 
 	ip_hdrlen = skb_transport_header(skb) - skb_network_header(skb);
@@ -346,44 +347,44 @@ static int iwl_txq_gen2_build_amsdu(struct iwl_trans *trans,
 	total_len = skb->len - snap_ip_tcp_hdrlen - hdr_len;
 	amsdu_pad = 0;
 
-	/* total amount of header we may need for this A-MSDU */
+	/* total amount of header we may need क्रम this A-MSDU */
 	hdr_room = DIV_ROUND_UP(total_len, mss) *
-		(3 + snap_ip_tcp_hdrlen + sizeof(struct ethhdr));
+		(3 + snap_ip_tcp_hdrlen + माप(काष्ठा ethhdr));
 
 	/* Our device supports 9 segments at most, it will fit in 1 page */
 	hdr_page = get_page_hdr(trans, hdr_room, skb);
-	if (!hdr_page)
-		return -ENOMEM;
+	अगर (!hdr_page)
+		वापस -ENOMEM;
 
 	start_hdr = hdr_page->pos;
 
 	/*
 	 * Pull the ieee80211 header to be able to use TSO core,
-	 * we will restore it for the tx_status flow.
+	 * we will restore it क्रम the tx_status flow.
 	 */
 	skb_pull(skb, hdr_len);
 
 	/*
-	 * Remove the length of all the headers that we don't actually
-	 * have in the MPDU by themselves, but that we duplicate into
-	 * all the different MSDUs inside the A-MSDU.
+	 * Remove the length of all the headers that we करोn't actually
+	 * have in the MPDU by themselves, but that we duplicate पूर्णांकo
+	 * all the dअगरferent MSDUs inside the A-MSDU.
 	 */
 	le16_add_cpu(&tx_cmd->len, -snap_ip_tcp_hdrlen);
 
 	tso_start(skb, &tso);
 
-	while (total_len) {
-		/* this is the data left for this subframe */
-		unsigned int data_left = min_t(unsigned int, mss, total_len);
-		unsigned int tb_len;
+	जबतक (total_len) अणु
+		/* this is the data left क्रम this subframe */
+		अचिन्हित पूर्णांक data_left = min_t(अचिन्हित पूर्णांक, mss, total_len);
+		अचिन्हित पूर्णांक tb_len;
 		dma_addr_t tb_phys;
 		u8 *subf_hdrs_start = hdr_page->pos;
 
 		total_len -= data_left;
 
-		memset(hdr_page->pos, 0, amsdu_pad);
+		स_रखो(hdr_page->pos, 0, amsdu_pad);
 		hdr_page->pos += amsdu_pad;
-		amsdu_pad = (4 - (sizeof(struct ethhdr) + snap_ip_tcp_hdrlen +
+		amsdu_pad = (4 - (माप(काष्ठा ethhdr) + snap_ip_tcp_hdrlen +
 				  data_left)) & 0x3;
 		ether_addr_copy(hdr_page->pos, ieee80211_get_DA(hdr));
 		hdr_page->pos += ETH_ALEN;
@@ -392,7 +393,7 @@ static int iwl_txq_gen2_build_amsdu(struct iwl_trans *trans,
 
 		length = snap_ip_tcp_hdrlen + data_left;
 		*((__be16 *)hdr_page->pos) = cpu_to_be16(length);
-		hdr_page->pos += sizeof(length);
+		hdr_page->pos += माप(length);
 
 		/*
 		 * This will copy the SNAP as well which will be considered
@@ -405,254 +406,254 @@ static int iwl_txq_gen2_build_amsdu(struct iwl_trans *trans,
 		tb_len = hdr_page->pos - start_hdr;
 		tb_phys = dma_map_single(trans->dev, start_hdr,
 					 tb_len, DMA_TO_DEVICE);
-		if (unlikely(dma_mapping_error(trans->dev, tb_phys)))
-			goto out_err;
+		अगर (unlikely(dma_mapping_error(trans->dev, tb_phys)))
+			जाओ out_err;
 		/*
-		 * No need for _with_wa, this is from the TSO page and
+		 * No need क्रम _with_wa, this is from the TSO page and
 		 * we leave some space at the end of it so can't hit
 		 * the buggy scenario.
 		 */
 		iwl_txq_gen2_set_tb(trans, tfd, tb_phys, tb_len);
-		trace_iwlwifi_dev_tx_tb(trans->dev, skb, start_hdr,
+		trace_iwlwअगरi_dev_tx_tb(trans->dev, skb, start_hdr,
 					tb_phys, tb_len);
 		/* add this subframe's headers' length to the tx_cmd */
 		le16_add_cpu(&tx_cmd->len, hdr_page->pos - subf_hdrs_start);
 
-		/* prepare the start_hdr for the next subframe */
+		/* prepare the start_hdr क्रम the next subframe */
 		start_hdr = hdr_page->pos;
 
 		/* put the payload */
-		while (data_left) {
-			int ret;
+		जबतक (data_left) अणु
+			पूर्णांक ret;
 
-			tb_len = min_t(unsigned int, tso.size, data_left);
+			tb_len = min_t(अचिन्हित पूर्णांक, tso.size, data_left);
 			tb_phys = dma_map_single(trans->dev, tso.data,
 						 tb_len, DMA_TO_DEVICE);
 			ret = iwl_txq_gen2_set_tb_with_wa(trans, skb, tfd,
 							  tb_phys, tso.data,
-							  tb_len, NULL);
-			if (ret)
-				goto out_err;
+							  tb_len, शून्य);
+			अगर (ret)
+				जाओ out_err;
 
 			data_left -= tb_len;
 			tso_build_data(skb, &tso, tb_len);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* re -add the WiFi header */
 	skb_push(skb, hdr_len);
 
-	return 0;
+	वापस 0;
 
 out_err:
-#endif
-	return -EINVAL;
-}
+#पूर्ण_अगर
+	वापस -EINVAL;
+पूर्ण
 
-static struct
-iwl_tfh_tfd *iwl_txq_gen2_build_tx_amsdu(struct iwl_trans *trans,
-					 struct iwl_txq *txq,
-					 struct iwl_device_tx_cmd *dev_cmd,
-					 struct sk_buff *skb,
-					 struct iwl_cmd_meta *out_meta,
-					 int hdr_len,
-					 int tx_cmd_len)
-{
-	int idx = iwl_txq_get_cmd_index(txq, txq->write_ptr);
-	struct iwl_tfh_tfd *tfd = iwl_txq_get_tfd(trans, txq, idx);
+अटल काष्ठा
+iwl_tfh_tfd *iwl_txq_gen2_build_tx_amsdu(काष्ठा iwl_trans *trans,
+					 काष्ठा iwl_txq *txq,
+					 काष्ठा iwl_device_tx_cmd *dev_cmd,
+					 काष्ठा sk_buff *skb,
+					 काष्ठा iwl_cmd_meta *out_meta,
+					 पूर्णांक hdr_len,
+					 पूर्णांक tx_cmd_len)
+अणु
+	पूर्णांक idx = iwl_txq_get_cmd_index(txq, txq->ग_लिखो_ptr);
+	काष्ठा iwl_tfh_tfd *tfd = iwl_txq_get_tfd(trans, txq, idx);
 	dma_addr_t tb_phys;
-	int len;
-	void *tb1_addr;
+	पूर्णांक len;
+	व्योम *tb1_addr;
 
 	tb_phys = iwl_txq_get_first_tb_dma(txq, idx);
 
 	/*
-	 * No need for _with_wa, the first TB allocation is aligned up
+	 * No need क्रम _with_wa, the first TB allocation is aligned up
 	 * to a 64-byte boundary and thus can't be at the end or cross
 	 * a page boundary (much less a 2^32 boundary).
 	 */
 	iwl_txq_gen2_set_tb(trans, tfd, tb_phys, IWL_FIRST_TB_SIZE);
 
 	/*
-	 * The second TB (tb1) points to the remainder of the TX command
+	 * The second TB (tb1) poपूर्णांकs to the reमुख्यder of the TX command
 	 * and the 802.11 header - dword aligned size
-	 * (This calculation modifies the TX command, so do it before the
+	 * (This calculation modअगरies the TX command, so करो it beक्रमe the
 	 * setup of the first TB)
 	 */
-	len = tx_cmd_len + sizeof(struct iwl_cmd_header) + hdr_len -
+	len = tx_cmd_len + माप(काष्ठा iwl_cmd_header) + hdr_len -
 	      IWL_FIRST_TB_SIZE;
 
-	/* do not align A-MSDU to dword as the subframe header aligns it */
+	/* करो not align A-MSDU to dword as the subframe header aligns it */
 
-	/* map the data for TB1 */
+	/* map the data क्रम TB1 */
 	tb1_addr = ((u8 *)&dev_cmd->hdr) + IWL_FIRST_TB_SIZE;
 	tb_phys = dma_map_single(trans->dev, tb1_addr, len, DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(trans->dev, tb_phys)))
-		goto out_err;
+	अगर (unlikely(dma_mapping_error(trans->dev, tb_phys)))
+		जाओ out_err;
 	/*
-	 * No need for _with_wa(), we ensure (via alignment) that the data
+	 * No need क्रम _with_wa(), we ensure (via alignment) that the data
 	 * here can never cross or end at a page boundary.
 	 */
 	iwl_txq_gen2_set_tb(trans, tfd, tb_phys, len);
 
-	if (iwl_txq_gen2_build_amsdu(trans, skb, tfd, len + IWL_FIRST_TB_SIZE,
+	अगर (iwl_txq_gen2_build_amsdu(trans, skb, tfd, len + IWL_FIRST_TB_SIZE,
 				     hdr_len, dev_cmd))
-		goto out_err;
+		जाओ out_err;
 
-	/* building the A-MSDU might have changed this data, memcpy it now */
-	memcpy(&txq->first_tb_bufs[idx], dev_cmd, IWL_FIRST_TB_SIZE);
-	return tfd;
+	/* building the A-MSDU might have changed this data, स_नकल it now */
+	स_नकल(&txq->first_tb_bufs[idx], dev_cmd, IWL_FIRST_TB_SIZE);
+	वापस tfd;
 
 out_err:
 	iwl_txq_gen2_tfd_unmap(trans, out_meta, tfd);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int iwl_txq_gen2_tx_add_frags(struct iwl_trans *trans,
-				     struct sk_buff *skb,
-				     struct iwl_tfh_tfd *tfd,
-				     struct iwl_cmd_meta *out_meta)
-{
-	int i;
+अटल पूर्णांक iwl_txq_gen2_tx_add_frags(काष्ठा iwl_trans *trans,
+				     काष्ठा sk_buff *skb,
+				     काष्ठा iwl_tfh_tfd *tfd,
+				     काष्ठा iwl_cmd_meta *out_meta)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
-		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+	क्रम (i = 0; i < skb_shinfo(skb)->nr_frags; i++) अणु
+		स्थिर skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 		dma_addr_t tb_phys;
-		unsigned int fragsz = skb_frag_size(frag);
-		int ret;
+		अचिन्हित पूर्णांक fragsz = skb_frag_size(frag);
+		पूर्णांक ret;
 
-		if (!fragsz)
-			continue;
+		अगर (!fragsz)
+			जारी;
 
 		tb_phys = skb_frag_dma_map(trans->dev, frag, 0,
 					   fragsz, DMA_TO_DEVICE);
 		ret = iwl_txq_gen2_set_tb_with_wa(trans, skb, tfd, tb_phys,
 						  skb_frag_address(frag),
 						  fragsz, out_meta);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct
-iwl_tfh_tfd *iwl_txq_gen2_build_tx(struct iwl_trans *trans,
-				   struct iwl_txq *txq,
-				   struct iwl_device_tx_cmd *dev_cmd,
-				   struct sk_buff *skb,
-				   struct iwl_cmd_meta *out_meta,
-				   int hdr_len,
-				   int tx_cmd_len,
+अटल काष्ठा
+iwl_tfh_tfd *iwl_txq_gen2_build_tx(काष्ठा iwl_trans *trans,
+				   काष्ठा iwl_txq *txq,
+				   काष्ठा iwl_device_tx_cmd *dev_cmd,
+				   काष्ठा sk_buff *skb,
+				   काष्ठा iwl_cmd_meta *out_meta,
+				   पूर्णांक hdr_len,
+				   पूर्णांक tx_cmd_len,
 				   bool pad)
-{
-	int idx = iwl_txq_get_cmd_index(txq, txq->write_ptr);
-	struct iwl_tfh_tfd *tfd = iwl_txq_get_tfd(trans, txq, idx);
+अणु
+	पूर्णांक idx = iwl_txq_get_cmd_index(txq, txq->ग_लिखो_ptr);
+	काष्ठा iwl_tfh_tfd *tfd = iwl_txq_get_tfd(trans, txq, idx);
 	dma_addr_t tb_phys;
-	int len, tb1_len, tb2_len;
-	void *tb1_addr;
-	struct sk_buff *frag;
+	पूर्णांक len, tb1_len, tb2_len;
+	व्योम *tb1_addr;
+	काष्ठा sk_buff *frag;
 
 	tb_phys = iwl_txq_get_first_tb_dma(txq, idx);
 
-	/* The first TB points to bi-directional DMA data */
-	memcpy(&txq->first_tb_bufs[idx], dev_cmd, IWL_FIRST_TB_SIZE);
+	/* The first TB poपूर्णांकs to bi-directional DMA data */
+	स_नकल(&txq->first_tb_bufs[idx], dev_cmd, IWL_FIRST_TB_SIZE);
 
 	/*
-	 * No need for _with_wa, the first TB allocation is aligned up
+	 * No need क्रम _with_wa, the first TB allocation is aligned up
 	 * to a 64-byte boundary and thus can't be at the end or cross
 	 * a page boundary (much less a 2^32 boundary).
 	 */
 	iwl_txq_gen2_set_tb(trans, tfd, tb_phys, IWL_FIRST_TB_SIZE);
 
 	/*
-	 * The second TB (tb1) points to the remainder of the TX command
+	 * The second TB (tb1) poपूर्णांकs to the reमुख्यder of the TX command
 	 * and the 802.11 header - dword aligned size
-	 * (This calculation modifies the TX command, so do it before the
+	 * (This calculation modअगरies the TX command, so करो it beक्रमe the
 	 * setup of the first TB)
 	 */
-	len = tx_cmd_len + sizeof(struct iwl_cmd_header) + hdr_len -
+	len = tx_cmd_len + माप(काष्ठा iwl_cmd_header) + hdr_len -
 	      IWL_FIRST_TB_SIZE;
 
-	if (pad)
+	अगर (pad)
 		tb1_len = ALIGN(len, 4);
-	else
+	अन्यथा
 		tb1_len = len;
 
-	/* map the data for TB1 */
+	/* map the data क्रम TB1 */
 	tb1_addr = ((u8 *)&dev_cmd->hdr) + IWL_FIRST_TB_SIZE;
 	tb_phys = dma_map_single(trans->dev, tb1_addr, tb1_len, DMA_TO_DEVICE);
-	if (unlikely(dma_mapping_error(trans->dev, tb_phys)))
-		goto out_err;
+	अगर (unlikely(dma_mapping_error(trans->dev, tb_phys)))
+		जाओ out_err;
 	/*
-	 * No need for _with_wa(), we ensure (via alignment) that the data
+	 * No need क्रम _with_wa(), we ensure (via alignment) that the data
 	 * here can never cross or end at a page boundary.
 	 */
 	iwl_txq_gen2_set_tb(trans, tfd, tb_phys, tb1_len);
-	trace_iwlwifi_dev_tx(trans->dev, skb, tfd, sizeof(*tfd), &dev_cmd->hdr,
+	trace_iwlwअगरi_dev_tx(trans->dev, skb, tfd, माप(*tfd), &dev_cmd->hdr,
 			     IWL_FIRST_TB_SIZE + tb1_len, hdr_len);
 
 	/* set up TFD's third entry to point to remainder of skb's head */
 	tb2_len = skb_headlen(skb) - hdr_len;
 
-	if (tb2_len > 0) {
-		int ret;
+	अगर (tb2_len > 0) अणु
+		पूर्णांक ret;
 
 		tb_phys = dma_map_single(trans->dev, skb->data + hdr_len,
 					 tb2_len, DMA_TO_DEVICE);
 		ret = iwl_txq_gen2_set_tb_with_wa(trans, skb, tfd, tb_phys,
 						  skb->data + hdr_len, tb2_len,
-						  NULL);
-		if (ret)
-			goto out_err;
-	}
+						  शून्य);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
 
-	if (iwl_txq_gen2_tx_add_frags(trans, skb, tfd, out_meta))
-		goto out_err;
+	अगर (iwl_txq_gen2_tx_add_frags(trans, skb, tfd, out_meta))
+		जाओ out_err;
 
-	skb_walk_frags(skb, frag) {
-		int ret;
+	skb_walk_frags(skb, frag) अणु
+		पूर्णांक ret;
 
 		tb_phys = dma_map_single(trans->dev, frag->data,
 					 skb_headlen(frag), DMA_TO_DEVICE);
 		ret = iwl_txq_gen2_set_tb_with_wa(trans, skb, tfd, tb_phys,
 						  frag->data,
-						  skb_headlen(frag), NULL);
-		if (ret)
-			goto out_err;
-		if (iwl_txq_gen2_tx_add_frags(trans, frag, tfd, out_meta))
-			goto out_err;
-	}
+						  skb_headlen(frag), शून्य);
+		अगर (ret)
+			जाओ out_err;
+		अगर (iwl_txq_gen2_tx_add_frags(trans, frag, tfd, out_meta))
+			जाओ out_err;
+	पूर्ण
 
-	return tfd;
+	वापस tfd;
 
 out_err:
 	iwl_txq_gen2_tfd_unmap(trans, out_meta, tfd);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static
-struct iwl_tfh_tfd *iwl_txq_gen2_build_tfd(struct iwl_trans *trans,
-					   struct iwl_txq *txq,
-					   struct iwl_device_tx_cmd *dev_cmd,
-					   struct sk_buff *skb,
-					   struct iwl_cmd_meta *out_meta)
-{
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
-	int idx = iwl_txq_get_cmd_index(txq, txq->write_ptr);
-	struct iwl_tfh_tfd *tfd = iwl_txq_get_tfd(trans, txq, idx);
-	int len, hdr_len;
+अटल
+काष्ठा iwl_tfh_tfd *iwl_txq_gen2_build_tfd(काष्ठा iwl_trans *trans,
+					   काष्ठा iwl_txq *txq,
+					   काष्ठा iwl_device_tx_cmd *dev_cmd,
+					   काष्ठा sk_buff *skb,
+					   काष्ठा iwl_cmd_meta *out_meta)
+अणु
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
+	पूर्णांक idx = iwl_txq_get_cmd_index(txq, txq->ग_लिखो_ptr);
+	काष्ठा iwl_tfh_tfd *tfd = iwl_txq_get_tfd(trans, txq, idx);
+	पूर्णांक len, hdr_len;
 	bool amsdu;
 
-	/* There must be data left over for TB1 or this code must be changed */
-	BUILD_BUG_ON(sizeof(struct iwl_tx_cmd_gen2) < IWL_FIRST_TB_SIZE);
+	/* There must be data left over क्रम TB1 or this code must be changed */
+	BUILD_BUG_ON(माप(काष्ठा iwl_tx_cmd_gen2) < IWL_FIRST_TB_SIZE);
 
-	memset(tfd, 0, sizeof(*tfd));
+	स_रखो(tfd, 0, माप(*tfd));
 
-	if (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_AX210)
-		len = sizeof(struct iwl_tx_cmd_gen2);
-	else
-		len = sizeof(struct iwl_tx_cmd_gen3);
+	अगर (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_AX210)
+		len = माप(काष्ठा iwl_tx_cmd_gen2);
+	अन्यथा
+		len = माप(काष्ठा iwl_tx_cmd_gen3);
 
 	amsdu = ieee80211_is_data_qos(hdr->frame_control) &&
 			(*ieee80211_get_qos_ctl(hdr) &
@@ -661,90 +662,90 @@ struct iwl_tfh_tfd *iwl_txq_gen2_build_tfd(struct iwl_trans *trans,
 	hdr_len = ieee80211_hdrlen(hdr->frame_control);
 
 	/*
-	 * Only build A-MSDUs here if doing so by GSO, otherwise it may be
-	 * an A-MSDU for other reasons, e.g. NAN or an A-MSDU having been
-	 * built in the higher layers already.
+	 * Only build A-MSDUs here अगर करोing so by GSO, otherwise it may be
+	 * an A-MSDU क्रम other reasons, e.g. न_अंक or an A-MSDU having been
+	 * built in the higher layers alपढ़ोy.
 	 */
-	if (amsdu && skb_shinfo(skb)->gso_size)
-		return iwl_txq_gen2_build_tx_amsdu(trans, txq, dev_cmd, skb,
+	अगर (amsdu && skb_shinfo(skb)->gso_size)
+		वापस iwl_txq_gen2_build_tx_amsdu(trans, txq, dev_cmd, skb,
 						    out_meta, hdr_len, len);
-	return iwl_txq_gen2_build_tx(trans, txq, dev_cmd, skb, out_meta,
+	वापस iwl_txq_gen2_build_tx(trans, txq, dev_cmd, skb, out_meta,
 				      hdr_len, len, !amsdu);
-}
+पूर्ण
 
-int iwl_txq_space(struct iwl_trans *trans, const struct iwl_txq *q)
-{
-	unsigned int max;
-	unsigned int used;
+पूर्णांक iwl_txq_space(काष्ठा iwl_trans *trans, स्थिर काष्ठा iwl_txq *q)
+अणु
+	अचिन्हित पूर्णांक max;
+	अचिन्हित पूर्णांक used;
 
 	/*
-	 * To avoid ambiguity between empty and completely full queues, there
+	 * To aव्योम ambiguity between empty and completely full queues, there
 	 * should always be less than max_tfd_queue_size elements in the queue.
-	 * If q->n_window is smaller than max_tfd_queue_size, there is no need
-	 * to reserve any queue entries for this purpose.
+	 * If q->n_winकरोw is smaller than max_tfd_queue_size, there is no need
+	 * to reserve any queue entries क्रम this purpose.
 	 */
-	if (q->n_window < trans->trans_cfg->base_params->max_tfd_queue_size)
-		max = q->n_window;
-	else
+	अगर (q->n_winकरोw < trans->trans_cfg->base_params->max_tfd_queue_size)
+		max = q->n_winकरोw;
+	अन्यथा
 		max = trans->trans_cfg->base_params->max_tfd_queue_size - 1;
 
 	/*
-	 * max_tfd_queue_size is a power of 2, so the following is equivalent to
+	 * max_tfd_queue_size is a घातer of 2, so the following is equivalent to
 	 * modulo by max_tfd_queue_size and is well defined.
 	 */
-	used = (q->write_ptr - q->read_ptr) &
+	used = (q->ग_लिखो_ptr - q->पढ़ो_ptr) &
 		(trans->trans_cfg->base_params->max_tfd_queue_size - 1);
 
-	if (WARN_ON(used > max))
-		return 0;
+	अगर (WARN_ON(used > max))
+		वापस 0;
 
-	return max - used;
-}
+	वापस max - used;
+पूर्ण
 
-int iwl_txq_gen2_tx(struct iwl_trans *trans, struct sk_buff *skb,
-		    struct iwl_device_tx_cmd *dev_cmd, int txq_id)
-{
-	struct iwl_cmd_meta *out_meta;
-	struct iwl_txq *txq = trans->txqs.txq[txq_id];
+पूर्णांक iwl_txq_gen2_tx(काष्ठा iwl_trans *trans, काष्ठा sk_buff *skb,
+		    काष्ठा iwl_device_tx_cmd *dev_cmd, पूर्णांक txq_id)
+अणु
+	काष्ठा iwl_cmd_meta *out_meta;
+	काष्ठा iwl_txq *txq = trans->txqs.txq[txq_id];
 	u16 cmd_len;
-	int idx;
-	void *tfd;
+	पूर्णांक idx;
+	व्योम *tfd;
 
-	if (WARN_ONCE(txq_id >= IWL_MAX_TVQM_QUEUES,
+	अगर (WARN_ONCE(txq_id >= IWL_MAX_TVQM_QUEUES,
 		      "queue %d out of range", txq_id))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (WARN_ONCE(!test_bit(txq_id, trans->txqs.queue_used),
+	अगर (WARN_ONCE(!test_bit(txq_id, trans->txqs.queue_used),
 		      "TX on unused queue %d\n", txq_id))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (skb_is_nonlinear(skb) &&
+	अगर (skb_is_nonlinear(skb) &&
 	    skb_shinfo(skb)->nr_frags > IWL_TRANS_MAX_FRAGS(trans) &&
 	    __skb_linearize(skb))
-		return -ENOMEM;
+		वापस -ENOMEM;
 
 	spin_lock(&txq->lock);
 
-	if (iwl_txq_space(trans, txq) < txq->high_mark) {
+	अगर (iwl_txq_space(trans, txq) < txq->high_mark) अणु
 		iwl_txq_stop(trans, txq);
 
-		/* don't put the packet on the ring, if there is no room */
-		if (unlikely(iwl_txq_space(trans, txq) < 3)) {
-			struct iwl_device_tx_cmd **dev_cmd_ptr;
+		/* करोn't put the packet on the ring, अगर there is no room */
+		अगर (unlikely(iwl_txq_space(trans, txq) < 3)) अणु
+			काष्ठा iwl_device_tx_cmd **dev_cmd_ptr;
 
-			dev_cmd_ptr = (void *)((u8 *)skb->cb +
+			dev_cmd_ptr = (व्योम *)((u8 *)skb->cb +
 					       trans->txqs.dev_cmd_offs);
 
 			*dev_cmd_ptr = dev_cmd;
 			__skb_queue_tail(&txq->overflow_q, skb);
 			spin_unlock(&txq->lock);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	idx = iwl_txq_get_cmd_index(txq, txq->write_ptr);
+	idx = iwl_txq_get_cmd_index(txq, txq->ग_लिखो_ptr);
 
-	/* Set up driver data for this TFD */
+	/* Set up driver data क्रम this TFD */
 	txq->entries[idx].skb = skb;
 	txq->entries[idx].cmd = dev_cmd;
 
@@ -757,846 +758,846 @@ int iwl_txq_gen2_tx(struct iwl_trans *trans, struct sk_buff *skb,
 	out_meta->flags = 0;
 
 	tfd = iwl_txq_gen2_build_tfd(trans, txq, dev_cmd, skb, out_meta);
-	if (!tfd) {
+	अगर (!tfd) अणु
 		spin_unlock(&txq->lock);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) {
-		struct iwl_tx_cmd_gen3 *tx_cmd_gen3 =
-			(void *)dev_cmd->payload;
+	अगर (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210) अणु
+		काष्ठा iwl_tx_cmd_gen3 *tx_cmd_gen3 =
+			(व्योम *)dev_cmd->payload;
 
 		cmd_len = le16_to_cpu(tx_cmd_gen3->len);
-	} else {
-		struct iwl_tx_cmd_gen2 *tx_cmd_gen2 =
-			(void *)dev_cmd->payload;
+	पूर्ण अन्यथा अणु
+		काष्ठा iwl_tx_cmd_gen2 *tx_cmd_gen2 =
+			(व्योम *)dev_cmd->payload;
 
 		cmd_len = le16_to_cpu(tx_cmd_gen2->len);
-	}
+	पूर्ण
 
-	/* Set up entry for this TFD in Tx byte-count array */
+	/* Set up entry क्रम this TFD in Tx byte-count array */
 	iwl_pcie_gen2_update_byte_tbl(trans, txq, cmd_len,
 				      iwl_txq_gen2_get_num_tbs(trans, tfd));
 
-	/* start timer if queue currently empty */
-	if (txq->read_ptr == txq->write_ptr && txq->wd_timeout)
-		mod_timer(&txq->stuck_timer, jiffies + txq->wd_timeout);
+	/* start समयr अगर queue currently empty */
+	अगर (txq->पढ़ो_ptr == txq->ग_लिखो_ptr && txq->wd_समयout)
+		mod_समयr(&txq->stuck_समयr, jअगरfies + txq->wd_समयout);
 
-	/* Tell device the write index *just past* this latest filled TFD */
-	txq->write_ptr = iwl_txq_inc_wrap(trans, txq->write_ptr);
+	/* Tell device the ग_लिखो index *just past* this latest filled TFD */
+	txq->ग_लिखो_ptr = iwl_txq_inc_wrap(trans, txq->ग_लिखो_ptr);
 	iwl_txq_inc_wr_ptr(trans, txq);
 	/*
-	 * At this point the frame is "transmitted" successfully
-	 * and we will get a TX status notification eventually.
+	 * At this poपूर्णांक the frame is "transmitted" successfully
+	 * and we will get a TX status notअगरication eventually.
 	 */
 	spin_unlock(&txq->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*************** HOST COMMAND QUEUE FUNCTIONS   *****/
 
 /*
- * iwl_txq_gen2_unmap -  Unmap any remaining DMA mappings and free skb's
+ * iwl_txq_gen2_unmap -  Unmap any reमुख्यing DMA mappings and मुक्त skb's
  */
-void iwl_txq_gen2_unmap(struct iwl_trans *trans, int txq_id)
-{
-	struct iwl_txq *txq = trans->txqs.txq[txq_id];
+व्योम iwl_txq_gen2_unmap(काष्ठा iwl_trans *trans, पूर्णांक txq_id)
+अणु
+	काष्ठा iwl_txq *txq = trans->txqs.txq[txq_id];
 
 	spin_lock_bh(&txq->lock);
-	while (txq->write_ptr != txq->read_ptr) {
+	जबतक (txq->ग_लिखो_ptr != txq->पढ़ो_ptr) अणु
 		IWL_DEBUG_TX_REPLY(trans, "Q %d Free %d\n",
-				   txq_id, txq->read_ptr);
+				   txq_id, txq->पढ़ो_ptr);
 
-		if (txq_id != trans->txqs.cmd.q_id) {
-			int idx = iwl_txq_get_cmd_index(txq, txq->read_ptr);
-			struct sk_buff *skb = txq->entries[idx].skb;
+		अगर (txq_id != trans->txqs.cmd.q_id) अणु
+			पूर्णांक idx = iwl_txq_get_cmd_index(txq, txq->पढ़ो_ptr);
+			काष्ठा sk_buff *skb = txq->entries[idx].skb;
 
-			if (!WARN_ON_ONCE(!skb))
-				iwl_txq_free_tso_page(trans, skb);
-		}
-		iwl_txq_gen2_free_tfd(trans, txq);
-		txq->read_ptr = iwl_txq_inc_wrap(trans, txq->read_ptr);
-	}
+			अगर (!WARN_ON_ONCE(!skb))
+				iwl_txq_मुक्त_tso_page(trans, skb);
+		पूर्ण
+		iwl_txq_gen2_मुक्त_tfd(trans, txq);
+		txq->पढ़ो_ptr = iwl_txq_inc_wrap(trans, txq->पढ़ो_ptr);
+	पूर्ण
 
-	while (!skb_queue_empty(&txq->overflow_q)) {
-		struct sk_buff *skb = __skb_dequeue(&txq->overflow_q);
+	जबतक (!skb_queue_empty(&txq->overflow_q)) अणु
+		काष्ठा sk_buff *skb = __skb_dequeue(&txq->overflow_q);
 
-		iwl_op_mode_free_skb(trans->op_mode, skb);
-	}
+		iwl_op_mode_मुक्त_skb(trans->op_mode, skb);
+	पूर्ण
 
 	spin_unlock_bh(&txq->lock);
 
-	/* just in case - this queue may have been stopped */
+	/* just in हाल - this queue may have been stopped */
 	iwl_wake_queue(trans, txq);
-}
+पूर्ण
 
-static void iwl_txq_gen2_free_memory(struct iwl_trans *trans,
-				     struct iwl_txq *txq)
-{
-	struct device *dev = trans->dev;
+अटल व्योम iwl_txq_gen2_मुक्त_memory(काष्ठा iwl_trans *trans,
+				     काष्ठा iwl_txq *txq)
+अणु
+	काष्ठा device *dev = trans->dev;
 
 	/* De-alloc circular buffer of TFDs */
-	if (txq->tfds) {
-		dma_free_coherent(dev,
-				  trans->txqs.tfd.size * txq->n_window,
+	अगर (txq->tfds) अणु
+		dma_मुक्त_coherent(dev,
+				  trans->txqs.tfd.size * txq->n_winकरोw,
 				  txq->tfds, txq->dma_addr);
-		dma_free_coherent(dev,
-				  sizeof(*txq->first_tb_bufs) * txq->n_window,
+		dma_मुक्त_coherent(dev,
+				  माप(*txq->first_tb_bufs) * txq->n_winकरोw,
 				  txq->first_tb_bufs, txq->first_tb_dma);
-	}
+	पूर्ण
 
-	kfree(txq->entries);
-	if (txq->bc_tbl.addr)
-		dma_pool_free(trans->txqs.bc_pool,
+	kमुक्त(txq->entries);
+	अगर (txq->bc_tbl.addr)
+		dma_pool_मुक्त(trans->txqs.bc_pool,
 			      txq->bc_tbl.addr, txq->bc_tbl.dma);
-	kfree(txq);
-}
+	kमुक्त(txq);
+पूर्ण
 
 /*
- * iwl_pcie_txq_free - Deallocate DMA queue.
+ * iwl_pcie_txq_मुक्त - Deallocate DMA queue.
  * @txq: Transmit queue to deallocate.
  *
  * Empty queue by removing and destroying all BD's.
  * Free all buffers.
- * 0-fill, but do not free "txq" descriptor structure.
+ * 0-fill, but करो not मुक्त "txq" descriptor काष्ठाure.
  */
-static void iwl_txq_gen2_free(struct iwl_trans *trans, int txq_id)
-{
-	struct iwl_txq *txq;
-	int i;
+अटल व्योम iwl_txq_gen2_मुक्त(काष्ठा iwl_trans *trans, पूर्णांक txq_id)
+अणु
+	काष्ठा iwl_txq *txq;
+	पूर्णांक i;
 
-	if (WARN_ONCE(txq_id >= IWL_MAX_TVQM_QUEUES,
+	अगर (WARN_ONCE(txq_id >= IWL_MAX_TVQM_QUEUES,
 		      "queue %d out of range", txq_id))
-		return;
+		वापस;
 
 	txq = trans->txqs.txq[txq_id];
 
-	if (WARN_ON(!txq))
-		return;
+	अगर (WARN_ON(!txq))
+		वापस;
 
 	iwl_txq_gen2_unmap(trans, txq_id);
 
 	/* De-alloc array of command/tx buffers */
-	if (txq_id == trans->txqs.cmd.q_id)
-		for (i = 0; i < txq->n_window; i++) {
-			kfree_sensitive(txq->entries[i].cmd);
-			kfree_sensitive(txq->entries[i].free_buf);
-		}
-	del_timer_sync(&txq->stuck_timer);
+	अगर (txq_id == trans->txqs.cmd.q_id)
+		क्रम (i = 0; i < txq->n_winकरोw; i++) अणु
+			kमुक्त_sensitive(txq->entries[i].cmd);
+			kमुक्त_sensitive(txq->entries[i].मुक्त_buf);
+		पूर्ण
+	del_समयr_sync(&txq->stuck_समयr);
 
-	iwl_txq_gen2_free_memory(trans, txq);
+	iwl_txq_gen2_मुक्त_memory(trans, txq);
 
-	trans->txqs.txq[txq_id] = NULL;
+	trans->txqs.txq[txq_id] = शून्य;
 
 	clear_bit(txq_id, trans->txqs.queue_used);
-}
+पूर्ण
 
 /*
- * iwl_queue_init - Initialize queue's high/low-water and read/write indexes
+ * iwl_queue_init - Initialize queue's high/low-water and पढ़ो/ग_लिखो indexes
  */
-static int iwl_queue_init(struct iwl_txq *q, int slots_num)
-{
-	q->n_window = slots_num;
+अटल पूर्णांक iwl_queue_init(काष्ठा iwl_txq *q, पूर्णांक slots_num)
+अणु
+	q->n_winकरोw = slots_num;
 
-	/* slots_num must be power-of-two size, otherwise
+	/* slots_num must be घातer-of-two size, otherwise
 	 * iwl_txq_get_cmd_index is broken. */
-	if (WARN_ON(!is_power_of_2(slots_num)))
-		return -EINVAL;
+	अगर (WARN_ON(!is_घातer_of_2(slots_num)))
+		वापस -EINVAL;
 
-	q->low_mark = q->n_window / 4;
-	if (q->low_mark < 4)
+	q->low_mark = q->n_winकरोw / 4;
+	अगर (q->low_mark < 4)
 		q->low_mark = 4;
 
-	q->high_mark = q->n_window / 8;
-	if (q->high_mark < 2)
+	q->high_mark = q->n_winकरोw / 8;
+	अगर (q->high_mark < 2)
 		q->high_mark = 2;
 
-	q->write_ptr = 0;
-	q->read_ptr = 0;
+	q->ग_लिखो_ptr = 0;
+	q->पढ़ो_ptr = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int iwl_txq_init(struct iwl_trans *trans, struct iwl_txq *txq, int slots_num,
+पूर्णांक iwl_txq_init(काष्ठा iwl_trans *trans, काष्ठा iwl_txq *txq, पूर्णांक slots_num,
 		 bool cmd_queue)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 tfd_queue_max_size =
 		trans->trans_cfg->base_params->max_tfd_queue_size;
 
 	txq->need_update = false;
 
-	/* max_tfd_queue_size must be power-of-two size, otherwise
+	/* max_tfd_queue_size must be घातer-of-two size, otherwise
 	 * iwl_txq_inc_wrap and iwl_txq_dec_wrap are broken. */
-	if (WARN_ONCE(tfd_queue_max_size & (tfd_queue_max_size - 1),
+	अगर (WARN_ONCE(tfd_queue_max_size & (tfd_queue_max_size - 1),
 		      "Max tfd queue size must be a power of two, but is %d",
 		      tfd_queue_max_size))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Initialize queue's high/low-water marks, and head/tail indexes */
 	ret = iwl_queue_init(txq, slots_num);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_init(&txq->lock);
 
-	if (cmd_queue) {
-		static struct lock_class_key iwl_txq_cmd_queue_lock_class;
+	अगर (cmd_queue) अणु
+		अटल काष्ठा lock_class_key iwl_txq_cmd_queue_lock_class;
 
 		lockdep_set_class(&txq->lock, &iwl_txq_cmd_queue_lock_class);
-	}
+	पूर्ण
 
 	__skb_queue_head_init(&txq->overflow_q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void iwl_txq_free_tso_page(struct iwl_trans *trans, struct sk_buff *skb)
-{
-	struct page **page_ptr;
-	struct page *next;
+व्योम iwl_txq_मुक्त_tso_page(काष्ठा iwl_trans *trans, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा page **page_ptr;
+	काष्ठा page *next;
 
-	page_ptr = (void *)((u8 *)skb->cb + trans->txqs.page_offs);
+	page_ptr = (व्योम *)((u8 *)skb->cb + trans->txqs.page_offs);
 	next = *page_ptr;
-	*page_ptr = NULL;
+	*page_ptr = शून्य;
 
-	while (next) {
-		struct page *tmp = next;
+	जबतक (next) अणु
+		काष्ठा page *पंचांगp = next;
 
-		next = *(void **)(page_address(next) + PAGE_SIZE -
-				  sizeof(void *));
-		__free_page(tmp);
-	}
-}
+		next = *(व्योम **)(page_address(next) + PAGE_SIZE -
+				  माप(व्योम *));
+		__मुक्त_page(पंचांगp);
+	पूर्ण
+पूर्ण
 
-void iwl_txq_log_scd_error(struct iwl_trans *trans, struct iwl_txq *txq)
-{
+व्योम iwl_txq_log_scd_error(काष्ठा iwl_trans *trans, काष्ठा iwl_txq *txq)
+अणु
 	u32 txq_id = txq->id;
 	u32 status;
 	bool active;
-	u8 fifo;
+	u8 fअगरo;
 
-	if (trans->trans_cfg->use_tfh) {
+	अगर (trans->trans_cfg->use_tfh) अणु
 		IWL_ERR(trans, "Queue %d is stuck %d %d\n", txq_id,
-			txq->read_ptr, txq->write_ptr);
-		/* TODO: access new SCD registers and dump them */
-		return;
-	}
+			txq->पढ़ो_ptr, txq->ग_लिखो_ptr);
+		/* TODO: access new SCD रेजिस्टरs and dump them */
+		वापस;
+	पूर्ण
 
-	status = iwl_read_prph(trans, SCD_QUEUE_STATUS_BITS(txq_id));
-	fifo = (status >> SCD_QUEUE_STTS_REG_POS_TXF) & 0x7;
+	status = iwl_पढ़ो_prph(trans, SCD_QUEUE_STATUS_BITS(txq_id));
+	fअगरo = (status >> SCD_QUEUE_STTS_REG_POS_TXF) & 0x7;
 	active = !!(status & BIT(SCD_QUEUE_STTS_REG_POS_ACTIVE));
 
 	IWL_ERR(trans,
 		"Queue %d is %sactive on fifo %d and stuck for %u ms. SW [%d, %d] HW [%d, %d] FH TRB=0x0%x\n",
-		txq_id, active ? "" : "in", fifo,
-		jiffies_to_msecs(txq->wd_timeout),
-		txq->read_ptr, txq->write_ptr,
-		iwl_read_prph(trans, SCD_QUEUE_RDPTR(txq_id)) &
+		txq_id, active ? "" : "in", fअगरo,
+		jअगरfies_to_msecs(txq->wd_समयout),
+		txq->पढ़ो_ptr, txq->ग_लिखो_ptr,
+		iwl_पढ़ो_prph(trans, SCD_QUEUE_RDPTR(txq_id)) &
 			(trans->trans_cfg->base_params->max_tfd_queue_size - 1),
-			iwl_read_prph(trans, SCD_QUEUE_WRPTR(txq_id)) &
+			iwl_पढ़ो_prph(trans, SCD_QUEUE_WRPTR(txq_id)) &
 			(trans->trans_cfg->base_params->max_tfd_queue_size - 1),
-			iwl_read_direct32(trans, FH_TX_TRB_REG(fifo)));
-}
+			iwl_पढ़ो_direct32(trans, FH_TX_TRB_REG(fअगरo)));
+पूर्ण
 
-static void iwl_txq_stuck_timer(struct timer_list *t)
-{
-	struct iwl_txq *txq = from_timer(txq, t, stuck_timer);
-	struct iwl_trans *trans = txq->trans;
+अटल व्योम iwl_txq_stuck_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा iwl_txq *txq = from_समयr(txq, t, stuck_समयr);
+	काष्ठा iwl_trans *trans = txq->trans;
 
 	spin_lock(&txq->lock);
-	/* check if triggered erroneously */
-	if (txq->read_ptr == txq->write_ptr) {
+	/* check अगर triggered erroneously */
+	अगर (txq->पढ़ो_ptr == txq->ग_लिखो_ptr) अणु
 		spin_unlock(&txq->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock(&txq->lock);
 
 	iwl_txq_log_scd_error(trans, txq);
 
-	iwl_force_nmi(trans);
-}
+	iwl_क्रमce_nmi(trans);
+पूर्ण
 
-int iwl_txq_alloc(struct iwl_trans *trans, struct iwl_txq *txq, int slots_num,
+पूर्णांक iwl_txq_alloc(काष्ठा iwl_trans *trans, काष्ठा iwl_txq *txq, पूर्णांक slots_num,
 		  bool cmd_queue)
-{
-	size_t tfd_sz = trans->txqs.tfd.size *
+अणु
+	माप_प्रकार tfd_sz = trans->txqs.tfd.size *
 		trans->trans_cfg->base_params->max_tfd_queue_size;
-	size_t tb0_buf_sz;
-	int i;
+	माप_प्रकार tb0_buf_sz;
+	पूर्णांक i;
 
-	if (WARN_ON(txq->entries || txq->tfds))
-		return -EINVAL;
+	अगर (WARN_ON(txq->entries || txq->tfds))
+		वापस -EINVAL;
 
-	if (trans->trans_cfg->use_tfh)
+	अगर (trans->trans_cfg->use_tfh)
 		tfd_sz = trans->txqs.tfd.size * slots_num;
 
-	timer_setup(&txq->stuck_timer, iwl_txq_stuck_timer, 0);
+	समयr_setup(&txq->stuck_समयr, iwl_txq_stuck_समयr, 0);
 	txq->trans = trans;
 
-	txq->n_window = slots_num;
+	txq->n_winकरोw = slots_num;
 
-	txq->entries = kcalloc(slots_num,
-			       sizeof(struct iwl_pcie_txq_entry),
+	txq->entries = kसुस्मृति(slots_num,
+			       माप(काष्ठा iwl_pcie_txq_entry),
 			       GFP_KERNEL);
 
-	if (!txq->entries)
-		goto error;
+	अगर (!txq->entries)
+		जाओ error;
 
-	if (cmd_queue)
-		for (i = 0; i < slots_num; i++) {
+	अगर (cmd_queue)
+		क्रम (i = 0; i < slots_num; i++) अणु
 			txq->entries[i].cmd =
-				kmalloc(sizeof(struct iwl_device_cmd),
+				kदो_स्मृति(माप(काष्ठा iwl_device_cmd),
 					GFP_KERNEL);
-			if (!txq->entries[i].cmd)
-				goto error;
-		}
+			अगर (!txq->entries[i].cmd)
+				जाओ error;
+		पूर्ण
 
 	/* Circular buffer of transmit frame descriptors (TFDs),
 	 * shared with device */
 	txq->tfds = dma_alloc_coherent(trans->dev, tfd_sz,
 				       &txq->dma_addr, GFP_KERNEL);
-	if (!txq->tfds)
-		goto error;
+	अगर (!txq->tfds)
+		जाओ error;
 
-	BUILD_BUG_ON(sizeof(*txq->first_tb_bufs) != IWL_FIRST_TB_SIZE_ALIGN);
+	BUILD_BUG_ON(माप(*txq->first_tb_bufs) != IWL_FIRST_TB_SIZE_ALIGN);
 
-	tb0_buf_sz = sizeof(*txq->first_tb_bufs) * slots_num;
+	tb0_buf_sz = माप(*txq->first_tb_bufs) * slots_num;
 
 	txq->first_tb_bufs = dma_alloc_coherent(trans->dev, tb0_buf_sz,
 						&txq->first_tb_dma,
 						GFP_KERNEL);
-	if (!txq->first_tb_bufs)
-		goto err_free_tfds;
+	अगर (!txq->first_tb_bufs)
+		जाओ err_मुक्त_tfds;
 
-	return 0;
-err_free_tfds:
-	dma_free_coherent(trans->dev, tfd_sz, txq->tfds, txq->dma_addr);
+	वापस 0;
+err_मुक्त_tfds:
+	dma_मुक्त_coherent(trans->dev, tfd_sz, txq->tfds, txq->dma_addr);
 error:
-	if (txq->entries && cmd_queue)
-		for (i = 0; i < slots_num; i++)
-			kfree(txq->entries[i].cmd);
-	kfree(txq->entries);
-	txq->entries = NULL;
+	अगर (txq->entries && cmd_queue)
+		क्रम (i = 0; i < slots_num; i++)
+			kमुक्त(txq->entries[i].cmd);
+	kमुक्त(txq->entries);
+	txq->entries = शून्य;
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int iwl_txq_dyn_alloc_dma(struct iwl_trans *trans,
-				 struct iwl_txq **intxq, int size,
-				 unsigned int timeout)
-{
-	size_t bc_tbl_size, bc_tbl_entries;
-	struct iwl_txq *txq;
-	int ret;
+अटल पूर्णांक iwl_txq_dyn_alloc_dma(काष्ठा iwl_trans *trans,
+				 काष्ठा iwl_txq **पूर्णांकxq, पूर्णांक size,
+				 अचिन्हित पूर्णांक समयout)
+अणु
+	माप_प्रकार bc_tbl_size, bc_tbl_entries;
+	काष्ठा iwl_txq *txq;
+	पूर्णांक ret;
 
 	WARN_ON(!trans->txqs.bc_tbl_size);
 
 	bc_tbl_size = trans->txqs.bc_tbl_size;
-	bc_tbl_entries = bc_tbl_size / sizeof(u16);
+	bc_tbl_entries = bc_tbl_size / माप(u16);
 
-	if (WARN_ON(size > bc_tbl_entries))
-		return -EINVAL;
+	अगर (WARN_ON(size > bc_tbl_entries))
+		वापस -EINVAL;
 
-	txq = kzalloc(sizeof(*txq), GFP_KERNEL);
-	if (!txq)
-		return -ENOMEM;
+	txq = kzalloc(माप(*txq), GFP_KERNEL);
+	अगर (!txq)
+		वापस -ENOMEM;
 
 	txq->bc_tbl.addr = dma_pool_alloc(trans->txqs.bc_pool, GFP_KERNEL,
 					  &txq->bc_tbl.dma);
-	if (!txq->bc_tbl.addr) {
+	अगर (!txq->bc_tbl.addr) अणु
 		IWL_ERR(trans, "Scheduler BC Table allocation failed\n");
-		kfree(txq);
-		return -ENOMEM;
-	}
+		kमुक्त(txq);
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = iwl_txq_alloc(trans, txq, size, false);
-	if (ret) {
+	अगर (ret) अणु
 		IWL_ERR(trans, "Tx queue alloc failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	ret = iwl_txq_init(trans, txq, size, false);
-	if (ret) {
+	अगर (ret) अणु
 		IWL_ERR(trans, "Tx queue init failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	txq->wd_timeout = msecs_to_jiffies(timeout);
+	txq->wd_समयout = msecs_to_jअगरfies(समयout);
 
-	*intxq = txq;
-	return 0;
+	*पूर्णांकxq = txq;
+	वापस 0;
 
 error:
-	iwl_txq_gen2_free_memory(trans, txq);
-	return ret;
-}
+	iwl_txq_gen2_मुक्त_memory(trans, txq);
+	वापस ret;
+पूर्ण
 
-static int iwl_txq_alloc_response(struct iwl_trans *trans, struct iwl_txq *txq,
-				  struct iwl_host_cmd *hcmd)
-{
-	struct iwl_tx_queue_cfg_rsp *rsp;
-	int ret, qid;
+अटल पूर्णांक iwl_txq_alloc_response(काष्ठा iwl_trans *trans, काष्ठा iwl_txq *txq,
+				  काष्ठा iwl_host_cmd *hcmd)
+अणु
+	काष्ठा iwl_tx_queue_cfg_rsp *rsp;
+	पूर्णांक ret, qid;
 	u32 wr_ptr;
 
-	if (WARN_ON(iwl_rx_packet_payload_len(hcmd->resp_pkt) !=
-		    sizeof(*rsp))) {
+	अगर (WARN_ON(iwl_rx_packet_payload_len(hcmd->resp_pkt) !=
+		    माप(*rsp))) अणु
 		ret = -EINVAL;
-		goto error_free_resp;
-	}
+		जाओ error_मुक्त_resp;
+	पूर्ण
 
-	rsp = (void *)hcmd->resp_pkt->data;
+	rsp = (व्योम *)hcmd->resp_pkt->data;
 	qid = le16_to_cpu(rsp->queue_number);
-	wr_ptr = le16_to_cpu(rsp->write_pointer);
+	wr_ptr = le16_to_cpu(rsp->ग_लिखो_poपूर्णांकer);
 
-	if (qid >= ARRAY_SIZE(trans->txqs.txq)) {
+	अगर (qid >= ARRAY_SIZE(trans->txqs.txq)) अणु
 		WARN_ONCE(1, "queue index %d unsupported", qid);
 		ret = -EIO;
-		goto error_free_resp;
-	}
+		जाओ error_मुक्त_resp;
+	पूर्ण
 
-	if (test_and_set_bit(qid, trans->txqs.queue_used)) {
+	अगर (test_and_set_bit(qid, trans->txqs.queue_used)) अणु
 		WARN_ONCE(1, "queue %d already used", qid);
 		ret = -EIO;
-		goto error_free_resp;
-	}
+		जाओ error_मुक्त_resp;
+	पूर्ण
 
-	if (WARN_ONCE(trans->txqs.txq[qid],
-		      "queue %d already allocated\n", qid)) {
+	अगर (WARN_ONCE(trans->txqs.txq[qid],
+		      "queue %d already allocated\n", qid)) अणु
 		ret = -EIO;
-		goto error_free_resp;
-	}
+		जाओ error_मुक्त_resp;
+	पूर्ण
 
 	txq->id = qid;
 	trans->txqs.txq[qid] = txq;
 	wr_ptr &= (trans->trans_cfg->base_params->max_tfd_queue_size - 1);
 
 	/* Place first TFD at index corresponding to start sequence number */
-	txq->read_ptr = wr_ptr;
-	txq->write_ptr = wr_ptr;
+	txq->पढ़ो_ptr = wr_ptr;
+	txq->ग_लिखो_ptr = wr_ptr;
 
 	IWL_DEBUG_TX_QUEUES(trans, "Activate queue %d\n", qid);
 
-	iwl_free_resp(hcmd);
-	return qid;
+	iwl_मुक्त_resp(hcmd);
+	वापस qid;
 
-error_free_resp:
-	iwl_free_resp(hcmd);
-	iwl_txq_gen2_free_memory(trans, txq);
-	return ret;
-}
+error_मुक्त_resp:
+	iwl_मुक्त_resp(hcmd);
+	iwl_txq_gen2_मुक्त_memory(trans, txq);
+	वापस ret;
+पूर्ण
 
-int iwl_txq_dyn_alloc(struct iwl_trans *trans, __le16 flags, u8 sta_id, u8 tid,
-		      int cmd_id, int size, unsigned int timeout)
-{
-	struct iwl_txq *txq = NULL;
-	struct iwl_tx_queue_cfg_cmd cmd = {
+पूर्णांक iwl_txq_dyn_alloc(काष्ठा iwl_trans *trans, __le16 flags, u8 sta_id, u8 tid,
+		      पूर्णांक cmd_id, पूर्णांक size, अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा iwl_txq *txq = शून्य;
+	काष्ठा iwl_tx_queue_cfg_cmd cmd = अणु
 		.flags = flags,
 		.sta_id = sta_id,
 		.tid = tid,
-	};
-	struct iwl_host_cmd hcmd = {
+	पूर्ण;
+	काष्ठा iwl_host_cmd hcmd = अणु
 		.id = cmd_id,
-		.len = { sizeof(cmd) },
-		.data = { &cmd, },
+		.len = अणु माप(cmd) पूर्ण,
+		.data = अणु &cmd, पूर्ण,
 		.flags = CMD_WANT_SKB,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	ret = iwl_txq_dyn_alloc_dma(trans, &txq, size, timeout);
-	if (ret)
-		return ret;
+	ret = iwl_txq_dyn_alloc_dma(trans, &txq, size, समयout);
+	अगर (ret)
+		वापस ret;
 
 	cmd.tfdq_addr = cpu_to_le64(txq->dma_addr);
 	cmd.byte_cnt_addr = cpu_to_le64(txq->bc_tbl.dma);
 	cmd.cb_size = cpu_to_le32(TFD_QUEUE_CB_SIZE(size));
 
 	ret = iwl_trans_send_cmd(trans, &hcmd);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	return iwl_txq_alloc_response(trans, txq, &hcmd);
+	वापस iwl_txq_alloc_response(trans, txq, &hcmd);
 
 error:
-	iwl_txq_gen2_free_memory(trans, txq);
-	return ret;
-}
+	iwl_txq_gen2_मुक्त_memory(trans, txq);
+	वापस ret;
+पूर्ण
 
-void iwl_txq_dyn_free(struct iwl_trans *trans, int queue)
-{
-	if (WARN(queue >= IWL_MAX_TVQM_QUEUES,
+व्योम iwl_txq_dyn_मुक्त(काष्ठा iwl_trans *trans, पूर्णांक queue)
+अणु
+	अगर (WARN(queue >= IWL_MAX_TVQM_QUEUES,
 		 "queue %d out of range", queue))
-		return;
+		वापस;
 
 	/*
-	 * Upon HW Rfkill - we stop the device, and then stop the queues
-	 * in the op_mode. Just for the sake of the simplicity of the op_mode,
-	 * allow the op_mode to call txq_disable after it already called
+	 * Upon HW Rfसमाप्त - we stop the device, and then stop the queues
+	 * in the op_mode. Just क्रम the sake of the simplicity of the op_mode,
+	 * allow the op_mode to call txq_disable after it alपढ़ोy called
 	 * stop_device.
 	 */
-	if (!test_and_clear_bit(queue, trans->txqs.queue_used)) {
+	अगर (!test_and_clear_bit(queue, trans->txqs.queue_used)) अणु
 		WARN_ONCE(test_bit(STATUS_DEVICE_ENABLED, &trans->status),
 			  "queue %d not used", queue);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	iwl_txq_gen2_free(trans, queue);
+	iwl_txq_gen2_मुक्त(trans, queue);
 
 	IWL_DEBUG_TX_QUEUES(trans, "Deactivate queue %d\n", queue);
-}
+पूर्ण
 
-void iwl_txq_gen2_tx_free(struct iwl_trans *trans)
-{
-	int i;
+व्योम iwl_txq_gen2_tx_मुक्त(काष्ठा iwl_trans *trans)
+अणु
+	पूर्णांक i;
 
-	memset(trans->txqs.queue_used, 0, sizeof(trans->txqs.queue_used));
+	स_रखो(trans->txqs.queue_used, 0, माप(trans->txqs.queue_used));
 
 	/* Free all TX queues */
-	for (i = 0; i < ARRAY_SIZE(trans->txqs.txq); i++) {
-		if (!trans->txqs.txq[i])
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(trans->txqs.txq); i++) अणु
+		अगर (!trans->txqs.txq[i])
+			जारी;
 
-		iwl_txq_gen2_free(trans, i);
-	}
-}
+		iwl_txq_gen2_मुक्त(trans, i);
+	पूर्ण
+पूर्ण
 
-int iwl_txq_gen2_init(struct iwl_trans *trans, int txq_id, int queue_size)
-{
-	struct iwl_txq *queue;
-	int ret;
+पूर्णांक iwl_txq_gen2_init(काष्ठा iwl_trans *trans, पूर्णांक txq_id, पूर्णांक queue_size)
+अणु
+	काष्ठा iwl_txq *queue;
+	पूर्णांक ret;
 
 	/* alloc and init the tx queue */
-	if (!trans->txqs.txq[txq_id]) {
-		queue = kzalloc(sizeof(*queue), GFP_KERNEL);
-		if (!queue) {
+	अगर (!trans->txqs.txq[txq_id]) अणु
+		queue = kzalloc(माप(*queue), GFP_KERNEL);
+		अगर (!queue) अणु
 			IWL_ERR(trans, "Not enough memory for tx queue\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		trans->txqs.txq[txq_id] = queue;
 		ret = iwl_txq_alloc(trans, queue, queue_size, true);
-		if (ret) {
+		अगर (ret) अणु
 			IWL_ERR(trans, "Tx %d queue init failed\n", txq_id);
-			goto error;
-		}
-	} else {
+			जाओ error;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		queue = trans->txqs.txq[txq_id];
-	}
+	पूर्ण
 
 	ret = iwl_txq_init(trans, queue, queue_size,
 			   (txq_id == trans->txqs.cmd.q_id));
-	if (ret) {
+	अगर (ret) अणु
 		IWL_ERR(trans, "Tx %d queue alloc failed\n", txq_id);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	trans->txqs.txq[txq_id]->id = txq_id;
 	set_bit(txq_id, trans->txqs.queue_used);
 
-	return 0;
+	वापस 0;
 
 error:
-	iwl_txq_gen2_tx_free(trans);
-	return ret;
-}
+	iwl_txq_gen2_tx_मुक्त(trans);
+	वापस ret;
+पूर्ण
 
-static inline dma_addr_t iwl_txq_gen1_tfd_tb_get_addr(struct iwl_trans *trans,
-						      void *_tfd, u8 idx)
-{
-	struct iwl_tfd *tfd;
-	struct iwl_tfd_tb *tb;
+अटल अंतरभूत dma_addr_t iwl_txq_gen1_tfd_tb_get_addr(काष्ठा iwl_trans *trans,
+						      व्योम *_tfd, u8 idx)
+अणु
+	काष्ठा iwl_tfd *tfd;
+	काष्ठा iwl_tfd_tb *tb;
 	dma_addr_t addr;
 	dma_addr_t hi_len;
 
-	if (trans->trans_cfg->use_tfh) {
-		struct iwl_tfh_tfd *tfd = _tfd;
-		struct iwl_tfh_tb *tb = &tfd->tbs[idx];
+	अगर (trans->trans_cfg->use_tfh) अणु
+		काष्ठा iwl_tfh_tfd *tfd = _tfd;
+		काष्ठा iwl_tfh_tb *tb = &tfd->tbs[idx];
 
-		return (dma_addr_t)(le64_to_cpu(tb->addr));
-	}
+		वापस (dma_addr_t)(le64_to_cpu(tb->addr));
+	पूर्ण
 
 	tfd = _tfd;
 	tb = &tfd->tbs[idx];
 	addr = get_unaligned_le32(&tb->lo);
 
-	if (sizeof(dma_addr_t) <= sizeof(u32))
-		return addr;
+	अगर (माप(dma_addr_t) <= माप(u32))
+		वापस addr;
 
 	hi_len = le16_to_cpu(tb->hi_n_len) & 0xF;
 
 	/*
-	 * shift by 16 twice to avoid warnings on 32-bit
+	 * shअगरt by 16 twice to aव्योम warnings on 32-bit
 	 * (where this code never runs anyway due to the
-	 * if statement above)
+	 * अगर statement above)
 	 */
-	return addr | ((hi_len << 16) << 16);
-}
+	वापस addr | ((hi_len << 16) << 16);
+पूर्ण
 
-void iwl_txq_gen1_tfd_unmap(struct iwl_trans *trans,
-			    struct iwl_cmd_meta *meta,
-			    struct iwl_txq *txq, int index)
-{
-	int i, num_tbs;
-	void *tfd = iwl_txq_get_tfd(trans, txq, index);
+व्योम iwl_txq_gen1_tfd_unmap(काष्ठा iwl_trans *trans,
+			    काष्ठा iwl_cmd_meta *meta,
+			    काष्ठा iwl_txq *txq, पूर्णांक index)
+अणु
+	पूर्णांक i, num_tbs;
+	व्योम *tfd = iwl_txq_get_tfd(trans, txq, index);
 
 	/* Sanity check on number of chunks */
 	num_tbs = iwl_txq_gen1_tfd_get_num_tbs(trans, tfd);
 
-	if (num_tbs > trans->txqs.tfd.max_tbs) {
+	अगर (num_tbs > trans->txqs.tfd.max_tbs) अणु
 		IWL_ERR(trans, "Too many chunks: %i\n", num_tbs);
-		/* @todo issue fatal error, it is quite serious situation */
-		return;
-	}
+		/* @toकरो issue fatal error, it is quite serious situation */
+		वापस;
+	पूर्ण
 
-	/* first TB is never freed - it's the bidirectional DMA data */
+	/* first TB is never मुक्तd - it's the bidirectional DMA data */
 
-	for (i = 1; i < num_tbs; i++) {
-		if (meta->tbs & BIT(i))
+	क्रम (i = 1; i < num_tbs; i++) अणु
+		अगर (meta->tbs & BIT(i))
 			dma_unmap_page(trans->dev,
 				       iwl_txq_gen1_tfd_tb_get_addr(trans,
 								    tfd, i),
 				       iwl_txq_gen1_tfd_tb_get_len(trans,
 								   tfd, i),
 				       DMA_TO_DEVICE);
-		else
+		अन्यथा
 			dma_unmap_single(trans->dev,
 					 iwl_txq_gen1_tfd_tb_get_addr(trans,
 								      tfd, i),
 					 iwl_txq_gen1_tfd_tb_get_len(trans,
 								     tfd, i),
 					 DMA_TO_DEVICE);
-	}
+	पूर्ण
 
 	meta->tbs = 0;
 
-	if (trans->trans_cfg->use_tfh) {
-		struct iwl_tfh_tfd *tfd_fh = (void *)tfd;
+	अगर (trans->trans_cfg->use_tfh) अणु
+		काष्ठा iwl_tfh_tfd *tfd_fh = (व्योम *)tfd;
 
 		tfd_fh->num_tbs = 0;
-	} else {
-		struct iwl_tfd *tfd_fh = (void *)tfd;
+	पूर्ण अन्यथा अणु
+		काष्ठा iwl_tfd *tfd_fh = (व्योम *)tfd;
 
 		tfd_fh->num_tbs = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define IWL_TX_CRC_SIZE 4
-#define IWL_TX_DELIMITER_SIZE 4
+#घोषणा IWL_TX_CRC_SIZE 4
+#घोषणा IWL_TX_DELIMITER_SIZE 4
 
 /*
  * iwl_txq_gen1_update_byte_cnt_tbl - Set up entry in Tx byte-count array
  */
-void iwl_txq_gen1_update_byte_cnt_tbl(struct iwl_trans *trans,
-				      struct iwl_txq *txq, u16 byte_cnt,
-				      int num_tbs)
-{
-	struct iwlagn_scd_bc_tbl *scd_bc_tbl;
-	int write_ptr = txq->write_ptr;
-	int txq_id = txq->id;
+व्योम iwl_txq_gen1_update_byte_cnt_tbl(काष्ठा iwl_trans *trans,
+				      काष्ठा iwl_txq *txq, u16 byte_cnt,
+				      पूर्णांक num_tbs)
+अणु
+	काष्ठा iwlagn_scd_bc_tbl *scd_bc_tbl;
+	पूर्णांक ग_लिखो_ptr = txq->ग_लिखो_ptr;
+	पूर्णांक txq_id = txq->id;
 	u8 sec_ctl = 0;
 	u16 len = byte_cnt + IWL_TX_CRC_SIZE + IWL_TX_DELIMITER_SIZE;
 	__le16 bc_ent;
-	struct iwl_device_tx_cmd *dev_cmd = txq->entries[txq->write_ptr].cmd;
-	struct iwl_tx_cmd *tx_cmd = (void *)dev_cmd->payload;
+	काष्ठा iwl_device_tx_cmd *dev_cmd = txq->entries[txq->ग_लिखो_ptr].cmd;
+	काष्ठा iwl_tx_cmd *tx_cmd = (व्योम *)dev_cmd->payload;
 	u8 sta_id = tx_cmd->sta_id;
 
 	scd_bc_tbl = trans->txqs.scd_bc_tbls.addr;
 
 	sec_ctl = tx_cmd->sec_ctl;
 
-	switch (sec_ctl & TX_CMD_SEC_MSK) {
-	case TX_CMD_SEC_CCM:
+	चयन (sec_ctl & TX_CMD_SEC_MSK) अणु
+	हाल TX_CMD_SEC_CCM:
 		len += IEEE80211_CCMP_MIC_LEN;
-		break;
-	case TX_CMD_SEC_TKIP:
+		अवरोध;
+	हाल TX_CMD_SEC_TKIP:
 		len += IEEE80211_TKIP_ICV_LEN;
-		break;
-	case TX_CMD_SEC_WEP:
+		अवरोध;
+	हाल TX_CMD_SEC_WEP:
 		len += IEEE80211_WEP_IV_LEN + IEEE80211_WEP_ICV_LEN;
-		break;
-	}
-	if (trans->txqs.bc_table_dword)
+		अवरोध;
+	पूर्ण
+	अगर (trans->txqs.bc_table_dword)
 		len = DIV_ROUND_UP(len, 4);
 
-	if (WARN_ON(len > 0xFFF || write_ptr >= TFD_QUEUE_SIZE_MAX))
-		return;
+	अगर (WARN_ON(len > 0xFFF || ग_लिखो_ptr >= TFD_QUEUE_SIZE_MAX))
+		वापस;
 
 	bc_ent = cpu_to_le16(len | (sta_id << 12));
 
-	scd_bc_tbl[txq_id].tfd_offset[write_ptr] = bc_ent;
+	scd_bc_tbl[txq_id].tfd_offset[ग_लिखो_ptr] = bc_ent;
 
-	if (write_ptr < TFD_QUEUE_SIZE_BC_DUP)
-		scd_bc_tbl[txq_id].tfd_offset[TFD_QUEUE_SIZE_MAX + write_ptr] =
+	अगर (ग_लिखो_ptr < TFD_QUEUE_SIZE_BC_DUP)
+		scd_bc_tbl[txq_id].tfd_offset[TFD_QUEUE_SIZE_MAX + ग_लिखो_ptr] =
 			bc_ent;
-}
+पूर्ण
 
-void iwl_txq_gen1_inval_byte_cnt_tbl(struct iwl_trans *trans,
-				     struct iwl_txq *txq)
-{
-	struct iwlagn_scd_bc_tbl *scd_bc_tbl = trans->txqs.scd_bc_tbls.addr;
-	int txq_id = txq->id;
-	int read_ptr = txq->read_ptr;
+व्योम iwl_txq_gen1_inval_byte_cnt_tbl(काष्ठा iwl_trans *trans,
+				     काष्ठा iwl_txq *txq)
+अणु
+	काष्ठा iwlagn_scd_bc_tbl *scd_bc_tbl = trans->txqs.scd_bc_tbls.addr;
+	पूर्णांक txq_id = txq->id;
+	पूर्णांक पढ़ो_ptr = txq->पढ़ो_ptr;
 	u8 sta_id = 0;
 	__le16 bc_ent;
-	struct iwl_device_tx_cmd *dev_cmd = txq->entries[read_ptr].cmd;
-	struct iwl_tx_cmd *tx_cmd = (void *)dev_cmd->payload;
+	काष्ठा iwl_device_tx_cmd *dev_cmd = txq->entries[पढ़ो_ptr].cmd;
+	काष्ठा iwl_tx_cmd *tx_cmd = (व्योम *)dev_cmd->payload;
 
-	WARN_ON(read_ptr >= TFD_QUEUE_SIZE_MAX);
+	WARN_ON(पढ़ो_ptr >= TFD_QUEUE_SIZE_MAX);
 
-	if (txq_id != trans->txqs.cmd.q_id)
+	अगर (txq_id != trans->txqs.cmd.q_id)
 		sta_id = tx_cmd->sta_id;
 
 	bc_ent = cpu_to_le16(1 | (sta_id << 12));
 
-	scd_bc_tbl[txq_id].tfd_offset[read_ptr] = bc_ent;
+	scd_bc_tbl[txq_id].tfd_offset[पढ़ो_ptr] = bc_ent;
 
-	if (read_ptr < TFD_QUEUE_SIZE_BC_DUP)
-		scd_bc_tbl[txq_id].tfd_offset[TFD_QUEUE_SIZE_MAX + read_ptr] =
+	अगर (पढ़ो_ptr < TFD_QUEUE_SIZE_BC_DUP)
+		scd_bc_tbl[txq_id].tfd_offset[TFD_QUEUE_SIZE_MAX + पढ़ो_ptr] =
 			bc_ent;
-}
+पूर्ण
 
 /*
- * iwl_txq_free_tfd - Free all chunks referenced by TFD [txq->q.read_ptr]
- * @trans - transport private data
+ * iwl_txq_मुक्त_tfd - Free all chunks referenced by TFD [txq->q.पढ़ो_ptr]
+ * @trans - transport निजी data
  * @txq - tx queue
  * @dma_dir - the direction of the DMA mapping
  *
- * Does NOT advance any TFD circular buffer read/write indexes
- * Does NOT free the TFD itself (which is within circular buffer)
+ * Does NOT advance any TFD circular buffer पढ़ो/ग_लिखो indexes
+ * Does NOT मुक्त the TFD itself (which is within circular buffer)
  */
-void iwl_txq_free_tfd(struct iwl_trans *trans, struct iwl_txq *txq)
-{
+व्योम iwl_txq_मुक्त_tfd(काष्ठा iwl_trans *trans, काष्ठा iwl_txq *txq)
+अणु
 	/* rd_ptr is bounded by TFD_QUEUE_SIZE_MAX and
-	 * idx is bounded by n_window
+	 * idx is bounded by n_winकरोw
 	 */
-	int rd_ptr = txq->read_ptr;
-	int idx = iwl_txq_get_cmd_index(txq, rd_ptr);
-	struct sk_buff *skb;
+	पूर्णांक rd_ptr = txq->पढ़ो_ptr;
+	पूर्णांक idx = iwl_txq_get_cmd_index(txq, rd_ptr);
+	काष्ठा sk_buff *skb;
 
-	lockdep_assert_held(&txq->lock);
+	lockdep_निश्चित_held(&txq->lock);
 
-	if (!txq->entries)
-		return;
+	अगर (!txq->entries)
+		वापस;
 
-	/* We have only q->n_window txq->entries, but we use
+	/* We have only q->n_winकरोw txq->entries, but we use
 	 * TFD_QUEUE_SIZE_MAX tfds
 	 */
 	iwl_txq_gen1_tfd_unmap(trans, &txq->entries[idx].meta, txq, rd_ptr);
 
-	/* free SKB */
+	/* मुक्त SKB */
 	skb = txq->entries[idx].skb;
 
 	/* Can be called from irqs-disabled context
-	 * If skb is not NULL, it means that the whole queue is being
-	 * freed and that the queue is not empty - free the skb
+	 * If skb is not शून्य, it means that the whole queue is being
+	 * मुक्तd and that the queue is not empty - मुक्त the skb
 	 */
-	if (skb) {
-		iwl_op_mode_free_skb(trans->op_mode, skb);
-		txq->entries[idx].skb = NULL;
-	}
-}
+	अगर (skb) अणु
+		iwl_op_mode_मुक्त_skb(trans->op_mode, skb);
+		txq->entries[idx].skb = शून्य;
+	पूर्ण
+पूर्ण
 
-void iwl_txq_progress(struct iwl_txq *txq)
-{
-	lockdep_assert_held(&txq->lock);
+व्योम iwl_txq_progress(काष्ठा iwl_txq *txq)
+अणु
+	lockdep_निश्चित_held(&txq->lock);
 
-	if (!txq->wd_timeout)
-		return;
+	अगर (!txq->wd_समयout)
+		वापस;
 
 	/*
 	 * station is asleep and we send data - that must
-	 * be uAPSD or PS-Poll. Don't rearm the timer.
+	 * be uAPSD or PS-Poll. Don't rearm the समयr.
 	 */
-	if (txq->frozen)
-		return;
+	अगर (txq->frozen)
+		वापस;
 
 	/*
-	 * if empty delete timer, otherwise move timer forward
+	 * अगर empty delete समयr, otherwise move समयr क्रमward
 	 * since we're making progress on this queue
 	 */
-	if (txq->read_ptr == txq->write_ptr)
-		del_timer(&txq->stuck_timer);
-	else
-		mod_timer(&txq->stuck_timer, jiffies + txq->wd_timeout);
-}
+	अगर (txq->पढ़ो_ptr == txq->ग_लिखो_ptr)
+		del_समयr(&txq->stuck_समयr);
+	अन्यथा
+		mod_समयr(&txq->stuck_समयr, jअगरfies + txq->wd_समयout);
+पूर्ण
 
 /* Frees buffers until index _not_ inclusive */
-void iwl_txq_reclaim(struct iwl_trans *trans, int txq_id, int ssn,
-		     struct sk_buff_head *skbs)
-{
-	struct iwl_txq *txq = trans->txqs.txq[txq_id];
-	int tfd_num = iwl_txq_get_cmd_index(txq, ssn);
-	int read_ptr = iwl_txq_get_cmd_index(txq, txq->read_ptr);
-	int last_to_free;
+व्योम iwl_txq_reclaim(काष्ठा iwl_trans *trans, पूर्णांक txq_id, पूर्णांक ssn,
+		     काष्ठा sk_buff_head *skbs)
+अणु
+	काष्ठा iwl_txq *txq = trans->txqs.txq[txq_id];
+	पूर्णांक tfd_num = iwl_txq_get_cmd_index(txq, ssn);
+	पूर्णांक पढ़ो_ptr = iwl_txq_get_cmd_index(txq, txq->पढ़ो_ptr);
+	पूर्णांक last_to_मुक्त;
 
 	/* This function is not meant to release cmd queue*/
-	if (WARN_ON(txq_id == trans->txqs.cmd.q_id))
-		return;
+	अगर (WARN_ON(txq_id == trans->txqs.cmd.q_id))
+		वापस;
 
 	spin_lock_bh(&txq->lock);
 
-	if (!test_bit(txq_id, trans->txqs.queue_used)) {
+	अगर (!test_bit(txq_id, trans->txqs.queue_used)) अणु
 		IWL_DEBUG_TX_QUEUES(trans, "Q %d inactive - ignoring idx %d\n",
 				    txq_id, ssn);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (read_ptr == tfd_num)
-		goto out;
+	अगर (पढ़ो_ptr == tfd_num)
+		जाओ out;
 
 	IWL_DEBUG_TX_REPLY(trans, "[Q %d] %d -> %d (%d)\n",
-			   txq_id, txq->read_ptr, tfd_num, ssn);
+			   txq_id, txq->पढ़ो_ptr, tfd_num, ssn);
 
-	/*Since we free until index _not_ inclusive, the one before index is
-	 * the last we will free. This one must be used */
-	last_to_free = iwl_txq_dec_wrap(trans, tfd_num);
+	/*Since we मुक्त until index _not_ inclusive, the one beक्रमe index is
+	 * the last we will मुक्त. This one must be used */
+	last_to_मुक्त = iwl_txq_dec_wrap(trans, tfd_num);
 
-	if (!iwl_txq_used(txq, last_to_free)) {
+	अगर (!iwl_txq_used(txq, last_to_मुक्त)) अणु
 		IWL_ERR(trans,
 			"%s: Read index for txq id (%d), last_to_free %d is out of range [0-%d] %d %d.\n",
-			__func__, txq_id, last_to_free,
+			__func__, txq_id, last_to_मुक्त,
 			trans->trans_cfg->base_params->max_tfd_queue_size,
-			txq->write_ptr, txq->read_ptr);
+			txq->ग_लिखो_ptr, txq->पढ़ो_ptr);
 
-		iwl_op_mode_time_point(trans->op_mode,
+		iwl_op_mode_समय_poपूर्णांक(trans->op_mode,
 				       IWL_FW_INI_TIME_POINT_FAKE_TX,
-				       NULL);
-		goto out;
-	}
+				       शून्य);
+		जाओ out;
+	पूर्ण
 
-	if (WARN_ON(!skb_queue_empty(skbs)))
-		goto out;
+	अगर (WARN_ON(!skb_queue_empty(skbs)))
+		जाओ out;
 
-	for (;
-	     read_ptr != tfd_num;
-	     txq->read_ptr = iwl_txq_inc_wrap(trans, txq->read_ptr),
-	     read_ptr = iwl_txq_get_cmd_index(txq, txq->read_ptr)) {
-		struct sk_buff *skb = txq->entries[read_ptr].skb;
+	क्रम (;
+	     पढ़ो_ptr != tfd_num;
+	     txq->पढ़ो_ptr = iwl_txq_inc_wrap(trans, txq->पढ़ो_ptr),
+	     पढ़ो_ptr = iwl_txq_get_cmd_index(txq, txq->पढ़ो_ptr)) अणु
+		काष्ठा sk_buff *skb = txq->entries[पढ़ो_ptr].skb;
 
-		if (WARN_ON_ONCE(!skb))
-			continue;
+		अगर (WARN_ON_ONCE(!skb))
+			जारी;
 
-		iwl_txq_free_tso_page(trans, skb);
+		iwl_txq_मुक्त_tso_page(trans, skb);
 
 		__skb_queue_tail(skbs, skb);
 
-		txq->entries[read_ptr].skb = NULL;
+		txq->entries[पढ़ो_ptr].skb = शून्य;
 
-		if (!trans->trans_cfg->use_tfh)
+		अगर (!trans->trans_cfg->use_tfh)
 			iwl_txq_gen1_inval_byte_cnt_tbl(trans, txq);
 
-		iwl_txq_free_tfd(trans, txq);
-	}
+		iwl_txq_मुक्त_tfd(trans, txq);
+	पूर्ण
 
 	iwl_txq_progress(txq);
 
-	if (iwl_txq_space(trans, txq) > txq->low_mark &&
-	    test_bit(txq_id, trans->txqs.queue_stopped)) {
-		struct sk_buff_head overflow_skbs;
+	अगर (iwl_txq_space(trans, txq) > txq->low_mark &&
+	    test_bit(txq_id, trans->txqs.queue_stopped)) अणु
+		काष्ठा sk_buff_head overflow_skbs;
 
 		__skb_queue_head_init(&overflow_skbs);
 		skb_queue_splice_init(&txq->overflow_q, &overflow_skbs);
 
 		/*
 		 * We are going to transmit from the overflow queue.
-		 * Remember this state so that wait_for_txq_empty will know we
+		 * Remember this state so that रुको_क्रम_txq_empty will know we
 		 * are adding more packets to the TFD queue. It cannot rely on
 		 * the state of &txq->overflow_q, as we just emptied it, but
 		 * haven't TXed the content yet.
@@ -1612,135 +1613,135 @@ void iwl_txq_reclaim(struct iwl_trans *trans, int txq_id, int ssn,
 		 */
 		spin_unlock_bh(&txq->lock);
 
-		while (!skb_queue_empty(&overflow_skbs)) {
-			struct sk_buff *skb = __skb_dequeue(&overflow_skbs);
-			struct iwl_device_tx_cmd *dev_cmd_ptr;
+		जबतक (!skb_queue_empty(&overflow_skbs)) अणु
+			काष्ठा sk_buff *skb = __skb_dequeue(&overflow_skbs);
+			काष्ठा iwl_device_tx_cmd *dev_cmd_ptr;
 
-			dev_cmd_ptr = *(void **)((u8 *)skb->cb +
+			dev_cmd_ptr = *(व्योम **)((u8 *)skb->cb +
 						 trans->txqs.dev_cmd_offs);
 
 			/*
 			 * Note that we can very well be overflowing again.
-			 * In that case, iwl_txq_space will be small again
+			 * In that हाल, iwl_txq_space will be small again
 			 * and we won't wake mac80211's queue.
 			 */
 			iwl_trans_tx(trans, skb, dev_cmd_ptr, txq_id);
-		}
+		पूर्ण
 
-		if (iwl_txq_space(trans, txq) > txq->low_mark)
+		अगर (iwl_txq_space(trans, txq) > txq->low_mark)
 			iwl_wake_queue(trans, txq);
 
 		spin_lock_bh(&txq->lock);
 		txq->overflow_tx = false;
-	}
+	पूर्ण
 
 out:
 	spin_unlock_bh(&txq->lock);
-}
+पूर्ण
 
-/* Set wr_ptr of specific device and txq  */
-void iwl_txq_set_q_ptrs(struct iwl_trans *trans, int txq_id, int ptr)
-{
-	struct iwl_txq *txq = trans->txqs.txq[txq_id];
+/* Set wr_ptr of specअगरic device and txq  */
+व्योम iwl_txq_set_q_ptrs(काष्ठा iwl_trans *trans, पूर्णांक txq_id, पूर्णांक ptr)
+अणु
+	काष्ठा iwl_txq *txq = trans->txqs.txq[txq_id];
 
 	spin_lock_bh(&txq->lock);
 
-	txq->write_ptr = ptr;
-	txq->read_ptr = txq->write_ptr;
+	txq->ग_लिखो_ptr = ptr;
+	txq->पढ़ो_ptr = txq->ग_लिखो_ptr;
 
 	spin_unlock_bh(&txq->lock);
-}
+पूर्ण
 
-void iwl_trans_txq_freeze_timer(struct iwl_trans *trans, unsigned long txqs,
-				bool freeze)
-{
-	int queue;
+व्योम iwl_trans_txq_मुक्तze_समयr(काष्ठा iwl_trans *trans, अचिन्हित दीर्घ txqs,
+				bool मुक्तze)
+अणु
+	पूर्णांक queue;
 
-	for_each_set_bit(queue, &txqs, BITS_PER_LONG) {
-		struct iwl_txq *txq = trans->txqs.txq[queue];
-		unsigned long now;
+	क्रम_each_set_bit(queue, &txqs, BITS_PER_LONG) अणु
+		काष्ठा iwl_txq *txq = trans->txqs.txq[queue];
+		अचिन्हित दीर्घ now;
 
 		spin_lock_bh(&txq->lock);
 
-		now = jiffies;
+		now = jअगरfies;
 
-		if (txq->frozen == freeze)
-			goto next_queue;
+		अगर (txq->frozen == मुक्तze)
+			जाओ next_queue;
 
 		IWL_DEBUG_TX_QUEUES(trans, "%s TXQ %d\n",
-				    freeze ? "Freezing" : "Waking", queue);
+				    मुक्तze ? "Freezing" : "Waking", queue);
 
-		txq->frozen = freeze;
+		txq->frozen = मुक्तze;
 
-		if (txq->read_ptr == txq->write_ptr)
-			goto next_queue;
+		अगर (txq->पढ़ो_ptr == txq->ग_लिखो_ptr)
+			जाओ next_queue;
 
-		if (freeze) {
-			if (unlikely(time_after(now,
-						txq->stuck_timer.expires))) {
+		अगर (मुक्तze) अणु
+			अगर (unlikely(समय_after(now,
+						txq->stuck_समयr.expires))) अणु
 				/*
-				 * The timer should have fired, maybe it is
+				 * The समयr should have fired, maybe it is
 				 * spinning right now on the lock.
 				 */
-				goto next_queue;
-			}
-			/* remember how long until the timer fires */
-			txq->frozen_expiry_remainder =
-				txq->stuck_timer.expires - now;
-			del_timer(&txq->stuck_timer);
-			goto next_queue;
-		}
+				जाओ next_queue;
+			पूर्ण
+			/* remember how दीर्घ until the समयr fires */
+			txq->frozen_expiry_reमुख्यder =
+				txq->stuck_समयr.expires - now;
+			del_समयr(&txq->stuck_समयr);
+			जाओ next_queue;
+		पूर्ण
 
 		/*
-		 * Wake a non-empty queue -> arm timer with the
-		 * remainder before it froze
+		 * Wake a non-empty queue -> arm समयr with the
+		 * reमुख्यder beक्रमe it froze
 		 */
-		mod_timer(&txq->stuck_timer,
-			  now + txq->frozen_expiry_remainder);
+		mod_समयr(&txq->stuck_समयr,
+			  now + txq->frozen_expiry_reमुख्यder);
 
 next_queue:
 		spin_unlock_bh(&txq->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define HOST_COMPLETE_TIMEOUT	(2 * HZ)
+#घोषणा HOST_COMPLETE_TIMEOUT	(2 * HZ)
 
-static int iwl_trans_txq_send_hcmd_sync(struct iwl_trans *trans,
-					struct iwl_host_cmd *cmd)
-{
-	const char *cmd_str = iwl_get_cmd_string(trans, cmd->id);
-	struct iwl_txq *txq = trans->txqs.txq[trans->txqs.cmd.q_id];
-	int cmd_idx;
-	int ret;
+अटल पूर्णांक iwl_trans_txq_send_hcmd_sync(काष्ठा iwl_trans *trans,
+					काष्ठा iwl_host_cmd *cmd)
+अणु
+	स्थिर अक्षर *cmd_str = iwl_get_cmd_string(trans, cmd->id);
+	काष्ठा iwl_txq *txq = trans->txqs.txq[trans->txqs.cmd.q_id];
+	पूर्णांक cmd_idx;
+	पूर्णांक ret;
 
 	IWL_DEBUG_INFO(trans, "Attempting to send sync command %s\n", cmd_str);
 
-	if (WARN(test_and_set_bit(STATUS_SYNC_HCMD_ACTIVE,
+	अगर (WARN(test_and_set_bit(STATUS_SYNC_HCMD_ACTIVE,
 				  &trans->status),
 		 "Command %s: a command is already active!\n", cmd_str))
-		return -EIO;
+		वापस -EIO;
 
 	IWL_DEBUG_INFO(trans, "Setting HCMD_ACTIVE for command %s\n", cmd_str);
 
 	cmd_idx = trans->ops->send_cmd(trans, cmd);
-	if (cmd_idx < 0) {
+	अगर (cmd_idx < 0) अणु
 		ret = cmd_idx;
 		clear_bit(STATUS_SYNC_HCMD_ACTIVE, &trans->status);
 		IWL_ERR(trans, "Error sending %s: enqueue_hcmd failed: %d\n",
 			cmd_str, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = wait_event_timeout(trans->wait_command_queue,
+	ret = रुको_event_समयout(trans->रुको_command_queue,
 				 !test_bit(STATUS_SYNC_HCMD_ACTIVE,
 					   &trans->status),
 				 HOST_COMPLETE_TIMEOUT);
-	if (!ret) {
+	अगर (!ret) अणु
 		IWL_ERR(trans, "Error sending %s: time out after %dms.\n",
-			cmd_str, jiffies_to_msecs(HOST_COMPLETE_TIMEOUT));
+			cmd_str, jअगरfies_to_msecs(HOST_COMPLETE_TIMEOUT));
 
 		IWL_ERR(trans, "Current CMD queue read_ptr %d write_ptr %d\n",
-			txq->read_ptr, txq->write_ptr);
+			txq->पढ़ो_ptr, txq->ग_लिखो_ptr);
 
 		clear_bit(STATUS_SYNC_HCMD_ACTIVE, &trans->status);
 		IWL_DEBUG_INFO(trans, "Clearing HCMD_ACTIVE for command %s\n",
@@ -1748,87 +1749,87 @@ static int iwl_trans_txq_send_hcmd_sync(struct iwl_trans *trans,
 		ret = -ETIMEDOUT;
 
 		iwl_trans_sync_nmi(trans);
-		goto cancel;
-	}
+		जाओ cancel;
+	पूर्ण
 
-	if (test_bit(STATUS_FW_ERROR, &trans->status)) {
+	अगर (test_bit(STATUS_FW_ERROR, &trans->status)) अणु
 		IWL_ERR(trans, "FW error in SYNC CMD %s\n", cmd_str);
 		dump_stack();
 		ret = -EIO;
-		goto cancel;
-	}
+		जाओ cancel;
+	पूर्ण
 
-	if (!(cmd->flags & CMD_SEND_IN_RFKILL) &&
-	    test_bit(STATUS_RFKILL_OPMODE, &trans->status)) {
+	अगर (!(cmd->flags & CMD_SEND_IN_RFKILL) &&
+	    test_bit(STATUS_RFKILL_OPMODE, &trans->status)) अणु
 		IWL_DEBUG_RF_KILL(trans, "RFKILL in SYNC CMD... no rsp\n");
 		ret = -ERFKILL;
-		goto cancel;
-	}
+		जाओ cancel;
+	पूर्ण
 
-	if ((cmd->flags & CMD_WANT_SKB) && !cmd->resp_pkt) {
+	अगर ((cmd->flags & CMD_WANT_SKB) && !cmd->resp_pkt) अणु
 		IWL_ERR(trans, "Error: Response NULL in '%s'\n", cmd_str);
 		ret = -EIO;
-		goto cancel;
-	}
+		जाओ cancel;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cancel:
-	if (cmd->flags & CMD_WANT_SKB) {
+	अगर (cmd->flags & CMD_WANT_SKB) अणु
 		/*
-		 * Cancel the CMD_WANT_SKB flag for the cmd in the
-		 * TX cmd queue. Otherwise in case the cmd comes
+		 * Cancel the CMD_WANT_SKB flag क्रम the cmd in the
+		 * TX cmd queue. Otherwise in हाल the cmd comes
 		 * in later, it will possibly set an invalid
 		 * address (cmd->meta.source).
 		 */
 		txq->entries[cmd_idx].meta.flags &= ~CMD_WANT_SKB;
-	}
+	पूर्ण
 
-	if (cmd->resp_pkt) {
-		iwl_free_resp(cmd);
-		cmd->resp_pkt = NULL;
-	}
+	अगर (cmd->resp_pkt) अणु
+		iwl_मुक्त_resp(cmd);
+		cmd->resp_pkt = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int iwl_trans_txq_send_hcmd(struct iwl_trans *trans,
-			    struct iwl_host_cmd *cmd)
-{
+पूर्णांक iwl_trans_txq_send_hcmd(काष्ठा iwl_trans *trans,
+			    काष्ठा iwl_host_cmd *cmd)
+अणु
 	/* Make sure the NIC is still alive in the bus */
-	if (test_bit(STATUS_TRANS_DEAD, &trans->status))
-		return -ENODEV;
+	अगर (test_bit(STATUS_TRANS_DEAD, &trans->status))
+		वापस -ENODEV;
 
-	if (!(cmd->flags & CMD_SEND_IN_RFKILL) &&
-	    test_bit(STATUS_RFKILL_OPMODE, &trans->status)) {
+	अगर (!(cmd->flags & CMD_SEND_IN_RFKILL) &&
+	    test_bit(STATUS_RFKILL_OPMODE, &trans->status)) अणु
 		IWL_DEBUG_RF_KILL(trans, "Dropping CMD 0x%x: RF KILL\n",
 				  cmd->id);
-		return -ERFKILL;
-	}
+		वापस -ERFKILL;
+	पूर्ण
 
-	if (unlikely(trans->system_pm_mode == IWL_PLAT_PM_MODE_D3 &&
-		     !(cmd->flags & CMD_SEND_IN_D3))) {
+	अगर (unlikely(trans->प्रणाली_pm_mode == IWL_PLAT_PM_MODE_D3 &&
+		     !(cmd->flags & CMD_SEND_IN_D3))) अणु
 		IWL_DEBUG_WOWLAN(trans, "Dropping CMD 0x%x: D3\n", cmd->id);
-		return -EHOSTDOWN;
-	}
+		वापस -EHOSTDOWN;
+	पूर्ण
 
-	if (cmd->flags & CMD_ASYNC) {
-		int ret;
+	अगर (cmd->flags & CMD_ASYNC) अणु
+		पूर्णांक ret;
 
 		/* An asynchronous command can not expect an SKB to be set. */
-		if (WARN_ON(cmd->flags & CMD_WANT_SKB))
-			return -EINVAL;
+		अगर (WARN_ON(cmd->flags & CMD_WANT_SKB))
+			वापस -EINVAL;
 
 		ret = trans->ops->send_cmd(trans, cmd);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			IWL_ERR(trans,
 				"Error sending %s: enqueue_hcmd failed: %d\n",
 				iwl_get_cmd_string(trans, cmd->id), ret);
-			return ret;
-		}
-		return 0;
-	}
+			वापस ret;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	return iwl_trans_txq_send_hcmd_sync(trans, cmd);
-}
+	वापस iwl_trans_txq_send_hcmd_sync(trans, cmd);
+पूर्ण
 

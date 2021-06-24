@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright IBM Corp.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of version 2.1 of the GNU Lesser General Public License
  * as published by the Free Software Foundation.
  *
@@ -11,226 +12,226 @@
  *
  */
 
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/ptrace.h>
-#include <sys/syscall.h>
-#include <ucontext.h>
-#include <unistd.h>
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <संकेत.स>
+#समावेश <मानकतर्क.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/ptrace.h>
+#समावेश <sys/syscall.h>
+#समावेश <ucontext.h>
+#समावेश <unistd.h>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-char *file_name;
+अक्षर *file_name;
 
-int in_test;
-volatile int faulted;
-volatile void *dar;
-int errors;
+पूर्णांक in_test;
+अस्थिर पूर्णांक faulted;
+अस्थिर व्योम *dar;
+पूर्णांक errors;
 
-static void segv(int signum, siginfo_t *info, void *ctxt_v)
-{
+अटल व्योम segv(पूर्णांक signum, siginfo_t *info, व्योम *ctxt_v)
+अणु
 	ucontext_t *ctxt = (ucontext_t *)ctxt_v;
-	struct pt_regs *regs = ctxt->uc_mcontext.regs;
+	काष्ठा pt_regs *regs = ctxt->uc_mcontext.regs;
 
-	if (!in_test) {
-		fprintf(stderr, "Segfault outside of test !\n");
-		exit(1);
-	}
+	अगर (!in_test) अणु
+		ख_लिखो(मानक_त्रुटि, "Segfault outside of test !\n");
+		निकास(1);
+	पूर्ण
 
 	faulted = 1;
-	dar = (void *)regs->dar;
+	dar = (व्योम *)regs->dar;
 	regs->nip += 4;
-}
+पूर्ण
 
-static inline void do_read(const volatile void *addr)
-{
-	int ret;
+अटल अंतरभूत व्योम करो_पढ़ो(स्थिर अस्थिर व्योम *addr)
+अणु
+	पूर्णांक ret;
 
-	asm volatile("lwz %0,0(%1); twi 0,%0,0; isync;\n"
+	यंत्र अस्थिर("lwz %0,0(%1); twi 0,%0,0; isync;\n"
 		     : "=r" (ret) : "r" (addr) : "memory");
-}
+पूर्ण
 
-static inline void do_write(const volatile void *addr)
-{
-	int val = 0x1234567;
+अटल अंतरभूत व्योम करो_ग_लिखो(स्थिर अस्थिर व्योम *addr)
+अणु
+	पूर्णांक val = 0x1234567;
 
-	asm volatile("stw %0,0(%1); sync; \n"
+	यंत्र अस्थिर("stw %0,0(%1); sync; \n"
 		     : : "r" (val), "r" (addr) : "memory");
-}
+पूर्ण
 
-static inline void check_faulted(void *addr, long page, long subpage, int write)
-{
-	int want_fault = (subpage == ((page + 3) % 16));
+अटल अंतरभूत व्योम check_faulted(व्योम *addr, दीर्घ page, दीर्घ subpage, पूर्णांक ग_लिखो)
+अणु
+	पूर्णांक want_fault = (subpage == ((page + 3) % 16));
 
-	if (write)
+	अगर (ग_लिखो)
 		want_fault |= (subpage == ((page + 1) % 16));
 
-	if (faulted != want_fault) {
-		printf("Failed at %p (p=%ld,sp=%ld,w=%d), want=%s, got=%s !\n",
-		       addr, page, subpage, write,
+	अगर (faulted != want_fault) अणु
+		म_लिखो("Failed at %p (p=%ld,sp=%ld,w=%d), want=%s, got=%s !\n",
+		       addr, page, subpage, ग_लिखो,
 		       want_fault ? "fault" : "pass",
 		       faulted ? "fault" : "pass");
 		++errors;
-	}
+	पूर्ण
 
-	if (faulted) {
-		if (dar != addr) {
-			printf("Fault expected at %p and happened at %p !\n",
+	अगर (faulted) अणु
+		अगर (dar != addr) अणु
+			म_लिखो("Fault expected at %p and happened at %p !\n",
 			       addr, dar);
-		}
+		पूर्ण
 		faulted = 0;
-		asm volatile("sync" : : : "memory");
-	}
-}
+		यंत्र अस्थिर("sync" : : : "memory");
+	पूर्ण
+पूर्ण
 
-static int run_test(void *addr, unsigned long size)
-{
-	unsigned int *map;
-	long i, j, pages, err;
+अटल पूर्णांक run_test(व्योम *addr, अचिन्हित दीर्घ size)
+अणु
+	अचिन्हित पूर्णांक *map;
+	दीर्घ i, j, pages, err;
 
 	pages = size / 0x10000;
-	map = malloc(pages * 4);
-	assert(map);
+	map = दो_स्मृति(pages * 4);
+	निश्चित(map);
 
 	/*
-	 * for each page, mark subpage i % 16 read only and subpage
+	 * क्रम each page, mark subpage i % 16 पढ़ो only and subpage
 	 * (i + 3) % 16 inaccessible
 	 */
-	for (i = 0; i < pages; i++) {
+	क्रम (i = 0; i < pages; i++) अणु
 		map[i] = (0x40000000 >> (((i + 1) * 2) % 32)) |
 			(0xc0000000 >> (((i + 3) * 2) % 32));
-	}
+	पूर्ण
 
 	err = syscall(__NR_subpage_prot, addr, size, map);
-	if (err) {
-		perror("subpage_perm");
-		return 1;
-	}
-	free(map);
+	अगर (err) अणु
+		लिखो_त्रुटि("subpage_perm");
+		वापस 1;
+	पूर्ण
+	मुक्त(map);
 
 	in_test = 1;
 	errors = 0;
-	for (i = 0; i < pages; i++) {
-		for (j = 0; j < 16; j++, addr += 0x1000) {
-			do_read(addr);
+	क्रम (i = 0; i < pages; i++) अणु
+		क्रम (j = 0; j < 16; j++, addr += 0x1000) अणु
+			करो_पढ़ो(addr);
 			check_faulted(addr, i, j, 0);
-			do_write(addr);
+			करो_ग_लिखो(addr);
 			check_faulted(addr, i, j, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	in_test = 0;
-	if (errors) {
-		printf("%d errors detected\n", errors);
-		return 1;
-	}
+	अगर (errors) अणु
+		म_लिखो("%d errors detected\n", errors);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int syscall_available(void)
-{
-	int rc;
+अटल पूर्णांक syscall_available(व्योम)
+अणु
+	पूर्णांक rc;
 
-	errno = 0;
+	त्रुटि_सं = 0;
 	rc = syscall(__NR_subpage_prot, 0, 0, 0);
 
-	return rc == 0 || (errno != ENOENT && errno != ENOSYS);
-}
+	वापस rc == 0 || (त्रुटि_सं != ENOENT && त्रुटि_सं != ENOSYS);
+पूर्ण
 
-int test_anon(void)
-{
-	unsigned long align;
-	struct sigaction act = {
+पूर्णांक test_anon(व्योम)
+अणु
+	अचिन्हित दीर्घ align;
+	काष्ठा sigaction act = अणु
 		.sa_sigaction = segv,
 		.sa_flags = SA_SIGINFO
-	};
-	void *mallocblock;
-	unsigned long mallocsize;
+	पूर्ण;
+	व्योम *दो_स्मृतिblock;
+	अचिन्हित दीर्घ दो_स्मृतिsize;
 
 	SKIP_IF(!syscall_available());
 
-	if (getpagesize() != 0x10000) {
-		fprintf(stderr, "Kernel page size must be 64K!\n");
-		return 1;
-	}
+	अगर (getpagesize() != 0x10000) अणु
+		ख_लिखो(मानक_त्रुटि, "Kernel page size must be 64K!\n");
+		वापस 1;
+	पूर्ण
 
-	sigaction(SIGSEGV, &act, NULL);
+	sigaction(संक_अंश, &act, शून्य);
 
-	mallocsize = 4 * 16 * 1024 * 1024;
+	दो_स्मृतिsize = 4 * 16 * 1024 * 1024;
 
-	FAIL_IF(posix_memalign(&mallocblock, 64 * 1024, mallocsize));
+	FAIL_IF(posix_memalign(&दो_स्मृतिblock, 64 * 1024, दो_स्मृतिsize));
 
-	align = (unsigned long)mallocblock;
-	if (align & 0xffff)
+	align = (अचिन्हित दीर्घ)दो_स्मृतिblock;
+	अगर (align & 0xffff)
 		align = (align | 0xffff) + 1;
 
-	mallocblock = (void *)align;
+	दो_स्मृतिblock = (व्योम *)align;
 
-	printf("allocated malloc block of 0x%lx bytes at %p\n",
-	       mallocsize, mallocblock);
+	म_लिखो("allocated malloc block of 0x%lx bytes at %p\n",
+	       दो_स्मृतिsize, दो_स्मृतिblock);
 
-	printf("testing malloc block...\n");
+	म_लिखो("testing malloc block...\n");
 
-	return run_test(mallocblock, mallocsize);
-}
+	वापस run_test(दो_स्मृतिblock, दो_स्मृतिsize);
+पूर्ण
 
-int test_file(void)
-{
-	struct sigaction act = {
+पूर्णांक test_file(व्योम)
+अणु
+	काष्ठा sigaction act = अणु
 		.sa_sigaction = segv,
 		.sa_flags = SA_SIGINFO
-	};
-	void *fileblock;
+	पूर्ण;
+	व्योम *fileblock;
 	off_t filesize;
-	int fd;
+	पूर्णांक fd;
 
 	SKIP_IF(!syscall_available());
 
-	fd = open(file_name, O_RDWR);
-	if (fd == -1) {
-		perror("failed to open file");
-		return 1;
-	}
-	sigaction(SIGSEGV, &act, NULL);
+	fd = खोलो(file_name, O_RDWR);
+	अगर (fd == -1) अणु
+		लिखो_त्रुटि("failed to open file");
+		वापस 1;
+	पूर्ण
+	sigaction(संक_अंश, &act, शून्य);
 
-	filesize = lseek(fd, 0, SEEK_END);
-	if (filesize & 0xffff)
+	filesize = lseek(fd, 0, अंत_से);
+	अगर (filesize & 0xffff)
 		filesize &= ~0xfffful;
 
-	fileblock = mmap(NULL, filesize, PROT_READ | PROT_WRITE,
+	fileblock = mmap(शून्य, filesize, PROT_READ | PROT_WRITE,
 			 MAP_SHARED, fd, 0);
-	if (fileblock == MAP_FAILED) {
-		perror("failed to map file");
-		return 1;
-	}
-	printf("allocated %s for 0x%lx bytes at %p\n",
+	अगर (fileblock == MAP_FAILED) अणु
+		लिखो_त्रुटि("failed to map file");
+		वापस 1;
+	पूर्ण
+	म_लिखो("allocated %s for 0x%lx bytes at %p\n",
 	       file_name, filesize, fileblock);
 
-	printf("testing file map...\n");
+	म_लिखो("testing file map...\n");
 
-	return run_test(fileblock, filesize);
-}
+	वापस run_test(fileblock, filesize);
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	int rc;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक rc;
 
 	rc = test_harness(test_anon, "subpage_prot_anon");
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (argc > 1)
+	अगर (argc > 1)
 		file_name = argv[1];
-	else
+	अन्यथा
 		file_name = "tempfile";
 
-	return test_harness(test_file, "subpage_prot_file");
-}
+	वापस test_harness(test_file, "subpage_prot_file");
+पूर्ण

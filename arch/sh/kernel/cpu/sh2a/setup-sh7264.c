@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SH7264 Setup
  *
  * Copyright (C) 2012  Renesas Electronics Europe Ltd
  */
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/serial_sci.h>
-#include <linux/usb/r8a66597.h>
-#include <linux/sh_timer.h>
-#include <linux/io.h>
-#include <asm/platform_early.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_sci.h>
+#समावेश <linux/usb/r8a66597.h>
+#समावेश <linux/sh_समयr.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/platक्रमm_early.h>
 
-enum {
+क्रमागत अणु
 	UNUSED = 0,
 
-	/* interrupt sources */
+	/* पूर्णांकerrupt sources */
 	IRQ0, IRQ1, IRQ2, IRQ3, IRQ4, IRQ5, IRQ6, IRQ7,
 	PINT0, PINT1, PINT2, PINT3, PINT4, PINT5, PINT6, PINT7,
 
@@ -42,11 +43,11 @@ enum {
 	NFMC, SDHI, RTC,
 	SRCC0, SRCC1, DCOMU, OFFI, IFEI,
 
-	/* interrupt groups */
+	/* पूर्णांकerrupt groups */
 	PINT, SCIF0, SCIF1, SCIF2, SCIF3, SCIF4, SCIF5, SCIF6, SCIF7,
-};
+पूर्ण;
 
-static struct intc_vect vectors[] __initdata = {
+अटल काष्ठा पूर्णांकc_vect vectors[] __initdata = अणु
 	INTC_IRQ(IRQ0, 64), INTC_IRQ(IRQ1, 65),
 	INTC_IRQ(IRQ2, 66), INTC_IRQ(IRQ3, 67),
 	INTC_IRQ(IRQ4, 68), INTC_IRQ(IRQ5, 69),
@@ -172,9 +173,9 @@ static struct intc_vect vectors[] __initdata = {
 
 	INTC_IRQ(DCOMU, 310), INTC_IRQ(DCOMU, 311),
 	INTC_IRQ(DCOMU, 312),
-};
+पूर्ण;
 
-static struct intc_group groups[] __initdata = {
+अटल काष्ठा पूर्णांकc_group groups[] __initdata = अणु
 	INTC_GROUP(PINT, PINT0, PINT1, PINT2, PINT3,
 		   PINT4, PINT5, PINT6, PINT7),
 	INTC_GROUP(SCIF0, SCIF0_BRI, SCIF0_ERI, SCIF0_RXI, SCIF0_TXI),
@@ -185,368 +186,368 @@ static struct intc_group groups[] __initdata = {
 	INTC_GROUP(SCIF5, SCIF5_BRI, SCIF5_ERI, SCIF5_RXI, SCIF5_TXI),
 	INTC_GROUP(SCIF6, SCIF6_BRI, SCIF6_ERI, SCIF6_RXI, SCIF6_TXI),
 	INTC_GROUP(SCIF7, SCIF7_BRI, SCIF7_ERI, SCIF7_RXI, SCIF7_TXI),
-};
+पूर्ण;
 
-static struct intc_prio_reg prio_registers[] __initdata = {
-	{ 0xfffe0818, 0, 16, 4, /* IPR01 */ { IRQ0, IRQ1, IRQ2, IRQ3 } },
-	{ 0xfffe081a, 0, 16, 4, /* IPR02 */ { IRQ4, IRQ5, IRQ6, IRQ7 } },
-	{ 0xfffe0820, 0, 16, 4, /* IPR05 */ { PINT, 0, 0, 0 } },
-	{ 0xfffe0c00, 0, 16, 4, /* IPR06 */ { DMAC0,  DMAC1,  DMAC2,  DMAC3 } },
-	{ 0xfffe0c02, 0, 16, 4, /* IPR07 */ { DMAC4,  DMAC5,  DMAC6,  DMAC7 } },
-	{ 0xfffe0c04, 0, 16, 4, /* IPR08 */ { DMAC8,  DMAC9,
-					      DMAC10, DMAC11 } },
-	{ 0xfffe0c06, 0, 16, 4, /* IPR09 */ { DMAC12, DMAC13,
-					      DMAC14, DMAC15 } },
-	{ 0xfffe0c08, 0, 16, 4, /* IPR10 */ { USB, VDC3, CMT0, CMT1 } },
-	{ 0xfffe0c0a, 0, 16, 4, /* IPR11 */ { BSC, WDT, MTU0_ABCD, MTU0_VEF } },
-	{ 0xfffe0c0c, 0, 16, 4, /* IPR12 */ { MTU1_AB, MTU1_VU,
-					      MTU2_AB, MTU2_VU } },
-	{ 0xfffe0c0e, 0, 16, 4, /* IPR13 */ { MTU3_ABCD, MTU3_TCI3V,
-					      MTU4_ABCD, MTU4_TCI4V } },
-	{ 0xfffe0c10, 0, 16, 4, /* IPR14 */ { PWMT1, PWMT2, ADC_ADI, 0 } },
-	{ 0xfffe0c12, 0, 16, 4, /* IPR15 */ { SSIF0, SSII1, SSII2, SSII3 } },
-	{ 0xfffe0c14, 0, 16, 4, /* IPR16 */ { RSPDIF, IIC30, IIC31, IIC32 } },
-	{ 0xfffe0c16, 0, 16, 4, /* IPR17 */ { SCIF0, SCIF1, SCIF2, SCIF3 } },
-	{ 0xfffe0c18, 0, 16, 4, /* IPR18 */ { SCIF4, SCIF5, SCIF6, SCIF7 } },
-	{ 0xfffe0c1a, 0, 16, 4, /* IPR19 */ { SIO_FIFO, 0, RSPIC0, RSPIC1, } },
-	{ 0xfffe0c1c, 0, 16, 4, /* IPR20 */ { RCAN0, RCAN1, IEBC, CD_ROMD } },
-	{ 0xfffe0c1e, 0, 16, 4, /* IPR21 */ { NFMC, SDHI, RTC, 0 } },
-	{ 0xfffe0c20, 0, 16, 4, /* IPR22 */ { SRCC0, SRCC1, 0, DCOMU } },
-};
+अटल काष्ठा पूर्णांकc_prio_reg prio_रेजिस्टरs[] __initdata = अणु
+	अणु 0xfffe0818, 0, 16, 4, /* IPR01 */ अणु IRQ0, IRQ1, IRQ2, IRQ3 पूर्ण पूर्ण,
+	अणु 0xfffe081a, 0, 16, 4, /* IPR02 */ अणु IRQ4, IRQ5, IRQ6, IRQ7 पूर्ण पूर्ण,
+	अणु 0xfffe0820, 0, 16, 4, /* IPR05 */ अणु PINT, 0, 0, 0 पूर्ण पूर्ण,
+	अणु 0xfffe0c00, 0, 16, 4, /* IPR06 */ अणु DMAC0,  DMAC1,  DMAC2,  DMAC3 पूर्ण पूर्ण,
+	अणु 0xfffe0c02, 0, 16, 4, /* IPR07 */ अणु DMAC4,  DMAC5,  DMAC6,  DMAC7 पूर्ण पूर्ण,
+	अणु 0xfffe0c04, 0, 16, 4, /* IPR08 */ अणु DMAC8,  DMAC9,
+					      DMAC10, DMAC11 पूर्ण पूर्ण,
+	अणु 0xfffe0c06, 0, 16, 4, /* IPR09 */ अणु DMAC12, DMAC13,
+					      DMAC14, DMAC15 पूर्ण पूर्ण,
+	अणु 0xfffe0c08, 0, 16, 4, /* IPR10 */ अणु USB, VDC3, CMT0, CMT1 पूर्ण पूर्ण,
+	अणु 0xfffe0c0a, 0, 16, 4, /* IPR11 */ अणु BSC, WDT, MTU0_ABCD, MTU0_VEF पूर्ण पूर्ण,
+	अणु 0xfffe0c0c, 0, 16, 4, /* IPR12 */ अणु MTU1_AB, MTU1_VU,
+					      MTU2_AB, MTU2_VU पूर्ण पूर्ण,
+	अणु 0xfffe0c0e, 0, 16, 4, /* IPR13 */ अणु MTU3_ABCD, MTU3_TCI3V,
+					      MTU4_ABCD, MTU4_TCI4V पूर्ण पूर्ण,
+	अणु 0xfffe0c10, 0, 16, 4, /* IPR14 */ अणु PWMT1, PWMT2, ADC_ADI, 0 पूर्ण पूर्ण,
+	अणु 0xfffe0c12, 0, 16, 4, /* IPR15 */ अणु SSIF0, SSII1, SSII2, SSII3 पूर्ण पूर्ण,
+	अणु 0xfffe0c14, 0, 16, 4, /* IPR16 */ अणु RSPDIF, IIC30, IIC31, IIC32 पूर्ण पूर्ण,
+	अणु 0xfffe0c16, 0, 16, 4, /* IPR17 */ अणु SCIF0, SCIF1, SCIF2, SCIF3 पूर्ण पूर्ण,
+	अणु 0xfffe0c18, 0, 16, 4, /* IPR18 */ अणु SCIF4, SCIF5, SCIF6, SCIF7 पूर्ण पूर्ण,
+	अणु 0xfffe0c1a, 0, 16, 4, /* IPR19 */ अणु SIO_FIFO, 0, RSPIC0, RSPIC1, पूर्ण पूर्ण,
+	अणु 0xfffe0c1c, 0, 16, 4, /* IPR20 */ अणु RCAN0, RCAN1, IEBC, CD_ROMD पूर्ण पूर्ण,
+	अणु 0xfffe0c1e, 0, 16, 4, /* IPR21 */ अणु NFMC, SDHI, RTC, 0 पूर्ण पूर्ण,
+	अणु 0xfffe0c20, 0, 16, 4, /* IPR22 */ अणु SRCC0, SRCC1, 0, DCOMU पूर्ण पूर्ण,
+पूर्ण;
 
-static struct intc_mask_reg mask_registers[] __initdata = {
-	{ 0xfffe0808, 0, 16, /* PINTER */
-	  { 0, 0, 0, 0, 0, 0, 0, 0,
-	    PINT7, PINT6, PINT5, PINT4, PINT3, PINT2, PINT1, PINT0 } },
-};
+अटल काष्ठा पूर्णांकc_mask_reg mask_रेजिस्टरs[] __initdata = अणु
+	अणु 0xfffe0808, 0, 16, /* PINTER */
+	  अणु 0, 0, 0, 0, 0, 0, 0, 0,
+	    PINT7, PINT6, PINT5, PINT4, PINT3, PINT2, PINT1, PINT0 पूर्ण पूर्ण,
+पूर्ण;
 
-static DECLARE_INTC_DESC(intc_desc, "sh7264", vectors, groups,
-			 mask_registers, prio_registers, NULL);
+अटल DECLARE_INTC_DESC(पूर्णांकc_desc, "sh7264", vectors, groups,
+			 mask_रेजिस्टरs, prio_रेजिस्टरs, शून्य);
 
-static struct plat_sci_port scif0_platform_data = {
+अटल काष्ठा plat_sci_port scअगर0_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif0_resources[] = {
+अटल काष्ठा resource scअगर0_resources[] = अणु
 	DEFINE_RES_MEM(0xfffe8000, 0x100),
 	DEFINE_RES_IRQ(233),
 	DEFINE_RES_IRQ(234),
 	DEFINE_RES_IRQ(235),
 	DEFINE_RES_IRQ(232),
-};
+पूर्ण;
 
-static struct platform_device scif0_device = {
+अटल काष्ठा platक्रमm_device scअगर0_device = अणु
 	.name		= "sh-sci",
 	.id		= 0,
-	.resource	= scif0_resources,
-	.num_resources	= ARRAY_SIZE(scif0_resources),
-	.dev		= {
-		.platform_data	= &scif0_platform_data,
-	},
-};
+	.resource	= scअगर0_resources,
+	.num_resources	= ARRAY_SIZE(scअगर0_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर0_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif1_platform_data = {
+अटल काष्ठा plat_sci_port scअगर1_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif1_resources[] = {
+अटल काष्ठा resource scअगर1_resources[] = अणु
 	DEFINE_RES_MEM(0xfffe8800, 0x100),
 	DEFINE_RES_IRQ(237),
 	DEFINE_RES_IRQ(238),
 	DEFINE_RES_IRQ(239),
 	DEFINE_RES_IRQ(236),
-};
+पूर्ण;
 
-static struct platform_device scif1_device = {
+अटल काष्ठा platक्रमm_device scअगर1_device = अणु
 	.name		= "sh-sci",
 	.id		= 1,
-	.resource	= scif1_resources,
-	.num_resources	= ARRAY_SIZE(scif1_resources),
-	.dev		= {
-		.platform_data	= &scif1_platform_data,
-	},
-};
+	.resource	= scअगर1_resources,
+	.num_resources	= ARRAY_SIZE(scअगर1_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर1_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif2_platform_data = {
+अटल काष्ठा plat_sci_port scअगर2_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif2_resources[] = {
+अटल काष्ठा resource scअगर2_resources[] = अणु
 	DEFINE_RES_MEM(0xfffe9000, 0x100),
 	DEFINE_RES_IRQ(241),
 	DEFINE_RES_IRQ(242),
 	DEFINE_RES_IRQ(243),
 	DEFINE_RES_IRQ(240),
-};
+पूर्ण;
 
-static struct platform_device scif2_device = {
+अटल काष्ठा platक्रमm_device scअगर2_device = अणु
 	.name		= "sh-sci",
 	.id		= 2,
-	.resource	= scif2_resources,
-	.num_resources	= ARRAY_SIZE(scif2_resources),
-	.dev		= {
-		.platform_data	= &scif2_platform_data,
-	},
-};
+	.resource	= scअगर2_resources,
+	.num_resources	= ARRAY_SIZE(scअगर2_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर2_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif3_platform_data = {
+अटल काष्ठा plat_sci_port scअगर3_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif3_resources[] = {
+अटल काष्ठा resource scअगर3_resources[] = अणु
 	DEFINE_RES_MEM(0xfffe9800, 0x100),
 	DEFINE_RES_IRQ(245),
 	DEFINE_RES_IRQ(246),
 	DEFINE_RES_IRQ(247),
 	DEFINE_RES_IRQ(244),
-};
+पूर्ण;
 
-static struct platform_device scif3_device = {
+अटल काष्ठा platक्रमm_device scअगर3_device = अणु
 	.name		= "sh-sci",
 	.id		= 3,
-	.resource	= scif3_resources,
-	.num_resources	= ARRAY_SIZE(scif3_resources),
-	.dev		= {
-		.platform_data	= &scif3_platform_data,
-	},
-};
+	.resource	= scअगर3_resources,
+	.num_resources	= ARRAY_SIZE(scअगर3_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर3_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif4_platform_data = {
+अटल काष्ठा plat_sci_port scअगर4_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif4_resources[] = {
+अटल काष्ठा resource scअगर4_resources[] = अणु
 	DEFINE_RES_MEM(0xfffea000, 0x100),
 	DEFINE_RES_IRQ(249),
 	DEFINE_RES_IRQ(250),
 	DEFINE_RES_IRQ(251),
 	DEFINE_RES_IRQ(248),
-};
+पूर्ण;
 
-static struct platform_device scif4_device = {
+अटल काष्ठा platक्रमm_device scअगर4_device = अणु
 	.name		= "sh-sci",
 	.id		= 4,
-	.resource	= scif4_resources,
-	.num_resources	= ARRAY_SIZE(scif4_resources),
-	.dev		= {
-		.platform_data	= &scif4_platform_data,
-	},
-};
+	.resource	= scअगर4_resources,
+	.num_resources	= ARRAY_SIZE(scअगर4_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर4_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif5_platform_data = {
+अटल काष्ठा plat_sci_port scअगर5_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif5_resources[] = {
+अटल काष्ठा resource scअगर5_resources[] = अणु
 	DEFINE_RES_MEM(0xfffea800, 0x100),
 	DEFINE_RES_IRQ(253),
 	DEFINE_RES_IRQ(254),
 	DEFINE_RES_IRQ(255),
 	DEFINE_RES_IRQ(252),
-};
+पूर्ण;
 
-static struct platform_device scif5_device = {
+अटल काष्ठा platक्रमm_device scअगर5_device = अणु
 	.name		= "sh-sci",
 	.id		= 5,
-	.resource	= scif5_resources,
-	.num_resources	= ARRAY_SIZE(scif5_resources),
-	.dev		= {
-		.platform_data	= &scif5_platform_data,
-	},
-};
+	.resource	= scअगर5_resources,
+	.num_resources	= ARRAY_SIZE(scअगर5_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर5_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif6_platform_data = {
+अटल काष्ठा plat_sci_port scअगर6_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif6_resources[] = {
+अटल काष्ठा resource scअगर6_resources[] = अणु
 	DEFINE_RES_MEM(0xfffeb000, 0x100),
 	DEFINE_RES_IRQ(257),
 	DEFINE_RES_IRQ(258),
 	DEFINE_RES_IRQ(259),
 	DEFINE_RES_IRQ(256),
-};
+पूर्ण;
 
-static struct platform_device scif6_device = {
+अटल काष्ठा platक्रमm_device scअगर6_device = अणु
 	.name		= "sh-sci",
 	.id		= 6,
-	.resource	= scif6_resources,
-	.num_resources	= ARRAY_SIZE(scif6_resources),
-	.dev		= {
-		.platform_data	= &scif6_platform_data,
-	},
-};
+	.resource	= scअगर6_resources,
+	.num_resources	= ARRAY_SIZE(scअगर6_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर6_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct plat_sci_port scif7_platform_data = {
+अटल काष्ठा plat_sci_port scअगर7_platक्रमm_data = अणु
 	.scscr		= SCSCR_REIE,
 	.type		= PORT_SCIF,
 	.regtype	= SCIx_SH2_SCIF_FIFODATA_REGTYPE,
-};
+पूर्ण;
 
-static struct resource scif7_resources[] = {
+अटल काष्ठा resource scअगर7_resources[] = अणु
 	DEFINE_RES_MEM(0xfffeb800, 0x100),
 	DEFINE_RES_IRQ(261),
 	DEFINE_RES_IRQ(262),
 	DEFINE_RES_IRQ(263),
 	DEFINE_RES_IRQ(260),
-};
+पूर्ण;
 
-static struct platform_device scif7_device = {
+अटल काष्ठा platक्रमm_device scअगर7_device = अणु
 	.name		= "sh-sci",
 	.id		= 7,
-	.resource	= scif7_resources,
-	.num_resources	= ARRAY_SIZE(scif7_resources),
-	.dev		= {
-		.platform_data	= &scif7_platform_data,
-	},
-};
+	.resource	= scअगर7_resources,
+	.num_resources	= ARRAY_SIZE(scअगर7_resources),
+	.dev		= अणु
+		.platक्रमm_data	= &scअगर7_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct sh_timer_config cmt_platform_data = {
+अटल काष्ठा sh_समयr_config cmt_platक्रमm_data = अणु
 	.channels_mask = 3,
-};
+पूर्ण;
 
-static struct resource cmt_resources[] = {
+अटल काष्ठा resource cmt_resources[] = अणु
 	DEFINE_RES_MEM(0xfffec000, 0x10),
 	DEFINE_RES_IRQ(175),
 	DEFINE_RES_IRQ(176),
-};
+पूर्ण;
 
-static struct platform_device cmt_device = {
+अटल काष्ठा platक्रमm_device cmt_device = अणु
 	.name		= "sh-cmt-16",
 	.id		= 0,
-	.dev = {
-		.platform_data	= &cmt_platform_data,
-	},
+	.dev = अणु
+		.platक्रमm_data	= &cmt_platक्रमm_data,
+	पूर्ण,
 	.resource	= cmt_resources,
 	.num_resources	= ARRAY_SIZE(cmt_resources),
-};
+पूर्ण;
 
-static struct resource mtu2_resources[] = {
+अटल काष्ठा resource mtu2_resources[] = अणु
 	DEFINE_RES_MEM(0xfffe4000, 0x400),
 	DEFINE_RES_IRQ_NAMED(179, "tgi0a"),
 	DEFINE_RES_IRQ_NAMED(186, "tgi1a"),
-};
+पूर्ण;
 
-static struct platform_device mtu2_device = {
+अटल काष्ठा platक्रमm_device mtu2_device = अणु
 	.name		= "sh-mtu2",
 	.id		= -1,
 	.resource	= mtu2_resources,
 	.num_resources	= ARRAY_SIZE(mtu2_resources),
-};
+पूर्ण;
 
-static struct resource rtc_resources[] = {
-	[0] = {
+अटल काष्ठा resource rtc_resources[] = अणु
+	[0] = अणु
 		.start	= 0xfffe6000,
 		.end	= 0xfffe6000 + 0x30 - 1,
 		.flags	= IORESOURCE_IO,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		/* Shared Period/Carry/Alarm IRQ */
 		.start	= 296,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device rtc_device = {
+अटल काष्ठा platक्रमm_device rtc_device = अणु
 	.name		= "sh-rtc",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(rtc_resources),
 	.resource	= rtc_resources,
-};
+पूर्ण;
 
 /* USB Host */
-static void usb_port_power(int port, int power)
-{
-	__raw_writew(0x200 , 0xffffc0c2) ; /* Initialise UACS25 */
-}
+अटल व्योम usb_port_घातer(पूर्णांक port, पूर्णांक घातer)
+अणु
+	__raw_ग_लिखोw(0x200 , 0xffffc0c2) ; /* Initialise UACS25 */
+पूर्ण
 
-static struct r8a66597_platdata r8a66597_data = {
+अटल काष्ठा r8a66597_platdata r8a66597_data = अणु
 	.on_chip = 1,
 	.endian = 1,
-	.port_power = usb_port_power,
-};
+	.port_घातer = usb_port_घातer,
+पूर्ण;
 
-static struct resource r8a66597_usb_host_resources[] = {
-	[0] = {
+अटल काष्ठा resource r8a66597_usb_host_resources[] = अणु
+	[0] = अणु
 		.start	= 0xffffc000,
 		.end	= 0xffffc0e4,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= 170,
 		.end	= 170,
 		.flags	= IORESOURCE_IRQ | IRQF_TRIGGER_LOW,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device r8a66597_usb_host_device = {
+अटल काष्ठा platक्रमm_device r8a66597_usb_host_device = अणु
 	.name		= "r8a66597_hcd",
 	.id		= 0,
-	.dev = {
-		.dma_mask		= NULL,         /*  not use dma */
+	.dev = अणु
+		.dma_mask		= शून्य,         /*  not use dma */
 		.coherent_dma_mask	= 0xffffffff,
-		.platform_data		= &r8a66597_data,
-	},
+		.platक्रमm_data		= &r8a66597_data,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(r8a66597_usb_host_resources),
 	.resource	= r8a66597_usb_host_resources,
-};
+पूर्ण;
 
-static struct platform_device *sh7264_devices[] __initdata = {
-	&scif0_device,
-	&scif1_device,
-	&scif2_device,
-	&scif3_device,
-	&scif4_device,
-	&scif5_device,
-	&scif6_device,
-	&scif7_device,
+अटल काष्ठा platक्रमm_device *sh7264_devices[] __initdata = अणु
+	&scअगर0_device,
+	&scअगर1_device,
+	&scअगर2_device,
+	&scअगर3_device,
+	&scअगर4_device,
+	&scअगर5_device,
+	&scअगर6_device,
+	&scअगर7_device,
 	&cmt_device,
 	&mtu2_device,
 	&rtc_device,
 	&r8a66597_usb_host_device,
-};
+पूर्ण;
 
-static int __init sh7264_devices_setup(void)
-{
-	return platform_add_devices(sh7264_devices,
+अटल पूर्णांक __init sh7264_devices_setup(व्योम)
+अणु
+	वापस platक्रमm_add_devices(sh7264_devices,
 				    ARRAY_SIZE(sh7264_devices));
-}
+पूर्ण
 arch_initcall(sh7264_devices_setup);
 
-void __init plat_irq_setup(void)
-{
-	register_intc_controller(&intc_desc);
-}
+व्योम __init plat_irq_setup(व्योम)
+अणु
+	रेजिस्टर_पूर्णांकc_controller(&पूर्णांकc_desc);
+पूर्ण
 
-static struct platform_device *sh7264_early_devices[] __initdata = {
-	&scif0_device,
-	&scif1_device,
-	&scif2_device,
-	&scif3_device,
-	&scif4_device,
-	&scif5_device,
-	&scif6_device,
-	&scif7_device,
+अटल काष्ठा platक्रमm_device *sh7264_early_devices[] __initdata = अणु
+	&scअगर0_device,
+	&scअगर1_device,
+	&scअगर2_device,
+	&scअगर3_device,
+	&scअगर4_device,
+	&scअगर5_device,
+	&scअगर6_device,
+	&scअगर7_device,
 	&cmt_device,
 	&mtu2_device,
-};
+पूर्ण;
 
-void __init plat_early_device_setup(void)
-{
-	sh_early_platform_add_devices(sh7264_early_devices,
+व्योम __init plat_early_device_setup(व्योम)
+अणु
+	sh_early_platक्रमm_add_devices(sh7264_early_devices,
 				   ARRAY_SIZE(sh7264_early_devices));
-}
+पूर्ण

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_S390_BITSPERLONG_H
-#define __ASM_S390_BITSPERLONG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_S390_BITSPERLONG_H
+#घोषणा __ASM_S390_BITSPERLONG_H
 
-#ifndef __s390x__
-#define __BITS_PER_LONG 32
-#else
-#define __BITS_PER_LONG 64
-#endif
+#अगर_अघोषित __s390x__
+#घोषणा __BITS_PER_LONG 32
+#अन्यथा
+#घोषणा __BITS_PER_LONG 64
+#पूर्ण_अगर
 
-#include <asm-generic/bitsperlong.h>
+#समावेश <यंत्र-generic/bitsperदीर्घ.h>
 
-#endif /* __ASM_S390_BITSPERLONG_H */
+#पूर्ण_अगर /* __ASM_S390_BITSPERLONG_H */

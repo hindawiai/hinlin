@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _AV7110_CA_H_
-#define _AV7110_CA_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _AV7110_CA_H_
+#घोषणा _AV7110_CA_H_
 
-struct av7110;
+काष्ठा av7110;
 
-extern void CI_handle(struct av7110 *av7110, u8 *data, u16 len);
-extern void ci_get_data(struct dvb_ringbuffer *cibuf, u8 *data, int len);
+बाह्य व्योम CI_handle(काष्ठा av7110 *av7110, u8 *data, u16 len);
+बाह्य व्योम ci_get_data(काष्ठा dvb_ringbuffer *cibuf, u8 *data, पूर्णांक len);
 
-extern int av7110_ca_register(struct av7110 *av7110);
-extern void av7110_ca_unregister(struct av7110 *av7110);
-extern int av7110_ca_init(struct av7110* av7110);
-extern void av7110_ca_exit(struct av7110* av7110);
+बाह्य पूर्णांक av7110_ca_रेजिस्टर(काष्ठा av7110 *av7110);
+बाह्य व्योम av7110_ca_unरेजिस्टर(काष्ठा av7110 *av7110);
+बाह्य पूर्णांक av7110_ca_init(काष्ठा av7110* av7110);
+बाह्य व्योम av7110_ca_निकास(काष्ठा av7110* av7110);
 
-#endif /* _AV7110_CA_H_ */
+#पूर्ण_अगर /* _AV7110_CA_H_ */

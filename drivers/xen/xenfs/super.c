@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  xenfs.c - a filesystem for passing info between the a domain and
+ *  xenfs.c - a fileप्रणाली क्रम passing info between the a करोमुख्य and
  *  the hypervisor.
  *
- * 2008-10-07  Alex Zeffertt    Replaced /proc/xen/xenbus with xenfs filesystem
- *                              and /proc/xen compatibility mount point.
- *                              Turned xenfs into a loadable module.
+ * 2008-10-07  Alex Zeffertt    Replaced /proc/xen/xenbus with xenfs fileप्रणाली
+ *                              and /proc/xen compatibility mount poपूर्णांक.
+ *                              Turned xenfs पूर्णांकo a loadable module.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/fs_context.h>
-#include <linux/magic.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/magic.h>
 
-#include <xen/xen.h>
-#include <xen/xenbus.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/xenbus.h>
 
-#include "xenfs.h"
-#include "../privcmd.h"
+#समावेश "xenfs.h"
+#समावेश "../privcmd.h"
 
-#include <asm/xen/hypervisor.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
 MODULE_DESCRIPTION("Xen filesystem");
 MODULE_LICENSE("GPL");
 
-static ssize_t capabilities_read(struct file *file, char __user *buf,
-				 size_t size, loff_t *off)
-{
-	char *tmp = "";
+अटल sमाप_प्रकार capabilities_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				 माप_प्रकार size, loff_t *off)
+अणु
+	अक्षर *पंचांगp = "";
 
-	if (xen_initial_domain())
-		tmp = "control_d\n";
+	अगर (xen_initial_करोमुख्य())
+		पंचांगp = "control_d\n";
 
-	return simple_read_from_buffer(buf, size, off, tmp, strlen(tmp));
-}
+	वापस simple_पढ़ो_from_buffer(buf, size, off, पंचांगp, म_माप(पंचांगp));
+पूर्ण
 
-static const struct file_operations capabilities_file_ops = {
-	.read = capabilities_read,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations capabilities_file_ops = अणु
+	.पढ़ो = capabilities_पढ़ो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static int xenfs_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	static const struct tree_descr xenfs_files[] = {
-		[2] = { "xenbus", &xen_xenbus_fops, S_IRUSR|S_IWUSR },
-		{ "capabilities", &capabilities_file_ops, S_IRUGO },
-		{ "privcmd", &xen_privcmd_fops, S_IRUSR|S_IWUSR },
-		{""},
-	};
+अटल पूर्णांक xenfs_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	अटल स्थिर काष्ठा tree_descr xenfs_files[] = अणु
+		[2] = अणु "xenbus", &xen_xenbus_fops, S_IRUSR|S_IWUSR पूर्ण,
+		अणु "capabilities", &capabilities_file_ops, S_IRUGO पूर्ण,
+		अणु "privcmd", &xen_privcmd_fops, S_IRUSR|S_IWUSR पूर्ण,
+		अणु""पूर्ण,
+	पूर्ण;
 
-	static const struct tree_descr xenfs_init_files[] = {
-		[2] = { "xenbus", &xen_xenbus_fops, S_IRUSR|S_IWUSR },
-		{ "capabilities", &capabilities_file_ops, S_IRUGO },
-		{ "privcmd", &xen_privcmd_fops, S_IRUSR|S_IWUSR },
-		{ "xsd_kva", &xsd_kva_file_ops, S_IRUSR|S_IWUSR},
-		{ "xsd_port", &xsd_port_file_ops, S_IRUSR|S_IWUSR},
-#ifdef CONFIG_XEN_SYMS
-		{ "xensyms", &xensyms_ops, S_IRUSR},
-#endif
-		{""},
-	};
+	अटल स्थिर काष्ठा tree_descr xenfs_init_files[] = अणु
+		[2] = अणु "xenbus", &xen_xenbus_fops, S_IRUSR|S_IWUSR पूर्ण,
+		अणु "capabilities", &capabilities_file_ops, S_IRUGO पूर्ण,
+		अणु "privcmd", &xen_privcmd_fops, S_IRUSR|S_IWUSR पूर्ण,
+		अणु "xsd_kva", &xsd_kva_file_ops, S_IRUSR|S_IWUSRपूर्ण,
+		अणु "xsd_port", &xsd_port_file_ops, S_IRUSR|S_IWUSRपूर्ण,
+#अगर_घोषित CONFIG_XEN_SYMS
+		अणु "xensyms", &xensyms_ops, S_IRUSRपूर्ण,
+#पूर्ण_अगर
+		अणु""पूर्ण,
+	पूर्ण;
 
-	return simple_fill_super(sb, XENFS_SUPER_MAGIC,
-			xen_initial_domain() ? xenfs_init_files : xenfs_files);
-}
+	वापस simple_fill_super(sb, XENFS_SUPER_MAGIC,
+			xen_initial_करोमुख्य() ? xenfs_init_files : xenfs_files);
+पूर्ण
 
-static int xenfs_get_tree(struct fs_context *fc)
-{
-	return get_tree_single(fc, xenfs_fill_super);
-}
+अटल पूर्णांक xenfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	वापस get_tree_single(fc, xenfs_fill_super);
+पूर्ण
 
-static const struct fs_context_operations xenfs_context_ops = {
+अटल स्थिर काष्ठा fs_context_operations xenfs_context_ops = अणु
 	.get_tree	= xenfs_get_tree,
-};
+पूर्ण;
 
-static int xenfs_init_fs_context(struct fs_context *fc)
-{
+अटल पूर्णांक xenfs_init_fs_context(काष्ठा fs_context *fc)
+अणु
 	fc->ops = &xenfs_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct file_system_type xenfs_type = {
+अटल काष्ठा file_प्रणाली_type xenfs_type = अणु
 	.owner =	THIS_MODULE,
 	.name =		"xenfs",
 	.init_fs_context = xenfs_init_fs_context,
-	.kill_sb =	kill_litter_super,
-};
+	.समाप्त_sb =	समाप्त_litter_super,
+पूर्ण;
 MODULE_ALIAS_FS("xenfs");
 
-static int __init xenfs_init(void)
-{
-	if (xen_domain())
-		return register_filesystem(&xenfs_type);
+अटल पूर्णांक __init xenfs_init(व्योम)
+अणु
+	अगर (xen_करोमुख्य())
+		वापस रेजिस्टर_fileप्रणाली(&xenfs_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit xenfs_exit(void)
-{
-	if (xen_domain())
-		unregister_filesystem(&xenfs_type);
-}
+अटल व्योम __निकास xenfs_निकास(व्योम)
+अणु
+	अगर (xen_करोमुख्य())
+		unरेजिस्टर_fileप्रणाली(&xenfs_type);
+पूर्ण
 
 module_init(xenfs_init);
-module_exit(xenfs_exit);
+module_निकास(xenfs_निकास);
 

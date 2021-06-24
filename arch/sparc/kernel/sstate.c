@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* sstate.c: System soft state support.
  *
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/notifier.h>
-#include <linux/reboot.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/init.h>
 
-#include <asm/hypervisor.h>
-#include <asm/spitfire.h>
-#include <asm/oplib.h>
-#include <asm/head.h>
-#include <asm/io.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/spitfire.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/head.h>
+#समावेश <यंत्र/पन.स>
 
-#include "kernel.h"
+#समावेश "kernel.h"
 
-static int hv_supports_soft_state;
+अटल पूर्णांक hv_supports_soft_state;
 
-static void do_set_sstate(unsigned long state, const char *msg)
-{
-	unsigned long err;
+अटल व्योम करो_set_sstate(अचिन्हित दीर्घ state, स्थिर अक्षर *msg)
+अणु
+	अचिन्हित दीर्घ err;
 
-	if (!hv_supports_soft_state)
-		return;
+	अगर (!hv_supports_soft_state)
+		वापस;
 
 	err = sun4v_mach_set_soft_state(state, kimage_addr_to_ra(msg));
-	if (err) {
-		printk(KERN_WARNING "SSTATE: Failed to set soft-state to "
+	अगर (err) अणु
+		prपूर्णांकk(KERN_WARNING "SSTATE: Failed to set soft-state to "
 		       "state[%lx] msg[%s], err=%lu\n",
 		       state, msg, err);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const char booting_msg[32] __attribute__((aligned(32))) =
+अटल स्थिर अक्षर booting_msg[32] __attribute__((aligned(32))) =
 	"Linux booting";
-static const char running_msg[32] __attribute__((aligned(32))) =
+अटल स्थिर अक्षर running_msg[32] __attribute__((aligned(32))) =
 	"Linux running";
-static const char halting_msg[32] __attribute__((aligned(32))) =
+अटल स्थिर अक्षर halting_msg[32] __attribute__((aligned(32))) =
 	"Linux halting";
-static const char poweroff_msg[32] __attribute__((aligned(32))) =
+अटल स्थिर अक्षर घातeroff_msg[32] __attribute__((aligned(32))) =
 	"Linux powering off";
-static const char rebooting_msg[32] __attribute__((aligned(32))) =
+अटल स्थिर अक्षर rebooting_msg[32] __attribute__((aligned(32))) =
 	"Linux rebooting";
-static const char panicking_msg[32] __attribute__((aligned(32))) =
+अटल स्थिर अक्षर panicking_msg[32] __attribute__((aligned(32))) =
 	"Linux panicking";
 
-static int sstate_reboot_call(struct notifier_block *np, unsigned long type, void *_unused)
-{
-	const char *msg;
+अटल पूर्णांक sstate_reboot_call(काष्ठा notअगरier_block *np, अचिन्हित दीर्घ type, व्योम *_unused)
+अणु
+	स्थिर अक्षर *msg;
 
-	switch (type) {
-	case SYS_DOWN:
-	default:
+	चयन (type) अणु
+	हाल SYS_DOWN:
+	शेष:
 		msg = rebooting_msg;
-		break;
+		अवरोध;
 
-	case SYS_HALT:
+	हाल SYS_HALT:
 		msg = halting_msg;
-		break;
+		अवरोध;
 
-	case SYS_POWER_OFF:
-		msg = poweroff_msg;
-		break;
-	}
+	हाल SYS_POWER_OFF:
+		msg = घातeroff_msg;
+		अवरोध;
+	पूर्ण
 
-	do_set_sstate(HV_SOFT_STATE_TRANSITION, msg);
+	करो_set_sstate(HV_SOFT_STATE_TRANSITION, msg);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block sstate_reboot_notifier = {
-	.notifier_call = sstate_reboot_call,
-};
+अटल काष्ठा notअगरier_block sstate_reboot_notअगरier = अणु
+	.notअगरier_call = sstate_reboot_call,
+पूर्ण;
 
-static int sstate_panic_event(struct notifier_block *n, unsigned long event, void *ptr)
-{
-	do_set_sstate(HV_SOFT_STATE_TRANSITION, panicking_msg);
+अटल पूर्णांक sstate_panic_event(काष्ठा notअगरier_block *n, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	करो_set_sstate(HV_SOFT_STATE_TRANSITION, panicking_msg);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block sstate_panic_block = {
-	.notifier_call	=	sstate_panic_event,
-	.priority	=	INT_MAX,
-};
+अटल काष्ठा notअगरier_block sstate_panic_block = अणु
+	.notअगरier_call	=	sstate_panic_event,
+	.priority	=	पूर्णांक_उच्च,
+पूर्ण;
 
-static int __init sstate_init(void)
-{
-	unsigned long major, minor;
+अटल पूर्णांक __init sstate_init(व्योम)
+अणु
+	अचिन्हित दीर्घ major, minor;
 
-	if (tlb_type != hypervisor)
-		return 0;
+	अगर (tlb_type != hypervisor)
+		वापस 0;
 
 	major = 1;
 	minor = 0;
-	if (sun4v_hvapi_register(HV_GRP_SOFT_STATE, major, &minor))
-		return 0;
+	अगर (sun4v_hvapi_रेजिस्टर(HV_GRP_SOFT_STATE, major, &minor))
+		वापस 0;
 
 	hv_supports_soft_state = 1;
 
 	prom_sun4v_guest_soft_state();
 
-	do_set_sstate(HV_SOFT_STATE_TRANSITION, booting_msg);
+	करो_set_sstate(HV_SOFT_STATE_TRANSITION, booting_msg);
 
-	atomic_notifier_chain_register(&panic_notifier_list,
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
 				       &sstate_panic_block);
-	register_reboot_notifier(&sstate_reboot_notifier);
+	रेजिस्टर_reboot_notअगरier(&sstate_reboot_notअगरier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 core_initcall(sstate_init);
 
-static int __init sstate_running(void)
-{
-	do_set_sstate(HV_SOFT_STATE_NORMAL, running_msg);
-	return 0;
-}
+अटल पूर्णांक __init sstate_running(व्योम)
+अणु
+	करो_set_sstate(HV_SOFT_STATE_NORMAL, running_msg);
+	वापस 0;
+पूर्ण
 
 late_initcall(sstate_running);

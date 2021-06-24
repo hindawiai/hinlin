@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,13 +22,13 @@
  *
 */
 
-#ifndef _ACP_GFX_IF_H
-#define _ACP_GFX_IF_H
+#अगर_अघोषित _ACP_GFX_IF_H
+#घोषणा _ACP_GFX_IF_H
 
-#include <linux/types.h>
-#include "cgs_common.h"
+#समावेश <linux/types.h>
+#समावेश "cgs_common.h"
 
-int amd_acp_hw_init(struct cgs_device *cgs_device,
-		    unsigned acp_version_major, unsigned acp_version_minor);
+पूर्णांक amd_acp_hw_init(काष्ठा cgs_device *cgs_device,
+		    अचिन्हित acp_version_major, अचिन्हित acp_version_minor);
 
-#endif /* _ACP_GFX_IF_H */
+#पूर्ण_अगर /* _ACP_GFX_IF_H */

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _CHSC_SCH_H
-#define _CHSC_SCH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _CHSC_SCH_H
+#घोषणा _CHSC_SCH_H
 
-struct chsc_request {
-	struct completion completion;
-	struct irb irb;
-};
+काष्ठा chsc_request अणु
+	काष्ठा completion completion;
+	काष्ठा irb irb;
+पूर्ण;
 
-struct chsc_private {
-	struct chsc_request *request;
-};
+काष्ठा chsc_निजी अणु
+	काष्ठा chsc_request *request;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics 2017 - All Rights Reserved
- * Author: Alexandre Torgue <alexandre.torgue@st.com> for STMicroelectronics.
+ * Author: Alexandre Torgue <alexandre.torgue@st.com> क्रम STMicroelectronics.
  */
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "pinctrl-stm32.h"
+#समावेश "pinctrl-stm32.h"
 
-static const struct stm32_desc_pin stm32mp157_pins[] = {
+अटल स्थिर काष्ठा sपंचांग32_desc_pin sपंचांग32mp157_pins[] = अणु
 	STM32_PIN_PKG(
 		PINCTRL_PIN(0, "PA0"),
 		STM32MP_PKG_AA | STM32MP_PKG_AC | STM32MP_PKG_AB | STM32MP_PKG_AD,
@@ -2215,9 +2216,9 @@ static const struct stm32_desc_pin stm32mp157_pins[] = {
 		STM32_FUNCTION(16, "EVENTOUT"),
 		STM32_FUNCTION(17, "ANALOG")
 	),
-};
+पूर्ण;
 
-static const struct stm32_desc_pin stm32mp157_z_pins[] = {
+अटल स्थिर काष्ठा sपंचांग32_desc_pin sपंचांग32mp157_z_pins[] = अणु
 	STM32_PIN_PKG(
 		PINCTRL_PIN(400, "PZ0"),
 		STM32MP_PKG_AA | STM32MP_PKG_AC,
@@ -2318,45 +2319,45 @@ static const struct stm32_desc_pin stm32mp157_z_pins[] = {
 		STM32_FUNCTION(16, "EVENTOUT"),
 		STM32_FUNCTION(17, "ANALOG")
 	),
-};
+पूर्ण;
 
-static struct stm32_pinctrl_match_data stm32mp157_match_data = {
-	.pins = stm32mp157_pins,
-	.npins = ARRAY_SIZE(stm32mp157_pins),
-};
+अटल काष्ठा sपंचांग32_pinctrl_match_data sपंचांग32mp157_match_data = अणु
+	.pins = sपंचांग32mp157_pins,
+	.npins = ARRAY_SIZE(sपंचांग32mp157_pins),
+पूर्ण;
 
-static struct stm32_pinctrl_match_data stm32mp157_z_match_data = {
-	.pins = stm32mp157_z_pins,
-	.npins = ARRAY_SIZE(stm32mp157_z_pins),
-};
+अटल काष्ठा sपंचांग32_pinctrl_match_data sपंचांग32mp157_z_match_data = अणु
+	.pins = sपंचांग32mp157_z_pins,
+	.npins = ARRAY_SIZE(sपंचांग32mp157_z_pins),
+पूर्ण;
 
-static const struct of_device_id stm32mp157_pctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sपंचांग32mp157_pctrl_match[] = अणु
+	अणु
 		.compatible = "st,stm32mp157-pinctrl",
-		.data = &stm32mp157_match_data,
-	},
-	{
+		.data = &sपंचांग32mp157_match_data,
+	पूर्ण,
+	अणु
 		.compatible = "st,stm32mp157-z-pinctrl",
-		.data = &stm32mp157_z_match_data,
-	},
-	{ }
-};
+		.data = &sपंचांग32mp157_z_match_data,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static const struct dev_pm_ops stm32_pinctrl_dev_pm_ops = {
-	 SET_LATE_SYSTEM_SLEEP_PM_OPS(NULL, stm32_pinctrl_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops sपंचांग32_pinctrl_dev_pm_ops = अणु
+	 SET_LATE_SYSTEM_SLEEP_PM_OPS(शून्य, sपंचांग32_pinctrl_resume)
+पूर्ण;
 
-static struct platform_driver stm32mp157_pinctrl_driver = {
-	.probe = stm32_pctl_probe,
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32mp157_pinctrl_driver = अणु
+	.probe = sपंचांग32_pctl_probe,
+	.driver = अणु
 		.name = "stm32mp157-pinctrl",
-		.of_match_table = stm32mp157_pctrl_match,
-		.pm = &stm32_pinctrl_dev_pm_ops,
-	},
-};
+		.of_match_table = sपंचांग32mp157_pctrl_match,
+		.pm = &sपंचांग32_pinctrl_dev_pm_ops,
+	पूर्ण,
+पूर्ण;
 
-static int __init stm32mp157_pinctrl_init(void)
-{
-	return platform_driver_register(&stm32mp157_pinctrl_driver);
-}
-arch_initcall(stm32mp157_pinctrl_init);
+अटल पूर्णांक __init sपंचांग32mp157_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&sपंचांग32mp157_pinctrl_driver);
+पूर्ण
+arch_initcall(sपंचांग32mp157_pinctrl_init);

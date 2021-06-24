@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST Ericsson SA 2011
  *
- * STE Ux500 Watchdog platform data
+ * STE Ux500 Watchकरोg platक्रमm data
  */
-#ifndef __UX500_WDT_H
-#define __UX500_WDT_H
+#अगर_अघोषित __UX500_WDT_H
+#घोषणा __UX500_WDT_H
 
 /**
- * struct ux500_wdt_data
+ * काष्ठा ux500_wdt_data
  */
-struct ux500_wdt_data {
-	unsigned int timeout;
+काष्ठा ux500_wdt_data अणु
+	अचिन्हित पूर्णांक समयout;
 	bool has_28_bits_resolution;
-};
+पूर्ण;
 
-#endif /* __UX500_WDT_H */
+#पूर्ण_अगर /* __UX500_WDT_H */

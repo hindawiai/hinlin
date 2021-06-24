@@ -1,194 +1,195 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * padata.h - header for the padata parallelization interface
+ * padata.h - header क्रम the padata parallelization पूर्णांकerface
  *
  * Copyright (C) 2008, 2009 secunet Security Networks AG
- * Copyright (C) 2008, 2009 Steffen Klassert <steffen.klassert@secunet.com>
+ * Copyright (C) 2008, 2009 Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
  *
  * Copyright (c) 2020 Oracle and/or its affiliates.
  * Author: Daniel Jordan <daniel.m.jordan@oracle.com>
  */
 
-#ifndef PADATA_H
-#define PADATA_H
+#अगर_अघोषित PADATA_H
+#घोषणा PADATA_H
 
-#include <linux/compiler_types.h>
-#include <linux/workqueue.h>
-#include <linux/spinlock.h>
-#include <linux/list.h>
-#include <linux/kobject.h>
+#समावेश <linux/compiler_types.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kobject.h>
 
-#define PADATA_CPU_SERIAL   0x01
-#define PADATA_CPU_PARALLEL 0x02
+#घोषणा PADATA_CPU_SERIAL   0x01
+#घोषणा PADATA_CPU_PARALLEL 0x02
 
 /**
- * struct padata_priv - Represents one job
+ * काष्ठा padata_priv - Represents one job
  *
  * @list: List entry, to attach to the padata lists.
- * @pd: Pointer to the internal control structure.
- * @cb_cpu: Callback cpu for serializatioon.
+ * @pd: Poपूर्णांकer to the पूर्णांकernal control काष्ठाure.
+ * @cb_cpu: Callback cpu क्रम serializatioon.
  * @seq_nr: Sequence number of the parallelized data object.
- * @info: Used to pass information from the parallel to the serial function.
+ * @info: Used to pass inक्रमmation from the parallel to the serial function.
  * @parallel: Parallel execution function.
  * @serial: Serial complete function.
  */
-struct padata_priv {
-	struct list_head	list;
-	struct parallel_data	*pd;
-	int			cb_cpu;
-	unsigned int		seq_nr;
-	int			info;
-	void                    (*parallel)(struct padata_priv *padata);
-	void                    (*serial)(struct padata_priv *padata);
-};
+काष्ठा padata_priv अणु
+	काष्ठा list_head	list;
+	काष्ठा parallel_data	*pd;
+	पूर्णांक			cb_cpu;
+	अचिन्हित पूर्णांक		seq_nr;
+	पूर्णांक			info;
+	व्योम                    (*parallel)(काष्ठा padata_priv *padata);
+	व्योम                    (*serial)(काष्ठा padata_priv *padata);
+पूर्ण;
 
 /**
- * struct padata_list - one per work type per CPU
+ * काष्ठा padata_list - one per work type per CPU
  *
  * @list: List head.
  * @lock: List lock.
  */
-struct padata_list {
-	struct list_head        list;
+काष्ठा padata_list अणु
+	काष्ठा list_head        list;
 	spinlock_t              lock;
-};
+पूर्ण;
 
 /**
-* struct padata_serial_queue - The percpu padata serial queue
+* काष्ठा padata_serial_queue - The percpu padata serial queue
 *
-* @serial: List to wait for serialization after reordering.
-* @work: work struct for serialization.
-* @pd: Backpointer to the internal control structure.
+* @serial: List to रुको क्रम serialization after reordering.
+* @work: work काष्ठा क्रम serialization.
+* @pd: Backpoपूर्णांकer to the पूर्णांकernal control काष्ठाure.
 */
-struct padata_serial_queue {
-       struct padata_list    serial;
-       struct work_struct    work;
-       struct parallel_data *pd;
-};
+काष्ठा padata_serial_queue अणु
+       काष्ठा padata_list    serial;
+       काष्ठा work_काष्ठा    work;
+       काष्ठा parallel_data *pd;
+पूर्ण;
 
 /**
- * struct padata_cpumask - The cpumasks for the parallel/serial workers
+ * काष्ठा padata_cpumask - The cpumasks क्रम the parallel/serial workers
  *
- * @pcpu: cpumask for the parallel workers.
- * @cbcpu: cpumask for the serial (callback) workers.
+ * @pcpu: cpumask क्रम the parallel workers.
+ * @cbcpu: cpumask क्रम the serial (callback) workers.
  */
-struct padata_cpumask {
+काष्ठा padata_cpumask अणु
 	cpumask_var_t	pcpu;
 	cpumask_var_t	cbcpu;
-};
+पूर्ण;
 
 /**
- * struct parallel_data - Internal control structure, covers everything
+ * काष्ठा parallel_data - Internal control काष्ठाure, covers everything
  * that depends on the cpumask in use.
  *
  * @ps: padata_shell object.
  * @reorder_list: percpu reorder lists
- * @squeue: percpu padata queues used for serialuzation.
+ * @squeue: percpu padata queues used क्रम serialuzation.
  * @refcnt: Number of objects holding a reference on this parallel_data.
  * @seq_nr: Sequence number of the parallelized data object.
- * @processed: Number of already processed objects.
+ * @processed: Number of alपढ़ोy processed objects.
  * @cpu: Next CPU to be processed.
- * @cpumask: The cpumasks in use for parallel and serial workers.
- * @reorder_work: work struct for reordering.
+ * @cpumask: The cpumasks in use क्रम parallel and serial workers.
+ * @reorder_work: work काष्ठा क्रम reordering.
  * @lock: Reorder lock.
  */
-struct parallel_data {
-	struct padata_shell		*ps;
-	struct padata_list		__percpu *reorder_list;
-	struct padata_serial_queue	__percpu *squeue;
+काष्ठा parallel_data अणु
+	काष्ठा padata_shell		*ps;
+	काष्ठा padata_list		__percpu *reorder_list;
+	काष्ठा padata_serial_queue	__percpu *squeue;
 	atomic_t			refcnt;
-	unsigned int			seq_nr;
-	unsigned int			processed;
-	int				cpu;
-	struct padata_cpumask		cpumask;
-	struct work_struct		reorder_work;
+	अचिन्हित पूर्णांक			seq_nr;
+	अचिन्हित पूर्णांक			processed;
+	पूर्णांक				cpu;
+	काष्ठा padata_cpumask		cpumask;
+	काष्ठा work_काष्ठा		reorder_work;
 	spinlock_t                      ____cacheline_aligned lock;
-};
+पूर्ण;
 
 /**
- * struct padata_shell - Wrapper around struct parallel_data, its
- * purpose is to allow the underlying control structure to be replaced
+ * काष्ठा padata_shell - Wrapper around काष्ठा parallel_data, its
+ * purpose is to allow the underlying control काष्ठाure to be replaced
  * on the fly using RCU.
  *
  * @pinst: padat instance.
- * @pd: Actual parallel_data structure which may be substituted on the fly.
- * @opd: Pointer to old pd to be freed by padata_replace.
+ * @pd: Actual parallel_data काष्ठाure which may be substituted on the fly.
+ * @opd: Poपूर्णांकer to old pd to be मुक्तd by padata_replace.
  * @list: List entry in padata_instance list.
  */
-struct padata_shell {
-	struct padata_instance		*pinst;
-	struct parallel_data __rcu	*pd;
-	struct parallel_data		*opd;
-	struct list_head		list;
-};
+काष्ठा padata_shell अणु
+	काष्ठा padata_instance		*pinst;
+	काष्ठा parallel_data __rcu	*pd;
+	काष्ठा parallel_data		*opd;
+	काष्ठा list_head		list;
+पूर्ण;
 
 /**
- * struct padata_mt_job - represents one multithreaded job
+ * काष्ठा padata_mt_job - represents one multithपढ़ोed job
  *
- * @thread_fn: Called for each chunk of work that a padata thread does.
- * @fn_arg: The thread function argument.
- * @start: The start of the job (units are job-specific).
- * @size: size of this node's work (units are job-specific).
- * @align: Ranges passed to the thread function fall on this boundary, with the
+ * @thपढ़ो_fn: Called क्रम each chunk of work that a padata thपढ़ो करोes.
+ * @fn_arg: The thपढ़ो function argument.
+ * @start: The start of the job (units are job-specअगरic).
+ * @size: size of this node's work (units are job-specअगरic).
+ * @align: Ranges passed to the thपढ़ो function fall on this boundary, with the
  *         possible exceptions of the beginning and end of the job.
- * @min_chunk: The minimum chunk size in job-specific units.  This allows
+ * @min_chunk: The minimum chunk size in job-specअगरic units.  This allows
  *             the client to communicate the minimum amount of work that's
- *             appropriate for one worker thread to do at once.
- * @max_threads: Max threads to use for the job, actual number may be less
+ *             appropriate क्रम one worker thपढ़ो to करो at once.
+ * @max_thपढ़ोs: Max thपढ़ोs to use क्रम the job, actual number may be less
  *               depending on task size and minimum chunk size.
  */
-struct padata_mt_job {
-	void (*thread_fn)(unsigned long start, unsigned long end, void *arg);
-	void			*fn_arg;
-	unsigned long		start;
-	unsigned long		size;
-	unsigned long		align;
-	unsigned long		min_chunk;
-	int			max_threads;
-};
+काष्ठा padata_mt_job अणु
+	व्योम (*thपढ़ो_fn)(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, व्योम *arg);
+	व्योम			*fn_arg;
+	अचिन्हित दीर्घ		start;
+	अचिन्हित दीर्घ		size;
+	अचिन्हित दीर्घ		align;
+	अचिन्हित दीर्घ		min_chunk;
+	पूर्णांक			max_thपढ़ोs;
+पूर्ण;
 
 /**
- * struct padata_instance - The overall control structure.
+ * काष्ठा padata_instance - The overall control काष्ठाure.
  *
- * @cpu_online_node: Linkage for CPU online callback.
- * @cpu_dead_node: Linkage for CPU offline callback.
- * @parallel_wq: The workqueue used for parallel work.
- * @serial_wq: The workqueue used for serial work.
+ * @cpu_online_node: Linkage क्रम CPU online callback.
+ * @cpu_dead_node: Linkage क्रम CPU offline callback.
+ * @parallel_wq: The workqueue used क्रम parallel work.
+ * @serial_wq: The workqueue used क्रम serial work.
  * @pslist: List of padata_shell objects attached to this instance.
- * @cpumask: User supplied cpumasks for parallel and serial works.
+ * @cpumask: User supplied cpumasks क्रम parallel and serial works.
  * @kobj: padata instance kernel object.
  * @lock: padata instance lock.
  * @flags: padata flags.
  */
-struct padata_instance {
-	struct hlist_node		cpu_online_node;
-	struct hlist_node		cpu_dead_node;
-	struct workqueue_struct		*parallel_wq;
-	struct workqueue_struct		*serial_wq;
-	struct list_head		pslist;
-	struct padata_cpumask		cpumask;
-	struct kobject                   kobj;
-	struct mutex			 lock;
+काष्ठा padata_instance अणु
+	काष्ठा hlist_node		cpu_online_node;
+	काष्ठा hlist_node		cpu_dead_node;
+	काष्ठा workqueue_काष्ठा		*parallel_wq;
+	काष्ठा workqueue_काष्ठा		*serial_wq;
+	काष्ठा list_head		pslist;
+	काष्ठा padata_cpumask		cpumask;
+	काष्ठा kobject                   kobj;
+	काष्ठा mutex			 lock;
 	u8				 flags;
-#define	PADATA_INIT	1
-#define	PADATA_RESET	2
-#define	PADATA_INVALID	4
-};
+#घोषणा	PADATA_INIT	1
+#घोषणा	PADATA_RESET	2
+#घोषणा	PADATA_INVALID	4
+पूर्ण;
 
-#ifdef CONFIG_PADATA
-extern void __init padata_init(void);
-#else
-static inline void __init padata_init(void) {}
-#endif
+#अगर_घोषित CONFIG_PADATA
+बाह्य व्योम __init padata_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम __init padata_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-extern struct padata_instance *padata_alloc(const char *name);
-extern void padata_free(struct padata_instance *pinst);
-extern struct padata_shell *padata_alloc_shell(struct padata_instance *pinst);
-extern void padata_free_shell(struct padata_shell *ps);
-extern int padata_do_parallel(struct padata_shell *ps,
-			      struct padata_priv *padata, int *cb_cpu);
-extern void padata_do_serial(struct padata_priv *padata);
-extern void __init padata_do_multithreaded(struct padata_mt_job *job);
-extern int padata_set_cpumask(struct padata_instance *pinst, int cpumask_type,
+बाह्य काष्ठा padata_instance *padata_alloc(स्थिर अक्षर *name);
+बाह्य व्योम padata_मुक्त(काष्ठा padata_instance *pinst);
+बाह्य काष्ठा padata_shell *padata_alloc_shell(काष्ठा padata_instance *pinst);
+बाह्य व्योम padata_मुक्त_shell(काष्ठा padata_shell *ps);
+बाह्य पूर्णांक padata_करो_parallel(काष्ठा padata_shell *ps,
+			      काष्ठा padata_priv *padata, पूर्णांक *cb_cpu);
+बाह्य व्योम padata_करो_serial(काष्ठा padata_priv *padata);
+बाह्य व्योम __init padata_करो_multithपढ़ोed(काष्ठा padata_mt_job *job);
+बाह्य पूर्णांक padata_set_cpumask(काष्ठा padata_instance *pinst, पूर्णांक cpumask_type,
 			      cpumask_var_t cpumask);
-#endif
+#पूर्ण_अगर

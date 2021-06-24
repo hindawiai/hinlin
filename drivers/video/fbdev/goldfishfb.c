@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2007 Google, Inc.
  * Copyright (C) 2012 Intel, Inc.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/mm.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/acpi.h>
 
-enum {
+क्रमागत अणु
 	FB_GET_WIDTH        = 0x00,
 	FB_GET_HEIGHT       = 0x04,
 	FB_INT_STATUS       = 0x08,
@@ -32,135 +33,135 @@ enum {
 
 	FB_INT_VSYNC             = 1U << 0,
 	FB_INT_BASE_UPDATE_DONE  = 1U << 1
-};
+पूर्ण;
 
-struct goldfish_fb {
-	void __iomem *reg_base;
-	int irq;
+काष्ठा goldfish_fb अणु
+	व्योम __iomem *reg_base;
+	पूर्णांक irq;
 	spinlock_t lock;
-	wait_queue_head_t wait;
-	int base_update_count;
-	int rotation;
-	struct fb_info fb;
+	रुको_queue_head_t रुको;
+	पूर्णांक base_update_count;
+	पूर्णांक rotation;
+	काष्ठा fb_info fb;
 	u32 cmap[16];
-};
+पूर्ण;
 
-static irqreturn_t goldfish_fb_interrupt(int irq, void *dev_id)
-{
-	unsigned long irq_flags;
-	struct goldfish_fb *fb = dev_id;
+अटल irqवापस_t goldfish_fb_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	काष्ठा goldfish_fb *fb = dev_id;
 	u32 status;
 
 	spin_lock_irqsave(&fb->lock, irq_flags);
-	status = readl(fb->reg_base + FB_INT_STATUS);
-	if (status & FB_INT_BASE_UPDATE_DONE) {
+	status = पढ़ोl(fb->reg_base + FB_INT_STATUS);
+	अगर (status & FB_INT_BASE_UPDATE_DONE) अणु
 		fb->base_update_count++;
-		wake_up(&fb->wait);
-	}
+		wake_up(&fb->रुको);
+	पूर्ण
 	spin_unlock_irqrestore(&fb->lock, irq_flags);
-	return status ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस status ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static inline u32 convert_bitfield(int val, struct fb_bitfield *bf)
-{
-	unsigned int mask = (1 << bf->length) - 1;
+अटल अंतरभूत u32 convert_bitfield(पूर्णांक val, काष्ठा fb_bitfield *bf)
+अणु
+	अचिन्हित पूर्णांक mask = (1 << bf->length) - 1;
 
-	return (val >> (16 - bf->length) & mask) << bf->offset;
-}
+	वापस (val >> (16 - bf->length) & mask) << bf->offset;
+पूर्ण
 
-static int
-goldfish_fb_setcolreg(unsigned int regno, unsigned int red, unsigned int green,
-		 unsigned int blue, unsigned int transp, struct fb_info *info)
-{
-	struct goldfish_fb *fb = container_of(info, struct goldfish_fb, fb);
+अटल पूर्णांक
+goldfish_fb_setcolreg(अचिन्हित पूर्णांक regno, अचिन्हित पूर्णांक red, अचिन्हित पूर्णांक green,
+		 अचिन्हित पूर्णांक blue, अचिन्हित पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा goldfish_fb *fb = container_of(info, काष्ठा goldfish_fb, fb);
 
-	if (regno < 16) {
+	अगर (regno < 16) अणु
 		fb->cmap[regno] = convert_bitfield(transp, &fb->fb.var.transp) |
 				  convert_bitfield(blue, &fb->fb.var.blue) |
 				  convert_bitfield(green, &fb->fb.var.green) |
 				  convert_bitfield(red, &fb->fb.var.red);
-		return 0;
-	} else {
-		return 1;
-	}
-}
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-static int goldfish_fb_check_var(struct fb_var_screeninfo *var,
-							struct fb_info *info)
-{
-	if ((var->rotate & 1) != (info->var.rotate & 1)) {
-		if ((var->xres != info->var.yres) ||
+अटल पूर्णांक goldfish_fb_check_var(काष्ठा fb_var_screeninfo *var,
+							काष्ठा fb_info *info)
+अणु
+	अगर ((var->rotate & 1) != (info->var.rotate & 1)) अणु
+		अगर ((var->xres != info->var.yres) ||
 				(var->yres != info->var.xres) ||
-				(var->xres_virtual != info->var.yres) ||
-				(var->yres_virtual > info->var.xres * 2) ||
-				(var->yres_virtual < info->var.xres)) {
-			return -EINVAL;
-		}
-	} else {
-		if ((var->xres != info->var.xres) ||
+				(var->xres_भव != info->var.yres) ||
+				(var->yres_भव > info->var.xres * 2) ||
+				(var->yres_भव < info->var.xres)) अणु
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((var->xres != info->var.xres) ||
 		   (var->yres != info->var.yres) ||
-		   (var->xres_virtual != info->var.xres) ||
-		   (var->yres_virtual > info->var.yres * 2) ||
-		   (var->yres_virtual < info->var.yres)) {
-			return -EINVAL;
-		}
-	}
-	if ((var->xoffset != info->var.xoffset) ||
+		   (var->xres_भव != info->var.xres) ||
+		   (var->yres_भव > info->var.yres * 2) ||
+		   (var->yres_भव < info->var.yres)) अणु
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर ((var->xoffset != info->var.xoffset) ||
 			(var->bits_per_pixel != info->var.bits_per_pixel) ||
-			(var->grayscale != info->var.grayscale)) {
-		return -EINVAL;
-	}
-	return 0;
-}
+			(var->grayscale != info->var.grayscale)) अणु
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int goldfish_fb_set_par(struct fb_info *info)
-{
-	struct goldfish_fb *fb = container_of(info, struct goldfish_fb, fb);
+अटल पूर्णांक goldfish_fb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा goldfish_fb *fb = container_of(info, काष्ठा goldfish_fb, fb);
 
-	if (fb->rotation != fb->fb.var.rotate) {
+	अगर (fb->rotation != fb->fb.var.rotate) अणु
 		info->fix.line_length = info->var.xres * 2;
 		fb->rotation = fb->fb.var.rotate;
-		writel(fb->rotation, fb->reg_base + FB_SET_ROTATION);
-	}
-	return 0;
-}
+		ग_लिखोl(fb->rotation, fb->reg_base + FB_SET_ROTATION);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static int goldfish_fb_pan_display(struct fb_var_screeninfo *var,
-							struct fb_info *info)
-{
-	unsigned long irq_flags;
-	int base_update_count;
-	struct goldfish_fb *fb = container_of(info, struct goldfish_fb, fb);
+अटल पूर्णांक goldfish_fb_pan_display(काष्ठा fb_var_screeninfo *var,
+							काष्ठा fb_info *info)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक base_update_count;
+	काष्ठा goldfish_fb *fb = container_of(info, काष्ठा goldfish_fb, fb);
 
 	spin_lock_irqsave(&fb->lock, irq_flags);
 	base_update_count = fb->base_update_count;
-	writel(fb->fb.fix.smem_start + fb->fb.var.xres * 2 * var->yoffset,
+	ग_लिखोl(fb->fb.fix.smem_start + fb->fb.var.xres * 2 * var->yoffset,
 						fb->reg_base + FB_SET_BASE);
 	spin_unlock_irqrestore(&fb->lock, irq_flags);
-	wait_event_timeout(fb->wait,
+	रुको_event_समयout(fb->रुको,
 			fb->base_update_count != base_update_count, HZ / 15);
-	if (fb->base_update_count == base_update_count)
+	अगर (fb->base_update_count == base_update_count)
 		pr_err("%s: timeout waiting for base update\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int goldfish_fb_blank(int blank, struct fb_info *info)
-{
-	struct goldfish_fb *fb = container_of(info, struct goldfish_fb, fb);
+अटल पूर्णांक goldfish_fb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा goldfish_fb *fb = container_of(info, काष्ठा goldfish_fb, fb);
 
-	switch (blank) {
-	case FB_BLANK_NORMAL:
-		writel(1, fb->reg_base + FB_SET_BLANK);
-		break;
-	case FB_BLANK_UNBLANK:
-		writel(0, fb->reg_base + FB_SET_BLANK);
-		break;
-	}
-	return 0;
-}
+	चयन (blank) अणु
+	हाल FB_BLANK_NORMAL:
+		ग_लिखोl(1, fb->reg_base + FB_SET_BLANK);
+		अवरोध;
+	हाल FB_BLANK_UNBLANK:
+		ग_लिखोl(0, fb->reg_base + FB_SET_BLANK);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops goldfish_fb_ops = {
+अटल स्थिर काष्ठा fb_ops goldfish_fb_ops = अणु
 	.owner          = THIS_MODULE,
 	.fb_check_var   = goldfish_fb_check_var,
 	.fb_set_par     = goldfish_fb_set_par,
@@ -170,50 +171,50 @@ static const struct fb_ops goldfish_fb_ops = {
 	.fb_fillrect    = cfb_fillrect,
 	.fb_copyarea    = cfb_copyarea,
 	.fb_imageblit   = cfb_imageblit,
-};
+पूर्ण;
 
 
-static int goldfish_fb_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct resource *r;
-	struct goldfish_fb *fb;
-	size_t framesize;
+अटल पूर्णांक goldfish_fb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा resource *r;
+	काष्ठा goldfish_fb *fb;
+	माप_प्रकार framesize;
 	u32 width, height;
 	dma_addr_t fbpaddr;
 
-	fb = kzalloc(sizeof(*fb), GFP_KERNEL);
-	if (fb == NULL) {
+	fb = kzalloc(माप(*fb), GFP_KERNEL);
+	अगर (fb == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_fb_alloc_failed;
-	}
+		जाओ err_fb_alloc_failed;
+	पूर्ण
 	spin_lock_init(&fb->lock);
-	init_waitqueue_head(&fb->wait);
-	platform_set_drvdata(pdev, fb);
+	init_रुकोqueue_head(&fb->रुको);
+	platक्रमm_set_drvdata(pdev, fb);
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (r == NULL) {
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (r == शून्य) अणु
 		ret = -ENODEV;
-		goto err_no_io_base;
-	}
+		जाओ err_no_io_base;
+	पूर्ण
 	fb->reg_base = ioremap(r->start, PAGE_SIZE);
-	if (fb->reg_base == NULL) {
+	अगर (fb->reg_base == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_no_io_base;
-	}
+		जाओ err_no_io_base;
+	पूर्ण
 
-	fb->irq = platform_get_irq(pdev, 0);
-	if (fb->irq <= 0) {
+	fb->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (fb->irq <= 0) अणु
 		ret = -ENODEV;
-		goto err_no_irq;
-	}
+		जाओ err_no_irq;
+	पूर्ण
 
-	width = readl(fb->reg_base + FB_GET_WIDTH);
-	height = readl(fb->reg_base + FB_GET_HEIGHT);
+	width = पढ़ोl(fb->reg_base + FB_GET_WIDTH);
+	height = पढ़ोl(fb->reg_base + FB_GET_HEIGHT);
 
 	fb->fb.fbops		= &goldfish_fb_ops;
 	fb->fb.flags		= FBINFO_FLAG_DEFAULT;
-	fb->fb.pseudo_palette	= fb->cmap;
+	fb->fb.pseuकरो_palette	= fb->cmap;
 	fb->fb.fix.type		= FB_TYPE_PACKED_PIXELS;
 	fb->fb.fix.visual = FB_VISUAL_TRUECOLOR;
 	fb->fb.fix.line_length = width * 2;
@@ -222,13 +223,13 @@ static int goldfish_fb_probe(struct platform_device *pdev)
 
 	fb->fb.var.xres		= width;
 	fb->fb.var.yres		= height;
-	fb->fb.var.xres_virtual	= width;
-	fb->fb.var.yres_virtual	= height * 2;
+	fb->fb.var.xres_भव	= width;
+	fb->fb.var.yres_भव	= height * 2;
 	fb->fb.var.bits_per_pixel = 16;
 	fb->fb.var.activate	= FB_ACTIVATE_NOW;
-	fb->fb.var.height	= readl(fb->reg_base + FB_GET_PHYS_HEIGHT);
-	fb->fb.var.width	= readl(fb->reg_base + FB_GET_PHYS_WIDTH);
-	fb->fb.var.pixclock	= 0;
+	fb->fb.var.height	= पढ़ोl(fb->reg_base + FB_GET_PHYS_HEIGHT);
+	fb->fb.var.width	= पढ़ोl(fb->reg_base + FB_GET_PHYS_WIDTH);
+	fb->fb.var.pixघड़ी	= 0;
 
 	fb->fb.var.red.offset = 11;
 	fb->fb.var.red.length = 5;
@@ -238,91 +239,91 @@ static int goldfish_fb_probe(struct platform_device *pdev)
 	fb->fb.var.blue.length = 5;
 
 	framesize = width * height * 2 * 2;
-	fb->fb.screen_base = (char __force __iomem *)dma_alloc_coherent(
+	fb->fb.screen_base = (अक्षर __क्रमce __iomem *)dma_alloc_coherent(
 						&pdev->dev, framesize,
 						&fbpaddr, GFP_KERNEL);
 	pr_debug("allocating frame buffer %d * %d, got %p\n",
 					width, height, fb->fb.screen_base);
-	if (fb->fb.screen_base == NULL) {
+	अगर (fb->fb.screen_base == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_alloc_screen_base_failed;
-	}
+		जाओ err_alloc_screen_base_failed;
+	पूर्ण
 	fb->fb.fix.smem_start = fbpaddr;
 	fb->fb.fix.smem_len = framesize;
 
 	ret = fb_set_var(&fb->fb, &fb->fb.var);
-	if (ret)
-		goto err_fb_set_var_failed;
+	अगर (ret)
+		जाओ err_fb_set_var_failed;
 
-	ret = request_irq(fb->irq, goldfish_fb_interrupt, IRQF_SHARED,
+	ret = request_irq(fb->irq, goldfish_fb_पूर्णांकerrupt, IRQF_SHARED,
 							pdev->name, fb);
-	if (ret)
-		goto err_request_irq_failed;
+	अगर (ret)
+		जाओ err_request_irq_failed;
 
-	writel(FB_INT_BASE_UPDATE_DONE, fb->reg_base + FB_INT_ENABLE);
+	ग_लिखोl(FB_INT_BASE_UPDATE_DONE, fb->reg_base + FB_INT_ENABLE);
 	goldfish_fb_pan_display(&fb->fb.var, &fb->fb); /* updates base */
 
-	ret = register_framebuffer(&fb->fb);
-	if (ret)
-		goto err_register_framebuffer_failed;
-	return 0;
+	ret = रेजिस्टर_framebuffer(&fb->fb);
+	अगर (ret)
+		जाओ err_रेजिस्टर_framebuffer_failed;
+	वापस 0;
 
-err_register_framebuffer_failed:
-	free_irq(fb->irq, fb);
+err_रेजिस्टर_framebuffer_failed:
+	मुक्त_irq(fb->irq, fb);
 err_request_irq_failed:
 err_fb_set_var_failed:
-	dma_free_coherent(&pdev->dev, framesize,
-				(void *)fb->fb.screen_base,
+	dma_मुक्त_coherent(&pdev->dev, framesize,
+				(व्योम *)fb->fb.screen_base,
 				fb->fb.fix.smem_start);
 err_alloc_screen_base_failed:
 err_no_irq:
 	iounmap(fb->reg_base);
 err_no_io_base:
-	kfree(fb);
+	kमुक्त(fb);
 err_fb_alloc_failed:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int goldfish_fb_remove(struct platform_device *pdev)
-{
-	size_t framesize;
-	struct goldfish_fb *fb = platform_get_drvdata(pdev);
+अटल पूर्णांक goldfish_fb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	माप_प्रकार framesize;
+	काष्ठा goldfish_fb *fb = platक्रमm_get_drvdata(pdev);
 
-	framesize = fb->fb.var.xres_virtual * fb->fb.var.yres_virtual * 2;
-	unregister_framebuffer(&fb->fb);
-	free_irq(fb->irq, fb);
+	framesize = fb->fb.var.xres_भव * fb->fb.var.yres_भव * 2;
+	unरेजिस्टर_framebuffer(&fb->fb);
+	मुक्त_irq(fb->irq, fb);
 
-	dma_free_coherent(&pdev->dev, framesize, (void *)fb->fb.screen_base,
+	dma_मुक्त_coherent(&pdev->dev, framesize, (व्योम *)fb->fb.screen_base,
 						fb->fb.fix.smem_start);
 	iounmap(fb->reg_base);
-	kfree(fb);
-	return 0;
-}
+	kमुक्त(fb);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id goldfish_fb_of_match[] = {
-	{ .compatible = "google,goldfish-fb", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id goldfish_fb_of_match[] = अणु
+	अणु .compatible = "google,goldfish-fb", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, goldfish_fb_of_match);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id goldfish_fb_acpi_match[] = {
-	{ "GFSH0004", 0 },
-	{ },
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id goldfish_fb_acpi_match[] = अणु
+	अणु "GFSH0004", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, goldfish_fb_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver goldfish_fb_driver = {
+अटल काष्ठा platक्रमm_driver goldfish_fb_driver = अणु
 	.probe		= goldfish_fb_probe,
-	.remove		= goldfish_fb_remove,
-	.driver = {
+	.हटाओ		= goldfish_fb_हटाओ,
+	.driver = अणु
 		.name = "goldfish_fb",
 		.of_match_table = goldfish_fb_of_match,
 		.acpi_match_table = ACPI_PTR(goldfish_fb_acpi_match),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-module_platform_driver(goldfish_fb_driver);
+module_platक्रमm_driver(goldfish_fb_driver);
 
 MODULE_LICENSE("GPL v2");

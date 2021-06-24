@@ -1,1294 +1,1295 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * System Control and Management Interface (SCMI) Notification support
+ * System Control and Management Interface (SCMI) Notअगरication support
  *
  * Copyright (C) 2020-2021 ARM Ltd.
  */
 /**
  * DOC: Theory of operation
  *
- * SCMI Protocol specification allows the platform to signal events to
- * interested agents via notification messages: this is an implementation
- * of the dispatch and delivery of such notifications to the interested users
+ * SCMI Protocol specअगरication allows the platक्रमm to संकेत events to
+ * पूर्णांकerested agents via notअगरication messages: this is an implementation
+ * of the dispatch and delivery of such notअगरications to the पूर्णांकerested users
  * inside the Linux kernel.
  *
- * An SCMI Notification core instance is initialized for each active platform
- * instance identified by the means of the usual &struct scmi_handle.
+ * An SCMI Notअगरication core instance is initialized क्रम each active platक्रमm
+ * instance identअगरied by the means of the usual &काष्ठा scmi_handle.
  *
- * Each SCMI Protocol implementation, during its initialization, registers with
- * this core its set of supported events using scmi_register_protocol_events():
- * all the needed descriptors are stored in the &struct registered_protocols and
- * &struct registered_events arrays.
+ * Each SCMI Protocol implementation, during its initialization, रेजिस्टरs with
+ * this core its set of supported events using scmi_रेजिस्टर_protocol_events():
+ * all the needed descriptors are stored in the &काष्ठा रेजिस्टरed_protocols and
+ * &काष्ठा रेजिस्टरed_events arrays.
  *
- * Kernel users interested in some specific event can register their callbacks
- * providing the usual notifier_block descriptor, since this core implements
- * events' delivery using the standard Kernel notification chains machinery.
+ * Kernel users पूर्णांकerested in some specअगरic event can रेजिस्टर their callbacks
+ * providing the usual notअगरier_block descriptor, since this core implements
+ * events' delivery using the standard Kernel notअगरication chains machinery.
  *
  * Given the number of possible events defined by SCMI and the extensibility
- * of the SCMI Protocol itself, the underlying notification chains are created
+ * of the SCMI Protocol itself, the underlying notअगरication chains are created
  * and destroyed dynamically on demand depending on the number of users
- * effectively registered for an event, so that no support structures or chains
- * are allocated until at least one user has registered a notifier_block for
- * such event. Similarly, events' generation itself is enabled at the platform
- * level only after at least one user has registered, and it is shutdown after
- * the last user for that event has gone.
+ * effectively रेजिस्टरed क्रम an event, so that no support काष्ठाures or chains
+ * are allocated until at least one user has रेजिस्टरed a notअगरier_block क्रम
+ * such event. Similarly, events' generation itself is enabled at the platक्रमm
+ * level only after at least one user has रेजिस्टरed, and it is shutकरोwn after
+ * the last user क्रम that event has gone.
  *
- * All users provided callbacks and allocated notification-chains are stored in
- * the @registered_events_handlers hashtable. Callbacks' registration requests
- * for still to be registered events are instead kept in the dedicated common
+ * All users provided callbacks and allocated notअगरication-chains are stored in
+ * the @रेजिस्टरed_events_handlers hashtable. Callbacks' registration requests
+ * क्रम still to be रेजिस्टरed events are instead kept in the dedicated common
  * hashtable @pending_events_handlers.
  *
- * An event is identified univocally by the tuple (proto_id, evt_id, src_id)
- * and is served by its own dedicated notification chain; information contained
- * in such tuples is used, in a few different ways, to generate the needed
+ * An event is identअगरied univocally by the tuple (proto_id, evt_id, src_id)
+ * and is served by its own dedicated notअगरication chain; inक्रमmation contained
+ * in such tuples is used, in a few dअगरferent ways, to generate the needed
  * hash-keys.
  *
  * Here proto_id and evt_id are simply the protocol_id and message_id numbers
- * as described in the SCMI Protocol specification, while src_id represents an
- * optional, protocol dependent, source identifier (like domain_id, perf_id
- * or sensor_id and so forth).
+ * as described in the SCMI Protocol specअगरication, जबतक src_id represents an
+ * optional, protocol dependent, source identअगरier (like करोमुख्य_id, perf_id
+ * or sensor_id and so क्रमth).
  *
- * Upon reception of a notification message from the platform the SCMI RX ISR
- * passes the received message payload and some ancillary information (including
- * an arrival timestamp in nanoseconds) to the core via @scmi_notify() which
- * pushes the event-data itself on a protocol-dedicated kfifo queue for further
- * deferred processing as specified in @scmi_events_dispatcher().
+ * Upon reception of a notअगरication message from the platक्रमm the SCMI RX ISR
+ * passes the received message payload and some ancillary inक्रमmation (including
+ * an arrival बारtamp in nanoseconds) to the core via @scmi_notअगरy() which
+ * pushes the event-data itself on a protocol-dedicated kfअगरo queue क्रम further
+ * deferred processing as specअगरied in @scmi_events_dispatcher().
  *
- * Each protocol has it own dedicated work_struct and worker which, once kicked
+ * Each protocol has it own dedicated work_काष्ठा and worker which, once kicked
  * by the ISR, takes care to empty its own dedicated queue, deliverying the
- * queued items into the proper notification-chain: notifications processing can
- * proceed concurrently on distinct workers only between events belonging to
- * different protocols while delivery of events within the same protocol is
- * still strictly sequentially ordered by time of arrival.
+ * queued items पूर्णांकo the proper notअगरication-chain: notअगरications processing can
+ * proceed concurrently on distinct workers only between events beदीर्घing to
+ * dअगरferent protocols जबतक delivery of events within the same protocol is
+ * still strictly sequentially ordered by समय of arrival.
  *
- * Events' information is then extracted from the SCMI Notification messages and
- * conveyed, converted into a custom per-event report struct, as the void *data
- * param to the user callback provided by the registered notifier_block, so that
+ * Events' inक्रमmation is then extracted from the SCMI Notअगरication messages and
+ * conveyed, converted पूर्णांकo a custom per-event report काष्ठा, as the व्योम *data
+ * param to the user callback provided by the रेजिस्टरed notअगरier_block, so that
  * from the user perspective his callback will look invoked like:
  *
- * int user_cb(struct notifier_block *nb, unsigned long event_id, void *report)
+ * पूर्णांक user_cb(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event_id, व्योम *report)
  *
  */
 
-#define dev_fmt(fmt) "SCMI Notifications - " fmt
-#define pr_fmt(fmt) "SCMI Notifications - " fmt
+#घोषणा dev_fmt(fmt) "SCMI Notifications - " fmt
+#घोषणा pr_fmt(fmt) "SCMI Notifications - " fmt
 
-#include <linux/bitfield.h>
-#include <linux/bug.h>
-#include <linux/compiler.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/hashtable.h>
-#include <linux/kernel.h>
-#include <linux/ktime.h>
-#include <linux/kfifo.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/notifier.h>
-#include <linux/refcount.h>
-#include <linux/scmi_protocol.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hashtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/scmi_protocol.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
-#include "common.h"
-#include "notify.h"
+#समावेश "common.h"
+#समावेश "notify.h"
 
-#define SCMI_MAX_PROTO		256
+#घोषणा SCMI_MAX_PROTO		256
 
-#define PROTO_ID_MASK		GENMASK(31, 24)
-#define EVT_ID_MASK		GENMASK(23, 16)
-#define SRC_ID_MASK		GENMASK(15, 0)
+#घोषणा PROTO_ID_MASK		GENMASK(31, 24)
+#घोषणा EVT_ID_MASK		GENMASK(23, 16)
+#घोषणा SRC_ID_MASK		GENMASK(15, 0)
 
 /*
- * Builds an unsigned 32bit key from the given input tuple to be used
+ * Builds an अचिन्हित 32bit key from the given input tuple to be used
  * as a key in hashtables.
  */
-#define MAKE_HASH_KEY(p, e, s)			\
+#घोषणा MAKE_HASH_KEY(p, e, s)			\
 	(FIELD_PREP(PROTO_ID_MASK, (p)) |	\
 	   FIELD_PREP(EVT_ID_MASK, (e)) |	\
 	   FIELD_PREP(SRC_ID_MASK, (s)))
 
-#define MAKE_ALL_SRCS_KEY(p, e)		MAKE_HASH_KEY((p), (e), SRC_ID_MASK)
+#घोषणा MAKE_ALL_SRCS_KEY(p, e)		MAKE_HASH_KEY((p), (e), SRC_ID_MASK)
 
 /*
  * Assumes that the stored obj includes its own hash-key in a field named 'key':
- * with this simplification this macro can be equally used for all the objects'
+ * with this simplअगरication this macro can be equally used क्रम all the objects'
  * types hashed by this implementation.
  *
  * @__ht: The hashtable name
- * @__obj: A pointer to the object type to be retrieved from the hashtable;
- *	   it will be used as a cursor while scanning the hastable and it will
- *	   be possibly left as NULL when @__k is not found
- * @__k: The key to search for
+ * @__obj: A poपूर्णांकer to the object type to be retrieved from the hashtable;
+ *	   it will be used as a cursor जबतक scanning the hastable and it will
+ *	   be possibly left as शून्य when @__k is not found
+ * @__k: The key to search क्रम
  */
-#define KEY_FIND(__ht, __obj, __k)				\
-({								\
+#घोषणा KEY_FIND(__ht, __obj, __k)				\
+(अणु								\
 	typeof(__k) k_ = __k;					\
 	typeof(__obj) obj_;					\
 								\
-	hash_for_each_possible((__ht), obj_, hash, k_)		\
-		if (obj_->key == k_)				\
-			break;					\
+	hash_क्रम_each_possible((__ht), obj_, hash, k_)		\
+		अगर (obj_->key == k_)				\
+			अवरोध;					\
 	__obj = obj_;						\
-})
+पूर्ण)
 
-#define KEY_XTRACT_PROTO_ID(key)	FIELD_GET(PROTO_ID_MASK, (key))
-#define KEY_XTRACT_EVT_ID(key)		FIELD_GET(EVT_ID_MASK, (key))
-#define KEY_XTRACT_SRC_ID(key)		FIELD_GET(SRC_ID_MASK, (key))
+#घोषणा KEY_XTRACT_PROTO_ID(key)	FIELD_GET(PROTO_ID_MASK, (key))
+#घोषणा KEY_XTRACT_EVT_ID(key)		FIELD_GET(EVT_ID_MASK, (key))
+#घोषणा KEY_XTRACT_SRC_ID(key)		FIELD_GET(SRC_ID_MASK, (key))
 
 /*
- * A set of macros used to access safely @registered_protocols and
- * @registered_events arrays; these are fixed in size and each entry is possibly
- * populated at protocols' registration time and then only read but NEVER
- * modified or removed.
+ * A set of macros used to access safely @रेजिस्टरed_protocols and
+ * @रेजिस्टरed_events arrays; these are fixed in size and each entry is possibly
+ * populated at protocols' registration समय and then only पढ़ो but NEVER
+ * modअगरied or हटाओd.
  */
-#define SCMI_GET_PROTO(__ni, __pid)					\
-({									\
+#घोषणा SCMI_GET_PROTO(__ni, __pid)					\
+(अणु									\
 	typeof(__ni) ni_ = __ni;					\
-	struct scmi_registered_events_desc *__pd = NULL;		\
+	काष्ठा scmi_रेजिस्टरed_events_desc *__pd = शून्य;		\
 									\
-	if (ni_)							\
-		__pd = READ_ONCE(ni_->registered_protocols[(__pid)]);	\
+	अगर (ni_)							\
+		__pd = READ_ONCE(ni_->रेजिस्टरed_protocols[(__pid)]);	\
 	__pd;								\
-})
+पूर्ण)
 
-#define SCMI_GET_REVT_FROM_PD(__pd, __eid)				\
-({									\
+#घोषणा SCMI_GET_REVT_FROM_PD(__pd, __eid)				\
+(अणु									\
 	typeof(__pd) pd_ = __pd;					\
 	typeof(__eid) eid_ = __eid;					\
-	struct scmi_registered_event *__revt = NULL;			\
+	काष्ठा scmi_रेजिस्टरed_event *__revt = शून्य;			\
 									\
-	if (pd_ && eid_ < pd_->num_events)				\
-		__revt = READ_ONCE(pd_->registered_events[eid_]);	\
+	अगर (pd_ && eid_ < pd_->num_events)				\
+		__revt = READ_ONCE(pd_->रेजिस्टरed_events[eid_]);	\
 	__revt;								\
-})
+पूर्ण)
 
-#define SCMI_GET_REVT(__ni, __pid, __eid)				\
-({									\
-	struct scmi_registered_event *__revt;				\
-	struct scmi_registered_events_desc *__pd;			\
+#घोषणा SCMI_GET_REVT(__ni, __pid, __eid)				\
+(अणु									\
+	काष्ठा scmi_रेजिस्टरed_event *__revt;				\
+	काष्ठा scmi_रेजिस्टरed_events_desc *__pd;			\
 									\
 	__pd = SCMI_GET_PROTO((__ni), (__pid));				\
 	__revt = SCMI_GET_REVT_FROM_PD(__pd, (__eid));			\
 	__revt;								\
-})
+पूर्ण)
 
 /* A couple of utility macros to limit cruft when calling protocols' helpers */
-#define REVT_NOTIFY_SET_STATUS(revt, eid, sid, state)		\
-({								\
+#घोषणा REVT_NOTIFY_SET_STATUS(revt, eid, sid, state)		\
+(अणु								\
 	typeof(revt) r = revt;					\
-	r->proto->ops->set_notify_enabled(r->proto->ph,		\
+	r->proto->ops->set_notअगरy_enabled(r->proto->ph,		\
 					(eid), (sid), (state));	\
-})
+पूर्ण)
 
-#define REVT_NOTIFY_ENABLE(revt, eid, sid)			\
+#घोषणा REVT_NOTIFY_ENABLE(revt, eid, sid)			\
 	REVT_NOTIFY_SET_STATUS((revt), (eid), (sid), true)
 
-#define REVT_NOTIFY_DISABLE(revt, eid, sid)			\
+#घोषणा REVT_NOTIFY_DISABLE(revt, eid, sid)			\
 	REVT_NOTIFY_SET_STATUS((revt), (eid), (sid), false)
 
-#define REVT_FILL_REPORT(revt, ...)				\
-({								\
+#घोषणा REVT_FILL_REPORT(revt, ...)				\
+(अणु								\
 	typeof(revt) r = revt;					\
 	r->proto->ops->fill_custom_report(r->proto->ph,		\
 					  __VA_ARGS__);		\
-})
+पूर्ण)
 
-#define SCMI_PENDING_HASH_SZ		4
-#define SCMI_REGISTERED_HASH_SZ		6
+#घोषणा SCMI_PENDING_HASH_SZ		4
+#घोषणा SCMI_REGISTERED_HASH_SZ		6
 
-struct scmi_registered_events_desc;
+काष्ठा scmi_रेजिस्टरed_events_desc;
 
 /**
- * struct scmi_notify_instance  - Represents an instance of the notification
+ * काष्ठा scmi_notअगरy_instance  - Represents an instance of the notअगरication
  * core
- * @gid: GroupID used for devres
- * @handle: A reference to the platform instance
- * @init_work: A work item to perform final initializations of pending handlers
- * @notify_wq: A reference to the allocated Kernel cmwq
+ * @gid: GroupID used क्रम devres
+ * @handle: A reference to the platक्रमm instance
+ * @init_work: A work item to perक्रमm final initializations of pending handlers
+ * @notअगरy_wq: A reference to the allocated Kernel cmwq
  * @pending_mtx: A mutex to protect @pending_events_handlers
- * @registered_protocols: A statically allocated array containing pointers to
- *			  all the registered protocol-level specific information
+ * @रेजिस्टरed_protocols: A अटलally allocated array containing poपूर्णांकers to
+ *			  all the रेजिस्टरed protocol-level specअगरic inक्रमmation
  *			  related to events' handling
  * @pending_events_handlers: An hashtable containing all pending events'
  *			     handlers descriptors
  *
- * Each platform instance, represented by a handle, has its own instance of
- * the notification subsystem represented by this structure.
+ * Each platक्रमm instance, represented by a handle, has its own instance of
+ * the notअगरication subप्रणाली represented by this काष्ठाure.
  */
-struct scmi_notify_instance {
-	void			*gid;
-	struct scmi_handle	*handle;
-	struct work_struct	init_work;
-	struct workqueue_struct	*notify_wq;
+काष्ठा scmi_notअगरy_instance अणु
+	व्योम			*gid;
+	काष्ठा scmi_handle	*handle;
+	काष्ठा work_काष्ठा	init_work;
+	काष्ठा workqueue_काष्ठा	*notअगरy_wq;
 	/* lock to protect pending_events_handlers */
-	struct mutex		pending_mtx;
-	struct scmi_registered_events_desc	**registered_protocols;
+	काष्ठा mutex		pending_mtx;
+	काष्ठा scmi_रेजिस्टरed_events_desc	**रेजिस्टरed_protocols;
 	DECLARE_HASHTABLE(pending_events_handlers, SCMI_PENDING_HASH_SZ);
-};
+पूर्ण;
 
 /**
- * struct events_queue  - Describes a queue and its associated worker
- * @sz: Size in bytes of the related kfifo
- * @kfifo: A dedicated Kernel kfifo descriptor
- * @notify_work: A custom work item bound to this queue
+ * काष्ठा events_queue  - Describes a queue and its associated worker
+ * @sz: Size in bytes of the related kfअगरo
+ * @kfअगरo: A dedicated Kernel kfअगरo descriptor
+ * @notअगरy_work: A custom work item bound to this queue
  * @wq: A reference to the associated workqueue
  *
  * Each protocol has its own dedicated events_queue descriptor.
  */
-struct events_queue {
-	size_t			sz;
-	struct kfifo		kfifo;
-	struct work_struct	notify_work;
-	struct workqueue_struct	*wq;
-};
+काष्ठा events_queue अणु
+	माप_प्रकार			sz;
+	काष्ठा kfअगरo		kfअगरo;
+	काष्ठा work_काष्ठा	notअगरy_work;
+	काष्ठा workqueue_काष्ठा	*wq;
+पूर्ण;
 
 /**
- * struct scmi_event_header  - A utility header
- * @timestamp: The timestamp, in nanoseconds (boottime), which was associated
+ * काष्ठा scmi_event_header  - A utility header
+ * @बारtamp: The बारtamp, in nanoseconds (bootसमय), which was associated
  *	       to this event as soon as it entered the SCMI RX ISR
  * @payld_sz: Effective size of the embedded message payload which follows
- * @evt_id: Event ID (corresponds to the Event MsgID for this Protocol)
+ * @evt_id: Event ID (corresponds to the Event MsgID क्रम this Protocol)
  * @payld: A reference to the embedded event payload
  *
- * This header is prepended to each received event message payload before
- * queueing it on the related &struct events_queue.
+ * This header is prepended to each received event message payload beक्रमe
+ * queueing it on the related &काष्ठा events_queue.
  */
-struct scmi_event_header {
-	ktime_t timestamp;
-	size_t payld_sz;
-	unsigned char evt_id;
-	unsigned char payld[];
-};
+काष्ठा scmi_event_header अणु
+	kसमय_प्रकार बारtamp;
+	माप_प्रकार payld_sz;
+	अचिन्हित अक्षर evt_id;
+	अचिन्हित अक्षर payld[];
+पूर्ण;
 
-struct scmi_registered_event;
+काष्ठा scmi_रेजिस्टरed_event;
 
 /**
- * struct scmi_registered_events_desc  - Protocol Specific information
+ * काष्ठा scmi_रेजिस्टरed_events_desc  - Protocol Specअगरic inक्रमmation
  * @id: Protocol ID
- * @ops: Protocol specific and event-related operations
+ * @ops: Protocol specअगरic and event-related operations
  * @equeue: The embedded per-protocol events_queue
  * @ni: A reference to the initialized instance descriptor
  * @eh: A reference to pre-allocated buffer to be used as a scratch area by the
- *	deferred worker when fetching data from the kfifo
+ *	deferred worker when fetching data from the kfअगरo
  * @eh_sz: Size of the pre-allocated buffer @eh
- * @in_flight: A reference to an in flight &struct scmi_registered_event
- * @num_events: Number of events in @registered_events
- * @registered_events: A dynamically allocated array holding all the registered
+ * @in_flight: A reference to an in flight &काष्ठा scmi_रेजिस्टरed_event
+ * @num_events: Number of events in @रेजिस्टरed_events
+ * @रेजिस्टरed_events: A dynamically allocated array holding all the रेजिस्टरed
  *		       events' descriptors, whose fixed-size is determined at
- *		       compile time.
- * @registered_mtx: A mutex to protect @registered_events_handlers
+ *		       compile समय.
+ * @रेजिस्टरed_mtx: A mutex to protect @रेजिस्टरed_events_handlers
  * @ph: SCMI protocol handle reference
- * @registered_events_handlers: An hashtable containing all events' handlers
- *				descriptors registered for this protocol
+ * @रेजिस्टरed_events_handlers: An hashtable containing all events' handlers
+ *				descriptors रेजिस्टरed क्रम this protocol
  *
- * All protocols that register at least one event have their protocol-specific
- * information stored here, together with the embedded allocated events_queue.
- * These descriptors are stored in the @registered_protocols array at protocol
- * registration time.
+ * All protocols that रेजिस्टर at least one event have their protocol-specअगरic
+ * inक्रमmation stored here, together with the embedded allocated events_queue.
+ * These descriptors are stored in the @रेजिस्टरed_protocols array at protocol
+ * registration समय.
  *
- * Once these descriptors are successfully registered, they are NEVER again
- * removed or modified since protocols do not unregister ever, so that, once
- * we safely grab a NON-NULL reference from the array we can keep it and use it.
+ * Once these descriptors are successfully रेजिस्टरed, they are NEVER again
+ * हटाओd or modअगरied since protocols करो not unरेजिस्टर ever, so that, once
+ * we safely grab a NON-शून्य reference from the array we can keep it and use it.
  */
-struct scmi_registered_events_desc {
+काष्ठा scmi_रेजिस्टरed_events_desc अणु
 	u8				id;
-	const struct scmi_event_ops	*ops;
-	struct events_queue		equeue;
-	struct scmi_notify_instance	*ni;
-	struct scmi_event_header	*eh;
-	size_t				eh_sz;
-	void				*in_flight;
-	int				num_events;
-	struct scmi_registered_event	**registered_events;
-	/* mutex to protect registered_events_handlers */
-	struct mutex			registered_mtx;
-	const struct scmi_protocol_handle	*ph;
-	DECLARE_HASHTABLE(registered_events_handlers, SCMI_REGISTERED_HASH_SZ);
-};
+	स्थिर काष्ठा scmi_event_ops	*ops;
+	काष्ठा events_queue		equeue;
+	काष्ठा scmi_notअगरy_instance	*ni;
+	काष्ठा scmi_event_header	*eh;
+	माप_प्रकार				eh_sz;
+	व्योम				*in_flight;
+	पूर्णांक				num_events;
+	काष्ठा scmi_रेजिस्टरed_event	**रेजिस्टरed_events;
+	/* mutex to protect रेजिस्टरed_events_handlers */
+	काष्ठा mutex			रेजिस्टरed_mtx;
+	स्थिर काष्ठा scmi_protocol_handle	*ph;
+	DECLARE_HASHTABLE(रेजिस्टरed_events_handlers, SCMI_REGISTERED_HASH_SZ);
+पूर्ण;
 
 /**
- * struct scmi_registered_event  - Event Specific Information
+ * काष्ठा scmi_रेजिस्टरed_event  - Event Specअगरic Inक्रमmation
  * @proto: A reference to the associated protocol descriptor
  * @evt: A reference to the associated event descriptor (as provided at
- *       registration time)
+ *       registration समय)
  * @report: A pre-allocated buffer used by the deferred worker to fill a
  *	    customized event report
- * @num_sources: The number of possible sources for this event as stated at
- *		 events' registration time
+ * @num_sources: The number of possible sources क्रम this event as stated at
+ *		 events' registration समय
  * @sources: A reference to a dynamically allocated array used to refcount the
- *	     events' enable requests for all the existing sources
+ *	     events' enable requests क्रम all the existing sources
  * @sources_mtx: A mutex to serialize the access to @sources
  *
- * All registered events are represented by one of these structures that are
- * stored in the @registered_events array at protocol registration time.
+ * All रेजिस्टरed events are represented by one of these काष्ठाures that are
+ * stored in the @रेजिस्टरed_events array at protocol registration समय.
  *
- * Once these descriptors are successfully registered, they are NEVER again
- * removed or modified since protocols do not unregister ever, so that once we
- * safely grab a NON-NULL reference from the table we can keep it and use it.
+ * Once these descriptors are successfully रेजिस्टरed, they are NEVER again
+ * हटाओd or modअगरied since protocols करो not unरेजिस्टर ever, so that once we
+ * safely grab a NON-शून्य reference from the table we can keep it and use it.
  */
-struct scmi_registered_event {
-	struct scmi_registered_events_desc *proto;
-	const struct scmi_event	*evt;
-	void		*report;
+काष्ठा scmi_रेजिस्टरed_event अणु
+	काष्ठा scmi_रेजिस्टरed_events_desc *proto;
+	स्थिर काष्ठा scmi_event	*evt;
+	व्योम		*report;
 	u32		num_sources;
 	refcount_t	*sources;
 	/* locking to serialize the access to sources */
-	struct mutex	sources_mtx;
-};
+	काष्ठा mutex	sources_mtx;
+पूर्ण;
 
 /**
- * struct scmi_event_handler  - Event handler information
+ * काष्ठा scmi_event_handler  - Event handler inक्रमmation
  * @key: The used hashkey
- * @users: A reference count for number of active users for this handler
- * @r_evt: A reference to the associated registered event; when this is NULL
- *	   this handler is pending, which means that identifies a set of
- *	   callbacks intended to be attached to an event which is still not
- *	   known nor registered by any protocol at that point in time
- * @chain: The notification chain dedicated to this specific event tuple
- * @hash: The hlist_node used for collision handling
- * @enabled: A boolean which records if event's generation has been already
- *	     enabled for this handler as a whole
+ * @users: A reference count क्रम number of active users क्रम this handler
+ * @r_evt: A reference to the associated रेजिस्टरed event; when this is शून्य
+ *	   this handler is pending, which means that identअगरies a set of
+ *	   callbacks पूर्णांकended to be attached to an event which is still not
+ *	   known nor रेजिस्टरed by any protocol at that poपूर्णांक in समय
+ * @chain: The notअगरication chain dedicated to this specअगरic event tuple
+ * @hash: The hlist_node used क्रम collision handling
+ * @enabled: A boolean which records अगर event's generation has been alपढ़ोy
+ *	     enabled क्रम this handler as a whole
  *
- * This structure collects all the information needed to process a received
- * event identified by the tuple (proto_id, evt_id, src_id).
- * These descriptors are stored in a per-protocol @registered_events_handlers
+ * This काष्ठाure collects all the inक्रमmation needed to process a received
+ * event identअगरied by the tuple (proto_id, evt_id, src_id).
+ * These descriptors are stored in a per-protocol @रेजिस्टरed_events_handlers
  * table using as a key a value derived from that tuple.
  */
-struct scmi_event_handler {
+काष्ठा scmi_event_handler अणु
 	u32				key;
 	refcount_t			users;
-	struct scmi_registered_event	*r_evt;
-	struct blocking_notifier_head	chain;
-	struct hlist_node		hash;
+	काष्ठा scmi_रेजिस्टरed_event	*r_evt;
+	काष्ठा blocking_notअगरier_head	chain;
+	काष्ठा hlist_node		hash;
 	bool				enabled;
-};
+पूर्ण;
 
-#define IS_HNDL_PENDING(hndl)	(!(hndl)->r_evt)
+#घोषणा IS_HNDL_PENDING(hndl)	(!(hndl)->r_evt)
 
-static struct scmi_event_handler *
-scmi_get_active_handler(struct scmi_notify_instance *ni, u32 evt_key);
-static void scmi_put_active_handler(struct scmi_notify_instance *ni,
-				    struct scmi_event_handler *hndl);
-static bool scmi_put_handler_unlocked(struct scmi_notify_instance *ni,
-				      struct scmi_event_handler *hndl);
+अटल काष्ठा scmi_event_handler *
+scmi_get_active_handler(काष्ठा scmi_notअगरy_instance *ni, u32 evt_key);
+अटल व्योम scmi_put_active_handler(काष्ठा scmi_notअगरy_instance *ni,
+				    काष्ठा scmi_event_handler *hndl);
+अटल bool scmi_put_handler_unlocked(काष्ठा scmi_notअगरy_instance *ni,
+				      काष्ठा scmi_event_handler *hndl);
 
 /**
  * scmi_lookup_and_call_event_chain()  - Lookup the proper chain and call it
- * @ni: A reference to the notification instance to use
- * @evt_key: The key to use to lookup the related notification chain
- * @report: The customized event-specific report to pass down to the callbacks
+ * @ni: A reference to the notअगरication instance to use
+ * @evt_key: The key to use to lookup the related notअगरication chain
+ * @report: The customized event-specअगरic report to pass करोwn to the callbacks
  *	    as their *data parameter.
  */
-static inline void
-scmi_lookup_and_call_event_chain(struct scmi_notify_instance *ni,
-				 u32 evt_key, void *report)
-{
-	int ret;
-	struct scmi_event_handler *hndl;
+अटल अंतरभूत व्योम
+scmi_lookup_and_call_event_chain(काष्ठा scmi_notअगरy_instance *ni,
+				 u32 evt_key, व्योम *report)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_event_handler *hndl;
 
 	/*
-	 * Here ensure the event handler cannot vanish while using it.
-	 * It is legitimate, though, for an handler not to be found at all here,
-	 * e.g. when it has been unregistered by the user after some events had
-	 * already been queued.
+	 * Here ensure the event handler cannot vanish जबतक using it.
+	 * It is legitimate, though, क्रम an handler not to be found at all here,
+	 * e.g. when it has been unरेजिस्टरed by the user after some events had
+	 * alपढ़ोy been queued.
 	 */
 	hndl = scmi_get_active_handler(ni, evt_key);
-	if (!hndl)
-		return;
+	अगर (!hndl)
+		वापस;
 
-	ret = blocking_notifier_call_chain(&hndl->chain,
+	ret = blocking_notअगरier_call_chain(&hndl->chain,
 					   KEY_XTRACT_EVT_ID(evt_key),
 					   report);
-	/* Notifiers are NOT supposed to cut the chain ... */
+	/* Notअगरiers are NOT supposed to cut the chain ... */
 	WARN_ON_ONCE(ret & NOTIFY_STOP_MASK);
 
 	scmi_put_active_handler(ni, hndl);
-}
+पूर्ण
 
 /**
  * scmi_process_event_header()  - Dequeue and process an event header
  * @eq: The queue to use
  * @pd: The protocol descriptor to use
  *
- * Read an event header from the protocol queue into the dedicated scratch
- * buffer and looks for a matching registered event; in case an anomalously
- * sized read is detected just flush the queue.
+ * Read an event header from the protocol queue पूर्णांकo the dedicated scratch
+ * buffer and looks क्रम a matching रेजिस्टरed event; in हाल an anomalously
+ * sized पढ़ो is detected just flush the queue.
  *
  * Return:
- * * a reference to the matching registered event when found
- * * ERR_PTR(-EINVAL) when NO registered event could be found
- * * NULL when the queue is empty
+ * * a reference to the matching रेजिस्टरed event when found
+ * * ERR_PTR(-EINVAL) when NO रेजिस्टरed event could be found
+ * * शून्य when the queue is empty
  */
-static inline struct scmi_registered_event *
-scmi_process_event_header(struct events_queue *eq,
-			  struct scmi_registered_events_desc *pd)
-{
-	unsigned int outs;
-	struct scmi_registered_event *r_evt;
+अटल अंतरभूत काष्ठा scmi_रेजिस्टरed_event *
+scmi_process_event_header(काष्ठा events_queue *eq,
+			  काष्ठा scmi_रेजिस्टरed_events_desc *pd)
+अणु
+	अचिन्हित पूर्णांक outs;
+	काष्ठा scmi_रेजिस्टरed_event *r_evt;
 
-	outs = kfifo_out(&eq->kfifo, pd->eh,
-			 sizeof(struct scmi_event_header));
-	if (!outs)
-		return NULL;
-	if (outs != sizeof(struct scmi_event_header)) {
+	outs = kfअगरo_out(&eq->kfअगरo, pd->eh,
+			 माप(काष्ठा scmi_event_header));
+	अगर (!outs)
+		वापस शून्य;
+	अगर (outs != माप(काष्ठा scmi_event_header)) अणु
 		dev_err(pd->ni->handle->dev, "corrupted EVT header. Flush.\n");
-		kfifo_reset_out(&eq->kfifo);
-		return NULL;
-	}
+		kfअगरo_reset_out(&eq->kfअगरo);
+		वापस शून्य;
+	पूर्ण
 
 	r_evt = SCMI_GET_REVT_FROM_PD(pd, pd->eh->evt_id);
-	if (!r_evt)
+	अगर (!r_evt)
 		r_evt = ERR_PTR(-EINVAL);
 
-	return r_evt;
-}
+	वापस r_evt;
+पूर्ण
 
 /**
  * scmi_process_event_payload()  - Dequeue and process an event payload
  * @eq: The queue to use
  * @pd: The protocol descriptor to use
- * @r_evt: The registered event descriptor to use
+ * @r_evt: The रेजिस्टरed event descriptor to use
  *
- * Read an event payload from the protocol queue into the dedicated scratch
- * buffer, fills a custom report and then look for matching event handlers and
+ * Read an event payload from the protocol queue पूर्णांकo the dedicated scratch
+ * buffer, fills a custom report and then look क्रम matching event handlers and
  * call them; skip any unknown event (as marked by scmi_process_event_header())
- * and in case an anomalously sized read is detected just flush the queue.
+ * and in हाल an anomalously sized पढ़ो is detected just flush the queue.
  *
  * Return: False when the queue is empty
  */
-static inline bool
-scmi_process_event_payload(struct events_queue *eq,
-			   struct scmi_registered_events_desc *pd,
-			   struct scmi_registered_event *r_evt)
-{
+अटल अंतरभूत bool
+scmi_process_event_payload(काष्ठा events_queue *eq,
+			   काष्ठा scmi_रेजिस्टरed_events_desc *pd,
+			   काष्ठा scmi_रेजिस्टरed_event *r_evt)
+अणु
 	u32 src_id, key;
-	unsigned int outs;
-	void *report = NULL;
+	अचिन्हित पूर्णांक outs;
+	व्योम *report = शून्य;
 
-	outs = kfifo_out(&eq->kfifo, pd->eh->payld, pd->eh->payld_sz);
-	if (!outs)
-		return false;
+	outs = kfअगरo_out(&eq->kfअगरo, pd->eh->payld, pd->eh->payld_sz);
+	अगर (!outs)
+		वापस false;
 
 	/* Any in-flight event has now been officially processed */
-	pd->in_flight = NULL;
+	pd->in_flight = शून्य;
 
-	if (outs != pd->eh->payld_sz) {
+	अगर (outs != pd->eh->payld_sz) अणु
 		dev_err(pd->ni->handle->dev, "corrupted EVT Payload. Flush.\n");
-		kfifo_reset_out(&eq->kfifo);
-		return false;
-	}
+		kfअगरo_reset_out(&eq->kfअगरo);
+		वापस false;
+	पूर्ण
 
-	if (IS_ERR(r_evt)) {
+	अगर (IS_ERR(r_evt)) अणु
 		dev_warn(pd->ni->handle->dev,
 			 "SKIP UNKNOWN EVT - proto:%X  evt:%d\n",
 			 pd->id, pd->eh->evt_id);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	report = REVT_FILL_REPORT(r_evt, pd->eh->evt_id, pd->eh->timestamp,
+	report = REVT_FILL_REPORT(r_evt, pd->eh->evt_id, pd->eh->बारtamp,
 				  pd->eh->payld, pd->eh->payld_sz,
 				  r_evt->report, &src_id);
-	if (!report) {
+	अगर (!report) अणु
 		dev_err(pd->ni->handle->dev,
 			"report not available - proto:%X  evt:%d\n",
 			pd->id, pd->eh->evt_id);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	/* At first search for a generic ALL src_ids handler... */
+	/* At first search क्रम a generic ALL src_ids handler... */
 	key = MAKE_ALL_SRCS_KEY(pd->id, pd->eh->evt_id);
 	scmi_lookup_and_call_event_chain(pd->ni, key, report);
 
-	/* ...then search for any specific src_id */
+	/* ...then search क्रम any specअगरic src_id */
 	key = MAKE_HASH_KEY(pd->id, pd->eh->evt_id, src_id);
 	scmi_lookup_and_call_event_chain(pd->ni, key, report);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * scmi_events_dispatcher()  - Common worker logic for all work items.
+ * scmi_events_dispatcher()  - Common worker logic क्रम all work items.
  * @work: The work item to use, which is associated to a dedicated events_queue
  *
  * Logic:
- *  1. dequeue one pending RX notification (queued in SCMI RX ISR context)
+ *  1. dequeue one pending RX notअगरication (queued in SCMI RX ISR context)
  *  2. generate a custom event report from the received event message
- *  3. lookup for any registered ALL_SRC_IDs handler:
- *    - > call the related notification chain passing in the report
- *  4. lookup for any registered specific SRC_ID handler:
- *    - > call the related notification chain passing in the report
+ *  3. lookup क्रम any रेजिस्टरed ALL_SRC_IDs handler:
+ *    - > call the related notअगरication chain passing in the report
+ *  4. lookup क्रम any रेजिस्टरed specअगरic SRC_ID handler:
+ *    - > call the related notअगरication chain passing in the report
  *
  * Note that:
- * * a dedicated per-protocol kfifo queue is used: in this way an anomalous
+ * * a dedicated per-protocol kfअगरo queue is used: in this way an anomalous
  *   flood of events cannot saturate other protocols' queues.
  * * each per-protocol queue is associated to a distinct work_item, which
  *   means, in turn, that:
  *   + all protocols can process their dedicated queues concurrently
- *     (since notify_wq:max_active != 1)
+ *     (since notअगरy_wq:max_active != 1)
  *   + anyway at most one worker instance is allowed to run on the same queue
  *     concurrently: this ensures that we can have only one concurrent
- *     reader/writer on the associated kfifo, so that we can use it lock-less
+ *     पढ़ोer/ग_लिखोr on the associated kfअगरo, so that we can use it lock-less
  *
  * Context: Process context.
  */
-static void scmi_events_dispatcher(struct work_struct *work)
-{
-	struct events_queue *eq;
-	struct scmi_registered_events_desc *pd;
-	struct scmi_registered_event *r_evt;
+अटल व्योम scmi_events_dispatcher(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा events_queue *eq;
+	काष्ठा scmi_रेजिस्टरed_events_desc *pd;
+	काष्ठा scmi_रेजिस्टरed_event *r_evt;
 
-	eq = container_of(work, struct events_queue, notify_work);
-	pd = container_of(eq, struct scmi_registered_events_desc, equeue);
+	eq = container_of(work, काष्ठा events_queue, notअगरy_work);
+	pd = container_of(eq, काष्ठा scmi_रेजिस्टरed_events_desc, equeue);
 	/*
 	 * In order to keep the queue lock-less and the number of memcopies
-	 * to the bare minimum needed, the dispatcher accounts for the
+	 * to the bare minimum needed, the dispatcher accounts क्रम the
 	 * possibility of per-protocol in-flight events: i.e. an event whose
 	 * reception could end up being split across two subsequent runs of this
 	 * worker, first the header, then the payload.
 	 */
-	do {
-		if (!pd->in_flight) {
+	करो अणु
+		अगर (!pd->in_flight) अणु
 			r_evt = scmi_process_event_header(eq, pd);
-			if (!r_evt)
-				break;
+			अगर (!r_evt)
+				अवरोध;
 			pd->in_flight = r_evt;
-		} else {
+		पूर्ण अन्यथा अणु
 			r_evt = pd->in_flight;
-		}
-	} while (scmi_process_event_payload(eq, pd, r_evt));
-}
+		पूर्ण
+	पूर्ण जबतक (scmi_process_event_payload(eq, pd, r_evt));
+पूर्ण
 
 /**
- * scmi_notify()  - Queues a notification for further deferred processing
- * @handle: The handle identifying the platform instance from which the
+ * scmi_notअगरy()  - Queues a notअगरication क्रम further deferred processing
+ * @handle: The handle identअगरying the platक्रमm instance from which the
  *	    dispatched event is generated
  * @proto_id: Protocol ID
  * @evt_id: Event ID (msgID)
  * @buf: Event Message Payload (without the header)
  * @len: Event Message Payload size
- * @ts: RX Timestamp in nanoseconds (boottime)
+ * @ts: RX Timestamp in nanoseconds (bootसमय)
  *
- * Context: Called in interrupt context to queue a received event for
+ * Context: Called in पूर्णांकerrupt context to queue a received event क्रम
  * deferred processing.
  *
  * Return: 0 on Success
  */
-int scmi_notify(const struct scmi_handle *handle, u8 proto_id, u8 evt_id,
-		const void *buf, size_t len, ktime_t ts)
-{
-	struct scmi_registered_event *r_evt;
-	struct scmi_event_header eh;
-	struct scmi_notify_instance *ni;
+पूर्णांक scmi_notअगरy(स्थिर काष्ठा scmi_handle *handle, u8 proto_id, u8 evt_id,
+		स्थिर व्योम *buf, माप_प्रकार len, kसमय_प्रकार ts)
+अणु
+	काष्ठा scmi_रेजिस्टरed_event *r_evt;
+	काष्ठा scmi_event_header eh;
+	काष्ठा scmi_notअगरy_instance *ni;
 
-	ni = scmi_notification_instance_data_get(handle);
-	if (!ni)
-		return 0;
+	ni = scmi_notअगरication_instance_data_get(handle);
+	अगर (!ni)
+		वापस 0;
 
 	r_evt = SCMI_GET_REVT(ni, proto_id, evt_id);
-	if (!r_evt)
-		return -EINVAL;
+	अगर (!r_evt)
+		वापस -EINVAL;
 
-	if (len > r_evt->evt->max_payld_sz) {
+	अगर (len > r_evt->evt->max_payld_sz) अणु
 		dev_err(handle->dev, "discard badly sized message\n");
-		return -EINVAL;
-	}
-	if (kfifo_avail(&r_evt->proto->equeue.kfifo) < sizeof(eh) + len) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (kfअगरo_avail(&r_evt->proto->equeue.kfअगरo) < माप(eh) + len) अणु
 		dev_warn(handle->dev,
 			 "queue full, dropping proto_id:%d  evt_id:%d  ts:%lld\n",
-			 proto_id, evt_id, ktime_to_ns(ts));
-		return -ENOMEM;
-	}
+			 proto_id, evt_id, kसमय_प्रकारo_ns(ts));
+		वापस -ENOMEM;
+	पूर्ण
 
-	eh.timestamp = ts;
+	eh.बारtamp = ts;
 	eh.evt_id = evt_id;
 	eh.payld_sz = len;
 	/*
-	 * Header and payload are enqueued with two distinct kfifo_in() (so non
+	 * Header and payload are enqueued with two distinct kfअगरo_in() (so non
 	 * atomic), but this situation is handled properly on the consumer side
 	 * with in-flight events tracking.
 	 */
-	kfifo_in(&r_evt->proto->equeue.kfifo, &eh, sizeof(eh));
-	kfifo_in(&r_evt->proto->equeue.kfifo, buf, len);
+	kfअगरo_in(&r_evt->proto->equeue.kfअगरo, &eh, माप(eh));
+	kfअगरo_in(&r_evt->proto->equeue.kfअगरo, buf, len);
 	/*
-	 * Don't care about return value here since we just want to ensure that
-	 * a work is queued all the times whenever some items have been pushed
-	 * on the kfifo:
-	 * - if work was already queued it will simply fail to queue a new one
+	 * Don't care about वापस value here since we just want to ensure that
+	 * a work is queued all the बार whenever some items have been pushed
+	 * on the kfअगरo:
+	 * - अगर work was alपढ़ोy queued it will simply fail to queue a new one
 	 *   since it is not needed
-	 * - if work was not queued already it will be now, even in case work
-	 *   was in fact already running: this behavior avoids any possible race
-	 *   when this function pushes new items onto the kfifos after the
-	 *   related executing worker had already determined the kfifo to be
+	 * - अगर work was not queued alपढ़ोy it will be now, even in हाल work
+	 *   was in fact alपढ़ोy running: this behavior aव्योमs any possible race
+	 *   when this function pushes new items onto the kfअगरos after the
+	 *   related executing worker had alपढ़ोy determined the kfअगरo to be
 	 *   empty and it was terminating.
 	 */
 	queue_work(r_evt->proto->equeue.wq,
-		   &r_evt->proto->equeue.notify_work);
+		   &r_evt->proto->equeue.notअगरy_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * scmi_kfifo_free()  - Devres action helper to free the kfifo
- * @kfifo: The kfifo to free
+ * scmi_kfअगरo_मुक्त()  - Devres action helper to मुक्त the kfअगरo
+ * @kfअगरo: The kfअगरo to मुक्त
  */
-static void scmi_kfifo_free(void *kfifo)
-{
-	kfifo_free((struct kfifo *)kfifo);
-}
+अटल व्योम scmi_kfअगरo_मुक्त(व्योम *kfअगरo)
+अणु
+	kfअगरo_मुक्त((काष्ठा kfअगरo *)kfअगरo);
+पूर्ण
 
 /**
- * scmi_initialize_events_queue()  - Allocate/Initialize a kfifo buffer
- * @ni: A reference to the notification instance to use
+ * scmi_initialize_events_queue()  - Allocate/Initialize a kfअगरo buffer
+ * @ni: A reference to the notअगरication instance to use
  * @equeue: The events_queue to initialize
- * @sz: Size of the kfifo buffer to allocate
+ * @sz: Size of the kfअगरo buffer to allocate
  *
- * Allocate a buffer for the kfifo and initialize it.
+ * Allocate a buffer क्रम the kfअगरo and initialize it.
  *
  * Return: 0 on Success
  */
-static int scmi_initialize_events_queue(struct scmi_notify_instance *ni,
-					struct events_queue *equeue, size_t sz)
-{
-	int ret;
+अटल पूर्णांक scmi_initialize_events_queue(काष्ठा scmi_notअगरy_instance *ni,
+					काष्ठा events_queue *equeue, माप_प्रकार sz)
+अणु
+	पूर्णांक ret;
 
-	if (kfifo_alloc(&equeue->kfifo, sz, GFP_KERNEL))
-		return -ENOMEM;
-	/* Size could have been roundup to power-of-two */
-	equeue->sz = kfifo_size(&equeue->kfifo);
+	अगर (kfअगरo_alloc(&equeue->kfअगरo, sz, GFP_KERNEL))
+		वापस -ENOMEM;
+	/* Size could have been roundup to घातer-of-two */
+	equeue->sz = kfअगरo_size(&equeue->kfअगरo);
 
-	ret = devm_add_action_or_reset(ni->handle->dev, scmi_kfifo_free,
-				       &equeue->kfifo);
-	if (ret)
-		return ret;
+	ret = devm_add_action_or_reset(ni->handle->dev, scmi_kfअगरo_मुक्त,
+				       &equeue->kfअगरo);
+	अगर (ret)
+		वापस ret;
 
-	INIT_WORK(&equeue->notify_work, scmi_events_dispatcher);
-	equeue->wq = ni->notify_wq;
+	INIT_WORK(&equeue->notअगरy_work, scmi_events_dispatcher);
+	equeue->wq = ni->notअगरy_wq;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * scmi_allocate_registered_events_desc()  - Allocate a registered events'
+ * scmi_allocate_रेजिस्टरed_events_desc()  - Allocate a रेजिस्टरed events'
  * descriptor
- * @ni: A reference to the &struct scmi_notify_instance notification instance
+ * @ni: A reference to the &काष्ठा scmi_notअगरy_instance notअगरication instance
  *	to use
  * @proto_id: Protocol ID
  * @queue_sz: Size of the associated queue to allocate
  * @eh_sz: Size of the event header scratch area to pre-allocate
- * @num_events: Number of events to support (size of @registered_events)
- * @ops: Pointer to a struct holding references to protocol specific helpers
+ * @num_events: Number of events to support (size of @रेजिस्टरed_events)
+ * @ops: Poपूर्णांकer to a काष्ठा holding references to protocol specअगरic helpers
  *	 needed during events handling
  *
- * It is supposed to be called only once for each protocol at protocol
- * initialization time, so it warns if the requested protocol is found already
- * registered.
+ * It is supposed to be called only once क्रम each protocol at protocol
+ * initialization समय, so it warns अगर the requested protocol is found alपढ़ोy
+ * रेजिस्टरed.
  *
- * Return: The allocated and registered descriptor on Success
+ * Return: The allocated and रेजिस्टरed descriptor on Success
  */
-static struct scmi_registered_events_desc *
-scmi_allocate_registered_events_desc(struct scmi_notify_instance *ni,
-				     u8 proto_id, size_t queue_sz, size_t eh_sz,
-				     int num_events,
-				     const struct scmi_event_ops *ops)
-{
-	int ret;
-	struct scmi_registered_events_desc *pd;
+अटल काष्ठा scmi_रेजिस्टरed_events_desc *
+scmi_allocate_रेजिस्टरed_events_desc(काष्ठा scmi_notअगरy_instance *ni,
+				     u8 proto_id, माप_प्रकार queue_sz, माप_प्रकार eh_sz,
+				     पूर्णांक num_events,
+				     स्थिर काष्ठा scmi_event_ops *ops)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_रेजिस्टरed_events_desc *pd;
 
 	/* Ensure protocols are up to date */
 	smp_rmb();
-	if (WARN_ON(ni->registered_protocols[proto_id]))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON(ni->रेजिस्टरed_protocols[proto_id]))
+		वापस ERR_PTR(-EINVAL);
 
-	pd = devm_kzalloc(ni->handle->dev, sizeof(*pd), GFP_KERNEL);
-	if (!pd)
-		return ERR_PTR(-ENOMEM);
+	pd = devm_kzalloc(ni->handle->dev, माप(*pd), GFP_KERNEL);
+	अगर (!pd)
+		वापस ERR_PTR(-ENOMEM);
 	pd->id = proto_id;
 	pd->ops = ops;
 	pd->ni = ni;
 
 	ret = scmi_initialize_events_queue(ni, &pd->equeue, queue_sz);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	pd->eh = devm_kzalloc(ni->handle->dev, eh_sz, GFP_KERNEL);
-	if (!pd->eh)
-		return ERR_PTR(-ENOMEM);
+	अगर (!pd->eh)
+		वापस ERR_PTR(-ENOMEM);
 	pd->eh_sz = eh_sz;
 
-	pd->registered_events = devm_kcalloc(ni->handle->dev, num_events,
-					     sizeof(char *), GFP_KERNEL);
-	if (!pd->registered_events)
-		return ERR_PTR(-ENOMEM);
+	pd->रेजिस्टरed_events = devm_kसुस्मृति(ni->handle->dev, num_events,
+					     माप(अक्षर *), GFP_KERNEL);
+	अगर (!pd->रेजिस्टरed_events)
+		वापस ERR_PTR(-ENOMEM);
 	pd->num_events = num_events;
 
 	/* Initialize per protocol handlers table */
-	mutex_init(&pd->registered_mtx);
-	hash_init(pd->registered_events_handlers);
+	mutex_init(&pd->रेजिस्टरed_mtx);
+	hash_init(pd->रेजिस्टरed_events_handlers);
 
-	return pd;
-}
+	वापस pd;
+पूर्ण
 
 /**
- * scmi_register_protocol_events()  - Register Protocol Events with the core
- * @handle: The handle identifying the platform instance against which the
- *	    protocol's events are registered
+ * scmi_रेजिस्टर_protocol_events()  - Register Protocol Events with the core
+ * @handle: The handle identअगरying the platक्रमm instance against which the
+ *	    protocol's events are रेजिस्टरed
  * @proto_id: Protocol ID
  * @ph: SCMI protocol handle.
- * @ee: A structure describing the events supported by this protocol.
+ * @ee: A काष्ठाure describing the events supported by this protocol.
  *
- * Used by SCMI Protocols initialization code to register with the notification
+ * Used by SCMI Protocols initialization code to रेजिस्टर with the notअगरication
  * core the list of supported events and their descriptors: takes care to
  * pre-allocate and store all needed descriptors, scratch buffers and event
  * queues.
  *
  * Return: 0 on Success
  */
-int scmi_register_protocol_events(const struct scmi_handle *handle, u8 proto_id,
-				  const struct scmi_protocol_handle *ph,
-				  const struct scmi_protocol_events *ee)
-{
-	int i;
-	unsigned int num_sources;
-	size_t payld_sz = 0;
-	struct scmi_registered_events_desc *pd;
-	struct scmi_notify_instance *ni;
-	const struct scmi_event *evt;
+पूर्णांक scmi_रेजिस्टर_protocol_events(स्थिर काष्ठा scmi_handle *handle, u8 proto_id,
+				  स्थिर काष्ठा scmi_protocol_handle *ph,
+				  स्थिर काष्ठा scmi_protocol_events *ee)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक num_sources;
+	माप_प्रकार payld_sz = 0;
+	काष्ठा scmi_रेजिस्टरed_events_desc *pd;
+	काष्ठा scmi_notअगरy_instance *ni;
+	स्थिर काष्ठा scmi_event *evt;
 
-	if (!ee || !ee->ops || !ee->evts || !ph ||
+	अगर (!ee || !ee->ops || !ee->evts || !ph ||
 	    (!ee->num_sources && !ee->ops->get_num_sources))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	ni = scmi_notification_instance_data_get(handle);
-	if (!ni)
-		return -ENOMEM;
+	ni = scmi_notअगरication_instance_data_get(handle);
+	अगर (!ni)
+		वापस -ENOMEM;
 
 	/* num_sources cannot be <= 0 */
-	if (ee->num_sources) {
+	अगर (ee->num_sources) अणु
 		num_sources = ee->num_sources;
-	} else {
-		int nsrc = ee->ops->get_num_sources(ph);
+	पूर्ण अन्यथा अणु
+		पूर्णांक nsrc = ee->ops->get_num_sources(ph);
 
-		if (nsrc <= 0)
-			return -EINVAL;
+		अगर (nsrc <= 0)
+			वापस -EINVAL;
 		num_sources = nsrc;
-	}
+	पूर्ण
 
 	evt = ee->evts;
-	for (i = 0; i < ee->num_events; i++)
-		payld_sz = max_t(size_t, payld_sz, evt[i].max_payld_sz);
-	payld_sz += sizeof(struct scmi_event_header);
+	क्रम (i = 0; i < ee->num_events; i++)
+		payld_sz = max_t(माप_प्रकार, payld_sz, evt[i].max_payld_sz);
+	payld_sz += माप(काष्ठा scmi_event_header);
 
-	pd = scmi_allocate_registered_events_desc(ni, proto_id, ee->queue_sz,
+	pd = scmi_allocate_रेजिस्टरed_events_desc(ni, proto_id, ee->queue_sz,
 						  payld_sz, ee->num_events,
 						  ee->ops);
-	if (IS_ERR(pd))
-		return PTR_ERR(pd);
+	अगर (IS_ERR(pd))
+		वापस PTR_ERR(pd);
 
 	pd->ph = ph;
-	for (i = 0; i < ee->num_events; i++, evt++) {
-		struct scmi_registered_event *r_evt;
+	क्रम (i = 0; i < ee->num_events; i++, evt++) अणु
+		काष्ठा scmi_रेजिस्टरed_event *r_evt;
 
-		r_evt = devm_kzalloc(ni->handle->dev, sizeof(*r_evt),
+		r_evt = devm_kzalloc(ni->handle->dev, माप(*r_evt),
 				     GFP_KERNEL);
-		if (!r_evt)
-			return -ENOMEM;
+		अगर (!r_evt)
+			वापस -ENOMEM;
 		r_evt->proto = pd;
 		r_evt->evt = evt;
 
-		r_evt->sources = devm_kcalloc(ni->handle->dev, num_sources,
-					      sizeof(refcount_t), GFP_KERNEL);
-		if (!r_evt->sources)
-			return -ENOMEM;
+		r_evt->sources = devm_kसुस्मृति(ni->handle->dev, num_sources,
+					      माप(refcount_t), GFP_KERNEL);
+		अगर (!r_evt->sources)
+			वापस -ENOMEM;
 		r_evt->num_sources = num_sources;
 		mutex_init(&r_evt->sources_mtx);
 
 		r_evt->report = devm_kzalloc(ni->handle->dev,
 					     evt->max_report_sz, GFP_KERNEL);
-		if (!r_evt->report)
-			return -ENOMEM;
+		अगर (!r_evt->report)
+			वापस -ENOMEM;
 
-		pd->registered_events[i] = r_evt;
+		pd->रेजिस्टरed_events[i] = r_evt;
 		/* Ensure events are updated */
 		smp_wmb();
 		dev_dbg(handle->dev, "registered event - %lX\n",
 			MAKE_ALL_SRCS_KEY(r_evt->proto->id, r_evt->evt->id));
-	}
+	पूर्ण
 
-	/* Register protocol and events...it will never be removed */
-	ni->registered_protocols[proto_id] = pd;
+	/* Register protocol and events...it will never be हटाओd */
+	ni->रेजिस्टरed_protocols[proto_id] = pd;
 	/* Ensure protocols are updated */
 	smp_wmb();
 
 	/*
-	 * Finalize any pending events' handler which could have been waiting
-	 * for this protocol's events registration.
+	 * Finalize any pending events' handler which could have been रुकोing
+	 * क्रम this protocol's events registration.
 	 */
 	schedule_work(&ni->init_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * scmi_deregister_protocol_events  - Deregister protocol events with the core
- * @handle: The handle identifying the platform instance against which the
- *	    protocol's events are registered
+ * scmi_deरेजिस्टर_protocol_events  - Deरेजिस्टर protocol events with the core
+ * @handle: The handle identअगरying the platक्रमm instance against which the
+ *	    protocol's events are रेजिस्टरed
  * @proto_id: Protocol ID
  */
-void scmi_deregister_protocol_events(const struct scmi_handle *handle,
+व्योम scmi_deरेजिस्टर_protocol_events(स्थिर काष्ठा scmi_handle *handle,
 				     u8 proto_id)
-{
-	struct scmi_notify_instance *ni;
-	struct scmi_registered_events_desc *pd;
+अणु
+	काष्ठा scmi_notअगरy_instance *ni;
+	काष्ठा scmi_रेजिस्टरed_events_desc *pd;
 
-	ni = scmi_notification_instance_data_get(handle);
-	if (!ni)
-		return;
+	ni = scmi_notअगरication_instance_data_get(handle);
+	अगर (!ni)
+		वापस;
 
-	pd = ni->registered_protocols[proto_id];
-	if (!pd)
-		return;
+	pd = ni->रेजिस्टरed_protocols[proto_id];
+	अगर (!pd)
+		वापस;
 
-	ni->registered_protocols[proto_id] = NULL;
+	ni->रेजिस्टरed_protocols[proto_id] = शून्य;
 	/* Ensure protocols are updated */
 	smp_wmb();
 
-	cancel_work_sync(&pd->equeue.notify_work);
-}
+	cancel_work_sync(&pd->equeue.notअगरy_work);
+पूर्ण
 
 /**
  * scmi_allocate_event_handler()  - Allocate Event handler
- * @ni: A reference to the notification instance to use
- * @evt_key: 32bit key uniquely bind to the event identified by the tuple
+ * @ni: A reference to the notअगरication instance to use
+ * @evt_key: 32bit key uniquely bind to the event identअगरied by the tuple
  *	     (proto_id, evt_id, src_id)
  *
- * Allocate an event handler and related notification chain associated with
+ * Allocate an event handler and related notअगरication chain associated with
  * the provided event handler key.
- * Note that, at this point, a related registered_event is still to be
- * associated to this handler descriptor (hndl->r_evt == NULL), so the handler
+ * Note that, at this poपूर्णांक, a related रेजिस्टरed_event is still to be
+ * associated to this handler descriptor (hndl->r_evt == शून्य), so the handler
  * is initialized as pending.
  *
- * Context: Assumes to be called with @pending_mtx already acquired.
- * Return: the freshly allocated structure on Success
+ * Context: Assumes to be called with @pending_mtx alपढ़ोy acquired.
+ * Return: the freshly allocated काष्ठाure on Success
  */
-static struct scmi_event_handler *
-scmi_allocate_event_handler(struct scmi_notify_instance *ni, u32 evt_key)
-{
-	struct scmi_event_handler *hndl;
+अटल काष्ठा scmi_event_handler *
+scmi_allocate_event_handler(काष्ठा scmi_notअगरy_instance *ni, u32 evt_key)
+अणु
+	काष्ठा scmi_event_handler *hndl;
 
-	hndl = kzalloc(sizeof(*hndl), GFP_KERNEL);
-	if (!hndl)
-		return NULL;
+	hndl = kzalloc(माप(*hndl), GFP_KERNEL);
+	अगर (!hndl)
+		वापस शून्य;
 	hndl->key = evt_key;
 	BLOCKING_INIT_NOTIFIER_HEAD(&hndl->chain);
 	refcount_set(&hndl->users, 1);
 	/* New handlers are created pending */
 	hash_add(ni->pending_events_handlers, &hndl->hash, hndl->key);
 
-	return hndl;
-}
+	वापस hndl;
+पूर्ण
 
 /**
- * scmi_free_event_handler()  - Free the provided Event handler
- * @hndl: The event handler structure to free
+ * scmi_मुक्त_event_handler()  - Free the provided Event handler
+ * @hndl: The event handler काष्ठाure to मुक्त
  *
  * Context: Assumes to be called with proper locking acquired depending
  *	    on the situation.
  */
-static void scmi_free_event_handler(struct scmi_event_handler *hndl)
-{
+अटल व्योम scmi_मुक्त_event_handler(काष्ठा scmi_event_handler *hndl)
+अणु
 	hash_del(&hndl->hash);
-	kfree(hndl);
-}
+	kमुक्त(hndl);
+पूर्ण
 
 /**
  * scmi_bind_event_handler()  - Helper to attempt binding an handler to an event
- * @ni: A reference to the notification instance to use
+ * @ni: A reference to the notअगरication instance to use
  * @hndl: The event handler to bind
  *
- * If an associated registered event is found, move the handler from the pending
- * into the registered table.
+ * If an associated रेजिस्टरed event is found, move the handler from the pending
+ * पूर्णांकo the रेजिस्टरed table.
  *
- * Context: Assumes to be called with @pending_mtx already acquired.
+ * Context: Assumes to be called with @pending_mtx alपढ़ोy acquired.
  *
  * Return: 0 on Success
  */
-static inline int scmi_bind_event_handler(struct scmi_notify_instance *ni,
-					  struct scmi_event_handler *hndl)
-{
-	struct scmi_registered_event *r_evt;
+अटल अंतरभूत पूर्णांक scmi_bind_event_handler(काष्ठा scmi_notअगरy_instance *ni,
+					  काष्ठा scmi_event_handler *hndl)
+अणु
+	काष्ठा scmi_रेजिस्टरed_event *r_evt;
 
 	r_evt = SCMI_GET_REVT(ni, KEY_XTRACT_PROTO_ID(hndl->key),
 			      KEY_XTRACT_EVT_ID(hndl->key));
-	if (!r_evt)
-		return -EINVAL;
+	अगर (!r_evt)
+		वापस -EINVAL;
 
 	/*
-	 * Remove from pending and insert into registered while getting hold
+	 * Remove from pending and insert पूर्णांकo रेजिस्टरed जबतक getting hold
 	 * of protocol instance.
 	 */
 	hash_del(&hndl->hash);
 	/*
-	 * Acquire protocols only for NON pending handlers, so as NOT to trigger
-	 * protocol initialization when a notifier is registered against a still
-	 * not registered protocol, since it would make little sense to force init
-	 * protocols for which still no SCMI driver user exists: they wouldn't
+	 * Acquire protocols only क्रम NON pending handlers, so as NOT to trigger
+	 * protocol initialization when a notअगरier is रेजिस्टरed against a still
+	 * not रेजिस्टरed protocol, since it would make little sense to क्रमce init
+	 * protocols क्रम which still no SCMI driver user exists: they wouldn't
 	 * emit any event anyway till some SCMI driver starts using it.
 	 */
 	scmi_protocol_acquire(ni->handle, KEY_XTRACT_PROTO_ID(hndl->key));
 	hndl->r_evt = r_evt;
 
-	mutex_lock(&r_evt->proto->registered_mtx);
-	hash_add(r_evt->proto->registered_events_handlers,
+	mutex_lock(&r_evt->proto->रेजिस्टरed_mtx);
+	hash_add(r_evt->proto->रेजिस्टरed_events_handlers,
 		 &hndl->hash, hndl->key);
-	mutex_unlock(&r_evt->proto->registered_mtx);
+	mutex_unlock(&r_evt->proto->रेजिस्टरed_mtx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * scmi_valid_pending_handler()  - Helper to check pending status of handlers
- * @ni: A reference to the notification instance to use
+ * @ni: A reference to the notअगरication instance to use
  * @hndl: The event handler to check
  *
- * An handler is considered pending when its r_evt == NULL, because the related
- * event was still unknown at handler's registration time; anyway, since all
- * protocols register their supported events once for all at protocols'
- * initialization time, a pending handler cannot be considered valid anymore if
- * the underlying event (which it is waiting for), belongs to an already
- * initialized and registered protocol.
+ * An handler is considered pending when its r_evt == शून्य, because the related
+ * event was still unknown at handler's registration समय; anyway, since all
+ * protocols रेजिस्टर their supported events once क्रम all at protocols'
+ * initialization समय, a pending handler cannot be considered valid anymore अगर
+ * the underlying event (which it is रुकोing क्रम), beदीर्घs to an alपढ़ोy
+ * initialized and रेजिस्टरed protocol.
  *
  * Return: 0 on Success
  */
-static inline int scmi_valid_pending_handler(struct scmi_notify_instance *ni,
-					     struct scmi_event_handler *hndl)
-{
-	struct scmi_registered_events_desc *pd;
+अटल अंतरभूत पूर्णांक scmi_valid_pending_handler(काष्ठा scmi_notअगरy_instance *ni,
+					     काष्ठा scmi_event_handler *hndl)
+अणु
+	काष्ठा scmi_रेजिस्टरed_events_desc *pd;
 
-	if (!IS_HNDL_PENDING(hndl))
-		return -EINVAL;
+	अगर (!IS_HNDL_PENDING(hndl))
+		वापस -EINVAL;
 
 	pd = SCMI_GET_PROTO(ni, KEY_XTRACT_PROTO_ID(hndl->key));
-	if (pd)
-		return -EINVAL;
+	अगर (pd)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * scmi_register_event_handler()  - Register whenever possible an Event handler
- * @ni: A reference to the notification instance to use
- * @hndl: The event handler to register
+ * scmi_रेजिस्टर_event_handler()  - Register whenever possible an Event handler
+ * @ni: A reference to the notअगरication instance to use
+ * @hndl: The event handler to रेजिस्टर
  *
- * At first try to bind an event handler to its associated event, then check if
- * it was at least a valid pending handler: if it was not bound nor valid return
+ * At first try to bind an event handler to its associated event, then check अगर
+ * it was at least a valid pending handler: अगर it was not bound nor valid वापस
  * false.
  *
  * Valid pending incomplete bindings will be periodically retried by a dedicated
- * worker which is kicked each time a new protocol completes its own
+ * worker which is kicked each समय a new protocol completes its own
  * registration phase.
  *
  * Context: Assumes to be called with @pending_mtx acquired.
  *
  * Return: 0 on Success
  */
-static int scmi_register_event_handler(struct scmi_notify_instance *ni,
-				       struct scmi_event_handler *hndl)
-{
-	int ret;
+अटल पूर्णांक scmi_रेजिस्टर_event_handler(काष्ठा scmi_notअगरy_instance *ni,
+				       काष्ठा scmi_event_handler *hndl)
+अणु
+	पूर्णांक ret;
 
 	ret = scmi_bind_event_handler(ni, hndl);
-	if (!ret) {
+	अगर (!ret) अणु
 		dev_dbg(ni->handle->dev, "registered NEW handler - key:%X\n",
 			hndl->key);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = scmi_valid_pending_handler(ni, hndl);
-		if (!ret)
+		अगर (!ret)
 			dev_dbg(ni->handle->dev,
 				"registered PENDING handler - key:%X\n",
 				hndl->key);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * __scmi_event_handler_get_ops()  - Utility to get or create an event handler
- * @ni: A reference to the notification instance to use
+ * @ni: A reference to the notअगरication instance to use
  * @evt_key: The event key to use
- * @create: A boolean flag to specify if a handler must be created when
- *	    not already existent
+ * @create: A boolean flag to specअगरy अगर a handler must be created when
+ *	    not alपढ़ोy existent
  *
- * Search for the desired handler matching the key in both the per-protocol
- * registered table and the common pending table:
- * * if found adjust users refcount
- * * if not found and @create is true, create and register the new handler:
- *   handler could end up being registered as pending if no matching event
+ * Search क्रम the desired handler matching the key in both the per-protocol
+ * रेजिस्टरed table and the common pending table:
+ * * अगर found adjust users refcount
+ * * अगर not found and @create is true, create and रेजिस्टर the new handler:
+ *   handler could end up being रेजिस्टरed as pending अगर no matching event
  *   could be found.
  *
  * An handler is guaranteed to reside in one and only one of the tables at
- * any one time; to ensure this the whole search and create is performed
- * holding the @pending_mtx lock, with @registered_mtx additionally acquired
- * if needed.
+ * any one समय; to ensure this the whole search and create is perक्रमmed
+ * holding the @pending_mtx lock, with @रेजिस्टरed_mtx additionally acquired
+ * अगर needed.
  *
  * Note that when a nested acquisition of these mutexes is needed the locking
  * order is always (same as in @init_work):
  * 1. pending_mtx
- * 2. registered_mtx
+ * 2. रेजिस्टरed_mtx
  *
  * Events generation is NOT enabled right after creation within this routine
- * since at creation time we usually want to have all setup and ready before
+ * since at creation समय we usually want to have all setup and पढ़ोy beक्रमe
  * events really start flowing.
  *
- * Return: A properly refcounted handler on Success, NULL on Failure
+ * Return: A properly refcounted handler on Success, शून्य on Failure
  */
-static inline struct scmi_event_handler *
-__scmi_event_handler_get_ops(struct scmi_notify_instance *ni,
+अटल अंतरभूत काष्ठा scmi_event_handler *
+__scmi_event_handler_get_ops(काष्ठा scmi_notअगरy_instance *ni,
 			     u32 evt_key, bool create)
-{
-	struct scmi_registered_event *r_evt;
-	struct scmi_event_handler *hndl = NULL;
+अणु
+	काष्ठा scmi_रेजिस्टरed_event *r_evt;
+	काष्ठा scmi_event_handler *hndl = शून्य;
 
 	r_evt = SCMI_GET_REVT(ni, KEY_XTRACT_PROTO_ID(evt_key),
 			      KEY_XTRACT_EVT_ID(evt_key));
 
 	mutex_lock(&ni->pending_mtx);
-	/* Search registered events at first ... if possible at all */
-	if (r_evt) {
-		mutex_lock(&r_evt->proto->registered_mtx);
-		hndl = KEY_FIND(r_evt->proto->registered_events_handlers,
+	/* Search रेजिस्टरed events at first ... अगर possible at all */
+	अगर (r_evt) अणु
+		mutex_lock(&r_evt->proto->रेजिस्टरed_mtx);
+		hndl = KEY_FIND(r_evt->proto->रेजिस्टरed_events_handlers,
 				hndl, evt_key);
-		if (hndl)
+		अगर (hndl)
 			refcount_inc(&hndl->users);
-		mutex_unlock(&r_evt->proto->registered_mtx);
-	}
+		mutex_unlock(&r_evt->proto->रेजिस्टरed_mtx);
+	पूर्ण
 
 	/* ...then amongst pending. */
-	if (!hndl) {
+	अगर (!hndl) अणु
 		hndl = KEY_FIND(ni->pending_events_handlers, hndl, evt_key);
-		if (hndl)
+		अगर (hndl)
 			refcount_inc(&hndl->users);
-	}
+	पूर्ण
 
-	/* Create if still not found and required */
-	if (!hndl && create) {
+	/* Create अगर still not found and required */
+	अगर (!hndl && create) अणु
 		hndl = scmi_allocate_event_handler(ni, evt_key);
-		if (hndl && scmi_register_event_handler(ni, hndl)) {
+		अगर (hndl && scmi_रेजिस्टर_event_handler(ni, hndl)) अणु
 			dev_dbg(ni->handle->dev,
 				"purging UNKNOWN handler - key:%X\n",
 				hndl->key);
 			/* this hndl can be only a pending one */
 			scmi_put_handler_unlocked(ni, hndl);
-			hndl = NULL;
-		}
-	}
+			hndl = शून्य;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ni->pending_mtx);
 
-	return hndl;
-}
+	वापस hndl;
+पूर्ण
 
-static struct scmi_event_handler *
-scmi_get_handler(struct scmi_notify_instance *ni, u32 evt_key)
-{
-	return __scmi_event_handler_get_ops(ni, evt_key, false);
-}
+अटल काष्ठा scmi_event_handler *
+scmi_get_handler(काष्ठा scmi_notअगरy_instance *ni, u32 evt_key)
+अणु
+	वापस __scmi_event_handler_get_ops(ni, evt_key, false);
+पूर्ण
 
-static struct scmi_event_handler *
-scmi_get_or_create_handler(struct scmi_notify_instance *ni, u32 evt_key)
-{
-	return __scmi_event_handler_get_ops(ni, evt_key, true);
-}
+अटल काष्ठा scmi_event_handler *
+scmi_get_or_create_handler(काष्ठा scmi_notअगरy_instance *ni, u32 evt_key)
+अणु
+	वापस __scmi_event_handler_get_ops(ni, evt_key, true);
+पूर्ण
 
 /**
  * scmi_get_active_handler()  - Helper to get active handlers only
- * @ni: A reference to the notification instance to use
+ * @ni: A reference to the notअगरication instance to use
  * @evt_key: The event key to use
  *
- * Search for the desired handler matching the key only in the per-protocol
- * table of registered handlers: this is called only from the dispatching path
- * so want to be as quick as possible and do not care about pending.
+ * Search क्रम the desired handler matching the key only in the per-protocol
+ * table of रेजिस्टरed handlers: this is called only from the dispatching path
+ * so want to be as quick as possible and करो not care about pending.
  *
  * Return: A properly refcounted active handler
  */
-static struct scmi_event_handler *
-scmi_get_active_handler(struct scmi_notify_instance *ni, u32 evt_key)
-{
-	struct scmi_registered_event *r_evt;
-	struct scmi_event_handler *hndl = NULL;
+अटल काष्ठा scmi_event_handler *
+scmi_get_active_handler(काष्ठा scmi_notअगरy_instance *ni, u32 evt_key)
+अणु
+	काष्ठा scmi_रेजिस्टरed_event *r_evt;
+	काष्ठा scmi_event_handler *hndl = शून्य;
 
 	r_evt = SCMI_GET_REVT(ni, KEY_XTRACT_PROTO_ID(evt_key),
 			      KEY_XTRACT_EVT_ID(evt_key));
-	if (r_evt) {
-		mutex_lock(&r_evt->proto->registered_mtx);
-		hndl = KEY_FIND(r_evt->proto->registered_events_handlers,
+	अगर (r_evt) अणु
+		mutex_lock(&r_evt->proto->रेजिस्टरed_mtx);
+		hndl = KEY_FIND(r_evt->proto->रेजिस्टरed_events_handlers,
 				hndl, evt_key);
-		if (hndl)
+		अगर (hndl)
 			refcount_inc(&hndl->users);
-		mutex_unlock(&r_evt->proto->registered_mtx);
-	}
+		mutex_unlock(&r_evt->proto->रेजिस्टरed_mtx);
+	पूर्ण
 
-	return hndl;
-}
+	वापस hndl;
+पूर्ण
 
 /**
  * __scmi_enable_evt()  - Enable/disable events generation
- * @r_evt: The registered event to act upon
+ * @r_evt: The रेजिस्टरed event to act upon
  * @src_id: The src_id to act upon
- * @enable: The action to perform: true->Enable, false->Disable
+ * @enable: The action to perक्रमm: true->Enable, false->Disable
  *
- * Takes care of proper refcounting while performing enable/disable: handles
- * the special case of ALL sources requests by itself.
- * Returns successfully if at least one of the required src_id has been
+ * Takes care of proper refcounting जबतक perक्रमming enable/disable: handles
+ * the special हाल of ALL sources requests by itself.
+ * Returns successfully अगर at least one of the required src_id has been
  * successfully enabled/disabled.
  *
  * Return: 0 on Success
  */
-static inline int __scmi_enable_evt(struct scmi_registered_event *r_evt,
+अटल अंतरभूत पूर्णांक __scmi_enable_evt(काष्ठा scmi_रेजिस्टरed_event *r_evt,
 				    u32 src_id, bool enable)
-{
-	int retvals = 0;
+अणु
+	पूर्णांक retvals = 0;
 	u32 num_sources;
 	refcount_t *sid;
 
-	if (src_id == SRC_ID_MASK) {
+	अगर (src_id == SRC_ID_MASK) अणु
 		src_id = 0;
 		num_sources = r_evt->num_sources;
-	} else if (src_id < r_evt->num_sources) {
+	पूर्ण अन्यथा अगर (src_id < r_evt->num_sources) अणु
 		num_sources = 1;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&r_evt->sources_mtx);
-	if (enable) {
-		for (; num_sources; src_id++, num_sources--) {
-			int ret = 0;
+	अगर (enable) अणु
+		क्रम (; num_sources; src_id++, num_sources--) अणु
+			पूर्णांक ret = 0;
 
 			sid = &r_evt->sources[src_id];
-			if (refcount_read(sid) == 0) {
+			अगर (refcount_पढ़ो(sid) == 0) अणु
 				ret = REVT_NOTIFY_ENABLE(r_evt, r_evt->evt->id,
 							 src_id);
-				if (!ret)
+				अगर (!ret)
 					refcount_set(sid, 1);
-			} else {
+			पूर्ण अन्यथा अणु
 				refcount_inc(sid);
-			}
+			पूर्ण
 			retvals += !ret;
-		}
-	} else {
-		for (; num_sources; src_id++, num_sources--) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (; num_sources; src_id++, num_sources--) अणु
 			sid = &r_evt->sources[src_id];
-			if (refcount_dec_and_test(sid))
+			अगर (refcount_dec_and_test(sid))
 				REVT_NOTIFY_DISABLE(r_evt,
 						    r_evt->evt->id, src_id);
-		}
+		पूर्ण
 		retvals = 1;
-	}
+	पूर्ण
 	mutex_unlock(&r_evt->sources_mtx);
 
-	return retvals ? 0 : -EINVAL;
-}
+	वापस retvals ? 0 : -EINVAL;
+पूर्ण
 
-static int scmi_enable_events(struct scmi_event_handler *hndl)
-{
-	int ret = 0;
+अटल पूर्णांक scmi_enable_events(काष्ठा scmi_event_handler *hndl)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!hndl->enabled) {
+	अगर (!hndl->enabled) अणु
 		ret = __scmi_enable_evt(hndl->r_evt,
 					KEY_XTRACT_SRC_ID(hndl->key), true);
-		if (!ret)
+		अगर (!ret)
 			hndl->enabled = true;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_disable_events(struct scmi_event_handler *hndl)
-{
-	int ret = 0;
+अटल पूर्णांक scmi_disable_events(काष्ठा scmi_event_handler *hndl)
+अणु
+	पूर्णांक ret = 0;
 
-	if (hndl->enabled) {
+	अगर (hndl->enabled) अणु
 		ret = __scmi_enable_evt(hndl->r_evt,
 					KEY_XTRACT_SRC_ID(hndl->key), false);
-		if (!ret)
+		अगर (!ret)
 			hndl->enabled = false;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * scmi_put_handler_unlocked()  - Put an event handler
- * @ni: A reference to the notification instance to use
+ * @ni: A reference to the notअगरication instance to use
  * @hndl: The event handler to act upon
  *
- * After having got exclusive access to the registered handlers hashtable,
- * update the refcount and if @hndl is no more in use by anyone:
- * * ask for events' generation disabling
- * * unregister and free the handler itself
+ * After having got exclusive access to the रेजिस्टरed handlers hashtable,
+ * update the refcount and अगर @hndl is no more in use by anyone:
+ * * ask क्रम events' generation disabling
+ * * unरेजिस्टर and मुक्त the handler itself
  *
  * Context: Assumes all the proper locking has been managed by the caller.
  *
- * Return: True if handler was freed (users dropped to zero)
+ * Return: True अगर handler was मुक्तd (users dropped to zero)
  */
-static bool scmi_put_handler_unlocked(struct scmi_notify_instance *ni,
-				      struct scmi_event_handler *hndl)
-{
-	bool freed = false;
+अटल bool scmi_put_handler_unlocked(काष्ठा scmi_notअगरy_instance *ni,
+				      काष्ठा scmi_event_handler *hndl)
+अणु
+	bool मुक्तd = false;
 
-	if (refcount_dec_and_test(&hndl->users)) {
-		if (!IS_HNDL_PENDING(hndl))
+	अगर (refcount_dec_and_test(&hndl->users)) अणु
+		अगर (!IS_HNDL_PENDING(hndl))
 			scmi_disable_events(hndl);
-		scmi_free_event_handler(hndl);
-		freed = true;
-	}
+		scmi_मुक्त_event_handler(hndl);
+		मुक्तd = true;
+	पूर्ण
 
-	return freed;
-}
+	वापस मुक्तd;
+पूर्ण
 
-static void scmi_put_handler(struct scmi_notify_instance *ni,
-			     struct scmi_event_handler *hndl)
-{
-	bool freed;
+अटल व्योम scmi_put_handler(काष्ठा scmi_notअगरy_instance *ni,
+			     काष्ठा scmi_event_handler *hndl)
+अणु
+	bool मुक्तd;
 	u8 protocol_id;
-	struct scmi_registered_event *r_evt = hndl->r_evt;
+	काष्ठा scmi_रेजिस्टरed_event *r_evt = hndl->r_evt;
 
 	mutex_lock(&ni->pending_mtx);
-	if (r_evt) {
+	अगर (r_evt) अणु
 		protocol_id = r_evt->proto->id;
-		mutex_lock(&r_evt->proto->registered_mtx);
-	}
+		mutex_lock(&r_evt->proto->रेजिस्टरed_mtx);
+	पूर्ण
 
-	freed = scmi_put_handler_unlocked(ni, hndl);
+	मुक्तd = scmi_put_handler_unlocked(ni, hndl);
 
-	if (r_evt) {
-		mutex_unlock(&r_evt->proto->registered_mtx);
+	अगर (r_evt) अणु
+		mutex_unlock(&r_evt->proto->रेजिस्टरed_mtx);
 		/*
-		 * Only registered handler acquired protocol; must be here
-		 * released only AFTER unlocking registered_mtx, since
+		 * Only रेजिस्टरed handler acquired protocol; must be here
+		 * released only AFTER unlocking रेजिस्टरed_mtx, since
 		 * releasing a protocol can trigger its de-initialization
-		 * (ie. including r_evt and registered_mtx)
+		 * (ie. including r_evt and रेजिस्टरed_mtx)
 		 */
-		if (freed)
+		अगर (मुक्तd)
 			scmi_protocol_release(ni->handle, protocol_id);
-	}
+	पूर्ण
 	mutex_unlock(&ni->pending_mtx);
-}
+पूर्ण
 
-static void scmi_put_active_handler(struct scmi_notify_instance *ni,
-				    struct scmi_event_handler *hndl)
-{
-	bool freed;
-	struct scmi_registered_event *r_evt = hndl->r_evt;
+अटल व्योम scmi_put_active_handler(काष्ठा scmi_notअगरy_instance *ni,
+				    काष्ठा scmi_event_handler *hndl)
+अणु
+	bool मुक्तd;
+	काष्ठा scmi_रेजिस्टरed_event *r_evt = hndl->r_evt;
 	u8 protocol_id = r_evt->proto->id;
 
-	mutex_lock(&r_evt->proto->registered_mtx);
-	freed = scmi_put_handler_unlocked(ni, hndl);
-	mutex_unlock(&r_evt->proto->registered_mtx);
-	if (freed)
+	mutex_lock(&r_evt->proto->रेजिस्टरed_mtx);
+	मुक्तd = scmi_put_handler_unlocked(ni, hndl);
+	mutex_unlock(&r_evt->proto->रेजिस्टरed_mtx);
+	अगर (मुक्तd)
 		scmi_protocol_release(ni->handle, protocol_id);
-}
+पूर्ण
 
 /**
  * scmi_event_handler_enable_events()  - Enable events associated to an handler
@@ -1296,413 +1297,413 @@ static void scmi_put_active_handler(struct scmi_notify_instance *ni,
  *
  * Return: 0 on Success
  */
-static int scmi_event_handler_enable_events(struct scmi_event_handler *hndl)
-{
-	if (scmi_enable_events(hndl)) {
+अटल पूर्णांक scmi_event_handler_enable_events(काष्ठा scmi_event_handler *hndl)
+अणु
+	अगर (scmi_enable_events(hndl)) अणु
 		pr_err("Failed to ENABLE events for key:%X !\n", hndl->key);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * scmi_notifier_register()  - Register a notifier_block for an event
- * @handle: The handle identifying the platform instance against which the
- *	    callback is registered
+ * scmi_notअगरier_रेजिस्टर()  - Register a notअगरier_block क्रम an event
+ * @handle: The handle identअगरying the platक्रमm instance against which the
+ *	    callback is रेजिस्टरed
  * @proto_id: Protocol ID
  * @evt_id: Event ID
- * @src_id: Source ID, when NULL register for events coming form ALL possible
+ * @src_id: Source ID, when शून्य रेजिस्टर क्रम events coming क्रमm ALL possible
  *	    sources
- * @nb: A standard notifier block to register for the specified event
+ * @nb: A standard notअगरier block to रेजिस्टर क्रम the specअगरied event
  *
- * Generic helper to register a notifier_block against a protocol event.
+ * Generic helper to रेजिस्टर a notअगरier_block against a protocol event.
  *
- * A notifier_block @nb will be registered for each distinct event identified
- * by the tuple (proto_id, evt_id, src_id) on a dedicated notification chain
+ * A notअगरier_block @nb will be रेजिस्टरed क्रम each distinct event identअगरied
+ * by the tuple (proto_id, evt_id, src_id) on a dedicated notअगरication chain
  * so that:
  *
  *	(proto_X, evt_Y, src_Z) --> chain_X_Y_Z
  *
- * @src_id meaning is protocol specific and identifies the origin of the event
- * (like domain_id, sensor_id and so forth).
+ * @src_id meaning is protocol specअगरic and identअगरies the origin of the event
+ * (like करोमुख्य_id, sensor_id and so क्रमth).
  *
- * @src_id can be NULL to signify that the caller is interested in receiving
- * notifications from ALL the available sources for that protocol OR simply that
- * the protocol does not support distinct sources.
+ * @src_id can be शून्य to signअगरy that the caller is पूर्णांकerested in receiving
+ * notअगरications from ALL the available sources क्रम that protocol OR simply that
+ * the protocol करोes not support distinct sources.
  *
- * As soon as one user for the specified tuple appears, an handler is created,
- * and that specific event's generation is enabled at the platform level, unless
- * an associated registered event is found missing, meaning that the needed
- * protocol is still to be initialized and the handler has just been registered
+ * As soon as one user क्रम the specअगरied tuple appears, an handler is created,
+ * and that specअगरic event's generation is enabled at the platक्रमm level, unless
+ * an associated रेजिस्टरed event is found missing, meaning that the needed
+ * protocol is still to be initialized and the handler has just been रेजिस्टरed
  * as still pending.
  *
  * Return: 0 on Success
  */
-static int scmi_notifier_register(const struct scmi_handle *handle,
-				  u8 proto_id, u8 evt_id, const u32 *src_id,
-				  struct notifier_block *nb)
-{
-	int ret = 0;
+अटल पूर्णांक scmi_notअगरier_रेजिस्टर(स्थिर काष्ठा scmi_handle *handle,
+				  u8 proto_id, u8 evt_id, स्थिर u32 *src_id,
+				  काष्ठा notअगरier_block *nb)
+अणु
+	पूर्णांक ret = 0;
 	u32 evt_key;
-	struct scmi_event_handler *hndl;
-	struct scmi_notify_instance *ni;
+	काष्ठा scmi_event_handler *hndl;
+	काष्ठा scmi_notअगरy_instance *ni;
 
-	ni = scmi_notification_instance_data_get(handle);
-	if (!ni)
-		return -ENODEV;
+	ni = scmi_notअगरication_instance_data_get(handle);
+	अगर (!ni)
+		वापस -ENODEV;
 
 	evt_key = MAKE_HASH_KEY(proto_id, evt_id,
 				src_id ? *src_id : SRC_ID_MASK);
 	hndl = scmi_get_or_create_handler(ni, evt_key);
-	if (!hndl)
-		return -EINVAL;
+	अगर (!hndl)
+		वापस -EINVAL;
 
-	blocking_notifier_chain_register(&hndl->chain, nb);
+	blocking_notअगरier_chain_रेजिस्टर(&hndl->chain, nb);
 
-	/* Enable events for not pending handlers */
-	if (!IS_HNDL_PENDING(hndl)) {
+	/* Enable events क्रम not pending handlers */
+	अगर (!IS_HNDL_PENDING(hndl)) अणु
 		ret = scmi_event_handler_enable_events(hndl);
-		if (ret)
+		अगर (ret)
 			scmi_put_handler(ni, hndl);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * scmi_notifier_unregister()  - Unregister a notifier_block for an event
- * @handle: The handle identifying the platform instance against which the
- *	    callback is unregistered
+ * scmi_notअगरier_unरेजिस्टर()  - Unरेजिस्टर a notअगरier_block क्रम an event
+ * @handle: The handle identअगरying the platक्रमm instance against which the
+ *	    callback is unरेजिस्टरed
  * @proto_id: Protocol ID
  * @evt_id: Event ID
  * @src_id: Source ID
- * @nb: The notifier_block to unregister
+ * @nb: The notअगरier_block to unरेजिस्टर
  *
- * Takes care to unregister the provided @nb from the notification chain
- * associated to the specified event and, if there are no more users for the
- * event handler, frees also the associated event handler structures.
- * (this could possibly cause disabling of event's generation at platform level)
+ * Takes care to unरेजिस्टर the provided @nb from the notअगरication chain
+ * associated to the specअगरied event and, अगर there are no more users क्रम the
+ * event handler, मुक्तs also the associated event handler काष्ठाures.
+ * (this could possibly cause disabling of event's generation at platक्रमm level)
  *
  * Return: 0 on Success
  */
-static int scmi_notifier_unregister(const struct scmi_handle *handle,
-				    u8 proto_id, u8 evt_id, const u32 *src_id,
-				    struct notifier_block *nb)
-{
+अटल पूर्णांक scmi_notअगरier_unरेजिस्टर(स्थिर काष्ठा scmi_handle *handle,
+				    u8 proto_id, u8 evt_id, स्थिर u32 *src_id,
+				    काष्ठा notअगरier_block *nb)
+अणु
 	u32 evt_key;
-	struct scmi_event_handler *hndl;
-	struct scmi_notify_instance *ni;
+	काष्ठा scmi_event_handler *hndl;
+	काष्ठा scmi_notअगरy_instance *ni;
 
-	ni = scmi_notification_instance_data_get(handle);
-	if (!ni)
-		return -ENODEV;
+	ni = scmi_notअगरication_instance_data_get(handle);
+	अगर (!ni)
+		वापस -ENODEV;
 
 	evt_key = MAKE_HASH_KEY(proto_id, evt_id,
 				src_id ? *src_id : SRC_ID_MASK);
 	hndl = scmi_get_handler(ni, evt_key);
-	if (!hndl)
-		return -EINVAL;
+	अगर (!hndl)
+		वापस -EINVAL;
 
 	/*
 	 * Note that this chain unregistration call is safe on its own
-	 * being internally protected by an rwsem.
+	 * being पूर्णांकernally रक्षित by an rwsem.
 	 */
-	blocking_notifier_chain_unregister(&hndl->chain, nb);
+	blocking_notअगरier_chain_unरेजिस्टर(&hndl->chain, nb);
 	scmi_put_handler(ni, hndl);
 
 	/*
-	 * This balances the initial get issued in @scmi_notifier_register.
-	 * If this notifier_block happened to be the last known user callback
-	 * for this event, the handler is here freed and the event's generation
+	 * This balances the initial get issued in @scmi_notअगरier_रेजिस्टर.
+	 * If this notअगरier_block happened to be the last known user callback
+	 * क्रम this event, the handler is here मुक्तd and the event's generation
 	 * stopped.
 	 *
 	 * Note that, an ongoing concurrent lookup on the delivery workqueue
 	 * path could still hold the refcount to 1 even after this routine
-	 * completes: in such a case it will be the final put on the delivery
-	 * path which will finally free this unused handler.
+	 * completes: in such a हाल it will be the final put on the delivery
+	 * path which will finally मुक्त this unused handler.
 	 */
 	scmi_put_handler(ni, hndl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct scmi_notifier_devres {
-	const struct scmi_handle *handle;
+काष्ठा scmi_notअगरier_devres अणु
+	स्थिर काष्ठा scmi_handle *handle;
 	u8 proto_id;
 	u8 evt_id;
 	u32 __src_id;
 	u32 *src_id;
-	struct notifier_block *nb;
-};
+	काष्ठा notअगरier_block *nb;
+पूर्ण;
 
-static void scmi_devm_release_notifier(struct device *dev, void *res)
-{
-	struct scmi_notifier_devres *dres = res;
+अटल व्योम scmi_devm_release_notअगरier(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा scmi_notअगरier_devres *dres = res;
 
-	scmi_notifier_unregister(dres->handle, dres->proto_id, dres->evt_id,
+	scmi_notअगरier_unरेजिस्टर(dres->handle, dres->proto_id, dres->evt_id,
 				 dres->src_id, dres->nb);
-}
+पूर्ण
 
 /**
- * scmi_devm_notifier_register()  - Managed registration of a notifier_block
- * for an event
- * @sdev: A reference to an scmi_device whose embedded struct device is to
- *	  be used for devres accounting.
+ * scmi_devm_notअगरier_रेजिस्टर()  - Managed registration of a notअगरier_block
+ * क्रम an event
+ * @sdev: A reference to an scmi_device whose embedded काष्ठा device is to
+ *	  be used क्रम devres accounting.
  * @proto_id: Protocol ID
  * @evt_id: Event ID
- * @src_id: Source ID, when NULL register for events coming form ALL possible
+ * @src_id: Source ID, when शून्य रेजिस्टर क्रम events coming क्रमm ALL possible
  *	    sources
- * @nb: A standard notifier block to register for the specified event
+ * @nb: A standard notअगरier block to रेजिस्टर क्रम the specअगरied event
  *
- * Generic devres managed helper to register a notifier_block against a
+ * Generic devres managed helper to रेजिस्टर a notअगरier_block against a
  * protocol event.
  */
-static int scmi_devm_notifier_register(struct scmi_device *sdev,
+अटल पूर्णांक scmi_devm_notअगरier_रेजिस्टर(काष्ठा scmi_device *sdev,
 				       u8 proto_id, u8 evt_id,
-				       const u32 *src_id,
-				       struct notifier_block *nb)
-{
-	int ret;
-	struct scmi_notifier_devres *dres;
+				       स्थिर u32 *src_id,
+				       काष्ठा notअगरier_block *nb)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_notअगरier_devres *dres;
 
-	dres = devres_alloc(scmi_devm_release_notifier,
-			    sizeof(*dres), GFP_KERNEL);
-	if (!dres)
-		return -ENOMEM;
+	dres = devres_alloc(scmi_devm_release_notअगरier,
+			    माप(*dres), GFP_KERNEL);
+	अगर (!dres)
+		वापस -ENOMEM;
 
-	ret = scmi_notifier_register(sdev->handle, proto_id,
+	ret = scmi_notअगरier_रेजिस्टर(sdev->handle, proto_id,
 				     evt_id, src_id, nb);
-	if (ret) {
-		devres_free(dres);
-		return ret;
-	}
+	अगर (ret) अणु
+		devres_मुक्त(dres);
+		वापस ret;
+	पूर्ण
 
 	dres->handle = sdev->handle;
 	dres->proto_id = proto_id;
 	dres->evt_id = evt_id;
 	dres->nb = nb;
-	if (src_id) {
+	अगर (src_id) अणु
 		dres->__src_id = *src_id;
 		dres->src_id = &dres->__src_id;
-	} else {
-		dres->src_id = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		dres->src_id = शून्य;
+	पूर्ण
 	devres_add(&sdev->dev, dres);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_devm_notifier_match(struct device *dev, void *res, void *data)
-{
-	struct scmi_notifier_devres *dres = res;
-	struct scmi_notifier_devres *xres = data;
+अटल पूर्णांक scmi_devm_notअगरier_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा scmi_notअगरier_devres *dres = res;
+	काष्ठा scmi_notअगरier_devres *xres = data;
 
-	if (WARN_ON(!dres || !xres))
-		return 0;
+	अगर (WARN_ON(!dres || !xres))
+		वापस 0;
 
-	return dres->proto_id == xres->proto_id &&
+	वापस dres->proto_id == xres->proto_id &&
 		dres->evt_id == xres->evt_id &&
 		dres->nb == xres->nb &&
 		((!dres->src_id && !xres->src_id) ||
 		  (dres->src_id && xres->src_id &&
 		   dres->__src_id == xres->__src_id));
-}
+पूर्ण
 
 /**
- * scmi_devm_notifier_unregister()  - Managed un-registration of a
- * notifier_block for an event
- * @sdev: A reference to an scmi_device whose embedded struct device is to
- *	  be used for devres accounting.
+ * scmi_devm_notअगरier_unरेजिस्टर()  - Managed un-registration of a
+ * notअगरier_block क्रम an event
+ * @sdev: A reference to an scmi_device whose embedded काष्ठा device is to
+ *	  be used क्रम devres accounting.
  * @proto_id: Protocol ID
  * @evt_id: Event ID
- * @src_id: Source ID, when NULL register for events coming form ALL possible
+ * @src_id: Source ID, when शून्य रेजिस्टर क्रम events coming क्रमm ALL possible
  *	    sources
- * @nb: A standard notifier block to register for the specified event
+ * @nb: A standard notअगरier block to रेजिस्टर क्रम the specअगरied event
  *
- * Generic devres managed helper to explicitly un-register a notifier_block
- * against a protocol event, which was previously registered using the above
- * @scmi_devm_notifier_register.
+ * Generic devres managed helper to explicitly un-रेजिस्टर a notअगरier_block
+ * against a protocol event, which was previously रेजिस्टरed using the above
+ * @scmi_devm_notअगरier_रेजिस्टर.
  */
-static int scmi_devm_notifier_unregister(struct scmi_device *sdev,
+अटल पूर्णांक scmi_devm_notअगरier_unरेजिस्टर(काष्ठा scmi_device *sdev,
 					 u8 proto_id, u8 evt_id,
-					 const u32 *src_id,
-					 struct notifier_block *nb)
-{
-	int ret;
-	struct scmi_notifier_devres dres;
+					 स्थिर u32 *src_id,
+					 काष्ठा notअगरier_block *nb)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_notअगरier_devres dres;
 
 	dres.handle = sdev->handle;
 	dres.proto_id = proto_id;
 	dres.evt_id = evt_id;
-	if (src_id) {
+	अगर (src_id) अणु
 		dres.__src_id = *src_id;
 		dres.src_id = &dres.__src_id;
-	} else {
-		dres.src_id = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		dres.src_id = शून्य;
+	पूर्ण
 
-	ret = devres_release(&sdev->dev, scmi_devm_release_notifier,
-			     scmi_devm_notifier_match, &dres);
+	ret = devres_release(&sdev->dev, scmi_devm_release_notअगरier,
+			     scmi_devm_notअगरier_match, &dres);
 
 	WARN_ON(ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * scmi_protocols_late_init()  - Worker for late initialization
+ * scmi_protocols_late_init()  - Worker क्रम late initialization
  * @work: The work item to use associated to the proper SCMI instance
  *
  * This kicks in whenever a new protocol has completed its own registration via
- * scmi_register_protocol_events(): it is in charge of scanning the table of
- * pending handlers (registered by users while the related protocol was still
+ * scmi_रेजिस्टर_protocol_events(): it is in अक्षरge of scanning the table of
+ * pending handlers (रेजिस्टरed by users जबतक the related protocol was still
  * not initialized) and finalizing their initialization whenever possible;
- * invalid pending handlers are purged at this point in time.
+ * invalid pending handlers are purged at this poपूर्णांक in समय.
  */
-static void scmi_protocols_late_init(struct work_struct *work)
-{
-	int bkt;
-	struct scmi_event_handler *hndl;
-	struct scmi_notify_instance *ni;
-	struct hlist_node *tmp;
+अटल व्योम scmi_protocols_late_init(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक bkt;
+	काष्ठा scmi_event_handler *hndl;
+	काष्ठा scmi_notअगरy_instance *ni;
+	काष्ठा hlist_node *पंचांगp;
 
-	ni = container_of(work, struct scmi_notify_instance, init_work);
+	ni = container_of(work, काष्ठा scmi_notअगरy_instance, init_work);
 
 	/* Ensure protocols and events are up to date */
 	smp_rmb();
 
 	mutex_lock(&ni->pending_mtx);
-	hash_for_each_safe(ni->pending_events_handlers, bkt, tmp, hndl, hash) {
-		int ret;
+	hash_क्रम_each_safe(ni->pending_events_handlers, bkt, पंचांगp, hndl, hash) अणु
+		पूर्णांक ret;
 
 		ret = scmi_bind_event_handler(ni, hndl);
-		if (!ret) {
+		अगर (!ret) अणु
 			dev_dbg(ni->handle->dev,
 				"finalized PENDING handler - key:%X\n",
 				hndl->key);
 			ret = scmi_event_handler_enable_events(hndl);
-			if (ret) {
+			अगर (ret) अणु
 				dev_dbg(ni->handle->dev,
 					"purging INVALID handler - key:%X\n",
 					hndl->key);
 				scmi_put_active_handler(ni, hndl);
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ret = scmi_valid_pending_handler(ni, hndl);
-			if (ret) {
+			अगर (ret) अणु
 				dev_dbg(ni->handle->dev,
 					"purging PENDING handler - key:%X\n",
 					hndl->key);
 				/* this hndl can be only a pending one */
 				scmi_put_handler_unlocked(ni, hndl);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ni->pending_mtx);
-}
+पूर्ण
 
 /*
- * notify_ops are attached to the handle so that can be accessed
- * directly from an scmi_driver to register its own notifiers.
+ * notअगरy_ops are attached to the handle so that can be accessed
+ * directly from an scmi_driver to रेजिस्टर its own notअगरiers.
  */
-static const struct scmi_notify_ops notify_ops = {
-	.devm_event_notifier_register = scmi_devm_notifier_register,
-	.devm_event_notifier_unregister = scmi_devm_notifier_unregister,
-	.event_notifier_register = scmi_notifier_register,
-	.event_notifier_unregister = scmi_notifier_unregister,
-};
+अटल स्थिर काष्ठा scmi_notअगरy_ops notअगरy_ops = अणु
+	.devm_event_notअगरier_रेजिस्टर = scmi_devm_notअगरier_रेजिस्टर,
+	.devm_event_notअगरier_unरेजिस्टर = scmi_devm_notअगरier_unरेजिस्टर,
+	.event_notअगरier_रेजिस्टर = scmi_notअगरier_रेजिस्टर,
+	.event_notअगरier_unरेजिस्टर = scmi_notअगरier_unरेजिस्टर,
+पूर्ण;
 
 /**
- * scmi_notification_init()  - Initializes Notification Core Support
- * @handle: The handle identifying the platform instance to initialize
+ * scmi_notअगरication_init()  - Initializes Notअगरication Core Support
+ * @handle: The handle identअगरying the platक्रमm instance to initialize
  *
- * This function lays out all the basic resources needed by the notification
- * core instance identified by the provided handle: once done, all of the
- * SCMI Protocols can register their events with the core during their own
+ * This function lays out all the basic resources needed by the notअगरication
+ * core instance identअगरied by the provided handle: once करोne, all of the
+ * SCMI Protocols can रेजिस्टर their events with the core during their own
  * initializations.
  *
- * Note that failing to initialize the core notifications support does not
+ * Note that failing to initialize the core notअगरications support करोes not
  * cause the whole SCMI Protocols stack to fail its initialization.
  *
- * SCMI Notification Initialization happens in 2 steps:
+ * SCMI Notअगरication Initialization happens in 2 steps:
  * * initialization: basic common allocations (this function)
- * * registration: protocols asynchronously come into life and registers their
+ * * registration: protocols asynchronously come पूर्णांकo lअगरe and रेजिस्टरs their
  *		   own supported list of events with the core; this causes
  *		   further per-protocol allocations
  *
- * Any user's callback registration attempt, referring a still not registered
- * event, will be registered as pending and finalized later (if possible)
+ * Any user's callback registration attempt, referring a still not रेजिस्टरed
+ * event, will be रेजिस्टरed as pending and finalized later (अगर possible)
  * by scmi_protocols_late_init() work.
- * This allows for lazy initialization of SCMI Protocols due to late (or
+ * This allows क्रम lazy initialization of SCMI Protocols due to late (or
  * missing) SCMI drivers' modules loading.
  *
  * Return: 0 on Success
  */
-int scmi_notification_init(struct scmi_handle *handle)
-{
-	void *gid;
-	struct scmi_notify_instance *ni;
+पूर्णांक scmi_notअगरication_init(काष्ठा scmi_handle *handle)
+अणु
+	व्योम *gid;
+	काष्ठा scmi_notअगरy_instance *ni;
 
-	gid = devres_open_group(handle->dev, NULL, GFP_KERNEL);
-	if (!gid)
-		return -ENOMEM;
+	gid = devres_खोलो_group(handle->dev, शून्य, GFP_KERNEL);
+	अगर (!gid)
+		वापस -ENOMEM;
 
-	ni = devm_kzalloc(handle->dev, sizeof(*ni), GFP_KERNEL);
-	if (!ni)
-		goto err;
+	ni = devm_kzalloc(handle->dev, माप(*ni), GFP_KERNEL);
+	अगर (!ni)
+		जाओ err;
 
 	ni->gid = gid;
 	ni->handle = handle;
 
-	ni->registered_protocols = devm_kcalloc(handle->dev, SCMI_MAX_PROTO,
-						sizeof(char *), GFP_KERNEL);
-	if (!ni->registered_protocols)
-		goto err;
+	ni->रेजिस्टरed_protocols = devm_kसुस्मृति(handle->dev, SCMI_MAX_PROTO,
+						माप(अक्षर *), GFP_KERNEL);
+	अगर (!ni->रेजिस्टरed_protocols)
+		जाओ err;
 
-	ni->notify_wq = alloc_workqueue(dev_name(handle->dev),
+	ni->notअगरy_wq = alloc_workqueue(dev_name(handle->dev),
 					WQ_UNBOUND | WQ_FREEZABLE | WQ_SYSFS,
 					0);
-	if (!ni->notify_wq)
-		goto err;
+	अगर (!ni->notअगरy_wq)
+		जाओ err;
 
 	mutex_init(&ni->pending_mtx);
 	hash_init(ni->pending_events_handlers);
 
 	INIT_WORK(&ni->init_work, scmi_protocols_late_init);
 
-	scmi_notification_instance_data_set(handle, ni);
-	handle->notify_ops = &notify_ops;
+	scmi_notअगरication_instance_data_set(handle, ni);
+	handle->notअगरy_ops = &notअगरy_ops;
 	/* Ensure handle is up to date */
 	smp_wmb();
 
 	dev_info(handle->dev, "Core Enabled.\n");
 
-	devres_close_group(handle->dev, ni->gid);
+	devres_बंद_group(handle->dev, ni->gid);
 
-	return 0;
+	वापस 0;
 
 err:
 	dev_warn(handle->dev, "Initialization Failed.\n");
 	devres_release_group(handle->dev, gid);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * scmi_notification_exit()  - Shutdown and clean Notification core
- * @handle: The handle identifying the platform instance to shutdown
+ * scmi_notअगरication_निकास()  - Shutकरोwn and clean Notअगरication core
+ * @handle: The handle identअगरying the platक्रमm instance to shutकरोwn
  */
-void scmi_notification_exit(struct scmi_handle *handle)
-{
-	struct scmi_notify_instance *ni;
+व्योम scmi_notअगरication_निकास(काष्ठा scmi_handle *handle)
+अणु
+	काष्ठा scmi_notअगरy_instance *ni;
 
-	ni = scmi_notification_instance_data_get(handle);
-	if (!ni)
-		return;
-	scmi_notification_instance_data_set(handle, NULL);
+	ni = scmi_notअगरication_instance_data_get(handle);
+	अगर (!ni)
+		वापस;
+	scmi_notअगरication_instance_data_set(handle, शून्य);
 
-	/* Destroy while letting pending work complete */
-	destroy_workqueue(ni->notify_wq);
+	/* Destroy जबतक letting pending work complete */
+	destroy_workqueue(ni->notअगरy_wq);
 
 	devres_release_group(ni->handle->dev, ni->gid);
-}
+पूर्ण

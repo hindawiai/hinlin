@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  */
 
-#include "dtc.h"
-#include "srcpos.h"
+#समावेश "dtc.h"
+#समावेश "srcpos.h"
 
-#define FTF_FULLPATH	0x1
-#define FTF_VARALIGN	0x2
-#define FTF_NAMEPROPS	0x4
-#define FTF_BOOTCPUID	0x8
-#define FTF_STRTABSIZE	0x10
-#define FTF_STRUCTSIZE	0x20
-#define FTF_NOPS	0x40
+#घोषणा FTF_FULLPATH	0x1
+#घोषणा FTF_VARALIGN	0x2
+#घोषणा FTF_NAMEPROPS	0x4
+#घोषणा FTF_BOOTCPUID	0x8
+#घोषणा FTF_STRTABSIZE	0x10
+#घोषणा FTF_STRUCTSIZE	0x20
+#घोषणा FTF_NOPS	0x40
 
-static struct version_info {
-	int version;
-	int last_comp_version;
-	int hdr_size;
-	int flags;
-} version_table[] = {
-	{1, 1, FDT_V1_SIZE,
-	 FTF_FULLPATH|FTF_VARALIGN|FTF_NAMEPROPS},
-	{2, 1, FDT_V2_SIZE,
-	 FTF_FULLPATH|FTF_VARALIGN|FTF_NAMEPROPS|FTF_BOOTCPUID},
-	{3, 1, FDT_V3_SIZE,
-	 FTF_FULLPATH|FTF_VARALIGN|FTF_NAMEPROPS|FTF_BOOTCPUID|FTF_STRTABSIZE},
-	{16, 16, FDT_V3_SIZE,
-	 FTF_BOOTCPUID|FTF_STRTABSIZE|FTF_NOPS},
-	{17, 16, FDT_V17_SIZE,
-	 FTF_BOOTCPUID|FTF_STRTABSIZE|FTF_STRUCTSIZE|FTF_NOPS},
-};
+अटल काष्ठा version_info अणु
+	पूर्णांक version;
+	पूर्णांक last_comp_version;
+	पूर्णांक hdr_size;
+	पूर्णांक flags;
+पूर्ण version_table[] = अणु
+	अणु1, 1, FDT_V1_SIZE,
+	 FTF_FULLPATH|FTF_VARALIGN|FTF_NAMEPROPSपूर्ण,
+	अणु2, 1, FDT_V2_SIZE,
+	 FTF_FULLPATH|FTF_VARALIGN|FTF_NAMEPROPS|FTF_BOOTCPUIDपूर्ण,
+	अणु3, 1, FDT_V3_SIZE,
+	 FTF_FULLPATH|FTF_VARALIGN|FTF_NAMEPROPS|FTF_BOOTCPUID|FTF_STRTABSIZEपूर्ण,
+	अणु16, 16, FDT_V3_SIZE,
+	 FTF_BOOTCPUID|FTF_STRTABSIZE|FTF_NOPSपूर्ण,
+	अणु17, 16, FDT_V17_SIZE,
+	 FTF_BOOTCPUID|FTF_STRTABSIZE|FTF_STRUCTSIZE|FTF_NOPSपूर्ण,
+पूर्ण;
 
-struct emitter {
-	void (*cell)(void *, cell_t);
-	void (*string)(void *, const char *, int);
-	void (*align)(void *, int);
-	void (*data)(void *, struct data);
-	void (*beginnode)(void *, struct label *labels);
-	void (*endnode)(void *, struct label *labels);
-	void (*property)(void *, struct label *labels);
-};
+काष्ठा emitter अणु
+	व्योम (*cell)(व्योम *, cell_t);
+	व्योम (*string)(व्योम *, स्थिर अक्षर *, पूर्णांक);
+	व्योम (*align)(व्योम *, पूर्णांक);
+	व्योम (*data)(व्योम *, काष्ठा data);
+	व्योम (*beginnode)(व्योम *, काष्ठा label *labels);
+	व्योम (*endnode)(व्योम *, काष्ठा label *labels);
+	व्योम (*property)(व्योम *, काष्ठा label *labels);
+पूर्ण;
 
-static void bin_emit_cell(void *e, cell_t val)
-{
-	struct data *dtbuf = e;
+अटल व्योम bin_emit_cell(व्योम *e, cell_t val)
+अणु
+	काष्ठा data *dtbuf = e;
 
 	*dtbuf = data_append_cell(*dtbuf, val);
-}
+पूर्ण
 
-static void bin_emit_string(void *e, const char *str, int len)
-{
-	struct data *dtbuf = e;
+अटल व्योम bin_emit_string(व्योम *e, स्थिर अक्षर *str, पूर्णांक len)
+अणु
+	काष्ठा data *dtbuf = e;
 
-	if (len == 0)
-		len = strlen(str);
+	अगर (len == 0)
+		len = म_माप(str);
 
 	*dtbuf = data_append_data(*dtbuf, str, len);
 	*dtbuf = data_append_byte(*dtbuf, '\0');
-}
+पूर्ण
 
-static void bin_emit_align(void *e, int a)
-{
-	struct data *dtbuf = e;
+अटल व्योम bin_emit_align(व्योम *e, पूर्णांक a)
+अणु
+	काष्ठा data *dtbuf = e;
 
 	*dtbuf = data_append_align(*dtbuf, a);
-}
+पूर्ण
 
-static void bin_emit_data(void *e, struct data d)
-{
-	struct data *dtbuf = e;
+अटल व्योम bin_emit_data(व्योम *e, काष्ठा data d)
+अणु
+	काष्ठा data *dtbuf = e;
 
 	*dtbuf = data_append_data(*dtbuf, d.val, d.len);
-}
+पूर्ण
 
-static void bin_emit_beginnode(void *e, struct label *labels)
-{
+अटल व्योम bin_emit_beginnode(व्योम *e, काष्ठा label *labels)
+अणु
 	bin_emit_cell(e, FDT_BEGIN_NODE);
-}
+पूर्ण
 
-static void bin_emit_endnode(void *e, struct label *labels)
-{
+अटल व्योम bin_emit_endnode(व्योम *e, काष्ठा label *labels)
+अणु
 	bin_emit_cell(e, FDT_END_NODE);
-}
+पूर्ण
 
-static void bin_emit_property(void *e, struct label *labels)
-{
+अटल व्योम bin_emit_property(व्योम *e, काष्ठा label *labels)
+अणु
 	bin_emit_cell(e, FDT_PROP);
-}
+पूर्ण
 
-static struct emitter bin_emitter = {
+अटल काष्ठा emitter bin_emitter = अणु
 	.cell = bin_emit_cell,
 	.string = bin_emit_string,
 	.align = bin_emit_align,
@@ -97,165 +98,165 @@ static struct emitter bin_emitter = {
 	.beginnode = bin_emit_beginnode,
 	.endnode = bin_emit_endnode,
 	.property = bin_emit_property,
-};
+पूर्ण;
 
-static void emit_label(FILE *f, const char *prefix, const char *label)
-{
-	fprintf(f, "\t.globl\t%s_%s\n", prefix, label);
-	fprintf(f, "%s_%s:\n", prefix, label);
-	fprintf(f, "_%s_%s:\n", prefix, label);
-}
+अटल व्योम emit_label(खाता *f, स्थिर अक्षर *prefix, स्थिर अक्षर *label)
+अणु
+	ख_लिखो(f, "\t.globl\t%s_%s\n", prefix, label);
+	ख_लिखो(f, "%s_%s:\n", prefix, label);
+	ख_लिखो(f, "_%s_%s:\n", prefix, label);
+पूर्ण
 
-static void emit_offset_label(FILE *f, const char *label, int offset)
-{
-	fprintf(f, "\t.globl\t%s\n", label);
-	fprintf(f, "%s\t= . + %d\n", label, offset);
-}
+अटल व्योम emit_offset_label(खाता *f, स्थिर अक्षर *label, पूर्णांक offset)
+अणु
+	ख_लिखो(f, "\t.globl\t%s\n", label);
+	ख_लिखो(f, "%s\t= . + %d\n", label, offset);
+पूर्ण
 
-#define ASM_EMIT_BELONG(f, fmt, ...) \
-	{ \
-		fprintf((f), "\t.byte\t((" fmt ") >> 24) & 0xff\n", __VA_ARGS__); \
-		fprintf((f), "\t.byte\t((" fmt ") >> 16) & 0xff\n", __VA_ARGS__); \
-		fprintf((f), "\t.byte\t((" fmt ") >> 8) & 0xff\n", __VA_ARGS__); \
-		fprintf((f), "\t.byte\t(" fmt ") & 0xff\n", __VA_ARGS__); \
-	}
+#घोषणा ASM_EMIT_BELONG(f, fmt, ...) \
+	अणु \
+		ख_लिखो((f), "\t.byte\t((" fmt ") >> 24) & 0xff\n", __VA_ARGS__); \
+		ख_लिखो((f), "\t.byte\t((" fmt ") >> 16) & 0xff\n", __VA_ARGS__); \
+		ख_लिखो((f), "\t.byte\t((" fmt ") >> 8) & 0xff\n", __VA_ARGS__); \
+		ख_लिखो((f), "\t.byte\t(" fmt ") & 0xff\n", __VA_ARGS__); \
+	पूर्ण
 
-static void asm_emit_cell(void *e, cell_t val)
-{
-	FILE *f = e;
+अटल व्योम यंत्र_emit_cell(व्योम *e, cell_t val)
+अणु
+	खाता *f = e;
 
-	fprintf(f, "\t.byte 0x%02x; .byte 0x%02x; .byte 0x%02x; .byte 0x%02x\n",
+	ख_लिखो(f, "\t.byte 0x%02x; .byte 0x%02x; .byte 0x%02x; .byte 0x%02x\n",
 		(val >> 24) & 0xff, (val >> 16) & 0xff,
 		(val >> 8) & 0xff, val & 0xff);
-}
+पूर्ण
 
-static void asm_emit_string(void *e, const char *str, int len)
-{
-	FILE *f = e;
+अटल व्योम यंत्र_emit_string(व्योम *e, स्थिर अक्षर *str, पूर्णांक len)
+अणु
+	खाता *f = e;
 
-	if (len != 0)
-		fprintf(f, "\t.string\t\"%.*s\"\n", len, str);
-	else
-		fprintf(f, "\t.string\t\"%s\"\n", str);
-}
+	अगर (len != 0)
+		ख_लिखो(f, "\t.string\t\"%.*s\"\n", len, str);
+	अन्यथा
+		ख_लिखो(f, "\t.string\t\"%s\"\n", str);
+पूर्ण
 
-static void asm_emit_align(void *e, int a)
-{
-	FILE *f = e;
+अटल व्योम यंत्र_emit_align(व्योम *e, पूर्णांक a)
+अणु
+	खाता *f = e;
 
-	fprintf(f, "\t.balign\t%d, 0\n", a);
-}
+	ख_लिखो(f, "\t.balign\t%d, 0\n", a);
+पूर्ण
 
-static void asm_emit_data(void *e, struct data d)
-{
-	FILE *f = e;
-	unsigned int off = 0;
-	struct marker *m = d.markers;
+अटल व्योम यंत्र_emit_data(व्योम *e, काष्ठा data d)
+अणु
+	खाता *f = e;
+	अचिन्हित पूर्णांक off = 0;
+	काष्ठा marker *m = d.markers;
 
-	for_each_marker_of_type(m, LABEL)
+	क्रम_each_marker_of_type(m, LABEL)
 		emit_offset_label(f, m->ref, m->offset);
 
-	while ((d.len - off) >= sizeof(uint32_t)) {
-		asm_emit_cell(e, dtb_ld32(d.val + off));
-		off += sizeof(uint32_t);
-	}
+	जबतक ((d.len - off) >= माप(uपूर्णांक32_t)) अणु
+		यंत्र_emit_cell(e, dtb_ld32(d.val + off));
+		off += माप(uपूर्णांक32_t);
+	पूर्ण
 
-	while ((d.len - off) >= 1) {
-		fprintf(f, "\t.byte\t0x%hhx\n", d.val[off]);
+	जबतक ((d.len - off) >= 1) अणु
+		ख_लिखो(f, "\t.byte\t0x%hhx\n", d.val[off]);
 		off += 1;
-	}
+	पूर्ण
 
-	assert(off == d.len);
-}
+	निश्चित(off == d.len);
+पूर्ण
 
-static void asm_emit_beginnode(void *e, struct label *labels)
-{
-	FILE *f = e;
-	struct label *l;
+अटल व्योम यंत्र_emit_beginnode(व्योम *e, काष्ठा label *labels)
+अणु
+	खाता *f = e;
+	काष्ठा label *l;
 
-	for_each_label(labels, l) {
-		fprintf(f, "\t.globl\t%s\n", l->label);
-		fprintf(f, "%s:\n", l->label);
-	}
-	fprintf(f, "\t/* FDT_BEGIN_NODE */\n");
-	asm_emit_cell(e, FDT_BEGIN_NODE);
-}
+	क्रम_each_label(labels, l) अणु
+		ख_लिखो(f, "\t.globl\t%s\n", l->label);
+		ख_लिखो(f, "%s:\n", l->label);
+	पूर्ण
+	ख_लिखो(f, "\t/* FDT_BEGIN_NODE */\n");
+	यंत्र_emit_cell(e, FDT_BEGIN_NODE);
+पूर्ण
 
-static void asm_emit_endnode(void *e, struct label *labels)
-{
-	FILE *f = e;
-	struct label *l;
+अटल व्योम यंत्र_emit_endnode(व्योम *e, काष्ठा label *labels)
+अणु
+	खाता *f = e;
+	काष्ठा label *l;
 
-	fprintf(f, "\t/* FDT_END_NODE */\n");
-	asm_emit_cell(e, FDT_END_NODE);
-	for_each_label(labels, l) {
-		fprintf(f, "\t.globl\t%s_end\n", l->label);
-		fprintf(f, "%s_end:\n", l->label);
-	}
-}
+	ख_लिखो(f, "\t/* FDT_END_NODE */\n");
+	यंत्र_emit_cell(e, FDT_END_NODE);
+	क्रम_each_label(labels, l) अणु
+		ख_लिखो(f, "\t.globl\t%s_end\n", l->label);
+		ख_लिखो(f, "%s_end:\n", l->label);
+	पूर्ण
+पूर्ण
 
-static void asm_emit_property(void *e, struct label *labels)
-{
-	FILE *f = e;
-	struct label *l;
+अटल व्योम यंत्र_emit_property(व्योम *e, काष्ठा label *labels)
+अणु
+	खाता *f = e;
+	काष्ठा label *l;
 
-	for_each_label(labels, l) {
-		fprintf(f, "\t.globl\t%s\n", l->label);
-		fprintf(f, "%s:\n", l->label);
-	}
-	fprintf(f, "\t/* FDT_PROP */\n");
-	asm_emit_cell(e, FDT_PROP);
-}
+	क्रम_each_label(labels, l) अणु
+		ख_लिखो(f, "\t.globl\t%s\n", l->label);
+		ख_लिखो(f, "%s:\n", l->label);
+	पूर्ण
+	ख_लिखो(f, "\t/* FDT_PROP */\n");
+	यंत्र_emit_cell(e, FDT_PROP);
+पूर्ण
 
-static struct emitter asm_emitter = {
-	.cell = asm_emit_cell,
-	.string = asm_emit_string,
-	.align = asm_emit_align,
-	.data = asm_emit_data,
-	.beginnode = asm_emit_beginnode,
-	.endnode = asm_emit_endnode,
-	.property = asm_emit_property,
-};
+अटल काष्ठा emitter यंत्र_emitter = अणु
+	.cell = यंत्र_emit_cell,
+	.string = यंत्र_emit_string,
+	.align = यंत्र_emit_align,
+	.data = यंत्र_emit_data,
+	.beginnode = यंत्र_emit_beginnode,
+	.endnode = यंत्र_emit_endnode,
+	.property = यंत्र_emit_property,
+पूर्ण;
 
-static int stringtable_insert(struct data *d, const char *str)
-{
-	unsigned int i;
+अटल पूर्णांक stringtable_insert(काष्ठा data *d, स्थिर अक्षर *str)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	/* FIXME: do this more efficiently? */
+	/* FIXME: करो this more efficiently? */
 
-	for (i = 0; i < d->len; i++) {
-		if (streq(str, d->val + i))
-			return i;
-	}
+	क्रम (i = 0; i < d->len; i++) अणु
+		अगर (streq(str, d->val + i))
+			वापस i;
+	पूर्ण
 
-	*d = data_append_data(*d, str, strlen(str)+1);
-	return i;
-}
+	*d = data_append_data(*d, str, म_माप(str)+1);
+	वापस i;
+पूर्ण
 
-static void flatten_tree(struct node *tree, struct emitter *emit,
-			 void *etarget, struct data *strbuf,
-			 struct version_info *vi)
-{
-	struct property *prop;
-	struct node *child;
+अटल व्योम flatten_tree(काष्ठा node *tree, काष्ठा emitter *emit,
+			 व्योम *etarget, काष्ठा data *strbuf,
+			 काष्ठा version_info *vi)
+अणु
+	काष्ठा property *prop;
+	काष्ठा node *child;
 	bool seen_name_prop = false;
 
-	if (tree->deleted)
-		return;
+	अगर (tree->deleted)
+		वापस;
 
 	emit->beginnode(etarget, tree->labels);
 
-	if (vi->flags & FTF_FULLPATH)
+	अगर (vi->flags & FTF_FULLPATH)
 		emit->string(etarget, tree->fullpath, 0);
-	else
+	अन्यथा
 		emit->string(etarget, tree->name, 0);
 
-	emit->align(etarget, sizeof(cell_t));
+	emit->align(etarget, माप(cell_t));
 
-	for_each_property(tree, prop) {
-		int nameoff;
+	क्रम_each_property(tree, prop) अणु
+		पूर्णांक nameoff;
 
-		if (streq(prop->name, "name"))
+		अगर (streq(prop->name, "name"))
 			seen_name_prop = true;
 
 		nameoff = stringtable_insert(strbuf, prop->name);
@@ -264,100 +265,100 @@ static void flatten_tree(struct node *tree, struct emitter *emit,
 		emit->cell(etarget, prop->val.len);
 		emit->cell(etarget, nameoff);
 
-		if ((vi->flags & FTF_VARALIGN) && (prop->val.len >= 8))
+		अगर ((vi->flags & FTF_VARALIGN) && (prop->val.len >= 8))
 			emit->align(etarget, 8);
 
 		emit->data(etarget, prop->val);
-		emit->align(etarget, sizeof(cell_t));
-	}
+		emit->align(etarget, माप(cell_t));
+	पूर्ण
 
-	if ((vi->flags & FTF_NAMEPROPS) && !seen_name_prop) {
-		emit->property(etarget, NULL);
+	अगर ((vi->flags & FTF_NAMEPROPS) && !seen_name_prop) अणु
+		emit->property(etarget, शून्य);
 		emit->cell(etarget, tree->basenamelen+1);
 		emit->cell(etarget, stringtable_insert(strbuf, "name"));
 
-		if ((vi->flags & FTF_VARALIGN) && ((tree->basenamelen+1) >= 8))
+		अगर ((vi->flags & FTF_VARALIGN) && ((tree->basenamelen+1) >= 8))
 			emit->align(etarget, 8);
 
 		emit->string(etarget, tree->name, tree->basenamelen);
-		emit->align(etarget, sizeof(cell_t));
-	}
+		emit->align(etarget, माप(cell_t));
+	पूर्ण
 
-	for_each_child(tree, child) {
+	क्रम_each_child(tree, child) अणु
 		flatten_tree(child, emit, etarget, strbuf, vi);
-	}
+	पूर्ण
 
 	emit->endnode(etarget, tree->labels);
-}
+पूर्ण
 
-static struct data flatten_reserve_list(struct reserve_info *reservelist,
-				 struct version_info *vi)
-{
-	struct reserve_info *re;
-	struct data d = empty_data;
-	int    j;
+अटल काष्ठा data flatten_reserve_list(काष्ठा reserve_info *reservelist,
+				 काष्ठा version_info *vi)
+अणु
+	काष्ठा reserve_info *re;
+	काष्ठा data d = empty_data;
+	पूर्णांक    j;
 
-	for (re = reservelist; re; re = re->next) {
+	क्रम (re = reservelist; re; re = re->next) अणु
 		d = data_append_re(d, re->address, re->size);
-	}
+	पूर्ण
 	/*
-	 * Add additional reserved slots if the user asked for them.
+	 * Add additional reserved slots अगर the user asked क्रम them.
 	 */
-	for (j = 0; j < reservenum; j++) {
+	क्रम (j = 0; j < reservक्रमागत; j++) अणु
 		d = data_append_re(d, 0, 0);
-	}
+	पूर्ण
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static void make_fdt_header(struct fdt_header *fdt,
-			    struct version_info *vi,
-			    int reservesize, int dtsize, int strsize,
-			    int boot_cpuid_phys)
-{
-	int reserve_off;
+अटल व्योम make_fdt_header(काष्ठा fdt_header *fdt,
+			    काष्ठा version_info *vi,
+			    पूर्णांक reservesize, पूर्णांक dtsize, पूर्णांक strsize,
+			    पूर्णांक boot_cpuid_phys)
+अणु
+	पूर्णांक reserve_off;
 
-	reservesize += sizeof(struct fdt_reserve_entry);
+	reservesize += माप(काष्ठा fdt_reserve_entry);
 
-	memset(fdt, 0xff, sizeof(*fdt));
+	स_रखो(fdt, 0xff, माप(*fdt));
 
 	fdt->magic = cpu_to_fdt32(FDT_MAGIC);
 	fdt->version = cpu_to_fdt32(vi->version);
 	fdt->last_comp_version = cpu_to_fdt32(vi->last_comp_version);
 
-	/* Reserve map should be doubleword aligned */
+	/* Reserve map should be द्विगुनword aligned */
 	reserve_off = ALIGN(vi->hdr_size, 8);
 
 	fdt->off_mem_rsvmap = cpu_to_fdt32(reserve_off);
-	fdt->off_dt_struct = cpu_to_fdt32(reserve_off + reservesize);
+	fdt->off_dt_काष्ठा = cpu_to_fdt32(reserve_off + reservesize);
 	fdt->off_dt_strings = cpu_to_fdt32(reserve_off + reservesize
 					  + dtsize);
 	fdt->totalsize = cpu_to_fdt32(reserve_off + reservesize + dtsize + strsize);
 
-	if (vi->flags & FTF_BOOTCPUID)
+	अगर (vi->flags & FTF_BOOTCPUID)
 		fdt->boot_cpuid_phys = cpu_to_fdt32(boot_cpuid_phys);
-	if (vi->flags & FTF_STRTABSIZE)
+	अगर (vi->flags & FTF_STRTABSIZE)
 		fdt->size_dt_strings = cpu_to_fdt32(strsize);
-	if (vi->flags & FTF_STRUCTSIZE)
-		fdt->size_dt_struct = cpu_to_fdt32(dtsize);
-}
+	अगर (vi->flags & FTF_STRUCTSIZE)
+		fdt->size_dt_काष्ठा = cpu_to_fdt32(dtsize);
+पूर्ण
 
-void dt_to_blob(FILE *f, struct dt_info *dti, int version)
-{
-	struct version_info *vi = NULL;
-	unsigned int i;
-	struct data blob       = empty_data;
-	struct data reservebuf = empty_data;
-	struct data dtbuf      = empty_data;
-	struct data strbuf     = empty_data;
-	struct fdt_header fdt;
-	int padlen = 0;
+व्योम dt_to_blob(खाता *f, काष्ठा dt_info *dti, पूर्णांक version)
+अणु
+	काष्ठा version_info *vi = शून्य;
+	अचिन्हित पूर्णांक i;
+	काष्ठा data blob       = empty_data;
+	काष्ठा data reservebuf = empty_data;
+	काष्ठा data dtbuf      = empty_data;
+	काष्ठा data strbuf     = empty_data;
+	काष्ठा fdt_header fdt;
+	पूर्णांक padlen = 0;
 
-	for (i = 0; i < ARRAY_SIZE(version_table); i++) {
-		if (version_table[i].version == version)
+	क्रम (i = 0; i < ARRAY_SIZE(version_table); i++) अणु
+		अगर (version_table[i].version == version)
 			vi = &version_table[i];
-	}
-	if (!vi)
+	पूर्ण
+	अगर (!vi)
 		die("Unknown device tree blob version %d\n", version);
 
 	flatten_tree(dti->dt, &bin_emitter, &dtbuf, &strbuf, vi);
@@ -370,31 +371,31 @@ void dt_to_blob(FILE *f, struct dt_info *dti, int version)
 			dti->boot_cpuid_phys);
 
 	/*
-	 * If the user asked for more space than is used, adjust the totalsize.
+	 * If the user asked क्रम more space than is used, adjust the totalsize.
 	 */
-	if (minsize > 0) {
+	अगर (minsize > 0) अणु
 		padlen = minsize - fdt32_to_cpu(fdt.totalsize);
-		if (padlen < 0) {
+		अगर (padlen < 0) अणु
 			padlen = 0;
-			if (quiet < 1)
-				fprintf(stderr,
+			अगर (quiet < 1)
+				ख_लिखो(मानक_त्रुटि,
 					"Warning: blob size %"PRIu32" >= minimum size %d\n",
 					fdt32_to_cpu(fdt.totalsize), minsize);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (padsize > 0)
+	अगर (padsize > 0)
 		padlen = padsize;
 
-	if (alignsize > 0)
+	अगर (alignsize > 0)
 		padlen = ALIGN(fdt32_to_cpu(fdt.totalsize) + padlen, alignsize)
 			- fdt32_to_cpu(fdt.totalsize);
 
-	if (padlen > 0) {
-		int tsize = fdt32_to_cpu(fdt.totalsize);
+	अगर (padlen > 0) अणु
+		पूर्णांक tsize = fdt32_to_cpu(fdt.totalsize);
 		tsize += padlen;
 		fdt.totalsize = cpu_to_fdt32(tsize);
-	}
+	पूर्ण
 
 	/*
 	 * Assemble the blob: start with the header, add with alignment
@@ -404,522 +405,522 @@ void dt_to_blob(FILE *f, struct dt_info *dti, int version)
 	blob = data_append_data(blob, &fdt, vi->hdr_size);
 	blob = data_append_align(blob, 8);
 	blob = data_merge(blob, reservebuf);
-	blob = data_append_zeroes(blob, sizeof(struct fdt_reserve_entry));
+	blob = data_append_zeroes(blob, माप(काष्ठा fdt_reserve_entry));
 	blob = data_merge(blob, dtbuf);
 	blob = data_merge(blob, strbuf);
 
 	/*
-	 * If the user asked for more space than is used, pad out the blob.
+	 * If the user asked क्रम more space than is used, pad out the blob.
 	 */
-	if (padlen > 0)
+	अगर (padlen > 0)
 		blob = data_append_zeroes(blob, padlen);
 
-	if (fwrite(blob.val, blob.len, 1, f) != 1) {
-		if (ferror(f))
+	अगर (ख_डालो(blob.val, blob.len, 1, f) != 1) अणु
+		अगर (ख_त्रुटि(f))
 			die("Error writing device tree blob: %s\n",
-			    strerror(errno));
-		else
+			    म_त्रुटि(त्रुटि_सं));
+		अन्यथा
 			die("Short write on device tree blob\n");
-	}
+	पूर्ण
 
 	/*
-	 * data_merge() frees the right-hand element so only the blob
-	 * remains to be freed.
+	 * data_merge() मुक्तs the right-hand element so only the blob
+	 * reमुख्यs to be मुक्तd.
 	 */
-	data_free(blob);
-}
+	data_मुक्त(blob);
+पूर्ण
 
-static void dump_stringtable_asm(FILE *f, struct data strbuf)
-{
-	const char *p;
-	int len;
+अटल व्योम dump_stringtable_यंत्र(खाता *f, काष्ठा data strbuf)
+अणु
+	स्थिर अक्षर *p;
+	पूर्णांक len;
 
 	p = strbuf.val;
 
-	while (p < (strbuf.val + strbuf.len)) {
-		len = strlen(p);
-		fprintf(f, "\t.string \"%s\"\n", p);
+	जबतक (p < (strbuf.val + strbuf.len)) अणु
+		len = म_माप(p);
+		ख_लिखो(f, "\t.string \"%s\"\n", p);
 		p += len+1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dt_to_asm(FILE *f, struct dt_info *dti, int version)
-{
-	struct version_info *vi = NULL;
-	unsigned int i;
-	struct data strbuf = empty_data;
-	struct reserve_info *re;
-	const char *symprefix = "dt";
+व्योम dt_to_यंत्र(खाता *f, काष्ठा dt_info *dti, पूर्णांक version)
+अणु
+	काष्ठा version_info *vi = शून्य;
+	अचिन्हित पूर्णांक i;
+	काष्ठा data strbuf = empty_data;
+	काष्ठा reserve_info *re;
+	स्थिर अक्षर *symprefix = "dt";
 
-	for (i = 0; i < ARRAY_SIZE(version_table); i++) {
-		if (version_table[i].version == version)
+	क्रम (i = 0; i < ARRAY_SIZE(version_table); i++) अणु
+		अगर (version_table[i].version == version)
 			vi = &version_table[i];
-	}
-	if (!vi)
+	पूर्ण
+	अगर (!vi)
 		die("Unknown device tree blob version %d\n", version);
 
-	fprintf(f, "/* autogenerated by dtc, do not edit */\n\n");
+	ख_लिखो(f, "/* autogenerated by dtc, do not edit */\n\n");
 
 	emit_label(f, symprefix, "blob_start");
 	emit_label(f, symprefix, "header");
-	fprintf(f, "\t/* magic */\n");
-	asm_emit_cell(f, FDT_MAGIC);
-	fprintf(f, "\t/* totalsize */\n");
+	ख_लिखो(f, "\t/* magic */\n");
+	यंत्र_emit_cell(f, FDT_MAGIC);
+	ख_लिखो(f, "\t/* totalsize */\n");
 	ASM_EMIT_BELONG(f, "_%s_blob_abs_end - _%s_blob_start",
 			symprefix, symprefix);
-	fprintf(f, "\t/* off_dt_struct */\n");
+	ख_लिखो(f, "\t/* off_dt_struct */\n");
 	ASM_EMIT_BELONG(f, "_%s_struct_start - _%s_blob_start",
 		symprefix, symprefix);
-	fprintf(f, "\t/* off_dt_strings */\n");
+	ख_लिखो(f, "\t/* off_dt_strings */\n");
 	ASM_EMIT_BELONG(f, "_%s_strings_start - _%s_blob_start",
 		symprefix, symprefix);
-	fprintf(f, "\t/* off_mem_rsvmap */\n");
+	ख_लिखो(f, "\t/* off_mem_rsvmap */\n");
 	ASM_EMIT_BELONG(f, "_%s_reserve_map - _%s_blob_start",
 		symprefix, symprefix);
-	fprintf(f, "\t/* version */\n");
-	asm_emit_cell(f, vi->version);
-	fprintf(f, "\t/* last_comp_version */\n");
-	asm_emit_cell(f, vi->last_comp_version);
+	ख_लिखो(f, "\t/* version */\n");
+	यंत्र_emit_cell(f, vi->version);
+	ख_लिखो(f, "\t/* last_comp_version */\n");
+	यंत्र_emit_cell(f, vi->last_comp_version);
 
-	if (vi->flags & FTF_BOOTCPUID) {
-		fprintf(f, "\t/* boot_cpuid_phys */\n");
-		asm_emit_cell(f, dti->boot_cpuid_phys);
-	}
+	अगर (vi->flags & FTF_BOOTCPUID) अणु
+		ख_लिखो(f, "\t/* boot_cpuid_phys */\n");
+		यंत्र_emit_cell(f, dti->boot_cpuid_phys);
+	पूर्ण
 
-	if (vi->flags & FTF_STRTABSIZE) {
-		fprintf(f, "\t/* size_dt_strings */\n");
+	अगर (vi->flags & FTF_STRTABSIZE) अणु
+		ख_लिखो(f, "\t/* size_dt_strings */\n");
 		ASM_EMIT_BELONG(f, "_%s_strings_end - _%s_strings_start",
 				symprefix, symprefix);
-	}
+	पूर्ण
 
-	if (vi->flags & FTF_STRUCTSIZE) {
-		fprintf(f, "\t/* size_dt_struct */\n");
+	अगर (vi->flags & FTF_STRUCTSIZE) अणु
+		ख_लिखो(f, "\t/* size_dt_struct */\n");
 		ASM_EMIT_BELONG(f, "_%s_struct_end - _%s_struct_start",
 			symprefix, symprefix);
-	}
+	पूर्ण
 
 	/*
 	 * Reserve map entries.
-	 * Align the reserve map to a doubleword boundary.
+	 * Align the reserve map to a द्विगुनword boundary.
 	 * Each entry is an (address, size) pair of u64 values.
 	 * Always supply a zero-sized temination entry.
 	 */
-	asm_emit_align(f, 8);
+	यंत्र_emit_align(f, 8);
 	emit_label(f, symprefix, "reserve_map");
 
-	fprintf(f, "/* Memory reserve map from source file */\n");
+	ख_लिखो(f, "/* Memory reserve map from source file */\n");
 
 	/*
-	 * Use .long on high and low halves of u64s to avoid .quad
+	 * Use .दीर्घ on high and low halves of u64s to aव्योम .quad
 	 * as it appears .quad isn't available in some assemblers.
 	 */
-	for (re = dti->reservelist; re; re = re->next) {
-		struct label *l;
+	क्रम (re = dti->reservelist; re; re = re->next) अणु
+		काष्ठा label *l;
 
-		for_each_label(re->labels, l) {
-			fprintf(f, "\t.globl\t%s\n", l->label);
-			fprintf(f, "%s:\n", l->label);
-		}
-		ASM_EMIT_BELONG(f, "0x%08x", (unsigned int)(re->address >> 32));
+		क्रम_each_label(re->labels, l) अणु
+			ख_लिखो(f, "\t.globl\t%s\n", l->label);
+			ख_लिखो(f, "%s:\n", l->label);
+		पूर्ण
+		ASM_EMIT_BELONG(f, "0x%08x", (अचिन्हित पूर्णांक)(re->address >> 32));
 		ASM_EMIT_BELONG(f, "0x%08x",
-				(unsigned int)(re->address & 0xffffffff));
-		ASM_EMIT_BELONG(f, "0x%08x", (unsigned int)(re->size >> 32));
-		ASM_EMIT_BELONG(f, "0x%08x", (unsigned int)(re->size & 0xffffffff));
-	}
-	for (i = 0; i < reservenum; i++) {
-		fprintf(f, "\t.long\t0, 0\n\t.long\t0, 0\n");
-	}
+				(अचिन्हित पूर्णांक)(re->address & 0xffffffff));
+		ASM_EMIT_BELONG(f, "0x%08x", (अचिन्हित पूर्णांक)(re->size >> 32));
+		ASM_EMIT_BELONG(f, "0x%08x", (अचिन्हित पूर्णांक)(re->size & 0xffffffff));
+	पूर्ण
+	क्रम (i = 0; i < reservक्रमागत; i++) अणु
+		ख_लिखो(f, "\t.long\t0, 0\n\t.long\t0, 0\n");
+	पूर्ण
 
-	fprintf(f, "\t.long\t0, 0\n\t.long\t0, 0\n");
+	ख_लिखो(f, "\t.long\t0, 0\n\t.long\t0, 0\n");
 
 	emit_label(f, symprefix, "struct_start");
-	flatten_tree(dti->dt, &asm_emitter, f, &strbuf, vi);
+	flatten_tree(dti->dt, &यंत्र_emitter, f, &strbuf, vi);
 
-	fprintf(f, "\t/* FDT_END */\n");
-	asm_emit_cell(f, FDT_END);
+	ख_लिखो(f, "\t/* FDT_END */\n");
+	यंत्र_emit_cell(f, FDT_END);
 	emit_label(f, symprefix, "struct_end");
 
 	emit_label(f, symprefix, "strings_start");
-	dump_stringtable_asm(f, strbuf);
+	dump_stringtable_यंत्र(f, strbuf);
 	emit_label(f, symprefix, "strings_end");
 
 	emit_label(f, symprefix, "blob_end");
 
 	/*
-	 * If the user asked for more space than is used, pad it out.
+	 * If the user asked क्रम more space than is used, pad it out.
 	 */
-	if (minsize > 0) {
-		fprintf(f, "\t.space\t%d - (_%s_blob_end - _%s_blob_start), 0\n",
+	अगर (minsize > 0) अणु
+		ख_लिखो(f, "\t.space\t%d - (_%s_blob_end - _%s_blob_start), 0\n",
 			minsize, symprefix, symprefix);
-	}
-	if (padsize > 0) {
-		fprintf(f, "\t.space\t%d, 0\n", padsize);
-	}
-	if (alignsize > 0)
-		asm_emit_align(f, alignsize);
+	पूर्ण
+	अगर (padsize > 0) अणु
+		ख_लिखो(f, "\t.space\t%d, 0\n", padsize);
+	पूर्ण
+	अगर (alignsize > 0)
+		यंत्र_emit_align(f, alignsize);
 	emit_label(f, symprefix, "blob_abs_end");
 
-	data_free(strbuf);
-}
+	data_मुक्त(strbuf);
+पूर्ण
 
-struct inbuf {
-	char *base, *limit, *ptr;
-};
+काष्ठा inbuf अणु
+	अक्षर *base, *limit, *ptr;
+पूर्ण;
 
-static void inbuf_init(struct inbuf *inb, void *base, void *limit)
-{
+अटल व्योम inbuf_init(काष्ठा inbuf *inb, व्योम *base, व्योम *limit)
+अणु
 	inb->base = base;
 	inb->limit = limit;
 	inb->ptr = inb->base;
-}
+पूर्ण
 
-static void flat_read_chunk(struct inbuf *inb, void *p, int len)
-{
-	if ((inb->ptr + len) > inb->limit)
+अटल व्योम flat_पढ़ो_chunk(काष्ठा inbuf *inb, व्योम *p, पूर्णांक len)
+अणु
+	अगर ((inb->ptr + len) > inb->limit)
 		die("Premature end of data parsing flat device tree\n");
 
-	memcpy(p, inb->ptr, len);
+	स_नकल(p, inb->ptr, len);
 
 	inb->ptr += len;
-}
+पूर्ण
 
-static uint32_t flat_read_word(struct inbuf *inb)
-{
+अटल uपूर्णांक32_t flat_पढ़ो_word(काष्ठा inbuf *inb)
+अणु
 	fdt32_t val;
 
-	assert(((inb->ptr - inb->base) % sizeof(val)) == 0);
+	निश्चित(((inb->ptr - inb->base) % माप(val)) == 0);
 
-	flat_read_chunk(inb, &val, sizeof(val));
+	flat_पढ़ो_chunk(inb, &val, माप(val));
 
-	return fdt32_to_cpu(val);
-}
+	वापस fdt32_to_cpu(val);
+पूर्ण
 
-static void flat_realign(struct inbuf *inb, int align)
-{
-	int off = inb->ptr - inb->base;
+अटल व्योम flat_realign(काष्ठा inbuf *inb, पूर्णांक align)
+अणु
+	पूर्णांक off = inb->ptr - inb->base;
 
 	inb->ptr = inb->base + ALIGN(off, align);
-	if (inb->ptr > inb->limit)
+	अगर (inb->ptr > inb->limit)
 		die("Premature end of data parsing flat device tree\n");
-}
+पूर्ण
 
-static char *flat_read_string(struct inbuf *inb)
-{
-	int len = 0;
-	const char *p = inb->ptr;
-	char *str;
+अटल अक्षर *flat_पढ़ो_string(काष्ठा inbuf *inb)
+अणु
+	पूर्णांक len = 0;
+	स्थिर अक्षर *p = inb->ptr;
+	अक्षर *str;
 
-	do {
-		if (p >= inb->limit)
+	करो अणु
+		अगर (p >= inb->limit)
 			die("Premature end of data parsing flat device tree\n");
 		len++;
-	} while ((*p++) != '\0');
+	पूर्ण जबतक ((*p++) != '\0');
 
 	str = xstrdup(inb->ptr);
 
 	inb->ptr += len;
 
-	flat_realign(inb, sizeof(uint32_t));
+	flat_realign(inb, माप(uपूर्णांक32_t));
 
-	return str;
-}
+	वापस str;
+पूर्ण
 
-static struct data flat_read_data(struct inbuf *inb, int len)
-{
-	struct data d = empty_data;
+अटल काष्ठा data flat_पढ़ो_data(काष्ठा inbuf *inb, पूर्णांक len)
+अणु
+	काष्ठा data d = empty_data;
 
-	if (len == 0)
-		return empty_data;
+	अगर (len == 0)
+		वापस empty_data;
 
-	d = data_grow_for(d, len);
+	d = data_grow_क्रम(d, len);
 	d.len = len;
 
-	flat_read_chunk(inb, d.val, len);
+	flat_पढ़ो_chunk(inb, d.val, len);
 
-	flat_realign(inb, sizeof(uint32_t));
+	flat_realign(inb, माप(uपूर्णांक32_t));
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static char *flat_read_stringtable(struct inbuf *inb, int offset)
-{
-	const char *p;
+अटल अक्षर *flat_पढ़ो_stringtable(काष्ठा inbuf *inb, पूर्णांक offset)
+अणु
+	स्थिर अक्षर *p;
 
 	p = inb->base + offset;
-	while (1) {
-		if (p >= inb->limit || p < inb->base)
+	जबतक (1) अणु
+		अगर (p >= inb->limit || p < inb->base)
 			die("String offset %d overruns string table\n",
 			    offset);
 
-		if (*p == '\0')
-			break;
+		अगर (*p == '\0')
+			अवरोध;
 
 		p++;
-	}
+	पूर्ण
 
-	return xstrdup(inb->base + offset);
-}
+	वापस xstrdup(inb->base + offset);
+पूर्ण
 
-static struct property *flat_read_property(struct inbuf *dtbuf,
-					   struct inbuf *strbuf, int flags)
-{
-	uint32_t proplen, stroff;
-	char *name;
-	struct data val;
+अटल काष्ठा property *flat_पढ़ो_property(काष्ठा inbuf *dtbuf,
+					   काष्ठा inbuf *strbuf, पूर्णांक flags)
+अणु
+	uपूर्णांक32_t proplen, stroff;
+	अक्षर *name;
+	काष्ठा data val;
 
-	proplen = flat_read_word(dtbuf);
-	stroff = flat_read_word(dtbuf);
+	proplen = flat_पढ़ो_word(dtbuf);
+	stroff = flat_पढ़ो_word(dtbuf);
 
-	name = flat_read_stringtable(strbuf, stroff);
+	name = flat_पढ़ो_stringtable(strbuf, stroff);
 
-	if ((flags & FTF_VARALIGN) && (proplen >= 8))
+	अगर ((flags & FTF_VARALIGN) && (proplen >= 8))
 		flat_realign(dtbuf, 8);
 
-	val = flat_read_data(dtbuf, proplen);
+	val = flat_पढ़ो_data(dtbuf, proplen);
 
-	return build_property(name, val, NULL);
-}
+	वापस build_property(name, val, शून्य);
+पूर्ण
 
 
-static struct reserve_info *flat_read_mem_reserve(struct inbuf *inb)
-{
-	struct reserve_info *reservelist = NULL;
-	struct reserve_info *new;
-	struct fdt_reserve_entry re;
+अटल काष्ठा reserve_info *flat_पढ़ो_mem_reserve(काष्ठा inbuf *inb)
+अणु
+	काष्ठा reserve_info *reservelist = शून्य;
+	काष्ठा reserve_info *new;
+	काष्ठा fdt_reserve_entry re;
 
 	/*
-	 * Each entry is a pair of u64 (addr, size) values for 4 cell_t's.
+	 * Each entry is a pair of u64 (addr, size) values क्रम 4 cell_t's.
 	 * List terminates at an entry with size equal to zero.
 	 *
 	 * First pass, count entries.
 	 */
-	while (1) {
-		uint64_t address, size;
+	जबतक (1) अणु
+		uपूर्णांक64_t address, size;
 
-		flat_read_chunk(inb, &re, sizeof(re));
+		flat_पढ़ो_chunk(inb, &re, माप(re));
 		address  = fdt64_to_cpu(re.address);
 		size = fdt64_to_cpu(re.size);
-		if (size == 0)
-			break;
+		अगर (size == 0)
+			अवरोध;
 
 		new = build_reserve_entry(address, size);
 		reservelist = add_reserve_entry(reservelist, new);
-	}
+	पूर्ण
 
-	return reservelist;
-}
+	वापस reservelist;
+पूर्ण
 
 
-static char *nodename_from_path(const char *ppath, const char *cpath)
-{
-	int plen;
+अटल अक्षर *nodename_from_path(स्थिर अक्षर *ppath, स्थिर अक्षर *cpath)
+अणु
+	पूर्णांक plen;
 
-	plen = strlen(ppath);
+	plen = म_माप(ppath);
 
-	if (!strstarts(cpath, ppath))
+	अगर (!strstarts(cpath, ppath))
 		die("Path \"%s\" is not valid as a child of \"%s\"\n",
 		    cpath, ppath);
 
-	/* root node is a special case */
-	if (!streq(ppath, "/"))
+	/* root node is a special हाल */
+	अगर (!streq(ppath, "/"))
 		plen++;
 
-	return xstrdup(cpath + plen);
-}
+	वापस xstrdup(cpath + plen);
+पूर्ण
 
-static struct node *unflatten_tree(struct inbuf *dtbuf,
-				   struct inbuf *strbuf,
-				   const char *parent_flatname, int flags)
-{
-	struct node *node;
-	char *flatname;
-	uint32_t val;
+अटल काष्ठा node *unflatten_tree(काष्ठा inbuf *dtbuf,
+				   काष्ठा inbuf *strbuf,
+				   स्थिर अक्षर *parent_flatname, पूर्णांक flags)
+अणु
+	काष्ठा node *node;
+	अक्षर *flatname;
+	uपूर्णांक32_t val;
 
-	node = build_node(NULL, NULL, NULL);
+	node = build_node(शून्य, शून्य, शून्य);
 
-	flatname = flat_read_string(dtbuf);
+	flatname = flat_पढ़ो_string(dtbuf);
 
-	if (flags & FTF_FULLPATH)
+	अगर (flags & FTF_FULLPATH)
 		node->name = nodename_from_path(parent_flatname, flatname);
-	else
+	अन्यथा
 		node->name = flatname;
 
-	do {
-		struct property *prop;
-		struct node *child;
+	करो अणु
+		काष्ठा property *prop;
+		काष्ठा node *child;
 
-		val = flat_read_word(dtbuf);
-		switch (val) {
-		case FDT_PROP:
-			if (node->children)
-				fprintf(stderr, "Warning: Flat tree input has "
+		val = flat_पढ़ो_word(dtbuf);
+		चयन (val) अणु
+		हाल FDT_PROP:
+			अगर (node->children)
+				ख_लिखो(मानक_त्रुटि, "Warning: Flat tree input has "
 					"subnodes preceding a property.\n");
-			prop = flat_read_property(dtbuf, strbuf, flags);
+			prop = flat_पढ़ो_property(dtbuf, strbuf, flags);
 			add_property(node, prop);
-			break;
+			अवरोध;
 
-		case FDT_BEGIN_NODE:
+		हाल FDT_BEGIN_NODE:
 			child = unflatten_tree(dtbuf,strbuf, flatname, flags);
 			add_child(node, child);
-			break;
+			अवरोध;
 
-		case FDT_END_NODE:
-			break;
+		हाल FDT_END_NODE:
+			अवरोध;
 
-		case FDT_END:
+		हाल FDT_END:
 			die("Premature FDT_END in device tree blob\n");
-			break;
+			अवरोध;
 
-		case FDT_NOP:
-			if (!(flags & FTF_NOPS))
-				fprintf(stderr, "Warning: NOP tag found in flat tree"
+		हाल FDT_NOP:
+			अगर (!(flags & FTF_NOPS))
+				ख_लिखो(मानक_त्रुटि, "Warning: NOP tag found in flat tree"
 					" version <16\n");
 
 			/* Ignore */
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			die("Invalid opcode word %08x in device tree blob\n",
 			    val);
-		}
-	} while (val != FDT_END_NODE);
+		पूर्ण
+	पूर्ण जबतक (val != FDT_END_NODE);
 
-	if (node->name != flatname) {
-		free(flatname);
-	}
+	अगर (node->name != flatname) अणु
+		मुक्त(flatname);
+	पूर्ण
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
 
-struct dt_info *dt_from_blob(const char *fname)
-{
-	FILE *f;
+काष्ठा dt_info *dt_from_blob(स्थिर अक्षर *fname)
+अणु
+	खाता *f;
 	fdt32_t magic_buf, totalsize_buf;
-	uint32_t magic, totalsize, version, size_dt, boot_cpuid_phys;
-	uint32_t off_dt, off_str, off_mem_rsvmap;
-	int rc;
-	char *blob;
-	struct fdt_header *fdt;
-	char *p;
-	struct inbuf dtbuf, strbuf;
-	struct inbuf memresvbuf;
-	int sizeleft;
-	struct reserve_info *reservelist;
-	struct node *tree;
-	uint32_t val;
-	int flags = 0;
+	uपूर्णांक32_t magic, totalsize, version, size_dt, boot_cpuid_phys;
+	uपूर्णांक32_t off_dt, off_str, off_mem_rsvmap;
+	पूर्णांक rc;
+	अक्षर *blob;
+	काष्ठा fdt_header *fdt;
+	अक्षर *p;
+	काष्ठा inbuf dtbuf, strbuf;
+	काष्ठा inbuf memresvbuf;
+	पूर्णांक sizeleft;
+	काष्ठा reserve_info *reservelist;
+	काष्ठा node *tree;
+	uपूर्णांक32_t val;
+	पूर्णांक flags = 0;
 
-	f = srcfile_relative_open(fname, NULL);
+	f = srcfile_relative_खोलो(fname, शून्य);
 
-	rc = fread(&magic_buf, sizeof(magic_buf), 1, f);
-	if (ferror(f))
+	rc = ख_पढ़ो(&magic_buf, माप(magic_buf), 1, f);
+	अगर (ख_त्रुटि(f))
 		die("Error reading DT blob magic number: %s\n",
-		    strerror(errno));
-	if (rc < 1) {
-		if (feof(f))
+		    म_त्रुटि(त्रुटि_सं));
+	अगर (rc < 1) अणु
+		अगर (ख_पूर्ण(f))
 			die("EOF reading DT blob magic number\n");
-		else
+		अन्यथा
 			die("Mysterious short read reading magic number\n");
-	}
+	पूर्ण
 
 	magic = fdt32_to_cpu(magic_buf);
-	if (magic != FDT_MAGIC)
+	अगर (magic != FDT_MAGIC)
 		die("Blob has incorrect magic number\n");
 
-	rc = fread(&totalsize_buf, sizeof(totalsize_buf), 1, f);
-	if (ferror(f))
-		die("Error reading DT blob size: %s\n", strerror(errno));
-	if (rc < 1) {
-		if (feof(f))
+	rc = ख_पढ़ो(&totalsize_buf, माप(totalsize_buf), 1, f);
+	अगर (ख_त्रुटि(f))
+		die("Error reading DT blob size: %s\n", म_त्रुटि(त्रुटि_सं));
+	अगर (rc < 1) अणु
+		अगर (ख_पूर्ण(f))
 			die("EOF reading DT blob size\n");
-		else
+		अन्यथा
 			die("Mysterious short read reading blob size\n");
-	}
+	पूर्ण
 
 	totalsize = fdt32_to_cpu(totalsize_buf);
-	if (totalsize < FDT_V1_SIZE)
+	अगर (totalsize < FDT_V1_SIZE)
 		die("DT blob size (%d) is too small\n", totalsize);
 
-	blob = xmalloc(totalsize);
+	blob = xदो_स्मृति(totalsize);
 
-	fdt = (struct fdt_header *)blob;
+	fdt = (काष्ठा fdt_header *)blob;
 	fdt->magic = cpu_to_fdt32(magic);
 	fdt->totalsize = cpu_to_fdt32(totalsize);
 
-	sizeleft = totalsize - sizeof(magic) - sizeof(totalsize);
-	p = blob + sizeof(magic)  + sizeof(totalsize);
+	sizeleft = totalsize - माप(magic) - माप(totalsize);
+	p = blob + माप(magic)  + माप(totalsize);
 
-	while (sizeleft) {
-		if (feof(f))
+	जबतक (sizeleft) अणु
+		अगर (ख_पूर्ण(f))
 			die("EOF before reading %d bytes of DT blob\n",
 			    totalsize);
 
-		rc = fread(p, 1, sizeleft, f);
-		if (ferror(f))
+		rc = ख_पढ़ो(p, 1, sizeleft, f);
+		अगर (ख_त्रुटि(f))
 			die("Error reading DT blob: %s\n",
-			    strerror(errno));
+			    म_त्रुटि(त्रुटि_सं));
 
 		sizeleft -= rc;
 		p += rc;
-	}
+	पूर्ण
 
-	off_dt = fdt32_to_cpu(fdt->off_dt_struct);
+	off_dt = fdt32_to_cpu(fdt->off_dt_काष्ठा);
 	off_str = fdt32_to_cpu(fdt->off_dt_strings);
 	off_mem_rsvmap = fdt32_to_cpu(fdt->off_mem_rsvmap);
 	version = fdt32_to_cpu(fdt->version);
 	boot_cpuid_phys = fdt32_to_cpu(fdt->boot_cpuid_phys);
 
-	if (off_mem_rsvmap >= totalsize)
+	अगर (off_mem_rsvmap >= totalsize)
 		die("Mem Reserve structure offset exceeds total size\n");
 
-	if (off_dt >= totalsize)
+	अगर (off_dt >= totalsize)
 		die("DT structure offset exceeds total size\n");
 
-	if (off_str > totalsize)
+	अगर (off_str > totalsize)
 		die("String table offset exceeds total size\n");
 
-	if (version >= 3) {
-		uint32_t size_str = fdt32_to_cpu(fdt->size_dt_strings);
-		if ((off_str+size_str < off_str) || (off_str+size_str > totalsize))
+	अगर (version >= 3) अणु
+		uपूर्णांक32_t size_str = fdt32_to_cpu(fdt->size_dt_strings);
+		अगर ((off_str+size_str < off_str) || (off_str+size_str > totalsize))
 			die("String table extends past total size\n");
 		inbuf_init(&strbuf, blob + off_str, blob + off_str + size_str);
-	} else {
+	पूर्ण अन्यथा अणु
 		inbuf_init(&strbuf, blob + off_str, blob + totalsize);
-	}
+	पूर्ण
 
-	if (version >= 17) {
-		size_dt = fdt32_to_cpu(fdt->size_dt_struct);
-		if ((off_dt+size_dt < off_dt) || (off_dt+size_dt > totalsize))
+	अगर (version >= 17) अणु
+		size_dt = fdt32_to_cpu(fdt->size_dt_काष्ठा);
+		अगर ((off_dt+size_dt < off_dt) || (off_dt+size_dt > totalsize))
 			die("Structure block extends past total size\n");
-	}
+	पूर्ण
 
-	if (version < 16) {
+	अगर (version < 16) अणु
 		flags |= FTF_FULLPATH | FTF_NAMEPROPS | FTF_VARALIGN;
-	} else {
+	पूर्ण अन्यथा अणु
 		flags |= FTF_NOPS;
-	}
+	पूर्ण
 
 	inbuf_init(&memresvbuf,
 		   blob + off_mem_rsvmap, blob + totalsize);
 	inbuf_init(&dtbuf, blob + off_dt, blob + totalsize);
 
-	reservelist = flat_read_mem_reserve(&memresvbuf);
+	reservelist = flat_पढ़ो_mem_reserve(&memresvbuf);
 
-	val = flat_read_word(&dtbuf);
+	val = flat_पढ़ो_word(&dtbuf);
 
-	if (val != FDT_BEGIN_NODE)
+	अगर (val != FDT_BEGIN_NODE)
 		die("Device tree blob doesn't begin with FDT_BEGIN_NODE (begins with 0x%08x)\n", val);
 
 	tree = unflatten_tree(&dtbuf, &strbuf, "", flags);
 
-	val = flat_read_word(&dtbuf);
-	if (val != FDT_END)
+	val = flat_पढ़ो_word(&dtbuf);
+	अगर (val != FDT_END)
 		die("Device tree blob doesn't end with FDT_END\n");
 
-	free(blob);
+	मुक्त(blob);
 
-	fclose(f);
+	ख_बंद(f);
 
-	return build_dt_info(DTSF_V1, reservelist, tree, boot_cpuid_phys);
-}
+	वापस build_dt_info(DTSF_V1, reservelist, tree, boot_cpuid_phys);
+पूर्ण

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	Wdt977	0.04:	A Watchdog Device for Netwinder W83977AF chip
+ *	Wdt977	0.04:	A Watchकरोg Device क्रम Netwinder W83977AF chip
  *
  *	(c) Copyright 1998 Rebel.com (Woody Suwalski <woody@netwinder.org>)
  *
@@ -9,73 +10,73 @@
  *			-----------------------
  *      14-Dec-2001 Matt Domsch <Matt_Domsch@dell.com>
  *           Added nowayout module option to override CONFIG_WATCHDOG_NOWAYOUT
- *	19-Dec-2001 Woody Suwalski: Netwinder fixes, ioctl interface
- *	06-Jan-2002 Woody Suwalski: For compatibility, convert all timeouts
+ *	19-Dec-2001 Woody Suwalski: Netwinder fixes, ioctl पूर्णांकerface
+ *	06-Jan-2002 Woody Suwalski: For compatibility, convert all समयouts
  *				    from minutes to seconds.
- *      07-Jul-2003 Daniele Bellucci: Audit return code of misc_register in
- *                                    nwwatchdog_init.
+ *      07-Jul-2003 Daniele Bellucci: Audit वापस code of misc_रेजिस्टर in
+ *                                    nwwatchकरोg_init.
  *      25-Oct-2005 Woody Suwalski: Convert addresses to #defs, add spinlocks
- *				    remove limitiation to be used on
+ *				    हटाओ limitiation to be used on
  *				    Netwinders only
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/miscdevice.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/watchdog.h>
-#include <linux/notifier.h>
-#include <linux/reboot.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/mach-types.h>
+#समावेश <यंत्र/mach-types.h>
 
-#define WATCHDOG_VERSION  "0.04"
-#define WATCHDOG_NAME     "Wdt977"
+#घोषणा WATCHDOG_VERSION  "0.04"
+#घोषणा WATCHDOG_NAME     "Wdt977"
 
-#define IO_INDEX_PORT	0x370		/* on some systems it can be 0x3F0 */
-#define IO_DATA_PORT	(IO_INDEX_PORT + 1)
+#घोषणा IO_INDEX_PORT	0x370		/* on some प्रणालीs it can be 0x3F0 */
+#घोषणा IO_DATA_PORT	(IO_INDEX_PORT + 1)
 
-#define UNLOCK_DATA	0x87
-#define LOCK_DATA	0xAA
-#define DEVICE_REGISTER	0x07
+#घोषणा UNLOCK_DATA	0x87
+#घोषणा LOCK_DATA	0xAA
+#घोषणा DEVICE_REGISTER	0x07
 
 
-#define	DEFAULT_TIMEOUT	60			/* default timeout in seconds */
+#घोषणा	DEFAULT_TIMEOUT	60			/* शेष समयout in seconds */
 
-static	int timeout = DEFAULT_TIMEOUT;
-static	int timeoutM;				/* timeout in minutes */
-static	unsigned long timer_alive;
-static	int testmode;
-static	char expect_close;
-static	DEFINE_SPINLOCK(spinlock);
+अटल	पूर्णांक समयout = DEFAULT_TIMEOUT;
+अटल	पूर्णांक समयoutM;				/* समयout in minutes */
+अटल	अचिन्हित दीर्घ समयr_alive;
+अटल	पूर्णांक tesपंचांगode;
+अटल	अक्षर expect_बंद;
+अटल	DEFINE_SPINLOCK(spinlock);
 
-module_param(timeout, int, 0);
-MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds (60..15300, default="
+module_param(समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds (60..15300, default="
 				__MODULE_STRING(DEFAULT_TIMEOUT) ")");
-module_param(testmode, int, 0);
-MODULE_PARM_DESC(testmode, "Watchdog testmode (1 = no reboot), default=0");
+module_param(tesपंचांगode, पूर्णांक, 0);
+MODULE_PARM_DESC(tesपंचांगode, "Watchdog testmode (1 = no reboot), default=0");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		"Watchdog cannot be stopped once started (default="
 				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
 /*
- * Start the watchdog
+ * Start the watchकरोg
  */
 
-static int wdt977_start(void)
-{
-	unsigned long flags;
+अटल पूर्णांक wdt977_start(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&spinlock, flags);
 
@@ -83,32 +84,32 @@ static int wdt977_start(void)
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 
-	/* select device Aux2 (device=8) and set watchdog regs F2, F3 and F4
-	 * F2 has the timeout in minutes
+	/* select device Aux2 (device=8) and set watchकरोg regs F2, F3 and F4
+	 * F2 has the समयout in minutes
 	 * F3 could be set to the POWER LED blink (with GP17 set to PowerLed)
-	 *   at timeout, and to reset timer on kbd/mouse activity (not impl.)
+	 *   at समयout, and to reset समयr on kbd/mouse activity (not impl.)
 	 * F4 is used to just clear the TIMEOUT'ed state (bit 0)
 	 */
 	outb_p(DEVICE_REGISTER, IO_INDEX_PORT);
 	outb_p(0x08, IO_DATA_PORT);
 	outb_p(0xF2, IO_INDEX_PORT);
-	outb_p(timeoutM, IO_DATA_PORT);
+	outb_p(समयoutM, IO_DATA_PORT);
 	outb_p(0xF3, IO_INDEX_PORT);
-	outb_p(0x00, IO_DATA_PORT);	/* another setting is 0E for
+	outb_p(0x00, IO_DATA_PORT);	/* another setting is 0E क्रम
 					   kbd/mouse/LED */
 	outb_p(0xF4, IO_INDEX_PORT);
 	outb_p(0x00, IO_DATA_PORT);
 
 	/* At last select device Aux1 (dev=7) and set GP16 as a
-	 * watchdog output. In test mode watch the bit 1 on F4 to
+	 * watchकरोg output. In test mode watch the bit 1 on F4 to
 	 * indicate "triggered"
 	 */
-	if (!testmode) {
+	अगर (!tesपंचांगode) अणु
 		outb_p(DEVICE_REGISTER, IO_INDEX_PORT);
 		outb_p(0x07, IO_DATA_PORT);
 		outb_p(0xE6, IO_INDEX_PORT);
 		outb_p(0x08, IO_DATA_PORT);
-	}
+	पूर्ण
 
 	/* lock the SuperIO chip */
 	outb_p(LOCK_DATA, IO_INDEX_PORT);
@@ -116,25 +117,25 @@ static int wdt977_start(void)
 	spin_unlock_irqrestore(&spinlock, flags);
 	pr_info("activated\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Stop the watchdog
+ * Stop the watchकरोg
  */
 
-static int wdt977_stop(void)
-{
-	unsigned long flags;
+अटल पूर्णांक wdt977_stop(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&spinlock, flags);
 
 	/* unlock the SuperIO chip */
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 
-	/* select device Aux2 (device=8) and set watchdog regs F2,F3 and F4
-	* F3 is reset to its default state
-	* F4 can clear the TIMEOUT'ed state (bit 0) - back to default
+	/* select device Aux2 (device=8) and set watchकरोg regs F2,F3 and F4
+	* F3 is reset to its शेष state
+	* F4 can clear the TIMEOUT'ed state (bit 0) - back to शेष
 	* We can not use GP17 as a PowerLed, as we use its usage as a RedLed
 	*/
 	outb_p(DEVICE_REGISTER, IO_INDEX_PORT);
@@ -149,7 +150,7 @@ static int wdt977_stop(void)
 	outb_p(0x00, IO_DATA_PORT);
 
 	/* at last select device Aux1 (dev=7) and set
-	   GP16 as a watchdog output */
+	   GP16 as a watchकरोg output */
 	outb_p(DEVICE_REGISTER, IO_INDEX_PORT);
 	outb_p(0x07, IO_DATA_PORT);
 	outb_p(0xE6, IO_INDEX_PORT);
@@ -161,74 +162,74 @@ static int wdt977_stop(void)
 	spin_unlock_irqrestore(&spinlock, flags);
 	pr_info("shutdown\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Send a keepalive ping to the watchdog
- * This is done by simply re-writing the timeout to reg. 0xF2
+ * Send a keepalive ping to the watchकरोg
+ * This is करोne by simply re-writing the समयout to reg. 0xF2
  */
 
-static int wdt977_keepalive(void)
-{
-	unsigned long flags;
+अटल पूर्णांक wdt977_keepalive(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&spinlock, flags);
 
 	/* unlock the SuperIO chip */
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 
-	/* select device Aux2 (device=8) and kicks watchdog reg F2 */
-	/* F2 has the timeout in minutes */
+	/* select device Aux2 (device=8) and kicks watchकरोg reg F2 */
+	/* F2 has the समयout in minutes */
 	outb_p(DEVICE_REGISTER, IO_INDEX_PORT);
 	outb_p(0x08, IO_DATA_PORT);
 	outb_p(0xF2, IO_INDEX_PORT);
-	outb_p(timeoutM, IO_DATA_PORT);
+	outb_p(समयoutM, IO_DATA_PORT);
 
 	/* lock the SuperIO chip */
 	outb_p(LOCK_DATA, IO_INDEX_PORT);
 	spin_unlock_irqrestore(&spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Set the watchdog timeout value
+ * Set the watchकरोg समयout value
  */
 
-static int wdt977_set_timeout(int t)
-{
-	int tmrval;
+अटल पूर्णांक wdt977_set_समयout(पूर्णांक t)
+अणु
+	पूर्णांक पंचांगrval;
 
 	/* convert seconds to minutes, rounding up */
-	tmrval = (t + 59) / 60;
+	पंचांगrval = (t + 59) / 60;
 
-	if (machine_is_netwinder()) {
+	अगर (machine_is_netwinder()) अणु
 		/* we have a hw bug somewhere, so each 977 minute is actually
-		 * only 30sec. This limits the max timeout to half of device
+		 * only 30sec. This limits the max समयout to half of device
 		 * max of 255 minutes...
 		 */
-		tmrval += tmrval;
-	}
+		पंचांगrval += पंचांगrval;
+	पूर्ण
 
-	if (tmrval < 1 || tmrval > 255)
-		return -EINVAL;
+	अगर (पंचांगrval < 1 || पंचांगrval > 255)
+		वापस -EINVAL;
 
-	/* timeout is the timeout in seconds, timeoutM is
-	   the timeout in minutes) */
-	timeout = t;
-	timeoutM = tmrval;
-	return 0;
-}
+	/* समयout is the समयout in seconds, समयoutM is
+	   the समयout in minutes) */
+	समयout = t;
+	समयoutM = पंचांगrval;
+	वापस 0;
+पूर्ण
 
 /*
- * Get the watchdog status
+ * Get the watchकरोg status
  */
 
-static int wdt977_get_status(int *status)
-{
-	int new_status;
-	unsigned long flags;
+अटल पूर्णांक wdt977_get_status(पूर्णांक *status)
+अणु
+	पूर्णांक new_status;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&spinlock, flags);
 
@@ -236,7 +237,7 @@ static int wdt977_get_status(int *status)
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 	outb_p(UNLOCK_DATA, IO_INDEX_PORT);
 
-	/* select device Aux2 (device=8) and read watchdog reg F4 */
+	/* select device Aux2 (device=8) and पढ़ो watchकरोg reg F4 */
 	outb_p(DEVICE_REGISTER, IO_INDEX_PORT);
 	outb_p(0x08, IO_DATA_PORT);
 	outb_p(0xF4, IO_INDEX_PORT);
@@ -248,258 +249,258 @@ static int wdt977_get_status(int *status)
 	spin_unlock_irqrestore(&spinlock, flags);
 
 	*status = 0;
-	if (new_status & 1)
+	अगर (new_status & 1)
 		*status |= WDIOF_CARDRESET;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- *	/dev/watchdog handling
+ *	/dev/watchकरोg handling
  */
 
-static int wdt977_open(struct inode *inode, struct file *file)
-{
-	/* If the watchdog is alive we don't need to start it again */
-	if (test_and_set_bit(0, &timer_alive))
-		return -EBUSY;
+अटल पूर्णांक wdt977_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* If the watchकरोg is alive we करोn't need to start it again */
+	अगर (test_and_set_bit(0, &समयr_alive))
+		वापस -EBUSY;
 
-	if (nowayout)
+	अगर (nowayout)
 		__module_get(THIS_MODULE);
 
 	wdt977_start();
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int wdt977_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक wdt977_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	/*
-	 *	Shut off the timer.
-	 *	Lock it in if it's a module and we set nowayout
+	 *	Shut off the समयr.
+	 *	Lock it in अगर it's a module and we set nowayout
 	 */
-	if (expect_close == 42) {
+	अगर (expect_बंद == 42) अणु
 		wdt977_stop();
-		clear_bit(0, &timer_alive);
-	} else {
+		clear_bit(0, &समयr_alive);
+	पूर्ण अन्यथा अणु
 		wdt977_keepalive();
 		pr_crit("Unexpected close, not stopping watchdog!\n");
-	}
-	expect_close = 0;
-	return 0;
-}
+	पूर्ण
+	expect_बंद = 0;
+	वापस 0;
+पूर्ण
 
 
 /*
- *      wdt977_write:
- *      @file: file handle to the watchdog
- *      @buf: buffer to write (unused as data does not matter here
+ *      wdt977_ग_लिखो:
+ *      @file: file handle to the watchकरोg
+ *      @buf: buffer to ग_लिखो (unused as data करोes not matter here
  *      @count: count of bytes
- *      @ppos: pointer to the position to write. No seeks allowed
+ *      @ppos: poपूर्णांकer to the position to ग_लिखो. No seeks allowed
  *
- *      A write to a watchdog device is defined as a keepalive signal. Any
- *      write of data will do, as we we don't define content meaning.
+ *      A ग_लिखो to a watchकरोg device is defined as a keepalive संकेत. Any
+ *      ग_लिखो of data will करो, as we we करोn't define content meaning.
  */
 
-static ssize_t wdt977_write(struct file *file, const char __user *buf,
-			    size_t count, loff_t *ppos)
-{
-	if (count) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार wdt977_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	अगर (count) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			/* In case it was set long ago */
-			expect_close = 0;
+			/* In हाल it was set दीर्घ ago */
+			expect_बंद = 0;
 
-			for (i = 0; i != count; i++) {
-				char c;
-				if (get_user(c, buf + i))
-					return -EFAULT;
-				if (c == 'V')
-					expect_close = 42;
-			}
-		}
+			क्रम (i = 0; i != count; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, buf + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
+					expect_बंद = 42;
+			पूर्ण
+		पूर्ण
 
-		/* someone wrote to us, we should restart timer */
+		/* someone wrote to us, we should restart समयr */
 		wdt977_keepalive();
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static const struct watchdog_info ident = {
+अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 	.options =		WDIOF_SETTIMEOUT |
 				WDIOF_MAGICCLOSE |
 				WDIOF_KEEPALIVEPING,
 	.firmware_version =	1,
 	.identity =		WATCHDOG_NAME,
-};
+पूर्ण;
 
 /*
  *      wdt977_ioctl:
  *      @inode: inode of the device
  *      @file: file handle to the device
- *      @cmd: watchdog command
- *      @arg: argument pointer
+ *      @cmd: watchकरोg command
+ *      @arg: argument poपूर्णांकer
  *
- *      The watchdog API defines a common set of functions for all watchdogs
+ *      The watchकरोg API defines a common set of functions क्रम all watchकरोgs
  *      according to their available features.
  */
 
-static long wdt977_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	int status;
-	int new_options, retval = -EINVAL;
-	int new_timeout;
-	union {
-		struct watchdog_info __user *ident;
-		int __user *i;
-	} uarg;
+अटल दीर्घ wdt977_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक status;
+	पूर्णांक new_options, retval = -EINVAL;
+	पूर्णांक new_समयout;
+	जोड़ अणु
+		काष्ठा watchकरोg_info __user *ident;
+		पूर्णांक __user *i;
+	पूर्ण uarg;
 
-	uarg.i = (int __user *)arg;
+	uarg.i = (पूर्णांक __user *)arg;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		return copy_to_user(uarg.ident, &ident,
-			sizeof(ident)) ? -EFAULT : 0;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		वापस copy_to_user(uarg.ident, &ident,
+			माप(ident)) ? -EFAULT : 0;
 
-	case WDIOC_GETSTATUS:
+	हाल WDIOC_GETSTATUS:
 		wdt977_get_status(&status);
-		return put_user(status, uarg.i);
+		वापस put_user(status, uarg.i);
 
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(0, uarg.i);
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(0, uarg.i);
 
-	case WDIOC_SETOPTIONS:
-		if (get_user(new_options, uarg.i))
-			return -EFAULT;
+	हाल WDIOC_SETOPTIONS:
+		अगर (get_user(new_options, uarg.i))
+			वापस -EFAULT;
 
-		if (new_options & WDIOS_DISABLECARD) {
+		अगर (new_options & WDIOS_DISABLECARD) अणु
 			wdt977_stop();
 			retval = 0;
-		}
+		पूर्ण
 
-		if (new_options & WDIOS_ENABLECARD) {
+		अगर (new_options & WDIOS_ENABLECARD) अणु
 			wdt977_start();
 			retval = 0;
-		}
+		पूर्ण
 
-		return retval;
+		वापस retval;
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		wdt977_keepalive();
-		return 0;
+		वापस 0;
 
-	case WDIOC_SETTIMEOUT:
-		if (get_user(new_timeout, uarg.i))
-			return -EFAULT;
+	हाल WDIOC_SETTIMEOUT:
+		अगर (get_user(new_समयout, uarg.i))
+			वापस -EFAULT;
 
-		if (wdt977_set_timeout(new_timeout))
-			return -EINVAL;
+		अगर (wdt977_set_समयout(new_समयout))
+			वापस -EINVAL;
 
 		wdt977_keepalive();
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		return put_user(timeout, uarg.i);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(समयout, uarg.i);
 
-	default:
-		return -ENOTTY;
+	शेष:
+		वापस -ENOTTY;
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int wdt977_notify_sys(struct notifier_block *this, unsigned long code,
-	void *unused)
-{
-	if (code == SYS_DOWN || code == SYS_HALT)
+अटल पूर्णांक wdt977_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
+	व्योम *unused)
+अणु
+	अगर (code == SYS_DOWN || code == SYS_HALT)
 		wdt977_stop();
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static const struct file_operations wdt977_fops = {
+अटल स्थिर काष्ठा file_operations wdt977_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= wdt977_write,
+	.ग_लिखो		= wdt977_ग_लिखो,
 	.unlocked_ioctl	= wdt977_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= wdt977_open,
+	.खोलो		= wdt977_खोलो,
 	.release	= wdt977_release,
-};
+पूर्ण;
 
-static struct miscdevice wdt977_miscdev = {
+अटल काष्ठा miscdevice wdt977_miscdev = अणु
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
 	.fops		= &wdt977_fops,
-};
+पूर्ण;
 
-static struct notifier_block wdt977_notifier = {
-	.notifier_call = wdt977_notify_sys,
-};
+अटल काष्ठा notअगरier_block wdt977_notअगरier = अणु
+	.notअगरier_call = wdt977_notअगरy_sys,
+पूर्ण;
 
-static int __init wd977_init(void)
-{
-	int rc;
+अटल पूर्णांक __init wd977_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	pr_info("driver v%s\n", WATCHDOG_VERSION);
 
-	/* Check that the timeout value is within its range;
-	   if not reset to the default */
-	if (wdt977_set_timeout(timeout)) {
-		wdt977_set_timeout(DEFAULT_TIMEOUT);
+	/* Check that the समयout value is within its range;
+	   अगर not reset to the शेष */
+	अगर (wdt977_set_समयout(समयout)) अणु
+		wdt977_set_समयout(DEFAULT_TIMEOUT);
 		pr_info("timeout value must be 60 < timeout < 15300, using %d\n",
 			DEFAULT_TIMEOUT);
-	}
+	पूर्ण
 
-	/* on Netwinder the IOports are already reserved by
+	/* on Netwinder the IOports are alपढ़ोy reserved by
 	 * arch/arm/mach-footbridge/netwinder-hw.c
 	 */
-	if (!machine_is_netwinder()) {
-		if (!request_region(IO_INDEX_PORT, 2, WATCHDOG_NAME)) {
+	अगर (!machine_is_netwinder()) अणु
+		अगर (!request_region(IO_INDEX_PORT, 2, WATCHDOG_NAME)) अणु
 			pr_err("I/O address 0x%04x already in use\n",
 			       IO_INDEX_PORT);
 			rc = -EIO;
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	rc = register_reboot_notifier(&wdt977_notifier);
-	if (rc) {
+	rc = रेजिस्टर_reboot_notअगरier(&wdt977_notअगरier);
+	अगर (rc) अणु
 		pr_err("cannot register reboot notifier (err=%d)\n", rc);
-		goto err_out_region;
-	}
+		जाओ err_out_region;
+	पूर्ण
 
-	rc = misc_register(&wdt977_miscdev);
-	if (rc) {
+	rc = misc_रेजिस्टर(&wdt977_miscdev);
+	अगर (rc) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       wdt977_miscdev.minor, rc);
-		goto err_out_reboot;
-	}
+		जाओ err_out_reboot;
+	पूर्ण
 
 	pr_info("initialized. timeout=%d sec (nowayout=%d, testmode=%i)\n",
-		timeout, nowayout, testmode);
+		समयout, nowayout, tesपंचांगode);
 
-	return 0;
+	वापस 0;
 
 err_out_reboot:
-	unregister_reboot_notifier(&wdt977_notifier);
+	unरेजिस्टर_reboot_notअगरier(&wdt977_notअगरier);
 err_out_region:
-	if (!machine_is_netwinder())
+	अगर (!machine_is_netwinder())
 		release_region(IO_INDEX_PORT, 2);
 err_out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit wd977_exit(void)
-{
+अटल व्योम __निकास wd977_निकास(व्योम)
+अणु
 	wdt977_stop();
-	misc_deregister(&wdt977_miscdev);
-	unregister_reboot_notifier(&wdt977_notifier);
+	misc_deरेजिस्टर(&wdt977_miscdev);
+	unरेजिस्टर_reboot_notअगरier(&wdt977_notअगरier);
 	release_region(IO_INDEX_PORT, 2);
-}
+पूर्ण
 
 module_init(wd977_init);
-module_exit(wd977_exit);
+module_निकास(wd977_निकास);
 
 MODULE_AUTHOR("Woody Suwalski <woodys@xandros.com>");
 MODULE_DESCRIPTION("W83977AF Watchdog driver");

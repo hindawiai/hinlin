@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Workbit NinjaSCSI-32Bi/UDE PCI/CardBus SCSI Host Bus Adapter driver
  * Debug routine
@@ -9,9 +10,9 @@
 /*
  * Show the command data of a command
  */
-static const char unknown[] = "UNKNOWN";
+अटल स्थिर अक्षर unknown[] = "UNKNOWN";
 
-static const char * group_0_commands[] = {
+अटल स्थिर अक्षर * group_0_commands[] = अणु
 /* 00-03 */ "Test Unit Ready", "Rezero Unit", unknown, "Request Sense",
 /* 04-07 */ "Format Unit", "Read Block Limits", unknown, "Reassign Blocks",
 /* 08-0d */ "Read (6)", unknown, "Write (6)", "Seek (6)", unknown, unknown,
@@ -20,10 +21,10 @@ static const char * group_0_commands[] = {
 /* 17-1b */ "Release", "Copy", "Erase", "Mode Sense", "Start/Stop Unit",
 /* 1c-1d */ "Receive Diagnostic", "Send Diagnostic", 
 /* 1e-1f */ "Prevent/Allow Medium Removal", unknown,
-};
+पूर्ण;
 
 
-static const char *group_1_commands[] = {
+अटल स्थिर अक्षर *group_1_commands[] = अणु
 /* 20-22 */  unknown, unknown, unknown,
 /* 23-28 */ unknown, unknown, "Read Capacity", unknown, unknown, "Read (10)",
 /* 29-2d */ unknown, "Write (10)", "Seek (10)", unknown, unknown,
@@ -32,232 +33,232 @@ static const char *group_1_commands[] = {
 /* 35-37 */ "Synchronize Cache","Lock/Unlock Cache", "Read Defect Data",
 /* 38-3c */ "Medium Scan", "Compare","Copy Verify", "Write Buffer", "Read Buffer",
 /* 3d-3f */ "Update Block", "Read Long",  "Write Long",
-};
+पूर्ण;
 
 
-static const char *group_2_commands[] = {
+अटल स्थिर अक्षर *group_2_commands[] = अणु
 /* 40-41 */ "Change Definition", "Write Same", 
 /* 42-48 */ "Read Sub-Ch(cd)", "Read TOC", "Read Header(cd)", "Play Audio(cd)", unknown, "Play Audio MSF(cd)", "Play Audio Track/Index(cd)", 
 /* 49-4f */ "Play Track Relative(10)(cd)", unknown, "Pause/Resume(cd)", "Log Select", "Log Sense", unknown, unknown,
 /* 50-55 */ unknown, unknown, unknown, unknown, unknown, "Mode Select (10)",
 /* 56-5b */ unknown, unknown, unknown, unknown, "Mode Sense (10)", unknown,
 /* 5c-5f */ unknown, unknown, unknown,
-};
+पूर्ण;
 
-#define group(opcode) (((opcode) >> 5) & 7)
+#घोषणा group(opcode) (((opcode) >> 5) & 7)
 
-#define RESERVED_GROUP  0
-#define VENDOR_GROUP    1
-#define NOTEXT_GROUP    2
+#घोषणा RESERVED_GROUP  0
+#घोषणा VENDOR_GROUP    1
+#घोषणा NOTEXT_GROUP    2
 
-static const char **commands[] = {
+अटल स्थिर अक्षर **commands[] = अणु
     group_0_commands, group_1_commands, group_2_commands, 
-    (const char **) RESERVED_GROUP, (const char **) RESERVED_GROUP, 
-    (const char **) NOTEXT_GROUP, (const char **) VENDOR_GROUP, 
-    (const char **) VENDOR_GROUP
-};
+    (स्थिर अक्षर **) RESERVED_GROUP, (स्थिर अक्षर **) RESERVED_GROUP, 
+    (स्थिर अक्षर **) NOTEXT_GROUP, (स्थिर अक्षर **) VENDOR_GROUP, 
+    (स्थिर अक्षर **) VENDOR_GROUP
+पूर्ण;
 
-static const char reserved[] = "RESERVED";
-static const char vendor[] = "VENDOR SPECIFIC";
+अटल स्थिर अक्षर reserved[] = "RESERVED";
+अटल स्थिर अक्षर venकरोr[] = "VENDOR SPECIFIC";
 
-static void print_opcodek(unsigned char opcode)
-{
-	const char **table = commands[ group(opcode) ];
+अटल व्योम prपूर्णांक_opcodek(अचिन्हित अक्षर opcode)
+अणु
+	स्थिर अक्षर **table = commands[ group(opcode) ];
 
-	switch ((unsigned long) table) {
-	case RESERVED_GROUP:
-		printk("%s[%02x] ", reserved, opcode); 
-		break;
-	case NOTEXT_GROUP:
-		printk("%s(notext)[%02x] ", unknown, opcode); 
-		break;
-	case VENDOR_GROUP:
-		printk("%s[%02x] ", vendor, opcode); 
-		break;
-	default:
-		if (table[opcode & 0x1f] != unknown)
-			printk("%s[%02x] ", table[opcode & 0x1f], opcode);
-		else
-			printk("%s[%02x] ", unknown, opcode);
-		break;
-	}
-}
+	चयन ((अचिन्हित दीर्घ) table) अणु
+	हाल RESERVED_GROUP:
+		prपूर्णांकk("%s[%02x] ", reserved, opcode); 
+		अवरोध;
+	हाल NOTEXT_GROUP:
+		prपूर्णांकk("%s(notext)[%02x] ", unknown, opcode); 
+		अवरोध;
+	हाल VENDOR_GROUP:
+		prपूर्णांकk("%s[%02x] ", venकरोr, opcode); 
+		अवरोध;
+	शेष:
+		अगर (table[opcode & 0x1f] != unknown)
+			prपूर्णांकk("%s[%02x] ", table[opcode & 0x1f], opcode);
+		अन्यथा
+			prपूर्णांकk("%s[%02x] ", unknown, opcode);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void print_commandk (unsigned char *command)
-{
-	int i,s;
-//	printk(KERN_DEBUG);
-	print_opcodek(command[0]);
-	/*printk(KERN_DEBUG "%s ", __func__);*/
-	if ((command[0] >> 5) == 6 ||
-	    (command[0] >> 5) == 7 ) {
-		s = 12; /* vender specific */
-	} else {
+अटल व्योम prपूर्णांक_commandk (अचिन्हित अक्षर *command)
+अणु
+	पूर्णांक i,s;
+//	prपूर्णांकk(KERN_DEBUG);
+	prपूर्णांक_opcodek(command[0]);
+	/*prपूर्णांकk(KERN_DEBUG "%s ", __func__);*/
+	अगर ((command[0] >> 5) == 6 ||
+	    (command[0] >> 5) == 7 ) अणु
+		s = 12; /* vender specअगरic */
+	पूर्ण अन्यथा अणु
 		s = COMMAND_SIZE(command[0]);
-	}
+	पूर्ण
 
-	for ( i = 1; i < s; ++i) {
-		printk("%02x ", command[i]);
-	}
+	क्रम ( i = 1; i < s; ++i) अणु
+		prपूर्णांकk("%02x ", command[i]);
+	पूर्ण
 
-	switch (s) {
-	case 6:
-		printk("LBA=%d len=%d",
-		       (((unsigned int)command[1] & 0x0f) << 16) |
-		       ( (unsigned int)command[2]         <<  8) |
-		       ( (unsigned int)command[3]              ),
-		       (unsigned int)command[4]
+	चयन (s) अणु
+	हाल 6:
+		prपूर्णांकk("LBA=%d len=%d",
+		       (((अचिन्हित पूर्णांक)command[1] & 0x0f) << 16) |
+		       ( (अचिन्हित पूर्णांक)command[2]         <<  8) |
+		       ( (अचिन्हित पूर्णांक)command[3]              ),
+		       (अचिन्हित पूर्णांक)command[4]
 			);
-		break;
-	case 10:
-		printk("LBA=%d len=%d",
-		       ((unsigned int)command[2] << 24) |
-		       ((unsigned int)command[3] << 16) |
-		       ((unsigned int)command[4] <<  8) |
-		       ((unsigned int)command[5]      ),
-		       ((unsigned int)command[7] <<  8) |
-		       ((unsigned int)command[8]      )
+		अवरोध;
+	हाल 10:
+		prपूर्णांकk("LBA=%d len=%d",
+		       ((अचिन्हित पूर्णांक)command[2] << 24) |
+		       ((अचिन्हित पूर्णांक)command[3] << 16) |
+		       ((अचिन्हित पूर्णांक)command[4] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[5]      ),
+		       ((अचिन्हित पूर्णांक)command[7] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[8]      )
 		       );
-		break;
-	case 12:
-		printk("LBA=%d len=%d",
-		       ((unsigned int)command[2] << 24) |
-		       ((unsigned int)command[3] << 16) |
-		       ((unsigned int)command[4] <<  8) |
-		       ((unsigned int)command[5]      ),
-		       ((unsigned int)command[6] << 24) |
-		       ((unsigned int)command[7] << 16) |
-		       ((unsigned int)command[8] <<  8) |
-		       ((unsigned int)command[9]      )
+		अवरोध;
+	हाल 12:
+		prपूर्णांकk("LBA=%d len=%d",
+		       ((अचिन्हित पूर्णांक)command[2] << 24) |
+		       ((अचिन्हित पूर्णांक)command[3] << 16) |
+		       ((अचिन्हित पूर्णांक)command[4] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[5]      ),
+		       ((अचिन्हित पूर्णांक)command[6] << 24) |
+		       ((अचिन्हित पूर्णांक)command[7] << 16) |
+		       ((अचिन्हित पूर्णांक)command[8] <<  8) |
+		       ((अचिन्हित पूर्णांक)command[9]      )
 		       );
-		break;
-	default:
-		break;
-	}
-	printk("\n");
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	prपूर्णांकk("\n");
+पूर्ण
 
-static void show_command(struct scsi_cmnd *SCpnt)
-{
-	print_commandk(SCpnt->cmnd);
-}
+अटल व्योम show_command(काष्ठा scsi_cmnd *SCpnt)
+अणु
+	prपूर्णांक_commandk(SCpnt->cmnd);
+पूर्ण
 
-static void show_busphase(unsigned char stat)
-{
-	switch(stat) {
-	case BUSPHASE_COMMAND:
-		printk( "BUSPHASE_COMMAND\n");
-		break;
-	case BUSPHASE_MESSAGE_IN:
-		printk( "BUSPHASE_MESSAGE_IN\n");
-		break;
-	case BUSPHASE_MESSAGE_OUT:
-		printk( "BUSPHASE_MESSAGE_OUT\n");
-		break;
-	case BUSPHASE_DATA_IN:
-		printk( "BUSPHASE_DATA_IN\n");
-		break;
-	case BUSPHASE_DATA_OUT:
-		printk( "BUSPHASE_DATA_OUT\n");
-		break;
-	case BUSPHASE_STATUS:
-		printk( "BUSPHASE_STATUS\n");
-		break;
-	case BUSPHASE_SELECT:
-		printk( "BUSPHASE_SELECT\n");
-		break;
-	default:
-		printk( "BUSPHASE_other: 0x%x\n", stat);
-		break;
-	}
-}
+अटल व्योम show_busphase(अचिन्हित अक्षर stat)
+अणु
+	चयन(stat) अणु
+	हाल BUSPHASE_COMMAND:
+		prपूर्णांकk( "BUSPHASE_COMMAND\n");
+		अवरोध;
+	हाल BUSPHASE_MESSAGE_IN:
+		prपूर्णांकk( "BUSPHASE_MESSAGE_IN\n");
+		अवरोध;
+	हाल BUSPHASE_MESSAGE_OUT:
+		prपूर्णांकk( "BUSPHASE_MESSAGE_OUT\n");
+		अवरोध;
+	हाल BUSPHASE_DATA_IN:
+		prपूर्णांकk( "BUSPHASE_DATA_IN\n");
+		अवरोध;
+	हाल BUSPHASE_DATA_OUT:
+		prपूर्णांकk( "BUSPHASE_DATA_OUT\n");
+		अवरोध;
+	हाल BUSPHASE_STATUS:
+		prपूर्णांकk( "BUSPHASE_STATUS\n");
+		अवरोध;
+	हाल BUSPHASE_SELECT:
+		prपूर्णांकk( "BUSPHASE_SELECT\n");
+		अवरोध;
+	शेष:
+		prपूर्णांकk( "BUSPHASE_other: 0x%x\n", stat);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void show_autophase(unsigned short i)
-{
-	printk("auto: 0x%x,", i);
+अटल व्योम show_स्वतःphase(अचिन्हित लघु i)
+अणु
+	prपूर्णांकk("auto: 0x%x,", i);
 
-	if(i & COMMAND_PHASE) {
-		printk(" cmd");
-	}
-	if(i & DATA_IN_PHASE) {
-		printk(" din");
-	}
-	if(i & DATA_OUT_PHASE) {
-		printk(" dout");
-	}
-	if(i & MSGOUT_PHASE) {
-		printk(" mout");
-	}
-	if(i & STATUS_PHASE) {
-		printk(" stat");
-	}
-	if(i & ILLEGAL_PHASE) {
-		printk(" ill");
-	}
-	if(i & BUS_FREE_OCCUER) {
-		printk(" bfree-o");
-	}
-	if(i & MSG_IN_OCCUER) {
-		printk(" min-o");
-	}
-	if(i & MSG_OUT_OCCUER) {
-		printk(" mout-o");
-	}
-	if(i & SELECTION_TIMEOUT) {
-		printk(" sel");
-	}
-	if(i & MSGIN_00_VALID) {
-		printk(" m0");
-	}
-	if(i & MSGIN_02_VALID) {
-		printk(" m2");
-	}
-	if(i & MSGIN_03_VALID) {
-		printk(" m3");
-	}
-	if(i & MSGIN_04_VALID) {
-		printk(" m4");
-	}
-	if(i & AUTOSCSI_BUSY) {
-		printk(" busy");
-	}
+	अगर(i & COMMAND_PHASE) अणु
+		prपूर्णांकk(" cmd");
+	पूर्ण
+	अगर(i & DATA_IN_PHASE) अणु
+		prपूर्णांकk(" din");
+	पूर्ण
+	अगर(i & DATA_OUT_PHASE) अणु
+		prपूर्णांकk(" dout");
+	पूर्ण
+	अगर(i & MSGOUT_PHASE) अणु
+		prपूर्णांकk(" mout");
+	पूर्ण
+	अगर(i & STATUS_PHASE) अणु
+		prपूर्णांकk(" stat");
+	पूर्ण
+	अगर(i & ILLEGAL_PHASE) अणु
+		prपूर्णांकk(" ill");
+	पूर्ण
+	अगर(i & BUS_FREE_OCCUER) अणु
+		prपूर्णांकk(" bfree-o");
+	पूर्ण
+	अगर(i & MSG_IN_OCCUER) अणु
+		prपूर्णांकk(" min-o");
+	पूर्ण
+	अगर(i & MSG_OUT_OCCUER) अणु
+		prपूर्णांकk(" mout-o");
+	पूर्ण
+	अगर(i & SELECTION_TIMEOUT) अणु
+		prपूर्णांकk(" sel");
+	पूर्ण
+	अगर(i & MSGIN_00_VALID) अणु
+		prपूर्णांकk(" m0");
+	पूर्ण
+	अगर(i & MSGIN_02_VALID) अणु
+		prपूर्णांकk(" m2");
+	पूर्ण
+	अगर(i & MSGIN_03_VALID) अणु
+		prपूर्णांकk(" m3");
+	पूर्ण
+	अगर(i & MSGIN_04_VALID) अणु
+		prपूर्णांकk(" m4");
+	पूर्ण
+	अगर(i & AUTOSCSI_BUSY) अणु
+		prपूर्णांकk(" busy");
+	पूर्ण
 
-	printk("\n");
-}
+	prपूर्णांकk("\n");
+पूर्ण
 
-static void nsp32_print_register(int base)
-{
-	if (!(NSP32_DEBUG_MASK & NSP32_SPECIAL_PRINT_REGISTER))
-		return;
+अटल व्योम nsp32_prपूर्णांक_रेजिस्टर(पूर्णांक base)
+अणु
+	अगर (!(NSP32_DEBUG_MASK & NSP32_SPECIAL_PRINT_REGISTER))
+		वापस;
 
-	printk("Phase=0x%x, ", nsp32_read1(base, SCSI_BUS_MONITOR));
-	printk("OldPhase=0x%x, ", nsp32_index_read1(base, OLD_SCSI_PHASE));
-	printk("syncreg=0x%x, ", nsp32_read1(base, SYNC_REG));
-	printk("ackwidth=0x%x, ", nsp32_read1(base, ACK_WIDTH));
-	printk("sgtpaddr=0x%lx, ", nsp32_read4(base, SGT_ADR));
-	printk("scsioutlatch=0x%x, ", nsp32_read1(base, SCSI_OUT_LATCH_TARGET_ID));
-	printk("msgout=0x%lx, ", nsp32_read4(base, SCSI_MSG_OUT));
-	printk("miscrd=0x%x, ", nsp32_index_read2(base, MISC_WR));
-	printk("seltimeout=0x%x, ", nsp32_read2(base, SEL_TIME_OUT));
-	printk("sreqrate=0x%x, ", nsp32_read1(base, SREQ_SMPL_RATE));
-	printk("transStatus=0x%x, ", nsp32_read2(base, TRANSFER_STATUS));
-	printk("reselectid=0x%x, ", nsp32_read2(base, COMMAND_CONTROL));
-	printk("arbit=0x%x, ", nsp32_read1(base, ARBIT_STATUS));
-	printk("BmStart=0x%lx, ", nsp32_read4(base, BM_START_ADR));
-	printk("BmCount=0x%lx, ", nsp32_read4(base, BM_CNT));
-	printk("SackCnt=0x%lx, ", nsp32_read4(base, SACK_CNT));
-	printk("SReqCnt=0x%lx, ", nsp32_read4(base, SREQ_CNT));
-	printk("SavedSackCnt=0x%lx, ", nsp32_read4(base, SAVED_SACK_CNT));
-	printk("ScsiBusControl=0x%x, ", nsp32_read1(base, SCSI_BUS_CONTROL));
-	printk("FifoRestCnt=0x%x, ", nsp32_read2(base, FIFO_REST_CNT));
-	printk("CdbIn=0x%x, ", nsp32_read1(base, SCSI_CSB_IN));
-	printk("\n");
+	prपूर्णांकk("Phase=0x%x, ", nsp32_पढ़ो1(base, SCSI_BUS_MONITOR));
+	prपूर्णांकk("OldPhase=0x%x, ", nsp32_index_पढ़ो1(base, OLD_SCSI_PHASE));
+	prपूर्णांकk("syncreg=0x%x, ", nsp32_पढ़ो1(base, SYNC_REG));
+	prपूर्णांकk("ackwidth=0x%x, ", nsp32_पढ़ो1(base, ACK_WIDTH));
+	prपूर्णांकk("sgtpaddr=0x%lx, ", nsp32_पढ़ो4(base, SGT_ADR));
+	prपूर्णांकk("scsioutlatch=0x%x, ", nsp32_पढ़ो1(base, SCSI_OUT_LATCH_TARGET_ID));
+	prपूर्णांकk("msgout=0x%lx, ", nsp32_पढ़ो4(base, SCSI_MSG_OUT));
+	prपूर्णांकk("miscrd=0x%x, ", nsp32_index_पढ़ो2(base, MISC_WR));
+	prपूर्णांकk("seltimeout=0x%x, ", nsp32_पढ़ो2(base, SEL_TIME_OUT));
+	prपूर्णांकk("sreqrate=0x%x, ", nsp32_पढ़ो1(base, SREQ_SMPL_RATE));
+	prपूर्णांकk("transStatus=0x%x, ", nsp32_पढ़ो2(base, TRANSFER_STATUS));
+	prपूर्णांकk("reselectid=0x%x, ", nsp32_पढ़ो2(base, COMMAND_CONTROL));
+	prपूर्णांकk("arbit=0x%x, ", nsp32_पढ़ो1(base, ARBIT_STATUS));
+	prपूर्णांकk("BmStart=0x%lx, ", nsp32_पढ़ो4(base, BM_START_ADR));
+	prपूर्णांकk("BmCount=0x%lx, ", nsp32_पढ़ो4(base, BM_CNT));
+	prपूर्णांकk("SackCnt=0x%lx, ", nsp32_पढ़ो4(base, SACK_CNT));
+	prपूर्णांकk("SReqCnt=0x%lx, ", nsp32_पढ़ो4(base, SREQ_CNT));
+	prपूर्णांकk("SavedSackCnt=0x%lx, ", nsp32_पढ़ो4(base, SAVED_SACK_CNT));
+	prपूर्णांकk("ScsiBusControl=0x%x, ", nsp32_पढ़ो1(base, SCSI_BUS_CONTROL));
+	prपूर्णांकk("FifoRestCnt=0x%x, ", nsp32_पढ़ो2(base, FIFO_REST_CNT));
+	prपूर्णांकk("CdbIn=0x%x, ", nsp32_पढ़ो1(base, SCSI_CSB_IN));
+	prपूर्णांकk("\n");
 
-	if (0) {
-		printk("execph=0x%x, ", nsp32_read2(base, SCSI_EXECUTE_PHASE));
-		printk("IrqStatus=0x%x, ", nsp32_read2(base, IRQ_STATUS));
-		printk("\n");
-	}
-}
+	अगर (0) अणु
+		prपूर्णांकk("execph=0x%x, ", nsp32_पढ़ो2(base, SCSI_EXECUTE_PHASE));
+		prपूर्णांकk("IrqStatus=0x%x, ", nsp32_पढ़ो2(base, IRQ_STATUS));
+		prपूर्णांकk("\n");
+	पूर्ण
+पूर्ण
 
 /* end */

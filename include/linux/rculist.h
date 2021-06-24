@@ -1,199 +1,200 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_RCULIST_H
-#define _LINUX_RCULIST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_RCULIST_H
+#घोषणा _LINUX_RCULIST_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 /*
- * RCU-protected list version
+ * RCU-रक्षित list version
  */
-#include <linux/list.h>
-#include <linux/rcupdate.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rcupdate.h>
 
 /*
  * Why is there no list_empty_rcu()?  Because list_empty() serves this
- * purpose.  The list_empty() function fetches the RCU-protected pointer
+ * purpose.  The list_empty() function fetches the RCU-रक्षित poपूर्णांकer
  * and compares it to the address of the list head, but neither dereferences
- * this pointer itself nor provides this pointer to the caller.  Therefore,
+ * this poपूर्णांकer itself nor provides this poपूर्णांकer to the caller.  Thereक्रमe,
  * it is not necessary to use rcu_dereference(), so that list_empty() can
  * be used anywhere you would want to use a list_empty_rcu().
  */
 
 /*
- * INIT_LIST_HEAD_RCU - Initialize a list_head visible to RCU readers
+ * INIT_LIST_HEAD_RCU - Initialize a list_head visible to RCU पढ़ोers
  * @list: list to be initialized
  *
- * You should instead use INIT_LIST_HEAD() for normal initialization and
- * cleanup tasks, when readers have no access to the list being initialized.
- * However, if the list being initialized is visible to readers, you
+ * You should instead use INIT_LIST_HEAD() क्रम normal initialization and
+ * cleanup tasks, when पढ़ोers have no access to the list being initialized.
+ * However, अगर the list being initialized is visible to पढ़ोers, you
  * need to keep the compiler from being too mischievous.
  */
-static inline void INIT_LIST_HEAD_RCU(struct list_head *list)
-{
+अटल अंतरभूत व्योम INIT_LIST_HEAD_RCU(काष्ठा list_head *list)
+अणु
 	WRITE_ONCE(list->next, list);
 	WRITE_ONCE(list->prev, list);
-}
+पूर्ण
 
 /*
- * return the ->next pointer of a list_head in an rcu safe
+ * वापस the ->next poपूर्णांकer of a list_head in an rcu safe
  * way, we must not access it directly
  */
-#define list_next_rcu(list)	(*((struct list_head __rcu **)(&(list)->next)))
+#घोषणा list_next_rcu(list)	(*((काष्ठा list_head __rcu **)(&(list)->next)))
 
 /**
- * list_tail_rcu - returns the prev pointer of the head of the list
+ * list_tail_rcu - वापसs the prev poपूर्णांकer of the head of the list
  * @head: the head of the list
  *
  * Note: This should only be used with the list header, and even then
- * only if list_del() and similar primitives are not also used on the
+ * only अगर list_del() and similar primitives are not also used on the
  * list header.
  */
-#define list_tail_rcu(head)	(*((struct list_head __rcu **)(&(head)->prev)))
+#घोषणा list_tail_rcu(head)	(*((काष्ठा list_head __rcu **)(&(head)->prev)))
 
 /*
- * Check during list traversal that we are within an RCU reader
+ * Check during list traversal that we are within an RCU पढ़ोer
  */
 
-#define check_arg_count_one(dummy)
+#घोषणा check_arg_count_one(dummy)
 
-#ifdef CONFIG_PROVE_RCU_LIST
-#define __list_check_rcu(dummy, cond, extra...)				\
-	({								\
+#अगर_घोषित CONFIG_PROVE_RCU_LIST
+#घोषणा __list_check_rcu(dummy, cond, extra...)				\
+	(अणु								\
 	check_arg_count_one(extra);					\
-	RCU_LOCKDEP_WARN(!(cond) && !rcu_read_lock_any_held(),		\
+	RCU_LOCKDEP_WARN(!(cond) && !rcu_पढ़ो_lock_any_held(),		\
 			 "RCU-list traversed in non-reader section!");	\
-	})
+	पूर्ण)
 
-#define __list_check_srcu(cond)					 \
-	({								 \
+#घोषणा __list_check_srcu(cond)					 \
+	(अणु								 \
 	RCU_LOCKDEP_WARN(!(cond),					 \
 		"RCU-list traversed without holding the required lock!");\
-	})
-#else
-#define __list_check_rcu(dummy, cond, extra...)				\
-	({ check_arg_count_one(extra); })
+	पूर्ण)
+#अन्यथा
+#घोषणा __list_check_rcu(dummy, cond, extra...)				\
+	(अणु check_arg_count_one(extra); पूर्ण)
 
-#define __list_check_srcu(cond) ({ })
-#endif
+#घोषणा __list_check_srcu(cond) (अणु पूर्ण)
+#पूर्ण_अगर
 
 /*
  * Insert a new entry between two known consecutive entries.
  *
- * This is only for internal list manipulation where we know
- * the prev/next entries already!
+ * This is only क्रम पूर्णांकernal list manipulation where we know
+ * the prev/next entries alपढ़ोy!
  */
-static inline void __list_add_rcu(struct list_head *new,
-		struct list_head *prev, struct list_head *next)
-{
-	if (!__list_add_valid(new, prev, next))
-		return;
+अटल अंतरभूत व्योम __list_add_rcu(काष्ठा list_head *new,
+		काष्ठा list_head *prev, काष्ठा list_head *next)
+अणु
+	अगर (!__list_add_valid(new, prev, next))
+		वापस;
 
 	new->next = next;
 	new->prev = prev;
-	rcu_assign_pointer(list_next_rcu(prev), new);
+	rcu_assign_poपूर्णांकer(list_next_rcu(prev), new);
 	next->prev = new;
-}
+पूर्ण
 
 /**
- * list_add_rcu - add a new entry to rcu-protected list
+ * list_add_rcu - add a new entry to rcu-रक्षित list
  * @new: new entry to be added
  * @head: list head to add it after
  *
- * Insert a new entry after the specified head.
- * This is good for implementing stacks.
+ * Insert a new entry after the specअगरied head.
+ * This is good क्रम implementing stacks.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as list_add_rcu()
  * or list_del_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * list_for_each_entry_rcu().
+ * list_क्रम_each_entry_rcu().
  */
-static inline void list_add_rcu(struct list_head *new, struct list_head *head)
-{
+अटल अंतरभूत व्योम list_add_rcu(काष्ठा list_head *new, काष्ठा list_head *head)
+अणु
 	__list_add_rcu(new, head, head->next);
-}
+पूर्ण
 
 /**
- * list_add_tail_rcu - add a new entry to rcu-protected list
+ * list_add_tail_rcu - add a new entry to rcu-रक्षित list
  * @new: new entry to be added
- * @head: list head to add it before
+ * @head: list head to add it beक्रमe
  *
- * Insert a new entry before the specified head.
- * This is useful for implementing queues.
+ * Insert a new entry beक्रमe the specअगरied head.
+ * This is useful क्रम implementing queues.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as list_add_tail_rcu()
  * or list_del_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * list_for_each_entry_rcu().
+ * list_क्रम_each_entry_rcu().
  */
-static inline void list_add_tail_rcu(struct list_head *new,
-					struct list_head *head)
-{
+अटल अंतरभूत व्योम list_add_tail_rcu(काष्ठा list_head *new,
+					काष्ठा list_head *head)
+अणु
 	__list_add_rcu(new, head->prev, head);
-}
+पूर्ण
 
 /**
  * list_del_rcu - deletes entry from list without re-initialization
  * @entry: the element to delete from the list.
  *
- * Note: list_empty() on entry does not return true after this,
- * the entry is in an undefined state. It is useful for RCU based
- * lockfree traversal.
+ * Note: list_empty() on entry करोes not वापस true after this,
+ * the entry is in an undefined state. It is useful क्रम RCU based
+ * lockमुक्त traversal.
  *
- * In particular, it means that we can not poison the forward
- * pointers that may still be used for walking the list.
+ * In particular, it means that we can not poison the क्रमward
+ * poपूर्णांकers that may still be used क्रम walking the list.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as list_del_rcu()
  * or list_add_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * list_for_each_entry_rcu().
+ * list_क्रम_each_entry_rcu().
  *
- * Note that the caller is not permitted to immediately free
+ * Note that the caller is not permitted to immediately मुक्त
  * the newly deleted entry.  Instead, either synchronize_rcu()
- * or call_rcu() must be used to defer freeing until an RCU
+ * or call_rcu() must be used to defer मुक्तing until an RCU
  * grace period has elapsed.
  */
-static inline void list_del_rcu(struct list_head *entry)
-{
+अटल अंतरभूत व्योम list_del_rcu(काष्ठा list_head *entry)
+अणु
 	__list_del_entry(entry);
 	entry->prev = LIST_POISON2;
-}
+पूर्ण
 
 /**
  * hlist_del_init_rcu - deletes entry from hash list with re-initialization
  * @n: the element to delete from the hash list.
  *
- * Note: list_unhashed() on the node return true after this. It is
- * useful for RCU based read lockfree traversal if the writer side
- * must know if the list entry is still hashed or already unhashed.
+ * Note: list_unhashed() on the node वापस true after this. It is
+ * useful क्रम RCU based पढ़ो lockमुक्त traversal अगर the ग_लिखोr side
+ * must know अगर the list entry is still hashed or alपढ़ोy unhashed.
  *
- * In particular, it means that we can not poison the forward pointers
- * that may still be used for walking the hash list and we can only
- * zero the pprev pointer so list_unhashed() will return true after
+ * In particular, it means that we can not poison the क्रमward poपूर्णांकers
+ * that may still be used क्रम walking the hash list and we can only
+ * zero the pprev poपूर्णांकer so list_unhashed() will वापस true after
  * this.
  *
  * The caller must take whatever precautions are necessary (such as
- * holding appropriate locks) to avoid racing with another
+ * holding appropriate locks) to aव्योम racing with another
  * list-mutation primitive, such as hlist_add_head_rcu() or
  * hlist_del_rcu(), running on this same list.  However, it is
  * perfectly legal to run concurrently with the _rcu list-traversal
- * primitives, such as hlist_for_each_entry_rcu().
+ * primitives, such as hlist_क्रम_each_entry_rcu().
  */
-static inline void hlist_del_init_rcu(struct hlist_node *n)
-{
-	if (!hlist_unhashed(n)) {
+अटल अंतरभूत व्योम hlist_del_init_rcu(काष्ठा hlist_node *n)
+अणु
+	अगर (!hlist_unhashed(n)) अणु
 		__hlist_del(n);
-		WRITE_ONCE(n->pprev, NULL);
-	}
-}
+		WRITE_ONCE(n->pprev, शून्य);
+	पूर्ण
+पूर्ण
 
 /**
  * list_replace_rcu - replace old entry by new one
@@ -203,45 +204,45 @@ static inline void hlist_del_init_rcu(struct hlist_node *n)
  * The @old entry will be replaced with the @new entry atomically.
  * Note: @old should not be empty.
  */
-static inline void list_replace_rcu(struct list_head *old,
-				struct list_head *new)
-{
+अटल अंतरभूत व्योम list_replace_rcu(काष्ठा list_head *old,
+				काष्ठा list_head *new)
+अणु
 	new->next = old->next;
 	new->prev = old->prev;
-	rcu_assign_pointer(list_next_rcu(new->prev), new);
+	rcu_assign_poपूर्णांकer(list_next_rcu(new->prev), new);
 	new->next->prev = new;
 	old->prev = LIST_POISON2;
-}
+पूर्ण
 
 /**
- * __list_splice_init_rcu - join an RCU-protected list into an existing list.
- * @list:	the RCU-protected list to splice
- * @prev:	points to the last element of the existing list
- * @next:	points to the first element of the existing list
+ * __list_splice_init_rcu - join an RCU-रक्षित list पूर्णांकo an existing list.
+ * @list:	the RCU-रक्षित list to splice
+ * @prev:	poपूर्णांकs to the last element of the existing list
+ * @next:	poपूर्णांकs to the first element of the existing list
  * @sync:	synchronize_rcu, synchronize_rcu_expedited, ...
  *
- * The list pointed to by @prev and @next can be RCU-read traversed
+ * The list poपूर्णांकed to by @prev and @next can be RCU-पढ़ो traversed
  * concurrently with this function.
  *
  * Note that this function blocks.
  *
  * Important note: the caller must take whatever action is necessary to prevent
  * any other updates to the existing list.  In principle, it is possible to
- * modify the list as soon as sync() begins execution. If this sort of thing
+ * modअगरy the list as soon as sync() begins execution. If this sort of thing
  * becomes necessary, an alternative version based on call_rcu() could be
- * created.  But only if -really- needed -- there is no shortage of RCU API
+ * created.  But only अगर -really- needed -- there is no लघुage of RCU API
  * members.
  */
-static inline void __list_splice_init_rcu(struct list_head *list,
-					  struct list_head *prev,
-					  struct list_head *next,
-					  void (*sync)(void))
-{
-	struct list_head *first = list->next;
-	struct list_head *last = list->prev;
+अटल अंतरभूत व्योम __list_splice_init_rcu(काष्ठा list_head *list,
+					  काष्ठा list_head *prev,
+					  काष्ठा list_head *next,
+					  व्योम (*sync)(व्योम))
+अणु
+	काष्ठा list_head *first = list->next;
+	काष्ठा list_head *last = list->prev;
 
 	/*
-	 * "first" and "last" tracking list, so initialize it.  RCU readers
+	 * "first" and "last" tracking list, so initialize it.  RCU पढ़ोers
 	 * have access to this list, so we must use INIT_LIST_HEAD_RCU()
 	 * instead of INIT_LIST_HEAD().
 	 */
@@ -249,9 +250,9 @@ static inline void __list_splice_init_rcu(struct list_head *list,
 	INIT_LIST_HEAD_RCU(list);
 
 	/*
-	 * At this point, the list body still points to the source list.
-	 * Wait for any readers to finish using the list before splicing
-	 * the list body into the new list.  Any new readers will see
+	 * At this poपूर्णांक, the list body still poपूर्णांकs to the source list.
+	 * Wait क्रम any पढ़ोers to finish using the list beक्रमe splicing
+	 * the list body पूर्णांकo the new list.  Any new पढ़ोers will see
 	 * an empty list.
 	 */
 
@@ -260,59 +261,59 @@ static inline void __list_splice_init_rcu(struct list_head *list,
 	ASSERT_EXCLUSIVE_ACCESS(*last);
 
 	/*
-	 * Readers are finished with the source list, so perform splice.
-	 * The order is important if the new list is global and accessible
-	 * to concurrent RCU readers.  Note that RCU readers are not
-	 * permitted to traverse the prev pointers without excluding
+	 * Readers are finished with the source list, so perक्रमm splice.
+	 * The order is important अगर the new list is global and accessible
+	 * to concurrent RCU पढ़ोers.  Note that RCU पढ़ोers are not
+	 * permitted to traverse the prev poपूर्णांकers without excluding
 	 * this function.
 	 */
 
 	last->next = next;
-	rcu_assign_pointer(list_next_rcu(prev), first);
+	rcu_assign_poपूर्णांकer(list_next_rcu(prev), first);
 	first->prev = prev;
 	next->prev = last;
-}
+पूर्ण
 
 /**
- * list_splice_init_rcu - splice an RCU-protected list into an existing list,
- *                        designed for stacks.
- * @list:	the RCU-protected list to splice
- * @head:	the place in the existing list to splice the first list into
+ * list_splice_init_rcu - splice an RCU-रक्षित list पूर्णांकo an existing list,
+ *                        deचिन्हित क्रम stacks.
+ * @list:	the RCU-रक्षित list to splice
+ * @head:	the place in the existing list to splice the first list पूर्णांकo
  * @sync:	synchronize_rcu, synchronize_rcu_expedited, ...
  */
-static inline void list_splice_init_rcu(struct list_head *list,
-					struct list_head *head,
-					void (*sync)(void))
-{
-	if (!list_empty(list))
+अटल अंतरभूत व्योम list_splice_init_rcu(काष्ठा list_head *list,
+					काष्ठा list_head *head,
+					व्योम (*sync)(व्योम))
+अणु
+	अगर (!list_empty(list))
 		__list_splice_init_rcu(list, head, head->next, sync);
-}
+पूर्ण
 
 /**
- * list_splice_tail_init_rcu - splice an RCU-protected list into an existing
- *                             list, designed for queues.
- * @list:	the RCU-protected list to splice
- * @head:	the place in the existing list to splice the first list into
+ * list_splice_tail_init_rcu - splice an RCU-रक्षित list पूर्णांकo an existing
+ *                             list, deचिन्हित क्रम queues.
+ * @list:	the RCU-रक्षित list to splice
+ * @head:	the place in the existing list to splice the first list पूर्णांकo
  * @sync:	synchronize_rcu, synchronize_rcu_expedited, ...
  */
-static inline void list_splice_tail_init_rcu(struct list_head *list,
-					     struct list_head *head,
-					     void (*sync)(void))
-{
-	if (!list_empty(list))
+अटल अंतरभूत व्योम list_splice_tail_init_rcu(काष्ठा list_head *list,
+					     काष्ठा list_head *head,
+					     व्योम (*sync)(व्योम))
+अणु
+	अगर (!list_empty(list))
 		__list_splice_init_rcu(list, head->prev, head, sync);
-}
+पूर्ण
 
 /**
- * list_entry_rcu - get the struct for this entry
- * @ptr:        the &struct list_head pointer.
- * @type:       the type of the struct this is embedded in.
- * @member:     the name of the list_head within the struct.
+ * list_entry_rcu - get the काष्ठा क्रम this entry
+ * @ptr:        the &काष्ठा list_head poपूर्णांकer.
+ * @type:       the type of the काष्ठा this is embedded in.
+ * @member:     the name of the list_head within the काष्ठा.
  *
  * This primitive may safely run concurrently with the _rcu list-mutation
- * primitives such as list_add_rcu() as long as it's guarded by rcu_read_lock().
+ * primitives such as list_add_rcu() as दीर्घ as it's guarded by rcu_पढ़ो_lock().
  */
-#define list_entry_rcu(ptr, type, member) \
+#घोषणा list_entry_rcu(ptr, type, member) \
 	container_of(READ_ONCE(ptr), type, member)
 
 /*
@@ -322,198 +323,198 @@ static inline void list_splice_tail_init_rcu(struct list_head *list,
  * list_first_entry() is not advisable because they lead to subtle race
  * conditions as the following snippet shows:
  *
- * if (!list_empty_rcu(mylist)) {
- *	struct foo *bar = list_first_entry_rcu(mylist, struct foo, list_member);
- *	do_something(bar);
- * }
+ * अगर (!list_empty_rcu(mylist)) अणु
+ *	काष्ठा foo *bar = list_first_entry_rcu(mylist, काष्ठा foo, list_member);
+ *	करो_something(bar);
+ * पूर्ण
  *
  * The list may not be empty when list_empty_rcu checks it, but it may be when
- * list_first_entry_rcu rereads the ->next pointer.
+ * list_first_entry_rcu reपढ़ोs the ->next poपूर्णांकer.
  *
- * Rereading the ->next pointer is not a problem for list_empty() and
- * list_first_entry() because they would be protected by a lock that blocks
- * writers.
+ * Reपढ़ोing the ->next poपूर्णांकer is not a problem क्रम list_empty() and
+ * list_first_entry() because they would be रक्षित by a lock that blocks
+ * ग_लिखोrs.
  *
- * See list_first_or_null_rcu for an alternative.
+ * See list_first_or_null_rcu क्रम an alternative.
  */
 
 /**
  * list_first_or_null_rcu - get the first element from a list
  * @ptr:        the list head to take the element from.
- * @type:       the type of the struct this is embedded in.
- * @member:     the name of the list_head within the struct.
+ * @type:       the type of the काष्ठा this is embedded in.
+ * @member:     the name of the list_head within the काष्ठा.
  *
- * Note that if the list is empty, it returns NULL.
+ * Note that अगर the list is empty, it वापसs शून्य.
  *
  * This primitive may safely run concurrently with the _rcu list-mutation
- * primitives such as list_add_rcu() as long as it's guarded by rcu_read_lock().
+ * primitives such as list_add_rcu() as दीर्घ as it's guarded by rcu_पढ़ो_lock().
  */
-#define list_first_or_null_rcu(ptr, type, member) \
-({ \
-	struct list_head *__ptr = (ptr); \
-	struct list_head *__next = READ_ONCE(__ptr->next); \
-	likely(__ptr != __next) ? list_entry_rcu(__next, type, member) : NULL; \
-})
+#घोषणा list_first_or_null_rcu(ptr, type, member) \
+(अणु \
+	काष्ठा list_head *__ptr = (ptr); \
+	काष्ठा list_head *__next = READ_ONCE(__ptr->next); \
+	likely(__ptr != __next) ? list_entry_rcu(__next, type, member) : शून्य; \
+पूर्ण)
 
 /**
  * list_next_or_null_rcu - get the first element from a list
- * @head:	the head for the list.
+ * @head:	the head क्रम the list.
  * @ptr:        the list head to take the next element from.
- * @type:       the type of the struct this is embedded in.
- * @member:     the name of the list_head within the struct.
+ * @type:       the type of the काष्ठा this is embedded in.
+ * @member:     the name of the list_head within the काष्ठा.
  *
- * Note that if the ptr is at the end of the list, NULL is returned.
+ * Note that अगर the ptr is at the end of the list, शून्य is वापसed.
  *
  * This primitive may safely run concurrently with the _rcu list-mutation
- * primitives such as list_add_rcu() as long as it's guarded by rcu_read_lock().
+ * primitives such as list_add_rcu() as दीर्घ as it's guarded by rcu_पढ़ो_lock().
  */
-#define list_next_or_null_rcu(head, ptr, type, member) \
-({ \
-	struct list_head *__head = (head); \
-	struct list_head *__ptr = (ptr); \
-	struct list_head *__next = READ_ONCE(__ptr->next); \
+#घोषणा list_next_or_null_rcu(head, ptr, type, member) \
+(अणु \
+	काष्ठा list_head *__head = (head); \
+	काष्ठा list_head *__ptr = (ptr); \
+	काष्ठा list_head *__next = READ_ONCE(__ptr->next); \
 	likely(__next != __head) ? list_entry_rcu(__next, type, \
-						  member) : NULL; \
-})
+						  member) : शून्य; \
+पूर्ण)
 
 /**
- * list_for_each_entry_rcu	-	iterate over rcu list of given type
+ * list_क्रम_each_entry_rcu	-	iterate over rcu list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
- * @cond:	optional lockdep expression if called from non-RCU protection.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_head within the काष्ठा.
+ * @cond:	optional lockdep expression अगर called from non-RCU protection.
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as list_add_rcu()
- * as long as the traversal is guarded by rcu_read_lock().
+ * as दीर्घ as the traversal is guarded by rcu_पढ़ो_lock().
  */
-#define list_for_each_entry_rcu(pos, head, member, cond...)		\
-	for (__list_check_rcu(dummy, ## cond, 0),			\
+#घोषणा list_क्रम_each_entry_rcu(pos, head, member, cond...)		\
+	क्रम (__list_check_rcu(dummy, ## cond, 0),			\
 	     pos = list_entry_rcu((head)->next, typeof(*pos), member);	\
 		&pos->member != (head);					\
 		pos = list_entry_rcu(pos->member.next, typeof(*pos), member))
 
 /**
- * list_for_each_entry_srcu	-	iterate over rcu list of given type
+ * list_क्रम_each_entry_srcu	-	iterate over rcu list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
- * @cond:	lockdep expression for the lock required to traverse the list.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_head within the काष्ठा.
+ * @cond:	lockdep expression क्रम the lock required to traverse the list.
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as list_add_rcu()
- * as long as the traversal is guarded by srcu_read_lock().
- * The lockdep expression srcu_read_lock_held() can be passed as the
- * cond argument from read side.
+ * as दीर्घ as the traversal is guarded by srcu_पढ़ो_lock().
+ * The lockdep expression srcu_पढ़ो_lock_held() can be passed as the
+ * cond argument from पढ़ो side.
  */
-#define list_for_each_entry_srcu(pos, head, member, cond)		\
-	for (__list_check_srcu(cond),					\
+#घोषणा list_क्रम_each_entry_srcu(pos, head, member, cond)		\
+	क्रम (__list_check_srcu(cond),					\
 	     pos = list_entry_rcu((head)->next, typeof(*pos), member);	\
 		&pos->member != (head);					\
 		pos = list_entry_rcu(pos->member.next, typeof(*pos), member))
 
 /**
- * list_entry_lockless - get the struct for this entry
- * @ptr:        the &struct list_head pointer.
- * @type:       the type of the struct this is embedded in.
- * @member:     the name of the list_head within the struct.
+ * list_entry_lockless - get the काष्ठा क्रम this entry
+ * @ptr:        the &काष्ठा list_head poपूर्णांकer.
+ * @type:       the type of the काष्ठा this is embedded in.
+ * @member:     the name of the list_head within the काष्ठा.
  *
  * This primitive may safely run concurrently with the _rcu
  * list-mutation primitives such as list_add_rcu(), but requires some
- * implicit RCU read-side guarding.  One example is running within a special
- * exception-time environment where preemption is disabled and where lockdep
+ * implicit RCU पढ़ो-side guarding.  One example is running within a special
+ * exception-समय environment where preemption is disabled and where lockdep
  * cannot be invoked.  Another example is when items are added to the list,
  * but never deleted.
  */
-#define list_entry_lockless(ptr, type, member) \
+#घोषणा list_entry_lockless(ptr, type, member) \
 	container_of((typeof(ptr))READ_ONCE(ptr), type, member)
 
 /**
- * list_for_each_entry_lockless - iterate over rcu list of given type
+ * list_क्रम_each_entry_lockless - iterate over rcu list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_struct within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_काष्ठा within the काष्ठा.
  *
  * This primitive may safely run concurrently with the _rcu
  * list-mutation primitives such as list_add_rcu(), but requires some
- * implicit RCU read-side guarding.  One example is running within a special
- * exception-time environment where preemption is disabled and where lockdep
+ * implicit RCU पढ़ो-side guarding.  One example is running within a special
+ * exception-समय environment where preemption is disabled and where lockdep
  * cannot be invoked.  Another example is when items are added to the list,
  * but never deleted.
  */
-#define list_for_each_entry_lockless(pos, head, member) \
-	for (pos = list_entry_lockless((head)->next, typeof(*pos), member); \
+#घोषणा list_क्रम_each_entry_lockless(pos, head, member) \
+	क्रम (pos = list_entry_lockless((head)->next, typeof(*pos), member); \
 	     &pos->member != (head); \
 	     pos = list_entry_lockless(pos->member.next, typeof(*pos), member))
 
 /**
- * list_for_each_entry_continue_rcu - continue iteration over list of given type
+ * list_क्रम_each_entry_जारी_rcu - जारी iteration over list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_head within the काष्ठा.
  *
  * Continue to iterate over list of given type, continuing after
- * the current position which must have been in the list when the RCU read
+ * the current position which must have been in the list when the RCU पढ़ो
  * lock was taken.
  * This would typically require either that you obtained the node from a
- * previous walk of the list in the same RCU read-side critical section, or
+ * previous walk of the list in the same RCU पढ़ो-side critical section, or
  * that you held some sort of non-RCU reference (such as a reference count)
  * to keep the node alive *and* in the list.
  *
- * This iterator is similar to list_for_each_entry_from_rcu() except
+ * This iterator is similar to list_क्रम_each_entry_from_rcu() except
  * this starts after the given position and that one starts at the given
  * position.
  */
-#define list_for_each_entry_continue_rcu(pos, head, member) 		\
-	for (pos = list_entry_rcu(pos->member.next, typeof(*pos), member); \
+#घोषणा list_क्रम_each_entry_जारी_rcu(pos, head, member) 		\
+	क्रम (pos = list_entry_rcu(pos->member.next, typeof(*pos), member); \
 	     &pos->member != (head);	\
 	     pos = list_entry_rcu(pos->member.next, typeof(*pos), member))
 
 /**
- * list_for_each_entry_from_rcu - iterate over a list from current point
+ * list_क्रम_each_entry_from_rcu - iterate over a list from current poपूर्णांक
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_node within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the list_node within the काष्ठा.
  *
  * Iterate over the tail of a list starting from a given position,
- * which must have been in the list when the RCU read lock was taken.
+ * which must have been in the list when the RCU पढ़ो lock was taken.
  * This would typically require either that you obtained the node from a
- * previous walk of the list in the same RCU read-side critical section, or
+ * previous walk of the list in the same RCU पढ़ो-side critical section, or
  * that you held some sort of non-RCU reference (such as a reference count)
  * to keep the node alive *and* in the list.
  *
- * This iterator is similar to list_for_each_entry_continue_rcu() except
+ * This iterator is similar to list_क्रम_each_entry_जारी_rcu() except
  * this starts from the given position and that one starts from the position
  * after the given position.
  */
-#define list_for_each_entry_from_rcu(pos, head, member)			\
-	for (; &(pos)->member != (head);					\
+#घोषणा list_क्रम_each_entry_from_rcu(pos, head, member)			\
+	क्रम (; &(pos)->member != (head);					\
 		pos = list_entry_rcu(pos->member.next, typeof(*(pos)), member))
 
 /**
  * hlist_del_rcu - deletes entry from hash list without re-initialization
  * @n: the element to delete from the hash list.
  *
- * Note: list_unhashed() on entry does not return true after this,
- * the entry is in an undefined state. It is useful for RCU based
- * lockfree traversal.
+ * Note: list_unhashed() on entry करोes not वापस true after this,
+ * the entry is in an undefined state. It is useful क्रम RCU based
+ * lockमुक्त traversal.
  *
- * In particular, it means that we can not poison the forward
- * pointers that may still be used for walking the hash list.
+ * In particular, it means that we can not poison the क्रमward
+ * poपूर्णांकers that may still be used क्रम walking the hash list.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as hlist_add_head_rcu()
  * or hlist_del_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * hlist_for_each_entry().
+ * hlist_क्रम_each_entry().
  */
-static inline void hlist_del_rcu(struct hlist_node *n)
-{
+अटल अंतरभूत व्योम hlist_del_rcu(काष्ठा hlist_node *n)
+अणु
 	__hlist_del(n);
 	WRITE_ONCE(n->pprev, LIST_POISON2);
-}
+पूर्ण
 
 /**
  * hlist_replace_rcu - replace old entry by new one
@@ -522,21 +523,21 @@ static inline void hlist_del_rcu(struct hlist_node *n)
  *
  * The @old entry will be replaced with the @new entry atomically.
  */
-static inline void hlist_replace_rcu(struct hlist_node *old,
-					struct hlist_node *new)
-{
-	struct hlist_node *next = old->next;
+अटल अंतरभूत व्योम hlist_replace_rcu(काष्ठा hlist_node *old,
+					काष्ठा hlist_node *new)
+अणु
+	काष्ठा hlist_node *next = old->next;
 
 	new->next = next;
 	WRITE_ONCE(new->pprev, old->pprev);
-	rcu_assign_pointer(*(struct hlist_node __rcu **)new->pprev, new);
-	if (next)
+	rcu_assign_poपूर्णांकer(*(काष्ठा hlist_node __rcu **)new->pprev, new);
+	अगर (next)
 		WRITE_ONCE(new->next->pprev, &new->next);
 	WRITE_ONCE(old->pprev, LIST_POISON2);
-}
+पूर्ण
 
 /**
- * hlists_swap_heads_rcu - swap the lists the hlist heads point to
+ * hlists_swap_heads_rcu - swap the lists the hlist heads poपूर्णांक to
  * @left:  The hlist head on the left
  * @right: The hlist head on the right
  *
@@ -545,23 +546,23 @@ static inline void hlist_replace_rcu(struct hlist_node *old,
  * The lists end up as    [@left  ][node2 ... ]
  *                        [@right ][node1 ... ]
  */
-static inline void hlists_swap_heads_rcu(struct hlist_head *left, struct hlist_head *right)
-{
-	struct hlist_node *node1 = left->first;
-	struct hlist_node *node2 = right->first;
+अटल अंतरभूत व्योम hlists_swap_heads_rcu(काष्ठा hlist_head *left, काष्ठा hlist_head *right)
+अणु
+	काष्ठा hlist_node *node1 = left->first;
+	काष्ठा hlist_node *node2 = right->first;
 
-	rcu_assign_pointer(left->first, node2);
-	rcu_assign_pointer(right->first, node1);
+	rcu_assign_poपूर्णांकer(left->first, node2);
+	rcu_assign_poपूर्णांकer(right->first, node1);
 	WRITE_ONCE(node2->pprev, &left->first);
 	WRITE_ONCE(node1->pprev, &right->first);
-}
+पूर्ण
 
 /*
- * return the first or the next element in an RCU protected hlist
+ * वापस the first or the next element in an RCU रक्षित hlist
  */
-#define hlist_first_rcu(head)	(*((struct hlist_node __rcu **)(&(head)->first)))
-#define hlist_next_rcu(node)	(*((struct hlist_node __rcu **)(&(node)->next)))
-#define hlist_pprev_rcu(node)	(*((struct hlist_node __rcu **)((node)->pprev)))
+#घोषणा hlist_first_rcu(head)	(*((काष्ठा hlist_node __rcu **)(&(head)->first)))
+#घोषणा hlist_next_rcu(node)	(*((काष्ठा hlist_node __rcu **)(&(node)->next)))
+#घोषणा hlist_pprev_rcu(node)	(*((काष्ठा hlist_node __rcu **)((node)->pprev)))
 
 /**
  * hlist_add_head_rcu
@@ -569,30 +570,30 @@ static inline void hlists_swap_heads_rcu(struct hlist_head *left, struct hlist_h
  * @h: the list to add to.
  *
  * Description:
- * Adds the specified element to the specified hlist,
- * while permitting racing traversals.
+ * Adds the specअगरied element to the specअगरied hlist,
+ * जबतक permitting racing traversals.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as hlist_add_head_rcu()
  * or hlist_del_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * hlist_for_each_entry_rcu(), used to prevent memory-consistency
+ * hlist_क्रम_each_entry_rcu(), used to prevent memory-consistency
  * problems on Alpha CPUs.  Regardless of the type of CPU, the
- * list-traversal primitive must be guarded by rcu_read_lock().
+ * list-traversal primitive must be guarded by rcu_पढ़ो_lock().
  */
-static inline void hlist_add_head_rcu(struct hlist_node *n,
-					struct hlist_head *h)
-{
-	struct hlist_node *first = h->first;
+अटल अंतरभूत व्योम hlist_add_head_rcu(काष्ठा hlist_node *n,
+					काष्ठा hlist_head *h)
+अणु
+	काष्ठा hlist_node *first = h->first;
 
 	n->next = first;
 	WRITE_ONCE(n->pprev, &h->first);
-	rcu_assign_pointer(hlist_first_rcu(h), n);
-	if (first)
+	rcu_assign_poपूर्णांकer(hlist_first_rcu(h), n);
+	अगर (first)
 		WRITE_ONCE(first->pprev, &n->next);
-}
+पूर्ण
 
 /**
  * hlist_add_tail_rcu
@@ -600,63 +601,63 @@ static inline void hlist_add_head_rcu(struct hlist_node *n,
  * @h: the list to add to.
  *
  * Description:
- * Adds the specified element to the specified hlist,
- * while permitting racing traversals.
+ * Adds the specअगरied element to the specअगरied hlist,
+ * जबतक permitting racing traversals.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as hlist_add_head_rcu()
  * or hlist_del_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * hlist_for_each_entry_rcu(), used to prevent memory-consistency
+ * hlist_क्रम_each_entry_rcu(), used to prevent memory-consistency
  * problems on Alpha CPUs.  Regardless of the type of CPU, the
- * list-traversal primitive must be guarded by rcu_read_lock().
+ * list-traversal primitive must be guarded by rcu_पढ़ो_lock().
  */
-static inline void hlist_add_tail_rcu(struct hlist_node *n,
-				      struct hlist_head *h)
-{
-	struct hlist_node *i, *last = NULL;
+अटल अंतरभूत व्योम hlist_add_tail_rcu(काष्ठा hlist_node *n,
+				      काष्ठा hlist_head *h)
+अणु
+	काष्ठा hlist_node *i, *last = शून्य;
 
-	/* Note: write side code, so rcu accessors are not needed. */
-	for (i = h->first; i; i = i->next)
+	/* Note: ग_लिखो side code, so rcu accessors are not needed. */
+	क्रम (i = h->first; i; i = i->next)
 		last = i;
 
-	if (last) {
+	अगर (last) अणु
 		n->next = last->next;
 		WRITE_ONCE(n->pprev, &last->next);
-		rcu_assign_pointer(hlist_next_rcu(last), n);
-	} else {
+		rcu_assign_poपूर्णांकer(hlist_next_rcu(last), n);
+	पूर्ण अन्यथा अणु
 		hlist_add_head_rcu(n, h);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * hlist_add_before_rcu
+ * hlist_add_beक्रमe_rcu
  * @n: the new element to add to the hash list.
- * @next: the existing element to add the new element before.
+ * @next: the existing element to add the new element beक्रमe.
  *
  * Description:
- * Adds the specified element to the specified hlist
- * before the specified node while permitting racing traversals.
+ * Adds the specअगरied element to the specअगरied hlist
+ * beक्रमe the specअगरied node जबतक permitting racing traversals.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as hlist_add_head_rcu()
  * or hlist_del_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * hlist_for_each_entry_rcu(), used to prevent memory-consistency
+ * hlist_क्रम_each_entry_rcu(), used to prevent memory-consistency
  * problems on Alpha CPUs.
  */
-static inline void hlist_add_before_rcu(struct hlist_node *n,
-					struct hlist_node *next)
-{
+अटल अंतरभूत व्योम hlist_add_beक्रमe_rcu(काष्ठा hlist_node *n,
+					काष्ठा hlist_node *next)
+अणु
 	WRITE_ONCE(n->pprev, next->pprev);
 	n->next = next;
-	rcu_assign_pointer(hlist_pprev_rcu(n), n);
+	rcu_assign_poपूर्णांकer(hlist_pprev_rcu(n), n);
 	WRITE_ONCE(next->pprev, &n->next);
-}
+पूर्ण
 
 /**
  * hlist_add_behind_rcu
@@ -664,46 +665,46 @@ static inline void hlist_add_before_rcu(struct hlist_node *n,
  * @prev: the existing element to add the new element after.
  *
  * Description:
- * Adds the specified element to the specified hlist
- * after the specified node while permitting racing traversals.
+ * Adds the specअगरied element to the specअगरied hlist
+ * after the specअगरied node जबतक permitting racing traversals.
  *
  * The caller must take whatever precautions are necessary
- * (such as holding appropriate locks) to avoid racing
+ * (such as holding appropriate locks) to aव्योम racing
  * with another list-mutation primitive, such as hlist_add_head_rcu()
  * or hlist_del_rcu(), running on this same list.
  * However, it is perfectly legal to run concurrently with
  * the _rcu list-traversal primitives, such as
- * hlist_for_each_entry_rcu(), used to prevent memory-consistency
+ * hlist_क्रम_each_entry_rcu(), used to prevent memory-consistency
  * problems on Alpha CPUs.
  */
-static inline void hlist_add_behind_rcu(struct hlist_node *n,
-					struct hlist_node *prev)
-{
+अटल अंतरभूत व्योम hlist_add_behind_rcu(काष्ठा hlist_node *n,
+					काष्ठा hlist_node *prev)
+अणु
 	n->next = prev->next;
 	WRITE_ONCE(n->pprev, &prev->next);
-	rcu_assign_pointer(hlist_next_rcu(prev), n);
-	if (n->next)
+	rcu_assign_poपूर्णांकer(hlist_next_rcu(prev), n);
+	अगर (n->next)
 		WRITE_ONCE(n->next->pprev, &n->next);
-}
+पूर्ण
 
-#define __hlist_for_each_rcu(pos, head)				\
-	for (pos = rcu_dereference(hlist_first_rcu(head));	\
+#घोषणा __hlist_क्रम_each_rcu(pos, head)				\
+	क्रम (pos = rcu_dereference(hlist_first_rcu(head));	\
 	     pos;						\
 	     pos = rcu_dereference(hlist_next_rcu(pos)))
 
 /**
- * hlist_for_each_entry_rcu - iterate over rcu list of given type
+ * hlist_क्रम_each_entry_rcu - iterate over rcu list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the hlist_node within the struct.
- * @cond:	optional lockdep expression if called from non-RCU protection.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the hlist_node within the काष्ठा.
+ * @cond:	optional lockdep expression अगर called from non-RCU protection.
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
- * as long as the traversal is guarded by rcu_read_lock().
+ * as दीर्घ as the traversal is guarded by rcu_पढ़ो_lock().
  */
-#define hlist_for_each_entry_rcu(pos, head, member, cond...)		\
-	for (__list_check_rcu(dummy, ## cond, 0),			\
+#घोषणा hlist_क्रम_each_entry_rcu(pos, head, member, cond...)		\
+	क्रम (__list_check_rcu(dummy, ## cond, 0),			\
 	     pos = hlist_entry_safe(rcu_dereference_raw(hlist_first_rcu(head)),\
 			typeof(*(pos)), member);			\
 		pos;							\
@@ -711,20 +712,20 @@ static inline void hlist_add_behind_rcu(struct hlist_node *n,
 			&(pos)->member)), typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_srcu - iterate over rcu list of given type
+ * hlist_क्रम_each_entry_srcu - iterate over rcu list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the hlist_node within the struct.
- * @cond:	lockdep expression for the lock required to traverse the list.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the hlist_node within the काष्ठा.
+ * @cond:	lockdep expression क्रम the lock required to traverse the list.
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
- * as long as the traversal is guarded by srcu_read_lock().
- * The lockdep expression srcu_read_lock_held() can be passed as the
- * cond argument from read side.
+ * as दीर्घ as the traversal is guarded by srcu_पढ़ो_lock().
+ * The lockdep expression srcu_पढ़ो_lock_held() can be passed as the
+ * cond argument from पढ़ो side.
  */
-#define hlist_for_each_entry_srcu(pos, head, member, cond)		\
-	for (__list_check_srcu(cond),					\
+#घोषणा hlist_क्रम_each_entry_srcu(pos, head, member, cond)		\
+	क्रम (__list_check_srcu(cond),					\
 	     pos = hlist_entry_safe(rcu_dereference_raw(hlist_first_rcu(head)),\
 			typeof(*(pos)), member);			\
 		pos;							\
@@ -732,75 +733,75 @@ static inline void hlist_add_behind_rcu(struct hlist_node *n,
 			&(pos)->member)), typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_rcu_notrace - iterate over rcu list of given type (for tracing)
+ * hlist_क्रम_each_entry_rcu_notrace - iterate over rcu list of given type (क्रम tracing)
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the hlist_node within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the hlist_node within the काष्ठा.
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
- * as long as the traversal is guarded by rcu_read_lock().
+ * as दीर्घ as the traversal is guarded by rcu_पढ़ो_lock().
  *
- * This is the same as hlist_for_each_entry_rcu() except that it does
- * not do any RCU debugging or tracing.
+ * This is the same as hlist_क्रम_each_entry_rcu() except that it करोes
+ * not करो any RCU debugging or tracing.
  */
-#define hlist_for_each_entry_rcu_notrace(pos, head, member)			\
-	for (pos = hlist_entry_safe(rcu_dereference_raw_check(hlist_first_rcu(head)),\
+#घोषणा hlist_क्रम_each_entry_rcu_notrace(pos, head, member)			\
+	क्रम (pos = hlist_entry_safe(rcu_dereference_raw_check(hlist_first_rcu(head)),\
 			typeof(*(pos)), member);			\
 		pos;							\
 		pos = hlist_entry_safe(rcu_dereference_raw_check(hlist_next_rcu(\
 			&(pos)->member)), typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_rcu_bh - iterate over rcu list of given type
+ * hlist_क्रम_each_entry_rcu_bh - iterate over rcu list of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the hlist_node within the struct.
+ * @head:	the head क्रम your list.
+ * @member:	the name of the hlist_node within the काष्ठा.
  *
  * This list-traversal primitive may safely run concurrently with
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
- * as long as the traversal is guarded by rcu_read_lock().
+ * as दीर्घ as the traversal is guarded by rcu_पढ़ो_lock().
  */
-#define hlist_for_each_entry_rcu_bh(pos, head, member)			\
-	for (pos = hlist_entry_safe(rcu_dereference_bh(hlist_first_rcu(head)),\
+#घोषणा hlist_क्रम_each_entry_rcu_bh(pos, head, member)			\
+	क्रम (pos = hlist_entry_safe(rcu_dereference_bh(hlist_first_rcu(head)),\
 			typeof(*(pos)), member);			\
 		pos;							\
 		pos = hlist_entry_safe(rcu_dereference_bh(hlist_next_rcu(\
 			&(pos)->member)), typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_continue_rcu - iterate over a hlist continuing after current point
+ * hlist_क्रम_each_entry_जारी_rcu - iterate over a hlist continuing after current poपूर्णांक
  * @pos:	the type * to use as a loop cursor.
- * @member:	the name of the hlist_node within the struct.
+ * @member:	the name of the hlist_node within the काष्ठा.
  */
-#define hlist_for_each_entry_continue_rcu(pos, member)			\
-	for (pos = hlist_entry_safe(rcu_dereference_raw(hlist_next_rcu( \
+#घोषणा hlist_क्रम_each_entry_जारी_rcu(pos, member)			\
+	क्रम (pos = hlist_entry_safe(rcu_dereference_raw(hlist_next_rcu( \
 			&(pos)->member)), typeof(*(pos)), member);	\
 	     pos;							\
 	     pos = hlist_entry_safe(rcu_dereference_raw(hlist_next_rcu(	\
 			&(pos)->member)), typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_continue_rcu_bh - iterate over a hlist continuing after current point
+ * hlist_क्रम_each_entry_जारी_rcu_bh - iterate over a hlist continuing after current poपूर्णांक
  * @pos:	the type * to use as a loop cursor.
- * @member:	the name of the hlist_node within the struct.
+ * @member:	the name of the hlist_node within the काष्ठा.
  */
-#define hlist_for_each_entry_continue_rcu_bh(pos, member)		\
-	for (pos = hlist_entry_safe(rcu_dereference_bh(hlist_next_rcu(  \
+#घोषणा hlist_क्रम_each_entry_जारी_rcu_bh(pos, member)		\
+	क्रम (pos = hlist_entry_safe(rcu_dereference_bh(hlist_next_rcu(  \
 			&(pos)->member)), typeof(*(pos)), member);	\
 	     pos;							\
 	     pos = hlist_entry_safe(rcu_dereference_bh(hlist_next_rcu(	\
 			&(pos)->member)), typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_from_rcu - iterate over a hlist continuing from current point
+ * hlist_क्रम_each_entry_from_rcu - iterate over a hlist continuing from current poपूर्णांक
  * @pos:	the type * to use as a loop cursor.
- * @member:	the name of the hlist_node within the struct.
+ * @member:	the name of the hlist_node within the काष्ठा.
  */
-#define hlist_for_each_entry_from_rcu(pos, member)			\
-	for (; pos;							\
+#घोषणा hlist_क्रम_each_entry_from_rcu(pos, member)			\
+	क्रम (; pos;							\
 	     pos = hlist_entry_safe(rcu_dereference_raw(hlist_next_rcu(	\
 			&(pos)->member)), typeof(*(pos)), member))
 
-#endif	/* __KERNEL__ */
-#endif
+#पूर्ण_अगर	/* __KERNEL__ */
+#पूर्ण_अगर

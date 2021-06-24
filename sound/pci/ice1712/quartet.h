@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SOUND_QTET_H
-#define __SOUND_QTET_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SOUND_QTET_H
+#घोषणा __SOUND_QTET_H
 
-#define QTET_DEVICE_DESC		"{Infrasonic,Quartet},"
+#घोषणा QTET_DEVICE_DESC		"{Infrasonic,Quartet},"
 
-#define VT1724_SUBDEVICE_QTET		0x30305349	/* Infrasonic Quartet */
+#घोषणा VT1724_SUBDEVICE_QTET		0x30305349	/* Infrasonic Quartet */
 
-extern struct snd_ice1712_card_info  snd_vt1724_qtet_cards[];
+बाह्य काष्ठा snd_ice1712_card_info  snd_vt1724_qtet_cards[];
 
-#endif	/* __SOUND_QTET_H */
+#पूर्ण_अगर	/* __SOUND_QTET_H */

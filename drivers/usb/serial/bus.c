@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * USB Serial Converter Bus specific functions
+ * USB Serial Converter Bus specअगरic functions
  *
- * Copyright (C) 2002 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (C) 2002 Greg Kroah-Harपंचांगan (greg@kroah.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/tty.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/tty.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
 
-static int usb_serial_device_match(struct device *dev,
-						struct device_driver *drv)
-{
-	const struct usb_serial_port *port = to_usb_serial_port(dev);
-	struct usb_serial_driver *driver = to_usb_serial_driver(drv);
+अटल पूर्णांक usb_serial_device_match(काष्ठा device *dev,
+						काष्ठा device_driver *drv)
+अणु
+	स्थिर काष्ठा usb_serial_port *port = to_usb_serial_port(dev);
+	काष्ठा usb_serial_driver *driver = to_usb_serial_driver(drv);
 
 	/*
-	 * drivers are already assigned to ports in serial_probe so it's
+	 * drivers are alपढ़ोy asचिन्हित to ports in serial_probe so it's
 	 * a simple check here.
 	 */
-	if (driver == port->serial->type)
-		return 1;
+	अगर (driver == port->serial->type)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usb_serial_device_probe(struct device *dev)
-{
-	struct usb_serial_port *port = to_usb_serial_port(dev);
-	struct usb_serial_driver *driver;
-	struct device *tty_dev;
-	int retval = 0;
-	int minor;
+अटल पूर्णांक usb_serial_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा usb_serial_port *port = to_usb_serial_port(dev);
+	काष्ठा usb_serial_driver *driver;
+	काष्ठा device *tty_dev;
+	पूर्णांक retval = 0;
+	पूर्णांक minor;
 
-	/* make sure suspend/resume doesn't race against port_probe */
-	retval = usb_autopm_get_interface(port->serial->interface);
-	if (retval)
-		return retval;
+	/* make sure suspend/resume करोesn't race against port_probe */
+	retval = usb_स्वतःpm_get_पूर्णांकerface(port->serial->पूर्णांकerface);
+	अगर (retval)
+		वापस retval;
 
 	driver = port->serial->type;
-	if (driver->port_probe) {
+	अगर (driver->port_probe) अणु
 		retval = driver->port_probe(port);
-		if (retval)
-			goto err_autopm_put;
-	}
+		अगर (retval)
+			जाओ err_स्वतःpm_put;
+	पूर्ण
 
 	minor = port->minor;
-	tty_dev = tty_port_register_device(&port->port, usb_serial_tty_driver,
+	tty_dev = tty_port_रेजिस्टर_device(&port->port, usb_serial_tty_driver,
 					   minor, dev);
-	if (IS_ERR(tty_dev)) {
+	अगर (IS_ERR(tty_dev)) अणु
 		retval = PTR_ERR(tty_dev);
-		goto err_port_remove;
-	}
+		जाओ err_port_हटाओ;
+	पूर्ण
 
-	usb_autopm_put_interface(port->serial->interface);
+	usb_स्वतःpm_put_पूर्णांकerface(port->serial->पूर्णांकerface);
 
 	dev_info(&port->serial->dev->dev,
 		 "%s converter now attached to ttyUSB%d\n",
 		 driver->description, minor);
 
-	return 0;
+	वापस 0;
 
-err_port_remove:
-	if (driver->port_remove)
-		driver->port_remove(port);
-err_autopm_put:
-	usb_autopm_put_interface(port->serial->interface);
+err_port_हटाओ:
+	अगर (driver->port_हटाओ)
+		driver->port_हटाओ(port);
+err_स्वतःpm_put:
+	usb_स्वतःpm_put_पूर्णांकerface(port->serial->पूर्णांकerface);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int usb_serial_device_remove(struct device *dev)
-{
-	struct usb_serial_port *port = to_usb_serial_port(dev);
-	struct usb_serial_driver *driver;
-	int minor;
-	int autopm_err;
+अटल पूर्णांक usb_serial_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा usb_serial_port *port = to_usb_serial_port(dev);
+	काष्ठा usb_serial_driver *driver;
+	पूर्णांक minor;
+	पूर्णांक स्वतःpm_err;
 
 	/*
-	 * Make sure suspend/resume doesn't race against port_remove.
+	 * Make sure suspend/resume करोesn't race against port_हटाओ.
 	 *
-	 * Note that no further runtime PM callbacks will be made if
-	 * autopm_get fails.
+	 * Note that no further runसमय PM callbacks will be made अगर
+	 * स्वतःpm_get fails.
 	 */
-	autopm_err = usb_autopm_get_interface(port->serial->interface);
+	स्वतःpm_err = usb_स्वतःpm_get_पूर्णांकerface(port->serial->पूर्णांकerface);
 
 	minor = port->minor;
-	tty_unregister_device(usb_serial_tty_driver, minor);
+	tty_unरेजिस्टर_device(usb_serial_tty_driver, minor);
 
 	driver = port->serial->type;
-	if (driver->port_remove)
-		driver->port_remove(port);
+	अगर (driver->port_हटाओ)
+		driver->port_हटाओ(port);
 
 	dev_info(dev, "%s converter now disconnected from ttyUSB%d\n",
 		 driver->description, minor);
 
-	if (!autopm_err)
-		usb_autopm_put_interface(port->serial->interface);
+	अगर (!स्वतःpm_err)
+		usb_स्वतःpm_put_पूर्णांकerface(port->serial->पूर्णांकerface);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t new_id_store(struct device_driver *driver,
-			    const char *buf, size_t count)
-{
-	struct usb_serial_driver *usb_drv = to_usb_serial_driver(driver);
-	ssize_t retval = usb_store_new_id(&usb_drv->dynids, usb_drv->id_table,
+अटल sमाप_प्रकार new_id_store(काष्ठा device_driver *driver,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा usb_serial_driver *usb_drv = to_usb_serial_driver(driver);
+	sमाप_प्रकार retval = usb_store_new_id(&usb_drv->dynids, usb_drv->id_table,
 					 driver, buf, count);
 
-	if (retval >= 0 && usb_drv->usb_driver != NULL)
+	अगर (retval >= 0 && usb_drv->usb_driver != शून्य)
 		retval = usb_store_new_id(&usb_drv->usb_driver->dynids,
 					  usb_drv->usb_driver->id_table,
 					  &usb_drv->usb_driver->drvwrap.driver,
 					  buf, count);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t new_id_show(struct device_driver *driver, char *buf)
-{
-	struct usb_serial_driver *usb_drv = to_usb_serial_driver(driver);
+अटल sमाप_प्रकार new_id_show(काष्ठा device_driver *driver, अक्षर *buf)
+अणु
+	काष्ठा usb_serial_driver *usb_drv = to_usb_serial_driver(driver);
 
-	return usb_show_dynids(&usb_drv->dynids, buf);
-}
-static DRIVER_ATTR_RW(new_id);
+	वापस usb_show_dynids(&usb_drv->dynids, buf);
+पूर्ण
+अटल DRIVER_ATTR_RW(new_id);
 
-static struct attribute *usb_serial_drv_attrs[] = {
+अटल काष्ठा attribute *usb_serial_drv_attrs[] = अणु
 	&driver_attr_new_id.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(usb_serial_drv);
 
-static void free_dynids(struct usb_serial_driver *drv)
-{
-	struct usb_dynid *dynid, *n;
+अटल व्योम मुक्त_dynids(काष्ठा usb_serial_driver *drv)
+अणु
+	काष्ठा usb_dynid *dynid, *n;
 
 	spin_lock(&drv->dynids.lock);
-	list_for_each_entry_safe(dynid, n, &drv->dynids.list, node) {
+	list_क्रम_each_entry_safe(dynid, n, &drv->dynids.list, node) अणु
 		list_del(&dynid->node);
-		kfree(dynid);
-	}
+		kमुक्त(dynid);
+	पूर्ण
 	spin_unlock(&drv->dynids.lock);
-}
+पूर्ण
 
-struct bus_type usb_serial_bus_type = {
+काष्ठा bus_type usb_serial_bus_type = अणु
 	.name =		"usb-serial",
 	.match =	usb_serial_device_match,
 	.probe =	usb_serial_device_probe,
-	.remove =	usb_serial_device_remove,
+	.हटाओ =	usb_serial_device_हटाओ,
 	.drv_groups = 	usb_serial_drv_groups,
-};
+पूर्ण;
 
-int usb_serial_bus_register(struct usb_serial_driver *driver)
-{
-	int retval;
+पूर्णांक usb_serial_bus_रेजिस्टर(काष्ठा usb_serial_driver *driver)
+अणु
+	पूर्णांक retval;
 
 	driver->driver.bus = &usb_serial_bus_type;
 	spin_lock_init(&driver->dynids.lock);
 	INIT_LIST_HEAD(&driver->dynids.list);
 
-	retval = driver_register(&driver->driver);
+	retval = driver_रेजिस्टर(&driver->driver);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void usb_serial_bus_deregister(struct usb_serial_driver *driver)
-{
-	free_dynids(driver);
-	driver_unregister(&driver->driver);
-}
+व्योम usb_serial_bus_deरेजिस्टर(काष्ठा usb_serial_driver *driver)
+अणु
+	मुक्त_dynids(driver);
+	driver_unरेजिस्टर(&driver->driver);
+पूर्ण
 

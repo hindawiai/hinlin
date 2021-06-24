@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
-#include <linux/kernel.h>
-#include <linux/kprobes.h>
-#include <linux/module.h>
-#include <linux/kallsyms.h>
-#include <asm/sections.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <यंत्र/sections.h>
 
-#include "decode-insn.h"
-#include "simulate-insn.h"
+#समावेश "decode-insn.h"
+#समावेश "simulate-insn.h"
 
 /* Return:
- *   INSN_REJECTED     If instruction is one not allowed to kprobe,
- *   INSN_GOOD_NO_SLOT If instruction is supported but doesn't use its slot.
+ *   INSN_REJECTED     If inकाष्ठाion is one not allowed to kprobe,
+ *   INSN_GOOD_NO_SLOT If inकाष्ठाion is supported but करोesn't use its slot.
  */
-enum probe_insn __kprobes
-csky_probe_decode_insn(probe_opcode_t *addr, struct arch_probe_insn *api)
-{
+क्रमागत probe_insn __kprobes
+csky_probe_decode_insn(probe_opcode_t *addr, काष्ठा arch_probe_insn *api)
+अणु
 	probe_opcode_t insn = le32_to_cpu(*addr);
 
 	CSKY_INSN_SET_SIMULATE(br16,		insn);
@@ -45,5 +46,5 @@ csky_probe_decode_insn(probe_opcode_t *addr, struct arch_probe_insn *api)
 	CSKY_INSN_SET_SIMULATE(jmpi32,		insn);
 	CSKY_INSN_SET_SIMULATE(jsri32,		insn);
 
-	return INSN_GOOD;
-}
+	वापस INSN_GOOD;
+पूर्ण

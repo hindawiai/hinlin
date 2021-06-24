@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_SYSCALLS_H
-#define __ASM_SH_SYSCALLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_SYSCALLS_H
+#घोषणा __ASM_SH_SYSCALLS_H
 
-asmlinkage int old_mmap(unsigned long addr, unsigned long len,
-			unsigned long prot, unsigned long flags,
-			int fd, unsigned long off);
-asmlinkage long sys_mmap2(unsigned long addr, unsigned long len,
-			  unsigned long prot, unsigned long flags,
-			  unsigned long fd, unsigned long pgoff);
+यंत्रlinkage पूर्णांक old_mmap(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+			अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
+			पूर्णांक fd, अचिन्हित दीर्घ off);
+यंत्रlinkage दीर्घ sys_mmap2(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+			  अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
+			  अचिन्हित दीर्घ fd, अचिन्हित दीर्घ pgoff);
 
-#include <asm/syscalls_32.h>
+#समावेश <यंत्र/syscalls_32.h>
 
-#endif /* __ASM_SH_SYSCALLS_H */
+#पूर्ण_अगर /* __ASM_SH_SYSCALLS_H */

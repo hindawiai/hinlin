@@ -1,13 +1,14 @@
+<शैली गुरु>
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,30 +24,30 @@
  * Authors: AMD
  *
  */
-#ifndef __DSCC_TYPES_H__
-#define __DSCC_TYPES_H__
+#अगर_अघोषित __DSCC_TYPES_H__
+#घोषणा __DSCC_TYPES_H__
 
-#include <drm/drm_dsc.h>
+#समावेश <drm/drm_dsc.h>
 
-#ifndef NUM_BUF_RANGES
-#define NUM_BUF_RANGES 15
-#endif
+#अगर_अघोषित NUM_BUF_RANGES
+#घोषणा NUM_BUF_RANGES 15
+#पूर्ण_अगर
 
-struct dsc_pps_rc_range {
-	int range_min_qp;
-	int range_max_qp;
-	int range_bpg_offset;
-};
+काष्ठा dsc_pps_rc_range अणु
+	पूर्णांक range_min_qp;
+	पूर्णांक range_max_qp;
+	पूर्णांक range_bpg_offset;
+पूर्ण;
 
-struct dsc_parameters {
-	struct drm_dsc_config pps;
+काष्ठा dsc_parameters अणु
+	काष्ठा drm_dsc_config pps;
 
-	/* Additional parameters for register programming */
-	uint32_t bytes_per_pixel; /* In u3.28 format */
-	uint32_t rc_buffer_model_size;
-};
+	/* Additional parameters क्रम रेजिस्टर programming */
+	uपूर्णांक32_t bytes_per_pixel; /* In u3.28 क्रमmat */
+	uपूर्णांक32_t rc_buffer_model_size;
+पूर्ण;
 
-int dscc_compute_dsc_parameters(const struct drm_dsc_config *pps, struct dsc_parameters *dsc_params);
+पूर्णांक dscc_compute_dsc_parameters(स्थिर काष्ठा drm_dsc_config *pps, काष्ठा dsc_parameters *dsc_params);
 
-#endif
+#पूर्ण_अगर
 

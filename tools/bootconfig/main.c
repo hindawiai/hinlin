@@ -1,458 +1,459 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Boot config tool for initrd image
+ * Boot config tool क्रम initrd image
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
-#include <endian.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <endian.h>
 
-#include <linux/kernel.h>
-#include <linux/bootconfig.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bootconfig.h>
 
-static int xbc_show_value(struct xbc_node *node, bool semicolon)
-{
-	const char *val, *eol;
-	char q;
-	int i = 0;
+अटल पूर्णांक xbc_show_value(काष्ठा xbc_node *node, bool semicolon)
+अणु
+	स्थिर अक्षर *val, *eol;
+	अक्षर q;
+	पूर्णांक i = 0;
 
 	eol = semicolon ? ";\n" : "\n";
-	xbc_array_for_each_value(node, val) {
-		if (strchr(val, '"'))
+	xbc_array_क्रम_each_value(node, val) अणु
+		अगर (म_अक्षर(val, '"'))
 			q = '\'';
-		else
+		अन्यथा
 			q = '"';
-		printf("%c%s%c%s", q, val, q, node->next ? ", " : eol);
+		म_लिखो("%c%s%c%s", q, val, q, node->next ? ", " : eol);
 		i++;
-	}
-	return i;
-}
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static void xbc_show_compact_tree(void)
-{
-	struct xbc_node *node, *cnode;
-	int depth = 0, i;
+अटल व्योम xbc_show_compact_tree(व्योम)
+अणु
+	काष्ठा xbc_node *node, *cnode;
+	पूर्णांक depth = 0, i;
 
 	node = xbc_root_node();
-	while (node && xbc_node_is_key(node)) {
-		for (i = 0; i < depth; i++)
-			printf("\t");
+	जबतक (node && xbc_node_is_key(node)) अणु
+		क्रम (i = 0; i < depth; i++)
+			म_लिखो("\t");
 		cnode = xbc_node_get_child(node);
-		while (cnode && xbc_node_is_key(cnode) && !cnode->next) {
-			printf("%s.", xbc_node_get_data(node));
+		जबतक (cnode && xbc_node_is_key(cnode) && !cnode->next) अणु
+			म_लिखो("%s.", xbc_node_get_data(node));
 			node = cnode;
 			cnode = xbc_node_get_child(node);
-		}
-		if (cnode && xbc_node_is_key(cnode)) {
-			printf("%s {\n", xbc_node_get_data(node));
+		पूर्ण
+		अगर (cnode && xbc_node_is_key(cnode)) अणु
+			म_लिखो("%s {\n", xbc_node_get_data(node));
 			depth++;
 			node = cnode;
-			continue;
-		} else if (cnode && xbc_node_is_value(cnode)) {
-			printf("%s = ", xbc_node_get_data(node));
+			जारी;
+		पूर्ण अन्यथा अगर (cnode && xbc_node_is_value(cnode)) अणु
+			म_लिखो("%s = ", xbc_node_get_data(node));
 			xbc_show_value(cnode, true);
-		} else {
-			printf("%s;\n", xbc_node_get_data(node));
-		}
+		पूर्ण अन्यथा अणु
+			म_लिखो("%s;\n", xbc_node_get_data(node));
+		पूर्ण
 
-		if (node->next) {
+		अगर (node->next) अणु
 			node = xbc_node_get_next(node);
-			continue;
-		}
-		while (!node->next) {
+			जारी;
+		पूर्ण
+		जबतक (!node->next) अणु
 			node = xbc_node_get_parent(node);
-			if (!node)
-				return;
-			if (!xbc_node_get_child(node)->next)
-				continue;
+			अगर (!node)
+				वापस;
+			अगर (!xbc_node_get_child(node)->next)
+				जारी;
 			depth--;
-			for (i = 0; i < depth; i++)
-				printf("\t");
-			printf("}\n");
-		}
+			क्रम (i = 0; i < depth; i++)
+				म_लिखो("\t");
+			म_लिखो("}\n");
+		पूर्ण
 		node = xbc_node_get_next(node);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xbc_show_list(void)
-{
-	char key[XBC_KEYLEN_MAX];
-	struct xbc_node *leaf;
-	const char *val;
-	int ret = 0;
+अटल व्योम xbc_show_list(व्योम)
+अणु
+	अक्षर key[XBC_KEYLEN_MAX];
+	काष्ठा xbc_node *leaf;
+	स्थिर अक्षर *val;
+	पूर्णांक ret = 0;
 
-	xbc_for_each_key_value(leaf, val) {
+	xbc_क्रम_each_key_value(leaf, val) अणु
 		ret = xbc_node_compose_key(leaf, key, XBC_KEYLEN_MAX);
-		if (ret < 0)
-			break;
-		printf("%s = ", key);
-		if (!val || val[0] == '\0') {
-			printf("\"\"\n");
-			continue;
-		}
+		अगर (ret < 0)
+			अवरोध;
+		म_लिखो("%s = ", key);
+		अगर (!val || val[0] == '\0') अणु
+			म_लिखो("\"\"\n");
+			जारी;
+		पूर्ण
 		xbc_show_value(xbc_node_get_child(leaf), false);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Simple real checksum */
-static int checksum(unsigned char *buf, int len)
-{
-	int i, sum = 0;
+अटल पूर्णांक checksum(अचिन्हित अक्षर *buf, पूर्णांक len)
+अणु
+	पूर्णांक i, sum = 0;
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		sum += buf[i];
 
-	return sum;
-}
+	वापस sum;
+पूर्ण
 
-#define PAGE_SIZE	4096
+#घोषणा PAGE_SIZE	4096
 
-static int load_xbc_fd(int fd, char **buf, int size)
-{
-	int ret;
+अटल पूर्णांक load_xbc_fd(पूर्णांक fd, अक्षर **buf, पूर्णांक size)
+अणु
+	पूर्णांक ret;
 
-	*buf = malloc(size + 1);
-	if (!*buf)
-		return -ENOMEM;
+	*buf = दो_स्मृति(size + 1);
+	अगर (!*buf)
+		वापस -ENOMEM;
 
-	ret = read(fd, *buf, size);
-	if (ret < 0)
-		return -errno;
+	ret = पढ़ो(fd, *buf, size);
+	अगर (ret < 0)
+		वापस -त्रुटि_सं;
 	(*buf)[size] = '\0';
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Return the read size or -errno */
-static int load_xbc_file(const char *path, char **buf)
-{
-	struct stat stat;
-	int fd, ret;
+/* Return the पढ़ो size or -त्रुटि_सं */
+अटल पूर्णांक load_xbc_file(स्थिर अक्षर *path, अक्षर **buf)
+अणु
+	काष्ठा stat stat;
+	पूर्णांक fd, ret;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		return -errno;
-	ret = fstat(fd, &stat);
-	if (ret < 0)
-		return -errno;
+	fd = खोलो(path, O_RDONLY);
+	अगर (fd < 0)
+		वापस -त्रुटि_सं;
+	ret = ख_स्थिति(fd, &stat);
+	अगर (ret < 0)
+		वापस -त्रुटि_सं;
 
 	ret = load_xbc_fd(fd, buf, stat.st_size);
 
-	close(fd);
+	बंद(fd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pr_errno(const char *msg, int err)
-{
+अटल पूर्णांक pr_त्रुटि_सं(स्थिर अक्षर *msg, पूर्णांक err)
+अणु
 	pr_err("%s: %d\n", msg, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int load_xbc_from_initrd(int fd, char **buf)
-{
-	struct stat stat;
-	int ret;
+अटल पूर्णांक load_xbc_from_initrd(पूर्णांक fd, अक्षर **buf)
+अणु
+	काष्ठा stat stat;
+	पूर्णांक ret;
 	u32 size = 0, csum = 0, rcsum;
-	char magic[BOOTCONFIG_MAGIC_LEN];
-	const char *msg;
+	अक्षर magic[BOOTCONFIG_MAGIC_LEN];
+	स्थिर अक्षर *msg;
 
-	ret = fstat(fd, &stat);
-	if (ret < 0)
-		return -errno;
+	ret = ख_स्थिति(fd, &stat);
+	अगर (ret < 0)
+		वापस -त्रुटि_सं;
 
-	if (stat.st_size < 8 + BOOTCONFIG_MAGIC_LEN)
-		return 0;
+	अगर (stat.st_size < 8 + BOOTCONFIG_MAGIC_LEN)
+		वापस 0;
 
-	if (lseek(fd, -BOOTCONFIG_MAGIC_LEN, SEEK_END) < 0)
-		return pr_errno("Failed to lseek for magic", -errno);
+	अगर (lseek(fd, -BOOTCONFIG_MAGIC_LEN, अंत_से) < 0)
+		वापस pr_त्रुटि_सं("Failed to lseek for magic", -त्रुटि_सं);
 
-	if (read(fd, magic, BOOTCONFIG_MAGIC_LEN) < 0)
-		return pr_errno("Failed to read", -errno);
+	अगर (पढ़ो(fd, magic, BOOTCONFIG_MAGIC_LEN) < 0)
+		वापस pr_त्रुटि_सं("Failed to read", -त्रुटि_सं);
 
 	/* Check the bootconfig magic bytes */
-	if (memcmp(magic, BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_LEN) != 0)
-		return 0;
+	अगर (स_भेद(magic, BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_LEN) != 0)
+		वापस 0;
 
-	if (lseek(fd, -(8 + BOOTCONFIG_MAGIC_LEN), SEEK_END) < 0)
-		return pr_errno("Failed to lseek for size", -errno);
+	अगर (lseek(fd, -(8 + BOOTCONFIG_MAGIC_LEN), अंत_से) < 0)
+		वापस pr_त्रुटि_सं("Failed to lseek for size", -त्रुटि_सं);
 
-	if (read(fd, &size, sizeof(u32)) < 0)
-		return pr_errno("Failed to read size", -errno);
+	अगर (पढ़ो(fd, &size, माप(u32)) < 0)
+		वापस pr_त्रुटि_सं("Failed to read size", -त्रुटि_सं);
 	size = le32toh(size);
 
-	if (read(fd, &csum, sizeof(u32)) < 0)
-		return pr_errno("Failed to read checksum", -errno);
+	अगर (पढ़ो(fd, &csum, माप(u32)) < 0)
+		वापस pr_त्रुटि_सं("Failed to read checksum", -त्रुटि_सं);
 	csum = le32toh(csum);
 
 	/* Wrong size error  */
-	if (stat.st_size < size + 8 + BOOTCONFIG_MAGIC_LEN) {
+	अगर (stat.st_size < size + 8 + BOOTCONFIG_MAGIC_LEN) अणु
 		pr_err("bootconfig size is too big\n");
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
-	if (lseek(fd, stat.st_size - (size + 8 + BOOTCONFIG_MAGIC_LEN),
-		  SEEK_SET) < 0)
-		return pr_errno("Failed to lseek", -errno);
+	अगर (lseek(fd, stat.st_size - (size + 8 + BOOTCONFIG_MAGIC_LEN),
+		  शुरू_से) < 0)
+		वापस pr_त्रुटि_सं("Failed to lseek", -त्रुटि_सं);
 
 	ret = load_xbc_fd(fd, buf, size);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Wrong Checksum */
-	rcsum = checksum((unsigned char *)*buf, size);
-	if (csum != rcsum) {
+	rcsum = checksum((अचिन्हित अक्षर *)*buf, size);
+	अगर (csum != rcsum) अणु
 		pr_err("checksum error: %d != %d\n", csum, rcsum);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = xbc_init(*buf, &msg, NULL);
+	ret = xbc_init(*buf, &msg, शून्य);
 	/* Wrong data */
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("parse error: %s.\n", msg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static void show_xbc_error(const char *data, const char *msg, int pos)
-{
-	int lin = 1, col, i;
+अटल व्योम show_xbc_error(स्थिर अक्षर *data, स्थिर अक्षर *msg, पूर्णांक pos)
+अणु
+	पूर्णांक lin = 1, col, i;
 
-	if (pos < 0) {
+	अगर (pos < 0) अणु
 		pr_err("Error: %s.\n", msg);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Note that pos starts from 0 but lin and col should start from 1. */
 	col = pos + 1;
-	for (i = 0; i < pos; i++) {
-		if (data[i] == '\n') {
+	क्रम (i = 0; i < pos; i++) अणु
+		अगर (data[i] == '\n') अणु
 			lin++;
 			col = pos - i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	pr_err("Parse Error: %s at %d:%d\n", msg, lin, col);
 
-}
+पूर्ण
 
-static int init_xbc_with_error(char *buf, int len)
-{
-	char *copy = strdup(buf);
-	const char *msg;
-	int ret, pos;
+अटल पूर्णांक init_xbc_with_error(अक्षर *buf, पूर्णांक len)
+अणु
+	अक्षर *copy = strdup(buf);
+	स्थिर अक्षर *msg;
+	पूर्णांक ret, pos;
 
-	if (!copy)
-		return -ENOMEM;
+	अगर (!copy)
+		वापस -ENOMEM;
 
 	ret = xbc_init(buf, &msg, &pos);
-	if (ret < 0)
+	अगर (ret < 0)
 		show_xbc_error(copy, msg, pos);
-	free(copy);
+	मुक्त(copy);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int show_xbc(const char *path, bool list)
-{
-	int ret, fd;
-	char *buf = NULL;
-	struct stat st;
+अटल पूर्णांक show_xbc(स्थिर अक्षर *path, bool list)
+अणु
+	पूर्णांक ret, fd;
+	अक्षर *buf = शून्य;
+	काष्ठा stat st;
 
 	ret = stat(path, &st);
-	if (ret < 0) {
-		ret = -errno;
+	अगर (ret < 0) अणु
+		ret = -त्रुटि_सं;
 		pr_err("Failed to stat %s: %d\n", path, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		ret = -errno;
+	fd = खोलो(path, O_RDONLY);
+	अगर (fd < 0) अणु
+		ret = -त्रुटि_सं;
 		pr_err("Failed to open initrd %s: %d\n", path, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = load_xbc_from_initrd(fd, &buf);
-	close(fd);
-	if (ret < 0) {
+	बंद(fd);
+	अगर (ret < 0) अणु
 		pr_err("Failed to load a boot config from initrd: %d\n", ret);
-		goto out;
-	}
-	/* Assume a bootconfig file if it is enough small */
-	if (ret == 0 && st.st_size <= XBC_DATA_MAX) {
+		जाओ out;
+	पूर्ण
+	/* Assume a bootconfig file अगर it is enough small */
+	अगर (ret == 0 && st.st_size <= XBC_DATA_MAX) अणु
 		ret = load_xbc_file(path, &buf);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("Failed to load a boot config: %d\n", ret);
-			goto out;
-		}
-		if (init_xbc_with_error(buf, ret) < 0)
-			goto out;
-	}
-	if (list)
+			जाओ out;
+		पूर्ण
+		अगर (init_xbc_with_error(buf, ret) < 0)
+			जाओ out;
+	पूर्ण
+	अगर (list)
 		xbc_show_list();
-	else
+	अन्यथा
 		xbc_show_compact_tree();
 	ret = 0;
 out:
-	free(buf);
+	मुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int delete_xbc(const char *path)
-{
-	struct stat stat;
-	int ret = 0, fd, size;
-	char *buf = NULL;
+अटल पूर्णांक delete_xbc(स्थिर अक्षर *path)
+अणु
+	काष्ठा stat stat;
+	पूर्णांक ret = 0, fd, size;
+	अक्षर *buf = शून्य;
 
-	fd = open(path, O_RDWR);
-	if (fd < 0) {
-		ret = -errno;
+	fd = खोलो(path, O_RDWR);
+	अगर (fd < 0) अणु
+		ret = -त्रुटि_सं;
 		pr_err("Failed to open initrd %s: %d\n", path, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	size = load_xbc_from_initrd(fd, &buf);
-	if (size < 0) {
+	अगर (size < 0) अणु
 		ret = size;
 		pr_err("Failed to load a boot config from initrd: %d\n", ret);
-	} else if (size > 0) {
-		ret = fstat(fd, &stat);
-		if (!ret)
+	पूर्ण अन्यथा अगर (size > 0) अणु
+		ret = ख_स्थिति(fd, &stat);
+		अगर (!ret)
 			ret = ftruncate(fd, stat.st_size
 					- size - 8 - BOOTCONFIG_MAGIC_LEN);
-		if (ret)
-			ret = -errno;
-	} /* Ignore if there is no boot config in initrd */
+		अगर (ret)
+			ret = -त्रुटि_सं;
+	पूर्ण /* Ignore अगर there is no boot config in initrd */
 
-	close(fd);
-	free(buf);
+	बंद(fd);
+	मुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int apply_xbc(const char *path, const char *xbc_path)
-{
-	char *buf, *data, *p;
-	size_t total_size;
-	struct stat stat;
-	const char *msg;
+अटल पूर्णांक apply_xbc(स्थिर अक्षर *path, स्थिर अक्षर *xbc_path)
+अणु
+	अक्षर *buf, *data, *p;
+	माप_प्रकार total_size;
+	काष्ठा stat stat;
+	स्थिर अक्षर *msg;
 	u32 size, csum;
-	int pos, pad;
-	int ret, fd;
+	पूर्णांक pos, pad;
+	पूर्णांक ret, fd;
 
 	ret = load_xbc_file(xbc_path, &buf);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Failed to load %s : %d\n", xbc_path, ret);
-		return ret;
-	}
-	size = strlen(buf) + 1;
-	csum = checksum((unsigned char *)buf, size);
+		वापस ret;
+	पूर्ण
+	size = म_माप(buf) + 1;
+	csum = checksum((अचिन्हित अक्षर *)buf, size);
 
 	/* Backup the bootconfig data */
-	data = calloc(size + BOOTCONFIG_ALIGN +
-		      sizeof(u32) + sizeof(u32) + BOOTCONFIG_MAGIC_LEN, 1);
-	if (!data)
-		return -ENOMEM;
-	memcpy(data, buf, size);
+	data = सुस्मृति(size + BOOTCONFIG_ALIGN +
+		      माप(u32) + माप(u32) + BOOTCONFIG_MAGIC_LEN, 1);
+	अगर (!data)
+		वापस -ENOMEM;
+	स_नकल(data, buf, size);
 
-	/* Check the data format */
+	/* Check the data क्रमmat */
 	ret = xbc_init(buf, &msg, &pos);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		show_xbc_error(data, msg, pos);
-		free(data);
-		free(buf);
+		मुक्त(data);
+		मुक्त(buf);
 
-		return ret;
-	}
-	printf("Apply %s to %s\n", xbc_path, path);
-	printf("\tNumber of nodes: %d\n", ret);
-	printf("\tSize: %u bytes\n", (unsigned int)size);
-	printf("\tChecksum: %d\n", (unsigned int)csum);
+		वापस ret;
+	पूर्ण
+	म_लिखो("Apply %s to %s\n", xbc_path, path);
+	म_लिखो("\tNumber of nodes: %d\n", ret);
+	म_लिखो("\tSize: %u bytes\n", (अचिन्हित पूर्णांक)size);
+	म_लिखो("\tChecksum: %d\n", (अचिन्हित पूर्णांक)csum);
 
 	/* TODO: Check the options by schema */
 	xbc_destroy_all();
-	free(buf);
+	मुक्त(buf);
 
-	/* Remove old boot config if exists */
+	/* Remove old boot config अगर exists */
 	ret = delete_xbc(path);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Failed to delete previous boot config: %d\n", ret);
-		free(data);
-		return ret;
-	}
+		मुक्त(data);
+		वापस ret;
+	पूर्ण
 
 	/* Apply new one */
-	fd = open(path, O_RDWR | O_APPEND);
-	if (fd < 0) {
-		ret = -errno;
+	fd = खोलो(path, O_RDWR | O_APPEND);
+	अगर (fd < 0) अणु
+		ret = -त्रुटि_सं;
 		pr_err("Failed to open %s: %d\n", path, ret);
-		free(data);
-		return ret;
-	}
+		मुक्त(data);
+		वापस ret;
+	पूर्ण
 	/* TODO: Ensure the @path is initramfs/initrd image */
-	if (fstat(fd, &stat) < 0) {
-		ret = -errno;
+	अगर (ख_स्थिति(fd, &stat) < 0) अणु
+		ret = -त्रुटि_सं;
 		pr_err("Failed to get the size of %s\n", path);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* To align up the total size to BOOTCONFIG_ALIGN, get padding size */
-	total_size = stat.st_size + size + sizeof(u32) * 2 + BOOTCONFIG_MAGIC_LEN;
+	total_size = stat.st_size + size + माप(u32) * 2 + BOOTCONFIG_MAGIC_LEN;
 	pad = ((total_size + BOOTCONFIG_ALIGN - 1) & (~BOOTCONFIG_ALIGN_MASK)) - total_size;
 	size += pad;
 
 	/* Add a footer */
 	p = data + size;
 	*(u32 *)p = htole32(size);
-	p += sizeof(u32);
+	p += माप(u32);
 
 	*(u32 *)p = htole32(csum);
-	p += sizeof(u32);
+	p += माप(u32);
 
-	memcpy(p, BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_LEN);
+	स_नकल(p, BOOTCONFIG_MAGIC, BOOTCONFIG_MAGIC_LEN);
 	p += BOOTCONFIG_MAGIC_LEN;
 
 	total_size = p - data;
 
-	ret = write(fd, data, total_size);
-	if (ret < total_size) {
-		if (ret < 0)
-			ret = -errno;
+	ret = ग_लिखो(fd, data, total_size);
+	अगर (ret < total_size) अणु
+		अगर (ret < 0)
+			ret = -त्रुटि_सं;
 		pr_err("Failed to apply a boot config: %d\n", ret);
-		if (ret >= 0)
-			goto out_rollback;
-	} else
+		अगर (ret >= 0)
+			जाओ out_rollback;
+	पूर्ण अन्यथा
 		ret = 0;
 
 out:
-	close(fd);
-	free(data);
+	बंद(fd);
+	मुक्त(data);
 
-	return ret;
+	वापस ret;
 
 out_rollback:
-	/* Map the partial write to -ENOSPC */
-	if (ret >= 0)
+	/* Map the partial ग_लिखो to -ENOSPC */
+	अगर (ret >= 0)
 		ret = -ENOSPC;
-	if (ftruncate(fd, stat.st_size) < 0) {
-		ret = -errno;
+	अगर (ftruncate(fd, stat.st_size) < 0) अणु
+		ret = -त्रुटि_सं;
 		pr_err("Failed to rollback the write error: %d\n", ret);
 		pr_err("The initrd %s may be corrupted. Recommend to rebuild.\n", path);
-	}
-	goto out;
-}
+	पूर्ण
+	जाओ out;
+पूर्ण
 
-static int usage(void)
-{
-	printf("Usage: bootconfig [OPTIONS] <INITRD>\n"
+अटल पूर्णांक usage(व्योम)
+अणु
+	म_लिखो("Usage: bootconfig [OPTIONS] <INITRD>\n"
 		"Or     bootconfig <CONFIG>\n"
 		" Apply, delete or show boot config to initrd.\n"
 		" Options:\n"
@@ -460,49 +461,49 @@ static int usage(void)
 		"		-d : Delete boot config file from initrd\n"
 		"		-l : list boot config in initrd or file\n\n"
 		" If no option is given, show the bootconfig in the given file.\n");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	char *path = NULL;
-	char *apply = NULL;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अक्षर *path = शून्य;
+	अक्षर *apply = शून्य;
 	bool delete = false, list = false;
-	int opt;
+	पूर्णांक opt;
 
-	while ((opt = getopt(argc, argv, "hda:l")) != -1) {
-		switch (opt) {
-		case 'd':
+	जबतक ((opt = getopt(argc, argv, "hda:l")) != -1) अणु
+		चयन (opt) अणु
+		हाल 'd':
 			delete = true;
-			break;
-		case 'a':
+			अवरोध;
+		हाल 'a':
 			apply = optarg;
-			break;
-		case 'l':
+			अवरोध;
+		हाल 'l':
 			list = true;
-			break;
-		case 'h':
-		default:
-			return usage();
-		}
-	}
+			अवरोध;
+		हाल 'h':
+		शेष:
+			वापस usage();
+		पूर्ण
+	पूर्ण
 
-	if ((apply && delete) || (delete && list) || (apply && list)) {
+	अगर ((apply && delete) || (delete && list) || (apply && list)) अणु
 		pr_err("Error: You can give one of -a, -d or -l at once.\n");
-		return usage();
-	}
+		वापस usage();
+	पूर्ण
 
-	if (optind >= argc) {
+	अगर (optind >= argc) अणु
 		pr_err("Error: No initrd is specified.\n");
-		return usage();
-	}
+		वापस usage();
+	पूर्ण
 
 	path = argv[optind];
 
-	if (apply)
-		return apply_xbc(path, apply);
-	else if (delete)
-		return delete_xbc(path);
+	अगर (apply)
+		वापस apply_xbc(path, apply);
+	अन्यथा अगर (delete)
+		वापस delete_xbc(path);
 
-	return show_xbc(path, list);
-}
+	वापस show_xbc(path, list);
+पूर्ण

@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- *  This file is part of the Chelsio T4 Ethernet driver for Linux.
+ *  This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *  Copyright (C) 2003-2014 Chelsio Communications.  All rights reserved.
  *
  *  Written by Deepak (deepak.s@chelsio.com)
@@ -7,324 +8,324 @@
  *  This program is distributed in the hope that it will be useful, but WITHOUT
  *  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  *  FITNESS FOR A PARTICULAR PURPOSE.  See the LICENSE file included in this
- *  release for licensing terms and conditions.
+ *  release क्रम licensing terms and conditions.
  */
 
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/jhash.h>
-#include <linux/if_vlan.h>
-#include <net/addrconf.h>
-#include "cxgb4.h"
-#include "clip_tbl.h"
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/addrconf.h>
+#समावेश "cxgb4.h"
+#समावेश "clip_tbl.h"
 
-static inline unsigned int ipv4_clip_hash(struct clip_tbl *c, const u32 *key)
-{
-	unsigned int clipt_size_half = c->clipt_size / 2;
+अटल अंतरभूत अचिन्हित पूर्णांक ipv4_clip_hash(काष्ठा clip_tbl *c, स्थिर u32 *key)
+अणु
+	अचिन्हित पूर्णांक clipt_size_half = c->clipt_size / 2;
 
-	return jhash_1word(*key, 0) % clipt_size_half;
-}
+	वापस jhash_1word(*key, 0) % clipt_size_half;
+पूर्ण
 
-static inline unsigned int ipv6_clip_hash(struct clip_tbl *d, const u32 *key)
-{
-	unsigned int clipt_size_half = d->clipt_size / 2;
+अटल अंतरभूत अचिन्हित पूर्णांक ipv6_clip_hash(काष्ठा clip_tbl *d, स्थिर u32 *key)
+अणु
+	अचिन्हित पूर्णांक clipt_size_half = d->clipt_size / 2;
 	u32 xor = key[0] ^ key[1] ^ key[2] ^ key[3];
 
-	return clipt_size_half +
+	वापस clipt_size_half +
 		(jhash_1word(xor, 0) % clipt_size_half);
-}
+पूर्ण
 
-static unsigned int clip_addr_hash(struct clip_tbl *ctbl, const u32 *addr,
+अटल अचिन्हित पूर्णांक clip_addr_hash(काष्ठा clip_tbl *ctbl, स्थिर u32 *addr,
 				   u8 v6)
-{
-	return v6 ? ipv6_clip_hash(ctbl, addr) :
+अणु
+	वापस v6 ? ipv6_clip_hash(ctbl, addr) :
 			ipv4_clip_hash(ctbl, addr);
-}
+पूर्ण
 
-static int clip6_get_mbox(const struct net_device *dev,
-			  const struct in6_addr *lip)
-{
-	struct adapter *adap = netdev2adap(dev);
-	struct fw_clip_cmd c;
+अटल पूर्णांक clip6_get_mbox(स्थिर काष्ठा net_device *dev,
+			  स्थिर काष्ठा in6_addr *lip)
+अणु
+	काष्ठा adapter *adap = netdev2adap(dev);
+	काष्ठा fw_clip_cmd c;
 
-	memset(&c, 0, sizeof(c));
-	c.op_to_write = htonl(FW_CMD_OP_V(FW_CLIP_CMD) |
+	स_रखो(&c, 0, माप(c));
+	c.op_to_ग_लिखो = htonl(FW_CMD_OP_V(FW_CLIP_CMD) |
 			      FW_CMD_REQUEST_F | FW_CMD_WRITE_F);
 	c.alloc_to_len16 = htonl(FW_CLIP_CMD_ALLOC_F | FW_LEN16(c));
 	*(__be64 *)&c.ip_hi = *(__be64 *)(lip->s6_addr);
 	*(__be64 *)&c.ip_lo = *(__be64 *)(lip->s6_addr + 8);
-	return t4_wr_mbox_meat(adap, adap->mbox, &c, sizeof(c), &c, false);
-}
+	वापस t4_wr_mbox_meat(adap, adap->mbox, &c, माप(c), &c, false);
+पूर्ण
 
-static int clip6_release_mbox(const struct net_device *dev,
-			      const struct in6_addr *lip)
-{
-	struct adapter *adap = netdev2adap(dev);
-	struct fw_clip_cmd c;
+अटल पूर्णांक clip6_release_mbox(स्थिर काष्ठा net_device *dev,
+			      स्थिर काष्ठा in6_addr *lip)
+अणु
+	काष्ठा adapter *adap = netdev2adap(dev);
+	काष्ठा fw_clip_cmd c;
 
-	memset(&c, 0, sizeof(c));
-	c.op_to_write = htonl(FW_CMD_OP_V(FW_CLIP_CMD) |
+	स_रखो(&c, 0, माप(c));
+	c.op_to_ग_लिखो = htonl(FW_CMD_OP_V(FW_CLIP_CMD) |
 			      FW_CMD_REQUEST_F | FW_CMD_READ_F);
 	c.alloc_to_len16 = htonl(FW_CLIP_CMD_FREE_F | FW_LEN16(c));
 	*(__be64 *)&c.ip_hi = *(__be64 *)(lip->s6_addr);
 	*(__be64 *)&c.ip_lo = *(__be64 *)(lip->s6_addr + 8);
-	return t4_wr_mbox_meat(adap, adap->mbox, &c, sizeof(c), &c, false);
-}
+	वापस t4_wr_mbox_meat(adap, adap->mbox, &c, माप(c), &c, false);
+पूर्ण
 
-int cxgb4_clip_get(const struct net_device *dev, const u32 *lip, u8 v6)
-{
-	struct adapter *adap = netdev2adap(dev);
-	struct clip_tbl *ctbl = adap->clipt;
-	struct clip_entry *ce, *cte;
+पूर्णांक cxgb4_clip_get(स्थिर काष्ठा net_device *dev, स्थिर u32 *lip, u8 v6)
+अणु
+	काष्ठा adapter *adap = netdev2adap(dev);
+	काष्ठा clip_tbl *ctbl = adap->clipt;
+	काष्ठा clip_entry *ce, *cte;
 	u32 *addr = (u32 *)lip;
-	int hash;
-	int ret = -1;
+	पूर्णांक hash;
+	पूर्णांक ret = -1;
 
-	if (!ctbl)
-		return 0;
+	अगर (!ctbl)
+		वापस 0;
 
 	hash = clip_addr_hash(ctbl, addr, v6);
 
-	read_lock_bh(&ctbl->lock);
-	list_for_each_entry(cte, &ctbl->hash_list[hash], list) {
-		if (cte->addr6.sin6_family == AF_INET6 && v6)
-			ret = memcmp(lip, cte->addr6.sin6_addr.s6_addr,
-				     sizeof(struct in6_addr));
-		else if (cte->addr.sin_family == AF_INET && !v6)
-			ret = memcmp(lip, (char *)(&cte->addr.sin_addr),
-				     sizeof(struct in_addr));
-		if (!ret) {
+	पढ़ो_lock_bh(&ctbl->lock);
+	list_क्रम_each_entry(cte, &ctbl->hash_list[hash], list) अणु
+		अगर (cte->addr6.sin6_family == AF_INET6 && v6)
+			ret = स_भेद(lip, cte->addr6.sin6_addr.s6_addr,
+				     माप(काष्ठा in6_addr));
+		अन्यथा अगर (cte->addr.sin_family == AF_INET && !v6)
+			ret = स_भेद(lip, (अक्षर *)(&cte->addr.sin_addr),
+				     माप(काष्ठा in_addr));
+		अगर (!ret) अणु
 			ce = cte;
-			read_unlock_bh(&ctbl->lock);
+			पढ़ो_unlock_bh(&ctbl->lock);
 			refcount_inc(&ce->refcnt);
-			return 0;
-		}
-	}
-	read_unlock_bh(&ctbl->lock);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock_bh(&ctbl->lock);
 
-	write_lock_bh(&ctbl->lock);
-	if (!list_empty(&ctbl->ce_free_head)) {
-		ce = list_first_entry(&ctbl->ce_free_head,
-				      struct clip_entry, list);
+	ग_लिखो_lock_bh(&ctbl->lock);
+	अगर (!list_empty(&ctbl->ce_मुक्त_head)) अणु
+		ce = list_first_entry(&ctbl->ce_मुक्त_head,
+				      काष्ठा clip_entry, list);
 		list_del(&ce->list);
 		INIT_LIST_HEAD(&ce->list);
 		spin_lock_init(&ce->lock);
 		refcount_set(&ce->refcnt, 0);
-		atomic_dec(&ctbl->nfree);
+		atomic_dec(&ctbl->nमुक्त);
 		list_add_tail(&ce->list, &ctbl->hash_list[hash]);
-		if (v6) {
+		अगर (v6) अणु
 			ce->addr6.sin6_family = AF_INET6;
-			memcpy(ce->addr6.sin6_addr.s6_addr,
-			       lip, sizeof(struct in6_addr));
-			ret = clip6_get_mbox(dev, (const struct in6_addr *)lip);
-			if (ret) {
-				write_unlock_bh(&ctbl->lock);
+			स_नकल(ce->addr6.sin6_addr.s6_addr,
+			       lip, माप(काष्ठा in6_addr));
+			ret = clip6_get_mbox(dev, (स्थिर काष्ठा in6_addr *)lip);
+			अगर (ret) अणु
+				ग_लिखो_unlock_bh(&ctbl->lock);
 				dev_err(adap->pdev_dev,
 					"CLIP FW cmd failed with error %d, "
 					"Connections using %pI6c wont be "
 					"offloaded",
 					ret, ce->addr6.sin6_addr.s6_addr);
-				return ret;
-			}
-		} else {
+				वापस ret;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ce->addr.sin_family = AF_INET;
-			memcpy((char *)(&ce->addr.sin_addr), lip,
-			       sizeof(struct in_addr));
-		}
-	} else {
-		write_unlock_bh(&ctbl->lock);
+			स_नकल((अक्षर *)(&ce->addr.sin_addr), lip,
+			       माप(काष्ठा in_addr));
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ग_लिखो_unlock_bh(&ctbl->lock);
 		dev_info(adap->pdev_dev, "CLIP table overflow, "
 			 "Connections using %pI6c wont be offloaded",
-			 (void *)lip);
-		return -ENOMEM;
-	}
-	write_unlock_bh(&ctbl->lock);
+			 (व्योम *)lip);
+		वापस -ENOMEM;
+	पूर्ण
+	ग_लिखो_unlock_bh(&ctbl->lock);
 	refcount_set(&ce->refcnt, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_clip_get);
 
-void cxgb4_clip_release(const struct net_device *dev, const u32 *lip, u8 v6)
-{
-	struct adapter *adap = netdev2adap(dev);
-	struct clip_tbl *ctbl = adap->clipt;
-	struct clip_entry *ce, *cte;
+व्योम cxgb4_clip_release(स्थिर काष्ठा net_device *dev, स्थिर u32 *lip, u8 v6)
+अणु
+	काष्ठा adapter *adap = netdev2adap(dev);
+	काष्ठा clip_tbl *ctbl = adap->clipt;
+	काष्ठा clip_entry *ce, *cte;
 	u32 *addr = (u32 *)lip;
-	int hash;
-	int ret = -1;
+	पूर्णांक hash;
+	पूर्णांक ret = -1;
 
-	if (!ctbl)
-		return;
+	अगर (!ctbl)
+		वापस;
 
 	hash = clip_addr_hash(ctbl, addr, v6);
 
-	read_lock_bh(&ctbl->lock);
-	list_for_each_entry(cte, &ctbl->hash_list[hash], list) {
-		if (cte->addr6.sin6_family == AF_INET6 && v6)
-			ret = memcmp(lip, cte->addr6.sin6_addr.s6_addr,
-				     sizeof(struct in6_addr));
-		else if (cte->addr.sin_family == AF_INET && !v6)
-			ret = memcmp(lip, (char *)(&cte->addr.sin_addr),
-				     sizeof(struct in_addr));
-		if (!ret) {
+	पढ़ो_lock_bh(&ctbl->lock);
+	list_क्रम_each_entry(cte, &ctbl->hash_list[hash], list) अणु
+		अगर (cte->addr6.sin6_family == AF_INET6 && v6)
+			ret = स_भेद(lip, cte->addr6.sin6_addr.s6_addr,
+				     माप(काष्ठा in6_addr));
+		अन्यथा अगर (cte->addr.sin_family == AF_INET && !v6)
+			ret = स_भेद(lip, (अक्षर *)(&cte->addr.sin_addr),
+				     माप(काष्ठा in_addr));
+		अगर (!ret) अणु
 			ce = cte;
-			read_unlock_bh(&ctbl->lock);
-			goto found;
-		}
-	}
-	read_unlock_bh(&ctbl->lock);
+			पढ़ो_unlock_bh(&ctbl->lock);
+			जाओ found;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock_bh(&ctbl->lock);
 
-	return;
+	वापस;
 found:
-	write_lock_bh(&ctbl->lock);
+	ग_लिखो_lock_bh(&ctbl->lock);
 	spin_lock_bh(&ce->lock);
-	if (refcount_dec_and_test(&ce->refcnt)) {
+	अगर (refcount_dec_and_test(&ce->refcnt)) अणु
 		list_del(&ce->list);
 		INIT_LIST_HEAD(&ce->list);
-		list_add_tail(&ce->list, &ctbl->ce_free_head);
-		atomic_inc(&ctbl->nfree);
-		if (v6)
-			clip6_release_mbox(dev, (const struct in6_addr *)lip);
-	}
+		list_add_tail(&ce->list, &ctbl->ce_मुक्त_head);
+		atomic_inc(&ctbl->nमुक्त);
+		अगर (v6)
+			clip6_release_mbox(dev, (स्थिर काष्ठा in6_addr *)lip);
+	पूर्ण
 	spin_unlock_bh(&ce->lock);
-	write_unlock_bh(&ctbl->lock);
-}
+	ग_लिखो_unlock_bh(&ctbl->lock);
+पूर्ण
 EXPORT_SYMBOL(cxgb4_clip_release);
 
 /* Retrieves IPv6 addresses from a root device (bond, vlan) associated with
  * a physical device.
  * The physical device reference is needed to send the actul CLIP command.
  */
-static int cxgb4_update_dev_clip(struct net_device *root_dev,
-				 struct net_device *dev)
-{
-	struct inet6_dev *idev = NULL;
-	struct inet6_ifaddr *ifa;
-	int ret = 0;
+अटल पूर्णांक cxgb4_update_dev_clip(काष्ठा net_device *root_dev,
+				 काष्ठा net_device *dev)
+अणु
+	काष्ठा inet6_dev *idev = शून्य;
+	काष्ठा inet6_अगरaddr *अगरa;
+	पूर्णांक ret = 0;
 
 	idev = __in6_dev_get(root_dev);
-	if (!idev)
-		return ret;
+	अगर (!idev)
+		वापस ret;
 
-	read_lock_bh(&idev->lock);
-	list_for_each_entry(ifa, &idev->addr_list, if_list) {
-		ret = cxgb4_clip_get(dev, (const u32 *)ifa->addr.s6_addr, 1);
-		if (ret < 0)
-			break;
-	}
-	read_unlock_bh(&idev->lock);
+	पढ़ो_lock_bh(&idev->lock);
+	list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
+		ret = cxgb4_clip_get(dev, (स्थिर u32 *)अगरa->addr.s6_addr, 1);
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+	पढ़ो_unlock_bh(&idev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgb4_update_root_dev_clip(struct net_device *dev)
-{
-	struct net_device *root_dev = NULL;
-	int i, ret = 0;
+पूर्णांक cxgb4_update_root_dev_clip(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *root_dev = शून्य;
+	पूर्णांक i, ret = 0;
 
 	/* First populate the real net device's IPv6 addresses */
 	ret = cxgb4_update_dev_clip(dev, dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Parse all bond and vlan devices layered on top of the physical dev */
 	root_dev = netdev_master_upper_dev_get_rcu(dev);
-	if (root_dev) {
+	अगर (root_dev) अणु
 		ret = cxgb4_update_dev_clip(root_dev, dev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	for (i = 0; i < VLAN_N_VID; i++) {
+	क्रम (i = 0; i < VLAN_N_VID; i++) अणु
 		root_dev = __vlan_find_dev_deep_rcu(dev, htons(ETH_P_8021Q), i);
-		if (!root_dev)
-			continue;
+		अगर (!root_dev)
+			जारी;
 
 		ret = cxgb4_update_dev_clip(root_dev, dev);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(cxgb4_update_root_dev_clip);
 
-int clip_tbl_show(struct seq_file *seq, void *v)
-{
-	struct adapter *adapter = seq->private;
-	struct clip_tbl *ctbl = adapter->clipt;
-	struct clip_entry *ce;
-	char ip[60];
-	int i;
+पूर्णांक clip_tbl_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा adapter *adapter = seq->निजी;
+	काष्ठा clip_tbl *ctbl = adapter->clipt;
+	काष्ठा clip_entry *ce;
+	अक्षर ip[60];
+	पूर्णांक i;
 
-	read_lock_bh(&ctbl->lock);
+	पढ़ो_lock_bh(&ctbl->lock);
 
-	seq_puts(seq, "IP Address                  Users\n");
-	for (i = 0 ; i < ctbl->clipt_size;  ++i) {
-		list_for_each_entry(ce, &ctbl->hash_list[i], list) {
+	seq_माला_दो(seq, "IP Address                  Users\n");
+	क्रम (i = 0 ; i < ctbl->clipt_size;  ++i) अणु
+		list_क्रम_each_entry(ce, &ctbl->hash_list[i], list) अणु
 			ip[0] = '\0';
-			sprintf(ip, "%pISc", &ce->addr);
-			seq_printf(seq, "%-25s   %u\n", ip,
-				   refcount_read(&ce->refcnt));
-		}
-	}
-	seq_printf(seq, "Free clip entries : %d\n", atomic_read(&ctbl->nfree));
+			प्र_लिखो(ip, "%pISc", &ce->addr);
+			seq_म_लिखो(seq, "%-25s   %u\n", ip,
+				   refcount_पढ़ो(&ce->refcnt));
+		पूर्ण
+	पूर्ण
+	seq_म_लिखो(seq, "Free clip entries : %d\n", atomic_पढ़ो(&ctbl->nमुक्त));
 
-	read_unlock_bh(&ctbl->lock);
+	पढ़ो_unlock_bh(&ctbl->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct clip_tbl *t4_init_clip_tbl(unsigned int clipt_start,
-				  unsigned int clipt_end)
-{
-	struct clip_entry *cl_list;
-	struct clip_tbl *ctbl;
-	unsigned int clipt_size;
-	int i;
+काष्ठा clip_tbl *t4_init_clip_tbl(अचिन्हित पूर्णांक clipt_start,
+				  अचिन्हित पूर्णांक clipt_end)
+अणु
+	काष्ठा clip_entry *cl_list;
+	काष्ठा clip_tbl *ctbl;
+	अचिन्हित पूर्णांक clipt_size;
+	पूर्णांक i;
 
-	if (clipt_start >= clipt_end)
-		return NULL;
+	अगर (clipt_start >= clipt_end)
+		वापस शून्य;
 	clipt_size = clipt_end - clipt_start + 1;
-	if (clipt_size < CLIPT_MIN_HASH_BUCKETS)
-		return NULL;
+	अगर (clipt_size < CLIPT_MIN_HASH_BUCKETS)
+		वापस शून्य;
 
-	ctbl = kvzalloc(struct_size(ctbl, hash_list, clipt_size), GFP_KERNEL);
-	if (!ctbl)
-		return NULL;
+	ctbl = kvzalloc(काष्ठा_size(ctbl, hash_list, clipt_size), GFP_KERNEL);
+	अगर (!ctbl)
+		वापस शून्य;
 
 	ctbl->clipt_start = clipt_start;
 	ctbl->clipt_size = clipt_size;
-	INIT_LIST_HEAD(&ctbl->ce_free_head);
+	INIT_LIST_HEAD(&ctbl->ce_मुक्त_head);
 
-	atomic_set(&ctbl->nfree, clipt_size);
+	atomic_set(&ctbl->nमुक्त, clipt_size);
 	rwlock_init(&ctbl->lock);
 
-	for (i = 0; i < ctbl->clipt_size; ++i)
+	क्रम (i = 0; i < ctbl->clipt_size; ++i)
 		INIT_LIST_HEAD(&ctbl->hash_list[i]);
 
-	cl_list = kvcalloc(clipt_size, sizeof(struct clip_entry), GFP_KERNEL);
-	if (!cl_list) {
-		kvfree(ctbl);
-		return NULL;
-	}
-	ctbl->cl_list = (void *)cl_list;
+	cl_list = kvसुस्मृति(clipt_size, माप(काष्ठा clip_entry), GFP_KERNEL);
+	अगर (!cl_list) अणु
+		kvमुक्त(ctbl);
+		वापस शून्य;
+	पूर्ण
+	ctbl->cl_list = (व्योम *)cl_list;
 
-	for (i = 0; i < clipt_size; i++) {
+	क्रम (i = 0; i < clipt_size; i++) अणु
 		INIT_LIST_HEAD(&cl_list[i].list);
-		list_add_tail(&cl_list[i].list, &ctbl->ce_free_head);
-	}
+		list_add_tail(&cl_list[i].list, &ctbl->ce_मुक्त_head);
+	पूर्ण
 
-	return ctbl;
-}
+	वापस ctbl;
+पूर्ण
 
-void t4_cleanup_clip_tbl(struct adapter *adap)
-{
-	struct clip_tbl *ctbl = adap->clipt;
+व्योम t4_cleanup_clip_tbl(काष्ठा adapter *adap)
+अणु
+	काष्ठा clip_tbl *ctbl = adap->clipt;
 
-	if (ctbl) {
-		kvfree(ctbl->cl_list);
-		kvfree(ctbl);
-	}
-}
+	अगर (ctbl) अणु
+		kvमुक्त(ctbl->cl_list);
+		kvमुक्त(ctbl);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(t4_cleanup_clip_tbl);

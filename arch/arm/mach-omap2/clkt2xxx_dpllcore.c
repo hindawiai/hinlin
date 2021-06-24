@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * DPLL + CORE_CLK composite clock functions
+ * DPLL + CORE_CLK composite घड़ी functions
  *
  * Copyright (C) 2005-2008 Texas Instruments, Inc.
  * Copyright (C) 2004-2010 Nokia Corporation
  *
  * Contacts:
- * Richard Woodruff <r-woodruff2@ti.com>
+ * Riअक्षरd Woodruff <r-woodruff2@ti.com>
  * Paul Walmsley
  *
  * Based on earlier work by Tuukka Tikkanen, Tony Lindgren,
- * Gordon McNutt and RidgeRun, Inc.
+ * Gorकरोn McNutt and RidgeRun, Inc.
  *
- * XXX The DPLL and CORE clocks should be split into two separate clock
+ * XXX The DPLL and CORE घड़ीs should be split पूर्णांकo two separate घड़ी
  * types.
  */
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/clk.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
 
-#include "clock.h"
-#include "clock2xxx.h"
-#include "opp2xxx.h"
-#include "cm2xxx.h"
-#include "cm-regbits-24xx.h"
-#include "sdrc.h"
-#include "sram.h"
+#समावेश "clock.h"
+#समावेश "clock2xxx.h"
+#समावेश "opp2xxx.h"
+#समावेश "cm2xxx.h"
+#समावेश "cm-regbits-24xx.h"
+#समावेश "sdrc.h"
+#समावेश "sram.h"
 
-/* #define DOWN_VARIABLE_DPLL 1 */		/* Experimental */
+/* #घोषणा DOWN_VARIABLE_DPLL 1 */		/* Experimental */
 
 /*
- * dpll_core_ck: pointer to the combined dpll_ck + core_ck on OMAP2xxx
- * (currently defined as "dpll_ck" in the OMAP2xxx clock tree).  Set
+ * dpll_core_ck: poपूर्णांकer to the combined dpll_ck + core_ck on OMAP2xxx
+ * (currently defined as "dpll_ck" in the OMAP2xxx घड़ी tree).  Set
  * during dpll_ck init and used later by omap2xxx_clk_get_core_rate().
  */
-static struct clk_hw_omap *dpll_core_ck;
+अटल काष्ठा clk_hw_omap *dpll_core_ck;
 
 /**
- * omap2xxx_clk_get_core_rate - return the CORE_CLK rate
+ * omap2xxx_clk_get_core_rate - वापस the CORE_CLK rate
  *
  * Returns the CORE_CLK rate.  CORE_CLK can have one of three rate
  * sources on OMAP2xxx: the DPLL CLKOUT rate, DPLL CLKOUTX2, or 32KHz
  * (the latter is unusual).  This currently should be called with
- * struct clk *dpll_ck, which is a composite clock of dpll_ck and
+ * काष्ठा clk *dpll_ck, which is a composite घड़ी of dpll_ck and
  * core_ck.
  */
-unsigned long omap2xxx_clk_get_core_rate(void)
-{
-	long long core_clk;
+अचिन्हित दीर्घ omap2xxx_clk_get_core_rate(व्योम)
+अणु
+	दीर्घ दीर्घ core_clk;
 	u32 v;
 
 	WARN_ON(!dpll_core_ck);
@@ -59,135 +60,135 @@ unsigned long omap2xxx_clk_get_core_rate(void)
 
 	v = omap2xxx_cm_get_core_clk_src();
 
-	if (v == CORE_CLK_SRC_32K)
+	अगर (v == CORE_CLK_SRC_32K)
 		core_clk = 32768;
-	else
+	अन्यथा
 		core_clk *= v;
 
-	return core_clk;
-}
+	वापस core_clk;
+पूर्ण
 
 /*
- * Uses the current prcm set to tell if a rate is valid.
+ * Uses the current prcm set to tell अगर a rate is valid.
  * You can go slower, but not faster within a given rate set.
  */
-static long omap2_dpllcore_round_rate(unsigned long target_rate)
-{
+अटल दीर्घ omap2_dpllcore_round_rate(अचिन्हित दीर्घ target_rate)
+अणु
 	u32 high, low, core_clk_src;
 
 	core_clk_src = omap2xxx_cm_get_core_clk_src();
 
-	if (core_clk_src == CORE_CLK_SRC_DPLL) {	/* DPLL clockout */
+	अगर (core_clk_src == CORE_CLK_SRC_DPLL) अणु	/* DPLL घड़ीout */
 		high = curr_prcm_set->dpll_speed * 2;
 		low = curr_prcm_set->dpll_speed;
-	} else {				/* DPLL clockout x 2 */
+	पूर्ण अन्यथा अणु				/* DPLL घड़ीout x 2 */
 		high = curr_prcm_set->dpll_speed;
 		low = curr_prcm_set->dpll_speed / 2;
-	}
+	पूर्ण
 
-#ifdef DOWN_VARIABLE_DPLL
-	if (target_rate > high)
-		return high;
-	else
-		return target_rate;
-#else
-	if (target_rate > low)
-		return high;
-	else
-		return low;
-#endif
+#अगर_घोषित DOWN_VARIABLE_DPLL
+	अगर (target_rate > high)
+		वापस high;
+	अन्यथा
+		वापस target_rate;
+#अन्यथा
+	अगर (target_rate > low)
+		वापस high;
+	अन्यथा
+		वापस low;
+#पूर्ण_अगर
 
-}
+पूर्ण
 
-unsigned long omap2_dpllcore_recalc(struct clk_hw *hw,
-				    unsigned long parent_rate)
-{
-	return omap2xxx_clk_get_core_rate();
-}
+अचिन्हित दीर्घ omap2_dpllcore_recalc(काष्ठा clk_hw *hw,
+				    अचिन्हित दीर्घ parent_rate)
+अणु
+	वापस omap2xxx_clk_get_core_rate();
+पूर्ण
 
-int omap2_reprogram_dpllcore(struct clk_hw *hw, unsigned long rate,
-			     unsigned long parent_rate)
-{
-	struct clk_hw_omap *clk = to_clk_hw_omap(hw);
-	u32 cur_rate, low, mult, div, valid_rate, done_rate;
+पूर्णांक omap2_reprogram_dpllcore(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_hw_omap *clk = to_clk_hw_omap(hw);
+	u32 cur_rate, low, mult, भाग, valid_rate, करोne_rate;
 	u32 bypass = 0;
-	struct prcm_config tmpset;
-	const struct dpll_data *dd;
+	काष्ठा prcm_config पंचांगpset;
+	स्थिर काष्ठा dpll_data *dd;
 
 	cur_rate = omap2xxx_clk_get_core_rate();
 	mult = omap2xxx_cm_get_core_clk_src();
 
-	if ((rate == (cur_rate / 2)) && (mult == 2)) {
+	अगर ((rate == (cur_rate / 2)) && (mult == 2)) अणु
 		omap2xxx_sdrc_reprogram(CORE_CLK_SRC_DPLL, 1);
-	} else if ((rate == (cur_rate * 2)) && (mult == 1)) {
+	पूर्ण अन्यथा अगर ((rate == (cur_rate * 2)) && (mult == 1)) अणु
 		omap2xxx_sdrc_reprogram(CORE_CLK_SRC_DPLL_X2, 1);
-	} else if (rate != cur_rate) {
+	पूर्ण अन्यथा अगर (rate != cur_rate) अणु
 		valid_rate = omap2_dpllcore_round_rate(rate);
-		if (valid_rate != rate)
-			return -EINVAL;
+		अगर (valid_rate != rate)
+			वापस -EINVAL;
 
-		if (mult == 1)
+		अगर (mult == 1)
 			low = curr_prcm_set->dpll_speed;
-		else
+		अन्यथा
 			low = curr_prcm_set->dpll_speed / 2;
 
 		dd = clk->dpll_data;
-		if (!dd)
-			return -EINVAL;
+		अगर (!dd)
+			वापस -EINVAL;
 
-		tmpset.cm_clksel1_pll =
-			omap_clk_ll_ops.clk_readl(&dd->mult_div1_reg);
-		tmpset.cm_clksel1_pll &= ~(dd->mult_mask |
-					   dd->div1_mask);
-		div = ((curr_prcm_set->xtal_speed / 1000000) - 1);
-		tmpset.cm_clksel2_pll = omap2xxx_cm_get_core_pll_config();
-		tmpset.cm_clksel2_pll &= ~OMAP24XX_CORE_CLK_SRC_MASK;
-		if (rate > low) {
-			tmpset.cm_clksel2_pll |= CORE_CLK_SRC_DPLL_X2;
+		पंचांगpset.cm_clksel1_pll =
+			omap_clk_ll_ops.clk_पढ़ोl(&dd->mult_भाग1_reg);
+		पंचांगpset.cm_clksel1_pll &= ~(dd->mult_mask |
+					   dd->भाग1_mask);
+		भाग = ((curr_prcm_set->xtal_speed / 1000000) - 1);
+		पंचांगpset.cm_clksel2_pll = omap2xxx_cm_get_core_pll_config();
+		पंचांगpset.cm_clksel2_pll &= ~OMAP24XX_CORE_CLK_SRC_MASK;
+		अगर (rate > low) अणु
+			पंचांगpset.cm_clksel2_pll |= CORE_CLK_SRC_DPLL_X2;
 			mult = ((rate / 2) / 1000000);
-			done_rate = CORE_CLK_SRC_DPLL_X2;
-		} else {
-			tmpset.cm_clksel2_pll |= CORE_CLK_SRC_DPLL;
+			करोne_rate = CORE_CLK_SRC_DPLL_X2;
+		पूर्ण अन्यथा अणु
+			पंचांगpset.cm_clksel2_pll |= CORE_CLK_SRC_DPLL;
 			mult = (rate / 1000000);
-			done_rate = CORE_CLK_SRC_DPLL;
-		}
-		tmpset.cm_clksel1_pll |= (div << __ffs(dd->mult_mask));
-		tmpset.cm_clksel1_pll |= (mult << __ffs(dd->div1_mask));
+			करोne_rate = CORE_CLK_SRC_DPLL;
+		पूर्ण
+		पंचांगpset.cm_clksel1_pll |= (भाग << __ffs(dd->mult_mask));
+		पंचांगpset.cm_clksel1_pll |= (mult << __ffs(dd->भाग1_mask));
 
-		/* Worst case */
-		tmpset.base_sdrc_rfr = SDRC_RFR_CTRL_BYPASS;
+		/* Worst हाल */
+		पंचांगpset.base_sdrc_rfr = SDRC_RFR_CTRL_BYPASS;
 
-		if (rate == curr_prcm_set->xtal_speed)	/* If asking for 1-1 */
+		अगर (rate == curr_prcm_set->xtal_speed)	/* If asking क्रम 1-1 */
 			bypass = 1;
 
 		/* For omap2xxx_sdrc_init_params() */
 		omap2xxx_sdrc_reprogram(CORE_CLK_SRC_DPLL_X2, 1);
 
 		/* Force dll lock mode */
-		omap2_set_prcm(tmpset.cm_clksel1_pll, tmpset.base_sdrc_rfr,
+		omap2_set_prcm(पंचांगpset.cm_clksel1_pll, पंचांगpset.base_sdrc_rfr,
 			       bypass);
 
 		/* Errata: ret dll entry state */
 		omap2xxx_sdrc_init_params(omap2xxx_sdrc_dll_is_unlocked());
-		omap2xxx_sdrc_reprogram(done_rate, 0);
-	}
+		omap2xxx_sdrc_reprogram(करोne_rate, 0);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * omap2xxx_clkt_dpllcore_init - clk init function for dpll_ck
- * @clk: struct clk *dpll_ck
+ * omap2xxx_clkt_dpllcore_init - clk init function क्रम dpll_ck
+ * @clk: काष्ठा clk *dpll_ck
  *
  * Store a local copy of @clk in dpll_core_ck so other code can query
  * the core rate without having to clk_get(), which can sleep.  Must
- * only be called once.  No return value.  XXX If the clock
- * registration process is ever changed such that dpll_ck is no longer
- * statically defined, this code may need to change to increment some
+ * only be called once.  No वापस value.  XXX If the घड़ी
+ * registration process is ever changed such that dpll_ck is no दीर्घer
+ * अटलally defined, this code may need to change to increment some
  * kind of use count on dpll_ck.
  */
-void omap2xxx_clkt_dpllcore_init(struct clk_hw *hw)
-{
+व्योम omap2xxx_clkt_dpllcore_init(काष्ठा clk_hw *hw)
+अणु
 	WARN(dpll_core_ck, "dpll_core_ck already set - should never happen");
 	dpll_core_ck = to_clk_hw_omap(hw);
-}
+पूर्ण

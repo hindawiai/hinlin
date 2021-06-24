@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#ifndef RXE_NET_H
-#define RXE_NET_H
+#अगर_अघोषित RXE_NET_H
+#घोषणा RXE_NET_H
 
-#include <net/sock.h>
-#include <net/if_inet6.h>
-#include <linux/module.h>
+#समावेश <net/sock.h>
+#समावेश <net/अगर_inet6.h>
+#समावेश <linux/module.h>
 
-struct rxe_recv_sockets {
-	struct socket *sk4;
-	struct socket *sk6;
-};
+काष्ठा rxe_recv_sockets अणु
+	काष्ठा socket *sk4;
+	काष्ठा socket *sk6;
+पूर्ण;
 
-int rxe_net_add(const char *ibdev_name, struct net_device *ndev);
+पूर्णांक rxe_net_add(स्थिर अक्षर *ibdev_name, काष्ठा net_device *ndev);
 
-int rxe_net_init(void);
-void rxe_net_exit(void);
+पूर्णांक rxe_net_init(व्योम);
+व्योम rxe_net_निकास(व्योम);
 
-#endif /* RXE_NET_H */
+#पूर्ण_अगर /* RXE_NET_H */

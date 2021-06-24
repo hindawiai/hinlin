@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hypervisor Maintenance Interrupt (HMI) handling.
+ * Hypervisor Maपूर्णांकenance Interrupt (HMI) handling.
  *
  * Copyright 2015 IBM Corporation
  * Author: Mahesh Salgaonkar <mahesh@linux.vnet.ibm.com>
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/types.h>
-#include <linux/compiler.h>
-#include <asm/paca.h>
-#include <asm/hmi.h>
-#include <asm/processor.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/hmi.h>
+#समावेश <यंत्र/processor.h>
 
-void wait_for_subcore_guest_exit(void)
-{
-	int i;
+व्योम रुको_क्रम_subcore_guest_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * NULL bitmap pointer indicates that KVM module hasn't
+	 * शून्य biपंचांगap poपूर्णांकer indicates that KVM module hasn't
 	 * been loaded yet and hence no guests are running.
-	 * If no KVM is in use, no need to co-ordinate among threads
+	 * If no KVM is in use, no need to co-ordinate among thपढ़ोs
 	 * as all of them will always be in host and no one is going
-	 * to modify TB other than the opal hmi handler.
-	 * Hence, just return from here.
+	 * to modअगरy TB other than the opal hmi handler.
+	 * Hence, just वापस from here.
 	 */
-	if (!local_paca->sibling_subcore_state)
-		return;
+	अगर (!local_paca->sibling_subcore_state)
+		वापस;
 
-	for (i = 0; i < MAX_SUBCORE_PER_CORE; i++)
-		while (local_paca->sibling_subcore_state->in_guest[i])
+	क्रम (i = 0; i < MAX_SUBCORE_PER_CORE; i++)
+		जबतक (local_paca->sibling_subcore_state->in_guest[i])
 			cpu_relax();
-}
+पूर्ण
 
-void wait_for_tb_resync(void)
-{
-	if (!local_paca->sibling_subcore_state)
-		return;
+व्योम रुको_क्रम_tb_resync(व्योम)
+अणु
+	अगर (!local_paca->sibling_subcore_state)
+		वापस;
 
-	while (test_bit(CORE_TB_RESYNC_REQ_BIT,
+	जबतक (test_bit(CORE_TB_RESYNC_REQ_BIT,
 				&local_paca->sibling_subcore_state->flags))
 		cpu_relax();
-}
+पूर्ण

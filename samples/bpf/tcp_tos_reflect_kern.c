@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018 Facebook
  *
- * BPF program to automatically reflect TOS option from received syn packet
+ * BPF program to स्वतःmatically reflect TOS option from received syn packet
  *
  * Use "bpftool cgroup attach $cg sock_ops $prog" to load this BPF program.
  */
 
-#include <uapi/linux/bpf.h>
-#include <uapi/linux/tcp.h>
-#include <uapi/linux/if_ether.h>
-#include <uapi/linux/if_packet.h>
-#include <uapi/linux/ip.h>
-#include <uapi/linux/ipv6.h>
-#include <uapi/linux/in.h>
-#include <linux/socket.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <uapi/linux/tcp.h>
+#समावेश <uapi/linux/अगर_ether.h>
+#समावेश <uapi/linux/अगर_packet.h>
+#समावेश <uapi/linux/ip.h>
+#समावेश <uapi/linux/ipv6.h>
+#समावेश <uapi/linux/in.h>
+#समावेश <linux/socket.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-#define DEBUG 1
+#घोषणा DEBUG 1
 
 SEC("sockops")
-int bpf_basertt(struct bpf_sock_ops *skops)
-{
-	char header[sizeof(struct ipv6hdr)];
-	struct ipv6hdr *hdr6;
-	struct iphdr *hdr;
-	int hdr_size = 0;
-	int save_syn = 1;
-	int tos = 0;
-	int rv = 0;
-	int op;
+पूर्णांक bpf_basertt(काष्ठा bpf_sock_ops *skops)
+अणु
+	अक्षर header[माप(काष्ठा ipv6hdr)];
+	काष्ठा ipv6hdr *hdr6;
+	काष्ठा iphdr *hdr;
+	पूर्णांक hdr_size = 0;
+	पूर्णांक save_syn = 1;
+	पूर्णांक tos = 0;
+	पूर्णांक rv = 0;
+	पूर्णांक op;
 
-	op = (int) skops->op;
+	op = (पूर्णांक) skops->op;
 
-#ifdef DEBUG
-	bpf_printk("BPF command: %d\n", op);
-#endif
-	switch (op) {
-	case BPF_SOCK_OPS_TCP_LISTEN_CB:
+#अगर_घोषित DEBUG
+	bpf_prपूर्णांकk("BPF command: %d\n", op);
+#पूर्ण_अगर
+	चयन (op) अणु
+	हाल BPF_SOCK_OPS_TCP_LISTEN_CB:
 		rv = bpf_setsockopt(skops, SOL_TCP, TCP_SAVE_SYN,
-				   &save_syn, sizeof(save_syn));
-		break;
-	case BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB:
-		if (skops->family == AF_INET)
-			hdr_size = sizeof(struct iphdr);
-		else
-			hdr_size = sizeof(struct ipv6hdr);
-		rv = bpf_getsockopt(skops, SOL_TCP, TCP_SAVED_SYN,
+				   &save_syn, माप(save_syn));
+		अवरोध;
+	हाल BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB:
+		अगर (skops->family == AF_INET)
+			hdr_size = माप(काष्ठा iphdr);
+		अन्यथा
+			hdr_size = माप(काष्ठा ipv6hdr);
+		rv = bpf_माला_लोockopt(skops, SOL_TCP, TCP_SAVED_SYN,
 				    header, hdr_size);
-		if (!rv) {
-			if (skops->family == AF_INET) {
-				hdr = (struct iphdr *) header;
+		अगर (!rv) अणु
+			अगर (skops->family == AF_INET) अणु
+				hdr = (काष्ठा iphdr *) header;
 				tos = hdr->tos;
-				if (tos != 0)
+				अगर (tos != 0)
 					bpf_setsockopt(skops, SOL_IP, IP_TOS,
-						       &tos, sizeof(tos));
-			} else {
-				hdr6 = (struct ipv6hdr *) header;
+						       &tos, माप(tos));
+			पूर्ण अन्यथा अणु
+				hdr6 = (काष्ठा ipv6hdr *) header;
 				tos = ((hdr6->priority) << 4 |
 				       (hdr6->flow_lbl[0]) >>  4);
-				if (tos)
+				अगर (tos)
 					bpf_setsockopt(skops, SOL_IPV6,
 						       IPV6_TCLASS,
-						       &tos, sizeof(tos));
-			}
+						       &tos, माप(tos));
+			पूर्ण
 			rv = 0;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		rv = -1;
-	}
-#ifdef DEBUG
-	bpf_printk("Returning %d\n", rv);
-#endif
+	पूर्ण
+#अगर_घोषित DEBUG
+	bpf_prपूर्णांकk("Returning %d\n", rv);
+#पूर्ण_अगर
 	skops->reply = rv;
-	return 1;
-}
-char _license[] SEC("license") = "GPL";
+	वापस 1;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

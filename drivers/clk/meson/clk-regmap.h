@@ -1,137 +1,138 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2018 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#ifndef __CLK_REGMAP_H
-#define __CLK_REGMAP_H
+#अगर_अघोषित __CLK_REGMAP_H
+#घोषणा __CLK_REGMAP_H
 
-#include <linux/clk-provider.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/regmap.h>
 
 /**
- * struct clk_regmap - regmap backed clock
+ * काष्ठा clk_regmap - regmap backed घड़ी
  *
- * @hw:		handle between common and hardware-specific interfaces
- * @map:	pointer to the regmap structure controlling the clock
- * @data:	data specific to the clock type
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @map:	poपूर्णांकer to the regmap काष्ठाure controlling the घड़ी
+ * @data:	data specअगरic to the घड़ी type
  *
- * Clock which is controlled by regmap backed registers. The actual type of
- * of the clock is controlled by the clock_ops and data.
+ * Clock which is controlled by regmap backed रेजिस्टरs. The actual type of
+ * of the घड़ी is controlled by the घड़ी_ops and data.
  */
-struct clk_regmap {
-	struct clk_hw	hw;
-	struct regmap	*map;
-	void		*data;
-};
+काष्ठा clk_regmap अणु
+	काष्ठा clk_hw	hw;
+	काष्ठा regmap	*map;
+	व्योम		*data;
+पूर्ण;
 
-static inline struct clk_regmap *to_clk_regmap(struct clk_hw *hw)
-{
-	return container_of(hw, struct clk_regmap, hw);
-}
+अटल अंतरभूत काष्ठा clk_regmap *to_clk_regmap(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा clk_regmap, hw);
+पूर्ण
 
 /**
- * struct clk_regmap_gate_data - regmap backed gate specific data
+ * काष्ठा clk_regmap_gate_data - regmap backed gate specअगरic data
  *
- * @offset:	offset of the register controlling gate
+ * @offset:	offset of the रेजिस्टर controlling gate
  * @bit_idx:	single bit controlling gate
- * @flags:	hardware-specific flags
+ * @flags:	hardware-specअगरic flags
  *
  * Flags:
  * Same as clk_gate except CLK_GATE_HIWORD_MASK which is ignored
  */
-struct clk_regmap_gate_data {
-	unsigned int	offset;
+काष्ठा clk_regmap_gate_data अणु
+	अचिन्हित पूर्णांक	offset;
 	u8		bit_idx;
 	u8		flags;
-};
+पूर्ण;
 
-static inline struct clk_regmap_gate_data *
-clk_get_regmap_gate_data(struct clk_regmap *clk)
-{
-	return (struct clk_regmap_gate_data *)clk->data;
-}
+अटल अंतरभूत काष्ठा clk_regmap_gate_data *
+clk_get_regmap_gate_data(काष्ठा clk_regmap *clk)
+अणु
+	वापस (काष्ठा clk_regmap_gate_data *)clk->data;
+पूर्ण
 
-extern const struct clk_ops clk_regmap_gate_ops;
-extern const struct clk_ops clk_regmap_gate_ro_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_gate_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_gate_ro_ops;
 
 /**
- * struct clk_regmap_div_data - regmap backed adjustable divider specific data
+ * काष्ठा clk_regmap_भाग_data - regmap backed adjustable भागider specअगरic data
  *
- * @offset:	offset of the register controlling the divider
- * @shift:	shift to the divider bit field
- * @width:	width of the divider bit field
- * @table:	array of value/divider pairs, last entry should have div = 0
+ * @offset:	offset of the रेजिस्टर controlling the भागider
+ * @shअगरt:	shअगरt to the भागider bit field
+ * @width:	width of the भागider bit field
+ * @table:	array of value/भागider pairs, last entry should have भाग = 0
  *
  * Flags:
- * Same as clk_divider except CLK_DIVIDER_HIWORD_MASK which is ignored
+ * Same as clk_भागider except CLK_DIVIDER_HIWORD_MASK which is ignored
  */
-struct clk_regmap_div_data {
-	unsigned int	offset;
-	u8		shift;
+काष्ठा clk_regmap_भाग_data अणु
+	अचिन्हित पूर्णांक	offset;
+	u8		shअगरt;
 	u8		width;
 	u8		flags;
-	const struct clk_div_table	*table;
-};
+	स्थिर काष्ठा clk_भाग_प्रकारable	*table;
+पूर्ण;
 
-static inline struct clk_regmap_div_data *
-clk_get_regmap_div_data(struct clk_regmap *clk)
-{
-	return (struct clk_regmap_div_data *)clk->data;
-}
+अटल अंतरभूत काष्ठा clk_regmap_भाग_data *
+clk_get_regmap_भाग_data(काष्ठा clk_regmap *clk)
+अणु
+	वापस (काष्ठा clk_regmap_भाग_data *)clk->data;
+पूर्ण
 
-extern const struct clk_ops clk_regmap_divider_ops;
-extern const struct clk_ops clk_regmap_divider_ro_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_भागider_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_भागider_ro_ops;
 
 /**
- * struct clk_regmap_mux_data - regmap backed multiplexer clock specific data
+ * काष्ठा clk_regmap_mux_data - regmap backed multiplexer घड़ी specअगरic data
  *
- * @hw:		handle between common and hardware-specific interfaces
- * @offset:	offset of theregister controlling multiplexer
- * @table:	array of parent indexed register values
- * @shift:	shift to multiplexer bit field
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @offset:	offset of theरेजिस्टर controlling multiplexer
+ * @table:	array of parent indexed रेजिस्टर values
+ * @shअगरt:	shअगरt to multiplexer bit field
  * @mask:	mask of mutliplexer bit field
- * @flags:	hardware-specific flags
+ * @flags:	hardware-specअगरic flags
  *
  * Flags:
- * Same as clk_divider except CLK_MUX_HIWORD_MASK which is ignored
+ * Same as clk_भागider except CLK_MUX_HIWORD_MASK which is ignored
  */
-struct clk_regmap_mux_data {
-	unsigned int	offset;
+काष्ठा clk_regmap_mux_data अणु
+	अचिन्हित पूर्णांक	offset;
 	u32		*table;
 	u32		mask;
-	u8		shift;
+	u8		shअगरt;
 	u8		flags;
-};
+पूर्ण;
 
-static inline struct clk_regmap_mux_data *
-clk_get_regmap_mux_data(struct clk_regmap *clk)
-{
-	return (struct clk_regmap_mux_data *)clk->data;
-}
+अटल अंतरभूत काष्ठा clk_regmap_mux_data *
+clk_get_regmap_mux_data(काष्ठा clk_regmap *clk)
+अणु
+	वापस (काष्ठा clk_regmap_mux_data *)clk->data;
+पूर्ण
 
-extern const struct clk_ops clk_regmap_mux_ops;
-extern const struct clk_ops clk_regmap_mux_ro_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_mux_ops;
+बाह्य स्थिर काष्ठा clk_ops clk_regmap_mux_ro_ops;
 
-#define __MESON_PCLK(_name, _reg, _bit, _ops, _pname)			\
-struct clk_regmap _name = {						\
-	.data = &(struct clk_regmap_gate_data){				\
+#घोषणा __MESON_PCLK(_name, _reg, _bit, _ops, _pname)			\
+काष्ठा clk_regmap _name = अणु						\
+	.data = &(काष्ठा clk_regmap_gate_data)अणु				\
 		.offset = (_reg),					\
 		.bit_idx = (_bit),					\
-	},								\
-	.hw.init = &(struct clk_init_data) {				\
+	पूर्ण,								\
+	.hw.init = &(काष्ठा clk_init_data) अणु				\
 		.name = #_name,						\
 		.ops = _ops,						\
-		.parent_hws = (const struct clk_hw *[]) { _pname },	\
+		.parent_hws = (स्थिर काष्ठा clk_hw *[]) अणु _pname पूर्ण,	\
 		.num_parents = 1,					\
 		.flags = (CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED),	\
-	},								\
-}
+	पूर्ण,								\
+पूर्ण
 
-#define MESON_PCLK(_name, _reg, _bit, _pname)	\
+#घोषणा MESON_PCLK(_name, _reg, _bit, _pname)	\
 	__MESON_PCLK(_name, _reg, _bit, &clk_regmap_gate_ops, _pname)
 
-#define MESON_PCLK_RO(_name, _reg, _bit, _pname)	\
+#घोषणा MESON_PCLK_RO(_name, _reg, _bit, _pname)	\
 	__MESON_PCLK(_name, _reg, _bit, &clk_regmap_gate_ro_ops, _pname)
-#endif /* __CLK_REGMAP_H */
+#पूर्ण_अगर /* __CLK_REGMAP_H */

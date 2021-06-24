@@ -1,20 +1,21 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ath9k.h"
+#समावेश "ath9k.h"
 
 /*
  * AR9285
@@ -22,32 +23,32 @@
  *
  * EEPROM has 2 4-bit fields containing the card configuration.
  *
- * antdiv_ctl1:
+ * antभाग_ctl1:
  * ------------
- * bb_enable_ant_div_lnadiv : 1
- * bb_ant_div_alt_gaintb    : 1
- * bb_ant_div_main_gaintb   : 1
- * bb_enable_ant_fast_div   : 1
+ * bb_enable_ant_भाग_lnaभाग : 1
+ * bb_ant_भाग_alt_gaपूर्णांकb    : 1
+ * bb_ant_भाग_मुख्य_gaपूर्णांकb   : 1
+ * bb_enable_ant_fast_भाग   : 1
  *
- * antdiv_ctl2:
+ * antभाग_ctl2:
  * -----------
- * bb_ant_div_alt_lnaconf  : 2
- * bb_ant_div_main_lnaconf : 2
+ * bb_ant_भाग_alt_lnaconf  : 2
+ * bb_ant_भाग_मुख्य_lnaconf : 2
  *
  * The EEPROM bits are used as follows:
  * ------------------------------------
  *
- * bb_enable_ant_div_lnadiv      - Enable LNA path rx antenna diversity/combining.
+ * bb_enable_ant_भाग_lnaभाग      - Enable LNA path rx antenna भागersity/combining.
  *                                 Set in AR_PHY_MULTICHAIN_GAIN_CTL.
  *
- * bb_ant_div_[alt/main]_gaintb  - 0 -> Antenna config Alt/Main uses gaintable 0
- *                                 1 -> Antenna config Alt/Main uses gaintable 1
+ * bb_ant_भाग_[alt/मुख्य]_gaपूर्णांकb  - 0 -> Antenna config Alt/Main uses gaपूर्णांकable 0
+ *                                 1 -> Antenna config Alt/Main uses gaपूर्णांकable 1
  *                                 Set in AR_PHY_MULTICHAIN_GAIN_CTL.
  *
- * bb_enable_ant_fast_div        - Enable fast antenna diversity.
+ * bb_enable_ant_fast_भाग        - Enable fast antenna भागersity.
  *                                 Set in AR_PHY_CCK_DETECT.
  *
- * bb_ant_div_[alt/main]_lnaconf - Alt/Main LNA diversity/combining input config.
+ * bb_ant_भाग_[alt/मुख्य]_lnaconf - Alt/Main LNA भागersity/combining input config.
  *                                 Set in AR_PHY_MULTICHAIN_GAIN_CTL.
  *                                 10=LNA1
  *                                 01=LNA2
@@ -58,792 +59,792 @@
  * ========================
  *
  * The same bits are present in the EEPROM, but the location in the
- * EEPROM is different (ant_div_control in ar9300_BaseExtension_1).
+ * EEPROM is dअगरferent (ant_भाग_control in ar9300_BaseExtension_1).
  *
- * ant_div_alt_lnaconf      ==> bit 0~1
- * ant_div_main_lnaconf     ==> bit 2~3
- * ant_div_alt_gaintb       ==> bit 4
- * ant_div_main_gaintb      ==> bit 5
- * enable_ant_div_lnadiv    ==> bit 6
- * enable_ant_fast_div      ==> bit 7
+ * ant_भाग_alt_lnaconf      ==> bit 0~1
+ * ant_भाग_मुख्य_lnaconf     ==> bit 2~3
+ * ant_भाग_alt_gaपूर्णांकb       ==> bit 4
+ * ant_भाग_मुख्य_gaपूर्णांकb      ==> bit 5
+ * enable_ant_भाग_lnaभाग    ==> bit 6
+ * enable_ant_fast_भाग      ==> bit 7
  */
 
-static inline bool ath_is_alt_ant_ratio_better(struct ath_ant_comb *antcomb,
-					       int alt_ratio, int maxdelta,
-					       int mindelta, int main_rssi_avg,
-					       int alt_rssi_avg, int pkt_count)
-{
-	if (pkt_count <= 50)
-		return false;
+अटल अंतरभूत bool ath_is_alt_ant_ratio_better(काष्ठा ath_ant_comb *antcomb,
+					       पूर्णांक alt_ratio, पूर्णांक maxdelta,
+					       पूर्णांक mindelta, पूर्णांक मुख्य_rssi_avg,
+					       पूर्णांक alt_rssi_avg, पूर्णांक pkt_count)
+अणु
+	अगर (pkt_count <= 50)
+		वापस false;
 
-	if (alt_rssi_avg > main_rssi_avg + mindelta)
-		return true;
+	अगर (alt_rssi_avg > मुख्य_rssi_avg + mindelta)
+		वापस true;
 
-	if (alt_ratio >= antcomb->ant_ratio2 &&
+	अगर (alt_ratio >= antcomb->ant_ratio2 &&
 	    alt_rssi_avg >= antcomb->low_rssi_thresh &&
-	    (alt_rssi_avg > main_rssi_avg + maxdelta))
-		return true;
+	    (alt_rssi_avg > मुख्य_rssi_avg + maxdelta))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool ath_ant_div_comb_alt_check(struct ath_hw_antcomb_conf *conf,
-					      struct ath_ant_comb *antcomb,
-					      int alt_ratio, int alt_rssi_avg,
-					      int main_rssi_avg)
-{
+अटल अंतरभूत bool ath_ant_भाग_comb_alt_check(काष्ठा ath_hw_antcomb_conf *conf,
+					      काष्ठा ath_ant_comb *antcomb,
+					      पूर्णांक alt_ratio, पूर्णांक alt_rssi_avg,
+					      पूर्णांक मुख्य_rssi_avg)
+अणु
 	bool result, set1, set2;
 
 	result = set1 = set2 = false;
 
-	if (conf->main_lna_conf == ATH_ANT_DIV_COMB_LNA2 &&
+	अगर (conf->मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA2 &&
 	    conf->alt_lna_conf == ATH_ANT_DIV_COMB_LNA1)
 		set1 = true;
 
-	if (conf->main_lna_conf == ATH_ANT_DIV_COMB_LNA1 &&
+	अगर (conf->मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA1 &&
 	    conf->alt_lna_conf == ATH_ANT_DIV_COMB_LNA2)
 		set2 = true;
 
-	switch (conf->div_group) {
-	case 0:
-		if (alt_ratio > ATH_ANT_DIV_COMB_ALT_ANT_RATIO)
+	चयन (conf->भाग_group) अणु
+	हाल 0:
+		अगर (alt_ratio > ATH_ANT_DIV_COMB_ALT_ANT_RATIO)
 			result = true;
-		break;
-	case 1:
-	case 2:
-		if (alt_rssi_avg < 4 || alt_rssi_avg < antcomb->low_rssi_thresh)
-			break;
+		अवरोध;
+	हाल 1:
+	हाल 2:
+		अगर (alt_rssi_avg < 4 || alt_rssi_avg < antcomb->low_rssi_thresh)
+			अवरोध;
 
-		if ((set1 && (alt_rssi_avg >= (main_rssi_avg - 5))) ||
-		    (set2 && (alt_rssi_avg >= (main_rssi_avg - 2))) ||
+		अगर ((set1 && (alt_rssi_avg >= (मुख्य_rssi_avg - 5))) ||
+		    (set2 && (alt_rssi_avg >= (मुख्य_rssi_avg - 2))) ||
 		    (alt_ratio > antcomb->ant_ratio))
 			result = true;
 
-		break;
-	case 3:
-		if (alt_rssi_avg < 4 || alt_rssi_avg < antcomb->low_rssi_thresh)
-			break;
+		अवरोध;
+	हाल 3:
+		अगर (alt_rssi_avg < 4 || alt_rssi_avg < antcomb->low_rssi_thresh)
+			अवरोध;
 
-		if ((set1 && (alt_rssi_avg >= (main_rssi_avg - 3))) ||
-		    (set2 && (alt_rssi_avg >= (main_rssi_avg + 3))) ||
+		अगर ((set1 && (alt_rssi_avg >= (मुख्य_rssi_avg - 3))) ||
+		    (set2 && (alt_rssi_avg >= (मुख्य_rssi_avg + 3))) ||
 		    (alt_ratio > antcomb->ant_ratio))
 			result = true;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void ath_lnaconf_alt_good_scan(struct ath_ant_comb *antcomb,
-				      struct ath_hw_antcomb_conf ant_conf,
-				      int main_rssi_avg)
-{
+अटल व्योम ath_lnaconf_alt_good_scan(काष्ठा ath_ant_comb *antcomb,
+				      काष्ठा ath_hw_antcomb_conf ant_conf,
+				      पूर्णांक मुख्य_rssi_avg)
+अणु
 	antcomb->quick_scan_cnt = 0;
 
-	if (ant_conf.main_lna_conf == ATH_ANT_DIV_COMB_LNA2)
-		antcomb->rssi_lna2 = main_rssi_avg;
-	else if (ant_conf.main_lna_conf == ATH_ANT_DIV_COMB_LNA1)
-		antcomb->rssi_lna1 = main_rssi_avg;
+	अगर (ant_conf.मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA2)
+		antcomb->rssi_lna2 = मुख्य_rssi_avg;
+	अन्यथा अगर (ant_conf.मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA1)
+		antcomb->rssi_lna1 = मुख्य_rssi_avg;
 
-	switch ((ant_conf.main_lna_conf << 4) | ant_conf.alt_lna_conf) {
-	case 0x10: /* LNA2 A-B */
-		antcomb->main_conf = ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
+	चयन ((ant_conf.मुख्य_lna_conf << 4) | ant_conf.alt_lna_conf) अणु
+	हाल 0x10: /* LNA2 A-B */
+		antcomb->मुख्य_conf = ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
 		antcomb->first_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
 		antcomb->second_quick_scan_conf = ATH_ANT_DIV_COMB_LNA1;
-		break;
-	case 0x20: /* LNA1 A-B */
-		antcomb->main_conf = ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
+		अवरोध;
+	हाल 0x20: /* LNA1 A-B */
+		antcomb->मुख्य_conf = ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
 		antcomb->first_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
 		antcomb->second_quick_scan_conf = ATH_ANT_DIV_COMB_LNA2;
-		break;
-	case 0x21: /* LNA1 LNA2 */
-		antcomb->main_conf = ATH_ANT_DIV_COMB_LNA2;
+		अवरोध;
+	हाल 0x21: /* LNA1 LNA2 */
+		antcomb->मुख्य_conf = ATH_ANT_DIV_COMB_LNA2;
 		antcomb->first_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
 		antcomb->second_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
-		break;
-	case 0x12: /* LNA2 LNA1 */
-		antcomb->main_conf = ATH_ANT_DIV_COMB_LNA1;
+		अवरोध;
+	हाल 0x12: /* LNA2 LNA1 */
+		antcomb->मुख्य_conf = ATH_ANT_DIV_COMB_LNA1;
 		antcomb->first_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
 		antcomb->second_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
-		break;
-	case 0x13: /* LNA2 A+B */
-		antcomb->main_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
+		अवरोध;
+	हाल 0x13: /* LNA2 A+B */
+		antcomb->मुख्य_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
 		antcomb->first_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
 		antcomb->second_quick_scan_conf = ATH_ANT_DIV_COMB_LNA1;
-		break;
-	case 0x23: /* LNA1 A+B */
-		antcomb->main_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
+		अवरोध;
+	हाल 0x23: /* LNA1 A+B */
+		antcomb->मुख्य_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
 		antcomb->first_quick_scan_conf =
 			ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
 		antcomb->second_quick_scan_conf = ATH_ANT_DIV_COMB_LNA2;
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ath_ant_set_alt_ratio(struct ath_ant_comb *antcomb,
-				  struct ath_hw_antcomb_conf *conf)
-{
+अटल व्योम ath_ant_set_alt_ratio(काष्ठा ath_ant_comb *antcomb,
+				  काष्ठा ath_hw_antcomb_conf *conf)
+अणु
 	/* set alt to the conf with maximun ratio */
-	if (antcomb->first_ratio && antcomb->second_ratio) {
-		if (antcomb->rssi_second > antcomb->rssi_third) {
+	अगर (antcomb->first_ratio && antcomb->second_ratio) अणु
+		अगर (antcomb->rssi_second > antcomb->rssi_third) अणु
 			/* first alt*/
-			if ((antcomb->first_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
+			अगर ((antcomb->first_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
 			    (antcomb->first_quick_scan_conf == ATH_ANT_DIV_COMB_LNA2))
 				/* Set alt LNA1 or LNA2*/
-				if (conf->main_lna_conf == ATH_ANT_DIV_COMB_LNA2)
+				अगर (conf->मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA2)
 					conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-				else
+				अन्यथा
 					conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-			else
+			अन्यथा
 				/* Set alt to A+B or A-B */
 				conf->alt_lna_conf =
 					antcomb->first_quick_scan_conf;
-		} else if ((antcomb->second_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
-			   (antcomb->second_quick_scan_conf == ATH_ANT_DIV_COMB_LNA2)) {
+		पूर्ण अन्यथा अगर ((antcomb->second_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
+			   (antcomb->second_quick_scan_conf == ATH_ANT_DIV_COMB_LNA2)) अणु
 			/* Set alt LNA1 or LNA2 */
-			if (conf->main_lna_conf == ATH_ANT_DIV_COMB_LNA2)
+			अगर (conf->मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA2)
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-			else
+			अन्यथा
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Set alt to A+B or A-B */
 			conf->alt_lna_conf = antcomb->second_quick_scan_conf;
-		}
-	} else if (antcomb->first_ratio) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (antcomb->first_ratio) अणु
 		/* first alt */
-		if ((antcomb->first_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
+		अगर ((antcomb->first_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
 		    (antcomb->first_quick_scan_conf == ATH_ANT_DIV_COMB_LNA2))
 			/* Set alt LNA1 or LNA2 */
-			if (conf->main_lna_conf == ATH_ANT_DIV_COMB_LNA2)
+			अगर (conf->मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA2)
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-			else
+			अन्यथा
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-		else
+		अन्यथा
 			/* Set alt to A+B or A-B */
 			conf->alt_lna_conf = antcomb->first_quick_scan_conf;
-	} else if (antcomb->second_ratio) {
+	पूर्ण अन्यथा अगर (antcomb->second_ratio) अणु
 		/* second alt */
-		if ((antcomb->second_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
+		अगर ((antcomb->second_quick_scan_conf == ATH_ANT_DIV_COMB_LNA1) ||
 		    (antcomb->second_quick_scan_conf == ATH_ANT_DIV_COMB_LNA2))
 			/* Set alt LNA1 or LNA2 */
-			if (conf->main_lna_conf == ATH_ANT_DIV_COMB_LNA2)
+			अगर (conf->मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA2)
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-			else
+			अन्यथा
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-		else
+		अन्यथा
 			/* Set alt to A+B or A-B */
 			conf->alt_lna_conf = antcomb->second_quick_scan_conf;
-	} else {
-		/* main is largest */
-		if ((antcomb->main_conf == ATH_ANT_DIV_COMB_LNA1) ||
-		    (antcomb->main_conf == ATH_ANT_DIV_COMB_LNA2))
+	पूर्ण अन्यथा अणु
+		/* मुख्य is largest */
+		अगर ((antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA1) ||
+		    (antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA2))
 			/* Set alt LNA1 or LNA2 */
-			if (conf->main_lna_conf == ATH_ANT_DIV_COMB_LNA2)
+			अगर (conf->मुख्य_lna_conf == ATH_ANT_DIV_COMB_LNA2)
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-			else
+			अन्यथा
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-		else
+		अन्यथा
 			/* Set alt to A+B or A-B */
-			conf->alt_lna_conf = antcomb->main_conf;
-	}
-}
+			conf->alt_lna_conf = antcomb->मुख्य_conf;
+	पूर्ण
+पूर्ण
 
-static void ath_select_ant_div_from_quick_scan(struct ath_ant_comb *antcomb,
-				       struct ath_hw_antcomb_conf *div_ant_conf,
-				       int main_rssi_avg, int alt_rssi_avg,
-				       int alt_ratio)
-{
+अटल व्योम ath_select_ant_भाग_from_quick_scan(काष्ठा ath_ant_comb *antcomb,
+				       काष्ठा ath_hw_antcomb_conf *भाग_ant_conf,
+				       पूर्णांक मुख्य_rssi_avg, पूर्णांक alt_rssi_avg,
+				       पूर्णांक alt_ratio)
+अणु
 	/* alt_good */
-	switch (antcomb->quick_scan_cnt) {
-	case 0:
-		/* set alt to main, and alt to first conf */
-		div_ant_conf->main_lna_conf = antcomb->main_conf;
-		div_ant_conf->alt_lna_conf = antcomb->first_quick_scan_conf;
-		break;
-	case 1:
-		/* set alt to main, and alt to first conf */
-		div_ant_conf->main_lna_conf = antcomb->main_conf;
-		div_ant_conf->alt_lna_conf = antcomb->second_quick_scan_conf;
-		antcomb->rssi_first = main_rssi_avg;
+	चयन (antcomb->quick_scan_cnt) अणु
+	हाल 0:
+		/* set alt to मुख्य, and alt to first conf */
+		भाग_ant_conf->मुख्य_lna_conf = antcomb->मुख्य_conf;
+		भाग_ant_conf->alt_lna_conf = antcomb->first_quick_scan_conf;
+		अवरोध;
+	हाल 1:
+		/* set alt to मुख्य, and alt to first conf */
+		भाग_ant_conf->मुख्य_lna_conf = antcomb->मुख्य_conf;
+		भाग_ant_conf->alt_lna_conf = antcomb->second_quick_scan_conf;
+		antcomb->rssi_first = मुख्य_rssi_avg;
 		antcomb->rssi_second = alt_rssi_avg;
 
-		if (antcomb->main_conf == ATH_ANT_DIV_COMB_LNA1) {
-			/* main is LNA1 */
-			if (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
+		अगर (antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA1) अणु
+			/* मुख्य is LNA1 */
+			अगर (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_HI,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_LOW,
-						main_rssi_avg, alt_rssi_avg,
+						मुख्य_rssi_avg, alt_rssi_avg,
 						antcomb->total_pkt_count))
 				antcomb->first_ratio = true;
-			else
+			अन्यथा
 				antcomb->first_ratio = false;
-		} else if (antcomb->main_conf == ATH_ANT_DIV_COMB_LNA2) {
-			if (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
+		पूर्ण अन्यथा अगर (antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA2) अणु
+			अगर (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_MID,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_LOW,
-						main_rssi_avg, alt_rssi_avg,
+						मुख्य_rssi_avg, alt_rssi_avg,
 						antcomb->total_pkt_count))
 				antcomb->first_ratio = true;
-			else
+			अन्यथा
 				antcomb->first_ratio = false;
-		} else {
-			if (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
+		पूर्ण अन्यथा अणु
+			अगर (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_HI,
 						0,
-						main_rssi_avg, alt_rssi_avg,
+						मुख्य_rssi_avg, alt_rssi_avg,
 						antcomb->total_pkt_count))
 				antcomb->first_ratio = true;
-			else
+			अन्यथा
 				antcomb->first_ratio = false;
-		}
-		break;
-	case 2:
+		पूर्ण
+		अवरोध;
+	हाल 2:
 		antcomb->alt_good = false;
 		antcomb->scan_not_start = false;
 		antcomb->scan = false;
-		antcomb->rssi_first = main_rssi_avg;
+		antcomb->rssi_first = मुख्य_rssi_avg;
 		antcomb->rssi_third = alt_rssi_avg;
 
-		switch(antcomb->second_quick_scan_conf) {
-		case ATH_ANT_DIV_COMB_LNA1:
+		चयन(antcomb->second_quick_scan_conf) अणु
+		हाल ATH_ANT_DIV_COMB_LNA1:
 			antcomb->rssi_lna1 = alt_rssi_avg;
-			break;
-		case ATH_ANT_DIV_COMB_LNA2:
+			अवरोध;
+		हाल ATH_ANT_DIV_COMB_LNA2:
 			antcomb->rssi_lna2 = alt_rssi_avg;
-			break;
-		case ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2:
-			if (antcomb->main_conf == ATH_ANT_DIV_COMB_LNA2)
-				antcomb->rssi_lna2 = main_rssi_avg;
-			else if (antcomb->main_conf == ATH_ANT_DIV_COMB_LNA1)
-				antcomb->rssi_lna1 = main_rssi_avg;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		हाल ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2:
+			अगर (antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA2)
+				antcomb->rssi_lna2 = मुख्य_rssi_avg;
+			अन्यथा अगर (antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA1)
+				antcomb->rssi_lna1 = मुख्य_rssi_avg;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		if (antcomb->rssi_lna2 > antcomb->rssi_lna1 +
-		    div_ant_conf->lna1_lna2_switch_delta)
-			div_ant_conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-		else
-			div_ant_conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+		अगर (antcomb->rssi_lna2 > antcomb->rssi_lna1 +
+		    भाग_ant_conf->lna1_lna2_चयन_delta)
+			भाग_ant_conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+		अन्यथा
+			भाग_ant_conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA1;
 
-		if (antcomb->main_conf == ATH_ANT_DIV_COMB_LNA1) {
-			if (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
+		अगर (antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA1) अणु
+			अगर (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_HI,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_LOW,
-						main_rssi_avg, alt_rssi_avg,
+						मुख्य_rssi_avg, alt_rssi_avg,
 						antcomb->total_pkt_count))
 				antcomb->second_ratio = true;
-			else
+			अन्यथा
 				antcomb->second_ratio = false;
-		} else if (antcomb->main_conf == ATH_ANT_DIV_COMB_LNA2) {
-			if (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
+		पूर्ण अन्यथा अगर (antcomb->मुख्य_conf == ATH_ANT_DIV_COMB_LNA2) अणु
+			अगर (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_MID,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_LOW,
-						main_rssi_avg, alt_rssi_avg,
+						मुख्य_rssi_avg, alt_rssi_avg,
 						antcomb->total_pkt_count))
 				antcomb->second_ratio = true;
-			else
+			अन्यथा
 				antcomb->second_ratio = false;
-		} else {
-			if (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
+		पूर्ण अन्यथा अणु
+			अगर (ath_is_alt_ant_ratio_better(antcomb, alt_ratio,
 						ATH_ANT_DIV_COMB_LNA1_DELTA_HI,
 						0,
-						main_rssi_avg, alt_rssi_avg,
+						मुख्य_rssi_avg, alt_rssi_avg,
 						antcomb->total_pkt_count))
 				antcomb->second_ratio = true;
-			else
+			अन्यथा
 				antcomb->second_ratio = false;
-		}
+		पूर्ण
 
-		ath_ant_set_alt_ratio(antcomb, div_ant_conf);
+		ath_ant_set_alt_ratio(antcomb, भाग_ant_conf);
 
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void ath_ant_div_conf_fast_divbias(struct ath_hw_antcomb_conf *ant_conf,
-					  struct ath_ant_comb *antcomb,
-					  int alt_ratio)
-{
-	ant_conf->main_gaintb = 0;
-	ant_conf->alt_gaintb = 0;
+अटल व्योम ath_ant_भाग_conf_fast_भागbias(काष्ठा ath_hw_antcomb_conf *ant_conf,
+					  काष्ठा ath_ant_comb *antcomb,
+					  पूर्णांक alt_ratio)
+अणु
+	ant_conf->मुख्य_gaपूर्णांकb = 0;
+	ant_conf->alt_gaपूर्णांकb = 0;
 
-	if (ant_conf->div_group == 0) {
-		/* Adjust the fast_div_bias based on main and alt lna conf */
-		switch ((ant_conf->main_lna_conf << 4) |
-				ant_conf->alt_lna_conf) {
-		case 0x01: /* A-B LNA2 */
-			ant_conf->fast_div_bias = 0x3b;
-			break;
-		case 0x02: /* A-B LNA1 */
-			ant_conf->fast_div_bias = 0x3d;
-			break;
-		case 0x03: /* A-B A+B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x10: /* LNA2 A-B */
-			ant_conf->fast_div_bias = 0x7;
-			break;
-		case 0x12: /* LNA2 LNA1 */
-			ant_conf->fast_div_bias = 0x2;
-			break;
-		case 0x13: /* LNA2 A+B */
-			ant_conf->fast_div_bias = 0x7;
-			break;
-		case 0x20: /* LNA1 A-B */
-			ant_conf->fast_div_bias = 0x6;
-			break;
-		case 0x21: /* LNA1 LNA2 */
-			ant_conf->fast_div_bias = 0x0;
-			break;
-		case 0x23: /* LNA1 A+B */
-			ant_conf->fast_div_bias = 0x6;
-			break;
-		case 0x30: /* A+B A-B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x31: /* A+B LNA2 */
-			ant_conf->fast_div_bias = 0x3b;
-			break;
-		case 0x32: /* A+B LNA1 */
-			ant_conf->fast_div_bias = 0x3d;
-			break;
-		default:
-			break;
-		}
-	} else if (ant_conf->div_group == 1) {
-		/* Adjust the fast_div_bias based on main and alt_lna_conf */
-		switch ((ant_conf->main_lna_conf << 4) |
-			ant_conf->alt_lna_conf) {
-		case 0x01: /* A-B LNA2 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x02: /* A-B LNA1 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x03: /* A-B A+B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x10: /* LNA2 A-B */
-			if (!(antcomb->scan) &&
+	अगर (ant_conf->भाग_group == 0) अणु
+		/* Adjust the fast_भाग_bias based on मुख्य and alt lna conf */
+		चयन ((ant_conf->मुख्य_lna_conf << 4) |
+				ant_conf->alt_lna_conf) अणु
+		हाल 0x01: /* A-B LNA2 */
+			ant_conf->fast_भाग_bias = 0x3b;
+			अवरोध;
+		हाल 0x02: /* A-B LNA1 */
+			ant_conf->fast_भाग_bias = 0x3d;
+			अवरोध;
+		हाल 0x03: /* A-B A+B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x10: /* LNA2 A-B */
+			ant_conf->fast_भाग_bias = 0x7;
+			अवरोध;
+		हाल 0x12: /* LNA2 LNA1 */
+			ant_conf->fast_भाग_bias = 0x2;
+			अवरोध;
+		हाल 0x13: /* LNA2 A+B */
+			ant_conf->fast_भाग_bias = 0x7;
+			अवरोध;
+		हाल 0x20: /* LNA1 A-B */
+			ant_conf->fast_भाग_bias = 0x6;
+			अवरोध;
+		हाल 0x21: /* LNA1 LNA2 */
+			ant_conf->fast_भाग_bias = 0x0;
+			अवरोध;
+		हाल 0x23: /* LNA1 A+B */
+			ant_conf->fast_भाग_bias = 0x6;
+			अवरोध;
+		हाल 0x30: /* A+B A-B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x31: /* A+B LNA2 */
+			ant_conf->fast_भाग_bias = 0x3b;
+			अवरोध;
+		हाल 0x32: /* A+B LNA1 */
+			ant_conf->fast_भाग_bias = 0x3d;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ant_conf->भाग_group == 1) अणु
+		/* Adjust the fast_भाग_bias based on मुख्य and alt_lna_conf */
+		चयन ((ant_conf->मुख्य_lna_conf << 4) |
+			ant_conf->alt_lna_conf) अणु
+		हाल 0x01: /* A-B LNA2 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x02: /* A-B LNA1 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x03: /* A-B A+B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x10: /* LNA2 A-B */
+			अगर (!(antcomb->scan) &&
 			    (alt_ratio > ATH_ANT_DIV_COMB_ALT_ANT_RATIO))
-				ant_conf->fast_div_bias = 0x3f;
-			else
-				ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x12: /* LNA2 LNA1 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x13: /* LNA2 A+B */
-			if (!(antcomb->scan) &&
+				ant_conf->fast_भाग_bias = 0x3f;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x12: /* LNA2 LNA1 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x13: /* LNA2 A+B */
+			अगर (!(antcomb->scan) &&
 			    (alt_ratio > ATH_ANT_DIV_COMB_ALT_ANT_RATIO))
-				ant_conf->fast_div_bias = 0x3f;
-			else
-				ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x20: /* LNA1 A-B */
-			if (!(antcomb->scan) &&
+				ant_conf->fast_भाग_bias = 0x3f;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x20: /* LNA1 A-B */
+			अगर (!(antcomb->scan) &&
 			    (alt_ratio > ATH_ANT_DIV_COMB_ALT_ANT_RATIO))
-				ant_conf->fast_div_bias = 0x3f;
-			else
-				ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x21: /* LNA1 LNA2 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x23: /* LNA1 A+B */
-			if (!(antcomb->scan) &&
+				ant_conf->fast_भाग_bias = 0x3f;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x21: /* LNA1 LNA2 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x23: /* LNA1 A+B */
+			अगर (!(antcomb->scan) &&
 			    (alt_ratio > ATH_ANT_DIV_COMB_ALT_ANT_RATIO))
-				ant_conf->fast_div_bias = 0x3f;
-			else
-				ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x30: /* A+B A-B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x31: /* A+B LNA2 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x32: /* A+B LNA1 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		default:
-			break;
-		}
-	} else if (ant_conf->div_group == 2) {
-		/* Adjust the fast_div_bias based on main and alt_lna_conf */
-		switch ((ant_conf->main_lna_conf << 4) |
-				ant_conf->alt_lna_conf) {
-		case 0x01: /* A-B LNA2 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x02: /* A-B LNA1 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x03: /* A-B A+B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x10: /* LNA2 A-B */
-			if (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
-				ant_conf->fast_div_bias = 0x1;
-			else
-				ant_conf->fast_div_bias = 0x2;
-			break;
-		case 0x12: /* LNA2 LNA1 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x13: /* LNA2 A+B */
-			if (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
-				ant_conf->fast_div_bias = 0x1;
-			else
-				ant_conf->fast_div_bias = 0x2;
-			break;
-		case 0x20: /* LNA1 A-B */
-			if (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
-				ant_conf->fast_div_bias = 0x1;
-			else
-				ant_conf->fast_div_bias = 0x2;
-			break;
-		case 0x21: /* LNA1 LNA2 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x23: /* LNA1 A+B */
-			if (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
-				ant_conf->fast_div_bias = 0x1;
-			else
-				ant_conf->fast_div_bias = 0x2;
-			break;
-		case 0x30: /* A+B A-B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x31: /* A+B LNA2 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x32: /* A+B LNA1 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		default:
-			break;
-		}
+				ant_conf->fast_भाग_bias = 0x3f;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x30: /* A+B A-B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x31: /* A+B LNA2 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x32: /* A+B LNA1 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ant_conf->भाग_group == 2) अणु
+		/* Adjust the fast_भाग_bias based on मुख्य and alt_lna_conf */
+		चयन ((ant_conf->मुख्य_lna_conf << 4) |
+				ant_conf->alt_lna_conf) अणु
+		हाल 0x01: /* A-B LNA2 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x02: /* A-B LNA1 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x03: /* A-B A+B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x10: /* LNA2 A-B */
+			अगर (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
+				ant_conf->fast_भाग_bias = 0x1;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x2;
+			अवरोध;
+		हाल 0x12: /* LNA2 LNA1 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x13: /* LNA2 A+B */
+			अगर (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
+				ant_conf->fast_भाग_bias = 0x1;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x2;
+			अवरोध;
+		हाल 0x20: /* LNA1 A-B */
+			अगर (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
+				ant_conf->fast_भाग_bias = 0x1;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x2;
+			अवरोध;
+		हाल 0x21: /* LNA1 LNA2 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x23: /* LNA1 A+B */
+			अगर (!antcomb->scan && (alt_ratio > antcomb->ant_ratio))
+				ant_conf->fast_भाग_bias = 0x1;
+			अन्यथा
+				ant_conf->fast_भाग_bias = 0x2;
+			अवरोध;
+		हाल 0x30: /* A+B A-B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x31: /* A+B LNA2 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x32: /* A+B LNA1 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		if (antcomb->fast_div_bias)
-			ant_conf->fast_div_bias = antcomb->fast_div_bias;
-	} else if (ant_conf->div_group == 3) {
-		switch ((ant_conf->main_lna_conf << 4) |
-			ant_conf->alt_lna_conf) {
-		case 0x01: /* A-B LNA2 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x02: /* A-B LNA1 */
-			ant_conf->fast_div_bias = 0x39;
-			break;
-		case 0x03: /* A-B A+B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x10: /* LNA2 A-B */
-			ant_conf->fast_div_bias = 0x2;
-			break;
-		case 0x12: /* LNA2 LNA1 */
-			ant_conf->fast_div_bias = 0x3f;
-			break;
-		case 0x13: /* LNA2 A+B */
-			ant_conf->fast_div_bias = 0x2;
-			break;
-		case 0x20: /* LNA1 A-B */
-			ant_conf->fast_div_bias = 0x3;
-			break;
-		case 0x21: /* LNA1 LNA2 */
-			ant_conf->fast_div_bias = 0x3;
-			break;
-		case 0x23: /* LNA1 A+B */
-			ant_conf->fast_div_bias = 0x3;
-			break;
-		case 0x30: /* A+B A-B */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		case 0x31: /* A+B LNA2 */
-			ant_conf->fast_div_bias = 0x6;
-			break;
-		case 0x32: /* A+B LNA1 */
-			ant_conf->fast_div_bias = 0x1;
-			break;
-		default:
-			break;
-		}
-	}
-}
+		अगर (antcomb->fast_भाग_bias)
+			ant_conf->fast_भाग_bias = antcomb->fast_भाग_bias;
+	पूर्ण अन्यथा अगर (ant_conf->भाग_group == 3) अणु
+		चयन ((ant_conf->मुख्य_lna_conf << 4) |
+			ant_conf->alt_lna_conf) अणु
+		हाल 0x01: /* A-B LNA2 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x02: /* A-B LNA1 */
+			ant_conf->fast_भाग_bias = 0x39;
+			अवरोध;
+		हाल 0x03: /* A-B A+B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x10: /* LNA2 A-B */
+			ant_conf->fast_भाग_bias = 0x2;
+			अवरोध;
+		हाल 0x12: /* LNA2 LNA1 */
+			ant_conf->fast_भाग_bias = 0x3f;
+			अवरोध;
+		हाल 0x13: /* LNA2 A+B */
+			ant_conf->fast_भाग_bias = 0x2;
+			अवरोध;
+		हाल 0x20: /* LNA1 A-B */
+			ant_conf->fast_भाग_bias = 0x3;
+			अवरोध;
+		हाल 0x21: /* LNA1 LNA2 */
+			ant_conf->fast_भाग_bias = 0x3;
+			अवरोध;
+		हाल 0x23: /* LNA1 A+B */
+			ant_conf->fast_भाग_bias = 0x3;
+			अवरोध;
+		हाल 0x30: /* A+B A-B */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		हाल 0x31: /* A+B LNA2 */
+			ant_conf->fast_भाग_bias = 0x6;
+			अवरोध;
+		हाल 0x32: /* A+B LNA1 */
+			ant_conf->fast_भाग_bias = 0x1;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ath_ant_try_scan(struct ath_ant_comb *antcomb,
-			     struct ath_hw_antcomb_conf *conf,
-			     int curr_alt_set, int alt_rssi_avg,
-			     int main_rssi_avg)
-{
-	switch (curr_alt_set) {
-	case ATH_ANT_DIV_COMB_LNA2:
+अटल व्योम ath_ant_try_scan(काष्ठा ath_ant_comb *antcomb,
+			     काष्ठा ath_hw_antcomb_conf *conf,
+			     पूर्णांक curr_alt_set, पूर्णांक alt_rssi_avg,
+			     पूर्णांक मुख्य_rssi_avg)
+अणु
+	चयन (curr_alt_set) अणु
+	हाल ATH_ANT_DIV_COMB_LNA2:
 		antcomb->rssi_lna2 = alt_rssi_avg;
-		antcomb->rssi_lna1 = main_rssi_avg;
+		antcomb->rssi_lna1 = मुख्य_rssi_avg;
 		antcomb->scan = true;
 		/* set to A+B */
-		conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+		conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA1;
 		conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
-		break;
-	case ATH_ANT_DIV_COMB_LNA1:
+		अवरोध;
+	हाल ATH_ANT_DIV_COMB_LNA1:
 		antcomb->rssi_lna1 = alt_rssi_avg;
-		antcomb->rssi_lna2 = main_rssi_avg;
+		antcomb->rssi_lna2 = मुख्य_rssi_avg;
 		antcomb->scan = true;
 		/* set to A+B */
-		conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+		conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA2;
 		conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
-		break;
-	case ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2:
+		अवरोध;
+	हाल ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2:
 		antcomb->rssi_add = alt_rssi_avg;
 		antcomb->scan = true;
 		/* set to A-B */
 		conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
-		break;
-	case ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2:
+		अवरोध;
+	हाल ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2:
 		antcomb->rssi_sub = alt_rssi_avg;
 		antcomb->scan = false;
-		if (antcomb->rssi_lna2 >
-		    (antcomb->rssi_lna1 + conf->lna1_lna2_switch_delta)) {
-			/* use LNA2 as main LNA */
-			if ((antcomb->rssi_add > antcomb->rssi_lna1) &&
-			    (antcomb->rssi_add > antcomb->rssi_sub)) {
+		अगर (antcomb->rssi_lna2 >
+		    (antcomb->rssi_lna1 + conf->lna1_lna2_चयन_delta)) अणु
+			/* use LNA2 as मुख्य LNA */
+			अगर ((antcomb->rssi_add > antcomb->rssi_lna1) &&
+			    (antcomb->rssi_add > antcomb->rssi_sub)) अणु
 				/* set to A+B */
-				conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+				conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA2;
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
-			} else if (antcomb->rssi_sub >
-				   antcomb->rssi_lna1) {
+			पूर्ण अन्यथा अगर (antcomb->rssi_sub >
+				   antcomb->rssi_lna1) अणु
 				/* set to A-B */
-				conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+				conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA2;
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* set to LNA1 */
-				conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+				conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA2;
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-			}
-		} else {
-			/* use LNA1 as main LNA */
-			if ((antcomb->rssi_add > antcomb->rssi_lna2) &&
-			    (antcomb->rssi_add > antcomb->rssi_sub)) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* use LNA1 as मुख्य LNA */
+			अगर ((antcomb->rssi_add > antcomb->rssi_lna2) &&
+			    (antcomb->rssi_add > antcomb->rssi_sub)) अणु
 				/* set to A+B */
-				conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+				conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA1;
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1_PLUS_LNA2;
-			} else if (antcomb->rssi_sub >
-				   antcomb->rssi_lna1) {
+			पूर्ण अन्यथा अगर (antcomb->rssi_sub >
+				   antcomb->rssi_lna1) अणु
 				/* set to A-B */
-				conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+				conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA1;
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1_MINUS_LNA2;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* set to LNA2 */
-				conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+				conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA1;
 				conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-			}
-		}
-		break;
-	default:
-		break;
-	}
-}
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static bool ath_ant_try_switch(struct ath_hw_antcomb_conf *div_ant_conf,
-			       struct ath_ant_comb *antcomb,
-			       int alt_ratio, int alt_rssi_avg,
-			       int main_rssi_avg, int curr_main_set,
-			       int curr_alt_set)
-{
+अटल bool ath_ant_try_चयन(काष्ठा ath_hw_antcomb_conf *भाग_ant_conf,
+			       काष्ठा ath_ant_comb *antcomb,
+			       पूर्णांक alt_ratio, पूर्णांक alt_rssi_avg,
+			       पूर्णांक मुख्य_rssi_avg, पूर्णांक curr_मुख्य_set,
+			       पूर्णांक curr_alt_set)
+अणु
 	bool ret = false;
 
-	if (ath_ant_div_comb_alt_check(div_ant_conf, antcomb, alt_ratio,
-				       alt_rssi_avg, main_rssi_avg)) {
-		if (curr_alt_set == ATH_ANT_DIV_COMB_LNA2) {
+	अगर (ath_ant_भाग_comb_alt_check(भाग_ant_conf, antcomb, alt_ratio,
+				       alt_rssi_avg, मुख्य_rssi_avg)) अणु
+		अगर (curr_alt_set == ATH_ANT_DIV_COMB_LNA2) अणु
 			/*
-			 * Switch main and alt LNA.
+			 * Switch मुख्य and alt LNA.
 			 */
-			div_ant_conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-			div_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-		} else if (curr_alt_set == ATH_ANT_DIV_COMB_LNA1) {
-			div_ant_conf->main_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-			div_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
-		}
+			भाग_ant_conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+			भाग_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+		पूर्ण अन्यथा अगर (curr_alt_set == ATH_ANT_DIV_COMB_LNA1) अणु
+			भाग_ant_conf->मुख्य_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+			भाग_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+		पूर्ण
 
 		ret = true;
-	} else if ((curr_alt_set != ATH_ANT_DIV_COMB_LNA1) &&
-		   (curr_alt_set != ATH_ANT_DIV_COMB_LNA2)) {
+	पूर्ण अन्यथा अगर ((curr_alt_set != ATH_ANT_DIV_COMB_LNA1) &&
+		   (curr_alt_set != ATH_ANT_DIV_COMB_LNA2)) अणु
 		/*
 		  Set alt to another LNA.
 		*/
-		if (curr_main_set == ATH_ANT_DIV_COMB_LNA2)
-			div_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
-		else if (curr_main_set == ATH_ANT_DIV_COMB_LNA1)
-			div_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
+		अगर (curr_मुख्य_set == ATH_ANT_DIV_COMB_LNA2)
+			भाग_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA1;
+		अन्यथा अगर (curr_मुख्य_set == ATH_ANT_DIV_COMB_LNA1)
+			भाग_ant_conf->alt_lna_conf = ATH_ANT_DIV_COMB_LNA2;
 
 		ret = true;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool ath_ant_short_scan_check(struct ath_ant_comb *antcomb)
-{
-	int alt_ratio;
+अटल bool ath_ant_लघु_scan_check(काष्ठा ath_ant_comb *antcomb)
+अणु
+	पूर्णांक alt_ratio;
 
-	if (!antcomb->scan || !antcomb->alt_good)
-		return false;
+	अगर (!antcomb->scan || !antcomb->alt_good)
+		वापस false;
 
-	if (time_after(jiffies, antcomb->scan_start_time +
-		       msecs_to_jiffies(ATH_ANT_DIV_COMB_SHORT_SCAN_INTR)))
-		return true;
+	अगर (समय_after(jअगरfies, antcomb->scan_start_समय +
+		       msecs_to_jअगरfies(ATH_ANT_DIV_COMB_SHORT_SCAN_INTR)))
+		वापस true;
 
-	if (antcomb->total_pkt_count == ATH_ANT_DIV_COMB_SHORT_SCAN_PKTCOUNT) {
+	अगर (antcomb->total_pkt_count == ATH_ANT_DIV_COMB_SHORT_SCAN_PKTCOUNT) अणु
 		alt_ratio = ((antcomb->alt_recv_cnt * 100) /
 			     antcomb->total_pkt_count);
-		if (alt_ratio < antcomb->ant_ratio)
-			return true;
-	}
+		अगर (alt_ratio < antcomb->ant_ratio)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void ath_ant_comb_scan(struct ath_softc *sc, struct ath_rx_status *rs)
-{
-	struct ath_hw_antcomb_conf div_ant_conf;
-	struct ath_ant_comb *antcomb = &sc->ant_comb;
-	int alt_ratio = 0, alt_rssi_avg = 0, main_rssi_avg = 0, curr_alt_set;
-	int curr_main_set;
-	int main_rssi = rs->rs_rssi_ctl[0];
-	int alt_rssi = rs->rs_rssi_ctl[1];
-	int rx_ant_conf,  main_ant_conf;
-	bool short_scan = false, ret;
+व्योम ath_ant_comb_scan(काष्ठा ath_softc *sc, काष्ठा ath_rx_status *rs)
+अणु
+	काष्ठा ath_hw_antcomb_conf भाग_ant_conf;
+	काष्ठा ath_ant_comb *antcomb = &sc->ant_comb;
+	पूर्णांक alt_ratio = 0, alt_rssi_avg = 0, मुख्य_rssi_avg = 0, curr_alt_set;
+	पूर्णांक curr_मुख्य_set;
+	पूर्णांक मुख्य_rssi = rs->rs_rssi_ctl[0];
+	पूर्णांक alt_rssi = rs->rs_rssi_ctl[1];
+	पूर्णांक rx_ant_conf,  मुख्य_ant_conf;
+	bool लघु_scan = false, ret;
 
 	rx_ant_conf = (rs->rs_rssi_ctl[2] >> ATH_ANT_RX_CURRENT_SHIFT) &
 		       ATH_ANT_RX_MASK;
-	main_ant_conf = (rs->rs_rssi_ctl[2] >> ATH_ANT_RX_MAIN_SHIFT) &
+	मुख्य_ant_conf = (rs->rs_rssi_ctl[2] >> ATH_ANT_RX_MAIN_SHIFT) &
 			 ATH_ANT_RX_MASK;
 
-	if (alt_rssi >= antcomb->low_rssi_thresh) {
+	अगर (alt_rssi >= antcomb->low_rssi_thresh) अणु
 		antcomb->ant_ratio = ATH_ANT_DIV_COMB_ALT_ANT_RATIO;
 		antcomb->ant_ratio2 = ATH_ANT_DIV_COMB_ALT_ANT_RATIO2;
-	} else {
+	पूर्ण अन्यथा अणु
 		antcomb->ant_ratio = ATH_ANT_DIV_COMB_ALT_ANT_RATIO_LOW_RSSI;
 		antcomb->ant_ratio2 = ATH_ANT_DIV_COMB_ALT_ANT_RATIO2_LOW_RSSI;
-	}
+	पूर्ण
 
-	/* Record packet only when both main_rssi and  alt_rssi is positive */
-	if (main_rssi > 0 && alt_rssi > 0) {
+	/* Record packet only when both मुख्य_rssi and  alt_rssi is positive */
+	अगर (मुख्य_rssi > 0 && alt_rssi > 0) अणु
 		antcomb->total_pkt_count++;
-		antcomb->main_total_rssi += main_rssi;
+		antcomb->मुख्य_total_rssi += मुख्य_rssi;
 		antcomb->alt_total_rssi  += alt_rssi;
 
-		if (main_ant_conf == rx_ant_conf)
-			antcomb->main_recv_cnt++;
-		else
+		अगर (मुख्य_ant_conf == rx_ant_conf)
+			antcomb->मुख्य_recv_cnt++;
+		अन्यथा
 			antcomb->alt_recv_cnt++;
-	}
+	पूर्ण
 
-	if (main_ant_conf == rx_ant_conf) {
+	अगर (मुख्य_ant_conf == rx_ant_conf) अणु
 		ANT_STAT_INC(sc, ANT_MAIN, recv_cnt);
 		ANT_LNA_INC(sc, ANT_MAIN, rx_ant_conf);
-	} else {
+	पूर्ण अन्यथा अणु
 		ANT_STAT_INC(sc, ANT_ALT, recv_cnt);
 		ANT_LNA_INC(sc, ANT_ALT, rx_ant_conf);
-	}
+	पूर्ण
 
 	/* Short scan check */
-	short_scan = ath_ant_short_scan_check(antcomb);
+	लघु_scan = ath_ant_लघु_scan_check(antcomb);
 
-	if (((antcomb->total_pkt_count < ATH_ANT_DIV_COMB_MAX_PKTCOUNT) ||
-	     rs->rs_moreaggr) && !short_scan)
-		return;
+	अगर (((antcomb->total_pkt_count < ATH_ANT_DIV_COMB_MAX_PKTCOUNT) ||
+	     rs->rs_moreaggr) && !लघु_scan)
+		वापस;
 
-	if (antcomb->total_pkt_count) {
+	अगर (antcomb->total_pkt_count) अणु
 		alt_ratio = ((antcomb->alt_recv_cnt * 100) /
 			     antcomb->total_pkt_count);
-		main_rssi_avg = (antcomb->main_total_rssi /
+		मुख्य_rssi_avg = (antcomb->मुख्य_total_rssi /
 				 antcomb->total_pkt_count);
 		alt_rssi_avg = (antcomb->alt_total_rssi /
 				 antcomb->total_pkt_count);
-	}
+	पूर्ण
 
-	ath9k_hw_antdiv_comb_conf_get(sc->sc_ah, &div_ant_conf);
-	curr_alt_set = div_ant_conf.alt_lna_conf;
-	curr_main_set = div_ant_conf.main_lna_conf;
+	ath9k_hw_antभाग_comb_conf_get(sc->sc_ah, &भाग_ant_conf);
+	curr_alt_set = भाग_ant_conf.alt_lna_conf;
+	curr_मुख्य_set = भाग_ant_conf.मुख्य_lna_conf;
 	antcomb->count++;
 
-	if (antcomb->count == ATH_ANT_DIV_COMB_MAX_COUNT) {
-		if (alt_ratio > antcomb->ant_ratio) {
-			ath_lnaconf_alt_good_scan(antcomb, div_ant_conf,
-						  main_rssi_avg);
+	अगर (antcomb->count == ATH_ANT_DIV_COMB_MAX_COUNT) अणु
+		अगर (alt_ratio > antcomb->ant_ratio) अणु
+			ath_lnaconf_alt_good_scan(antcomb, भाग_ant_conf,
+						  मुख्य_rssi_avg);
 			antcomb->alt_good = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			antcomb->alt_good = false;
-		}
+		पूर्ण
 
 		antcomb->count = 0;
 		antcomb->scan = true;
 		antcomb->scan_not_start = true;
-	}
+	पूर्ण
 
-	if (!antcomb->scan) {
-		ret = ath_ant_try_switch(&div_ant_conf, antcomb, alt_ratio,
-					 alt_rssi_avg, main_rssi_avg,
-					 curr_main_set, curr_alt_set);
-		if (ret)
-			goto div_comb_done;
-	}
+	अगर (!antcomb->scan) अणु
+		ret = ath_ant_try_चयन(&भाग_ant_conf, antcomb, alt_ratio,
+					 alt_rssi_avg, मुख्य_rssi_avg,
+					 curr_मुख्य_set, curr_alt_set);
+		अगर (ret)
+			जाओ भाग_comb_करोne;
+	पूर्ण
 
-	if (!antcomb->scan &&
-	    (alt_rssi_avg < (main_rssi_avg + div_ant_conf.lna1_lna2_delta)))
-		goto div_comb_done;
+	अगर (!antcomb->scan &&
+	    (alt_rssi_avg < (मुख्य_rssi_avg + भाग_ant_conf.lna1_lna2_delta)))
+		जाओ भाग_comb_करोne;
 
-	if (!antcomb->scan_not_start) {
-		ath_ant_try_scan(antcomb, &div_ant_conf, curr_alt_set,
-				 alt_rssi_avg, main_rssi_avg);
-	} else {
-		if (!antcomb->alt_good) {
+	अगर (!antcomb->scan_not_start) अणु
+		ath_ant_try_scan(antcomb, &भाग_ant_conf, curr_alt_set,
+				 alt_rssi_avg, मुख्य_rssi_avg);
+	पूर्ण अन्यथा अणु
+		अगर (!antcomb->alt_good) अणु
 			antcomb->scan_not_start = false;
 			/* Set alt to another LNA */
-			if (curr_main_set == ATH_ANT_DIV_COMB_LNA2) {
-				div_ant_conf.main_lna_conf =
+			अगर (curr_मुख्य_set == ATH_ANT_DIV_COMB_LNA2) अणु
+				भाग_ant_conf.मुख्य_lna_conf =
 					ATH_ANT_DIV_COMB_LNA2;
-				div_ant_conf.alt_lna_conf =
+				भाग_ant_conf.alt_lna_conf =
 					ATH_ANT_DIV_COMB_LNA1;
-			} else if (curr_main_set == ATH_ANT_DIV_COMB_LNA1) {
-				div_ant_conf.main_lna_conf =
+			पूर्ण अन्यथा अगर (curr_मुख्य_set == ATH_ANT_DIV_COMB_LNA1) अणु
+				भाग_ant_conf.मुख्य_lna_conf =
 					ATH_ANT_DIV_COMB_LNA1;
-				div_ant_conf.alt_lna_conf =
+				भाग_ant_conf.alt_lna_conf =
 					ATH_ANT_DIV_COMB_LNA2;
-			}
-			goto div_comb_done;
-		}
-		ath_select_ant_div_from_quick_scan(antcomb, &div_ant_conf,
-						   main_rssi_avg, alt_rssi_avg,
+			पूर्ण
+			जाओ भाग_comb_करोne;
+		पूर्ण
+		ath_select_ant_भाग_from_quick_scan(antcomb, &भाग_ant_conf,
+						   मुख्य_rssi_avg, alt_rssi_avg,
 						   alt_ratio);
 		antcomb->quick_scan_cnt++;
-	}
+	पूर्ण
 
-div_comb_done:
-	ath_ant_div_conf_fast_divbias(&div_ant_conf, antcomb, alt_ratio);
-	ath9k_hw_antdiv_comb_conf_set(sc->sc_ah, &div_ant_conf);
-	ath9k_debug_stat_ant(sc, &div_ant_conf, main_rssi_avg, alt_rssi_avg);
+भाग_comb_करोne:
+	ath_ant_भाग_conf_fast_भागbias(&भाग_ant_conf, antcomb, alt_ratio);
+	ath9k_hw_antभाग_comb_conf_set(sc->sc_ah, &भाग_ant_conf);
+	ath9k_debug_stat_ant(sc, &भाग_ant_conf, मुख्य_rssi_avg, alt_rssi_avg);
 
-	antcomb->scan_start_time = jiffies;
+	antcomb->scan_start_समय = jअगरfies;
 	antcomb->total_pkt_count = 0;
-	antcomb->main_total_rssi = 0;
+	antcomb->मुख्य_total_rssi = 0;
 	antcomb->alt_total_rssi = 0;
-	antcomb->main_recv_cnt = 0;
+	antcomb->मुख्य_recv_cnt = 0;
 	antcomb->alt_recv_cnt = 0;
-}
+पूर्ण

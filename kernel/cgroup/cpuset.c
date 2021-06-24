@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  *  kernel/cpuset.c
  *
- *  Processor and Memory placement constraints for sets of tasks.
+ *  Processor and Memory placement स्थिरraपूर्णांकs क्रम sets of tasks.
  *
  *  Copyright (C) 2003 BULL SA.
  *  Copyright (C) 2004-2007 Silicon Graphics, Inc.
@@ -14,88 +15,88 @@
  *  2003-10-22 Updates by Stephen Hemminger.
  *  2004 May-July Rework by Paul Jackson.
  *  2006 Rework by Paul Menage to use generic cgroups
- *  2008 Rework of the scheduler domains and CPU hotplug handling
+ *  2008 Rework of the scheduler करोमुख्यs and CPU hotplug handling
  *       by Max Krasnyansky
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of the Linux
- *  distribution for more details.
+ *  License.  See the file COPYING in the मुख्य directory of the Linux
+ *  distribution क्रम more details.
  */
 
-#include <linux/cpu.h>
-#include <linux/cpumask.h>
-#include <linux/cpuset.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/kmod.h>
-#include <linux/list.h>
-#include <linux/mempolicy.h>
-#include <linux/mm.h>
-#include <linux/memory.h>
-#include <linux/export.h>
-#include <linux/mount.h>
-#include <linux/fs_context.h>
-#include <linux/namei.h>
-#include <linux/pagemap.h>
-#include <linux/proc_fs.h>
-#include <linux/rcupdate.h>
-#include <linux/sched.h>
-#include <linux/sched/deadline.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/task.h>
-#include <linux/seq_file.h>
-#include <linux/security.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/stat.h>
-#include <linux/string.h>
-#include <linux/time.h>
-#include <linux/time64.h>
-#include <linux/backing-dev.h>
-#include <linux/sort.h>
-#include <linux/oom.h>
-#include <linux/sched/isolation.h>
-#include <linux/uaccess.h>
-#include <linux/atomic.h>
-#include <linux/mutex.h>
-#include <linux/cgroup.h>
-#include <linux/wait.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mempolicy.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/memory.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/deadline.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/security.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/समय64.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/sched/isolation.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/रुको.h>
 
 DEFINE_STATIC_KEY_FALSE(cpusets_pre_enable_key);
 DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);
 
 /* See "Frequency meter" comments, below. */
 
-struct fmeter {
-	int cnt;		/* unprocessed events count */
-	int val;		/* most recent output value */
-	time64_t time;		/* clock (secs) when val computed */
-	spinlock_t lock;	/* guards read or write of above */
-};
+काष्ठा fmeter अणु
+	पूर्णांक cnt;		/* unprocessed events count */
+	पूर्णांक val;		/* most recent output value */
+	समय64_t समय;		/* घड़ी (secs) when val computed */
+	spinlock_t lock;	/* guards पढ़ो or ग_लिखो of above */
+पूर्ण;
 
-struct cpuset {
-	struct cgroup_subsys_state css;
+काष्ठा cpuset अणु
+	काष्ठा cgroup_subsys_state css;
 
-	unsigned long flags;		/* "unsigned long" so bitops work */
+	अचिन्हित दीर्घ flags;		/* "unsigned long" so bitops work */
 
 	/*
-	 * On default hierarchy:
+	 * On शेष hierarchy:
 	 *
 	 * The user-configured masks can only be changed by writing to
 	 * cpuset.cpus and cpuset.mems, and won't be limited by the
 	 * parent masks.
 	 *
 	 * The effective masks is the real masks that apply to the tasks
-	 * in the cpuset. They may be changed if the configured masks are
+	 * in the cpuset. They may be changed अगर the configured masks are
 	 * changed or hotplug happens.
 	 *
 	 * effective_mask == configured_mask & parent's effective_mask,
-	 * and if it ends up empty, it will inherit the parent's mask.
+	 * and अगर it ends up empty, it will inherit the parent's mask.
 	 *
 	 *
 	 * On legacy hierarchy:
@@ -112,7 +113,7 @@ struct cpuset {
 	nodemask_t effective_mems;
 
 	/*
-	 * CPUs allocated to child sub-partitions (default hierarchy only)
+	 * CPUs allocated to child sub-partitions (शेष hierarchy only)
 	 * - CPUs granted by the parent = effective_cpus U subparts_cpus
 	 * - effective_cpus and subparts_cpus are mutually exclusive.
 	 *
@@ -126,41 +127,41 @@ struct cpuset {
 	 *
 	 * - top_cpuset.old_mems_allowed is initialized to mems_allowed.
 	 * - A new cpuset's old_mems_allowed is initialized when some
-	 *   task is moved into it.
+	 *   task is moved पूर्णांकo it.
 	 * - old_mems_allowed is used in cpuset_migrate_mm() when we change
 	 *   cpuset.mems_allowed and have tasks' nodemask updated, and
 	 *   then old_mems_allowed is updated to mems_allowed.
 	 */
 	nodemask_t old_mems_allowed;
 
-	struct fmeter fmeter;		/* memory_pressure filter */
+	काष्ठा fmeter fmeter;		/* memory_pressure filter */
 
 	/*
 	 * Tasks are being attached to this cpuset.  Used to prevent
 	 * zeroing cpus/mems_allowed between ->can_attach() and ->attach().
 	 */
-	int attach_in_progress;
+	पूर्णांक attach_in_progress;
 
-	/* partition number for rebuild_sched_domains() */
-	int pn;
+	/* partition number क्रम rebuild_sched_करोमुख्यs() */
+	पूर्णांक pn;
 
-	/* for custom sched domain */
-	int relax_domain_level;
+	/* क्रम custom sched करोमुख्य */
+	पूर्णांक relax_करोमुख्य_level;
 
 	/* number of CPUs in subparts_cpus */
-	int nr_subparts_cpus;
+	पूर्णांक nr_subparts_cpus;
 
 	/* partition root state */
-	int partition_root_state;
+	पूर्णांक partition_root_state;
 
 	/*
 	 * Default hierarchy only:
-	 * use_parent_ecpus - set if using parent's effective_cpus
+	 * use_parent_ecpus - set अगर using parent's effective_cpus
 	 * child_ecpus_count - # of children with use_parent_ecpus set
 	 */
-	int use_parent_ecpus;
-	int child_ecpus_count;
-};
+	पूर्णांक use_parent_ecpus;
+	पूर्णांक child_ecpus_count;
+पूर्ण;
 
 /*
  * Partition root states:
@@ -170,43 +171,43 @@ struct cpuset {
  *   1 - partition root
  *
  *  -1 - invalid partition root
- *       None of the cpus in cpus_allowed can be put into the parent's
- *       subparts_cpus. In this case, the cpuset is not a real partition
+ *       None of the cpus in cpus_allowed can be put पूर्णांकo the parent's
+ *       subparts_cpus. In this हाल, the cpuset is not a real partition
  *       root anymore.  However, the CPU_EXCLUSIVE bit will still be set
- *       and the cpuset can be restored back to a partition root if the
+ *       and the cpuset can be restored back to a partition root अगर the
  *       parent cpuset can give more CPUs back to this child cpuset.
  */
-#define PRS_DISABLED		0
-#define PRS_ENABLED		1
-#define PRS_ERROR		-1
+#घोषणा PRS_DISABLED		0
+#घोषणा PRS_ENABLED		1
+#घोषणा PRS_ERROR		-1
 
 /*
- * Temporary cpumasks for working with partitions that are passed among
- * functions to avoid memory allocation in inner functions.
+ * Temporary cpumasks क्रम working with partitions that are passed among
+ * functions to aव्योम memory allocation in inner functions.
  */
-struct tmpmasks {
+काष्ठा पंचांगpmasks अणु
 	cpumask_var_t addmask, delmask;	/* For partition root */
 	cpumask_var_t new_cpus;		/* For update_cpumasks_hier() */
-};
+पूर्ण;
 
-static inline struct cpuset *css_cs(struct cgroup_subsys_state *css)
-{
-	return css ? container_of(css, struct cpuset, css) : NULL;
-}
+अटल अंतरभूत काष्ठा cpuset *css_cs(काष्ठा cgroup_subsys_state *css)
+अणु
+	वापस css ? container_of(css, काष्ठा cpuset, css) : शून्य;
+पूर्ण
 
-/* Retrieve the cpuset for a task */
-static inline struct cpuset *task_cs(struct task_struct *task)
-{
-	return css_cs(task_css(task, cpuset_cgrp_id));
-}
+/* Retrieve the cpuset क्रम a task */
+अटल अंतरभूत काष्ठा cpuset *task_cs(काष्ठा task_काष्ठा *task)
+अणु
+	वापस css_cs(task_css(task, cpuset_cgrp_id));
+पूर्ण
 
-static inline struct cpuset *parent_cs(struct cpuset *cs)
-{
-	return css_cs(cs->css.parent);
-}
+अटल अंतरभूत काष्ठा cpuset *parent_cs(काष्ठा cpuset *cs)
+अणु
+	वापस css_cs(cs->css.parent);
+पूर्ण
 
-/* bits in struct cpuset flags field */
-typedef enum {
+/* bits in काष्ठा cpuset flags field */
+प्रकार क्रमागत अणु
 	CS_ONLINE,
 	CS_CPU_EXCLUSIVE,
 	CS_MEM_EXCLUSIVE,
@@ -215,338 +216,338 @@ typedef enum {
 	CS_SCHED_LOAD_BALANCE,
 	CS_SPREAD_PAGE,
 	CS_SPREAD_SLAB,
-} cpuset_flagbits_t;
+पूर्ण cpuset_flagbits_t;
 
-/* convenient tests for these bits */
-static inline bool is_cpuset_online(struct cpuset *cs)
-{
-	return test_bit(CS_ONLINE, &cs->flags) && !css_is_dying(&cs->css);
-}
+/* convenient tests क्रम these bits */
+अटल अंतरभूत bool is_cpuset_online(काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_ONLINE, &cs->flags) && !css_is_dying(&cs->css);
+पूर्ण
 
-static inline int is_cpu_exclusive(const struct cpuset *cs)
-{
-	return test_bit(CS_CPU_EXCLUSIVE, &cs->flags);
-}
+अटल अंतरभूत पूर्णांक is_cpu_exclusive(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_CPU_EXCLUSIVE, &cs->flags);
+पूर्ण
 
-static inline int is_mem_exclusive(const struct cpuset *cs)
-{
-	return test_bit(CS_MEM_EXCLUSIVE, &cs->flags);
-}
+अटल अंतरभूत पूर्णांक is_mem_exclusive(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_MEM_EXCLUSIVE, &cs->flags);
+पूर्ण
 
-static inline int is_mem_hardwall(const struct cpuset *cs)
-{
-	return test_bit(CS_MEM_HARDWALL, &cs->flags);
-}
+अटल अंतरभूत पूर्णांक is_mem_hardwall(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_MEM_HARDWALL, &cs->flags);
+पूर्ण
 
-static inline int is_sched_load_balance(const struct cpuset *cs)
-{
-	return test_bit(CS_SCHED_LOAD_BALANCE, &cs->flags);
-}
+अटल अंतरभूत पूर्णांक is_sched_load_balance(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_SCHED_LOAD_BALANCE, &cs->flags);
+पूर्ण
 
-static inline int is_memory_migrate(const struct cpuset *cs)
-{
-	return test_bit(CS_MEMORY_MIGRATE, &cs->flags);
-}
+अटल अंतरभूत पूर्णांक is_memory_migrate(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_MEMORY_MIGRATE, &cs->flags);
+पूर्ण
 
-static inline int is_spread_page(const struct cpuset *cs)
-{
-	return test_bit(CS_SPREAD_PAGE, &cs->flags);
-}
+अटल अंतरभूत पूर्णांक is_spपढ़ो_page(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_SPREAD_PAGE, &cs->flags);
+पूर्ण
 
-static inline int is_spread_slab(const struct cpuset *cs)
-{
-	return test_bit(CS_SPREAD_SLAB, &cs->flags);
-}
+अटल अंतरभूत पूर्णांक is_spपढ़ो_slab(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस test_bit(CS_SPREAD_SLAB, &cs->flags);
+पूर्ण
 
-static inline int is_partition_root(const struct cpuset *cs)
-{
-	return cs->partition_root_state > 0;
-}
+अटल अंतरभूत पूर्णांक is_partition_root(स्थिर काष्ठा cpuset *cs)
+अणु
+	वापस cs->partition_root_state > 0;
+पूर्ण
 
-static struct cpuset top_cpuset = {
+अटल काष्ठा cpuset top_cpuset = अणु
 	.flags = ((1 << CS_ONLINE) | (1 << CS_CPU_EXCLUSIVE) |
 		  (1 << CS_MEM_EXCLUSIVE)),
 	.partition_root_state = PRS_ENABLED,
-};
+पूर्ण;
 
 /**
- * cpuset_for_each_child - traverse online children of a cpuset
- * @child_cs: loop cursor pointing to the current child
- * @pos_css: used for iteration
+ * cpuset_क्रम_each_child - traverse online children of a cpuset
+ * @child_cs: loop cursor poपूर्णांकing to the current child
+ * @pos_css: used क्रम iteration
  * @parent_cs: target cpuset to walk children of
  *
  * Walk @child_cs through the online children of @parent_cs.  Must be used
- * with RCU read locked.
+ * with RCU पढ़ो locked.
  */
-#define cpuset_for_each_child(child_cs, pos_css, parent_cs)		\
-	css_for_each_child((pos_css), &(parent_cs)->css)		\
-		if (is_cpuset_online(((child_cs) = css_cs((pos_css)))))
+#घोषणा cpuset_क्रम_each_child(child_cs, pos_css, parent_cs)		\
+	css_क्रम_each_child((pos_css), &(parent_cs)->css)		\
+		अगर (is_cpuset_online(((child_cs) = css_cs((pos_css)))))
 
 /**
- * cpuset_for_each_descendant_pre - pre-order walk of a cpuset's descendants
- * @des_cs: loop cursor pointing to the current descendant
- * @pos_css: used for iteration
+ * cpuset_क्रम_each_descendant_pre - pre-order walk of a cpuset's descendants
+ * @des_cs: loop cursor poपूर्णांकing to the current descendant
+ * @pos_css: used क्रम iteration
  * @root_cs: target cpuset to walk ancestor of
  *
  * Walk @des_cs through the online descendants of @root_cs.  Must be used
- * with RCU read locked.  The caller may modify @pos_css by calling
- * css_rightmost_descendant() to skip subtree.  @root_cs is included in the
+ * with RCU पढ़ो locked.  The caller may modअगरy @pos_css by calling
+ * css_righपंचांगost_descendant() to skip subtree.  @root_cs is included in the
  * iteration and the first node to be visited.
  */
-#define cpuset_for_each_descendant_pre(des_cs, pos_css, root_cs)	\
-	css_for_each_descendant_pre((pos_css), &(root_cs)->css)		\
-		if (is_cpuset_online(((des_cs) = css_cs((pos_css)))))
+#घोषणा cpuset_क्रम_each_descendant_pre(des_cs, pos_css, root_cs)	\
+	css_क्रम_each_descendant_pre((pos_css), &(root_cs)->css)		\
+		अगर (is_cpuset_online(((des_cs) = css_cs((pos_css)))))
 
 /*
- * There are two global locks guarding cpuset structures - cpuset_mutex and
+ * There are two global locks guarding cpuset काष्ठाures - cpuset_mutex and
  * callback_lock. We also require taking task_lock() when dereferencing a
- * task's cpuset pointer. See "The task_lock() exception", at the end of this
+ * task's cpuset poपूर्णांकer. See "The task_lock() exception", at the end of this
  * comment.
  *
- * A task must hold both locks to modify cpusets.  If a task holds
+ * A task must hold both locks to modअगरy cpusets.  If a task holds
  * cpuset_mutex, then it blocks others wanting that mutex, ensuring that it
  * is the only task able to also acquire callback_lock and be able to
- * modify cpusets.  It can perform various checks on the cpuset structure
- * first, knowing nothing will change.  It can also allocate memory while
- * just holding cpuset_mutex.  While it is performing these checks, various
+ * modअगरy cpusets.  It can perक्रमm various checks on the cpuset काष्ठाure
+ * first, knowing nothing will change.  It can also allocate memory जबतक
+ * just holding cpuset_mutex.  While it is perक्रमming these checks, various
  * callback routines can briefly acquire callback_lock to query cpusets.
- * Once it is ready to make the changes, it takes callback_lock, blocking
- * everyone else.
+ * Once it is पढ़ोy to make the changes, it takes callback_lock, blocking
+ * everyone अन्यथा.
  *
- * Calls to the kernel memory allocator can not be made while holding
- * callback_lock, as that would risk double tripping on callback_lock
- * from one of the callbacks into the cpuset code from within
+ * Calls to the kernel memory allocator can not be made जबतक holding
+ * callback_lock, as that would risk द्विगुन tripping on callback_lock
+ * from one of the callbacks पूर्णांकo the cpuset code from within
  * __alloc_pages().
  *
- * If a task is only holding callback_lock, then it has read-only
+ * If a task is only holding callback_lock, then it has पढ़ो-only
  * access to cpusets.
  *
- * Now, the task_struct fields mems_allowed and mempolicy may be changed
- * by other task, we use alloc_lock in the task_struct fields to protect
+ * Now, the task_काष्ठा fields mems_allowed and mempolicy may be changed
+ * by other task, we use alloc_lock in the task_काष्ठा fields to protect
  * them.
  *
- * The cpuset_common_file_read() handlers only hold callback_lock across
- * small pieces of code, such as when reading out possibly multi-word
+ * The cpuset_common_file_पढ़ो() handlers only hold callback_lock across
+ * small pieces of code, such as when पढ़ोing out possibly multi-word
  * cpumasks and nodemasks.
  *
- * Accessing a task's cpuset should be done in accordance with the
- * guidelines for accessing subsystem state in kernel/cgroup.c
+ * Accessing a task's cpuset should be करोne in accordance with the
+ * guidelines क्रम accessing subप्रणाली state in kernel/cgroup.c
  */
 
 DEFINE_STATIC_PERCPU_RWSEM(cpuset_rwsem);
 
-void cpuset_read_lock(void)
-{
-	percpu_down_read(&cpuset_rwsem);
-}
+व्योम cpuset_पढ़ो_lock(व्योम)
+अणु
+	percpu_करोwn_पढ़ो(&cpuset_rwsem);
+पूर्ण
 
-void cpuset_read_unlock(void)
-{
-	percpu_up_read(&cpuset_rwsem);
-}
+व्योम cpuset_पढ़ो_unlock(व्योम)
+अणु
+	percpu_up_पढ़ो(&cpuset_rwsem);
+पूर्ण
 
-static DEFINE_SPINLOCK(callback_lock);
+अटल DEFINE_SPINLOCK(callback_lock);
 
-static struct workqueue_struct *cpuset_migrate_mm_wq;
+अटल काष्ठा workqueue_काष्ठा *cpuset_migrate_mm_wq;
 
 /*
  * CPU / memory hotplug is handled asynchronously.
  */
-static void cpuset_hotplug_workfn(struct work_struct *work);
-static DECLARE_WORK(cpuset_hotplug_work, cpuset_hotplug_workfn);
+अटल व्योम cpuset_hotplug_workfn(काष्ठा work_काष्ठा *work);
+अटल DECLARE_WORK(cpuset_hotplug_work, cpuset_hotplug_workfn);
 
-static DECLARE_WAIT_QUEUE_HEAD(cpuset_attach_wq);
+अटल DECLARE_WAIT_QUEUE_HEAD(cpuset_attach_wq);
 
 /*
  * Cgroup v2 behavior is used on the "cpus" and "mems" control files when
- * on default hierarchy or when the cpuset_v2_mode flag is set by mounting
- * the v1 cpuset cgroup filesystem with the "cpuset_v2_mode" mount option.
+ * on शेष hierarchy or when the cpuset_v2_mode flag is set by mounting
+ * the v1 cpuset cgroup fileप्रणाली with the "cpuset_v2_mode" mount option.
  * With v2 behavior, "cpus" and "mems" are always what the users have
  * requested and won't be changed by hotplug events. Only the effective
  * cpus or mems will be affected.
  */
-static inline bool is_in_v2_mode(void)
-{
-	return cgroup_subsys_on_dfl(cpuset_cgrp_subsys) ||
+अटल अंतरभूत bool is_in_v2_mode(व्योम)
+अणु
+	वापस cgroup_subsys_on_dfl(cpuset_cgrp_subsys) ||
 	      (cpuset_cgrp_subsys.root->flags & CGRP_ROOT_CPUSET_V2_MODE);
-}
+पूर्ण
 
 /*
  * Return in pmask the portion of a cpusets's cpus_allowed that
  * are online.  If none are online, walk up the cpuset hierarchy
- * until we find one that does have some online cpus.
+ * until we find one that करोes have some online cpus.
  *
- * One way or another, we guarantee to return some non-empty subset
+ * One way or another, we guarantee to वापस some non-empty subset
  * of cpu_online_mask.
  *
  * Call with callback_lock or cpuset_mutex held.
  */
-static void guarantee_online_cpus(struct cpuset *cs, struct cpumask *pmask)
-{
-	while (!cpumask_intersects(cs->effective_cpus, cpu_online_mask)) {
+अटल व्योम guarantee_online_cpus(काष्ठा cpuset *cs, काष्ठा cpumask *pmask)
+अणु
+	जबतक (!cpumask_पूर्णांकersects(cs->effective_cpus, cpu_online_mask)) अणु
 		cs = parent_cs(cs);
-		if (unlikely(!cs)) {
+		अगर (unlikely(!cs)) अणु
 			/*
-			 * The top cpuset doesn't have any online cpu as a
+			 * The top cpuset करोesn't have any online cpu as a
 			 * consequence of a race between cpuset_hotplug_work
-			 * and cpu hotplug notifier.  But we know the top
+			 * and cpu hotplug notअगरier.  But we know the top
 			 * cpuset's effective_cpus is on its way to be
 			 * identical to cpu_online_mask.
 			 */
 			cpumask_copy(pmask, cpu_online_mask);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	cpumask_and(pmask, cs->effective_cpus, cpu_online_mask);
-}
+पूर्ण
 
 /*
  * Return in *pmask the portion of a cpusets's mems_allowed that
  * are online, with memory.  If none are online with memory, walk
- * up the cpuset hierarchy until we find one that does have some
+ * up the cpuset hierarchy until we find one that करोes have some
  * online mems.  The top cpuset always has some mems online.
  *
- * One way or another, we guarantee to return some non-empty subset
+ * One way or another, we guarantee to वापस some non-empty subset
  * of node_states[N_MEMORY].
  *
  * Call with callback_lock or cpuset_mutex held.
  */
-static void guarantee_online_mems(struct cpuset *cs, nodemask_t *pmask)
-{
-	while (!nodes_intersects(cs->effective_mems, node_states[N_MEMORY]))
+अटल व्योम guarantee_online_mems(काष्ठा cpuset *cs, nodemask_t *pmask)
+अणु
+	जबतक (!nodes_पूर्णांकersects(cs->effective_mems, node_states[N_MEMORY]))
 		cs = parent_cs(cs);
 	nodes_and(*pmask, cs->effective_mems, node_states[N_MEMORY]);
-}
+पूर्ण
 
 /*
- * update task's spread flag if cpuset's page/slab spread flag is set
+ * update task's spread flag if cpuset's page/slab spपढ़ो flag is set
  *
  * Call with callback_lock or cpuset_mutex held.
  */
-static void cpuset_update_task_spread_flag(struct cpuset *cs,
-					struct task_struct *tsk)
-{
-	if (is_spread_page(cs))
-		task_set_spread_page(tsk);
-	else
-		task_clear_spread_page(tsk);
+अटल व्योम cpuset_update_task_spपढ़ो_flag(काष्ठा cpuset *cs,
+					काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (is_spपढ़ो_page(cs))
+		task_set_spपढ़ो_page(tsk);
+	अन्यथा
+		task_clear_spपढ़ो_page(tsk);
 
-	if (is_spread_slab(cs))
-		task_set_spread_slab(tsk);
-	else
-		task_clear_spread_slab(tsk);
-}
+	अगर (is_spपढ़ो_slab(cs))
+		task_set_spपढ़ो_slab(tsk);
+	अन्यथा
+		task_clear_spपढ़ो_slab(tsk);
+पूर्ण
 
 /*
  * is_cpuset_subset(p, q) - Is cpuset p a subset of cpuset q?
  *
- * One cpuset is a subset of another if all its allowed CPUs and
+ * One cpuset is a subset of another अगर all its allowed CPUs and
  * Memory Nodes are a subset of the other, and its exclusive flags
- * are only set if the other's are set.  Call holding cpuset_mutex.
+ * are only set अगर the other's are set.  Call holding cpuset_mutex.
  */
 
-static int is_cpuset_subset(const struct cpuset *p, const struct cpuset *q)
-{
-	return	cpumask_subset(p->cpus_allowed, q->cpus_allowed) &&
+अटल पूर्णांक is_cpuset_subset(स्थिर काष्ठा cpuset *p, स्थिर काष्ठा cpuset *q)
+अणु
+	वापस	cpumask_subset(p->cpus_allowed, q->cpus_allowed) &&
 		nodes_subset(p->mems_allowed, q->mems_allowed) &&
 		is_cpu_exclusive(p) <= is_cpu_exclusive(q) &&
 		is_mem_exclusive(p) <= is_mem_exclusive(q);
-}
+पूर्ण
 
 /**
- * alloc_cpumasks - allocate three cpumasks for cpuset
+ * alloc_cpumasks - allocate three cpumasks क्रम cpuset
  * @cs:  the cpuset that have cpumasks to be allocated.
- * @tmp: the tmpmasks structure pointer
- * Return: 0 if successful, -ENOMEM otherwise.
+ * @पंचांगp: the पंचांगpmasks काष्ठाure poपूर्णांकer
+ * Return: 0 अगर successful, -ENOMEM otherwise.
  *
- * Only one of the two input arguments should be non-NULL.
+ * Only one of the two input arguments should be non-शून्य.
  */
-static inline int alloc_cpumasks(struct cpuset *cs, struct tmpmasks *tmp)
-{
+अटल अंतरभूत पूर्णांक alloc_cpumasks(काष्ठा cpuset *cs, काष्ठा पंचांगpmasks *पंचांगp)
+अणु
 	cpumask_var_t *pmask1, *pmask2, *pmask3;
 
-	if (cs) {
+	अगर (cs) अणु
 		pmask1 = &cs->cpus_allowed;
 		pmask2 = &cs->effective_cpus;
 		pmask3 = &cs->subparts_cpus;
-	} else {
-		pmask1 = &tmp->new_cpus;
-		pmask2 = &tmp->addmask;
-		pmask3 = &tmp->delmask;
-	}
+	पूर्ण अन्यथा अणु
+		pmask1 = &पंचांगp->new_cpus;
+		pmask2 = &पंचांगp->addmask;
+		pmask3 = &पंचांगp->delmask;
+	पूर्ण
 
-	if (!zalloc_cpumask_var(pmask1, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!zalloc_cpumask_var(pmask1, GFP_KERNEL))
+		वापस -ENOMEM;
 
-	if (!zalloc_cpumask_var(pmask2, GFP_KERNEL))
-		goto free_one;
+	अगर (!zalloc_cpumask_var(pmask2, GFP_KERNEL))
+		जाओ मुक्त_one;
 
-	if (!zalloc_cpumask_var(pmask3, GFP_KERNEL))
-		goto free_two;
+	अगर (!zalloc_cpumask_var(pmask3, GFP_KERNEL))
+		जाओ मुक्त_two;
 
-	return 0;
+	वापस 0;
 
-free_two:
-	free_cpumask_var(*pmask2);
-free_one:
-	free_cpumask_var(*pmask1);
-	return -ENOMEM;
-}
+मुक्त_two:
+	मुक्त_cpumask_var(*pmask2);
+मुक्त_one:
+	मुक्त_cpumask_var(*pmask1);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * free_cpumasks - free cpumasks in a tmpmasks structure
- * @cs:  the cpuset that have cpumasks to be free.
- * @tmp: the tmpmasks structure pointer
+ * मुक्त_cpumasks - मुक्त cpumasks in a पंचांगpmasks काष्ठाure
+ * @cs:  the cpuset that have cpumasks to be मुक्त.
+ * @पंचांगp: the पंचांगpmasks काष्ठाure poपूर्णांकer
  */
-static inline void free_cpumasks(struct cpuset *cs, struct tmpmasks *tmp)
-{
-	if (cs) {
-		free_cpumask_var(cs->cpus_allowed);
-		free_cpumask_var(cs->effective_cpus);
-		free_cpumask_var(cs->subparts_cpus);
-	}
-	if (tmp) {
-		free_cpumask_var(tmp->new_cpus);
-		free_cpumask_var(tmp->addmask);
-		free_cpumask_var(tmp->delmask);
-	}
-}
+अटल अंतरभूत व्योम मुक्त_cpumasks(काष्ठा cpuset *cs, काष्ठा पंचांगpmasks *पंचांगp)
+अणु
+	अगर (cs) अणु
+		मुक्त_cpumask_var(cs->cpus_allowed);
+		मुक्त_cpumask_var(cs->effective_cpus);
+		मुक्त_cpumask_var(cs->subparts_cpus);
+	पूर्ण
+	अगर (पंचांगp) अणु
+		मुक्त_cpumask_var(पंचांगp->new_cpus);
+		मुक्त_cpumask_var(पंचांगp->addmask);
+		मुक्त_cpumask_var(पंचांगp->delmask);
+	पूर्ण
+पूर्ण
 
 /**
  * alloc_trial_cpuset - allocate a trial cpuset
  * @cs: the cpuset that the trial cpuset duplicates
  */
-static struct cpuset *alloc_trial_cpuset(struct cpuset *cs)
-{
-	struct cpuset *trial;
+अटल काष्ठा cpuset *alloc_trial_cpuset(काष्ठा cpuset *cs)
+अणु
+	काष्ठा cpuset *trial;
 
-	trial = kmemdup(cs, sizeof(*cs), GFP_KERNEL);
-	if (!trial)
-		return NULL;
+	trial = kmemdup(cs, माप(*cs), GFP_KERNEL);
+	अगर (!trial)
+		वापस शून्य;
 
-	if (alloc_cpumasks(trial, NULL)) {
-		kfree(trial);
-		return NULL;
-	}
+	अगर (alloc_cpumasks(trial, शून्य)) अणु
+		kमुक्त(trial);
+		वापस शून्य;
+	पूर्ण
 
 	cpumask_copy(trial->cpus_allowed, cs->cpus_allowed);
 	cpumask_copy(trial->effective_cpus, cs->effective_cpus);
-	return trial;
-}
+	वापस trial;
+पूर्ण
 
 /**
- * free_cpuset - free the cpuset
- * @cs: the cpuset to be freed
+ * मुक्त_cpuset - मुक्त the cpuset
+ * @cs: the cpuset to be मुक्तd
  */
-static inline void free_cpuset(struct cpuset *cs)
-{
-	free_cpumasks(cs, NULL);
-	kfree(cs);
-}
+अटल अंतरभूत व्योम मुक्त_cpuset(काष्ठा cpuset *cs)
+अणु
+	मुक्त_cpumasks(cs, शून्य);
+	kमुक्त(cs);
+पूर्ण
 
 /*
  * validate_change() - Used to validate that any proposed cpuset change
- *		       follows the structural rules for cpusets.
+ *		       follows the काष्ठाural rules क्रम cpusets.
  *
  * If we replaced the flag and mask values of the current cpuset
  * (cur) with those values in the trial cpuset (trial), would
@@ -557,495 +558,495 @@ static inline void free_cpuset(struct cpuset *cs)
  * such as list traversal that depend on the actual address of the
  * cpuset in the list must use cur below, not trial.
  *
- * 'trial' is the address of bulk structure copy of cur, with
+ * 'trial' is the address of bulk काष्ठाure copy of cur, with
  * perhaps one or more of the fields cpus_allowed, mems_allowed,
  * or flags changed to new, trial values.
  *
- * Return 0 if valid, -errno if not.
+ * Return 0 अगर valid, -त्रुटि_सं अगर not.
  */
 
-static int validate_change(struct cpuset *cur, struct cpuset *trial)
-{
-	struct cgroup_subsys_state *css;
-	struct cpuset *c, *par;
-	int ret;
+अटल पूर्णांक validate_change(काष्ठा cpuset *cur, काष्ठा cpuset *trial)
+अणु
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा cpuset *c, *par;
+	पूर्णांक ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/* Each of our child cpusets must be a subset of us */
 	ret = -EBUSY;
-	cpuset_for_each_child(c, css, cur)
-		if (!is_cpuset_subset(c, trial))
-			goto out;
+	cpuset_क्रम_each_child(c, css, cur)
+		अगर (!is_cpuset_subset(c, trial))
+			जाओ out;
 
-	/* Remaining checks don't apply to root cpuset */
+	/* Reमुख्यing checks करोn't apply to root cpuset */
 	ret = 0;
-	if (cur == &top_cpuset)
-		goto out;
+	अगर (cur == &top_cpuset)
+		जाओ out;
 
 	par = parent_cs(cur);
 
 	/* On legacy hierarchy, we must be a subset of our parent cpuset. */
 	ret = -EACCES;
-	if (!is_in_v2_mode() && !is_cpuset_subset(trial, par))
-		goto out;
+	अगर (!is_in_v2_mode() && !is_cpuset_subset(trial, par))
+		जाओ out;
 
 	/*
 	 * If either I or some sibling (!= me) is exclusive, we can't
 	 * overlap
 	 */
 	ret = -EINVAL;
-	cpuset_for_each_child(c, css, par) {
-		if ((is_cpu_exclusive(trial) || is_cpu_exclusive(c)) &&
+	cpuset_क्रम_each_child(c, css, par) अणु
+		अगर ((is_cpu_exclusive(trial) || is_cpu_exclusive(c)) &&
 		    c != cur &&
-		    cpumask_intersects(trial->cpus_allowed, c->cpus_allowed))
-			goto out;
-		if ((is_mem_exclusive(trial) || is_mem_exclusive(c)) &&
+		    cpumask_पूर्णांकersects(trial->cpus_allowed, c->cpus_allowed))
+			जाओ out;
+		अगर ((is_mem_exclusive(trial) || is_mem_exclusive(c)) &&
 		    c != cur &&
-		    nodes_intersects(trial->mems_allowed, c->mems_allowed))
-			goto out;
-	}
+		    nodes_पूर्णांकersects(trial->mems_allowed, c->mems_allowed))
+			जाओ out;
+	पूर्ण
 
 	/*
 	 * Cpusets with tasks - existing or newly being attached - can't
 	 * be changed to have empty cpus_allowed or mems_allowed.
 	 */
 	ret = -ENOSPC;
-	if ((cgroup_is_populated(cur->css.cgroup) || cur->attach_in_progress)) {
-		if (!cpumask_empty(cur->cpus_allowed) &&
+	अगर ((cgroup_is_populated(cur->css.cgroup) || cur->attach_in_progress)) अणु
+		अगर (!cpumask_empty(cur->cpus_allowed) &&
 		    cpumask_empty(trial->cpus_allowed))
-			goto out;
-		if (!nodes_empty(cur->mems_allowed) &&
+			जाओ out;
+		अगर (!nodes_empty(cur->mems_allowed) &&
 		    nodes_empty(trial->mems_allowed))
-			goto out;
-	}
+			जाओ out;
+	पूर्ण
 
 	/*
-	 * We can't shrink if we won't have enough room for SCHED_DEADLINE
+	 * We can't shrink if we won't have enough room क्रम SCHED_DEADLINE
 	 * tasks.
 	 */
 	ret = -EBUSY;
-	if (is_cpu_exclusive(cur) &&
+	अगर (is_cpu_exclusive(cur) &&
 	    !cpuset_cpumask_can_shrink(cur->cpus_allowed,
 				       trial->cpus_allowed))
-		goto out;
+		जाओ out;
 
 	ret = 0;
 out:
-	rcu_read_unlock();
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 /*
- * Helper routine for generate_sched_domains().
+ * Helper routine क्रम generate_sched_करोमुख्यs().
  * Do cpusets a, b have overlapping effective cpus_allowed masks?
  */
-static int cpusets_overlap(struct cpuset *a, struct cpuset *b)
-{
-	return cpumask_intersects(a->effective_cpus, b->effective_cpus);
-}
+अटल पूर्णांक cpusets_overlap(काष्ठा cpuset *a, काष्ठा cpuset *b)
+अणु
+	वापस cpumask_पूर्णांकersects(a->effective_cpus, b->effective_cpus);
+पूर्ण
 
-static void
-update_domain_attr(struct sched_domain_attr *dattr, struct cpuset *c)
-{
-	if (dattr->relax_domain_level < c->relax_domain_level)
-		dattr->relax_domain_level = c->relax_domain_level;
-	return;
-}
+अटल व्योम
+update_करोमुख्य_attr(काष्ठा sched_करोमुख्य_attr *dattr, काष्ठा cpuset *c)
+अणु
+	अगर (dattr->relax_करोमुख्य_level < c->relax_करोमुख्य_level)
+		dattr->relax_करोमुख्य_level = c->relax_करोमुख्य_level;
+	वापस;
+पूर्ण
 
-static void update_domain_attr_tree(struct sched_domain_attr *dattr,
-				    struct cpuset *root_cs)
-{
-	struct cpuset *cp;
-	struct cgroup_subsys_state *pos_css;
+अटल व्योम update_करोमुख्य_attr_tree(काष्ठा sched_करोमुख्य_attr *dattr,
+				    काष्ठा cpuset *root_cs)
+अणु
+	काष्ठा cpuset *cp;
+	काष्ठा cgroup_subsys_state *pos_css;
 
-	rcu_read_lock();
-	cpuset_for_each_descendant_pre(cp, pos_css, root_cs) {
-		/* skip the whole subtree if @cp doesn't have any CPU */
-		if (cpumask_empty(cp->cpus_allowed)) {
-			pos_css = css_rightmost_descendant(pos_css);
-			continue;
-		}
+	rcu_पढ़ो_lock();
+	cpuset_क्रम_each_descendant_pre(cp, pos_css, root_cs) अणु
+		/* skip the whole subtree अगर @cp करोesn't have any CPU */
+		अगर (cpumask_empty(cp->cpus_allowed)) अणु
+			pos_css = css_righपंचांगost_descendant(pos_css);
+			जारी;
+		पूर्ण
 
-		if (is_sched_load_balance(cp))
-			update_domain_attr(dattr, cp);
-	}
-	rcu_read_unlock();
-}
+		अगर (is_sched_load_balance(cp))
+			update_करोमुख्य_attr(dattr, cp);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /* Must be called with cpuset_mutex held.  */
-static inline int nr_cpusets(void)
-{
+अटल अंतरभूत पूर्णांक nr_cpusets(व्योम)
+अणु
 	/* jump label reference count + the top-level cpuset */
-	return static_key_count(&cpusets_enabled_key.key) + 1;
-}
+	वापस अटल_key_count(&cpusets_enabled_key.key) + 1;
+पूर्ण
 
 /*
- * generate_sched_domains()
+ * generate_sched_करोमुख्यs()
  *
- * This function builds a partial partition of the systems CPUs
+ * This function builds a partial partition of the प्रणालीs CPUs
  * A 'partial partition' is a set of non-overlapping subsets whose
- * union is a subset of that set.
+ * जोड़ is a subset of that set.
  * The output of this function needs to be passed to kernel/sched/core.c
- * partition_sched_domains() routine, which will rebuild the scheduler's
- * load balancing domains (sched domains) as specified by that partial
+ * partition_sched_करोमुख्यs() routine, which will rebuild the scheduler's
+ * load balancing करोमुख्यs (sched करोमुख्यs) as specअगरied by that partial
  * partition.
  *
  * See "What is sched_load_balance" in Documentation/admin-guide/cgroup-v1/cpusets.rst
- * for a background explanation of this.
+ * क्रम a background explanation of this.
  *
- * Does not return errors, on the theory that the callers of this
+ * Does not वापस errors, on the theory that the callers of this
  * routine would rather not worry about failures to rebuild sched
- * domains when operating in the severe memory shortage situations
+ * करोमुख्यs when operating in the severe memory लघुage situations
  * that could cause allocation failures below.
  *
  * Must be called with cpuset_mutex held.
  *
  * The three key local variables below are:
- *    cp - cpuset pointer, used (together with pos_css) to perform a
- *	   top-down scan of all cpusets. For our purposes, rebuilding
- *	   the schedulers sched domains, we can ignore !is_sched_load_
+ *    cp - cpuset poपूर्णांकer, used (together with pos_css) to perक्रमm a
+ *	   top-करोwn scan of all cpusets. For our purposes, rebuilding
+ *	   the schedulers sched करोमुख्यs, we can ignore !is_sched_load_
  *	   balance cpusets.
- *  csa  - (for CpuSet Array) Array of pointers to all the cpusets
- *	   that need to be load balanced, for convenient iterative
+ *  csa  - (क्रम CpuSet Array) Array of poपूर्णांकers to all the cpusets
+ *	   that need to be load balanced, क्रम convenient iterative
  *	   access by the subsequent code that finds the best partition,
- *	   i.e the set of domains (subsets) of CPUs such that the
+ *	   i.e the set of करोमुख्यs (subsets) of CPUs such that the
  *	   cpus_allowed of every cpuset marked is_sched_load_balance
- *	   is a subset of one of these domains, while there are as
- *	   many such domains as possible, each as small as possible.
- * doms  - Conversion of 'csa' to an array of cpumasks, for passing to
- *	   the kernel/sched/core.c routine partition_sched_domains() in a
- *	   convenient format, that can be easily compared to the prior
- *	   value to determine what partition elements (sched domains)
- *	   were changed (added or removed.)
+ *	   is a subset of one of these करोमुख्यs, जबतक there are as
+ *	   many such करोमुख्यs as possible, each as small as possible.
+ * करोms  - Conversion of 'csa' to an array of cpumasks, क्रम passing to
+ *	   the kernel/sched/core.c routine partition_sched_करोमुख्यs() in a
+ *	   convenient क्रमmat, that can be easily compared to the prior
+ *	   value to determine what partition elements (sched करोमुख्यs)
+ *	   were changed (added or हटाओd.)
  *
- * Finding the best partition (set of domains):
+ * Finding the best partition (set of करोमुख्यs):
  *	The triple nested loops below over i, j, k scan over the
- *	load balanced cpusets (using the array of cpuset pointers in
- *	csa[]) looking for pairs of cpusets that have overlapping
- *	cpus_allowed, but which don't have the same 'pn' partition
+ *	load balanced cpusets (using the array of cpuset poपूर्णांकers in
+ *	csa[]) looking क्रम pairs of cpusets that have overlapping
+ *	cpus_allowed, but which करोn't have the same 'pn' partition
  *	number and gives them in the same partition number.  It keeps
- *	looping on the 'restart' label until it can no longer find
+ *	looping on the 'restart' label until it can no दीर्घer find
  *	any such pairs.
  *
- *	The union of the cpus_allowed masks from the set of
- *	all cpusets having the same 'pn' value then form the one
- *	element of the partition (one sched domain) to be passed to
- *	partition_sched_domains().
+ *	The जोड़ of the cpus_allowed masks from the set of
+ *	all cpusets having the same 'pn' value then क्रमm the one
+ *	element of the partition (one sched करोमुख्य) to be passed to
+ *	partition_sched_करोमुख्यs().
  */
-static int generate_sched_domains(cpumask_var_t **domains,
-			struct sched_domain_attr **attributes)
-{
-	struct cpuset *cp;	/* top-down scan of cpusets */
-	struct cpuset **csa;	/* array of all cpuset ptrs */
-	int csn;		/* how many cpuset ptrs in csa so far */
-	int i, j, k;		/* indices for partition finding loops */
-	cpumask_var_t *doms;	/* resulting partition; i.e. sched domains */
-	struct sched_domain_attr *dattr;  /* attributes for custom domains */
-	int ndoms = 0;		/* number of sched domains in result */
-	int nslot;		/* next empty doms[] struct cpumask slot */
-	struct cgroup_subsys_state *pos_css;
+अटल पूर्णांक generate_sched_करोमुख्यs(cpumask_var_t **करोमुख्यs,
+			काष्ठा sched_करोमुख्य_attr **attributes)
+अणु
+	काष्ठा cpuset *cp;	/* top-करोwn scan of cpusets */
+	काष्ठा cpuset **csa;	/* array of all cpuset ptrs */
+	पूर्णांक csn;		/* how many cpuset ptrs in csa so far */
+	पूर्णांक i, j, k;		/* indices क्रम partition finding loops */
+	cpumask_var_t *करोms;	/* resulting partition; i.e. sched करोमुख्यs */
+	काष्ठा sched_करोमुख्य_attr *dattr;  /* attributes क्रम custom करोमुख्यs */
+	पूर्णांक nकरोms = 0;		/* number of sched करोमुख्यs in result */
+	पूर्णांक nslot;		/* next empty करोms[] काष्ठा cpumask slot */
+	काष्ठा cgroup_subsys_state *pos_css;
 	bool root_load_balance = is_sched_load_balance(&top_cpuset);
 
-	doms = NULL;
-	dattr = NULL;
-	csa = NULL;
+	करोms = शून्य;
+	dattr = शून्य;
+	csa = शून्य;
 
-	/* Special case for the 99% of systems with one, full, sched domain */
-	if (root_load_balance && !top_cpuset.nr_subparts_cpus) {
-		ndoms = 1;
-		doms = alloc_sched_domains(ndoms);
-		if (!doms)
-			goto done;
+	/* Special हाल क्रम the 99% of प्रणालीs with one, full, sched करोमुख्य */
+	अगर (root_load_balance && !top_cpuset.nr_subparts_cpus) अणु
+		nकरोms = 1;
+		करोms = alloc_sched_करोमुख्यs(nकरोms);
+		अगर (!करोms)
+			जाओ करोne;
 
-		dattr = kmalloc(sizeof(struct sched_domain_attr), GFP_KERNEL);
-		if (dattr) {
+		dattr = kदो_स्मृति(माप(काष्ठा sched_करोमुख्य_attr), GFP_KERNEL);
+		अगर (dattr) अणु
 			*dattr = SD_ATTR_INIT;
-			update_domain_attr_tree(dattr, &top_cpuset);
-		}
-		cpumask_and(doms[0], top_cpuset.effective_cpus,
+			update_करोमुख्य_attr_tree(dattr, &top_cpuset);
+		पूर्ण
+		cpumask_and(करोms[0], top_cpuset.effective_cpus,
 			    housekeeping_cpumask(HK_FLAG_DOMAIN));
 
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	csa = kmalloc_array(nr_cpusets(), sizeof(cp), GFP_KERNEL);
-	if (!csa)
-		goto done;
+	csa = kदो_स्मृति_array(nr_cpusets(), माप(cp), GFP_KERNEL);
+	अगर (!csa)
+		जाओ करोne;
 	csn = 0;
 
-	rcu_read_lock();
-	if (root_load_balance)
+	rcu_पढ़ो_lock();
+	अगर (root_load_balance)
 		csa[csn++] = &top_cpuset;
-	cpuset_for_each_descendant_pre(cp, pos_css, &top_cpuset) {
-		if (cp == &top_cpuset)
-			continue;
+	cpuset_क्रम_each_descendant_pre(cp, pos_css, &top_cpuset) अणु
+		अगर (cp == &top_cpuset)
+			जारी;
 		/*
-		 * Continue traversing beyond @cp iff @cp has some CPUs and
-		 * isn't load balancing.  The former is obvious.  The
+		 * Continue traversing beyond @cp अगरf @cp has some CPUs and
+		 * isn't load balancing.  The क्रमmer is obvious.  The
 		 * latter: All child cpusets contain a subset of the
 		 * parent's cpus, so just skip them, and then we call
-		 * update_domain_attr_tree() to calc relax_domain_level of
-		 * the corresponding sched domain.
+		 * update_करोमुख्य_attr_tree() to calc relax_करोमुख्य_level of
+		 * the corresponding sched करोमुख्य.
 		 *
-		 * If root is load-balancing, we can skip @cp if it
+		 * If root is load-balancing, we can skip @cp अगर it
 		 * is a subset of the root's effective_cpus.
 		 */
-		if (!cpumask_empty(cp->cpus_allowed) &&
+		अगर (!cpumask_empty(cp->cpus_allowed) &&
 		    !(is_sched_load_balance(cp) &&
-		      cpumask_intersects(cp->cpus_allowed,
+		      cpumask_पूर्णांकersects(cp->cpus_allowed,
 					 housekeeping_cpumask(HK_FLAG_DOMAIN))))
-			continue;
+			जारी;
 
-		if (root_load_balance &&
+		अगर (root_load_balance &&
 		    cpumask_subset(cp->cpus_allowed, top_cpuset.effective_cpus))
-			continue;
+			जारी;
 
-		if (is_sched_load_balance(cp) &&
+		अगर (is_sched_load_balance(cp) &&
 		    !cpumask_empty(cp->effective_cpus))
 			csa[csn++] = cp;
 
-		/* skip @cp's subtree if not a partition root */
-		if (!is_partition_root(cp))
-			pos_css = css_rightmost_descendant(pos_css);
-	}
-	rcu_read_unlock();
+		/* skip @cp's subtree अगर not a partition root */
+		अगर (!is_partition_root(cp))
+			pos_css = css_righपंचांगost_descendant(pos_css);
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	for (i = 0; i < csn; i++)
+	क्रम (i = 0; i < csn; i++)
 		csa[i]->pn = i;
-	ndoms = csn;
+	nकरोms = csn;
 
 restart:
-	/* Find the best partition (set of sched domains) */
-	for (i = 0; i < csn; i++) {
-		struct cpuset *a = csa[i];
-		int apn = a->pn;
+	/* Find the best partition (set of sched करोमुख्यs) */
+	क्रम (i = 0; i < csn; i++) अणु
+		काष्ठा cpuset *a = csa[i];
+		पूर्णांक apn = a->pn;
 
-		for (j = 0; j < csn; j++) {
-			struct cpuset *b = csa[j];
-			int bpn = b->pn;
+		क्रम (j = 0; j < csn; j++) अणु
+			काष्ठा cpuset *b = csa[j];
+			पूर्णांक bpn = b->pn;
 
-			if (apn != bpn && cpusets_overlap(a, b)) {
-				for (k = 0; k < csn; k++) {
-					struct cpuset *c = csa[k];
+			अगर (apn != bpn && cpusets_overlap(a, b)) अणु
+				क्रम (k = 0; k < csn; k++) अणु
+					काष्ठा cpuset *c = csa[k];
 
-					if (c->pn == bpn)
+					अगर (c->pn == bpn)
 						c->pn = apn;
-				}
-				ndoms--;	/* one less element */
-				goto restart;
-			}
-		}
-	}
+				पूर्ण
+				nकरोms--;	/* one less element */
+				जाओ restart;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Now we know how many domains to create.
-	 * Convert <csn, csa> to <ndoms, doms> and populate cpu masks.
+	 * Now we know how many करोमुख्यs to create.
+	 * Convert <csn, csa> to <nकरोms, करोms> and populate cpu masks.
 	 */
-	doms = alloc_sched_domains(ndoms);
-	if (!doms)
-		goto done;
+	करोms = alloc_sched_करोमुख्यs(nकरोms);
+	अगर (!करोms)
+		जाओ करोne;
 
 	/*
 	 * The rest of the code, including the scheduler, can deal with
-	 * dattr==NULL case. No need to abort if alloc fails.
+	 * dattr==शून्य हाल. No need to पात अगर alloc fails.
 	 */
-	dattr = kmalloc_array(ndoms, sizeof(struct sched_domain_attr),
+	dattr = kदो_स्मृति_array(nकरोms, माप(काष्ठा sched_करोमुख्य_attr),
 			      GFP_KERNEL);
 
-	for (nslot = 0, i = 0; i < csn; i++) {
-		struct cpuset *a = csa[i];
-		struct cpumask *dp;
-		int apn = a->pn;
+	क्रम (nslot = 0, i = 0; i < csn; i++) अणु
+		काष्ठा cpuset *a = csa[i];
+		काष्ठा cpumask *dp;
+		पूर्णांक apn = a->pn;
 
-		if (apn < 0) {
+		अगर (apn < 0) अणु
 			/* Skip completed partitions */
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		dp = doms[nslot];
+		dp = करोms[nslot];
 
-		if (nslot == ndoms) {
-			static int warnings = 10;
-			if (warnings) {
+		अगर (nslot == nकरोms) अणु
+			अटल पूर्णांक warnings = 10;
+			अगर (warnings) अणु
 				pr_warn("rebuild_sched_domains confused: nslot %d, ndoms %d, csn %d, i %d, apn %d\n",
-					nslot, ndoms, csn, i, apn);
+					nslot, nकरोms, csn, i, apn);
 				warnings--;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		cpumask_clear(dp);
-		if (dattr)
+		अगर (dattr)
 			*(dattr + nslot) = SD_ATTR_INIT;
-		for (j = i; j < csn; j++) {
-			struct cpuset *b = csa[j];
+		क्रम (j = i; j < csn; j++) अणु
+			काष्ठा cpuset *b = csa[j];
 
-			if (apn == b->pn) {
+			अगर (apn == b->pn) अणु
 				cpumask_or(dp, dp, b->effective_cpus);
 				cpumask_and(dp, dp, housekeeping_cpumask(HK_FLAG_DOMAIN));
-				if (dattr)
-					update_domain_attr_tree(dattr + nslot, b);
+				अगर (dattr)
+					update_करोमुख्य_attr_tree(dattr + nslot, b);
 
 				/* Done with this partition */
 				b->pn = -1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		nslot++;
-	}
-	BUG_ON(nslot != ndoms);
+	पूर्ण
+	BUG_ON(nslot != nकरोms);
 
-done:
-	kfree(csa);
+करोne:
+	kमुक्त(csa);
 
 	/*
-	 * Fallback to the default domain if kmalloc() failed.
-	 * See comments in partition_sched_domains().
+	 * Fallback to the शेष करोमुख्य अगर kदो_स्मृति() failed.
+	 * See comments in partition_sched_करोमुख्यs().
 	 */
-	if (doms == NULL)
-		ndoms = 1;
+	अगर (करोms == शून्य)
+		nकरोms = 1;
 
-	*domains    = doms;
+	*करोमुख्यs    = करोms;
 	*attributes = dattr;
-	return ndoms;
-}
+	वापस nकरोms;
+पूर्ण
 
-static void update_tasks_root_domain(struct cpuset *cs)
-{
-	struct css_task_iter it;
-	struct task_struct *task;
+अटल व्योम update_tasks_root_करोमुख्य(काष्ठा cpuset *cs)
+अणु
+	काष्ठा css_task_iter it;
+	काष्ठा task_काष्ठा *task;
 
 	css_task_iter_start(&cs->css, 0, &it);
 
-	while ((task = css_task_iter_next(&it)))
-		dl_add_task_root_domain(task);
+	जबतक ((task = css_task_iter_next(&it)))
+		dl_add_task_root_करोमुख्य(task);
 
 	css_task_iter_end(&it);
-}
+पूर्ण
 
-static void rebuild_root_domains(void)
-{
-	struct cpuset *cs = NULL;
-	struct cgroup_subsys_state *pos_css;
+अटल व्योम rebuild_root_करोमुख्यs(व्योम)
+अणु
+	काष्ठा cpuset *cs = शून्य;
+	काष्ठा cgroup_subsys_state *pos_css;
 
-	percpu_rwsem_assert_held(&cpuset_rwsem);
-	lockdep_assert_cpus_held();
-	lockdep_assert_held(&sched_domains_mutex);
+	percpu_rwsem_निश्चित_held(&cpuset_rwsem);
+	lockdep_निश्चित_cpus_held();
+	lockdep_निश्चित_held(&sched_करोमुख्यs_mutex);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/*
-	 * Clear default root domain DL accounting, it will be computed again
-	 * if a task belongs to it.
+	 * Clear शेष root करोमुख्य DL accounting, it will be computed again
+	 * अगर a task beदीर्घs to it.
 	 */
-	dl_clear_root_domain(&def_root_domain);
+	dl_clear_root_करोमुख्य(&def_root_करोमुख्य);
 
-	cpuset_for_each_descendant_pre(cs, pos_css, &top_cpuset) {
+	cpuset_क्रम_each_descendant_pre(cs, pos_css, &top_cpuset) अणु
 
-		if (cpumask_empty(cs->effective_cpus)) {
-			pos_css = css_rightmost_descendant(pos_css);
-			continue;
-		}
+		अगर (cpumask_empty(cs->effective_cpus)) अणु
+			pos_css = css_righपंचांगost_descendant(pos_css);
+			जारी;
+		पूर्ण
 
 		css_get(&cs->css);
 
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		update_tasks_root_domain(cs);
+		update_tasks_root_करोमुख्य(cs);
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		css_put(&cs->css);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void
-partition_and_rebuild_sched_domains(int ndoms_new, cpumask_var_t doms_new[],
-				    struct sched_domain_attr *dattr_new)
-{
-	mutex_lock(&sched_domains_mutex);
-	partition_sched_domains_locked(ndoms_new, doms_new, dattr_new);
-	rebuild_root_domains();
-	mutex_unlock(&sched_domains_mutex);
-}
+अटल व्योम
+partition_and_rebuild_sched_करोमुख्यs(पूर्णांक nकरोms_new, cpumask_var_t करोms_new[],
+				    काष्ठा sched_करोमुख्य_attr *dattr_new)
+अणु
+	mutex_lock(&sched_करोमुख्यs_mutex);
+	partition_sched_करोमुख्यs_locked(nकरोms_new, करोms_new, dattr_new);
+	rebuild_root_करोमुख्यs();
+	mutex_unlock(&sched_करोमुख्यs_mutex);
+पूर्ण
 
 /*
- * Rebuild scheduler domains.
+ * Rebuild scheduler करोमुख्यs.
  *
  * If the flag 'sched_load_balance' of any cpuset with non-empty
  * 'cpus' changes, or if the 'cpus' allowed changes in any cpuset
- * which has that flag enabled, or if any cpuset with a non-empty
- * 'cpus' is removed, then call this routine to rebuild the
- * scheduler's dynamic sched domains.
+ * which has that flag enabled, or अगर any cpuset with a non-empty
+ * 'cpus' is हटाओd, then call this routine to rebuild the
+ * scheduler's dynamic sched करोमुख्यs.
  *
  * Call with cpuset_mutex held.  Takes get_online_cpus().
  */
-static void rebuild_sched_domains_locked(void)
-{
-	struct cgroup_subsys_state *pos_css;
-	struct sched_domain_attr *attr;
-	cpumask_var_t *doms;
-	struct cpuset *cs;
-	int ndoms;
+अटल व्योम rebuild_sched_करोमुख्यs_locked(व्योम)
+अणु
+	काष्ठा cgroup_subsys_state *pos_css;
+	काष्ठा sched_करोमुख्य_attr *attr;
+	cpumask_var_t *करोms;
+	काष्ठा cpuset *cs;
+	पूर्णांक nकरोms;
 
-	lockdep_assert_cpus_held();
-	percpu_rwsem_assert_held(&cpuset_rwsem);
+	lockdep_निश्चित_cpus_held();
+	percpu_rwsem_निश्चित_held(&cpuset_rwsem);
 
 	/*
-	 * If we have raced with CPU hotplug, return early to avoid
-	 * passing doms with offlined cpu to partition_sched_domains().
-	 * Anyways, cpuset_hotplug_workfn() will rebuild sched domains.
+	 * If we have raced with CPU hotplug, वापस early to aव्योम
+	 * passing करोms with offlined cpu to partition_sched_करोमुख्यs().
+	 * Anyways, cpuset_hotplug_workfn() will rebuild sched करोमुख्यs.
 	 *
 	 * With no CPUs in any subpartitions, top_cpuset's effective CPUs
 	 * should be the same as the active CPUs, so checking only top_cpuset
 	 * is enough to detect racing CPU offlines.
 	 */
-	if (!top_cpuset.nr_subparts_cpus &&
+	अगर (!top_cpuset.nr_subparts_cpus &&
 	    !cpumask_equal(top_cpuset.effective_cpus, cpu_active_mask))
-		return;
+		वापस;
 
 	/*
 	 * With subpartition CPUs, however, the effective CPUs of a partition
 	 * root should be only a subset of the active CPUs.  Since a CPU in any
 	 * partition root could be offlined, all must be checked.
 	 */
-	if (top_cpuset.nr_subparts_cpus) {
-		rcu_read_lock();
-		cpuset_for_each_descendant_pre(cs, pos_css, &top_cpuset) {
-			if (!is_partition_root(cs)) {
-				pos_css = css_rightmost_descendant(pos_css);
-				continue;
-			}
-			if (!cpumask_subset(cs->effective_cpus,
-					    cpu_active_mask)) {
-				rcu_read_unlock();
-				return;
-			}
-		}
-		rcu_read_unlock();
-	}
+	अगर (top_cpuset.nr_subparts_cpus) अणु
+		rcu_पढ़ो_lock();
+		cpuset_क्रम_each_descendant_pre(cs, pos_css, &top_cpuset) अणु
+			अगर (!is_partition_root(cs)) अणु
+				pos_css = css_righपंचांगost_descendant(pos_css);
+				जारी;
+			पूर्ण
+			अगर (!cpumask_subset(cs->effective_cpus,
+					    cpu_active_mask)) अणु
+				rcu_पढ़ो_unlock();
+				वापस;
+			पूर्ण
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	/* Generate domain masks and attrs */
-	ndoms = generate_sched_domains(&doms, &attr);
+	/* Generate करोमुख्य masks and attrs */
+	nकरोms = generate_sched_करोमुख्यs(&करोms, &attr);
 
-	/* Have scheduler rebuild the domains */
-	partition_and_rebuild_sched_domains(ndoms, doms, attr);
-}
-#else /* !CONFIG_SMP */
-static void rebuild_sched_domains_locked(void)
-{
-}
-#endif /* CONFIG_SMP */
+	/* Have scheduler rebuild the करोमुख्यs */
+	partition_and_rebuild_sched_करोमुख्यs(nकरोms, करोms, attr);
+पूर्ण
+#अन्यथा /* !CONFIG_SMP */
+अटल व्योम rebuild_sched_करोमुख्यs_locked(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-void rebuild_sched_domains(void)
-{
+व्योम rebuild_sched_करोमुख्यs(व्योम)
+अणु
 	get_online_cpus();
-	percpu_down_write(&cpuset_rwsem);
-	rebuild_sched_domains_locked();
-	percpu_up_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
+	rebuild_sched_करोमुख्यs_locked();
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 	put_online_cpus();
-}
+पूर्ण
 
 /**
  * update_tasks_cpumask - Update the cpumasks of tasks in the cpuset.
@@ -1055,81 +1056,81 @@ void rebuild_sched_domains(void)
  * effective cpuset's.  As this function is called with cpuset_mutex held,
  * cpuset membership stays stable.
  */
-static void update_tasks_cpumask(struct cpuset *cs)
-{
-	struct css_task_iter it;
-	struct task_struct *task;
+अटल व्योम update_tasks_cpumask(काष्ठा cpuset *cs)
+अणु
+	काष्ठा css_task_iter it;
+	काष्ठा task_काष्ठा *task;
 
 	css_task_iter_start(&cs->css, 0, &it);
-	while ((task = css_task_iter_next(&it)))
+	जबतक ((task = css_task_iter_next(&it)))
 		set_cpus_allowed_ptr(task, cs->effective_cpus);
 	css_task_iter_end(&it);
-}
+पूर्ण
 
 /**
  * compute_effective_cpumask - Compute the effective cpumask of the cpuset
- * @new_cpus: the temp variable for the new effective_cpus mask
+ * @new_cpus: the temp variable क्रम the new effective_cpus mask
  * @cs: the cpuset the need to recompute the new effective_cpus mask
  * @parent: the parent cpuset
  *
  * If the parent has subpartition CPUs, include them in the list of
  * allowable CPUs in computing the new effective_cpus mask. Since offlined
- * CPUs are not removed from subparts_cpus, we have to use cpu_active_mask
+ * CPUs are not हटाओd from subparts_cpus, we have to use cpu_active_mask
  * to mask those out.
  */
-static void compute_effective_cpumask(struct cpumask *new_cpus,
-				      struct cpuset *cs, struct cpuset *parent)
-{
-	if (parent->nr_subparts_cpus) {
+अटल व्योम compute_effective_cpumask(काष्ठा cpumask *new_cpus,
+				      काष्ठा cpuset *cs, काष्ठा cpuset *parent)
+अणु
+	अगर (parent->nr_subparts_cpus) अणु
 		cpumask_or(new_cpus, parent->effective_cpus,
 			   parent->subparts_cpus);
 		cpumask_and(new_cpus, new_cpus, cs->cpus_allowed);
 		cpumask_and(new_cpus, new_cpus, cpu_active_mask);
-	} else {
+	पूर्ण अन्यथा अणु
 		cpumask_and(new_cpus, cs->cpus_allowed, parent->effective_cpus);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Commands for update_parent_subparts_cpumask
+ * Commands क्रम update_parent_subparts_cpumask
  */
-enum subparts_cmd {
+क्रमागत subparts_cmd अणु
 	partcmd_enable,		/* Enable partition root	 */
 	partcmd_disable,	/* Disable partition root	 */
 	partcmd_update,		/* Update parent's subparts_cpus */
-};
+पूर्ण;
 
 /**
  * update_parent_subparts_cpumask - update subparts_cpus mask of parent cpuset
  * @cpuset:  The cpuset that requests change in partition root state
  * @cmd:     Partition root state change command
- * @newmask: Optional new cpumask for partcmd_update
- * @tmp:     Temporary addmask and delmask
+ * @newmask: Optional new cpumask क्रम partcmd_update
+ * @पंचांगp:     Temporary addmask and delmask
  * Return:   0, 1 or an error code
  *
- * For partcmd_enable, the cpuset is being transformed from a non-partition
+ * For partcmd_enable, the cpuset is being transक्रमmed from a non-partition
  * root to a partition root. The cpus_allowed mask of the given cpuset will
- * be put into parent's subparts_cpus and taken away from parent's
- * effective_cpus. The function will return 0 if all the CPUs listed in
- * cpus_allowed can be granted or an error code will be returned.
+ * be put पूर्णांकo parent's subparts_cpus and taken away from parent's
+ * effective_cpus. The function will वापस 0 अगर all the CPUs listed in
+ * cpus_allowed can be granted or an error code will be वापसed.
  *
  * For partcmd_disable, the cpuset is being transofrmed from a partition
  * root back to a non-partition root. any CPUs in cpus_allowed that are in
  * parent's subparts_cpus will be taken away from that cpumask and put back
- * into parent's effective_cpus. 0 should always be returned.
+ * पूर्णांकo parent's effective_cpus. 0 should always be वापसed.
  *
- * For partcmd_update, if the optional newmask is specified, the cpu
+ * For partcmd_update, अगर the optional newmask is specअगरied, the cpu
  * list is to be changed from cpus_allowed to newmask. Otherwise,
- * cpus_allowed is assumed to remain the same. The cpuset should either
+ * cpus_allowed is assumed to reमुख्य the same. The cpuset should either
  * be a partition root or an invalid partition root. The partition root
- * state may change if newmask is NULL and none of the requested CPUs can
- * be granted by the parent. The function will return 1 if changes to
+ * state may change अगर newmask is शून्य and none of the requested CPUs can
+ * be granted by the parent. The function will वापस 1 अगर changes to
  * parent's subparts_cpus and effective_cpus happen or 0 otherwise.
- * Error code should only be returned when newmask is non-NULL.
+ * Error code should only be वापसed when newmask is non-शून्य.
  *
  * The partcmd_enable and partcmd_disable commands are used by
  * update_prstate(). The partcmd_update command is used by
- * update_cpumasks_hier() with newmask NULL and update_cpumask() with
+ * update_cpumasks_hier() with newmask शून्य and update_cpumask() with
  * newmask set.
  *
  * The checking is more strict when enabling partition root than the
@@ -1138,58 +1139,58 @@ enum subparts_cmd {
  * Because of the implicit cpu exclusive nature of a partition root,
  * cpumask changes that violates the cpu exclusivity rule will not be
  * permitted when checked by validate_change(). The validate_change()
- * function will also prevent any changes to the cpu list if it is not
+ * function will also prevent any changes to the cpu list अगर it is not
  * a superset of children's cpu lists.
  */
-static int update_parent_subparts_cpumask(struct cpuset *cpuset, int cmd,
-					  struct cpumask *newmask,
-					  struct tmpmasks *tmp)
-{
-	struct cpuset *parent = parent_cs(cpuset);
-	int adding;	/* Moving cpus from effective_cpus to subparts_cpus */
-	int deleting;	/* Moving cpus from subparts_cpus to effective_cpus */
+अटल पूर्णांक update_parent_subparts_cpumask(काष्ठा cpuset *cpuset, पूर्णांक cmd,
+					  काष्ठा cpumask *newmask,
+					  काष्ठा पंचांगpmasks *पंचांगp)
+अणु
+	काष्ठा cpuset *parent = parent_cs(cpuset);
+	पूर्णांक adding;	/* Moving cpus from effective_cpus to subparts_cpus */
+	पूर्णांक deleting;	/* Moving cpus from subparts_cpus to effective_cpus */
 	bool part_error = false;	/* Partition error? */
 
-	percpu_rwsem_assert_held(&cpuset_rwsem);
+	percpu_rwsem_निश्चित_held(&cpuset_rwsem);
 
 	/*
 	 * The parent must be a partition root.
-	 * The new cpumask, if present, or the current cpus_allowed must
+	 * The new cpumask, अगर present, or the current cpus_allowed must
 	 * not be empty.
 	 */
-	if (!is_partition_root(parent) ||
+	अगर (!is_partition_root(parent) ||
 	   (newmask && cpumask_empty(newmask)) ||
 	   (!newmask && cpumask_empty(cpuset->cpus_allowed)))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/*
-	 * Enabling/disabling partition root is not allowed if there are
+	 * Enabling/disabling partition root is not allowed अगर there are
 	 * online children.
 	 */
-	if ((cmd != partcmd_update) && css_has_online_children(&cpuset->css))
-		return -EBUSY;
+	अगर ((cmd != partcmd_update) && css_has_online_children(&cpuset->css))
+		वापस -EBUSY;
 
 	/*
-	 * Enabling partition root is not allowed if not all the CPUs
+	 * Enabling partition root is not allowed अगर not all the CPUs
 	 * can be granted from parent's effective_cpus or at least one
 	 * CPU will be left after that.
 	 */
-	if ((cmd == partcmd_enable) &&
+	अगर ((cmd == partcmd_enable) &&
 	   (!cpumask_subset(cpuset->cpus_allowed, parent->effective_cpus) ||
 	     cpumask_equal(cpuset->cpus_allowed, parent->effective_cpus)))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/*
 	 * A cpumask update cannot make parent's effective_cpus become empty.
 	 */
 	adding = deleting = false;
-	if (cmd == partcmd_enable) {
-		cpumask_copy(tmp->addmask, cpuset->cpus_allowed);
+	अगर (cmd == partcmd_enable) अणु
+		cpumask_copy(पंचांगp->addmask, cpuset->cpus_allowed);
 		adding = true;
-	} else if (cmd == partcmd_disable) {
-		deleting = cpumask_and(tmp->delmask, cpuset->cpus_allowed,
+	पूर्ण अन्यथा अगर (cmd == partcmd_disable) अणु
+		deleting = cpumask_and(पंचांगp->delmask, cpuset->cpus_allowed,
 				       parent->subparts_cpus);
-	} else if (newmask) {
+	पूर्ण अन्यथा अगर (newmask) अणु
 		/*
 		 * partcmd_update with newmask:
 		 *
@@ -1197,117 +1198,117 @@ static int update_parent_subparts_cpumask(struct cpuset *cpuset, int cmd,
 		 * addmask = newmask & parent->effective_cpus
 		 *		     & ~parent->subparts_cpus
 		 */
-		cpumask_andnot(tmp->delmask, cpuset->cpus_allowed, newmask);
-		deleting = cpumask_and(tmp->delmask, tmp->delmask,
+		cpumask_andnot(पंचांगp->delmask, cpuset->cpus_allowed, newmask);
+		deleting = cpumask_and(पंचांगp->delmask, पंचांगp->delmask,
 				       parent->subparts_cpus);
 
-		cpumask_and(tmp->addmask, newmask, parent->effective_cpus);
-		adding = cpumask_andnot(tmp->addmask, tmp->addmask,
+		cpumask_and(पंचांगp->addmask, newmask, parent->effective_cpus);
+		adding = cpumask_andnot(पंचांगp->addmask, पंचांगp->addmask,
 					parent->subparts_cpus);
 		/*
-		 * Return error if the new effective_cpus could become empty.
+		 * Return error अगर the new effective_cpus could become empty.
 		 */
-		if (adding &&
-		    cpumask_equal(parent->effective_cpus, tmp->addmask)) {
-			if (!deleting)
-				return -EINVAL;
+		अगर (adding &&
+		    cpumask_equal(parent->effective_cpus, पंचांगp->addmask)) अणु
+			अगर (!deleting)
+				वापस -EINVAL;
 			/*
 			 * As some of the CPUs in subparts_cpus might have
 			 * been offlined, we need to compute the real delmask
 			 * to confirm that.
 			 */
-			if (!cpumask_and(tmp->addmask, tmp->delmask,
+			अगर (!cpumask_and(पंचांगp->addmask, पंचांगp->delmask,
 					 cpu_active_mask))
-				return -EINVAL;
-			cpumask_copy(tmp->addmask, parent->effective_cpus);
-		}
-	} else {
+				वापस -EINVAL;
+			cpumask_copy(पंचांगp->addmask, parent->effective_cpus);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * partcmd_update w/o newmask:
 		 *
 		 * addmask = cpus_allowed & parent->effectiveb_cpus
 		 *
 		 * Note that parent's subparts_cpus may have been
-		 * pre-shrunk in case there is a change in the cpu list.
+		 * pre-shrunk in हाल there is a change in the cpu list.
 		 * So no deletion is needed.
 		 */
-		adding = cpumask_and(tmp->addmask, cpuset->cpus_allowed,
+		adding = cpumask_and(पंचांगp->addmask, cpuset->cpus_allowed,
 				     parent->effective_cpus);
-		part_error = cpumask_equal(tmp->addmask,
+		part_error = cpumask_equal(पंचांगp->addmask,
 					   parent->effective_cpus);
-	}
+	पूर्ण
 
-	if (cmd == partcmd_update) {
-		int prev_prs = cpuset->partition_root_state;
+	अगर (cmd == partcmd_update) अणु
+		पूर्णांक prev_prs = cpuset->partition_root_state;
 
 		/*
-		 * Check for possible transition between PRS_ENABLED
+		 * Check क्रम possible transition between PRS_ENABLED
 		 * and PRS_ERROR.
 		 */
-		switch (cpuset->partition_root_state) {
-		case PRS_ENABLED:
-			if (part_error)
+		चयन (cpuset->partition_root_state) अणु
+		हाल PRS_ENABLED:
+			अगर (part_error)
 				cpuset->partition_root_state = PRS_ERROR;
-			break;
-		case PRS_ERROR:
-			if (!part_error)
+			अवरोध;
+		हाल PRS_ERROR:
+			अगर (!part_error)
 				cpuset->partition_root_state = PRS_ENABLED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/*
-		 * Set part_error if previously in invalid state.
+		 * Set part_error अगर previously in invalid state.
 		 */
 		part_error = (prev_prs == PRS_ERROR);
-	}
+	पूर्ण
 
-	if (!part_error && (cpuset->partition_root_state == PRS_ERROR))
-		return 0;	/* Nothing need to be done */
+	अगर (!part_error && (cpuset->partition_root_state == PRS_ERROR))
+		वापस 0;	/* Nothing need to be करोne */
 
-	if (cpuset->partition_root_state == PRS_ERROR) {
+	अगर (cpuset->partition_root_state == PRS_ERROR) अणु
 		/*
 		 * Remove all its cpus from parent's subparts_cpus.
 		 */
 		adding = false;
-		deleting = cpumask_and(tmp->delmask, cpuset->cpus_allowed,
+		deleting = cpumask_and(पंचांगp->delmask, cpuset->cpus_allowed,
 				       parent->subparts_cpus);
-	}
+	पूर्ण
 
-	if (!adding && !deleting)
-		return 0;
+	अगर (!adding && !deleting)
+		वापस 0;
 
 	/*
 	 * Change the parent's subparts_cpus.
-	 * Newly added CPUs will be removed from effective_cpus and
+	 * Newly added CPUs will be हटाओd from effective_cpus and
 	 * newly deleted ones will be added back to effective_cpus.
 	 */
 	spin_lock_irq(&callback_lock);
-	if (adding) {
+	अगर (adding) अणु
 		cpumask_or(parent->subparts_cpus,
-			   parent->subparts_cpus, tmp->addmask);
+			   parent->subparts_cpus, पंचांगp->addmask);
 		cpumask_andnot(parent->effective_cpus,
-			       parent->effective_cpus, tmp->addmask);
-	}
-	if (deleting) {
+			       parent->effective_cpus, पंचांगp->addmask);
+	पूर्ण
+	अगर (deleting) अणु
 		cpumask_andnot(parent->subparts_cpus,
-			       parent->subparts_cpus, tmp->delmask);
+			       parent->subparts_cpus, पंचांगp->delmask);
 		/*
 		 * Some of the CPUs in subparts_cpus might have been offlined.
 		 */
-		cpumask_and(tmp->delmask, tmp->delmask, cpu_active_mask);
+		cpumask_and(पंचांगp->delmask, पंचांगp->delmask, cpu_active_mask);
 		cpumask_or(parent->effective_cpus,
-			   parent->effective_cpus, tmp->delmask);
-	}
+			   parent->effective_cpus, पंचांगp->delmask);
+	पूर्ण
 
 	parent->nr_subparts_cpus = cpumask_weight(parent->subparts_cpus);
 	spin_unlock_irq(&callback_lock);
 
-	return cmd == partcmd_update;
-}
+	वापस cmd == partcmd_update;
+पूर्ण
 
 /*
  * update_cpumasks_hier - Update effective cpumasks and tasks in the subtree
  * @cs:  the cpuset to consider
- * @tmp: temp variables for calculating effective_cpus & partition setup
+ * @पंचांगp: temp variables क्रम calculating effective_cpus & partition setup
  *
  * When configured cpumask is changed, the effective cpumasks of this cpuset
  * and all its descendants need to be updated.
@@ -1316,53 +1317,53 @@ static int update_parent_subparts_cpumask(struct cpuset *cpuset, int cmd,
  *
  * Called with cpuset_mutex held
  */
-static void update_cpumasks_hier(struct cpuset *cs, struct tmpmasks *tmp)
-{
-	struct cpuset *cp;
-	struct cgroup_subsys_state *pos_css;
-	bool need_rebuild_sched_domains = false;
+अटल व्योम update_cpumasks_hier(काष्ठा cpuset *cs, काष्ठा पंचांगpmasks *पंचांगp)
+अणु
+	काष्ठा cpuset *cp;
+	काष्ठा cgroup_subsys_state *pos_css;
+	bool need_rebuild_sched_करोमुख्यs = false;
 
-	rcu_read_lock();
-	cpuset_for_each_descendant_pre(cp, pos_css, cs) {
-		struct cpuset *parent = parent_cs(cp);
+	rcu_पढ़ो_lock();
+	cpuset_क्रम_each_descendant_pre(cp, pos_css, cs) अणु
+		काष्ठा cpuset *parent = parent_cs(cp);
 
-		compute_effective_cpumask(tmp->new_cpus, cp, parent);
+		compute_effective_cpumask(पंचांगp->new_cpus, cp, parent);
 
 		/*
 		 * If it becomes empty, inherit the effective mask of the
 		 * parent, which is guaranteed to have some CPUs.
 		 */
-		if (is_in_v2_mode() && cpumask_empty(tmp->new_cpus)) {
-			cpumask_copy(tmp->new_cpus, parent->effective_cpus);
-			if (!cp->use_parent_ecpus) {
+		अगर (is_in_v2_mode() && cpumask_empty(पंचांगp->new_cpus)) अणु
+			cpumask_copy(पंचांगp->new_cpus, parent->effective_cpus);
+			अगर (!cp->use_parent_ecpus) अणु
 				cp->use_parent_ecpus = true;
 				parent->child_ecpus_count++;
-			}
-		} else if (cp->use_parent_ecpus) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (cp->use_parent_ecpus) अणु
 			cp->use_parent_ecpus = false;
 			WARN_ON_ONCE(!parent->child_ecpus_count);
 			parent->child_ecpus_count--;
-		}
+		पूर्ण
 
 		/*
-		 * Skip the whole subtree if the cpumask remains the same
+		 * Skip the whole subtree अगर the cpumask reमुख्यs the same
 		 * and has no partition root state.
 		 */
-		if (!cp->partition_root_state &&
-		    cpumask_equal(tmp->new_cpus, cp->effective_cpus)) {
-			pos_css = css_rightmost_descendant(pos_css);
-			continue;
-		}
+		अगर (!cp->partition_root_state &&
+		    cpumask_equal(पंचांगp->new_cpus, cp->effective_cpus)) अणु
+			pos_css = css_righपंचांगost_descendant(pos_css);
+			जारी;
+		पूर्ण
 
 		/*
 		 * update_parent_subparts_cpumask() should have been called
-		 * for cs already in update_cpumask(). We should also call
-		 * update_tasks_cpumask() again for tasks in the parent
-		 * cpuset if the parent's subparts_cpus changes.
+		 * क्रम cs alपढ़ोy in update_cpumask(). We should also call
+		 * update_tasks_cpumask() again क्रम tasks in the parent
+		 * cpuset अगर the parent's subparts_cpus changes.
 		 */
-		if ((cp != cs) && cp->partition_root_state) {
-			switch (parent->partition_root_state) {
-			case PRS_DISABLED:
+		अगर ((cp != cs) && cp->partition_root_state) अणु
+			चयन (parent->partition_root_state) अणु
+			हाल PRS_DISABLED:
 				/*
 				 * If parent is not a partition root or an
 				 * invalid partition root, clear the state
@@ -1374,67 +1375,67 @@ static void update_cpumasks_hier(struct cpuset *cs, struct tmpmasks *tmp)
 
 				/*
 				 * clear_bit() is an atomic operation and
-				 * readers aren't interested in the state
+				 * पढ़ोers aren't पूर्णांकerested in the state
 				 * of CS_CPU_EXCLUSIVE anyway. So we can
 				 * just update the flag without holding
 				 * the callback_lock.
 				 */
 				clear_bit(CS_CPU_EXCLUSIVE, &cp->flags);
-				break;
+				अवरोध;
 
-			case PRS_ENABLED:
-				if (update_parent_subparts_cpumask(cp, partcmd_update, NULL, tmp))
+			हाल PRS_ENABLED:
+				अगर (update_parent_subparts_cpumask(cp, partcmd_update, शून्य, पंचांगp))
 					update_tasks_cpumask(parent);
-				break;
+				अवरोध;
 
-			case PRS_ERROR:
+			हाल PRS_ERROR:
 				/*
 				 * When parent is invalid, it has to be too.
 				 */
 				cp->partition_root_state = PRS_ERROR;
-				if (cp->nr_subparts_cpus) {
+				अगर (cp->nr_subparts_cpus) अणु
 					cp->nr_subparts_cpus = 0;
 					cpumask_clear(cp->subparts_cpus);
-				}
-				break;
-			}
-		}
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!css_tryget_online(&cp->css))
-			continue;
-		rcu_read_unlock();
+		अगर (!css_tryget_online(&cp->css))
+			जारी;
+		rcu_पढ़ो_unlock();
 
 		spin_lock_irq(&callback_lock);
 
-		cpumask_copy(cp->effective_cpus, tmp->new_cpus);
-		if (cp->nr_subparts_cpus &&
-		   (cp->partition_root_state != PRS_ENABLED)) {
+		cpumask_copy(cp->effective_cpus, पंचांगp->new_cpus);
+		अगर (cp->nr_subparts_cpus &&
+		   (cp->partition_root_state != PRS_ENABLED)) अणु
 			cp->nr_subparts_cpus = 0;
 			cpumask_clear(cp->subparts_cpus);
-		} else if (cp->nr_subparts_cpus) {
+		पूर्ण अन्यथा अगर (cp->nr_subparts_cpus) अणु
 			/*
 			 * Make sure that effective_cpus & subparts_cpus
 			 * are mutually exclusive.
 			 *
 			 * In the unlikely event that effective_cpus
 			 * becomes empty. we clear cp->nr_subparts_cpus and
-			 * let its child partition roots to compete for
+			 * let its child partition roots to compete क्रम
 			 * CPUs again.
 			 */
 			cpumask_andnot(cp->effective_cpus, cp->effective_cpus,
 				       cp->subparts_cpus);
-			if (cpumask_empty(cp->effective_cpus)) {
-				cpumask_copy(cp->effective_cpus, tmp->new_cpus);
+			अगर (cpumask_empty(cp->effective_cpus)) अणु
+				cpumask_copy(cp->effective_cpus, पंचांगp->new_cpus);
 				cpumask_clear(cp->subparts_cpus);
 				cp->nr_subparts_cpus = 0;
-			} else if (!cpumask_subset(cp->subparts_cpus,
-						   tmp->new_cpus)) {
+			पूर्ण अन्यथा अगर (!cpumask_subset(cp->subparts_cpus,
+						   पंचांगp->new_cpus)) अणु
 				cpumask_andnot(cp->subparts_cpus,
-					cp->subparts_cpus, tmp->new_cpus);
+					cp->subparts_cpus, पंचांगp->new_cpus);
 				cp->nr_subparts_cpus
 					= cpumask_weight(cp->subparts_cpus);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock_irq(&callback_lock);
 
 		WARN_ON(!is_in_v2_mode() &&
@@ -1443,54 +1444,54 @@ static void update_cpumasks_hier(struct cpuset *cs, struct tmpmasks *tmp)
 		update_tasks_cpumask(cp);
 
 		/*
-		 * On legacy hierarchy, if the effective cpumask of any non-
-		 * empty cpuset is changed, we need to rebuild sched domains.
-		 * On default hierarchy, the cpuset needs to be a partition
+		 * On legacy hierarchy, अगर the effective cpumask of any non-
+		 * empty cpuset is changed, we need to rebuild sched करोमुख्यs.
+		 * On शेष hierarchy, the cpuset needs to be a partition
 		 * root as well.
 		 */
-		if (!cpumask_empty(cp->cpus_allowed) &&
+		अगर (!cpumask_empty(cp->cpus_allowed) &&
 		    is_sched_load_balance(cp) &&
 		   (!cgroup_subsys_on_dfl(cpuset_cgrp_subsys) ||
 		    is_partition_root(cp)))
-			need_rebuild_sched_domains = true;
+			need_rebuild_sched_करोमुख्यs = true;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		css_put(&cp->css);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (need_rebuild_sched_domains)
-		rebuild_sched_domains_locked();
-}
+	अगर (need_rebuild_sched_करोमुख्यs)
+		rebuild_sched_करोमुख्यs_locked();
+पूर्ण
 
 /**
  * update_sibling_cpumasks - Update siblings cpumasks
  * @parent:  Parent cpuset
  * @cs:      Current cpuset
- * @tmp:     Temp variables
+ * @पंचांगp:     Temp variables
  */
-static void update_sibling_cpumasks(struct cpuset *parent, struct cpuset *cs,
-				    struct tmpmasks *tmp)
-{
-	struct cpuset *sibling;
-	struct cgroup_subsys_state *pos_css;
+अटल व्योम update_sibling_cpumasks(काष्ठा cpuset *parent, काष्ठा cpuset *cs,
+				    काष्ठा पंचांगpmasks *पंचांगp)
+अणु
+	काष्ठा cpuset *sibling;
+	काष्ठा cgroup_subsys_state *pos_css;
 
 	/*
 	 * Check all its siblings and call update_cpumasks_hier()
-	 * if their use_parent_ecpus flag is set in order for them
+	 * अगर their use_parent_ecpus flag is set in order क्रम them
 	 * to use the right effective_cpus value.
 	 */
-	rcu_read_lock();
-	cpuset_for_each_child(sibling, pos_css, parent) {
-		if (sibling == cs)
-			continue;
-		if (!sibling->use_parent_ecpus)
-			continue;
+	rcu_पढ़ो_lock();
+	cpuset_क्रम_each_child(sibling, pos_css, parent) अणु
+		अगर (sibling == cs)
+			जारी;
+		अगर (!sibling->use_parent_ecpus)
+			जारी;
 
-		update_cpumasks_hier(sibling, tmp);
-	}
-	rcu_read_unlock();
-}
+		update_cpumasks_hier(sibling, पंचांगp);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
  * update_cpumask - update the cpus_allowed mask of a cpuset and all tasks in it
@@ -1498,60 +1499,60 @@ static void update_sibling_cpumasks(struct cpuset *parent, struct cpuset *cs,
  * @trialcs: trial cpuset
  * @buf: buffer of cpu numbers written to this cpuset
  */
-static int update_cpumask(struct cpuset *cs, struct cpuset *trialcs,
-			  const char *buf)
-{
-	int retval;
-	struct tmpmasks tmp;
+अटल पूर्णांक update_cpumask(काष्ठा cpuset *cs, काष्ठा cpuset *trialcs,
+			  स्थिर अक्षर *buf)
+अणु
+	पूर्णांक retval;
+	काष्ठा पंचांगpmasks पंचांगp;
 
-	/* top_cpuset.cpus_allowed tracks cpu_online_mask; it's read-only */
-	if (cs == &top_cpuset)
-		return -EACCES;
+	/* top_cpuset.cpus_allowed tracks cpu_online_mask; it's पढ़ो-only */
+	अगर (cs == &top_cpuset)
+		वापस -EACCES;
 
 	/*
-	 * An empty cpus_allowed is ok only if the cpuset has no tasks.
-	 * Since cpulist_parse() fails on an empty mask, we special case
+	 * An empty cpus_allowed is ok only अगर the cpuset has no tasks.
+	 * Since cpulist_parse() fails on an empty mask, we special हाल
 	 * that parsing.  The validate_change() call ensures that cpusets
 	 * with tasks have cpus.
 	 */
-	if (!*buf) {
+	अगर (!*buf) अणु
 		cpumask_clear(trialcs->cpus_allowed);
-	} else {
+	पूर्ण अन्यथा अणु
 		retval = cpulist_parse(buf, trialcs->cpus_allowed);
-		if (retval < 0)
-			return retval;
+		अगर (retval < 0)
+			वापस retval;
 
-		if (!cpumask_subset(trialcs->cpus_allowed,
+		अगर (!cpumask_subset(trialcs->cpus_allowed,
 				    top_cpuset.cpus_allowed))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Nothing to do if the cpus didn't change */
-	if (cpumask_equal(cs->cpus_allowed, trialcs->cpus_allowed))
-		return 0;
+	/* Nothing to करो अगर the cpus didn't change */
+	अगर (cpumask_equal(cs->cpus_allowed, trialcs->cpus_allowed))
+		वापस 0;
 
 	retval = validate_change(cs, trialcs);
-	if (retval < 0)
-		return retval;
+	अगर (retval < 0)
+		वापस retval;
 
-#ifdef CONFIG_CPUMASK_OFFSTACK
+#अगर_घोषित CONFIG_CPUMASK_OFFSTACK
 	/*
-	 * Use the cpumasks in trialcs for tmpmasks when they are pointers
+	 * Use the cpumasks in trialcs क्रम पंचांगpmasks when they are poपूर्णांकers
 	 * to allocated cpumasks.
 	 */
-	tmp.addmask  = trialcs->subparts_cpus;
-	tmp.delmask  = trialcs->effective_cpus;
-	tmp.new_cpus = trialcs->cpus_allowed;
-#endif
+	पंचांगp.addmask  = trialcs->subparts_cpus;
+	पंचांगp.delmask  = trialcs->effective_cpus;
+	पंचांगp.new_cpus = trialcs->cpus_allowed;
+#पूर्ण_अगर
 
-	if (cs->partition_root_state) {
+	अगर (cs->partition_root_state) अणु
 		/* Cpumask of a partition root cannot be empty */
-		if (cpumask_empty(trialcs->cpus_allowed))
-			return -EINVAL;
-		if (update_parent_subparts_cpumask(cs, partcmd_update,
-					trialcs->cpus_allowed, &tmp) < 0)
-			return -EINVAL;
-	}
+		अगर (cpumask_empty(trialcs->cpus_allowed))
+			वापस -EINVAL;
+		अगर (update_parent_subparts_cpumask(cs, partcmd_update,
+					trialcs->cpus_allowed, &पंचांगp) < 0)
+			वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irq(&callback_lock);
 	cpumask_copy(cs->cpus_allowed, trialcs->cpus_allowed);
@@ -1559,75 +1560,75 @@ static int update_cpumask(struct cpuset *cs, struct cpuset *trialcs,
 	/*
 	 * Make sure that subparts_cpus is a subset of cpus_allowed.
 	 */
-	if (cs->nr_subparts_cpus) {
+	अगर (cs->nr_subparts_cpus) अणु
 		cpumask_andnot(cs->subparts_cpus, cs->subparts_cpus,
 			       cs->cpus_allowed);
 		cs->nr_subparts_cpus = cpumask_weight(cs->subparts_cpus);
-	}
+	पूर्ण
 	spin_unlock_irq(&callback_lock);
 
-	update_cpumasks_hier(cs, &tmp);
+	update_cpumasks_hier(cs, &पंचांगp);
 
-	if (cs->partition_root_state) {
-		struct cpuset *parent = parent_cs(cs);
+	अगर (cs->partition_root_state) अणु
+		काष्ठा cpuset *parent = parent_cs(cs);
 
 		/*
 		 * For partition root, update the cpumasks of sibling
-		 * cpusets if they use parent's effective_cpus.
+		 * cpusets अगर they use parent's effective_cpus.
 		 */
-		if (parent->child_ecpus_count)
-			update_sibling_cpumasks(parent, cs, &tmp);
-	}
-	return 0;
-}
+		अगर (parent->child_ecpus_count)
+			update_sibling_cpumasks(parent, cs, &पंचांगp);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Migrate memory region from one set of nodes to another.  This is
- * performed asynchronously as it can be called from process migration path
+ * perक्रमmed asynchronously as it can be called from process migration path
  * holding locks involved in process management.  All mm migrations are
- * performed in the queued order and can be waited for by flushing
+ * perक्रमmed in the queued order and can be रुकोed क्रम by flushing
  * cpuset_migrate_mm_wq.
  */
 
-struct cpuset_migrate_mm_work {
-	struct work_struct	work;
-	struct mm_struct	*mm;
+काष्ठा cpuset_migrate_mm_work अणु
+	काष्ठा work_काष्ठा	work;
+	काष्ठा mm_काष्ठा	*mm;
 	nodemask_t		from;
 	nodemask_t		to;
-};
+पूर्ण;
 
-static void cpuset_migrate_mm_workfn(struct work_struct *work)
-{
-	struct cpuset_migrate_mm_work *mwork =
-		container_of(work, struct cpuset_migrate_mm_work, work);
+अटल व्योम cpuset_migrate_mm_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cpuset_migrate_mm_work *mwork =
+		container_of(work, काष्ठा cpuset_migrate_mm_work, work);
 
 	/* on a wq worker, no need to worry about %current's mems_allowed */
-	do_migrate_pages(mwork->mm, &mwork->from, &mwork->to, MPOL_MF_MOVE_ALL);
+	करो_migrate_pages(mwork->mm, &mwork->from, &mwork->to, MPOL_MF_MOVE_ALL);
 	mmput(mwork->mm);
-	kfree(mwork);
-}
+	kमुक्त(mwork);
+पूर्ण
 
-static void cpuset_migrate_mm(struct mm_struct *mm, const nodemask_t *from,
-							const nodemask_t *to)
-{
-	struct cpuset_migrate_mm_work *mwork;
+अटल व्योम cpuset_migrate_mm(काष्ठा mm_काष्ठा *mm, स्थिर nodemask_t *from,
+							स्थिर nodemask_t *to)
+अणु
+	काष्ठा cpuset_migrate_mm_work *mwork;
 
-	mwork = kzalloc(sizeof(*mwork), GFP_KERNEL);
-	if (mwork) {
+	mwork = kzalloc(माप(*mwork), GFP_KERNEL);
+	अगर (mwork) अणु
 		mwork->mm = mm;
 		mwork->from = *from;
 		mwork->to = *to;
 		INIT_WORK(&mwork->work, cpuset_migrate_mm_workfn);
 		queue_work(cpuset_migrate_mm_wq, &mwork->work);
-	} else {
+	पूर्ण अन्यथा अणु
 		mmput(mm);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cpuset_post_attach(void)
-{
+अटल व्योम cpuset_post_attach(व्योम)
+अणु
 	flush_workqueue(cpuset_migrate_mm_wq);
-}
+पूर्ण
 
 /*
  * cpuset_change_task_nodemask - change task's mems_allowed and mempolicy
@@ -1636,28 +1637,28 @@ static void cpuset_post_attach(void)
  *
  * We use the mems_allowed_seq seqlock to safely update both tsk->mems_allowed
  * and rebind an eventual tasks' mempolicy. If the task is allocating in
- * parallel, it might temporarily see an empty intersection, which results in
- * a seqlock check and retry before OOM or allocation failure.
+ * parallel, it might temporarily see an empty पूर्णांकersection, which results in
+ * a seqlock check and retry beक्रमe OOM or allocation failure.
  */
-static void cpuset_change_task_nodemask(struct task_struct *tsk,
+अटल व्योम cpuset_change_task_nodemask(काष्ठा task_काष्ठा *tsk,
 					nodemask_t *newmems)
-{
+अणु
 	task_lock(tsk);
 
 	local_irq_disable();
-	write_seqcount_begin(&tsk->mems_allowed_seq);
+	ग_लिखो_seqcount_begin(&tsk->mems_allowed_seq);
 
 	nodes_or(tsk->mems_allowed, tsk->mems_allowed, *newmems);
 	mpol_rebind_task(tsk, newmems);
 	tsk->mems_allowed = *newmems;
 
-	write_seqcount_end(&tsk->mems_allowed_seq);
+	ग_लिखो_seqcount_end(&tsk->mems_allowed_seq);
 	local_irq_enable();
 
 	task_unlock(tsk);
-}
+पूर्ण
 
-static void *cpuset_being_rebound;
+अटल व्योम *cpuset_being_rebound;
 
 /**
  * update_tasks_nodemask - Update the nodemasks of tasks in the cpuset.
@@ -1667,11 +1668,11 @@ static void *cpuset_being_rebound;
  * effective cpuset's.  As this function is called with cpuset_mutex held,
  * cpuset membership stays stable.
  */
-static void update_tasks_nodemask(struct cpuset *cs)
-{
-	static nodemask_t newmems;	/* protected by cpuset_mutex */
-	struct css_task_iter it;
-	struct task_struct *task;
+अटल व्योम update_tasks_nodemask(काष्ठा cpuset *cs)
+अणु
+	अटल nodemask_t newmems;	/* रक्षित by cpuset_mutex */
+	काष्ठा css_task_iter it;
+	काष्ठा task_काष्ठा *task;
 
 	cpuset_being_rebound = cs;		/* causes mpol_dup() rebind */
 
@@ -1679,33 +1680,33 @@ static void update_tasks_nodemask(struct cpuset *cs)
 
 	/*
 	 * The mpol_rebind_mm() call takes mmap_lock, which we couldn't
-	 * take while holding tasklist_lock.  Forks can happen - the
-	 * mpol_dup() cpuset_being_rebound check will catch such forks,
+	 * take जबतक holding tasklist_lock.  Forks can happen - the
+	 * mpol_dup() cpuset_being_rebound check will catch such विभाजनs,
 	 * and rebind their vma mempolicies too.  Because we still hold
-	 * the global cpuset_mutex, we know that no other rebind effort
-	 * will be contending for the global variable cpuset_being_rebound.
-	 * It's ok if we rebind the same mm twice; mpol_rebind_mm()
+	 * the global cpuset_mutex, we know that no other rebind efक्रमt
+	 * will be contending क्रम the global variable cpuset_being_rebound.
+	 * It's ok अगर we rebind the same mm twice; mpol_rebind_mm()
 	 * is idempotent.  Also migrate pages in each mm to new nodes.
 	 */
 	css_task_iter_start(&cs->css, 0, &it);
-	while ((task = css_task_iter_next(&it))) {
-		struct mm_struct *mm;
+	जबतक ((task = css_task_iter_next(&it))) अणु
+		काष्ठा mm_काष्ठा *mm;
 		bool migrate;
 
 		cpuset_change_task_nodemask(task, &newmems);
 
 		mm = get_task_mm(task);
-		if (!mm)
-			continue;
+		अगर (!mm)
+			जारी;
 
 		migrate = is_memory_migrate(cs);
 
 		mpol_rebind_mm(mm, &cs->mems_allowed);
-		if (migrate)
+		अगर (migrate)
 			cpuset_migrate_mm(mm, &cs->old_mems_allowed, &newmems);
-		else
+		अन्यथा
 			mmput(mm);
-	}
+	पूर्ण
 	css_task_iter_end(&it);
 
 	/*
@@ -1715,13 +1716,13 @@ static void update_tasks_nodemask(struct cpuset *cs)
 	cs->old_mems_allowed = newmems;
 
 	/* We're done rebinding vmas to this cpuset's new mems_allowed. */
-	cpuset_being_rebound = NULL;
-}
+	cpuset_being_rebound = शून्य;
+पूर्ण
 
 /*
  * update_nodemasks_hier - Update effective nodemasks and tasks in the subtree
  * @cs: the cpuset to consider
- * @new_mems: a temp variable for calculating new effective_mems
+ * @new_mems: a temp variable क्रम calculating new effective_mems
  *
  * When configured nodemask is changed, the effective nodemasks of this cpuset
  * and all its descendants need to be updated.
@@ -1730,14 +1731,14 @@ static void update_tasks_nodemask(struct cpuset *cs)
  *
  * Called with cpuset_mutex held
  */
-static void update_nodemasks_hier(struct cpuset *cs, nodemask_t *new_mems)
-{
-	struct cpuset *cp;
-	struct cgroup_subsys_state *pos_css;
+अटल व्योम update_nodemasks_hier(काष्ठा cpuset *cs, nodemask_t *new_mems)
+अणु
+	काष्ठा cpuset *cp;
+	काष्ठा cgroup_subsys_state *pos_css;
 
-	rcu_read_lock();
-	cpuset_for_each_descendant_pre(cp, pos_css, cs) {
-		struct cpuset *parent = parent_cs(cp);
+	rcu_पढ़ो_lock();
+	cpuset_क्रम_each_descendant_pre(cp, pos_css, cs) अणु
+		काष्ठा cpuset *parent = parent_cs(cp);
 
 		nodes_and(*new_mems, cp->mems_allowed, parent->effective_mems);
 
@@ -1745,18 +1746,18 @@ static void update_nodemasks_hier(struct cpuset *cs, nodemask_t *new_mems)
 		 * If it becomes empty, inherit the effective mask of the
 		 * parent, which is guaranteed to have some MEMs.
 		 */
-		if (is_in_v2_mode() && nodes_empty(*new_mems))
+		अगर (is_in_v2_mode() && nodes_empty(*new_mems))
 			*new_mems = parent->effective_mems;
 
-		/* Skip the whole subtree if the nodemask remains the same. */
-		if (nodes_equal(*new_mems, cp->effective_mems)) {
-			pos_css = css_rightmost_descendant(pos_css);
-			continue;
-		}
+		/* Skip the whole subtree अगर the nodemask reमुख्यs the same. */
+		अगर (nodes_equal(*new_mems, cp->effective_mems)) अणु
+			pos_css = css_righपंचांगost_descendant(pos_css);
+			जारी;
+		पूर्ण
 
-		if (!css_tryget_online(&cp->css))
-			continue;
-		rcu_read_unlock();
+		अगर (!css_tryget_online(&cp->css))
+			जारी;
+		rcu_पढ़ो_unlock();
 
 		spin_lock_irq(&callback_lock);
 		cp->effective_mems = *new_mems;
@@ -1767,66 +1768,66 @@ static void update_nodemasks_hier(struct cpuset *cs, nodemask_t *new_mems)
 
 		update_tasks_nodemask(cp);
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		css_put(&cp->css);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /*
  * Handle user request to change the 'mems' memory placement
  * of a cpuset.  Needs to validate the request, update the
- * cpusets mems_allowed, and for each task in the cpuset,
+ * cpusets mems_allowed, and क्रम each task in the cpuset,
  * update mems_allowed and rebind task's mempolicy and any vma
- * mempolicies and if the cpuset is marked 'memory_migrate',
+ * mempolicies and अगर the cpuset is marked 'memory_migrate',
  * migrate the tasks pages to the new memory.
  *
  * Call with cpuset_mutex held. May take callback_lock during call.
- * Will take tasklist_lock, scan tasklist for tasks in cpuset cs,
+ * Will take tasklist_lock, scan tasklist क्रम tasks in cpuset cs,
  * lock each such tasks mm->mmap_lock, scan its vma's and rebind
  * their mempolicies to the cpusets new mems_allowed.
  */
-static int update_nodemask(struct cpuset *cs, struct cpuset *trialcs,
-			   const char *buf)
-{
-	int retval;
+अटल पूर्णांक update_nodemask(काष्ठा cpuset *cs, काष्ठा cpuset *trialcs,
+			   स्थिर अक्षर *buf)
+अणु
+	पूर्णांक retval;
 
 	/*
 	 * top_cpuset.mems_allowed tracks node_stats[N_MEMORY];
-	 * it's read-only
+	 * it's पढ़ो-only
 	 */
-	if (cs == &top_cpuset) {
+	अगर (cs == &top_cpuset) अणु
 		retval = -EACCES;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/*
-	 * An empty mems_allowed is ok iff there are no tasks in the cpuset.
-	 * Since nodelist_parse() fails on an empty mask, we special case
+	 * An empty mems_allowed is ok अगरf there are no tasks in the cpuset.
+	 * Since nodelist_parse() fails on an empty mask, we special हाल
 	 * that parsing.  The validate_change() call ensures that cpusets
 	 * with tasks have memory.
 	 */
-	if (!*buf) {
+	अगर (!*buf) अणु
 		nodes_clear(trialcs->mems_allowed);
-	} else {
+	पूर्ण अन्यथा अणु
 		retval = nodelist_parse(buf, trialcs->mems_allowed);
-		if (retval < 0)
-			goto done;
+		अगर (retval < 0)
+			जाओ करोne;
 
-		if (!nodes_subset(trialcs->mems_allowed,
-				  top_cpuset.mems_allowed)) {
+		अगर (!nodes_subset(trialcs->mems_allowed,
+				  top_cpuset.mems_allowed)) अणु
 			retval = -EINVAL;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	if (nodes_equal(cs->mems_allowed, trialcs->mems_allowed)) {
-		retval = 0;		/* Too easy - nothing to do */
-		goto done;
-	}
+	अगर (nodes_equal(cs->mems_allowed, trialcs->mems_allowed)) अणु
+		retval = 0;		/* Too easy - nothing to करो */
+		जाओ करोne;
+	पूर्ण
 	retval = validate_change(cs, trialcs);
-	if (retval < 0)
-		goto done;
+	अगर (retval < 0)
+		जाओ करोne;
 
 	spin_lock_irq(&callback_lock);
 	cs->mems_allowed = trialcs->mems_allowed;
@@ -1834,59 +1835,59 @@ static int update_nodemask(struct cpuset *cs, struct cpuset *trialcs,
 
 	/* use trialcs->mems_allowed as a temp variable */
 	update_nodemasks_hier(cs, &trialcs->mems_allowed);
-done:
-	return retval;
-}
+करोne:
+	वापस retval;
+पूर्ण
 
-bool current_cpuset_is_being_rebound(void)
-{
+bool current_cpuset_is_being_rebound(व्योम)
+अणु
 	bool ret;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ret = task_cs(current) == cpuset_being_rebound;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int update_relax_domain_level(struct cpuset *cs, s64 val)
-{
-#ifdef CONFIG_SMP
-	if (val < -1 || val >= sched_domain_level_max)
-		return -EINVAL;
-#endif
+अटल पूर्णांक update_relax_करोमुख्य_level(काष्ठा cpuset *cs, s64 val)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अगर (val < -1 || val >= sched_करोमुख्य_level_max)
+		वापस -EINVAL;
+#पूर्ण_अगर
 
-	if (val != cs->relax_domain_level) {
-		cs->relax_domain_level = val;
-		if (!cpumask_empty(cs->cpus_allowed) &&
+	अगर (val != cs->relax_करोमुख्य_level) अणु
+		cs->relax_करोमुख्य_level = val;
+		अगर (!cpumask_empty(cs->cpus_allowed) &&
 		    is_sched_load_balance(cs))
-			rebuild_sched_domains_locked();
-	}
+			rebuild_sched_करोमुख्यs_locked();
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * update_tasks_flags - update the spread flags of tasks in the cpuset.
- * @cs: the cpuset in which each task's spread flags needs to be changed
+ * update_tasks_flags - update the spपढ़ो flags of tasks in the cpuset.
+ * @cs: the cpuset in which each task's spपढ़ो flags needs to be changed
  *
- * Iterate through each task of @cs updating its spread flags.  As this
+ * Iterate through each task of @cs updating its spपढ़ो flags.  As this
  * function is called with cpuset_mutex held, cpuset membership stays
  * stable.
  */
-static void update_tasks_flags(struct cpuset *cs)
-{
-	struct css_task_iter it;
-	struct task_struct *task;
+अटल व्योम update_tasks_flags(काष्ठा cpuset *cs)
+अणु
+	काष्ठा css_task_iter it;
+	काष्ठा task_काष्ठा *task;
 
 	css_task_iter_start(&cs->css, 0, &it);
-	while ((task = css_task_iter_next(&it)))
-		cpuset_update_task_spread_flag(cs, task);
+	जबतक ((task = css_task_iter_next(&it)))
+		cpuset_update_task_spपढ़ो_flag(cs, task);
 	css_task_iter_end(&it);
-}
+पूर्ण
 
 /*
- * update_flag - read a 0 or a 1 in a file and update associated flag
+ * update_flag - पढ़ो a 0 or a 1 in a file and update associated flag
  * bit:		the bit to update (see cpuset_flagbits_t)
  * cs:		the cpuset to update
  * turning_on: 	whether the flag is being set or cleared
@@ -1894,46 +1895,46 @@ static void update_tasks_flags(struct cpuset *cs)
  * Call with cpuset_mutex held.
  */
 
-static int update_flag(cpuset_flagbits_t bit, struct cpuset *cs,
-		       int turning_on)
-{
-	struct cpuset *trialcs;
-	int balance_flag_changed;
-	int spread_flag_changed;
-	int err;
+अटल पूर्णांक update_flag(cpuset_flagbits_t bit, काष्ठा cpuset *cs,
+		       पूर्णांक turning_on)
+अणु
+	काष्ठा cpuset *trialcs;
+	पूर्णांक balance_flag_changed;
+	पूर्णांक spपढ़ो_flag_changed;
+	पूर्णांक err;
 
 	trialcs = alloc_trial_cpuset(cs);
-	if (!trialcs)
-		return -ENOMEM;
+	अगर (!trialcs)
+		वापस -ENOMEM;
 
-	if (turning_on)
+	अगर (turning_on)
 		set_bit(bit, &trialcs->flags);
-	else
+	अन्यथा
 		clear_bit(bit, &trialcs->flags);
 
 	err = validate_change(cs, trialcs);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
 	balance_flag_changed = (is_sched_load_balance(cs) !=
 				is_sched_load_balance(trialcs));
 
-	spread_flag_changed = ((is_spread_slab(cs) != is_spread_slab(trialcs))
-			|| (is_spread_page(cs) != is_spread_page(trialcs)));
+	spपढ़ो_flag_changed = ((is_spपढ़ो_slab(cs) != is_spपढ़ो_slab(trialcs))
+			|| (is_spपढ़ो_page(cs) != is_spपढ़ो_page(trialcs)));
 
 	spin_lock_irq(&callback_lock);
 	cs->flags = trialcs->flags;
 	spin_unlock_irq(&callback_lock);
 
-	if (!cpumask_empty(trialcs->cpus_allowed) && balance_flag_changed)
-		rebuild_sched_domains_locked();
+	अगर (!cpumask_empty(trialcs->cpus_allowed) && balance_flag_changed)
+		rebuild_sched_करोमुख्यs_locked();
 
-	if (spread_flag_changed)
+	अगर (spपढ़ो_flag_changed)
 		update_tasks_flags(cs);
 out:
-	free_cpuset(trialcs);
-	return err;
-}
+	मुक्त_cpuset(trialcs);
+	वापस err;
+पूर्ण
 
 /*
  * update_prstate - update partititon_root_state
@@ -1942,218 +1943,218 @@ out:
  *
  * Call with cpuset_mutex held.
  */
-static int update_prstate(struct cpuset *cs, int val)
-{
-	int err;
-	struct cpuset *parent = parent_cs(cs);
-	struct tmpmasks tmp;
+अटल पूर्णांक update_prstate(काष्ठा cpuset *cs, पूर्णांक val)
+अणु
+	पूर्णांक err;
+	काष्ठा cpuset *parent = parent_cs(cs);
+	काष्ठा पंचांगpmasks पंचांगp;
 
-	if ((val != 0) && (val != 1))
-		return -EINVAL;
-	if (val == cs->partition_root_state)
-		return 0;
+	अगर ((val != 0) && (val != 1))
+		वापस -EINVAL;
+	अगर (val == cs->partition_root_state)
+		वापस 0;
 
 	/*
-	 * Cannot force a partial or invalid partition root to a full
+	 * Cannot क्रमce a partial or invalid partition root to a full
 	 * partition root.
 	 */
-	if (val && cs->partition_root_state)
-		return -EINVAL;
+	अगर (val && cs->partition_root_state)
+		वापस -EINVAL;
 
-	if (alloc_cpumasks(NULL, &tmp))
-		return -ENOMEM;
+	अगर (alloc_cpumasks(शून्य, &पंचांगp))
+		वापस -ENOMEM;
 
 	err = -EINVAL;
-	if (!cs->partition_root_state) {
+	अगर (!cs->partition_root_state) अणु
 		/*
 		 * Turning on partition root requires setting the
 		 * CS_CPU_EXCLUSIVE bit implicitly as well and cpus_allowed
-		 * cannot be NULL.
+		 * cannot be शून्य.
 		 */
-		if (cpumask_empty(cs->cpus_allowed))
-			goto out;
+		अगर (cpumask_empty(cs->cpus_allowed))
+			जाओ out;
 
 		err = update_flag(CS_CPU_EXCLUSIVE, cs, 1);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		err = update_parent_subparts_cpumask(cs, partcmd_enable,
-						     NULL, &tmp);
-		if (err) {
+						     शून्य, &पंचांगp);
+		अगर (err) अणु
 			update_flag(CS_CPU_EXCLUSIVE, cs, 0);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		cs->partition_root_state = PRS_ENABLED;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Turning off partition root will clear the
 		 * CS_CPU_EXCLUSIVE bit.
 		 */
-		if (cs->partition_root_state == PRS_ERROR) {
+		अगर (cs->partition_root_state == PRS_ERROR) अणु
 			cs->partition_root_state = 0;
 			update_flag(CS_CPU_EXCLUSIVE, cs, 0);
 			err = 0;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		err = update_parent_subparts_cpumask(cs, partcmd_disable,
-						     NULL, &tmp);
-		if (err)
-			goto out;
+						     शून्य, &पंचांगp);
+		अगर (err)
+			जाओ out;
 
 		cs->partition_root_state = 0;
 
-		/* Turning off CS_CPU_EXCLUSIVE will not return error */
+		/* Turning off CS_CPU_EXCLUSIVE will not वापस error */
 		update_flag(CS_CPU_EXCLUSIVE, cs, 0);
-	}
+	पूर्ण
 
 	/*
 	 * Update cpumask of parent's tasks except when it is the top
-	 * cpuset as some system daemons cannot be mapped to other CPUs.
+	 * cpuset as some प्रणाली daemons cannot be mapped to other CPUs.
 	 */
-	if (parent != &top_cpuset)
+	अगर (parent != &top_cpuset)
 		update_tasks_cpumask(parent);
 
-	if (parent->child_ecpus_count)
-		update_sibling_cpumasks(parent, cs, &tmp);
+	अगर (parent->child_ecpus_count)
+		update_sibling_cpumasks(parent, cs, &पंचांगp);
 
-	rebuild_sched_domains_locked();
+	rebuild_sched_करोमुख्यs_locked();
 out:
-	free_cpumasks(NULL, &tmp);
-	return err;
-}
+	मुक्त_cpumasks(शून्य, &पंचांगp);
+	वापस err;
+पूर्ण
 
 /*
  * Frequency meter - How fast is some event occurring?
  *
- * These routines manage a digitally filtered, constant time based,
+ * These routines manage a digitally filtered, स्थिरant समय based,
  * event frequency meter.  There are four routines:
  *   fmeter_init() - initialize a frequency meter.
- *   fmeter_markevent() - called each time the event happens.
- *   fmeter_getrate() - returns the recent rate of such events.
- *   fmeter_update() - internal routine used to update fmeter.
+ *   fmeter_markevent() - called each समय the event happens.
+ *   fmeter_getrate() - वापसs the recent rate of such events.
+ *   fmeter_update() - पूर्णांकernal routine used to update fmeter.
  *
- * A common data structure is passed to each of these routines,
+ * A common data काष्ठाure is passed to each of these routines,
  * which is used to keep track of the state required to manage the
  * frequency meter and its digital filter.
  *
- * The filter works on the number of events marked per unit time.
- * The filter is single-pole low-pass recursive (IIR).  The time unit
- * is 1 second.  Arithmetic is done using 32-bit integers scaled to
+ * The filter works on the number of events marked per unit समय.
+ * The filter is single-pole low-pass recursive (IIR).  The समय unit
+ * is 1 second.  Arithmetic is करोne using 32-bit पूर्णांकegers scaled to
  * simulate 3 decimal digits of precision (multiplied by 1000).
  *
- * With an FM_COEF of 933, and a time base of 1 second, the filter
- * has a half-life of 10 seconds, meaning that if the events quit
- * happening, then the rate returned from the fmeter_getrate()
+ * With an FM_COEF of 933, and a समय base of 1 second, the filter
+ * has a half-lअगरe of 10 seconds, meaning that अगर the events quit
+ * happening, then the rate वापसed from the fmeter_getrate()
  * will be cut in half each 10 seconds, until it converges to zero.
  *
- * It is not worth doing a real infinitely recursive filter.  If more
+ * It is not worth करोing a real infinitely recursive filter.  If more
  * than FM_MAXTICKS ticks have elapsed since the last filter event,
- * just compute FM_MAXTICKS ticks worth, by which point the level
+ * just compute FM_MAXTICKS ticks worth, by which poपूर्णांक the level
  * will be stable.
  *
- * Limit the count of unprocessed events to FM_MAXCNT, so as to avoid
+ * Limit the count of unprocessed events to FM_MAXCNT, so as to aव्योम
  * arithmetic overflow in the fmeter_update() routine.
  *
- * Given the simple 32 bit integer arithmetic used, this meter works
- * best for reporting rates between one per millisecond (msec) and
- * one per 32 (approx) seconds.  At constant rates faster than one
- * per msec it maxes out at values just under 1,000,000.  At constant
+ * Given the simple 32 bit पूर्णांकeger arithmetic used, this meter works
+ * best क्रम reporting rates between one per millisecond (msec) and
+ * one per 32 (approx) seconds.  At स्थिरant rates faster than one
+ * per msec it maxes out at values just under 1,000,000.  At स्थिरant
  * rates between one per msec, and one per second it will stabilize
  * to a value N*1000, where N is the rate of events per second.
- * At constant rates between one per second and one per 32 seconds,
+ * At स्थिरant rates between one per second and one per 32 seconds,
  * it will be choppy, moving up on the seconds that have an event,
  * and then decaying until the next event.  At rates slower than
  * about one in 32 seconds, it decays all the way back to zero between
  * each event.
  */
 
-#define FM_COEF 933		/* coefficient for half-life of 10 secs */
-#define FM_MAXTICKS ((u32)99)   /* useless computing more ticks than this */
-#define FM_MAXCNT 1000000	/* limit cnt to avoid overflow */
-#define FM_SCALE 1000		/* faux fixed point scale */
+#घोषणा FM_COEF 933		/* coefficient क्रम half-lअगरe of 10 secs */
+#घोषणा FM_MAXTICKS ((u32)99)   /* useless computing more ticks than this */
+#घोषणा FM_MAXCNT 1000000	/* limit cnt to aव्योम overflow */
+#घोषणा FM_SCALE 1000		/* faux fixed poपूर्णांक scale */
 
 /* Initialize a frequency meter */
-static void fmeter_init(struct fmeter *fmp)
-{
+अटल व्योम fmeter_init(काष्ठा fmeter *fmp)
+अणु
 	fmp->cnt = 0;
 	fmp->val = 0;
-	fmp->time = 0;
+	fmp->समय = 0;
 	spin_lock_init(&fmp->lock);
-}
+पूर्ण
 
 /* Internal meter update - process cnt events and update value */
-static void fmeter_update(struct fmeter *fmp)
-{
-	time64_t now;
+अटल व्योम fmeter_update(काष्ठा fmeter *fmp)
+अणु
+	समय64_t now;
 	u32 ticks;
 
-	now = ktime_get_seconds();
-	ticks = now - fmp->time;
+	now = kसमय_get_seconds();
+	ticks = now - fmp->समय;
 
-	if (ticks == 0)
-		return;
+	अगर (ticks == 0)
+		वापस;
 
 	ticks = min(FM_MAXTICKS, ticks);
-	while (ticks-- > 0)
+	जबतक (ticks-- > 0)
 		fmp->val = (FM_COEF * fmp->val) / FM_SCALE;
-	fmp->time = now;
+	fmp->समय = now;
 
 	fmp->val += ((FM_SCALE - FM_COEF) * fmp->cnt) / FM_SCALE;
 	fmp->cnt = 0;
-}
+पूर्ण
 
-/* Process any previous ticks, then bump cnt by one (times scale). */
-static void fmeter_markevent(struct fmeter *fmp)
-{
+/* Process any previous ticks, then bump cnt by one (बार scale). */
+अटल व्योम fmeter_markevent(काष्ठा fmeter *fmp)
+अणु
 	spin_lock(&fmp->lock);
 	fmeter_update(fmp);
 	fmp->cnt = min(FM_MAXCNT, fmp->cnt + FM_SCALE);
 	spin_unlock(&fmp->lock);
-}
+पूर्ण
 
-/* Process any previous ticks, then return current value. */
-static int fmeter_getrate(struct fmeter *fmp)
-{
-	int val;
+/* Process any previous ticks, then वापस current value. */
+अटल पूर्णांक fmeter_getrate(काष्ठा fmeter *fmp)
+अणु
+	पूर्णांक val;
 
 	spin_lock(&fmp->lock);
 	fmeter_update(fmp);
 	val = fmp->val;
 	spin_unlock(&fmp->lock);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static struct cpuset *cpuset_attach_old_cs;
+अटल काष्ठा cpuset *cpuset_attach_old_cs;
 
-/* Called by cgroups to determine if a cpuset is usable; cpuset_mutex held */
-static int cpuset_can_attach(struct cgroup_taskset *tset)
-{
-	struct cgroup_subsys_state *css;
-	struct cpuset *cs;
-	struct task_struct *task;
-	int ret;
+/* Called by cgroups to determine अगर a cpuset is usable; cpuset_mutex held */
+अटल पूर्णांक cpuset_can_attach(काष्ठा cgroup_taskset *tset)
+अणु
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा cpuset *cs;
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक ret;
 
 	/* used later by cpuset_attach() */
 	cpuset_attach_old_cs = task_cs(cgroup_taskset_first(tset, &css));
 	cs = css_cs(css);
 
-	percpu_down_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 
-	/* allow moving tasks into an empty cpuset if on default hierarchy */
+	/* allow moving tasks पूर्णांकo an empty cpuset अगर on शेष hierarchy */
 	ret = -ENOSPC;
-	if (!is_in_v2_mode() &&
+	अगर (!is_in_v2_mode() &&
 	    (cpumask_empty(cs->cpus_allowed) || nodes_empty(cs->mems_allowed)))
-		goto out_unlock;
+		जाओ out_unlock;
 
-	cgroup_taskset_for_each(task, css, tset) {
+	cgroup_taskset_क्रम_each(task, css, tset) अणु
 		ret = task_can_attach(task, cs->cpus_allowed);
-		if (ret)
-			goto out_unlock;
+		अगर (ret)
+			जाओ out_unlock;
 		ret = security_task_setscheduler(task);
-		if (ret)
-			goto out_unlock;
-	}
+		अगर (ret)
+			जाओ out_unlock;
+	पूर्ण
 
 	/*
 	 * Mark attach is in progress.  This makes validate_change() fail
@@ -2162,557 +2163,557 @@ static int cpuset_can_attach(struct cgroup_taskset *tset)
 	cs->attach_in_progress++;
 	ret = 0;
 out_unlock:
-	percpu_up_write(&cpuset_rwsem);
-	return ret;
-}
+	percpu_up_ग_लिखो(&cpuset_rwsem);
+	वापस ret;
+पूर्ण
 
-static void cpuset_cancel_attach(struct cgroup_taskset *tset)
-{
-	struct cgroup_subsys_state *css;
+अटल व्योम cpuset_cancel_attach(काष्ठा cgroup_taskset *tset)
+अणु
+	काष्ठा cgroup_subsys_state *css;
 
 	cgroup_taskset_first(tset, &css);
 
-	percpu_down_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 	css_cs(css)->attach_in_progress--;
-	percpu_up_write(&cpuset_rwsem);
-}
+	percpu_up_ग_लिखो(&cpuset_rwsem);
+पूर्ण
 
 /*
  * Protected by cpuset_mutex.  cpus_attach is used only by cpuset_attach()
  * but we can't allocate it dynamically there.  Define it global and
  * allocate from cpuset_init().
  */
-static cpumask_var_t cpus_attach;
+अटल cpumask_var_t cpus_attach;
 
-static void cpuset_attach(struct cgroup_taskset *tset)
-{
-	/* static buf protected by cpuset_mutex */
-	static nodemask_t cpuset_attach_nodemask_to;
-	struct task_struct *task;
-	struct task_struct *leader;
-	struct cgroup_subsys_state *css;
-	struct cpuset *cs;
-	struct cpuset *oldcs = cpuset_attach_old_cs;
+अटल व्योम cpuset_attach(काष्ठा cgroup_taskset *tset)
+अणु
+	/* अटल buf रक्षित by cpuset_mutex */
+	अटल nodemask_t cpuset_attach_nodemask_to;
+	काष्ठा task_काष्ठा *task;
+	काष्ठा task_काष्ठा *leader;
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा cpuset *cs;
+	काष्ठा cpuset *oldcs = cpuset_attach_old_cs;
 
 	cgroup_taskset_first(tset, &css);
 	cs = css_cs(css);
 
-	percpu_down_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 
-	/* prepare for attach */
-	if (cs == &top_cpuset)
+	/* prepare क्रम attach */
+	अगर (cs == &top_cpuset)
 		cpumask_copy(cpus_attach, cpu_possible_mask);
-	else
+	अन्यथा
 		guarantee_online_cpus(cs, cpus_attach);
 
 	guarantee_online_mems(cs, &cpuset_attach_nodemask_to);
 
-	cgroup_taskset_for_each(task, css, tset) {
+	cgroup_taskset_क्रम_each(task, css, tset) अणु
 		/*
-		 * can_attach beforehand should guarantee that this doesn't
+		 * can_attach beक्रमehand should guarantee that this करोesn't
 		 * fail.  TODO: have a better way to handle failure here
 		 */
 		WARN_ON_ONCE(set_cpus_allowed_ptr(task, cpus_attach));
 
 		cpuset_change_task_nodemask(task, &cpuset_attach_nodemask_to);
-		cpuset_update_task_spread_flag(cs, task);
-	}
+		cpuset_update_task_spपढ़ो_flag(cs, task);
+	पूर्ण
 
 	/*
-	 * Change mm for all threadgroup leaders. This is expensive and may
+	 * Change mm क्रम all thपढ़ोgroup leaders. This is expensive and may
 	 * sleep and should be moved outside migration path proper.
 	 */
 	cpuset_attach_nodemask_to = cs->effective_mems;
-	cgroup_taskset_for_each_leader(leader, css, tset) {
-		struct mm_struct *mm = get_task_mm(leader);
+	cgroup_taskset_क्रम_each_leader(leader, css, tset) अणु
+		काष्ठा mm_काष्ठा *mm = get_task_mm(leader);
 
-		if (mm) {
+		अगर (mm) अणु
 			mpol_rebind_mm(mm, &cpuset_attach_nodemask_to);
 
 			/*
 			 * old_mems_allowed is the same with mems_allowed
-			 * here, except if this task is being moved
-			 * automatically due to hotplug.  In that case
+			 * here, except अगर this task is being moved
+			 * स्वतःmatically due to hotplug.  In that हाल
 			 * @mems_allowed has been updated and is empty, so
 			 * @old_mems_allowed is the right nodesets that we
 			 * migrate mm from.
 			 */
-			if (is_memory_migrate(cs))
+			अगर (is_memory_migrate(cs))
 				cpuset_migrate_mm(mm, &oldcs->old_mems_allowed,
 						  &cpuset_attach_nodemask_to);
-			else
+			अन्यथा
 				mmput(mm);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	cs->old_mems_allowed = cpuset_attach_nodemask_to;
 
 	cs->attach_in_progress--;
-	if (!cs->attach_in_progress)
+	अगर (!cs->attach_in_progress)
 		wake_up(&cpuset_attach_wq);
 
-	percpu_up_write(&cpuset_rwsem);
-}
+	percpu_up_ग_लिखो(&cpuset_rwsem);
+पूर्ण
 
-/* The various types of files and directories in a cpuset file system */
+/* The various types of files and directories in a cpuset file प्रणाली */
 
-typedef enum {
-	FILE_MEMORY_MIGRATE,
-	FILE_CPULIST,
-	FILE_MEMLIST,
-	FILE_EFFECTIVE_CPULIST,
-	FILE_EFFECTIVE_MEMLIST,
-	FILE_SUBPARTS_CPULIST,
-	FILE_CPU_EXCLUSIVE,
-	FILE_MEM_EXCLUSIVE,
-	FILE_MEM_HARDWALL,
-	FILE_SCHED_LOAD_BALANCE,
-	FILE_PARTITION_ROOT,
-	FILE_SCHED_RELAX_DOMAIN_LEVEL,
-	FILE_MEMORY_PRESSURE_ENABLED,
-	FILE_MEMORY_PRESSURE,
-	FILE_SPREAD_PAGE,
-	FILE_SPREAD_SLAB,
-} cpuset_filetype_t;
+प्रकार क्रमागत अणु
+	खाता_MEMORY_MIGRATE,
+	खाता_CPULIST,
+	खाता_MEMLIST,
+	खाता_EFFECTIVE_CPULIST,
+	खाता_EFFECTIVE_MEMLIST,
+	खाता_SUBPARTS_CPULIST,
+	खाता_CPU_EXCLUSIVE,
+	खाता_MEM_EXCLUSIVE,
+	खाता_MEM_HARDWALL,
+	खाता_SCHED_LOAD_BALANCE,
+	खाता_PARTITION_ROOT,
+	खाता_SCHED_RELAX_DOMAIN_LEVEL,
+	खाता_MEMORY_PRESSURE_ENABLED,
+	खाता_MEMORY_PRESSURE,
+	खाता_SPREAD_PAGE,
+	खाता_SPREAD_SLAB,
+पूर्ण cpuset_filetype_t;
 
-static int cpuset_write_u64(struct cgroup_subsys_state *css, struct cftype *cft,
+अटल पूर्णांक cpuset_ग_लिखो_u64(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft,
 			    u64 val)
-{
-	struct cpuset *cs = css_cs(css);
-	cpuset_filetype_t type = cft->private;
-	int retval = 0;
+अणु
+	काष्ठा cpuset *cs = css_cs(css);
+	cpuset_filetype_t type = cft->निजी;
+	पूर्णांक retval = 0;
 
 	get_online_cpus();
-	percpu_down_write(&cpuset_rwsem);
-	if (!is_cpuset_online(cs)) {
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
+	अगर (!is_cpuset_online(cs)) अणु
 		retval = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	switch (type) {
-	case FILE_CPU_EXCLUSIVE:
+	चयन (type) अणु
+	हाल खाता_CPU_EXCLUSIVE:
 		retval = update_flag(CS_CPU_EXCLUSIVE, cs, val);
-		break;
-	case FILE_MEM_EXCLUSIVE:
+		अवरोध;
+	हाल खाता_MEM_EXCLUSIVE:
 		retval = update_flag(CS_MEM_EXCLUSIVE, cs, val);
-		break;
-	case FILE_MEM_HARDWALL:
+		अवरोध;
+	हाल खाता_MEM_HARDWALL:
 		retval = update_flag(CS_MEM_HARDWALL, cs, val);
-		break;
-	case FILE_SCHED_LOAD_BALANCE:
+		अवरोध;
+	हाल खाता_SCHED_LOAD_BALANCE:
 		retval = update_flag(CS_SCHED_LOAD_BALANCE, cs, val);
-		break;
-	case FILE_MEMORY_MIGRATE:
+		अवरोध;
+	हाल खाता_MEMORY_MIGRATE:
 		retval = update_flag(CS_MEMORY_MIGRATE, cs, val);
-		break;
-	case FILE_MEMORY_PRESSURE_ENABLED:
+		अवरोध;
+	हाल खाता_MEMORY_PRESSURE_ENABLED:
 		cpuset_memory_pressure_enabled = !!val;
-		break;
-	case FILE_SPREAD_PAGE:
+		अवरोध;
+	हाल खाता_SPREAD_PAGE:
 		retval = update_flag(CS_SPREAD_PAGE, cs, val);
-		break;
-	case FILE_SPREAD_SLAB:
+		अवरोध;
+	हाल खाता_SPREAD_SLAB:
 		retval = update_flag(CS_SPREAD_SLAB, cs, val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retval = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out_unlock:
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 	put_online_cpus();
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int cpuset_write_s64(struct cgroup_subsys_state *css, struct cftype *cft,
+अटल पूर्णांक cpuset_ग_लिखो_s64(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft,
 			    s64 val)
-{
-	struct cpuset *cs = css_cs(css);
-	cpuset_filetype_t type = cft->private;
-	int retval = -ENODEV;
+अणु
+	काष्ठा cpuset *cs = css_cs(css);
+	cpuset_filetype_t type = cft->निजी;
+	पूर्णांक retval = -ENODEV;
 
 	get_online_cpus();
-	percpu_down_write(&cpuset_rwsem);
-	if (!is_cpuset_online(cs))
-		goto out_unlock;
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
+	अगर (!is_cpuset_online(cs))
+		जाओ out_unlock;
 
-	switch (type) {
-	case FILE_SCHED_RELAX_DOMAIN_LEVEL:
-		retval = update_relax_domain_level(cs, val);
-		break;
-	default:
+	चयन (type) अणु
+	हाल खाता_SCHED_RELAX_DOMAIN_LEVEL:
+		retval = update_relax_करोमुख्य_level(cs, val);
+		अवरोध;
+	शेष:
 		retval = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out_unlock:
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 	put_online_cpus();
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
- * Common handling for a write to a "cpus" or "mems" file.
+ * Common handling क्रम a ग_लिखो to a "cpus" or "mems" file.
  */
-static ssize_t cpuset_write_resmask(struct kernfs_open_file *of,
-				    char *buf, size_t nbytes, loff_t off)
-{
-	struct cpuset *cs = css_cs(of_css(of));
-	struct cpuset *trialcs;
-	int retval = -ENODEV;
+अटल sमाप_प्रकार cpuset_ग_लिखो_resmask(काष्ठा kernfs_खोलो_file *of,
+				    अक्षर *buf, माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cpuset *cs = css_cs(of_css(of));
+	काष्ठा cpuset *trialcs;
+	पूर्णांक retval = -ENODEV;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 
 	/*
 	 * CPU or memory hotunplug may leave @cs w/o any execution
-	 * resources, in which case the hotplug code asynchronously updates
+	 * resources, in which हाल the hotplug code asynchronously updates
 	 * configuration and transfers all tasks to the nearest ancestor
 	 * which can execute.
 	 *
-	 * As writes to "cpus" or "mems" may restore @cs's execution
-	 * resources, wait for the previously scheduled operations before
-	 * proceeding, so that we don't end up keep removing tasks added
+	 * As ग_लिखोs to "cpus" or "mems" may restore @cs's execution
+	 * resources, रुको क्रम the previously scheduled operations beक्रमe
+	 * proceeding, so that we करोn't end up keep removing tasks added
 	 * after execution capability is restored.
 	 *
-	 * cpuset_hotplug_work calls back into cgroup core via
-	 * cgroup_transfer_tasks() and waiting for it from a cgroupfs
+	 * cpuset_hotplug_work calls back पूर्णांकo cgroup core via
+	 * cgroup_transfer_tasks() and रुकोing क्रम it from a cgroupfs
 	 * operation like this one can lead to a deadlock through kernfs
-	 * active_ref protection.  Let's break the protection.  Losing the
+	 * active_ref protection.  Let's अवरोध the protection.  Losing the
 	 * protection is okay as we check whether @cs is online after
 	 * grabbing cpuset_mutex anyway.  This only happens on the legacy
 	 * hierarchies.
 	 */
 	css_get(&cs->css);
-	kernfs_break_active_protection(of->kn);
+	kernfs_अवरोध_active_protection(of->kn);
 	flush_work(&cpuset_hotplug_work);
 
 	get_online_cpus();
-	percpu_down_write(&cpuset_rwsem);
-	if (!is_cpuset_online(cs))
-		goto out_unlock;
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
+	अगर (!is_cpuset_online(cs))
+		जाओ out_unlock;
 
 	trialcs = alloc_trial_cpuset(cs);
-	if (!trialcs) {
+	अगर (!trialcs) अणु
 		retval = -ENOMEM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	switch (of_cft(of)->private) {
-	case FILE_CPULIST:
+	चयन (of_cft(of)->निजी) अणु
+	हाल खाता_CPULIST:
 		retval = update_cpumask(cs, trialcs, buf);
-		break;
-	case FILE_MEMLIST:
+		अवरोध;
+	हाल खाता_MEMLIST:
 		retval = update_nodemask(cs, trialcs, buf);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retval = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	free_cpuset(trialcs);
+	मुक्त_cpuset(trialcs);
 out_unlock:
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 	put_online_cpus();
-	kernfs_unbreak_active_protection(of->kn);
+	kernfs_unअवरोध_active_protection(of->kn);
 	css_put(&cs->css);
 	flush_workqueue(cpuset_migrate_mm_wq);
-	return retval ?: nbytes;
-}
+	वापस retval ?: nbytes;
+पूर्ण
 
 /*
- * These ascii lists should be read in a single call, by using a user
- * buffer large enough to hold the entire map.  If read in smaller
- * chunks, there is no guarantee of atomicity.  Since the display format
+ * These ascii lists should be पढ़ो in a single call, by using a user
+ * buffer large enough to hold the entire map.  If पढ़ो in smaller
+ * chunks, there is no guarantee of atomicity.  Since the display क्रमmat
  * used, list of ranges of sequential numbers, is variable length,
- * and since these maps can change value dynamically, one could read
- * gibberish by doing partial reads while a list was changing.
+ * and since these maps can change value dynamically, one could पढ़ो
+ * gibberish by करोing partial पढ़ोs जबतक a list was changing.
  */
-static int cpuset_common_seq_show(struct seq_file *sf, void *v)
-{
-	struct cpuset *cs = css_cs(seq_css(sf));
-	cpuset_filetype_t type = seq_cft(sf)->private;
-	int ret = 0;
+अटल पूर्णांक cpuset_common_seq_show(काष्ठा seq_file *sf, व्योम *v)
+अणु
+	काष्ठा cpuset *cs = css_cs(seq_css(sf));
+	cpuset_filetype_t type = seq_cft(sf)->निजी;
+	पूर्णांक ret = 0;
 
 	spin_lock_irq(&callback_lock);
 
-	switch (type) {
-	case FILE_CPULIST:
-		seq_printf(sf, "%*pbl\n", cpumask_pr_args(cs->cpus_allowed));
-		break;
-	case FILE_MEMLIST:
-		seq_printf(sf, "%*pbl\n", nodemask_pr_args(&cs->mems_allowed));
-		break;
-	case FILE_EFFECTIVE_CPULIST:
-		seq_printf(sf, "%*pbl\n", cpumask_pr_args(cs->effective_cpus));
-		break;
-	case FILE_EFFECTIVE_MEMLIST:
-		seq_printf(sf, "%*pbl\n", nodemask_pr_args(&cs->effective_mems));
-		break;
-	case FILE_SUBPARTS_CPULIST:
-		seq_printf(sf, "%*pbl\n", cpumask_pr_args(cs->subparts_cpus));
-		break;
-	default:
+	चयन (type) अणु
+	हाल खाता_CPULIST:
+		seq_म_लिखो(sf, "%*pbl\n", cpumask_pr_args(cs->cpus_allowed));
+		अवरोध;
+	हाल खाता_MEMLIST:
+		seq_म_लिखो(sf, "%*pbl\n", nodemask_pr_args(&cs->mems_allowed));
+		अवरोध;
+	हाल खाता_EFFECTIVE_CPULIST:
+		seq_म_लिखो(sf, "%*pbl\n", cpumask_pr_args(cs->effective_cpus));
+		अवरोध;
+	हाल खाता_EFFECTIVE_MEMLIST:
+		seq_म_लिखो(sf, "%*pbl\n", nodemask_pr_args(&cs->effective_mems));
+		अवरोध;
+	हाल खाता_SUBPARTS_CPULIST:
+		seq_म_लिखो(sf, "%*pbl\n", cpumask_pr_args(cs->subparts_cpus));
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&callback_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u64 cpuset_read_u64(struct cgroup_subsys_state *css, struct cftype *cft)
-{
-	struct cpuset *cs = css_cs(css);
-	cpuset_filetype_t type = cft->private;
-	switch (type) {
-	case FILE_CPU_EXCLUSIVE:
-		return is_cpu_exclusive(cs);
-	case FILE_MEM_EXCLUSIVE:
-		return is_mem_exclusive(cs);
-	case FILE_MEM_HARDWALL:
-		return is_mem_hardwall(cs);
-	case FILE_SCHED_LOAD_BALANCE:
-		return is_sched_load_balance(cs);
-	case FILE_MEMORY_MIGRATE:
-		return is_memory_migrate(cs);
-	case FILE_MEMORY_PRESSURE_ENABLED:
-		return cpuset_memory_pressure_enabled;
-	case FILE_MEMORY_PRESSURE:
-		return fmeter_getrate(&cs->fmeter);
-	case FILE_SPREAD_PAGE:
-		return is_spread_page(cs);
-	case FILE_SPREAD_SLAB:
-		return is_spread_slab(cs);
-	default:
+अटल u64 cpuset_पढ़ो_u64(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft)
+अणु
+	काष्ठा cpuset *cs = css_cs(css);
+	cpuset_filetype_t type = cft->निजी;
+	चयन (type) अणु
+	हाल खाता_CPU_EXCLUSIVE:
+		वापस is_cpu_exclusive(cs);
+	हाल खाता_MEM_EXCLUSIVE:
+		वापस is_mem_exclusive(cs);
+	हाल खाता_MEM_HARDWALL:
+		वापस is_mem_hardwall(cs);
+	हाल खाता_SCHED_LOAD_BALANCE:
+		वापस is_sched_load_balance(cs);
+	हाल खाता_MEMORY_MIGRATE:
+		वापस is_memory_migrate(cs);
+	हाल खाता_MEMORY_PRESSURE_ENABLED:
+		वापस cpuset_memory_pressure_enabled;
+	हाल खाता_MEMORY_PRESSURE:
+		वापस fmeter_getrate(&cs->fmeter);
+	हाल खाता_SPREAD_PAGE:
+		वापस is_spपढ़ो_page(cs);
+	हाल खाता_SPREAD_SLAB:
+		वापस is_spपढ़ो_slab(cs);
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	/* Unreachable but makes gcc happy */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static s64 cpuset_read_s64(struct cgroup_subsys_state *css, struct cftype *cft)
-{
-	struct cpuset *cs = css_cs(css);
-	cpuset_filetype_t type = cft->private;
-	switch (type) {
-	case FILE_SCHED_RELAX_DOMAIN_LEVEL:
-		return cs->relax_domain_level;
-	default:
+अटल s64 cpuset_पढ़ो_s64(काष्ठा cgroup_subsys_state *css, काष्ठा cftype *cft)
+अणु
+	काष्ठा cpuset *cs = css_cs(css);
+	cpuset_filetype_t type = cft->निजी;
+	चयन (type) अणु
+	हाल खाता_SCHED_RELAX_DOMAIN_LEVEL:
+		वापस cs->relax_करोमुख्य_level;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	/* Unreachable but makes gcc happy */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sched_partition_show(struct seq_file *seq, void *v)
-{
-	struct cpuset *cs = css_cs(seq_css(seq));
+अटल पूर्णांक sched_partition_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा cpuset *cs = css_cs(seq_css(seq));
 
-	switch (cs->partition_root_state) {
-	case PRS_ENABLED:
-		seq_puts(seq, "root\n");
-		break;
-	case PRS_DISABLED:
-		seq_puts(seq, "member\n");
-		break;
-	case PRS_ERROR:
-		seq_puts(seq, "root invalid\n");
-		break;
-	}
-	return 0;
-}
+	चयन (cs->partition_root_state) अणु
+	हाल PRS_ENABLED:
+		seq_माला_दो(seq, "root\n");
+		अवरोध;
+	हाल PRS_DISABLED:
+		seq_माला_दो(seq, "member\n");
+		अवरोध;
+	हाल PRS_ERROR:
+		seq_माला_दो(seq, "root invalid\n");
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static ssize_t sched_partition_write(struct kernfs_open_file *of, char *buf,
-				     size_t nbytes, loff_t off)
-{
-	struct cpuset *cs = css_cs(of_css(of));
-	int val;
-	int retval = -ENODEV;
+अटल sमाप_प्रकार sched_partition_ग_लिखो(काष्ठा kernfs_खोलो_file *of, अक्षर *buf,
+				     माप_प्रकार nbytes, loff_t off)
+अणु
+	काष्ठा cpuset *cs = css_cs(of_css(of));
+	पूर्णांक val;
+	पूर्णांक retval = -ENODEV;
 
-	buf = strstrip(buf);
+	buf = म_मालाip(buf);
 
 	/*
 	 * Convert "root" to ENABLED, and convert "member" to DISABLED.
 	 */
-	if (!strcmp(buf, "root"))
+	अगर (!म_भेद(buf, "root"))
 		val = PRS_ENABLED;
-	else if (!strcmp(buf, "member"))
+	अन्यथा अगर (!म_भेद(buf, "member"))
 		val = PRS_DISABLED;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	css_get(&cs->css);
 	get_online_cpus();
-	percpu_down_write(&cpuset_rwsem);
-	if (!is_cpuset_online(cs))
-		goto out_unlock;
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
+	अगर (!is_cpuset_online(cs))
+		जाओ out_unlock;
 
 	retval = update_prstate(cs, val);
 out_unlock:
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 	put_online_cpus();
 	css_put(&cs->css);
-	return retval ?: nbytes;
-}
+	वापस retval ?: nbytes;
+पूर्ण
 
 /*
- * for the common functions, 'private' gives the type of file
+ * क्रम the common functions, 'private' gives the type of file
  */
 
-static struct cftype legacy_files[] = {
-	{
+अटल काष्ठा cftype legacy_files[] = अणु
+	अणु
 		.name = "cpus",
 		.seq_show = cpuset_common_seq_show,
-		.write = cpuset_write_resmask,
-		.max_write_len = (100U + 6 * NR_CPUS),
-		.private = FILE_CPULIST,
-	},
+		.ग_लिखो = cpuset_ग_लिखो_resmask,
+		.max_ग_लिखो_len = (100U + 6 * NR_CPUS),
+		.निजी = खाता_CPULIST,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "mems",
 		.seq_show = cpuset_common_seq_show,
-		.write = cpuset_write_resmask,
-		.max_write_len = (100U + 6 * MAX_NUMNODES),
-		.private = FILE_MEMLIST,
-	},
+		.ग_लिखो = cpuset_ग_लिखो_resmask,
+		.max_ग_लिखो_len = (100U + 6 * MAX_NUMNODES),
+		.निजी = खाता_MEMLIST,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "effective_cpus",
 		.seq_show = cpuset_common_seq_show,
-		.private = FILE_EFFECTIVE_CPULIST,
-	},
+		.निजी = खाता_EFFECTIVE_CPULIST,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "effective_mems",
 		.seq_show = cpuset_common_seq_show,
-		.private = FILE_EFFECTIVE_MEMLIST,
-	},
+		.निजी = खाता_EFFECTIVE_MEMLIST,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "cpu_exclusive",
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_CPU_EXCLUSIVE,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_CPU_EXCLUSIVE,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "mem_exclusive",
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_MEM_EXCLUSIVE,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_MEM_EXCLUSIVE,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "mem_hardwall",
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_MEM_HARDWALL,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_MEM_HARDWALL,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "sched_load_balance",
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_SCHED_LOAD_BALANCE,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_SCHED_LOAD_BALANCE,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "sched_relax_domain_level",
-		.read_s64 = cpuset_read_s64,
-		.write_s64 = cpuset_write_s64,
-		.private = FILE_SCHED_RELAX_DOMAIN_LEVEL,
-	},
+		.पढ़ो_s64 = cpuset_पढ़ो_s64,
+		.ग_लिखो_s64 = cpuset_ग_लिखो_s64,
+		.निजी = खाता_SCHED_RELAX_DOMAIN_LEVEL,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "memory_migrate",
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_MEMORY_MIGRATE,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_MEMORY_MIGRATE,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "memory_pressure",
-		.read_u64 = cpuset_read_u64,
-		.private = FILE_MEMORY_PRESSURE,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.निजी = खाता_MEMORY_PRESSURE,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "memory_spread_page",
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_SPREAD_PAGE,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_SPREAD_PAGE,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "memory_spread_slab",
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_SPREAD_SLAB,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_SPREAD_SLAB,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "memory_pressure_enabled",
 		.flags = CFTYPE_ONLY_ON_ROOT,
-		.read_u64 = cpuset_read_u64,
-		.write_u64 = cpuset_write_u64,
-		.private = FILE_MEMORY_PRESSURE_ENABLED,
-	},
+		.पढ़ो_u64 = cpuset_पढ़ो_u64,
+		.ग_लिखो_u64 = cpuset_ग_लिखो_u64,
+		.निजी = खाता_MEMORY_PRESSURE_ENABLED,
+	पूर्ण,
 
-	{ }	/* terminate */
-};
+	अणु पूर्ण	/* terminate */
+पूर्ण;
 
 /*
- * This is currently a minimal set for the default hierarchy. It can be
+ * This is currently a minimal set क्रम the शेष hierarchy. It can be
  * expanded later on by migrating more features and control files from v1.
  */
-static struct cftype dfl_files[] = {
-	{
+अटल काष्ठा cftype dfl_files[] = अणु
+	अणु
 		.name = "cpus",
 		.seq_show = cpuset_common_seq_show,
-		.write = cpuset_write_resmask,
-		.max_write_len = (100U + 6 * NR_CPUS),
-		.private = FILE_CPULIST,
+		.ग_लिखो = cpuset_ग_लिखो_resmask,
+		.max_ग_लिखो_len = (100U + 6 * NR_CPUS),
+		.निजी = खाता_CPULIST,
 		.flags = CFTYPE_NOT_ON_ROOT,
-	},
+	पूर्ण,
 
-	{
+	अणु
 		.name = "mems",
 		.seq_show = cpuset_common_seq_show,
-		.write = cpuset_write_resmask,
-		.max_write_len = (100U + 6 * MAX_NUMNODES),
-		.private = FILE_MEMLIST,
+		.ग_लिखो = cpuset_ग_लिखो_resmask,
+		.max_ग_लिखो_len = (100U + 6 * MAX_NUMNODES),
+		.निजी = खाता_MEMLIST,
 		.flags = CFTYPE_NOT_ON_ROOT,
-	},
+	पूर्ण,
 
-	{
+	अणु
 		.name = "cpus.effective",
 		.seq_show = cpuset_common_seq_show,
-		.private = FILE_EFFECTIVE_CPULIST,
-	},
+		.निजी = खाता_EFFECTIVE_CPULIST,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "mems.effective",
 		.seq_show = cpuset_common_seq_show,
-		.private = FILE_EFFECTIVE_MEMLIST,
-	},
+		.निजी = खाता_EFFECTIVE_MEMLIST,
+	पूर्ण,
 
-	{
+	अणु
 		.name = "cpus.partition",
 		.seq_show = sched_partition_show,
-		.write = sched_partition_write,
-		.private = FILE_PARTITION_ROOT,
+		.ग_लिखो = sched_partition_ग_लिखो,
+		.निजी = खाता_PARTITION_ROOT,
 		.flags = CFTYPE_NOT_ON_ROOT,
-	},
+	पूर्ण,
 
-	{
+	अणु
 		.name = "cpus.subpartitions",
 		.seq_show = cpuset_common_seq_show,
-		.private = FILE_SUBPARTS_CPULIST,
+		.निजी = खाता_SUBPARTS_CPULIST,
 		.flags = CFTYPE_DEBUG,
-	},
+	पूर्ण,
 
-	{ }	/* terminate */
-};
+	अणु पूर्ण	/* terminate */
+पूर्ण;
 
 
 /*
@@ -2720,86 +2721,86 @@ static struct cftype dfl_files[] = {
  *	cgrp:	control group that the new cpuset will be part of
  */
 
-static struct cgroup_subsys_state *
-cpuset_css_alloc(struct cgroup_subsys_state *parent_css)
-{
-	struct cpuset *cs;
+अटल काष्ठा cgroup_subsys_state *
+cpuset_css_alloc(काष्ठा cgroup_subsys_state *parent_css)
+अणु
+	काष्ठा cpuset *cs;
 
-	if (!parent_css)
-		return &top_cpuset.css;
+	अगर (!parent_css)
+		वापस &top_cpuset.css;
 
-	cs = kzalloc(sizeof(*cs), GFP_KERNEL);
-	if (!cs)
-		return ERR_PTR(-ENOMEM);
+	cs = kzalloc(माप(*cs), GFP_KERNEL);
+	अगर (!cs)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (alloc_cpumasks(cs, NULL)) {
-		kfree(cs);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (alloc_cpumasks(cs, शून्य)) अणु
+		kमुक्त(cs);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	set_bit(CS_SCHED_LOAD_BALANCE, &cs->flags);
 	nodes_clear(cs->mems_allowed);
 	nodes_clear(cs->effective_mems);
 	fmeter_init(&cs->fmeter);
-	cs->relax_domain_level = -1;
+	cs->relax_करोमुख्य_level = -1;
 
-	return &cs->css;
-}
+	वापस &cs->css;
+पूर्ण
 
-static int cpuset_css_online(struct cgroup_subsys_state *css)
-{
-	struct cpuset *cs = css_cs(css);
-	struct cpuset *parent = parent_cs(cs);
-	struct cpuset *tmp_cs;
-	struct cgroup_subsys_state *pos_css;
+अटल पूर्णांक cpuset_css_online(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cpuset *cs = css_cs(css);
+	काष्ठा cpuset *parent = parent_cs(cs);
+	काष्ठा cpuset *पंचांगp_cs;
+	काष्ठा cgroup_subsys_state *pos_css;
 
-	if (!parent)
-		return 0;
+	अगर (!parent)
+		वापस 0;
 
 	get_online_cpus();
-	percpu_down_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 
 	set_bit(CS_ONLINE, &cs->flags);
-	if (is_spread_page(parent))
+	अगर (is_spपढ़ो_page(parent))
 		set_bit(CS_SPREAD_PAGE, &cs->flags);
-	if (is_spread_slab(parent))
+	अगर (is_spपढ़ो_slab(parent))
 		set_bit(CS_SPREAD_SLAB, &cs->flags);
 
 	cpuset_inc();
 
 	spin_lock_irq(&callback_lock);
-	if (is_in_v2_mode()) {
+	अगर (is_in_v2_mode()) अणु
 		cpumask_copy(cs->effective_cpus, parent->effective_cpus);
 		cs->effective_mems = parent->effective_mems;
 		cs->use_parent_ecpus = true;
 		parent->child_ecpus_count++;
-	}
+	पूर्ण
 	spin_unlock_irq(&callback_lock);
 
-	if (!test_bit(CGRP_CPUSET_CLONE_CHILDREN, &css->cgroup->flags))
-		goto out_unlock;
+	अगर (!test_bit(CGRP_CPUSET_CLONE_CHILDREN, &css->cgroup->flags))
+		जाओ out_unlock;
 
 	/*
-	 * Clone @parent's configuration if CGRP_CPUSET_CLONE_CHILDREN is
-	 * set.  This flag handling is implemented in cgroup core for
-	 * histrical reasons - the flag may be specified during mount.
+	 * Clone @parent's configuration अगर CGRP_CPUSET_CLONE_CHILDREN is
+	 * set.  This flag handling is implemented in cgroup core क्रम
+	 * histrical reasons - the flag may be specअगरied during mount.
 	 *
-	 * Currently, if any sibling cpusets have exclusive cpus or mem, we
+	 * Currently, अगर any sibling cpusets have exclusive cpus or mem, we
 	 * refuse to clone the configuration - thereby refusing the task to
 	 * be entered, and as a result refusing the sys_unshare() or
-	 * clone() which initiated it.  If this becomes a problem for some
+	 * clone() which initiated it.  If this becomes a problem क्रम some
 	 * users who wish to allow that scenario, then this could be
 	 * changed to grant parent->cpus_allowed-sibling_cpus_exclusive
-	 * (and likewise for mems) to the new cgroup.
+	 * (and likewise क्रम mems) to the new cgroup.
 	 */
-	rcu_read_lock();
-	cpuset_for_each_child(tmp_cs, pos_css, parent) {
-		if (is_mem_exclusive(tmp_cs) || is_cpu_exclusive(tmp_cs)) {
-			rcu_read_unlock();
-			goto out_unlock;
-		}
-	}
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	cpuset_क्रम_each_child(पंचांगp_cs, pos_css, parent) अणु
+		अगर (is_mem_exclusive(पंचांगp_cs) || is_cpu_exclusive(पंचांगp_cs)) अणु
+			rcu_पढ़ो_unlock();
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	spin_lock_irq(&callback_lock);
 	cs->mems_allowed = parent->mems_allowed;
@@ -2808,114 +2809,114 @@ static int cpuset_css_online(struct cgroup_subsys_state *css)
 	cpumask_copy(cs->effective_cpus, parent->cpus_allowed);
 	spin_unlock_irq(&callback_lock);
 out_unlock:
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 	put_online_cpus();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * If the cpuset being removed has its flag 'sched_load_balance'
+ * If the cpuset being हटाओd has its flag 'sched_load_balance'
  * enabled, then simulate turning sched_load_balance off, which
- * will call rebuild_sched_domains_locked(). That is not needed
- * in the default hierarchy where only changes in partition
+ * will call rebuild_sched_करोमुख्यs_locked(). That is not needed
+ * in the शेष hierarchy where only changes in partition
  * will cause repartitioning.
  *
  * If the cpuset has the 'sched.partition' flag enabled, simulate
  * turning 'sched.partition" off.
  */
 
-static void cpuset_css_offline(struct cgroup_subsys_state *css)
-{
-	struct cpuset *cs = css_cs(css);
+अटल व्योम cpuset_css_offline(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cpuset *cs = css_cs(css);
 
 	get_online_cpus();
-	percpu_down_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 
-	if (is_partition_root(cs))
+	अगर (is_partition_root(cs))
 		update_prstate(cs, 0);
 
-	if (!cgroup_subsys_on_dfl(cpuset_cgrp_subsys) &&
+	अगर (!cgroup_subsys_on_dfl(cpuset_cgrp_subsys) &&
 	    is_sched_load_balance(cs))
 		update_flag(CS_SCHED_LOAD_BALANCE, cs, 0);
 
-	if (cs->use_parent_ecpus) {
-		struct cpuset *parent = parent_cs(cs);
+	अगर (cs->use_parent_ecpus) अणु
+		काष्ठा cpuset *parent = parent_cs(cs);
 
 		cs->use_parent_ecpus = false;
 		parent->child_ecpus_count--;
-	}
+	पूर्ण
 
 	cpuset_dec();
 	clear_bit(CS_ONLINE, &cs->flags);
 
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 	put_online_cpus();
-}
+पूर्ण
 
-static void cpuset_css_free(struct cgroup_subsys_state *css)
-{
-	struct cpuset *cs = css_cs(css);
+अटल व्योम cpuset_css_मुक्त(काष्ठा cgroup_subsys_state *css)
+अणु
+	काष्ठा cpuset *cs = css_cs(css);
 
-	free_cpuset(cs);
-}
+	मुक्त_cpuset(cs);
+पूर्ण
 
-static void cpuset_bind(struct cgroup_subsys_state *root_css)
-{
-	percpu_down_write(&cpuset_rwsem);
+अटल व्योम cpuset_bind(काष्ठा cgroup_subsys_state *root_css)
+अणु
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 	spin_lock_irq(&callback_lock);
 
-	if (is_in_v2_mode()) {
+	अगर (is_in_v2_mode()) अणु
 		cpumask_copy(top_cpuset.cpus_allowed, cpu_possible_mask);
 		top_cpuset.mems_allowed = node_possible_map;
-	} else {
+	पूर्ण अन्यथा अणु
 		cpumask_copy(top_cpuset.cpus_allowed,
 			     top_cpuset.effective_cpus);
 		top_cpuset.mems_allowed = top_cpuset.effective_mems;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&callback_lock);
-	percpu_up_write(&cpuset_rwsem);
-}
+	percpu_up_ग_लिखो(&cpuset_rwsem);
+पूर्ण
 
 /*
- * Make sure the new task conform to the current state of its parent,
+ * Make sure the new task conक्रमm to the current state of its parent,
  * which could have been changed by cpuset just after it inherits the
- * state from the parent and before it sits on the cgroup's task list.
+ * state from the parent and beक्रमe it sits on the cgroup's task list.
  */
-static void cpuset_fork(struct task_struct *task)
-{
-	if (task_css_is_root(task, cpuset_cgrp_id))
-		return;
+अटल व्योम cpuset_विभाजन(काष्ठा task_काष्ठा *task)
+अणु
+	अगर (task_css_is_root(task, cpuset_cgrp_id))
+		वापस;
 
 	set_cpus_allowed_ptr(task, current->cpus_ptr);
 	task->mems_allowed = current->mems_allowed;
-}
+पूर्ण
 
-struct cgroup_subsys cpuset_cgrp_subsys = {
+काष्ठा cgroup_subsys cpuset_cgrp_subsys = अणु
 	.css_alloc	= cpuset_css_alloc,
 	.css_online	= cpuset_css_online,
 	.css_offline	= cpuset_css_offline,
-	.css_free	= cpuset_css_free,
+	.css_मुक्त	= cpuset_css_मुक्त,
 	.can_attach	= cpuset_can_attach,
 	.cancel_attach	= cpuset_cancel_attach,
 	.attach		= cpuset_attach,
 	.post_attach	= cpuset_post_attach,
 	.bind		= cpuset_bind,
-	.fork		= cpuset_fork,
+	.विभाजन		= cpuset_विभाजन,
 	.legacy_cftypes	= legacy_files,
 	.dfl_cftypes	= dfl_files,
 	.early_init	= true,
-	.threaded	= true,
-};
+	.thपढ़ोed	= true,
+पूर्ण;
 
 /**
- * cpuset_init - initialize cpusets at system boot
+ * cpuset_init - initialize cpusets at प्रणाली boot
  *
  * Description: Initialize top_cpuset
  **/
 
-int __init cpuset_init(void)
-{
+पूर्णांक __init cpuset_init(व्योम)
+अणु
 	BUG_ON(percpu_init_rwsem(&cpuset_rwsem));
 
 	BUG_ON(!alloc_cpumask_var(&top_cpuset.cpus_allowed, GFP_KERNEL));
@@ -2929,45 +2930,45 @@ int __init cpuset_init(void)
 
 	fmeter_init(&top_cpuset.fmeter);
 	set_bit(CS_SCHED_LOAD_BALANCE, &top_cpuset.flags);
-	top_cpuset.relax_domain_level = -1;
+	top_cpuset.relax_करोमुख्य_level = -1;
 
 	BUG_ON(!alloc_cpumask_var(&cpus_attach, GFP_KERNEL));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * If CPU and/or memory hotplug handlers, below, unplug any CPUs
  * or memory nodes, we need to walk over the cpuset hierarchy,
- * removing that CPU or node from all cpusets.  If this removes the
+ * removing that CPU or node from all cpusets.  If this हटाओs the
  * last CPU or node from a cpuset, then move the tasks in the empty
  * cpuset to its next-highest non-empty parent.
  */
-static void remove_tasks_in_empty_cpuset(struct cpuset *cs)
-{
-	struct cpuset *parent;
+अटल व्योम हटाओ_tasks_in_empty_cpuset(काष्ठा cpuset *cs)
+अणु
+	काष्ठा cpuset *parent;
 
 	/*
 	 * Find its next-highest non-empty parent, (top cpuset
 	 * has online cpus, so can't be empty).
 	 */
 	parent = parent_cs(cs);
-	while (cpumask_empty(parent->cpus_allowed) ||
+	जबतक (cpumask_empty(parent->cpus_allowed) ||
 			nodes_empty(parent->mems_allowed))
 		parent = parent_cs(parent);
 
-	if (cgroup_transfer_tasks(parent->css.cgroup, cs->css.cgroup)) {
+	अगर (cgroup_transfer_tasks(parent->css.cgroup, cs->css.cgroup)) अणु
 		pr_err("cpuset: failed to transfer tasks out of empty cpuset ");
 		pr_cont_cgroup_name(cs->css.cgroup);
 		pr_cont("\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-hotplug_update_tasks_legacy(struct cpuset *cs,
-			    struct cpumask *new_cpus, nodemask_t *new_mems,
+अटल व्योम
+hotplug_update_tasks_legacy(काष्ठा cpuset *cs,
+			    काष्ठा cpumask *new_cpus, nodemask_t *new_mems,
 			    bool cpus_updated, bool mems_updated)
-{
+अणु
 	bool is_empty;
 
 	spin_lock_irq(&callback_lock);
@@ -2978,38 +2979,38 @@ hotplug_update_tasks_legacy(struct cpuset *cs,
 	spin_unlock_irq(&callback_lock);
 
 	/*
-	 * Don't call update_tasks_cpumask() if the cpuset becomes empty,
+	 * Don't call update_tasks_cpumask() अगर the cpuset becomes empty,
 	 * as the tasks will be migratecd to an ancestor.
 	 */
-	if (cpus_updated && !cpumask_empty(cs->cpus_allowed))
+	अगर (cpus_updated && !cpumask_empty(cs->cpus_allowed))
 		update_tasks_cpumask(cs);
-	if (mems_updated && !nodes_empty(cs->mems_allowed))
+	अगर (mems_updated && !nodes_empty(cs->mems_allowed))
 		update_tasks_nodemask(cs);
 
 	is_empty = cpumask_empty(cs->cpus_allowed) ||
 		   nodes_empty(cs->mems_allowed);
 
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 
 	/*
 	 * Move tasks to the nearest ancestor with execution resources,
-	 * This is full cgroup operation which will also call back into
-	 * cpuset. Should be done outside any lock.
+	 * This is full cgroup operation which will also call back पूर्णांकo
+	 * cpuset. Should be करोne outside any lock.
 	 */
-	if (is_empty)
-		remove_tasks_in_empty_cpuset(cs);
+	अगर (is_empty)
+		हटाओ_tasks_in_empty_cpuset(cs);
 
-	percpu_down_write(&cpuset_rwsem);
-}
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
+पूर्ण
 
-static void
-hotplug_update_tasks(struct cpuset *cs,
-		     struct cpumask *new_cpus, nodemask_t *new_mems,
+अटल व्योम
+hotplug_update_tasks(काष्ठा cpuset *cs,
+		     काष्ठा cpumask *new_cpus, nodemask_t *new_mems,
 		     bool cpus_updated, bool mems_updated)
-{
-	if (cpumask_empty(new_cpus))
+अणु
+	अगर (cpumask_empty(new_cpus))
 		cpumask_copy(new_cpus, parent_cs(cs)->effective_cpus);
-	if (nodes_empty(*new_mems))
+	अगर (nodes_empty(*new_mems))
 		*new_mems = parent_cs(cs)->effective_mems;
 
 	spin_lock_irq(&callback_lock);
@@ -3017,144 +3018,144 @@ hotplug_update_tasks(struct cpuset *cs,
 	cs->effective_mems = *new_mems;
 	spin_unlock_irq(&callback_lock);
 
-	if (cpus_updated)
+	अगर (cpus_updated)
 		update_tasks_cpumask(cs);
-	if (mems_updated)
+	अगर (mems_updated)
 		update_tasks_nodemask(cs);
-}
+पूर्ण
 
-static bool force_rebuild;
+अटल bool क्रमce_rebuild;
 
-void cpuset_force_rebuild(void)
-{
-	force_rebuild = true;
-}
+व्योम cpuset_क्रमce_rebuild(व्योम)
+अणु
+	क्रमce_rebuild = true;
+पूर्ण
 
 /**
- * cpuset_hotplug_update_tasks - update tasks in a cpuset for hotunplug
- * @cs: cpuset in interest
- * @tmp: the tmpmasks structure pointer
+ * cpuset_hotplug_update_tasks - update tasks in a cpuset क्रम hotunplug
+ * @cs: cpuset in पूर्णांकerest
+ * @पंचांगp: the पंचांगpmasks काष्ठाure poपूर्णांकer
  *
- * Compare @cs's cpu and mem masks against top_cpuset and if some have gone
+ * Compare @cs's cpu and mem masks against top_cpuset and अगर some have gone
  * offline, update @cs accordingly.  If @cs ends up with no CPU or memory,
  * all its tasks are moved to the nearest ancestor with both resources.
  */
-static void cpuset_hotplug_update_tasks(struct cpuset *cs, struct tmpmasks *tmp)
-{
-	static cpumask_t new_cpus;
-	static nodemask_t new_mems;
+अटल व्योम cpuset_hotplug_update_tasks(काष्ठा cpuset *cs, काष्ठा पंचांगpmasks *पंचांगp)
+अणु
+	अटल cpumask_t new_cpus;
+	अटल nodemask_t new_mems;
 	bool cpus_updated;
 	bool mems_updated;
-	struct cpuset *parent;
+	काष्ठा cpuset *parent;
 retry:
-	wait_event(cpuset_attach_wq, cs->attach_in_progress == 0);
+	रुको_event(cpuset_attach_wq, cs->attach_in_progress == 0);
 
-	percpu_down_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 
 	/*
-	 * We have raced with task attaching. We wait until attaching
+	 * We have raced with task attaching. We रुको until attaching
 	 * is finished, so we won't attach a task to an empty cpuset.
 	 */
-	if (cs->attach_in_progress) {
-		percpu_up_write(&cpuset_rwsem);
-		goto retry;
-	}
+	अगर (cs->attach_in_progress) अणु
+		percpu_up_ग_लिखो(&cpuset_rwsem);
+		जाओ retry;
+	पूर्ण
 
 	parent =  parent_cs(cs);
 	compute_effective_cpumask(&new_cpus, cs, parent);
 	nodes_and(new_mems, cs->mems_allowed, parent->effective_mems);
 
-	if (cs->nr_subparts_cpus)
+	अगर (cs->nr_subparts_cpus)
 		/*
 		 * Make sure that CPUs allocated to child partitions
-		 * do not show up in effective_cpus.
+		 * करो not show up in effective_cpus.
 		 */
 		cpumask_andnot(&new_cpus, &new_cpus, cs->subparts_cpus);
 
-	if (!tmp || !cs->partition_root_state)
-		goto update_tasks;
+	अगर (!पंचांगp || !cs->partition_root_state)
+		जाओ update_tasks;
 
 	/*
 	 * In the unlikely event that a partition root has empty
 	 * effective_cpus or its parent becomes erroneous, we have to
 	 * transition it to the erroneous state.
 	 */
-	if (is_partition_root(cs) && (cpumask_empty(&new_cpus) ||
-	   (parent->partition_root_state == PRS_ERROR))) {
-		if (cs->nr_subparts_cpus) {
+	अगर (is_partition_root(cs) && (cpumask_empty(&new_cpus) ||
+	   (parent->partition_root_state == PRS_ERROR))) अणु
+		अगर (cs->nr_subparts_cpus) अणु
 			cs->nr_subparts_cpus = 0;
 			cpumask_clear(cs->subparts_cpus);
 			compute_effective_cpumask(&new_cpus, cs, parent);
-		}
+		पूर्ण
 
 		/*
 		 * If the effective_cpus is empty because the child
 		 * partitions take away all the CPUs, we can keep
 		 * the current partition and let the child partitions
-		 * fight for available CPUs.
+		 * fight क्रम available CPUs.
 		 */
-		if ((parent->partition_root_state == PRS_ERROR) ||
-		     cpumask_empty(&new_cpus)) {
+		अगर ((parent->partition_root_state == PRS_ERROR) ||
+		     cpumask_empty(&new_cpus)) अणु
 			update_parent_subparts_cpumask(cs, partcmd_disable,
-						       NULL, tmp);
+						       शून्य, पंचांगp);
 			cs->partition_root_state = PRS_ERROR;
-		}
-		cpuset_force_rebuild();
-	}
+		पूर्ण
+		cpuset_क्रमce_rebuild();
+	पूर्ण
 
 	/*
 	 * On the other hand, an erroneous partition root may be transitioned
 	 * back to a regular one or a partition root with no CPU allocated
 	 * from the parent may change to erroneous.
 	 */
-	if (is_partition_root(parent) &&
+	अगर (is_partition_root(parent) &&
 	   ((cs->partition_root_state == PRS_ERROR) ||
-	    !cpumask_intersects(&new_cpus, parent->subparts_cpus)) &&
-	     update_parent_subparts_cpumask(cs, partcmd_update, NULL, tmp))
-		cpuset_force_rebuild();
+	    !cpumask_पूर्णांकersects(&new_cpus, parent->subparts_cpus)) &&
+	     update_parent_subparts_cpumask(cs, partcmd_update, शून्य, पंचांगp))
+		cpuset_क्रमce_rebuild();
 
 update_tasks:
 	cpus_updated = !cpumask_equal(&new_cpus, cs->effective_cpus);
 	mems_updated = !nodes_equal(new_mems, cs->effective_mems);
 
-	if (is_in_v2_mode())
+	अगर (is_in_v2_mode())
 		hotplug_update_tasks(cs, &new_cpus, &new_mems,
 				     cpus_updated, mems_updated);
-	else
+	अन्यथा
 		hotplug_update_tasks_legacy(cs, &new_cpus, &new_mems,
 					    cpus_updated, mems_updated);
 
-	percpu_up_write(&cpuset_rwsem);
-}
+	percpu_up_ग_लिखो(&cpuset_rwsem);
+पूर्ण
 
 /**
- * cpuset_hotplug_workfn - handle CPU/memory hotunplug for a cpuset
+ * cpuset_hotplug_workfn - handle CPU/memory hotunplug क्रम a cpuset
  *
  * This function is called after either CPU or memory configuration has
  * changed and updates cpuset accordingly.  The top_cpuset is always
  * synchronized to cpu_active_mask and N_MEMORY, which is necessary in
- * order to make cpusets transparent (of no affect) on systems that are
+ * order to make cpusets transparent (of no affect) on प्रणालीs that are
  * actively using CPU hotplug but making no active use of cpusets.
  *
  * Non-root cpusets are only affected by offlining.  If any CPUs or memory
- * nodes have been taken down, cpuset_hotplug_update_tasks() is invoked on
+ * nodes have been taken करोwn, cpuset_hotplug_update_tasks() is invoked on
  * all descendants.
  *
- * Note that CPU offlining during suspend is ignored.  We don't modify
+ * Note that CPU offlining during suspend is ignored.  We करोn't modअगरy
  * cpusets across suspend/resume cycles at all.
  */
-static void cpuset_hotplug_workfn(struct work_struct *work)
-{
-	static cpumask_t new_cpus;
-	static nodemask_t new_mems;
+अटल व्योम cpuset_hotplug_workfn(काष्ठा work_काष्ठा *work)
+अणु
+	अटल cpumask_t new_cpus;
+	अटल nodemask_t new_mems;
 	bool cpus_updated, mems_updated;
 	bool on_dfl = is_in_v2_mode();
-	struct tmpmasks tmp, *ptmp = NULL;
+	काष्ठा पंचांगpmasks पंचांगp, *pपंचांगp = शून्य;
 
-	if (on_dfl && !alloc_cpumasks(NULL, &tmp))
-		ptmp = &tmp;
+	अगर (on_dfl && !alloc_cpumasks(शून्य, &पंचांगp))
+		pपंचांगp = &पंचांगp;
 
-	percpu_down_write(&cpuset_rwsem);
+	percpu_करोwn_ग_लिखो(&cpuset_rwsem);
 
 	/* fetch the available cpus/mems and find out which changed how */
 	cpumask_copy(&new_cpus, cpu_active_mask);
@@ -3169,110 +3170,110 @@ static void cpuset_hotplug_workfn(struct work_struct *work)
 	mems_updated = !nodes_equal(top_cpuset.effective_mems, new_mems);
 
 	/* synchronize cpus_allowed to cpu_active_mask */
-	if (cpus_updated) {
+	अगर (cpus_updated) अणु
 		spin_lock_irq(&callback_lock);
-		if (!on_dfl)
+		अगर (!on_dfl)
 			cpumask_copy(top_cpuset.cpus_allowed, &new_cpus);
 		/*
 		 * Make sure that CPUs allocated to child partitions
-		 * do not show up in effective_cpus. If no CPU is left,
+		 * करो not show up in effective_cpus. If no CPU is left,
 		 * we clear the subparts_cpus & let the child partitions
-		 * fight for the CPUs again.
+		 * fight क्रम the CPUs again.
 		 */
-		if (top_cpuset.nr_subparts_cpus) {
-			if (cpumask_subset(&new_cpus,
-					   top_cpuset.subparts_cpus)) {
+		अगर (top_cpuset.nr_subparts_cpus) अणु
+			अगर (cpumask_subset(&new_cpus,
+					   top_cpuset.subparts_cpus)) अणु
 				top_cpuset.nr_subparts_cpus = 0;
 				cpumask_clear(top_cpuset.subparts_cpus);
-			} else {
+			पूर्ण अन्यथा अणु
 				cpumask_andnot(&new_cpus, &new_cpus,
 					       top_cpuset.subparts_cpus);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		cpumask_copy(top_cpuset.effective_cpus, &new_cpus);
 		spin_unlock_irq(&callback_lock);
-		/* we don't mess with cpumasks of tasks in top_cpuset */
-	}
+		/* we करोn't mess with cpumasks of tasks in top_cpuset */
+	पूर्ण
 
 	/* synchronize mems_allowed to N_MEMORY */
-	if (mems_updated) {
+	अगर (mems_updated) अणु
 		spin_lock_irq(&callback_lock);
-		if (!on_dfl)
+		अगर (!on_dfl)
 			top_cpuset.mems_allowed = new_mems;
 		top_cpuset.effective_mems = new_mems;
 		spin_unlock_irq(&callback_lock);
 		update_tasks_nodemask(&top_cpuset);
-	}
+	पूर्ण
 
-	percpu_up_write(&cpuset_rwsem);
+	percpu_up_ग_लिखो(&cpuset_rwsem);
 
-	/* if cpus or mems changed, we need to propagate to descendants */
-	if (cpus_updated || mems_updated) {
-		struct cpuset *cs;
-		struct cgroup_subsys_state *pos_css;
+	/* अगर cpus or mems changed, we need to propagate to descendants */
+	अगर (cpus_updated || mems_updated) अणु
+		काष्ठा cpuset *cs;
+		काष्ठा cgroup_subsys_state *pos_css;
 
-		rcu_read_lock();
-		cpuset_for_each_descendant_pre(cs, pos_css, &top_cpuset) {
-			if (cs == &top_cpuset || !css_tryget_online(&cs->css))
-				continue;
-			rcu_read_unlock();
+		rcu_पढ़ो_lock();
+		cpuset_क्रम_each_descendant_pre(cs, pos_css, &top_cpuset) अणु
+			अगर (cs == &top_cpuset || !css_tryget_online(&cs->css))
+				जारी;
+			rcu_पढ़ो_unlock();
 
-			cpuset_hotplug_update_tasks(cs, ptmp);
+			cpuset_hotplug_update_tasks(cs, pपंचांगp);
 
-			rcu_read_lock();
+			rcu_पढ़ो_lock();
 			css_put(&cs->css);
-		}
-		rcu_read_unlock();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	/* rebuild sched domains if cpus_allowed has changed */
-	if (cpus_updated || force_rebuild) {
-		force_rebuild = false;
-		rebuild_sched_domains();
-	}
+	/* rebuild sched करोमुख्यs अगर cpus_allowed has changed */
+	अगर (cpus_updated || क्रमce_rebuild) अणु
+		क्रमce_rebuild = false;
+		rebuild_sched_करोमुख्यs();
+	पूर्ण
 
-	free_cpumasks(NULL, ptmp);
-}
+	मुक्त_cpumasks(शून्य, pपंचांगp);
+पूर्ण
 
-void cpuset_update_active_cpus(void)
-{
+व्योम cpuset_update_active_cpus(व्योम)
+अणु
 	/*
 	 * We're inside cpu hotplug critical region which usually nests
 	 * inside cgroup synchronization.  Bounce actual hotplug processing
-	 * to a work item to avoid reverse locking order.
+	 * to a work item to aव्योम reverse locking order.
 	 */
 	schedule_work(&cpuset_hotplug_work);
-}
+पूर्ण
 
-void cpuset_wait_for_hotplug(void)
-{
+व्योम cpuset_रुको_क्रम_hotplug(व्योम)
+अणु
 	flush_work(&cpuset_hotplug_work);
-}
+पूर्ण
 
 /*
  * Keep top_cpuset.mems_allowed tracking node_states[N_MEMORY].
- * Call this routine anytime after node_states[N_MEMORY] changes.
- * See cpuset_update_active_cpus() for CPU hotplug handling.
+ * Call this routine anyसमय after node_states[N_MEMORY] changes.
+ * See cpuset_update_active_cpus() क्रम CPU hotplug handling.
  */
-static int cpuset_track_online_nodes(struct notifier_block *self,
-				unsigned long action, void *arg)
-{
+अटल पूर्णांक cpuset_track_online_nodes(काष्ठा notअगरier_block *self,
+				अचिन्हित दीर्घ action, व्योम *arg)
+अणु
 	schedule_work(&cpuset_hotplug_work);
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block cpuset_track_online_nodes_nb = {
-	.notifier_call = cpuset_track_online_nodes,
+अटल काष्ठा notअगरier_block cpuset_track_online_nodes_nb = अणु
+	.notअगरier_call = cpuset_track_online_nodes,
 	.priority = 10,		/* ??! */
-};
+पूर्ण;
 
 /**
  * cpuset_init_smp - initialize cpus_allowed
  *
  * Description: Finish top cpuset after cpu, node maps are initialized
  */
-void __init cpuset_init_smp(void)
-{
+व्योम __init cpuset_init_smp(व्योम)
+अणु
 	cpumask_copy(top_cpuset.cpus_allowed, cpu_active_mask);
 	top_cpuset.mems_allowed = node_states[N_MEMORY];
 	top_cpuset.old_mems_allowed = top_cpuset.mems_allowed;
@@ -3280,100 +3281,100 @@ void __init cpuset_init_smp(void)
 	cpumask_copy(top_cpuset.effective_cpus, cpu_active_mask);
 	top_cpuset.effective_mems = node_states[N_MEMORY];
 
-	register_hotmemory_notifier(&cpuset_track_online_nodes_nb);
+	रेजिस्टर_hoपंचांगemory_notअगरier(&cpuset_track_online_nodes_nb);
 
 	cpuset_migrate_mm_wq = alloc_ordered_workqueue("cpuset_migrate_mm", 0);
 	BUG_ON(!cpuset_migrate_mm_wq);
-}
+पूर्ण
 
 /**
- * cpuset_cpus_allowed - return cpus_allowed mask from a tasks cpuset.
- * @tsk: pointer to task_struct from which to obtain cpuset->cpus_allowed.
- * @pmask: pointer to struct cpumask variable to receive cpus_allowed set.
+ * cpuset_cpus_allowed - वापस cpus_allowed mask from a tasks cpuset.
+ * @tsk: poपूर्णांकer to task_काष्ठा from which to obtain cpuset->cpus_allowed.
+ * @pmask: poपूर्णांकer to काष्ठा cpumask variable to receive cpus_allowed set.
  *
  * Description: Returns the cpumask_var_t cpus_allowed of the cpuset
- * attached to the specified @tsk.  Guaranteed to return some non-empty
- * subset of cpu_online_mask, even if this means going outside the
+ * attached to the specअगरied @tsk.  Guaranteed to वापस some non-empty
+ * subset of cpu_online_mask, even अगर this means going outside the
  * tasks cpuset.
  **/
 
-void cpuset_cpus_allowed(struct task_struct *tsk, struct cpumask *pmask)
-{
-	unsigned long flags;
+व्योम cpuset_cpus_allowed(काष्ठा task_काष्ठा *tsk, काष्ठा cpumask *pmask)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&callback_lock, flags);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	guarantee_online_cpus(task_cs(tsk), pmask);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	spin_unlock_irqrestore(&callback_lock, flags);
-}
+पूर्ण
 
 /**
- * cpuset_cpus_allowed_fallback - final fallback before complete catastrophe.
- * @tsk: pointer to task_struct with which the scheduler is struggling
+ * cpuset_cpus_allowed_fallback - final fallback beक्रमe complete catastrophe.
+ * @tsk: poपूर्णांकer to task_काष्ठा with which the scheduler is struggling
  *
- * Description: In the case that the scheduler cannot find an allowed cpu in
+ * Description: In the हाल that the scheduler cannot find an allowed cpu in
  * tsk->cpus_allowed, we fall back to task_cs(tsk)->cpus_allowed. In legacy
  * mode however, this value is the same as task_cs(tsk)->effective_cpus,
- * which will not contain a sane cpumask during cases such as cpu hotplugging.
- * This is the absolute last resort for the scheduler and it is only used if
+ * which will not contain a sane cpumask during हालs such as cpu hotplugging.
+ * This is the असलolute last resort क्रम the scheduler and it is only used अगर
  * _every_ other avenue has been traveled.
  **/
 
-void cpuset_cpus_allowed_fallback(struct task_struct *tsk)
-{
-	rcu_read_lock();
-	do_set_cpus_allowed(tsk, is_in_v2_mode() ?
+व्योम cpuset_cpus_allowed_fallback(काष्ठा task_काष्ठा *tsk)
+अणु
+	rcu_पढ़ो_lock();
+	करो_set_cpus_allowed(tsk, is_in_v2_mode() ?
 		task_cs(tsk)->cpus_allowed : cpu_possible_mask);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	/*
 	 * We own tsk->cpus_allowed, nobody can change it under us.
 	 *
 	 * But we used cs && cs->cpus_allowed lockless and thus can
 	 * race with cgroup_attach_task() or update_cpumask() and get
-	 * the wrong tsk->cpus_allowed. However, both cases imply the
+	 * the wrong tsk->cpus_allowed. However, both हालs imply the
 	 * subsequent cpuset_change_cpumask()->set_cpus_allowed_ptr()
 	 * which takes task_rq_lock().
 	 *
 	 * If we are called after it dropped the lock we must see all
 	 * changes in tsk_cs()->cpus_allowed. Otherwise we can temporary
-	 * set any mask even if it is not right from task_cs() pov,
+	 * set any mask even अगर it is not right from task_cs() pov,
 	 * the pending set_cpus_allowed_ptr() will fix things.
 	 *
 	 * select_fallback_rq() will fix things ups and set cpu_possible_mask
-	 * if required.
+	 * अगर required.
 	 */
-}
+पूर्ण
 
-void __init cpuset_init_current_mems_allowed(void)
-{
+व्योम __init cpuset_init_current_mems_allowed(व्योम)
+अणु
 	nodes_setall(current->mems_allowed);
-}
+पूर्ण
 
 /**
- * cpuset_mems_allowed - return mems_allowed mask from a tasks cpuset.
- * @tsk: pointer to task_struct from which to obtain cpuset->mems_allowed.
+ * cpuset_mems_allowed - वापस mems_allowed mask from a tasks cpuset.
+ * @tsk: poपूर्णांकer to task_काष्ठा from which to obtain cpuset->mems_allowed.
  *
  * Description: Returns the nodemask_t mems_allowed of the cpuset
- * attached to the specified @tsk.  Guaranteed to return some non-empty
- * subset of node_states[N_MEMORY], even if this means going outside the
+ * attached to the specअगरied @tsk.  Guaranteed to वापस some non-empty
+ * subset of node_states[N_MEMORY], even अगर this means going outside the
  * tasks cpuset.
  **/
 
-nodemask_t cpuset_mems_allowed(struct task_struct *tsk)
-{
+nodemask_t cpuset_mems_allowed(काष्ठा task_काष्ठा *tsk)
+अणु
 	nodemask_t mask;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&callback_lock, flags);
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	guarantee_online_mems(task_cs(tsk), &mask);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	spin_unlock_irqrestore(&callback_lock, flags);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /**
  * cpuset_nodemask_valid_mems_allowed - check nodemask vs. current mems_allowed
@@ -3381,178 +3382,178 @@ nodemask_t cpuset_mems_allowed(struct task_struct *tsk)
  *
  * Are any of the nodes in the nodemask allowed in current->mems_allowed?
  */
-int cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask)
-{
-	return nodes_intersects(*nodemask, current->mems_allowed);
-}
+पूर्णांक cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask)
+अणु
+	वापस nodes_पूर्णांकersects(*nodemask, current->mems_allowed);
+पूर्ण
 
 /*
  * nearest_hardwall_ancestor() - Returns the nearest mem_exclusive or
- * mem_hardwall ancestor to the specified cpuset.  Call holding
+ * mem_hardwall ancestor to the specअगरied cpuset.  Call holding
  * callback_lock.  If no ancestor is mem_exclusive or mem_hardwall
- * (an unusual configuration), then returns the root cpuset.
+ * (an unusual configuration), then वापसs the root cpuset.
  */
-static struct cpuset *nearest_hardwall_ancestor(struct cpuset *cs)
-{
-	while (!(is_mem_exclusive(cs) || is_mem_hardwall(cs)) && parent_cs(cs))
+अटल काष्ठा cpuset *nearest_hardwall_ancestor(काष्ठा cpuset *cs)
+अणु
+	जबतक (!(is_mem_exclusive(cs) || is_mem_hardwall(cs)) && parent_cs(cs))
 		cs = parent_cs(cs);
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
 /**
  * cpuset_node_allowed - Can we allocate on a memory node?
  * @node: is this an allowed node?
  * @gfp_mask: memory allocation flags
  *
- * If we're in interrupt, yes, we can always allocate.  If @node is set in
+ * If we're in पूर्णांकerrupt, yes, we can always allocate.  If @node is set in
  * current's mems_allowed, yes.  If it's not a __GFP_HARDWALL request and this
  * node is set in the nearest hardwalled cpuset ancestor to current's cpuset,
  * yes.  If current has access to memory reserves as an oom victim, yes.
  * Otherwise, no.
  *
  * GFP_USER allocations are marked with the __GFP_HARDWALL bit,
- * and do not allow allocations outside the current tasks cpuset
- * unless the task has been OOM killed.
+ * and करो not allow allocations outside the current tasks cpuset
+ * unless the task has been OOM समाप्तed.
  * GFP_KERNEL allocations are not so marked, so can escape to the
  * nearest enclosing hardwalled ancestor cpuset.
  *
  * Scanning up parent cpusets requires callback_lock.  The
  * __alloc_pages() routine only calls here with __GFP_HARDWALL bit
- * _not_ set if it's a GFP_KERNEL allocation, and all nodes in the
+ * _not_ set अगर it's a GFP_KERNEL allocation, and all nodes in the
  * current tasks mems_allowed came up empty on the first pass over
- * the zonelist.  So only GFP_KERNEL allocations, if all nodes in the
- * cpuset are short of memory, might require taking the callback_lock.
+ * the zonelist.  So only GFP_KERNEL allocations, अगर all nodes in the
+ * cpuset are लघु of memory, might require taking the callback_lock.
  *
- * The first call here from mm/page_alloc:get_page_from_freelist()
- * has __GFP_HARDWALL set in gfp_mask, enforcing hardwall cpusets,
+ * The first call here from mm/page_alloc:get_page_from_मुक्तlist()
+ * has __GFP_HARDWALL set in gfp_mask, enक्रमcing hardwall cpusets,
  * so no allocation on a node outside the cpuset is allowed (unless
- * in interrupt, of course).
+ * in पूर्णांकerrupt, of course).
  *
- * The second pass through get_page_from_freelist() doesn't even call
- * here for GFP_ATOMIC calls.  For those calls, the __alloc_pages()
+ * The second pass through get_page_from_मुक्तlist() करोesn't even call
+ * here क्रम GFP_ATOMIC calls.  For those calls, the __alloc_pages()
  * variable 'wait' is not set, and the bit ALLOC_CPUSET is not set
  * in alloc_flags.  That logic and the checks below have the combined
  * affect that:
- *	in_interrupt - any node ok (current task context irrelevant)
+ *	in_पूर्णांकerrupt - any node ok (current task context irrelevant)
  *	GFP_ATOMIC   - any node ok
  *	tsk_is_oom_victim   - any node ok
  *	GFP_KERNEL   - any node in enclosing hardwalled cpuset ok
  *	GFP_USER     - only nodes in current tasks mems allowed ok.
  */
-bool __cpuset_node_allowed(int node, gfp_t gfp_mask)
-{
-	struct cpuset *cs;		/* current cpuset ancestors */
-	int allowed;			/* is allocation in zone z allowed? */
-	unsigned long flags;
+bool __cpuset_node_allowed(पूर्णांक node, gfp_t gfp_mask)
+अणु
+	काष्ठा cpuset *cs;		/* current cpuset ancestors */
+	पूर्णांक allowed;			/* is allocation in zone z allowed? */
+	अचिन्हित दीर्घ flags;
 
-	if (in_interrupt())
-		return true;
-	if (node_isset(node, current->mems_allowed))
-		return true;
+	अगर (in_पूर्णांकerrupt())
+		वापस true;
+	अगर (node_isset(node, current->mems_allowed))
+		वापस true;
 	/*
 	 * Allow tasks that have access to memory reserves because they have
-	 * been OOM killed to get memory anywhere.
+	 * been OOM समाप्तed to get memory anywhere.
 	 */
-	if (unlikely(tsk_is_oom_victim(current)))
-		return true;
-	if (gfp_mask & __GFP_HARDWALL)	/* If hardwall request, stop here */
-		return false;
+	अगर (unlikely(tsk_is_oom_victim(current)))
+		वापस true;
+	अगर (gfp_mask & __GFP_HARDWALL)	/* If hardwall request, stop here */
+		वापस false;
 
-	if (current->flags & PF_EXITING) /* Let dying task have memory */
-		return true;
+	अगर (current->flags & PF_EXITING) /* Let dying task have memory */
+		वापस true;
 
 	/* Not hardwall and node outside mems_allowed: scan up cpusets */
 	spin_lock_irqsave(&callback_lock, flags);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	cs = nearest_hardwall_ancestor(task_cs(current));
 	allowed = node_isset(node, cs->mems_allowed);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	spin_unlock_irqrestore(&callback_lock, flags);
-	return allowed;
-}
+	वापस allowed;
+पूर्ण
 
 /**
- * cpuset_mem_spread_node() - On which node to begin search for a file page
- * cpuset_slab_spread_node() - On which node to begin search for a slab page
+ * cpuset_mem_spपढ़ो_node() - On which node to begin search क्रम a file page
+ * cpuset_slab_spपढ़ो_node() - On which node to begin search क्रम a slab page
  *
- * If a task is marked PF_SPREAD_PAGE or PF_SPREAD_SLAB (as for
- * tasks in a cpuset with is_spread_page or is_spread_slab set),
- * and if the memory allocation used cpuset_mem_spread_node()
- * to determine on which node to start looking, as it will for
- * certain page cache or slab cache pages such as used for file
- * system buffers and inode caches, then instead of starting on the
- * local node to look for a free page, rather spread the starting
+ * If a task is marked PF_SPREAD_PAGE or PF_SPREAD_SLAB (as क्रम
+ * tasks in a cpuset with is_spपढ़ो_page or is_spपढ़ो_slab set),
+ * and अगर the memory allocation used cpuset_mem_spपढ़ो_node()
+ * to determine on which node to start looking, as it will क्रम
+ * certain page cache or slab cache pages such as used क्रम file
+ * प्रणाली buffers and inode caches, then instead of starting on the
+ * local node to look क्रम a मुक्त page, rather spपढ़ो the starting
  * node around the tasks mems_allowed nodes.
  *
- * We don't have to worry about the returned node being offline
- * because "it can't happen", and even if it did, it would be ok.
+ * We करोn't have to worry about the वापसed node being offline
+ * because "it can't happen", and even अगर it did, it would be ok.
  *
  * The routines calling guarantee_online_mems() are careful to
  * only set nodes in task->mems_allowed that are online.  So it
- * should not be possible for the following code to return an
- * offline node.  But if it did, that would be ok, as this routine
- * is not returning the node where the allocation must be, only
+ * should not be possible क्रम the following code to वापस an
+ * offline node.  But अगर it did, that would be ok, as this routine
+ * is not वापसing the node where the allocation must be, only
  * the node where the search should start.  The zonelist passed to
  * __alloc_pages() will include all nodes.  If the slab allocator
  * is passed an offline node, it will fall back to the local node.
  * See kmem_cache_alloc_node().
  */
 
-static int cpuset_spread_node(int *rotor)
-{
-	return *rotor = next_node_in(*rotor, current->mems_allowed);
-}
+अटल पूर्णांक cpuset_spपढ़ो_node(पूर्णांक *rotor)
+अणु
+	वापस *rotor = next_node_in(*rotor, current->mems_allowed);
+पूर्ण
 
-int cpuset_mem_spread_node(void)
-{
-	if (current->cpuset_mem_spread_rotor == NUMA_NO_NODE)
-		current->cpuset_mem_spread_rotor =
-			node_random(&current->mems_allowed);
+पूर्णांक cpuset_mem_spपढ़ो_node(व्योम)
+अणु
+	अगर (current->cpuset_mem_spपढ़ो_rotor == NUMA_NO_NODE)
+		current->cpuset_mem_spपढ़ो_rotor =
+			node_अक्रमom(&current->mems_allowed);
 
-	return cpuset_spread_node(&current->cpuset_mem_spread_rotor);
-}
+	वापस cpuset_spपढ़ो_node(&current->cpuset_mem_spपढ़ो_rotor);
+पूर्ण
 
-int cpuset_slab_spread_node(void)
-{
-	if (current->cpuset_slab_spread_rotor == NUMA_NO_NODE)
-		current->cpuset_slab_spread_rotor =
-			node_random(&current->mems_allowed);
+पूर्णांक cpuset_slab_spपढ़ो_node(व्योम)
+अणु
+	अगर (current->cpuset_slab_spपढ़ो_rotor == NUMA_NO_NODE)
+		current->cpuset_slab_spपढ़ो_rotor =
+			node_अक्रमom(&current->mems_allowed);
 
-	return cpuset_spread_node(&current->cpuset_slab_spread_rotor);
-}
+	वापस cpuset_spपढ़ो_node(&current->cpuset_slab_spपढ़ो_rotor);
+पूर्ण
 
-EXPORT_SYMBOL_GPL(cpuset_mem_spread_node);
+EXPORT_SYMBOL_GPL(cpuset_mem_spपढ़ो_node);
 
 /**
- * cpuset_mems_allowed_intersects - Does @tsk1's mems_allowed intersect @tsk2's?
- * @tsk1: pointer to task_struct of some task.
- * @tsk2: pointer to task_struct of some other task.
+ * cpuset_mems_allowed_पूर्णांकersects - Does @tsk1's mems_allowed intersect @tsk2's?
+ * @tsk1: poपूर्णांकer to task_काष्ठा of some task.
+ * @tsk2: poपूर्णांकer to task_काष्ठा of some other task.
  *
- * Description: Return true if @tsk1's mems_allowed intersects the
- * mems_allowed of @tsk2.  Used by the OOM killer to determine if
+ * Description: Return true अगर @tsk1's mems_allowed पूर्णांकersects the
+ * mems_allowed of @tsk2.  Used by the OOM समाप्तer to determine अगर
  * one of the task's memory usage might impact the memory available
  * to the other.
  **/
 
-int cpuset_mems_allowed_intersects(const struct task_struct *tsk1,
-				   const struct task_struct *tsk2)
-{
-	return nodes_intersects(tsk1->mems_allowed, tsk2->mems_allowed);
-}
+पूर्णांक cpuset_mems_allowed_पूर्णांकersects(स्थिर काष्ठा task_काष्ठा *tsk1,
+				   स्थिर काष्ठा task_काष्ठा *tsk2)
+अणु
+	वापस nodes_पूर्णांकersects(tsk1->mems_allowed, tsk2->mems_allowed);
+पूर्ण
 
 /**
- * cpuset_print_current_mems_allowed - prints current's cpuset and mems_allowed
+ * cpuset_prपूर्णांक_current_mems_allowed - prपूर्णांकs current's cpuset and mems_allowed
  *
- * Description: Prints current's name, cpuset name, and cached copy of its
+ * Description: Prपूर्णांकs current's name, cpuset name, and cached copy of its
  * mems_allowed to the kernel log.
  */
-void cpuset_print_current_mems_allowed(void)
-{
-	struct cgroup *cgrp;
+व्योम cpuset_prपूर्णांक_current_mems_allowed(व्योम)
+अणु
+	काष्ठा cgroup *cgrp;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	cgrp = task_cs(current)->css.cgroup;
 	pr_cont(",cpuset=");
@@ -3560,8 +3561,8 @@ void cpuset_print_current_mems_allowed(void)
 	pr_cont(",mems_allowed=%*pbl",
 		nodemask_pr_args(&current->mems_allowed));
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /*
  * Collection of memory_pressure is suppressed unless
@@ -3569,78 +3570,78 @@ void cpuset_print_current_mems_allowed(void)
  * cpuset file 'memory_pressure_enabled' in the root cpuset.
  */
 
-int cpuset_memory_pressure_enabled __read_mostly;
+पूर्णांक cpuset_memory_pressure_enabled __पढ़ो_mostly;
 
 /**
  * cpuset_memory_pressure_bump - keep stats of per-cpuset reclaims.
  *
  * Keep a running average of the rate of synchronous (direct)
- * page reclaim efforts initiated by tasks in each cpuset.
+ * page reclaim efक्रमts initiated by tasks in each cpuset.
  *
  * This represents the rate at which some task in the cpuset
  * ran low on memory on all nodes it was allowed to use, and
- * had to enter the kernels page reclaim code in an effort to
- * create more free memory by tossing clean pages or swapping
+ * had to enter the kernels page reclaim code in an efक्रमt to
+ * create more मुक्त memory by tossing clean pages or swapping
  * or writing dirty pages.
  *
- * Display to user space in the per-cpuset read-only file
- * "memory_pressure".  Value displayed is an integer
- * representing the recent rate of entry into the synchronous
+ * Display to user space in the per-cpuset पढ़ो-only file
+ * "memory_pressure".  Value displayed is an पूर्णांकeger
+ * representing the recent rate of entry पूर्णांकo the synchronous
  * (direct) page reclaim by any task attached to the cpuset.
  **/
 
-void __cpuset_memory_pressure_bump(void)
-{
-	rcu_read_lock();
+व्योम __cpuset_memory_pressure_bump(व्योम)
+अणु
+	rcu_पढ़ो_lock();
 	fmeter_markevent(&task_cs(current)->fmeter);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-#ifdef CONFIG_PROC_PID_CPUSET
+#अगर_घोषित CONFIG_PROC_PID_CPUSET
 /*
  * proc_cpuset_show()
- *  - Print tasks cpuset path into seq_file.
- *  - Used for /proc/<pid>/cpuset.
+ *  - Prपूर्णांक tasks cpuset path पूर्णांकo seq_file.
+ *  - Used क्रम /proc/<pid>/cpuset.
  *  - No need to task_lock(tsk) on this tsk->cpuset reference, as it
- *    doesn't really matter if tsk->cpuset changes after we read it,
+ *    करोesn't really matter अगर tsk->cpuset changes after we पढ़ो it,
  *    and we take cpuset_mutex, keeping cpuset_attach() from changing it
  *    anyway.
  */
-int proc_cpuset_show(struct seq_file *m, struct pid_namespace *ns,
-		     struct pid *pid, struct task_struct *tsk)
-{
-	char *buf;
-	struct cgroup_subsys_state *css;
-	int retval;
+पूर्णांक proc_cpuset_show(काष्ठा seq_file *m, काष्ठा pid_namespace *ns,
+		     काष्ठा pid *pid, काष्ठा task_काष्ठा *tsk)
+अणु
+	अक्षर *buf;
+	काष्ठा cgroup_subsys_state *css;
+	पूर्णांक retval;
 
 	retval = -ENOMEM;
-	buf = kmalloc(PATH_MAX, GFP_KERNEL);
-	if (!buf)
-		goto out;
+	buf = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
+	अगर (!buf)
+		जाओ out;
 
 	css = task_get_css(tsk, cpuset_cgrp_id);
 	retval = cgroup_path_ns(css->cgroup, buf, PATH_MAX,
 				current->nsproxy->cgroup_ns);
 	css_put(css);
-	if (retval >= PATH_MAX)
+	अगर (retval >= PATH_MAX)
 		retval = -ENAMETOOLONG;
-	if (retval < 0)
-		goto out_free;
-	seq_puts(m, buf);
-	seq_putc(m, '\n');
+	अगर (retval < 0)
+		जाओ out_मुक्त;
+	seq_माला_दो(m, buf);
+	seq_अ_दो(m, '\n');
 	retval = 0;
-out_free:
-	kfree(buf);
+out_मुक्त:
+	kमुक्त(buf);
 out:
-	return retval;
-}
-#endif /* CONFIG_PROC_PID_CPUSET */
+	वापस retval;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PROC_PID_CPUSET */
 
 /* Display task mems_allowed in /proc/<pid>/status file. */
-void cpuset_task_status_allowed(struct seq_file *m, struct task_struct *task)
-{
-	seq_printf(m, "Mems_allowed:\t%*pb\n",
+व्योम cpuset_task_status_allowed(काष्ठा seq_file *m, काष्ठा task_काष्ठा *task)
+अणु
+	seq_म_लिखो(m, "Mems_allowed:\t%*pb\n",
 		   nodemask_pr_args(&task->mems_allowed));
-	seq_printf(m, "Mems_allowed_list:\t%*pbl\n",
+	seq_म_लिखो(m, "Mems_allowed_list:\t%*pbl\n",
 		   nodemask_pr_args(&task->mems_allowed));
-}
+पूर्ण

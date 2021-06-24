@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  */
 
-#include <linux/bits.h>
-#include <linux/clk.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/regulator/consumer.h>
-#include <linux/of_address.h>
-#include <linux/iommu.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/iommu.h>
 
-#include "ce.h"
-#include "coredump.h"
-#include "debug.h"
-#include "hif.h"
-#include "htc.h"
-#include "snoc.h"
+#समावेश "ce.h"
+#समावेश "coredump.h"
+#समावेश "debug.h"
+#समावेश "hif.h"
+#समावेश "htc.h"
+#समावेश "snoc.h"
 
-#define ATH10K_SNOC_RX_POST_RETRY_MS 50
-#define CE_POLL_PIPE 4
-#define ATH10K_SNOC_WAKE_IRQ 2
+#घोषणा ATH10K_SNOC_RX_POST_RETRY_MS 50
+#घोषणा CE_POLL_PIPE 4
+#घोषणा ATH10K_SNOC_WAKE_IRQ 2
 
-static char *const ce_name[] = {
+अटल अक्षर *स्थिर ce_name[] = अणु
 	"WLAN_CE_0",
 	"WLAN_CE_1",
 	"WLAN_CE_2",
@@ -39,663 +40,663 @@ static char *const ce_name[] = {
 	"WLAN_CE_9",
 	"WLAN_CE_10",
 	"WLAN_CE_11",
-};
+पूर्ण;
 
-static const char * const ath10k_regulators[] = {
+अटल स्थिर अक्षर * स्थिर ath10k_regulators[] = अणु
 	"vdd-0.8-cx-mx",
 	"vdd-1.8-xo",
 	"vdd-1.3-rfa",
 	"vdd-3.3-ch0",
 	"vdd-3.3-ch1",
-};
+पूर्ण;
 
-static const char * const ath10k_clocks[] = {
+अटल स्थिर अक्षर * स्थिर ath10k_घड़ीs[] = अणु
 	"cxo_ref_clk_pin", "qdss",
-};
+पूर्ण;
 
-static void ath10k_snoc_htc_tx_cb(struct ath10k_ce_pipe *ce_state);
-static void ath10k_snoc_htt_tx_cb(struct ath10k_ce_pipe *ce_state);
-static void ath10k_snoc_htc_rx_cb(struct ath10k_ce_pipe *ce_state);
-static void ath10k_snoc_htt_rx_cb(struct ath10k_ce_pipe *ce_state);
-static void ath10k_snoc_htt_htc_rx_cb(struct ath10k_ce_pipe *ce_state);
-static void ath10k_snoc_pktlog_rx_cb(struct ath10k_ce_pipe *ce_state);
+अटल व्योम ath10k_snoc_htc_tx_cb(काष्ठा ath10k_ce_pipe *ce_state);
+अटल व्योम ath10k_snoc_htt_tx_cb(काष्ठा ath10k_ce_pipe *ce_state);
+अटल व्योम ath10k_snoc_htc_rx_cb(काष्ठा ath10k_ce_pipe *ce_state);
+अटल व्योम ath10k_snoc_htt_rx_cb(काष्ठा ath10k_ce_pipe *ce_state);
+अटल व्योम ath10k_snoc_htt_htc_rx_cb(काष्ठा ath10k_ce_pipe *ce_state);
+अटल व्योम ath10k_snoc_pktlog_rx_cb(काष्ठा ath10k_ce_pipe *ce_state);
 
-static const struct ath10k_snoc_drv_priv drv_priv = {
+अटल स्थिर काष्ठा ath10k_snoc_drv_priv drv_priv = अणु
 	.hw_rev = ATH10K_HW_WCN3990,
 	.dma_mask = DMA_BIT_MASK(35),
 	.msa_size = 0x100000,
-};
+पूर्ण;
 
-#define WCN3990_SRC_WR_IDX_OFFSET 0x3C
-#define WCN3990_DST_WR_IDX_OFFSET 0x40
+#घोषणा WCN3990_SRC_WR_IDX_OFFSET 0x3C
+#घोषणा WCN3990_DST_WR_IDX_OFFSET 0x40
 
-static struct ath10k_shadow_reg_cfg target_shadow_reg_cfg_map[] = {
-		{
+अटल काष्ठा ath10k_shaकरोw_reg_cfg target_shaकरोw_reg_cfg_map[] = अणु
+		अणु
 			.ce_id = __cpu_to_le16(0),
 			.reg_offset = __cpu_to_le16(WCN3990_SRC_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(3),
 			.reg_offset = __cpu_to_le16(WCN3990_SRC_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(4),
 			.reg_offset = __cpu_to_le16(WCN3990_SRC_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(5),
 			.reg_offset =  __cpu_to_le16(WCN3990_SRC_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(7),
 			.reg_offset = __cpu_to_le16(WCN3990_SRC_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(1),
 			.reg_offset = __cpu_to_le16(WCN3990_DST_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(2),
 			.reg_offset =  __cpu_to_le16(WCN3990_DST_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(7),
 			.reg_offset =  __cpu_to_le16(WCN3990_DST_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(8),
 			.reg_offset =  __cpu_to_le16(WCN3990_DST_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(9),
 			.reg_offset = __cpu_to_le16(WCN3990_DST_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(10),
 			.reg_offset =  __cpu_to_le16(WCN3990_DST_WR_IDX_OFFSET),
-		},
+		पूर्ण,
 
-		{
+		अणु
 			.ce_id = __cpu_to_le16(11),
 			.reg_offset = __cpu_to_le16(WCN3990_DST_WR_IDX_OFFSET),
-		},
-};
+		पूर्ण,
+पूर्ण;
 
-static struct ce_attr host_ce_config_wlan[] = {
+अटल काष्ठा ce_attr host_ce_config_wlan[] = अणु
 	/* CE0: host->target HTC control streams */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 16,
 		.src_sz_max = 2048,
 		.dest_nentries = 0,
 		.send_cb = ath10k_snoc_htc_tx_cb,
-	},
+	पूर्ण,
 
 	/* CE1: target->host HTT + HTC control */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
 		.recv_cb = ath10k_snoc_htt_htc_rx_cb,
-	},
+	पूर्ण,
 
 	/* CE2: target->host WMI */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 64,
 		.recv_cb = ath10k_snoc_htc_rx_cb,
-	},
+	पूर्ण,
 
 	/* CE3: host->target WMI */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 32,
 		.src_sz_max = 2048,
 		.dest_nentries = 0,
 		.send_cb = ath10k_snoc_htc_tx_cb,
-	},
+	पूर्ण,
 
 	/* CE4: host->target HTT */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
 		.src_nentries = 2048,
 		.src_sz_max = 256,
 		.dest_nentries = 0,
 		.send_cb = ath10k_snoc_htt_tx_cb,
-	},
+	पूर्ण,
 
 	/* CE5: target->host HTT (ipa_uc->target ) */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 512,
 		.dest_nentries = 512,
 		.recv_cb = ath10k_snoc_htt_rx_cb,
-	},
+	पूर्ण,
 
-	/* CE6: target autonomous hif_memcpy */
-	{
+	/* CE6: target स्वतःnomous hअगर_स_नकल */
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 0,
 		.dest_nentries = 0,
-	},
+	पूर्ण,
 
-	/* CE7: ce_diag, the Diagnostic Window */
-	{
+	/* CE7: ce_diag, the Diagnostic Winकरोw */
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 2,
 		.src_sz_max = 2048,
 		.dest_nentries = 2,
-	},
+	पूर्ण,
 
 	/* CE8: Target to uMC */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 128,
-	},
+	पूर्ण,
 
 	/* CE9 target->host HTT */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
 		.recv_cb = ath10k_snoc_htt_htc_rx_cb,
-	},
+	पूर्ण,
 
 	/* CE10: target->host HTT */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
 		.recv_cb = ath10k_snoc_htt_htc_rx_cb,
-	},
+	पूर्ण,
 
 	/* CE11: target -> host PKTLOG */
-	{
+	अणु
 		.flags = CE_ATTR_FLAGS,
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
 		.recv_cb = ath10k_snoc_pktlog_rx_cb,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ce_pipe_config target_ce_config_wlan[] = {
+अटल काष्ठा ce_pipe_config target_ce_config_wlan[] = अणु
 	/* CE0: host->target HTC control and raw streams */
-	{
-		.pipenum = __cpu_to_le32(0),
-		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(0),
+		.pipedir = __cpu_to_le32(PIPEसूची_OUT),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE1: target->host HTT + HTC control */
-	{
-		.pipenum = __cpu_to_le32(1),
-		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(1),
+		.pipedir = __cpu_to_le32(PIPEसूची_IN),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE2: target->host WMI */
-	{
-		.pipenum = __cpu_to_le32(2),
-		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(2),
+		.pipedir = __cpu_to_le32(PIPEसूची_IN),
 		.nentries = __cpu_to_le32(64),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE3: host->target WMI */
-	{
-		.pipenum = __cpu_to_le32(3),
-		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(3),
+		.pipedir = __cpu_to_le32(PIPEसूची_OUT),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE4: host->target HTT */
-	{
-		.pipenum = __cpu_to_le32(4),
-		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(4),
+		.pipedir = __cpu_to_le32(PIPEसूची_OUT),
 		.nentries = __cpu_to_le32(256),
 		.nbytes_max = __cpu_to_le32(256),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE5: target->host HTT (HIF->HTT) */
-	{
-		.pipenum = __cpu_to_le32(5),
-		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(5),
+		.pipedir = __cpu_to_le32(PIPEसूची_OUT),
 		.nentries = __cpu_to_le32(1024),
 		.nbytes_max = __cpu_to_le32(64),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
-	/* CE6: Reserved for target autonomous hif_memcpy */
-	{
-		.pipenum = __cpu_to_le32(6),
-		.pipedir = __cpu_to_le32(PIPEDIR_INOUT),
+	/* CE6: Reserved क्रम target स्वतःnomous hअगर_स_नकल */
+	अणु
+		.pipक्रमागत = __cpu_to_le32(6),
+		.pipedir = __cpu_to_le32(PIPEसूची_INOUT),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(16384),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE7 used only by Host */
-	{
-		.pipenum = __cpu_to_le32(7),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(7),
 		.pipedir = __cpu_to_le32(4),
 		.nentries = __cpu_to_le32(0),
 		.nbytes_max = __cpu_to_le32(0),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE8 Target to uMC */
-	{
-		.pipenum = __cpu_to_le32(8),
-		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(8),
+		.pipedir = __cpu_to_le32(PIPEसूची_IN),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(0),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE9 target->host HTT */
-	{
-		.pipenum = __cpu_to_le32(9),
-		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(9),
+		.pipedir = __cpu_to_le32(PIPEसूची_IN),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
 	/* CE10 target->host HTT */
-	{
-		.pipenum = __cpu_to_le32(10),
-		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+	अणु
+		.pipक्रमागत = __cpu_to_le32(10),
+		.pipedir = __cpu_to_le32(PIPEसूची_IN),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
+	पूर्ण,
 
-	/* CE11 target autonomous qcache memcpy */
-	{
-		.pipenum = __cpu_to_le32(11),
-		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+	/* CE11 target स्वतःnomous qcache स_नकल */
+	अणु
+		.pipक्रमागत = __cpu_to_le32(11),
+		.pipedir = __cpu_to_le32(PIPEसूची_IN),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
 		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct ce_service_to_pipe target_service_to_ce_map_wlan[] = {
-	{
+अटल काष्ठा ce_service_to_pipe target_service_to_ce_map_wlan[] = अणु
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_VO),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(3),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_VO),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_BK),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(3),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_BK),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_BE),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(3),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_BE),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_VI),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(3),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_DATA_VI),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_CONTROL),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(3),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_WMI_CONTROL),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_RSVD_CTRL),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(0),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_RSVD_CTRL),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
-	},
-	{ /* not used */
+	पूर्ण,
+	अणु /* not used */
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(0),
-	},
-	{ /* not used */
+	पूर्ण,
+	अणु /* not used */
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_HTT_DATA_MSG),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(PIPEसूची_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(4),
-	},
-	{
+	पूर्ण,
+	अणु
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_HTT_DATA_MSG),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(1),
-	},
-	{ /* not used */
+	पूर्ण,
+	अणु /* not used */
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		__cpu_to_le32(PIPEDIR_OUT),
+		__cpu_to_le32(PIPEसूची_OUT),
 		__cpu_to_le32(5),
-	},
-	{ /* in = DL = target -> host */
+	पूर्ण,
+	अणु /* in = DL = target -> host */
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_HTT_DATA2_MSG),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(9),
-	},
-	{ /* in = DL = target -> host */
+	पूर्ण,
+	अणु /* in = DL = target -> host */
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_HTT_DATA3_MSG),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(10),
-	},
-	{ /* in = DL = target -> host pktlog */
+	पूर्ण,
+	अणु /* in = DL = target -> host pktlog */
 		__cpu_to_le32(ATH10K_HTC_SVC_ID_HTT_LOG_MSG),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(PIPEसूची_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(11),
-	},
+	पूर्ण,
 	/* (Additions here) */
 
-	{ /* must be last */
+	अणु /* must be last */
 		__cpu_to_le32(0),
 		__cpu_to_le32(0),
 		__cpu_to_le32(0),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void ath10k_snoc_write32(struct ath10k *ar, u32 offset, u32 value)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल व्योम ath10k_snoc_ग_लिखो32(काष्ठा ath10k *ar, u32 offset, u32 value)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 
-	iowrite32(value, ar_snoc->mem + offset);
-}
+	ioग_लिखो32(value, ar_snoc->mem + offset);
+पूर्ण
 
-static u32 ath10k_snoc_read32(struct ath10k *ar, u32 offset)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल u32 ath10k_snoc_पढ़ो32(काष्ठा ath10k *ar, u32 offset)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 	u32 val;
 
-	val = ioread32(ar_snoc->mem + offset);
+	val = ioपढ़ो32(ar_snoc->mem + offset);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int __ath10k_snoc_rx_post_buf(struct ath10k_snoc_pipe *pipe)
-{
-	struct ath10k_ce_pipe *ce_pipe = pipe->ce_hdl;
-	struct ath10k *ar = pipe->hif_ce_state;
-	struct ath10k_ce *ce = ath10k_ce_priv(ar);
-	struct sk_buff *skb;
+अटल पूर्णांक __ath10k_snoc_rx_post_buf(काष्ठा ath10k_snoc_pipe *pipe)
+अणु
+	काष्ठा ath10k_ce_pipe *ce_pipe = pipe->ce_hdl;
+	काष्ठा ath10k *ar = pipe->hअगर_ce_state;
+	काष्ठा ath10k_ce *ce = ath10k_ce_priv(ar);
+	काष्ठा sk_buff *skb;
 	dma_addr_t paddr;
-	int ret;
+	पूर्णांक ret;
 
 	skb = dev_alloc_skb(pipe->buf_sz);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	WARN_ONCE((unsigned long)skb->data & 3, "unaligned skb");
+	WARN_ONCE((अचिन्हित दीर्घ)skb->data & 3, "unaligned skb");
 
 	paddr = dma_map_single(ar->dev, skb->data,
 			       skb->len + skb_tailroom(skb),
 			       DMA_FROM_DEVICE);
-	if (unlikely(dma_mapping_error(ar->dev, paddr))) {
+	अगर (unlikely(dma_mapping_error(ar->dev, paddr))) अणु
 		ath10k_warn(ar, "failed to dma map snoc rx buf\n");
-		dev_kfree_skb_any(skb);
-		return -EIO;
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस -EIO;
+	पूर्ण
 
 	ATH10K_SKB_RXCB(skb)->paddr = paddr;
 
 	spin_lock_bh(&ce->ce_lock);
 	ret = ce_pipe->ops->ce_rx_post_buf(ce_pipe, skb, paddr);
 	spin_unlock_bh(&ce->ce_lock);
-	if (ret) {
+	अगर (ret) अणु
 		dma_unmap_single(ar->dev, paddr, skb->len + skb_tailroom(skb),
 				 DMA_FROM_DEVICE);
-		dev_kfree_skb_any(skb);
-		return ret;
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath10k_snoc_rx_post_pipe(struct ath10k_snoc_pipe *pipe)
-{
-	struct ath10k *ar = pipe->hif_ce_state;
-	struct ath10k_ce *ce = ath10k_ce_priv(ar);
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct ath10k_ce_pipe *ce_pipe = pipe->ce_hdl;
-	int ret, num;
+अटल व्योम ath10k_snoc_rx_post_pipe(काष्ठा ath10k_snoc_pipe *pipe)
+अणु
+	काष्ठा ath10k *ar = pipe->hअगर_ce_state;
+	काष्ठा ath10k_ce *ce = ath10k_ce_priv(ar);
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा ath10k_ce_pipe *ce_pipe = pipe->ce_hdl;
+	पूर्णांक ret, num;
 
-	if (pipe->buf_sz == 0)
-		return;
+	अगर (pipe->buf_sz == 0)
+		वापस;
 
-	if (!ce_pipe->dest_ring)
-		return;
+	अगर (!ce_pipe->dest_ring)
+		वापस;
 
 	spin_lock_bh(&ce->ce_lock);
-	num = __ath10k_ce_rx_num_free_bufs(ce_pipe);
+	num = __ath10k_ce_rx_num_मुक्त_bufs(ce_pipe);
 	spin_unlock_bh(&ce->ce_lock);
-	while (num--) {
+	जबतक (num--) अणु
 		ret = __ath10k_snoc_rx_post_buf(pipe);
-		if (ret) {
-			if (ret == -ENOSPC)
-				break;
+		अगर (ret) अणु
+			अगर (ret == -ENOSPC)
+				अवरोध;
 			ath10k_warn(ar, "failed to post rx buf: %d\n", ret);
-			mod_timer(&ar_snoc->rx_post_retry, jiffies +
+			mod_समयr(&ar_snoc->rx_post_retry, jअगरfies +
 				  ATH10K_SNOC_RX_POST_RETRY_MS);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ath10k_snoc_rx_post(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int i;
+अटल व्योम ath10k_snoc_rx_post(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक i;
 
-	for (i = 0; i < CE_COUNT; i++)
+	क्रम (i = 0; i < CE_COUNT; i++)
 		ath10k_snoc_rx_post_pipe(&ar_snoc->pipe_info[i]);
-}
+पूर्ण
 
-static void ath10k_snoc_process_rx_cb(struct ath10k_ce_pipe *ce_state,
-				      void (*callback)(struct ath10k *ar,
-						       struct sk_buff *skb))
-{
-	struct ath10k *ar = ce_state->ar;
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct ath10k_snoc_pipe *pipe_info =  &ar_snoc->pipe_info[ce_state->id];
-	struct sk_buff *skb;
-	struct sk_buff_head list;
-	void *transfer_context;
-	unsigned int nbytes, max_nbytes;
+अटल व्योम ath10k_snoc_process_rx_cb(काष्ठा ath10k_ce_pipe *ce_state,
+				      व्योम (*callback)(काष्ठा ath10k *ar,
+						       काष्ठा sk_buff *skb))
+अणु
+	काष्ठा ath10k *ar = ce_state->ar;
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा ath10k_snoc_pipe *pipe_info =  &ar_snoc->pipe_info[ce_state->id];
+	काष्ठा sk_buff *skb;
+	काष्ठा sk_buff_head list;
+	व्योम *transfer_context;
+	अचिन्हित पूर्णांक nbytes, max_nbytes;
 
 	__skb_queue_head_init(&list);
-	while (ath10k_ce_completed_recv_next(ce_state, &transfer_context,
-					     &nbytes) == 0) {
+	जबतक (ath10k_ce_completed_recv_next(ce_state, &transfer_context,
+					     &nbytes) == 0) अणु
 		skb = transfer_context;
 		max_nbytes = skb->len + skb_tailroom(skb);
 		dma_unmap_single(ar->dev, ATH10K_SKB_RXCB(skb)->paddr,
 				 max_nbytes, DMA_FROM_DEVICE);
 
-		if (unlikely(max_nbytes < nbytes)) {
+		अगर (unlikely(max_nbytes < nbytes)) अणु
 			ath10k_warn(ar, "rxed more than expected (nbytes %d, max %d)\n",
 				    nbytes, max_nbytes);
-			dev_kfree_skb_any(skb);
-			continue;
-		}
+			dev_kमुक्त_skb_any(skb);
+			जारी;
+		पूर्ण
 
 		skb_put(skb, nbytes);
 		__skb_queue_tail(&list, skb);
-	}
+	पूर्ण
 
-	while ((skb = __skb_dequeue(&list))) {
+	जबतक ((skb = __skb_dequeue(&list))) अणु
 		ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc rx ce pipe %d len %d\n",
 			   ce_state->id, skb->len);
 
 		callback(ar, skb);
-	}
+	पूर्ण
 
 	ath10k_snoc_rx_post_pipe(pipe_info);
-}
+पूर्ण
 
-static void ath10k_snoc_htc_rx_cb(struct ath10k_ce_pipe *ce_state)
-{
+अटल व्योम ath10k_snoc_htc_rx_cb(काष्ठा ath10k_ce_pipe *ce_state)
+अणु
 	ath10k_snoc_process_rx_cb(ce_state, ath10k_htc_rx_completion_handler);
-}
+पूर्ण
 
-static void ath10k_snoc_htt_htc_rx_cb(struct ath10k_ce_pipe *ce_state)
-{
-	/* CE4 polling needs to be done whenever CE pipe which transports
+अटल व्योम ath10k_snoc_htt_htc_rx_cb(काष्ठा ath10k_ce_pipe *ce_state)
+अणु
+	/* CE4 polling needs to be करोne whenever CE pipe which transports
 	 * HTT Rx (target->host) is processed.
 	 */
 	ath10k_ce_per_engine_service(ce_state->ar, CE_POLL_PIPE);
 
 	ath10k_snoc_process_rx_cb(ce_state, ath10k_htc_rx_completion_handler);
-}
+पूर्ण
 
 /* Called by lower (CE) layer when data is received from the Target.
  * WCN3990 firmware uses separate CE(CE11) to transfer pktlog data.
  */
-static void ath10k_snoc_pktlog_rx_cb(struct ath10k_ce_pipe *ce_state)
-{
+अटल व्योम ath10k_snoc_pktlog_rx_cb(काष्ठा ath10k_ce_pipe *ce_state)
+अणु
 	ath10k_snoc_process_rx_cb(ce_state, ath10k_htc_rx_completion_handler);
-}
+पूर्ण
 
-static void ath10k_snoc_htt_rx_deliver(struct ath10k *ar, struct sk_buff *skb)
-{
-	skb_pull(skb, sizeof(struct ath10k_htc_hdr));
+अटल व्योम ath10k_snoc_htt_rx_deliver(काष्ठा ath10k *ar, काष्ठा sk_buff *skb)
+अणु
+	skb_pull(skb, माप(काष्ठा ath10k_htc_hdr));
 	ath10k_htt_t2h_msg_handler(ar, skb);
-}
+पूर्ण
 
-static void ath10k_snoc_htt_rx_cb(struct ath10k_ce_pipe *ce_state)
-{
+अटल व्योम ath10k_snoc_htt_rx_cb(काष्ठा ath10k_ce_pipe *ce_state)
+अणु
 	ath10k_ce_per_engine_service(ce_state->ar, CE_POLL_PIPE);
 	ath10k_snoc_process_rx_cb(ce_state, ath10k_snoc_htt_rx_deliver);
-}
+पूर्ण
 
-static void ath10k_snoc_rx_replenish_retry(struct timer_list *t)
-{
-	struct ath10k_snoc *ar_snoc = from_timer(ar_snoc, t, rx_post_retry);
-	struct ath10k *ar = ar_snoc->ar;
+अटल व्योम ath10k_snoc_rx_replenish_retry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = from_समयr(ar_snoc, t, rx_post_retry);
+	काष्ठा ath10k *ar = ar_snoc->ar;
 
 	ath10k_snoc_rx_post(ar);
-}
+पूर्ण
 
-static void ath10k_snoc_htc_tx_cb(struct ath10k_ce_pipe *ce_state)
-{
-	struct ath10k *ar = ce_state->ar;
-	struct sk_buff_head list;
-	struct sk_buff *skb;
+अटल व्योम ath10k_snoc_htc_tx_cb(काष्ठा ath10k_ce_pipe *ce_state)
+अणु
+	काष्ठा ath10k *ar = ce_state->ar;
+	काष्ठा sk_buff_head list;
+	काष्ठा sk_buff *skb;
 
 	__skb_queue_head_init(&list);
-	while (ath10k_ce_completed_send_next(ce_state, (void **)&skb) == 0) {
-		if (!skb)
-			continue;
+	जबतक (ath10k_ce_completed_send_next(ce_state, (व्योम **)&skb) == 0) अणु
+		अगर (!skb)
+			जारी;
 
 		__skb_queue_tail(&list, skb);
-	}
+	पूर्ण
 
-	while ((skb = __skb_dequeue(&list)))
+	जबतक ((skb = __skb_dequeue(&list)))
 		ath10k_htc_tx_completion_handler(ar, skb);
-}
+पूर्ण
 
-static void ath10k_snoc_htt_tx_cb(struct ath10k_ce_pipe *ce_state)
-{
-	struct ath10k *ar = ce_state->ar;
-	struct sk_buff *skb;
+अटल व्योम ath10k_snoc_htt_tx_cb(काष्ठा ath10k_ce_pipe *ce_state)
+अणु
+	काष्ठा ath10k *ar = ce_state->ar;
+	काष्ठा sk_buff *skb;
 
-	while (ath10k_ce_completed_send_next(ce_state, (void **)&skb) == 0) {
-		if (!skb)
-			continue;
+	जबतक (ath10k_ce_completed_send_next(ce_state, (व्योम **)&skb) == 0) अणु
+		अगर (!skb)
+			जारी;
 
 		dma_unmap_single(ar->dev, ATH10K_SKB_CB(skb)->paddr,
 				 skb->len, DMA_TO_DEVICE);
-		ath10k_htt_hif_tx_complete(ar, skb);
-	}
-}
+		ath10k_htt_hअगर_tx_complete(ar, skb);
+	पूर्ण
+पूर्ण
 
-static int ath10k_snoc_hif_tx_sg(struct ath10k *ar, u8 pipe_id,
-				 struct ath10k_hif_sg_item *items, int n_items)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct ath10k_ce *ce = ath10k_ce_priv(ar);
-	struct ath10k_snoc_pipe *snoc_pipe;
-	struct ath10k_ce_pipe *ce_pipe;
-	int err, i = 0;
+अटल पूर्णांक ath10k_snoc_hअगर_tx_sg(काष्ठा ath10k *ar, u8 pipe_id,
+				 काष्ठा ath10k_hअगर_sg_item *items, पूर्णांक n_items)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा ath10k_ce *ce = ath10k_ce_priv(ar);
+	काष्ठा ath10k_snoc_pipe *snoc_pipe;
+	काष्ठा ath10k_ce_pipe *ce_pipe;
+	पूर्णांक err, i = 0;
 
 	snoc_pipe = &ar_snoc->pipe_info[pipe_id];
 	ce_pipe = snoc_pipe->ce_hdl;
 	spin_lock_bh(&ce->ce_lock);
 
-	for (i = 0; i < n_items - 1; i++) {
+	क्रम (i = 0; i < n_items - 1; i++) अणु
 		ath10k_dbg(ar, ATH10K_DBG_SNOC,
 			   "snoc tx item %d paddr %pad len %d n_items %d\n",
 			   i, &items[i].paddr, items[i].len, n_items);
@@ -706,9 +707,9 @@ static int ath10k_snoc_hif_tx_sg(struct ath10k *ar, u8 pipe_id,
 					    items[i].len,
 					    items[i].transfer_id,
 					    CE_SEND_FLAG_GATHER);
-		if (err)
-			goto err;
-	}
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC,
 		   "snoc tx item %d paddr %pad len %d n_items %d\n",
@@ -720,211 +721,211 @@ static int ath10k_snoc_hif_tx_sg(struct ath10k *ar, u8 pipe_id,
 				    items[i].len,
 				    items[i].transfer_id,
 				    0);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	spin_unlock_bh(&ce->ce_lock);
 
-	return 0;
+	वापस 0;
 
 err:
-	for (; i > 0; i--)
+	क्रम (; i > 0; i--)
 		__ath10k_ce_send_revert(ce_pipe);
 
 	spin_unlock_bh(&ce->ce_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ath10k_snoc_hif_get_target_info(struct ath10k *ar,
-					   struct bmi_target_info *target_info)
-{
+अटल पूर्णांक ath10k_snoc_hअगर_get_target_info(काष्ठा ath10k *ar,
+					   काष्ठा bmi_target_info *target_info)
+अणु
 	target_info->version = ATH10K_HW_WCN3990;
 	target_info->type = ATH10K_HW_WCN3990;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u16 ath10k_snoc_hif_get_free_queue_number(struct ath10k *ar, u8 pipe)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल u16 ath10k_snoc_hअगर_get_मुक्त_queue_number(काष्ठा ath10k *ar, u8 pipe)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "hif get free queue number\n");
 
-	return ath10k_ce_num_free_src_entries(ar_snoc->pipe_info[pipe].ce_hdl);
-}
+	वापस ath10k_ce_num_मुक्त_src_entries(ar_snoc->pipe_info[pipe].ce_hdl);
+पूर्ण
 
-static void ath10k_snoc_hif_send_complete_check(struct ath10k *ar, u8 pipe,
-						int force)
-{
-	int resources;
+अटल व्योम ath10k_snoc_hअगर_send_complete_check(काष्ठा ath10k *ar, u8 pipe,
+						पूर्णांक क्रमce)
+अणु
+	पूर्णांक resources;
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc hif send complete check\n");
 
-	if (!force) {
-		resources = ath10k_snoc_hif_get_free_queue_number(ar, pipe);
+	अगर (!क्रमce) अणु
+		resources = ath10k_snoc_hअगर_get_मुक्त_queue_number(ar, pipe);
 
-		if (resources > (host_ce_config_wlan[pipe].src_nentries >> 1))
-			return;
-	}
+		अगर (resources > (host_ce_config_wlan[pipe].src_nentries >> 1))
+			वापस;
+	पूर्ण
 	ath10k_ce_per_engine_service(ar, pipe);
-}
+पूर्ण
 
-static int ath10k_snoc_hif_map_service_to_pipe(struct ath10k *ar,
+अटल पूर्णांक ath10k_snoc_hअगर_map_service_to_pipe(काष्ठा ath10k *ar,
 					       u16 service_id,
 					       u8 *ul_pipe, u8 *dl_pipe)
-{
-	const struct ce_service_to_pipe *entry;
+अणु
+	स्थिर काष्ठा ce_service_to_pipe *entry;
 	bool ul_set = false, dl_set = false;
-	int i;
+	पूर्णांक i;
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc hif map service\n");
 
-	for (i = 0; i < ARRAY_SIZE(target_service_to_ce_map_wlan); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(target_service_to_ce_map_wlan); i++) अणु
 		entry = &target_service_to_ce_map_wlan[i];
 
-		if (__le32_to_cpu(entry->service_id) != service_id)
-			continue;
+		अगर (__le32_to_cpu(entry->service_id) != service_id)
+			जारी;
 
-		switch (__le32_to_cpu(entry->pipedir)) {
-		case PIPEDIR_NONE:
-			break;
-		case PIPEDIR_IN:
+		चयन (__le32_to_cpu(entry->pipedir)) अणु
+		हाल PIPEसूची_NONE:
+			अवरोध;
+		हाल PIPEसूची_IN:
 			WARN_ON(dl_set);
-			*dl_pipe = __le32_to_cpu(entry->pipenum);
+			*dl_pipe = __le32_to_cpu(entry->pipक्रमागत);
 			dl_set = true;
-			break;
-		case PIPEDIR_OUT:
+			अवरोध;
+		हाल PIPEसूची_OUT:
 			WARN_ON(ul_set);
-			*ul_pipe = __le32_to_cpu(entry->pipenum);
+			*ul_pipe = __le32_to_cpu(entry->pipक्रमागत);
 			ul_set = true;
-			break;
-		case PIPEDIR_INOUT:
+			अवरोध;
+		हाल PIPEसूची_INOUT:
 			WARN_ON(dl_set);
 			WARN_ON(ul_set);
-			*dl_pipe = __le32_to_cpu(entry->pipenum);
-			*ul_pipe = __le32_to_cpu(entry->pipenum);
+			*dl_pipe = __le32_to_cpu(entry->pipक्रमागत);
+			*ul_pipe = __le32_to_cpu(entry->pipक्रमागत);
 			dl_set = true;
 			ul_set = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!ul_set || !dl_set)
-		return -ENOENT;
+	अगर (!ul_set || !dl_set)
+		वापस -ENOENT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath10k_snoc_hif_get_default_pipe(struct ath10k *ar,
+अटल व्योम ath10k_snoc_hअगर_get_शेष_pipe(काष्ठा ath10k *ar,
 					     u8 *ul_pipe, u8 *dl_pipe)
-{
+अणु
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc hif get default pipe\n");
 
-	(void)ath10k_snoc_hif_map_service_to_pipe(ar,
+	(व्योम)ath10k_snoc_hअगर_map_service_to_pipe(ar,
 						 ATH10K_HTC_SVC_ID_RSVD_CTRL,
 						 ul_pipe, dl_pipe);
-}
+पूर्ण
 
-static inline void ath10k_snoc_irq_disable(struct ath10k *ar)
-{
-	ath10k_ce_disable_interrupts(ar);
-}
+अटल अंतरभूत व्योम ath10k_snoc_irq_disable(काष्ठा ath10k *ar)
+अणु
+	ath10k_ce_disable_पूर्णांकerrupts(ar);
+पूर्ण
 
-static inline void ath10k_snoc_irq_enable(struct ath10k *ar)
-{
-	ath10k_ce_enable_interrupts(ar);
-}
+अटल अंतरभूत व्योम ath10k_snoc_irq_enable(काष्ठा ath10k *ar)
+अणु
+	ath10k_ce_enable_पूर्णांकerrupts(ar);
+पूर्ण
 
-static void ath10k_snoc_rx_pipe_cleanup(struct ath10k_snoc_pipe *snoc_pipe)
-{
-	struct ath10k_ce_pipe *ce_pipe;
-	struct ath10k_ce_ring *ce_ring;
-	struct sk_buff *skb;
-	struct ath10k *ar;
-	int i;
+अटल व्योम ath10k_snoc_rx_pipe_cleanup(काष्ठा ath10k_snoc_pipe *snoc_pipe)
+अणु
+	काष्ठा ath10k_ce_pipe *ce_pipe;
+	काष्ठा ath10k_ce_ring *ce_ring;
+	काष्ठा sk_buff *skb;
+	काष्ठा ath10k *ar;
+	पूर्णांक i;
 
-	ar = snoc_pipe->hif_ce_state;
+	ar = snoc_pipe->hअगर_ce_state;
 	ce_pipe = snoc_pipe->ce_hdl;
 	ce_ring = ce_pipe->dest_ring;
 
-	if (!ce_ring)
-		return;
+	अगर (!ce_ring)
+		वापस;
 
-	if (!snoc_pipe->buf_sz)
-		return;
+	अगर (!snoc_pipe->buf_sz)
+		वापस;
 
-	for (i = 0; i < ce_ring->nentries; i++) {
+	क्रम (i = 0; i < ce_ring->nentries; i++) अणु
 		skb = ce_ring->per_transfer_context[i];
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
-		ce_ring->per_transfer_context[i] = NULL;
+		ce_ring->per_transfer_context[i] = शून्य;
 
 		dma_unmap_single(ar->dev, ATH10K_SKB_RXCB(skb)->paddr,
 				 skb->len + skb_tailroom(skb),
 				 DMA_FROM_DEVICE);
-		dev_kfree_skb_any(skb);
-	}
-}
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
+पूर्ण
 
-static void ath10k_snoc_tx_pipe_cleanup(struct ath10k_snoc_pipe *snoc_pipe)
-{
-	struct ath10k_ce_pipe *ce_pipe;
-	struct ath10k_ce_ring *ce_ring;
-	struct sk_buff *skb;
-	struct ath10k *ar;
-	int i;
+अटल व्योम ath10k_snoc_tx_pipe_cleanup(काष्ठा ath10k_snoc_pipe *snoc_pipe)
+अणु
+	काष्ठा ath10k_ce_pipe *ce_pipe;
+	काष्ठा ath10k_ce_ring *ce_ring;
+	काष्ठा sk_buff *skb;
+	काष्ठा ath10k *ar;
+	पूर्णांक i;
 
-	ar = snoc_pipe->hif_ce_state;
+	ar = snoc_pipe->hअगर_ce_state;
 	ce_pipe = snoc_pipe->ce_hdl;
 	ce_ring = ce_pipe->src_ring;
 
-	if (!ce_ring)
-		return;
+	अगर (!ce_ring)
+		वापस;
 
-	if (!snoc_pipe->buf_sz)
-		return;
+	अगर (!snoc_pipe->buf_sz)
+		वापस;
 
-	for (i = 0; i < ce_ring->nentries; i++) {
+	क्रम (i = 0; i < ce_ring->nentries; i++) अणु
 		skb = ce_ring->per_transfer_context[i];
-		if (!skb)
-			continue;
+		अगर (!skb)
+			जारी;
 
-		ce_ring->per_transfer_context[i] = NULL;
+		ce_ring->per_transfer_context[i] = शून्य;
 
 		ath10k_htc_tx_completion_handler(ar, skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ath10k_snoc_buffer_cleanup(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct ath10k_snoc_pipe *pipe_info;
-	int pipe_num;
+अटल व्योम ath10k_snoc_buffer_cleanup(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा ath10k_snoc_pipe *pipe_info;
+	पूर्णांक pipe_num;
 
-	del_timer_sync(&ar_snoc->rx_post_retry);
-	for (pipe_num = 0; pipe_num < CE_COUNT; pipe_num++) {
+	del_समयr_sync(&ar_snoc->rx_post_retry);
+	क्रम (pipe_num = 0; pipe_num < CE_COUNT; pipe_num++) अणु
 		pipe_info = &ar_snoc->pipe_info[pipe_num];
 		ath10k_snoc_rx_pipe_cleanup(pipe_info);
 		ath10k_snoc_tx_pipe_cleanup(pipe_info);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ath10k_snoc_hif_stop(struct ath10k *ar)
-{
-	if (!test_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags))
+अटल व्योम ath10k_snoc_hअगर_stop(काष्ठा ath10k *ar)
+अणु
+	अगर (!test_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags))
 		ath10k_snoc_irq_disable(ar);
 
 	ath10k_core_napi_sync_disable(ar);
 	ath10k_snoc_buffer_cleanup(ar);
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot hif stop\n");
-}
+पूर्ण
 
-static int ath10k_snoc_hif_start(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल पूर्णांक ath10k_snoc_hअगर_start(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 
-	bitmap_clear(ar_snoc->pending_ce_irqs, 0, CE_COUNT_MAX);
+	biपंचांगap_clear(ar_snoc->pending_ce_irqs, 0, CE_COUNT_MAX);
 
 	ath10k_core_napi_enable(ar);
 	ath10k_snoc_irq_enable(ar);
@@ -934,36 +935,36 @@ static int ath10k_snoc_hif_start(struct ath10k *ar)
 
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot hif start\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath10k_snoc_init_pipes(struct ath10k *ar)
-{
-	int i, ret;
+अटल पूर्णांक ath10k_snoc_init_pipes(काष्ठा ath10k *ar)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < CE_COUNT; i++) {
+	क्रम (i = 0; i < CE_COUNT; i++) अणु
 		ret = ath10k_ce_init_pipe(ar, i, &host_ce_config_wlan[i]);
-		if (ret) {
+		अगर (ret) अणु
 			ath10k_err(ar, "failed to initialize copy engine pipe %d: %d\n",
 				   i, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath10k_snoc_wlan_enable(struct ath10k *ar,
-				   enum ath10k_firmware_mode fw_mode)
-{
-	struct ath10k_tgt_pipe_cfg tgt_cfg[CE_COUNT_MAX];
-	struct ath10k_qmi_wlan_enable_cfg cfg;
-	enum wlfw_driver_mode_enum_v01 mode;
-	int pipe_num;
+अटल पूर्णांक ath10k_snoc_wlan_enable(काष्ठा ath10k *ar,
+				   क्रमागत ath10k_firmware_mode fw_mode)
+अणु
+	काष्ठा ath10k_tgt_pipe_cfg tgt_cfg[CE_COUNT_MAX];
+	काष्ठा ath10k_qmi_wlan_enable_cfg cfg;
+	क्रमागत wlfw_driver_mode_क्रमागत_v01 mode;
+	पूर्णांक pipe_num;
 
-	for (pipe_num = 0; pipe_num < CE_COUNT_MAX; pipe_num++) {
+	क्रम (pipe_num = 0; pipe_num < CE_COUNT_MAX; pipe_num++) अणु
 		tgt_cfg[pipe_num].pipe_num =
-				target_ce_config_wlan[pipe_num].pipenum;
+				target_ce_config_wlan[pipe_num].pipक्रमागत;
 		tgt_cfg[pipe_num].pipe_dir =
 				target_ce_config_wlan[pipe_num].pipedir;
 		tgt_cfg[pipe_num].nentries =
@@ -973,490 +974,490 @@ static int ath10k_snoc_wlan_enable(struct ath10k *ar,
 		tgt_cfg[pipe_num].flags =
 				target_ce_config_wlan[pipe_num].flags;
 		tgt_cfg[pipe_num].reserved = 0;
-	}
+	पूर्ण
 
-	cfg.num_ce_tgt_cfg = sizeof(target_ce_config_wlan) /
-				sizeof(struct ath10k_tgt_pipe_cfg);
-	cfg.ce_tgt_cfg = (struct ath10k_tgt_pipe_cfg *)
+	cfg.num_ce_tgt_cfg = माप(target_ce_config_wlan) /
+				माप(काष्ठा ath10k_tgt_pipe_cfg);
+	cfg.ce_tgt_cfg = (काष्ठा ath10k_tgt_pipe_cfg *)
 		&tgt_cfg;
-	cfg.num_ce_svc_pipe_cfg = sizeof(target_service_to_ce_map_wlan) /
-				  sizeof(struct ath10k_svc_pipe_cfg);
-	cfg.ce_svc_cfg = (struct ath10k_svc_pipe_cfg *)
+	cfg.num_ce_svc_pipe_cfg = माप(target_service_to_ce_map_wlan) /
+				  माप(काष्ठा ath10k_svc_pipe_cfg);
+	cfg.ce_svc_cfg = (काष्ठा ath10k_svc_pipe_cfg *)
 		&target_service_to_ce_map_wlan;
-	cfg.num_shadow_reg_cfg = ARRAY_SIZE(target_shadow_reg_cfg_map);
-	cfg.shadow_reg_cfg = (struct ath10k_shadow_reg_cfg *)
-		&target_shadow_reg_cfg_map;
+	cfg.num_shaकरोw_reg_cfg = ARRAY_SIZE(target_shaकरोw_reg_cfg_map);
+	cfg.shaकरोw_reg_cfg = (काष्ठा ath10k_shaकरोw_reg_cfg *)
+		&target_shaकरोw_reg_cfg_map;
 
-	switch (fw_mode) {
-	case ATH10K_FIRMWARE_MODE_NORMAL:
+	चयन (fw_mode) अणु
+	हाल ATH10K_FIRMWARE_MODE_NORMAL:
 		mode = QMI_WLFW_MISSION_V01;
-		break;
-	case ATH10K_FIRMWARE_MODE_UTF:
+		अवरोध;
+	हाल ATH10K_FIRMWARE_MODE_UTF:
 		mode = QMI_WLFW_FTM_V01;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ath10k_err(ar, "invalid firmware mode %d\n", fw_mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ath10k_qmi_wlan_enable(ar, &cfg, mode,
-				       NULL);
-}
+	वापस ath10k_qmi_wlan_enable(ar, &cfg, mode,
+				       शून्य);
+पूर्ण
 
-static int ath10k_hw_power_on(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int ret;
+अटल पूर्णांक ath10k_hw_घातer_on(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "soc power on\n");
 
 	ret = regulator_bulk_enable(ar_snoc->num_vregs, ar_snoc->vregs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_bulk_prepare_enable(ar_snoc->num_clks, ar_snoc->clks);
-	if (ret)
-		goto vreg_off;
+	अगर (ret)
+		जाओ vreg_off;
 
-	return ret;
+	वापस ret;
 
 vreg_off:
 	regulator_bulk_disable(ar_snoc->num_vregs, ar_snoc->vregs);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath10k_hw_power_off(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल पूर्णांक ath10k_hw_घातer_off(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "soc power off\n");
 
 	clk_bulk_disable_unprepare(ar_snoc->num_clks, ar_snoc->clks);
 
-	return regulator_bulk_disable(ar_snoc->num_vregs, ar_snoc->vregs);
-}
+	वापस regulator_bulk_disable(ar_snoc->num_vregs, ar_snoc->vregs);
+पूर्ण
 
-static void ath10k_snoc_wlan_disable(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल व्योम ath10k_snoc_wlan_disable(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 
 	/* If both ATH10K_FLAG_CRASH_FLUSH and ATH10K_SNOC_FLAG_RECOVERY
 	 * flags are not set, it means that the driver has restarted
-	 * due to a crash inject via debugfs. In this case, the driver
+	 * due to a crash inject via debugfs. In this हाल, the driver
 	 * needs to restart the firmware and hence send qmi wlan disable,
 	 * during the driver restart sequence.
 	 */
-	if (!test_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags) ||
+	अगर (!test_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags) ||
 	    !test_bit(ATH10K_SNOC_FLAG_RECOVERY, &ar_snoc->flags))
 		ath10k_qmi_wlan_disable(ar);
-}
+पूर्ण
 
-static void ath10k_snoc_hif_power_down(struct ath10k *ar)
-{
+अटल व्योम ath10k_snoc_hअगर_घातer_करोwn(काष्ठा ath10k *ar)
+अणु
 	ath10k_dbg(ar, ATH10K_DBG_BOOT, "boot hif power down\n");
 
 	ath10k_snoc_wlan_disable(ar);
-	ath10k_ce_free_rri(ar);
-	ath10k_hw_power_off(ar);
-}
+	ath10k_ce_मुक्त_rri(ar);
+	ath10k_hw_घातer_off(ar);
+पूर्ण
 
-static int ath10k_snoc_hif_power_up(struct ath10k *ar,
-				    enum ath10k_firmware_mode fw_mode)
-{
-	int ret;
+अटल पूर्णांक ath10k_snoc_hअगर_घातer_up(काष्ठा ath10k *ar,
+				    क्रमागत ath10k_firmware_mode fw_mode)
+अणु
+	पूर्णांक ret;
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "%s:WCN3990 driver state = %d\n",
 		   __func__, ar->state);
 
-	ret = ath10k_hw_power_on(ar);
-	if (ret) {
+	ret = ath10k_hw_घातer_on(ar);
+	अगर (ret) अणु
 		ath10k_err(ar, "failed to power on device: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ath10k_snoc_wlan_enable(ar, fw_mode);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_err(ar, "failed to enable wcn3990: %d\n", ret);
-		goto err_hw_power_off;
-	}
+		जाओ err_hw_घातer_off;
+	पूर्ण
 
 	ath10k_ce_alloc_rri(ar);
 
 	ret = ath10k_snoc_init_pipes(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_err(ar, "failed to initialize CE: %d\n", ret);
-		goto err_free_rri;
-	}
+		जाओ err_मुक्त_rri;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_rri:
-	ath10k_ce_free_rri(ar);
+err_मुक्त_rri:
+	ath10k_ce_मुक्त_rri(ar);
 	ath10k_snoc_wlan_disable(ar);
 
-err_hw_power_off:
-	ath10k_hw_power_off(ar);
+err_hw_घातer_off:
+	ath10k_hw_घातer_off(ar);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath10k_snoc_hif_set_target_log_mode(struct ath10k *ar,
+अटल पूर्णांक ath10k_snoc_hअगर_set_target_log_mode(काष्ठा ath10k *ar,
 					       u8 fw_log_mode)
-{
+अणु
 	u8 fw_dbg_mode;
 
-	if (fw_log_mode)
+	अगर (fw_log_mode)
 		fw_dbg_mode = ATH10K_ENABLE_FW_LOG_CE;
-	else
+	अन्यथा
 		fw_dbg_mode = ATH10K_ENABLE_FW_LOG_DIAG;
 
-	return ath10k_qmi_set_fw_log_mode(ar, fw_dbg_mode);
-}
+	वापस ath10k_qmi_set_fw_log_mode(ar, fw_dbg_mode);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int ath10k_snoc_hif_suspend(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ath10k_snoc_hअगर_suspend(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक ret;
 
-	if (!device_may_wakeup(ar->dev))
-		return -EPERM;
+	अगर (!device_may_wakeup(ar->dev))
+		वापस -EPERM;
 
 	ret = enable_irq_wake(ar_snoc->ce_irqs[ATH10K_SNOC_WAKE_IRQ].irq_line);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_err(ar, "failed to enable wakeup irq :%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc device suspended\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath10k_snoc_hif_resume(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int ret;
+अटल पूर्णांक ath10k_snoc_hअगर_resume(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक ret;
 
-	if (!device_may_wakeup(ar->dev))
-		return -EPERM;
+	अगर (!device_may_wakeup(ar->dev))
+		वापस -EPERM;
 
 	ret = disable_irq_wake(ar_snoc->ce_irqs[ATH10K_SNOC_WAKE_IRQ].irq_line);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_err(ar, "failed to disable wakeup irq: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc device resumed\n");
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct ath10k_hif_ops ath10k_snoc_hif_ops = {
-	.read32		= ath10k_snoc_read32,
-	.write32	= ath10k_snoc_write32,
-	.start		= ath10k_snoc_hif_start,
-	.stop		= ath10k_snoc_hif_stop,
-	.map_service_to_pipe	= ath10k_snoc_hif_map_service_to_pipe,
-	.get_default_pipe	= ath10k_snoc_hif_get_default_pipe,
-	.power_up		= ath10k_snoc_hif_power_up,
-	.power_down		= ath10k_snoc_hif_power_down,
-	.tx_sg			= ath10k_snoc_hif_tx_sg,
-	.send_complete_check	= ath10k_snoc_hif_send_complete_check,
-	.get_free_queue_number	= ath10k_snoc_hif_get_free_queue_number,
-	.get_target_info	= ath10k_snoc_hif_get_target_info,
-	.set_target_log_mode    = ath10k_snoc_hif_set_target_log_mode,
+अटल स्थिर काष्ठा ath10k_hअगर_ops ath10k_snoc_hअगर_ops = अणु
+	.पढ़ो32		= ath10k_snoc_पढ़ो32,
+	.ग_लिखो32	= ath10k_snoc_ग_लिखो32,
+	.start		= ath10k_snoc_hअगर_start,
+	.stop		= ath10k_snoc_hअगर_stop,
+	.map_service_to_pipe	= ath10k_snoc_hअगर_map_service_to_pipe,
+	.get_शेष_pipe	= ath10k_snoc_hअगर_get_शेष_pipe,
+	.घातer_up		= ath10k_snoc_hअगर_घातer_up,
+	.घातer_करोwn		= ath10k_snoc_hअगर_घातer_करोwn,
+	.tx_sg			= ath10k_snoc_hअगर_tx_sg,
+	.send_complete_check	= ath10k_snoc_hअगर_send_complete_check,
+	.get_मुक्त_queue_number	= ath10k_snoc_hअगर_get_मुक्त_queue_number,
+	.get_target_info	= ath10k_snoc_hअगर_get_target_info,
+	.set_target_log_mode    = ath10k_snoc_hअगर_set_target_log_mode,
 
-#ifdef CONFIG_PM
-	.suspend                = ath10k_snoc_hif_suspend,
-	.resume                 = ath10k_snoc_hif_resume,
-#endif
-};
+#अगर_घोषित CONFIG_PM
+	.suspend                = ath10k_snoc_hअगर_suspend,
+	.resume                 = ath10k_snoc_hअगर_resume,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct ath10k_bus_ops ath10k_snoc_bus_ops = {
-	.read32		= ath10k_snoc_read32,
-	.write32	= ath10k_snoc_write32,
-};
+अटल स्थिर काष्ठा ath10k_bus_ops ath10k_snoc_bus_ops = अणु
+	.पढ़ो32		= ath10k_snoc_पढ़ो32,
+	.ग_लिखो32	= ath10k_snoc_ग_लिखो32,
+पूर्ण;
 
-static int ath10k_snoc_get_ce_id_from_irq(struct ath10k *ar, int irq)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int i;
+अटल पूर्णांक ath10k_snoc_get_ce_id_from_irq(काष्ठा ath10k *ar, पूर्णांक irq)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक i;
 
-	for (i = 0; i < CE_COUNT_MAX; i++) {
-		if (ar_snoc->ce_irqs[i].irq_line == irq)
-			return i;
-	}
+	क्रम (i = 0; i < CE_COUNT_MAX; i++) अणु
+		अगर (ar_snoc->ce_irqs[i].irq_line == irq)
+			वापस i;
+	पूर्ण
 	ath10k_err(ar, "No matching CE id for irq %d\n", irq);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static irqreturn_t ath10k_snoc_per_engine_handler(int irq, void *arg)
-{
-	struct ath10k *ar = arg;
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int ce_id = ath10k_snoc_get_ce_id_from_irq(ar, irq);
+अटल irqवापस_t ath10k_snoc_per_engine_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा ath10k *ar = arg;
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक ce_id = ath10k_snoc_get_ce_id_from_irq(ar, irq);
 
-	if (ce_id < 0 || ce_id >= ARRAY_SIZE(ar_snoc->pipe_info)) {
+	अगर (ce_id < 0 || ce_id >= ARRAY_SIZE(ar_snoc->pipe_info)) अणु
 		ath10k_warn(ar, "unexpected/invalid irq %d ce_id %d\n", irq,
 			    ce_id);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	ath10k_ce_disable_interrupt(ar, ce_id);
+	ath10k_ce_disable_पूर्णांकerrupt(ar, ce_id);
 	set_bit(ce_id, ar_snoc->pending_ce_irqs);
 
 	napi_schedule(&ar->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ath10k_snoc_napi_poll(struct napi_struct *ctx, int budget)
-{
-	struct ath10k *ar = container_of(ctx, struct ath10k, napi);
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int done = 0;
-	int ce_id;
+अटल पूर्णांक ath10k_snoc_napi_poll(काष्ठा napi_काष्ठा *ctx, पूर्णांक budget)
+अणु
+	काष्ठा ath10k *ar = container_of(ctx, काष्ठा ath10k, napi);
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक करोne = 0;
+	पूर्णांक ce_id;
 
-	if (test_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags)) {
+	अगर (test_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags)) अणु
 		napi_complete(ctx);
-		return done;
-	}
+		वापस करोne;
+	पूर्ण
 
-	for (ce_id = 0; ce_id < CE_COUNT; ce_id++)
-		if (test_and_clear_bit(ce_id, ar_snoc->pending_ce_irqs)) {
+	क्रम (ce_id = 0; ce_id < CE_COUNT; ce_id++)
+		अगर (test_and_clear_bit(ce_id, ar_snoc->pending_ce_irqs)) अणु
 			ath10k_ce_per_engine_service(ar, ce_id);
-			ath10k_ce_enable_interrupt(ar, ce_id);
-		}
+			ath10k_ce_enable_पूर्णांकerrupt(ar, ce_id);
+		पूर्ण
 
-	done = ath10k_htt_txrx_compl_task(ar, budget);
+	करोne = ath10k_htt_txrx_compl_task(ar, budget);
 
-	if (done < budget)
+	अगर (करोne < budget)
 		napi_complete(ctx);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-static void ath10k_snoc_init_napi(struct ath10k *ar)
-{
-	netif_napi_add(&ar->napi_dev, &ar->napi, ath10k_snoc_napi_poll,
+अटल व्योम ath10k_snoc_init_napi(काष्ठा ath10k *ar)
+अणु
+	netअगर_napi_add(&ar->napi_dev, &ar->napi, ath10k_snoc_napi_poll,
 		       ATH10K_NAPI_BUDGET);
-}
+पूर्ण
 
-static int ath10k_snoc_request_irq(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int irqflags = IRQF_TRIGGER_RISING;
-	int ret, id;
+अटल पूर्णांक ath10k_snoc_request_irq(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक irqflags = IRQF_TRIGGER_RISING;
+	पूर्णांक ret, id;
 
-	for (id = 0; id < CE_COUNT_MAX; id++) {
+	क्रम (id = 0; id < CE_COUNT_MAX; id++) अणु
 		ret = request_irq(ar_snoc->ce_irqs[id].irq_line,
 				  ath10k_snoc_per_engine_handler,
 				  irqflags, ce_name[id], ar);
-		if (ret) {
+		अगर (ret) अणु
 			ath10k_err(ar,
 				   "failed to register IRQ handler for CE %d: %d\n",
 				   id, ret);
-			goto err_irq;
-		}
-	}
+			जाओ err_irq;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_irq:
-	for (id -= 1; id >= 0; id--)
-		free_irq(ar_snoc->ce_irqs[id].irq_line, ar);
+	क्रम (id -= 1; id >= 0; id--)
+		मुक्त_irq(ar_snoc->ce_irqs[id].irq_line, ar);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ath10k_snoc_free_irq(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	int id;
+अटल व्योम ath10k_snoc_मुक्त_irq(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	पूर्णांक id;
 
-	for (id = 0; id < CE_COUNT_MAX; id++)
-		free_irq(ar_snoc->ce_irqs[id].irq_line, ar);
-}
+	क्रम (id = 0; id < CE_COUNT_MAX; id++)
+		मुक्त_irq(ar_snoc->ce_irqs[id].irq_line, ar);
+पूर्ण
 
-static int ath10k_snoc_resource_init(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct platform_device *pdev;
-	struct resource *res;
-	int i, ret = 0;
+अटल पूर्णांक ath10k_snoc_resource_init(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा resource *res;
+	पूर्णांक i, ret = 0;
 
 	pdev = ar_snoc->dev;
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "membase");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "membase");
+	अगर (!res) अणु
 		ath10k_err(ar, "Memory base not found in DT\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ar_snoc->mem_pa = res->start;
 	ar_snoc->mem = devm_ioremap(&pdev->dev, ar_snoc->mem_pa,
 				    resource_size(res));
-	if (!ar_snoc->mem) {
+	अगर (!ar_snoc->mem) अणु
 		ath10k_err(ar, "Memory base ioremap failed with physical address %pa\n",
 			   &ar_snoc->mem_pa);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < CE_COUNT; i++) {
-		res = platform_get_resource(ar_snoc->dev, IORESOURCE_IRQ, i);
-		if (!res) {
+	क्रम (i = 0; i < CE_COUNT; i++) अणु
+		res = platक्रमm_get_resource(ar_snoc->dev, IORESOURCE_IRQ, i);
+		अगर (!res) अणु
 			ath10k_err(ar, "failed to get IRQ%d\n", i);
 			ret = -ENODEV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ar_snoc->ce_irqs[i].irq_line = res->start;
-	}
+	पूर्ण
 
-	ret = device_property_read_u32(&pdev->dev, "qcom,xo-cal-data",
+	ret = device_property_पढ़ो_u32(&pdev->dev, "qcom,xo-cal-data",
 				       &ar_snoc->xo_cal_data);
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc xo-cal-data return %d\n", ret);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ar_snoc->xo_cal_supported = true;
 		ath10k_dbg(ar, ATH10K_DBG_SNOC, "xo cal data %x\n",
 			   ar_snoc->xo_cal_data);
-	}
+	पूर्ण
 	ret = 0;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ath10k_snoc_quirks_init(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct device *dev = &ar_snoc->dev->dev;
+अटल व्योम ath10k_snoc_quirks_init(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा device *dev = &ar_snoc->dev->dev;
 
-	if (of_property_read_bool(dev->of_node, "qcom,snoc-host-cap-8bit-quirk"))
+	अगर (of_property_पढ़ो_bool(dev->of_node, "qcom,snoc-host-cap-8bit-quirk"))
 		set_bit(ATH10K_SNOC_FLAG_8BIT_HOST_CAP_QUIRK, &ar_snoc->flags);
-}
+पूर्ण
 
-int ath10k_snoc_fw_indication(struct ath10k *ar, u64 type)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct ath10k_bus_params bus_params = {};
-	int ret;
+पूर्णांक ath10k_snoc_fw_indication(काष्ठा ath10k *ar, u64 type)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा ath10k_bus_params bus_params = अणुपूर्ण;
+	पूर्णांक ret;
 
-	if (test_bit(ATH10K_SNOC_FLAG_UNREGISTERING, &ar_snoc->flags))
-		return 0;
+	अगर (test_bit(ATH10K_SNOC_FLAG_UNREGISTERING, &ar_snoc->flags))
+		वापस 0;
 
-	switch (type) {
-	case ATH10K_QMI_EVENT_FW_READY_IND:
-		if (test_bit(ATH10K_SNOC_FLAG_REGISTERED, &ar_snoc->flags)) {
+	चयन (type) अणु
+	हाल ATH10K_QMI_EVENT_FW_READY_IND:
+		अगर (test_bit(ATH10K_SNOC_FLAG_REGISTERED, &ar_snoc->flags)) अणु
 			ath10k_core_start_recovery(ar);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		bus_params.dev_type = ATH10K_DEV_TYPE_LL;
 		bus_params.chip_id = ar_snoc->target_info.soc_version;
-		ret = ath10k_core_register(ar, &bus_params);
-		if (ret) {
+		ret = ath10k_core_रेजिस्टर(ar, &bus_params);
+		अगर (ret) अणु
 			ath10k_err(ar, "Failed to register driver core: %d\n",
 				   ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		set_bit(ATH10K_SNOC_FLAG_REGISTERED, &ar_snoc->flags);
-		break;
-	case ATH10K_QMI_EVENT_FW_DOWN_IND:
+		अवरोध;
+	हाल ATH10K_QMI_EVENT_FW_DOWN_IND:
 		set_bit(ATH10K_SNOC_FLAG_RECOVERY, &ar_snoc->flags);
 		set_bit(ATH10K_FLAG_CRASH_FLUSH, &ar->dev_flags);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ath10k_err(ar, "invalid fw indication: %llx\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath10k_snoc_setup_resource(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct ath10k_ce *ce = ath10k_ce_priv(ar);
-	struct ath10k_snoc_pipe *pipe;
-	int i, ret;
+अटल पूर्णांक ath10k_snoc_setup_resource(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा ath10k_ce *ce = ath10k_ce_priv(ar);
+	काष्ठा ath10k_snoc_pipe *pipe;
+	पूर्णांक i, ret;
 
-	timer_setup(&ar_snoc->rx_post_retry, ath10k_snoc_rx_replenish_retry, 0);
+	समयr_setup(&ar_snoc->rx_post_retry, ath10k_snoc_rx_replenish_retry, 0);
 	spin_lock_init(&ce->ce_lock);
-	for (i = 0; i < CE_COUNT; i++) {
+	क्रम (i = 0; i < CE_COUNT; i++) अणु
 		pipe = &ar_snoc->pipe_info[i];
 		pipe->ce_hdl = &ce->ce_states[i];
 		pipe->pipe_num = i;
-		pipe->hif_ce_state = ar;
+		pipe->hअगर_ce_state = ar;
 
 		ret = ath10k_ce_alloc_pipe(ar, i, &host_ce_config_wlan[i]);
-		if (ret) {
+		अगर (ret) अणु
 			ath10k_err(ar, "failed to allocate copy engine pipe %d: %d\n",
 				   i, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		pipe->buf_sz = host_ce_config_wlan[i].src_sz_max;
-	}
+	पूर्ण
 	ath10k_snoc_init_napi(ar);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath10k_snoc_release_resource(struct ath10k *ar)
-{
-	int i;
+अटल व्योम ath10k_snoc_release_resource(काष्ठा ath10k *ar)
+अणु
+	पूर्णांक i;
 
-	netif_napi_del(&ar->napi);
-	for (i = 0; i < CE_COUNT; i++)
-		ath10k_ce_free_pipe(ar, i);
-}
+	netअगर_napi_del(&ar->napi);
+	क्रम (i = 0; i < CE_COUNT; i++)
+		ath10k_ce_मुक्त_pipe(ar, i);
+पूर्ण
 
-static void ath10k_msa_dump_memory(struct ath10k *ar,
-				   struct ath10k_fw_crash_data *crash_data)
-{
-	const struct ath10k_hw_mem_layout *mem_layout;
-	const struct ath10k_mem_region *current_region;
-	struct ath10k_dump_ram_data_hdr *hdr;
-	size_t buf_len;
+अटल व्योम ath10k_msa_dump_memory(काष्ठा ath10k *ar,
+				   काष्ठा ath10k_fw_crash_data *crash_data)
+अणु
+	स्थिर काष्ठा ath10k_hw_mem_layout *mem_layout;
+	स्थिर काष्ठा ath10k_mem_region *current_region;
+	काष्ठा ath10k_dump_ram_data_hdr *hdr;
+	माप_प्रकार buf_len;
 	u8 *buf;
 
-	if (!crash_data || !crash_data->ramdump_buf)
-		return;
+	अगर (!crash_data || !crash_data->ramdump_buf)
+		वापस;
 
 	mem_layout = ath10k_coredump_get_mem_layout(ar);
-	if (!mem_layout)
-		return;
+	अगर (!mem_layout)
+		वापस;
 
 	current_region = &mem_layout->region_table.regions[0];
 
 	buf = crash_data->ramdump_buf;
 	buf_len = crash_data->ramdump_buf_len;
-	memset(buf, 0, buf_len);
+	स_रखो(buf, 0, buf_len);
 
-	/* Reserve space for the header. */
-	hdr = (void *)buf;
-	buf += sizeof(*hdr);
-	buf_len -= sizeof(*hdr);
+	/* Reserve space क्रम the header. */
+	hdr = (व्योम *)buf;
+	buf += माप(*hdr);
+	buf_len -= माप(*hdr);
 
 	hdr->region_type = cpu_to_le32(current_region->type);
-	hdr->start = cpu_to_le32((unsigned long)ar->msa.vaddr);
+	hdr->start = cpu_to_le32((अचिन्हित दीर्घ)ar->msa.vaddr);
 	hdr->length = cpu_to_le32(ar->msa.mem_size);
 
-	if (current_region->len < ar->msa.mem_size) {
-		memcpy(buf, ar->msa.vaddr, current_region->len);
+	अगर (current_region->len < ar->msa.mem_size) अणु
+		स_नकल(buf, ar->msa.vaddr, current_region->len);
 		ath10k_warn(ar, "msa dump length is less than msa size %x, %x\n",
 			    current_region->len, ar->msa.mem_size);
-	} else {
-		memcpy(buf, ar->msa.vaddr, ar->msa.mem_size);
-	}
-}
+	पूर्ण अन्यथा अणु
+		स_नकल(buf, ar->msa.vaddr, ar->msa.mem_size);
+	पूर्ण
+पूर्ण
 
-void ath10k_snoc_fw_crashed_dump(struct ath10k *ar)
-{
-	struct ath10k_fw_crash_data *crash_data;
-	char guid[UUID_STRING_LEN + 1];
+व्योम ath10k_snoc_fw_crashed_dump(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_fw_crash_data *crash_data;
+	अक्षर guid[UUID_STRING_LEN + 1];
 
 	mutex_lock(&ar->dump_mutex);
 
@@ -1466,31 +1467,31 @@ void ath10k_snoc_fw_crashed_dump(struct ath10k *ar)
 
 	crash_data = ath10k_coredump_new(ar);
 
-	if (crash_data)
-		scnprintf(guid, sizeof(guid), "%pUl", &crash_data->guid);
-	else
-		scnprintf(guid, sizeof(guid), "n/a");
+	अगर (crash_data)
+		scnम_लिखो(guid, माप(guid), "%pUl", &crash_data->guid);
+	अन्यथा
+		scnम_लिखो(guid, माप(guid), "n/a");
 
 	ath10k_err(ar, "firmware crashed! (guid %s)\n", guid);
-	ath10k_print_driver_info(ar);
+	ath10k_prपूर्णांक_driver_info(ar);
 	ath10k_msa_dump_memory(ar, crash_data);
 	mutex_unlock(&ar->dump_mutex);
-}
+पूर्ण
 
-static int ath10k_setup_msa_resources(struct ath10k *ar, u32 msa_size)
-{
-	struct device *dev = ar->dev;
-	struct device_node *node;
-	struct resource r;
-	int ret;
+अटल पूर्णांक ath10k_setup_msa_resources(काष्ठा ath10k *ar, u32 msa_size)
+अणु
+	काष्ठा device *dev = ar->dev;
+	काष्ठा device_node *node;
+	काष्ठा resource r;
+	पूर्णांक ret;
 
 	node = of_parse_phandle(dev->of_node, "memory-region", 0);
-	if (node) {
+	अगर (node) अणु
 		ret = of_address_to_resource(node, 0, &r);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "failed to resolve msa fixed region\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		of_node_put(node);
 
 		ar->msa.paddr = r.start;
@@ -1498,175 +1499,175 @@ static int ath10k_setup_msa_resources(struct ath10k *ar, u32 msa_size)
 		ar->msa.vaddr = devm_memremap(dev, ar->msa.paddr,
 					      ar->msa.mem_size,
 					      MEMREMAP_WT);
-		if (IS_ERR(ar->msa.vaddr)) {
+		अगर (IS_ERR(ar->msa.vaddr)) अणु
 			dev_err(dev, "failed to map memory region: %pa\n",
 				&r.start);
-			return PTR_ERR(ar->msa.vaddr);
-		}
-	} else {
+			वापस PTR_ERR(ar->msa.vaddr);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ar->msa.vaddr = dmam_alloc_coherent(dev, msa_size,
 						    &ar->msa.paddr,
 						    GFP_KERNEL);
-		if (!ar->msa.vaddr) {
+		अगर (!ar->msa.vaddr) अणु
 			ath10k_err(ar, "failed to allocate dma memory for msa region\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		ar->msa.mem_size = msa_size;
-	}
+	पूर्ण
 
 	ath10k_dbg(ar, ATH10K_DBG_QMI, "qmi msa.paddr: %pad , msa.vaddr: 0x%p\n",
 		   &ar->msa.paddr,
 		   ar->msa.vaddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath10k_fw_init(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	struct device *host_dev = &ar_snoc->dev->dev;
-	struct platform_device_info info;
-	struct iommu_domain *iommu_dom;
-	struct platform_device *pdev;
-	struct device_node *node;
-	int ret;
+अटल पूर्णांक ath10k_fw_init(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	काष्ठा device *host_dev = &ar_snoc->dev->dev;
+	काष्ठा platक्रमm_device_info info;
+	काष्ठा iommu_करोमुख्य *iommu_करोm;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device_node *node;
+	पूर्णांक ret;
 
 	node = of_get_child_by_name(host_dev->of_node, "wifi-firmware");
-	if (!node) {
+	अगर (!node) अणु
 		ar_snoc->use_tz = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 	info.fwnode = &node->fwnode;
 	info.parent = host_dev;
 	info.name = node->name;
 	info.dma_mask = DMA_BIT_MASK(32);
 
-	pdev = platform_device_register_full(&info);
-	if (IS_ERR(pdev)) {
+	pdev = platक्रमm_device_रेजिस्टर_full(&info);
+	अगर (IS_ERR(pdev)) अणु
 		of_node_put(node);
-		return PTR_ERR(pdev);
-	}
+		वापस PTR_ERR(pdev);
+	पूर्ण
 
 	pdev->dev.of_node = node;
 
 	ret = of_dma_configure(&pdev->dev, node, true);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_err(ar, "dma configure fail: %d\n", ret);
-		goto err_unregister;
-	}
+		जाओ err_unरेजिस्टर;
+	पूर्ण
 
 	ar_snoc->fw.dev = &pdev->dev;
 
-	iommu_dom = iommu_domain_alloc(&platform_bus_type);
-	if (!iommu_dom) {
+	iommu_करोm = iommu_करोमुख्य_alloc(&platक्रमm_bus_type);
+	अगर (!iommu_करोm) अणु
 		ath10k_err(ar, "failed to allocate iommu domain\n");
 		ret = -ENOMEM;
-		goto err_unregister;
-	}
+		जाओ err_unरेजिस्टर;
+	पूर्ण
 
-	ret = iommu_attach_device(iommu_dom, ar_snoc->fw.dev);
-	if (ret) {
+	ret = iommu_attach_device(iommu_करोm, ar_snoc->fw.dev);
+	अगर (ret) अणु
 		ath10k_err(ar, "could not attach device: %d\n", ret);
-		goto err_iommu_free;
-	}
+		जाओ err_iommu_मुक्त;
+	पूर्ण
 
-	ar_snoc->fw.iommu_domain = iommu_dom;
+	ar_snoc->fw.iommu_करोमुख्य = iommu_करोm;
 	ar_snoc->fw.fw_start_addr = ar->msa.paddr;
 
-	ret = iommu_map(iommu_dom, ar_snoc->fw.fw_start_addr,
+	ret = iommu_map(iommu_करोm, ar_snoc->fw.fw_start_addr,
 			ar->msa.paddr, ar->msa.mem_size,
 			IOMMU_READ | IOMMU_WRITE);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_err(ar, "failed to map firmware region: %d\n", ret);
-		goto err_iommu_detach;
-	}
+		जाओ err_iommu_detach;
+	पूर्ण
 
 	of_node_put(node);
 
-	return 0;
+	वापस 0;
 
 err_iommu_detach:
-	iommu_detach_device(iommu_dom, ar_snoc->fw.dev);
+	iommu_detach_device(iommu_करोm, ar_snoc->fw.dev);
 
-err_iommu_free:
-	iommu_domain_free(iommu_dom);
+err_iommu_मुक्त:
+	iommu_करोमुख्य_मुक्त(iommu_करोm);
 
-err_unregister:
-	platform_device_unregister(pdev);
+err_unरेजिस्टर:
+	platक्रमm_device_unरेजिस्टर(pdev);
 	of_node_put(node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath10k_fw_deinit(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
-	const size_t mapped_size = ar_snoc->fw.mapped_mem_size;
-	struct iommu_domain *iommu;
-	size_t unmapped_size;
+अटल पूर्णांक ath10k_fw_deinit(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+	स्थिर माप_प्रकार mapped_size = ar_snoc->fw.mapped_mem_size;
+	काष्ठा iommu_करोमुख्य *iommu;
+	माप_प्रकार unmapped_size;
 
-	if (ar_snoc->use_tz)
-		return 0;
+	अगर (ar_snoc->use_tz)
+		वापस 0;
 
-	iommu = ar_snoc->fw.iommu_domain;
+	iommu = ar_snoc->fw.iommu_करोमुख्य;
 
 	unmapped_size = iommu_unmap(iommu, ar_snoc->fw.fw_start_addr,
 				    mapped_size);
-	if (unmapped_size != mapped_size)
+	अगर (unmapped_size != mapped_size)
 		ath10k_err(ar, "failed to unmap firmware: %zu\n",
 			   unmapped_size);
 
 	iommu_detach_device(iommu, ar_snoc->fw.dev);
-	iommu_domain_free(iommu);
+	iommu_करोमुख्य_मुक्त(iommu);
 
-	platform_device_unregister(to_platform_device(ar_snoc->fw.dev));
+	platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(ar_snoc->fw.dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ath10k_snoc_dt_match[] = {
-	{ .compatible = "qcom,wcn3990-wifi",
+अटल स्थिर काष्ठा of_device_id ath10k_snoc_dt_match[] = अणु
+	अणु .compatible = "qcom,wcn3990-wifi",
 	 .data = &drv_priv,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ath10k_snoc_dt_match);
 
-static int ath10k_snoc_probe(struct platform_device *pdev)
-{
-	const struct ath10k_snoc_drv_priv *drv_data;
-	struct ath10k_snoc *ar_snoc;
-	struct device *dev;
-	struct ath10k *ar;
+अटल पूर्णांक ath10k_snoc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा ath10k_snoc_drv_priv *drv_data;
+	काष्ठा ath10k_snoc *ar_snoc;
+	काष्ठा device *dev;
+	काष्ठा ath10k *ar;
 	u32 msa_size;
-	int ret;
+	पूर्णांक ret;
 	u32 i;
 
 	dev = &pdev->dev;
 	drv_data = device_get_match_data(dev);
-	if (!drv_data) {
+	अगर (!drv_data) अणु
 		dev_err(dev, "failed to find matching device tree id\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = dma_set_mask_and_coherent(dev, drv_data->dma_mask);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to set dma mask: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ar = ath10k_core_create(sizeof(*ar_snoc), dev, ATH10K_BUS_SNOC,
-				drv_data->hw_rev, &ath10k_snoc_hif_ops);
-	if (!ar) {
+	ar = ath10k_core_create(माप(*ar_snoc), dev, ATH10K_BUS_SNOC,
+				drv_data->hw_rev, &ath10k_snoc_hअगर_ops);
+	अगर (!ar) अणु
 		dev_err(dev, "failed to allocate core\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ar_snoc = ath10k_snoc_priv(ar);
 	ar_snoc->dev = pdev;
-	platform_set_drvdata(pdev, ar);
+	platक्रमm_set_drvdata(pdev, ar);
 	ar_snoc->ar = ar;
 	ar_snoc->ce.bus_ops = &ath10k_snoc_bus_ops;
 	ar->ce_priv = &ar_snoc->ce;
@@ -1675,80 +1676,80 @@ static int ath10k_snoc_probe(struct platform_device *pdev)
 	ath10k_snoc_quirks_init(ar);
 
 	ret = ath10k_snoc_resource_init(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_warn(ar, "failed to initialize resource: %d\n", ret);
-		goto err_core_destroy;
-	}
+		जाओ err_core_destroy;
+	पूर्ण
 
 	ret = ath10k_snoc_setup_resource(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_warn(ar, "failed to setup resource: %d\n", ret);
-		goto err_core_destroy;
-	}
+		जाओ err_core_destroy;
+	पूर्ण
 	ret = ath10k_snoc_request_irq(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_warn(ar, "failed to request irqs: %d\n", ret);
-		goto err_release_resource;
-	}
+		जाओ err_release_resource;
+	पूर्ण
 
 	ar_snoc->num_vregs = ARRAY_SIZE(ath10k_regulators);
-	ar_snoc->vregs = devm_kcalloc(&pdev->dev, ar_snoc->num_vregs,
-				      sizeof(*ar_snoc->vregs), GFP_KERNEL);
-	if (!ar_snoc->vregs) {
+	ar_snoc->vregs = devm_kसुस्मृति(&pdev->dev, ar_snoc->num_vregs,
+				      माप(*ar_snoc->vregs), GFP_KERNEL);
+	अगर (!ar_snoc->vregs) अणु
 		ret = -ENOMEM;
-		goto err_free_irq;
-	}
-	for (i = 0; i < ar_snoc->num_vregs; i++)
+		जाओ err_मुक्त_irq;
+	पूर्ण
+	क्रम (i = 0; i < ar_snoc->num_vregs; i++)
 		ar_snoc->vregs[i].supply = ath10k_regulators[i];
 
 	ret = devm_regulator_bulk_get(&pdev->dev, ar_snoc->num_vregs,
 				      ar_snoc->vregs);
-	if (ret < 0)
-		goto err_free_irq;
+	अगर (ret < 0)
+		जाओ err_मुक्त_irq;
 
-	ar_snoc->num_clks = ARRAY_SIZE(ath10k_clocks);
-	ar_snoc->clks = devm_kcalloc(&pdev->dev, ar_snoc->num_clks,
-				     sizeof(*ar_snoc->clks), GFP_KERNEL);
-	if (!ar_snoc->clks) {
+	ar_snoc->num_clks = ARRAY_SIZE(ath10k_घड़ीs);
+	ar_snoc->clks = devm_kसुस्मृति(&pdev->dev, ar_snoc->num_clks,
+				     माप(*ar_snoc->clks), GFP_KERNEL);
+	अगर (!ar_snoc->clks) अणु
 		ret = -ENOMEM;
-		goto err_free_irq;
-	}
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
-	for (i = 0; i < ar_snoc->num_clks; i++)
-		ar_snoc->clks[i].id = ath10k_clocks[i];
+	क्रम (i = 0; i < ar_snoc->num_clks; i++)
+		ar_snoc->clks[i].id = ath10k_घड़ीs[i];
 
 	ret = devm_clk_bulk_get_optional(&pdev->dev, ar_snoc->num_clks,
 					 ar_snoc->clks);
-	if (ret)
-		goto err_free_irq;
+	अगर (ret)
+		जाओ err_मुक्त_irq;
 
 	ret = ath10k_setup_msa_resources(ar, msa_size);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_warn(ar, "failed to setup msa resources: %d\n", ret);
-		goto err_free_irq;
-	}
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
 	ret = ath10k_fw_init(ar);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_err(ar, "failed to initialize firmware: %d\n", ret);
-		goto err_free_irq;
-	}
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
 	ret = ath10k_qmi_init(ar, msa_size);
-	if (ret) {
+	अगर (ret) अणु
 		ath10k_warn(ar, "failed to register wlfw qmi client: %d\n", ret);
-		goto err_fw_deinit;
-	}
+		जाओ err_fw_deinit;
+	पूर्ण
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc probe\n");
 
-	return 0;
+	वापस 0;
 
 err_fw_deinit:
 	ath10k_fw_deinit(ar);
 
-err_free_irq:
-	ath10k_snoc_free_irq(ar);
+err_मुक्त_irq:
+	ath10k_snoc_मुक्त_irq(ar);
 
 err_release_resource:
 	ath10k_snoc_release_resource(ar);
@@ -1756,62 +1757,62 @@ err_release_resource:
 err_core_destroy:
 	ath10k_core_destroy(ar);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath10k_snoc_free_resources(struct ath10k *ar)
-{
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल पूर्णांक ath10k_snoc_मुक्त_resources(काष्ठा ath10k *ar)
+अणु
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc free resources\n");
 
 	set_bit(ATH10K_SNOC_FLAG_UNREGISTERING, &ar_snoc->flags);
 
-	ath10k_core_unregister(ar);
+	ath10k_core_unरेजिस्टर(ar);
 	ath10k_fw_deinit(ar);
-	ath10k_snoc_free_irq(ar);
+	ath10k_snoc_मुक्त_irq(ar);
 	ath10k_snoc_release_resource(ar);
 	ath10k_qmi_deinit(ar);
 	ath10k_core_destroy(ar);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath10k_snoc_remove(struct platform_device *pdev)
-{
-	struct ath10k *ar = platform_get_drvdata(pdev);
-	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
+अटल पूर्णांक ath10k_snoc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ath10k *ar = platक्रमm_get_drvdata(pdev);
+	काष्ठा ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc remove\n");
 
 	reinit_completion(&ar->driver_recovery);
 
-	if (test_bit(ATH10K_SNOC_FLAG_RECOVERY, &ar_snoc->flags))
-		wait_for_completion_timeout(&ar->driver_recovery, 3 * HZ);
+	अगर (test_bit(ATH10K_SNOC_FLAG_RECOVERY, &ar_snoc->flags))
+		रुको_क्रम_completion_समयout(&ar->driver_recovery, 3 * HZ);
 
-	ath10k_snoc_free_resources(ar);
+	ath10k_snoc_मुक्त_resources(ar);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath10k_snoc_shutdown(struct platform_device *pdev)
-{
-	struct ath10k *ar = platform_get_drvdata(pdev);
+अटल व्योम ath10k_snoc_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ath10k *ar = platक्रमm_get_drvdata(pdev);
 
 	ath10k_dbg(ar, ATH10K_DBG_SNOC, "snoc shutdown\n");
-	ath10k_snoc_free_resources(ar);
-}
+	ath10k_snoc_मुक्त_resources(ar);
+पूर्ण
 
-static struct platform_driver ath10k_snoc_driver = {
+अटल काष्ठा platक्रमm_driver ath10k_snoc_driver = अणु
 	.probe  = ath10k_snoc_probe,
-	.remove = ath10k_snoc_remove,
-	.shutdown =  ath10k_snoc_shutdown,
-	.driver = {
+	.हटाओ = ath10k_snoc_हटाओ,
+	.shutकरोwn =  ath10k_snoc_shutकरोwn,
+	.driver = अणु
 		.name   = "ath10k_snoc",
 		.of_match_table = ath10k_snoc_dt_match,
-	},
-};
-module_platform_driver(ath10k_snoc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ath10k_snoc_driver);
 
 MODULE_AUTHOR("Qualcomm");
 MODULE_LICENSE("Dual BSD/GPL");

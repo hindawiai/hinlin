@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/crash_core.h>
-#include <linux/pgtable.h>
+#समावेश <linux/crash_core.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/setup.h>
+#समावेश <यंत्र/setup.h>
 
-void arch_crash_save_vmcoreinfo(void)
-{
+व्योम arch_crash_save_vmcoreinfo(व्योम)
+अणु
 	u64 sme_mask = sme_me_mask;
 
 	VMCOREINFO_NUMBER(phys_base);
@@ -14,11 +15,11 @@ void arch_crash_save_vmcoreinfo(void)
 	vmcoreinfo_append_str("NUMBER(pgtable_l5_enabled)=%d\n",
 			      pgtable_l5_enabled());
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 	VMCOREINFO_SYMBOL(node_data);
 	VMCOREINFO_LENGTH(node_data, MAX_NUMNODES);
-#endif
+#पूर्ण_अगर
 	vmcoreinfo_append_str("KERNELOFFSET=%lx\n", kaslr_offset());
 	VMCOREINFO_NUMBER(KERNEL_IMAGE_SIZE);
 	VMCOREINFO_NUMBER(sme_mask);
-}
+पूर्ण

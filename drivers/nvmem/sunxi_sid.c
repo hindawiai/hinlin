@@ -1,219 +1,220 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Allwinner sunXi SoCs Security ID support.
  *
  * Copyright (c) 2013 Oliver Schinagl <oliver@schinagl.nl>
- * Copyright (C) 2014 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2014 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/nvmem-provider.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/random.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अक्रमom.h>
 
-/* Registers and special values for doing register-based SID readout on H3 */
-#define SUN8I_SID_PRCTL		0x40
-#define SUN8I_SID_RDKEY		0x60
+/* Registers and special values क्रम करोing रेजिस्टर-based SID पढ़ोout on H3 */
+#घोषणा SUN8I_SID_PRCTL		0x40
+#घोषणा SUN8I_SID_RDKEY		0x60
 
-#define SUN8I_SID_OFFSET_MASK	0x1FF
-#define SUN8I_SID_OFFSET_SHIFT	16
-#define SUN8I_SID_OP_LOCK	(0xAC << 8)
-#define SUN8I_SID_READ		BIT(1)
+#घोषणा SUN8I_SID_OFFSET_MASK	0x1FF
+#घोषणा SUN8I_SID_OFFSET_SHIFT	16
+#घोषणा SUN8I_SID_OP_LOCK	(0xAC << 8)
+#घोषणा SUN8I_SID_READ		BIT(1)
 
-struct sunxi_sid_cfg {
+काष्ठा sunxi_sid_cfg अणु
 	u32	value_offset;
 	u32	size;
-	bool	need_register_readout;
-};
+	bool	need_रेजिस्टर_पढ़ोout;
+पूर्ण;
 
-struct sunxi_sid {
-	void __iomem		*base;
+काष्ठा sunxi_sid अणु
+	व्योम __iomem		*base;
 	u32			value_offset;
-};
+पूर्ण;
 
-static int sunxi_sid_read(void *context, unsigned int offset,
-			  void *val, size_t bytes)
-{
-	struct sunxi_sid *sid = context;
+अटल पूर्णांक sunxi_sid_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
+			  व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा sunxi_sid *sid = context;
 
-	memcpy_fromio(val, sid->base + sid->value_offset + offset, bytes);
+	स_नकल_fromio(val, sid->base + sid->value_offset + offset, bytes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun8i_sid_register_readout(const struct sunxi_sid *sid,
-				      const unsigned int offset,
+अटल पूर्णांक sun8i_sid_रेजिस्टर_पढ़ोout(स्थिर काष्ठा sunxi_sid *sid,
+				      स्थिर अचिन्हित पूर्णांक offset,
 				      u32 *out)
-{
+अणु
 	u32 reg_val;
-	int ret;
+	पूर्णांक ret;
 
-	/* Set word, lock access, and set read command */
+	/* Set word, lock access, and set पढ़ो command */
 	reg_val = (offset & SUN8I_SID_OFFSET_MASK)
 		  << SUN8I_SID_OFFSET_SHIFT;
 	reg_val |= SUN8I_SID_OP_LOCK | SUN8I_SID_READ;
-	writel(reg_val, sid->base + SUN8I_SID_PRCTL);
+	ग_लिखोl(reg_val, sid->base + SUN8I_SID_PRCTL);
 
-	ret = readl_poll_timeout(sid->base + SUN8I_SID_PRCTL, reg_val,
+	ret = पढ़ोl_poll_समयout(sid->base + SUN8I_SID_PRCTL, reg_val,
 				 !(reg_val & SUN8I_SID_READ), 100, 250000);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (out)
-		*out = readl(sid->base + SUN8I_SID_RDKEY);
+	अगर (out)
+		*out = पढ़ोl(sid->base + SUN8I_SID_RDKEY);
 
-	writel(0, sid->base + SUN8I_SID_PRCTL);
+	ग_लिखोl(0, sid->base + SUN8I_SID_PRCTL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * On Allwinner H3, the value on the 0x200 offset of the SID controller seems
  * to be not reliable at all.
- * Read by the registers instead.
+ * Read by the रेजिस्टरs instead.
  */
-static int sun8i_sid_read_by_reg(void *context, unsigned int offset,
-				 void *val, size_t bytes)
-{
-	struct sunxi_sid *sid = context;
+अटल पूर्णांक sun8i_sid_पढ़ो_by_reg(व्योम *context, अचिन्हित पूर्णांक offset,
+				 व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा sunxi_sid *sid = context;
 	u32 word;
-	int ret;
+	पूर्णांक ret;
 
 	/* .stride = 4 so offset is guaranteed to be aligned */
-	while (bytes >= 4) {
-		ret = sun8i_sid_register_readout(sid, offset, val);
-		if (ret)
-			return ret;
+	जबतक (bytes >= 4) अणु
+		ret = sun8i_sid_रेजिस्टर_पढ़ोout(sid, offset, val);
+		अगर (ret)
+			वापस ret;
 
 		val += 4;
 		offset += 4;
 		bytes -= 4;
-	}
+	पूर्ण
 
-	if (!bytes)
-		return 0;
+	अगर (!bytes)
+		वापस 0;
 
 	/* Handle any trailing bytes */
-	ret = sun8i_sid_register_readout(sid, offset, &word);
-	if (ret)
-		return ret;
+	ret = sun8i_sid_रेजिस्टर_पढ़ोout(sid, offset, &word);
+	अगर (ret)
+		वापस ret;
 
-	memcpy(val, &word, bytes);
+	स_नकल(val, &word, bytes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_sid_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct nvmem_config *nvmem_cfg;
-	struct nvmem_device *nvmem;
-	struct sunxi_sid *sid;
-	int size;
-	char *randomness;
-	const struct sunxi_sid_cfg *cfg;
+अटल पूर्णांक sunxi_sid_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा nvmem_config *nvmem_cfg;
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा sunxi_sid *sid;
+	पूर्णांक size;
+	अक्षर *अक्रमomness;
+	स्थिर काष्ठा sunxi_sid_cfg *cfg;
 
-	sid = devm_kzalloc(dev, sizeof(*sid), GFP_KERNEL);
-	if (!sid)
-		return -ENOMEM;
+	sid = devm_kzalloc(dev, माप(*sid), GFP_KERNEL);
+	अगर (!sid)
+		वापस -ENOMEM;
 
 	cfg = of_device_get_match_data(dev);
-	if (!cfg)
-		return -EINVAL;
+	अगर (!cfg)
+		वापस -EINVAL;
 	sid->value_offset = cfg->value_offset;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	sid->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(sid->base))
-		return PTR_ERR(sid->base);
+	अगर (IS_ERR(sid->base))
+		वापस PTR_ERR(sid->base);
 
 	size = cfg->size;
 
-	nvmem_cfg = devm_kzalloc(dev, sizeof(*nvmem_cfg), GFP_KERNEL);
-	if (!nvmem_cfg)
-		return -ENOMEM;
+	nvmem_cfg = devm_kzalloc(dev, माप(*nvmem_cfg), GFP_KERNEL);
+	अगर (!nvmem_cfg)
+		वापस -ENOMEM;
 
 	nvmem_cfg->dev = dev;
 	nvmem_cfg->name = "sunxi-sid";
-	nvmem_cfg->read_only = true;
+	nvmem_cfg->पढ़ो_only = true;
 	nvmem_cfg->size = cfg->size;
 	nvmem_cfg->word_size = 1;
 	nvmem_cfg->stride = 4;
 	nvmem_cfg->priv = sid;
-	if (cfg->need_register_readout)
-		nvmem_cfg->reg_read = sun8i_sid_read_by_reg;
-	else
-		nvmem_cfg->reg_read = sunxi_sid_read;
+	अगर (cfg->need_रेजिस्टर_पढ़ोout)
+		nvmem_cfg->reg_पढ़ो = sun8i_sid_पढ़ो_by_reg;
+	अन्यथा
+		nvmem_cfg->reg_पढ़ो = sunxi_sid_पढ़ो;
 
-	nvmem = devm_nvmem_register(dev, nvmem_cfg);
-	if (IS_ERR(nvmem))
-		return PTR_ERR(nvmem);
+	nvmem = devm_nvmem_रेजिस्टर(dev, nvmem_cfg);
+	अगर (IS_ERR(nvmem))
+		वापस PTR_ERR(nvmem);
 
-	randomness = kzalloc(size, GFP_KERNEL);
-	if (!randomness)
-		return -ENOMEM;
+	अक्रमomness = kzalloc(size, GFP_KERNEL);
+	अगर (!अक्रमomness)
+		वापस -ENOMEM;
 
-	nvmem_cfg->reg_read(sid, 0, randomness, size);
-	add_device_randomness(randomness, size);
-	kfree(randomness);
+	nvmem_cfg->reg_पढ़ो(sid, 0, अक्रमomness, size);
+	add_device_अक्रमomness(अक्रमomness, size);
+	kमुक्त(अक्रमomness);
 
-	platform_set_drvdata(pdev, nvmem);
+	platक्रमm_set_drvdata(pdev, nvmem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sunxi_sid_cfg sun4i_a10_cfg = {
+अटल स्थिर काष्ठा sunxi_sid_cfg sun4i_a10_cfg = अणु
 	.size = 0x10,
-};
+पूर्ण;
 
-static const struct sunxi_sid_cfg sun7i_a20_cfg = {
+अटल स्थिर काष्ठा sunxi_sid_cfg sun7i_a20_cfg = अणु
 	.size = 0x200,
-};
+पूर्ण;
 
-static const struct sunxi_sid_cfg sun8i_h3_cfg = {
+अटल स्थिर काष्ठा sunxi_sid_cfg sun8i_h3_cfg = अणु
 	.value_offset = 0x200,
 	.size = 0x100,
-	.need_register_readout = true,
-};
+	.need_रेजिस्टर_पढ़ोout = true,
+पूर्ण;
 
-static const struct sunxi_sid_cfg sun50i_a64_cfg = {
+अटल स्थिर काष्ठा sunxi_sid_cfg sun50i_a64_cfg = अणु
 	.value_offset = 0x200,
 	.size = 0x100,
-	.need_register_readout = true,
-};
+	.need_रेजिस्टर_पढ़ोout = true,
+पूर्ण;
 
-static const struct sunxi_sid_cfg sun50i_h6_cfg = {
+अटल स्थिर काष्ठा sunxi_sid_cfg sun50i_h6_cfg = अणु
 	.value_offset = 0x200,
 	.size = 0x200,
-};
+पूर्ण;
 
-static const struct of_device_id sunxi_sid_of_match[] = {
-	{ .compatible = "allwinner,sun4i-a10-sid", .data = &sun4i_a10_cfg },
-	{ .compatible = "allwinner,sun7i-a20-sid", .data = &sun7i_a20_cfg },
-	{ .compatible = "allwinner,sun8i-a83t-sid", .data = &sun50i_a64_cfg },
-	{ .compatible = "allwinner,sun8i-h3-sid", .data = &sun8i_h3_cfg },
-	{ .compatible = "allwinner,sun50i-a64-sid", .data = &sun50i_a64_cfg },
-	{ .compatible = "allwinner,sun50i-h5-sid", .data = &sun50i_a64_cfg },
-	{ .compatible = "allwinner,sun50i-h6-sid", .data = &sun50i_h6_cfg },
-	{/* sentinel */},
-};
+अटल स्थिर काष्ठा of_device_id sunxi_sid_of_match[] = अणु
+	अणु .compatible = "allwinner,sun4i-a10-sid", .data = &sun4i_a10_cfg पूर्ण,
+	अणु .compatible = "allwinner,sun7i-a20-sid", .data = &sun7i_a20_cfg पूर्ण,
+	अणु .compatible = "allwinner,sun8i-a83t-sid", .data = &sun50i_a64_cfg पूर्ण,
+	अणु .compatible = "allwinner,sun8i-h3-sid", .data = &sun8i_h3_cfg पूर्ण,
+	अणु .compatible = "allwinner,sun50i-a64-sid", .data = &sun50i_a64_cfg पूर्ण,
+	अणु .compatible = "allwinner,sun50i-h5-sid", .data = &sun50i_a64_cfg पूर्ण,
+	अणु .compatible = "allwinner,sun50i-h6-sid", .data = &sun50i_h6_cfg पूर्ण,
+	अणु/* sentinel */पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sunxi_sid_of_match);
 
-static struct platform_driver sunxi_sid_driver = {
+अटल काष्ठा platक्रमm_driver sunxi_sid_driver = अणु
 	.probe = sunxi_sid_probe,
-	.driver = {
+	.driver = अणु
 		.name = "eeprom-sunxi-sid",
 		.of_match_table = sunxi_sid_of_match,
-	},
-};
-module_platform_driver(sunxi_sid_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sunxi_sid_driver);
 
 MODULE_AUTHOR("Oliver Schinagl <oliver@schinagl.nl>");
 MODULE_DESCRIPTION("Allwinner sunxi security id driver");

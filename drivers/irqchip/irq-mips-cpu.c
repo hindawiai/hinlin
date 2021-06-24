@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2001 MontaVista Software Inc.
  * Author: Jun Sun, jsun@mvista.com or jsun@junsun.net
@@ -7,49 +8,49 @@
  * Copyright (C) 2005  MIPS Technologies, Inc.	All rights reserved.
  *	Author: Maciej W. Rozycki <macro@mips.com>
  *
- * This file define the irq handler for MIPS CPU interrupts.
+ * This file define the irq handler क्रम MIPS CPU पूर्णांकerrupts.
  */
 
 /*
- * Almost all MIPS CPUs define 8 interrupt sources.  They are typically
+ * Almost all MIPS CPUs define 8 पूर्णांकerrupt sources.  They are typically
  * level triggered (i.e., cannot be cleared from CPU; must be cleared from
  * device).
  *
- * The first two are software interrupts (i.e. not exposed as pins) which
- * may be used for IPIs in multi-threaded single-core systems.
+ * The first two are software पूर्णांकerrupts (i.e. not exposed as pins) which
+ * may be used क्रम IPIs in multi-thपढ़ोed single-core प्रणालीs.
  *
- * The last one is usually the CPU timer interrupt if the counter register
- * is present, or for old CPUs with an external FPU by convention it's the
- * FPU exception interrupt.
+ * The last one is usually the CPU समयr पूर्णांकerrupt अगर the counter रेजिस्टर
+ * is present, or क्रम old CPUs with an बाह्यal FPU by convention it's the
+ * FPU exception पूर्णांकerrupt.
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqdomain.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqकरोमुख्य.h>
 
-#include <asm/irq_cpu.h>
-#include <asm/mipsregs.h>
-#include <asm/mipsmtregs.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/irq_cpu.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/mipsmtregs.h>
+#समावेश <यंत्र/setup.h>
 
-static struct irq_domain *irq_domain;
-static struct irq_domain *ipi_domain;
+अटल काष्ठा irq_करोमुख्य *irq_करोमुख्य;
+अटल काष्ठा irq_करोमुख्य *ipi_करोमुख्य;
 
-static inline void unmask_mips_irq(struct irq_data *d)
-{
+अटल अंतरभूत व्योम unmask_mips_irq(काष्ठा irq_data *d)
+अणु
 	set_c0_status(IE_SW0 << d->hwirq);
 	irq_enable_hazard();
-}
+पूर्ण
 
-static inline void mask_mips_irq(struct irq_data *d)
-{
+अटल अंतरभूत व्योम mask_mips_irq(काष्ठा irq_data *d)
+अणु
 	clear_c0_status(IE_SW0 << d->hwirq);
 	irq_disable_hazard();
-}
+पूर्ण
 
-static struct irq_chip mips_cpu_irq_controller = {
+अटल काष्ठा irq_chip mips_cpu_irq_controller = अणु
 	.name		= "MIPS",
 	.irq_ack	= mask_mips_irq,
 	.irq_mask	= mask_mips_irq,
@@ -58,41 +59,41 @@ static struct irq_chip mips_cpu_irq_controller = {
 	.irq_eoi	= unmask_mips_irq,
 	.irq_disable	= mask_mips_irq,
 	.irq_enable	= unmask_mips_irq,
-};
+पूर्ण;
 
 /*
  * Basically the same as above but taking care of all the MT stuff
  */
 
-static unsigned int mips_mt_cpu_irq_startup(struct irq_data *d)
-{
-	unsigned int vpflags = dvpe();
+अटल अचिन्हित पूर्णांक mips_mt_cpu_irq_startup(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक vpflags = dvpe();
 
 	clear_c0_cause(C_SW0 << d->hwirq);
 	evpe(vpflags);
 	unmask_mips_irq(d);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * While we ack the interrupt interrupts are disabled and thus we don't need
- * to deal with concurrency issues.  Same for mips_cpu_irq_end.
+ * While we ack the पूर्णांकerrupt पूर्णांकerrupts are disabled and thus we करोn't need
+ * to deal with concurrency issues.  Same क्रम mips_cpu_irq_end.
  */
-static void mips_mt_cpu_irq_ack(struct irq_data *d)
-{
-	unsigned int vpflags = dvpe();
+अटल व्योम mips_mt_cpu_irq_ack(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक vpflags = dvpe();
 	clear_c0_cause(C_SW0 << d->hwirq);
 	evpe(vpflags);
 	mask_mips_irq(d);
-}
+पूर्ण
 
-#ifdef CONFIG_GENERIC_IRQ_IPI
+#अगर_घोषित CONFIG_GENERIC_IRQ_IPI
 
-static void mips_mt_send_ipi(struct irq_data *d, unsigned int cpu)
-{
+अटल व्योम mips_mt_send_ipi(काष्ठा irq_data *d, अचिन्हित पूर्णांक cpu)
+अणु
 	irq_hw_number_t hwirq = irqd_to_hwirq(d);
-	unsigned long flags;
-	int vpflags;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक vpflags;
 
 	local_irq_save(flags);
 
@@ -101,15 +102,15 @@ static void mips_mt_send_ipi(struct irq_data *d, unsigned int cpu)
 
 	vpflags = dvpe();
 	settc(cpu_vpe_id(&cpu_data[cpu]));
-	write_vpe_c0_cause(read_vpe_c0_cause() | (C_SW0 << hwirq));
+	ग_लिखो_vpe_c0_cause(पढ़ो_vpe_c0_cause() | (C_SW0 << hwirq));
 	evpe(vpflags);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-#endif /* CONFIG_GENERIC_IRQ_IPI */
+#पूर्ण_अगर /* CONFIG_GENERIC_IRQ_IPI */
 
-static struct irq_chip mips_mt_cpu_irq_controller = {
+अटल काष्ठा irq_chip mips_mt_cpu_irq_controller = अणु
 	.name		= "MIPS",
 	.irq_startup	= mips_mt_cpu_irq_startup,
 	.irq_ack	= mips_mt_cpu_irq_ack,
@@ -119,168 +120,168 @@ static struct irq_chip mips_mt_cpu_irq_controller = {
 	.irq_eoi	= unmask_mips_irq,
 	.irq_disable	= mask_mips_irq,
 	.irq_enable	= unmask_mips_irq,
-#ifdef CONFIG_GENERIC_IRQ_IPI
+#अगर_घोषित CONFIG_GENERIC_IRQ_IPI
 	.ipi_send_single = mips_mt_send_ipi,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-asmlinkage void __weak plat_irq_dispatch(void)
-{
-	unsigned long pending = read_c0_cause() & read_c0_status() & ST0_IM;
-	unsigned int virq;
-	int irq;
+यंत्रlinkage व्योम __weak plat_irq_dispatch(व्योम)
+अणु
+	अचिन्हित दीर्घ pending = पढ़ो_c0_cause() & पढ़ो_c0_status() & ST0_IM;
+	अचिन्हित पूर्णांक virq;
+	पूर्णांक irq;
 
-	if (!pending) {
-		spurious_interrupt();
-		return;
-	}
+	अगर (!pending) अणु
+		spurious_पूर्णांकerrupt();
+		वापस;
+	पूर्ण
 
 	pending >>= CAUSEB_IP;
-	while (pending) {
+	जबतक (pending) अणु
 		irq = fls(pending) - 1;
-		if (IS_ENABLED(CONFIG_GENERIC_IRQ_IPI) && irq < 2)
-			virq = irq_linear_revmap(ipi_domain, irq);
-		else
-			virq = irq_linear_revmap(irq_domain, irq);
-		do_IRQ(virq);
+		अगर (IS_ENABLED(CONFIG_GENERIC_IRQ_IPI) && irq < 2)
+			virq = irq_linear_revmap(ipi_करोमुख्य, irq);
+		अन्यथा
+			virq = irq_linear_revmap(irq_करोमुख्य, irq);
+		करो_IRQ(virq);
 		pending &= ~BIT(irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int mips_cpu_intc_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक mips_cpu_पूर्णांकc_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 			     irq_hw_number_t hw)
-{
-	struct irq_chip *chip;
+अणु
+	काष्ठा irq_chip *chip;
 
-	if (hw < 2 && cpu_has_mipsmt) {
-		/* Software interrupts are used for MT/CMT IPI */
+	अगर (hw < 2 && cpu_has_mipsmt) अणु
+		/* Software पूर्णांकerrupts are used क्रम MT/CMT IPI */
 		chip = &mips_mt_cpu_irq_controller;
-	} else {
+	पूर्ण अन्यथा अणु
 		chip = &mips_cpu_irq_controller;
-	}
+	पूर्ण
 
-	if (cpu_has_vint)
+	अगर (cpu_has_vपूर्णांक)
 		set_vi_handler(hw, plat_irq_dispatch);
 
 	irq_set_chip_and_handler(irq, chip, handle_percpu_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops mips_cpu_intc_irq_domain_ops = {
-	.map = mips_cpu_intc_map,
-	.xlate = irq_domain_xlate_onecell,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops mips_cpu_पूर्णांकc_irq_करोमुख्य_ops = अणु
+	.map = mips_cpu_पूर्णांकc_map,
+	.xlate = irq_करोमुख्य_xlate_onecell,
+पूर्ण;
 
-#ifdef CONFIG_GENERIC_IRQ_IPI
+#अगर_घोषित CONFIG_GENERIC_IRQ_IPI
 
-struct cpu_ipi_domain_state {
+काष्ठा cpu_ipi_करोमुख्य_state अणु
 	DECLARE_BITMAP(allocated, 2);
-};
+पूर्ण;
 
-static int mips_cpu_ipi_alloc(struct irq_domain *domain, unsigned int virq,
-			      unsigned int nr_irqs, void *arg)
-{
-	struct cpu_ipi_domain_state *state = domain->host_data;
-	unsigned int i, hwirq;
-	int ret;
+अटल पूर्णांक mips_cpu_ipi_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+			      अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
+अणु
+	काष्ठा cpu_ipi_करोमुख्य_state *state = करोमुख्य->host_data;
+	अचिन्हित पूर्णांक i, hwirq;
+	पूर्णांक ret;
 
-	for (i = 0; i < nr_irqs; i++) {
+	क्रम (i = 0; i < nr_irqs; i++) अणु
 		hwirq = find_first_zero_bit(state->allocated, 2);
-		if (hwirq == 2)
-			return -EBUSY;
-		bitmap_set(state->allocated, hwirq, 1);
+		अगर (hwirq == 2)
+			वापस -EBUSY;
+		biपंचांगap_set(state->allocated, hwirq, 1);
 
-		ret = irq_domain_set_hwirq_and_chip(domain, virq + i, hwirq,
+		ret = irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq + i, hwirq,
 						    &mips_mt_cpu_irq_controller,
-						    NULL);
-		if (ret)
-			return ret;
+						    शून्य);
+		अगर (ret)
+			वापस ret;
 
-		ret = irq_domain_set_hwirq_and_chip(domain->parent, virq + i, hwirq,
+		ret = irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य->parent, virq + i, hwirq,
 						    &mips_mt_cpu_irq_controller,
-						    NULL);
+						    शून्य);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = irq_set_irq_type(virq + i, IRQ_TYPE_LEVEL_HIGH);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mips_cpu_ipi_match(struct irq_domain *d, struct device_node *node,
-			      enum irq_domain_bus_token bus_token)
-{
+अटल पूर्णांक mips_cpu_ipi_match(काष्ठा irq_करोमुख्य *d, काष्ठा device_node *node,
+			      क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
 	bool is_ipi;
 
-	switch (bus_token) {
-	case DOMAIN_BUS_IPI:
+	चयन (bus_token) अणु
+	हाल DOMAIN_BUS_IPI:
 		is_ipi = d->bus_token == bus_token;
-		return (!node || (to_of_node(d->fwnode) == node)) && is_ipi;
-	default:
-		return 0;
-	}
-}
+		वापस (!node || (to_of_node(d->fwnode) == node)) && is_ipi;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static const struct irq_domain_ops mips_cpu_ipi_chip_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops mips_cpu_ipi_chip_ops = अणु
 	.alloc	= mips_cpu_ipi_alloc,
 	.match	= mips_cpu_ipi_match,
-};
+पूर्ण;
 
-static void mips_cpu_register_ipi_domain(struct device_node *of_node)
-{
-	struct cpu_ipi_domain_state *ipi_domain_state;
+अटल व्योम mips_cpu_रेजिस्टर_ipi_करोमुख्य(काष्ठा device_node *of_node)
+अणु
+	काष्ठा cpu_ipi_करोमुख्य_state *ipi_करोमुख्य_state;
 
-	ipi_domain_state = kzalloc(sizeof(*ipi_domain_state), GFP_KERNEL);
-	ipi_domain = irq_domain_add_hierarchy(irq_domain,
+	ipi_करोमुख्य_state = kzalloc(माप(*ipi_करोमुख्य_state), GFP_KERNEL);
+	ipi_करोमुख्य = irq_करोमुख्य_add_hierarchy(irq_करोमुख्य,
 					      IRQ_DOMAIN_FLAG_IPI_SINGLE,
 					      2, of_node,
 					      &mips_cpu_ipi_chip_ops,
-					      ipi_domain_state);
-	if (!ipi_domain)
+					      ipi_करोमुख्य_state);
+	अगर (!ipi_करोमुख्य)
 		panic("Failed to add MIPS CPU IPI domain");
-	irq_domain_update_bus_token(ipi_domain, DOMAIN_BUS_IPI);
-}
+	irq_करोमुख्य_update_bus_token(ipi_करोमुख्य, DOMAIN_BUS_IPI);
+पूर्ण
 
-#else /* !CONFIG_GENERIC_IRQ_IPI */
+#अन्यथा /* !CONFIG_GENERIC_IRQ_IPI */
 
-static inline void mips_cpu_register_ipi_domain(struct device_node *of_node) {}
+अटल अंतरभूत व्योम mips_cpu_रेजिस्टर_ipi_करोमुख्य(काष्ठा device_node *of_node) अणुपूर्ण
 
-#endif /* !CONFIG_GENERIC_IRQ_IPI */
+#पूर्ण_अगर /* !CONFIG_GENERIC_IRQ_IPI */
 
-static void __init __mips_cpu_irq_init(struct device_node *of_node)
-{
-	/* Mask interrupts. */
+अटल व्योम __init __mips_cpu_irq_init(काष्ठा device_node *of_node)
+अणु
+	/* Mask पूर्णांकerrupts. */
 	clear_c0_status(ST0_IM);
 	clear_c0_cause(CAUSEF_IP);
 
-	irq_domain = irq_domain_add_legacy(of_node, 8, MIPS_CPU_IRQ_BASE, 0,
-					   &mips_cpu_intc_irq_domain_ops,
-					   NULL);
-	if (!irq_domain)
+	irq_करोमुख्य = irq_करोमुख्य_add_legacy(of_node, 8, MIPS_CPU_IRQ_BASE, 0,
+					   &mips_cpu_पूर्णांकc_irq_करोमुख्य_ops,
+					   शून्य);
+	अगर (!irq_करोमुख्य)
 		panic("Failed to add irqdomain for MIPS CPU");
 
 	/*
-	 * Only proceed to register the software interrupt IPI implementation
-	 * for CPUs which implement the MIPS MT (multi-threading) ASE.
+	 * Only proceed to रेजिस्टर the software पूर्णांकerrupt IPI implementation
+	 * क्रम CPUs which implement the MIPS MT (multi-thपढ़ोing) ASE.
 	 */
-	if (cpu_has_mipsmt)
-		mips_cpu_register_ipi_domain(of_node);
-}
+	अगर (cpu_has_mipsmt)
+		mips_cpu_रेजिस्टर_ipi_करोमुख्य(of_node);
+पूर्ण
 
-void __init mips_cpu_irq_init(void)
-{
-	__mips_cpu_irq_init(NULL);
-}
+व्योम __init mips_cpu_irq_init(व्योम)
+अणु
+	__mips_cpu_irq_init(शून्य);
+पूर्ण
 
-int __init mips_cpu_irq_of_init(struct device_node *of_node,
-				struct device_node *parent)
-{
+पूर्णांक __init mips_cpu_irq_of_init(काष्ठा device_node *of_node,
+				काष्ठा device_node *parent)
+अणु
 	__mips_cpu_irq_init(of_node);
-	return 0;
-}
-IRQCHIP_DECLARE(cpu_intc, "mti,cpu-interrupt-controller", mips_cpu_irq_of_init);
+	वापस 0;
+पूर्ण
+IRQCHIP_DECLARE(cpu_पूर्णांकc, "mti,cpu-interrupt-controller", mips_cpu_irq_of_init);

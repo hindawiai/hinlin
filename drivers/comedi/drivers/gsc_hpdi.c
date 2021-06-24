@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * gsc_hpdi.c
  * Comedi driver the General Standards Corporation
  * High Speed Parallel Digital Interface rs485 boards.
  *
- * Author:  Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Author:  Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  * Copyright (C) 2003 Coherent Imaging Systems
  *
  * COMEDI - Linux Control and Measurement Device Interface
@@ -15,7 +16,7 @@
  * Driver: gsc_hpdi
  * Description: General Standards Corporation High
  *    Speed Parallel Digital Interface rs485 boards
- * Author: Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Author: Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  * Status: only receive mode works, transmit not supported
  * Updated: Thu, 01 Nov 2012 16:17:38 +0000
  * Devices: [General Standards Corporation] PCI-HPDI32 (gsc_hpdi),
@@ -25,337 +26,337 @@
  *    None.
  *
  * Manual configuration of supported devices is not supported; they are
- * configured automatically.
+ * configured स्वतःmatically.
  *
- * There are some additional hpdi models available from GSC for which
+ * There are some additional hpdi models available from GSC क्रम which
  * support could be added to this driver.
  */
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
-#include "plx9080.h"
+#समावेश "plx9080.h"
 
 /*
  * PCI BAR2 Register map (dev->mmio)
  */
-#define FIRMWARE_REV_REG			0x00
-#define FEATURES_REG_PRESENT_BIT		BIT(15)
-#define BOARD_CONTROL_REG			0x04
-#define BOARD_RESET_BIT				BIT(0)
-#define TX_FIFO_RESET_BIT			BIT(1)
-#define RX_FIFO_RESET_BIT			BIT(2)
-#define TX_ENABLE_BIT				BIT(4)
-#define RX_ENABLE_BIT				BIT(5)
-#define DEMAND_DMA_DIRECTION_TX_BIT		BIT(6)  /* ch 0 only */
-#define LINE_VALID_ON_STATUS_VALID_BIT		BIT(7)
-#define START_TX_BIT				BIT(8)
-#define CABLE_THROTTLE_ENABLE_BIT		BIT(9)
-#define TEST_MODE_ENABLE_BIT			BIT(31)
-#define BOARD_STATUS_REG			0x08
-#define COMMAND_LINE_STATUS_MASK		(0x7f << 0)
-#define TX_IN_PROGRESS_BIT			BIT(7)
-#define TX_NOT_EMPTY_BIT			BIT(8)
-#define TX_NOT_ALMOST_EMPTY_BIT			BIT(9)
-#define TX_NOT_ALMOST_FULL_BIT			BIT(10)
-#define TX_NOT_FULL_BIT				BIT(11)
-#define RX_NOT_EMPTY_BIT			BIT(12)
-#define RX_NOT_ALMOST_EMPTY_BIT			BIT(13)
-#define RX_NOT_ALMOST_FULL_BIT			BIT(14)
-#define RX_NOT_FULL_BIT				BIT(15)
-#define BOARD_JUMPER0_INSTALLED_BIT		BIT(16)
-#define BOARD_JUMPER1_INSTALLED_BIT		BIT(17)
-#define TX_OVERRUN_BIT				BIT(21)
-#define RX_UNDERRUN_BIT				BIT(22)
-#define RX_OVERRUN_BIT				BIT(23)
-#define TX_PROG_ALMOST_REG			0x0c
-#define RX_PROG_ALMOST_REG			0x10
-#define ALMOST_EMPTY_BITS(x)			(((x) & 0xffff) << 0)
-#define ALMOST_FULL_BITS(x)			(((x) & 0xff) << 16)
-#define FEATURES_REG				0x14
-#define FIFO_SIZE_PRESENT_BIT			BIT(0)
-#define FIFO_WORDS_PRESENT_BIT			BIT(1)
-#define LEVEL_EDGE_INTERRUPTS_PRESENT_BIT	BIT(2)
-#define GPIO_SUPPORTED_BIT			BIT(3)
-#define PLX_DMA_CH1_SUPPORTED_BIT		BIT(4)
-#define OVERRUN_UNDERRUN_SUPPORTED_BIT		BIT(5)
-#define FIFO_REG				0x18
-#define TX_STATUS_COUNT_REG			0x1c
-#define TX_LINE_VALID_COUNT_REG			0x20,
-#define TX_LINE_INVALID_COUNT_REG		0x24
-#define RX_STATUS_COUNT_REG			0x28
-#define RX_LINE_COUNT_REG			0x2c
-#define INTERRUPT_CONTROL_REG			0x30
-#define FRAME_VALID_START_INTR			BIT(0)
-#define FRAME_VALID_END_INTR			BIT(1)
-#define TX_FIFO_EMPTY_INTR			BIT(8)
-#define TX_FIFO_ALMOST_EMPTY_INTR		BIT(9)
-#define TX_FIFO_ALMOST_FULL_INTR		BIT(10)
-#define TX_FIFO_FULL_INTR			BIT(11)
-#define RX_EMPTY_INTR				BIT(12)
-#define RX_ALMOST_EMPTY_INTR			BIT(13)
-#define RX_ALMOST_FULL_INTR			BIT(14)
-#define RX_FULL_INTR				BIT(15)
-#define INTERRUPT_STATUS_REG			0x34
-#define TX_CLOCK_DIVIDER_REG			0x38
-#define TX_FIFO_SIZE_REG			0x40
-#define RX_FIFO_SIZE_REG			0x44
-#define FIFO_SIZE_MASK				(0xfffff << 0)
-#define TX_FIFO_WORDS_REG			0x48
-#define RX_FIFO_WORDS_REG			0x4c
-#define INTERRUPT_EDGE_LEVEL_REG		0x50
-#define INTERRUPT_POLARITY_REG			0x54
+#घोषणा FIRMWARE_REV_REG			0x00
+#घोषणा FEATURES_REG_PRESENT_BIT		BIT(15)
+#घोषणा BOARD_CONTROL_REG			0x04
+#घोषणा BOARD_RESET_BIT				BIT(0)
+#घोषणा TX_FIFO_RESET_BIT			BIT(1)
+#घोषणा RX_FIFO_RESET_BIT			BIT(2)
+#घोषणा TX_ENABLE_BIT				BIT(4)
+#घोषणा RX_ENABLE_BIT				BIT(5)
+#घोषणा DEMAND_DMA_सूचीECTION_TX_BIT		BIT(6)  /* ch 0 only */
+#घोषणा LINE_VALID_ON_STATUS_VALID_BIT		BIT(7)
+#घोषणा START_TX_BIT				BIT(8)
+#घोषणा CABLE_THROTTLE_ENABLE_BIT		BIT(9)
+#घोषणा TEST_MODE_ENABLE_BIT			BIT(31)
+#घोषणा BOARD_STATUS_REG			0x08
+#घोषणा COMMAND_LINE_STATUS_MASK		(0x7f << 0)
+#घोषणा TX_IN_PROGRESS_BIT			BIT(7)
+#घोषणा TX_NOT_EMPTY_BIT			BIT(8)
+#घोषणा TX_NOT_ALMOST_EMPTY_BIT			BIT(9)
+#घोषणा TX_NOT_ALMOST_FULL_BIT			BIT(10)
+#घोषणा TX_NOT_FULL_BIT				BIT(11)
+#घोषणा RX_NOT_EMPTY_BIT			BIT(12)
+#घोषणा RX_NOT_ALMOST_EMPTY_BIT			BIT(13)
+#घोषणा RX_NOT_ALMOST_FULL_BIT			BIT(14)
+#घोषणा RX_NOT_FULL_BIT				BIT(15)
+#घोषणा BOARD_JUMPER0_INSTALLED_BIT		BIT(16)
+#घोषणा BOARD_JUMPER1_INSTALLED_BIT		BIT(17)
+#घोषणा TX_OVERRUN_BIT				BIT(21)
+#घोषणा RX_UNDERRUN_BIT				BIT(22)
+#घोषणा RX_OVERRUN_BIT				BIT(23)
+#घोषणा TX_PROG_ALMOST_REG			0x0c
+#घोषणा RX_PROG_ALMOST_REG			0x10
+#घोषणा ALMOST_EMPTY_BITS(x)			(((x) & 0xffff) << 0)
+#घोषणा ALMOST_FULL_BITS(x)			(((x) & 0xff) << 16)
+#घोषणा FEATURES_REG				0x14
+#घोषणा FIFO_SIZE_PRESENT_BIT			BIT(0)
+#घोषणा FIFO_WORDS_PRESENT_BIT			BIT(1)
+#घोषणा LEVEL_EDGE_INTERRUPTS_PRESENT_BIT	BIT(2)
+#घोषणा GPIO_SUPPORTED_BIT			BIT(3)
+#घोषणा PLX_DMA_CH1_SUPPORTED_BIT		BIT(4)
+#घोषणा OVERRUN_UNDERRUN_SUPPORTED_BIT		BIT(5)
+#घोषणा FIFO_REG				0x18
+#घोषणा TX_STATUS_COUNT_REG			0x1c
+#घोषणा TX_LINE_VALID_COUNT_REG			0x20,
+#घोषणा TX_LINE_INVALID_COUNT_REG		0x24
+#घोषणा RX_STATUS_COUNT_REG			0x28
+#घोषणा RX_LINE_COUNT_REG			0x2c
+#घोषणा INTERRUPT_CONTROL_REG			0x30
+#घोषणा FRAME_VALID_START_INTR			BIT(0)
+#घोषणा FRAME_VALID_END_INTR			BIT(1)
+#घोषणा TX_FIFO_EMPTY_INTR			BIT(8)
+#घोषणा TX_FIFO_ALMOST_EMPTY_INTR		BIT(9)
+#घोषणा TX_FIFO_ALMOST_FULL_INTR		BIT(10)
+#घोषणा TX_FIFO_FULL_INTR			BIT(11)
+#घोषणा RX_EMPTY_INTR				BIT(12)
+#घोषणा RX_ALMOST_EMPTY_INTR			BIT(13)
+#घोषणा RX_ALMOST_FULL_INTR			BIT(14)
+#घोषणा RX_FULL_INTR				BIT(15)
+#घोषणा INTERRUPT_STATUS_REG			0x34
+#घोषणा TX_CLOCK_DIVIDER_REG			0x38
+#घोषणा TX_FIFO_SIZE_REG			0x40
+#घोषणा RX_FIFO_SIZE_REG			0x44
+#घोषणा FIFO_SIZE_MASK				(0xfffff << 0)
+#घोषणा TX_FIFO_WORDS_REG			0x48
+#घोषणा RX_FIFO_WORDS_REG			0x4c
+#घोषणा INTERRUPT_EDGE_LEVEL_REG		0x50
+#घोषणा INTERRUPT_POLARITY_REG			0x54
 
-#define TIMER_BASE				50	/* 20MHz master clock */
-#define DMA_BUFFER_SIZE				0x10000
-#define NUM_DMA_BUFFERS				4
-#define NUM_DMA_DESCRIPTORS			256
+#घोषणा TIMER_BASE				50	/* 20MHz master घड़ी */
+#घोषणा DMA_BUFFER_SIZE				0x10000
+#घोषणा NUM_DMA_BUFFERS				4
+#घोषणा NUM_DMA_DESCRIPTORS			256
 
-struct hpdi_private {
-	void __iomem *plx9080_mmio;
+काष्ठा hpdi_निजी अणु
+	व्योम __iomem *plx9080_mmio;
 	u32 *dio_buffer[NUM_DMA_BUFFERS];	/* dma buffers */
 	/* physical addresses of dma buffers */
 	dma_addr_t dio_buffer_phys_addr[NUM_DMA_BUFFERS];
 	/*
-	 * array of dma descriptors read by plx9080, allocated to get proper
+	 * array of dma descriptors पढ़ो by plx9080, allocated to get proper
 	 * alignment
 	 */
-	struct plx_dma_desc *dma_desc;
+	काष्ठा plx_dma_desc *dma_desc;
 	/* physical address of dma descriptor array */
 	dma_addr_t dma_desc_phys_addr;
-	unsigned int num_dma_descriptors;
-	/* pointer to start of buffers indexed by descriptor */
+	अचिन्हित पूर्णांक num_dma_descriptors;
+	/* poपूर्णांकer to start of buffers indexed by descriptor */
 	u32 *desc_dio_buffer[NUM_DMA_DESCRIPTORS];
 	/* index of the dma descriptor that is currently being used */
-	unsigned int dma_desc_index;
-	unsigned int tx_fifo_size;
-	unsigned int rx_fifo_size;
-	unsigned long dio_count;
+	अचिन्हित पूर्णांक dma_desc_index;
+	अचिन्हित पूर्णांक tx_fअगरo_size;
+	अचिन्हित पूर्णांक rx_fअगरo_size;
+	अचिन्हित दीर्घ dio_count;
 	/* number of bytes at which to generate COMEDI_CB_BLOCK events */
-	unsigned int block_size;
-};
+	अचिन्हित पूर्णांक block_size;
+पूर्ण;
 
-static void gsc_hpdi_drain_dma(struct comedi_device *dev, unsigned int channel)
-{
-	struct hpdi_private *devpriv = dev->private;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct comedi_cmd *cmd = &s->async->cmd;
-	unsigned int idx;
-	unsigned int start;
-	unsigned int desc;
-	unsigned int size;
-	unsigned int next;
+अटल व्योम gsc_hpdi_drain_dma(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक channel)
+अणु
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	अचिन्हित पूर्णांक idx;
+	अचिन्हित पूर्णांक start;
+	अचिन्हित पूर्णांक desc;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक next;
 
-	next = readl(devpriv->plx9080_mmio + PLX_REG_DMAPADR(channel));
+	next = पढ़ोl(devpriv->plx9080_mmio + PLX_REG_DMAPADR(channel));
 
 	idx = devpriv->dma_desc_index;
 	start = le32_to_cpu(devpriv->dma_desc[idx].pci_start_addr);
-	/* loop until we have read all the full buffers */
-	for (desc = 0; (next < start || next >= start + devpriv->block_size) &&
-	     desc < devpriv->num_dma_descriptors; desc++) {
+	/* loop until we have पढ़ो all the full buffers */
+	क्रम (desc = 0; (next < start || next >= start + devpriv->block_size) &&
+	     desc < devpriv->num_dma_descriptors; desc++) अणु
 		/* transfer data from dma buffer to comedi buffer */
-		size = devpriv->block_size / sizeof(u32);
-		if (cmd->stop_src == TRIG_COUNT) {
-			if (size > devpriv->dio_count)
+		size = devpriv->block_size / माप(u32);
+		अगर (cmd->stop_src == TRIG_COUNT) अणु
+			अगर (size > devpriv->dio_count)
 				size = devpriv->dio_count;
 			devpriv->dio_count -= size;
-		}
-		comedi_buf_write_samples(s, devpriv->desc_dio_buffer[idx],
+		पूर्ण
+		comedi_buf_ग_लिखो_samples(s, devpriv->desc_dio_buffer[idx],
 					 size);
 		idx++;
 		idx %= devpriv->num_dma_descriptors;
 		start = le32_to_cpu(devpriv->dma_desc[idx].pci_start_addr);
 
 		devpriv->dma_desc_index = idx;
-	}
-	/* XXX check for buffer overrun somehow */
-}
+	पूर्ण
+	/* XXX check क्रम buffer overrun somehow */
+पूर्ण
 
-static irqreturn_t gsc_hpdi_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct hpdi_private *devpriv = dev->private;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct comedi_async *async = s->async;
-	u32 hpdi_intr_status, hpdi_board_status;
+अटल irqवापस_t gsc_hpdi_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा comedi_async *async = s->async;
+	u32 hpdi_पूर्णांकr_status, hpdi_board_status;
 	u32 plx_status;
 	u32 plx_bits;
 	u8 dma0_status, dma1_status;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (!dev->attached)
-		return IRQ_NONE;
+	अगर (!dev->attached)
+		वापस IRQ_NONE;
 
-	plx_status = readl(devpriv->plx9080_mmio + PLX_REG_INTCSR);
-	if ((plx_status &
+	plx_status = पढ़ोl(devpriv->plx9080_mmio + PLX_REG_INTCSR);
+	अगर ((plx_status &
 	     (PLX_INTCSR_DMA0IA | PLX_INTCSR_DMA1IA | PLX_INTCSR_PLIA)) == 0)
-		return IRQ_NONE;
+		वापस IRQ_NONE;
 
-	hpdi_intr_status = readl(dev->mmio + INTERRUPT_STATUS_REG);
-	hpdi_board_status = readl(dev->mmio + BOARD_STATUS_REG);
+	hpdi_पूर्णांकr_status = पढ़ोl(dev->mmio + INTERRUPT_STATUS_REG);
+	hpdi_board_status = पढ़ोl(dev->mmio + BOARD_STATUS_REG);
 
-	if (hpdi_intr_status)
-		writel(hpdi_intr_status, dev->mmio + INTERRUPT_STATUS_REG);
+	अगर (hpdi_पूर्णांकr_status)
+		ग_लिखोl(hpdi_पूर्णांकr_status, dev->mmio + INTERRUPT_STATUS_REG);
 
-	/* spin lock makes sure no one else changes plx dma control reg */
+	/* spin lock makes sure no one अन्यथा changes plx dma control reg */
 	spin_lock_irqsave(&dev->spinlock, flags);
-	dma0_status = readb(devpriv->plx9080_mmio + PLX_REG_DMACSR0);
-	if (plx_status & PLX_INTCSR_DMA0IA) {
-		/* dma chan 0 interrupt */
-		writeb((dma0_status & PLX_DMACSR_ENABLE) | PLX_DMACSR_CLEARINTR,
+	dma0_status = पढ़ोb(devpriv->plx9080_mmio + PLX_REG_DMACSR0);
+	अगर (plx_status & PLX_INTCSR_DMA0IA) अणु
+		/* dma chan 0 पूर्णांकerrupt */
+		ग_लिखोb((dma0_status & PLX_DMACSR_ENABLE) | PLX_DMACSR_CLEARINTR,
 		       devpriv->plx9080_mmio + PLX_REG_DMACSR0);
 
-		if (dma0_status & PLX_DMACSR_ENABLE)
+		अगर (dma0_status & PLX_DMACSR_ENABLE)
 			gsc_hpdi_drain_dma(dev, 0);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
-	/* spin lock makes sure no one else changes plx dma control reg */
+	/* spin lock makes sure no one अन्यथा changes plx dma control reg */
 	spin_lock_irqsave(&dev->spinlock, flags);
-	dma1_status = readb(devpriv->plx9080_mmio + PLX_REG_DMACSR1);
-	if (plx_status & PLX_INTCSR_DMA1IA) {
-		/* XXX */ /* dma chan 1 interrupt */
-		writeb((dma1_status & PLX_DMACSR_ENABLE) | PLX_DMACSR_CLEARINTR,
+	dma1_status = पढ़ोb(devpriv->plx9080_mmio + PLX_REG_DMACSR1);
+	अगर (plx_status & PLX_INTCSR_DMA1IA) अणु
+		/* XXX */ /* dma chan 1 पूर्णांकerrupt */
+		ग_लिखोb((dma1_status & PLX_DMACSR_ENABLE) | PLX_DMACSR_CLEARINTR,
 		       devpriv->plx9080_mmio + PLX_REG_DMACSR1);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
-	/* clear possible plx9080 interrupt sources */
-	if (plx_status & PLX_INTCSR_LDBIA) {
-		/* clear local doorbell interrupt */
-		plx_bits = readl(devpriv->plx9080_mmio + PLX_REG_L2PDBELL);
-		writel(plx_bits, devpriv->plx9080_mmio + PLX_REG_L2PDBELL);
-	}
+	/* clear possible plx9080 पूर्णांकerrupt sources */
+	अगर (plx_status & PLX_INTCSR_LDBIA) अणु
+		/* clear local करोorbell पूर्णांकerrupt */
+		plx_bits = पढ़ोl(devpriv->plx9080_mmio + PLX_REG_L2PDBELL);
+		ग_लिखोl(plx_bits, devpriv->plx9080_mmio + PLX_REG_L2PDBELL);
+	पूर्ण
 
-	if (hpdi_board_status & RX_OVERRUN_BIT) {
+	अगर (hpdi_board_status & RX_OVERRUN_BIT) अणु
 		dev_err(dev->class_dev, "rx fifo overrun\n");
 		async->events |= COMEDI_CB_ERROR;
-	}
+	पूर्ण
 
-	if (hpdi_board_status & RX_UNDERRUN_BIT) {
+	अगर (hpdi_board_status & RX_UNDERRUN_BIT) अणु
 		dev_err(dev->class_dev, "rx fifo underrun\n");
 		async->events |= COMEDI_CB_ERROR;
-	}
+	पूर्ण
 
-	if (devpriv->dio_count == 0)
+	अगर (devpriv->dio_count == 0)
 		async->events |= COMEDI_CB_EOA;
 
 	comedi_handle_events(dev, s);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void gsc_hpdi_abort_dma(struct comedi_device *dev, unsigned int channel)
-{
-	struct hpdi_private *devpriv = dev->private;
-	unsigned long flags;
+अटल व्योम gsc_hpdi_पात_dma(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक channel)
+अणु
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
+	अचिन्हित दीर्घ flags;
 
-	/* spinlock for plx dma control/status reg */
+	/* spinlock क्रम plx dma control/status reg */
 	spin_lock_irqsave(&dev->spinlock, flags);
 
-	plx9080_abort_dma(devpriv->plx9080_mmio, channel);
+	plx9080_पात_dma(devpriv->plx9080_mmio, channel);
 
 	spin_unlock_irqrestore(&dev->spinlock, flags);
-}
+पूर्ण
 
-static int gsc_hpdi_cancel(struct comedi_device *dev,
-			   struct comedi_subdevice *s)
-{
-	writel(0, dev->mmio + BOARD_CONTROL_REG);
-	writel(0, dev->mmio + INTERRUPT_CONTROL_REG);
+अटल पूर्णांक gsc_hpdi_cancel(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_subdevice *s)
+अणु
+	ग_लिखोl(0, dev->mmio + BOARD_CONTROL_REG);
+	ग_लिखोl(0, dev->mmio + INTERRUPT_CONTROL_REG);
 
-	gsc_hpdi_abort_dma(dev, 0);
+	gsc_hpdi_पात_dma(dev, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gsc_hpdi_cmd(struct comedi_device *dev,
-			struct comedi_subdevice *s)
-{
-	struct hpdi_private *devpriv = dev->private;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	unsigned long flags;
+अटल पूर्णांक gsc_hpdi_cmd(काष्ठा comedi_device *dev,
+			काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	अचिन्हित दीर्घ flags;
 	u32 bits;
 
-	if (s->io_bits)
-		return -EINVAL;
+	अगर (s->io_bits)
+		वापस -EINVAL;
 
-	writel(RX_FIFO_RESET_BIT, dev->mmio + BOARD_CONTROL_REG);
+	ग_लिखोl(RX_FIFO_RESET_BIT, dev->mmio + BOARD_CONTROL_REG);
 
-	gsc_hpdi_abort_dma(dev, 0);
+	gsc_hpdi_पात_dma(dev, 0);
 
 	devpriv->dma_desc_index = 0;
 
 	/*
-	 * These register are supposedly unused during chained dma,
+	 * These रेजिस्टर are supposedly unused during chained dma,
 	 * but I have found that left over values from last operation
 	 * occasionally cause problems with transfer of first dma
 	 * block.  Initializing them to zero seems to fix the problem.
 	 */
-	writel(0, devpriv->plx9080_mmio + PLX_REG_DMASIZ0);
-	writel(0, devpriv->plx9080_mmio + PLX_REG_DMAPADR0);
-	writel(0, devpriv->plx9080_mmio + PLX_REG_DMALADR0);
+	ग_लिखोl(0, devpriv->plx9080_mmio + PLX_REG_DMASIZ0);
+	ग_लिखोl(0, devpriv->plx9080_mmio + PLX_REG_DMAPADR0);
+	ग_लिखोl(0, devpriv->plx9080_mmio + PLX_REG_DMALADR0);
 
 	/* give location of first dma descriptor */
 	bits = devpriv->dma_desc_phys_addr | PLX_DMADPR_DESCPCI |
 	       PLX_DMADPR_TCINTR | PLX_DMADPR_XFERL2P;
-	writel(bits, devpriv->plx9080_mmio + PLX_REG_DMADPR0);
+	ग_लिखोl(bits, devpriv->plx9080_mmio + PLX_REG_DMADPR0);
 
 	/* enable dma transfer */
 	spin_lock_irqsave(&dev->spinlock, flags);
-	writeb(PLX_DMACSR_ENABLE | PLX_DMACSR_START | PLX_DMACSR_CLEARINTR,
+	ग_लिखोb(PLX_DMACSR_ENABLE | PLX_DMACSR_START | PLX_DMACSR_CLEARINTR,
 	       devpriv->plx9080_mmio + PLX_REG_DMACSR0);
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		devpriv->dio_count = cmd->stop_arg;
-	else
+	अन्यथा
 		devpriv->dio_count = 1;
 
 	/* clear over/under run status flags */
-	writel(RX_UNDERRUN_BIT | RX_OVERRUN_BIT, dev->mmio + BOARD_STATUS_REG);
+	ग_लिखोl(RX_UNDERRUN_BIT | RX_OVERRUN_BIT, dev->mmio + BOARD_STATUS_REG);
 
-	/* enable interrupts */
-	writel(RX_FULL_INTR, dev->mmio + INTERRUPT_CONTROL_REG);
+	/* enable पूर्णांकerrupts */
+	ग_लिखोl(RX_FULL_INTR, dev->mmio + INTERRUPT_CONTROL_REG);
 
-	writel(RX_ENABLE_BIT, dev->mmio + BOARD_CONTROL_REG);
+	ग_लिखोl(RX_ENABLE_BIT, dev->mmio + BOARD_CONTROL_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gsc_hpdi_check_chanlist(struct comedi_device *dev,
-				   struct comedi_subdevice *s,
-				   struct comedi_cmd *cmd)
-{
-	int i;
+अटल पूर्णांक gsc_hpdi_check_chanlist(काष्ठा comedi_device *dev,
+				   काष्ठा comedi_subdevice *s,
+				   काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < cmd->chanlist_len; i++) {
-		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
+	क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
+		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
 
-		if (chan != i) {
+		अगर (chan != i) अणु
 			dev_dbg(dev->class_dev,
 				"chanlist must be ch 0 to 31 in order\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gsc_hpdi_cmd_test(struct comedi_device *dev,
-			     struct comedi_subdevice *s,
-			     struct comedi_cmd *cmd)
-{
-	int err = 0;
+अटल पूर्णांक gsc_hpdi_cmd_test(काष्ठा comedi_device *dev,
+			     काष्ठा comedi_subdevice *s,
+			     काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
 
-	if (s->io_bits)
-		return -EINVAL;
+	अगर (s->io_bits)
+		वापस -EINVAL;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_EXT);
@@ -363,8 +364,8 @@ static int gsc_hpdi_cmd_test(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -372,291 +373,291 @@ static int gsc_hpdi_cmd_test(struct comedi_device *dev,
 
 	/* Step 2b : and mutually compatible */
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	if (!cmd->chanlist_len || !cmd->chanlist) {
+	अगर (!cmd->chanlist_len || !cmd->chanlist) अणु
 		cmd->chanlist_len = 32;
 		err |= -EINVAL;
-	}
+	पूर्ण
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* Step 4: fix up any arguments */
 
-	/* Step 5: check channel list if it exists */
+	/* Step 5: check channel list अगर it exists */
 
-	if (cmd->chanlist && cmd->chanlist_len > 0)
+	अगर (cmd->chanlist && cmd->chanlist_len > 0)
 		err |= gsc_hpdi_check_chanlist(dev, s, cmd);
 
-	if (err)
-		return 5;
+	अगर (err)
+		वापस 5;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* setup dma descriptors so a link completes every 'len' bytes */
-static int gsc_hpdi_setup_dma_descriptors(struct comedi_device *dev,
-					  unsigned int len)
-{
-	struct hpdi_private *devpriv = dev->private;
+अटल पूर्णांक gsc_hpdi_setup_dma_descriptors(काष्ठा comedi_device *dev,
+					  अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
 	dma_addr_t phys_addr = devpriv->dma_desc_phys_addr;
 	u32 next_bits = PLX_DMADPR_DESCPCI | PLX_DMADPR_TCINTR |
 			PLX_DMADPR_XFERL2P;
-	unsigned int offset = 0;
-	unsigned int idx = 0;
-	unsigned int i;
+	अचिन्हित पूर्णांक offset = 0;
+	अचिन्हित पूर्णांक idx = 0;
+	अचिन्हित पूर्णांक i;
 
-	if (len > DMA_BUFFER_SIZE)
+	अगर (len > DMA_BUFFER_SIZE)
 		len = DMA_BUFFER_SIZE;
-	len -= len % sizeof(u32);
-	if (len == 0)
-		return -EINVAL;
+	len -= len % माप(u32);
+	अगर (len == 0)
+		वापस -EINVAL;
 
-	for (i = 0; i < NUM_DMA_DESCRIPTORS && idx < NUM_DMA_BUFFERS; i++) {
+	क्रम (i = 0; i < NUM_DMA_DESCRIPTORS && idx < NUM_DMA_BUFFERS; i++) अणु
 		devpriv->dma_desc[i].pci_start_addr =
 		    cpu_to_le32(devpriv->dio_buffer_phys_addr[idx] + offset);
 		devpriv->dma_desc[i].local_start_addr = cpu_to_le32(FIFO_REG);
 		devpriv->dma_desc[i].transfer_size = cpu_to_le32(len);
 		devpriv->dma_desc[i].next = cpu_to_le32((phys_addr +
-			(i + 1) * sizeof(devpriv->dma_desc[0])) | next_bits);
+			(i + 1) * माप(devpriv->dma_desc[0])) | next_bits);
 
 		devpriv->desc_dio_buffer[i] = devpriv->dio_buffer[idx] +
-					      (offset / sizeof(u32));
+					      (offset / माप(u32));
 
 		offset += len;
-		if (len + offset > DMA_BUFFER_SIZE) {
+		अगर (len + offset > DMA_BUFFER_SIZE) अणु
 			offset = 0;
 			idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	devpriv->num_dma_descriptors = i;
-	/* fix last descriptor to point back to first */
+	/* fix last descriptor to poपूर्णांक back to first */
 	devpriv->dma_desc[i - 1].next = cpu_to_le32(phys_addr | next_bits);
 
 	devpriv->block_size = len;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int gsc_hpdi_dio_insn_config(struct comedi_device *dev,
-				    struct comedi_subdevice *s,
-				    struct comedi_insn *insn,
-				    unsigned int *data)
-{
-	int ret;
+अटल पूर्णांक gsc_hpdi_dio_insn_config(काष्ठा comedi_device *dev,
+				    काष्ठा comedi_subdevice *s,
+				    काष्ठा comedi_insn *insn,
+				    अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
 
-	switch (data[0]) {
-	case INSN_CONFIG_BLOCK_SIZE:
+	चयन (data[0]) अणु
+	हाल INSN_CONFIG_BLOCK_SIZE:
 		ret = gsc_hpdi_setup_dma_descriptors(dev, data[1]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		data[1] = ret;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = comedi_dio_insn_config(dev, s, insn, data, 0xffffffff);
-		if (ret)
-			return ret;
-		break;
-	}
+		अगर (ret)
+			वापस ret;
+		अवरोध;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static void gsc_hpdi_free_dma(struct comedi_device *dev)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	struct hpdi_private *devpriv = dev->private;
-	int i;
+अटल व्योम gsc_hpdi_मुक्त_dma(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
+	पूर्णांक i;
 
-	if (!devpriv)
-		return;
+	अगर (!devpriv)
+		वापस;
 
-	/* free pci dma buffers */
-	for (i = 0; i < NUM_DMA_BUFFERS; i++) {
-		if (devpriv->dio_buffer[i])
-			dma_free_coherent(&pcidev->dev,
+	/* मुक्त pci dma buffers */
+	क्रम (i = 0; i < NUM_DMA_BUFFERS; i++) अणु
+		अगर (devpriv->dio_buffer[i])
+			dma_मुक्त_coherent(&pcidev->dev,
 					  DMA_BUFFER_SIZE,
 					  devpriv->dio_buffer[i],
 					  devpriv->dio_buffer_phys_addr[i]);
-	}
-	/* free dma descriptors */
-	if (devpriv->dma_desc)
-		dma_free_coherent(&pcidev->dev,
-				  sizeof(struct plx_dma_desc) *
+	पूर्ण
+	/* मुक्त dma descriptors */
+	अगर (devpriv->dma_desc)
+		dma_मुक्त_coherent(&pcidev->dev,
+				  माप(काष्ठा plx_dma_desc) *
 				  NUM_DMA_DESCRIPTORS,
 				  devpriv->dma_desc,
 				  devpriv->dma_desc_phys_addr);
-}
+पूर्ण
 
-static int gsc_hpdi_init(struct comedi_device *dev)
-{
-	struct hpdi_private *devpriv = dev->private;
-	u32 plx_intcsr_bits;
+अटल पूर्णांक gsc_hpdi_init(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
+	u32 plx_पूर्णांकcsr_bits;
 
-	/* wait 10usec after reset before accessing fifos */
-	writel(BOARD_RESET_BIT, dev->mmio + BOARD_CONTROL_REG);
+	/* रुको 10usec after reset beक्रमe accessing fअगरos */
+	ग_लिखोl(BOARD_RESET_BIT, dev->mmio + BOARD_CONTROL_REG);
 	usleep_range(10, 1000);
 
-	writel(ALMOST_EMPTY_BITS(32) | ALMOST_FULL_BITS(32),
+	ग_लिखोl(ALMOST_EMPTY_BITS(32) | ALMOST_FULL_BITS(32),
 	       dev->mmio + RX_PROG_ALMOST_REG);
-	writel(ALMOST_EMPTY_BITS(32) | ALMOST_FULL_BITS(32),
+	ग_लिखोl(ALMOST_EMPTY_BITS(32) | ALMOST_FULL_BITS(32),
 	       dev->mmio + TX_PROG_ALMOST_REG);
 
-	devpriv->tx_fifo_size = readl(dev->mmio + TX_FIFO_SIZE_REG) &
+	devpriv->tx_fअगरo_size = पढ़ोl(dev->mmio + TX_FIFO_SIZE_REG) &
 				FIFO_SIZE_MASK;
-	devpriv->rx_fifo_size = readl(dev->mmio + RX_FIFO_SIZE_REG) &
+	devpriv->rx_fअगरo_size = पढ़ोl(dev->mmio + RX_FIFO_SIZE_REG) &
 				FIFO_SIZE_MASK;
 
-	writel(0, dev->mmio + INTERRUPT_CONTROL_REG);
+	ग_लिखोl(0, dev->mmio + INTERRUPT_CONTROL_REG);
 
-	/* enable interrupts */
-	plx_intcsr_bits =
+	/* enable पूर्णांकerrupts */
+	plx_पूर्णांकcsr_bits =
 	    PLX_INTCSR_LSEABORTEN | PLX_INTCSR_LSEPARITYEN | PLX_INTCSR_PIEN |
 	    PLX_INTCSR_PLIEN | PLX_INTCSR_PABORTIEN | PLX_INTCSR_LIOEN |
 	    PLX_INTCSR_DMA0IEN;
-	writel(plx_intcsr_bits, devpriv->plx9080_mmio + PLX_REG_INTCSR);
+	ग_लिखोl(plx_पूर्णांकcsr_bits, devpriv->plx9080_mmio + PLX_REG_INTCSR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gsc_hpdi_init_plx9080(struct comedi_device *dev)
-{
-	struct hpdi_private *devpriv = dev->private;
+अटल व्योम gsc_hpdi_init_plx9080(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
 	u32 bits;
-	void __iomem *plx_iobase = devpriv->plx9080_mmio;
+	व्योम __iomem *plx_iobase = devpriv->plx9080_mmio;
 
-#ifdef __BIG_ENDIAN
+#अगर_घोषित __BIG_ENDIAN
 	bits = PLX_BIGEND_DMA0 | PLX_BIGEND_DMA1;
-#else
+#अन्यथा
 	bits = 0;
-#endif
-	writel(bits, devpriv->plx9080_mmio + PLX_REG_BIGEND);
+#पूर्ण_अगर
+	ग_लिखोl(bits, devpriv->plx9080_mmio + PLX_REG_BIGEND);
 
-	writel(0, devpriv->plx9080_mmio + PLX_REG_INTCSR);
+	ग_लिखोl(0, devpriv->plx9080_mmio + PLX_REG_INTCSR);
 
-	gsc_hpdi_abort_dma(dev, 0);
-	gsc_hpdi_abort_dma(dev, 1);
+	gsc_hpdi_पात_dma(dev, 0);
+	gsc_hpdi_पात_dma(dev, 1);
 
 	/* configure dma0 mode */
 	bits = 0;
-	/* enable ready input */
+	/* enable पढ़ोy input */
 	bits |= PLX_DMAMODE_READYIEN;
 	/* enable dma chaining */
 	bits |= PLX_DMAMODE_CHAINEN;
 	/*
-	 * enable interrupt on dma done
-	 * (probably don't need this, since chain never finishes)
+	 * enable पूर्णांकerrupt on dma करोne
+	 * (probably करोn't need this, since chain never finishes)
 	 */
 	bits |= PLX_DMAMODE_DONEIEN;
 	/*
-	 * don't increment local address during transfers
-	 * (we are transferring from a fixed fifo register)
+	 * करोn't increment local address during transfers
+	 * (we are transferring from a fixed fअगरo रेजिस्टर)
 	 */
 	bits |= PLX_DMAMODE_LACONST;
-	/* route dma interrupt to pci bus */
+	/* route dma पूर्णांकerrupt to pci bus */
 	bits |= PLX_DMAMODE_INTRPCI;
 	/* enable demand mode */
 	bits |= PLX_DMAMODE_DEMAND;
 	/* enable local burst mode */
 	bits |= PLX_DMAMODE_BURSTEN;
 	bits |= PLX_DMAMODE_WIDTH_32;
-	writel(bits, plx_iobase + PLX_REG_DMAMODE0);
-}
+	ग_लिखोl(bits, plx_iobase + PLX_REG_DMAMODE0);
+पूर्ण
 
-static int gsc_hpdi_auto_attach(struct comedi_device *dev,
-				unsigned long context_unused)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	struct hpdi_private *devpriv;
-	struct comedi_subdevice *s;
-	int i;
-	int retval;
+अटल पूर्णांक gsc_hpdi_स्वतः_attach(काष्ठा comedi_device *dev,
+				अचिन्हित दीर्घ context_unused)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	काष्ठा hpdi_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक i;
+	पूर्णांक retval;
 
 	dev->board_name = "pci-hpdi32";
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	retval = comedi_pci_enable(dev);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 	pci_set_master(pcidev);
 
 	devpriv->plx9080_mmio = pci_ioremap_bar(pcidev, 0);
 	dev->mmio = pci_ioremap_bar(pcidev, 2);
-	if (!devpriv->plx9080_mmio || !dev->mmio) {
+	अगर (!devpriv->plx9080_mmio || !dev->mmio) अणु
 		dev_warn(dev->class_dev, "failed to remap io memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	gsc_hpdi_init_plx9080(dev);
 
 	/* get irq */
-	if (request_irq(pcidev->irq, gsc_hpdi_interrupt, IRQF_SHARED,
-			dev->board_name, dev)) {
+	अगर (request_irq(pcidev->irq, gsc_hpdi_पूर्णांकerrupt, IRQF_SHARED,
+			dev->board_name, dev)) अणु
 		dev_warn(dev->class_dev,
 			 "unable to allocate irq %u\n", pcidev->irq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev->irq = pcidev->irq;
 
 	dev_dbg(dev->class_dev, " irq %u\n", dev->irq);
 
 	/* allocate pci dma buffers */
-	for (i = 0; i < NUM_DMA_BUFFERS; i++) {
+	क्रम (i = 0; i < NUM_DMA_BUFFERS; i++) अणु
 		devpriv->dio_buffer[i] =
 		    dma_alloc_coherent(&pcidev->dev, DMA_BUFFER_SIZE,
 				       &devpriv->dio_buffer_phys_addr[i],
 				       GFP_KERNEL);
-		if (!devpriv->dio_buffer[i]) {
+		अगर (!devpriv->dio_buffer[i]) अणु
 			dev_warn(dev->class_dev,
 				 "failed to allocate DMA buffer\n");
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 	/* allocate dma descriptors */
 	devpriv->dma_desc = dma_alloc_coherent(&pcidev->dev,
-					       sizeof(struct plx_dma_desc) *
+					       माप(काष्ठा plx_dma_desc) *
 					       NUM_DMA_DESCRIPTORS,
 					       &devpriv->dma_desc_phys_addr,
 					       GFP_KERNEL);
-	if (!devpriv->dma_desc) {
+	अगर (!devpriv->dma_desc) अणु
 		dev_warn(dev->class_dev,
 			 "failed to allocate DMA descriptors\n");
-		return -ENOMEM;
-	}
-	if (devpriv->dma_desc_phys_addr & 0xf) {
+		वापस -ENOMEM;
+	पूर्ण
+	अगर (devpriv->dma_desc_phys_addr & 0xf) अणु
 		dev_warn(dev->class_dev,
 			 " dma descriptors not quad-word aligned (bug)\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	retval = gsc_hpdi_setup_dma_descriptors(dev, 0x1000);
-	if (retval < 0)
-		return retval;
+	अगर (retval < 0)
+		वापस retval;
 
 	retval = comedi_alloc_subdevices(dev, 1);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	/* Digital I/O subdevice */
 	s = &dev->subdevices[0];
-	dev->read_subdev = s;
+	dev->पढ़ो_subdev = s;
 	s->type		= COMEDI_SUBD_DIO;
 	s->subdev_flags	= SDF_READABLE | SDF_WRITABLE | SDF_LSAMPL |
 			  SDF_CMD_READ;
@@ -665,57 +666,57 @@ static int gsc_hpdi_auto_attach(struct comedi_device *dev,
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
 	s->insn_config	= gsc_hpdi_dio_insn_config;
-	s->do_cmd	= gsc_hpdi_cmd;
-	s->do_cmdtest	= gsc_hpdi_cmd_test;
+	s->करो_cmd	= gsc_hpdi_cmd;
+	s->करो_cmdtest	= gsc_hpdi_cmd_test;
 	s->cancel	= gsc_hpdi_cancel;
 
-	return gsc_hpdi_init(dev);
-}
+	वापस gsc_hpdi_init(dev);
+पूर्ण
 
-static void gsc_hpdi_detach(struct comedi_device *dev)
-{
-	struct hpdi_private *devpriv = dev->private;
+अटल व्योम gsc_hpdi_detach(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा hpdi_निजी *devpriv = dev->निजी;
 
-	if (dev->irq)
-		free_irq(dev->irq, dev);
-	if (devpriv) {
-		if (devpriv->plx9080_mmio) {
-			writel(0, devpriv->plx9080_mmio + PLX_REG_INTCSR);
+	अगर (dev->irq)
+		मुक्त_irq(dev->irq, dev);
+	अगर (devpriv) अणु
+		अगर (devpriv->plx9080_mmio) अणु
+			ग_लिखोl(0, devpriv->plx9080_mmio + PLX_REG_INTCSR);
 			iounmap(devpriv->plx9080_mmio);
-		}
-		if (dev->mmio)
+		पूर्ण
+		अगर (dev->mmio)
 			iounmap(dev->mmio);
-	}
+	पूर्ण
 	comedi_pci_disable(dev);
-	gsc_hpdi_free_dma(dev);
-}
+	gsc_hpdi_मुक्त_dma(dev);
+पूर्ण
 
-static struct comedi_driver gsc_hpdi_driver = {
+अटल काष्ठा comedi_driver gsc_hpdi_driver = अणु
 	.driver_name	= "gsc_hpdi",
 	.module		= THIS_MODULE,
-	.auto_attach	= gsc_hpdi_auto_attach,
+	.स्वतः_attach	= gsc_hpdi_स्वतः_attach,
 	.detach		= gsc_hpdi_detach,
-};
+पूर्ण;
 
-static int gsc_hpdi_pci_probe(struct pci_dev *dev,
-			      const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &gsc_hpdi_driver, id->driver_data);
-}
+अटल पूर्णांक gsc_hpdi_pci_probe(काष्ठा pci_dev *dev,
+			      स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &gsc_hpdi_driver, id->driver_data);
+पूर्ण
 
-static const struct pci_device_id gsc_hpdi_pci_table[] = {
-	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9080,
-			 PCI_VENDOR_ID_PLX, 0x2400) },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id gsc_hpdi_pci_table[] = अणु
+	अणु PCI_DEVICE_SUB(PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9080,
+			 PCI_VENDOR_ID_PLX, 0x2400) पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, gsc_hpdi_pci_table);
 
-static struct pci_driver gsc_hpdi_pci_driver = {
+अटल काष्ठा pci_driver gsc_hpdi_pci_driver = अणु
 	.name		= "gsc_hpdi",
 	.id_table	= gsc_hpdi_pci_table,
 	.probe		= gsc_hpdi_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(gsc_hpdi_driver, gsc_hpdi_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

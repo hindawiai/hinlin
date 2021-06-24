@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * MAX77620 pin control driver.
  *
@@ -9,65 +10,65 @@
  *	Laxman Dewangan <ldewangan@nvidia.com>
  */
 
-#include <linux/mfd/max77620.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/mfd/max77620.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include "core.h"
-#include "pinconf.h"
-#include "pinctrl-utils.h"
+#समावेश "core.h"
+#समावेश "pinconf.h"
+#समावेश "pinctrl-utils.h"
 
-#define MAX77620_PIN_NUM 8
+#घोषणा MAX77620_PIN_NUM 8
 
-enum max77620_pin_ppdrv {
+क्रमागत max77620_pin_ppdrv अणु
 	MAX77620_PIN_UNCONFIG_DRV,
 	MAX77620_PIN_OD_DRV,
 	MAX77620_PIN_PP_DRV,
-};
+पूर्ण;
 
-#define MAX77620_ACTIVE_FPS_SOURCE		(PIN_CONFIG_END + 1)
-#define MAX77620_ACTIVE_FPS_POWER_ON_SLOTS	(PIN_CONFIG_END + 2)
-#define MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS	(PIN_CONFIG_END + 3)
-#define MAX77620_SUSPEND_FPS_SOURCE		(PIN_CONFIG_END + 4)
-#define MAX77620_SUSPEND_FPS_POWER_ON_SLOTS	(PIN_CONFIG_END + 5)
-#define MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS	(PIN_CONFIG_END + 6)
+#घोषणा MAX77620_ACTIVE_FPS_SOURCE		(PIN_CONFIG_END + 1)
+#घोषणा MAX77620_ACTIVE_FPS_POWER_ON_SLOTS	(PIN_CONFIG_END + 2)
+#घोषणा MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS	(PIN_CONFIG_END + 3)
+#घोषणा MAX77620_SUSPEND_FPS_SOURCE		(PIN_CONFIG_END + 4)
+#घोषणा MAX77620_SUSPEND_FPS_POWER_ON_SLOTS	(PIN_CONFIG_END + 5)
+#घोषणा MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS	(PIN_CONFIG_END + 6)
 
-struct max77620_pin_function {
-	const char *name;
-	const char * const *groups;
-	unsigned int ngroups;
-	int mux_option;
-};
+काष्ठा max77620_pin_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	अचिन्हित पूर्णांक ngroups;
+	पूर्णांक mux_option;
+पूर्ण;
 
-static const struct pinconf_generic_params max77620_cfg_params[] = {
-	{
+अटल स्थिर काष्ठा pinconf_generic_params max77620_cfg_params[] = अणु
+	अणु
 		.property = "maxim,active-fps-source",
 		.param = MAX77620_ACTIVE_FPS_SOURCE,
-	}, {
+	पूर्ण, अणु
 		.property = "maxim,active-fps-power-up-slot",
 		.param = MAX77620_ACTIVE_FPS_POWER_ON_SLOTS,
-	}, {
+	पूर्ण, अणु
 		.property = "maxim,active-fps-power-down-slot",
 		.param = MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS,
-	}, {
+	पूर्ण, अणु
 		.property = "maxim,suspend-fps-source",
 		.param = MAX77620_SUSPEND_FPS_SOURCE,
-	}, {
+	पूर्ण, अणु
 		.property = "maxim,suspend-fps-power-up-slot",
 		.param = MAX77620_SUSPEND_FPS_POWER_ON_SLOTS,
-	}, {
+	पूर्ण, अणु
 		.property = "maxim,suspend-fps-power-down-slot",
 		.param = MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-enum max77620_alternate_pinmux_option {
+क्रमागत max77620_alternate_pinmux_option अणु
 	MAX77620_PINMUX_GPIO				= 0,
 	MAX77620_PINMUX_LOW_POWER_MODE_CONTROL_IN	= 1,
 	MAX77620_PINMUX_FLEXIBLE_POWER_SEQUENCER_OUT	= 2,
@@ -75,45 +76,45 @@ enum max77620_alternate_pinmux_option {
 	MAX77620_PINMUX_SD0_DYNAMIC_VOLTAGE_SCALING_IN	= 4,
 	MAX77620_PINMUX_SD1_DYNAMIC_VOLTAGE_SCALING_IN	= 5,
 	MAX77620_PINMUX_REFERENCE_OUT			= 6,
-};
+पूर्ण;
 
-struct max77620_pingroup {
-	const char *name;
-	const unsigned int pins[1];
-	unsigned int npins;
-	enum max77620_alternate_pinmux_option alt_option;
-};
+काष्ठा max77620_pingroup अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक pins[1];
+	अचिन्हित पूर्णांक npins;
+	क्रमागत max77620_alternate_pinmux_option alt_option;
+पूर्ण;
 
-struct max77620_pin_info {
-	enum max77620_pin_ppdrv drv_type;
-	int pull_config;
-};
+काष्ठा max77620_pin_info अणु
+	क्रमागत max77620_pin_ppdrv drv_type;
+	पूर्णांक pull_config;
+पूर्ण;
 
-struct max77620_fps_config {
-	int active_fps_src;
-	int active_power_up_slots;
-	int active_power_down_slots;
-	int suspend_fps_src;
-	int suspend_power_up_slots;
-	int suspend_power_down_slots;
-};
+काष्ठा max77620_fps_config अणु
+	पूर्णांक active_fps_src;
+	पूर्णांक active_घातer_up_slots;
+	पूर्णांक active_घातer_करोwn_slots;
+	पूर्णांक suspend_fps_src;
+	पूर्णांक suspend_घातer_up_slots;
+	पूर्णांक suspend_घातer_करोwn_slots;
+पूर्ण;
 
-struct max77620_pctrl_info {
-	struct device *dev;
-	struct pinctrl_dev *pctl;
-	struct regmap *rmap;
-	int pins_current_opt[MAX77620_GPIO_NR];
-	const struct max77620_pin_function *functions;
-	unsigned int num_functions;
-	const struct max77620_pingroup *pin_groups;
-	int num_pin_groups;
-	const struct pinctrl_pin_desc *pins;
-	unsigned int num_pins;
-	struct max77620_pin_info pin_info[MAX77620_PIN_NUM];
-	struct max77620_fps_config fps_config[MAX77620_PIN_NUM];
-};
+काष्ठा max77620_pctrl_info अणु
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctl;
+	काष्ठा regmap *rmap;
+	पूर्णांक pins_current_opt[MAX77620_GPIO_NR];
+	स्थिर काष्ठा max77620_pin_function *functions;
+	अचिन्हित पूर्णांक num_functions;
+	स्थिर काष्ठा max77620_pingroup *pin_groups;
+	पूर्णांक num_pin_groups;
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	अचिन्हित पूर्णांक num_pins;
+	काष्ठा max77620_pin_info pin_info[MAX77620_PIN_NUM];
+	काष्ठा max77620_fps_config fps_config[MAX77620_PIN_NUM];
+पूर्ण;
 
-static const struct pinctrl_pin_desc max77620_pins_desc[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc max77620_pins_desc[] = अणु
 	PINCTRL_PIN(MAX77620_GPIO0, "gpio0"),
 	PINCTRL_PIN(MAX77620_GPIO1, "gpio1"),
 	PINCTRL_PIN(MAX77620_GPIO2, "gpio2"),
@@ -122,9 +123,9 @@ static const struct pinctrl_pin_desc max77620_pins_desc[] = {
 	PINCTRL_PIN(MAX77620_GPIO5, "gpio5"),
 	PINCTRL_PIN(MAX77620_GPIO6, "gpio6"),
 	PINCTRL_PIN(MAX77620_GPIO7, "gpio7"),
-};
+पूर्ण;
 
-static const char * const gpio_groups[] = {
+अटल स्थिर अक्षर * स्थिर gpio_groups[] = अणु
 	"gpio0",
 	"gpio1",
 	"gpio2",
@@ -133,17 +134,17 @@ static const char * const gpio_groups[] = {
 	"gpio5",
 	"gpio6",
 	"gpio7",
-};
+पूर्ण;
 
-#define FUNCTION_GROUP(fname, mux)			\
-	{						\
+#घोषणा FUNCTION_GROUP(fname, mux)			\
+	अणु						\
 		.name = fname,				\
 		.groups = gpio_groups,			\
 		.ngroups = ARRAY_SIZE(gpio_groups),	\
 		.mux_option = MAX77620_PINMUX_##mux,	\
-	}
+	पूर्ण
 
-static const struct max77620_pin_function max77620_pin_function[] = {
+अटल स्थिर काष्ठा max77620_pin_function max77620_pin_function[] = अणु
 	FUNCTION_GROUP("gpio", GPIO),
 	FUNCTION_GROUP("lpm-control-in", LOW_POWER_MODE_CONTROL_IN),
 	FUNCTION_GROUP("fps-out", FLEXIBLE_POWER_SEQUENCER_OUT),
@@ -151,17 +152,17 @@ static const struct max77620_pin_function max77620_pin_function[] = {
 	FUNCTION_GROUP("sd0-dvs-in", SD0_DYNAMIC_VOLTAGE_SCALING_IN),
 	FUNCTION_GROUP("sd1-dvs-in", SD1_DYNAMIC_VOLTAGE_SCALING_IN),
 	FUNCTION_GROUP("reference-out", REFERENCE_OUT),
-};
+पूर्ण;
 
-#define MAX77620_PINGROUP(pg_name, pin_id, option) \
-	{								\
+#घोषणा MAX77620_PINGROUP(pg_name, pin_id, option) \
+	अणु								\
 		.name = #pg_name,					\
-		.pins = {MAX77620_##pin_id},				\
+		.pins = अणुMAX77620_##pin_idपूर्ण,				\
 		.npins = 1,						\
 		.alt_option = MAX77620_PINMUX_##option,			\
-	}
+	पूर्ण
 
-static const struct max77620_pingroup max77620_pingroups[] = {
+अटल स्थिर काष्ठा max77620_pingroup max77620_pingroups[] = अणु
 	MAX77620_PINGROUP(gpio0, GPIO0, LOW_POWER_MODE_CONTROL_IN),
 	MAX77620_PINGROUP(gpio1, GPIO1, FLEXIBLE_POWER_SEQUENCER_OUT),
 	MAX77620_PINGROUP(gpio2, GPIO2, FLEXIBLE_POWER_SEQUENCER_OUT),
@@ -170,332 +171,332 @@ static const struct max77620_pingroup max77620_pingroups[] = {
 	MAX77620_PINGROUP(gpio5, GPIO5, SD0_DYNAMIC_VOLTAGE_SCALING_IN),
 	MAX77620_PINGROUP(gpio6, GPIO6, SD1_DYNAMIC_VOLTAGE_SCALING_IN),
 	MAX77620_PINGROUP(gpio7, GPIO7, REFERENCE_OUT),
-};
+पूर्ण;
 
-static int max77620_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक max77620_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
 
-	return mpci->num_pin_groups;
-}
+	वापस mpci->num_pin_groups;
+पूर्ण
 
-static const char *max77620_pinctrl_get_group_name(
-		struct pinctrl_dev *pctldev, unsigned int group)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *max77620_pinctrl_get_group_name(
+		काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
 
-	return mpci->pin_groups[group].name;
-}
+	वापस mpci->pin_groups[group].name;
+पूर्ण
 
-static int max77620_pinctrl_get_group_pins(
-		struct pinctrl_dev *pctldev, unsigned int group,
-		const unsigned int **pins, unsigned int *num_pins)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक max77620_pinctrl_get_group_pins(
+		काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक group,
+		स्थिर अचिन्हित पूर्णांक **pins, अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = mpci->pin_groups[group].pins;
 	*num_pins = mpci->pin_groups[group].npins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops max77620_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops max77620_pinctrl_ops = अणु
 	.get_groups_count = max77620_pinctrl_get_groups_count,
 	.get_group_name = max77620_pinctrl_get_group_name,
 	.get_group_pins = max77620_pinctrl_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static int max77620_pinctrl_get_funcs_count(struct pinctrl_dev *pctldev)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक max77620_pinctrl_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
 
-	return mpci->num_functions;
-}
+	वापस mpci->num_functions;
+पूर्ण
 
-static const char *max77620_pinctrl_get_func_name(struct pinctrl_dev *pctldev,
-						  unsigned int function)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *max77620_pinctrl_get_func_name(काष्ठा pinctrl_dev *pctldev,
+						  अचिन्हित पूर्णांक function)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
 
-	return mpci->functions[function].name;
-}
+	वापस mpci->functions[function].name;
+पूर्ण
 
-static int max77620_pinctrl_get_func_groups(struct pinctrl_dev *pctldev,
-					    unsigned int function,
-					    const char * const **groups,
-					    unsigned int * const num_groups)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक max77620_pinctrl_get_func_groups(काष्ठा pinctrl_dev *pctldev,
+					    अचिन्हित पूर्णांक function,
+					    स्थिर अक्षर * स्थिर **groups,
+					    अचिन्हित पूर्णांक * स्थिर num_groups)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = mpci->functions[function].groups;
 	*num_groups = mpci->functions[function].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max77620_pinctrl_enable(struct pinctrl_dev *pctldev,
-				   unsigned int function, unsigned int group)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक max77620_pinctrl_enable(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित पूर्णांक function, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (function == MAX77620_PINMUX_GPIO) {
+	अगर (function == MAX77620_PINMUX_GPIO) अणु
 		val = 0;
-	} else if (function == mpci->pin_groups[group].alt_option) {
+	पूर्ण अन्यथा अगर (function == mpci->pin_groups[group].alt_option) अणु
 		val = 1 << group;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(mpci->dev, "GPIO %u doesn't have function %u\n",
 			group, function);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	ret = regmap_update_bits(mpci->rmap, MAX77620_REG_AME_GPIO,
 				 BIT(group), val);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(mpci->dev, "REG AME GPIO update failed: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pinmux_ops max77620_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops max77620_pinmux_ops = अणु
 	.get_functions_count	= max77620_pinctrl_get_funcs_count,
 	.get_function_name	= max77620_pinctrl_get_func_name,
 	.get_function_groups	= max77620_pinctrl_get_func_groups,
 	.set_mux		= max77620_pinctrl_enable,
-};
+पूर्ण;
 
-static int max77620_pinconf_get(struct pinctrl_dev *pctldev,
-				unsigned int pin, unsigned long *config)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
-	struct device *dev = mpci->dev;
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	unsigned int val;
-	int arg = 0;
-	int ret;
+अटल पूर्णांक max77620_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा device *dev = mpci->dev;
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक arg = 0;
+	पूर्णांक ret;
 
-	switch (param) {
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		if (mpci->pin_info[pin].drv_type == MAX77620_PIN_OD_DRV)
+	चयन (param) अणु
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		अगर (mpci->pin_info[pin].drv_type == MAX77620_PIN_OD_DRV)
 			arg = 1;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_PUSH_PULL:
-		if (mpci->pin_info[pin].drv_type == MAX77620_PIN_PP_DRV)
+	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
+		अगर (mpci->pin_info[pin].drv_type == MAX77620_PIN_PP_DRV)
 			arg = 1;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
-		ret = regmap_read(mpci->rmap, MAX77620_REG_PUE_GPIO, &val);
-		if (ret < 0) {
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		ret = regmap_पढ़ो(mpci->rmap, MAX77620_REG_PUE_GPIO, &val);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Reg PUE_GPIO read failed: %d\n", ret);
-			return ret;
-		}
-		if (val & BIT(pin))
+			वापस ret;
+		पूर्ण
+		अगर (val & BIT(pin))
 			arg = 1;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		ret = regmap_read(mpci->rmap, MAX77620_REG_PDE_GPIO, &val);
-		if (ret < 0) {
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		ret = regmap_पढ़ो(mpci->rmap, MAX77620_REG_PDE_GPIO, &val);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Reg PDE_GPIO read failed: %d\n", ret);
-			return ret;
-		}
-		if (val & BIT(pin))
+			वापस ret;
+		पूर्ण
+		अगर (val & BIT(pin))
 			arg = 1;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "Properties not supported\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, (u16)arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max77620_get_default_fps(struct max77620_pctrl_info *mpci,
-				    int addr, int *fps)
-{
-	unsigned int val;
-	int ret;
+अटल पूर्णांक max77620_get_शेष_fps(काष्ठा max77620_pctrl_info *mpci,
+				    पूर्णांक addr, पूर्णांक *fps)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(mpci->rmap, addr, &val);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(mpci->rmap, addr, &val);
+	अगर (ret < 0) अणु
 		dev_err(mpci->dev, "Reg PUE_GPIO read failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	*fps = (val & MAX77620_FPS_SRC_MASK) >> MAX77620_FPS_SRC_SHIFT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max77620_set_fps_param(struct max77620_pctrl_info *mpci,
-				  int pin, int param)
-{
-	struct max77620_fps_config *fps_config = &mpci->fps_config[pin];
-	int addr, ret;
-	int param_val;
-	int mask, shift;
+अटल पूर्णांक max77620_set_fps_param(काष्ठा max77620_pctrl_info *mpci,
+				  पूर्णांक pin, पूर्णांक param)
+अणु
+	काष्ठा max77620_fps_config *fps_config = &mpci->fps_config[pin];
+	पूर्णांक addr, ret;
+	पूर्णांक param_val;
+	पूर्णांक mask, shअगरt;
 
-	if ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
-		return 0;
+	अगर ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
+		वापस 0;
 
 	addr = MAX77620_REG_FPS_GPIO1 + pin - 1;
-	switch (param) {
-	case MAX77620_ACTIVE_FPS_SOURCE:
-	case MAX77620_SUSPEND_FPS_SOURCE:
+	चयन (param) अणु
+	हाल MAX77620_ACTIVE_FPS_SOURCE:
+	हाल MAX77620_SUSPEND_FPS_SOURCE:
 		mask = MAX77620_FPS_SRC_MASK;
-		shift = MAX77620_FPS_SRC_SHIFT;
+		shअगरt = MAX77620_FPS_SRC_SHIFT;
 		param_val = fps_config->active_fps_src;
-		if (param == MAX77620_SUSPEND_FPS_SOURCE)
+		अगर (param == MAX77620_SUSPEND_FPS_SOURCE)
 			param_val = fps_config->suspend_fps_src;
-		break;
+		अवरोध;
 
-	case MAX77620_ACTIVE_FPS_POWER_ON_SLOTS:
-	case MAX77620_SUSPEND_FPS_POWER_ON_SLOTS:
+	हाल MAX77620_ACTIVE_FPS_POWER_ON_SLOTS:
+	हाल MAX77620_SUSPEND_FPS_POWER_ON_SLOTS:
 		mask = MAX77620_FPS_PU_PERIOD_MASK;
-		shift = MAX77620_FPS_PU_PERIOD_SHIFT;
-		param_val = fps_config->active_power_up_slots;
-		if (param == MAX77620_SUSPEND_FPS_POWER_ON_SLOTS)
-			param_val = fps_config->suspend_power_up_slots;
-		break;
+		shअगरt = MAX77620_FPS_PU_PERIOD_SHIFT;
+		param_val = fps_config->active_घातer_up_slots;
+		अगर (param == MAX77620_SUSPEND_FPS_POWER_ON_SLOTS)
+			param_val = fps_config->suspend_घातer_up_slots;
+		अवरोध;
 
-	case MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS:
-	case MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS:
+	हाल MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS:
+	हाल MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS:
 		mask = MAX77620_FPS_PD_PERIOD_MASK;
-		shift = MAX77620_FPS_PD_PERIOD_SHIFT;
-		param_val = fps_config->active_power_down_slots;
-		if (param == MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS)
-			param_val = fps_config->suspend_power_down_slots;
-		break;
+		shअगरt = MAX77620_FPS_PD_PERIOD_SHIFT;
+		param_val = fps_config->active_घातer_करोwn_slots;
+		अगर (param == MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS)
+			param_val = fps_config->suspend_घातer_करोwn_slots;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(mpci->dev, "Invalid parameter %d for pin %d\n",
 			param, pin);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (param_val < 0)
-		return 0;
+	अगर (param_val < 0)
+		वापस 0;
 
-	ret = regmap_update_bits(mpci->rmap, addr, mask, param_val << shift);
-	if (ret < 0)
+	ret = regmap_update_bits(mpci->rmap, addr, mask, param_val << shअगरt);
+	अगर (ret < 0)
 		dev_err(mpci->dev, "Reg 0x%02x update failed %d\n", addr, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int max77620_pinconf_set(struct pinctrl_dev *pctldev,
-				unsigned int pin, unsigned long *configs,
-				unsigned int num_configs)
-{
-	struct max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
-	struct device *dev = mpci->dev;
-	struct max77620_fps_config *fps_config;
-	int param;
+अटल पूर्णांक max77620_pinconf_set(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *configs,
+				अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा device *dev = mpci->dev;
+	काष्ठा max77620_fps_config *fps_config;
+	पूर्णांक param;
 	u32 param_val;
-	unsigned int val;
-	unsigned int pu_val;
-	unsigned int pd_val;
-	int addr, ret;
-	int i;
+	अचिन्हित पूर्णांक val;
+	अचिन्हित पूर्णांक pu_val;
+	अचिन्हित पूर्णांक pd_val;
+	पूर्णांक addr, ret;
+	पूर्णांक i;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		param_val = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		चयन (param) अणु
+		हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
 			val = param_val ? 0 : 1;
 			ret = regmap_update_bits(mpci->rmap,
 						 MAX77620_REG_GPIO0 + pin,
 						 MAX77620_CNFG_GPIO_DRV_MASK,
 						 val);
-			if (ret)
-				goto report_update_failure;
+			अगर (ret)
+				जाओ report_update_failure;
 
 			mpci->pin_info[pin].drv_type = val ?
 				MAX77620_PIN_PP_DRV : MAX77620_PIN_OD_DRV;
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_DRIVE_PUSH_PULL:
+		हाल PIN_CONFIG_DRIVE_PUSH_PULL:
 			val = param_val ? 1 : 0;
 			ret = regmap_update_bits(mpci->rmap,
 						 MAX77620_REG_GPIO0 + pin,
 						 MAX77620_CNFG_GPIO_DRV_MASK,
 						 val);
-			if (ret)
-				goto report_update_failure;
+			अगर (ret)
+				जाओ report_update_failure;
 
 			mpci->pin_info[pin].drv_type = val ?
 				MAX77620_PIN_PP_DRV : MAX77620_PIN_OD_DRV;
-			break;
+			अवरोध;
 
-		case MAX77620_ACTIVE_FPS_SOURCE:
-		case MAX77620_ACTIVE_FPS_POWER_ON_SLOTS:
-		case MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS:
-			if ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
-				return -EINVAL;
+		हाल MAX77620_ACTIVE_FPS_SOURCE:
+		हाल MAX77620_ACTIVE_FPS_POWER_ON_SLOTS:
+		हाल MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS:
+			अगर ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
+				वापस -EINVAL;
 
 			fps_config = &mpci->fps_config[pin];
 
-			if ((param == MAX77620_ACTIVE_FPS_SOURCE) &&
-			    (param_val == MAX77620_FPS_SRC_DEF)) {
+			अगर ((param == MAX77620_ACTIVE_FPS_SOURCE) &&
+			    (param_val == MAX77620_FPS_SRC_DEF)) अणु
 				addr = MAX77620_REG_FPS_GPIO1 + pin - 1;
-				ret = max77620_get_default_fps(
+				ret = max77620_get_शेष_fps(
 						mpci, addr,
 						&fps_config->active_fps_src);
-				if (ret < 0)
-					return ret;
-				break;
-			}
+				अगर (ret < 0)
+					वापस ret;
+				अवरोध;
+			पूर्ण
 
-			if (param == MAX77620_ACTIVE_FPS_SOURCE)
+			अगर (param == MAX77620_ACTIVE_FPS_SOURCE)
 				fps_config->active_fps_src = param_val;
-			else if (param == MAX77620_ACTIVE_FPS_POWER_ON_SLOTS)
-				fps_config->active_power_up_slots = param_val;
-			else
-				fps_config->active_power_down_slots = param_val;
+			अन्यथा अगर (param == MAX77620_ACTIVE_FPS_POWER_ON_SLOTS)
+				fps_config->active_घातer_up_slots = param_val;
+			अन्यथा
+				fps_config->active_घातer_करोwn_slots = param_val;
 
 			ret = max77620_set_fps_param(mpci, pin, param);
-			if (ret < 0)
-				return ret;
-			break;
+			अगर (ret < 0)
+				वापस ret;
+			अवरोध;
 
-		case MAX77620_SUSPEND_FPS_SOURCE:
-		case MAX77620_SUSPEND_FPS_POWER_ON_SLOTS:
-		case MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS:
-			if ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
-				return -EINVAL;
+		हाल MAX77620_SUSPEND_FPS_SOURCE:
+		हाल MAX77620_SUSPEND_FPS_POWER_ON_SLOTS:
+		हाल MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS:
+			अगर ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
+				वापस -EINVAL;
 
 			fps_config = &mpci->fps_config[pin];
 
-			if ((param == MAX77620_SUSPEND_FPS_SOURCE) &&
-			    (param_val == MAX77620_FPS_SRC_DEF)) {
+			अगर ((param == MAX77620_SUSPEND_FPS_SOURCE) &&
+			    (param_val == MAX77620_FPS_SRC_DEF)) अणु
 				addr = MAX77620_REG_FPS_GPIO1 + pin - 1;
-				ret = max77620_get_default_fps(
+				ret = max77620_get_शेष_fps(
 						mpci, addr,
 						&fps_config->suspend_fps_src);
-				if (ret < 0)
-					return ret;
-				break;
-			}
+				अगर (ret < 0)
+					वापस ret;
+				अवरोध;
+			पूर्ण
 
-			if (param == MAX77620_SUSPEND_FPS_SOURCE)
+			अगर (param == MAX77620_SUSPEND_FPS_SOURCE)
 				fps_config->suspend_fps_src = param_val;
-			else if (param == MAX77620_SUSPEND_FPS_POWER_ON_SLOTS)
-				fps_config->suspend_power_up_slots = param_val;
-			else
-				fps_config->suspend_power_down_slots =
+			अन्यथा अगर (param == MAX77620_SUSPEND_FPS_POWER_ON_SLOTS)
+				fps_config->suspend_घातer_up_slots = param_val;
+			अन्यथा
+				fps_config->suspend_घातer_करोwn_slots =
 								param_val;
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_UP:
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			pu_val = (param == PIN_CONFIG_BIAS_PULL_UP) ?
 							BIT(pin) : 0;
 			pd_val = (param == PIN_CONFIG_BIAS_PULL_DOWN) ?
@@ -504,56 +505,56 @@ static int max77620_pinconf_set(struct pinctrl_dev *pctldev,
 			ret = regmap_update_bits(mpci->rmap,
 						 MAX77620_REG_PUE_GPIO,
 						 BIT(pin), pu_val);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(dev, "PUE_GPIO update failed: %d\n",
 					ret);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			ret = regmap_update_bits(mpci->rmap,
 						 MAX77620_REG_PDE_GPIO,
 						 BIT(pin), pd_val);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(dev, "PDE_GPIO update failed: %d\n",
 					ret);
-				return ret;
-			}
-			break;
+				वापस ret;
+			पूर्ण
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(dev, "Properties not supported\n");
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 report_update_failure:
 	dev_err(dev, "Reg 0x%02x update failed %d\n",
 		MAX77620_REG_GPIO0 + pin, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pinconf_ops max77620_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops max77620_pinconf_ops = अणु
 	.pin_config_get = max77620_pinconf_get,
 	.pin_config_set = max77620_pinconf_set,
-};
+पूर्ण;
 
-static struct pinctrl_desc max77620_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc max77620_pinctrl_desc = अणु
 	.pctlops = &max77620_pinctrl_ops,
 	.pmxops = &max77620_pinmux_ops,
 	.confops = &max77620_pinconf_ops,
-};
+पूर्ण;
 
-static int max77620_pinctrl_probe(struct platform_device *pdev)
-{
-	struct max77620_chip *max77620 = dev_get_drvdata(pdev->dev.parent);
-	struct max77620_pctrl_info *mpci;
-	int i;
+अटल पूर्णांक max77620_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max77620_chip *max77620 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा max77620_pctrl_info *mpci;
+	पूर्णांक i;
 
-	mpci = devm_kzalloc(&pdev->dev, sizeof(*mpci), GFP_KERNEL);
-	if (!mpci)
-		return -ENOMEM;
+	mpci = devm_kzalloc(&pdev->dev, माप(*mpci), GFP_KERNEL);
+	अगर (!mpci)
+		वापस -ENOMEM;
 
 	mpci->dev = &pdev->dev;
 	mpci->dev->of_node = pdev->dev.parent->of_node;
@@ -565,7 +566,7 @@ static int max77620_pinctrl_probe(struct platform_device *pdev)
 	mpci->num_functions = ARRAY_SIZE(max77620_pin_function);
 	mpci->pin_groups = max77620_pingroups;
 	mpci->num_pin_groups = ARRAY_SIZE(max77620_pingroups);
-	platform_set_drvdata(pdev, mpci);
+	platक्रमm_set_drvdata(pdev, mpci);
 
 	max77620_pinctrl_desc.name = dev_name(&pdev->dev);
 	max77620_pinctrl_desc.pins = max77620_pins_desc;
@@ -574,93 +575,93 @@ static int max77620_pinctrl_probe(struct platform_device *pdev)
 				ARRAY_SIZE(max77620_cfg_params);
 	max77620_pinctrl_desc.custom_params = max77620_cfg_params;
 
-	for (i = 0; i < MAX77620_PIN_NUM; ++i) {
+	क्रम (i = 0; i < MAX77620_PIN_NUM; ++i) अणु
 		mpci->fps_config[i].active_fps_src = -1;
-		mpci->fps_config[i].active_power_up_slots = -1;
-		mpci->fps_config[i].active_power_down_slots = -1;
+		mpci->fps_config[i].active_घातer_up_slots = -1;
+		mpci->fps_config[i].active_घातer_करोwn_slots = -1;
 		mpci->fps_config[i].suspend_fps_src = -1;
-		mpci->fps_config[i].suspend_power_up_slots = -1;
-		mpci->fps_config[i].suspend_power_down_slots = -1;
-	}
+		mpci->fps_config[i].suspend_घातer_up_slots = -1;
+		mpci->fps_config[i].suspend_घातer_करोwn_slots = -1;
+	पूर्ण
 
-	mpci->pctl = devm_pinctrl_register(&pdev->dev, &max77620_pinctrl_desc,
+	mpci->pctl = devm_pinctrl_रेजिस्टर(&pdev->dev, &max77620_pinctrl_desc,
 					   mpci);
-	if (IS_ERR(mpci->pctl)) {
+	अगर (IS_ERR(mpci->pctl)) अणु
 		dev_err(&pdev->dev, "Couldn't register pinctrl driver\n");
-		return PTR_ERR(mpci->pctl);
-	}
+		वापस PTR_ERR(mpci->pctl);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int max77620_suspend_fps_param[] = {
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक max77620_suspend_fps_param[] = अणु
 	MAX77620_SUSPEND_FPS_SOURCE,
 	MAX77620_SUSPEND_FPS_POWER_ON_SLOTS,
 	MAX77620_SUSPEND_FPS_POWER_DOWN_SLOTS,
-};
+पूर्ण;
 
-static int max77620_active_fps_param[] = {
+अटल पूर्णांक max77620_active_fps_param[] = अणु
 	MAX77620_ACTIVE_FPS_SOURCE,
 	MAX77620_ACTIVE_FPS_POWER_ON_SLOTS,
 	MAX77620_ACTIVE_FPS_POWER_DOWN_SLOTS,
-};
+पूर्ण;
 
-static int max77620_pinctrl_suspend(struct device *dev)
-{
-	struct max77620_pctrl_info *mpci = dev_get_drvdata(dev);
-	int pin, p;
+अटल पूर्णांक max77620_pinctrl_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = dev_get_drvdata(dev);
+	पूर्णांक pin, p;
 
-	for (pin = 0; pin < MAX77620_PIN_NUM; ++pin) {
-		if ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
-			continue;
-		for (p = 0; p < 3; ++p)
+	क्रम (pin = 0; pin < MAX77620_PIN_NUM; ++pin) अणु
+		अगर ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
+			जारी;
+		क्रम (p = 0; p < 3; ++p)
 			max77620_set_fps_param(
 				mpci, pin, max77620_suspend_fps_param[p]);
-	}
+	पूर्ण
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static int max77620_pinctrl_resume(struct device *dev)
-{
-	struct max77620_pctrl_info *mpci = dev_get_drvdata(dev);
-	int pin, p;
+अटल पूर्णांक max77620_pinctrl_resume(काष्ठा device *dev)
+अणु
+	काष्ठा max77620_pctrl_info *mpci = dev_get_drvdata(dev);
+	पूर्णांक pin, p;
 
-	for (pin = 0; pin < MAX77620_PIN_NUM; ++pin) {
-		if ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
-			continue;
-		for (p = 0; p < 3; ++p)
+	क्रम (pin = 0; pin < MAX77620_PIN_NUM; ++pin) अणु
+		अगर ((pin < MAX77620_GPIO1) || (pin > MAX77620_GPIO3))
+			जारी;
+		क्रम (p = 0; p < 3; ++p)
 			max77620_set_fps_param(
 				mpci, pin, max77620_active_fps_param[p]);
-	}
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops max77620_pinctrl_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops max77620_pinctrl_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(
 		max77620_pinctrl_suspend, max77620_pinctrl_resume)
-};
+पूर्ण;
 
-static const struct platform_device_id max77620_pinctrl_devtype[] = {
-	{ .name = "max77620-pinctrl", },
-	{ .name = "max20024-pinctrl", },
-	{},
-};
-MODULE_DEVICE_TABLE(platform, max77620_pinctrl_devtype);
+अटल स्थिर काष्ठा platक्रमm_device_id max77620_pinctrl_devtype[] = अणु
+	अणु .name = "max77620-pinctrl", पूर्ण,
+	अणु .name = "max20024-pinctrl", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, max77620_pinctrl_devtype);
 
-static struct platform_driver max77620_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver max77620_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "max77620-pinctrl",
 		.pm = &max77620_pinctrl_pm_ops,
-	},
+	पूर्ण,
 	.probe = max77620_pinctrl_probe,
 	.id_table = max77620_pinctrl_devtype,
-};
+पूर्ण;
 
-module_platform_driver(max77620_pinctrl_driver);
+module_platक्रमm_driver(max77620_pinctrl_driver);
 
 MODULE_DESCRIPTION("MAX77620/MAX20024 pin control driver");
 MODULE_AUTHOR("Chaitanya Bandi<bandik@nvidia.com>");

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /* exynos_drm.h
  *
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
@@ -7,51 +8,51 @@
  *	Joonyoung Shim <jy0922.shim@samsung.com>
  *	Seung-Woo Kim <sw0312.kim@samsung.com>
  *
- * This program is free software; you can redistribute  it and/or modify it
+ * This program is मुक्त software; you can redistribute  it and/or modअगरy it
  * under  the terms of  the GNU General  Public License as published by the
  * Free Software Foundation;  either version 2 of the  License, or (at your
  * option) any later version.
  */
 
-#ifndef _UAPI_EXYNOS_DRM_H_
-#define _UAPI_EXYNOS_DRM_H_
+#अगर_अघोषित _UAPI_EXYNOS_DRM_H_
+#घोषणा _UAPI_EXYNOS_DRM_H_
 
-#include "drm.h"
+#समावेश "drm.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#अगर defined(__cplusplus)
+बाह्य "C" अणु
+#पूर्ण_अगर
 
 /**
- * User-desired buffer creation information structure.
+ * User-desired buffer creation inक्रमmation काष्ठाure.
  *
  * @size: user-desired memory allocation size.
- *	- this size value would be page-aligned internally.
- * @flags: user request for setting memory type or cache attributes.
- * @handle: returned a handle to created gem object.
+ *	- this size value would be page-aligned पूर्णांकernally.
+ * @flags: user request क्रम setting memory type or cache attributes.
+ * @handle: वापसed a handle to created gem object.
  *	- this handle will be set by gem module of kernel side.
  */
-struct drm_exynos_gem_create {
+काष्ठा drm_exynos_gem_create अणु
 	__u64 size;
 	__u32 flags;
 	__u32 handle;
-};
+पूर्ण;
 
 /**
- * A structure for getting a fake-offset that can be used with mmap.
+ * A काष्ठाure क्रम getting a fake-offset that can be used with mmap.
  *
  * @handle: handle of gem object.
  * @reserved: just padding to be 64-bit aligned.
  * @offset: a fake-offset of gem object.
  */
-struct drm_exynos_gem_map {
+काष्ठा drm_exynos_gem_map अणु
 	__u32 handle;
 	__u32 reserved;
 	__u64 offset;
-};
+पूर्ण;
 
 /**
- * A structure to gem information.
+ * A काष्ठाure to gem inक्रमmation.
  *
  * @handle: a handle to gem object created.
  * @flags: flag value including memory type and cache attribute and
@@ -59,81 +60,81 @@ struct drm_exynos_gem_map {
  * @size: size to memory region allocated by gem and this size would
  *	be set by driver.
  */
-struct drm_exynos_gem_info {
+काष्ठा drm_exynos_gem_info अणु
 	__u32 handle;
 	__u32 flags;
 	__u64 size;
-};
+पूर्ण;
 
 /**
- * A structure for user connection request of virtual display.
+ * A काष्ठाure क्रम user connection request of भव display.
  *
- * @connection: indicate whether doing connection or not by user.
- * @extensions: if this value is 1 then the vidi driver would need additional
+ * @connection: indicate whether करोing connection or not by user.
+ * @extensions: अगर this value is 1 then the vidi driver would need additional
  *	128bytes edid data.
- * @edid: the edid data pointer from user side.
+ * @edid: the edid data poपूर्णांकer from user side.
  */
-struct drm_exynos_vidi_connection {
+काष्ठा drm_exynos_vidi_connection अणु
 	__u32 connection;
 	__u32 extensions;
 	__u64 edid;
-};
+पूर्ण;
 
 /* memory type definitions. */
-enum e_drm_exynos_gem_mem_type {
-	/* Physically Continuous memory and used as default. */
+क्रमागत e_drm_exynos_gem_mem_type अणु
+	/* Physically Continuous memory and used as शेष. */
 	EXYNOS_BO_CONTIG	= 0 << 0,
 	/* Physically Non-Continuous memory. */
 	EXYNOS_BO_NONCONTIG	= 1 << 0,
-	/* non-cachable mapping and used as default. */
+	/* non-cachable mapping and used as शेष. */
 	EXYNOS_BO_NONCACHABLE	= 0 << 1,
 	/* cachable mapping. */
 	EXYNOS_BO_CACHABLE	= 1 << 1,
-	/* write-combine mapping. */
+	/* ग_लिखो-combine mapping. */
 	EXYNOS_BO_WC		= 1 << 2,
 	EXYNOS_BO_MASK		= EXYNOS_BO_NONCONTIG | EXYNOS_BO_CACHABLE |
 					EXYNOS_BO_WC
-};
+पूर्ण;
 
-struct drm_exynos_g2d_get_ver {
+काष्ठा drm_exynos_g2d_get_ver अणु
 	__u32	major;
 	__u32	minor;
-};
+पूर्ण;
 
-struct drm_exynos_g2d_cmd {
+काष्ठा drm_exynos_g2d_cmd अणु
 	__u32	offset;
 	__u32	data;
-};
+पूर्ण;
 
-enum drm_exynos_g2d_buf_type {
+क्रमागत drm_exynos_g2d_buf_type अणु
 	G2D_BUF_USERPTR = 1 << 31,
-};
+पूर्ण;
 
-enum drm_exynos_g2d_event_type {
+क्रमागत drm_exynos_g2d_event_type अणु
 	G2D_EVENT_NOT,
 	G2D_EVENT_NONSTOP,
 	G2D_EVENT_STOP,		/* not yet */
-};
+पूर्ण;
 
-struct drm_exynos_g2d_userptr {
-	unsigned long userptr;
-	unsigned long size;
-};
+काष्ठा drm_exynos_g2d_userptr अणु
+	अचिन्हित दीर्घ userptr;
+	अचिन्हित दीर्घ size;
+पूर्ण;
 
-struct drm_exynos_g2d_set_cmdlist {
+काष्ठा drm_exynos_g2d_set_cmdlist अणु
 	__u64					cmd;
 	__u64					cmd_buf;
 	__u32					cmd_nr;
 	__u32					cmd_buf_nr;
 
-	/* for g2d event */
+	/* क्रम g2d event */
 	__u64					event_type;
 	__u64					user_data;
-};
+पूर्ण;
 
-struct drm_exynos_g2d_exec {
+काष्ठा drm_exynos_g2d_exec अणु
 	__u64					async;
-};
+पूर्ण;
 
 /* Exynos DRM IPP v2 API */
 
@@ -142,54 +143,54 @@ struct drm_exynos_g2d_exec {
  *
  * @count_ipps: size of ipp_id array / number of ipp modules (set by driver)
  * @reserved: padding
- * @ipp_id_ptr: pointer to ipp_id array or NULL
+ * @ipp_id_ptr: poपूर्णांकer to ipp_id array or शून्य
  */
-struct drm_exynos_ioctl_ipp_get_res {
+काष्ठा drm_exynos_ioctl_ipp_get_res अणु
 	__u32 count_ipps;
 	__u32 reserved;
 	__u64 ipp_id_ptr;
-};
+पूर्ण;
 
-enum drm_exynos_ipp_format_type {
+क्रमागत drm_exynos_ipp_क्रमmat_type अणु
 	DRM_EXYNOS_IPP_FORMAT_SOURCE		= 0x01,
 	DRM_EXYNOS_IPP_FORMAT_DESTINATION	= 0x02,
-};
+पूर्ण;
 
-struct drm_exynos_ipp_format {
+काष्ठा drm_exynos_ipp_क्रमmat अणु
 	__u32 fourcc;
 	__u32 type;
-	__u64 modifier;
-};
+	__u64 modअगरier;
+पूर्ण;
 
-enum drm_exynos_ipp_capability {
+क्रमागत drm_exynos_ipp_capability अणु
 	DRM_EXYNOS_IPP_CAP_CROP		= 0x01,
 	DRM_EXYNOS_IPP_CAP_ROTATE	= 0x02,
 	DRM_EXYNOS_IPP_CAP_SCALE	= 0x04,
 	DRM_EXYNOS_IPP_CAP_CONVERT	= 0x08,
-};
+पूर्ण;
 
 /**
- * Get IPP hardware capabilities and supported image formats.
+ * Get IPP hardware capabilities and supported image क्रमmats.
  *
  * @ipp_id: id of IPP module to query
- * @capabilities: bitmask of drm_exynos_ipp_capability (set by driver)
+ * @capabilities: biपंचांगask of drm_exynos_ipp_capability (set by driver)
  * @reserved: padding
- * @formats_count: size of formats array (in entries) / number of filled
- *		   formats (set by driver)
- * @formats_ptr: pointer to formats array or NULL
+ * @क्रमmats_count: size of क्रमmats array (in entries) / number of filled
+ *		   क्रमmats (set by driver)
+ * @क्रमmats_ptr: poपूर्णांकer to क्रमmats array or शून्य
  */
-struct drm_exynos_ioctl_ipp_get_caps {
+काष्ठा drm_exynos_ioctl_ipp_get_caps अणु
 	__u32 ipp_id;
 	__u32 capabilities;
 	__u32 reserved;
-	__u32 formats_count;
-	__u64 formats_ptr;
-};
+	__u32 क्रमmats_count;
+	__u64 क्रमmats_ptr;
+पूर्ण;
 
-enum drm_exynos_ipp_limit_type {
+क्रमागत drm_exynos_ipp_limit_type अणु
 	/* size (horizontal/vertial) limits, in pixels (min, max, alignment) */
 	DRM_EXYNOS_IPP_LIMIT_TYPE_SIZE		= 0x0001,
-	/* scale ratio (horizonta/vertial), 16.16 fixed point (min, max) */
+	/* scale ratio (horizonta/vertial), 16.16 fixed poपूर्णांक (min, max) */
 	DRM_EXYNOS_IPP_LIMIT_TYPE_SCALE		= 0x0002,
 
 	/* image buffer area */
@@ -201,224 +202,224 @@ enum drm_exynos_ipp_limit_type {
 
 	DRM_EXYNOS_IPP_LIMIT_TYPE_MASK		= 0x000f,
 	DRM_EXYNOS_IPP_LIMIT_SIZE_MASK		= 0x000f << 16,
-};
+पूर्ण;
 
-struct drm_exynos_ipp_limit_val {
+काष्ठा drm_exynos_ipp_limit_val अणु
 	__u32 min;
 	__u32 max;
 	__u32 align;
 	__u32 reserved;
-};
+पूर्ण;
 
 /**
  * IPP module limitation.
  *
- * @type: limit type (see drm_exynos_ipp_limit_type enum)
+ * @type: limit type (see drm_exynos_ipp_limit_type क्रमागत)
  * @reserved: padding
  * @h: horizontal limits
  * @v: vertical limits
  */
-struct drm_exynos_ipp_limit {
+काष्ठा drm_exynos_ipp_limit अणु
 	__u32 type;
 	__u32 reserved;
-	struct drm_exynos_ipp_limit_val h;
-	struct drm_exynos_ipp_limit_val v;
-};
+	काष्ठा drm_exynos_ipp_limit_val h;
+	काष्ठा drm_exynos_ipp_limit_val v;
+पूर्ण;
 
 /**
- * Get IPP limits for given image format.
+ * Get IPP limits क्रम given image क्रमmat.
  *
  * @ipp_id: id of IPP module to query
- * @fourcc: image format code (see DRM_FORMAT_* in drm_fourcc.h)
- * @modifier: image format modifier (see DRM_FORMAT_MOD_* in drm_fourcc.h)
- * @type: source/destination identifier (drm_exynos_ipp_format_flag enum)
+ * @fourcc: image क्रमmat code (see DRM_FORMAT_* in drm_fourcc.h)
+ * @modअगरier: image क्रमmat modअगरier (see DRM_FORMAT_MOD_* in drm_fourcc.h)
+ * @type: source/destination identअगरier (drm_exynos_ipp_क्रमmat_flag क्रमागत)
  * @limits_count: size of limits array (in entries) / number of filled entries
  *		 (set by driver)
- * @limits_ptr: pointer to limits array or NULL
+ * @limits_ptr: poपूर्णांकer to limits array or शून्य
  */
-struct drm_exynos_ioctl_ipp_get_limits {
+काष्ठा drm_exynos_ioctl_ipp_get_limits अणु
 	__u32 ipp_id;
 	__u32 fourcc;
-	__u64 modifier;
+	__u64 modअगरier;
 	__u32 type;
 	__u32 limits_count;
 	__u64 limits_ptr;
-};
+पूर्ण;
 
-enum drm_exynos_ipp_task_id {
-	/* buffer described by struct drm_exynos_ipp_task_buffer */
+क्रमागत drm_exynos_ipp_task_id अणु
+	/* buffer described by काष्ठा drm_exynos_ipp_task_buffer */
 	DRM_EXYNOS_IPP_TASK_BUFFER		= 0x0001,
-	/* rectangle described by struct drm_exynos_ipp_task_rect */
+	/* rectangle described by काष्ठा drm_exynos_ipp_task_rect */
 	DRM_EXYNOS_IPP_TASK_RECTANGLE		= 0x0002,
-	/* transformation described by struct drm_exynos_ipp_task_transform */
+	/* transक्रमmation described by काष्ठा drm_exynos_ipp_task_transक्रमm */
 	DRM_EXYNOS_IPP_TASK_TRANSFORM		= 0x0003,
-	/* alpha configuration described by struct drm_exynos_ipp_task_alpha */
+	/* alpha configuration described by काष्ठा drm_exynos_ipp_task_alpha */
 	DRM_EXYNOS_IPP_TASK_ALPHA		= 0x0004,
 
-	/* source image data (for buffer and rectangle chunks) */
+	/* source image data (क्रम buffer and rectangle chunks) */
 	DRM_EXYNOS_IPP_TASK_TYPE_SOURCE		= 0x0001 << 16,
-	/* destination image data (for buffer and rectangle chunks) */
+	/* destination image data (क्रम buffer and rectangle chunks) */
 	DRM_EXYNOS_IPP_TASK_TYPE_DESTINATION	= 0x0002 << 16,
-};
+पूर्ण;
 
 /**
  * Memory buffer with image data.
  *
  * @id: must be DRM_EXYNOS_IPP_TASK_BUFFER
- * other parameters are same as for AddFB2 generic DRM ioctl
+ * other parameters are same as क्रम AddFB2 generic DRM ioctl
  */
-struct drm_exynos_ipp_task_buffer {
+काष्ठा drm_exynos_ipp_task_buffer अणु
 	__u32	id;
 	__u32	fourcc;
 	__u32	width, height;
 	__u32	gem_id[4];
 	__u32	offset[4];
 	__u32	pitch[4];
-	__u64	modifier;
-};
+	__u64	modअगरier;
+पूर्ण;
 
 /**
- * Rectangle for processing.
+ * Rectangle क्रम processing.
  *
  * @id: must be DRM_EXYNOS_IPP_TASK_RECTANGLE
  * @reserved: padding
  * @x,@y: left corner in pixels
  * @w,@h: width/height in pixels
  */
-struct drm_exynos_ipp_task_rect {
+काष्ठा drm_exynos_ipp_task_rect अणु
 	__u32	id;
 	__u32	reserved;
 	__u32	x;
 	__u32	y;
 	__u32	w;
 	__u32	h;
-};
+पूर्ण;
 
 /**
- * Image tranformation description.
+ * Image tranक्रमmation description.
  *
  * @id: must be DRM_EXYNOS_IPP_TASK_TRANSFORM
  * @rotation: DRM_MODE_ROTATE_* and DRM_MODE_REFLECT_* values
  */
-struct drm_exynos_ipp_task_transform {
+काष्ठा drm_exynos_ipp_task_transक्रमm अणु
 	__u32	id;
 	__u32	rotation;
-};
+पूर्ण;
 
 /**
- * Image global alpha configuration for formats without alpha values.
+ * Image global alpha configuration क्रम क्रमmats without alpha values.
  *
  * @id: must be DRM_EXYNOS_IPP_TASK_ALPHA
  * @value: global alpha value (0-255)
  */
-struct drm_exynos_ipp_task_alpha {
+काष्ठा drm_exynos_ipp_task_alpha अणु
 	__u32	id;
 	__u32	value;
-};
+पूर्ण;
 
-enum drm_exynos_ipp_flag {
+क्रमागत drm_exynos_ipp_flag अणु
 	/* generate DRM event after processing */
 	DRM_EXYNOS_IPP_FLAG_EVENT	= 0x01,
 	/* dry run, only check task parameters */
 	DRM_EXYNOS_IPP_FLAG_TEST_ONLY	= 0x02,
 	/* non-blocking processing */
 	DRM_EXYNOS_IPP_FLAG_NONBLOCK	= 0x04,
-};
+पूर्ण;
 
-#define DRM_EXYNOS_IPP_FLAGS (DRM_EXYNOS_IPP_FLAG_EVENT |\
+#घोषणा DRM_EXYNOS_IPP_FLAGS (DRM_EXYNOS_IPP_FLAG_EVENT |\
 		DRM_EXYNOS_IPP_FLAG_TEST_ONLY | DRM_EXYNOS_IPP_FLAG_NONBLOCK)
 
 /**
- * Perform image processing described by array of drm_exynos_ipp_task_*
- * structures (parameters array).
+ * Perक्रमm image processing described by array of drm_exynos_ipp_task_*
+ * काष्ठाures (parameters array).
  *
  * @ipp_id: id of IPP module to run the task
- * @flags: bitmask of drm_exynos_ipp_flag values
+ * @flags: biपंचांगask of drm_exynos_ipp_flag values
  * @reserved: padding
  * @params_size: size of parameters array (in bytes)
- * @params_ptr: pointer to parameters array or NULL
- * @user_data: (optional) data for drm event
+ * @params_ptr: poपूर्णांकer to parameters array or शून्य
+ * @user_data: (optional) data क्रम drm event
  */
-struct drm_exynos_ioctl_ipp_commit {
+काष्ठा drm_exynos_ioctl_ipp_commit अणु
 	__u32 ipp_id;
 	__u32 flags;
 	__u32 reserved;
 	__u32 params_size;
 	__u64 params_ptr;
 	__u64 user_data;
-};
+पूर्ण;
 
-#define DRM_EXYNOS_GEM_CREATE		0x00
-#define DRM_EXYNOS_GEM_MAP		0x01
-/* Reserved 0x03 ~ 0x05 for exynos specific gem ioctl */
-#define DRM_EXYNOS_GEM_GET		0x04
-#define DRM_EXYNOS_VIDI_CONNECTION	0x07
+#घोषणा DRM_EXYNOS_GEM_CREATE		0x00
+#घोषणा DRM_EXYNOS_GEM_MAP		0x01
+/* Reserved 0x03 ~ 0x05 क्रम exynos specअगरic gem ioctl */
+#घोषणा DRM_EXYNOS_GEM_GET		0x04
+#घोषणा DRM_EXYNOS_VIDI_CONNECTION	0x07
 
 /* G2D */
-#define DRM_EXYNOS_G2D_GET_VER		0x20
-#define DRM_EXYNOS_G2D_SET_CMDLIST	0x21
-#define DRM_EXYNOS_G2D_EXEC		0x22
+#घोषणा DRM_EXYNOS_G2D_GET_VER		0x20
+#घोषणा DRM_EXYNOS_G2D_SET_CMDLIST	0x21
+#घोषणा DRM_EXYNOS_G2D_EXEC		0x22
 
-/* Reserved 0x30 ~ 0x33 for obsolete Exynos IPP ioctls */
+/* Reserved 0x30 ~ 0x33 क्रम obsolete Exynos IPP ioctls */
 /* IPP - Image Post Processing */
-#define DRM_EXYNOS_IPP_GET_RESOURCES	0x40
-#define DRM_EXYNOS_IPP_GET_CAPS		0x41
-#define DRM_EXYNOS_IPP_GET_LIMITS	0x42
-#define DRM_EXYNOS_IPP_COMMIT		0x43
+#घोषणा DRM_EXYNOS_IPP_GET_RESOURCES	0x40
+#घोषणा DRM_EXYNOS_IPP_GET_CAPS		0x41
+#घोषणा DRM_EXYNOS_IPP_GET_LIMITS	0x42
+#घोषणा DRM_EXYNOS_IPP_COMMIT		0x43
 
-#define DRM_IOCTL_EXYNOS_GEM_CREATE		DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_GEM_CREATE, struct drm_exynos_gem_create)
-#define DRM_IOCTL_EXYNOS_GEM_MAP		DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_GEM_MAP, struct drm_exynos_gem_map)
-#define DRM_IOCTL_EXYNOS_GEM_GET	DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_GEM_GET,	struct drm_exynos_gem_info)
+#घोषणा DRM_IOCTL_EXYNOS_GEM_CREATE		DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_GEM_CREATE, काष्ठा drm_exynos_gem_create)
+#घोषणा DRM_IOCTL_EXYNOS_GEM_MAP		DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_GEM_MAP, काष्ठा drm_exynos_gem_map)
+#घोषणा DRM_IOCTL_EXYNOS_GEM_GET	DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_GEM_GET,	काष्ठा drm_exynos_gem_info)
 
-#define DRM_IOCTL_EXYNOS_VIDI_CONNECTION	DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_VIDI_CONNECTION, struct drm_exynos_vidi_connection)
+#घोषणा DRM_IOCTL_EXYNOS_VIDI_CONNECTION	DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_VIDI_CONNECTION, काष्ठा drm_exynos_vidi_connection)
 
-#define DRM_IOCTL_EXYNOS_G2D_GET_VER		DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_G2D_GET_VER, struct drm_exynos_g2d_get_ver)
-#define DRM_IOCTL_EXYNOS_G2D_SET_CMDLIST	DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_G2D_SET_CMDLIST, struct drm_exynos_g2d_set_cmdlist)
-#define DRM_IOCTL_EXYNOS_G2D_EXEC		DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_G2D_EXEC, struct drm_exynos_g2d_exec)
+#घोषणा DRM_IOCTL_EXYNOS_G2D_GET_VER		DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_G2D_GET_VER, काष्ठा drm_exynos_g2d_get_ver)
+#घोषणा DRM_IOCTL_EXYNOS_G2D_SET_CMDLIST	DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_G2D_SET_CMDLIST, काष्ठा drm_exynos_g2d_set_cmdlist)
+#घोषणा DRM_IOCTL_EXYNOS_G2D_EXEC		DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_G2D_EXEC, काष्ठा drm_exynos_g2d_exec)
 
-#define DRM_IOCTL_EXYNOS_IPP_GET_RESOURCES	DRM_IOWR(DRM_COMMAND_BASE + \
+#घोषणा DRM_IOCTL_EXYNOS_IPP_GET_RESOURCES	DRM_IOWR(DRM_COMMAND_BASE + \
 		DRM_EXYNOS_IPP_GET_RESOURCES, \
-		struct drm_exynos_ioctl_ipp_get_res)
-#define DRM_IOCTL_EXYNOS_IPP_GET_CAPS		DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_IPP_GET_CAPS, struct drm_exynos_ioctl_ipp_get_caps)
-#define DRM_IOCTL_EXYNOS_IPP_GET_LIMITS		DRM_IOWR(DRM_COMMAND_BASE + \
+		काष्ठा drm_exynos_ioctl_ipp_get_res)
+#घोषणा DRM_IOCTL_EXYNOS_IPP_GET_CAPS		DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_IPP_GET_CAPS, काष्ठा drm_exynos_ioctl_ipp_get_caps)
+#घोषणा DRM_IOCTL_EXYNOS_IPP_GET_LIMITS		DRM_IOWR(DRM_COMMAND_BASE + \
 		DRM_EXYNOS_IPP_GET_LIMITS, \
-		struct drm_exynos_ioctl_ipp_get_limits)
-#define DRM_IOCTL_EXYNOS_IPP_COMMIT		DRM_IOWR(DRM_COMMAND_BASE + \
-		DRM_EXYNOS_IPP_COMMIT, struct drm_exynos_ioctl_ipp_commit)
+		काष्ठा drm_exynos_ioctl_ipp_get_limits)
+#घोषणा DRM_IOCTL_EXYNOS_IPP_COMMIT		DRM_IOWR(DRM_COMMAND_BASE + \
+		DRM_EXYNOS_IPP_COMMIT, काष्ठा drm_exynos_ioctl_ipp_commit)
 
-/* Exynos specific events */
-#define DRM_EXYNOS_G2D_EVENT		0x80000000
-#define DRM_EXYNOS_IPP_EVENT		0x80000002
+/* Exynos specअगरic events */
+#घोषणा DRM_EXYNOS_G2D_EVENT		0x80000000
+#घोषणा DRM_EXYNOS_IPP_EVENT		0x80000002
 
-struct drm_exynos_g2d_event {
-	struct drm_event	base;
+काष्ठा drm_exynos_g2d_event अणु
+	काष्ठा drm_event	base;
 	__u64			user_data;
 	__u32			tv_sec;
 	__u32			tv_usec;
 	__u32			cmdlist_no;
 	__u32			reserved;
-};
+पूर्ण;
 
-struct drm_exynos_ipp_event {
-	struct drm_event	base;
+काष्ठा drm_exynos_ipp_event अणु
+	काष्ठा drm_event	base;
 	__u64			user_data;
 	__u32			tv_sec;
 	__u32			tv_usec;
 	__u32			ipp_id;
 	__u32			sequence;
 	__u64			reserved;
-};
+पूर्ण;
 
-#if defined(__cplusplus)
-}
-#endif
+#अगर defined(__cplusplus)
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _UAPI_EXYNOS_DRM_H_ */
+#पूर्ण_अगर /* _UAPI_EXYNOS_DRM_H_ */

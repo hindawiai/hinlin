@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 
-#ifndef _NET_ETHTOOL_BITSET_H
-#define _NET_ETHTOOL_BITSET_H
+#अगर_अघोषित _NET_ETHTOOL_BITSET_H
+#घोषणा _NET_ETHTOOL_BITSET_H
 
-#define ETHNL_MAX_BITSET_SIZE S16_MAX
+#घोषणा ETHNL_MAX_BITSET_SIZE S16_MAX
 
-typedef const char (*const ethnl_string_array_t)[ETH_GSTRING_LEN];
+प्रकार स्थिर अक्षर (*स्थिर ethnl_string_array_t)[ETH_GSTRING_LEN];
 
-int ethnl_bitset_is_compact(const struct nlattr *bitset, bool *compact);
-int ethnl_bitset_size(const unsigned long *val, const unsigned long *mask,
-		      unsigned int nbits, ethnl_string_array_t names,
+पूर्णांक ethnl_bitset_is_compact(स्थिर काष्ठा nlattr *bitset, bool *compact);
+पूर्णांक ethnl_bitset_size(स्थिर अचिन्हित दीर्घ *val, स्थिर अचिन्हित दीर्घ *mask,
+		      अचिन्हित पूर्णांक nbits, ethnl_string_array_t names,
 		      bool compact);
-int ethnl_bitset32_size(const u32 *val, const u32 *mask, unsigned int nbits,
+पूर्णांक ethnl_bitset32_size(स्थिर u32 *val, स्थिर u32 *mask, अचिन्हित पूर्णांक nbits,
 			ethnl_string_array_t names, bool compact);
-int ethnl_put_bitset(struct sk_buff *skb, int attrtype,
-		     const unsigned long *val, const unsigned long *mask,
-		     unsigned int nbits, ethnl_string_array_t names,
+पूर्णांक ethnl_put_bitset(काष्ठा sk_buff *skb, पूर्णांक attrtype,
+		     स्थिर अचिन्हित दीर्घ *val, स्थिर अचिन्हित दीर्घ *mask,
+		     अचिन्हित पूर्णांक nbits, ethnl_string_array_t names,
 		     bool compact);
-int ethnl_put_bitset32(struct sk_buff *skb, int attrtype, const u32 *val,
-		       const u32 *mask, unsigned int nbits,
+पूर्णांक ethnl_put_bitset32(काष्ठा sk_buff *skb, पूर्णांक attrtype, स्थिर u32 *val,
+		       स्थिर u32 *mask, अचिन्हित पूर्णांक nbits,
 		       ethnl_string_array_t names, bool compact);
-int ethnl_update_bitset(unsigned long *bitmap, unsigned int nbits,
-			const struct nlattr *attr, ethnl_string_array_t names,
-			struct netlink_ext_ack *extack, bool *mod);
-int ethnl_update_bitset32(u32 *bitmap, unsigned int nbits,
-			  const struct nlattr *attr, ethnl_string_array_t names,
-			  struct netlink_ext_ack *extack, bool *mod);
-int ethnl_parse_bitset(unsigned long *val, unsigned long *mask,
-		       unsigned int nbits, const struct nlattr *attr,
+पूर्णांक ethnl_update_bitset(अचिन्हित दीर्घ *biपंचांगap, अचिन्हित पूर्णांक nbits,
+			स्थिर काष्ठा nlattr *attr, ethnl_string_array_t names,
+			काष्ठा netlink_ext_ack *extack, bool *mod);
+पूर्णांक ethnl_update_bitset32(u32 *biपंचांगap, अचिन्हित पूर्णांक nbits,
+			  स्थिर काष्ठा nlattr *attr, ethnl_string_array_t names,
+			  काष्ठा netlink_ext_ack *extack, bool *mod);
+पूर्णांक ethnl_parse_bitset(अचिन्हित दीर्घ *val, अचिन्हित दीर्घ *mask,
+		       अचिन्हित पूर्णांक nbits, स्थिर काष्ठा nlattr *attr,
 		       ethnl_string_array_t names,
-		       struct netlink_ext_ack *extack);
+		       काष्ठा netlink_ext_ack *extack);
 
-#endif /* _NET_ETHTOOL_BITSET_H */
+#पूर्ण_अगर /* _NET_ETHTOOL_BITSET_H */

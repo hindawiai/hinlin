@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  *
  */
-#include <linux/sched/task_stack.h>
-#include <linux/stacktrace.h>
-#include <linux/security.h>
-#include <linux/kallsyms.h>
-#include <linux/seq_file.h>
-#include <linux/spinlock.h>
-#include <linux/uaccess.h>
-#include <linux/ftrace.h>
-#include <linux/module.h>
-#include <linux/sysctl.h>
-#include <linux/init.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/security.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/init.h>
 
-#include <asm/setup.h>
+#समावेश <यंत्र/setup.h>
 
-#include "trace.h"
+#समावेश "trace.h"
 
-#define STACK_TRACE_ENTRIES 500
+#घोषणा STACK_TRACE_ENTRIES 500
 
-static unsigned long stack_dump_trace[STACK_TRACE_ENTRIES];
-static unsigned stack_trace_index[STACK_TRACE_ENTRIES];
+अटल अचिन्हित दीर्घ stack_dump_trace[STACK_TRACE_ENTRIES];
+अटल अचिन्हित stack_trace_index[STACK_TRACE_ENTRIES];
 
-static unsigned int stack_trace_nr_entries;
-static unsigned long stack_trace_max_size;
-static arch_spinlock_t stack_trace_max_lock =
+अटल अचिन्हित पूर्णांक stack_trace_nr_entries;
+अटल अचिन्हित दीर्घ stack_trace_max_size;
+अटल arch_spinlock_t stack_trace_max_lock =
 	(arch_spinlock_t)__ARCH_SPIN_LOCK_UNLOCKED;
 
-DEFINE_PER_CPU(int, disable_stack_tracer);
-static DEFINE_MUTEX(stack_sysctl_mutex);
+DEFINE_PER_CPU(पूर्णांक, disable_stack_tracer);
+अटल DEFINE_MUTEX(stack_sysctl_mutex);
 
-int stack_tracer_enabled;
+पूर्णांक stack_tracer_enabled;
 
-static void print_max_stack(void)
-{
-	long i;
-	int size;
+अटल व्योम prपूर्णांक_max_stack(व्योम)
+अणु
+	दीर्घ i;
+	पूर्णांक size;
 
 	pr_emerg("        Depth    Size   Location    (%d entries)\n"
 			   "        -----    ----   --------\n",
 			   stack_trace_nr_entries);
 
-	for (i = 0; i < stack_trace_nr_entries; i++) {
-		if (i + 1 == stack_trace_nr_entries)
+	क्रम (i = 0; i < stack_trace_nr_entries; i++) अणु
+		अगर (i + 1 == stack_trace_nr_entries)
 			size = stack_trace_index[i];
-		else
+		अन्यथा
 			size = stack_trace_index[i] - stack_trace_index[i+1];
 
 		pr_emerg("%3ld) %8d   %5d   %pS\n", i, stack_trace_index[i],
-				size, (void *)stack_dump_trace[i]);
-	}
-}
+				size, (व्योम *)stack_dump_trace[i]);
+	पूर्ण
+पूर्ण
 
 /*
- * The stack tracer looks for a maximum stack at each call from a function. It
- * registers a callback from ftrace, and in that callback it examines the stack
+ * The stack tracer looks क्रम a maximum stack at each call from a function. It
+ * रेजिस्टरs a callback from ftrace, and in that callback it examines the stack
  * size. It determines the stack size from the variable passed in, which is the
  * address of a local variable in the stack_trace_call() callback function.
  * The stack size is calculated by the address of the local variable to the top
  * of the current stack. If that size is smaller than the currently saved max
- * stack size, nothing more is done.
+ * stack size, nothing more is करोne.
  *
  * If the size of the stack is greater than the maximum recorded size, then the
  * following algorithm takes place.
  *
- * For architectures (like x86) that store the function's return address before
+ * For architectures (like x86) that store the function's वापस address beक्रमe
  * saving the function's local variables, the stack will look something like
  * this:
  *
  *   [ top of stack ]
  *    0: sys call entry frame
- *   10: return addr to entry code
+ *   10: वापस addr to entry code
  *   11: start of sys_foo frame
- *   20: return addr to sys_foo
+ *   20: वापस addr to sys_foo
  *   21: start of kernel_func_bar frame
- *   30: return addr to kernel_func_bar
- *   31: [ do trace stack here ]
+ *   30: वापस addr to kernel_func_bar
+ *   31: [ करो trace stack here ]
  *
- * The save_stack_trace() is called returning all the functions it finds in the
+ * The save_stack_trace() is called वापसing all the functions it finds in the
  * current stack. Which would be (from the bottom of the stack to the top):
  *
- *   return addr to kernel_func_bar
- *   return addr to sys_foo
- *   return addr to entry code
+ *   वापस addr to kernel_func_bar
+ *   वापस addr to sys_foo
+ *   वापस addr to entry code
  *
  * Now to figure out how much each of these functions' local variable size is,
  * a search of the stack is made to find these values. When a match is made, it
- * is added to the stack_dump_trace[] array. The offset into the stack is saved
+ * is added to the stack_dump_trace[] array. The offset पूर्णांकo the stack is saved
  * in the stack_trace_index[] array. The above example would show:
  *
  *        stack_dump_trace[]        |   stack_trace_index[]
  *        ------------------        +   -------------------
- *  return addr to kernel_func_bar  |          30
- *  return addr to sys_foo          |          20
- *  return addr to entry            |          10
+ *  वापस addr to kernel_func_bar  |          30
+ *  वापस addr to sys_foo          |          20
+ *  वापस addr to entry            |          10
  *
- * The print_max_stack() function above, uses these values to print the size of
+ * The prपूर्णांक_max_stack() function above, uses these values to prपूर्णांक the size of
  * each function's portion of the stack.
  *
- *  for (i = 0; i < nr_entries; i++) {
+ *  क्रम (i = 0; i < nr_entries; i++) अणु
  *     size = i == nr_entries - 1 ? stack_trace_index[i] :
  *                    stack_trace_index[i] - stack_trace_index[i+1]
- *     print "%d %d %d %s\n", i, stack_trace_index[i], size, stack_dump_trace[i]);
- *  }
+ *     prपूर्णांक "%d %d %d %s\n", i, stack_trace_index[i], size, stack_dump_trace[i]);
+ *  पूर्ण
  *
  * The above shows
  *
@@ -114,77 +115,77 @@ static void print_max_stack(void)
  *  1    20   10   sys_foo
  *  2    10   10   entry code
  *
- * Now for architectures that might save the return address after the functions
- * local variables (saving the link register before calling nested functions),
- * this will cause the stack to look a little different:
+ * Now क्रम architectures that might save the वापस address after the functions
+ * local variables (saving the link रेजिस्टर beक्रमe calling nested functions),
+ * this will cause the stack to look a little dअगरferent:
  *
  * [ top of stack ]
  *  0: sys call entry frame
  * 10: start of sys_foo_frame
- * 19: return addr to entry code << lr saved before calling kernel_func_bar
+ * 19: वापस addr to entry code << lr saved beक्रमe calling kernel_func_bar
  * 20: start of kernel_func_bar frame
- * 29: return addr to sys_foo_frame << lr saved before calling next function
- * 30: [ do trace stack here ]
+ * 29: वापस addr to sys_foo_frame << lr saved beक्रमe calling next function
+ * 30: [ करो trace stack here ]
  *
- * Although the functions returned by save_stack_trace() may be the same, the
- * placement in the stack will be different. Using the same algorithm as above
+ * Although the functions वापसed by save_stack_trace() may be the same, the
+ * placement in the stack will be dअगरferent. Using the same algorithm as above
  * would yield:
  *
  *        stack_dump_trace[]        |   stack_trace_index[]
  *        ------------------        +   -------------------
- *  return addr to kernel_func_bar  |          30
- *  return addr to sys_foo          |          29
- *  return addr to entry            |          19
+ *  वापस addr to kernel_func_bar  |          30
+ *  वापस addr to sys_foo          |          29
+ *  वापस addr to entry            |          19
  *
  * Where the mapping is off by one:
  *
  *   kernel_func_bar stack frame size is 29 - 19 not 30 - 29!
  *
- * To fix this, if the architecture sets ARCH_RET_ADDR_AFTER_LOCAL_VARS the
- * values in stack_trace_index[] are shifted by one to and the number of
+ * To fix this, अगर the architecture sets ARCH_RET_ADDR_AFTER_LOCAL_VARS the
+ * values in stack_trace_index[] are shअगरted by one to and the number of
  * stack trace entries is decremented by one.
  *
  *        stack_dump_trace[]        |   stack_trace_index[]
  *        ------------------        +   -------------------
- *  return addr to kernel_func_bar  |          29
- *  return addr to sys_foo          |          19
+ *  वापस addr to kernel_func_bar  |          29
+ *  वापस addr to sys_foo          |          19
  *
  * Although the entry function is not displayed, the first function (sys_foo)
  * will still include the stack size of it.
  */
-static void check_stack(unsigned long ip, unsigned long *stack)
-{
-	unsigned long this_size, flags; unsigned long *p, *top, *start;
-	static int tracer_frame;
-	int frame_size = READ_ONCE(tracer_frame);
-	int i, x;
+अटल व्योम check_stack(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ *stack)
+अणु
+	अचिन्हित दीर्घ this_size, flags; अचिन्हित दीर्घ *p, *top, *start;
+	अटल पूर्णांक tracer_frame;
+	पूर्णांक frame_size = READ_ONCE(tracer_frame);
+	पूर्णांक i, x;
 
-	this_size = ((unsigned long)stack) & (THREAD_SIZE-1);
+	this_size = ((अचिन्हित दीर्घ)stack) & (THREAD_SIZE-1);
 	this_size = THREAD_SIZE - this_size;
 	/* Remove the frame of the tracer */
 	this_size -= frame_size;
 
-	if (this_size <= stack_trace_max_size)
-		return;
+	अगर (this_size <= stack_trace_max_size)
+		वापस;
 
-	/* we do not handle interrupt stacks yet */
-	if (!object_is_on_stack(stack))
-		return;
+	/* we करो not handle पूर्णांकerrupt stacks yet */
+	अगर (!object_is_on_stack(stack))
+		वापस;
 
-	/* Can't do this from NMI context (can cause deadlocks) */
-	if (in_nmi())
-		return;
+	/* Can't करो this from NMI context (can cause deadlocks) */
+	अगर (in_nmi())
+		वापस;
 
 	local_irq_save(flags);
 	arch_spin_lock(&stack_trace_max_lock);
 
-	/* In case another CPU set the tracer_frame on us */
-	if (unlikely(!frame_size))
+	/* In हाल another CPU set the tracer_frame on us */
+	अगर (unlikely(!frame_size))
 		this_size -= tracer_frame;
 
-	/* a race could have already updated it */
-	if (this_size <= stack_trace_max_size)
-		goto out;
+	/* a race could have alपढ़ोy updated it */
+	अगर (this_size <= stack_trace_max_size)
+		जाओ out;
 
 	stack_trace_max_size = this_size;
 
@@ -193,16 +194,16 @@ static void check_stack(unsigned long ip, unsigned long *stack)
 					       0);
 
 	/* Skip over the overhead of the stack tracer itself */
-	for (i = 0; i < stack_trace_nr_entries; i++) {
-		if (stack_dump_trace[i] == ip)
-			break;
-	}
+	क्रम (i = 0; i < stack_trace_nr_entries; i++) अणु
+		अगर (stack_dump_trace[i] == ip)
+			अवरोध;
+	पूर्ण
 
 	/*
 	 * Some archs may not have the passed in ip in the dump.
 	 * If that happens, we need to show everything.
 	 */
-	if (i == stack_trace_nr_entries)
+	अगर (i == stack_trace_nr_entries)
 		i = 0;
 
 	/*
@@ -210,100 +211,100 @@ static void check_stack(unsigned long ip, unsigned long *stack)
 	 */
 	x = 0;
 	start = stack;
-	top = (unsigned long *)
-		(((unsigned long)start & ~(THREAD_SIZE-1)) + THREAD_SIZE);
+	top = (अचिन्हित दीर्घ *)
+		(((अचिन्हित दीर्घ)start & ~(THREAD_SIZE-1)) + THREAD_SIZE);
 
 	/*
 	 * Loop through all the entries. One of the entries may
-	 * for some reason be missed on the stack, so we may
-	 * have to account for them. If they are all there, this
+	 * क्रम some reason be missed on the stack, so we may
+	 * have to account क्रम them. If they are all there, this
 	 * loop will only happen once. This code only takes place
 	 * on a new max, so it is far from a fast path.
 	 */
-	while (i < stack_trace_nr_entries) {
-		int found = 0;
+	जबतक (i < stack_trace_nr_entries) अणु
+		पूर्णांक found = 0;
 
 		stack_trace_index[x] = this_size;
 		p = start;
 
-		for (; p < top && i < stack_trace_nr_entries; p++) {
+		क्रम (; p < top && i < stack_trace_nr_entries; p++) अणु
 			/*
 			 * The READ_ONCE_NOCHECK is used to let KASAN know that
 			 * this is not a stack-out-of-bounds error.
 			 */
-			if ((READ_ONCE_NOCHECK(*p)) == stack_dump_trace[i]) {
+			अगर ((READ_ONCE_NOCHECK(*p)) == stack_dump_trace[i]) अणु
 				stack_dump_trace[x] = stack_dump_trace[i++];
 				this_size = stack_trace_index[x++] =
-					(top - p) * sizeof(unsigned long);
+					(top - p) * माप(अचिन्हित दीर्घ);
 				found = 1;
 				/* Start the search from here */
 				start = p + 1;
 				/*
-				 * We do not want to show the overhead
+				 * We करो not want to show the overhead
 				 * of the stack tracer stack in the
 				 * max stack. If we haven't figured
 				 * out what that is, then figure it out
 				 * now.
 				 */
-				if (unlikely(!tracer_frame)) {
+				अगर (unlikely(!tracer_frame)) अणु
 					tracer_frame = (p - stack) *
-						sizeof(unsigned long);
+						माप(अचिन्हित दीर्घ);
 					stack_trace_max_size -= tracer_frame;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (!found)
+		अगर (!found)
 			i++;
-	}
+	पूर्ण
 
-#ifdef ARCH_FTRACE_SHIFT_STACK_TRACER
+#अगर_घोषित ARCH_FTRACE_SHIFT_STACK_TRACER
 	/*
-	 * Some archs will store the link register before calling
-	 * nested functions. This means the saved return address
-	 * comes after the local storage, and we need to shift
-	 * for that.
+	 * Some archs will store the link रेजिस्टर beक्रमe calling
+	 * nested functions. This means the saved वापस address
+	 * comes after the local storage, and we need to shअगरt
+	 * क्रम that.
 	 */
-	if (x > 1) {
-		memmove(&stack_trace_index[0], &stack_trace_index[1],
-			sizeof(stack_trace_index[0]) * (x - 1));
+	अगर (x > 1) अणु
+		स_हटाओ(&stack_trace_index[0], &stack_trace_index[1],
+			माप(stack_trace_index[0]) * (x - 1));
 		x--;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	stack_trace_nr_entries = x;
 
-	if (task_stack_end_corrupted(current)) {
-		print_max_stack();
+	अगर (task_stack_end_corrupted(current)) अणु
+		prपूर्णांक_max_stack();
 		BUG();
-	}
+	पूर्ण
 
  out:
 	arch_spin_unlock(&stack_trace_max_lock);
 	local_irq_restore(flags);
-}
+पूर्ण
 
 /* Some archs may not define MCOUNT_INSN_SIZE */
-#ifndef MCOUNT_INSN_SIZE
+#अगर_अघोषित MCOUNT_INSN_SIZE
 # define MCOUNT_INSN_SIZE 0
-#endif
+#पूर्ण_अगर
 
-static void
-stack_trace_call(unsigned long ip, unsigned long parent_ip,
-		 struct ftrace_ops *op, struct ftrace_regs *fregs)
-{
-	unsigned long stack;
+अटल व्योम
+stack_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		 काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *fregs)
+अणु
+	अचिन्हित दीर्घ stack;
 
 	preempt_disable_notrace();
 
-	/* no atomic needed, we only modify this variable by this cpu */
+	/* no atomic needed, we only modअगरy this variable by this cpu */
 	__this_cpu_inc(disable_stack_tracer);
-	if (__this_cpu_read(disable_stack_tracer) != 1)
-		goto out;
+	अगर (__this_cpu_पढ़ो(disable_stack_tracer) != 1)
+		जाओ out;
 
 	/* If rcu is not watching, then save stack trace can fail */
-	if (!rcu_is_watching())
-		goto out;
+	अगर (!rcu_is_watching())
+		जाओ out;
 
 	ip += MCOUNT_INSN_SIZE;
 
@@ -313,43 +314,43 @@ stack_trace_call(unsigned long ip, unsigned long parent_ip,
 	__this_cpu_dec(disable_stack_tracer);
 	/* prevent recursion in schedule */
 	preempt_enable_notrace();
-}
+पूर्ण
 
-static struct ftrace_ops trace_ops __read_mostly =
-{
+अटल काष्ठा ftrace_ops trace_ops __पढ़ो_mostly =
+अणु
 	.func = stack_trace_call,
-};
+पूर्ण;
 
-static ssize_t
-stack_max_size_read(struct file *filp, char __user *ubuf,
-		    size_t count, loff_t *ppos)
-{
-	unsigned long *ptr = filp->private_data;
-	char buf[64];
-	int r;
+अटल sमाप_प्रकार
+stack_max_size_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf,
+		    माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित दीर्घ *ptr = filp->निजी_data;
+	अक्षर buf[64];
+	पूर्णांक r;
 
-	r = snprintf(buf, sizeof(buf), "%ld\n", *ptr);
-	if (r > sizeof(buf))
-		r = sizeof(buf);
-	return simple_read_from_buffer(ubuf, count, ppos, buf, r);
-}
+	r = snम_लिखो(buf, माप(buf), "%ld\n", *ptr);
+	अगर (r > माप(buf))
+		r = माप(buf);
+	वापस simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, r);
+पूर्ण
 
-static ssize_t
-stack_max_size_write(struct file *filp, const char __user *ubuf,
-		     size_t count, loff_t *ppos)
-{
-	long *ptr = filp->private_data;
-	unsigned long val, flags;
-	int ret;
+अटल sमाप_प्रकार
+stack_max_size_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf,
+		     माप_प्रकार count, loff_t *ppos)
+अणु
+	दीर्घ *ptr = filp->निजी_data;
+	अचिन्हित दीर्घ val, flags;
+	पूर्णांक ret;
 
-	ret = kstrtoul_from_user(ubuf, count, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ_from_user(ubuf, count, 10, &val);
+	अगर (ret)
+		वापस ret;
 
 	local_irq_save(flags);
 
 	/*
-	 * In case we trace inside arch_spin_lock() or after (NMI),
+	 * In हाल we trace inside arch_spin_lock() or after (NMI),
 	 * we will cause circular lock, so we also need to increase
 	 * the percpu disable_stack_tracer here.
 	 */
@@ -362,221 +363,221 @@ stack_max_size_write(struct file *filp, const char __user *ubuf,
 	__this_cpu_dec(disable_stack_tracer);
 	local_irq_restore(flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations stack_max_size_fops = {
-	.open		= tracing_open_generic,
-	.read		= stack_max_size_read,
-	.write		= stack_max_size_write,
-	.llseek		= default_llseek,
-};
+अटल स्थिर काष्ठा file_operations stack_max_size_fops = अणु
+	.खोलो		= tracing_खोलो_generic,
+	.पढ़ो		= stack_max_size_पढ़ो,
+	.ग_लिखो		= stack_max_size_ग_लिखो,
+	.llseek		= शेष_llseek,
+पूर्ण;
 
-static void *
-__next(struct seq_file *m, loff_t *pos)
-{
-	long n = *pos - 1;
+अटल व्योम *
+__next(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	दीर्घ n = *pos - 1;
 
-	if (n >= stack_trace_nr_entries)
-		return NULL;
+	अगर (n >= stack_trace_nr_entries)
+		वापस शून्य;
 
-	m->private = (void *)n;
-	return &m->private;
-}
+	m->निजी = (व्योम *)n;
+	वापस &m->निजी;
+पूर्ण
 
-static void *
-t_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *
+t_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return __next(m, pos);
-}
+	वापस __next(m, pos);
+पूर्ण
 
-static void *t_start(struct seq_file *m, loff_t *pos)
-{
+अटल व्योम *t_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
 	local_irq_disable();
 
 	__this_cpu_inc(disable_stack_tracer);
 
 	arch_spin_lock(&stack_trace_max_lock);
 
-	if (*pos == 0)
-		return SEQ_START_TOKEN;
+	अगर (*pos == 0)
+		वापस SEQ_START_TOKEN;
 
-	return __next(m, pos);
-}
+	वापस __next(m, pos);
+पूर्ण
 
-static void t_stop(struct seq_file *m, void *p)
-{
+अटल व्योम t_stop(काष्ठा seq_file *m, व्योम *p)
+अणु
 	arch_spin_unlock(&stack_trace_max_lock);
 
 	__this_cpu_dec(disable_stack_tracer);
 
 	local_irq_enable();
-}
+पूर्ण
 
-static void trace_lookup_stack(struct seq_file *m, long i)
-{
-	unsigned long addr = stack_dump_trace[i];
+अटल व्योम trace_lookup_stack(काष्ठा seq_file *m, दीर्घ i)
+अणु
+	अचिन्हित दीर्घ addr = stack_dump_trace[i];
 
-	seq_printf(m, "%pS\n", (void *)addr);
-}
+	seq_म_लिखो(m, "%pS\n", (व्योम *)addr);
+पूर्ण
 
-static void print_disabled(struct seq_file *m)
-{
-	seq_puts(m, "#\n"
+अटल व्योम prपूर्णांक_disabled(काष्ठा seq_file *m)
+अणु
+	seq_माला_दो(m, "#\n"
 		 "#  Stack tracer disabled\n"
 		 "#\n"
 		 "# To enable the stack tracer, either add 'stacktrace' to the\n"
 		 "# kernel command line\n"
 		 "# or 'echo 1 > /proc/sys/kernel/stack_tracer_enabled'\n"
 		 "#\n");
-}
+पूर्ण
 
-static int t_show(struct seq_file *m, void *v)
-{
-	long i;
-	int size;
+अटल पूर्णांक t_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	दीर्घ i;
+	पूर्णांक size;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_printf(m, "        Depth    Size   Location"
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_म_लिखो(m, "        Depth    Size   Location"
 			   "    (%d entries)\n"
 			   "        -----    ----   --------\n",
 			   stack_trace_nr_entries);
 
-		if (!stack_tracer_enabled && !stack_trace_max_size)
-			print_disabled(m);
+		अगर (!stack_tracer_enabled && !stack_trace_max_size)
+			prपूर्णांक_disabled(m);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	i = *(long *)v;
+	i = *(दीर्घ *)v;
 
-	if (i >= stack_trace_nr_entries)
-		return 0;
+	अगर (i >= stack_trace_nr_entries)
+		वापस 0;
 
-	if (i + 1 == stack_trace_nr_entries)
+	अगर (i + 1 == stack_trace_nr_entries)
 		size = stack_trace_index[i];
-	else
+	अन्यथा
 		size = stack_trace_index[i] - stack_trace_index[i+1];
 
-	seq_printf(m, "%3ld) %8d   %5d   ", i, stack_trace_index[i], size);
+	seq_म_लिखो(m, "%3ld) %8d   %5d   ", i, stack_trace_index[i], size);
 
 	trace_lookup_stack(m, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations stack_trace_seq_ops = {
+अटल स्थिर काष्ठा seq_operations stack_trace_seq_ops = अणु
 	.start		= t_start,
 	.next		= t_next,
 	.stop		= t_stop,
 	.show		= t_show,
-};
+पूर्ण;
 
-static int stack_trace_open(struct inode *inode, struct file *file)
-{
-	int ret;
+अटल पूर्णांक stack_trace_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	ret = security_locked_down(LOCKDOWN_TRACEFS);
-	if (ret)
-		return ret;
+	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
+	अगर (ret)
+		वापस ret;
 
-	return seq_open(file, &stack_trace_seq_ops);
-}
+	वापस seq_खोलो(file, &stack_trace_seq_ops);
+पूर्ण
 
-static const struct file_operations stack_trace_fops = {
-	.open		= stack_trace_open,
-	.read		= seq_read,
+अटल स्थिर काष्ठा file_operations stack_trace_fops = अणु
+	.खोलो		= stack_trace_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= seq_release,
-};
+पूर्ण;
 
-#ifdef CONFIG_DYNAMIC_FTRACE
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
 
-static int
-stack_trace_filter_open(struct inode *inode, struct file *file)
-{
-	struct ftrace_ops *ops = inode->i_private;
+अटल पूर्णांक
+stack_trace_filter_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा ftrace_ops *ops = inode->i_निजी;
 
-	/* Checks for tracefs lockdown */
-	return ftrace_regex_open(ops, FTRACE_ITER_FILTER,
+	/* Checks क्रम tracefs lockकरोwn */
+	वापस ftrace_regex_खोलो(ops, FTRACE_ITER_FILTER,
 				 inode, file);
-}
+पूर्ण
 
-static const struct file_operations stack_trace_filter_fops = {
-	.open = stack_trace_filter_open,
-	.read = seq_read,
-	.write = ftrace_filter_write,
+अटल स्थिर काष्ठा file_operations stack_trace_filter_fops = अणु
+	.खोलो = stack_trace_filter_खोलो,
+	.पढ़ो = seq_पढ़ो,
+	.ग_लिखो = ftrace_filter_ग_लिखो,
 	.llseek = tracing_lseek,
 	.release = ftrace_regex_release,
-};
+पूर्ण;
 
-#endif /* CONFIG_DYNAMIC_FTRACE */
+#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
 
-int
-stack_trace_sysctl(struct ctl_table *table, int write, void *buffer,
-		   size_t *lenp, loff_t *ppos)
-{
-	int was_enabled;
-	int ret;
+पूर्णांक
+stack_trace_sysctl(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
+		   माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक was_enabled;
+	पूर्णांक ret;
 
 	mutex_lock(&stack_sysctl_mutex);
 	was_enabled = !!stack_tracer_enabled;
 
-	ret = proc_dointvec(table, write, buffer, lenp, ppos);
+	ret = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
 
-	if (ret || !write || (was_enabled == !!stack_tracer_enabled))
-		goto out;
+	अगर (ret || !ग_लिखो || (was_enabled == !!stack_tracer_enabled))
+		जाओ out;
 
-	if (stack_tracer_enabled)
-		register_ftrace_function(&trace_ops);
-	else
-		unregister_ftrace_function(&trace_ops);
+	अगर (stack_tracer_enabled)
+		रेजिस्टर_ftrace_function(&trace_ops);
+	अन्यथा
+		unरेजिस्टर_ftrace_function(&trace_ops);
  out:
 	mutex_unlock(&stack_sysctl_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static char stack_trace_filter_buf[COMMAND_LINE_SIZE+1] __initdata;
+अटल अक्षर stack_trace_filter_buf[COMMAND_LINE_SIZE+1] __initdata;
 
-static __init int enable_stacktrace(char *str)
-{
-	int len;
+अटल __init पूर्णांक enable_stacktrace(अक्षर *str)
+अणु
+	पूर्णांक len;
 
-	if ((len = str_has_prefix(str, "_filter=")))
-		strncpy(stack_trace_filter_buf, str + len, COMMAND_LINE_SIZE);
+	अगर ((len = str_has_prefix(str, "_filter=")))
+		म_नकलन(stack_trace_filter_buf, str + len, COMMAND_LINE_SIZE);
 
 	stack_tracer_enabled = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("stacktrace", enable_stacktrace);
 
-static __init int stack_trace_init(void)
-{
-	int ret;
+अटल __init पूर्णांक stack_trace_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = tracing_init_dentry();
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	trace_create_file("stack_max_size", 0644, NULL,
+	trace_create_file("stack_max_size", 0644, शून्य,
 			&stack_trace_max_size, &stack_max_size_fops);
 
-	trace_create_file("stack_trace", 0444, NULL,
-			NULL, &stack_trace_fops);
+	trace_create_file("stack_trace", 0444, शून्य,
+			शून्य, &stack_trace_fops);
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-	trace_create_file("stack_trace_filter", 0644, NULL,
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+	trace_create_file("stack_trace_filter", 0644, शून्य,
 			  &trace_ops, &stack_trace_filter_fops);
-#endif
+#पूर्ण_अगर
 
-	if (stack_trace_filter_buf[0])
+	अगर (stack_trace_filter_buf[0])
 		ftrace_set_early_filter(&trace_ops, stack_trace_filter_buf, 1);
 
-	if (stack_tracer_enabled)
-		register_ftrace_function(&trace_ops);
+	अगर (stack_tracer_enabled)
+		रेजिस्टर_ftrace_function(&trace_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 device_initcall(stack_trace_init);

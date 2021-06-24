@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Common code for low-level network console, dump, and debugger code
+ * Common code क्रम low-level network console, dump, and debugger code
  *
  * Derived from netconsole, kgdb-over-ethernet, and netdump patches
  */
 
-#ifndef _LINUX_NETPOLL_H
-#define _LINUX_NETPOLL_H
+#अगर_अघोषित _LINUX_NETPOLL_H
+#घोषणा _LINUX_NETPOLL_H
 
-#include <linux/netdevice.h>
-#include <linux/interrupt.h>
-#include <linux/rcupdate.h>
-#include <linux/list.h>
-#include <linux/refcount.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/list.h>
+#समावेश <linux/refcount.h>
 
-union inet_addr {
+जोड़ inet_addr अणु
 	__u32		all[4];
 	__be32		ip;
 	__be32		ip6[4];
-	struct in_addr	in;
-	struct in6_addr	in6;
-};
+	काष्ठा in_addr	in;
+	काष्ठा in6_addr	in6;
+पूर्ण;
 
-struct netpoll {
-	struct net_device *dev;
-	char dev_name[IFNAMSIZ];
-	const char *name;
+काष्ठा netpoll अणु
+	काष्ठा net_device *dev;
+	अक्षर dev_name[IFNAMSIZ];
+	स्थिर अक्षर *name;
 
-	union inet_addr local_ip, remote_ip;
+	जोड़ inet_addr local_ip, remote_ip;
 	bool ipv6;
 	u16 local_port, remote_port;
 	u8 remote_mac[ETH_ALEN];
-};
+पूर्ण;
 
-struct netpoll_info {
+काष्ठा netpoll_info अणु
 	refcount_t refcnt;
 
-	struct semaphore dev_lock;
+	काष्ठा semaphore dev_lock;
 
-	struct sk_buff_head txq;
+	काष्ठा sk_buff_head txq;
 
-	struct delayed_work tx_work;
+	काष्ठा delayed_work tx_work;
 
-	struct netpoll *netpoll;
-	struct rcu_head rcu;
-};
+	काष्ठा netpoll *netpoll;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-#ifdef CONFIG_NETPOLL
-void netpoll_poll_dev(struct net_device *dev);
-void netpoll_poll_disable(struct net_device *dev);
-void netpoll_poll_enable(struct net_device *dev);
-#else
-static inline void netpoll_poll_disable(struct net_device *dev) { return; }
-static inline void netpoll_poll_enable(struct net_device *dev) { return; }
-#endif
+#अगर_घोषित CONFIG_NETPOLL
+व्योम netpoll_poll_dev(काष्ठा net_device *dev);
+व्योम netpoll_poll_disable(काष्ठा net_device *dev);
+व्योम netpoll_poll_enable(काष्ठा net_device *dev);
+#अन्यथा
+अटल अंतरभूत व्योम netpoll_poll_disable(काष्ठा net_device *dev) अणु वापस; पूर्ण
+अटल अंतरभूत व्योम netpoll_poll_enable(काष्ठा net_device *dev) अणु वापस; पूर्ण
+#पूर्ण_अगर
 
-void netpoll_send_udp(struct netpoll *np, const char *msg, int len);
-void netpoll_print_options(struct netpoll *np);
-int netpoll_parse_options(struct netpoll *np, char *opt);
-int __netpoll_setup(struct netpoll *np, struct net_device *ndev);
-int netpoll_setup(struct netpoll *np);
-void __netpoll_cleanup(struct netpoll *np);
-void __netpoll_free(struct netpoll *np);
-void netpoll_cleanup(struct netpoll *np);
-netdev_tx_t netpoll_send_skb(struct netpoll *np, struct sk_buff *skb);
+व्योम netpoll_send_udp(काष्ठा netpoll *np, स्थिर अक्षर *msg, पूर्णांक len);
+व्योम netpoll_prपूर्णांक_options(काष्ठा netpoll *np);
+पूर्णांक netpoll_parse_options(काष्ठा netpoll *np, अक्षर *opt);
+पूर्णांक __netpoll_setup(काष्ठा netpoll *np, काष्ठा net_device *ndev);
+पूर्णांक netpoll_setup(काष्ठा netpoll *np);
+व्योम __netpoll_cleanup(काष्ठा netpoll *np);
+व्योम __netpoll_मुक्त(काष्ठा netpoll *np);
+व्योम netpoll_cleanup(काष्ठा netpoll *np);
+netdev_tx_t netpoll_send_skb(काष्ठा netpoll *np, काष्ठा sk_buff *skb);
 
-#ifdef CONFIG_NETPOLL
-static inline void *netpoll_poll_lock(struct napi_struct *napi)
-{
-	struct net_device *dev = napi->dev;
+#अगर_घोषित CONFIG_NETPOLL
+अटल अंतरभूत व्योम *netpoll_poll_lock(काष्ठा napi_काष्ठा *napi)
+अणु
+	काष्ठा net_device *dev = napi->dev;
 
-	if (dev && dev->npinfo) {
-		int owner = smp_processor_id();
+	अगर (dev && dev->npinfo) अणु
+		पूर्णांक owner = smp_processor_id();
 
-		while (cmpxchg(&napi->poll_owner, -1, owner) != -1)
+		जबतक (cmpxchg(&napi->poll_owner, -1, owner) != -1)
 			cpu_relax();
 
-		return napi;
-	}
-	return NULL;
-}
+		वापस napi;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static inline void netpoll_poll_unlock(void *have)
-{
-	struct napi_struct *napi = have;
+अटल अंतरभूत व्योम netpoll_poll_unlock(व्योम *have)
+अणु
+	काष्ठा napi_काष्ठा *napi = have;
 
-	if (napi)
+	अगर (napi)
 		smp_store_release(&napi->poll_owner, -1);
-}
+पूर्ण
 
-static inline bool netpoll_tx_running(struct net_device *dev)
-{
-	return irqs_disabled();
-}
+अटल अंतरभूत bool netpoll_tx_running(काष्ठा net_device *dev)
+अणु
+	वापस irqs_disabled();
+पूर्ण
 
-#else
-static inline void *netpoll_poll_lock(struct napi_struct *napi)
-{
-	return NULL;
-}
-static inline void netpoll_poll_unlock(void *have)
-{
-}
-static inline bool netpoll_tx_running(struct net_device *dev)
-{
-	return false;
-}
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम *netpoll_poll_lock(काष्ठा napi_काष्ठा *napi)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत व्योम netpoll_poll_unlock(व्योम *have)
+अणु
+पूर्ण
+अटल अंतरभूत bool netpoll_tx_running(काष्ठा net_device *dev)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

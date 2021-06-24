@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * shmob_drm_plane.h  --  SH Mobile DRM Planes
  *
  * Copyright (C) 2012 Renesas Electronics Corporation
  *
- * Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
 
-#ifndef __SHMOB_DRM_PLANE_H__
-#define __SHMOB_DRM_PLANE_H__
+#अगर_अघोषित __SHMOB_DRM_PLANE_H__
+#घोषणा __SHMOB_DRM_PLANE_H__
 
-struct drm_plane;
-struct shmob_drm_device;
+काष्ठा drm_plane;
+काष्ठा shmob_drm_device;
 
-int shmob_drm_plane_create(struct shmob_drm_device *sdev, unsigned int index);
-void shmob_drm_plane_setup(struct drm_plane *plane);
+पूर्णांक shmob_drm_plane_create(काष्ठा shmob_drm_device *sdev, अचिन्हित पूर्णांक index);
+व्योम shmob_drm_plane_setup(काष्ठा drm_plane *plane);
 
-#endif /* __SHMOB_DRM_PLANE_H__ */
+#पूर्ण_अगर /* __SHMOB_DRM_PLANE_H__ */

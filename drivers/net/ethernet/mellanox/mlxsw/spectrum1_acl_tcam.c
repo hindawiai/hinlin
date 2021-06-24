@@ -1,254 +1,255 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
 
-#include "reg.h"
-#include "core.h"
-#include "spectrum.h"
-#include "spectrum_acl_tcam.h"
+#समावेश "reg.h"
+#समावेश "core.h"
+#समावेश "spectrum.h"
+#समावेश "spectrum_acl_tcam.h"
 
-struct mlxsw_sp1_acl_tcam_region {
-	struct mlxsw_sp_acl_ctcam_region cregion;
-	struct mlxsw_sp_acl_tcam_region *region;
-	struct {
-		struct mlxsw_sp_acl_ctcam_chunk cchunk;
-		struct mlxsw_sp_acl_ctcam_entry centry;
-		struct mlxsw_sp_acl_rule_info *rulei;
-	} catchall;
-};
+काष्ठा mlxsw_sp1_acl_tcam_region अणु
+	काष्ठा mlxsw_sp_acl_ctcam_region cregion;
+	काष्ठा mlxsw_sp_acl_tcam_region *region;
+	काष्ठा अणु
+		काष्ठा mlxsw_sp_acl_ctcam_chunk cchunk;
+		काष्ठा mlxsw_sp_acl_ctcam_entry centry;
+		काष्ठा mlxsw_sp_acl_rule_info *rulei;
+	पूर्ण catchall;
+पूर्ण;
 
-struct mlxsw_sp1_acl_tcam_chunk {
-	struct mlxsw_sp_acl_ctcam_chunk cchunk;
-};
+काष्ठा mlxsw_sp1_acl_tcam_chunk अणु
+	काष्ठा mlxsw_sp_acl_ctcam_chunk cchunk;
+पूर्ण;
 
-struct mlxsw_sp1_acl_tcam_entry {
-	struct mlxsw_sp_acl_ctcam_entry centry;
-};
+काष्ठा mlxsw_sp1_acl_tcam_entry अणु
+	काष्ठा mlxsw_sp_acl_ctcam_entry centry;
+पूर्ण;
 
-static int
-mlxsw_sp1_acl_ctcam_region_entry_insert(struct mlxsw_sp_acl_ctcam_region *cregion,
-					struct mlxsw_sp_acl_ctcam_entry *centry,
-					const char *mask)
-{
-	return 0;
-}
+अटल पूर्णांक
+mlxsw_sp1_acl_ctcam_region_entry_insert(काष्ठा mlxsw_sp_acl_ctcam_region *cregion,
+					काष्ठा mlxsw_sp_acl_ctcam_entry *centry,
+					स्थिर अक्षर *mask)
+अणु
+	वापस 0;
+पूर्ण
 
-static void
-mlxsw_sp1_acl_ctcam_region_entry_remove(struct mlxsw_sp_acl_ctcam_region *cregion,
-					struct mlxsw_sp_acl_ctcam_entry *centry)
-{
-}
+अटल व्योम
+mlxsw_sp1_acl_ctcam_region_entry_हटाओ(काष्ठा mlxsw_sp_acl_ctcam_region *cregion,
+					काष्ठा mlxsw_sp_acl_ctcam_entry *centry)
+अणु
+पूर्ण
 
-static const struct mlxsw_sp_acl_ctcam_region_ops
-mlxsw_sp1_acl_ctcam_region_ops = {
+अटल स्थिर काष्ठा mlxsw_sp_acl_ctcam_region_ops
+mlxsw_sp1_acl_ctcam_region_ops = अणु
 	.entry_insert = mlxsw_sp1_acl_ctcam_region_entry_insert,
-	.entry_remove = mlxsw_sp1_acl_ctcam_region_entry_remove,
-};
+	.entry_हटाओ = mlxsw_sp1_acl_ctcam_region_entry_हटाओ,
+पूर्ण;
 
-static int mlxsw_sp1_acl_tcam_init(struct mlxsw_sp *mlxsw_sp, void *priv,
-				   struct mlxsw_sp_acl_tcam *tcam)
-{
-	return 0;
-}
+अटल पूर्णांक mlxsw_sp1_acl_tcam_init(काष्ठा mlxsw_sp *mlxsw_sp, व्योम *priv,
+				   काष्ठा mlxsw_sp_acl_tcam *tcam)
+अणु
+	वापस 0;
+पूर्ण
 
-static void mlxsw_sp1_acl_tcam_fini(struct mlxsw_sp *mlxsw_sp, void *priv)
-{
-}
+अटल व्योम mlxsw_sp1_acl_tcam_fini(काष्ठा mlxsw_sp *mlxsw_sp, व्योम *priv)
+अणु
+पूर्ण
 
-static int
-mlxsw_sp1_acl_ctcam_region_catchall_add(struct mlxsw_sp *mlxsw_sp,
-					struct mlxsw_sp1_acl_tcam_region *region)
-{
-	struct mlxsw_sp_acl_rule_info *rulei;
-	int err;
+अटल पूर्णांक
+mlxsw_sp1_acl_ctcam_region_catchall_add(काष्ठा mlxsw_sp *mlxsw_sp,
+					काष्ठा mlxsw_sp1_acl_tcam_region *region)
+अणु
+	काष्ठा mlxsw_sp_acl_rule_info *rulei;
+	पूर्णांक err;
 
 	mlxsw_sp_acl_ctcam_chunk_init(&region->cregion,
 				      &region->catchall.cchunk,
 				      MLXSW_SP_ACL_TCAM_CATCHALL_PRIO);
-	rulei = mlxsw_sp_acl_rulei_create(mlxsw_sp->acl, NULL);
-	if (IS_ERR(rulei)) {
+	rulei = mlxsw_sp_acl_rulei_create(mlxsw_sp->acl, शून्य);
+	अगर (IS_ERR(rulei)) अणु
 		err = PTR_ERR(rulei);
-		goto err_rulei_create;
-	}
-	err = mlxsw_sp_acl_rulei_act_continue(rulei);
-	if (WARN_ON(err))
-		goto err_rulei_act_continue;
+		जाओ err_rulei_create;
+	पूर्ण
+	err = mlxsw_sp_acl_rulei_act_जारी(rulei);
+	अगर (WARN_ON(err))
+		जाओ err_rulei_act_जारी;
 	err = mlxsw_sp_acl_rulei_commit(rulei);
-	if (err)
-		goto err_rulei_commit;
+	अगर (err)
+		जाओ err_rulei_commit;
 	err = mlxsw_sp_acl_ctcam_entry_add(mlxsw_sp, &region->cregion,
 					   &region->catchall.cchunk,
 					   &region->catchall.centry,
 					   rulei, false);
-	if (err)
-		goto err_entry_add;
+	अगर (err)
+		जाओ err_entry_add;
 	region->catchall.rulei = rulei;
-	return 0;
+	वापस 0;
 
 err_entry_add:
 err_rulei_commit:
-err_rulei_act_continue:
+err_rulei_act_जारी:
 	mlxsw_sp_acl_rulei_destroy(rulei);
 err_rulei_create:
 	mlxsw_sp_acl_ctcam_chunk_fini(&region->catchall.cchunk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-mlxsw_sp1_acl_ctcam_region_catchall_del(struct mlxsw_sp *mlxsw_sp,
-					struct mlxsw_sp1_acl_tcam_region *region)
-{
-	struct mlxsw_sp_acl_rule_info *rulei = region->catchall.rulei;
+अटल व्योम
+mlxsw_sp1_acl_ctcam_region_catchall_del(काष्ठा mlxsw_sp *mlxsw_sp,
+					काष्ठा mlxsw_sp1_acl_tcam_region *region)
+अणु
+	काष्ठा mlxsw_sp_acl_rule_info *rulei = region->catchall.rulei;
 
 	mlxsw_sp_acl_ctcam_entry_del(mlxsw_sp, &region->cregion,
 				     &region->catchall.cchunk,
 				     &region->catchall.centry);
 	mlxsw_sp_acl_rulei_destroy(rulei);
 	mlxsw_sp_acl_ctcam_chunk_fini(&region->catchall.cchunk);
-}
+पूर्ण
 
-static int
-mlxsw_sp1_acl_tcam_region_init(struct mlxsw_sp *mlxsw_sp, void *region_priv,
-			       void *tcam_priv,
-			       struct mlxsw_sp_acl_tcam_region *_region,
-			       void *hints_priv)
-{
-	struct mlxsw_sp1_acl_tcam_region *region = region_priv;
-	int err;
+अटल पूर्णांक
+mlxsw_sp1_acl_tcam_region_init(काष्ठा mlxsw_sp *mlxsw_sp, व्योम *region_priv,
+			       व्योम *tcam_priv,
+			       काष्ठा mlxsw_sp_acl_tcam_region *_region,
+			       व्योम *hपूर्णांकs_priv)
+अणु
+	काष्ठा mlxsw_sp1_acl_tcam_region *region = region_priv;
+	पूर्णांक err;
 
 	err = mlxsw_sp_acl_ctcam_region_init(mlxsw_sp, &region->cregion,
 					     _region,
 					     &mlxsw_sp1_acl_ctcam_region_ops);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = mlxsw_sp1_acl_ctcam_region_catchall_add(mlxsw_sp, region);
-	if (err)
-		goto err_catchall_add;
+	अगर (err)
+		जाओ err_catchall_add;
 	region->region = _region;
-	return 0;
+	वापस 0;
 
 err_catchall_add:
 	mlxsw_sp_acl_ctcam_region_fini(&region->cregion);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-mlxsw_sp1_acl_tcam_region_fini(struct mlxsw_sp *mlxsw_sp, void *region_priv)
-{
-	struct mlxsw_sp1_acl_tcam_region *region = region_priv;
+अटल व्योम
+mlxsw_sp1_acl_tcam_region_fini(काष्ठा mlxsw_sp *mlxsw_sp, व्योम *region_priv)
+अणु
+	काष्ठा mlxsw_sp1_acl_tcam_region *region = region_priv;
 
 	mlxsw_sp1_acl_ctcam_region_catchall_del(mlxsw_sp, region);
 	mlxsw_sp_acl_ctcam_region_fini(&region->cregion);
-}
+पूर्ण
 
-static int
-mlxsw_sp1_acl_tcam_region_associate(struct mlxsw_sp *mlxsw_sp,
-				    struct mlxsw_sp_acl_tcam_region *region)
-{
-	return 0;
-}
+अटल पूर्णांक
+mlxsw_sp1_acl_tcam_region_associate(काष्ठा mlxsw_sp *mlxsw_sp,
+				    काष्ठा mlxsw_sp_acl_tcam_region *region)
+अणु
+	वापस 0;
+पूर्ण
 
-static void mlxsw_sp1_acl_tcam_chunk_init(void *region_priv, void *chunk_priv,
-					  unsigned int priority)
-{
-	struct mlxsw_sp1_acl_tcam_region *region = region_priv;
-	struct mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
+अटल व्योम mlxsw_sp1_acl_tcam_chunk_init(व्योम *region_priv, व्योम *chunk_priv,
+					  अचिन्हित पूर्णांक priority)
+अणु
+	काष्ठा mlxsw_sp1_acl_tcam_region *region = region_priv;
+	काष्ठा mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
 
 	mlxsw_sp_acl_ctcam_chunk_init(&region->cregion, &chunk->cchunk,
 				      priority);
-}
+पूर्ण
 
-static void mlxsw_sp1_acl_tcam_chunk_fini(void *chunk_priv)
-{
-	struct mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
+अटल व्योम mlxsw_sp1_acl_tcam_chunk_fini(व्योम *chunk_priv)
+अणु
+	काष्ठा mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
 
 	mlxsw_sp_acl_ctcam_chunk_fini(&chunk->cchunk);
-}
+पूर्ण
 
-static int mlxsw_sp1_acl_tcam_entry_add(struct mlxsw_sp *mlxsw_sp,
-					void *region_priv, void *chunk_priv,
-					void *entry_priv,
-					struct mlxsw_sp_acl_rule_info *rulei)
-{
-	struct mlxsw_sp1_acl_tcam_region *region = region_priv;
-	struct mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
-	struct mlxsw_sp1_acl_tcam_entry *entry = entry_priv;
+अटल पूर्णांक mlxsw_sp1_acl_tcam_entry_add(काष्ठा mlxsw_sp *mlxsw_sp,
+					व्योम *region_priv, व्योम *chunk_priv,
+					व्योम *entry_priv,
+					काष्ठा mlxsw_sp_acl_rule_info *rulei)
+अणु
+	काष्ठा mlxsw_sp1_acl_tcam_region *region = region_priv;
+	काष्ठा mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
+	काष्ठा mlxsw_sp1_acl_tcam_entry *entry = entry_priv;
 
-	return mlxsw_sp_acl_ctcam_entry_add(mlxsw_sp, &region->cregion,
+	वापस mlxsw_sp_acl_ctcam_entry_add(mlxsw_sp, &region->cregion,
 					    &chunk->cchunk, &entry->centry,
 					    rulei, false);
-}
+पूर्ण
 
-static void mlxsw_sp1_acl_tcam_entry_del(struct mlxsw_sp *mlxsw_sp,
-					 void *region_priv, void *chunk_priv,
-					 void *entry_priv)
-{
-	struct mlxsw_sp1_acl_tcam_region *region = region_priv;
-	struct mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
-	struct mlxsw_sp1_acl_tcam_entry *entry = entry_priv;
+अटल व्योम mlxsw_sp1_acl_tcam_entry_del(काष्ठा mlxsw_sp *mlxsw_sp,
+					 व्योम *region_priv, व्योम *chunk_priv,
+					 व्योम *entry_priv)
+अणु
+	काष्ठा mlxsw_sp1_acl_tcam_region *region = region_priv;
+	काष्ठा mlxsw_sp1_acl_tcam_chunk *chunk = chunk_priv;
+	काष्ठा mlxsw_sp1_acl_tcam_entry *entry = entry_priv;
 
 	mlxsw_sp_acl_ctcam_entry_del(mlxsw_sp, &region->cregion,
 				     &chunk->cchunk, &entry->centry);
-}
+पूर्ण
 
-static int
-mlxsw_sp1_acl_tcam_entry_action_replace(struct mlxsw_sp *mlxsw_sp,
-					void *region_priv, void *entry_priv,
-					struct mlxsw_sp_acl_rule_info *rulei)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक
+mlxsw_sp1_acl_tcam_entry_action_replace(काष्ठा mlxsw_sp *mlxsw_sp,
+					व्योम *region_priv, व्योम *entry_priv,
+					काष्ठा mlxsw_sp_acl_rule_info *rulei)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int
-mlxsw_sp1_acl_tcam_region_entry_activity_get(struct mlxsw_sp *mlxsw_sp,
-					     struct mlxsw_sp_acl_tcam_region *_region,
-					     unsigned int offset,
+अटल पूर्णांक
+mlxsw_sp1_acl_tcam_region_entry_activity_get(काष्ठा mlxsw_sp *mlxsw_sp,
+					     काष्ठा mlxsw_sp_acl_tcam_region *_region,
+					     अचिन्हित पूर्णांक offset,
 					     bool *activity)
-{
-	char ptce2_pl[MLXSW_REG_PTCE2_LEN];
-	int err;
+अणु
+	अक्षर ptce2_pl[MLXSW_REG_PTCE2_LEN];
+	पूर्णांक err;
 
 	mlxsw_reg_ptce2_pack(ptce2_pl, true, MLXSW_REG_PTCE2_OP_QUERY_CLEAR_ON_READ,
 			     _region->tcam_region_info, offset, 0);
 	err = mlxsw_reg_query(mlxsw_sp->core, MLXSW_REG(ptce2), ptce2_pl);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	*activity = mlxsw_reg_ptce2_a_get(ptce2_pl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mlxsw_sp1_acl_tcam_entry_activity_get(struct mlxsw_sp *mlxsw_sp,
-				      void *region_priv, void *entry_priv,
+अटल पूर्णांक
+mlxsw_sp1_acl_tcam_entry_activity_get(काष्ठा mlxsw_sp *mlxsw_sp,
+				      व्योम *region_priv, व्योम *entry_priv,
 				      bool *activity)
-{
-	struct mlxsw_sp1_acl_tcam_region *region = region_priv;
-	struct mlxsw_sp1_acl_tcam_entry *entry = entry_priv;
-	unsigned int offset;
+अणु
+	काष्ठा mlxsw_sp1_acl_tcam_region *region = region_priv;
+	काष्ठा mlxsw_sp1_acl_tcam_entry *entry = entry_priv;
+	अचिन्हित पूर्णांक offset;
 
 	offset = mlxsw_sp_acl_ctcam_entry_offset(&entry->centry);
-	return mlxsw_sp1_acl_tcam_region_entry_activity_get(mlxsw_sp,
+	वापस mlxsw_sp1_acl_tcam_region_entry_activity_get(mlxsw_sp,
 							    region->region,
 							    offset, activity);
-}
+पूर्ण
 
-const struct mlxsw_sp_acl_tcam_ops mlxsw_sp1_acl_tcam_ops = {
+स्थिर काष्ठा mlxsw_sp_acl_tcam_ops mlxsw_sp1_acl_tcam_ops = अणु
 	.key_type		= MLXSW_REG_PTAR_KEY_TYPE_FLEX,
 	.priv_size		= 0,
 	.init			= mlxsw_sp1_acl_tcam_init,
 	.fini			= mlxsw_sp1_acl_tcam_fini,
-	.region_priv_size	= sizeof(struct mlxsw_sp1_acl_tcam_region),
+	.region_priv_size	= माप(काष्ठा mlxsw_sp1_acl_tcam_region),
 	.region_init		= mlxsw_sp1_acl_tcam_region_init,
 	.region_fini		= mlxsw_sp1_acl_tcam_region_fini,
 	.region_associate	= mlxsw_sp1_acl_tcam_region_associate,
-	.chunk_priv_size	= sizeof(struct mlxsw_sp1_acl_tcam_chunk),
+	.chunk_priv_size	= माप(काष्ठा mlxsw_sp1_acl_tcam_chunk),
 	.chunk_init		= mlxsw_sp1_acl_tcam_chunk_init,
 	.chunk_fini		= mlxsw_sp1_acl_tcam_chunk_fini,
-	.entry_priv_size	= sizeof(struct mlxsw_sp1_acl_tcam_entry),
+	.entry_priv_size	= माप(काष्ठा mlxsw_sp1_acl_tcam_entry),
 	.entry_add		= mlxsw_sp1_acl_tcam_entry_add,
 	.entry_del		= mlxsw_sp1_acl_tcam_entry_del,
 	.entry_action_replace	= mlxsw_sp1_acl_tcam_entry_action_replace,
 	.entry_activity_get	= mlxsw_sp1_acl_tcam_entry_activity_get,
-};
+पूर्ण;

@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_SECCOMP_H
-#define _ASM_SECCOMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_SECCOMP_H
+#घोषणा _ASM_SECCOMP_H
 
-#include <linux/unistd.h>
+#समावेश <linux/unistd.h>
 
-#define __NR_seccomp_sigreturn_32 __NR_sigreturn
+#घोषणा __NR_seccomp_sigवापस_32 __NR_sigवापस
 
-#include <asm-generic/seccomp.h>
+#समावेश <यंत्र-generic/seccomp.h>
 
-#endif /* _ASM_SECCOMP_H */
+#पूर्ण_अगर /* _ASM_SECCOMP_H */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,43 +24,43 @@
  *
  */
 
-#include <linux/delay.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
 
-#include "dm_services.h"
-#include "basics/dc_common.h"
-#include "dc.h"
-#include "core_types.h"
-#include "resource.h"
-#include "ipp.h"
-#include "timing_generator.h"
+#समावेश "dm_services.h"
+#समावेश "basics/dc_common.h"
+#समावेश "dc.h"
+#समावेश "core_types.h"
+#समावेश "resource.h"
+#समावेश "ipp.h"
+#समावेश "timing_generator.h"
 
-#define DC_LOGGER dc->ctx->logger
+#घोषणा DC_LOGGER dc->ctx->logger
 
 /*******************************************************************************
  * Private functions
  ******************************************************************************/
-void update_stream_signal(struct dc_stream_state *stream, struct dc_sink *sink)
-{
-	if (sink->sink_signal == SIGNAL_TYPE_NONE)
-		stream->signal = stream->link->connector_signal;
-	else
-		stream->signal = sink->sink_signal;
+व्योम update_stream_संकेत(काष्ठा dc_stream_state *stream, काष्ठा dc_sink *sink)
+अणु
+	अगर (sink->sink_संकेत == SIGNAL_TYPE_NONE)
+		stream->संकेत = stream->link->connector_संकेत;
+	अन्यथा
+		stream->संकेत = sink->sink_संकेत;
 
-	if (dc_is_dvi_signal(stream->signal)) {
-		if (stream->ctx->dc->caps.dual_link_dvi &&
+	अगर (dc_is_dvi_संकेत(stream->संकेत)) अणु
+		अगर (stream->ctx->dc->caps.dual_link_dvi &&
 			(stream->timing.pix_clk_100hz / 10) > TMDS_MAX_PIXEL_CLOCK &&
-			sink->sink_signal != SIGNAL_TYPE_DVI_SINGLE_LINK)
-			stream->signal = SIGNAL_TYPE_DVI_DUAL_LINK;
-		else
-			stream->signal = SIGNAL_TYPE_DVI_SINGLE_LINK;
-	}
-}
+			sink->sink_संकेत != SIGNAL_TYPE_DVI_SINGLE_LINK)
+			stream->संकेत = SIGNAL_TYPE_DVI_DUAL_LINK;
+		अन्यथा
+			stream->संकेत = SIGNAL_TYPE_DVI_SINGLE_LINK;
+	पूर्ण
+पूर्ण
 
-static bool dc_stream_construct(struct dc_stream_state *stream,
-	struct dc_sink *dc_sink_data)
-{
-	uint32_t i = 0;
+अटल bool dc_stream_स्थिरruct(काष्ठा dc_stream_state *stream,
+	काष्ठा dc_sink *dc_sink_data)
+अणु
+	uपूर्णांक32_t i = 0;
 
 	stream->sink = dc_sink_data;
 	dc_sink_retain(dc_sink_data);
@@ -73,17 +74,17 @@ static bool dc_stream_construct(struct dc_stream_state *stream,
 
 	/* Copy audio modes */
 	/* TODO - Remove this translation */
-	for (i = 0; i < (dc_sink_data->edid_caps.audio_mode_count); i++)
-	{
+	क्रम (i = 0; i < (dc_sink_data->edid_caps.audio_mode_count); i++)
+	अणु
 		stream->audio_info.modes[i].channel_count = dc_sink_data->edid_caps.audio_modes[i].channel_count;
-		stream->audio_info.modes[i].format_code = dc_sink_data->edid_caps.audio_modes[i].format_code;
+		stream->audio_info.modes[i].क्रमmat_code = dc_sink_data->edid_caps.audio_modes[i].क्रमmat_code;
 		stream->audio_info.modes[i].sample_rates.all = dc_sink_data->edid_caps.audio_modes[i].sample_rate;
 		stream->audio_info.modes[i].sample_size = dc_sink_data->edid_caps.audio_modes[i].sample_size;
-	}
+	पूर्ण
 	stream->audio_info.mode_count = dc_sink_data->edid_caps.audio_mode_count;
 	stream->audio_info.audio_latency = dc_sink_data->edid_caps.audio_latency;
 	stream->audio_info.video_latency = dc_sink_data->edid_caps.video_latency;
-	memmove(
+	स_हटाओ(
 		stream->audio_info.display_name,
 		dc_sink_data->edid_caps.display_name,
 		AUDIO_INFO_DISPLAY_NAME_SIZE_IN_CHARS);
@@ -91,22 +92,22 @@ static bool dc_stream_construct(struct dc_stream_state *stream,
 	stream->audio_info.product_id = dc_sink_data->edid_caps.product_id;
 	stream->audio_info.flags.all = dc_sink_data->edid_caps.speaker_flags;
 
-	if (dc_sink_data->dc_container_id != NULL) {
-		struct dc_container_id *dc_container_id = dc_sink_data->dc_container_id;
+	अगर (dc_sink_data->dc_container_id != शून्य) अणु
+		काष्ठा dc_container_id *dc_container_id = dc_sink_data->dc_container_id;
 
 		stream->audio_info.port_id[0] = dc_container_id->portId[0];
 		stream->audio_info.port_id[1] = dc_container_id->portId[1];
-	} else {
-		/* TODO - WindowDM has implemented,
+	पूर्ण अन्यथा अणु
+		/* TODO - WinकरोwDM has implemented,
 		other DMs need Unhardcode port_id */
 		stream->audio_info.port_id[0] = 0x5558859e;
 		stream->audio_info.port_id[1] = 0xd989449;
-	}
+	पूर्ण
 
-	/* EDID CAP translation for HDMI 2.0 */
+	/* EDID CAP translation क्रम HDMI 2.0 */
 	stream->timing.flags.LTE_340MCSC_SCRAMBLE = dc_sink_data->edid_caps.lte_340mcsc_scramble;
 
-	memset(&stream->timing.dsc_cfg, 0, sizeof(stream->timing.dsc_cfg));
+	स_रखो(&stream->timing.dsc_cfg, 0, माप(stream->timing.dsc_cfg));
 	stream->timing.dsc_cfg.num_slices_h = 0;
 	stream->timing.dsc_cfg.num_slices_v = 0;
 	stream->timing.dsc_cfg.bits_per_pixel = 128;
@@ -115,88 +116,88 @@ static bool dc_stream_construct(struct dc_stream_state *stream,
 	stream->timing.dsc_cfg.version_minor = 2;
 	stream->timing.dsc_cfg.ycbcr422_simple = 0;
 
-	update_stream_signal(stream, dc_sink_data);
+	update_stream_संकेत(stream, dc_sink_data);
 
 	stream->out_transfer_func = dc_create_transfer_func();
-	if (stream->out_transfer_func == NULL) {
+	अगर (stream->out_transfer_func == शून्य) अणु
 		dc_sink_release(dc_sink_data);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	stream->out_transfer_func->type = TF_TYPE_BYPASS;
 
 	stream->stream_id = stream->ctx->dc_stream_id_count;
 	stream->ctx->dc_stream_id_count++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void dc_stream_destruct(struct dc_stream_state *stream)
-{
+अटल व्योम dc_stream_deकाष्ठा(काष्ठा dc_stream_state *stream)
+अणु
 	dc_sink_release(stream->sink);
-	if (stream->out_transfer_func != NULL) {
+	अगर (stream->out_transfer_func != शून्य) अणु
 		dc_transfer_func_release(stream->out_transfer_func);
-		stream->out_transfer_func = NULL;
-	}
-}
+		stream->out_transfer_func = शून्य;
+	पूर्ण
+पूर्ण
 
-void dc_stream_retain(struct dc_stream_state *stream)
-{
+व्योम dc_stream_retain(काष्ठा dc_stream_state *stream)
+अणु
 	kref_get(&stream->refcount);
-}
+पूर्ण
 
-static void dc_stream_free(struct kref *kref)
-{
-	struct dc_stream_state *stream = container_of(kref, struct dc_stream_state, refcount);
+अटल व्योम dc_stream_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा dc_stream_state *stream = container_of(kref, काष्ठा dc_stream_state, refcount);
 
-	dc_stream_destruct(stream);
-	kfree(stream);
-}
+	dc_stream_deकाष्ठा(stream);
+	kमुक्त(stream);
+पूर्ण
 
-void dc_stream_release(struct dc_stream_state *stream)
-{
-	if (stream != NULL) {
-		kref_put(&stream->refcount, dc_stream_free);
-	}
-}
+व्योम dc_stream_release(काष्ठा dc_stream_state *stream)
+अणु
+	अगर (stream != शून्य) अणु
+		kref_put(&stream->refcount, dc_stream_मुक्त);
+	पूर्ण
+पूर्ण
 
-struct dc_stream_state *dc_create_stream_for_sink(
-		struct dc_sink *sink)
-{
-	struct dc_stream_state *stream;
+काष्ठा dc_stream_state *dc_create_stream_क्रम_sink(
+		काष्ठा dc_sink *sink)
+अणु
+	काष्ठा dc_stream_state *stream;
 
-	if (sink == NULL)
-		return NULL;
+	अगर (sink == शून्य)
+		वापस शून्य;
 
-	stream = kzalloc(sizeof(struct dc_stream_state), GFP_KERNEL);
-	if (stream == NULL)
-		goto alloc_fail;
+	stream = kzalloc(माप(काष्ठा dc_stream_state), GFP_KERNEL);
+	अगर (stream == शून्य)
+		जाओ alloc_fail;
 
-	if (dc_stream_construct(stream, sink) == false)
-		goto construct_fail;
+	अगर (dc_stream_स्थिरruct(stream, sink) == false)
+		जाओ स्थिरruct_fail;
 
 	kref_init(&stream->refcount);
 
-	return stream;
+	वापस stream;
 
-construct_fail:
-	kfree(stream);
+स्थिरruct_fail:
+	kमुक्त(stream);
 
 alloc_fail:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct dc_stream_state *dc_copy_stream(const struct dc_stream_state *stream)
-{
-	struct dc_stream_state *new_stream;
+काष्ठा dc_stream_state *dc_copy_stream(स्थिर काष्ठा dc_stream_state *stream)
+अणु
+	काष्ठा dc_stream_state *new_stream;
 
-	new_stream = kmemdup(stream, sizeof(struct dc_stream_state), GFP_KERNEL);
-	if (!new_stream)
-		return NULL;
+	new_stream = kmemdup(stream, माप(काष्ठा dc_stream_state), GFP_KERNEL);
+	अगर (!new_stream)
+		वापस शून्य;
 
-	if (new_stream->sink)
+	अगर (new_stream->sink)
 		dc_sink_retain(new_stream->sink);
 
-	if (new_stream->out_transfer_func)
+	अगर (new_stream->out_transfer_func)
 		dc_transfer_func_retain(new_stream->out_transfer_func);
 
 	new_stream->stream_id = new_stream->ctx->dc_stream_id_count;
@@ -204,219 +205,219 @@ struct dc_stream_state *dc_copy_stream(const struct dc_stream_state *stream)
 
 	kref_init(&new_stream->refcount);
 
-	return new_stream;
-}
+	वापस new_stream;
+पूर्ण
 
 /**
  * dc_stream_get_status_from_state - Get stream status from given dc state
  * @state: DC state to find the stream status in
- * @stream: The stream to get the stream status for
+ * @stream: The stream to get the stream status क्रम
  *
- * The given stream is expected to exist in the given dc state. Otherwise, NULL
- * will be returned.
+ * The given stream is expected to exist in the given dc state. Otherwise, शून्य
+ * will be वापसed.
  */
-struct dc_stream_status *dc_stream_get_status_from_state(
-	struct dc_state *state,
-	struct dc_stream_state *stream)
-{
-	uint8_t i;
+काष्ठा dc_stream_status *dc_stream_get_status_from_state(
+	काष्ठा dc_state *state,
+	काष्ठा dc_stream_state *stream)
+अणु
+	uपूर्णांक8_t i;
 
-	for (i = 0; i < state->stream_count; i++) {
-		if (stream == state->streams[i])
-			return &state->stream_status[i];
-	}
+	क्रम (i = 0; i < state->stream_count; i++) अणु
+		अगर (stream == state->streams[i])
+			वापस &state->stream_status[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * dc_stream_get_status() - Get current stream status of the given stream state
- * @stream: The stream to get the stream status for.
+ * @stream: The stream to get the stream status क्रम.
  *
- * The given stream is expected to exist in dc->current_state. Otherwise, NULL
- * will be returned.
+ * The given stream is expected to exist in dc->current_state. Otherwise, शून्य
+ * will be वापसed.
  */
-struct dc_stream_status *dc_stream_get_status(
-	struct dc_stream_state *stream)
-{
-	struct dc *dc = stream->ctx->dc;
-	return dc_stream_get_status_from_state(dc->current_state, stream);
-}
+काष्ठा dc_stream_status *dc_stream_get_status(
+	काष्ठा dc_stream_state *stream)
+अणु
+	काष्ठा dc *dc = stream->ctx->dc;
+	वापस dc_stream_get_status_from_state(dc->current_state, stream);
+पूर्ण
 
-#ifndef TRIM_FSFT
+#अगर_अघोषित TRIM_FSFT
 /*
- * dc_optimize_timing_for_fsft() - dc to optimize timing
+ * dc_optimize_timing_क्रम_fsft() - dc to optimize timing
  */
-bool dc_optimize_timing_for_fsft(
-	struct dc_stream_state *pStream,
-	unsigned int max_input_rate_in_khz)
-{
-	struct dc  *dc;
+bool dc_optimize_timing_क्रम_fsft(
+	काष्ठा dc_stream_state *pStream,
+	अचिन्हित पूर्णांक max_input_rate_in_khz)
+अणु
+	काष्ठा dc  *dc;
 
 	dc = pStream->ctx->dc;
 
-	return (dc->hwss.optimize_timing_for_fsft &&
-		dc->hwss.optimize_timing_for_fsft(dc, &pStream->timing, max_input_rate_in_khz));
-}
-#endif
+	वापस (dc->hwss.optimize_timing_क्रम_fsft &&
+		dc->hwss.optimize_timing_क्रम_fsft(dc, &pStream->timing, max_input_rate_in_khz));
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * dc_stream_set_cursor_attributes() - Update cursor attributes and set cursor surface address
  */
 bool dc_stream_set_cursor_attributes(
-	struct dc_stream_state *stream,
-	const struct dc_cursor_attributes *attributes)
-{
-	int i;
-	struct dc  *dc;
-	struct resource_context *res_ctx;
-	struct pipe_ctx *pipe_to_program = NULL;
-#if defined(CONFIG_DRM_AMD_DC_DCN)
+	काष्ठा dc_stream_state *stream,
+	स्थिर काष्ठा dc_cursor_attributes *attributes)
+अणु
+	पूर्णांक i;
+	काष्ठा dc  *dc;
+	काष्ठा resource_context *res_ctx;
+	काष्ठा pipe_ctx *pipe_to_program = शून्य;
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
 	bool reset_idle_optimizations = false;
-#endif
+#पूर्ण_अगर
 
-	if (NULL == stream) {
+	अगर (शून्य == stream) अणु
 		dm_error("DC: dc_stream is NULL!\n");
-		return false;
-	}
-	if (NULL == attributes) {
+		वापस false;
+	पूर्ण
+	अगर (शून्य == attributes) अणु
 		dm_error("DC: attributes is NULL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (attributes->address.quad_part == 0) {
+	अगर (attributes->address.quad_part == 0) अणु
 		dm_output_to_console("DC: Cursor address is 0!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	dc = stream->ctx->dc;
 	res_ctx = &dc->current_state->res_ctx;
 	stream->cursor_attributes = *attributes;
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	/* disable idle optimizations while updating cursor */
-	if (dc->idle_optimizations_allowed) {
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	/* disable idle optimizations जबतक updating cursor */
+	अगर (dc->idle_optimizations_allowed) अणु
 		dc_allow_idle_optimizations(dc, false);
 		reset_idle_optimizations = true;
-	}
+	पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		struct pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		काष्ठा pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
 
-		if (pipe_ctx->stream != stream)
-			continue;
+		अगर (pipe_ctx->stream != stream)
+			जारी;
 
-		if (!pipe_to_program) {
+		अगर (!pipe_to_program) अणु
 			pipe_to_program = pipe_ctx;
 			dc->hwss.cursor_lock(dc, pipe_to_program, true);
-		}
+		पूर्ण
 
 		dc->hwss.set_cursor_attribute(pipe_ctx);
-		if (dc->hwss.set_cursor_sdr_white_level)
+		अगर (dc->hwss.set_cursor_sdr_white_level)
 			dc->hwss.set_cursor_sdr_white_level(pipe_ctx);
-	}
+	पूर्ण
 
-	if (pipe_to_program)
+	अगर (pipe_to_program)
 		dc->hwss.cursor_lock(dc, pipe_to_program, false);
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	/* re-enable idle optimizations if necessary */
-	if (reset_idle_optimizations)
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	/* re-enable idle optimizations अगर necessary */
+	अगर (reset_idle_optimizations)
 		dc_allow_idle_optimizations(dc, true);
 
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
 bool dc_stream_set_cursor_position(
-	struct dc_stream_state *stream,
-	const struct dc_cursor_position *position)
-{
-	int i;
-	struct dc  *dc;
-	struct resource_context *res_ctx;
-	struct pipe_ctx *pipe_to_program = NULL;
-#if defined(CONFIG_DRM_AMD_DC_DCN)
+	काष्ठा dc_stream_state *stream,
+	स्थिर काष्ठा dc_cursor_position *position)
+अणु
+	पूर्णांक i;
+	काष्ठा dc  *dc;
+	काष्ठा resource_context *res_ctx;
+	काष्ठा pipe_ctx *pipe_to_program = शून्य;
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
 	bool reset_idle_optimizations = false;
-#endif
+#पूर्ण_अगर
 
-	if (NULL == stream) {
+	अगर (शून्य == stream) अणु
 		dm_error("DC: dc_stream is NULL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (NULL == position) {
+	अगर (शून्य == position) अणु
 		dm_error("DC: cursor position is NULL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	dc = stream->ctx->dc;
 	res_ctx = &dc->current_state->res_ctx;
-#if defined(CONFIG_DRM_AMD_DC_DCN)
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
 
-	/* disable idle optimizations if enabling cursor */
-	if (dc->idle_optimizations_allowed && !stream->cursor_position.enable && position->enable) {
+	/* disable idle optimizations अगर enabling cursor */
+	अगर (dc->idle_optimizations_allowed && !stream->cursor_position.enable && position->enable) अणु
 		dc_allow_idle_optimizations(dc, false);
 		reset_idle_optimizations = true;
-	}
+	पूर्ण
 
-#endif
+#पूर्ण_अगर
 	stream->cursor_position = *position;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		struct pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		काष्ठा pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
 
-		if (pipe_ctx->stream != stream ||
+		अगर (pipe_ctx->stream != stream ||
 				(!pipe_ctx->plane_res.mi  && !pipe_ctx->plane_res.hubp) ||
 				!pipe_ctx->plane_state ||
 				(!pipe_ctx->plane_res.xfm && !pipe_ctx->plane_res.dpp) ||
 				(!pipe_ctx->plane_res.ipp && !pipe_ctx->plane_res.dpp))
-			continue;
+			जारी;
 
-		if (!pipe_to_program) {
+		अगर (!pipe_to_program) अणु
 			pipe_to_program = pipe_ctx;
 			dc->hwss.cursor_lock(dc, pipe_to_program, true);
-		}
+		पूर्ण
 
 		dc->hwss.set_cursor_position(pipe_ctx);
-	}
+	पूर्ण
 
-	if (pipe_to_program)
+	अगर (pipe_to_program)
 		dc->hwss.cursor_lock(dc, pipe_to_program, false);
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	/* re-enable idle optimizations if necessary */
-	if (reset_idle_optimizations)
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	/* re-enable idle optimizations अगर necessary */
+	अगर (reset_idle_optimizations)
 		dc_allow_idle_optimizations(dc, true);
 
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-bool dc_stream_add_writeback(struct dc *dc,
-		struct dc_stream_state *stream,
-		struct dc_writeback_info *wb_info)
-{
+bool dc_stream_add_ग_लिखोback(काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		काष्ठा dc_ग_लिखोback_info *wb_info)
+अणु
 	bool isDrc = false;
-	int i = 0;
-	struct dwbc *dwb;
+	पूर्णांक i = 0;
+	काष्ठा dwbc *dwb;
 
-	if (stream == NULL) {
+	अगर (stream == शून्य) अणु
 		dm_error("DC: dc_stream is NULL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (wb_info == NULL) {
+	अगर (wb_info == शून्य) अणु
 		dm_error("DC: dc_writeback_info is NULL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (wb_info->dwb_pipe_inst >= MAX_DWB_PIPES) {
+	अगर (wb_info->dwb_pipe_inst >= MAX_DWB_PIPES) अणु
 		dm_error("DC: writeback pipe is invalid!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	wb_info->dwb_params.out_transfer_func = stream->out_transfer_func;
 
@@ -425,175 +426,175 @@ bool dc_stream_add_writeback(struct dc *dc,
 
 	/* recalculate and apply DML parameters */
 
-	for (i = 0; i < stream->num_wb_info; i++) {
+	क्रम (i = 0; i < stream->num_wb_info; i++) अणु
 		/*dynamic update*/
-		if (stream->writeback_info[i].wb_enabled &&
-			stream->writeback_info[i].dwb_pipe_inst == wb_info->dwb_pipe_inst) {
-			stream->writeback_info[i] = *wb_info;
+		अगर (stream->ग_लिखोback_info[i].wb_enabled &&
+			stream->ग_लिखोback_info[i].dwb_pipe_inst == wb_info->dwb_pipe_inst) अणु
+			stream->ग_लिखोback_info[i] = *wb_info;
 			isDrc = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!isDrc) {
-		stream->writeback_info[stream->num_wb_info++] = *wb_info;
-	}
+	अगर (!isDrc) अणु
+		stream->ग_लिखोback_info[stream->num_wb_info++] = *wb_info;
+	पूर्ण
 
-	if (dc->hwss.enable_writeback) {
-		struct dc_stream_status *stream_status = dc_stream_get_status(stream);
-		struct dwbc *dwb = dc->res_pool->dwbc[wb_info->dwb_pipe_inst];
+	अगर (dc->hwss.enable_ग_लिखोback) अणु
+		काष्ठा dc_stream_status *stream_status = dc_stream_get_status(stream);
+		काष्ठा dwbc *dwb = dc->res_pool->dwbc[wb_info->dwb_pipe_inst];
 		dwb->otg_inst = stream_status->primary_otg_inst;
-	}
-	if (IS_DIAG_DC(dc->ctx->dce_environment)) {
-		if (!dc->hwss.update_bandwidth(dc, dc->current_state)) {
+	पूर्ण
+	अगर (IS_DIAG_DC(dc->ctx->dce_environment)) अणु
+		अगर (!dc->hwss.update_bandwidth(dc, dc->current_state)) अणु
 			dm_error("DC: update_bandwidth failed!\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		/* enable writeback */
-		if (dc->hwss.enable_writeback) {
-			struct dwbc *dwb = dc->res_pool->dwbc[wb_info->dwb_pipe_inst];
+		/* enable ग_लिखोback */
+		अगर (dc->hwss.enable_ग_लिखोback) अणु
+			काष्ठा dwbc *dwb = dc->res_pool->dwbc[wb_info->dwb_pipe_inst];
 
-			if (dwb->funcs->is_enabled(dwb)) {
-				/* writeback pipe already enabled, only need to update */
-				dc->hwss.update_writeback(dc, wb_info, dc->current_state);
-			} else {
-				/* Enable writeback pipe from scratch*/
-				dc->hwss.enable_writeback(dc, wb_info, dc->current_state);
-			}
-		}
-	}
-	return true;
-}
+			अगर (dwb->funcs->is_enabled(dwb)) अणु
+				/* ग_लिखोback pipe alपढ़ोy enabled, only need to update */
+				dc->hwss.update_ग_लिखोback(dc, wb_info, dc->current_state);
+			पूर्ण अन्यथा अणु
+				/* Enable ग_लिखोback pipe from scratch*/
+				dc->hwss.enable_ग_लिखोback(dc, wb_info, dc->current_state);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 
-bool dc_stream_remove_writeback(struct dc *dc,
-		struct dc_stream_state *stream,
-		uint32_t dwb_pipe_inst)
-{
-	int i = 0, j = 0;
-	if (stream == NULL) {
+bool dc_stream_हटाओ_ग_लिखोback(काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		uपूर्णांक32_t dwb_pipe_inst)
+अणु
+	पूर्णांक i = 0, j = 0;
+	अगर (stream == शून्य) अणु
 		dm_error("DC: dc_stream is NULL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (dwb_pipe_inst >= MAX_DWB_PIPES) {
+	अगर (dwb_pipe_inst >= MAX_DWB_PIPES) अणु
 		dm_error("DC: writeback pipe is invalid!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-//	stream->writeback_info[dwb_pipe_inst].wb_enabled = false;
-	for (i = 0; i < stream->num_wb_info; i++) {
+//	stream->ग_लिखोback_info[dwb_pipe_inst].wb_enabled = false;
+	क्रम (i = 0; i < stream->num_wb_info; i++) अणु
 		/*dynamic update*/
-		if (stream->writeback_info[i].wb_enabled &&
-			stream->writeback_info[i].dwb_pipe_inst == dwb_pipe_inst) {
-			stream->writeback_info[i].wb_enabled = false;
-		}
-	}
+		अगर (stream->ग_लिखोback_info[i].wb_enabled &&
+			stream->ग_लिखोback_info[i].dwb_pipe_inst == dwb_pipe_inst) अणु
+			stream->ग_लिखोback_info[i].wb_enabled = false;
+		पूर्ण
+	पूर्ण
 
-	/* remove writeback info for disabled writeback pipes from stream */
-	for (i = 0, j = 0; i < stream->num_wb_info; i++) {
-		if (stream->writeback_info[i].wb_enabled) {
-			if (i != j)
+	/* हटाओ ग_लिखोback info क्रम disabled ग_लिखोback pipes from stream */
+	क्रम (i = 0, j = 0; i < stream->num_wb_info; i++) अणु
+		अगर (stream->ग_लिखोback_info[i].wb_enabled) अणु
+			अगर (i != j)
 				/* trim the array */
-				stream->writeback_info[j] = stream->writeback_info[i];
+				stream->ग_लिखोback_info[j] = stream->ग_लिखोback_info[i];
 			j++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	stream->num_wb_info = j;
 
-	if (IS_DIAG_DC(dc->ctx->dce_environment)) {
+	अगर (IS_DIAG_DC(dc->ctx->dce_environment)) अणु
 		/* recalculate and apply DML parameters */
-		if (!dc->hwss.update_bandwidth(dc, dc->current_state)) {
+		अगर (!dc->hwss.update_bandwidth(dc, dc->current_state)) अणु
 			dm_error("DC: update_bandwidth failed!\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		/* disable writeback */
-		if (dc->hwss.disable_writeback)
-			dc->hwss.disable_writeback(dc, dwb_pipe_inst);
-	}
-	return true;
-}
+		/* disable ग_लिखोback */
+		अगर (dc->hwss.disable_ग_लिखोback)
+			dc->hwss.disable_ग_लिखोback(dc, dwb_pipe_inst);
+	पूर्ण
+	वापस true;
+पूर्ण
 
-bool dc_stream_warmup_writeback(struct dc *dc,
-		int num_dwb,
-		struct dc_writeback_info *wb_info)
-{
-	if (dc->hwss.mmhubbub_warmup)
-		return dc->hwss.mmhubbub_warmup(dc, num_dwb, wb_info);
-	else
-		return false;
-}
-uint32_t dc_stream_get_vblank_counter(const struct dc_stream_state *stream)
-{
-	uint8_t i;
-	struct dc  *dc = stream->ctx->dc;
-	struct resource_context *res_ctx =
+bool dc_stream_warmup_ग_लिखोback(काष्ठा dc *dc,
+		पूर्णांक num_dwb,
+		काष्ठा dc_ग_लिखोback_info *wb_info)
+अणु
+	अगर (dc->hwss.mmhubbub_warmup)
+		वापस dc->hwss.mmhubbub_warmup(dc, num_dwb, wb_info);
+	अन्यथा
+		वापस false;
+पूर्ण
+uपूर्णांक32_t dc_stream_get_vblank_counter(स्थिर काष्ठा dc_stream_state *stream)
+अणु
+	uपूर्णांक8_t i;
+	काष्ठा dc  *dc = stream->ctx->dc;
+	काष्ठा resource_context *res_ctx =
 		&dc->current_state->res_ctx;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		struct timing_generator *tg = res_ctx->pipe_ctx[i].stream_res.tg;
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		काष्ठा timing_generator *tg = res_ctx->pipe_ctx[i].stream_res.tg;
 
-		if (res_ctx->pipe_ctx[i].stream != stream)
-			continue;
+		अगर (res_ctx->pipe_ctx[i].stream != stream)
+			जारी;
 
-		return tg->funcs->get_frame_count(tg);
-	}
+		वापस tg->funcs->get_frame_count(tg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool dc_stream_send_dp_sdp(const struct dc_stream_state *stream,
-		const uint8_t *custom_sdp_message,
-		unsigned int sdp_message_size)
-{
-	int i;
-	struct dc  *dc;
-	struct resource_context *res_ctx;
+bool dc_stream_send_dp_sdp(स्थिर काष्ठा dc_stream_state *stream,
+		स्थिर uपूर्णांक8_t *custom_sdp_message,
+		अचिन्हित पूर्णांक sdp_message_size)
+अणु
+	पूर्णांक i;
+	काष्ठा dc  *dc;
+	काष्ठा resource_context *res_ctx;
 
-	if (stream == NULL) {
+	अगर (stream == शून्य) अणु
 		dm_error("DC: dc_stream is NULL!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	dc = stream->ctx->dc;
 	res_ctx = &dc->current_state->res_ctx;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		struct pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		काष्ठा pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
 
-		if (pipe_ctx->stream != stream)
-			continue;
+		अगर (pipe_ctx->stream != stream)
+			जारी;
 
-		if (dc->hwss.send_immediate_sdp_message != NULL)
+		अगर (dc->hwss.send_immediate_sdp_message != शून्य)
 			dc->hwss.send_immediate_sdp_message(pipe_ctx,
 								custom_sdp_message,
 								sdp_message_size);
-		else
+		अन्यथा
 			DC_LOG_WARNING("%s:send_immediate_sdp_message not implemented on this ASIC\n",
 			__func__);
 
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dc_stream_get_scanoutpos(const struct dc_stream_state *stream,
-				  uint32_t *v_blank_start,
-				  uint32_t *v_blank_end,
-				  uint32_t *h_position,
-				  uint32_t *v_position)
-{
-	uint8_t i;
+bool dc_stream_get_scanoutpos(स्थिर काष्ठा dc_stream_state *stream,
+				  uपूर्णांक32_t *v_blank_start,
+				  uपूर्णांक32_t *v_blank_end,
+				  uपूर्णांक32_t *h_position,
+				  uपूर्णांक32_t *v_position)
+अणु
+	uपूर्णांक8_t i;
 	bool ret = false;
-	struct dc  *dc = stream->ctx->dc;
-	struct resource_context *res_ctx =
+	काष्ठा dc  *dc = stream->ctx->dc;
+	काष्ठा resource_context *res_ctx =
 		&dc->current_state->res_ctx;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		struct timing_generator *tg = res_ctx->pipe_ctx[i].stream_res.tg;
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		काष्ठा timing_generator *tg = res_ctx->pipe_ctx[i].stream_res.tg;
 
-		if (res_ctx->pipe_ctx[i].stream != stream)
-			continue;
+		अगर (res_ctx->pipe_ctx[i].stream != stream)
+			जारी;
 
 		tg->funcs->get_scanoutpos(tg,
 					  v_blank_start,
@@ -602,86 +603,86 @@ bool dc_stream_get_scanoutpos(const struct dc_stream_state *stream,
 					  v_position);
 
 		ret = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool dc_stream_dmdata_status_done(struct dc *dc, struct dc_stream_state *stream)
-{
-	struct pipe_ctx *pipe = NULL;
-	int i;
+bool dc_stream_dmdata_status_करोne(काष्ठा dc *dc, काष्ठा dc_stream_state *stream)
+अणु
+	काष्ठा pipe_ctx *pipe = शून्य;
+	पूर्णांक i;
 
-	if (!dc->hwss.dmdata_status_done)
-		return false;
+	अगर (!dc->hwss.dmdata_status_करोne)
+		वापस false;
 
-	for (i = 0; i < MAX_PIPES; i++) {
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
 		pipe = &dc->current_state->res_ctx.pipe_ctx[i];
-		if (pipe->stream == stream)
-			break;
-	}
-	/* Stream not found, by default we'll assume HUBP fetched dm data */
-	if (i == MAX_PIPES)
-		return true;
+		अगर (pipe->stream == stream)
+			अवरोध;
+	पूर्ण
+	/* Stream not found, by शेष we'll assume HUBP fetched dm data */
+	अगर (i == MAX_PIPES)
+		वापस true;
 
-	return dc->hwss.dmdata_status_done(pipe);
-}
+	वापस dc->hwss.dmdata_status_करोne(pipe);
+पूर्ण
 
-bool dc_stream_set_dynamic_metadata(struct dc *dc,
-		struct dc_stream_state *stream,
-		struct dc_dmdata_attributes *attr)
-{
-	struct pipe_ctx *pipe_ctx = NULL;
-	struct hubp *hubp;
-	int i;
+bool dc_stream_set_dynamic_metadata(काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		काष्ठा dc_dmdata_attributes *attr)
+अणु
+	काष्ठा pipe_ctx *pipe_ctx = शून्य;
+	काष्ठा hubp *hubp;
+	पूर्णांक i;
 
 	/* Dynamic metadata is only supported on HDMI or DP */
-	if (!dc_is_hdmi_signal(stream->signal) && !dc_is_dp_signal(stream->signal))
-		return false;
+	अगर (!dc_is_hdmi_संकेत(stream->संकेत) && !dc_is_dp_संकेत(stream->संकेत))
+		वापस false;
 
 	/* Check hardware support */
-	if (!dc->hwss.program_dmdata_engine)
-		return false;
+	अगर (!dc->hwss.program_dmdata_engine)
+		वापस false;
 
-	for (i = 0; i < MAX_PIPES; i++) {
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
 		pipe_ctx = &dc->current_state->res_ctx.pipe_ctx[i];
-		if (pipe_ctx->stream == stream)
-			break;
-	}
+		अगर (pipe_ctx->stream == stream)
+			अवरोध;
+	पूर्ण
 
-	if (i == MAX_PIPES)
-		return false;
+	अगर (i == MAX_PIPES)
+		वापस false;
 
 	hubp = pipe_ctx->plane_res.hubp;
-	if (hubp == NULL)
-		return false;
+	अगर (hubp == शून्य)
+		वापस false;
 
 	pipe_ctx->stream->dmdata_address = attr->address;
 
 	dc->hwss.program_dmdata_engine(pipe_ctx);
 
-	if (hubp->funcs->dmdata_set_attributes != NULL &&
-			pipe_ctx->stream->dmdata_address.quad_part != 0) {
+	अगर (hubp->funcs->dmdata_set_attributes != शून्य &&
+			pipe_ctx->stream->dmdata_address.quad_part != 0) अणु
 		hubp->funcs->dmdata_set_attributes(hubp, attr);
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-enum dc_status dc_stream_add_dsc_to_resource(struct dc *dc,
-		struct dc_state *state,
-		struct dc_stream_state *stream)
-{
-	if (dc->res_pool->funcs->add_dsc_to_stream_resource) {
-		return dc->res_pool->funcs->add_dsc_to_stream_resource(dc, state, stream);
-	} else {
-		return DC_NO_DSC_RESOURCE;
-	}
-}
+क्रमागत dc_status dc_stream_add_dsc_to_resource(काष्ठा dc *dc,
+		काष्ठा dc_state *state,
+		काष्ठा dc_stream_state *stream)
+अणु
+	अगर (dc->res_pool->funcs->add_dsc_to_stream_resource) अणु
+		वापस dc->res_pool->funcs->add_dsc_to_stream_resource(dc, state, stream);
+	पूर्ण अन्यथा अणु
+		वापस DC_NO_DSC_RESOURCE;
+	पूर्ण
+पूर्ण
 
-void dc_stream_log(const struct dc *dc, const struct dc_stream_state *stream)
-{
+व्योम dc_stream_log(स्थिर काष्ठा dc *dc, स्थिर काष्ठा dc_stream_state *stream)
+अणु
 	DC_LOG_DC(
 			"core_stream 0x%p: src: %d, %d, %d, %d; dst: %d, %d, %d, %d, colorSpace:%d\n",
 			stream,
@@ -704,5 +705,5 @@ void dc_stream_log(const struct dc *dc, const struct dc_stream_state *stream)
 	DC_LOG_DC(
 			"\tlink: %d\n",
 			stream->link->link_index);
-}
+पूर्ण
 

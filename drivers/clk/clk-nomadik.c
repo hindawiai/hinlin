@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Nomadik clock implementation
+ * Nomadik घड़ी implementation
  * Copyright (C) 2013 ST-Ericsson AB
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
-#define pr_fmt(fmt) "Nomadik SRC clocks: " fmt
+#घोषणा pr_fmt(fmt) "Nomadik SRC clocks: " fmt
 
-#include <linux/bitops.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/spinlock.h>
-#include <linux/reboot.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/reboot.h>
 
 /*
- * The Nomadik clock tree is described in the STN8815A12 DB V4.2
- * reference manual for the chip, page 94 ff.
+ * The Nomadik घड़ी tree is described in the STN8815A12 DB V4.2
+ * reference manual क्रम the chip, page 94 ff.
  * Clock IDs are in the STn8815 Reference Manual table 3, page 27.
  */
 
-#define SRC_CR			0x00U
-#define SRC_CR_T0_ENSEL		BIT(15)
-#define SRC_CR_T1_ENSEL		BIT(17)
-#define SRC_CR_T2_ENSEL		BIT(19)
-#define SRC_CR_T3_ENSEL		BIT(21)
-#define SRC_CR_T4_ENSEL		BIT(23)
-#define SRC_CR_T5_ENSEL		BIT(25)
-#define SRC_CR_T6_ENSEL		BIT(27)
-#define SRC_CR_T7_ENSEL		BIT(29)
-#define SRC_XTALCR		0x0CU
-#define SRC_XTALCR_XTALTIMEN	BIT(20)
-#define SRC_XTALCR_SXTALDIS	BIT(19)
-#define SRC_XTALCR_MXTALSTAT	BIT(2)
-#define SRC_XTALCR_MXTALEN	BIT(1)
-#define SRC_XTALCR_MXTALOVER	BIT(0)
-#define SRC_PLLCR		0x10U
-#define SRC_PLLCR_PLLTIMEN	BIT(29)
-#define SRC_PLLCR_PLL2EN	BIT(28)
-#define SRC_PLLCR_PLL1STAT	BIT(2)
-#define SRC_PLLCR_PLL1EN	BIT(1)
-#define SRC_PLLCR_PLL1OVER	BIT(0)
-#define SRC_PLLFR		0x14U
-#define SRC_PCKEN0		0x24U
-#define SRC_PCKDIS0		0x28U
-#define SRC_PCKENSR0		0x2CU
-#define SRC_PCKSR0		0x30U
-#define SRC_PCKEN1		0x34U
-#define SRC_PCKDIS1		0x38U
-#define SRC_PCKENSR1		0x3CU
-#define SRC_PCKSR1		0x40U
+#घोषणा SRC_CR			0x00U
+#घोषणा SRC_CR_T0_ENSEL		BIT(15)
+#घोषणा SRC_CR_T1_ENSEL		BIT(17)
+#घोषणा SRC_CR_T2_ENSEL		BIT(19)
+#घोषणा SRC_CR_T3_ENSEL		BIT(21)
+#घोषणा SRC_CR_T4_ENSEL		BIT(23)
+#घोषणा SRC_CR_T5_ENSEL		BIT(25)
+#घोषणा SRC_CR_T6_ENSEL		BIT(27)
+#घोषणा SRC_CR_T7_ENSEL		BIT(29)
+#घोषणा SRC_XTALCR		0x0CU
+#घोषणा SRC_XTALCR_XTALTIMEN	BIT(20)
+#घोषणा SRC_XTALCR_SXTALDIS	BIT(19)
+#घोषणा SRC_XTALCR_MXTALSTAT	BIT(2)
+#घोषणा SRC_XTALCR_MXTALEN	BIT(1)
+#घोषणा SRC_XTALCR_MXTALOVER	BIT(0)
+#घोषणा SRC_PLLCR		0x10U
+#घोषणा SRC_PLLCR_PLLTIMEN	BIT(29)
+#घोषणा SRC_PLLCR_PLL2EN	BIT(28)
+#घोषणा SRC_PLLCR_PLL1STAT	BIT(2)
+#घोषणा SRC_PLLCR_PLL1EN	BIT(1)
+#घोषणा SRC_PLLCR_PLL1OVER	BIT(0)
+#घोषणा SRC_PLLFR		0x14U
+#घोषणा SRC_PCKEN0		0x24U
+#घोषणा SRC_PCKDIS0		0x28U
+#घोषणा SRC_PCKENSR0		0x2CU
+#घोषणा SRC_PCKSR0		0x30U
+#घोषणा SRC_PCKEN1		0x34U
+#घोषणा SRC_PCKDIS1		0x38U
+#घोषणा SRC_PCKENSR1		0x3CU
+#घोषणा SRC_PCKSR1		0x40U
 
-/* Lock protecting the SRC_CR register */
-static DEFINE_SPINLOCK(src_lock);
+/* Lock protecting the SRC_CR रेजिस्टर */
+अटल DEFINE_SPINLOCK(src_lock);
 /* Base address of the SRC */
-static void __iomem *src_base;
+अटल व्योम __iomem *src_base;
 
-static int nomadik_clk_reboot_handler(struct notifier_block *this,
-				unsigned long code,
-				void *unused)
-{
+अटल पूर्णांक nomadik_clk_reboot_handler(काष्ठा notअगरier_block *this,
+				अचिन्हित दीर्घ code,
+				व्योम *unused)
+अणु
 	u32 val;
 
-	/* The main chrystal need to be enabled for reboot to work */
-	val = readl(src_base + SRC_XTALCR);
+	/* The मुख्य chrystal need to be enabled क्रम reboot to work */
+	val = पढ़ोl(src_base + SRC_XTALCR);
 	val &= ~SRC_XTALCR_MXTALOVER;
 	val |= SRC_XTALCR_MXTALEN;
 	pr_crit("force-enabling MXTALO\n");
-	writel(val, src_base + SRC_XTALCR);
-	return NOTIFY_OK;
-}
+	ग_लिखोl(val, src_base + SRC_XTALCR);
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block nomadik_clk_reboot_notifier = {
-	.notifier_call = nomadik_clk_reboot_handler,
-};
+अटल काष्ठा notअगरier_block nomadik_clk_reboot_notअगरier = अणु
+	.notअगरier_call = nomadik_clk_reboot_handler,
+पूर्ण;
 
-static const struct of_device_id nomadik_src_match[] __initconst = {
-	{ .compatible = "stericsson,nomadik-src" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id nomadik_src_match[] __initस्थिर = अणु
+	अणु .compatible = "stericsson,nomadik-src" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static void __init nomadik_src_init(void)
-{
-	struct device_node *np;
+अटल व्योम __init nomadik_src_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 	u32 val;
 
-	np = of_find_matching_node(NULL, nomadik_src_match);
-	if (!np) {
+	np = of_find_matching_node(शून्य, nomadik_src_match);
+	अगर (!np) अणु
 		pr_crit("no matching node for SRC, aborting clock init\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	src_base = of_iomap(np, 0);
-	if (!src_base) {
+	अगर (!src_base) अणु
 		pr_err("%s: must have src parent node with REGS (%pOFn)\n",
 		       __func__, np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Set all timers to use the 2.4 MHz TIMCLK */
-	val = readl(src_base + SRC_CR);
+	/* Set all समयrs to use the 2.4 MHz TIMCLK */
+	val = पढ़ोl(src_base + SRC_CR);
 	val |= SRC_CR_T0_ENSEL;
 	val |= SRC_CR_T1_ENSEL;
 	val |= SRC_CR_T2_ENSEL;
@@ -112,259 +113,259 @@ static void __init nomadik_src_init(void)
 	val |= SRC_CR_T5_ENSEL;
 	val |= SRC_CR_T6_ENSEL;
 	val |= SRC_CR_T7_ENSEL;
-	writel(val, src_base + SRC_CR);
+	ग_लिखोl(val, src_base + SRC_CR);
 
-	val = readl(src_base + SRC_XTALCR);
+	val = पढ़ोl(src_base + SRC_XTALCR);
 	pr_info("SXTALO is %s\n",
 		(val & SRC_XTALCR_SXTALDIS) ? "disabled" : "enabled");
 	pr_info("MXTAL is %s\n",
 		(val & SRC_XTALCR_MXTALSTAT) ? "enabled" : "disabled");
-	if (of_property_read_bool(np, "disable-sxtalo")) {
-		/* The machine uses an external oscillator circuit */
+	अगर (of_property_पढ़ो_bool(np, "disable-sxtalo")) अणु
+		/* The machine uses an बाह्यal oscillator circuit */
 		val |= SRC_XTALCR_SXTALDIS;
 		pr_info("disabling SXTALO\n");
-	}
-	if (of_property_read_bool(np, "disable-mxtalo")) {
-		/* Disable this too: also run by external oscillator */
+	पूर्ण
+	अगर (of_property_पढ़ो_bool(np, "disable-mxtalo")) अणु
+		/* Disable this too: also run by बाह्यal oscillator */
 		val |= SRC_XTALCR_MXTALOVER;
 		val &= ~SRC_XTALCR_MXTALEN;
 		pr_info("disabling MXTALO\n");
-	}
-	writel(val, src_base + SRC_XTALCR);
-	register_reboot_notifier(&nomadik_clk_reboot_notifier);
-}
+	पूर्ण
+	ग_लिखोl(val, src_base + SRC_XTALCR);
+	रेजिस्टर_reboot_notअगरier(&nomadik_clk_reboot_notअगरier);
+पूर्ण
 
 /**
- * struct clk_pll1 - Nomadik PLL1 clock
- * @hw: corresponding clock hardware entry
+ * काष्ठा clk_pll1 - Nomadik PLL1 घड़ी
+ * @hw: corresponding घड़ी hardware entry
  * @id: PLL instance: 1 or 2
  */
-struct clk_pll {
-	struct clk_hw hw;
-	int id;
-};
+काष्ठा clk_pll अणु
+	काष्ठा clk_hw hw;
+	पूर्णांक id;
+पूर्ण;
 
 /**
- * struct clk_src - Nomadik src clock
- * @hw: corresponding clock hardware entry
- * @id: the clock ID
- * @group1: true if the clock is in group1, else it is in group0
- * @clkbit: bit 0...31 corresponding to the clock in each clock register
+ * काष्ठा clk_src - Nomadik src घड़ी
+ * @hw: corresponding घड़ी hardware entry
+ * @id: the घड़ी ID
+ * @group1: true अगर the घड़ी is in group1, अन्यथा it is in group0
+ * @clkbit: bit 0...31 corresponding to the घड़ी in each घड़ी रेजिस्टर
  */
-struct clk_src {
-	struct clk_hw hw;
-	int id;
+काष्ठा clk_src अणु
+	काष्ठा clk_hw hw;
+	पूर्णांक id;
 	bool group1;
 	u32 clkbit;
-};
+पूर्ण;
 
-#define to_pll(_hw) container_of(_hw, struct clk_pll, hw)
-#define to_src(_hw) container_of(_hw, struct clk_src, hw)
+#घोषणा to_pll(_hw) container_of(_hw, काष्ठा clk_pll, hw)
+#घोषणा to_src(_hw) container_of(_hw, काष्ठा clk_src, hw)
 
-static int pll_clk_enable(struct clk_hw *hw)
-{
-	struct clk_pll *pll = to_pll(hw);
+अटल पूर्णांक pll_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pll *pll = to_pll(hw);
 	u32 val;
 
 	spin_lock(&src_lock);
-	val = readl(src_base + SRC_PLLCR);
-	if (pll->id == 1) {
-		if (val & SRC_PLLCR_PLL1OVER) {
+	val = पढ़ोl(src_base + SRC_PLLCR);
+	अगर (pll->id == 1) अणु
+		अगर (val & SRC_PLLCR_PLL1OVER) अणु
 			val |= SRC_PLLCR_PLL1EN;
-			writel(val, src_base + SRC_PLLCR);
-		}
-	} else if (pll->id == 2) {
+			ग_लिखोl(val, src_base + SRC_PLLCR);
+		पूर्ण
+	पूर्ण अन्यथा अगर (pll->id == 2) अणु
 		val |= SRC_PLLCR_PLL2EN;
-		writel(val, src_base + SRC_PLLCR);
-	}
+		ग_लिखोl(val, src_base + SRC_PLLCR);
+	पूर्ण
 	spin_unlock(&src_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pll_clk_disable(struct clk_hw *hw)
-{
-	struct clk_pll *pll = to_pll(hw);
+अटल व्योम pll_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pll *pll = to_pll(hw);
 	u32 val;
 
 	spin_lock(&src_lock);
-	val = readl(src_base + SRC_PLLCR);
-	if (pll->id == 1) {
-		if (val & SRC_PLLCR_PLL1OVER) {
+	val = पढ़ोl(src_base + SRC_PLLCR);
+	अगर (pll->id == 1) अणु
+		अगर (val & SRC_PLLCR_PLL1OVER) अणु
 			val &= ~SRC_PLLCR_PLL1EN;
-			writel(val, src_base + SRC_PLLCR);
-		}
-	} else if (pll->id == 2) {
+			ग_लिखोl(val, src_base + SRC_PLLCR);
+		पूर्ण
+	पूर्ण अन्यथा अगर (pll->id == 2) अणु
 		val &= ~SRC_PLLCR_PLL2EN;
-		writel(val, src_base + SRC_PLLCR);
-	}
+		ग_लिखोl(val, src_base + SRC_PLLCR);
+	पूर्ण
 	spin_unlock(&src_lock);
-}
+पूर्ण
 
-static int pll_clk_is_enabled(struct clk_hw *hw)
-{
-	struct clk_pll *pll = to_pll(hw);
+अटल पूर्णांक pll_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pll *pll = to_pll(hw);
 	u32 val;
 
-	val = readl(src_base + SRC_PLLCR);
-	if (pll->id == 1) {
-		if (val & SRC_PLLCR_PLL1OVER)
-			return !!(val & SRC_PLLCR_PLL1EN);
-	} else if (pll->id == 2) {
-		return !!(val & SRC_PLLCR_PLL2EN);
-	}
-	return 1;
-}
+	val = पढ़ोl(src_base + SRC_PLLCR);
+	अगर (pll->id == 1) अणु
+		अगर (val & SRC_PLLCR_PLL1OVER)
+			वापस !!(val & SRC_PLLCR_PLL1EN);
+	पूर्ण अन्यथा अगर (pll->id == 2) अणु
+		वापस !!(val & SRC_PLLCR_PLL2EN);
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static unsigned long pll_clk_recalc_rate(struct clk_hw *hw,
-					  unsigned long parent_rate)
-{
-	struct clk_pll *pll = to_pll(hw);
+अटल अचिन्हित दीर्घ pll_clk_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pll *pll = to_pll(hw);
 	u32 val;
 
-	val = readl(src_base + SRC_PLLFR);
+	val = पढ़ोl(src_base + SRC_PLLFR);
 
-	if (pll->id == 1) {
+	अगर (pll->id == 1) अणु
 		u8 mul;
-		u8 div;
+		u8 भाग;
 
 		mul = (val >> 8) & 0x3FU;
 		mul += 2;
-		div = val & 0x07U;
-		return (parent_rate * mul) >> div;
-	}
+		भाग = val & 0x07U;
+		वापस (parent_rate * mul) >> भाग;
+	पूर्ण
 
-	if (pll->id == 2) {
+	अगर (pll->id == 2) अणु
 		u8 mul;
 
 		mul = (val >> 24) & 0x3FU;
 		mul += 2;
-		return (parent_rate * mul);
-	}
+		वापस (parent_rate * mul);
+	पूर्ण
 
 	/* Unknown PLL */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct clk_ops pll_clk_ops = {
+अटल स्थिर काष्ठा clk_ops pll_clk_ops = अणु
 	.enable = pll_clk_enable,
 	.disable = pll_clk_disable,
 	.is_enabled = pll_clk_is_enabled,
 	.recalc_rate = pll_clk_recalc_rate,
-};
+पूर्ण;
 
-static struct clk_hw * __init
-pll_clk_register(struct device *dev, const char *name,
-		 const char *parent_name, u32 id)
-{
-	int ret;
-	struct clk_pll *pll;
-	struct clk_init_data init;
+अटल काष्ठा clk_hw * __init
+pll_clk_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name,
+		 स्थिर अक्षर *parent_name, u32 id)
+अणु
+	पूर्णांक ret;
+	काष्ठा clk_pll *pll;
+	काष्ठा clk_init_data init;
 
-	if (id != 1 && id != 2) {
+	अगर (id != 1 && id != 2) अणु
 		pr_err("%s: the Nomadik has only PLL 1 & 2\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
-	if (!pll)
-		return ERR_PTR(-ENOMEM);
+	pll = kzalloc(माप(*pll), GFP_KERNEL);
+	अगर (!pll)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &pll_clk_ops;
-	init.parent_names = (parent_name ? &parent_name : NULL);
+	init.parent_names = (parent_name ? &parent_name : शून्य);
 	init.num_parents = (parent_name ? 1 : 0);
 	pll->hw.init = &init;
 	pll->id = id;
 
 	pr_debug("register PLL1 clock \"%s\"\n", name);
 
-	ret = clk_hw_register(dev, &pll->hw);
-	if (ret) {
-		kfree(pll);
-		return ERR_PTR(ret);
-	}
+	ret = clk_hw_रेजिस्टर(dev, &pll->hw);
+	अगर (ret) अणु
+		kमुक्त(pll);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return &pll->hw;
-}
+	वापस &pll->hw;
+पूर्ण
 
 /*
- * The Nomadik SRC clocks are gated, but not in the sense that
- * you read-modify-write a register. Instead there are separate
- * clock enable and clock disable registers. Writing a '1' bit in
- * the enable register for a certain clock ungates that clock without
- * affecting the other clocks. The disable register works the opposite
+ * The Nomadik SRC घड़ीs are gated, but not in the sense that
+ * you पढ़ो-modअगरy-ग_लिखो a रेजिस्टर. Instead there are separate
+ * घड़ी enable and घड़ी disable रेजिस्टरs. Writing a '1' bit in
+ * the enable रेजिस्टर क्रम a certain घड़ी ungates that घड़ी without
+ * affecting the other घड़ीs. The disable रेजिस्टर works the opposite
  * way.
  */
 
-static int src_clk_enable(struct clk_hw *hw)
-{
-	struct clk_src *sclk = to_src(hw);
+अटल पूर्णांक src_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_src *sclk = to_src(hw);
 	u32 enreg = sclk->group1 ? SRC_PCKEN1 : SRC_PCKEN0;
 	u32 sreg = sclk->group1 ? SRC_PCKSR1 : SRC_PCKSR0;
 
-	writel(sclk->clkbit, src_base + enreg);
+	ग_लिखोl(sclk->clkbit, src_base + enreg);
 	/* spin until enabled */
-	while (!(readl(src_base + sreg) & sclk->clkbit))
+	जबतक (!(पढ़ोl(src_base + sreg) & sclk->clkbit))
 		cpu_relax();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void src_clk_disable(struct clk_hw *hw)
-{
-	struct clk_src *sclk = to_src(hw);
+अटल व्योम src_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_src *sclk = to_src(hw);
 	u32 disreg = sclk->group1 ? SRC_PCKDIS1 : SRC_PCKDIS0;
 	u32 sreg = sclk->group1 ? SRC_PCKSR1 : SRC_PCKSR0;
 
-	writel(sclk->clkbit, src_base + disreg);
+	ग_लिखोl(sclk->clkbit, src_base + disreg);
 	/* spin until disabled */
-	while (readl(src_base + sreg) & sclk->clkbit)
+	जबतक (पढ़ोl(src_base + sreg) & sclk->clkbit)
 		cpu_relax();
-}
+पूर्ण
 
-static int src_clk_is_enabled(struct clk_hw *hw)
-{
-	struct clk_src *sclk = to_src(hw);
+अटल पूर्णांक src_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_src *sclk = to_src(hw);
 	u32 sreg = sclk->group1 ? SRC_PCKSR1 : SRC_PCKSR0;
-	u32 val = readl(src_base + sreg);
+	u32 val = पढ़ोl(src_base + sreg);
 
-	return !!(val & sclk->clkbit);
-}
+	वापस !!(val & sclk->clkbit);
+पूर्ण
 
-static unsigned long
-src_clk_recalc_rate(struct clk_hw *hw,
-		    unsigned long parent_rate)
-{
-	return parent_rate;
-}
+अटल अचिन्हित दीर्घ
+src_clk_recalc_rate(काष्ठा clk_hw *hw,
+		    अचिन्हित दीर्घ parent_rate)
+अणु
+	वापस parent_rate;
+पूर्ण
 
-static const struct clk_ops src_clk_ops = {
+अटल स्थिर काष्ठा clk_ops src_clk_ops = अणु
 	.enable = src_clk_enable,
 	.disable = src_clk_disable,
 	.is_enabled = src_clk_is_enabled,
 	.recalc_rate = src_clk_recalc_rate,
-};
+पूर्ण;
 
-static struct clk_hw * __init
-src_clk_register(struct device *dev, const char *name,
-		 const char *parent_name, u8 id)
-{
-	int ret;
-	struct clk_src *sclk;
-	struct clk_init_data init;
+अटल काष्ठा clk_hw * __init
+src_clk_रेजिस्टर(काष्ठा device *dev, स्थिर अक्षर *name,
+		 स्थिर अक्षर *parent_name, u8 id)
+अणु
+	पूर्णांक ret;
+	काष्ठा clk_src *sclk;
+	काष्ठा clk_init_data init;
 
-	sclk = kzalloc(sizeof(*sclk), GFP_KERNEL);
-	if (!sclk)
-		return ERR_PTR(-ENOMEM);
+	sclk = kzalloc(माप(*sclk), GFP_KERNEL);
+	अगर (!sclk)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &src_clk_ops;
-	/* Do not force-disable the static SDRAM controller */
-	if (id == 2)
+	/* Do not क्रमce-disable the अटल SDRAM controller */
+	अगर (id == 2)
 		init.flags = CLK_IGNORE_UNUSED;
-	else
+	अन्यथा
 		init.flags = 0;
-	init.parent_names = (parent_name ? &parent_name : NULL);
+	init.parent_names = (parent_name ? &parent_name : शून्य);
 	init.num_parents = (parent_name ? 1 : 0);
 	sclk->hw.init = &init;
 	sclk->id = id;
@@ -374,21 +375,21 @@ src_clk_register(struct device *dev, const char *name,
 	pr_debug("register clock \"%s\" ID: %d group: %d bits: %08x\n",
 		 name, id, sclk->group1, sclk->clkbit);
 
-	ret = clk_hw_register(dev, &sclk->hw);
-	if (ret) {
-		kfree(sclk);
-		return ERR_PTR(ret);
-	}
+	ret = clk_hw_रेजिस्टर(dev, &sclk->hw);
+	अगर (ret) अणु
+		kमुक्त(sclk);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return &sclk->hw;
-}
+	वापस &sclk->hw;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-static u32 src_pcksr0_boot;
-static u32 src_pcksr1_boot;
+अटल u32 src_pcksr0_boot;
+अटल u32 src_pcksr1_boot;
 
-static const char * const src_clk_names[] = {
+अटल स्थिर अक्षर * स्थिर src_clk_names[] = अणु
 	"HCLKDMA0  ",
 	"HCLKSMC   ",
 	"HCLKSDRAM ",
@@ -453,115 +454,115 @@ static const char * const src_clk_names[] = {
 	"MSHCCLK   ",
 	"USBMCLK   ",
 	"RNGCCLK   ",
-};
+पूर्ण;
 
-static int nomadik_src_clk_debugfs_show(struct seq_file *s, void *what)
-{
-	int i;
-	u32 src_pcksr0 = readl(src_base + SRC_PCKSR0);
-	u32 src_pcksr1 = readl(src_base + SRC_PCKSR1);
-	u32 src_pckensr0 = readl(src_base + SRC_PCKENSR0);
-	u32 src_pckensr1 = readl(src_base + SRC_PCKENSR1);
+अटल पूर्णांक nomadik_src_clk_debugfs_show(काष्ठा seq_file *s, व्योम *what)
+अणु
+	पूर्णांक i;
+	u32 src_pcksr0 = पढ़ोl(src_base + SRC_PCKSR0);
+	u32 src_pcksr1 = पढ़ोl(src_base + SRC_PCKSR1);
+	u32 src_pckensr0 = पढ़ोl(src_base + SRC_PCKENSR0);
+	u32 src_pckensr1 = पढ़ोl(src_base + SRC_PCKENSR1);
 
-	seq_puts(s, "Clock:      Boot:   Now:    Request: ASKED:\n");
-	for (i = 0; i < ARRAY_SIZE(src_clk_names); i++) {
+	seq_माला_दो(s, "Clock:      Boot:   Now:    Request: ASKED:\n");
+	क्रम (i = 0; i < ARRAY_SIZE(src_clk_names); i++) अणु
 		u32 pcksrb = (i < 0x20) ? src_pcksr0_boot : src_pcksr1_boot;
 		u32 pcksr = (i < 0x20) ? src_pcksr0 : src_pcksr1;
 		u32 pckreq = (i < 0x20) ? src_pckensr0 : src_pckensr1;
 		u32 mask = BIT(i & 0x1f);
 
-		seq_printf(s, "%s  %s     %s     %s\n",
+		seq_म_लिखो(s, "%s  %s     %s     %s\n",
 			   src_clk_names[i],
 			   (pcksrb & mask) ? "on " : "off",
 			   (pcksr & mask) ? "on " : "off",
 			   (pckreq & mask) ? "on " : "off");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(nomadik_src_clk_debugfs);
 
-static int __init nomadik_src_clk_init_debugfs(void)
-{
-	/* Vital for multiplatform */
-	if (!src_base)
-		return -ENODEV;
-	src_pcksr0_boot = readl(src_base + SRC_PCKSR0);
-	src_pcksr1_boot = readl(src_base + SRC_PCKSR1);
+अटल पूर्णांक __init nomadik_src_clk_init_debugfs(व्योम)
+अणु
+	/* Vital क्रम multiplatक्रमm */
+	अगर (!src_base)
+		वापस -ENODEV;
+	src_pcksr0_boot = पढ़ोl(src_base + SRC_PCKSR0);
+	src_pcksr1_boot = पढ़ोl(src_base + SRC_PCKSR1);
 	debugfs_create_file("nomadik-src-clk", S_IFREG | S_IRUGO,
-			    NULL, NULL, &nomadik_src_clk_debugfs_fops);
-	return 0;
-}
+			    शून्य, शून्य, &nomadik_src_clk_debugfs_fops);
+	वापस 0;
+पूर्ण
 device_initcall(nomadik_src_clk_init_debugfs);
 
-#endif
+#पूर्ण_अगर
 
-static void __init of_nomadik_pll_setup(struct device_node *np)
-{
-	struct clk_hw *hw;
-	const char *clk_name = np->name;
-	const char *parent_name;
+अटल व्योम __init of_nomadik_pll_setup(काष्ठा device_node *np)
+अणु
+	काष्ठा clk_hw *hw;
+	स्थिर अक्षर *clk_name = np->name;
+	स्थिर अक्षर *parent_name;
 	u32 pll_id;
 
-	if (!src_base)
+	अगर (!src_base)
 		nomadik_src_init();
 
-	if (of_property_read_u32(np, "pll-id", &pll_id)) {
+	अगर (of_property_पढ़ो_u32(np, "pll-id", &pll_id)) अणु
 		pr_err("%s: PLL \"%s\" missing pll-id property\n",
 			__func__, clk_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 	parent_name = of_clk_get_parent_name(np, 0);
-	hw = pll_clk_register(NULL, clk_name, parent_name, pll_id);
-	if (!IS_ERR(hw))
+	hw = pll_clk_रेजिस्टर(शून्य, clk_name, parent_name, pll_id);
+	अगर (!IS_ERR(hw))
 		of_clk_add_hw_provider(np, of_clk_hw_simple_get, hw);
-}
+पूर्ण
 CLK_OF_DECLARE(nomadik_pll_clk,
 	"st,nomadik-pll-clock", of_nomadik_pll_setup);
 
-static void __init of_nomadik_hclk_setup(struct device_node *np)
-{
-	struct clk_hw *hw;
-	const char *clk_name = np->name;
-	const char *parent_name;
+अटल व्योम __init of_nomadik_hclk_setup(काष्ठा device_node *np)
+अणु
+	काष्ठा clk_hw *hw;
+	स्थिर अक्षर *clk_name = np->name;
+	स्थिर अक्षर *parent_name;
 
-	if (!src_base)
+	अगर (!src_base)
 		nomadik_src_init();
 
 	parent_name = of_clk_get_parent_name(np, 0);
 	/*
-	 * The HCLK divides PLL1 with 1 (passthru), 2, 3 or 4.
+	 * The HCLK भागides PLL1 with 1 (passthru), 2, 3 or 4.
 	 */
-	hw = clk_hw_register_divider(NULL, clk_name, parent_name,
+	hw = clk_hw_रेजिस्टर_भागider(शून्य, clk_name, parent_name,
 			   0, src_base + SRC_CR,
 			   13, 2,
 			   CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
 			   &src_lock);
-	if (!IS_ERR(hw))
+	अगर (!IS_ERR(hw))
 		of_clk_add_hw_provider(np, of_clk_hw_simple_get, hw);
-}
+पूर्ण
 CLK_OF_DECLARE(nomadik_hclk_clk,
 	"st,nomadik-hclk-clock", of_nomadik_hclk_setup);
 
-static void __init of_nomadik_src_clk_setup(struct device_node *np)
-{
-	struct clk_hw *hw;
-	const char *clk_name = np->name;
-	const char *parent_name;
+अटल व्योम __init of_nomadik_src_clk_setup(काष्ठा device_node *np)
+अणु
+	काष्ठा clk_hw *hw;
+	स्थिर अक्षर *clk_name = np->name;
+	स्थिर अक्षर *parent_name;
 	u32 clk_id;
 
-	if (!src_base)
+	अगर (!src_base)
 		nomadik_src_init();
 
-	if (of_property_read_u32(np, "clock-id", &clk_id)) {
+	अगर (of_property_पढ़ो_u32(np, "clock-id", &clk_id)) अणु
 		pr_err("%s: SRC clock \"%s\" missing clock-id property\n",
 			__func__, clk_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 	parent_name = of_clk_get_parent_name(np, 0);
-	hw = src_clk_register(NULL, clk_name, parent_name, clk_id);
-	if (!IS_ERR(hw))
+	hw = src_clk_रेजिस्टर(शून्य, clk_name, parent_name, clk_id);
+	अगर (!IS_ERR(hw))
 		of_clk_add_hw_provider(np, of_clk_hw_simple_get, hw);
-}
+पूर्ण
 CLK_OF_DECLARE(nomadik_src_clk,
 	"st,nomadik-src-clock", of_nomadik_src_clk_setup);

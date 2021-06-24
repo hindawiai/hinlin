@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * ARM PrimeXsys System Controller SP810 header file
  *
@@ -9,54 +10,54 @@
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __AMBA_SP810_H
-#define __AMBA_SP810_H
+#अगर_अघोषित __AMBA_SP810_H
+#घोषणा __AMBA_SP810_H
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-/* sysctl registers offset */
-#define SCCTRL			0x000
-#define SCSYSSTAT		0x004
-#define SCIMCTRL		0x008
-#define SCIMSTAT		0x00C
-#define SCXTALCTRL		0x010
-#define SCPLLCTRL		0x014
-#define SCPLLFCTRL		0x018
-#define SCPERCTRL0		0x01C
-#define SCPERCTRL1		0x020
-#define SCPEREN			0x024
-#define SCPERDIS		0x028
-#define SCPERCLKEN		0x02C
-#define SCPERSTAT		0x030
-#define SCSYSID0		0xEE0
-#define SCSYSID1		0xEE4
-#define SCSYSID2		0xEE8
-#define SCSYSID3		0xEEC
-#define SCITCR			0xF00
-#define SCITIR0			0xF04
-#define SCITIR1			0xF08
-#define SCITOR			0xF0C
-#define SCCNTCTRL		0xF10
-#define SCCNTDATA		0xF14
-#define SCCNTSTEP		0xF18
-#define SCPERIPHID0		0xFE0
-#define SCPERIPHID1		0xFE4
-#define SCPERIPHID2		0xFE8
-#define SCPERIPHID3		0xFEC
-#define SCPCELLID0		0xFF0
-#define SCPCELLID1		0xFF4
-#define SCPCELLID2		0xFF8
-#define SCPCELLID3		0xFFC
+/* sysctl रेजिस्टरs offset */
+#घोषणा SCCTRL			0x000
+#घोषणा SCSYSSTAT		0x004
+#घोषणा SCIMCTRL		0x008
+#घोषणा SCIMSTAT		0x00C
+#घोषणा SCXTALCTRL		0x010
+#घोषणा SCPLLCTRL		0x014
+#घोषणा SCPLLFCTRL		0x018
+#घोषणा SCPERCTRL0		0x01C
+#घोषणा SCPERCTRL1		0x020
+#घोषणा SCPEREN			0x024
+#घोषणा SCPERDIS		0x028
+#घोषणा SCPERCLKEN		0x02C
+#घोषणा SCPERSTAT		0x030
+#घोषणा SCSYSID0		0xEE0
+#घोषणा SCSYSID1		0xEE4
+#घोषणा SCSYSID2		0xEE8
+#घोषणा SCSYSID3		0xEEC
+#घोषणा SCITCR			0xF00
+#घोषणा SCITIR0			0xF04
+#घोषणा SCITIR1			0xF08
+#घोषणा SCITOR			0xF0C
+#घोषणा SCCNTCTRL		0xF10
+#घोषणा SCCNTDATA		0xF14
+#घोषणा SCCNTSTEP		0xF18
+#घोषणा SCPERIPHID0		0xFE0
+#घोषणा SCPERIPHID1		0xFE4
+#घोषणा SCPERIPHID2		0xFE8
+#घोषणा SCPERIPHID3		0xFEC
+#घोषणा SCPCELLID0		0xFF0
+#घोषणा SCPCELLID1		0xFF4
+#घोषणा SCPCELLID2		0xFF8
+#घोषणा SCPCELLID3		0xFFC
 
-#define SCCTRL_TIMERENnSEL_SHIFT(n)	(15 + ((n) * 2))
+#घोषणा SCCTRL_TIMERENnSEL_SHIFT(n)	(15 + ((n) * 2))
 
-static inline void sysctl_soft_reset(void __iomem *base)
-{
-	/* switch to slow mode */
-	writel(0x2, base + SCCTRL);
+अटल अंतरभूत व्योम sysctl_soft_reset(व्योम __iomem *base)
+अणु
+	/* चयन to slow mode */
+	ग_लिखोl(0x2, base + SCCTRL);
 
-	/* writing any value to SCSYSSTAT reg will reset system */
-	writel(0, base + SCSYSSTAT);
-}
+	/* writing any value to SCSYSSTAT reg will reset प्रणाली */
+	ग_लिखोl(0, base + SCSYSSTAT);
+पूर्ण
 
-#endif /* __AMBA_SP810_H */
+#पूर्ण_अगर /* __AMBA_SP810_H */

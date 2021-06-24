@@ -1,632 +1,633 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Sony MemoryStick Pro storage support
  *
  *  Copyright (C) 2007 Alex Dubov <oakad@yahoo.com>
  *
- * Special thanks to Carlos Corbacho for providing various MemoryStick cards
+ * Special thanks to Carlos Corbacho क्रम providing various MemoryStick cards
  * that made this driver possible.
  */
 
-#include <linux/blk-mq.h>
-#include <linux/idr.h>
-#include <linux/hdreg.h>
-#include <linux/kthread.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/memstick.h>
-#include <linux/module.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/memstick.h>
+#समावेश <linux/module.h>
 
-#define DRIVER_NAME "mspro_block"
+#घोषणा DRIVER_NAME "mspro_block"
 
-static int major;
-module_param(major, int, 0644);
+अटल पूर्णांक major;
+module_param(major, पूर्णांक, 0644);
 
-#define MSPRO_BLOCK_MAX_SEGS  32
-#define MSPRO_BLOCK_MAX_PAGES ((2 << 16) - 1)
+#घोषणा MSPRO_BLOCK_MAX_SEGS  32
+#घोषणा MSPRO_BLOCK_MAX_PAGES ((2 << 16) - 1)
 
-#define MSPRO_BLOCK_SIGNATURE        0xa5c3
-#define MSPRO_BLOCK_MAX_ATTRIBUTES   41
+#घोषणा MSPRO_BLOCK_SIGNATURE        0xa5c3
+#घोषणा MSPRO_BLOCK_MAX_ATTRIBUTES   41
 
-#define MSPRO_BLOCK_PART_SHIFT 3
+#घोषणा MSPRO_BLOCK_PART_SHIFT 3
 
-enum {
+क्रमागत अणु
 	MSPRO_BLOCK_ID_SYSINFO         = 0x10,
 	MSPRO_BLOCK_ID_MODELNAME       = 0x15,
 	MSPRO_BLOCK_ID_MBR             = 0x20,
 	MSPRO_BLOCK_ID_PBR16           = 0x21,
 	MSPRO_BLOCK_ID_PBR32           = 0x22,
-	MSPRO_BLOCK_ID_SPECFILEVALUES1 = 0x25,
-	MSPRO_BLOCK_ID_SPECFILEVALUES2 = 0x26,
+	MSPRO_BLOCK_ID_SPECखाताVALUES1 = 0x25,
+	MSPRO_BLOCK_ID_SPECखाताVALUES2 = 0x26,
 	MSPRO_BLOCK_ID_DEVINFO         = 0x30
-};
+पूर्ण;
 
-struct mspro_sys_attr {
-	size_t                  size;
-	void                    *data;
-	unsigned char           id;
-	char                    name[32];
-	struct device_attribute dev_attr;
-};
+काष्ठा mspro_sys_attr अणु
+	माप_प्रकार                  size;
+	व्योम                    *data;
+	अचिन्हित अक्षर           id;
+	अक्षर                    name[32];
+	काष्ठा device_attribute dev_attr;
+पूर्ण;
 
-struct mspro_attr_entry {
+काष्ठा mspro_attr_entry अणु
 	__be32 address;
 	__be32 size;
-	unsigned char id;
-	unsigned char reserved[3];
-} __attribute__((packed));
+	अचिन्हित अक्षर id;
+	अचिन्हित अक्षर reserved[3];
+पूर्ण __attribute__((packed));
 
-struct mspro_attribute {
+काष्ठा mspro_attribute अणु
 	__be16 signature;
-	unsigned short          version;
-	unsigned char           count;
-	unsigned char           reserved[11];
-	struct mspro_attr_entry entries[];
-} __attribute__((packed));
+	अचिन्हित लघु          version;
+	अचिन्हित अक्षर           count;
+	अचिन्हित अक्षर           reserved[11];
+	काष्ठा mspro_attr_entry entries[];
+पूर्ण __attribute__((packed));
 
-struct mspro_sys_info {
-	unsigned char  class;
-	unsigned char  reserved0;
+काष्ठा mspro_sys_info अणु
+	अचिन्हित अक्षर  class;
+	अचिन्हित अक्षर  reserved0;
 	__be16 block_size;
 	__be16 block_count;
 	__be16 user_block_count;
 	__be16 page_size;
-	unsigned char  reserved1[2];
-	unsigned char  assembly_date[8];
+	अचिन्हित अक्षर  reserved1[2];
+	अचिन्हित अक्षर  assembly_date[8];
 	__be32 serial_number;
-	unsigned char  assembly_maker_code;
-	unsigned char  assembly_model_code[3];
+	अचिन्हित अक्षर  assembly_maker_code;
+	अचिन्हित अक्षर  assembly_model_code[3];
 	__be16 memory_maker_code;
 	__be16 memory_model_code;
-	unsigned char  reserved2[4];
-	unsigned char  vcc;
-	unsigned char  vpp;
+	अचिन्हित अक्षर  reserved2[4];
+	अचिन्हित अक्षर  vcc;
+	अचिन्हित अक्षर  vpp;
 	__be16 controller_number;
 	__be16 controller_function;
 	__be16 start_sector;
 	__be16 unit_size;
-	unsigned char  ms_sub_class;
-	unsigned char  reserved3[4];
-	unsigned char  interface_type;
+	अचिन्हित अक्षर  ms_sub_class;
+	अचिन्हित अक्षर  reserved3[4];
+	अचिन्हित अक्षर  पूर्णांकerface_type;
 	__be16 controller_code;
-	unsigned char  format_type;
-	unsigned char  reserved4;
-	unsigned char  device_type;
-	unsigned char  reserved5[7];
-	unsigned char  mspro_id[16];
-	unsigned char  reserved6[16];
-} __attribute__((packed));
+	अचिन्हित अक्षर  क्रमmat_type;
+	अचिन्हित अक्षर  reserved4;
+	अचिन्हित अक्षर  device_type;
+	अचिन्हित अक्षर  reserved5[7];
+	अचिन्हित अक्षर  mspro_id[16];
+	अचिन्हित अक्षर  reserved6[16];
+पूर्ण __attribute__((packed));
 
-struct mspro_mbr {
-	unsigned char boot_partition;
-	unsigned char start_head;
-	unsigned char start_sector;
-	unsigned char start_cylinder;
-	unsigned char partition_type;
-	unsigned char end_head;
-	unsigned char end_sector;
-	unsigned char end_cylinder;
-	unsigned int  start_sectors;
-	unsigned int  sectors_per_partition;
-} __attribute__((packed));
+काष्ठा mspro_mbr अणु
+	अचिन्हित अक्षर boot_partition;
+	अचिन्हित अक्षर start_head;
+	अचिन्हित अक्षर start_sector;
+	अचिन्हित अक्षर start_cylinder;
+	अचिन्हित अक्षर partition_type;
+	अचिन्हित अक्षर end_head;
+	अचिन्हित अक्षर end_sector;
+	अचिन्हित अक्षर end_cylinder;
+	अचिन्हित पूर्णांक  start_sectors;
+	अचिन्हित पूर्णांक  sectors_per_partition;
+पूर्ण __attribute__((packed));
 
-struct mspro_specfile {
-	char           name[8];
-	char           ext[3];
-	unsigned char  attr;
-	unsigned char  reserved[10];
-	unsigned short time;
-	unsigned short date;
-	unsigned short cluster;
-	unsigned int   size;
-} __attribute__((packed));
+काष्ठा mspro_specfile अणु
+	अक्षर           name[8];
+	अक्षर           ext[3];
+	अचिन्हित अक्षर  attr;
+	अचिन्हित अक्षर  reserved[10];
+	अचिन्हित लघु समय;
+	अचिन्हित लघु date;
+	अचिन्हित लघु cluster;
+	अचिन्हित पूर्णांक   size;
+पूर्ण __attribute__((packed));
 
-struct mspro_devinfo {
+काष्ठा mspro_devinfo अणु
 	__be16 cylinders;
 	__be16 heads;
 	__be16 bytes_per_track;
 	__be16 bytes_per_sector;
 	__be16 sectors_per_track;
-	unsigned char  reserved[6];
-} __attribute__((packed));
+	अचिन्हित अक्षर  reserved[6];
+पूर्ण __attribute__((packed));
 
-struct mspro_block_data {
-	struct memstick_dev   *card;
-	unsigned int          usage_count;
-	unsigned int          caps;
-	struct gendisk        *disk;
-	struct request_queue  *queue;
-	struct request        *block_req;
-	struct blk_mq_tag_set tag_set;
+काष्ठा mspro_block_data अणु
+	काष्ठा memstick_dev   *card;
+	अचिन्हित पूर्णांक          usage_count;
+	अचिन्हित पूर्णांक          caps;
+	काष्ठा gendisk        *disk;
+	काष्ठा request_queue  *queue;
+	काष्ठा request        *block_req;
+	काष्ठा blk_mq_tag_set tag_set;
 	spinlock_t            q_lock;
 
-	unsigned short        page_size;
-	unsigned short        cylinders;
-	unsigned short        heads;
-	unsigned short        sectors_per_track;
+	अचिन्हित लघु        page_size;
+	अचिन्हित लघु        cylinders;
+	अचिन्हित लघु        heads;
+	अचिन्हित लघु        sectors_per_track;
 
-	unsigned char         system;
-	unsigned char         read_only:1,
+	अचिन्हित अक्षर         प्रणाली;
+	अचिन्हित अक्षर         पढ़ो_only:1,
 			      eject:1,
 			      data_dir:1,
 			      active:1;
-	unsigned char         transfer_cmd;
+	अचिन्हित अक्षर         transfer_cmd;
 
-	int                   (*mrq_handler)(struct memstick_dev *card,
-					     struct memstick_request **mrq);
+	पूर्णांक                   (*mrq_handler)(काष्ठा memstick_dev *card,
+					     काष्ठा memstick_request **mrq);
 
 
-	/* Default request setup function for data access method preferred by
+	/* Default request setup function क्रम data access method preferred by
 	 * this host instance.
 	 */
-	void                  (*setup_transfer)(struct memstick_dev *card,
-						u64 offset, size_t length);
+	व्योम                  (*setup_transfer)(काष्ठा memstick_dev *card,
+						u64 offset, माप_प्रकार length);
 
-	struct attribute_group attr_group;
+	काष्ठा attribute_group attr_group;
 
-	struct scatterlist    req_sg[MSPRO_BLOCK_MAX_SEGS];
-	unsigned int          seg_count;
-	unsigned int          current_seg;
-	unsigned int          current_page;
-};
+	काष्ठा scatterlist    req_sg[MSPRO_BLOCK_MAX_SEGS];
+	अचिन्हित पूर्णांक          seg_count;
+	अचिन्हित पूर्णांक          current_seg;
+	अचिन्हित पूर्णांक          current_page;
+पूर्ण;
 
-static DEFINE_IDR(mspro_block_disk_idr);
-static DEFINE_MUTEX(mspro_block_disk_lock);
+अटल DEFINE_IDR(mspro_block_disk_idr);
+अटल DEFINE_MUTEX(mspro_block_disk_lock);
 
-static int mspro_block_complete_req(struct memstick_dev *card, int error);
+अटल पूर्णांक mspro_block_complete_req(काष्ठा memstick_dev *card, पूर्णांक error);
 
 /*** Block device ***/
 
-static int mspro_block_bd_open(struct block_device *bdev, fmode_t mode)
-{
-	struct gendisk *disk = bdev->bd_disk;
-	struct mspro_block_data *msb = disk->private_data;
-	int rc = -ENXIO;
+अटल पूर्णांक mspro_block_bd_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा gendisk *disk = bdev->bd_disk;
+	काष्ठा mspro_block_data *msb = disk->निजी_data;
+	पूर्णांक rc = -ENXIO;
 
 	mutex_lock(&mspro_block_disk_lock);
 
-	if (msb && msb->card) {
+	अगर (msb && msb->card) अणु
 		msb->usage_count++;
-		if ((mode & FMODE_WRITE) && msb->read_only)
+		अगर ((mode & FMODE_WRITE) && msb->पढ़ो_only)
 			rc = -EROFS;
-		else
+		अन्यथा
 			rc = 0;
-	}
+	पूर्ण
 
 	mutex_unlock(&mspro_block_disk_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-static void mspro_block_disk_release(struct gendisk *disk)
-{
-	struct mspro_block_data *msb = disk->private_data;
-	int disk_id = MINOR(disk_devt(disk)) >> MSPRO_BLOCK_PART_SHIFT;
+अटल व्योम mspro_block_disk_release(काष्ठा gendisk *disk)
+अणु
+	काष्ठा mspro_block_data *msb = disk->निजी_data;
+	पूर्णांक disk_id = MINOR(disk_devt(disk)) >> MSPRO_BLOCK_PART_SHIFT;
 
 	mutex_lock(&mspro_block_disk_lock);
 
-	if (msb) {
-		if (msb->usage_count)
+	अगर (msb) अणु
+		अगर (msb->usage_count)
 			msb->usage_count--;
 
-		if (!msb->usage_count) {
-			kfree(msb);
-			disk->private_data = NULL;
-			idr_remove(&mspro_block_disk_idr, disk_id);
+		अगर (!msb->usage_count) अणु
+			kमुक्त(msb);
+			disk->निजी_data = शून्य;
+			idr_हटाओ(&mspro_block_disk_idr, disk_id);
 			put_disk(disk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&mspro_block_disk_lock);
-}
+पूर्ण
 
-static void mspro_block_bd_release(struct gendisk *disk, fmode_t mode)
-{
+अटल व्योम mspro_block_bd_release(काष्ठा gendisk *disk, भ_शेषe_t mode)
+अणु
 	mspro_block_disk_release(disk);
-}
+पूर्ण
 
-static int mspro_block_bd_getgeo(struct block_device *bdev,
-				 struct hd_geometry *geo)
-{
-	struct mspro_block_data *msb = bdev->bd_disk->private_data;
+अटल पूर्णांक mspro_block_bd_getgeo(काष्ठा block_device *bdev,
+				 काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा mspro_block_data *msb = bdev->bd_disk->निजी_data;
 
 	geo->heads = msb->heads;
 	geo->sectors = msb->sectors_per_track;
 	geo->cylinders = msb->cylinders;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct block_device_operations ms_block_bdops = {
-	.open    = mspro_block_bd_open,
+अटल स्थिर काष्ठा block_device_operations ms_block_bकरोps = अणु
+	.खोलो    = mspro_block_bd_खोलो,
 	.release = mspro_block_bd_release,
 	.getgeo  = mspro_block_bd_getgeo,
 	.owner   = THIS_MODULE
-};
+पूर्ण;
 
-/*** Information ***/
+/*** Inक्रमmation ***/
 
-static struct mspro_sys_attr *mspro_from_sysfs_attr(struct attribute *attr)
-{
-	struct device_attribute *dev_attr
-		= container_of(attr, struct device_attribute, attr);
-	return container_of(dev_attr, struct mspro_sys_attr, dev_attr);
-}
+अटल काष्ठा mspro_sys_attr *mspro_from_sysfs_attr(काष्ठा attribute *attr)
+अणु
+	काष्ठा device_attribute *dev_attr
+		= container_of(attr, काष्ठा device_attribute, attr);
+	वापस container_of(dev_attr, काष्ठा mspro_sys_attr, dev_attr);
+पूर्ण
 
-static const char *mspro_block_attr_name(unsigned char tag)
-{
-	switch (tag) {
-	case MSPRO_BLOCK_ID_SYSINFO:
-		return "attr_sysinfo";
-	case MSPRO_BLOCK_ID_MODELNAME:
-		return "attr_modelname";
-	case MSPRO_BLOCK_ID_MBR:
-		return "attr_mbr";
-	case MSPRO_BLOCK_ID_PBR16:
-		return "attr_pbr16";
-	case MSPRO_BLOCK_ID_PBR32:
-		return "attr_pbr32";
-	case MSPRO_BLOCK_ID_SPECFILEVALUES1:
-		return "attr_specfilevalues1";
-	case MSPRO_BLOCK_ID_SPECFILEVALUES2:
-		return "attr_specfilevalues2";
-	case MSPRO_BLOCK_ID_DEVINFO:
-		return "attr_devinfo";
-	default:
-		return NULL;
-	}
-}
+अटल स्थिर अक्षर *mspro_block_attr_name(अचिन्हित अक्षर tag)
+अणु
+	चयन (tag) अणु
+	हाल MSPRO_BLOCK_ID_SYSINFO:
+		वापस "attr_sysinfo";
+	हाल MSPRO_BLOCK_ID_MODELNAME:
+		वापस "attr_modelname";
+	हाल MSPRO_BLOCK_ID_MBR:
+		वापस "attr_mbr";
+	हाल MSPRO_BLOCK_ID_PBR16:
+		वापस "attr_pbr16";
+	हाल MSPRO_BLOCK_ID_PBR32:
+		वापस "attr_pbr32";
+	हाल MSPRO_BLOCK_ID_SPECखाताVALUES1:
+		वापस "attr_specfilevalues1";
+	हाल MSPRO_BLOCK_ID_SPECखाताVALUES2:
+		वापस "attr_specfilevalues2";
+	हाल MSPRO_BLOCK_ID_DEVINFO:
+		वापस "attr_devinfo";
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-typedef ssize_t (*sysfs_show_t)(struct device *dev,
-				struct device_attribute *attr,
-				char *buffer);
+प्रकार sमाप_प्रकार (*sysfs_show_t)(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buffer);
 
-static ssize_t mspro_block_attr_show_default(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buffer)
-{
-	struct mspro_sys_attr *s_attr = container_of(attr,
-						     struct mspro_sys_attr,
+अटल sमाप_प्रकार mspro_block_attr_show_शेष(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buffer)
+अणु
+	काष्ठा mspro_sys_attr *s_attr = container_of(attr,
+						     काष्ठा mspro_sys_attr,
 						     dev_attr);
 
-	ssize_t cnt, rc = 0;
+	sमाप_प्रकार cnt, rc = 0;
 
-	for (cnt = 0; cnt < s_attr->size; cnt++) {
-		if (cnt && !(cnt % 16)) {
-			if (PAGE_SIZE - rc)
+	क्रम (cnt = 0; cnt < s_attr->size; cnt++) अणु
+		अगर (cnt && !(cnt % 16)) अणु
+			अगर (PAGE_SIZE - rc)
 				buffer[rc++] = '\n';
-		}
+		पूर्ण
 
-		rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "%02x ",
-				((unsigned char *)s_attr->data)[cnt]);
-	}
-	return rc;
-}
+		rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "%02x ",
+				((अचिन्हित अक्षर *)s_attr->data)[cnt]);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static ssize_t mspro_block_attr_show_sysinfo(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buffer)
-{
-	struct mspro_sys_attr *x_attr = container_of(attr,
-						     struct mspro_sys_attr,
+अटल sमाप_प्रकार mspro_block_attr_show_sysinfo(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buffer)
+अणु
+	काष्ठा mspro_sys_attr *x_attr = container_of(attr,
+						     काष्ठा mspro_sys_attr,
 						     dev_attr);
-	struct mspro_sys_info *x_sys = x_attr->data;
-	ssize_t rc = 0;
-	int date_tz = 0, date_tz_f = 0;
+	काष्ठा mspro_sys_info *x_sys = x_attr->data;
+	sमाप_प्रकार rc = 0;
+	पूर्णांक date_tz = 0, date_tz_f = 0;
 
-	if (x_sys->assembly_date[0] > 0x80U) {
+	अगर (x_sys->assembly_date[0] > 0x80U) अणु
 		date_tz = (~x_sys->assembly_date[0]) + 1;
 		date_tz_f = date_tz & 3;
 		date_tz >>= 2;
 		date_tz = -date_tz;
 		date_tz_f *= 15;
-	} else if (x_sys->assembly_date[0] < 0x80U) {
+	पूर्ण अन्यथा अगर (x_sys->assembly_date[0] < 0x80U) अणु
 		date_tz = x_sys->assembly_date[0];
 		date_tz_f = date_tz & 3;
 		date_tz >>= 2;
 		date_tz_f *= 15;
-	}
+	पूर्ण
 
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "class: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "class: %x\n",
 			x_sys->class);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "block size: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "block size: %x\n",
 			be16_to_cpu(x_sys->block_size));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "block count: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "block count: %x\n",
 			be16_to_cpu(x_sys->block_count));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "user block count: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "user block count: %x\n",
 			be16_to_cpu(x_sys->user_block_count));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "page size: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "page size: %x\n",
 			be16_to_cpu(x_sys->page_size));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "assembly date: "
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "assembly date: "
 			"GMT%+d:%d %04u-%02u-%02u %02u:%02u:%02u\n",
 			date_tz, date_tz_f,
 			be16_to_cpup((__be16 *)&x_sys->assembly_date[1]),
 			x_sys->assembly_date[3], x_sys->assembly_date[4],
 			x_sys->assembly_date[5], x_sys->assembly_date[6],
 			x_sys->assembly_date[7]);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "serial number: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "serial number: %x\n",
 			be32_to_cpu(x_sys->serial_number));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc,
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc,
 			"assembly maker code: %x\n",
 			x_sys->assembly_maker_code);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "assembly model code: "
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "assembly model code: "
 			"%02x%02x%02x\n", x_sys->assembly_model_code[0],
 			x_sys->assembly_model_code[1],
 			x_sys->assembly_model_code[2]);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "memory maker code: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "memory maker code: %x\n",
 			be16_to_cpu(x_sys->memory_maker_code));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "memory model code: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "memory model code: %x\n",
 			be16_to_cpu(x_sys->memory_model_code));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "vcc: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "vcc: %x\n",
 			x_sys->vcc);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "vpp: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "vpp: %x\n",
 			x_sys->vpp);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "controller number: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "controller number: %x\n",
 			be16_to_cpu(x_sys->controller_number));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc,
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc,
 			"controller function: %x\n",
 			be16_to_cpu(x_sys->controller_function));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "start sector: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "start sector: %x\n",
 			be16_to_cpu(x_sys->start_sector));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "unit size: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "unit size: %x\n",
 			be16_to_cpu(x_sys->unit_size));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "sub class: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "sub class: %x\n",
 			x_sys->ms_sub_class);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "interface type: %x\n",
-			x_sys->interface_type);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "controller code: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "interface type: %x\n",
+			x_sys->पूर्णांकerface_type);
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "controller code: %x\n",
 			be16_to_cpu(x_sys->controller_code));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "format type: %x\n",
-			x_sys->format_type);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "device type: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "format type: %x\n",
+			x_sys->क्रमmat_type);
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "device type: %x\n",
 			x_sys->device_type);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "mspro id: %s\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "mspro id: %s\n",
 			x_sys->mspro_id);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t mspro_block_attr_show_modelname(struct device *dev,
-					       struct device_attribute *attr,
-					       char *buffer)
-{
-	struct mspro_sys_attr *s_attr = container_of(attr,
-						     struct mspro_sys_attr,
+अटल sमाप_प्रकार mspro_block_attr_show_modelname(काष्ठा device *dev,
+					       काष्ठा device_attribute *attr,
+					       अक्षर *buffer)
+अणु
+	काष्ठा mspro_sys_attr *s_attr = container_of(attr,
+						     काष्ठा mspro_sys_attr,
 						     dev_attr);
 
-	return scnprintf(buffer, PAGE_SIZE, "%s", (char *)s_attr->data);
-}
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s", (अक्षर *)s_attr->data);
+पूर्ण
 
-static ssize_t mspro_block_attr_show_mbr(struct device *dev,
-					 struct device_attribute *attr,
-					 char *buffer)
-{
-	struct mspro_sys_attr *x_attr = container_of(attr,
-						     struct mspro_sys_attr,
+अटल sमाप_प्रकार mspro_block_attr_show_mbr(काष्ठा device *dev,
+					 काष्ठा device_attribute *attr,
+					 अक्षर *buffer)
+अणु
+	काष्ठा mspro_sys_attr *x_attr = container_of(attr,
+						     काष्ठा mspro_sys_attr,
 						     dev_attr);
-	struct mspro_mbr *x_mbr = x_attr->data;
-	ssize_t rc = 0;
+	काष्ठा mspro_mbr *x_mbr = x_attr->data;
+	sमाप_प्रकार rc = 0;
 
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "boot partition: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "boot partition: %x\n",
 			x_mbr->boot_partition);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "start head: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "start head: %x\n",
 			x_mbr->start_head);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "start sector: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "start sector: %x\n",
 			x_mbr->start_sector);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "start cylinder: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "start cylinder: %x\n",
 			x_mbr->start_cylinder);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "partition type: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "partition type: %x\n",
 			x_mbr->partition_type);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "end head: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "end head: %x\n",
 			x_mbr->end_head);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "end sector: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "end sector: %x\n",
 			x_mbr->end_sector);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "end cylinder: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "end cylinder: %x\n",
 			x_mbr->end_cylinder);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "start sectors: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "start sectors: %x\n",
 			x_mbr->start_sectors);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc,
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc,
 			"sectors per partition: %x\n",
 			x_mbr->sectors_per_partition);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t mspro_block_attr_show_specfile(struct device *dev,
-					      struct device_attribute *attr,
-					      char *buffer)
-{
-	struct mspro_sys_attr *x_attr = container_of(attr,
-						     struct mspro_sys_attr,
+अटल sमाप_प्रकार mspro_block_attr_show_specfile(काष्ठा device *dev,
+					      काष्ठा device_attribute *attr,
+					      अक्षर *buffer)
+अणु
+	काष्ठा mspro_sys_attr *x_attr = container_of(attr,
+						     काष्ठा mspro_sys_attr,
 						     dev_attr);
-	struct mspro_specfile *x_spfile = x_attr->data;
-	char name[9], ext[4];
-	ssize_t rc = 0;
+	काष्ठा mspro_specfile *x_spfile = x_attr->data;
+	अक्षर name[9], ext[4];
+	sमाप_प्रकार rc = 0;
 
-	memcpy(name, x_spfile->name, 8);
+	स_नकल(name, x_spfile->name, 8);
 	name[8] = 0;
-	memcpy(ext, x_spfile->ext, 3);
+	स_नकल(ext, x_spfile->ext, 3);
 	ext[3] = 0;
 
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "name: %s\n", name);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "ext: %s\n", ext);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "attribute: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "name: %s\n", name);
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "ext: %s\n", ext);
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "attribute: %x\n",
 			x_spfile->attr);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "time: %d:%d:%d\n",
-			x_spfile->time >> 11,
-			(x_spfile->time >> 5) & 0x3f,
-			(x_spfile->time & 0x1f) * 2);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "date: %d-%d-%d\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "time: %d:%d:%d\n",
+			x_spfile->समय >> 11,
+			(x_spfile->समय >> 5) & 0x3f,
+			(x_spfile->समय & 0x1f) * 2);
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "date: %d-%d-%d\n",
 			(x_spfile->date >> 9) + 1980,
 			(x_spfile->date >> 5) & 0xf,
 			x_spfile->date & 0x1f);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "start cluster: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "start cluster: %x\n",
 			x_spfile->cluster);
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "size: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "size: %x\n",
 			x_spfile->size);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t mspro_block_attr_show_devinfo(struct device *dev,
-					     struct device_attribute *attr,
-					     char *buffer)
-{
-	struct mspro_sys_attr *x_attr = container_of(attr,
-						     struct mspro_sys_attr,
+अटल sमाप_प्रकार mspro_block_attr_show_devinfo(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *buffer)
+अणु
+	काष्ठा mspro_sys_attr *x_attr = container_of(attr,
+						     काष्ठा mspro_sys_attr,
 						     dev_attr);
-	struct mspro_devinfo *x_devinfo = x_attr->data;
-	ssize_t rc = 0;
+	काष्ठा mspro_devinfo *x_devinfo = x_attr->data;
+	sमाप_प्रकार rc = 0;
 
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "cylinders: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "cylinders: %x\n",
 			be16_to_cpu(x_devinfo->cylinders));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "heads: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "heads: %x\n",
 			be16_to_cpu(x_devinfo->heads));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "bytes per track: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "bytes per track: %x\n",
 			be16_to_cpu(x_devinfo->bytes_per_track));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "bytes per sector: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "bytes per sector: %x\n",
 			be16_to_cpu(x_devinfo->bytes_per_sector));
-	rc += scnprintf(buffer + rc, PAGE_SIZE - rc, "sectors per track: %x\n",
+	rc += scnम_लिखो(buffer + rc, PAGE_SIZE - rc, "sectors per track: %x\n",
 			be16_to_cpu(x_devinfo->sectors_per_track));
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static sysfs_show_t mspro_block_attr_show(unsigned char tag)
-{
-	switch (tag) {
-	case MSPRO_BLOCK_ID_SYSINFO:
-		return mspro_block_attr_show_sysinfo;
-	case MSPRO_BLOCK_ID_MODELNAME:
-		return mspro_block_attr_show_modelname;
-	case MSPRO_BLOCK_ID_MBR:
-		return mspro_block_attr_show_mbr;
-	case MSPRO_BLOCK_ID_SPECFILEVALUES1:
-	case MSPRO_BLOCK_ID_SPECFILEVALUES2:
-		return mspro_block_attr_show_specfile;
-	case MSPRO_BLOCK_ID_DEVINFO:
-		return mspro_block_attr_show_devinfo;
-	default:
-		return mspro_block_attr_show_default;
-	}
-}
+अटल sysfs_show_t mspro_block_attr_show(अचिन्हित अक्षर tag)
+अणु
+	चयन (tag) अणु
+	हाल MSPRO_BLOCK_ID_SYSINFO:
+		वापस mspro_block_attr_show_sysinfo;
+	हाल MSPRO_BLOCK_ID_MODELNAME:
+		वापस mspro_block_attr_show_modelname;
+	हाल MSPRO_BLOCK_ID_MBR:
+		वापस mspro_block_attr_show_mbr;
+	हाल MSPRO_BLOCK_ID_SPECखाताVALUES1:
+	हाल MSPRO_BLOCK_ID_SPECखाताVALUES2:
+		वापस mspro_block_attr_show_specfile;
+	हाल MSPRO_BLOCK_ID_DEVINFO:
+		वापस mspro_block_attr_show_devinfo;
+	शेष:
+		वापस mspro_block_attr_show_शेष;
+	पूर्ण
+पूर्ण
 
 /*** Protocol handlers ***/
 
 /*
  * Functions prefixed with "h_" are protocol callbacks. They can be called from
- * interrupt context. Return value of 0 means that request processing is still
- * ongoing, while special error value of -EAGAIN means that current request is
- * finished (and request processor should come back some time later).
+ * पूर्णांकerrupt context. Return value of 0 means that request processing is still
+ * ongoing, जबतक special error value of -EAGAIN means that current request is
+ * finished (and request processor should come back some समय later).
  */
 
-static int h_mspro_block_req_init(struct memstick_dev *card,
-				  struct memstick_request **mrq)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
+अटल पूर्णांक h_mspro_block_req_init(काष्ठा memstick_dev *card,
+				  काष्ठा memstick_request **mrq)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
 
 	*mrq = &card->current_mrq;
 	card->next_request = msb->mrq_handler;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int h_mspro_block_default(struct memstick_dev *card,
-				 struct memstick_request **mrq)
-{
-	return mspro_block_complete_req(card, (*mrq)->error);
-}
+अटल पूर्णांक h_mspro_block_शेष(काष्ठा memstick_dev *card,
+				 काष्ठा memstick_request **mrq)
+अणु
+	वापस mspro_block_complete_req(card, (*mrq)->error);
+पूर्ण
 
-static int h_mspro_block_default_bad(struct memstick_dev *card,
-				     struct memstick_request **mrq)
-{
-	return -ENXIO;
-}
+अटल पूर्णांक h_mspro_block_शेष_bad(काष्ठा memstick_dev *card,
+				     काष्ठा memstick_request **mrq)
+अणु
+	वापस -ENXIO;
+पूर्ण
 
-static int h_mspro_block_get_ro(struct memstick_dev *card,
-				struct memstick_request **mrq)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
+अटल पूर्णांक h_mspro_block_get_ro(काष्ठा memstick_dev *card,
+				काष्ठा memstick_request **mrq)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
 
-	if (!(*mrq)->error) {
-		if ((*mrq)->data[offsetof(struct ms_status_register, status0)]
+	अगर (!(*mrq)->error) अणु
+		अगर ((*mrq)->data[दुरत्व(काष्ठा ms_status_रेजिस्टर, status0)]
 		    & MEMSTICK_STATUS0_WP)
-			msb->read_only = 1;
-		else
-			msb->read_only = 0;
-	}
+			msb->पढ़ो_only = 1;
+		अन्यथा
+			msb->पढ़ो_only = 0;
+	पूर्ण
 
-	return mspro_block_complete_req(card, (*mrq)->error);
-}
+	वापस mspro_block_complete_req(card, (*mrq)->error);
+पूर्ण
 
-static int h_mspro_block_wait_for_ced(struct memstick_dev *card,
-				      struct memstick_request **mrq)
-{
+अटल पूर्णांक h_mspro_block_रुको_क्रम_ced(काष्ठा memstick_dev *card,
+				      काष्ठा memstick_request **mrq)
+अणु
 	dev_dbg(&card->dev, "wait for ced: value %x\n", (*mrq)->data[0]);
 
-	if (!(*mrq)->error) {
-		if ((*mrq)->data[0] & (MEMSTICK_INT_CMDNAK | MEMSTICK_INT_ERR))
+	अगर (!(*mrq)->error) अणु
+		अगर ((*mrq)->data[0] & (MEMSTICK_INT_CMDNAK | MEMSTICK_INT_ERR))
 			(*mrq)->error = -EFAULT;
-		else if (!((*mrq)->data[0] & MEMSTICK_INT_CED))
-			return 0;
-	}
+		अन्यथा अगर (!((*mrq)->data[0] & MEMSTICK_INT_CED))
+			वापस 0;
+	पूर्ण
 
-	return mspro_block_complete_req(card, (*mrq)->error);
-}
+	वापस mspro_block_complete_req(card, (*mrq)->error);
+पूर्ण
 
-static int h_mspro_block_transfer_data(struct memstick_dev *card,
-				       struct memstick_request **mrq)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	unsigned char t_val = 0;
-	struct scatterlist t_sg = { 0 };
-	size_t t_offset;
+अटल पूर्णांक h_mspro_block_transfer_data(काष्ठा memstick_dev *card,
+				       काष्ठा memstick_request **mrq)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	अचिन्हित अक्षर t_val = 0;
+	काष्ठा scatterlist t_sg = अणु 0 पूर्ण;
+	माप_प्रकार t_offset;
 
-	if ((*mrq)->error)
-		return mspro_block_complete_req(card, (*mrq)->error);
+	अगर ((*mrq)->error)
+		वापस mspro_block_complete_req(card, (*mrq)->error);
 
-	switch ((*mrq)->tpc) {
-	case MS_TPC_WRITE_REG:
+	चयन ((*mrq)->tpc) अणु
+	हाल MS_TPC_WRITE_REG:
 		memstick_init_req(*mrq, MS_TPC_SET_CMD, &msb->transfer_cmd, 1);
-		(*mrq)->need_card_int = 1;
-		return 0;
-	case MS_TPC_SET_CMD:
-		t_val = (*mrq)->int_reg;
-		memstick_init_req(*mrq, MS_TPC_GET_INT, NULL, 1);
-		if (msb->caps & MEMSTICK_CAP_AUTO_GET_INT)
-			goto has_int_reg;
-		return 0;
-	case MS_TPC_GET_INT:
+		(*mrq)->need_card_पूर्णांक = 1;
+		वापस 0;
+	हाल MS_TPC_SET_CMD:
+		t_val = (*mrq)->पूर्णांक_reg;
+		memstick_init_req(*mrq, MS_TPC_GET_INT, शून्य, 1);
+		अगर (msb->caps & MEMSTICK_CAP_AUTO_GET_INT)
+			जाओ has_पूर्णांक_reg;
+		वापस 0;
+	हाल MS_TPC_GET_INT:
 		t_val = (*mrq)->data[0];
-has_int_reg:
-		if (t_val & (MEMSTICK_INT_CMDNAK | MEMSTICK_INT_ERR)) {
+has_पूर्णांक_reg:
+		अगर (t_val & (MEMSTICK_INT_CMDNAK | MEMSTICK_INT_ERR)) अणु
 			t_val = MSPRO_CMD_STOP;
 			memstick_init_req(*mrq, MS_TPC_SET_CMD, &t_val, 1);
-			card->next_request = h_mspro_block_default;
-			return 0;
-		}
+			card->next_request = h_mspro_block_शेष;
+			वापस 0;
+		पूर्ण
 
-		if (msb->current_page
+		अगर (msb->current_page
 		    == (msb->req_sg[msb->current_seg].length
-			/ msb->page_size)) {
+			/ msb->page_size)) अणु
 			msb->current_page = 0;
 			msb->current_seg++;
 
-			if (msb->current_seg == msb->seg_count) {
-				if (t_val & MEMSTICK_INT_CED) {
-					return mspro_block_complete_req(card,
+			अगर (msb->current_seg == msb->seg_count) अणु
+				अगर (t_val & MEMSTICK_INT_CED) अणु
+					वापस mspro_block_complete_req(card,
 									0);
-				} else {
+				पूर्ण अन्यथा अणु
 					card->next_request
-						= h_mspro_block_wait_for_ced;
+						= h_mspro_block_रुको_क्रम_ced;
 					memstick_init_req(*mrq, MS_TPC_GET_INT,
-							  NULL, 1);
-					return 0;
-				}
-			}
-		}
+							  शून्य, 1);
+					वापस 0;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (!(t_val & MEMSTICK_INT_BREQ)) {
-			memstick_init_req(*mrq, MS_TPC_GET_INT, NULL, 1);
-			return 0;
-		}
+		अगर (!(t_val & MEMSTICK_INT_BREQ)) अणु
+			memstick_init_req(*mrq, MS_TPC_GET_INT, शून्य, 1);
+			वापस 0;
+		पूर्ण
 
 		t_offset = msb->req_sg[msb->current_seg].offset;
 		t_offset += msb->current_page * msb->page_size;
@@ -640,83 +641,83 @@ has_int_reg:
 					   ? MS_TPC_READ_LONG_DATA
 					   : MS_TPC_WRITE_LONG_DATA,
 				     &t_sg);
-		(*mrq)->need_card_int = 1;
-		return 0;
-	case MS_TPC_READ_LONG_DATA:
-	case MS_TPC_WRITE_LONG_DATA:
+		(*mrq)->need_card_पूर्णांक = 1;
+		वापस 0;
+	हाल MS_TPC_READ_LONG_DATA:
+	हाल MS_TPC_WRITE_LONG_DATA:
 		msb->current_page++;
-		if (msb->caps & MEMSTICK_CAP_AUTO_GET_INT) {
-			t_val = (*mrq)->int_reg;
-			goto has_int_reg;
-		} else {
-			memstick_init_req(*mrq, MS_TPC_GET_INT, NULL, 1);
-			return 0;
-		}
+		अगर (msb->caps & MEMSTICK_CAP_AUTO_GET_INT) अणु
+			t_val = (*mrq)->पूर्णांक_reg;
+			जाओ has_पूर्णांक_reg;
+		पूर्ण अन्यथा अणु
+			memstick_init_req(*mrq, MS_TPC_GET_INT, शून्य, 1);
+			वापस 0;
+		पूर्ण
 
-	default:
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-/*** Transfer setup functions for different access methods. ***/
+/*** Transfer setup functions क्रम dअगरferent access methods. ***/
 
-/** Setup data transfer request for SET_CMD TPC with arguments in card
- *  registers.
+/** Setup data transfer request क्रम SET_CMD TPC with arguments in card
+ *  रेजिस्टरs.
  *
  *  @card    Current media instance
  *  @offset  Target data offset in bytes
  *  @length  Required transfer length in bytes.
  */
-static void h_mspro_block_setup_cmd(struct memstick_dev *card, u64 offset,
-				    size_t length)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	struct mspro_param_register param = {
-		.system = msb->system,
-		.data_count = cpu_to_be16((uint16_t)(length / msb->page_size)),
-		/* ISO C90 warning precludes direct initialization for now. */
+अटल व्योम h_mspro_block_setup_cmd(काष्ठा memstick_dev *card, u64 offset,
+				    माप_प्रकार length)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	काष्ठा mspro_param_रेजिस्टर param = अणु
+		.प्रणाली = msb->प्रणाली,
+		.data_count = cpu_to_be16((uपूर्णांक16_t)(length / msb->page_size)),
+		/* ISO C90 warning precludes direct initialization क्रम now. */
 		.data_address = 0,
 		.tpc_param = 0
-	};
+	पूर्ण;
 
-	do_div(offset, msb->page_size);
-	param.data_address = cpu_to_be32((uint32_t)offset);
+	करो_भाग(offset, msb->page_size);
+	param.data_address = cpu_to_be32((uपूर्णांक32_t)offset);
 
 	card->next_request = h_mspro_block_req_init;
 	msb->mrq_handler = h_mspro_block_transfer_data;
 	memstick_init_req(&card->current_mrq, MS_TPC_WRITE_REG,
-			  &param, sizeof(param));
-}
+			  &param, माप(param));
+पूर्ण
 
 /*** Data transfer ***/
 
-static int mspro_block_issue_req(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
+अटल पूर्णांक mspro_block_issue_req(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
 	u64 t_off;
-	unsigned int count;
+	अचिन्हित पूर्णांक count;
 
-	while (true) {
+	जबतक (true) अणु
 		msb->current_page = 0;
 		msb->current_seg = 0;
 		msb->seg_count = blk_rq_map_sg(msb->block_req->q,
 					       msb->block_req,
 					       msb->req_sg);
 
-		if (!msb->seg_count) {
-			unsigned int bytes = blk_rq_cur_bytes(msb->block_req);
+		अगर (!msb->seg_count) अणु
+			अचिन्हित पूर्णांक bytes = blk_rq_cur_bytes(msb->block_req);
 			bool chunk;
 
 			chunk = blk_update_request(msb->block_req,
 							BLK_STS_RESOURCE,
 							bytes);
-			if (chunk)
-				continue;
+			अगर (chunk)
+				जारी;
 			__blk_mq_end_request(msb->block_req,
 						BLK_STS_RESOURCE);
-			msb->block_req = NULL;
-			return -EAGAIN;
-		}
+			msb->block_req = शून्य;
+			वापस -EAGAIN;
+		पूर्ण
 
 		t_off = blk_rq_pos(msb->block_req);
 		t_off <<= 9;
@@ -730,259 +731,259 @@ static int mspro_block_issue_req(struct memstick_dev *card)
 				    : MSPRO_CMD_WRITE_DATA;
 
 		memstick_new_req(card->host);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int mspro_block_complete_req(struct memstick_dev *card, int error)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	int cnt;
+अटल पूर्णांक mspro_block_complete_req(काष्ठा memstick_dev *card, पूर्णांक error)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	पूर्णांक cnt;
 	bool chunk;
-	unsigned int t_len = 0;
-	unsigned long flags;
+	अचिन्हित पूर्णांक t_len = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&msb->q_lock, flags);
 	dev_dbg(&card->dev, "complete %d, %d\n", msb->block_req ? 1 : 0,
 		error);
 
-	if (msb->block_req) {
-		/* Nothing to do - not really an error */
-		if (error == -EAGAIN)
+	अगर (msb->block_req) अणु
+		/* Nothing to करो - not really an error */
+		अगर (error == -EAGAIN)
 			error = 0;
 
-		if (error || (card->current_mrq.tpc == MSPRO_CMD_STOP)) {
-			if (msb->data_dir == READ) {
-				for (cnt = 0; cnt < msb->current_seg; cnt++) {
+		अगर (error || (card->current_mrq.tpc == MSPRO_CMD_STOP)) अणु
+			अगर (msb->data_dir == READ) अणु
+				क्रम (cnt = 0; cnt < msb->current_seg; cnt++) अणु
 					t_len += msb->req_sg[cnt].length
 						 / msb->page_size;
 
-					if (msb->current_page)
+					अगर (msb->current_page)
 						t_len += msb->current_page - 1;
 
 					t_len *= msb->page_size;
-				}
-			}
-		} else
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा
 			t_len = blk_rq_bytes(msb->block_req);
 
 		dev_dbg(&card->dev, "transferred %x (%d)\n", t_len, error);
 
-		if (error && !t_len)
+		अगर (error && !t_len)
 			t_len = blk_rq_cur_bytes(msb->block_req);
 
 		chunk = blk_update_request(msb->block_req,
-				errno_to_blk_status(error), t_len);
-		if (chunk) {
+				त्रुटि_सं_to_blk_status(error), t_len);
+		अगर (chunk) अणु
 			error = mspro_block_issue_req(card);
-			if (!error)
-				goto out;
-		} else {
+			अगर (!error)
+				जाओ out;
+		पूर्ण अन्यथा अणु
 			__blk_mq_end_request(msb->block_req,
-						errno_to_blk_status(error));
-			msb->block_req = NULL;
-		}
-	} else {
-		if (!error)
+						त्रुटि_सं_to_blk_status(error));
+			msb->block_req = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!error)
 			error = -EAGAIN;
-	}
+	पूर्ण
 
-	card->next_request = h_mspro_block_default_bad;
+	card->next_request = h_mspro_block_शेष_bad;
 	complete_all(&card->mrq_complete);
 out:
 	spin_unlock_irqrestore(&msb->q_lock, flags);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void mspro_block_stop(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	int rc = 0;
-	unsigned long flags;
+अटल व्योम mspro_block_stop(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	पूर्णांक rc = 0;
+	अचिन्हित दीर्घ flags;
 
-	while (1) {
+	जबतक (1) अणु
 		spin_lock_irqsave(&msb->q_lock, flags);
-		if (!msb->block_req) {
+		अगर (!msb->block_req) अणु
 			blk_mq_stop_hw_queues(msb->queue);
 			rc = 1;
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&msb->q_lock, flags);
 
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 
-		wait_for_completion(&card->mrq_complete);
-	}
-}
+		रुको_क्रम_completion(&card->mrq_complete);
+	पूर्ण
+पूर्ण
 
-static void mspro_block_start(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
+अटल व्योम mspro_block_start(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
 
 	blk_mq_start_hw_queues(msb->queue);
-}
+पूर्ण
 
-static blk_status_t mspro_queue_rq(struct blk_mq_hw_ctx *hctx,
-				   const struct blk_mq_queue_data *bd)
-{
-	struct memstick_dev *card = hctx->queue->queuedata;
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
+अटल blk_status_t mspro_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+				   स्थिर काष्ठा blk_mq_queue_data *bd)
+अणु
+	काष्ठा memstick_dev *card = hctx->queue->queuedata;
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
 
 	spin_lock_irq(&msb->q_lock);
 
-	if (msb->block_req) {
+	अगर (msb->block_req) अणु
 		spin_unlock_irq(&msb->q_lock);
-		return BLK_STS_DEV_RESOURCE;
-	}
+		वापस BLK_STS_DEV_RESOURCE;
+	पूर्ण
 
-	if (msb->eject) {
+	अगर (msb->eject) अणु
 		spin_unlock_irq(&msb->q_lock);
 		blk_mq_start_request(bd->rq);
-		return BLK_STS_IOERR;
-	}
+		वापस BLK_STS_IOERR;
+	पूर्ण
 
 	msb->block_req = bd->rq;
 	blk_mq_start_request(bd->rq);
 
-	if (mspro_block_issue_req(card))
-		msb->block_req = NULL;
+	अगर (mspro_block_issue_req(card))
+		msb->block_req = शून्य;
 
 	spin_unlock_irq(&msb->q_lock);
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
 /*** Initialization ***/
 
-static int mspro_block_wait_for_ced(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
+अटल पूर्णांक mspro_block_रुको_क्रम_ced(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
 
 	card->next_request = h_mspro_block_req_init;
-	msb->mrq_handler = h_mspro_block_wait_for_ced;
-	memstick_init_req(&card->current_mrq, MS_TPC_GET_INT, NULL, 1);
+	msb->mrq_handler = h_mspro_block_रुको_क्रम_ced;
+	memstick_init_req(&card->current_mrq, MS_TPC_GET_INT, शून्य, 1);
 	memstick_new_req(card->host);
-	wait_for_completion(&card->mrq_complete);
-	return card->current_mrq.error;
-}
+	रुको_क्रम_completion(&card->mrq_complete);
+	वापस card->current_mrq.error;
+पूर्ण
 
-static int mspro_block_set_interface(struct memstick_dev *card,
-				     unsigned char sys_reg)
-{
-	struct memstick_host *host = card->host;
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	struct mspro_param_register param = {
-		.system = sys_reg,
+अटल पूर्णांक mspro_block_set_पूर्णांकerface(काष्ठा memstick_dev *card,
+				     अचिन्हित अक्षर sys_reg)
+अणु
+	काष्ठा memstick_host *host = card->host;
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	काष्ठा mspro_param_रेजिस्टर param = अणु
+		.प्रणाली = sys_reg,
 		.data_count = 0,
 		.data_address = 0,
 		.tpc_param = 0
-	};
+	पूर्ण;
 
 	card->next_request = h_mspro_block_req_init;
-	msb->mrq_handler = h_mspro_block_default;
+	msb->mrq_handler = h_mspro_block_शेष;
 	memstick_init_req(&card->current_mrq, MS_TPC_WRITE_REG, &param,
-			  sizeof(param));
+			  माप(param));
 	memstick_new_req(host);
-	wait_for_completion(&card->mrq_complete);
-	return card->current_mrq.error;
-}
+	रुको_क्रम_completion(&card->mrq_complete);
+	वापस card->current_mrq.error;
+पूर्ण
 
-static int mspro_block_switch_interface(struct memstick_dev *card)
-{
-	struct memstick_host *host = card->host;
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	int rc = 0;
+अटल पूर्णांक mspro_block_चयन_पूर्णांकerface(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा memstick_host *host = card->host;
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	पूर्णांक rc = 0;
 
 try_again:
-	if (msb->caps & MEMSTICK_CAP_PAR4)
-		rc = mspro_block_set_interface(card, MEMSTICK_SYS_PAR4);
-	else
-		return 0;
+	अगर (msb->caps & MEMSTICK_CAP_PAR4)
+		rc = mspro_block_set_पूर्णांकerface(card, MEMSTICK_SYS_PAR4);
+	अन्यथा
+		वापस 0;
 
-	if (rc) {
-		printk(KERN_WARNING
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: could not switch to 4-bit mode, error %d\n",
 		       dev_name(&card->dev), rc);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	msb->system = MEMSTICK_SYS_PAR4;
+	msb->प्रणाली = MEMSTICK_SYS_PAR4;
 	host->set_param(host, MEMSTICK_INTERFACE, MEMSTICK_PAR4);
-	printk(KERN_INFO "%s: switching to 4-bit parallel mode\n",
+	prपूर्णांकk(KERN_INFO "%s: switching to 4-bit parallel mode\n",
 	       dev_name(&card->dev));
 
-	if (msb->caps & MEMSTICK_CAP_PAR8) {
-		rc = mspro_block_set_interface(card, MEMSTICK_SYS_PAR8);
+	अगर (msb->caps & MEMSTICK_CAP_PAR8) अणु
+		rc = mspro_block_set_पूर्णांकerface(card, MEMSTICK_SYS_PAR8);
 
-		if (!rc) {
-			msb->system = MEMSTICK_SYS_PAR8;
+		अगर (!rc) अणु
+			msb->प्रणाली = MEMSTICK_SYS_PAR8;
 			host->set_param(host, MEMSTICK_INTERFACE,
 					MEMSTICK_PAR8);
-			printk(KERN_INFO
+			prपूर्णांकk(KERN_INFO
 			       "%s: switching to 8-bit parallel mode\n",
 			       dev_name(&card->dev));
-		} else
-			printk(KERN_WARNING
+		पूर्ण अन्यथा
+			prपूर्णांकk(KERN_WARNING
 			       "%s: could not switch to 8-bit mode, error %d\n",
 			       dev_name(&card->dev), rc);
-	}
+	पूर्ण
 
 	card->next_request = h_mspro_block_req_init;
-	msb->mrq_handler = h_mspro_block_default;
-	memstick_init_req(&card->current_mrq, MS_TPC_GET_INT, NULL, 1);
+	msb->mrq_handler = h_mspro_block_शेष;
+	memstick_init_req(&card->current_mrq, MS_TPC_GET_INT, शून्य, 1);
 	memstick_new_req(card->host);
-	wait_for_completion(&card->mrq_complete);
+	रुको_क्रम_completion(&card->mrq_complete);
 	rc = card->current_mrq.error;
 
-	if (rc) {
-		printk(KERN_WARNING
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "%s: interface error, trying to fall back to serial\n",
 		       dev_name(&card->dev));
-		msb->system = MEMSTICK_SYS_SERIAL;
+		msb->प्रणाली = MEMSTICK_SYS_SERIAL;
 		host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_OFF);
 		msleep(10);
 		host->set_param(host, MEMSTICK_POWER, MEMSTICK_POWER_ON);
 		host->set_param(host, MEMSTICK_INTERFACE, MEMSTICK_SERIAL);
 
 		rc = memstick_set_rw_addr(card);
-		if (!rc)
-			rc = mspro_block_set_interface(card, msb->system);
+		अगर (!rc)
+			rc = mspro_block_set_पूर्णांकerface(card, msb->प्रणाली);
 
-		if (!rc) {
+		अगर (!rc) अणु
 			msleep(150);
-			rc = mspro_block_wait_for_ced(card);
-			if (rc)
-				return rc;
+			rc = mspro_block_रुको_क्रम_ced(card);
+			अगर (rc)
+				वापस rc;
 
-			if (msb->caps & MEMSTICK_CAP_PAR8) {
+			अगर (msb->caps & MEMSTICK_CAP_PAR8) अणु
 				msb->caps &= ~MEMSTICK_CAP_PAR8;
-				goto try_again;
-			}
-		}
-	}
-	return rc;
-}
+				जाओ try_again;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-/* Memory allocated for attributes by this function should be freed by
- * mspro_block_data_clear, no matter if the initialization process succeeded
+/* Memory allocated क्रम attributes by this function should be मुक्तd by
+ * mspro_block_data_clear, no matter अगर the initialization process succeeded
  * or failed.
  */
-static int mspro_block_read_attributes(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	struct mspro_attribute *attr = NULL;
-	struct mspro_sys_attr *s_attr = NULL;
-	unsigned char *buffer = NULL;
-	int cnt, rc, attr_count;
+अटल पूर्णांक mspro_block_पढ़ो_attributes(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	काष्ठा mspro_attribute *attr = शून्य;
+	काष्ठा mspro_sys_attr *s_attr = शून्य;
+	अचिन्हित अक्षर *buffer = शून्य;
+	पूर्णांक cnt, rc, attr_count;
 	/* While normally physical device offsets, represented here by
 	 * attr_offset and attr_len will be of large numeric types, we can be
-	 * sure, that attributes are close enough to the beginning of the
+	 * sure, that attributes are बंद enough to the beginning of the
 	 * device, to save ourselves some trouble.
 	 */
-	unsigned int addr, attr_offset = 0, attr_len = msb->page_size;
+	अचिन्हित पूर्णांक addr, attr_offset = 0, attr_len = msb->page_size;
 
-	attr = kmalloc(msb->page_size, GFP_KERNEL);
-	if (!attr)
-		return -ENOMEM;
+	attr = kदो_स्मृति(msb->page_size, GFP_KERNEL);
+	अगर (!attr)
+		वापस -ENOMEM;
 
 	sg_init_one(&msb->req_sg[0], attr, msb->page_size);
 	msb->seg_count = 1;
@@ -994,47 +995,47 @@ static int mspro_block_read_attributes(struct memstick_dev *card)
 	msb->setup_transfer(card, attr_offset, attr_len);
 
 	memstick_new_req(card->host);
-	wait_for_completion(&card->mrq_complete);
-	if (card->current_mrq.error) {
+	रुको_क्रम_completion(&card->mrq_complete);
+	अगर (card->current_mrq.error) अणु
 		rc = card->current_mrq.error;
-		goto out_free_attr;
-	}
+		जाओ out_मुक्त_attr;
+	पूर्ण
 
-	if (be16_to_cpu(attr->signature) != MSPRO_BLOCK_SIGNATURE) {
-		printk(KERN_ERR "%s: unrecognized device signature %x\n",
+	अगर (be16_to_cpu(attr->signature) != MSPRO_BLOCK_SIGNATURE) अणु
+		prपूर्णांकk(KERN_ERR "%s: unrecognized device signature %x\n",
 		       dev_name(&card->dev), be16_to_cpu(attr->signature));
 		rc = -ENODEV;
-		goto out_free_attr;
-	}
+		जाओ out_मुक्त_attr;
+	पूर्ण
 
-	if (attr->count > MSPRO_BLOCK_MAX_ATTRIBUTES) {
-		printk(KERN_WARNING "%s: way too many attribute entries\n",
+	अगर (attr->count > MSPRO_BLOCK_MAX_ATTRIBUTES) अणु
+		prपूर्णांकk(KERN_WARNING "%s: way too many attribute entries\n",
 		       dev_name(&card->dev));
 		attr_count = MSPRO_BLOCK_MAX_ATTRIBUTES;
-	} else
+	पूर्ण अन्यथा
 		attr_count = attr->count;
 
-	msb->attr_group.attrs = kcalloc(attr_count + 1,
-					sizeof(*msb->attr_group.attrs),
+	msb->attr_group.attrs = kसुस्मृति(attr_count + 1,
+					माप(*msb->attr_group.attrs),
 					GFP_KERNEL);
-	if (!msb->attr_group.attrs) {
+	अगर (!msb->attr_group.attrs) अणु
 		rc = -ENOMEM;
-		goto out_free_attr;
-	}
+		जाओ out_मुक्त_attr;
+	पूर्ण
 	msb->attr_group.name = "media_attributes";
 
 	buffer = kmemdup(attr, attr_len, GFP_KERNEL);
-	if (!buffer) {
+	अगर (!buffer) अणु
 		rc = -ENOMEM;
-		goto out_free_attr;
-	}
+		जाओ out_मुक्त_attr;
+	पूर्ण
 
-	for (cnt = 0; cnt < attr_count; ++cnt) {
-		s_attr = kzalloc(sizeof(struct mspro_sys_attr), GFP_KERNEL);
-		if (!s_attr) {
+	क्रम (cnt = 0; cnt < attr_count; ++cnt) अणु
+		s_attr = kzalloc(माप(काष्ठा mspro_sys_attr), GFP_KERNEL);
+		अगर (!s_attr) अणु
 			rc = -ENOMEM;
-			goto out_free_buffer;
-		}
+			जाओ out_मुक्त_buffer;
+		पूर्ण
 
 		msb->attr_group.attrs[cnt] = &s_attr->dev_attr.attr;
 		addr = be32_to_cpu(attr->entries[cnt].address);
@@ -1043,11 +1044,11 @@ static int mspro_block_read_attributes(struct memstick_dev *card)
 			"size %zx\n", cnt, attr->entries[cnt].id, addr,
 			s_attr->size);
 		s_attr->id = attr->entries[cnt].id;
-		if (mspro_block_attr_name(s_attr->id))
-			snprintf(s_attr->name, sizeof(s_attr->name), "%s",
+		अगर (mspro_block_attr_name(s_attr->id))
+			snम_लिखो(s_attr->name, माप(s_attr->name), "%s",
 				 mspro_block_attr_name(attr->entries[cnt].id));
-		else
-			snprintf(s_attr->name, sizeof(s_attr->name),
+		अन्यथा
+			snम_लिखो(s_attr->name, माप(s_attr->name),
 				 "attr_x%02x", attr->entries[cnt].id);
 
 		sysfs_attr_init(&s_attr->dev_attr.attr);
@@ -1055,35 +1056,35 @@ static int mspro_block_read_attributes(struct memstick_dev *card)
 		s_attr->dev_attr.attr.mode = S_IRUGO;
 		s_attr->dev_attr.show = mspro_block_attr_show(s_attr->id);
 
-		if (!s_attr->size)
-			continue;
+		अगर (!s_attr->size)
+			जारी;
 
-		s_attr->data = kmalloc(s_attr->size, GFP_KERNEL);
-		if (!s_attr->data) {
+		s_attr->data = kदो_स्मृति(s_attr->size, GFP_KERNEL);
+		अगर (!s_attr->data) अणु
 			rc = -ENOMEM;
-			goto out_free_buffer;
-		}
+			जाओ out_मुक्त_buffer;
+		पूर्ण
 
-		if (((addr / msb->page_size) == (attr_offset / msb->page_size))
+		अगर (((addr / msb->page_size) == (attr_offset / msb->page_size))
 		    && (((addr + s_attr->size - 1) / msb->page_size)
-			== (attr_offset / msb->page_size))) {
-			memcpy(s_attr->data, buffer + addr % msb->page_size,
+			== (attr_offset / msb->page_size))) अणु
+			स_नकल(s_attr->data, buffer + addr % msb->page_size,
 			       s_attr->size);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		attr_offset = (addr / msb->page_size) * msb->page_size;
 
-		if ((attr_offset + attr_len) < (addr + s_attr->size)) {
-			kfree(buffer);
+		अगर ((attr_offset + attr_len) < (addr + s_attr->size)) अणु
+			kमुक्त(buffer);
 			attr_len = (((addr + s_attr->size) / msb->page_size)
 				    + 1 ) * msb->page_size - attr_offset;
-			buffer = kmalloc(attr_len, GFP_KERNEL);
-			if (!buffer) {
+			buffer = kदो_स्मृति(attr_len, GFP_KERNEL);
+			अगर (!buffer) अणु
 				rc = -ENOMEM;
-				goto out_free_attr;
-			}
-		}
+				जाओ out_मुक्त_attr;
+			पूर्ण
+		पूर्ण
 
 		sg_init_one(&msb->req_sg[0], buffer, attr_len);
 		msb->seg_count = 1;
@@ -1097,101 +1098,101 @@ static int mspro_block_read_attributes(struct memstick_dev *card)
 
 		msb->setup_transfer(card, attr_offset, attr_len);
 		memstick_new_req(card->host);
-		wait_for_completion(&card->mrq_complete);
-		if (card->current_mrq.error) {
+		रुको_क्रम_completion(&card->mrq_complete);
+		अगर (card->current_mrq.error) अणु
 			rc = card->current_mrq.error;
-			goto out_free_buffer;
-		}
+			जाओ out_मुक्त_buffer;
+		पूर्ण
 
-		memcpy(s_attr->data, buffer + addr % msb->page_size,
+		स_नकल(s_attr->data, buffer + addr % msb->page_size,
 		       s_attr->size);
-	}
+	पूर्ण
 
 	rc = 0;
-out_free_buffer:
-	kfree(buffer);
-out_free_attr:
-	kfree(attr);
-	return rc;
-}
+out_मुक्त_buffer:
+	kमुक्त(buffer);
+out_मुक्त_attr:
+	kमुक्त(attr);
+	वापस rc;
+पूर्ण
 
-static int mspro_block_init_card(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	struct memstick_host *host = card->host;
-	int rc = 0;
+अटल पूर्णांक mspro_block_init_card(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	काष्ठा memstick_host *host = card->host;
+	पूर्णांक rc = 0;
 
-	msb->system = MEMSTICK_SYS_SERIAL;
+	msb->प्रणाली = MEMSTICK_SYS_SERIAL;
 	msb->setup_transfer = h_mspro_block_setup_cmd;
 
-	card->reg_addr.r_offset = offsetof(struct mspro_register, status);
-	card->reg_addr.r_length = sizeof(struct ms_status_register);
-	card->reg_addr.w_offset = offsetof(struct mspro_register, param);
-	card->reg_addr.w_length = sizeof(struct mspro_param_register);
+	card->reg_addr.r_offset = दुरत्व(काष्ठा mspro_रेजिस्टर, status);
+	card->reg_addr.r_length = माप(काष्ठा ms_status_रेजिस्टर);
+	card->reg_addr.w_offset = दुरत्व(काष्ठा mspro_रेजिस्टर, param);
+	card->reg_addr.w_length = माप(काष्ठा mspro_param_रेजिस्टर);
 
-	if (memstick_set_rw_addr(card))
-		return -EIO;
+	अगर (memstick_set_rw_addr(card))
+		वापस -EIO;
 
 	msb->caps = host->caps;
 
 	msleep(150);
-	rc = mspro_block_wait_for_ced(card);
-	if (rc)
-		return rc;
+	rc = mspro_block_रुको_क्रम_ced(card);
+	अगर (rc)
+		वापस rc;
 
-	rc = mspro_block_switch_interface(card);
-	if (rc)
-		return rc;
+	rc = mspro_block_चयन_पूर्णांकerface(card);
+	अगर (rc)
+		वापस rc;
 
 	dev_dbg(&card->dev, "card activated\n");
-	if (msb->system != MEMSTICK_SYS_SERIAL)
+	अगर (msb->प्रणाली != MEMSTICK_SYS_SERIAL)
 		msb->caps |= MEMSTICK_CAP_AUTO_GET_INT;
 
 	card->next_request = h_mspro_block_req_init;
 	msb->mrq_handler = h_mspro_block_get_ro;
-	memstick_init_req(&card->current_mrq, MS_TPC_READ_REG, NULL,
-			  sizeof(struct ms_status_register));
+	memstick_init_req(&card->current_mrq, MS_TPC_READ_REG, शून्य,
+			  माप(काष्ठा ms_status_रेजिस्टर));
 	memstick_new_req(card->host);
-	wait_for_completion(&card->mrq_complete);
-	if (card->current_mrq.error)
-		return card->current_mrq.error;
+	रुको_क्रम_completion(&card->mrq_complete);
+	अगर (card->current_mrq.error)
+		वापस card->current_mrq.error;
 
-	dev_dbg(&card->dev, "card r/w status %d\n", msb->read_only ? 0 : 1);
+	dev_dbg(&card->dev, "card r/w status %d\n", msb->पढ़ो_only ? 0 : 1);
 
 	msb->page_size = 512;
-	rc = mspro_block_read_attributes(card);
-	if (rc)
-		return rc;
+	rc = mspro_block_पढ़ो_attributes(card);
+	अगर (rc)
+		वापस rc;
 
 	dev_dbg(&card->dev, "attributes loaded\n");
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static const struct blk_mq_ops mspro_mq_ops = {
+अटल स्थिर काष्ठा blk_mq_ops mspro_mq_ops = अणु
 	.queue_rq	= mspro_queue_rq,
-};
+पूर्ण;
 
-static int mspro_block_init_disk(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	struct mspro_devinfo *dev_info = NULL;
-	struct mspro_sys_info *sys_info = NULL;
-	struct mspro_sys_attr *s_attr = NULL;
-	int rc, disk_id;
-	unsigned long capacity;
+अटल पूर्णांक mspro_block_init_disk(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	काष्ठा mspro_devinfo *dev_info = शून्य;
+	काष्ठा mspro_sys_info *sys_info = शून्य;
+	काष्ठा mspro_sys_attr *s_attr = शून्य;
+	पूर्णांक rc, disk_id;
+	अचिन्हित दीर्घ capacity;
 
-	for (rc = 0; msb->attr_group.attrs[rc]; ++rc) {
+	क्रम (rc = 0; msb->attr_group.attrs[rc]; ++rc) अणु
 		s_attr = mspro_from_sysfs_attr(msb->attr_group.attrs[rc]);
 
-		if (s_attr->id == MSPRO_BLOCK_ID_DEVINFO)
+		अगर (s_attr->id == MSPRO_BLOCK_ID_DEVINFO)
 			dev_info = s_attr->data;
-		else if (s_attr->id == MSPRO_BLOCK_ID_SYSINFO)
+		अन्यथा अगर (s_attr->id == MSPRO_BLOCK_ID_SYSINFO)
 			sys_info = s_attr->data;
-	}
+	पूर्ण
 
-	if (!dev_info || !sys_info)
-		return -ENODEV;
+	अगर (!dev_info || !sys_info)
+		वापस -ENODEV;
 
 	msb->cylinders = be16_to_cpu(dev_info->cylinders);
 	msb->heads = be16_to_cpu(dev_info->heads);
@@ -1202,22 +1203,22 @@ static int mspro_block_init_disk(struct memstick_dev *card)
 	mutex_lock(&mspro_block_disk_lock);
 	disk_id = idr_alloc(&mspro_block_disk_idr, card, 0, 256, GFP_KERNEL);
 	mutex_unlock(&mspro_block_disk_lock);
-	if (disk_id < 0)
-		return disk_id;
+	अगर (disk_id < 0)
+		वापस disk_id;
 
 	msb->disk = alloc_disk(1 << MSPRO_BLOCK_PART_SHIFT);
-	if (!msb->disk) {
+	अगर (!msb->disk) अणु
 		rc = -ENOMEM;
-		goto out_release_id;
-	}
+		जाओ out_release_id;
+	पूर्ण
 
 	msb->queue = blk_mq_init_sq_queue(&msb->tag_set, &mspro_mq_ops, 2,
 						BLK_MQ_F_SHOULD_MERGE);
-	if (IS_ERR(msb->queue)) {
+	अगर (IS_ERR(msb->queue)) अणु
 		rc = PTR_ERR(msb->queue);
-		msb->queue = NULL;
-		goto out_put_disk;
-	}
+		msb->queue = शून्य;
+		जाओ out_put_disk;
+	पूर्ण
 
 	msb->queue->queuedata = card;
 
@@ -1228,12 +1229,12 @@ static int mspro_block_init_disk(struct memstick_dev *card)
 
 	msb->disk->major = major;
 	msb->disk->first_minor = disk_id << MSPRO_BLOCK_PART_SHIFT;
-	msb->disk->fops = &ms_block_bdops;
+	msb->disk->fops = &ms_block_bकरोps;
 	msb->usage_count = 1;
-	msb->disk->private_data = msb;
+	msb->disk->निजी_data = msb;
 	msb->disk->queue = msb->queue;
 
-	sprintf(msb->disk->disk_name, "mspblk%d", disk_id);
+	प्र_लिखो(msb->disk->disk_name, "mspblk%d", disk_id);
 
 	blk_queue_logical_block_size(msb->queue, msb->page_size);
 
@@ -1243,85 +1244,85 @@ static int mspro_block_init_disk(struct memstick_dev *card)
 	set_capacity(msb->disk, capacity);
 	dev_dbg(&card->dev, "capacity set %ld\n", capacity);
 
-	device_add_disk(&card->dev, msb->disk, NULL);
+	device_add_disk(&card->dev, msb->disk, शून्य);
 	msb->active = 1;
-	return 0;
+	वापस 0;
 
 out_put_disk:
 	put_disk(msb->disk);
 out_release_id:
 	mutex_lock(&mspro_block_disk_lock);
-	idr_remove(&mspro_block_disk_idr, disk_id);
+	idr_हटाओ(&mspro_block_disk_idr, disk_id);
 	mutex_unlock(&mspro_block_disk_lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void mspro_block_data_clear(struct mspro_block_data *msb)
-{
-	int cnt;
-	struct mspro_sys_attr *s_attr;
+अटल व्योम mspro_block_data_clear(काष्ठा mspro_block_data *msb)
+अणु
+	पूर्णांक cnt;
+	काष्ठा mspro_sys_attr *s_attr;
 
-	if (msb->attr_group.attrs) {
-		for (cnt = 0; msb->attr_group.attrs[cnt]; ++cnt) {
+	अगर (msb->attr_group.attrs) अणु
+		क्रम (cnt = 0; msb->attr_group.attrs[cnt]; ++cnt) अणु
 			s_attr = mspro_from_sysfs_attr(msb->attr_group
 							   .attrs[cnt]);
-			kfree(s_attr->data);
-			kfree(s_attr);
-		}
-		kfree(msb->attr_group.attrs);
-	}
+			kमुक्त(s_attr->data);
+			kमुक्त(s_attr);
+		पूर्ण
+		kमुक्त(msb->attr_group.attrs);
+	पूर्ण
 
-	msb->card = NULL;
-}
+	msb->card = शून्य;
+पूर्ण
 
-static int mspro_block_check_card(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
+अटल पूर्णांक mspro_block_check_card(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
 
-	return (msb->active == 1);
-}
+	वापस (msb->active == 1);
+पूर्ण
 
-static int mspro_block_probe(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb;
-	int rc = 0;
+अटल पूर्णांक mspro_block_probe(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb;
+	पूर्णांक rc = 0;
 
-	msb = kzalloc(sizeof(struct mspro_block_data), GFP_KERNEL);
-	if (!msb)
-		return -ENOMEM;
+	msb = kzalloc(माप(काष्ठा mspro_block_data), GFP_KERNEL);
+	अगर (!msb)
+		वापस -ENOMEM;
 	memstick_set_drvdata(card, msb);
 	msb->card = card;
 	spin_lock_init(&msb->q_lock);
 
 	rc = mspro_block_init_card(card);
 
-	if (rc)
-		goto out_free;
+	अगर (rc)
+		जाओ out_मुक्त;
 
 	rc = sysfs_create_group(&card->dev.kobj, &msb->attr_group);
-	if (rc)
-		goto out_free;
+	अगर (rc)
+		जाओ out_मुक्त;
 
 	rc = mspro_block_init_disk(card);
-	if (!rc) {
+	अगर (!rc) अणु
 		card->check = mspro_block_check_card;
 		card->stop = mspro_block_stop;
 		card->start = mspro_block_start;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	sysfs_remove_group(&card->dev.kobj, &msb->attr_group);
-out_free:
-	memstick_set_drvdata(card, NULL);
+	sysfs_हटाओ_group(&card->dev.kobj, &msb->attr_group);
+out_मुक्त:
+	memstick_set_drvdata(card, शून्य);
 	mspro_block_data_clear(msb);
-	kfree(msb);
-	return rc;
-}
+	kमुक्त(msb);
+	वापस rc;
+पूर्ण
 
-static void mspro_block_remove(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	unsigned long flags;
+अटल व्योम mspro_block_हटाओ(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&msb->q_lock, flags);
 	msb->eject = 1;
@@ -1332,25 +1333,25 @@ static void mspro_block_remove(struct memstick_dev *card)
 	dev_dbg(&card->dev, "mspro block remove\n");
 
 	blk_cleanup_queue(msb->queue);
-	blk_mq_free_tag_set(&msb->tag_set);
-	msb->queue = NULL;
+	blk_mq_मुक्त_tag_set(&msb->tag_set);
+	msb->queue = शून्य;
 
-	sysfs_remove_group(&card->dev.kobj, &msb->attr_group);
+	sysfs_हटाओ_group(&card->dev.kobj, &msb->attr_group);
 
 	mutex_lock(&mspro_block_disk_lock);
 	mspro_block_data_clear(msb);
 	mutex_unlock(&mspro_block_disk_lock);
 
 	mspro_block_disk_release(msb->disk);
-	memstick_set_drvdata(card, NULL);
-}
+	memstick_set_drvdata(card, शून्य);
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int mspro_block_suspend(struct memstick_dev *card, pm_message_t state)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	unsigned long flags;
+अटल पूर्णांक mspro_block_suspend(काष्ठा memstick_dev *card, pm_message_t state)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	अचिन्हित दीर्घ flags;
 
 	blk_mq_stop_hw_queues(msb->queue);
 
@@ -1358,116 +1359,116 @@ static int mspro_block_suspend(struct memstick_dev *card, pm_message_t state)
 	msb->active = 0;
 	spin_unlock_irqrestore(&msb->q_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mspro_block_resume(struct memstick_dev *card)
-{
-	struct mspro_block_data *msb = memstick_get_drvdata(card);
-	int rc = 0;
+अटल पूर्णांक mspro_block_resume(काष्ठा memstick_dev *card)
+अणु
+	काष्ठा mspro_block_data *msb = memstick_get_drvdata(card);
+	पूर्णांक rc = 0;
 
-#ifdef CONFIG_MEMSTICK_UNSAFE_RESUME
+#अगर_घोषित CONFIG_MEMSTICK_UNSAFE_RESUME
 
-	struct mspro_block_data *new_msb;
-	struct memstick_host *host = card->host;
-	struct mspro_sys_attr *s_attr, *r_attr;
-	unsigned char cnt;
+	काष्ठा mspro_block_data *new_msb;
+	काष्ठा memstick_host *host = card->host;
+	काष्ठा mspro_sys_attr *s_attr, *r_attr;
+	अचिन्हित अक्षर cnt;
 
 	mutex_lock(&host->lock);
-	new_msb = kzalloc(sizeof(struct mspro_block_data), GFP_KERNEL);
-	if (!new_msb) {
+	new_msb = kzalloc(माप(काष्ठा mspro_block_data), GFP_KERNEL);
+	अगर (!new_msb) अणु
 		rc = -ENOMEM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	new_msb->card = card;
 	memstick_set_drvdata(card, new_msb);
 	rc = mspro_block_init_card(card);
-	if (rc)
-		goto out_free;
+	अगर (rc)
+		जाओ out_मुक्त;
 
-	for (cnt = 0; new_msb->attr_group.attrs[cnt]
-		      && msb->attr_group.attrs[cnt]; ++cnt) {
+	क्रम (cnt = 0; new_msb->attr_group.attrs[cnt]
+		      && msb->attr_group.attrs[cnt]; ++cnt) अणु
 		s_attr = mspro_from_sysfs_attr(new_msb->attr_group.attrs[cnt]);
 		r_attr = mspro_from_sysfs_attr(msb->attr_group.attrs[cnt]);
 
-		if (s_attr->id == MSPRO_BLOCK_ID_SYSINFO
-		    && r_attr->id == s_attr->id) {
-			if (memcmp(s_attr->data, r_attr->data, s_attr->size))
-				break;
+		अगर (s_attr->id == MSPRO_BLOCK_ID_SYSINFO
+		    && r_attr->id == s_attr->id) अणु
+			अगर (स_भेद(s_attr->data, r_attr->data, s_attr->size))
+				अवरोध;
 
 			msb->active = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-out_free:
+out_मुक्त:
 	memstick_set_drvdata(card, msb);
 	mspro_block_data_clear(new_msb);
-	kfree(new_msb);
+	kमुक्त(new_msb);
 out_unlock:
 	mutex_unlock(&host->lock);
 
-#endif /* CONFIG_MEMSTICK_UNSAFE_RESUME */
+#पूर्ण_अगर /* CONFIG_MEMSTICK_UNSAFE_RESUME */
 
 	blk_mq_start_hw_queues(msb->queue);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#else
+#अन्यथा
 
-#define mspro_block_suspend NULL
-#define mspro_block_resume NULL
+#घोषणा mspro_block_suspend शून्य
+#घोषणा mspro_block_resume शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static struct memstick_device_id mspro_block_id_tbl[] = {
-	{MEMSTICK_MATCH_ALL, MEMSTICK_TYPE_PRO, MEMSTICK_CATEGORY_STORAGE_DUO,
-	 MEMSTICK_CLASS_DUO},
-	{}
-};
+अटल काष्ठा memstick_device_id mspro_block_id_tbl[] = अणु
+	अणुMEMSTICK_MATCH_ALL, MEMSTICK_TYPE_PRO, MEMSTICK_CATEGORY_STORAGE_DUO,
+	 MEMSTICK_CLASS_DUOपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 
-static struct memstick_driver mspro_block_driver = {
-	.driver = {
+अटल काष्ठा memstick_driver mspro_block_driver = अणु
+	.driver = अणु
 		.name  = DRIVER_NAME,
 		.owner = THIS_MODULE
-	},
+	पूर्ण,
 	.id_table = mspro_block_id_tbl,
 	.probe    = mspro_block_probe,
-	.remove   = mspro_block_remove,
+	.हटाओ   = mspro_block_हटाओ,
 	.suspend  = mspro_block_suspend,
 	.resume   = mspro_block_resume
-};
+पूर्ण;
 
-static int __init mspro_block_init(void)
-{
-	int rc = -ENOMEM;
+अटल पूर्णांक __init mspro_block_init(व्योम)
+अणु
+	पूर्णांक rc = -ENOMEM;
 
-	rc = register_blkdev(major, DRIVER_NAME);
-	if (rc < 0) {
-		printk(KERN_ERR DRIVER_NAME ": failed to register "
+	rc = रेजिस्टर_blkdev(major, DRIVER_NAME);
+	अगर (rc < 0) अणु
+		prपूर्णांकk(KERN_ERR DRIVER_NAME ": failed to register "
 		       "major %d, error %d\n", major, rc);
-		return rc;
-	}
-	if (!major)
+		वापस rc;
+	पूर्ण
+	अगर (!major)
 		major = rc;
 
-	rc = memstick_register_driver(&mspro_block_driver);
-	if (rc)
-		unregister_blkdev(major, DRIVER_NAME);
-	return rc;
-}
+	rc = memstick_रेजिस्टर_driver(&mspro_block_driver);
+	अगर (rc)
+		unरेजिस्टर_blkdev(major, DRIVER_NAME);
+	वापस rc;
+पूर्ण
 
-static void __exit mspro_block_exit(void)
-{
-	memstick_unregister_driver(&mspro_block_driver);
-	unregister_blkdev(major, DRIVER_NAME);
+अटल व्योम __निकास mspro_block_निकास(व्योम)
+अणु
+	memstick_unरेजिस्टर_driver(&mspro_block_driver);
+	unरेजिस्टर_blkdev(major, DRIVER_NAME);
 	idr_destroy(&mspro_block_disk_idr);
-}
+पूर्ण
 
 module_init(mspro_block_init);
-module_exit(mspro_block_exit);
+module_निकास(mspro_block_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alex Dubov");

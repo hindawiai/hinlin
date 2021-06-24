@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-/* Copyright (C) 2019 Hangzhou C-SKY Microsystems co.,ltd. */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+/* Copyright (C) 2019 Hangzhou C-SKY Microप्रणालीs co.,ltd. */
 
-#ifndef _ASM_RISCV_PERF_REGS_H
-#define _ASM_RISCV_PERF_REGS_H
+#अगर_अघोषित _ASM_RISCV_PERF_REGS_H
+#घोषणा _ASM_RISCV_PERF_REGS_H
 
-enum perf_event_riscv_regs {
+क्रमागत perf_event_riscv_regs अणु
 	PERF_REG_RISCV_PC,
 	PERF_REG_RISCV_RA,
 	PERF_REG_RISCV_SP,
@@ -38,5 +39,5 @@ enum perf_event_riscv_regs {
 	PERF_REG_RISCV_T5,
 	PERF_REG_RISCV_T6,
 	PERF_REG_RISCV_MAX,
-};
-#endif /* _ASM_RISCV_PERF_REGS_H */
+पूर्ण;
+#पूर्ण_अगर /* _ASM_RISCV_PERF_REGS_H */

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef SELFTEST_ENGINE_HEARTBEAT_H
-#define SELFTEST_ENGINE_HEARTBEAT_H
+#अगर_अघोषित SELFTEST_ENGINE_HEARTBEAT_H
+#घोषणा SELFTEST_ENGINE_HEARTBEAT_H
 
-struct intel_engine_cs;
+काष्ठा पूर्णांकel_engine_cs;
 
-void st_engine_heartbeat_disable(struct intel_engine_cs *engine);
-void st_engine_heartbeat_enable(struct intel_engine_cs *engine);
+व्योम st_engine_heartbeat_disable(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम st_engine_heartbeat_enable(काष्ठा पूर्णांकel_engine_cs *engine);
 
-#endif /* SELFTEST_ENGINE_HEARTBEAT_H */
+#पूर्ण_अगर /* SELFTEST_ENGINE_HEARTBEAT_H */

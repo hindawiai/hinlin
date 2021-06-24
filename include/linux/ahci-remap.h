@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_AHCI_REMAP_H
-#define _LINUX_AHCI_REMAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_AHCI_REMAP_H
+#घोषणा _LINUX_AHCI_REMAP_H
 
-#include <linux/sizes.h>
+#समावेश <linux/sizes.h>
 
-#define AHCI_VSCAP		0xa4
-#define AHCI_REMAP_CAP		0x800
+#घोषणा AHCI_VSCAP		0xa4
+#घोषणा AHCI_REMAP_CAP		0x800
 
 /* device class code */
-#define AHCI_REMAP_N_DCC	0x880
+#घोषणा AHCI_REMAP_N_DCC	0x880
 
 /* remap-device base relative to ahci-bar */
-#define AHCI_REMAP_N_OFFSET	SZ_16K
-#define AHCI_REMAP_N_SIZE	SZ_16K
+#घोषणा AHCI_REMAP_N_OFFSET	SZ_16K
+#घोषणा AHCI_REMAP_N_SIZE	SZ_16K
 
-#define AHCI_MAX_REMAP		3
+#घोषणा AHCI_MAX_REMAP		3
 
-static inline unsigned int ahci_remap_dcc(int i)
-{
-	return AHCI_REMAP_N_DCC + i * 0x80;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ahci_remap_dcc(पूर्णांक i)
+अणु
+	वापस AHCI_REMAP_N_DCC + i * 0x80;
+पूर्ण
 
-static inline unsigned int ahci_remap_base(int i)
-{
-	return AHCI_REMAP_N_OFFSET + i * AHCI_REMAP_N_SIZE;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ahci_remap_base(पूर्णांक i)
+अणु
+	वापस AHCI_REMAP_N_OFFSET + i * AHCI_REMAP_N_SIZE;
+पूर्ण
 
-#endif /* _LINUX_AHCI_REMAP_H */
+#पूर्ण_अगर /* _LINUX_AHCI_REMAP_H */

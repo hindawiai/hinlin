@@ -1,587 +1,588 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for ICPlus PHYs
+ * Driver क्रम ICPlus PHYs
  *
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/unistd.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/spinlock.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
-#include <linux/phy.h>
-#include <linux/property.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/unistd.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/property.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/uaccess.h>
 
 MODULE_DESCRIPTION("ICPlus IP175C/IP101A/IP101G/IC1001 PHY drivers");
 MODULE_AUTHOR("Michael Barkowski");
 MODULE_LICENSE("GPL");
 
 /* IP101A/G - IP1001 */
-#define IP10XX_SPEC_CTRL_STATUS		16	/* Spec. Control Register */
-#define IP1001_RXPHASE_SEL		BIT(0)	/* Add delay on RX_CLK */
-#define IP1001_TXPHASE_SEL		BIT(1)	/* Add delay on TX_CLK */
-#define IP1001_SPEC_CTRL_STATUS_2	20	/* IP1001 Spec. Control Reg 2 */
-#define IP1001_APS_ON			11	/* IP1001 APS Mode  bit */
-#define IP101A_G_APS_ON			BIT(1)	/* IP101A/G APS Mode bit */
-#define IP101A_G_AUTO_MDIX_DIS		BIT(11)
-#define IP101A_G_IRQ_CONF_STATUS	0x11	/* Conf Info IRQ & Status Reg */
-#define	IP101A_G_IRQ_PIN_USED		BIT(15) /* INTR pin used */
-#define IP101A_G_IRQ_ALL_MASK		BIT(11) /* IRQ's inactive */
-#define IP101A_G_IRQ_SPEED_CHANGE	BIT(2)
-#define IP101A_G_IRQ_DUPLEX_CHANGE	BIT(1)
-#define IP101A_G_IRQ_LINK_CHANGE	BIT(0)
-#define IP101A_G_PHY_STATUS		18
-#define IP101A_G_MDIX			BIT(9)
-#define IP101A_G_PHY_SPEC_CTRL		30
-#define IP101A_G_FORCE_MDIX		BIT(3)
+#घोषणा IP10XX_SPEC_CTRL_STATUS		16	/* Spec. Control Register */
+#घोषणा IP1001_RXPHASE_SEL		BIT(0)	/* Add delay on RX_CLK */
+#घोषणा IP1001_TXPHASE_SEL		BIT(1)	/* Add delay on TX_CLK */
+#घोषणा IP1001_SPEC_CTRL_STATUS_2	20	/* IP1001 Spec. Control Reg 2 */
+#घोषणा IP1001_APS_ON			11	/* IP1001 APS Mode  bit */
+#घोषणा IP101A_G_APS_ON			BIT(1)	/* IP101A/G APS Mode bit */
+#घोषणा IP101A_G_AUTO_MDIX_DIS		BIT(11)
+#घोषणा IP101A_G_IRQ_CONF_STATUS	0x11	/* Conf Info IRQ & Status Reg */
+#घोषणा	IP101A_G_IRQ_PIN_USED		BIT(15) /* INTR pin used */
+#घोषणा IP101A_G_IRQ_ALL_MASK		BIT(11) /* IRQ's inactive */
+#घोषणा IP101A_G_IRQ_SPEED_CHANGE	BIT(2)
+#घोषणा IP101A_G_IRQ_DUPLEX_CHANGE	BIT(1)
+#घोषणा IP101A_G_IRQ_LINK_CHANGE	BIT(0)
+#घोषणा IP101A_G_PHY_STATUS		18
+#घोषणा IP101A_G_MDIX			BIT(9)
+#घोषणा IP101A_G_PHY_SPEC_CTRL		30
+#घोषणा IP101A_G_FORCE_MDIX		BIT(3)
 
-#define IP101G_PAGE_CONTROL				0x14
-#define IP101G_PAGE_CONTROL_MASK			GENMASK(4, 0)
-#define IP101G_DIGITAL_IO_SPEC_CTRL			0x1d
-#define IP101G_DIGITAL_IO_SPEC_CTRL_SEL_INTR32		BIT(2)
+#घोषणा IP101G_PAGE_CONTROL				0x14
+#घोषणा IP101G_PAGE_CONTROL_MASK			GENMASK(4, 0)
+#घोषणा IP101G_DIGITAL_IO_SPEC_CTRL			0x1d
+#घोषणा IP101G_DIGITAL_IO_SPEC_CTRL_SEL_INTR32		BIT(2)
 
-#define IP101G_DEFAULT_PAGE			16
+#घोषणा IP101G_DEFAULT_PAGE			16
 
-#define IP101G_P1_CNT_CTRL		17
-#define CNT_CTRL_RX_EN			BIT(13)
-#define IP101G_P8_CNT_CTRL		17
-#define CNT_CTRL_RDCLR_EN		BIT(15)
-#define IP101G_CNT_REG			18
+#घोषणा IP101G_P1_CNT_CTRL		17
+#घोषणा CNT_CTRL_RX_EN			BIT(13)
+#घोषणा IP101G_P8_CNT_CTRL		17
+#घोषणा CNT_CTRL_RDCLR_EN		BIT(15)
+#घोषणा IP101G_CNT_REG			18
 
-#define IP175C_PHY_ID 0x02430d80
-#define IP1001_PHY_ID 0x02430d90
-#define IP101A_PHY_ID 0x02430c54
+#घोषणा IP175C_PHY_ID 0x02430d80
+#घोषणा IP1001_PHY_ID 0x02430d90
+#घोषणा IP101A_PHY_ID 0x02430c54
 
 /* The 32-pin IP101GR package can re-configure the mode of the RXER/INTR_32 pin
- * (pin number 21). The hardware default is RXER (receive error) mode. But it
- * can be configured to interrupt mode manually.
+ * (pin number 21). The hardware शेष is RXER (receive error) mode. But it
+ * can be configured to पूर्णांकerrupt mode manually.
  */
-enum ip101gr_sel_intr32 {
+क्रमागत ip101gr_sel_पूर्णांकr32 अणु
 	IP101GR_SEL_INTR32_KEEP,
 	IP101GR_SEL_INTR32_INTR,
 	IP101GR_SEL_INTR32_RXER,
-};
+पूर्ण;
 
-struct ip101g_hw_stat {
-	const char *name;
-	int page;
-};
+काष्ठा ip101g_hw_stat अणु
+	स्थिर अक्षर *name;
+	पूर्णांक page;
+पूर्ण;
 
-static struct ip101g_hw_stat ip101g_hw_stats[] = {
-	{ "phy_crc_errors", 1 },
-	{ "phy_symbol_errors", 11, },
-};
+अटल काष्ठा ip101g_hw_stat ip101g_hw_stats[] = अणु
+	अणु "phy_crc_errors", 1 पूर्ण,
+	अणु "phy_symbol_errors", 11, पूर्ण,
+पूर्ण;
 
-struct ip101a_g_phy_priv {
-	enum ip101gr_sel_intr32 sel_intr32;
+काष्ठा ip101a_g_phy_priv अणु
+	क्रमागत ip101gr_sel_पूर्णांकr32 sel_पूर्णांकr32;
 	u64 stats[ARRAY_SIZE(ip101g_hw_stats)];
-};
+पूर्ण;
 
-static int ip175c_config_init(struct phy_device *phydev)
-{
-	int err, i;
-	static int full_reset_performed;
+अटल पूर्णांक ip175c_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err, i;
+	अटल पूर्णांक full_reset_perक्रमmed;
 
-	if (full_reset_performed == 0) {
+	अगर (full_reset_perक्रमmed == 0) अणु
 
 		/* master reset */
-		err = mdiobus_write(phydev->mdio.bus, 30, 0, 0x175c);
-		if (err < 0)
-			return err;
+		err = mdiobus_ग_लिखो(phydev->mdio.bus, 30, 0, 0x175c);
+		अगर (err < 0)
+			वापस err;
 
 		/* ensure no bus delays overlap reset period */
-		err = mdiobus_read(phydev->mdio.bus, 30, 0);
+		err = mdiobus_पढ़ो(phydev->mdio.bus, 30, 0);
 
-		/* data sheet specifies reset period is 2 msec */
+		/* data sheet specअगरies reset period is 2 msec */
 		mdelay(2);
 
 		/* enable IP175C mode */
-		err = mdiobus_write(phydev->mdio.bus, 29, 31, 0x175c);
-		if (err < 0)
-			return err;
+		err = mdiobus_ग_लिखो(phydev->mdio.bus, 29, 31, 0x175c);
+		अगर (err < 0)
+			वापस err;
 
 		/* Set MII0 speed and duplex (in PHY mode) */
-		err = mdiobus_write(phydev->mdio.bus, 29, 22, 0x420);
-		if (err < 0)
-			return err;
+		err = mdiobus_ग_लिखो(phydev->mdio.bus, 29, 22, 0x420);
+		अगर (err < 0)
+			वापस err;
 
-		/* reset switch ports */
-		for (i = 0; i < 5; i++) {
-			err = mdiobus_write(phydev->mdio.bus, i,
+		/* reset चयन ports */
+		क्रम (i = 0; i < 5; i++) अणु
+			err = mdiobus_ग_लिखो(phydev->mdio.bus, i,
 					    MII_BMCR, BMCR_RESET);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
-		for (i = 0; i < 5; i++)
-			err = mdiobus_read(phydev->mdio.bus, i, MII_BMCR);
+		क्रम (i = 0; i < 5; i++)
+			err = mdiobus_पढ़ो(phydev->mdio.bus, i, MII_BMCR);
 
 		mdelay(2);
 
-		full_reset_performed = 1;
-	}
+		full_reset_perक्रमmed = 1;
+	पूर्ण
 
-	if (phydev->mdio.addr != 4) {
+	अगर (phydev->mdio.addr != 4) अणु
 		phydev->state = PHY_RUNNING;
 		phydev->speed = SPEED_100;
 		phydev->duplex = DUPLEX_FULL;
 		phydev->link = 1;
-		netif_carrier_on(phydev->attached_dev);
-	}
+		netअगर_carrier_on(phydev->attached_dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip1001_config_init(struct phy_device *phydev)
-{
-	int c;
+अटल पूर्णांक ip1001_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक c;
 
 	/* Enable Auto Power Saving mode */
-	c = phy_read(phydev, IP1001_SPEC_CTRL_STATUS_2);
-	if (c < 0)
-		return c;
+	c = phy_पढ़ो(phydev, IP1001_SPEC_CTRL_STATUS_2);
+	अगर (c < 0)
+		वापस c;
 	c |= IP1001_APS_ON;
-	c = phy_write(phydev, IP1001_SPEC_CTRL_STATUS_2, c);
-	if (c < 0)
-		return c;
+	c = phy_ग_लिखो(phydev, IP1001_SPEC_CTRL_STATUS_2, c);
+	अगर (c < 0)
+		वापस c;
 
-	if (phy_interface_is_rgmii(phydev)) {
+	अगर (phy_पूर्णांकerface_is_rgmii(phydev)) अणु
 
-		c = phy_read(phydev, IP10XX_SPEC_CTRL_STATUS);
-		if (c < 0)
-			return c;
+		c = phy_पढ़ो(phydev, IP10XX_SPEC_CTRL_STATUS);
+		अगर (c < 0)
+			वापस c;
 
 		c &= ~(IP1001_RXPHASE_SEL | IP1001_TXPHASE_SEL);
 
-		if (phydev->interface == PHY_INTERFACE_MODE_RGMII_ID)
+		अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID)
 			c |= (IP1001_RXPHASE_SEL | IP1001_TXPHASE_SEL);
-		else if (phydev->interface == PHY_INTERFACE_MODE_RGMII_RXID)
+		अन्यथा अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_RXID)
 			c |= IP1001_RXPHASE_SEL;
-		else if (phydev->interface == PHY_INTERFACE_MODE_RGMII_TXID)
+		अन्यथा अगर (phydev->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID)
 			c |= IP1001_TXPHASE_SEL;
 
-		c = phy_write(phydev, IP10XX_SPEC_CTRL_STATUS, c);
-		if (c < 0)
-			return c;
-	}
+		c = phy_ग_लिखो(phydev, IP10XX_SPEC_CTRL_STATUS, c);
+		अगर (c < 0)
+			वापस c;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip175c_read_status(struct phy_device *phydev)
-{
-	if (phydev->mdio.addr == 4) /* WAN port */
-		genphy_read_status(phydev);
-	else
-		/* Don't need to read status for switch ports */
+अटल पूर्णांक ip175c_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	अगर (phydev->mdio.addr == 4) /* WAN port */
+		genphy_पढ़ो_status(phydev);
+	अन्यथा
+		/* Don't need to पढ़ो status क्रम चयन ports */
 		phydev->irq = PHY_MAC_INTERRUPT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip175c_config_aneg(struct phy_device *phydev)
-{
-	if (phydev->mdio.addr == 4) /* WAN port */
+अटल पूर्णांक ip175c_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	अगर (phydev->mdio.addr == 4) /* WAN port */
 		genphy_config_aneg(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip101a_g_probe(struct phy_device *phydev)
-{
-	struct device *dev = &phydev->mdio.dev;
-	struct ip101a_g_phy_priv *priv;
+अटल पूर्णांक ip101a_g_probe(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा device *dev = &phydev->mdio.dev;
+	काष्ठा ip101a_g_phy_priv *priv;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	/* Both functions (RX error and interrupt status) are sharing the same
+	/* Both functions (RX error and पूर्णांकerrupt status) are sharing the same
 	 * pin on the 32-pin IP101GR, so this is an exclusive choice.
 	 */
-	if (device_property_read_bool(dev, "icplus,select-rx-error") &&
-	    device_property_read_bool(dev, "icplus,select-interrupt")) {
+	अगर (device_property_पढ़ो_bool(dev, "icplus,select-rx-error") &&
+	    device_property_पढ़ो_bool(dev, "icplus,select-interrupt")) अणु
 		dev_err(dev,
 			"RXER and INTR mode cannot be selected together\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (device_property_read_bool(dev, "icplus,select-rx-error"))
-		priv->sel_intr32 = IP101GR_SEL_INTR32_RXER;
-	else if (device_property_read_bool(dev, "icplus,select-interrupt"))
-		priv->sel_intr32 = IP101GR_SEL_INTR32_INTR;
-	else
-		priv->sel_intr32 = IP101GR_SEL_INTR32_KEEP;
+	अगर (device_property_पढ़ो_bool(dev, "icplus,select-rx-error"))
+		priv->sel_पूर्णांकr32 = IP101GR_SEL_INTR32_RXER;
+	अन्यथा अगर (device_property_पढ़ो_bool(dev, "icplus,select-interrupt"))
+		priv->sel_पूर्णांकr32 = IP101GR_SEL_INTR32_INTR;
+	अन्यथा
+		priv->sel_पूर्णांकr32 = IP101GR_SEL_INTR32_KEEP;
 
 	phydev->priv = priv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip101a_g_config_intr_pin(struct phy_device *phydev)
-{
-	struct ip101a_g_phy_priv *priv = phydev->priv;
-	int oldpage, err = 0;
+अटल पूर्णांक ip101a_g_config_पूर्णांकr_pin(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा ip101a_g_phy_priv *priv = phydev->priv;
+	पूर्णांक oldpage, err = 0;
 
 	oldpage = phy_select_page(phydev, IP101G_DEFAULT_PAGE);
-	if (oldpage < 0)
-		goto out;
+	अगर (oldpage < 0)
+		जाओ out;
 
-	/* configure the RXER/INTR_32 pin of the 32-pin IP101GR if needed: */
-	switch (priv->sel_intr32) {
-	case IP101GR_SEL_INTR32_RXER:
-		err = __phy_modify(phydev, IP101G_DIGITAL_IO_SPEC_CTRL,
+	/* configure the RXER/INTR_32 pin of the 32-pin IP101GR अगर needed: */
+	चयन (priv->sel_पूर्णांकr32) अणु
+	हाल IP101GR_SEL_INTR32_RXER:
+		err = __phy_modअगरy(phydev, IP101G_DIGITAL_IO_SPEC_CTRL,
 				   IP101G_DIGITAL_IO_SPEC_CTRL_SEL_INTR32, 0);
-		if (err < 0)
-			goto out;
-		break;
+		अगर (err < 0)
+			जाओ out;
+		अवरोध;
 
-	case IP101GR_SEL_INTR32_INTR:
-		err = __phy_modify(phydev, IP101G_DIGITAL_IO_SPEC_CTRL,
+	हाल IP101GR_SEL_INTR32_INTR:
+		err = __phy_modअगरy(phydev, IP101G_DIGITAL_IO_SPEC_CTRL,
 				   IP101G_DIGITAL_IO_SPEC_CTRL_SEL_INTR32,
 				   IP101G_DIGITAL_IO_SPEC_CTRL_SEL_INTR32);
-		if (err < 0)
-			goto out;
-		break;
+		अगर (err < 0)
+			जाओ out;
+		अवरोध;
 
-	default:
+	शेष:
 		/* Don't touch IP101G_DIGITAL_IO_SPEC_CTRL because it's not
-		 * documented on IP101A and it's not clear whether this would
+		 * करोcumented on IP101A and it's not clear whether this would
 		 * cause problems.
 		 * For the 32-pin IP101GR we simply keep the SEL_INTR32
 		 * configuration as set by the bootloader when not configured
 		 * to one of the special functions.
 		 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
-	return phy_restore_page(phydev, oldpage, err);
-}
+	वापस phy_restore_page(phydev, oldpage, err);
+पूर्ण
 
-static int ip101a_config_init(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक ip101a_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	/* Enable Auto Power Saving mode */
 	ret = phy_set_bits(phydev, IP10XX_SPEC_CTRL_STATUS, IP101A_G_APS_ON);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ip101a_g_config_intr_pin(phydev);
-}
+	वापस ip101a_g_config_पूर्णांकr_pin(phydev);
+पूर्ण
 
-static int ip101g_config_init(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक ip101g_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	/* Enable the PHY counters */
-	ret = phy_modify_paged(phydev, 1, IP101G_P1_CNT_CTRL,
+	ret = phy_modअगरy_paged(phydev, 1, IP101G_P1_CNT_CTRL,
 			       CNT_CTRL_RX_EN, CNT_CTRL_RX_EN);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Clear error counters on read */
-	ret = phy_modify_paged(phydev, 8, IP101G_P8_CNT_CTRL,
+	/* Clear error counters on पढ़ो */
+	ret = phy_modअगरy_paged(phydev, 8, IP101G_P8_CNT_CTRL,
 			       CNT_CTRL_RDCLR_EN, CNT_CTRL_RDCLR_EN);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ip101a_g_config_intr_pin(phydev);
-}
+	वापस ip101a_g_config_पूर्णांकr_pin(phydev);
+पूर्ण
 
-static int ip101a_g_read_status(struct phy_device *phydev)
-{
-	int oldpage, ret, stat1, stat2;
+अटल पूर्णांक ip101a_g_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक oldpage, ret, stat1, stat2;
 
-	ret = genphy_read_status(phydev);
-	if (ret)
-		return ret;
+	ret = genphy_पढ़ो_status(phydev);
+	अगर (ret)
+		वापस ret;
 
 	oldpage = phy_select_page(phydev, IP101G_DEFAULT_PAGE);
-	if (oldpage < 0)
-		goto out;
+	अगर (oldpage < 0)
+		जाओ out;
 
-	ret = __phy_read(phydev, IP10XX_SPEC_CTRL_STATUS);
-	if (ret < 0)
-		goto out;
+	ret = __phy_पढ़ो(phydev, IP10XX_SPEC_CTRL_STATUS);
+	अगर (ret < 0)
+		जाओ out;
 	stat1 = ret;
 
-	ret = __phy_read(phydev, IP101A_G_PHY_SPEC_CTRL);
-	if (ret < 0)
-		goto out;
+	ret = __phy_पढ़ो(phydev, IP101A_G_PHY_SPEC_CTRL);
+	अगर (ret < 0)
+		जाओ out;
 	stat2 = ret;
 
-	if (stat1 & IP101A_G_AUTO_MDIX_DIS) {
-		if (stat2 & IP101A_G_FORCE_MDIX)
+	अगर (stat1 & IP101A_G_AUTO_MDIX_DIS) अणु
+		अगर (stat2 & IP101A_G_FORCE_MDIX)
 			phydev->mdix_ctrl = ETH_TP_MDI_X;
-		else
+		अन्यथा
 			phydev->mdix_ctrl = ETH_TP_MDI;
-	} else {
+	पूर्ण अन्यथा अणु
 		phydev->mdix_ctrl = ETH_TP_MDI_AUTO;
-	}
+	पूर्ण
 
-	if (stat2 & IP101A_G_MDIX)
+	अगर (stat2 & IP101A_G_MDIX)
 		phydev->mdix = ETH_TP_MDI_X;
-	else
+	अन्यथा
 		phydev->mdix = ETH_TP_MDI;
 
 	ret = 0;
 
 out:
-	return phy_restore_page(phydev, oldpage, ret);
-}
+	वापस phy_restore_page(phydev, oldpage, ret);
+पूर्ण
 
-static int ip101a_g_config_mdix(struct phy_device *phydev)
-{
+अटल पूर्णांक ip101a_g_config_mdix(काष्ठा phy_device *phydev)
+अणु
 	u16 ctrl = 0, ctrl2 = 0;
-	int oldpage;
-	int ret = 0;
+	पूर्णांक oldpage;
+	पूर्णांक ret = 0;
 
-	switch (phydev->mdix_ctrl) {
-	case ETH_TP_MDI:
+	चयन (phydev->mdix_ctrl) अणु
+	हाल ETH_TP_MDI:
 		ctrl = IP101A_G_AUTO_MDIX_DIS;
-		break;
-	case ETH_TP_MDI_X:
+		अवरोध;
+	हाल ETH_TP_MDI_X:
 		ctrl = IP101A_G_AUTO_MDIX_DIS;
 		ctrl2 = IP101A_G_FORCE_MDIX;
-		break;
-	case ETH_TP_MDI_AUTO:
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	हाल ETH_TP_MDI_AUTO:
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	oldpage = phy_select_page(phydev, IP101G_DEFAULT_PAGE);
-	if (oldpage < 0)
-		goto out;
+	अगर (oldpage < 0)
+		जाओ out;
 
-	ret = __phy_modify(phydev, IP10XX_SPEC_CTRL_STATUS,
+	ret = __phy_modअगरy(phydev, IP10XX_SPEC_CTRL_STATUS,
 			   IP101A_G_AUTO_MDIX_DIS, ctrl);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	ret = __phy_modify(phydev, IP101A_G_PHY_SPEC_CTRL,
+	ret = __phy_modअगरy(phydev, IP101A_G_PHY_SPEC_CTRL,
 			   IP101A_G_FORCE_MDIX, ctrl2);
 
 out:
-	return phy_restore_page(phydev, oldpage, ret);
-}
+	वापस phy_restore_page(phydev, oldpage, ret);
+पूर्ण
 
-static int ip101a_g_config_aneg(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक ip101a_g_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
 	ret = ip101a_g_config_mdix(phydev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return genphy_config_aneg(phydev);
-}
+	वापस genphy_config_aneg(phydev);
+पूर्ण
 
-static int ip101a_g_ack_interrupt(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक ip101a_g_ack_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	err = phy_read_paged(phydev, IP101G_DEFAULT_PAGE,
+	err = phy_पढ़ो_paged(phydev, IP101G_DEFAULT_PAGE,
 			     IP101A_G_IRQ_CONF_STATUS);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip101a_g_config_intr(struct phy_device *phydev)
-{
+अटल पूर्णांक ip101a_g_config_पूर्णांकr(काष्ठा phy_device *phydev)
+अणु
 	u16 val;
-	int err;
+	पूर्णांक err;
 
-	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
-		err = ip101a_g_ack_interrupt(phydev);
-		if (err)
-			return err;
+	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
+		err = ip101a_g_ack_पूर्णांकerrupt(phydev);
+		अगर (err)
+			वापस err;
 
-		/* INTR pin used: Speed/link/duplex will cause an interrupt */
+		/* INTR pin used: Speed/link/duplex will cause an पूर्णांकerrupt */
 		val = IP101A_G_IRQ_PIN_USED;
-		err = phy_write_paged(phydev, IP101G_DEFAULT_PAGE,
+		err = phy_ग_लिखो_paged(phydev, IP101G_DEFAULT_PAGE,
 				      IP101A_G_IRQ_CONF_STATUS, val);
-	} else {
+	पूर्ण अन्यथा अणु
 		val = IP101A_G_IRQ_ALL_MASK;
-		err = phy_write_paged(phydev, IP101G_DEFAULT_PAGE,
+		err = phy_ग_लिखो_paged(phydev, IP101G_DEFAULT_PAGE,
 				      IP101A_G_IRQ_CONF_STATUS, val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		err = ip101a_g_ack_interrupt(phydev);
-	}
+		err = ip101a_g_ack_पूर्णांकerrupt(phydev);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static irqreturn_t ip101a_g_handle_interrupt(struct phy_device *phydev)
-{
-	int irq_status;
+अटल irqवापस_t ip101a_g_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक irq_status;
 
-	irq_status = phy_read_paged(phydev, IP101G_DEFAULT_PAGE,
+	irq_status = phy_पढ़ो_paged(phydev, IP101G_DEFAULT_PAGE,
 				    IP101A_G_IRQ_CONF_STATUS);
-	if (irq_status < 0) {
+	अगर (irq_status < 0) अणु
 		phy_error(phydev);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (!(irq_status & (IP101A_G_IRQ_SPEED_CHANGE |
+	अगर (!(irq_status & (IP101A_G_IRQ_SPEED_CHANGE |
 			    IP101A_G_IRQ_DUPLEX_CHANGE |
 			    IP101A_G_IRQ_LINK_CHANGE)))
-		return IRQ_NONE;
+		वापस IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* The IP101A doesn't really have a page register. We just pretend to have one
+/* The IP101A करोesn't really have a page रेजिस्टर. We just pretend to have one
  * so we can use the paged versions of the callbacks of the IP101G.
  */
-static int ip101a_read_page(struct phy_device *phydev)
-{
-	return IP101G_DEFAULT_PAGE;
-}
+अटल पूर्णांक ip101a_पढ़ो_page(काष्ठा phy_device *phydev)
+अणु
+	वापस IP101G_DEFAULT_PAGE;
+पूर्ण
 
-static int ip101a_write_page(struct phy_device *phydev, int page)
-{
+अटल पूर्णांक ip101a_ग_लिखो_page(काष्ठा phy_device *phydev, पूर्णांक page)
+अणु
 	WARN_ONCE(page != IP101G_DEFAULT_PAGE, "wrong page selected\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip101g_read_page(struct phy_device *phydev)
-{
-	return __phy_read(phydev, IP101G_PAGE_CONTROL);
-}
+अटल पूर्णांक ip101g_पढ़ो_page(काष्ठा phy_device *phydev)
+अणु
+	वापस __phy_पढ़ो(phydev, IP101G_PAGE_CONTROL);
+पूर्ण
 
-static int ip101g_write_page(struct phy_device *phydev, int page)
-{
-	return __phy_write(phydev, IP101G_PAGE_CONTROL, page);
-}
+अटल पूर्णांक ip101g_ग_लिखो_page(काष्ठा phy_device *phydev, पूर्णांक page)
+अणु
+	वापस __phy_ग_लिखो(phydev, IP101G_PAGE_CONTROL, page);
+पूर्ण
 
-static int ip101a_g_has_page_register(struct phy_device *phydev)
-{
-	int oldval, val, ret;
+अटल पूर्णांक ip101a_g_has_page_रेजिस्टर(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक oldval, val, ret;
 
-	oldval = phy_read(phydev, IP101G_PAGE_CONTROL);
-	if (oldval < 0)
-		return oldval;
+	oldval = phy_पढ़ो(phydev, IP101G_PAGE_CONTROL);
+	अगर (oldval < 0)
+		वापस oldval;
 
-	ret = phy_write(phydev, IP101G_PAGE_CONTROL, 0xffff);
-	if (ret)
-		return ret;
+	ret = phy_ग_लिखो(phydev, IP101G_PAGE_CONTROL, 0xffff);
+	अगर (ret)
+		वापस ret;
 
-	val = phy_read(phydev, IP101G_PAGE_CONTROL);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो(phydev, IP101G_PAGE_CONTROL);
+	अगर (val < 0)
+		वापस val;
 
-	ret = phy_write(phydev, IP101G_PAGE_CONTROL, oldval);
-	if (ret)
-		return ret;
+	ret = phy_ग_लिखो(phydev, IP101G_PAGE_CONTROL, oldval);
+	अगर (ret)
+		वापस ret;
 
-	return val == IP101G_PAGE_CONTROL_MASK;
-}
+	वापस val == IP101G_PAGE_CONTROL_MASK;
+पूर्ण
 
-static int ip101a_g_match_phy_device(struct phy_device *phydev, bool ip101a)
-{
-	int ret;
+अटल पूर्णांक ip101a_g_match_phy_device(काष्ठा phy_device *phydev, bool ip101a)
+अणु
+	पूर्णांक ret;
 
-	if (phydev->phy_id != IP101A_PHY_ID)
-		return 0;
+	अगर (phydev->phy_id != IP101A_PHY_ID)
+		वापस 0;
 
-	/* The IP101A and the IP101G share the same PHY identifier.The IP101G
+	/* The IP101A and the IP101G share the same PHY identअगरier.The IP101G
 	 * seems to be a successor of the IP101A and implements more functions.
-	 * Amongst other things there is a page select register, which is not
+	 * Amongst other things there is a page select रेजिस्टर, which is not
 	 * available on the IP101A. Use this to distinguish these two.
 	 */
-	ret = ip101a_g_has_page_register(phydev);
-	if (ret < 0)
-		return ret;
+	ret = ip101a_g_has_page_रेजिस्टर(phydev);
+	अगर (ret < 0)
+		वापस ret;
 
-	return ip101a == !ret;
-}
+	वापस ip101a == !ret;
+पूर्ण
 
-static int ip101a_match_phy_device(struct phy_device *phydev)
-{
-	return ip101a_g_match_phy_device(phydev, true);
-}
+अटल पूर्णांक ip101a_match_phy_device(काष्ठा phy_device *phydev)
+अणु
+	वापस ip101a_g_match_phy_device(phydev, true);
+पूर्ण
 
-static int ip101g_match_phy_device(struct phy_device *phydev)
-{
-	return ip101a_g_match_phy_device(phydev, false);
-}
+अटल पूर्णांक ip101g_match_phy_device(काष्ठा phy_device *phydev)
+अणु
+	वापस ip101a_g_match_phy_device(phydev, false);
+पूर्ण
 
-static int ip101g_get_sset_count(struct phy_device *phydev)
-{
-	return ARRAY_SIZE(ip101g_hw_stats);
-}
+अटल पूर्णांक ip101g_get_sset_count(काष्ठा phy_device *phydev)
+अणु
+	वापस ARRAY_SIZE(ip101g_hw_stats);
+पूर्ण
 
-static void ip101g_get_strings(struct phy_device *phydev, u8 *data)
-{
-	int i;
+अटल व्योम ip101g_get_strings(काष्ठा phy_device *phydev, u8 *data)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ip101g_hw_stats); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(ip101g_hw_stats); i++)
 		strscpy(data + i * ETH_GSTRING_LEN,
 			ip101g_hw_stats[i].name, ETH_GSTRING_LEN);
-}
+पूर्ण
 
-static u64 ip101g_get_stat(struct phy_device *phydev, int i)
-{
-	struct ip101g_hw_stat stat = ip101g_hw_stats[i];
-	struct ip101a_g_phy_priv *priv = phydev->priv;
-	int val;
+अटल u64 ip101g_get_stat(काष्ठा phy_device *phydev, पूर्णांक i)
+अणु
+	काष्ठा ip101g_hw_stat stat = ip101g_hw_stats[i];
+	काष्ठा ip101a_g_phy_priv *priv = phydev->priv;
+	पूर्णांक val;
 	u64 ret;
 
-	val = phy_read_paged(phydev, stat.page, IP101G_CNT_REG);
-	if (val < 0) {
+	val = phy_पढ़ो_paged(phydev, stat.page, IP101G_CNT_REG);
+	अगर (val < 0) अणु
 		ret = U64_MAX;
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->stats[i] += val;
 		ret = priv->stats[i];
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ip101g_get_stats(struct phy_device *phydev,
-			     struct ethtool_stats *stats, u64 *data)
-{
-	int i;
+अटल व्योम ip101g_get_stats(काष्ठा phy_device *phydev,
+			     काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ip101g_hw_stats); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(ip101g_hw_stats); i++)
 		data[i] = ip101g_get_stat(phydev, i);
-}
+पूर्ण
 
-static struct phy_driver icplus_driver[] = {
-{
+अटल काष्ठा phy_driver icplus_driver[] = अणु
+अणु
 	PHY_ID_MATCH_MODEL(IP175C_PHY_ID),
 	.name		= "ICPlus IP175C",
 	/* PHY_BASIC_FEATURES */
 	.config_init	= ip175c_config_init,
 	.config_aneg	= ip175c_config_aneg,
-	.read_status	= ip175c_read_status,
+	.पढ़ो_status	= ip175c_पढ़ो_status,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
-}, {
+पूर्ण, अणु
 	PHY_ID_MATCH_MODEL(IP1001_PHY_ID),
 	.name		= "ICPlus IP1001",
 	/* PHY_GBIT_FEATURES */
@@ -589,46 +590,46 @@ static struct phy_driver icplus_driver[] = {
 	.soft_reset	= genphy_soft_reset,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
-}, {
+पूर्ण, अणु
 	.name		= "ICPlus IP101A",
 	.match_phy_device = ip101a_match_phy_device,
 	.probe		= ip101a_g_probe,
-	.read_page	= ip101a_read_page,
-	.write_page	= ip101a_write_page,
-	.config_intr	= ip101a_g_config_intr,
-	.handle_interrupt = ip101a_g_handle_interrupt,
+	.पढ़ो_page	= ip101a_पढ़ो_page,
+	.ग_लिखो_page	= ip101a_ग_लिखो_page,
+	.config_पूर्णांकr	= ip101a_g_config_पूर्णांकr,
+	.handle_पूर्णांकerrupt = ip101a_g_handle_पूर्णांकerrupt,
 	.config_init	= ip101a_config_init,
 	.config_aneg	= ip101a_g_config_aneg,
-	.read_status	= ip101a_g_read_status,
+	.पढ़ो_status	= ip101a_g_पढ़ो_status,
 	.soft_reset	= genphy_soft_reset,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
-}, {
+पूर्ण, अणु
 	.name		= "ICPlus IP101G",
 	.match_phy_device = ip101g_match_phy_device,
 	.probe		= ip101a_g_probe,
-	.read_page	= ip101g_read_page,
-	.write_page	= ip101g_write_page,
-	.config_intr	= ip101a_g_config_intr,
-	.handle_interrupt = ip101a_g_handle_interrupt,
+	.पढ़ो_page	= ip101g_पढ़ो_page,
+	.ग_लिखो_page	= ip101g_ग_लिखो_page,
+	.config_पूर्णांकr	= ip101a_g_config_पूर्णांकr,
+	.handle_पूर्णांकerrupt = ip101a_g_handle_पूर्णांकerrupt,
 	.config_init	= ip101g_config_init,
 	.config_aneg	= ip101a_g_config_aneg,
-	.read_status	= ip101a_g_read_status,
+	.पढ़ो_status	= ip101a_g_पढ़ो_status,
 	.soft_reset	= genphy_soft_reset,
 	.get_sset_count = ip101g_get_sset_count,
 	.get_strings	= ip101g_get_strings,
 	.get_stats	= ip101g_get_stats,
 	.suspend	= genphy_suspend,
 	.resume		= genphy_resume,
-} };
+पूर्ण पूर्ण;
 
 module_phy_driver(icplus_driver);
 
-static struct mdio_device_id __maybe_unused icplus_tbl[] = {
-	{ PHY_ID_MATCH_MODEL(IP175C_PHY_ID) },
-	{ PHY_ID_MATCH_MODEL(IP1001_PHY_ID) },
-	{ PHY_ID_MATCH_EXACT(IP101A_PHY_ID) },
-	{ }
-};
+अटल काष्ठा mdio_device_id __maybe_unused icplus_tbl[] = अणु
+	अणु PHY_ID_MATCH_MODEL(IP175C_PHY_ID) पूर्ण,
+	अणु PHY_ID_MATCH_MODEL(IP1001_PHY_ID) पूर्ण,
+	अणु PHY_ID_MATCH_EXACT(IP101A_PHY_ID) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(mdio, icplus_tbl);

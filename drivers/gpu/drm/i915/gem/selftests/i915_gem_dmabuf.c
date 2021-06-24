@@ -1,154 +1,155 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include "i915_drv.h"
-#include "i915_selftest.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_selftest.h"
 
-#include "mock_dmabuf.h"
-#include "selftests/mock_gem_device.h"
+#समावेश "mock_dmabuf.h"
+#समावेश "selftests/mock_gem_device.h"
 
-static int igt_dmabuf_export(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	struct dma_buf *dmabuf;
+अटल पूर्णांक igt_dmabuf_export(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा dma_buf *dmabuf;
 
 	obj = i915_gem_object_create_shmem(i915, PAGE_SIZE);
-	if (IS_ERR(obj))
-		return PTR_ERR(obj);
+	अगर (IS_ERR(obj))
+		वापस PTR_ERR(obj);
 
 	dmabuf = i915_gem_prime_export(&obj->base, 0);
 	i915_gem_object_put(obj);
-	if (IS_ERR(dmabuf)) {
+	अगर (IS_ERR(dmabuf)) अणु
 		pr_err("i915_gem_prime_export failed with err=%d\n",
-		       (int)PTR_ERR(dmabuf));
-		return PTR_ERR(dmabuf);
-	}
+		       (पूर्णांक)PTR_ERR(dmabuf));
+		वापस PTR_ERR(dmabuf);
+	पूर्ण
 
 	dma_buf_put(dmabuf);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_dmabuf_import_self(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	struct drm_gem_object *import;
-	struct dma_buf *dmabuf;
-	int err;
+अटल पूर्णांक igt_dmabuf_import_self(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा drm_gem_object *import;
+	काष्ठा dma_buf *dmabuf;
+	पूर्णांक err;
 
 	obj = i915_gem_object_create_shmem(i915, PAGE_SIZE);
-	if (IS_ERR(obj))
-		return PTR_ERR(obj);
+	अगर (IS_ERR(obj))
+		वापस PTR_ERR(obj);
 
 	dmabuf = i915_gem_prime_export(&obj->base, 0);
-	if (IS_ERR(dmabuf)) {
+	अगर (IS_ERR(dmabuf)) अणु
 		pr_err("i915_gem_prime_export failed with err=%d\n",
-		       (int)PTR_ERR(dmabuf));
+		       (पूर्णांक)PTR_ERR(dmabuf));
 		err = PTR_ERR(dmabuf);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	import = i915_gem_prime_import(&i915->drm, dmabuf);
-	if (IS_ERR(import)) {
+	अगर (IS_ERR(import)) अणु
 		pr_err("i915_gem_prime_import failed with err=%d\n",
-		       (int)PTR_ERR(import));
+		       (पूर्णांक)PTR_ERR(import));
 		err = PTR_ERR(import);
-		goto out_dmabuf;
-	}
+		जाओ out_dmabuf;
+	पूर्ण
 
-	if (import != &obj->base) {
+	अगर (import != &obj->base) अणु
 		pr_err("i915_gem_prime_import created a new object!\n");
 		err = -EINVAL;
-		goto out_import;
-	}
+		जाओ out_import;
+	पूर्ण
 
 	err = 0;
 out_import:
-	i915_gem_object_put(to_intel_bo(import));
+	i915_gem_object_put(to_पूर्णांकel_bo(import));
 out_dmabuf:
 	dma_buf_put(dmabuf);
 out:
 	i915_gem_object_put(obj);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_dmabuf_import(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	struct dma_buf *dmabuf;
-	void *obj_map, *dma_map;
-	struct dma_buf_map map;
-	u32 pattern[] = { 0, 0xaa, 0xcc, 0x55, 0xff };
-	int err, i;
+अटल पूर्णांक igt_dmabuf_import(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा dma_buf *dmabuf;
+	व्योम *obj_map, *dma_map;
+	काष्ठा dma_buf_map map;
+	u32 pattern[] = अणु 0, 0xaa, 0xcc, 0x55, 0xff पूर्ण;
+	पूर्णांक err, i;
 
 	dmabuf = mock_dmabuf(1);
-	if (IS_ERR(dmabuf))
-		return PTR_ERR(dmabuf);
+	अगर (IS_ERR(dmabuf))
+		वापस PTR_ERR(dmabuf);
 
-	obj = to_intel_bo(i915_gem_prime_import(&i915->drm, dmabuf));
-	if (IS_ERR(obj)) {
+	obj = to_पूर्णांकel_bo(i915_gem_prime_import(&i915->drm, dmabuf));
+	अगर (IS_ERR(obj)) अणु
 		pr_err("i915_gem_prime_import failed with err=%d\n",
-		       (int)PTR_ERR(obj));
+		       (पूर्णांक)PTR_ERR(obj));
 		err = PTR_ERR(obj);
-		goto out_dmabuf;
-	}
+		जाओ out_dmabuf;
+	पूर्ण
 
-	if (obj->base.dev != &i915->drm) {
+	अगर (obj->base.dev != &i915->drm) अणु
 		pr_err("i915_gem_prime_import created a non-i915 object!\n");
 		err = -EINVAL;
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
-	if (obj->base.size != PAGE_SIZE) {
+	अगर (obj->base.size != PAGE_SIZE) अणु
 		pr_err("i915_gem_prime_import is wrong size found %lld, expected %ld\n",
-		       (long long)obj->base.size, PAGE_SIZE);
+		       (दीर्घ दीर्घ)obj->base.size, PAGE_SIZE);
 		err = -EINVAL;
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
 	err = dma_buf_vmap(dmabuf, &map);
-	dma_map = err ? NULL : map.vaddr;
-	if (!dma_map) {
+	dma_map = err ? शून्य : map.vaddr;
+	अगर (!dma_map) अणु
 		pr_err("dma_buf_vmap failed\n");
 		err = -ENOMEM;
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
-	if (0) { /* Can not yet map dmabuf */
+	अगर (0) अणु /* Can not yet map dmabuf */
 		obj_map = i915_gem_object_pin_map(obj, I915_MAP_WB);
-		if (IS_ERR(obj_map)) {
+		अगर (IS_ERR(obj_map)) अणु
 			err = PTR_ERR(obj_map);
 			pr_err("i915_gem_object_pin_map failed with err=%d\n", err);
-			goto out_dma_map;
-		}
+			जाओ out_dma_map;
+		पूर्ण
 
-		for (i = 0; i < ARRAY_SIZE(pattern); i++) {
-			memset(dma_map, pattern[i], PAGE_SIZE);
-			if (memchr_inv(obj_map, pattern[i], PAGE_SIZE)) {
+		क्रम (i = 0; i < ARRAY_SIZE(pattern); i++) अणु
+			स_रखो(dma_map, pattern[i], PAGE_SIZE);
+			अगर (स_प्रथम_inv(obj_map, pattern[i], PAGE_SIZE)) अणु
 				err = -EINVAL;
 				pr_err("imported vmap not all set to %x!\n", pattern[i]);
 				i915_gem_object_unpin_map(obj);
-				goto out_dma_map;
-			}
-		}
+				जाओ out_dma_map;
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < ARRAY_SIZE(pattern); i++) {
-			memset(obj_map, pattern[i], PAGE_SIZE);
-			if (memchr_inv(dma_map, pattern[i], PAGE_SIZE)) {
+		क्रम (i = 0; i < ARRAY_SIZE(pattern); i++) अणु
+			स_रखो(obj_map, pattern[i], PAGE_SIZE);
+			अगर (स_प्रथम_inv(dma_map, pattern[i], PAGE_SIZE)) अणु
 				err = -EINVAL;
 				pr_err("exported vmap not all set to %x!\n", pattern[i]);
 				i915_gem_object_unpin_map(obj);
-				goto out_dma_map;
-			}
-		}
+				जाओ out_dma_map;
+			पूर्ण
+		पूर्ण
 
 		i915_gem_object_unpin_map(obj);
-	}
+	पूर्ण
 
 	err = 0;
 out_dma_map:
@@ -157,136 +158,136 @@ out_obj:
 	i915_gem_object_put(obj);
 out_dmabuf:
 	dma_buf_put(dmabuf);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_dmabuf_import_ownership(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	struct dma_buf *dmabuf;
-	struct dma_buf_map map;
-	void *ptr;
-	int err;
+अटल पूर्णांक igt_dmabuf_import_ownership(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा dma_buf *dmabuf;
+	काष्ठा dma_buf_map map;
+	व्योम *ptr;
+	पूर्णांक err;
 
 	dmabuf = mock_dmabuf(1);
-	if (IS_ERR(dmabuf))
-		return PTR_ERR(dmabuf);
+	अगर (IS_ERR(dmabuf))
+		वापस PTR_ERR(dmabuf);
 
 	err = dma_buf_vmap(dmabuf, &map);
-	ptr = err ? NULL : map.vaddr;
-	if (!ptr) {
+	ptr = err ? शून्य : map.vaddr;
+	अगर (!ptr) अणु
 		pr_err("dma_buf_vmap failed\n");
 		err = -ENOMEM;
-		goto err_dmabuf;
-	}
+		जाओ err_dmabuf;
+	पूर्ण
 
-	memset(ptr, 0xc5, PAGE_SIZE);
+	स_रखो(ptr, 0xc5, PAGE_SIZE);
 	dma_buf_vunmap(dmabuf, &map);
 
-	obj = to_intel_bo(i915_gem_prime_import(&i915->drm, dmabuf));
-	if (IS_ERR(obj)) {
+	obj = to_पूर्णांकel_bo(i915_gem_prime_import(&i915->drm, dmabuf));
+	अगर (IS_ERR(obj)) अणु
 		pr_err("i915_gem_prime_import failed with err=%d\n",
-		       (int)PTR_ERR(obj));
+		       (पूर्णांक)PTR_ERR(obj));
 		err = PTR_ERR(obj);
-		goto err_dmabuf;
-	}
+		जाओ err_dmabuf;
+	पूर्ण
 
 	dma_buf_put(dmabuf);
 
 	err = i915_gem_object_pin_pages_unlocked(obj);
-	if (err) {
+	अगर (err) अणु
 		pr_err("i915_gem_object_pin_pages failed with err=%d\n", err);
-		goto out_obj;
-	}
+		जाओ out_obj;
+	पूर्ण
 
 	err = 0;
 	i915_gem_object_unpin_pages(obj);
 out_obj:
 	i915_gem_object_put(obj);
-	return err;
+	वापस err;
 
 err_dmabuf:
 	dma_buf_put(dmabuf);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int igt_dmabuf_export_vmap(void *arg)
-{
-	struct drm_i915_private *i915 = arg;
-	struct drm_i915_gem_object *obj;
-	struct dma_buf *dmabuf;
-	struct dma_buf_map map;
-	void *ptr;
-	int err;
+अटल पूर्णांक igt_dmabuf_export_vmap(व्योम *arg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = arg;
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा dma_buf *dmabuf;
+	काष्ठा dma_buf_map map;
+	व्योम *ptr;
+	पूर्णांक err;
 
 	obj = i915_gem_object_create_shmem(i915, PAGE_SIZE);
-	if (IS_ERR(obj))
-		return PTR_ERR(obj);
+	अगर (IS_ERR(obj))
+		वापस PTR_ERR(obj);
 
 	dmabuf = i915_gem_prime_export(&obj->base, 0);
-	if (IS_ERR(dmabuf)) {
+	अगर (IS_ERR(dmabuf)) अणु
 		pr_err("i915_gem_prime_export failed with err=%d\n",
-		       (int)PTR_ERR(dmabuf));
+		       (पूर्णांक)PTR_ERR(dmabuf));
 		err = PTR_ERR(dmabuf);
-		goto err_obj;
-	}
+		जाओ err_obj;
+	पूर्ण
 	i915_gem_object_put(obj);
 
 	err = dma_buf_vmap(dmabuf, &map);
-	ptr = err ? NULL : map.vaddr;
-	if (!ptr) {
+	ptr = err ? शून्य : map.vaddr;
+	अगर (!ptr) अणु
 		pr_err("dma_buf_vmap failed\n");
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (memchr_inv(ptr, 0, dmabuf->size)) {
+	अगर (स_प्रथम_inv(ptr, 0, dmabuf->size)) अणु
 		pr_err("Exported object not initialiased to zero!\n");
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memset(ptr, 0xc5, dmabuf->size);
+	स_रखो(ptr, 0xc5, dmabuf->size);
 
 	err = 0;
 	dma_buf_vunmap(dmabuf, &map);
 out:
 	dma_buf_put(dmabuf);
-	return err;
+	वापस err;
 
 err_obj:
 	i915_gem_object_put(obj);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_gem_dmabuf_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_dmabuf_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_dmabuf_export),
 		SUBTEST(igt_dmabuf_import_self),
 		SUBTEST(igt_dmabuf_import),
 		SUBTEST(igt_dmabuf_import_ownership),
 		SUBTEST(igt_dmabuf_export_vmap),
-	};
-	struct drm_i915_private *i915;
-	int err;
+	पूर्ण;
+	काष्ठा drm_i915_निजी *i915;
+	पूर्णांक err;
 
 	i915 = mock_gem_device();
-	if (!i915)
-		return -ENOMEM;
+	अगर (!i915)
+		वापस -ENOMEM;
 
 	err = i915_subtests(tests, i915);
 
 	mock_destroy_device(i915);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int i915_gem_dmabuf_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_gem_dmabuf_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_dmabuf_export),
-	};
+	पूर्ण;
 
-	return i915_subtests(tests, i915);
-}
+	वापस i915_subtests(tests, i915);
+पूर्ण

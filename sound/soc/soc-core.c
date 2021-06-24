@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // soc-core.c  --  ALSA SoC Audio Layer
 //
@@ -9,363 +10,363 @@
 //
 // Author: Liam Girdwood <lrg@slimlogic.co.uk>
 //         with code, comments and ideas from :-
-//         Richard Purdie <richard@openedhand.com>
+//         Riअक्षरd Purdie <riअक्षरd@खोलोedhand.com>
 //
 //  TODO:
-//   o Add hw rules to enforce rates, etc.
+//   o Add hw rules to enक्रमce rates, etc.
 //   o More testing with other codecs/machines.
-//   o Add more codecs and platforms to ensure good API coverage.
+//   o Add more codecs and platक्रमms to ensure good API coverage.
 //   o Support TDM on PCM and I2S
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/bitops.h>
-#include <linux/debugfs.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
-#include <linux/dmi.h>
-#include <linux/acpi.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dpcm.h>
-#include <sound/soc-topology.h>
-#include <sound/soc-link.h>
-#include <sound/initval.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/acpi.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dpcm.h>
+#समावेश <sound/soc-topology.h>
+#समावेश <sound/soc-link.h>
+#समावेश <sound/initval.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/asoc.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/asoc.h>
 
-static DEFINE_MUTEX(client_mutex);
-static LIST_HEAD(component_list);
-static LIST_HEAD(unbind_card_list);
+अटल DEFINE_MUTEX(client_mutex);
+अटल LIST_HEAD(component_list);
+अटल LIST_HEAD(unbind_card_list);
 
-#define for_each_component(component)			\
-	list_for_each_entry(component, &component_list, list)
+#घोषणा क्रम_each_component(component)			\
+	list_क्रम_each_entry(component, &component_list, list)
 
 /*
- * This is used if driver don't need to have CPU/Codec/Platform
+ * This is used अगर driver करोn't need to have CPU/Codec/Platक्रमm
  * dai_link. see soc.h
  */
-struct snd_soc_dai_link_component null_dailink_component[0];
+काष्ठा snd_soc_dai_link_component null_dailink_component[0];
 EXPORT_SYMBOL_GPL(null_dailink_component);
 
 /*
- * This is a timeout to do a DAPM powerdown after a stream is closed().
- * It can be used to eliminate pops between different playback streams, e.g.
+ * This is a समयout to करो a DAPM घातerकरोwn after a stream is बंदd().
+ * It can be used to eliminate pops between dअगरferent playback streams, e.g.
  * between two audio tracks.
  */
-static int pmdown_time = 5000;
-module_param(pmdown_time, int, 0);
-MODULE_PARM_DESC(pmdown_time, "DAPM stream powerdown time (msecs)");
+अटल पूर्णांक pmकरोwn_समय = 5000;
+module_param(pmकरोwn_समय, पूर्णांक, 0);
+MODULE_PARM_DESC(pmकरोwn_समय, "DAPM stream powerdown time (msecs)");
 
-static ssize_t pmdown_time_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct snd_soc_pcm_runtime *rtd = dev_get_drvdata(dev);
+अटल sमाप_प्रकार pmकरोwn_समय_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%ld\n", rtd->pmdown_time);
-}
+	वापस प्र_लिखो(buf, "%ld\n", rtd->pmकरोwn_समय);
+पूर्ण
 
-static ssize_t pmdown_time_set(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t count)
-{
-	struct snd_soc_pcm_runtime *rtd = dev_get_drvdata(dev);
-	int ret;
+अटल sमाप_प्रकार pmकरोwn_समय_set(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	ret = kstrtol(buf, 10, &rtd->pmdown_time);
-	if (ret)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 10, &rtd->pmकरोwn_समय);
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(pmdown_time, 0644, pmdown_time_show, pmdown_time_set);
+अटल DEVICE_ATTR(pmकरोwn_समय, 0644, pmकरोwn_समय_show, pmकरोwn_समय_set);
 
-static struct attribute *soc_dev_attrs[] = {
-	&dev_attr_pmdown_time.attr,
-	NULL
-};
+अटल काष्ठा attribute *soc_dev_attrs[] = अणु
+	&dev_attr_pmकरोwn_समय.attr,
+	शून्य
+पूर्ण;
 
-static umode_t soc_dev_attr_is_visible(struct kobject *kobj,
-				       struct attribute *attr, int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct snd_soc_pcm_runtime *rtd = dev_get_drvdata(dev);
+अटल umode_t soc_dev_attr_is_visible(काष्ठा kobject *kobj,
+				       काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा snd_soc_pcm_runसमय *rtd = dev_get_drvdata(dev);
 
-	if (!rtd)
-		return 0;
+	अगर (!rtd)
+		वापस 0;
 
-	if (attr == &dev_attr_pmdown_time.attr)
-		return attr->mode; /* always visible */
-	return rtd->num_codecs ? attr->mode : 0; /* enabled only with codec */
-}
+	अगर (attr == &dev_attr_pmकरोwn_समय.attr)
+		वापस attr->mode; /* always visible */
+	वापस rtd->num_codecs ? attr->mode : 0; /* enabled only with codec */
+पूर्ण
 
-static const struct attribute_group soc_dapm_dev_group = {
+अटल स्थिर काष्ठा attribute_group soc_dapm_dev_group = अणु
 	.attrs = soc_dapm_dev_attrs,
 	.is_visible = soc_dev_attr_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group soc_dev_group = {
+अटल स्थिर काष्ठा attribute_group soc_dev_group = अणु
 	.attrs = soc_dev_attrs,
 	.is_visible = soc_dev_attr_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *soc_dev_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *soc_dev_attr_groups[] = अणु
 	&soc_dapm_dev_group,
 	&soc_dev_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_FS
-struct dentry *snd_soc_debugfs_root;
+#अगर_घोषित CONFIG_DEBUG_FS
+काष्ठा dentry *snd_soc_debugfs_root;
 EXPORT_SYMBOL_GPL(snd_soc_debugfs_root);
 
-static void soc_init_component_debugfs(struct snd_soc_component *component)
-{
-	if (!component->card->debugfs_card_root)
-		return;
+अटल व्योम soc_init_component_debugfs(काष्ठा snd_soc_component *component)
+अणु
+	अगर (!component->card->debugfs_card_root)
+		वापस;
 
-	if (component->debugfs_prefix) {
-		char *name;
+	अगर (component->debugfs_prefix) अणु
+		अक्षर *name;
 
-		name = kasprintf(GFP_KERNEL, "%s:%s",
+		name = kaप्र_लिखो(GFP_KERNEL, "%s:%s",
 			component->debugfs_prefix, component->name);
-		if (name) {
+		अगर (name) अणु
 			component->debugfs_root = debugfs_create_dir(name,
 				component->card->debugfs_card_root);
-			kfree(name);
-		}
-	} else {
+			kमुक्त(name);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		component->debugfs_root = debugfs_create_dir(component->name,
 				component->card->debugfs_card_root);
-	}
+	पूर्ण
 
 	snd_soc_dapm_debugfs_init(snd_soc_component_get_dapm(component),
 		component->debugfs_root);
-}
+पूर्ण
 
-static void soc_cleanup_component_debugfs(struct snd_soc_component *component)
-{
-	if (!component->debugfs_root)
-		return;
-	debugfs_remove_recursive(component->debugfs_root);
-	component->debugfs_root = NULL;
-}
+अटल व्योम soc_cleanup_component_debugfs(काष्ठा snd_soc_component *component)
+अणु
+	अगर (!component->debugfs_root)
+		वापस;
+	debugfs_हटाओ_recursive(component->debugfs_root);
+	component->debugfs_root = शून्य;
+पूर्ण
 
-static int dai_list_show(struct seq_file *m, void *v)
-{
-	struct snd_soc_component *component;
-	struct snd_soc_dai *dai;
+अटल पूर्णांक dai_list_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_dai *dai;
 
 	mutex_lock(&client_mutex);
 
-	for_each_component(component)
-		for_each_component_dais(component, dai)
-			seq_printf(m, "%s\n", dai->name);
+	क्रम_each_component(component)
+		क्रम_each_component_dais(component, dai)
+			seq_म_लिखो(m, "%s\n", dai->name);
 
 	mutex_unlock(&client_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(dai_list);
 
-static int component_list_show(struct seq_file *m, void *v)
-{
-	struct snd_soc_component *component;
+अटल पूर्णांक component_list_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा snd_soc_component *component;
 
 	mutex_lock(&client_mutex);
 
-	for_each_component(component)
-		seq_printf(m, "%s\n", component->name);
+	क्रम_each_component(component)
+		seq_म_लिखो(m, "%s\n", component->name);
 
 	mutex_unlock(&client_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(component_list);
 
-static void soc_init_card_debugfs(struct snd_soc_card *card)
-{
+अटल व्योम soc_init_card_debugfs(काष्ठा snd_soc_card *card)
+अणु
 	card->debugfs_card_root = debugfs_create_dir(card->name,
 						     snd_soc_debugfs_root);
 
 	debugfs_create_u32("dapm_pop_time", 0644, card->debugfs_card_root,
-			   &card->pop_time);
+			   &card->pop_समय);
 
 	snd_soc_dapm_debugfs_init(&card->dapm, card->debugfs_card_root);
-}
+पूर्ण
 
-static void soc_cleanup_card_debugfs(struct snd_soc_card *card)
-{
-	debugfs_remove_recursive(card->debugfs_card_root);
-	card->debugfs_card_root = NULL;
-}
+अटल व्योम soc_cleanup_card_debugfs(काष्ठा snd_soc_card *card)
+अणु
+	debugfs_हटाओ_recursive(card->debugfs_card_root);
+	card->debugfs_card_root = शून्य;
+पूर्ण
 
-static void snd_soc_debugfs_init(void)
-{
-	snd_soc_debugfs_root = debugfs_create_dir("asoc", NULL);
+अटल व्योम snd_soc_debugfs_init(व्योम)
+अणु
+	snd_soc_debugfs_root = debugfs_create_dir("asoc", शून्य);
 
-	debugfs_create_file("dais", 0444, snd_soc_debugfs_root, NULL,
+	debugfs_create_file("dais", 0444, snd_soc_debugfs_root, शून्य,
 			    &dai_list_fops);
 
-	debugfs_create_file("components", 0444, snd_soc_debugfs_root, NULL,
+	debugfs_create_file("components", 0444, snd_soc_debugfs_root, शून्य,
 			    &component_list_fops);
-}
+पूर्ण
 
-static void snd_soc_debugfs_exit(void)
-{
-	debugfs_remove_recursive(snd_soc_debugfs_root);
-}
+अटल व्योम snd_soc_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(snd_soc_debugfs_root);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void soc_init_component_debugfs(
-	struct snd_soc_component *component)
-{
-}
+अटल अंतरभूत व्योम soc_init_component_debugfs(
+	काष्ठा snd_soc_component *component)
+अणु
+पूर्ण
 
-static inline void soc_cleanup_component_debugfs(
-	struct snd_soc_component *component)
-{
-}
+अटल अंतरभूत व्योम soc_cleanup_component_debugfs(
+	काष्ठा snd_soc_component *component)
+अणु
+पूर्ण
 
-static inline void soc_init_card_debugfs(struct snd_soc_card *card)
-{
-}
+अटल अंतरभूत व्योम soc_init_card_debugfs(काष्ठा snd_soc_card *card)
+अणु
+पूर्ण
 
-static inline void soc_cleanup_card_debugfs(struct snd_soc_card *card)
-{
-}
+अटल अंतरभूत व्योम soc_cleanup_card_debugfs(काष्ठा snd_soc_card *card)
+अणु
+पूर्ण
 
-static inline void snd_soc_debugfs_init(void)
-{
-}
+अटल अंतरभूत व्योम snd_soc_debugfs_init(व्योम)
+अणु
+पूर्ण
 
-static inline void snd_soc_debugfs_exit(void)
-{
-}
+अटल अंतरभूत व्योम snd_soc_debugfs_निकास(व्योम)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int snd_soc_rtd_add_component(struct snd_soc_pcm_runtime *rtd,
-				     struct snd_soc_component *component)
-{
-	struct snd_soc_component *comp;
-	int i;
+अटल पूर्णांक snd_soc_rtd_add_component(काष्ठा snd_soc_pcm_runसमय *rtd,
+				     काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_component *comp;
+	पूर्णांक i;
 
-	for_each_rtd_components(rtd, i, comp) {
-		/* already connected */
-		if (comp == component)
-			return 0;
-	}
+	क्रम_each_rtd_components(rtd, i, comp) अणु
+		/* alपढ़ोy connected */
+		अगर (comp == component)
+			वापस 0;
+	पूर्ण
 
-	/* see for_each_rtd_components */
+	/* see क्रम_each_rtd_components */
 	rtd->components[rtd->num_components] = component;
 	rtd->num_components++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct snd_soc_component *snd_soc_rtdcom_lookup(struct snd_soc_pcm_runtime *rtd,
-						const char *driver_name)
-{
-	struct snd_soc_component *component;
-	int i;
+काष्ठा snd_soc_component *snd_soc_rtdcom_lookup(काष्ठा snd_soc_pcm_runसमय *rtd,
+						स्थिर अक्षर *driver_name)
+अणु
+	काष्ठा snd_soc_component *component;
+	पूर्णांक i;
 
-	if (!driver_name)
-		return NULL;
+	अगर (!driver_name)
+		वापस शून्य;
 
 	/*
 	 * NOTE
 	 *
 	 * snd_soc_rtdcom_lookup() will find component from rtd by using
-	 * specified driver name.
-	 * But, if many components which have same driver name are connected
-	 * to 1 rtd, this function will return 1st found component.
+	 * specअगरied driver name.
+	 * But, अगर many components which have same driver name are connected
+	 * to 1 rtd, this function will वापस 1st found component.
 	 */
-	for_each_rtd_components(rtd, i, component) {
-		const char *component_name = component->driver->name;
+	क्रम_each_rtd_components(rtd, i, component) अणु
+		स्थिर अक्षर *component_name = component->driver->name;
 
-		if (!component_name)
-			continue;
+		अगर (!component_name)
+			जारी;
 
-		if ((component_name == driver_name) ||
-		    strcmp(component_name, driver_name) == 0)
-			return component;
-	}
+		अगर ((component_name == driver_name) ||
+		    म_भेद(component_name, driver_name) == 0)
+			वापस component;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_rtdcom_lookup);
 
-struct snd_soc_component
-*snd_soc_lookup_component_nolocked(struct device *dev, const char *driver_name)
-{
-	struct snd_soc_component *component;
-	struct snd_soc_component *found_component;
+काष्ठा snd_soc_component
+*snd_soc_lookup_component_nolocked(काष्ठा device *dev, स्थिर अक्षर *driver_name)
+अणु
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_component *found_component;
 
-	found_component = NULL;
-	for_each_component(component) {
-		if ((dev == component->dev) &&
+	found_component = शून्य;
+	क्रम_each_component(component) अणु
+		अगर ((dev == component->dev) &&
 		    (!driver_name ||
 		     (driver_name == component->driver->name) ||
-		     (strcmp(component->driver->name, driver_name) == 0))) {
+		     (म_भेद(component->driver->name, driver_name) == 0))) अणु
 			found_component = component;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return found_component;
-}
+	वापस found_component;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_lookup_component_nolocked);
 
-struct snd_soc_component *snd_soc_lookup_component(struct device *dev,
-						   const char *driver_name)
-{
-	struct snd_soc_component *component;
+काष्ठा snd_soc_component *snd_soc_lookup_component(काष्ठा device *dev,
+						   स्थिर अक्षर *driver_name)
+अणु
+	काष्ठा snd_soc_component *component;
 
 	mutex_lock(&client_mutex);
 	component = snd_soc_lookup_component_nolocked(dev, driver_name);
 	mutex_unlock(&client_mutex);
 
-	return component;
-}
+	वापस component;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_lookup_component);
 
-struct snd_soc_pcm_runtime
-*snd_soc_get_pcm_runtime(struct snd_soc_card *card,
-			 struct snd_soc_dai_link *dai_link)
-{
-	struct snd_soc_pcm_runtime *rtd;
+काष्ठा snd_soc_pcm_runसमय
+*snd_soc_get_pcm_runसमय(काष्ठा snd_soc_card *card,
+			 काष्ठा snd_soc_dai_link *dai_link)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
 
-	for_each_card_rtds(card, rtd) {
-		if (rtd->dai_link == dai_link)
-			return rtd;
-	}
+	क्रम_each_card_rtds(card, rtd) अणु
+		अगर (rtd->dai_link == dai_link)
+			वापस rtd;
+	पूर्ण
 	dev_dbg(card->dev, "ASoC: failed to find rtd %s\n", dai_link->name);
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(snd_soc_get_pcm_runtime);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_get_pcm_runसमय);
 
 /*
- * Power down the audio subsystem pmdown_time msecs after close is called.
+ * Power करोwn the audio subप्रणाली pmकरोwn_समय msecs after बंद is called.
  * This is to ensure there are no pops or clicks in between any music tracks
- * due to DAPM power cycling.
+ * due to DAPM घातer cycling.
  */
-void snd_soc_close_delayed_work(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	int playback = SNDRV_PCM_STREAM_PLAYBACK;
+व्योम snd_soc_बंद_delayed_work(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	पूर्णांक playback = SNDRV_PCM_STREAM_PLAYBACK;
 
 	mutex_lock_nested(&rtd->card->pcm_mutex, rtd->card->pcm_subclass);
 
@@ -374,124 +375,124 @@ void snd_soc_close_delayed_work(struct snd_soc_pcm_runtime *rtd)
 		codec_dai->driver->playback.stream_name,
 		snd_soc_dai_stream_active(codec_dai, playback) ?
 		"active" : "inactive",
-		rtd->pop_wait ? "yes" : "no");
+		rtd->pop_रुको ? "yes" : "no");
 
-	/* are we waiting on this codec DAI stream */
-	if (rtd->pop_wait == 1) {
-		rtd->pop_wait = 0;
+	/* are we रुकोing on this codec DAI stream */
+	अगर (rtd->pop_रुको == 1) अणु
+		rtd->pop_रुको = 0;
 		snd_soc_dapm_stream_event(rtd, playback,
 					  SND_SOC_DAPM_STREAM_STOP);
-	}
+	पूर्ण
 
 	mutex_unlock(&rtd->card->pcm_mutex);
-}
-EXPORT_SYMBOL_GPL(snd_soc_close_delayed_work);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_बंद_delayed_work);
 
-static void soc_release_rtd_dev(struct device *dev)
-{
+अटल व्योम soc_release_rtd_dev(काष्ठा device *dev)
+अणु
 	/* "dev" means "rtd->dev" */
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
-static void soc_free_pcm_runtime(struct snd_soc_pcm_runtime *rtd)
-{
-	if (!rtd)
-		return;
+अटल व्योम soc_मुक्त_pcm_runसमय(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	अगर (!rtd)
+		वापस;
 
 	list_del(&rtd->list);
 
-	if (delayed_work_pending(&rtd->delayed_work))
+	अगर (delayed_work_pending(&rtd->delayed_work))
 		flush_delayed_work(&rtd->delayed_work);
-	snd_soc_pcm_component_free(rtd);
+	snd_soc_pcm_component_मुक्त(rtd);
 
 	/*
-	 * we don't need to call kfree() for rtd->dev
+	 * we करोn't need to call kमुक्त() क्रम rtd->dev
 	 * see
 	 *	soc_release_rtd_dev()
 	 *
-	 * We don't need rtd->dev NULL check, because
-	 * it is alloced *before* rtd.
+	 * We करोn't need rtd->dev शून्य check, because
+	 * it is alloced *beक्रमe* rtd.
 	 * see
-	 *	soc_new_pcm_runtime()
+	 *	soc_new_pcm_runसमय()
 	 *
-	 * We don't need to mind freeing for rtd,
+	 * We करोn't need to mind मुक्तing क्रम rtd,
 	 * because it was created from dev (= rtd->dev)
 	 * see
-	 *	soc_new_pcm_runtime()
+	 *	soc_new_pcm_runसमय()
 	 *
 	 *		rtd = devm_kzalloc(dev, ...);
 	 *		rtd->dev = dev
 	 */
-	device_unregister(rtd->dev);
-}
+	device_unरेजिस्टर(rtd->dev);
+पूर्ण
 
-static void close_delayed_work(struct work_struct *work) {
-	struct snd_soc_pcm_runtime *rtd =
-			container_of(work, struct snd_soc_pcm_runtime,
+अटल व्योम बंद_delayed_work(काष्ठा work_काष्ठा *work) अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd =
+			container_of(work, काष्ठा snd_soc_pcm_runसमय,
 				     delayed_work.work);
 
-	if (rtd->close_delayed_work_func)
-		rtd->close_delayed_work_func(rtd);
-}
+	अगर (rtd->बंद_delayed_work_func)
+		rtd->बंद_delayed_work_func(rtd);
+पूर्ण
 
-static struct snd_soc_pcm_runtime *soc_new_pcm_runtime(
-	struct snd_soc_card *card, struct snd_soc_dai_link *dai_link)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_component *component;
-	struct device *dev;
-	int ret;
-	int stream;
+अटल काष्ठा snd_soc_pcm_runसमय *soc_new_pcm_runसमय(
+	काष्ठा snd_soc_card *card, काष्ठा snd_soc_dai_link *dai_link)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_soc_component *component;
+	काष्ठा device *dev;
+	पूर्णांक ret;
+	पूर्णांक stream;
 
 	/*
-	 * for rtd->dev
+	 * क्रम rtd->dev
 	 */
-	dev = kzalloc(sizeof(struct device), GFP_KERNEL);
-	if (!dev)
-		return NULL;
+	dev = kzalloc(माप(काष्ठा device), GFP_KERNEL);
+	अगर (!dev)
+		वापस शून्य;
 
 	dev->parent	= card->dev;
 	dev->release	= soc_release_rtd_dev;
 
 	dev_set_name(dev, "%s", dai_link->name);
 
-	ret = device_register(dev);
-	if (ret < 0) {
+	ret = device_रेजिस्टर(dev);
+	अगर (ret < 0) अणु
 		put_device(dev); /* soc_release_rtd_dev */
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
-	 * for rtd
+	 * क्रम rtd
 	 */
 	rtd = devm_kzalloc(dev,
-			   sizeof(*rtd) +
-			   sizeof(*component) * (dai_link->num_cpus +
+			   माप(*rtd) +
+			   माप(*component) * (dai_link->num_cpus +
 						 dai_link->num_codecs +
-						 dai_link->num_platforms),
+						 dai_link->num_platक्रमms),
 			   GFP_KERNEL);
-	if (!rtd) {
-		device_unregister(dev);
-		return NULL;
-	}
+	अगर (!rtd) अणु
+		device_unरेजिस्टर(dev);
+		वापस शून्य;
+	पूर्ण
 
 	rtd->dev = dev;
 	INIT_LIST_HEAD(&rtd->list);
-	for_each_pcm_streams(stream) {
+	क्रम_each_pcm_streams(stream) अणु
 		INIT_LIST_HEAD(&rtd->dpcm[stream].be_clients);
 		INIT_LIST_HEAD(&rtd->dpcm[stream].fe_clients);
-	}
+	पूर्ण
 	dev_set_drvdata(dev, rtd);
-	INIT_DELAYED_WORK(&rtd->delayed_work, close_delayed_work);
+	INIT_DELAYED_WORK(&rtd->delayed_work, बंद_delayed_work);
 
 	/*
-	 * for rtd->dais
+	 * क्रम rtd->dais
 	 */
-	rtd->dais = devm_kcalloc(dev, dai_link->num_cpus + dai_link->num_codecs,
-					sizeof(struct snd_soc_dai *),
+	rtd->dais = devm_kसुस्मृति(dev, dai_link->num_cpus + dai_link->num_codecs,
+					माप(काष्ठा snd_soc_dai *),
 					GFP_KERNEL);
-	if (!rtd->dais)
-		goto free_rtd;
+	अगर (!rtd->dais)
+		जाओ मुक्त_rtd;
 
 	/*
 	 * dais = [][][][][][][][][][][][][][][][][][]
@@ -507,189 +508,189 @@ static struct snd_soc_pcm_runtime *soc_new_pcm_runtime(
 	rtd->dai_link	= dai_link;
 	rtd->num	= card->num_rtd++;
 
-	/* see for_each_card_rtds */
+	/* see क्रम_each_card_rtds */
 	list_add_tail(&rtd->list, &card->rtd_list);
 
 	ret = device_add_groups(dev, soc_dev_attr_groups);
-	if (ret < 0)
-		goto free_rtd;
+	अगर (ret < 0)
+		जाओ मुक्त_rtd;
 
-	return rtd;
+	वापस rtd;
 
-free_rtd:
-	soc_free_pcm_runtime(rtd);
-	return NULL;
-}
+मुक्त_rtd:
+	soc_मुक्त_pcm_runसमय(rtd);
+	वापस शून्य;
+पूर्ण
 
-static void snd_soc_flush_all_delayed_work(struct snd_soc_card *card)
-{
-	struct snd_soc_pcm_runtime *rtd;
+अटल व्योम snd_soc_flush_all_delayed_work(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
 
-	for_each_card_rtds(card, rtd)
+	क्रम_each_card_rtds(card, rtd)
 		flush_delayed_work(&rtd->delayed_work);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static void soc_playback_digital_mute(struct snd_soc_card *card, int mute)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_dai *dai;
-	int playback = SNDRV_PCM_STREAM_PLAYBACK;
-	int i;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल व्योम soc_playback_digital_mute(काष्ठा snd_soc_card *card, पूर्णांक mute)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_soc_dai *dai;
+	पूर्णांक playback = SNDRV_PCM_STREAM_PLAYBACK;
+	पूर्णांक i;
 
-	for_each_card_rtds(card, rtd) {
+	क्रम_each_card_rtds(card, rtd) अणु
 
-		if (rtd->dai_link->ignore_suspend)
-			continue;
+		अगर (rtd->dai_link->ignore_suspend)
+			जारी;
 
-		for_each_rtd_dais(rtd, i, dai) {
-			if (snd_soc_dai_stream_active(dai, playback))
+		क्रम_each_rtd_dais(rtd, i, dai) अणु
+			अगर (snd_soc_dai_stream_active(dai, playback))
 				snd_soc_dai_digital_mute(dai, mute, playback);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void soc_dapm_suspend_resume(struct snd_soc_card *card, int event)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	int stream;
+अटल व्योम soc_dapm_suspend_resume(काष्ठा snd_soc_card *card, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	पूर्णांक stream;
 
-	for_each_card_rtds(card, rtd) {
+	क्रम_each_card_rtds(card, rtd) अणु
 
-		if (rtd->dai_link->ignore_suspend)
-			continue;
+		अगर (rtd->dai_link->ignore_suspend)
+			जारी;
 
-		for_each_pcm_streams(stream)
+		क्रम_each_pcm_streams(stream)
 			snd_soc_dapm_stream_event(rtd, stream, event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* powers down audio subsystem for suspend */
-int snd_soc_suspend(struct device *dev)
-{
-	struct snd_soc_card *card = dev_get_drvdata(dev);
-	struct snd_soc_component *component;
-	struct snd_soc_pcm_runtime *rtd;
-	int i;
+/* घातers करोwn audio subप्रणाली क्रम suspend */
+पूर्णांक snd_soc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा snd_soc_card *card = dev_get_drvdata(dev);
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	पूर्णांक i;
 
-	/* If the card is not initialized yet there is nothing to do */
-	if (!card->instantiated)
-		return 0;
+	/* If the card is not initialized yet there is nothing to करो */
+	अगर (!card->instantiated)
+		वापस 0;
 
 	/*
-	 * Due to the resume being scheduled into a workqueue we could
-	 * suspend before that's finished - wait for it to complete.
+	 * Due to the resume being scheduled पूर्णांकo a workqueue we could
+	 * suspend beक्रमe that's finished - रुको क्रम it to complete.
 	 */
-	snd_power_wait(card->snd_card, SNDRV_CTL_POWER_D0);
+	snd_घातer_रुको(card->snd_card, SNDRV_CTL_POWER_D0);
 
 	/* we're going to block userspace touching us until resume completes */
-	snd_power_change_state(card->snd_card, SNDRV_CTL_POWER_D3hot);
+	snd_घातer_change_state(card->snd_card, SNDRV_CTL_POWER_D3hot);
 
 	/* mute any active DACs */
 	soc_playback_digital_mute(card, 1);
 
 	/* suspend all pcms */
-	for_each_card_rtds(card, rtd) {
-		if (rtd->dai_link->ignore_suspend)
-			continue;
+	क्रम_each_card_rtds(card, rtd) अणु
+		अगर (rtd->dai_link->ignore_suspend)
+			जारी;
 
 		snd_pcm_suspend_all(rtd->pcm);
-	}
+	पूर्ण
 
 	snd_soc_card_suspend_pre(card);
 
-	/* close any waiting streams */
+	/* बंद any रुकोing streams */
 	snd_soc_flush_all_delayed_work(card);
 
 	soc_dapm_suspend_resume(card, SND_SOC_DAPM_STREAM_SUSPEND);
 
-	/* Recheck all endpoints too, their state is affected by suspend */
-	dapm_mark_endpoints_dirty(card);
+	/* Recheck all endpoपूर्णांकs too, their state is affected by suspend */
+	dapm_mark_endpoपूर्णांकs_dirty(card);
 	snd_soc_dapm_sync(&card->dapm);
 
 	/* suspend all COMPONENTs */
-	for_each_card_rtds(card, rtd) {
+	क्रम_each_card_rtds(card, rtd) अणु
 
-		if (rtd->dai_link->ignore_suspend)
-			continue;
+		अगर (rtd->dai_link->ignore_suspend)
+			जारी;
 
-		for_each_rtd_components(rtd, i, component) {
-			struct snd_soc_dapm_context *dapm =
+		क्रम_each_rtd_components(rtd, i, component) अणु
+			काष्ठा snd_soc_dapm_context *dapm =
 				snd_soc_component_get_dapm(component);
 
 			/*
-			 * ignore if component was already suspended
+			 * ignore अगर component was alपढ़ोy suspended
 			 */
-			if (snd_soc_component_is_suspended(component))
-				continue;
+			अगर (snd_soc_component_is_suspended(component))
+				जारी;
 
 			/*
 			 * If there are paths active then the COMPONENT will be
 			 * held with bias _ON and should not be suspended.
 			 */
-			switch (snd_soc_dapm_get_bias_level(dapm)) {
-			case SND_SOC_BIAS_STANDBY:
+			चयन (snd_soc_dapm_get_bias_level(dapm)) अणु
+			हाल SND_SOC_BIAS_STANDBY:
 				/*
 				 * If the COMPONENT is capable of idle
 				 * bias off then being in STANDBY
-				 * means it's doing something,
+				 * means it's करोing something,
 				 * otherwise fall through.
 				 */
-				if (dapm->idle_bias_off) {
+				अगर (dapm->idle_bias_off) अणु
 					dev_dbg(component->dev,
 						"ASoC: idle_bias_off CODEC on over suspend\n");
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				fallthrough;
 
-			case SND_SOC_BIAS_OFF:
+			हाल SND_SOC_BIAS_OFF:
 				snd_soc_component_suspend(component);
-				if (component->regmap)
+				अगर (component->regmap)
 					regcache_mark_dirty(component->regmap);
 				/* deactivate pins to sleep state */
 				pinctrl_pm_select_sleep_state(component->dev);
-				break;
-			default:
+				अवरोध;
+			शेष:
 				dev_dbg(component->dev,
 					"ASoC: COMPONENT is on over suspend\n");
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	snd_soc_card_suspend_post(card);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_suspend);
 
 /*
- * deferred resume work, so resume can complete before we finished
+ * deferred resume work, so resume can complete beक्रमe we finished
  * setting our codec back up, which can be very slow on I2C
  */
-static void soc_resume_deferred(struct work_struct *work)
-{
-	struct snd_soc_card *card =
-			container_of(work, struct snd_soc_card,
+अटल व्योम soc_resume_deferred(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snd_soc_card *card =
+			container_of(work, काष्ठा snd_soc_card,
 				     deferred_resume_work);
-	struct snd_soc_component *component;
+	काष्ठा snd_soc_component *component;
 
 	/*
-	 * our power state is still SNDRV_CTL_POWER_D3hot from suspend time,
+	 * our घातer state is still SNDRV_CTL_POWER_D3hot from suspend समय,
 	 * so userspace apps are blocked from touching us
 	 */
 
 	dev_dbg(card->dev, "ASoC: starting resume work\n");
 
-	/* Bring us up into D2 so that DAPM starts enabling things */
-	snd_power_change_state(card->snd_card, SNDRV_CTL_POWER_D2);
+	/* Bring us up पूर्णांकo D2 so that DAPM starts enabling things */
+	snd_घातer_change_state(card->snd_card, SNDRV_CTL_POWER_D2);
 
 	snd_soc_card_resume_pre(card);
 
-	for_each_card_components(card, component) {
-		if (snd_soc_component_is_suspended(component))
+	क्रम_each_card_components(card, component) अणु
+		अगर (snd_soc_component_is_suspended(component))
 			snd_soc_component_resume(component);
-	}
+	पूर्ण
 
 	soc_dapm_suspend_resume(card, SND_SOC_DAPM_STREAM_RESUME);
 
@@ -700,381 +701,381 @@ static void soc_resume_deferred(struct work_struct *work)
 
 	dev_dbg(card->dev, "ASoC: resume work completed\n");
 
-	/* Recheck all endpoints too, their state is affected by suspend */
-	dapm_mark_endpoints_dirty(card);
+	/* Recheck all endpoपूर्णांकs too, their state is affected by suspend */
+	dapm_mark_endpoपूर्णांकs_dirty(card);
 	snd_soc_dapm_sync(&card->dapm);
 
-	/* userspace can access us now we are back as we were before */
-	snd_power_change_state(card->snd_card, SNDRV_CTL_POWER_D0);
-}
+	/* userspace can access us now we are back as we were beक्रमe */
+	snd_घातer_change_state(card->snd_card, SNDRV_CTL_POWER_D0);
+पूर्ण
 
-/* powers up audio subsystem after a suspend */
-int snd_soc_resume(struct device *dev)
-{
-	struct snd_soc_card *card = dev_get_drvdata(dev);
-	struct snd_soc_component *component;
+/* घातers up audio subप्रणाली after a suspend */
+पूर्णांक snd_soc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा snd_soc_card *card = dev_get_drvdata(dev);
+	काष्ठा snd_soc_component *component;
 
-	/* If the card is not initialized yet there is nothing to do */
-	if (!card->instantiated)
-		return 0;
+	/* If the card is not initialized yet there is nothing to करो */
+	अगर (!card->instantiated)
+		वापस 0;
 
 	/* activate pins from sleep state */
-	for_each_card_components(card, component)
-		if (snd_soc_component_active(component))
-			pinctrl_pm_select_default_state(component->dev);
+	क्रम_each_card_components(card, component)
+		अगर (snd_soc_component_active(component))
+			pinctrl_pm_select_शेष_state(component->dev);
 
 	dev_dbg(dev, "ASoC: Scheduling resume work\n");
-	if (!schedule_work(&card->deferred_resume_work))
+	अगर (!schedule_work(&card->deferred_resume_work))
 		dev_err(dev, "ASoC: resume work item may be lost\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_resume);
 
-static void soc_resume_init(struct snd_soc_card *card)
-{
+अटल व्योम soc_resume_init(काष्ठा snd_soc_card *card)
+अणु
 	/* deferred resume work */
 	INIT_WORK(&card->deferred_resume_work, soc_resume_deferred);
-}
-#else
-#define snd_soc_suspend NULL
-#define snd_soc_resume NULL
-static inline void soc_resume_init(struct snd_soc_card *card)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा snd_soc_suspend शून्य
+#घोषणा snd_soc_resume शून्य
+अटल अंतरभूत व्योम soc_resume_init(काष्ठा snd_soc_card *card)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static struct device_node
-*soc_component_to_node(struct snd_soc_component *component)
-{
-	struct device_node *of_node;
+अटल काष्ठा device_node
+*soc_component_to_node(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा device_node *of_node;
 
 	of_node = component->dev->of_node;
-	if (!of_node && component->dev->parent)
+	अगर (!of_node && component->dev->parent)
 		of_node = component->dev->parent->of_node;
 
-	return of_node;
-}
+	वापस of_node;
+पूर्ण
 
-static int snd_soc_is_matching_component(
-	const struct snd_soc_dai_link_component *dlc,
-	struct snd_soc_component *component)
-{
-	struct device_node *component_of_node;
+अटल पूर्णांक snd_soc_is_matching_component(
+	स्थिर काष्ठा snd_soc_dai_link_component *dlc,
+	काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा device_node *component_of_node;
 
-	if (!dlc)
-		return 0;
+	अगर (!dlc)
+		वापस 0;
 
 	component_of_node = soc_component_to_node(component);
 
-	if (dlc->of_node && component_of_node != dlc->of_node)
-		return 0;
-	if (dlc->name && strcmp(component->name, dlc->name))
-		return 0;
+	अगर (dlc->of_node && component_of_node != dlc->of_node)
+		वापस 0;
+	अगर (dlc->name && म_भेद(component->name, dlc->name))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct snd_soc_component *soc_find_component(
-	const struct snd_soc_dai_link_component *dlc)
-{
-	struct snd_soc_component *component;
+अटल काष्ठा snd_soc_component *soc_find_component(
+	स्थिर काष्ठा snd_soc_dai_link_component *dlc)
+अणु
+	काष्ठा snd_soc_component *component;
 
-	lockdep_assert_held(&client_mutex);
+	lockdep_निश्चित_held(&client_mutex);
 
 	/*
 	 * NOTE
 	 *
-	 * It returns *1st* found component, but some driver
+	 * It वापसs *1st* found component, but some driver
 	 * has few components by same of_node/name
 	 * ex)
 	 *	CPU component and generic DMAEngine component
 	 */
-	for_each_component(component)
-		if (snd_soc_is_matching_component(dlc, component))
-			return component;
+	क्रम_each_component(component)
+		अगर (snd_soc_is_matching_component(dlc, component))
+			वापस component;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * snd_soc_find_dai - Find a registered DAI
+ * snd_soc_find_dai - Find a रेजिस्टरed DAI
  *
  * @dlc: name of the DAI or the DAI driver and optional component info to match
  *
- * This function will search all registered components and their DAIs to
+ * This function will search all रेजिस्टरed components and their DAIs to
  * find the DAI of the same name. The component's of_node and name
- * should also match if being specified.
+ * should also match अगर being specअगरied.
  *
- * Return: pointer of DAI, or NULL if not found.
+ * Return: poपूर्णांकer of DAI, or शून्य अगर not found.
  */
-struct snd_soc_dai *snd_soc_find_dai(
-	const struct snd_soc_dai_link_component *dlc)
-{
-	struct snd_soc_component *component;
-	struct snd_soc_dai *dai;
+काष्ठा snd_soc_dai *snd_soc_find_dai(
+	स्थिर काष्ठा snd_soc_dai_link_component *dlc)
+अणु
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_dai *dai;
 
-	lockdep_assert_held(&client_mutex);
+	lockdep_निश्चित_held(&client_mutex);
 
-	/* Find CPU DAI from registered DAIs */
-	for_each_component(component) {
-		if (!snd_soc_is_matching_component(dlc, component))
-			continue;
-		for_each_component_dais(component, dai) {
-			if (dlc->dai_name && strcmp(dai->name, dlc->dai_name)
+	/* Find CPU DAI from रेजिस्टरed DAIs */
+	क्रम_each_component(component) अणु
+		अगर (!snd_soc_is_matching_component(dlc, component))
+			जारी;
+		क्रम_each_component_dais(component, dai) अणु
+			अगर (dlc->dai_name && म_भेद(dai->name, dlc->dai_name)
 			    && (!dai->driver->name
-				|| strcmp(dai->driver->name, dlc->dai_name)))
-				continue;
+				|| म_भेद(dai->driver->name, dlc->dai_name)))
+				जारी;
 
-			return dai;
-		}
-	}
+			वापस dai;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_find_dai);
 
-struct snd_soc_dai *snd_soc_find_dai_with_mutex(
-	const struct snd_soc_dai_link_component *dlc)
-{
-	struct snd_soc_dai *dai;
+काष्ठा snd_soc_dai *snd_soc_find_dai_with_mutex(
+	स्थिर काष्ठा snd_soc_dai_link_component *dlc)
+अणु
+	काष्ठा snd_soc_dai *dai;
 
 	mutex_lock(&client_mutex);
 	dai = snd_soc_find_dai(dlc);
 	mutex_unlock(&client_mutex);
 
-	return dai;
-}
+	वापस dai;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_find_dai_with_mutex);
 
-static int soc_dai_link_sanity_check(struct snd_soc_card *card,
-				     struct snd_soc_dai_link *link)
-{
-	int i;
-	struct snd_soc_dai_link_component *cpu, *codec, *platform;
+अटल पूर्णांक soc_dai_link_sanity_check(काष्ठा snd_soc_card *card,
+				     काष्ठा snd_soc_dai_link *link)
+अणु
+	पूर्णांक i;
+	काष्ठा snd_soc_dai_link_component *cpu, *codec, *platक्रमm;
 
-	for_each_link_codecs(link, i, codec) {
+	क्रम_each_link_codecs(link, i, codec) अणु
 		/*
-		 * Codec must be specified by 1 of name or OF node,
+		 * Codec must be specअगरied by 1 of name or OF node,
 		 * not both or neither.
 		 */
-		if (!!codec->name == !!codec->of_node) {
+		अगर (!!codec->name == !!codec->of_node) अणु
 			dev_err(card->dev, "ASoC: Neither/both codec name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Codec DAI name must be specified */
-		if (!codec->dai_name) {
+		/* Codec DAI name must be specअगरied */
+		अगर (!codec->dai_name) अणु
 			dev_err(card->dev, "ASoC: codec_dai_name not set for %s\n",
 				link->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
-		 * Defer card registration if codec component is not added to
+		 * Defer card registration अगर codec component is not added to
 		 * component list.
 		 */
-		if (!soc_find_component(codec)) {
+		अगर (!soc_find_component(codec)) अणु
 			dev_dbg(card->dev,
 				"ASoC: codec component %s not found for link %s\n",
 				codec->name, link->name);
-			return -EPROBE_DEFER;
-		}
-	}
+			वापस -EPROBE_DEFER;
+		पूर्ण
+	पूर्ण
 
-	for_each_link_platforms(link, i, platform) {
+	क्रम_each_link_platक्रमms(link, i, platक्रमm) अणु
 		/*
-		 * Platform may be specified by either name or OF node, but it
-		 * can be left unspecified, then no components will be inserted
+		 * Platक्रमm may be specअगरied by either name or OF node, but it
+		 * can be left unspecअगरied, then no components will be inserted
 		 * in the rtdcom list
 		 */
-		if (!!platform->name == !!platform->of_node) {
+		अगर (!!platक्रमm->name == !!platक्रमm->of_node) अणु
 			dev_err(card->dev,
 				"ASoC: Neither/both platform name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
-		 * Defer card registration if platform component is not added to
+		 * Defer card registration अगर platक्रमm component is not added to
 		 * component list.
 		 */
-		if (!soc_find_component(platform)) {
+		अगर (!soc_find_component(platक्रमm)) अणु
 			dev_dbg(card->dev,
 				"ASoC: platform component %s not found for link %s\n",
-				platform->name, link->name);
-			return -EPROBE_DEFER;
-		}
-	}
+				platक्रमm->name, link->name);
+			वापस -EPROBE_DEFER;
+		पूर्ण
+	पूर्ण
 
-	for_each_link_cpus(link, i, cpu) {
+	क्रम_each_link_cpus(link, i, cpu) अणु
 		/*
-		 * CPU device may be specified by either name or OF node, but
-		 * can be left unspecified, and will be matched based on DAI
+		 * CPU device may be specअगरied by either name or OF node, but
+		 * can be left unspecअगरied, and will be matched based on DAI
 		 * name alone..
 		 */
-		if (cpu->name && cpu->of_node) {
+		अगर (cpu->name && cpu->of_node) अणु
 			dev_err(card->dev,
 				"ASoC: Neither/both cpu name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
-		 * Defer card registration if cpu dai component is not added to
+		 * Defer card registration अगर cpu dai component is not added to
 		 * component list.
 		 */
-		if ((cpu->of_node || cpu->name) &&
-		    !soc_find_component(cpu)) {
+		अगर ((cpu->of_node || cpu->name) &&
+		    !soc_find_component(cpu)) अणु
 			dev_dbg(card->dev,
 				"ASoC: cpu component %s not found for link %s\n",
 				cpu->name, link->name);
-			return -EPROBE_DEFER;
-		}
+			वापस -EPROBE_DEFER;
+		पूर्ण
 
 		/*
 		 * At least one of CPU DAI name or CPU device name/node must be
-		 * specified
+		 * specअगरied
 		 */
-		if (!cpu->dai_name &&
-		    !(cpu->name || cpu->of_node)) {
+		अगर (!cpu->dai_name &&
+		    !(cpu->name || cpu->of_node)) अणु
 			dev_err(card->dev,
 				"ASoC: Neither cpu_dai_name nor cpu_name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * snd_soc_remove_pcm_runtime - Remove a pcm_runtime from card
- * @card: The ASoC card to which the pcm_runtime has
- * @rtd: The pcm_runtime to remove
+ * snd_soc_हटाओ_pcm_runसमय - Remove a pcm_runसमय from card
+ * @card: The ASoC card to which the pcm_runसमय has
+ * @rtd: The pcm_runसमय to हटाओ
  *
- * This function removes a pcm_runtime from the ASoC card.
+ * This function हटाओs a pcm_runसमय from the ASoC card.
  */
-void snd_soc_remove_pcm_runtime(struct snd_soc_card *card,
-				struct snd_soc_pcm_runtime *rtd)
-{
-	lockdep_assert_held(&client_mutex);
+व्योम snd_soc_हटाओ_pcm_runसमय(काष्ठा snd_soc_card *card,
+				काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	lockdep_निश्चित_held(&client_mutex);
 
-	/* release machine specific resources */
-	snd_soc_link_exit(rtd);
+	/* release machine specअगरic resources */
+	snd_soc_link_निकास(rtd);
 
 	/*
-	 * Notify the machine driver for extra destruction
+	 * Notअगरy the machine driver क्रम extra deकाष्ठाion
 	 */
-	snd_soc_card_remove_dai_link(card, rtd->dai_link);
+	snd_soc_card_हटाओ_dai_link(card, rtd->dai_link);
 
-	soc_free_pcm_runtime(rtd);
-}
-EXPORT_SYMBOL_GPL(snd_soc_remove_pcm_runtime);
+	soc_मुक्त_pcm_runसमय(rtd);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_हटाओ_pcm_runसमय);
 
 /**
- * snd_soc_add_pcm_runtime - Add a pcm_runtime dynamically via dai_link
- * @card: The ASoC card to which the pcm_runtime is added
- * @dai_link: The DAI link to find pcm_runtime
+ * snd_soc_add_pcm_runसमय - Add a pcm_runसमय dynamically via dai_link
+ * @card: The ASoC card to which the pcm_runसमय is added
+ * @dai_link: The DAI link to find pcm_runसमय
  *
- * This function adds a pcm_runtime ASoC card by using dai_link.
+ * This function adds a pcm_runसमय ASoC card by using dai_link.
  *
- * Note: Topology can use this API to add pcm_runtime when probing the
- * topology component. And machine drivers can still define static
+ * Note: Topology can use this API to add pcm_runसमय when probing the
+ * topology component. And machine drivers can still define अटल
  * DAI links in dai_link array.
  */
-int snd_soc_add_pcm_runtime(struct snd_soc_card *card,
-			    struct snd_soc_dai_link *dai_link)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_dai_link_component *codec, *platform, *cpu;
-	struct snd_soc_component *component;
-	int i, ret;
+पूर्णांक snd_soc_add_pcm_runसमय(काष्ठा snd_soc_card *card,
+			    काष्ठा snd_soc_dai_link *dai_link)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_soc_dai_link_component *codec, *platक्रमm, *cpu;
+	काष्ठा snd_soc_component *component;
+	पूर्णांक i, ret;
 
-	lockdep_assert_held(&client_mutex);
+	lockdep_निश्चित_held(&client_mutex);
 
 	/*
-	 * Notify the machine driver for extra initialization
+	 * Notअगरy the machine driver क्रम extra initialization
 	 */
 	ret = snd_soc_card_add_dai_link(card, dai_link);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (dai_link->ignore)
-		return 0;
+	अगर (dai_link->ignore)
+		वापस 0;
 
 	dev_dbg(card->dev, "ASoC: binding %s\n", dai_link->name);
 
 	ret = soc_dai_link_sanity_check(card, dai_link);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	rtd = soc_new_pcm_runtime(card, dai_link);
-	if (!rtd)
-		return -ENOMEM;
+	rtd = soc_new_pcm_runसमय(card, dai_link);
+	अगर (!rtd)
+		वापस -ENOMEM;
 
-	for_each_link_cpus(dai_link, i, cpu) {
+	क्रम_each_link_cpus(dai_link, i, cpu) अणु
 		asoc_rtd_to_cpu(rtd, i) = snd_soc_find_dai(cpu);
-		if (!asoc_rtd_to_cpu(rtd, i)) {
+		अगर (!asoc_rtd_to_cpu(rtd, i)) अणु
 			dev_info(card->dev, "ASoC: CPU DAI %s not registered\n",
 				 cpu->dai_name);
-			goto _err_defer;
-		}
+			जाओ _err_defer;
+		पूर्ण
 		snd_soc_rtd_add_component(rtd, asoc_rtd_to_cpu(rtd, i)->component);
-	}
+	पूर्ण
 
-	/* Find CODEC from registered CODECs */
-	for_each_link_codecs(dai_link, i, codec) {
+	/* Find CODEC from रेजिस्टरed CODECs */
+	क्रम_each_link_codecs(dai_link, i, codec) अणु
 		asoc_rtd_to_codec(rtd, i) = snd_soc_find_dai(codec);
-		if (!asoc_rtd_to_codec(rtd, i)) {
+		अगर (!asoc_rtd_to_codec(rtd, i)) अणु
 			dev_info(card->dev, "ASoC: CODEC DAI %s not registered\n",
 				 codec->dai_name);
-			goto _err_defer;
-		}
+			जाओ _err_defer;
+		पूर्ण
 
 		snd_soc_rtd_add_component(rtd, asoc_rtd_to_codec(rtd, i)->component);
-	}
+	पूर्ण
 
-	/* Find PLATFORM from registered PLATFORMs */
-	for_each_link_platforms(dai_link, i, platform) {
-		for_each_component(component) {
-			if (!snd_soc_is_matching_component(platform, component))
-				continue;
+	/* Find PLATFORM from रेजिस्टरed PLATFORMs */
+	क्रम_each_link_platक्रमms(dai_link, i, platक्रमm) अणु
+		क्रम_each_component(component) अणु
+			अगर (!snd_soc_is_matching_component(platक्रमm, component))
+				जारी;
 
 			snd_soc_rtd_add_component(rtd, component);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 _err_defer:
-	snd_soc_remove_pcm_runtime(card, rtd);
-	return -EPROBE_DEFER;
-}
-EXPORT_SYMBOL_GPL(snd_soc_add_pcm_runtime);
+	snd_soc_हटाओ_pcm_runसमय(card, rtd);
+	वापस -EPROBE_DEFER;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_add_pcm_runसमय);
 
-static int soc_init_pcm_runtime(struct snd_soc_card *card,
-				struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_dai_link *dai_link = rtd->dai_link;
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	struct snd_soc_component *component;
-	int ret, num, i;
+अटल पूर्णांक soc_init_pcm_runसमय(काष्ठा snd_soc_card *card,
+				काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा snd_soc_dai_link *dai_link = rtd->dai_link;
+	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	काष्ठा snd_soc_component *component;
+	पूर्णांक ret, num, i;
 
-	/* set default power off timeout */
-	rtd->pmdown_time = pmdown_time;
+	/* set शेष घातer off समयout */
+	rtd->pmकरोwn_समय = pmकरोwn_समय;
 
-	/* do machine specific initialization */
+	/* करो machine specअगरic initialization */
 	ret = snd_soc_link_init(rtd);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (dai_link->dai_fmt) {
-		ret = snd_soc_runtime_set_dai_fmt(rtd, dai_link->dai_fmt);
-		if (ret)
-			return ret;
-	}
+	अगर (dai_link->dai_fmt) अणु
+		ret = snd_soc_runसमय_set_dai_fmt(rtd, dai_link->dai_fmt);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* add DPCM sysfs entries */
 	soc_dpcm_debugfs_add(rtd);
@@ -1082,109 +1083,109 @@ static int soc_init_pcm_runtime(struct snd_soc_card *card,
 	num = rtd->num;
 
 	/*
-	 * most drivers will register their PCMs using DAI link ordering but
+	 * most drivers will रेजिस्टर their PCMs using DAI link ordering but
 	 * topology based drivers can use the DAI link id field to set PCM
 	 * device number and then use rtd + a base offset of the BEs.
 	 */
-	for_each_rtd_components(rtd, i, component) {
-		if (!component->driver->use_dai_pcm_id)
-			continue;
+	क्रम_each_rtd_components(rtd, i, component) अणु
+		अगर (!component->driver->use_dai_pcm_id)
+			जारी;
 
-		if (rtd->dai_link->no_pcm)
+		अगर (rtd->dai_link->no_pcm)
 			num += component->driver->be_pcm_base;
-		else
+		अन्यथा
 			num = rtd->dai_link->id;
-	}
+	पूर्ण
 
-	/* create compress_device if possible */
+	/* create compress_device अगर possible */
 	ret = snd_soc_dai_compress_new(cpu_dai, rtd, num);
-	if (ret != -ENOTSUPP)
-		return ret;
+	अगर (ret != -ENOTSUPP)
+		वापस ret;
 
 	/* create the pcm */
 	ret = soc_new_pcm(rtd, num);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(card->dev, "ASoC: can't create pcm %s :%d\n",
 			dai_link->stream_name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return snd_soc_pcm_dai_new(rtd);
-}
+	वापस snd_soc_pcm_dai_new(rtd);
+पूर्ण
 
-static void soc_set_name_prefix(struct snd_soc_card *card,
-				struct snd_soc_component *component)
-{
-	struct device_node *of_node = soc_component_to_node(component);
-	const char *str;
-	int ret, i;
+अटल व्योम soc_set_name_prefix(काष्ठा snd_soc_card *card,
+				काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा device_node *of_node = soc_component_to_node(component);
+	स्थिर अक्षर *str;
+	पूर्णांक ret, i;
 
-	for (i = 0; i < card->num_configs; i++) {
-		struct snd_soc_codec_conf *map = &card->codec_conf[i];
+	क्रम (i = 0; i < card->num_configs; i++) अणु
+		काष्ठा snd_soc_codec_conf *map = &card->codec_conf[i];
 
-		if (snd_soc_is_matching_component(&map->dlc, component) &&
-		    map->name_prefix) {
+		अगर (snd_soc_is_matching_component(&map->dlc, component) &&
+		    map->name_prefix) अणु
 			component->name_prefix = map->name_prefix;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If there is no configuration table or no match in the table,
-	 * check if a prefix is provided in the node
+	 * check अगर a prefix is provided in the node
 	 */
-	ret = of_property_read_string(of_node, "sound-name-prefix", &str);
-	if (ret < 0)
-		return;
+	ret = of_property_पढ़ो_string(of_node, "sound-name-prefix", &str);
+	अगर (ret < 0)
+		वापस;
 
 	component->name_prefix = str;
-}
+पूर्ण
 
-static void soc_remove_component(struct snd_soc_component *component,
-				 int probed)
-{
+अटल व्योम soc_हटाओ_component(काष्ठा snd_soc_component *component,
+				 पूर्णांक probed)
+अणु
 
-	if (!component->card)
-		return;
+	अगर (!component->card)
+		वापस;
 
-	if (probed)
-		snd_soc_component_remove(component);
+	अगर (probed)
+		snd_soc_component_हटाओ(component);
 
 	/* For framework level robustness */
-	snd_soc_component_set_jack(component, NULL, NULL);
+	snd_soc_component_set_jack(component, शून्य, शून्य);
 
 	list_del_init(&component->card_list);
-	snd_soc_dapm_free(snd_soc_component_get_dapm(component));
+	snd_soc_dapm_मुक्त(snd_soc_component_get_dapm(component));
 	soc_cleanup_component_debugfs(component);
-	component->card = NULL;
-	snd_soc_component_module_put_when_remove(component);
-}
+	component->card = शून्य;
+	snd_soc_component_module_put_when_हटाओ(component);
+पूर्ण
 
-static int soc_probe_component(struct snd_soc_card *card,
-			       struct snd_soc_component *component)
-{
-	struct snd_soc_dapm_context *dapm =
+अटल पूर्णांक soc_probe_component(काष्ठा snd_soc_card *card,
+			       काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm =
 		snd_soc_component_get_dapm(component);
-	struct snd_soc_dai *dai;
-	int probed = 0;
-	int ret;
+	काष्ठा snd_soc_dai *dai;
+	पूर्णांक probed = 0;
+	पूर्णांक ret;
 
-	if (snd_soc_component_is_dummy(component))
-		return 0;
+	अगर (snd_soc_component_is_dummy(component))
+		वापस 0;
 
-	if (component->card) {
-		if (component->card != card) {
+	अगर (component->card) अणु
+		अगर (component->card != card) अणु
 			dev_err(component->dev,
 				"Trying to bind component to card \"%s\" but is already bound to card \"%s\"\n",
 				card->name, component->card->name);
-			return -ENODEV;
-		}
-		return 0;
-	}
+			वापस -ENODEV;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	ret = snd_soc_component_module_get_when_probe(component);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	component->card = card;
 	soc_set_name_prefix(card, component);
@@ -1194,27 +1195,27 @@ static int soc_probe_component(struct snd_soc_card *card,
 	snd_soc_dapm_init(dapm, card, component);
 
 	ret = snd_soc_dapm_new_controls(dapm,
-					component->driver->dapm_widgets,
-					component->driver->num_dapm_widgets);
+					component->driver->dapm_widमाला_लो,
+					component->driver->num_dapm_widमाला_लो);
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(component->dev,
 			"Failed to create new controls %d\n", ret);
-		goto err_probe;
-	}
+		जाओ err_probe;
+	पूर्ण
 
-	for_each_component_dais(component, dai) {
-		ret = snd_soc_dapm_new_dai_widgets(dapm, dai);
-		if (ret != 0) {
+	क्रम_each_component_dais(component, dai) अणु
+		ret = snd_soc_dapm_new_dai_widमाला_लो(dapm, dai);
+		अगर (ret != 0) अणु
 			dev_err(component->dev,
 				"Failed to create DAI widgets %d\n", ret);
-			goto err_probe;
-		}
-	}
+			जाओ err_probe;
+		पूर्ण
+	पूर्ण
 
 	ret = snd_soc_component_probe(component);
-	if (ret < 0)
-		goto err_probe;
+	अगर (ret < 0)
+		जाओ err_probe;
 
 	WARN(dapm->idle_bias_off &&
 	     dapm->bias_level != SND_SOC_BIAS_OFF,
@@ -1223,66 +1224,66 @@ static int soc_probe_component(struct snd_soc_card *card,
 	probed = 1;
 
 	/*
-	 * machine specific init
+	 * machine specअगरic init
 	 * see
 	 *	snd_soc_component_set_aux()
 	 */
 	ret = snd_soc_component_init(component);
-	if (ret < 0)
-		goto err_probe;
+	अगर (ret < 0)
+		जाओ err_probe;
 
 	ret = snd_soc_add_component_controls(component,
 					     component->driver->controls,
 					     component->driver->num_controls);
-	if (ret < 0)
-		goto err_probe;
+	अगर (ret < 0)
+		जाओ err_probe;
 
 	ret = snd_soc_dapm_add_routes(dapm,
 				      component->driver->dapm_routes,
 				      component->driver->num_dapm_routes);
-	if (ret < 0) {
-		if (card->disable_route_checks) {
+	अगर (ret < 0) अणु
+		अगर (card->disable_route_checks) अणु
 			dev_info(card->dev,
 				 "%s: disable_route_checks set, ignoring errors on add_routes\n",
 				 __func__);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(card->dev,
 				"%s: snd_soc_dapm_add_routes failed: %d\n",
 				__func__, ret);
-			goto err_probe;
-		}
-	}
+			जाओ err_probe;
+		पूर्ण
+	पूर्ण
 
-	/* see for_each_card_components */
+	/* see क्रम_each_card_components */
 	list_add(&component->card_list, &card->component_dev_list);
 
 err_probe:
-	if (ret < 0)
-		soc_remove_component(component, probed);
+	अगर (ret < 0)
+		soc_हटाओ_component(component, probed);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void soc_remove_link_dais(struct snd_soc_card *card)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	int order;
+अटल व्योम soc_हटाओ_link_dais(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	पूर्णांक order;
 
-	for_each_comp_order(order) {
-		for_each_card_rtds(card, rtd) {
-			/* remove all rtd connected DAIs in good order */
-			snd_soc_pcm_dai_remove(rtd, order);
-		}
-	}
-}
+	क्रम_each_comp_order(order) अणु
+		क्रम_each_card_rtds(card, rtd) अणु
+			/* हटाओ all rtd connected DAIs in good order */
+			snd_soc_pcm_dai_हटाओ(rtd, order);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int soc_probe_link_dais(struct snd_soc_card *card)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	int order, ret;
+अटल पूर्णांक soc_probe_link_dais(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	पूर्णांक order, ret;
 
-	for_each_comp_order(order) {
-		for_each_card_rtds(card, rtd) {
+	क्रम_each_comp_order(order) अणु
+		क्रम_each_card_rtds(card, rtd) अणु
 
 			dev_dbg(card->dev,
 				"ASoC: probe %s dai link %d late %d\n",
@@ -1290,400 +1291,400 @@ static int soc_probe_link_dais(struct snd_soc_card *card)
 
 			/* probe all rtd connected DAIs in good order */
 			ret = snd_soc_pcm_dai_probe(rtd, order);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void soc_remove_link_components(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component;
-	struct snd_soc_pcm_runtime *rtd;
-	int i, order;
+अटल व्योम soc_हटाओ_link_components(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	पूर्णांक i, order;
 
-	for_each_comp_order(order) {
-		for_each_card_rtds(card, rtd) {
-			for_each_rtd_components(rtd, i, component) {
-				if (component->driver->remove_order != order)
-					continue;
+	क्रम_each_comp_order(order) अणु
+		क्रम_each_card_rtds(card, rtd) अणु
+			क्रम_each_rtd_components(rtd, i, component) अणु
+				अगर (component->driver->हटाओ_order != order)
+					जारी;
 
-				soc_remove_component(component, 1);
-			}
-		}
-	}
-}
+				soc_हटाओ_component(component, 1);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int soc_probe_link_components(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component;
-	struct snd_soc_pcm_runtime *rtd;
-	int i, ret, order;
+अटल पूर्णांक soc_probe_link_components(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	पूर्णांक i, ret, order;
 
-	for_each_comp_order(order) {
-		for_each_card_rtds(card, rtd) {
-			for_each_rtd_components(rtd, i, component) {
-				if (component->driver->probe_order != order)
-					continue;
+	क्रम_each_comp_order(order) अणु
+		क्रम_each_card_rtds(card, rtd) अणु
+			क्रम_each_rtd_components(rtd, i, component) अणु
+				अगर (component->driver->probe_order != order)
+					जारी;
 
 				ret = soc_probe_component(card, component);
-				if (ret < 0)
-					return ret;
-			}
-		}
-	}
+				अगर (ret < 0)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void soc_unbind_aux_dev(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component, *_component;
+अटल व्योम soc_unbind_aux_dev(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component, *_component;
 
-	for_each_card_auxs_safe(card, component, _component) {
-		/* for snd_soc_component_init() */
-		snd_soc_component_set_aux(component, NULL);
+	क्रम_each_card_auxs_safe(card, component, _component) अणु
+		/* क्रम snd_soc_component_init() */
+		snd_soc_component_set_aux(component, शून्य);
 		list_del(&component->card_aux_list);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int soc_bind_aux_dev(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component;
-	struct snd_soc_aux_dev *aux;
-	int i;
+अटल पूर्णांक soc_bind_aux_dev(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_aux_dev *aux;
+	पूर्णांक i;
 
-	for_each_card_pre_auxs(card, i, aux) {
+	क्रम_each_card_pre_auxs(card, i, aux) अणु
 		/* codecs, usually analog devices */
 		component = soc_find_component(&aux->dlc);
-		if (!component)
-			return -EPROBE_DEFER;
+		अगर (!component)
+			वापस -EPROBE_DEFER;
 
-		/* for snd_soc_component_init() */
+		/* क्रम snd_soc_component_init() */
 		snd_soc_component_set_aux(component, aux);
-		/* see for_each_card_auxs */
+		/* see क्रम_each_card_auxs */
 		list_add(&component->card_aux_list, &card->aux_comp_list);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int soc_probe_aux_devices(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component;
-	int order;
-	int ret;
+अटल पूर्णांक soc_probe_aux_devices(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component;
+	पूर्णांक order;
+	पूर्णांक ret;
 
-	for_each_comp_order(order) {
-		for_each_card_auxs(card, component) {
-			if (component->driver->probe_order != order)
-				continue;
+	क्रम_each_comp_order(order) अणु
+		क्रम_each_card_auxs(card, component) अणु
+			अगर (component->driver->probe_order != order)
+				जारी;
 
 			ret = soc_probe_component(card,	component);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void soc_remove_aux_devices(struct snd_soc_card *card)
-{
-	struct snd_soc_component *comp, *_comp;
-	int order;
+अटल व्योम soc_हटाओ_aux_devices(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *comp, *_comp;
+	पूर्णांक order;
 
-	for_each_comp_order(order) {
-		for_each_card_auxs_safe(card, comp, _comp) {
-			if (comp->driver->remove_order == order)
-				soc_remove_component(comp, 1);
-		}
-	}
-}
+	क्रम_each_comp_order(order) अणु
+		क्रम_each_card_auxs_safe(card, comp, _comp) अणु
+			अगर (comp->driver->हटाओ_order == order)
+				soc_हटाओ_component(comp, 1);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * snd_soc_runtime_set_dai_fmt() - Change DAI link format for a ASoC runtime
- * @rtd: The runtime for which the DAI link format should be changed
- * @dai_fmt: The new DAI link format
+ * snd_soc_runसमय_set_dai_fmt() - Change DAI link क्रमmat क्रम a ASoC runसमय
+ * @rtd: The runसमय क्रम which the DAI link क्रमmat should be changed
+ * @dai_fmt: The new DAI link क्रमmat
  *
- * This function updates the DAI link format for all DAIs connected to the DAI
- * link for the specified runtime.
+ * This function updates the DAI link क्रमmat क्रम all DAIs connected to the DAI
+ * link क्रम the specअगरied runसमय.
  *
- * Note: For setups with a static format set the dai_fmt field in the
- * corresponding snd_dai_link struct instead of using this function.
+ * Note: For setups with a अटल क्रमmat set the dai_fmt field in the
+ * corresponding snd_dai_link काष्ठा instead of using this function.
  *
  * Returns 0 on success, otherwise a negative error code.
  */
-int snd_soc_runtime_set_dai_fmt(struct snd_soc_pcm_runtime *rtd,
-	unsigned int dai_fmt)
-{
-	struct snd_soc_dai *cpu_dai;
-	struct snd_soc_dai *codec_dai;
-	unsigned int inv_dai_fmt;
-	unsigned int i;
-	int ret;
+पूर्णांक snd_soc_runसमय_set_dai_fmt(काष्ठा snd_soc_pcm_runसमय *rtd,
+	अचिन्हित पूर्णांक dai_fmt)
+अणु
+	काष्ठा snd_soc_dai *cpu_dai;
+	काष्ठा snd_soc_dai *codec_dai;
+	अचिन्हित पूर्णांक inv_dai_fmt;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for_each_rtd_codec_dais(rtd, i, codec_dai) {
+	क्रम_each_rtd_codec_dais(rtd, i, codec_dai) अणु
 		ret = snd_soc_dai_set_fmt(codec_dai, dai_fmt);
-		if (ret != 0 && ret != -ENOTSUPP)
-			return ret;
-	}
+		अगर (ret != 0 && ret != -ENOTSUPP)
+			वापस ret;
+	पूर्ण
 
 	/*
-	 * Flip the polarity for the "CPU" end of a CODEC<->CODEC link
+	 * Flip the polarity क्रम the "CPU" end of a CODEC<->CODEC link
 	 * the component which has non_legacy_dai_naming is Codec
 	 */
 	inv_dai_fmt = dai_fmt & ~SND_SOC_DAIFMT_MASTER_MASK;
-	switch (dai_fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	चयन (dai_fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		inv_dai_fmt |= SND_SOC_DAIFMT_CBS_CFS;
-		break;
-	case SND_SOC_DAIFMT_CBM_CFS:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBM_CFS:
 		inv_dai_fmt |= SND_SOC_DAIFMT_CBS_CFM;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFM:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFM:
 		inv_dai_fmt |= SND_SOC_DAIFMT_CBM_CFS;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
 		inv_dai_fmt |= SND_SOC_DAIFMT_CBM_CFM;
-		break;
-	}
-	for_each_rtd_cpu_dais(rtd, i, cpu_dai) {
-		unsigned int fmt = dai_fmt;
+		अवरोध;
+	पूर्ण
+	क्रम_each_rtd_cpu_dais(rtd, i, cpu_dai) अणु
+		अचिन्हित पूर्णांक fmt = dai_fmt;
 
-		if (cpu_dai->component->driver->non_legacy_dai_naming)
+		अगर (cpu_dai->component->driver->non_legacy_dai_naming)
 			fmt = inv_dai_fmt;
 
 		ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
-		if (ret != 0 && ret != -ENOTSUPP)
-			return ret;
-	}
+		अगर (ret != 0 && ret != -ENOTSUPP)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_soc_runtime_set_dai_fmt);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_runसमय_set_dai_fmt);
 
-#ifdef CONFIG_DMI
+#अगर_घोषित CONFIG_DMI
 /*
  * If a DMI filed contain strings in this blacklist (e.g.
  * "Type2 - Board Manufacturer" or "Type1 - TBD by OEM"), it will be taken
- * as invalid and dropped when setting the card long name from DMI info.
+ * as invalid and dropped when setting the card दीर्घ name from DMI info.
  */
-static const char * const dmi_blacklist[] = {
+अटल स्थिर अक्षर * स्थिर dmi_blacklist[] = अणु
 	"To be filled by OEM",
 	"TBD by OEM",
 	"Default String",
 	"Board Manufacturer",
 	"Board Vendor Name",
 	"Board Product Name",
-	NULL,	/* terminator */
-};
+	शून्य,	/* terminator */
+पूर्ण;
 
 /*
- * Trim special characters, and replace '-' with '_' since '-' is used to
- * separate different DMI fields in the card long name. Only number and
- * alphabet characters and a few separator characters are kept.
+ * Trim special अक्षरacters, and replace '-' with '_' since '-' is used to
+ * separate dअगरferent DMI fields in the card दीर्घ name. Only number and
+ * alphabet अक्षरacters and a few separator अक्षरacters are kept.
  */
-static void cleanup_dmi_name(char *name)
-{
-	int i, j = 0;
+अटल व्योम cleanup_dmi_name(अक्षर *name)
+अणु
+	पूर्णांक i, j = 0;
 
-	for (i = 0; name[i]; i++) {
-		if (isalnum(name[i]) || (name[i] == '.')
+	क्रम (i = 0; name[i]; i++) अणु
+		अगर (है_अक्षर_अंक(name[i]) || (name[i] == '.')
 		    || (name[i] == '_'))
 			name[j++] = name[i];
-		else if (name[i] == '-')
+		अन्यथा अगर (name[i] == '-')
 			name[j++] = '_';
-	}
+	पूर्ण
 
 	name[j] = '\0';
-}
+पूर्ण
 
 /*
- * Check if a DMI field is valid, i.e. not containing any string
+ * Check अगर a DMI field is valid, i.e. not containing any string
  * in the black list.
  */
-static int is_dmi_valid(const char *field)
-{
-	int i = 0;
+अटल पूर्णांक is_dmi_valid(स्थिर अक्षर *field)
+अणु
+	पूर्णांक i = 0;
 
-	while (dmi_blacklist[i]) {
-		if (strstr(field, dmi_blacklist[i]))
-			return 0;
+	जबतक (dmi_blacklist[i]) अणु
+		अगर (म_माला(field, dmi_blacklist[i]))
+			वापस 0;
 		i++;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Append a string to card->dmi_longname with character cleanups.
+ * Append a string to card->dmi_दीर्घname with अक्षरacter cleanups.
  */
-static void append_dmi_string(struct snd_soc_card *card, const char *str)
-{
-	char *dst = card->dmi_longname;
-	size_t dst_len = sizeof(card->dmi_longname);
-	size_t len;
+अटल व्योम append_dmi_string(काष्ठा snd_soc_card *card, स्थिर अक्षर *str)
+अणु
+	अक्षर *dst = card->dmi_दीर्घname;
+	माप_प्रकार dst_len = माप(card->dmi_दीर्घname);
+	माप_प्रकार len;
 
-	len = strlen(dst);
-	snprintf(dst + len, dst_len - len, "-%s", str);
+	len = म_माप(dst);
+	snम_लिखो(dst + len, dst_len - len, "-%s", str);
 
 	len++;	/* skip the separator "-" */
-	if (len < dst_len)
+	अगर (len < dst_len)
 		cleanup_dmi_name(dst + len);
-}
+पूर्ण
 
 /**
  * snd_soc_set_dmi_name() - Register DMI names to card
- * @card: The card to register DMI names
- * @flavour: The flavour "differentiator" for the card amongst its peers.
+ * @card: The card to रेजिस्टर DMI names
+ * @flavour: The flavour "differentiator" क्रम the card amongst its peers.
  *
- * An Intel machine driver may be used by many different devices but are
- * difficult for userspace to differentiate, since machine drivers ususally
- * use their own name as the card short name and leave the card long name
- * blank. To differentiate such devices and fix bugs due to lack of
- * device-specific configurations, this function allows DMI info to be used
- * as the sound card long name, in the format of
+ * An Intel machine driver may be used by many dअगरferent devices but are
+ * dअगरficult क्रम userspace to dअगरferentiate, since machine drivers ususally
+ * use their own name as the card लघु name and leave the card दीर्घ name
+ * blank. To dअगरferentiate such devices and fix bugs due to lack of
+ * device-specअगरic configurations, this function allows DMI info to be used
+ * as the sound card दीर्घ name, in the क्रमmat of
  * "vendor-product-version-board"
- * (Character '-' is used to separate different DMI fields here).
- * This will help the user space to load the device-specific Use Case Manager
- * (UCM) configurations for the card.
+ * (Character '-' is used to separate dअगरferent DMI fields here).
+ * This will help the user space to load the device-specअगरic Use Case Manager
+ * (UCM) configurations क्रम the card.
  *
- * Possible card long names may be:
+ * Possible card दीर्घ names may be:
  * DellInc.-XPS139343-01-0310JH
  * ASUSTeKCOMPUTERINC.-T100TA-1.0-T100TA
  * Circuitco-MinnowboardMaxD0PLATFORM-D0-MinnowBoardMAX
  *
- * This function also supports flavoring the card longname to provide
- * the extra differentiation, like "vendor-product-version-board-flavor".
+ * This function also supports flavoring the card दीर्घname to provide
+ * the extra dअगरferentiation, like "vendor-product-version-board-flavor".
  *
- * We only keep number and alphabet characters and a few separator characters
- * in the card long name since UCM in the user space uses the card long names
- * as card configuration directory names and AudoConf cannot support special
- * charactors like SPACE.
+ * We only keep number and alphabet अक्षरacters and a few separator अक्षरacters
+ * in the card दीर्घ name since UCM in the user space uses the card दीर्घ names
+ * as card configuration directory names and AuकरोConf cannot support special
+ * अक्षरactors like SPACE.
  *
  * Returns 0 on success, otherwise a negative error code.
  */
-int snd_soc_set_dmi_name(struct snd_soc_card *card, const char *flavour)
-{
-	const char *vendor, *product, *product_version, *board;
+पूर्णांक snd_soc_set_dmi_name(काष्ठा snd_soc_card *card, स्थिर अक्षर *flavour)
+अणु
+	स्थिर अक्षर *venकरोr, *product, *product_version, *board;
 
-	if (card->long_name)
-		return 0; /* long name already set by driver or from DMI */
+	अगर (card->दीर्घ_name)
+		वापस 0; /* दीर्घ name alपढ़ोy set by driver or from DMI */
 
-	if (!dmi_available)
-		return 0;
+	अगर (!dmi_available)
+		वापस 0;
 
-	/* make up dmi long name as: vendor-product-version-board */
-	vendor = dmi_get_system_info(DMI_BOARD_VENDOR);
-	if (!vendor || !is_dmi_valid(vendor)) {
+	/* make up dmi दीर्घ name as: venकरोr-product-version-board */
+	venकरोr = dmi_get_प्रणाली_info(DMI_BOARD_VENDOR);
+	अगर (!venकरोr || !is_dmi_valid(venकरोr)) अणु
 		dev_warn(card->dev, "ASoC: no DMI vendor name!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	snprintf(card->dmi_longname, sizeof(card->dmi_longname), "%s", vendor);
-	cleanup_dmi_name(card->dmi_longname);
+	snम_लिखो(card->dmi_दीर्घname, माप(card->dmi_दीर्घname), "%s", venकरोr);
+	cleanup_dmi_name(card->dmi_दीर्घname);
 
-	product = dmi_get_system_info(DMI_PRODUCT_NAME);
-	if (product && is_dmi_valid(product)) {
+	product = dmi_get_प्रणाली_info(DMI_PRODUCT_NAME);
+	अगर (product && is_dmi_valid(product)) अणु
 		append_dmi_string(card, product);
 
 		/*
-		 * some vendors like Lenovo may only put a self-explanatory
+		 * some venकरोrs like Lenovo may only put a self-explanatory
 		 * name in the product version field
 		 */
-		product_version = dmi_get_system_info(DMI_PRODUCT_VERSION);
-		if (product_version && is_dmi_valid(product_version))
+		product_version = dmi_get_प्रणाली_info(DMI_PRODUCT_VERSION);
+		अगर (product_version && is_dmi_valid(product_version))
 			append_dmi_string(card, product_version);
-	}
+	पूर्ण
 
-	board = dmi_get_system_info(DMI_BOARD_NAME);
-	if (board && is_dmi_valid(board)) {
-		if (!product || strcasecmp(board, product))
+	board = dmi_get_प्रणाली_info(DMI_BOARD_NAME);
+	अगर (board && is_dmi_valid(board)) अणु
+		अगर (!product || strहालcmp(board, product))
 			append_dmi_string(card, board);
-	} else if (!product) {
+	पूर्ण अन्यथा अगर (!product) अणु
 		/* fall back to using legacy name */
 		dev_warn(card->dev, "ASoC: no DMI board/product name!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Add flavour to dmi long name */
-	if (flavour)
+	/* Add flavour to dmi दीर्घ name */
+	अगर (flavour)
 		append_dmi_string(card, flavour);
 
-	/* set the card long name */
-	card->long_name = card->dmi_longname;
+	/* set the card दीर्घ name */
+	card->दीर्घ_name = card->dmi_दीर्घname;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_set_dmi_name);
-#endif /* CONFIG_DMI */
+#पूर्ण_अगर /* CONFIG_DMI */
 
-static void soc_check_tplg_fes(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component;
-	const struct snd_soc_component_driver *comp_drv;
-	struct snd_soc_dai_link *dai_link;
-	int i;
+अटल व्योम soc_check_tplg_fes(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component;
+	स्थिर काष्ठा snd_soc_component_driver *comp_drv;
+	काष्ठा snd_soc_dai_link *dai_link;
+	पूर्णांक i;
 
-	for_each_component(component) {
+	क्रम_each_component(component) अणु
 
-		/* does this component override BEs ? */
-		if (!component->driver->ignore_machine)
-			continue;
+		/* करोes this component override BEs ? */
+		अगर (!component->driver->ignore_machine)
+			जारी;
 
-		/* for this machine ? */
-		if (!strcmp(component->driver->ignore_machine,
+		/* क्रम this machine ? */
+		अगर (!म_भेद(component->driver->ignore_machine,
 			    card->dev->driver->name))
-			goto match;
-		if (strcmp(component->driver->ignore_machine,
+			जाओ match;
+		अगर (म_भेद(component->driver->ignore_machine,
 			   dev_name(card->dev)))
-			continue;
+			जारी;
 match:
 		/* machine matches, so override the rtd data */
-		for_each_card_prelinks(card, i, dai_link) {
+		क्रम_each_card_prelinks(card, i, dai_link) अणु
 
 			/* ignore this FE */
-			if (dai_link->dynamic) {
+			अगर (dai_link->dynamic) अणु
 				dai_link->ignore = true;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			dev_dbg(card->dev, "info: override BE DAI link %s\n",
 				card->dai_link[i].name);
 
-			/* override platform component */
-			if (!dai_link->platforms) {
+			/* override platक्रमm component */
+			अगर (!dai_link->platक्रमms) अणु
 				dev_err(card->dev, "init platform error");
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (component->dev->of_node)
-				dai_link->platforms->of_node = component->dev->of_node;
-			else
-				dai_link->platforms->name = component->name;
+			अगर (component->dev->of_node)
+				dai_link->platक्रमms->of_node = component->dev->of_node;
+			अन्यथा
+				dai_link->platक्रमms->name = component->name;
 
-			/* convert non BE into BE */
-			if (!dai_link->no_pcm) {
+			/* convert non BE पूर्णांकo BE */
+			अगर (!dai_link->no_pcm) अणु
 				dai_link->no_pcm = 1;
 
-				if (dai_link->dpcm_playback)
+				अगर (dai_link->dpcm_playback)
 					dev_warn(card->dev,
 						 "invalid configuration, dailink %s has flags no_pcm=0 and dpcm_playback=1\n",
 						 dai_link->name);
-				if (dai_link->dpcm_capture)
+				अगर (dai_link->dpcm_capture)
 					dev_warn(card->dev,
 						 "invalid configuration, dailink %s has flags no_pcm=0 and dpcm_capture=1\n",
 						 dai_link->name);
 
-				/* convert normal link into DPCM one */
-				if (!(dai_link->dpcm_playback ||
-				      dai_link->dpcm_capture)) {
+				/* convert normal link पूर्णांकo DPCM one */
+				अगर (!(dai_link->dpcm_playback ||
+				      dai_link->dpcm_capture)) अणु
 					dai_link->dpcm_playback = !dai_link->capture_only;
 					dai_link->dpcm_capture = !dai_link->playback_only;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
 			/*
 			 * override any BE fixups
@@ -1694,413 +1695,413 @@ match:
 				component->driver->be_hw_params_fixup;
 
 			/*
-			 * most BE links don't set stream name, so set it to
-			 * dai link name if it's NULL to help bind widgets.
+			 * most BE links करोn't set stream name, so set it to
+			 * dai link name अगर it's शून्य to help bind widमाला_लो.
 			 */
-			if (!dai_link->stream_name)
+			अगर (!dai_link->stream_name)
 				dai_link->stream_name = dai_link->name;
-		}
+		पूर्ण
 
-		/* Inform userspace we are using alternate topology */
-		if (component->driver->topology_name_prefix) {
+		/* Inक्रमm userspace we are using alternate topology */
+		अगर (component->driver->topology_name_prefix) अणु
 
-			/* topology shortname created? */
-			if (!card->topology_shortname_created) {
+			/* topology लघुname created? */
+			अगर (!card->topology_लघुname_created) अणु
 				comp_drv = component->driver;
 
-				snprintf(card->topology_shortname, 32, "%s-%s",
+				snम_लिखो(card->topology_लघुname, 32, "%s-%s",
 					 comp_drv->topology_name_prefix,
 					 card->name);
-				card->topology_shortname_created = true;
-			}
+				card->topology_लघुname_created = true;
+			पूर्ण
 
-			/* use topology shortname */
-			card->name = card->topology_shortname;
-		}
-	}
-}
+			/* use topology लघुname */
+			card->name = card->topology_लघुname;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define soc_setup_card_name(name, name1, name2, norm)		\
-	__soc_setup_card_name(name, sizeof(name), name1, name2, norm)
-static void __soc_setup_card_name(char *name, int len,
-				  const char *name1, const char *name2,
-				  int normalization)
-{
-	int i;
+#घोषणा soc_setup_card_name(name, name1, name2, norm)		\
+	__soc_setup_card_name(name, माप(name), name1, name2, norm)
+अटल व्योम __soc_setup_card_name(अक्षर *name, पूर्णांक len,
+				  स्थिर अक्षर *name1, स्थिर अक्षर *name2,
+				  पूर्णांक normalization)
+अणु
+	पूर्णांक i;
 
-	snprintf(name, len, "%s", name1 ? name1 : name2);
+	snम_लिखो(name, len, "%s", name1 ? name1 : name2);
 
-	if (!normalization)
-		return;
+	अगर (!normalization)
+		वापस;
 
 	/*
 	 * Name normalization
 	 *
-	 * The driver name is somewhat special, as it's used as a key for
+	 * The driver name is somewhat special, as it's used as a key क्रम
 	 * searches in the user-space.
 	 *
 	 * ex)
 	 *	"abcd??efg" -> "abcd__efg"
 	 */
-	for (i = 0; i < len; i++) {
-		switch (name[i]) {
-		case '_':
-		case '-':
-		case '\0':
-			break;
-		default:
-			if (!isalnum(name[i]))
+	क्रम (i = 0; i < len; i++) अणु
+		चयन (name[i]) अणु
+		हाल '_':
+		हाल '-':
+		हाल '\0':
+			अवरोध;
+		शेष:
+			अगर (!है_अक्षर_अंक(name[i]))
 				name[i] = '_';
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void soc_cleanup_card_resources(struct snd_soc_card *card)
-{
-	struct snd_soc_pcm_runtime *rtd, *n;
+अटल व्योम soc_cleanup_card_resources(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd, *n;
 
-	if (card->snd_card)
+	अगर (card->snd_card)
 		snd_card_disconnect_sync(card->snd_card);
 
-	snd_soc_dapm_shutdown(card);
+	snd_soc_dapm_shutकरोwn(card);
 
-	/* remove and free each DAI */
-	soc_remove_link_dais(card);
-	soc_remove_link_components(card);
+	/* हटाओ and मुक्त each DAI */
+	soc_हटाओ_link_dais(card);
+	soc_हटाओ_link_components(card);
 
-	for_each_card_rtds_safe(card, rtd, n)
-		snd_soc_remove_pcm_runtime(card, rtd);
+	क्रम_each_card_rtds_safe(card, rtd, n)
+		snd_soc_हटाओ_pcm_runसमय(card, rtd);
 
-	/* remove auxiliary devices */
-	soc_remove_aux_devices(card);
+	/* हटाओ auxiliary devices */
+	soc_हटाओ_aux_devices(card);
 	soc_unbind_aux_dev(card);
 
-	snd_soc_dapm_free(&card->dapm);
+	snd_soc_dapm_मुक्त(&card->dapm);
 	soc_cleanup_card_debugfs(card);
 
-	/* remove the card */
-	snd_soc_card_remove(card);
+	/* हटाओ the card */
+	snd_soc_card_हटाओ(card);
 
-	if (card->snd_card) {
-		snd_card_free(card->snd_card);
-		card->snd_card = NULL;
-	}
-}
+	अगर (card->snd_card) अणु
+		snd_card_मुक्त(card->snd_card);
+		card->snd_card = शून्य;
+	पूर्ण
+पूर्ण
 
-static void snd_soc_unbind_card(struct snd_soc_card *card, bool unregister)
-{
-	if (card->instantiated) {
+अटल व्योम snd_soc_unbind_card(काष्ठा snd_soc_card *card, bool unरेजिस्टर)
+अणु
+	अगर (card->instantiated) अणु
 		card->instantiated = false;
 		snd_soc_flush_all_delayed_work(card);
 
 		soc_cleanup_card_resources(card);
-		if (!unregister)
+		अगर (!unरेजिस्टर)
 			list_add(&card->list, &unbind_card_list);
-	} else {
-		if (unregister)
+	पूर्ण अन्यथा अणु
+		अगर (unरेजिस्टर)
 			list_del(&card->list);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int snd_soc_bind_card(struct snd_soc_card *card)
-{
-	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_component *component;
-	struct snd_soc_dai_link *dai_link;
-	int ret, i;
+अटल पूर्णांक snd_soc_bind_card(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd;
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_dai_link *dai_link;
+	पूर्णांक ret, i;
 
 	mutex_lock(&client_mutex);
 	mutex_lock_nested(&card->mutex, SND_SOC_CARD_CLASS_INIT);
 
-	snd_soc_dapm_init(&card->dapm, card, NULL);
+	snd_soc_dapm_init(&card->dapm, card, शून्य);
 
-	/* check whether any platform is ignore machine FE and using topology */
+	/* check whether any platक्रमm is ignore machine FE and using topology */
 	soc_check_tplg_fes(card);
 
 	/* bind aux_devs too */
 	ret = soc_bind_aux_dev(card);
-	if (ret < 0)
-		goto probe_end;
+	अगर (ret < 0)
+		जाओ probe_end;
 
 	/* add predefined DAI links to the list */
 	card->num_rtd = 0;
-	for_each_card_prelinks(card, i, dai_link) {
-		ret = snd_soc_add_pcm_runtime(card, dai_link);
-		if (ret < 0)
-			goto probe_end;
-	}
+	क्रम_each_card_prelinks(card, i, dai_link) अणु
+		ret = snd_soc_add_pcm_runसमय(card, dai_link);
+		अगर (ret < 0)
+			जाओ probe_end;
+	पूर्ण
 
-	/* card bind complete so register a sound card */
+	/* card bind complete so रेजिस्टर a sound card */
 	ret = snd_card_new(card->dev, SNDRV_DEFAULT_IDX1, SNDRV_DEFAULT_STR1,
 			card->owner, 0, &card->snd_card);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(card->dev,
 			"ASoC: can't create sound card for card %s: %d\n",
 			card->name, ret);
-		goto probe_end;
-	}
+		जाओ probe_end;
+	पूर्ण
 
 	soc_init_card_debugfs(card);
 
 	soc_resume_init(card);
 
-	ret = snd_soc_dapm_new_controls(&card->dapm, card->dapm_widgets,
-					card->num_dapm_widgets);
-	if (ret < 0)
-		goto probe_end;
+	ret = snd_soc_dapm_new_controls(&card->dapm, card->dapm_widमाला_लो,
+					card->num_dapm_widमाला_लो);
+	अगर (ret < 0)
+		जाओ probe_end;
 
-	ret = snd_soc_dapm_new_controls(&card->dapm, card->of_dapm_widgets,
-					card->num_of_dapm_widgets);
-	if (ret < 0)
-		goto probe_end;
+	ret = snd_soc_dapm_new_controls(&card->dapm, card->of_dapm_widमाला_लो,
+					card->num_of_dapm_widमाला_लो);
+	अगर (ret < 0)
+		जाओ probe_end;
 
 	/* initialise the sound card only once */
 	ret = snd_soc_card_probe(card);
-	if (ret < 0)
-		goto probe_end;
+	अगर (ret < 0)
+		जाओ probe_end;
 
 	/* probe all components used by DAI links on this card */
 	ret = soc_probe_link_components(card);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(card->dev,
 			"ASoC: failed to instantiate card %d\n", ret);
-		goto probe_end;
-	}
+		जाओ probe_end;
+	पूर्ण
 
 	/* probe auxiliary components */
 	ret = soc_probe_aux_devices(card);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(card->dev,
 			"ASoC: failed to probe aux component %d\n", ret);
-		goto probe_end;
-	}
+		जाओ probe_end;
+	पूर्ण
 
 	/* probe all DAI links on this card */
 	ret = soc_probe_link_dais(card);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(card->dev,
 			"ASoC: failed to instantiate card %d\n", ret);
-		goto probe_end;
-	}
+		जाओ probe_end;
+	पूर्ण
 
-	for_each_card_rtds(card, rtd) {
-		ret = soc_init_pcm_runtime(card, rtd);
-		if (ret < 0)
-			goto probe_end;
-	}
+	क्रम_each_card_rtds(card, rtd) अणु
+		ret = soc_init_pcm_runसमय(card, rtd);
+		अगर (ret < 0)
+			जाओ probe_end;
+	पूर्ण
 
-	snd_soc_dapm_link_dai_widgets(card);
-	snd_soc_dapm_connect_dai_link_widgets(card);
+	snd_soc_dapm_link_dai_widमाला_लो(card);
+	snd_soc_dapm_connect_dai_link_widमाला_लो(card);
 
 	ret = snd_soc_add_card_controls(card, card->controls,
 					card->num_controls);
-	if (ret < 0)
-		goto probe_end;
+	अगर (ret < 0)
+		जाओ probe_end;
 
 	ret = snd_soc_dapm_add_routes(&card->dapm, card->dapm_routes,
 				      card->num_dapm_routes);
-	if (ret < 0) {
-		if (card->disable_route_checks) {
+	अगर (ret < 0) अणु
+		अगर (card->disable_route_checks) अणु
 			dev_info(card->dev,
 				 "%s: disable_route_checks set, ignoring errors on add_routes\n",
 				 __func__);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(card->dev,
 				 "%s: snd_soc_dapm_add_routes failed: %d\n",
 				 __func__, ret);
-			goto probe_end;
-		}
-	}
+			जाओ probe_end;
+		पूर्ण
+	पूर्ण
 
 	ret = snd_soc_dapm_add_routes(&card->dapm, card->of_dapm_routes,
 				      card->num_of_dapm_routes);
-	if (ret < 0)
-		goto probe_end;
+	अगर (ret < 0)
+		जाओ probe_end;
 
-	/* try to set some sane longname if DMI is available */
-	snd_soc_set_dmi_name(card, NULL);
+	/* try to set some sane दीर्घname अगर DMI is available */
+	snd_soc_set_dmi_name(card, शून्य);
 
-	soc_setup_card_name(card->snd_card->shortname,
-			    card->name, NULL, 0);
-	soc_setup_card_name(card->snd_card->longname,
-			    card->long_name, card->name, 0);
+	soc_setup_card_name(card->snd_card->लघुname,
+			    card->name, शून्य, 0);
+	soc_setup_card_name(card->snd_card->दीर्घname,
+			    card->दीर्घ_name, card->name, 0);
 	soc_setup_card_name(card->snd_card->driver,
 			    card->driver_name, card->name, 1);
 
-	if (card->components) {
+	अगर (card->components) अणु
 		/* the current implementation of snd_component_add() accepts */
 		/* multiple components in the string separated by space, */
 		/* but the string collision (identical string) check might */
 		/* not work correctly */
 		ret = snd_component_add(card->snd_card, card->components);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(card->dev, "ASoC: %s snd_component_add() failed: %d\n",
 				card->name, ret);
-			goto probe_end;
-		}
-	}
+			जाओ probe_end;
+		पूर्ण
+	पूर्ण
 
 	ret = snd_soc_card_late_probe(card);
-	if (ret < 0)
-		goto probe_end;
+	अगर (ret < 0)
+		जाओ probe_end;
 
-	snd_soc_dapm_new_widgets(card);
+	snd_soc_dapm_new_widमाला_लो(card);
 
-	ret = snd_card_register(card->snd_card);
-	if (ret < 0) {
+	ret = snd_card_रेजिस्टर(card->snd_card);
+	अगर (ret < 0) अणु
 		dev_err(card->dev, "ASoC: failed to register soundcard %d\n",
 				ret);
-		goto probe_end;
-	}
+		जाओ probe_end;
+	पूर्ण
 
 	card->instantiated = 1;
-	dapm_mark_endpoints_dirty(card);
+	dapm_mark_endpoपूर्णांकs_dirty(card);
 	snd_soc_dapm_sync(&card->dapm);
 
 	/* deactivate pins to sleep state */
-	for_each_card_components(card, component)
-		if (!snd_soc_component_active(component))
+	क्रम_each_card_components(card, component)
+		अगर (!snd_soc_component_active(component))
 			pinctrl_pm_select_sleep_state(component->dev);
 
 probe_end:
-	if (ret < 0)
+	अगर (ret < 0)
 		soc_cleanup_card_resources(card);
 
 	mutex_unlock(&card->mutex);
 	mutex_unlock(&client_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* probes a new socdev */
-static int soc_probe(struct platform_device *pdev)
-{
-	struct snd_soc_card *card = platform_get_drvdata(pdev);
+अटल पूर्णांक soc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_soc_card *card = platक्रमm_get_drvdata(pdev);
 
 	/*
-	 * no card, so machine driver should be registering card
-	 * we should not be here in that case so ret error
+	 * no card, so machine driver should be रेजिस्टरing card
+	 * we should not be here in that हाल so ret error
 	 */
-	if (!card)
-		return -EINVAL;
+	अगर (!card)
+		वापस -EINVAL;
 
 	dev_warn(&pdev->dev,
 		 "ASoC: machine %s should use snd_soc_register_card()\n",
 		 card->name);
 
-	/* Bodge while we unpick instantiation */
+	/* Bodge जबतक we unpick instantiation */
 	card->dev = &pdev->dev;
 
-	return devm_snd_soc_register_card(&pdev->dev, card);
-}
+	वापस devm_snd_soc_रेजिस्टर_card(&pdev->dev, card);
+पूर्ण
 
-int snd_soc_poweroff(struct device *dev)
-{
-	struct snd_soc_card *card = dev_get_drvdata(dev);
-	struct snd_soc_component *component;
+पूर्णांक snd_soc_घातeroff(काष्ठा device *dev)
+अणु
+	काष्ठा snd_soc_card *card = dev_get_drvdata(dev);
+	काष्ठा snd_soc_component *component;
 
-	if (!card->instantiated)
-		return 0;
+	अगर (!card->instantiated)
+		वापस 0;
 
 	/*
-	 * Flush out pmdown_time work - we actually do want to run it
-	 * now, we're shutting down so no imminent restart.
+	 * Flush out pmकरोwn_समय work - we actually करो want to run it
+	 * now, we're shutting करोwn so no imminent restart.
 	 */
 	snd_soc_flush_all_delayed_work(card);
 
-	snd_soc_dapm_shutdown(card);
+	snd_soc_dapm_shutकरोwn(card);
 
 	/* deactivate pins to sleep state */
-	for_each_card_components(card, component)
+	क्रम_each_card_components(card, component)
 		pinctrl_pm_select_sleep_state(component->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_soc_poweroff);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_घातeroff);
 
-const struct dev_pm_ops snd_soc_pm_ops = {
+स्थिर काष्ठा dev_pm_ops snd_soc_pm_ops = अणु
 	.suspend = snd_soc_suspend,
 	.resume = snd_soc_resume,
-	.freeze = snd_soc_suspend,
+	.मुक्तze = snd_soc_suspend,
 	.thaw = snd_soc_resume,
-	.poweroff = snd_soc_poweroff,
+	.घातeroff = snd_soc_घातeroff,
 	.restore = snd_soc_resume,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(snd_soc_pm_ops);
 
-/* ASoC platform driver */
-static struct platform_driver soc_driver = {
-	.driver		= {
+/* ASoC platक्रमm driver */
+अटल काष्ठा platक्रमm_driver soc_driver = अणु
+	.driver		= अणु
 		.name		= "soc-audio",
 		.pm		= &snd_soc_pm_ops,
-	},
+	पूर्ण,
 	.probe		= soc_probe,
-};
+पूर्ण;
 
 /**
  * snd_soc_cnew - create new control
- * @_template: control template
- * @data: control private data
- * @long_name: control long name
+ * @_ढाँचा: control ढाँचा
+ * @data: control निजी data
+ * @दीर्घ_name: control दीर्घ name
  * @prefix: control name prefix
  *
- * Create a new mixer control from a template control.
+ * Create a new mixer control from a ढाँचा control.
  *
- * Returns 0 for success, else error.
+ * Returns 0 क्रम success, अन्यथा error.
  */
-struct snd_kcontrol *snd_soc_cnew(const struct snd_kcontrol_new *_template,
-				  void *data, const char *long_name,
-				  const char *prefix)
-{
-	struct snd_kcontrol_new template;
-	struct snd_kcontrol *kcontrol;
-	char *name = NULL;
+काष्ठा snd_kcontrol *snd_soc_cnew(स्थिर काष्ठा snd_kcontrol_new *_ढाँचा,
+				  व्योम *data, स्थिर अक्षर *दीर्घ_name,
+				  स्थिर अक्षर *prefix)
+अणु
+	काष्ठा snd_kcontrol_new ढाँचा;
+	काष्ठा snd_kcontrol *kcontrol;
+	अक्षर *name = शून्य;
 
-	memcpy(&template, _template, sizeof(template));
-	template.index = 0;
+	स_नकल(&ढाँचा, _ढाँचा, माप(ढाँचा));
+	ढाँचा.index = 0;
 
-	if (!long_name)
-		long_name = template.name;
+	अगर (!दीर्घ_name)
+		दीर्घ_name = ढाँचा.name;
 
-	if (prefix) {
-		name = kasprintf(GFP_KERNEL, "%s %s", prefix, long_name);
-		if (!name)
-			return NULL;
+	अगर (prefix) अणु
+		name = kaप्र_लिखो(GFP_KERNEL, "%s %s", prefix, दीर्घ_name);
+		अगर (!name)
+			वापस शून्य;
 
-		template.name = name;
-	} else {
-		template.name = long_name;
-	}
+		ढाँचा.name = name;
+	पूर्ण अन्यथा अणु
+		ढाँचा.name = दीर्घ_name;
+	पूर्ण
 
-	kcontrol = snd_ctl_new1(&template, data);
+	kcontrol = snd_ctl_new1(&ढाँचा, data);
 
-	kfree(name);
+	kमुक्त(name);
 
-	return kcontrol;
-}
+	वापस kcontrol;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_cnew);
 
-static int snd_soc_add_controls(struct snd_card *card, struct device *dev,
-	const struct snd_kcontrol_new *controls, int num_controls,
-	const char *prefix, void *data)
-{
-	int err, i;
+अटल पूर्णांक snd_soc_add_controls(काष्ठा snd_card *card, काष्ठा device *dev,
+	स्थिर काष्ठा snd_kcontrol_new *controls, पूर्णांक num_controls,
+	स्थिर अक्षर *prefix, व्योम *data)
+अणु
+	पूर्णांक err, i;
 
-	for (i = 0; i < num_controls; i++) {
-		const struct snd_kcontrol_new *control = &controls[i];
+	क्रम (i = 0; i < num_controls; i++) अणु
+		स्थिर काष्ठा snd_kcontrol_new *control = &controls[i];
 
 		err = snd_ctl_add(card, snd_soc_cnew(control, data,
 						     control->name, prefix));
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "ASoC: Failed to add %s: %d\n",
 				control->name, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * snd_soc_add_component_controls - Add an array of controls to a component.
@@ -2109,16 +2110,16 @@ static int snd_soc_add_controls(struct snd_card *card, struct device *dev,
  * @controls: Array of controls to add
  * @num_controls: Number of elements in the array
  *
- * Return: 0 for success, else error.
+ * Return: 0 क्रम success, अन्यथा error.
  */
-int snd_soc_add_component_controls(struct snd_soc_component *component,
-	const struct snd_kcontrol_new *controls, unsigned int num_controls)
-{
-	struct snd_card *card = component->card->snd_card;
+पूर्णांक snd_soc_add_component_controls(काष्ठा snd_soc_component *component,
+	स्थिर काष्ठा snd_kcontrol_new *controls, अचिन्हित पूर्णांक num_controls)
+अणु
+	काष्ठा snd_card *card = component->card->snd_card;
 
-	return snd_soc_add_controls(card, component->dev, controls,
+	वापस snd_soc_add_controls(card, component->dev, controls,
 			num_controls, component->name_prefix, component);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_add_component_controls);
 
 /**
@@ -2129,16 +2130,16 @@ EXPORT_SYMBOL_GPL(snd_soc_add_component_controls);
  * @controls: array of controls to add
  * @num_controls: number of elements in the array
  *
- * Return 0 for success, else error.
+ * Return 0 क्रम success, अन्यथा error.
  */
-int snd_soc_add_card_controls(struct snd_soc_card *soc_card,
-	const struct snd_kcontrol_new *controls, int num_controls)
-{
-	struct snd_card *card = soc_card->snd_card;
+पूर्णांक snd_soc_add_card_controls(काष्ठा snd_soc_card *soc_card,
+	स्थिर काष्ठा snd_kcontrol_new *controls, पूर्णांक num_controls)
+अणु
+	काष्ठा snd_card *card = soc_card->snd_card;
 
-	return snd_soc_add_controls(card, soc_card->dev, controls, num_controls,
-			NULL, soc_card);
-}
+	वापस snd_soc_add_controls(card, soc_card->dev, controls, num_controls,
+			शून्य, soc_card);
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_add_card_controls);
 
 /**
@@ -2149,32 +2150,32 @@ EXPORT_SYMBOL_GPL(snd_soc_add_card_controls);
  * @controls: array of controls to add
  * @num_controls: number of elements in the array
  *
- * Return 0 for success, else error.
+ * Return 0 क्रम success, अन्यथा error.
  */
-int snd_soc_add_dai_controls(struct snd_soc_dai *dai,
-	const struct snd_kcontrol_new *controls, int num_controls)
-{
-	struct snd_card *card = dai->component->card->snd_card;
+पूर्णांक snd_soc_add_dai_controls(काष्ठा snd_soc_dai *dai,
+	स्थिर काष्ठा snd_kcontrol_new *controls, पूर्णांक num_controls)
+अणु
+	काष्ठा snd_card *card = dai->component->card->snd_card;
 
-	return snd_soc_add_controls(card, dai->dev, controls, num_controls,
-			NULL, dai);
-}
+	वापस snd_soc_add_controls(card, dai->dev, controls, num_controls,
+			शून्य, dai);
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_add_dai_controls);
 
 /**
- * snd_soc_register_card - Register a card with the ASoC core
+ * snd_soc_रेजिस्टर_card - Register a card with the ASoC core
  *
- * @card: Card to register
+ * @card: Card to रेजिस्टर
  *
  */
-int snd_soc_register_card(struct snd_soc_card *card)
-{
-	if (!card->name || !card->dev)
-		return -EINVAL;
+पूर्णांक snd_soc_रेजिस्टर_card(काष्ठा snd_soc_card *card)
+अणु
+	अगर (!card->name || !card->dev)
+		वापस -EINVAL;
 
 	dev_set_drvdata(card->dev, card);
 
-	INIT_LIST_HEAD(&card->widgets);
+	INIT_LIST_HEAD(&card->widमाला_लो);
 	INIT_LIST_HEAD(&card->paths);
 	INIT_LIST_HEAD(&card->dapm_list);
 	INIT_LIST_HEAD(&card->aux_comp_list);
@@ -2182,7 +2183,7 @@ int snd_soc_register_card(struct snd_soc_card *card)
 	INIT_LIST_HEAD(&card->list);
 	INIT_LIST_HEAD(&card->rtd_list);
 	INIT_LIST_HEAD(&card->dapm_dirty);
-	INIT_LIST_HEAD(&card->dobj_list);
+	INIT_LIST_HEAD(&card->करोbj_list);
 
 	card->instantiated = 0;
 	mutex_init(&card->mutex);
@@ -2190,204 +2191,204 @@ int snd_soc_register_card(struct snd_soc_card *card)
 	mutex_init(&card->pcm_mutex);
 	spin_lock_init(&card->dpcm_lock);
 
-	return snd_soc_bind_card(card);
-}
-EXPORT_SYMBOL_GPL(snd_soc_register_card);
+	वापस snd_soc_bind_card(card);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_रेजिस्टर_card);
 
 /**
- * snd_soc_unregister_card - Unregister a card with the ASoC core
+ * snd_soc_unरेजिस्टर_card - Unरेजिस्टर a card with the ASoC core
  *
- * @card: Card to unregister
+ * @card: Card to unरेजिस्टर
  *
  */
-int snd_soc_unregister_card(struct snd_soc_card *card)
-{
+पूर्णांक snd_soc_unरेजिस्टर_card(काष्ठा snd_soc_card *card)
+अणु
 	mutex_lock(&client_mutex);
 	snd_soc_unbind_card(card, true);
 	mutex_unlock(&client_mutex);
 	dev_dbg(card->dev, "ASoC: Unregistered card '%s'\n", card->name);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_soc_unregister_card);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_unरेजिस्टर_card);
 
 /*
- * Simplify DAI link configuration by removing ".-1" from device names
+ * Simplअगरy DAI link configuration by removing ".-1" from device names
  * and sanitizing names.
  */
-static char *fmt_single_name(struct device *dev, int *id)
-{
-	const char *devname = dev_name(dev);
-	char *found, *name;
-	unsigned int id1, id2;
+अटल अक्षर *fmt_single_name(काष्ठा device *dev, पूर्णांक *id)
+अणु
+	स्थिर अक्षर *devname = dev_name(dev);
+	अक्षर *found, *name;
+	अचिन्हित पूर्णांक id1, id2;
 
-	if (devname == NULL)
-		return NULL;
+	अगर (devname == शून्य)
+		वापस शून्य;
 
 	name = devm_kstrdup(dev, devname, GFP_KERNEL);
-	if (!name)
-		return NULL;
+	अगर (!name)
+		वापस शून्य;
 
-	/* are we a "%s.%d" name (platform and SPI components) */
-	found = strstr(name, dev->driver->name);
-	if (found) {
+	/* are we a "%s.%d" name (platक्रमm and SPI components) */
+	found = म_माला(name, dev->driver->name);
+	अगर (found) अणु
 		/* get ID */
-		if (sscanf(&found[strlen(dev->driver->name)], ".%d", id) == 1) {
+		अगर (माला_पूछो(&found[म_माप(dev->driver->name)], ".%d", id) == 1) अणु
 
-			/* discard ID from name if ID == -1 */
-			if (*id == -1)
-				found[strlen(dev->driver->name)] = '\0';
-		}
+			/* discard ID from name अगर ID == -1 */
+			अगर (*id == -1)
+				found[म_माप(dev->driver->name)] = '\0';
+		पूर्ण
 
 	/* I2C component devices are named "bus-addr" */
-	} else if (sscanf(name, "%x-%x", &id1, &id2) == 2) {
+	पूर्ण अन्यथा अगर (माला_पूछो(name, "%x-%x", &id1, &id2) == 2) अणु
 
 		/* create unique ID number from I2C addr and bus */
 		*id = ((id1 & 0xffff) << 16) + id2;
 
-		devm_kfree(dev, name);
+		devm_kमुक्त(dev, name);
 
-		/* sanitize component name for DAI link creation */
-		name = devm_kasprintf(dev, GFP_KERNEL, "%s.%s", dev->driver->name, devname);
-	} else {
+		/* sanitize component name क्रम DAI link creation */
+		name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%s.%s", dev->driver->name, devname);
+	पूर्ण अन्यथा अणु
 		*id = 0;
-	}
+	पूर्ण
 
-	return name;
-}
+	वापस name;
+पूर्ण
 
 /*
- * Simplify DAI link naming for single devices with multiple DAIs by removing
+ * Simplअगरy DAI link naming क्रम single devices with multiple DAIs by removing
  * any ".-1" and using the DAI name (instead of device name).
  */
-static inline char *fmt_multiple_name(struct device *dev,
-		struct snd_soc_dai_driver *dai_drv)
-{
-	if (dai_drv->name == NULL) {
+अटल अंतरभूत अक्षर *fmt_multiple_name(काष्ठा device *dev,
+		काष्ठा snd_soc_dai_driver *dai_drv)
+अणु
+	अगर (dai_drv->name == शून्य) अणु
 		dev_err(dev,
 			"ASoC: error - multiple DAI %s registered with no name\n",
 			dev_name(dev));
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return devm_kstrdup(dev, dai_drv->name, GFP_KERNEL);
-}
+	वापस devm_kstrdup(dev, dai_drv->name, GFP_KERNEL);
+पूर्ण
 
-void snd_soc_unregister_dai(struct snd_soc_dai *dai)
-{
+व्योम snd_soc_unरेजिस्टर_dai(काष्ठा snd_soc_dai *dai)
+अणु
 	dev_dbg(dai->dev, "ASoC: Unregistered DAI '%s'\n", dai->name);
 	list_del(&dai->list);
-}
-EXPORT_SYMBOL_GPL(snd_soc_unregister_dai);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_unरेजिस्टर_dai);
 
 /**
- * snd_soc_register_dai - Register a DAI dynamically & create its widgets
+ * snd_soc_रेजिस्टर_dai - Register a DAI dynamically & create its widमाला_लो
  *
- * @component: The component the DAIs are registered for
- * @dai_drv: DAI driver to use for the DAI
- * @legacy_dai_naming: if %true, use legacy single-name format;
- * 	if %false, use multiple-name format;
+ * @component: The component the DAIs are रेजिस्टरed क्रम
+ * @dai_drv: DAI driver to use क्रम the DAI
+ * @legacy_dai_naming: अगर %true, use legacy single-name क्रमmat;
+ * 	अगर %false, use multiple-name क्रमmat;
  *
- * Topology can use this API to register DAIs when probing a component.
- * These DAIs's widgets will be freed in the card cleanup and the DAIs
- * will be freed in the component cleanup.
+ * Topology can use this API to रेजिस्टर DAIs when probing a component.
+ * These DAIs's widमाला_लो will be मुक्तd in the card cleanup and the DAIs
+ * will be मुक्तd in the component cleanup.
  */
-struct snd_soc_dai *snd_soc_register_dai(struct snd_soc_component *component,
-					 struct snd_soc_dai_driver *dai_drv,
+काष्ठा snd_soc_dai *snd_soc_रेजिस्टर_dai(काष्ठा snd_soc_component *component,
+					 काष्ठा snd_soc_dai_driver *dai_drv,
 					 bool legacy_dai_naming)
-{
-	struct device *dev = component->dev;
-	struct snd_soc_dai *dai;
+अणु
+	काष्ठा device *dev = component->dev;
+	काष्ठा snd_soc_dai *dai;
 
 	dev_dbg(dev, "ASoC: dynamically register DAI %s\n", dev_name(dev));
 
-	lockdep_assert_held(&client_mutex);
+	lockdep_निश्चित_held(&client_mutex);
 
-	dai = devm_kzalloc(dev, sizeof(*dai), GFP_KERNEL);
-	if (dai == NULL)
-		return NULL;
+	dai = devm_kzalloc(dev, माप(*dai), GFP_KERNEL);
+	अगर (dai == शून्य)
+		वापस शून्य;
 
 	/*
 	 * Back in the old days when we still had component-less DAIs,
-	 * instead of having a static name, component-less DAIs would
+	 * instead of having a अटल name, component-less DAIs would
 	 * inherit the name of the parent device so it is possible to
-	 * register multiple instances of the DAI. We still need to keep
+	 * रेजिस्टर multiple instances of the DAI. We still need to keep
 	 * the same naming style even though those DAIs are not
 	 * component-less anymore.
 	 */
-	if (legacy_dai_naming &&
-	    (dai_drv->id == 0 || dai_drv->name == NULL)) {
+	अगर (legacy_dai_naming &&
+	    (dai_drv->id == 0 || dai_drv->name == शून्य)) अणु
 		dai->name = fmt_single_name(dev, &dai->id);
-	} else {
+	पूर्ण अन्यथा अणु
 		dai->name = fmt_multiple_name(dev, dai_drv);
-		if (dai_drv->id)
+		अगर (dai_drv->id)
 			dai->id = dai_drv->id;
-		else
+		अन्यथा
 			dai->id = component->num_dai;
-	}
-	if (!dai->name)
-		return NULL;
+	पूर्ण
+	अगर (!dai->name)
+		वापस शून्य;
 
 	dai->component = component;
 	dai->dev = dev;
 	dai->driver = dai_drv;
 
-	/* see for_each_component_dais */
+	/* see क्रम_each_component_dais */
 	list_add_tail(&dai->list, &component->dai_list);
 	component->num_dai++;
 
 	dev_dbg(dev, "ASoC: Registered DAI '%s'\n", dai->name);
-	return dai;
-}
+	वापस dai;
+पूर्ण
 
 /**
- * snd_soc_unregister_dais - Unregister DAIs from the ASoC core
+ * snd_soc_unरेजिस्टर_dais - Unरेजिस्टर DAIs from the ASoC core
  *
- * @component: The component for which the DAIs should be unregistered
+ * @component: The component क्रम which the DAIs should be unरेजिस्टरed
  */
-static void snd_soc_unregister_dais(struct snd_soc_component *component)
-{
-	struct snd_soc_dai *dai, *_dai;
+अटल व्योम snd_soc_unरेजिस्टर_dais(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_dai *dai, *_dai;
 
-	for_each_component_dais_safe(component, dai, _dai)
-		snd_soc_unregister_dai(dai);
-}
+	क्रम_each_component_dais_safe(component, dai, _dai)
+		snd_soc_unरेजिस्टर_dai(dai);
+पूर्ण
 
 /**
- * snd_soc_register_dais - Register a DAI with the ASoC core
+ * snd_soc_रेजिस्टर_dais - Register a DAI with the ASoC core
  *
- * @component: The component the DAIs are registered for
- * @dai_drv: DAI driver to use for the DAIs
+ * @component: The component the DAIs are रेजिस्टरed क्रम
+ * @dai_drv: DAI driver to use क्रम the DAIs
  * @count: Number of DAIs
  */
-static int snd_soc_register_dais(struct snd_soc_component *component,
-				 struct snd_soc_dai_driver *dai_drv,
-				 size_t count)
-{
-	struct snd_soc_dai *dai;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक snd_soc_रेजिस्टर_dais(काष्ठा snd_soc_component *component,
+				 काष्ठा snd_soc_dai_driver *dai_drv,
+				 माप_प्रकार count)
+अणु
+	काष्ठा snd_soc_dai *dai;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < count; i++) {
-		dai = snd_soc_register_dai(component, dai_drv + i, count == 1 &&
+	क्रम (i = 0; i < count; i++) अणु
+		dai = snd_soc_रेजिस्टर_dai(component, dai_drv + i, count == 1 &&
 				  !component->driver->non_legacy_dai_naming);
-		if (dai == NULL) {
+		अगर (dai == शून्य) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	snd_soc_unregister_dais(component);
+	snd_soc_unरेजिस्टर_dais(component);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define ENDIANNESS_MAP(name) \
+#घोषणा ENDIANNESS_MAP(name) \
 	(SNDRV_PCM_FMTBIT_##name##LE | SNDRV_PCM_FMTBIT_##name##BE)
-static u64 endianness_format_map[] = {
+अटल u64 endianness_क्रमmat_map[] = अणु
 	ENDIANNESS_MAP(S16_),
 	ENDIANNESS_MAP(U16_),
 	ENDIANNESS_MAP(S24_),
@@ -2403,482 +2404,482 @@ static u64 endianness_format_map[] = {
 	ENDIANNESS_MAP(FLOAT_),
 	ENDIANNESS_MAP(FLOAT64_),
 	ENDIANNESS_MAP(IEC958_SUBFRAME_),
-};
+पूर्ण;
 
 /*
- * Fix up the DAI formats for endianness: codecs don't actually see
- * the endianness of the data but we're using the CPU format
- * definitions which do need to include endianness so we ensure that
+ * Fix up the DAI क्रमmats क्रम endianness: codecs करोn't actually see
+ * the endianness of the data but we're using the CPU क्रमmat
+ * definitions which करो need to include endianness so we ensure that
  * codec DAIs always have both big and little endian variants set.
  */
-static void convert_endianness_formats(struct snd_soc_pcm_stream *stream)
-{
-	int i;
+अटल व्योम convert_endianness_क्रमmats(काष्ठा snd_soc_pcm_stream *stream)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(endianness_format_map); i++)
-		if (stream->formats & endianness_format_map[i])
-			stream->formats |= endianness_format_map[i];
-}
+	क्रम (i = 0; i < ARRAY_SIZE(endianness_क्रमmat_map); i++)
+		अगर (stream->क्रमmats & endianness_क्रमmat_map[i])
+			stream->क्रमmats |= endianness_क्रमmat_map[i];
+पूर्ण
 
-static void snd_soc_try_rebind_card(void)
-{
-	struct snd_soc_card *card, *c;
+अटल व्योम snd_soc_try_rebind_card(व्योम)
+अणु
+	काष्ठा snd_soc_card *card, *c;
 
-	list_for_each_entry_safe(card, c, &unbind_card_list, list)
-		if (!snd_soc_bind_card(card))
+	list_क्रम_each_entry_safe(card, c, &unbind_card_list, list)
+		अगर (!snd_soc_bind_card(card))
 			list_del(&card->list);
-}
+पूर्ण
 
-static void snd_soc_del_component_unlocked(struct snd_soc_component *component)
-{
-	struct snd_soc_card *card = component->card;
+अटल व्योम snd_soc_del_component_unlocked(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_card *card = component->card;
 
-	snd_soc_unregister_dais(component);
+	snd_soc_unरेजिस्टर_dais(component);
 
-	if (card)
+	अगर (card)
 		snd_soc_unbind_card(card, false);
 
 	list_del(&component->list);
-}
+पूर्ण
 
-int snd_soc_component_initialize(struct snd_soc_component *component,
-				 const struct snd_soc_component_driver *driver,
-				 struct device *dev)
-{
+पूर्णांक snd_soc_component_initialize(काष्ठा snd_soc_component *component,
+				 स्थिर काष्ठा snd_soc_component_driver *driver,
+				 काष्ठा device *dev)
+अणु
 	INIT_LIST_HEAD(&component->dai_list);
-	INIT_LIST_HEAD(&component->dobj_list);
+	INIT_LIST_HEAD(&component->करोbj_list);
 	INIT_LIST_HEAD(&component->card_list);
 	mutex_init(&component->io_mutex);
 
 	component->name = fmt_single_name(dev, &component->id);
-	if (!component->name) {
+	अगर (!component->name) अणु
 		dev_err(dev, "ASoC: Failed to allocate name\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	component->dev		= dev;
 	component->driver	= driver;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_component_initialize);
 
-int snd_soc_add_component(struct snd_soc_component *component,
-			  struct snd_soc_dai_driver *dai_drv,
-			  int num_dai)
-{
-	int ret;
-	int i;
+पूर्णांक snd_soc_add_component(काष्ठा snd_soc_component *component,
+			  काष्ठा snd_soc_dai_driver *dai_drv,
+			  पूर्णांक num_dai)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	mutex_lock(&client_mutex);
 
-	if (component->driver->endianness) {
-		for (i = 0; i < num_dai; i++) {
-			convert_endianness_formats(&dai_drv[i].playback);
-			convert_endianness_formats(&dai_drv[i].capture);
-		}
-	}
+	अगर (component->driver->endianness) अणु
+		क्रम (i = 0; i < num_dai; i++) अणु
+			convert_endianness_क्रमmats(&dai_drv[i].playback);
+			convert_endianness_क्रमmats(&dai_drv[i].capture);
+		पूर्ण
+	पूर्ण
 
-	ret = snd_soc_register_dais(component, dai_drv, num_dai);
-	if (ret < 0) {
+	ret = snd_soc_रेजिस्टर_dais(component, dai_drv, num_dai);
+	अगर (ret < 0) अणु
 		dev_err(component->dev, "ASoC: Failed to register DAIs: %d\n",
 			ret);
-		goto err_cleanup;
-	}
+		जाओ err_cleanup;
+	पूर्ण
 
-	if (!component->driver->write && !component->driver->read) {
-		if (!component->regmap)
+	अगर (!component->driver->ग_लिखो && !component->driver->पढ़ो) अणु
+		अगर (!component->regmap)
 			component->regmap = dev_get_regmap(component->dev,
-							   NULL);
-		if (component->regmap)
+							   शून्य);
+		अगर (component->regmap)
 			snd_soc_component_setup_regmap(component);
-	}
+	पूर्ण
 
-	/* see for_each_component */
+	/* see क्रम_each_component */
 	list_add(&component->list, &component_list);
 
 err_cleanup:
-	if (ret < 0)
+	अगर (ret < 0)
 		snd_soc_del_component_unlocked(component);
 
 	mutex_unlock(&client_mutex);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		snd_soc_try_rebind_card();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_add_component);
 
-int snd_soc_register_component(struct device *dev,
-			const struct snd_soc_component_driver *component_driver,
-			struct snd_soc_dai_driver *dai_drv,
-			int num_dai)
-{
-	struct snd_soc_component *component;
-	int ret;
+पूर्णांक snd_soc_रेजिस्टर_component(काष्ठा device *dev,
+			स्थिर काष्ठा snd_soc_component_driver *component_driver,
+			काष्ठा snd_soc_dai_driver *dai_drv,
+			पूर्णांक num_dai)
+अणु
+	काष्ठा snd_soc_component *component;
+	पूर्णांक ret;
 
-	component = devm_kzalloc(dev, sizeof(*component), GFP_KERNEL);
-	if (!component)
-		return -ENOMEM;
+	component = devm_kzalloc(dev, माप(*component), GFP_KERNEL);
+	अगर (!component)
+		वापस -ENOMEM;
 
 	ret = snd_soc_component_initialize(component, component_driver, dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return snd_soc_add_component(component, dai_drv, num_dai);
-}
-EXPORT_SYMBOL_GPL(snd_soc_register_component);
+	वापस snd_soc_add_component(component, dai_drv, num_dai);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_रेजिस्टर_component);
 
 /**
- * snd_soc_unregister_component_by_driver - Unregister component using a given driver
+ * snd_soc_unरेजिस्टर_component_by_driver - Unरेजिस्टर component using a given driver
  * from the ASoC core
  *
- * @dev: The device to unregister
- * @component_driver: The component driver to unregister
+ * @dev: The device to unरेजिस्टर
+ * @component_driver: The component driver to unरेजिस्टर
  */
-void snd_soc_unregister_component_by_driver(struct device *dev,
-					    const struct snd_soc_component_driver *component_driver)
-{
-	struct snd_soc_component *component;
+व्योम snd_soc_unरेजिस्टर_component_by_driver(काष्ठा device *dev,
+					    स्थिर काष्ठा snd_soc_component_driver *component_driver)
+अणु
+	काष्ठा snd_soc_component *component;
 
-	if (!component_driver)
-		return;
+	अगर (!component_driver)
+		वापस;
 
 	mutex_lock(&client_mutex);
 	component = snd_soc_lookup_component_nolocked(dev, component_driver->name);
-	if (!component)
-		goto out;
+	अगर (!component)
+		जाओ out;
 
 	snd_soc_del_component_unlocked(component);
 
 out:
 	mutex_unlock(&client_mutex);
-}
-EXPORT_SYMBOL_GPL(snd_soc_unregister_component_by_driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_unरेजिस्टर_component_by_driver);
 
 /**
- * snd_soc_unregister_component - Unregister all related component
+ * snd_soc_unरेजिस्टर_component - Unरेजिस्टर all related component
  * from the ASoC core
  *
- * @dev: The device to unregister
+ * @dev: The device to unरेजिस्टर
  */
-void snd_soc_unregister_component(struct device *dev)
-{
-	struct snd_soc_component *component;
+व्योम snd_soc_unरेजिस्टर_component(काष्ठा device *dev)
+अणु
+	काष्ठा snd_soc_component *component;
 
 	mutex_lock(&client_mutex);
-	while (1) {
-		component = snd_soc_lookup_component_nolocked(dev, NULL);
-		if (!component)
-			break;
+	जबतक (1) अणु
+		component = snd_soc_lookup_component_nolocked(dev, शून्य);
+		अगर (!component)
+			अवरोध;
 
 		snd_soc_del_component_unlocked(component);
-	}
+	पूर्ण
 	mutex_unlock(&client_mutex);
-}
-EXPORT_SYMBOL_GPL(snd_soc_unregister_component);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_unरेजिस्टर_component);
 
 /* Retrieve a card's name from device tree */
-int snd_soc_of_parse_card_name(struct snd_soc_card *card,
-			       const char *propname)
-{
-	struct device_node *np;
-	int ret;
+पूर्णांक snd_soc_of_parse_card_name(काष्ठा snd_soc_card *card,
+			       स्थिर अक्षर *propname)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
-	if (!card->dev) {
+	अगर (!card->dev) अणु
 		pr_err("card->dev is not set before calling %s\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	np = card->dev->of_node;
 
-	ret = of_property_read_string_index(np, propname, 0, &card->name);
+	ret = of_property_पढ़ो_string_index(np, propname, 0, &card->name);
 	/*
-	 * EINVAL means the property does not exist. This is fine providing
+	 * EINVAL means the property करोes not exist. This is fine providing
 	 * card->name was previously set, which is checked later in
-	 * snd_soc_register_card.
+	 * snd_soc_रेजिस्टर_card.
 	 */
-	if (ret < 0 && ret != -EINVAL) {
+	अगर (ret < 0 && ret != -EINVAL) अणु
 		dev_err(card->dev,
 			"ASoC: Property '%s' could not be read: %d\n",
 			propname, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_parse_card_name);
 
-static const struct snd_soc_dapm_widget simple_widgets[] = {
-	SND_SOC_DAPM_MIC("Microphone", NULL),
-	SND_SOC_DAPM_LINE("Line", NULL),
-	SND_SOC_DAPM_HP("Headphone", NULL),
-	SND_SOC_DAPM_SPK("Speaker", NULL),
-};
+अटल स्थिर काष्ठा snd_soc_dapm_widget simple_widमाला_लो[] = अणु
+	SND_SOC_DAPM_MIC("Microphone", शून्य),
+	SND_SOC_DAPM_LINE("Line", शून्य),
+	SND_SOC_DAPM_HP("Headphone", शून्य),
+	SND_SOC_DAPM_SPK("Speaker", शून्य),
+पूर्ण;
 
-int snd_soc_of_parse_audio_simple_widgets(struct snd_soc_card *card,
-					  const char *propname)
-{
-	struct device_node *np = card->dev->of_node;
-	struct snd_soc_dapm_widget *widgets;
-	const char *template, *wname;
-	int i, j, num_widgets, ret;
+पूर्णांक snd_soc_of_parse_audio_simple_widमाला_लो(काष्ठा snd_soc_card *card,
+					  स्थिर अक्षर *propname)
+अणु
+	काष्ठा device_node *np = card->dev->of_node;
+	काष्ठा snd_soc_dapm_widget *widमाला_लो;
+	स्थिर अक्षर *ढाँचा, *wname;
+	पूर्णांक i, j, num_widमाला_लो, ret;
 
-	num_widgets = of_property_count_strings(np, propname);
-	if (num_widgets < 0) {
+	num_widमाला_लो = of_property_count_strings(np, propname);
+	अगर (num_widमाला_लो < 0) अणु
 		dev_err(card->dev,
 			"ASoC: Property '%s' does not exist\n",	propname);
-		return -EINVAL;
-	}
-	if (num_widgets & 1) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (num_widमाला_लो & 1) अणु
 		dev_err(card->dev,
 			"ASoC: Property '%s' length is not even\n", propname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	num_widgets /= 2;
-	if (!num_widgets) {
+	num_widमाला_लो /= 2;
+	अगर (!num_widमाला_लो) अणु
 		dev_err(card->dev, "ASoC: Property '%s's length is zero\n",
 			propname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	widgets = devm_kcalloc(card->dev, num_widgets, sizeof(*widgets),
+	widमाला_लो = devm_kसुस्मृति(card->dev, num_widमाला_लो, माप(*widमाला_लो),
 			       GFP_KERNEL);
-	if (!widgets) {
+	अगर (!widमाला_लो) अणु
 		dev_err(card->dev,
 			"ASoC: Could not allocate memory for widgets\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < num_widgets; i++) {
-		ret = of_property_read_string_index(np, propname,
-			2 * i, &template);
-		if (ret) {
+	क्रम (i = 0; i < num_widमाला_लो; i++) अणु
+		ret = of_property_पढ़ो_string_index(np, propname,
+			2 * i, &ढाँचा);
+		अगर (ret) अणु
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d read error:%d\n",
 				propname, 2 * i, ret);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		for (j = 0; j < ARRAY_SIZE(simple_widgets); j++) {
-			if (!strncmp(template, simple_widgets[j].name,
-				     strlen(simple_widgets[j].name))) {
-				widgets[i] = simple_widgets[j];
-				break;
-			}
-		}
+		क्रम (j = 0; j < ARRAY_SIZE(simple_widमाला_लो); j++) अणु
+			अगर (!म_भेदन(ढाँचा, simple_widमाला_लो[j].name,
+				     म_माप(simple_widमाला_लो[j].name))) अणु
+				widमाला_लो[i] = simple_widमाला_लो[j];
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (j >= ARRAY_SIZE(simple_widgets)) {
+		अगर (j >= ARRAY_SIZE(simple_widमाला_लो)) अणु
 			dev_err(card->dev,
 				"ASoC: DAPM widget '%s' is not supported\n",
-				template);
-			return -EINVAL;
-		}
+				ढाँचा);
+			वापस -EINVAL;
+		पूर्ण
 
-		ret = of_property_read_string_index(np, propname,
+		ret = of_property_पढ़ो_string_index(np, propname,
 						    (2 * i) + 1,
 						    &wname);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d read error:%d\n",
 				propname, (2 * i) + 1, ret);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		widgets[i].name = wname;
-	}
+		widमाला_लो[i].name = wname;
+	पूर्ण
 
-	card->of_dapm_widgets = widgets;
-	card->num_of_dapm_widgets = num_widgets;
+	card->of_dapm_widमाला_लो = widमाला_लो;
+	card->num_of_dapm_widमाला_लो = num_widमाला_लो;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_soc_of_parse_audio_simple_widgets);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_of_parse_audio_simple_widमाला_लो);
 
-int snd_soc_of_get_slot_mask(struct device_node *np,
-			     const char *prop_name,
-			     unsigned int *mask)
-{
+पूर्णांक snd_soc_of_get_slot_mask(काष्ठा device_node *np,
+			     स्थिर अक्षर *prop_name,
+			     अचिन्हित पूर्णांक *mask)
+अणु
 	u32 val;
-	const __be32 *of_slot_mask = of_get_property(np, prop_name, &val);
-	int i;
+	स्थिर __be32 *of_slot_mask = of_get_property(np, prop_name, &val);
+	पूर्णांक i;
 
-	if (!of_slot_mask)
-		return 0;
-	val /= sizeof(u32);
-	for (i = 0; i < val; i++)
-		if (be32_to_cpup(&of_slot_mask[i]))
+	अगर (!of_slot_mask)
+		वापस 0;
+	val /= माप(u32);
+	क्रम (i = 0; i < val; i++)
+		अगर (be32_to_cpup(&of_slot_mask[i]))
 			*mask |= (1 << i);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_get_slot_mask);
 
-int snd_soc_of_parse_tdm_slot(struct device_node *np,
-			      unsigned int *tx_mask,
-			      unsigned int *rx_mask,
-			      unsigned int *slots,
-			      unsigned int *slot_width)
-{
+पूर्णांक snd_soc_of_parse_tdm_slot(काष्ठा device_node *np,
+			      अचिन्हित पूर्णांक *tx_mask,
+			      अचिन्हित पूर्णांक *rx_mask,
+			      अचिन्हित पूर्णांक *slots,
+			      अचिन्हित पूर्णांक *slot_width)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (tx_mask)
+	अगर (tx_mask)
 		snd_soc_of_get_slot_mask(np, "dai-tdm-slot-tx-mask", tx_mask);
-	if (rx_mask)
+	अगर (rx_mask)
 		snd_soc_of_get_slot_mask(np, "dai-tdm-slot-rx-mask", rx_mask);
 
-	if (of_property_read_bool(np, "dai-tdm-slot-num")) {
-		ret = of_property_read_u32(np, "dai-tdm-slot-num", &val);
-		if (ret)
-			return ret;
+	अगर (of_property_पढ़ो_bool(np, "dai-tdm-slot-num")) अणु
+		ret = of_property_पढ़ो_u32(np, "dai-tdm-slot-num", &val);
+		अगर (ret)
+			वापस ret;
 
-		if (slots)
+		अगर (slots)
 			*slots = val;
-	}
+	पूर्ण
 
-	if (of_property_read_bool(np, "dai-tdm-slot-width")) {
-		ret = of_property_read_u32(np, "dai-tdm-slot-width", &val);
-		if (ret)
-			return ret;
+	अगर (of_property_पढ़ो_bool(np, "dai-tdm-slot-width")) अणु
+		ret = of_property_पढ़ो_u32(np, "dai-tdm-slot-width", &val);
+		अगर (ret)
+			वापस ret;
 
-		if (slot_width)
+		अगर (slot_width)
 			*slot_width = val;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_parse_tdm_slot);
 
-void snd_soc_of_parse_node_prefix(struct device_node *np,
-				  struct snd_soc_codec_conf *codec_conf,
-				  struct device_node *of_node,
-				  const char *propname)
-{
-	const char *str;
-	int ret;
+व्योम snd_soc_of_parse_node_prefix(काष्ठा device_node *np,
+				  काष्ठा snd_soc_codec_conf *codec_conf,
+				  काष्ठा device_node *of_node,
+				  स्थिर अक्षर *propname)
+अणु
+	स्थिर अक्षर *str;
+	पूर्णांक ret;
 
-	ret = of_property_read_string(np, propname, &str);
-	if (ret < 0) {
+	ret = of_property_पढ़ो_string(np, propname, &str);
+	अगर (ret < 0) अणु
 		/* no prefix is not error */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	codec_conf->dlc.of_node	= of_node;
 	codec_conf->name_prefix	= str;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_parse_node_prefix);
 
-int snd_soc_of_parse_audio_routing(struct snd_soc_card *card,
-				   const char *propname)
-{
-	struct device_node *np = card->dev->of_node;
-	int num_routes;
-	struct snd_soc_dapm_route *routes;
-	int i, ret;
+पूर्णांक snd_soc_of_parse_audio_routing(काष्ठा snd_soc_card *card,
+				   स्थिर अक्षर *propname)
+अणु
+	काष्ठा device_node *np = card->dev->of_node;
+	पूर्णांक num_routes;
+	काष्ठा snd_soc_dapm_route *routes;
+	पूर्णांक i, ret;
 
 	num_routes = of_property_count_strings(np, propname);
-	if (num_routes < 0 || num_routes & 1) {
+	अगर (num_routes < 0 || num_routes & 1) अणु
 		dev_err(card->dev,
 			"ASoC: Property '%s' does not exist or its length is not even\n",
 			propname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	num_routes /= 2;
 
-	routes = devm_kcalloc(card->dev, num_routes, sizeof(*routes),
+	routes = devm_kसुस्मृति(card->dev, num_routes, माप(*routes),
 			      GFP_KERNEL);
-	if (!routes) {
+	अगर (!routes) अणु
 		dev_err(card->dev,
 			"ASoC: Could not allocate DAPM route table\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < num_routes; i++) {
-		ret = of_property_read_string_index(np, propname,
+	क्रम (i = 0; i < num_routes; i++) अणु
+		ret = of_property_पढ़ो_string_index(np, propname,
 			2 * i, &routes[i].sink);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d could not be read: %d\n",
 				propname, 2 * i, ret);
-			return -EINVAL;
-		}
-		ret = of_property_read_string_index(np, propname,
+			वापस -EINVAL;
+		पूर्ण
+		ret = of_property_पढ़ो_string_index(np, propname,
 			(2 * i) + 1, &routes[i].source);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d could not be read: %d\n",
 				propname, (2 * i) + 1, ret);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	card->num_of_dapm_routes = num_routes;
 	card->of_dapm_routes = routes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_parse_audio_routing);
 
-int snd_soc_of_parse_aux_devs(struct snd_soc_card *card, const char *propname)
-{
-	struct device_node *node = card->dev->of_node;
-	struct snd_soc_aux_dev *aux;
-	int num, i;
+पूर्णांक snd_soc_of_parse_aux_devs(काष्ठा snd_soc_card *card, स्थिर अक्षर *propname)
+अणु
+	काष्ठा device_node *node = card->dev->of_node;
+	काष्ठा snd_soc_aux_dev *aux;
+	पूर्णांक num, i;
 
-	num = of_count_phandle_with_args(node, propname, NULL);
-	if (num == -ENOENT) {
-		return 0;
-	} else if (num < 0) {
+	num = of_count_phandle_with_args(node, propname, शून्य);
+	अगर (num == -ENOENT) अणु
+		वापस 0;
+	पूर्ण अन्यथा अगर (num < 0) अणु
 		dev_err(card->dev, "ASOC: Property '%s' could not be read: %d\n",
 			propname, num);
-		return num;
-	}
+		वापस num;
+	पूर्ण
 
-	aux = devm_kcalloc(card->dev, num, sizeof(*aux), GFP_KERNEL);
-	if (!aux)
-		return -ENOMEM;
+	aux = devm_kसुस्मृति(card->dev, num, माप(*aux), GFP_KERNEL);
+	अगर (!aux)
+		वापस -ENOMEM;
 	card->aux_dev = aux;
 	card->num_aux_devs = num;
 
-	for_each_card_pre_auxs(card, i, aux) {
+	क्रम_each_card_pre_auxs(card, i, aux) अणु
 		aux->dlc.of_node = of_parse_phandle(node, propname, i);
-		if (!aux->dlc.of_node)
-			return -EINVAL;
-	}
+		अगर (!aux->dlc.of_node)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_parse_aux_devs);
 
-unsigned int snd_soc_of_parse_daifmt(struct device_node *np,
-				     const char *prefix,
-				     struct device_node **bitclkmaster,
-				     struct device_node **framemaster)
-{
-	int ret, i;
-	char prop[128];
-	unsigned int format = 0;
-	int bit, frame;
-	const char *str;
-	struct {
-		char *name;
-		unsigned int val;
-	} of_fmt_table[] = {
-		{ "i2s",	SND_SOC_DAIFMT_I2S },
-		{ "right_j",	SND_SOC_DAIFMT_RIGHT_J },
-		{ "left_j",	SND_SOC_DAIFMT_LEFT_J },
-		{ "dsp_a",	SND_SOC_DAIFMT_DSP_A },
-		{ "dsp_b",	SND_SOC_DAIFMT_DSP_B },
-		{ "ac97",	SND_SOC_DAIFMT_AC97 },
-		{ "pdm",	SND_SOC_DAIFMT_PDM},
-		{ "msb",	SND_SOC_DAIFMT_MSB },
-		{ "lsb",	SND_SOC_DAIFMT_LSB },
-	};
+अचिन्हित पूर्णांक snd_soc_of_parse_daअगरmt(काष्ठा device_node *np,
+				     स्थिर अक्षर *prefix,
+				     काष्ठा device_node **bitclkmaster,
+				     काष्ठा device_node **framemaster)
+अणु
+	पूर्णांक ret, i;
+	अक्षर prop[128];
+	अचिन्हित पूर्णांक क्रमmat = 0;
+	पूर्णांक bit, frame;
+	स्थिर अक्षर *str;
+	काष्ठा अणु
+		अक्षर *name;
+		अचिन्हित पूर्णांक val;
+	पूर्ण of_fmt_table[] = अणु
+		अणु "i2s",	SND_SOC_DAIFMT_I2S पूर्ण,
+		अणु "right_j",	SND_SOC_DAIFMT_RIGHT_J पूर्ण,
+		अणु "left_j",	SND_SOC_DAIFMT_LEFT_J पूर्ण,
+		अणु "dsp_a",	SND_SOC_DAIFMT_DSP_A पूर्ण,
+		अणु "dsp_b",	SND_SOC_DAIFMT_DSP_B पूर्ण,
+		अणु "ac97",	SND_SOC_DAIFMT_AC97 पूर्ण,
+		अणु "pdm",	SND_SOC_DAIFMT_PDMपूर्ण,
+		अणु "msb",	SND_SOC_DAIFMT_MSB पूर्ण,
+		अणु "lsb",	SND_SOC_DAIFMT_LSB पूर्ण,
+	पूर्ण;
 
-	if (!prefix)
+	अगर (!prefix)
 		prefix = "";
 
 	/*
@@ -2886,199 +2887,199 @@ unsigned int snd_soc_of_parse_daifmt(struct device_node *np,
 	 * or    "[prefix]format = xxx"
 	 * SND_SOC_DAIFMT_FORMAT_MASK area
 	 */
-	ret = of_property_read_string(np, "dai-format", &str);
-	if (ret < 0) {
-		snprintf(prop, sizeof(prop), "%sformat", prefix);
-		ret = of_property_read_string(np, prop, &str);
-	}
-	if (ret == 0) {
-		for (i = 0; i < ARRAY_SIZE(of_fmt_table); i++) {
-			if (strcmp(str, of_fmt_table[i].name) == 0) {
-				format |= of_fmt_table[i].val;
-				break;
-			}
-		}
-	}
+	ret = of_property_पढ़ो_string(np, "dai-format", &str);
+	अगर (ret < 0) अणु
+		snम_लिखो(prop, माप(prop), "%sformat", prefix);
+		ret = of_property_पढ़ो_string(np, prop, &str);
+	पूर्ण
+	अगर (ret == 0) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(of_fmt_table); i++) अणु
+			अगर (म_भेद(str, of_fmt_table[i].name) == 0) अणु
+				क्रमmat |= of_fmt_table[i].val;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * check "[prefix]continuous-clock"
 	 * SND_SOC_DAIFMT_CLOCK_MASK area
 	 */
-	snprintf(prop, sizeof(prop), "%scontinuous-clock", prefix);
-	if (of_property_read_bool(np, prop))
-		format |= SND_SOC_DAIFMT_CONT;
-	else
-		format |= SND_SOC_DAIFMT_GATED;
+	snम_लिखो(prop, माप(prop), "%scontinuous-clock", prefix);
+	अगर (of_property_पढ़ो_bool(np, prop))
+		क्रमmat |= SND_SOC_DAIFMT_CONT;
+	अन्यथा
+		क्रमmat |= SND_SOC_DAIFMT_GATED;
 
 	/*
 	 * check "[prefix]bitclock-inversion"
 	 * check "[prefix]frame-inversion"
 	 * SND_SOC_DAIFMT_INV_MASK area
 	 */
-	snprintf(prop, sizeof(prop), "%sbitclock-inversion", prefix);
-	bit = !!of_get_property(np, prop, NULL);
+	snम_लिखो(prop, माप(prop), "%sbitclock-inversion", prefix);
+	bit = !!of_get_property(np, prop, शून्य);
 
-	snprintf(prop, sizeof(prop), "%sframe-inversion", prefix);
-	frame = !!of_get_property(np, prop, NULL);
+	snम_लिखो(prop, माप(prop), "%sframe-inversion", prefix);
+	frame = !!of_get_property(np, prop, शून्य);
 
-	switch ((bit << 4) + frame) {
-	case 0x11:
-		format |= SND_SOC_DAIFMT_IB_IF;
-		break;
-	case 0x10:
-		format |= SND_SOC_DAIFMT_IB_NF;
-		break;
-	case 0x01:
-		format |= SND_SOC_DAIFMT_NB_IF;
-		break;
-	default:
-		/* SND_SOC_DAIFMT_NB_NF is default */
-		break;
-	}
+	चयन ((bit << 4) + frame) अणु
+	हाल 0x11:
+		क्रमmat |= SND_SOC_DAIFMT_IB_IF;
+		अवरोध;
+	हाल 0x10:
+		क्रमmat |= SND_SOC_DAIFMT_IB_NF;
+		अवरोध;
+	हाल 0x01:
+		क्रमmat |= SND_SOC_DAIFMT_NB_IF;
+		अवरोध;
+	शेष:
+		/* SND_SOC_DAIFMT_NB_NF is शेष */
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * check "[prefix]bitclock-master"
 	 * check "[prefix]frame-master"
 	 * SND_SOC_DAIFMT_MASTER_MASK area
 	 */
-	snprintf(prop, sizeof(prop), "%sbitclock-master", prefix);
-	bit = !!of_get_property(np, prop, NULL);
-	if (bit && bitclkmaster)
+	snम_लिखो(prop, माप(prop), "%sbitclock-master", prefix);
+	bit = !!of_get_property(np, prop, शून्य);
+	अगर (bit && bitclkmaster)
 		*bitclkmaster = of_parse_phandle(np, prop, 0);
 
-	snprintf(prop, sizeof(prop), "%sframe-master", prefix);
-	frame = !!of_get_property(np, prop, NULL);
-	if (frame && framemaster)
+	snम_लिखो(prop, माप(prop), "%sframe-master", prefix);
+	frame = !!of_get_property(np, prop, शून्य);
+	अगर (frame && framemaster)
 		*framemaster = of_parse_phandle(np, prop, 0);
 
-	switch ((bit << 4) + frame) {
-	case 0x11:
-		format |= SND_SOC_DAIFMT_CBM_CFM;
-		break;
-	case 0x10:
-		format |= SND_SOC_DAIFMT_CBM_CFS;
-		break;
-	case 0x01:
-		format |= SND_SOC_DAIFMT_CBS_CFM;
-		break;
-	default:
-		format |= SND_SOC_DAIFMT_CBS_CFS;
-		break;
-	}
+	चयन ((bit << 4) + frame) अणु
+	हाल 0x11:
+		क्रमmat |= SND_SOC_DAIFMT_CBM_CFM;
+		अवरोध;
+	हाल 0x10:
+		क्रमmat |= SND_SOC_DAIFMT_CBM_CFS;
+		अवरोध;
+	हाल 0x01:
+		क्रमmat |= SND_SOC_DAIFMT_CBS_CFM;
+		अवरोध;
+	शेष:
+		क्रमmat |= SND_SOC_DAIFMT_CBS_CFS;
+		अवरोध;
+	पूर्ण
 
-	return format;
-}
-EXPORT_SYMBOL_GPL(snd_soc_of_parse_daifmt);
+	वापस क्रमmat;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_soc_of_parse_daअगरmt);
 
-int snd_soc_get_dai_id(struct device_node *ep)
-{
-	struct snd_soc_component *component;
-	struct snd_soc_dai_link_component dlc;
-	int ret;
+पूर्णांक snd_soc_get_dai_id(काष्ठा device_node *ep)
+अणु
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_dai_link_component dlc;
+	पूर्णांक ret;
 
 	dlc.of_node	= of_graph_get_port_parent(ep);
-	dlc.name	= NULL;
+	dlc.name	= शून्य;
 	/*
-	 * For example HDMI case, HDMI has video/sound port,
+	 * For example HDMI हाल, HDMI has video/sound port,
 	 * but ALSA SoC needs sound port number only.
-	 * Thus counting HDMI DT port/endpoint doesn't work.
+	 * Thus counting HDMI DT port/endpoपूर्णांक करोesn't work.
 	 * Then, it should have .of_xlate_dai_id
 	 */
 	ret = -ENOTSUPP;
 	mutex_lock(&client_mutex);
 	component = soc_find_component(&dlc);
-	if (component)
+	अगर (component)
 		ret = snd_soc_component_of_xlate_dai_id(component, ep);
 	mutex_unlock(&client_mutex);
 
 	of_node_put(dlc.of_node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_get_dai_id);
 
-int snd_soc_get_dai_name(const struct of_phandle_args *args,
-				const char **dai_name)
-{
-	struct snd_soc_component *pos;
-	struct device_node *component_of_node;
-	int ret = -EPROBE_DEFER;
+पूर्णांक snd_soc_get_dai_name(स्थिर काष्ठा of_phandle_args *args,
+				स्थिर अक्षर **dai_name)
+अणु
+	काष्ठा snd_soc_component *pos;
+	काष्ठा device_node *component_of_node;
+	पूर्णांक ret = -EPROBE_DEFER;
 
 	mutex_lock(&client_mutex);
-	for_each_component(pos) {
+	क्रम_each_component(pos) अणु
 		component_of_node = soc_component_to_node(pos);
 
-		if (component_of_node != args->np)
-			continue;
+		अगर (component_of_node != args->np)
+			जारी;
 
 		ret = snd_soc_component_of_xlate_dai_name(pos, args, dai_name);
-		if (ret == -ENOTSUPP) {
-			struct snd_soc_dai *dai;
-			int id = -1;
+		अगर (ret == -ENOTSUPP) अणु
+			काष्ठा snd_soc_dai *dai;
+			पूर्णांक id = -1;
 
-			switch (args->args_count) {
-			case 0:
+			चयन (args->args_count) अणु
+			हाल 0:
 				id = 0; /* same as dai_drv[0] */
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				id = args->args[0];
-				break;
-			default:
+				अवरोध;
+			शेष:
 				/* not supported */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (id < 0 || id >= pos->num_dai) {
+			अगर (id < 0 || id >= pos->num_dai) अणु
 				ret = -EINVAL;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			ret = 0;
 
 			/* find target DAI */
-			for_each_component_dais(pos, dai) {
-				if (id == 0)
-					break;
+			क्रम_each_component_dais(pos, dai) अणु
+				अगर (id == 0)
+					अवरोध;
 				id--;
-			}
+			पूर्ण
 
 			*dai_name = dai->driver->name;
-			if (!*dai_name)
+			अगर (!*dai_name)
 				*dai_name = pos->name;
-		} else if (ret) {
+		पूर्ण अन्यथा अगर (ret) अणु
 			/*
-			 * if another error than ENOTSUPP is returned go on and
-			 * check if another component is provided with the same
-			 * node. This may happen if a device provides several
+			 * अगर another error than ENOTSUPP is वापसed go on and
+			 * check अगर another component is provided with the same
+			 * node. This may happen अगर a device provides several
 			 * components
 			 */
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&client_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_get_dai_name);
 
-int snd_soc_of_get_dai_name(struct device_node *of_node,
-			    const char **dai_name)
-{
-	struct of_phandle_args args;
-	int ret;
+पूर्णांक snd_soc_of_get_dai_name(काष्ठा device_node *of_node,
+			    स्थिर अक्षर **dai_name)
+अणु
+	काष्ठा of_phandle_args args;
+	पूर्णांक ret;
 
 	ret = of_parse_phandle_with_args(of_node, "sound-dai",
 					 "#sound-dai-cells", 0, &args);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = snd_soc_get_dai_name(&args, dai_name);
 
 	of_node_put(args.np);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_get_dai_name);
 
 /*
@@ -3087,18 +3088,18 @@ EXPORT_SYMBOL_GPL(snd_soc_of_get_dai_name);
  *
  * Dereference device nodes acquired by snd_soc_of_get_dai_link_codecs().
  */
-void snd_soc_of_put_dai_link_codecs(struct snd_soc_dai_link *dai_link)
-{
-	struct snd_soc_dai_link_component *component;
-	int index;
+व्योम snd_soc_of_put_dai_link_codecs(काष्ठा snd_soc_dai_link *dai_link)
+अणु
+	काष्ठा snd_soc_dai_link_component *component;
+	पूर्णांक index;
 
-	for_each_link_codecs(dai_link, index, component) {
-		if (!component->of_node)
-			break;
+	क्रम_each_link_codecs(dai_link, index, component) अणु
+		अगर (!component->of_node)
+			अवरोध;
 		of_node_put(component->of_node);
-		component->of_node = NULL;
-	}
-}
+		component->of_node = शून्य;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_put_dai_link_codecs);
 
 /*
@@ -3113,76 +3114,76 @@ EXPORT_SYMBOL_GPL(snd_soc_of_put_dai_link_codecs);
  * The device nodes in the array (of_node) must be dereferenced by calling
  * snd_soc_of_put_dai_link_codecs() on @dai_link.
  *
- * Returns 0 for success
+ * Returns 0 क्रम success
  */
-int snd_soc_of_get_dai_link_codecs(struct device *dev,
-				   struct device_node *of_node,
-				   struct snd_soc_dai_link *dai_link)
-{
-	struct of_phandle_args args;
-	struct snd_soc_dai_link_component *component;
-	char *name;
-	int index, num_codecs, ret;
+पूर्णांक snd_soc_of_get_dai_link_codecs(काष्ठा device *dev,
+				   काष्ठा device_node *of_node,
+				   काष्ठा snd_soc_dai_link *dai_link)
+अणु
+	काष्ठा of_phandle_args args;
+	काष्ठा snd_soc_dai_link_component *component;
+	अक्षर *name;
+	पूर्णांक index, num_codecs, ret;
 
 	/* Count the number of CODECs */
 	name = "sound-dai";
 	num_codecs = of_count_phandle_with_args(of_node, name,
 						"#sound-dai-cells");
-	if (num_codecs <= 0) {
-		if (num_codecs == -ENOENT)
+	अगर (num_codecs <= 0) अणु
+		अगर (num_codecs == -ENOENT)
 			dev_err(dev, "No 'sound-dai' property\n");
-		else
+		अन्यथा
 			dev_err(dev, "Bad phandle in 'sound-dai'\n");
-		return num_codecs;
-	}
-	component = devm_kcalloc(dev,
-				 num_codecs, sizeof(*component),
+		वापस num_codecs;
+	पूर्ण
+	component = devm_kसुस्मृति(dev,
+				 num_codecs, माप(*component),
 				 GFP_KERNEL);
-	if (!component)
-		return -ENOMEM;
+	अगर (!component)
+		वापस -ENOMEM;
 	dai_link->codecs = component;
 	dai_link->num_codecs = num_codecs;
 
 	/* Parse the list */
-	for_each_link_codecs(dai_link, index, component) {
+	क्रम_each_link_codecs(dai_link, index, component) अणु
 		ret = of_parse_phandle_with_args(of_node, name,
 						 "#sound-dai-cells",
 						 index, &args);
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 		component->of_node = args.np;
 		ret = snd_soc_get_dai_name(&args, &component->dai_name);
-		if (ret < 0)
-			goto err;
-	}
-	return 0;
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
+	वापस 0;
 err:
 	snd_soc_of_put_dai_link_codecs(dai_link);
-	dai_link->codecs = NULL;
+	dai_link->codecs = शून्य;
 	dai_link->num_codecs = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_soc_of_get_dai_link_codecs);
 
-static int __init snd_soc_init(void)
-{
+अटल पूर्णांक __init snd_soc_init(व्योम)
+अणु
 	snd_soc_debugfs_init();
 	snd_soc_util_init();
 
-	return platform_driver_register(&soc_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&soc_driver);
+पूर्ण
 module_init(snd_soc_init);
 
-static void __exit snd_soc_exit(void)
-{
-	snd_soc_util_exit();
-	snd_soc_debugfs_exit();
+अटल व्योम __निकास snd_soc_निकास(व्योम)
+अणु
+	snd_soc_util_निकास();
+	snd_soc_debugfs_निकास();
 
-	platform_driver_unregister(&soc_driver);
-}
-module_exit(snd_soc_exit);
+	platक्रमm_driver_unरेजिस्टर(&soc_driver);
+पूर्ण
+module_निकास(snd_soc_निकास);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Liam Girdwood, lrg@slimlogic.co.uk");
 MODULE_DESCRIPTION("ALSA SoC Core");
 MODULE_LICENSE("GPL");

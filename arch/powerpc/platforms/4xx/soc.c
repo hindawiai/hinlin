@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * IBM/AMCC PPC4xx SoC setup code
  *
@@ -9,117 +10,117 @@
  *   Copyright (c) 2003 - 2006 Zultys Technologies
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/dcr.h>
-#include <asm/dcr-regs.h>
-#include <asm/reg.h>
+#समावेश <यंत्र/dcr.h>
+#समावेश <यंत्र/dcr-regs.h>
+#समावेश <यंत्र/reg.h>
 
-static u32 dcrbase_l2c;
+अटल u32 dcrbase_l2c;
 
 /*
  * L2-cache
  */
 
 /* Issue L2C diagnostic command */
-static inline u32 l2c_diag(u32 addr)
-{
+अटल अंतरभूत u32 l2c_diag(u32 addr)
+अणु
 	mtdcr(dcrbase_l2c + DCRN_L2C0_ADDR, addr);
 	mtdcr(dcrbase_l2c + DCRN_L2C0_CMD, L2C_CMD_DIAG);
-	while (!(mfdcr(dcrbase_l2c + DCRN_L2C0_SR) & L2C_SR_CC))
+	जबतक (!(mfdcr(dcrbase_l2c + DCRN_L2C0_SR) & L2C_SR_CC))
 		;
 
-	return mfdcr(dcrbase_l2c + DCRN_L2C0_DATA);
-}
+	वापस mfdcr(dcrbase_l2c + DCRN_L2C0_DATA);
+पूर्ण
 
-static irqreturn_t l2c_error_handler(int irq, void *dev)
-{
+अटल irqवापस_t l2c_error_handler(पूर्णांक irq, व्योम *dev)
+अणु
 	u32 sr = mfdcr(dcrbase_l2c + DCRN_L2C0_SR);
 
-	if (sr & L2C_SR_CPE) {
+	अगर (sr & L2C_SR_CPE) अणु
 		/* Read cache trapped address */
 		u32 addr = l2c_diag(0x42000000);
-		printk(KERN_EMERG "L2C: Cache Parity Error, addr[16:26] = 0x%08x\n",
+		prपूर्णांकk(KERN_EMERG "L2C: Cache Parity Error, addr[16:26] = 0x%08x\n",
 		       addr);
-	}
-	if (sr & L2C_SR_TPE) {
+	पूर्ण
+	अगर (sr & L2C_SR_TPE) अणु
 		/* Read tag trapped address */
 		u32 addr = l2c_diag(0x82000000) >> 16;
-		printk(KERN_EMERG "L2C: Tag Parity Error, addr[16:26] = 0x%08x\n",
+		prपूर्णांकk(KERN_EMERG "L2C: Tag Parity Error, addr[16:26] = 0x%08x\n",
 		       addr);
-	}
+	पूर्ण
 
 	/* Clear parity errors */
-	if (sr & (L2C_SR_CPE | L2C_SR_TPE)){
+	अगर (sr & (L2C_SR_CPE | L2C_SR_TPE))अणु
 		mtdcr(dcrbase_l2c + DCRN_L2C0_ADDR, 0);
 		mtdcr(dcrbase_l2c + DCRN_L2C0_CMD, L2C_CMD_CCP | L2C_CMD_CTE);
-	} else {
-		printk(KERN_EMERG "L2C: LRU error\n");
-	}
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_EMERG "L2C: LRU error\n");
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init ppc4xx_l2c_probe(void)
-{
-	struct device_node *np;
+अटल पूर्णांक __init ppc4xx_l2c_probe(व्योम)
+अणु
+	काष्ठा device_node *np;
 	u32 r;
-	unsigned long flags;
-	int irq;
-	const u32 *dcrreg;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक irq;
+	स्थिर u32 *dcrreg;
 	u32 dcrbase_isram;
-	int len;
-	const u32 *prop;
+	पूर्णांक len;
+	स्थिर u32 *prop;
 	u32 l2_size;
 
-	np = of_find_compatible_node(NULL, NULL, "ibm,l2-cache");
-	if (!np)
-		return 0;
+	np = of_find_compatible_node(शून्य, शून्य, "ibm,l2-cache");
+	अगर (!np)
+		वापस 0;
 
 	/* Get l2 cache size */
-	prop = of_get_property(np, "cache-size", NULL);
-	if (prop == NULL) {
-		printk(KERN_ERR "%pOF: Can't get cache-size!\n", np);
+	prop = of_get_property(np, "cache-size", शून्य);
+	अगर (prop == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%pOF: Can't get cache-size!\n", np);
 		of_node_put(np);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	l2_size = prop[0];
 
 	/* Map DCRs */
 	dcrreg = of_get_property(np, "dcr-reg", &len);
-	if (!dcrreg || (len != 4 * sizeof(u32))) {
-		printk(KERN_ERR "%pOF: Can't get DCR register base !", np);
+	अगर (!dcrreg || (len != 4 * माप(u32))) अणु
+		prपूर्णांकk(KERN_ERR "%pOF: Can't get DCR register base !", np);
 		of_node_put(np);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	dcrbase_isram = dcrreg[0];
 	dcrbase_l2c = dcrreg[2];
 
 	/* Get and map irq number from device tree */
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
-		printk(KERN_ERR "irq_of_parse_and_map failed\n");
+	अगर (!irq) अणु
+		prपूर्णांकk(KERN_ERR "irq_of_parse_and_map failed\n");
 		of_node_put(np);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Install error handler */
-	if (request_irq(irq, l2c_error_handler, 0, "L2C", 0) < 0) {
-		printk(KERN_ERR "Cannot install L2C error handler"
+	अगर (request_irq(irq, l2c_error_handler, 0, "L2C", 0) < 0) अणु
+		prपूर्णांकk(KERN_ERR "Cannot install L2C error handler"
 		       ", cache is not enabled\n");
 		of_node_put(np);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	local_irq_save(flags);
-	asm volatile ("sync" ::: "memory");
+	यंत्र अस्थिर ("sync" ::: "memory");
 
 	/* Disable SRAM */
 	mtdcr(dcrbase_isram + DCRN_SRAM0_DPC,
@@ -143,7 +144,7 @@ static int __init ppc4xx_l2c_probe(void)
 
 	/* Hardware Clear Command */
 	mtdcr(dcrbase_l2c + DCRN_L2C0_CMD, L2C_CMD_HCC);
-	while (!(mfdcr(dcrbase_l2c + DCRN_L2C0_SR) & L2C_SR_CC))
+	जबतक (!(mfdcr(dcrbase_l2c + DCRN_L2C0_SR) & L2C_SR_CC))
 		;
 
 	/* Clear Cache Parity and Tag Errors */
@@ -160,7 +161,7 @@ static int __init ppc4xx_l2c_probe(void)
 	r |= 0x80000000 | L2C_SNP_SSR_32G | L2C_SNP_ESR;
 	mtdcr(dcrbase_l2c + DCRN_L2C0_SNP1, r);
 
-	asm volatile ("sync" ::: "memory");
+	यंत्र अस्थिर ("sync" ::: "memory");
 
 	/* Enable ICU/DCU ports */
 	r = mfdcr(dcrbase_l2c + DCRN_L2C0_CFG);
@@ -169,49 +170,49 @@ static int __init ppc4xx_l2c_probe(void)
 	r |= L2C_CFG_ICU | L2C_CFG_DCU | L2C_CFG_TPC | L2C_CFG_CPC | L2C_CFG_FRAN
 		| L2C_CFG_CPIM | L2C_CFG_TPIM | L2C_CFG_LIM | L2C_CFG_SMCM;
 
-	/* Check for 460EX/GT special handling */
-	if (of_device_is_compatible(np, "ibm,l2-cache-460ex") ||
+	/* Check क्रम 460EX/GT special handling */
+	अगर (of_device_is_compatible(np, "ibm,l2-cache-460ex") ||
 	    of_device_is_compatible(np, "ibm,l2-cache-460gt"))
 		r |= L2C_CFG_RDBW;
 
 	mtdcr(dcrbase_l2c + DCRN_L2C0_CFG, r);
 
-	asm volatile ("sync; isync" ::: "memory");
+	यंत्र अस्थिर ("sync; isync" ::: "memory");
 	local_irq_restore(flags);
 
-	printk(KERN_INFO "%dk L2-cache enabled\n", l2_size >> 10);
+	prपूर्णांकk(KERN_INFO "%dk L2-cache enabled\n", l2_size >> 10);
 
 	of_node_put(np);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(ppc4xx_l2c_probe);
 
 /*
- * Apply a system reset. Alternatively a board specific value may be
+ * Apply a प्रणाली reset. Alternatively a board specअगरic value may be
  * provided via the "reset-type" property in the cpu node.
  */
-void ppc4xx_reset_system(char *cmd)
-{
-	struct device_node *np;
+व्योम ppc4xx_reset_प्रणाली(अक्षर *cmd)
+अणु
+	काष्ठा device_node *np;
 	u32 reset_type = DBCR0_RST_SYSTEM;
-	const u32 *prop;
+	स्थिर u32 *prop;
 
-	np = of_get_cpu_node(0, NULL);
-	if (np) {
-		prop = of_get_property(np, "reset-type", NULL);
+	np = of_get_cpu_node(0, शून्य);
+	अगर (np) अणु
+		prop = of_get_property(np, "reset-type", शून्य);
 
 		/*
-		 * Check if property exists and if it is in range:
+		 * Check अगर property exists and अगर it is in range:
 		 * 1 - PPC4xx core reset
 		 * 2 - PPC4xx chip reset
-		 * 3 - PPC4xx system reset (default)
+		 * 3 - PPC4xx प्रणाली reset (शेष)
 		 */
-		if ((prop) && ((prop[0] >= 1) && (prop[0] <= 3)))
+		अगर ((prop) && ((prop[0] >= 1) && (prop[0] <= 3)))
 			reset_type = prop[0] << 28;
-	}
+	पूर्ण
 
 	mtspr(SPRN_DBCR0, mfspr(SPRN_DBCR0) | reset_type);
 
-	while (1)
-		;	/* Just in case the reset doesn't work */
-}
+	जबतक (1)
+		;	/* Just in हाल the reset करोesn't work */
+पूर्ण

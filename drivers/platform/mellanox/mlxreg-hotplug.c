@@ -1,249 +1,250 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Mellanox hotplug driver
  *
  * Copyright (C) 2016-2020 Mellanox Technologies
  */
 
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_data/mlxreg.h>
-#include <linux/platform_device.h>
-#include <linux/spinlock.h>
-#include <linux/string_helpers.h>
-#include <linux/regmap.h>
-#include <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_data/mlxreg.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/string_helpers.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/workqueue.h>
 
-/* Offset of event and mask registers from status register. */
-#define MLXREG_HOTPLUG_EVENT_OFF	1
-#define MLXREG_HOTPLUG_MASK_OFF		2
-#define MLXREG_HOTPLUG_AGGR_MASK_OFF	1
+/* Offset of event and mask रेजिस्टरs from status रेजिस्टर. */
+#घोषणा MLXREG_HOTPLUG_EVENT_OFF	1
+#घोषणा MLXREG_HOTPLUG_MASK_OFF		2
+#घोषणा MLXREG_HOTPLUG_AGGR_MASK_OFF	1
 
 /* ASIC good health mask. */
-#define MLXREG_HOTPLUG_GOOD_HEALTH_MASK	0x02
+#घोषणा MLXREG_HOTPLUG_GOOD_HEALTH_MASK	0x02
 
-#define MLXREG_HOTPLUG_ATTRS_MAX	24
-#define MLXREG_HOTPLUG_NOT_ASSERT	3
+#घोषणा MLXREG_HOTPLUG_ATTRS_MAX	24
+#घोषणा MLXREG_HOTPLUG_NOT_ASSERT	3
 
 /**
- * struct mlxreg_hotplug_priv_data - platform private data:
- * @irq: platform device interrupt number;
+ * काष्ठा mlxreg_hotplug_priv_data - platक्रमm निजी data:
+ * @irq: platक्रमm device पूर्णांकerrupt number;
  * @dev: basic device;
- * @pdev: platform device;
- * @plat: platform data;
- * @regmap: register map handle;
- * @dwork_irq: delayed work template;
+ * @pdev: platक्रमm device;
+ * @plat: platक्रमm data;
+ * @regmap: रेजिस्टर map handle;
+ * @dwork_irq: delayed work ढाँचा;
  * @lock: spin lock;
  * @hwmon: hwmon device;
  * @mlxreg_hotplug_attr: sysfs attributes array;
  * @mlxreg_hotplug_dev_attr: sysfs sensor device attribute array;
  * @group: sysfs attribute group;
- * @groups: list of sysfs attribute group for hwmon registration;
- * @cell: location of top aggregation interrupt register;
- * @mask: top aggregation interrupt common mask;
- * @aggr_cache: last value of aggregation register status;
+ * @groups: list of sysfs attribute group क्रम hwmon registration;
+ * @cell: location of top aggregation पूर्णांकerrupt रेजिस्टर;
+ * @mask: top aggregation पूर्णांकerrupt common mask;
+ * @aggr_cache: last value of aggregation रेजिस्टर status;
  * @after_probe: flag indication probing completion;
- * @not_asserted: number of entries in workqueue with no signal assertion;
+ * @not_निश्चितed: number of entries in workqueue with no संकेत निश्चितion;
  */
-struct mlxreg_hotplug_priv_data {
-	int irq;
-	struct device *dev;
-	struct platform_device *pdev;
-	struct mlxreg_hotplug_platform_data *plat;
-	struct regmap *regmap;
-	struct delayed_work dwork_irq;
-	spinlock_t lock; /* sync with interrupt */
-	struct device *hwmon;
-	struct attribute *mlxreg_hotplug_attr[MLXREG_HOTPLUG_ATTRS_MAX + 1];
-	struct sensor_device_attribute_2
+काष्ठा mlxreg_hotplug_priv_data अणु
+	पूर्णांक irq;
+	काष्ठा device *dev;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा mlxreg_hotplug_platक्रमm_data *plat;
+	काष्ठा regmap *regmap;
+	काष्ठा delayed_work dwork_irq;
+	spinlock_t lock; /* sync with पूर्णांकerrupt */
+	काष्ठा device *hwmon;
+	काष्ठा attribute *mlxreg_hotplug_attr[MLXREG_HOTPLUG_ATTRS_MAX + 1];
+	काष्ठा sensor_device_attribute_2
 			mlxreg_hotplug_dev_attr[MLXREG_HOTPLUG_ATTRS_MAX];
-	struct attribute_group group;
-	const struct attribute_group *groups[2];
+	काष्ठा attribute_group group;
+	स्थिर काष्ठा attribute_group *groups[2];
 	u32 cell;
 	u32 mask;
 	u32 aggr_cache;
 	bool after_probe;
-	u8 not_asserted;
-};
+	u8 not_निश्चितed;
+पूर्ण;
 
-/* Environment variables array for udev. */
-static char *mlxreg_hotplug_udev_envp[] = { NULL, NULL };
+/* Environment variables array क्रम udev. */
+अटल अक्षर *mlxreg_hotplug_udev_envp[] = अणु शून्य, शून्य पूर्ण;
 
-static int
-mlxreg_hotplug_udev_event_send(struct kobject *kobj,
-			       struct mlxreg_core_data *data, bool action)
-{
-	char event_str[MLXREG_CORE_LABEL_MAX_SIZE + 2];
-	char label[MLXREG_CORE_LABEL_MAX_SIZE] = { 0 };
+अटल पूर्णांक
+mlxreg_hotplug_udev_event_send(काष्ठा kobject *kobj,
+			       काष्ठा mlxreg_core_data *data, bool action)
+अणु
+	अक्षर event_str[MLXREG_CORE_LABEL_MAX_SIZE + 2];
+	अक्षर label[MLXREG_CORE_LABEL_MAX_SIZE] = अणु 0 पूर्ण;
 
 	mlxreg_hotplug_udev_envp[0] = event_str;
 	string_upper(label, data->label);
-	snprintf(event_str, MLXREG_CORE_LABEL_MAX_SIZE, "%s=%d", label, !!action);
+	snम_लिखो(event_str, MLXREG_CORE_LABEL_MAX_SIZE, "%s=%d", label, !!action);
 
-	return kobject_uevent_env(kobj, KOBJ_CHANGE, mlxreg_hotplug_udev_envp);
-}
+	वापस kobject_uevent_env(kobj, KOBJ_CHANGE, mlxreg_hotplug_udev_envp);
+पूर्ण
 
-static int mlxreg_hotplug_device_create(struct mlxreg_hotplug_priv_data *priv,
-					struct mlxreg_core_data *data)
-{
-	struct mlxreg_core_hotplug_platform_data *pdata;
-	struct i2c_client *client;
+अटल पूर्णांक mlxreg_hotplug_device_create(काष्ठा mlxreg_hotplug_priv_data *priv,
+					काष्ठा mlxreg_core_data *data)
+अणु
+	काष्ठा mlxreg_core_hotplug_platक्रमm_data *pdata;
+	काष्ठा i2c_client *client;
 
-	/* Notify user by sending hwmon uevent. */
+	/* Notअगरy user by sending hwmon uevent. */
 	mlxreg_hotplug_udev_event_send(&priv->hwmon->kobj, data, true);
 
 	/*
-	 * Return if adapter number is negative. It could be in case hotplug
+	 * Return अगर adapter number is negative. It could be in हाल hotplug
 	 * event is not associated with hotplug device.
 	 */
-	if (data->hpdev.nr < 0)
-		return 0;
+	अगर (data->hpdev.nr < 0)
+		वापस 0;
 
 	pdata = dev_get_platdata(&priv->pdev->dev);
 	data->hpdev.adapter = i2c_get_adapter(data->hpdev.nr +
-					      pdata->shift_nr);
-	if (!data->hpdev.adapter) {
+					      pdata->shअगरt_nr);
+	अगर (!data->hpdev.adapter) अणु
 		dev_err(priv->dev, "Failed to get adapter for bus %d\n",
-			data->hpdev.nr + pdata->shift_nr);
-		return -EFAULT;
-	}
+			data->hpdev.nr + pdata->shअगरt_nr);
+		वापस -EFAULT;
+	पूर्ण
 
 	client = i2c_new_client_device(data->hpdev.adapter,
 				       data->hpdev.brdinfo);
-	if (IS_ERR(client)) {
+	अगर (IS_ERR(client)) अणु
 		dev_err(priv->dev, "Failed to create client %s at bus %d at addr 0x%02x\n",
 			data->hpdev.brdinfo->type, data->hpdev.nr +
-			pdata->shift_nr, data->hpdev.brdinfo->addr);
+			pdata->shअगरt_nr, data->hpdev.brdinfo->addr);
 
 		i2c_put_adapter(data->hpdev.adapter);
-		data->hpdev.adapter = NULL;
-		return PTR_ERR(client);
-	}
+		data->hpdev.adapter = शून्य;
+		वापस PTR_ERR(client);
+	पूर्ण
 
 	data->hpdev.client = client;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mlxreg_hotplug_device_destroy(struct mlxreg_hotplug_priv_data *priv,
-			      struct mlxreg_core_data *data)
-{
-	/* Notify user by sending hwmon uevent. */
+अटल व्योम
+mlxreg_hotplug_device_destroy(काष्ठा mlxreg_hotplug_priv_data *priv,
+			      काष्ठा mlxreg_core_data *data)
+अणु
+	/* Notअगरy user by sending hwmon uevent. */
 	mlxreg_hotplug_udev_event_send(&priv->hwmon->kobj, data, false);
 
-	if (data->hpdev.client) {
-		i2c_unregister_device(data->hpdev.client);
-		data->hpdev.client = NULL;
-	}
+	अगर (data->hpdev.client) अणु
+		i2c_unरेजिस्टर_device(data->hpdev.client);
+		data->hpdev.client = शून्य;
+	पूर्ण
 
-	if (data->hpdev.adapter) {
+	अगर (data->hpdev.adapter) अणु
 		i2c_put_adapter(data->hpdev.adapter);
-		data->hpdev.adapter = NULL;
-	}
-}
+		data->hpdev.adapter = शून्य;
+	पूर्ण
+पूर्ण
 
-static ssize_t mlxreg_hotplug_attr_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct mlxreg_hotplug_priv_data *priv = dev_get_drvdata(dev);
-	struct mlxreg_core_hotplug_platform_data *pdata;
-	int index = to_sensor_dev_attr_2(attr)->index;
-	int nr = to_sensor_dev_attr_2(attr)->nr;
-	struct mlxreg_core_item *item;
-	struct mlxreg_core_data *data;
+अटल sमाप_प्रकार mlxreg_hotplug_attr_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा mlxreg_hotplug_priv_data *priv = dev_get_drvdata(dev);
+	काष्ठा mlxreg_core_hotplug_platक्रमm_data *pdata;
+	पूर्णांक index = to_sensor_dev_attr_2(attr)->index;
+	पूर्णांक nr = to_sensor_dev_attr_2(attr)->nr;
+	काष्ठा mlxreg_core_item *item;
+	काष्ठा mlxreg_core_data *data;
 	u32 regval;
-	int ret;
+	पूर्णांक ret;
 
 	pdata = dev_get_platdata(&priv->pdev->dev);
 	item = pdata->items + nr;
 	data = item->data + index;
 
-	ret = regmap_read(priv->regmap, data->reg, &regval);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(priv->regmap, data->reg, &regval);
+	अगर (ret)
+		वापस ret;
 
-	if (item->health) {
+	अगर (item->health) अणु
 		regval &= data->mask;
-	} else {
-		/* Bit = 0 : functional if item->inversed is true. */
-		if (item->inversed)
+	पूर्ण अन्यथा अणु
+		/* Bit = 0 : functional अगर item->inversed is true. */
+		अगर (item->inversed)
 			regval = !(regval & data->mask);
-		else
+		अन्यथा
 			regval = !!(regval & data->mask);
-	}
+	पूर्ण
 
-	return sprintf(buf, "%u\n", regval);
-}
+	वापस प्र_लिखो(buf, "%u\n", regval);
+पूर्ण
 
-#define PRIV_ATTR(i) priv->mlxreg_hotplug_attr[i]
-#define PRIV_DEV_ATTR(i) priv->mlxreg_hotplug_dev_attr[i]
+#घोषणा PRIV_ATTR(i) priv->mlxreg_hotplug_attr[i]
+#घोषणा PRIV_DEV_ATTR(i) priv->mlxreg_hotplug_dev_attr[i]
 
-static int mlxreg_hotplug_attr_init(struct mlxreg_hotplug_priv_data *priv)
-{
-	struct mlxreg_core_hotplug_platform_data *pdata;
-	struct mlxreg_core_item *item;
-	struct mlxreg_core_data *data;
-	unsigned long mask;
+अटल पूर्णांक mlxreg_hotplug_attr_init(काष्ठा mlxreg_hotplug_priv_data *priv)
+अणु
+	काष्ठा mlxreg_core_hotplug_platक्रमm_data *pdata;
+	काष्ठा mlxreg_core_item *item;
+	काष्ठा mlxreg_core_data *data;
+	अचिन्हित दीर्घ mask;
 	u32 regval;
-	int num_attrs = 0, id = 0, i, j, k, ret;
+	पूर्णांक num_attrs = 0, id = 0, i, j, k, ret;
 
 	pdata = dev_get_platdata(&priv->pdev->dev);
 	item = pdata->items;
 
 	/* Go over all kinds of items - psu, pwr, fan. */
-	for (i = 0; i < pdata->counter; i++, item++) {
-		if (item->capability) {
+	क्रम (i = 0; i < pdata->counter; i++, item++) अणु
+		अगर (item->capability) अणु
 			/*
-			 * Read group capability register to get actual number
-			 * of interrupt capable components and set group mask
+			 * Read group capability रेजिस्टर to get actual number
+			 * of पूर्णांकerrupt capable components and set group mask
 			 * accordingly.
 			 */
-			ret = regmap_read(priv->regmap, item->capability,
+			ret = regmap_पढ़ो(priv->regmap, item->capability,
 					  &regval);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			item->mask = GENMASK((regval & item->mask) - 1, 0);
-		}
+		पूर्ण
 
 		data = item->data;
 
 		/* Go over all unmasked units within item. */
 		mask = item->mask;
 		k = 0;
-		for_each_set_bit(j, &mask, item->count) {
-			if (data->capability) {
+		क्रम_each_set_bit(j, &mask, item->count) अणु
+			अगर (data->capability) अणु
 				/*
-				 * Read capability register and skip non
+				 * Read capability रेजिस्टर and skip non
 				 * relevant attributes.
 				 */
-				ret = regmap_read(priv->regmap,
+				ret = regmap_पढ़ो(priv->regmap,
 						  data->capability, &regval);
-				if (ret)
-					return ret;
-				if (!(regval & data->bit)) {
+				अगर (ret)
+					वापस ret;
+				अगर (!(regval & data->bit)) अणु
 					data++;
-					continue;
-				}
-			}
+					जारी;
+				पूर्ण
+			पूर्ण
 			PRIV_ATTR(id) = &PRIV_DEV_ATTR(id).dev_attr.attr;
-			PRIV_ATTR(id)->name = devm_kasprintf(&priv->pdev->dev,
+			PRIV_ATTR(id)->name = devm_kaप्र_लिखो(&priv->pdev->dev,
 							     GFP_KERNEL,
 							     data->label);
 
-			if (!PRIV_ATTR(id)->name) {
+			अगर (!PRIV_ATTR(id)->name) अणु
 				dev_err(priv->dev, "Memory allocation failed for attr %d.\n",
 					id);
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 
 			PRIV_DEV_ATTR(id).dev_attr.attr.name =
 							PRIV_ATTR(id)->name;
@@ -256,253 +257,253 @@ static int mlxreg_hotplug_attr_init(struct mlxreg_hotplug_priv_data *priv)
 			data++;
 			id++;
 			k++;
-		}
+		पूर्ण
 		num_attrs += k;
-	}
+	पूर्ण
 
-	priv->group.attrs = devm_kcalloc(&priv->pdev->dev,
+	priv->group.attrs = devm_kसुस्मृति(&priv->pdev->dev,
 					 num_attrs,
-					 sizeof(struct attribute *),
+					 माप(काष्ठा attribute *),
 					 GFP_KERNEL);
-	if (!priv->group.attrs)
-		return -ENOMEM;
+	अगर (!priv->group.attrs)
+		वापस -ENOMEM;
 
 	priv->group.attrs = priv->mlxreg_hotplug_attr;
 	priv->groups[0] = &priv->group;
-	priv->groups[1] = NULL;
+	priv->groups[1] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mlxreg_hotplug_work_helper(struct mlxreg_hotplug_priv_data *priv,
-			   struct mlxreg_core_item *item)
-{
-	struct mlxreg_core_data *data;
-	unsigned long asserted;
+अटल व्योम
+mlxreg_hotplug_work_helper(काष्ठा mlxreg_hotplug_priv_data *priv,
+			   काष्ठा mlxreg_core_item *item)
+अणु
+	काष्ठा mlxreg_core_data *data;
+	अचिन्हित दीर्घ निश्चितed;
 	u32 regval, bit;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Validate if item related to received signal type is valid.
+	 * Validate अगर item related to received संकेत type is valid.
 	 * It should never happen, excepted the situation when some
 	 * piece of hardware is broken. In such situation just produce
-	 * error message and return. Caller must continue to handle the
-	 * signals from other devices if any.
+	 * error message and वापस. Caller must जारी to handle the
+	 * संकेतs from other devices अगर any.
 	 */
-	if (unlikely(!item)) {
+	अगर (unlikely(!item)) अणु
 		dev_err(priv->dev, "False signal: at offset:mask 0x%02x:0x%02x.\n",
 			item->reg, item->mask);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Mask event. */
-	ret = regmap_write(priv->regmap, item->reg + MLXREG_HOTPLUG_MASK_OFF,
+	ret = regmap_ग_लिखो(priv->regmap, item->reg + MLXREG_HOTPLUG_MASK_OFF,
 			   0);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Read status. */
-	ret = regmap_read(priv->regmap, item->reg, &regval);
-	if (ret)
-		goto out;
+	ret = regmap_पढ़ो(priv->regmap, item->reg, &regval);
+	अगर (ret)
+		जाओ out;
 
-	/* Set asserted bits and save last status. */
+	/* Set निश्चितed bits and save last status. */
 	regval &= item->mask;
-	asserted = item->cache ^ regval;
+	निश्चितed = item->cache ^ regval;
 	item->cache = regval;
 
-	for_each_set_bit(bit, &asserted, 8) {
+	क्रम_each_set_bit(bit, &निश्चितed, 8) अणु
 		data = item->data + bit;
-		if (regval & BIT(bit)) {
-			if (item->inversed)
+		अगर (regval & BIT(bit)) अणु
+			अगर (item->inversed)
 				mlxreg_hotplug_device_destroy(priv, data);
-			else
+			अन्यथा
 				mlxreg_hotplug_device_create(priv, data);
-		} else {
-			if (item->inversed)
+		पूर्ण अन्यथा अणु
+			अगर (item->inversed)
 				mlxreg_hotplug_device_create(priv, data);
-			else
+			अन्यथा
 				mlxreg_hotplug_device_destroy(priv, data);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Acknowledge event. */
-	ret = regmap_write(priv->regmap, item->reg + MLXREG_HOTPLUG_EVENT_OFF,
+	ret = regmap_ग_लिखो(priv->regmap, item->reg + MLXREG_HOTPLUG_EVENT_OFF,
 			   0);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Unmask event. */
-	ret = regmap_write(priv->regmap, item->reg + MLXREG_HOTPLUG_MASK_OFF,
+	ret = regmap_ग_लिखो(priv->regmap, item->reg + MLXREG_HOTPLUG_MASK_OFF,
 			   item->mask);
 
  out:
-	if (ret)
+	अगर (ret)
 		dev_err(priv->dev, "Failed to complete workqueue.\n");
-}
+पूर्ण
 
-static void
-mlxreg_hotplug_health_work_helper(struct mlxreg_hotplug_priv_data *priv,
-				  struct mlxreg_core_item *item)
-{
-	struct mlxreg_core_data *data = item->data;
+अटल व्योम
+mlxreg_hotplug_health_work_helper(काष्ठा mlxreg_hotplug_priv_data *priv,
+				  काष्ठा mlxreg_core_item *item)
+अणु
+	काष्ठा mlxreg_core_data *data = item->data;
 	u32 regval;
-	int i, ret = 0;
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < item->count; i++, data++) {
+	क्रम (i = 0; i < item->count; i++, data++) अणु
 		/* Mask event. */
-		ret = regmap_write(priv->regmap, data->reg +
+		ret = regmap_ग_लिखो(priv->regmap, data->reg +
 				   MLXREG_HOTPLUG_MASK_OFF, 0);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		/* Read status. */
-		ret = regmap_read(priv->regmap, data->reg, &regval);
-		if (ret)
-			goto out;
+		ret = regmap_पढ़ो(priv->regmap, data->reg, &regval);
+		अगर (ret)
+			जाओ out;
 
 		regval &= data->mask;
 
-		if (item->cache == regval)
-			goto ack_event;
+		अगर (item->cache == regval)
+			जाओ ack_event;
 
 		/*
 		 * ASIC health indication is provided through two bits. Bits
 		 * value 0x2 indicates that ASIC reached the good health, value
-		 * 0x0 indicates ASIC the bad health or dormant state and value
+		 * 0x0 indicates ASIC the bad health or करोrmant state and value
 		 * 0x3 indicates the booting state. During ASIC reset it should
-		 * pass the following states: dormant -> booting -> good.
+		 * pass the following states: करोrmant -> booting -> good.
 		 */
-		if (regval == MLXREG_HOTPLUG_GOOD_HEALTH_MASK) {
-			if (!data->attached) {
+		अगर (regval == MLXREG_HOTPLUG_GOOD_HEALTH_MASK) अणु
+			अगर (!data->attached) अणु
 				/*
 				 * ASIC is in steady state. Connect associated
-				 * device, if configured.
+				 * device, अगर configured.
 				 */
 				mlxreg_hotplug_device_create(priv, data);
 				data->attached = true;
-			}
-		} else {
-			if (data->attached) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (data->attached) अणु
 				/*
 				 * ASIC health is failed after ASIC has been
 				 * in steady state. Disconnect associated
-				 * device, if it has been connected.
+				 * device, अगर it has been connected.
 				 */
 				mlxreg_hotplug_device_destroy(priv, data);
 				data->attached = false;
 				data->health_cntr = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		item->cache = regval;
 ack_event:
 		/* Acknowledge event. */
-		ret = regmap_write(priv->regmap, data->reg +
+		ret = regmap_ग_लिखो(priv->regmap, data->reg +
 				   MLXREG_HOTPLUG_EVENT_OFF, 0);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		/* Unmask event. */
-		ret = regmap_write(priv->regmap, data->reg +
+		ret = regmap_ग_लिखो(priv->regmap, data->reg +
 				   MLXREG_HOTPLUG_MASK_OFF, data->mask);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
  out:
-	if (ret)
+	अगर (ret)
 		dev_err(priv->dev, "Failed to complete workqueue.\n");
-}
+पूर्ण
 
 /*
- * mlxreg_hotplug_work_handler - performs traversing of device interrupt
- * registers according to the below hierarchy schema:
+ * mlxreg_hotplug_work_handler - perक्रमms traversing of device पूर्णांकerrupt
+ * रेजिस्टरs according to the below hierarchy schema:
  *
- *				Aggregation registers (status/mask)
- * PSU registers:		*---*
+ *				Aggregation रेजिस्टरs (status/mask)
+ * PSU रेजिस्टरs:		*---*
  * *-----------------*		|   |
  * |status/event/mask|----->    | * |
  * *-----------------*		|   |
- * Power registers:		|   |
+ * Power रेजिस्टरs:		|   |
  * *-----------------*		|   |
  * |status/event/mask|----->    | * |
  * *-----------------*		|   |
- * FAN registers:		|   |--> CPU
+ * FAN रेजिस्टरs:		|   |--> CPU
  * *-----------------*		|   |
  * |status/event/mask|----->    | * |
  * *-----------------*		|   |
- * ASIC registers:		|   |
+ * ASIC रेजिस्टरs:		|   |
  * *-----------------*		|   |
  * |status/event/mask|----->    | * |
  * *-----------------*		|   |
  *				*---*
  *
- * In case some system changed are detected: FAN in/out, PSU in/out, power
+ * In हाल some प्रणाली changed are detected: FAN in/out, PSU in/out, घातer
  * cable attached/detached, ASIC health good/bad, relevant device is created
  * or destroyed.
  */
-static void mlxreg_hotplug_work_handler(struct work_struct *work)
-{
-	struct mlxreg_core_hotplug_platform_data *pdata;
-	struct mlxreg_hotplug_priv_data *priv;
-	struct mlxreg_core_item *item;
-	u32 regval, aggr_asserted;
-	unsigned long flags;
-	int i, ret;
+अटल व्योम mlxreg_hotplug_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mlxreg_core_hotplug_platक्रमm_data *pdata;
+	काष्ठा mlxreg_hotplug_priv_data *priv;
+	काष्ठा mlxreg_core_item *item;
+	u32 regval, aggr_निश्चितed;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, ret;
 
-	priv = container_of(work, struct mlxreg_hotplug_priv_data,
+	priv = container_of(work, काष्ठा mlxreg_hotplug_priv_data,
 			    dwork_irq.work);
 	pdata = dev_get_platdata(&priv->pdev->dev);
 	item = pdata->items;
 
 	/* Mask aggregation event. */
-	ret = regmap_write(priv->regmap, pdata->cell +
+	ret = regmap_ग_लिखो(priv->regmap, pdata->cell +
 			   MLXREG_HOTPLUG_AGGR_MASK_OFF, 0);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	/* Read aggregation status. */
-	ret = regmap_read(priv->regmap, pdata->cell, &regval);
-	if (ret)
-		goto out;
+	ret = regmap_पढ़ो(priv->regmap, pdata->cell, &regval);
+	अगर (ret)
+		जाओ out;
 
 	regval &= pdata->mask;
-	aggr_asserted = priv->aggr_cache ^ regval;
+	aggr_निश्चितed = priv->aggr_cache ^ regval;
 	priv->aggr_cache = regval;
 
 	/*
-	 * Handler is invoked, but no assertion is detected at top aggregation
-	 * status level. Set aggr_asserted to mask value to allow handler extra
-	 * run over all relevant signals to recover any missed signal.
+	 * Handler is invoked, but no निश्चितion is detected at top aggregation
+	 * status level. Set aggr_निश्चितed to mask value to allow handler extra
+	 * run over all relevant संकेतs to recover any missed संकेत.
 	 */
-	if (priv->not_asserted == MLXREG_HOTPLUG_NOT_ASSERT) {
-		priv->not_asserted = 0;
-		aggr_asserted = pdata->mask;
-	}
-	if (!aggr_asserted)
-		goto unmask_event;
+	अगर (priv->not_निश्चितed == MLXREG_HOTPLUG_NOT_ASSERT) अणु
+		priv->not_निश्चितed = 0;
+		aggr_निश्चितed = pdata->mask;
+	पूर्ण
+	अगर (!aggr_निश्चितed)
+		जाओ unmask_event;
 
 	/* Handle topology and health configuration changes. */
-	for (i = 0; i < pdata->counter; i++, item++) {
-		if (aggr_asserted & item->aggr_mask) {
-			if (item->health)
+	क्रम (i = 0; i < pdata->counter; i++, item++) अणु
+		अगर (aggr_निश्चितed & item->aggr_mask) अणु
+			अगर (item->health)
 				mlxreg_hotplug_health_work_helper(priv, item);
-			else
+			अन्यथा
 				mlxreg_hotplug_work_helper(priv, item);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&priv->lock, flags);
 
 	/*
-	 * It is possible, that some signals have been inserted, while
-	 * interrupt has been masked by mlxreg_hotplug_work_handler. In this
-	 * case such signals will be missed. In order to handle these signals
-	 * delayed work is canceled and work task re-scheduled for immediate
-	 * execution. It allows to handle missed signals, if any. In other case
-	 * work handler just validates that no new signals have been received
+	 * It is possible, that some संकेतs have been inserted, जबतक
+	 * पूर्णांकerrupt has been masked by mlxreg_hotplug_work_handler. In this
+	 * हाल such संकेतs will be missed. In order to handle these संकेतs
+	 * delayed work is canceled and work task re-scheduled क्रम immediate
+	 * execution. It allows to handle missed संकेतs, अगर any. In other हाल
+	 * work handler just validates that no new संकेतs have been received
 	 * during masking.
 	 */
 	cancel_delayed_work(&priv->dwork_irq);
@@ -510,172 +511,172 @@ static void mlxreg_hotplug_work_handler(struct work_struct *work)
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return;
+	वापस;
 
 unmask_event:
-	priv->not_asserted++;
+	priv->not_निश्चितed++;
 	/* Unmask aggregation event (no need acknowledge). */
-	ret = regmap_write(priv->regmap, pdata->cell +
+	ret = regmap_ग_लिखो(priv->regmap, pdata->cell +
 			   MLXREG_HOTPLUG_AGGR_MASK_OFF, pdata->mask);
 
  out:
-	if (ret)
+	अगर (ret)
 		dev_err(priv->dev, "Failed to complete workqueue.\n");
-}
+पूर्ण
 
-static int mlxreg_hotplug_set_irq(struct mlxreg_hotplug_priv_data *priv)
-{
-	struct mlxreg_core_hotplug_platform_data *pdata;
-	struct mlxreg_core_item *item;
-	struct mlxreg_core_data *data;
+अटल पूर्णांक mlxreg_hotplug_set_irq(काष्ठा mlxreg_hotplug_priv_data *priv)
+अणु
+	काष्ठा mlxreg_core_hotplug_platक्रमm_data *pdata;
+	काष्ठा mlxreg_core_item *item;
+	काष्ठा mlxreg_core_data *data;
 	u32 regval;
-	int i, j, ret;
+	पूर्णांक i, j, ret;
 
 	pdata = dev_get_platdata(&priv->pdev->dev);
 	item = pdata->items;
 
-	for (i = 0; i < pdata->counter; i++, item++) {
+	क्रम (i = 0; i < pdata->counter; i++, item++) अणु
 		/* Clear group presense event. */
-		ret = regmap_write(priv->regmap, item->reg +
+		ret = regmap_ग_लिखो(priv->regmap, item->reg +
 				   MLXREG_HOTPLUG_EVENT_OFF, 0);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		/*
-		 * Verify if hardware configuration requires to disable
-		 * interrupt capability for some of components.
+		 * Verअगरy अगर hardware configuration requires to disable
+		 * पूर्णांकerrupt capability क्रम some of components.
 		 */
 		data = item->data;
-		for (j = 0; j < item->count; j++, data++) {
-			/* Verify if the attribute has capability register. */
-			if (data->capability) {
-				/* Read capability register. */
-				ret = regmap_read(priv->regmap,
+		क्रम (j = 0; j < item->count; j++, data++) अणु
+			/* Verअगरy अगर the attribute has capability रेजिस्टर. */
+			अगर (data->capability) अणु
+				/* Read capability रेजिस्टर. */
+				ret = regmap_पढ़ो(priv->regmap,
 						  data->capability, &regval);
-				if (ret)
-					goto out;
+				अगर (ret)
+					जाओ out;
 
-				if (!(regval & data->bit))
+				अगर (!(regval & data->bit))
 					item->mask &= ~BIT(j);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Set group initial status as mask and unmask group event. */
-		if (item->inversed) {
+		अगर (item->inversed) अणु
 			item->cache = item->mask;
-			ret = regmap_write(priv->regmap, item->reg +
+			ret = regmap_ग_लिखो(priv->regmap, item->reg +
 					   MLXREG_HOTPLUG_MASK_OFF,
 					   item->mask);
-			if (ret)
-				goto out;
-		}
-	}
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Keep aggregation initial status as zero and unmask events. */
-	ret = regmap_write(priv->regmap, pdata->cell +
+	ret = regmap_ग_लिखो(priv->regmap, pdata->cell +
 			   MLXREG_HOTPLUG_AGGR_MASK_OFF, pdata->mask);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Keep low aggregation initial status as zero and unmask events. */
-	if (pdata->cell_low) {
-		ret = regmap_write(priv->regmap, pdata->cell_low +
+	अगर (pdata->cell_low) अणु
+		ret = regmap_ग_लिखो(priv->regmap, pdata->cell_low +
 				   MLXREG_HOTPLUG_AGGR_MASK_OFF,
 				   pdata->mask_low);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	/* Invoke work handler for initializing hot plug devices setting. */
+	/* Invoke work handler क्रम initializing hot plug devices setting. */
 	mlxreg_hotplug_work_handler(&priv->dwork_irq.work);
 
  out:
-	if (ret)
+	अगर (ret)
 		dev_err(priv->dev, "Failed to set interrupts.\n");
 	enable_irq(priv->irq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mlxreg_hotplug_unset_irq(struct mlxreg_hotplug_priv_data *priv)
-{
-	struct mlxreg_core_hotplug_platform_data *pdata;
-	struct mlxreg_core_item *item;
-	struct mlxreg_core_data *data;
-	int count, i, j;
+अटल व्योम mlxreg_hotplug_unset_irq(काष्ठा mlxreg_hotplug_priv_data *priv)
+अणु
+	काष्ठा mlxreg_core_hotplug_platक्रमm_data *pdata;
+	काष्ठा mlxreg_core_item *item;
+	काष्ठा mlxreg_core_data *data;
+	पूर्णांक count, i, j;
 
 	pdata = dev_get_platdata(&priv->pdev->dev);
 	item = pdata->items;
 	disable_irq(priv->irq);
 	cancel_delayed_work_sync(&priv->dwork_irq);
 
-	/* Mask low aggregation event, if defined. */
-	if (pdata->cell_low)
-		regmap_write(priv->regmap, pdata->cell_low +
+	/* Mask low aggregation event, अगर defined. */
+	अगर (pdata->cell_low)
+		regmap_ग_लिखो(priv->regmap, pdata->cell_low +
 			     MLXREG_HOTPLUG_AGGR_MASK_OFF, 0);
 
 	/* Mask aggregation event. */
-	regmap_write(priv->regmap, pdata->cell + MLXREG_HOTPLUG_AGGR_MASK_OFF,
+	regmap_ग_लिखो(priv->regmap, pdata->cell + MLXREG_HOTPLUG_AGGR_MASK_OFF,
 		     0);
 
 	/* Clear topology configurations. */
-	for (i = 0; i < pdata->counter; i++, item++) {
+	क्रम (i = 0; i < pdata->counter; i++, item++) अणु
 		data = item->data;
 		/* Mask group presense event. */
-		regmap_write(priv->regmap, data->reg + MLXREG_HOTPLUG_MASK_OFF,
+		regmap_ग_लिखो(priv->regmap, data->reg + MLXREG_HOTPLUG_MASK_OFF,
 			     0);
 		/* Clear group presense event. */
-		regmap_write(priv->regmap, data->reg +
+		regmap_ग_लिखो(priv->regmap, data->reg +
 			     MLXREG_HOTPLUG_EVENT_OFF, 0);
 
 		/* Remove all the attached devices in group. */
 		count = item->count;
-		for (j = 0; j < count; j++, data++)
+		क्रम (j = 0; j < count; j++, data++)
 			mlxreg_hotplug_device_destroy(priv, data);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t mlxreg_hotplug_irq_handler(int irq, void *dev)
-{
-	struct mlxreg_hotplug_priv_data *priv;
+अटल irqवापस_t mlxreg_hotplug_irq_handler(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा mlxreg_hotplug_priv_data *priv;
 
-	priv = (struct mlxreg_hotplug_priv_data *)dev;
+	priv = (काष्ठा mlxreg_hotplug_priv_data *)dev;
 
-	/* Schedule work task for immediate execution.*/
+	/* Schedule work task क्रम immediate execution.*/
 	schedule_delayed_work(&priv->dwork_irq, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mlxreg_hotplug_probe(struct platform_device *pdev)
-{
-	struct mlxreg_core_hotplug_platform_data *pdata;
-	struct mlxreg_hotplug_priv_data *priv;
-	struct i2c_adapter *deferred_adap;
-	int err;
+अटल पूर्णांक mlxreg_hotplug_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxreg_core_hotplug_platक्रमm_data *pdata;
+	काष्ठा mlxreg_hotplug_priv_data *priv;
+	काष्ठा i2c_adapter *deferred_adap;
+	पूर्णांक err;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "Failed to get platform data.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Defer probing if the necessary adapter is not configured yet. */
+	/* Defer probing अगर the necessary adapter is not configured yet. */
 	deferred_adap = i2c_get_adapter(pdata->deferred_nr);
-	if (!deferred_adap)
-		return -EPROBE_DEFER;
+	अगर (!deferred_adap)
+		वापस -EPROBE_DEFER;
 	i2c_put_adapter(deferred_adap);
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	if (pdata->irq) {
+	अगर (pdata->irq) अणु
 		priv->irq = pdata->irq;
-	} else {
-		priv->irq = platform_get_irq(pdev, 0);
-		if (priv->irq < 0)
-			return priv->irq;
-	}
+	पूर्ण अन्यथा अणु
+		priv->irq = platक्रमm_get_irq(pdev, 0);
+		अगर (priv->irq < 0)
+			वापस priv->irq;
+	पूर्ण
 
 	priv->regmap = pdata->regmap;
 	priv->dev = pdev->dev.parent;
@@ -684,10 +685,10 @@ static int mlxreg_hotplug_probe(struct platform_device *pdev)
 	err = devm_request_irq(&pdev->dev, priv->irq,
 			       mlxreg_hotplug_irq_handler, IRQF_TRIGGER_FALLING
 			       | IRQF_SHARED, "mlxreg-hotplug", priv);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to request irq: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	disable_irq(priv->irq);
 	spin_lock_init(&priv->lock);
@@ -695,47 +696,47 @@ static int mlxreg_hotplug_probe(struct platform_device *pdev)
 	dev_set_drvdata(&pdev->dev, priv);
 
 	err = mlxreg_hotplug_attr_init(priv);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to allocate attributes: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	priv->hwmon = devm_hwmon_device_register_with_groups(&pdev->dev,
+	priv->hwmon = devm_hwmon_device_रेजिस्टर_with_groups(&pdev->dev,
 					"mlxreg_hotplug", priv, priv->groups);
-	if (IS_ERR(priv->hwmon)) {
+	अगर (IS_ERR(priv->hwmon)) अणु
 		dev_err(&pdev->dev, "Failed to register hwmon device %ld\n",
 			PTR_ERR(priv->hwmon));
-		return PTR_ERR(priv->hwmon);
-	}
+		वापस PTR_ERR(priv->hwmon);
+	पूर्ण
 
-	/* Perform initial interrupts setup. */
+	/* Perक्रमm initial पूर्णांकerrupts setup. */
 	mlxreg_hotplug_set_irq(priv);
 	priv->after_probe = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mlxreg_hotplug_remove(struct platform_device *pdev)
-{
-	struct mlxreg_hotplug_priv_data *priv = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक mlxreg_hotplug_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxreg_hotplug_priv_data *priv = dev_get_drvdata(&pdev->dev);
 
-	/* Clean interrupts setup. */
+	/* Clean पूर्णांकerrupts setup. */
 	mlxreg_hotplug_unset_irq(priv);
-	devm_free_irq(&pdev->dev, priv->irq, priv);
+	devm_मुक्त_irq(&pdev->dev, priv->irq, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mlxreg_hotplug_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mlxreg_hotplug_driver = अणु
+	.driver = अणु
 		.name = "mlxreg-hotplug",
-	},
+	पूर्ण,
 	.probe = mlxreg_hotplug_probe,
-	.remove = mlxreg_hotplug_remove,
-};
+	.हटाओ = mlxreg_hotplug_हटाओ,
+पूर्ण;
 
-module_platform_driver(mlxreg_hotplug_driver);
+module_platक्रमm_driver(mlxreg_hotplug_driver);
 
 MODULE_AUTHOR("Vadim Pasternak <vadimp@mellanox.com>");
 MODULE_DESCRIPTION("Mellanox regmap hotplug platform driver");

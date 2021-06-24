@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016, Fuzhou Rockchip Electronics Co., Ltd
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
-#include <linux/reboot-mode.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/reboot-mode.h>
 
-struct syscon_reboot_mode {
-	struct regmap *map;
-	struct reboot_mode_driver reboot;
+काष्ठा syscon_reboot_mode अणु
+	काष्ठा regmap *map;
+	काष्ठा reboot_mode_driver reboot;
 	u32 offset;
 	u32 mask;
-};
+पूर्ण;
 
-static int syscon_reboot_mode_write(struct reboot_mode_driver *reboot,
-				    unsigned int magic)
-{
-	struct syscon_reboot_mode *syscon_rbm;
-	int ret;
+अटल पूर्णांक syscon_reboot_mode_ग_लिखो(काष्ठा reboot_mode_driver *reboot,
+				    अचिन्हित पूर्णांक magic)
+अणु
+	काष्ठा syscon_reboot_mode *syscon_rbm;
+	पूर्णांक ret;
 
-	syscon_rbm = container_of(reboot, struct syscon_reboot_mode, reboot);
+	syscon_rbm = container_of(reboot, काष्ठा syscon_reboot_mode, reboot);
 
 	ret = regmap_update_bits(syscon_rbm->map, syscon_rbm->offset,
 				 syscon_rbm->mask, magic);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(reboot->dev, "update reboot mode bits failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int syscon_reboot_mode_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct syscon_reboot_mode *syscon_rbm;
+अटल पूर्णांक syscon_reboot_mode_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा syscon_reboot_mode *syscon_rbm;
 
-	syscon_rbm = devm_kzalloc(&pdev->dev, sizeof(*syscon_rbm), GFP_KERNEL);
-	if (!syscon_rbm)
-		return -ENOMEM;
+	syscon_rbm = devm_kzalloc(&pdev->dev, माप(*syscon_rbm), GFP_KERNEL);
+	अगर (!syscon_rbm)
+		वापस -ENOMEM;
 
 	syscon_rbm->reboot.dev = &pdev->dev;
-	syscon_rbm->reboot.write = syscon_reboot_mode_write;
+	syscon_rbm->reboot.ग_लिखो = syscon_reboot_mode_ग_लिखो;
 	syscon_rbm->mask = 0xffffffff;
 
 	syscon_rbm->map = syscon_node_to_regmap(pdev->dev.parent->of_node);
-	if (IS_ERR(syscon_rbm->map))
-		return PTR_ERR(syscon_rbm->map);
+	अगर (IS_ERR(syscon_rbm->map))
+		वापस PTR_ERR(syscon_rbm->map);
 
-	if (of_property_read_u32(pdev->dev.of_node, "offset",
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node, "offset",
 	    &syscon_rbm->offset))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	of_property_read_u32(pdev->dev.of_node, "mask", &syscon_rbm->mask);
+	of_property_पढ़ो_u32(pdev->dev.of_node, "mask", &syscon_rbm->mask);
 
-	ret = devm_reboot_mode_register(&pdev->dev, &syscon_rbm->reboot);
-	if (ret)
+	ret = devm_reboot_mode_रेजिस्टर(&pdev->dev, &syscon_rbm->reboot);
+	अगर (ret)
 		dev_err(&pdev->dev, "can't register reboot mode\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id syscon_reboot_mode_of_match[] = {
-	{ .compatible = "syscon-reboot-mode" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id syscon_reboot_mode_of_match[] = अणु
+	अणु .compatible = "syscon-reboot-mode" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, syscon_reboot_mode_of_match);
 
-static struct platform_driver syscon_reboot_mode_driver = {
+अटल काष्ठा platक्रमm_driver syscon_reboot_mode_driver = अणु
 	.probe = syscon_reboot_mode_probe,
-	.driver = {
+	.driver = अणु
 		.name = "syscon-reboot-mode",
 		.of_match_table = syscon_reboot_mode_of_match,
-	},
-};
-module_platform_driver(syscon_reboot_mode_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(syscon_reboot_mode_driver);
 
 MODULE_AUTHOR("Andy Yan <andy.yan@rock-chips.com");
 MODULE_DESCRIPTION("SYSCON reboot mode driver");

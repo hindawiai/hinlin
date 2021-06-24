@@ -1,90 +1,91 @@
+<शैली गुरु>
 /*
- * llc_c_ev.c - Connection component state transition event qualifiers
+ * llc_c_ev.c - Connection component state transition event qualअगरiers
  *
  * A 'state' consists of a number of possible event matching functions,
  * the actions associated with each being executed when that event is
  * matched; a 'state machine' accepts events in a serial fashion from an
  * event queue. Each event is passed to each successive event matching
- * function until a match is made (the event matching function returns
+ * function until a match is made (the event matching function वापसs
  * success, or '0') or the list of event matching functions is exhausted.
  * If a match is made, the actions associated with the event are executed
- * and the state is changed to that event's transition state. Before some
+ * and the state is changed to that event's transition state. Beक्रमe some
  * events are recognized, even after a match has been made, a certain
  * number of 'event qualifier' functions must also be executed. If these
  * all execute successfully, then the event is finally executed.
  *
- * These event functions must return 0 for success, to show a matched
- * event, of 1 if the event does not match. Event qualifier functions
- * must return a 0 for success or a non-zero for failure. Each function
- * is simply responsible for verifying one single thing and returning
+ * These event functions must वापस 0 क्रम success, to show a matched
+ * event, of 1 अगर the event करोes not match. Event qualअगरier functions
+ * must वापस a 0 क्रम success or a non-zero क्रम failure. Each function
+ * is simply responsible क्रम verअगरying one single thing and वापसing
  * either a success or failure.
  *
  * All of followed event functions are described in 802.2 LLC Protocol
- * standard document except two functions that we added that will explain
+ * standard करोcument except two functions that we added that will explain
  * in their comments, at below.
  *
  * Copyright (c) 1997 by Procom Technology, Inc.
- * 		 2001-2003 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+ * 		 2001-2003 by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
  *
- * This program can be redistributed or modified under the terms of the
+ * This program can be redistributed or modअगरied under the terms of the
  * GNU General Public License as published by the Free Software Foundation.
  * This program is distributed without any warranty or implied warranty
- * of merchantability or fitness for a particular purpose.
+ * of merchantability or fitness क्रम a particular purpose.
  *
- * See the GNU General Public License for more details.
+ * See the GNU General Public License क्रम more details.
  */
-#include <linux/netdevice.h>
-#include <net/llc_conn.h>
-#include <net/llc_sap.h>
-#include <net/sock.h>
-#include <net/llc_c_ac.h>
-#include <net/llc_c_ev.h>
-#include <net/llc_pdu.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/llc_conn.h>
+#समावेश <net/llc_sap.h>
+#समावेश <net/sock.h>
+#समावेश <net/llc_c_ac.h>
+#समावेश <net/llc_c_ev.h>
+#समावेश <net/llc_pdu.h>
 
-#if 1
-#define dprintk(args...) printk(KERN_DEBUG args)
-#else
-#define dprintk(args...)
-#endif
+#अगर 1
+#घोषणा dprपूर्णांकk(args...) prपूर्णांकk(KERN_DEBUG args)
+#अन्यथा
+#घोषणा dprपूर्णांकk(args...)
+#पूर्ण_अगर
 
 /**
- *	llc_util_ns_inside_rx_window - check if sequence number is in rx window
+ *	llc_util_ns_inside_rx_winकरोw - check अगर sequence number is in rx winकरोw
  *	@ns: sequence number of received pdu.
  *	@vr: sequence number which receiver expects to receive.
- *	@rw: receive window size of receiver.
+ *	@rw: receive winकरोw size of receiver.
  *
- *	Checks if sequence number of received PDU is in range of receive
- *	window. Returns 0 for success, 1 otherwise
+ *	Checks अगर sequence number of received PDU is in range of receive
+ *	winकरोw. Returns 0 क्रम success, 1 otherwise
  */
-static u16 llc_util_ns_inside_rx_window(u8 ns, u8 vr, u8 rw)
-{
-	return !llc_circular_between(vr, ns,
+अटल u16 llc_util_ns_inside_rx_winकरोw(u8 ns, u8 vr, u8 rw)
+अणु
+	वापस !llc_circular_between(vr, ns,
 				     (vr + rw - 1) % LLC_2_SEQ_NBR_MODULO);
-}
+पूर्ण
 
 /**
- *	llc_util_nr_inside_tx_window - check if sequence number is in tx window
+ *	llc_util_nr_inside_tx_winकरोw - check अगर sequence number is in tx winकरोw
  *	@sk: current connection.
  *	@nr: N(R) of received PDU.
  *
- *	This routine checks if N(R) of received PDU is in range of transmit
- *	window; on the other hand checks if received PDU acknowledges some
- *	outstanding PDUs that are in transmit window. Returns 0 for success, 1
+ *	This routine checks अगर N(R) of received PDU is in range of transmit
+ *	winकरोw; on the other hand checks अगर received PDU acknowledges some
+ *	outstanding PDUs that are in transmit winकरोw. Returns 0 क्रम success, 1
  *	otherwise.
  */
-static u16 llc_util_nr_inside_tx_window(struct sock *sk, u8 nr)
-{
+अटल u16 llc_util_nr_inside_tx_winकरोw(काष्ठा sock *sk, u8 nr)
+अणु
 	u8 nr1, nr2;
-	struct sk_buff *skb;
-	struct llc_pdu_sn *pdu;
-	struct llc_sock *llc = llc_sk(sk);
-	int rc = 0;
+	काष्ठा sk_buff *skb;
+	काष्ठा llc_pdu_sn *pdu;
+	काष्ठा llc_sock *llc = llc_sk(sk);
+	पूर्णांक rc = 0;
 
-	if (llc->dev->flags & IFF_LOOPBACK)
-		goto out;
+	अगर (llc->dev->flags & IFF_LOOPBACK)
+		जाओ out;
 	rc = 1;
-	if (skb_queue_empty(&llc->pdu_unack_q))
-		goto out;
+	अगर (skb_queue_empty(&llc->pdu_unack_q))
+		जाओ out;
 	skb = skb_peek(&llc->pdu_unack_q);
 	pdu = llc_pdu_sn_hdr(skb);
 	nr1 = LLC_I_GET_NS(pdu);
@@ -93,656 +94,656 @@ static u16 llc_util_nr_inside_tx_window(struct sock *sk, u8 nr)
 	nr2 = LLC_I_GET_NS(pdu);
 	rc = !llc_circular_between(nr1, nr, (nr2 + 1) % LLC_2_SEQ_NBR_MODULO);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_conn_req(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_conn_req(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->prim == LLC_CONN_PRIM &&
+	वापस ev->prim == LLC_CONN_PRIM &&
 	       ev->prim_type == LLC_PRIM_TYPE_REQ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_data_req(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_data_req(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->prim == LLC_DATA_PRIM &&
+	वापस ev->prim == LLC_DATA_PRIM &&
 	       ev->prim_type == LLC_PRIM_TYPE_REQ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_disc_req(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_disc_req(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->prim == LLC_DISC_PRIM &&
+	वापस ev->prim == LLC_DISC_PRIM &&
 	       ev->prim_type == LLC_PRIM_TYPE_REQ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rst_req(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_rst_req(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->prim == LLC_RESET_PRIM &&
+	वापस ev->prim == LLC_RESET_PRIM &&
 	       ev->prim_type == LLC_PRIM_TYPE_REQ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_local_busy_detected(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_local_busy_detected(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->type == LLC_CONN_EV_TYPE_SIMPLE &&
+	वापस ev->type == LLC_CONN_EV_TYPE_SIMPLE &&
 	       ev->prim_type == LLC_CONN_EV_LOCAL_BUSY_DETECTED ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_local_busy_cleared(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_local_busy_cleared(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->type == LLC_CONN_EV_TYPE_SIMPLE &&
+	वापस ev->type == LLC_CONN_EV_TYPE_SIMPLE &&
 	       ev->prim_type == LLC_CONN_EV_LOCAL_BUSY_CLEARED ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_bad_pdu(struct sock *sk, struct sk_buff *skb)
-{
-	return 1;
-}
+पूर्णांक llc_conn_ev_rx_bad_pdu(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस 1;
+पूर्ण
 
-int llc_conn_ev_rx_disc_cmd_pbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+पूर्णांक llc_conn_ev_rx_disc_cmd_pbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
 	       LLC_U_PDU_CMD(pdu) == LLC_2_PDU_CMD_DISC ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_dm_rsp_fbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+पूर्णांक llc_conn_ev_rx_dm_rsp_fbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
 	       LLC_U_PDU_RSP(pdu) == LLC_2_PDU_RSP_DM ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_frmr_rsp_fbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+पूर्णांक llc_conn_ev_rx_frmr_rsp_fbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
 	       LLC_U_PDU_RSP(pdu) == LLC_2_PDU_RSP_FRMR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_i_cmd_pbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_i_cmd_pbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return llc_conn_space(sk, skb) &&
+	वापस llc_conn_space(sk, skb) &&
 	       LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_0(pdu) &&
 	       LLC_I_GET_NS(pdu) == llc_sk(sk)->vR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_i_cmd_pbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_i_cmd_pbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return llc_conn_space(sk, skb) &&
+	वापस llc_conn_space(sk, skb) &&
 	       LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_1(pdu) &&
 	       LLC_I_GET_NS(pdu) == llc_sk(sk)->vR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns(struct sock *sk,
-					      struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vr = llc_sk(sk)->vR;
-	const u8 ns = LLC_I_GET_NS(pdu);
+पूर्णांक llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns(काष्ठा sock *sk,
+					      काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vr = llc_sk(sk)->vR;
+	स्थिर u8 ns = LLC_I_GET_NS(pdu);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_0(pdu) && ns != vr &&
-	       !llc_util_ns_inside_rx_window(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
-}
+	       !llc_util_ns_inside_rx_winकरोw(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
+पूर्ण
 
-int llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns(struct sock *sk,
-					      struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vr = llc_sk(sk)->vR;
-	const u8 ns = LLC_I_GET_NS(pdu);
+पूर्णांक llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns(काष्ठा sock *sk,
+					      काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vr = llc_sk(sk)->vR;
+	स्थिर u8 ns = LLC_I_GET_NS(pdu);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_1(pdu) && ns != vr &&
-	       !llc_util_ns_inside_rx_window(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
-}
+	       !llc_util_ns_inside_rx_winकरोw(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
+पूर्ण
 
-int llc_conn_ev_rx_i_cmd_pbit_set_x_inval_ns(struct sock *sk,
-					     struct sk_buff *skb)
-{
-	const struct llc_pdu_sn * pdu = llc_pdu_sn_hdr(skb);
-	const u8 vr = llc_sk(sk)->vR;
-	const u8 ns = LLC_I_GET_NS(pdu);
-	const u16 rc = LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
+पूर्णांक llc_conn_ev_rx_i_cmd_pbit_set_x_inval_ns(काष्ठा sock *sk,
+					     काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn * pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vr = llc_sk(sk)->vR;
+	स्थिर u8 ns = LLC_I_GET_NS(pdu);
+	स्थिर u16 rc = LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 		ns != vr &&
-		 llc_util_ns_inside_rx_window(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
-	if (!rc)
-		dprintk("%s: matched, state=%d, ns=%d, vr=%d\n",
+		 llc_util_ns_inside_rx_winकरोw(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
+	अगर (!rc)
+		dprपूर्णांकk("%s: matched, state=%d, ns=%d, vr=%d\n",
 			__func__, llc_sk(sk)->state, ns, vr);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_rx_i_rsp_fbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_i_rsp_fbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return llc_conn_space(sk, skb) &&
+	वापस llc_conn_space(sk, skb) &&
 	       LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_0(pdu) &&
 	       LLC_I_GET_NS(pdu) == llc_sk(sk)->vR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_i_rsp_fbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_i_rsp_fbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_1(pdu) &&
 	       LLC_I_GET_NS(pdu) == llc_sk(sk)->vR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_i_rsp_fbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_i_rsp_fbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return llc_conn_space(sk, skb) &&
+	वापस llc_conn_space(sk, skb) &&
 	       LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_GET_NS(pdu) == llc_sk(sk)->vR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns(struct sock *sk,
-					      struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vr = llc_sk(sk)->vR;
-	const u8 ns = LLC_I_GET_NS(pdu);
+पूर्णांक llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns(काष्ठा sock *sk,
+					      काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vr = llc_sk(sk)->vR;
+	स्थिर u8 ns = LLC_I_GET_NS(pdu);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_0(pdu) && ns != vr &&
-	       !llc_util_ns_inside_rx_window(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
-}
+	       !llc_util_ns_inside_rx_winकरोw(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
+पूर्ण
 
-int llc_conn_ev_rx_i_rsp_fbit_set_1_unexpd_ns(struct sock *sk,
-					      struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vr = llc_sk(sk)->vR;
-	const u8 ns = LLC_I_GET_NS(pdu);
+पूर्णांक llc_conn_ev_rx_i_rsp_fbit_set_1_unexpd_ns(काष्ठा sock *sk,
+					      काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vr = llc_sk(sk)->vR;
+	स्थिर u8 ns = LLC_I_GET_NS(pdu);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 	       LLC_I_PF_IS_1(pdu) && ns != vr &&
-	       !llc_util_ns_inside_rx_window(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
-}
+	       !llc_util_ns_inside_rx_winकरोw(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
+पूर्ण
 
-int llc_conn_ev_rx_i_rsp_fbit_set_x_unexpd_ns(struct sock *sk,
-					      struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vr = llc_sk(sk)->vR;
-	const u8 ns = LLC_I_GET_NS(pdu);
+पूर्णांक llc_conn_ev_rx_i_rsp_fbit_set_x_unexpd_ns(काष्ठा sock *sk,
+					      काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vr = llc_sk(sk)->vR;
+	स्थिर u8 ns = LLC_I_GET_NS(pdu);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) && ns != vr &&
-	       !llc_util_ns_inside_rx_window(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
-}
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) && ns != vr &&
+	       !llc_util_ns_inside_rx_winकरोw(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
+पूर्ण
 
-int llc_conn_ev_rx_i_rsp_fbit_set_x_inval_ns(struct sock *sk,
-					     struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vr = llc_sk(sk)->vR;
-	const u8 ns = LLC_I_GET_NS(pdu);
-	const u16 rc = LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
+पूर्णांक llc_conn_ev_rx_i_rsp_fbit_set_x_inval_ns(काष्ठा sock *sk,
+					     काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vr = llc_sk(sk)->vR;
+	स्थिर u8 ns = LLC_I_GET_NS(pdu);
+	स्थिर u16 rc = LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_I(pdu) &&
 		ns != vr &&
-		 llc_util_ns_inside_rx_window(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
-	if (!rc)
-		dprintk("%s: matched, state=%d, ns=%d, vr=%d\n",
+		 llc_util_ns_inside_rx_winकरोw(ns, vr, llc_sk(sk)->rw) ? 0 : 1;
+	अगर (!rc)
+		dprपूर्णांकk("%s: matched, state=%d, ns=%d, vr=%d\n",
 			__func__, llc_sk(sk)->state, ns, vr);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_rx_rej_cmd_pbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rej_cmd_pbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_0(pdu) &&
 	       LLC_S_PDU_CMD(pdu) == LLC_2_PDU_CMD_REJ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rej_cmd_pbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rej_cmd_pbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_1(pdu) &&
 	       LLC_S_PDU_CMD(pdu) == LLC_2_PDU_CMD_REJ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rej_rsp_fbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rej_rsp_fbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_0(pdu) &&
 	       LLC_S_PDU_RSP(pdu) == LLC_2_PDU_RSP_REJ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rej_rsp_fbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rej_rsp_fbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_1(pdu) &&
 	       LLC_S_PDU_RSP(pdu) == LLC_2_PDU_RSP_REJ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rej_rsp_fbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rej_rsp_fbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PDU_RSP(pdu) == LLC_2_PDU_RSP_REJ ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rnr_cmd_pbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rnr_cmd_pbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_0(pdu) &&
 	       LLC_S_PDU_CMD(pdu) == LLC_2_PDU_CMD_RNR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rnr_cmd_pbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rnr_cmd_pbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_1(pdu) &&
 	       LLC_S_PDU_CMD(pdu) == LLC_2_PDU_CMD_RNR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rnr_rsp_fbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rnr_rsp_fbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_0(pdu) &&
 	       LLC_S_PDU_RSP(pdu) == LLC_2_PDU_RSP_RNR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rnr_rsp_fbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rnr_rsp_fbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_1(pdu) &&
 	       LLC_S_PDU_RSP(pdu) == LLC_2_PDU_RSP_RNR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rr_cmd_pbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rr_cmd_pbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_0(pdu) &&
 	       LLC_S_PDU_CMD(pdu) == LLC_2_PDU_CMD_RR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rr_cmd_pbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rr_cmd_pbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_1(pdu) &&
 	       LLC_S_PDU_CMD(pdu) == LLC_2_PDU_CMD_RR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rr_rsp_fbit_set_0(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rr_rsp_fbit_set_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return llc_conn_space(sk, skb) &&
+	वापस llc_conn_space(sk, skb) &&
 	       LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_0(pdu) &&
 	       LLC_S_PDU_RSP(pdu) == LLC_2_PDU_RSP_RR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_rr_rsp_fbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+पूर्णांक llc_conn_ev_rx_rr_rsp_fbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	return llc_conn_space(sk, skb) &&
+	वापस llc_conn_space(sk, skb) &&
 	       LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_S(pdu) &&
 	       LLC_S_PF_IS_1(pdu) &&
 	       LLC_S_PDU_RSP(pdu) == LLC_2_PDU_RSP_RR ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_sabme_cmd_pbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+पूर्णांक llc_conn_ev_rx_sabme_cmd_pbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	return LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
+	वापस LLC_PDU_IS_CMD(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
 	       LLC_U_PDU_CMD(pdu) == LLC_2_PDU_CMD_SABME ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_ua_rsp_fbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+पूर्णांक llc_conn_ev_rx_ua_rsp_fbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	return LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
+	वापस LLC_PDU_IS_RSP(pdu) && LLC_PDU_TYPE_IS_U(pdu) &&
 	       LLC_U_PDU_RSP(pdu) == LLC_2_PDU_RSP_UA ? 0 : 1;
-}
+पूर्ण
 
-int llc_conn_ev_rx_xxx_cmd_pbit_set_1(struct sock *sk, struct sk_buff *skb)
-{
+पूर्णांक llc_conn_ev_rx_xxx_cmd_pbit_set_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	u16 rc = 1;
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 
-	if (LLC_PDU_IS_CMD(pdu)) {
-		if (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu)) {
-			if (LLC_I_PF_IS_1(pdu))
+	अगर (LLC_PDU_IS_CMD(pdu)) अणु
+		अगर (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu)) अणु
+			अगर (LLC_I_PF_IS_1(pdu))
 				rc = 0;
-		} else if (LLC_PDU_TYPE_IS_U(pdu) && LLC_U_PF_IS_1(pdu))
+		पूर्ण अन्यथा अगर (LLC_PDU_TYPE_IS_U(pdu) && LLC_U_PF_IS_1(pdu))
 			rc = 0;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_rx_xxx_cmd_pbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
+पूर्णांक llc_conn_ev_rx_xxx_cmd_pbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	u16 rc = 1;
-	const struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+	स्थिर काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	if (LLC_PDU_IS_CMD(pdu)) {
-		if (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu))
+	अगर (LLC_PDU_IS_CMD(pdu)) अणु
+		अगर (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu))
 			rc = 0;
-		else if (LLC_PDU_TYPE_IS_U(pdu))
-			switch (LLC_U_PDU_CMD(pdu)) {
-			case LLC_2_PDU_CMD_SABME:
-			case LLC_2_PDU_CMD_DISC:
+		अन्यथा अगर (LLC_PDU_TYPE_IS_U(pdu))
+			चयन (LLC_U_PDU_CMD(pdu)) अणु
+			हाल LLC_2_PDU_CMD_SABME:
+			हाल LLC_2_PDU_CMD_DISC:
 				rc = 0;
-				break;
-			}
-	}
-	return rc;
-}
+				अवरोध;
+			पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_rx_xxx_rsp_fbit_set_x(struct sock *sk, struct sk_buff *skb)
-{
+पूर्णांक llc_conn_ev_rx_xxx_rsp_fbit_set_x(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	u16 rc = 1;
-	const struct llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
+	स्थिर काष्ठा llc_pdu_un *pdu = llc_pdu_un_hdr(skb);
 
-	if (LLC_PDU_IS_RSP(pdu)) {
-		if (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu))
+	अगर (LLC_PDU_IS_RSP(pdu)) अणु
+		अगर (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu))
 			rc = 0;
-		else if (LLC_PDU_TYPE_IS_U(pdu))
-			switch (LLC_U_PDU_RSP(pdu)) {
-			case LLC_2_PDU_RSP_UA:
-			case LLC_2_PDU_RSP_DM:
-			case LLC_2_PDU_RSP_FRMR:
+		अन्यथा अगर (LLC_PDU_TYPE_IS_U(pdu))
+			चयन (LLC_U_PDU_RSP(pdu)) अणु
+			हाल LLC_2_PDU_RSP_UA:
+			हाल LLC_2_PDU_RSP_DM:
+			हाल LLC_2_PDU_RSP_FRMR:
 				rc = 0;
-				break;
-			}
-	}
+				अवरोध;
+			पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_rx_zzz_cmd_pbit_set_x_inval_nr(struct sock *sk,
-					       struct sk_buff *skb)
-{
+पूर्णांक llc_conn_ev_rx_zzz_cmd_pbit_set_x_inval_nr(काष्ठा sock *sk,
+					       काष्ठा sk_buff *skb)
+अणु
 	u16 rc = 1;
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vs = llc_sk(sk)->vS;
-	const u8 nr = LLC_I_GET_NR(pdu);
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vs = llc_sk(sk)->vS;
+	स्थिर u8 nr = LLC_I_GET_NR(pdu);
 
-	if (LLC_PDU_IS_CMD(pdu) &&
+	अगर (LLC_PDU_IS_CMD(pdu) &&
 	    (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu)) &&
-	    nr != vs && llc_util_nr_inside_tx_window(sk, nr)) {
-		dprintk("%s: matched, state=%d, vs=%d, nr=%d\n",
+	    nr != vs && llc_util_nr_inside_tx_winकरोw(sk, nr)) अणु
+		dprपूर्णांकk("%s: matched, state=%d, vs=%d, nr=%d\n",
 			__func__, llc_sk(sk)->state, vs, nr);
 		rc = 0;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_rx_zzz_rsp_fbit_set_x_inval_nr(struct sock *sk,
-					       struct sk_buff *skb)
-{
+पूर्णांक llc_conn_ev_rx_zzz_rsp_fbit_set_x_inval_nr(काष्ठा sock *sk,
+					       काष्ठा sk_buff *skb)
+अणु
 	u16 rc = 1;
-	const struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	const u8 vs = llc_sk(sk)->vS;
-	const u8 nr = LLC_I_GET_NR(pdu);
+	स्थिर काष्ठा llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
+	स्थिर u8 vs = llc_sk(sk)->vS;
+	स्थिर u8 nr = LLC_I_GET_NR(pdu);
 
-	if (LLC_PDU_IS_RSP(pdu) &&
+	अगर (LLC_PDU_IS_RSP(pdu) &&
 	    (LLC_PDU_TYPE_IS_I(pdu) || LLC_PDU_TYPE_IS_S(pdu)) &&
-	    nr != vs && llc_util_nr_inside_tx_window(sk, nr)) {
+	    nr != vs && llc_util_nr_inside_tx_winकरोw(sk, nr)) अणु
 		rc = 0;
-		dprintk("%s: matched, state=%d, vs=%d, nr=%d\n",
+		dprपूर्णांकk("%s: matched, state=%d, vs=%d, nr=%d\n",
 			__func__, llc_sk(sk)->state, vs, nr);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-int llc_conn_ev_rx_any_frame(struct sock *sk, struct sk_buff *skb)
-{
-	return 0;
-}
+पूर्णांक llc_conn_ev_rx_any_frame(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस 0;
+पूर्ण
 
-int llc_conn_ev_p_tmr_exp(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_p_पंचांगr_exp(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->type != LLC_CONN_EV_TYPE_P_TMR;
-}
+	वापस ev->type != LLC_CONN_EV_TYPE_P_TMR;
+पूर्ण
 
-int llc_conn_ev_ack_tmr_exp(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_ack_पंचांगr_exp(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->type != LLC_CONN_EV_TYPE_ACK_TMR;
-}
+	वापस ev->type != LLC_CONN_EV_TYPE_ACK_TMR;
+पूर्ण
 
-int llc_conn_ev_rej_tmr_exp(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_rej_पंचांगr_exp(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->type != LLC_CONN_EV_TYPE_REJ_TMR;
-}
+	वापस ev->type != LLC_CONN_EV_TYPE_REJ_TMR;
+पूर्ण
 
-int llc_conn_ev_busy_tmr_exp(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_busy_पंचांगr_exp(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->type != LLC_CONN_EV_TYPE_BUSY_TMR;
-}
+	वापस ev->type != LLC_CONN_EV_TYPE_BUSY_TMR;
+पूर्ण
 
-int llc_conn_ev_init_p_f_cycle(struct sock *sk, struct sk_buff *skb)
-{
-	return 1;
-}
+पूर्णांक llc_conn_ev_init_p_f_cycle(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस 1;
+पूर्ण
 
-int llc_conn_ev_tx_buffer_full(struct sock *sk, struct sk_buff *skb)
-{
-	const struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_tx_buffer_full(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
-	return ev->type == LLC_CONN_EV_TYPE_SIMPLE &&
+	वापस ev->type == LLC_CONN_EV_TYPE_SIMPLE &&
 	       ev->prim_type == LLC_CONN_EV_TX_BUFF_FULL ? 0 : 1;
-}
+पूर्ण
 
-/* Event qualifier functions
+/* Event qualअगरier functions
  *
- * these functions simply verify the value of a state flag associated with
- * the connection and return either a 0 for success or a non-zero value
- * for not-success; verify the event is the type we expect
+ * these functions simply verअगरy the value of a state flag associated with
+ * the connection and वापस either a 0 क्रम success or a non-zero value
+ * क्रम not-success; verअगरy the event is the type we expect
  */
-int llc_conn_ev_qlfy_data_flag_eq_1(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->data_flag != 1;
-}
+पूर्णांक llc_conn_ev_qlfy_data_flag_eq_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->data_flag != 1;
+पूर्ण
 
-int llc_conn_ev_qlfy_data_flag_eq_0(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->data_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_data_flag_eq_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->data_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_data_flag_eq_2(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->data_flag != 2;
-}
+पूर्णांक llc_conn_ev_qlfy_data_flag_eq_2(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->data_flag != 2;
+पूर्ण
 
-int llc_conn_ev_qlfy_p_flag_eq_1(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->p_flag != 1;
-}
+पूर्णांक llc_conn_ev_qlfy_p_flag_eq_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->p_flag != 1;
+पूर्ण
 
 /**
- *	llc_conn_ev_qlfy_last_frame_eq_1 - checks if frame is last in tx window
- *	@sk: current connection structure.
+ *	llc_conn_ev_qlfy_last_frame_eq_1 - checks अगर frame is last in tx winकरोw
+ *	@sk: current connection काष्ठाure.
  *	@skb: current event.
  *
  *	This function determines when frame which is sent, is last frame of
- *	transmit window, if it is then this function return zero else return
- *	one.  This function is used for sending last frame of transmit window
- *	as I-format command with p-bit set to one. Returns 0 if frame is last
+ *	transmit winकरोw, अगर it is then this function वापस zero अन्यथा वापस
+ *	one.  This function is used क्रम sending last frame of transmit winकरोw
+ *	as I-क्रमmat command with p-bit set to one. Returns 0 अगर frame is last
  *	frame, 1 otherwise.
  */
-int llc_conn_ev_qlfy_last_frame_eq_1(struct sock *sk, struct sk_buff *skb)
-{
-	return !(skb_queue_len(&llc_sk(sk)->pdu_unack_q) + 1 == llc_sk(sk)->k);
-}
+पूर्णांक llc_conn_ev_qlfy_last_frame_eq_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस !(skb_queue_len(&llc_sk(sk)->pdu_unack_q) + 1 == llc_sk(sk)->k);
+पूर्ण
 
 /**
- *	llc_conn_ev_qlfy_last_frame_eq_0 - checks if frame isn't last in tx window
- *	@sk: current connection structure.
+ *	llc_conn_ev_qlfy_last_frame_eq_0 - checks अगर frame isn't last in tx winकरोw
+ *	@sk: current connection काष्ठाure.
  *	@skb: current event.
  *
  *	This function determines when frame which is sent, isn't last frame of
- *	transmit window, if it isn't then this function return zero else return
- *	one. Returns 0 if frame isn't last frame, 1 otherwise.
+ *	transmit winकरोw, अगर it isn't then this function वापस zero अन्यथा वापस
+ *	one. Returns 0 अगर frame isn't last frame, 1 otherwise.
  */
-int llc_conn_ev_qlfy_last_frame_eq_0(struct sock *sk, struct sk_buff *skb)
-{
-	return skb_queue_len(&llc_sk(sk)->pdu_unack_q) + 1 == llc_sk(sk)->k;
-}
+पूर्णांक llc_conn_ev_qlfy_last_frame_eq_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस skb_queue_len(&llc_sk(sk)->pdu_unack_q) + 1 == llc_sk(sk)->k;
+पूर्ण
 
-int llc_conn_ev_qlfy_p_flag_eq_0(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->p_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_p_flag_eq_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->p_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_p_flag_eq_f(struct sock *sk, struct sk_buff *skb)
-{
+पूर्णांक llc_conn_ev_qlfy_p_flag_eq_f(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	u8 f_bit;
 
 	llc_pdu_decode_pf_bit(skb, &f_bit);
-	return llc_sk(sk)->p_flag == f_bit ? 0 : 1;
-}
+	वापस llc_sk(sk)->p_flag == f_bit ? 0 : 1;
+पूर्ण
 
-int llc_conn_ev_qlfy_remote_busy_eq_0(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->remote_busy_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_remote_busy_eq_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->remote_busy_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_remote_busy_eq_1(struct sock *sk, struct sk_buff *skb)
-{
-	return !llc_sk(sk)->remote_busy_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_remote_busy_eq_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस !llc_sk(sk)->remote_busy_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_retry_cnt_lt_n2(struct sock *sk, struct sk_buff *skb)
-{
-	return !(llc_sk(sk)->retry_count < llc_sk(sk)->n2);
-}
+पूर्णांक llc_conn_ev_qlfy_retry_cnt_lt_n2(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस !(llc_sk(sk)->retry_count < llc_sk(sk)->n2);
+पूर्ण
 
-int llc_conn_ev_qlfy_retry_cnt_gte_n2(struct sock *sk, struct sk_buff *skb)
-{
-	return !(llc_sk(sk)->retry_count >= llc_sk(sk)->n2);
-}
+पूर्णांक llc_conn_ev_qlfy_retry_cnt_gte_n2(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस !(llc_sk(sk)->retry_count >= llc_sk(sk)->n2);
+पूर्ण
 
-int llc_conn_ev_qlfy_s_flag_eq_1(struct sock *sk, struct sk_buff *skb)
-{
-	return !llc_sk(sk)->s_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_s_flag_eq_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस !llc_sk(sk)->s_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_s_flag_eq_0(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->s_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_s_flag_eq_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->s_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_cause_flag_eq_1(struct sock *sk, struct sk_buff *skb)
-{
-	return !llc_sk(sk)->cause_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_cause_flag_eq_1(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस !llc_sk(sk)->cause_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_cause_flag_eq_0(struct sock *sk, struct sk_buff *skb)
-{
-	return llc_sk(sk)->cause_flag;
-}
+पूर्णांक llc_conn_ev_qlfy_cause_flag_eq_0(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस llc_sk(sk)->cause_flag;
+पूर्ण
 
-int llc_conn_ev_qlfy_set_status_conn(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_qlfy_set_status_conn(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->status = LLC_STATUS_CONN;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int llc_conn_ev_qlfy_set_status_disc(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_qlfy_set_status_disc(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->status = LLC_STATUS_DISC;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int llc_conn_ev_qlfy_set_status_failed(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_qlfy_set_status_failed(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->status = LLC_STATUS_FAILED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int llc_conn_ev_qlfy_set_status_remote_busy(struct sock *sk,
-					    struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_qlfy_set_status_remote_busy(काष्ठा sock *sk,
+					    काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->status = LLC_STATUS_REMOTE_BUSY;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int llc_conn_ev_qlfy_set_status_refuse(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_qlfy_set_status_refuse(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->status = LLC_STATUS_REFUSE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int llc_conn_ev_qlfy_set_status_conflict(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_qlfy_set_status_conflict(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->status = LLC_STATUS_CONFLICT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int llc_conn_ev_qlfy_set_status_rst_done(struct sock *sk, struct sk_buff *skb)
-{
-	struct llc_conn_state_ev *ev = llc_conn_ev(skb);
+पूर्णांक llc_conn_ev_qlfy_set_status_rst_करोne(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा llc_conn_state_ev *ev = llc_conn_ev(skb);
 
 	ev->status = LLC_STATUS_RESET_DONE;
-	return 0;
-}
+	वापस 0;
+पूर्ण

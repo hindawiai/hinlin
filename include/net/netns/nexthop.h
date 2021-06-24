@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * nexthops in net namespaces
  */
 
-#ifndef __NETNS_NEXTHOP_H__
-#define __NETNS_NEXTHOP_H__
+#अगर_अघोषित __NETNS_NEXTHOP_H__
+#घोषणा __NETNS_NEXTHOP_H__
 
-#include <linux/rbtree.h>
+#समावेश <linux/rbtree.h>
 
-struct netns_nexthop {
-	struct rb_root		rb_root;	/* tree of nexthops by id */
-	struct hlist_head	*devhash;	/* nexthops by device */
+काष्ठा netns_nexthop अणु
+	काष्ठा rb_root		rb_root;	/* tree of nexthops by id */
+	काष्ठा hlist_head	*devhash;	/* nexthops by device */
 
-	unsigned int		seq;		/* protected by rtnl_mutex */
+	अचिन्हित पूर्णांक		seq;		/* रक्षित by rtnl_mutex */
 	u32			last_id_allocated;
-	struct blocking_notifier_head notifier_chain;
-};
-#endif
+	काष्ठा blocking_notअगरier_head notअगरier_chain;
+पूर्ण;
+#पूर्ण_अगर

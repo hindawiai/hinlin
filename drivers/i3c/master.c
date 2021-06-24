@@ -1,251 +1,252 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Cadence Design Systems Inc.
  *
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  */
 
-#include <linux/atomic.h>
-#include <linux/bug.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
-static DEFINE_IDR(i3c_bus_idr);
-static DEFINE_MUTEX(i3c_core_lock);
+अटल DEFINE_IDR(i3c_bus_idr);
+अटल DEFINE_MUTEX(i3c_core_lock);
 
 /**
- * i3c_bus_maintenance_lock - Lock the bus for a maintenance operation
+ * i3c_bus_मुख्यtenance_lock - Lock the bus क्रम a मुख्यtenance operation
  * @bus: I3C bus to take the lock on
  *
  * This function takes the bus lock so that no other operations can occur on
- * the bus. This is needed for all kind of bus maintenance operation, like
+ * the bus. This is needed क्रम all kind of bus मुख्यtenance operation, like
  * - enabling/disabling slave events
  * - re-triggering DAA
  * - changing the dynamic address of a device
  * - relinquishing mastership
  * - ...
  *
- * The reason for this kind of locking is that we don't want drivers and core
- * logic to rely on I3C device information that could be changed behind their
+ * The reason क्रम this kind of locking is that we करोn't want drivers and core
+ * logic to rely on I3C device inक्रमmation that could be changed behind their
  * back.
  */
-static void i3c_bus_maintenance_lock(struct i3c_bus *bus)
-{
-	down_write(&bus->lock);
-}
+अटल व्योम i3c_bus_मुख्यtenance_lock(काष्ठा i3c_bus *bus)
+अणु
+	करोwn_ग_लिखो(&bus->lock);
+पूर्ण
 
 /**
- * i3c_bus_maintenance_unlock - Release the bus lock after a maintenance
+ * i3c_bus_मुख्यtenance_unlock - Release the bus lock after a मुख्यtenance
  *			      operation
  * @bus: I3C bus to release the lock on
  *
- * Should be called when the bus maintenance operation is done. See
- * i3c_bus_maintenance_lock() for more details on what these maintenance
+ * Should be called when the bus मुख्यtenance operation is करोne. See
+ * i3c_bus_मुख्यtenance_lock() क्रम more details on what these मुख्यtenance
  * operations are.
  */
-static void i3c_bus_maintenance_unlock(struct i3c_bus *bus)
-{
-	up_write(&bus->lock);
-}
+अटल व्योम i3c_bus_मुख्यtenance_unlock(काष्ठा i3c_bus *bus)
+अणु
+	up_ग_लिखो(&bus->lock);
+पूर्ण
 
 /**
- * i3c_bus_normaluse_lock - Lock the bus for a normal operation
+ * i3c_bus_normaluse_lock - Lock the bus क्रम a normal operation
  * @bus: I3C bus to take the lock on
  *
- * This function takes the bus lock for any operation that is not a maintenance
- * operation (see i3c_bus_maintenance_lock() for a non-exhaustive list of
- * maintenance operations). Basically all communications with I3C devices are
- * normal operations (HDR, SDR transfers or CCC commands that do not change bus
+ * This function takes the bus lock क्रम any operation that is not a मुख्यtenance
+ * operation (see i3c_bus_मुख्यtenance_lock() क्रम a non-exhaustive list of
+ * मुख्यtenance operations). Basically all communications with I3C devices are
+ * normal operations (HDR, SDR transfers or CCC commands that करो not change bus
  * state or I3C dynamic address).
  *
  * Note that this lock is not guaranteeing serialization of normal operations.
  * In other words, transfer requests passed to the I3C master can be submitted
  * in parallel and I3C master drivers have to use their own locking to make
- * sure two different communications are not inter-mixed, or access to the
- * output/input queue is not done while the engine is busy.
+ * sure two dअगरferent communications are not पूर्णांकer-mixed, or access to the
+ * output/input queue is not करोne जबतक the engine is busy.
  */
-void i3c_bus_normaluse_lock(struct i3c_bus *bus)
-{
-	down_read(&bus->lock);
-}
+व्योम i3c_bus_normaluse_lock(काष्ठा i3c_bus *bus)
+अणु
+	करोwn_पढ़ो(&bus->lock);
+पूर्ण
 
 /**
  * i3c_bus_normaluse_unlock - Release the bus lock after a normal operation
  * @bus: I3C bus to release the lock on
  *
- * Should be called when a normal operation is done. See
- * i3c_bus_normaluse_lock() for more details on what these normal operations
+ * Should be called when a normal operation is करोne. See
+ * i3c_bus_normaluse_lock() क्रम more details on what these normal operations
  * are.
  */
-void i3c_bus_normaluse_unlock(struct i3c_bus *bus)
-{
-	up_read(&bus->lock);
-}
+व्योम i3c_bus_normaluse_unlock(काष्ठा i3c_bus *bus)
+अणु
+	up_पढ़ो(&bus->lock);
+पूर्ण
 
-static struct i3c_master_controller *
-i3c_bus_to_i3c_master(struct i3c_bus *i3cbus)
-{
-	return container_of(i3cbus, struct i3c_master_controller, bus);
-}
+अटल काष्ठा i3c_master_controller *
+i3c_bus_to_i3c_master(काष्ठा i3c_bus *i3cbus)
+अणु
+	वापस container_of(i3cbus, काष्ठा i3c_master_controller, bus);
+पूर्ण
 
-static struct i3c_master_controller *dev_to_i3cmaster(struct device *dev)
-{
-	return container_of(dev, struct i3c_master_controller, dev);
-}
+अटल काष्ठा i3c_master_controller *dev_to_i3cmaster(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा i3c_master_controller, dev);
+पूर्ण
 
-static const struct device_type i3c_device_type;
+अटल स्थिर काष्ठा device_type i3c_device_type;
 
-static struct i3c_bus *dev_to_i3cbus(struct device *dev)
-{
-	struct i3c_master_controller *master;
+अटल काष्ठा i3c_bus *dev_to_i3cbus(काष्ठा device *dev)
+अणु
+	काष्ठा i3c_master_controller *master;
 
-	if (dev->type == &i3c_device_type)
-		return dev_to_i3cdev(dev)->bus;
-
-	master = dev_to_i3cmaster(dev);
-
-	return &master->bus;
-}
-
-static struct i3c_dev_desc *dev_to_i3cdesc(struct device *dev)
-{
-	struct i3c_master_controller *master;
-
-	if (dev->type == &i3c_device_type)
-		return dev_to_i3cdev(dev)->desc;
+	अगर (dev->type == &i3c_device_type)
+		वापस dev_to_i3cdev(dev)->bus;
 
 	master = dev_to_i3cmaster(dev);
 
-	return master->this;
-}
+	वापस &master->bus;
+पूर्ण
 
-static ssize_t bcr_show(struct device *dev,
-			struct device_attribute *da,
-			char *buf)
-{
-	struct i3c_bus *bus = dev_to_i3cbus(dev);
-	struct i3c_dev_desc *desc;
-	ssize_t ret;
+अटल काष्ठा i3c_dev_desc *dev_to_i3cdesc(काष्ठा device *dev)
+अणु
+	काष्ठा i3c_master_controller *master;
 
-	i3c_bus_normaluse_lock(bus);
-	desc = dev_to_i3cdesc(dev);
-	ret = sprintf(buf, "%x\n", desc->info.bcr);
-	i3c_bus_normaluse_unlock(bus);
+	अगर (dev->type == &i3c_device_type)
+		वापस dev_to_i3cdev(dev)->desc;
 
-	return ret;
-}
-static DEVICE_ATTR_RO(bcr);
+	master = dev_to_i3cmaster(dev);
 
-static ssize_t dcr_show(struct device *dev,
-			struct device_attribute *da,
-			char *buf)
-{
-	struct i3c_bus *bus = dev_to_i3cbus(dev);
-	struct i3c_dev_desc *desc;
-	ssize_t ret;
+	वापस master->this;
+पूर्ण
+
+अटल sमाप_प्रकार bcr_show(काष्ठा device *dev,
+			काष्ठा device_attribute *da,
+			अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *bus = dev_to_i3cbus(dev);
+	काष्ठा i3c_dev_desc *desc;
+	sमाप_प्रकार ret;
 
 	i3c_bus_normaluse_lock(bus);
 	desc = dev_to_i3cdesc(dev);
-	ret = sprintf(buf, "%x\n", desc->info.dcr);
+	ret = प्र_लिखो(buf, "%x\n", desc->info.bcr);
 	i3c_bus_normaluse_unlock(bus);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(dcr);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(bcr);
 
-static ssize_t pid_show(struct device *dev,
-			struct device_attribute *da,
-			char *buf)
-{
-	struct i3c_bus *bus = dev_to_i3cbus(dev);
-	struct i3c_dev_desc *desc;
-	ssize_t ret;
+अटल sमाप_प्रकार dcr_show(काष्ठा device *dev,
+			काष्ठा device_attribute *da,
+			अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *bus = dev_to_i3cbus(dev);
+	काष्ठा i3c_dev_desc *desc;
+	sमाप_प्रकार ret;
 
 	i3c_bus_normaluse_lock(bus);
 	desc = dev_to_i3cdesc(dev);
-	ret = sprintf(buf, "%llx\n", desc->info.pid);
+	ret = प्र_लिखो(buf, "%x\n", desc->info.dcr);
 	i3c_bus_normaluse_unlock(bus);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(pid);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(dcr);
 
-static ssize_t dynamic_address_show(struct device *dev,
-				    struct device_attribute *da,
-				    char *buf)
-{
-	struct i3c_bus *bus = dev_to_i3cbus(dev);
-	struct i3c_dev_desc *desc;
-	ssize_t ret;
+अटल sमाप_प्रकार pid_show(काष्ठा device *dev,
+			काष्ठा device_attribute *da,
+			अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *bus = dev_to_i3cbus(dev);
+	काष्ठा i3c_dev_desc *desc;
+	sमाप_प्रकार ret;
 
 	i3c_bus_normaluse_lock(bus);
 	desc = dev_to_i3cdesc(dev);
-	ret = sprintf(buf, "%02x\n", desc->info.dyn_addr);
+	ret = प्र_लिखो(buf, "%llx\n", desc->info.pid);
 	i3c_bus_normaluse_unlock(bus);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(dynamic_address);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(pid);
 
-static const char * const hdrcap_strings[] = {
+अटल sमाप_प्रकार dynamic_address_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *da,
+				    अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *bus = dev_to_i3cbus(dev);
+	काष्ठा i3c_dev_desc *desc;
+	sमाप_प्रकार ret;
+
+	i3c_bus_normaluse_lock(bus);
+	desc = dev_to_i3cdesc(dev);
+	ret = प्र_लिखो(buf, "%02x\n", desc->info.dyn_addr);
+	i3c_bus_normaluse_unlock(bus);
+
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(dynamic_address);
+
+अटल स्थिर अक्षर * स्थिर hdrcap_strings[] = अणु
 	"hdr-ddr", "hdr-tsp", "hdr-tsl",
-};
+पूर्ण;
 
-static ssize_t hdrcap_show(struct device *dev,
-			   struct device_attribute *da,
-			   char *buf)
-{
-	struct i3c_bus *bus = dev_to_i3cbus(dev);
-	struct i3c_dev_desc *desc;
-	ssize_t offset = 0, ret;
-	unsigned long caps;
-	int mode;
+अटल sमाप_प्रकार hdrcap_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *da,
+			   अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *bus = dev_to_i3cbus(dev);
+	काष्ठा i3c_dev_desc *desc;
+	sमाप_प्रकार offset = 0, ret;
+	अचिन्हित दीर्घ caps;
+	पूर्णांक mode;
 
 	i3c_bus_normaluse_lock(bus);
 	desc = dev_to_i3cdesc(dev);
 	caps = desc->info.hdr_cap;
-	for_each_set_bit(mode, &caps, 8) {
-		if (mode >= ARRAY_SIZE(hdrcap_strings))
-			break;
+	क्रम_each_set_bit(mode, &caps, 8) अणु
+		अगर (mode >= ARRAY_SIZE(hdrcap_strings))
+			अवरोध;
 
-		if (!hdrcap_strings[mode])
-			continue;
+		अगर (!hdrcap_strings[mode])
+			जारी;
 
-		ret = sprintf(buf + offset, offset ? " %s" : "%s",
+		ret = प्र_लिखो(buf + offset, offset ? " %s" : "%s",
 			      hdrcap_strings[mode]);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
 		offset += ret;
-	}
+	पूर्ण
 
-	ret = sprintf(buf + offset, "\n");
-	if (ret < 0)
-		goto out;
+	ret = प्र_लिखो(buf + offset, "\n");
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = offset + ret;
 
 out:
 	i3c_bus_normaluse_unlock(bus);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(hdrcap);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(hdrcap);
 
-static ssize_t modalias_show(struct device *dev,
-			     struct device_attribute *da, char *buf)
-{
-	struct i3c_device *i3c = dev_to_i3cdev(dev);
-	struct i3c_device_info devinfo;
+अटल sमाप_प्रकार modalias_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा i3c_device *i3c = dev_to_i3cdev(dev);
+	काष्ठा i3c_device_info devinfo;
 	u16 manuf, part, ext;
 
 	i3c_device_get_info(i3c, &devinfo);
@@ -253,30 +254,30 @@ static ssize_t modalias_show(struct device *dev,
 	part = I3C_PID_PART_ID(devinfo.pid);
 	ext = I3C_PID_EXTRA_INFO(devinfo.pid);
 
-	if (I3C_PID_RND_LOWER_32BITS(devinfo.pid))
-		return sprintf(buf, "i3c:dcr%02Xmanuf%04X", devinfo.dcr,
+	अगर (I3C_PID_RND_LOWER_32BITS(devinfo.pid))
+		वापस प्र_लिखो(buf, "i3c:dcr%02Xmanuf%04X", devinfo.dcr,
 			       manuf);
 
-	return sprintf(buf, "i3c:dcr%02Xmanuf%04Xpart%04Xext%04X",
+	वापस प्र_लिखो(buf, "i3c:dcr%02Xmanuf%04Xpart%04Xext%04X",
 		       devinfo.dcr, manuf, part, ext);
-}
-static DEVICE_ATTR_RO(modalias);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *i3c_device_attrs[] = {
+अटल काष्ठा attribute *i3c_device_attrs[] = अणु
 	&dev_attr_bcr.attr,
 	&dev_attr_dcr.attr,
 	&dev_attr_pid.attr,
 	&dev_attr_dynamic_address.attr,
 	&dev_attr_hdrcap.attr,
 	&dev_attr_modalias.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(i3c_device);
 
-static int i3c_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct i3c_device *i3cdev = dev_to_i3cdev(dev);
-	struct i3c_device_info devinfo;
+अटल पूर्णांक i3c_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा i3c_device *i3cdev = dev_to_i3cdev(dev);
+	काष्ठा i3c_device_info devinfo;
 	u16 manuf, part, ext;
 
 	i3c_device_get_info(i3cdev, &devinfo);
@@ -284,122 +285,122 @@ static int i3c_device_uevent(struct device *dev, struct kobj_uevent_env *env)
 	part = I3C_PID_PART_ID(devinfo.pid);
 	ext = I3C_PID_EXTRA_INFO(devinfo.pid);
 
-	if (I3C_PID_RND_LOWER_32BITS(devinfo.pid))
-		return add_uevent_var(env, "MODALIAS=i3c:dcr%02Xmanuf%04X",
+	अगर (I3C_PID_RND_LOWER_32BITS(devinfo.pid))
+		वापस add_uevent_var(env, "MODALIAS=i3c:dcr%02Xmanuf%04X",
 				      devinfo.dcr, manuf);
 
-	return add_uevent_var(env,
+	वापस add_uevent_var(env,
 			      "MODALIAS=i3c:dcr%02Xmanuf%04Xpart%04Xext%04X",
 			      devinfo.dcr, manuf, part, ext);
-}
+पूर्ण
 
-static const struct device_type i3c_device_type = {
+अटल स्थिर काष्ठा device_type i3c_device_type = अणु
 	.groups	= i3c_device_groups,
 	.uevent = i3c_device_uevent,
-};
+पूर्ण;
 
-static int i3c_device_match(struct device *dev, struct device_driver *drv)
-{
-	struct i3c_device *i3cdev;
-	struct i3c_driver *i3cdrv;
+अटल पूर्णांक i3c_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा i3c_device *i3cdev;
+	काष्ठा i3c_driver *i3cdrv;
 
-	if (dev->type != &i3c_device_type)
-		return 0;
+	अगर (dev->type != &i3c_device_type)
+		वापस 0;
 
 	i3cdev = dev_to_i3cdev(dev);
 	i3cdrv = drv_to_i3cdrv(drv);
-	if (i3c_device_match_id(i3cdev, i3cdrv->id_table))
-		return 1;
+	अगर (i3c_device_match_id(i3cdev, i3cdrv->id_table))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i3c_device_probe(struct device *dev)
-{
-	struct i3c_device *i3cdev = dev_to_i3cdev(dev);
-	struct i3c_driver *driver = drv_to_i3cdrv(dev->driver);
+अटल पूर्णांक i3c_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा i3c_device *i3cdev = dev_to_i3cdev(dev);
+	काष्ठा i3c_driver *driver = drv_to_i3cdrv(dev->driver);
 
-	return driver->probe(i3cdev);
-}
+	वापस driver->probe(i3cdev);
+पूर्ण
 
-static int i3c_device_remove(struct device *dev)
-{
-	struct i3c_device *i3cdev = dev_to_i3cdev(dev);
-	struct i3c_driver *driver = drv_to_i3cdrv(dev->driver);
+अटल पूर्णांक i3c_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा i3c_device *i3cdev = dev_to_i3cdev(dev);
+	काष्ठा i3c_driver *driver = drv_to_i3cdrv(dev->driver);
 
-	if (driver->remove)
-		driver->remove(i3cdev);
+	अगर (driver->हटाओ)
+		driver->हटाओ(i3cdev);
 
-	i3c_device_free_ibi(i3cdev);
+	i3c_device_मुक्त_ibi(i3cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bus_type i3c_bus_type = {
+काष्ठा bus_type i3c_bus_type = अणु
 	.name = "i3c",
 	.match = i3c_device_match,
 	.probe = i3c_device_probe,
-	.remove = i3c_device_remove,
-};
+	.हटाओ = i3c_device_हटाओ,
+पूर्ण;
 
-static enum i3c_addr_slot_status
-i3c_bus_get_addr_slot_status(struct i3c_bus *bus, u16 addr)
-{
-	int status, bitpos = addr * 2;
+अटल क्रमागत i3c_addr_slot_status
+i3c_bus_get_addr_slot_status(काष्ठा i3c_bus *bus, u16 addr)
+अणु
+	पूर्णांक status, bitpos = addr * 2;
 
-	if (addr > I2C_MAX_ADDR)
-		return I3C_ADDR_SLOT_RSVD;
+	अगर (addr > I2C_MAX_ADDR)
+		वापस I3C_ADDR_SLOT_RSVD;
 
 	status = bus->addrslots[bitpos / BITS_PER_LONG];
 	status >>= bitpos % BITS_PER_LONG;
 
-	return status & I3C_ADDR_SLOT_STATUS_MASK;
-}
+	वापस status & I3C_ADDR_SLOT_STATUS_MASK;
+पूर्ण
 
-static void i3c_bus_set_addr_slot_status(struct i3c_bus *bus, u16 addr,
-					 enum i3c_addr_slot_status status)
-{
-	int bitpos = addr * 2;
-	unsigned long *ptr;
+अटल व्योम i3c_bus_set_addr_slot_status(काष्ठा i3c_bus *bus, u16 addr,
+					 क्रमागत i3c_addr_slot_status status)
+अणु
+	पूर्णांक bitpos = addr * 2;
+	अचिन्हित दीर्घ *ptr;
 
-	if (addr > I2C_MAX_ADDR)
-		return;
+	अगर (addr > I2C_MAX_ADDR)
+		वापस;
 
 	ptr = bus->addrslots + (bitpos / BITS_PER_LONG);
-	*ptr &= ~((unsigned long)I3C_ADDR_SLOT_STATUS_MASK <<
+	*ptr &= ~((अचिन्हित दीर्घ)I3C_ADDR_SLOT_STATUS_MASK <<
 						(bitpos % BITS_PER_LONG));
-	*ptr |= (unsigned long)status << (bitpos % BITS_PER_LONG);
-}
+	*ptr |= (अचिन्हित दीर्घ)status << (bitpos % BITS_PER_LONG);
+पूर्ण
 
-static bool i3c_bus_dev_addr_is_avail(struct i3c_bus *bus, u8 addr)
-{
-	enum i3c_addr_slot_status status;
+अटल bool i3c_bus_dev_addr_is_avail(काष्ठा i3c_bus *bus, u8 addr)
+अणु
+	क्रमागत i3c_addr_slot_status status;
 
 	status = i3c_bus_get_addr_slot_status(bus, addr);
 
-	return status == I3C_ADDR_SLOT_FREE;
-}
+	वापस status == I3C_ADDR_SLOT_FREE;
+पूर्ण
 
-static int i3c_bus_get_free_addr(struct i3c_bus *bus, u8 start_addr)
-{
-	enum i3c_addr_slot_status status;
+अटल पूर्णांक i3c_bus_get_मुक्त_addr(काष्ठा i3c_bus *bus, u8 start_addr)
+अणु
+	क्रमागत i3c_addr_slot_status status;
 	u8 addr;
 
-	for (addr = start_addr; addr < I3C_MAX_ADDR; addr++) {
+	क्रम (addr = start_addr; addr < I3C_MAX_ADDR; addr++) अणु
 		status = i3c_bus_get_addr_slot_status(bus, addr);
-		if (status == I3C_ADDR_SLOT_FREE)
-			return addr;
-	}
+		अगर (status == I3C_ADDR_SLOT_FREE)
+			वापस addr;
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void i3c_bus_init_addrslots(struct i3c_bus *bus)
-{
-	int i;
+अटल व्योम i3c_bus_init_addrslots(काष्ठा i3c_bus *bus)
+अणु
+	पूर्णांक i;
 
 	/* Addresses 0 to 7 are reserved. */
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		i3c_bus_set_addr_slot_status(bus, i, I3C_ADDR_SLOT_RSVD);
 
 	/*
@@ -408,21 +409,21 @@ static void i3c_bus_init_addrslots(struct i3c_bus *bus)
 	 */
 	i3c_bus_set_addr_slot_status(bus, I3C_BROADCAST_ADDR,
 				     I3C_ADDR_SLOT_RSVD);
-	for (i = 0; i < 7; i++)
+	क्रम (i = 0; i < 7; i++)
 		i3c_bus_set_addr_slot_status(bus, I3C_BROADCAST_ADDR ^ BIT(i),
 					     I3C_ADDR_SLOT_RSVD);
-}
+पूर्ण
 
-static void i3c_bus_cleanup(struct i3c_bus *i3cbus)
-{
+अटल व्योम i3c_bus_cleanup(काष्ठा i3c_bus *i3cbus)
+अणु
 	mutex_lock(&i3c_core_lock);
-	idr_remove(&i3c_bus_idr, i3cbus->id);
+	idr_हटाओ(&i3c_bus_idr, i3cbus->id);
 	mutex_unlock(&i3c_core_lock);
-}
+पूर्ण
 
-static int i3c_bus_init(struct i3c_bus *i3cbus)
-{
-	int ret;
+अटल पूर्णांक i3c_bus_init(काष्ठा i3c_bus *i3cbus)
+अणु
+	पूर्णांक ret;
 
 	init_rwsem(&i3cbus->lock);
 	INIT_LIST_HEAD(&i3cbus->devs.i2c);
@@ -434,88 +435,88 @@ static int i3c_bus_init(struct i3c_bus *i3cbus)
 	ret = idr_alloc(&i3c_bus_idr, i3cbus, 0, 0, GFP_KERNEL);
 	mutex_unlock(&i3c_core_lock);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	i3cbus->id = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const i3c_bus_mode_strings[] = {
+अटल स्थिर अक्षर * स्थिर i3c_bus_mode_strings[] = अणु
 	[I3C_BUS_MODE_PURE] = "pure",
 	[I3C_BUS_MODE_MIXED_FAST] = "mixed-fast",
 	[I3C_BUS_MODE_MIXED_LIMITED] = "mixed-limited",
 	[I3C_BUS_MODE_MIXED_SLOW] = "mixed-slow",
-};
+पूर्ण;
 
-static ssize_t mode_show(struct device *dev,
-			 struct device_attribute *da,
-			 char *buf)
-{
-	struct i3c_bus *i3cbus = dev_to_i3cbus(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार mode_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *da,
+			 अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *i3cbus = dev_to_i3cbus(dev);
+	sमाप_प्रकार ret;
 
 	i3c_bus_normaluse_lock(i3cbus);
-	if (i3cbus->mode < 0 ||
+	अगर (i3cbus->mode < 0 ||
 	    i3cbus->mode >= ARRAY_SIZE(i3c_bus_mode_strings) ||
 	    !i3c_bus_mode_strings[i3cbus->mode])
-		ret = sprintf(buf, "unknown\n");
-	else
-		ret = sprintf(buf, "%s\n", i3c_bus_mode_strings[i3cbus->mode]);
+		ret = प्र_लिखो(buf, "unknown\n");
+	अन्यथा
+		ret = प्र_लिखो(buf, "%s\n", i3c_bus_mode_strings[i3cbus->mode]);
 	i3c_bus_normaluse_unlock(i3cbus);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(mode);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(mode);
 
-static ssize_t current_master_show(struct device *dev,
-				   struct device_attribute *da,
-				   char *buf)
-{
-	struct i3c_bus *i3cbus = dev_to_i3cbus(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार current_master_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *da,
+				   अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *i3cbus = dev_to_i3cbus(dev);
+	sमाप_प्रकार ret;
 
 	i3c_bus_normaluse_lock(i3cbus);
-	ret = sprintf(buf, "%d-%llx\n", i3cbus->id,
+	ret = प्र_लिखो(buf, "%d-%llx\n", i3cbus->id,
 		      i3cbus->cur_master->info.pid);
 	i3c_bus_normaluse_unlock(i3cbus);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(current_master);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(current_master);
 
-static ssize_t i3c_scl_frequency_show(struct device *dev,
-				      struct device_attribute *da,
-				      char *buf)
-{
-	struct i3c_bus *i3cbus = dev_to_i3cbus(dev);
-	ssize_t ret;
-
-	i3c_bus_normaluse_lock(i3cbus);
-	ret = sprintf(buf, "%ld\n", i3cbus->scl_rate.i3c);
-	i3c_bus_normaluse_unlock(i3cbus);
-
-	return ret;
-}
-static DEVICE_ATTR_RO(i3c_scl_frequency);
-
-static ssize_t i2c_scl_frequency_show(struct device *dev,
-				      struct device_attribute *da,
-				      char *buf)
-{
-	struct i3c_bus *i3cbus = dev_to_i3cbus(dev);
-	ssize_t ret;
+अटल sमाप_प्रकार i3c_scl_frequency_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *da,
+				      अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *i3cbus = dev_to_i3cbus(dev);
+	sमाप_प्रकार ret;
 
 	i3c_bus_normaluse_lock(i3cbus);
-	ret = sprintf(buf, "%ld\n", i3cbus->scl_rate.i2c);
+	ret = प्र_लिखो(buf, "%ld\n", i3cbus->scl_rate.i3c);
 	i3c_bus_normaluse_unlock(i3cbus);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(i2c_scl_frequency);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(i3c_scl_frequency);
 
-static struct attribute *i3c_masterdev_attrs[] = {
+अटल sमाप_प्रकार i2c_scl_frequency_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *da,
+				      अक्षर *buf)
+अणु
+	काष्ठा i3c_bus *i3cbus = dev_to_i3cbus(dev);
+	sमाप_प्रकार ret;
+
+	i3c_bus_normaluse_lock(i3cbus);
+	ret = प्र_लिखो(buf, "%ld\n", i3cbus->scl_rate.i2c);
+	i3c_bus_normaluse_unlock(i3cbus);
+
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(i2c_scl_frequency);
+
+अटल काष्ठा attribute *i3c_masterdev_attrs[] = अणु
 	&dev_attr_mode.attr,
 	&dev_attr_current_master.attr,
 	&dev_attr_i3c_scl_frequency.attr,
@@ -525,57 +526,57 @@ static struct attribute *i3c_masterdev_attrs[] = {
 	&dev_attr_pid.attr,
 	&dev_attr_dynamic_address.attr,
 	&dev_attr_hdrcap.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(i3c_masterdev);
 
-static void i3c_masterdev_release(struct device *dev)
-{
-	struct i3c_master_controller *master = dev_to_i3cmaster(dev);
-	struct i3c_bus *bus = dev_to_i3cbus(dev);
+अटल व्योम i3c_masterdev_release(काष्ठा device *dev)
+अणु
+	काष्ठा i3c_master_controller *master = dev_to_i3cmaster(dev);
+	काष्ठा i3c_bus *bus = dev_to_i3cbus(dev);
 
-	if (master->wq)
+	अगर (master->wq)
 		destroy_workqueue(master->wq);
 
 	WARN_ON(!list_empty(&bus->devs.i2c) || !list_empty(&bus->devs.i3c));
 	i3c_bus_cleanup(bus);
 
 	of_node_put(dev->of_node);
-}
+पूर्ण
 
-static const struct device_type i3c_masterdev_type = {
+अटल स्थिर काष्ठा device_type i3c_masterdev_type = अणु
 	.groups	= i3c_masterdev_groups,
-};
+पूर्ण;
 
-static int i3c_bus_set_mode(struct i3c_bus *i3cbus, enum i3c_bus_mode mode,
-			    unsigned long max_i2c_scl_rate)
-{
-	struct i3c_master_controller *master = i3c_bus_to_i3c_master(i3cbus);
+अटल पूर्णांक i3c_bus_set_mode(काष्ठा i3c_bus *i3cbus, क्रमागत i3c_bus_mode mode,
+			    अचिन्हित दीर्घ max_i2c_scl_rate)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_bus_to_i3c_master(i3cbus);
 
 	i3cbus->mode = mode;
 
-	switch (i3cbus->mode) {
-	case I3C_BUS_MODE_PURE:
-		if (!i3cbus->scl_rate.i3c)
+	चयन (i3cbus->mode) अणु
+	हाल I3C_BUS_MODE_PURE:
+		अगर (!i3cbus->scl_rate.i3c)
 			i3cbus->scl_rate.i3c = I3C_BUS_TYP_I3C_SCL_RATE;
-		break;
-	case I3C_BUS_MODE_MIXED_FAST:
-	case I3C_BUS_MODE_MIXED_LIMITED:
-		if (!i3cbus->scl_rate.i3c)
+		अवरोध;
+	हाल I3C_BUS_MODE_MIXED_FAST:
+	हाल I3C_BUS_MODE_MIXED_LIMITED:
+		अगर (!i3cbus->scl_rate.i3c)
 			i3cbus->scl_rate.i3c = I3C_BUS_TYP_I3C_SCL_RATE;
-		if (!i3cbus->scl_rate.i2c)
+		अगर (!i3cbus->scl_rate.i2c)
 			i3cbus->scl_rate.i2c = max_i2c_scl_rate;
-		break;
-	case I3C_BUS_MODE_MIXED_SLOW:
-		if (!i3cbus->scl_rate.i2c)
+		अवरोध;
+	हाल I3C_BUS_MODE_MIXED_SLOW:
+		अगर (!i3cbus->scl_rate.i2c)
 			i3cbus->scl_rate.i2c = max_i2c_scl_rate;
-		if (!i3cbus->scl_rate.i3c ||
+		अगर (!i3cbus->scl_rate.i3c ||
 		    i3cbus->scl_rate.i3c > i3cbus->scl_rate.i2c)
 			i3cbus->scl_rate.i3c = i3cbus->scl_rate.i2c;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(&master->dev, "i2c-scl = %ld Hz i3c-scl = %ld Hz\n",
 		i3cbus->scl_rate.i2c, i3cbus->scl_rate.i3c);
@@ -584,187 +585,187 @@ static int i3c_bus_set_mode(struct i3c_bus *i3cbus, enum i3c_bus_mode mode,
 	 * I3C/I2C frequency may have been overridden, check that user-provided
 	 * values are not exceeding max possible frequency.
 	 */
-	if (i3cbus->scl_rate.i3c > I3C_BUS_MAX_I3C_SCL_RATE ||
+	अगर (i3cbus->scl_rate.i3c > I3C_BUS_MAX_I3C_SCL_RATE ||
 	    i3cbus->scl_rate.i2c > I3C_BUS_I2C_FM_PLUS_SCL_RATE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct i3c_master_controller *
-i2c_adapter_to_i3c_master(struct i2c_adapter *adap)
-{
-	return container_of(adap, struct i3c_master_controller, i2c);
-}
+अटल काष्ठा i3c_master_controller *
+i2c_adapter_to_i3c_master(काष्ठा i2c_adapter *adap)
+अणु
+	वापस container_of(adap, काष्ठा i3c_master_controller, i2c);
+पूर्ण
 
-static struct i2c_adapter *
-i3c_master_to_i2c_adapter(struct i3c_master_controller *master)
-{
-	return &master->i2c;
-}
+अटल काष्ठा i2c_adapter *
+i3c_master_to_i2c_adapter(काष्ठा i3c_master_controller *master)
+अणु
+	वापस &master->i2c;
+पूर्ण
 
-static void i3c_master_free_i2c_dev(struct i2c_dev_desc *dev)
-{
-	kfree(dev);
-}
+अटल व्योम i3c_master_मुक्त_i2c_dev(काष्ठा i2c_dev_desc *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
 
-static struct i2c_dev_desc *
-i3c_master_alloc_i2c_dev(struct i3c_master_controller *master,
-			 const struct i2c_dev_boardinfo *boardinfo)
-{
-	struct i2c_dev_desc *dev;
+अटल काष्ठा i2c_dev_desc *
+i3c_master_alloc_i2c_dev(काष्ठा i3c_master_controller *master,
+			 स्थिर काष्ठा i2c_dev_boardinfo *boardinfo)
+अणु
+	काष्ठा i2c_dev_desc *dev;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return ERR_PTR(-ENOMEM);
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस ERR_PTR(-ENOMEM);
 
 	dev->common.master = master;
 	dev->boardinfo = boardinfo;
 	dev->addr = boardinfo->base.addr;
 	dev->lvr = boardinfo->lvr;
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static void *i3c_ccc_cmd_dest_init(struct i3c_ccc_cmd_dest *dest, u8 addr,
+अटल व्योम *i3c_ccc_cmd_dest_init(काष्ठा i3c_ccc_cmd_dest *dest, u8 addr,
 				   u16 payloadlen)
-{
+अणु
 	dest->addr = addr;
 	dest->payload.len = payloadlen;
-	if (payloadlen)
+	अगर (payloadlen)
 		dest->payload.data = kzalloc(payloadlen, GFP_KERNEL);
-	else
-		dest->payload.data = NULL;
+	अन्यथा
+		dest->payload.data = शून्य;
 
-	return dest->payload.data;
-}
+	वापस dest->payload.data;
+पूर्ण
 
-static void i3c_ccc_cmd_dest_cleanup(struct i3c_ccc_cmd_dest *dest)
-{
-	kfree(dest->payload.data);
-}
+अटल व्योम i3c_ccc_cmd_dest_cleanup(काष्ठा i3c_ccc_cmd_dest *dest)
+अणु
+	kमुक्त(dest->payload.data);
+पूर्ण
 
-static void i3c_ccc_cmd_init(struct i3c_ccc_cmd *cmd, bool rnw, u8 id,
-			     struct i3c_ccc_cmd_dest *dests,
-			     unsigned int ndests)
-{
+अटल व्योम i3c_ccc_cmd_init(काष्ठा i3c_ccc_cmd *cmd, bool rnw, u8 id,
+			     काष्ठा i3c_ccc_cmd_dest *dests,
+			     अचिन्हित पूर्णांक ndests)
+अणु
 	cmd->rnw = rnw ? 1 : 0;
 	cmd->id = id;
 	cmd->dests = dests;
 	cmd->ndests = ndests;
 	cmd->err = I3C_ERROR_UNKNOWN;
-}
+पूर्ण
 
-static int i3c_master_send_ccc_cmd_locked(struct i3c_master_controller *master,
-					  struct i3c_ccc_cmd *cmd)
-{
-	int ret;
+अटल पूर्णांक i3c_master_send_ccc_cmd_locked(काष्ठा i3c_master_controller *master,
+					  काष्ठा i3c_ccc_cmd *cmd)
+अणु
+	पूर्णांक ret;
 
-	if (!cmd || !master)
-		return -EINVAL;
+	अगर (!cmd || !master)
+		वापस -EINVAL;
 
-	if (WARN_ON(master->init_done &&
+	अगर (WARN_ON(master->init_करोne &&
 		    !rwsem_is_locked(&master->bus.lock)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!master->ops->send_ccc_cmd)
-		return -ENOTSUPP;
+	अगर (!master->ops->send_ccc_cmd)
+		वापस -ENOTSUPP;
 
-	if ((cmd->id & I3C_CCC_DIRECT) && (!cmd->dests || !cmd->ndests))
-		return -EINVAL;
+	अगर ((cmd->id & I3C_CCC_सूचीECT) && (!cmd->dests || !cmd->ndests))
+		वापस -EINVAL;
 
-	if (master->ops->supports_ccc_cmd &&
+	अगर (master->ops->supports_ccc_cmd &&
 	    !master->ops->supports_ccc_cmd(master, cmd))
-		return -ENOTSUPP;
+		वापस -ENOTSUPP;
 
 	ret = master->ops->send_ccc_cmd(master, cmd);
-	if (ret) {
-		if (cmd->err != I3C_ERROR_UNKNOWN)
-			return cmd->err;
+	अगर (ret) अणु
+		अगर (cmd->err != I3C_ERROR_UNKNOWN)
+			वापस cmd->err;
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct i2c_dev_desc *
-i3c_master_find_i2c_dev_by_addr(const struct i3c_master_controller *master,
+अटल काष्ठा i2c_dev_desc *
+i3c_master_find_i2c_dev_by_addr(स्थिर काष्ठा i3c_master_controller *master,
 				u16 addr)
-{
-	struct i2c_dev_desc *dev;
+अणु
+	काष्ठा i2c_dev_desc *dev;
 
-	i3c_bus_for_each_i2cdev(&master->bus, dev) {
-		if (dev->boardinfo->base.addr == addr)
-			return dev;
-	}
+	i3c_bus_क्रम_each_i2cdev(&master->bus, dev) अणु
+		अगर (dev->boardinfo->base.addr == addr)
+			वापस dev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * i3c_master_get_free_addr() - get a free address on the bus
+ * i3c_master_get_मुक्त_addr() - get a मुक्त address on the bus
  * @master: I3C master object
  * @start_addr: where to start searching
  *
- * This function must be called with the bus lock held in write mode.
+ * This function must be called with the bus lock held in ग_लिखो mode.
  *
- * Return: the first free address starting at @start_addr (included) or -ENOMEM
- * if there's no more address available.
+ * Return: the first मुक्त address starting at @start_addr (included) or -ENOMEM
+ * अगर there's no more address available.
  */
-int i3c_master_get_free_addr(struct i3c_master_controller *master,
+पूर्णांक i3c_master_get_मुक्त_addr(काष्ठा i3c_master_controller *master,
 			     u8 start_addr)
-{
-	return i3c_bus_get_free_addr(&master->bus, start_addr);
-}
-EXPORT_SYMBOL_GPL(i3c_master_get_free_addr);
+अणु
+	वापस i3c_bus_get_मुक्त_addr(&master->bus, start_addr);
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_master_get_मुक्त_addr);
 
-static void i3c_device_release(struct device *dev)
-{
-	struct i3c_device *i3cdev = dev_to_i3cdev(dev);
+अटल व्योम i3c_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा i3c_device *i3cdev = dev_to_i3cdev(dev);
 
 	WARN_ON(i3cdev->desc);
 
 	of_node_put(i3cdev->dev.of_node);
-	kfree(i3cdev);
-}
+	kमुक्त(i3cdev);
+पूर्ण
 
-static void i3c_master_free_i3c_dev(struct i3c_dev_desc *dev)
-{
-	kfree(dev);
-}
+अटल व्योम i3c_master_मुक्त_i3c_dev(काष्ठा i3c_dev_desc *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
 
-static struct i3c_dev_desc *
-i3c_master_alloc_i3c_dev(struct i3c_master_controller *master,
-			 const struct i3c_device_info *info)
-{
-	struct i3c_dev_desc *dev;
+अटल काष्ठा i3c_dev_desc *
+i3c_master_alloc_i3c_dev(काष्ठा i3c_master_controller *master,
+			 स्थिर काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_dev_desc *dev;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return ERR_PTR(-ENOMEM);
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस ERR_PTR(-ENOMEM);
 
 	dev->common.master = master;
 	dev->info = *info;
 	mutex_init(&dev->ibi_lock);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static int i3c_master_rstdaa_locked(struct i3c_master_controller *master,
+अटल पूर्णांक i3c_master_rstdaa_locked(काष्ठा i3c_master_controller *master,
 				    u8 addr)
-{
-	enum i3c_addr_slot_status addrstat;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अणु
+	क्रमागत i3c_addr_slot_status addrstat;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	if (!master)
-		return -EINVAL;
+	अगर (!master)
+		वापस -EINVAL;
 
 	addrstat = i3c_bus_get_addr_slot_status(&master->bus, addr);
-	if (addr != I3C_BROADCAST_ADDR && addrstat != I3C_ADDR_SLOT_I3C_DEV)
-		return -EINVAL;
+	अगर (addr != I3C_BROADCAST_ADDR && addrstat != I3C_ADDR_SLOT_I3C_DEV)
+		वापस -EINVAL;
 
 	i3c_ccc_cmd_dest_init(&dest, addr, 0);
 	i3c_ccc_cmd_init(&cmd, false,
@@ -773,8 +774,8 @@ static int i3c_master_rstdaa_locked(struct i3c_master_controller *master,
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i3c_master_entdaa_locked() - start a DAA (Dynamic Address Assignment)
@@ -787,37 +788,37 @@ static int i3c_master_rstdaa_locked(struct i3c_master_controller *master,
  * behind dynamic address assignment has to be handled in the I3C master
  * driver.
  *
- * This function must be called with the bus lock held in write mode.
+ * This function must be called with the bus lock held in ग_लिखो mode.
  *
- * Return: 0 in case of success, a positive I3C error code if the error is
+ * Return: 0 in हाल of success, a positive I3C error code अगर the error is
  * one of the official Mx error codes, and a negative error code otherwise.
  */
-int i3c_master_entdaa_locked(struct i3c_master_controller *master)
-{
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+पूर्णांक i3c_master_entdaa_locked(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
 	i3c_ccc_cmd_dest_init(&dest, I3C_BROADCAST_ADDR, 0);
 	i3c_ccc_cmd_init(&cmd, false, I3C_CCC_ENTDAA, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_master_entdaa_locked);
 
-static int i3c_master_enec_disec_locked(struct i3c_master_controller *master,
+अटल पूर्णांक i3c_master_enec_disec_locked(काष्ठा i3c_master_controller *master,
 					u8 addr, bool enable, u8 evts)
-{
-	struct i3c_ccc_events *events;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अणु
+	काष्ठा i3c_ccc_events *events;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	events = i3c_ccc_cmd_dest_init(&dest, addr, sizeof(*events));
-	if (!events)
-		return -ENOMEM;
+	events = i3c_ccc_cmd_dest_init(&dest, addr, माप(*events));
+	अगर (!events)
+		वापस -ENOMEM;
 
 	events->events = evts;
 	i3c_ccc_cmd_init(&cmd, false,
@@ -828,8 +829,8 @@ static int i3c_master_enec_disec_locked(struct i3c_master_controller *master,
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i3c_master_disec_locked() - send a DISEC CCC command
@@ -838,18 +839,18 @@ static int i3c_master_enec_disec_locked(struct i3c_master_controller *master,
  * @evts: events to disable
  *
  * Send a DISEC CCC command to disable some or all events coming from a
- * specific slave, or all devices if @addr is %I3C_BROADCAST_ADDR.
+ * specअगरic slave, or all devices अगर @addr is %I3C_BROADCAST_ADDR.
  *
- * This function must be called with the bus lock held in write mode.
+ * This function must be called with the bus lock held in ग_लिखो mode.
  *
- * Return: 0 in case of success, a positive I3C error code if the error is
+ * Return: 0 in हाल of success, a positive I3C error code अगर the error is
  * one of the official Mx error codes, and a negative error code otherwise.
  */
-int i3c_master_disec_locked(struct i3c_master_controller *master, u8 addr,
+पूर्णांक i3c_master_disec_locked(काष्ठा i3c_master_controller *master, u8 addr,
 			    u8 evts)
-{
-	return i3c_master_enec_disec_locked(master, addr, false, evts);
-}
+अणु
+	वापस i3c_master_enec_disec_locked(master, addr, false, evts);
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_master_disec_locked);
 
 /**
@@ -859,18 +860,18 @@ EXPORT_SYMBOL_GPL(i3c_master_disec_locked);
  * @evts: events to disable
  *
  * Sends an ENEC CCC command to enable some or all events coming from a
- * specific slave, or all devices if @addr is %I3C_BROADCAST_ADDR.
+ * specअगरic slave, or all devices अगर @addr is %I3C_BROADCAST_ADDR.
  *
- * This function must be called with the bus lock held in write mode.
+ * This function must be called with the bus lock held in ग_लिखो mode.
  *
- * Return: 0 in case of success, a positive I3C error code if the error is
+ * Return: 0 in हाल of success, a positive I3C error code अगर the error is
  * one of the official Mx error codes, and a negative error code otherwise.
  */
-int i3c_master_enec_locked(struct i3c_master_controller *master, u8 addr,
+पूर्णांक i3c_master_enec_locked(काष्ठा i3c_master_controller *master, u8 addr,
 			   u8 evts)
-{
-	return i3c_master_enec_disec_locked(master, addr, true, evts);
-}
+अणु
+	वापस i3c_master_enec_disec_locked(master, addr, true, evts);
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_master_enec_locked);
 
 /**
@@ -879,106 +880,106 @@ EXPORT_SYMBOL_GPL(i3c_master_enec_locked);
  *
  * Send a DEFSLVS CCC command containing all the devices known to the @master.
  * This is useful when you have secondary masters on the bus to propagate
- * device information.
+ * device inक्रमmation.
  *
  * This should be called after all I3C devices have been discovered (in other
  * words, after the DAA procedure has finished) and instantiated in
  * &i3c_master_controller_ops->bus_init().
- * It should also be called if a master ACKed an Hot-Join request and assigned
+ * It should also be called अगर a master ACKed an Hot-Join request and asचिन्हित
  * a dynamic address to the device joining the bus.
  *
- * This function must be called with the bus lock held in write mode.
+ * This function must be called with the bus lock held in ग_लिखो mode.
  *
- * Return: 0 in case of success, a positive I3C error code if the error is
+ * Return: 0 in हाल of success, a positive I3C error code अगर the error is
  * one of the official Mx error codes, and a negative error code otherwise.
  */
-int i3c_master_defslvs_locked(struct i3c_master_controller *master)
-{
-	struct i3c_ccc_defslvs *defslvs;
-	struct i3c_ccc_dev_desc *desc;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_dev_desc *i3cdev;
-	struct i2c_dev_desc *i2cdev;
-	struct i3c_ccc_cmd cmd;
-	struct i3c_bus *bus;
+पूर्णांक i3c_master_defslvs_locked(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा i3c_ccc_defslvs *defslvs;
+	काष्ठा i3c_ccc_dev_desc *desc;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_dev_desc *i3cdev;
+	काष्ठा i2c_dev_desc *i2cdev;
+	काष्ठा i3c_ccc_cmd cmd;
+	काष्ठा i3c_bus *bus;
 	bool send = false;
-	int ndevs = 0, ret;
+	पूर्णांक ndevs = 0, ret;
 
-	if (!master)
-		return -EINVAL;
+	अगर (!master)
+		वापस -EINVAL;
 
 	bus = i3c_master_get_bus(master);
-	i3c_bus_for_each_i3cdev(bus, i3cdev) {
+	i3c_bus_क्रम_each_i3cdev(bus, i3cdev) अणु
 		ndevs++;
 
-		if (i3cdev == master->this)
-			continue;
+		अगर (i3cdev == master->this)
+			जारी;
 
-		if (I3C_BCR_DEVICE_ROLE(i3cdev->info.bcr) ==
+		अगर (I3C_BCR_DEVICE_ROLE(i3cdev->info.bcr) ==
 		    I3C_BCR_I3C_MASTER)
 			send = true;
-	}
+	पूर्ण
 
 	/* No other master on the bus, skip DEFSLVS. */
-	if (!send)
-		return 0;
+	अगर (!send)
+		वापस 0;
 
-	i3c_bus_for_each_i2cdev(bus, i2cdev)
+	i3c_bus_क्रम_each_i2cdev(bus, i2cdev)
 		ndevs++;
 
 	defslvs = i3c_ccc_cmd_dest_init(&dest, I3C_BROADCAST_ADDR,
-					struct_size(defslvs, slaves,
+					काष्ठा_size(defslvs, slaves,
 						    ndevs - 1));
-	if (!defslvs)
-		return -ENOMEM;
+	अगर (!defslvs)
+		वापस -ENOMEM;
 
 	defslvs->count = ndevs;
 	defslvs->master.bcr = master->this->info.bcr;
 	defslvs->master.dcr = master->this->info.dcr;
 	defslvs->master.dyn_addr = master->this->info.dyn_addr << 1;
-	defslvs->master.static_addr = I3C_BROADCAST_ADDR << 1;
+	defslvs->master.अटल_addr = I3C_BROADCAST_ADDR << 1;
 
 	desc = defslvs->slaves;
-	i3c_bus_for_each_i2cdev(bus, i2cdev) {
+	i3c_bus_क्रम_each_i2cdev(bus, i2cdev) अणु
 		desc->lvr = i2cdev->lvr;
-		desc->static_addr = i2cdev->addr << 1;
+		desc->अटल_addr = i2cdev->addr << 1;
 		desc++;
-	}
+	पूर्ण
 
-	i3c_bus_for_each_i3cdev(bus, i3cdev) {
+	i3c_bus_क्रम_each_i3cdev(bus, i3cdev) अणु
 		/* Skip the I3C dev representing this master. */
-		if (i3cdev == master->this)
-			continue;
+		अगर (i3cdev == master->this)
+			जारी;
 
 		desc->bcr = i3cdev->info.bcr;
 		desc->dcr = i3cdev->info.dcr;
 		desc->dyn_addr = i3cdev->info.dyn_addr << 1;
-		desc->static_addr = i3cdev->info.static_addr << 1;
+		desc->अटल_addr = i3cdev->info.अटल_addr << 1;
 		desc++;
-	}
+	पूर्ण
 
 	i3c_ccc_cmd_init(&cmd, false, I3C_CCC_DEFSLVS, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_master_defslvs_locked);
 
-static int i3c_master_setda_locked(struct i3c_master_controller *master,
+अटल पूर्णांक i3c_master_setda_locked(काष्ठा i3c_master_controller *master,
 				   u8 oldaddr, u8 newaddr, bool setdasa)
-{
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_setda *setda;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अणु
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_setda *setda;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	if (!oldaddr || !newaddr)
-		return -EINVAL;
+	अगर (!oldaddr || !newaddr)
+		वापस -EINVAL;
 
-	setda = i3c_ccc_cmd_dest_init(&dest, oldaddr, sizeof(*setda));
-	if (!setda)
-		return -ENOMEM;
+	setda = i3c_ccc_cmd_dest_init(&dest, oldaddr, माप(*setda));
+	अगर (!setda)
+		वापस -ENOMEM;
 
 	setda->addr = newaddr << 1;
 	i3c_ccc_cmd_init(&cmd, false,
@@ -987,512 +988,512 @@ static int i3c_master_setda_locked(struct i3c_master_controller *master,
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_setdasa_locked(struct i3c_master_controller *master,
-				     u8 static_addr, u8 dyn_addr)
-{
-	return i3c_master_setda_locked(master, static_addr, dyn_addr, true);
-}
+अटल पूर्णांक i3c_master_setdasa_locked(काष्ठा i3c_master_controller *master,
+				     u8 अटल_addr, u8 dyn_addr)
+अणु
+	वापस i3c_master_setda_locked(master, अटल_addr, dyn_addr, true);
+पूर्ण
 
-static int i3c_master_setnewda_locked(struct i3c_master_controller *master,
+अटल पूर्णांक i3c_master_setnewda_locked(काष्ठा i3c_master_controller *master,
 				      u8 oldaddr, u8 newaddr)
-{
-	return i3c_master_setda_locked(master, oldaddr, newaddr, false);
-}
+अणु
+	वापस i3c_master_setda_locked(master, oldaddr, newaddr, false);
+पूर्ण
 
-static int i3c_master_getmrl_locked(struct i3c_master_controller *master,
-				    struct i3c_device_info *info)
-{
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_mrl *mrl;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अटल पूर्णांक i3c_master_geपंचांगrl_locked(काष्ठा i3c_master_controller *master,
+				    काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_mrl *mrl;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	mrl = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, sizeof(*mrl));
-	if (!mrl)
-		return -ENOMEM;
+	mrl = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, माप(*mrl));
+	अगर (!mrl)
+		वापस -ENOMEM;
 
 	/*
-	 * When the device does not have IBI payload GETMRL only returns 2
+	 * When the device करोes not have IBI payload GETMRL only वापसs 2
 	 * bytes of data.
 	 */
-	if (!(info->bcr & I3C_BCR_IBI_PAYLOAD))
+	अगर (!(info->bcr & I3C_BCR_IBI_PAYLOAD))
 		dest.payload.len -= 1;
 
 	i3c_ccc_cmd_init(&cmd, true, I3C_CCC_GETMRL, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	switch (dest.payload.len) {
-	case 3:
+	चयन (dest.payload.len) अणु
+	हाल 3:
 		info->max_ibi_len = mrl->ibi_len;
 		fallthrough;
-	case 2:
-		info->max_read_len = be16_to_cpu(mrl->read_len);
-		break;
-	default:
+	हाल 2:
+		info->max_पढ़ो_len = be16_to_cpu(mrl->पढ़ो_len);
+		अवरोध;
+	शेष:
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_getmwl_locked(struct i3c_master_controller *master,
-				    struct i3c_device_info *info)
-{
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_mwl *mwl;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अटल पूर्णांक i3c_master_geपंचांगwl_locked(काष्ठा i3c_master_controller *master,
+				    काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_mwl *mwl;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	mwl = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, sizeof(*mwl));
-	if (!mwl)
-		return -ENOMEM;
+	mwl = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, माप(*mwl));
+	अगर (!mwl)
+		वापस -ENOMEM;
 
 	i3c_ccc_cmd_init(&cmd, true, I3C_CCC_GETMWL, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (dest.payload.len != sizeof(*mwl)) {
+	अगर (dest.payload.len != माप(*mwl)) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	info->max_write_len = be16_to_cpu(mwl->len);
+	info->max_ग_लिखो_len = be16_to_cpu(mwl->len);
 
 out:
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_getmxds_locked(struct i3c_master_controller *master,
-				     struct i3c_device_info *info)
-{
-	struct i3c_ccc_getmxds *getmaxds;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अटल पूर्णांक i3c_master_geपंचांगxds_locked(काष्ठा i3c_master_controller *master,
+				     काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_ccc_geपंचांगxds *geपंचांगaxds;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	getmaxds = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr,
-					 sizeof(*getmaxds));
-	if (!getmaxds)
-		return -ENOMEM;
+	geपंचांगaxds = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr,
+					 माप(*geपंचांगaxds));
+	अगर (!geपंचांगaxds)
+		वापस -ENOMEM;
 
 	i3c_ccc_cmd_init(&cmd, true, I3C_CCC_GETMXDS, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (dest.payload.len != 2 && dest.payload.len != 5) {
+	अगर (dest.payload.len != 2 && dest.payload.len != 5) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	info->max_read_ds = getmaxds->maxrd;
-	info->max_write_ds = getmaxds->maxwr;
-	if (dest.payload.len == 5)
-		info->max_read_turnaround = getmaxds->maxrdturn[0] |
-					    ((u32)getmaxds->maxrdturn[1] << 8) |
-					    ((u32)getmaxds->maxrdturn[2] << 16);
+	info->max_पढ़ो_ds = geपंचांगaxds->maxrd;
+	info->max_ग_लिखो_ds = geपंचांगaxds->maxwr;
+	अगर (dest.payload.len == 5)
+		info->max_पढ़ो_turnaround = geपंचांगaxds->maxrdturn[0] |
+					    ((u32)geपंचांगaxds->maxrdturn[1] << 8) |
+					    ((u32)geपंचांगaxds->maxrdturn[2] << 16);
 
 out:
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_gethdrcap_locked(struct i3c_master_controller *master,
-				       struct i3c_device_info *info)
-{
-	struct i3c_ccc_gethdrcap *gethdrcap;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अटल पूर्णांक i3c_master_gethdrcap_locked(काष्ठा i3c_master_controller *master,
+				       काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_ccc_gethdrcap *gethdrcap;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
 	gethdrcap = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr,
-					  sizeof(*gethdrcap));
-	if (!gethdrcap)
-		return -ENOMEM;
+					  माप(*gethdrcap));
+	अगर (!gethdrcap)
+		वापस -ENOMEM;
 
 	i3c_ccc_cmd_init(&cmd, true, I3C_CCC_GETHDRCAP, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (dest.payload.len != 1) {
+	अगर (dest.payload.len != 1) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	info->hdr_cap = gethdrcap->modes;
 
 out:
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_getpid_locked(struct i3c_master_controller *master,
-				    struct i3c_device_info *info)
-{
-	struct i3c_ccc_getpid *getpid;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret, i;
+अटल पूर्णांक i3c_master_getpid_locked(काष्ठा i3c_master_controller *master,
+				    काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_ccc_getpid *getpid;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret, i;
 
-	getpid = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, sizeof(*getpid));
-	if (!getpid)
-		return -ENOMEM;
+	getpid = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, माप(*getpid));
+	अगर (!getpid)
+		वापस -ENOMEM;
 
 	i3c_ccc_cmd_init(&cmd, true, I3C_CCC_GETPID, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	info->pid = 0;
-	for (i = 0; i < sizeof(getpid->pid); i++) {
-		int sft = (sizeof(getpid->pid) - i - 1) * 8;
+	क्रम (i = 0; i < माप(getpid->pid); i++) अणु
+		पूर्णांक sft = (माप(getpid->pid) - i - 1) * 8;
 
 		info->pid |= (u64)getpid->pid[i] << sft;
-	}
+	पूर्ण
 
 out:
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_getbcr_locked(struct i3c_master_controller *master,
-				    struct i3c_device_info *info)
-{
-	struct i3c_ccc_getbcr *getbcr;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अटल पूर्णांक i3c_master_getbcr_locked(काष्ठा i3c_master_controller *master,
+				    काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_ccc_getbcr *getbcr;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	getbcr = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, sizeof(*getbcr));
-	if (!getbcr)
-		return -ENOMEM;
+	getbcr = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, माप(*getbcr));
+	अगर (!getbcr)
+		वापस -ENOMEM;
 
 	i3c_ccc_cmd_init(&cmd, true, I3C_CCC_GETBCR, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	info->bcr = getbcr->bcr;
 
 out:
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_getdcr_locked(struct i3c_master_controller *master,
-				    struct i3c_device_info *info)
-{
-	struct i3c_ccc_getdcr *getdcr;
-	struct i3c_ccc_cmd_dest dest;
-	struct i3c_ccc_cmd cmd;
-	int ret;
+अटल पूर्णांक i3c_master_getdcr_locked(काष्ठा i3c_master_controller *master,
+				    काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_ccc_getdcr *getdcr;
+	काष्ठा i3c_ccc_cmd_dest dest;
+	काष्ठा i3c_ccc_cmd cmd;
+	पूर्णांक ret;
 
-	getdcr = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, sizeof(*getdcr));
-	if (!getdcr)
-		return -ENOMEM;
+	getdcr = i3c_ccc_cmd_dest_init(&dest, info->dyn_addr, माप(*getdcr));
+	अगर (!getdcr)
+		वापस -ENOMEM;
 
 	i3c_ccc_cmd_init(&cmd, true, I3C_CCC_GETDCR, &dest, 1);
 	ret = i3c_master_send_ccc_cmd_locked(master, &cmd);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	info->dcr = getdcr->dcr;
 
 out:
 	i3c_ccc_cmd_dest_cleanup(&dest);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i3c_master_retrieve_dev_info(struct i3c_dev_desc *dev)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
-	enum i3c_addr_slot_status slot_status;
-	int ret;
+अटल पूर्णांक i3c_master_retrieve_dev_info(काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
+	क्रमागत i3c_addr_slot_status slot_status;
+	पूर्णांक ret;
 
-	if (!dev->info.dyn_addr)
-		return -EINVAL;
+	अगर (!dev->info.dyn_addr)
+		वापस -EINVAL;
 
 	slot_status = i3c_bus_get_addr_slot_status(&master->bus,
 						   dev->info.dyn_addr);
-	if (slot_status == I3C_ADDR_SLOT_RSVD ||
+	अगर (slot_status == I3C_ADDR_SLOT_RSVD ||
 	    slot_status == I3C_ADDR_SLOT_I2C_DEV)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ret = i3c_master_getpid_locked(master, &dev->info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = i3c_master_getbcr_locked(master, &dev->info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = i3c_master_getdcr_locked(master, &dev->info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (dev->info.bcr & I3C_BCR_MAX_DATA_SPEED_LIM) {
-		ret = i3c_master_getmxds_locked(master, &dev->info);
-		if (ret)
-			return ret;
-	}
+	अगर (dev->info.bcr & I3C_BCR_MAX_DATA_SPEED_LIM) अणु
+		ret = i3c_master_geपंचांगxds_locked(master, &dev->info);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->info.bcr & I3C_BCR_IBI_PAYLOAD)
+	अगर (dev->info.bcr & I3C_BCR_IBI_PAYLOAD)
 		dev->info.max_ibi_len = 1;
 
-	i3c_master_getmrl_locked(master, &dev->info);
-	i3c_master_getmwl_locked(master, &dev->info);
+	i3c_master_geपंचांगrl_locked(master, &dev->info);
+	i3c_master_geपंचांगwl_locked(master, &dev->info);
 
-	if (dev->info.bcr & I3C_BCR_HDR_CAP) {
+	अगर (dev->info.bcr & I3C_BCR_HDR_CAP) अणु
 		ret = i3c_master_gethdrcap_locked(master, &dev->info);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void i3c_master_put_i3c_addrs(struct i3c_dev_desc *dev)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
+अटल व्योम i3c_master_put_i3c_addrs(काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
 
-	if (dev->info.static_addr)
+	अगर (dev->info.अटल_addr)
 		i3c_bus_set_addr_slot_status(&master->bus,
-					     dev->info.static_addr,
+					     dev->info.अटल_addr,
 					     I3C_ADDR_SLOT_FREE);
 
-	if (dev->info.dyn_addr)
+	अगर (dev->info.dyn_addr)
 		i3c_bus_set_addr_slot_status(&master->bus, dev->info.dyn_addr,
 					     I3C_ADDR_SLOT_FREE);
 
-	if (dev->boardinfo && dev->boardinfo->init_dyn_addr)
+	अगर (dev->boardinfo && dev->boardinfo->init_dyn_addr)
 		i3c_bus_set_addr_slot_status(&master->bus, dev->info.dyn_addr,
 					     I3C_ADDR_SLOT_FREE);
-}
+पूर्ण
 
-static int i3c_master_get_i3c_addrs(struct i3c_dev_desc *dev)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
-	enum i3c_addr_slot_status status;
+अटल पूर्णांक i3c_master_get_i3c_addrs(काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
+	क्रमागत i3c_addr_slot_status status;
 
-	if (!dev->info.static_addr && !dev->info.dyn_addr)
-		return 0;
+	अगर (!dev->info.अटल_addr && !dev->info.dyn_addr)
+		वापस 0;
 
-	if (dev->info.static_addr) {
+	अगर (dev->info.अटल_addr) अणु
 		status = i3c_bus_get_addr_slot_status(&master->bus,
-						      dev->info.static_addr);
-		if (status != I3C_ADDR_SLOT_FREE)
-			return -EBUSY;
+						      dev->info.अटल_addr);
+		अगर (status != I3C_ADDR_SLOT_FREE)
+			वापस -EBUSY;
 
 		i3c_bus_set_addr_slot_status(&master->bus,
-					     dev->info.static_addr,
+					     dev->info.अटल_addr,
 					     I3C_ADDR_SLOT_I3C_DEV);
-	}
+	पूर्ण
 
 	/*
-	 * ->init_dyn_addr should have been reserved before that, so, if we're
+	 * ->init_dyn_addr should have been reserved beक्रमe that, so, अगर we're
 	 * trying to apply a pre-reserved dynamic address, we should not try
-	 * to reserve the address slot a second time.
+	 * to reserve the address slot a second समय.
 	 */
-	if (dev->info.dyn_addr &&
+	अगर (dev->info.dyn_addr &&
 	    (!dev->boardinfo ||
-	     dev->boardinfo->init_dyn_addr != dev->info.dyn_addr)) {
+	     dev->boardinfo->init_dyn_addr != dev->info.dyn_addr)) अणु
 		status = i3c_bus_get_addr_slot_status(&master->bus,
 						      dev->info.dyn_addr);
-		if (status != I3C_ADDR_SLOT_FREE)
-			goto err_release_static_addr;
+		अगर (status != I3C_ADDR_SLOT_FREE)
+			जाओ err_release_अटल_addr;
 
 		i3c_bus_set_addr_slot_status(&master->bus, dev->info.dyn_addr,
 					     I3C_ADDR_SLOT_I3C_DEV);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_release_static_addr:
-	if (dev->info.static_addr)
+err_release_अटल_addr:
+	अगर (dev->info.अटल_addr)
 		i3c_bus_set_addr_slot_status(&master->bus,
-					     dev->info.static_addr,
+					     dev->info.अटल_addr,
 					     I3C_ADDR_SLOT_FREE);
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int i3c_master_attach_i3c_dev(struct i3c_master_controller *master,
-				     struct i3c_dev_desc *dev)
-{
-	int ret;
+अटल पूर्णांक i3c_master_attach_i3c_dev(काष्ठा i3c_master_controller *master,
+				     काष्ठा i3c_dev_desc *dev)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * We don't attach devices to the controller until they are
+	 * We करोn't attach devices to the controller until they are
 	 * addressable on the bus.
 	 */
-	if (!dev->info.static_addr && !dev->info.dyn_addr)
-		return 0;
+	अगर (!dev->info.अटल_addr && !dev->info.dyn_addr)
+		वापस 0;
 
 	ret = i3c_master_get_i3c_addrs(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Do not attach the master device itself. */
-	if (master->this != dev && master->ops->attach_i3c_dev) {
+	अगर (master->this != dev && master->ops->attach_i3c_dev) अणु
 		ret = master->ops->attach_i3c_dev(dev);
-		if (ret) {
+		अगर (ret) अणु
 			i3c_master_put_i3c_addrs(dev);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	list_add_tail(&dev->common.node, &master->bus.devs.i3c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i3c_master_reattach_i3c_dev(struct i3c_dev_desc *dev,
+अटल पूर्णांक i3c_master_reattach_i3c_dev(काष्ठा i3c_dev_desc *dev,
 				       u8 old_dyn_addr)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
-	enum i3c_addr_slot_status status;
-	int ret;
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
+	क्रमागत i3c_addr_slot_status status;
+	पूर्णांक ret;
 
-	if (dev->info.dyn_addr != old_dyn_addr &&
+	अगर (dev->info.dyn_addr != old_dyn_addr &&
 	    (!dev->boardinfo ||
-	     dev->info.dyn_addr != dev->boardinfo->init_dyn_addr)) {
+	     dev->info.dyn_addr != dev->boardinfo->init_dyn_addr)) अणु
 		status = i3c_bus_get_addr_slot_status(&master->bus,
 						      dev->info.dyn_addr);
-		if (status != I3C_ADDR_SLOT_FREE)
-			return -EBUSY;
+		अगर (status != I3C_ADDR_SLOT_FREE)
+			वापस -EBUSY;
 		i3c_bus_set_addr_slot_status(&master->bus,
 					     dev->info.dyn_addr,
 					     I3C_ADDR_SLOT_I3C_DEV);
-	}
+	पूर्ण
 
-	if (master->ops->reattach_i3c_dev) {
+	अगर (master->ops->reattach_i3c_dev) अणु
 		ret = master->ops->reattach_i3c_dev(dev, old_dyn_addr);
-		if (ret) {
+		अगर (ret) अणु
 			i3c_master_put_i3c_addrs(dev);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void i3c_master_detach_i3c_dev(struct i3c_dev_desc *dev)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
+अटल व्योम i3c_master_detach_i3c_dev(काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
 
 	/* Do not detach the master device itself. */
-	if (master->this != dev && master->ops->detach_i3c_dev)
+	अगर (master->this != dev && master->ops->detach_i3c_dev)
 		master->ops->detach_i3c_dev(dev);
 
 	i3c_master_put_i3c_addrs(dev);
 	list_del(&dev->common.node);
-}
+पूर्ण
 
-static int i3c_master_attach_i2c_dev(struct i3c_master_controller *master,
-				     struct i2c_dev_desc *dev)
-{
-	int ret;
+अटल पूर्णांक i3c_master_attach_i2c_dev(काष्ठा i3c_master_controller *master,
+				     काष्ठा i2c_dev_desc *dev)
+अणु
+	पूर्णांक ret;
 
-	if (master->ops->attach_i2c_dev) {
+	अगर (master->ops->attach_i2c_dev) अणु
 		ret = master->ops->attach_i2c_dev(dev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	list_add_tail(&dev->common.node, &master->bus.devs.i2c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void i3c_master_detach_i2c_dev(struct i2c_dev_desc *dev)
-{
-	struct i3c_master_controller *master = i2c_dev_get_master(dev);
+अटल व्योम i3c_master_detach_i2c_dev(काष्ठा i2c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master = i2c_dev_get_master(dev);
 
 	list_del(&dev->common.node);
 
-	if (master->ops->detach_i2c_dev)
+	अगर (master->ops->detach_i2c_dev)
 		master->ops->detach_i2c_dev(dev);
-}
+पूर्ण
 
-static int i3c_master_early_i3c_dev_add(struct i3c_master_controller *master,
-					  struct i3c_dev_boardinfo *boardinfo)
-{
-	struct i3c_device_info info = {
-		.static_addr = boardinfo->static_addr,
-	};
-	struct i3c_dev_desc *i3cdev;
-	int ret;
+अटल पूर्णांक i3c_master_early_i3c_dev_add(काष्ठा i3c_master_controller *master,
+					  काष्ठा i3c_dev_boardinfo *boardinfo)
+अणु
+	काष्ठा i3c_device_info info = अणु
+		.अटल_addr = boardinfo->अटल_addr,
+	पूर्ण;
+	काष्ठा i3c_dev_desc *i3cdev;
+	पूर्णांक ret;
 
 	i3cdev = i3c_master_alloc_i3c_dev(master, &info);
-	if (IS_ERR(i3cdev))
-		return -ENOMEM;
+	अगर (IS_ERR(i3cdev))
+		वापस -ENOMEM;
 
 	i3cdev->boardinfo = boardinfo;
 
 	ret = i3c_master_attach_i3c_dev(master, i3cdev);
-	if (ret)
-		goto err_free_dev;
+	अगर (ret)
+		जाओ err_मुक्त_dev;
 
-	ret = i3c_master_setdasa_locked(master, i3cdev->info.static_addr,
+	ret = i3c_master_setdasa_locked(master, i3cdev->info.अटल_addr,
 					i3cdev->boardinfo->init_dyn_addr);
-	if (ret)
-		goto err_detach_dev;
+	अगर (ret)
+		जाओ err_detach_dev;
 
 	i3cdev->info.dyn_addr = i3cdev->boardinfo->init_dyn_addr;
 	ret = i3c_master_reattach_i3c_dev(i3cdev, 0);
-	if (ret)
-		goto err_rstdaa;
+	अगर (ret)
+		जाओ err_rstdaa;
 
 	ret = i3c_master_retrieve_dev_info(i3cdev);
-	if (ret)
-		goto err_rstdaa;
+	अगर (ret)
+		जाओ err_rstdaa;
 
-	return 0;
+	वापस 0;
 
 err_rstdaa:
 	i3c_master_rstdaa_locked(master, i3cdev->boardinfo->init_dyn_addr);
 err_detach_dev:
 	i3c_master_detach_i3c_dev(i3cdev);
-err_free_dev:
-	i3c_master_free_i3c_dev(i3cdev);
+err_मुक्त_dev:
+	i3c_master_मुक्त_i3c_dev(i3cdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-i3c_master_register_new_i3c_devs(struct i3c_master_controller *master)
-{
-	struct i3c_dev_desc *desc;
-	int ret;
+अटल व्योम
+i3c_master_रेजिस्टर_new_i3c_devs(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा i3c_dev_desc *desc;
+	पूर्णांक ret;
 
-	if (!master->init_done)
-		return;
+	अगर (!master->init_करोne)
+		वापस;
 
-	i3c_bus_for_each_i3cdev(&master->bus, desc) {
-		if (desc->dev || !desc->info.dyn_addr || desc == master->this)
-			continue;
+	i3c_bus_क्रम_each_i3cdev(&master->bus, desc) अणु
+		अगर (desc->dev || !desc->info.dyn_addr || desc == master->this)
+			जारी;
 
-		desc->dev = kzalloc(sizeof(*desc->dev), GFP_KERNEL);
-		if (!desc->dev)
-			continue;
+		desc->dev = kzalloc(माप(*desc->dev), GFP_KERNEL);
+		अगर (!desc->dev)
+			जारी;
 
 		desc->dev->bus = &master->bus;
 		desc->dev->desc = desc;
@@ -1503,517 +1504,517 @@ i3c_master_register_new_i3c_devs(struct i3c_master_controller *master)
 		dev_set_name(&desc->dev->dev, "%d-%llx", master->bus.id,
 			     desc->info.pid);
 
-		if (desc->boardinfo)
+		अगर (desc->boardinfo)
 			desc->dev->dev.of_node = desc->boardinfo->of_node;
 
-		ret = device_register(&desc->dev->dev);
-		if (ret)
+		ret = device_रेजिस्टर(&desc->dev->dev);
+		अगर (ret)
 			dev_err(&master->dev,
 				"Failed to add I3C device (err = %d)\n", ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * i3c_master_do_daa() - do a DAA (Dynamic Address Assignment)
- * @master: master doing the DAA
+ * i3c_master_करो_daa() - करो a DAA (Dynamic Address Assignment)
+ * @master: master करोing the DAA
  *
  * This function is instantiating an I3C device object and adding it to the
- * I3C device list. All device information are automatically retrieved using
+ * I3C device list. All device inक्रमmation are स्वतःmatically retrieved using
  * standard CCC commands.
  *
- * The I3C device object is returned in case the master wants to attach
- * private data to it using i3c_dev_set_master_data().
+ * The I3C device object is वापसed in हाल the master wants to attach
+ * निजी data to it using i3c_dev_set_master_data().
  *
- * This function must be called with the bus lock held in write mode.
+ * This function must be called with the bus lock held in ग_लिखो mode.
  *
- * Return: a 0 in case of success, an negative error code otherwise.
+ * Return: a 0 in हाल of success, an negative error code otherwise.
  */
-int i3c_master_do_daa(struct i3c_master_controller *master)
-{
-	int ret;
+पूर्णांक i3c_master_करो_daa(काष्ठा i3c_master_controller *master)
+अणु
+	पूर्णांक ret;
 
-	i3c_bus_maintenance_lock(&master->bus);
-	ret = master->ops->do_daa(master);
-	i3c_bus_maintenance_unlock(&master->bus);
+	i3c_bus_मुख्यtenance_lock(&master->bus);
+	ret = master->ops->करो_daa(master);
+	i3c_bus_मुख्यtenance_unlock(&master->bus);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	i3c_bus_normaluse_lock(&master->bus);
-	i3c_master_register_new_i3c_devs(master);
+	i3c_master_रेजिस्टर_new_i3c_devs(master);
 	i3c_bus_normaluse_unlock(&master->bus);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(i3c_master_do_daa);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_master_करो_daa);
 
 /**
- * i3c_master_set_info() - set master device information
+ * i3c_master_set_info() - set master device inक्रमmation
  * @master: master used to send frames on the bus
- * @info: I3C device information
+ * @info: I3C device inक्रमmation
  *
  * Set master device info. This should be called from
  * &i3c_master_controller_ops->bus_init().
  *
- * Not all &i3c_device_info fields are meaningful for a master device.
+ * Not all &i3c_device_info fields are meaningful क्रम a master device.
  * Here is a list of fields that should be properly filled:
  *
  * - &i3c_device_info->dyn_addr
  * - &i3c_device_info->bcr
  * - &i3c_device_info->dcr
  * - &i3c_device_info->pid
- * - &i3c_device_info->hdr_cap if %I3C_BCR_HDR_CAP bit is set in
+ * - &i3c_device_info->hdr_cap अगर %I3C_BCR_HDR_CAP bit is set in
  *   &i3c_device_info->bcr
  *
- * This function must be called with the bus lock held in maintenance mode.
+ * This function must be called with the bus lock held in मुख्यtenance mode.
  *
- * Return: 0 if @info contains valid information (not every piece of
- * information can be checked, but we can at least make sure @info->dyn_addr
+ * Return: 0 अगर @info contains valid inक्रमmation (not every piece of
+ * inक्रमmation can be checked, but we can at least make sure @info->dyn_addr
  * and @info->bcr are correct), -EINVAL otherwise.
  */
-int i3c_master_set_info(struct i3c_master_controller *master,
-			const struct i3c_device_info *info)
-{
-	struct i3c_dev_desc *i3cdev;
-	int ret;
+पूर्णांक i3c_master_set_info(काष्ठा i3c_master_controller *master,
+			स्थिर काष्ठा i3c_device_info *info)
+अणु
+	काष्ठा i3c_dev_desc *i3cdev;
+	पूर्णांक ret;
 
-	if (!i3c_bus_dev_addr_is_avail(&master->bus, info->dyn_addr))
-		return -EINVAL;
+	अगर (!i3c_bus_dev_addr_is_avail(&master->bus, info->dyn_addr))
+		वापस -EINVAL;
 
-	if (I3C_BCR_DEVICE_ROLE(info->bcr) == I3C_BCR_I3C_MASTER &&
+	अगर (I3C_BCR_DEVICE_ROLE(info->bcr) == I3C_BCR_I3C_MASTER &&
 	    master->secondary)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (master->this)
-		return -EINVAL;
+	अगर (master->this)
+		वापस -EINVAL;
 
 	i3cdev = i3c_master_alloc_i3c_dev(master, info);
-	if (IS_ERR(i3cdev))
-		return PTR_ERR(i3cdev);
+	अगर (IS_ERR(i3cdev))
+		वापस PTR_ERR(i3cdev);
 
 	master->this = i3cdev;
 	master->bus.cur_master = master->this;
 
 	ret = i3c_master_attach_i3c_dev(master, i3cdev);
-	if (ret)
-		goto err_free_dev;
+	अगर (ret)
+		जाओ err_मुक्त_dev;
 
-	return 0;
+	वापस 0;
 
-err_free_dev:
-	i3c_master_free_i3c_dev(i3cdev);
+err_मुक्त_dev:
+	i3c_master_मुक्त_i3c_dev(i3cdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_master_set_info);
 
-static void i3c_master_detach_free_devs(struct i3c_master_controller *master)
-{
-	struct i3c_dev_desc *i3cdev, *i3ctmp;
-	struct i2c_dev_desc *i2cdev, *i2ctmp;
+अटल व्योम i3c_master_detach_मुक्त_devs(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा i3c_dev_desc *i3cdev, *i3cपंचांगp;
+	काष्ठा i2c_dev_desc *i2cdev, *i2cपंचांगp;
 
-	list_for_each_entry_safe(i3cdev, i3ctmp, &master->bus.devs.i3c,
-				 common.node) {
+	list_क्रम_each_entry_safe(i3cdev, i3cपंचांगp, &master->bus.devs.i3c,
+				 common.node) अणु
 		i3c_master_detach_i3c_dev(i3cdev);
 
-		if (i3cdev->boardinfo && i3cdev->boardinfo->init_dyn_addr)
+		अगर (i3cdev->boardinfo && i3cdev->boardinfo->init_dyn_addr)
 			i3c_bus_set_addr_slot_status(&master->bus,
 					i3cdev->boardinfo->init_dyn_addr,
 					I3C_ADDR_SLOT_FREE);
 
-		i3c_master_free_i3c_dev(i3cdev);
-	}
+		i3c_master_मुक्त_i3c_dev(i3cdev);
+	पूर्ण
 
-	list_for_each_entry_safe(i2cdev, i2ctmp, &master->bus.devs.i2c,
-				 common.node) {
+	list_क्रम_each_entry_safe(i2cdev, i2cपंचांगp, &master->bus.devs.i2c,
+				 common.node) अणु
 		i3c_master_detach_i2c_dev(i2cdev);
 		i3c_bus_set_addr_slot_status(&master->bus,
 					     i2cdev->addr,
 					     I3C_ADDR_SLOT_FREE);
-		i3c_master_free_i2c_dev(i2cdev);
-	}
-}
+		i3c_master_मुक्त_i2c_dev(i2cdev);
+	पूर्ण
+पूर्ण
 
 /**
  * i3c_master_bus_init() - initialize an I3C bus
- * @master: main master initializing the bus
+ * @master: मुख्य master initializing the bus
  *
  * This function is following all initialisation steps described in the I3C
- * specification:
+ * specअगरication:
  *
- * 1. Attach I2C devs to the master so that the master can fill its internal
+ * 1. Attach I2C devs to the master so that the master can fill its पूर्णांकernal
  *    device table appropriately
  *
  * 2. Call &i3c_master_controller_ops->bus_init() method to initialize
  *    the master controller. That's usually where the bus mode is selected
  *    (pure bus or mixed fast/slow bus)
  *
- * 3. Instruct all devices on the bus to drop their dynamic address. This is
+ * 3. Inकाष्ठा all devices on the bus to drop their dynamic address. This is
  *    particularly important when the bus was previously configured by someone
- *    else (for example the bootloader)
+ *    अन्यथा (क्रम example the bootloader)
  *
  * 4. Disable all slave events.
  *
- * 5. Reserve address slots for I3C devices with init_dyn_addr. And if devices
- *    also have static_addr, try to pre-assign dynamic addresses requested by
- *    the FW with SETDASA and attach corresponding statically defined I3C
+ * 5. Reserve address slots क्रम I3C devices with init_dyn_addr. And अगर devices
+ *    also have अटल_addr, try to pre-assign dynamic addresses requested by
+ *    the FW with SETDASA and attach corresponding अटलally defined I3C
  *    devices to the master.
  *
  * 6. Do a DAA (Dynamic Address Assignment) to assign dynamic addresses to all
- *    remaining I3C devices
+ *    reमुख्यing I3C devices
  *
- * Once this is done, all I3C and I2C devices should be usable.
+ * Once this is करोne, all I3C and I2C devices should be usable.
  *
- * Return: a 0 in case of success, an negative error code otherwise.
+ * Return: a 0 in हाल of success, an negative error code otherwise.
  */
-static int i3c_master_bus_init(struct i3c_master_controller *master)
-{
-	enum i3c_addr_slot_status status;
-	struct i2c_dev_boardinfo *i2cboardinfo;
-	struct i3c_dev_boardinfo *i3cboardinfo;
-	struct i2c_dev_desc *i2cdev;
-	int ret;
+अटल पूर्णांक i3c_master_bus_init(काष्ठा i3c_master_controller *master)
+अणु
+	क्रमागत i3c_addr_slot_status status;
+	काष्ठा i2c_dev_boardinfo *i2cboardinfo;
+	काष्ठा i3c_dev_boardinfo *i3cboardinfo;
+	काष्ठा i2c_dev_desc *i2cdev;
+	पूर्णांक ret;
 
 	/*
-	 * First attach all devices with static definitions provided by the
+	 * First attach all devices with अटल definitions provided by the
 	 * FW.
 	 */
-	list_for_each_entry(i2cboardinfo, &master->boardinfo.i2c, node) {
+	list_क्रम_each_entry(i2cboardinfo, &master->boardinfo.i2c, node) अणु
 		status = i3c_bus_get_addr_slot_status(&master->bus,
 						      i2cboardinfo->base.addr);
-		if (status != I3C_ADDR_SLOT_FREE) {
+		अगर (status != I3C_ADDR_SLOT_FREE) अणु
 			ret = -EBUSY;
-			goto err_detach_devs;
-		}
+			जाओ err_detach_devs;
+		पूर्ण
 
 		i3c_bus_set_addr_slot_status(&master->bus,
 					     i2cboardinfo->base.addr,
 					     I3C_ADDR_SLOT_I2C_DEV);
 
 		i2cdev = i3c_master_alloc_i2c_dev(master, i2cboardinfo);
-		if (IS_ERR(i2cdev)) {
+		अगर (IS_ERR(i2cdev)) अणु
 			ret = PTR_ERR(i2cdev);
-			goto err_detach_devs;
-		}
+			जाओ err_detach_devs;
+		पूर्ण
 
 		ret = i3c_master_attach_i2c_dev(master, i2cdev);
-		if (ret) {
-			i3c_master_free_i2c_dev(i2cdev);
-			goto err_detach_devs;
-		}
-	}
+		अगर (ret) अणु
+			i3c_master_मुक्त_i2c_dev(i2cdev);
+			जाओ err_detach_devs;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Now execute the controller specific ->bus_init() routine, which
-	 * might configure its internal logic to match the bus limitations.
+	 * Now execute the controller specअगरic ->bus_init() routine, which
+	 * might configure its पूर्णांकernal logic to match the bus limitations.
 	 */
 	ret = master->ops->bus_init(master);
-	if (ret)
-		goto err_detach_devs;
+	अगर (ret)
+		जाओ err_detach_devs;
 
 	/*
 	 * The master device should have been instantiated in ->bus_init(),
-	 * complain if this was not the case.
+	 * complain अगर this was not the हाल.
 	 */
-	if (!master->this) {
+	अगर (!master->this) अणु
 		dev_err(&master->dev,
 			"master_set_info() was not called in ->bus_init()\n");
 		ret = -EINVAL;
-		goto err_bus_cleanup;
-	}
+		जाओ err_bus_cleanup;
+	पूर्ण
 
 	/*
-	 * Reset all dynamic address that may have been assigned before
-	 * (assigned by the bootloader for example).
+	 * Reset all dynamic address that may have been asचिन्हित beक्रमe
+	 * (asचिन्हित by the bootloader क्रम example).
 	 */
 	ret = i3c_master_rstdaa_locked(master, I3C_BROADCAST_ADDR);
-	if (ret && ret != I3C_ERROR_M2)
-		goto err_bus_cleanup;
+	अगर (ret && ret != I3C_ERROR_M2)
+		जाओ err_bus_cleanup;
 
-	/* Disable all slave events before starting DAA. */
+	/* Disable all slave events beक्रमe starting DAA. */
 	ret = i3c_master_disec_locked(master, I3C_BROADCAST_ADDR,
 				      I3C_CCC_EVENT_SIR | I3C_CCC_EVENT_MR |
 				      I3C_CCC_EVENT_HJ);
-	if (ret && ret != I3C_ERROR_M2)
-		goto err_bus_cleanup;
+	अगर (ret && ret != I3C_ERROR_M2)
+		जाओ err_bus_cleanup;
 
 	/*
 	 * Reserve init_dyn_addr first, and then try to pre-assign dynamic
-	 * address and retrieve device information if needed.
-	 * In case pre-assign dynamic address fails, setting dynamic address to
-	 * the requested init_dyn_addr is retried after DAA is done in
+	 * address and retrieve device inक्रमmation अगर needed.
+	 * In हाल pre-assign dynamic address fails, setting dynamic address to
+	 * the requested init_dyn_addr is retried after DAA is करोne in
 	 * i3c_master_add_i3c_dev_locked().
 	 */
-	list_for_each_entry(i3cboardinfo, &master->boardinfo.i3c, node) {
+	list_क्रम_each_entry(i3cboardinfo, &master->boardinfo.i3c, node) अणु
 
 		/*
-		 * We don't reserve a dynamic address for devices that
-		 * don't explicitly request one.
+		 * We करोn't reserve a dynamic address क्रम devices that
+		 * करोn't explicitly request one.
 		 */
-		if (!i3cboardinfo->init_dyn_addr)
-			continue;
+		अगर (!i3cboardinfo->init_dyn_addr)
+			जारी;
 
 		ret = i3c_bus_get_addr_slot_status(&master->bus,
 						   i3cboardinfo->init_dyn_addr);
-		if (ret != I3C_ADDR_SLOT_FREE) {
+		अगर (ret != I3C_ADDR_SLOT_FREE) अणु
 			ret = -EBUSY;
-			goto err_rstdaa;
-		}
+			जाओ err_rstdaa;
+		पूर्ण
 
 		i3c_bus_set_addr_slot_status(&master->bus,
 					     i3cboardinfo->init_dyn_addr,
 					     I3C_ADDR_SLOT_I3C_DEV);
 
 		/*
-		 * Only try to create/attach devices that have a static
+		 * Only try to create/attach devices that have a अटल
 		 * address. Other devices will be created/attached when
 		 * DAA happens, and the requested dynamic address will
 		 * be set using SETNEWDA once those devices become
 		 * addressable.
 		 */
 
-		if (i3cboardinfo->static_addr)
+		अगर (i3cboardinfo->अटल_addr)
 			i3c_master_early_i3c_dev_add(master, i3cboardinfo);
-	}
+	पूर्ण
 
-	ret = i3c_master_do_daa(master);
-	if (ret)
-		goto err_rstdaa;
+	ret = i3c_master_करो_daa(master);
+	अगर (ret)
+		जाओ err_rstdaa;
 
-	return 0;
+	वापस 0;
 
 err_rstdaa:
 	i3c_master_rstdaa_locked(master, I3C_BROADCAST_ADDR);
 
 err_bus_cleanup:
-	if (master->ops->bus_cleanup)
+	अगर (master->ops->bus_cleanup)
 		master->ops->bus_cleanup(master);
 
 err_detach_devs:
-	i3c_master_detach_free_devs(master);
+	i3c_master_detach_मुक्त_devs(master);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void i3c_master_bus_cleanup(struct i3c_master_controller *master)
-{
-	if (master->ops->bus_cleanup)
+अटल व्योम i3c_master_bus_cleanup(काष्ठा i3c_master_controller *master)
+अणु
+	अगर (master->ops->bus_cleanup)
 		master->ops->bus_cleanup(master);
 
-	i3c_master_detach_free_devs(master);
-}
+	i3c_master_detach_मुक्त_devs(master);
+पूर्ण
 
-static void i3c_master_attach_boardinfo(struct i3c_dev_desc *i3cdev)
-{
-	struct i3c_master_controller *master = i3cdev->common.master;
-	struct i3c_dev_boardinfo *i3cboardinfo;
+अटल व्योम i3c_master_attach_boardinfo(काष्ठा i3c_dev_desc *i3cdev)
+अणु
+	काष्ठा i3c_master_controller *master = i3cdev->common.master;
+	काष्ठा i3c_dev_boardinfo *i3cboardinfo;
 
-	list_for_each_entry(i3cboardinfo, &master->boardinfo.i3c, node) {
-		if (i3cdev->info.pid != i3cboardinfo->pid)
-			continue;
+	list_क्रम_each_entry(i3cboardinfo, &master->boardinfo.i3c, node) अणु
+		अगर (i3cdev->info.pid != i3cboardinfo->pid)
+			जारी;
 
 		i3cdev->boardinfo = i3cboardinfo;
-		i3cdev->info.static_addr = i3cboardinfo->static_addr;
-		return;
-	}
-}
+		i3cdev->info.अटल_addr = i3cboardinfo->अटल_addr;
+		वापस;
+	पूर्ण
+पूर्ण
 
-static struct i3c_dev_desc *
-i3c_master_search_i3c_dev_duplicate(struct i3c_dev_desc *refdev)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(refdev);
-	struct i3c_dev_desc *i3cdev;
+अटल काष्ठा i3c_dev_desc *
+i3c_master_search_i3c_dev_duplicate(काष्ठा i3c_dev_desc *refdev)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(refdev);
+	काष्ठा i3c_dev_desc *i3cdev;
 
-	i3c_bus_for_each_i3cdev(&master->bus, i3cdev) {
-		if (i3cdev != refdev && i3cdev->info.pid == refdev->info.pid)
-			return i3cdev;
-	}
+	i3c_bus_क्रम_each_i3cdev(&master->bus, i3cdev) अणु
+		अगर (i3cdev != refdev && i3cdev->info.pid == refdev->info.pid)
+			वापस i3cdev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * i3c_master_add_i3c_dev_locked() - add an I3C slave to the bus
  * @master: master used to send frames on the bus
- * @addr: I3C slave dynamic address assigned to the device
+ * @addr: I3C slave dynamic address asचिन्हित to the device
  *
  * This function is instantiating an I3C device object and adding it to the
- * I3C device list. All device information are automatically retrieved using
+ * I3C device list. All device inक्रमmation are स्वतःmatically retrieved using
  * standard CCC commands.
  *
- * The I3C device object is returned in case the master wants to attach
- * private data to it using i3c_dev_set_master_data().
+ * The I3C device object is वापसed in हाल the master wants to attach
+ * निजी data to it using i3c_dev_set_master_data().
  *
- * This function must be called with the bus lock held in write mode.
+ * This function must be called with the bus lock held in ग_लिखो mode.
  *
- * Return: a 0 in case of success, an negative error code otherwise.
+ * Return: a 0 in हाल of success, an negative error code otherwise.
  */
-int i3c_master_add_i3c_dev_locked(struct i3c_master_controller *master,
+पूर्णांक i3c_master_add_i3c_dev_locked(काष्ठा i3c_master_controller *master,
 				  u8 addr)
-{
-	struct i3c_device_info info = { .dyn_addr = addr };
-	struct i3c_dev_desc *newdev, *olddev;
+अणु
+	काष्ठा i3c_device_info info = अणु .dyn_addr = addr पूर्ण;
+	काष्ठा i3c_dev_desc *newdev, *olddev;
 	u8 old_dyn_addr = addr, expected_dyn_addr;
-	struct i3c_ibi_setup ibireq = { };
+	काष्ठा i3c_ibi_setup ibireq = अणु पूर्ण;
 	bool enable_ibi = false;
-	int ret;
+	पूर्णांक ret;
 
-	if (!master)
-		return -EINVAL;
+	अगर (!master)
+		वापस -EINVAL;
 
 	newdev = i3c_master_alloc_i3c_dev(master, &info);
-	if (IS_ERR(newdev))
-		return PTR_ERR(newdev);
+	अगर (IS_ERR(newdev))
+		वापस PTR_ERR(newdev);
 
 	ret = i3c_master_attach_i3c_dev(master, newdev);
-	if (ret)
-		goto err_free_dev;
+	अगर (ret)
+		जाओ err_मुक्त_dev;
 
 	ret = i3c_master_retrieve_dev_info(newdev);
-	if (ret)
-		goto err_detach_dev;
+	अगर (ret)
+		जाओ err_detach_dev;
 
 	i3c_master_attach_boardinfo(newdev);
 
 	olddev = i3c_master_search_i3c_dev_duplicate(newdev);
-	if (olddev) {
+	अगर (olddev) अणु
 		newdev->dev = olddev->dev;
-		if (newdev->dev)
+		अगर (newdev->dev)
 			newdev->dev->desc = newdev;
 
 		/*
 		 * We need to restore the IBI state too, so let's save the
-		 * IBI information and try to restore them after olddev has
+		 * IBI inक्रमmation and try to restore them after olddev has
 		 * been detached+released and its IBI has been stopped and
-		 * the associated resources have been freed.
+		 * the associated resources have been मुक्तd.
 		 */
 		mutex_lock(&olddev->ibi_lock);
-		if (olddev->ibi) {
+		अगर (olddev->ibi) अणु
 			ibireq.handler = olddev->ibi->handler;
 			ibireq.max_payload_len = olddev->ibi->max_payload_len;
 			ibireq.num_slots = olddev->ibi->num_slots;
 
-			if (olddev->ibi->enabled) {
+			अगर (olddev->ibi->enabled) अणु
 				enable_ibi = true;
 				i3c_dev_disable_ibi_locked(olddev);
-			}
+			पूर्ण
 
-			i3c_dev_free_ibi_locked(olddev);
-		}
+			i3c_dev_मुक्त_ibi_locked(olddev);
+		पूर्ण
 		mutex_unlock(&olddev->ibi_lock);
 
 		old_dyn_addr = olddev->info.dyn_addr;
 
 		i3c_master_detach_i3c_dev(olddev);
-		i3c_master_free_i3c_dev(olddev);
-	}
+		i3c_master_मुक्त_i3c_dev(olddev);
+	पूर्ण
 
 	ret = i3c_master_reattach_i3c_dev(newdev, old_dyn_addr);
-	if (ret)
-		goto err_detach_dev;
+	अगर (ret)
+		जाओ err_detach_dev;
 
 	/*
 	 * Depending on our previous state, the expected dynamic address might
-	 * differ:
-	 * - if the device already had a dynamic address assigned, let's try to
+	 * dअगरfer:
+	 * - अगर the device alपढ़ोy had a dynamic address asचिन्हित, let's try to
 	 *   re-apply this one
-	 * - if the device did not have a dynamic address and the firmware
-	 *   requested a specific address, pick this one
-	 * - in any other case, keep the address automatically assigned by the
+	 * - अगर the device did not have a dynamic address and the firmware
+	 *   requested a specअगरic address, pick this one
+	 * - in any other हाल, keep the address स्वतःmatically asचिन्हित by the
 	 *   master
 	 */
-	if (old_dyn_addr && old_dyn_addr != newdev->info.dyn_addr)
+	अगर (old_dyn_addr && old_dyn_addr != newdev->info.dyn_addr)
 		expected_dyn_addr = old_dyn_addr;
-	else if (newdev->boardinfo && newdev->boardinfo->init_dyn_addr)
+	अन्यथा अगर (newdev->boardinfo && newdev->boardinfo->init_dyn_addr)
 		expected_dyn_addr = newdev->boardinfo->init_dyn_addr;
-	else
+	अन्यथा
 		expected_dyn_addr = newdev->info.dyn_addr;
 
-	if (newdev->info.dyn_addr != expected_dyn_addr) {
+	अगर (newdev->info.dyn_addr != expected_dyn_addr) अणु
 		/*
 		 * Try to apply the expected dynamic address. If it fails, keep
-		 * the address assigned by the master.
+		 * the address asचिन्हित by the master.
 		 */
 		ret = i3c_master_setnewda_locked(master,
 						 newdev->info.dyn_addr,
 						 expected_dyn_addr);
-		if (!ret) {
+		अगर (!ret) अणु
 			old_dyn_addr = newdev->info.dyn_addr;
 			newdev->info.dyn_addr = expected_dyn_addr;
 			i3c_master_reattach_i3c_dev(newdev, old_dyn_addr);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&master->dev,
 				"Failed to assign reserved/old address to device %d%llx",
 				master->bus.id, newdev->info.pid);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Now is time to try to restore the IBI setup. If we're lucky,
-	 * everything works as before, otherwise, all we can do is complain.
-	 * FIXME: maybe we should add callback to inform the driver that it
+	 * Now is समय to try to restore the IBI setup. If we're lucky,
+	 * everything works as beक्रमe, otherwise, all we can करो is complain.
+	 * FIXME: maybe we should add callback to inक्रमm the driver that it
 	 * should request the IBI again instead of trying to hide that from
 	 * him.
 	 */
-	if (ibireq.handler) {
+	अगर (ibireq.handler) अणु
 		mutex_lock(&newdev->ibi_lock);
 		ret = i3c_dev_request_ibi_locked(newdev, &ibireq);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&master->dev,
 				"Failed to request IBI on device %d-%llx",
 				master->bus.id, newdev->info.pid);
-		} else if (enable_ibi) {
+		पूर्ण अन्यथा अगर (enable_ibi) अणु
 			ret = i3c_dev_enable_ibi_locked(newdev);
-			if (ret)
+			अगर (ret)
 				dev_err(&master->dev,
 					"Failed to re-enable IBI on device %d-%llx",
 					master->bus.id, newdev->info.pid);
-		}
+		पूर्ण
 		mutex_unlock(&newdev->ibi_lock);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_detach_dev:
-	if (newdev->dev && newdev->dev->desc)
-		newdev->dev->desc = NULL;
+	अगर (newdev->dev && newdev->dev->desc)
+		newdev->dev->desc = शून्य;
 
 	i3c_master_detach_i3c_dev(newdev);
 
-err_free_dev:
-	i3c_master_free_i3c_dev(newdev);
+err_मुक्त_dev:
+	i3c_master_मुक्त_i3c_dev(newdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_master_add_i3c_dev_locked);
 
-#define OF_I3C_REG1_IS_I2C_DEV			BIT(31)
+#घोषणा OF_I3C_REG1_IS_I2C_DEV			BIT(31)
 
-static int
-of_i3c_master_add_i2c_boardinfo(struct i3c_master_controller *master,
-				struct device_node *node, u32 *reg)
-{
-	struct i2c_dev_boardinfo *boardinfo;
-	struct device *dev = &master->dev;
-	int ret;
+अटल पूर्णांक
+of_i3c_master_add_i2c_boardinfo(काष्ठा i3c_master_controller *master,
+				काष्ठा device_node *node, u32 *reg)
+अणु
+	काष्ठा i2c_dev_boardinfo *boardinfo;
+	काष्ठा device *dev = &master->dev;
+	पूर्णांक ret;
 
-	boardinfo = devm_kzalloc(dev, sizeof(*boardinfo), GFP_KERNEL);
-	if (!boardinfo)
-		return -ENOMEM;
+	boardinfo = devm_kzalloc(dev, माप(*boardinfo), GFP_KERNEL);
+	अगर (!boardinfo)
+		वापस -ENOMEM;
 
 	ret = of_i2c_get_board_info(dev, node, &boardinfo->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * The I3C Specification does not clearly say I2C devices with 10-bit
+	 * The I3C Specअगरication करोes not clearly say I2C devices with 10-bit
 	 * address are supported. These devices can't be passed properly through
 	 * DEFSLVS command.
 	 */
-	if (boardinfo->base.flags & I2C_CLIENT_TEN) {
+	अगर (boardinfo->base.flags & I2C_CLIENT_TEN) अणु
 		dev_err(dev, "I2C device with 10 bit address not supported.");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	/* LVR is encoded in reg[2]. */
 	boardinfo->lvr = reg[2];
@@ -2021,212 +2022,212 @@ of_i3c_master_add_i2c_boardinfo(struct i3c_master_controller *master,
 	list_add_tail(&boardinfo->node, &master->boardinfo.i2c);
 	of_node_get(node);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-of_i3c_master_add_i3c_boardinfo(struct i3c_master_controller *master,
-				struct device_node *node, u32 *reg)
-{
-	struct i3c_dev_boardinfo *boardinfo;
-	struct device *dev = &master->dev;
-	enum i3c_addr_slot_status addrstatus;
+अटल पूर्णांक
+of_i3c_master_add_i3c_boardinfo(काष्ठा i3c_master_controller *master,
+				काष्ठा device_node *node, u32 *reg)
+अणु
+	काष्ठा i3c_dev_boardinfo *boardinfo;
+	काष्ठा device *dev = &master->dev;
+	क्रमागत i3c_addr_slot_status addrstatus;
 	u32 init_dyn_addr = 0;
 
-	boardinfo = devm_kzalloc(dev, sizeof(*boardinfo), GFP_KERNEL);
-	if (!boardinfo)
-		return -ENOMEM;
+	boardinfo = devm_kzalloc(dev, माप(*boardinfo), GFP_KERNEL);
+	अगर (!boardinfo)
+		वापस -ENOMEM;
 
-	if (reg[0]) {
-		if (reg[0] > I3C_MAX_ADDR)
-			return -EINVAL;
+	अगर (reg[0]) अणु
+		अगर (reg[0] > I3C_MAX_ADDR)
+			वापस -EINVAL;
 
 		addrstatus = i3c_bus_get_addr_slot_status(&master->bus,
 							  reg[0]);
-		if (addrstatus != I3C_ADDR_SLOT_FREE)
-			return -EINVAL;
-	}
+		अगर (addrstatus != I3C_ADDR_SLOT_FREE)
+			वापस -EINVAL;
+	पूर्ण
 
-	boardinfo->static_addr = reg[0];
+	boardinfo->अटल_addr = reg[0];
 
-	if (!of_property_read_u32(node, "assigned-address", &init_dyn_addr)) {
-		if (init_dyn_addr > I3C_MAX_ADDR)
-			return -EINVAL;
+	अगर (!of_property_पढ़ो_u32(node, "assigned-address", &init_dyn_addr)) अणु
+		अगर (init_dyn_addr > I3C_MAX_ADDR)
+			वापस -EINVAL;
 
 		addrstatus = i3c_bus_get_addr_slot_status(&master->bus,
 							  init_dyn_addr);
-		if (addrstatus != I3C_ADDR_SLOT_FREE)
-			return -EINVAL;
-	}
+		अगर (addrstatus != I3C_ADDR_SLOT_FREE)
+			वापस -EINVAL;
+	पूर्ण
 
 	boardinfo->pid = ((u64)reg[1] << 32) | reg[2];
 
-	if ((boardinfo->pid & GENMASK_ULL(63, 48)) ||
+	अगर ((boardinfo->pid & GENMASK_ULL(63, 48)) ||
 	    I3C_PID_RND_LOWER_32BITS(boardinfo->pid))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	boardinfo->init_dyn_addr = init_dyn_addr;
 	boardinfo->of_node = of_node_get(node);
 	list_add_tail(&boardinfo->node, &master->boardinfo.i3c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int of_i3c_master_add_dev(struct i3c_master_controller *master,
-				 struct device_node *node)
-{
+अटल पूर्णांक of_i3c_master_add_dev(काष्ठा i3c_master_controller *master,
+				 काष्ठा device_node *node)
+अणु
 	u32 reg[3];
-	int ret;
+	पूर्णांक ret;
 
-	if (!master || !node)
-		return -EINVAL;
+	अगर (!master || !node)
+		वापस -EINVAL;
 
-	ret = of_property_read_u32_array(node, "reg", reg, ARRAY_SIZE(reg));
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32_array(node, "reg", reg, ARRAY_SIZE(reg));
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * The manufacturer ID can't be 0. If reg[1] == 0 that means we're
 	 * dealing with an I2C device.
 	 */
-	if (!reg[1])
+	अगर (!reg[1])
 		ret = of_i3c_master_add_i2c_boardinfo(master, node, reg);
-	else
+	अन्यथा
 		ret = of_i3c_master_add_i3c_boardinfo(master, node, reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int of_populate_i3c_bus(struct i3c_master_controller *master)
-{
-	struct device *dev = &master->dev;
-	struct device_node *i3cbus_np = dev->of_node;
-	struct device_node *node;
-	int ret;
+अटल पूर्णांक of_populate_i3c_bus(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा device *dev = &master->dev;
+	काष्ठा device_node *i3cbus_np = dev->of_node;
+	काष्ठा device_node *node;
+	पूर्णांक ret;
 	u32 val;
 
-	if (!i3cbus_np)
-		return 0;
+	अगर (!i3cbus_np)
+		वापस 0;
 
-	for_each_available_child_of_node(i3cbus_np, node) {
+	क्रम_each_available_child_of_node(i3cbus_np, node) अणु
 		ret = of_i3c_master_add_dev(master, node);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(node);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * The user might want to limit I2C and I3C speed in case some devices
-	 * on the bus are not supporting typical rates, or if the bus topology
+	 * The user might want to limit I2C and I3C speed in हाल some devices
+	 * on the bus are not supporting typical rates, or अगर the bus topology
 	 * prevents it from using max possible rate.
 	 */
-	if (!of_property_read_u32(i3cbus_np, "i2c-scl-hz", &val))
+	अगर (!of_property_पढ़ो_u32(i3cbus_np, "i2c-scl-hz", &val))
 		master->bus.scl_rate.i2c = val;
 
-	if (!of_property_read_u32(i3cbus_np, "i3c-scl-hz", &val))
+	अगर (!of_property_पढ़ो_u32(i3cbus_np, "i3c-scl-hz", &val))
 		master->bus.scl_rate.i3c = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i3c_master_i2c_adapter_xfer(struct i2c_adapter *adap,
-				       struct i2c_msg *xfers, int nxfers)
-{
-	struct i3c_master_controller *master = i2c_adapter_to_i3c_master(adap);
-	struct i2c_dev_desc *dev;
-	int i, ret;
+अटल पूर्णांक i3c_master_i2c_adapter_xfer(काष्ठा i2c_adapter *adap,
+				       काष्ठा i2c_msg *xfers, पूर्णांक nxfers)
+अणु
+	काष्ठा i3c_master_controller *master = i2c_adapter_to_i3c_master(adap);
+	काष्ठा i2c_dev_desc *dev;
+	पूर्णांक i, ret;
 	u16 addr;
 
-	if (!xfers || !master || nxfers <= 0)
-		return -EINVAL;
+	अगर (!xfers || !master || nxfers <= 0)
+		वापस -EINVAL;
 
-	if (!master->ops->i2c_xfers)
-		return -ENOTSUPP;
+	अगर (!master->ops->i2c_xfers)
+		वापस -ENOTSUPP;
 
-	/* Doing transfers to different devices is not supported. */
+	/* Doing transfers to dअगरferent devices is not supported. */
 	addr = xfers[0].addr;
-	for (i = 1; i < nxfers; i++) {
-		if (addr != xfers[i].addr)
-			return -ENOTSUPP;
-	}
+	क्रम (i = 1; i < nxfers; i++) अणु
+		अगर (addr != xfers[i].addr)
+			वापस -ENOTSUPP;
+	पूर्ण
 
 	i3c_bus_normaluse_lock(&master->bus);
 	dev = i3c_master_find_i2c_dev_by_addr(master, addr);
-	if (!dev)
+	अगर (!dev)
 		ret = -ENOENT;
-	else
+	अन्यथा
 		ret = master->ops->i2c_xfers(dev, xfers, nxfers);
 	i3c_bus_normaluse_unlock(&master->bus);
 
-	return ret ? ret : nxfers;
-}
+	वापस ret ? ret : nxfers;
+पूर्ण
 
-static u32 i3c_master_i2c_funcs(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_SMBUS_EMUL | I2C_FUNC_I2C;
-}
+अटल u32 i3c_master_i2c_funcs(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_SMBUS_EMUL | I2C_FUNC_I2C;
+पूर्ण
 
-static const struct i2c_algorithm i3c_master_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm i3c_master_i2c_algo = अणु
 	.master_xfer = i3c_master_i2c_adapter_xfer,
 	.functionality = i3c_master_i2c_funcs,
-};
+पूर्ण;
 
-static int i3c_master_i2c_adapter_init(struct i3c_master_controller *master)
-{
-	struct i2c_adapter *adap = i3c_master_to_i2c_adapter(master);
-	struct i2c_dev_desc *i2cdev;
-	int ret;
+अटल पूर्णांक i3c_master_i2c_adapter_init(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा i2c_adapter *adap = i3c_master_to_i2c_adapter(master);
+	काष्ठा i2c_dev_desc *i2cdev;
+	पूर्णांक ret;
 
 	adap->dev.parent = master->dev.parent;
 	adap->owner = master->dev.parent->driver->owner;
 	adap->algo = &i3c_master_i2c_algo;
-	strncpy(adap->name, dev_name(master->dev.parent), sizeof(adap->name));
+	म_नकलन(adap->name, dev_name(master->dev.parent), माप(adap->name));
 
 	/* FIXME: Should we allow i3c masters to override these values? */
-	adap->timeout = 1000;
+	adap->समयout = 1000;
 	adap->retries = 3;
 
 	ret = i2c_add_adapter(adap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * We silently ignore failures here. The bus should keep working
-	 * correctly even if one or more i2c devices are not registered.
+	 * correctly even अगर one or more i2c devices are not रेजिस्टरed.
 	 */
-	i3c_bus_for_each_i2cdev(&master->bus, i2cdev)
+	i3c_bus_क्रम_each_i2cdev(&master->bus, i2cdev)
 		i2cdev->dev = i2c_new_client_device(adap, &i2cdev->boardinfo->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void i3c_master_i2c_adapter_cleanup(struct i3c_master_controller *master)
-{
-	struct i2c_dev_desc *i2cdev;
+अटल व्योम i3c_master_i2c_adapter_cleanup(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा i2c_dev_desc *i2cdev;
 
 	i2c_del_adapter(&master->i2c);
 
-	i3c_bus_for_each_i2cdev(&master->bus, i2cdev)
-		i2cdev->dev = NULL;
-}
+	i3c_bus_क्रम_each_i2cdev(&master->bus, i2cdev)
+		i2cdev->dev = शून्य;
+पूर्ण
 
-static void i3c_master_unregister_i3c_devs(struct i3c_master_controller *master)
-{
-	struct i3c_dev_desc *i3cdev;
+अटल व्योम i3c_master_unरेजिस्टर_i3c_devs(काष्ठा i3c_master_controller *master)
+अणु
+	काष्ठा i3c_dev_desc *i3cdev;
 
-	i3c_bus_for_each_i3cdev(&master->bus, i3cdev) {
-		if (!i3cdev->dev)
-			continue;
+	i3c_bus_क्रम_each_i3cdev(&master->bus, i3cdev) अणु
+		अगर (!i3cdev->dev)
+			जारी;
 
-		i3cdev->dev->desc = NULL;
-		if (device_is_registered(&i3cdev->dev->dev))
-			device_unregister(&i3cdev->dev->dev);
-		else
+		i3cdev->dev->desc = शून्य;
+		अगर (device_is_रेजिस्टरed(&i3cdev->dev->dev))
+			device_unरेजिस्टर(&i3cdev->dev->dev);
+		अन्यथा
 			put_device(&i3cdev->dev->dev);
-		i3cdev->dev = NULL;
-	}
-}
+		i3cdev->dev = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * i3c_master_queue_ibi() - Queue an IBI
@@ -2236,248 +2237,248 @@ static void i3c_master_unregister_i3c_devs(struct i3c_master_controller *master)
  * Queue an IBI to the controller workqueue. The IBI handler attached to
  * the dev will be called from a workqueue context.
  */
-void i3c_master_queue_ibi(struct i3c_dev_desc *dev, struct i3c_ibi_slot *slot)
-{
+व्योम i3c_master_queue_ibi(काष्ठा i3c_dev_desc *dev, काष्ठा i3c_ibi_slot *slot)
+अणु
 	atomic_inc(&dev->ibi->pending_ibis);
 	queue_work(dev->common.master->wq, &slot->work);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_master_queue_ibi);
 
-static void i3c_master_handle_ibi(struct work_struct *work)
-{
-	struct i3c_ibi_slot *slot = container_of(work, struct i3c_ibi_slot,
+अटल व्योम i3c_master_handle_ibi(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा i3c_ibi_slot *slot = container_of(work, काष्ठा i3c_ibi_slot,
 						 work);
-	struct i3c_dev_desc *dev = slot->dev;
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
-	struct i3c_ibi_payload payload;
+	काष्ठा i3c_dev_desc *dev = slot->dev;
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
+	काष्ठा i3c_ibi_payload payload;
 
 	payload.data = slot->data;
 	payload.len = slot->len;
 
-	if (dev->dev)
+	अगर (dev->dev)
 		dev->ibi->handler(dev->dev, &payload);
 
 	master->ops->recycle_ibi_slot(dev, slot);
-	if (atomic_dec_and_test(&dev->ibi->pending_ibis))
+	अगर (atomic_dec_and_test(&dev->ibi->pending_ibis))
 		complete(&dev->ibi->all_ibis_handled);
-}
+पूर्ण
 
-static void i3c_master_init_ibi_slot(struct i3c_dev_desc *dev,
-				     struct i3c_ibi_slot *slot)
-{
+अटल व्योम i3c_master_init_ibi_slot(काष्ठा i3c_dev_desc *dev,
+				     काष्ठा i3c_ibi_slot *slot)
+अणु
 	slot->dev = dev;
 	INIT_WORK(&slot->work, i3c_master_handle_ibi);
-}
+पूर्ण
 
-struct i3c_generic_ibi_slot {
-	struct list_head node;
-	struct i3c_ibi_slot base;
-};
+काष्ठा i3c_generic_ibi_slot अणु
+	काष्ठा list_head node;
+	काष्ठा i3c_ibi_slot base;
+पूर्ण;
 
-struct i3c_generic_ibi_pool {
+काष्ठा i3c_generic_ibi_pool अणु
 	spinlock_t lock;
-	unsigned int num_slots;
-	struct i3c_generic_ibi_slot *slots;
-	void *payload_buf;
-	struct list_head free_slots;
-	struct list_head pending;
-};
+	अचिन्हित पूर्णांक num_slots;
+	काष्ठा i3c_generic_ibi_slot *slots;
+	व्योम *payload_buf;
+	काष्ठा list_head मुक्त_slots;
+	काष्ठा list_head pending;
+पूर्ण;
 
 /**
- * i3c_generic_ibi_free_pool() - Free a generic IBI pool
- * @pool: the IBI pool to free
+ * i3c_generic_ibi_मुक्त_pool() - Free a generic IBI pool
+ * @pool: the IBI pool to मुक्त
  *
  * Free all IBI slots allated by a generic IBI pool.
  */
-void i3c_generic_ibi_free_pool(struct i3c_generic_ibi_pool *pool)
-{
-	struct i3c_generic_ibi_slot *slot;
-	unsigned int nslots = 0;
+व्योम i3c_generic_ibi_मुक्त_pool(काष्ठा i3c_generic_ibi_pool *pool)
+अणु
+	काष्ठा i3c_generic_ibi_slot *slot;
+	अचिन्हित पूर्णांक nslots = 0;
 
-	while (!list_empty(&pool->free_slots)) {
-		slot = list_first_entry(&pool->free_slots,
-					struct i3c_generic_ibi_slot, node);
+	जबतक (!list_empty(&pool->मुक्त_slots)) अणु
+		slot = list_first_entry(&pool->मुक्त_slots,
+					काष्ठा i3c_generic_ibi_slot, node);
 		list_del(&slot->node);
 		nslots++;
-	}
+	पूर्ण
 
 	/*
-	 * If the number of freed slots is not equal to the number of allocated
+	 * If the number of मुक्तd slots is not equal to the number of allocated
 	 * slots we have a leak somewhere.
 	 */
 	WARN_ON(nslots != pool->num_slots);
 
-	kfree(pool->payload_buf);
-	kfree(pool->slots);
-	kfree(pool);
-}
-EXPORT_SYMBOL_GPL(i3c_generic_ibi_free_pool);
+	kमुक्त(pool->payload_buf);
+	kमुक्त(pool->slots);
+	kमुक्त(pool);
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_generic_ibi_मुक्त_pool);
 
 /**
  * i3c_generic_ibi_alloc_pool() - Create a generic IBI pool
- * @dev: the device this pool will be used for
+ * @dev: the device this pool will be used क्रम
  * @req: IBI setup request describing what the device driver expects
  *
- * Create a generic IBI pool based on the information provided in @req.
+ * Create a generic IBI pool based on the inक्रमmation provided in @req.
  *
- * Return: a valid IBI pool in case of success, an ERR_PTR() otherwise.
+ * Return: a valid IBI pool in हाल of success, an ERR_PTR() otherwise.
  */
-struct i3c_generic_ibi_pool *
-i3c_generic_ibi_alloc_pool(struct i3c_dev_desc *dev,
-			   const struct i3c_ibi_setup *req)
-{
-	struct i3c_generic_ibi_pool *pool;
-	struct i3c_generic_ibi_slot *slot;
-	unsigned int i;
-	int ret;
+काष्ठा i3c_generic_ibi_pool *
+i3c_generic_ibi_alloc_pool(काष्ठा i3c_dev_desc *dev,
+			   स्थिर काष्ठा i3c_ibi_setup *req)
+अणु
+	काष्ठा i3c_generic_ibi_pool *pool;
+	काष्ठा i3c_generic_ibi_slot *slot;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	pool = kzalloc(sizeof(*pool), GFP_KERNEL);
-	if (!pool)
-		return ERR_PTR(-ENOMEM);
+	pool = kzalloc(माप(*pool), GFP_KERNEL);
+	अगर (!pool)
+		वापस ERR_PTR(-ENOMEM);
 
 	spin_lock_init(&pool->lock);
-	INIT_LIST_HEAD(&pool->free_slots);
+	INIT_LIST_HEAD(&pool->मुक्त_slots);
 	INIT_LIST_HEAD(&pool->pending);
 
-	pool->slots = kcalloc(req->num_slots, sizeof(*slot), GFP_KERNEL);
-	if (!pool->slots) {
+	pool->slots = kसुस्मृति(req->num_slots, माप(*slot), GFP_KERNEL);
+	अगर (!pool->slots) अणु
 		ret = -ENOMEM;
-		goto err_free_pool;
-	}
+		जाओ err_मुक्त_pool;
+	पूर्ण
 
-	if (req->max_payload_len) {
-		pool->payload_buf = kcalloc(req->num_slots,
+	अगर (req->max_payload_len) अणु
+		pool->payload_buf = kसुस्मृति(req->num_slots,
 					    req->max_payload_len, GFP_KERNEL);
-		if (!pool->payload_buf) {
+		अगर (!pool->payload_buf) अणु
 			ret = -ENOMEM;
-			goto err_free_pool;
-		}
-	}
+			जाओ err_मुक्त_pool;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < req->num_slots; i++) {
+	क्रम (i = 0; i < req->num_slots; i++) अणु
 		slot = &pool->slots[i];
 		i3c_master_init_ibi_slot(dev, &slot->base);
 
-		if (req->max_payload_len)
+		अगर (req->max_payload_len)
 			slot->base.data = pool->payload_buf +
 					  (i * req->max_payload_len);
 
-		list_add_tail(&slot->node, &pool->free_slots);
+		list_add_tail(&slot->node, &pool->मुक्त_slots);
 		pool->num_slots++;
-	}
+	पूर्ण
 
-	return pool;
+	वापस pool;
 
-err_free_pool:
-	i3c_generic_ibi_free_pool(pool);
-	return ERR_PTR(ret);
-}
+err_मुक्त_pool:
+	i3c_generic_ibi_मुक्त_pool(pool);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_generic_ibi_alloc_pool);
 
 /**
- * i3c_generic_ibi_get_free_slot() - Get a free slot from a generic IBI pool
+ * i3c_generic_ibi_get_मुक्त_slot() - Get a मुक्त slot from a generic IBI pool
  * @pool: the pool to query an IBI slot on
  *
- * Search for a free slot in a generic IBI pool.
- * The slot should be returned to the pool using i3c_generic_ibi_recycle_slot()
- * when it's no longer needed.
+ * Search क्रम a मुक्त slot in a generic IBI pool.
+ * The slot should be वापसed to the pool using i3c_generic_ibi_recycle_slot()
+ * when it's no दीर्घer needed.
  *
- * Return: a pointer to a free slot, or NULL if there's no free slot available.
+ * Return: a poपूर्णांकer to a मुक्त slot, or शून्य अगर there's no मुक्त slot available.
  */
-struct i3c_ibi_slot *
-i3c_generic_ibi_get_free_slot(struct i3c_generic_ibi_pool *pool)
-{
-	struct i3c_generic_ibi_slot *slot;
-	unsigned long flags;
+काष्ठा i3c_ibi_slot *
+i3c_generic_ibi_get_मुक्त_slot(काष्ठा i3c_generic_ibi_pool *pool)
+अणु
+	काष्ठा i3c_generic_ibi_slot *slot;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pool->lock, flags);
-	slot = list_first_entry_or_null(&pool->free_slots,
-					struct i3c_generic_ibi_slot, node);
-	if (slot)
+	slot = list_first_entry_or_null(&pool->मुक्त_slots,
+					काष्ठा i3c_generic_ibi_slot, node);
+	अगर (slot)
 		list_del(&slot->node);
 	spin_unlock_irqrestore(&pool->lock, flags);
 
-	return slot ? &slot->base : NULL;
-}
-EXPORT_SYMBOL_GPL(i3c_generic_ibi_get_free_slot);
+	वापस slot ? &slot->base : शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_generic_ibi_get_मुक्त_slot);
 
 /**
  * i3c_generic_ibi_recycle_slot() - Return a slot to a generic IBI pool
- * @pool: the pool to return the IBI slot to
+ * @pool: the pool to वापस the IBI slot to
  * @s: IBI slot to recycle
  *
  * Add an IBI slot back to its generic IBI pool. Should be called from the
- * master driver struct_master_controller_ops->recycle_ibi() method.
+ * master driver काष्ठा_master_controller_ops->recycle_ibi() method.
  */
-void i3c_generic_ibi_recycle_slot(struct i3c_generic_ibi_pool *pool,
-				  struct i3c_ibi_slot *s)
-{
-	struct i3c_generic_ibi_slot *slot;
-	unsigned long flags;
+व्योम i3c_generic_ibi_recycle_slot(काष्ठा i3c_generic_ibi_pool *pool,
+				  काष्ठा i3c_ibi_slot *s)
+अणु
+	काष्ठा i3c_generic_ibi_slot *slot;
+	अचिन्हित दीर्घ flags;
 
-	if (!s)
-		return;
+	अगर (!s)
+		वापस;
 
-	slot = container_of(s, struct i3c_generic_ibi_slot, base);
+	slot = container_of(s, काष्ठा i3c_generic_ibi_slot, base);
 	spin_lock_irqsave(&pool->lock, flags);
-	list_add_tail(&slot->node, &pool->free_slots);
+	list_add_tail(&slot->node, &pool->मुक्त_slots);
 	spin_unlock_irqrestore(&pool->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(i3c_generic_ibi_recycle_slot);
 
-static int i3c_master_check_ops(const struct i3c_master_controller_ops *ops)
-{
-	if (!ops || !ops->bus_init || !ops->priv_xfers ||
-	    !ops->send_ccc_cmd || !ops->do_daa || !ops->i2c_xfers)
-		return -EINVAL;
+अटल पूर्णांक i3c_master_check_ops(स्थिर काष्ठा i3c_master_controller_ops *ops)
+अणु
+	अगर (!ops || !ops->bus_init || !ops->priv_xfers ||
+	    !ops->send_ccc_cmd || !ops->करो_daa || !ops->i2c_xfers)
+		वापस -EINVAL;
 
-	if (ops->request_ibi &&
-	    (!ops->enable_ibi || !ops->disable_ibi || !ops->free_ibi ||
+	अगर (ops->request_ibi &&
+	    (!ops->enable_ibi || !ops->disable_ibi || !ops->मुक्त_ibi ||
 	     !ops->recycle_ibi_slot))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * i3c_master_register() - register an I3C master
+ * i3c_master_रेजिस्टर() - रेजिस्टर an I3C master
  * @master: master used to send frames on the bus
  * @parent: the parent device (the one that provides this I3C master
  *	    controller)
  * @ops: the master controller operations
- * @secondary: true if you are registering a secondary master. Will return
- *	       -ENOTSUPP if set to true since secondary masters are not yet
+ * @secondary: true अगर you are रेजिस्टरing a secondary master. Will वापस
+ *	       -ENOTSUPP अगर set to true since secondary masters are not yet
  *	       supported
  *
- * This function takes care of everything for you:
+ * This function takes care of everything क्रम you:
  *
  * - creates and initializes the I3C bus
- * - populates the bus with static I2C devs if @parent->of_node is not
- *   NULL
- * - registers all I3C devices added by the controller during bus
+ * - populates the bus with अटल I2C devs अगर @parent->of_node is not
+ *   शून्य
+ * - रेजिस्टरs all I3C devices added by the controller during bus
  *   initialization
- * - registers the I2C adapter and all I2C devices
+ * - रेजिस्टरs the I2C adapter and all I2C devices
  *
- * Return: 0 in case of success, a negative error code otherwise.
+ * Return: 0 in हाल of success, a negative error code otherwise.
  */
-int i3c_master_register(struct i3c_master_controller *master,
-			struct device *parent,
-			const struct i3c_master_controller_ops *ops,
+पूर्णांक i3c_master_रेजिस्टर(काष्ठा i3c_master_controller *master,
+			काष्ठा device *parent,
+			स्थिर काष्ठा i3c_master_controller_ops *ops,
 			bool secondary)
-{
-	unsigned long i2c_scl_rate = I3C_BUS_I2C_FM_PLUS_SCL_RATE;
-	struct i3c_bus *i3cbus = i3c_master_get_bus(master);
-	enum i3c_bus_mode mode = I3C_BUS_MODE_PURE;
-	struct i2c_dev_boardinfo *i2cbi;
-	int ret;
+अणु
+	अचिन्हित दीर्घ i2c_scl_rate = I3C_BUS_I2C_FM_PLUS_SCL_RATE;
+	काष्ठा i3c_bus *i3cbus = i3c_master_get_bus(master);
+	क्रमागत i3c_bus_mode mode = I3C_BUS_MODE_PURE;
+	काष्ठा i2c_dev_boardinfo *i2cbi;
+	पूर्णांक ret;
 
-	/* We do not support secondary masters yet. */
-	if (secondary)
-		return -ENOTSUPP;
+	/* We करो not support secondary masters yet. */
+	अगर (secondary)
+		वापस -ENOTSUPP;
 
 	ret = i3c_master_check_ops(ops);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	master->dev.parent = parent;
 	master->dev.of_node = of_node_get(parent->of_node);
@@ -2490,75 +2491,75 @@ int i3c_master_register(struct i3c_master_controller *master,
 	INIT_LIST_HEAD(&master->boardinfo.i3c);
 
 	ret = i3c_bus_init(i3cbus);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	device_initialize(&master->dev);
 	dev_set_name(&master->dev, "i3c-%d", i3cbus->id);
 
 	ret = of_populate_i3c_bus(master);
-	if (ret)
-		goto err_put_dev;
+	अगर (ret)
+		जाओ err_put_dev;
 
-	list_for_each_entry(i2cbi, &master->boardinfo.i2c, node) {
-		switch (i2cbi->lvr & I3C_LVR_I2C_INDEX_MASK) {
-		case I3C_LVR_I2C_INDEX(0):
-			if (mode < I3C_BUS_MODE_MIXED_FAST)
+	list_क्रम_each_entry(i2cbi, &master->boardinfo.i2c, node) अणु
+		चयन (i2cbi->lvr & I3C_LVR_I2C_INDEX_MASK) अणु
+		हाल I3C_LVR_I2C_INDEX(0):
+			अगर (mode < I3C_BUS_MODE_MIXED_FAST)
 				mode = I3C_BUS_MODE_MIXED_FAST;
-			break;
-		case I3C_LVR_I2C_INDEX(1):
-			if (mode < I3C_BUS_MODE_MIXED_LIMITED)
+			अवरोध;
+		हाल I3C_LVR_I2C_INDEX(1):
+			अगर (mode < I3C_BUS_MODE_MIXED_LIMITED)
 				mode = I3C_BUS_MODE_MIXED_LIMITED;
-			break;
-		case I3C_LVR_I2C_INDEX(2):
-			if (mode < I3C_BUS_MODE_MIXED_SLOW)
+			अवरोध;
+		हाल I3C_LVR_I2C_INDEX(2):
+			अगर (mode < I3C_BUS_MODE_MIXED_SLOW)
 				mode = I3C_BUS_MODE_MIXED_SLOW;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			goto err_put_dev;
-		}
+			जाओ err_put_dev;
+		पूर्ण
 
-		if (i2cbi->lvr & I3C_LVR_I2C_FM_MODE)
+		अगर (i2cbi->lvr & I3C_LVR_I2C_FM_MODE)
 			i2c_scl_rate = I3C_BUS_I2C_FM_SCL_RATE;
-	}
+	पूर्ण
 
 	ret = i3c_bus_set_mode(i3cbus, mode, i2c_scl_rate);
-	if (ret)
-		goto err_put_dev;
+	अगर (ret)
+		जाओ err_put_dev;
 
 	master->wq = alloc_workqueue("%s", 0, 0, dev_name(parent));
-	if (!master->wq) {
+	अगर (!master->wq) अणु
 		ret = -ENOMEM;
-		goto err_put_dev;
-	}
+		जाओ err_put_dev;
+	पूर्ण
 
 	ret = i3c_master_bus_init(master);
-	if (ret)
-		goto err_put_dev;
+	अगर (ret)
+		जाओ err_put_dev;
 
 	ret = device_add(&master->dev);
-	if (ret)
-		goto err_cleanup_bus;
+	अगर (ret)
+		जाओ err_cleanup_bus;
 
 	/*
 	 * Expose our I3C bus as an I2C adapter so that I2C devices are exposed
-	 * through the I2C subsystem.
+	 * through the I2C subप्रणाली.
 	 */
 	ret = i3c_master_i2c_adapter_init(master);
-	if (ret)
-		goto err_del_dev;
+	अगर (ret)
+		जाओ err_del_dev;
 
 	/*
-	 * We're done initializing the bus and the controller, we can now
-	 * register I3C devices discovered during the initial DAA.
+	 * We're करोne initializing the bus and the controller, we can now
+	 * रेजिस्टर I3C devices discovered during the initial DAA.
 	 */
-	master->init_done = true;
+	master->init_करोne = true;
 	i3c_bus_normaluse_lock(&master->bus);
-	i3c_master_register_new_i3c_devs(master);
+	i3c_master_रेजिस्टर_new_i3c_devs(master);
 	i3c_bus_normaluse_unlock(&master->bus);
 
-	return 0;
+	वापस 0;
 
 err_del_dev:
 	device_del(&master->dev);
@@ -2569,101 +2570,101 @@ err_cleanup_bus:
 err_put_dev:
 	put_device(&master->dev);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(i3c_master_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_master_रेजिस्टर);
 
 /**
- * i3c_master_unregister() - unregister an I3C master
+ * i3c_master_unरेजिस्टर() - unरेजिस्टर an I3C master
  * @master: master used to send frames on the bus
  *
- * Basically undo everything done in i3c_master_register().
+ * Basically unकरो everything करोne in i3c_master_रेजिस्टर().
  *
- * Return: 0 in case of success, a negative error code otherwise.
+ * Return: 0 in हाल of success, a negative error code otherwise.
  */
-int i3c_master_unregister(struct i3c_master_controller *master)
-{
+पूर्णांक i3c_master_unरेजिस्टर(काष्ठा i3c_master_controller *master)
+अणु
 	i3c_master_i2c_adapter_cleanup(master);
-	i3c_master_unregister_i3c_devs(master);
+	i3c_master_unरेजिस्टर_i3c_devs(master);
 	i3c_master_bus_cleanup(master);
-	device_unregister(&master->dev);
+	device_unरेजिस्टर(&master->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(i3c_master_unregister);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(i3c_master_unरेजिस्टर);
 
-int i3c_dev_do_priv_xfers_locked(struct i3c_dev_desc *dev,
-				 struct i3c_priv_xfer *xfers,
-				 int nxfers)
-{
-	struct i3c_master_controller *master;
+पूर्णांक i3c_dev_करो_priv_xfers_locked(काष्ठा i3c_dev_desc *dev,
+				 काष्ठा i3c_priv_xfer *xfers,
+				 पूर्णांक nxfers)
+अणु
+	काष्ठा i3c_master_controller *master;
 
-	if (!dev)
-		return -ENOENT;
+	अगर (!dev)
+		वापस -ENOENT;
 
 	master = i3c_dev_get_master(dev);
-	if (!master || !xfers)
-		return -EINVAL;
+	अगर (!master || !xfers)
+		वापस -EINVAL;
 
-	if (!master->ops->priv_xfers)
-		return -ENOTSUPP;
+	अगर (!master->ops->priv_xfers)
+		वापस -ENOTSUPP;
 
-	return master->ops->priv_xfers(dev, xfers, nxfers);
-}
+	वापस master->ops->priv_xfers(dev, xfers, nxfers);
+पूर्ण
 
-int i3c_dev_disable_ibi_locked(struct i3c_dev_desc *dev)
-{
-	struct i3c_master_controller *master;
-	int ret;
+पूर्णांक i3c_dev_disable_ibi_locked(काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master;
+	पूर्णांक ret;
 
-	if (!dev->ibi)
-		return -EINVAL;
+	अगर (!dev->ibi)
+		वापस -EINVAL;
 
 	master = i3c_dev_get_master(dev);
 	ret = master->ops->disable_ibi(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	reinit_completion(&dev->ibi->all_ibis_handled);
-	if (atomic_read(&dev->ibi->pending_ibis))
-		wait_for_completion(&dev->ibi->all_ibis_handled);
+	अगर (atomic_पढ़ो(&dev->ibi->pending_ibis))
+		रुको_क्रम_completion(&dev->ibi->all_ibis_handled);
 
 	dev->ibi->enabled = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int i3c_dev_enable_ibi_locked(struct i3c_dev_desc *dev)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
-	int ret;
+पूर्णांक i3c_dev_enable_ibi_locked(काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
+	पूर्णांक ret;
 
-	if (!dev->ibi)
-		return -EINVAL;
+	अगर (!dev->ibi)
+		वापस -EINVAL;
 
 	ret = master->ops->enable_ibi(dev);
-	if (!ret)
+	अगर (!ret)
 		dev->ibi->enabled = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int i3c_dev_request_ibi_locked(struct i3c_dev_desc *dev,
-			       const struct i3c_ibi_setup *req)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
-	struct i3c_device_ibi_info *ibi;
-	int ret;
+पूर्णांक i3c_dev_request_ibi_locked(काष्ठा i3c_dev_desc *dev,
+			       स्थिर काष्ठा i3c_ibi_setup *req)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
+	काष्ठा i3c_device_ibi_info *ibi;
+	पूर्णांक ret;
 
-	if (!master->ops->request_ibi)
-		return -ENOTSUPP;
+	अगर (!master->ops->request_ibi)
+		वापस -ENOTSUPP;
 
-	if (dev->ibi)
-		return -EBUSY;
+	अगर (dev->ibi)
+		वापस -EBUSY;
 
-	ibi = kzalloc(sizeof(*ibi), GFP_KERNEL);
-	if (!ibi)
-		return -ENOMEM;
+	ibi = kzalloc(माप(*ibi), GFP_KERNEL);
+	अगर (!ibi)
+		वापस -ENOMEM;
 
 	atomic_set(&ibi->pending_ibis, 0);
 	init_completion(&ibi->all_ibis_handled);
@@ -2673,41 +2674,41 @@ int i3c_dev_request_ibi_locked(struct i3c_dev_desc *dev,
 
 	dev->ibi = ibi;
 	ret = master->ops->request_ibi(dev, req);
-	if (ret) {
-		kfree(ibi);
-		dev->ibi = NULL;
-	}
+	अगर (ret) अणु
+		kमुक्त(ibi);
+		dev->ibi = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void i3c_dev_free_ibi_locked(struct i3c_dev_desc *dev)
-{
-	struct i3c_master_controller *master = i3c_dev_get_master(dev);
+व्योम i3c_dev_मुक्त_ibi_locked(काष्ठा i3c_dev_desc *dev)
+अणु
+	काष्ठा i3c_master_controller *master = i3c_dev_get_master(dev);
 
-	if (!dev->ibi)
-		return;
+	अगर (!dev->ibi)
+		वापस;
 
-	if (WARN_ON(dev->ibi->enabled))
+	अगर (WARN_ON(dev->ibi->enabled))
 		WARN_ON(i3c_dev_disable_ibi_locked(dev));
 
-	master->ops->free_ibi(dev);
-	kfree(dev->ibi);
-	dev->ibi = NULL;
-}
+	master->ops->मुक्त_ibi(dev);
+	kमुक्त(dev->ibi);
+	dev->ibi = शून्य;
+पूर्ण
 
-static int __init i3c_init(void)
-{
-	return bus_register(&i3c_bus_type);
-}
+अटल पूर्णांक __init i3c_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&i3c_bus_type);
+पूर्ण
 subsys_initcall(i3c_init);
 
-static void __exit i3c_exit(void)
-{
+अटल व्योम __निकास i3c_निकास(व्योम)
+अणु
 	idr_destroy(&i3c_bus_idr);
-	bus_unregister(&i3c_bus_type);
-}
-module_exit(i3c_exit);
+	bus_unरेजिस्टर(&i3c_bus_type);
+पूर्ण
+module_निकास(i3c_निकास);
 
 MODULE_AUTHOR("Boris Brezillon <boris.brezillon@bootlin.com>");
 MODULE_DESCRIPTION("I3C core");

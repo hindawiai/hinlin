@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * Copyright(c) 2018 Intel Corporation. All rights reserved.
  */
 
-#ifndef __INCLUDE_SOUND_SOF_PM_H__
-#define __INCLUDE_SOUND_SOF_PM_H__
+#अगर_अघोषित __INCLUDE_SOUND_SOF_PM_H__
+#घोषणा __INCLUDE_SOUND_SOF_PM_H__
 
-#include <sound/sof/header.h>
+#समावेश <sound/sof/header.h>
 
 /*
  * PM
  */
 
 /* PM context element */
-struct sof_ipc_pm_ctx_elem {
-	struct sof_ipc_hdr hdr;
-	uint32_t type;
-	uint32_t size;
-	uint64_t addr;
-}  __packed;
+काष्ठा sof_ipc_pm_ctx_elem अणु
+	काष्ठा sof_ipc_hdr hdr;
+	uपूर्णांक32_t type;
+	uपूर्णांक32_t size;
+	uपूर्णांक64_t addr;
+पूर्ण  __packed;
 
 /*
  * PM context - SOF_IPC_PM_CTX_SAVE, SOF_IPC_PM_CTX_RESTORE,
  * SOF_IPC_PM_CTX_SIZE
  */
-struct sof_ipc_pm_ctx {
-	struct sof_ipc_cmd_hdr hdr;
-	struct sof_ipc_host_buffer buffer;
-	uint32_t num_elems;
-	uint32_t size;
+काष्ठा sof_ipc_pm_ctx अणु
+	काष्ठा sof_ipc_cmd_hdr hdr;
+	काष्ठा sof_ipc_host_buffer buffer;
+	uपूर्णांक32_t num_elems;
+	uपूर्णांक32_t size;
 
-	/* reserved for future use */
-	uint32_t reserved[8];
+	/* reserved क्रम future use */
+	uपूर्णांक32_t reserved[8];
 
-	struct sof_ipc_pm_ctx_elem elems[];
-} __packed;
+	काष्ठा sof_ipc_pm_ctx_elem elems[];
+पूर्ण __packed;
 
 /* enable or disable cores - SOF_IPC_PM_CORE_ENABLE */
-struct sof_ipc_pm_core_config {
-	struct sof_ipc_cmd_hdr hdr;
-	uint32_t enable_mask;
-} __packed;
+काष्ठा sof_ipc_pm_core_config अणु
+	काष्ठा sof_ipc_cmd_hdr hdr;
+	uपूर्णांक32_t enable_mask;
+पूर्ण __packed;
 
-struct sof_ipc_pm_gate {
-	struct sof_ipc_cmd_hdr hdr;
-	uint32_t flags;	/* platform specific */
+काष्ठा sof_ipc_pm_gate अणु
+	काष्ठा sof_ipc_cmd_hdr hdr;
+	uपूर्णांक32_t flags;	/* platक्रमm specअगरic */
 
-	/* reserved for future use */
-	uint32_t reserved[5];
-} __packed;
+	/* reserved क्रम future use */
+	uपूर्णांक32_t reserved[5];
+पूर्ण __packed;
 
-#endif
+#पूर्ण_अगर

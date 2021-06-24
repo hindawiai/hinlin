@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __RTW_LED_H_
-#define __RTW_LED_H_
+#अगर_अघोषित __RTW_LED_H_
+#घोषणा __RTW_LED_H_
 
-#include <osdep_service.h>
-#include <drv_types.h>
+#समावेश <osdep_service.h>
+#समावेश <drv_types.h>
 
-#define LED_BLINK_NO_LINK_INTERVAL_ALPHA	1000
-#define LED_BLINK_LINK_INTERVAL_ALPHA		500	/* 500 */
-#define LED_BLINK_SCAN_INTERVAL_ALPHA		180	/* 150 */
-#define LED_BLINK_FASTER_INTERVAL_ALPHA		50
-#define LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA	5000
+#घोषणा LED_BLINK_NO_LINK_INTERVAL_ALPHA	1000
+#घोषणा LED_BLINK_LINK_INTERVAL_ALPHA		500	/* 500 */
+#घोषणा LED_BLINK_SCAN_INTERVAL_ALPHA		180	/* 150 */
+#घोषणा LED_BLINK_FASTER_INTERVAL_ALPHA		50
+#घोषणा LED_BLINK_WPS_SUCCESS_INTERVAL_ALPHA	5000
 
-enum LED_CTL_MODE {
+क्रमागत LED_CTL_MODE अणु
 	LED_CTL_POWER_ON,
 	LED_CTL_LINK,
 	LED_CTL_NO_LINK,
@@ -29,9 +30,9 @@ enum LED_CTL_MODE {
 	LED_CTL_STOP_WPS,
 	LED_CTL_START_WPS_BOTTON,
 	LED_CTL_STOP_WPS_FAIL
-};
+पूर्ण;
 
-enum LED_STATE_871x {
+क्रमागत LED_STATE_871x अणु
 	LED_UNKNOWN,
 	RTW_LED_ON,
 	RTW_LED_OFF,
@@ -42,57 +43,57 @@ enum LED_STATE_871x {
 	LED_BLINK_TXRX,
 	LED_BLINK_WPS,
 	LED_BLINK_WPS_STOP
-};
+पूर्ण;
 
-struct LED_871x {
-	struct adapter *padapter;
+काष्ठा LED_871x अणु
+	काष्ठा adapter *padapter;
 
-	enum LED_STATE_871x	CurrLedState; /*  Current LED state. */
-	enum LED_STATE_871x	BlinkingLedState; /*  Next state for blinking,
+	क्रमागत LED_STATE_871x	CurrLedState; /*  Current LED state. */
+	क्रमागत LED_STATE_871x	BlinkingLedState; /*  Next state क्रम blinking,
 						   * either RTW_LED_ON or RTW_LED_OFF are.
 						   */
 
-	u8 bLedOn; /*  true if LED is ON, false if LED is OFF. */
+	u8 bLedOn; /*  true अगर LED is ON, false अगर LED is OFF. */
 
-	u8 bLedBlinkInProgress; /*  true if it is blinking, false o.w.. */
+	u8 bLedBlinkInProgress; /*  true अगर it is blinking, false o.w.. */
 
 	u8 bLedWPSBlinkInProgress;
 
-	u32 BlinkTimes; /*  Number of times to toggle led state for blinking. */
+	u32 BlinkTimes; /*  Number of बार to toggle led state क्रम blinking. */
 
-	struct timer_list BlinkTimer; /*  Timer object for led blinking. */
+	काष्ठा समयr_list BlinkTimer; /*  Timer object क्रम led blinking. */
 
 	/*  ALPHA, added by chiyoko, 20090106 */
 	u8 bLedNoLinkBlinkInProgress;
 	u8 bLedLinkBlinkInProgress;
 	u8 bLedScanBlinkInProgress;
-	struct work_struct BlinkWorkItem; /* Workitem used by BlinkTimer to
+	काष्ठा work_काष्ठा BlinkWorkItem; /* Workitem used by BlinkTimer to
 					   * manipulate H/W to blink LED.
 					   */
-};
+पूर्ण;
 
-#define IS_LED_WPS_BLINKING(_LED_871x)					\
-	(((struct LED_871x *)_LED_871x)->CurrLedState == LED_BLINK_WPS || \
-	((struct LED_871x *)_LED_871x)->CurrLedState == LED_BLINK_WPS_STOP || \
-	((struct LED_871x *)_LED_871x)->bLedWPSBlinkInProgress)
+#घोषणा IS_LED_WPS_BLINKING(_LED_871x)					\
+	(((काष्ठा LED_871x *)_LED_871x)->CurrLedState == LED_BLINK_WPS || \
+	((काष्ठा LED_871x *)_LED_871x)->CurrLedState == LED_BLINK_WPS_STOP || \
+	((काष्ठा LED_871x *)_LED_871x)->bLedWPSBlinkInProgress)
 
-void led_control_8188eu(struct adapter *padapter, enum LED_CTL_MODE LedAction);
+व्योम led_control_8188eu(काष्ठा adapter *padapter, क्रमागत LED_CTL_MODE LedAction);
 
-struct led_priv {
-	struct LED_871x sw_led;
-};
+काष्ठा led_priv अणु
+	काष्ठा LED_871x sw_led;
+पूर्ण;
 
-void BlinkWorkItemCallback(struct work_struct *work);
+व्योम BlinkWorkItemCallback(काष्ठा work_काष्ठा *work);
 
-void ResetLedStatus(struct LED_871x *pLed);
+व्योम ResetLedStatus(काष्ठा LED_871x *pLed);
 
-void InitLed871x(struct adapter *padapter, struct LED_871x *pLed);
+व्योम InitLed871x(काष्ठा adapter *padapter, काष्ठा LED_871x *pLed);
 
-void DeInitLed871x(struct LED_871x *pLed);
+व्योम DeInitLed871x(काष्ठा LED_871x *pLed);
 
 /* hal... */
-void blink_handler(struct LED_871x *pLed);
-void sw_led_on(struct adapter *padapter, struct LED_871x *pLed);
-void sw_led_off(struct adapter *padapter, struct LED_871x *pLed);
+व्योम blink_handler(काष्ठा LED_871x *pLed);
+व्योम sw_led_on(काष्ठा adapter *padapter, काष्ठा LED_871x *pLed);
+व्योम sw_led_off(काष्ठा adapter *padapter, काष्ठा LED_871x *pLed);
 
-#endif /* __RTW_LED_H_ */
+#पूर्ण_अगर /* __RTW_LED_H_ */

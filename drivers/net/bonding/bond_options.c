@@ -1,235 +1,236 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * drivers/net/bond/bond_options.c - bonding options
  * Copyright (c) 2013 Jiri Pirko <jiri@resnulli.us>
  * Copyright (c) 2013 Scott Feldman <sfeldma@cumulusnetworks.com>
  */
 
-#include <linux/errno.h>
-#include <linux/if.h>
-#include <linux/netdevice.h>
-#include <linux/spinlock.h>
-#include <linux/rcupdate.h>
-#include <linux/ctype.h>
-#include <linux/inet.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अगर.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/inet.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/bonding.h>
+#समावेश <net/bonding.h>
 
-static int bond_option_active_slave_set(struct bonding *bond,
-					const struct bond_opt_value *newval);
-static int bond_option_miimon_set(struct bonding *bond,
-				  const struct bond_opt_value *newval);
-static int bond_option_updelay_set(struct bonding *bond,
-				   const struct bond_opt_value *newval);
-static int bond_option_downdelay_set(struct bonding *bond,
-				     const struct bond_opt_value *newval);
-static int bond_option_peer_notif_delay_set(struct bonding *bond,
-					    const struct bond_opt_value *newval);
-static int bond_option_use_carrier_set(struct bonding *bond,
-				       const struct bond_opt_value *newval);
-static int bond_option_arp_interval_set(struct bonding *bond,
-					const struct bond_opt_value *newval);
-static int bond_option_arp_ip_target_add(struct bonding *bond, __be32 target);
-static int bond_option_arp_ip_target_rem(struct bonding *bond, __be32 target);
-static int bond_option_arp_ip_targets_set(struct bonding *bond,
-					  const struct bond_opt_value *newval);
-static int bond_option_arp_validate_set(struct bonding *bond,
-					const struct bond_opt_value *newval);
-static int bond_option_arp_all_targets_set(struct bonding *bond,
-					   const struct bond_opt_value *newval);
-static int bond_option_primary_set(struct bonding *bond,
-				   const struct bond_opt_value *newval);
-static int bond_option_primary_reselect_set(struct bonding *bond,
-					    const struct bond_opt_value *newval);
-static int bond_option_fail_over_mac_set(struct bonding *bond,
-					 const struct bond_opt_value *newval);
-static int bond_option_xmit_hash_policy_set(struct bonding *bond,
-					    const struct bond_opt_value *newval);
-static int bond_option_resend_igmp_set(struct bonding *bond,
-				       const struct bond_opt_value *newval);
-static int bond_option_num_peer_notif_set(struct bonding *bond,
-					  const struct bond_opt_value *newval);
-static int bond_option_all_slaves_active_set(struct bonding *bond,
-					     const struct bond_opt_value *newval);
-static int bond_option_min_links_set(struct bonding *bond,
-				     const struct bond_opt_value *newval);
-static int bond_option_lp_interval_set(struct bonding *bond,
-				       const struct bond_opt_value *newval);
-static int bond_option_pps_set(struct bonding *bond,
-			       const struct bond_opt_value *newval);
-static int bond_option_lacp_rate_set(struct bonding *bond,
-				     const struct bond_opt_value *newval);
-static int bond_option_ad_select_set(struct bonding *bond,
-				     const struct bond_opt_value *newval);
-static int bond_option_queue_id_set(struct bonding *bond,
-				    const struct bond_opt_value *newval);
-static int bond_option_mode_set(struct bonding *bond,
-				const struct bond_opt_value *newval);
-static int bond_option_slaves_set(struct bonding *bond,
-				  const struct bond_opt_value *newval);
-static int bond_option_tlb_dynamic_lb_set(struct bonding *bond,
-				  const struct bond_opt_value *newval);
-static int bond_option_ad_actor_sys_prio_set(struct bonding *bond,
-					     const struct bond_opt_value *newval);
-static int bond_option_ad_actor_system_set(struct bonding *bond,
-					   const struct bond_opt_value *newval);
-static int bond_option_ad_user_port_key_set(struct bonding *bond,
-					    const struct bond_opt_value *newval);
+अटल पूर्णांक bond_option_active_slave_set(काष्ठा bonding *bond,
+					स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_miimon_set(काष्ठा bonding *bond,
+				  स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_updelay_set(काष्ठा bonding *bond,
+				   स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_करोwndelay_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_peer_notअगर_delay_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_use_carrier_set(काष्ठा bonding *bond,
+				       स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_arp_पूर्णांकerval_set(काष्ठा bonding *bond,
+					स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_arp_ip_target_add(काष्ठा bonding *bond, __be32 target);
+अटल पूर्णांक bond_option_arp_ip_target_rem(काष्ठा bonding *bond, __be32 target);
+अटल पूर्णांक bond_option_arp_ip_tarमाला_लो_set(काष्ठा bonding *bond,
+					  स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_arp_validate_set(काष्ठा bonding *bond,
+					स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_arp_all_tarमाला_लो_set(काष्ठा bonding *bond,
+					   स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_primary_set(काष्ठा bonding *bond,
+				   स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_primary_reselect_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_fail_over_mac_set(काष्ठा bonding *bond,
+					 स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_xmit_hash_policy_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_resend_igmp_set(काष्ठा bonding *bond,
+				       स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_num_peer_notअगर_set(काष्ठा bonding *bond,
+					  स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_all_slaves_active_set(काष्ठा bonding *bond,
+					     स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_min_links_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_lp_पूर्णांकerval_set(काष्ठा bonding *bond,
+				       स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_pps_set(काष्ठा bonding *bond,
+			       स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_lacp_rate_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_ad_select_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_queue_id_set(काष्ठा bonding *bond,
+				    स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_mode_set(काष्ठा bonding *bond,
+				स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_slaves_set(काष्ठा bonding *bond,
+				  स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_tlb_dynamic_lb_set(काष्ठा bonding *bond,
+				  स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_ad_actor_sys_prio_set(काष्ठा bonding *bond,
+					     स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_ad_actor_प्रणाली_set(काष्ठा bonding *bond,
+					   स्थिर काष्ठा bond_opt_value *newval);
+अटल पूर्णांक bond_option_ad_user_port_key_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval);
 
 
-static const struct bond_opt_value bond_mode_tbl[] = {
-	{ "balance-rr",    BOND_MODE_ROUNDROBIN,   BOND_VALFLAG_DEFAULT},
-	{ "active-backup", BOND_MODE_ACTIVEBACKUP, 0},
-	{ "balance-xor",   BOND_MODE_XOR,          0},
-	{ "broadcast",     BOND_MODE_BROADCAST,    0},
-	{ "802.3ad",       BOND_MODE_8023AD,       0},
-	{ "balance-tlb",   BOND_MODE_TLB,          0},
-	{ "balance-alb",   BOND_MODE_ALB,          0},
-	{ NULL,            -1,                     0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_mode_tbl[] = अणु
+	अणु "balance-rr",    BOND_MODE_ROUNDROBIN,   BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "active-backup", BOND_MODE_ACTIVEBACKUP, 0पूर्ण,
+	अणु "balance-xor",   BOND_MODE_XOR,          0पूर्ण,
+	अणु "broadcast",     BOND_MODE_BROADCAST,    0पूर्ण,
+	अणु "802.3ad",       BOND_MODE_8023AD,       0पूर्ण,
+	अणु "balance-tlb",   BOND_MODE_TLB,          0पूर्ण,
+	अणु "balance-alb",   BOND_MODE_ALB,          0पूर्ण,
+	अणु शून्य,            -1,                     0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_pps_tbl[] = {
-	{ "default", 1,         BOND_VALFLAG_DEFAULT},
-	{ "maxval",  USHRT_MAX, BOND_VALFLAG_MAX},
-	{ NULL,      -1,        0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_pps_tbl[] = अणु
+	अणु "default", 1,         BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "maxval",  अच_लघु_उच्च, BOND_VALFLAG_MAXपूर्ण,
+	अणु शून्य,      -1,        0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_xmit_hashtype_tbl[] = {
-	{ "layer2",      BOND_XMIT_POLICY_LAYER2,      BOND_VALFLAG_DEFAULT},
-	{ "layer3+4",    BOND_XMIT_POLICY_LAYER34,     0},
-	{ "layer2+3",    BOND_XMIT_POLICY_LAYER23,     0},
-	{ "encap2+3",    BOND_XMIT_POLICY_ENCAP23,     0},
-	{ "encap3+4",    BOND_XMIT_POLICY_ENCAP34,     0},
-	{ "vlan+srcmac", BOND_XMIT_POLICY_VLAN_SRCMAC, 0},
-	{ NULL,          -1,                           0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_xmit_hashtype_tbl[] = अणु
+	अणु "layer2",      BOND_XMIT_POLICY_LAYER2,      BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "layer3+4",    BOND_XMIT_POLICY_LAYER34,     0पूर्ण,
+	अणु "layer2+3",    BOND_XMIT_POLICY_LAYER23,     0पूर्ण,
+	अणु "encap2+3",    BOND_XMIT_POLICY_ENCAP23,     0पूर्ण,
+	अणु "encap3+4",    BOND_XMIT_POLICY_ENCAP34,     0पूर्ण,
+	अणु "vlan+srcmac", BOND_XMIT_POLICY_VLAN_SRCMAC, 0पूर्ण,
+	अणु शून्य,          -1,                           0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_arp_validate_tbl[] = {
-	{ "none",		BOND_ARP_VALIDATE_NONE,		BOND_VALFLAG_DEFAULT},
-	{ "active",		BOND_ARP_VALIDATE_ACTIVE,	0},
-	{ "backup",		BOND_ARP_VALIDATE_BACKUP,	0},
-	{ "all",		BOND_ARP_VALIDATE_ALL,		0},
-	{ "filter",		BOND_ARP_FILTER,		0},
-	{ "filter_active",	BOND_ARP_FILTER_ACTIVE,		0},
-	{ "filter_backup",	BOND_ARP_FILTER_BACKUP,		0},
-	{ NULL,			-1,				0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_arp_validate_tbl[] = अणु
+	अणु "none",		BOND_ARP_VALIDATE_NONE,		BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "active",		BOND_ARP_VALIDATE_ACTIVE,	0पूर्ण,
+	अणु "backup",		BOND_ARP_VALIDATE_BACKUP,	0पूर्ण,
+	अणु "all",		BOND_ARP_VALIDATE_ALL,		0पूर्ण,
+	अणु "filter",		BOND_ARP_FILTER,		0पूर्ण,
+	अणु "filter_active",	BOND_ARP_FILTER_ACTIVE,		0पूर्ण,
+	अणु "filter_backup",	BOND_ARP_FILTER_BACKUP,		0पूर्ण,
+	अणु शून्य,			-1,				0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_arp_all_targets_tbl[] = {
-	{ "any", BOND_ARP_TARGETS_ANY, BOND_VALFLAG_DEFAULT},
-	{ "all", BOND_ARP_TARGETS_ALL, 0},
-	{ NULL,  -1,                   0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_arp_all_tarमाला_लो_tbl[] = अणु
+	अणु "any", BOND_ARP_TARGETS_ANY, BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "all", BOND_ARP_TARGETS_ALL, 0पूर्ण,
+	अणु शून्य,  -1,                   0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_fail_over_mac_tbl[] = {
-	{ "none",   BOND_FOM_NONE,   BOND_VALFLAG_DEFAULT},
-	{ "active", BOND_FOM_ACTIVE, 0},
-	{ "follow", BOND_FOM_FOLLOW, 0},
-	{ NULL,     -1,              0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_fail_over_mac_tbl[] = अणु
+	अणु "none",   BOND_FOM_NONE,   BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "active", BOND_FOM_ACTIVE, 0पूर्ण,
+	अणु "follow", BOND_FOM_FOLLOW, 0पूर्ण,
+	अणु शून्य,     -1,              0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_intmax_tbl[] = {
-	{ "off",     0,       BOND_VALFLAG_DEFAULT},
-	{ "maxval",  INT_MAX, BOND_VALFLAG_MAX},
-	{ NULL,      -1,      0}
-};
+अटल स्थिर काष्ठा bond_opt_value bond_पूर्णांकmax_tbl[] = अणु
+	अणु "off",     0,       BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "maxval",  पूर्णांक_उच्च, BOND_VALFLAG_MAXपूर्ण,
+	अणु शून्य,      -1,      0पूर्ण
+पूर्ण;
 
-static const struct bond_opt_value bond_lacp_rate_tbl[] = {
-	{ "slow", AD_LACP_SLOW, 0},
-	{ "fast", AD_LACP_FAST, 0},
-	{ NULL,   -1,           0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_lacp_rate_tbl[] = अणु
+	अणु "slow", AD_LACP_SLOW, 0पूर्ण,
+	अणु "fast", AD_LACP_FAST, 0पूर्ण,
+	अणु शून्य,   -1,           0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_ad_select_tbl[] = {
-	{ "stable",    BOND_AD_STABLE,    BOND_VALFLAG_DEFAULT},
-	{ "bandwidth", BOND_AD_BANDWIDTH, 0},
-	{ "count",     BOND_AD_COUNT,     0},
-	{ NULL,        -1,                0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_ad_select_tbl[] = अणु
+	अणु "stable",    BOND_AD_STABLE,    BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "bandwidth", BOND_AD_BANDWIDTH, 0पूर्ण,
+	अणु "count",     BOND_AD_COUNT,     0पूर्ण,
+	अणु शून्य,        -1,                0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_num_peer_notif_tbl[] = {
-	{ "off",     0,   0},
-	{ "maxval",  255, BOND_VALFLAG_MAX},
-	{ "default", 1,   BOND_VALFLAG_DEFAULT},
-	{ NULL,      -1,  0}
-};
+अटल स्थिर काष्ठा bond_opt_value bond_num_peer_notअगर_tbl[] = अणु
+	अणु "off",     0,   0पूर्ण,
+	अणु "maxval",  255, BOND_VALFLAG_MAXपूर्ण,
+	अणु "default", 1,   BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु शून्य,      -1,  0पूर्ण
+पूर्ण;
 
-static const struct bond_opt_value bond_primary_reselect_tbl[] = {
-	{ "always",  BOND_PRI_RESELECT_ALWAYS,  BOND_VALFLAG_DEFAULT},
-	{ "better",  BOND_PRI_RESELECT_BETTER,  0},
-	{ "failure", BOND_PRI_RESELECT_FAILURE, 0},
-	{ NULL,      -1},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_primary_reselect_tbl[] = अणु
+	अणु "always",  BOND_PRI_RESELECT_ALWAYS,  BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "better",  BOND_PRI_RESELECT_BETTER,  0पूर्ण,
+	अणु "failure", BOND_PRI_RESELECT_FAILURE, 0पूर्ण,
+	अणु शून्य,      -1पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_use_carrier_tbl[] = {
-	{ "off", 0,  0},
-	{ "on",  1,  BOND_VALFLAG_DEFAULT},
-	{ NULL,  -1, 0}
-};
+अटल स्थिर काष्ठा bond_opt_value bond_use_carrier_tbl[] = अणु
+	अणु "off", 0,  0पूर्ण,
+	अणु "on",  1,  BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु शून्य,  -1, 0पूर्ण
+पूर्ण;
 
-static const struct bond_opt_value bond_all_slaves_active_tbl[] = {
-	{ "off", 0,  BOND_VALFLAG_DEFAULT},
-	{ "on",  1,  0},
-	{ NULL,  -1, 0}
-};
+अटल स्थिर काष्ठा bond_opt_value bond_all_slaves_active_tbl[] = अणु
+	अणु "off", 0,  BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "on",  1,  0पूर्ण,
+	अणु शून्य,  -1, 0पूर्ण
+पूर्ण;
 
-static const struct bond_opt_value bond_resend_igmp_tbl[] = {
-	{ "off",     0,   0},
-	{ "maxval",  255, BOND_VALFLAG_MAX},
-	{ "default", 1,   BOND_VALFLAG_DEFAULT},
-	{ NULL,      -1,  0}
-};
+अटल स्थिर काष्ठा bond_opt_value bond_resend_igmp_tbl[] = अणु
+	अणु "off",     0,   0पूर्ण,
+	अणु "maxval",  255, BOND_VALFLAG_MAXपूर्ण,
+	अणु "default", 1,   BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु शून्य,      -1,  0पूर्ण
+पूर्ण;
 
-static const struct bond_opt_value bond_lp_interval_tbl[] = {
-	{ "minval",  1,       BOND_VALFLAG_MIN | BOND_VALFLAG_DEFAULT},
-	{ "maxval",  INT_MAX, BOND_VALFLAG_MAX},
-	{ NULL,      -1,      0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_lp_पूर्णांकerval_tbl[] = अणु
+	अणु "minval",  1,       BOND_VALFLAG_MIN | BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "maxval",  पूर्णांक_उच्च, BOND_VALFLAG_MAXपूर्ण,
+	अणु शून्य,      -1,      0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_tlb_dynamic_lb_tbl[] = {
-	{ "off", 0,  0},
-	{ "on",  1,  BOND_VALFLAG_DEFAULT},
-	{ NULL,  -1, 0}
-};
+अटल स्थिर काष्ठा bond_opt_value bond_tlb_dynamic_lb_tbl[] = अणु
+	अणु "off", 0,  0पूर्ण,
+	अणु "on",  1,  BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु शून्य,  -1, 0पूर्ण
+पूर्ण;
 
-static const struct bond_opt_value bond_ad_actor_sys_prio_tbl[] = {
-	{ "minval",  1,     BOND_VALFLAG_MIN},
-	{ "maxval",  65535, BOND_VALFLAG_MAX | BOND_VALFLAG_DEFAULT},
-	{ NULL,      -1,    0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_ad_actor_sys_prio_tbl[] = अणु
+	अणु "minval",  1,     BOND_VALFLAG_MINपूर्ण,
+	अणु "maxval",  65535, BOND_VALFLAG_MAX | BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु शून्य,      -1,    0पूर्ण,
+पूर्ण;
 
-static const struct bond_opt_value bond_ad_user_port_key_tbl[] = {
-	{ "minval",  0,     BOND_VALFLAG_MIN | BOND_VALFLAG_DEFAULT},
-	{ "maxval",  1023,  BOND_VALFLAG_MAX},
-	{ NULL,      -1,    0},
-};
+अटल स्थिर काष्ठा bond_opt_value bond_ad_user_port_key_tbl[] = अणु
+	अणु "minval",  0,     BOND_VALFLAG_MIN | BOND_VALFLAG_DEFAULTपूर्ण,
+	अणु "maxval",  1023,  BOND_VALFLAG_MAXपूर्ण,
+	अणु शून्य,      -1,    0पूर्ण,
+पूर्ण;
 
-static const struct bond_option bond_opts[BOND_OPT_LAST] = {
-	[BOND_OPT_MODE] = {
+अटल स्थिर काष्ठा bond_option bond_opts[BOND_OPT_LAST] = अणु
+	[BOND_OPT_MODE] = अणु
 		.id = BOND_OPT_MODE,
 		.name = "mode",
 		.desc = "bond device mode",
 		.flags = BOND_OPTFLAG_NOSLAVES | BOND_OPTFLAG_IFDOWN,
 		.values = bond_mode_tbl,
 		.set = bond_option_mode_set
-	},
-	[BOND_OPT_PACKETS_PER_SLAVE] = {
+	पूर्ण,
+	[BOND_OPT_PACKETS_PER_SLAVE] = अणु
 		.id = BOND_OPT_PACKETS_PER_SLAVE,
 		.name = "packets_per_slave",
 		.desc = "Packets to send per slave in RR mode",
 		.unsuppmodes = BOND_MODE_ALL_EX(BIT(BOND_MODE_ROUNDROBIN)),
 		.values = bond_pps_tbl,
 		.set = bond_option_pps_set
-	},
-	[BOND_OPT_XMIT_HASH] = {
+	पूर्ण,
+	[BOND_OPT_XMIT_HASH] = अणु
 		.id = BOND_OPT_XMIT_HASH,
 		.name = "xmit_hash_policy",
 		.desc = "balance-xor, 802.3ad, and tlb hashing method",
 		.values = bond_xmit_hashtype_tbl,
 		.set = bond_option_xmit_hash_policy_set
-	},
-	[BOND_OPT_ARP_VALIDATE] = {
+	पूर्ण,
+	[BOND_OPT_ARP_VALIDATE] = अणु
 		.id = BOND_OPT_ARP_VALIDATE,
 		.name = "arp_validate",
 		.desc = "validate src/dst of ARP probes",
@@ -237,53 +238,53 @@ static const struct bond_option bond_opts[BOND_OPT_LAST] = {
 			       BIT(BOND_MODE_ALB),
 		.values = bond_arp_validate_tbl,
 		.set = bond_option_arp_validate_set
-	},
-	[BOND_OPT_ARP_ALL_TARGETS] = {
+	पूर्ण,
+	[BOND_OPT_ARP_ALL_TARGETS] = अणु
 		.id = BOND_OPT_ARP_ALL_TARGETS,
 		.name = "arp_all_targets",
 		.desc = "fail on any/all arp targets timeout",
-		.values = bond_arp_all_targets_tbl,
-		.set = bond_option_arp_all_targets_set
-	},
-	[BOND_OPT_FAIL_OVER_MAC] = {
+		.values = bond_arp_all_tarमाला_लो_tbl,
+		.set = bond_option_arp_all_tarमाला_लो_set
+	पूर्ण,
+	[BOND_OPT_FAIL_OVER_MAC] = अणु
 		.id = BOND_OPT_FAIL_OVER_MAC,
 		.name = "fail_over_mac",
 		.desc = "For active-backup, do not set all slaves to the same MAC",
 		.flags = BOND_OPTFLAG_NOSLAVES,
 		.values = bond_fail_over_mac_tbl,
 		.set = bond_option_fail_over_mac_set
-	},
-	[BOND_OPT_ARP_INTERVAL] = {
+	पूर्ण,
+	[BOND_OPT_ARP_INTERVAL] = अणु
 		.id = BOND_OPT_ARP_INTERVAL,
 		.name = "arp_interval",
 		.desc = "arp interval in milliseconds",
 		.unsuppmodes = BIT(BOND_MODE_8023AD) | BIT(BOND_MODE_TLB) |
 			       BIT(BOND_MODE_ALB),
-		.values = bond_intmax_tbl,
-		.set = bond_option_arp_interval_set
-	},
-	[BOND_OPT_ARP_TARGETS] = {
+		.values = bond_पूर्णांकmax_tbl,
+		.set = bond_option_arp_पूर्णांकerval_set
+	पूर्ण,
+	[BOND_OPT_ARP_TARGETS] = अणु
 		.id = BOND_OPT_ARP_TARGETS,
 		.name = "arp_ip_target",
 		.desc = "arp targets in n.n.n.n form",
 		.flags = BOND_OPTFLAG_RAWVAL,
-		.set = bond_option_arp_ip_targets_set
-	},
-	[BOND_OPT_DOWNDELAY] = {
+		.set = bond_option_arp_ip_tarमाला_लो_set
+	पूर्ण,
+	[BOND_OPT_DOWNDELAY] = अणु
 		.id = BOND_OPT_DOWNDELAY,
 		.name = "downdelay",
 		.desc = "Delay before considering link down, in milliseconds",
-		.values = bond_intmax_tbl,
-		.set = bond_option_downdelay_set
-	},
-	[BOND_OPT_UPDELAY] = {
+		.values = bond_पूर्णांकmax_tbl,
+		.set = bond_option_करोwndelay_set
+	पूर्ण,
+	[BOND_OPT_UPDELAY] = अणु
 		.id = BOND_OPT_UPDELAY,
 		.name = "updelay",
 		.desc = "Delay before considering link up, in milliseconds",
-		.values = bond_intmax_tbl,
+		.values = bond_पूर्णांकmax_tbl,
 		.set = bond_option_updelay_set
-	},
-	[BOND_OPT_LACP_RATE] = {
+	पूर्ण,
+	[BOND_OPT_LACP_RATE] = अणु
 		.id = BOND_OPT_LACP_RATE,
 		.name = "lacp_rate",
 		.desc = "LACPDU tx rate to request from 802.3ad partner",
@@ -291,37 +292,37 @@ static const struct bond_option bond_opts[BOND_OPT_LAST] = {
 		.unsuppmodes = BOND_MODE_ALL_EX(BIT(BOND_MODE_8023AD)),
 		.values = bond_lacp_rate_tbl,
 		.set = bond_option_lacp_rate_set
-	},
-	[BOND_OPT_MINLINKS] = {
+	पूर्ण,
+	[BOND_OPT_MINLINKS] = अणु
 		.id = BOND_OPT_MINLINKS,
 		.name = "min_links",
 		.desc = "Minimum number of available links before turning on carrier",
-		.values = bond_intmax_tbl,
+		.values = bond_पूर्णांकmax_tbl,
 		.set = bond_option_min_links_set
-	},
-	[BOND_OPT_AD_SELECT] = {
+	पूर्ण,
+	[BOND_OPT_AD_SELECT] = अणु
 		.id = BOND_OPT_AD_SELECT,
 		.name = "ad_select",
 		.desc = "803.ad aggregation selection logic",
 		.flags = BOND_OPTFLAG_IFDOWN,
 		.values = bond_ad_select_tbl,
 		.set = bond_option_ad_select_set
-	},
-	[BOND_OPT_NUM_PEER_NOTIF] = {
+	पूर्ण,
+	[BOND_OPT_NUM_PEER_NOTIF] = अणु
 		.id = BOND_OPT_NUM_PEER_NOTIF,
 		.name = "num_unsol_na",
 		.desc = "Number of peer notifications to send on failover event",
-		.values = bond_num_peer_notif_tbl,
-		.set = bond_option_num_peer_notif_set
-	},
-	[BOND_OPT_MIIMON] = {
+		.values = bond_num_peer_notअगर_tbl,
+		.set = bond_option_num_peer_notअगर_set
+	पूर्ण,
+	[BOND_OPT_MIIMON] = अणु
 		.id = BOND_OPT_MIIMON,
 		.name = "miimon",
 		.desc = "Link check interval in milliseconds",
-		.values = bond_intmax_tbl,
+		.values = bond_पूर्णांकmax_tbl,
 		.set = bond_option_miimon_set
-	},
-	[BOND_OPT_PRIMARY] = {
+	पूर्ण,
+	[BOND_OPT_PRIMARY] = अणु
 		.id = BOND_OPT_PRIMARY,
 		.name = "primary",
 		.desc = "Primary network device to use",
@@ -330,22 +331,22 @@ static const struct bond_option bond_opts[BOND_OPT_LAST] = {
 						BIT(BOND_MODE_TLB) |
 						BIT(BOND_MODE_ALB)),
 		.set = bond_option_primary_set
-	},
-	[BOND_OPT_PRIMARY_RESELECT] = {
+	पूर्ण,
+	[BOND_OPT_PRIMARY_RESELECT] = अणु
 		.id = BOND_OPT_PRIMARY_RESELECT,
 		.name = "primary_reselect",
 		.desc = "Reselect primary slave once it comes up",
 		.values = bond_primary_reselect_tbl,
 		.set = bond_option_primary_reselect_set
-	},
-	[BOND_OPT_USE_CARRIER] = {
+	पूर्ण,
+	[BOND_OPT_USE_CARRIER] = अणु
 		.id = BOND_OPT_USE_CARRIER,
 		.name = "use_carrier",
 		.desc = "Use netif_carrier_ok (vs MII ioctls) in miimon",
 		.values = bond_use_carrier_tbl,
 		.set = bond_option_use_carrier_set
-	},
-	[BOND_OPT_ACTIVE_SLAVE] = {
+	पूर्ण,
+	[BOND_OPT_ACTIVE_SLAVE] = अणु
 		.id = BOND_OPT_ACTIVE_SLAVE,
 		.name = "active_slave",
 		.desc = "Currently active slave",
@@ -354,43 +355,43 @@ static const struct bond_option bond_opts[BOND_OPT_LAST] = {
 						BIT(BOND_MODE_TLB) |
 						BIT(BOND_MODE_ALB)),
 		.set = bond_option_active_slave_set
-	},
-	[BOND_OPT_QUEUE_ID] = {
+	पूर्ण,
+	[BOND_OPT_QUEUE_ID] = अणु
 		.id = BOND_OPT_QUEUE_ID,
 		.name = "queue_id",
 		.desc = "Set queue id of a slave",
 		.flags = BOND_OPTFLAG_RAWVAL,
 		.set = bond_option_queue_id_set
-	},
-	[BOND_OPT_ALL_SLAVES_ACTIVE] = {
+	पूर्ण,
+	[BOND_OPT_ALL_SLAVES_ACTIVE] = अणु
 		.id = BOND_OPT_ALL_SLAVES_ACTIVE,
 		.name = "all_slaves_active",
 		.desc = "Keep all frames received on an interface by setting active flag for all slaves",
 		.values = bond_all_slaves_active_tbl,
 		.set = bond_option_all_slaves_active_set
-	},
-	[BOND_OPT_RESEND_IGMP] = {
+	पूर्ण,
+	[BOND_OPT_RESEND_IGMP] = अणु
 		.id = BOND_OPT_RESEND_IGMP,
 		.name = "resend_igmp",
 		.desc = "Number of IGMP membership reports to send on link failure",
 		.values = bond_resend_igmp_tbl,
 		.set = bond_option_resend_igmp_set
-	},
-	[BOND_OPT_LP_INTERVAL] = {
+	पूर्ण,
+	[BOND_OPT_LP_INTERVAL] = अणु
 		.id = BOND_OPT_LP_INTERVAL,
 		.name = "lp_interval",
 		.desc = "The number of seconds between instances where the bonding driver sends learning packets to each slave's peer switch",
-		.values = bond_lp_interval_tbl,
-		.set = bond_option_lp_interval_set
-	},
-	[BOND_OPT_SLAVES] = {
+		.values = bond_lp_पूर्णांकerval_tbl,
+		.set = bond_option_lp_पूर्णांकerval_set
+	पूर्ण,
+	[BOND_OPT_SLAVES] = अणु
 		.id = BOND_OPT_SLAVES,
 		.name = "slaves",
 		.desc = "Slave membership management",
 		.flags = BOND_OPTFLAG_RAWVAL,
 		.set = bond_option_slaves_set
-	},
-	[BOND_OPT_TLB_DYNAMIC_LB] = {
+	पूर्ण,
+	[BOND_OPT_TLB_DYNAMIC_LB] = अणु
 		.id = BOND_OPT_TLB_DYNAMIC_LB,
 		.name = "tlb_dynamic_lb",
 		.desc = "Enable dynamic flow shuffling",
@@ -398,261 +399,261 @@ static const struct bond_option bond_opts[BOND_OPT_LAST] = {
 		.values = bond_tlb_dynamic_lb_tbl,
 		.flags = BOND_OPTFLAG_IFDOWN,
 		.set = bond_option_tlb_dynamic_lb_set,
-	},
-	[BOND_OPT_AD_ACTOR_SYS_PRIO] = {
+	पूर्ण,
+	[BOND_OPT_AD_ACTOR_SYS_PRIO] = अणु
 		.id = BOND_OPT_AD_ACTOR_SYS_PRIO,
 		.name = "ad_actor_sys_prio",
 		.unsuppmodes = BOND_MODE_ALL_EX(BIT(BOND_MODE_8023AD)),
 		.values = bond_ad_actor_sys_prio_tbl,
 		.set = bond_option_ad_actor_sys_prio_set,
-	},
-	[BOND_OPT_AD_ACTOR_SYSTEM] = {
+	पूर्ण,
+	[BOND_OPT_AD_ACTOR_SYSTEM] = अणु
 		.id = BOND_OPT_AD_ACTOR_SYSTEM,
 		.name = "ad_actor_system",
 		.unsuppmodes = BOND_MODE_ALL_EX(BIT(BOND_MODE_8023AD)),
 		.flags = BOND_OPTFLAG_RAWVAL,
-		.set = bond_option_ad_actor_system_set,
-	},
-	[BOND_OPT_AD_USER_PORT_KEY] = {
+		.set = bond_option_ad_actor_प्रणाली_set,
+	पूर्ण,
+	[BOND_OPT_AD_USER_PORT_KEY] = अणु
 		.id = BOND_OPT_AD_USER_PORT_KEY,
 		.name = "ad_user_port_key",
 		.unsuppmodes = BOND_MODE_ALL_EX(BIT(BOND_MODE_8023AD)),
 		.flags = BOND_OPTFLAG_IFDOWN,
 		.values = bond_ad_user_port_key_tbl,
 		.set = bond_option_ad_user_port_key_set,
-	},
-	[BOND_OPT_NUM_PEER_NOTIF_ALIAS] = {
+	पूर्ण,
+	[BOND_OPT_NUM_PEER_NOTIF_ALIAS] = अणु
 		.id = BOND_OPT_NUM_PEER_NOTIF_ALIAS,
 		.name = "num_grat_arp",
 		.desc = "Number of peer notifications to send on failover event",
-		.values = bond_num_peer_notif_tbl,
-		.set = bond_option_num_peer_notif_set
-	},
-	[BOND_OPT_PEER_NOTIF_DELAY] = {
+		.values = bond_num_peer_notअगर_tbl,
+		.set = bond_option_num_peer_notअगर_set
+	पूर्ण,
+	[BOND_OPT_PEER_NOTIF_DELAY] = अणु
 		.id = BOND_OPT_PEER_NOTIF_DELAY,
 		.name = "peer_notif_delay",
 		.desc = "Delay between each peer notification on failover event, in milliseconds",
-		.values = bond_intmax_tbl,
-		.set = bond_option_peer_notif_delay_set
-	}
-};
+		.values = bond_पूर्णांकmax_tbl,
+		.set = bond_option_peer_notअगर_delay_set
+	पूर्ण
+पूर्ण;
 
-/* Searches for an option by name */
-const struct bond_option *bond_opt_get_by_name(const char *name)
-{
-	const struct bond_option *opt;
-	int option;
+/* Searches क्रम an option by name */
+स्थिर काष्ठा bond_option *bond_opt_get_by_name(स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा bond_option *opt;
+	पूर्णांक option;
 
-	for (option = 0; option < BOND_OPT_LAST; option++) {
+	क्रम (option = 0; option < BOND_OPT_LAST; option++) अणु
 		opt = bond_opt_get(option);
-		if (opt && !strcmp(opt->name, name))
-			return opt;
-	}
+		अगर (opt && !म_भेद(opt->name, name))
+			वापस opt;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Searches for a value in opt's values[] table */
-const struct bond_opt_value *bond_opt_get_val(unsigned int option, u64 val)
-{
-	const struct bond_option *opt;
-	int i;
+/* Searches क्रम a value in opt's values[] table */
+स्थिर काष्ठा bond_opt_value *bond_opt_get_val(अचिन्हित पूर्णांक option, u64 val)
+अणु
+	स्थिर काष्ठा bond_option *opt;
+	पूर्णांक i;
 
 	opt = bond_opt_get(option);
-	if (WARN_ON(!opt))
-		return NULL;
-	for (i = 0; opt->values && opt->values[i].string; i++)
-		if (opt->values[i].value == val)
-			return &opt->values[i];
+	अगर (WARN_ON(!opt))
+		वापस शून्य;
+	क्रम (i = 0; opt->values && opt->values[i].string; i++)
+		अगर (opt->values[i].value == val)
+			वापस &opt->values[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Searches for a value in opt's values[] table which matches the flagmask */
-static const struct bond_opt_value *bond_opt_get_flags(const struct bond_option *opt,
+/* Searches क्रम a value in opt's values[] table which matches the flagmask */
+अटल स्थिर काष्ठा bond_opt_value *bond_opt_get_flags(स्थिर काष्ठा bond_option *opt,
 						       u32 flagmask)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; opt->values && opt->values[i].string; i++)
-		if (opt->values[i].flags & flagmask)
-			return &opt->values[i];
+	क्रम (i = 0; opt->values && opt->values[i].string; i++)
+		अगर (opt->values[i].flags & flagmask)
+			वापस &opt->values[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* If maxval is missing then there's no range to check. In case minval is
+/* If maxval is missing then there's no range to check. In हाल minval is
  * missing then it's considered to be 0.
  */
-static bool bond_opt_check_range(const struct bond_option *opt, u64 val)
-{
-	const struct bond_opt_value *minval, *maxval;
+अटल bool bond_opt_check_range(स्थिर काष्ठा bond_option *opt, u64 val)
+अणु
+	स्थिर काष्ठा bond_opt_value *minval, *maxval;
 
 	minval = bond_opt_get_flags(opt, BOND_VALFLAG_MIN);
 	maxval = bond_opt_get_flags(opt, BOND_VALFLAG_MAX);
-	if (!maxval || (minval && val < minval->value) || val > maxval->value)
-		return false;
+	अगर (!maxval || (minval && val < minval->value) || val > maxval->value)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * bond_opt_parse - parse option value
  * @opt: the option to parse against
  * @val: value to parse
  *
- * This function tries to extract the value from @val and check if it's
- * a possible match for the option and returns NULL if a match isn't found,
- * or the struct_opt_value that matched. It also strips the new line from
- * @val->string if it's present.
+ * This function tries to extract the value from @val and check अगर it's
+ * a possible match क्रम the option and वापसs शून्य अगर a match isn't found,
+ * or the काष्ठा_opt_value that matched. It also strips the new line from
+ * @val->string अगर it's present.
  */
-const struct bond_opt_value *bond_opt_parse(const struct bond_option *opt,
-					    struct bond_opt_value *val)
-{
-	char *p, valstr[BOND_OPT_MAX_NAMELEN + 1] = { 0, };
-	const struct bond_opt_value *tbl;
-	const struct bond_opt_value *ret = NULL;
+स्थिर काष्ठा bond_opt_value *bond_opt_parse(स्थिर काष्ठा bond_option *opt,
+					    काष्ठा bond_opt_value *val)
+अणु
+	अक्षर *p, valstr[BOND_OPT_MAX_NAMELEN + 1] = अणु 0, पूर्ण;
+	स्थिर काष्ठा bond_opt_value *tbl;
+	स्थिर काष्ठा bond_opt_value *ret = शून्य;
 	bool checkval;
-	int i, rv;
+	पूर्णांक i, rv;
 
-	/* No parsing if the option wants a raw val */
-	if (opt->flags & BOND_OPTFLAG_RAWVAL)
-		return val;
+	/* No parsing अगर the option wants a raw val */
+	अगर (opt->flags & BOND_OPTFLAG_RAWVAL)
+		वापस val;
 
 	tbl = opt->values;
-	if (!tbl)
-		goto out;
+	अगर (!tbl)
+		जाओ out;
 
-	/* ULLONG_MAX is used to bypass string processing */
-	checkval = val->value != ULLONG_MAX;
-	if (!checkval) {
-		if (!val->string)
-			goto out;
-		p = strchr(val->string, '\n');
-		if (p)
+	/* ULदीर्घ_उच्च is used to bypass string processing */
+	checkval = val->value != ULदीर्घ_उच्च;
+	अगर (!checkval) अणु
+		अगर (!val->string)
+			जाओ out;
+		p = म_अक्षर(val->string, '\n');
+		अगर (p)
 			*p = '\0';
-		for (p = val->string; *p; p++)
-			if (!(isdigit(*p) || isspace(*p)))
-				break;
+		क्रम (p = val->string; *p; p++)
+			अगर (!(है_अंक(*p) || है_खाली(*p)))
+				अवरोध;
 		/* The following code extracts the string to match or the value
 		 * and sets checkval appropriately
 		 */
-		if (*p) {
-			rv = sscanf(val->string, "%32s", valstr);
-		} else {
-			rv = sscanf(val->string, "%llu", &val->value);
+		अगर (*p) अणु
+			rv = माला_पूछो(val->string, "%32s", valstr);
+		पूर्ण अन्यथा अणु
+			rv = माला_पूछो(val->string, "%llu", &val->value);
 			checkval = true;
-		}
-		if (!rv)
-			goto out;
-	}
+		पूर्ण
+		अगर (!rv)
+			जाओ out;
+	पूर्ण
 
-	for (i = 0; tbl[i].string; i++) {
-		/* Check for exact match */
-		if (checkval) {
-			if (val->value == tbl[i].value)
+	क्रम (i = 0; tbl[i].string; i++) अणु
+		/* Check क्रम exact match */
+		अगर (checkval) अणु
+			अगर (val->value == tbl[i].value)
 				ret = &tbl[i];
-		} else {
-			if (!strcmp(valstr, "default") &&
+		पूर्ण अन्यथा अणु
+			अगर (!म_भेद(valstr, "default") &&
 			    (tbl[i].flags & BOND_VALFLAG_DEFAULT))
 				ret = &tbl[i];
 
-			if (!strcmp(valstr, tbl[i].string))
+			अगर (!म_भेद(valstr, tbl[i].string))
 				ret = &tbl[i];
-		}
+		पूर्ण
 		/* Found an exact match */
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 	/* Possible range match */
-	if (checkval && bond_opt_check_range(opt, val->value))
+	अगर (checkval && bond_opt_check_range(opt, val->value))
 		ret = val;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Check opt's dependencies against bond mode and currently set options */
-static int bond_opt_check_deps(struct bonding *bond,
-			       const struct bond_option *opt)
-{
-	struct bond_params *params = &bond->params;
+अटल पूर्णांक bond_opt_check_deps(काष्ठा bonding *bond,
+			       स्थिर काष्ठा bond_option *opt)
+अणु
+	काष्ठा bond_params *params = &bond->params;
 
-	if (test_bit(params->mode, &opt->unsuppmodes))
-		return -EACCES;
-	if ((opt->flags & BOND_OPTFLAG_NOSLAVES) && bond_has_slaves(bond))
-		return -ENOTEMPTY;
-	if ((opt->flags & BOND_OPTFLAG_IFDOWN) && (bond->dev->flags & IFF_UP))
-		return -EBUSY;
+	अगर (test_bit(params->mode, &opt->unsuppmodes))
+		वापस -EACCES;
+	अगर ((opt->flags & BOND_OPTFLAG_NOSLAVES) && bond_has_slaves(bond))
+		वापस -ENOTEMPTY;
+	अगर ((opt->flags & BOND_OPTFLAG_IFDOWN) && (bond->dev->flags & IFF_UP))
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bond_opt_dep_print(struct bonding *bond,
-			       const struct bond_option *opt)
-{
-	const struct bond_opt_value *modeval;
-	struct bond_params *params;
+अटल व्योम bond_opt_dep_prपूर्णांक(काष्ठा bonding *bond,
+			       स्थिर काष्ठा bond_option *opt)
+अणु
+	स्थिर काष्ठा bond_opt_value *modeval;
+	काष्ठा bond_params *params;
 
 	params = &bond->params;
 	modeval = bond_opt_get_val(BOND_OPT_MODE, params->mode);
-	if (test_bit(params->mode, &opt->unsuppmodes))
+	अगर (test_bit(params->mode, &opt->unsuppmodes))
 		netdev_err(bond->dev, "option %s: mode dependency failed, not supported in mode %s(%llu)\n",
 			   opt->name, modeval->string, modeval->value);
-}
+पूर्ण
 
-static void bond_opt_error_interpret(struct bonding *bond,
-				     const struct bond_option *opt,
-				     int error, const struct bond_opt_value *val)
-{
-	const struct bond_opt_value *minval, *maxval;
-	char *p;
+अटल व्योम bond_opt_error_पूर्णांकerpret(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_option *opt,
+				     पूर्णांक error, स्थिर काष्ठा bond_opt_value *val)
+अणु
+	स्थिर काष्ठा bond_opt_value *minval, *maxval;
+	अक्षर *p;
 
-	switch (error) {
-	case -EINVAL:
-		if (val) {
-			if (val->string) {
-				/* sometimes RAWVAL opts may have new lines */
-				p = strchr(val->string, '\n');
-				if (p)
+	चयन (error) अणु
+	हाल -EINVAL:
+		अगर (val) अणु
+			अगर (val->string) अणु
+				/* someबार RAWVAL opts may have new lines */
+				p = म_अक्षर(val->string, '\n');
+				अगर (p)
 					*p = '\0';
 				netdev_err(bond->dev, "option %s: invalid value (%s)\n",
 					   opt->name, val->string);
-			} else {
+			पूर्ण अन्यथा अणु
 				netdev_err(bond->dev, "option %s: invalid value (%llu)\n",
 					   opt->name, val->value);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		minval = bond_opt_get_flags(opt, BOND_VALFLAG_MIN);
 		maxval = bond_opt_get_flags(opt, BOND_VALFLAG_MAX);
-		if (!maxval)
-			break;
+		अगर (!maxval)
+			अवरोध;
 		netdev_err(bond->dev, "option %s: allowed values %llu - %llu\n",
 			   opt->name, minval ? minval->value : 0, maxval->value);
-		break;
-	case -EACCES:
-		bond_opt_dep_print(bond, opt);
-		break;
-	case -ENOTEMPTY:
+		अवरोध;
+	हाल -EACCES:
+		bond_opt_dep_prपूर्णांक(bond, opt);
+		अवरोध;
+	हाल -ENOTEMPTY:
 		netdev_err(bond->dev, "option %s: unable to set because the bond device has slaves\n",
 			   opt->name);
-		break;
-	case -EBUSY:
+		अवरोध;
+	हाल -EBUSY:
 		netdev_err(bond->dev, "option %s: unable to set because the bond device is up\n",
 			   opt->name);
-		break;
-	case -ENODEV:
-		if (val && val->string) {
-			p = strchr(val->string, '\n');
-			if (p)
+		अवरोध;
+	हाल -ENODEV:
+		अगर (val && val->string) अणु
+			p = म_अक्षर(val->string, '\n');
+			अगर (p)
 				*p = '\0';
 			netdev_err(bond->dev, "option %s: interface %s does not exist!\n",
 				   opt->name, val->string);
-		}
-		break;
-	default:
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * __bond_opt_set - set a bonding option
@@ -661,61 +662,61 @@ static void bond_opt_error_interpret(struct bonding *bond,
  * @val: value to set it to
  *
  * This function is used to change the bond's option value, it can be
- * used for both enabling/changing an option and for disabling it. RTNL lock
- * must be obtained before calling this function.
+ * used क्रम both enabling/changing an option and क्रम disabling it. RTNL lock
+ * must be obtained beक्रमe calling this function.
  */
-int __bond_opt_set(struct bonding *bond,
-		   unsigned int option, struct bond_opt_value *val)
-{
-	const struct bond_opt_value *retval = NULL;
-	const struct bond_option *opt;
-	int ret = -ENOENT;
+पूर्णांक __bond_opt_set(काष्ठा bonding *bond,
+		   अचिन्हित पूर्णांक option, काष्ठा bond_opt_value *val)
+अणु
+	स्थिर काष्ठा bond_opt_value *retval = शून्य;
+	स्थिर काष्ठा bond_option *opt;
+	पूर्णांक ret = -ENOENT;
 
 	ASSERT_RTNL();
 
 	opt = bond_opt_get(option);
-	if (WARN_ON(!val) || WARN_ON(!opt))
-		goto out;
+	अगर (WARN_ON(!val) || WARN_ON(!opt))
+		जाओ out;
 	ret = bond_opt_check_deps(bond, opt);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	retval = bond_opt_parse(opt, val);
-	if (!retval) {
+	अगर (!retval) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = opt->set(bond, retval);
 out:
-	if (ret)
-		bond_opt_error_interpret(bond, opt, ret, val);
+	अगर (ret)
+		bond_opt_error_पूर्णांकerpret(bond, opt, ret, val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 /**
- * __bond_opt_set_notify - set a bonding option
+ * __bond_opt_set_notअगरy - set a bonding option
  * @bond: target bond device
  * @option: option to set
  * @val: value to set it to
  *
  * This function is used to change the bond's option value and trigger
- * a notification to user sapce. It can be used for both enabling/changing
- * an option and for disabling it. RTNL lock must be obtained before calling
+ * a notअगरication to user sapce. It can be used क्रम both enabling/changing
+ * an option and क्रम disabling it. RTNL lock must be obtained beक्रमe calling
  * this function.
  */
-int __bond_opt_set_notify(struct bonding *bond,
-			  unsigned int option, struct bond_opt_value *val)
-{
-	int ret = -ENOENT;
+पूर्णांक __bond_opt_set_notअगरy(काष्ठा bonding *bond,
+			  अचिन्हित पूर्णांक option, काष्ठा bond_opt_value *val)
+अणु
+	पूर्णांक ret = -ENOENT;
 
 	ASSERT_RTNL();
 
 	ret = __bond_opt_set(bond, option, val);
 
-	if (!ret && (bond->dev->reg_state == NETREG_REGISTERED))
-		call_netdevice_notifiers(NETDEV_CHANGEINFODATA, bond->dev);
+	अगर (!ret && (bond->dev->reg_state == NETREG_REGISTERED))
+		call_netdevice_notअगरiers(NETDEV_CHANGEINFODATA, bond->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * bond_opt_tryset_rtnl - try to acquire rtnl and call __bond_opt_set
@@ -723,490 +724,490 @@ int __bond_opt_set_notify(struct bonding *bond,
  * @option: option to set
  * @buf: value to set it to
  *
- * This function tries to acquire RTNL without blocking and if successful
- * calls __bond_opt_set. It is mainly used for sysfs option manipulation.
+ * This function tries to acquire RTNL without blocking and अगर successful
+ * calls __bond_opt_set. It is मुख्यly used क्रम sysfs option manipulation.
  */
-int bond_opt_tryset_rtnl(struct bonding *bond, unsigned int option, char *buf)
-{
-	struct bond_opt_value optval;
-	int ret;
+पूर्णांक bond_opt_tryset_rtnl(काष्ठा bonding *bond, अचिन्हित पूर्णांक option, अक्षर *buf)
+अणु
+	काष्ठा bond_opt_value optval;
+	पूर्णांक ret;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 	bond_opt_initstr(&optval, buf);
-	ret = __bond_opt_set_notify(bond, option, &optval);
+	ret = __bond_opt_set_notअगरy(bond, option, &optval);
 	rtnl_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * bond_opt_get - get a pointer to an option
- * @option: option for which to return a pointer
+ * bond_opt_get - get a poपूर्णांकer to an option
+ * @option: option क्रम which to वापस a poपूर्णांकer
  *
- * This function checks if option is valid and if so returns a pointer
+ * This function checks अगर option is valid and अगर so वापसs a poपूर्णांकer
  * to its entry in the bond_opts[] option array.
  */
-const struct bond_option *bond_opt_get(unsigned int option)
-{
-	if (!BOND_OPT_VALID(option))
-		return NULL;
+स्थिर काष्ठा bond_option *bond_opt_get(अचिन्हित पूर्णांक option)
+अणु
+	अगर (!BOND_OPT_VALID(option))
+		वापस शून्य;
 
-	return &bond_opts[option];
-}
+	वापस &bond_opts[option];
+पूर्ण
 
-static bool bond_set_xfrm_features(struct bonding *bond)
-{
-	if (!IS_ENABLED(CONFIG_XFRM_OFFLOAD))
-		return false;
+अटल bool bond_set_xfrm_features(काष्ठा bonding *bond)
+अणु
+	अगर (!IS_ENABLED(CONFIG_XFRM_OFFLOAD))
+		वापस false;
 
-	if (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
+	अगर (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
 		bond->dev->wanted_features |= BOND_XFRM_FEATURES;
-	else
+	अन्यथा
 		bond->dev->wanted_features &= ~BOND_XFRM_FEATURES;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool bond_set_tls_features(struct bonding *bond)
-{
-	if (!IS_ENABLED(CONFIG_TLS_DEVICE))
-		return false;
+अटल bool bond_set_tls_features(काष्ठा bonding *bond)
+अणु
+	अगर (!IS_ENABLED(CONFIG_TLS_DEVICE))
+		वापस false;
 
-	if (bond_sk_check(bond))
+	अगर (bond_sk_check(bond))
 		bond->dev->wanted_features |= BOND_TLS_FEATURES;
-	else
+	अन्यथा
 		bond->dev->wanted_features &= ~BOND_TLS_FEATURES;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int bond_option_mode_set(struct bonding *bond,
-				const struct bond_opt_value *newval)
-{
-	if (!bond_mode_uses_arp(newval->value)) {
-		if (bond->params.arp_interval) {
+अटल पूर्णांक bond_option_mode_set(काष्ठा bonding *bond,
+				स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	अगर (!bond_mode_uses_arp(newval->value)) अणु
+		अगर (bond->params.arp_पूर्णांकerval) अणु
 			netdev_dbg(bond->dev, "%s mode is incompatible with arp monitoring, start mii monitoring\n",
 				   newval->string);
 			/* disable arp monitoring */
-			bond->params.arp_interval = 0;
-		}
+			bond->params.arp_पूर्णांकerval = 0;
+		पूर्ण
 
-		if (!bond->params.miimon) {
-			/* set miimon to default value */
+		अगर (!bond->params.miimon) अणु
+			/* set miimon to शेष value */
 			bond->params.miimon = BOND_DEFAULT_MIIMON;
 			netdev_dbg(bond->dev, "Setting MII monitoring interval to %d\n",
 				   bond->params.miimon);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (newval->value == BOND_MODE_ALB)
+	अगर (newval->value == BOND_MODE_ALB)
 		bond->params.tlb_dynamic_lb = 1;
 
-	/* don't cache arp_validate between modes */
+	/* करोn't cache arp_validate between modes */
 	bond->params.arp_validate = BOND_ARP_VALIDATE_NONE;
 	bond->params.mode = newval->value;
 
-	if (bond->dev->reg_state == NETREG_REGISTERED) {
+	अगर (bond->dev->reg_state == NETREG_REGISTERED) अणु
 		bool update = false;
 
 		update |= bond_set_xfrm_features(bond);
 		update |= bond_set_tls_features(bond);
 
-		if (update)
+		अगर (update)
 			netdev_update_features(bond->dev);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_active_slave_set(struct bonding *bond,
-					const struct bond_opt_value *newval)
-{
-	char ifname[IFNAMSIZ] = { 0, };
-	struct net_device *slave_dev;
-	int ret = 0;
+अटल पूर्णांक bond_option_active_slave_set(काष्ठा bonding *bond,
+					स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	अक्षर अगरname[IFNAMSIZ] = अणु 0, पूर्ण;
+	काष्ठा net_device *slave_dev;
+	पूर्णांक ret = 0;
 
-	sscanf(newval->string, "%15s", ifname); /* IFNAMSIZ */
-	if (!strlen(ifname) || newval->string[0] == '\n') {
-		slave_dev = NULL;
-	} else {
-		slave_dev = __dev_get_by_name(dev_net(bond->dev), ifname);
-		if (!slave_dev)
-			return -ENODEV;
-	}
+	माला_पूछो(newval->string, "%15s", अगरname); /* IFNAMSIZ */
+	अगर (!म_माप(अगरname) || newval->string[0] == '\n') अणु
+		slave_dev = शून्य;
+	पूर्ण अन्यथा अणु
+		slave_dev = __dev_get_by_name(dev_net(bond->dev), अगरname);
+		अगर (!slave_dev)
+			वापस -ENODEV;
+	पूर्ण
 
-	if (slave_dev) {
-		if (!netif_is_bond_slave(slave_dev)) {
+	अगर (slave_dev) अणु
+		अगर (!netअगर_is_bond_slave(slave_dev)) अणु
 			slave_err(bond->dev, slave_dev, "Device is not bonding slave\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (bond->dev != netdev_master_upper_dev_get(slave_dev)) {
+		अगर (bond->dev != netdev_master_upper_dev_get(slave_dev)) अणु
 			slave_err(bond->dev, slave_dev, "Device is not our slave\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	block_netpoll_tx();
-	/* check to see if we are clearing active */
-	if (!slave_dev) {
+	/* check to see अगर we are clearing active */
+	अगर (!slave_dev) अणु
 		netdev_dbg(bond->dev, "Clearing current active slave\n");
-		RCU_INIT_POINTER(bond->curr_active_slave, NULL);
+		RCU_INIT_POINTER(bond->curr_active_slave, शून्य);
 		bond_select_active_slave(bond);
-	} else {
-		struct slave *old_active = rtnl_dereference(bond->curr_active_slave);
-		struct slave *new_active = bond_slave_get_rtnl(slave_dev);
+	पूर्ण अन्यथा अणु
+		काष्ठा slave *old_active = rtnl_dereference(bond->curr_active_slave);
+		काष्ठा slave *new_active = bond_slave_get_rtnl(slave_dev);
 
 		BUG_ON(!new_active);
 
-		if (new_active == old_active) {
-			/* do nothing */
+		अगर (new_active == old_active) अणु
+			/* करो nothing */
 			slave_dbg(bond->dev, new_active->dev, "is already the current active slave\n");
-		} else {
-			if (old_active && (new_active->link == BOND_LINK_UP) &&
-			    bond_slave_is_up(new_active)) {
+		पूर्ण अन्यथा अणु
+			अगर (old_active && (new_active->link == BOND_LINK_UP) &&
+			    bond_slave_is_up(new_active)) अणु
 				slave_dbg(bond->dev, new_active->dev, "Setting as active slave\n");
 				bond_change_active_slave(bond, new_active);
-			} else {
+			पूर्ण अन्यथा अणु
 				slave_err(bond->dev, new_active->dev, "Could not set as active slave; either %s is down or the link is down\n",
 					  new_active->dev->name);
 				ret = -EINVAL;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	unblock_netpoll_tx();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* There are two tricky bits here.  First, if MII monitoring is activated, then
- * we must disable ARP monitoring.  Second, if the timer isn't running, we must
+/* There are two tricky bits here.  First, अगर MII monitoring is activated, then
+ * we must disable ARP monitoring.  Second, अगर the समयr isn't running, we must
  * start it.
  */
-static int bond_option_miimon_set(struct bonding *bond,
-				  const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_miimon_set(काष्ठा bonding *bond,
+				  स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting MII monitoring interval to %llu\n",
 		   newval->value);
 	bond->params.miimon = newval->value;
-	if (bond->params.updelay)
+	अगर (bond->params.updelay)
 		netdev_dbg(bond->dev, "Note: Updating updelay (to %d) since it is a multiple of the miimon value\n",
 			   bond->params.updelay * bond->params.miimon);
-	if (bond->params.downdelay)
+	अगर (bond->params.करोwndelay)
 		netdev_dbg(bond->dev, "Note: Updating downdelay (to %d) since it is a multiple of the miimon value\n",
-			   bond->params.downdelay * bond->params.miimon);
-	if (bond->params.peer_notif_delay)
+			   bond->params.करोwndelay * bond->params.miimon);
+	अगर (bond->params.peer_notअगर_delay)
 		netdev_dbg(bond->dev, "Note: Updating peer_notif_delay (to %d) since it is a multiple of the miimon value\n",
-			   bond->params.peer_notif_delay * bond->params.miimon);
-	if (newval->value && bond->params.arp_interval) {
+			   bond->params.peer_notअगर_delay * bond->params.miimon);
+	अगर (newval->value && bond->params.arp_पूर्णांकerval) अणु
 		netdev_dbg(bond->dev, "MII monitoring cannot be used with ARP monitoring - disabling ARP monitoring...\n");
-		bond->params.arp_interval = 0;
-		if (bond->params.arp_validate)
+		bond->params.arp_पूर्णांकerval = 0;
+		अगर (bond->params.arp_validate)
 			bond->params.arp_validate = BOND_ARP_VALIDATE_NONE;
-	}
-	if (bond->dev->flags & IFF_UP) {
-		/* If the interface is up, we may need to fire off
-		 * the MII timer. If the interface is down, the
-		 * timer will get fired off when the open function
+	पूर्ण
+	अगर (bond->dev->flags & IFF_UP) अणु
+		/* If the पूर्णांकerface is up, we may need to fire off
+		 * the MII समयr. If the पूर्णांकerface is करोwn, the
+		 * समयr will get fired off when the खोलो function
 		 * is called.
 		 */
-		if (!newval->value) {
+		अगर (!newval->value) अणु
 			cancel_delayed_work_sync(&bond->mii_work);
-		} else {
+		पूर्ण अन्यथा अणु
 			cancel_delayed_work_sync(&bond->arp_work);
 			queue_delayed_work(bond->wq, &bond->mii_work, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set up, down and peer notification delays. These must be multiples
- * of the MII monitoring value, and are stored internally as the
- * multiplier. Thus, we must translate to MS for the real world.
+/* Set up, करोwn and peer notअगरication delays. These must be multiples
+ * of the MII monitoring value, and are stored पूर्णांकernally as the
+ * multiplier. Thus, we must translate to MS क्रम the real world.
  */
-static int _bond_option_delay_set(struct bonding *bond,
-				  const struct bond_opt_value *newval,
-				  const char *name,
-				  int *target)
-{
-	int value = newval->value;
+अटल पूर्णांक _bond_option_delay_set(काष्ठा bonding *bond,
+				  स्थिर काष्ठा bond_opt_value *newval,
+				  स्थिर अक्षर *name,
+				  पूर्णांक *target)
+अणु
+	पूर्णांक value = newval->value;
 
-	if (!bond->params.miimon) {
+	अगर (!bond->params.miimon) अणु
 		netdev_err(bond->dev, "Unable to set %s as MII monitoring is disabled\n",
 			   name);
-		return -EPERM;
-	}
-	if ((value % bond->params.miimon) != 0) {
+		वापस -EPERM;
+	पूर्ण
+	अगर ((value % bond->params.miimon) != 0) अणु
 		netdev_warn(bond->dev,
 			    "%s (%d) is not a multiple of miimon (%d), value rounded to %d ms\n",
 			    name,
 			    value, bond->params.miimon,
 			    (value / bond->params.miimon) *
 			    bond->params.miimon);
-	}
+	पूर्ण
 	*target = value / bond->params.miimon;
 	netdev_dbg(bond->dev, "Setting %s to %d\n",
 		   name,
 		   *target * bond->params.miimon);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_updelay_set(struct bonding *bond,
-				   const struct bond_opt_value *newval)
-{
-	return _bond_option_delay_set(bond, newval, "up delay",
+अटल पूर्णांक bond_option_updelay_set(काष्ठा bonding *bond,
+				   स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	वापस _bond_option_delay_set(bond, newval, "up delay",
 				      &bond->params.updelay);
-}
+पूर्ण
 
-static int bond_option_downdelay_set(struct bonding *bond,
-				     const struct bond_opt_value *newval)
-{
-	return _bond_option_delay_set(bond, newval, "down delay",
-				      &bond->params.downdelay);
-}
+अटल पूर्णांक bond_option_करोwndelay_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	वापस _bond_option_delay_set(bond, newval, "down delay",
+				      &bond->params.करोwndelay);
+पूर्ण
 
-static int bond_option_peer_notif_delay_set(struct bonding *bond,
-					    const struct bond_opt_value *newval)
-{
-	int ret = _bond_option_delay_set(bond, newval,
+अटल पूर्णांक bond_option_peer_notअगर_delay_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	पूर्णांक ret = _bond_option_delay_set(bond, newval,
 					 "peer notification delay",
-					 &bond->params.peer_notif_delay);
-	return ret;
-}
+					 &bond->params.peer_notअगर_delay);
+	वापस ret;
+पूर्ण
 
-static int bond_option_use_carrier_set(struct bonding *bond,
-				       const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_use_carrier_set(काष्ठा bonding *bond,
+				       स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting use_carrier to %llu\n",
 		   newval->value);
 	bond->params.use_carrier = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* There are two tricky bits here.  First, if ARP monitoring is activated, then
- * we must disable MII monitoring.  Second, if the ARP timer isn't running,
+/* There are two tricky bits here.  First, अगर ARP monitoring is activated, then
+ * we must disable MII monitoring.  Second, अगर the ARP समयr isn't running,
  * we must start it.
  */
-static int bond_option_arp_interval_set(struct bonding *bond,
-					const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_arp_पूर्णांकerval_set(काष्ठा bonding *bond,
+					स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting ARP monitoring interval to %llu\n",
 		   newval->value);
-	bond->params.arp_interval = newval->value;
-	if (newval->value) {
-		if (bond->params.miimon) {
+	bond->params.arp_पूर्णांकerval = newval->value;
+	अगर (newval->value) अणु
+		अगर (bond->params.miimon) अणु
 			netdev_dbg(bond->dev, "ARP monitoring cannot be used with MII monitoring. Disabling MII monitoring\n");
 			bond->params.miimon = 0;
-		}
-		if (!bond->params.arp_targets[0])
+		पूर्ण
+		अगर (!bond->params.arp_tarमाला_लो[0])
 			netdev_dbg(bond->dev, "ARP monitoring has been set up, but no ARP targets have been specified\n");
-	}
-	if (bond->dev->flags & IFF_UP) {
-		/* If the interface is up, we may need to fire off
-		 * the ARP timer.  If the interface is down, the
-		 * timer will get fired off when the open function
+	पूर्ण
+	अगर (bond->dev->flags & IFF_UP) अणु
+		/* If the पूर्णांकerface is up, we may need to fire off
+		 * the ARP समयr.  If the पूर्णांकerface is करोwn, the
+		 * समयr will get fired off when the खोलो function
 		 * is called.
 		 */
-		if (!newval->value) {
-			if (bond->params.arp_validate)
-				bond->recv_probe = NULL;
+		अगर (!newval->value) अणु
+			अगर (bond->params.arp_validate)
+				bond->recv_probe = शून्य;
 			cancel_delayed_work_sync(&bond->arp_work);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* arp_validate can be set only in active-backup mode */
 			bond->recv_probe = bond_arp_rcv;
 			cancel_delayed_work_sync(&bond->mii_work);
 			queue_delayed_work(bond->wq, &bond->arp_work, 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void _bond_options_arp_ip_target_set(struct bonding *bond, int slot,
+अटल व्योम _bond_options_arp_ip_target_set(काष्ठा bonding *bond, पूर्णांक slot,
 					    __be32 target,
-					    unsigned long last_rx)
-{
-	__be32 *targets = bond->params.arp_targets;
-	struct list_head *iter;
-	struct slave *slave;
+					    अचिन्हित दीर्घ last_rx)
+अणु
+	__be32 *tarमाला_लो = bond->params.arp_tarमाला_लो;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
-	if (slot >= 0 && slot < BOND_MAX_ARP_TARGETS) {
-		bond_for_each_slave(bond, slave, iter)
+	अगर (slot >= 0 && slot < BOND_MAX_ARP_TARGETS) अणु
+		bond_क्रम_each_slave(bond, slave, iter)
 			slave->target_last_arp_rx[slot] = last_rx;
-		targets[slot] = target;
-	}
-}
+		tarमाला_लो[slot] = target;
+	पूर्ण
+पूर्ण
 
-static int _bond_option_arp_ip_target_add(struct bonding *bond, __be32 target)
-{
-	__be32 *targets = bond->params.arp_targets;
-	int ind;
+अटल पूर्णांक _bond_option_arp_ip_target_add(काष्ठा bonding *bond, __be32 target)
+अणु
+	__be32 *tarमाला_लो = bond->params.arp_tarमाला_लो;
+	पूर्णांक ind;
 
-	if (!bond_is_ip_target_ok(target)) {
+	अगर (!bond_is_ip_target_ok(target)) अणु
 		netdev_err(bond->dev, "invalid ARP target %pI4 specified for addition\n",
 			   &target);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (bond_get_targets_ip(targets, target) != -1) { /* dup */
+	अगर (bond_get_tarमाला_लो_ip(tarमाला_लो, target) != -1) अणु /* dup */
 		netdev_err(bond->dev, "ARP target %pI4 is already present\n",
 			   &target);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ind = bond_get_targets_ip(targets, 0); /* first free slot */
-	if (ind == -1) {
+	ind = bond_get_tarमाला_लो_ip(tarमाला_लो, 0); /* first मुक्त slot */
+	अगर (ind == -1) अणु
 		netdev_err(bond->dev, "ARP target table is full!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	netdev_dbg(bond->dev, "Adding ARP target %pI4\n", &target);
 
-	_bond_options_arp_ip_target_set(bond, ind, target, jiffies);
+	_bond_options_arp_ip_target_set(bond, ind, target, jअगरfies);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_arp_ip_target_add(struct bonding *bond, __be32 target)
-{
-	return _bond_option_arp_ip_target_add(bond, target);
-}
+अटल पूर्णांक bond_option_arp_ip_target_add(काष्ठा bonding *bond, __be32 target)
+अणु
+	वापस _bond_option_arp_ip_target_add(bond, target);
+पूर्ण
 
-static int bond_option_arp_ip_target_rem(struct bonding *bond, __be32 target)
-{
-	__be32 *targets = bond->params.arp_targets;
-	struct list_head *iter;
-	struct slave *slave;
-	unsigned long *targets_rx;
-	int ind, i;
+अटल पूर्णांक bond_option_arp_ip_target_rem(काष्ठा bonding *bond, __be32 target)
+अणु
+	__be32 *tarमाला_लो = bond->params.arp_tarमाला_लो;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
+	अचिन्हित दीर्घ *tarमाला_लो_rx;
+	पूर्णांक ind, i;
 
-	if (!bond_is_ip_target_ok(target)) {
+	अगर (!bond_is_ip_target_ok(target)) अणु
 		netdev_err(bond->dev, "invalid ARP target %pI4 specified for removal\n",
 			   &target);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ind = bond_get_targets_ip(targets, target);
-	if (ind == -1) {
+	ind = bond_get_tarमाला_लो_ip(tarमाला_लो, target);
+	अगर (ind == -1) अणु
 		netdev_err(bond->dev, "unable to remove nonexistent ARP target %pI4\n",
 			   &target);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ind == 0 && !targets[1] && bond->params.arp_interval)
+	अगर (ind == 0 && !tarमाला_लो[1] && bond->params.arp_पूर्णांकerval)
 		netdev_warn(bond->dev, "Removing last arp target with arp_interval on\n");
 
 	netdev_dbg(bond->dev, "Removing ARP target %pI4\n", &target);
 
-	bond_for_each_slave(bond, slave, iter) {
-		targets_rx = slave->target_last_arp_rx;
-		for (i = ind; (i < BOND_MAX_ARP_TARGETS-1) && targets[i+1]; i++)
-			targets_rx[i] = targets_rx[i+1];
-		targets_rx[i] = 0;
-	}
-	for (i = ind; (i < BOND_MAX_ARP_TARGETS-1) && targets[i+1]; i++)
-		targets[i] = targets[i+1];
-	targets[i] = 0;
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		tarमाला_लो_rx = slave->target_last_arp_rx;
+		क्रम (i = ind; (i < BOND_MAX_ARP_TARGETS-1) && tarमाला_लो[i+1]; i++)
+			tarमाला_लो_rx[i] = tarमाला_लो_rx[i+1];
+		tarमाला_लो_rx[i] = 0;
+	पूर्ण
+	क्रम (i = ind; (i < BOND_MAX_ARP_TARGETS-1) && tarमाला_लो[i+1]; i++)
+		tarमाला_लो[i] = tarमाला_लो[i+1];
+	tarमाला_लो[i] = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void bond_option_arp_ip_targets_clear(struct bonding *bond)
-{
-	int i;
+व्योम bond_option_arp_ip_tarमाला_लो_clear(काष्ठा bonding *bond)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < BOND_MAX_ARP_TARGETS; i++)
+	क्रम (i = 0; i < BOND_MAX_ARP_TARGETS; i++)
 		_bond_options_arp_ip_target_set(bond, i, 0, 0);
-}
+पूर्ण
 
-static int bond_option_arp_ip_targets_set(struct bonding *bond,
-					  const struct bond_opt_value *newval)
-{
-	int ret = -EPERM;
+अटल पूर्णांक bond_option_arp_ip_tarमाला_लो_set(काष्ठा bonding *bond,
+					  स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	पूर्णांक ret = -EPERM;
 	__be32 target;
 
-	if (newval->string) {
-		if (!in4_pton(newval->string+1, -1, (u8 *)&target, -1, NULL)) {
+	अगर (newval->string) अणु
+		अगर (!in4_pton(newval->string+1, -1, (u8 *)&target, -1, शून्य)) अणु
 			netdev_err(bond->dev, "invalid ARP target %pI4 specified\n",
 				   &target);
-			return ret;
-		}
-		if (newval->string[0] == '+')
+			वापस ret;
+		पूर्ण
+		अगर (newval->string[0] == '+')
 			ret = bond_option_arp_ip_target_add(bond, target);
-		else if (newval->string[0] == '-')
+		अन्यथा अगर (newval->string[0] == '-')
 			ret = bond_option_arp_ip_target_rem(bond, target);
-		else
+		अन्यथा
 			netdev_err(bond->dev, "no command found in arp_ip_targets file - use +<addr> or -<addr>\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		target = newval->value;
 		ret = bond_option_arp_ip_target_add(bond, target);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bond_option_arp_validate_set(struct bonding *bond,
-					const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_arp_validate_set(काष्ठा bonding *bond,
+					स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting arp_validate to %s (%llu)\n",
 		   newval->string, newval->value);
 	bond->params.arp_validate = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_arp_all_targets_set(struct bonding *bond,
-					   const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_arp_all_tarमाला_लो_set(काष्ठा bonding *bond,
+					   स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting arp_all_targets to %s (%llu)\n",
 		   newval->string, newval->value);
-	bond->params.arp_all_targets = newval->value;
+	bond->params.arp_all_tarमाला_लो = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_primary_set(struct bonding *bond,
-				   const struct bond_opt_value *newval)
-{
-	char *p, *primary = newval->string;
-	struct list_head *iter;
-	struct slave *slave;
+अटल पूर्णांक bond_option_primary_set(काष्ठा bonding *bond,
+				   स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	अक्षर *p, *primary = newval->string;
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
 	block_netpoll_tx();
 
-	p = strchr(primary, '\n');
-	if (p)
+	p = म_अक्षर(primary, '\n');
+	अगर (p)
 		*p = '\0';
-	/* check to see if we are clearing primary */
-	if (!strlen(primary)) {
+	/* check to see अगर we are clearing primary */
+	अगर (!म_माप(primary)) अणु
 		netdev_dbg(bond->dev, "Setting primary slave to None\n");
-		RCU_INIT_POINTER(bond->primary_slave, NULL);
-		memset(bond->params.primary, 0, sizeof(bond->params.primary));
+		RCU_INIT_POINTER(bond->primary_slave, शून्य);
+		स_रखो(bond->params.primary, 0, माप(bond->params.primary));
 		bond_select_active_slave(bond);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	bond_for_each_slave(bond, slave, iter) {
-		if (strncmp(slave->dev->name, primary, IFNAMSIZ) == 0) {
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (म_भेदन(slave->dev->name, primary, IFNAMSIZ) == 0) अणु
 			slave_dbg(bond->dev, slave->dev, "Setting as primary slave\n");
-			rcu_assign_pointer(bond->primary_slave, slave);
-			strcpy(bond->params.primary, slave->dev->name);
-			bond->force_primary = true;
+			rcu_assign_poपूर्णांकer(bond->primary_slave, slave);
+			म_नकल(bond->params.primary, slave->dev->name);
+			bond->क्रमce_primary = true;
 			bond_select_active_slave(bond);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (rtnl_dereference(bond->primary_slave)) {
+	अगर (rtnl_dereference(bond->primary_slave)) अणु
 		netdev_dbg(bond->dev, "Setting primary slave to None\n");
-		RCU_INIT_POINTER(bond->primary_slave, NULL);
+		RCU_INIT_POINTER(bond->primary_slave, शून्य);
 		bond_select_active_slave(bond);
-	}
-	strncpy(bond->params.primary, primary, IFNAMSIZ);
+	पूर्ण
+	म_नकलन(bond->params.primary, primary, IFNAMSIZ);
 	bond->params.primary[IFNAMSIZ - 1] = 0;
 
 	netdev_dbg(bond->dev, "Recording %s as primary, but it has not been enslaved yet\n",
@@ -1215,12 +1216,12 @@ static int bond_option_primary_set(struct bonding *bond,
 out:
 	unblock_netpoll_tx();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_primary_reselect_set(struct bonding *bond,
-					    const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_primary_reselect_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting primary_reselect to %s (%llu)\n",
 		   newval->string, newval->value);
 	bond->params.primary_reselect = newval->value;
@@ -1229,297 +1230,297 @@ static int bond_option_primary_reselect_set(struct bonding *bond,
 	bond_select_active_slave(bond);
 	unblock_netpoll_tx();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_fail_over_mac_set(struct bonding *bond,
-					 const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_fail_over_mac_set(काष्ठा bonding *bond,
+					 स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting fail_over_mac to %s (%llu)\n",
 		   newval->string, newval->value);
 	bond->params.fail_over_mac = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_xmit_hash_policy_set(struct bonding *bond,
-					    const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_xmit_hash_policy_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting xmit hash policy to %s (%llu)\n",
 		   newval->string, newval->value);
 	bond->params.xmit_policy = newval->value;
 
-	if (bond->dev->reg_state == NETREG_REGISTERED)
-		if (bond_set_tls_features(bond))
+	अगर (bond->dev->reg_state == NETREG_REGISTERED)
+		अगर (bond_set_tls_features(bond))
 			netdev_update_features(bond->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_resend_igmp_set(struct bonding *bond,
-				       const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_resend_igmp_set(काष्ठा bonding *bond,
+				       स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting resend_igmp to %llu\n",
 		   newval->value);
 	bond->params.resend_igmp = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_num_peer_notif_set(struct bonding *bond,
-				   const struct bond_opt_value *newval)
-{
-	bond->params.num_peer_notif = newval->value;
+अटल पूर्णांक bond_option_num_peer_notअगर_set(काष्ठा bonding *bond,
+				   स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	bond->params.num_peer_notअगर = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_all_slaves_active_set(struct bonding *bond,
-					     const struct bond_opt_value *newval)
-{
-	struct list_head *iter;
-	struct slave *slave;
+अटल पूर्णांक bond_option_all_slaves_active_set(काष्ठा bonding *bond,
+					     स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	काष्ठा list_head *iter;
+	काष्ठा slave *slave;
 
-	if (newval->value == bond->params.all_slaves_active)
-		return 0;
+	अगर (newval->value == bond->params.all_slaves_active)
+		वापस 0;
 	bond->params.all_slaves_active = newval->value;
-	bond_for_each_slave(bond, slave, iter) {
-		if (!bond_is_active_slave(slave)) {
-			if (newval->value)
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (!bond_is_active_slave(slave)) अणु
+			अगर (newval->value)
 				slave->inactive = 0;
-			else
+			अन्यथा
 				slave->inactive = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_min_links_set(struct bonding *bond,
-				     const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_min_links_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting min links value to %llu\n",
 		   newval->value);
 	bond->params.min_links = newval->value;
 	bond_set_carrier(bond);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_lp_interval_set(struct bonding *bond,
-				       const struct bond_opt_value *newval)
-{
-	bond->params.lp_interval = newval->value;
+अटल पूर्णांक bond_option_lp_पूर्णांकerval_set(काष्ठा bonding *bond,
+				       स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	bond->params.lp_पूर्णांकerval = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_pps_set(struct bonding *bond,
-			       const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_pps_set(काष्ठा bonding *bond,
+			       स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting packets per slave to %llu\n",
 		   newval->value);
 	bond->params.packets_per_slave = newval->value;
-	if (newval->value > 0) {
+	अगर (newval->value > 0) अणु
 		bond->params.reciprocal_packets_per_slave =
 			reciprocal_value(newval->value);
-	} else {
-		/* reciprocal_packets_per_slave is unused if
+	पूर्ण अन्यथा अणु
+		/* reciprocal_packets_per_slave is unused अगर
 		 * packets_per_slave is 0 or 1, just initialize it
 		 */
 		bond->params.reciprocal_packets_per_slave =
-			(struct reciprocal_value) { 0 };
-	}
+			(काष्ठा reciprocal_value) अणु 0 पूर्ण;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_lacp_rate_set(struct bonding *bond,
-				     const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_lacp_rate_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting LACP rate to %s (%llu)\n",
 		   newval->string, newval->value);
 	bond->params.lacp_fast = newval->value;
 	bond_3ad_update_lacp_rate(bond);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_ad_select_set(struct bonding *bond,
-				     const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_ad_select_set(काष्ठा bonding *bond,
+				     स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting ad_select to %s (%llu)\n",
 		   newval->string, newval->value);
 	bond->params.ad_select = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_queue_id_set(struct bonding *bond,
-				    const struct bond_opt_value *newval)
-{
-	struct slave *slave, *update_slave;
-	struct net_device *sdev;
-	struct list_head *iter;
-	char *delim;
-	int ret = 0;
+अटल पूर्णांक bond_option_queue_id_set(काष्ठा bonding *bond,
+				    स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	काष्ठा slave *slave, *update_slave;
+	काष्ठा net_device *sdev;
+	काष्ठा list_head *iter;
+	अक्षर *delim;
+	पूर्णांक ret = 0;
 	u16 qid;
 
-	/* delim will point to queue id if successful */
-	delim = strchr(newval->string, ':');
-	if (!delim)
-		goto err_no_cmd;
+	/* delim will poपूर्णांक to queue id अगर successful */
+	delim = म_अक्षर(newval->string, ':');
+	अगर (!delim)
+		जाओ err_no_cmd;
 
-	/* Terminate string that points to device name and bump it
-	 * up one, so we can read the queue id there.
+	/* Terminate string that poपूर्णांकs to device name and bump it
+	 * up one, so we can पढ़ो the queue id there.
 	 */
 	*delim = '\0';
-	if (sscanf(++delim, "%hd\n", &qid) != 1)
-		goto err_no_cmd;
+	अगर (माला_पूछो(++delim, "%hd\n", &qid) != 1)
+		जाओ err_no_cmd;
 
-	/* Check buffer length, valid ifname and queue id */
-	if (!dev_valid_name(newval->string) ||
+	/* Check buffer length, valid अगरname and queue id */
+	अगर (!dev_valid_name(newval->string) ||
 	    qid > bond->dev->real_num_tx_queues)
-		goto err_no_cmd;
+		जाओ err_no_cmd;
 
-	/* Get the pointer to that interface if it exists */
+	/* Get the poपूर्णांकer to that पूर्णांकerface अगर it exists */
 	sdev = __dev_get_by_name(dev_net(bond->dev), newval->string);
-	if (!sdev)
-		goto err_no_cmd;
+	अगर (!sdev)
+		जाओ err_no_cmd;
 
-	/* Search for thes slave and check for duplicate qids */
-	update_slave = NULL;
-	bond_for_each_slave(bond, slave, iter) {
-		if (sdev == slave->dev)
-			/* We don't need to check the matching
-			 * slave for dups, since we're overwriting it
+	/* Search क्रम thes slave and check क्रम duplicate qids */
+	update_slave = शून्य;
+	bond_क्रम_each_slave(bond, slave, iter) अणु
+		अगर (sdev == slave->dev)
+			/* We करोn't need to check the matching
+			 * slave क्रम dups, since we're overwriting it
 			 */
 			update_slave = slave;
-		else if (qid && qid == slave->queue_id) {
-			goto err_no_cmd;
-		}
-	}
+		अन्यथा अगर (qid && qid == slave->queue_id) अणु
+			जाओ err_no_cmd;
+		पूर्ण
+	पूर्ण
 
-	if (!update_slave)
-		goto err_no_cmd;
+	अगर (!update_slave)
+		जाओ err_no_cmd;
 
-	/* Actually set the qids for the slave */
+	/* Actually set the qids क्रम the slave */
 	update_slave->queue_id = qid;
 
 out:
-	return ret;
+	वापस ret;
 
 err_no_cmd:
 	netdev_dbg(bond->dev, "invalid input for queue_id set\n");
 	ret = -EPERM;
-	goto out;
+	जाओ out;
 
-}
+पूर्ण
 
-static int bond_option_slaves_set(struct bonding *bond,
-				  const struct bond_opt_value *newval)
-{
-	char command[IFNAMSIZ + 1] = { 0, };
-	struct net_device *dev;
-	char *ifname;
-	int ret;
+अटल पूर्णांक bond_option_slaves_set(काष्ठा bonding *bond,
+				  स्थिर काष्ठा bond_opt_value *newval)
+अणु
+	अक्षर command[IFNAMSIZ + 1] = अणु 0, पूर्ण;
+	काष्ठा net_device *dev;
+	अक्षर *अगरname;
+	पूर्णांक ret;
 
-	sscanf(newval->string, "%16s", command); /* IFNAMSIZ*/
-	ifname = command + 1;
-	if ((strlen(command) <= 1) ||
+	माला_पूछो(newval->string, "%16s", command); /* IFNAMSIZ*/
+	अगरname = command + 1;
+	अगर ((म_माप(command) <= 1) ||
 	    (command[0] != '+' && command[0] != '-') ||
-	    !dev_valid_name(ifname))
-		goto err_no_cmd;
+	    !dev_valid_name(अगरname))
+		जाओ err_no_cmd;
 
-	dev = __dev_get_by_name(dev_net(bond->dev), ifname);
-	if (!dev) {
+	dev = __dev_get_by_name(dev_net(bond->dev), अगरname);
+	अगर (!dev) अणु
 		netdev_dbg(bond->dev, "interface %s does not exist!\n",
-			   ifname);
+			   अगरname);
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (command[0]) {
-	case '+':
+	चयन (command[0]) अणु
+	हाल '+':
 		slave_dbg(bond->dev, dev, "Enslaving interface\n");
-		ret = bond_enslave(bond->dev, dev, NULL);
-		break;
+		ret = bond_enslave(bond->dev, dev, शून्य);
+		अवरोध;
 
-	case '-':
+	हाल '-':
 		slave_dbg(bond->dev, dev, "Releasing interface\n");
 		ret = bond_release(bond->dev, dev);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* should not run here. */
-		goto err_no_cmd;
-	}
+		जाओ err_no_cmd;
+	पूर्ण
 
 out:
-	return ret;
+	वापस ret;
 
 err_no_cmd:
 	netdev_err(bond->dev, "no command found in slaves file - use +ifname or -ifname\n");
 	ret = -EPERM;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static int bond_option_tlb_dynamic_lb_set(struct bonding *bond,
-					  const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_tlb_dynamic_lb_set(काष्ठा bonding *bond,
+					  स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting dynamic-lb to %s (%llu)\n",
 		   newval->string, newval->value);
 	bond->params.tlb_dynamic_lb = newval->value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_ad_actor_sys_prio_set(struct bonding *bond,
-					     const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_ad_actor_sys_prio_set(काष्ठा bonding *bond,
+					     स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting ad_actor_sys_prio to %llu\n",
 		   newval->value);
 
 	bond->params.ad_actor_sys_prio = newval->value;
 	bond_3ad_update_ad_actor_settings(bond);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bond_option_ad_actor_system_set(struct bonding *bond,
-					   const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_ad_actor_प्रणाली_set(काष्ठा bonding *bond,
+					   स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	u8 macaddr[ETH_ALEN];
 	u8 *mac;
 
-	if (newval->string) {
-		if (!mac_pton(newval->string, macaddr))
-			goto err;
+	अगर (newval->string) अणु
+		अगर (!mac_pton(newval->string, macaddr))
+			जाओ err;
 		mac = macaddr;
-	} else {
+	पूर्ण अन्यथा अणु
 		mac = (u8 *)&newval->value;
-	}
+	पूर्ण
 
-	if (!is_valid_ether_addr(mac))
-		goto err;
+	अगर (!is_valid_ether_addr(mac))
+		जाओ err;
 
 	netdev_dbg(bond->dev, "Setting ad_actor_system to %pM\n", mac);
-	ether_addr_copy(bond->params.ad_actor_system, mac);
+	ether_addr_copy(bond->params.ad_actor_प्रणाली, mac);
 	bond_3ad_update_ad_actor_settings(bond);
 
-	return 0;
+	वापस 0;
 
 err:
 	netdev_err(bond->dev, "Invalid ad_actor_system MAC address.\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int bond_option_ad_user_port_key_set(struct bonding *bond,
-					    const struct bond_opt_value *newval)
-{
+अटल पूर्णांक bond_option_ad_user_port_key_set(काष्ठा bonding *bond,
+					    स्थिर काष्ठा bond_opt_value *newval)
+अणु
 	netdev_dbg(bond->dev, "Setting ad_user_port_key to %llu\n",
 		   newval->value);
 
 	bond->params.ad_user_port_key = newval->value;
-	return 0;
-}
+	वापस 0;
+पूर्ण

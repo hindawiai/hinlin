@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * IIO multiplexer driver
  *
@@ -7,244 +8,244 @@
  * Author: Peter Rosin <peda@axentia.se>
  */
 
-#include <linux/err.h>
-#include <linux/iio/consumer.h>
-#include <linux/iio/iio.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/mux/consumer.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iio/consumer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/mux/consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-struct mux_ext_info_cache {
-	char *data;
-	ssize_t size;
-};
+काष्ठा mux_ext_info_cache अणु
+	अक्षर *data;
+	sमाप_प्रकार size;
+पूर्ण;
 
-struct mux_child {
-	struct mux_ext_info_cache *ext_info_cache;
-};
+काष्ठा mux_child अणु
+	काष्ठा mux_ext_info_cache *ext_info_cache;
+पूर्ण;
 
-struct mux {
-	int cached_state;
-	struct mux_control *control;
-	struct iio_channel *parent;
-	struct iio_dev *indio_dev;
-	struct iio_chan_spec *chan;
-	struct iio_chan_spec_ext_info *ext_info;
-	struct mux_child *child;
-};
+काष्ठा mux अणु
+	पूर्णांक cached_state;
+	काष्ठा mux_control *control;
+	काष्ठा iio_channel *parent;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा iio_chan_spec *chan;
+	काष्ठा iio_chan_spec_ext_info *ext_info;
+	काष्ठा mux_child *child;
+पूर्ण;
 
-static int iio_mux_select(struct mux *mux, int idx)
-{
-	struct mux_child *child = &mux->child[idx];
-	struct iio_chan_spec const *chan = &mux->chan[idx];
-	int ret;
-	int i;
+अटल पूर्णांक iio_mux_select(काष्ठा mux *mux, पूर्णांक idx)
+अणु
+	काष्ठा mux_child *child = &mux->child[idx];
+	काष्ठा iio_chan_spec स्थिर *chan = &mux->chan[idx];
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	ret = mux_control_select(mux->control, chan->channel);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		mux->cached_state = -1;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (mux->cached_state == chan->channel)
-		return 0;
+	अगर (mux->cached_state == chan->channel)
+		वापस 0;
 
-	if (chan->ext_info) {
-		for (i = 0; chan->ext_info[i].name; ++i) {
-			const char *attr = chan->ext_info[i].name;
-			struct mux_ext_info_cache *cache;
+	अगर (chan->ext_info) अणु
+		क्रम (i = 0; chan->ext_info[i].name; ++i) अणु
+			स्थिर अक्षर *attr = chan->ext_info[i].name;
+			काष्ठा mux_ext_info_cache *cache;
 
 			cache = &child->ext_info_cache[i];
 
-			if (cache->size < 0)
-				continue;
+			अगर (cache->size < 0)
+				जारी;
 
-			ret = iio_write_channel_ext_info(mux->parent, attr,
+			ret = iio_ग_लिखो_channel_ext_info(mux->parent, attr,
 							 cache->data,
 							 cache->size);
 
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				mux_control_deselect(mux->control);
 				mux->cached_state = -1;
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mux->cached_state = chan->channel;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void iio_mux_deselect(struct mux *mux)
-{
+अटल व्योम iio_mux_deselect(काष्ठा mux *mux)
+अणु
 	mux_control_deselect(mux->control);
-}
+पूर्ण
 
-static int mux_read_raw(struct iio_dev *indio_dev,
-			struct iio_chan_spec const *chan,
-			int *val, int *val2, long mask)
-{
-	struct mux *mux = iio_priv(indio_dev);
-	int idx = chan - mux->chan;
-	int ret;
+अटल पूर्णांक mux_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			काष्ठा iio_chan_spec स्थिर *chan,
+			पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा mux *mux = iio_priv(indio_dev);
+	पूर्णांक idx = chan - mux->chan;
+	पूर्णांक ret;
 
 	ret = iio_mux_select(mux, idx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		ret = iio_read_channel_raw(mux->parent, val);
-		break;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		ret = iio_पढ़ो_channel_raw(mux->parent, val);
+		अवरोध;
 
-	case IIO_CHAN_INFO_SCALE:
-		ret = iio_read_channel_scale(mux->parent, val, val2);
-		break;
+	हाल IIO_CHAN_INFO_SCALE:
+		ret = iio_पढ़ो_channel_scale(mux->parent, val, val2);
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	iio_mux_deselect(mux);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mux_read_avail(struct iio_dev *indio_dev,
-			  struct iio_chan_spec const *chan,
-			  const int **vals, int *type, int *length,
-			  long mask)
-{
-	struct mux *mux = iio_priv(indio_dev);
-	int idx = chan - mux->chan;
-	int ret;
+अटल पूर्णांक mux_पढ़ो_avail(काष्ठा iio_dev *indio_dev,
+			  काष्ठा iio_chan_spec स्थिर *chan,
+			  स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length,
+			  दीर्घ mask)
+अणु
+	काष्ठा mux *mux = iio_priv(indio_dev);
+	पूर्णांक idx = chan - mux->chan;
+	पूर्णांक ret;
 
 	ret = iio_mux_select(mux, idx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		*type = IIO_VAL_INT;
-		ret = iio_read_avail_channel_raw(mux->parent, vals, length);
-		break;
+		ret = iio_पढ़ो_avail_channel_raw(mux->parent, vals, length);
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	iio_mux_deselect(mux);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mux_write_raw(struct iio_dev *indio_dev,
-			 struct iio_chan_spec const *chan,
-			 int val, int val2, long mask)
-{
-	struct mux *mux = iio_priv(indio_dev);
-	int idx = chan - mux->chan;
-	int ret;
+अटल पूर्णांक mux_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			 काष्ठा iio_chan_spec स्थिर *chan,
+			 पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा mux *mux = iio_priv(indio_dev);
+	पूर्णांक idx = chan - mux->chan;
+	पूर्णांक ret;
 
 	ret = iio_mux_select(mux, idx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		ret = iio_write_channel_raw(mux->parent, val);
-		break;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		ret = iio_ग_लिखो_channel_raw(mux->parent, val);
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	iio_mux_deselect(mux);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info mux_info = {
-	.read_raw = mux_read_raw,
-	.read_avail = mux_read_avail,
-	.write_raw = mux_write_raw,
-};
+अटल स्थिर काष्ठा iio_info mux_info = अणु
+	.पढ़ो_raw = mux_पढ़ो_raw,
+	.पढ़ो_avail = mux_पढ़ो_avail,
+	.ग_लिखो_raw = mux_ग_लिखो_raw,
+पूर्ण;
 
-static ssize_t mux_read_ext_info(struct iio_dev *indio_dev, uintptr_t private,
-				 struct iio_chan_spec const *chan, char *buf)
-{
-	struct mux *mux = iio_priv(indio_dev);
-	int idx = chan - mux->chan;
-	ssize_t ret;
+अटल sमाप_प्रकार mux_पढ़ो_ext_info(काष्ठा iio_dev *indio_dev, uपूर्णांकptr_t निजी,
+				 काष्ठा iio_chan_spec स्थिर *chan, अक्षर *buf)
+अणु
+	काष्ठा mux *mux = iio_priv(indio_dev);
+	पूर्णांक idx = chan - mux->chan;
+	sमाप_प्रकार ret;
 
 	ret = iio_mux_select(mux, idx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = iio_read_channel_ext_info(mux->parent,
-					mux->ext_info[private].name,
+	ret = iio_पढ़ो_channel_ext_info(mux->parent,
+					mux->ext_info[निजी].name,
 					buf);
 
 	iio_mux_deselect(mux);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t mux_write_ext_info(struct iio_dev *indio_dev, uintptr_t private,
-				  struct iio_chan_spec const *chan,
-				  const char *buf, size_t len)
-{
-	struct device *dev = indio_dev->dev.parent;
-	struct mux *mux = iio_priv(indio_dev);
-	int idx = chan - mux->chan;
-	char *new;
-	ssize_t ret;
+अटल sमाप_प्रकार mux_ग_लिखो_ext_info(काष्ठा iio_dev *indio_dev, uपूर्णांकptr_t निजी,
+				  काष्ठा iio_chan_spec स्थिर *chan,
+				  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा device *dev = indio_dev->dev.parent;
+	काष्ठा mux *mux = iio_priv(indio_dev);
+	पूर्णांक idx = chan - mux->chan;
+	अक्षर *new;
+	sमाप_प्रकार ret;
 
-	if (len >= PAGE_SIZE)
-		return -EINVAL;
+	अगर (len >= PAGE_SIZE)
+		वापस -EINVAL;
 
 	ret = iio_mux_select(mux, idx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	new = devm_kmemdup(dev, buf, len + 1, GFP_KERNEL);
-	if (!new) {
+	अगर (!new) अणु
 		iio_mux_deselect(mux);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	new[len] = 0;
 
-	ret = iio_write_channel_ext_info(mux->parent,
-					 mux->ext_info[private].name,
+	ret = iio_ग_लिखो_channel_ext_info(mux->parent,
+					 mux->ext_info[निजी].name,
 					 buf, len);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		iio_mux_deselect(mux);
-		devm_kfree(dev, new);
-		return ret;
-	}
+		devm_kमुक्त(dev, new);
+		वापस ret;
+	पूर्ण
 
-	devm_kfree(dev, mux->child[idx].ext_info_cache[private].data);
-	mux->child[idx].ext_info_cache[private].data = new;
-	mux->child[idx].ext_info_cache[private].size = len;
+	devm_kमुक्त(dev, mux->child[idx].ext_info_cache[निजी].data);
+	mux->child[idx].ext_info_cache[निजी].data = new;
+	mux->child[idx].ext_info_cache[निजी].size = len;
 
 	iio_mux_deselect(mux);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mux_configure_channel(struct device *dev, struct mux *mux,
-				 u32 state, const char *label, int idx)
-{
-	struct mux_child *child = &mux->child[idx];
-	struct iio_chan_spec *chan = &mux->chan[idx];
-	struct iio_chan_spec const *pchan = mux->parent->channel;
-	char *page = NULL;
-	int num_ext_info;
-	int i;
-	int ret;
+अटल पूर्णांक mux_configure_channel(काष्ठा device *dev, काष्ठा mux *mux,
+				 u32 state, स्थिर अक्षर *label, पूर्णांक idx)
+अणु
+	काष्ठा mux_child *child = &mux->child[idx];
+	काष्ठा iio_chan_spec *chan = &mux->chan[idx];
+	काष्ठा iio_chan_spec स्थिर *pchan = mux->parent->channel;
+	अक्षर *page = शून्य;
+	पूर्णांक num_ext_info;
+	पूर्णांक i;
+	पूर्णांक ret;
 
 	chan->indexed = 1;
 	chan->output = pchan->output;
@@ -252,207 +253,207 @@ static int mux_configure_channel(struct device *dev, struct mux *mux,
 	chan->ext_info = mux->ext_info;
 
 	ret = iio_get_channel_type(mux->parent, &chan->type);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "failed to get parent channel type\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (iio_channel_has_info(pchan, IIO_CHAN_INFO_RAW))
+	अगर (iio_channel_has_info(pchan, IIO_CHAN_INFO_RAW))
 		chan->info_mask_separate |= BIT(IIO_CHAN_INFO_RAW);
-	if (iio_channel_has_info(pchan, IIO_CHAN_INFO_SCALE))
+	अगर (iio_channel_has_info(pchan, IIO_CHAN_INFO_SCALE))
 		chan->info_mask_separate |= BIT(IIO_CHAN_INFO_SCALE);
 
-	if (iio_channel_has_available(pchan, IIO_CHAN_INFO_RAW))
+	अगर (iio_channel_has_available(pchan, IIO_CHAN_INFO_RAW))
 		chan->info_mask_separate_available |= BIT(IIO_CHAN_INFO_RAW);
 
-	if (state >= mux_control_states(mux->control)) {
+	अगर (state >= mux_control_states(mux->control)) अणु
 		dev_err(dev, "too many channels\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	chan->channel = state;
 
 	num_ext_info = iio_get_channel_ext_info_count(mux->parent);
-	if (num_ext_info) {
+	अगर (num_ext_info) अणु
 		page = devm_kzalloc(dev, PAGE_SIZE, GFP_KERNEL);
-		if (!page)
-			return -ENOMEM;
-	}
-	child->ext_info_cache = devm_kcalloc(dev,
+		अगर (!page)
+			वापस -ENOMEM;
+	पूर्ण
+	child->ext_info_cache = devm_kसुस्मृति(dev,
 					     num_ext_info,
-					     sizeof(*child->ext_info_cache),
+					     माप(*child->ext_info_cache),
 					     GFP_KERNEL);
-	if (!child->ext_info_cache)
-		return -ENOMEM;
+	अगर (!child->ext_info_cache)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_ext_info; ++i) {
+	क्रम (i = 0; i < num_ext_info; ++i) अणु
 		child->ext_info_cache[i].size = -1;
 
-		if (!pchan->ext_info[i].write)
-			continue;
-		if (!pchan->ext_info[i].read)
-			continue;
+		अगर (!pchan->ext_info[i].ग_लिखो)
+			जारी;
+		अगर (!pchan->ext_info[i].पढ़ो)
+			जारी;
 
-		ret = iio_read_channel_ext_info(mux->parent,
+		ret = iio_पढ़ो_channel_ext_info(mux->parent,
 						mux->ext_info[i].name,
 						page);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "failed to get ext_info '%s'\n",
 				pchan->ext_info[i].name);
-			return ret;
-		}
-		if (ret >= PAGE_SIZE) {
+			वापस ret;
+		पूर्ण
+		अगर (ret >= PAGE_SIZE) अणु
 			dev_err(dev, "too large ext_info '%s'\n",
 				pchan->ext_info[i].name);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		child->ext_info_cache[i].data = devm_kmemdup(dev, page, ret + 1,
 							     GFP_KERNEL);
-		if (!child->ext_info_cache[i].data)
-			return -ENOMEM;
+		अगर (!child->ext_info_cache[i].data)
+			वापस -ENOMEM;
 
 		child->ext_info_cache[i].data[ret] = 0;
 		child->ext_info_cache[i].size = ret;
-	}
+	पूर्ण
 
-	if (page)
-		devm_kfree(dev, page);
+	अगर (page)
+		devm_kमुक्त(dev, page);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Same as of_property_for_each_string(), but also keeps track of the
+ * Same as of_property_क्रम_each_string(), but also keeps track of the
  * index of each string.
  */
-#define of_property_for_each_string_index(np, propname, prop, s, i)	\
-	for (prop = of_find_property(np, propname, NULL),		\
-	     s = of_prop_next_string(prop, NULL),			\
+#घोषणा of_property_क्रम_each_string_index(np, propname, prop, s, i)	\
+	क्रम (prop = of_find_property(np, propname, शून्य),		\
+	     s = of_prop_next_string(prop, शून्य),			\
 	     i = 0;							\
 	     s;								\
 	     s = of_prop_next_string(prop, s),				\
 	     i++)
 
-static int mux_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = pdev->dev.of_node;
-	struct iio_dev *indio_dev;
-	struct iio_channel *parent;
-	struct mux *mux;
-	struct property *prop;
-	const char *label;
+अटल पूर्णांक mux_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा iio_channel *parent;
+	काष्ठा mux *mux;
+	काष्ठा property *prop;
+	स्थिर अक्षर *label;
 	u32 state;
-	int sizeof_ext_info;
-	int children;
-	int sizeof_priv;
-	int i;
-	int ret;
+	पूर्णांक माप_ext_info;
+	पूर्णांक children;
+	पूर्णांक माप_priv;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	parent = devm_iio_channel_get(dev, "parent");
-	if (IS_ERR(parent))
-		return dev_err_probe(dev, PTR_ERR(parent),
+	अगर (IS_ERR(parent))
+		वापस dev_err_probe(dev, PTR_ERR(parent),
 				     "failed to get parent channel\n");
 
-	sizeof_ext_info = iio_get_channel_ext_info_count(parent);
-	if (sizeof_ext_info) {
-		sizeof_ext_info += 1; /* one extra entry for the sentinel */
-		sizeof_ext_info *= sizeof(*mux->ext_info);
-	}
+	माप_ext_info = iio_get_channel_ext_info_count(parent);
+	अगर (माप_ext_info) अणु
+		माप_ext_info += 1; /* one extra entry क्रम the sentinel */
+		माप_ext_info *= माप(*mux->ext_info);
+	पूर्ण
 
 	children = 0;
-	of_property_for_each_string(np, "channels", prop, label) {
-		if (*label)
+	of_property_क्रम_each_string(np, "channels", prop, label) अणु
+		अगर (*label)
 			children++;
-	}
-	if (children <= 0) {
+	पूर्ण
+	अगर (children <= 0) अणु
 		dev_err(dev, "not even a single child\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sizeof_priv = sizeof(*mux);
-	sizeof_priv += sizeof(*mux->child) * children;
-	sizeof_priv += sizeof(*mux->chan) * children;
-	sizeof_priv += sizeof_ext_info;
+	माप_priv = माप(*mux);
+	माप_priv += माप(*mux->child) * children;
+	माप_priv += माप(*mux->chan) * children;
+	माप_priv += माप_ext_info;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof_priv);
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप_priv);
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	mux = iio_priv(indio_dev);
-	mux->child = (struct mux_child *)(mux + 1);
-	mux->chan = (struct iio_chan_spec *)(mux->child + children);
+	mux->child = (काष्ठा mux_child *)(mux + 1);
+	mux->chan = (काष्ठा iio_chan_spec *)(mux->child + children);
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
 	mux->parent = parent;
 	mux->cached_state = -1;
 
 	indio_dev->name = dev_name(dev);
 	indio_dev->info = &mux_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = mux->chan;
 	indio_dev->num_channels = children;
-	if (sizeof_ext_info) {
+	अगर (माप_ext_info) अणु
 		mux->ext_info = devm_kmemdup(dev,
 					     parent->channel->ext_info,
-					     sizeof_ext_info, GFP_KERNEL);
-		if (!mux->ext_info)
-			return -ENOMEM;
+					     माप_ext_info, GFP_KERNEL);
+		अगर (!mux->ext_info)
+			वापस -ENOMEM;
 
-		for (i = 0; mux->ext_info[i].name; ++i) {
-			if (parent->channel->ext_info[i].read)
-				mux->ext_info[i].read = mux_read_ext_info;
-			if (parent->channel->ext_info[i].write)
-				mux->ext_info[i].write = mux_write_ext_info;
-			mux->ext_info[i].private = i;
-		}
-	}
+		क्रम (i = 0; mux->ext_info[i].name; ++i) अणु
+			अगर (parent->channel->ext_info[i].पढ़ो)
+				mux->ext_info[i].पढ़ो = mux_पढ़ो_ext_info;
+			अगर (parent->channel->ext_info[i].ग_लिखो)
+				mux->ext_info[i].ग_लिखो = mux_ग_लिखो_ext_info;
+			mux->ext_info[i].निजी = i;
+		पूर्ण
+	पूर्ण
 
-	mux->control = devm_mux_control_get(dev, NULL);
-	if (IS_ERR(mux->control)) {
-		if (PTR_ERR(mux->control) != -EPROBE_DEFER)
+	mux->control = devm_mux_control_get(dev, शून्य);
+	अगर (IS_ERR(mux->control)) अणु
+		अगर (PTR_ERR(mux->control) != -EPROBE_DEFER)
 			dev_err(dev, "failed to get control-mux\n");
-		return PTR_ERR(mux->control);
-	}
+		वापस PTR_ERR(mux->control);
+	पूर्ण
 
 	i = 0;
-	of_property_for_each_string_index(np, "channels", prop, label, state) {
-		if (!*label)
-			continue;
+	of_property_क्रम_each_string_index(np, "channels", prop, label, state) अणु
+		अगर (!*label)
+			जारी;
 
 		ret = mux_configure_channel(dev, mux, state, label, i++);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	ret = devm_iio_device_register(dev, indio_dev);
-	if (ret) {
+	ret = devm_iio_device_रेजिस्टर(dev, indio_dev);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register iio device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mux_match[] = {
-	{ .compatible = "io-channel-mux" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id mux_match[] = अणु
+	अणु .compatible = "io-channel-mux" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mux_match);
 
-static struct platform_driver mux_driver = {
+अटल काष्ठा platक्रमm_driver mux_driver = अणु
 	.probe = mux_probe,
-	.driver = {
+	.driver = अणु
 		.name = "iio-mux",
 		.of_match_table = mux_match,
-	},
-};
-module_platform_driver(mux_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(mux_driver);
 
 MODULE_DESCRIPTION("IIO multiplexer driver");
 MODULE_AUTHOR("Peter Rosin <peda@axentia.se>");

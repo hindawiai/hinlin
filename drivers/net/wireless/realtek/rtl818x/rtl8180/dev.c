@@ -1,5 +1,6 @@
+<शैली गुरु>
 
-/* Linux device driver for RTL8180 / RTL8185 / RTL8187SE
+/* Linux device driver क्रम RTL8180 / RTL8185 / RTL8187SE
  *
  * Copyright 2007 Michael Wu <flamingice@sourmilk.net>
  * Copyright 2007,2014 Andrea Merello <andrea.merello@gmail.com>
@@ -7,7 +8,7 @@
  * Based on the r8180 driver, which is:
  * Copyright 2004-2005 Andrea Merello <andrea.merello@gmail.com>, et al.
  *
- * Thanks to Realtek for their support!
+ * Thanks to Realtek क्रम their support!
  *
  ************************************************************************
  *
@@ -20,105 +21,105 @@
  *  - other GPL, unpublished (until now), Linux driver code,
  *    Copyright Larry Finger <Larry.Finger@lwfinger.net>
  *
- * A huge thanks goes to Sara V. Nari who forgives me when I'm
+ * A huge thanks goes to Sara V. Nari who क्रमgives me when I'm
  * sitting in front of my laptop at evening, week-end, night...
  *
  * A special thanks goes to Antonio Cuni, who helped me with
  * some python userspace stuff I used to debug RTL8187SE code, and who
  * bought a laptop with an unsupported Wi-Fi card some years ago...
  *
- * Thanks to Larry Finger for writing some code for rtl8187se and for
+ * Thanks to Larry Finger क्रम writing some code क्रम rtl8187se and क्रम
  * his suggestions.
  *
- * Thanks to Dan Carpenter for reviewing my initial patch and for his
+ * Thanks to Dan Carpenter क्रम reviewing my initial patch and क्रम his
  * suggestions.
  *
- * Thanks to Bernhard Schiffner for his help in testing and for his
+ * Thanks to Bernhard Schअगरfner क्रम his help in testing and क्रम his
  * suggestions.
  *
  ************************************************************************
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/etherdevice.h>
-#include <linux/eeprom_93cx6.h>
-#include <linux/module.h>
-#include <net/mac80211.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/eeprom_93cx6.h>
+#समावेश <linux/module.h>
+#समावेश <net/mac80211.h>
 
-#include "rtl8180.h"
-#include "rtl8225.h"
-#include "sa2400.h"
-#include "max2820.h"
-#include "grf5101.h"
-#include "rtl8225se.h"
+#समावेश "rtl8180.h"
+#समावेश "rtl8225.h"
+#समावेश "sa2400.h"
+#समावेश "max2820.h"
+#समावेश "grf5101.h"
+#समावेश "rtl8225se.h"
 
 MODULE_AUTHOR("Michael Wu <flamingice@sourmilk.net>");
 MODULE_AUTHOR("Andrea Merello <andrea.merello@gmail.com>");
 MODULE_DESCRIPTION("RTL8180 / RTL8185 / RTL8187SE PCI wireless driver");
 MODULE_LICENSE("GPL");
 
-static const struct pci_device_id rtl8180_table[] = {
+अटल स्थिर काष्ठा pci_device_id rtl8180_table[] = अणु
 
 	/* rtl8187se */
-	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8199) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8199) पूर्ण,
 
 	/* rtl8185 */
-	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8185) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_BELKIN, 0x700f) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_BELKIN, 0x701f) },
+	अणु PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8185) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_BELKIN, 0x700f) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_BELKIN, 0x701f) पूर्ण,
 
 	/* rtl8180 */
-	{ PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8180) },
-	{ PCI_DEVICE(0x1799, 0x6001) },
-	{ PCI_DEVICE(0x1799, 0x6020) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_DLINK, 0x3300) },
-	{ PCI_DEVICE(0x1186, 0x3301) },
-	{ PCI_DEVICE(0x1432, 0x7106) },
-	{ }
-};
+	अणु PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8180) पूर्ण,
+	अणु PCI_DEVICE(0x1799, 0x6001) पूर्ण,
+	अणु PCI_DEVICE(0x1799, 0x6020) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_DLINK, 0x3300) पूर्ण,
+	अणु PCI_DEVICE(0x1186, 0x3301) पूर्ण,
+	अणु PCI_DEVICE(0x1432, 0x7106) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, rtl8180_table);
 
-static const struct ieee80211_rate rtl818x_rates[] = {
-	{ .bitrate = 10, .hw_value = 0, },
-	{ .bitrate = 20, .hw_value = 1, },
-	{ .bitrate = 55, .hw_value = 2, },
-	{ .bitrate = 110, .hw_value = 3, },
-	{ .bitrate = 60, .hw_value = 4, },
-	{ .bitrate = 90, .hw_value = 5, },
-	{ .bitrate = 120, .hw_value = 6, },
-	{ .bitrate = 180, .hw_value = 7, },
-	{ .bitrate = 240, .hw_value = 8, },
-	{ .bitrate = 360, .hw_value = 9, },
-	{ .bitrate = 480, .hw_value = 10, },
-	{ .bitrate = 540, .hw_value = 11, },
-};
+अटल स्थिर काष्ठा ieee80211_rate rtl818x_rates[] = अणु
+	अणु .bitrate = 10, .hw_value = 0, पूर्ण,
+	अणु .bitrate = 20, .hw_value = 1, पूर्ण,
+	अणु .bitrate = 55, .hw_value = 2, पूर्ण,
+	अणु .bitrate = 110, .hw_value = 3, पूर्ण,
+	अणु .bitrate = 60, .hw_value = 4, पूर्ण,
+	अणु .bitrate = 90, .hw_value = 5, पूर्ण,
+	अणु .bitrate = 120, .hw_value = 6, पूर्ण,
+	अणु .bitrate = 180, .hw_value = 7, पूर्ण,
+	अणु .bitrate = 240, .hw_value = 8, पूर्ण,
+	अणु .bitrate = 360, .hw_value = 9, पूर्ण,
+	अणु .bitrate = 480, .hw_value = 10, पूर्ण,
+	अणु .bitrate = 540, .hw_value = 11, पूर्ण,
+पूर्ण;
 
-static const struct ieee80211_channel rtl818x_channels[] = {
-	{ .center_freq = 2412 },
-	{ .center_freq = 2417 },
-	{ .center_freq = 2422 },
-	{ .center_freq = 2427 },
-	{ .center_freq = 2432 },
-	{ .center_freq = 2437 },
-	{ .center_freq = 2442 },
-	{ .center_freq = 2447 },
-	{ .center_freq = 2452 },
-	{ .center_freq = 2457 },
-	{ .center_freq = 2462 },
-	{ .center_freq = 2467 },
-	{ .center_freq = 2472 },
-	{ .center_freq = 2484 },
-};
+अटल स्थिर काष्ठा ieee80211_channel rtl818x_channels[] = अणु
+	अणु .center_freq = 2412 पूर्ण,
+	अणु .center_freq = 2417 पूर्ण,
+	अणु .center_freq = 2422 पूर्ण,
+	अणु .center_freq = 2427 पूर्ण,
+	अणु .center_freq = 2432 पूर्ण,
+	अणु .center_freq = 2437 पूर्ण,
+	अणु .center_freq = 2442 पूर्ण,
+	अणु .center_freq = 2447 पूर्ण,
+	अणु .center_freq = 2452 पूर्ण,
+	अणु .center_freq = 2457 पूर्ण,
+	अणु .center_freq = 2462 पूर्ण,
+	अणु .center_freq = 2467 पूर्ण,
+	अणु .center_freq = 2472 पूर्ण,
+	अणु .center_freq = 2484 पूर्ण,
+पूर्ण;
 
-/* Queues for rtl8187se card
+/* Queues क्रम rtl8187se card
  *
  * name | reg  |  queue
  *  BC  |  7   |   6
@@ -129,11 +130,11 @@ static const struct ieee80211_channel rtl818x_channels[] = {
  *  BE  |  3   |   4
  *  BK  |  2   |   5
  *
- * The complete map for DMA kick reg using use all queue is:
- * static const int rtl8187se_queues_map[RTL8187SE_NR_TX_QUEUES] =
- *	{1, 6, 5, 4, 3, 2, 7};
+ * The complete map क्रम DMA kick reg using use all queue is:
+ * अटल स्थिर पूर्णांक rtl8187se_queues_map[RTL8187SE_NR_TX_QUEUES] =
+ *	अणु1, 6, 5, 4, 3, 2, 7पूर्ण;
  *
- * .. but.. Because for mac80211 4 queues are enough for QoS we use this
+ * .. but.. Because क्रम mac80211 4 queues are enough क्रम QoS we use this
  *
  * name | reg  |  queue
  *  BC  |  7   |   4  <- currently not used yet
@@ -146,25 +147,25 @@ static const struct ieee80211_channel rtl818x_channels[] = {
  *
  * Beacon queue could be used, but this is not finished yet.
  *
- * I thougth about using the other two queues but I decided not to do this:
+ * I thougth about using the other two queues but I decided not to करो this:
  *
  * - I'm unsure whether the mac80211 will ever try to use more than 4 queues
  *   by itself.
  *
  * - I could route MGMT frames (currently sent over VO queue) to the MGMT
- *   queue but since mac80211 will do not know about it, I will probably gain
+ *   queue but since mac80211 will करो not know about it, I will probably gain
  *   some HW priority whenever the VO queue is not empty, but this gain is
  *   limited by the fact that I had to stop the mac80211 queue whenever one of
  *   the VO or MGMT queues is full, stopping also submitting of MGMT frame
  *   to the driver.
  *
- * - I don't know how to set in the HW the contention window params for MGMT
+ * - I करोn't know how to set in the HW the contention winकरोw params क्रम MGMT
  *   and HI-prio queues.
  */
 
-static const int rtl8187se_queues_map[RTL8187SE_NR_TX_QUEUES] = {5, 4, 3, 2, 7};
+अटल स्थिर पूर्णांक rtl8187se_queues_map[RTL8187SE_NR_TX_QUEUES] = अणु5, 4, 3, 2, 7पूर्ण;
 
-/* Queues for rtl8180/rtl8185 cards
+/* Queues क्रम rtl8180/rtl8185 cards
  *
  * name | reg  |  prio
  *  BC  |  7   |   3
@@ -172,11 +173,11 @@ static const int rtl8187se_queues_map[RTL8187SE_NR_TX_QUEUES] = {5, 4, 3, 2, 7};
  *  NO  |  5   |   1
  *  LO  |  4   |   2
  *
- * The complete map for DMA kick reg using all queue is:
- * static const int rtl8180_queues_map[RTL8180_NR_TX_QUEUES] = {6, 5, 4, 7};
+ * The complete map क्रम DMA kick reg using all queue is:
+ * अटल स्थिर पूर्णांक rtl8180_queues_map[RTL8180_NR_TX_QUEUES] = अणु6, 5, 4, 7पूर्ण;
  *
- * .. but .. Because the mac80211 needs at least 4 queues for QoS or
- * otherwise QoS can't be done, we use just one.
+ * .. but .. Because the mac80211 needs at least 4 queues क्रम QoS or
+ * otherwise QoS can't be करोne, we use just one.
  * Beacon queue could be used, but this is not finished yet.
  * Actual map is:
  *
@@ -187,89 +188,89 @@ static const int rtl8187se_queues_map[RTL8187SE_NR_TX_QUEUES] = {5, 4, 3, 2, 7};
  *  LO  |  4   |   0  <- used
  */
 
-static const int rtl8180_queues_map[RTL8180_NR_TX_QUEUES] = {4, 7};
+अटल स्थिर पूर्णांक rtl8180_queues_map[RTL8180_NR_TX_QUEUES] = अणु4, 7पूर्ण;
 
-/* LNA gain table for rtl8187se */
-static const u8 rtl8187se_lna_gain[4] = {02, 17, 29, 39};
+/* LNA gain table क्रम rtl8187se */
+अटल स्थिर u8 rtl8187se_lna_gain[4] = अणु02, 17, 29, 39पूर्ण;
 
-void rtl8180_write_phy(struct ieee80211_hw *dev, u8 addr, u32 data)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	int i = 10;
+व्योम rtl8180_ग_लिखो_phy(काष्ठा ieee80211_hw *dev, u8 addr, u32 data)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	पूर्णांक i = 10;
 	u32 buf;
 
 	buf = (data << 8) | addr;
 
-	rtl818x_iowrite32(priv, (__le32 __iomem *)&priv->map->PHY[0], buf | 0x80);
-	while (i--) {
-		rtl818x_iowrite32(priv, (__le32 __iomem *)&priv->map->PHY[0], buf);
-		if (rtl818x_ioread8(priv, &priv->map->PHY[2]) == (data & 0xFF))
-			return;
-	}
-}
+	rtl818x_ioग_लिखो32(priv, (__le32 __iomem *)&priv->map->PHY[0], buf | 0x80);
+	जबतक (i--) अणु
+		rtl818x_ioग_लिखो32(priv, (__le32 __iomem *)&priv->map->PHY[0], buf);
+		अगर (rtl818x_ioपढ़ो8(priv, &priv->map->PHY[2]) == (data & 0xFF))
+			वापस;
+	पूर्ण
+पूर्ण
 
-static void rtl8180_handle_rx(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl818x_rx_cmd_desc *cmd_desc;
-	unsigned int count = 32;
+अटल व्योम rtl8180_handle_rx(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl818x_rx_cmd_desc *cmd_desc;
+	अचिन्हित पूर्णांक count = 32;
 	u8 agc, sq;
-	s8 signal = 1;
+	s8 संकेत = 1;
 	dma_addr_t mapping;
 
-	while (count--) {
-		void *entry = priv->rx_ring + priv->rx_idx * priv->rx_ring_sz;
-		struct sk_buff *skb = priv->rx_buf[priv->rx_idx];
+	जबतक (count--) अणु
+		व्योम *entry = priv->rx_ring + priv->rx_idx * priv->rx_ring_sz;
+		काष्ठा sk_buff *skb = priv->rx_buf[priv->rx_idx];
 		u32 flags, flags2, flags3 = 0;
 		u64 tsft;
 
-		if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
-			struct rtl8187se_rx_desc *desc = entry;
+		अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+			काष्ठा rtl8187se_rx_desc *desc = entry;
 
 			flags = le32_to_cpu(desc->flags);
-			/* if ownership flag is set, then we can trust the
+			/* अगर ownership flag is set, then we can trust the
 			 * HW has written other fields. We must not trust
-			 * other descriptor data read before we checked (read)
+			 * other descriptor data पढ़ो beक्रमe we checked (पढ़ो)
 			 * the ownership flag
 			 */
 			rmb();
 			flags3 = le32_to_cpu(desc->flags3);
 			flags2 = le32_to_cpu(desc->flags2);
 			tsft = le64_to_cpu(desc->tsft);
-		} else {
-			struct rtl8180_rx_desc *desc = entry;
+		पूर्ण अन्यथा अणु
+			काष्ठा rtl8180_rx_desc *desc = entry;
 
 			flags = le32_to_cpu(desc->flags);
 			/* same as above */
 			rmb();
 			flags2 = le32_to_cpu(desc->flags2);
 			tsft = le64_to_cpu(desc->tsft);
-		}
+		पूर्ण
 
-		if (flags & RTL818X_RX_DESC_FLAG_OWN)
-			return;
+		अगर (flags & RTL818X_RX_DESC_FLAG_OWN)
+			वापस;
 
-		if (unlikely(flags & (RTL818X_RX_DESC_FLAG_DMA_FAIL |
+		अगर (unlikely(flags & (RTL818X_RX_DESC_FLAG_DMA_FAIL |
 				      RTL818X_RX_DESC_FLAG_FOF |
 				      RTL818X_RX_DESC_FLAG_RX_ERR)))
-			goto done;
-		else {
-			struct ieee80211_rx_status rx_status = {0};
-			struct sk_buff *new_skb = dev_alloc_skb(MAX_RX_SIZE);
+			जाओ करोne;
+		अन्यथा अणु
+			काष्ठा ieee80211_rx_status rx_status = अणु0पूर्ण;
+			काष्ठा sk_buff *new_skb = dev_alloc_skb(MAX_RX_SIZE);
 
-			if (unlikely(!new_skb))
-				goto done;
+			अगर (unlikely(!new_skb))
+				जाओ करोne;
 
 			mapping = dma_map_single(&priv->pdev->dev,
-						 skb_tail_pointer(new_skb),
+						 skb_tail_poपूर्णांकer(new_skb),
 						 MAX_RX_SIZE, DMA_FROM_DEVICE);
 
-			if (dma_mapping_error(&priv->pdev->dev, mapping)) {
-				kfree_skb(new_skb);
+			अगर (dma_mapping_error(&priv->pdev->dev, mapping)) अणु
+				kमुक्त_skb(new_skb);
 				dev_err(&priv->pdev->dev, "RX DMA map error\n");
 
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 
 			dma_unmap_single(&priv->pdev->dev,
 					 *((dma_addr_t *)skb->cb),
@@ -280,78 +281,78 @@ static void rtl8180_handle_rx(struct ieee80211_hw *dev)
 			rx_status.rate_idx = (flags >> 20) & 0xF;
 			agc = (flags2 >> 17) & 0x7F;
 
-			switch (priv->chip_family) {
-			case RTL818X_CHIP_FAMILY_RTL8185:
-				if (rx_status.rate_idx > 3)
-					signal = -clamp_t(u8, agc, 25, 90) - 9;
-				else
-					signal = -clamp_t(u8, agc, 30, 95);
-				break;
-			case RTL818X_CHIP_FAMILY_RTL8180:
+			चयन (priv->chip_family) अणु
+			हाल RTL818X_CHIP_FAMILY_RTL8185:
+				अगर (rx_status.rate_idx > 3)
+					संकेत = -clamp_t(u8, agc, 25, 90) - 9;
+				अन्यथा
+					संकेत = -clamp_t(u8, agc, 30, 95);
+				अवरोध;
+			हाल RTL818X_CHIP_FAMILY_RTL8180:
 				sq = flags2 & 0xff;
-				signal = priv->rf->calc_rssi(agc, sq);
-				break;
-			case RTL818X_CHIP_FAMILY_RTL8187SE:
-				/* OFDM measure reported by HW is signed,
+				संकेत = priv->rf->calc_rssi(agc, sq);
+				अवरोध;
+			हाल RTL818X_CHIP_FAMILY_RTL8187SE:
+				/* OFDM measure reported by HW is चिन्हित,
 				 * in 0.5dBm unit, with zero centered @ -41dBm
-				 * input signal.
+				 * input संकेत.
 				 */
-				if (rx_status.rate_idx > 3) {
-					signal = (s8)((flags3 >> 16) & 0xff);
-					signal = signal / 2 - 41;
-				} else {
-					int idx, bb;
+				अगर (rx_status.rate_idx > 3) अणु
+					संकेत = (s8)((flags3 >> 16) & 0xff);
+					संकेत = संकेत / 2 - 41;
+				पूर्ण अन्यथा अणु
+					पूर्णांक idx, bb;
 
 					idx = (agc & 0x60) >> 5;
 					bb = (agc & 0x1F) * 2;
 					/* bias + BB gain + LNA gain */
-					signal = 4 - bb - rtl8187se_lna_gain[idx];
-				}
-				break;
-			}
-			rx_status.signal = signal;
+					संकेत = 4 - bb - rtl8187se_lna_gain[idx];
+				पूर्ण
+				अवरोध;
+			पूर्ण
+			rx_status.संकेत = संकेत;
 			rx_status.freq = dev->conf.chandef.chan->center_freq;
 			rx_status.band = dev->conf.chandef.chan->band;
-			rx_status.mactime = tsft;
+			rx_status.maस_समय = tsft;
 			rx_status.flag |= RX_FLAG_MACTIME_START;
-			if (flags & RTL818X_RX_DESC_FLAG_SPLCP)
+			अगर (flags & RTL818X_RX_DESC_FLAG_SPLCP)
 				rx_status.enc_flags |= RX_ENC_FLAG_SHORTPRE;
-			if (flags & RTL818X_RX_DESC_FLAG_CRC32_ERR)
+			अगर (flags & RTL818X_RX_DESC_FLAG_CRC32_ERR)
 				rx_status.flag |= RX_FLAG_FAILED_FCS_CRC;
 
-			memcpy(IEEE80211_SKB_RXCB(skb), &rx_status, sizeof(rx_status));
+			स_नकल(IEEE80211_SKB_RXCB(skb), &rx_status, माप(rx_status));
 			ieee80211_rx_irqsafe(dev, skb);
 
 			skb = new_skb;
 			priv->rx_buf[priv->rx_idx] = skb;
 			*((dma_addr_t *) skb->cb) = mapping;
-		}
+		पूर्ण
 
-	done:
+	करोne:
 		cmd_desc = entry;
 		cmd_desc->rx_buf = cpu_to_le32(*((dma_addr_t *)skb->cb));
 		cmd_desc->flags = cpu_to_le32(RTL818X_RX_DESC_FLAG_OWN |
 					   MAX_RX_SIZE);
-		if (priv->rx_idx == 31)
+		अगर (priv->rx_idx == 31)
 			cmd_desc->flags |=
 				cpu_to_le32(RTL818X_RX_DESC_FLAG_EOR);
 		priv->rx_idx = (priv->rx_idx + 1) % 32;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtl8180_handle_tx(struct ieee80211_hw *dev, unsigned int prio)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl8180_tx_ring *ring = &priv->tx_ring[prio];
+अटल व्योम rtl8180_handle_tx(काष्ठा ieee80211_hw *dev, अचिन्हित पूर्णांक prio)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl8180_tx_ring *ring = &priv->tx_ring[prio];
 
-	while (skb_queue_len(&ring->queue)) {
-		struct rtl8180_tx_desc *entry = &ring->desc[ring->idx];
-		struct sk_buff *skb;
-		struct ieee80211_tx_info *info;
+	जबतक (skb_queue_len(&ring->queue)) अणु
+		काष्ठा rtl8180_tx_desc *entry = &ring->desc[ring->idx];
+		काष्ठा sk_buff *skb;
+		काष्ठा ieee80211_tx_info *info;
 		u32 flags = le32_to_cpu(entry->flags);
 
-		if (flags & RTL818X_TX_DESC_FLAG_OWN)
-			return;
+		अगर (flags & RTL818X_TX_DESC_FLAG_OWN)
+			वापस;
 
 		ring->idx = (ring->idx + 1) % ring->entries;
 		skb = __skb_dequeue(&ring->queue);
@@ -361,113 +362,113 @@ static void rtl8180_handle_tx(struct ieee80211_hw *dev, unsigned int prio)
 		info = IEEE80211_SKB_CB(skb);
 		ieee80211_tx_info_clear_status(info);
 
-		if (!(info->flags & IEEE80211_TX_CTL_NO_ACK) &&
+		अगर (!(info->flags & IEEE80211_TX_CTL_NO_ACK) &&
 		    (flags & RTL818X_TX_DESC_FLAG_TX_OK))
 			info->flags |= IEEE80211_TX_STAT_ACK;
 
 		info->status.rates[0].count = (flags & 0xFF) + 1;
 
 		ieee80211_tx_status_irqsafe(dev, skb);
-		if (ring->entries - skb_queue_len(&ring->queue) == 2)
+		अगर (ring->entries - skb_queue_len(&ring->queue) == 2)
 			ieee80211_wake_queue(dev, prio);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t rtl8187se_interrupt(int irq, void *dev_id)
-{
-	struct ieee80211_hw *dev = dev_id;
-	struct rtl8180_priv *priv = dev->priv;
+अटल irqवापस_t rtl8187se_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ieee80211_hw *dev = dev_id;
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u32 reg;
-	unsigned long flags;
-	static int desc_err;
+	अचिन्हित दीर्घ flags;
+	अटल पूर्णांक desc_err;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	/* Note: 32-bit interrupt status */
-	reg = rtl818x_ioread32(priv, &priv->map->INT_STATUS_SE);
-	if (unlikely(reg == 0xFFFFFFFF)) {
+	/* Note: 32-bit पूर्णांकerrupt status */
+	reg = rtl818x_ioपढ़ो32(priv, &priv->map->INT_STATUS_SE);
+	अगर (unlikely(reg == 0xFFFFFFFF)) अणु
 		spin_unlock_irqrestore(&priv->lock, flags);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	rtl818x_iowrite32(priv, &priv->map->INT_STATUS_SE, reg);
+	rtl818x_ioग_लिखो32(priv, &priv->map->INT_STATUS_SE, reg);
 
-	if (reg & IMR_TIMEOUT1)
-		rtl818x_iowrite32(priv, &priv->map->INT_TIMEOUT, 0);
+	अगर (reg & IMR_TIMEOUT1)
+		rtl818x_ioग_लिखो32(priv, &priv->map->INT_TIMEOUT, 0);
 
-	if (reg & (IMR_TBDOK | IMR_TBDER))
+	अगर (reg & (IMR_TBDOK | IMR_TBDER))
 		rtl8180_handle_tx(dev, 4);
 
-	if (reg & (IMR_TVODOK | IMR_TVODER))
+	अगर (reg & (IMR_TVODOK | IMR_TVODER))
 		rtl8180_handle_tx(dev, 0);
 
-	if (reg & (IMR_TVIDOK | IMR_TVIDER))
+	अगर (reg & (IMR_TVIDOK | IMR_TVIDER))
 		rtl8180_handle_tx(dev, 1);
 
-	if (reg & (IMR_TBEDOK | IMR_TBEDER))
+	अगर (reg & (IMR_TBEDOK | IMR_TBEDER))
 		rtl8180_handle_tx(dev, 2);
 
-	if (reg & (IMR_TBKDOK | IMR_TBKDER))
+	अगर (reg & (IMR_TBKDOK | IMR_TBKDER))
 		rtl8180_handle_tx(dev, 3);
 
-	if (reg & (IMR_ROK | IMR_RER | RTL818X_INT_SE_RX_DU | IMR_RQOSOK))
+	अगर (reg & (IMR_ROK | IMR_RER | RTL818X_INT_SE_RX_DU | IMR_RQOSOK))
 		rtl8180_handle_rx(dev);
-	/* The interface sometimes generates several RX DMA descriptor errors
+	/* The पूर्णांकerface someबार generates several RX DMA descriptor errors
 	 * at startup. Do not report these.
 	 */
-	if ((reg & RTL818X_INT_SE_RX_DU) && desc_err++ > 2)
-		if (net_ratelimit())
+	अगर ((reg & RTL818X_INT_SE_RX_DU) && desc_err++ > 2)
+		अगर (net_ratelimit())
 			wiphy_err(dev->wiphy, "No RX DMA Descriptor avail\n");
 
 	spin_unlock_irqrestore(&priv->lock, flags);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t rtl8180_interrupt(int irq, void *dev_id)
-{
-	struct ieee80211_hw *dev = dev_id;
-	struct rtl8180_priv *priv = dev->priv;
+अटल irqवापस_t rtl8180_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ieee80211_hw *dev = dev_id;
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u16 reg;
 
 	spin_lock(&priv->lock);
-	reg = rtl818x_ioread16(priv, &priv->map->INT_STATUS);
-	if (unlikely(reg == 0xFFFF)) {
+	reg = rtl818x_ioपढ़ो16(priv, &priv->map->INT_STATUS);
+	अगर (unlikely(reg == 0xFFFF)) अणु
 		spin_unlock(&priv->lock);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	rtl818x_iowrite16(priv, &priv->map->INT_STATUS, reg);
+	rtl818x_ioग_लिखो16(priv, &priv->map->INT_STATUS, reg);
 
-	if (reg & (RTL818X_INT_TXB_OK | RTL818X_INT_TXB_ERR))
+	अगर (reg & (RTL818X_INT_TXB_OK | RTL818X_INT_TXB_ERR))
 		rtl8180_handle_tx(dev, 1);
 
-	if (reg & (RTL818X_INT_TXL_OK | RTL818X_INT_TXL_ERR))
+	अगर (reg & (RTL818X_INT_TXL_OK | RTL818X_INT_TXL_ERR))
 		rtl8180_handle_tx(dev, 0);
 
-	if (reg & (RTL818X_INT_RX_OK | RTL818X_INT_RX_ERR))
+	अगर (reg & (RTL818X_INT_RX_OK | RTL818X_INT_RX_ERR))
 		rtl8180_handle_rx(dev);
 
 	spin_unlock(&priv->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rtl8180_tx(struct ieee80211_hw *dev,
-		       struct ieee80211_tx_control *control,
-		       struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl8180_tx_ring *ring;
-	struct rtl8180_tx_desc *entry;
-	unsigned long flags;
-	unsigned int idx, prio, hw_prio;
+अटल व्योम rtl8180_tx(काष्ठा ieee80211_hw *dev,
+		       काष्ठा ieee80211_tx_control *control,
+		       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl8180_tx_ring *ring;
+	काष्ठा rtl8180_tx_desc *entry;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक idx, prio, hw_prio;
 	dma_addr_t mapping;
 	u32 tx_flags;
 	u8 rc_flags;
 	u16 plcp_len = 0;
 	__le16 rts_duration = 0;
-	/* do arithmetic and then convert to le16 */
+	/* करो arithmetic and then convert to le16 */
 	u16 frame_duration = 0;
 
 	prio = skb_get_queue_mapping(skb);
@@ -476,81 +477,81 @@ static void rtl8180_tx(struct ieee80211_hw *dev,
 	mapping = dma_map_single(&priv->pdev->dev, skb->data, skb->len,
 				 DMA_TO_DEVICE);
 
-	if (dma_mapping_error(&priv->pdev->dev, mapping)) {
-		kfree_skb(skb);
+	अगर (dma_mapping_error(&priv->pdev->dev, mapping)) अणु
+		kमुक्त_skb(skb);
 		dev_err(&priv->pdev->dev, "TX DMA mapping error\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tx_flags = RTL818X_TX_DESC_FLAG_OWN | RTL818X_TX_DESC_FLAG_FS |
 		   RTL818X_TX_DESC_FLAG_LS |
 		   (ieee80211_get_tx_rate(dev, info)->hw_value << 24) |
 		   skb->len;
 
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180)
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180)
 		tx_flags |= RTL818X_TX_DESC_FLAG_DMA |
 			    RTL818X_TX_DESC_FLAG_NO_ENC;
 
 	rc_flags = info->control.rates[0].flags;
 
-	/* HW will perform RTS-CTS when only RTS flags is set.
-	 * HW will perform CTS-to-self when both RTS and CTS flags are set.
-	 * RTS rate and RTS duration will be used also for CTS-to-self.
+	/* HW will perक्रमm RTS-CTS when only RTS flags is set.
+	 * HW will perक्रमm CTS-to-self when both RTS and CTS flags are set.
+	 * RTS rate and RTS duration will be used also क्रम CTS-to-self.
 	 */
-	if (rc_flags & IEEE80211_TX_RC_USE_RTS_CTS) {
+	अगर (rc_flags & IEEE80211_TX_RC_USE_RTS_CTS) अणु
 		tx_flags |= RTL818X_TX_DESC_FLAG_RTS;
 		tx_flags |= ieee80211_get_rts_cts_rate(dev, info)->hw_value << 19;
-		rts_duration = ieee80211_rts_duration(dev, priv->vif,
+		rts_duration = ieee80211_rts_duration(dev, priv->vअगर,
 						skb->len, info);
-	} else if (rc_flags & IEEE80211_TX_RC_USE_CTS_PROTECT) {
+	पूर्ण अन्यथा अगर (rc_flags & IEEE80211_TX_RC_USE_CTS_PROTECT) अणु
 		tx_flags |= RTL818X_TX_DESC_FLAG_RTS | RTL818X_TX_DESC_FLAG_CTS;
 		tx_flags |= ieee80211_get_rts_cts_rate(dev, info)->hw_value << 19;
-		rts_duration = ieee80211_ctstoself_duration(dev, priv->vif,
+		rts_duration = ieee80211_ctstoself_duration(dev, priv->vअगर,
 						skb->len, info);
-	}
+	पूर्ण
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180) {
-		unsigned int remainder;
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180) अणु
+		अचिन्हित पूर्णांक reमुख्यder;
 
 		plcp_len = DIV_ROUND_UP(16 * (skb->len + 4),
 				(ieee80211_get_tx_rate(dev, info)->bitrate * 2) / 10);
-		remainder = (16 * (skb->len + 4)) %
+		reमुख्यder = (16 * (skb->len + 4)) %
 			    ((ieee80211_get_tx_rate(dev, info)->bitrate * 2) / 10);
-		if (remainder <= 6)
+		अगर (reमुख्यder <= 6)
 			plcp_len |= 1 << 15;
-	}
+	पूर्ण
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
 		__le16 duration;
-		/* SIFS time (required by HW) is already included by
+		/* SIFS समय (required by HW) is alपढ़ोy included by
 		 * ieee80211_generic_frame_duration
 		 */
-		duration = ieee80211_generic_frame_duration(dev, priv->vif,
+		duration = ieee80211_generic_frame_duration(dev, priv->vअगर,
 					NL80211_BAND_2GHZ, skb->len,
 					ieee80211_get_tx_rate(dev, info));
 
-		frame_duration =  priv->ack_time + le16_to_cpu(duration);
-	}
+		frame_duration =  priv->ack_समय + le16_to_cpu(duration);
+	पूर्ण
 
 	spin_lock_irqsave(&priv->lock, flags);
 
-	if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) {
-		if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+	अगर (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) अणु
+		अगर (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
 			priv->seqno += 0x10;
 		hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
 		hdr->seq_ctrl |= cpu_to_le16(priv->seqno);
-	}
+	पूर्ण
 
 	idx = (ring->idx + skb_queue_len(&ring->queue)) % ring->entries;
 	entry = &ring->desc[idx];
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
 		entry->frame_duration = cpu_to_le16(frame_duration);
 		entry->frame_len_se = cpu_to_le16(skb->len);
 
 		/* tpc polarity */
 		entry->flags3 = cpu_to_le16(1<<4);
-	} else
+	पूर्ण अन्यथा
 		entry->frame_len = cpu_to_le32(skb->len);
 
 	entry->rts_duration = rts_duration;
@@ -560,164 +561,164 @@ static void rtl8180_tx(struct ieee80211_hw *dev,
 	entry->retry_limit = info->control.rates[0].count - 1;
 
 	/* We must be sure that tx_flags is written last because the HW
-	 * looks at it to check if the rest of data is valid or not
+	 * looks at it to check अगर the rest of data is valid or not
 	 */
 	wmb();
 	entry->flags = cpu_to_le32(tx_flags);
-	/* We must be sure this has been written before followings HW
-	 * register write, because this write will made the HW attempts
+	/* We must be sure this has been written beक्रमe followings HW
+	 * रेजिस्टर ग_लिखो, because this ग_लिखो will made the HW attempts
 	 * to DMA the just-written data
 	 */
 	wmb();
 
 	__skb_queue_tail(&ring->queue, skb);
-	if (ring->entries - skb_queue_len(&ring->queue) < 2)
+	अगर (ring->entries - skb_queue_len(&ring->queue) < 2)
 		ieee80211_stop_queue(dev, prio);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
 		/* just poll: rings are stopped with TPPollStop reg */
 		hw_prio = rtl8187se_queues_map[prio];
-		rtl818x_iowrite8(priv, &priv->map->TX_DMA_POLLING,
+		rtl818x_ioग_लिखो8(priv, &priv->map->TX_DMA_POLLING,
 			 (1 << hw_prio));
-	} else {
+	पूर्ण अन्यथा अणु
 		hw_prio = rtl8180_queues_map[prio];
-		rtl818x_iowrite8(priv, &priv->map->TX_DMA_POLLING,
+		rtl818x_ioग_लिखो8(priv, &priv->map->TX_DMA_POLLING,
 			 (1 << hw_prio) | /* ring to poll  */
 			 (1<<1) | (1<<2));/* stopped rings */
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtl8180_set_anaparam3(struct rtl8180_priv *priv, u16 anaparam3)
-{
+अटल व्योम rtl8180_set_anaparam3(काष्ठा rtl8180_priv *priv, u16 anaparam3)
+अणु
 	u8 reg;
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD,
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD,
 			 RTL818X_EEPROM_CMD_CONFIG);
 
-	reg = rtl818x_ioread8(priv, &priv->map->CONFIG3);
-	rtl818x_iowrite8(priv, &priv->map->CONFIG3,
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG3);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3,
 		 reg | RTL818X_CONFIG3_ANAPARAM_WRITE);
 
-	rtl818x_iowrite16(priv, &priv->map->ANAPARAM3, anaparam3);
+	rtl818x_ioग_लिखो16(priv, &priv->map->ANAPARAM3, anaparam3);
 
-	rtl818x_iowrite8(priv, &priv->map->CONFIG3,
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3,
 		 reg & ~RTL818X_CONFIG3_ANAPARAM_WRITE);
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD,
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD,
 			 RTL818X_EEPROM_CMD_NORMAL);
-}
+पूर्ण
 
-void rtl8180_set_anaparam2(struct rtl8180_priv *priv, u32 anaparam2)
-{
+व्योम rtl8180_set_anaparam2(काष्ठा rtl8180_priv *priv, u32 anaparam2)
+अणु
 	u8 reg;
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD,
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD,
 			 RTL818X_EEPROM_CMD_CONFIG);
 
-	reg = rtl818x_ioread8(priv, &priv->map->CONFIG3);
-	rtl818x_iowrite8(priv, &priv->map->CONFIG3,
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG3);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3,
 		 reg | RTL818X_CONFIG3_ANAPARAM_WRITE);
 
-	rtl818x_iowrite32(priv, &priv->map->ANAPARAM2, anaparam2);
+	rtl818x_ioग_लिखो32(priv, &priv->map->ANAPARAM2, anaparam2);
 
-	rtl818x_iowrite8(priv, &priv->map->CONFIG3,
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3,
 		 reg & ~RTL818X_CONFIG3_ANAPARAM_WRITE);
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD,
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD,
 			 RTL818X_EEPROM_CMD_NORMAL);
-}
+पूर्ण
 
-void rtl8180_set_anaparam(struct rtl8180_priv *priv, u32 anaparam)
-{
+व्योम rtl8180_set_anaparam(काष्ठा rtl8180_priv *priv, u32 anaparam)
+अणु
 	u8 reg;
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
-	reg = rtl818x_ioread8(priv, &priv->map->CONFIG3);
-	rtl818x_iowrite8(priv, &priv->map->CONFIG3,
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG3);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3,
 		 reg | RTL818X_CONFIG3_ANAPARAM_WRITE);
-	rtl818x_iowrite32(priv, &priv->map->ANAPARAM, anaparam);
-	rtl818x_iowrite8(priv, &priv->map->CONFIG3,
+	rtl818x_ioग_लिखो32(priv, &priv->map->ANAPARAM, anaparam);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3,
 		 reg & ~RTL818X_CONFIG3_ANAPARAM_WRITE);
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
-}
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
+पूर्ण
 
-static void rtl8187se_mac_config(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल व्योम rtl8187se_mac_config(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u8 reg;
 
-	rtl818x_iowrite32(priv, REG_ADDR4(0x1F0), 0);
-	rtl818x_ioread32(priv, REG_ADDR4(0x1F0));
-	rtl818x_iowrite32(priv, REG_ADDR4(0x1F4), 0);
-	rtl818x_ioread32(priv, REG_ADDR4(0x1F4));
-	rtl818x_iowrite8(priv, REG_ADDR1(0x1F8), 0);
-	rtl818x_ioread8(priv, REG_ADDR1(0x1F8));
-	/* Enable DA10 TX power saving */
-	reg = rtl818x_ioread8(priv, &priv->map->PHY_PR);
-	rtl818x_iowrite8(priv, &priv->map->PHY_PR, reg | 0x04);
+	rtl818x_ioग_लिखो32(priv, REG_ADDR4(0x1F0), 0);
+	rtl818x_ioपढ़ो32(priv, REG_ADDR4(0x1F0));
+	rtl818x_ioग_लिखो32(priv, REG_ADDR4(0x1F4), 0);
+	rtl818x_ioपढ़ो32(priv, REG_ADDR4(0x1F4));
+	rtl818x_ioग_लिखो8(priv, REG_ADDR1(0x1F8), 0);
+	rtl818x_ioपढ़ो8(priv, REG_ADDR1(0x1F8));
+	/* Enable DA10 TX घातer saving */
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->PHY_PR);
+	rtl818x_ioग_लिखो8(priv, &priv->map->PHY_PR, reg | 0x04);
 	/* Power */
-	rtl818x_iowrite16(priv, PI_DATA_REG, 0x1000);
-	rtl818x_iowrite16(priv, SI_DATA_REG, 0x1000);
-	/* AFE - default to power ON */
-	rtl818x_iowrite16(priv, REG_ADDR2(0x370), 0x0560);
-	rtl818x_iowrite16(priv, REG_ADDR2(0x372), 0x0560);
-	rtl818x_iowrite16(priv, REG_ADDR2(0x374), 0x0DA4);
-	rtl818x_iowrite16(priv, REG_ADDR2(0x376), 0x0DA4);
-	rtl818x_iowrite16(priv, REG_ADDR2(0x378), 0x0560);
-	rtl818x_iowrite16(priv, REG_ADDR2(0x37A), 0x0560);
-	rtl818x_iowrite16(priv, REG_ADDR2(0x37C), 0x00EC);
-	rtl818x_iowrite16(priv, REG_ADDR2(0x37E), 0x00EC);
-	rtl818x_iowrite8(priv, REG_ADDR1(0x24E), 0x01);
-	/* unknown, needed for suspend to RAM resume */
-	rtl818x_iowrite8(priv, REG_ADDR1(0x0A), 0x72);
-}
+	rtl818x_ioग_लिखो16(priv, PI_DATA_REG, 0x1000);
+	rtl818x_ioग_लिखो16(priv, SI_DATA_REG, 0x1000);
+	/* AFE - शेष to घातer ON */
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x370), 0x0560);
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x372), 0x0560);
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x374), 0x0DA4);
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x376), 0x0DA4);
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x378), 0x0560);
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x37A), 0x0560);
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x37C), 0x00EC);
+	rtl818x_ioग_लिखो16(priv, REG_ADDR2(0x37E), 0x00EC);
+	rtl818x_ioग_लिखो8(priv, REG_ADDR1(0x24E), 0x01);
+	/* unknown, needed क्रम suspend to RAM resume */
+	rtl818x_ioग_लिखो8(priv, REG_ADDR1(0x0A), 0x72);
+पूर्ण
 
-static void rtl8187se_set_antenna_config(struct ieee80211_hw *dev, u8 def_ant,
-					 bool diversity)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल व्योम rtl8187se_set_antenna_config(काष्ठा ieee80211_hw *dev, u8 def_ant,
+					 bool भागersity)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 
-	rtl8225_write_phy_cck(dev, 0x0C, 0x09);
-	if (diversity) {
-		if (def_ant == 1) {
-			rtl818x_iowrite8(priv, &priv->map->TX_ANTENNA, 0x00);
-			rtl8225_write_phy_cck(dev, 0x11, 0xBB);
-			rtl8225_write_phy_cck(dev, 0x01, 0xC7);
-			rtl8225_write_phy_ofdm(dev, 0x0D, 0x54);
-			rtl8225_write_phy_ofdm(dev, 0x18, 0xB2);
-		} else { /* main antenna */
-			rtl818x_iowrite8(priv, &priv->map->TX_ANTENNA, 0x03);
-			rtl8225_write_phy_cck(dev, 0x11, 0x9B);
-			rtl8225_write_phy_cck(dev, 0x01, 0xC7);
-			rtl8225_write_phy_ofdm(dev, 0x0D, 0x5C);
-			rtl8225_write_phy_ofdm(dev, 0x18, 0xB2);
-		}
-	} else { /* disable antenna diversity */
-		if (def_ant == 1) {
-			rtl818x_iowrite8(priv, &priv->map->TX_ANTENNA, 0x00);
-			rtl8225_write_phy_cck(dev, 0x11, 0xBB);
-			rtl8225_write_phy_cck(dev, 0x01, 0x47);
-			rtl8225_write_phy_ofdm(dev, 0x0D, 0x54);
-			rtl8225_write_phy_ofdm(dev, 0x18, 0x32);
-		} else { /* main antenna */
-			rtl818x_iowrite8(priv, &priv->map->TX_ANTENNA, 0x03);
-			rtl8225_write_phy_cck(dev, 0x11, 0x9B);
-			rtl8225_write_phy_cck(dev, 0x01, 0x47);
-			rtl8225_write_phy_ofdm(dev, 0x0D, 0x5C);
-			rtl8225_write_phy_ofdm(dev, 0x18, 0x32);
-		}
-	}
+	rtl8225_ग_लिखो_phy_cck(dev, 0x0C, 0x09);
+	अगर (भागersity) अणु
+		अगर (def_ant == 1) अणु
+			rtl818x_ioग_लिखो8(priv, &priv->map->TX_ANTENNA, 0x00);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x11, 0xBB);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x01, 0xC7);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x0D, 0x54);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x18, 0xB2);
+		पूर्ण अन्यथा अणु /* मुख्य antenna */
+			rtl818x_ioग_लिखो8(priv, &priv->map->TX_ANTENNA, 0x03);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x11, 0x9B);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x01, 0xC7);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x0D, 0x5C);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x18, 0xB2);
+		पूर्ण
+	पूर्ण अन्यथा अणु /* disable antenna भागersity */
+		अगर (def_ant == 1) अणु
+			rtl818x_ioग_लिखो8(priv, &priv->map->TX_ANTENNA, 0x00);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x11, 0xBB);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x01, 0x47);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x0D, 0x54);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x18, 0x32);
+		पूर्ण अन्यथा अणु /* मुख्य antenna */
+			rtl818x_ioग_लिखो8(priv, &priv->map->TX_ANTENNA, 0x03);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x11, 0x9B);
+			rtl8225_ग_लिखो_phy_cck(dev, 0x01, 0x47);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x0D, 0x5C);
+			rtl8225_ग_लिखो_phy_ofdm(dev, 0x18, 0x32);
+		पूर्ण
+	पूर्ण
 	/* priv->curr_ant = def_ant; */
-}
+पूर्ण
 
-static void rtl8180_int_enable(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल व्योम rtl8180_पूर्णांक_enable(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
-		rtl818x_iowrite32(priv, &priv->map->IMR,
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+		rtl818x_ioग_लिखो32(priv, &priv->map->IMR,
 			  IMR_TBDER | IMR_TBDOK |
 			  IMR_TVODER | IMR_TVODOK |
 			  IMR_TVIDER | IMR_TVIDOK |
@@ -725,26 +726,26 @@ static void rtl8180_int_enable(struct ieee80211_hw *dev)
 			  IMR_TBKDER | IMR_TBKDOK |
 			  IMR_RDU | IMR_RER |
 			  IMR_ROK | IMR_RQOSOK);
-	} else {
-		rtl818x_iowrite16(priv, &priv->map->INT_MASK, 0xFFFF);
-	}
-}
+	पूर्ण अन्यथा अणु
+		rtl818x_ioग_लिखो16(priv, &priv->map->INT_MASK, 0xFFFF);
+	पूर्ण
+पूर्ण
 
-static void rtl8180_int_disable(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल व्योम rtl8180_पूर्णांक_disable(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
-		rtl818x_iowrite32(priv, &priv->map->IMR, 0);
-	} else {
-		rtl818x_iowrite16(priv, &priv->map->INT_MASK, 0);
-	}
-}
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+		rtl818x_ioग_लिखो32(priv, &priv->map->IMR, 0);
+	पूर्ण अन्यथा अणु
+		rtl818x_ioग_लिखो16(priv, &priv->map->INT_MASK, 0);
+	पूर्ण
+पूर्ण
 
-static void rtl8180_conf_basic_rates(struct ieee80211_hw *dev,
+अटल व्योम rtl8180_conf_basic_rates(काष्ठा ieee80211_hw *dev,
 			    u32 basic_mask)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u16 reg;
 	u32 resp_mask;
 	u8 basic_max;
@@ -752,337 +753,337 @@ static void rtl8180_conf_basic_rates(struct ieee80211_hw *dev,
 
 	resp_mask = basic_mask;
 	/* IEEE80211 says the response rate should be equal to the highest basic
-	 * rate that is not faster than received frame. But it says also that if
-	 * the basic rate set does not contains any rate for the current
-	 * modulation class then mandatory rate set must be used for that
+	 * rate that is not faster than received frame. But it says also that अगर
+	 * the basic rate set करोes not contains any rate क्रम the current
+	 * modulation class then mandatory rate set must be used क्रम that
 	 * modulation class. Eventually add OFDM mandatory rates..
 	 */
-	if ((resp_mask & 0xf) == resp_mask)
+	अगर ((resp_mask & 0xf) == resp_mask)
 		resp_mask |= 0x150; /* 6, 12, 24Mbps */
 
-	switch (priv->chip_family) {
+	चयन (priv->chip_family) अणु
 
-	case RTL818X_CHIP_FAMILY_RTL8180:
+	हाल RTL818X_CHIP_FAMILY_RTL8180:
 		/* in 8180 this is NOT a BITMAP */
 		basic_max = fls(basic_mask) - 1;
-		reg = rtl818x_ioread16(priv, &priv->map->BRSR);
+		reg = rtl818x_ioपढ़ो16(priv, &priv->map->BRSR);
 		reg &= ~3;
 		reg |= basic_max;
-		rtl818x_iowrite16(priv, &priv->map->BRSR, reg);
-		break;
+		rtl818x_ioग_लिखो16(priv, &priv->map->BRSR, reg);
+		अवरोध;
 
-	case RTL818X_CHIP_FAMILY_RTL8185:
+	हाल RTL818X_CHIP_FAMILY_RTL8185:
 		resp_max = fls(resp_mask) - 1;
 		resp_min = ffs(resp_mask) - 1;
 		/* in 8185 this is a BITMAP */
-		rtl818x_iowrite16(priv, &priv->map->BRSR, basic_mask);
-		rtl818x_iowrite8(priv, &priv->map->RESP_RATE, (resp_max << 4) |
+		rtl818x_ioग_लिखो16(priv, &priv->map->BRSR, basic_mask);
+		rtl818x_ioग_लिखो8(priv, &priv->map->RESP_RATE, (resp_max << 4) |
 				resp_min);
-		break;
+		अवरोध;
 
-	case RTL818X_CHIP_FAMILY_RTL8187SE:
+	हाल RTL818X_CHIP_FAMILY_RTL8187SE:
 		/* in 8187se this is a BITMAP. BRSR reg actually sets
 		 * response rates.
 		 */
-		rtl818x_iowrite16(priv, &priv->map->BRSR_8187SE, resp_mask);
-		break;
-	}
-}
+		rtl818x_ioग_लिखो16(priv, &priv->map->BRSR_8187SE, resp_mask);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void rtl8180_config_cardbus(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल व्योम rtl8180_config_cardbus(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u16 reg16;
 	u8 reg8;
 
-	reg8 = rtl818x_ioread8(priv, &priv->map->CONFIG3);
+	reg8 = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG3);
 	reg8 |= 1 << 1;
-	rtl818x_iowrite8(priv, &priv->map->CONFIG3, reg8);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3, reg8);
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
-		rtl818x_iowrite16(priv, FEMR_SE, 0xffff);
-	} else {
-		reg16 = rtl818x_ioread16(priv, &priv->map->FEMR);
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+		rtl818x_ioग_लिखो16(priv, FEMR_SE, 0xffff);
+	पूर्ण अन्यथा अणु
+		reg16 = rtl818x_ioपढ़ो16(priv, &priv->map->FEMR);
 		reg16 |= (1 << 15) | (1 << 14) | (1 << 4);
-		rtl818x_iowrite16(priv, &priv->map->FEMR, reg16);
-	}
+		rtl818x_ioग_लिखो16(priv, &priv->map->FEMR, reg16);
+	पूर्ण
 
-}
+पूर्ण
 
-static int rtl8180_init_hw(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल पूर्णांक rtl8180_init_hw(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u16 reg;
 	u32 reg32;
 
-	rtl818x_iowrite8(priv, &priv->map->CMD, 0);
-	rtl818x_ioread8(priv, &priv->map->CMD);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CMD, 0);
+	rtl818x_ioपढ़ो8(priv, &priv->map->CMD);
 	msleep(10);
 
 	/* reset */
-	rtl8180_int_disable(dev);
-	rtl818x_ioread8(priv, &priv->map->CMD);
+	rtl8180_पूर्णांक_disable(dev);
+	rtl818x_ioपढ़ो8(priv, &priv->map->CMD);
 
-	reg = rtl818x_ioread8(priv, &priv->map->CMD);
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CMD);
 	reg &= (1 << 1);
 	reg |= RTL818X_CMD_RESET;
-	rtl818x_iowrite8(priv, &priv->map->CMD, RTL818X_CMD_RESET);
-	rtl818x_ioread8(priv, &priv->map->CMD);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CMD, RTL818X_CMD_RESET);
+	rtl818x_ioपढ़ो8(priv, &priv->map->CMD);
 	msleep(200);
 
 	/* check success of reset */
-	if (rtl818x_ioread8(priv, &priv->map->CMD) & RTL818X_CMD_RESET) {
+	अगर (rtl818x_ioपढ़ो8(priv, &priv->map->CMD) & RTL818X_CMD_RESET) अणु
 		wiphy_err(dev->wiphy, "reset timeout!\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_LOAD);
-	rtl818x_ioread8(priv, &priv->map->CMD);
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_LOAD);
+	rtl818x_ioपढ़ो8(priv, &priv->map->CMD);
 	msleep(200);
 
-	if (rtl818x_ioread8(priv, &priv->map->CONFIG3) & (1 << 3)) {
+	अगर (rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG3) & (1 << 3)) अणु
 		rtl8180_config_cardbus(dev);
-	}
+	पूर्ण
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
-		rtl818x_iowrite8(priv, &priv->map->MSR, RTL818X_MSR_ENEDCA);
-	else
-		rtl818x_iowrite8(priv, &priv->map->MSR, 0);
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+		rtl818x_ioग_लिखो8(priv, &priv->map->MSR, RTL818X_MSR_ENEDCA);
+	अन्यथा
+		rtl818x_ioग_लिखो8(priv, &priv->map->MSR, 0);
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
 		rtl8180_set_anaparam(priv, priv->anaparam);
 
-	rtl818x_iowrite32(priv, &priv->map->RDSAR, priv->rx_ring_dma);
-	/* mac80211 queue have higher prio for lower index. The last queue
-	 * (that mac80211 is not aware of) is reserved for beacons (and have
+	rtl818x_ioग_लिखो32(priv, &priv->map->RDSAR, priv->rx_ring_dma);
+	/* mac80211 queue have higher prio क्रम lower index. The last queue
+	 * (that mac80211 is not aware of) is reserved क्रम beacons (and have
 	 * the highest priority on the NIC)
 	 */
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8187SE) {
-		rtl818x_iowrite32(priv, &priv->map->TBDA,
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+		rtl818x_ioग_लिखो32(priv, &priv->map->TBDA,
 				  priv->tx_ring[1].dma);
-		rtl818x_iowrite32(priv, &priv->map->TLPDA,
+		rtl818x_ioग_लिखो32(priv, &priv->map->TLPDA,
 				  priv->tx_ring[0].dma);
-	} else {
-		rtl818x_iowrite32(priv, &priv->map->TBDA,
+	पूर्ण अन्यथा अणु
+		rtl818x_ioग_लिखो32(priv, &priv->map->TBDA,
 				  priv->tx_ring[4].dma);
-		rtl818x_iowrite32(priv, &priv->map->TVODA,
+		rtl818x_ioग_लिखो32(priv, &priv->map->TVODA,
 				  priv->tx_ring[0].dma);
-		rtl818x_iowrite32(priv, &priv->map->TVIDA,
+		rtl818x_ioग_लिखो32(priv, &priv->map->TVIDA,
 				  priv->tx_ring[1].dma);
-		rtl818x_iowrite32(priv, &priv->map->TBEDA,
+		rtl818x_ioग_लिखो32(priv, &priv->map->TBEDA,
 				  priv->tx_ring[2].dma);
-		rtl818x_iowrite32(priv, &priv->map->TBKDA,
+		rtl818x_ioग_लिखो32(priv, &priv->map->TBKDA,
 				  priv->tx_ring[3].dma);
-	}
+	पूर्ण
 
 	/* TODO: necessary? specs indicate not */
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
-	reg = rtl818x_ioread8(priv, &priv->map->CONFIG2);
-	rtl818x_iowrite8(priv, &priv->map->CONFIG2, reg & ~(1 << 3));
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185) {
-		reg = rtl818x_ioread8(priv, &priv->map->CONFIG2);
-		rtl818x_iowrite8(priv, &priv->map->CONFIG2, reg | (1 << 4));
-	}
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG2);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG2, reg & ~(1 << 3));
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185) अणु
+		reg = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG2);
+		rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG2, reg | (1 << 4));
+	पूर्ण
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
 
-	/* TODO: set CONFIG5 for calibrating AGC on rtl8180 + philips radio? */
+	/* TODO: set CONFIG5 क्रम calibrating AGC on rtl8180 + philips radio? */
 
 	/* TODO: turn off hw wep on rtl8180 */
 
-	rtl818x_iowrite32(priv, &priv->map->INT_TIMEOUT, 0);
+	rtl818x_ioग_लिखो32(priv, &priv->map->INT_TIMEOUT, 0);
 
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) {
-		rtl818x_iowrite8(priv, &priv->map->WPA_CONF, 0);
-		rtl818x_iowrite8(priv, &priv->map->RATE_FALLBACK, 0);
-	} else {
-		rtl818x_iowrite8(priv, &priv->map->SECURITY, 0);
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) अणु
+		rtl818x_ioग_लिखो8(priv, &priv->map->WPA_CONF, 0);
+		rtl818x_ioग_लिखो8(priv, &priv->map->RATE_FALLBACK, 0);
+	पूर्ण अन्यथा अणु
+		rtl818x_ioग_लिखो8(priv, &priv->map->SECURITY, 0);
 
-		rtl818x_iowrite8(priv, &priv->map->PHY_DELAY, 0x6);
-		rtl818x_iowrite8(priv, &priv->map->CARRIER_SENSE_COUNTER, 0x4C);
-	}
+		rtl818x_ioग_लिखो8(priv, &priv->map->PHY_DELAY, 0x6);
+		rtl818x_ioग_लिखो8(priv, &priv->map->CARRIER_SENSE_COUNTER, 0x4C);
+	पूर्ण
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185) अणु
 		/* TODO: set ClkRun enable? necessary? */
-		reg = rtl818x_ioread8(priv, &priv->map->GP_ENABLE);
-		rtl818x_iowrite8(priv, &priv->map->GP_ENABLE, reg & ~(1 << 6));
-		rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
-		reg = rtl818x_ioread8(priv, &priv->map->CONFIG3);
-		rtl818x_iowrite8(priv, &priv->map->CONFIG3, reg | (1 << 2));
-		rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
+		reg = rtl818x_ioपढ़ो8(priv, &priv->map->GP_ENABLE);
+		rtl818x_ioग_लिखो8(priv, &priv->map->GP_ENABLE, reg & ~(1 << 6));
+		rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
+		reg = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG3);
+		rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG3, reg | (1 << 2));
+		rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
 		/* fix eccessive IFS after CTS-to-self */
-		if (priv->map_pio) {
+		अगर (priv->map_pio) अणु
 			u8 reg;
 
-			reg = rtl818x_ioread8(priv, &priv->map->PGSELECT);
-			rtl818x_iowrite8(priv, &priv->map->PGSELECT, reg | 1);
-			rtl818x_iowrite8(priv, REG_ADDR1(0xff), 0x35);
-			rtl818x_iowrite8(priv, &priv->map->PGSELECT, reg);
-		} else
-			rtl818x_iowrite8(priv, REG_ADDR1(0x1ff), 0x35);
-	}
+			reg = rtl818x_ioपढ़ो8(priv, &priv->map->PGSELECT);
+			rtl818x_ioग_लिखो8(priv, &priv->map->PGSELECT, reg | 1);
+			rtl818x_ioग_लिखो8(priv, REG_ADDR1(0xff), 0x35);
+			rtl818x_ioग_लिखो8(priv, &priv->map->PGSELECT, reg);
+		पूर्ण अन्यथा
+			rtl818x_ioग_लिखो8(priv, REG_ADDR1(0x1ff), 0x35);
+	पूर्ण
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
 
-		/* the set auto rate fallback bitmask from 1M to 54 Mb/s */
-		rtl818x_iowrite16(priv, ARFR, 0xFFF);
-		rtl818x_ioread16(priv, ARFR);
+		/* the set स्वतः rate fallback biपंचांगask from 1M to 54 Mb/s */
+		rtl818x_ioग_लिखो16(priv, ARFR, 0xFFF);
+		rtl818x_ioपढ़ो16(priv, ARFR);
 
 		/* stop unused queus (no dma alloc) */
-		rtl818x_iowrite8(priv, &priv->map->TPPOLL_STOP,
+		rtl818x_ioग_लिखो8(priv, &priv->map->TPPOLL_STOP,
 			       RTL818x_TPPOLL_STOP_MG | RTL818x_TPPOLL_STOP_HI);
 
-		rtl818x_iowrite8(priv, &priv->map->ACM_CONTROL, 0x00);
-		rtl818x_iowrite16(priv, &priv->map->TID_AC_MAP, 0xFA50);
+		rtl818x_ioग_लिखो8(priv, &priv->map->ACM_CONTROL, 0x00);
+		rtl818x_ioग_लिखो16(priv, &priv->map->TID_AC_MAP, 0xFA50);
 
-		rtl818x_iowrite16(priv, &priv->map->INT_MIG, 0);
+		rtl818x_ioग_लिखो16(priv, &priv->map->INT_MIG, 0);
 
 		/* some black magic here.. */
 		rtl8187se_mac_config(dev);
 
-		rtl818x_iowrite16(priv, RFSW_CTRL, 0x569A);
-		rtl818x_ioread16(priv, RFSW_CTRL);
+		rtl818x_ioग_लिखो16(priv, RFSW_CTRL, 0x569A);
+		rtl818x_ioपढ़ो16(priv, RFSW_CTRL);
 
 		rtl8180_set_anaparam(priv, RTL8225SE_ANAPARAM_ON);
 		rtl8180_set_anaparam2(priv, RTL8225SE_ANAPARAM2_ON);
 		rtl8180_set_anaparam3(priv, RTL8225SE_ANAPARAM3);
 
 
-		rtl818x_iowrite8(priv, &priv->map->CONFIG5,
-			    rtl818x_ioread8(priv, &priv->map->CONFIG5) & 0x7F);
+		rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG5,
+			    rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG5) & 0x7F);
 
-		/*probably this switch led on */
-		rtl818x_iowrite8(priv, &priv->map->PGSELECT,
-			    rtl818x_ioread8(priv, &priv->map->PGSELECT) | 0x08);
+		/*probably this चयन led on */
+		rtl818x_ioग_लिखो8(priv, &priv->map->PGSELECT,
+			    rtl818x_ioपढ़ो8(priv, &priv->map->PGSELECT) | 0x08);
 
-		rtl818x_iowrite16(priv, &priv->map->RFPinsOutput, 0x0480);
-		rtl818x_iowrite16(priv, &priv->map->RFPinsEnable, 0x1BFF);
-		rtl818x_iowrite16(priv, &priv->map->RFPinsSelect, 0x2488);
+		rtl818x_ioग_लिखो16(priv, &priv->map->RFPinsOutput, 0x0480);
+		rtl818x_ioग_लिखो16(priv, &priv->map->RFPinsEnable, 0x1BFF);
+		rtl818x_ioग_लिखो16(priv, &priv->map->RFPinsSelect, 0x2488);
 
-		rtl818x_iowrite32(priv, &priv->map->RF_TIMING, 0x4003);
+		rtl818x_ioग_लिखो32(priv, &priv->map->RF_TIMING, 0x4003);
 
-		/* the reference code mac hardcode table write
-		 * this reg by doing byte-wide accesses.
-		 * It does it just for lowest and highest byte..
+		/* the reference code mac hardcode table ग_लिखो
+		 * this reg by करोing byte-wide accesses.
+		 * It करोes it just क्रम lowest and highest byte..
 		 */
-		reg32 = rtl818x_ioread32(priv, &priv->map->RF_PARA);
+		reg32 = rtl818x_ioपढ़ो32(priv, &priv->map->RF_PARA);
 		reg32 &= 0x00ffff00;
 		reg32 |= 0xb8000054;
-		rtl818x_iowrite32(priv, &priv->map->RF_PARA, reg32);
-	} else
+		rtl818x_ioग_लिखो32(priv, &priv->map->RF_PARA, reg32);
+	पूर्ण अन्यथा
 		/* stop unused queus (no dma alloc) */
-		rtl818x_iowrite8(priv, &priv->map->TX_DMA_POLLING,
+		rtl818x_ioग_लिखो8(priv, &priv->map->TX_DMA_POLLING,
 			    (1<<1) | (1<<2));
 
 	priv->rf->init(dev);
 
-	/* default basic rates are 1,2 Mbps for rtl8180. 1,2,6,9,12,18,24 Mbps
-	 * otherwise. bitmask 0x3 and 0x01f3 respectively.
-	 * NOTE: currenty rtl8225 RF code changes basic rates, so we need to do
+	/* शेष basic rates are 1,2 Mbps क्रम rtl8180. 1,2,6,9,12,18,24 Mbps
+	 * otherwise. biपंचांगask 0x3 and 0x01f3 respectively.
+	 * NOTE: currenty rtl8225 RF code changes basic rates, so we need to करो
 	 * this after rf init.
-	 * TODO: try to find out whether RF code really needs to do this..
+	 * TODO: try to find out whether RF code really needs to करो this..
 	 */
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
 		rtl8180_conf_basic_rates(dev, 0x3);
-	else
+	अन्यथा
 		rtl8180_conf_basic_rates(dev, 0x1f3);
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
 		rtl8187se_set_antenna_config(dev,
-					     priv->antenna_diversity_default,
-					     priv->antenna_diversity_en);
-	return 0;
-}
+					     priv->antenna_भागersity_शेष,
+					     priv->antenna_भागersity_en);
+	वापस 0;
+पूर्ण
 
-static int rtl8180_init_rx_ring(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl818x_rx_cmd_desc *entry;
-	int i;
+अटल पूर्णांक rtl8180_init_rx_ring(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl818x_rx_cmd_desc *entry;
+	पूर्णांक i;
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
-		priv->rx_ring_sz = sizeof(struct rtl8187se_rx_desc);
-	else
-		priv->rx_ring_sz = sizeof(struct rtl8180_rx_desc);
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+		priv->rx_ring_sz = माप(काष्ठा rtl8187se_rx_desc);
+	अन्यथा
+		priv->rx_ring_sz = माप(काष्ठा rtl8180_rx_desc);
 
 	priv->rx_ring = dma_alloc_coherent(&priv->pdev->dev,
 					   priv->rx_ring_sz * 32,
 					   &priv->rx_ring_dma, GFP_KERNEL);
-	if (!priv->rx_ring || (unsigned long)priv->rx_ring & 0xFF) {
+	अगर (!priv->rx_ring || (अचिन्हित दीर्घ)priv->rx_ring & 0xFF) अणु
 		wiphy_err(dev->wiphy, "Cannot allocate RX ring\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	priv->rx_idx = 0;
 
-	for (i = 0; i < 32; i++) {
-		struct sk_buff *skb = dev_alloc_skb(MAX_RX_SIZE);
+	क्रम (i = 0; i < 32; i++) अणु
+		काष्ठा sk_buff *skb = dev_alloc_skb(MAX_RX_SIZE);
 		dma_addr_t *mapping;
 		entry = priv->rx_ring + priv->rx_ring_sz*i;
-		if (!skb) {
-			dma_free_coherent(&priv->pdev->dev,
+		अगर (!skb) अणु
+			dma_मुक्त_coherent(&priv->pdev->dev,
 					  priv->rx_ring_sz * 32,
 					  priv->rx_ring, priv->rx_ring_dma);
 			wiphy_err(dev->wiphy, "Cannot allocate RX skb\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		priv->rx_buf[i] = skb;
 		mapping = (dma_addr_t *)skb->cb;
 		*mapping = dma_map_single(&priv->pdev->dev,
-					  skb_tail_pointer(skb), MAX_RX_SIZE,
+					  skb_tail_poपूर्णांकer(skb), MAX_RX_SIZE,
 					  DMA_FROM_DEVICE);
 
-		if (dma_mapping_error(&priv->pdev->dev, *mapping)) {
-			kfree_skb(skb);
-			dma_free_coherent(&priv->pdev->dev,
+		अगर (dma_mapping_error(&priv->pdev->dev, *mapping)) अणु
+			kमुक्त_skb(skb);
+			dma_मुक्त_coherent(&priv->pdev->dev,
 					  priv->rx_ring_sz * 32,
 					  priv->rx_ring, priv->rx_ring_dma);
 			wiphy_err(dev->wiphy, "Cannot map DMA for RX skb\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		entry->rx_buf = cpu_to_le32(*mapping);
 		entry->flags = cpu_to_le32(RTL818X_RX_DESC_FLAG_OWN |
 					   MAX_RX_SIZE);
-	}
+	पूर्ण
 	entry->flags |= cpu_to_le32(RTL818X_RX_DESC_FLAG_EOR);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtl8180_free_rx_ring(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	int i;
+अटल व्योम rtl8180_मुक्त_rx_ring(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	पूर्णांक i;
 
-	for (i = 0; i < 32; i++) {
-		struct sk_buff *skb = priv->rx_buf[i];
-		if (!skb)
-			continue;
+	क्रम (i = 0; i < 32; i++) अणु
+		काष्ठा sk_buff *skb = priv->rx_buf[i];
+		अगर (!skb)
+			जारी;
 
 		dma_unmap_single(&priv->pdev->dev, *((dma_addr_t *)skb->cb),
 				 MAX_RX_SIZE, DMA_FROM_DEVICE);
-		kfree_skb(skb);
-	}
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	dma_free_coherent(&priv->pdev->dev, priv->rx_ring_sz * 32,
+	dma_मुक्त_coherent(&priv->pdev->dev, priv->rx_ring_sz * 32,
 			  priv->rx_ring, priv->rx_ring_dma);
-	priv->rx_ring = NULL;
-}
+	priv->rx_ring = शून्य;
+पूर्ण
 
-static int rtl8180_init_tx_ring(struct ieee80211_hw *dev,
-				unsigned int prio, unsigned int entries)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl8180_tx_desc *ring;
+अटल पूर्णांक rtl8180_init_tx_ring(काष्ठा ieee80211_hw *dev,
+				अचिन्हित पूर्णांक prio, अचिन्हित पूर्णांक entries)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl8180_tx_desc *ring;
 	dma_addr_t dma;
-	int i;
+	पूर्णांक i;
 
-	ring = dma_alloc_coherent(&priv->pdev->dev, sizeof(*ring) * entries,
+	ring = dma_alloc_coherent(&priv->pdev->dev, माप(*ring) * entries,
 				  &dma, GFP_KERNEL);
-	if (!ring || (unsigned long)ring & 0xFF) {
+	अगर (!ring || (अचिन्हित दीर्घ)ring & 0xFF) अणु
 		wiphy_err(dev->wiphy, "Cannot allocate TX ring (prio = %d)\n",
 			  prio);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	priv->tx_ring[prio].desc = ring;
 	priv->tx_ring[prio].dma = dma;
@@ -1090,74 +1091,74 @@ static int rtl8180_init_tx_ring(struct ieee80211_hw *dev,
 	priv->tx_ring[prio].entries = entries;
 	skb_queue_head_init(&priv->tx_ring[prio].queue);
 
-	for (i = 0; i < entries; i++)
+	क्रम (i = 0; i < entries; i++)
 		ring[i].next_tx_desc =
-			cpu_to_le32((u32)dma + ((i + 1) % entries) * sizeof(*ring));
+			cpu_to_le32((u32)dma + ((i + 1) % entries) * माप(*ring));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtl8180_free_tx_ring(struct ieee80211_hw *dev, unsigned int prio)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl8180_tx_ring *ring = &priv->tx_ring[prio];
+अटल व्योम rtl8180_मुक्त_tx_ring(काष्ठा ieee80211_hw *dev, अचिन्हित पूर्णांक prio)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl8180_tx_ring *ring = &priv->tx_ring[prio];
 
-	while (skb_queue_len(&ring->queue)) {
-		struct rtl8180_tx_desc *entry = &ring->desc[ring->idx];
-		struct sk_buff *skb = __skb_dequeue(&ring->queue);
+	जबतक (skb_queue_len(&ring->queue)) अणु
+		काष्ठा rtl8180_tx_desc *entry = &ring->desc[ring->idx];
+		काष्ठा sk_buff *skb = __skb_dequeue(&ring->queue);
 
 		dma_unmap_single(&priv->pdev->dev, le32_to_cpu(entry->tx_buf),
 				 skb->len, DMA_TO_DEVICE);
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		ring->idx = (ring->idx + 1) % ring->entries;
-	}
+	पूर्ण
 
-	dma_free_coherent(&priv->pdev->dev,
-			  sizeof(*ring->desc) * ring->entries, ring->desc,
+	dma_मुक्त_coherent(&priv->pdev->dev,
+			  माप(*ring->desc) * ring->entries, ring->desc,
 			  ring->dma);
-	ring->desc = NULL;
-}
+	ring->desc = शून्य;
+पूर्ण
 
-static int rtl8180_start(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	int ret, i;
+अटल पूर्णांक rtl8180_start(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	पूर्णांक ret, i;
 	u32 reg;
 
 	ret = rtl8180_init_rx_ring(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < (dev->queues + 1); i++)
-		if ((ret = rtl8180_init_tx_ring(dev, i, 16)))
-			goto err_free_rings;
+	क्रम (i = 0; i < (dev->queues + 1); i++)
+		अगर ((ret = rtl8180_init_tx_ring(dev, i, 16)))
+			जाओ err_मुक्त_rings;
 
 	ret = rtl8180_init_hw(dev);
-	if (ret)
-		goto err_free_rings;
+	अगर (ret)
+		जाओ err_मुक्त_rings;
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
-		ret = request_irq(priv->pdev->irq, rtl8187se_interrupt,
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+		ret = request_irq(priv->pdev->irq, rtl8187se_पूर्णांकerrupt,
 			  IRQF_SHARED, KBUILD_MODNAME, dev);
-	} else {
-		ret = request_irq(priv->pdev->irq, rtl8180_interrupt,
+	पूर्ण अन्यथा अणु
+		ret = request_irq(priv->pdev->irq, rtl8180_पूर्णांकerrupt,
 			  IRQF_SHARED, KBUILD_MODNAME, dev);
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		wiphy_err(dev->wiphy, "failed to register IRQ handler\n");
-		goto err_free_rings;
-	}
+		जाओ err_मुक्त_rings;
+	पूर्ण
 
-	rtl8180_int_enable(dev);
+	rtl8180_पूर्णांक_enable(dev);
 
 	/* in rtl8187se at MAR regs offset there is the management
 	 * TX descriptor DMA addres..
 	 */
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8187SE) {
-		rtl818x_iowrite32(priv, &priv->map->MAR[0], ~0);
-		rtl818x_iowrite32(priv, &priv->map->MAR[1], ~0);
-	}
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+		rtl818x_ioग_लिखो32(priv, &priv->map->MAR[0], ~0);
+		rtl818x_ioग_लिखो32(priv, &priv->map->MAR[1], ~0);
+	पूर्ण
 
 	reg = RTL818X_RX_CONF_ONLYERLPKT |
 	      RTL818X_RX_CONF_RX_AUTORESETPHY |
@@ -1167,22 +1168,22 @@ static int rtl8180_start(struct ieee80211_hw *dev)
 	      RTL818X_RX_CONF_BROADCAST |
 	      RTL818X_RX_CONF_NICMAC;
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185)
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185)
 		reg |= RTL818X_RX_CONF_CSDM1 | RTL818X_RX_CONF_CSDM2;
-	else if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180) {
+	अन्यथा अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180) अणु
 		reg |= (priv->rfparam & RF_PARAM_CARRIERSENSE1)
 			? RTL818X_RX_CONF_CSDM1 : 0;
 		reg |= (priv->rfparam & RF_PARAM_CARRIERSENSE2)
 			? RTL818X_RX_CONF_CSDM2 : 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg &= ~(RTL818X_RX_CONF_CSDM1 | RTL818X_RX_CONF_CSDM2);
-	}
+	पूर्ण
 
 	priv->rx_conf = reg;
-	rtl818x_iowrite32(priv, &priv->map->RX_CONF, reg);
+	rtl818x_ioग_लिखो32(priv, &priv->map->RX_CONF, reg);
 
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) {
-		reg = rtl818x_ioread8(priv, &priv->map->CW_CONF);
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) अणु
+		reg = rtl818x_ioपढ़ो8(priv, &priv->map->CW_CONF);
 
 		/* CW is not on per-packet basis.
 		 * in rtl8185 the CW_VALUE reg is used.
@@ -1190,13 +1191,13 @@ static int rtl8180_start(struct ieee80211_hw *dev)
 		 */
 		reg &= ~RTL818X_CW_CONF_PERPACKET_CW;
 		/* retry limit IS on per-packet basis.
-		 * the short and long retry limit in TX_CONF
+		 * the लघु and दीर्घ retry limit in TX_CONF
 		 * reg are ignored
 		 */
 		reg |= RTL818X_CW_CONF_PERPACKET_RETRY;
-		rtl818x_iowrite8(priv, &priv->map->CW_CONF, reg);
+		rtl818x_ioग_लिखो8(priv, &priv->map->CW_CONF, reg);
 
-		reg = rtl818x_ioread8(priv, &priv->map->TX_AGC_CTL);
+		reg = rtl818x_ioपढ़ो8(priv, &priv->map->TX_AGC_CTL);
 		/* TX antenna and TX gain are not on per-packet basis.
 		 * TX Antenna is selected by ANTSEL reg (RX in BB regs).
 		 * TX gain is selected with CCK_TX_AGC and OFDM_TX_AGC regs
@@ -1204,187 +1205,187 @@ static int rtl8180_start(struct ieee80211_hw *dev)
 		reg &= ~RTL818X_TX_AGC_CTL_PERPACKET_GAIN;
 		reg &= ~RTL818X_TX_AGC_CTL_PERPACKET_ANTSEL;
 		reg |=  RTL818X_TX_AGC_CTL_FEEDBACK_ANT;
-		rtl818x_iowrite8(priv, &priv->map->TX_AGC_CTL, reg);
+		rtl818x_ioग_लिखो8(priv, &priv->map->TX_AGC_CTL, reg);
 
 		/* disable early TX */
-		rtl818x_iowrite8(priv, (u8 __iomem *)priv->map + 0xec, 0x3f);
-	}
+		rtl818x_ioग_लिखो8(priv, (u8 __iomem *)priv->map + 0xec, 0x3f);
+	पूर्ण
 
-	reg = rtl818x_ioread32(priv, &priv->map->TX_CONF);
+	reg = rtl818x_ioपढ़ो32(priv, &priv->map->TX_CONF);
 	reg |= (6 << 21 /* MAX TX DMA */) |
 	       RTL818X_TX_CONF_NO_ICV;
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
 		reg |= 1<<30;  /*  "duration procedure mode" */
 
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180)
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180)
 		reg &= ~RTL818X_TX_CONF_PROBE_DTS;
-	else
+	अन्यथा
 		reg &= ~RTL818X_TX_CONF_HW_SEQNUM;
 
 	reg &= ~RTL818X_TX_CONF_DISCW;
 
-	/* different meaning, same value on both rtl8185 and rtl8180 */
+	/* dअगरferent meaning, same value on both rtl8185 and rtl8180 */
 	reg &= ~RTL818X_TX_CONF_SAT_HWPLCP;
 
-	rtl818x_iowrite32(priv, &priv->map->TX_CONF, reg);
+	rtl818x_ioग_लिखो32(priv, &priv->map->TX_CONF, reg);
 
-	reg = rtl818x_ioread8(priv, &priv->map->CMD);
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CMD);
 	reg |= RTL818X_CMD_RX_ENABLE;
 	reg |= RTL818X_CMD_TX_ENABLE;
-	rtl818x_iowrite8(priv, &priv->map->CMD, reg);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CMD, reg);
 
-	return 0;
+	वापस 0;
 
- err_free_rings:
-	rtl8180_free_rx_ring(dev);
-	for (i = 0; i < (dev->queues + 1); i++)
-		if (priv->tx_ring[i].desc)
-			rtl8180_free_tx_ring(dev, i);
+ err_मुक्त_rings:
+	rtl8180_मुक्त_rx_ring(dev);
+	क्रम (i = 0; i < (dev->queues + 1); i++)
+		अगर (priv->tx_ring[i].desc)
+			rtl8180_मुक्त_tx_ring(dev, i);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rtl8180_stop(struct ieee80211_hw *dev)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल व्योम rtl8180_stop(काष्ठा ieee80211_hw *dev)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u8 reg;
-	int i;
+	पूर्णांक i;
 
-	rtl8180_int_disable(dev);
+	rtl8180_पूर्णांक_disable(dev);
 
-	reg = rtl818x_ioread8(priv, &priv->map->CMD);
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CMD);
 	reg &= ~RTL818X_CMD_TX_ENABLE;
 	reg &= ~RTL818X_CMD_RX_ENABLE;
-	rtl818x_iowrite8(priv, &priv->map->CMD, reg);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CMD, reg);
 
 	priv->rf->stop(dev);
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
-	reg = rtl818x_ioread8(priv, &priv->map->CONFIG4);
-	rtl818x_iowrite8(priv, &priv->map->CONFIG4, reg | RTL818X_CONFIG4_VCOOFF);
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
+	reg = rtl818x_ioपढ़ो8(priv, &priv->map->CONFIG4);
+	rtl818x_ioग_लिखो8(priv, &priv->map->CONFIG4, reg | RTL818X_CONFIG4_VCOOFF);
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
 
-	free_irq(priv->pdev->irq, dev);
+	मुक्त_irq(priv->pdev->irq, dev);
 
-	rtl8180_free_rx_ring(dev);
-	for (i = 0; i < (dev->queues + 1); i++)
-		rtl8180_free_tx_ring(dev, i);
-}
+	rtl8180_मुक्त_rx_ring(dev);
+	क्रम (i = 0; i < (dev->queues + 1); i++)
+		rtl8180_मुक्त_tx_ring(dev, i);
+पूर्ण
 
-static u64 rtl8180_get_tsf(struct ieee80211_hw *dev,
-			   struct ieee80211_vif *vif)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल u64 rtl8180_get_tsf(काष्ठा ieee80211_hw *dev,
+			   काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 
-	return rtl818x_ioread32(priv, &priv->map->TSFT[0]) |
-	       (u64)(rtl818x_ioread32(priv, &priv->map->TSFT[1])) << 32;
-}
+	वापस rtl818x_ioपढ़ो32(priv, &priv->map->TSFT[0]) |
+	       (u64)(rtl818x_ioपढ़ो32(priv, &priv->map->TSFT[1])) << 32;
+पूर्ण
 
-static void rtl8180_beacon_work(struct work_struct *work)
-{
-	struct rtl8180_vif *vif_priv =
-		container_of(work, struct rtl8180_vif, beacon_work.work);
-	struct ieee80211_vif *vif =
-		container_of((void *)vif_priv, struct ieee80211_vif, drv_priv);
-	struct ieee80211_hw *dev = vif_priv->dev;
-	struct ieee80211_mgmt *mgmt;
-	struct sk_buff *skb;
+अटल व्योम rtl8180_beacon_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtl8180_vअगर *vअगर_priv =
+		container_of(work, काष्ठा rtl8180_vअगर, beacon_work.work);
+	काष्ठा ieee80211_vअगर *vअगर =
+		container_of((व्योम *)vअगर_priv, काष्ठा ieee80211_vअगर, drv_priv);
+	काष्ठा ieee80211_hw *dev = vअगर_priv->dev;
+	काष्ठा ieee80211_mgmt *mgmt;
+	काष्ठा sk_buff *skb;
 
-	/* don't overflow the tx ring */
-	if (ieee80211_queue_stopped(dev, 0))
-		goto resched;
+	/* करोn't overflow the tx ring */
+	अगर (ieee80211_queue_stopped(dev, 0))
+		जाओ resched;
 
 	/* grab a fresh beacon */
-	skb = ieee80211_beacon_get(dev, vif);
-	if (!skb)
-		goto resched;
+	skb = ieee80211_beacon_get(dev, vअगर);
+	अगर (!skb)
+		जाओ resched;
 
 	/*
-	 * update beacon timestamp w/ TSF value
-	 * TODO: make hardware update beacon timestamp
+	 * update beacon बारtamp w/ TSF value
+	 * TODO: make hardware update beacon बारtamp
 	 */
-	mgmt = (struct ieee80211_mgmt *)skb->data;
-	mgmt->u.beacon.timestamp = cpu_to_le64(rtl8180_get_tsf(dev, vif));
+	mgmt = (काष्ठा ieee80211_mgmt *)skb->data;
+	mgmt->u.beacon.बारtamp = cpu_to_le64(rtl8180_get_tsf(dev, vअगर));
 
 	/* TODO: use actual beacon queue */
 	skb_set_queue_mapping(skb, 0);
 
-	rtl8180_tx(dev, NULL, skb);
+	rtl8180_tx(dev, शून्य, skb);
 
 resched:
 	/*
 	 * schedule next beacon
-	 * TODO: use hardware support for beacon timing
+	 * TODO: use hardware support क्रम beacon timing
 	 */
-	schedule_delayed_work(&vif_priv->beacon_work,
-			usecs_to_jiffies(1024 * vif->bss_conf.beacon_int));
-}
+	schedule_delayed_work(&vअगर_priv->beacon_work,
+			usecs_to_jअगरfies(1024 * vअगर->bss_conf.beacon_पूर्णांक));
+पूर्ण
 
-static int rtl8180_add_interface(struct ieee80211_hw *dev,
-				 struct ieee80211_vif *vif)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl8180_vif *vif_priv;
+अटल पूर्णांक rtl8180_add_पूर्णांकerface(काष्ठा ieee80211_hw *dev,
+				 काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl8180_vअगर *vअगर_priv;
 
 	/*
-	 * We only support one active interface at a time.
+	 * We only support one active पूर्णांकerface at a समय.
 	 */
-	if (priv->vif)
-		return -EBUSY;
+	अगर (priv->vअगर)
+		वापस -EBUSY;
 
-	switch (vif->type) {
-	case NL80211_IFTYPE_STATION:
-	case NL80211_IFTYPE_ADHOC:
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	चयन (vअगर->type) अणु
+	हाल NL80211_IFTYPE_STATION:
+	हाल NL80211_IFTYPE_ADHOC:
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	priv->vif = vif;
+	priv->vअगर = vअगर;
 
-	/* Initialize driver private area */
-	vif_priv = (struct rtl8180_vif *)&vif->drv_priv;
-	vif_priv->dev = dev;
-	INIT_DELAYED_WORK(&vif_priv->beacon_work, rtl8180_beacon_work);
-	vif_priv->enable_beacon = false;
+	/* Initialize driver निजी area */
+	vअगर_priv = (काष्ठा rtl8180_vअगर *)&vअगर->drv_priv;
+	vअगर_priv->dev = dev;
+	INIT_DELAYED_WORK(&vअगर_priv->beacon_work, rtl8180_beacon_work);
+	vअगर_priv->enable_beacon = false;
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
-	rtl818x_iowrite32(priv, (__le32 __iomem *)&priv->map->MAC[0],
-			  le32_to_cpu(*(__le32 *)vif->addr));
-	rtl818x_iowrite16(priv, (__le16 __iomem *)&priv->map->MAC[4],
-			  le16_to_cpu(*(__le16 *)(vif->addr + 4)));
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_CONFIG);
+	rtl818x_ioग_लिखो32(priv, (__le32 __iomem *)&priv->map->MAC[0],
+			  le32_to_cpu(*(__le32 *)vअगर->addr));
+	rtl818x_ioग_लिखो16(priv, (__le16 __iomem *)&priv->map->MAC[4],
+			  le16_to_cpu(*(__le16 *)(vअगर->addr + 4)));
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, RTL818X_EEPROM_CMD_NORMAL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtl8180_remove_interface(struct ieee80211_hw *dev,
-				     struct ieee80211_vif *vif)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	priv->vif = NULL;
-}
+अटल व्योम rtl8180_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *dev,
+				     काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	priv->vअगर = शून्य;
+पूर्ण
 
-static int rtl8180_config(struct ieee80211_hw *dev, u32 changed)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct ieee80211_conf *conf = &dev->conf;
+अटल पूर्णांक rtl8180_config(काष्ठा ieee80211_hw *dev, u32 changed)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा ieee80211_conf *conf = &dev->conf;
 
 	priv->rf->set_chan(dev, conf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtl8187se_conf_ac_parm(struct ieee80211_hw *dev, u8 queue)
-{
-	const struct ieee80211_tx_queue_params *params;
-	struct rtl8180_priv *priv = dev->priv;
+अटल व्योम rtl8187se_conf_ac_parm(काष्ठा ieee80211_hw *dev, u8 queue)
+अणु
+	स्थिर काष्ठा ieee80211_tx_queue_params *params;
+	काष्ठा rtl8180_priv *priv = dev->priv;
 
 	/* hw value */
 	u32 ac_param;
 
-	u8 aifs;
+	u8 aअगरs;
 	u8 txop;
 	u8 cw_min, cw_max;
 
@@ -1393,387 +1394,387 @@ static void rtl8187se_conf_ac_parm(struct ieee80211_hw *dev, u8 queue)
 	cw_min = fls(params->cw_min);
 	cw_max = fls(params->cw_max);
 
-	aifs = 10 + params->aifs * priv->slot_time;
+	aअगरs = 10 + params->aअगरs * priv->slot_समय;
 
-	/* TODO: check if txop HW is in us (mult by 32) */
+	/* TODO: check अगर txop HW is in us (mult by 32) */
 	txop = params->txop;
 
 	ac_param = txop << AC_PARAM_TXOP_LIMIT_SHIFT |
 		cw_max << AC_PARAM_ECW_MAX_SHIFT |
 		cw_min << AC_PARAM_ECW_MIN_SHIFT |
-		aifs << AC_PARAM_AIFS_SHIFT;
+		aअगरs << AC_PARAM_AIFS_SHIFT;
 
-	switch (queue) {
-	case IEEE80211_AC_BK:
-		rtl818x_iowrite32(priv, &priv->map->AC_BK_PARAM, ac_param);
-		break;
-	case IEEE80211_AC_BE:
-		rtl818x_iowrite32(priv, &priv->map->AC_BE_PARAM, ac_param);
-		break;
-	case IEEE80211_AC_VI:
-		rtl818x_iowrite32(priv, &priv->map->AC_VI_PARAM, ac_param);
-		break;
-	case IEEE80211_AC_VO:
-		rtl818x_iowrite32(priv, &priv->map->AC_VO_PARAM, ac_param);
-		break;
-	}
-}
+	चयन (queue) अणु
+	हाल IEEE80211_AC_BK:
+		rtl818x_ioग_लिखो32(priv, &priv->map->AC_BK_PARAM, ac_param);
+		अवरोध;
+	हाल IEEE80211_AC_BE:
+		rtl818x_ioग_लिखो32(priv, &priv->map->AC_BE_PARAM, ac_param);
+		अवरोध;
+	हाल IEEE80211_AC_VI:
+		rtl818x_ioग_लिखो32(priv, &priv->map->AC_VI_PARAM, ac_param);
+		अवरोध;
+	हाल IEEE80211_AC_VO:
+		rtl818x_ioग_लिखो32(priv, &priv->map->AC_VO_PARAM, ac_param);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int rtl8180_conf_tx(struct ieee80211_hw *dev,
-			    struct ieee80211_vif *vif, u16 queue,
-			    const struct ieee80211_tx_queue_params *params)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अटल पूर्णांक rtl8180_conf_tx(काष्ठा ieee80211_hw *dev,
+			    काष्ठा ieee80211_vअगर *vअगर, u16 queue,
+			    स्थिर काष्ठा ieee80211_tx_queue_params *params)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 	u8 cw_min, cw_max;
 
-	/* nothing to do ? */
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
-		return 0;
+	/* nothing to करो ? */
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
+		वापस 0;
 
 	cw_min = fls(params->cw_min);
 	cw_max = fls(params->cw_max);
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
 		priv->queue_param[queue] = *params;
 		rtl8187se_conf_ac_parm(dev, queue);
-	} else
-		rtl818x_iowrite8(priv, &priv->map->CW_VAL,
+	पूर्ण अन्यथा
+		rtl818x_ioग_लिखो8(priv, &priv->map->CW_VAL,
 				 (cw_max << 4) | cw_min);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtl8180_conf_erp(struct ieee80211_hw *dev,
-			    struct ieee80211_bss_conf *info)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	u8 sifs, difs;
-	int eifs;
-	u8 hw_eifs;
+अटल व्योम rtl8180_conf_erp(काष्ठा ieee80211_hw *dev,
+			    काष्ठा ieee80211_bss_conf *info)
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	u8 sअगरs, dअगरs;
+	पूर्णांक eअगरs;
+	u8 hw_eअगरs;
 
-	/* TODO: should we do something ? */
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
-		return;
+	/* TODO: should we करो something ? */
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180)
+		वापस;
 
-	/* I _hope_ this means 10uS for the HW.
-	 * In reference code it is 0x22 for
+	/* I _hope_ this means 10uS क्रम the HW.
+	 * In reference code it is 0x22 क्रम
 	 * both rtl8187L and rtl8187SE
 	 */
-	sifs = 0x22;
+	sअगरs = 0x22;
 
-	if (info->use_short_slot)
-		priv->slot_time = 9;
-	else
-		priv->slot_time = 20;
+	अगर (info->use_लघु_slot)
+		priv->slot_समय = 9;
+	अन्यथा
+		priv->slot_समय = 20;
 
-	/* 10 is SIFS time in uS */
-	difs = 10 + 2 * priv->slot_time;
-	eifs = 10 + difs + priv->ack_time;
+	/* 10 is SIFS समय in uS */
+	dअगरs = 10 + 2 * priv->slot_समय;
+	eअगरs = 10 + dअगरs + priv->ack_समय;
 
-	/* HW should use 4uS units for EIFS (I'm sure for rtl8185)*/
-	hw_eifs = DIV_ROUND_UP(eifs, 4);
+	/* HW should use 4uS units क्रम EIFS (I'm sure क्रम rtl8185)*/
+	hw_eअगरs = DIV_ROUND_UP(eअगरs, 4);
 
 
-	rtl818x_iowrite8(priv, &priv->map->SLOT, priv->slot_time);
-	rtl818x_iowrite8(priv, &priv->map->SIFS, sifs);
-	rtl818x_iowrite8(priv, &priv->map->DIFS, difs);
+	rtl818x_ioग_लिखो8(priv, &priv->map->SLOT, priv->slot_समय);
+	rtl818x_ioग_लिखो8(priv, &priv->map->SIFS, sअगरs);
+	rtl818x_ioग_लिखो8(priv, &priv->map->DIFS, dअगरs);
 
-	/* from reference code. set ack timeout reg = eifs reg */
-	rtl818x_iowrite8(priv, &priv->map->CARRIER_SENSE_COUNTER, hw_eifs);
+	/* from reference code. set ack समयout reg = eअगरs reg */
+	rtl818x_ioग_लिखो8(priv, &priv->map->CARRIER_SENSE_COUNTER, hw_eअगरs);
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
-		rtl818x_iowrite8(priv, &priv->map->EIFS_8187SE, hw_eifs);
-	else if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+		rtl818x_ioग_लिखो8(priv, &priv->map->EIFS_8187SE, hw_eअगरs);
+	अन्यथा अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8185) अणु
 		/* rtl8187/rtl8185 HW bug. After EIFS is elapsed,
-		 * the HW still wait for DIFS.
-		 * HW uses 4uS units for EIFS.
+		 * the HW still रुको क्रम DIFS.
+		 * HW uses 4uS units क्रम EIFS.
 		 */
-		hw_eifs = DIV_ROUND_UP(eifs - difs, 4);
+		hw_eअगरs = DIV_ROUND_UP(eअगरs - dअगरs, 4);
 
-		rtl818x_iowrite8(priv, &priv->map->EIFS, hw_eifs);
-	}
-}
+		rtl818x_ioग_लिखो8(priv, &priv->map->EIFS, hw_eअगरs);
+	पूर्ण
+पूर्ण
 
-static void rtl8180_bss_info_changed(struct ieee80211_hw *dev,
-				     struct ieee80211_vif *vif,
-				     struct ieee80211_bss_conf *info,
+अटल व्योम rtl8180_bss_info_changed(काष्ठा ieee80211_hw *dev,
+				     काष्ठा ieee80211_vअगर *vअगर,
+				     काष्ठा ieee80211_bss_conf *info,
 				     u32 changed)
-{
-	struct rtl8180_priv *priv = dev->priv;
-	struct rtl8180_vif *vif_priv;
-	int i;
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
+	काष्ठा rtl8180_vअगर *vअगर_priv;
+	पूर्णांक i;
 	u8 reg;
 
-	vif_priv = (struct rtl8180_vif *)&vif->drv_priv;
+	vअगर_priv = (काष्ठा rtl8180_vअगर *)&vअगर->drv_priv;
 
-	if (changed & BSS_CHANGED_BSSID) {
-		rtl818x_iowrite16(priv, (__le16 __iomem *)&priv->map->BSSID[0],
+	अगर (changed & BSS_CHANGED_BSSID) अणु
+		rtl818x_ioग_लिखो16(priv, (__le16 __iomem *)&priv->map->BSSID[0],
 				  le16_to_cpu(*(__le16 *)info->bssid));
-		rtl818x_iowrite32(priv, (__le32 __iomem *)&priv->map->BSSID[2],
+		rtl818x_ioग_लिखो32(priv, (__le32 __iomem *)&priv->map->BSSID[2],
 				  le32_to_cpu(*(__le32 *)(info->bssid + 2)));
 
-		if (is_valid_ether_addr(info->bssid)) {
-			if (vif->type == NL80211_IFTYPE_ADHOC)
+		अगर (is_valid_ether_addr(info->bssid)) अणु
+			अगर (vअगर->type == NL80211_IFTYPE_ADHOC)
 				reg = RTL818X_MSR_ADHOC;
-			else
+			अन्यथा
 				reg = RTL818X_MSR_INFRA;
-		} else
+		पूर्ण अन्यथा
 			reg = RTL818X_MSR_NO_LINK;
 
-		if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+		अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
 			reg |= RTL818X_MSR_ENEDCA;
 
-		rtl818x_iowrite8(priv, &priv->map->MSR, reg);
-	}
+		rtl818x_ioग_लिखो8(priv, &priv->map->MSR, reg);
+	पूर्ण
 
-	if (changed & BSS_CHANGED_BASIC_RATES)
+	अगर (changed & BSS_CHANGED_BASIC_RATES)
 		rtl8180_conf_basic_rates(dev, info->basic_rates);
 
-	if (changed & (BSS_CHANGED_ERP_SLOT | BSS_CHANGED_ERP_PREAMBLE)) {
+	अगर (changed & (BSS_CHANGED_ERP_SLOT | BSS_CHANGED_ERP_PREAMBLE)) अणु
 
-		/* when preamble changes, acktime duration changes, and erp must
-		 * be recalculated. ACK time is calculated at lowest rate.
-		 * Since mac80211 include SIFS time we remove it (-10)
+		/* when preamble changes, ackसमय duration changes, and erp must
+		 * be recalculated. ACK समय is calculated at lowest rate.
+		 * Since mac80211 include SIFS समय we हटाओ it (-10)
 		 */
-		priv->ack_time =
+		priv->ack_समय =
 			le16_to_cpu(ieee80211_generic_frame_duration(dev,
-					priv->vif,
+					priv->vअगर,
 					NL80211_BAND_2GHZ, 10,
 					&priv->rates[0])) - 10;
 
 		rtl8180_conf_erp(dev, info);
 
-		/* mac80211 supplies aifs_n to driver and calls
-		 * conf_tx callback whether aifs_n changes, NOT
-		 * when aifs changes.
-		 * Aifs should be recalculated if slot changes.
+		/* mac80211 supplies aअगरs_n to driver and calls
+		 * conf_tx callback whether aअगरs_n changes, NOT
+		 * when aअगरs changes.
+		 * Aअगरs should be recalculated अगर slot changes.
 		 */
-		if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
-			for (i = 0; i < 4; i++)
+		अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+			क्रम (i = 0; i < 4; i++)
 				rtl8187se_conf_ac_parm(dev, i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & BSS_CHANGED_BEACON_ENABLED)
-		vif_priv->enable_beacon = info->enable_beacon;
+	अगर (changed & BSS_CHANGED_BEACON_ENABLED)
+		vअगर_priv->enable_beacon = info->enable_beacon;
 
-	if (changed & (BSS_CHANGED_BEACON_ENABLED | BSS_CHANGED_BEACON)) {
-		cancel_delayed_work_sync(&vif_priv->beacon_work);
-		if (vif_priv->enable_beacon)
-			schedule_work(&vif_priv->beacon_work.work);
-	}
-}
+	अगर (changed & (BSS_CHANGED_BEACON_ENABLED | BSS_CHANGED_BEACON)) अणु
+		cancel_delayed_work_sync(&vअगर_priv->beacon_work);
+		अगर (vअगर_priv->enable_beacon)
+			schedule_work(&vअगर_priv->beacon_work.work);
+	पूर्ण
+पूर्ण
 
-static u64 rtl8180_prepare_multicast(struct ieee80211_hw *dev,
-				     struct netdev_hw_addr_list *mc_list)
-{
-	return netdev_hw_addr_list_count(mc_list);
-}
+अटल u64 rtl8180_prepare_multicast(काष्ठा ieee80211_hw *dev,
+				     काष्ठा netdev_hw_addr_list *mc_list)
+अणु
+	वापस netdev_hw_addr_list_count(mc_list);
+पूर्ण
 
-static void rtl8180_configure_filter(struct ieee80211_hw *dev,
-				     unsigned int changed_flags,
-				     unsigned int *total_flags,
+अटल व्योम rtl8180_configure_filter(काष्ठा ieee80211_hw *dev,
+				     अचिन्हित पूर्णांक changed_flags,
+				     अचिन्हित पूर्णांक *total_flags,
 				     u64 multicast)
-{
-	struct rtl8180_priv *priv = dev->priv;
+अणु
+	काष्ठा rtl8180_priv *priv = dev->priv;
 
-	if (changed_flags & FIF_FCSFAIL)
+	अगर (changed_flags & FIF_FCSFAIL)
 		priv->rx_conf ^= RTL818X_RX_CONF_FCS;
-	if (changed_flags & FIF_CONTROL)
+	अगर (changed_flags & FIF_CONTROL)
 		priv->rx_conf ^= RTL818X_RX_CONF_CTRL;
-	if (changed_flags & FIF_OTHER_BSS)
+	अगर (changed_flags & FIF_OTHER_BSS)
 		priv->rx_conf ^= RTL818X_RX_CONF_MONITOR;
-	if (*total_flags & FIF_ALLMULTI || multicast > 0)
+	अगर (*total_flags & FIF_ALLMULTI || multicast > 0)
 		priv->rx_conf |= RTL818X_RX_CONF_MULTICAST;
-	else
+	अन्यथा
 		priv->rx_conf &= ~RTL818X_RX_CONF_MULTICAST;
 
 	*total_flags = 0;
 
-	if (priv->rx_conf & RTL818X_RX_CONF_FCS)
+	अगर (priv->rx_conf & RTL818X_RX_CONF_FCS)
 		*total_flags |= FIF_FCSFAIL;
-	if (priv->rx_conf & RTL818X_RX_CONF_CTRL)
+	अगर (priv->rx_conf & RTL818X_RX_CONF_CTRL)
 		*total_flags |= FIF_CONTROL;
-	if (priv->rx_conf & RTL818X_RX_CONF_MONITOR)
+	अगर (priv->rx_conf & RTL818X_RX_CONF_MONITOR)
 		*total_flags |= FIF_OTHER_BSS;
-	if (priv->rx_conf & RTL818X_RX_CONF_MULTICAST)
+	अगर (priv->rx_conf & RTL818X_RX_CONF_MULTICAST)
 		*total_flags |= FIF_ALLMULTI;
 
-	rtl818x_iowrite32(priv, &priv->map->RX_CONF, priv->rx_conf);
-}
+	rtl818x_ioग_लिखो32(priv, &priv->map->RX_CONF, priv->rx_conf);
+पूर्ण
 
-static const struct ieee80211_ops rtl8180_ops = {
+अटल स्थिर काष्ठा ieee80211_ops rtl8180_ops = अणु
 	.tx			= rtl8180_tx,
 	.start			= rtl8180_start,
 	.stop			= rtl8180_stop,
-	.add_interface		= rtl8180_add_interface,
-	.remove_interface	= rtl8180_remove_interface,
+	.add_पूर्णांकerface		= rtl8180_add_पूर्णांकerface,
+	.हटाओ_पूर्णांकerface	= rtl8180_हटाओ_पूर्णांकerface,
 	.config			= rtl8180_config,
 	.bss_info_changed	= rtl8180_bss_info_changed,
 	.conf_tx		= rtl8180_conf_tx,
 	.prepare_multicast	= rtl8180_prepare_multicast,
 	.configure_filter	= rtl8180_configure_filter,
 	.get_tsf		= rtl8180_get_tsf,
-};
+पूर्ण;
 
-static void rtl8180_eeprom_register_read(struct eeprom_93cx6 *eeprom)
-{
-	struct rtl8180_priv *priv = eeprom->data;
-	u8 reg = rtl818x_ioread8(priv, &priv->map->EEPROM_CMD);
+अटल व्योम rtl8180_eeprom_रेजिस्टर_पढ़ो(काष्ठा eeprom_93cx6 *eeprom)
+अणु
+	काष्ठा rtl8180_priv *priv = eeprom->data;
+	u8 reg = rtl818x_ioपढ़ो8(priv, &priv->map->EEPROM_CMD);
 
 	eeprom->reg_data_in = reg & RTL818X_EEPROM_CMD_WRITE;
 	eeprom->reg_data_out = reg & RTL818X_EEPROM_CMD_READ;
-	eeprom->reg_data_clock = reg & RTL818X_EEPROM_CMD_CK;
+	eeprom->reg_data_घड़ी = reg & RTL818X_EEPROM_CMD_CK;
 	eeprom->reg_chip_select = reg & RTL818X_EEPROM_CMD_CS;
-}
+पूर्ण
 
-static void rtl8180_eeprom_register_write(struct eeprom_93cx6 *eeprom)
-{
-	struct rtl8180_priv *priv = eeprom->data;
+अटल व्योम rtl8180_eeprom_रेजिस्टर_ग_लिखो(काष्ठा eeprom_93cx6 *eeprom)
+अणु
+	काष्ठा rtl8180_priv *priv = eeprom->data;
 	u8 reg = 2 << 6;
 
-	if (eeprom->reg_data_in)
+	अगर (eeprom->reg_data_in)
 		reg |= RTL818X_EEPROM_CMD_WRITE;
-	if (eeprom->reg_data_out)
+	अगर (eeprom->reg_data_out)
 		reg |= RTL818X_EEPROM_CMD_READ;
-	if (eeprom->reg_data_clock)
+	अगर (eeprom->reg_data_घड़ी)
 		reg |= RTL818X_EEPROM_CMD_CK;
-	if (eeprom->reg_chip_select)
+	अगर (eeprom->reg_chip_select)
 		reg |= RTL818X_EEPROM_CMD_CS;
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD, reg);
-	rtl818x_ioread8(priv, &priv->map->EEPROM_CMD);
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD, reg);
+	rtl818x_ioपढ़ो8(priv, &priv->map->EEPROM_CMD);
 	udelay(10);
-}
+पूर्ण
 
-static void rtl8180_eeprom_read(struct rtl8180_priv *priv)
-{
-	struct eeprom_93cx6 eeprom;
-	int eeprom_cck_table_adr;
+अटल व्योम rtl8180_eeprom_पढ़ो(काष्ठा rtl8180_priv *priv)
+अणु
+	काष्ठा eeprom_93cx6 eeprom;
+	पूर्णांक eeprom_cck_table_adr;
 	u16 eeprom_val;
-	int i;
+	पूर्णांक i;
 
 	eeprom.data = priv;
-	eeprom.register_read = rtl8180_eeprom_register_read;
-	eeprom.register_write = rtl8180_eeprom_register_write;
-	if (rtl818x_ioread32(priv, &priv->map->RX_CONF) & (1 << 6))
+	eeprom.रेजिस्टर_पढ़ो = rtl8180_eeprom_रेजिस्टर_पढ़ो;
+	eeprom.रेजिस्टर_ग_लिखो = rtl8180_eeprom_रेजिस्टर_ग_लिखो;
+	अगर (rtl818x_ioपढ़ो32(priv, &priv->map->RX_CONF) & (1 << 6))
 		eeprom.width = PCI_EEPROM_WIDTH_93C66;
-	else
+	अन्यथा
 		eeprom.width = PCI_EEPROM_WIDTH_93C46;
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD,
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD,
 			RTL818X_EEPROM_CMD_PROGRAM);
-	rtl818x_ioread8(priv, &priv->map->EEPROM_CMD);
+	rtl818x_ioपढ़ो8(priv, &priv->map->EEPROM_CMD);
 	udelay(10);
 
-	eeprom_93cx6_read(&eeprom, 0x06, &eeprom_val);
+	eeprom_93cx6_पढ़ो(&eeprom, 0x06, &eeprom_val);
 	eeprom_val &= 0xFF;
 	priv->rf_type = eeprom_val;
 
-	eeprom_93cx6_read(&eeprom, 0x17, &eeprom_val);
+	eeprom_93cx6_पढ़ो(&eeprom, 0x17, &eeprom_val);
 	priv->csthreshold = eeprom_val >> 8;
 
-	eeprom_93cx6_multiread(&eeprom, 0x7, (__le16 *)priv->mac_addr, 3);
+	eeprom_93cx6_multiपढ़ो(&eeprom, 0x7, (__le16 *)priv->mac_addr, 3);
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
 		eeprom_cck_table_adr = 0x30;
-	else
+	अन्यथा
 		eeprom_cck_table_adr = 0x10;
 
-	/* CCK TX power */
-	for (i = 0; i < 14; i += 2) {
+	/* CCK TX घातer */
+	क्रम (i = 0; i < 14; i += 2) अणु
 		u16 txpwr;
-		eeprom_93cx6_read(&eeprom, eeprom_cck_table_adr + (i >> 1),
+		eeprom_93cx6_पढ़ो(&eeprom, eeprom_cck_table_adr + (i >> 1),
 				&txpwr);
 		priv->channels[i].hw_value = txpwr & 0xFF;
 		priv->channels[i + 1].hw_value = txpwr >> 8;
-	}
+	पूर्ण
 
-	/* OFDM TX power */
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) {
-		for (i = 0; i < 14; i += 2) {
+	/* OFDM TX घातer */
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) अणु
+		क्रम (i = 0; i < 14; i += 2) अणु
 			u16 txpwr;
-			eeprom_93cx6_read(&eeprom, 0x20 + (i >> 1), &txpwr);
+			eeprom_93cx6_पढ़ो(&eeprom, 0x20 + (i >> 1), &txpwr);
 			priv->channels[i].hw_value |= (txpwr & 0xFF) << 8;
 			priv->channels[i + 1].hw_value |= txpwr & 0xFF00;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180) {
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8180) अणु
 		__le32 anaparam;
-		eeprom_93cx6_multiread(&eeprom, 0xD, (__le16 *)&anaparam, 2);
+		eeprom_93cx6_multiपढ़ो(&eeprom, 0xD, (__le16 *)&anaparam, 2);
 		priv->anaparam = le32_to_cpu(anaparam);
-		eeprom_93cx6_read(&eeprom, 0x19, &priv->rfparam);
-	}
+		eeprom_93cx6_पढ़ो(&eeprom, 0x19, &priv->rfparam);
+	पूर्ण
 
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) {
-		eeprom_93cx6_read(&eeprom, 0x3F, &eeprom_val);
-		priv->antenna_diversity_en = !!(eeprom_val & 0x100);
-		priv->antenna_diversity_default = (eeprom_val & 0xC00) == 0x400;
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE) अणु
+		eeprom_93cx6_पढ़ो(&eeprom, 0x3F, &eeprom_val);
+		priv->antenna_भागersity_en = !!(eeprom_val & 0x100);
+		priv->antenna_भागersity_शेष = (eeprom_val & 0xC00) == 0x400;
 
-		eeprom_93cx6_read(&eeprom, 0x7C, &eeprom_val);
+		eeprom_93cx6_पढ़ो(&eeprom, 0x7C, &eeprom_val);
 		priv->xtal_out = eeprom_val & 0xF;
 		priv->xtal_in = (eeprom_val & 0xF0) >> 4;
 		priv->xtal_cal = !!(eeprom_val & 0x1000);
 		priv->thermal_meter_val = (eeprom_val & 0xF00) >> 8;
 		priv->thermal_meter_en = !!(eeprom_val & 0x2000);
-	}
+	पूर्ण
 
-	rtl818x_iowrite8(priv, &priv->map->EEPROM_CMD,
+	rtl818x_ioग_लिखो8(priv, &priv->map->EEPROM_CMD,
 			RTL818X_EEPROM_CMD_NORMAL);
-}
+पूर्ण
 
-static int rtl8180_probe(struct pci_dev *pdev,
-				   const struct pci_device_id *id)
-{
-	struct ieee80211_hw *dev;
-	struct rtl8180_priv *priv;
-	unsigned long mem_len;
-	unsigned int io_len;
-	int err;
-	const char *chip_name, *rf_name = NULL;
+अटल पूर्णांक rtl8180_probe(काष्ठा pci_dev *pdev,
+				   स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा ieee80211_hw *dev;
+	काष्ठा rtl8180_priv *priv;
+	अचिन्हित दीर्घ mem_len;
+	अचिन्हित पूर्णांक io_len;
+	पूर्णांक err;
+	स्थिर अक्षर *chip_name, *rf_name = शून्य;
 	u32 reg;
 
 	err = pci_enable_device(pdev);
-	if (err) {
-		printk(KERN_ERR "%s (rtl8180): Cannot enable new PCI device\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): Cannot enable new PCI device\n",
 		       pci_name(pdev));
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = pci_request_regions(pdev, KBUILD_MODNAME);
-	if (err) {
-		printk(KERN_ERR "%s (rtl8180): Cannot obtain PCI resources\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): Cannot obtain PCI resources\n",
 		       pci_name(pdev));
-		goto err_disable_dev;
-	}
+		जाओ err_disable_dev;
+	पूर्ण
 
 	io_len = pci_resource_len(pdev, 0);
 	mem_len = pci_resource_len(pdev, 1);
 
-	if (mem_len < sizeof(struct rtl818x_csr) ||
-	    io_len < sizeof(struct rtl818x_csr)) {
-		printk(KERN_ERR "%s (rtl8180): Too short PCI resources\n",
+	अगर (mem_len < माप(काष्ठा rtl818x_csr) ||
+	    io_len < माप(काष्ठा rtl818x_csr)) अणु
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): Too short PCI resources\n",
 		       pci_name(pdev));
 		err = -ENOMEM;
-		goto err_free_reg;
-	}
+		जाओ err_मुक्त_reg;
+	पूर्ण
 
-	if ((err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) ||
-	    (err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32)))) {
-		printk(KERN_ERR "%s (rtl8180): No suitable DMA available\n",
+	अगर ((err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32))) ||
+	    (err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32)))) अणु
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): No suitable DMA available\n",
 		       pci_name(pdev));
-		goto err_free_reg;
-	}
+		जाओ err_मुक्त_reg;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	dev = ieee80211_alloc_hw(sizeof(*priv), &rtl8180_ops);
-	if (!dev) {
-		printk(KERN_ERR "%s (rtl8180): ieee80211 alloc failed\n",
+	dev = ieee80211_alloc_hw(माप(*priv), &rtl8180_ops);
+	अगर (!dev) अणु
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): ieee80211 alloc failed\n",
 		       pci_name(pdev));
 		err = -ENOMEM;
-		goto err_free_reg;
-	}
+		जाओ err_मुक्त_reg;
+	पूर्ण
 
 	priv = dev->priv;
 	priv->pdev = pdev;
@@ -1784,22 +1785,22 @@ static int rtl8180_probe(struct pci_dev *pdev,
 
 	priv->map_pio = false;
 	priv->map = pci_iomap(pdev, 1, mem_len);
-	if (!priv->map) {
+	अगर (!priv->map) अणु
 		priv->map = pci_iomap(pdev, 0, io_len);
 		priv->map_pio = true;
-	}
+	पूर्ण
 
-	if (!priv->map) {
+	अगर (!priv->map) अणु
 		dev_err(&pdev->dev, "Cannot map device memory/PIO\n");
 		err = -ENOMEM;
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
-	BUILD_BUG_ON(sizeof(priv->channels) != sizeof(rtl818x_channels));
-	BUILD_BUG_ON(sizeof(priv->rates) != sizeof(rtl818x_rates));
+	BUILD_BUG_ON(माप(priv->channels) != माप(rtl818x_channels));
+	BUILD_BUG_ON(माप(priv->rates) != माप(rtl818x_rates));
 
-	memcpy(priv->channels, rtl818x_channels, sizeof(rtl818x_channels));
-	memcpy(priv->rates, rtl818x_rates, sizeof(rtl818x_rates));
+	स_नकल(priv->channels, rtl818x_channels, माप(rtl818x_channels));
+	स_नकल(priv->rates, rtl818x_rates, माप(rtl818x_rates));
 
 	priv->band.band = NL80211_BAND_2GHZ;
 	priv->band.channels = priv->channels;
@@ -1811,176 +1812,176 @@ static int rtl8180_probe(struct pci_dev *pdev,
 	ieee80211_hw_set(dev, HOST_BROADCAST_PS_BUFFERING);
 	ieee80211_hw_set(dev, RX_INCLUDES_FCS);
 
-	dev->vif_data_size = sizeof(struct rtl8180_vif);
-	dev->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+	dev->vअगर_data_size = माप(काष्ठा rtl8180_vअगर);
+	dev->wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 					BIT(NL80211_IFTYPE_ADHOC);
-	dev->max_signal = 65;
+	dev->max_संकेत = 65;
 
-	reg = rtl818x_ioread32(priv, &priv->map->TX_CONF);
+	reg = rtl818x_ioपढ़ो32(priv, &priv->map->TX_CONF);
 	reg &= RTL818X_TX_CONF_HWVER_MASK;
-	switch (reg) {
-	case RTL818X_TX_CONF_R8180_ABCD:
+	चयन (reg) अणु
+	हाल RTL818X_TX_CONF_R8180_ABCD:
 		chip_name = "RTL8180";
 		priv->chip_family = RTL818X_CHIP_FAMILY_RTL8180;
-		break;
+		अवरोध;
 
-	case RTL818X_TX_CONF_R8180_F:
+	हाल RTL818X_TX_CONF_R8180_F:
 		chip_name = "RTL8180vF";
 		priv->chip_family = RTL818X_CHIP_FAMILY_RTL8180;
-		break;
+		अवरोध;
 
-	case RTL818X_TX_CONF_R8185_ABC:
+	हाल RTL818X_TX_CONF_R8185_ABC:
 		chip_name = "RTL8185";
 		priv->chip_family = RTL818X_CHIP_FAMILY_RTL8185;
-		break;
+		अवरोध;
 
-	case RTL818X_TX_CONF_R8185_D:
+	हाल RTL818X_TX_CONF_R8185_D:
 		chip_name = "RTL8185vD";
 		priv->chip_family = RTL818X_CHIP_FAMILY_RTL8185;
-		break;
+		अवरोध;
 
-	case RTL818X_TX_CONF_RTL8187SE:
+	हाल RTL818X_TX_CONF_RTL8187SE:
 		chip_name = "RTL8187SE";
-		if (priv->map_pio) {
+		अगर (priv->map_pio) अणु
 			dev_err(&pdev->dev,
 				"MMIO failed. PIO not supported on RTL8187SE\n");
 			err = -ENOMEM;
-			goto err_iounmap;
-		}
+			जाओ err_iounmap;
+		पूर्ण
 		priv->chip_family = RTL818X_CHIP_FAMILY_RTL8187SE;
-		break;
+		अवरोध;
 
-	default:
-		printk(KERN_ERR "%s (rtl8180): Unknown chip! (0x%x)\n",
+	शेष:
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): Unknown chip! (0x%x)\n",
 		       pci_name(pdev), reg >> 25);
 		err = -ENODEV;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	/* we declare to MAC80211 all the queues except for beacon queue
+	/* we declare to MAC80211 all the queues except क्रम beacon queue
 	 * that will be eventually handled by DRV.
 	 * TX rings are arranged in such a way that lower is the IDX,
 	 * higher is the priority, in order to achieve direct mapping
 	 * with mac80211, however the beacon queue is an exception and it
 	 * is mapped on the highst tx ring IDX.
 	 */
-	if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+	अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
 		dev->queues = RTL8187SE_NR_TX_QUEUES - 1;
-	else
+	अन्यथा
 		dev->queues = RTL8180_NR_TX_QUEUES - 1;
 
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) {
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180) अणु
 		priv->band.n_bitrates = ARRAY_SIZE(rtl818x_rates);
 		pci_try_set_mwi(pdev);
-	}
+	पूर्ण
 
-	if (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180)
+	अगर (priv->chip_family != RTL818X_CHIP_FAMILY_RTL8180)
 		ieee80211_hw_set(dev, SIGNAL_DBM);
-	else
+	अन्यथा
 		ieee80211_hw_set(dev, SIGNAL_UNSPEC);
 
 	wiphy_ext_feature_set(dev->wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
 
-	rtl8180_eeprom_read(priv);
+	rtl8180_eeprom_पढ़ो(priv);
 
-	switch (priv->rf_type) {
-	case 1:	rf_name = "Intersil";
-		break;
-	case 2:	rf_name = "RFMD";
-		break;
-	case 3:	priv->rf = &sa2400_rf_ops;
-		break;
-	case 4:	priv->rf = &max2820_rf_ops;
-		break;
-	case 5:	priv->rf = &grf5101_rf_ops;
-		break;
-	case 9:
-		if (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
+	चयन (priv->rf_type) अणु
+	हाल 1:	rf_name = "Intersil";
+		अवरोध;
+	हाल 2:	rf_name = "RFMD";
+		अवरोध;
+	हाल 3:	priv->rf = &sa2400_rf_ops;
+		अवरोध;
+	हाल 4:	priv->rf = &max2820_rf_ops;
+		अवरोध;
+	हाल 5:	priv->rf = &grf5101_rf_ops;
+		अवरोध;
+	हाल 9:
+		अगर (priv->chip_family == RTL818X_CHIP_FAMILY_RTL8187SE)
 			priv->rf = rtl8187se_detect_rf(dev);
-		else
+		अन्यथा
 			priv->rf = rtl8180_detect_rf(dev);
-		break;
-	case 10:
+		अवरोध;
+	हाल 10:
 		rf_name = "RTL8255";
-		break;
-	default:
-		printk(KERN_ERR "%s (rtl8180): Unknown RF! (0x%x)\n",
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): Unknown RF! (0x%x)\n",
 		       pci_name(pdev), priv->rf_type);
 		err = -ENODEV;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	if (!priv->rf) {
-		printk(KERN_ERR "%s (rtl8180): %s RF frontend not supported!\n",
+	अगर (!priv->rf) अणु
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): %s RF frontend not supported!\n",
 		       pci_name(pdev), rf_name);
 		err = -ENODEV;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	if (!is_valid_ether_addr(priv->mac_addr)) {
-		printk(KERN_WARNING "%s (rtl8180): Invalid hwaddr! Using"
+	अगर (!is_valid_ether_addr(priv->mac_addr)) अणु
+		prपूर्णांकk(KERN_WARNING "%s (rtl8180): Invalid hwaddr! Using"
 		       " randomly generated MAC addr\n", pci_name(pdev));
-		eth_random_addr(priv->mac_addr);
-	}
+		eth_अक्रमom_addr(priv->mac_addr);
+	पूर्ण
 	SET_IEEE80211_PERM_ADDR(dev, priv->mac_addr);
 
 	spin_lock_init(&priv->lock);
 
-	err = ieee80211_register_hw(dev);
-	if (err) {
-		printk(KERN_ERR "%s (rtl8180): Cannot register device\n",
+	err = ieee80211_रेजिस्टर_hw(dev);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "%s (rtl8180): Cannot register device\n",
 		       pci_name(pdev));
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	wiphy_info(dev->wiphy, "hwaddr %pm, %s + %s\n",
 		   priv->mac_addr, chip_name, priv->rf->name);
 
-	return 0;
+	वापस 0;
 
  err_iounmap:
 	pci_iounmap(pdev, priv->map);
 
- err_free_dev:
-	ieee80211_free_hw(dev);
+ err_मुक्त_dev:
+	ieee80211_मुक्त_hw(dev);
 
- err_free_reg:
+ err_मुक्त_reg:
 	pci_release_regions(pdev);
 
  err_disable_dev:
 	pci_disable_device(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtl8180_remove(struct pci_dev *pdev)
-{
-	struct ieee80211_hw *dev = pci_get_drvdata(pdev);
-	struct rtl8180_priv *priv;
+अटल व्योम rtl8180_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ieee80211_hw *dev = pci_get_drvdata(pdev);
+	काष्ठा rtl8180_priv *priv;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
-	ieee80211_unregister_hw(dev);
+	ieee80211_unरेजिस्टर_hw(dev);
 
 	priv = dev->priv;
 
 	pci_iounmap(pdev, priv->map);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-	ieee80211_free_hw(dev);
-}
+	ieee80211_मुक्त_hw(dev);
+पूर्ण
 
-#define rtl8180_suspend NULL
-#define rtl8180_resume NULL
+#घोषणा rtl8180_suspend शून्य
+#घोषणा rtl8180_resume शून्य
 
-static SIMPLE_DEV_PM_OPS(rtl8180_pm_ops, rtl8180_suspend, rtl8180_resume);
+अटल SIMPLE_DEV_PM_OPS(rtl8180_pm_ops, rtl8180_suspend, rtl8180_resume);
 
-static struct pci_driver rtl8180_driver = {
+अटल काष्ठा pci_driver rtl8180_driver = अणु
 	.name		= KBUILD_MODNAME,
 	.id_table	= rtl8180_table,
 	.probe		= rtl8180_probe,
-	.remove		= rtl8180_remove,
+	.हटाओ		= rtl8180_हटाओ,
 	.driver.pm	= &rtl8180_pm_ops,
-};
+पूर्ण;
 
 module_pci_driver(rtl8180_driver);

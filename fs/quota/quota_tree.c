@@ -1,734 +1,735 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *	vfsv0 quota IO operations on file
  */
 
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/dqblk_v2.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/quotaops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/dqblk_v2.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/quotaops.h>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include "quota_tree.h"
+#समावेश "quota_tree.h"
 
 MODULE_AUTHOR("Jan Kara");
 MODULE_DESCRIPTION("Quota trie support");
 MODULE_LICENSE("GPL");
 
-#define __QUOTA_QT_PARANOIA
+#घोषणा __QUOTA_QT_PARANOIA
 
-static int __get_index(struct qtree_mem_dqinfo *info, qid_t id, int depth)
-{
-	unsigned int epb = info->dqi_usable_bs >> 2;
+अटल पूर्णांक __get_index(काष्ठा qtree_mem_dqinfo *info, qid_t id, पूर्णांक depth)
+अणु
+	अचिन्हित पूर्णांक epb = info->dqi_usable_bs >> 2;
 
 	depth = info->dqi_qtree_depth - depth - 1;
-	while (depth--)
+	जबतक (depth--)
 		id /= epb;
-	return id % epb;
-}
+	वापस id % epb;
+पूर्ण
 
-static int get_index(struct qtree_mem_dqinfo *info, struct kqid qid, int depth)
-{
+अटल पूर्णांक get_index(काष्ठा qtree_mem_dqinfo *info, काष्ठा kqid qid, पूर्णांक depth)
+अणु
 	qid_t id = from_kqid(&init_user_ns, qid);
 
-	return __get_index(info, id, depth);
-}
+	वापस __get_index(info, id, depth);
+पूर्ण
 
 /* Number of entries in one blocks */
-static int qtree_dqstr_in_blk(struct qtree_mem_dqinfo *info)
-{
-	return (info->dqi_usable_bs - sizeof(struct qt_disk_dqdbheader))
+अटल पूर्णांक qtree_dqstr_in_blk(काष्ठा qtree_mem_dqinfo *info)
+अणु
+	वापस (info->dqi_usable_bs - माप(काष्ठा qt_disk_dqdbheader))
 	       / info->dqi_entry_size;
-}
+पूर्ण
 
-static char *getdqbuf(size_t size)
-{
-	char *buf = kmalloc(size, GFP_NOFS);
-	if (!buf)
-		printk(KERN_WARNING
+अटल अक्षर *getdqbuf(माप_प्रकार size)
+अणु
+	अक्षर *buf = kदो_स्मृति(size, GFP_NOFS);
+	अगर (!buf)
+		prपूर्णांकk(KERN_WARNING
 		       "VFS: Not enough memory for quota buffers.\n");
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static ssize_t read_blk(struct qtree_mem_dqinfo *info, uint blk, char *buf)
-{
-	struct super_block *sb = info->dqi_sb;
+अटल sमाप_प्रकार पढ़ो_blk(काष्ठा qtree_mem_dqinfo *info, uपूर्णांक blk, अक्षर *buf)
+अणु
+	काष्ठा super_block *sb = info->dqi_sb;
 
-	memset(buf, 0, info->dqi_usable_bs);
-	return sb->s_op->quota_read(sb, info->dqi_type, buf,
+	स_रखो(buf, 0, info->dqi_usable_bs);
+	वापस sb->s_op->quota_पढ़ो(sb, info->dqi_type, buf,
 	       info->dqi_usable_bs, (loff_t)blk << info->dqi_blocksize_bits);
-}
+पूर्ण
 
-static ssize_t write_blk(struct qtree_mem_dqinfo *info, uint blk, char *buf)
-{
-	struct super_block *sb = info->dqi_sb;
-	ssize_t ret;
+अटल sमाप_प्रकार ग_लिखो_blk(काष्ठा qtree_mem_dqinfo *info, uपूर्णांक blk, अक्षर *buf)
+अणु
+	काष्ठा super_block *sb = info->dqi_sb;
+	sमाप_प्रकार ret;
 
-	ret = sb->s_op->quota_write(sb, info->dqi_type, buf,
+	ret = sb->s_op->quota_ग_लिखो(sb, info->dqi_type, buf,
 	       info->dqi_usable_bs, (loff_t)blk << info->dqi_blocksize_bits);
-	if (ret != info->dqi_usable_bs) {
+	अगर (ret != info->dqi_usable_bs) अणु
 		quota_error(sb, "dquota write failed");
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -EIO;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* Remove empty block from list and return it */
-static int get_free_dqblk(struct qtree_mem_dqinfo *info)
-{
-	char *buf = getdqbuf(info->dqi_usable_bs);
-	struct qt_disk_dqdbheader *dh = (struct qt_disk_dqdbheader *)buf;
-	int ret, blk;
+/* Remove empty block from list and वापस it */
+अटल पूर्णांक get_मुक्त_dqblk(काष्ठा qtree_mem_dqinfo *info)
+अणु
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
+	काष्ठा qt_disk_dqdbheader *dh = (काष्ठा qt_disk_dqdbheader *)buf;
+	पूर्णांक ret, blk;
 
-	if (!buf)
-		return -ENOMEM;
-	if (info->dqi_free_blk) {
-		blk = info->dqi_free_blk;
-		ret = read_blk(info, blk, buf);
-		if (ret < 0)
-			goto out_buf;
-		info->dqi_free_blk = le32_to_cpu(dh->dqdh_next_free);
-	}
-	else {
-		memset(buf, 0, info->dqi_usable_bs);
+	अगर (!buf)
+		वापस -ENOMEM;
+	अगर (info->dqi_मुक्त_blk) अणु
+		blk = info->dqi_मुक्त_blk;
+		ret = पढ़ो_blk(info, blk, buf);
+		अगर (ret < 0)
+			जाओ out_buf;
+		info->dqi_मुक्त_blk = le32_to_cpu(dh->dqdh_next_मुक्त);
+	पूर्ण
+	अन्यथा अणु
+		स_रखो(buf, 0, info->dqi_usable_bs);
 		/* Assure block allocation... */
-		ret = write_blk(info, info->dqi_blocks, buf);
-		if (ret < 0)
-			goto out_buf;
+		ret = ग_लिखो_blk(info, info->dqi_blocks, buf);
+		अगर (ret < 0)
+			जाओ out_buf;
 		blk = info->dqi_blocks++;
-	}
+	पूर्ण
 	mark_info_dirty(info->dqi_sb, info->dqi_type);
 	ret = blk;
 out_buf:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /* Insert empty block to the list */
-static int put_free_dqblk(struct qtree_mem_dqinfo *info, char *buf, uint blk)
-{
-	struct qt_disk_dqdbheader *dh = (struct qt_disk_dqdbheader *)buf;
-	int err;
+अटल पूर्णांक put_मुक्त_dqblk(काष्ठा qtree_mem_dqinfo *info, अक्षर *buf, uपूर्णांक blk)
+अणु
+	काष्ठा qt_disk_dqdbheader *dh = (काष्ठा qt_disk_dqdbheader *)buf;
+	पूर्णांक err;
 
-	dh->dqdh_next_free = cpu_to_le32(info->dqi_free_blk);
-	dh->dqdh_prev_free = cpu_to_le32(0);
+	dh->dqdh_next_मुक्त = cpu_to_le32(info->dqi_मुक्त_blk);
+	dh->dqdh_prev_मुक्त = cpu_to_le32(0);
 	dh->dqdh_entries = cpu_to_le16(0);
-	err = write_blk(info, blk, buf);
-	if (err < 0)
-		return err;
-	info->dqi_free_blk = blk;
+	err = ग_लिखो_blk(info, blk, buf);
+	अगर (err < 0)
+		वापस err;
+	info->dqi_मुक्त_blk = blk;
 	mark_info_dirty(info->dqi_sb, info->dqi_type);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Remove given block from the list of blocks with free entries */
-static int remove_free_dqentry(struct qtree_mem_dqinfo *info, char *buf,
-			       uint blk)
-{
-	char *tmpbuf = getdqbuf(info->dqi_usable_bs);
-	struct qt_disk_dqdbheader *dh = (struct qt_disk_dqdbheader *)buf;
-	uint nextblk = le32_to_cpu(dh->dqdh_next_free);
-	uint prevblk = le32_to_cpu(dh->dqdh_prev_free);
-	int err;
+/* Remove given block from the list of blocks with मुक्त entries */
+अटल पूर्णांक हटाओ_मुक्त_dqentry(काष्ठा qtree_mem_dqinfo *info, अक्षर *buf,
+			       uपूर्णांक blk)
+अणु
+	अक्षर *पंचांगpbuf = getdqbuf(info->dqi_usable_bs);
+	काष्ठा qt_disk_dqdbheader *dh = (काष्ठा qt_disk_dqdbheader *)buf;
+	uपूर्णांक nextblk = le32_to_cpu(dh->dqdh_next_मुक्त);
+	uपूर्णांक prevblk = le32_to_cpu(dh->dqdh_prev_मुक्त);
+	पूर्णांक err;
 
-	if (!tmpbuf)
-		return -ENOMEM;
-	if (nextblk) {
-		err = read_blk(info, nextblk, tmpbuf);
-		if (err < 0)
-			goto out_buf;
-		((struct qt_disk_dqdbheader *)tmpbuf)->dqdh_prev_free =
-							dh->dqdh_prev_free;
-		err = write_blk(info, nextblk, tmpbuf);
-		if (err < 0)
-			goto out_buf;
-	}
-	if (prevblk) {
-		err = read_blk(info, prevblk, tmpbuf);
-		if (err < 0)
-			goto out_buf;
-		((struct qt_disk_dqdbheader *)tmpbuf)->dqdh_next_free =
-							dh->dqdh_next_free;
-		err = write_blk(info, prevblk, tmpbuf);
-		if (err < 0)
-			goto out_buf;
-	} else {
-		info->dqi_free_entry = nextblk;
+	अगर (!पंचांगpbuf)
+		वापस -ENOMEM;
+	अगर (nextblk) अणु
+		err = पढ़ो_blk(info, nextblk, पंचांगpbuf);
+		अगर (err < 0)
+			जाओ out_buf;
+		((काष्ठा qt_disk_dqdbheader *)पंचांगpbuf)->dqdh_prev_मुक्त =
+							dh->dqdh_prev_मुक्त;
+		err = ग_लिखो_blk(info, nextblk, पंचांगpbuf);
+		अगर (err < 0)
+			जाओ out_buf;
+	पूर्ण
+	अगर (prevblk) अणु
+		err = पढ़ो_blk(info, prevblk, पंचांगpbuf);
+		अगर (err < 0)
+			जाओ out_buf;
+		((काष्ठा qt_disk_dqdbheader *)पंचांगpbuf)->dqdh_next_मुक्त =
+							dh->dqdh_next_मुक्त;
+		err = ग_लिखो_blk(info, prevblk, पंचांगpbuf);
+		अगर (err < 0)
+			जाओ out_buf;
+	पूर्ण अन्यथा अणु
+		info->dqi_मुक्त_entry = nextblk;
 		mark_info_dirty(info->dqi_sb, info->dqi_type);
-	}
-	kfree(tmpbuf);
-	dh->dqdh_next_free = dh->dqdh_prev_free = cpu_to_le32(0);
-	/* No matter whether write succeeds block is out of list */
-	if (write_blk(info, blk, buf) < 0)
+	पूर्ण
+	kमुक्त(पंचांगpbuf);
+	dh->dqdh_next_मुक्त = dh->dqdh_prev_मुक्त = cpu_to_le32(0);
+	/* No matter whether ग_लिखो succeeds block is out of list */
+	अगर (ग_लिखो_blk(info, blk, buf) < 0)
 		quota_error(info->dqi_sb, "Can't write block (%u) "
 			    "with free entries", blk);
-	return 0;
+	वापस 0;
 out_buf:
-	kfree(tmpbuf);
-	return err;
-}
+	kमुक्त(पंचांगpbuf);
+	वापस err;
+पूर्ण
 
-/* Insert given block to the beginning of list with free entries */
-static int insert_free_dqentry(struct qtree_mem_dqinfo *info, char *buf,
-			       uint blk)
-{
-	char *tmpbuf = getdqbuf(info->dqi_usable_bs);
-	struct qt_disk_dqdbheader *dh = (struct qt_disk_dqdbheader *)buf;
-	int err;
+/* Insert given block to the beginning of list with मुक्त entries */
+अटल पूर्णांक insert_मुक्त_dqentry(काष्ठा qtree_mem_dqinfo *info, अक्षर *buf,
+			       uपूर्णांक blk)
+अणु
+	अक्षर *पंचांगpbuf = getdqbuf(info->dqi_usable_bs);
+	काष्ठा qt_disk_dqdbheader *dh = (काष्ठा qt_disk_dqdbheader *)buf;
+	पूर्णांक err;
 
-	if (!tmpbuf)
-		return -ENOMEM;
-	dh->dqdh_next_free = cpu_to_le32(info->dqi_free_entry);
-	dh->dqdh_prev_free = cpu_to_le32(0);
-	err = write_blk(info, blk, buf);
-	if (err < 0)
-		goto out_buf;
-	if (info->dqi_free_entry) {
-		err = read_blk(info, info->dqi_free_entry, tmpbuf);
-		if (err < 0)
-			goto out_buf;
-		((struct qt_disk_dqdbheader *)tmpbuf)->dqdh_prev_free =
+	अगर (!पंचांगpbuf)
+		वापस -ENOMEM;
+	dh->dqdh_next_मुक्त = cpu_to_le32(info->dqi_मुक्त_entry);
+	dh->dqdh_prev_मुक्त = cpu_to_le32(0);
+	err = ग_लिखो_blk(info, blk, buf);
+	अगर (err < 0)
+		जाओ out_buf;
+	अगर (info->dqi_मुक्त_entry) अणु
+		err = पढ़ो_blk(info, info->dqi_मुक्त_entry, पंचांगpbuf);
+		अगर (err < 0)
+			जाओ out_buf;
+		((काष्ठा qt_disk_dqdbheader *)पंचांगpbuf)->dqdh_prev_मुक्त =
 							cpu_to_le32(blk);
-		err = write_blk(info, info->dqi_free_entry, tmpbuf);
-		if (err < 0)
-			goto out_buf;
-	}
-	kfree(tmpbuf);
-	info->dqi_free_entry = blk;
+		err = ग_लिखो_blk(info, info->dqi_मुक्त_entry, पंचांगpbuf);
+		अगर (err < 0)
+			जाओ out_buf;
+	पूर्ण
+	kमुक्त(पंचांगpbuf);
+	info->dqi_मुक्त_entry = blk;
 	mark_info_dirty(info->dqi_sb, info->dqi_type);
-	return 0;
+	वापस 0;
 out_buf:
-	kfree(tmpbuf);
-	return err;
-}
+	kमुक्त(पंचांगpbuf);
+	वापस err;
+पूर्ण
 
-/* Is the entry in the block free? */
-int qtree_entry_unused(struct qtree_mem_dqinfo *info, char *disk)
-{
-	int i;
+/* Is the entry in the block मुक्त? */
+पूर्णांक qtree_entry_unused(काष्ठा qtree_mem_dqinfo *info, अक्षर *disk)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < info->dqi_entry_size; i++)
-		if (disk[i])
-			return 0;
-	return 1;
-}
+	क्रम (i = 0; i < info->dqi_entry_size; i++)
+		अगर (disk[i])
+			वापस 0;
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(qtree_entry_unused);
 
-/* Find space for dquot */
-static uint find_free_dqentry(struct qtree_mem_dqinfo *info,
-			      struct dquot *dquot, int *err)
-{
-	uint blk, i;
-	struct qt_disk_dqdbheader *dh;
-	char *buf = getdqbuf(info->dqi_usable_bs);
-	char *ddquot;
+/* Find space क्रम dquot */
+अटल uपूर्णांक find_मुक्त_dqentry(काष्ठा qtree_mem_dqinfo *info,
+			      काष्ठा dquot *dquot, पूर्णांक *err)
+अणु
+	uपूर्णांक blk, i;
+	काष्ठा qt_disk_dqdbheader *dh;
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
+	अक्षर *ddquot;
 
 	*err = 0;
-	if (!buf) {
+	अगर (!buf) अणु
 		*err = -ENOMEM;
-		return 0;
-	}
-	dh = (struct qt_disk_dqdbheader *)buf;
-	if (info->dqi_free_entry) {
-		blk = info->dqi_free_entry;
-		*err = read_blk(info, blk, buf);
-		if (*err < 0)
-			goto out_buf;
-	} else {
-		blk = get_free_dqblk(info);
-		if ((int)blk < 0) {
+		वापस 0;
+	पूर्ण
+	dh = (काष्ठा qt_disk_dqdbheader *)buf;
+	अगर (info->dqi_मुक्त_entry) अणु
+		blk = info->dqi_मुक्त_entry;
+		*err = पढ़ो_blk(info, blk, buf);
+		अगर (*err < 0)
+			जाओ out_buf;
+	पूर्ण अन्यथा अणु
+		blk = get_मुक्त_dqblk(info);
+		अगर ((पूर्णांक)blk < 0) अणु
 			*err = blk;
-			kfree(buf);
-			return 0;
-		}
-		memset(buf, 0, info->dqi_usable_bs);
-		/* This is enough as the block is already zeroed and the entry
+			kमुक्त(buf);
+			वापस 0;
+		पूर्ण
+		स_रखो(buf, 0, info->dqi_usable_bs);
+		/* This is enough as the block is alपढ़ोy zeroed and the entry
 		 * list is empty... */
-		info->dqi_free_entry = blk;
+		info->dqi_मुक्त_entry = blk;
 		mark_info_dirty(dquot->dq_sb, dquot->dq_id.type);
-	}
+	पूर्ण
 	/* Block will be full? */
-	if (le16_to_cpu(dh->dqdh_entries) + 1 >= qtree_dqstr_in_blk(info)) {
-		*err = remove_free_dqentry(info, buf, blk);
-		if (*err < 0) {
+	अगर (le16_to_cpu(dh->dqdh_entries) + 1 >= qtree_dqstr_in_blk(info)) अणु
+		*err = हटाओ_मुक्त_dqentry(info, buf, blk);
+		अगर (*err < 0) अणु
 			quota_error(dquot->dq_sb, "Can't remove block (%u) "
 				    "from entry free list", blk);
-			goto out_buf;
-		}
-	}
+			जाओ out_buf;
+		पूर्ण
+	पूर्ण
 	le16_add_cpu(&dh->dqdh_entries, 1);
-	/* Find free structure in block */
-	ddquot = buf + sizeof(struct qt_disk_dqdbheader);
-	for (i = 0; i < qtree_dqstr_in_blk(info); i++) {
-		if (qtree_entry_unused(info, ddquot))
-			break;
+	/* Find मुक्त काष्ठाure in block */
+	ddquot = buf + माप(काष्ठा qt_disk_dqdbheader);
+	क्रम (i = 0; i < qtree_dqstr_in_blk(info); i++) अणु
+		अगर (qtree_entry_unused(info, ddquot))
+			अवरोध;
 		ddquot += info->dqi_entry_size;
-	}
-#ifdef __QUOTA_QT_PARANOIA
-	if (i == qtree_dqstr_in_blk(info)) {
+	पूर्ण
+#अगर_घोषित __QUOTA_QT_PARANOIA
+	अगर (i == qtree_dqstr_in_blk(info)) अणु
 		quota_error(dquot->dq_sb, "Data block full but it shouldn't");
 		*err = -EIO;
-		goto out_buf;
-	}
-#endif
-	*err = write_blk(info, blk, buf);
-	if (*err < 0) {
+		जाओ out_buf;
+	पूर्ण
+#पूर्ण_अगर
+	*err = ग_लिखो_blk(info, blk, buf);
+	अगर (*err < 0) अणु
 		quota_error(dquot->dq_sb, "Can't write quota data block %u",
 			    blk);
-		goto out_buf;
-	}
+		जाओ out_buf;
+	पूर्ण
 	dquot->dq_off = ((loff_t)blk << info->dqi_blocksize_bits) +
-			sizeof(struct qt_disk_dqdbheader) +
+			माप(काष्ठा qt_disk_dqdbheader) +
 			i * info->dqi_entry_size;
-	kfree(buf);
-	return blk;
+	kमुक्त(buf);
+	वापस blk;
 out_buf:
-	kfree(buf);
-	return 0;
-}
+	kमुक्त(buf);
+	वापस 0;
+पूर्ण
 
-/* Insert reference to structure into the trie */
-static int do_insert_tree(struct qtree_mem_dqinfo *info, struct dquot *dquot,
-			  uint *treeblk, int depth)
-{
-	char *buf = getdqbuf(info->dqi_usable_bs);
-	int ret = 0, newson = 0, newact = 0;
+/* Insert reference to काष्ठाure पूर्णांकo the trie */
+अटल पूर्णांक करो_insert_tree(काष्ठा qtree_mem_dqinfo *info, काष्ठा dquot *dquot,
+			  uपूर्णांक *treeblk, पूर्णांक depth)
+अणु
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
+	पूर्णांक ret = 0, newson = 0, newact = 0;
 	__le32 *ref;
-	uint newblk;
+	uपूर्णांक newblk;
 
-	if (!buf)
-		return -ENOMEM;
-	if (!*treeblk) {
-		ret = get_free_dqblk(info);
-		if (ret < 0)
-			goto out_buf;
+	अगर (!buf)
+		वापस -ENOMEM;
+	अगर (!*treeblk) अणु
+		ret = get_मुक्त_dqblk(info);
+		अगर (ret < 0)
+			जाओ out_buf;
 		*treeblk = ret;
-		memset(buf, 0, info->dqi_usable_bs);
+		स_रखो(buf, 0, info->dqi_usable_bs);
 		newact = 1;
-	} else {
-		ret = read_blk(info, *treeblk, buf);
-		if (ret < 0) {
+	पूर्ण अन्यथा अणु
+		ret = पढ़ो_blk(info, *treeblk, buf);
+		अगर (ret < 0) अणु
 			quota_error(dquot->dq_sb, "Can't read tree quota "
 				    "block %u", *treeblk);
-			goto out_buf;
-		}
-	}
+			जाओ out_buf;
+		पूर्ण
+	पूर्ण
 	ref = (__le32 *)buf;
 	newblk = le32_to_cpu(ref[get_index(info, dquot->dq_id, depth)]);
-	if (!newblk)
+	अगर (!newblk)
 		newson = 1;
-	if (depth == info->dqi_qtree_depth - 1) {
-#ifdef __QUOTA_QT_PARANOIA
-		if (newblk) {
+	अगर (depth == info->dqi_qtree_depth - 1) अणु
+#अगर_घोषित __QUOTA_QT_PARANOIA
+		अगर (newblk) अणु
 			quota_error(dquot->dq_sb, "Inserting already present "
 				    "quota entry (block %u)",
 				    le32_to_cpu(ref[get_index(info,
 						dquot->dq_id, depth)]));
 			ret = -EIO;
-			goto out_buf;
-		}
-#endif
-		newblk = find_free_dqentry(info, dquot, &ret);
-	} else {
-		ret = do_insert_tree(info, dquot, &newblk, depth+1);
-	}
-	if (newson && ret >= 0) {
+			जाओ out_buf;
+		पूर्ण
+#पूर्ण_अगर
+		newblk = find_मुक्त_dqentry(info, dquot, &ret);
+	पूर्ण अन्यथा अणु
+		ret = करो_insert_tree(info, dquot, &newblk, depth+1);
+	पूर्ण
+	अगर (newson && ret >= 0) अणु
 		ref[get_index(info, dquot->dq_id, depth)] =
 							cpu_to_le32(newblk);
-		ret = write_blk(info, *treeblk, buf);
-	} else if (newact && ret < 0) {
-		put_free_dqblk(info, buf, *treeblk);
-	}
+		ret = ग_लिखो_blk(info, *treeblk, buf);
+	पूर्ण अन्यथा अगर (newact && ret < 0) अणु
+		put_मुक्त_dqblk(info, buf, *treeblk);
+	पूर्ण
 out_buf:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-/* Wrapper for inserting quota structure into tree */
-static inline int dq_insert_tree(struct qtree_mem_dqinfo *info,
-				 struct dquot *dquot)
-{
-	int tmp = QT_TREEOFF;
+/* Wrapper क्रम inserting quota काष्ठाure पूर्णांकo tree */
+अटल अंतरभूत पूर्णांक dq_insert_tree(काष्ठा qtree_mem_dqinfo *info,
+				 काष्ठा dquot *dquot)
+अणु
+	पूर्णांक पंचांगp = QT_TREखातापूर्णF;
 
-#ifdef __QUOTA_QT_PARANOIA
-	if (info->dqi_blocks <= QT_TREEOFF) {
+#अगर_घोषित __QUOTA_QT_PARANOIA
+	अगर (info->dqi_blocks <= QT_TREखातापूर्णF) अणु
 		quota_error(dquot->dq_sb, "Quota tree root isn't allocated!");
-		return -EIO;
-	}
-#endif
-	return do_insert_tree(info, dquot, &tmp, 0);
-}
+		वापस -EIO;
+	पूर्ण
+#पूर्ण_अगर
+	वापस करो_insert_tree(info, dquot, &पंचांगp, 0);
+पूर्ण
 
 /*
- * We don't have to be afraid of deadlocks as we never have quotas on quota
+ * We करोn't have to be afraid of deadlocks as we never have quotas on quota
  * files...
  */
-int qtree_write_dquot(struct qtree_mem_dqinfo *info, struct dquot *dquot)
-{
-	int type = dquot->dq_id.type;
-	struct super_block *sb = dquot->dq_sb;
-	ssize_t ret;
-	char *ddquot = getdqbuf(info->dqi_entry_size);
+पूर्णांक qtree_ग_लिखो_dquot(काष्ठा qtree_mem_dqinfo *info, काष्ठा dquot *dquot)
+अणु
+	पूर्णांक type = dquot->dq_id.type;
+	काष्ठा super_block *sb = dquot->dq_sb;
+	sमाप_प्रकार ret;
+	अक्षर *ddquot = getdqbuf(info->dqi_entry_size);
 
-	if (!ddquot)
-		return -ENOMEM;
+	अगर (!ddquot)
+		वापस -ENOMEM;
 
 	/* dq_off is guarded by dqio_sem */
-	if (!dquot->dq_off) {
+	अगर (!dquot->dq_off) अणु
 		ret = dq_insert_tree(info, dquot);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			quota_error(sb, "Error %zd occurred while creating "
 				    "quota", ret);
-			kfree(ddquot);
-			return ret;
-		}
-	}
+			kमुक्त(ddquot);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	spin_lock(&dquot->dq_dqb_lock);
 	info->dqi_ops->mem2disk_dqblk(ddquot, dquot);
 	spin_unlock(&dquot->dq_dqb_lock);
-	ret = sb->s_op->quota_write(sb, type, ddquot, info->dqi_entry_size,
+	ret = sb->s_op->quota_ग_लिखो(sb, type, ddquot, info->dqi_entry_size,
 				    dquot->dq_off);
-	if (ret != info->dqi_entry_size) {
+	अगर (ret != info->dqi_entry_size) अणु
 		quota_error(sb, "dquota write failed");
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -ENOSPC;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 	dqstats_inc(DQST_WRITES);
-	kfree(ddquot);
+	kमुक्त(ddquot);
 
-	return ret;
-}
-EXPORT_SYMBOL(qtree_write_dquot);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(qtree_ग_लिखो_dquot);
 
 /* Free dquot entry in data block */
-static int free_dqentry(struct qtree_mem_dqinfo *info, struct dquot *dquot,
-			uint blk)
-{
-	struct qt_disk_dqdbheader *dh;
-	char *buf = getdqbuf(info->dqi_usable_bs);
-	int ret = 0;
+अटल पूर्णांक मुक्त_dqentry(काष्ठा qtree_mem_dqinfo *info, काष्ठा dquot *dquot,
+			uपूर्णांक blk)
+अणु
+	काष्ठा qt_disk_dqdbheader *dh;
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
+	पूर्णांक ret = 0;
 
-	if (!buf)
-		return -ENOMEM;
-	if (dquot->dq_off >> info->dqi_blocksize_bits != blk) {
+	अगर (!buf)
+		वापस -ENOMEM;
+	अगर (dquot->dq_off >> info->dqi_blocksize_bits != blk) अणु
 		quota_error(dquot->dq_sb, "Quota structure has offset to "
 			"other block (%u) than it should (%u)", blk,
-			(uint)(dquot->dq_off >> info->dqi_blocksize_bits));
-		goto out_buf;
-	}
-	ret = read_blk(info, blk, buf);
-	if (ret < 0) {
+			(uपूर्णांक)(dquot->dq_off >> info->dqi_blocksize_bits));
+		जाओ out_buf;
+	पूर्ण
+	ret = पढ़ो_blk(info, blk, buf);
+	अगर (ret < 0) अणु
 		quota_error(dquot->dq_sb, "Can't read quota data block %u",
 			    blk);
-		goto out_buf;
-	}
-	dh = (struct qt_disk_dqdbheader *)buf;
+		जाओ out_buf;
+	पूर्ण
+	dh = (काष्ठा qt_disk_dqdbheader *)buf;
 	le16_add_cpu(&dh->dqdh_entries, -1);
-	if (!le16_to_cpu(dh->dqdh_entries)) {	/* Block got free? */
-		ret = remove_free_dqentry(info, buf, blk);
-		if (ret >= 0)
-			ret = put_free_dqblk(info, buf, blk);
-		if (ret < 0) {
+	अगर (!le16_to_cpu(dh->dqdh_entries)) अणु	/* Block got मुक्त? */
+		ret = हटाओ_मुक्त_dqentry(info, buf, blk);
+		अगर (ret >= 0)
+			ret = put_मुक्त_dqblk(info, buf, blk);
+		अगर (ret < 0) अणु
 			quota_error(dquot->dq_sb, "Can't move quota data block "
 				    "(%u) to free list", blk);
-			goto out_buf;
-		}
-	} else {
-		memset(buf +
+			जाओ out_buf;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		स_रखो(buf +
 		       (dquot->dq_off & ((1 << info->dqi_blocksize_bits) - 1)),
 		       0, info->dqi_entry_size);
-		if (le16_to_cpu(dh->dqdh_entries) ==
-		    qtree_dqstr_in_blk(info) - 1) {
-			/* Insert will write block itself */
-			ret = insert_free_dqentry(info, buf, blk);
-			if (ret < 0) {
+		अगर (le16_to_cpu(dh->dqdh_entries) ==
+		    qtree_dqstr_in_blk(info) - 1) अणु
+			/* Insert will ग_लिखो block itself */
+			ret = insert_मुक्त_dqentry(info, buf, blk);
+			अगर (ret < 0) अणु
 				quota_error(dquot->dq_sb, "Can't insert quota "
 				    "data block (%u) to free entry list", blk);
-				goto out_buf;
-			}
-		} else {
-			ret = write_blk(info, blk, buf);
-			if (ret < 0) {
+				जाओ out_buf;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			ret = ग_लिखो_blk(info, blk, buf);
+			अगर (ret < 0) अणु
 				quota_error(dquot->dq_sb, "Can't write quota "
 					    "data block %u", blk);
-				goto out_buf;
-			}
-		}
-	}
+				जाओ out_buf;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	dquot->dq_off = 0;	/* Quota is now unattached */
 out_buf:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /* Remove reference to dquot from tree */
-static int remove_tree(struct qtree_mem_dqinfo *info, struct dquot *dquot,
-		       uint *blk, int depth)
-{
-	char *buf = getdqbuf(info->dqi_usable_bs);
-	int ret = 0;
-	uint newblk;
+अटल पूर्णांक हटाओ_tree(काष्ठा qtree_mem_dqinfo *info, काष्ठा dquot *dquot,
+		       uपूर्णांक *blk, पूर्णांक depth)
+अणु
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
+	पूर्णांक ret = 0;
+	uपूर्णांक newblk;
 	__le32 *ref = (__le32 *)buf;
 
-	if (!buf)
-		return -ENOMEM;
-	ret = read_blk(info, *blk, buf);
-	if (ret < 0) {
+	अगर (!buf)
+		वापस -ENOMEM;
+	ret = पढ़ो_blk(info, *blk, buf);
+	अगर (ret < 0) अणु
 		quota_error(dquot->dq_sb, "Can't read quota data block %u",
 			    *blk);
-		goto out_buf;
-	}
+		जाओ out_buf;
+	पूर्ण
 	newblk = le32_to_cpu(ref[get_index(info, dquot->dq_id, depth)]);
-	if (depth == info->dqi_qtree_depth - 1) {
-		ret = free_dqentry(info, dquot, newblk);
+	अगर (depth == info->dqi_qtree_depth - 1) अणु
+		ret = मुक्त_dqentry(info, dquot, newblk);
 		newblk = 0;
-	} else {
-		ret = remove_tree(info, dquot, &newblk, depth+1);
-	}
-	if (ret >= 0 && !newblk) {
-		int i;
+	पूर्ण अन्यथा अणु
+		ret = हटाओ_tree(info, dquot, &newblk, depth+1);
+	पूर्ण
+	अगर (ret >= 0 && !newblk) अणु
+		पूर्णांक i;
 		ref[get_index(info, dquot->dq_id, depth)] = cpu_to_le32(0);
 		/* Block got empty? */
-		for (i = 0; i < (info->dqi_usable_bs >> 2) && !ref[i]; i++)
+		क्रम (i = 0; i < (info->dqi_usable_bs >> 2) && !ref[i]; i++)
 			;
-		/* Don't put the root block into the free block list */
-		if (i == (info->dqi_usable_bs >> 2)
-		    && *blk != QT_TREEOFF) {
-			put_free_dqblk(info, buf, *blk);
+		/* Don't put the root block पूर्णांकo the मुक्त block list */
+		अगर (i == (info->dqi_usable_bs >> 2)
+		    && *blk != QT_TREखातापूर्णF) अणु
+			put_मुक्त_dqblk(info, buf, *blk);
 			*blk = 0;
-		} else {
-			ret = write_blk(info, *blk, buf);
-			if (ret < 0)
+		पूर्ण अन्यथा अणु
+			ret = ग_लिखो_blk(info, *blk, buf);
+			अगर (ret < 0)
 				quota_error(dquot->dq_sb,
 					    "Can't write quota tree block %u",
 					    *blk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out_buf:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /* Delete dquot from tree */
-int qtree_delete_dquot(struct qtree_mem_dqinfo *info, struct dquot *dquot)
-{
-	uint tmp = QT_TREEOFF;
+पूर्णांक qtree_delete_dquot(काष्ठा qtree_mem_dqinfo *info, काष्ठा dquot *dquot)
+अणु
+	uपूर्णांक पंचांगp = QT_TREखातापूर्णF;
 
-	if (!dquot->dq_off)	/* Even not allocated? */
-		return 0;
-	return remove_tree(info, dquot, &tmp, 0);
-}
+	अगर (!dquot->dq_off)	/* Even not allocated? */
+		वापस 0;
+	वापस हटाओ_tree(info, dquot, &पंचांगp, 0);
+पूर्ण
 EXPORT_SYMBOL(qtree_delete_dquot);
 
 /* Find entry in block */
-static loff_t find_block_dqentry(struct qtree_mem_dqinfo *info,
-				 struct dquot *dquot, uint blk)
-{
-	char *buf = getdqbuf(info->dqi_usable_bs);
+अटल loff_t find_block_dqentry(काष्ठा qtree_mem_dqinfo *info,
+				 काष्ठा dquot *dquot, uपूर्णांक blk)
+अणु
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
 	loff_t ret = 0;
-	int i;
-	char *ddquot;
+	पूर्णांक i;
+	अक्षर *ddquot;
 
-	if (!buf)
-		return -ENOMEM;
-	ret = read_blk(info, blk, buf);
-	if (ret < 0) {
+	अगर (!buf)
+		वापस -ENOMEM;
+	ret = पढ़ो_blk(info, blk, buf);
+	अगर (ret < 0) अणु
 		quota_error(dquot->dq_sb, "Can't read quota tree "
 			    "block %u", blk);
-		goto out_buf;
-	}
-	ddquot = buf + sizeof(struct qt_disk_dqdbheader);
-	for (i = 0; i < qtree_dqstr_in_blk(info); i++) {
-		if (info->dqi_ops->is_id(ddquot, dquot))
-			break;
+		जाओ out_buf;
+	पूर्ण
+	ddquot = buf + माप(काष्ठा qt_disk_dqdbheader);
+	क्रम (i = 0; i < qtree_dqstr_in_blk(info); i++) अणु
+		अगर (info->dqi_ops->is_id(ddquot, dquot))
+			अवरोध;
 		ddquot += info->dqi_entry_size;
-	}
-	if (i == qtree_dqstr_in_blk(info)) {
+	पूर्ण
+	अगर (i == qtree_dqstr_in_blk(info)) अणु
 		quota_error(dquot->dq_sb,
 			    "Quota for id %u referenced but not present",
 			    from_kqid(&init_user_ns, dquot->dq_id));
 		ret = -EIO;
-		goto out_buf;
-	} else {
-		ret = ((loff_t)blk << info->dqi_blocksize_bits) + sizeof(struct
+		जाओ out_buf;
+	पूर्ण अन्यथा अणु
+		ret = ((loff_t)blk << info->dqi_blocksize_bits) + माप(काष्ठा
 		  qt_disk_dqdbheader) + i * info->dqi_entry_size;
-	}
+	पूर्ण
 out_buf:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-/* Find entry for given id in the tree */
-static loff_t find_tree_dqentry(struct qtree_mem_dqinfo *info,
-				struct dquot *dquot, uint blk, int depth)
-{
-	char *buf = getdqbuf(info->dqi_usable_bs);
+/* Find entry क्रम given id in the tree */
+अटल loff_t find_tree_dqentry(काष्ठा qtree_mem_dqinfo *info,
+				काष्ठा dquot *dquot, uपूर्णांक blk, पूर्णांक depth)
+अणु
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
 	loff_t ret = 0;
 	__le32 *ref = (__le32 *)buf;
 
-	if (!buf)
-		return -ENOMEM;
-	ret = read_blk(info, blk, buf);
-	if (ret < 0) {
+	अगर (!buf)
+		वापस -ENOMEM;
+	ret = पढ़ो_blk(info, blk, buf);
+	अगर (ret < 0) अणु
 		quota_error(dquot->dq_sb, "Can't read quota tree block %u",
 			    blk);
-		goto out_buf;
-	}
+		जाओ out_buf;
+	पूर्ण
 	ret = 0;
 	blk = le32_to_cpu(ref[get_index(info, dquot->dq_id, depth)]);
-	if (!blk)	/* No reference? */
-		goto out_buf;
-	if (depth < info->dqi_qtree_depth - 1)
+	अगर (!blk)	/* No reference? */
+		जाओ out_buf;
+	अगर (depth < info->dqi_qtree_depth - 1)
 		ret = find_tree_dqentry(info, dquot, blk, depth+1);
-	else
+	अन्यथा
 		ret = find_block_dqentry(info, dquot, blk);
 out_buf:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-/* Find entry for given id in the tree - wrapper function */
-static inline loff_t find_dqentry(struct qtree_mem_dqinfo *info,
-				  struct dquot *dquot)
-{
-	return find_tree_dqentry(info, dquot, QT_TREEOFF, 0);
-}
+/* Find entry क्रम given id in the tree - wrapper function */
+अटल अंतरभूत loff_t find_dqentry(काष्ठा qtree_mem_dqinfo *info,
+				  काष्ठा dquot *dquot)
+अणु
+	वापस find_tree_dqentry(info, dquot, QT_TREखातापूर्णF, 0);
+पूर्ण
 
-int qtree_read_dquot(struct qtree_mem_dqinfo *info, struct dquot *dquot)
-{
-	int type = dquot->dq_id.type;
-	struct super_block *sb = dquot->dq_sb;
+पूर्णांक qtree_पढ़ो_dquot(काष्ठा qtree_mem_dqinfo *info, काष्ठा dquot *dquot)
+अणु
+	पूर्णांक type = dquot->dq_id.type;
+	काष्ठा super_block *sb = dquot->dq_sb;
 	loff_t offset;
-	char *ddquot;
-	int ret = 0;
+	अक्षर *ddquot;
+	पूर्णांक ret = 0;
 
-#ifdef __QUOTA_QT_PARANOIA
+#अगर_घोषित __QUOTA_QT_PARANOIA
 	/* Invalidated quota? */
-	if (!sb_dqopt(dquot->dq_sb)->files[type]) {
+	अगर (!sb_dqopt(dquot->dq_sb)->files[type]) अणु
 		quota_error(sb, "Quota invalidated while reading!");
-		return -EIO;
-	}
-#endif
+		वापस -EIO;
+	पूर्ण
+#पूर्ण_अगर
 	/* Do we know offset of the dquot entry in the quota file? */
-	if (!dquot->dq_off) {
+	अगर (!dquot->dq_off) अणु
 		offset = find_dqentry(info, dquot);
-		if (offset <= 0) {	/* Entry not present? */
-			if (offset < 0)
+		अगर (offset <= 0) अणु	/* Entry not present? */
+			अगर (offset < 0)
 				quota_error(sb,"Can't read quota structure "
 					    "for id %u",
 					    from_kqid(&init_user_ns,
 						      dquot->dq_id));
 			dquot->dq_off = 0;
 			set_bit(DQ_FAKE_B, &dquot->dq_flags);
-			memset(&dquot->dq_dqb, 0, sizeof(struct mem_dqblk));
+			स_रखो(&dquot->dq_dqb, 0, माप(काष्ठा mem_dqblk));
 			ret = offset;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		dquot->dq_off = offset;
-	}
+	पूर्ण
 	ddquot = getdqbuf(info->dqi_entry_size);
-	if (!ddquot)
-		return -ENOMEM;
-	ret = sb->s_op->quota_read(sb, type, ddquot, info->dqi_entry_size,
+	अगर (!ddquot)
+		वापस -ENOMEM;
+	ret = sb->s_op->quota_पढ़ो(sb, type, ddquot, info->dqi_entry_size,
 				   dquot->dq_off);
-	if (ret != info->dqi_entry_size) {
-		if (ret >= 0)
+	अगर (ret != info->dqi_entry_size) अणु
+		अगर (ret >= 0)
 			ret = -EIO;
 		quota_error(sb, "Error while reading quota structure for id %u",
 			    from_kqid(&init_user_ns, dquot->dq_id));
 		set_bit(DQ_FAKE_B, &dquot->dq_flags);
-		memset(&dquot->dq_dqb, 0, sizeof(struct mem_dqblk));
-		kfree(ddquot);
-		goto out;
-	}
+		स_रखो(&dquot->dq_dqb, 0, माप(काष्ठा mem_dqblk));
+		kमुक्त(ddquot);
+		जाओ out;
+	पूर्ण
 	spin_lock(&dquot->dq_dqb_lock);
 	info->dqi_ops->disk2mem_dqblk(dquot, ddquot);
-	if (!dquot->dq_dqb.dqb_bhardlimit &&
+	अगर (!dquot->dq_dqb.dqb_bhardlimit &&
 	    !dquot->dq_dqb.dqb_bsoftlimit &&
 	    !dquot->dq_dqb.dqb_ihardlimit &&
 	    !dquot->dq_dqb.dqb_isoftlimit)
 		set_bit(DQ_FAKE_B, &dquot->dq_flags);
 	spin_unlock(&dquot->dq_dqb_lock);
-	kfree(ddquot);
+	kमुक्त(ddquot);
 out:
 	dqstats_inc(DQST_READS);
-	return ret;
-}
-EXPORT_SYMBOL(qtree_read_dquot);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(qtree_पढ़ो_dquot);
 
 /* Check whether dquot should not be deleted. We know we are
  * the only one operating on dquot (thanks to dq_lock) */
-int qtree_release_dquot(struct qtree_mem_dqinfo *info, struct dquot *dquot)
-{
-	if (test_bit(DQ_FAKE_B, &dquot->dq_flags) &&
+पूर्णांक qtree_release_dquot(काष्ठा qtree_mem_dqinfo *info, काष्ठा dquot *dquot)
+अणु
+	अगर (test_bit(DQ_FAKE_B, &dquot->dq_flags) &&
 	    !(dquot->dq_dqb.dqb_curinodes | dquot->dq_dqb.dqb_curspace))
-		return qtree_delete_dquot(info, dquot);
-	return 0;
-}
+		वापस qtree_delete_dquot(info, dquot);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(qtree_release_dquot);
 
-static int find_next_id(struct qtree_mem_dqinfo *info, qid_t *id,
-			unsigned int blk, int depth)
-{
-	char *buf = getdqbuf(info->dqi_usable_bs);
+अटल पूर्णांक find_next_id(काष्ठा qtree_mem_dqinfo *info, qid_t *id,
+			अचिन्हित पूर्णांक blk, पूर्णांक depth)
+अणु
+	अक्षर *buf = getdqbuf(info->dqi_usable_bs);
 	__le32 *ref = (__le32 *)buf;
-	ssize_t ret;
-	unsigned int epb = info->dqi_usable_bs >> 2;
-	unsigned int level_inc = 1;
-	int i;
+	sमाप_प्रकार ret;
+	अचिन्हित पूर्णांक epb = info->dqi_usable_bs >> 2;
+	अचिन्हित पूर्णांक level_inc = 1;
+	पूर्णांक i;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	for (i = depth; i < info->dqi_qtree_depth - 1; i++)
+	क्रम (i = depth; i < info->dqi_qtree_depth - 1; i++)
 		level_inc *= epb;
 
-	ret = read_blk(info, blk, buf);
-	if (ret < 0) {
+	ret = पढ़ो_blk(info, blk, buf);
+	अगर (ret < 0) अणु
 		quota_error(info->dqi_sb,
 			    "Can't read quota tree block %u", blk);
-		goto out_buf;
-	}
-	for (i = __get_index(info, *id, depth); i < epb; i++) {
-		if (ref[i] == cpu_to_le32(0)) {
+		जाओ out_buf;
+	पूर्ण
+	क्रम (i = __get_index(info, *id, depth); i < epb; i++) अणु
+		अगर (ref[i] == cpu_to_le32(0)) अणु
 			*id += level_inc;
-			continue;
-		}
-		if (depth == info->dqi_qtree_depth - 1) {
+			जारी;
+		पूर्ण
+		अगर (depth == info->dqi_qtree_depth - 1) अणु
 			ret = 0;
-			goto out_buf;
-		}
+			जाओ out_buf;
+		पूर्ण
 		ret = find_next_id(info, id, le32_to_cpu(ref[i]), depth + 1);
-		if (ret != -ENOENT)
-			break;
-	}
-	if (i == epb) {
+		अगर (ret != -ENOENT)
+			अवरोध;
+	पूर्ण
+	अगर (i == epb) अणु
 		ret = -ENOENT;
-		goto out_buf;
-	}
+		जाओ out_buf;
+	पूर्ण
 out_buf:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-int qtree_get_next_id(struct qtree_mem_dqinfo *info, struct kqid *qid)
-{
+पूर्णांक qtree_get_next_id(काष्ठा qtree_mem_dqinfo *info, काष्ठा kqid *qid)
+अणु
 	qid_t id = from_kqid(&init_user_ns, *qid);
-	int ret;
+	पूर्णांक ret;
 
-	ret = find_next_id(info, &id, QT_TREEOFF, 0);
-	if (ret < 0)
-		return ret;
+	ret = find_next_id(info, &id, QT_TREखातापूर्णF, 0);
+	अगर (ret < 0)
+		वापस ret;
 	*qid = make_kqid(&init_user_ns, qid->type, id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(qtree_get_next_id);

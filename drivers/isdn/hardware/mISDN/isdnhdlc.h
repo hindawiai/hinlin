@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * hdlc.h  --  General purpose ISDN HDLC decoder.
  *
  * Implementation of a HDLC decoder/encoder in software.
- * Necessary because some ISDN devices don't have HDLC
+ * Necessary because some ISDN devices करोn't have HDLC
  * controllers.
  *
  * Copyright (C)
- *	2009	Karsten Keil		<keil@b1-systems.de>
- *	2002	Wolfgang Mües		<wolfgang@iksw-muees.de>
+ *	2009	Karsten Keil		<keil@b1-प्रणालीs.de>
+ *	2002	Wolfgang Mथञes		<wolfgang@iksw-muees.de>
  *	2001	Frode Isaksen		<fisaksen@bewan.com>
  *	2001	Kai Germaschewski	<kai.germaschewski@gmx.de>
  */
 
-#ifndef __ISDNHDLC_H__
-#define __ISDNHDLC_H__
+#अगर_अघोषित __ISDNHDLC_H__
+#घोषणा __ISDNHDLC_H__
 
-struct isdnhdlc_vars {
-	int bit_shift;
-	int hdlc_bits1;
-	int data_bits;
-	int ffbit_shift;	/* encoding only */
-	int state;
-	int dstpos;
+काष्ठा isdnhdlc_vars अणु
+	पूर्णांक bit_shअगरt;
+	पूर्णांक hdlc_bits1;
+	पूर्णांक data_bits;
+	पूर्णांक ffbit_shअगरt;	/* encoding only */
+	पूर्णांक state;
+	पूर्णांक dstpos;
 
 	u16 crc;
 
 	u8 cbin;
-	u8 shift_reg;
+	u8 shअगरt_reg;
 	u8 ffvalue;
 
-	/* set if transferring data */
+	/* set अगर transferring data */
 	u32 data_received:1;
-	/* set if D channel (send idle instead of flags) */
+	/* set अगर D channel (send idle instead of flags) */
 	u32 dchannel:1;
-	/* set if 56K adaptation */
-	u32 do_adapt56:1;
-	/* set if in closing phase (need to send CRC + flag) */
-	u32 do_closing:1;
-	/* set if data is bitreverse */
-	u32 do_bitreverse:1;
-};
+	/* set अगर 56K adaptation */
+	u32 करो_adapt56:1;
+	/* set अगर in closing phase (need to send CRC + flag) */
+	u32 करो_closing:1;
+	/* set अगर data is bitreverse */
+	u32 करो_bitreverse:1;
+पूर्ण;
 
 /* Feature Flags */
-#define HDLC_56KBIT	0x01
-#define HDLC_DCHANNEL	0x02
-#define HDLC_BITREVERSE	0x04
+#घोषणा HDLC_56KBIT	0x01
+#घोषणा HDLC_DCHANNEL	0x02
+#घोषणा HDLC_BITREVERSE	0x04
 
 /*
-  The return value from isdnhdlc_decode is
-  the frame length, 0 if no complete frame was decoded,
+  The वापस value from isdnhdlc_decode is
+  the frame length, 0 अगर no complete frame was decoded,
   or a negative error number
 */
-#define HDLC_FRAMING_ERROR     1
-#define HDLC_CRC_ERROR         2
-#define HDLC_LENGTH_ERROR      3
+#घोषणा HDLC_FRAMING_ERROR     1
+#घोषणा HDLC_CRC_ERROR         2
+#घोषणा HDLC_LENGTH_ERROR      3
 
-extern void	isdnhdlc_rcv_init(struct isdnhdlc_vars *hdlc, u32 features);
+बाह्य व्योम	isdnhdlc_rcv_init(काष्ठा isdnhdlc_vars *hdlc, u32 features);
 
-extern int	isdnhdlc_decode(struct isdnhdlc_vars *hdlc, const u8 *src,
-			int slen, int *count, u8 *dst, int dsize);
+बाह्य पूर्णांक	isdnhdlc_decode(काष्ठा isdnhdlc_vars *hdlc, स्थिर u8 *src,
+			पूर्णांक slen, पूर्णांक *count, u8 *dst, पूर्णांक dsize);
 
-extern void	isdnhdlc_out_init(struct isdnhdlc_vars *hdlc, u32 features);
+बाह्य व्योम	isdnhdlc_out_init(काष्ठा isdnhdlc_vars *hdlc, u32 features);
 
-extern int	isdnhdlc_encode(struct isdnhdlc_vars *hdlc, const u8 *src,
-			u16 slen, int *count, u8 *dst, int dsize);
+बाह्य पूर्णांक	isdnhdlc_encode(काष्ठा isdnhdlc_vars *hdlc, स्थिर u8 *src,
+			u16 slen, पूर्णांक *count, u8 *dst, पूर्णांक dsize);
 
-#endif /* __ISDNHDLC_H__ */
+#पूर्ण_अगर /* __ISDNHDLC_H__ */

@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __UM_THREAD_INFO_H
-#define __UM_THREAD_INFO_H
+#अगर_अघोषित __UM_THREAD_INFO_H
+#घोषणा __UM_THREAD_INFO_H
 
-#define THREAD_SIZE_ORDER CONFIG_KERNEL_STACK_ORDER
-#define THREAD_SIZE ((1 << CONFIG_KERNEL_STACK_ORDER) * PAGE_SIZE)
+#घोषणा THREAD_SIZE_ORDER CONFIG_KERNEL_STACK_ORDER
+#घोषणा THREAD_SIZE ((1 << CONFIG_KERNEL_STACK_ORDER) * PAGE_SIZE)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/types.h>
-#include <asm/page.h>
-#include <asm/segment.h>
-#include <sysdep/ptrace_user.h>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <sysdep/ptrace_user.h>
 
-struct thread_info {
-	struct task_struct	*task;		/* main task structure */
-	unsigned long		flags;		/* low level flags */
+काष्ठा thपढ़ो_info अणु
+	काष्ठा task_काष्ठा	*task;		/* मुख्य task काष्ठाure */
+	अचिन्हित दीर्घ		flags;		/* low level flags */
 	__u32			cpu;		/* current CPU */
-	int			preempt_count;  /* 0 => preemptable,
+	पूर्णांक			preempt_count;  /* 0 => preemptable,
 						   <0 => BUG */
-	mm_segment_t		addr_limit;	/* thread address space:
-					 	   0-0xBFFFFFFF for user
-						   0-0xFFFFFFFF for kernel */
-	struct thread_info	*real_thread;    /* Points to non-IRQ stack */
-	unsigned long aux_fp_regs[FP_SIZE];	/* auxiliary fp_regs to save/restore
+	mm_segment_t		addr_limit;	/* thपढ़ो address space:
+					 	   0-0xBFFFFFFF क्रम user
+						   0-0xFFFFFFFF क्रम kernel */
+	काष्ठा thपढ़ो_info	*real_thपढ़ो;    /* Poपूर्णांकs to non-IRQ stack */
+	अचिन्हित दीर्घ aux_fp_regs[FP_SIZE];	/* auxiliary fp_regs to save/restore
 						   them out-of-band */
-};
+पूर्ण;
 
-#define INIT_THREAD_INFO(tsk)			\
-{						\
+#घोषणा INIT_THREAD_INFO(tsk)			\
+अणु						\
 	.task =		&tsk,			\
 	.flags =		0,		\
 	.cpu =		0,			\
 	.preempt_count = INIT_PREEMPT_COUNT,	\
 	.addr_limit =	KERNEL_DS,		\
-	.real_thread = NULL,			\
-}
+	.real_thपढ़ो = शून्य,			\
+पूर्ण
 
-/* how to get the thread information struct from C */
-static inline struct thread_info *current_thread_info(void)
-{
-	struct thread_info *ti;
-	unsigned long mask = THREAD_SIZE - 1;
-	void *p;
+/* how to get the thपढ़ो inक्रमmation काष्ठा from C */
+अटल अंतरभूत काष्ठा thपढ़ो_info *current_thपढ़ो_info(व्योम)
+अणु
+	काष्ठा thपढ़ो_info *ti;
+	अचिन्हित दीर्घ mask = THREAD_SIZE - 1;
+	व्योम *p;
 
-	asm volatile ("" : "=r" (p) : "0" (&ti));
-	ti = (struct thread_info *) (((unsigned long)p) & ~mask);
-	return ti;
-}
+	यंत्र अस्थिर ("" : "=r" (p) : "0" (&ti));
+	ti = (काष्ठा thपढ़ो_info *) (((अचिन्हित दीर्घ)p) & ~mask);
+	वापस ti;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#define TIF_SYSCALL_TRACE	0	/* syscall trace active */
-#define TIF_SIGPENDING		1	/* signal pending */
-#define TIF_NEED_RESCHED	2	/* rescheduling necessary */
-#define TIF_NOTIFY_SIGNAL	3	/* signal notifications exist */
-#define TIF_RESTART_BLOCK	4
-#define TIF_MEMDIE		5	/* is terminating due to OOM killer */
-#define TIF_SYSCALL_AUDIT	6
-#define TIF_RESTORE_SIGMASK	7
-#define TIF_NOTIFY_RESUME	8
-#define TIF_SECCOMP		9	/* secure computing */
+#घोषणा TIF_SYSCALL_TRACE	0	/* syscall trace active */
+#घोषणा TIF_SIGPENDING		1	/* संकेत pending */
+#घोषणा TIF_NEED_RESCHED	2	/* rescheduling necessary */
+#घोषणा TIF_NOTIFY_SIGNAL	3	/* संकेत notअगरications exist */
+#घोषणा TIF_RESTART_BLOCK	4
+#घोषणा TIF_MEMDIE		5	/* is terminating due to OOM समाप्तer */
+#घोषणा TIF_SYSCALL_AUDIT	6
+#घोषणा TIF_RESTORE_SIGMASK	7
+#घोषणा TIF_NOTIFY_RESUME	8
+#घोषणा TIF_SECCOMP		9	/* secure computing */
 
-#define _TIF_SYSCALL_TRACE	(1 << TIF_SYSCALL_TRACE)
-#define _TIF_SIGPENDING		(1 << TIF_SIGPENDING)
-#define _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
-#define _TIF_NOTIFY_SIGNAL	(1 << TIF_NOTIFY_SIGNAL)
-#define _TIF_MEMDIE		(1 << TIF_MEMDIE)
-#define _TIF_SYSCALL_AUDIT	(1 << TIF_SYSCALL_AUDIT)
-#define _TIF_SECCOMP		(1 << TIF_SECCOMP)
+#घोषणा _TIF_SYSCALL_TRACE	(1 << TIF_SYSCALL_TRACE)
+#घोषणा _TIF_SIGPENDING		(1 << TIF_SIGPENDING)
+#घोषणा _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
+#घोषणा _TIF_NOTIFY_SIGNAL	(1 << TIF_NOTIFY_SIGNAL)
+#घोषणा _TIF_MEMDIE		(1 << TIF_MEMDIE)
+#घोषणा _TIF_SYSCALL_AUDIT	(1 << TIF_SYSCALL_AUDIT)
+#घोषणा _TIF_SECCOMP		(1 << TIF_SECCOMP)
 
-#endif
+#पूर्ण_अगर

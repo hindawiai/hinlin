@@ -1,19 +1,20 @@
-/* net/tipc/udp_media.c: IP bearer support for TIPC
+<शैली गुरु>
+/* net/tipc/udp_media.c: IP bearer support क्रम TIPC
  *
  * Copyright (c) 2015, Ericsson AB
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. Neither the names of the copyright holders nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived from
+ *    this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -23,7 +24,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -32,35 +33,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/socket.h>
-#include <linux/ip.h>
-#include <linux/udp.h>
-#include <linux/inet.h>
-#include <linux/inetdevice.h>
-#include <linux/igmp.h>
-#include <linux/kernel.h>
-#include <linux/workqueue.h>
-#include <linux/list.h>
-#include <net/sock.h>
-#include <net/ip.h>
-#include <net/udp_tunnel.h>
-#include <net/ipv6_stubs.h>
-#include <linux/tipc_netlink.h>
-#include "core.h"
-#include "addr.h"
-#include "net.h"
-#include "bearer.h"
-#include "netlink.h"
-#include "msg.h"
-#include "udp_media.h"
+#समावेश <linux/socket.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/igmp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/list.h>
+#समावेश <net/sock.h>
+#समावेश <net/ip.h>
+#समावेश <net/udp_tunnel.h>
+#समावेश <net/ipv6_stubs.h>
+#समावेश <linux/tipc_netlink.h>
+#समावेश "core.h"
+#समावेश "addr.h"
+#समावेश "net.h"
+#समावेश "bearer.h"
+#समावेश "netlink.h"
+#समावेश "msg.h"
+#समावेश "udp_media.h"
 
-/* IANA assigned UDP port */
-#define UDP_PORT_DEFAULT	6118
+/* IANA asचिन्हित UDP port */
+#घोषणा UDP_PORT_DEFAULT	6118
 
-#define UDP_MIN_HEADROOM        48
+#घोषणा UDP_MIN_HEADROOM        48
 
 /**
- * struct udp_media_addr - IP/UDP addressing information
+ * काष्ठा udp_media_addr - IP/UDP addressing inक्रमmation
  *
  * This is the bearer level originating address used in neighbor discovery
  * messages, and all fields should be in network byte order
@@ -70,777 +71,777 @@
  * @ipv4: IPv4 address of neighbor
  * @ipv6: IPv6 address of neighbor
  */
-struct udp_media_addr {
+काष्ठा udp_media_addr अणु
 	__be16	proto;
 	__be16	port;
-	union {
-		struct in_addr ipv4;
-		struct in6_addr ipv6;
-	};
-};
+	जोड़ अणु
+		काष्ठा in_addr ipv4;
+		काष्ठा in6_addr ipv6;
+	पूर्ण;
+पूर्ण;
 
-/* struct udp_replicast - container for UDP remote addresses */
-struct udp_replicast {
-	struct udp_media_addr addr;
-	struct dst_cache dst_cache;
-	struct rcu_head rcu;
-	struct list_head list;
-};
+/* काष्ठा udp_replicast - container क्रम UDP remote addresses */
+काष्ठा udp_replicast अणु
+	काष्ठा udp_media_addr addr;
+	काष्ठा dst_cache dst_cache;
+	काष्ठा rcu_head rcu;
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * struct udp_bearer - ip/udp bearer data structure
+ * काष्ठा udp_bearer - ip/udp bearer data काष्ठाure
  * @bearer:	associated generic tipc bearer
  * @ubsock:	bearer associated socket
- * @ifindex:	local address scope
+ * @अगरindex:	local address scope
  * @work:	used to schedule deferred work on a bearer
  * @rcast:	associated udp_replicast container
  */
-struct udp_bearer {
-	struct tipc_bearer __rcu *bearer;
-	struct socket *ubsock;
-	u32 ifindex;
-	struct work_struct work;
-	struct udp_replicast rcast;
-};
+काष्ठा udp_bearer अणु
+	काष्ठा tipc_bearer __rcu *bearer;
+	काष्ठा socket *ubsock;
+	u32 अगरindex;
+	काष्ठा work_काष्ठा work;
+	काष्ठा udp_replicast rcast;
+पूर्ण;
 
-static int tipc_udp_is_mcast_addr(struct udp_media_addr *addr)
-{
-	if (ntohs(addr->proto) == ETH_P_IP)
-		return ipv4_is_multicast(addr->ipv4.s_addr);
-#if IS_ENABLED(CONFIG_IPV6)
-	else
-		return ipv6_addr_is_multicast(&addr->ipv6);
-#endif
-	return 0;
-}
+अटल पूर्णांक tipc_udp_is_mcast_addr(काष्ठा udp_media_addr *addr)
+अणु
+	अगर (ntohs(addr->proto) == ETH_P_IP)
+		वापस ipv4_is_multicast(addr->ipv4.s_addr);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अन्यथा
+		वापस ipv6_addr_is_multicast(&addr->ipv6);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /* udp_media_addr_set - convert a ip/udp address to a TIPC media address */
-static void tipc_udp_media_addr_set(struct tipc_media_addr *addr,
-				    struct udp_media_addr *ua)
-{
-	memset(addr, 0, sizeof(struct tipc_media_addr));
+अटल व्योम tipc_udp_media_addr_set(काष्ठा tipc_media_addr *addr,
+				    काष्ठा udp_media_addr *ua)
+अणु
+	स_रखो(addr, 0, माप(काष्ठा tipc_media_addr));
 	addr->media_id = TIPC_MEDIA_TYPE_UDP;
-	memcpy(addr->value, ua, sizeof(struct udp_media_addr));
+	स_नकल(addr->value, ua, माप(काष्ठा udp_media_addr));
 
-	if (tipc_udp_is_mcast_addr(ua))
+	अगर (tipc_udp_is_mcast_addr(ua))
 		addr->broadcast = TIPC_BROADCAST_SUPPORT;
-}
+पूर्ण
 
 /* tipc_udp_addr2str - convert ip/udp address to string */
-static int tipc_udp_addr2str(struct tipc_media_addr *a, char *buf, int size)
-{
-	struct udp_media_addr *ua = (struct udp_media_addr *)&a->value;
+अटल पूर्णांक tipc_udp_addr2str(काष्ठा tipc_media_addr *a, अक्षर *buf, पूर्णांक size)
+अणु
+	काष्ठा udp_media_addr *ua = (काष्ठा udp_media_addr *)&a->value;
 
-	if (ntohs(ua->proto) == ETH_P_IP)
-		snprintf(buf, size, "%pI4:%u", &ua->ipv4, ntohs(ua->port));
-	else if (ntohs(ua->proto) == ETH_P_IPV6)
-		snprintf(buf, size, "%pI6:%u", &ua->ipv6, ntohs(ua->port));
-	else
+	अगर (ntohs(ua->proto) == ETH_P_IP)
+		snम_लिखो(buf, size, "%pI4:%u", &ua->ipv4, ntohs(ua->port));
+	अन्यथा अगर (ntohs(ua->proto) == ETH_P_IPV6)
+		snम_लिखो(buf, size, "%pI6:%u", &ua->ipv6, ntohs(ua->port));
+	अन्यथा
 		pr_err("Invalid UDP media address\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* tipc_udp_msg2addr - extract an ip/udp address from a TIPC ndisc message */
-static int tipc_udp_msg2addr(struct tipc_bearer *b, struct tipc_media_addr *a,
-			     char *msg)
-{
-	struct udp_media_addr *ua;
+अटल पूर्णांक tipc_udp_msg2addr(काष्ठा tipc_bearer *b, काष्ठा tipc_media_addr *a,
+			     अक्षर *msg)
+अणु
+	काष्ठा udp_media_addr *ua;
 
-	ua = (struct udp_media_addr *) (msg + TIPC_MEDIA_ADDR_OFFSET);
-	if (msg[TIPC_MEDIA_TYPE_OFFSET] != TIPC_MEDIA_TYPE_UDP)
-		return -EINVAL;
+	ua = (काष्ठा udp_media_addr *) (msg + TIPC_MEDIA_ADDR_OFFSET);
+	अगर (msg[TIPC_MEDIA_TYPE_OFFSET] != TIPC_MEDIA_TYPE_UDP)
+		वापस -EINVAL;
 	tipc_udp_media_addr_set(a, ua);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* tipc_udp_addr2msg - write an ip/udp address to a TIPC ndisc message */
-static int tipc_udp_addr2msg(char *msg, struct tipc_media_addr *a)
-{
-	memset(msg, 0, TIPC_MEDIA_INFO_SIZE);
+/* tipc_udp_addr2msg - ग_लिखो an ip/udp address to a TIPC ndisc message */
+अटल पूर्णांक tipc_udp_addr2msg(अक्षर *msg, काष्ठा tipc_media_addr *a)
+अणु
+	स_रखो(msg, 0, TIPC_MEDIA_INFO_SIZE);
 	msg[TIPC_MEDIA_TYPE_OFFSET] = TIPC_MEDIA_TYPE_UDP;
-	memcpy(msg + TIPC_MEDIA_ADDR_OFFSET, a->value,
-	       sizeof(struct udp_media_addr));
-	return 0;
-}
+	स_नकल(msg + TIPC_MEDIA_ADDR_OFFSET, a->value,
+	       माप(काष्ठा udp_media_addr));
+	वापस 0;
+पूर्ण
 
 /* tipc_send_msg - enqueue a send request */
-static int tipc_udp_xmit(struct net *net, struct sk_buff *skb,
-			 struct udp_bearer *ub, struct udp_media_addr *src,
-			 struct udp_media_addr *dst, struct dst_cache *cache)
-{
-	struct dst_entry *ndst;
-	int ttl, err = 0;
+अटल पूर्णांक tipc_udp_xmit(काष्ठा net *net, काष्ठा sk_buff *skb,
+			 काष्ठा udp_bearer *ub, काष्ठा udp_media_addr *src,
+			 काष्ठा udp_media_addr *dst, काष्ठा dst_cache *cache)
+अणु
+	काष्ठा dst_entry *ndst;
+	पूर्णांक ttl, err = 0;
 
 	local_bh_disable();
 	ndst = dst_cache_get(cache);
-	if (dst->proto == htons(ETH_P_IP)) {
-		struct rtable *rt = (struct rtable *)ndst;
+	अगर (dst->proto == htons(ETH_P_IP)) अणु
+		काष्ठा rtable *rt = (काष्ठा rtable *)ndst;
 
-		if (!rt) {
-			struct flowi4 fl = {
+		अगर (!rt) अणु
+			काष्ठा flowi4 fl = अणु
 				.daddr = dst->ipv4.s_addr,
 				.saddr = src->ipv4.s_addr,
 				.flowi4_mark = skb->mark,
 				.flowi4_proto = IPPROTO_UDP
-			};
+			पूर्ण;
 			rt = ip_route_output_key(net, &fl);
-			if (IS_ERR(rt)) {
+			अगर (IS_ERR(rt)) अणु
 				err = PTR_ERR(rt);
-				goto tx_error;
-			}
+				जाओ tx_error;
+			पूर्ण
 			dst_cache_set_ip4(cache, &rt->dst, fl.saddr);
-		}
+		पूर्ण
 
 		ttl = ip4_dst_hoplimit(&rt->dst);
 		udp_tunnel_xmit_skb(rt, ub->ubsock->sk, skb, src->ipv4.s_addr,
 				    dst->ipv4.s_addr, 0, ttl, 0, src->port,
 				    dst->port, false, true);
-#if IS_ENABLED(CONFIG_IPV6)
-	} else {
-		if (!ndst) {
-			struct flowi6 fl6 = {
-				.flowi6_oif = ub->ifindex,
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अणु
+		अगर (!ndst) अणु
+			काष्ठा flowi6 fl6 = अणु
+				.flowi6_oअगर = ub->अगरindex,
 				.daddr = dst->ipv6,
 				.saddr = src->ipv6,
 				.flowi6_proto = IPPROTO_UDP
-			};
+			पूर्ण;
 			ndst = ipv6_stub->ipv6_dst_lookup_flow(net,
 							       ub->ubsock->sk,
-							       &fl6, NULL);
-			if (IS_ERR(ndst)) {
+							       &fl6, शून्य);
+			अगर (IS_ERR(ndst)) अणु
 				err = PTR_ERR(ndst);
-				goto tx_error;
-			}
+				जाओ tx_error;
+			पूर्ण
 			dst_cache_set_ip6(cache, ndst, &fl6.saddr);
-		}
+		पूर्ण
 		ttl = ip6_dst_hoplimit(ndst);
-		err = udp_tunnel6_xmit_skb(ndst, ub->ubsock->sk, skb, NULL,
+		err = udp_tunnel6_xmit_skb(ndst, ub->ubsock->sk, skb, शून्य,
 					   &src->ipv6, &dst->ipv6, 0, ttl, 0,
 					   src->port, dst->port, false);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 	local_bh_enable();
-	return err;
+	वापस err;
 
 tx_error:
 	local_bh_enable();
-	kfree_skb(skb);
-	return err;
-}
+	kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
-static int tipc_udp_send_msg(struct net *net, struct sk_buff *skb,
-			     struct tipc_bearer *b,
-			     struct tipc_media_addr *addr)
-{
-	struct udp_media_addr *src = (struct udp_media_addr *)&b->addr.value;
-	struct udp_media_addr *dst = (struct udp_media_addr *)&addr->value;
-	struct udp_replicast *rcast;
-	struct udp_bearer *ub;
-	int err = 0;
+अटल पूर्णांक tipc_udp_send_msg(काष्ठा net *net, काष्ठा sk_buff *skb,
+			     काष्ठा tipc_bearer *b,
+			     काष्ठा tipc_media_addr *addr)
+अणु
+	काष्ठा udp_media_addr *src = (काष्ठा udp_media_addr *)&b->addr.value;
+	काष्ठा udp_media_addr *dst = (काष्ठा udp_media_addr *)&addr->value;
+	काष्ठा udp_replicast *rcast;
+	काष्ठा udp_bearer *ub;
+	पूर्णांक err = 0;
 
-	if (skb_headroom(skb) < UDP_MIN_HEADROOM) {
+	अगर (skb_headroom(skb) < UDP_MIN_HEADROOM) अणु
 		err = pskb_expand_head(skb, UDP_MIN_HEADROOM, 0, GFP_ATOMIC);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	skb_set_inner_protocol(skb, htons(ETH_P_TIPC));
 	ub = rcu_dereference(b->media_ptr);
-	if (!ub) {
+	अगर (!ub) अणु
 		err = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (addr->broadcast != TIPC_REPLICAST_SUPPORT)
-		return tipc_udp_xmit(net, skb, ub, src, dst,
+	अगर (addr->broadcast != TIPC_REPLICAST_SUPPORT)
+		वापस tipc_udp_xmit(net, skb, ub, src, dst,
 				     &ub->rcast.dst_cache);
 
 	/* Replicast, send an skb to each configured IP address */
-	list_for_each_entry_rcu(rcast, &ub->rcast.list, list) {
-		struct sk_buff *_skb;
+	list_क्रम_each_entry_rcu(rcast, &ub->rcast.list, list) अणु
+		काष्ठा sk_buff *_skb;
 
 		_skb = pskb_copy(skb, GFP_ATOMIC);
-		if (!_skb) {
+		अगर (!_skb) अणु
 			err = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		err = tipc_udp_xmit(net, _skb, ub, src, &rcast->addr,
 				    &rcast->dst_cache);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 	err = 0;
 out:
-	kfree_skb(skb);
-	return err;
-}
+	kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
-static bool tipc_udp_is_known_peer(struct tipc_bearer *b,
-				   struct udp_media_addr *addr)
-{
-	struct udp_replicast *rcast, *tmp;
-	struct udp_bearer *ub;
+अटल bool tipc_udp_is_known_peer(काष्ठा tipc_bearer *b,
+				   काष्ठा udp_media_addr *addr)
+अणु
+	काष्ठा udp_replicast *rcast, *पंचांगp;
+	काष्ठा udp_bearer *ub;
 
 	ub = rcu_dereference_rtnl(b->media_ptr);
-	if (!ub) {
+	अगर (!ub) अणु
 		pr_err_ratelimited("UDP bearer instance not found\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	list_for_each_entry_safe(rcast, tmp, &ub->rcast.list, list) {
-		if (!memcmp(&rcast->addr, addr, sizeof(struct udp_media_addr)))
-			return true;
-	}
+	list_क्रम_each_entry_safe(rcast, पंचांगp, &ub->rcast.list, list) अणु
+		अगर (!स_भेद(&rcast->addr, addr, माप(काष्ठा udp_media_addr)))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int tipc_udp_rcast_add(struct tipc_bearer *b,
-			      struct udp_media_addr *addr)
-{
-	struct udp_replicast *rcast;
-	struct udp_bearer *ub;
+अटल पूर्णांक tipc_udp_rcast_add(काष्ठा tipc_bearer *b,
+			      काष्ठा udp_media_addr *addr)
+अणु
+	काष्ठा udp_replicast *rcast;
+	काष्ठा udp_bearer *ub;
 
 	ub = rcu_dereference_rtnl(b->media_ptr);
-	if (!ub)
-		return -ENODEV;
+	अगर (!ub)
+		वापस -ENODEV;
 
-	rcast = kmalloc(sizeof(*rcast), GFP_ATOMIC);
-	if (!rcast)
-		return -ENOMEM;
+	rcast = kदो_स्मृति(माप(*rcast), GFP_ATOMIC);
+	अगर (!rcast)
+		वापस -ENOMEM;
 
-	if (dst_cache_init(&rcast->dst_cache, GFP_ATOMIC)) {
-		kfree(rcast);
-		return -ENOMEM;
-	}
+	अगर (dst_cache_init(&rcast->dst_cache, GFP_ATOMIC)) अणु
+		kमुक्त(rcast);
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(&rcast->addr, addr, sizeof(struct udp_media_addr));
+	स_नकल(&rcast->addr, addr, माप(काष्ठा udp_media_addr));
 
-	if (ntohs(addr->proto) == ETH_P_IP)
+	अगर (ntohs(addr->proto) == ETH_P_IP)
 		pr_info("New replicast peer: %pI4\n", &rcast->addr.ipv4);
-#if IS_ENABLED(CONFIG_IPV6)
-	else if (ntohs(addr->proto) == ETH_P_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अन्यथा अगर (ntohs(addr->proto) == ETH_P_IPV6)
 		pr_info("New replicast peer: %pI6\n", &rcast->addr.ipv6);
-#endif
+#पूर्ण_अगर
 	b->bcast_addr.broadcast = TIPC_REPLICAST_SUPPORT;
 	list_add_rcu(&rcast->list, &ub->rcast.list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tipc_udp_rcast_disc(struct tipc_bearer *b, struct sk_buff *skb)
-{
-	struct udp_media_addr src = {0};
-	struct udp_media_addr *dst;
+अटल पूर्णांक tipc_udp_rcast_disc(काष्ठा tipc_bearer *b, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा udp_media_addr src = अणु0पूर्ण;
+	काष्ठा udp_media_addr *dst;
 
-	dst = (struct udp_media_addr *)&b->bcast_addr.value;
-	if (tipc_udp_is_mcast_addr(dst))
-		return 0;
+	dst = (काष्ठा udp_media_addr *)&b->bcast_addr.value;
+	अगर (tipc_udp_is_mcast_addr(dst))
+		वापस 0;
 
 	src.port = udp_hdr(skb)->source;
 
-	if (ip_hdr(skb)->version == 4) {
-		struct iphdr *iphdr = ip_hdr(skb);
+	अगर (ip_hdr(skb)->version == 4) अणु
+		काष्ठा iphdr *iphdr = ip_hdr(skb);
 
 		src.proto = htons(ETH_P_IP);
 		src.ipv4.s_addr = iphdr->saddr;
-		if (ipv4_is_multicast(iphdr->daddr))
-			return 0;
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (ip_hdr(skb)->version == 6) {
-		struct ipv6hdr *iphdr = ipv6_hdr(skb);
+		अगर (ipv4_is_multicast(iphdr->daddr))
+			वापस 0;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (ip_hdr(skb)->version == 6) अणु
+		काष्ठा ipv6hdr *iphdr = ipv6_hdr(skb);
 
 		src.proto = htons(ETH_P_IPV6);
 		src.ipv6 = iphdr->saddr;
-		if (ipv6_addr_is_multicast(&iphdr->daddr))
-			return 0;
-#endif
-	} else {
-		return 0;
-	}
+		अगर (ipv6_addr_is_multicast(&iphdr->daddr))
+			वापस 0;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
 
-	if (likely(tipc_udp_is_known_peer(b, &src)))
-		return 0;
+	अगर (likely(tipc_udp_is_known_peer(b, &src)))
+		वापस 0;
 
-	return tipc_udp_rcast_add(b, &src);
-}
+	वापस tipc_udp_rcast_add(b, &src);
+पूर्ण
 
-/* tipc_udp_recv - read data from bearer socket */
-static int tipc_udp_recv(struct sock *sk, struct sk_buff *skb)
-{
-	struct udp_bearer *ub;
-	struct tipc_bearer *b;
-	struct tipc_msg *hdr;
-	int err;
+/* tipc_udp_recv - पढ़ो data from bearer socket */
+अटल पूर्णांक tipc_udp_recv(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा udp_bearer *ub;
+	काष्ठा tipc_bearer *b;
+	काष्ठा tipc_msg *hdr;
+	पूर्णांक err;
 
 	ub = rcu_dereference_sk_user_data(sk);
-	if (!ub) {
+	अगर (!ub) अणु
 		pr_err_ratelimited("Failed to get UDP bearer reference");
-		goto out;
-	}
-	skb_pull(skb, sizeof(struct udphdr));
+		जाओ out;
+	पूर्ण
+	skb_pull(skb, माप(काष्ठा udphdr));
 	hdr = buf_msg(skb);
 
 	b = rcu_dereference(ub->bearer);
-	if (!b)
-		goto out;
+	अगर (!b)
+		जाओ out;
 
-	if (b && test_bit(0, &b->up)) {
+	अगर (b && test_bit(0, &b->up)) अणु
 		TIPC_SKB_CB(skb)->flags = 0;
 		tipc_rcv(sock_net(sk), skb, b);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (unlikely(msg_user(hdr) == LINK_CONFIG)) {
+	अगर (unlikely(msg_user(hdr) == LINK_CONFIG)) अणु
 		err = tipc_udp_rcast_disc(b, skb);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 out:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int enable_mcast(struct udp_bearer *ub, struct udp_media_addr *remote)
-{
-	int err = 0;
-	struct ip_mreqn mreqn;
-	struct sock *sk = ub->ubsock->sk;
+अटल पूर्णांक enable_mcast(काष्ठा udp_bearer *ub, काष्ठा udp_media_addr *remote)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ip_mreqn mreqn;
+	काष्ठा sock *sk = ub->ubsock->sk;
 
-	if (ntohs(remote->proto) == ETH_P_IP) {
+	अगर (ntohs(remote->proto) == ETH_P_IP) अणु
 		mreqn.imr_multiaddr = remote->ipv4;
-		mreqn.imr_ifindex = ub->ifindex;
+		mreqn.imr_अगरindex = ub->अगरindex;
 		err = ip_mc_join_group(sk, &mreqn);
-#if IS_ENABLED(CONFIG_IPV6)
-	} else {
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अणु
 		lock_sock(sk);
-		err = ipv6_stub->ipv6_sock_mc_join(sk, ub->ifindex,
+		err = ipv6_stub->ipv6_sock_mc_join(sk, ub->अगरindex,
 						   &remote->ipv6);
 		release_sock(sk);
-#endif
-	}
-	return err;
-}
+#पूर्ण_अगर
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int __tipc_nl_add_udp_addr(struct sk_buff *skb,
-				  struct udp_media_addr *addr, int nla_t)
-{
-	if (ntohs(addr->proto) == ETH_P_IP) {
-		struct sockaddr_in ip4;
+अटल पूर्णांक __tipc_nl_add_udp_addr(काष्ठा sk_buff *skb,
+				  काष्ठा udp_media_addr *addr, पूर्णांक nla_t)
+अणु
+	अगर (ntohs(addr->proto) == ETH_P_IP) अणु
+		काष्ठा sockaddr_in ip4;
 
-		memset(&ip4, 0, sizeof(ip4));
+		स_रखो(&ip4, 0, माप(ip4));
 		ip4.sin_family = AF_INET;
 		ip4.sin_port = addr->port;
 		ip4.sin_addr.s_addr = addr->ipv4.s_addr;
-		if (nla_put(skb, nla_t, sizeof(ip4), &ip4))
-			return -EMSGSIZE;
+		अगर (nla_put(skb, nla_t, माप(ip4), &ip4))
+			वापस -EMSGSIZE;
 
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (ntohs(addr->proto) == ETH_P_IPV6) {
-		struct sockaddr_in6 ip6;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (ntohs(addr->proto) == ETH_P_IPV6) अणु
+		काष्ठा sockaddr_in6 ip6;
 
-		memset(&ip6, 0, sizeof(ip6));
+		स_रखो(&ip6, 0, माप(ip6));
 		ip6.sin6_family = AF_INET6;
 		ip6.sin6_port  = addr->port;
-		memcpy(&ip6.sin6_addr, &addr->ipv6, sizeof(struct in6_addr));
-		if (nla_put(skb, nla_t, sizeof(ip6), &ip6))
-			return -EMSGSIZE;
-#endif
-	}
+		स_नकल(&ip6.sin6_addr, &addr->ipv6, माप(काष्ठा in6_addr));
+		अगर (nla_put(skb, nla_t, माप(ip6), &ip6))
+			वापस -EMSGSIZE;
+#पूर्ण_अगर
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tipc_udp_nl_dump_remoteip(struct sk_buff *skb, struct netlink_callback *cb)
-{
+पूर्णांक tipc_udp_nl_dump_remoteip(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
 	u32 bid = cb->args[0];
 	u32 skip_cnt = cb->args[1];
 	u32 portid = NETLINK_CB(cb->skb).portid;
-	struct udp_replicast *rcast, *tmp;
-	struct tipc_bearer *b;
-	struct udp_bearer *ub;
-	void *hdr;
-	int err;
-	int i;
+	काष्ठा udp_replicast *rcast, *पंचांगp;
+	काष्ठा tipc_bearer *b;
+	काष्ठा udp_bearer *ub;
+	व्योम *hdr;
+	पूर्णांक err;
+	पूर्णांक i;
 
-	if (!bid && !skip_cnt) {
-		struct nlattr **attrs = genl_dumpit_info(cb)->attrs;
-		struct net *net = sock_net(skb->sk);
-		struct nlattr *battrs[TIPC_NLA_BEARER_MAX + 1];
-		char *bname;
+	अगर (!bid && !skip_cnt) अणु
+		काष्ठा nlattr **attrs = genl_dumpit_info(cb)->attrs;
+		काष्ठा net *net = sock_net(skb->sk);
+		काष्ठा nlattr *battrs[TIPC_NLA_BEARER_MAX + 1];
+		अक्षर *bname;
 
-		if (!attrs[TIPC_NLA_BEARER])
-			return -EINVAL;
+		अगर (!attrs[TIPC_NLA_BEARER])
+			वापस -EINVAL;
 
 		err = nla_parse_nested_deprecated(battrs, TIPC_NLA_BEARER_MAX,
 						  attrs[TIPC_NLA_BEARER],
-						  tipc_nl_bearer_policy, NULL);
-		if (err)
-			return err;
+						  tipc_nl_bearer_policy, शून्य);
+		अगर (err)
+			वापस err;
 
-		if (!battrs[TIPC_NLA_BEARER_NAME])
-			return -EINVAL;
+		अगर (!battrs[TIPC_NLA_BEARER_NAME])
+			वापस -EINVAL;
 
 		bname = nla_data(battrs[TIPC_NLA_BEARER_NAME]);
 
 		rtnl_lock();
 		b = tipc_bearer_find(net, bname);
-		if (!b) {
+		अगर (!b) अणु
 			rtnl_unlock();
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		bid = b->identity;
-	} else {
-		struct net *net = sock_net(skb->sk);
-		struct tipc_net *tn = net_generic(net, tipc_net_id);
+	पूर्ण अन्यथा अणु
+		काष्ठा net *net = sock_net(skb->sk);
+		काष्ठा tipc_net *tn = net_generic(net, tipc_net_id);
 
 		rtnl_lock();
 		b = rtnl_dereference(tn->bearer_list[bid]);
-		if (!b) {
+		अगर (!b) अणु
 			rtnl_unlock();
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	ub = rtnl_dereference(b->media_ptr);
-	if (!ub) {
+	अगर (!ub) अणु
 		rtnl_unlock();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	i = 0;
-	list_for_each_entry_safe(rcast, tmp, &ub->rcast.list, list) {
-		if (i < skip_cnt)
-			goto count;
+	list_क्रम_each_entry_safe(rcast, पंचांगp, &ub->rcast.list, list) अणु
+		अगर (i < skip_cnt)
+			जाओ count;
 
 		hdr = genlmsg_put(skb, portid, cb->nlh->nlmsg_seq,
 				  &tipc_genl_family, NLM_F_MULTI,
 				  TIPC_NL_BEARER_GET);
-		if (!hdr)
-			goto done;
+		अगर (!hdr)
+			जाओ करोne;
 
 		err = __tipc_nl_add_udp_addr(skb, &rcast->addr,
 					     TIPC_NLA_UDP_REMOTE);
-		if (err) {
+		अगर (err) अणु
 			genlmsg_cancel(skb, hdr);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		genlmsg_end(skb, hdr);
 count:
 		i++;
-	}
-done:
+	पूर्ण
+करोne:
 	rtnl_unlock();
 	cb->args[0] = bid;
 	cb->args[1] = i;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-int tipc_udp_nl_add_bearer_data(struct tipc_nl_msg *msg, struct tipc_bearer *b)
-{
-	struct udp_media_addr *src = (struct udp_media_addr *)&b->addr.value;
-	struct udp_media_addr *dst;
-	struct udp_bearer *ub;
-	struct nlattr *nest;
+पूर्णांक tipc_udp_nl_add_bearer_data(काष्ठा tipc_nl_msg *msg, काष्ठा tipc_bearer *b)
+अणु
+	काष्ठा udp_media_addr *src = (काष्ठा udp_media_addr *)&b->addr.value;
+	काष्ठा udp_media_addr *dst;
+	काष्ठा udp_bearer *ub;
+	काष्ठा nlattr *nest;
 
 	ub = rtnl_dereference(b->media_ptr);
-	if (!ub)
-		return -ENODEV;
+	अगर (!ub)
+		वापस -ENODEV;
 
 	nest = nla_nest_start_noflag(msg->skb, TIPC_NLA_BEARER_UDP_OPTS);
-	if (!nest)
-		goto msg_full;
+	अगर (!nest)
+		जाओ msg_full;
 
-	if (__tipc_nl_add_udp_addr(msg->skb, src, TIPC_NLA_UDP_LOCAL))
-		goto msg_full;
+	अगर (__tipc_nl_add_udp_addr(msg->skb, src, TIPC_NLA_UDP_LOCAL))
+		जाओ msg_full;
 
-	dst = (struct udp_media_addr *)&b->bcast_addr.value;
-	if (__tipc_nl_add_udp_addr(msg->skb, dst, TIPC_NLA_UDP_REMOTE))
-		goto msg_full;
+	dst = (काष्ठा udp_media_addr *)&b->bcast_addr.value;
+	अगर (__tipc_nl_add_udp_addr(msg->skb, dst, TIPC_NLA_UDP_REMOTE))
+		जाओ msg_full;
 
-	if (!list_empty(&ub->rcast.list)) {
-		if (nla_put_flag(msg->skb, TIPC_NLA_UDP_MULTI_REMOTEIP))
-			goto msg_full;
-	}
+	अगर (!list_empty(&ub->rcast.list)) अणु
+		अगर (nla_put_flag(msg->skb, TIPC_NLA_UDP_MULTI_REMOTEIP))
+			जाओ msg_full;
+	पूर्ण
 
 	nla_nest_end(msg->skb, nest);
-	return 0;
+	वापस 0;
 msg_full:
 	nla_nest_cancel(msg->skb, nest);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
 /**
  * tipc_parse_udp_addr - build udp media address from netlink data
  * @nla:	netlink attribute containing sockaddr storage aligned address
  * @addr:	tipc media address to fill with address, port and protocol type
- * @scope_id:	IPv6 scope id pointer, not NULL indicates it's required
+ * @scope_id:	IPv6 scope id poपूर्णांकer, not शून्य indicates it's required
  */
 
-static int tipc_parse_udp_addr(struct nlattr *nla, struct udp_media_addr *addr,
+अटल पूर्णांक tipc_parse_udp_addr(काष्ठा nlattr *nla, काष्ठा udp_media_addr *addr,
 			       u32 *scope_id)
-{
-	struct sockaddr_storage sa;
+अणु
+	काष्ठा sockaddr_storage sa;
 
-	nla_memcpy(&sa, nla, sizeof(sa));
-	if (sa.ss_family == AF_INET) {
-		struct sockaddr_in *ip4 = (struct sockaddr_in *)&sa;
+	nla_स_नकल(&sa, nla, माप(sa));
+	अगर (sa.ss_family == AF_INET) अणु
+		काष्ठा sockaddr_in *ip4 = (काष्ठा sockaddr_in *)&sa;
 
 		addr->proto = htons(ETH_P_IP);
 		addr->port = ip4->sin_port;
 		addr->ipv4.s_addr = ip4->sin_addr.s_addr;
-		return 0;
+		वापस 0;
 
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (sa.ss_family == AF_INET6) {
-		struct sockaddr_in6 *ip6 = (struct sockaddr_in6 *)&sa;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (sa.ss_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *ip6 = (काष्ठा sockaddr_in6 *)&sa;
 
 		addr->proto = htons(ETH_P_IPV6);
 		addr->port = ip6->sin6_port;
-		memcpy(&addr->ipv6, &ip6->sin6_addr, sizeof(struct in6_addr));
+		स_नकल(&addr->ipv6, &ip6->sin6_addr, माप(काष्ठा in6_addr));
 
-		/* Scope ID is only interesting for local addresses */
-		if (scope_id) {
-			int atype;
+		/* Scope ID is only पूर्णांकeresting क्रम local addresses */
+		अगर (scope_id) अणु
+			पूर्णांक atype;
 
 			atype = ipv6_addr_type(&ip6->sin6_addr);
-			if (__ipv6_addr_needs_scope_id(atype) &&
-			    !ip6->sin6_scope_id) {
-				return -EINVAL;
-			}
+			अगर (__ipv6_addr_needs_scope_id(atype) &&
+			    !ip6->sin6_scope_id) अणु
+				वापस -EINVAL;
+			पूर्ण
 
 			*scope_id = ip6->sin6_scope_id ? : 0;
-		}
+		पूर्ण
 
-		return 0;
-#endif
-	}
-	return -EADDRNOTAVAIL;
-}
+		वापस 0;
+#पूर्ण_अगर
+	पूर्ण
+	वापस -EADDRNOTAVAIL;
+पूर्ण
 
-int tipc_udp_nl_bearer_add(struct tipc_bearer *b, struct nlattr *attr)
-{
-	int err;
-	struct udp_media_addr addr = {0};
-	struct nlattr *opts[TIPC_NLA_UDP_MAX + 1];
-	struct udp_media_addr *dst;
+पूर्णांक tipc_udp_nl_bearer_add(काष्ठा tipc_bearer *b, काष्ठा nlattr *attr)
+अणु
+	पूर्णांक err;
+	काष्ठा udp_media_addr addr = अणु0पूर्ण;
+	काष्ठा nlattr *opts[TIPC_NLA_UDP_MAX + 1];
+	काष्ठा udp_media_addr *dst;
 
-	if (nla_parse_nested_deprecated(opts, TIPC_NLA_UDP_MAX, attr, tipc_nl_udp_policy, NULL))
-		return -EINVAL;
+	अगर (nla_parse_nested_deprecated(opts, TIPC_NLA_UDP_MAX, attr, tipc_nl_udp_policy, शून्य))
+		वापस -EINVAL;
 
-	if (!opts[TIPC_NLA_UDP_REMOTE])
-		return -EINVAL;
+	अगर (!opts[TIPC_NLA_UDP_REMOTE])
+		वापस -EINVAL;
 
-	err = tipc_parse_udp_addr(opts[TIPC_NLA_UDP_REMOTE], &addr, NULL);
-	if (err)
-		return err;
+	err = tipc_parse_udp_addr(opts[TIPC_NLA_UDP_REMOTE], &addr, शून्य);
+	अगर (err)
+		वापस err;
 
-	dst = (struct udp_media_addr *)&b->bcast_addr.value;
-	if (tipc_udp_is_mcast_addr(dst)) {
+	dst = (काष्ठा udp_media_addr *)&b->bcast_addr.value;
+	अगर (tipc_udp_is_mcast_addr(dst)) अणु
 		pr_err("Can't add remote ip to TIPC UDP multicast bearer\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (tipc_udp_is_known_peer(b, &addr))
-		return 0;
+	अगर (tipc_udp_is_known_peer(b, &addr))
+		वापस 0;
 
-	return tipc_udp_rcast_add(b, &addr);
-}
+	वापस tipc_udp_rcast_add(b, &addr);
+पूर्ण
 
 /**
  * tipc_udp_enable - callback to create a new udp bearer instance
  * @net:	network namespace
- * @b:		pointer to generic tipc_bearer
+ * @b:		poपूर्णांकer to generic tipc_bearer
  * @attrs:	netlink bearer configuration
  *
  * validate the bearer parameters and initialize the udp bearer
  * rtnl_lock should be held
  */
-static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
-			   struct nlattr *attrs[])
-{
-	int err = -EINVAL;
-	struct udp_bearer *ub;
-	struct udp_media_addr remote = {0};
-	struct udp_media_addr local = {0};
-	struct udp_port_cfg udp_conf = {0};
-	struct udp_tunnel_sock_cfg tuncfg = {NULL};
-	struct nlattr *opts[TIPC_NLA_UDP_MAX + 1];
-	u8 node_id[NODE_ID_LEN] = {0,};
-	struct net_device *dev;
-	int rmcast = 0;
+अटल पूर्णांक tipc_udp_enable(काष्ठा net *net, काष्ठा tipc_bearer *b,
+			   काष्ठा nlattr *attrs[])
+अणु
+	पूर्णांक err = -EINVAL;
+	काष्ठा udp_bearer *ub;
+	काष्ठा udp_media_addr remote = अणु0पूर्ण;
+	काष्ठा udp_media_addr local = अणु0पूर्ण;
+	काष्ठा udp_port_cfg udp_conf = अणु0पूर्ण;
+	काष्ठा udp_tunnel_sock_cfg tuncfg = अणुशून्यपूर्ण;
+	काष्ठा nlattr *opts[TIPC_NLA_UDP_MAX + 1];
+	u8 node_id[NODE_ID_LEN] = अणु0,पूर्ण;
+	काष्ठा net_device *dev;
+	पूर्णांक rmcast = 0;
 
-	ub = kzalloc(sizeof(*ub), GFP_ATOMIC);
-	if (!ub)
-		return -ENOMEM;
+	ub = kzalloc(माप(*ub), GFP_ATOMIC);
+	अगर (!ub)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&ub->rcast.list);
 
-	if (!attrs[TIPC_NLA_BEARER_UDP_OPTS])
-		goto err;
+	अगर (!attrs[TIPC_NLA_BEARER_UDP_OPTS])
+		जाओ err;
 
-	if (nla_parse_nested_deprecated(opts, TIPC_NLA_UDP_MAX, attrs[TIPC_NLA_BEARER_UDP_OPTS], tipc_nl_udp_policy, NULL))
-		goto err;
+	अगर (nla_parse_nested_deprecated(opts, TIPC_NLA_UDP_MAX, attrs[TIPC_NLA_BEARER_UDP_OPTS], tipc_nl_udp_policy, शून्य))
+		जाओ err;
 
-	if (!opts[TIPC_NLA_UDP_LOCAL] || !opts[TIPC_NLA_UDP_REMOTE]) {
+	अगर (!opts[TIPC_NLA_UDP_LOCAL] || !opts[TIPC_NLA_UDP_REMOTE]) अणु
 		pr_err("Invalid UDP bearer configuration");
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	err = tipc_parse_udp_addr(opts[TIPC_NLA_UDP_LOCAL], &local,
-				  &ub->ifindex);
-	if (err)
-		goto err;
+				  &ub->अगरindex);
+	अगर (err)
+		जाओ err;
 
-	err = tipc_parse_udp_addr(opts[TIPC_NLA_UDP_REMOTE], &remote, NULL);
-	if (err)
-		goto err;
+	err = tipc_parse_udp_addr(opts[TIPC_NLA_UDP_REMOTE], &remote, शून्य);
+	अगर (err)
+		जाओ err;
 
-	if (remote.proto != local.proto) {
+	अगर (remote.proto != local.proto) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* Checking remote ip address */
 	rmcast = tipc_udp_is_mcast_addr(&remote);
 
-	/* Autoconfigure own node identity if needed */
-	if (!tipc_own_id(net)) {
-		memcpy(node_id, local.ipv6.in6_u.u6_addr8, 16);
+	/* Autoconfigure own node identity अगर needed */
+	अगर (!tipc_own_id(net)) अणु
+		स_नकल(node_id, local.ipv6.in6_u.u6_addr8, 16);
 		tipc_net_init(net, node_id, 0);
-	}
-	if (!tipc_own_id(net)) {
+	पूर्ण
+	अगर (!tipc_own_id(net)) अणु
 		pr_warn("Failed to set node id, please configure manually\n");
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	b->bcast_addr.media_id = TIPC_MEDIA_TYPE_UDP;
 	b->bcast_addr.broadcast = TIPC_BROADCAST_SUPPORT;
-	rcu_assign_pointer(b->media_ptr, ub);
-	rcu_assign_pointer(ub->bearer, b);
+	rcu_assign_poपूर्णांकer(b->media_ptr, ub);
+	rcu_assign_poपूर्णांकer(ub->bearer, b);
 	tipc_udp_media_addr_set(&b->addr, &local);
-	if (local.proto == htons(ETH_P_IP)) {
+	अगर (local.proto == htons(ETH_P_IP)) अणु
 		dev = __ip_dev_find(net, local.ipv4.s_addr, false);
-		if (!dev) {
+		अगर (!dev) अणु
 			err = -ENODEV;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		udp_conf.family = AF_INET;
 
 		/* Switch to use ANY to receive packets from group */
-		if (rmcast)
+		अगर (rmcast)
 			udp_conf.local_ip.s_addr = htonl(INADDR_ANY);
-		else
+		अन्यथा
 			udp_conf.local_ip.s_addr = local.ipv4.s_addr;
 		udp_conf.use_udp_checksums = false;
-		ub->ifindex = dev->ifindex;
-		if (tipc_mtu_bad(dev, sizeof(struct iphdr) +
-				      sizeof(struct udphdr))) {
+		ub->अगरindex = dev->अगरindex;
+		अगर (tipc_mtu_bad(dev, माप(काष्ठा iphdr) +
+				      माप(काष्ठा udphdr))) अणु
 			err = -EINVAL;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		b->mtu = b->media->mtu;
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (local.proto == htons(ETH_P_IPV6)) {
-		dev = ub->ifindex ? __dev_get_by_index(net, ub->ifindex) : NULL;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (local.proto == htons(ETH_P_IPV6)) अणु
+		dev = ub->अगरindex ? __dev_get_by_index(net, ub->अगरindex) : शून्य;
 		dev = ipv6_dev_find(net, &local.ipv6, dev);
-		if (!dev) {
+		अगर (!dev) अणु
 			err = -ENODEV;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		udp_conf.family = AF_INET6;
 		udp_conf.use_udp6_tx_checksums = true;
 		udp_conf.use_udp6_rx_checksums = true;
-		if (rmcast)
+		अगर (rmcast)
 			udp_conf.local_ip6 = in6addr_any;
-		else
+		अन्यथा
 			udp_conf.local_ip6 = local.ipv6;
-		ub->ifindex = dev->ifindex;
+		ub->अगरindex = dev->अगरindex;
 		b->mtu = 1280;
-#endif
-	} else {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		err = -EAFNOSUPPORT;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	udp_conf.local_udp_port = local.port;
 	err = udp_sock_create(net, &udp_conf, &ub->ubsock);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 	tuncfg.sk_user_data = ub;
 	tuncfg.encap_type = 1;
 	tuncfg.encap_rcv = tipc_udp_recv;
-	tuncfg.encap_destroy = NULL;
+	tuncfg.encap_destroy = शून्य;
 	setup_udp_tunnel_sock(net, ub->ubsock, &tuncfg);
 
 	err = dst_cache_init(&ub->rcast.dst_cache, GFP_ATOMIC);
-	if (err)
-		goto free;
+	अगर (err)
+		जाओ मुक्त;
 
 	/*
-	 * The bcast media address port is used for all peers and the ip
-	 * is used if it's a multicast address.
+	 * The bcast media address port is used क्रम all peers and the ip
+	 * is used अगर it's a multicast address.
 	 */
-	memcpy(&b->bcast_addr.value, &remote, sizeof(remote));
-	if (rmcast)
+	स_नकल(&b->bcast_addr.value, &remote, माप(remote));
+	अगर (rmcast)
 		err = enable_mcast(ub, &remote);
-	else
+	अन्यथा
 		err = tipc_udp_rcast_add(b, &remote);
-	if (err)
-		goto free;
+	अगर (err)
+		जाओ मुक्त;
 
-	return 0;
+	वापस 0;
 
-free:
+मुक्त:
 	dst_cache_destroy(&ub->rcast.dst_cache);
 	udp_tunnel_sock_release(ub->ubsock);
 err:
-	kfree(ub);
-	return err;
-}
+	kमुक्त(ub);
+	वापस err;
+पूर्ण
 
-/* cleanup_bearer - break the socket/bearer association */
-static void cleanup_bearer(struct work_struct *work)
-{
-	struct udp_bearer *ub = container_of(work, struct udp_bearer, work);
-	struct udp_replicast *rcast, *tmp;
+/* cleanup_bearer - अवरोध the socket/bearer association */
+अटल व्योम cleanup_bearer(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा udp_bearer *ub = container_of(work, काष्ठा udp_bearer, work);
+	काष्ठा udp_replicast *rcast, *पंचांगp;
 
-	list_for_each_entry_safe(rcast, tmp, &ub->rcast.list, list) {
+	list_क्रम_each_entry_safe(rcast, पंचांगp, &ub->rcast.list, list) अणु
 		dst_cache_destroy(&rcast->dst_cache);
 		list_del_rcu(&rcast->list);
-		kfree_rcu(rcast, rcu);
-	}
+		kमुक्त_rcu(rcast, rcu);
+	पूर्ण
 
 	atomic_dec(&tipc_net(sock_net(ub->ubsock->sk))->wq_count);
 	dst_cache_destroy(&ub->rcast.dst_cache);
 	udp_tunnel_sock_release(ub->ubsock);
 	synchronize_net();
-	kfree(ub);
-}
+	kमुक्त(ub);
+पूर्ण
 
 /* tipc_udp_disable - detach bearer from socket */
-static void tipc_udp_disable(struct tipc_bearer *b)
-{
-	struct udp_bearer *ub;
+अटल व्योम tipc_udp_disable(काष्ठा tipc_bearer *b)
+अणु
+	काष्ठा udp_bearer *ub;
 
 	ub = rtnl_dereference(b->media_ptr);
-	if (!ub) {
+	अगर (!ub) अणु
 		pr_err("UDP bearer instance not found\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	sock_set_flag(ub->ubsock->sk, SOCK_DEAD);
-	RCU_INIT_POINTER(ub->bearer, NULL);
+	RCU_INIT_POINTER(ub->bearer, शून्य);
 
-	/* sock_release need to be done outside of rtnl lock */
+	/* sock_release need to be करोne outside of rtnl lock */
 	atomic_inc(&tipc_net(sock_net(ub->ubsock->sk))->wq_count);
 	INIT_WORK(&ub->work, cleanup_bearer);
 	schedule_work(&ub->work);
-}
+पूर्ण
 
-struct tipc_media udp_media_info = {
+काष्ठा tipc_media udp_media_info = अणु
 	.send_msg	= tipc_udp_send_msg,
 	.enable_media	= tipc_udp_enable,
 	.disable_media	= tipc_udp_disable,
@@ -855,4 +856,4 @@ struct tipc_media udp_media_info = {
 	.type_id	= TIPC_MEDIA_TYPE_UDP,
 	.hwaddr_len	= 0,
 	.name		= "udp"
-};
+पूर्ण;

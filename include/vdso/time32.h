@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __VDSO_TIME32_H
-#define __VDSO_TIME32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __VDSO_TIME32_H
+#घोषणा __VDSO_TIME32_H
 
-typedef s32		old_time32_t;
+प्रकार s32		old_समय32_t;
 
-struct old_timespec32 {
-	old_time32_t	tv_sec;
+काष्ठा old_बारpec32 अणु
+	old_समय32_t	tv_sec;
 	s32		tv_nsec;
-};
+पूर्ण;
 
-struct old_timeval32 {
-	old_time32_t	tv_sec;
+काष्ठा old_समयval32 अणु
+	old_समय32_t	tv_sec;
 	s32		tv_usec;
-};
+पूर्ण;
 
-#endif /* __VDSO_TIME32_H */
+#पूर्ण_अगर /* __VDSO_TIME32_H */

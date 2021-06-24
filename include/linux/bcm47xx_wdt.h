@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_BCM47XX_WDT_H_
-#define LINUX_BCM47XX_WDT_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_BCM47XX_WDT_H_
+#घोषणा LINUX_BCM47XX_WDT_H_
 
-#include <linux/timer.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
 
 
-struct bcm47xx_wdt {
-	u32 (*timer_set)(struct bcm47xx_wdt *, u32);
-	u32 (*timer_set_ms)(struct bcm47xx_wdt *, u32);
-	u32 max_timer_ms;
+काष्ठा bcm47xx_wdt अणु
+	u32 (*समयr_set)(काष्ठा bcm47xx_wdt *, u32);
+	u32 (*समयr_set_ms)(काष्ठा bcm47xx_wdt *, u32);
+	u32 max_समयr_ms;
 
-	void *driver_data;
+	व्योम *driver_data;
 
-	struct watchdog_device wdd;
+	काष्ठा watchकरोg_device wdd;
 
-	struct timer_list soft_timer;
+	काष्ठा समयr_list soft_समयr;
 	atomic_t soft_ticks;
-};
+पूर्ण;
 
-static inline void *bcm47xx_wdt_get_drvdata(struct bcm47xx_wdt *wdt)
-{
-	return wdt->driver_data;
-}
-#endif /* LINUX_BCM47XX_WDT_H_ */
+अटल अंतरभूत व्योम *bcm47xx_wdt_get_drvdata(काष्ठा bcm47xx_wdt *wdt)
+अणु
+	वापस wdt->driver_data;
+पूर्ण
+#पूर्ण_अगर /* LINUX_BCM47XX_WDT_H_ */

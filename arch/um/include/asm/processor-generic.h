@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* 
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __UM_PROCESSOR_GENERIC_H
-#define __UM_PROCESSOR_GENERIC_H
+#अगर_अघोषित __UM_PROCESSOR_GENERIC_H
+#घोषणा __UM_PROCESSOR_GENERIC_H
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-#include <asm/ptrace.h>
-#include <registers.h>
-#include <sysdep/archsetjmp.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <रेजिस्टरs.h>
+#समावेश <sysdep/archसमलाँघ.स>
 
-#include <linux/prefetch.h>
+#समावेश <linux/prefetch.h>
 
-struct mm_struct;
+काष्ठा mm_काष्ठा;
 
-struct thread_struct {
-	struct pt_regs regs;
-	struct pt_regs *segv_regs;
-	int singlestep_syscall;
-	void *fault_addr;
-	jmp_buf *fault_catcher;
-	struct task_struct *prev_sched;
-	struct arch_thread arch;
-	jmp_buf switch_buf;
-	struct {
-		int op;
-		union {
-			struct {
-				int pid;
-			} fork, exec;
-			struct {
-				int (*proc)(void *);
-				void *arg;
-			} thread;
-			struct {
-				void (*proc)(void *);
-				void *arg;
-			} cb;
-		} u;
-	} request;
-};
+काष्ठा thपढ़ो_काष्ठा अणु
+	काष्ठा pt_regs regs;
+	काष्ठा pt_regs *segv_regs;
+	पूर्णांक singlestep_syscall;
+	व्योम *fault_addr;
+	लाँघ_बफ *fault_catcher;
+	काष्ठा task_काष्ठा *prev_sched;
+	काष्ठा arch_thपढ़ो arch;
+	लाँघ_बफ चयन_buf;
+	काष्ठा अणु
+		पूर्णांक op;
+		जोड़ अणु
+			काष्ठा अणु
+				पूर्णांक pid;
+			पूर्ण विभाजन, exec;
+			काष्ठा अणु
+				पूर्णांक (*proc)(व्योम *);
+				व्योम *arg;
+			पूर्ण thपढ़ो;
+			काष्ठा अणु
+				व्योम (*proc)(व्योम *);
+				व्योम *arg;
+			पूर्ण cb;
+		पूर्ण u;
+	पूर्ण request;
+पूर्ण;
 
-#define INIT_THREAD \
-{ \
+#घोषणा INIT_THREAD \
+अणु \
 	.regs		   	= EMPTY_REGS,	\
-	.fault_addr		= NULL, \
-	.prev_sched		= NULL, \
+	.fault_addr		= शून्य, \
+	.prev_sched		= शून्य, \
 	.arch			= INIT_ARCH_THREAD, \
-	.request		= { 0 } \
-}
+	.request		= अणु 0 पूर्ण \
+पूर्ण
 
-static inline void release_thread(struct task_struct *task)
-{
-}
+अटल अंतरभूत व्योम release_thपढ़ो(काष्ठा task_काष्ठा *task)
+अणु
+पूर्ण
 
-static inline void mm_copy_segments(struct mm_struct *from_mm,
-				    struct mm_struct *new_mm)
-{
-}
+अटल अंतरभूत व्योम mm_copy_segments(काष्ठा mm_काष्ठा *from_mm,
+				    काष्ठा mm_काष्ठा *new_mm)
+अणु
+पूर्ण
 
 /*
- * User space process size: 3GB (default).
+ * User space process size: 3GB (शेष).
  */
-extern unsigned long task_size;
+बाह्य अचिन्हित दीर्घ task_size;
 
-#define TASK_SIZE (task_size)
+#घोषणा TASK_SIZE (task_size)
 
-#undef STACK_TOP
-#undef STACK_TOP_MAX
+#अघोषित STACK_TOP
+#अघोषित STACK_TOP_MAX
 
-extern unsigned long stacksizelim;
+बाह्य अचिन्हित दीर्घ stacksizelim;
 
-#define STACK_ROOM	(stacksizelim)
-#define STACK_TOP	(TASK_SIZE - 2 * PAGE_SIZE)
-#define STACK_TOP_MAX	STACK_TOP
+#घोषणा STACK_ROOM	(stacksizelim)
+#घोषणा STACK_TOP	(TASK_SIZE - 2 * PAGE_SIZE)
+#घोषणा STACK_TOP_MAX	STACK_TOP
 
-/* This decides where the kernel will search for a free chunk of vm
+/* This decides where the kernel will search क्रम a मुक्त chunk of vm
  * space during mmap's.
  */
-#define TASK_UNMAPPED_BASE	(0x40000000)
+#घोषणा TASK_UNMAPPED_BASE	(0x40000000)
 
-extern void start_thread(struct pt_regs *regs, unsigned long entry, 
-			 unsigned long stack);
+बाह्य व्योम start_thपढ़ो(काष्ठा pt_regs *regs, अचिन्हित दीर्घ entry, 
+			 अचिन्हित दीर्घ stack);
 
-struct cpuinfo_um {
-	unsigned long loops_per_jiffy;
-	int ipi_pipe[2];
-};
+काष्ठा cpuinfo_um अणु
+	अचिन्हित दीर्घ loops_per_jअगरfy;
+	पूर्णांक ipi_pipe[2];
+पूर्ण;
 
-extern struct cpuinfo_um boot_cpu_data;
+बाह्य काष्ठा cpuinfo_um boot_cpu_data;
 
-#define cpu_data (&boot_cpu_data)
-#define current_cpu_data boot_cpu_data
+#घोषणा cpu_data (&boot_cpu_data)
+#घोषणा current_cpu_data boot_cpu_data
 
-#define KSTK_REG(tsk, reg) get_thread_reg(reg, &tsk->thread.switch_buf)
-extern unsigned long get_wchan(struct task_struct *p);
+#घोषणा KSTK_REG(tsk, reg) get_thपढ़ो_reg(reg, &tsk->thपढ़ो.चयन_buf)
+बाह्य अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
 
-#endif
+#पूर्ण_अगर

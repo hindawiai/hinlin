@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *      uvc_metadata.c  --  USB Video Class driver - Metadata handling
  *
  *      Copyright (C) 2016
- *          Guennadi Liakhovetski (guennadi.liakhovetski@intel.com)
+ *          Guennadi Liakhovetski (guennadi.liakhovetski@पूर्णांकel.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/videodev2.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/videodev2.h>
 
-#include <media/v4l2-ioctl.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-vmalloc.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
 
-#include "uvcvideo.h"
+#समावेश "uvcvideo.h"
 
 /* -----------------------------------------------------------------------------
  * V4L2 ioctls
  */
 
-static int uvc_meta_v4l2_querycap(struct file *file, void *fh,
-				  struct v4l2_capability *cap)
-{
-	struct v4l2_fh *vfh = file->private_data;
-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
-	struct uvc_video_chain *chain = stream->chain;
+अटल पूर्णांक uvc_meta_v4l2_querycap(काष्ठा file *file, व्योम *fh,
+				  काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा v4l2_fh *vfh = file->निजी_data;
+	काष्ठा uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+	काष्ठा uvc_video_chain *chain = stream->chain;
 
-	strscpy(cap->driver, "uvcvideo", sizeof(cap->driver));
-	strscpy(cap->card, vfh->vdev->name, sizeof(cap->card));
-	usb_make_path(stream->dev->udev, cap->bus_info, sizeof(cap->bus_info));
+	strscpy(cap->driver, "uvcvideo", माप(cap->driver));
+	strscpy(cap->card, vfh->vdev->name, माप(cap->card));
+	usb_make_path(stream->dev->udev, cap->bus_info, माप(cap->bus_info));
 	cap->capabilities = V4L2_CAP_DEVICE_CAPS | V4L2_CAP_STREAMING
 			  | chain->caps;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uvc_meta_v4l2_get_format(struct file *file, void *fh,
-				    struct v4l2_format *format)
-{
-	struct v4l2_fh *vfh = file->private_data;
-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
-	struct v4l2_meta_format *fmt = &format->fmt.meta;
+अटल पूर्णांक uvc_meta_v4l2_get_क्रमmat(काष्ठा file *file, व्योम *fh,
+				    काष्ठा v4l2_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_fh *vfh = file->निजी_data;
+	काष्ठा uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+	काष्ठा v4l2_meta_क्रमmat *fmt = &क्रमmat->fmt.meta;
 
-	if (format->type != vfh->vdev->queue->type)
-		return -EINVAL;
+	अगर (क्रमmat->type != vfh->vdev->queue->type)
+		वापस -EINVAL;
 
-	memset(fmt, 0, sizeof(*fmt));
+	स_रखो(fmt, 0, माप(*fmt));
 
-	fmt->dataformat = stream->meta.format;
+	fmt->dataक्रमmat = stream->meta.क्रमmat;
 	fmt->buffersize = UVC_METADATA_BUF_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uvc_meta_v4l2_try_format(struct file *file, void *fh,
-				    struct v4l2_format *format)
-{
-	struct v4l2_fh *vfh = file->private_data;
-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
-	struct uvc_device *dev = stream->dev;
-	struct v4l2_meta_format *fmt = &format->fmt.meta;
-	u32 fmeta = fmt->dataformat;
+अटल पूर्णांक uvc_meta_v4l2_try_क्रमmat(काष्ठा file *file, व्योम *fh,
+				    काष्ठा v4l2_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_fh *vfh = file->निजी_data;
+	काष्ठा uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+	काष्ठा uvc_device *dev = stream->dev;
+	काष्ठा v4l2_meta_क्रमmat *fmt = &क्रमmat->fmt.meta;
+	u32 fmeta = fmt->dataक्रमmat;
 
-	if (format->type != vfh->vdev->queue->type)
-		return -EINVAL;
+	अगर (क्रमmat->type != vfh->vdev->queue->type)
+		वापस -EINVAL;
 
-	memset(fmt, 0, sizeof(*fmt));
+	स_रखो(fmt, 0, माप(*fmt));
 
-	fmt->dataformat = fmeta == dev->info->meta_format
+	fmt->dataक्रमmat = fmeta == dev->info->meta_क्रमmat
 			? fmeta : V4L2_META_FMT_UVC;
 	fmt->buffersize = UVC_METADATA_BUF_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uvc_meta_v4l2_set_format(struct file *file, void *fh,
-				    struct v4l2_format *format)
-{
-	struct v4l2_fh *vfh = file->private_data;
-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
-	struct v4l2_meta_format *fmt = &format->fmt.meta;
-	int ret;
+अटल पूर्णांक uvc_meta_v4l2_set_क्रमmat(काष्ठा file *file, व्योम *fh,
+				    काष्ठा v4l2_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_fh *vfh = file->निजी_data;
+	काष्ठा uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+	काष्ठा v4l2_meta_क्रमmat *fmt = &क्रमmat->fmt.meta;
+	पूर्णांक ret;
 
-	ret = uvc_meta_v4l2_try_format(file, fh, format);
-	if (ret < 0)
-		return ret;
+	ret = uvc_meta_v4l2_try_क्रमmat(file, fh, क्रमmat);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * We could in principle switch at any time, also during streaming.
+	 * We could in principle चयन at any समय, also during streaming.
 	 * Metadata buffers would still be perfectly parseable, but it's more
 	 * consistent and cleaner to disallow that.
 	 */
 	mutex_lock(&stream->mutex);
 
-	if (uvc_queue_allocated(&stream->queue))
+	अगर (uvc_queue_allocated(&stream->queue))
 		ret = -EBUSY;
-	else
-		stream->meta.format = fmt->dataformat;
+	अन्यथा
+		stream->meta.क्रमmat = fmt->dataक्रमmat;
 
 	mutex_unlock(&stream->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uvc_meta_v4l2_enum_formats(struct file *file, void *fh,
-				      struct v4l2_fmtdesc *fdesc)
-{
-	struct v4l2_fh *vfh = file->private_data;
-	struct uvc_streaming *stream = video_get_drvdata(vfh->vdev);
-	struct uvc_device *dev = stream->dev;
+अटल पूर्णांक uvc_meta_v4l2_क्रमागत_क्रमmats(काष्ठा file *file, व्योम *fh,
+				      काष्ठा v4l2_fmtdesc *fdesc)
+अणु
+	काष्ठा v4l2_fh *vfh = file->निजी_data;
+	काष्ठा uvc_streaming *stream = video_get_drvdata(vfh->vdev);
+	काष्ठा uvc_device *dev = stream->dev;
 	u32 index = fdesc->index;
 
-	if (fdesc->type != vfh->vdev->queue->type ||
-	    index > 1U || (index && !dev->info->meta_format))
-		return -EINVAL;
+	अगर (fdesc->type != vfh->vdev->queue->type ||
+	    index > 1U || (index && !dev->info->meta_क्रमmat))
+		वापस -EINVAL;
 
-	memset(fdesc, 0, sizeof(*fdesc));
+	स_रखो(fdesc, 0, माप(*fdesc));
 
 	fdesc->type = vfh->vdev->queue->type;
 	fdesc->index = index;
-	fdesc->pixelformat = index ? dev->info->meta_format : V4L2_META_FMT_UVC;
+	fdesc->pixelक्रमmat = index ? dev->info->meta_क्रमmat : V4L2_META_FMT_UVC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ioctl_ops uvc_meta_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops uvc_meta_ioctl_ops = अणु
 	.vidioc_querycap		= uvc_meta_v4l2_querycap,
-	.vidioc_g_fmt_meta_cap		= uvc_meta_v4l2_get_format,
-	.vidioc_s_fmt_meta_cap		= uvc_meta_v4l2_set_format,
-	.vidioc_try_fmt_meta_cap	= uvc_meta_v4l2_try_format,
-	.vidioc_enum_fmt_meta_cap	= uvc_meta_v4l2_enum_formats,
+	.vidioc_g_fmt_meta_cap		= uvc_meta_v4l2_get_क्रमmat,
+	.vidioc_s_fmt_meta_cap		= uvc_meta_v4l2_set_क्रमmat,
+	.vidioc_try_fmt_meta_cap	= uvc_meta_v4l2_try_क्रमmat,
+	.vidioc_क्रमागत_fmt_meta_cap	= uvc_meta_v4l2_क्रमागत_क्रमmats,
 	.vidioc_reqbufs			= vb2_ioctl_reqbufs,
 	.vidioc_querybuf		= vb2_ioctl_querybuf,
 	.vidioc_qbuf			= vb2_ioctl_qbuf,
@@ -141,36 +142,36 @@ static const struct v4l2_ioctl_ops uvc_meta_ioctl_ops = {
 	.vidioc_prepare_buf		= vb2_ioctl_prepare_buf,
 	.vidioc_streamon		= vb2_ioctl_streamon,
 	.vidioc_streamoff		= vb2_ioctl_streamoff,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * V4L2 File Operations
  */
 
-static const struct v4l2_file_operations uvc_meta_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations uvc_meta_fops = अणु
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = video_ioctl2,
-	.open = v4l2_fh_open,
+	.खोलो = v4l2_fh_खोलो,
 	.release = vb2_fop_release,
 	.poll = vb2_fop_poll,
 	.mmap = vb2_fop_mmap,
-};
+पूर्ण;
 
-int uvc_meta_register(struct uvc_streaming *stream)
-{
-	struct uvc_device *dev = stream->dev;
-	struct video_device *vdev = &stream->meta.vdev;
-	struct uvc_video_queue *queue = &stream->meta.queue;
+पूर्णांक uvc_meta_रेजिस्टर(काष्ठा uvc_streaming *stream)
+अणु
+	काष्ठा uvc_device *dev = stream->dev;
+	काष्ठा video_device *vdev = &stream->meta.vdev;
+	काष्ठा uvc_video_queue *queue = &stream->meta.queue;
 
-	stream->meta.format = V4L2_META_FMT_UVC;
+	stream->meta.क्रमmat = V4L2_META_FMT_UVC;
 
 	/*
-	 * The video interface queue uses manual locking and thus does not set
-	 * the queue pointer. Set it manually here.
+	 * The video पूर्णांकerface queue uses manual locking and thus करोes not set
+	 * the queue poपूर्णांकer. Set it manually here.
 	 */
 	vdev->queue = &queue->queue;
 
-	return uvc_register_video_device(dev, stream, vdev, queue,
+	वापस uvc_रेजिस्टर_video_device(dev, stream, vdev, queue,
 					 V4L2_BUF_TYPE_META_CAPTURE,
 					 &uvc_meta_fops, &uvc_meta_ioctl_ops);
-}
+पूर्ण

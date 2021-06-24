@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_UI_UTIL_H_
-#define _PERF_UI_UTIL_H_ 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_UI_UTIL_H_
+#घोषणा _PERF_UI_UTIL_H_ 1
 
-#include <stdarg.h>
+#समावेश <मानकतर्क.स>
 
-int ui__getch(int delay_secs);
-int ui__popup_menu(int argc, char * const argv[], int *keyp);
-int ui__help_window(const char *text);
-int ui__dialog_yesno(const char *msg);
-void __ui__info_window(const char *title, const char *text, const char *exit_msg);
-void ui__info_window(const char *title, const char *text);
-int ui__question_window(const char *title, const char *text,
-			const char *exit_msg, int delay_secs);
+पूर्णांक ui__अ_लोh(पूर्णांक delay_secs);
+पूर्णांक ui__popup_menu(पूर्णांक argc, अक्षर * स्थिर argv[], पूर्णांक *keyp);
+पूर्णांक ui__help_winकरोw(स्थिर अक्षर *text);
+पूर्णांक ui__dialog_yesno(स्थिर अक्षर *msg);
+व्योम __ui__info_winकरोw(स्थिर अक्षर *title, स्थिर अक्षर *text, स्थिर अक्षर *निकास_msg);
+व्योम ui__info_winकरोw(स्थिर अक्षर *title, स्थिर अक्षर *text);
+पूर्णांक ui__question_winकरोw(स्थिर अक्षर *title, स्थिर अक्षर *text,
+			स्थिर अक्षर *निकास_msg, पूर्णांक delay_secs);
 
-struct perf_error_ops {
-	int (*error)(const char *format, va_list args);
-	int (*warning)(const char *format, va_list args);
-};
+काष्ठा perf_error_ops अणु
+	पूर्णांक (*error)(स्थिर अक्षर *क्रमmat, बहु_सूची args);
+	पूर्णांक (*warning)(स्थिर अक्षर *क्रमmat, बहु_सूची args);
+पूर्ण;
 
-int perf_error__register(struct perf_error_ops *eops);
-int perf_error__unregister(struct perf_error_ops *eops);
+पूर्णांक perf_error__रेजिस्टर(काष्ठा perf_error_ops *eops);
+पूर्णांक perf_error__unरेजिस्टर(काष्ठा perf_error_ops *eops);
 
-#endif /* _PERF_UI_UTIL_H_ */
+#पूर्ण_अगर /* _PERF_UI_UTIL_H_ */

@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * MAX9768 AMP driver
  *
  * Copyright (C) 2011, 2012 by Wolfram Sang, Pengutronix e.K.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/gpio.h>
-#include <linux/regmap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/regmap.h>
 
-#include <sound/core.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
-#include <sound/max9768.h>
+#समावेश <sound/core.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/max9768.h>
 
 /* "Registers" */
-#define MAX9768_VOL 0
-#define MAX9768_CTRL 3
+#घोषणा MAX9768_VOL 0
+#घोषणा MAX9768_CTRL 3
 
 /* Commands */
-#define MAX9768_CTRL_PWM 0x15
-#define MAX9768_CTRL_FILTERLESS 0x16
+#घोषणा MAX9768_CTRL_PWM 0x15
+#घोषणा MAX9768_CTRL_FILTERLESS 0x16
 
-struct max9768 {
-	struct regmap *regmap;
-	int mute_gpio;
-	int shdn_gpio;
+काष्ठा max9768 अणु
+	काष्ठा regmap *regmap;
+	पूर्णांक mute_gpio;
+	पूर्णांक shdn_gpio;
 	u32 flags;
-};
+पूर्ण;
 
-static const struct reg_default max9768_default_regs[] = {
-	{ 0, 0 },
-	{ 3,  MAX9768_CTRL_FILTERLESS},
-};
+अटल स्थिर काष्ठा reg_शेष max9768_शेष_regs[] = अणु
+	अणु 0, 0 पूर्ण,
+	अणु 3,  MAX9768_CTRL_FILTERLESSपूर्ण,
+पूर्ण;
 
-static int max9768_get_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *c = snd_soc_kcontrol_component(kcontrol);
-	struct max9768 *max9768 = snd_soc_component_get_drvdata(c);
-	int val = gpio_get_value_cansleep(max9768->mute_gpio);
+अटल पूर्णांक max9768_get_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *c = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा max9768 *max9768 = snd_soc_component_get_drvdata(c);
+	पूर्णांक val = gpio_get_value_cansleep(max9768->mute_gpio);
 
-	ucontrol->value.integer.value[0] = !val;
+	ucontrol->value.पूर्णांकeger.value[0] = !val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max9768_set_gpio(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *c = snd_soc_kcontrol_component(kcontrol);
-	struct max9768 *max9768 = snd_soc_component_get_drvdata(c);
+अटल पूर्णांक max9768_set_gpio(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *c = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा max9768 *max9768 = snd_soc_component_get_drvdata(c);
 
-	gpio_set_value_cansleep(max9768->mute_gpio, !ucontrol->value.integer.value[0]);
+	gpio_set_value_cansleep(max9768->mute_gpio, !ucontrol->value.पूर्णांकeger.value[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const DECLARE_TLV_DB_RANGE(volume_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(volume_tlv,
 	0, 0, TLV_DB_SCALE_ITEM(-16150, 0, 0),
 	1, 1, TLV_DB_SCALE_ITEM(-9280, 0, 0),
 	2, 2, TLV_DB_SCALE_ITEM(-9030, 0, 0),
@@ -106,118 +107,118 @@ static const DECLARE_TLV_DB_RANGE(volume_tlv,
 	63, 63, TLV_DB_SCALE_ITEM(950, 0, 0)
 );
 
-static const struct snd_kcontrol_new max9768_volume[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new max9768_volume[] = अणु
 	SOC_SINGLE_TLV("Playback Volume", MAX9768_VOL, 0, 63, 0, volume_tlv),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new max9768_mute[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new max9768_mute[] = अणु
 	SOC_SINGLE_BOOL_EXT("Playback Switch", 0, max9768_get_gpio, max9768_set_gpio),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget max9768_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget max9768_dapm_widमाला_लो[] = अणु
 SND_SOC_DAPM_INPUT("IN"),
 
 SND_SOC_DAPM_OUTPUT("OUT+"),
 SND_SOC_DAPM_OUTPUT("OUT-"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route max9768_dapm_routes[] = {
-	{ "OUT+", NULL, "IN" },
-	{ "OUT-", NULL, "IN" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route max9768_dapm_routes[] = अणु
+	अणु "OUT+", शून्य, "IN" पूर्ण,
+	अणु "OUT-", शून्य, "IN" पूर्ण,
+पूर्ण;
 
-static int max9768_probe(struct snd_soc_component *component)
-{
-	struct max9768 *max9768 = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक max9768_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा max9768 *max9768 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
-	if (max9768->flags & MAX9768_FLAG_CLASSIC_PWM) {
-		ret = regmap_write(max9768->regmap, MAX9768_CTRL,
+	अगर (max9768->flags & MAX9768_FLAG_CLASSIC_PWM) अणु
+		ret = regmap_ग_लिखो(max9768->regmap, MAX9768_CTRL,
 			MAX9768_CTRL_PWM);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (gpio_is_valid(max9768->mute_gpio)) {
+	अगर (gpio_is_valid(max9768->mute_gpio)) अणु
 		ret = snd_soc_add_component_controls(component, max9768_mute,
 				ARRAY_SIZE(max9768_mute));
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver max9768_component_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver max9768_component_driver = अणु
 	.probe = max9768_probe,
 	.controls = max9768_volume,
 	.num_controls = ARRAY_SIZE(max9768_volume),
-	.dapm_widgets = max9768_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(max9768_dapm_widgets),
+	.dapm_widमाला_लो = max9768_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(max9768_dapm_widमाला_लो),
 	.dapm_routes = max9768_dapm_routes,
 	.num_dapm_routes = ARRAY_SIZE(max9768_dapm_routes),
-};
+पूर्ण;
 
-static const struct regmap_config max9768_i2c_regmap_config = {
+अटल स्थिर काष्ठा regmap_config max9768_i2c_regmap_config = अणु
 	.reg_bits = 2,
 	.val_bits = 6,
-	.max_register = 3,
-	.reg_defaults = max9768_default_regs,
-	.num_reg_defaults = ARRAY_SIZE(max9768_default_regs),
+	.max_रेजिस्टर = 3,
+	.reg_शेषs = max9768_शेष_regs,
+	.num_reg_शेषs = ARRAY_SIZE(max9768_शेष_regs),
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static int max9768_i2c_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
-{
-	struct max9768 *max9768;
-	struct max9768_pdata *pdata = client->dev.platform_data;
-	int err;
+अटल पूर्णांक max9768_i2c_probe(काष्ठा i2c_client *client,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा max9768 *max9768;
+	काष्ठा max9768_pdata *pdata = client->dev.platक्रमm_data;
+	पूर्णांक err;
 
-	max9768 = devm_kzalloc(&client->dev, sizeof(*max9768), GFP_KERNEL);
-	if (!max9768)
-		return -ENOMEM;
+	max9768 = devm_kzalloc(&client->dev, माप(*max9768), GFP_KERNEL);
+	अगर (!max9768)
+		वापस -ENOMEM;
 
-	if (pdata) {
-		/* Mute on powerup to avoid clicks */
+	अगर (pdata) अणु
+		/* Mute on घातerup to aव्योम clicks */
 		err = devm_gpio_request_one(&client->dev, pdata->mute_gpio,
 				GPIOF_INIT_HIGH, "MAX9768 Mute");
 		max9768->mute_gpio = err ?: pdata->mute_gpio;
 
-		/* Activate chip by releasing shutdown, enables I2C */
+		/* Activate chip by releasing shutकरोwn, enables I2C */
 		err = devm_gpio_request_one(&client->dev, pdata->shdn_gpio,
 				GPIOF_INIT_HIGH, "MAX9768 Shutdown");
 		max9768->shdn_gpio = err ?: pdata->shdn_gpio;
 
 		max9768->flags = pdata->flags;
-	} else {
+	पूर्ण अन्यथा अणु
 		max9768->shdn_gpio = -EINVAL;
 		max9768->mute_gpio = -EINVAL;
-	}
+	पूर्ण
 
 	i2c_set_clientdata(client, max9768);
 
 	max9768->regmap = devm_regmap_init_i2c(client, &max9768_i2c_regmap_config);
-	if (IS_ERR(max9768->regmap))
-		return PTR_ERR(max9768->regmap);
+	अगर (IS_ERR(max9768->regmap))
+		वापस PTR_ERR(max9768->regmap);
 
-	return devm_snd_soc_register_component(&client->dev,
-		&max9768_component_driver, NULL, 0);
-}
+	वापस devm_snd_soc_रेजिस्टर_component(&client->dev,
+		&max9768_component_driver, शून्य, 0);
+पूर्ण
 
-static const struct i2c_device_id max9768_i2c_id[] = {
-	{ "max9768", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id max9768_i2c_id[] = अणु
+	अणु "max9768", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max9768_i2c_id);
 
-static struct i2c_driver max9768_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max9768_i2c_driver = अणु
+	.driver = अणु
 		.name = "max9768",
-	},
+	पूर्ण,
 	.probe = max9768_i2c_probe,
 	.id_table = max9768_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(max9768_i2c_driver);
 
 MODULE_AUTHOR("Wolfram Sang <kernel@pengutronix.de>");

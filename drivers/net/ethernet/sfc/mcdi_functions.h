@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2018 Solarflare Communications Inc.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
-#ifndef EFX_MCDI_FUNCTIONS_H
-#define EFX_MCDI_FUNCTIONS_H
+#अगर_अघोषित EFX_MCDI_FUNCTIONS_H
+#घोषणा EFX_MCDI_FUNCTIONS_H
 
-int efx_mcdi_alloc_vis(struct efx_nic *efx, unsigned int min_vis,
-		       unsigned int max_vis, unsigned int *vi_base,
-		       unsigned int *allocated_vis);
-int efx_mcdi_free_vis(struct efx_nic *efx);
+पूर्णांक efx_mcdi_alloc_vis(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक min_vis,
+		       अचिन्हित पूर्णांक max_vis, अचिन्हित पूर्णांक *vi_base,
+		       अचिन्हित पूर्णांक *allocated_vis);
+पूर्णांक efx_mcdi_मुक्त_vis(काष्ठा efx_nic *efx);
 
-int efx_mcdi_ev_probe(struct efx_channel *channel);
-int efx_mcdi_ev_init(struct efx_channel *channel, bool v1_cut_thru, bool v2);
-void efx_mcdi_ev_remove(struct efx_channel *channel);
-void efx_mcdi_ev_fini(struct efx_channel *channel);
-int efx_mcdi_tx_init(struct efx_tx_queue *tx_queue);
-void efx_mcdi_tx_remove(struct efx_tx_queue *tx_queue);
-void efx_mcdi_tx_fini(struct efx_tx_queue *tx_queue);
-int efx_mcdi_rx_probe(struct efx_rx_queue *rx_queue);
-void efx_mcdi_rx_init(struct efx_rx_queue *rx_queue);
-void efx_mcdi_rx_remove(struct efx_rx_queue *rx_queue);
-void efx_mcdi_rx_fini(struct efx_rx_queue *rx_queue);
-int efx_fini_dmaq(struct efx_nic *efx);
-int efx_mcdi_window_mode_to_stride(struct efx_nic *efx, u8 vi_window_mode);
-int efx_get_pf_index(struct efx_nic *efx, unsigned int *pf_index);
+पूर्णांक efx_mcdi_ev_probe(काष्ठा efx_channel *channel);
+पूर्णांक efx_mcdi_ev_init(काष्ठा efx_channel *channel, bool v1_cut_thru, bool v2);
+व्योम efx_mcdi_ev_हटाओ(काष्ठा efx_channel *channel);
+व्योम efx_mcdi_ev_fini(काष्ठा efx_channel *channel);
+पूर्णांक efx_mcdi_tx_init(काष्ठा efx_tx_queue *tx_queue);
+व्योम efx_mcdi_tx_हटाओ(काष्ठा efx_tx_queue *tx_queue);
+व्योम efx_mcdi_tx_fini(काष्ठा efx_tx_queue *tx_queue);
+पूर्णांक efx_mcdi_rx_probe(काष्ठा efx_rx_queue *rx_queue);
+व्योम efx_mcdi_rx_init(काष्ठा efx_rx_queue *rx_queue);
+व्योम efx_mcdi_rx_हटाओ(काष्ठा efx_rx_queue *rx_queue);
+व्योम efx_mcdi_rx_fini(काष्ठा efx_rx_queue *rx_queue);
+पूर्णांक efx_fini_dmaq(काष्ठा efx_nic *efx);
+पूर्णांक efx_mcdi_winकरोw_mode_to_stride(काष्ठा efx_nic *efx, u8 vi_winकरोw_mode);
+पूर्णांक efx_get_pf_index(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक *pf_index);
 
-#endif
+#पूर्ण_अगर

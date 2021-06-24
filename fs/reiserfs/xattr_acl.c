@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/capability.h>
-#include <linux/fs.h>
-#include <linux/posix_acl.h>
-#include "reiserfs.h"
-#include <linux/errno.h>
-#include <linux/pagemap.h>
-#include <linux/xattr.h>
-#include <linux/slab.h>
-#include <linux/posix_acl_xattr.h>
-#include "xattr.h"
-#include "acl.h"
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/capability.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/posix_acl.h>
+#समावेश "reiserfs.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश "xattr.h"
+#समावेश "acl.h"
+#समावेश <linux/uaccess.h>
 
-static int __reiserfs_set_acl(struct reiserfs_transaction_handle *th,
-			    struct inode *inode, int type,
-			    struct posix_acl *acl);
+अटल पूर्णांक __reiserfs_set_acl(काष्ठा reiserfs_transaction_handle *th,
+			    काष्ठा inode *inode, पूर्णांक type,
+			    काष्ठा posix_acl *acl);
 
 
-int
-reiserfs_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
-		 struct posix_acl *acl, int type)
-{
-	int error, error2;
-	struct reiserfs_transaction_handle th;
-	size_t jcreate_blocks;
-	int size = acl ? posix_acl_xattr_size(acl->a_count) : 0;
-	int update_mode = 0;
+पूर्णांक
+reiserfs_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		 काष्ठा posix_acl *acl, पूर्णांक type)
+अणु
+	पूर्णांक error, error2;
+	काष्ठा reiserfs_transaction_handle th;
+	माप_प्रकार jcreate_blocks;
+	पूर्णांक size = acl ? posix_acl_xattr_size(acl->a_count) : 0;
+	पूर्णांक update_mode = 0;
 	umode_t mode = inode->i_mode;
 
 	/*
@@ -36,345 +37,345 @@ reiserfs_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
 	jcreate_blocks = reiserfs_xattr_jcreate_nblocks(inode) +
 			 reiserfs_xattr_nblocks(inode, size) * 2;
 
-	reiserfs_write_lock(inode->i_sb);
+	reiserfs_ग_लिखो_lock(inode->i_sb);
 	error = journal_begin(&th, inode->i_sb, jcreate_blocks);
-	reiserfs_write_unlock(inode->i_sb);
-	if (error == 0) {
-		if (type == ACL_TYPE_ACCESS && acl) {
+	reiserfs_ग_लिखो_unlock(inode->i_sb);
+	अगर (error == 0) अणु
+		अगर (type == ACL_TYPE_ACCESS && acl) अणु
 			error = posix_acl_update_mode(&init_user_ns, inode,
 						      &mode, &acl);
-			if (error)
-				goto unlock;
+			अगर (error)
+				जाओ unlock;
 			update_mode = 1;
-		}
+		पूर्ण
 		error = __reiserfs_set_acl(&th, inode, type, acl);
-		if (!error && update_mode)
+		अगर (!error && update_mode)
 			inode->i_mode = mode;
 unlock:
-		reiserfs_write_lock(inode->i_sb);
+		reiserfs_ग_लिखो_lock(inode->i_sb);
 		error2 = journal_end(&th);
-		reiserfs_write_unlock(inode->i_sb);
-		if (error2)
+		reiserfs_ग_लिखो_unlock(inode->i_sb);
+		अगर (error2)
 			error = error2;
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * Convert from filesystem to in-memory representation.
+ * Convert from fileप्रणाली to in-memory representation.
  */
-static struct posix_acl *reiserfs_posix_acl_from_disk(const void *value, size_t size)
-{
-	const char *end = (char *)value + size;
-	int n, count;
-	struct posix_acl *acl;
+अटल काष्ठा posix_acl *reiserfs_posix_acl_from_disk(स्थिर व्योम *value, माप_प्रकार size)
+अणु
+	स्थिर अक्षर *end = (अक्षर *)value + size;
+	पूर्णांक n, count;
+	काष्ठा posix_acl *acl;
 
-	if (!value)
-		return NULL;
-	if (size < sizeof(reiserfs_acl_header))
-		return ERR_PTR(-EINVAL);
-	if (((reiserfs_acl_header *) value)->a_version !=
+	अगर (!value)
+		वापस शून्य;
+	अगर (size < माप(reiserfs_acl_header))
+		वापस ERR_PTR(-EINVAL);
+	अगर (((reiserfs_acl_header *) value)->a_version !=
 	    cpu_to_le32(REISERFS_ACL_VERSION))
-		return ERR_PTR(-EINVAL);
-	value = (char *)value + sizeof(reiserfs_acl_header);
+		वापस ERR_PTR(-EINVAL);
+	value = (अक्षर *)value + माप(reiserfs_acl_header);
 	count = reiserfs_acl_count(size);
-	if (count < 0)
-		return ERR_PTR(-EINVAL);
-	if (count == 0)
-		return NULL;
+	अगर (count < 0)
+		वापस ERR_PTR(-EINVAL);
+	अगर (count == 0)
+		वापस शून्य;
 	acl = posix_acl_alloc(count, GFP_NOFS);
-	if (!acl)
-		return ERR_PTR(-ENOMEM);
-	for (n = 0; n < count; n++) {
+	अगर (!acl)
+		वापस ERR_PTR(-ENOMEM);
+	क्रम (n = 0; n < count; n++) अणु
 		reiserfs_acl_entry *entry = (reiserfs_acl_entry *) value;
-		if ((char *)value + sizeof(reiserfs_acl_entry_short) > end)
-			goto fail;
+		अगर ((अक्षर *)value + माप(reiserfs_acl_entry_लघु) > end)
+			जाओ fail;
 		acl->a_entries[n].e_tag = le16_to_cpu(entry->e_tag);
 		acl->a_entries[n].e_perm = le16_to_cpu(entry->e_perm);
-		switch (acl->a_entries[n].e_tag) {
-		case ACL_USER_OBJ:
-		case ACL_GROUP_OBJ:
-		case ACL_MASK:
-		case ACL_OTHER:
-			value = (char *)value +
-			    sizeof(reiserfs_acl_entry_short);
-			break;
+		चयन (acl->a_entries[n].e_tag) अणु
+		हाल ACL_USER_OBJ:
+		हाल ACL_GROUP_OBJ:
+		हाल ACL_MASK:
+		हाल ACL_OTHER:
+			value = (अक्षर *)value +
+			    माप(reiserfs_acl_entry_लघु);
+			अवरोध;
 
-		case ACL_USER:
-			value = (char *)value + sizeof(reiserfs_acl_entry);
-			if ((char *)value > end)
-				goto fail;
+		हाल ACL_USER:
+			value = (अक्षर *)value + माप(reiserfs_acl_entry);
+			अगर ((अक्षर *)value > end)
+				जाओ fail;
 			acl->a_entries[n].e_uid = 
 				make_kuid(&init_user_ns,
 					  le32_to_cpu(entry->e_id));
-			break;
-		case ACL_GROUP:
-			value = (char *)value + sizeof(reiserfs_acl_entry);
-			if ((char *)value > end)
-				goto fail;
+			अवरोध;
+		हाल ACL_GROUP:
+			value = (अक्षर *)value + माप(reiserfs_acl_entry);
+			अगर ((अक्षर *)value > end)
+				जाओ fail;
 			acl->a_entries[n].e_gid =
 				make_kgid(&init_user_ns,
 					  le32_to_cpu(entry->e_id));
-			break;
+			अवरोध;
 
-		default:
-			goto fail;
-		}
-	}
-	if (value != end)
-		goto fail;
-	return acl;
+		शेष:
+			जाओ fail;
+		पूर्ण
+	पूर्ण
+	अगर (value != end)
+		जाओ fail;
+	वापस acl;
 
 fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
 /*
- * Convert from in-memory to filesystem representation.
+ * Convert from in-memory to fileप्रणाली representation.
  */
-static void *reiserfs_posix_acl_to_disk(const struct posix_acl *acl, size_t * size)
-{
+अटल व्योम *reiserfs_posix_acl_to_disk(स्थिर काष्ठा posix_acl *acl, माप_प्रकार * size)
+अणु
 	reiserfs_acl_header *ext_acl;
-	char *e;
-	int n;
+	अक्षर *e;
+	पूर्णांक n;
 
 	*size = reiserfs_acl_size(acl->a_count);
-	ext_acl = kmalloc(sizeof(reiserfs_acl_header) +
+	ext_acl = kदो_स्मृति(माप(reiserfs_acl_header) +
 						  acl->a_count *
-						  sizeof(reiserfs_acl_entry),
+						  माप(reiserfs_acl_entry),
 						  GFP_NOFS);
-	if (!ext_acl)
-		return ERR_PTR(-ENOMEM);
+	अगर (!ext_acl)
+		वापस ERR_PTR(-ENOMEM);
 	ext_acl->a_version = cpu_to_le32(REISERFS_ACL_VERSION);
-	e = (char *)ext_acl + sizeof(reiserfs_acl_header);
-	for (n = 0; n < acl->a_count; n++) {
-		const struct posix_acl_entry *acl_e = &acl->a_entries[n];
+	e = (अक्षर *)ext_acl + माप(reiserfs_acl_header);
+	क्रम (n = 0; n < acl->a_count; n++) अणु
+		स्थिर काष्ठा posix_acl_entry *acl_e = &acl->a_entries[n];
 		reiserfs_acl_entry *entry = (reiserfs_acl_entry *) e;
 		entry->e_tag = cpu_to_le16(acl->a_entries[n].e_tag);
 		entry->e_perm = cpu_to_le16(acl->a_entries[n].e_perm);
-		switch (acl->a_entries[n].e_tag) {
-		case ACL_USER:
+		चयन (acl->a_entries[n].e_tag) अणु
+		हाल ACL_USER:
 			entry->e_id = cpu_to_le32(
 				from_kuid(&init_user_ns, acl_e->e_uid));
-			e += sizeof(reiserfs_acl_entry);
-			break;
-		case ACL_GROUP:
+			e += माप(reiserfs_acl_entry);
+			अवरोध;
+		हाल ACL_GROUP:
 			entry->e_id = cpu_to_le32(
 				from_kgid(&init_user_ns, acl_e->e_gid));
-			e += sizeof(reiserfs_acl_entry);
-			break;
+			e += माप(reiserfs_acl_entry);
+			अवरोध;
 
-		case ACL_USER_OBJ:
-		case ACL_GROUP_OBJ:
-		case ACL_MASK:
-		case ACL_OTHER:
-			e += sizeof(reiserfs_acl_entry_short);
-			break;
+		हाल ACL_USER_OBJ:
+		हाल ACL_GROUP_OBJ:
+		हाल ACL_MASK:
+		हाल ACL_OTHER:
+			e += माप(reiserfs_acl_entry_लघु);
+			अवरोध;
 
-		default:
-			goto fail;
-		}
-	}
-	return (char *)ext_acl;
+		शेष:
+			जाओ fail;
+		पूर्ण
+	पूर्ण
+	वापस (अक्षर *)ext_acl;
 
 fail:
-	kfree(ext_acl);
-	return ERR_PTR(-EINVAL);
-}
+	kमुक्त(ext_acl);
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
 /*
  * Inode operation get_posix_acl().
  *
- * inode->i_mutex: down
- * BKL held [before 2.5.x]
+ * inode->i_mutex: करोwn
+ * BKL held [beक्रमe 2.5.x]
  */
-struct posix_acl *reiserfs_get_acl(struct inode *inode, int type)
-{
-	char *name, *value;
-	struct posix_acl *acl;
-	int size;
-	int retval;
+काष्ठा posix_acl *reiserfs_get_acl(काष्ठा inode *inode, पूर्णांक type)
+अणु
+	अक्षर *name, *value;
+	काष्ठा posix_acl *acl;
+	पूर्णांक size;
+	पूर्णांक retval;
 
-	switch (type) {
-	case ACL_TYPE_ACCESS:
+	चयन (type) अणु
+	हाल ACL_TYPE_ACCESS:
 		name = XATTR_NAME_POSIX_ACL_ACCESS;
-		break;
-	case ACL_TYPE_DEFAULT:
+		अवरोध;
+	हाल ACL_TYPE_DEFAULT:
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	size = reiserfs_xattr_get(inode, name, NULL, 0);
-	if (size < 0) {
-		if (size == -ENODATA || size == -ENOSYS)
-			return NULL;
-		return ERR_PTR(size);
-	}
+	size = reiserfs_xattr_get(inode, name, शून्य, 0);
+	अगर (size < 0) अणु
+		अगर (size == -ENODATA || size == -ENOSYS)
+			वापस शून्य;
+		वापस ERR_PTR(size);
+	पूर्ण
 
-	value = kmalloc(size, GFP_NOFS);
-	if (!value)
-		return ERR_PTR(-ENOMEM);
+	value = kदो_स्मृति(size, GFP_NOFS);
+	अगर (!value)
+		वापस ERR_PTR(-ENOMEM);
 
 	retval = reiserfs_xattr_get(inode, name, value, size);
-	if (retval == -ENODATA || retval == -ENOSYS) {
+	अगर (retval == -ENODATA || retval == -ENOSYS) अणु
 		/*
 		 * This shouldn't actually happen as it should have
-		 * been caught above.. but just in case
+		 * been caught above.. but just in हाल
 		 */
-		acl = NULL;
-	} else if (retval < 0) {
+		acl = शून्य;
+	पूर्ण अन्यथा अगर (retval < 0) अणु
 		acl = ERR_PTR(retval);
-	} else {
+	पूर्ण अन्यथा अणु
 		acl = reiserfs_posix_acl_from_disk(value, retval);
-	}
+	पूर्ण
 
-	kfree(value);
-	return acl;
-}
+	kमुक्त(value);
+	वापस acl;
+पूर्ण
 
 /*
  * Inode operation set_posix_acl().
  *
- * inode->i_mutex: down
- * BKL held [before 2.5.x]
+ * inode->i_mutex: करोwn
+ * BKL held [beक्रमe 2.5.x]
  */
-static int
-__reiserfs_set_acl(struct reiserfs_transaction_handle *th, struct inode *inode,
-		 int type, struct posix_acl *acl)
-{
-	char *name;
-	void *value = NULL;
-	size_t size = 0;
-	int error;
+अटल पूर्णांक
+__reiserfs_set_acl(काष्ठा reiserfs_transaction_handle *th, काष्ठा inode *inode,
+		 पूर्णांक type, काष्ठा posix_acl *acl)
+अणु
+	अक्षर *name;
+	व्योम *value = शून्य;
+	माप_प्रकार size = 0;
+	पूर्णांक error;
 
-	switch (type) {
-	case ACL_TYPE_ACCESS:
+	चयन (type) अणु
+	हाल ACL_TYPE_ACCESS:
 		name = XATTR_NAME_POSIX_ACL_ACCESS;
-		break;
-	case ACL_TYPE_DEFAULT:
+		अवरोध;
+	हाल ACL_TYPE_DEFAULT:
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
-		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EACCES : 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अगर (!S_ISसूची(inode->i_mode))
+			वापस acl ? -EACCES : 0;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (acl) {
+	अगर (acl) अणु
 		value = reiserfs_posix_acl_to_disk(acl, &size);
-		if (IS_ERR(value))
-			return (int)PTR_ERR(value);
-	}
+		अगर (IS_ERR(value))
+			वापस (पूर्णांक)PTR_ERR(value);
+	पूर्ण
 
 	error = reiserfs_xattr_set_handle(th, inode, name, value, size, 0);
 
 	/*
-	 * Ensure that the inode gets dirtied if we're only using
+	 * Ensure that the inode माला_लो dirtied अगर we're only using
 	 * the mode bits and an old ACL didn't exist. We don't need
-	 * to check if the inode is hashed here since we won't get
-	 * called by reiserfs_inherit_default_acl().
+	 * to check अगर the inode is hashed here since we won't get
+	 * called by reiserfs_inherit_शेष_acl().
 	 */
-	if (error == -ENODATA) {
+	अगर (error == -ENODATA) अणु
 		error = 0;
-		if (type == ACL_TYPE_ACCESS) {
-			inode->i_ctime = current_time(inode);
+		अगर (type == ACL_TYPE_ACCESS) अणु
+			inode->i_स_समय = current_समय(inode);
 			mark_inode_dirty(inode);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	kfree(value);
+	kमुक्त(value);
 
-	if (!error)
+	अगर (!error)
 		set_cached_acl(inode, type, acl);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * dir->i_mutex: locked,
- * inode is new and not released into the wild yet
+ * inode is new and not released पूर्णांकo the wild yet
  */
-int
-reiserfs_inherit_default_acl(struct reiserfs_transaction_handle *th,
-			     struct inode *dir, struct dentry *dentry,
-			     struct inode *inode)
-{
-	struct posix_acl *default_acl, *acl;
-	int err = 0;
+पूर्णांक
+reiserfs_inherit_शेष_acl(काष्ठा reiserfs_transaction_handle *th,
+			     काष्ठा inode *dir, काष्ठा dentry *dentry,
+			     काष्ठा inode *inode)
+अणु
+	काष्ठा posix_acl *शेष_acl, *acl;
+	पूर्णांक err = 0;
 
 	/* ACLs only get applied to files and directories */
-	if (S_ISLNK(inode->i_mode))
-		return 0;
+	अगर (S_ISLNK(inode->i_mode))
+		वापस 0;
 
 	/*
-	 * ACLs can only be used on "new" objects, so if it's an old object
+	 * ACLs can only be used on "new" objects, so अगर it's an old object
 	 * there is nothing to inherit from
 	 */
-	if (get_inode_sd_version(dir) == STAT_DATA_V1)
-		goto apply_umask;
+	अगर (get_inode_sd_version(dir) == STAT_DATA_V1)
+		जाओ apply_umask;
 
 	/*
 	 * Don't apply ACLs to objects in the .reiserfs_priv tree.. This
 	 * would be useless since permissions are ignored, and a pain because
-	 * it introduces locking cycles
+	 * it पूर्णांकroduces locking cycles
 	 */
-	if (IS_PRIVATE(inode))
-		goto apply_umask;
+	अगर (IS_PRIVATE(inode))
+		जाओ apply_umask;
 
-	err = posix_acl_create(dir, &inode->i_mode, &default_acl, &acl);
-	if (err)
-		return err;
+	err = posix_acl_create(dir, &inode->i_mode, &शेष_acl, &acl);
+	अगर (err)
+		वापस err;
 
-	if (default_acl) {
+	अगर (शेष_acl) अणु
 		err = __reiserfs_set_acl(th, inode, ACL_TYPE_DEFAULT,
-					 default_acl);
-		posix_acl_release(default_acl);
-	}
-	if (acl) {
-		if (!err)
+					 शेष_acl);
+		posix_acl_release(शेष_acl);
+	पूर्ण
+	अगर (acl) अणु
+		अगर (!err)
 			err = __reiserfs_set_acl(th, inode, ACL_TYPE_ACCESS,
 						 acl);
 		posix_acl_release(acl);
-	}
+	पूर्ण
 
-	return err;
+	वापस err;
 
 apply_umask:
 	/* no ACL, apply umask */
 	inode->i_mode &= ~current_umask();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* This is used to cache the default acl before a new object is created.
- * The biggest reason for this is to get an idea of how many blocks will
- * actually be required for the create operation if we must inherit an ACL.
- * An ACL write can add up to 3 object creations and an additional file write
- * so we'd prefer not to reserve that many blocks in the journal if we can.
- * It also has the advantage of not loading the ACL with a transaction open,
- * this may seem silly, but if the owner of the directory is doing the
+/* This is used to cache the शेष acl beक्रमe a new object is created.
+ * The biggest reason क्रम this is to get an idea of how many blocks will
+ * actually be required क्रम the create operation अगर we must inherit an ACL.
+ * An ACL ग_लिखो can add up to 3 object creations and an additional file ग_लिखो
+ * so we'd prefer not to reserve that many blocks in the journal अगर we can.
+ * It also has the advantage of not loading the ACL with a transaction खोलो,
+ * this may seem silly, but अगर the owner of the directory is करोing the
  * creation, the ACL may not be loaded since the permissions wouldn't require
  * it.
- * We return the number of blocks required for the transaction.
+ * We वापस the number of blocks required क्रम the transaction.
  */
-int reiserfs_cache_default_acl(struct inode *inode)
-{
-	struct posix_acl *acl;
-	int nblocks = 0;
+पूर्णांक reiserfs_cache_शेष_acl(काष्ठा inode *inode)
+अणु
+	काष्ठा posix_acl *acl;
+	पूर्णांक nblocks = 0;
 
-	if (IS_PRIVATE(inode))
-		return 0;
+	अगर (IS_PRIVATE(inode))
+		वापस 0;
 
 	acl = get_acl(inode, ACL_TYPE_DEFAULT);
 
-	if (acl && !IS_ERR(acl)) {
-		int size = reiserfs_acl_size(acl->a_count);
+	अगर (acl && !IS_ERR(acl)) अणु
+		पूर्णांक size = reiserfs_acl_size(acl->a_count);
 
-		/* Other xattrs can be created during inode creation. We don't
-		 * want to claim too many blocks, so we check to see if we
+		/* Other xattrs can be created during inode creation. We करोn't
+		 * want to claim too many blocks, so we check to see अगर we
 		 * need to create the tree to the xattrs, and then we
 		 * just want two files. */
 		nblocks = reiserfs_xattr_jcreate_nblocks(inode);
@@ -382,24 +383,24 @@ int reiserfs_cache_default_acl(struct inode *inode)
 
 		REISERFS_I(inode)->i_flags |= i_has_xattr_dir;
 
-		/* We need to account for writes + bitmaps for two files */
+		/* We need to account क्रम ग_लिखोs + biपंचांगaps क्रम two files */
 		nblocks += reiserfs_xattr_nblocks(inode, size) * 4;
 		posix_acl_release(acl);
-	}
+	पूर्ण
 
-	return nblocks;
-}
+	वापस nblocks;
+पूर्ण
 
 /*
  * Called under i_mutex
  */
-int reiserfs_acl_chmod(struct inode *inode)
-{
-	if (IS_PRIVATE(inode))
-		return 0;
-	if (get_inode_sd_version(inode) == STAT_DATA_V1 ||
+पूर्णांक reiserfs_acl_chmod(काष्ठा inode *inode)
+अणु
+	अगर (IS_PRIVATE(inode))
+		वापस 0;
+	अगर (get_inode_sd_version(inode) == STAT_DATA_V1 ||
 	    !reiserfs_posixacl(inode->i_sb))
-		return 0;
+		वापस 0;
 
-	return posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
-}
+	वापस posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+पूर्ण

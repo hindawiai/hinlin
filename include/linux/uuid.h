@@ -1,106 +1,107 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * UUID/GUID definition
  *
  * Copyright (C) 2010, 2016 Intel Corp.
- *	Huang Ying <ying.huang@intel.com>
+ *	Huang Ying <ying.huang@पूर्णांकel.com>
  */
-#ifndef _LINUX_UUID_H_
-#define _LINUX_UUID_H_
+#अगर_अघोषित _LINUX_UUID_H_
+#घोषणा _LINUX_UUID_H_
 
-#include <uapi/linux/uuid.h>
-#include <linux/string.h>
+#समावेश <uapi/linux/uuid.h>
+#समावेश <linux/माला.स>
 
-#define UUID_SIZE 16
+#घोषणा UUID_SIZE 16
 
-typedef struct {
+प्रकार काष्ठा अणु
 	__u8 b[UUID_SIZE];
-} uuid_t;
+पूर्ण uuid_t;
 
-#define UUID_INIT(a, b, c, d0, d1, d2, d3, d4, d5, d6, d7)			\
+#घोषणा UUID_INIT(a, b, c, d0, d1, d2, d3, d4, d5, d6, d7)			\
 ((uuid_t)								\
-{{ ((a) >> 24) & 0xff, ((a) >> 16) & 0xff, ((a) >> 8) & 0xff, (a) & 0xff, \
+अणुअणु ((a) >> 24) & 0xff, ((a) >> 16) & 0xff, ((a) >> 8) & 0xff, (a) & 0xff, \
    ((b) >> 8) & 0xff, (b) & 0xff,					\
    ((c) >> 8) & 0xff, (c) & 0xff,					\
-   (d0), (d1), (d2), (d3), (d4), (d5), (d6), (d7) }})
+   (d0), (d1), (d2), (d3), (d4), (d5), (d6), (d7) पूर्णपूर्ण)
 
 /*
  * The length of a UUID string ("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
  * not including trailing NUL.
  */
-#define	UUID_STRING_LEN		36
+#घोषणा	UUID_STRING_LEN		36
 
-extern const guid_t guid_null;
-extern const uuid_t uuid_null;
+बाह्य स्थिर guid_t guid_null;
+बाह्य स्थिर uuid_t uuid_null;
 
-static inline bool guid_equal(const guid_t *u1, const guid_t *u2)
-{
-	return memcmp(u1, u2, sizeof(guid_t)) == 0;
-}
+अटल अंतरभूत bool guid_equal(स्थिर guid_t *u1, स्थिर guid_t *u2)
+अणु
+	वापस स_भेद(u1, u2, माप(guid_t)) == 0;
+पूर्ण
 
-static inline void guid_copy(guid_t *dst, const guid_t *src)
-{
-	memcpy(dst, src, sizeof(guid_t));
-}
+अटल अंतरभूत व्योम guid_copy(guid_t *dst, स्थिर guid_t *src)
+अणु
+	स_नकल(dst, src, माप(guid_t));
+पूर्ण
 
-static inline void import_guid(guid_t *dst, const __u8 *src)
-{
-	memcpy(dst, src, sizeof(guid_t));
-}
+अटल अंतरभूत व्योम import_guid(guid_t *dst, स्थिर __u8 *src)
+अणु
+	स_नकल(dst, src, माप(guid_t));
+पूर्ण
 
-static inline void export_guid(__u8 *dst, const guid_t *src)
-{
-	memcpy(dst, src, sizeof(guid_t));
-}
+अटल अंतरभूत व्योम export_guid(__u8 *dst, स्थिर guid_t *src)
+अणु
+	स_नकल(dst, src, माप(guid_t));
+पूर्ण
 
-static inline bool guid_is_null(const guid_t *guid)
-{
-	return guid_equal(guid, &guid_null);
-}
+अटल अंतरभूत bool guid_is_null(स्थिर guid_t *guid)
+अणु
+	वापस guid_equal(guid, &guid_null);
+पूर्ण
 
-static inline bool uuid_equal(const uuid_t *u1, const uuid_t *u2)
-{
-	return memcmp(u1, u2, sizeof(uuid_t)) == 0;
-}
+अटल अंतरभूत bool uuid_equal(स्थिर uuid_t *u1, स्थिर uuid_t *u2)
+अणु
+	वापस स_भेद(u1, u2, माप(uuid_t)) == 0;
+पूर्ण
 
-static inline void uuid_copy(uuid_t *dst, const uuid_t *src)
-{
-	memcpy(dst, src, sizeof(uuid_t));
-}
+अटल अंतरभूत व्योम uuid_copy(uuid_t *dst, स्थिर uuid_t *src)
+अणु
+	स_नकल(dst, src, माप(uuid_t));
+पूर्ण
 
-static inline void import_uuid(uuid_t *dst, const __u8 *src)
-{
-	memcpy(dst, src, sizeof(uuid_t));
-}
+अटल अंतरभूत व्योम import_uuid(uuid_t *dst, स्थिर __u8 *src)
+अणु
+	स_नकल(dst, src, माप(uuid_t));
+पूर्ण
 
-static inline void export_uuid(__u8 *dst, const uuid_t *src)
-{
-	memcpy(dst, src, sizeof(uuid_t));
-}
+अटल अंतरभूत व्योम export_uuid(__u8 *dst, स्थिर uuid_t *src)
+अणु
+	स_नकल(dst, src, माप(uuid_t));
+पूर्ण
 
-static inline bool uuid_is_null(const uuid_t *uuid)
-{
-	return uuid_equal(uuid, &uuid_null);
-}
+अटल अंतरभूत bool uuid_is_null(स्थिर uuid_t *uuid)
+अणु
+	वापस uuid_equal(uuid, &uuid_null);
+पूर्ण
 
-void generate_random_uuid(unsigned char uuid[16]);
-void generate_random_guid(unsigned char guid[16]);
+व्योम generate_अक्रमom_uuid(अचिन्हित अक्षर uuid[16]);
+व्योम generate_अक्रमom_guid(अचिन्हित अक्षर guid[16]);
 
-extern void guid_gen(guid_t *u);
-extern void uuid_gen(uuid_t *u);
+बाह्य व्योम guid_gen(guid_t *u);
+बाह्य व्योम uuid_gen(uuid_t *u);
 
-bool __must_check uuid_is_valid(const char *uuid);
+bool __must_check uuid_is_valid(स्थिर अक्षर *uuid);
 
-extern const u8 guid_index[16];
-extern const u8 uuid_index[16];
+बाह्य स्थिर u8 guid_index[16];
+बाह्य स्थिर u8 uuid_index[16];
 
-int guid_parse(const char *uuid, guid_t *u);
-int uuid_parse(const char *uuid, uuid_t *u);
+पूर्णांक guid_parse(स्थिर अक्षर *uuid, guid_t *u);
+पूर्णांक uuid_parse(स्थिर अक्षर *uuid, uuid_t *u);
 
-/* backwards compatibility, don't use in new code */
-static inline int uuid_le_cmp(const guid_t u1, const guid_t u2)
-{
-	return memcmp(&u1, &u2, sizeof(guid_t));
-}
+/* backwards compatibility, करोn't use in new code */
+अटल अंतरभूत पूर्णांक uuid_le_cmp(स्थिर guid_t u1, स्थिर guid_t u2)
+अणु
+	वापस स_भेद(&u1, &u2, माप(guid_t));
+पूर्ण
 
-#endif
+#पूर्ण_अगर

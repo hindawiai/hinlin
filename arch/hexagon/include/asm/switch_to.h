@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Task switching definitions for the Hexagon architecture
+ * Task चयनing definitions क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_SWITCH_TO_H
-#define _ASM_SWITCH_TO_H
+#अगर_अघोषित _ASM_SWITCH_TO_H
+#घोषणा _ASM_SWITCH_TO_H
 
-struct thread_struct;
+काष्ठा thपढ़ो_काष्ठा;
 
-extern struct task_struct *__switch_to(struct task_struct *,
-	struct task_struct *,
-	struct task_struct *);
+बाह्य काष्ठा task_काष्ठा *__चयन_to(काष्ठा task_काष्ठा *,
+	काष्ठा task_काष्ठा *,
+	काष्ठा task_काष्ठा *);
 
-#define switch_to(p, n, r) do {\
-	r = __switch_to((p), (n), (r));\
-} while (0)
+#घोषणा चयन_to(p, n, r) करो अणु\
+	r = __चयन_to((p), (n), (r));\
+पूर्ण जबतक (0)
 
-#endif /* _ASM_SWITCH_TO_H */
+#पूर्ण_अगर /* _ASM_SWITCH_TO_H */

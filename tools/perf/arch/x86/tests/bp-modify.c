@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/user.h>
-#include <syscall.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ptrace.h>
-#include <asm/ptrace.h>
-#include <errno.h>
-#include "debug.h"
-#include "tests/tests.h"
-#include "arch-tests.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/user.h>
+#समावेश <syscall.h>
+#समावेश <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <त्रुटिसं.स>
+#समावेश "debug.h"
+#समावेश "tests/tests.h"
+#समावेश "arch-tests.h"
 
-static noinline int bp_1(void)
-{
+अटल noअंतरभूत पूर्णांक bp_1(व्योम)
+अणु
 	pr_debug("in %s\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline int bp_2(void)
-{
+अटल noअंतरभूत पूर्णांक bp_2(व्योम)
+अणु
 	pr_debug("in %s\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spawn_child(void)
-{
-	int child = fork();
+अटल पूर्णांक spawn_child(व्योम)
+अणु
+	पूर्णांक child = विभाजन();
 
-	if (child == 0) {
+	अगर (child == 0) अणु
 		/*
-		 * The child sets itself for as tracee and
-		 * waits in signal for parent to trace it,
+		 * The child sets itself क्रम as tracee and
+		 * रुकोs in संकेत क्रम parent to trace it,
 		 * then it calls bp_1 and quits.
 		 */
-		int err = ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+		पूर्णांक err = ptrace(PTRACE_TRACEME, 0, शून्य, शून्य);
 
-		if (err) {
+		अगर (err) अणु
 			pr_debug("failed to PTRACE_TRACEME\n");
-			exit(1);
-		}
+			निकास(1);
+		पूर्ण
 
-		raise(SIGCONT);
+		उठाओ(SIGCONT);
 		bp_1();
-		exit(0);
-	}
+		निकास(0);
+	पूर्ण
 
-	return child;
-}
+	वापस child;
+पूर्ण
 
 /*
- * This tests creates HW breakpoint, tries to
+ * This tests creates HW अवरोधpoपूर्णांक, tries to
  * change it and checks it was properly changed.
  */
-static int bp_modify1(void)
-{
+अटल पूर्णांक bp_modअगरy1(व्योम)
+अणु
 	pid_t child;
-	int status;
-	unsigned long rip = 0, dr7 = 1;
+	पूर्णांक status;
+	अचिन्हित दीर्घ rip = 0, dr7 = 1;
 
 	child = spawn_child();
 
-	waitpid(child, &status, 0);
-	if (WIFEXITED(status)) {
+	रुकोpid(child, &status, 0);
+	अगर (WIFEXITED(status)) अणु
 		pr_debug("tracee exited prematurely 1\n");
-		return TEST_FAIL;
-	}
+		वापस TEST_FAIL;
+	पूर्ण
 
 	/*
-	 * The parent does following steps:
-	 *  - creates a new breakpoint (id 0) for bp_2 function
-	 *  - changes that breakpoint to bp_1 function
-	 *  - waits for the breakpoint to hit and checks
+	 * The parent करोes following steps:
+	 *  - creates a new अवरोधpoपूर्णांक (id 0) क्रम bp_2 function
+	 *  - changes that अवरोधpoपूर्णांक to bp_1 function
+	 *  - रुकोs क्रम the अवरोधpoपूर्णांक to hit and checks
 	 *    it has proper rip of bp_1 function
 	 *  - detaches the child
 	 */
-	if (ptrace(PTRACE_POKEUSER, child,
-		   offsetof(struct user, u_debugreg[0]), bp_2)) {
+	अगर (ptrace(PTRACE_POKEUSER, child,
+		   दुरत्व(काष्ठा user, u_debugreg[0]), bp_2)) अणु
 		pr_debug("failed to set breakpoint, 1st time: %s\n",
-			 strerror(errno));
-		goto out;
-	}
+			 म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
-	if (ptrace(PTRACE_POKEUSER, child,
-		   offsetof(struct user, u_debugreg[0]), bp_1)) {
+	अगर (ptrace(PTRACE_POKEUSER, child,
+		   दुरत्व(काष्ठा user, u_debugreg[0]), bp_1)) अणु
 		pr_debug("failed to set breakpoint, 2nd time: %s\n",
-			 strerror(errno));
-		goto out;
-	}
+			 म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
-	if (ptrace(PTRACE_POKEUSER, child,
-		   offsetof(struct user, u_debugreg[7]), dr7)) {
-		pr_debug("failed to set dr7: %s\n", strerror(errno));
-		goto out;
-	}
+	अगर (ptrace(PTRACE_POKEUSER, child,
+		   दुरत्व(काष्ठा user, u_debugreg[7]), dr7)) अणु
+		pr_debug("failed to set dr7: %s\n", म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
-	if (ptrace(PTRACE_CONT, child, NULL, NULL)) {
-		pr_debug("failed to PTRACE_CONT: %s\n", strerror(errno));
-		goto out;
-	}
+	अगर (ptrace(PTRACE_CONT, child, शून्य, शून्य)) अणु
+		pr_debug("failed to PTRACE_CONT: %s\n", म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
-	waitpid(child, &status, 0);
-	if (WIFEXITED(status)) {
+	रुकोpid(child, &status, 0);
+	अगर (WIFEXITED(status)) अणु
 		pr_debug("tracee exited prematurely 2\n");
-		return TEST_FAIL;
-	}
+		वापस TEST_FAIL;
+	पूर्ण
 
 	rip = ptrace(PTRACE_PEEKUSER, child,
-		     offsetof(struct user_regs_struct, rip), NULL);
-	if (rip == (unsigned long) -1) {
+		     दुरत्व(काष्ठा user_regs_काष्ठा, rip), शून्य);
+	अगर (rip == (अचिन्हित दीर्घ) -1) अणु
 		pr_debug("failed to PTRACE_PEEKUSER: %s\n",
-			 strerror(errno));
-		goto out;
-	}
+			 म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
 	pr_debug("rip %lx, bp_1 %p\n", rip, bp_1);
 
 out:
-	if (ptrace(PTRACE_DETACH, child, NULL, NULL)) {
-		pr_debug("failed to PTRACE_DETACH: %s", strerror(errno));
-		return TEST_FAIL;
-	}
+	अगर (ptrace(PTRACE_DETACH, child, शून्य, शून्य)) अणु
+		pr_debug("failed to PTRACE_DETACH: %s", म_त्रुटि(त्रुटि_सं));
+		वापस TEST_FAIL;
+	पूर्ण
 
-	return rip == (unsigned long) bp_1 ? TEST_OK : TEST_FAIL;
-}
+	वापस rip == (अचिन्हित दीर्घ) bp_1 ? TEST_OK : TEST_FAIL;
+पूर्ण
 
 /*
- * This tests creates HW breakpoint, tries to
+ * This tests creates HW अवरोधpoपूर्णांक, tries to
  * change it to bogus value and checks the original
- * breakpoint is hit.
+ * अवरोधpoपूर्णांक is hit.
  */
-static int bp_modify2(void)
-{
+अटल पूर्णांक bp_modअगरy2(व्योम)
+अणु
 	pid_t child;
-	int status;
-	unsigned long rip = 0, dr7 = 1;
+	पूर्णांक status;
+	अचिन्हित दीर्घ rip = 0, dr7 = 1;
 
 	child = spawn_child();
 
-	waitpid(child, &status, 0);
-	if (WIFEXITED(status)) {
+	रुकोpid(child, &status, 0);
+	अगर (WIFEXITED(status)) अणु
 		pr_debug("tracee exited prematurely 1\n");
-		return TEST_FAIL;
-	}
+		वापस TEST_FAIL;
+	पूर्ण
 
 	/*
-	 * The parent does following steps:
-	 *  - creates a new breakpoint (id 0) for bp_1 function
-	 *  - tries to change that breakpoint to (-1) address
-	 *  - waits for the breakpoint to hit and checks
+	 * The parent करोes following steps:
+	 *  - creates a new अवरोधpoपूर्णांक (id 0) क्रम bp_1 function
+	 *  - tries to change that अवरोधpoपूर्णांक to (-1) address
+	 *  - रुकोs क्रम the अवरोधpoपूर्णांक to hit and checks
 	 *    it has proper rip of bp_1 function
 	 *  - detaches the child
 	 */
-	if (ptrace(PTRACE_POKEUSER, child,
-		   offsetof(struct user, u_debugreg[0]), bp_1)) {
+	अगर (ptrace(PTRACE_POKEUSER, child,
+		   दुरत्व(काष्ठा user, u_debugreg[0]), bp_1)) अणु
 		pr_debug("failed to set breakpoint: %s\n",
-			 strerror(errno));
-		goto out;
-	}
+			 म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
-	if (ptrace(PTRACE_POKEUSER, child,
-		   offsetof(struct user, u_debugreg[7]), dr7)) {
-		pr_debug("failed to set dr7: %s\n", strerror(errno));
-		goto out;
-	}
+	अगर (ptrace(PTRACE_POKEUSER, child,
+		   दुरत्व(काष्ठा user, u_debugreg[7]), dr7)) अणु
+		pr_debug("failed to set dr7: %s\n", म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
-	if (!ptrace(PTRACE_POKEUSER, child,
-		   offsetof(struct user, u_debugreg[0]), (unsigned long) (-1))) {
+	अगर (!ptrace(PTRACE_POKEUSER, child,
+		   दुरत्व(काष्ठा user, u_debugreg[0]), (अचिन्हित दीर्घ) (-1))) अणु
 		pr_debug("failed, breakpoint set to bogus address\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ptrace(PTRACE_CONT, child, NULL, NULL)) {
-		pr_debug("failed to PTRACE_CONT: %s\n", strerror(errno));
-		goto out;
-	}
+	अगर (ptrace(PTRACE_CONT, child, शून्य, शून्य)) अणु
+		pr_debug("failed to PTRACE_CONT: %s\n", म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
-	waitpid(child, &status, 0);
-	if (WIFEXITED(status)) {
+	रुकोpid(child, &status, 0);
+	अगर (WIFEXITED(status)) अणु
 		pr_debug("tracee exited prematurely 2\n");
-		return TEST_FAIL;
-	}
+		वापस TEST_FAIL;
+	पूर्ण
 
 	rip = ptrace(PTRACE_PEEKUSER, child,
-		     offsetof(struct user_regs_struct, rip), NULL);
-	if (rip == (unsigned long) -1) {
+		     दुरत्व(काष्ठा user_regs_काष्ठा, rip), शून्य);
+	अगर (rip == (अचिन्हित दीर्घ) -1) अणु
 		pr_debug("failed to PTRACE_PEEKUSER: %s\n",
-			 strerror(errno));
-		goto out;
-	}
+			 म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
 
 	pr_debug("rip %lx, bp_1 %p\n", rip, bp_1);
 
 out:
-	if (ptrace(PTRACE_DETACH, child, NULL, NULL)) {
-		pr_debug("failed to PTRACE_DETACH: %s", strerror(errno));
-		return TEST_FAIL;
-	}
+	अगर (ptrace(PTRACE_DETACH, child, शून्य, शून्य)) अणु
+		pr_debug("failed to PTRACE_DETACH: %s", म_त्रुटि(त्रुटि_सं));
+		वापस TEST_FAIL;
+	पूर्ण
 
-	return rip == (unsigned long) bp_1 ? TEST_OK : TEST_FAIL;
-}
+	वापस rip == (अचिन्हित दीर्घ) bp_1 ? TEST_OK : TEST_FAIL;
+पूर्ण
 
-int test__bp_modify(struct test *test __maybe_unused,
-		    int subtest __maybe_unused)
-{
-	TEST_ASSERT_VAL("modify test 1 failed\n", !bp_modify1());
-	TEST_ASSERT_VAL("modify test 2 failed\n", !bp_modify2());
+पूर्णांक test__bp_modअगरy(काष्ठा test *test __maybe_unused,
+		    पूर्णांक subtest __maybe_unused)
+अणु
+	TEST_ASSERT_VAL("modify test 1 failed\n", !bp_modअगरy1());
+	TEST_ASSERT_VAL("modify test 2 failed\n", !bp_modअगरy2());
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

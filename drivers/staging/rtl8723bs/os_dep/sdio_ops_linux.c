@@ -1,526 +1,527 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  *******************************************************************************/
-#define _SDIO_OPS_LINUX_C_
+#घोषणा _SDIO_OPS_LINUX_C_
 
-#include <drv_types.h>
-#include <rtw_debug.h>
+#समावेश <drv_types.h>
+#समावेश <rtw_debug.h>
 
-static bool rtw_sdio_claim_host_needed(struct sdio_func *func)
-{
-	struct dvobj_priv *dvobj = sdio_get_drvdata(func);
-	struct sdio_data *sdio_data = &dvobj->intf_data;
+अटल bool rtw_sdio_claim_host_needed(काष्ठा sdio_func *func)
+अणु
+	काष्ठा dvobj_priv *dvobj = sdio_get_drvdata(func);
+	काष्ठा sdio_data *sdio_data = &dvobj->पूर्णांकf_data;
 
-	if (sdio_data->sys_sdio_irq_thd && sdio_data->sys_sdio_irq_thd == current)
-		return false;
-	return true;
-}
+	अगर (sdio_data->sys_sdio_irq_thd && sdio_data->sys_sdio_irq_thd == current)
+		वापस false;
+	वापस true;
+पूर्ण
 
-inline void rtw_sdio_set_irq_thd(struct dvobj_priv *dvobj, void *thd_hdl)
-{
-	struct sdio_data *sdio_data = &dvobj->intf_data;
+अंतरभूत व्योम rtw_sdio_set_irq_thd(काष्ठा dvobj_priv *dvobj, व्योम *thd_hdl)
+अणु
+	काष्ठा sdio_data *sdio_data = &dvobj->पूर्णांकf_data;
 
 	sdio_data->sys_sdio_irq_thd = thd_hdl;
-}
+पूर्ण
 
-u8 sd_f0_read8(struct intf_hdl *pintfhdl, u32 addr, s32 *err)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-
-	u8 v = 0;
-	struct sdio_func *func;
-	bool claim_needed;
-
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
-
-	if (padapter->bSurpriseRemoved)
-		return v;
-
-	func = psdio->func;
-	claim_needed = rtw_sdio_claim_host_needed(func);
-
-	if (claim_needed)
-		sdio_claim_host(func);
-	v = sdio_f0_readb(func, addr, err);
-	if (claim_needed)
-		sdio_release_host(func);
-	return v;
-}
-
-/*
- * Return:
- *0		Success
- *others	Fail
- */
-s32 _sd_cmd52_read(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, u8 *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-
-	int err = 0, i;
-	struct sdio_func *func;
-
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
-
-	if (padapter->bSurpriseRemoved)
-		return err;
-
-	func = psdio->func;
-
-	for (i = 0; i < cnt; i++) {
-		pdata[i] = sdio_readb(func, addr + i, &err);
-		if (err)
-			break;
-	}
-	return err;
-}
-
-/*
- * Return:
- *0		Success
- *others	Fail
- */
-s32 sd_cmd52_read(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, u8 *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-
-	int err = 0;
-	struct sdio_func *func;
-	bool claim_needed;
-
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
-
-	if (padapter->bSurpriseRemoved)
-		return err;
-
-	func = psdio->func;
-	claim_needed = rtw_sdio_claim_host_needed(func);
-
-	if (claim_needed)
-		sdio_claim_host(func);
-	err = _sd_cmd52_read(pintfhdl, addr, cnt, pdata);
-	if (claim_needed)
-		sdio_release_host(func);
-	return err;
-}
-
-/*
- * Return:
- *0		Success
- *others	Fail
- */
-s32 _sd_cmd52_write(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, u8 *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-
-	int err = 0, i;
-	struct sdio_func *func;
-
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
-
-	if (padapter->bSurpriseRemoved)
-		return err;
-
-	func = psdio->func;
-
-	for (i = 0; i < cnt; i++) {
-		sdio_writeb(func, pdata[i], addr + i, &err);
-		if (err)
-			break;
-	}
-	return err;
-}
-
-/*
- * Return:
- *0		Success
- *others	Fail
- */
-s32 sd_cmd52_write(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, u8 *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-
-	int err = 0;
-	struct sdio_func *func;
-	bool claim_needed;
-
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
-
-	if (padapter->bSurpriseRemoved)
-		return err;
-
-	func = psdio->func;
-	claim_needed = rtw_sdio_claim_host_needed(func);
-
-	if (claim_needed)
-		sdio_claim_host(func);
-	err = _sd_cmd52_write(pintfhdl, addr, cnt, pdata);
-	if (claim_needed)
-		sdio_release_host(func);
-	return err;
-}
-
-u8 sd_read8(struct intf_hdl *pintfhdl, u32 addr, s32 *err)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
+u8 sd_f0_पढ़ो8(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, s32 *err)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
 
 	u8 v = 0;
-	struct sdio_func *func;
+	काष्ठा sdio_func *func;
 	bool claim_needed;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return v;
+	अगर (padapter->bSurpriseRemoved)
+		वापस v;
 
 	func = psdio->func;
 	claim_needed = rtw_sdio_claim_host_needed(func);
 
-	if (claim_needed)
+	अगर (claim_needed)
 		sdio_claim_host(func);
-	v = sdio_readb(func, addr, err);
-	if (claim_needed)
+	v = sdio_f0_पढ़ोb(func, addr, err);
+	अगर (claim_needed)
 		sdio_release_host(func);
-	return v;
-}
+	वापस v;
+पूर्ण
 
-u32 sd_read32(struct intf_hdl *pintfhdl, u32 addr, s32 *err)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
+/*
+ * Return:
+ *0		Success
+ *others	Fail
+ */
+s32 _sd_cmd52_पढ़ो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, u8 *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+
+	पूर्णांक err = 0, i;
+	काष्ठा sdio_func *func;
+
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
+
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
+
+	func = psdio->func;
+
+	क्रम (i = 0; i < cnt; i++) अणु
+		pdata[i] = sdio_पढ़ोb(func, addr + i, &err);
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
+
+/*
+ * Return:
+ *0		Success
+ *others	Fail
+ */
+s32 sd_cmd52_पढ़ो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, u8 *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+
+	पूर्णांक err = 0;
+	काष्ठा sdio_func *func;
+	bool claim_needed;
+
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
+
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
+
+	func = psdio->func;
+	claim_needed = rtw_sdio_claim_host_needed(func);
+
+	अगर (claim_needed)
+		sdio_claim_host(func);
+	err = _sd_cmd52_पढ़ो(pपूर्णांकfhdl, addr, cnt, pdata);
+	अगर (claim_needed)
+		sdio_release_host(func);
+	वापस err;
+पूर्ण
+
+/*
+ * Return:
+ *0		Success
+ *others	Fail
+ */
+s32 _sd_cmd52_ग_लिखो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, u8 *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+
+	पूर्णांक err = 0, i;
+	काष्ठा sdio_func *func;
+
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
+
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
+
+	func = psdio->func;
+
+	क्रम (i = 0; i < cnt; i++) अणु
+		sdio_ग_लिखोb(func, pdata[i], addr + i, &err);
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
+
+/*
+ * Return:
+ *0		Success
+ *others	Fail
+ */
+s32 sd_cmd52_ग_लिखो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, u8 *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+
+	पूर्णांक err = 0;
+	काष्ठा sdio_func *func;
+	bool claim_needed;
+
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
+
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
+
+	func = psdio->func;
+	claim_needed = rtw_sdio_claim_host_needed(func);
+
+	अगर (claim_needed)
+		sdio_claim_host(func);
+	err = _sd_cmd52_ग_लिखो(pपूर्णांकfhdl, addr, cnt, pdata);
+	अगर (claim_needed)
+		sdio_release_host(func);
+	वापस err;
+पूर्ण
+
+u8 sd_पढ़ो8(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, s32 *err)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+
+	u8 v = 0;
+	काष्ठा sdio_func *func;
+	bool claim_needed;
+
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
+
+	अगर (padapter->bSurpriseRemoved)
+		वापस v;
+
+	func = psdio->func;
+	claim_needed = rtw_sdio_claim_host_needed(func);
+
+	अगर (claim_needed)
+		sdio_claim_host(func);
+	v = sdio_पढ़ोb(func, addr, err);
+	अगर (claim_needed)
+		sdio_release_host(func);
+	वापस v;
+पूर्ण
+
+u32 sd_पढ़ो32(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, s32 *err)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
 	u32 v = 0;
-	struct sdio_func *func;
+	काष्ठा sdio_func *func;
 	bool claim_needed;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return v;
+	अगर (padapter->bSurpriseRemoved)
+		वापस v;
 
 	func = psdio->func;
 	claim_needed = rtw_sdio_claim_host_needed(func);
 
-	if (claim_needed)
+	अगर (claim_needed)
 		sdio_claim_host(func);
-	v = sdio_readl(func, addr, err);
-	if (claim_needed)
+	v = sdio_पढ़ोl(func, addr, err);
+	अगर (claim_needed)
 		sdio_release_host(func);
 
-	if (err && *err) {
-		int i;
+	अगर (err && *err) अणु
+		पूर्णांक i;
 
 		*err = 0;
-		for (i = 0; i < SD_IO_TRY_CNT; i++) {
-			if (claim_needed)
+		क्रम (i = 0; i < SD_IO_TRY_CNT; i++) अणु
+			अगर (claim_needed)
 				sdio_claim_host(func);
-			v = sdio_readl(func, addr, err);
-			if (claim_needed)
+			v = sdio_पढ़ोl(func, addr, err);
+			अगर (claim_needed)
 				sdio_release_host(func);
 
-			if (*err == 0) {
+			अगर (*err == 0) अणु
 				rtw_reset_continual_io_error(psdiodev);
-				break;
-			} else {
-				if ((-ESHUTDOWN == *err) || (-ENODEV == *err))
+				अवरोध;
+			पूर्ण अन्यथा अणु
+				अगर ((-ESHUTDOWN == *err) || (-ENODEV == *err))
 					padapter->bSurpriseRemoved = true;
 
-				if (rtw_inc_and_chk_continual_io_error(psdiodev) == true) {
+				अगर (rtw_inc_and_chk_continual_io_error(psdiodev) == true) अणु
 					padapter->bSurpriseRemoved = true;
-					break;
-				}
-			}
-		}
-	}
-	return  v;
-}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस  v;
+पूर्ण
 
-void sd_write8(struct intf_hdl *pintfhdl, u32 addr, u8 v, s32 *err)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-	struct sdio_func *func;
+व्योम sd_ग_लिखो8(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u8 v, s32 *err)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+	काष्ठा sdio_func *func;
 	bool claim_needed;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return;
+	अगर (padapter->bSurpriseRemoved)
+		वापस;
 
 	func = psdio->func;
 	claim_needed = rtw_sdio_claim_host_needed(func);
 
-	if (claim_needed)
+	अगर (claim_needed)
 		sdio_claim_host(func);
-	sdio_writeb(func, v, addr, err);
-	if (claim_needed)
+	sdio_ग_लिखोb(func, v, addr, err);
+	अगर (claim_needed)
 		sdio_release_host(func);
-}
+पूर्ण
 
-void sd_write32(struct intf_hdl *pintfhdl, u32 addr, u32 v, s32 *err)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-	struct sdio_func *func;
+व्योम sd_ग_लिखो32(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 v, s32 *err)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+	काष्ठा sdio_func *func;
 	bool claim_needed;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return;
+	अगर (padapter->bSurpriseRemoved)
+		वापस;
 
 	func = psdio->func;
 	claim_needed = rtw_sdio_claim_host_needed(func);
 
-	if (claim_needed)
+	अगर (claim_needed)
 		sdio_claim_host(func);
-	sdio_writel(func, v, addr, err);
-	if (claim_needed)
+	sdio_ग_लिखोl(func, v, addr, err);
+	अगर (claim_needed)
 		sdio_release_host(func);
 
-	if (err && *err) {
-		int i;
+	अगर (err && *err) अणु
+		पूर्णांक i;
 
 		*err = 0;
-		for (i = 0; i < SD_IO_TRY_CNT; i++) {
-			if (claim_needed)
+		क्रम (i = 0; i < SD_IO_TRY_CNT; i++) अणु
+			अगर (claim_needed)
 				sdio_claim_host(func);
-			sdio_writel(func, v, addr, err);
-			if (claim_needed)
+			sdio_ग_लिखोl(func, v, addr, err);
+			अगर (claim_needed)
 				sdio_release_host(func);
-			if (*err == 0) {
+			अगर (*err == 0) अणु
 				rtw_reset_continual_io_error(psdiodev);
-				break;
-			} else {
-				if ((-ESHUTDOWN == *err) || (-ENODEV == *err))
+				अवरोध;
+			पूर्ण अन्यथा अणु
+				अगर ((-ESHUTDOWN == *err) || (-ENODEV == *err))
 					padapter->bSurpriseRemoved = true;
 
-				if (rtw_inc_and_chk_continual_io_error(psdiodev) == true) {
+				अगर (rtw_inc_and_chk_continual_io_error(psdiodev) == true) अणु
 					padapter->bSurpriseRemoved = true;
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Use CMD53 to read data from SDIO device.
+ * Use CMD53 to पढ़ो data from SDIO device.
  * This function MUST be called after sdio_claim_host() or
  * in SDIO ISR(host had been claimed).
  *
  * Parameters:
- *psdio	pointer of SDIO_DATA
- *addr	address to read
- *cnt		amount to read
- *pdata	pointer to put data, this should be a "DMA:able scratch buffer"!
+ *psdio	poपूर्णांकer of SDIO_DATA
+ *addr	address to पढ़ो
+ *cnt		amount to पढ़ो
+ *pdata	poपूर्णांकer to put data, this should be a "DMA:able scratch buffer"!
  *
  * Return:
  *0		Success
  *others	Fail
  */
-s32 _sd_read(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, void *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
+s32 _sd_पढ़ो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, व्योम *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
 
-	int err = -EPERM;
-	struct sdio_func *func;
+	पूर्णांक err = -EPERM;
+	काष्ठा sdio_func *func;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return err;
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
 
 	func = psdio->func;
 
-	if (unlikely((cnt == 1) || (cnt == 2))) {
-		int i;
+	अगर (unlikely((cnt == 1) || (cnt == 2))) अणु
+		पूर्णांक i;
 		u8 *pbuf = pdata;
 
-		for (i = 0; i < cnt; i++) {
-			*(pbuf + i) = sdio_readb(func, addr + i, &err);
+		क्रम (i = 0; i < cnt; i++) अणु
+			*(pbuf + i) = sdio_पढ़ोb(func, addr + i, &err);
 
-			if (err)
-				break;
-		}
-		return err;
-	}
+			अगर (err)
+				अवरोध;
+		पूर्ण
+		वापस err;
+	पूर्ण
 
-	err = sdio_memcpy_fromio(func, pdata, addr, cnt);
+	err = sdio_स_नकल_fromio(func, pdata, addr, cnt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Use CMD53 to read data from SDIO device.
+ * Use CMD53 to पढ़ो data from SDIO device.
  *
  * Parameters:
- *psdio	pointer of SDIO_DATA
- *addr	address to read
- *cnt		amount to read
- *pdata	pointer to put data, this should be a "DMA:able scratch buffer"!
+ *psdio	poपूर्णांकer of SDIO_DATA
+ *addr	address to पढ़ो
+ *cnt		amount to पढ़ो
+ *pdata	poपूर्णांकer to put data, this should be a "DMA:able scratch buffer"!
  *
  * Return:
  *0		Success
  *others	Fail
  */
-s32 sd_read(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, void *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
+s32 sd_पढ़ो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, व्योम *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
 
-	struct sdio_func *func;
+	काष्ठा sdio_func *func;
 	bool claim_needed;
 	s32 err = -EPERM;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return err;
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
 
 	func = psdio->func;
 	claim_needed = rtw_sdio_claim_host_needed(func);
 
-	if (claim_needed)
+	अगर (claim_needed)
 		sdio_claim_host(func);
-	err = _sd_read(pintfhdl, addr, cnt, pdata);
-	if (claim_needed)
+	err = _sd_पढ़ो(pपूर्णांकfhdl, addr, cnt, pdata);
+	अगर (claim_needed)
 		sdio_release_host(func);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Use CMD53 to write data to SDIO device.
+ * Use CMD53 to ग_लिखो data to SDIO device.
  * This function MUST be called after sdio_claim_host() or
  * in SDIO ISR(host had been claimed).
  *
  * Parameters:
- *psdio	pointer of SDIO_DATA
- *addr	address to write
- *cnt		amount to write
- *pdata	data pointer, this should be a "DMA:able scratch buffer"!
+ *psdio	poपूर्णांकer of SDIO_DATA
+ *addr	address to ग_लिखो
+ *cnt		amount to ग_लिखो
+ *pdata	data poपूर्णांकer, this should be a "DMA:able scratch buffer"!
  *
  * Return:
  *0		Success
  *others	Fail
  */
-s32 _sd_write(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, void *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
+s32 _sd_ग_लिखो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, व्योम *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
 
-	struct sdio_func *func;
+	काष्ठा sdio_func *func;
 	u32 size;
 	s32 err =  -EPERM;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return err;
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
 
 	func = psdio->func;
 /*	size = sdio_align_size(func, cnt); */
 
-	if (unlikely((cnt == 1) || (cnt == 2))) {
-		int i;
+	अगर (unlikely((cnt == 1) || (cnt == 2))) अणु
+		पूर्णांक i;
 		u8 *pbuf = pdata;
 
-		for (i = 0; i < cnt; i++) {
-			sdio_writeb(func, *(pbuf + i), addr + i, &err);
-			if (err)
-				break;
-		}
+		क्रम (i = 0; i < cnt; i++) अणु
+			sdio_ग_लिखोb(func, *(pbuf + i), addr + i, &err);
+			अगर (err)
+				अवरोध;
+		पूर्ण
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	size = cnt;
-	err = sdio_memcpy_toio(func, addr, pdata, size);
+	err = sdio_स_नकल_toio(func, addr, pdata, size);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Use CMD53 to write data to SDIO device.
+ * Use CMD53 to ग_लिखो data to SDIO device.
  *
  * Parameters:
- *  psdio	pointer of SDIO_DATA
- *  addr	address to write
- *  cnt		amount to write
- *  pdata	data pointer, this should be a "DMA:able scratch buffer"!
+ *  psdio	poपूर्णांकer of SDIO_DATA
+ *  addr	address to ग_लिखो
+ *  cnt		amount to ग_लिखो
+ *  pdata	data poपूर्णांकer, this should be a "DMA:able scratch buffer"!
  *
  * Return:
  *  0		Success
  *  others	Fail
  */
-s32 sd_write(struct intf_hdl *pintfhdl, u32 addr, u32 cnt, void *pdata)
-{
-	struct adapter *padapter;
-	struct dvobj_priv *psdiodev;
-	struct sdio_data *psdio;
-	struct sdio_func *func;
+s32 sd_ग_लिखो(काष्ठा पूर्णांकf_hdl *pपूर्णांकfhdl, u32 addr, u32 cnt, व्योम *pdata)
+अणु
+	काष्ठा adapter *padapter;
+	काष्ठा dvobj_priv *psdiodev;
+	काष्ठा sdio_data *psdio;
+	काष्ठा sdio_func *func;
 	bool claim_needed;
 	s32 err =  -EPERM;
 
-	padapter = pintfhdl->padapter;
-	psdiodev = pintfhdl->pintf_dev;
-	psdio = &psdiodev->intf_data;
+	padapter = pपूर्णांकfhdl->padapter;
+	psdiodev = pपूर्णांकfhdl->pपूर्णांकf_dev;
+	psdio = &psdiodev->पूर्णांकf_data;
 
-	if (padapter->bSurpriseRemoved)
-		return err;
+	अगर (padapter->bSurpriseRemoved)
+		वापस err;
 
 	func = psdio->func;
 	claim_needed = rtw_sdio_claim_host_needed(func);
 
-	if (claim_needed)
+	अगर (claim_needed)
 		sdio_claim_host(func);
-	err = _sd_write(pintfhdl, addr, cnt, pdata);
-	if (claim_needed)
+	err = _sd_ग_लिखो(pपूर्णांकfhdl, addr, cnt, pdata);
+	अगर (claim_needed)
 		sdio_release_host(func);
-	return err;
-}
+	वापस err;
+पूर्ण

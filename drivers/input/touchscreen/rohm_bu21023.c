@@ -1,290 +1,291 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ROHM BU21023/24 Dual touch support resistive touch screen driver
  * Copyright (C) 2012 ROHM CO.,LTD.
  */
-#include <linux/delay.h>
-#include <linux/firmware.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/input/mt.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#define BU21023_NAME			"bu21023_ts"
-#define BU21023_FIRMWARE_NAME		"bu21023.bin"
+#घोषणा BU21023_NAME			"bu21023_ts"
+#घोषणा BU21023_FIRMWARE_NAME		"bu21023.bin"
 
-#define MAX_CONTACTS			2
+#घोषणा MAX_CONTACTS			2
 
-#define AXIS_ADJUST			4
-#define AXIS_OFFSET			8
+#घोषणा AXIS_ADJUST			4
+#घोषणा AXIS_OFFSET			8
 
-#define FIRMWARE_BLOCK_SIZE		32U
-#define FIRMWARE_RETRY_MAX		4
+#घोषणा FIRMWARE_BLOCK_SIZE		32U
+#घोषणा FIRMWARE_RETRY_MAX		4
 
-#define SAMPLING_DELAY			12	/* msec */
+#घोषणा SAMPLING_DELAY			12	/* msec */
 
-#define CALIBRATION_RETRY_MAX		6
+#घोषणा CALIBRATION_RETRY_MAX		6
 
-#define ROHM_TS_ABS_X_MIN		40
-#define ROHM_TS_ABS_X_MAX		990
-#define ROHM_TS_ABS_Y_MIN		160
-#define ROHM_TS_ABS_Y_MAX		920
-#define ROHM_TS_DISPLACEMENT_MAX	0	/* zero for infinite */
-
-/*
- * BU21023GUL/BU21023MUV/BU21024FV-M registers map
- */
-#define VADOUT_YP_H		0x00
-#define VADOUT_YP_L		0x01
-#define VADOUT_XP_H		0x02
-#define VADOUT_XP_L		0x03
-#define VADOUT_YN_H		0x04
-#define VADOUT_YN_L		0x05
-#define VADOUT_XN_H		0x06
-#define VADOUT_XN_L		0x07
-
-#define PRM1_X_H		0x08
-#define PRM1_X_L		0x09
-#define PRM1_Y_H		0x0a
-#define PRM1_Y_L		0x0b
-#define PRM2_X_H		0x0c
-#define PRM2_X_L		0x0d
-#define PRM2_Y_H		0x0e
-#define PRM2_Y_L		0x0f
-
-#define MLT_PRM_MONI_X		0x10
-#define MLT_PRM_MONI_Y		0x11
-
-#define DEBUG_MONI_1		0x12
-#define DEBUG_MONI_2		0x13
-
-#define VADOUT_ZX_H		0x14
-#define VADOUT_ZX_L		0x15
-#define VADOUT_ZY_H		0x16
-#define VADOUT_ZY_L		0x17
-
-#define Z_PARAM_H		0x18
-#define Z_PARAM_L		0x19
+#घोषणा ROHM_TS_ABS_X_MIN		40
+#घोषणा ROHM_TS_ABS_X_MAX		990
+#घोषणा ROHM_TS_ABS_Y_MIN		160
+#घोषणा ROHM_TS_ABS_Y_MAX		920
+#घोषणा ROHM_TS_DISPLACEMENT_MAX	0	/* zero क्रम infinite */
 
 /*
- * Value for VADOUT_*_L
+ * BU21023GUL/BU21023MUV/BU21024FV-M रेजिस्टरs map
  */
-#define VADOUT_L_MASK		0x01
+#घोषणा VADOUT_YP_H		0x00
+#घोषणा VADOUT_YP_L		0x01
+#घोषणा VADOUT_XP_H		0x02
+#घोषणा VADOUT_XP_L		0x03
+#घोषणा VADOUT_YN_H		0x04
+#घोषणा VADOUT_YN_L		0x05
+#घोषणा VADOUT_XN_H		0x06
+#घोषणा VADOUT_XN_L		0x07
+
+#घोषणा PRM1_X_H		0x08
+#घोषणा PRM1_X_L		0x09
+#घोषणा PRM1_Y_H		0x0a
+#घोषणा PRM1_Y_L		0x0b
+#घोषणा PRM2_X_H		0x0c
+#घोषणा PRM2_X_L		0x0d
+#घोषणा PRM2_Y_H		0x0e
+#घोषणा PRM2_Y_L		0x0f
+
+#घोषणा MLT_PRM_MONI_X		0x10
+#घोषणा MLT_PRM_MONI_Y		0x11
+
+#घोषणा DEBUG_MONI_1		0x12
+#घोषणा DEBUG_MONI_2		0x13
+
+#घोषणा VADOUT_ZX_H		0x14
+#घोषणा VADOUT_ZX_L		0x15
+#घोषणा VADOUT_ZY_H		0x16
+#घोषणा VADOUT_ZY_L		0x17
+
+#घोषणा Z_PARAM_H		0x18
+#घोषणा Z_PARAM_L		0x19
 
 /*
- * Value for PRM*_*_L
+ * Value क्रम VADOUT_*_L
  */
-#define PRM_L_MASK		0x01
-
-#define POS_X1_H		0x20
-#define POS_X1_L		0x21
-#define POS_Y1_H		0x22
-#define POS_Y1_L		0x23
-#define POS_X2_H		0x24
-#define POS_X2_L		0x25
-#define POS_Y2_H		0x26
-#define POS_Y2_L		0x27
+#घोषणा VADOUT_L_MASK		0x01
 
 /*
- * Value for POS_*_L
+ * Value क्रम PRM*_*_L
  */
-#define POS_L_MASK		0x01
+#घोषणा PRM_L_MASK		0x01
 
-#define TOUCH			0x28
-#define TOUCH_DETECT		0x01
-
-#define TOUCH_GESTURE		0x29
-#define SINGLE_TOUCH		0x01
-#define DUAL_TOUCH		0x03
-#define TOUCH_MASK		0x03
-#define CALIBRATION_REQUEST	0x04
-#define CALIBRATION_STATUS	0x08
-#define CALIBRATION_MASK	0x0c
-#define GESTURE_SPREAD		0x10
-#define GESTURE_PINCH		0x20
-#define GESTURE_ROTATE_R	0x40
-#define GESTURE_ROTATE_L	0x80
-
-#define INT_STATUS		0x2a
-#define INT_MASK		0x3d
-#define INT_CLEAR		0x3e
+#घोषणा POS_X1_H		0x20
+#घोषणा POS_X1_L		0x21
+#घोषणा POS_Y1_H		0x22
+#घोषणा POS_Y1_L		0x23
+#घोषणा POS_X2_H		0x24
+#घोषणा POS_X2_L		0x25
+#घोषणा POS_Y2_H		0x26
+#घोषणा POS_Y2_L		0x27
 
 /*
- * Values for INT_*
+ * Value क्रम POS_*_L
  */
-#define COORD_UPDATE		0x01
-#define CALIBRATION_DONE	0x02
-#define SLEEP_IN		0x04
-#define SLEEP_OUT		0x08
-#define PROGRAM_LOAD_DONE	0x10
-#define ERROR			0x80
-#define INT_ALL			0x9f
+#घोषणा POS_L_MASK		0x01
 
-#define ERR_STATUS		0x2b
-#define ERR_MASK		0x3f
+#घोषणा TOUCH			0x28
+#घोषणा TOUCH_DETECT		0x01
+
+#घोषणा TOUCH_GESTURE		0x29
+#घोषणा SINGLE_TOUCH		0x01
+#घोषणा DUAL_TOUCH		0x03
+#घोषणा TOUCH_MASK		0x03
+#घोषणा CALIBRATION_REQUEST	0x04
+#घोषणा CALIBRATION_STATUS	0x08
+#घोषणा CALIBRATION_MASK	0x0c
+#घोषणा GESTURE_SPREAD		0x10
+#घोषणा GESTURE_PINCH		0x20
+#घोषणा GESTURE_ROTATE_R	0x40
+#घोषणा GESTURE_ROTATE_L	0x80
+
+#घोषणा INT_STATUS		0x2a
+#घोषणा INT_MASK		0x3d
+#घोषणा INT_CLEAR		0x3e
 
 /*
- * Values for ERR_*
+ * Values क्रम INT_*
  */
-#define ADC_TIMEOUT		0x01
-#define CPU_TIMEOUT		0x02
-#define CALIBRATION_ERR		0x04
-#define PROGRAM_LOAD_ERR	0x10
+#घोषणा COORD_UPDATE		0x01
+#घोषणा CALIBRATION_DONE	0x02
+#घोषणा SLEEP_IN		0x04
+#घोषणा SLEEP_OUT		0x08
+#घोषणा PROGRAM_LOAD_DONE	0x10
+#घोषणा ERROR			0x80
+#घोषणा INT_ALL			0x9f
 
-#define COMMON_SETUP1			0x30
-#define PROGRAM_LOAD_HOST		0x02
-#define PROGRAM_LOAD_EEPROM		0x03
-#define CENSOR_4PORT			0x04
-#define CENSOR_8PORT			0x00	/* Not supported by BU21023 */
-#define CALIBRATION_TYPE_DEFAULT	0x08
-#define CALIBRATION_TYPE_SPECIAL	0x00
-#define INT_ACTIVE_HIGH			0x10
-#define INT_ACTIVE_LOW			0x00
-#define AUTO_CALIBRATION		0x40
-#define MANUAL_CALIBRATION		0x00
-#define COMMON_SETUP1_DEFAULT		0x4e
+#घोषणा ERR_STATUS		0x2b
+#घोषणा ERR_MASK		0x3f
 
-#define COMMON_SETUP2		0x31
-#define MAF_NONE		0x00
-#define MAF_1SAMPLE		0x01
-#define MAF_3SAMPLES		0x02
-#define MAF_5SAMPLES		0x03
-#define INV_Y			0x04
-#define INV_X			0x08
-#define SWAP_XY			0x10
+/*
+ * Values क्रम ERR_*
+ */
+#घोषणा ADC_TIMEOUT		0x01
+#घोषणा CPU_TIMEOUT		0x02
+#घोषणा CALIBRATION_ERR		0x04
+#घोषणा PROGRAM_LOAD_ERR	0x10
 
-#define COMMON_SETUP3		0x32
-#define EN_SLEEP		0x01
-#define EN_MULTI		0x02
-#define EN_GESTURE		0x04
-#define EN_INTVL		0x08
-#define SEL_STEP		0x10
-#define SEL_MULTI		0x20
-#define SEL_TBL_DEFAULT		0x40
+#घोषणा COMMON_SETUP1			0x30
+#घोषणा PROGRAM_LOAD_HOST		0x02
+#घोषणा PROGRAM_LOAD_EEPROM		0x03
+#घोषणा CENSOR_4PORT			0x04
+#घोषणा CENSOR_8PORT			0x00	/* Not supported by BU21023 */
+#घोषणा CALIBRATION_TYPE_DEFAULT	0x08
+#घोषणा CALIBRATION_TYPE_SPECIAL	0x00
+#घोषणा INT_ACTIVE_HIGH			0x10
+#घोषणा INT_ACTIVE_LOW			0x00
+#घोषणा AUTO_CALIBRATION		0x40
+#घोषणा MANUAL_CALIBRATION		0x00
+#घोषणा COMMON_SETUP1_DEFAULT		0x4e
 
-#define INTERVAL_TIME		0x33
-#define INTERVAL_TIME_DEFAULT	0x10
+#घोषणा COMMON_SETUP2		0x31
+#घोषणा MAF_NONE		0x00
+#घोषणा MAF_1SAMPLE		0x01
+#घोषणा MAF_3SAMPLES		0x02
+#घोषणा MAF_5SAMPLES		0x03
+#घोषणा INV_Y			0x04
+#घोषणा INV_X			0x08
+#घोषणा SWAP_XY			0x10
 
-#define STEP_X			0x34
-#define STEP_X_DEFAULT		0x41
+#घोषणा COMMON_SETUP3		0x32
+#घोषणा EN_SLEEP		0x01
+#घोषणा EN_MULTI		0x02
+#घोषणा EN_GESTURE		0x04
+#घोषणा EN_INTVL		0x08
+#घोषणा SEL_STEP		0x10
+#घोषणा SEL_MULTI		0x20
+#घोषणा SEL_TBL_DEFAULT		0x40
 
-#define STEP_Y			0x35
-#define STEP_Y_DEFAULT		0x8d
+#घोषणा INTERVAL_TIME		0x33
+#घोषणा INTERVAL_TIME_DEFAULT	0x10
 
-#define OFFSET_X		0x38
-#define OFFSET_X_DEFAULT	0x0c
+#घोषणा STEP_X			0x34
+#घोषणा STEP_X_DEFAULT		0x41
 
-#define OFFSET_Y		0x39
-#define OFFSET_Y_DEFAULT	0x0c
+#घोषणा STEP_Y			0x35
+#घोषणा STEP_Y_DEFAULT		0x8d
 
-#define THRESHOLD_TOUCH		0x3a
-#define THRESHOLD_TOUCH_DEFAULT	0xa0
+#घोषणा OFFSET_X		0x38
+#घोषणा OFFSET_X_DEFAULT	0x0c
 
-#define THRESHOLD_GESTURE		0x3b
-#define THRESHOLD_GESTURE_DEFAULT	0x17
+#घोषणा OFFSET_Y		0x39
+#घोषणा OFFSET_Y_DEFAULT	0x0c
 
-#define SYSTEM			0x40
-#define ANALOG_POWER_ON		0x01
-#define ANALOG_POWER_OFF	0x00
-#define CPU_POWER_ON		0x02
-#define CPU_POWER_OFF		0x00
+#घोषणा THRESHOLD_TOUCH		0x3a
+#घोषणा THRESHOLD_TOUCH_DEFAULT	0xa0
 
-#define FORCE_CALIBRATION	0x42
-#define FORCE_CALIBRATION_ON	0x01
-#define FORCE_CALIBRATION_OFF	0x00
+#घोषणा THRESHOLD_GESTURE		0x3b
+#घोषणा THRESHOLD_GESTURE_DEFAULT	0x17
 
-#define CPU_FREQ		0x50	/* 10 / (reg + 1) MHz */
-#define CPU_FREQ_10MHZ		0x00
-#define CPU_FREQ_5MHZ		0x01
-#define CPU_FREQ_1MHZ		0x09
+#घोषणा SYSTEM			0x40
+#घोषणा ANALOG_POWER_ON		0x01
+#घोषणा ANALOG_POWER_OFF	0x00
+#घोषणा CPU_POWER_ON		0x02
+#घोषणा CPU_POWER_OFF		0x00
 
-#define EEPROM_ADDR		0x51
+#घोषणा FORCE_CALIBRATION	0x42
+#घोषणा FORCE_CALIBRATION_ON	0x01
+#घोषणा FORCE_CALIBRATION_OFF	0x00
 
-#define CALIBRATION_ADJUST		0x52
-#define CALIBRATION_ADJUST_DEFAULT	0x00
+#घोषणा CPU_FREQ		0x50	/* 10 / (reg + 1) MHz */
+#घोषणा CPU_FREQ_10MHZ		0x00
+#घोषणा CPU_FREQ_5MHZ		0x01
+#घोषणा CPU_FREQ_1MHZ		0x09
 
-#define THRESHOLD_SLEEP_IN	0x53
+#घोषणा EEPROM_ADDR		0x51
 
-#define EVR_XY			0x56
-#define EVR_XY_DEFAULT		0x10
+#घोषणा CALIBRATION_ADJUST		0x52
+#घोषणा CALIBRATION_ADJUST_DEFAULT	0x00
 
-#define PRM_SWOFF_TIME		0x57
-#define PRM_SWOFF_TIME_DEFAULT	0x04
+#घोषणा THRESHOLD_SLEEP_IN	0x53
 
-#define PROGRAM_VERSION		0x5f
+#घोषणा EVR_XY			0x56
+#घोषणा EVR_XY_DEFAULT		0x10
 
-#define ADC_CTRL		0x60
-#define ADC_DIV_MASK		0x1f	/* The minimum value is 4 */
-#define ADC_DIV_DEFAULT		0x08
+#घोषणा PRM_SWOFF_TIME		0x57
+#घोषणा PRM_SWOFF_TIME_DEFAULT	0x04
 
-#define ADC_WAIT		0x61
-#define ADC_WAIT_DEFAULT	0x0a
+#घोषणा PROGRAM_VERSION		0x5f
 
-#define SWCONT			0x62
-#define SWCONT_DEFAULT		0x0f
+#घोषणा ADC_CTRL		0x60
+#घोषणा ADC_DIV_MASK		0x1f	/* The minimum value is 4 */
+#घोषणा ADC_DIV_DEFAULT		0x08
 
-#define EVR_X			0x63
-#define EVR_X_DEFAULT		0x86
+#घोषणा ADC_WAIT		0x61
+#घोषणा ADC_WAIT_DEFAULT	0x0a
 
-#define EVR_Y			0x64
-#define EVR_Y_DEFAULT		0x64
+#घोषणा SWCONT			0x62
+#घोषणा SWCONT_DEFAULT		0x0f
 
-#define TEST1			0x65
-#define DUALTOUCH_STABILIZE_ON	0x01
-#define DUALTOUCH_STABILIZE_OFF	0x00
-#define DUALTOUCH_REG_ON	0x20
-#define DUALTOUCH_REG_OFF	0x00
+#घोषणा EVR_X			0x63
+#घोषणा EVR_X_DEFAULT		0x86
 
-#define CALIBRATION_REG1		0x68
-#define CALIBRATION_REG1_DEFAULT	0xd9
+#घोषणा EVR_Y			0x64
+#घोषणा EVR_Y_DEFAULT		0x64
 
-#define CALIBRATION_REG2		0x69
-#define CALIBRATION_REG2_DEFAULT	0x36
+#घोषणा TEST1			0x65
+#घोषणा DUALTOUCH_STABILIZE_ON	0x01
+#घोषणा DUALTOUCH_STABILIZE_OFF	0x00
+#घोषणा DUALTOUCH_REG_ON	0x20
+#घोषणा DUALTOUCH_REG_OFF	0x00
 
-#define CALIBRATION_REG3		0x6a
-#define CALIBRATION_REG3_DEFAULT	0x32
+#घोषणा CALIBRATION_REG1		0x68
+#घोषणा CALIBRATION_REG1_DEFAULT	0xd9
 
-#define EX_ADDR_H		0x70
-#define EX_ADDR_L		0x71
-#define EX_WDAT			0x72
-#define EX_RDAT			0x73
-#define EX_CHK_SUM1		0x74
-#define EX_CHK_SUM2		0x75
-#define EX_CHK_SUM3		0x76
+#घोषणा CALIBRATION_REG2		0x69
+#घोषणा CALIBRATION_REG2_DEFAULT	0x36
 
-struct rohm_ts_data {
-	struct i2c_client *client;
-	struct input_dev *input;
+#घोषणा CALIBRATION_REG3		0x6a
+#घोषणा CALIBRATION_REG3_DEFAULT	0x32
+
+#घोषणा EX_ADDR_H		0x70
+#घोषणा EX_ADDR_L		0x71
+#घोषणा EX_WDAT			0x72
+#घोषणा EX_RDAT			0x73
+#घोषणा EX_CHK_SUM1		0x74
+#घोषणा EX_CHK_SUM2		0x75
+#घोषणा EX_CHK_SUM3		0x76
+
+काष्ठा rohm_ts_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा input_dev *input;
 
 	bool initialized;
 
-	unsigned int contact_count[MAX_CONTACTS + 1];
-	int finger_count;
+	अचिन्हित पूर्णांक contact_count[MAX_CONTACTS + 1];
+	पूर्णांक finger_count;
 
 	u8 setup2;
-};
+पूर्ण;
 
 /*
- * rohm_i2c_burst_read - execute combined I2C message for ROHM BU21023/24
+ * rohm_i2c_burst_पढ़ो - execute combined I2C message क्रम ROHM BU21023/24
  * @client: Handle to ROHM BU21023/24
- * @start: Where to start read address from ROHM BU21023/24
- * @buf: Where to store read data from ROHM BU21023/24
- * @len: How many bytes to read
+ * @start: Where to start पढ़ो address from ROHM BU21023/24
+ * @buf: Where to store पढ़ो data from ROHM BU21023/24
+ * @len: How many bytes to पढ़ो
  *
- * Returns negative errno, else zero on success.
+ * Returns negative त्रुटि_सं, अन्यथा zero on success.
  *
  * Note
- * In BU21023/24 burst read, stop condition is needed after "address write".
- * Therefore, transmission is performed in 2 steps.
+ * In BU21023/24 burst पढ़ो, stop condition is needed after "address write".
+ * Thereक्रमe, transmission is perक्रमmed in 2 steps.
  */
-static int rohm_i2c_burst_read(struct i2c_client *client, u8 start, void *buf,
-			       size_t len)
-{
-	struct i2c_adapter *adap = client->adapter;
-	struct i2c_msg msg[2];
-	int i, ret = 0;
+अटल पूर्णांक rohm_i2c_burst_पढ़ो(काष्ठा i2c_client *client, u8 start, व्योम *buf,
+			       माप_प्रकार len)
+अणु
+	काष्ठा i2c_adapter *adap = client->adapter;
+	काष्ठा i2c_msg msg[2];
+	पूर्णांक i, ret = 0;
 
 	msg[0].addr = client->addr;
 	msg[0].flags = 0;
@@ -298,261 +299,261 @@ static int rohm_i2c_burst_read(struct i2c_client *client, u8 start, void *buf,
 
 	i2c_lock_bus(adap, I2C_LOCK_SEGMENT);
 
-	for (i = 0; i < 2; i++) {
-		if (__i2c_transfer(adap, &msg[i], 1) < 0) {
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (__i2c_transfer(adap, &msg[i], 1) < 0) अणु
 			ret = -EIO;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	i2c_unlock_bus(adap, I2C_LOCK_SEGMENT);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rohm_ts_manual_calibration(struct rohm_ts_data *ts)
-{
-	struct i2c_client *client = ts->client;
-	struct device *dev = &client->dev;
-	u8 buf[33];	/* for PRM1_X_H(0x08)-TOUCH(0x28) */
+अटल पूर्णांक rohm_ts_manual_calibration(काष्ठा rohm_ts_data *ts)
+अणु
+	काष्ठा i2c_client *client = ts->client;
+	काष्ठा device *dev = &client->dev;
+	u8 buf[33];	/* क्रम PRM1_X_H(0x08)-TOUCH(0x28) */
 
-	int retry;
+	पूर्णांक retry;
 	bool success = false;
-	bool first_time = true;
-	bool calibration_done;
+	bool first_समय = true;
+	bool calibration_करोne;
 
 	u8 reg1, reg2, reg3;
 	s32 reg1_orig, reg2_orig, reg3_orig;
 	s32 val;
 
-	int calib_x = 0, calib_y = 0;
-	int reg_x, reg_y;
-	int err_x, err_y;
+	पूर्णांक calib_x = 0, calib_y = 0;
+	पूर्णांक reg_x, reg_y;
+	पूर्णांक err_x, err_y;
 
-	int error, error2;
-	int i;
+	पूर्णांक error, error2;
+	पूर्णांक i;
 
-	reg1_orig = i2c_smbus_read_byte_data(client, CALIBRATION_REG1);
-	if (reg1_orig < 0)
-		return reg1_orig;
+	reg1_orig = i2c_smbus_पढ़ो_byte_data(client, CALIBRATION_REG1);
+	अगर (reg1_orig < 0)
+		वापस reg1_orig;
 
-	reg2_orig = i2c_smbus_read_byte_data(client, CALIBRATION_REG2);
-	if (reg2_orig < 0)
-		return reg2_orig;
+	reg2_orig = i2c_smbus_पढ़ो_byte_data(client, CALIBRATION_REG2);
+	अगर (reg2_orig < 0)
+		वापस reg2_orig;
 
-	reg3_orig = i2c_smbus_read_byte_data(client, CALIBRATION_REG3);
-	if (reg3_orig < 0)
-		return reg3_orig;
+	reg3_orig = i2c_smbus_पढ़ो_byte_data(client, CALIBRATION_REG3);
+	अगर (reg3_orig < 0)
+		वापस reg3_orig;
 
-	error = i2c_smbus_write_byte_data(client, INT_MASK,
+	error = i2c_smbus_ग_लिखो_byte_data(client, INT_MASK,
 					  COORD_UPDATE | SLEEP_IN | SLEEP_OUT |
 					  PROGRAM_LOAD_DONE);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	error = i2c_smbus_write_byte_data(client, TEST1,
+	error = i2c_smbus_ग_लिखो_byte_data(client, TEST1,
 					  DUALTOUCH_STABILIZE_ON);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	for (retry = 0; retry < CALIBRATION_RETRY_MAX; retry++) {
-		/* wait 2 sampling for update */
+	क्रम (retry = 0; retry < CALIBRATION_RETRY_MAX; retry++) अणु
+		/* रुको 2 sampling क्रम update */
 		mdelay(2 * SAMPLING_DELAY);
 
-#define READ_CALIB_BUF(reg)	buf[((reg) - PRM1_X_H)]
+#घोषणा READ_CALIB_BUF(reg)	buf[((reg) - PRM1_X_H)]
 
-		error = rohm_i2c_burst_read(client, PRM1_X_H, buf, sizeof(buf));
-		if (error)
-			goto out;
+		error = rohm_i2c_burst_पढ़ो(client, PRM1_X_H, buf, माप(buf));
+		अगर (error)
+			जाओ out;
 
-		if (READ_CALIB_BUF(TOUCH) & TOUCH_DETECT)
-			continue;
+		अगर (READ_CALIB_BUF(TOUCH) & TOUCH_DETECT)
+			जारी;
 
-		if (first_time) {
+		अगर (first_समय) अणु
 			/* generate calibration parameter */
-			calib_x = ((int)READ_CALIB_BUF(PRM1_X_H) << 2 |
+			calib_x = ((पूर्णांक)READ_CALIB_BUF(PRM1_X_H) << 2 |
 				READ_CALIB_BUF(PRM1_X_L)) - AXIS_OFFSET;
-			calib_y = ((int)READ_CALIB_BUF(PRM1_Y_H) << 2 |
+			calib_y = ((पूर्णांक)READ_CALIB_BUF(PRM1_Y_H) << 2 |
 				READ_CALIB_BUF(PRM1_Y_L)) - AXIS_OFFSET;
 
-			error = i2c_smbus_write_byte_data(client, TEST1,
+			error = i2c_smbus_ग_लिखो_byte_data(client, TEST1,
 				DUALTOUCH_STABILIZE_ON | DUALTOUCH_REG_ON);
-			if (error)
-				goto out;
+			अगर (error)
+				जाओ out;
 
-			first_time = false;
-		} else {
-			/* generate adjustment parameter */
-			err_x = (int)READ_CALIB_BUF(PRM1_X_H) << 2 |
+			first_समय = false;
+		पूर्ण अन्यथा अणु
+			/* generate adjusपंचांगent parameter */
+			err_x = (पूर्णांक)READ_CALIB_BUF(PRM1_X_H) << 2 |
 				READ_CALIB_BUF(PRM1_X_L);
-			err_y = (int)READ_CALIB_BUF(PRM1_Y_H) << 2 |
+			err_y = (पूर्णांक)READ_CALIB_BUF(PRM1_Y_H) << 2 |
 				READ_CALIB_BUF(PRM1_Y_L);
 
 			/* X axis ajust */
-			if (err_x <= 4)
+			अगर (err_x <= 4)
 				calib_x -= AXIS_ADJUST;
-			else if (err_x >= 60)
+			अन्यथा अगर (err_x >= 60)
 				calib_x += AXIS_ADJUST;
 
 			/* Y axis ajust */
-			if (err_y <= 4)
+			अगर (err_y <= 4)
 				calib_y -= AXIS_ADJUST;
-			else if (err_y >= 60)
+			अन्यथा अगर (err_y >= 60)
 				calib_y += AXIS_ADJUST;
-		}
+		पूर्ण
 
 		/* generate calibration setting value */
 		reg_x = calib_x + ((calib_x & 0x200) << 1);
 		reg_y = calib_y + ((calib_y & 0x200) << 1);
 
-		/* convert for register format */
+		/* convert क्रम रेजिस्टर क्रमmat */
 		reg1 = reg_x >> 3;
 		reg2 = (reg_y & 0x7) << 4 | (reg_x & 0x7);
 		reg3 = reg_y >> 3;
 
-		error = i2c_smbus_write_byte_data(client,
+		error = i2c_smbus_ग_लिखो_byte_data(client,
 						  CALIBRATION_REG1, reg1);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		error = i2c_smbus_write_byte_data(client,
+		error = i2c_smbus_ग_लिखो_byte_data(client,
 						  CALIBRATION_REG2, reg2);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		error = i2c_smbus_write_byte_data(client,
+		error = i2c_smbus_ग_लिखो_byte_data(client,
 						  CALIBRATION_REG3, reg3);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
 		/*
-		 * force calibration sequcence
+		 * क्रमce calibration sequcence
 		 */
-		error = i2c_smbus_write_byte_data(client, FORCE_CALIBRATION,
+		error = i2c_smbus_ग_लिखो_byte_data(client, FORCE_CALIBRATION,
 						  FORCE_CALIBRATION_OFF);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		error = i2c_smbus_write_byte_data(client, FORCE_CALIBRATION,
+		error = i2c_smbus_ग_लिखो_byte_data(client, FORCE_CALIBRATION,
 						  FORCE_CALIBRATION_ON);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		/* clear all interrupts */
-		error = i2c_smbus_write_byte_data(client, INT_CLEAR, 0xff);
-		if (error)
-			goto out;
+		/* clear all पूर्णांकerrupts */
+		error = i2c_smbus_ग_लिखो_byte_data(client, INT_CLEAR, 0xff);
+		अगर (error)
+			जाओ out;
 
 		/*
-		 * Wait for the status change of calibration, max 10 sampling
+		 * Wait क्रम the status change of calibration, max 10 sampling
 		 */
-		calibration_done = false;
+		calibration_करोne = false;
 
-		for (i = 0; i < 10; i++) {
+		क्रम (i = 0; i < 10; i++) अणु
 			mdelay(SAMPLING_DELAY);
 
-			val = i2c_smbus_read_byte_data(client, TOUCH_GESTURE);
-			if (!(val & CALIBRATION_MASK)) {
-				calibration_done = true;
-				break;
-			} else if (val < 0) {
+			val = i2c_smbus_पढ़ो_byte_data(client, TOUCH_GESTURE);
+			अगर (!(val & CALIBRATION_MASK)) अणु
+				calibration_करोne = true;
+				अवरोध;
+			पूर्ण अन्यथा अगर (val < 0) अणु
 				error = val;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		if (calibration_done) {
-			val = i2c_smbus_read_byte_data(client, INT_STATUS);
-			if (val == CALIBRATION_DONE) {
+		अगर (calibration_करोne) अणु
+			val = i2c_smbus_पढ़ो_byte_data(client, INT_STATUS);
+			अगर (val == CALIBRATION_DONE) अणु
 				success = true;
-				break;
-			} else if (val < 0) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (val < 0) अणु
 				error = val;
-				goto out;
-			}
-		} else {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dev_warn(dev, "calibration timeout\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!success) {
-		error = i2c_smbus_write_byte_data(client, CALIBRATION_REG1,
+	अगर (!success) अणु
+		error = i2c_smbus_ग_लिखो_byte_data(client, CALIBRATION_REG1,
 						  reg1_orig);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		error = i2c_smbus_write_byte_data(client, CALIBRATION_REG2,
+		error = i2c_smbus_ग_लिखो_byte_data(client, CALIBRATION_REG2,
 						  reg2_orig);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		error = i2c_smbus_write_byte_data(client, CALIBRATION_REG3,
+		error = i2c_smbus_ग_लिखो_byte_data(client, CALIBRATION_REG3,
 						  reg3_orig);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
 		/* calibration data enable */
-		error = i2c_smbus_write_byte_data(client, TEST1,
+		error = i2c_smbus_ग_लिखो_byte_data(client, TEST1,
 						  DUALTOUCH_STABILIZE_ON |
 						  DUALTOUCH_REG_ON);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
-		/* wait 10 sampling */
+		/* रुको 10 sampling */
 		mdelay(10 * SAMPLING_DELAY);
 
 		error = -EBUSY;
-	}
+	पूर्ण
 
 out:
-	error2 = i2c_smbus_write_byte_data(client, INT_MASK, INT_ALL);
-	if (!error2)
-		/* Clear all interrupts */
-		error2 = i2c_smbus_write_byte_data(client, INT_CLEAR, 0xff);
+	error2 = i2c_smbus_ग_लिखो_byte_data(client, INT_MASK, INT_ALL);
+	अगर (!error2)
+		/* Clear all पूर्णांकerrupts */
+		error2 = i2c_smbus_ग_लिखो_byte_data(client, INT_CLEAR, 0xff);
 
-	return error ? error : error2;
-}
+	वापस error ? error : error2;
+पूर्ण
 
-static const unsigned int untouch_threshold[3] = { 0, 1, 5 };
-static const unsigned int single_touch_threshold[3] = { 0, 0, 4 };
-static const unsigned int dual_touch_threshold[3] = { 10, 8, 0 };
+अटल स्थिर अचिन्हित पूर्णांक untouch_threshold[3] = अणु 0, 1, 5 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक single_touch_threshold[3] = अणु 0, 0, 4 पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक dual_touch_threshold[3] = अणु 10, 8, 0 पूर्ण;
 
-static irqreturn_t rohm_ts_soft_irq(int irq, void *dev_id)
-{
-	struct rohm_ts_data *ts = dev_id;
-	struct i2c_client *client = ts->client;
-	struct input_dev *input_dev = ts->input;
-	struct device *dev = &client->dev;
+अटल irqवापस_t rohm_ts_soft_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा rohm_ts_data *ts = dev_id;
+	काष्ठा i2c_client *client = ts->client;
+	काष्ठा input_dev *input_dev = ts->input;
+	काष्ठा device *dev = &client->dev;
 
-	u8 buf[10];	/* for POS_X1_H(0x20)-TOUCH_GESTURE(0x29) */
+	u8 buf[10];	/* क्रम POS_X1_H(0x20)-TOUCH_GESTURE(0x29) */
 
-	struct input_mt_pos pos[MAX_CONTACTS];
-	int slots[MAX_CONTACTS];
+	काष्ठा input_mt_pos pos[MAX_CONTACTS];
+	पूर्णांक slots[MAX_CONTACTS];
 	u8 touch_flags;
-	unsigned int threshold;
-	int finger_count = -1;
-	int prev_finger_count = ts->finger_count;
-	int count;
-	int error;
-	int i;
+	अचिन्हित पूर्णांक threshold;
+	पूर्णांक finger_count = -1;
+	पूर्णांक prev_finger_count = ts->finger_count;
+	पूर्णांक count;
+	पूर्णांक error;
+	पूर्णांक i;
 
-	error = i2c_smbus_write_byte_data(client, INT_MASK, INT_ALL);
-	if (error)
-		return IRQ_HANDLED;
+	error = i2c_smbus_ग_लिखो_byte_data(client, INT_MASK, INT_ALL);
+	अगर (error)
+		वापस IRQ_HANDLED;
 
-	/* Clear all interrupts */
-	error = i2c_smbus_write_byte_data(client, INT_CLEAR, 0xff);
-	if (error)
-		return IRQ_HANDLED;
+	/* Clear all पूर्णांकerrupts */
+	error = i2c_smbus_ग_लिखो_byte_data(client, INT_CLEAR, 0xff);
+	अगर (error)
+		वापस IRQ_HANDLED;
 
-#define READ_POS_BUF(reg)	buf[((reg) - POS_X1_H)]
+#घोषणा READ_POS_BUF(reg)	buf[((reg) - POS_X1_H)]
 
-	error = rohm_i2c_burst_read(client, POS_X1_H, buf, sizeof(buf));
-	if (error)
-		return IRQ_HANDLED;
+	error = rohm_i2c_burst_पढ़ो(client, POS_X1_H, buf, माप(buf));
+	अगर (error)
+		वापस IRQ_HANDLED;
 
 	touch_flags = READ_POS_BUF(TOUCH_GESTURE) & TOUCH_MASK;
-	if (touch_flags) {
+	अगर (touch_flags) अणु
 		/* generate coordinates */
 		pos[0].x = ((s16)READ_POS_BUF(POS_X1_H) << 2) |
 			   READ_POS_BUF(POS_X1_L);
@@ -562,631 +563,631 @@ static irqreturn_t rohm_ts_soft_irq(int irq, void *dev_id)
 			   READ_POS_BUF(POS_X2_L);
 		pos[1].y = ((s16)READ_POS_BUF(POS_Y2_H) << 2) |
 			   READ_POS_BUF(POS_Y2_L);
-	}
+	पूर्ण
 
-	switch (touch_flags) {
-	case 0:
+	चयन (touch_flags) अणु
+	हाल 0:
 		threshold = untouch_threshold[prev_finger_count];
-		if (++ts->contact_count[0] >= threshold)
+		अगर (++ts->contact_count[0] >= threshold)
 			finger_count = 0;
-		break;
+		अवरोध;
 
-	case SINGLE_TOUCH:
+	हाल SINGLE_TOUCH:
 		threshold = single_touch_threshold[prev_finger_count];
-		if (++ts->contact_count[1] >= threshold)
+		अगर (++ts->contact_count[1] >= threshold)
 			finger_count = 1;
 
-		if (finger_count == 1) {
-			if (pos[1].x != 0 && pos[1].y != 0) {
+		अगर (finger_count == 1) अणु
+			अगर (pos[1].x != 0 && pos[1].y != 0) अणु
 				pos[0].x = pos[1].x;
 				pos[0].y = pos[1].y;
 				pos[1].x = 0;
 				pos[1].y = 0;
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case DUAL_TOUCH:
+	हाल DUAL_TOUCH:
 		threshold = dual_touch_threshold[prev_finger_count];
-		if (++ts->contact_count[2] >= threshold)
+		अगर (++ts->contact_count[2] >= threshold)
 			finger_count = 2;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(dev,
 			"Three or more touches are not supported\n");
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (finger_count >= 0) {
-		if (prev_finger_count != finger_count) {
+	अगर (finger_count >= 0) अणु
+		अगर (prev_finger_count != finger_count) अणु
 			count = ts->contact_count[finger_count];
-			memset(ts->contact_count, 0, sizeof(ts->contact_count));
+			स_रखो(ts->contact_count, 0, माप(ts->contact_count));
 			ts->contact_count[finger_count] = count;
-		}
+		पूर्ण
 
 		input_mt_assign_slots(input_dev, slots, pos,
 				      finger_count, ROHM_TS_DISPLACEMENT_MAX);
 
-		for (i = 0; i < finger_count; i++) {
+		क्रम (i = 0; i < finger_count; i++) अणु
 			input_mt_slot(input_dev, slots[i]);
 			input_mt_report_slot_state(input_dev,
 						   MT_TOOL_FINGER, true);
-			input_report_abs(input_dev,
+			input_report_असल(input_dev,
 					 ABS_MT_POSITION_X, pos[i].x);
-			input_report_abs(input_dev,
+			input_report_असल(input_dev,
 					 ABS_MT_POSITION_Y, pos[i].y);
-		}
+		पूर्ण
 
 		input_mt_sync_frame(input_dev);
-		input_mt_report_pointer_emulation(input_dev, true);
+		input_mt_report_poपूर्णांकer_emulation(input_dev, true);
 		input_sync(input_dev);
 
 		ts->finger_count = finger_count;
-	}
+	पूर्ण
 
-	if (READ_POS_BUF(TOUCH_GESTURE) & CALIBRATION_REQUEST) {
+	अगर (READ_POS_BUF(TOUCH_GESTURE) & CALIBRATION_REQUEST) अणु
 		error = rohm_ts_manual_calibration(ts);
-		if (error)
+		अगर (error)
 			dev_warn(dev, "manual calibration failed: %d\n",
 				 error);
-	}
+	पूर्ण
 
-	i2c_smbus_write_byte_data(client, INT_MASK,
+	i2c_smbus_ग_लिखो_byte_data(client, INT_MASK,
 				  CALIBRATION_DONE | SLEEP_OUT | SLEEP_IN |
 				  PROGRAM_LOAD_DONE);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rohm_ts_load_firmware(struct i2c_client *client,
-				 const char *firmware_name)
-{
-	struct device *dev = &client->dev;
-	const struct firmware *fw;
+अटल पूर्णांक rohm_ts_load_firmware(काष्ठा i2c_client *client,
+				 स्थिर अक्षर *firmware_name)
+अणु
+	काष्ठा device *dev = &client->dev;
+	स्थिर काष्ठा firmware *fw;
 	s32 status;
-	unsigned int offset, len, xfer_len;
-	unsigned int retry = 0;
-	int error, error2;
+	अचिन्हित पूर्णांक offset, len, xfer_len;
+	अचिन्हित पूर्णांक retry = 0;
+	पूर्णांक error, error2;
 
 	error = request_firmware(&fw, firmware_name, dev);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "unable to retrieve firmware %s: %d\n",
 			firmware_name, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = i2c_smbus_write_byte_data(client, INT_MASK,
+	error = i2c_smbus_ग_लिखो_byte_data(client, INT_MASK,
 					  COORD_UPDATE | CALIBRATION_DONE |
 					  SLEEP_IN | SLEEP_OUT);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	do {
-		if (retry) {
+	करो अणु
+		अगर (retry) अणु
 			dev_warn(dev, "retrying firmware load\n");
 
-			/* settings for retry */
-			error = i2c_smbus_write_byte_data(client, EX_WDAT, 0);
-			if (error)
-				goto out;
-		}
+			/* settings क्रम retry */
+			error = i2c_smbus_ग_लिखो_byte_data(client, EX_WDAT, 0);
+			अगर (error)
+				जाओ out;
+		पूर्ण
 
-		error = i2c_smbus_write_byte_data(client, EX_ADDR_H, 0);
-		if (error)
-			goto out;
+		error = i2c_smbus_ग_लिखो_byte_data(client, EX_ADDR_H, 0);
+		अगर (error)
+			जाओ out;
 
-		error = i2c_smbus_write_byte_data(client, EX_ADDR_L, 0);
-		if (error)
-			goto out;
+		error = i2c_smbus_ग_लिखो_byte_data(client, EX_ADDR_L, 0);
+		अगर (error)
+			जाओ out;
 
-		error = i2c_smbus_write_byte_data(client, COMMON_SETUP1,
+		error = i2c_smbus_ग_लिखो_byte_data(client, COMMON_SETUP1,
 						  COMMON_SETUP1_DEFAULT);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 
 		/* firmware load to the device */
 		offset = 0;
 		len = fw->size;
 
-		while (len) {
+		जबतक (len) अणु
 			xfer_len = min(FIRMWARE_BLOCK_SIZE, len);
 
-			error = i2c_smbus_write_i2c_block_data(client, EX_WDAT,
+			error = i2c_smbus_ग_लिखो_i2c_block_data(client, EX_WDAT,
 						xfer_len, &fw->data[offset]);
-			if (error)
-				goto out;
+			अगर (error)
+				जाओ out;
 
 			len -= xfer_len;
 			offset += xfer_len;
-		}
+		पूर्ण
 
 		/* check firmware load result */
-		status = i2c_smbus_read_byte_data(client, INT_STATUS);
-		if (status < 0) {
+		status = i2c_smbus_पढ़ो_byte_data(client, INT_STATUS);
+		अगर (status < 0) अणु
 			error = status;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* clear all interrupts */
-		error = i2c_smbus_write_byte_data(client, INT_CLEAR, 0xff);
-		if (error)
-			goto out;
+		/* clear all पूर्णांकerrupts */
+		error = i2c_smbus_ग_लिखो_byte_data(client, INT_CLEAR, 0xff);
+		अगर (error)
+			जाओ out;
 
-		if (status == PROGRAM_LOAD_DONE)
-			break;
+		अगर (status == PROGRAM_LOAD_DONE)
+			अवरोध;
 
 		error = -EIO;
-	} while (++retry <= FIRMWARE_RETRY_MAX);
+	पूर्ण जबतक (++retry <= FIRMWARE_RETRY_MAX);
 
 out:
-	error2 = i2c_smbus_write_byte_data(client, INT_MASK, INT_ALL);
+	error2 = i2c_smbus_ग_लिखो_byte_data(client, INT_MASK, INT_ALL);
 
 	release_firmware(fw);
 
-	return error ? error : error2;
-}
+	वापस error ? error : error2;
+पूर्ण
 
-static ssize_t swap_xy_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rohm_ts_data *ts = i2c_get_clientdata(client);
+अटल sमाप_प्रकार swap_xy_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rohm_ts_data *ts = i2c_get_clientdata(client);
 
-	return sprintf(buf, "%d\n", !!(ts->setup2 & SWAP_XY));
-}
+	वापस प्र_लिखो(buf, "%d\n", !!(ts->setup2 & SWAP_XY));
+पूर्ण
 
-static ssize_t swap_xy_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rohm_ts_data *ts = i2c_get_clientdata(client);
-	unsigned int val;
-	int error;
+अटल sमाप_प्रकार swap_xy_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rohm_ts_data *ts = i2c_get_clientdata(client);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक error;
 
-	error = kstrtouint(buf, 0, &val);
-	if (error)
-		return error;
+	error = kstrtouपूर्णांक(buf, 0, &val);
+	अगर (error)
+		वापस error;
 
-	error = mutex_lock_interruptible(&ts->input->mutex);
-	if (error)
-		return error;
+	error = mutex_lock_पूर्णांकerruptible(&ts->input->mutex);
+	अगर (error)
+		वापस error;
 
-	if (val)
+	अगर (val)
 		ts->setup2 |= SWAP_XY;
-	else
+	अन्यथा
 		ts->setup2 &= ~SWAP_XY;
 
-	if (ts->initialized)
-		error = i2c_smbus_write_byte_data(ts->client, COMMON_SETUP2,
+	अगर (ts->initialized)
+		error = i2c_smbus_ग_लिखो_byte_data(ts->client, COMMON_SETUP2,
 						  ts->setup2);
 
 	mutex_unlock(&ts->input->mutex);
 
-	return error ? error : count;
-}
+	वापस error ? error : count;
+पूर्ण
 
-static ssize_t inv_x_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rohm_ts_data *ts = i2c_get_clientdata(client);
+अटल sमाप_प्रकार inv_x_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rohm_ts_data *ts = i2c_get_clientdata(client);
 
-	return sprintf(buf, "%d\n", !!(ts->setup2 & INV_X));
-}
+	वापस प्र_लिखो(buf, "%d\n", !!(ts->setup2 & INV_X));
+पूर्ण
 
-static ssize_t inv_x_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rohm_ts_data *ts = i2c_get_clientdata(client);
-	unsigned int val;
-	int error;
+अटल sमाप_प्रकार inv_x_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rohm_ts_data *ts = i2c_get_clientdata(client);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक error;
 
-	error = kstrtouint(buf, 0, &val);
-	if (error)
-		return error;
+	error = kstrtouपूर्णांक(buf, 0, &val);
+	अगर (error)
+		वापस error;
 
-	error = mutex_lock_interruptible(&ts->input->mutex);
-	if (error)
-		return error;
+	error = mutex_lock_पूर्णांकerruptible(&ts->input->mutex);
+	अगर (error)
+		वापस error;
 
-	if (val)
+	अगर (val)
 		ts->setup2 |= INV_X;
-	else
+	अन्यथा
 		ts->setup2 &= ~INV_X;
 
-	if (ts->initialized)
-		error = i2c_smbus_write_byte_data(ts->client, COMMON_SETUP2,
+	अगर (ts->initialized)
+		error = i2c_smbus_ग_लिखो_byte_data(ts->client, COMMON_SETUP2,
 						  ts->setup2);
 
 	mutex_unlock(&ts->input->mutex);
 
-	return error ? error : count;
-}
+	वापस error ? error : count;
+पूर्ण
 
-static ssize_t inv_y_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rohm_ts_data *ts = i2c_get_clientdata(client);
+अटल sमाप_प्रकार inv_y_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rohm_ts_data *ts = i2c_get_clientdata(client);
 
-	return sprintf(buf, "%d\n", !!(ts->setup2 & INV_Y));
-}
+	वापस प्र_लिखो(buf, "%d\n", !!(ts->setup2 & INV_Y));
+पूर्ण
 
-static ssize_t inv_y_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct rohm_ts_data *ts = i2c_get_clientdata(client);
-	unsigned int val;
-	int error;
+अटल sमाप_प्रकार inv_y_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा rohm_ts_data *ts = i2c_get_clientdata(client);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक error;
 
-	error = kstrtouint(buf, 0, &val);
-	if (error)
-		return error;
+	error = kstrtouपूर्णांक(buf, 0, &val);
+	अगर (error)
+		वापस error;
 
-	error = mutex_lock_interruptible(&ts->input->mutex);
-	if (error)
-		return error;
+	error = mutex_lock_पूर्णांकerruptible(&ts->input->mutex);
+	अगर (error)
+		वापस error;
 
-	if (val)
+	अगर (val)
 		ts->setup2 |= INV_Y;
-	else
+	अन्यथा
 		ts->setup2 &= ~INV_Y;
 
-	if (ts->initialized)
-		error = i2c_smbus_write_byte_data(client, COMMON_SETUP2,
+	अगर (ts->initialized)
+		error = i2c_smbus_ग_लिखो_byte_data(client, COMMON_SETUP2,
 						  ts->setup2);
 
 	mutex_unlock(&ts->input->mutex);
 
-	return error ? error : count;
-}
+	वापस error ? error : count;
+पूर्ण
 
-static DEVICE_ATTR_RW(swap_xy);
-static DEVICE_ATTR_RW(inv_x);
-static DEVICE_ATTR_RW(inv_y);
+अटल DEVICE_ATTR_RW(swap_xy);
+अटल DEVICE_ATTR_RW(inv_x);
+अटल DEVICE_ATTR_RW(inv_y);
 
-static struct attribute *rohm_ts_attrs[] = {
+अटल काष्ठा attribute *rohm_ts_attrs[] = अणु
 	&dev_attr_swap_xy.attr,
 	&dev_attr_inv_x.attr,
 	&dev_attr_inv_y.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group rohm_ts_attr_group = {
+अटल स्थिर काष्ठा attribute_group rohm_ts_attr_group = अणु
 	.attrs = rohm_ts_attrs,
-};
+पूर्ण;
 
-static int rohm_ts_device_init(struct i2c_client *client, u8 setup2)
-{
-	struct device *dev = &client->dev;
-	int error;
+अटल पूर्णांक rohm_ts_device_init(काष्ठा i2c_client *client, u8 setup2)
+अणु
+	काष्ठा device *dev = &client->dev;
+	पूर्णांक error;
 
 	disable_irq(client->irq);
 
 	/*
-	 * Wait 200usec for reset
+	 * Wait 200usec क्रम reset
 	 */
 	udelay(200);
 
 	/* Release analog reset */
-	error = i2c_smbus_write_byte_data(client, SYSTEM,
+	error = i2c_smbus_ग_लिखो_byte_data(client, SYSTEM,
 					  ANALOG_POWER_ON | CPU_POWER_OFF);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	/* Waiting for the analog warm-up, max. 200usec */
+	/* Waiting क्रम the analog warm-up, max. 200usec */
 	udelay(200);
 
-	/* clear all interrupts */
-	error = i2c_smbus_write_byte_data(client, INT_CLEAR, 0xff);
-	if (error)
-		return error;
+	/* clear all पूर्णांकerrupts */
+	error = i2c_smbus_ग_लिखो_byte_data(client, INT_CLEAR, 0xff);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, EX_WDAT, 0);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, EX_WDAT, 0);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, COMMON_SETUP1, 0);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, COMMON_SETUP1, 0);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, COMMON_SETUP2, setup2);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, COMMON_SETUP2, setup2);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, COMMON_SETUP3,
+	error = i2c_smbus_ग_लिखो_byte_data(client, COMMON_SETUP3,
 					  SEL_TBL_DEFAULT | EN_MULTI);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, THRESHOLD_GESTURE,
+	error = i2c_smbus_ग_लिखो_byte_data(client, THRESHOLD_GESTURE,
 					  THRESHOLD_GESTURE_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, INTERVAL_TIME,
+	error = i2c_smbus_ग_लिखो_byte_data(client, INTERVAL_TIME,
 					  INTERVAL_TIME_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, CPU_FREQ, CPU_FREQ_10MHZ);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, CPU_FREQ, CPU_FREQ_10MHZ);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, PRM_SWOFF_TIME,
+	error = i2c_smbus_ग_लिखो_byte_data(client, PRM_SWOFF_TIME,
 					  PRM_SWOFF_TIME_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, ADC_CTRL, ADC_DIV_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, ADC_CTRL, ADC_DIV_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, ADC_WAIT, ADC_WAIT_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, ADC_WAIT, ADC_WAIT_DEFAULT);
+	अगर (error)
+		वापस error;
 
 	/*
 	 * Panel setup, these values change with the panel.
 	 */
-	error = i2c_smbus_write_byte_data(client, STEP_X, STEP_X_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, STEP_X, STEP_X_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, STEP_Y, STEP_Y_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, STEP_Y, STEP_Y_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, OFFSET_X, OFFSET_X_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, OFFSET_X, OFFSET_X_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, OFFSET_Y, OFFSET_Y_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, OFFSET_Y, OFFSET_Y_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, THRESHOLD_TOUCH,
+	error = i2c_smbus_ग_लिखो_byte_data(client, THRESHOLD_TOUCH,
 					  THRESHOLD_TOUCH_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, EVR_XY, EVR_XY_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, EVR_XY, EVR_XY_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, EVR_X, EVR_X_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, EVR_X, EVR_X_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, EVR_Y, EVR_Y_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, EVR_Y, EVR_Y_DEFAULT);
+	अगर (error)
+		वापस error;
 
 	/* Fixed value settings */
-	error = i2c_smbus_write_byte_data(client, CALIBRATION_ADJUST,
+	error = i2c_smbus_ग_लिखो_byte_data(client, CALIBRATION_ADJUST,
 					  CALIBRATION_ADJUST_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, SWCONT, SWCONT_DEFAULT);
-	if (error)
-		return error;
+	error = i2c_smbus_ग_लिखो_byte_data(client, SWCONT, SWCONT_DEFAULT);
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, TEST1,
+	error = i2c_smbus_ग_लिखो_byte_data(client, TEST1,
 					  DUALTOUCH_STABILIZE_ON |
 					  DUALTOUCH_REG_ON);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = rohm_ts_load_firmware(client, BU21023_FIRMWARE_NAME);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "failed to load firmware: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	/*
 	 * Manual calibration results are not changed in same environment.
-	 * If the force calibration is performed,
-	 * the controller will not require calibration request interrupt
-	 * when the typical values are set to the calibration registers.
+	 * If the क्रमce calibration is perक्रमmed,
+	 * the controller will not require calibration request पूर्णांकerrupt
+	 * when the typical values are set to the calibration रेजिस्टरs.
 	 */
-	error = i2c_smbus_write_byte_data(client, CALIBRATION_REG1,
+	error = i2c_smbus_ग_लिखो_byte_data(client, CALIBRATION_REG1,
 					  CALIBRATION_REG1_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, CALIBRATION_REG2,
+	error = i2c_smbus_ग_लिखो_byte_data(client, CALIBRATION_REG2,
 					  CALIBRATION_REG2_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, CALIBRATION_REG3,
+	error = i2c_smbus_ग_लिखो_byte_data(client, CALIBRATION_REG3,
 					  CALIBRATION_REG3_DEFAULT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, FORCE_CALIBRATION,
+	error = i2c_smbus_ग_लिखो_byte_data(client, FORCE_CALIBRATION,
 					  FORCE_CALIBRATION_OFF);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, FORCE_CALIBRATION,
+	error = i2c_smbus_ग_लिखो_byte_data(client, FORCE_CALIBRATION,
 					  FORCE_CALIBRATION_ON);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	/* Clear all interrupts */
-	error = i2c_smbus_write_byte_data(client, INT_CLEAR, 0xff);
-	if (error)
-		return error;
+	/* Clear all पूर्णांकerrupts */
+	error = i2c_smbus_ग_लिखो_byte_data(client, INT_CLEAR, 0xff);
+	अगर (error)
+		वापस error;
 
-	/* Enable coordinates update interrupt */
-	error = i2c_smbus_write_byte_data(client, INT_MASK,
+	/* Enable coordinates update पूर्णांकerrupt */
+	error = i2c_smbus_ग_लिखो_byte_data(client, INT_MASK,
 					  CALIBRATION_DONE | SLEEP_OUT |
 					  SLEEP_IN | PROGRAM_LOAD_DONE);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = i2c_smbus_write_byte_data(client, ERR_MASK,
+	error = i2c_smbus_ग_लिखो_byte_data(client, ERR_MASK,
 					  PROGRAM_LOAD_ERR | CPU_TIMEOUT |
 					  ADC_TIMEOUT);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	/* controller CPU power on */
-	error = i2c_smbus_write_byte_data(client, SYSTEM,
+	/* controller CPU घातer on */
+	error = i2c_smbus_ग_लिखो_byte_data(client, SYSTEM,
 					  ANALOG_POWER_ON | CPU_POWER_ON);
 
 	enable_irq(client->irq);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int rohm_ts_power_off(struct i2c_client *client)
-{
-	int error;
+अटल पूर्णांक rohm_ts_घातer_off(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक error;
 
-	error = i2c_smbus_write_byte_data(client, SYSTEM,
+	error = i2c_smbus_ग_लिखो_byte_data(client, SYSTEM,
 					  ANALOG_POWER_ON | CPU_POWER_OFF);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev,
 			"failed to power off device CPU: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = i2c_smbus_write_byte_data(client, SYSTEM,
+	error = i2c_smbus_ग_लिखो_byte_data(client, SYSTEM,
 					  ANALOG_POWER_OFF | CPU_POWER_OFF);
-	if (error)
+	अगर (error)
 		dev_err(&client->dev,
 			"failed to power off the device: %d\n", error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int rohm_ts_open(struct input_dev *input_dev)
-{
-	struct rohm_ts_data *ts = input_get_drvdata(input_dev);
-	struct i2c_client *client = ts->client;
-	int error;
+अटल पूर्णांक rohm_ts_खोलो(काष्ठा input_dev *input_dev)
+अणु
+	काष्ठा rohm_ts_data *ts = input_get_drvdata(input_dev);
+	काष्ठा i2c_client *client = ts->client;
+	पूर्णांक error;
 
-	if (!ts->initialized) {
+	अगर (!ts->initialized) अणु
 		error = rohm_ts_device_init(client, ts->setup2);
-		if (error) {
+		अगर (error) अणु
 			dev_err(&client->dev,
 				"device initialization failed: %d\n", error);
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		ts->initialized = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rohm_ts_close(struct input_dev *input_dev)
-{
-	struct rohm_ts_data *ts = input_get_drvdata(input_dev);
+अटल व्योम rohm_ts_बंद(काष्ठा input_dev *input_dev)
+अणु
+	काष्ठा rohm_ts_data *ts = input_get_drvdata(input_dev);
 
-	rohm_ts_power_off(ts->client);
+	rohm_ts_घातer_off(ts->client);
 
 	ts->initialized = false;
-}
+पूर्ण
 
-static int rohm_bu21023_i2c_probe(struct i2c_client *client,
-				  const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct rohm_ts_data *ts;
-	struct input_dev *input;
-	int error;
+अटल पूर्णांक rohm_bu21023_i2c_probe(काष्ठा i2c_client *client,
+				  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा rohm_ts_data *ts;
+	काष्ठा input_dev *input;
+	पूर्णांक error;
 
-	if (!client->irq) {
+	अगर (!client->irq) अणु
 		dev_err(dev, "IRQ is not assigned\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!client->adapter->algo->master_xfer) {
+	अगर (!client->adapter->algo->master_xfer) अणु
 		dev_err(dev, "I2C level transfers not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* Turn off CPU just in case */
-	error = rohm_ts_power_off(client);
-	if (error)
-		return error;
+	/* Turn off CPU just in हाल */
+	error = rohm_ts_घातer_off(client);
+	अगर (error)
+		वापस error;
 
-	ts = devm_kzalloc(dev, sizeof(struct rohm_ts_data), GFP_KERNEL);
-	if (!ts)
-		return -ENOMEM;
+	ts = devm_kzalloc(dev, माप(काष्ठा rohm_ts_data), GFP_KERNEL);
+	अगर (!ts)
+		वापस -ENOMEM;
 
 	ts->client = client;
 	ts->setup2 = MAF_1SAMPLE;
 	i2c_set_clientdata(client, ts);
 
 	input = devm_input_allocate_device(dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = BU21023_NAME;
 	input->id.bustype = BUS_I2C;
-	input->open = rohm_ts_open;
-	input->close = rohm_ts_close;
+	input->खोलो = rohm_ts_खोलो;
+	input->बंद = rohm_ts_बंद;
 
 	ts->input = input;
 	input_set_drvdata(input, ts);
 
-	input_set_abs_params(input, ABS_MT_POSITION_X,
+	input_set_असल_params(input, ABS_MT_POSITION_X,
 			     ROHM_TS_ABS_X_MIN, ROHM_TS_ABS_X_MAX, 0, 0);
-	input_set_abs_params(input, ABS_MT_POSITION_Y,
+	input_set_असल_params(input, ABS_MT_POSITION_Y,
 			     ROHM_TS_ABS_Y_MIN, ROHM_TS_ABS_Y_MAX, 0, 0);
 
 	error = input_mt_init_slots(input, MAX_CONTACTS,
-				    INPUT_MT_DIRECT | INPUT_MT_TRACK |
+				    INPUT_MT_सूचीECT | INPUT_MT_TRACK |
 				    INPUT_MT_DROP_UNUSED);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "failed to multi touch slots initialization\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = devm_request_threaded_irq(dev, client->irq,
-					  NULL, rohm_ts_soft_irq,
+	error = devm_request_thपढ़ोed_irq(dev, client->irq,
+					  शून्य, rohm_ts_soft_irq,
 					  IRQF_ONESHOT, client->name, ts);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "failed to request IRQ: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(input);
-	if (error) {
+	error = input_रेजिस्टर_device(input);
+	अगर (error) अणु
 		dev_err(dev, "failed to register input device: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_device_add_group(dev, &rohm_ts_attr_group);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "failed to create sysfs group: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static const struct i2c_device_id rohm_bu21023_i2c_id[] = {
-	{ BU21023_NAME, 0 },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा i2c_device_id rohm_bu21023_i2c_id[] = अणु
+	अणु BU21023_NAME, 0 पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rohm_bu21023_i2c_id);
 
-static struct i2c_driver rohm_bu21023_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rohm_bu21023_i2c_driver = अणु
+	.driver = अणु
 		.name = BU21023_NAME,
-	},
+	पूर्ण,
 	.probe = rohm_bu21023_i2c_probe,
 	.id_table = rohm_bu21023_i2c_id,
-};
+पूर्ण;
 module_i2c_driver(rohm_bu21023_i2c_driver);
 
 MODULE_DESCRIPTION("ROHM BU21023/24 Touchscreen driver");

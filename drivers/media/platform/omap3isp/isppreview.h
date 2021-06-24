@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * isppreview.h
  *
@@ -7,57 +8,57 @@
  * Copyright (C) 2010 Nokia Corporation
  * Copyright (C) 2009 Texas Instruments, Inc.
  *
- * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#ifndef OMAP3_ISP_PREVIEW_H
-#define OMAP3_ISP_PREVIEW_H
+#अगर_अघोषित OMAP3_ISP_PREVIEW_H
+#घोषणा OMAP3_ISP_PREVIEW_H
 
-#include <linux/omap3isp.h>
-#include <linux/types.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <linux/omap3isp.h>
+#समावेश <linux/types.h>
+#समावेश <media/v4l2-ctrls.h>
 
-#include "ispvideo.h"
+#समावेश "ispvideo.h"
 
-#define ISPPRV_BRIGHT_STEP		0x1
-#define ISPPRV_BRIGHT_DEF		0x0
-#define ISPPRV_BRIGHT_LOW		0x0
-#define ISPPRV_BRIGHT_HIGH		0xFF
-#define ISPPRV_BRIGHT_UNITS		0x1
+#घोषणा ISPPRV_BRIGHT_STEP		0x1
+#घोषणा ISPPRV_BRIGHT_DEF		0x0
+#घोषणा ISPPRV_BRIGHT_LOW		0x0
+#घोषणा ISPPRV_BRIGHT_HIGH		0xFF
+#घोषणा ISPPRV_BRIGHT_UNITS		0x1
 
-#define ISPPRV_CONTRAST_STEP		0x1
-#define ISPPRV_CONTRAST_DEF		0x10
-#define ISPPRV_CONTRAST_LOW		0x0
-#define ISPPRV_CONTRAST_HIGH		0xFF
-#define ISPPRV_CONTRAST_UNITS		0x1
+#घोषणा ISPPRV_CONTRAST_STEP		0x1
+#घोषणा ISPPRV_CONTRAST_DEF		0x10
+#घोषणा ISPPRV_CONTRAST_LOW		0x0
+#घोषणा ISPPRV_CONTRAST_HIGH		0xFF
+#घोषणा ISPPRV_CONTRAST_UNITS		0x1
 
 /* Additional features not listed in linux/omap3isp.h */
-#define OMAP3ISP_PREV_CONTRAST		(1 << 17)
-#define OMAP3ISP_PREV_BRIGHTNESS	(1 << 18)
-#define OMAP3ISP_PREV_FEATURES_END	(1 << 19)
+#घोषणा OMAP3ISP_PREV_CONTRAST		(1 << 17)
+#घोषणा OMAP3ISP_PREV_BRIGHTNESS	(1 << 18)
+#घोषणा OMAP3ISP_PREV_FEATURES_END	(1 << 19)
 
-enum preview_input_entity {
+क्रमागत preview_input_entity अणु
 	PREVIEW_INPUT_NONE,
 	PREVIEW_INPUT_CCDC,
 	PREVIEW_INPUT_MEMORY,
-};
+पूर्ण;
 
-#define PREVIEW_OUTPUT_RESIZER		(1 << 1)
-#define PREVIEW_OUTPUT_MEMORY		(1 << 2)
+#घोषणा PREVIEW_OUTPUT_RESIZER		(1 << 1)
+#घोषणा PREVIEW_OUTPUT_MEMORY		(1 << 2)
 
 /* Configure byte layout of YUV image */
-enum preview_ycpos_mode {
+क्रमागत preview_ycpos_mode अणु
 	YCPOS_YCrYCb = 0,
 	YCPOS_YCbYCr = 1,
 	YCPOS_CbYCrY = 2,
 	YCPOS_CrYCbY = 3
-};
+पूर्ण;
 
 /*
- * struct prev_params - Structure for all configuration
- * @busy: Bitmask of busy parameters (being updated or used)
- * @update: Bitmask of the parameters to be updated
+ * काष्ठा prev_params - Structure क्रम all configuration
+ * @busy: Biपंचांगask of busy parameters (being updated or used)
+ * @update: Biपंचांगask of the parameters to be updated
  * @features: Set of features enabled.
  * @cfa: CFA coefficients.
  * @csup: Chroma suppression coefficients.
@@ -66,7 +67,7 @@ enum preview_ycpos_mode {
  * @dcor: Noise filter coefficients.
  * @gamma: Gamma coefficients.
  * @wbal: White Balance parameters.
- * @blkadj: Black adjustment parameters.
+ * @blkadj: Black adjusपंचांगent parameters.
  * @rgb2rgb: RGB blending parameters.
  * @csc: Color space conversion (RGB to YCbCr) parameters.
  * @hmed: Horizontal median filter.
@@ -74,88 +75,88 @@ enum preview_ycpos_mode {
  * @contrast: Contrast.
  * @brightness: Brightness.
  */
-struct prev_params {
+काष्ठा prev_params अणु
 	u32 busy;
 	u32 update;
 	u32 features;
-	struct omap3isp_prev_cfa cfa;
-	struct omap3isp_prev_csup csup;
-	struct omap3isp_prev_luma luma;
-	struct omap3isp_prev_nf nf;
-	struct omap3isp_prev_dcor dcor;
-	struct omap3isp_prev_gtables gamma;
-	struct omap3isp_prev_wbal wbal;
-	struct omap3isp_prev_blkadj blkadj;
-	struct omap3isp_prev_rgbtorgb rgb2rgb;
-	struct omap3isp_prev_csc csc;
-	struct omap3isp_prev_hmed hmed;
-	struct omap3isp_prev_yclimit yclimit;
+	काष्ठा omap3isp_prev_cfa cfa;
+	काष्ठा omap3isp_prev_csup csup;
+	काष्ठा omap3isp_prev_luma luma;
+	काष्ठा omap3isp_prev_nf nf;
+	काष्ठा omap3isp_prev_dcor dcor;
+	काष्ठा omap3isp_prev_gtables gamma;
+	काष्ठा omap3isp_prev_wbal wbal;
+	काष्ठा omap3isp_prev_blkadj blkadj;
+	काष्ठा omap3isp_prev_rgbtorgb rgb2rgb;
+	काष्ठा omap3isp_prev_csc csc;
+	काष्ठा omap3isp_prev_hmed hmed;
+	काष्ठा omap3isp_prev_yclimit yclimit;
 	u8 contrast;
 	u8 brightness;
-};
+पूर्ण;
 
 /* Sink and source previewer pads */
-#define PREV_PAD_SINK			0
-#define PREV_PAD_SOURCE			1
-#define PREV_PADS_NUM			2
+#घोषणा PREV_PAD_SINK			0
+#घोषणा PREV_PAD_SOURCE			1
+#घोषणा PREV_PADS_NUM			2
 
 /*
- * struct isp_prev_device - Structure for storing ISP Preview module information
+ * काष्ठा isp_prev_device - Structure क्रम storing ISP Preview module inक्रमmation
  * @subdev: V4L2 subdevice
  * @pads: Media entity pads
- * @formats: Active formats at the subdev pad
+ * @क्रमmats: Active क्रमmats at the subdev pad
  * @crop: Active crop rectangle
  * @input: Module currently connected to the input pad
- * @output: Bitmask of the active output
+ * @output: Biपंचांगask of the active output
  * @video_in: Input video entity
  * @video_out: Output video entity
- * @params.params : Active and shadow parameters sets
- * @params.active: Bitmask of parameters active in set 0
- * @params.lock: Parameters lock, protects params.active and params.shadow
+ * @params.params : Active and shaकरोw parameters sets
+ * @params.active: Biपंचांगask of parameters active in set 0
+ * @params.lock: Parameters lock, protects params.active and params.shaकरोw
  * @underrun: Whether the preview entity has queued buffers on the output
  * @state: Current preview pipeline state
  *
- * This structure is used to store the OMAP ISP Preview module Information.
+ * This काष्ठाure is used to store the OMAP ISP Preview module Inक्रमmation.
  */
-struct isp_prev_device {
-	struct v4l2_subdev subdev;
-	struct media_pad pads[PREV_PADS_NUM];
-	struct v4l2_mbus_framefmt formats[PREV_PADS_NUM];
-	struct v4l2_rect crop;
+काष्ठा isp_prev_device अणु
+	काष्ठा v4l2_subdev subdev;
+	काष्ठा media_pad pads[PREV_PADS_NUM];
+	काष्ठा v4l2_mbus_framefmt क्रमmats[PREV_PADS_NUM];
+	काष्ठा v4l2_rect crop;
 
-	struct v4l2_ctrl_handler ctrls;
+	काष्ठा v4l2_ctrl_handler ctrls;
 
-	enum preview_input_entity input;
-	unsigned int output;
-	struct isp_video video_in;
-	struct isp_video video_out;
+	क्रमागत preview_input_entity input;
+	अचिन्हित पूर्णांक output;
+	काष्ठा isp_video video_in;
+	काष्ठा isp_video video_out;
 
-	struct {
-		unsigned int cfa_order;
-		struct prev_params params[2];
+	काष्ठा अणु
+		अचिन्हित पूर्णांक cfa_order;
+		काष्ठा prev_params params[2];
 		u32 active;
 		spinlock_t lock;
-	} params;
+	पूर्ण params;
 
-	enum isp_pipeline_stream_state state;
-	wait_queue_head_t wait;
+	क्रमागत isp_pipeline_stream_state state;
+	रुको_queue_head_t रुको;
 	atomic_t stopping;
-};
+पूर्ण;
 
-struct isp_device;
+काष्ठा isp_device;
 
-int omap3isp_preview_init(struct isp_device *isp);
-void omap3isp_preview_cleanup(struct isp_device *isp);
+पूर्णांक omap3isp_preview_init(काष्ठा isp_device *isp);
+व्योम omap3isp_preview_cleanup(काष्ठा isp_device *isp);
 
-int omap3isp_preview_register_entities(struct isp_prev_device *prv,
-				       struct v4l2_device *vdev);
-void omap3isp_preview_unregister_entities(struct isp_prev_device *prv);
+पूर्णांक omap3isp_preview_रेजिस्टर_entities(काष्ठा isp_prev_device *prv,
+				       काष्ठा v4l2_device *vdev);
+व्योम omap3isp_preview_unरेजिस्टर_entities(काष्ठा isp_prev_device *prv);
 
-void omap3isp_preview_isr_frame_sync(struct isp_prev_device *prev);
-void omap3isp_preview_isr(struct isp_prev_device *prev);
+व्योम omap3isp_preview_isr_frame_sync(काष्ठा isp_prev_device *prev);
+व्योम omap3isp_preview_isr(काष्ठा isp_prev_device *prev);
 
-int omap3isp_preview_busy(struct isp_prev_device *isp_prev);
+पूर्णांक omap3isp_preview_busy(काष्ठा isp_prev_device *isp_prev);
 
-void omap3isp_preview_restore_context(struct isp_device *isp);
+व्योम omap3isp_preview_restore_context(काष्ठा isp_device *isp);
 
-#endif	/* OMAP3_ISP_PREVIEW_H */
+#पूर्ण_अगर	/* OMAP3_ISP_PREVIEW_H */

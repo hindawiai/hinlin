@@ -1,171 +1,172 @@
-{
+<शैली गुरु>
+अणु
 	"valid access family in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, family)),
+		    दुरत्व(काष्ठा sk_msg_md, family)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"valid access remote_ip4 in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, remote_ip4)),
+		    दुरत्व(काष्ठा sk_msg_md, remote_ip4)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"valid access local_ip4 in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, local_ip4)),
+		    दुरत्व(काष्ठा sk_msg_md, local_ip4)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"valid access remote_port in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, remote_port)),
+		    दुरत्व(काष्ठा sk_msg_md, remote_port)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"valid access local_port in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, local_port)),
+		    दुरत्व(काष्ठा sk_msg_md, local_port)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"valid access remote_ip6 in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, remote_ip6[0])),
+		    दुरत्व(काष्ठा sk_msg_md, remote_ip6[0])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, remote_ip6[1])),
+		    दुरत्व(काष्ठा sk_msg_md, remote_ip6[1])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, remote_ip6[2])),
+		    दुरत्व(काष्ठा sk_msg_md, remote_ip6[2])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, remote_ip6[3])),
+		    दुरत्व(काष्ठा sk_msg_md, remote_ip6[3])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access local_ip6 in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, local_ip6[0])),
+		    दुरत्व(काष्ठा sk_msg_md, local_ip6[0])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, local_ip6[1])),
+		    दुरत्व(काष्ठा sk_msg_md, local_ip6[1])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, local_ip6[2])),
+		    दुरत्व(काष्ठा sk_msg_md, local_ip6[2])),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, local_ip6[3])),
+		    दुरत्व(काष्ठा sk_msg_md, local_ip6[3])),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_SKB,
-},
-{
+पूर्ण,
+अणु
 	"valid access size in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
-		    offsetof(struct sk_msg_md, size)),
+		    दुरत्व(काष्ठा sk_msg_md, size)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"invalid 64B read of size in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct sk_msg_md, size)),
+		    दुरत्व(काष्ठा sk_msg_md, size)),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"invalid read past end of SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct sk_msg_md, size) + 4),
+		    दुरत्व(काष्ठा sk_msg_md, size) + 4),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"invalid read offset in SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct sk_msg_md, family) + 1),
+		    दुरत्व(काष्ठा sk_msg_md, family) + 1),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.errstr = "invalid bpf_context access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
 	.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
-},
-{
+पूर्ण,
+अणु
 	"direct packet read for SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct sk_msg_md, data)),
+		    दुरत्व(काष्ठा sk_msg_md, data)),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_1,
-		    offsetof(struct sk_msg_md, data_end)),
+		    दुरत्व(काष्ठा sk_msg_md, data_end)),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 8),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_0, BPF_REG_3, 1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_2, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"direct packet write for SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct sk_msg_md, data)),
+		    दुरत्व(काष्ठा sk_msg_md, data)),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_1,
-		    offsetof(struct sk_msg_md, data_end)),
+		    दुरत्व(काष्ठा sk_msg_md, data_end)),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 8),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_0, BPF_REG_3, 1),
 	BPF_STX_MEM(BPF_B, BPF_REG_2, BPF_REG_2, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
-{
+पूर्ण,
+अणु
 	"overlapping checks for direct packet access SK_MSG",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_1,
-		    offsetof(struct sk_msg_md, data)),
+		    दुरत्व(काष्ठा sk_msg_md, data)),
 	BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_1,
-		    offsetof(struct sk_msg_md, data_end)),
+		    दुरत्व(काष्ठा sk_msg_md, data_end)),
 	BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 8),
 	BPF_JMP_REG(BPF_JGT, BPF_REG_0, BPF_REG_3, 4),
@@ -175,7 +176,7 @@
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_2, 6),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_SK_MSG,
-},
+पूर्ण,

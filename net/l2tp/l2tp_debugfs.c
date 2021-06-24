@@ -1,348 +1,349 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* L2TP subsystem debugfs
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* L2TP subप्रणाली debugfs
  *
  * Copyright (c) 2010 Katalix Systems Ltd
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/socket.h>
-#include <linux/hash.h>
-#include <linux/l2tp.h>
-#include <linux/in.h>
-#include <linux/etherdevice.h>
-#include <linux/spinlock.h>
-#include <linux/debugfs.h>
-#include <net/sock.h>
-#include <net/ip.h>
-#include <net/icmp.h>
-#include <net/udp.h>
-#include <net/inet_common.h>
-#include <net/inet_hashtables.h>
-#include <net/tcp_states.h>
-#include <net/protocol.h>
-#include <net/xfrm.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/l2tp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/debugfs.h>
+#समावेश <net/sock.h>
+#समावेश <net/ip.h>
+#समावेश <net/icmp.h>
+#समावेश <net/udp.h>
+#समावेश <net/inet_common.h>
+#समावेश <net/inet_hashtables.h>
+#समावेश <net/tcp_states.h>
+#समावेश <net/protocol.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
 
-#include "l2tp_core.h"
+#समावेश "l2tp_core.h"
 
-static struct dentry *rootdir;
+अटल काष्ठा dentry *rootdir;
 
-struct l2tp_dfs_seq_data {
-	struct net *net;
-	int tunnel_idx;			/* current tunnel */
-	int session_idx;		/* index of session within current tunnel */
-	struct l2tp_tunnel *tunnel;
-	struct l2tp_session *session;	/* NULL means get next tunnel */
-};
+काष्ठा l2tp_dfs_seq_data अणु
+	काष्ठा net *net;
+	पूर्णांक tunnel_idx;			/* current tunnel */
+	पूर्णांक session_idx;		/* index of session within current tunnel */
+	काष्ठा l2tp_tunnel *tunnel;
+	काष्ठा l2tp_session *session;	/* शून्य means get next tunnel */
+पूर्ण;
 
-static void l2tp_dfs_next_tunnel(struct l2tp_dfs_seq_data *pd)
-{
+अटल व्योम l2tp_dfs_next_tunnel(काष्ठा l2tp_dfs_seq_data *pd)
+अणु
 	/* Drop reference taken during previous invocation */
-	if (pd->tunnel)
+	अगर (pd->tunnel)
 		l2tp_tunnel_dec_refcount(pd->tunnel);
 
 	pd->tunnel = l2tp_tunnel_get_nth(pd->net, pd->tunnel_idx);
 	pd->tunnel_idx++;
-}
+पूर्ण
 
-static void l2tp_dfs_next_session(struct l2tp_dfs_seq_data *pd)
-{
+अटल व्योम l2tp_dfs_next_session(काष्ठा l2tp_dfs_seq_data *pd)
+अणु
 	/* Drop reference taken during previous invocation */
-	if (pd->session)
+	अगर (pd->session)
 		l2tp_session_dec_refcount(pd->session);
 
 	pd->session = l2tp_session_get_nth(pd->tunnel, pd->session_idx);
 	pd->session_idx++;
 
-	if (!pd->session) {
+	अगर (!pd->session) अणु
 		pd->session_idx = 0;
 		l2tp_dfs_next_tunnel(pd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void *l2tp_dfs_seq_start(struct seq_file *m, loff_t *offs)
-{
-	struct l2tp_dfs_seq_data *pd = SEQ_START_TOKEN;
+अटल व्योम *l2tp_dfs_seq_start(काष्ठा seq_file *m, loff_t *offs)
+अणु
+	काष्ठा l2tp_dfs_seq_data *pd = SEQ_START_TOKEN;
 	loff_t pos = *offs;
 
-	if (!pos)
-		goto out;
+	अगर (!pos)
+		जाओ out;
 
-	if (WARN_ON(!m->private)) {
-		pd = NULL;
-		goto out;
-	}
-	pd = m->private;
+	अगर (WARN_ON(!m->निजी)) अणु
+		pd = शून्य;
+		जाओ out;
+	पूर्ण
+	pd = m->निजी;
 
-	if (!pd->tunnel)
+	अगर (!pd->tunnel)
 		l2tp_dfs_next_tunnel(pd);
-	else
+	अन्यथा
 		l2tp_dfs_next_session(pd);
 
-	/* NULL tunnel and session indicates end of list */
-	if (!pd->tunnel && !pd->session)
-		pd = NULL;
+	/* शून्य tunnel and session indicates end of list */
+	अगर (!pd->tunnel && !pd->session)
+		pd = शून्य;
 
 out:
-	return pd;
-}
+	वापस pd;
+पूर्ण
 
-static void *l2tp_dfs_seq_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *l2tp_dfs_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void l2tp_dfs_seq_stop(struct seq_file *p, void *v)
-{
-	struct l2tp_dfs_seq_data *pd = v;
+अटल व्योम l2tp_dfs_seq_stop(काष्ठा seq_file *p, व्योम *v)
+अणु
+	काष्ठा l2tp_dfs_seq_data *pd = v;
 
-	if (!pd || pd == SEQ_START_TOKEN)
-		return;
+	अगर (!pd || pd == SEQ_START_TOKEN)
+		वापस;
 
 	/* Drop reference taken by last invocation of l2tp_dfs_next_session()
 	 * or l2tp_dfs_next_tunnel().
 	 */
-	if (pd->session) {
+	अगर (pd->session) अणु
 		l2tp_session_dec_refcount(pd->session);
-		pd->session = NULL;
-	}
-	if (pd->tunnel) {
+		pd->session = शून्य;
+	पूर्ण
+	अगर (pd->tunnel) अणु
 		l2tp_tunnel_dec_refcount(pd->tunnel);
-		pd->tunnel = NULL;
-	}
-}
+		pd->tunnel = शून्य;
+	पूर्ण
+पूर्ण
 
-static void l2tp_dfs_seq_tunnel_show(struct seq_file *m, void *v)
-{
-	struct l2tp_tunnel *tunnel = v;
-	int session_count = 0;
-	int hash;
-	struct hlist_node *walk;
-	struct hlist_node *tmp;
+अटल व्योम l2tp_dfs_seq_tunnel_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा l2tp_tunnel *tunnel = v;
+	पूर्णांक session_count = 0;
+	पूर्णांक hash;
+	काष्ठा hlist_node *walk;
+	काष्ठा hlist_node *पंचांगp;
 
-	read_lock_bh(&tunnel->hlist_lock);
-	for (hash = 0; hash < L2TP_HASH_SIZE; hash++) {
-		hlist_for_each_safe(walk, tmp, &tunnel->session_hlist[hash]) {
-			struct l2tp_session *session;
+	पढ़ो_lock_bh(&tunnel->hlist_lock);
+	क्रम (hash = 0; hash < L2TP_HASH_SIZE; hash++) अणु
+		hlist_क्रम_each_safe(walk, पंचांगp, &tunnel->session_hlist[hash]) अणु
+			काष्ठा l2tp_session *session;
 
-			session = hlist_entry(walk, struct l2tp_session, hlist);
-			if (session->session_id == 0)
-				continue;
+			session = hlist_entry(walk, काष्ठा l2tp_session, hlist);
+			अगर (session->session_id == 0)
+				जारी;
 
 			session_count++;
-		}
-	}
-	read_unlock_bh(&tunnel->hlist_lock);
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock_bh(&tunnel->hlist_lock);
 
-	seq_printf(m, "\nTUNNEL %u peer %u", tunnel->tunnel_id, tunnel->peer_tunnel_id);
-	if (tunnel->sock) {
-		struct inet_sock *inet = inet_sk(tunnel->sock);
+	seq_म_लिखो(m, "\nTUNNEL %u peer %u", tunnel->tunnel_id, tunnel->peer_tunnel_id);
+	अगर (tunnel->sock) अणु
+		काष्ठा inet_sock *inet = inet_sk(tunnel->sock);
 
-#if IS_ENABLED(CONFIG_IPV6)
-		if (tunnel->sock->sk_family == AF_INET6) {
-			const struct ipv6_pinfo *np = inet6_sk(tunnel->sock);
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अगर (tunnel->sock->sk_family == AF_INET6) अणु
+			स्थिर काष्ठा ipv6_pinfo *np = inet6_sk(tunnel->sock);
 
-			seq_printf(m, " from %pI6c to %pI6c\n",
+			seq_म_लिखो(m, " from %pI6c to %pI6c\n",
 				   &np->saddr, &tunnel->sock->sk_v6_daddr);
-		}
-#endif
-		if (tunnel->sock->sk_family == AF_INET)
-			seq_printf(m, " from %pI4 to %pI4\n",
+		पूर्ण
+#पूर्ण_अगर
+		अगर (tunnel->sock->sk_family == AF_INET)
+			seq_म_लिखो(m, " from %pI4 to %pI4\n",
 				   &inet->inet_saddr, &inet->inet_daddr);
 
-		if (tunnel->encap == L2TP_ENCAPTYPE_UDP)
-			seq_printf(m, " source port %hu, dest port %hu\n",
+		अगर (tunnel->encap == L2TP_ENCAPTYPE_UDP)
+			seq_म_लिखो(m, " source port %hu, dest port %hu\n",
 				   ntohs(inet->inet_sport), ntohs(inet->inet_dport));
-	}
-	seq_printf(m, " L2TPv%d, %s\n", tunnel->version,
+	पूर्ण
+	seq_म_लिखो(m, " L2TPv%d, %s\n", tunnel->version,
 		   tunnel->encap == L2TP_ENCAPTYPE_UDP ? "UDP" :
 		   tunnel->encap == L2TP_ENCAPTYPE_IP ? "IP" :
 		   "");
-	seq_printf(m, " %d sessions, refcnt %d/%d\n", session_count,
-		   tunnel->sock ? refcount_read(&tunnel->sock->sk_refcnt) : 0,
-		   refcount_read(&tunnel->ref_count));
-	seq_printf(m, " %08x rx %ld/%ld/%ld rx %ld/%ld/%ld\n",
+	seq_म_लिखो(m, " %d sessions, refcnt %d/%d\n", session_count,
+		   tunnel->sock ? refcount_पढ़ो(&tunnel->sock->sk_refcnt) : 0,
+		   refcount_पढ़ो(&tunnel->ref_count));
+	seq_म_लिखो(m, " %08x rx %ld/%ld/%ld rx %ld/%ld/%ld\n",
 		   0,
-		   atomic_long_read(&tunnel->stats.tx_packets),
-		   atomic_long_read(&tunnel->stats.tx_bytes),
-		   atomic_long_read(&tunnel->stats.tx_errors),
-		   atomic_long_read(&tunnel->stats.rx_packets),
-		   atomic_long_read(&tunnel->stats.rx_bytes),
-		   atomic_long_read(&tunnel->stats.rx_errors));
-}
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.tx_packets),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.tx_bytes),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.tx_errors),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.rx_packets),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.rx_bytes),
+		   atomic_दीर्घ_पढ़ो(&tunnel->stats.rx_errors));
+पूर्ण
 
-static void l2tp_dfs_seq_session_show(struct seq_file *m, void *v)
-{
-	struct l2tp_session *session = v;
+अटल व्योम l2tp_dfs_seq_session_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा l2tp_session *session = v;
 
-	seq_printf(m, "  SESSION %u, peer %u, %s\n", session->session_id,
+	seq_म_लिखो(m, "  SESSION %u, peer %u, %s\n", session->session_id,
 		   session->peer_session_id,
 		   session->pwtype == L2TP_PWTYPE_ETH ? "ETH" :
 		   session->pwtype == L2TP_PWTYPE_PPP ? "PPP" :
 		   "");
-	if (session->send_seq || session->recv_seq)
-		seq_printf(m, "   nr %hu, ns %hu\n", session->nr, session->ns);
-	seq_printf(m, "   refcnt %d\n", refcount_read(&session->ref_count));
-	seq_printf(m, "   config 0/0/%c/%c/-/%s %08x %u\n",
+	अगर (session->send_seq || session->recv_seq)
+		seq_म_लिखो(m, "   nr %hu, ns %hu\n", session->nr, session->ns);
+	seq_म_लिखो(m, "   refcnt %d\n", refcount_पढ़ो(&session->ref_count));
+	seq_म_लिखो(m, "   config 0/0/%c/%c/-/%s %08x %u\n",
 		   session->recv_seq ? 'R' : '-',
 		   session->send_seq ? 'S' : '-',
 		   session->lns_mode ? "LNS" : "LAC",
 		   0,
-		   jiffies_to_msecs(session->reorder_timeout));
-	seq_printf(m, "   offset 0 l2specific %hu/%hu\n",
-		   session->l2specific_type, l2tp_get_l2specific_len(session));
-	if (session->cookie_len) {
-		seq_printf(m, "   cookie %02x%02x%02x%02x",
+		   jअगरfies_to_msecs(session->reorder_समयout));
+	seq_म_लिखो(m, "   offset 0 l2specific %hu/%hu\n",
+		   session->l2specअगरic_type, l2tp_get_l2specअगरic_len(session));
+	अगर (session->cookie_len) अणु
+		seq_म_लिखो(m, "   cookie %02x%02x%02x%02x",
 			   session->cookie[0], session->cookie[1],
 			   session->cookie[2], session->cookie[3]);
-		if (session->cookie_len == 8)
-			seq_printf(m, "%02x%02x%02x%02x",
+		अगर (session->cookie_len == 8)
+			seq_म_लिखो(m, "%02x%02x%02x%02x",
 				   session->cookie[4], session->cookie[5],
 				   session->cookie[6], session->cookie[7]);
-		seq_puts(m, "\n");
-	}
-	if (session->peer_cookie_len) {
-		seq_printf(m, "   peer cookie %02x%02x%02x%02x",
+		seq_माला_दो(m, "\n");
+	पूर्ण
+	अगर (session->peer_cookie_len) अणु
+		seq_म_लिखो(m, "   peer cookie %02x%02x%02x%02x",
 			   session->peer_cookie[0], session->peer_cookie[1],
 			   session->peer_cookie[2], session->peer_cookie[3]);
-		if (session->peer_cookie_len == 8)
-			seq_printf(m, "%02x%02x%02x%02x",
+		अगर (session->peer_cookie_len == 8)
+			seq_म_लिखो(m, "%02x%02x%02x%02x",
 				   session->peer_cookie[4], session->peer_cookie[5],
 				   session->peer_cookie[6], session->peer_cookie[7]);
-		seq_puts(m, "\n");
-	}
+		seq_माला_दो(m, "\n");
+	पूर्ण
 
-	seq_printf(m, "   %hu/%hu tx %ld/%ld/%ld rx %ld/%ld/%ld\n",
+	seq_म_लिखो(m, "   %hu/%hu tx %ld/%ld/%ld rx %ld/%ld/%ld\n",
 		   session->nr, session->ns,
-		   atomic_long_read(&session->stats.tx_packets),
-		   atomic_long_read(&session->stats.tx_bytes),
-		   atomic_long_read(&session->stats.tx_errors),
-		   atomic_long_read(&session->stats.rx_packets),
-		   atomic_long_read(&session->stats.rx_bytes),
-		   atomic_long_read(&session->stats.rx_errors));
+		   atomic_दीर्घ_पढ़ो(&session->stats.tx_packets),
+		   atomic_दीर्घ_पढ़ो(&session->stats.tx_bytes),
+		   atomic_दीर्घ_पढ़ो(&session->stats.tx_errors),
+		   atomic_दीर्घ_पढ़ो(&session->stats.rx_packets),
+		   atomic_दीर्घ_पढ़ो(&session->stats.rx_bytes),
+		   atomic_दीर्घ_पढ़ो(&session->stats.rx_errors));
 
-	if (session->show)
+	अगर (session->show)
 		session->show(m, session);
-}
+पूर्ण
 
-static int l2tp_dfs_seq_show(struct seq_file *m, void *v)
-{
-	struct l2tp_dfs_seq_data *pd = v;
+अटल पूर्णांक l2tp_dfs_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा l2tp_dfs_seq_data *pd = v;
 
 	/* display header on line 1 */
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(m, "TUNNEL ID, peer ID from IP to IP\n");
-		seq_puts(m, " L2TPv2/L2TPv3, UDP/IP\n");
-		seq_puts(m, " sessions session-count, refcnt refcnt/sk->refcnt\n");
-		seq_puts(m, " debug tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
-		seq_puts(m, "  SESSION ID, peer ID, PWTYPE\n");
-		seq_puts(m, "   refcnt cnt\n");
-		seq_puts(m, "   offset OFFSET l2specific TYPE/LEN\n");
-		seq_puts(m, "   [ cookie ]\n");
-		seq_puts(m, "   [ peer cookie ]\n");
-		seq_puts(m, "   config mtu/mru/rcvseq/sendseq/dataseq/lns debug reorderto\n");
-		seq_puts(m, "   nr/ns tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
-		goto out;
-	}
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(m, "TUNNEL ID, peer ID from IP to IP\n");
+		seq_माला_दो(m, " L2TPv2/L2TPv3, UDP/IP\n");
+		seq_माला_दो(m, " sessions session-count, refcnt refcnt/sk->refcnt\n");
+		seq_माला_दो(m, " debug tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
+		seq_माला_दो(m, "  SESSION ID, peer ID, PWTYPE\n");
+		seq_माला_दो(m, "   refcnt cnt\n");
+		seq_माला_दो(m, "   offset OFFSET l2specific TYPE/LEN\n");
+		seq_माला_दो(m, "   [ cookie ]\n");
+		seq_माला_दो(m, "   [ peer cookie ]\n");
+		seq_माला_दो(m, "   config mtu/mru/rcvseq/sendseq/dataseq/lns debug reorderto\n");
+		seq_माला_दो(m, "   nr/ns tx-pkts/bytes/errs rx-pkts/bytes/errs\n");
+		जाओ out;
+	पूर्ण
 
-	if (!pd->session)
+	अगर (!pd->session)
 		l2tp_dfs_seq_tunnel_show(m, pd->tunnel);
-	else
+	अन्यथा
 		l2tp_dfs_seq_session_show(m, pd->session);
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations l2tp_dfs_seq_ops = {
+अटल स्थिर काष्ठा seq_operations l2tp_dfs_seq_ops = अणु
 	.start		= l2tp_dfs_seq_start,
 	.next		= l2tp_dfs_seq_next,
 	.stop		= l2tp_dfs_seq_stop,
 	.show		= l2tp_dfs_seq_show,
-};
+पूर्ण;
 
-static int l2tp_dfs_seq_open(struct inode *inode, struct file *file)
-{
-	struct l2tp_dfs_seq_data *pd;
-	struct seq_file *seq;
-	int rc = -ENOMEM;
+अटल पूर्णांक l2tp_dfs_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा l2tp_dfs_seq_data *pd;
+	काष्ठा seq_file *seq;
+	पूर्णांक rc = -ENOMEM;
 
-	pd = kzalloc(sizeof(*pd), GFP_KERNEL);
-	if (!pd)
-		goto out;
+	pd = kzalloc(माप(*pd), GFP_KERNEL);
+	अगर (!pd)
+		जाओ out;
 
-	/* Derive the network namespace from the pid opening the
+	/* Derive the network namespace from the pid खोलोing the
 	 * file.
 	 */
 	pd->net = get_net_ns_by_pid(current->pid);
-	if (IS_ERR(pd->net)) {
+	अगर (IS_ERR(pd->net)) अणु
 		rc = PTR_ERR(pd->net);
-		goto err_free_pd;
-	}
+		जाओ err_मुक्त_pd;
+	पूर्ण
 
-	rc = seq_open(file, &l2tp_dfs_seq_ops);
-	if (rc)
-		goto err_free_net;
+	rc = seq_खोलो(file, &l2tp_dfs_seq_ops);
+	अगर (rc)
+		जाओ err_मुक्त_net;
 
-	seq = file->private_data;
-	seq->private = pd;
+	seq = file->निजी_data;
+	seq->निजी = pd;
 
 out:
-	return rc;
+	वापस rc;
 
-err_free_net:
+err_मुक्त_net:
 	put_net(pd->net);
-err_free_pd:
-	kfree(pd);
-	goto out;
-}
+err_मुक्त_pd:
+	kमुक्त(pd);
+	जाओ out;
+पूर्ण
 
-static int l2tp_dfs_seq_release(struct inode *inode, struct file *file)
-{
-	struct l2tp_dfs_seq_data *pd;
-	struct seq_file *seq;
+अटल पूर्णांक l2tp_dfs_seq_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा l2tp_dfs_seq_data *pd;
+	काष्ठा seq_file *seq;
 
-	seq = file->private_data;
-	pd = seq->private;
-	if (pd->net)
+	seq = file->निजी_data;
+	pd = seq->निजी;
+	अगर (pd->net)
 		put_net(pd->net);
-	kfree(pd);
+	kमुक्त(pd);
 	seq_release(inode, file);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations l2tp_dfs_fops = {
+अटल स्थिर काष्ठा file_operations l2tp_dfs_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= l2tp_dfs_seq_open,
-	.read		= seq_read,
+	.खोलो		= l2tp_dfs_seq_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= l2tp_dfs_seq_release,
-};
+पूर्ण;
 
-static int __init l2tp_debugfs_init(void)
-{
-	rootdir = debugfs_create_dir("l2tp", NULL);
+अटल पूर्णांक __init l2tp_debugfs_init(व्योम)
+अणु
+	rootdir = debugfs_create_dir("l2tp", शून्य);
 
-	debugfs_create_file("tunnels", 0600, rootdir, NULL, &l2tp_dfs_fops);
+	debugfs_create_file("tunnels", 0600, rootdir, शून्य, &l2tp_dfs_fops);
 
 	pr_info("L2TP debugfs support\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit l2tp_debugfs_exit(void)
-{
-	debugfs_remove_recursive(rootdir);
-}
+अटल व्योम __निकास l2tp_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(rootdir);
+पूर्ण
 
 module_init(l2tp_debugfs_init);
-module_exit(l2tp_debugfs_exit);
+module_निकास(l2tp_debugfs_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("James Chapman <jchapman@katalix.com>");

@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_OS_H__
-#define __NVKM_OS_H__
-#include <nvif/os.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_OS_H__
+#घोषणा __NVKM_OS_H__
+#समावेश <nvअगर/os.h>
 
-#ifdef __BIG_ENDIAN
-#define ioread16_native ioread16be
-#define iowrite16_native iowrite16be
-#define ioread32_native  ioread32be
-#define iowrite32_native iowrite32be
-#else
-#define ioread16_native ioread16
-#define iowrite16_native iowrite16
-#define ioread32_native  ioread32
-#define iowrite32_native iowrite32
-#endif
+#अगर_घोषित __BIG_ENDIAN
+#घोषणा ioपढ़ो16_native ioपढ़ो16be
+#घोषणा ioग_लिखो16_native ioग_लिखो16be
+#घोषणा ioपढ़ो32_native  ioपढ़ो32be
+#घोषणा ioग_लिखो32_native ioग_लिखो32be
+#अन्यथा
+#घोषणा ioपढ़ो16_native ioपढ़ो16
+#घोषणा ioग_लिखो16_native ioग_लिखो16
+#घोषणा ioपढ़ो32_native  ioपढ़ो32
+#घोषणा ioग_लिखो32_native ioग_लिखो32
+#पूर्ण_अगर
 
-#define iowrite64_native(v,p) do {                                             \
+#घोषणा ioग_लिखो64_native(v,p) करो अणु                                             \
 	u32 __iomem *_p = (u32 __iomem *)(p);				       \
 	u64 _v = (v);							       \
-	iowrite32_native(lower_32_bits(_v), &_p[0]);			       \
-	iowrite32_native(upper_32_bits(_v), &_p[1]);			       \
-} while(0)
+	ioग_लिखो32_native(lower_32_bits(_v), &_p[0]);			       \
+	ioग_लिखो32_native(upper_32_bits(_v), &_p[1]);			       \
+पूर्ण जबतक(0)
 
-struct nvkm_blob {
-	void *data;
+काष्ठा nvkm_blob अणु
+	व्योम *data;
 	u32 size;
-};
+पूर्ण;
 
-static inline void
-nvkm_blob_dtor(struct nvkm_blob *blob)
-{
-	kfree(blob->data);
-	blob->data = NULL;
+अटल अंतरभूत व्योम
+nvkm_blob_dtor(काष्ठा nvkm_blob *blob)
+अणु
+	kमुक्त(blob->data);
+	blob->data = शून्य;
 	blob->size = 0;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

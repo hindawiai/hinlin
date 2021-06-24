@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
- * Wrapper for decompressing XZ-compressed kernel, initramfs, and initrd
+ * Wrapper क्रम decompressing XZ-compressed kernel, initramfs, and initrd
  *
  * Author: Lasse Collin <lasse.collin@tukaani.org>
  *
- * This file has been put into the public domain.
- * You can do whatever you want with this file.
+ * This file has been put पूर्णांकo the खुला करोमुख्य.
+ * You can करो whatever you want with this file.
  */
 
-#ifndef DECOMPRESS_UNXZ_H
-#define DECOMPRESS_UNXZ_H
+#अगर_अघोषित DECOMPRESS_UNXZ_H
+#घोषणा DECOMPRESS_UNXZ_H
 
-int unxz(unsigned char *in, long in_size,
-	 long (*fill)(void *dest, unsigned long size),
-	 long (*flush)(void *src, unsigned long size),
-	 unsigned char *out, long *in_used,
-	 void (*error)(char *x));
+पूर्णांक unxz(अचिन्हित अक्षर *in, दीर्घ in_size,
+	 दीर्घ (*fill)(व्योम *dest, अचिन्हित दीर्घ size),
+	 दीर्घ (*flush)(व्योम *src, अचिन्हित दीर्घ size),
+	 अचिन्हित अक्षर *out, दीर्घ *in_used,
+	 व्योम (*error)(अक्षर *x));
 
-#endif
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OSS compatible sequencer driver
  *
@@ -7,93 +8,93 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#ifndef __SEQ_OSS_EVENT_H
-#define __SEQ_OSS_EVENT_H
+#अगर_अघोषित __SEQ_OSS_EVENT_H
+#घोषणा __SEQ_OSS_EVENT_H
 
-#include "seq_oss_device.h"
+#समावेश "seq_oss_device.h"
 
-#define SHORT_EVENT_SIZE	4
-#define LONG_EVENT_SIZE		8
+#घोषणा SHORT_EVENT_SIZE	4
+#घोषणा LONG_EVENT_SIZE		8
 
-/* short event (4bytes) */
-struct evrec_short {
-	unsigned char code;
-	unsigned char parm1;
-	unsigned char dev;
-	unsigned char parm2;
-};
+/* लघु event (4bytes) */
+काष्ठा evrec_लघु अणु
+	अचिन्हित अक्षर code;
+	अचिन्हित अक्षर parm1;
+	अचिन्हित अक्षर dev;
+	अचिन्हित अक्षर parm2;
+पूर्ण;
 	
-/* short note events (4bytes) */
-struct evrec_note {
-	unsigned char code;
-	unsigned char chn;
-	unsigned char note;
-	unsigned char vel;
-};
+/* लघु note events (4bytes) */
+काष्ठा evrec_note अणु
+	अचिन्हित अक्षर code;
+	अचिन्हित अक्षर chn;
+	अचिन्हित अक्षर note;
+	अचिन्हित अक्षर vel;
+पूर्ण;
 	
-/* long timer events (8bytes) */
-struct evrec_timer {
-	unsigned char code;
-	unsigned char cmd;
-	unsigned char dummy1, dummy2;
-	unsigned int time;
-};
+/* दीर्घ समयr events (8bytes) */
+काष्ठा evrec_समयr अणु
+	अचिन्हित अक्षर code;
+	अचिन्हित अक्षर cmd;
+	अचिन्हित अक्षर dummy1, dummy2;
+	अचिन्हित पूर्णांक समय;
+पूर्ण;
 
-/* long extended events (8bytes) */
-struct evrec_extended {
-	unsigned char code;
-	unsigned char cmd;
-	unsigned char dev;
-	unsigned char chn;
-	unsigned char p1, p2, p3, p4;
-};
+/* दीर्घ extended events (8bytes) */
+काष्ठा evrec_extended अणु
+	अचिन्हित अक्षर code;
+	अचिन्हित अक्षर cmd;
+	अचिन्हित अक्षर dev;
+	अचिन्हित अक्षर chn;
+	अचिन्हित अक्षर p1, p2, p3, p4;
+पूर्ण;
 
-/* long channel events (8bytes) */
-struct evrec_long {
-	unsigned char code;
-	unsigned char dev;
-	unsigned char cmd;
-	unsigned char chn;
-	unsigned char p1, p2;
-	unsigned short val;
-};
+/* दीर्घ channel events (8bytes) */
+काष्ठा evrec_दीर्घ अणु
+	अचिन्हित अक्षर code;
+	अचिन्हित अक्षर dev;
+	अचिन्हित अक्षर cmd;
+	अचिन्हित अक्षर chn;
+	अचिन्हित अक्षर p1, p2;
+	अचिन्हित लघु val;
+पूर्ण;
 	
 /* channel voice events (8bytes) */
-struct evrec_voice {
-	unsigned char code;
-	unsigned char dev;
-	unsigned char cmd;
-	unsigned char chn;
-	unsigned char note, parm;
-	unsigned short dummy;
-};
+काष्ठा evrec_voice अणु
+	अचिन्हित अक्षर code;
+	अचिन्हित अक्षर dev;
+	अचिन्हित अक्षर cmd;
+	अचिन्हित अक्षर chn;
+	अचिन्हित अक्षर note, parm;
+	अचिन्हित लघु dummy;
+पूर्ण;
 
 /* sysex events (8bytes) */
-struct evrec_sysex {
-	unsigned char code;
-	unsigned char dev;
-	unsigned char buf[6];
-};
+काष्ठा evrec_sysex अणु
+	अचिन्हित अक्षर code;
+	अचिन्हित अक्षर dev;
+	अचिन्हित अक्षर buf[6];
+पूर्ण;
 
 /* event record */
-union evrec {
-	struct evrec_short s;
-	struct evrec_note n;
-	struct evrec_long l;
-	struct evrec_voice v;
-	struct evrec_timer t;
-	struct evrec_extended e;
-	struct evrec_sysex x;
-	unsigned int echo;
-	unsigned char c[LONG_EVENT_SIZE];
-};
+जोड़ evrec अणु
+	काष्ठा evrec_लघु s;
+	काष्ठा evrec_note n;
+	काष्ठा evrec_दीर्घ l;
+	काष्ठा evrec_voice v;
+	काष्ठा evrec_समयr t;
+	काष्ठा evrec_extended e;
+	काष्ठा evrec_sysex x;
+	अचिन्हित पूर्णांक echo;
+	अचिन्हित अक्षर c[LONG_EVENT_SIZE];
+पूर्ण;
 
-#define ev_is_long(ev) ((ev)->s.code >= 128)
-#define ev_length(ev) ((ev)->s.code >= 128 ? LONG_EVENT_SIZE : SHORT_EVENT_SIZE)
+#घोषणा ev_is_दीर्घ(ev) ((ev)->s.code >= 128)
+#घोषणा ev_length(ev) ((ev)->s.code >= 128 ? LONG_EVENT_SIZE : SHORT_EVENT_SIZE)
 
-int snd_seq_oss_process_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event *ev);
-int snd_seq_oss_process_timer_event(struct seq_oss_timer *rec, union evrec *q);
-int snd_seq_oss_event_input(struct snd_seq_event *ev, int direct, void *private_data, int atomic, int hop);
+पूर्णांक snd_seq_oss_process_event(काष्ठा seq_oss_devinfo *dp, जोड़ evrec *q, काष्ठा snd_seq_event *ev);
+पूर्णांक snd_seq_oss_process_समयr_event(काष्ठा seq_oss_समयr *rec, जोड़ evrec *q);
+पूर्णांक snd_seq_oss_event_input(काष्ठा snd_seq_event *ev, पूर्णांक direct, व्योम *निजी_data, पूर्णांक atomic, पूर्णांक hop);
 
 
-#endif /* __SEQ_OSS_EVENT_H */
+#पूर्ण_अगर /* __SEQ_OSS_EVENT_H */

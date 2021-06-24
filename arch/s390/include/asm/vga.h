@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390_VGA_H
-#define _ASM_S390_VGA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390_VGA_H
+#घोषणा _ASM_S390_VGA_H
 
-/* Avoid compile errors due to missing asm/vga.h */
+/* Aव्योम compile errors due to missing यंत्र/vga.h */
 
-#endif /* _ASM_S390_VGA_H */
+#पूर्ण_अगर /* _ASM_S390_VGA_H */

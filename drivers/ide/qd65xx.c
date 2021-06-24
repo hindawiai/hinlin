@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 1996-2001  Linus Torvalds & author (see below)
  */
 
 /*
- *  Version 0.03	Cleaned auto-tune, added probe
+ *  Version 0.03	Cleaned स्वतः-tune, added probe
  *  Version 0.04	Added second channel tuning
  *  Version 0.05	Enhanced tuning ; added qd6500 support
- *  Version 0.06	Added dos driver's list
+ *  Version 0.06	Added करोs driver's list
  *  Version 0.07	Second channel bug fix 
  *
  * QDI QD6500/QD6580 EIDE controller fast support
@@ -20,30 +21,30 @@
  * Samuel Thibault <samuel.thibault@ens-lyon.org>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/timer.h>
-#include <linux/mm.h>
-#include <linux/ioport.h>
-#include <linux/blkdev.h>
-#include <linux/ide.h>
-#include <linux/init.h>
-#include <asm/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/init.h>
+#समावेश <यंत्र/पन.स>
 
-#define DRV_NAME "qd65xx"
+#घोषणा DRV_NAME "qd65xx"
 
-#include "qd65xx.h"
+#समावेश "qd65xx.h"
 
 /*
- * I/O ports are 0x30-0x31 (and 0x32-0x33 for qd6580)
- *            or 0xb0-0xb1 (and 0xb2-0xb3 for qd6580)
- *	-- qd6500 is a single IDE interface
- *	-- qd6580 is a dual IDE interface
+ * I/O ports are 0x30-0x31 (and 0x32-0x33 क्रम qd6580)
+ *            or 0xb0-0xb1 (and 0xb2-0xb3 क्रम qd6580)
+ *	-- qd6500 is a single IDE पूर्णांकerface
+ *	-- qd6580 is a dual IDE पूर्णांकerface
  *
- * More research on qd6580 being done by willmore@cig.mot.com (David)
- * More Information given by Petr Soucek (petr@ryston.cz)
+ * More research on qd6580 being करोne by willmore@cig.mot.com (David)
+ * More Inक्रमmation given by Petr Soucek (petr@ryston.cz)
  * http://www.ryston.cz/petr/vlb
  */
 
@@ -53,7 +54,7 @@
  *
  * base+0x01: Config (R/O)
  *
- * bit 0: ide baseport: 1 = 0x1f0 ; 0 = 0x170 (only useful for qd6500)
+ * bit 0: ide baseport: 1 = 0x1f0 ; 0 = 0x170 (only useful क्रम qd6500)
  * bit 1: qd65xx baseport: 1 = 0xb0 ; 0 = 0x30
  * bit 2: ID3: bus speed: 1 = <=33MHz ; 0 = >33MHz
  * bit 3: qd6500: 1 = disabled, 0 = enabled
@@ -69,108 +70,108 @@
  * base+0x03: Control (qd6580 only)
  *
  * bits 0-3 must always be set 1
- * bit 4 must be set 1, but is set 0 by dos driver while measuring vlb clock
- * bit 0 : 1 = Only primary port enabled : channel 0 for hda, channel 1 for hdb
- *         0 = Primary and Secondary ports enabled : channel 0 for hda & hdb
- *                                                   channel 1 for hdc & hdd
+ * bit 4 must be set 1, but is set 0 by करोs driver जबतक measuring vlb घड़ी
+ * bit 0 : 1 = Only primary port enabled : channel 0 क्रम hda, channel 1 क्रम hdb
+ *         0 = Primary and Secondary ports enabled : channel 0 क्रम hda & hdb
+ *                                                   channel 1 क्रम hdc & hdd
  * bit 1 : 1 = only disks on primary port
  *         0 = disks & ATAPI devices on primary port
  * bit 2-4 : always 0
  * bit 5 : status, but of what ?
- * bit 6 : always set 1 by dos driver
- * bit 7 : set 1 for non-ATAPI devices on primary port
- *	(maybe read-ahead and post-write buffer ?)
+ * bit 6 : always set 1 by करोs driver
+ * bit 7 : set 1 क्रम non-ATAPI devices on primary port
+ *	(maybe पढ़ो-ahead and post-ग_लिखो buffer ?)
  */
 
-static int timings[4]={-1,-1,-1,-1}; /* stores current timing for each timer */
+अटल पूर्णांक timings[4]=अणु-1,-1,-1,-1पूर्ण; /* stores current timing क्रम each समयr */
 
 /*
  * qd65xx_select:
  *
- * This routine is invoked to prepare for access to a given drive.
+ * This routine is invoked to prepare क्रम access to a given drive.
  */
 
-static void qd65xx_dev_select(ide_drive_t *drive)
-{
+अटल व्योम qd65xx_dev_select(ide_drive_t *drive)
+अणु
 	u8 index = ((	(QD_TIMREG(drive)) & 0x80 ) >> 7) |
 			(QD_TIMREG(drive) & 0x02);
 
-	if (timings[index] != QD_TIMING(drive))
+	अगर (timings[index] != QD_TIMING(drive))
 		outb(timings[index] = QD_TIMING(drive), QD_TIMREG(drive));
 
-	outb(drive->select | ATA_DEVICE_OBS, drive->hwif->io_ports.device_addr);
-}
+	outb(drive->select | ATA_DEVICE_OBS, drive->hwअगर->io_ports.device_addr);
+पूर्ण
 
 /*
  * qd6500_compute_timing
  *
  * computes the timing value where
- *	lower nibble represents active time,   in count of VLB clocks
- *	upper nibble represents recovery time, in count of VLB clocks
+ *	lower nibble represents active समय,   in count of VLB घड़ीs
+ *	upper nibble represents recovery समय, in count of VLB घड़ीs
  */
 
-static u8 qd6500_compute_timing (ide_hwif_t *hwif, int active_time, int recovery_time)
-{
-	int clk = ide_vlb_clk ? ide_vlb_clk : 50;
+अटल u8 qd6500_compute_timing (ide_hwअगर_t *hwअगर, पूर्णांक active_समय, पूर्णांक recovery_समय)
+अणु
+	पूर्णांक clk = ide_vlb_clk ? ide_vlb_clk : 50;
 	u8 act_cyc, rec_cyc;
 
-	if (clk <= 33) {
-		act_cyc =  9 - IDE_IN(active_time   * clk / 1000 + 1, 2,  9);
-		rec_cyc = 15 - IDE_IN(recovery_time * clk / 1000 + 1, 0, 15);
-	} else {
-		act_cyc =  8 - IDE_IN(active_time   * clk / 1000 + 1, 1,  8);
-		rec_cyc = 18 - IDE_IN(recovery_time * clk / 1000 + 1, 3, 18);
-	}
+	अगर (clk <= 33) अणु
+		act_cyc =  9 - IDE_IN(active_समय   * clk / 1000 + 1, 2,  9);
+		rec_cyc = 15 - IDE_IN(recovery_समय * clk / 1000 + 1, 0, 15);
+	पूर्ण अन्यथा अणु
+		act_cyc =  8 - IDE_IN(active_समय   * clk / 1000 + 1, 1,  8);
+		rec_cyc = 18 - IDE_IN(recovery_समय * clk / 1000 + 1, 3, 18);
+	पूर्ण
 
-	return (rec_cyc << 4) | 0x08 | act_cyc;
-}
+	वापस (rec_cyc << 4) | 0x08 | act_cyc;
+पूर्ण
 
 /*
  * qd6580_compute_timing
  *
- * idem for qd6580
+ * idem क्रम qd6580
  */
 
-static u8 qd6580_compute_timing (int active_time, int recovery_time)
-{
-	int clk = ide_vlb_clk ? ide_vlb_clk : 50;
+अटल u8 qd6580_compute_timing (पूर्णांक active_समय, पूर्णांक recovery_समय)
+अणु
+	पूर्णांक clk = ide_vlb_clk ? ide_vlb_clk : 50;
 	u8 act_cyc, rec_cyc;
 
-	act_cyc = 17 - IDE_IN(active_time   * clk / 1000 + 1, 2, 17);
-	rec_cyc = 15 - IDE_IN(recovery_time * clk / 1000 + 1, 2, 15);
+	act_cyc = 17 - IDE_IN(active_समय   * clk / 1000 + 1, 2, 17);
+	rec_cyc = 15 - IDE_IN(recovery_समय * clk / 1000 + 1, 2, 15);
 
-	return (rec_cyc << 4) | act_cyc;
-}
+	वापस (rec_cyc << 4) | act_cyc;
+पूर्ण
 
 /*
  * qd_find_disk_type
  *
- * tries to find timing from dos driver's table
+ * tries to find timing from करोs driver's table
  */
 
-static int qd_find_disk_type (ide_drive_t *drive,
-		int *active_time, int *recovery_time)
-{
-	struct qd65xx_timing_s *p;
-	char *m = (char *)&drive->id[ATA_ID_PROD];
-	char model[ATA_ID_PROD_LEN];
+अटल पूर्णांक qd_find_disk_type (ide_drive_t *drive,
+		पूर्णांक *active_समय, पूर्णांक *recovery_समय)
+अणु
+	काष्ठा qd65xx_timing_s *p;
+	अक्षर *m = (अक्षर *)&drive->id[ATA_ID_PROD];
+	अक्षर model[ATA_ID_PROD_LEN];
 
-	if (*m == 0)
-		return 0;
+	अगर (*m == 0)
+		वापस 0;
 
-	strncpy(model, m, ATA_ID_PROD_LEN);
+	म_नकलन(model, m, ATA_ID_PROD_LEN);
 	ide_fixstring(model, ATA_ID_PROD_LEN, 1); /* byte-swap */
 
-	for (p = qd65xx_timing ; p->offset != -1 ; p++) {
-		if (!strncmp(p->model, model+p->offset, 4)) {
-			printk(KERN_DEBUG "%s: listed !\n", drive->name);
-			*active_time = p->active;
-			*recovery_time = p->recovery;
-			return 1;
-		}
-	}
-	return 0;
-}
+	क्रम (p = qd65xx_timing ; p->offset != -1 ; p++) अणु
+		अगर (!म_भेदन(p->model, model+p->offset, 4)) अणु
+			prपूर्णांकk(KERN_DEBUG "%s: listed !\n", drive->name);
+			*active_समय = p->active;
+			*recovery_समय = p->recovery;
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * qd_set_timing:
@@ -178,266 +179,266 @@ static int qd_find_disk_type (ide_drive_t *drive,
  * records the timing
  */
 
-static void qd_set_timing (ide_drive_t *drive, u8 timing)
-{
-	unsigned long data = (unsigned long)ide_get_drivedata(drive);
+अटल व्योम qd_set_timing (ide_drive_t *drive, u8 timing)
+अणु
+	अचिन्हित दीर्घ data = (अचिन्हित दीर्घ)ide_get_drivedata(drive);
 
 	data &= 0xff00;
 	data |= timing;
-	ide_set_drivedata(drive, (void *)data);
+	ide_set_drivedata(drive, (व्योम *)data);
 
-	printk(KERN_DEBUG "%s: %#x\n", drive->name, timing);
-}
+	prपूर्णांकk(KERN_DEBUG "%s: %#x\n", drive->name, timing);
+पूर्ण
 
-static void qd6500_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
+अटल व्योम qd6500_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
 	u16 *id = drive->id;
-	int active_time   = 175;
-	int recovery_time = 415; /* worst case values from the dos driver */
+	पूर्णांक active_समय   = 175;
+	पूर्णांक recovery_समय = 415; /* worst हाल values from the करोs driver */
 
 	/* FIXME: use drive->pio_mode value */
-	if (!qd_find_disk_type(drive, &active_time, &recovery_time) &&
+	अगर (!qd_find_disk_type(drive, &active_समय, &recovery_समय) &&
 	    (id[ATA_ID_OLD_PIO_MODES] & 0xff) && (id[ATA_ID_FIELD_VALID] & 2) &&
-	    id[ATA_ID_EIDE_PIO] >= 240) {
-		printk(KERN_INFO "%s: PIO mode%d\n", drive->name,
+	    id[ATA_ID_EIDE_PIO] >= 240) अणु
+		prपूर्णांकk(KERN_INFO "%s: PIO mode%d\n", drive->name,
 			id[ATA_ID_OLD_PIO_MODES] & 0xff);
-		active_time = 110;
-		recovery_time = drive->id[ATA_ID_EIDE_PIO] - 120;
-	}
+		active_समय = 110;
+		recovery_समय = drive->id[ATA_ID_EIDE_PIO] - 120;
+	पूर्ण
 
-	qd_set_timing(drive, qd6500_compute_timing(drive->hwif,
-				active_time, recovery_time));
-}
+	qd_set_timing(drive, qd6500_compute_timing(drive->hwअगर,
+				active_समय, recovery_समय));
+पूर्ण
 
-static void qd6580_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	const u8 pio = drive->pio_mode - XFER_PIO_0;
-	struct ide_timing *t = ide_timing_find_mode(XFER_PIO_0 + pio);
-	unsigned int cycle_time;
-	int active_time   = 175;
-	int recovery_time = 415; /* worst case values from the dos driver */
-	u8 base = (hwif->config_data & 0xff00) >> 8;
+अटल व्योम qd6580_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	स्थिर u8 pio = drive->pio_mode - XFER_PIO_0;
+	काष्ठा ide_timing *t = ide_timing_find_mode(XFER_PIO_0 + pio);
+	अचिन्हित पूर्णांक cycle_समय;
+	पूर्णांक active_समय   = 175;
+	पूर्णांक recovery_समय = 415; /* worst हाल values from the करोs driver */
+	u8 base = (hwअगर->config_data & 0xff00) >> 8;
 
-	if (drive->id && !qd_find_disk_type(drive, &active_time, &recovery_time)) {
-		cycle_time = ide_pio_cycle_time(drive, pio);
+	अगर (drive->id && !qd_find_disk_type(drive, &active_समय, &recovery_समय)) अणु
+		cycle_समय = ide_pio_cycle_समय(drive, pio);
 
-		switch (pio) {
-			case 0: break;
-			case 3:
-				if (cycle_time >= 110) {
-					active_time = 86;
-					recovery_time = cycle_time - 102;
-				} else
-					printk(KERN_WARNING "%s: Strange recovery time !\n",drive->name);
-				break;
-			case 4:
-				if (cycle_time >= 69) {
-					active_time = 70;
-					recovery_time = cycle_time - 61;
-				} else
-					printk(KERN_WARNING "%s: Strange recovery time !\n",drive->name);
-				break;
-			default:
-				if (cycle_time >= 180) {
-					active_time = 110;
-					recovery_time = cycle_time - 120;
-				} else {
-					active_time = t->active;
-					recovery_time = cycle_time - active_time;
-				}
-		}
-		printk(KERN_INFO "%s: PIO mode%d\n", drive->name,pio);
-	}
+		चयन (pio) अणु
+			हाल 0: अवरोध;
+			हाल 3:
+				अगर (cycle_समय >= 110) अणु
+					active_समय = 86;
+					recovery_समय = cycle_समय - 102;
+				पूर्ण अन्यथा
+					prपूर्णांकk(KERN_WARNING "%s: Strange recovery time !\n",drive->name);
+				अवरोध;
+			हाल 4:
+				अगर (cycle_समय >= 69) अणु
+					active_समय = 70;
+					recovery_समय = cycle_समय - 61;
+				पूर्ण अन्यथा
+					prपूर्णांकk(KERN_WARNING "%s: Strange recovery time !\n",drive->name);
+				अवरोध;
+			शेष:
+				अगर (cycle_समय >= 180) अणु
+					active_समय = 110;
+					recovery_समय = cycle_समय - 120;
+				पूर्ण अन्यथा अणु
+					active_समय = t->active;
+					recovery_समय = cycle_समय - active_समय;
+				पूर्ण
+		पूर्ण
+		prपूर्णांकk(KERN_INFO "%s: PIO mode%d\n", drive->name,pio);
+	पूर्ण
 
-	if (!hwif->channel && drive->media != ide_disk) {
+	अगर (!hwअगर->channel && drive->media != ide_disk) अणु
 		outb(0x5f, QD_CONTROL_PORT);
-		printk(KERN_WARNING "%s: ATAPI: disabled read-ahead FIFO "
+		prपूर्णांकk(KERN_WARNING "%s: ATAPI: disabled read-ahead FIFO "
 			"and post-write buffer on %s.\n",
-			drive->name, hwif->name);
-	}
+			drive->name, hwअगर->name);
+	पूर्ण
 
-	qd_set_timing(drive, qd6580_compute_timing(active_time, recovery_time));
-}
+	qd_set_timing(drive, qd6580_compute_timing(active_समय, recovery_समय));
+पूर्ण
 
 /*
  * qd_testreg
  *
- * tests if the given port is a register
+ * tests अगर the given port is a रेजिस्टर
  */
 
-static int __init qd_testreg(int port)
-{
-	unsigned long flags;
-	u8 savereg, readreg;
+अटल पूर्णांक __init qd_testreg(पूर्णांक port)
+अणु
+	अचिन्हित दीर्घ flags;
+	u8 savereg, पढ़ोreg;
 
 	local_irq_save(flags);
 	savereg = inb_p(port);
 	outb_p(QD_TESTVAL, port);	/* safe value */
-	readreg = inb_p(port);
+	पढ़ोreg = inb_p(port);
 	outb(savereg, port);
 	local_irq_restore(flags);
 
-	if (savereg == QD_TESTVAL) {
-		printk(KERN_ERR "Outch ! the probe for qd65xx isn't reliable !\n");
-		printk(KERN_ERR "Please contact maintainers to tell about your hardware\n");
-		printk(KERN_ERR "Assuming qd65xx is not present.\n");
-		return 1;
-	}
+	अगर (savereg == QD_TESTVAL) अणु
+		prपूर्णांकk(KERN_ERR "Outch ! the probe for qd65xx isn't reliable !\n");
+		prपूर्णांकk(KERN_ERR "Please contact maintainers to tell about your hardware\n");
+		prपूर्णांकk(KERN_ERR "Assuming qd65xx is not present.\n");
+		वापस 1;
+	पूर्ण
 
-	return (readreg != QD_TESTVAL);
-}
+	वापस (पढ़ोreg != QD_TESTVAL);
+पूर्ण
 
-static void __init qd6500_init_dev(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	u8 base = (hwif->config_data & 0xff00) >> 8;
-	u8 config = QD_CONFIG(hwif);
+अटल व्योम __init qd6500_init_dev(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	u8 base = (hwअगर->config_data & 0xff00) >> 8;
+	u8 config = QD_CONFIG(hwअगर);
 
-	ide_set_drivedata(drive, (void *)QD6500_DEF_DATA);
-}
+	ide_set_drivedata(drive, (व्योम *)QD6500_DEF_DATA);
+पूर्ण
 
-static void __init qd6580_init_dev(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	unsigned long t1, t2;
-	u8 base = (hwif->config_data & 0xff00) >> 8;
-	u8 config = QD_CONFIG(hwif);
+अटल व्योम __init qd6580_init_dev(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	अचिन्हित दीर्घ t1, t2;
+	u8 base = (hwअगर->config_data & 0xff00) >> 8;
+	u8 config = QD_CONFIG(hwअगर);
 
-	if (hwif->host_flags & IDE_HFLAG_SINGLE) {
+	अगर (hwअगर->host_flags & IDE_HFLAG_SINGLE) अणु
 		t1 = QD6580_DEF_DATA;
 		t2 = QD6580_DEF_DATA2;
-	} else
-		t2 = t1 = hwif->channel ? QD6580_DEF_DATA2 : QD6580_DEF_DATA;
+	पूर्ण अन्यथा
+		t2 = t1 = hwअगर->channel ? QD6580_DEF_DATA2 : QD6580_DEF_DATA;
 
-	ide_set_drivedata(drive, (void *)((drive->dn & 1) ? t2 : t1));
-}
+	ide_set_drivedata(drive, (व्योम *)((drive->dn & 1) ? t2 : t1));
+पूर्ण
 
-static const struct ide_tp_ops qd65xx_tp_ops = {
+अटल स्थिर काष्ठा ide_tp_ops qd65xx_tp_ops = अणु
 	.exec_command		= ide_exec_command,
-	.read_status		= ide_read_status,
-	.read_altstatus		= ide_read_altstatus,
-	.write_devctl		= ide_write_devctl,
+	.पढ़ो_status		= ide_पढ़ो_status,
+	.पढ़ो_altstatus		= ide_पढ़ो_altstatus,
+	.ग_लिखो_devctl		= ide_ग_लिखो_devctl,
 
 	.dev_select		= qd65xx_dev_select,
 	.tf_load		= ide_tf_load,
-	.tf_read		= ide_tf_read,
+	.tf_पढ़ो		= ide_tf_पढ़ो,
 
 	.input_data		= ide_input_data,
 	.output_data		= ide_output_data,
-};
+पूर्ण;
 
-static const struct ide_port_ops qd6500_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops qd6500_port_ops = अणु
 	.init_dev		= qd6500_init_dev,
 	.set_pio_mode		= qd6500_set_pio_mode,
-};
+पूर्ण;
 
-static const struct ide_port_ops qd6580_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops qd6580_port_ops = अणु
 	.init_dev		= qd6580_init_dev,
 	.set_pio_mode		= qd6580_set_pio_mode,
-};
+पूर्ण;
 
-static const struct ide_port_info qd65xx_port_info __initconst = {
+अटल स्थिर काष्ठा ide_port_info qd65xx_port_info __initस्थिर = अणु
 	.name			= DRV_NAME,
 	.tp_ops 		= &qd65xx_tp_ops,
 	.chipset		= ide_qd65xx,
 	.host_flags		= IDE_HFLAG_IO_32BIT |
 				  IDE_HFLAG_NO_DMA,
 	.pio_mask		= ATA_PIO4,
-};
+पूर्ण;
 
 /*
  * qd_probe:
  *
- * looks at the specified baseport, and if qd found, registers & initialises it
- * return 1 if another qd may be probed
+ * looks at the specअगरied baseport, and अगर qd found, रेजिस्टरs & initialises it
+ * वापस 1 अगर another qd may be probed
  */
 
-static int __init qd_probe(int base)
-{
-	int rc;
+अटल पूर्णांक __init qd_probe(पूर्णांक base)
+अणु
+	पूर्णांक rc;
 	u8 config, unit, control;
-	struct ide_port_info d = qd65xx_port_info;
+	काष्ठा ide_port_info d = qd65xx_port_info;
 
 	config = inb(QD_CONFIG_PORT);
 
-	if (! ((config & QD_CONFIG_BASEPORT) >> 1 == (base == 0xb0)) )
-		return -ENODEV;
+	अगर (! ((config & QD_CONFIG_BASEPORT) >> 1 == (base == 0xb0)) )
+		वापस -ENODEV;
 
 	unit = ! (config & QD_CONFIG_IDE_BASEPORT);
 
-	if (unit)
+	अगर (unit)
 		d.host_flags |= IDE_HFLAG_QD_2ND_PORT;
 
-	switch (config & 0xf0) {
-	case QD_CONFIG_QD6500:
-		if (qd_testreg(base))
-			 return -ENODEV;	/* bad register */
+	चयन (config & 0xf0) अणु
+	हाल QD_CONFIG_QD6500:
+		अगर (qd_testreg(base))
+			 वापस -ENODEV;	/* bad रेजिस्टर */
 
-		if (config & QD_CONFIG_DISABLED) {
-			printk(KERN_WARNING "qd6500 is disabled !\n");
-			return -ENODEV;
-		}
+		अगर (config & QD_CONFIG_DISABLED) अणु
+			prपूर्णांकk(KERN_WARNING "qd6500 is disabled !\n");
+			वापस -ENODEV;
+		पूर्ण
 
-		printk(KERN_NOTICE "qd6500 at %#x\n", base);
-		printk(KERN_DEBUG "qd6500: config=%#x, ID3=%u\n",
+		prपूर्णांकk(KERN_NOTICE "qd6500 at %#x\n", base);
+		prपूर्णांकk(KERN_DEBUG "qd6500: config=%#x, ID3=%u\n",
 			config, QD_ID3);
 
 		d.port_ops = &qd6500_port_ops;
 		d.host_flags |= IDE_HFLAG_SINGLE;
-		break;
-	case QD_CONFIG_QD6580_A:
-	case QD_CONFIG_QD6580_B:
-		if (qd_testreg(base) || qd_testreg(base + 0x02))
-			return -ENODEV;	/* bad registers */
+		अवरोध;
+	हाल QD_CONFIG_QD6580_A:
+	हाल QD_CONFIG_QD6580_B:
+		अगर (qd_testreg(base) || qd_testreg(base + 0x02))
+			वापस -ENODEV;	/* bad रेजिस्टरs */
 
 		control = inb(QD_CONTROL_PORT);
 
-		printk(KERN_NOTICE "qd6580 at %#x\n", base);
-		printk(KERN_DEBUG "qd6580: config=%#x, control=%#x, ID3=%u\n",
+		prपूर्णांकk(KERN_NOTICE "qd6580 at %#x\n", base);
+		prपूर्णांकk(KERN_DEBUG "qd6580: config=%#x, control=%#x, ID3=%u\n",
 			config, control, QD_ID3);
 
 		outb(QD_DEF_CONTR, QD_CONTROL_PORT);
 
 		d.port_ops = &qd6580_port_ops;
-		if (control & QD_CONTR_SEC_DISABLED)
+		अगर (control & QD_CONTR_SEC_DISABLED)
 			d.host_flags |= IDE_HFLAG_SINGLE;
 
-		printk(KERN_INFO "qd6580: %s IDE board\n",
+		prपूर्णांकk(KERN_INFO "qd6580: %s IDE board\n",
 			(control & QD_CONTR_SEC_DISABLED) ? "single" : "dual");
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
 	rc = ide_legacy_device_add(&d, (base << 8) | config);
 
-	if (d.host_flags & IDE_HFLAG_SINGLE)
-		return (rc == 0) ? 1 : rc;
+	अगर (d.host_flags & IDE_HFLAG_SINGLE)
+		वापस (rc == 0) ? 1 : rc;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool probe_qd65xx;
+अटल bool probe_qd65xx;
 
 module_param_named(probe, probe_qd65xx, bool, 0);
 MODULE_PARM_DESC(probe, "probe for QD65xx chipsets");
 
-static int __init qd65xx_init(void)
-{
-	int rc1, rc2 = -ENODEV;
+अटल पूर्णांक __init qd65xx_init(व्योम)
+अणु
+	पूर्णांक rc1, rc2 = -ENODEV;
 
-	if (probe_qd65xx == 0)
-		return -ENODEV;
+	अगर (probe_qd65xx == 0)
+		वापस -ENODEV;
 
 	rc1 = qd_probe(0x30);
-	if (rc1)
+	अगर (rc1)
 		rc2 = qd_probe(0xb0);
 
-	if (rc1 < 0 && rc2 < 0)
-		return -ENODEV;
+	अगर (rc1 < 0 && rc2 < 0)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(qd65xx_init);
 

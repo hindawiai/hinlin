@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Force-disables a regulator to power down a device
+ * Force-disables a regulator to घातer करोwn a device
  *
  * Michael Klein <michael@fossekall.de>
  *
  * Copyright (C) 2020 Michael Klein
  *
- * Based on the gpio-poweroff driver.
+ * Based on the gpio-घातeroff driver.
  */
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define TIMEOUT_MS 3000
+#घोषणा TIMEOUT_MS 3000
 
 /*
  * Hold configuration here, cannot be more than one instance of the driver
- * since pm_power_off itself is global.
+ * since pm_घातer_off itself is global.
  */
-static struct regulator *cpu_regulator;
+अटल काष्ठा regulator *cpu_regulator;
 
-static void regulator_poweroff_do_poweroff(void)
-{
-	if (cpu_regulator && regulator_is_enabled(cpu_regulator))
-		regulator_force_disable(cpu_regulator);
+अटल व्योम regulator_घातeroff_करो_घातeroff(व्योम)
+अणु
+	अगर (cpu_regulator && regulator_is_enabled(cpu_regulator))
+		regulator_क्रमce_disable(cpu_regulator);
 
-	/* give it some time */
+	/* give it some समय */
 	mdelay(TIMEOUT_MS);
 
 	WARN_ON(1);
-}
+पूर्ण
 
-static int regulator_poweroff_probe(struct platform_device *pdev)
-{
-	/* If a pm_power_off function has already been added, leave it alone */
-	if (pm_power_off != NULL) {
+अटल पूर्णांक regulator_घातeroff_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	/* If a pm_घातer_off function has alपढ़ोy been added, leave it alone */
+	अगर (pm_घातer_off != शून्य) अणु
 		dev_err(&pdev->dev,
 			"%s: pm_power_off function already registered\n",
 			__func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	cpu_regulator = devm_regulator_get(&pdev->dev, "cpu");
-	if (IS_ERR(cpu_regulator))
-		return PTR_ERR(cpu_regulator);
+	अगर (IS_ERR(cpu_regulator))
+		वापस PTR_ERR(cpu_regulator);
 
-	pm_power_off = &regulator_poweroff_do_poweroff;
-	return 0;
-}
+	pm_घातer_off = &regulator_घातeroff_करो_घातeroff;
+	वापस 0;
+पूर्ण
 
-static int regulator_poweroff_remove(__maybe_unused struct platform_device *pdev)
-{
-	if (pm_power_off == &regulator_poweroff_do_poweroff)
-		pm_power_off = NULL;
+अटल पूर्णांक regulator_घातeroff_हटाओ(__maybe_unused काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (pm_घातer_off == &regulator_घातeroff_करो_घातeroff)
+		pm_घातer_off = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_regulator_poweroff_match[] = {
-	{ .compatible = "regulator-poweroff", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_regulator_घातeroff_match[] = अणु
+	अणु .compatible = "regulator-poweroff", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver regulator_poweroff_driver = {
-	.probe = regulator_poweroff_probe,
-	.remove = regulator_poweroff_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver regulator_घातeroff_driver = अणु
+	.probe = regulator_घातeroff_probe,
+	.हटाओ = regulator_घातeroff_हटाओ,
+	.driver = अणु
 		.name = "poweroff-regulator",
-		.of_match_table = of_regulator_poweroff_match,
-	},
-};
+		.of_match_table = of_regulator_घातeroff_match,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(regulator_poweroff_driver);
+module_platक्रमm_driver(regulator_घातeroff_driver);
 
 MODULE_AUTHOR("Michael Klein <michael@fossekall.de>");
 MODULE_DESCRIPTION("Regulator poweroff driver");

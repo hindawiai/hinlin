@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *
- * Common Clock Framework support for all PLL's in Samsung platforms
+ * Common Clock Framework support क्रम all PLL's in Samsung platक्रमms
 */
 
-#ifndef __SAMSUNG_CLK_CPU_H
-#define __SAMSUNG_CLK_CPU_H
+#अगर_अघोषित __SAMSUNG_CLK_CPU_H
+#घोषणा __SAMSUNG_CLK_CPU_H
 
-#include "clk.h"
+#समावेश "clk.h"
 
 /**
- * struct exynos_cpuclk_data: config data to setup cpu clocks.
- * @prate: frequency of the primary parent clock (in KHz).
- * @div0: value to be programmed in the div_cpu0 register.
- * @div1: value to be programmed in the div_cpu1 register.
+ * काष्ठा exynos_cpuclk_data: config data to setup cpu घड़ीs.
+ * @prate: frequency of the primary parent घड़ी (in KHz).
+ * @भाग0: value to be programmed in the भाग_cpu0 रेजिस्टर.
+ * @भाग1: value to be programmed in the भाग_cpu1 रेजिस्टर.
  *
- * This structure holds the divider configuration data for dividers in the CPU
- * clock domain. The parent frequency at which these divider values are valid is
- * specified in @prate. The @prate is the frequency of the primary parent clock.
- * For CPU clock domains that do not have a DIV1 register, the @div1 member
+ * This काष्ठाure holds the भागider configuration data क्रम भागiders in the CPU
+ * घड़ी करोमुख्य. The parent frequency at which these भागider values are valid is
+ * specअगरied in @prate. The @prate is the frequency of the primary parent घड़ी.
+ * For CPU घड़ी करोमुख्यs that करो not have a DIV1 रेजिस्टर, the @भाग1 member
  * value is not used.
  */
-struct exynos_cpuclk_cfg_data {
-	unsigned long	prate;
-	unsigned long	div0;
-	unsigned long	div1;
-};
+काष्ठा exynos_cpuclk_cfg_data अणु
+	अचिन्हित दीर्घ	prate;
+	अचिन्हित दीर्घ	भाग0;
+	अचिन्हित दीर्घ	भाग1;
+पूर्ण;
 
 /**
- * struct exynos_cpuclk: information about clock supplied to a CPU core.
- * @hw:	handle between CCF and CPU clock.
- * @alt_parent: alternate parent clock to use when switching the speed
- *	of the primary parent clock.
- * @ctrl_base:	base address of the clock controller.
- * @lock: cpu clock domain register access lock.
- * @cfg: cpu clock rate configuration data.
+ * काष्ठा exynos_cpuclk: inक्रमmation about घड़ी supplied to a CPU core.
+ * @hw:	handle between CCF and CPU घड़ी.
+ * @alt_parent: alternate parent घड़ी to use when चयनing the speed
+ *	of the primary parent घड़ी.
+ * @ctrl_base:	base address of the घड़ी controller.
+ * @lock: cpu घड़ी करोमुख्य रेजिस्टर access lock.
+ * @cfg: cpu घड़ी rate configuration data.
  * @num_cfgs: number of array elements in @cfg array.
- * @clk_nb: clock notifier registered for changes in clock speed of the
- *	primary parent clock.
- * @flags: configuration flags for the CPU clock.
+ * @clk_nb: घड़ी notअगरier रेजिस्टरed क्रम changes in घड़ी speed of the
+ *	primary parent घड़ी.
+ * @flags: configuration flags क्रम the CPU घड़ी.
  *
- * This structure holds information required for programming the CPU clock for
- * various clock speeds.
+ * This काष्ठाure holds inक्रमmation required क्रम programming the CPU घड़ी क्रम
+ * various घड़ी speeds.
  */
-struct exynos_cpuclk {
-	struct clk_hw				hw;
-	const struct clk_hw			*alt_parent;
-	void __iomem				*ctrl_base;
+काष्ठा exynos_cpuclk अणु
+	काष्ठा clk_hw				hw;
+	स्थिर काष्ठा clk_hw			*alt_parent;
+	व्योम __iomem				*ctrl_base;
 	spinlock_t				*lock;
-	const struct exynos_cpuclk_cfg_data	*cfg;
-	const unsigned long			num_cfgs;
-	struct notifier_block			clk_nb;
-	unsigned long				flags;
+	स्थिर काष्ठा exynos_cpuclk_cfg_data	*cfg;
+	स्थिर अचिन्हित दीर्घ			num_cfgs;
+	काष्ठा notअगरier_block			clk_nb;
+	अचिन्हित दीर्घ				flags;
 
-/* The CPU clock registers have DIV1 configuration register */
-#define CLK_CPU_HAS_DIV1		(1 << 0)
-/* When ALT parent is active, debug clocks need safe divider values */
-#define CLK_CPU_NEEDS_DEBUG_ALT_DIV	(1 << 1)
-/* The CPU clock registers have Exynos5433-compatible layout */
-#define CLK_CPU_HAS_E5433_REGS_LAYOUT	(1 << 2)
-};
+/* The CPU घड़ी रेजिस्टरs have DIV1 configuration रेजिस्टर */
+#घोषणा CLK_CPU_HAS_DIV1		(1 << 0)
+/* When ALT parent is active, debug घड़ीs need safe भागider values */
+#घोषणा CLK_CPU_NEEDS_DEBUG_ALT_DIV	(1 << 1)
+/* The CPU घड़ी रेजिस्टरs have Exynos5433-compatible layout */
+#घोषणा CLK_CPU_HAS_E5433_REGS_LAYOUT	(1 << 2)
+पूर्ण;
 
-int __init exynos_register_cpu_clock(struct samsung_clk_provider *ctx,
-			unsigned int lookup_id, const char *name,
-			const struct clk_hw *parent, const struct clk_hw *alt_parent,
-			unsigned long offset,
-			const struct exynos_cpuclk_cfg_data *cfg,
-			unsigned long num_cfgs, unsigned long flags);
+पूर्णांक __init exynos_रेजिस्टर_cpu_घड़ी(काष्ठा samsung_clk_provider *ctx,
+			अचिन्हित पूर्णांक lookup_id, स्थिर अक्षर *name,
+			स्थिर काष्ठा clk_hw *parent, स्थिर काष्ठा clk_hw *alt_parent,
+			अचिन्हित दीर्घ offset,
+			स्थिर काष्ठा exynos_cpuclk_cfg_data *cfg,
+			अचिन्हित दीर्घ num_cfgs, अचिन्हित दीर्घ flags);
 
-#endif /* __SAMSUNG_CLK_CPU_H */
+#पूर्ण_अगर /* __SAMSUNG_CLK_CPU_H */

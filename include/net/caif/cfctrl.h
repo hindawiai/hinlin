@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#ifndef CFCTRL_H_
-#define CFCTRL_H_
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfsrvl.h>
+#अगर_अघोषित CFCTRL_H_
+#घोषणा CFCTRL_H_
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfsrvl.h>
 
 /* CAIF Control packet commands */
-enum cfctrl_cmd {
+क्रमागत cfctrl_cmd अणु
 	CFCTRL_CMD_LINK_SETUP = 0,
 	CFCTRL_CMD_LINK_DESTROY = 1,
 	CFCTRL_CMD_LINK_ERR = 2,
@@ -22,10 +23,10 @@ enum cfctrl_cmd {
 	CFCTRL_CMD_RADIO_SET = 8,
 	CFCTRL_CMD_MODEM_SET = 9,
 	CFCTRL_CMD_MASK = 0xf
-};
+पूर्ण;
 
 /* Channel types */
-enum cfctrl_srv {
+क्रमागत cfctrl_srv अणु
 	CFCTRL_SRV_DECM = 0,
 	CFCTRL_SRV_VEI = 1,
 	CFCTRL_SRV_VIDEO = 2,
@@ -34,97 +35,97 @@ enum cfctrl_srv {
 	CFCTRL_SRV_RFM = 5,
 	CFCTRL_SRV_UTIL = 6,
 	CFCTRL_SRV_MASK = 0xf
-};
+पूर्ण;
 
-#define CFCTRL_RSP_BIT 0x20
-#define CFCTRL_ERR_BIT 0x10
+#घोषणा CFCTRL_RSP_BIT 0x20
+#घोषणा CFCTRL_ERR_BIT 0x10
 
-struct cfctrl_rsp {
-	void (*linksetup_rsp)(struct cflayer *layer, u8 linkid,
-			      enum cfctrl_srv serv, u8 phyid,
-			      struct cflayer *adapt_layer);
-	void (*linkdestroy_rsp)(struct cflayer *layer, u8 linkid);
-	void (*linkerror_ind)(void);
-	void (*enum_rsp)(void);
-	void (*sleep_rsp)(void);
-	void (*wake_rsp)(void);
-	void (*restart_rsp)(void);
-	void (*radioset_rsp)(void);
-	void (*reject_rsp)(struct cflayer *layer, u8 linkid,
-				struct cflayer *client_layer);
-};
+काष्ठा cfctrl_rsp अणु
+	व्योम (*linksetup_rsp)(काष्ठा cflayer *layer, u8 linkid,
+			      क्रमागत cfctrl_srv serv, u8 phyid,
+			      काष्ठा cflayer *adapt_layer);
+	व्योम (*linkdestroy_rsp)(काष्ठा cflayer *layer, u8 linkid);
+	व्योम (*linkerror_ind)(व्योम);
+	व्योम (*क्रमागत_rsp)(व्योम);
+	व्योम (*sleep_rsp)(व्योम);
+	व्योम (*wake_rsp)(व्योम);
+	व्योम (*restart_rsp)(व्योम);
+	व्योम (*radioset_rsp)(व्योम);
+	व्योम (*reject_rsp)(काष्ठा cflayer *layer, u8 linkid,
+				काष्ठा cflayer *client_layer);
+पूर्ण;
 
-/* Link Setup Parameters for CAIF-Links. */
-struct cfctrl_link_param {
-	enum cfctrl_srv linktype;/* (T3,T0) Type of Channel */
+/* Link Setup Parameters क्रम CAIF-Links. */
+काष्ठा cfctrl_link_param अणु
+	क्रमागत cfctrl_srv linktype;/* (T3,T0) Type of Channel */
 	u8 priority;		  /* (P4,P0) Priority of the channel */
-	u8 phyid;		  /* (U2-U0) Physical interface to connect */
-	u8 endpoint;		  /* (E1,E0) Endpoint for data channels */
+	u8 phyid;		  /* (U2-U0) Physical पूर्णांकerface to connect */
+	u8 endpoपूर्णांक;		  /* (E1,E0) Endpoपूर्णांक क्रम data channels */
 	u8 chtype;		  /* (H1,H0) Channel-Type, applies to
 				   *            VEI, DEBUG */
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u8 connid;	/*  (D7,D0) Video LinkId */
-		} video;
+		पूर्ण video;
 
-		struct {
+		काष्ठा अणु
 			u32 connid;	/* (N31,Ngit0) Connection ID used
-					 *  for Datagram */
-		} datagram;
+					 *  क्रम Datagram */
+		पूर्ण datagram;
 
-		struct {
-			u32 connid;	/* Connection ID used for RFM */
-			char volume[20];	/* Volume to mount for RFM */
-		} rfm;		/* Configuration for RFM */
+		काष्ठा अणु
+			u32 connid;	/* Connection ID used क्रम RFM */
+			अक्षर volume[20];	/* Volume to mount क्रम RFM */
+		पूर्ण rfm;		/* Configuration क्रम RFM */
 
-		struct {
-			u16 fifosize_kb;	/* Psock FIFO size in KB */
-			u16 fifosize_bufs;	/* Psock # signal buffers */
-			char name[16];	/* Name of the PSOCK service */
+		काष्ठा अणु
+			u16 fअगरosize_kb;	/* Psock FIFO size in KB */
+			u16 fअगरosize_bufs;	/* Psock # संकेत buffers */
+			अक्षर name[16];	/* Name of the PSOCK service */
 			u8 params[255];	/* Link setup Parameters> */
 			u16 paramlen;	/* Length of Link Setup
 						 *   Parameters */
-		} utility;	/* Configuration for Utility Links (Psock) */
-	} u;
-};
+		पूर्ण utility;	/* Configuration क्रम Utility Links (Psock) */
+	पूर्ण u;
+पूर्ण;
 
-/* This structure is used internally in CFCTRL */
-struct cfctrl_request_info {
-	int sequence_no;
-	enum cfctrl_cmd cmd;
+/* This काष्ठाure is used पूर्णांकernally in CFCTRL */
+काष्ठा cfctrl_request_info अणु
+	पूर्णांक sequence_no;
+	क्रमागत cfctrl_cmd cmd;
 	u8 channel_id;
-	struct cfctrl_link_param param;
-	struct cflayer *client_layer;
-	struct list_head list;
-};
+	काष्ठा cfctrl_link_param param;
+	काष्ठा cflayer *client_layer;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct cfctrl {
-	struct cfsrvl serv;
-	struct cfctrl_rsp res;
+काष्ठा cfctrl अणु
+	काष्ठा cfsrvl serv;
+	काष्ठा cfctrl_rsp res;
 	atomic_t req_seq_no;
 	atomic_t rsp_seq_no;
-	struct list_head list;
+	काष्ठा list_head list;
 	/* Protects from simultaneous access to first_req list */
 	spinlock_t info_list_lock;
-#ifndef CAIF_NO_LOOP
+#अगर_अघोषित CAIF_NO_LOOP
 	u8 loop_linkid;
-	int loop_linkused[256];
+	पूर्णांक loop_linkused[256];
 	/* Protects simultaneous access to loop_linkid and loop_linkused */
 	spinlock_t loop_linkid_lock;
-#endif
+#पूर्ण_अगर
 
-};
+पूर्ण;
 
-void cfctrl_enum_req(struct cflayer *cfctrl, u8 physlinkid);
-int cfctrl_linkup_request(struct cflayer *cfctrl,
-			   struct cfctrl_link_param *param,
-			   struct cflayer *user_layer);
-int  cfctrl_linkdown_req(struct cflayer *cfctrl, u8 linkid,
-			 struct cflayer *client);
+व्योम cfctrl_क्रमागत_req(काष्ठा cflayer *cfctrl, u8 physlinkid);
+पूर्णांक cfctrl_linkup_request(काष्ठा cflayer *cfctrl,
+			   काष्ठा cfctrl_link_param *param,
+			   काष्ठा cflayer *user_layer);
+पूर्णांक  cfctrl_linkकरोwn_req(काष्ठा cflayer *cfctrl, u8 linkid,
+			 काष्ठा cflayer *client);
 
-struct cflayer *cfctrl_create(void);
-struct cfctrl_rsp *cfctrl_get_respfuncs(struct cflayer *layer);
-int cfctrl_cancel_req(struct cflayer *layr, struct cflayer *adap_layer);
-void cfctrl_remove(struct cflayer *layr);
+काष्ठा cflayer *cfctrl_create(व्योम);
+काष्ठा cfctrl_rsp *cfctrl_get_respfuncs(काष्ठा cflayer *layer);
+पूर्णांक cfctrl_cancel_req(काष्ठा cflayer *layr, काष्ठा cflayer *adap_layer);
+व्योम cfctrl_हटाओ(काष्ठा cflayer *layr);
 
-#endif				/* CFCTRL_H_ */
+#पूर्ण_अगर				/* CFCTRL_H_ */

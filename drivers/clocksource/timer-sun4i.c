@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * Allwinner A1X SoCs timer handling.
+ * Allwinner A1X SoCs समयr handling.
  *
  * Copyright (C) 2012 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * Based on code from
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
@@ -14,214 +15,214 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/irqreturn.h>
-#include <linux/sched_clock.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#include "timer-of.h"
+#समावेश "timer-of.h"
 
-#define TIMER_IRQ_EN_REG	0x00
-#define TIMER_IRQ_EN(val)		BIT(val)
-#define TIMER_IRQ_ST_REG	0x04
-#define TIMER_CTL_REG(val)	(0x10 * val + 0x10)
-#define TIMER_CTL_ENABLE		BIT(0)
-#define TIMER_CTL_RELOAD		BIT(1)
-#define TIMER_CTL_CLK_SRC(val)		(((val) & 0x3) << 2)
-#define TIMER_CTL_CLK_SRC_OSC24M		(1)
-#define TIMER_CTL_CLK_PRES(val)		(((val) & 0x7) << 4)
-#define TIMER_CTL_ONESHOT		BIT(7)
-#define TIMER_INTVAL_REG(val)	(0x10 * (val) + 0x14)
-#define TIMER_CNTVAL_REG(val)	(0x10 * (val) + 0x18)
+#घोषणा TIMER_IRQ_EN_REG	0x00
+#घोषणा TIMER_IRQ_EN(val)		BIT(val)
+#घोषणा TIMER_IRQ_ST_REG	0x04
+#घोषणा TIMER_CTL_REG(val)	(0x10 * val + 0x10)
+#घोषणा TIMER_CTL_ENABLE		BIT(0)
+#घोषणा TIMER_CTL_RELOAD		BIT(1)
+#घोषणा TIMER_CTL_CLK_SRC(val)		(((val) & 0x3) << 2)
+#घोषणा TIMER_CTL_CLK_SRC_OSC24M		(1)
+#घोषणा TIMER_CTL_CLK_PRES(val)		(((val) & 0x7) << 4)
+#घोषणा TIMER_CTL_ONESHOT		BIT(7)
+#घोषणा TIMER_INTVAL_REG(val)	(0x10 * (val) + 0x14)
+#घोषणा TIMER_CNTVAL_REG(val)	(0x10 * (val) + 0x18)
 
-#define TIMER_SYNC_TICKS	3
+#घोषणा TIMER_SYNC_TICKS	3
 
 /*
- * When we disable a timer, we need to wait at least for 2 cycles of
- * the timer source clock. We will use for that the clocksource timer
- * that is already setup and runs at the same frequency than the other
- * timers, and we never will be disabled.
+ * When we disable a समयr, we need to रुको at least क्रम 2 cycles of
+ * the समयr source घड़ी. We will use क्रम that the घड़ीsource समयr
+ * that is alपढ़ोy setup and runs at the same frequency than the other
+ * समयrs, and we never will be disabled.
  */
-static void sun4i_clkevt_sync(void __iomem *base)
-{
-	u32 old = readl(base + TIMER_CNTVAL_REG(1));
+अटल व्योम sun4i_clkevt_sync(व्योम __iomem *base)
+अणु
+	u32 old = पढ़ोl(base + TIMER_CNTVAL_REG(1));
 
-	while ((old - readl(base + TIMER_CNTVAL_REG(1))) < TIMER_SYNC_TICKS)
+	जबतक ((old - पढ़ोl(base + TIMER_CNTVAL_REG(1))) < TIMER_SYNC_TICKS)
 		cpu_relax();
-}
+पूर्ण
 
-static void sun4i_clkevt_time_stop(void __iomem *base, u8 timer)
-{
-	u32 val = readl(base + TIMER_CTL_REG(timer));
-	writel(val & ~TIMER_CTL_ENABLE, base + TIMER_CTL_REG(timer));
+अटल व्योम sun4i_clkevt_समय_stop(व्योम __iomem *base, u8 समयr)
+अणु
+	u32 val = पढ़ोl(base + TIMER_CTL_REG(समयr));
+	ग_लिखोl(val & ~TIMER_CTL_ENABLE, base + TIMER_CTL_REG(समयr));
 	sun4i_clkevt_sync(base);
-}
+पूर्ण
 
-static void sun4i_clkevt_time_setup(void __iomem *base, u8 timer,
-				    unsigned long delay)
-{
-	writel(delay, base + TIMER_INTVAL_REG(timer));
-}
+अटल व्योम sun4i_clkevt_समय_setup(व्योम __iomem *base, u8 समयr,
+				    अचिन्हित दीर्घ delay)
+अणु
+	ग_लिखोl(delay, base + TIMER_INTVAL_REG(समयr));
+पूर्ण
 
-static void sun4i_clkevt_time_start(void __iomem *base, u8 timer,
+अटल व्योम sun4i_clkevt_समय_start(व्योम __iomem *base, u8 समयr,
 				    bool periodic)
-{
-	u32 val = readl(base + TIMER_CTL_REG(timer));
+अणु
+	u32 val = पढ़ोl(base + TIMER_CTL_REG(समयr));
 
-	if (periodic)
+	अगर (periodic)
 		val &= ~TIMER_CTL_ONESHOT;
-	else
+	अन्यथा
 		val |= TIMER_CTL_ONESHOT;
 
-	writel(val | TIMER_CTL_ENABLE | TIMER_CTL_RELOAD,
-	       base + TIMER_CTL_REG(timer));
-}
+	ग_लिखोl(val | TIMER_CTL_ENABLE | TIMER_CTL_RELOAD,
+	       base + TIMER_CTL_REG(समयr));
+पूर्ण
 
-static int sun4i_clkevt_shutdown(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+अटल पूर्णांक sun4i_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	sun4i_clkevt_time_stop(timer_of_base(to), 0);
+	sun4i_clkevt_समय_stop(समयr_of_base(to), 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_clkevt_set_oneshot(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+अटल पूर्णांक sun4i_clkevt_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	sun4i_clkevt_time_stop(timer_of_base(to), 0);
-	sun4i_clkevt_time_start(timer_of_base(to), 0, false);
+	sun4i_clkevt_समय_stop(समयr_of_base(to), 0);
+	sun4i_clkevt_समय_start(समयr_of_base(to), 0, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_clkevt_set_periodic(struct clock_event_device *evt)
-{
-	struct timer_of *to = to_timer_of(evt);
+अटल पूर्णांक sun4i_clkevt_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	sun4i_clkevt_time_stop(timer_of_base(to), 0);
-	sun4i_clkevt_time_setup(timer_of_base(to), 0, timer_of_period(to));
-	sun4i_clkevt_time_start(timer_of_base(to), 0, true);
+	sun4i_clkevt_समय_stop(समयr_of_base(to), 0);
+	sun4i_clkevt_समय_setup(समयr_of_base(to), 0, समयr_of_period(to));
+	sun4i_clkevt_समय_start(समयr_of_base(to), 0, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_clkevt_next_event(unsigned long evt,
-				   struct clock_event_device *clkevt)
-{
-	struct timer_of *to = to_timer_of(clkevt);
+अटल पूर्णांक sun4i_clkevt_next_event(अचिन्हित दीर्घ evt,
+				   काष्ठा घड़ी_event_device *clkevt)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(clkevt);
 
-	sun4i_clkevt_time_stop(timer_of_base(to), 0);
-	sun4i_clkevt_time_setup(timer_of_base(to), 0, evt - TIMER_SYNC_TICKS);
-	sun4i_clkevt_time_start(timer_of_base(to), 0, false);
+	sun4i_clkevt_समय_stop(समयr_of_base(to), 0);
+	sun4i_clkevt_समय_setup(समयr_of_base(to), 0, evt - TIMER_SYNC_TICKS);
+	sun4i_clkevt_समय_start(समयr_of_base(to), 0, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sun4i_timer_clear_interrupt(void __iomem *base)
-{
-	writel(TIMER_IRQ_EN(0), base + TIMER_IRQ_ST_REG);
-}
+अटल व्योम sun4i_समयr_clear_पूर्णांकerrupt(व्योम __iomem *base)
+अणु
+	ग_लिखोl(TIMER_IRQ_EN(0), base + TIMER_IRQ_ST_REG);
+पूर्ण
 
-static irqreturn_t sun4i_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = (struct clock_event_device *)dev_id;
-	struct timer_of *to = to_timer_of(evt);
+अटल irqवापस_t sun4i_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = (काष्ठा घड़ी_event_device *)dev_id;
+	काष्ठा समयr_of *to = to_समयr_of(evt);
 
-	sun4i_timer_clear_interrupt(timer_of_base(to));
+	sun4i_समयr_clear_पूर्णांकerrupt(समयr_of_base(to));
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct timer_of to = {
+अटल काष्ठा समयr_of to = अणु
 	.flags = TIMER_OF_IRQ | TIMER_OF_CLOCK | TIMER_OF_BASE,
 
-	.clkevt = {
+	.clkevt = अणु
 		.name = "sun4i_tick",
 		.rating = 350,
 		.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT,
-		.set_state_shutdown = sun4i_clkevt_shutdown,
+		.set_state_shutकरोwn = sun4i_clkevt_shutकरोwn,
 		.set_state_periodic = sun4i_clkevt_set_periodic,
 		.set_state_oneshot = sun4i_clkevt_set_oneshot,
-		.tick_resume = sun4i_clkevt_shutdown,
+		.tick_resume = sun4i_clkevt_shutकरोwn,
 		.set_next_event = sun4i_clkevt_next_event,
 		.cpumask = cpu_possible_mask,
-	},
+	पूर्ण,
 
-	.of_irq = {
-		.handler = sun4i_timer_interrupt,
+	.of_irq = अणु
+		.handler = sun4i_समयr_पूर्णांकerrupt,
 		.flags = IRQF_TIMER | IRQF_IRQPOLL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u64 notrace sun4i_timer_sched_read(void)
-{
-	return ~readl(timer_of_base(&to) + TIMER_CNTVAL_REG(1));
-}
+अटल u64 notrace sun4i_समयr_sched_पढ़ो(व्योम)
+अणु
+	वापस ~पढ़ोl(समयr_of_base(&to) + TIMER_CNTVAL_REG(1));
+पूर्ण
 
-static int __init sun4i_timer_init(struct device_node *node)
-{
-	int ret;
+अटल पूर्णांक __init sun4i_समयr_init(काष्ठा device_node *node)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	ret = timer_of_init(node, &to);
-	if (ret)
-		return ret;
+	ret = समयr_of_init(node, &to);
+	अगर (ret)
+		वापस ret;
 
-	writel(~0, timer_of_base(&to) + TIMER_INTVAL_REG(1));
-	writel(TIMER_CTL_ENABLE | TIMER_CTL_RELOAD |
+	ग_लिखोl(~0, समयr_of_base(&to) + TIMER_INTVAL_REG(1));
+	ग_लिखोl(TIMER_CTL_ENABLE | TIMER_CTL_RELOAD |
 	       TIMER_CTL_CLK_SRC(TIMER_CTL_CLK_SRC_OSC24M),
-	       timer_of_base(&to) + TIMER_CTL_REG(1));
+	       समयr_of_base(&to) + TIMER_CTL_REG(1));
 
 	/*
-	 * sched_clock_register does not have priorities, and on sun6i and
-	 * later there is a better sched_clock registered by arm_arch_timer.c
+	 * sched_घड़ी_रेजिस्टर करोes not have priorities, and on sun6i and
+	 * later there is a better sched_घड़ी रेजिस्टरed by arm_arch_समयr.c
 	 */
-	if (of_machine_is_compatible("allwinner,sun4i-a10") ||
+	अगर (of_machine_is_compatible("allwinner,sun4i-a10") ||
 	    of_machine_is_compatible("allwinner,sun5i-a13") ||
 	    of_machine_is_compatible("allwinner,sun5i-a10s") ||
 	    of_machine_is_compatible("allwinner,suniv-f1c100s"))
-		sched_clock_register(sun4i_timer_sched_read, 32,
-				     timer_of_rate(&to));
+		sched_घड़ी_रेजिस्टर(sun4i_समयr_sched_पढ़ो, 32,
+				     समयr_of_rate(&to));
 
-	ret = clocksource_mmio_init(timer_of_base(&to) + TIMER_CNTVAL_REG(1),
-				    node->name, timer_of_rate(&to), 350, 32,
-				    clocksource_mmio_readl_down);
-	if (ret) {
+	ret = घड़ीsource_mmio_init(समयr_of_base(&to) + TIMER_CNTVAL_REG(1),
+				    node->name, समयr_of_rate(&to), 350, 32,
+				    घड़ीsource_mmio_पढ़ोl_करोwn);
+	अगर (ret) अणु
 		pr_err("Failed to register clocksource\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	writel(TIMER_CTL_CLK_SRC(TIMER_CTL_CLK_SRC_OSC24M),
-	       timer_of_base(&to) + TIMER_CTL_REG(0));
+	ग_लिखोl(TIMER_CTL_CLK_SRC(TIMER_CTL_CLK_SRC_OSC24M),
+	       समयr_of_base(&to) + TIMER_CTL_REG(0));
 
-	/* Make sure timer is stopped before playing with interrupts */
-	sun4i_clkevt_time_stop(timer_of_base(&to), 0);
+	/* Make sure समयr is stopped beक्रमe playing with पूर्णांकerrupts */
+	sun4i_clkevt_समय_stop(समयr_of_base(&to), 0);
 
-	/* clear timer0 interrupt */
-	sun4i_timer_clear_interrupt(timer_of_base(&to));
+	/* clear समयr0 पूर्णांकerrupt */
+	sun4i_समयr_clear_पूर्णांकerrupt(समयr_of_base(&to));
 
-	clockevents_config_and_register(&to.clkevt, timer_of_rate(&to),
+	घड़ीevents_config_and_रेजिस्टर(&to.clkevt, समयr_of_rate(&to),
 					TIMER_SYNC_TICKS, 0xffffffff);
 
-	/* Enable timer0 interrupt */
-	val = readl(timer_of_base(&to) + TIMER_IRQ_EN_REG);
-	writel(val | TIMER_IRQ_EN(0), timer_of_base(&to) + TIMER_IRQ_EN_REG);
+	/* Enable समयr0 पूर्णांकerrupt */
+	val = पढ़ोl(समयr_of_base(&to) + TIMER_IRQ_EN_REG);
+	ग_लिखोl(val | TIMER_IRQ_EN(0), समयr_of_base(&to) + TIMER_IRQ_EN_REG);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 TIMER_OF_DECLARE(sun4i, "allwinner,sun4i-a10-timer",
-		       sun4i_timer_init);
+		       sun4i_समयr_init);
 TIMER_OF_DECLARE(sun8i_a23, "allwinner,sun8i-a23-timer",
-		 sun4i_timer_init);
+		 sun4i_समयr_init);
 TIMER_OF_DECLARE(sun8i_v3s, "allwinner,sun8i-v3s-timer",
-		 sun4i_timer_init);
+		 sun4i_समयr_init);
 TIMER_OF_DECLARE(suniv, "allwinner,suniv-f1c100s-timer",
-		       sun4i_timer_init);
+		       sun4i_समयr_init);

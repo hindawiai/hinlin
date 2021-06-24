@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#define STACK_MAX_LEN 50
-#define SUBPROGS
-#include "pyperf.h"
+#घोषणा STACK_MAX_LEN 50
+#घोषणा SUBPROGS
+#समावेश "pyperf.h"

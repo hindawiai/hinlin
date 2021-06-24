@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
-#ifndef __SSP_SENSORHUB_H__
-#define __SSP_SENSORHUB_H__
+#अगर_अघोषित __SSP_SENSORHUB_H__
+#घोषणा __SSP_SENSORHUB_H__
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/iio/common/ssp_sensors.h>
-#include <linux/iio/iio.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/iio/common/ssp_sensors.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/spi/spi.h>
 
-#define SSP_DEVICE_ID		0x55
+#घोषणा SSP_DEVICE_ID		0x55
 
-#ifdef SSP_DBG
-#define ssp_dbg(format, ...) pr_info("[SSP] "format, ##__VA_ARGS__)
-#else
-#define ssp_dbg(format, ...)
-#endif
+#अगर_घोषित SSP_DBG
+#घोषणा ssp_dbg(क्रमmat, ...) pr_info("[SSP] "क्रमmat, ##__VA_ARGS__)
+#अन्यथा
+#घोषणा ssp_dbg(क्रमmat, ...)
+#पूर्ण_अगर
 
-#define SSP_SW_RESET_TIME		3000
+#घोषणा SSP_SW_RESET_TIME		3000
 /* Sensor polling in ms */
-#define SSP_DEFAULT_POLLING_DELAY	200
-#define SSP_DEFAULT_RETRIES		3
-#define SSP_DATA_PACKET_SIZE		960
-#define SSP_HEADER_BUFFER_SIZE		4
+#घोषणा SSP_DEFAULT_POLLING_DELAY	200
+#घोषणा SSP_DEFAULT_RETRIES		3
+#घोषणा SSP_DATA_PACKET_SIZE		960
+#घोषणा SSP_HEADER_BUFFER_SIZE		4
 
-enum {
+क्रमागत अणु
 	SSP_KERNEL_BINARY = 0,
 	SSP_KERNEL_CRASHED_BINARY,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SSP_INITIALIZATION_STATE = 0,
 	SSP_NO_SENSOR_STATE,
 	SSP_ADD_SENSOR_STATE,
 	SSP_RUNNING_SENSOR_STATE,
-};
+पूर्ण;
 
-/* Firmware download STATE */
-enum {
+/* Firmware करोwnload STATE */
+क्रमागत अणु
 	SSP_FW_DL_STATE_FAIL = -1,
 	SSP_FW_DL_STATE_NONE = 0,
 	SSP_FW_DL_STATE_NEED_TO_SCHEDULE,
@@ -48,200 +49,200 @@ enum {
 	SSP_FW_DL_STATE_DOWNLOADING,
 	SSP_FW_DL_STATE_SYNC,
 	SSP_FW_DL_STATE_DONE,
-};
+पूर्ण;
 
-#define SSP_INVALID_REVISION			99999
-#define SSP_INVALID_REVISION2			0xffffff
+#घोषणा SSP_INVALID_REVISION			99999
+#घोषणा SSP_INVALID_REVISION2			0xffffff
 
-/* AP -> SSP Instruction */
-#define SSP_MSG2SSP_INST_BYPASS_SENSOR_ADD	0xa1
-#define SSP_MSG2SSP_INST_BYPASS_SENSOR_RM	0xa2
-#define SSP_MSG2SSP_INST_REMOVE_ALL		0xa3
-#define SSP_MSG2SSP_INST_CHANGE_DELAY		0xa4
-#define SSP_MSG2SSP_INST_LIBRARY_ADD		0xb1
-#define SSP_MSG2SSP_INST_LIBRARY_REMOVE		0xb2
-#define SSP_MSG2SSP_INST_LIB_NOTI		0xb4
-#define SSP_MSG2SSP_INST_LIB_DATA		0xc1
+/* AP -> SSP Inकाष्ठाion */
+#घोषणा SSP_MSG2SSP_INST_BYPASS_SENSOR_ADD	0xa1
+#घोषणा SSP_MSG2SSP_INST_BYPASS_SENSOR_RM	0xa2
+#घोषणा SSP_MSG2SSP_INST_REMOVE_ALL		0xa3
+#घोषणा SSP_MSG2SSP_INST_CHANGE_DELAY		0xa4
+#घोषणा SSP_MSG2SSP_INST_LIBRARY_ADD		0xb1
+#घोषणा SSP_MSG2SSP_INST_LIBRARY_REMOVE		0xb2
+#घोषणा SSP_MSG2SSP_INST_LIB_NOTI		0xb4
+#घोषणा SSP_MSG2SSP_INST_LIB_DATA		0xc1
 
-#define SSP_MSG2SSP_AP_MCU_SET_GYRO_CAL		0xcd
-#define SSP_MSG2SSP_AP_MCU_SET_ACCEL_CAL	0xce
-#define SSP_MSG2SSP_AP_STATUS_SHUTDOWN		0xd0
-#define SSP_MSG2SSP_AP_STATUS_WAKEUP		0xd1
-#define SSP_MSG2SSP_AP_STATUS_SLEEP		0xd2
-#define SSP_MSG2SSP_AP_STATUS_RESUME		0xd3
-#define SSP_MSG2SSP_AP_STATUS_SUSPEND		0xd4
-#define SSP_MSG2SSP_AP_STATUS_RESET		0xd5
-#define SSP_MSG2SSP_AP_STATUS_POW_CONNECTED	0xd6
-#define SSP_MSG2SSP_AP_STATUS_POW_DISCONNECTED	0xd7
-#define SSP_MSG2SSP_AP_TEMPHUMIDITY_CAL_DONE	0xda
-#define SSP_MSG2SSP_AP_MCU_SET_DUMPMODE		0xdb
-#define SSP_MSG2SSP_AP_MCU_DUMP_CHECK		0xdc
-#define SSP_MSG2SSP_AP_MCU_BATCH_FLUSH		0xdd
-#define SSP_MSG2SSP_AP_MCU_BATCH_COUNT		0xdf
+#घोषणा SSP_MSG2SSP_AP_MCU_SET_GYRO_CAL		0xcd
+#घोषणा SSP_MSG2SSP_AP_MCU_SET_ACCEL_CAL	0xce
+#घोषणा SSP_MSG2SSP_AP_STATUS_SHUTDOWN		0xd0
+#घोषणा SSP_MSG2SSP_AP_STATUS_WAKEUP		0xd1
+#घोषणा SSP_MSG2SSP_AP_STATUS_SLEEP		0xd2
+#घोषणा SSP_MSG2SSP_AP_STATUS_RESUME		0xd3
+#घोषणा SSP_MSG2SSP_AP_STATUS_SUSPEND		0xd4
+#घोषणा SSP_MSG2SSP_AP_STATUS_RESET		0xd5
+#घोषणा SSP_MSG2SSP_AP_STATUS_POW_CONNECTED	0xd6
+#घोषणा SSP_MSG2SSP_AP_STATUS_POW_DISCONNECTED	0xd7
+#घोषणा SSP_MSG2SSP_AP_TEMPHUMIDITY_CAL_DONE	0xda
+#घोषणा SSP_MSG2SSP_AP_MCU_SET_DUMPMODE		0xdb
+#घोषणा SSP_MSG2SSP_AP_MCU_DUMP_CHECK		0xdc
+#घोषणा SSP_MSG2SSP_AP_MCU_BATCH_FLUSH		0xdd
+#घोषणा SSP_MSG2SSP_AP_MCU_BATCH_COUNT		0xdf
 
-#define SSP_MSG2SSP_AP_WHOAMI				0x0f
-#define SSP_MSG2SSP_AP_FIRMWARE_REV			0xf0
-#define SSP_MSG2SSP_AP_SENSOR_FORMATION			0xf1
-#define SSP_MSG2SSP_AP_SENSOR_PROXTHRESHOLD		0xf2
-#define SSP_MSG2SSP_AP_SENSOR_BARCODE_EMUL		0xf3
-#define SSP_MSG2SSP_AP_SENSOR_SCANNING			0xf4
-#define SSP_MSG2SSP_AP_SET_MAGNETIC_HWOFFSET		0xf5
-#define SSP_MSG2SSP_AP_GET_MAGNETIC_HWOFFSET		0xf6
-#define SSP_MSG2SSP_AP_SENSOR_GESTURE_CURRENT		0xf7
-#define SSP_MSG2SSP_AP_GET_THERM			0xf8
-#define SSP_MSG2SSP_AP_GET_BIG_DATA			0xf9
-#define SSP_MSG2SSP_AP_SET_BIG_DATA			0xfa
-#define SSP_MSG2SSP_AP_START_BIG_DATA			0xfb
-#define SSP_MSG2SSP_AP_SET_MAGNETIC_STATIC_MATRIX	0xfd
-#define SSP_MSG2SSP_AP_SENSOR_TILT			0xea
-#define SSP_MSG2SSP_AP_MCU_SET_TIME			0xfe
-#define SSP_MSG2SSP_AP_MCU_GET_TIME			0xff
+#घोषणा SSP_MSG2SSP_AP_WHOAMI				0x0f
+#घोषणा SSP_MSG2SSP_AP_FIRMWARE_REV			0xf0
+#घोषणा SSP_MSG2SSP_AP_SENSOR_FORMATION			0xf1
+#घोषणा SSP_MSG2SSP_AP_SENSOR_PROXTHRESHOLD		0xf2
+#घोषणा SSP_MSG2SSP_AP_SENSOR_BARCODE_EMUL		0xf3
+#घोषणा SSP_MSG2SSP_AP_SENSOR_SCANNING			0xf4
+#घोषणा SSP_MSG2SSP_AP_SET_MAGNETIC_HWOFFSET		0xf5
+#घोषणा SSP_MSG2SSP_AP_GET_MAGNETIC_HWOFFSET		0xf6
+#घोषणा SSP_MSG2SSP_AP_SENSOR_GESTURE_CURRENT		0xf7
+#घोषणा SSP_MSG2SSP_AP_GET_THERM			0xf8
+#घोषणा SSP_MSG2SSP_AP_GET_BIG_DATA			0xf9
+#घोषणा SSP_MSG2SSP_AP_SET_BIG_DATA			0xfa
+#घोषणा SSP_MSG2SSP_AP_START_BIG_DATA			0xfb
+#घोषणा SSP_MSG2SSP_AP_SET_MAGNETIC_STATIC_MATRIX	0xfd
+#घोषणा SSP_MSG2SSP_AP_SENSOR_TILT			0xea
+#घोषणा SSP_MSG2SSP_AP_MCU_SET_TIME			0xfe
+#घोषणा SSP_MSG2SSP_AP_MCU_GET_TIME			0xff
 
-#define SSP_MSG2SSP_AP_FUSEROM				0x01
+#घोषणा SSP_MSG2SSP_AP_FUSEROM				0x01
 
 /* voice data */
-#define SSP_TYPE_WAKE_UP_VOICE_SERVICE			0x01
-#define SSP_TYPE_WAKE_UP_VOICE_SOUND_SOURCE_AM		0x01
-#define SSP_TYPE_WAKE_UP_VOICE_SOUND_SOURCE_GRAMMER	0x02
+#घोषणा SSP_TYPE_WAKE_UP_VOICE_SERVICE			0x01
+#घोषणा SSP_TYPE_WAKE_UP_VOICE_SOUND_SOURCE_AM		0x01
+#घोषणा SSP_TYPE_WAKE_UP_VOICE_SOUND_SOURCE_GRAMMER	0x02
 
 /* Factory Test */
-#define SSP_ACCELEROMETER_FACTORY			0x80
-#define SSP_GYROSCOPE_FACTORY				0x81
-#define SSP_GEOMAGNETIC_FACTORY				0x82
-#define SSP_PRESSURE_FACTORY				0x85
-#define SSP_GESTURE_FACTORY				0x86
-#define SSP_TEMPHUMIDITY_CRC_FACTORY			0x88
-#define SSP_GYROSCOPE_TEMP_FACTORY			0x8a
-#define SSP_GYROSCOPE_DPS_FACTORY			0x8b
-#define SSP_MCU_FACTORY					0x8c
-#define SSP_MCU_SLEEP_FACTORY				0x8d
+#घोषणा SSP_ACCELEROMETER_FACTORY			0x80
+#घोषणा SSP_GYROSCOPE_FACTORY				0x81
+#घोषणा SSP_GEOMAGNETIC_FACTORY				0x82
+#घोषणा SSP_PRESSURE_FACTORY				0x85
+#घोषणा SSP_GESTURE_FACTORY				0x86
+#घोषणा SSP_TEMPHUMIDITY_CRC_FACTORY			0x88
+#घोषणा SSP_GYROSCOPE_TEMP_FACTORY			0x8a
+#घोषणा SSP_GYROSCOPE_DPS_FACTORY			0x8b
+#घोषणा SSP_MCU_FACTORY					0x8c
+#घोषणा SSP_MCU_SLEEP_FACTORY				0x8d
 
-/* SSP -> AP ACK about write CMD */
-#define SSP_MSG_ACK		0x80	/* ACK from SSP to AP */
-#define SSP_MSG_NAK		0x70	/* NAK from SSP to AP */
+/* SSP -> AP ACK about ग_लिखो CMD */
+#घोषणा SSP_MSG_ACK		0x80	/* ACK from SSP to AP */
+#घोषणा SSP_MSG_NAK		0x70	/* NAK from SSP to AP */
 
-struct ssp_sensorhub_info {
-	char *fw_name;
-	char *fw_crashed_name;
-	unsigned int fw_rev;
-	const u8 * const mag_table;
-	const unsigned int mag_length;
-};
+काष्ठा ssp_sensorhub_info अणु
+	अक्षर *fw_name;
+	अक्षर *fw_crashed_name;
+	अचिन्हित पूर्णांक fw_rev;
+	स्थिर u8 * स्थिर mag_table;
+	स्थिर अचिन्हित पूर्णांक mag_length;
+पूर्ण;
 
 /* ssp_msg options bit */
-#define SSP_RW		0
-#define SSP_INDEX	3
+#घोषणा SSP_RW		0
+#घोषणा SSP_INDEX	3
 
-#define SSP_AP2HUB_READ		0
-#define SSP_AP2HUB_WRITE	1
-#define SSP_HUB2AP_WRITE	2
-#define SSP_AP2HUB_READY	3
-#define SSP_AP2HUB_RETURN	4
+#घोषणा SSP_AP2HUB_READ		0
+#घोषणा SSP_AP2HUB_WRITE	1
+#घोषणा SSP_HUB2AP_WRITE	2
+#घोषणा SSP_AP2HUB_READY	3
+#घोषणा SSP_AP2HUB_RETURN	4
 
 /**
- * struct ssp_data - ssp platformdata structure
+ * काष्ठा ssp_data - ssp platक्रमmdata काष्ठाure
  * @spi:		spi device
- * @sensorhub_info:	info about sensorhub board specific features
- * @wdt_timer:		watchdog timer
- * @work_wdt:		watchdog work
+ * @sensorhub_info:	info about sensorhub board specअगरic features
+ * @wdt_समयr:		watchकरोg समयr
+ * @work_wdt:		watchकरोg work
  * @work_firmware:	firmware upgrade work queue
- * @work_refresh:	refresh work queue for reset request from MCU
- * @shut_down:		shut down flag
- * @mcu_dump_mode:	mcu dump mode for debug
- * @time_syncing:	time syncing indication flag
- * @timestamp:		previous time in ns calculated for time syncing
- * @check_status:	status table for each sensor
+ * @work_refresh:	refresh work queue क्रम reset request from MCU
+ * @shut_करोwn:		shut करोwn flag
+ * @mcu_dump_mode:	mcu dump mode क्रम debug
+ * @समय_syncing:	समय syncing indication flag
+ * @बारtamp:		previous समय in ns calculated क्रम समय syncing
+ * @check_status:	status table क्रम each sensor
  * @com_fail_cnt:	communication fail count
  * @reset_cnt:		reset count
- * @timeout_cnt:	timeout count
+ * @समयout_cnt:	समयout count
  * @available_sensors:	available sensors seen by sensorhub (bit array)
  * @cur_firm_rev:	cached current firmware revision
  * @last_resume_state:	last AP resume/suspend state used to handle the PM
  *                      state of ssp
- * @last_ap_state:	(obsolete) sleep notification for MCU
+ * @last_ap_state:	(obsolete) sleep notअगरication क्रम MCU
  * @sensor_enable:	sensor enable mask
- * @delay_buf:		data acquisition intervals table
+ * @delay_buf:		data acquisition पूर्णांकervals table
  * @batch_latency_buf:	yet unknown but existing in communication protocol
  * @batch_opt_buf:	yet unknown but existing in communication protocol
  * @accel_position:	yet unknown but existing in communication protocol
  * @mag_position:	yet unknown but existing in communication protocol
- * @fw_dl_state:	firmware download state
+ * @fw_dl_state:	firmware करोwnload state
  * @comm_lock:		lock protecting the handshake
  * @pending_lock:	lock protecting pending list and completion
  * @mcu_reset_gpiod:	mcu reset line
  * @ap_mcu_gpiod:	ap to mcu gpio line
  * @mcu_ap_gpiod:	mcu to ap gpio line
- * @pending_list:	pending list for messages queued to be sent/read
- * @sensor_devs:	registered IIO devices table
- * @enable_refcount:	enable reference count for wdt (watchdog timer)
- * @header_buffer:	cache aligned buffer for packet header
+ * @pending_list:	pending list क्रम messages queued to be sent/पढ़ो
+ * @sensor_devs:	रेजिस्टरed IIO devices table
+ * @enable_refcount:	enable reference count क्रम wdt (watchकरोg समयr)
+ * @header_buffer:	cache aligned buffer क्रम packet header
  */
-struct ssp_data {
-	struct spi_device *spi;
-	const struct ssp_sensorhub_info *sensorhub_info;
-	struct timer_list wdt_timer;
-	struct work_struct work_wdt;
-	struct delayed_work work_refresh;
+काष्ठा ssp_data अणु
+	काष्ठा spi_device *spi;
+	स्थिर काष्ठा ssp_sensorhub_info *sensorhub_info;
+	काष्ठा समयr_list wdt_समयr;
+	काष्ठा work_काष्ठा work_wdt;
+	काष्ठा delayed_work work_refresh;
 
-	bool shut_down;
+	bool shut_करोwn;
 	bool mcu_dump_mode;
-	bool time_syncing;
-	int64_t timestamp;
+	bool समय_syncing;
+	पूर्णांक64_t बारtamp;
 
-	int check_status[SSP_SENSOR_MAX];
+	पूर्णांक check_status[SSP_SENSOR_MAX];
 
-	unsigned int com_fail_cnt;
-	unsigned int reset_cnt;
-	unsigned int timeout_cnt;
+	अचिन्हित पूर्णांक com_fail_cnt;
+	अचिन्हित पूर्णांक reset_cnt;
+	अचिन्हित पूर्णांक समयout_cnt;
 
-	unsigned int available_sensors;
-	unsigned int cur_firm_rev;
+	अचिन्हित पूर्णांक available_sensors;
+	अचिन्हित पूर्णांक cur_firm_rev;
 
-	char last_resume_state;
-	char last_ap_state;
+	अक्षर last_resume_state;
+	अक्षर last_ap_state;
 
-	unsigned int sensor_enable;
+	अचिन्हित पूर्णांक sensor_enable;
 	u32 delay_buf[SSP_SENSOR_MAX];
 	s32 batch_latency_buf[SSP_SENSOR_MAX];
 	s8 batch_opt_buf[SSP_SENSOR_MAX];
 
-	int accel_position;
-	int mag_position;
-	int fw_dl_state;
+	पूर्णांक accel_position;
+	पूर्णांक mag_position;
+	पूर्णांक fw_dl_state;
 
-	struct mutex comm_lock;
-	struct mutex pending_lock;
+	काष्ठा mutex comm_lock;
+	काष्ठा mutex pending_lock;
 
-	struct gpio_desc *mcu_reset_gpiod;
-	struct gpio_desc *ap_mcu_gpiod;
-	struct gpio_desc *mcu_ap_gpiod;
+	काष्ठा gpio_desc *mcu_reset_gpiod;
+	काष्ठा gpio_desc *ap_mcu_gpiod;
+	काष्ठा gpio_desc *mcu_ap_gpiod;
 
-	struct list_head pending_list;
+	काष्ठा list_head pending_list;
 
-	struct iio_dev *sensor_devs[SSP_SENSOR_MAX];
+	काष्ठा iio_dev *sensor_devs[SSP_SENSOR_MAX];
 	atomic_t enable_refcount;
 
-	__le16 header_buffer[SSP_HEADER_BUFFER_SIZE / sizeof(__le16)]
+	__le16 header_buffer[SSP_HEADER_BUFFER_SIZE / माप(__le16)]
 		____cacheline_aligned;
-};
+पूर्ण;
 
-void ssp_clean_pending_list(struct ssp_data *data);
+व्योम ssp_clean_pending_list(काष्ठा ssp_data *data);
 
-int ssp_command(struct ssp_data *data, char command, int arg);
+पूर्णांक ssp_command(काष्ठा ssp_data *data, अक्षर command, पूर्णांक arg);
 
-int ssp_send_instruction(struct ssp_data *data, u8 inst, u8 sensor_type,
+पूर्णांक ssp_send_inकाष्ठाion(काष्ठा ssp_data *data, u8 inst, u8 sensor_type,
 			 u8 *send_buf, u8 length);
 
-int ssp_irq_msg(struct ssp_data *data);
+पूर्णांक ssp_irq_msg(काष्ठा ssp_data *data);
 
-int ssp_get_chipid(struct ssp_data *data);
+पूर्णांक ssp_get_chipid(काष्ठा ssp_data *data);
 
-int ssp_set_magnetic_matrix(struct ssp_data *data);
+पूर्णांक ssp_set_magnetic_matrix(काष्ठा ssp_data *data);
 
-unsigned int ssp_get_sensor_scanning_info(struct ssp_data *data);
+अचिन्हित पूर्णांक ssp_get_sensor_scanning_info(काष्ठा ssp_data *data);
 
-unsigned int ssp_get_firmware_rev(struct ssp_data *data);
+अचिन्हित पूर्णांक ssp_get_firmware_rev(काष्ठा ssp_data *data);
 
-int ssp_queue_ssp_refresh_task(struct ssp_data *data, unsigned int delay);
+पूर्णांक ssp_queue_ssp_refresh_task(काष्ठा ssp_data *data, अचिन्हित पूर्णांक delay);
 
-#endif /* __SSP_SENSORHUB_H__ */
+#पूर्ण_अगर /* __SSP_SENSORHUB_H__ */

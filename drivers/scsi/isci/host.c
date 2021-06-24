@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
  * The full GNU General Public License is included in this distribution
  * in the file called LICENSE.GPL.
  *
@@ -26,25 +27,25 @@
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Redistributions in binary क्रमm must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in
- *     the documentation and/or other materials provided with the
+ *     the करोcumentation and/or other materials provided with the
  *     distribution.
  *   * Neither the name of Intel Corporation nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
+ *     contributors may be used to enकरोrse or promote products derived
+ *     from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -52,57 +53,57 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <linux/circ_buf.h>
-#include <linux/device.h>
-#include <scsi/sas.h>
-#include "host.h"
-#include "isci.h"
-#include "port.h"
-#include "probe_roms.h"
-#include "remote_device.h"
-#include "request.h"
-#include "scu_completion_codes.h"
-#include "scu_event_codes.h"
-#include "registers.h"
-#include "scu_remote_node_context.h"
-#include "scu_task_context.h"
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/device.h>
+#समावेश <scsi/sas.h>
+#समावेश "host.h"
+#समावेश "isci.h"
+#समावेश "port.h"
+#समावेश "probe_roms.h"
+#समावेश "remote_device.h"
+#समावेश "request.h"
+#समावेश "scu_completion_codes.h"
+#समावेश "scu_event_codes.h"
+#समावेश "registers.h"
+#समावेश "scu_remote_node_context.h"
+#समावेश "scu_task_context.h"
 
-#define SCU_CONTEXT_RAM_INIT_STALL_TIME      200
+#घोषणा SCU_CONTEXT_RAM_INIT_STALL_TIME      200
 
-#define smu_max_ports(dcc_value) \
+#घोषणा smu_max_ports(dcc_value) \
 	(\
 		(((dcc_value) & SMU_DEVICE_CONTEXT_CAPACITY_MAX_LP_MASK) \
 		 >> SMU_DEVICE_CONTEXT_CAPACITY_MAX_LP_SHIFT) + 1 \
 	)
 
-#define smu_max_task_contexts(dcc_value)	\
+#घोषणा smu_max_task_contexts(dcc_value)	\
 	(\
 		(((dcc_value) & SMU_DEVICE_CONTEXT_CAPACITY_MAX_TC_MASK) \
 		 >> SMU_DEVICE_CONTEXT_CAPACITY_MAX_TC_SHIFT) + 1 \
 	)
 
-#define smu_max_rncs(dcc_value) \
+#घोषणा smu_max_rncs(dcc_value) \
 	(\
 		(((dcc_value) & SMU_DEVICE_CONTEXT_CAPACITY_MAX_RNC_MASK) \
 		 >> SMU_DEVICE_CONTEXT_CAPACITY_MAX_RNC_SHIFT) + 1 \
 	)
 
-#define SCIC_SDS_CONTROLLER_PHY_START_TIMEOUT      100
+#घोषणा SCIC_SDS_CONTROLLER_PHY_START_TIMEOUT      100
 
 /*
- * The number of milliseconds to wait while a given phy is consuming power
- * before allowing another set of phys to consume power. Ultimately, this will
- * be specified by OEM parameter.
+ * The number of milliseconds to रुको जबतक a given phy is consuming घातer
+ * beक्रमe allowing another set of phys to consume घातer. Ultimately, this will
+ * be specअगरied by OEM parameter.
  */
-#define SCIC_SDS_CONTROLLER_POWER_CONTROL_INTERVAL 500
+#घोषणा SCIC_SDS_CONTROLLER_POWER_CONTROL_INTERVAL 500
 
 /*
  * NORMALIZE_PUT_POINTER() -
  *
- * This macro will normalize the completion queue put pointer so its value can
+ * This macro will normalize the completion queue put poपूर्णांकer so its value can
  * be used as an array inde
  */
-#define NORMALIZE_PUT_POINTER(x) \
+#घोषणा NORMALIZE_PUT_POINTER(x) \
 	((x) & SMU_COMPLETION_QUEUE_PUT_POINTER_MASK)
 
 
@@ -112,7 +113,7 @@
  * This macro will normalize the completion queue event entry so its value can
  * be used as an index.
  */
-#define NORMALIZE_EVENT_POINTER(x) \
+#घोषणा NORMALIZE_EVENT_POINTER(x) \
 	(\
 		((x) & SMU_COMPLETION_QUEUE_GET_EVENT_POINTER_MASK) \
 		>> SMU_COMPLETION_QUEUE_GET_EVENT_POINTER_SHIFT	\
@@ -121,32 +122,32 @@
 /*
  * NORMALIZE_GET_POINTER() -
  *
- * This macro will normalize the completion queue get pointer so its value can
- * be used as an index into an array
+ * This macro will normalize the completion queue get poपूर्णांकer so its value can
+ * be used as an index पूर्णांकo an array
  */
-#define NORMALIZE_GET_POINTER(x) \
+#घोषणा NORMALIZE_GET_POINTER(x) \
 	((x) & SMU_COMPLETION_QUEUE_GET_POINTER_MASK)
 
 /*
  * NORMALIZE_GET_POINTER_CYCLE_BIT() -
  *
- * This macro will normalize the completion queue cycle pointer so it matches
+ * This macro will normalize the completion queue cycle poपूर्णांकer so it matches
  * the completion queue cycle bit
  */
-#define NORMALIZE_GET_POINTER_CYCLE_BIT(x) \
+#घोषणा NORMALIZE_GET_POINTER_CYCLE_BIT(x) \
 	((SMU_CQGR_CYCLE_BIT & (x)) << (31 - SMU_COMPLETION_QUEUE_GET_CYCLE_BIT_SHIFT))
 
 /*
  * COMPLETION_QUEUE_CYCLE_BIT() -
  *
- * This macro will return the cycle bit of the completion queue entry
+ * This macro will वापस the cycle bit of the completion queue entry
  */
-#define COMPLETION_QUEUE_CYCLE_BIT(x) ((x) & 0x80000000)
+#घोषणा COMPLETION_QUEUE_CYCLE_BIT(x) ((x) & 0x80000000)
 
-/* Init the state machine and call the state entry function (if any) */
-void sci_init_sm(struct sci_base_state_machine *sm,
-		 const struct sci_base_state *state_table, u32 initial_state)
-{
+/* Init the state machine and call the state entry function (अगर any) */
+व्योम sci_init_sm(काष्ठा sci_base_state_machine *sm,
+		 स्थिर काष्ठा sci_base_state *state_table, u32 initial_state)
+अणु
 	sci_state_transition_t handler;
 
 	sm->initial_state_id    = initial_state;
@@ -155,239 +156,239 @@ void sci_init_sm(struct sci_base_state_machine *sm,
 	sm->state_table         = state_table;
 
 	handler = sm->state_table[initial_state].enter_state;
-	if (handler)
+	अगर (handler)
 		handler(sm);
-}
+पूर्ण
 
-/* Call the state exit fn, update the current state, call the state entry fn */
-void sci_change_state(struct sci_base_state_machine *sm, u32 next_state)
-{
+/* Call the state निकास fn, update the current state, call the state entry fn */
+व्योम sci_change_state(काष्ठा sci_base_state_machine *sm, u32 next_state)
+अणु
 	sci_state_transition_t handler;
 
-	handler = sm->state_table[sm->current_state_id].exit_state;
-	if (handler)
+	handler = sm->state_table[sm->current_state_id].निकास_state;
+	अगर (handler)
 		handler(sm);
 
 	sm->previous_state_id = sm->current_state_id;
 	sm->current_state_id = next_state;
 
 	handler = sm->state_table[sm->current_state_id].enter_state;
-	if (handler)
+	अगर (handler)
 		handler(sm);
-}
+पूर्ण
 
-static bool sci_controller_completion_queue_has_entries(struct isci_host *ihost)
-{
+अटल bool sci_controller_completion_queue_has_entries(काष्ठा isci_host *ihost)
+अणु
 	u32 get_value = ihost->completion_queue_get;
 	u32 get_index = get_value & SMU_COMPLETION_QUEUE_GET_POINTER_MASK;
 
-	if (NORMALIZE_GET_POINTER_CYCLE_BIT(get_value) ==
+	अगर (NORMALIZE_GET_POINTER_CYCLE_BIT(get_value) ==
 	    COMPLETION_QUEUE_CYCLE_BIT(ihost->completion_queue[get_index]))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool sci_controller_isr(struct isci_host *ihost)
-{
-	if (sci_controller_completion_queue_has_entries(ihost))
-		return true;
+अटल bool sci_controller_isr(काष्ठा isci_host *ihost)
+अणु
+	अगर (sci_controller_completion_queue_has_entries(ihost))
+		वापस true;
 
-	/* we have a spurious interrupt it could be that we have already
-	 * emptied the completion queue from a previous interrupt
+	/* we have a spurious पूर्णांकerrupt it could be that we have alपढ़ोy
+	 * emptied the completion queue from a previous पूर्णांकerrupt
 	 * FIXME: really!?
 	 */
-	writel(SMU_ISR_COMPLETION, &ihost->smu_registers->interrupt_status);
+	ग_लिखोl(SMU_ISR_COMPLETION, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_status);
 
 	/* There is a race in the hardware that could cause us not to be
-	 * notified of an interrupt completion if we do not take this
-	 * step.  We will mask then unmask the interrupts so if there is
-	 * another interrupt pending the clearing of the interrupt
-	 * source we get the next interrupt message.
+	 * notअगरied of an पूर्णांकerrupt completion अगर we करो not take this
+	 * step.  We will mask then unmask the पूर्णांकerrupts so अगर there is
+	 * another पूर्णांकerrupt pending the clearing of the पूर्णांकerrupt
+	 * source we get the next पूर्णांकerrupt message.
 	 */
 	spin_lock(&ihost->scic_lock);
-	if (test_bit(IHOST_IRQ_ENABLED, &ihost->flags)) {
-		writel(0xFF000000, &ihost->smu_registers->interrupt_mask);
-		writel(0, &ihost->smu_registers->interrupt_mask);
-	}
+	अगर (test_bit(IHOST_IRQ_ENABLED, &ihost->flags)) अणु
+		ग_लिखोl(0xFF000000, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+		ग_लिखोl(0, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+	पूर्ण
 	spin_unlock(&ihost->scic_lock);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-irqreturn_t isci_msix_isr(int vec, void *data)
-{
-	struct isci_host *ihost = data;
+irqवापस_t isci_msix_isr(पूर्णांक vec, व्योम *data)
+अणु
+	काष्ठा isci_host *ihost = data;
 
-	if (sci_controller_isr(ihost))
+	अगर (sci_controller_isr(ihost))
 		tasklet_schedule(&ihost->completion_tasklet);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static bool sci_controller_error_isr(struct isci_host *ihost)
-{
-	u32 interrupt_status;
+अटल bool sci_controller_error_isr(काष्ठा isci_host *ihost)
+अणु
+	u32 पूर्णांकerrupt_status;
 
-	interrupt_status =
-		readl(&ihost->smu_registers->interrupt_status);
-	interrupt_status &= (SMU_ISR_QUEUE_ERROR | SMU_ISR_QUEUE_SUSPEND);
+	पूर्णांकerrupt_status =
+		पढ़ोl(&ihost->smu_रेजिस्टरs->पूर्णांकerrupt_status);
+	पूर्णांकerrupt_status &= (SMU_ISR_QUEUE_ERROR | SMU_ISR_QUEUE_SUSPEND);
 
-	if (interrupt_status != 0) {
+	अगर (पूर्णांकerrupt_status != 0) अणु
 		/*
-		 * There is an error interrupt pending so let it through and handle
+		 * There is an error पूर्णांकerrupt pending so let it through and handle
 		 * in the callback */
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/*
-	 * There is a race in the hardware that could cause us not to be notified
-	 * of an interrupt completion if we do not take this step.  We will mask
-	 * then unmask the error interrupts so if there was another interrupt
-	 * pending we will be notified.
-	 * Could we write the value of (SMU_ISR_QUEUE_ERROR | SMU_ISR_QUEUE_SUSPEND)? */
-	writel(0xff, &ihost->smu_registers->interrupt_mask);
-	writel(0, &ihost->smu_registers->interrupt_mask);
+	 * There is a race in the hardware that could cause us not to be notअगरied
+	 * of an पूर्णांकerrupt completion अगर we करो not take this step.  We will mask
+	 * then unmask the error पूर्णांकerrupts so अगर there was another पूर्णांकerrupt
+	 * pending we will be notअगरied.
+	 * Could we ग_लिखो the value of (SMU_ISR_QUEUE_ERROR | SMU_ISR_QUEUE_SUSPEND)? */
+	ग_लिखोl(0xff, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+	ग_लिखोl(0, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void sci_controller_task_completion(struct isci_host *ihost, u32 ent)
-{
+अटल व्योम sci_controller_task_completion(काष्ठा isci_host *ihost, u32 ent)
+अणु
 	u32 index = SCU_GET_COMPLETION_INDEX(ent);
-	struct isci_request *ireq = ihost->reqs[index];
+	काष्ठा isci_request *ireq = ihost->reqs[index];
 
 	/* Make sure that we really want to process this IO request */
-	if (test_bit(IREQ_ACTIVE, &ireq->flags) &&
+	अगर (test_bit(IREQ_ACTIVE, &ireq->flags) &&
 	    ireq->io_tag != SCI_CONTROLLER_INVALID_IO_TAG &&
 	    ISCI_TAG_SEQ(ireq->io_tag) == ihost->io_request_sequence[index])
-		/* Yep this is a valid io request pass it along to the
+		/* Yep this is a valid io request pass it aदीर्घ to the
 		 * io request handler
 		 */
 		sci_io_request_tc_completion(ireq, ent);
-}
+पूर्ण
 
-static void sci_controller_sdma_completion(struct isci_host *ihost, u32 ent)
-{
+अटल व्योम sci_controller_sdma_completion(काष्ठा isci_host *ihost, u32 ent)
+अणु
 	u32 index;
-	struct isci_request *ireq;
-	struct isci_remote_device *idev;
+	काष्ठा isci_request *ireq;
+	काष्ठा isci_remote_device *idev;
 
 	index = SCU_GET_COMPLETION_INDEX(ent);
 
-	switch (scu_get_command_request_type(ent)) {
-	case SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_TC:
-	case SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_TC:
+	चयन (scu_get_command_request_type(ent)) अणु
+	हाल SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_TC:
+	हाल SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_TC:
 		ireq = ihost->reqs[index];
 		dev_warn(&ihost->pdev->dev, "%s: %x for io request %p\n",
 			 __func__, ent, ireq);
-		/* @todo For a post TC operation we need to fail the IO
+		/* @toकरो For a post TC operation we need to fail the IO
 		 * request
 		 */
-		break;
-	case SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_RNC:
-	case SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC:
-	case SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_RNC:
+		अवरोध;
+	हाल SCU_CONTEXT_COMMAND_REQUEST_TYPE_DUMP_RNC:
+	हाल SCU_CONTEXT_COMMAND_REQUEST_TYPE_OTHER_RNC:
+	हाल SCU_CONTEXT_COMMAND_REQUEST_TYPE_POST_RNC:
 		idev = ihost->device_table[index];
 		dev_warn(&ihost->pdev->dev, "%s: %x for device %p\n",
 			 __func__, ent, idev);
-		/* @todo For a port RNC operation we need to fail the
+		/* @toकरो For a port RNC operation we need to fail the
 		 * device
 		 */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(&ihost->pdev->dev, "%s: unknown completion type %x\n",
 			 __func__, ent);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void sci_controller_unsolicited_frame(struct isci_host *ihost, u32 ent)
-{
+अटल व्योम sci_controller_unsolicited_frame(काष्ठा isci_host *ihost, u32 ent)
+अणु
 	u32 index;
 	u32 frame_index;
 
-	struct scu_unsolicited_frame_header *frame_header;
-	struct isci_phy *iphy;
-	struct isci_remote_device *idev;
+	काष्ठा scu_unsolicited_frame_header *frame_header;
+	काष्ठा isci_phy *iphy;
+	काष्ठा isci_remote_device *idev;
 
-	enum sci_status result = SCI_FAILURE;
+	क्रमागत sci_status result = SCI_FAILURE;
 
 	frame_index = SCU_GET_FRAME_INDEX(ent);
 
 	frame_header = ihost->uf_control.buffers.array[frame_index].header;
 	ihost->uf_control.buffers.array[frame_index].state = UNSOLICITED_FRAME_IN_USE;
 
-	if (SCU_GET_FRAME_ERROR(ent)) {
+	अगर (SCU_GET_FRAME_ERROR(ent)) अणु
 		/*
-		 * / @todo If the IAF frame or SIGNATURE FIS frame has an error will
+		 * / @toकरो If the IAF frame or SIGNATURE FIS frame has an error will
 		 * /       this cause a problem? We expect the phy initialization will
-		 * /       fail if there is an error in the frame. */
+		 * /       fail अगर there is an error in the frame. */
 		sci_controller_release_frame(ihost, frame_index);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (frame_header->is_address_frame) {
+	अगर (frame_header->is_address_frame) अणु
 		index = SCU_GET_PROTOCOL_ENGINE_INDEX(ent);
 		iphy = &ihost->phys[index];
 		result = sci_phy_frame_handler(iphy, frame_index);
-	} else {
+	पूर्ण अन्यथा अणु
 
 		index = SCU_GET_COMPLETION_INDEX(ent);
 
-		if (index == SCIC_SDS_REMOTE_NODE_CONTEXT_INVALID_INDEX) {
+		अगर (index == SCIC_SDS_REMOTE_NODE_CONTEXT_INVALID_INDEX) अणु
 			/*
 			 * This is a signature fis or a frame from a direct attached SATA
-			 * device that has not yet been created.  In either case forwared
+			 * device that has not yet been created.  In either हाल क्रमwared
 			 * the frame to the PE and let it take care of the frame data. */
 			index = SCU_GET_PROTOCOL_ENGINE_INDEX(ent);
 			iphy = &ihost->phys[index];
 			result = sci_phy_frame_handler(iphy, frame_index);
-		} else {
-			if (index < ihost->remote_node_entries)
+		पूर्ण अन्यथा अणु
+			अगर (index < ihost->remote_node_entries)
 				idev = ihost->device_table[index];
-			else
-				idev = NULL;
+			अन्यथा
+				idev = शून्य;
 
-			if (idev != NULL)
+			अगर (idev != शून्य)
 				result = sci_remote_device_frame_handler(idev, frame_index);
-			else
+			अन्यथा
 				sci_controller_release_frame(ihost, frame_index);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (result != SCI_SUCCESS) {
+	अगर (result != SCI_SUCCESS) अणु
 		/*
-		 * / @todo Is there any reason to report some additional error message
-		 * /       when we get this failure notifiction? */
-	}
-}
+		 * / @toकरो Is there any reason to report some additional error message
+		 * /       when we get this failure notअगरiction? */
+	पूर्ण
+पूर्ण
 
-static void sci_controller_event_completion(struct isci_host *ihost, u32 ent)
-{
-	struct isci_remote_device *idev;
-	struct isci_request *ireq;
-	struct isci_phy *iphy;
+अटल व्योम sci_controller_event_completion(काष्ठा isci_host *ihost, u32 ent)
+अणु
+	काष्ठा isci_remote_device *idev;
+	काष्ठा isci_request *ireq;
+	काष्ठा isci_phy *iphy;
 	u32 index;
 
 	index = SCU_GET_COMPLETION_INDEX(ent);
 
-	switch (scu_get_event_type(ent)) {
-	case SCU_EVENT_TYPE_SMU_COMMAND_ERROR:
-		/* / @todo The driver did something wrong and we need to fix the condtion. */
+	चयन (scu_get_event_type(ent)) अणु
+	हाल SCU_EVENT_TYPE_SMU_COMMAND_ERROR:
+		/* / @toकरो The driver did something wrong and we need to fix the condtion. */
 		dev_err(&ihost->pdev->dev,
 			"%s: SCIC Controller 0x%p received SMU command error "
 			"0x%x\n",
 			__func__,
 			ihost,
 			ent);
-		break;
+		अवरोध;
 
-	case SCU_EVENT_TYPE_SMU_PCQ_ERROR:
-	case SCU_EVENT_TYPE_SMU_ERROR:
-	case SCU_EVENT_TYPE_FATAL_MEMORY_ERROR:
+	हाल SCU_EVENT_TYPE_SMU_PCQ_ERROR:
+	हाल SCU_EVENT_TYPE_SMU_ERROR:
+	हाल SCU_EVENT_TYPE_FATAL_MEMORY_ERROR:
 		/*
-		 * / @todo This is a hardware failure and its likely that we want to
+		 * / @toकरो This is a hardware failure and its likely that we want to
 		 * /       reset the controller. */
 		dev_err(&ihost->pdev->dev,
 			"%s: SCIC Controller 0x%p received fatal controller "
@@ -395,21 +396,21 @@ static void sci_controller_event_completion(struct isci_host *ihost, u32 ent)
 			__func__,
 			ihost,
 			ent);
-		break;
+		अवरोध;
 
-	case SCU_EVENT_TYPE_TRANSPORT_ERROR:
+	हाल SCU_EVENT_TYPE_TRANSPORT_ERROR:
 		ireq = ihost->reqs[index];
 		sci_io_request_event_handler(ireq, ent);
-		break;
+		अवरोध;
 
-	case SCU_EVENT_TYPE_PTX_SCHEDULE_EVENT:
-		switch (scu_get_event_specifier(ent)) {
-		case SCU_EVENT_SPECIFIC_SMP_RESPONSE_NO_PE:
-		case SCU_EVENT_SPECIFIC_TASK_TIMEOUT:
+	हाल SCU_EVENT_TYPE_PTX_SCHEDULE_EVENT:
+		चयन (scu_get_event_specअगरier(ent)) अणु
+		हाल SCU_EVENT_SPECIFIC_SMP_RESPONSE_NO_PE:
+		हाल SCU_EVENT_SPECIFIC_TASK_TIMEOUT:
 			ireq = ihost->reqs[index];
-			if (ireq != NULL)
+			अगर (ireq != शून्य)
 				sci_io_request_event_handler(ireq, ent);
-			else
+			अन्यथा
 				dev_warn(&ihost->pdev->dev,
 					 "%s: SCIC Controller 0x%p received "
 					 "event 0x%x for io request object "
@@ -418,13 +419,13 @@ static void sci_controller_event_completion(struct isci_host *ihost, u32 ent)
 					 ihost,
 					 ent);
 
-			break;
+			अवरोध;
 
-		case SCU_EVENT_SPECIFIC_IT_NEXUS_TIMEOUT:
+		हाल SCU_EVENT_SPECIFIC_IT_NEXUS_TIMEOUT:
 			idev = ihost->device_table[index];
-			if (idev != NULL)
+			अगर (idev != शून्य)
 				sci_remote_device_event_handler(idev, ent);
-			else
+			अन्यथा
 				dev_warn(&ihost->pdev->dev,
 					 "%s: SCIC Controller 0x%p received "
 					 "event 0x%x for remote device object "
@@ -433,33 +434,33 @@ static void sci_controller_event_completion(struct isci_host *ihost, u32 ent)
 					 ihost,
 					 ent);
 
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case SCU_EVENT_TYPE_BROADCAST_CHANGE:
+	हाल SCU_EVENT_TYPE_BROADCAST_CHANGE:
 	/*
 	 * direct the broadcast change event to the phy first and then let
 	 * the phy redirect the broadcast change to the port object */
-	case SCU_EVENT_TYPE_ERR_CNT_EVENT:
+	हाल SCU_EVENT_TYPE_ERR_CNT_EVENT:
 	/*
 	 * direct error counter event to the phy object since that is where
-	 * we get the event notification.  This is a type 4 event. */
-	case SCU_EVENT_TYPE_OSSP_EVENT:
+	 * we get the event notअगरication.  This is a type 4 event. */
+	हाल SCU_EVENT_TYPE_OSSP_EVENT:
 		index = SCU_GET_PROTOCOL_ENGINE_INDEX(ent);
 		iphy = &ihost->phys[index];
 		sci_phy_event_handler(iphy, ent);
-		break;
+		अवरोध;
 
-	case SCU_EVENT_TYPE_RNC_SUSPEND_TX:
-	case SCU_EVENT_TYPE_RNC_SUSPEND_TX_RX:
-	case SCU_EVENT_TYPE_RNC_OPS_MISC:
-		if (index < ihost->remote_node_entries) {
+	हाल SCU_EVENT_TYPE_RNC_SUSPEND_TX:
+	हाल SCU_EVENT_TYPE_RNC_SUSPEND_TX_RX:
+	हाल SCU_EVENT_TYPE_RNC_OPS_MISC:
+		अगर (index < ihost->remote_node_entries) अणु
 			idev = ihost->device_table[index];
 
-			if (idev != NULL)
+			अगर (idev != शून्य)
 				sci_remote_device_event_handler(idev, ent);
-		} else
+		पूर्ण अन्यथा
 			dev_err(&ihost->pdev->dev,
 				"%s: SCIC Controller 0x%p received event 0x%x "
 				"for remote device object 0x%0x that doesnt "
@@ -469,19 +470,19 @@ static void sci_controller_event_completion(struct isci_host *ihost, u32 ent)
 				ent,
 				index);
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(&ihost->pdev->dev,
 			 "%s: SCIC Controller received unknown event code %x\n",
 			 __func__,
 			 ent);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void sci_controller_process_completions(struct isci_host *ihost)
-{
+अटल व्योम sci_controller_process_completions(काष्ठा isci_host *ihost)
+अणु
 	u32 completion_count = 0;
 	u32 ent;
 	u32 get_index;
@@ -501,15 +502,15 @@ static void sci_controller_process_completions(struct isci_host *ihost)
 	event_get = NORMALIZE_EVENT_POINTER(ihost->completion_queue_get);
 	event_cycle = SMU_CQGR_EVENT_CYCLE_BIT & ihost->completion_queue_get;
 
-	while (
+	जबतक (
 		NORMALIZE_GET_POINTER_CYCLE_BIT(get_cycle)
 		== COMPLETION_QUEUE_CYCLE_BIT(ihost->completion_queue[get_index])
-		) {
+		) अणु
 		completion_count++;
 
 		ent = ihost->completion_queue[get_index];
 
-		/* increment the get pointer and check for rollover to toggle the cycle bit */
+		/* increment the get poपूर्णांकer and check क्रम rollover to toggle the cycle bit */
 		get_cycle ^= ((get_index+1) & SCU_MAX_COMPLETION_QUEUE_ENTRIES) <<
 			     (SMU_COMPLETION_QUEUE_GET_CYCLE_BIT_SHIFT - SCU_MAX_COMPLETION_QUEUE_SHIFT);
 		get_index = (get_index+1) & (SCU_MAX_COMPLETION_QUEUE_ENTRIES-1);
@@ -519,43 +520,43 @@ static void sci_controller_process_completions(struct isci_host *ihost)
 			__func__,
 			ent);
 
-		switch (SCU_GET_COMPLETION_TYPE(ent)) {
-		case SCU_COMPLETION_TYPE_TASK:
+		चयन (SCU_GET_COMPLETION_TYPE(ent)) अणु
+		हाल SCU_COMPLETION_TYPE_TASK:
 			sci_controller_task_completion(ihost, ent);
-			break;
+			अवरोध;
 
-		case SCU_COMPLETION_TYPE_SDMA:
+		हाल SCU_COMPLETION_TYPE_SDMA:
 			sci_controller_sdma_completion(ihost, ent);
-			break;
+			अवरोध;
 
-		case SCU_COMPLETION_TYPE_UFI:
+		हाल SCU_COMPLETION_TYPE_UFI:
 			sci_controller_unsolicited_frame(ihost, ent);
-			break;
+			अवरोध;
 
-		case SCU_COMPLETION_TYPE_EVENT:
+		हाल SCU_COMPLETION_TYPE_EVENT:
 			sci_controller_event_completion(ihost, ent);
-			break;
+			अवरोध;
 
-		case SCU_COMPLETION_TYPE_NOTIFY: {
+		हाल SCU_COMPLETION_TYPE_NOTIFY: अणु
 			event_cycle ^= ((event_get+1) & SCU_MAX_EVENTS) <<
 				       (SMU_COMPLETION_QUEUE_GET_EVENT_CYCLE_BIT_SHIFT - SCU_MAX_EVENTS_SHIFT);
 			event_get = (event_get+1) & (SCU_MAX_EVENTS-1);
 
 			sci_controller_event_completion(ihost, ent);
-			break;
-		}
-		default:
+			अवरोध;
+		पूर्ण
+		शेष:
 			dev_warn(&ihost->pdev->dev,
 				 "%s: SCIC Controller received unknown "
 				 "completion type %x\n",
 				 __func__,
 				 ent);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Update the get register if we completed one or more entries */
-	if (completion_count > 0) {
+	/* Update the get रेजिस्टर अगर we completed one or more entries */
+	अगर (completion_count > 0) अणु
 		ihost->completion_queue_get =
 			SMU_CQGR_GEN_BIT(ENABLE) |
 			SMU_CQGR_GEN_BIT(EVENT_ENABLE) |
@@ -564,190 +565,190 @@ static void sci_controller_process_completions(struct isci_host *ihost)
 			get_cycle |
 			SMU_CQGR_GEN_VAL(POINTER, get_index);
 
-		writel(ihost->completion_queue_get,
-		       &ihost->smu_registers->completion_queue_get);
+		ग_लिखोl(ihost->completion_queue_get,
+		       &ihost->smu_रेजिस्टरs->completion_queue_get);
 
-	}
+	पूर्ण
 
 	dev_dbg(&ihost->pdev->dev,
 		"%s: completion queue ending get:0x%08x\n",
 		__func__,
 		ihost->completion_queue_get);
 
-}
+पूर्ण
 
-static void sci_controller_error_handler(struct isci_host *ihost)
-{
-	u32 interrupt_status;
+अटल व्योम sci_controller_error_handler(काष्ठा isci_host *ihost)
+अणु
+	u32 पूर्णांकerrupt_status;
 
-	interrupt_status =
-		readl(&ihost->smu_registers->interrupt_status);
+	पूर्णांकerrupt_status =
+		पढ़ोl(&ihost->smu_रेजिस्टरs->पूर्णांकerrupt_status);
 
-	if ((interrupt_status & SMU_ISR_QUEUE_SUSPEND) &&
-	    sci_controller_completion_queue_has_entries(ihost)) {
+	अगर ((पूर्णांकerrupt_status & SMU_ISR_QUEUE_SUSPEND) &&
+	    sci_controller_completion_queue_has_entries(ihost)) अणु
 
 		sci_controller_process_completions(ihost);
-		writel(SMU_ISR_QUEUE_SUSPEND, &ihost->smu_registers->interrupt_status);
-	} else {
+		ग_लिखोl(SMU_ISR_QUEUE_SUSPEND, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_status);
+	पूर्ण अन्यथा अणु
 		dev_err(&ihost->pdev->dev, "%s: status: %#x\n", __func__,
-			interrupt_status);
+			पूर्णांकerrupt_status);
 
 		sci_change_state(&ihost->sm, SCIC_FAILED);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* If we dont process any completions I am not sure that we want to do this.
+	/* If we करोnt process any completions I am not sure that we want to करो this.
 	 * We are in the middle of a hardware fault and should probably be reset.
 	 */
-	writel(0, &ihost->smu_registers->interrupt_mask);
-}
+	ग_लिखोl(0, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+पूर्ण
 
-irqreturn_t isci_intx_isr(int vec, void *data)
-{
-	irqreturn_t ret = IRQ_NONE;
-	struct isci_host *ihost = data;
+irqवापस_t isci_पूर्णांकx_isr(पूर्णांक vec, व्योम *data)
+अणु
+	irqवापस_t ret = IRQ_NONE;
+	काष्ठा isci_host *ihost = data;
 
-	if (sci_controller_isr(ihost)) {
-		writel(SMU_ISR_COMPLETION, &ihost->smu_registers->interrupt_status);
+	अगर (sci_controller_isr(ihost)) अणु
+		ग_लिखोl(SMU_ISR_COMPLETION, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_status);
 		tasklet_schedule(&ihost->completion_tasklet);
 		ret = IRQ_HANDLED;
-	} else if (sci_controller_error_isr(ihost)) {
+	पूर्ण अन्यथा अगर (sci_controller_error_isr(ihost)) अणु
 		spin_lock(&ihost->scic_lock);
 		sci_controller_error_handler(ihost);
 		spin_unlock(&ihost->scic_lock);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-irqreturn_t isci_error_isr(int vec, void *data)
-{
-	struct isci_host *ihost = data;
+irqवापस_t isci_error_isr(पूर्णांक vec, व्योम *data)
+अणु
+	काष्ठा isci_host *ihost = data;
 
-	if (sci_controller_error_isr(ihost))
+	अगर (sci_controller_error_isr(ihost))
 		sci_controller_error_handler(ihost);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * isci_host_start_complete() - This function is called by the core library,
  *    through the ISCI Module, to indicate controller start status.
- * @ihost: This parameter specifies the ISCI host object
- * @completion_status: This parameter specifies the completion status from the
+ * @ihost: This parameter specअगरies the ISCI host object
+ * @completion_status: This parameter specअगरies the completion status from the
  *    core library.
  *
  */
-static void isci_host_start_complete(struct isci_host *ihost, enum sci_status completion_status)
-{
-	if (completion_status != SCI_SUCCESS)
+अटल व्योम isci_host_start_complete(काष्ठा isci_host *ihost, क्रमागत sci_status completion_status)
+अणु
+	अगर (completion_status != SCI_SUCCESS)
 		dev_info(&ihost->pdev->dev,
 			"controller start timed out, continuing...\n");
 	clear_bit(IHOST_START_PENDING, &ihost->flags);
 	wake_up(&ihost->eventq);
-}
+पूर्ण
 
-int isci_host_scan_finished(struct Scsi_Host *shost, unsigned long time)
-{
-	struct sas_ha_struct *ha = SHOST_TO_SAS_HA(shost);
-	struct isci_host *ihost = ha->lldd_ha;
+पूर्णांक isci_host_scan_finished(काष्ठा Scsi_Host *shost, अचिन्हित दीर्घ समय)
+अणु
+	काष्ठा sas_ha_काष्ठा *ha = SHOST_TO_SAS_HA(shost);
+	काष्ठा isci_host *ihost = ha->lldd_ha;
 
-	if (test_bit(IHOST_START_PENDING, &ihost->flags))
-		return 0;
+	अगर (test_bit(IHOST_START_PENDING, &ihost->flags))
+		वापस 0;
 
 	sas_drain_work(ha);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
- * sci_controller_get_suggested_start_timeout() - This method returns the
- *    suggested sci_controller_start() timeout amount.  The user is free to
- *    use any timeout value, but this method provides the suggested minimum
- *    start timeout value.  The returned value is based upon empirical
- *    information determined as a result of interoperability testing.
- * @ihost: the handle to the controller object for which to return the
- *    suggested start timeout.
+ * sci_controller_get_suggested_start_समयout() - This method वापसs the
+ *    suggested sci_controller_start() समयout amount.  The user is मुक्त to
+ *    use any समयout value, but this method provides the suggested minimum
+ *    start समयout value.  The वापसed value is based upon empirical
+ *    inक्रमmation determined as a result of पूर्णांकeroperability testing.
+ * @ihost: the handle to the controller object क्रम which to वापस the
+ *    suggested start समयout.
  *
- * This method returns the number of milliseconds for the suggested start
- * operation timeout.
+ * This method वापसs the number of milliseconds क्रम the suggested start
+ * operation समयout.
  */
-static u32 sci_controller_get_suggested_start_timeout(struct isci_host *ihost)
-{
+अटल u32 sci_controller_get_suggested_start_समयout(काष्ठा isci_host *ihost)
+अणु
 	/* Validate the user supplied parameters. */
-	if (!ihost)
-		return 0;
+	अगर (!ihost)
+		वापस 0;
 
 	/*
-	 * The suggested minimum timeout value for a controller start operation:
+	 * The suggested minimum समयout value क्रम a controller start operation:
 	 *
 	 *     Signature FIS Timeout
 	 *   + Phy Start Timeout
 	 *   + Number of Phy Spin Up Intervals
 	 *   ---------------------------------
-	 *   Number of milliseconds for the controller start operation.
+	 *   Number of milliseconds क्रम the controller start operation.
 	 *
-	 * NOTE: The number of phy spin up intervals will be equivalent
-	 *       to the number of phys divided by the number phys allowed
-	 *       per interval - 1 (once OEM parameters are supported).
-	 *       Currently we assume only 1 phy per interval. */
+	 * NOTE: The number of phy spin up पूर्णांकervals will be equivalent
+	 *       to the number of phys भागided by the number phys allowed
+	 *       per पूर्णांकerval - 1 (once OEM parameters are supported).
+	 *       Currently we assume only 1 phy per पूर्णांकerval. */
 
-	return SCIC_SDS_SIGNATURE_FIS_TIMEOUT
+	वापस SCIC_SDS_SIGNATURE_FIS_TIMEOUT
 		+ SCIC_SDS_CONTROLLER_PHY_START_TIMEOUT
 		+ ((SCI_MAX_PHYS - 1) * SCIC_SDS_CONTROLLER_POWER_CONTROL_INTERVAL);
-}
+पूर्ण
 
-static void sci_controller_enable_interrupts(struct isci_host *ihost)
-{
+अटल व्योम sci_controller_enable_पूर्णांकerrupts(काष्ठा isci_host *ihost)
+अणु
 	set_bit(IHOST_IRQ_ENABLED, &ihost->flags);
-	writel(0, &ihost->smu_registers->interrupt_mask);
-}
+	ग_लिखोl(0, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+पूर्ण
 
-void sci_controller_disable_interrupts(struct isci_host *ihost)
-{
+व्योम sci_controller_disable_पूर्णांकerrupts(काष्ठा isci_host *ihost)
+अणु
 	clear_bit(IHOST_IRQ_ENABLED, &ihost->flags);
-	writel(0xffffffff, &ihost->smu_registers->interrupt_mask);
-	readl(&ihost->smu_registers->interrupt_mask); /* flush */
-}
+	ग_लिखोl(0xffffffff, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+	पढ़ोl(&ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask); /* flush */
+पूर्ण
 
-static void sci_controller_enable_port_task_scheduler(struct isci_host *ihost)
-{
+अटल व्योम sci_controller_enable_port_task_scheduler(काष्ठा isci_host *ihost)
+अणु
 	u32 port_task_scheduler_value;
 
 	port_task_scheduler_value =
-		readl(&ihost->scu_registers->peg0.ptsg.control);
+		पढ़ोl(&ihost->scu_रेजिस्टरs->peg0.ptsg.control);
 	port_task_scheduler_value |=
 		(SCU_PTSGCR_GEN_BIT(ETM_ENABLE) |
 		 SCU_PTSGCR_GEN_BIT(PTSG_ENABLE));
-	writel(port_task_scheduler_value,
-	       &ihost->scu_registers->peg0.ptsg.control);
-}
+	ग_लिखोl(port_task_scheduler_value,
+	       &ihost->scu_रेजिस्टरs->peg0.ptsg.control);
+पूर्ण
 
-static void sci_controller_assign_task_entries(struct isci_host *ihost)
-{
+अटल व्योम sci_controller_assign_task_entries(काष्ठा isci_host *ihost)
+अणु
 	u32 task_assignment;
 
 	/*
 	 * Assign all the TCs to function 0
-	 * TODO: Do we actually need to read this register to write it back?
+	 * TODO: Do we actually need to पढ़ो this रेजिस्टर to ग_लिखो it back?
 	 */
 
 	task_assignment =
-		readl(&ihost->smu_registers->task_context_assignment[0]);
+		पढ़ोl(&ihost->smu_रेजिस्टरs->task_context_assignment[0]);
 
 	task_assignment |= (SMU_TCA_GEN_VAL(STARTING, 0)) |
 		(SMU_TCA_GEN_VAL(ENDING,  ihost->task_context_entries - 1)) |
 		(SMU_TCA_GEN_BIT(RANGE_CHECK_ENABLE));
 
-	writel(task_assignment,
-		&ihost->smu_registers->task_context_assignment[0]);
+	ग_लिखोl(task_assignment,
+		&ihost->smu_रेजिस्टरs->task_context_assignment[0]);
 
-}
+पूर्ण
 
-static void sci_controller_initialize_completion_queue(struct isci_host *ihost)
-{
+अटल व्योम sci_controller_initialize_completion_queue(काष्ठा isci_host *ihost)
+अणु
 	u32 index;
 	u32 completion_queue_control_value;
 	u32 completion_queue_get_value;
@@ -759,11 +760,11 @@ static void sci_controller_initialize_completion_queue(struct isci_host *ihost)
 		(SMU_CQC_QUEUE_LIMIT_SET(SCU_MAX_COMPLETION_QUEUE_ENTRIES - 1) |
 		 SMU_CQC_EVENT_LIMIT_SET(SCU_MAX_EVENTS - 1));
 
-	writel(completion_queue_control_value,
-	       &ihost->smu_registers->completion_queue_control);
+	ग_लिखोl(completion_queue_control_value,
+	       &ihost->smu_रेजिस्टरs->completion_queue_control);
 
 
-	/* Set the completion queue get pointer and enable the queue */
+	/* Set the completion queue get poपूर्णांकer and enable the queue */
 	completion_queue_get_value = (
 		(SMU_CQGR_GEN_VAL(POINTER, 0))
 		| (SMU_CQGR_GEN_VAL(EVENT_POINTER, 0))
@@ -771,30 +772,30 @@ static void sci_controller_initialize_completion_queue(struct isci_host *ihost)
 		| (SMU_CQGR_GEN_BIT(EVENT_ENABLE))
 		);
 
-	writel(completion_queue_get_value,
-	       &ihost->smu_registers->completion_queue_get);
+	ग_लिखोl(completion_queue_get_value,
+	       &ihost->smu_रेजिस्टरs->completion_queue_get);
 
-	/* Set the completion queue put pointer */
+	/* Set the completion queue put poपूर्णांकer */
 	completion_queue_put_value = (
 		(SMU_CQPR_GEN_VAL(POINTER, 0))
 		| (SMU_CQPR_GEN_VAL(EVENT_POINTER, 0))
 		);
 
-	writel(completion_queue_put_value,
-	       &ihost->smu_registers->completion_queue_put);
+	ग_लिखोl(completion_queue_put_value,
+	       &ihost->smu_रेजिस्टरs->completion_queue_put);
 
 	/* Initialize the cycle bit of the completion queue entries */
-	for (index = 0; index < SCU_MAX_COMPLETION_QUEUE_ENTRIES; index++) {
+	क्रम (index = 0; index < SCU_MAX_COMPLETION_QUEUE_ENTRIES; index++) अणु
 		/*
 		 * If get.cycle_bit != completion_queue.cycle_bit
 		 * its not a valid completion queue entry
-		 * so at system start all entries are invalid */
+		 * so at प्रणाली start all entries are invalid */
 		ihost->completion_queue[index] = 0x80000000;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sci_controller_initialize_unsolicited_frame_queue(struct isci_host *ihost)
-{
+अटल व्योम sci_controller_initialize_unsolicited_frame_queue(काष्ठा isci_host *ihost)
+अणु
 	u32 frame_queue_control_value;
 	u32 frame_queue_get_value;
 	u32 frame_queue_put_value;
@@ -803,144 +804,144 @@ static void sci_controller_initialize_unsolicited_frame_queue(struct isci_host *
 	frame_queue_control_value =
 		SCU_UFQC_GEN_VAL(QUEUE_SIZE, SCU_MAX_UNSOLICITED_FRAMES);
 
-	writel(frame_queue_control_value,
-	       &ihost->scu_registers->sdma.unsolicited_frame_queue_control);
+	ग_लिखोl(frame_queue_control_value,
+	       &ihost->scu_रेजिस्टरs->sdma.unsolicited_frame_queue_control);
 
-	/* Setup the get pointer for the unsolicited frame queue */
+	/* Setup the get poपूर्णांकer क्रम the unsolicited frame queue */
 	frame_queue_get_value = (
 		SCU_UFQGP_GEN_VAL(POINTER, 0)
 		|  SCU_UFQGP_GEN_BIT(ENABLE_BIT)
 		);
 
-	writel(frame_queue_get_value,
-	       &ihost->scu_registers->sdma.unsolicited_frame_get_pointer);
-	/* Setup the put pointer for the unsolicited frame queue */
+	ग_लिखोl(frame_queue_get_value,
+	       &ihost->scu_रेजिस्टरs->sdma.unsolicited_frame_get_poपूर्णांकer);
+	/* Setup the put poपूर्णांकer क्रम the unsolicited frame queue */
 	frame_queue_put_value = SCU_UFQPP_GEN_VAL(POINTER, 0);
-	writel(frame_queue_put_value,
-	       &ihost->scu_registers->sdma.unsolicited_frame_put_pointer);
-}
+	ग_लिखोl(frame_queue_put_value,
+	       &ihost->scu_रेजिस्टरs->sdma.unsolicited_frame_put_poपूर्णांकer);
+पूर्ण
 
-void sci_controller_transition_to_ready(struct isci_host *ihost, enum sci_status status)
-{
-	if (ihost->sm.current_state_id == SCIC_STARTING) {
+व्योम sci_controller_transition_to_पढ़ोy(काष्ठा isci_host *ihost, क्रमागत sci_status status)
+अणु
+	अगर (ihost->sm.current_state_id == SCIC_STARTING) अणु
 		/*
-		 * We move into the ready state, because some of the phys/ports
+		 * We move पूर्णांकo the पढ़ोy state, because some of the phys/ports
 		 * may be up and operational.
 		 */
 		sci_change_state(&ihost->sm, SCIC_READY);
 
 		isci_host_start_complete(ihost, status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool is_phy_starting(struct isci_phy *iphy)
-{
-	enum sci_phy_states state;
+अटल bool is_phy_starting(काष्ठा isci_phy *iphy)
+अणु
+	क्रमागत sci_phy_states state;
 
 	state = iphy->sm.current_state_id;
-	switch (state) {
-	case SCI_PHY_STARTING:
-	case SCI_PHY_SUB_INITIAL:
-	case SCI_PHY_SUB_AWAIT_SAS_SPEED_EN:
-	case SCI_PHY_SUB_AWAIT_IAF_UF:
-	case SCI_PHY_SUB_AWAIT_SAS_POWER:
-	case SCI_PHY_SUB_AWAIT_SATA_POWER:
-	case SCI_PHY_SUB_AWAIT_SATA_PHY_EN:
-	case SCI_PHY_SUB_AWAIT_SATA_SPEED_EN:
-	case SCI_PHY_SUB_AWAIT_OSSP_EN:
-	case SCI_PHY_SUB_AWAIT_SIG_FIS_UF:
-	case SCI_PHY_SUB_FINAL:
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (state) अणु
+	हाल SCI_PHY_STARTING:
+	हाल SCI_PHY_SUB_INITIAL:
+	हाल SCI_PHY_SUB_AWAIT_SAS_SPEED_EN:
+	हाल SCI_PHY_SUB_AWAIT_IAF_UF:
+	हाल SCI_PHY_SUB_AWAIT_SAS_POWER:
+	हाल SCI_PHY_SUB_AWAIT_SATA_POWER:
+	हाल SCI_PHY_SUB_AWAIT_SATA_PHY_EN:
+	हाल SCI_PHY_SUB_AWAIT_SATA_SPEED_EN:
+	हाल SCI_PHY_SUB_AWAIT_OSSP_EN:
+	हाल SCI_PHY_SUB_AWAIT_SIG_FIS_UF:
+	हाल SCI_PHY_SUB_FINAL:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-bool is_controller_start_complete(struct isci_host *ihost)
-{
-	int i;
+bool is_controller_start_complete(काष्ठा isci_host *ihost)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SCI_MAX_PHYS; i++) {
-		struct isci_phy *iphy = &ihost->phys[i];
+	क्रम (i = 0; i < SCI_MAX_PHYS; i++) अणु
+		काष्ठा isci_phy *iphy = &ihost->phys[i];
 		u32 state = iphy->sm.current_state_id;
 
 		/* in apc mode we need to check every phy, in
 		 * mpc mode we only need to check phys that have
-		 * been configured into a port
+		 * been configured पूर्णांकo a port
 		 */
-		if (is_port_config_apc(ihost))
+		अगर (is_port_config_apc(ihost))
 			/* pass */;
-		else if (!phy_get_non_dummy_port(iphy))
-			continue;
+		अन्यथा अगर (!phy_get_non_dummy_port(iphy))
+			जारी;
 
-		/* The controller start operation is complete iff:
+		/* The controller start operation is complete अगरf:
 		 * - all links have been given an opportunity to start
 		 * - have no indication of a connected device
 		 * - have an indication of a connected device and it has
 		 *   finished the link training process.
 		 */
-		if ((iphy->is_in_link_training == false && state == SCI_PHY_INITIAL) ||
+		अगर ((iphy->is_in_link_training == false && state == SCI_PHY_INITIAL) ||
 		    (iphy->is_in_link_training == false && state == SCI_PHY_STOPPED) ||
 		    (iphy->is_in_link_training == true && is_phy_starting(iphy)) ||
-		    (ihost->port_agent.phy_ready_mask != ihost->port_agent.phy_configured_mask))
-			return false;
-	}
+		    (ihost->port_agent.phy_पढ़ोy_mask != ihost->port_agent.phy_configured_mask))
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * sci_controller_start_next_phy - start phy
  * @ihost: controller
  *
  * If all the phys have been started, then attempt to transition the
- * controller to the READY state and inform the user
+ * controller to the READY state and inक्रमm the user
  * (sci_cb_controller_start_complete()).
  */
-static enum sci_status sci_controller_start_next_phy(struct isci_host *ihost)
-{
-	struct sci_oem_params *oem = &ihost->oem_parameters;
-	struct isci_phy *iphy;
-	enum sci_status status;
+अटल क्रमागत sci_status sci_controller_start_next_phy(काष्ठा isci_host *ihost)
+अणु
+	काष्ठा sci_oem_params *oem = &ihost->oem_parameters;
+	काष्ठा isci_phy *iphy;
+	क्रमागत sci_status status;
 
 	status = SCI_SUCCESS;
 
-	if (ihost->phy_startup_timer_pending)
-		return status;
+	अगर (ihost->phy_startup_समयr_pending)
+		वापस status;
 
-	if (ihost->next_phy_to_start >= SCI_MAX_PHYS) {
-		if (is_controller_start_complete(ihost)) {
-			sci_controller_transition_to_ready(ihost, SCI_SUCCESS);
-			sci_del_timer(&ihost->phy_timer);
-			ihost->phy_startup_timer_pending = false;
-		}
-	} else {
+	अगर (ihost->next_phy_to_start >= SCI_MAX_PHYS) अणु
+		अगर (is_controller_start_complete(ihost)) अणु
+			sci_controller_transition_to_पढ़ोy(ihost, SCI_SUCCESS);
+			sci_del_समयr(&ihost->phy_समयr);
+			ihost->phy_startup_समयr_pending = false;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		iphy = &ihost->phys[ihost->next_phy_to_start];
 
-		if (oem->controller.mode_type == SCIC_PORT_MANUAL_CONFIGURATION_MODE) {
-			if (phy_get_non_dummy_port(iphy) == NULL) {
+		अगर (oem->controller.mode_type == SCIC_PORT_MANUAL_CONFIGURATION_MODE) अणु
+			अगर (phy_get_non_dummy_port(iphy) == शून्य) अणु
 				ihost->next_phy_to_start++;
 
-				/* Caution recursion ahead be forwarned
+				/* Caution recursion ahead be क्रमwarned
 				 *
 				 * The PHY was never added to a PORT in MPC mode
 				 * so start the next phy in sequence This phy
-				 * will never go link up and will not draw power
+				 * will never go link up and will not draw घातer
 				 * the OEM parameters either configured the phy
-				 * incorrectly for the PORT or it was never
-				 * assigned to a PORT
+				 * incorrectly क्रम the PORT or it was never
+				 * asचिन्हित to a PORT
 				 */
-				return sci_controller_start_next_phy(ihost);
-			}
-		}
+				वापस sci_controller_start_next_phy(ihost);
+			पूर्ण
+		पूर्ण
 
 		status = sci_phy_start(iphy);
 
-		if (status == SCI_SUCCESS) {
-			sci_mod_timer(&ihost->phy_timer,
+		अगर (status == SCI_SUCCESS) अणु
+			sci_mod_समयr(&ihost->phy_समयr,
 				      SCIC_SDS_CONTROLLER_PHY_START_TIMEOUT);
-			ihost->phy_startup_timer_pending = true;
-		} else {
+			ihost->phy_startup_समयr_pending = true;
+		पूर्ण अन्यथा अणु
 			dev_warn(&ihost->pdev->dev,
 				 "%s: Controller stop operation failed "
 				 "to stop phy %d because of status "
@@ -948,69 +949,69 @@ static enum sci_status sci_controller_start_next_phy(struct isci_host *ihost)
 				 __func__,
 				 ihost->phys[ihost->next_phy_to_start].phy_index,
 				 status);
-		}
+		पूर्ण
 
 		ihost->next_phy_to_start++;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void phy_startup_timeout(struct timer_list *t)
-{
-	struct sci_timer *tmr = from_timer(tmr, t, timer);
-	struct isci_host *ihost = container_of(tmr, typeof(*ihost), phy_timer);
-	unsigned long flags;
-	enum sci_status status;
+अटल व्योम phy_startup_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sci_समयr *पंचांगr = from_समयr(पंचांगr, t, समयr);
+	काष्ठा isci_host *ihost = container_of(पंचांगr, typeof(*ihost), phy_समयr);
+	अचिन्हित दीर्घ flags;
+	क्रमागत sci_status status;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
-	if (tmr->cancel)
-		goto done;
+	अगर (पंचांगr->cancel)
+		जाओ करोne;
 
-	ihost->phy_startup_timer_pending = false;
+	ihost->phy_startup_समयr_pending = false;
 
-	do {
+	करो अणु
 		status = sci_controller_start_next_phy(ihost);
-	} while (status != SCI_SUCCESS);
+	पूर्ण जबतक (status != SCI_SUCCESS);
 
-done:
+करोne:
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
-}
+पूर्ण
 
-static u16 isci_tci_active(struct isci_host *ihost)
-{
-	return CIRC_CNT(ihost->tci_head, ihost->tci_tail, SCI_MAX_IO_REQUESTS);
-}
+अटल u16 isci_tci_active(काष्ठा isci_host *ihost)
+अणु
+	वापस CIRC_CNT(ihost->tci_head, ihost->tci_tail, SCI_MAX_IO_REQUESTS);
+पूर्ण
 
-static enum sci_status sci_controller_start(struct isci_host *ihost,
-					     u32 timeout)
-{
-	enum sci_status result;
+अटल क्रमागत sci_status sci_controller_start(काष्ठा isci_host *ihost,
+					     u32 समयout)
+अणु
+	क्रमागत sci_status result;
 	u16 index;
 
-	if (ihost->sm.current_state_id != SCIC_INITIALIZED) {
+	अगर (ihost->sm.current_state_id != SCIC_INITIALIZED) अणु
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 
-	/* Build the TCi free pool */
-	BUILD_BUG_ON(SCI_MAX_IO_REQUESTS > 1 << sizeof(ihost->tci_pool[0]) * 8);
+	/* Build the TCi मुक्त pool */
+	BUILD_BUG_ON(SCI_MAX_IO_REQUESTS > 1 << माप(ihost->tci_pool[0]) * 8);
 	ihost->tci_head = 0;
 	ihost->tci_tail = 0;
-	for (index = 0; index < ihost->task_context_entries; index++)
-		isci_tci_free(ihost, index);
+	क्रम (index = 0; index < ihost->task_context_entries; index++)
+		isci_tci_मुक्त(ihost, index);
 
-	/* Build the RNi free pool */
+	/* Build the RNi मुक्त pool */
 	sci_remote_node_table_initialize(&ihost->available_remote_nodes,
 					 ihost->remote_node_entries);
 
 	/*
-	 * Before anything else lets make sure we will not be
-	 * interrupted by the hardware.
+	 * Beक्रमe anything अन्यथा lets make sure we will not be
+	 * पूर्णांकerrupted by the hardware.
 	 */
-	sci_controller_disable_interrupts(ihost);
+	sci_controller_disable_पूर्णांकerrupts(ihost);
 
 	/* Enable the port task scheduler */
 	sci_controller_enable_port_task_scheduler(ihost);
@@ -1021,99 +1022,99 @@ static enum sci_status sci_controller_start(struct isci_host *ihost,
 	/* Now initialize the completion queue */
 	sci_controller_initialize_completion_queue(ihost);
 
-	/* Initialize the unsolicited frame queue for use */
+	/* Initialize the unsolicited frame queue क्रम use */
 	sci_controller_initialize_unsolicited_frame_queue(ihost);
 
 	/* Start all of the ports on this controller */
-	for (index = 0; index < ihost->logical_port_entries; index++) {
-		struct isci_port *iport = &ihost->ports[index];
+	क्रम (index = 0; index < ihost->logical_port_entries; index++) अणु
+		काष्ठा isci_port *iport = &ihost->ports[index];
 
 		result = sci_port_start(iport);
-		if (result)
-			return result;
-	}
+		अगर (result)
+			वापस result;
+	पूर्ण
 
 	sci_controller_start_next_phy(ihost);
 
-	sci_mod_timer(&ihost->timer, timeout);
+	sci_mod_समयr(&ihost->समयr, समयout);
 
 	sci_change_state(&ihost->sm, SCIC_STARTING);
 
-	return SCI_SUCCESS;
-}
+	वापस SCI_SUCCESS;
+पूर्ण
 
-void isci_host_start(struct Scsi_Host *shost)
-{
-	struct isci_host *ihost = SHOST_TO_SAS_HA(shost)->lldd_ha;
-	unsigned long tmo = sci_controller_get_suggested_start_timeout(ihost);
+व्योम isci_host_start(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा isci_host *ihost = SHOST_TO_SAS_HA(shost)->lldd_ha;
+	अचिन्हित दीर्घ पंचांगo = sci_controller_get_suggested_start_समयout(ihost);
 
 	set_bit(IHOST_START_PENDING, &ihost->flags);
 
 	spin_lock_irq(&ihost->scic_lock);
-	sci_controller_start(ihost, tmo);
-	sci_controller_enable_interrupts(ihost);
+	sci_controller_start(ihost, पंचांगo);
+	sci_controller_enable_पूर्णांकerrupts(ihost);
 	spin_unlock_irq(&ihost->scic_lock);
-}
+पूर्ण
 
-static void isci_host_stop_complete(struct isci_host *ihost)
-{
-	sci_controller_disable_interrupts(ihost);
+अटल व्योम isci_host_stop_complete(काष्ठा isci_host *ihost)
+अणु
+	sci_controller_disable_पूर्णांकerrupts(ihost);
 	clear_bit(IHOST_STOP_PENDING, &ihost->flags);
 	wake_up(&ihost->eventq);
-}
+पूर्ण
 
-static void sci_controller_completion_handler(struct isci_host *ihost)
-{
+अटल व्योम sci_controller_completion_handler(काष्ठा isci_host *ihost)
+अणु
 	/* Empty out the completion queue */
-	if (sci_controller_completion_queue_has_entries(ihost))
+	अगर (sci_controller_completion_queue_has_entries(ihost))
 		sci_controller_process_completions(ihost);
 
-	/* Clear the interrupt and enable all interrupts again */
-	writel(SMU_ISR_COMPLETION, &ihost->smu_registers->interrupt_status);
-	/* Could we write the value of SMU_ISR_COMPLETION? */
-	writel(0xFF000000, &ihost->smu_registers->interrupt_mask);
-	writel(0, &ihost->smu_registers->interrupt_mask);
-}
+	/* Clear the पूर्णांकerrupt and enable all पूर्णांकerrupts again */
+	ग_लिखोl(SMU_ISR_COMPLETION, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_status);
+	/* Could we ग_लिखो the value of SMU_ISR_COMPLETION? */
+	ग_लिखोl(0xFF000000, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+	ग_लिखोl(0, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_mask);
+पूर्ण
 
-void ireq_done(struct isci_host *ihost, struct isci_request *ireq, struct sas_task *task)
-{
-	if (!test_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags) &&
-	    !(task->task_state_flags & SAS_TASK_STATE_ABORTED)) {
-		if (test_bit(IREQ_COMPLETE_IN_TARGET, &ireq->flags)) {
-			/* Normal notification (task_done) */
+व्योम ireq_करोne(काष्ठा isci_host *ihost, काष्ठा isci_request *ireq, काष्ठा sas_task *task)
+अणु
+	अगर (!test_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags) &&
+	    !(task->task_state_flags & SAS_TASK_STATE_ABORTED)) अणु
+		अगर (test_bit(IREQ_COMPLETE_IN_TARGET, &ireq->flags)) अणु
+			/* Normal notअगरication (task_करोne) */
 			dev_dbg(&ihost->pdev->dev,
 				"%s: Normal - ireq/task = %p/%p\n",
 				__func__, ireq, task);
-			task->lldd_task = NULL;
-			task->task_done(task);
-		} else {
+			task->lldd_task = शून्य;
+			task->task_करोne(task);
+		पूर्ण अन्यथा अणु
 			dev_dbg(&ihost->pdev->dev,
 				"%s: Error - ireq/task = %p/%p\n",
 				__func__, ireq, task);
-			if (sas_protocol_ata(task->task_proto))
-				task->lldd_task = NULL;
-			sas_task_abort(task);
-		}
-	} else
-		task->lldd_task = NULL;
+			अगर (sas_protocol_ata(task->task_proto))
+				task->lldd_task = शून्य;
+			sas_task_पात(task);
+		पूर्ण
+	पूर्ण अन्यथा
+		task->lldd_task = शून्य;
 
-	if (test_and_clear_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags))
+	अगर (test_and_clear_bit(IREQ_ABORT_PATH_ACTIVE, &ireq->flags))
 		wake_up_all(&ihost->eventq);
 
-	if (!test_bit(IREQ_NO_AUTO_FREE_TAG, &ireq->flags))
-		isci_free_tag(ihost, ireq->io_tag);
-}
+	अगर (!test_bit(IREQ_NO_AUTO_FREE_TAG, &ireq->flags))
+		isci_मुक्त_tag(ihost, ireq->io_tag);
+पूर्ण
 /**
  * isci_host_completion_routine() - This function is the delayed service
  *    routine that calls the sci core library's completion handler. It's
- *    scheduled as a tasklet from the interrupt service routine when interrupts
- *    in use, or set as the timeout function in polled mode.
- * @data: This parameter specifies the ISCI host object
+ *    scheduled as a tasklet from the पूर्णांकerrupt service routine when पूर्णांकerrupts
+ *    in use, or set as the समयout function in polled mode.
+ * @data: This parameter specअगरies the ISCI host object
  *
  */
-void isci_host_completion_routine(unsigned long data)
-{
-	struct isci_host *ihost = (struct isci_host *)data;
+व्योम isci_host_completion_routine(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा isci_host *ihost = (काष्ठा isci_host *)data;
 	u16 active;
 
 	spin_lock_irq(&ihost->scic_lock);
@@ -1121,96 +1122,96 @@ void isci_host_completion_routine(unsigned long data)
 	spin_unlock_irq(&ihost->scic_lock);
 
 	/*
-	 * we subtract SCI_MAX_PORTS to account for the number of dummy TCs
-	 * issued for hardware issue workaround
+	 * we subtract SCI_MAX_PORTS to account क्रम the number of dummy TCs
+	 * issued क्रम hardware issue workaround
 	 */
 	active = isci_tci_active(ihost) - SCI_MAX_PORTS;
 
 	/*
-	 * the coalesence timeout doubles at each encoding step, so
+	 * the coalesence समयout द्विगुनs at each encoding step, so
 	 * update it based on the ilog2 value of the outstanding requests
 	 */
-	writel(SMU_ICC_GEN_VAL(NUMBER, active) |
+	ग_लिखोl(SMU_ICC_GEN_VAL(NUMBER, active) |
 	       SMU_ICC_GEN_VAL(TIMER, ISCI_COALESCE_BASE + ilog2(active)),
-	       &ihost->smu_registers->interrupt_coalesce_control);
-}
+	       &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_coalesce_control);
+पूर्ण
 
 /**
- * sci_controller_stop() - This method will stop an individual controller
+ * sci_controller_stop() - This method will stop an inभागidual controller
  *    object.This method will invoke the associated user callback upon
  *    completion.  The completion callback is called when the following
- *    conditions are met: -# the method return status is SCI_SUCCESS. -# the
+ *    conditions are met: -# the method वापस status is SCI_SUCCESS. -# the
  *    controller has been quiesced. This method will ensure that all IO
  *    requests are quiesced, phys are stopped, and all additional operation by
  *    the hardware is halted.
  * @ihost: the handle to the controller object to stop.
- * @timeout: This parameter specifies the number of milliseconds in which the
+ * @समयout: This parameter specअगरies the number of milliseconds in which the
  *    stop operation should complete.
  *
- * The controller must be in the STARTED or STOPPED state. Indicate if the
- * controller stop method succeeded or failed in some way. SCI_SUCCESS if the
- * stop operation successfully began. SCI_WARNING_ALREADY_IN_STATE if the
- * controller is already in the STOPPED state. SCI_FAILURE_INVALID_STATE if the
+ * The controller must be in the STARTED or STOPPED state. Indicate अगर the
+ * controller stop method succeeded or failed in some way. SCI_SUCCESS अगर the
+ * stop operation successfully began. SCI_WARNING_ALREADY_IN_STATE अगर the
+ * controller is alपढ़ोy in the STOPPED state. SCI_FAILURE_INVALID_STATE अगर the
  * controller is not either in the STARTED or STOPPED states.
  */
-static enum sci_status sci_controller_stop(struct isci_host *ihost, u32 timeout)
-{
-	if (ihost->sm.current_state_id != SCIC_READY) {
+अटल क्रमागत sci_status sci_controller_stop(काष्ठा isci_host *ihost, u32 समयout)
+अणु
+	अगर (ihost->sm.current_state_id != SCIC_READY) अणु
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 
-	sci_mod_timer(&ihost->timer, timeout);
+	sci_mod_समयr(&ihost->समयr, समयout);
 	sci_change_state(&ihost->sm, SCIC_STOPPING);
-	return SCI_SUCCESS;
-}
+	वापस SCI_SUCCESS;
+पूर्ण
 
 /**
  * sci_controller_reset() - This method will reset the supplied core
  *    controller regardless of the state of said controller.  This operation is
- *    considered destructive.  In other words, all current operations are wiped
- *    out.  No IO completions for outstanding devices occur.  Outstanding IO
- *    requests are not aborted or completed at the actual remote device.
+ *    considered deकाष्ठाive.  In other words, all current operations are wiped
+ *    out.  No IO completions क्रम outstanding devices occur.  Outstanding IO
+ *    requests are not पातed or completed at the actual remote device.
  * @ihost: the handle to the controller object to reset.
  *
- * Indicate if the controller reset method succeeded or failed in some way.
- * SCI_SUCCESS if the reset operation successfully started. SCI_FATAL_ERROR if
+ * Indicate अगर the controller reset method succeeded or failed in some way.
+ * SCI_SUCCESS अगर the reset operation successfully started. SCI_FATAL_ERROR अगर
  * the controller reset operation is unable to complete.
  */
-static enum sci_status sci_controller_reset(struct isci_host *ihost)
-{
-	switch (ihost->sm.current_state_id) {
-	case SCIC_RESET:
-	case SCIC_READY:
-	case SCIC_STOPPING:
-	case SCIC_FAILED:
+अटल क्रमागत sci_status sci_controller_reset(काष्ठा isci_host *ihost)
+अणु
+	चयन (ihost->sm.current_state_id) अणु
+	हाल SCIC_RESET:
+	हाल SCIC_READY:
+	हाल SCIC_STOPPING:
+	हाल SCIC_FAILED:
 		/*
 		 * The reset operation is not a graceful cleanup, just
-		 * perform the state transition.
+		 * perक्रमm the state transition.
 		 */
 		sci_change_state(&ihost->sm, SCIC_RESETTING);
-		return SCI_SUCCESS;
-	default:
+		वापस SCI_SUCCESS;
+	शेष:
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
-}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
+पूर्ण
 
-static enum sci_status sci_controller_stop_phys(struct isci_host *ihost)
-{
+अटल क्रमागत sci_status sci_controller_stop_phys(काष्ठा isci_host *ihost)
+अणु
 	u32 index;
-	enum sci_status status;
-	enum sci_status phy_status;
+	क्रमागत sci_status status;
+	क्रमागत sci_status phy_status;
 
 	status = SCI_SUCCESS;
 
-	for (index = 0; index < SCI_MAX_PHYS; index++) {
+	क्रम (index = 0; index < SCI_MAX_PHYS; index++) अणु
 		phy_status = sci_phy_stop(&ihost->phys[index]);
 
-		if (phy_status != SCI_SUCCESS &&
-		    phy_status != SCI_FAILURE_INVALID_STATE) {
+		अगर (phy_status != SCI_SUCCESS &&
+		    phy_status != SCI_FAILURE_INVALID_STATE) अणु
 			status = SCI_FAILURE;
 
 			dev_warn(&ihost->pdev->dev,
@@ -1218,31 +1219,31 @@ static enum sci_status sci_controller_stop_phys(struct isci_host *ihost)
 				 "phy %d because of status %d.\n",
 				 __func__,
 				 ihost->phys[index].phy_index, phy_status);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
 /**
- * isci_host_deinit - shutdown frame reception and dma
- * @ihost: host to take down
+ * isci_host_deinit - shutकरोwn frame reception and dma
+ * @ihost: host to take करोwn
  *
- * This is called in either the driver shutdown or the suspend path.  In
- * the shutdown case libsas went through port teardown and normal device
+ * This is called in either the driver shutकरोwn or the suspend path.  In
+ * the shutकरोwn हाल libsas went through port tearकरोwn and normal device
  * removal (i.e. physical links stayed up to service scsi_device removal
- * commands).  In the suspend case we disable the hardware without
- * notifying libsas of the link down events since we want libsas to
- * remember the domain across the suspend/resume cycle
+ * commands).  In the suspend हाल we disable the hardware without
+ * notअगरying libsas of the link करोwn events since we want libsas to
+ * remember the करोमुख्य across the suspend/resume cycle
  */
-void isci_host_deinit(struct isci_host *ihost)
-{
-	int i;
+व्योम isci_host_deinit(काष्ठा isci_host *ihost)
+अणु
+	पूर्णांक i;
 
 	/* disable output data selects */
-	for (i = 0; i < isci_gpio_count(ihost); i++)
-		writel(SGPIO_HW_CONTROL, &ihost->scu_registers->peg0.sgpio.output_data_select[i]);
+	क्रम (i = 0; i < isci_gpio_count(ihost); i++)
+		ग_लिखोl(SGPIO_HW_CONTROL, &ihost->scu_रेजिस्टरs->peg0.sgpio.output_data_select[i]);
 
 	set_bit(IHOST_STOP_PENDING, &ihost->flags);
 
@@ -1250,114 +1251,114 @@ void isci_host_deinit(struct isci_host *ihost)
 	sci_controller_stop(ihost, SCIC_CONTROLLER_STOP_TIMEOUT);
 	spin_unlock_irq(&ihost->scic_lock);
 
-	wait_for_stop(ihost);
+	रुको_क्रम_stop(ihost);
 
 	/* phy stop is after controller stop to allow port and device to
-	 * go idle before shutting down the phys, but the expectation is
-	 * that i/o has been shut off well before we reach this
+	 * go idle beक्रमe shutting करोwn the phys, but the expectation is
+	 * that i/o has been shut off well beक्रमe we reach this
 	 * function.
 	 */
 	sci_controller_stop_phys(ihost);
 
-	/* disable sgpio: where the above wait should give time for the
+	/* disable sgpio: where the above रुको should give समय क्रम the
 	 * enclosure to sample the gpios going inactive
 	 */
-	writel(0, &ihost->scu_registers->peg0.sgpio.interface_control);
+	ग_लिखोl(0, &ihost->scu_रेजिस्टरs->peg0.sgpio.पूर्णांकerface_control);
 
 	spin_lock_irq(&ihost->scic_lock);
 	sci_controller_reset(ihost);
 	spin_unlock_irq(&ihost->scic_lock);
 
-	/* Cancel any/all outstanding port timers */
-	for (i = 0; i < ihost->logical_port_entries; i++) {
-		struct isci_port *iport = &ihost->ports[i];
-		del_timer_sync(&iport->timer.timer);
-	}
+	/* Cancel any/all outstanding port समयrs */
+	क्रम (i = 0; i < ihost->logical_port_entries; i++) अणु
+		काष्ठा isci_port *iport = &ihost->ports[i];
+		del_समयr_sync(&iport->समयr.समयr);
+	पूर्ण
 
-	/* Cancel any/all outstanding phy timers */
-	for (i = 0; i < SCI_MAX_PHYS; i++) {
-		struct isci_phy *iphy = &ihost->phys[i];
-		del_timer_sync(&iphy->sata_timer.timer);
-	}
+	/* Cancel any/all outstanding phy समयrs */
+	क्रम (i = 0; i < SCI_MAX_PHYS; i++) अणु
+		काष्ठा isci_phy *iphy = &ihost->phys[i];
+		del_समयr_sync(&iphy->sata_समयr.समयr);
+	पूर्ण
 
-	del_timer_sync(&ihost->port_agent.timer.timer);
+	del_समयr_sync(&ihost->port_agent.समयr.समयr);
 
-	del_timer_sync(&ihost->power_control.timer.timer);
+	del_समयr_sync(&ihost->घातer_control.समयr.समयr);
 
-	del_timer_sync(&ihost->timer.timer);
+	del_समयr_sync(&ihost->समयr.समयr);
 
-	del_timer_sync(&ihost->phy_timer.timer);
-}
+	del_समयr_sync(&ihost->phy_समयr.समयr);
+पूर्ण
 
-static void __iomem *scu_base(struct isci_host *isci_host)
-{
-	struct pci_dev *pdev = isci_host->pdev;
-	int id = isci_host->id;
+अटल व्योम __iomem *scu_base(काष्ठा isci_host *isci_host)
+अणु
+	काष्ठा pci_dev *pdev = isci_host->pdev;
+	पूर्णांक id = isci_host->id;
 
-	return pcim_iomap_table(pdev)[SCI_SCU_BAR * 2] + SCI_SCU_BAR_SIZE * id;
-}
+	वापस pcim_iomap_table(pdev)[SCI_SCU_BAR * 2] + SCI_SCU_BAR_SIZE * id;
+पूर्ण
 
-static void __iomem *smu_base(struct isci_host *isci_host)
-{
-	struct pci_dev *pdev = isci_host->pdev;
-	int id = isci_host->id;
+अटल व्योम __iomem *smu_base(काष्ठा isci_host *isci_host)
+अणु
+	काष्ठा pci_dev *pdev = isci_host->pdev;
+	पूर्णांक id = isci_host->id;
 
-	return pcim_iomap_table(pdev)[SCI_SMU_BAR * 2] + SCI_SMU_BAR_SIZE * id;
-}
+	वापस pcim_iomap_table(pdev)[SCI_SMU_BAR * 2] + SCI_SMU_BAR_SIZE * id;
+पूर्ण
 
-static void sci_controller_initial_state_enter(struct sci_base_state_machine *sm)
-{
-	struct isci_host *ihost = container_of(sm, typeof(*ihost), sm);
+अटल व्योम sci_controller_initial_state_enter(काष्ठा sci_base_state_machine *sm)
+अणु
+	काष्ठा isci_host *ihost = container_of(sm, typeof(*ihost), sm);
 
 	sci_change_state(&ihost->sm, SCIC_RESET);
-}
+पूर्ण
 
-static inline void sci_controller_starting_state_exit(struct sci_base_state_machine *sm)
-{
-	struct isci_host *ihost = container_of(sm, typeof(*ihost), sm);
+अटल अंतरभूत व्योम sci_controller_starting_state_निकास(काष्ठा sci_base_state_machine *sm)
+अणु
+	काष्ठा isci_host *ihost = container_of(sm, typeof(*ihost), sm);
 
-	sci_del_timer(&ihost->timer);
-}
+	sci_del_समयr(&ihost->समयr);
+पूर्ण
 
-#define INTERRUPT_COALESCE_TIMEOUT_BASE_RANGE_LOWER_BOUND_NS 853
-#define INTERRUPT_COALESCE_TIMEOUT_BASE_RANGE_UPPER_BOUND_NS 1280
-#define INTERRUPT_COALESCE_TIMEOUT_MAX_US                    2700000
-#define INTERRUPT_COALESCE_NUMBER_MAX                        256
-#define INTERRUPT_COALESCE_TIMEOUT_ENCODE_MIN                7
-#define INTERRUPT_COALESCE_TIMEOUT_ENCODE_MAX                28
+#घोषणा INTERRUPT_COALESCE_TIMEOUT_BASE_RANGE_LOWER_BOUND_NS 853
+#घोषणा INTERRUPT_COALESCE_TIMEOUT_BASE_RANGE_UPPER_BOUND_NS 1280
+#घोषणा INTERRUPT_COALESCE_TIMEOUT_MAX_US                    2700000
+#घोषणा INTERRUPT_COALESCE_NUMBER_MAX                        256
+#घोषणा INTERRUPT_COALESCE_TIMEOUT_ENCODE_MIN                7
+#घोषणा INTERRUPT_COALESCE_TIMEOUT_ENCODE_MAX                28
 
 /**
- * sci_controller_set_interrupt_coalescence() - This method allows the user to
- *    configure the interrupt coalescence.
+ * sci_controller_set_पूर्णांकerrupt_coalescence() - This method allows the user to
+ *    configure the पूर्णांकerrupt coalescence.
  * @ihost: This parameter represents the handle to the controller object
- *    for which its interrupt coalesce register is overridden.
+ *    क्रम which its पूर्णांकerrupt coalesce रेजिस्टर is overridden.
  * @coalesce_number: Used to control the number of entries in the Completion
- *    Queue before an interrupt is generated. If the number of entries exceed
- *    this number, an interrupt will be generated. The valid range of the input
+ *    Queue beक्रमe an पूर्णांकerrupt is generated. If the number of entries exceed
+ *    this number, an पूर्णांकerrupt will be generated. The valid range of the input
  *    is [0, 256]. A setting of 0 results in coalescing being disabled.
- * @coalesce_timeout: Timeout value in microseconds. The valid range of the
+ * @coalesce_समयout: Timeout value in microseconds. The valid range of the
  *    input is [0, 2700000] . A setting of 0 is allowed and results in no
- *    interrupt coalescing timeout.
+ *    पूर्णांकerrupt coalescing समयout.
  *
- * Indicate if the user successfully set the interrupt coalesce parameters.
- * SCI_SUCCESS The user successfully updated the interrutp coalescence.
+ * Indicate अगर the user successfully set the पूर्णांकerrupt coalesce parameters.
+ * SCI_SUCCESS The user successfully updated the पूर्णांकerrutp coalescence.
  * SCI_FAILURE_INVALID_PARAMETER_VALUE The user input value is out of range.
  */
-static enum sci_status
-sci_controller_set_interrupt_coalescence(struct isci_host *ihost,
+अटल क्रमागत sci_status
+sci_controller_set_पूर्णांकerrupt_coalescence(काष्ठा isci_host *ihost,
 					 u32 coalesce_number,
-					 u32 coalesce_timeout)
-{
-	u8 timeout_encode = 0;
+					 u32 coalesce_समयout)
+अणु
+	u8 समयout_encode = 0;
 	u32 min = 0;
 	u32 max = 0;
 
-	/* Check if the input parameters fall in the range. */
-	if (coalesce_number > INTERRUPT_COALESCE_NUMBER_MAX)
-		return SCI_FAILURE_INVALID_PARAMETER_VALUE;
+	/* Check अगर the input parameters fall in the range. */
+	अगर (coalesce_number > INTERRUPT_COALESCE_NUMBER_MAX)
+		वापस SCI_FAILURE_INVALID_PARAMETER_VALUE;
 
 	/*
-	 *  Defined encoding for interrupt coalescing timeout:
+	 *  Defined encoding क्रम पूर्णांकerrupt coalescing समयout:
 	 *              Value   Min      Max     Units
 	 *              -----   ---      ---     -----
 	 *              0       -        -       Disabled
@@ -1392,91 +1393,91 @@ sci_controller_set_interrupt_coalescence(struct isci_host *ihost,
 	 *              Others Undefined */
 
 	/*
-	 * Use the table above to decide the encode of interrupt coalescing timeout
-	 * value for register writing. */
-	if (coalesce_timeout == 0)
-		timeout_encode = 0;
-	else{
-		/* make the timeout value in unit of (10 ns). */
-		coalesce_timeout = coalesce_timeout * 100;
+	 * Use the table above to decide the encode of पूर्णांकerrupt coalescing समयout
+	 * value क्रम रेजिस्टर writing. */
+	अगर (coalesce_समयout == 0)
+		समयout_encode = 0;
+	अन्यथाअणु
+		/* make the समयout value in unit of (10 ns). */
+		coalesce_समयout = coalesce_समयout * 100;
 		min = INTERRUPT_COALESCE_TIMEOUT_BASE_RANGE_LOWER_BOUND_NS / 10;
 		max = INTERRUPT_COALESCE_TIMEOUT_BASE_RANGE_UPPER_BOUND_NS / 10;
 
-		/* get the encode of timeout for register writing. */
-		for (timeout_encode = INTERRUPT_COALESCE_TIMEOUT_ENCODE_MIN;
-		      timeout_encode <= INTERRUPT_COALESCE_TIMEOUT_ENCODE_MAX;
-		      timeout_encode++) {
-			if (min <= coalesce_timeout &&  max > coalesce_timeout)
-				break;
-			else if (coalesce_timeout >= max && coalesce_timeout < min * 2
-				 && coalesce_timeout <= INTERRUPT_COALESCE_TIMEOUT_MAX_US * 100) {
-				if ((coalesce_timeout - max) < (2 * min - coalesce_timeout))
-					break;
-				else{
-					timeout_encode++;
-					break;
-				}
-			} else {
+		/* get the encode of समयout क्रम रेजिस्टर writing. */
+		क्रम (समयout_encode = INTERRUPT_COALESCE_TIMEOUT_ENCODE_MIN;
+		      समयout_encode <= INTERRUPT_COALESCE_TIMEOUT_ENCODE_MAX;
+		      समयout_encode++) अणु
+			अगर (min <= coalesce_समयout &&  max > coalesce_समयout)
+				अवरोध;
+			अन्यथा अगर (coalesce_समयout >= max && coalesce_समयout < min * 2
+				 && coalesce_समयout <= INTERRUPT_COALESCE_TIMEOUT_MAX_US * 100) अणु
+				अगर ((coalesce_समयout - max) < (2 * min - coalesce_समयout))
+					अवरोध;
+				अन्यथाअणु
+					समयout_encode++;
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				max = max * 2;
 				min = min * 2;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (timeout_encode == INTERRUPT_COALESCE_TIMEOUT_ENCODE_MAX + 1)
+		अगर (समयout_encode == INTERRUPT_COALESCE_TIMEOUT_ENCODE_MAX + 1)
 			/* the value is out of range. */
-			return SCI_FAILURE_INVALID_PARAMETER_VALUE;
-	}
+			वापस SCI_FAILURE_INVALID_PARAMETER_VALUE;
+	पूर्ण
 
-	writel(SMU_ICC_GEN_VAL(NUMBER, coalesce_number) |
-	       SMU_ICC_GEN_VAL(TIMER, timeout_encode),
-	       &ihost->smu_registers->interrupt_coalesce_control);
-
-
-	ihost->interrupt_coalesce_number = (u16)coalesce_number;
-	ihost->interrupt_coalesce_timeout = coalesce_timeout / 100;
-
-	return SCI_SUCCESS;
-}
+	ग_लिखोl(SMU_ICC_GEN_VAL(NUMBER, coalesce_number) |
+	       SMU_ICC_GEN_VAL(TIMER, समयout_encode),
+	       &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_coalesce_control);
 
 
-static void sci_controller_ready_state_enter(struct sci_base_state_machine *sm)
-{
-	struct isci_host *ihost = container_of(sm, typeof(*ihost), sm);
+	ihost->पूर्णांकerrupt_coalesce_number = (u16)coalesce_number;
+	ihost->पूर्णांकerrupt_coalesce_समयout = coalesce_समयout / 100;
+
+	वापस SCI_SUCCESS;
+पूर्ण
+
+
+अटल व्योम sci_controller_पढ़ोy_state_enter(काष्ठा sci_base_state_machine *sm)
+अणु
+	काष्ठा isci_host *ihost = container_of(sm, typeof(*ihost), sm);
 	u32 val;
 
-	/* enable clock gating for power control of the scu unit */
-	val = readl(&ihost->smu_registers->clock_gating_control);
+	/* enable घड़ी gating क्रम घातer control of the scu unit */
+	val = पढ़ोl(&ihost->smu_रेजिस्टरs->घड़ी_gating_control);
 	val &= ~(SMU_CGUCR_GEN_BIT(REGCLK_ENABLE) |
 		 SMU_CGUCR_GEN_BIT(TXCLK_ENABLE) |
 		 SMU_CGUCR_GEN_BIT(XCLK_ENABLE));
 	val |= SMU_CGUCR_GEN_BIT(IDLE_ENABLE);
-	writel(val, &ihost->smu_registers->clock_gating_control);
+	ग_लिखोl(val, &ihost->smu_रेजिस्टरs->घड़ी_gating_control);
 
-	/* set the default interrupt coalescence number and timeout value. */
-	sci_controller_set_interrupt_coalescence(ihost, 0, 0);
-}
+	/* set the शेष पूर्णांकerrupt coalescence number and समयout value. */
+	sci_controller_set_पूर्णांकerrupt_coalescence(ihost, 0, 0);
+पूर्ण
 
-static void sci_controller_ready_state_exit(struct sci_base_state_machine *sm)
-{
-	struct isci_host *ihost = container_of(sm, typeof(*ihost), sm);
+अटल व्योम sci_controller_पढ़ोy_state_निकास(काष्ठा sci_base_state_machine *sm)
+अणु
+	काष्ठा isci_host *ihost = container_of(sm, typeof(*ihost), sm);
 
-	/* disable interrupt coalescence. */
-	sci_controller_set_interrupt_coalescence(ihost, 0, 0);
-}
+	/* disable पूर्णांकerrupt coalescence. */
+	sci_controller_set_पूर्णांकerrupt_coalescence(ihost, 0, 0);
+पूर्ण
 
-static enum sci_status sci_controller_stop_ports(struct isci_host *ihost)
-{
+अटल क्रमागत sci_status sci_controller_stop_ports(काष्ठा isci_host *ihost)
+अणु
 	u32 index;
-	enum sci_status port_status;
-	enum sci_status status = SCI_SUCCESS;
+	क्रमागत sci_status port_status;
+	क्रमागत sci_status status = SCI_SUCCESS;
 
-	for (index = 0; index < ihost->logical_port_entries; index++) {
-		struct isci_port *iport = &ihost->ports[index];
+	क्रम (index = 0; index < ihost->logical_port_entries; index++) अणु
+		काष्ठा isci_port *iport = &ihost->ports[index];
 
 		port_status = sci_port_stop(iport);
 
-		if ((port_status != SCI_SUCCESS) &&
-		    (port_status != SCI_FAILURE_INVALID_STATE)) {
+		अगर ((port_status != SCI_SUCCESS) &&
+		    (port_status != SCI_FAILURE_INVALID_STATE)) अणु
 			status = SCI_FAILURE;
 
 			dev_warn(&ihost->pdev->dev,
@@ -1485,703 +1486,703 @@ static enum sci_status sci_controller_stop_ports(struct isci_host *ihost)
 				 __func__,
 				 iport->logical_port_index,
 				 port_status);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static enum sci_status sci_controller_stop_devices(struct isci_host *ihost)
-{
+अटल क्रमागत sci_status sci_controller_stop_devices(काष्ठा isci_host *ihost)
+अणु
 	u32 index;
-	enum sci_status status;
-	enum sci_status device_status;
+	क्रमागत sci_status status;
+	क्रमागत sci_status device_status;
 
 	status = SCI_SUCCESS;
 
-	for (index = 0; index < ihost->remote_node_entries; index++) {
-		if (ihost->device_table[index] != NULL) {
-			/* / @todo What timeout value do we want to provide to this request? */
+	क्रम (index = 0; index < ihost->remote_node_entries; index++) अणु
+		अगर (ihost->device_table[index] != शून्य) अणु
+			/* / @toकरो What समयout value करो we want to provide to this request? */
 			device_status = sci_remote_device_stop(ihost->device_table[index], 0);
 
-			if ((device_status != SCI_SUCCESS) &&
-			    (device_status != SCI_FAILURE_INVALID_STATE)) {
+			अगर ((device_status != SCI_SUCCESS) &&
+			    (device_status != SCI_FAILURE_INVALID_STATE)) अणु
 				dev_warn(&ihost->pdev->dev,
 					 "%s: Controller stop operation failed "
 					 "to stop device 0x%p because of "
 					 "status %d.\n",
 					 __func__,
 					 ihost->device_table[index], device_status);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void sci_controller_stopping_state_enter(struct sci_base_state_machine *sm)
-{
-	struct isci_host *ihost = container_of(sm, typeof(*ihost), sm);
+अटल व्योम sci_controller_stopping_state_enter(काष्ठा sci_base_state_machine *sm)
+अणु
+	काष्ठा isci_host *ihost = container_of(sm, typeof(*ihost), sm);
 
 	sci_controller_stop_devices(ihost);
 	sci_controller_stop_ports(ihost);
 
-	if (!sci_controller_has_remote_devices_stopping(ihost))
+	अगर (!sci_controller_has_remote_devices_stopping(ihost))
 		isci_host_stop_complete(ihost);
-}
+पूर्ण
 
-static void sci_controller_stopping_state_exit(struct sci_base_state_machine *sm)
-{
-	struct isci_host *ihost = container_of(sm, typeof(*ihost), sm);
+अटल व्योम sci_controller_stopping_state_निकास(काष्ठा sci_base_state_machine *sm)
+अणु
+	काष्ठा isci_host *ihost = container_of(sm, typeof(*ihost), sm);
 
-	sci_del_timer(&ihost->timer);
-}
+	sci_del_समयr(&ihost->समयr);
+पूर्ण
 
-static void sci_controller_reset_hardware(struct isci_host *ihost)
-{
-	/* Disable interrupts so we dont take any spurious interrupts */
-	sci_controller_disable_interrupts(ihost);
+अटल व्योम sci_controller_reset_hardware(काष्ठा isci_host *ihost)
+अणु
+	/* Disable पूर्णांकerrupts so we करोnt take any spurious पूर्णांकerrupts */
+	sci_controller_disable_पूर्णांकerrupts(ihost);
 
 	/* Reset the SCU */
-	writel(0xFFFFFFFF, &ihost->smu_registers->soft_reset_control);
+	ग_लिखोl(0xFFFFFFFF, &ihost->smu_रेजिस्टरs->soft_reset_control);
 
-	/* Delay for 1ms to before clearing the CQP and UFQPR. */
+	/* Delay क्रम 1ms to beक्रमe clearing the CQP and UFQPR. */
 	udelay(1000);
 
-	/* The write to the CQGR clears the CQP */
-	writel(0x00000000, &ihost->smu_registers->completion_queue_get);
+	/* The ग_लिखो to the CQGR clears the CQP */
+	ग_लिखोl(0x00000000, &ihost->smu_रेजिस्टरs->completion_queue_get);
 
-	/* The write to the UFQGP clears the UFQPR */
-	writel(0, &ihost->scu_registers->sdma.unsolicited_frame_get_pointer);
+	/* The ग_लिखो to the UFQGP clears the UFQPR */
+	ग_लिखोl(0, &ihost->scu_रेजिस्टरs->sdma.unsolicited_frame_get_poपूर्णांकer);
 
-	/* clear all interrupts */
-	writel(~SMU_INTERRUPT_STATUS_RESERVED_MASK, &ihost->smu_registers->interrupt_status);
-}
+	/* clear all पूर्णांकerrupts */
+	ग_लिखोl(~SMU_INTERRUPT_STATUS_RESERVED_MASK, &ihost->smu_रेजिस्टरs->पूर्णांकerrupt_status);
+पूर्ण
 
-static void sci_controller_resetting_state_enter(struct sci_base_state_machine *sm)
-{
-	struct isci_host *ihost = container_of(sm, typeof(*ihost), sm);
+अटल व्योम sci_controller_resetting_state_enter(काष्ठा sci_base_state_machine *sm)
+अणु
+	काष्ठा isci_host *ihost = container_of(sm, typeof(*ihost), sm);
 
 	sci_controller_reset_hardware(ihost);
 	sci_change_state(&ihost->sm, SCIC_RESET);
-}
+पूर्ण
 
-static const struct sci_base_state sci_controller_state_table[] = {
-	[SCIC_INITIAL] = {
+अटल स्थिर काष्ठा sci_base_state sci_controller_state_table[] = अणु
+	[SCIC_INITIAL] = अणु
 		.enter_state = sci_controller_initial_state_enter,
-	},
-	[SCIC_RESET] = {},
-	[SCIC_INITIALIZING] = {},
-	[SCIC_INITIALIZED] = {},
-	[SCIC_STARTING] = {
-		.exit_state  = sci_controller_starting_state_exit,
-	},
-	[SCIC_READY] = {
-		.enter_state = sci_controller_ready_state_enter,
-		.exit_state  = sci_controller_ready_state_exit,
-	},
-	[SCIC_RESETTING] = {
+	पूर्ण,
+	[SCIC_RESET] = अणुपूर्ण,
+	[SCIC_INITIALIZING] = अणुपूर्ण,
+	[SCIC_INITIALIZED] = अणुपूर्ण,
+	[SCIC_STARTING] = अणु
+		.निकास_state  = sci_controller_starting_state_निकास,
+	पूर्ण,
+	[SCIC_READY] = अणु
+		.enter_state = sci_controller_पढ़ोy_state_enter,
+		.निकास_state  = sci_controller_पढ़ोy_state_निकास,
+	पूर्ण,
+	[SCIC_RESETTING] = अणु
 		.enter_state = sci_controller_resetting_state_enter,
-	},
-	[SCIC_STOPPING] = {
+	पूर्ण,
+	[SCIC_STOPPING] = अणु
 		.enter_state = sci_controller_stopping_state_enter,
-		.exit_state = sci_controller_stopping_state_exit,
-	},
-	[SCIC_FAILED] = {}
-};
+		.निकास_state = sci_controller_stopping_state_निकास,
+	पूर्ण,
+	[SCIC_FAILED] = अणुपूर्ण
+पूर्ण;
 
-static void controller_timeout(struct timer_list *t)
-{
-	struct sci_timer *tmr = from_timer(tmr, t, timer);
-	struct isci_host *ihost = container_of(tmr, typeof(*ihost), timer);
-	struct sci_base_state_machine *sm = &ihost->sm;
-	unsigned long flags;
+अटल व्योम controller_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sci_समयr *पंचांगr = from_समयr(पंचांगr, t, समयr);
+	काष्ठा isci_host *ihost = container_of(पंचांगr, typeof(*ihost), समयr);
+	काष्ठा sci_base_state_machine *sm = &ihost->sm;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
-	if (tmr->cancel)
-		goto done;
+	अगर (पंचांगr->cancel)
+		जाओ करोne;
 
-	if (sm->current_state_id == SCIC_STARTING)
-		sci_controller_transition_to_ready(ihost, SCI_FAILURE_TIMEOUT);
-	else if (sm->current_state_id == SCIC_STOPPING) {
+	अगर (sm->current_state_id == SCIC_STARTING)
+		sci_controller_transition_to_पढ़ोy(ihost, SCI_FAILURE_TIMEOUT);
+	अन्यथा अगर (sm->current_state_id == SCIC_STOPPING) अणु
 		sci_change_state(sm, SCIC_FAILED);
 		isci_host_stop_complete(ihost);
-	} else	/* / @todo Now what do we want to do in this case? */
+	पूर्ण अन्यथा	/* / @toकरो Now what करो we want to करो in this हाल? */
 		dev_err(&ihost->pdev->dev,
 			"%s: Controller timer fired when controller was not "
 			"in a state being timed.\n",
 			__func__);
 
-done:
+करोne:
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
-}
+पूर्ण
 
-static enum sci_status sci_controller_construct(struct isci_host *ihost,
-						void __iomem *scu_base,
-						void __iomem *smu_base)
-{
+अटल क्रमागत sci_status sci_controller_स्थिरruct(काष्ठा isci_host *ihost,
+						व्योम __iomem *scu_base,
+						व्योम __iomem *smu_base)
+अणु
 	u8 i;
 
 	sci_init_sm(&ihost->sm, sci_controller_state_table, SCIC_INITIAL);
 
-	ihost->scu_registers = scu_base;
-	ihost->smu_registers = smu_base;
+	ihost->scu_रेजिस्टरs = scu_base;
+	ihost->smu_रेजिस्टरs = smu_base;
 
-	sci_port_configuration_agent_construct(&ihost->port_agent);
+	sci_port_configuration_agent_स्थिरruct(&ihost->port_agent);
 
-	/* Construct the ports for this controller */
-	for (i = 0; i < SCI_MAX_PORTS; i++)
-		sci_port_construct(&ihost->ports[i], i, ihost);
-	sci_port_construct(&ihost->ports[i], SCIC_SDS_DUMMY_PORT, ihost);
+	/* Conकाष्ठा the ports क्रम this controller */
+	क्रम (i = 0; i < SCI_MAX_PORTS; i++)
+		sci_port_स्थिरruct(&ihost->ports[i], i, ihost);
+	sci_port_स्थिरruct(&ihost->ports[i], SCIC_SDS_DUMMY_PORT, ihost);
 
-	/* Construct the phys for this controller */
-	for (i = 0; i < SCI_MAX_PHYS; i++) {
+	/* Conकाष्ठा the phys क्रम this controller */
+	क्रम (i = 0; i < SCI_MAX_PHYS; i++) अणु
 		/* Add all the PHYs to the dummy port */
-		sci_phy_construct(&ihost->phys[i],
+		sci_phy_स्थिरruct(&ihost->phys[i],
 				  &ihost->ports[SCI_MAX_PORTS], i);
-	}
+	पूर्ण
 
 	ihost->invalid_phy_mask = 0;
 
-	sci_init_timer(&ihost->timer, controller_timeout);
+	sci_init_समयr(&ihost->समयr, controller_समयout);
 
-	return sci_controller_reset(ihost);
-}
+	वापस sci_controller_reset(ihost);
+पूर्ण
 
-int sci_oem_parameters_validate(struct sci_oem_params *oem, u8 version)
-{
-	int i;
+पूर्णांक sci_oem_parameters_validate(काष्ठा sci_oem_params *oem, u8 version)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SCI_MAX_PORTS; i++)
-		if (oem->ports[i].phy_mask > SCIC_SDS_PARM_PHY_MASK_MAX)
-			return -EINVAL;
+	क्रम (i = 0; i < SCI_MAX_PORTS; i++)
+		अगर (oem->ports[i].phy_mask > SCIC_SDS_PARM_PHY_MASK_MAX)
+			वापस -EINVAL;
 
-	for (i = 0; i < SCI_MAX_PHYS; i++)
-		if (oem->phys[i].sas_address.high == 0 &&
+	क्रम (i = 0; i < SCI_MAX_PHYS; i++)
+		अगर (oem->phys[i].sas_address.high == 0 &&
 		    oem->phys[i].sas_address.low == 0)
-			return -EINVAL;
+			वापस -EINVAL;
 
-	if (oem->controller.mode_type == SCIC_PORT_AUTOMATIC_CONFIGURATION_MODE) {
-		for (i = 0; i < SCI_MAX_PHYS; i++)
-			if (oem->ports[i].phy_mask != 0)
-				return -EINVAL;
-	} else if (oem->controller.mode_type == SCIC_PORT_MANUAL_CONFIGURATION_MODE) {
+	अगर (oem->controller.mode_type == SCIC_PORT_AUTOMATIC_CONFIGURATION_MODE) अणु
+		क्रम (i = 0; i < SCI_MAX_PHYS; i++)
+			अगर (oem->ports[i].phy_mask != 0)
+				वापस -EINVAL;
+	पूर्ण अन्यथा अगर (oem->controller.mode_type == SCIC_PORT_MANUAL_CONFIGURATION_MODE) अणु
 		u8 phy_mask = 0;
 
-		for (i = 0; i < SCI_MAX_PHYS; i++)
+		क्रम (i = 0; i < SCI_MAX_PHYS; i++)
 			phy_mask |= oem->ports[i].phy_mask;
 
-		if (phy_mask == 0)
-			return -EINVAL;
-	} else
-		return -EINVAL;
+		अगर (phy_mask == 0)
+			वापस -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	if (oem->controller.max_concurr_spin_up > MAX_CONCURRENT_DEVICE_SPIN_UP_COUNT ||
+	अगर (oem->controller.max_concurr_spin_up > MAX_CONCURRENT_DEVICE_SPIN_UP_COUNT ||
 	    oem->controller.max_concurr_spin_up < 1)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (oem->controller.do_enable_ssc) {
-		if (version < ISCI_ROM_VER_1_1 && oem->controller.do_enable_ssc != 1)
-			return -EINVAL;
+	अगर (oem->controller.करो_enable_ssc) अणु
+		अगर (version < ISCI_ROM_VER_1_1 && oem->controller.करो_enable_ssc != 1)
+			वापस -EINVAL;
 
-		if (version >= ISCI_ROM_VER_1_1) {
-			u8 test = oem->controller.ssc_sata_tx_spread_level;
+		अगर (version >= ISCI_ROM_VER_1_1) अणु
+			u8 test = oem->controller.ssc_sata_tx_spपढ़ो_level;
 
-			switch (test) {
-			case 0:
-			case 2:
-			case 3:
-			case 6:
-			case 7:
-				break;
-			default:
-				return -EINVAL;
-			}
+			चयन (test) अणु
+			हाल 0:
+			हाल 2:
+			हाल 3:
+			हाल 6:
+			हाल 7:
+				अवरोध;
+			शेष:
+				वापस -EINVAL;
+			पूर्ण
 
-			test = oem->controller.ssc_sas_tx_spread_level;
-			if (oem->controller.ssc_sas_tx_type == 0) {
-				switch (test) {
-				case 0:
-				case 2:
-				case 3:
-					break;
-				default:
-					return -EINVAL;
-				}
-			} else if (oem->controller.ssc_sas_tx_type == 1) {
-				switch (test) {
-				case 0:
-				case 3:
-				case 6:
-					break;
-				default:
-					return -EINVAL;
-				}
-			}
-		}
-	}
+			test = oem->controller.ssc_sas_tx_spपढ़ो_level;
+			अगर (oem->controller.ssc_sas_tx_type == 0) अणु
+				चयन (test) अणु
+				हाल 0:
+				हाल 2:
+				हाल 3:
+					अवरोध;
+				शेष:
+					वापस -EINVAL;
+				पूर्ण
+			पूर्ण अन्यथा अगर (oem->controller.ssc_sas_tx_type == 1) अणु
+				चयन (test) अणु
+				हाल 0:
+				हाल 3:
+				हाल 6:
+					अवरोध;
+				शेष:
+					वापस -EINVAL;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 max_spin_up(struct isci_host *ihost)
-{
-	if (ihost->user_parameters.max_concurr_spinup)
-		return min_t(u8, ihost->user_parameters.max_concurr_spinup,
+अटल u8 max_spin_up(काष्ठा isci_host *ihost)
+अणु
+	अगर (ihost->user_parameters.max_concurr_spinup)
+		वापस min_t(u8, ihost->user_parameters.max_concurr_spinup,
 			     MAX_CONCURRENT_DEVICE_SPIN_UP_COUNT);
-	else
-		return min_t(u8, ihost->oem_parameters.controller.max_concurr_spin_up,
+	अन्यथा
+		वापस min_t(u8, ihost->oem_parameters.controller.max_concurr_spin_up,
 			     MAX_CONCURRENT_DEVICE_SPIN_UP_COUNT);
-}
+पूर्ण
 
-static void power_control_timeout(struct timer_list *t)
-{
-	struct sci_timer *tmr = from_timer(tmr, t, timer);
-	struct isci_host *ihost = container_of(tmr, typeof(*ihost), power_control.timer);
-	struct isci_phy *iphy;
-	unsigned long flags;
+अटल व्योम घातer_control_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sci_समयr *पंचांगr = from_समयr(पंचांगr, t, समयr);
+	काष्ठा isci_host *ihost = container_of(पंचांगr, typeof(*ihost), घातer_control.समयr);
+	काष्ठा isci_phy *iphy;
+	अचिन्हित दीर्घ flags;
 	u8 i;
 
 	spin_lock_irqsave(&ihost->scic_lock, flags);
 
-	if (tmr->cancel)
-		goto done;
+	अगर (पंचांगr->cancel)
+		जाओ करोne;
 
-	ihost->power_control.phys_granted_power = 0;
+	ihost->घातer_control.phys_granted_घातer = 0;
 
-	if (ihost->power_control.phys_waiting == 0) {
-		ihost->power_control.timer_started = false;
-		goto done;
-	}
+	अगर (ihost->घातer_control.phys_रुकोing == 0) अणु
+		ihost->घातer_control.समयr_started = false;
+		जाओ करोne;
+	पूर्ण
 
-	for (i = 0; i < SCI_MAX_PHYS; i++) {
+	क्रम (i = 0; i < SCI_MAX_PHYS; i++) अणु
 
-		if (ihost->power_control.phys_waiting == 0)
-			break;
+		अगर (ihost->घातer_control.phys_रुकोing == 0)
+			अवरोध;
 
-		iphy = ihost->power_control.requesters[i];
-		if (iphy == NULL)
-			continue;
+		iphy = ihost->घातer_control.requesters[i];
+		अगर (iphy == शून्य)
+			जारी;
 
-		if (ihost->power_control.phys_granted_power >= max_spin_up(ihost))
-			break;
+		अगर (ihost->घातer_control.phys_granted_घातer >= max_spin_up(ihost))
+			अवरोध;
 
-		ihost->power_control.requesters[i] = NULL;
-		ihost->power_control.phys_waiting--;
-		ihost->power_control.phys_granted_power++;
-		sci_phy_consume_power_handler(iphy);
+		ihost->घातer_control.requesters[i] = शून्य;
+		ihost->घातer_control.phys_रुकोing--;
+		ihost->घातer_control.phys_granted_घातer++;
+		sci_phy_consume_घातer_handler(iphy);
 
-		if (iphy->protocol == SAS_PROTOCOL_SSP) {
+		अगर (iphy->protocol == SAS_PROTOCOL_SSP) अणु
 			u8 j;
 
-			for (j = 0; j < SCI_MAX_PHYS; j++) {
-				struct isci_phy *requester = ihost->power_control.requesters[j];
+			क्रम (j = 0; j < SCI_MAX_PHYS; j++) अणु
+				काष्ठा isci_phy *requester = ihost->घातer_control.requesters[j];
 
 				/*
-				 * Search the power_control queue to see if there are other phys
+				 * Search the घातer_control queue to see अगर there are other phys
 				 * attached to the same remote device. If found, take all of
-				 * them out of await_sas_power state.
+				 * them out of aरुको_sas_घातer state.
 				 */
-				if (requester != NULL && requester != iphy) {
-					u8 other = memcmp(requester->frame_rcvd.iaf.sas_addr,
+				अगर (requester != शून्य && requester != iphy) अणु
+					u8 other = स_भेद(requester->frame_rcvd.iaf.sas_addr,
 							  iphy->frame_rcvd.iaf.sas_addr,
-							  sizeof(requester->frame_rcvd.iaf.sas_addr));
+							  माप(requester->frame_rcvd.iaf.sas_addr));
 
-					if (other == 0) {
-						ihost->power_control.requesters[j] = NULL;
-						ihost->power_control.phys_waiting--;
-						sci_phy_consume_power_handler(requester);
-					}
-				}
-			}
-		}
-	}
+					अगर (other == 0) अणु
+						ihost->घातer_control.requesters[j] = शून्य;
+						ihost->घातer_control.phys_रुकोing--;
+						sci_phy_consume_घातer_handler(requester);
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * It doesn't matter if the power list is empty, we need to start the
-	 * timer in case another phy becomes ready.
+	 * It करोesn't matter अगर the घातer list is empty, we need to start the
+	 * समयr in हाल another phy becomes पढ़ोy.
 	 */
-	sci_mod_timer(tmr, SCIC_SDS_CONTROLLER_POWER_CONTROL_INTERVAL);
-	ihost->power_control.timer_started = true;
+	sci_mod_समयr(पंचांगr, SCIC_SDS_CONTROLLER_POWER_CONTROL_INTERVAL);
+	ihost->घातer_control.समयr_started = true;
 
-done:
+करोne:
 	spin_unlock_irqrestore(&ihost->scic_lock, flags);
-}
+पूर्ण
 
-void sci_controller_power_control_queue_insert(struct isci_host *ihost,
-					       struct isci_phy *iphy)
-{
-	BUG_ON(iphy == NULL);
+व्योम sci_controller_घातer_control_queue_insert(काष्ठा isci_host *ihost,
+					       काष्ठा isci_phy *iphy)
+अणु
+	BUG_ON(iphy == शून्य);
 
-	if (ihost->power_control.phys_granted_power < max_spin_up(ihost)) {
-		ihost->power_control.phys_granted_power++;
-		sci_phy_consume_power_handler(iphy);
+	अगर (ihost->घातer_control.phys_granted_घातer < max_spin_up(ihost)) अणु
+		ihost->घातer_control.phys_granted_घातer++;
+		sci_phy_consume_घातer_handler(iphy);
 
 		/*
-		 * stop and start the power_control timer. When the timer fires, the
-		 * no_of_phys_granted_power will be set to 0
+		 * stop and start the घातer_control समयr. When the समयr fires, the
+		 * no_of_phys_granted_घातer will be set to 0
 		 */
-		if (ihost->power_control.timer_started)
-			sci_del_timer(&ihost->power_control.timer);
+		अगर (ihost->घातer_control.समयr_started)
+			sci_del_समयr(&ihost->घातer_control.समयr);
 
-		sci_mod_timer(&ihost->power_control.timer,
+		sci_mod_समयr(&ihost->घातer_control.समयr,
 				 SCIC_SDS_CONTROLLER_POWER_CONTROL_INTERVAL);
-		ihost->power_control.timer_started = true;
+		ihost->घातer_control.समयr_started = true;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * There are phys, attached to the same sas address as this phy, are
-		 * already in READY state, this phy don't need wait.
+		 * alपढ़ोy in READY state, this phy करोn't need रुको.
 		 */
 		u8 i;
-		struct isci_phy *current_phy;
+		काष्ठा isci_phy *current_phy;
 
-		for (i = 0; i < SCI_MAX_PHYS; i++) {
+		क्रम (i = 0; i < SCI_MAX_PHYS; i++) अणु
 			u8 other;
 			current_phy = &ihost->phys[i];
 
-			other = memcmp(current_phy->frame_rcvd.iaf.sas_addr,
+			other = स_भेद(current_phy->frame_rcvd.iaf.sas_addr,
 				       iphy->frame_rcvd.iaf.sas_addr,
-				       sizeof(current_phy->frame_rcvd.iaf.sas_addr));
+				       माप(current_phy->frame_rcvd.iaf.sas_addr));
 
-			if (current_phy->sm.current_state_id == SCI_PHY_READY &&
+			अगर (current_phy->sm.current_state_id == SCI_PHY_READY &&
 			    current_phy->protocol == SAS_PROTOCOL_SSP &&
-			    other == 0) {
-				sci_phy_consume_power_handler(iphy);
-				break;
-			}
-		}
+			    other == 0) अणु
+				sci_phy_consume_घातer_handler(iphy);
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (i == SCI_MAX_PHYS) {
-			/* Add the phy in the waiting list */
-			ihost->power_control.requesters[iphy->phy_index] = iphy;
-			ihost->power_control.phys_waiting++;
-		}
-	}
-}
+		अगर (i == SCI_MAX_PHYS) अणु
+			/* Add the phy in the रुकोing list */
+			ihost->घातer_control.requesters[iphy->phy_index] = iphy;
+			ihost->घातer_control.phys_रुकोing++;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void sci_controller_power_control_queue_remove(struct isci_host *ihost,
-					       struct isci_phy *iphy)
-{
-	BUG_ON(iphy == NULL);
+व्योम sci_controller_घातer_control_queue_हटाओ(काष्ठा isci_host *ihost,
+					       काष्ठा isci_phy *iphy)
+अणु
+	BUG_ON(iphy == शून्य);
 
-	if (ihost->power_control.requesters[iphy->phy_index])
-		ihost->power_control.phys_waiting--;
+	अगर (ihost->घातer_control.requesters[iphy->phy_index])
+		ihost->घातer_control.phys_रुकोing--;
 
-	ihost->power_control.requesters[iphy->phy_index] = NULL;
-}
+	ihost->घातer_control.requesters[iphy->phy_index] = शून्य;
+पूर्ण
 
-static int is_long_cable(int phy, unsigned char selection_byte)
-{
-	return !!(selection_byte & (1 << phy));
-}
+अटल पूर्णांक is_दीर्घ_cable(पूर्णांक phy, अचिन्हित अक्षर selection_byte)
+अणु
+	वापस !!(selection_byte & (1 << phy));
+पूर्ण
 
-static int is_medium_cable(int phy, unsigned char selection_byte)
-{
-	return !!(selection_byte & (1 << (phy + 4)));
-}
+अटल पूर्णांक is_medium_cable(पूर्णांक phy, अचिन्हित अक्षर selection_byte)
+अणु
+	वापस !!(selection_byte & (1 << (phy + 4)));
+पूर्ण
 
-static enum cable_selections decode_selection_byte(
-	int phy,
-	unsigned char selection_byte)
-{
-	return ((selection_byte & (1 << phy)) ? 1 : 0)
+अटल क्रमागत cable_selections decode_selection_byte(
+	पूर्णांक phy,
+	अचिन्हित अक्षर selection_byte)
+अणु
+	वापस ((selection_byte & (1 << phy)) ? 1 : 0)
 		+ (selection_byte & (1 << (phy + 4)) ? 2 : 0);
-}
+पूर्ण
 
-static unsigned char *to_cable_select(struct isci_host *ihost)
-{
-	if (is_cable_select_overridden())
-		return ((unsigned char *)&cable_selection_override)
+अटल अचिन्हित अक्षर *to_cable_select(काष्ठा isci_host *ihost)
+अणु
+	अगर (is_cable_select_overridden())
+		वापस ((अचिन्हित अक्षर *)&cable_selection_override)
 			+ ihost->id;
-	else
-		return &ihost->oem_parameters.controller.cable_selection_mask;
-}
+	अन्यथा
+		वापस &ihost->oem_parameters.controller.cable_selection_mask;
+पूर्ण
 
-enum cable_selections decode_cable_selection(struct isci_host *ihost, int phy)
-{
-	return decode_selection_byte(phy, *to_cable_select(ihost));
-}
+क्रमागत cable_selections decode_cable_selection(काष्ठा isci_host *ihost, पूर्णांक phy)
+अणु
+	वापस decode_selection_byte(phy, *to_cable_select(ihost));
+पूर्ण
 
-char *lookup_cable_names(enum cable_selections selection)
-{
-	static char *cable_names[] = {
-		[short_cable]     = "short",
-		[long_cable]      = "long",
+अक्षर *lookup_cable_names(क्रमागत cable_selections selection)
+अणु
+	अटल अक्षर *cable_names[] = अणु
+		[लघु_cable]     = "short",
+		[दीर्घ_cable]      = "long",
 		[medium_cable]    = "medium",
 		[undefined_cable] = "<undefined, assumed long>" /* bit 0==1 */
-	};
-	return (selection <= undefined_cable) ? cable_names[selection]
+	पूर्ण;
+	वापस (selection <= undefined_cable) ? cable_names[selection]
 					      : cable_names[undefined_cable];
-}
+पूर्ण
 
-#define AFE_REGISTER_WRITE_DELAY 10
+#घोषणा AFE_REGISTER_WRITE_DELAY 10
 
-static void sci_controller_afe_initialization(struct isci_host *ihost)
-{
-	struct scu_afe_registers __iomem *afe = &ihost->scu_registers->afe;
-	const struct sci_oem_params *oem = &ihost->oem_parameters;
-	struct pci_dev *pdev = ihost->pdev;
+अटल व्योम sci_controller_afe_initialization(काष्ठा isci_host *ihost)
+अणु
+	काष्ठा scu_afe_रेजिस्टरs __iomem *afe = &ihost->scu_रेजिस्टरs->afe;
+	स्थिर काष्ठा sci_oem_params *oem = &ihost->oem_parameters;
+	काष्ठा pci_dev *pdev = ihost->pdev;
 	u32 afe_status;
 	u32 phy_id;
-	unsigned char cable_selection_mask = *to_cable_select(ihost);
+	अचिन्हित अक्षर cable_selection_mask = *to_cable_select(ihost);
 
-	/* Clear DFX Status registers */
-	writel(0x0081000f, &afe->afe_dfx_master_control0);
+	/* Clear DFX Status रेजिस्टरs */
+	ग_लिखोl(0x0081000f, &afe->afe_dfx_master_control0);
 	udelay(AFE_REGISTER_WRITE_DELAY);
 
-	if (is_b0(pdev) || is_c0(pdev) || is_c1(pdev)) {
+	अगर (is_b0(pdev) || is_c0(pdev) || is_c1(pdev)) अणु
 		/* PM Rx Equalization Save, PM SPhy Rx Acknowledgement
 		 * Timer, PM Stagger Timer
 		 */
-		writel(0x0007FFFF, &afe->afe_pmsn_master_control2);
+		ग_लिखोl(0x0007FFFF, &afe->afe_pmsn_master_control2);
 		udelay(AFE_REGISTER_WRITE_DELAY);
-	}
+	पूर्ण
 
 	/* Configure bias currents to normal */
-	if (is_a2(pdev))
-		writel(0x00005A00, &afe->afe_bias_control);
-	else if (is_b0(pdev) || is_c0(pdev))
-		writel(0x00005F00, &afe->afe_bias_control);
-	else if (is_c1(pdev))
-		writel(0x00005500, &afe->afe_bias_control);
+	अगर (is_a2(pdev))
+		ग_लिखोl(0x00005A00, &afe->afe_bias_control);
+	अन्यथा अगर (is_b0(pdev) || is_c0(pdev))
+		ग_लिखोl(0x00005F00, &afe->afe_bias_control);
+	अन्यथा अगर (is_c1(pdev))
+		ग_लिखोl(0x00005500, &afe->afe_bias_control);
 
 	udelay(AFE_REGISTER_WRITE_DELAY);
 
 	/* Enable PLL */
-	if (is_a2(pdev))
-		writel(0x80040908, &afe->afe_pll_control0);
-	else if (is_b0(pdev) || is_c0(pdev))
-		writel(0x80040A08, &afe->afe_pll_control0);
-	else if (is_c1(pdev)) {
-		writel(0x80000B08, &afe->afe_pll_control0);
+	अगर (is_a2(pdev))
+		ग_लिखोl(0x80040908, &afe->afe_pll_control0);
+	अन्यथा अगर (is_b0(pdev) || is_c0(pdev))
+		ग_लिखोl(0x80040A08, &afe->afe_pll_control0);
+	अन्यथा अगर (is_c1(pdev)) अणु
+		ग_लिखोl(0x80000B08, &afe->afe_pll_control0);
 		udelay(AFE_REGISTER_WRITE_DELAY);
-		writel(0x00000B08, &afe->afe_pll_control0);
+		ग_लिखोl(0x00000B08, &afe->afe_pll_control0);
 		udelay(AFE_REGISTER_WRITE_DELAY);
-		writel(0x80000B08, &afe->afe_pll_control0);
-	}
+		ग_लिखोl(0x80000B08, &afe->afe_pll_control0);
+	पूर्ण
 
 	udelay(AFE_REGISTER_WRITE_DELAY);
 
-	/* Wait for the PLL to lock */
-	do {
-		afe_status = readl(&afe->afe_common_block_status);
+	/* Wait क्रम the PLL to lock */
+	करो अणु
+		afe_status = पढ़ोl(&afe->afe_common_block_status);
 		udelay(AFE_REGISTER_WRITE_DELAY);
-	} while ((afe_status & 0x00001000) == 0);
+	पूर्ण जबतक ((afe_status & 0x00001000) == 0);
 
-	if (is_a2(pdev)) {
-		/* Shorten SAS SNW lock time (RxLock timer value from 76
+	अगर (is_a2(pdev)) अणु
+		/* Shorten SAS SNW lock समय (RxLock समयr value from 76
 		 * us to 50 us)
 		 */
-		writel(0x7bcc96ad, &afe->afe_pmsn_master_control0);
+		ग_लिखोl(0x7bcc96ad, &afe->afe_pmsn_master_control0);
 		udelay(AFE_REGISTER_WRITE_DELAY);
-	}
+	पूर्ण
 
-	for (phy_id = 0; phy_id < SCI_MAX_PHYS; phy_id++) {
-		struct scu_afe_transceiver __iomem *xcvr = &afe->scu_afe_xcvr[phy_id];
-		const struct sci_phy_oem_params *oem_phy = &oem->phys[phy_id];
-		int cable_length_long =
-			is_long_cable(phy_id, cable_selection_mask);
-		int cable_length_medium =
+	क्रम (phy_id = 0; phy_id < SCI_MAX_PHYS; phy_id++) अणु
+		काष्ठा scu_afe_transceiver __iomem *xcvr = &afe->scu_afe_xcvr[phy_id];
+		स्थिर काष्ठा sci_phy_oem_params *oem_phy = &oem->phys[phy_id];
+		पूर्णांक cable_length_दीर्घ =
+			is_दीर्घ_cable(phy_id, cable_selection_mask);
+		पूर्णांक cable_length_medium =
 			is_medium_cable(phy_id, cable_selection_mask);
 
-		if (is_a2(pdev)) {
-			/* All defaults, except the Receive Word
+		अगर (is_a2(pdev)) अणु
+			/* All शेषs, except the Receive Word
 			 * Alignament/Comma Detect Enable....(0xe800)
 			 */
-			writel(0x00004512, &xcvr->afe_xcvr_control0);
+			ग_लिखोl(0x00004512, &xcvr->afe_xcvr_control0);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			writel(0x0050100F, &xcvr->afe_xcvr_control1);
+			ग_लिखोl(0x0050100F, &xcvr->afe_xcvr_control1);
 			udelay(AFE_REGISTER_WRITE_DELAY);
-		} else if (is_b0(pdev)) {
+		पूर्ण अन्यथा अगर (is_b0(pdev)) अणु
 			/* Configure transmitter SSC parameters */
-			writel(0x00030000, &xcvr->afe_tx_ssc_control);
+			ग_लिखोl(0x00030000, &xcvr->afe_tx_ssc_control);
 			udelay(AFE_REGISTER_WRITE_DELAY);
-		} else if (is_c0(pdev)) {
+		पूर्ण अन्यथा अगर (is_c0(pdev)) अणु
 			/* Configure transmitter SSC parameters */
-			writel(0x00010202, &xcvr->afe_tx_ssc_control);
+			ग_लिखोl(0x00010202, &xcvr->afe_tx_ssc_control);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			/* All defaults, except the Receive Word
+			/* All शेषs, except the Receive Word
 			 * Alignament/Comma Detect Enable....(0xe800)
 			 */
-			writel(0x00014500, &xcvr->afe_xcvr_control0);
+			ग_लिखोl(0x00014500, &xcvr->afe_xcvr_control0);
 			udelay(AFE_REGISTER_WRITE_DELAY);
-		} else if (is_c1(pdev)) {
+		पूर्ण अन्यथा अगर (is_c1(pdev)) अणु
 			/* Configure transmitter SSC parameters */
-			writel(0x00010202, &xcvr->afe_tx_ssc_control);
+			ग_लिखोl(0x00010202, &xcvr->afe_tx_ssc_control);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			/* All defaults, except the Receive Word
+			/* All शेषs, except the Receive Word
 			 * Alignament/Comma Detect Enable....(0xe800)
 			 */
-			writel(0x0001C500, &xcvr->afe_xcvr_control0);
+			ग_लिखोl(0x0001C500, &xcvr->afe_xcvr_control0);
 			udelay(AFE_REGISTER_WRITE_DELAY);
-		}
+		पूर्ण
 
-		/* Power up TX and RX out from power down (PWRDNTX and
-		 * PWRDNRX) & increase TX int & ext bias 20%....(0xe85c)
+		/* Power up TX and RX out from घातer करोwn (PWRDNTX and
+		 * PWRDNRX) & increase TX पूर्णांक & ext bias 20%....(0xe85c)
 		 */
-		if (is_a2(pdev))
-			writel(0x000003F0, &xcvr->afe_channel_control);
-		else if (is_b0(pdev)) {
-			writel(0x000003D7, &xcvr->afe_channel_control);
+		अगर (is_a2(pdev))
+			ग_लिखोl(0x000003F0, &xcvr->afe_channel_control);
+		अन्यथा अगर (is_b0(pdev)) अणु
+			ग_लिखोl(0x000003D7, &xcvr->afe_channel_control);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			writel(0x000003D4, &xcvr->afe_channel_control);
-		} else if (is_c0(pdev)) {
-			writel(0x000001E7, &xcvr->afe_channel_control);
+			ग_लिखोl(0x000003D4, &xcvr->afe_channel_control);
+		पूर्ण अन्यथा अगर (is_c0(pdev)) अणु
+			ग_लिखोl(0x000001E7, &xcvr->afe_channel_control);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			writel(0x000001E4, &xcvr->afe_channel_control);
-		} else if (is_c1(pdev)) {
-			writel(cable_length_long ? 0x000002F7 : 0x000001F7,
+			ग_लिखोl(0x000001E4, &xcvr->afe_channel_control);
+		पूर्ण अन्यथा अगर (is_c1(pdev)) अणु
+			ग_लिखोl(cable_length_दीर्घ ? 0x000002F7 : 0x000001F7,
 			       &xcvr->afe_channel_control);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			writel(cable_length_long ? 0x000002F4 : 0x000001F4,
+			ग_लिखोl(cable_length_दीर्घ ? 0x000002F4 : 0x000001F4,
 			       &xcvr->afe_channel_control);
-		}
+		पूर्ण
 		udelay(AFE_REGISTER_WRITE_DELAY);
 
-		if (is_a2(pdev)) {
+		अगर (is_a2(pdev)) अणु
 			/* Enable TX equalization (0xe824) */
-			writel(0x00040000, &xcvr->afe_tx_control);
+			ग_लिखोl(0x00040000, &xcvr->afe_tx_control);
 			udelay(AFE_REGISTER_WRITE_DELAY);
-		}
+		पूर्ण
 
-		if (is_a2(pdev) || is_b0(pdev))
+		अगर (is_a2(pdev) || is_b0(pdev))
 			/* RDPI=0x0(RX Power On), RXOOBDETPDNC=0x0,
 			 * TPD=0x0(TX Power On), RDD=0x0(RX Detect
 			 * Enabled) ....(0xe800)
 			 */
-			writel(0x00004100, &xcvr->afe_xcvr_control0);
-		else if (is_c0(pdev))
-			writel(0x00014100, &xcvr->afe_xcvr_control0);
-		else if (is_c1(pdev))
-			writel(0x0001C100, &xcvr->afe_xcvr_control0);
+			ग_लिखोl(0x00004100, &xcvr->afe_xcvr_control0);
+		अन्यथा अगर (is_c0(pdev))
+			ग_लिखोl(0x00014100, &xcvr->afe_xcvr_control0);
+		अन्यथा अगर (is_c1(pdev))
+			ग_लिखोl(0x0001C100, &xcvr->afe_xcvr_control0);
 		udelay(AFE_REGISTER_WRITE_DELAY);
 
 		/* Leave DFE/FFE on */
-		if (is_a2(pdev))
-			writel(0x3F11103F, &xcvr->afe_rx_ssc_control0);
-		else if (is_b0(pdev)) {
-			writel(0x3F11103F, &xcvr->afe_rx_ssc_control0);
+		अगर (is_a2(pdev))
+			ग_लिखोl(0x3F11103F, &xcvr->afe_rx_ssc_control0);
+		अन्यथा अगर (is_b0(pdev)) अणु
+			ग_लिखोl(0x3F11103F, &xcvr->afe_rx_ssc_control0);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 			/* Enable TX equalization (0xe824) */
-			writel(0x00040000, &xcvr->afe_tx_control);
-		} else if (is_c0(pdev)) {
-			writel(0x01400C0F, &xcvr->afe_rx_ssc_control1);
+			ग_लिखोl(0x00040000, &xcvr->afe_tx_control);
+		पूर्ण अन्यथा अगर (is_c0(pdev)) अणु
+			ग_लिखोl(0x01400C0F, &xcvr->afe_rx_ssc_control1);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			writel(0x3F6F103F, &xcvr->afe_rx_ssc_control0);
+			ग_लिखोl(0x3F6F103F, &xcvr->afe_rx_ssc_control0);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
 			/* Enable TX equalization (0xe824) */
-			writel(0x00040000, &xcvr->afe_tx_control);
-		} else if (is_c1(pdev)) {
-			writel(cable_length_long ? 0x01500C0C :
+			ग_लिखोl(0x00040000, &xcvr->afe_tx_control);
+		पूर्ण अन्यथा अगर (is_c1(pdev)) अणु
+			ग_लिखोl(cable_length_दीर्घ ? 0x01500C0C :
 			       cable_length_medium ? 0x01400C0D : 0x02400C0D,
 			       &xcvr->afe_xcvr_control1);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			writel(0x000003E0, &xcvr->afe_dfx_rx_control1);
+			ग_लिखोl(0x000003E0, &xcvr->afe_dfx_rx_control1);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
-			writel(cable_length_long ? 0x33091C1F :
+			ग_लिखोl(cable_length_दीर्घ ? 0x33091C1F :
 			       cable_length_medium ? 0x3315181F : 0x2B17161F,
 			       &xcvr->afe_rx_ssc_control0);
 			udelay(AFE_REGISTER_WRITE_DELAY);
 
 			/* Enable TX equalization (0xe824) */
-			writel(0x00040000, &xcvr->afe_tx_control);
-		}
+			ग_लिखोl(0x00040000, &xcvr->afe_tx_control);
+		पूर्ण
 
 		udelay(AFE_REGISTER_WRITE_DELAY);
 
-		writel(oem_phy->afe_tx_amp_control0, &xcvr->afe_tx_amp_control0);
+		ग_लिखोl(oem_phy->afe_tx_amp_control0, &xcvr->afe_tx_amp_control0);
 		udelay(AFE_REGISTER_WRITE_DELAY);
 
-		writel(oem_phy->afe_tx_amp_control1, &xcvr->afe_tx_amp_control1);
+		ग_लिखोl(oem_phy->afe_tx_amp_control1, &xcvr->afe_tx_amp_control1);
 		udelay(AFE_REGISTER_WRITE_DELAY);
 
-		writel(oem_phy->afe_tx_amp_control2, &xcvr->afe_tx_amp_control2);
+		ग_लिखोl(oem_phy->afe_tx_amp_control2, &xcvr->afe_tx_amp_control2);
 		udelay(AFE_REGISTER_WRITE_DELAY);
 
-		writel(oem_phy->afe_tx_amp_control3, &xcvr->afe_tx_amp_control3);
+		ग_लिखोl(oem_phy->afe_tx_amp_control3, &xcvr->afe_tx_amp_control3);
 		udelay(AFE_REGISTER_WRITE_DELAY);
-	}
+	पूर्ण
 
 	/* Transfer control to the PEs */
-	writel(0x00010f00, &afe->afe_dfx_master_control0);
+	ग_लिखोl(0x00010f00, &afe->afe_dfx_master_control0);
 	udelay(AFE_REGISTER_WRITE_DELAY);
-}
+पूर्ण
 
-static void sci_controller_initialize_power_control(struct isci_host *ihost)
-{
-	sci_init_timer(&ihost->power_control.timer, power_control_timeout);
+अटल व्योम sci_controller_initialize_घातer_control(काष्ठा isci_host *ihost)
+अणु
+	sci_init_समयr(&ihost->घातer_control.समयr, घातer_control_समयout);
 
-	memset(ihost->power_control.requesters, 0,
-	       sizeof(ihost->power_control.requesters));
+	स_रखो(ihost->घातer_control.requesters, 0,
+	       माप(ihost->घातer_control.requesters));
 
-	ihost->power_control.phys_waiting = 0;
-	ihost->power_control.phys_granted_power = 0;
-}
+	ihost->घातer_control.phys_रुकोing = 0;
+	ihost->घातer_control.phys_granted_घातer = 0;
+पूर्ण
 
-static enum sci_status sci_controller_initialize(struct isci_host *ihost)
-{
-	struct sci_base_state_machine *sm = &ihost->sm;
-	enum sci_status result = SCI_FAILURE;
-	unsigned long i, state, val;
+अटल क्रमागत sci_status sci_controller_initialize(काष्ठा isci_host *ihost)
+अणु
+	काष्ठा sci_base_state_machine *sm = &ihost->sm;
+	क्रमागत sci_status result = SCI_FAILURE;
+	अचिन्हित दीर्घ i, state, val;
 
-	if (ihost->sm.current_state_id != SCIC_RESET) {
+	अगर (ihost->sm.current_state_id != SCIC_RESET) अणु
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 
 	sci_change_state(sm, SCIC_INITIALIZING);
 
-	sci_init_timer(&ihost->phy_timer, phy_startup_timeout);
+	sci_init_समयr(&ihost->phy_समयr, phy_startup_समयout);
 
 	ihost->next_phy_to_start = 0;
-	ihost->phy_startup_timer_pending = false;
+	ihost->phy_startup_समयr_pending = false;
 
-	sci_controller_initialize_power_control(ihost);
+	sci_controller_initialize_घातer_control(ihost);
 
 	/*
-	 * There is nothing to do here for B0 since we do not have to
-	 * program the AFE registers.
-	 * / @todo The AFE settings are supposed to be correct for the B0 but
+	 * There is nothing to करो here क्रम B0 since we करो not have to
+	 * program the AFE रेजिस्टरs.
+	 * / @toकरो The AFE settings are supposed to be correct क्रम the B0 but
 	 * /       presently they seem to be wrong. */
 	sci_controller_afe_initialization(ihost);
 
 
 	/* Take the hardware out of reset */
-	writel(0, &ihost->smu_registers->soft_reset_control);
+	ग_लिखोl(0, &ihost->smu_रेजिस्टरs->soft_reset_control);
 
 	/*
-	 * / @todo Provide meaningfull error code for hardware failure
+	 * / @toकरो Provide meaningfull error code क्रम hardware failure
 	 * result = SCI_FAILURE_CONTROLLER_HARDWARE; */
-	for (i = 100; i >= 1; i--) {
+	क्रम (i = 100; i >= 1; i--) अणु
 		u32 status;
 
 		/* Loop until the hardware reports success */
 		udelay(SCU_CONTEXT_RAM_INIT_STALL_TIME);
-		status = readl(&ihost->smu_registers->control_status);
+		status = पढ़ोl(&ihost->smu_रेजिस्टरs->control_status);
 
-		if ((status & SCU_RAM_INIT_COMPLETED) == SCU_RAM_INIT_COMPLETED)
-			break;
-	}
-	if (i == 0)
-		goto out;
+		अगर ((status & SCU_RAM_INIT_COMPLETED) == SCU_RAM_INIT_COMPLETED)
+			अवरोध;
+	पूर्ण
+	अगर (i == 0)
+		जाओ out;
 
 	/*
 	 * Determine what are the actaul device capacities that the
 	 * hardware will support */
-	val = readl(&ihost->smu_registers->device_context_capacity);
+	val = पढ़ोl(&ihost->smu_रेजिस्टरs->device_context_capacity);
 
 	/* Record the smaller of the two capacity values */
 	ihost->logical_port_entries = min(smu_max_ports(val), SCI_MAX_PORTS);
@@ -2189,312 +2190,312 @@ static enum sci_status sci_controller_initialize(struct isci_host *ihost)
 	ihost->remote_node_entries = min(smu_max_rncs(val), SCI_MAX_REMOTE_DEVICES);
 
 	/*
-	 * Make all PEs that are unassigned match up with the
+	 * Make all PEs that are unasचिन्हित match up with the
 	 * logical ports
 	 */
-	for (i = 0; i < ihost->logical_port_entries; i++) {
-		struct scu_port_task_scheduler_group_registers __iomem
-			*ptsg = &ihost->scu_registers->peg0.ptsg;
+	क्रम (i = 0; i < ihost->logical_port_entries; i++) अणु
+		काष्ठा scu_port_task_scheduler_group_रेजिस्टरs __iomem
+			*ptsg = &ihost->scu_रेजिस्टरs->peg0.ptsg;
 
-		writel(i, &ptsg->protocol_engine[i]);
-	}
+		ग_लिखोl(i, &ptsg->protocol_engine[i]);
+	पूर्ण
 
 	/* Initialize hardware PCI Relaxed ordering in DMA engines */
-	val = readl(&ihost->scu_registers->sdma.pdma_configuration);
+	val = पढ़ोl(&ihost->scu_रेजिस्टरs->sdma.pdma_configuration);
 	val |= SCU_PDMACR_GEN_BIT(PCI_RELAXED_ORDERING_ENABLE);
-	writel(val, &ihost->scu_registers->sdma.pdma_configuration);
+	ग_लिखोl(val, &ihost->scu_रेजिस्टरs->sdma.pdma_configuration);
 
-	val = readl(&ihost->scu_registers->sdma.cdma_configuration);
+	val = पढ़ोl(&ihost->scu_रेजिस्टरs->sdma.cdma_configuration);
 	val |= SCU_CDMACR_GEN_BIT(PCI_RELAXED_ORDERING_ENABLE);
-	writel(val, &ihost->scu_registers->sdma.cdma_configuration);
+	ग_लिखोl(val, &ihost->scu_रेजिस्टरs->sdma.cdma_configuration);
 
 	/*
-	 * Initialize the PHYs before the PORTs because the PHY registers
+	 * Initialize the PHYs beक्रमe the PORTs because the PHY रेजिस्टरs
 	 * are accessed during the port initialization.
 	 */
-	for (i = 0; i < SCI_MAX_PHYS; i++) {
+	क्रम (i = 0; i < SCI_MAX_PHYS; i++) अणु
 		result = sci_phy_initialize(&ihost->phys[i],
-					    &ihost->scu_registers->peg0.pe[i].tl,
-					    &ihost->scu_registers->peg0.pe[i].ll);
-		if (result != SCI_SUCCESS)
-			goto out;
-	}
+					    &ihost->scu_रेजिस्टरs->peg0.pe[i].tl,
+					    &ihost->scu_रेजिस्टरs->peg0.pe[i].ll);
+		अगर (result != SCI_SUCCESS)
+			जाओ out;
+	पूर्ण
 
-	for (i = 0; i < ihost->logical_port_entries; i++) {
-		struct isci_port *iport = &ihost->ports[i];
+	क्रम (i = 0; i < ihost->logical_port_entries; i++) अणु
+		काष्ठा isci_port *iport = &ihost->ports[i];
 
-		iport->port_task_scheduler_registers = &ihost->scu_registers->peg0.ptsg.port[i];
-		iport->port_pe_configuration_register = &ihost->scu_registers->peg0.ptsg.protocol_engine[0];
-		iport->viit_registers = &ihost->scu_registers->peg0.viit[i];
-	}
+		iport->port_task_scheduler_रेजिस्टरs = &ihost->scu_रेजिस्टरs->peg0.ptsg.port[i];
+		iport->port_pe_configuration_रेजिस्टर = &ihost->scu_रेजिस्टरs->peg0.ptsg.protocol_engine[0];
+		iport->viit_रेजिस्टरs = &ihost->scu_रेजिस्टरs->peg0.viit[i];
+	पूर्ण
 
 	result = sci_port_configuration_agent_initialize(ihost, &ihost->port_agent);
 
  out:
 	/* Advance the controller state machine */
-	if (result == SCI_SUCCESS)
+	अगर (result == SCI_SUCCESS)
 		state = SCIC_INITIALIZED;
-	else
+	अन्यथा
 		state = SCIC_FAILED;
 	sci_change_state(sm, state);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int sci_controller_dma_alloc(struct isci_host *ihost)
-{
-	struct device *dev = &ihost->pdev->dev;
-	size_t size;
-	int i;
+अटल पूर्णांक sci_controller_dma_alloc(काष्ठा isci_host *ihost)
+अणु
+	काष्ठा device *dev = &ihost->pdev->dev;
+	माप_प्रकार size;
+	पूर्णांक i;
 
 	/* detect re-initialization */
-	if (ihost->completion_queue)
-		return 0;
+	अगर (ihost->completion_queue)
+		वापस 0;
 
-	size = SCU_MAX_COMPLETION_QUEUE_ENTRIES * sizeof(u32);
+	size = SCU_MAX_COMPLETION_QUEUE_ENTRIES * माप(u32);
 	ihost->completion_queue = dmam_alloc_coherent(dev, size, &ihost->cq_dma,
 						      GFP_KERNEL);
-	if (!ihost->completion_queue)
-		return -ENOMEM;
+	अगर (!ihost->completion_queue)
+		वापस -ENOMEM;
 
-	size = ihost->remote_node_entries * sizeof(union scu_remote_node_context);
+	size = ihost->remote_node_entries * माप(जोड़ scu_remote_node_context);
 	ihost->remote_node_context_table = dmam_alloc_coherent(dev, size, &ihost->rnc_dma,
 							       GFP_KERNEL);
 
-	if (!ihost->remote_node_context_table)
-		return -ENOMEM;
+	अगर (!ihost->remote_node_context_table)
+		वापस -ENOMEM;
 
-	size = ihost->task_context_entries * sizeof(struct scu_task_context),
+	size = ihost->task_context_entries * माप(काष्ठा scu_task_context),
 	ihost->task_context_table = dmam_alloc_coherent(dev, size, &ihost->tc_dma,
 							GFP_KERNEL);
-	if (!ihost->task_context_table)
-		return -ENOMEM;
+	अगर (!ihost->task_context_table)
+		वापस -ENOMEM;
 
 	size = SCI_UFI_TOTAL_SIZE;
 	ihost->ufi_buf = dmam_alloc_coherent(dev, size, &ihost->ufi_dma, GFP_KERNEL);
-	if (!ihost->ufi_buf)
-		return -ENOMEM;
+	अगर (!ihost->ufi_buf)
+		वापस -ENOMEM;
 
-	for (i = 0; i < SCI_MAX_IO_REQUESTS; i++) {
-		struct isci_request *ireq;
+	क्रम (i = 0; i < SCI_MAX_IO_REQUESTS; i++) अणु
+		काष्ठा isci_request *ireq;
 		dma_addr_t dma;
 
-		ireq = dmam_alloc_coherent(dev, sizeof(*ireq), &dma, GFP_KERNEL);
-		if (!ireq)
-			return -ENOMEM;
+		ireq = dmam_alloc_coherent(dev, माप(*ireq), &dma, GFP_KERNEL);
+		अगर (!ireq)
+			वापस -ENOMEM;
 
 		ireq->tc = &ihost->task_context_table[i];
 		ireq->owning_controller = ihost;
 		ireq->request_daddr = dma;
 		ireq->isci_host = ihost;
 		ihost->reqs[i] = ireq;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sci_controller_mem_init(struct isci_host *ihost)
-{
-	int err = sci_controller_dma_alloc(ihost);
+अटल पूर्णांक sci_controller_mem_init(काष्ठा isci_host *ihost)
+अणु
+	पूर्णांक err = sci_controller_dma_alloc(ihost);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	writel(lower_32_bits(ihost->cq_dma), &ihost->smu_registers->completion_queue_lower);
-	writel(upper_32_bits(ihost->cq_dma), &ihost->smu_registers->completion_queue_upper);
+	ग_लिखोl(lower_32_bits(ihost->cq_dma), &ihost->smu_रेजिस्टरs->completion_queue_lower);
+	ग_लिखोl(upper_32_bits(ihost->cq_dma), &ihost->smu_रेजिस्टरs->completion_queue_upper);
 
-	writel(lower_32_bits(ihost->rnc_dma), &ihost->smu_registers->remote_node_context_lower);
-	writel(upper_32_bits(ihost->rnc_dma), &ihost->smu_registers->remote_node_context_upper);
+	ग_लिखोl(lower_32_bits(ihost->rnc_dma), &ihost->smu_रेजिस्टरs->remote_node_context_lower);
+	ग_लिखोl(upper_32_bits(ihost->rnc_dma), &ihost->smu_रेजिस्टरs->remote_node_context_upper);
 
-	writel(lower_32_bits(ihost->tc_dma), &ihost->smu_registers->host_task_table_lower);
-	writel(upper_32_bits(ihost->tc_dma), &ihost->smu_registers->host_task_table_upper);
+	ग_लिखोl(lower_32_bits(ihost->tc_dma), &ihost->smu_रेजिस्टरs->host_task_table_lower);
+	ग_लिखोl(upper_32_bits(ihost->tc_dma), &ihost->smu_रेजिस्टरs->host_task_table_upper);
 
-	sci_unsolicited_frame_control_construct(ihost);
+	sci_unsolicited_frame_control_स्थिरruct(ihost);
 
 	/*
-	 * Inform the silicon as to the location of the UF headers and
+	 * Inक्रमm the silicon as to the location of the UF headers and
 	 * address table.
 	 */
-	writel(lower_32_bits(ihost->uf_control.headers.physical_address),
-		&ihost->scu_registers->sdma.uf_header_base_address_lower);
-	writel(upper_32_bits(ihost->uf_control.headers.physical_address),
-		&ihost->scu_registers->sdma.uf_header_base_address_upper);
+	ग_लिखोl(lower_32_bits(ihost->uf_control.headers.physical_address),
+		&ihost->scu_रेजिस्टरs->sdma.uf_header_base_address_lower);
+	ग_लिखोl(upper_32_bits(ihost->uf_control.headers.physical_address),
+		&ihost->scu_रेजिस्टरs->sdma.uf_header_base_address_upper);
 
-	writel(lower_32_bits(ihost->uf_control.address_table.physical_address),
-		&ihost->scu_registers->sdma.uf_address_table_lower);
-	writel(upper_32_bits(ihost->uf_control.address_table.physical_address),
-		&ihost->scu_registers->sdma.uf_address_table_upper);
+	ग_लिखोl(lower_32_bits(ihost->uf_control.address_table.physical_address),
+		&ihost->scu_रेजिस्टरs->sdma.uf_address_table_lower);
+	ग_लिखोl(upper_32_bits(ihost->uf_control.address_table.physical_address),
+		&ihost->scu_रेजिस्टरs->sdma.uf_address_table_upper);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * isci_host_init - (re-)initialize hardware and internal (private) state
+ * isci_host_init - (re-)initialize hardware and पूर्णांकernal (निजी) state
  * @ihost: host to init
  *
- * Any public facing objects (like asd_sas_port, and asd_sas_phys), or
- * one-time initialization objects like locks and waitqueues, are
+ * Any खुला facing objects (like asd_sas_port, and asd_sas_phys), or
+ * one-समय initialization objects like locks and रुकोqueues, are
  * not touched (they are initialized in isci_host_alloc)
  */
-int isci_host_init(struct isci_host *ihost)
-{
-	int i, err;
-	enum sci_status status;
+पूर्णांक isci_host_init(काष्ठा isci_host *ihost)
+अणु
+	पूर्णांक i, err;
+	क्रमागत sci_status status;
 
 	spin_lock_irq(&ihost->scic_lock);
-	status = sci_controller_construct(ihost, scu_base(ihost), smu_base(ihost));
+	status = sci_controller_स्थिरruct(ihost, scu_base(ihost), smu_base(ihost));
 	spin_unlock_irq(&ihost->scic_lock);
-	if (status != SCI_SUCCESS) {
+	अगर (status != SCI_SUCCESS) अणु
 		dev_err(&ihost->pdev->dev,
 			"%s: sci_controller_construct failed - status = %x\n",
 			__func__,
 			status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	spin_lock_irq(&ihost->scic_lock);
 	status = sci_controller_initialize(ihost);
 	spin_unlock_irq(&ihost->scic_lock);
-	if (status != SCI_SUCCESS) {
+	अगर (status != SCI_SUCCESS) अणु
 		dev_warn(&ihost->pdev->dev,
 			 "%s: sci_controller_initialize failed -"
 			 " status = 0x%x\n",
 			 __func__, status);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	err = sci_controller_mem_init(ihost);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* enable sgpio */
-	writel(1, &ihost->scu_registers->peg0.sgpio.interface_control);
-	for (i = 0; i < isci_gpio_count(ihost); i++)
-		writel(SGPIO_HW_CONTROL, &ihost->scu_registers->peg0.sgpio.output_data_select[i]);
-	writel(0, &ihost->scu_registers->peg0.sgpio.vendor_specific_code);
+	ग_लिखोl(1, &ihost->scu_रेजिस्टरs->peg0.sgpio.पूर्णांकerface_control);
+	क्रम (i = 0; i < isci_gpio_count(ihost); i++)
+		ग_लिखोl(SGPIO_HW_CONTROL, &ihost->scu_रेजिस्टरs->peg0.sgpio.output_data_select[i]);
+	ग_लिखोl(0, &ihost->scu_रेजिस्टरs->peg0.sgpio.venकरोr_specअगरic_code);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sci_controller_link_up(struct isci_host *ihost, struct isci_port *iport,
-			    struct isci_phy *iphy)
-{
-	switch (ihost->sm.current_state_id) {
-	case SCIC_STARTING:
-		sci_del_timer(&ihost->phy_timer);
-		ihost->phy_startup_timer_pending = false;
+व्योम sci_controller_link_up(काष्ठा isci_host *ihost, काष्ठा isci_port *iport,
+			    काष्ठा isci_phy *iphy)
+अणु
+	चयन (ihost->sm.current_state_id) अणु
+	हाल SCIC_STARTING:
+		sci_del_समयr(&ihost->phy_समयr);
+		ihost->phy_startup_समयr_pending = false;
 		ihost->port_agent.link_up_handler(ihost, &ihost->port_agent,
 						  iport, iphy);
 		sci_controller_start_next_phy(ihost);
-		break;
-	case SCIC_READY:
+		अवरोध;
+	हाल SCIC_READY:
 		ihost->port_agent.link_up_handler(ihost, &ihost->port_agent,
 						  iport, iphy);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(&ihost->pdev->dev,
 			"%s: SCIC Controller linkup event from phy %d in "
 			"unexpected state %d\n", __func__, iphy->phy_index,
 			ihost->sm.current_state_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void sci_controller_link_down(struct isci_host *ihost, struct isci_port *iport,
-			      struct isci_phy *iphy)
-{
-	switch (ihost->sm.current_state_id) {
-	case SCIC_STARTING:
-	case SCIC_READY:
-		ihost->port_agent.link_down_handler(ihost, &ihost->port_agent,
+व्योम sci_controller_link_करोwn(काष्ठा isci_host *ihost, काष्ठा isci_port *iport,
+			      काष्ठा isci_phy *iphy)
+अणु
+	चयन (ihost->sm.current_state_id) अणु
+	हाल SCIC_STARTING:
+	हाल SCIC_READY:
+		ihost->port_agent.link_करोwn_handler(ihost, &ihost->port_agent,
 						   iport, iphy);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(&ihost->pdev->dev,
 			"%s: SCIC Controller linkdown event from phy %d in "
 			"unexpected state %d\n",
 			__func__,
 			iphy->phy_index,
 			ihost->sm.current_state_id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool sci_controller_has_remote_devices_stopping(struct isci_host *ihost)
-{
+bool sci_controller_has_remote_devices_stopping(काष्ठा isci_host *ihost)
+अणु
 	u32 index;
 
-	for (index = 0; index < ihost->remote_node_entries; index++) {
-		if ((ihost->device_table[index] != NULL) &&
+	क्रम (index = 0; index < ihost->remote_node_entries; index++) अणु
+		अगर ((ihost->device_table[index] != शून्य) &&
 		   (ihost->device_table[index]->sm.current_state_id == SCI_DEV_STOPPING))
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void sci_controller_remote_device_stopped(struct isci_host *ihost,
-					  struct isci_remote_device *idev)
-{
-	if (ihost->sm.current_state_id != SCIC_STOPPING) {
+व्योम sci_controller_remote_device_stopped(काष्ठा isci_host *ihost,
+					  काष्ठा isci_remote_device *idev)
+अणु
+	अगर (ihost->sm.current_state_id != SCIC_STOPPING) अणु
 		dev_dbg(&ihost->pdev->dev,
 			"SCIC Controller 0x%p remote device stopped event "
 			"from device 0x%p in unexpected state %d\n",
 			ihost, idev,
 			ihost->sm.current_state_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!sci_controller_has_remote_devices_stopping(ihost))
+	अगर (!sci_controller_has_remote_devices_stopping(ihost))
 		isci_host_stop_complete(ihost);
-}
+पूर्ण
 
-void sci_controller_post_request(struct isci_host *ihost, u32 request)
-{
+व्योम sci_controller_post_request(काष्ठा isci_host *ihost, u32 request)
+अणु
 	dev_dbg(&ihost->pdev->dev, "%s[%d]: %#x\n",
 		__func__, ihost->id, request);
 
-	writel(request, &ihost->smu_registers->post_context_port);
-}
+	ग_लिखोl(request, &ihost->smu_रेजिस्टरs->post_context_port);
+पूर्ण
 
-struct isci_request *sci_request_by_tag(struct isci_host *ihost, u16 io_tag)
-{
+काष्ठा isci_request *sci_request_by_tag(काष्ठा isci_host *ihost, u16 io_tag)
+अणु
 	u16 task_index;
 	u16 task_sequence;
 
 	task_index = ISCI_TAG_TCI(io_tag);
 
-	if (task_index < ihost->task_context_entries) {
-		struct isci_request *ireq = ihost->reqs[task_index];
+	अगर (task_index < ihost->task_context_entries) अणु
+		काष्ठा isci_request *ireq = ihost->reqs[task_index];
 
-		if (test_bit(IREQ_ACTIVE, &ireq->flags)) {
+		अगर (test_bit(IREQ_ACTIVE, &ireq->flags)) अणु
 			task_sequence = ISCI_TAG_SEQ(io_tag);
 
-			if (task_sequence == ihost->io_request_sequence[task_index])
-				return ireq;
-		}
-	}
+			अगर (task_sequence == ihost->io_request_sequence[task_index])
+				वापस ireq;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * sci_controller_allocate_remote_node_context()
  * This method allocates remote node index and the reserves the remote node
- *    context space for use. This method can fail if there are no more remote
+ *    context space क्रम use. This method can fail अगर there are no more remote
  *    node index available.
  * @ihost: This is the controller object which contains the set of
- *    free remote node ids
+ *    मुक्त remote node ids
  * @idev: This is the device object which is requesting the a remote node
  *    id
- * @node_id: This is the remote node id that is assinged to the device if one
+ * @node_id: This is the remote node id that is assinged to the device अगर one
  *    is available
  *
- * enum sci_status SCI_FAILURE_OUT_OF_RESOURCES if there are no available remote
+ * क्रमागत sci_status SCI_FAILURE_OUT_OF_RESOURCES अगर there are no available remote
  * node index available.
  */
-enum sci_status sci_controller_allocate_remote_node_context(struct isci_host *ihost,
-							    struct isci_remote_device *idev,
+क्रमागत sci_status sci_controller_allocate_remote_node_context(काष्ठा isci_host *ihost,
+							    काष्ठा isci_remote_device *idev,
 							    u16 *node_id)
-{
+अणु
 	u16 node_index;
 	u32 remote_node_count = sci_remote_device_node_count(idev);
 
@@ -2502,235 +2503,235 @@ enum sci_status sci_controller_allocate_remote_node_context(struct isci_host *ih
 		&ihost->available_remote_nodes, remote_node_count
 		);
 
-	if (node_index != SCIC_SDS_REMOTE_NODE_CONTEXT_INVALID_INDEX) {
+	अगर (node_index != SCIC_SDS_REMOTE_NODE_CONTEXT_INVALID_INDEX) अणु
 		ihost->device_table[node_index] = idev;
 
 		*node_id = node_index;
 
-		return SCI_SUCCESS;
-	}
+		वापस SCI_SUCCESS;
+	पूर्ण
 
-	return SCI_FAILURE_INSUFFICIENT_RESOURCES;
-}
+	वापस SCI_FAILURE_INSUFFICIENT_RESOURCES;
+पूर्ण
 
-void sci_controller_free_remote_node_context(struct isci_host *ihost,
-					     struct isci_remote_device *idev,
+व्योम sci_controller_मुक्त_remote_node_context(काष्ठा isci_host *ihost,
+					     काष्ठा isci_remote_device *idev,
 					     u16 node_id)
-{
+अणु
 	u32 remote_node_count = sci_remote_device_node_count(idev);
 
-	if (ihost->device_table[node_id] == idev) {
-		ihost->device_table[node_id] = NULL;
+	अगर (ihost->device_table[node_id] == idev) अणु
+		ihost->device_table[node_id] = शून्य;
 
 		sci_remote_node_table_release_remote_node_index(
 			&ihost->available_remote_nodes, remote_node_count, node_id
 			);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void sci_controller_copy_sata_response(void *response_buffer,
-				       void *frame_header,
-				       void *frame_buffer)
-{
+व्योम sci_controller_copy_sata_response(व्योम *response_buffer,
+				       व्योम *frame_header,
+				       व्योम *frame_buffer)
+अणु
 	/* XXX type safety? */
-	memcpy(response_buffer, frame_header, sizeof(u32));
+	स_नकल(response_buffer, frame_header, माप(u32));
 
-	memcpy(response_buffer + sizeof(u32),
+	स_नकल(response_buffer + माप(u32),
 	       frame_buffer,
-	       sizeof(struct dev_to_host_fis) - sizeof(u32));
-}
+	       माप(काष्ठा dev_to_host_fis) - माप(u32));
+पूर्ण
 
-void sci_controller_release_frame(struct isci_host *ihost, u32 frame_index)
-{
-	if (sci_unsolicited_frame_control_release_frame(&ihost->uf_control, frame_index))
-		writel(ihost->uf_control.get,
-			&ihost->scu_registers->sdma.unsolicited_frame_get_pointer);
-}
+व्योम sci_controller_release_frame(काष्ठा isci_host *ihost, u32 frame_index)
+अणु
+	अगर (sci_unsolicited_frame_control_release_frame(&ihost->uf_control, frame_index))
+		ग_लिखोl(ihost->uf_control.get,
+			&ihost->scu_रेजिस्टरs->sdma.unsolicited_frame_get_poपूर्णांकer);
+पूर्ण
 
-void isci_tci_free(struct isci_host *ihost, u16 tci)
-{
+व्योम isci_tci_मुक्त(काष्ठा isci_host *ihost, u16 tci)
+अणु
 	u16 tail = ihost->tci_tail & (SCI_MAX_IO_REQUESTS-1);
 
 	ihost->tci_pool[tail] = tci;
 	ihost->tci_tail = tail + 1;
-}
+पूर्ण
 
-static u16 isci_tci_alloc(struct isci_host *ihost)
-{
+अटल u16 isci_tci_alloc(काष्ठा isci_host *ihost)
+अणु
 	u16 head = ihost->tci_head & (SCI_MAX_IO_REQUESTS-1);
 	u16 tci = ihost->tci_pool[head];
 
 	ihost->tci_head = head + 1;
-	return tci;
-}
+	वापस tci;
+पूर्ण
 
-static u16 isci_tci_space(struct isci_host *ihost)
-{
-	return CIRC_SPACE(ihost->tci_head, ihost->tci_tail, SCI_MAX_IO_REQUESTS);
-}
+अटल u16 isci_tci_space(काष्ठा isci_host *ihost)
+अणु
+	वापस CIRC_SPACE(ihost->tci_head, ihost->tci_tail, SCI_MAX_IO_REQUESTS);
+पूर्ण
 
-u16 isci_alloc_tag(struct isci_host *ihost)
-{
-	if (isci_tci_space(ihost)) {
+u16 isci_alloc_tag(काष्ठा isci_host *ihost)
+अणु
+	अगर (isci_tci_space(ihost)) अणु
 		u16 tci = isci_tci_alloc(ihost);
 		u8 seq = ihost->io_request_sequence[tci];
 
-		return ISCI_TAG(seq, tci);
-	}
+		वापस ISCI_TAG(seq, tci);
+	पूर्ण
 
-	return SCI_CONTROLLER_INVALID_IO_TAG;
-}
+	वापस SCI_CONTROLLER_INVALID_IO_TAG;
+पूर्ण
 
-enum sci_status isci_free_tag(struct isci_host *ihost, u16 io_tag)
-{
+क्रमागत sci_status isci_मुक्त_tag(काष्ठा isci_host *ihost, u16 io_tag)
+अणु
 	u16 tci = ISCI_TAG_TCI(io_tag);
 	u16 seq = ISCI_TAG_SEQ(io_tag);
 
 	/* prevent tail from passing head */
-	if (isci_tci_active(ihost) == 0)
-		return SCI_FAILURE_INVALID_IO_TAG;
+	अगर (isci_tci_active(ihost) == 0)
+		वापस SCI_FAILURE_INVALID_IO_TAG;
 
-	if (seq == ihost->io_request_sequence[tci]) {
+	अगर (seq == ihost->io_request_sequence[tci]) अणु
 		ihost->io_request_sequence[tci] = (seq+1) & (SCI_MAX_SEQ-1);
 
-		isci_tci_free(ihost, tci);
+		isci_tci_मुक्त(ihost, tci);
 
-		return SCI_SUCCESS;
-	}
-	return SCI_FAILURE_INVALID_IO_TAG;
-}
+		वापस SCI_SUCCESS;
+	पूर्ण
+	वापस SCI_FAILURE_INVALID_IO_TAG;
+पूर्ण
 
-enum sci_status sci_controller_start_io(struct isci_host *ihost,
-					struct isci_remote_device *idev,
-					struct isci_request *ireq)
-{
-	enum sci_status status;
+क्रमागत sci_status sci_controller_start_io(काष्ठा isci_host *ihost,
+					काष्ठा isci_remote_device *idev,
+					काष्ठा isci_request *ireq)
+अणु
+	क्रमागत sci_status status;
 
-	if (ihost->sm.current_state_id != SCIC_READY) {
+	अगर (ihost->sm.current_state_id != SCIC_READY) अणु
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 
 	status = sci_remote_device_start_io(ihost, idev, ireq);
-	if (status != SCI_SUCCESS)
-		return status;
+	अगर (status != SCI_SUCCESS)
+		वापस status;
 
 	set_bit(IREQ_ACTIVE, &ireq->flags);
 	sci_controller_post_request(ihost, ireq->post_context);
-	return SCI_SUCCESS;
-}
+	वापस SCI_SUCCESS;
+पूर्ण
 
-enum sci_status sci_controller_terminate_request(struct isci_host *ihost,
-						 struct isci_remote_device *idev,
-						 struct isci_request *ireq)
-{
-	/* terminate an ongoing (i.e. started) core IO request.  This does not
-	 * abort the IO request at the target, but rather removes the IO
+क्रमागत sci_status sci_controller_terminate_request(काष्ठा isci_host *ihost,
+						 काष्ठा isci_remote_device *idev,
+						 काष्ठा isci_request *ireq)
+अणु
+	/* terminate an ongoing (i.e. started) core IO request.  This करोes not
+	 * पात the IO request at the target, but rather हटाओs the IO
 	 * request from the host controller.
 	 */
-	enum sci_status status;
+	क्रमागत sci_status status;
 
-	if (ihost->sm.current_state_id != SCIC_READY) {
+	अगर (ihost->sm.current_state_id != SCIC_READY) अणु
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 	status = sci_io_request_terminate(ireq);
 
 	dev_dbg(&ihost->pdev->dev, "%s: status=%d; ireq=%p; flags=%lx\n",
 		__func__, status, ireq, ireq->flags);
 
-	if ((status == SCI_SUCCESS) &&
+	अगर ((status == SCI_SUCCESS) &&
 	    !test_bit(IREQ_PENDING_ABORT, &ireq->flags) &&
-	    !test_and_set_bit(IREQ_TC_ABORT_POSTED, &ireq->flags)) {
+	    !test_and_set_bit(IREQ_TC_ABORT_POSTED, &ireq->flags)) अणु
 		/* Utilize the original post context command and or in the
 		 * POST_TC_ABORT request sub-type.
 		 */
 		sci_controller_post_request(
 			ihost, ireq->post_context |
 				SCU_CONTEXT_COMMAND_REQUEST_POST_TC_ABORT);
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /**
- * sci_controller_complete_io() - This method will perform core specific
- *    completion operations for an IO request.  After this method is invoked,
+ * sci_controller_complete_io() - This method will perक्रमm core specअगरic
+ *    completion operations क्रम an IO request.  After this method is invoked,
  *    the user should consider the IO request as invalid until it is properly
- *    reused (i.e. re-constructed).
- * @ihost: The handle to the controller object for which to complete the
+ *    reused (i.e. re-स्थिरructed).
+ * @ihost: The handle to the controller object क्रम which to complete the
  *    IO request.
- * @idev: The handle to the remote device object for which to complete
+ * @idev: The handle to the remote device object क्रम which to complete
  *    the IO request.
  * @ireq: the handle to the io request object to complete.
  */
-enum sci_status sci_controller_complete_io(struct isci_host *ihost,
-					   struct isci_remote_device *idev,
-					   struct isci_request *ireq)
-{
-	enum sci_status status;
+क्रमागत sci_status sci_controller_complete_io(काष्ठा isci_host *ihost,
+					   काष्ठा isci_remote_device *idev,
+					   काष्ठा isci_request *ireq)
+अणु
+	क्रमागत sci_status status;
 
-	switch (ihost->sm.current_state_id) {
-	case SCIC_STOPPING:
+	चयन (ihost->sm.current_state_id) अणु
+	हाल SCIC_STOPPING:
 		/* XXX: Implement this function */
-		return SCI_FAILURE;
-	case SCIC_READY:
+		वापस SCI_FAILURE;
+	हाल SCIC_READY:
 		status = sci_remote_device_complete_io(ihost, idev, ireq);
-		if (status != SCI_SUCCESS)
-			return status;
+		अगर (status != SCI_SUCCESS)
+			वापस status;
 
 		clear_bit(IREQ_ACTIVE, &ireq->flags);
-		return SCI_SUCCESS;
-	default:
+		वापस SCI_SUCCESS;
+	शेष:
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 
-}
+पूर्ण
 
-enum sci_status sci_controller_continue_io(struct isci_request *ireq)
-{
-	struct isci_host *ihost = ireq->owning_controller;
+क्रमागत sci_status sci_controller_जारी_io(काष्ठा isci_request *ireq)
+अणु
+	काष्ठा isci_host *ihost = ireq->owning_controller;
 
-	if (ihost->sm.current_state_id != SCIC_READY) {
+	अगर (ihost->sm.current_state_id != SCIC_READY) अणु
 		dev_warn(&ihost->pdev->dev, "%s invalid state: %d\n",
 			 __func__, ihost->sm.current_state_id);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 
 	set_bit(IREQ_ACTIVE, &ireq->flags);
 	sci_controller_post_request(ihost, ireq->post_context);
-	return SCI_SUCCESS;
-}
+	वापस SCI_SUCCESS;
+पूर्ण
 
 /**
  * sci_controller_start_task() - This method is called by the SCIC user to
  *    send/start a framework task management request.
- * @ihost: the handle to the controller object for which to start the task
+ * @ihost: the handle to the controller object क्रम which to start the task
  *    management request.
- * @idev: the handle to the remote device object for which to start
+ * @idev: the handle to the remote device object क्रम which to start
  *    the task management request.
  * @ireq: the handle to the task request object to start.
  */
-enum sci_status sci_controller_start_task(struct isci_host *ihost,
-					  struct isci_remote_device *idev,
-					  struct isci_request *ireq)
-{
-	enum sci_status status;
+क्रमागत sci_status sci_controller_start_task(काष्ठा isci_host *ihost,
+					  काष्ठा isci_remote_device *idev,
+					  काष्ठा isci_request *ireq)
+अणु
+	क्रमागत sci_status status;
 
-	if (ihost->sm.current_state_id != SCIC_READY) {
+	अगर (ihost->sm.current_state_id != SCIC_READY) अणु
 		dev_warn(&ihost->pdev->dev,
 			 "%s: SCIC Controller starting task from invalid "
 			 "state\n",
 			 __func__);
-		return SCI_FAILURE_INVALID_STATE;
-	}
+		वापस SCI_FAILURE_INVALID_STATE;
+	पूर्ण
 
 	status = sci_remote_device_start_task(ihost, idev, ireq);
-	switch (status) {
-	case SCI_FAILURE_RESET_DEVICE_PARTIAL_SUCCESS:
+	चयन (status) अणु
+	हाल SCI_FAILURE_RESET_DEVICE_PARTIAL_SUCCESS:
 		set_bit(IREQ_ACTIVE, &ireq->flags);
 
 		/*
@@ -2738,67 +2739,67 @@ enum sci_status sci_controller_start_task(struct isci_host *ihost,
 		 * although core is still woring on starting the request (to post tc when
 		 * RNC is resumed.)
 		 */
-		return SCI_SUCCESS;
-	case SCI_SUCCESS:
+		वापस SCI_SUCCESS;
+	हाल SCI_SUCCESS:
 		set_bit(IREQ_ACTIVE, &ireq->flags);
 		sci_controller_post_request(ihost, ireq->post_context);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int sci_write_gpio_tx_gp(struct isci_host *ihost, u8 reg_index, u8 reg_count, u8 *write_data)
-{
-	int d;
+अटल पूर्णांक sci_ग_लिखो_gpio_tx_gp(काष्ठा isci_host *ihost, u8 reg_index, u8 reg_count, u8 *ग_लिखो_data)
+अणु
+	पूर्णांक d;
 
-	/* no support for TX_GP_CFG */
-	if (reg_index == 0)
-		return -EINVAL;
+	/* no support क्रम TX_GP_CFG */
+	अगर (reg_index == 0)
+		वापस -EINVAL;
 
-	for (d = 0; d < isci_gpio_count(ihost); d++) {
+	क्रम (d = 0; d < isci_gpio_count(ihost); d++) अणु
 		u32 val = 0x444; /* all ODx.n clear */
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < 3; i++) {
-			int bit;
+		क्रम (i = 0; i < 3; i++) अणु
+			पूर्णांक bit;
 
 			bit = try_test_sas_gpio_gp_bit(to_sas_gpio_od(d, i),
-						       write_data, reg_index,
+						       ग_लिखो_data, reg_index,
 						       reg_count);
-			if (bit < 0)
-				break;
+			अगर (bit < 0)
+				अवरोध;
 
-			/* if od is set, clear the 'invert' bit */
+			/* अगर od is set, clear the 'invert' bit */
 			val &= ~(bit << ((i << 2) + 2));
-		}
+		पूर्ण
 
-		if (i < 3)
-			break;
-		writel(val, &ihost->scu_registers->peg0.sgpio.output_data_select[d]);
-	}
+		अगर (i < 3)
+			अवरोध;
+		ग_लिखोl(val, &ihost->scu_रेजिस्टरs->peg0.sgpio.output_data_select[d]);
+	पूर्ण
 
-	/* unless reg_index is > 1, we should always be able to write at
-	 * least one register
+	/* unless reg_index is > 1, we should always be able to ग_लिखो at
+	 * least one रेजिस्टर
 	 */
-	return d > 0;
-}
+	वापस d > 0;
+पूर्ण
 
-int isci_gpio_write(struct sas_ha_struct *sas_ha, u8 reg_type, u8 reg_index,
-		    u8 reg_count, u8 *write_data)
-{
-	struct isci_host *ihost = sas_ha->lldd_ha;
-	int written;
+पूर्णांक isci_gpio_ग_लिखो(काष्ठा sas_ha_काष्ठा *sas_ha, u8 reg_type, u8 reg_index,
+		    u8 reg_count, u8 *ग_लिखो_data)
+अणु
+	काष्ठा isci_host *ihost = sas_ha->lldd_ha;
+	पूर्णांक written;
 
-	switch (reg_type) {
-	case SAS_GPIO_REG_TX_GP:
-		written = sci_write_gpio_tx_gp(ihost, reg_index, reg_count, write_data);
-		break;
-	default:
+	चयन (reg_type) अणु
+	हाल SAS_GPIO_REG_TX_GP:
+		written = sci_ग_लिखो_gpio_tx_gp(ihost, reg_index, reg_count, ग_लिखो_data);
+		अवरोध;
+	शेष:
 		written = -EINVAL;
-	}
+	पूर्ण
 
-	return written;
-}
+	वापस written;
+पूर्ण

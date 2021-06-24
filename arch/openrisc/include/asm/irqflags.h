@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,14 +13,14 @@
  * et al.
  */
 
-#ifndef ___ASM_OPENRISC_IRQFLAGS_H
-#define ___ASM_OPENRISC_IRQFLAGS_H
+#अगर_अघोषित ___ASM_OPENRISC_IRQFLAGS_H
+#घोषणा ___ASM_OPENRISC_IRQFLAGS_H
 
-#include <asm/spr_defs.h>
+#समावेश <यंत्र/spr_defs.h>
 
-#define ARCH_IRQ_DISABLED        0x00
-#define ARCH_IRQ_ENABLED         (SPR_SR_IEE|SPR_SR_TEE)
+#घोषणा ARCH_IRQ_DISABLED        0x00
+#घोषणा ARCH_IRQ_ENABLED         (SPR_SR_IEE|SPR_SR_TEE)
 
-#include <asm-generic/irqflags.h>
+#समावेश <यंत्र-generic/irqflags.h>
 
-#endif /* ___ASM_OPENRISC_IRQFLAGS_H */
+#पूर्ण_अगर /* ___ASM_OPENRISC_IRQFLAGS_H */

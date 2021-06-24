@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright © 2012 NetCommWireless
+ * Copyright तऊ 2012 NetCommWireless
  * Iwo Mergler <Iwo.Mergler@netcommwireless.com.au>
  *
- * Test for multi-bit error recovery on a NAND page This mostly tests the
+ * Test क्रम multi-bit error recovery on a न_अंकD page This mostly tests the
  * ECC controller / driver.
  *
  * There are two test modes:
  *
- *	0 - artificially inserting bit errors until the ECC fails
- *	    This is the default method and fairly quick. It should
+ *	0 - artअगरicially inserting bit errors until the ECC fails
+ *	    This is the शेष method and fairly quick. It should
  *	    be independent of the quality of the FLASH.
  *
  *	1 - re-writing the same pattern repeatedly until the ECC fails.
- *	    This method relies on the physics of NAND FLASH to eventually
- *	    generate '0' bits if '1' has been written sufficient times.
- *	    Depending on the NAND, the first bit errors will appear after
- *	    1000 or more writes and then will usually snowball, reaching the
+ *	    This method relies on the physics of न_अंकD FLASH to eventually
+ *	    generate '0' bits if '1' has been written sufficient बार.
+ *	    Depending on the न_अंकD, the first bit errors will appear after
+ *	    1000 or more ग_लिखोs and then will usually snowball, reaching the
  *	    limits of the ECC quickly.
  *
  *	    The test stops after 10000 cycles, should your FLASH be
- *	    exceptionally good and not generate bit errors before that. Try
- *	    a different page in that case.
+ *	    exceptionally good and not generate bit errors beक्रमe that. Try
+ *	    a dअगरferent page in that हाल.
  *
- * Please note that neither of these tests will significantly 'use up' any
- * FLASH endurance. Only a maximum of two erase operations will be performed.
+ * Please note that neither of these tests will signअगरicantly 'use up' any
+ * FLASH endurance. Only a maximum of two erase operations will be perक्रमmed.
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/mtd/mtd.h>
-#include <linux/err.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/slab.h>
-#include "mtd_test.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/slab.h>
+#समावेश "mtd_test.h"
 
-static int dev;
-module_param(dev, int, S_IRUGO);
+अटल पूर्णांक dev;
+module_param(dev, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(dev, "MTD device number to use");
 
-static unsigned page_offset;
-module_param(page_offset, uint, S_IRUGO);
+अटल अचिन्हित page_offset;
+module_param(page_offset, uपूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(page_offset, "Page number relative to dev start");
 
-static unsigned seed;
-module_param(seed, uint, S_IRUGO);
+अटल अचिन्हित seed;
+module_param(seed, uपूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(seed, "Random seed");
 
-static int mode;
-module_param(mode, int, S_IRUGO);
+अटल पूर्णांक mode;
+module_param(mode, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(mode, "0=incremental errors, 1=overwrite test");
 
-static unsigned max_overwrite = 10000;
+अटल अचिन्हित max_overग_लिखो = 10000;
 
-static loff_t   offset;     /* Offset of the page we're using. */
-static unsigned eraseblock; /* Eraseblock number for our page. */
+अटल loff_t   offset;     /* Offset of the page we're using. */
+अटल अचिन्हित eraseblock; /* Eraseblock number क्रम our page. */
 
 /* We assume that the ECC can correct up to a certain number
  * of biterrors per subpage. */
-static unsigned subsize;  /* Size of subpages */
-static unsigned subcount; /* Number of subpages per page */
+अटल अचिन्हित subsize;  /* Size of subpages */
+अटल अचिन्हित subcount; /* Number of subpages per page */
 
-static struct mtd_info *mtd;   /* MTD device */
+अटल काष्ठा mtd_info *mtd;   /* MTD device */
 
-static uint8_t *wbuffer; /* One page write / compare buffer */
-static uint8_t *rbuffer; /* One page read buffer */
+अटल uपूर्णांक8_t *wbuffer; /* One page ग_लिखो / compare buffer */
+अटल uपूर्णांक8_t *rbuffer; /* One page पढ़ो buffer */
 
 /* 'random' bytes from known offsets */
-static uint8_t hash(unsigned offset)
-{
-	unsigned v = offset;
-	unsigned char c;
+अटल uपूर्णांक8_t hash(अचिन्हित offset)
+अणु
+	अचिन्हित v = offset;
+	अचिन्हित अक्षर c;
 	v ^= 0x7f7edfd3;
 	v = v ^ (v >> 3);
 	v = v ^ (v >> 5);
@@ -83,336 +84,336 @@ static uint8_t hash(unsigned offset)
 	c = (c & 0x0F) << 4 | (c & 0xF0) >> 4;
 	c = (c & 0x33) << 2 | (c & 0xCC) >> 2;
 	c = (c & 0x55) << 1 | (c & 0xAA) >> 1;
-	return c;
-}
+	वापस c;
+पूर्ण
 
 /* Writes wbuffer to page */
-static int write_page(int log)
-{
-	if (log)
+अटल पूर्णांक ग_लिखो_page(पूर्णांक log)
+अणु
+	अगर (log)
 		pr_info("write_page\n");
 
-	return mtdtest_write(mtd, offset, mtd->writesize, wbuffer);
-}
+	वापस mtdtest_ग_लिखो(mtd, offset, mtd->ग_लिखोsize, wbuffer);
+पूर्ण
 
-/* Re-writes the data area while leaving the OOB alone. */
-static int rewrite_page(int log)
-{
-	int err = 0;
-	struct mtd_oob_ops ops;
+/* Re-ग_लिखोs the data area जबतक leaving the OOB alone. */
+अटल पूर्णांक reग_लिखो_page(पूर्णांक log)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा mtd_oob_ops ops;
 
-	if (log)
+	अगर (log)
 		pr_info("rewrite page\n");
 
 	ops.mode      = MTD_OPS_RAW; /* No ECC */
-	ops.len       = mtd->writesize;
+	ops.len       = mtd->ग_लिखोsize;
 	ops.retlen    = 0;
 	ops.ooblen    = 0;
 	ops.oobretlen = 0;
 	ops.ooboffs   = 0;
 	ops.datbuf    = wbuffer;
-	ops.oobbuf    = NULL;
+	ops.oobbuf    = शून्य;
 
-	err = mtd_write_oob(mtd, offset, &ops);
-	if (err || ops.retlen != mtd->writesize) {
+	err = mtd_ग_लिखो_oob(mtd, offset, &ops);
+	अगर (err || ops.retlen != mtd->ग_लिखोsize) अणु
 		pr_err("error: write_oob failed (%d)\n", err);
-		if (!err)
+		अगर (!err)
 			err = -EIO;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Reads page into rbuffer. Returns number of corrected bit errors (>=0)
+/* Reads page पूर्णांकo rbuffer. Returns number of corrected bit errors (>=0)
  * or error (<0) */
-static int read_page(int log)
-{
-	int err = 0;
-	size_t read;
-	struct mtd_ecc_stats oldstats;
+अटल पूर्णांक पढ़ो_page(पूर्णांक log)
+अणु
+	पूर्णांक err = 0;
+	माप_प्रकार पढ़ो;
+	काष्ठा mtd_ecc_stats oldstats;
 
-	if (log)
+	अगर (log)
 		pr_info("read_page\n");
 
 	/* Saving last mtd stats */
-	memcpy(&oldstats, &mtd->ecc_stats, sizeof(oldstats));
+	स_नकल(&oldstats, &mtd->ecc_stats, माप(oldstats));
 
-	err = mtd_read(mtd, offset, mtd->writesize, &read, rbuffer);
-	if (!err || err == -EUCLEAN)
+	err = mtd_पढ़ो(mtd, offset, mtd->ग_लिखोsize, &पढ़ो, rbuffer);
+	अगर (!err || err == -EUCLEAN)
 		err = mtd->ecc_stats.corrected - oldstats.corrected;
 
-	if (err < 0 || read != mtd->writesize) {
-		pr_err("error: read failed at %#llx\n", (long long)offset);
-		if (err >= 0)
+	अगर (err < 0 || पढ़ो != mtd->ग_लिखोsize) अणु
+		pr_err("error: read failed at %#llx\n", (दीर्घ दीर्घ)offset);
+		अगर (err >= 0)
 			err = -EIO;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Verifies rbuffer against random sequence */
-static int verify_page(int log)
-{
-	unsigned i, errs = 0;
+/* Verअगरies rbuffer against अक्रमom sequence */
+अटल पूर्णांक verअगरy_page(पूर्णांक log)
+अणु
+	अचिन्हित i, errs = 0;
 
-	if (log)
+	अगर (log)
 		pr_info("verify_page\n");
 
-	for (i = 0; i < mtd->writesize; i++) {
-		if (rbuffer[i] != hash(i+seed)) {
+	क्रम (i = 0; i < mtd->ग_लिखोsize; i++) अणु
+		अगर (rbuffer[i] != hash(i+seed)) अणु
 			pr_err("Error: page offset %u, expected %02x, got %02x\n",
 				i, hash(i+seed), rbuffer[i]);
 			errs++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (errs)
-		return -EIO;
-	else
-		return 0;
-}
+	अगर (errs)
+		वापस -EIO;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-#define CBIT(v, n) ((v) & (1 << (n)))
-#define BCLR(v, n) ((v) = (v) & ~(1 << (n)))
+#घोषणा CBIT(v, n) ((v) & (1 << (n)))
+#घोषणा BCLR(v, n) ((v) = (v) & ~(1 << (n)))
 
 /* Finds the first '1' bit in wbuffer starting at offset 'byte'
  * and sets it to '0'. */
-static int insert_biterror(unsigned byte)
-{
-	int bit;
+अटल पूर्णांक insert_biterror(अचिन्हित byte)
+अणु
+	पूर्णांक bit;
 
-	while (byte < mtd->writesize) {
-		for (bit = 7; bit >= 0; bit--) {
-			if (CBIT(wbuffer[byte], bit)) {
+	जबतक (byte < mtd->ग_लिखोsize) अणु
+		क्रम (bit = 7; bit >= 0; bit--) अणु
+			अगर (CBIT(wbuffer[byte], bit)) अणु
 				BCLR(wbuffer[byte], bit);
 				pr_info("Inserted biterror @ %u/%u\n", byte, bit);
-				return 0;
-			}
-		}
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		byte++;
-	}
+	पूर्ण
 	pr_err("biterror: Failed to find a '1' bit\n");
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-/* Writes 'random' data to page and then introduces deliberate bit
- * errors into the page, while verifying each step. */
-static int incremental_errors_test(void)
-{
-	int err = 0;
-	unsigned i;
-	unsigned errs_per_subpage = 0;
+/* Writes 'random' data to page and then पूर्णांकroduces deliberate bit
+ * errors पूर्णांकo the page, जबतक verअगरying each step. */
+अटल पूर्णांक incremental_errors_test(व्योम)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित i;
+	अचिन्हित errs_per_subpage = 0;
 
 	pr_info("incremental biterrors test\n");
 
-	for (i = 0; i < mtd->writesize; i++)
+	क्रम (i = 0; i < mtd->ग_लिखोsize; i++)
 		wbuffer[i] = hash(i+seed);
 
-	err = write_page(1);
-	if (err)
-		goto exit;
+	err = ग_लिखो_page(1);
+	अगर (err)
+		जाओ निकास;
 
-	while (1) {
+	जबतक (1) अणु
 
-		err = rewrite_page(1);
-		if (err)
-			goto exit;
+		err = reग_लिखो_page(1);
+		अगर (err)
+			जाओ निकास;
 
-		err = read_page(1);
-		if (err > 0)
+		err = पढ़ो_page(1);
+		अगर (err > 0)
 			pr_info("Read reported %d corrected bit errors\n", err);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			pr_err("After %d biterrors per subpage, read reported error %d\n",
 				errs_per_subpage, err);
 			err = 0;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		err = verify_page(1);
-		if (err) {
+		err = verअगरy_page(1);
+		अगर (err) अणु
 			pr_err("ECC failure, read data is incorrect despite read success\n");
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		pr_info("Successfully corrected %d bit errors per subpage\n",
 			errs_per_subpage);
 
-		for (i = 0; i < subcount; i++) {
+		क्रम (i = 0; i < subcount; i++) अणु
 			err = insert_biterror(i * subsize);
-			if (err < 0)
-				goto exit;
-		}
+			अगर (err < 0)
+				जाओ निकास;
+		पूर्ण
 		errs_per_subpage++;
-	}
+	पूर्ण
 
-exit:
-	return err;
-}
+निकास:
+	वापस err;
+पूर्ण
 
 
-/* Writes 'random' data to page and then re-writes that same data repeatedly.
+/* Writes 'random' data to page and then re-ग_लिखोs that same data repeatedly.
    This eventually develops bit errors (bits written as '1' will slowly become
    '0'), which are corrected as far as the ECC is capable of. */
-static int overwrite_test(void)
-{
-	int err = 0;
-	unsigned i;
-	unsigned max_corrected = 0;
-	unsigned opno = 0;
-	/* We don't expect more than this many correctable bit errors per
+अटल पूर्णांक overग_लिखो_test(व्योम)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित i;
+	अचिन्हित max_corrected = 0;
+	अचिन्हित opno = 0;
+	/* We करोn't expect more than this many correctable bit errors per
 	 * page. */
-	#define MAXBITS 512
-	static unsigned bitstats[MAXBITS]; /* bit error histogram. */
+	#घोषणा MAXBITS 512
+	अटल अचिन्हित bitstats[MAXBITS]; /* bit error histogram. */
 
-	memset(bitstats, 0, sizeof(bitstats));
+	स_रखो(bitstats, 0, माप(bitstats));
 
 	pr_info("overwrite biterrors test\n");
 
-	for (i = 0; i < mtd->writesize; i++)
+	क्रम (i = 0; i < mtd->ग_लिखोsize; i++)
 		wbuffer[i] = hash(i+seed);
 
-	err = write_page(1);
-	if (err)
-		goto exit;
+	err = ग_लिखो_page(1);
+	अगर (err)
+		जाओ निकास;
 
-	while (opno < max_overwrite) {
+	जबतक (opno < max_overग_लिखो) अणु
 
-		err = write_page(0);
-		if (err)
-			break;
+		err = ग_लिखो_page(0);
+		अगर (err)
+			अवरोध;
 
-		err = read_page(0);
-		if (err >= 0) {
-			if (err >= MAXBITS) {
+		err = पढ़ो_page(0);
+		अगर (err >= 0) अणु
+			अगर (err >= MAXBITS) अणु
 				pr_info("Implausible number of bit errors corrected\n");
 				err = -EIO;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			bitstats[err]++;
-			if (err > max_corrected) {
+			अगर (err > max_corrected) अणु
 				max_corrected = err;
 				pr_info("Read reported %d corrected bit errors\n",
 					err);
-			}
-		} else { /* err < 0 */
+			पूर्ण
+		पूर्ण अन्यथा अणु /* err < 0 */
 			pr_info("Read reported error %d\n", err);
 			err = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = verify_page(0);
-		if (err) {
+		err = verअगरy_page(0);
+		अगर (err) अणु
 			bitstats[max_corrected] = opno;
 			pr_info("ECC failure, read data is incorrect despite read success\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		err = mtdtest_relax();
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		opno++;
-	}
+	पूर्ण
 
-	/* At this point bitstats[0] contains the number of ops with no bit
+	/* At this poपूर्णांक bitstats[0] contains the number of ops with no bit
 	 * errors, bitstats[1] the number of ops with 1 bit error, etc. */
 	pr_info("Bit error histogram (%d operations total):\n", opno);
-	for (i = 0; i < max_corrected; i++)
+	क्रम (i = 0; i < max_corrected; i++)
 		pr_info("Page reads with %3d corrected bit errors: %d\n",
 			i, bitstats[i]);
 
-exit:
-	return err;
-}
+निकास:
+	वापस err;
+पूर्ण
 
-static int __init mtd_nandbiterrs_init(void)
-{
-	int err = 0;
+अटल पूर्णांक __init mtd_nandbiterrs_init(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	printk("\n");
-	printk(KERN_INFO "==================================================\n");
+	prपूर्णांकk("\n");
+	prपूर्णांकk(KERN_INFO "==================================================\n");
 	pr_info("MTD device: %d\n", dev);
 
-	mtd = get_mtd_device(NULL, dev);
-	if (IS_ERR(mtd)) {
+	mtd = get_mtd_device(शून्य, dev);
+	अगर (IS_ERR(mtd)) अणु
 		err = PTR_ERR(mtd);
 		pr_err("error: cannot get MTD device\n");
-		goto exit_mtddev;
-	}
+		जाओ निकास_mtddev;
+	पूर्ण
 
-	if (!mtd_type_is_nand(mtd)) {
+	अगर (!mtd_type_is_nand(mtd)) अणु
 		pr_info("this test requires NAND flash\n");
 		err = -ENODEV;
-		goto exit_nand;
-	}
+		जाओ निकास_nand;
+	पूर्ण
 
 	pr_info("MTD device size %llu, eraseblock=%u, page=%u, oob=%u\n",
-		(unsigned long long)mtd->size, mtd->erasesize,
-		mtd->writesize, mtd->oobsize);
+		(अचिन्हित दीर्घ दीर्घ)mtd->size, mtd->erasesize,
+		mtd->ग_लिखोsize, mtd->oobsize);
 
-	subsize  = mtd->writesize >> mtd->subpage_sft;
-	subcount = mtd->writesize / subsize;
+	subsize  = mtd->ग_लिखोsize >> mtd->subpage_sft;
+	subcount = mtd->ग_लिखोsize / subsize;
 
 	pr_info("Device uses %d subpages of %d bytes\n", subcount, subsize);
 
-	offset     = (loff_t)page_offset * mtd->writesize;
-	eraseblock = mtd_div_by_eb(offset, mtd);
+	offset     = (loff_t)page_offset * mtd->ग_लिखोsize;
+	eraseblock = mtd_भाग_by_eb(offset, mtd);
 
 	pr_info("Using page=%u, offset=%llu, eraseblock=%u\n",
 		page_offset, offset, eraseblock);
 
-	wbuffer = kmalloc(mtd->writesize, GFP_KERNEL);
-	if (!wbuffer) {
+	wbuffer = kदो_स्मृति(mtd->ग_लिखोsize, GFP_KERNEL);
+	अगर (!wbuffer) अणु
 		err = -ENOMEM;
-		goto exit_wbuffer;
-	}
+		जाओ निकास_wbuffer;
+	पूर्ण
 
-	rbuffer = kmalloc(mtd->writesize, GFP_KERNEL);
-	if (!rbuffer) {
+	rbuffer = kदो_स्मृति(mtd->ग_लिखोsize, GFP_KERNEL);
+	अगर (!rbuffer) अणु
 		err = -ENOMEM;
-		goto exit_rbuffer;
-	}
+		जाओ निकास_rbuffer;
+	पूर्ण
 
 	err = mtdtest_erase_eraseblock(mtd, eraseblock);
-	if (err)
-		goto exit_error;
+	अगर (err)
+		जाओ निकास_error;
 
-	if (mode == 0)
+	अगर (mode == 0)
 		err = incremental_errors_test();
-	else
-		err = overwrite_test();
+	अन्यथा
+		err = overग_लिखो_test();
 
-	if (err)
-		goto exit_error;
+	अगर (err)
+		जाओ निकास_error;
 
-	/* We leave the block un-erased in case of test failure. */
+	/* We leave the block un-erased in हाल of test failure. */
 	err = mtdtest_erase_eraseblock(mtd, eraseblock);
-	if (err)
-		goto exit_error;
+	अगर (err)
+		जाओ निकास_error;
 
 	err = -EIO;
 	pr_info("finished successfully.\n");
-	printk(KERN_INFO "==================================================\n");
+	prपूर्णांकk(KERN_INFO "==================================================\n");
 
-exit_error:
-	kfree(rbuffer);
-exit_rbuffer:
-	kfree(wbuffer);
-exit_wbuffer:
+निकास_error:
+	kमुक्त(rbuffer);
+निकास_rbuffer:
+	kमुक्त(wbuffer);
+निकास_wbuffer:
 	/* Nothing */
-exit_nand:
+निकास_nand:
 	put_mtd_device(mtd);
-exit_mtddev:
-	return err;
-}
+निकास_mtddev:
+	वापस err;
+पूर्ण
 
-static void __exit mtd_nandbiterrs_exit(void)
-{
-	return;
-}
+अटल व्योम __निकास mtd_nandbiterrs_निकास(व्योम)
+अणु
+	वापस;
+पूर्ण
 
 module_init(mtd_nandbiterrs_init);
-module_exit(mtd_nandbiterrs_exit);
+module_निकास(mtd_nandbiterrs_निकास);
 
 MODULE_DESCRIPTION("NAND bit error recovery test");
 MODULE_AUTHOR("Iwo Mergler");

@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net/sched/em_nbyte.c	N-Byte ematch
  *
  * Authors:	Thomas Graf <tgraf@suug.ch>
  */
 
-#include <linux/gfp.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/skbuff.h>
-#include <linux/tc_ematch/tc_em_nbyte.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/tc_ematch/tc_em_nbyte.h>
+#समावेश <net/pkt_cls.h>
 
-struct nbyte_data {
-	struct tcf_em_nbyte	hdr;
-	char			pattern[];
-};
+काष्ठा nbyte_data अणु
+	काष्ठा tcf_em_nbyte	hdr;
+	अक्षर			pattern[];
+पूर्ण;
 
-static int em_nbyte_change(struct net *net, void *data, int data_len,
-			   struct tcf_ematch *em)
-{
-	struct tcf_em_nbyte *nbyte = data;
+अटल पूर्णांक em_nbyte_change(काष्ठा net *net, व्योम *data, पूर्णांक data_len,
+			   काष्ठा tcf_ematch *em)
+अणु
+	काष्ठा tcf_em_nbyte *nbyte = data;
 
-	if (data_len < sizeof(*nbyte) ||
-	    data_len < (sizeof(*nbyte) + nbyte->len))
-		return -EINVAL;
+	अगर (data_len < माप(*nbyte) ||
+	    data_len < (माप(*nbyte) + nbyte->len))
+		वापस -EINVAL;
 
-	em->datalen = sizeof(*nbyte) + nbyte->len;
-	em->data = (unsigned long)kmemdup(data, em->datalen, GFP_KERNEL);
-	if (em->data == 0UL)
-		return -ENOMEM;
+	em->datalen = माप(*nbyte) + nbyte->len;
+	em->data = (अचिन्हित दीर्घ)kmemdup(data, em->datalen, GFP_KERNEL);
+	अगर (em->data == 0UL)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int em_nbyte_match(struct sk_buff *skb, struct tcf_ematch *em,
-			  struct tcf_pkt_info *info)
-{
-	struct nbyte_data *nbyte = (struct nbyte_data *) em->data;
-	unsigned char *ptr = tcf_get_base_ptr(skb, nbyte->hdr.layer);
+अटल पूर्णांक em_nbyte_match(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *em,
+			  काष्ठा tcf_pkt_info *info)
+अणु
+	काष्ठा nbyte_data *nbyte = (काष्ठा nbyte_data *) em->data;
+	अचिन्हित अक्षर *ptr = tcf_get_base_ptr(skb, nbyte->hdr.layer);
 
 	ptr += nbyte->hdr.off;
 
-	if (!tcf_valid_offset(skb, ptr, nbyte->hdr.len))
-		return 0;
+	अगर (!tcf_valid_offset(skb, ptr, nbyte->hdr.len))
+		वापस 0;
 
-	return !memcmp(ptr, nbyte->pattern, nbyte->hdr.len);
-}
+	वापस !स_भेद(ptr, nbyte->pattern, nbyte->hdr.len);
+पूर्ण
 
-static struct tcf_ematch_ops em_nbyte_ops = {
+अटल काष्ठा tcf_ematch_ops em_nbyte_ops = अणु
 	.kind	  = TCF_EM_NBYTE,
 	.change	  = em_nbyte_change,
 	.match	  = em_nbyte_match,
 	.owner	  = THIS_MODULE,
 	.link	  = LIST_HEAD_INIT(em_nbyte_ops.link)
-};
+पूर्ण;
 
-static int __init init_em_nbyte(void)
-{
-	return tcf_em_register(&em_nbyte_ops);
-}
+अटल पूर्णांक __init init_em_nbyte(व्योम)
+अणु
+	वापस tcf_em_रेजिस्टर(&em_nbyte_ops);
+पूर्ण
 
-static void __exit exit_em_nbyte(void)
-{
-	tcf_em_unregister(&em_nbyte_ops);
-}
+अटल व्योम __निकास निकास_em_nbyte(व्योम)
+अणु
+	tcf_em_unरेजिस्टर(&em_nbyte_ops);
+पूर्ण
 
 MODULE_LICENSE("GPL");
 
 module_init(init_em_nbyte);
-module_exit(exit_em_nbyte);
+module_निकास(निकास_em_nbyte);
 
 MODULE_ALIAS_TCF_EMATCH(TCF_EM_NBYTE);

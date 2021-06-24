@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Intel Multimedia Timer device interface
+ * Intel Mulसमयdia Timer device पूर्णांकerface
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (c) 2001-2004 Silicon Graphics, Inc.  All rights reserved.
  *
- * This file should define an interface compatible with the IA-PC Multimedia
- * Timers Draft Specification (rev. 0.97) from Intel.  Note that some
- * hardware may not be able to safely export its registers to userspace,
- * so the ioctl interface should support all necessary functionality.
+ * This file should define an पूर्णांकerface compatible with the IA-PC Mulसमयdia
+ * Timers Draft Specअगरication (rev. 0.97) from Intel.  Note that some
+ * hardware may not be able to safely export its रेजिस्टरs to userspace,
+ * so the ioctl पूर्णांकerface should support all necessary functionality.
  *
  * 11/01/01 - jbarnes - initial revision
- * 9/10/04 - Christoph Lameter - remove interrupt support
- * 9/17/04 - jbarnes - remove test program, move some #defines to the driver
+ * 9/10/04 - Christoph Lameter - हटाओ पूर्णांकerrupt support
+ * 9/17/04 - jbarnes - हटाओ test program, move some #घोषणाs to the driver
  */
 
-#ifndef _LINUX_MMTIMER_H
-#define _LINUX_MMTIMER_H
+#अगर_अघोषित _LINUX_MMTIMER_H
+#घोषणा _LINUX_MMTIMER_H
 
 /*
- * Breakdown of the ioctl's available.  An 'optional' next to the command
- * indicates that supporting this command is optional, while 'required'
- * commands must be implemented if conformance is desired.
+ * Breakकरोwn of the ioctl's available.  An 'optional' next to the command
+ * indicates that supporting this command is optional, जबतक 'required'
+ * commands must be implemented अगर conक्रमmance is desired.
  *
  * MMTIMER_GETOFFSET - optional
- *   Should return the offset (relative to the start of the page where the
- *   registers are mapped) for the counter in question.
+ *   Should वापस the offset (relative to the start of the page where the
+ *   रेजिस्टरs are mapped) क्रम the counter in question.
  *
  * MMTIMER_GETRES - required
- *   The resolution of the clock in femto (10^-15) seconds
+ *   The resolution of the घड़ी in femto (10^-15) seconds
  *
  * MMTIMER_GETFREQ - required
- *   Frequency of the clock in Hz
+ *   Frequency of the घड़ी in Hz
  *
  * MMTIMER_GETBITS - required
- *   Number of bits in the clock's counter
+ *   Number of bits in the घड़ी's counter
  *
  * MMTIMER_MMAPAVAIL - required
- *   Returns nonzero if the registers can be mmap'd into userspace, 0 otherwise
+ *   Returns nonzero अगर the रेजिस्टरs can be mmap'd पूर्णांकo userspace, 0 otherwise
  *
  * MMTIMER_GETCOUNTER - required
  *   Gets the current value in the counter
  */
-#define MMTIMER_IOCTL_BASE 'm'
+#घोषणा MMTIMER_IOCTL_BASE 'm'
 
-#define MMTIMER_GETOFFSET _IO(MMTIMER_IOCTL_BASE, 0)
-#define MMTIMER_GETRES _IOR(MMTIMER_IOCTL_BASE, 1, unsigned long)
-#define MMTIMER_GETFREQ _IOR(MMTIMER_IOCTL_BASE, 2, unsigned long)
-#define MMTIMER_GETBITS _IO(MMTIMER_IOCTL_BASE, 4)
-#define MMTIMER_MMAPAVAIL _IO(MMTIMER_IOCTL_BASE, 6)
-#define MMTIMER_GETCOUNTER _IOR(MMTIMER_IOCTL_BASE, 9, unsigned long)
+#घोषणा MMTIMER_GETOFFSET _IO(MMTIMER_IOCTL_BASE, 0)
+#घोषणा MMTIMER_GETRES _IOR(MMTIMER_IOCTL_BASE, 1, अचिन्हित दीर्घ)
+#घोषणा MMTIMER_GETFREQ _IOR(MMTIMER_IOCTL_BASE, 2, अचिन्हित दीर्घ)
+#घोषणा MMTIMER_GETBITS _IO(MMTIMER_IOCTL_BASE, 4)
+#घोषणा MMTIMER_MMAPAVAIL _IO(MMTIMER_IOCTL_BASE, 6)
+#घोषणा MMTIMER_GETCOUNTER _IOR(MMTIMER_IOCTL_BASE, 9, अचिन्हित दीर्घ)
 
-#endif /* _LINUX_MMTIMER_H */
+#पूर्ण_अगर /* _LINUX_MMTIMER_H */

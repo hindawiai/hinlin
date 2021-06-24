@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011  Intel Corporation. All rights reserved.
  * Copyright (C) 2014 Marvell International Ltd.
  */
 
-#define pr_fmt(fmt) "llcp: %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) "llcp: %s: " fmt, __func__
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/nfc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/nfc.h>
 
-#include "nfc.h"
-#include "llcp.h"
+#समावेश "nfc.h"
+#समावेश "llcp.h"
 
-static u8 llcp_magic[3] = {0x46, 0x66, 0x6d};
+अटल u8 llcp_magic[3] = अणु0x46, 0x66, 0x6dपूर्ण;
 
-static LIST_HEAD(llcp_devices);
+अटल LIST_HEAD(llcp_devices);
 
-static void nfc_llcp_rx_skb(struct nfc_llcp_local *local, struct sk_buff *skb);
+अटल व्योम nfc_llcp_rx_skb(काष्ठा nfc_llcp_local *local, काष्ठा sk_buff *skb);
 
-void nfc_llcp_sock_link(struct llcp_sock_list *l, struct sock *sk)
-{
-	write_lock(&l->lock);
+व्योम nfc_llcp_sock_link(काष्ठा llcp_sock_list *l, काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock(&l->lock);
 	sk_add_node(sk, &l->head);
-	write_unlock(&l->lock);
-}
+	ग_लिखो_unlock(&l->lock);
+पूर्ण
 
-void nfc_llcp_sock_unlink(struct llcp_sock_list *l, struct sock *sk)
-{
-	write_lock(&l->lock);
+व्योम nfc_llcp_sock_unlink(काष्ठा llcp_sock_list *l, काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock(&l->lock);
 	sk_del_node_init(sk);
-	write_unlock(&l->lock);
-}
+	ग_लिखो_unlock(&l->lock);
+पूर्ण
 
-void nfc_llcp_socket_remote_param_init(struct nfc_llcp_sock *sock)
-{
+व्योम nfc_llcp_socket_remote_param_init(काष्ठा nfc_llcp_sock *sock)
+अणु
 	sock->remote_rw = LLCP_DEFAULT_RW;
 	sock->remote_miu = LLCP_MAX_MIU + 1;
-}
+पूर्ण
 
-static void nfc_llcp_socket_purge(struct nfc_llcp_sock *sock)
-{
-	struct nfc_llcp_local *local = sock->local;
-	struct sk_buff *s, *tmp;
+अटल व्योम nfc_llcp_socket_purge(काष्ठा nfc_llcp_sock *sock)
+अणु
+	काष्ठा nfc_llcp_local *local = sock->local;
+	काष्ठा sk_buff *s, *पंचांगp;
 
 	pr_debug("%p\n", &sock->sk);
 
 	skb_queue_purge(&sock->tx_queue);
 	skb_queue_purge(&sock->tx_pending_queue);
 
-	if (local == NULL)
-		return;
+	अगर (local == शून्य)
+		वापस;
 
-	/* Search for local pending SKBs that are related to this socket */
-	skb_queue_walk_safe(&local->tx_queue, s, tmp) {
-		if (s->sk != &sock->sk)
-			continue;
+	/* Search क्रम local pending SKBs that are related to this socket */
+	skb_queue_walk_safe(&local->tx_queue, s, पंचांगp) अणु
+		अगर (s->sk != &sock->sk)
+			जारी;
 
 		skb_unlink(s, &local->tx_queue);
-		kfree_skb(s);
-	}
-}
+		kमुक्त_skb(s);
+	पूर्ण
+पूर्ण
 
-static void nfc_llcp_socket_release(struct nfc_llcp_local *local, bool device,
-				    int err)
-{
-	struct sock *sk;
-	struct hlist_node *tmp;
-	struct nfc_llcp_sock *llcp_sock;
+अटल व्योम nfc_llcp_socket_release(काष्ठा nfc_llcp_local *local, bool device,
+				    पूर्णांक err)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा hlist_node *पंचांगp;
+	काष्ठा nfc_llcp_sock *llcp_sock;
 
 	skb_queue_purge(&local->tx_queue);
 
-	write_lock(&local->sockets.lock);
+	ग_लिखो_lock(&local->sockets.lock);
 
-	sk_for_each_safe(sk, tmp, &local->sockets.head) {
+	sk_क्रम_each_safe(sk, पंचांगp, &local->sockets.head) अणु
 		llcp_sock = nfc_llcp_sock(sk);
 
 		bh_lock_sock(sk);
 
 		nfc_llcp_socket_purge(llcp_sock);
 
-		if (sk->sk_state == LLCP_CONNECTED)
+		अगर (sk->sk_state == LLCP_CONNECTED)
 			nfc_put_device(llcp_sock->dev);
 
-		if (sk->sk_state == LLCP_LISTEN) {
-			struct nfc_llcp_sock *lsk, *n;
-			struct sock *accept_sk;
+		अगर (sk->sk_state == LLCP_LISTEN) अणु
+			काष्ठा nfc_llcp_sock *lsk, *n;
+			काष्ठा sock *accept_sk;
 
-			list_for_each_entry_safe(lsk, n,
+			list_क्रम_each_entry_safe(lsk, n,
 						 &llcp_sock->accept_queue,
-						 accept_queue) {
+						 accept_queue) अणु
 				accept_sk = &lsk->sk;
 				bh_lock_sock(accept_sk);
 
 				nfc_llcp_accept_unlink(accept_sk);
 
-				if (err)
+				अगर (err)
 					accept_sk->sk_err = err;
 				accept_sk->sk_state = LLCP_CLOSED;
 				accept_sk->sk_state_change(sk);
 
 				bh_unlock_sock(accept_sk);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (err)
+		अगर (err)
 			sk->sk_err = err;
 		sk->sk_state = LLCP_CLOSED;
 		sk->sk_state_change(sk);
@@ -113,24 +114,24 @@ static void nfc_llcp_socket_release(struct nfc_llcp_local *local, bool device,
 		bh_unlock_sock(sk);
 
 		sk_del_node_init(sk);
-	}
+	पूर्ण
 
-	write_unlock(&local->sockets.lock);
+	ग_लिखो_unlock(&local->sockets.lock);
 
 	/* If we still have a device, we keep the RAW sockets alive */
-	if (device == true)
-		return;
+	अगर (device == true)
+		वापस;
 
-	write_lock(&local->raw_sockets.lock);
+	ग_लिखो_lock(&local->raw_sockets.lock);
 
-	sk_for_each_safe(sk, tmp, &local->raw_sockets.head) {
+	sk_क्रम_each_safe(sk, पंचांगp, &local->raw_sockets.head) अणु
 		llcp_sock = nfc_llcp_sock(sk);
 
 		bh_lock_sock(sk);
 
 		nfc_llcp_socket_purge(llcp_sock);
 
-		if (err)
+		अगर (err)
 			sk->sk_err = err;
 		sk->sk_state = LLCP_CLOSED;
 		sk->sk_state_change(sk);
@@ -138,334 +139,334 @@ static void nfc_llcp_socket_release(struct nfc_llcp_local *local, bool device,
 		bh_unlock_sock(sk);
 
 		sk_del_node_init(sk);
-	}
+	पूर्ण
 
-	write_unlock(&local->raw_sockets.lock);
-}
+	ग_लिखो_unlock(&local->raw_sockets.lock);
+पूर्ण
 
-struct nfc_llcp_local *nfc_llcp_local_get(struct nfc_llcp_local *local)
-{
+काष्ठा nfc_llcp_local *nfc_llcp_local_get(काष्ठा nfc_llcp_local *local)
+अणु
 	kref_get(&local->ref);
 
-	return local;
-}
+	वापस local;
+पूर्ण
 
-static void local_cleanup(struct nfc_llcp_local *local)
-{
+अटल व्योम local_cleanup(काष्ठा nfc_llcp_local *local)
+अणु
 	nfc_llcp_socket_release(local, false, ENXIO);
-	del_timer_sync(&local->link_timer);
+	del_समयr_sync(&local->link_समयr);
 	skb_queue_purge(&local->tx_queue);
 	cancel_work_sync(&local->tx_work);
 	cancel_work_sync(&local->rx_work);
-	cancel_work_sync(&local->timeout_work);
-	kfree_skb(local->rx_pending);
-	del_timer_sync(&local->sdreq_timer);
-	cancel_work_sync(&local->sdreq_timeout_work);
-	nfc_llcp_free_sdp_tlv_list(&local->pending_sdreqs);
-}
+	cancel_work_sync(&local->समयout_work);
+	kमुक्त_skb(local->rx_pending);
+	del_समयr_sync(&local->sdreq_समयr);
+	cancel_work_sync(&local->sdreq_समयout_work);
+	nfc_llcp_मुक्त_sdp_tlv_list(&local->pending_sdreqs);
+पूर्ण
 
-static void local_release(struct kref *ref)
-{
-	struct nfc_llcp_local *local;
+अटल व्योम local_release(काष्ठा kref *ref)
+अणु
+	काष्ठा nfc_llcp_local *local;
 
-	local = container_of(ref, struct nfc_llcp_local, ref);
+	local = container_of(ref, काष्ठा nfc_llcp_local, ref);
 
 	list_del(&local->list);
 	local_cleanup(local);
-	kfree(local);
-}
+	kमुक्त(local);
+पूर्ण
 
-int nfc_llcp_local_put(struct nfc_llcp_local *local)
-{
-	if (local == NULL)
-		return 0;
+पूर्णांक nfc_llcp_local_put(काष्ठा nfc_llcp_local *local)
+अणु
+	अगर (local == शून्य)
+		वापस 0;
 
-	return kref_put(&local->ref, local_release);
-}
+	वापस kref_put(&local->ref, local_release);
+पूर्ण
 
-static struct nfc_llcp_sock *nfc_llcp_sock_get(struct nfc_llcp_local *local,
+अटल काष्ठा nfc_llcp_sock *nfc_llcp_sock_get(काष्ठा nfc_llcp_local *local,
 					       u8 ssap, u8 dsap)
-{
-	struct sock *sk;
-	struct nfc_llcp_sock *llcp_sock, *tmp_sock;
+अणु
+	काष्ठा sock *sk;
+	काष्ठा nfc_llcp_sock *llcp_sock, *पंचांगp_sock;
 
 	pr_debug("ssap dsap %d %d\n", ssap, dsap);
 
-	if (ssap == 0 && dsap == 0)
-		return NULL;
+	अगर (ssap == 0 && dsap == 0)
+		वापस शून्य;
 
-	read_lock(&local->sockets.lock);
+	पढ़ो_lock(&local->sockets.lock);
 
-	llcp_sock = NULL;
+	llcp_sock = शून्य;
 
-	sk_for_each(sk, &local->sockets.head) {
-		tmp_sock = nfc_llcp_sock(sk);
+	sk_क्रम_each(sk, &local->sockets.head) अणु
+		पंचांगp_sock = nfc_llcp_sock(sk);
 
-		if (tmp_sock->ssap == ssap && tmp_sock->dsap == dsap) {
-			llcp_sock = tmp_sock;
-			break;
-		}
-	}
+		अगर (पंचांगp_sock->ssap == ssap && पंचांगp_sock->dsap == dsap) अणु
+			llcp_sock = पंचांगp_sock;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	read_unlock(&local->sockets.lock);
+	पढ़ो_unlock(&local->sockets.lock);
 
-	if (llcp_sock == NULL)
-		return NULL;
+	अगर (llcp_sock == शून्य)
+		वापस शून्य;
 
 	sock_hold(&llcp_sock->sk);
 
-	return llcp_sock;
-}
+	वापस llcp_sock;
+पूर्ण
 
-static void nfc_llcp_sock_put(struct nfc_llcp_sock *sock)
-{
+अटल व्योम nfc_llcp_sock_put(काष्ठा nfc_llcp_sock *sock)
+अणु
 	sock_put(&sock->sk);
-}
+पूर्ण
 
-static void nfc_llcp_timeout_work(struct work_struct *work)
-{
-	struct nfc_llcp_local *local = container_of(work, struct nfc_llcp_local,
-						    timeout_work);
+अटल व्योम nfc_llcp_समयout_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nfc_llcp_local *local = container_of(work, काष्ठा nfc_llcp_local,
+						    समयout_work);
 
-	nfc_dep_link_down(local->dev);
-}
+	nfc_dep_link_करोwn(local->dev);
+पूर्ण
 
-static void nfc_llcp_symm_timer(struct timer_list *t)
-{
-	struct nfc_llcp_local *local = from_timer(local, t, link_timer);
+अटल व्योम nfc_llcp_symm_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nfc_llcp_local *local = from_समयr(local, t, link_समयr);
 
 	pr_err("SYMM timeout\n");
 
-	schedule_work(&local->timeout_work);
-}
+	schedule_work(&local->समयout_work);
+पूर्ण
 
-static void nfc_llcp_sdreq_timeout_work(struct work_struct *work)
-{
-	unsigned long time;
+अटल व्योम nfc_llcp_sdreq_समयout_work(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित दीर्घ समय;
 	HLIST_HEAD(nl_sdres_list);
-	struct hlist_node *n;
-	struct nfc_llcp_sdp_tlv *sdp;
-	struct nfc_llcp_local *local = container_of(work, struct nfc_llcp_local,
-						    sdreq_timeout_work);
+	काष्ठा hlist_node *n;
+	काष्ठा nfc_llcp_sdp_tlv *sdp;
+	काष्ठा nfc_llcp_local *local = container_of(work, काष्ठा nfc_llcp_local,
+						    sdreq_समयout_work);
 
 	mutex_lock(&local->sdreq_lock);
 
-	time = jiffies - msecs_to_jiffies(3 * local->remote_lto);
+	समय = jअगरfies - msecs_to_jअगरfies(3 * local->remote_lto);
 
-	hlist_for_each_entry_safe(sdp, n, &local->pending_sdreqs, node) {
-		if (time_after(sdp->time, time))
-			continue;
+	hlist_क्रम_each_entry_safe(sdp, n, &local->pending_sdreqs, node) अणु
+		अगर (समय_after(sdp->समय, समय))
+			जारी;
 
 		sdp->sap = LLCP_SDP_UNBOUND;
 
 		hlist_del(&sdp->node);
 
 		hlist_add_head(&sdp->node, &nl_sdres_list);
-	}
+	पूर्ण
 
-	if (!hlist_empty(&local->pending_sdreqs))
-		mod_timer(&local->sdreq_timer,
-			  jiffies + msecs_to_jiffies(3 * local->remote_lto));
+	अगर (!hlist_empty(&local->pending_sdreqs))
+		mod_समयr(&local->sdreq_समयr,
+			  jअगरfies + msecs_to_jअगरfies(3 * local->remote_lto));
 
 	mutex_unlock(&local->sdreq_lock);
 
-	if (!hlist_empty(&nl_sdres_list))
+	अगर (!hlist_empty(&nl_sdres_list))
 		nfc_genl_llc_send_sdres(local->dev, &nl_sdres_list);
-}
+पूर्ण
 
-static void nfc_llcp_sdreq_timer(struct timer_list *t)
-{
-	struct nfc_llcp_local *local = from_timer(local, t, sdreq_timer);
+अटल व्योम nfc_llcp_sdreq_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा nfc_llcp_local *local = from_समयr(local, t, sdreq_समयr);
 
-	schedule_work(&local->sdreq_timeout_work);
-}
+	schedule_work(&local->sdreq_समयout_work);
+पूर्ण
 
-struct nfc_llcp_local *nfc_llcp_find_local(struct nfc_dev *dev)
-{
-	struct nfc_llcp_local *local;
+काष्ठा nfc_llcp_local *nfc_llcp_find_local(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा nfc_llcp_local *local;
 
-	list_for_each_entry(local, &llcp_devices, list)
-		if (local->dev == dev)
-			return local;
+	list_क्रम_each_entry(local, &llcp_devices, list)
+		अगर (local->dev == dev)
+			वापस local;
 
 	pr_debug("No device found\n");
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static char *wks[] = {
-	NULL,
-	NULL, /* SDP */
+अटल अक्षर *wks[] = अणु
+	शून्य,
+	शून्य, /* SDP */
 	"urn:nfc:sn:ip",
 	"urn:nfc:sn:obex",
 	"urn:nfc:sn:snep",
-};
+पूर्ण;
 
-static int nfc_llcp_wks_sap(char *service_name, size_t service_name_len)
-{
-	int sap, num_wks;
+अटल पूर्णांक nfc_llcp_wks_sap(अक्षर *service_name, माप_प्रकार service_name_len)
+अणु
+	पूर्णांक sap, num_wks;
 
 	pr_debug("%s\n", service_name);
 
-	if (service_name == NULL)
-		return -EINVAL;
+	अगर (service_name == शून्य)
+		वापस -EINVAL;
 
 	num_wks = ARRAY_SIZE(wks);
 
-	for (sap = 0; sap < num_wks; sap++) {
-		if (wks[sap] == NULL)
-			continue;
+	क्रम (sap = 0; sap < num_wks; sap++) अणु
+		अगर (wks[sap] == शून्य)
+			जारी;
 
-		if (strncmp(wks[sap], service_name, service_name_len) == 0)
-			return sap;
-	}
+		अगर (म_भेदन(wks[sap], service_name, service_name_len) == 0)
+			वापस sap;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static
-struct nfc_llcp_sock *nfc_llcp_sock_from_sn(struct nfc_llcp_local *local,
-					    u8 *sn, size_t sn_len)
-{
-	struct sock *sk;
-	struct nfc_llcp_sock *llcp_sock, *tmp_sock;
+अटल
+काष्ठा nfc_llcp_sock *nfc_llcp_sock_from_sn(काष्ठा nfc_llcp_local *local,
+					    u8 *sn, माप_प्रकार sn_len)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा nfc_llcp_sock *llcp_sock, *पंचांगp_sock;
 
 	pr_debug("sn %zd %p\n", sn_len, sn);
 
-	if (sn == NULL || sn_len == 0)
-		return NULL;
+	अगर (sn == शून्य || sn_len == 0)
+		वापस शून्य;
 
-	read_lock(&local->sockets.lock);
+	पढ़ो_lock(&local->sockets.lock);
 
-	llcp_sock = NULL;
+	llcp_sock = शून्य;
 
-	sk_for_each(sk, &local->sockets.head) {
-		tmp_sock = nfc_llcp_sock(sk);
+	sk_क्रम_each(sk, &local->sockets.head) अणु
+		पंचांगp_sock = nfc_llcp_sock(sk);
 
-		pr_debug("llcp sock %p\n", tmp_sock);
+		pr_debug("llcp sock %p\n", पंचांगp_sock);
 
-		if (tmp_sock->sk.sk_type == SOCK_STREAM &&
-		    tmp_sock->sk.sk_state != LLCP_LISTEN)
-			continue;
+		अगर (पंचांगp_sock->sk.sk_type == SOCK_STREAM &&
+		    पंचांगp_sock->sk.sk_state != LLCP_LISTEN)
+			जारी;
 
-		if (tmp_sock->sk.sk_type == SOCK_DGRAM &&
-		    tmp_sock->sk.sk_state != LLCP_BOUND)
-			continue;
+		अगर (पंचांगp_sock->sk.sk_type == SOCK_DGRAM &&
+		    पंचांगp_sock->sk.sk_state != LLCP_BOUND)
+			जारी;
 
-		if (tmp_sock->service_name == NULL ||
-		    tmp_sock->service_name_len == 0)
-			continue;
+		अगर (पंचांगp_sock->service_name == शून्य ||
+		    पंचांगp_sock->service_name_len == 0)
+			जारी;
 
-		if (tmp_sock->service_name_len != sn_len)
-			continue;
+		अगर (पंचांगp_sock->service_name_len != sn_len)
+			जारी;
 
-		if (memcmp(sn, tmp_sock->service_name, sn_len) == 0) {
-			llcp_sock = tmp_sock;
-			break;
-		}
-	}
+		अगर (स_भेद(sn, पंचांगp_sock->service_name, sn_len) == 0) अणु
+			llcp_sock = पंचांगp_sock;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	read_unlock(&local->sockets.lock);
+	पढ़ो_unlock(&local->sockets.lock);
 
 	pr_debug("Found llcp sock %p\n", llcp_sock);
 
-	return llcp_sock;
-}
+	वापस llcp_sock;
+पूर्ण
 
-u8 nfc_llcp_get_sdp_ssap(struct nfc_llcp_local *local,
-			 struct nfc_llcp_sock *sock)
-{
+u8 nfc_llcp_get_sdp_ssap(काष्ठा nfc_llcp_local *local,
+			 काष्ठा nfc_llcp_sock *sock)
+अणु
 	mutex_lock(&local->sdp_lock);
 
-	if (sock->service_name != NULL && sock->service_name_len > 0) {
-		int ssap = nfc_llcp_wks_sap(sock->service_name,
+	अगर (sock->service_name != शून्य && sock->service_name_len > 0) अणु
+		पूर्णांक ssap = nfc_llcp_wks_sap(sock->service_name,
 					    sock->service_name_len);
 
-		if (ssap > 0) {
+		अगर (ssap > 0) अणु
 			pr_debug("WKS %d\n", ssap);
 
-			/* This is a WKS, let's check if it's free */
-			if (local->local_wks & BIT(ssap)) {
+			/* This is a WKS, let's check if it's मुक्त */
+			अगर (local->local_wks & BIT(ssap)) अणु
 				mutex_unlock(&local->sdp_lock);
 
-				return LLCP_SAP_MAX;
-			}
+				वापस LLCP_SAP_MAX;
+			पूर्ण
 
 			set_bit(ssap, &local->local_wks);
 			mutex_unlock(&local->sdp_lock);
 
-			return ssap;
-		}
+			वापस ssap;
+		पूर्ण
 
 		/*
-		 * Check if there already is a non WKS socket bound
+		 * Check अगर there alपढ़ोy is a non WKS socket bound
 		 * to this service name.
 		 */
-		if (nfc_llcp_sock_from_sn(local, sock->service_name,
-					  sock->service_name_len) != NULL) {
+		अगर (nfc_llcp_sock_from_sn(local, sock->service_name,
+					  sock->service_name_len) != शून्य) अणु
 			mutex_unlock(&local->sdp_lock);
 
-			return LLCP_SAP_MAX;
-		}
+			वापस LLCP_SAP_MAX;
+		पूर्ण
 
 		mutex_unlock(&local->sdp_lock);
 
-		return LLCP_SDP_UNBOUND;
+		वापस LLCP_SDP_UNBOUND;
 
-	} else if (sock->ssap != 0 && sock->ssap < LLCP_WKS_NUM_SAP) {
-		if (!test_bit(sock->ssap, &local->local_wks)) {
+	पूर्ण अन्यथा अगर (sock->ssap != 0 && sock->ssap < LLCP_WKS_NUM_SAP) अणु
+		अगर (!test_bit(sock->ssap, &local->local_wks)) अणु
 			set_bit(sock->ssap, &local->local_wks);
 			mutex_unlock(&local->sdp_lock);
 
-			return sock->ssap;
-		}
-	}
+			वापस sock->ssap;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&local->sdp_lock);
 
-	return LLCP_SAP_MAX;
-}
+	वापस LLCP_SAP_MAX;
+पूर्ण
 
-u8 nfc_llcp_get_local_ssap(struct nfc_llcp_local *local)
-{
+u8 nfc_llcp_get_local_ssap(काष्ठा nfc_llcp_local *local)
+अणु
 	u8 local_ssap;
 
 	mutex_lock(&local->sdp_lock);
 
 	local_ssap = find_first_zero_bit(&local->local_sap, LLCP_LOCAL_NUM_SAP);
-	if (local_ssap == LLCP_LOCAL_NUM_SAP) {
+	अगर (local_ssap == LLCP_LOCAL_NUM_SAP) अणु
 		mutex_unlock(&local->sdp_lock);
-		return LLCP_SAP_MAX;
-	}
+		वापस LLCP_SAP_MAX;
+	पूर्ण
 
 	set_bit(local_ssap, &local->local_sap);
 
 	mutex_unlock(&local->sdp_lock);
 
-	return local_ssap + LLCP_LOCAL_SAP_OFFSET;
-}
+	वापस local_ssap + LLCP_LOCAL_SAP_OFFSET;
+पूर्ण
 
-void nfc_llcp_put_ssap(struct nfc_llcp_local *local, u8 ssap)
-{
+व्योम nfc_llcp_put_ssap(काष्ठा nfc_llcp_local *local, u8 ssap)
+अणु
 	u8 local_ssap;
-	unsigned long *sdp;
+	अचिन्हित दीर्घ *sdp;
 
-	if (ssap < LLCP_WKS_NUM_SAP) {
+	अगर (ssap < LLCP_WKS_NUM_SAP) अणु
 		local_ssap = ssap;
 		sdp = &local->local_wks;
-	} else if (ssap < LLCP_LOCAL_NUM_SAP) {
+	पूर्ण अन्यथा अगर (ssap < LLCP_LOCAL_NUM_SAP) अणु
 		atomic_t *client_cnt;
 
 		local_ssap = ssap - LLCP_WKS_NUM_SAP;
 		sdp = &local->local_sdp;
 		client_cnt = &local->local_sdp_cnt[local_ssap];
 
-		pr_debug("%d clients\n", atomic_read(client_cnt));
+		pr_debug("%d clients\n", atomic_पढ़ो(client_cnt));
 
 		mutex_lock(&local->sdp_lock);
 
-		if (atomic_dec_and_test(client_cnt)) {
-			struct nfc_llcp_sock *l_sock;
+		अगर (atomic_dec_and_test(client_cnt)) अणु
+			काष्ठा nfc_llcp_sock *l_sock;
 
 			pr_debug("No more clients for SAP %d\n", ssap);
 
@@ -473,41 +474,41 @@ void nfc_llcp_put_ssap(struct nfc_llcp_local *local, u8 ssap)
 
 			/* Find the listening sock and set it back to UNBOUND */
 			l_sock = nfc_llcp_sock_get(local, ssap, LLCP_SAP_SDP);
-			if (l_sock) {
+			अगर (l_sock) अणु
 				l_sock->ssap = LLCP_SDP_UNBOUND;
 				nfc_llcp_sock_put(l_sock);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		mutex_unlock(&local->sdp_lock);
 
-		return;
-	} else if (ssap < LLCP_MAX_SAP) {
+		वापस;
+	पूर्ण अन्यथा अगर (ssap < LLCP_MAX_SAP) अणु
 		local_ssap = ssap - LLCP_LOCAL_NUM_SAP;
 		sdp = &local->local_sap;
-	} else {
-		return;
-	}
+	पूर्ण अन्यथा अणु
+		वापस;
+	पूर्ण
 
 	mutex_lock(&local->sdp_lock);
 
 	clear_bit(local_ssap, sdp);
 
 	mutex_unlock(&local->sdp_lock);
-}
+पूर्ण
 
-static u8 nfc_llcp_reserve_sdp_ssap(struct nfc_llcp_local *local)
-{
+अटल u8 nfc_llcp_reserve_sdp_ssap(काष्ठा nfc_llcp_local *local)
+अणु
 	u8 ssap;
 
 	mutex_lock(&local->sdp_lock);
 
 	ssap = find_first_zero_bit(&local->local_sdp, LLCP_SDP_NUM_SAP);
-	if (ssap == LLCP_SDP_NUM_SAP) {
+	अगर (ssap == LLCP_SDP_NUM_SAP) अणु
 		mutex_unlock(&local->sdp_lock);
 
-		return LLCP_SAP_MAX;
-	}
+		वापस LLCP_SAP_MAX;
+	पूर्ण
 
 	pr_debug("SDP ssap %d\n", LLCP_WKS_NUM_SAP + ssap);
 
@@ -515,334 +516,334 @@ static u8 nfc_llcp_reserve_sdp_ssap(struct nfc_llcp_local *local)
 
 	mutex_unlock(&local->sdp_lock);
 
-	return LLCP_WKS_NUM_SAP + ssap;
-}
+	वापस LLCP_WKS_NUM_SAP + ssap;
+पूर्ण
 
-static int nfc_llcp_build_gb(struct nfc_llcp_local *local)
-{
+अटल पूर्णांक nfc_llcp_build_gb(काष्ठा nfc_llcp_local *local)
+अणु
 	u8 *gb_cur, version, version_length;
 	u8 lto_length, wks_length, miux_length;
-	u8 *version_tlv = NULL, *lto_tlv = NULL,
-	   *wks_tlv = NULL, *miux_tlv = NULL;
+	u8 *version_tlv = शून्य, *lto_tlv = शून्य,
+	   *wks_tlv = शून्य, *miux_tlv = शून्य;
 	__be16 wks = cpu_to_be16(local->local_wks);
 	u8 gb_len = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	version = LLCP_VERSION_11;
 	version_tlv = nfc_llcp_build_tlv(LLCP_TLV_VERSION, &version,
 					 1, &version_length);
-	if (!version_tlv) {
+	अगर (!version_tlv) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	gb_len += version_length;
 
 	lto_tlv = nfc_llcp_build_tlv(LLCP_TLV_LTO, &local->lto, 1, &lto_length);
-	if (!lto_tlv) {
+	अगर (!lto_tlv) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	gb_len += lto_length;
 
 	pr_debug("Local wks 0x%lx\n", local->local_wks);
 	wks_tlv = nfc_llcp_build_tlv(LLCP_TLV_WKS, (u8 *)&wks, 2, &wks_length);
-	if (!wks_tlv) {
+	अगर (!wks_tlv) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	gb_len += wks_length;
 
 	miux_tlv = nfc_llcp_build_tlv(LLCP_TLV_MIUX, (u8 *)&local->miux, 0,
 				      &miux_length);
-	if (!miux_tlv) {
+	अगर (!miux_tlv) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	gb_len += miux_length;
 
 	gb_len += ARRAY_SIZE(llcp_magic);
 
-	if (gb_len > NFC_MAX_GT_LEN) {
+	अगर (gb_len > NFC_MAX_GT_LEN) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	gb_cur = local->gb;
 
-	memcpy(gb_cur, llcp_magic, ARRAY_SIZE(llcp_magic));
+	स_नकल(gb_cur, llcp_magic, ARRAY_SIZE(llcp_magic));
 	gb_cur += ARRAY_SIZE(llcp_magic);
 
-	memcpy(gb_cur, version_tlv, version_length);
+	स_नकल(gb_cur, version_tlv, version_length);
 	gb_cur += version_length;
 
-	memcpy(gb_cur, lto_tlv, lto_length);
+	स_नकल(gb_cur, lto_tlv, lto_length);
 	gb_cur += lto_length;
 
-	memcpy(gb_cur, wks_tlv, wks_length);
+	स_नकल(gb_cur, wks_tlv, wks_length);
 	gb_cur += wks_length;
 
-	memcpy(gb_cur, miux_tlv, miux_length);
+	स_नकल(gb_cur, miux_tlv, miux_length);
 	gb_cur += miux_length;
 
 	local->gb_len = gb_len;
 
 out:
-	kfree(version_tlv);
-	kfree(lto_tlv);
-	kfree(wks_tlv);
-	kfree(miux_tlv);
+	kमुक्त(version_tlv);
+	kमुक्त(lto_tlv);
+	kमुक्त(wks_tlv);
+	kमुक्त(miux_tlv);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-u8 *nfc_llcp_general_bytes(struct nfc_dev *dev, size_t *general_bytes_len)
-{
-	struct nfc_llcp_local *local;
+u8 *nfc_llcp_general_bytes(काष्ठा nfc_dev *dev, माप_प्रकार *general_bytes_len)
+अणु
+	काष्ठा nfc_llcp_local *local;
 
 	local = nfc_llcp_find_local(dev);
-	if (local == NULL) {
+	अगर (local == शून्य) अणु
 		*general_bytes_len = 0;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	nfc_llcp_build_gb(local);
 
 	*general_bytes_len = local->gb_len;
 
-	return local->gb;
-}
+	वापस local->gb;
+पूर्ण
 
-int nfc_llcp_set_remote_gb(struct nfc_dev *dev, u8 *gb, u8 gb_len)
-{
-	struct nfc_llcp_local *local;
+पूर्णांक nfc_llcp_set_remote_gb(काष्ठा nfc_dev *dev, u8 *gb, u8 gb_len)
+अणु
+	काष्ठा nfc_llcp_local *local;
 
-	if (gb_len < 3 || gb_len > NFC_MAX_GT_LEN)
-		return -EINVAL;
+	अगर (gb_len < 3 || gb_len > NFC_MAX_GT_LEN)
+		वापस -EINVAL;
 
 	local = nfc_llcp_find_local(dev);
-	if (local == NULL) {
+	अगर (local == शून्य) अणु
 		pr_err("No LLCP device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	memset(local->remote_gb, 0, NFC_MAX_GT_LEN);
-	memcpy(local->remote_gb, gb, gb_len);
+	स_रखो(local->remote_gb, 0, NFC_MAX_GT_LEN);
+	स_नकल(local->remote_gb, gb, gb_len);
 	local->remote_gb_len = gb_len;
 
-	if (memcmp(local->remote_gb, llcp_magic, 3)) {
+	अगर (स_भेद(local->remote_gb, llcp_magic, 3)) अणु
 		pr_err("MAC does not support LLCP\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return nfc_llcp_parse_gb_tlv(local,
+	वापस nfc_llcp_parse_gb_tlv(local,
 				     &local->remote_gb[3],
 				     local->remote_gb_len - 3);
-}
+पूर्ण
 
-static u8 nfc_llcp_dsap(struct sk_buff *pdu)
-{
-	return (pdu->data[0] & 0xfc) >> 2;
-}
+अटल u8 nfc_llcp_dsap(काष्ठा sk_buff *pdu)
+अणु
+	वापस (pdu->data[0] & 0xfc) >> 2;
+पूर्ण
 
-static u8 nfc_llcp_ptype(struct sk_buff *pdu)
-{
-	return ((pdu->data[0] & 0x03) << 2) | ((pdu->data[1] & 0xc0) >> 6);
-}
+अटल u8 nfc_llcp_ptype(काष्ठा sk_buff *pdu)
+अणु
+	वापस ((pdu->data[0] & 0x03) << 2) | ((pdu->data[1] & 0xc0) >> 6);
+पूर्ण
 
-static u8 nfc_llcp_ssap(struct sk_buff *pdu)
-{
-	return pdu->data[1] & 0x3f;
-}
+अटल u8 nfc_llcp_ssap(काष्ठा sk_buff *pdu)
+अणु
+	वापस pdu->data[1] & 0x3f;
+पूर्ण
 
-static u8 nfc_llcp_ns(struct sk_buff *pdu)
-{
-	return pdu->data[2] >> 4;
-}
+अटल u8 nfc_llcp_ns(काष्ठा sk_buff *pdu)
+अणु
+	वापस pdu->data[2] >> 4;
+पूर्ण
 
-static u8 nfc_llcp_nr(struct sk_buff *pdu)
-{
-	return pdu->data[2] & 0xf;
-}
+अटल u8 nfc_llcp_nr(काष्ठा sk_buff *pdu)
+अणु
+	वापस pdu->data[2] & 0xf;
+पूर्ण
 
-static void nfc_llcp_set_nrns(struct nfc_llcp_sock *sock, struct sk_buff *pdu)
-{
+अटल व्योम nfc_llcp_set_nrns(काष्ठा nfc_llcp_sock *sock, काष्ठा sk_buff *pdu)
+अणु
 	pdu->data[2] = (sock->send_n << 4) | (sock->recv_n);
 	sock->send_n = (sock->send_n + 1) % 16;
 	sock->recv_ack_n = (sock->recv_n - 1) % 16;
-}
+पूर्ण
 
-void nfc_llcp_send_to_raw_sock(struct nfc_llcp_local *local,
-			       struct sk_buff *skb, u8 direction)
-{
-	struct sk_buff *skb_copy = NULL, *nskb;
-	struct sock *sk;
+व्योम nfc_llcp_send_to_raw_sock(काष्ठा nfc_llcp_local *local,
+			       काष्ठा sk_buff *skb, u8 direction)
+अणु
+	काष्ठा sk_buff *skb_copy = शून्य, *nskb;
+	काष्ठा sock *sk;
 	u8 *data;
 
-	read_lock(&local->raw_sockets.lock);
+	पढ़ो_lock(&local->raw_sockets.lock);
 
-	sk_for_each(sk, &local->raw_sockets.head) {
-		if (sk->sk_state != LLCP_BOUND)
-			continue;
+	sk_क्रम_each(sk, &local->raw_sockets.head) अणु
+		अगर (sk->sk_state != LLCP_BOUND)
+			जारी;
 
-		if (skb_copy == NULL) {
+		अगर (skb_copy == शून्य) अणु
 			skb_copy = __pskb_copy_fclone(skb, NFC_RAW_HEADER_SIZE,
 						      GFP_ATOMIC, true);
 
-			if (skb_copy == NULL)
-				continue;
+			अगर (skb_copy == शून्य)
+				जारी;
 
 			data = skb_push(skb_copy, NFC_RAW_HEADER_SIZE);
 
 			data[0] = local->dev ? local->dev->idx : 0xFF;
 			data[1] = direction & 0x01;
 			data[1] |= (RAW_PAYLOAD_LLCP << 1);
-		}
+		पूर्ण
 
 		nskb = skb_clone(skb_copy, GFP_ATOMIC);
-		if (!nskb)
-			continue;
+		अगर (!nskb)
+			जारी;
 
-		if (sock_queue_rcv_skb(sk, nskb))
-			kfree_skb(nskb);
-	}
+		अगर (sock_queue_rcv_skb(sk, nskb))
+			kमुक्त_skb(nskb);
+	पूर्ण
 
-	read_unlock(&local->raw_sockets.lock);
+	पढ़ो_unlock(&local->raw_sockets.lock);
 
-	kfree_skb(skb_copy);
-}
+	kमुक्त_skb(skb_copy);
+पूर्ण
 
-static void nfc_llcp_tx_work(struct work_struct *work)
-{
-	struct nfc_llcp_local *local = container_of(work, struct nfc_llcp_local,
+अटल व्योम nfc_llcp_tx_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nfc_llcp_local *local = container_of(work, काष्ठा nfc_llcp_local,
 						    tx_work);
-	struct sk_buff *skb;
-	struct sock *sk;
-	struct nfc_llcp_sock *llcp_sock;
+	काष्ठा sk_buff *skb;
+	काष्ठा sock *sk;
+	काष्ठा nfc_llcp_sock *llcp_sock;
 
 	skb = skb_dequeue(&local->tx_queue);
-	if (skb != NULL) {
+	अगर (skb != शून्य) अणु
 		sk = skb->sk;
 		llcp_sock = nfc_llcp_sock(sk);
 
-		if (llcp_sock == NULL && nfc_llcp_ptype(skb) == LLCP_PDU_I) {
-			kfree_skb(skb);
+		अगर (llcp_sock == शून्य && nfc_llcp_ptype(skb) == LLCP_PDU_I) अणु
+			kमुक्त_skb(skb);
 			nfc_llcp_send_symm(local->dev);
-		} else if (llcp_sock && !llcp_sock->remote_ready) {
+		पूर्ण अन्यथा अगर (llcp_sock && !llcp_sock->remote_पढ़ोy) अणु
 			skb_queue_head(&local->tx_queue, skb);
 			nfc_llcp_send_symm(local->dev);
-		} else {
-			struct sk_buff *copy_skb = NULL;
+		पूर्ण अन्यथा अणु
+			काष्ठा sk_buff *copy_skb = शून्य;
 			u8 ptype = nfc_llcp_ptype(skb);
-			int ret;
+			पूर्णांक ret;
 
 			pr_debug("Sending pending skb\n");
-			print_hex_dump_debug("LLCP Tx: ", DUMP_PREFIX_OFFSET,
+			prपूर्णांक_hex_dump_debug("LLCP Tx: ", DUMP_PREFIX_OFFSET,
 					     16, 1, skb->data, skb->len, true);
 
-			if (ptype == LLCP_PDU_DISC && sk != NULL &&
-			    sk->sk_state == LLCP_DISCONNECTING) {
+			अगर (ptype == LLCP_PDU_DISC && sk != शून्य &&
+			    sk->sk_state == LLCP_DISCONNECTING) अणु
 				nfc_llcp_sock_unlink(&local->sockets, sk);
 				sock_orphan(sk);
 				sock_put(sk);
-			}
+			पूर्ण
 
-			if (ptype == LLCP_PDU_I)
+			अगर (ptype == LLCP_PDU_I)
 				copy_skb = skb_copy(skb, GFP_ATOMIC);
 
-			__net_timestamp(skb);
+			__net_बारtamp(skb);
 
 			nfc_llcp_send_to_raw_sock(local, skb,
-						  NFC_DIRECTION_TX);
+						  NFC_सूचीECTION_TX);
 
 			ret = nfc_data_exchange(local->dev, local->target_idx,
 						skb, nfc_llcp_recv, local);
 
-			if (ret) {
-				kfree_skb(copy_skb);
-				goto out;
-			}
+			अगर (ret) अणु
+				kमुक्त_skb(copy_skb);
+				जाओ out;
+			पूर्ण
 
-			if (ptype == LLCP_PDU_I && copy_skb)
+			अगर (ptype == LLCP_PDU_I && copy_skb)
 				skb_queue_tail(&llcp_sock->tx_pending_queue,
 					       copy_skb);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		nfc_llcp_send_symm(local->dev);
-	}
+	पूर्ण
 
 out:
-	mod_timer(&local->link_timer,
-		  jiffies + msecs_to_jiffies(2 * local->remote_lto));
-}
+	mod_समयr(&local->link_समयr,
+		  jअगरfies + msecs_to_jअगरfies(2 * local->remote_lto));
+पूर्ण
 
-static struct nfc_llcp_sock *nfc_llcp_connecting_sock_get(struct nfc_llcp_local *local,
+अटल काष्ठा nfc_llcp_sock *nfc_llcp_connecting_sock_get(काष्ठा nfc_llcp_local *local,
 							  u8 ssap)
-{
-	struct sock *sk;
-	struct nfc_llcp_sock *llcp_sock;
+अणु
+	काष्ठा sock *sk;
+	काष्ठा nfc_llcp_sock *llcp_sock;
 
-	read_lock(&local->connecting_sockets.lock);
+	पढ़ो_lock(&local->connecting_sockets.lock);
 
-	sk_for_each(sk, &local->connecting_sockets.head) {
+	sk_क्रम_each(sk, &local->connecting_sockets.head) अणु
 		llcp_sock = nfc_llcp_sock(sk);
 
-		if (llcp_sock->ssap == ssap) {
+		अगर (llcp_sock->ssap == ssap) अणु
 			sock_hold(&llcp_sock->sk);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	llcp_sock = NULL;
+	llcp_sock = शून्य;
 
 out:
-	read_unlock(&local->connecting_sockets.lock);
+	पढ़ो_unlock(&local->connecting_sockets.lock);
 
-	return llcp_sock;
-}
+	वापस llcp_sock;
+पूर्ण
 
-static struct nfc_llcp_sock *nfc_llcp_sock_get_sn(struct nfc_llcp_local *local,
-						  u8 *sn, size_t sn_len)
-{
-	struct nfc_llcp_sock *llcp_sock;
+अटल काष्ठा nfc_llcp_sock *nfc_llcp_sock_get_sn(काष्ठा nfc_llcp_local *local,
+						  u8 *sn, माप_प्रकार sn_len)
+अणु
+	काष्ठा nfc_llcp_sock *llcp_sock;
 
 	llcp_sock = nfc_llcp_sock_from_sn(local, sn, sn_len);
 
-	if (llcp_sock == NULL)
-		return NULL;
+	अगर (llcp_sock == शून्य)
+		वापस शून्य;
 
 	sock_hold(&llcp_sock->sk);
 
-	return llcp_sock;
-}
+	वापस llcp_sock;
+पूर्ण
 
-static u8 *nfc_llcp_connect_sn(struct sk_buff *skb, size_t *sn_len)
-{
+अटल u8 *nfc_llcp_connect_sn(काष्ठा sk_buff *skb, माप_प्रकार *sn_len)
+अणु
 	u8 *tlv = &skb->data[2], type, length;
-	size_t tlv_array_len = skb->len - LLCP_HEADER_SIZE, offset = 0;
+	माप_प्रकार tlv_array_len = skb->len - LLCP_HEADER_SIZE, offset = 0;
 
-	while (offset < tlv_array_len) {
+	जबतक (offset < tlv_array_len) अणु
 		type = tlv[0];
 		length = tlv[1];
 
 		pr_debug("type 0x%x length %d\n", type, length);
 
-		if (type == LLCP_TLV_SN) {
+		अगर (type == LLCP_TLV_SN) अणु
 			*sn_len = length;
-			return &tlv[2];
-		}
+			वापस &tlv[2];
+		पूर्ण
 
 		offset += length + 2;
 		tlv += length + 2;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void nfc_llcp_recv_ui(struct nfc_llcp_local *local,
-			     struct sk_buff *skb)
-{
-	struct nfc_llcp_sock *llcp_sock;
-	struct nfc_llcp_ui_cb *ui_cb;
+अटल व्योम nfc_llcp_recv_ui(काष्ठा nfc_llcp_local *local,
+			     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_llcp_sock *llcp_sock;
+	काष्ठा nfc_llcp_ui_cb *ui_cb;
 	u8 dsap, ssap;
 
 	dsap = nfc_llcp_dsap(skb);
@@ -854,31 +855,31 @@ static void nfc_llcp_recv_ui(struct nfc_llcp_local *local,
 
 	pr_debug("%d %d\n", dsap, ssap);
 
-	/* We're looking for a bound socket, not a client one */
+	/* We're looking क्रम a bound socket, not a client one */
 	llcp_sock = nfc_llcp_sock_get(local, dsap, LLCP_SAP_SDP);
-	if (llcp_sock == NULL || llcp_sock->sk.sk_type != SOCK_DGRAM)
-		return;
+	अगर (llcp_sock == शून्य || llcp_sock->sk.sk_type != SOCK_DGRAM)
+		वापस;
 
 	/* There is no sequence with UI frames */
 	skb_pull(skb, LLCP_HEADER_SIZE);
-	if (!sock_queue_rcv_skb(&llcp_sock->sk, skb)) {
+	अगर (!sock_queue_rcv_skb(&llcp_sock->sk, skb)) अणु
 		/*
-		 * UI frames will be freed from the socket layer, so we
+		 * UI frames will be मुक्तd from the socket layer, so we
 		 * need to keep them alive until someone receives them.
 		 */
 		skb_get(skb);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Receive queue is full\n");
-	}
+	पूर्ण
 
 	nfc_llcp_sock_put(llcp_sock);
-}
+पूर्ण
 
-static void nfc_llcp_recv_connect(struct nfc_llcp_local *local,
-				  struct sk_buff *skb)
-{
-	struct sock *new_sk, *parent;
-	struct nfc_llcp_sock *sock, *new_sock;
+अटल व्योम nfc_llcp_recv_connect(काष्ठा nfc_llcp_local *local,
+				  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *new_sk, *parent;
+	काष्ठा nfc_llcp_sock *sock, *new_sock;
 	u8 dsap, ssap, reason;
 
 	dsap = nfc_llcp_dsap(skb);
@@ -886,64 +887,64 @@ static void nfc_llcp_recv_connect(struct nfc_llcp_local *local,
 
 	pr_debug("%d %d\n", dsap, ssap);
 
-	if (dsap != LLCP_SAP_SDP) {
+	अगर (dsap != LLCP_SAP_SDP) अणु
 		sock = nfc_llcp_sock_get(local, dsap, LLCP_SAP_SDP);
-		if (sock == NULL || sock->sk.sk_state != LLCP_LISTEN) {
+		अगर (sock == शून्य || sock->sk.sk_state != LLCP_LISTEN) अणु
 			reason = LLCP_DM_NOBOUND;
-			goto fail;
-		}
-	} else {
+			जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		u8 *sn;
-		size_t sn_len;
+		माप_प्रकार sn_len;
 
 		sn = nfc_llcp_connect_sn(skb, &sn_len);
-		if (sn == NULL) {
+		अगर (sn == शून्य) अणु
 			reason = LLCP_DM_NOBOUND;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
 		pr_debug("Service name length %zu\n", sn_len);
 
 		sock = nfc_llcp_sock_get_sn(local, sn, sn_len);
-		if (sock == NULL) {
+		अगर (sock == शून्य) अणु
 			reason = LLCP_DM_NOBOUND;
-			goto fail;
-		}
-	}
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 
 	lock_sock(&sock->sk);
 
 	parent = &sock->sk;
 
-	if (sk_acceptq_is_full(parent)) {
+	अगर (sk_acceptq_is_full(parent)) अणु
 		reason = LLCP_DM_REJ;
 		release_sock(&sock->sk);
 		sock_put(&sock->sk);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (sock->ssap == LLCP_SDP_UNBOUND) {
+	अगर (sock->ssap == LLCP_SDP_UNBOUND) अणु
 		u8 ssap = nfc_llcp_reserve_sdp_ssap(local);
 
 		pr_debug("First client, reserving %d\n", ssap);
 
-		if (ssap == LLCP_SAP_MAX) {
+		अगर (ssap == LLCP_SAP_MAX) अणु
 			reason = LLCP_DM_REJ;
 			release_sock(&sock->sk);
 			sock_put(&sock->sk);
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
 		sock->ssap = ssap;
-	}
+	पूर्ण
 
-	new_sk = nfc_llcp_sock_alloc(NULL, parent->sk_type, GFP_ATOMIC, 0);
-	if (new_sk == NULL) {
+	new_sk = nfc_llcp_sock_alloc(शून्य, parent->sk_type, GFP_ATOMIC, 0);
+	अगर (new_sk == शून्य) अणु
 		reason = LLCP_DM_REJ;
 		release_sock(&sock->sk);
 		sock_put(&sock->sk);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	new_sock = nfc_llcp_sock(new_sk);
 	new_sock->dev = local->dev;
@@ -955,7 +956,7 @@ static void nfc_llcp_recv_connect(struct nfc_llcp_local *local,
 	new_sock->target_idx = local->target_idx;
 	new_sock->parent = parent;
 	new_sock->ssap = sock->ssap;
-	if (sock->ssap < LLCP_LOCAL_NUM_SAP && sock->ssap >= LLCP_WKS_NUM_SAP) {
+	अगर (sock->ssap < LLCP_LOCAL_NUM_SAP && sock->ssap >= LLCP_WKS_NUM_SAP) अणु
 		atomic_t *client_count;
 
 		pr_debug("reserved_ssap %d for %p\n", sock->ssap, new_sock);
@@ -965,7 +966,7 @@ static void nfc_llcp_recv_connect(struct nfc_llcp_local *local,
 
 		atomic_inc(client_count);
 		new_sock->reserved_ssap = sock->ssap;
-	}
+	पूर्ण
 
 	nfc_llcp_parse_connection_tlv(new_sock, &skb->data[LLCP_HEADER_SIZE],
 				      skb->len - LLCP_HEADER_SIZE);
@@ -981,7 +982,7 @@ static void nfc_llcp_recv_connect(struct nfc_llcp_local *local,
 	new_sk->sk_state = LLCP_CONNECTED;
 
 	/* Wake the listening processes */
-	parent->sk_data_ready(parent);
+	parent->sk_data_पढ़ोy(parent);
 
 	/* Send CC */
 	nfc_llcp_send_cc(new_sock);
@@ -989,46 +990,46 @@ static void nfc_llcp_recv_connect(struct nfc_llcp_local *local,
 	release_sock(&sock->sk);
 	sock_put(&sock->sk);
 
-	return;
+	वापस;
 
 fail:
 	/* Send DM */
 	nfc_llcp_send_dm(local, dsap, ssap, reason);
-}
+पूर्ण
 
-int nfc_llcp_queue_i_frames(struct nfc_llcp_sock *sock)
-{
-	int nr_frames = 0;
-	struct nfc_llcp_local *local = sock->local;
+पूर्णांक nfc_llcp_queue_i_frames(काष्ठा nfc_llcp_sock *sock)
+अणु
+	पूर्णांक nr_frames = 0;
+	काष्ठा nfc_llcp_local *local = sock->local;
 
 	pr_debug("Remote ready %d tx queue len %d remote rw %d",
-		 sock->remote_ready, skb_queue_len(&sock->tx_pending_queue),
+		 sock->remote_पढ़ोy, skb_queue_len(&sock->tx_pending_queue),
 		 sock->remote_rw);
 
-	/* Try to queue some I frames for transmission */
-	while (sock->remote_ready &&
-	       skb_queue_len(&sock->tx_pending_queue) < sock->remote_rw) {
-		struct sk_buff *pdu;
+	/* Try to queue some I frames क्रम transmission */
+	जबतक (sock->remote_पढ़ोy &&
+	       skb_queue_len(&sock->tx_pending_queue) < sock->remote_rw) अणु
+		काष्ठा sk_buff *pdu;
 
 		pdu = skb_dequeue(&sock->tx_queue);
-		if (pdu == NULL)
-			break;
+		अगर (pdu == शून्य)
+			अवरोध;
 
 		/* Update N(S)/N(R) */
 		nfc_llcp_set_nrns(sock, pdu);
 
 		skb_queue_tail(&local->tx_queue, pdu);
 		nr_frames++;
-	}
+	पूर्ण
 
-	return nr_frames;
-}
+	वापस nr_frames;
+पूर्ण
 
-static void nfc_llcp_recv_hdlc(struct nfc_llcp_local *local,
-			       struct sk_buff *skb)
-{
-	struct nfc_llcp_sock *llcp_sock;
-	struct sock *sk;
+अटल व्योम nfc_llcp_recv_hdlc(काष्ठा nfc_llcp_local *local,
+			       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_llcp_sock *llcp_sock;
+	काष्ठा sock *sk;
 	u8 dsap, ssap, ptype, ns, nr;
 
 	ptype = nfc_llcp_ptype(skb);
@@ -1040,137 +1041,137 @@ static void nfc_llcp_recv_hdlc(struct nfc_llcp_local *local,
 	pr_debug("%d %d R %d S %d\n", dsap, ssap, nr, ns);
 
 	llcp_sock = nfc_llcp_sock_get(local, dsap, ssap);
-	if (llcp_sock == NULL) {
+	अगर (llcp_sock == शून्य) अणु
 		nfc_llcp_send_dm(local, dsap, ssap, LLCP_DM_NOCONN);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sk = &llcp_sock->sk;
 	lock_sock(sk);
-	if (sk->sk_state == LLCP_CLOSED) {
+	अगर (sk->sk_state == LLCP_CLOSED) अणु
 		release_sock(sk);
 		nfc_llcp_sock_put(llcp_sock);
-	}
+	पूर्ण
 
 	/* Pass the payload upstream */
-	if (ptype == LLCP_PDU_I) {
+	अगर (ptype == LLCP_PDU_I) अणु
 		pr_debug("I frame, queueing on %p\n", &llcp_sock->sk);
 
-		if (ns == llcp_sock->recv_n)
+		अगर (ns == llcp_sock->recv_n)
 			llcp_sock->recv_n = (llcp_sock->recv_n + 1) % 16;
-		else
+		अन्यथा
 			pr_err("Received out of sequence I PDU\n");
 
 		skb_pull(skb, LLCP_HEADER_SIZE + LLCP_SEQUENCE_SIZE);
-		if (!sock_queue_rcv_skb(&llcp_sock->sk, skb)) {
+		अगर (!sock_queue_rcv_skb(&llcp_sock->sk, skb)) अणु
 			/*
-			 * I frames will be freed from the socket layer, so we
+			 * I frames will be मुक्तd from the socket layer, so we
 			 * need to keep them alive until someone receives them.
 			 */
 			skb_get(skb);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("Receive queue is full\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Remove skbs from the pending queue */
-	if (llcp_sock->send_ack_n != nr) {
-		struct sk_buff *s, *tmp;
+	अगर (llcp_sock->send_ack_n != nr) अणु
+		काष्ठा sk_buff *s, *पंचांगp;
 		u8 n;
 
 		llcp_sock->send_ack_n = nr;
 
-		/* Remove and free all skbs until ns == nr */
-		skb_queue_walk_safe(&llcp_sock->tx_pending_queue, s, tmp) {
+		/* Remove and मुक्त all skbs until ns == nr */
+		skb_queue_walk_safe(&llcp_sock->tx_pending_queue, s, पंचांगp) अणु
 			n = nfc_llcp_ns(s);
 
 			skb_unlink(s, &llcp_sock->tx_pending_queue);
-			kfree_skb(s);
+			kमुक्त_skb(s);
 
-			if (n == nr)
-				break;
-		}
+			अगर (n == nr)
+				अवरोध;
+		पूर्ण
 
-		/* Re-queue the remaining skbs for transmission */
+		/* Re-queue the reमुख्यing skbs क्रम transmission */
 		skb_queue_reverse_walk_safe(&llcp_sock->tx_pending_queue,
-					    s, tmp) {
+					    s, पंचांगp) अणु
 			skb_unlink(s, &llcp_sock->tx_pending_queue);
 			skb_queue_head(&local->tx_queue, s);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ptype == LLCP_PDU_RR)
-		llcp_sock->remote_ready = true;
-	else if (ptype == LLCP_PDU_RNR)
-		llcp_sock->remote_ready = false;
+	अगर (ptype == LLCP_PDU_RR)
+		llcp_sock->remote_पढ़ोy = true;
+	अन्यथा अगर (ptype == LLCP_PDU_RNR)
+		llcp_sock->remote_पढ़ोy = false;
 
-	if (nfc_llcp_queue_i_frames(llcp_sock) == 0 && ptype == LLCP_PDU_I)
+	अगर (nfc_llcp_queue_i_frames(llcp_sock) == 0 && ptype == LLCP_PDU_I)
 		nfc_llcp_send_rr(llcp_sock);
 
 	release_sock(sk);
 	nfc_llcp_sock_put(llcp_sock);
-}
+पूर्ण
 
-static void nfc_llcp_recv_disc(struct nfc_llcp_local *local,
-			       struct sk_buff *skb)
-{
-	struct nfc_llcp_sock *llcp_sock;
-	struct sock *sk;
+अटल व्योम nfc_llcp_recv_disc(काष्ठा nfc_llcp_local *local,
+			       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_llcp_sock *llcp_sock;
+	काष्ठा sock *sk;
 	u8 dsap, ssap;
 
 	dsap = nfc_llcp_dsap(skb);
 	ssap = nfc_llcp_ssap(skb);
 
-	if ((dsap == 0) && (ssap == 0)) {
+	अगर ((dsap == 0) && (ssap == 0)) अणु
 		pr_debug("Connection termination");
-		nfc_dep_link_down(local->dev);
-		return;
-	}
+		nfc_dep_link_करोwn(local->dev);
+		वापस;
+	पूर्ण
 
 	llcp_sock = nfc_llcp_sock_get(local, dsap, ssap);
-	if (llcp_sock == NULL) {
+	अगर (llcp_sock == शून्य) अणु
 		nfc_llcp_send_dm(local, dsap, ssap, LLCP_DM_NOCONN);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sk = &llcp_sock->sk;
 	lock_sock(sk);
 
 	nfc_llcp_socket_purge(llcp_sock);
 
-	if (sk->sk_state == LLCP_CLOSED) {
+	अगर (sk->sk_state == LLCP_CLOSED) अणु
 		release_sock(sk);
 		nfc_llcp_sock_put(llcp_sock);
-	}
+	पूर्ण
 
-	if (sk->sk_state == LLCP_CONNECTED) {
+	अगर (sk->sk_state == LLCP_CONNECTED) अणु
 		nfc_put_device(local->dev);
 		sk->sk_state = LLCP_CLOSED;
 		sk->sk_state_change(sk);
-	}
+	पूर्ण
 
 	nfc_llcp_send_dm(local, dsap, ssap, LLCP_DM_DISC);
 
 	release_sock(sk);
 	nfc_llcp_sock_put(llcp_sock);
-}
+पूर्ण
 
-static void nfc_llcp_recv_cc(struct nfc_llcp_local *local, struct sk_buff *skb)
-{
-	struct nfc_llcp_sock *llcp_sock;
-	struct sock *sk;
+अटल व्योम nfc_llcp_recv_cc(काष्ठा nfc_llcp_local *local, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_llcp_sock *llcp_sock;
+	काष्ठा sock *sk;
 	u8 dsap, ssap;
 
 	dsap = nfc_llcp_dsap(skb);
 	ssap = nfc_llcp_ssap(skb);
 
 	llcp_sock = nfc_llcp_connecting_sock_get(local, dsap);
-	if (llcp_sock == NULL) {
+	अगर (llcp_sock == शून्य) अणु
 		pr_err("Invalid CC\n");
 		nfc_llcp_send_dm(local, dsap, ssap, LLCP_DM_NOCONN);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sk = &llcp_sock->sk;
 
@@ -1186,12 +1187,12 @@ static void nfc_llcp_recv_cc(struct nfc_llcp_local *local, struct sk_buff *skb)
 	sk->sk_state_change(sk);
 
 	nfc_llcp_sock_put(llcp_sock);
-}
+पूर्ण
 
-static void nfc_llcp_recv_dm(struct nfc_llcp_local *local, struct sk_buff *skb)
-{
-	struct nfc_llcp_sock *llcp_sock;
-	struct sock *sk;
+अटल व्योम nfc_llcp_recv_dm(काष्ठा nfc_llcp_local *local, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_llcp_sock *llcp_sock;
+	काष्ठा sock *sk;
 	u8 dsap, ssap, reason;
 
 	dsap = nfc_llcp_dsap(skb);
@@ -1200,21 +1201,21 @@ static void nfc_llcp_recv_dm(struct nfc_llcp_local *local, struct sk_buff *skb)
 
 	pr_debug("%d %d reason %d\n", ssap, dsap, reason);
 
-	switch (reason) {
-	case LLCP_DM_NOBOUND:
-	case LLCP_DM_REJ:
+	चयन (reason) अणु
+	हाल LLCP_DM_NOBOUND:
+	हाल LLCP_DM_REJ:
 		llcp_sock = nfc_llcp_connecting_sock_get(local, dsap);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		llcp_sock = nfc_llcp_sock_get(local, dsap, ssap);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (llcp_sock == NULL) {
+	अगर (llcp_sock == शून्य) अणु
 		pr_debug("Already closed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sk = &llcp_sock->sk;
 
@@ -1223,19 +1224,19 @@ static void nfc_llcp_recv_dm(struct nfc_llcp_local *local, struct sk_buff *skb)
 	sk->sk_state_change(sk);
 
 	nfc_llcp_sock_put(llcp_sock);
-}
+पूर्ण
 
-static void nfc_llcp_recv_snl(struct nfc_llcp_local *local,
-			      struct sk_buff *skb)
-{
-	struct nfc_llcp_sock *llcp_sock;
+अटल व्योम nfc_llcp_recv_snl(काष्ठा nfc_llcp_local *local,
+			      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_llcp_sock *llcp_sock;
 	u8 dsap, ssap, *tlv, type, length, tid, sap;
 	u16 tlv_len, offset;
-	char *service_name;
-	size_t service_name_len;
-	struct nfc_llcp_sdp_tlv *sdp;
+	अक्षर *service_name;
+	माप_प्रकार service_name_len;
+	काष्ठा nfc_llcp_sdp_tlv *sdp;
 	HLIST_HEAD(llc_sdres_list);
-	size_t sdres_tlvs_len;
+	माप_प्रकार sdres_tlvs_len;
 	HLIST_HEAD(nl_sdres_list);
 
 	dsap = nfc_llcp_dsap(skb);
@@ -1243,58 +1244,58 @@ static void nfc_llcp_recv_snl(struct nfc_llcp_local *local,
 
 	pr_debug("%d %d\n", dsap, ssap);
 
-	if (dsap != LLCP_SAP_SDP || ssap != LLCP_SAP_SDP) {
+	अगर (dsap != LLCP_SAP_SDP || ssap != LLCP_SAP_SDP) अणु
 		pr_err("Wrong SNL SAP\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tlv = &skb->data[LLCP_HEADER_SIZE];
 	tlv_len = skb->len - LLCP_HEADER_SIZE;
 	offset = 0;
 	sdres_tlvs_len = 0;
 
-	while (offset < tlv_len) {
+	जबतक (offset < tlv_len) अणु
 		type = tlv[0];
 		length = tlv[1];
 
-		switch (type) {
-		case LLCP_TLV_SDREQ:
+		चयन (type) अणु
+		हाल LLCP_TLV_SDREQ:
 			tid = tlv[2];
-			service_name = (char *) &tlv[3];
+			service_name = (अक्षर *) &tlv[3];
 			service_name_len = length - 1;
 
 			pr_debug("Looking for %.16s\n", service_name);
 
-			if (service_name_len == strlen("urn:nfc:sn:sdp") &&
-			    !strncmp(service_name, "urn:nfc:sn:sdp",
-				     service_name_len)) {
+			अगर (service_name_len == म_माप("urn:nfc:sn:sdp") &&
+			    !म_भेदन(service_name, "urn:nfc:sn:sdp",
+				     service_name_len)) अणु
 				sap = 1;
-				goto add_snl;
-			}
+				जाओ add_snl;
+			पूर्ण
 
 			llcp_sock = nfc_llcp_sock_from_sn(local, service_name,
 							  service_name_len);
-			if (!llcp_sock) {
+			अगर (!llcp_sock) अणु
 				sap = 0;
-				goto add_snl;
-			}
+				जाओ add_snl;
+			पूर्ण
 
 			/*
 			 * We found a socket but its ssap has not been reserved
-			 * yet. We need to assign it for good and send a reply.
-			 * The ssap will be freed when the socket is closed.
+			 * yet. We need to assign it क्रम good and send a reply.
+			 * The ssap will be मुक्तd when the socket is बंदd.
 			 */
-			if (llcp_sock->ssap == LLCP_SDP_UNBOUND) {
+			अगर (llcp_sock->ssap == LLCP_SDP_UNBOUND) अणु
 				atomic_t *client_count;
 
 				sap = nfc_llcp_reserve_sdp_ssap(local);
 
 				pr_debug("Reserving %d\n", sap);
 
-				if (sap == LLCP_SAP_MAX) {
+				अगर (sap == LLCP_SAP_MAX) अणु
 					sap = 0;
-					goto add_snl;
-				}
+					जाओ add_snl;
+				पूर्ण
 
 				client_count =
 					&local->local_sdp_cnt[sap -
@@ -1304,29 +1305,29 @@ static void nfc_llcp_recv_snl(struct nfc_llcp_local *local,
 
 				llcp_sock->ssap = sap;
 				llcp_sock->reserved_ssap = sap;
-			} else {
+			पूर्ण अन्यथा अणु
 				sap = llcp_sock->ssap;
-			}
+			पूर्ण
 
 			pr_debug("%p %d\n", llcp_sock, sap);
 
 add_snl:
 			sdp = nfc_llcp_build_sdres_tlv(tid, sap);
-			if (sdp == NULL)
-				goto exit;
+			अगर (sdp == शून्य)
+				जाओ निकास;
 
 			sdres_tlvs_len += sdp->tlv_len;
 			hlist_add_head(&sdp->node, &llc_sdres_list);
-			break;
+			अवरोध;
 
-		case LLCP_TLV_SDRES:
+		हाल LLCP_TLV_SDRES:
 			mutex_lock(&local->sdreq_lock);
 
 			pr_debug("LLCP_TLV_SDRES: searching tid %d\n", tlv[2]);
 
-			hlist_for_each_entry(sdp, &local->pending_sdreqs, node) {
-				if (sdp->tid != tlv[2])
-					continue;
+			hlist_क्रम_each_entry(sdp, &local->pending_sdreqs, node) अणु
+				अगर (sdp->tid != tlv[2])
+					जारी;
 
 				sdp->sap = tlv[3];
 
@@ -1337,75 +1338,75 @@ add_snl:
 
 				hlist_add_head(&sdp->node, &nl_sdres_list);
 
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			mutex_unlock(&local->sdreq_lock);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			pr_err("Invalid SNL tlv value 0x%x\n", type);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		offset += length + 2;
 		tlv += length + 2;
-	}
+	पूर्ण
 
-exit:
-	if (!hlist_empty(&nl_sdres_list))
+निकास:
+	अगर (!hlist_empty(&nl_sdres_list))
 		nfc_genl_llc_send_sdres(local->dev, &nl_sdres_list);
 
-	if (!hlist_empty(&llc_sdres_list))
+	अगर (!hlist_empty(&llc_sdres_list))
 		nfc_llcp_send_snl_sdres(local, &llc_sdres_list, sdres_tlvs_len);
-}
+पूर्ण
 
-static void nfc_llcp_recv_agf(struct nfc_llcp_local *local, struct sk_buff *skb)
-{
+अटल व्योम nfc_llcp_recv_agf(काष्ठा nfc_llcp_local *local, काष्ठा sk_buff *skb)
+अणु
 	u8 ptype;
 	u16 pdu_len;
-	struct sk_buff *new_skb;
+	काष्ठा sk_buff *new_skb;
 
-	if (skb->len <= LLCP_HEADER_SIZE) {
+	अगर (skb->len <= LLCP_HEADER_SIZE) अणु
 		pr_err("Malformed AGF PDU\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	skb_pull(skb, LLCP_HEADER_SIZE);
 
-	while (skb->len > LLCP_AGF_PDU_HEADER_SIZE) {
+	जबतक (skb->len > LLCP_AGF_PDU_HEADER_SIZE) अणु
 		pdu_len = skb->data[0] << 8 | skb->data[1];
 
 		skb_pull(skb, LLCP_AGF_PDU_HEADER_SIZE);
 
-		if (pdu_len < LLCP_HEADER_SIZE || pdu_len > skb->len) {
+		अगर (pdu_len < LLCP_HEADER_SIZE || pdu_len > skb->len) अणु
 			pr_err("Malformed AGF PDU\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		ptype = nfc_llcp_ptype(skb);
 
-		if (ptype == LLCP_PDU_SYMM || ptype == LLCP_PDU_AGF)
-			goto next;
+		अगर (ptype == LLCP_PDU_SYMM || ptype == LLCP_PDU_AGF)
+			जाओ next;
 
 		new_skb = nfc_alloc_recv_skb(pdu_len, GFP_KERNEL);
-		if (new_skb == NULL) {
+		अगर (new_skb == शून्य) अणु
 			pr_err("Could not allocate PDU\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		skb_put_data(new_skb, skb->data, pdu_len);
 
 		nfc_llcp_rx_skb(local, new_skb);
 
-		kfree_skb(new_skb);
+		kमुक्त_skb(new_skb);
 next:
 		skb_pull(skb, pdu_len);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nfc_llcp_rx_skb(struct nfc_llcp_local *local, struct sk_buff *skb)
-{
+अटल व्योम nfc_llcp_rx_skb(काष्ठा nfc_llcp_local *local, काष्ठा sk_buff *skb)
+अणु
 	u8 dsap, ssap, ptype;
 
 	ptype = nfc_llcp_ptype(skb);
@@ -1414,178 +1415,178 @@ static void nfc_llcp_rx_skb(struct nfc_llcp_local *local, struct sk_buff *skb)
 
 	pr_debug("ptype 0x%x dsap 0x%x ssap 0x%x\n", ptype, dsap, ssap);
 
-	if (ptype != LLCP_PDU_SYMM)
-		print_hex_dump_debug("LLCP Rx: ", DUMP_PREFIX_OFFSET, 16, 1,
+	अगर (ptype != LLCP_PDU_SYMM)
+		prपूर्णांक_hex_dump_debug("LLCP Rx: ", DUMP_PREFIX_OFFSET, 16, 1,
 				     skb->data, skb->len, true);
 
-	switch (ptype) {
-	case LLCP_PDU_SYMM:
+	चयन (ptype) अणु
+	हाल LLCP_PDU_SYMM:
 		pr_debug("SYMM\n");
-		break;
+		अवरोध;
 
-	case LLCP_PDU_UI:
+	हाल LLCP_PDU_UI:
 		pr_debug("UI\n");
 		nfc_llcp_recv_ui(local, skb);
-		break;
+		अवरोध;
 
-	case LLCP_PDU_CONNECT:
+	हाल LLCP_PDU_CONNECT:
 		pr_debug("CONNECT\n");
 		nfc_llcp_recv_connect(local, skb);
-		break;
+		अवरोध;
 
-	case LLCP_PDU_DISC:
+	हाल LLCP_PDU_DISC:
 		pr_debug("DISC\n");
 		nfc_llcp_recv_disc(local, skb);
-		break;
+		अवरोध;
 
-	case LLCP_PDU_CC:
+	हाल LLCP_PDU_CC:
 		pr_debug("CC\n");
 		nfc_llcp_recv_cc(local, skb);
-		break;
+		अवरोध;
 
-	case LLCP_PDU_DM:
+	हाल LLCP_PDU_DM:
 		pr_debug("DM\n");
 		nfc_llcp_recv_dm(local, skb);
-		break;
+		अवरोध;
 
-	case LLCP_PDU_SNL:
+	हाल LLCP_PDU_SNL:
 		pr_debug("SNL\n");
 		nfc_llcp_recv_snl(local, skb);
-		break;
+		अवरोध;
 
-	case LLCP_PDU_I:
-	case LLCP_PDU_RR:
-	case LLCP_PDU_RNR:
+	हाल LLCP_PDU_I:
+	हाल LLCP_PDU_RR:
+	हाल LLCP_PDU_RNR:
 		pr_debug("I frame\n");
 		nfc_llcp_recv_hdlc(local, skb);
-		break;
+		अवरोध;
 
-	case LLCP_PDU_AGF:
+	हाल LLCP_PDU_AGF:
 		pr_debug("AGF frame\n");
 		nfc_llcp_recv_agf(local, skb);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void nfc_llcp_rx_work(struct work_struct *work)
-{
-	struct nfc_llcp_local *local = container_of(work, struct nfc_llcp_local,
+अटल व्योम nfc_llcp_rx_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nfc_llcp_local *local = container_of(work, काष्ठा nfc_llcp_local,
 						    rx_work);
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 
 	skb = local->rx_pending;
-	if (skb == NULL) {
+	अगर (skb == शून्य) अणु
 		pr_debug("No pending SKB\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	__net_timestamp(skb);
+	__net_बारtamp(skb);
 
-	nfc_llcp_send_to_raw_sock(local, skb, NFC_DIRECTION_RX);
+	nfc_llcp_send_to_raw_sock(local, skb, NFC_सूचीECTION_RX);
 
 	nfc_llcp_rx_skb(local, skb);
 
 	schedule_work(&local->tx_work);
-	kfree_skb(local->rx_pending);
-	local->rx_pending = NULL;
-}
+	kमुक्त_skb(local->rx_pending);
+	local->rx_pending = शून्य;
+पूर्ण
 
-static void __nfc_llcp_recv(struct nfc_llcp_local *local, struct sk_buff *skb)
-{
+अटल व्योम __nfc_llcp_recv(काष्ठा nfc_llcp_local *local, काष्ठा sk_buff *skb)
+अणु
 	local->rx_pending = skb;
-	del_timer(&local->link_timer);
+	del_समयr(&local->link_समयr);
 	schedule_work(&local->rx_work);
-}
+पूर्ण
 
-void nfc_llcp_recv(void *data, struct sk_buff *skb, int err)
-{
-	struct nfc_llcp_local *local = (struct nfc_llcp_local *) data;
+व्योम nfc_llcp_recv(व्योम *data, काष्ठा sk_buff *skb, पूर्णांक err)
+अणु
+	काष्ठा nfc_llcp_local *local = (काष्ठा nfc_llcp_local *) data;
 
 	pr_debug("Received an LLCP PDU\n");
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("err %d\n", err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	__nfc_llcp_recv(local, skb);
-}
+पूर्ण
 
-int nfc_llcp_data_received(struct nfc_dev *dev, struct sk_buff *skb)
-{
-	struct nfc_llcp_local *local;
+पूर्णांक nfc_llcp_data_received(काष्ठा nfc_dev *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_llcp_local *local;
 
 	local = nfc_llcp_find_local(dev);
-	if (local == NULL) {
-		kfree_skb(skb);
-		return -ENODEV;
-	}
+	अगर (local == शून्य) अणु
+		kमुक्त_skb(skb);
+		वापस -ENODEV;
+	पूर्ण
 
 	__nfc_llcp_recv(local, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nfc_llcp_mac_is_down(struct nfc_dev *dev)
-{
-	struct nfc_llcp_local *local;
+व्योम nfc_llcp_mac_is_करोwn(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा nfc_llcp_local *local;
 
 	local = nfc_llcp_find_local(dev);
-	if (local == NULL)
-		return;
+	अगर (local == शून्य)
+		वापस;
 
 	local->remote_miu = LLCP_DEFAULT_MIU;
 	local->remote_lto = LLCP_DEFAULT_LTO;
 
 	/* Close and purge all existing sockets */
 	nfc_llcp_socket_release(local, true, 0);
-}
+पूर्ण
 
-void nfc_llcp_mac_is_up(struct nfc_dev *dev, u32 target_idx,
+व्योम nfc_llcp_mac_is_up(काष्ठा nfc_dev *dev, u32 target_idx,
 			u8 comm_mode, u8 rf_mode)
-{
-	struct nfc_llcp_local *local;
+अणु
+	काष्ठा nfc_llcp_local *local;
 
 	pr_debug("rf mode %d\n", rf_mode);
 
 	local = nfc_llcp_find_local(dev);
-	if (local == NULL)
-		return;
+	अगर (local == शून्य)
+		वापस;
 
 	local->target_idx = target_idx;
 	local->comm_mode = comm_mode;
 	local->rf_mode = rf_mode;
 
-	if (rf_mode == NFC_RF_INITIATOR) {
+	अगर (rf_mode == NFC_RF_INITIATOR) अणु
 		pr_debug("Queueing Tx work\n");
 
 		schedule_work(&local->tx_work);
-	} else {
-		mod_timer(&local->link_timer,
-			  jiffies + msecs_to_jiffies(local->remote_lto));
-	}
-}
+	पूर्ण अन्यथा अणु
+		mod_समयr(&local->link_समयr,
+			  jअगरfies + msecs_to_jअगरfies(local->remote_lto));
+	पूर्ण
+पूर्ण
 
-int nfc_llcp_register_device(struct nfc_dev *ndev)
-{
-	struct nfc_llcp_local *local;
+पूर्णांक nfc_llcp_रेजिस्टर_device(काष्ठा nfc_dev *ndev)
+अणु
+	काष्ठा nfc_llcp_local *local;
 
-	local = kzalloc(sizeof(struct nfc_llcp_local), GFP_KERNEL);
-	if (local == NULL)
-		return -ENOMEM;
+	local = kzalloc(माप(काष्ठा nfc_llcp_local), GFP_KERNEL);
+	अगर (local == शून्य)
+		वापस -ENOMEM;
 
 	local->dev = ndev;
 	INIT_LIST_HEAD(&local->list);
 	kref_init(&local->ref);
 	mutex_init(&local->sdp_lock);
-	timer_setup(&local->link_timer, nfc_llcp_symm_timer, 0);
+	समयr_setup(&local->link_समयr, nfc_llcp_symm_समयr, 0);
 
 	skb_queue_head_init(&local->tx_queue);
 	INIT_WORK(&local->tx_work, nfc_llcp_tx_work);
 
-	local->rx_pending = NULL;
+	local->rx_pending = शून्य;
 	INIT_WORK(&local->rx_work, nfc_llcp_rx_work);
 
-	INIT_WORK(&local->timeout_work, nfc_llcp_timeout_work);
+	INIT_WORK(&local->समयout_work, nfc_llcp_समयout_work);
 
 	rwlock_init(&local->sockets.lock);
 	rwlock_init(&local->connecting_sockets.lock);
@@ -1603,34 +1604,34 @@ int nfc_llcp_register_device(struct nfc_dev *ndev)
 
 	mutex_init(&local->sdreq_lock);
 	INIT_HLIST_HEAD(&local->pending_sdreqs);
-	timer_setup(&local->sdreq_timer, nfc_llcp_sdreq_timer, 0);
-	INIT_WORK(&local->sdreq_timeout_work, nfc_llcp_sdreq_timeout_work);
+	समयr_setup(&local->sdreq_समयr, nfc_llcp_sdreq_समयr, 0);
+	INIT_WORK(&local->sdreq_समयout_work, nfc_llcp_sdreq_समयout_work);
 
 	list_add(&local->list, &llcp_devices);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nfc_llcp_unregister_device(struct nfc_dev *dev)
-{
-	struct nfc_llcp_local *local = nfc_llcp_find_local(dev);
+व्योम nfc_llcp_unरेजिस्टर_device(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा nfc_llcp_local *local = nfc_llcp_find_local(dev);
 
-	if (local == NULL) {
+	अगर (local == शून्य) अणु
 		pr_debug("No such device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	local_cleanup(local);
 
 	nfc_llcp_local_put(local);
-}
+पूर्ण
 
-int __init nfc_llcp_init(void)
-{
-	return nfc_llcp_sock_init();
-}
+पूर्णांक __init nfc_llcp_init(व्योम)
+अणु
+	वापस nfc_llcp_sock_init();
+पूर्ण
 
-void nfc_llcp_exit(void)
-{
-	nfc_llcp_sock_exit();
-}
+व्योम nfc_llcp_निकास(व्योम)
+अणु
+	nfc_llcp_sock_निकास();
+पूर्ण

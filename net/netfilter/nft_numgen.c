@@ -1,215 +1,216 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Laura Garcia <nevola@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <linux/static_key.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <linux/अटल_key.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
 
-static DEFINE_PER_CPU(struct rnd_state, nft_numgen_prandom_state);
+अटल DEFINE_PER_CPU(काष्ठा rnd_state, nft_numgen_pअक्रमom_state);
 
-struct nft_ng_inc {
+काष्ठा nft_ng_inc अणु
 	u8			dreg;
 	u32			modulus;
 	atomic_t		counter;
 	u32			offset;
-};
+पूर्ण;
 
-static u32 nft_ng_inc_gen(struct nft_ng_inc *priv)
-{
+अटल u32 nft_ng_inc_gen(काष्ठा nft_ng_inc *priv)
+अणु
 	u32 nval, oval;
 
-	do {
-		oval = atomic_read(&priv->counter);
+	करो अणु
+		oval = atomic_पढ़ो(&priv->counter);
 		nval = (oval + 1 < priv->modulus) ? oval + 1 : 0;
-	} while (atomic_cmpxchg(&priv->counter, oval, nval) != oval);
+	पूर्ण जबतक (atomic_cmpxchg(&priv->counter, oval, nval) != oval);
 
-	return nval + priv->offset;
-}
+	वापस nval + priv->offset;
+पूर्ण
 
-static void nft_ng_inc_eval(const struct nft_expr *expr,
-			    struct nft_regs *regs,
-			    const struct nft_pktinfo *pkt)
-{
-	struct nft_ng_inc *priv = nft_expr_priv(expr);
+अटल व्योम nft_ng_inc_eval(स्थिर काष्ठा nft_expr *expr,
+			    काष्ठा nft_regs *regs,
+			    स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_ng_inc *priv = nft_expr_priv(expr);
 
 	regs->data[priv->dreg] = nft_ng_inc_gen(priv);
-}
+पूर्ण
 
-static const struct nla_policy nft_ng_policy[NFTA_NG_MAX + 1] = {
-	[NFTA_NG_DREG]		= { .type = NLA_U32 },
-	[NFTA_NG_MODULUS]	= { .type = NLA_U32 },
-	[NFTA_NG_TYPE]		= { .type = NLA_U32 },
-	[NFTA_NG_OFFSET]	= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy nft_ng_policy[NFTA_NG_MAX + 1] = अणु
+	[NFTA_NG_DREG]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_NG_MODULUS]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_NG_TYPE]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_NG_OFFSET]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int nft_ng_inc_init(const struct nft_ctx *ctx,
-			   const struct nft_expr *expr,
-			   const struct nlattr * const tb[])
-{
-	struct nft_ng_inc *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_ng_inc_init(स्थिर काष्ठा nft_ctx *ctx,
+			   स्थिर काष्ठा nft_expr *expr,
+			   स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_ng_inc *priv = nft_expr_priv(expr);
 
-	if (tb[NFTA_NG_OFFSET])
+	अगर (tb[NFTA_NG_OFFSET])
 		priv->offset = ntohl(nla_get_be32(tb[NFTA_NG_OFFSET]));
 
 	priv->modulus = ntohl(nla_get_be32(tb[NFTA_NG_MODULUS]));
-	if (priv->modulus == 0)
-		return -ERANGE;
+	अगर (priv->modulus == 0)
+		वापस -दुस्फल;
 
-	if (priv->offset + priv->modulus - 1 < priv->offset)
-		return -EOVERFLOW;
+	अगर (priv->offset + priv->modulus - 1 < priv->offset)
+		वापस -EOVERFLOW;
 
 	atomic_set(&priv->counter, priv->modulus - 1);
 
-	return nft_parse_register_store(ctx, tb[NFTA_NG_DREG], &priv->dreg,
-					NULL, NFT_DATA_VALUE, sizeof(u32));
-}
+	वापस nft_parse_रेजिस्टर_store(ctx, tb[NFTA_NG_DREG], &priv->dreg,
+					शून्य, NFT_DATA_VALUE, माप(u32));
+पूर्ण
 
-static int nft_ng_dump(struct sk_buff *skb, enum nft_registers dreg,
-		       u32 modulus, enum nft_ng_types type, u32 offset)
-{
-	if (nft_dump_register(skb, NFTA_NG_DREG, dreg))
-		goto nla_put_failure;
-	if (nla_put_be32(skb, NFTA_NG_MODULUS, htonl(modulus)))
-		goto nla_put_failure;
-	if (nla_put_be32(skb, NFTA_NG_TYPE, htonl(type)))
-		goto nla_put_failure;
-	if (nla_put_be32(skb, NFTA_NG_OFFSET, htonl(offset)))
-		goto nla_put_failure;
+अटल पूर्णांक nft_ng_dump(काष्ठा sk_buff *skb, क्रमागत nft_रेजिस्टरs dreg,
+		       u32 modulus, क्रमागत nft_ng_types type, u32 offset)
+अणु
+	अगर (nft_dump_रेजिस्टर(skb, NFTA_NG_DREG, dreg))
+		जाओ nla_put_failure;
+	अगर (nla_put_be32(skb, NFTA_NG_MODULUS, htonl(modulus)))
+		जाओ nla_put_failure;
+	अगर (nla_put_be32(skb, NFTA_NG_TYPE, htonl(type)))
+		जाओ nla_put_failure;
+	अगर (nla_put_be32(skb, NFTA_NG_OFFSET, htonl(offset)))
+		जाओ nla_put_failure;
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int nft_ng_inc_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct nft_ng_inc *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_ng_inc_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_ng_inc *priv = nft_expr_priv(expr);
 
-	return nft_ng_dump(skb, priv->dreg, priv->modulus, NFT_NG_INCREMENTAL,
+	वापस nft_ng_dump(skb, priv->dreg, priv->modulus, NFT_NG_INCREMENTAL,
 			   priv->offset);
-}
+पूर्ण
 
-struct nft_ng_random {
+काष्ठा nft_ng_अक्रमom अणु
 	u8			dreg;
 	u32			modulus;
 	u32			offset;
-};
+पूर्ण;
 
-static u32 nft_ng_random_gen(struct nft_ng_random *priv)
-{
-	struct rnd_state *state = this_cpu_ptr(&nft_numgen_prandom_state);
+अटल u32 nft_ng_अक्रमom_gen(काष्ठा nft_ng_अक्रमom *priv)
+अणु
+	काष्ठा rnd_state *state = this_cpu_ptr(&nft_numgen_pअक्रमom_state);
 
-	return reciprocal_scale(prandom_u32_state(state), priv->modulus) +
+	वापस reciprocal_scale(pअक्रमom_u32_state(state), priv->modulus) +
 	       priv->offset;
-}
+पूर्ण
 
-static void nft_ng_random_eval(const struct nft_expr *expr,
-			       struct nft_regs *regs,
-			       const struct nft_pktinfo *pkt)
-{
-	struct nft_ng_random *priv = nft_expr_priv(expr);
+अटल व्योम nft_ng_अक्रमom_eval(स्थिर काष्ठा nft_expr *expr,
+			       काष्ठा nft_regs *regs,
+			       स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_ng_अक्रमom *priv = nft_expr_priv(expr);
 
-	regs->data[priv->dreg] = nft_ng_random_gen(priv);
-}
+	regs->data[priv->dreg] = nft_ng_अक्रमom_gen(priv);
+पूर्ण
 
-static int nft_ng_random_init(const struct nft_ctx *ctx,
-			      const struct nft_expr *expr,
-			      const struct nlattr * const tb[])
-{
-	struct nft_ng_random *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_ng_अक्रमom_init(स्थिर काष्ठा nft_ctx *ctx,
+			      स्थिर काष्ठा nft_expr *expr,
+			      स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_ng_अक्रमom *priv = nft_expr_priv(expr);
 
-	if (tb[NFTA_NG_OFFSET])
+	अगर (tb[NFTA_NG_OFFSET])
 		priv->offset = ntohl(nla_get_be32(tb[NFTA_NG_OFFSET]));
 
 	priv->modulus = ntohl(nla_get_be32(tb[NFTA_NG_MODULUS]));
-	if (priv->modulus == 0)
-		return -ERANGE;
+	अगर (priv->modulus == 0)
+		वापस -दुस्फल;
 
-	if (priv->offset + priv->modulus - 1 < priv->offset)
-		return -EOVERFLOW;
+	अगर (priv->offset + priv->modulus - 1 < priv->offset)
+		वापस -EOVERFLOW;
 
-	prandom_init_once(&nft_numgen_prandom_state);
+	pअक्रमom_init_once(&nft_numgen_pअक्रमom_state);
 
-	return nft_parse_register_store(ctx, tb[NFTA_NG_DREG], &priv->dreg,
-					NULL, NFT_DATA_VALUE, sizeof(u32));
-}
+	वापस nft_parse_रेजिस्टर_store(ctx, tb[NFTA_NG_DREG], &priv->dreg,
+					शून्य, NFT_DATA_VALUE, माप(u32));
+पूर्ण
 
-static int nft_ng_random_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct nft_ng_random *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_ng_अक्रमom_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_ng_अक्रमom *priv = nft_expr_priv(expr);
 
-	return nft_ng_dump(skb, priv->dreg, priv->modulus, NFT_NG_RANDOM,
+	वापस nft_ng_dump(skb, priv->dreg, priv->modulus, NFT_NG_RANDOM,
 			   priv->offset);
-}
+पूर्ण
 
-static struct nft_expr_type nft_ng_type;
-static const struct nft_expr_ops nft_ng_inc_ops = {
+अटल काष्ठा nft_expr_type nft_ng_type;
+अटल स्थिर काष्ठा nft_expr_ops nft_ng_inc_ops = अणु
 	.type		= &nft_ng_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_ng_inc)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_ng_inc)),
 	.eval		= nft_ng_inc_eval,
 	.init		= nft_ng_inc_init,
 	.dump		= nft_ng_inc_dump,
-};
+पूर्ण;
 
-static const struct nft_expr_ops nft_ng_random_ops = {
+अटल स्थिर काष्ठा nft_expr_ops nft_ng_अक्रमom_ops = अणु
 	.type		= &nft_ng_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_ng_random)),
-	.eval		= nft_ng_random_eval,
-	.init		= nft_ng_random_init,
-	.dump		= nft_ng_random_dump,
-};
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_ng_अक्रमom)),
+	.eval		= nft_ng_अक्रमom_eval,
+	.init		= nft_ng_अक्रमom_init,
+	.dump		= nft_ng_अक्रमom_dump,
+पूर्ण;
 
-static const struct nft_expr_ops *
-nft_ng_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
-{
+अटल स्थिर काष्ठा nft_expr_ops *
+nft_ng_select_ops(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
 	u32 type;
 
-	if (!tb[NFTA_NG_DREG]	 ||
+	अगर (!tb[NFTA_NG_DREG]	 ||
 	    !tb[NFTA_NG_MODULUS] ||
 	    !tb[NFTA_NG_TYPE])
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
 	type = ntohl(nla_get_be32(tb[NFTA_NG_TYPE]));
 
-	switch (type) {
-	case NFT_NG_INCREMENTAL:
-		return &nft_ng_inc_ops;
-	case NFT_NG_RANDOM:
-		return &nft_ng_random_ops;
-	}
+	चयन (type) अणु
+	हाल NFT_NG_INCREMENTAL:
+		वापस &nft_ng_inc_ops;
+	हाल NFT_NG_RANDOM:
+		वापस &nft_ng_अक्रमom_ops;
+	पूर्ण
 
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static struct nft_expr_type nft_ng_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_ng_type __पढ़ो_mostly = अणु
 	.name		= "numgen",
 	.select_ops	= nft_ng_select_ops,
 	.policy		= nft_ng_policy,
 	.maxattr	= NFTA_NG_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nft_ng_module_init(void)
-{
-	return nft_register_expr(&nft_ng_type);
-}
+अटल पूर्णांक __init nft_ng_module_init(व्योम)
+अणु
+	वापस nft_रेजिस्टर_expr(&nft_ng_type);
+पूर्ण
 
-static void __exit nft_ng_module_exit(void)
-{
-	nft_unregister_expr(&nft_ng_type);
-}
+अटल व्योम __निकास nft_ng_module_निकास(व्योम)
+अणु
+	nft_unरेजिस्टर_expr(&nft_ng_type);
+पूर्ण
 
 module_init(nft_ng_module_init);
-module_exit(nft_ng_module_exit);
+module_निकास(nft_ng_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Laura Garcia <nevola@gmail.com>");

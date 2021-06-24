@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,32 +21,32 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _VEGA10_SMUMANAGER_H_
-#define _VEGA10_SMUMANAGER_H_
+#अगर_अघोषित _VEGA10_SMUMANAGER_H_
+#घोषणा _VEGA10_SMUMANAGER_H_
 
-#define MAX_SMU_TABLE 5
+#घोषणा MAX_SMU_TABLE 5
 
-struct smu_table_entry {
-	uint32_t version;
-	uint32_t size;
-	uint32_t table_id;
-	uint64_t mc_addr;
-	void *table;
-	struct amdgpu_bo *handle;
-};
+काष्ठा smu_table_entry अणु
+	uपूर्णांक32_t version;
+	uपूर्णांक32_t size;
+	uपूर्णांक32_t table_id;
+	uपूर्णांक64_t mc_addr;
+	व्योम *table;
+	काष्ठा amdgpu_bo *handle;
+पूर्ण;
 
-struct smu_table_array {
-	struct smu_table_entry entry[MAX_SMU_TABLE];
-};
+काष्ठा smu_table_array अणु
+	काष्ठा smu_table_entry entry[MAX_SMU_TABLE];
+पूर्ण;
 
-struct vega10_smumgr {
-	struct smu_table_array            smu_tables;
-};
+काष्ठा vega10_smumgr अणु
+	काष्ठा smu_table_array            smu_tables;
+पूर्ण;
 
-int vega10_enable_smc_features(struct pp_hwmgr *hwmgr,
-			       bool enable, uint32_t feature_mask);
-int vega10_get_enabled_smc_features(struct pp_hwmgr *hwmgr,
-				    uint64_t *features_enabled);
+पूर्णांक vega10_enable_smc_features(काष्ठा pp_hwmgr *hwmgr,
+			       bool enable, uपूर्णांक32_t feature_mask);
+पूर्णांक vega10_get_enabled_smc_features(काष्ठा pp_hwmgr *hwmgr,
+				    uपूर्णांक64_t *features_enabled);
 
-#endif
+#पूर्ण_अगर
 

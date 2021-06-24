@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * SGI One-Wire (W1) IP
  */
 
-#ifndef PLATFORM_DATA_SGI_W1_H
-#define PLATFORM_DATA_SGI_W1_H
+#अगर_अघोषित PLATFORM_DATA_SGI_W1_H
+#घोषणा PLATFORM_DATA_SGI_W1_H
 
-struct sgi_w1_platform_data {
-	char dev_id[64];
-};
+काष्ठा sgi_w1_platक्रमm_data अणु
+	अक्षर dev_id[64];
+पूर्ण;
 
-#endif /* PLATFORM_DATA_SGI_W1_H */
+#पूर्ण_अगर /* PLATFORM_DATA_SGI_W1_H */

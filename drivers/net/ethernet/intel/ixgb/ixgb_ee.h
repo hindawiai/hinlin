@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 1999 - 2008 Intel Corporation. */
 
-#ifndef _IXGB_EE_H_
-#define _IXGB_EE_H_
+#अगर_अघोषित _IXGB_EE_H_
+#घोषणा _IXGB_EE_H_
 
-#define IXGB_EEPROM_SIZE    64	/* Size in words */
+#घोषणा IXGB_EEPROM_SIZE    64	/* Size in words */
 
 /* EEPROM Commands */
-#define EEPROM_READ_OPCODE  0x6	/* EEPROM read opcode */
-#define EEPROM_WRITE_OPCODE 0x5	/* EEPROM write opcode */
-#define EEPROM_ERASE_OPCODE 0x7	/* EEPROM erase opcode */
-#define EEPROM_EWEN_OPCODE  0x13	/* EEPROM erase/write enable */
-#define EEPROM_EWDS_OPCODE  0x10	/* EEPROM erase/write disable */
+#घोषणा EEPROM_READ_OPCODE  0x6	/* EEPROM पढ़ो opcode */
+#घोषणा EEPROM_WRITE_OPCODE 0x5	/* EEPROM ग_लिखो opcode */
+#घोषणा EEPROM_ERASE_OPCODE 0x7	/* EEPROM erase opcode */
+#घोषणा EEPROM_EWEN_OPCODE  0x13	/* EEPROM erase/ग_लिखो enable */
+#घोषणा EEPROM_EWDS_OPCODE  0x10	/* EEPROM erase/ग_लिखो disable */
 
 /* EEPROM MAP (Word Offsets) */
-#define EEPROM_IA_1_2_REG        0x0000
-#define EEPROM_IA_3_4_REG        0x0001
-#define EEPROM_IA_5_6_REG        0x0002
-#define EEPROM_COMPATIBILITY_REG 0x0003
-#define EEPROM_PBA_1_2_REG       0x0008
-#define EEPROM_PBA_3_4_REG       0x0009
-#define EEPROM_INIT_CONTROL1_REG 0x000A
-#define EEPROM_SUBSYS_ID_REG     0x000B
-#define EEPROM_SUBVEND_ID_REG    0x000C
-#define EEPROM_DEVICE_ID_REG     0x000D
-#define EEPROM_VENDOR_ID_REG     0x000E
-#define EEPROM_INIT_CONTROL2_REG 0x000F
-#define EEPROM_SWDPINS_REG       0x0020
-#define EEPROM_CIRCUIT_CTRL_REG  0x0021
-#define EEPROM_D0_D3_POWER_REG   0x0022
-#define EEPROM_FLASH_VERSION     0x0032
-#define EEPROM_CHECKSUM_REG      0x003F
+#घोषणा EEPROM_IA_1_2_REG        0x0000
+#घोषणा EEPROM_IA_3_4_REG        0x0001
+#घोषणा EEPROM_IA_5_6_REG        0x0002
+#घोषणा EEPROM_COMPATIBILITY_REG 0x0003
+#घोषणा EEPROM_PBA_1_2_REG       0x0008
+#घोषणा EEPROM_PBA_3_4_REG       0x0009
+#घोषणा EEPROM_INIT_CONTROL1_REG 0x000A
+#घोषणा EEPROM_SUBSYS_ID_REG     0x000B
+#घोषणा EEPROM_SUBVEND_ID_REG    0x000C
+#घोषणा EEPROM_DEVICE_ID_REG     0x000D
+#घोषणा EEPROM_VENDOR_ID_REG     0x000E
+#घोषणा EEPROM_INIT_CONTROL2_REG 0x000F
+#घोषणा EEPROM_SWDPINS_REG       0x0020
+#घोषणा EEPROM_CIRCUIT_CTRL_REG  0x0021
+#घोषणा EEPROM_D0_D3_POWER_REG   0x0022
+#घोषणा EEPROM_FLASH_VERSION     0x0032
+#घोषणा EEPROM_CHECKSUM_REG      0x003F
 
-/* Mask bits for fields in Word 0x0a of the EEPROM */
+/* Mask bits क्रम fields in Word 0x0a of the EEPROM */
 
-#define EEPROM_ICW1_SIGNATURE_MASK  0xC000
-#define EEPROM_ICW1_SIGNATURE_VALID 0x4000
-#define EEPROM_ICW1_SIGNATURE_CLEAR 0x0000
+#घोषणा EEPROM_ICW1_SIGNATURE_MASK  0xC000
+#घोषणा EEPROM_ICW1_SIGNATURE_VALID 0x4000
+#घोषणा EEPROM_ICW1_SIGNATURE_CLEAR 0x0000
 
 /* For checksumming, the sum of all words in the EEPROM should equal 0xBABA. */
-#define EEPROM_SUM 0xBABA
+#घोषणा EEPROM_SUM 0xBABA
 
 /* EEPROM Map Sizes (Byte Counts) */
-#define PBA_SIZE 4
+#घोषणा PBA_SIZE 4
 
 /* EEPROM Map defines (WORD OFFSETS)*/
 
-/* EEPROM structure */
-struct ixgb_ee_map_type {
+/* EEPROM काष्ठाure */
+काष्ठा ixgb_ee_map_type अणु
 	u8 mac_addr[ETH_ALEN];
 	__le16 compatibility;
 	__le16 reserved1[4];
 	__le32 pba_number;
 	__le16 init_ctrl_reg_1;
-	__le16 subsystem_id;
-	__le16 subvendor_id;
+	__le16 subप्रणाली_id;
+	__le16 subvenकरोr_id;
 	__le16 device_id;
-	__le16 vendor_id;
+	__le16 venकरोr_id;
 	__le16 init_ctrl_reg_2;
 	__le16 oem_reserved[16];
 	__le16 swdpins_reg;
 	__le16 circuit_ctrl_reg;
-	u8 d3_power;
-	u8 d0_power;
+	u8 d3_घातer;
+	u8 d0_घातer;
 	__le16 reserved2[28];
 	__le16 checksum;
-};
+पूर्ण;
 
 /* EEPROM Functions */
-u16 ixgb_read_eeprom(struct ixgb_hw *hw, u16 reg);
+u16 ixgb_पढ़ो_eeprom(काष्ठा ixgb_hw *hw, u16 reg);
 
-bool ixgb_validate_eeprom_checksum(struct ixgb_hw *hw);
+bool ixgb_validate_eeprom_checksum(काष्ठा ixgb_hw *hw);
 
-void ixgb_update_eeprom_checksum(struct ixgb_hw *hw);
+व्योम ixgb_update_eeprom_checksum(काष्ठा ixgb_hw *hw);
 
-void ixgb_write_eeprom(struct ixgb_hw *hw, u16 reg, u16 data);
+व्योम ixgb_ग_लिखो_eeprom(काष्ठा ixgb_hw *hw, u16 reg, u16 data);
 
-#endif				/* IXGB_EE_H */
+#पूर्ण_अगर				/* IXGB_EE_H */

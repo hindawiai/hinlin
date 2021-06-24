@@ -1,179 +1,180 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
 // tegra186_dspk.c - Tegra186 DSPK driver
 //
 // Copyright (c) 2020 NVIDIA CORPORATION. All rights reserved.
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <sound/core.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include "tegra186_dspk.h"
-#include "tegra_cif.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश "tegra186_dspk.h"
+#समावेश "tegra_cif.h"
 
-static const struct reg_default tegra186_dspk_reg_defaults[] = {
-	{ TEGRA186_DSPK_RX_INT_MASK, 0x00000007 },
-	{ TEGRA186_DSPK_RX_CIF_CTRL, 0x00007700 },
-	{ TEGRA186_DSPK_CG,	     0x00000001 },
-	{ TEGRA186_DSPK_CORE_CTRL,   0x00000310 },
-	{ TEGRA186_DSPK_CODEC_CTRL,  0x03000000 },
-};
+अटल स्थिर काष्ठा reg_शेष tegra186_dspk_reg_शेषs[] = अणु
+	अणु TEGRA186_DSPK_RX_INT_MASK, 0x00000007 पूर्ण,
+	अणु TEGRA186_DSPK_RX_CIF_CTRL, 0x00007700 पूर्ण,
+	अणु TEGRA186_DSPK_CG,	     0x00000001 पूर्ण,
+	अणु TEGRA186_DSPK_CORE_CTRL,   0x00000310 पूर्ण,
+	अणु TEGRA186_DSPK_CODEC_CTRL,  0x03000000 पूर्ण,
+पूर्ण;
 
-static int tegra186_dspk_get_control(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
-	struct tegra186_dspk *dspk = snd_soc_component_get_drvdata(codec);
+अटल पूर्णांक tegra186_dspk_get_control(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा tegra186_dspk *dspk = snd_soc_component_get_drvdata(codec);
 
-	if (strstr(kcontrol->id.name, "FIFO Threshold"))
-		ucontrol->value.integer.value[0] = dspk->rx_fifo_th;
-	else if (strstr(kcontrol->id.name, "OSR Value"))
-		ucontrol->value.integer.value[0] = dspk->osr_val;
-	else if (strstr(kcontrol->id.name, "LR Polarity Select"))
-		ucontrol->value.integer.value[0] = dspk->lrsel;
-	else if (strstr(kcontrol->id.name, "Channel Select"))
-		ucontrol->value.integer.value[0] = dspk->ch_sel;
-	else if (strstr(kcontrol->id.name, "Mono To Stereo"))
-		ucontrol->value.integer.value[0] = dspk->mono_to_stereo;
-	else if (strstr(kcontrol->id.name, "Stereo To Mono"))
-		ucontrol->value.integer.value[0] = dspk->stereo_to_mono;
+	अगर (म_माला(kcontrol->id.name, "FIFO Threshold"))
+		ucontrol->value.पूर्णांकeger.value[0] = dspk->rx_fअगरo_th;
+	अन्यथा अगर (म_माला(kcontrol->id.name, "OSR Value"))
+		ucontrol->value.पूर्णांकeger.value[0] = dspk->osr_val;
+	अन्यथा अगर (म_माला(kcontrol->id.name, "LR Polarity Select"))
+		ucontrol->value.पूर्णांकeger.value[0] = dspk->lrsel;
+	अन्यथा अगर (म_माला(kcontrol->id.name, "Channel Select"))
+		ucontrol->value.पूर्णांकeger.value[0] = dspk->ch_sel;
+	अन्यथा अगर (म_माला(kcontrol->id.name, "Mono To Stereo"))
+		ucontrol->value.पूर्णांकeger.value[0] = dspk->mono_to_stereo;
+	अन्यथा अगर (म_माला(kcontrol->id.name, "Stereo To Mono"))
+		ucontrol->value.पूर्णांकeger.value[0] = dspk->stereo_to_mono;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra186_dspk_put_control(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
-	struct tegra186_dspk *dspk = snd_soc_component_get_drvdata(codec);
-	int val = ucontrol->value.integer.value[0];
+अटल पूर्णांक tegra186_dspk_put_control(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *codec = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा tegra186_dspk *dspk = snd_soc_component_get_drvdata(codec);
+	पूर्णांक val = ucontrol->value.पूर्णांकeger.value[0];
 
-	if (strstr(kcontrol->id.name, "FIFO Threshold"))
-		dspk->rx_fifo_th = val;
-	else if (strstr(kcontrol->id.name, "OSR Value"))
+	अगर (म_माला(kcontrol->id.name, "FIFO Threshold"))
+		dspk->rx_fअगरo_th = val;
+	अन्यथा अगर (म_माला(kcontrol->id.name, "OSR Value"))
 		dspk->osr_val = val;
-	else if (strstr(kcontrol->id.name, "LR Polarity Select"))
+	अन्यथा अगर (म_माला(kcontrol->id.name, "LR Polarity Select"))
 		dspk->lrsel = val;
-	else if (strstr(kcontrol->id.name, "Channel Select"))
+	अन्यथा अगर (म_माला(kcontrol->id.name, "Channel Select"))
 		dspk->ch_sel = val;
-	else if (strstr(kcontrol->id.name, "Mono To Stereo"))
+	अन्यथा अगर (म_माला(kcontrol->id.name, "Mono To Stereo"))
 		dspk->mono_to_stereo = val;
-	else if (strstr(kcontrol->id.name, "Stereo To Mono"))
+	अन्यथा अगर (म_माला(kcontrol->id.name, "Stereo To Mono"))
 		dspk->stereo_to_mono = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused tegra186_dspk_runtime_suspend(struct device *dev)
-{
-	struct tegra186_dspk *dspk = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused tegra186_dspk_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा tegra186_dspk *dspk = dev_get_drvdata(dev);
 
 	regcache_cache_only(dspk->regmap, true);
 	regcache_mark_dirty(dspk->regmap);
 
 	clk_disable_unprepare(dspk->clk_dspk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused tegra186_dspk_runtime_resume(struct device *dev)
-{
-	struct tegra186_dspk *dspk = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक __maybe_unused tegra186_dspk_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tegra186_dspk *dspk = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	err = clk_prepare_enable(dspk->clk_dspk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to enable DSPK clock, err: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	regcache_cache_only(dspk->regmap, false);
 	regcache_sync(dspk->regmap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra186_dspk_hw_params(struct snd_pcm_substream *substream,
-				   struct snd_pcm_hw_params *params,
-				   struct snd_soc_dai *dai)
-{
-	struct tegra186_dspk *dspk = snd_soc_dai_get_drvdata(dai);
-	unsigned int channels, srate, dspk_clk;
-	struct device *dev = dai->dev;
-	struct tegra_cif_conf cif_conf;
-	unsigned int max_th;
-	int err;
+अटल पूर्णांक tegra186_dspk_hw_params(काष्ठा snd_pcm_substream *substream,
+				   काष्ठा snd_pcm_hw_params *params,
+				   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा tegra186_dspk *dspk = snd_soc_dai_get_drvdata(dai);
+	अचिन्हित पूर्णांक channels, srate, dspk_clk;
+	काष्ठा device *dev = dai->dev;
+	काष्ठा tegra_cअगर_conf cअगर_conf;
+	अचिन्हित पूर्णांक max_th;
+	पूर्णांक err;
 
-	memset(&cif_conf, 0, sizeof(struct tegra_cif_conf));
+	स_रखो(&cअगर_conf, 0, माप(काष्ठा tegra_cअगर_conf));
 
 	channels = params_channels(params);
-	cif_conf.audio_ch = channels;
+	cअगर_conf.audio_ch = channels;
 
 	/* Client channel */
-	switch (dspk->ch_sel) {
-	case DSPK_CH_SELECT_LEFT:
-	case DSPK_CH_SELECT_RIGHT:
-		cif_conf.client_ch = 1;
-		break;
-	case DSPK_CH_SELECT_STEREO:
-		cif_conf.client_ch = 2;
-		break;
-	default:
+	चयन (dspk->ch_sel) अणु
+	हाल DSPK_CH_SELECT_LEFT:
+	हाल DSPK_CH_SELECT_RIGHT:
+		cअगर_conf.client_ch = 1;
+		अवरोध;
+	हाल DSPK_CH_SELECT_STEREO:
+		cअगर_conf.client_ch = 2;
+		अवरोध;
+	शेष:
 		dev_err(dev, "Invalid DSPK client channels\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cif_conf.client_bits = TEGRA_ACIF_BITS_24;
+	cअगर_conf.client_bits = TEGRA_ACIF_BITS_24;
 
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_S16_LE:
-		cif_conf.audio_bits = TEGRA_ACIF_BITS_16;
-		break;
-	case SNDRV_PCM_FORMAT_S32_LE:
-		cif_conf.audio_bits = TEGRA_ACIF_BITS_32;
-		break;
-	default:
+	चयन (params_क्रमmat(params)) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
+		cअगर_conf.audio_bits = TEGRA_ACIF_BITS_16;
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S32_LE:
+		cअगर_conf.audio_bits = TEGRA_ACIF_BITS_32;
+		अवरोध;
+	शेष:
 		dev_err(dev, "unsupported format!\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	srate = params_rate(params);
 
 	/* RX FIFO threshold in terms of frames */
-	max_th = (TEGRA186_DSPK_RX_FIFO_DEPTH / cif_conf.audio_ch) - 1;
+	max_th = (TEGRA186_DSPK_RX_FIFO_DEPTH / cअगर_conf.audio_ch) - 1;
 
-	if (dspk->rx_fifo_th > max_th)
-		dspk->rx_fifo_th = max_th;
+	अगर (dspk->rx_fअगरo_th > max_th)
+		dspk->rx_fअगरo_th = max_th;
 
-	cif_conf.threshold = dspk->rx_fifo_th;
-	cif_conf.mono_conv = dspk->mono_to_stereo;
-	cif_conf.stereo_conv = dspk->stereo_to_mono;
+	cअगर_conf.threshold = dspk->rx_fअगरo_th;
+	cअगर_conf.mono_conv = dspk->mono_to_stereo;
+	cअगर_conf.stereo_conv = dspk->stereo_to_mono;
 
-	tegra_set_cif(dspk->regmap, TEGRA186_DSPK_RX_CIF_CTRL,
-		      &cif_conf);
+	tegra_set_cअगर(dspk->regmap, TEGRA186_DSPK_RX_CIF_CTRL,
+		      &cअगर_conf);
 
 	/*
-	 * DSPK clock and PDM codec clock should be synchronous with 4:1 ratio,
-	 * this is because it takes 4 clock cycles to send out one sample to
-	 * codec by sigma delta modulator. Finally the clock rate is a multiple
+	 * DSPK घड़ी and PDM codec घड़ी should be synchronous with 4:1 ratio,
+	 * this is because it takes 4 घड़ी cycles to send out one sample to
+	 * codec by sigma delta modulator. Finally the घड़ी rate is a multiple
 	 * of 'Over Sampling Ratio', 'Sample Rate' and 'Interface Clock Ratio'.
 	 */
 	dspk_clk = (DSPK_OSR_FACTOR << dspk->osr_val) * srate * DSPK_CLK_RATIO;
 
 	err = clk_set_rate(dspk->clk_dspk, dspk_clk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "can't set DSPK clock rate %u, err: %d\n",
 			dspk_clk, err);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	regmap_update_bits(dspk->regmap,
 			   /* Reg */
@@ -187,190 +188,190 @@ static int tegra186_dspk_hw_params(struct snd_pcm_substream *substream,
 			   ((dspk->ch_sel + 1) << CH_SEL_SHIFT) |
 			   (dspk->lrsel << LRSEL_POL_SHIFT));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops tegra186_dspk_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops tegra186_dspk_dai_ops = अणु
 	.hw_params	= tegra186_dspk_hw_params,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver tegra186_dspk_dais[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver tegra186_dspk_dais[] = अणु
+	अणु
 	    .name = "DSPK-CIF",
-	    .playback = {
+	    .playback = अणु
 		.stream_name = "CIF-Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_48000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE |
 			   SNDRV_PCM_FMTBIT_S32_LE,
-	    },
-	},
-	{
+	    पूर्ण,
+	पूर्ण,
+	अणु
 	    .name = "DSPK-DAP",
-	    .playback = {
+	    .playback = अणु
 		.stream_name = "DAP-Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_48000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE |
 			   SNDRV_PCM_FMTBIT_S32_LE,
-	    },
+	    पूर्ण,
 	    .ops = &tegra186_dspk_dai_ops,
 	    .symmetric_rate = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_widget tegra186_dspk_widgets[] = {
-	SND_SOC_DAPM_AIF_IN("RX", NULL, 0, TEGRA186_DSPK_ENABLE, 0, 0),
-	SND_SOC_DAPM_SPK("SPK", NULL),
-};
+अटल स्थिर काष्ठा snd_soc_dapm_widget tegra186_dspk_widमाला_लो[] = अणु
+	SND_SOC_DAPM_AIF_IN("RX", शून्य, 0, TEGRA186_DSPK_ENABLE, 0, 0),
+	SND_SOC_DAPM_SPK("SPK", शून्य),
+पूर्ण;
 
-static const struct snd_soc_dapm_route tegra186_dspk_routes[] = {
-	{ "XBAR-Playback",	NULL,	"XBAR-TX" },
-	{ "CIF-Playback",	NULL,	"XBAR-Playback" },
-	{ "RX",			NULL,	"CIF-Playback" },
-	{ "DAP-Playback",	NULL,	"RX" },
-	{ "SPK",		NULL,	"DAP-Playback" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route tegra186_dspk_routes[] = अणु
+	अणु "XBAR-Playback",	शून्य,	"XBAR-TX" पूर्ण,
+	अणु "CIF-Playback",	शून्य,	"XBAR-Playback" पूर्ण,
+	अणु "RX",			शून्य,	"CIF-Playback" पूर्ण,
+	अणु "DAP-Playback",	शून्य,	"RX" पूर्ण,
+	अणु "SPK",		शून्य,	"DAP-Playback" पूर्ण,
+पूर्ण;
 
-static const char * const tegra186_dspk_ch_sel_text[] = {
+अटल स्थिर अक्षर * स्थिर tegra186_dspk_ch_sel_text[] = अणु
 	"Left", "Right", "Stereo",
-};
+पूर्ण;
 
-static const struct soc_enum tegra186_dspk_ch_sel_enum =
+अटल स्थिर काष्ठा soc_क्रमागत tegra186_dspk_ch_sel_क्रमागत =
 	SOC_ENUM_SINGLE(SND_SOC_NOPM, 0, ARRAY_SIZE(tegra186_dspk_ch_sel_text),
 			tegra186_dspk_ch_sel_text);
 
-static const char * const tegra186_dspk_osr_text[] = {
+अटल स्थिर अक्षर * स्थिर tegra186_dspk_osr_text[] = अणु
 	"OSR_32", "OSR_64", "OSR_128", "OSR_256",
-};
+पूर्ण;
 
-static const struct soc_enum tegra186_dspk_osr_enum =
+अटल स्थिर काष्ठा soc_क्रमागत tegra186_dspk_osr_क्रमागत =
 	SOC_ENUM_SINGLE(SND_SOC_NOPM, 0, ARRAY_SIZE(tegra186_dspk_osr_text),
 			tegra186_dspk_osr_text);
 
-static const char * const tegra186_dspk_lrsel_text[] = {
+अटल स्थिर अक्षर * स्थिर tegra186_dspk_lrsel_text[] = अणु
 	"Left", "Right",
-};
+पूर्ण;
 
-static const char * const tegra186_dspk_mono_conv_text[] = {
+अटल स्थिर अक्षर * स्थिर tegra186_dspk_mono_conv_text[] = अणु
 	"Zero", "Copy",
-};
+पूर्ण;
 
-static const struct soc_enum tegra186_dspk_mono_conv_enum =
+अटल स्थिर काष्ठा soc_क्रमागत tegra186_dspk_mono_conv_क्रमागत =
 	SOC_ENUM_SINGLE(SND_SOC_NOPM, 0,
 			ARRAY_SIZE(tegra186_dspk_mono_conv_text),
 			tegra186_dspk_mono_conv_text);
 
-static const char * const tegra186_dspk_stereo_conv_text[] = {
+अटल स्थिर अक्षर * स्थिर tegra186_dspk_stereo_conv_text[] = अणु
 	"CH0", "CH1", "AVG",
-};
+पूर्ण;
 
-static const struct soc_enum tegra186_dspk_stereo_conv_enum =
+अटल स्थिर काष्ठा soc_क्रमागत tegra186_dspk_stereo_conv_क्रमागत =
 	SOC_ENUM_SINGLE(SND_SOC_NOPM, 0,
 			ARRAY_SIZE(tegra186_dspk_stereo_conv_text),
 			tegra186_dspk_stereo_conv_text);
 
-static const struct soc_enum tegra186_dspk_lrsel_enum =
+अटल स्थिर काष्ठा soc_क्रमागत tegra186_dspk_lrsel_क्रमागत =
 	SOC_ENUM_SINGLE(SND_SOC_NOPM, 0, ARRAY_SIZE(tegra186_dspk_lrsel_text),
 			tegra186_dspk_lrsel_text);
 
-static const struct snd_kcontrol_new tegrat186_dspk_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new tegrat186_dspk_controls[] = अणु
 	SOC_SINGLE_EXT("FIFO Threshold", SND_SOC_NOPM, 0,
 		       TEGRA186_DSPK_RX_FIFO_DEPTH - 1, 0,
 		       tegra186_dspk_get_control, tegra186_dspk_put_control),
-	SOC_ENUM_EXT("OSR Value", tegra186_dspk_osr_enum,
+	SOC_ENUM_EXT("OSR Value", tegra186_dspk_osr_क्रमागत,
 		     tegra186_dspk_get_control, tegra186_dspk_put_control),
-	SOC_ENUM_EXT("LR Polarity Select", tegra186_dspk_lrsel_enum,
+	SOC_ENUM_EXT("LR Polarity Select", tegra186_dspk_lrsel_क्रमागत,
 		     tegra186_dspk_get_control, tegra186_dspk_put_control),
-	SOC_ENUM_EXT("Channel Select", tegra186_dspk_ch_sel_enum,
+	SOC_ENUM_EXT("Channel Select", tegra186_dspk_ch_sel_क्रमागत,
 		     tegra186_dspk_get_control, tegra186_dspk_put_control),
-	SOC_ENUM_EXT("Mono To Stereo", tegra186_dspk_mono_conv_enum,
+	SOC_ENUM_EXT("Mono To Stereo", tegra186_dspk_mono_conv_क्रमागत,
 		     tegra186_dspk_get_control, tegra186_dspk_put_control),
-	SOC_ENUM_EXT("Stereo To Mono", tegra186_dspk_stereo_conv_enum,
+	SOC_ENUM_EXT("Stereo To Mono", tegra186_dspk_stereo_conv_क्रमागत,
 		     tegra186_dspk_get_control, tegra186_dspk_put_control),
-};
+पूर्ण;
 
-static const struct snd_soc_component_driver tegra186_dspk_cmpnt = {
-	.dapm_widgets = tegra186_dspk_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(tegra186_dspk_widgets),
+अटल स्थिर काष्ठा snd_soc_component_driver tegra186_dspk_cmpnt = अणु
+	.dapm_widमाला_लो = tegra186_dspk_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(tegra186_dspk_widमाला_लो),
 	.dapm_routes = tegra186_dspk_routes,
 	.num_dapm_routes = ARRAY_SIZE(tegra186_dspk_routes),
 	.controls = tegrat186_dspk_controls,
 	.num_controls = ARRAY_SIZE(tegrat186_dspk_controls),
-};
+पूर्ण;
 
-static bool tegra186_dspk_wr_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case TEGRA186_DSPK_RX_INT_MASK ... TEGRA186_DSPK_RX_CIF_CTRL:
-	case TEGRA186_DSPK_ENABLE ... TEGRA186_DSPK_CG:
-	case TEGRA186_DSPK_CORE_CTRL ... TEGRA186_DSPK_CODEC_CTRL:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool tegra186_dspk_wr_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल TEGRA186_DSPK_RX_INT_MASK ... TEGRA186_DSPK_RX_CIF_CTRL:
+	हाल TEGRA186_DSPK_ENABLE ... TEGRA186_DSPK_CG:
+	हाल TEGRA186_DSPK_CORE_CTRL ... TEGRA186_DSPK_CODEC_CTRL:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool tegra186_dspk_rd_reg(struct device *dev, unsigned int reg)
-{
-	if (tegra186_dspk_wr_reg(dev, reg))
-		return true;
+अटल bool tegra186_dspk_rd_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	अगर (tegra186_dspk_wr_reg(dev, reg))
+		वापस true;
 
-	switch (reg) {
-	case TEGRA186_DSPK_RX_STATUS:
-	case TEGRA186_DSPK_RX_INT_STATUS:
-	case TEGRA186_DSPK_STATUS:
-	case TEGRA186_DSPK_INT_STATUS:
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (reg) अणु
+	हाल TEGRA186_DSPK_RX_STATUS:
+	हाल TEGRA186_DSPK_RX_INT_STATUS:
+	हाल TEGRA186_DSPK_STATUS:
+	हाल TEGRA186_DSPK_INT_STATUS:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool tegra186_dspk_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case TEGRA186_DSPK_RX_STATUS:
-	case TEGRA186_DSPK_RX_INT_STATUS:
-	case TEGRA186_DSPK_STATUS:
-	case TEGRA186_DSPK_INT_STATUS:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool tegra186_dspk_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल TEGRA186_DSPK_RX_STATUS:
+	हाल TEGRA186_DSPK_RX_INT_STATUS:
+	हाल TEGRA186_DSPK_STATUS:
+	हाल TEGRA186_DSPK_INT_STATUS:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config tegra186_dspk_regmap = {
+अटल स्थिर काष्ठा regmap_config tegra186_dspk_regmap = अणु
 	.reg_bits		= 32,
 	.reg_stride		= 4,
 	.val_bits		= 32,
-	.max_register		= TEGRA186_DSPK_CODEC_CTRL,
-	.writeable_reg		= tegra186_dspk_wr_reg,
-	.readable_reg		= tegra186_dspk_rd_reg,
-	.volatile_reg		= tegra186_dspk_volatile_reg,
-	.reg_defaults		= tegra186_dspk_reg_defaults,
-	.num_reg_defaults	= ARRAY_SIZE(tegra186_dspk_reg_defaults),
+	.max_रेजिस्टर		= TEGRA186_DSPK_CODEC_CTRL,
+	.ग_लिखोable_reg		= tegra186_dspk_wr_reg,
+	.पढ़ोable_reg		= tegra186_dspk_rd_reg,
+	.अस्थिर_reg		= tegra186_dspk_अस्थिर_reg,
+	.reg_शेषs		= tegra186_dspk_reg_शेषs,
+	.num_reg_शेषs	= ARRAY_SIZE(tegra186_dspk_reg_शेषs),
 	.cache_type		= REGCACHE_FLAT,
-};
+पूर्ण;
 
-static const struct of_device_id tegra186_dspk_of_match[] = {
-	{ .compatible = "nvidia,tegra186-dspk" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id tegra186_dspk_of_match[] = अणु
+	अणु .compatible = "nvidia,tegra186-dspk" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra186_dspk_of_match);
 
-static int tegra186_dspk_platform_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct tegra186_dspk *dspk;
-	void __iomem *regs;
-	int err;
+अटल पूर्णांक tegra186_dspk_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा tegra186_dspk *dspk;
+	व्योम __iomem *regs;
+	पूर्णांक err;
 
-	dspk = devm_kzalloc(dev, sizeof(*dspk), GFP_KERNEL);
-	if (!dspk)
-		return -ENOMEM;
+	dspk = devm_kzalloc(dev, माप(*dspk), GFP_KERNEL);
+	अगर (!dspk)
+		वापस -ENOMEM;
 
 	dspk->osr_val = DSPK_OSR_64;
 	dspk->lrsel = DSPK_LRSEL_LEFT;
@@ -380,61 +381,61 @@ static int tegra186_dspk_platform_probe(struct platform_device *pdev)
 	dev_set_drvdata(dev, dspk);
 
 	dspk->clk_dspk = devm_clk_get(dev, "dspk");
-	if (IS_ERR(dspk->clk_dspk)) {
+	अगर (IS_ERR(dspk->clk_dspk)) अणु
 		dev_err(dev, "can't retrieve DSPK clock\n");
-		return PTR_ERR(dspk->clk_dspk);
-	}
+		वापस PTR_ERR(dspk->clk_dspk);
+	पूर्ण
 
-	regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
 	dspk->regmap = devm_regmap_init_mmio(dev, regs, &tegra186_dspk_regmap);
-	if (IS_ERR(dspk->regmap)) {
+	अगर (IS_ERR(dspk->regmap)) अणु
 		dev_err(dev, "regmap init failed\n");
-		return PTR_ERR(dspk->regmap);
-	}
+		वापस PTR_ERR(dspk->regmap);
+	पूर्ण
 
 	regcache_cache_only(dspk->regmap, true);
 
-	err = devm_snd_soc_register_component(dev, &tegra186_dspk_cmpnt,
+	err = devm_snd_soc_रेजिस्टर_component(dev, &tegra186_dspk_cmpnt,
 					      tegra186_dspk_dais,
 					      ARRAY_SIZE(tegra186_dspk_dais));
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "can't register DSPK component, err: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra186_dspk_platform_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
+अटल पूर्णांक tegra186_dspk_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops tegra186_dspk_pm_ops = {
-	SET_RUNTIME_PM_OPS(tegra186_dspk_runtime_suspend,
-			   tegra186_dspk_runtime_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops tegra186_dspk_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(tegra186_dspk_runसमय_suspend,
+			   tegra186_dspk_runसमय_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static struct platform_driver tegra186_dspk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra186_dspk_driver = अणु
+	.driver = अणु
 		.name = "tegra186-dspk",
 		.of_match_table = tegra186_dspk_of_match,
 		.pm = &tegra186_dspk_pm_ops,
-	},
-	.probe = tegra186_dspk_platform_probe,
-	.remove = tegra186_dspk_platform_remove,
-};
-module_platform_driver(tegra186_dspk_driver);
+	पूर्ण,
+	.probe = tegra186_dspk_platक्रमm_probe,
+	.हटाओ = tegra186_dspk_platक्रमm_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(tegra186_dspk_driver);
 
 MODULE_AUTHOR("Mohan Kumar <mkumard@nvidia.com>");
 MODULE_AUTHOR("Sameer Pujar <spujar@nvidia.com>");

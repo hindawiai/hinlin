@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
 /******************************************************************************
- Copyright (c)2006 - 2007 Myricom, Inc. for some LRO specific code
+ Copyright (c)2006 - 2007 Myricom, Inc. क्रम some LRO specअगरic code
 ******************************************************************************/
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/bitops.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/vmalloc.h>
-#include <linux/string.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/sctp.h>
-#include <linux/ipv6.h>
-#include <linux/slab.h>
-#include <net/checksum.h>
-#include <net/ip6_checksum.h>
-#include <linux/ethtool.h>
-#include <linux/if.h>
-#include <linux/if_vlan.h>
-#include <linux/prefetch.h>
-#include <net/mpls.h>
-#include <linux/bpf.h>
-#include <linux/bpf_trace.h>
-#include <linux/atomic.h>
-#include <net/xfrm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/slab.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/prefetch.h>
+#समावेश <net/mpls.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/bpf_trace.h>
+#समावेश <linux/atomic.h>
+#समावेश <net/xfrm.h>
 
-#include "ixgbevf.h"
+#समावेश "ixgbevf.h"
 
-const char ixgbevf_driver_name[] = "ixgbevf";
-static const char ixgbevf_driver_string[] =
+स्थिर अक्षर ixgbevf_driver_name[] = "ixgbevf";
+अटल स्थिर अक्षर ixgbevf_driver_string[] =
 	"Intel(R) 10 Gigabit PCI Express Virtual Function Network Driver";
 
-static char ixgbevf_copyright[] =
+अटल अक्षर ixgbevf_copyright[] =
 	"Copyright (c) 2009 - 2018 Intel Corporation.";
 
-static const struct ixgbevf_info *ixgbevf_info_tbl[] = {
+अटल स्थिर काष्ठा ixgbevf_info *ixgbevf_info_tbl[] = अणु
 	[board_82599_vf]	= &ixgbevf_82599_vf_info,
 	[board_82599_vf_hv]	= &ixgbevf_82599_vf_hv_info,
 	[board_X540_vf]		= &ixgbevf_X540_vf_info,
@@ -51,132 +52,132 @@ static const struct ixgbevf_info *ixgbevf_info_tbl[] = {
 	[board_X550EM_x_vf]	= &ixgbevf_X550EM_x_vf_info,
 	[board_X550EM_x_vf_hv]	= &ixgbevf_X550EM_x_vf_hv_info,
 	[board_x550em_a_vf]	= &ixgbevf_x550em_a_vf_info,
-};
+पूर्ण;
 
 /* ixgbevf_pci_tbl - PCI Device ID Table
  *
  * Wildcard entries (PCI_ANY_ID) should come last
  * Last entry must be all 0s
  *
- * { Vendor ID, Device ID, SubVendor ID, SubDevice ID,
- *   Class, Class Mask, private data (not used) }
+ * अणु Venकरोr ID, Device ID, SubVenकरोr ID, SubDevice ID,
+ *   Class, Class Mask, निजी data (not used) पूर्ण
  */
-static const struct pci_device_id ixgbevf_pci_tbl[] = {
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_VF), board_82599_vf },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_VF_HV), board_82599_vf_hv },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540_VF), board_X540_vf },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540_VF_HV), board_X540_vf_hv },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550_VF), board_X550_vf },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550_VF_HV), board_X550_vf_hv },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_VF), board_X550EM_x_vf },
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_VF_HV), board_X550EM_x_vf_hv},
-	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_VF), board_x550em_a_vf },
+अटल स्थिर काष्ठा pci_device_id ixgbevf_pci_tbl[] = अणु
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_VF), board_82599_vf पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_82599_VF_HV), board_82599_vf_hv पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540_VF), board_X540_vf पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X540_VF_HV), board_X540_vf_hv पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550_VF), board_X550_vf पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550_VF_HV), board_X550_vf_hv पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_VF), board_X550EM_x_vf पूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_X_VF_HV), board_X550EM_x_vf_hvपूर्ण,
+	अणुPCI_VDEVICE(INTEL, IXGBE_DEV_ID_X550EM_A_VF), board_x550em_a_vf पूर्ण,
 	/* required last entry */
-	{0, }
-};
+	अणु0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, ixgbevf_pci_tbl);
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
 MODULE_DESCRIPTION("Intel(R) 10 Gigabit Virtual Function Network Driver");
 MODULE_LICENSE("GPL v2");
 
-#define DEFAULT_MSG_ENABLE (NETIF_MSG_DRV|NETIF_MSG_PROBE|NETIF_MSG_LINK)
-static int debug = -1;
-module_param(debug, int, 0);
+#घोषणा DEFAULT_MSG_ENABLE (NETIF_MSG_DRV|NETIF_MSG_PROBE|NETIF_MSG_LINK)
+अटल पूर्णांक debug = -1;
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
-static struct workqueue_struct *ixgbevf_wq;
+अटल काष्ठा workqueue_काष्ठा *ixgbevf_wq;
 
-static void ixgbevf_service_event_schedule(struct ixgbevf_adapter *adapter)
-{
-	if (!test_bit(__IXGBEVF_DOWN, &adapter->state) &&
+अटल व्योम ixgbevf_service_event_schedule(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	अगर (!test_bit(__IXGBEVF_DOWN, &adapter->state) &&
 	    !test_bit(__IXGBEVF_REMOVING, &adapter->state) &&
 	    !test_and_set_bit(__IXGBEVF_SERVICE_SCHED, &adapter->state))
 		queue_work(ixgbevf_wq, &adapter->service_task);
-}
+पूर्ण
 
-static void ixgbevf_service_event_complete(struct ixgbevf_adapter *adapter)
-{
+अटल व्योम ixgbevf_service_event_complete(काष्ठा ixgbevf_adapter *adapter)
+अणु
 	BUG_ON(!test_bit(__IXGBEVF_SERVICE_SCHED, &adapter->state));
 
-	/* flush memory to make sure state is correct before next watchdog */
-	smp_mb__before_atomic();
+	/* flush memory to make sure state is correct beक्रमe next watchकरोg */
+	smp_mb__beक्रमe_atomic();
 	clear_bit(__IXGBEVF_SERVICE_SCHED, &adapter->state);
-}
+पूर्ण
 
-/* forward decls */
-static void ixgbevf_queue_reset_subtask(struct ixgbevf_adapter *adapter);
-static void ixgbevf_set_itr(struct ixgbevf_q_vector *q_vector);
-static void ixgbevf_free_all_rx_resources(struct ixgbevf_adapter *adapter);
-static bool ixgbevf_can_reuse_rx_page(struct ixgbevf_rx_buffer *rx_buffer);
-static void ixgbevf_reuse_rx_page(struct ixgbevf_ring *rx_ring,
-				  struct ixgbevf_rx_buffer *old_buff);
+/* क्रमward decls */
+अटल व्योम ixgbevf_queue_reset_subtask(काष्ठा ixgbevf_adapter *adapter);
+अटल व्योम ixgbevf_set_itr(काष्ठा ixgbevf_q_vector *q_vector);
+अटल व्योम ixgbevf_मुक्त_all_rx_resources(काष्ठा ixgbevf_adapter *adapter);
+अटल bool ixgbevf_can_reuse_rx_page(काष्ठा ixgbevf_rx_buffer *rx_buffer);
+अटल व्योम ixgbevf_reuse_rx_page(काष्ठा ixgbevf_ring *rx_ring,
+				  काष्ठा ixgbevf_rx_buffer *old_buff);
 
-static void ixgbevf_remove_adapter(struct ixgbe_hw *hw)
-{
-	struct ixgbevf_adapter *adapter = hw->back;
+अटल व्योम ixgbevf_हटाओ_adapter(काष्ठा ixgbe_hw *hw)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = hw->back;
 
-	if (!hw->hw_addr)
-		return;
-	hw->hw_addr = NULL;
+	अगर (!hw->hw_addr)
+		वापस;
+	hw->hw_addr = शून्य;
 	dev_err(&adapter->pdev->dev, "Adapter removed\n");
-	if (test_bit(__IXGBEVF_SERVICE_INITED, &adapter->state))
+	अगर (test_bit(__IXGBEVF_SERVICE_INITED, &adapter->state))
 		ixgbevf_service_event_schedule(adapter);
-}
+पूर्ण
 
-static void ixgbevf_check_remove(struct ixgbe_hw *hw, u32 reg)
-{
+अटल व्योम ixgbevf_check_हटाओ(काष्ठा ixgbe_hw *hw, u32 reg)
+अणु
 	u32 value;
 
 	/* The following check not only optimizes a bit by not
-	 * performing a read on the status register when the
-	 * register just read was a status register read that
-	 * returned IXGBE_FAILED_READ_REG. It also blocks any
+	 * perक्रमming a पढ़ो on the status रेजिस्टर when the
+	 * रेजिस्टर just पढ़ो was a status रेजिस्टर पढ़ो that
+	 * वापसed IXGBE_FAILED_READ_REG. It also blocks any
 	 * potential recursion.
 	 */
-	if (reg == IXGBE_VFSTATUS) {
-		ixgbevf_remove_adapter(hw);
-		return;
-	}
-	value = ixgbevf_read_reg(hw, IXGBE_VFSTATUS);
-	if (value == IXGBE_FAILED_READ_REG)
-		ixgbevf_remove_adapter(hw);
-}
+	अगर (reg == IXGBE_VFSTATUS) अणु
+		ixgbevf_हटाओ_adapter(hw);
+		वापस;
+	पूर्ण
+	value = ixgbevf_पढ़ो_reg(hw, IXGBE_VFSTATUS);
+	अगर (value == IXGBE_FAILED_READ_REG)
+		ixgbevf_हटाओ_adapter(hw);
+पूर्ण
 
-u32 ixgbevf_read_reg(struct ixgbe_hw *hw, u32 reg)
-{
+u32 ixgbevf_पढ़ो_reg(काष्ठा ixgbe_hw *hw, u32 reg)
+अणु
 	u8 __iomem *reg_addr = READ_ONCE(hw->hw_addr);
 	u32 value;
 
-	if (IXGBE_REMOVED(reg_addr))
-		return IXGBE_FAILED_READ_REG;
-	value = readl(reg_addr + reg);
-	if (unlikely(value == IXGBE_FAILED_READ_REG))
-		ixgbevf_check_remove(hw, reg);
-	return value;
-}
+	अगर (IXGBE_REMOVED(reg_addr))
+		वापस IXGBE_FAILED_READ_REG;
+	value = पढ़ोl(reg_addr + reg);
+	अगर (unlikely(value == IXGBE_FAILED_READ_REG))
+		ixgbevf_check_हटाओ(hw, reg);
+	वापस value;
+पूर्ण
 
 /**
- * ixgbevf_set_ivar - set IVAR registers - maps interrupt causes to vectors
- * @adapter: pointer to adapter struct
- * @direction: 0 for Rx, 1 for Tx, -1 for other causes
- * @queue: queue to map the corresponding interrupt to
+ * ixgbevf_set_ivar - set IVAR रेजिस्टरs - maps पूर्णांकerrupt causes to vectors
+ * @adapter: poपूर्णांकer to adapter काष्ठा
+ * @direction: 0 क्रम Rx, 1 क्रम Tx, -1 क्रम other causes
+ * @queue: queue to map the corresponding पूर्णांकerrupt to
  * @msix_vector: the vector to map to the corresponding queue
  **/
-static void ixgbevf_set_ivar(struct ixgbevf_adapter *adapter, s8 direction,
+अटल व्योम ixgbevf_set_ivar(काष्ठा ixgbevf_adapter *adapter, s8 direction,
 			     u8 queue, u8 msix_vector)
-{
+अणु
 	u32 ivar, index;
-	struct ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if (direction == -1) {
+	अगर (direction == -1) अणु
 		/* other causes */
 		msix_vector |= IXGBE_IVAR_ALLOC_VAL;
 		ivar = IXGBE_READ_REG(hw, IXGBE_VTIVAR_MISC);
 		ivar &= ~0xFF;
 		ivar |= msix_vector;
 		IXGBE_WRITE_REG(hw, IXGBE_VTIVAR_MISC, ivar);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Tx or Rx causes */
 		msix_vector |= IXGBE_IVAR_ALLOC_VAL;
 		index = ((16 * (queue & 1)) + (8 * direction));
@@ -184,127 +185,127 @@ static void ixgbevf_set_ivar(struct ixgbevf_adapter *adapter, s8 direction,
 		ivar &= ~(0xFF << index);
 		ivar |= (msix_vector << index);
 		IXGBE_WRITE_REG(hw, IXGBE_VTIVAR(queue >> 1), ivar);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u64 ixgbevf_get_tx_completed(struct ixgbevf_ring *ring)
-{
-	return ring->stats.packets;
-}
+अटल u64 ixgbevf_get_tx_completed(काष्ठा ixgbevf_ring *ring)
+अणु
+	वापस ring->stats.packets;
+पूर्ण
 
-static u32 ixgbevf_get_tx_pending(struct ixgbevf_ring *ring)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(ring->netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल u32 ixgbevf_get_tx_pending(काष्ठा ixgbevf_ring *ring)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(ring->netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	u32 head = IXGBE_READ_REG(hw, IXGBE_VFTDH(ring->reg_idx));
 	u32 tail = IXGBE_READ_REG(hw, IXGBE_VFTDT(ring->reg_idx));
 
-	if (head != tail)
-		return (head < tail) ?
+	अगर (head != tail)
+		वापस (head < tail) ?
 			tail - head : (tail + ring->count - head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool ixgbevf_check_tx_hang(struct ixgbevf_ring *tx_ring)
-{
-	u32 tx_done = ixgbevf_get_tx_completed(tx_ring);
-	u32 tx_done_old = tx_ring->tx_stats.tx_done_old;
+अटल अंतरभूत bool ixgbevf_check_tx_hang(काष्ठा ixgbevf_ring *tx_ring)
+अणु
+	u32 tx_करोne = ixgbevf_get_tx_completed(tx_ring);
+	u32 tx_करोne_old = tx_ring->tx_stats.tx_करोne_old;
 	u32 tx_pending = ixgbevf_get_tx_pending(tx_ring);
 
-	clear_check_for_tx_hang(tx_ring);
+	clear_check_क्रम_tx_hang(tx_ring);
 
-	/* Check for a hung queue, but be thorough. This verifies
+	/* Check क्रम a hung queue, but be thorough. This verअगरies
 	 * that a transmit has been completed since the previous
 	 * check AND there is at least one packet pending. The
 	 * ARMED bit is set to indicate a potential hang.
 	 */
-	if ((tx_done_old == tx_done) && tx_pending) {
-		/* make sure it is true for two checks in a row */
-		return test_and_set_bit(__IXGBEVF_HANG_CHECK_ARMED,
+	अगर ((tx_करोne_old == tx_करोne) && tx_pending) अणु
+		/* make sure it is true क्रम two checks in a row */
+		वापस test_and_set_bit(__IXGBEVF_HANG_CHECK_ARMED,
 					&tx_ring->state);
-	}
-	/* reset the countdown */
+	पूर्ण
+	/* reset the countकरोwn */
 	clear_bit(__IXGBEVF_HANG_CHECK_ARMED, &tx_ring->state);
 
-	/* update completed stats and continue */
-	tx_ring->tx_stats.tx_done_old = tx_done;
+	/* update completed stats and जारी */
+	tx_ring->tx_stats.tx_करोne_old = tx_करोne;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void ixgbevf_tx_timeout_reset(struct ixgbevf_adapter *adapter)
-{
-	/* Do the reset outside of interrupt context */
-	if (!test_bit(__IXGBEVF_DOWN, &adapter->state)) {
+अटल व्योम ixgbevf_tx_समयout_reset(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	/* Do the reset outside of पूर्णांकerrupt context */
+	अगर (!test_bit(__IXGBEVF_DOWN, &adapter->state)) अणु
 		set_bit(__IXGBEVF_RESET_REQUESTED, &adapter->state);
 		ixgbevf_service_event_schedule(adapter);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbevf_tx_timeout - Respond to a Tx Hang
- * @netdev: network interface device structure
+ * ixgbevf_tx_समयout - Respond to a Tx Hang
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @txqueue: transmit queue hanging (unused)
  **/
-static void ixgbevf_tx_timeout(struct net_device *netdev, unsigned int __always_unused txqueue)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल व्योम ixgbevf_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक __always_unused txqueue)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	ixgbevf_tx_timeout_reset(adapter);
-}
+	ixgbevf_tx_समयout_reset(adapter);
+पूर्ण
 
 /**
  * ixgbevf_clean_tx_irq - Reclaim resources after transmit completes
- * @q_vector: board private structure
+ * @q_vector: board निजी काष्ठाure
  * @tx_ring: tx ring to clean
- * @napi_budget: Used to determine if we are in netpoll
+ * @napi_budget: Used to determine अगर we are in netpoll
  **/
-static bool ixgbevf_clean_tx_irq(struct ixgbevf_q_vector *q_vector,
-				 struct ixgbevf_ring *tx_ring, int napi_budget)
-{
-	struct ixgbevf_adapter *adapter = q_vector->adapter;
-	struct ixgbevf_tx_buffer *tx_buffer;
-	union ixgbe_adv_tx_desc *tx_desc;
-	unsigned int total_bytes = 0, total_packets = 0, total_ipsec = 0;
-	unsigned int budget = tx_ring->count / 2;
-	unsigned int i = tx_ring->next_to_clean;
+अटल bool ixgbevf_clean_tx_irq(काष्ठा ixgbevf_q_vector *q_vector,
+				 काष्ठा ixgbevf_ring *tx_ring, पूर्णांक napi_budget)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = q_vector->adapter;
+	काष्ठा ixgbevf_tx_buffer *tx_buffer;
+	जोड़ ixgbe_adv_tx_desc *tx_desc;
+	अचिन्हित पूर्णांक total_bytes = 0, total_packets = 0, total_ipsec = 0;
+	अचिन्हित पूर्णांक budget = tx_ring->count / 2;
+	अचिन्हित पूर्णांक i = tx_ring->next_to_clean;
 
-	if (test_bit(__IXGBEVF_DOWN, &adapter->state))
-		return true;
+	अगर (test_bit(__IXGBEVF_DOWN, &adapter->state))
+		वापस true;
 
 	tx_buffer = &tx_ring->tx_buffer_info[i];
 	tx_desc = IXGBEVF_TX_DESC(tx_ring, i);
 	i -= tx_ring->count;
 
-	do {
-		union ixgbe_adv_tx_desc *eop_desc = tx_buffer->next_to_watch;
+	करो अणु
+		जोड़ ixgbe_adv_tx_desc *eop_desc = tx_buffer->next_to_watch;
 
-		/* if next_to_watch is not set then there is no work pending */
-		if (!eop_desc)
-			break;
+		/* अगर next_to_watch is not set then there is no work pending */
+		अगर (!eop_desc)
+			अवरोध;
 
-		/* prevent any other reads prior to eop_desc */
+		/* prevent any other पढ़ोs prior to eop_desc */
 		smp_rmb();
 
-		/* if DD is not set pending work has not been completed */
-		if (!(eop_desc->wb.status & cpu_to_le32(IXGBE_TXD_STAT_DD)))
-			break;
+		/* अगर DD is not set pending work has not been completed */
+		अगर (!(eop_desc->wb.status & cpu_to_le32(IXGBE_TXD_STAT_DD)))
+			अवरोध;
 
 		/* clear next_to_watch to prevent false hangs */
-		tx_buffer->next_to_watch = NULL;
+		tx_buffer->next_to_watch = शून्य;
 
-		/* update the statistics for this packet */
+		/* update the statistics क्रम this packet */
 		total_bytes += tx_buffer->bytecount;
 		total_packets += tx_buffer->gso_segs;
-		if (tx_buffer->tx_flags & IXGBE_TX_FLAGS_IPSEC)
+		अगर (tx_buffer->tx_flags & IXGBE_TX_FLAGS_IPSEC)
 			total_ipsec++;
 
-		/* free the skb */
-		if (ring_is_xdp(tx_ring))
-			page_frag_free(tx_buffer->data);
-		else
+		/* मुक्त the skb */
+		अगर (ring_is_xdp(tx_ring))
+			page_frag_मुक्त(tx_buffer->data);
+		अन्यथा
 			napi_consume_skb(tx_buffer->skb, napi_budget);
 
 		/* unmap skb header data */
@@ -316,43 +317,43 @@ static bool ixgbevf_clean_tx_irq(struct ixgbevf_q_vector *q_vector,
 		/* clear tx_buffer data */
 		dma_unmap_len_set(tx_buffer, len, 0);
 
-		/* unmap remaining buffers */
-		while (tx_desc != eop_desc) {
+		/* unmap reमुख्यing buffers */
+		जबतक (tx_desc != eop_desc) अणु
 			tx_buffer++;
 			tx_desc++;
 			i++;
-			if (unlikely(!i)) {
+			अगर (unlikely(!i)) अणु
 				i -= tx_ring->count;
 				tx_buffer = tx_ring->tx_buffer_info;
 				tx_desc = IXGBEVF_TX_DESC(tx_ring, 0);
-			}
+			पूर्ण
 
-			/* unmap any remaining paged data */
-			if (dma_unmap_len(tx_buffer, len)) {
+			/* unmap any reमुख्यing paged data */
+			अगर (dma_unmap_len(tx_buffer, len)) अणु
 				dma_unmap_page(tx_ring->dev,
 					       dma_unmap_addr(tx_buffer, dma),
 					       dma_unmap_len(tx_buffer, len),
 					       DMA_TO_DEVICE);
 				dma_unmap_len_set(tx_buffer, len, 0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* move us one more past the eop_desc for start of next pkt */
+		/* move us one more past the eop_desc क्रम start of next pkt */
 		tx_buffer++;
 		tx_desc++;
 		i++;
-		if (unlikely(!i)) {
+		अगर (unlikely(!i)) अणु
 			i -= tx_ring->count;
 			tx_buffer = tx_ring->tx_buffer_info;
 			tx_desc = IXGBEVF_TX_DESC(tx_ring, 0);
-		}
+		पूर्ण
 
-		/* issue prefetch for next Tx descriptor */
+		/* issue prefetch क्रम next Tx descriptor */
 		prefetch(tx_desc);
 
 		/* update budget accounting */
 		budget--;
-	} while (likely(budget));
+	पूर्ण जबतक (likely(budget));
 
 	i += tx_ring->count;
 	tx_ring->next_to_clean = i;
@@ -364,9 +365,9 @@ static bool ixgbevf_clean_tx_irq(struct ixgbevf_q_vector *q_vector,
 	q_vector->tx.total_packets += total_packets;
 	adapter->tx_ipsec += total_ipsec;
 
-	if (check_for_tx_hang(tx_ring) && ixgbevf_check_tx_hang(tx_ring)) {
-		struct ixgbe_hw *hw = &adapter->hw;
-		union ixgbe_adv_tx_desc *eop_desc;
+	अगर (check_क्रम_tx_hang(tx_ring) && ixgbevf_check_tx_hang(tx_ring)) अणु
+		काष्ठा ixgbe_hw *hw = &adapter->hw;
+		जोड़ ixgbe_adv_tx_desc *eop_desc;
 
 		eop_desc = tx_ring->tx_buffer_info[i].next_to_watch;
 
@@ -386,155 +387,155 @@ static bool ixgbevf_clean_tx_irq(struct ixgbevf_q_vector *q_vector,
 		       IXGBE_READ_REG(hw, IXGBE_VFTDT(tx_ring->reg_idx)),
 		       tx_ring->next_to_use, i,
 		       eop_desc, (eop_desc ? eop_desc->wb.status : 0),
-		       tx_ring->tx_buffer_info[i].time_stamp, jiffies);
+		       tx_ring->tx_buffer_info[i].समय_stamp, jअगरfies);
 
-		if (!ring_is_xdp(tx_ring))
-			netif_stop_subqueue(tx_ring->netdev,
+		अगर (!ring_is_xdp(tx_ring))
+			netअगर_stop_subqueue(tx_ring->netdev,
 					    tx_ring->queue_index);
 
-		/* schedule immediate reset if we believe we hung */
-		ixgbevf_tx_timeout_reset(adapter);
+		/* schedule immediate reset अगर we believe we hung */
+		ixgbevf_tx_समयout_reset(adapter);
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (ring_is_xdp(tx_ring))
-		return !!budget;
+	अगर (ring_is_xdp(tx_ring))
+		वापस !!budget;
 
-#define TX_WAKE_THRESHOLD (DESC_NEEDED * 2)
-	if (unlikely(total_packets && netif_carrier_ok(tx_ring->netdev) &&
-		     (ixgbevf_desc_unused(tx_ring) >= TX_WAKE_THRESHOLD))) {
+#घोषणा TX_WAKE_THRESHOLD (DESC_NEEDED * 2)
+	अगर (unlikely(total_packets && netअगर_carrier_ok(tx_ring->netdev) &&
+		     (ixgbevf_desc_unused(tx_ring) >= TX_WAKE_THRESHOLD))) अणु
 		/* Make sure that anybody stopping the queue after this
 		 * sees the new next_to_clean.
 		 */
 		smp_mb();
 
-		if (__netif_subqueue_stopped(tx_ring->netdev,
+		अगर (__netअगर_subqueue_stopped(tx_ring->netdev,
 					     tx_ring->queue_index) &&
-		    !test_bit(__IXGBEVF_DOWN, &adapter->state)) {
-			netif_wake_subqueue(tx_ring->netdev,
+		    !test_bit(__IXGBEVF_DOWN, &adapter->state)) अणु
+			netअगर_wake_subqueue(tx_ring->netdev,
 					    tx_ring->queue_index);
 			++tx_ring->tx_stats.restart_queue;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return !!budget;
-}
+	वापस !!budget;
+पूर्ण
 
 /**
  * ixgbevf_rx_skb - Helper function to determine proper Rx method
- * @q_vector: structure containing interrupt and ring information
+ * @q_vector: काष्ठाure containing पूर्णांकerrupt and ring inक्रमmation
  * @skb: packet to send up
  **/
-static void ixgbevf_rx_skb(struct ixgbevf_q_vector *q_vector,
-			   struct sk_buff *skb)
-{
+अटल व्योम ixgbevf_rx_skb(काष्ठा ixgbevf_q_vector *q_vector,
+			   काष्ठा sk_buff *skb)
+अणु
 	napi_gro_receive(&q_vector->napi, skb);
-}
+पूर्ण
 
-#define IXGBE_RSS_L4_TYPES_MASK \
+#घोषणा IXGBE_RSS_L4_TYPES_MASK \
 	((1ul << IXGBE_RXDADV_RSSTYPE_IPV4_TCP) | \
 	 (1ul << IXGBE_RXDADV_RSSTYPE_IPV4_UDP) | \
 	 (1ul << IXGBE_RXDADV_RSSTYPE_IPV6_TCP) | \
 	 (1ul << IXGBE_RXDADV_RSSTYPE_IPV6_UDP))
 
-static inline void ixgbevf_rx_hash(struct ixgbevf_ring *ring,
-				   union ixgbe_adv_rx_desc *rx_desc,
-				   struct sk_buff *skb)
-{
+अटल अंतरभूत व्योम ixgbevf_rx_hash(काष्ठा ixgbevf_ring *ring,
+				   जोड़ ixgbe_adv_rx_desc *rx_desc,
+				   काष्ठा sk_buff *skb)
+अणु
 	u16 rss_type;
 
-	if (!(ring->netdev->features & NETIF_F_RXHASH))
-		return;
+	अगर (!(ring->netdev->features & NETIF_F_RXHASH))
+		वापस;
 
 	rss_type = le16_to_cpu(rx_desc->wb.lower.lo_dword.hs_rss.pkt_info) &
 		   IXGBE_RXDADV_RSSTYPE_MASK;
 
-	if (!rss_type)
-		return;
+	अगर (!rss_type)
+		वापस;
 
 	skb_set_hash(skb, le32_to_cpu(rx_desc->wb.lower.hi_dword.rss),
 		     (IXGBE_RSS_L4_TYPES_MASK & (1ul << rss_type)) ?
 		     PKT_HASH_TYPE_L4 : PKT_HASH_TYPE_L3);
-}
+पूर्ण
 
 /**
- * ixgbevf_rx_checksum - indicate in skb if hw indicated a good cksum
- * @ring: structure containig ring specific data
+ * ixgbevf_rx_checksum - indicate in skb अगर hw indicated a good cksum
+ * @ring: काष्ठाure containig ring specअगरic data
  * @rx_desc: current Rx descriptor being processed
- * @skb: skb currently being received and modified
+ * @skb: skb currently being received and modअगरied
  **/
-static inline void ixgbevf_rx_checksum(struct ixgbevf_ring *ring,
-				       union ixgbe_adv_rx_desc *rx_desc,
-				       struct sk_buff *skb)
-{
-	skb_checksum_none_assert(skb);
+अटल अंतरभूत व्योम ixgbevf_rx_checksum(काष्ठा ixgbevf_ring *ring,
+				       जोड़ ixgbe_adv_rx_desc *rx_desc,
+				       काष्ठा sk_buff *skb)
+अणु
+	skb_checksum_none_निश्चित(skb);
 
 	/* Rx csum disabled */
-	if (!(ring->netdev->features & NETIF_F_RXCSUM))
-		return;
+	अगर (!(ring->netdev->features & NETIF_F_RXCSUM))
+		वापस;
 
-	/* if IP and error */
-	if (ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_IPCS) &&
-	    ixgbevf_test_staterr(rx_desc, IXGBE_RXDADV_ERR_IPE)) {
+	/* अगर IP and error */
+	अगर (ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_IPCS) &&
+	    ixgbevf_test_staterr(rx_desc, IXGBE_RXDADV_ERR_IPE)) अणु
 		ring->rx_stats.csum_err++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_L4CS))
-		return;
+	अगर (!ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_L4CS))
+		वापस;
 
-	if (ixgbevf_test_staterr(rx_desc, IXGBE_RXDADV_ERR_TCPE)) {
+	अगर (ixgbevf_test_staterr(rx_desc, IXGBE_RXDADV_ERR_TCPE)) अणु
 		ring->rx_stats.csum_err++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* It must be a TCP or UDP packet with a valid checksum */
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
-}
+पूर्ण
 
 /**
  * ixgbevf_process_skb_fields - Populate skb header fields from Rx descriptor
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @rx_desc: pointer to the EOP Rx descriptor
- * @skb: pointer to current skb being populated
+ * @rx_desc: poपूर्णांकer to the EOP Rx descriptor
+ * @skb: poपूर्णांकer to current skb being populated
  *
- * This function checks the ring, descriptor, and packet information in
+ * This function checks the ring, descriptor, and packet inक्रमmation in
  * order to populate the checksum, VLAN, protocol, and other fields within
  * the skb.
  **/
-static void ixgbevf_process_skb_fields(struct ixgbevf_ring *rx_ring,
-				       union ixgbe_adv_rx_desc *rx_desc,
-				       struct sk_buff *skb)
-{
+अटल व्योम ixgbevf_process_skb_fields(काष्ठा ixgbevf_ring *rx_ring,
+				       जोड़ ixgbe_adv_rx_desc *rx_desc,
+				       काष्ठा sk_buff *skb)
+अणु
 	ixgbevf_rx_hash(rx_ring, rx_desc, skb);
 	ixgbevf_rx_checksum(rx_ring, rx_desc, skb);
 
-	if (ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_VP)) {
+	अगर (ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_VP)) अणु
 		u16 vid = le16_to_cpu(rx_desc->wb.upper.vlan);
-		unsigned long *active_vlans = netdev_priv(rx_ring->netdev);
+		अचिन्हित दीर्घ *active_vlans = netdev_priv(rx_ring->netdev);
 
-		if (test_bit(vid & VLAN_VID_MASK, active_vlans))
+		अगर (test_bit(vid & VLAN_VID_MASK, active_vlans))
 			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vid);
-	}
+	पूर्ण
 
-	if (ixgbevf_test_staterr(rx_desc, IXGBE_RXDADV_STAT_SECP))
+	अगर (ixgbevf_test_staterr(rx_desc, IXGBE_RXDADV_STAT_SECP))
 		ixgbevf_ipsec_rx(rx_ring, rx_desc, skb);
 
 	skb->protocol = eth_type_trans(skb, rx_ring->netdev);
-}
+पूर्ण
 
-static
-struct ixgbevf_rx_buffer *ixgbevf_get_rx_buffer(struct ixgbevf_ring *rx_ring,
-						const unsigned int size)
-{
-	struct ixgbevf_rx_buffer *rx_buffer;
+अटल
+काष्ठा ixgbevf_rx_buffer *ixgbevf_get_rx_buffer(काष्ठा ixgbevf_ring *rx_ring,
+						स्थिर अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा ixgbevf_rx_buffer *rx_buffer;
 
 	rx_buffer = &rx_ring->rx_buffer_info[rx_ring->next_to_clean];
 	prefetchw(rx_buffer->page);
 
-	/* we are reusing so sync this buffer for CPU use */
-	dma_sync_single_range_for_cpu(rx_ring->dev,
+	/* we are reusing so sync this buffer क्रम CPU use */
+	dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 				      rx_buffer->dma,
 				      rx_buffer->page_offset,
 				      size,
@@ -542,19 +543,19 @@ struct ixgbevf_rx_buffer *ixgbevf_get_rx_buffer(struct ixgbevf_ring *rx_ring,
 
 	rx_buffer->pagecnt_bias--;
 
-	return rx_buffer;
-}
+	वापस rx_buffer;
+पूर्ण
 
-static void ixgbevf_put_rx_buffer(struct ixgbevf_ring *rx_ring,
-				  struct ixgbevf_rx_buffer *rx_buffer,
-				  struct sk_buff *skb)
-{
-	if (ixgbevf_can_reuse_rx_page(rx_buffer)) {
+अटल व्योम ixgbevf_put_rx_buffer(काष्ठा ixgbevf_ring *rx_ring,
+				  काष्ठा ixgbevf_rx_buffer *rx_buffer,
+				  काष्ठा sk_buff *skb)
+अणु
+	अगर (ixgbevf_can_reuse_rx_page(rx_buffer)) अणु
 		/* hand second half of page back to the ring */
 		ixgbevf_reuse_rx_page(rx_ring, rx_buffer);
-	} else {
-		if (IS_ERR(skb))
-			/* We are not reusing the buffer so unmap it and free
+	पूर्ण अन्यथा अणु
+		अगर (IS_ERR(skb))
+			/* We are not reusing the buffer so unmap it and मुक्त
 			 * any references we are holding to it
 			 */
 			dma_unmap_page_attrs(rx_ring->dev, rx_buffer->dma,
@@ -563,25 +564,25 @@ static void ixgbevf_put_rx_buffer(struct ixgbevf_ring *rx_ring,
 					     IXGBEVF_RX_DMA_ATTR);
 		__page_frag_cache_drain(rx_buffer->page,
 					rx_buffer->pagecnt_bias);
-	}
+	पूर्ण
 
 	/* clear contents of rx_buffer */
-	rx_buffer->page = NULL;
-}
+	rx_buffer->page = शून्य;
+पूर्ण
 
 /**
  * ixgbevf_is_non_eop - process handling of non-EOP buffers
  * @rx_ring: Rx ring being processed
- * @rx_desc: Rx descriptor for current buffer
+ * @rx_desc: Rx descriptor क्रम current buffer
  *
  * This function updates next to clean.  If the buffer is an EOP buffer
- * this function exits returning false, otherwise it will place the
- * sk_buff in the next buffer to be chained and return true indicating
+ * this function निकासs वापसing false, otherwise it will place the
+ * sk_buff in the next buffer to be chained and वापस true indicating
  * that this is in fact a non-EOP buffer.
  **/
-static bool ixgbevf_is_non_eop(struct ixgbevf_ring *rx_ring,
-			       union ixgbe_adv_rx_desc *rx_desc)
-{
+अटल bool ixgbevf_is_non_eop(काष्ठा ixgbevf_ring *rx_ring,
+			       जोड़ ixgbe_adv_rx_desc *rx_desc)
+अणु
 	u32 ntc = rx_ring->next_to_clean + 1;
 
 	/* fetch, update, and store next to clean */
@@ -590,48 +591,48 @@ static bool ixgbevf_is_non_eop(struct ixgbevf_ring *rx_ring,
 
 	prefetch(IXGBEVF_RX_DESC(rx_ring, ntc));
 
-	if (likely(ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP)))
-		return false;
+	अगर (likely(ixgbevf_test_staterr(rx_desc, IXGBE_RXD_STAT_EOP)))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline unsigned int ixgbevf_rx_offset(struct ixgbevf_ring *rx_ring)
-{
-	return ring_uses_build_skb(rx_ring) ? IXGBEVF_SKB_PAD : 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ixgbevf_rx_offset(काष्ठा ixgbevf_ring *rx_ring)
+अणु
+	वापस ring_uses_build_skb(rx_ring) ? IXGBEVF_SKB_PAD : 0;
+पूर्ण
 
-static bool ixgbevf_alloc_mapped_page(struct ixgbevf_ring *rx_ring,
-				      struct ixgbevf_rx_buffer *bi)
-{
-	struct page *page = bi->page;
+अटल bool ixgbevf_alloc_mapped_page(काष्ठा ixgbevf_ring *rx_ring,
+				      काष्ठा ixgbevf_rx_buffer *bi)
+अणु
+	काष्ठा page *page = bi->page;
 	dma_addr_t dma;
 
-	/* since we are recycling buffers we should seldom need to alloc */
-	if (likely(page))
-		return true;
+	/* since we are recycling buffers we should selकरोm need to alloc */
+	अगर (likely(page))
+		वापस true;
 
-	/* alloc new page for storage */
+	/* alloc new page क्रम storage */
 	page = dev_alloc_pages(ixgbevf_rx_pg_order(rx_ring));
-	if (unlikely(!page)) {
+	अगर (unlikely(!page)) अणु
 		rx_ring->rx_stats.alloc_rx_page_failed++;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* map page for use */
+	/* map page क्रम use */
 	dma = dma_map_page_attrs(rx_ring->dev, page, 0,
 				 ixgbevf_rx_pg_size(rx_ring),
 				 DMA_FROM_DEVICE, IXGBEVF_RX_DMA_ATTR);
 
-	/* if mapping failed free memory back to system since
+	/* अगर mapping failed मुक्त memory back to प्रणाली since
 	 * there isn't much point in holding memory we can't use
 	 */
-	if (dma_mapping_error(rx_ring->dev, dma)) {
-		__free_pages(page, ixgbevf_rx_pg_order(rx_ring));
+	अगर (dma_mapping_error(rx_ring->dev, dma)) अणु
+		__मुक्त_pages(page, ixgbevf_rx_pg_order(rx_ring));
 
 		rx_ring->rx_stats.alloc_rx_page_failed++;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	bi->dma = dma;
 	bi->page = page;
@@ -639,133 +640,133 @@ static bool ixgbevf_alloc_mapped_page(struct ixgbevf_ring *rx_ring,
 	bi->pagecnt_bias = 1;
 	rx_ring->rx_stats.alloc_rx_page++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * ixgbevf_alloc_rx_buffers - Replace used receive buffers; packet split
- * @rx_ring: rx descriptor ring (for a specific queue) to setup buffers on
+ * @rx_ring: rx descriptor ring (क्रम a specअगरic queue) to setup buffers on
  * @cleaned_count: number of buffers to replace
  **/
-static void ixgbevf_alloc_rx_buffers(struct ixgbevf_ring *rx_ring,
+अटल व्योम ixgbevf_alloc_rx_buffers(काष्ठा ixgbevf_ring *rx_ring,
 				     u16 cleaned_count)
-{
-	union ixgbe_adv_rx_desc *rx_desc;
-	struct ixgbevf_rx_buffer *bi;
-	unsigned int i = rx_ring->next_to_use;
+अणु
+	जोड़ ixgbe_adv_rx_desc *rx_desc;
+	काष्ठा ixgbevf_rx_buffer *bi;
+	अचिन्हित पूर्णांक i = rx_ring->next_to_use;
 
-	/* nothing to do or no valid netdev defined */
-	if (!cleaned_count || !rx_ring->netdev)
-		return;
+	/* nothing to करो or no valid netdev defined */
+	अगर (!cleaned_count || !rx_ring->netdev)
+		वापस;
 
 	rx_desc = IXGBEVF_RX_DESC(rx_ring, i);
 	bi = &rx_ring->rx_buffer_info[i];
 	i -= rx_ring->count;
 
-	do {
-		if (!ixgbevf_alloc_mapped_page(rx_ring, bi))
-			break;
+	करो अणु
+		अगर (!ixgbevf_alloc_mapped_page(rx_ring, bi))
+			अवरोध;
 
-		/* sync the buffer for use by the device */
-		dma_sync_single_range_for_device(rx_ring->dev, bi->dma,
+		/* sync the buffer क्रम use by the device */
+		dma_sync_single_range_क्रम_device(rx_ring->dev, bi->dma,
 						 bi->page_offset,
 						 ixgbevf_rx_bufsz(rx_ring),
 						 DMA_FROM_DEVICE);
 
-		/* Refresh the desc even if pkt_addr didn't change
-		 * because each write-back erases this info.
+		/* Refresh the desc even अगर pkt_addr didn't change
+		 * because each ग_लिखो-back erases this info.
 		 */
-		rx_desc->read.pkt_addr = cpu_to_le64(bi->dma + bi->page_offset);
+		rx_desc->पढ़ो.pkt_addr = cpu_to_le64(bi->dma + bi->page_offset);
 
 		rx_desc++;
 		bi++;
 		i++;
-		if (unlikely(!i)) {
+		अगर (unlikely(!i)) अणु
 			rx_desc = IXGBEVF_RX_DESC(rx_ring, 0);
 			bi = rx_ring->rx_buffer_info;
 			i -= rx_ring->count;
-		}
+		पूर्ण
 
-		/* clear the length for the next_to_use descriptor */
+		/* clear the length क्रम the next_to_use descriptor */
 		rx_desc->wb.upper.length = 0;
 
 		cleaned_count--;
-	} while (cleaned_count);
+	पूर्ण जबतक (cleaned_count);
 
 	i += rx_ring->count;
 
-	if (rx_ring->next_to_use != i) {
+	अगर (rx_ring->next_to_use != i) अणु
 		/* record the next descriptor to use */
 		rx_ring->next_to_use = i;
 
 		/* update next to alloc since we have filled the ring */
 		rx_ring->next_to_alloc = i;
 
-		/* Force memory writes to complete before letting h/w
+		/* Force memory ग_लिखोs to complete beक्रमe letting h/w
 		 * know there are new descriptors to fetch.  (Only
-		 * applicable for weak-ordered memory model archs,
+		 * applicable क्रम weak-ordered memory model archs,
 		 * such as IA-64).
 		 */
 		wmb();
-		ixgbevf_write_tail(rx_ring, i);
-	}
-}
+		ixgbevf_ग_लिखो_tail(rx_ring, i);
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbevf_cleanup_headers - Correct corrupted or empty headers
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @rx_desc: pointer to the EOP Rx descriptor
- * @skb: pointer to current skb being fixed
+ * @rx_desc: poपूर्णांकer to the EOP Rx descriptor
+ * @skb: poपूर्णांकer to current skb being fixed
  *
- * Check for corrupted packet headers caused by senders on the local L2
- * embedded NIC switch not setting up their Tx Descriptors right.  These
+ * Check क्रम corrupted packet headers caused by senders on the local L2
+ * embedded NIC चयन not setting up their Tx Descriptors right.  These
  * should be very rare.
  *
- * Also address the case where we are pulling data in on pages only
+ * Also address the हाल where we are pulling data in on pages only
  * and as such no data is present in the skb header.
  *
- * In addition if skb is not at least 60 bytes we need to pad it so that
- * it is large enough to qualify as a valid Ethernet frame.
+ * In addition अगर skb is not at least 60 bytes we need to pad it so that
+ * it is large enough to qualअगरy as a valid Ethernet frame.
  *
- * Returns true if an error was encountered and skb was freed.
+ * Returns true अगर an error was encountered and skb was मुक्तd.
  **/
-static bool ixgbevf_cleanup_headers(struct ixgbevf_ring *rx_ring,
-				    union ixgbe_adv_rx_desc *rx_desc,
-				    struct sk_buff *skb)
-{
-	/* XDP packets use error pointer so abort at this point */
-	if (IS_ERR(skb))
-		return true;
+अटल bool ixgbevf_cleanup_headers(काष्ठा ixgbevf_ring *rx_ring,
+				    जोड़ ixgbe_adv_rx_desc *rx_desc,
+				    काष्ठा sk_buff *skb)
+अणु
+	/* XDP packets use error poपूर्णांकer so पात at this poपूर्णांक */
+	अगर (IS_ERR(skb))
+		वापस true;
 
-	/* verify that the packet does not have any known errors */
-	if (unlikely(ixgbevf_test_staterr(rx_desc,
-					  IXGBE_RXDADV_ERR_FRAME_ERR_MASK))) {
-		struct net_device *netdev = rx_ring->netdev;
+	/* verअगरy that the packet करोes not have any known errors */
+	अगर (unlikely(ixgbevf_test_staterr(rx_desc,
+					  IXGBE_RXDADV_ERR_FRAME_ERR_MASK))) अणु
+		काष्ठा net_device *netdev = rx_ring->netdev;
 
-		if (!(netdev->features & NETIF_F_RXALL)) {
-			dev_kfree_skb_any(skb);
-			return true;
-		}
-	}
+		अगर (!(netdev->features & NETIF_F_RXALL)) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	/* if eth_skb_pad returns an error the skb was freed */
-	if (eth_skb_pad(skb))
-		return true;
+	/* अगर eth_skb_pad वापसs an error the skb was मुक्तd */
+	अगर (eth_skb_pad(skb))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * ixgbevf_reuse_rx_page - page flip buffer and store it back on the ring
  * @rx_ring: rx descriptor ring to store buffers on
- * @old_buff: donor buffer to have page reused
+ * @old_buff: करोnor buffer to have page reused
  *
- * Synchronizes page for reuse by the adapter
+ * Synchronizes page क्रम reuse by the adapter
  **/
-static void ixgbevf_reuse_rx_page(struct ixgbevf_ring *rx_ring,
-				  struct ixgbevf_rx_buffer *old_buff)
-{
-	struct ixgbevf_rx_buffer *new_buff;
+अटल व्योम ixgbevf_reuse_rx_page(काष्ठा ixgbevf_ring *rx_ring,
+				  काष्ठा ixgbevf_rx_buffer *old_buff)
+अणु
+	काष्ठा ixgbevf_rx_buffer *new_buff;
 	u16 nta = rx_ring->next_to_alloc;
 
 	new_buff = &rx_ring->rx_buffer_info[nta];
@@ -779,87 +780,87 @@ static void ixgbevf_reuse_rx_page(struct ixgbevf_ring *rx_ring,
 	new_buff->dma = old_buff->dma;
 	new_buff->page_offset = old_buff->page_offset;
 	new_buff->pagecnt_bias = old_buff->pagecnt_bias;
-}
+पूर्ण
 
-static bool ixgbevf_can_reuse_rx_page(struct ixgbevf_rx_buffer *rx_buffer)
-{
-	unsigned int pagecnt_bias = rx_buffer->pagecnt_bias;
-	struct page *page = rx_buffer->page;
+अटल bool ixgbevf_can_reuse_rx_page(काष्ठा ixgbevf_rx_buffer *rx_buffer)
+अणु
+	अचिन्हित पूर्णांक pagecnt_bias = rx_buffer->pagecnt_bias;
+	काष्ठा page *page = rx_buffer->page;
 
-	/* avoid re-using remote and pfmemalloc pages */
-	if (!dev_page_is_reusable(page))
-		return false;
+	/* aव्योम re-using remote and pfmeदो_स्मृति pages */
+	अगर (!dev_page_is_reusable(page))
+		वापस false;
 
-#if (PAGE_SIZE < 8192)
-	/* if we are only owner of page we can reuse it */
-	if (unlikely((page_ref_count(page) - pagecnt_bias) > 1))
-		return false;
-#else
-#define IXGBEVF_LAST_OFFSET \
+#अगर (PAGE_SIZE < 8192)
+	/* अगर we are only owner of page we can reuse it */
+	अगर (unlikely((page_ref_count(page) - pagecnt_bias) > 1))
+		वापस false;
+#अन्यथा
+#घोषणा IXGBEVF_LAST_OFFSET \
 	(SKB_WITH_OVERHEAD(PAGE_SIZE) - IXGBEVF_RXBUFFER_2048)
 
-	if (rx_buffer->page_offset > IXGBEVF_LAST_OFFSET)
-		return false;
+	अगर (rx_buffer->page_offset > IXGBEVF_LAST_OFFSET)
+		वापस false;
 
-#endif
+#पूर्ण_अगर
 
 	/* If we have drained the page fragment pool we need to update
 	 * the pagecnt_bias and page count so that we fully restock the
 	 * number of references the driver holds.
 	 */
-	if (unlikely(!pagecnt_bias)) {
-		page_ref_add(page, USHRT_MAX);
-		rx_buffer->pagecnt_bias = USHRT_MAX;
-	}
+	अगर (unlikely(!pagecnt_bias)) अणु
+		page_ref_add(page, अच_लघु_उच्च);
+		rx_buffer->pagecnt_bias = अच_लघु_उच्च;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * ixgbevf_add_rx_frag - Add contents of Rx buffer to sk_buff
  * @rx_ring: rx descriptor ring to transact packets on
  * @rx_buffer: buffer containing page to add
- * @skb: sk_buff to place the data into
+ * @skb: sk_buff to place the data पूर्णांकo
  * @size: size of buffer to be added
  *
  * This function will add the data contained in rx_buffer->page to the skb.
  **/
-static void ixgbevf_add_rx_frag(struct ixgbevf_ring *rx_ring,
-				struct ixgbevf_rx_buffer *rx_buffer,
-				struct sk_buff *skb,
-				unsigned int size)
-{
-#if (PAGE_SIZE < 8192)
-	unsigned int truesize = ixgbevf_rx_pg_size(rx_ring) / 2;
-#else
-	unsigned int truesize = ring_uses_build_skb(rx_ring) ?
+अटल व्योम ixgbevf_add_rx_frag(काष्ठा ixgbevf_ring *rx_ring,
+				काष्ठा ixgbevf_rx_buffer *rx_buffer,
+				काष्ठा sk_buff *skb,
+				अचिन्हित पूर्णांक size)
+अणु
+#अगर (PAGE_SIZE < 8192)
+	अचिन्हित पूर्णांक truesize = ixgbevf_rx_pg_size(rx_ring) / 2;
+#अन्यथा
+	अचिन्हित पूर्णांक truesize = ring_uses_build_skb(rx_ring) ?
 				SKB_DATA_ALIGN(IXGBEVF_SKB_PAD + size) :
 				SKB_DATA_ALIGN(size);
-#endif
+#पूर्ण_अगर
 	skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags, rx_buffer->page,
 			rx_buffer->page_offset, size, truesize);
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 	rx_buffer->page_offset += truesize;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static
-struct sk_buff *ixgbevf_construct_skb(struct ixgbevf_ring *rx_ring,
-				      struct ixgbevf_rx_buffer *rx_buffer,
-				      struct xdp_buff *xdp,
-				      union ixgbe_adv_rx_desc *rx_desc)
-{
-	unsigned int size = xdp->data_end - xdp->data;
-#if (PAGE_SIZE < 8192)
-	unsigned int truesize = ixgbevf_rx_pg_size(rx_ring) / 2;
-#else
-	unsigned int truesize = SKB_DATA_ALIGN(xdp->data_end -
+अटल
+काष्ठा sk_buff *ixgbevf_स्थिरruct_skb(काष्ठा ixgbevf_ring *rx_ring,
+				      काष्ठा ixgbevf_rx_buffer *rx_buffer,
+				      काष्ठा xdp_buff *xdp,
+				      जोड़ ixgbe_adv_rx_desc *rx_desc)
+अणु
+	अचिन्हित पूर्णांक size = xdp->data_end - xdp->data;
+#अगर (PAGE_SIZE < 8192)
+	अचिन्हित पूर्णांक truesize = ixgbevf_rx_pg_size(rx_ring) / 2;
+#अन्यथा
+	अचिन्हित पूर्णांक truesize = SKB_DATA_ALIGN(xdp->data_end -
 					       xdp->data_hard_start);
-#endif
-	unsigned int headlen;
-	struct sk_buff *skb;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक headlen;
+	काष्ठा sk_buff *skb;
 
 	/* prefetch first cache line of first page */
 	net_prefetch(xdp->data);
@@ -872,72 +873,72 @@ struct sk_buff *ixgbevf_construct_skb(struct ixgbevf_ring *rx_ring,
 	 * opposed to having legacy-rx off, where we process XDP
 	 * packets going to stack via ixgbevf_build_skb().
 	 *
-	 * For ixgbevf_construct_skb() mode it means that the
-	 * xdp->data_meta will always point to xdp->data, since
+	 * For ixgbevf_स्थिरruct_skb() mode it means that the
+	 * xdp->data_meta will always poपूर्णांक to xdp->data, since
 	 * the helper cannot expand the head. Should this ever
-	 * changed in future for legacy-rx mode on, then lets also
+	 * changed in future क्रम legacy-rx mode on, then lets also
 	 * add xdp->data_meta handling here.
 	 */
 
 	/* allocate a skb to store the frags */
 	skb = napi_alloc_skb(&rx_ring->q_vector->napi, IXGBEVF_RX_HDR_SIZE);
-	if (unlikely(!skb))
-		return NULL;
+	अगर (unlikely(!skb))
+		वापस शून्य;
 
-	/* Determine available headroom for copy */
+	/* Determine available headroom क्रम copy */
 	headlen = size;
-	if (headlen > IXGBEVF_RX_HDR_SIZE)
+	अगर (headlen > IXGBEVF_RX_HDR_SIZE)
 		headlen = eth_get_headlen(skb->dev, xdp->data,
 					  IXGBEVF_RX_HDR_SIZE);
 
-	/* align pull length to size of long to optimize memcpy performance */
-	memcpy(__skb_put(skb, headlen), xdp->data,
-	       ALIGN(headlen, sizeof(long)));
+	/* align pull length to size of दीर्घ to optimize स_नकल perक्रमmance */
+	स_नकल(__skb_put(skb, headlen), xdp->data,
+	       ALIGN(headlen, माप(दीर्घ)));
 
-	/* update all of the pointers */
+	/* update all of the poपूर्णांकers */
 	size -= headlen;
-	if (size) {
+	अगर (size) अणु
 		skb_add_rx_frag(skb, 0, rx_buffer->page,
 				(xdp->data + headlen) -
 					page_address(rx_buffer->page),
 				size, truesize);
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 		rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 		rx_buffer->page_offset += truesize;
-#endif
-	} else {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		rx_buffer->pagecnt_bias++;
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static inline void ixgbevf_irq_enable_queues(struct ixgbevf_adapter *adapter,
+अटल अंतरभूत व्योम ixgbevf_irq_enable_queues(काष्ठा ixgbevf_adapter *adapter,
 					     u32 qmask)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, qmask);
-}
+पूर्ण
 
-static struct sk_buff *ixgbevf_build_skb(struct ixgbevf_ring *rx_ring,
-					 struct ixgbevf_rx_buffer *rx_buffer,
-					 struct xdp_buff *xdp,
-					 union ixgbe_adv_rx_desc *rx_desc)
-{
-	unsigned int metasize = xdp->data - xdp->data_meta;
-#if (PAGE_SIZE < 8192)
-	unsigned int truesize = ixgbevf_rx_pg_size(rx_ring) / 2;
-#else
-	unsigned int truesize = SKB_DATA_ALIGN(sizeof(struct skb_shared_info)) +
+अटल काष्ठा sk_buff *ixgbevf_build_skb(काष्ठा ixgbevf_ring *rx_ring,
+					 काष्ठा ixgbevf_rx_buffer *rx_buffer,
+					 काष्ठा xdp_buff *xdp,
+					 जोड़ ixgbe_adv_rx_desc *rx_desc)
+अणु
+	अचिन्हित पूर्णांक metasize = xdp->data - xdp->data_meta;
+#अगर (PAGE_SIZE < 8192)
+	अचिन्हित पूर्णांक truesize = ixgbevf_rx_pg_size(rx_ring) / 2;
+#अन्यथा
+	अचिन्हित पूर्णांक truesize = SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)) +
 				SKB_DATA_ALIGN(xdp->data_end -
 					       xdp->data_hard_start);
-#endif
-	struct sk_buff *skb;
+#पूर्ण_अगर
+	काष्ठा sk_buff *skb;
 
 	/* Prefetch first cache line of first page. If xdp->data_meta
-	 * is unused, this points to xdp->data, otherwise, we likely
+	 * is unused, this poपूर्णांकs to xdp->data, otherwise, we likely
 	 * have a consumer accessing first few bytes of meta data,
 	 * and then actual data.
 	 */
@@ -945,48 +946,48 @@ static struct sk_buff *ixgbevf_build_skb(struct ixgbevf_ring *rx_ring,
 
 	/* build an skb around the page buffer */
 	skb = build_skb(xdp->data_hard_start, truesize);
-	if (unlikely(!skb))
-		return NULL;
+	अगर (unlikely(!skb))
+		वापस शून्य;
 
-	/* update pointers within the skb to store the data */
+	/* update poपूर्णांकers within the skb to store the data */
 	skb_reserve(skb, xdp->data - xdp->data_hard_start);
 	__skb_put(skb, xdp->data_end - xdp->data);
-	if (metasize)
+	अगर (metasize)
 		skb_metadata_set(skb, metasize);
 
 	/* update buffer offset */
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 	rx_buffer->page_offset += truesize;
-#endif
+#पूर्ण_अगर
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-#define IXGBEVF_XDP_PASS 0
-#define IXGBEVF_XDP_CONSUMED 1
-#define IXGBEVF_XDP_TX 2
+#घोषणा IXGBEVF_XDP_PASS 0
+#घोषणा IXGBEVF_XDP_CONSUMED 1
+#घोषणा IXGBEVF_XDP_TX 2
 
-static int ixgbevf_xmit_xdp_ring(struct ixgbevf_ring *ring,
-				 struct xdp_buff *xdp)
-{
-	struct ixgbevf_tx_buffer *tx_buffer;
-	union ixgbe_adv_tx_desc *tx_desc;
+अटल पूर्णांक ixgbevf_xmit_xdp_ring(काष्ठा ixgbevf_ring *ring,
+				 काष्ठा xdp_buff *xdp)
+अणु
+	काष्ठा ixgbevf_tx_buffer *tx_buffer;
+	जोड़ ixgbe_adv_tx_desc *tx_desc;
 	u32 len, cmd_type;
 	dma_addr_t dma;
 	u16 i;
 
 	len = xdp->data_end - xdp->data;
 
-	if (unlikely(!ixgbevf_desc_unused(ring)))
-		return IXGBEVF_XDP_CONSUMED;
+	अगर (unlikely(!ixgbevf_desc_unused(ring)))
+		वापस IXGBEVF_XDP_CONSUMED;
 
 	dma = dma_map_single(ring->dev, xdp->data, len, DMA_TO_DEVICE);
-	if (dma_mapping_error(ring->dev, dma))
-		return IXGBEVF_XDP_CONSUMED;
+	अगर (dma_mapping_error(ring->dev, dma))
+		वापस IXGBEVF_XDP_CONSUMED;
 
-	/* record the location of the first descriptor for this packet */
+	/* record the location of the first descriptor क्रम this packet */
 	i = ring->next_to_use;
 	tx_buffer = &ring->tx_buffer_info[i];
 
@@ -997,11 +998,11 @@ static int ixgbevf_xmit_xdp_ring(struct ixgbevf_ring *ring,
 	tx_buffer->gso_segs = 1;
 	tx_buffer->protocol = 0;
 
-	/* Populate minimal context descriptor that will provide for the
+	/* Populate minimal context descriptor that will provide क्रम the
 	 * fact that we are expected to process Ethernet frames.
 	 */
-	if (!test_bit(__IXGBEVF_TX_XDP_RING_PRIMED, &ring->state)) {
-		struct ixgbe_adv_tx_context_desc *context_desc;
+	अगर (!test_bit(__IXGBEVF_TX_XDP_RING_PRIMED, &ring->state)) अणु
+		काष्ठा ixgbe_adv_tx_context_desc *context_desc;
 
 		set_bit(__IXGBEVF_TX_XDP_RING_PRIMED, &ring->state);
 
@@ -1015,7 +1016,7 @@ static int ixgbevf_xmit_xdp_ring(struct ixgbevf_ring *ring,
 		context_desc->mss_l4len_idx	= 0;
 
 		i = 1;
-	}
+	पूर्ण
 
 	/* put descriptor type bits */
 	cmd_type = IXGBE_ADVTXD_DTYP_DATA |
@@ -1024,131 +1025,131 @@ static int ixgbevf_xmit_xdp_ring(struct ixgbevf_ring *ring,
 	cmd_type |= len | IXGBE_TXD_CMD;
 
 	tx_desc = IXGBEVF_TX_DESC(ring, i);
-	tx_desc->read.buffer_addr = cpu_to_le64(dma);
+	tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
 
-	tx_desc->read.cmd_type_len = cpu_to_le32(cmd_type);
-	tx_desc->read.olinfo_status =
+	tx_desc->पढ़ो.cmd_type_len = cpu_to_le32(cmd_type);
+	tx_desc->पढ़ो.olinfo_status =
 			cpu_to_le32((len << IXGBE_ADVTXD_PAYLEN_SHIFT) |
 				    IXGBE_ADVTXD_CC);
 
-	/* Avoid any potential race with cleanup */
+	/* Aव्योम any potential race with cleanup */
 	smp_wmb();
 
 	/* set next_to_watch value indicating a packet is present */
 	i++;
-	if (i == ring->count)
+	अगर (i == ring->count)
 		i = 0;
 
 	tx_buffer->next_to_watch = tx_desc;
 	ring->next_to_use = i;
 
-	return IXGBEVF_XDP_TX;
-}
+	वापस IXGBEVF_XDP_TX;
+पूर्ण
 
-static struct sk_buff *ixgbevf_run_xdp(struct ixgbevf_adapter *adapter,
-				       struct ixgbevf_ring  *rx_ring,
-				       struct xdp_buff *xdp)
-{
-	int result = IXGBEVF_XDP_PASS;
-	struct ixgbevf_ring *xdp_ring;
-	struct bpf_prog *xdp_prog;
+अटल काष्ठा sk_buff *ixgbevf_run_xdp(काष्ठा ixgbevf_adapter *adapter,
+				       काष्ठा ixgbevf_ring  *rx_ring,
+				       काष्ठा xdp_buff *xdp)
+अणु
+	पूर्णांक result = IXGBEVF_XDP_PASS;
+	काष्ठा ixgbevf_ring *xdp_ring;
+	काष्ठा bpf_prog *xdp_prog;
 	u32 act;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	xdp_prog = READ_ONCE(rx_ring->xdp_prog);
 
-	if (!xdp_prog)
-		goto xdp_out;
+	अगर (!xdp_prog)
+		जाओ xdp_out;
 
 	act = bpf_prog_run_xdp(xdp_prog, xdp);
-	switch (act) {
-	case XDP_PASS:
-		break;
-	case XDP_TX:
+	चयन (act) अणु
+	हाल XDP_PASS:
+		अवरोध;
+	हाल XDP_TX:
 		xdp_ring = adapter->xdp_ring[rx_ring->queue_index];
 		result = ixgbevf_xmit_xdp_ring(xdp_ring, xdp);
-		if (result == IXGBEVF_XDP_CONSUMED)
-			goto out_failure;
-		break;
-	default:
+		अगर (result == IXGBEVF_XDP_CONSUMED)
+			जाओ out_failure;
+		अवरोध;
+	शेष:
 		bpf_warn_invalid_xdp_action(act);
 		fallthrough;
-	case XDP_ABORTED:
+	हाल XDP_ABORTED:
 out_failure:
 		trace_xdp_exception(rx_ring->netdev, xdp_prog, act);
-		fallthrough; /* handle aborts by dropping packet */
-	case XDP_DROP:
+		fallthrough; /* handle पातs by dropping packet */
+	हाल XDP_DROP:
 		result = IXGBEVF_XDP_CONSUMED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 xdp_out:
-	rcu_read_unlock();
-	return ERR_PTR(-result);
-}
+	rcu_पढ़ो_unlock();
+	वापस ERR_PTR(-result);
+पूर्ण
 
-static unsigned int ixgbevf_rx_frame_truesize(struct ixgbevf_ring *rx_ring,
-					      unsigned int size)
-{
-	unsigned int truesize;
+अटल अचिन्हित पूर्णांक ixgbevf_rx_frame_truesize(काष्ठा ixgbevf_ring *rx_ring,
+					      अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक truesize;
 
-#if (PAGE_SIZE < 8192)
-	truesize = ixgbevf_rx_pg_size(rx_ring) / 2; /* Must be power-of-2 */
-#else
+#अगर (PAGE_SIZE < 8192)
+	truesize = ixgbevf_rx_pg_size(rx_ring) / 2; /* Must be घातer-of-2 */
+#अन्यथा
 	truesize = ring_uses_build_skb(rx_ring) ?
 		SKB_DATA_ALIGN(IXGBEVF_SKB_PAD + size) +
-		SKB_DATA_ALIGN(sizeof(struct skb_shared_info)) :
+		SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)) :
 		SKB_DATA_ALIGN(size);
-#endif
-	return truesize;
-}
+#पूर्ण_अगर
+	वापस truesize;
+पूर्ण
 
-static void ixgbevf_rx_buffer_flip(struct ixgbevf_ring *rx_ring,
-				   struct ixgbevf_rx_buffer *rx_buffer,
-				   unsigned int size)
-{
-	unsigned int truesize = ixgbevf_rx_frame_truesize(rx_ring, size);
+अटल व्योम ixgbevf_rx_buffer_flip(काष्ठा ixgbevf_ring *rx_ring,
+				   काष्ठा ixgbevf_rx_buffer *rx_buffer,
+				   अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक truesize = ixgbevf_rx_frame_truesize(rx_ring, size);
 
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	rx_buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 	rx_buffer->page_offset += truesize;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int ixgbevf_clean_rx_irq(struct ixgbevf_q_vector *q_vector,
-				struct ixgbevf_ring *rx_ring,
-				int budget)
-{
-	unsigned int total_rx_bytes = 0, total_rx_packets = 0, frame_sz = 0;
-	struct ixgbevf_adapter *adapter = q_vector->adapter;
+अटल पूर्णांक ixgbevf_clean_rx_irq(काष्ठा ixgbevf_q_vector *q_vector,
+				काष्ठा ixgbevf_ring *rx_ring,
+				पूर्णांक budget)
+अणु
+	अचिन्हित पूर्णांक total_rx_bytes = 0, total_rx_packets = 0, frame_sz = 0;
+	काष्ठा ixgbevf_adapter *adapter = q_vector->adapter;
 	u16 cleaned_count = ixgbevf_desc_unused(rx_ring);
-	struct sk_buff *skb = rx_ring->skb;
+	काष्ठा sk_buff *skb = rx_ring->skb;
 	bool xdp_xmit = false;
-	struct xdp_buff xdp;
+	काष्ठा xdp_buff xdp;
 
 	/* Frame size depend on rx_ring setup when PAGE_SIZE=4K */
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	frame_sz = ixgbevf_rx_frame_truesize(rx_ring, 0);
-#endif
+#पूर्ण_अगर
 	xdp_init_buff(&xdp, frame_sz, &rx_ring->xdp_rxq);
 
-	while (likely(total_rx_packets < budget)) {
-		struct ixgbevf_rx_buffer *rx_buffer;
-		union ixgbe_adv_rx_desc *rx_desc;
-		unsigned int size;
+	जबतक (likely(total_rx_packets < budget)) अणु
+		काष्ठा ixgbevf_rx_buffer *rx_buffer;
+		जोड़ ixgbe_adv_rx_desc *rx_desc;
+		अचिन्हित पूर्णांक size;
 
-		/* return some buffers to hardware, one at a time is too slow */
-		if (cleaned_count >= IXGBEVF_RX_BUFFER_WRITE) {
+		/* वापस some buffers to hardware, one at a समय is too slow */
+		अगर (cleaned_count >= IXGBEVF_RX_BUFFER_WRITE) अणु
 			ixgbevf_alloc_rx_buffers(rx_ring, cleaned_count);
 			cleaned_count = 0;
-		}
+		पूर्ण
 
 		rx_desc = IXGBEVF_RX_DESC(rx_ring, rx_ring->next_to_clean);
 		size = le16_to_cpu(rx_desc->wb.upper.length);
-		if (!size)
-			break;
+		अगर (!size)
+			अवरोध;
 
-		/* This memory barrier is needed to keep us from reading
+		/* This memory barrier is needed to keep us from पढ़ोing
 		 * any other fields out of the rx_desc until we know the
 		 * RXD_STAT_DD bit is set
 		 */
@@ -1157,99 +1158,99 @@ static int ixgbevf_clean_rx_irq(struct ixgbevf_q_vector *q_vector,
 		rx_buffer = ixgbevf_get_rx_buffer(rx_ring, size);
 
 		/* retrieve a buffer from the ring */
-		if (!skb) {
-			unsigned int offset = ixgbevf_rx_offset(rx_ring);
-			unsigned char *hard_start;
+		अगर (!skb) अणु
+			अचिन्हित पूर्णांक offset = ixgbevf_rx_offset(rx_ring);
+			अचिन्हित अक्षर *hard_start;
 
 			hard_start = page_address(rx_buffer->page) +
 				     rx_buffer->page_offset - offset;
 			xdp_prepare_buff(&xdp, hard_start, offset, size, true);
-#if (PAGE_SIZE > 4096)
+#अगर (PAGE_SIZE > 4096)
 			/* At larger PAGE_SIZE, frame_sz depend on len size */
 			xdp.frame_sz = ixgbevf_rx_frame_truesize(rx_ring, size);
-#endif
+#पूर्ण_अगर
 			skb = ixgbevf_run_xdp(adapter, rx_ring, &xdp);
-		}
+		पूर्ण
 
-		if (IS_ERR(skb)) {
-			if (PTR_ERR(skb) == -IXGBEVF_XDP_TX) {
+		अगर (IS_ERR(skb)) अणु
+			अगर (PTR_ERR(skb) == -IXGBEVF_XDP_TX) अणु
 				xdp_xmit = true;
 				ixgbevf_rx_buffer_flip(rx_ring, rx_buffer,
 						       size);
-			} else {
+			पूर्ण अन्यथा अणु
 				rx_buffer->pagecnt_bias++;
-			}
+			पूर्ण
 			total_rx_packets++;
 			total_rx_bytes += size;
-		} else if (skb) {
+		पूर्ण अन्यथा अगर (skb) अणु
 			ixgbevf_add_rx_frag(rx_ring, rx_buffer, skb, size);
-		} else if (ring_uses_build_skb(rx_ring)) {
+		पूर्ण अन्यथा अगर (ring_uses_build_skb(rx_ring)) अणु
 			skb = ixgbevf_build_skb(rx_ring, rx_buffer,
 						&xdp, rx_desc);
-		} else {
-			skb = ixgbevf_construct_skb(rx_ring, rx_buffer,
+		पूर्ण अन्यथा अणु
+			skb = ixgbevf_स्थिरruct_skb(rx_ring, rx_buffer,
 						    &xdp, rx_desc);
-		}
+		पूर्ण
 
-		/* exit if we failed to retrieve a buffer */
-		if (!skb) {
+		/* निकास अगर we failed to retrieve a buffer */
+		अगर (!skb) अणु
 			rx_ring->rx_stats.alloc_rx_buff_failed++;
 			rx_buffer->pagecnt_bias++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ixgbevf_put_rx_buffer(rx_ring, rx_buffer, skb);
 		cleaned_count++;
 
-		/* fetch next buffer in frame if non-eop */
-		if (ixgbevf_is_non_eop(rx_ring, rx_desc))
-			continue;
+		/* fetch next buffer in frame अगर non-eop */
+		अगर (ixgbevf_is_non_eop(rx_ring, rx_desc))
+			जारी;
 
-		/* verify the packet layout is correct */
-		if (ixgbevf_cleanup_headers(rx_ring, rx_desc, skb)) {
-			skb = NULL;
-			continue;
-		}
+		/* verअगरy the packet layout is correct */
+		अगर (ixgbevf_cleanup_headers(rx_ring, rx_desc, skb)) अणु
+			skb = शून्य;
+			जारी;
+		पूर्ण
 
 		/* probably a little skewed due to removing CRC */
 		total_rx_bytes += skb->len;
 
-		/* Workaround hardware that can't do proper VEPA multicast
+		/* Workaround hardware that can't करो proper VEPA multicast
 		 * source pruning.
 		 */
-		if ((skb->pkt_type == PACKET_BROADCAST ||
+		अगर ((skb->pkt_type == PACKET_BROADCAST ||
 		     skb->pkt_type == PACKET_MULTICAST) &&
 		    ether_addr_equal(rx_ring->netdev->dev_addr,
-				     eth_hdr(skb)->h_source)) {
-			dev_kfree_skb_irq(skb);
-			continue;
-		}
+				     eth_hdr(skb)->h_source)) अणु
+			dev_kमुक्त_skb_irq(skb);
+			जारी;
+		पूर्ण
 
 		/* populate checksum, VLAN, and protocol */
 		ixgbevf_process_skb_fields(rx_ring, rx_desc, skb);
 
 		ixgbevf_rx_skb(q_vector, skb);
 
-		/* reset skb pointer */
-		skb = NULL;
+		/* reset skb poपूर्णांकer */
+		skb = शून्य;
 
 		/* update budget accounting */
 		total_rx_packets++;
-	}
+	पूर्ण
 
-	/* place incomplete frames back on ring for completion */
+	/* place incomplete frames back on ring क्रम completion */
 	rx_ring->skb = skb;
 
-	if (xdp_xmit) {
-		struct ixgbevf_ring *xdp_ring =
+	अगर (xdp_xmit) अणु
+		काष्ठा ixgbevf_ring *xdp_ring =
 			adapter->xdp_ring[rx_ring->queue_index];
 
-		/* Force memory writes to complete before letting h/w
+		/* Force memory ग_लिखोs to complete beक्रमe letting h/w
 		 * know there are new descriptors to fetch.
 		 */
 		wmb();
-		ixgbevf_write_tail(xdp_ring, xdp_ring->next_to_use);
-	}
+		ixgbevf_ग_लिखो_tail(xdp_ring, xdp_ring->next_to_use);
+	पूर्ण
 
 	u64_stats_update_begin(&rx_ring->syncp);
 	rx_ring->stats.packets += total_rx_packets;
@@ -1258,214 +1259,214 @@ static int ixgbevf_clean_rx_irq(struct ixgbevf_q_vector *q_vector,
 	q_vector->rx.total_packets += total_rx_packets;
 	q_vector->rx.total_bytes += total_rx_bytes;
 
-	return total_rx_packets;
-}
+	वापस total_rx_packets;
+पूर्ण
 
 /**
  * ixgbevf_poll - NAPI polling calback
- * @napi: napi struct with our devices info in it
- * @budget: amount of work driver is allowed to do this pass, in packets
+ * @napi: napi काष्ठा with our devices info in it
+ * @budget: amount of work driver is allowed to करो this pass, in packets
  *
  * This function will clean more than one or more rings associated with a
  * q_vector.
  **/
-static int ixgbevf_poll(struct napi_struct *napi, int budget)
-{
-	struct ixgbevf_q_vector *q_vector =
-		container_of(napi, struct ixgbevf_q_vector, napi);
-	struct ixgbevf_adapter *adapter = q_vector->adapter;
-	struct ixgbevf_ring *ring;
-	int per_ring_budget, work_done = 0;
+अटल पूर्णांक ixgbevf_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा ixgbevf_q_vector *q_vector =
+		container_of(napi, काष्ठा ixgbevf_q_vector, napi);
+	काष्ठा ixgbevf_adapter *adapter = q_vector->adapter;
+	काष्ठा ixgbevf_ring *ring;
+	पूर्णांक per_ring_budget, work_करोne = 0;
 	bool clean_complete = true;
 
-	ixgbevf_for_each_ring(ring, q_vector->tx) {
-		if (!ixgbevf_clean_tx_irq(q_vector, ring, budget))
+	ixgbevf_क्रम_each_ring(ring, q_vector->tx) अणु
+		अगर (!ixgbevf_clean_tx_irq(q_vector, ring, budget))
 			clean_complete = false;
-	}
+	पूर्ण
 
-	if (budget <= 0)
-		return budget;
+	अगर (budget <= 0)
+		वापस budget;
 
-	/* attempt to distribute budget to each queue fairly, but don't allow
-	 * the budget to go below 1 because we'll exit polling
+	/* attempt to distribute budget to each queue fairly, but करोn't allow
+	 * the budget to go below 1 because we'll निकास polling
 	 */
-	if (q_vector->rx.count > 1)
+	अगर (q_vector->rx.count > 1)
 		per_ring_budget = max(budget/q_vector->rx.count, 1);
-	else
+	अन्यथा
 		per_ring_budget = budget;
 
-	ixgbevf_for_each_ring(ring, q_vector->rx) {
-		int cleaned = ixgbevf_clean_rx_irq(q_vector, ring,
+	ixgbevf_क्रम_each_ring(ring, q_vector->rx) अणु
+		पूर्णांक cleaned = ixgbevf_clean_rx_irq(q_vector, ring,
 						   per_ring_budget);
-		work_done += cleaned;
-		if (cleaned >= per_ring_budget)
+		work_करोne += cleaned;
+		अगर (cleaned >= per_ring_budget)
 			clean_complete = false;
-	}
+	पूर्ण
 
-	/* If all work not completed, return budget and keep polling */
-	if (!clean_complete)
-		return budget;
+	/* If all work not completed, वापस budget and keep polling */
+	अगर (!clean_complete)
+		वापस budget;
 
-	/* Exit the polling mode, but don't re-enable interrupts if stack might
+	/* Exit the polling mode, but करोn't re-enable पूर्णांकerrupts अगर stack might
 	 * poll us due to busy-polling
 	 */
-	if (likely(napi_complete_done(napi, work_done))) {
-		if (adapter->rx_itr_setting == 1)
+	अगर (likely(napi_complete_करोne(napi, work_करोne))) अणु
+		अगर (adapter->rx_itr_setting == 1)
 			ixgbevf_set_itr(q_vector);
-		if (!test_bit(__IXGBEVF_DOWN, &adapter->state) &&
+		अगर (!test_bit(__IXGBEVF_DOWN, &adapter->state) &&
 		    !test_bit(__IXGBEVF_REMOVING, &adapter->state))
 			ixgbevf_irq_enable_queues(adapter,
 						  BIT(q_vector->v_idx));
-	}
+	पूर्ण
 
-	return min(work_done, budget - 1);
-}
+	वापस min(work_करोne, budget - 1);
+पूर्ण
 
 /**
- * ixgbevf_write_eitr - write VTEITR register in hardware specific way
- * @q_vector: structure containing interrupt and ring information
+ * ixgbevf_ग_लिखो_eitr - ग_लिखो VTEITR रेजिस्टर in hardware specअगरic way
+ * @q_vector: काष्ठाure containing पूर्णांकerrupt and ring inक्रमmation
  **/
-void ixgbevf_write_eitr(struct ixgbevf_q_vector *q_vector)
-{
-	struct ixgbevf_adapter *adapter = q_vector->adapter;
-	struct ixgbe_hw *hw = &adapter->hw;
-	int v_idx = q_vector->v_idx;
+व्योम ixgbevf_ग_लिखो_eitr(काष्ठा ixgbevf_q_vector *q_vector)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = q_vector->adapter;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक v_idx = q_vector->v_idx;
 	u32 itr_reg = q_vector->itr & IXGBE_MAX_EITR;
 
-	/* set the WDIS bit to not clear the timer bits and cause an
-	 * immediate assertion of the interrupt
+	/* set the WDIS bit to not clear the समयr bits and cause an
+	 * immediate निश्चितion of the पूर्णांकerrupt
 	 */
 	itr_reg |= IXGBE_EITR_CNT_WDIS;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEITR(v_idx), itr_reg);
-}
+पूर्ण
 
 /**
  * ixgbevf_configure_msix - Configure MSI-X hardware
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * ixgbevf_configure_msix sets up the hardware to properly generate MSI-X
- * interrupts.
+ * पूर्णांकerrupts.
  **/
-static void ixgbevf_configure_msix(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbevf_q_vector *q_vector;
-	int q_vectors, v_idx;
+अटल व्योम ixgbevf_configure_msix(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbevf_q_vector *q_vector;
+	पूर्णांक q_vectors, v_idx;
 
 	q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
 	adapter->eims_enable_mask = 0;
 
 	/* Populate the IVAR table and set the ITR values to the
-	 * corresponding register.
+	 * corresponding रेजिस्टर.
 	 */
-	for (v_idx = 0; v_idx < q_vectors; v_idx++) {
-		struct ixgbevf_ring *ring;
+	क्रम (v_idx = 0; v_idx < q_vectors; v_idx++) अणु
+		काष्ठा ixgbevf_ring *ring;
 
 		q_vector = adapter->q_vector[v_idx];
 
-		ixgbevf_for_each_ring(ring, q_vector->rx)
+		ixgbevf_क्रम_each_ring(ring, q_vector->rx)
 			ixgbevf_set_ivar(adapter, 0, ring->reg_idx, v_idx);
 
-		ixgbevf_for_each_ring(ring, q_vector->tx)
+		ixgbevf_क्रम_each_ring(ring, q_vector->tx)
 			ixgbevf_set_ivar(adapter, 1, ring->reg_idx, v_idx);
 
-		if (q_vector->tx.ring && !q_vector->rx.ring) {
+		अगर (q_vector->tx.ring && !q_vector->rx.ring) अणु
 			/* Tx only vector */
-			if (adapter->tx_itr_setting == 1)
+			अगर (adapter->tx_itr_setting == 1)
 				q_vector->itr = IXGBE_12K_ITR;
-			else
+			अन्यथा
 				q_vector->itr = adapter->tx_itr_setting;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Rx or Rx/Tx vector */
-			if (adapter->rx_itr_setting == 1)
+			अगर (adapter->rx_itr_setting == 1)
 				q_vector->itr = IXGBE_20K_ITR;
-			else
+			अन्यथा
 				q_vector->itr = adapter->rx_itr_setting;
-		}
+		पूर्ण
 
 		/* add q_vector eims value to global eims_enable_mask */
 		adapter->eims_enable_mask |= BIT(v_idx);
 
-		ixgbevf_write_eitr(q_vector);
-	}
+		ixgbevf_ग_लिखो_eitr(q_vector);
+	पूर्ण
 
 	ixgbevf_set_ivar(adapter, -1, 1, v_idx);
 	/* setup eims_other and add value to global eims_enable_mask */
 	adapter->eims_other = BIT(v_idx);
 	adapter->eims_enable_mask |= adapter->eims_other;
-}
+पूर्ण
 
-enum latency_range {
+क्रमागत latency_range अणु
 	lowest_latency = 0,
 	low_latency = 1,
 	bulk_latency = 2,
 	latency_invalid = 255
-};
+पूर्ण;
 
 /**
  * ixgbevf_update_itr - update the dynamic ITR value based on statistics
- * @q_vector: structure containing interrupt and ring information
- * @ring_container: structure containing ring performance data
+ * @q_vector: काष्ठाure containing पूर्णांकerrupt and ring inक्रमmation
+ * @ring_container: काष्ठाure containing ring perक्रमmance data
  *
  * Stores a new ITR value based on packets and byte
- * counts during the last interrupt.  The advantage of per interrupt
- * computation is faster updates and more accurate ITR for the current
+ * counts during the last पूर्णांकerrupt.  The advantage of per पूर्णांकerrupt
+ * computation is faster updates and more accurate ITR क्रम the current
  * traffic pattern.  Constants in this function were computed
  * based on theoretical maximum wire speed and thresholds were set based
- * on testing data as well as attempting to minimize response time
- * while increasing bulk throughput.
+ * on testing data as well as attempting to minimize response समय
+ * जबतक increasing bulk throughput.
  **/
-static void ixgbevf_update_itr(struct ixgbevf_q_vector *q_vector,
-			       struct ixgbevf_ring_container *ring_container)
-{
-	int bytes = ring_container->total_bytes;
-	int packets = ring_container->total_packets;
-	u32 timepassed_us;
-	u64 bytes_perint;
+अटल व्योम ixgbevf_update_itr(काष्ठा ixgbevf_q_vector *q_vector,
+			       काष्ठा ixgbevf_ring_container *ring_container)
+अणु
+	पूर्णांक bytes = ring_container->total_bytes;
+	पूर्णांक packets = ring_container->total_packets;
+	u32 समयpassed_us;
+	u64 bytes_perपूर्णांक;
 	u8 itr_setting = ring_container->itr;
 
-	if (packets == 0)
-		return;
+	अगर (packets == 0)
+		वापस;
 
 	/* simple throttle rate management
-	 *    0-20MB/s lowest (100000 ints/s)
-	 *   20-100MB/s low   (20000 ints/s)
-	 *  100-1249MB/s bulk (12000 ints/s)
+	 *    0-20MB/s lowest (100000 पूर्णांकs/s)
+	 *   20-100MB/s low   (20000 पूर्णांकs/s)
+	 *  100-1249MB/s bulk (12000 पूर्णांकs/s)
 	 */
-	/* what was last interrupt timeslice? */
-	timepassed_us = q_vector->itr >> 2;
-	if (timepassed_us == 0)
-		return;
+	/* what was last पूर्णांकerrupt बारlice? */
+	समयpassed_us = q_vector->itr >> 2;
+	अगर (समयpassed_us == 0)
+		वापस;
 
-	bytes_perint = bytes / timepassed_us; /* bytes/usec */
+	bytes_perपूर्णांक = bytes / समयpassed_us; /* bytes/usec */
 
-	switch (itr_setting) {
-	case lowest_latency:
-		if (bytes_perint > 10)
+	चयन (itr_setting) अणु
+	हाल lowest_latency:
+		अगर (bytes_perपूर्णांक > 10)
 			itr_setting = low_latency;
-		break;
-	case low_latency:
-		if (bytes_perint > 20)
+		अवरोध;
+	हाल low_latency:
+		अगर (bytes_perपूर्णांक > 20)
 			itr_setting = bulk_latency;
-		else if (bytes_perint <= 10)
+		अन्यथा अगर (bytes_perपूर्णांक <= 10)
 			itr_setting = lowest_latency;
-		break;
-	case bulk_latency:
-		if (bytes_perint <= 20)
+		अवरोध;
+	हाल bulk_latency:
+		अगर (bytes_perपूर्णांक <= 20)
 			itr_setting = low_latency;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* clear work counters since we have the values we need */
 	ring_container->total_bytes = 0;
 	ring_container->total_packets = 0;
 
-	/* write updated itr to ring container */
+	/* ग_लिखो updated itr to ring container */
 	ring_container->itr = itr_setting;
-}
+पूर्ण
 
-static void ixgbevf_set_itr(struct ixgbevf_q_vector *q_vector)
-{
+अटल व्योम ixgbevf_set_itr(काष्ठा ixgbevf_q_vector *q_vector)
+अणु
 	u32 new_itr = q_vector->itr;
 	u8 current_itr;
 
@@ -1474,37 +1475,37 @@ static void ixgbevf_set_itr(struct ixgbevf_q_vector *q_vector)
 
 	current_itr = max(q_vector->rx.itr, q_vector->tx.itr);
 
-	switch (current_itr) {
+	चयन (current_itr) अणु
 	/* counts and packets in update_itr are dependent on these numbers */
-	case lowest_latency:
+	हाल lowest_latency:
 		new_itr = IXGBE_100K_ITR;
-		break;
-	case low_latency:
+		अवरोध;
+	हाल low_latency:
 		new_itr = IXGBE_20K_ITR;
-		break;
-	case bulk_latency:
+		अवरोध;
+	हाल bulk_latency:
 		new_itr = IXGBE_12K_ITR;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (new_itr != q_vector->itr) {
-		/* do an exponential smoothing */
+	अगर (new_itr != q_vector->itr) अणु
+		/* करो an exponential smoothing */
 		new_itr = (10 * new_itr * q_vector->itr) /
 			  ((9 * new_itr) + q_vector->itr);
 
 		/* save the algorithm value here */
 		q_vector->itr = new_itr;
 
-		ixgbevf_write_eitr(q_vector);
-	}
-}
+		ixgbevf_ग_लिखो_eitr(q_vector);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t ixgbevf_msix_other(int irq, void *data)
-{
-	struct ixgbevf_adapter *adapter = data;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल irqवापस_t ixgbevf_msix_other(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = data;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	hw->mac.get_link_status = 1;
 
@@ -1512,146 +1513,146 @@ static irqreturn_t ixgbevf_msix_other(int irq, void *data)
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, adapter->eims_other);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * ixgbevf_msix_clean_rings - single unshared vector rx clean (all queues)
  * @irq: unused
- * @data: pointer to our q_vector struct for this interrupt vector
+ * @data: poपूर्णांकer to our q_vector काष्ठा क्रम this पूर्णांकerrupt vector
  **/
-static irqreturn_t ixgbevf_msix_clean_rings(int irq, void *data)
-{
-	struct ixgbevf_q_vector *q_vector = data;
+अटल irqवापस_t ixgbevf_msix_clean_rings(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ixgbevf_q_vector *q_vector = data;
 
-	/* EIAM disabled interrupts (on this vector) for us */
-	if (q_vector->rx.ring || q_vector->tx.ring)
+	/* EIAM disabled पूर्णांकerrupts (on this vector) क्रम us */
+	अगर (q_vector->rx.ring || q_vector->tx.ring)
 		napi_schedule_irqoff(&q_vector->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * ixgbevf_request_msix_irqs - Initialize MSI-X interrupts
- * @adapter: board private structure
+ * ixgbevf_request_msix_irqs - Initialize MSI-X पूर्णांकerrupts
+ * @adapter: board निजी काष्ठाure
  *
  * ixgbevf_request_msix_irqs allocates MSI-X vectors and requests
- * interrupts from the kernel.
+ * पूर्णांकerrupts from the kernel.
  **/
-static int ixgbevf_request_msix_irqs(struct ixgbevf_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	int q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
-	unsigned int ri = 0, ti = 0;
-	int vector, err;
+अटल पूर्णांक ixgbevf_request_msix_irqs(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
+	अचिन्हित पूर्णांक ri = 0, ti = 0;
+	पूर्णांक vector, err;
 
-	for (vector = 0; vector < q_vectors; vector++) {
-		struct ixgbevf_q_vector *q_vector = adapter->q_vector[vector];
-		struct msix_entry *entry = &adapter->msix_entries[vector];
+	क्रम (vector = 0; vector < q_vectors; vector++) अणु
+		काष्ठा ixgbevf_q_vector *q_vector = adapter->q_vector[vector];
+		काष्ठा msix_entry *entry = &adapter->msix_entries[vector];
 
-		if (q_vector->tx.ring && q_vector->rx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name),
+		अगर (q_vector->tx.ring && q_vector->rx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name),
 				 "%s-TxRx-%u", netdev->name, ri++);
 			ti++;
-		} else if (q_vector->rx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name),
+		पूर्ण अन्यथा अगर (q_vector->rx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name),
 				 "%s-rx-%u", netdev->name, ri++);
-		} else if (q_vector->tx.ring) {
-			snprintf(q_vector->name, sizeof(q_vector->name),
+		पूर्ण अन्यथा अगर (q_vector->tx.ring) अणु
+			snम_लिखो(q_vector->name, माप(q_vector->name),
 				 "%s-tx-%u", netdev->name, ti++);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* skip this unused q_vector */
-			continue;
-		}
+			जारी;
+		पूर्ण
 		err = request_irq(entry->vector, &ixgbevf_msix_clean_rings, 0,
 				  q_vector->name, q_vector);
-		if (err) {
+		अगर (err) अणु
 			hw_dbg(&adapter->hw,
 			       "request_irq failed for MSIX interrupt Error: %d\n",
 			       err);
-			goto free_queue_irqs;
-		}
-	}
+			जाओ मुक्त_queue_irqs;
+		पूर्ण
+	पूर्ण
 
 	err = request_irq(adapter->msix_entries[vector].vector,
 			  &ixgbevf_msix_other, 0, netdev->name, adapter);
-	if (err) {
+	अगर (err) अणु
 		hw_dbg(&adapter->hw, "request_irq for msix_other failed: %d\n",
 		       err);
-		goto free_queue_irqs;
-	}
+		जाओ मुक्त_queue_irqs;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_queue_irqs:
-	while (vector) {
+मुक्त_queue_irqs:
+	जबतक (vector) अणु
 		vector--;
-		free_irq(adapter->msix_entries[vector].vector,
+		मुक्त_irq(adapter->msix_entries[vector].vector,
 			 adapter->q_vector[vector]);
-	}
-	/* This failure is non-recoverable - it indicates the system is
+	पूर्ण
+	/* This failure is non-recoverable - it indicates the प्रणाली is
 	 * out of MSIX vector resources and the VF driver cannot run
 	 * without them.  Set the number of msix vectors to zero
 	 * indicating that not enough can be allocated.  The error
-	 * will be returned to the user indicating device open failed.
-	 * Any further attempts to force the driver to open will also
+	 * will be वापसed to the user indicating device खोलो failed.
+	 * Any further attempts to क्रमce the driver to खोलो will also
 	 * fail.  The only way to recover is to unload the driver and
-	 * reload it again.  If the system has recovered some MSIX
+	 * reload it again.  If the प्रणाली has recovered some MSIX
 	 * vectors then it may succeed.
 	 */
 	adapter->num_msix_vectors = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ixgbevf_request_irq - initialize interrupts
- * @adapter: board private structure
+ * ixgbevf_request_irq - initialize पूर्णांकerrupts
+ * @adapter: board निजी काष्ठाure
  *
- * Attempts to configure interrupts using the best available
+ * Attempts to configure पूर्णांकerrupts using the best available
  * capabilities of the hardware and kernel.
  **/
-static int ixgbevf_request_irq(struct ixgbevf_adapter *adapter)
-{
-	int err = ixgbevf_request_msix_irqs(adapter);
+अटल पूर्णांक ixgbevf_request_irq(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक err = ixgbevf_request_msix_irqs(adapter);
 
-	if (err)
+	अगर (err)
 		hw_dbg(&adapter->hw, "request_irq failed, Error %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ixgbevf_free_irq(struct ixgbevf_adapter *adapter)
-{
-	int i, q_vectors;
+अटल व्योम ixgbevf_मुक्त_irq(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक i, q_vectors;
 
-	if (!adapter->msix_entries)
-		return;
+	अगर (!adapter->msix_entries)
+		वापस;
 
 	q_vectors = adapter->num_msix_vectors;
 	i = q_vectors - 1;
 
-	free_irq(adapter->msix_entries[i].vector, adapter);
+	मुक्त_irq(adapter->msix_entries[i].vector, adapter);
 	i--;
 
-	for (; i >= 0; i--) {
-		/* free only the irqs that were actually requested */
-		if (!adapter->q_vector[i]->rx.ring &&
+	क्रम (; i >= 0; i--) अणु
+		/* मुक्त only the irqs that were actually requested */
+		अगर (!adapter->q_vector[i]->rx.ring &&
 		    !adapter->q_vector[i]->tx.ring)
-			continue;
+			जारी;
 
-		free_irq(adapter->msix_entries[i].vector,
+		मुक्त_irq(adapter->msix_entries[i].vector,
 			 adapter->q_vector[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbevf_irq_disable - Mask off interrupt generation on the NIC
- * @adapter: board private structure
+ * ixgbevf_irq_disable - Mask off पूर्णांकerrupt generation on the NIC
+ * @adapter: board निजी काष्ठाure
  **/
-static inline void ixgbevf_irq_disable(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+अटल अंतरभूत व्योम ixgbevf_irq_disable(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, 0);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMC, ~0);
@@ -1659,49 +1660,49 @@ static inline void ixgbevf_irq_disable(struct ixgbevf_adapter *adapter)
 
 	IXGBE_WRITE_FLUSH(hw);
 
-	for (i = 0; i < adapter->num_msix_vectors; i++)
+	क्रम (i = 0; i < adapter->num_msix_vectors; i++)
 		synchronize_irq(adapter->msix_entries[i].vector);
-}
+पूर्ण
 
 /**
- * ixgbevf_irq_enable - Enable default interrupt generation settings
- * @adapter: board private structure
+ * ixgbevf_irq_enable - Enable शेष पूर्णांकerrupt generation settings
+ * @adapter: board निजी काष्ठाure
  **/
-static inline void ixgbevf_irq_enable(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल अंतरभूत व्योम ixgbevf_irq_enable(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAM, adapter->eims_enable_mask);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIAC, adapter->eims_enable_mask);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, adapter->eims_enable_mask);
-}
+पूर्ण
 
 /**
  * ixgbevf_configure_tx_ring - Configure 82599 VF Tx ring after Reset
- * @adapter: board private structure
- * @ring: structure containing ring specific data
+ * @adapter: board निजी काष्ठाure
+ * @ring: काष्ठाure containing ring specअगरic data
  *
  * Configure the Tx descriptor ring after a reset.
  **/
-static void ixgbevf_configure_tx_ring(struct ixgbevf_adapter *adapter,
-				      struct ixgbevf_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_configure_tx_ring(काष्ठा ixgbevf_adapter *adapter,
+				      काष्ठा ixgbevf_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u64 tdba = ring->dma;
-	int wait_loop = 10;
+	पूर्णांक रुको_loop = 10;
 	u32 txdctl = IXGBE_TXDCTL_ENABLE;
 	u8 reg_idx = ring->reg_idx;
 
-	/* disable queue to avoid issues while updating state */
+	/* disable queue to aव्योम issues जबतक updating state */
 	IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(reg_idx), IXGBE_TXDCTL_SWFLSH);
 	IXGBE_WRITE_FLUSH(hw);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFTDBAL(reg_idx), tdba & DMA_BIT_MASK(32));
 	IXGBE_WRITE_REG(hw, IXGBE_VFTDBAH(reg_idx), tdba >> 32);
 	IXGBE_WRITE_REG(hw, IXGBE_VFTDLEN(reg_idx),
-			ring->count * sizeof(union ixgbe_adv_tx_desc));
+			ring->count * माप(जोड़ ixgbe_adv_tx_desc));
 
-	/* disable head writeback */
+	/* disable head ग_लिखोback */
 	IXGBE_WRITE_REG(hw, IXGBE_VFTDWBAH(reg_idx), 0);
 	IXGBE_WRITE_REG(hw, IXGBE_VFTDWBAL(reg_idx), 0);
 
@@ -1710,7 +1711,7 @@ static void ixgbevf_configure_tx_ring(struct ixgbevf_adapter *adapter,
 			(IXGBE_DCA_TXCTRL_DESC_RRO_EN |
 			 IXGBE_DCA_TXCTRL_DATA_RRO_EN));
 
-	/* reset head and tail pointers */
+	/* reset head and tail poपूर्णांकers */
 	IXGBE_WRITE_REG(hw, IXGBE_VFTDH(reg_idx), 0);
 	IXGBE_WRITE_REG(hw, IXGBE_VFTDT(reg_idx), 0);
 	ring->tail = adapter->io_addr + IXGBE_VFTDT(reg_idx);
@@ -1719,181 +1720,181 @@ static void ixgbevf_configure_tx_ring(struct ixgbevf_adapter *adapter,
 	ring->next_to_clean = 0;
 	ring->next_to_use = 0;
 
-	/* In order to avoid issues WTHRESH + PTHRESH should always be equal
+	/* In order to aव्योम issues WTHRESH + PTHRESH should always be equal
 	 * to or less than the number of on chip descriptors, which is
 	 * currently 40.
 	 */
 	txdctl |= (8 << 16);    /* WTHRESH = 8 */
 
-	/* Setting PTHRESH to 32 both improves performance */
+	/* Setting PTHRESH to 32 both improves perक्रमmance */
 	txdctl |= (1u << 8) |    /* HTHRESH = 1 */
 		   32;           /* PTHRESH = 32 */
 
 	/* reinitialize tx_buffer_info */
-	memset(ring->tx_buffer_info, 0,
-	       sizeof(struct ixgbevf_tx_buffer) * ring->count);
+	स_रखो(ring->tx_buffer_info, 0,
+	       माप(काष्ठा ixgbevf_tx_buffer) * ring->count);
 
 	clear_bit(__IXGBEVF_HANG_CHECK_ARMED, &ring->state);
 	clear_bit(__IXGBEVF_TX_XDP_RING_PRIMED, &ring->state);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(reg_idx), txdctl);
 
-	/* poll to verify queue is enabled */
-	do {
+	/* poll to verअगरy queue is enabled */
+	करो अणु
 		usleep_range(1000, 2000);
 		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(reg_idx));
-	}  while (--wait_loop && !(txdctl & IXGBE_TXDCTL_ENABLE));
-	if (!wait_loop)
+	पूर्ण  जबतक (--रुको_loop && !(txdctl & IXGBE_TXDCTL_ENABLE));
+	अगर (!रुको_loop)
 		hw_dbg(hw, "Could not enable Tx Queue %d\n", reg_idx);
-}
+पूर्ण
 
 /**
  * ixgbevf_configure_tx - Configure 82599 VF Transmit Unit after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * Configure the Tx unit of the MAC after a reset.
  **/
-static void ixgbevf_configure_tx(struct ixgbevf_adapter *adapter)
-{
+अटल व्योम ixgbevf_configure_tx(काष्ठा ixgbevf_adapter *adapter)
+अणु
 	u32 i;
 
-	/* Setup the HW Tx Head and Tail descriptor pointers */
-	for (i = 0; i < adapter->num_tx_queues; i++)
+	/* Setup the HW Tx Head and Tail descriptor poपूर्णांकers */
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
 		ixgbevf_configure_tx_ring(adapter, adapter->tx_ring[i]);
-	for (i = 0; i < adapter->num_xdp_queues; i++)
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
 		ixgbevf_configure_tx_ring(adapter, adapter->xdp_ring[i]);
-}
+पूर्ण
 
-#define IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT	2
+#घोषणा IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT	2
 
-static void ixgbevf_configure_srrctl(struct ixgbevf_adapter *adapter,
-				     struct ixgbevf_ring *ring, int index)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_configure_srrctl(काष्ठा ixgbevf_adapter *adapter,
+				     काष्ठा ixgbevf_ring *ring, पूर्णांक index)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 srrctl;
 
 	srrctl = IXGBE_SRRCTL_DROP_EN;
 
 	srrctl |= IXGBEVF_RX_HDR_SIZE << IXGBE_SRRCTL_BSIZEHDRSIZE_SHIFT;
-	if (ring_uses_large_buffer(ring))
+	अगर (ring_uses_large_buffer(ring))
 		srrctl |= IXGBEVF_RXBUFFER_3072 >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
-	else
+	अन्यथा
 		srrctl |= IXGBEVF_RXBUFFER_2048 >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
 	srrctl |= IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFSRRCTL(index), srrctl);
-}
+पूर्ण
 
-static void ixgbevf_setup_psrtype(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_setup_psrtype(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	/* PSRTYPE must be initialized in 82599 */
 	u32 psrtype = IXGBE_PSRTYPE_TCPHDR | IXGBE_PSRTYPE_UDPHDR |
 		      IXGBE_PSRTYPE_IPV4HDR | IXGBE_PSRTYPE_IPV6HDR |
 		      IXGBE_PSRTYPE_L2HDR;
 
-	if (adapter->num_rx_queues > 1)
+	अगर (adapter->num_rx_queues > 1)
 		psrtype |= BIT(29);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFPSRTYPE, psrtype);
-}
+पूर्ण
 
-#define IXGBEVF_MAX_RX_DESC_POLL 10
-static void ixgbevf_disable_rx_queue(struct ixgbevf_adapter *adapter,
-				     struct ixgbevf_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int wait_loop = IXGBEVF_MAX_RX_DESC_POLL;
+#घोषणा IXGBEVF_MAX_RX_DESC_POLL 10
+अटल व्योम ixgbevf_disable_rx_queue(काष्ठा ixgbevf_adapter *adapter,
+				     काष्ठा ixgbevf_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक रुको_loop = IXGBEVF_MAX_RX_DESC_POLL;
 	u32 rxdctl;
 	u8 reg_idx = ring->reg_idx;
 
-	if (IXGBE_REMOVED(hw->hw_addr))
-		return;
+	अगर (IXGBE_REMOVED(hw->hw_addr))
+		वापस;
 	rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(reg_idx));
 	rxdctl &= ~IXGBE_RXDCTL_ENABLE;
 
-	/* write value back with RXDCTL.ENABLE bit cleared */
+	/* ग_लिखो value back with RXDCTL.ENABLE bit cleared */
 	IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(reg_idx), rxdctl);
 
 	/* the hardware may take up to 100us to really disable the Rx queue */
-	do {
+	करो अणु
 		udelay(10);
 		rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(reg_idx));
-	} while (--wait_loop && (rxdctl & IXGBE_RXDCTL_ENABLE));
+	पूर्ण जबतक (--रुको_loop && (rxdctl & IXGBE_RXDCTL_ENABLE));
 
-	if (!wait_loop)
+	अगर (!रुको_loop)
 		pr_err("RXDCTL.ENABLE queue %d not cleared while polling\n",
 		       reg_idx);
-}
+पूर्ण
 
-static void ixgbevf_rx_desc_queue_enable(struct ixgbevf_adapter *adapter,
-					 struct ixgbevf_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	int wait_loop = IXGBEVF_MAX_RX_DESC_POLL;
+अटल व्योम ixgbevf_rx_desc_queue_enable(काष्ठा ixgbevf_adapter *adapter,
+					 काष्ठा ixgbevf_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक रुको_loop = IXGBEVF_MAX_RX_DESC_POLL;
 	u32 rxdctl;
 	u8 reg_idx = ring->reg_idx;
 
-	if (IXGBE_REMOVED(hw->hw_addr))
-		return;
-	do {
+	अगर (IXGBE_REMOVED(hw->hw_addr))
+		वापस;
+	करो अणु
 		usleep_range(1000, 2000);
 		rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(reg_idx));
-	} while (--wait_loop && !(rxdctl & IXGBE_RXDCTL_ENABLE));
+	पूर्ण जबतक (--रुको_loop && !(rxdctl & IXGBE_RXDCTL_ENABLE));
 
-	if (!wait_loop)
+	अगर (!रुको_loop)
 		pr_err("RXDCTL.ENABLE queue %d not set while polling\n",
 		       reg_idx);
-}
+पूर्ण
 
 /**
  * ixgbevf_init_rss_key - Initialize adapter RSS key
  * @adapter: device handle
  *
- * Allocates and initializes the RSS key if it is not allocated.
+ * Allocates and initializes the RSS key अगर it is not allocated.
  **/
-static inline int ixgbevf_init_rss_key(struct ixgbevf_adapter *adapter)
-{
+अटल अंतरभूत पूर्णांक ixgbevf_init_rss_key(काष्ठा ixgbevf_adapter *adapter)
+अणु
 	u32 *rss_key;
 
-	if (!adapter->rss_key) {
+	अगर (!adapter->rss_key) अणु
 		rss_key = kzalloc(IXGBEVF_RSS_HASH_KEY_SIZE, GFP_KERNEL);
-		if (unlikely(!rss_key))
-			return -ENOMEM;
+		अगर (unlikely(!rss_key))
+			वापस -ENOMEM;
 
 		netdev_rss_key_fill(rss_key, IXGBEVF_RSS_HASH_KEY_SIZE);
 		adapter->rss_key = rss_key;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ixgbevf_setup_vfmrqc(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_setup_vfmrqc(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 vfmrqc = 0, vfreta = 0;
 	u16 rss_i = adapter->num_rx_queues;
 	u8 i, j;
 
 	/* Fill out hash function seeds */
-	for (i = 0; i < IXGBEVF_VFRSSRK_REGS; i++)
+	क्रम (i = 0; i < IXGBEVF_VFRSSRK_REGS; i++)
 		IXGBE_WRITE_REG(hw, IXGBE_VFRSSRK(i), *(adapter->rss_key + i));
 
-	for (i = 0, j = 0; i < IXGBEVF_X550_VFRETA_SIZE; i++, j++) {
-		if (j == rss_i)
+	क्रम (i = 0, j = 0; i < IXGBEVF_X550_VFRETA_SIZE; i++, j++) अणु
+		अगर (j == rss_i)
 			j = 0;
 
 		adapter->rss_indir_tbl[i] = j;
 
 		vfreta |= j << (i & 0x3) * 8;
-		if ((i & 3) == 3) {
+		अगर ((i & 3) == 3) अणु
 			IXGBE_WRITE_REG(hw, IXGBE_VFRETA(i >> 2), vfreta);
 			vfreta = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Perform hash on these packet types */
+	/* Perक्रमm hash on these packet types */
 	vfmrqc |= IXGBE_VFMRQC_RSS_FIELD_IPV4 |
 		IXGBE_VFMRQC_RSS_FIELD_IPV4_TCP |
 		IXGBE_VFMRQC_RSS_FIELD_IPV6 |
@@ -1902,44 +1903,44 @@ static void ixgbevf_setup_vfmrqc(struct ixgbevf_adapter *adapter)
 	vfmrqc |= IXGBE_VFMRQC_RSSEN;
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFMRQC, vfmrqc);
-}
+पूर्ण
 
-static void ixgbevf_configure_rx_ring(struct ixgbevf_adapter *adapter,
-				      struct ixgbevf_ring *ring)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	union ixgbe_adv_rx_desc *rx_desc;
+अटल व्योम ixgbevf_configure_rx_ring(काष्ठा ixgbevf_adapter *adapter,
+				      काष्ठा ixgbevf_ring *ring)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	जोड़ ixgbe_adv_rx_desc *rx_desc;
 	u64 rdba = ring->dma;
 	u32 rxdctl;
 	u8 reg_idx = ring->reg_idx;
 
-	/* disable queue to avoid issues while updating state */
+	/* disable queue to aव्योम issues जबतक updating state */
 	rxdctl = IXGBE_READ_REG(hw, IXGBE_VFRXDCTL(reg_idx));
 	ixgbevf_disable_rx_queue(adapter, ring);
 
 	IXGBE_WRITE_REG(hw, IXGBE_VFRDBAL(reg_idx), rdba & DMA_BIT_MASK(32));
 	IXGBE_WRITE_REG(hw, IXGBE_VFRDBAH(reg_idx), rdba >> 32);
 	IXGBE_WRITE_REG(hw, IXGBE_VFRDLEN(reg_idx),
-			ring->count * sizeof(union ixgbe_adv_rx_desc));
+			ring->count * माप(जोड़ ixgbe_adv_rx_desc));
 
-#ifndef CONFIG_SPARC
+#अगर_अघोषित CONFIG_SPARC
 	/* enable relaxed ordering */
 	IXGBE_WRITE_REG(hw, IXGBE_VFDCA_RXCTRL(reg_idx),
 			IXGBE_DCA_RXCTRL_DESC_RRO_EN);
-#else
+#अन्यथा
 	IXGBE_WRITE_REG(hw, IXGBE_VFDCA_RXCTRL(reg_idx),
 			IXGBE_DCA_RXCTRL_DESC_RRO_EN |
 			IXGBE_DCA_RXCTRL_DATA_WRO_EN);
-#endif
+#पूर्ण_अगर
 
-	/* reset head and tail pointers */
+	/* reset head and tail poपूर्णांकers */
 	IXGBE_WRITE_REG(hw, IXGBE_VFRDH(reg_idx), 0);
 	IXGBE_WRITE_REG(hw, IXGBE_VFRDT(reg_idx), 0);
 	ring->tail = adapter->io_addr + IXGBE_VFRDT(reg_idx);
 
 	/* initialize rx_buffer_info */
-	memset(ring->rx_buffer_info, 0,
-	       sizeof(struct ixgbevf_rx_buffer) * ring->count);
+	स_रखो(ring->rx_buffer_info, 0,
+	       माप(काष्ठा ixgbevf_rx_buffer) * ring->count);
 
 	/* initialize Rx descriptor 0 */
 	rx_desc = IXGBEVF_RX_DESC(ring, 0);
@@ -1952,91 +1953,91 @@ static void ixgbevf_configure_rx_ring(struct ixgbevf_adapter *adapter,
 
 	ixgbevf_configure_srrctl(adapter, ring, reg_idx);
 
-	/* RXDCTL.RLPML does not work on 82599 */
-	if (adapter->hw.mac.type != ixgbe_mac_82599_vf) {
+	/* RXDCTL.RLPML करोes not work on 82599 */
+	अगर (adapter->hw.mac.type != ixgbe_mac_82599_vf) अणु
 		rxdctl &= ~(IXGBE_RXDCTL_RLPMLMASK |
 			    IXGBE_RXDCTL_RLPML_EN);
 
-#if (PAGE_SIZE < 8192)
-		/* Limit the maximum frame size so we don't overrun the skb */
-		if (ring_uses_build_skb(ring) &&
+#अगर (PAGE_SIZE < 8192)
+		/* Limit the maximum frame size so we करोn't overrun the skb */
+		अगर (ring_uses_build_skb(ring) &&
 		    !ring_uses_large_buffer(ring))
 			rxdctl |= IXGBEVF_MAX_FRAME_BUILD_SKB |
 				  IXGBE_RXDCTL_RLPML_EN;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	rxdctl |= IXGBE_RXDCTL_ENABLE | IXGBE_RXDCTL_VME;
 	IXGBE_WRITE_REG(hw, IXGBE_VFRXDCTL(reg_idx), rxdctl);
 
 	ixgbevf_rx_desc_queue_enable(adapter, ring);
 	ixgbevf_alloc_rx_buffers(ring, ixgbevf_desc_unused(ring));
-}
+पूर्ण
 
-static void ixgbevf_set_rx_buffer_len(struct ixgbevf_adapter *adapter,
-				      struct ixgbevf_ring *rx_ring)
-{
-	struct net_device *netdev = adapter->netdev;
-	unsigned int max_frame = netdev->mtu + ETH_HLEN + ETH_FCS_LEN;
+अटल व्योम ixgbevf_set_rx_buffer_len(काष्ठा ixgbevf_adapter *adapter,
+				      काष्ठा ixgbevf_ring *rx_ring)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	अचिन्हित पूर्णांक max_frame = netdev->mtu + ETH_HLEN + ETH_FCS_LEN;
 
 	/* set build_skb and buffer size flags */
 	clear_ring_build_skb_enabled(rx_ring);
 	clear_ring_uses_large_buffer(rx_ring);
 
-	if (adapter->flags & IXGBEVF_FLAGS_LEGACY_RX)
-		return;
+	अगर (adapter->flags & IXGBEVF_FLAGS_LEGACY_RX)
+		वापस;
 
 	set_ring_build_skb_enabled(rx_ring);
 
-	if (PAGE_SIZE < 8192) {
-		if (max_frame <= IXGBEVF_MAX_FRAME_BUILD_SKB)
-			return;
+	अगर (PAGE_SIZE < 8192) अणु
+		अगर (max_frame <= IXGBEVF_MAX_FRAME_BUILD_SKB)
+			वापस;
 
 		set_ring_uses_large_buffer(rx_ring);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * ixgbevf_configure_rx - Configure 82599 VF Receive Unit after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * Configure the Rx unit of the MAC after a reset.
  **/
-static void ixgbevf_configure_rx(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
-	int i, ret;
+अटल व्योम ixgbevf_configure_rx(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक i, ret;
 
 	ixgbevf_setup_psrtype(adapter);
-	if (hw->mac.type >= ixgbe_mac_X550_vf)
+	अगर (hw->mac.type >= ixgbe_mac_X550_vf)
 		ixgbevf_setup_vfmrqc(adapter);
 
 	spin_lock_bh(&adapter->mbx_lock);
-	/* notify the PF of our intent to use this size of frame */
+	/* notअगरy the PF of our पूर्णांकent to use this size of frame */
 	ret = hw->mac.ops.set_rlpml(hw, netdev->mtu + ETH_HLEN + ETH_FCS_LEN);
 	spin_unlock_bh(&adapter->mbx_lock);
-	if (ret)
+	अगर (ret)
 		dev_err(&adapter->pdev->dev,
 			"Failed to set MTU at %d\n", netdev->mtu);
 
-	/* Setup the HW Rx Head and Tail Descriptor Pointers and
+	/* Setup the HW Rx Head and Tail Descriptor Poपूर्णांकers and
 	 * the Base and Length of the Rx Descriptor Ring
 	 */
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct ixgbevf_ring *rx_ring = adapter->rx_ring[i];
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा ixgbevf_ring *rx_ring = adapter->rx_ring[i];
 
 		ixgbevf_set_rx_buffer_len(adapter, rx_ring);
 		ixgbevf_configure_rx_ring(adapter, rx_ring);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ixgbevf_vlan_rx_add_vid(struct net_device *netdev,
+अटल पूर्णांक ixgbevf_vlan_rx_add_vid(काष्ठा net_device *netdev,
 				   __be16 proto, u16 vid)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err;
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
 	spin_lock_bh(&adapter->mbx_lock);
 
@@ -2045,93 +2046,93 @@ static int ixgbevf_vlan_rx_add_vid(struct net_device *netdev,
 
 	spin_unlock_bh(&adapter->mbx_lock);
 
-	/* translate error return types so error makes sense */
-	if (err == IXGBE_ERR_MBX)
-		return -EIO;
+	/* translate error वापस types so error makes sense */
+	अगर (err == IXGBE_ERR_MBX)
+		वापस -EIO;
 
-	if (err == IXGBE_ERR_INVALID_ARGUMENT)
-		return -EACCES;
+	अगर (err == IXGBE_ERR_INVALID_ARGUMENT)
+		वापस -EACCES;
 
 	set_bit(vid, adapter->active_vlans);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ixgbevf_vlan_rx_kill_vid(struct net_device *netdev,
+अटल पूर्णांक ixgbevf_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev,
 				    __be16 proto, u16 vid)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err;
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
 	spin_lock_bh(&adapter->mbx_lock);
 
-	/* remove VID from filter table */
+	/* हटाओ VID from filter table */
 	err = hw->mac.ops.set_vfta(hw, vid, 0, false);
 
 	spin_unlock_bh(&adapter->mbx_lock);
 
 	clear_bit(vid, adapter->active_vlans);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ixgbevf_restore_vlan(struct ixgbevf_adapter *adapter)
-{
+अटल व्योम ixgbevf_restore_vlan(काष्ठा ixgbevf_adapter *adapter)
+अणु
 	u16 vid;
 
-	for_each_set_bit(vid, adapter->active_vlans, VLAN_N_VID)
+	क्रम_each_set_bit(vid, adapter->active_vlans, VLAN_N_VID)
 		ixgbevf_vlan_rx_add_vid(adapter->netdev,
 					htons(ETH_P_8021Q), vid);
-}
+पूर्ण
 
-static int ixgbevf_write_uc_addr_list(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	int count = 0;
+अटल पूर्णांक ixgbevf_ग_लिखो_uc_addr_list(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक count = 0;
 
-	if (!netdev_uc_empty(netdev)) {
-		struct netdev_hw_addr *ha;
+	अगर (!netdev_uc_empty(netdev)) अणु
+		काष्ठा netdev_hw_addr *ha;
 
-		netdev_for_each_uc_addr(ha, netdev) {
+		netdev_क्रम_each_uc_addr(ha, netdev) अणु
 			hw->mac.ops.set_uc_addr(hw, ++count, ha->addr);
 			udelay(200);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* If the list is empty then send message to PF driver to
 		 * clear all MAC VLANs on this VF.
 		 */
-		hw->mac.ops.set_uc_addr(hw, 0, NULL);
-	}
+		hw->mac.ops.set_uc_addr(hw, 0, शून्य);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * ixgbevf_set_rx_mode - Multicast and unicast set
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * The set_rx_method entry point is called whenever the multicast address
- * list, unicast address list or the network interface flags are updated.
- * This routine is responsible for configuring the hardware for proper
+ * The set_rx_method entry poपूर्णांक is called whenever the multicast address
+ * list, unicast address list or the network पूर्णांकerface flags are updated.
+ * This routine is responsible क्रम configuring the hardware क्रम proper
  * multicast mode and configuring requested unicast filters.
  **/
-static void ixgbevf_set_rx_mode(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	unsigned int flags = netdev->flags;
-	int xcast_mode;
+अटल व्योम ixgbevf_set_rx_mode(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	अचिन्हित पूर्णांक flags = netdev->flags;
+	पूर्णांक xcast_mode;
 
 	/* request the most inclusive mode we need */
-	if (flags & IFF_PROMISC)
+	अगर (flags & IFF_PROMISC)
 		xcast_mode = IXGBEVF_XCAST_MODE_PROMISC;
-	else if (flags & IFF_ALLMULTI)
+	अन्यथा अगर (flags & IFF_ALLMULTI)
 		xcast_mode = IXGBEVF_XCAST_MODE_ALLMULTI;
-	else if (flags & (IFF_BROADCAST | IFF_MULTICAST))
+	अन्यथा अगर (flags & (IFF_BROADCAST | IFF_MULTICAST))
 		xcast_mode = IXGBEVF_XCAST_MODE_MULTI;
-	else
+	अन्यथा
 		xcast_mode = IXGBEVF_XCAST_MODE_NONE;
 
 	spin_lock_bh(&adapter->mbx_lock);
@@ -2141,43 +2142,43 @@ static void ixgbevf_set_rx_mode(struct net_device *netdev)
 	/* reprogram multicast list */
 	hw->mac.ops.update_mc_addr_list(hw, netdev);
 
-	ixgbevf_write_uc_addr_list(netdev);
+	ixgbevf_ग_लिखो_uc_addr_list(netdev);
 
 	spin_unlock_bh(&adapter->mbx_lock);
-}
+पूर्ण
 
-static void ixgbevf_napi_enable_all(struct ixgbevf_adapter *adapter)
-{
-	int q_idx;
-	struct ixgbevf_q_vector *q_vector;
-	int q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
+अटल व्योम ixgbevf_napi_enable_all(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक q_idx;
+	काष्ठा ixgbevf_q_vector *q_vector;
+	पूर्णांक q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
 
-	for (q_idx = 0; q_idx < q_vectors; q_idx++) {
+	क्रम (q_idx = 0; q_idx < q_vectors; q_idx++) अणु
 		q_vector = adapter->q_vector[q_idx];
 		napi_enable(&q_vector->napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbevf_napi_disable_all(struct ixgbevf_adapter *adapter)
-{
-	int q_idx;
-	struct ixgbevf_q_vector *q_vector;
-	int q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
+अटल व्योम ixgbevf_napi_disable_all(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक q_idx;
+	काष्ठा ixgbevf_q_vector *q_vector;
+	पूर्णांक q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
 
-	for (q_idx = 0; q_idx < q_vectors; q_idx++) {
+	क्रम (q_idx = 0; q_idx < q_vectors; q_idx++) अणु
 		q_vector = adapter->q_vector[q_idx];
 		napi_disable(&q_vector->napi);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ixgbevf_configure_dcb(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	unsigned int def_q = 0;
-	unsigned int num_tcs = 0;
-	unsigned int num_rx_queues = adapter->num_rx_queues;
-	unsigned int num_tx_queues = adapter->num_tx_queues;
-	int err;
+अटल पूर्णांक ixgbevf_configure_dcb(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	अचिन्हित पूर्णांक def_q = 0;
+	अचिन्हित पूर्णांक num_tcs = 0;
+	अचिन्हित पूर्णांक num_rx_queues = adapter->num_rx_queues;
+	अचिन्हित पूर्णांक num_tx_queues = adapter->num_tx_queues;
+	पूर्णांक err;
 
 	spin_lock_bh(&adapter->mbx_lock);
 
@@ -2186,35 +2187,35 @@ static int ixgbevf_configure_dcb(struct ixgbevf_adapter *adapter)
 
 	spin_unlock_bh(&adapter->mbx_lock);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (num_tcs > 1) {
+	अगर (num_tcs > 1) अणु
 		/* we need only one Tx queue */
 		num_tx_queues = 1;
 
-		/* update default Tx ring register index */
+		/* update शेष Tx ring रेजिस्टर index */
 		adapter->tx_ring[0]->reg_idx = def_q;
 
 		/* we need as many queues as traffic classes */
 		num_rx_queues = num_tcs;
-	}
+	पूर्ण
 
-	/* if we have a bad config abort request queue reset */
-	if ((adapter->num_rx_queues != num_rx_queues) ||
-	    (adapter->num_tx_queues != num_tx_queues)) {
-		/* force mailbox timeout to prevent further messages */
-		hw->mbx.timeout = 0;
+	/* अगर we have a bad config पात request queue reset */
+	अगर ((adapter->num_rx_queues != num_rx_queues) ||
+	    (adapter->num_tx_queues != num_tx_queues)) अणु
+		/* क्रमce mailbox समयout to prevent further messages */
+		hw->mbx.समयout = 0;
 
-		/* wait for watchdog to come around and bail us out */
+		/* रुको क्रम watchकरोg to come around and bail us out */
 		set_bit(__IXGBEVF_QUEUE_RESET_REQUESTED, &adapter->state);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ixgbevf_configure(struct ixgbevf_adapter *adapter)
-{
+अटल व्योम ixgbevf_configure(काष्ठा ixgbevf_adapter *adapter)
+अणु
 	ixgbevf_configure_dcb(adapter);
 
 	ixgbevf_set_rx_mode(adapter->netdev);
@@ -2224,12 +2225,12 @@ static void ixgbevf_configure(struct ixgbevf_adapter *adapter)
 
 	ixgbevf_configure_tx(adapter);
 	ixgbevf_configure_rx(adapter);
-}
+पूर्ण
 
-static void ixgbevf_save_reset_stats(struct ixgbevf_adapter *adapter)
-{
-	/* Only save pre-reset stats if there are some */
-	if (adapter->stats.vfgprc || adapter->stats.vfgptc) {
+अटल व्योम ixgbevf_save_reset_stats(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	/* Only save pre-reset stats अगर there are some */
+	अगर (adapter->stats.vfgprc || adapter->stats.vfgptc) अणु
 		adapter->stats.saved_reset_vfgprc += adapter->stats.vfgprc -
 			adapter->stats.base_vfgprc;
 		adapter->stats.saved_reset_vfgptc += adapter->stats.vfgptc -
@@ -2240,12 +2241,12 @@ static void ixgbevf_save_reset_stats(struct ixgbevf_adapter *adapter)
 			adapter->stats.base_vfgotc;
 		adapter->stats.saved_reset_vfmprc += adapter->stats.vfmprc -
 			adapter->stats.base_vfmprc;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbevf_init_last_counter_stats(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_init_last_counter_stats(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	adapter->stats.last_vfgprc = IXGBE_READ_REG(hw, IXGBE_VFGPRC);
 	adapter->stats.last_vfgorc = IXGBE_READ_REG(hw, IXGBE_VFGORC_LSB);
@@ -2262,104 +2263,104 @@ static void ixgbevf_init_last_counter_stats(struct ixgbevf_adapter *adapter)
 	adapter->stats.base_vfgptc = adapter->stats.last_vfgptc;
 	adapter->stats.base_vfgotc = adapter->stats.last_vfgotc;
 	adapter->stats.base_vfmprc = adapter->stats.last_vfmprc;
-}
+पूर्ण
 
-static void ixgbevf_negotiate_api(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	static const int api[] = {
+अटल व्योम ixgbevf_negotiate_api(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	अटल स्थिर पूर्णांक api[] = अणु
 		ixgbe_mbox_api_14,
 		ixgbe_mbox_api_13,
 		ixgbe_mbox_api_12,
 		ixgbe_mbox_api_11,
 		ixgbe_mbox_api_10,
 		ixgbe_mbox_api_unknown
-	};
-	int err, idx = 0;
+	पूर्ण;
+	पूर्णांक err, idx = 0;
 
 	spin_lock_bh(&adapter->mbx_lock);
 
-	while (api[idx] != ixgbe_mbox_api_unknown) {
+	जबतक (api[idx] != ixgbe_mbox_api_unknown) अणु
 		err = hw->mac.ops.negotiate_api_version(hw, api[idx]);
-		if (!err)
-			break;
+		अगर (!err)
+			अवरोध;
 		idx++;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&adapter->mbx_lock);
-}
+पूर्ण
 
-static void ixgbevf_up_complete(struct ixgbevf_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_up_complete(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
 	ixgbevf_configure_msix(adapter);
 
 	spin_lock_bh(&adapter->mbx_lock);
 
-	if (is_valid_ether_addr(hw->mac.addr))
+	अगर (is_valid_ether_addr(hw->mac.addr))
 		hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0);
-	else
+	अन्यथा
 		hw->mac.ops.set_rar(hw, 0, hw->mac.perm_addr, 0);
 
 	spin_unlock_bh(&adapter->mbx_lock);
 
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(__IXGBEVF_DOWN, &adapter->state);
 	ixgbevf_napi_enable_all(adapter);
 
-	/* clear any pending interrupts, may auto mask */
+	/* clear any pending पूर्णांकerrupts, may स्वतः mask */
 	IXGBE_READ_REG(hw, IXGBE_VTEICR);
 	ixgbevf_irq_enable(adapter);
 
 	/* enable transmits */
-	netif_tx_start_all_queues(netdev);
+	netअगर_tx_start_all_queues(netdev);
 
 	ixgbevf_save_reset_stats(adapter);
 	ixgbevf_init_last_counter_stats(adapter);
 
 	hw->mac.get_link_status = 1;
-	mod_timer(&adapter->service_timer, jiffies);
-}
+	mod_समयr(&adapter->service_समयr, jअगरfies);
+पूर्ण
 
-void ixgbevf_up(struct ixgbevf_adapter *adapter)
-{
+व्योम ixgbevf_up(काष्ठा ixgbevf_adapter *adapter)
+अणु
 	ixgbevf_configure(adapter);
 
 	ixgbevf_up_complete(adapter);
-}
+पूर्ण
 
 /**
  * ixgbevf_clean_rx_ring - Free Rx Buffers per Queue
- * @rx_ring: ring to free buffers from
+ * @rx_ring: ring to मुक्त buffers from
  **/
-static void ixgbevf_clean_rx_ring(struct ixgbevf_ring *rx_ring)
-{
+अटल व्योम ixgbevf_clean_rx_ring(काष्ठा ixgbevf_ring *rx_ring)
+अणु
 	u16 i = rx_ring->next_to_clean;
 
 	/* Free Rx ring sk_buff */
-	if (rx_ring->skb) {
-		dev_kfree_skb(rx_ring->skb);
-		rx_ring->skb = NULL;
-	}
+	अगर (rx_ring->skb) अणु
+		dev_kमुक्त_skb(rx_ring->skb);
+		rx_ring->skb = शून्य;
+	पूर्ण
 
 	/* Free all the Rx ring pages */
-	while (i != rx_ring->next_to_alloc) {
-		struct ixgbevf_rx_buffer *rx_buffer;
+	जबतक (i != rx_ring->next_to_alloc) अणु
+		काष्ठा ixgbevf_rx_buffer *rx_buffer;
 
 		rx_buffer = &rx_ring->rx_buffer_info[i];
 
 		/* Invalidate cache lines that may have been written to by
-		 * device so that we avoid corrupting memory.
+		 * device so that we aव्योम corrupting memory.
 		 */
-		dma_sync_single_range_for_cpu(rx_ring->dev,
+		dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 					      rx_buffer->dma,
 					      rx_buffer->page_offset,
 					      ixgbevf_rx_bufsz(rx_ring),
 					      DMA_FROM_DEVICE);
 
-		/* free resources associated with mapping */
+		/* मुक्त resources associated with mapping */
 		dma_unmap_page_attrs(rx_ring->dev,
 				     rx_buffer->dma,
 				     ixgbevf_rx_pg_size(rx_ring),
@@ -2370,32 +2371,32 @@ static void ixgbevf_clean_rx_ring(struct ixgbevf_ring *rx_ring)
 					rx_buffer->pagecnt_bias);
 
 		i++;
-		if (i == rx_ring->count)
+		अगर (i == rx_ring->count)
 			i = 0;
-	}
+	पूर्ण
 
 	rx_ring->next_to_alloc = 0;
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
-}
+पूर्ण
 
 /**
  * ixgbevf_clean_tx_ring - Free Tx Buffers
  * @tx_ring: ring to be cleaned
  **/
-static void ixgbevf_clean_tx_ring(struct ixgbevf_ring *tx_ring)
-{
+अटल व्योम ixgbevf_clean_tx_ring(काष्ठा ixgbevf_ring *tx_ring)
+अणु
 	u16 i = tx_ring->next_to_clean;
-	struct ixgbevf_tx_buffer *tx_buffer = &tx_ring->tx_buffer_info[i];
+	काष्ठा ixgbevf_tx_buffer *tx_buffer = &tx_ring->tx_buffer_info[i];
 
-	while (i != tx_ring->next_to_use) {
-		union ixgbe_adv_tx_desc *eop_desc, *tx_desc;
+	जबतक (i != tx_ring->next_to_use) अणु
+		जोड़ ixgbe_adv_tx_desc *eop_desc, *tx_desc;
 
 		/* Free all the Tx ring sk_buffs */
-		if (ring_is_xdp(tx_ring))
-			page_frag_free(tx_buffer->data);
-		else
-			dev_kfree_skb_any(tx_buffer->skb);
+		अगर (ring_is_xdp(tx_ring))
+			page_frag_मुक्त(tx_buffer->data);
+		अन्यथा
+			dev_kमुक्त_skb_any(tx_buffer->skb);
 
 		/* unmap skb header data */
 		dma_unmap_single(tx_ring->dev,
@@ -2403,156 +2404,156 @@ static void ixgbevf_clean_tx_ring(struct ixgbevf_ring *tx_ring)
 				 dma_unmap_len(tx_buffer, len),
 				 DMA_TO_DEVICE);
 
-		/* check for eop_desc to determine the end of the packet */
+		/* check क्रम eop_desc to determine the end of the packet */
 		eop_desc = tx_buffer->next_to_watch;
 		tx_desc = IXGBEVF_TX_DESC(tx_ring, i);
 
-		/* unmap remaining buffers */
-		while (tx_desc != eop_desc) {
+		/* unmap reमुख्यing buffers */
+		जबतक (tx_desc != eop_desc) अणु
 			tx_buffer++;
 			tx_desc++;
 			i++;
-			if (unlikely(i == tx_ring->count)) {
+			अगर (unlikely(i == tx_ring->count)) अणु
 				i = 0;
 				tx_buffer = tx_ring->tx_buffer_info;
 				tx_desc = IXGBEVF_TX_DESC(tx_ring, 0);
-			}
+			पूर्ण
 
-			/* unmap any remaining paged data */
-			if (dma_unmap_len(tx_buffer, len))
+			/* unmap any reमुख्यing paged data */
+			अगर (dma_unmap_len(tx_buffer, len))
 				dma_unmap_page(tx_ring->dev,
 					       dma_unmap_addr(tx_buffer, dma),
 					       dma_unmap_len(tx_buffer, len),
 					       DMA_TO_DEVICE);
-		}
+		पूर्ण
 
-		/* move us one more past the eop_desc for start of next pkt */
+		/* move us one more past the eop_desc क्रम start of next pkt */
 		tx_buffer++;
 		i++;
-		if (unlikely(i == tx_ring->count)) {
+		अगर (unlikely(i == tx_ring->count)) अणु
 			i = 0;
 			tx_buffer = tx_ring->tx_buffer_info;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* reset next_to_use and next_to_clean */
 	tx_ring->next_to_use = 0;
 	tx_ring->next_to_clean = 0;
 
-}
+पूर्ण
 
 /**
- * ixgbevf_clean_all_rx_rings - Free Rx Buffers for all queues
- * @adapter: board private structure
+ * ixgbevf_clean_all_rx_rings - Free Rx Buffers क्रम all queues
+ * @adapter: board निजी काष्ठाure
  **/
-static void ixgbevf_clean_all_rx_rings(struct ixgbevf_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbevf_clean_all_rx_rings(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_rx_queues; i++)
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
 		ixgbevf_clean_rx_ring(adapter->rx_ring[i]);
-}
+पूर्ण
 
 /**
- * ixgbevf_clean_all_tx_rings - Free Tx Buffers for all queues
- * @adapter: board private structure
+ * ixgbevf_clean_all_tx_rings - Free Tx Buffers क्रम all queues
+ * @adapter: board निजी काष्ठाure
  **/
-static void ixgbevf_clean_all_tx_rings(struct ixgbevf_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbevf_clean_all_tx_rings(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
 		ixgbevf_clean_tx_ring(adapter->tx_ring[i]);
-	for (i = 0; i < adapter->num_xdp_queues; i++)
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
 		ixgbevf_clean_tx_ring(adapter->xdp_ring[i]);
-}
+पूर्ण
 
-void ixgbevf_down(struct ixgbevf_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct ixgbe_hw *hw = &adapter->hw;
-	int i;
+व्योम ixgbevf_करोwn(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	/* signal that we are down to the interrupt handler */
-	if (test_and_set_bit(__IXGBEVF_DOWN, &adapter->state))
-		return; /* do nothing if already down */
+	/* संकेत that we are करोwn to the पूर्णांकerrupt handler */
+	अगर (test_and_set_bit(__IXGBEVF_DOWN, &adapter->state))
+		वापस; /* करो nothing अगर alपढ़ोy करोwn */
 
 	/* disable all enabled Rx queues */
-	for (i = 0; i < adapter->num_rx_queues; i++)
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
 		ixgbevf_disable_rx_queue(adapter, adapter->rx_ring[i]);
 
 	usleep_range(10000, 20000);
 
-	netif_tx_stop_all_queues(netdev);
+	netअगर_tx_stop_all_queues(netdev);
 
-	/* call carrier off first to avoid false dev_watchdog timeouts */
-	netif_carrier_off(netdev);
-	netif_tx_disable(netdev);
+	/* call carrier off first to aव्योम false dev_watchकरोg समयouts */
+	netअगर_carrier_off(netdev);
+	netअगर_tx_disable(netdev);
 
 	ixgbevf_irq_disable(adapter);
 
 	ixgbevf_napi_disable_all(adapter);
 
-	del_timer_sync(&adapter->service_timer);
+	del_समयr_sync(&adapter->service_समयr);
 
-	/* disable transmits in the hardware now that interrupts are off */
-	for (i = 0; i < adapter->num_tx_queues; i++) {
+	/* disable transmits in the hardware now that पूर्णांकerrupts are off */
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
 		u8 reg_idx = adapter->tx_ring[i]->reg_idx;
 
 		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(reg_idx),
 				IXGBE_TXDCTL_SWFLSH);
-	}
+	पूर्ण
 
-	for (i = 0; i < adapter->num_xdp_queues; i++) {
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
 		u8 reg_idx = adapter->xdp_ring[i]->reg_idx;
 
 		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(reg_idx),
 				IXGBE_TXDCTL_SWFLSH);
-	}
+	पूर्ण
 
-	if (!pci_channel_offline(adapter->pdev))
+	अगर (!pci_channel_offline(adapter->pdev))
 		ixgbevf_reset(adapter);
 
 	ixgbevf_clean_all_tx_rings(adapter);
 	ixgbevf_clean_all_rx_rings(adapter);
-}
+पूर्ण
 
-void ixgbevf_reinit_locked(struct ixgbevf_adapter *adapter)
-{
-	while (test_and_set_bit(__IXGBEVF_RESETTING, &adapter->state))
+व्योम ixgbevf_reinit_locked(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	जबतक (test_and_set_bit(__IXGBEVF_RESETTING, &adapter->state))
 		msleep(1);
 
-	ixgbevf_down(adapter);
+	ixgbevf_करोwn(adapter);
 	pci_set_master(adapter->pdev);
 	ixgbevf_up(adapter);
 
 	clear_bit(__IXGBEVF_RESETTING, &adapter->state);
-}
+पूर्ण
 
-void ixgbevf_reset(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
+व्योम ixgbevf_reset(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा net_device *netdev = adapter->netdev;
 
-	if (hw->mac.ops.reset_hw(hw)) {
+	अगर (hw->mac.ops.reset_hw(hw)) अणु
 		hw_dbg(hw, "PF still resetting\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		hw->mac.ops.init_hw(hw);
 		ixgbevf_negotiate_api(adapter);
-	}
+	पूर्ण
 
-	if (is_valid_ether_addr(adapter->hw.mac.addr)) {
+	अगर (is_valid_ether_addr(adapter->hw.mac.addr)) अणु
 		ether_addr_copy(netdev->dev_addr, adapter->hw.mac.addr);
 		ether_addr_copy(netdev->perm_addr, adapter->hw.mac.addr);
-	}
+	पूर्ण
 
-	adapter->last_reset = jiffies;
-}
+	adapter->last_reset = jअगरfies;
+पूर्ण
 
-static int ixgbevf_acquire_msix_vectors(struct ixgbevf_adapter *adapter,
-					int vectors)
-{
-	int vector_threshold;
+अटल पूर्णांक ixgbevf_acquire_msix_vectors(काष्ठा ixgbevf_adapter *adapter,
+					पूर्णांक vectors)
+अणु
+	पूर्णांक vector_threshold;
 
 	/* We'll want at least 2 (vector_threshold):
 	 * 1) TxQ[0] + RxQ[0] handler
@@ -2561,49 +2562,49 @@ static int ixgbevf_acquire_msix_vectors(struct ixgbevf_adapter *adapter,
 	vector_threshold = MIN_MSIX_COUNT;
 
 	/* The more we get, the more we will assign to Tx/Rx Cleanup
-	 * for the separate queues...where Rx Cleanup >= Tx Cleanup.
+	 * क्रम the separate queues...where Rx Cleanup >= Tx Cleanup.
 	 * Right now, we simply care about how many we'll get; we'll
-	 * set them up later while requesting irq's.
+	 * set them up later जबतक requesting irq's.
 	 */
 	vectors = pci_enable_msix_range(adapter->pdev, adapter->msix_entries,
 					vector_threshold, vectors);
 
-	if (vectors < 0) {
+	अगर (vectors < 0) अणु
 		dev_err(&adapter->pdev->dev,
 			"Unable to allocate MSI-X interrupts\n");
-		kfree(adapter->msix_entries);
-		adapter->msix_entries = NULL;
-		return vectors;
-	}
+		kमुक्त(adapter->msix_entries);
+		adapter->msix_entries = शून्य;
+		वापस vectors;
+	पूर्ण
 
-	/* Adjust for only the vectors we'll use, which is minimum
+	/* Adjust क्रम only the vectors we'll use, which is minimum
 	 * of max_msix_q_vectors + NON_Q_VECTORS, or the number of
 	 * vectors we were allocated.
 	 */
 	adapter->num_msix_vectors = vectors;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ixgbevf_set_num_queues - Allocate queues for device, feature dependent
- * @adapter: board private structure to initialize
+ * ixgbevf_set_num_queues - Allocate queues क्रम device, feature dependent
+ * @adapter: board निजी काष्ठाure to initialize
  *
  * This is the top level queue allocation routine.  The order here is very
  * important, starting with the "most" number of features turned on at once,
  * and ending with the smallest set of features.  This way large combinations
- * can be allocated if they're turned on, and smaller combinations are the
+ * can be allocated अगर they're turned on, and smaller combinations are the
  * fall through conditions.
  *
  **/
-static void ixgbevf_set_num_queues(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	unsigned int def_q = 0;
-	unsigned int num_tcs = 0;
-	int err;
+अटल व्योम ixgbevf_set_num_queues(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	अचिन्हित पूर्णांक def_q = 0;
+	अचिन्हित पूर्णांक num_tcs = 0;
+	पूर्णांक err;
 
-	/* Start with base case */
+	/* Start with base हाल */
 	adapter->num_rx_queues = 1;
 	adapter->num_tx_queues = 1;
 	adapter->num_xdp_queues = 0;
@@ -2615,121 +2616,121 @@ static void ixgbevf_set_num_queues(struct ixgbevf_adapter *adapter)
 
 	spin_unlock_bh(&adapter->mbx_lock);
 
-	if (err)
-		return;
+	अगर (err)
+		वापस;
 
 	/* we need as many queues as traffic classes */
-	if (num_tcs > 1) {
+	अगर (num_tcs > 1) अणु
 		adapter->num_rx_queues = num_tcs;
-	} else {
+	पूर्ण अन्यथा अणु
 		u16 rss = min_t(u16, num_online_cpus(), IXGBEVF_MAX_RSS_QUEUES);
 
-		switch (hw->api_version) {
-		case ixgbe_mbox_api_11:
-		case ixgbe_mbox_api_12:
-		case ixgbe_mbox_api_13:
-		case ixgbe_mbox_api_14:
-			if (adapter->xdp_prog &&
+		चयन (hw->api_version) अणु
+		हाल ixgbe_mbox_api_11:
+		हाल ixgbe_mbox_api_12:
+		हाल ixgbe_mbox_api_13:
+		हाल ixgbe_mbox_api_14:
+			अगर (adapter->xdp_prog &&
 			    hw->mac.max_tx_queues == rss)
 				rss = rss > 3 ? 2 : 1;
 
 			adapter->num_rx_queues = rss;
 			adapter->num_tx_queues = rss;
 			adapter->num_xdp_queues = adapter->xdp_prog ? rss : 0;
-			break;
-		default:
-			break;
-		}
-	}
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbevf_set_interrupt_capability - set MSI-X or FAIL if not supported
- * @adapter: board private structure to initialize
+ * ixgbevf_set_पूर्णांकerrupt_capability - set MSI-X or FAIL अगर not supported
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * Attempt to configure the interrupts using the best available
+ * Attempt to configure the पूर्णांकerrupts using the best available
  * capabilities of the hardware and the kernel.
  **/
-static int ixgbevf_set_interrupt_capability(struct ixgbevf_adapter *adapter)
-{
-	int vector, v_budget;
+अटल पूर्णांक ixgbevf_set_पूर्णांकerrupt_capability(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक vector, v_budget;
 
-	/* It's easy to be greedy for MSI-X vectors, but it really
-	 * doesn't do us much good if we have a lot more vectors
-	 * than CPU's.  So let's be conservative and only ask for
+	/* It's easy to be greedy क्रम MSI-X vectors, but it really
+	 * करोesn't करो us much good अगर we have a lot more vectors
+	 * than CPU's.  So let's be conservative and only ask क्रम
 	 * (roughly) the same number of vectors as there are CPU's.
-	 * The default is to use pairs of vectors.
+	 * The शेष is to use pairs of vectors.
 	 */
 	v_budget = max(adapter->num_rx_queues, adapter->num_tx_queues);
-	v_budget = min_t(int, v_budget, num_online_cpus());
+	v_budget = min_t(पूर्णांक, v_budget, num_online_cpus());
 	v_budget += NON_Q_VECTORS;
 
-	adapter->msix_entries = kcalloc(v_budget,
-					sizeof(struct msix_entry), GFP_KERNEL);
-	if (!adapter->msix_entries)
-		return -ENOMEM;
+	adapter->msix_entries = kसुस्मृति(v_budget,
+					माप(काष्ठा msix_entry), GFP_KERNEL);
+	अगर (!adapter->msix_entries)
+		वापस -ENOMEM;
 
-	for (vector = 0; vector < v_budget; vector++)
+	क्रम (vector = 0; vector < v_budget; vector++)
 		adapter->msix_entries[vector].entry = vector;
 
 	/* A failure in MSI-X entry allocation isn't fatal, but the VF driver
-	 * does not support any other modes, so we will simply fail here. Note
-	 * that we clean up the msix_entries pointer else-where.
+	 * करोes not support any other modes, so we will simply fail here. Note
+	 * that we clean up the msix_entries poपूर्णांकer अन्यथा-where.
 	 */
-	return ixgbevf_acquire_msix_vectors(adapter, v_budget);
-}
+	वापस ixgbevf_acquire_msix_vectors(adapter, v_budget);
+पूर्ण
 
-static void ixgbevf_add_ring(struct ixgbevf_ring *ring,
-			     struct ixgbevf_ring_container *head)
-{
+अटल व्योम ixgbevf_add_ring(काष्ठा ixgbevf_ring *ring,
+			     काष्ठा ixgbevf_ring_container *head)
+अणु
 	ring->next = head->ring;
 	head->ring = ring;
 	head->count++;
-}
+पूर्ण
 
 /**
- * ixgbevf_alloc_q_vector - Allocate memory for a single interrupt vector
- * @adapter: board private structure to initialize
- * @v_idx: index of vector in adapter struct
- * @txr_count: number of Tx rings for q vector
+ * ixgbevf_alloc_q_vector - Allocate memory क्रम a single पूर्णांकerrupt vector
+ * @adapter: board निजी काष्ठाure to initialize
+ * @v_idx: index of vector in adapter काष्ठा
+ * @txr_count: number of Tx rings क्रम q vector
  * @txr_idx: index of first Tx ring to assign
  * @xdp_count: total number of XDP rings to allocate
  * @xdp_idx: index of first XDP ring to allocate
- * @rxr_count: number of Rx rings for q vector
+ * @rxr_count: number of Rx rings क्रम q vector
  * @rxr_idx: index of first Rx ring to assign
  *
- * We allocate one q_vector.  If allocation fails we return -ENOMEM.
+ * We allocate one q_vector.  If allocation fails we वापस -ENOMEM.
  **/
-static int ixgbevf_alloc_q_vector(struct ixgbevf_adapter *adapter, int v_idx,
-				  int txr_count, int txr_idx,
-				  int xdp_count, int xdp_idx,
-				  int rxr_count, int rxr_idx)
-{
-	struct ixgbevf_q_vector *q_vector;
-	int reg_idx = txr_idx + xdp_idx;
-	struct ixgbevf_ring *ring;
-	int ring_count, size;
+अटल पूर्णांक ixgbevf_alloc_q_vector(काष्ठा ixgbevf_adapter *adapter, पूर्णांक v_idx,
+				  पूर्णांक txr_count, पूर्णांक txr_idx,
+				  पूर्णांक xdp_count, पूर्णांक xdp_idx,
+				  पूर्णांक rxr_count, पूर्णांक rxr_idx)
+अणु
+	काष्ठा ixgbevf_q_vector *q_vector;
+	पूर्णांक reg_idx = txr_idx + xdp_idx;
+	काष्ठा ixgbevf_ring *ring;
+	पूर्णांक ring_count, size;
 
 	ring_count = txr_count + xdp_count + rxr_count;
-	size = sizeof(*q_vector) + (sizeof(*ring) * ring_count);
+	size = माप(*q_vector) + (माप(*ring) * ring_count);
 
 	/* allocate q_vector and rings */
 	q_vector = kzalloc(size, GFP_KERNEL);
-	if (!q_vector)
-		return -ENOMEM;
+	अगर (!q_vector)
+		वापस -ENOMEM;
 
 	/* initialize NAPI */
-	netif_napi_add(adapter->netdev, &q_vector->napi, ixgbevf_poll, 64);
+	netअगर_napi_add(adapter->netdev, &q_vector->napi, ixgbevf_poll, 64);
 
 	/* tie q_vector and adapter together */
 	adapter->q_vector[v_idx] = q_vector;
 	q_vector->adapter = adapter;
 	q_vector->v_idx = v_idx;
 
-	/* initialize pointer to rings */
+	/* initialize poपूर्णांकer to rings */
 	ring = q_vector->ring;
 
-	while (txr_count) {
+	जबतक (txr_count) अणु
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -2740,7 +2741,7 @@ static int ixgbevf_alloc_q_vector(struct ixgbevf_adapter *adapter, int v_idx,
 		/* update q_vector Tx values */
 		ixgbevf_add_ring(ring, &q_vector->tx);
 
-		/* apply Tx specific ring traits */
+		/* apply Tx specअगरic ring traits */
 		ring->count = adapter->tx_ring_count;
 		ring->queue_index = txr_idx;
 		ring->reg_idx = reg_idx;
@@ -2753,11 +2754,11 @@ static int ixgbevf_alloc_q_vector(struct ixgbevf_adapter *adapter, int v_idx,
 		txr_idx++;
 		reg_idx++;
 
-		/* push pointer to next ring */
+		/* push poपूर्णांकer to next ring */
 		ring++;
-	}
+	पूर्ण
 
-	while (xdp_count) {
+	जबतक (xdp_count) अणु
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -2768,7 +2769,7 @@ static int ixgbevf_alloc_q_vector(struct ixgbevf_adapter *adapter, int v_idx,
 		/* update q_vector Tx values */
 		ixgbevf_add_ring(ring, &q_vector->tx);
 
-		/* apply Tx specific ring traits */
+		/* apply Tx specअगरic ring traits */
 		ring->count = adapter->tx_ring_count;
 		ring->queue_index = xdp_idx;
 		ring->reg_idx = reg_idx;
@@ -2782,11 +2783,11 @@ static int ixgbevf_alloc_q_vector(struct ixgbevf_adapter *adapter, int v_idx,
 		xdp_idx++;
 		reg_idx++;
 
-		/* push pointer to next ring */
+		/* push poपूर्णांकer to next ring */
 		ring++;
-	}
+	पूर्ण
 
-	while (rxr_count) {
+	जबतक (rxr_count) अणु
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -2797,7 +2798,7 @@ static int ixgbevf_alloc_q_vector(struct ixgbevf_adapter *adapter, int v_idx,
 		/* update q_vector Rx values */
 		ixgbevf_add_ring(ring, &q_vector->rx);
 
-		/* apply Rx specific ring traits */
+		/* apply Rx specअगरic ring traits */
 		ring->count = adapter->rx_ring_count;
 		ring->queue_index = rxr_idx;
 		ring->reg_idx = rxr_idx;
@@ -2809,167 +2810,167 @@ static int ixgbevf_alloc_q_vector(struct ixgbevf_adapter *adapter, int v_idx,
 		rxr_count--;
 		rxr_idx++;
 
-		/* push pointer to next ring */
+		/* push poपूर्णांकer to next ring */
 		ring++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ixgbevf_free_q_vector - Free memory allocated for specific interrupt vector
- * @adapter: board private structure to initialize
- * @v_idx: index of vector in adapter struct
+ * ixgbevf_मुक्त_q_vector - Free memory allocated क्रम specअगरic पूर्णांकerrupt vector
+ * @adapter: board निजी काष्ठाure to initialize
+ * @v_idx: index of vector in adapter काष्ठा
  *
- * This function frees the memory allocated to the q_vector.  In addition if
- * NAPI is enabled it will delete any references to the NAPI struct prior
- * to freeing the q_vector.
+ * This function मुक्तs the memory allocated to the q_vector.  In addition अगर
+ * NAPI is enabled it will delete any references to the NAPI काष्ठा prior
+ * to मुक्तing the q_vector.
  **/
-static void ixgbevf_free_q_vector(struct ixgbevf_adapter *adapter, int v_idx)
-{
-	struct ixgbevf_q_vector *q_vector = adapter->q_vector[v_idx];
-	struct ixgbevf_ring *ring;
+अटल व्योम ixgbevf_मुक्त_q_vector(काष्ठा ixgbevf_adapter *adapter, पूर्णांक v_idx)
+अणु
+	काष्ठा ixgbevf_q_vector *q_vector = adapter->q_vector[v_idx];
+	काष्ठा ixgbevf_ring *ring;
 
-	ixgbevf_for_each_ring(ring, q_vector->tx) {
-		if (ring_is_xdp(ring))
-			adapter->xdp_ring[ring->queue_index] = NULL;
-		else
-			adapter->tx_ring[ring->queue_index] = NULL;
-	}
+	ixgbevf_क्रम_each_ring(ring, q_vector->tx) अणु
+		अगर (ring_is_xdp(ring))
+			adapter->xdp_ring[ring->queue_index] = शून्य;
+		अन्यथा
+			adapter->tx_ring[ring->queue_index] = शून्य;
+	पूर्ण
 
-	ixgbevf_for_each_ring(ring, q_vector->rx)
-		adapter->rx_ring[ring->queue_index] = NULL;
+	ixgbevf_क्रम_each_ring(ring, q_vector->rx)
+		adapter->rx_ring[ring->queue_index] = शून्य;
 
-	adapter->q_vector[v_idx] = NULL;
-	netif_napi_del(&q_vector->napi);
+	adapter->q_vector[v_idx] = शून्य;
+	netअगर_napi_del(&q_vector->napi);
 
 	/* ixgbevf_get_stats() might access the rings on this vector,
-	 * we must wait a grace period before freeing it.
+	 * we must रुको a grace period beक्रमe मुक्तing it.
 	 */
-	kfree_rcu(q_vector, rcu);
-}
+	kमुक्त_rcu(q_vector, rcu);
+पूर्ण
 
 /**
- * ixgbevf_alloc_q_vectors - Allocate memory for interrupt vectors
- * @adapter: board private structure to initialize
+ * ixgbevf_alloc_q_vectors - Allocate memory क्रम पूर्णांकerrupt vectors
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * We allocate one q_vector per queue interrupt.  If allocation fails we
- * return -ENOMEM.
+ * We allocate one q_vector per queue पूर्णांकerrupt.  If allocation fails we
+ * वापस -ENOMEM.
  **/
-static int ixgbevf_alloc_q_vectors(struct ixgbevf_adapter *adapter)
-{
-	int q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
-	int rxr_remaining = adapter->num_rx_queues;
-	int txr_remaining = adapter->num_tx_queues;
-	int xdp_remaining = adapter->num_xdp_queues;
-	int rxr_idx = 0, txr_idx = 0, xdp_idx = 0, v_idx = 0;
-	int err;
+अटल पूर्णांक ixgbevf_alloc_q_vectors(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
+	पूर्णांक rxr_reमुख्यing = adapter->num_rx_queues;
+	पूर्णांक txr_reमुख्यing = adapter->num_tx_queues;
+	पूर्णांक xdp_reमुख्यing = adapter->num_xdp_queues;
+	पूर्णांक rxr_idx = 0, txr_idx = 0, xdp_idx = 0, v_idx = 0;
+	पूर्णांक err;
 
-	if (q_vectors >= (rxr_remaining + txr_remaining + xdp_remaining)) {
-		for (; rxr_remaining; v_idx++, q_vectors--) {
-			int rqpv = DIV_ROUND_UP(rxr_remaining, q_vectors);
+	अगर (q_vectors >= (rxr_reमुख्यing + txr_reमुख्यing + xdp_reमुख्यing)) अणु
+		क्रम (; rxr_reमुख्यing; v_idx++, q_vectors--) अणु
+			पूर्णांक rqpv = DIV_ROUND_UP(rxr_reमुख्यing, q_vectors);
 
 			err = ixgbevf_alloc_q_vector(adapter, v_idx,
 						     0, 0, 0, 0, rqpv, rxr_idx);
-			if (err)
-				goto err_out;
+			अगर (err)
+				जाओ err_out;
 
 			/* update counts and index */
-			rxr_remaining -= rqpv;
+			rxr_reमुख्यing -= rqpv;
 			rxr_idx += rqpv;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (; q_vectors; v_idx++, q_vectors--) {
-		int rqpv = DIV_ROUND_UP(rxr_remaining, q_vectors);
-		int tqpv = DIV_ROUND_UP(txr_remaining, q_vectors);
-		int xqpv = DIV_ROUND_UP(xdp_remaining, q_vectors);
+	क्रम (; q_vectors; v_idx++, q_vectors--) अणु
+		पूर्णांक rqpv = DIV_ROUND_UP(rxr_reमुख्यing, q_vectors);
+		पूर्णांक tqpv = DIV_ROUND_UP(txr_reमुख्यing, q_vectors);
+		पूर्णांक xqpv = DIV_ROUND_UP(xdp_reमुख्यing, q_vectors);
 
 		err = ixgbevf_alloc_q_vector(adapter, v_idx,
 					     tqpv, txr_idx,
 					     xqpv, xdp_idx,
 					     rqpv, rxr_idx);
 
-		if (err)
-			goto err_out;
+		अगर (err)
+			जाओ err_out;
 
 		/* update counts and index */
-		rxr_remaining -= rqpv;
+		rxr_reमुख्यing -= rqpv;
 		rxr_idx += rqpv;
-		txr_remaining -= tqpv;
+		txr_reमुख्यing -= tqpv;
 		txr_idx += tqpv;
-		xdp_remaining -= xqpv;
+		xdp_reमुख्यing -= xqpv;
 		xdp_idx += xqpv;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
-	while (v_idx) {
+	जबतक (v_idx) अणु
 		v_idx--;
-		ixgbevf_free_q_vector(adapter, v_idx);
-	}
+		ixgbevf_मुक्त_q_vector(adapter, v_idx);
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * ixgbevf_free_q_vectors - Free memory allocated for interrupt vectors
- * @adapter: board private structure to initialize
+ * ixgbevf_मुक्त_q_vectors - Free memory allocated क्रम पूर्णांकerrupt vectors
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * This function frees the memory allocated to the q_vectors.  In addition if
- * NAPI is enabled it will delete any references to the NAPI struct prior
- * to freeing the q_vector.
+ * This function मुक्तs the memory allocated to the q_vectors.  In addition अगर
+ * NAPI is enabled it will delete any references to the NAPI काष्ठा prior
+ * to मुक्तing the q_vector.
  **/
-static void ixgbevf_free_q_vectors(struct ixgbevf_adapter *adapter)
-{
-	int q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
+अटल व्योम ixgbevf_मुक्त_q_vectors(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक q_vectors = adapter->num_msix_vectors - NON_Q_VECTORS;
 
-	while (q_vectors) {
+	जबतक (q_vectors) अणु
 		q_vectors--;
-		ixgbevf_free_q_vector(adapter, q_vectors);
-	}
-}
+		ixgbevf_मुक्त_q_vector(adapter, q_vectors);
+	पूर्ण
+पूर्ण
 
 /**
- * ixgbevf_reset_interrupt_capability - Reset MSIX setup
- * @adapter: board private structure
+ * ixgbevf_reset_पूर्णांकerrupt_capability - Reset MSIX setup
+ * @adapter: board निजी काष्ठाure
  *
  **/
-static void ixgbevf_reset_interrupt_capability(struct ixgbevf_adapter *adapter)
-{
-	if (!adapter->msix_entries)
-		return;
+अटल व्योम ixgbevf_reset_पूर्णांकerrupt_capability(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	अगर (!adapter->msix_entries)
+		वापस;
 
 	pci_disable_msix(adapter->pdev);
-	kfree(adapter->msix_entries);
-	adapter->msix_entries = NULL;
-}
+	kमुक्त(adapter->msix_entries);
+	adapter->msix_entries = शून्य;
+पूर्ण
 
 /**
- * ixgbevf_init_interrupt_scheme - Determine if MSIX is supported and init
- * @adapter: board private structure to initialize
+ * ixgbevf_init_पूर्णांकerrupt_scheme - Determine अगर MSIX is supported and init
+ * @adapter: board निजी काष्ठाure to initialize
  *
  **/
-static int ixgbevf_init_interrupt_scheme(struct ixgbevf_adapter *adapter)
-{
-	int err;
+अटल पूर्णांक ixgbevf_init_पूर्णांकerrupt_scheme(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक err;
 
 	/* Number of supported queues */
 	ixgbevf_set_num_queues(adapter);
 
-	err = ixgbevf_set_interrupt_capability(adapter);
-	if (err) {
+	err = ixgbevf_set_पूर्णांकerrupt_capability(adapter);
+	अगर (err) अणु
 		hw_dbg(&adapter->hw,
 		       "Unable to setup interrupt capabilities\n");
-		goto err_set_interrupt;
-	}
+		जाओ err_set_पूर्णांकerrupt;
+	पूर्ण
 
 	err = ixgbevf_alloc_q_vectors(adapter);
-	if (err) {
+	अगर (err) अणु
 		hw_dbg(&adapter->hw, "Unable to allocate memory for queue vectors\n");
-		goto err_alloc_q_vectors;
-	}
+		जाओ err_alloc_q_vectors;
+	पूर्ण
 
 	hw_dbg(&adapter->hw, "Multiqueue %s: Rx Queue count = %u, Tx Queue count = %u XDP Queue count %u\n",
 	       (adapter->num_rx_queues > 1) ? "Enabled" : "Disabled",
@@ -2978,61 +2979,61 @@ static int ixgbevf_init_interrupt_scheme(struct ixgbevf_adapter *adapter)
 
 	set_bit(__IXGBEVF_DOWN, &adapter->state);
 
-	return 0;
+	वापस 0;
 err_alloc_q_vectors:
-	ixgbevf_reset_interrupt_capability(adapter);
-err_set_interrupt:
-	return err;
-}
+	ixgbevf_reset_पूर्णांकerrupt_capability(adapter);
+err_set_पूर्णांकerrupt:
+	वापस err;
+पूर्ण
 
 /**
- * ixgbevf_clear_interrupt_scheme - Clear the current interrupt scheme settings
- * @adapter: board private structure to clear interrupt scheme on
+ * ixgbevf_clear_पूर्णांकerrupt_scheme - Clear the current पूर्णांकerrupt scheme settings
+ * @adapter: board निजी काष्ठाure to clear पूर्णांकerrupt scheme on
  *
- * We go through and clear interrupt specific resources and reset the structure
+ * We go through and clear पूर्णांकerrupt specअगरic resources and reset the काष्ठाure
  * to pre-load conditions
  **/
-static void ixgbevf_clear_interrupt_scheme(struct ixgbevf_adapter *adapter)
-{
+अटल व्योम ixgbevf_clear_पूर्णांकerrupt_scheme(काष्ठा ixgbevf_adapter *adapter)
+अणु
 	adapter->num_tx_queues = 0;
 	adapter->num_xdp_queues = 0;
 	adapter->num_rx_queues = 0;
 
-	ixgbevf_free_q_vectors(adapter);
-	ixgbevf_reset_interrupt_capability(adapter);
-}
+	ixgbevf_मुक्त_q_vectors(adapter);
+	ixgbevf_reset_पूर्णांकerrupt_capability(adapter);
+पूर्ण
 
 /**
- * ixgbevf_sw_init - Initialize general software structures
- * @adapter: board private structure to initialize
+ * ixgbevf_sw_init - Initialize general software काष्ठाures
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * ixgbevf_sw_init initializes the Adapter private data structure.
- * Fields are initialized based on PCI device information and
+ * ixgbevf_sw_init initializes the Adapter निजी data काष्ठाure.
+ * Fields are initialized based on PCI device inक्रमmation and
  * OS network device settings (MTU size).
  **/
-static int ixgbevf_sw_init(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct pci_dev *pdev = adapter->pdev;
-	struct net_device *netdev = adapter->netdev;
-	int err;
+अटल पूर्णांक ixgbevf_sw_init(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक err;
 
 	/* PCI config space info */
-	hw->vendor_id = pdev->vendor;
+	hw->venकरोr_id = pdev->venकरोr;
 	hw->device_id = pdev->device;
 	hw->revision_id = pdev->revision;
-	hw->subsystem_vendor_id = pdev->subsystem_vendor;
-	hw->subsystem_device_id = pdev->subsystem_device;
+	hw->subप्रणाली_venकरोr_id = pdev->subप्रणाली_venकरोr;
+	hw->subप्रणाली_device_id = pdev->subप्रणाली_device;
 
 	hw->mbx.ops.init_params(hw);
 
-	if (hw->mac.type >= ixgbe_mac_X550_vf) {
+	अगर (hw->mac.type >= ixgbe_mac_X550_vf) अणु
 		err = ixgbevf_init_rss_key(adapter);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
-	/* assume legacy case in which PF would only give VF 2 queues */
+	/* assume legacy हाल in which PF would only give VF 2 queues */
 	hw->mac.max_tx_queues = 2;
 	hw->mac.max_rx_queues = 2;
 
@@ -3040,83 +3041,83 @@ static int ixgbevf_sw_init(struct ixgbevf_adapter *adapter)
 	spin_lock_init(&adapter->mbx_lock);
 
 	err = hw->mac.ops.reset_hw(hw);
-	if (err) {
+	अगर (err) अणु
 		dev_info(&pdev->dev,
 			 "PF still in reset state.  Is the PF interface up?\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		err = hw->mac.ops.init_hw(hw);
-		if (err) {
+		अगर (err) अणु
 			pr_err("init_shared_code failed: %d\n", err);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ixgbevf_negotiate_api(adapter);
 		err = hw->mac.ops.get_mac_addr(hw, hw->mac.addr);
-		if (err)
+		अगर (err)
 			dev_info(&pdev->dev, "Error reading MAC address\n");
-		else if (is_zero_ether_addr(adapter->hw.mac.addr))
+		अन्यथा अगर (is_zero_ether_addr(adapter->hw.mac.addr))
 			dev_info(&pdev->dev,
 				 "MAC address not assigned by administrator.\n");
 		ether_addr_copy(netdev->dev_addr, hw->mac.addr);
-	}
+	पूर्ण
 
-	if (!is_valid_ether_addr(netdev->dev_addr)) {
+	अगर (!is_valid_ether_addr(netdev->dev_addr)) अणु
 		dev_info(&pdev->dev, "Assigning random MAC address\n");
-		eth_hw_addr_random(netdev);
+		eth_hw_addr_अक्रमom(netdev);
 		ether_addr_copy(hw->mac.addr, netdev->dev_addr);
 		ether_addr_copy(hw->mac.perm_addr, netdev->dev_addr);
-	}
+	पूर्ण
 
-	/* Enable dynamic interrupt throttling rates */
+	/* Enable dynamic पूर्णांकerrupt throttling rates */
 	adapter->rx_itr_setting = 1;
 	adapter->tx_itr_setting = 1;
 
-	/* set default ring sizes */
+	/* set शेष ring sizes */
 	adapter->tx_ring_count = IXGBEVF_DEFAULT_TXD;
 	adapter->rx_ring_count = IXGBEVF_DEFAULT_RXD;
 
 	set_bit(__IXGBEVF_DOWN, &adapter->state);
-	return 0;
+	वापस 0;
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define UPDATE_VF_COUNTER_32bit(reg, last_counter, counter)	\
-	{							\
+#घोषणा UPDATE_VF_COUNTER_32bit(reg, last_counter, counter)	\
+	अणु							\
 		u32 current_counter = IXGBE_READ_REG(hw, reg);	\
-		if (current_counter < last_counter)		\
+		अगर (current_counter < last_counter)		\
 			counter += 0x100000000LL;		\
 		last_counter = current_counter;			\
 		counter &= 0xFFFFFFFF00000000LL;		\
 		counter |= current_counter;			\
-	}
+	पूर्ण
 
-#define UPDATE_VF_COUNTER_36bit(reg_lsb, reg_msb, last_counter, counter) \
-	{								 \
+#घोषणा UPDATE_VF_COUNTER_36bit(reg_lsb, reg_msb, last_counter, counter) \
+	अणु								 \
 		u64 current_counter_lsb = IXGBE_READ_REG(hw, reg_lsb);	 \
 		u64 current_counter_msb = IXGBE_READ_REG(hw, reg_msb);	 \
 		u64 current_counter = (current_counter_msb << 32) |	 \
 			current_counter_lsb;				 \
-		if (current_counter < last_counter)			 \
+		अगर (current_counter < last_counter)			 \
 			counter += 0x1000000000LL;			 \
 		last_counter = current_counter;				 \
 		counter &= 0xFFFFFFF000000000LL;			 \
 		counter |= current_counter;				 \
-	}
+	पूर्ण
 /**
  * ixgbevf_update_stats - Update the board statistics counters.
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  **/
-void ixgbevf_update_stats(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+व्योम ixgbevf_update_stats(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u64 alloc_rx_page_failed = 0, alloc_rx_buff_failed = 0;
 	u64 alloc_rx_page = 0, hw_csum_rx_error = 0;
-	int i;
+	पूर्णांक i;
 
-	if (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
+	अगर (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
 	    test_bit(__IXGBEVF_RESETTING, &adapter->state))
-		return;
+		वापस;
 
 	UPDATE_VF_COUNTER_32bit(IXGBE_VFGPRC, adapter->stats.last_vfgprc,
 				adapter->stats.vfgprc);
@@ -3131,103 +3132,103 @@ void ixgbevf_update_stats(struct ixgbevf_adapter *adapter)
 	UPDATE_VF_COUNTER_32bit(IXGBE_VFMPRC, adapter->stats.last_vfmprc,
 				adapter->stats.vfmprc);
 
-	for (i = 0;  i  < adapter->num_rx_queues;  i++) {
-		struct ixgbevf_ring *rx_ring = adapter->rx_ring[i];
+	क्रम (i = 0;  i  < adapter->num_rx_queues;  i++) अणु
+		काष्ठा ixgbevf_ring *rx_ring = adapter->rx_ring[i];
 
 		hw_csum_rx_error += rx_ring->rx_stats.csum_err;
 		alloc_rx_page_failed += rx_ring->rx_stats.alloc_rx_page_failed;
 		alloc_rx_buff_failed += rx_ring->rx_stats.alloc_rx_buff_failed;
 		alloc_rx_page += rx_ring->rx_stats.alloc_rx_page;
-	}
+	पूर्ण
 
 	adapter->hw_csum_rx_error = hw_csum_rx_error;
 	adapter->alloc_rx_page_failed = alloc_rx_page_failed;
 	adapter->alloc_rx_buff_failed = alloc_rx_buff_failed;
 	adapter->alloc_rx_page = alloc_rx_page;
-}
+पूर्ण
 
 /**
- * ixgbevf_service_timer - Timer Call-back
- * @t: pointer to timer_list struct
+ * ixgbevf_service_समयr - Timer Call-back
+ * @t: poपूर्णांकer to समयr_list काष्ठा
  **/
-static void ixgbevf_service_timer(struct timer_list *t)
-{
-	struct ixgbevf_adapter *adapter = from_timer(adapter, t,
-						     service_timer);
+अटल व्योम ixgbevf_service_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = from_समयr(adapter, t,
+						     service_समयr);
 
-	/* Reset the timer */
-	mod_timer(&adapter->service_timer, (HZ * 2) + jiffies);
+	/* Reset the समयr */
+	mod_समयr(&adapter->service_समयr, (HZ * 2) + jअगरfies);
 
 	ixgbevf_service_event_schedule(adapter);
-}
+पूर्ण
 
-static void ixgbevf_reset_subtask(struct ixgbevf_adapter *adapter)
-{
-	if (!test_and_clear_bit(__IXGBEVF_RESET_REQUESTED, &adapter->state))
-		return;
+अटल व्योम ixgbevf_reset_subtask(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	अगर (!test_and_clear_bit(__IXGBEVF_RESET_REQUESTED, &adapter->state))
+		वापस;
 
 	rtnl_lock();
-	/* If we're already down or resetting, just bail */
-	if (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
+	/* If we're alपढ़ोy करोwn or resetting, just bail */
+	अगर (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
 	    test_bit(__IXGBEVF_REMOVING, &adapter->state) ||
-	    test_bit(__IXGBEVF_RESETTING, &adapter->state)) {
+	    test_bit(__IXGBEVF_RESETTING, &adapter->state)) अणु
 		rtnl_unlock();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	adapter->tx_timeout_count++;
+	adapter->tx_समयout_count++;
 
 	ixgbevf_reinit_locked(adapter);
 	rtnl_unlock();
-}
+पूर्ण
 
 /**
- * ixgbevf_check_hang_subtask - check for hung queues and dropped interrupts
- * @adapter: pointer to the device adapter structure
+ * ixgbevf_check_hang_subtask - check क्रम hung queues and dropped पूर्णांकerrupts
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  *
- * This function serves two purposes.  First it strobes the interrupt lines
- * in order to make certain interrupts are occurring.  Secondly it sets the
- * bits needed to check for TX hangs.  As a result we should immediately
- * determine if a hang has occurred.
+ * This function serves two purposes.  First it strobes the पूर्णांकerrupt lines
+ * in order to make certain पूर्णांकerrupts are occurring.  Secondly it sets the
+ * bits needed to check क्रम TX hangs.  As a result we should immediately
+ * determine अगर a hang has occurred.
  **/
-static void ixgbevf_check_hang_subtask(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_check_hang_subtask(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 eics = 0;
-	int i;
+	पूर्णांक i;
 
-	/* If we're down or resetting, just bail */
-	if (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
+	/* If we're करोwn or resetting, just bail */
+	अगर (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
 	    test_bit(__IXGBEVF_RESETTING, &adapter->state))
-		return;
+		वापस;
 
 	/* Force detection of hung controller */
-	if (netif_carrier_ok(adapter->netdev)) {
-		for (i = 0; i < adapter->num_tx_queues; i++)
-			set_check_for_tx_hang(adapter->tx_ring[i]);
-		for (i = 0; i < adapter->num_xdp_queues; i++)
-			set_check_for_tx_hang(adapter->xdp_ring[i]);
-	}
+	अगर (netअगर_carrier_ok(adapter->netdev)) अणु
+		क्रम (i = 0; i < adapter->num_tx_queues; i++)
+			set_check_क्रम_tx_hang(adapter->tx_ring[i]);
+		क्रम (i = 0; i < adapter->num_xdp_queues; i++)
+			set_check_क्रम_tx_hang(adapter->xdp_ring[i]);
+	पूर्ण
 
-	/* get one bit for every active Tx/Rx interrupt vector */
-	for (i = 0; i < adapter->num_msix_vectors - NON_Q_VECTORS; i++) {
-		struct ixgbevf_q_vector *qv = adapter->q_vector[i];
+	/* get one bit क्रम every active Tx/Rx पूर्णांकerrupt vector */
+	क्रम (i = 0; i < adapter->num_msix_vectors - NON_Q_VECTORS; i++) अणु
+		काष्ठा ixgbevf_q_vector *qv = adapter->q_vector[i];
 
-		if (qv->rx.ring || qv->tx.ring)
+		अगर (qv->rx.ring || qv->tx.ring)
 			eics |= BIT(i);
-	}
+	पूर्ण
 
-	/* Cause software interrupt to ensure rings are cleaned */
+	/* Cause software पूर्णांकerrupt to ensure rings are cleaned */
 	IXGBE_WRITE_REG(hw, IXGBE_VTEICS, eics);
-}
+पूर्ण
 
 /**
- * ixgbevf_watchdog_update_link - update the link status
- * @adapter: pointer to the device adapter structure
+ * ixgbevf_watchकरोg_update_link - update the link status
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  **/
-static void ixgbevf_watchdog_update_link(struct ixgbevf_adapter *adapter)
-{
-	struct ixgbe_hw *hw = &adapter->hw;
+अटल व्योम ixgbevf_watchकरोg_update_link(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 	u32 link_speed = adapter->link_speed;
 	bool link_up = adapter->link_up;
 	s32 err;
@@ -3238,28 +3239,28 @@ static void ixgbevf_watchdog_update_link(struct ixgbevf_adapter *adapter)
 
 	spin_unlock_bh(&adapter->mbx_lock);
 
-	/* if check for link returns error we will need to reset */
-	if (err && time_after(jiffies, adapter->last_reset + (10 * HZ))) {
+	/* अगर check क्रम link वापसs error we will need to reset */
+	अगर (err && समय_after(jअगरfies, adapter->last_reset + (10 * HZ))) अणु
 		set_bit(__IXGBEVF_RESET_REQUESTED, &adapter->state);
 		link_up = false;
-	}
+	पूर्ण
 
 	adapter->link_up = link_up;
 	adapter->link_speed = link_speed;
-}
+पूर्ण
 
 /**
- * ixgbevf_watchdog_link_is_up - update netif_carrier status and
- *				 print link up message
- * @adapter: pointer to the device adapter structure
+ * ixgbevf_watchकरोg_link_is_up - update netअगर_carrier status and
+ *				 prपूर्णांक link up message
+ * @adapter: poपूर्णांकer to the device adapter काष्ठाure
  **/
-static void ixgbevf_watchdog_link_is_up(struct ixgbevf_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
+अटल व्योम ixgbevf_watchकरोg_link_is_up(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
 
-	/* only continue if link was previously down */
-	if (netif_carrier_ok(netdev))
-		return;
+	/* only जारी अगर link was previously करोwn */
+	अगर (netअगर_carrier_ok(netdev))
+		वापस;
 
 	dev_info(&adapter->pdev->dev, "NIC Link is Up %s\n",
 		 (adapter->link_speed == IXGBE_LINK_SPEED_10GB_FULL) ?
@@ -3270,465 +3271,465 @@ static void ixgbevf_watchdog_link_is_up(struct ixgbevf_adapter *adapter)
 		 "100 Mbps" :
 		 "unknown speed");
 
-	netif_carrier_on(netdev);
-}
+	netअगर_carrier_on(netdev);
+पूर्ण
 
 /**
- * ixgbevf_watchdog_link_is_down - update netif_carrier status and
- *				   print link down message
- * @adapter: pointer to the adapter structure
+ * ixgbevf_watchकरोg_link_is_करोwn - update netअगर_carrier status and
+ *				   prपूर्णांक link करोwn message
+ * @adapter: poपूर्णांकer to the adapter काष्ठाure
  **/
-static void ixgbevf_watchdog_link_is_down(struct ixgbevf_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
+अटल व्योम ixgbevf_watchकरोg_link_is_करोwn(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
 
 	adapter->link_speed = 0;
 
-	/* only continue if link was up previously */
-	if (!netif_carrier_ok(netdev))
-		return;
+	/* only जारी अगर link was up previously */
+	अगर (!netअगर_carrier_ok(netdev))
+		वापस;
 
 	dev_info(&adapter->pdev->dev, "NIC Link is Down\n");
 
-	netif_carrier_off(netdev);
-}
+	netअगर_carrier_off(netdev);
+पूर्ण
 
 /**
- * ixgbevf_watchdog_subtask - worker thread to bring link up
- * @adapter: board private structure
+ * ixgbevf_watchकरोg_subtask - worker thपढ़ो to bring link up
+ * @adapter: board निजी काष्ठाure
  **/
-static void ixgbevf_watchdog_subtask(struct ixgbevf_adapter *adapter)
-{
-	/* if interface is down do nothing */
-	if (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
+अटल व्योम ixgbevf_watchकरोg_subtask(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	/* अगर पूर्णांकerface is करोwn करो nothing */
+	अगर (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
 	    test_bit(__IXGBEVF_RESETTING, &adapter->state))
-		return;
+		वापस;
 
-	ixgbevf_watchdog_update_link(adapter);
+	ixgbevf_watchकरोg_update_link(adapter);
 
-	if (adapter->link_up)
-		ixgbevf_watchdog_link_is_up(adapter);
-	else
-		ixgbevf_watchdog_link_is_down(adapter);
+	अगर (adapter->link_up)
+		ixgbevf_watchकरोg_link_is_up(adapter);
+	अन्यथा
+		ixgbevf_watchकरोg_link_is_करोwn(adapter);
 
 	ixgbevf_update_stats(adapter);
-}
+पूर्ण
 
 /**
  * ixgbevf_service_task - manages and runs subtasks
- * @work: pointer to work_struct containing our data
+ * @work: poपूर्णांकer to work_काष्ठा containing our data
  **/
-static void ixgbevf_service_task(struct work_struct *work)
-{
-	struct ixgbevf_adapter *adapter = container_of(work,
-						       struct ixgbevf_adapter,
+अटल व्योम ixgbevf_service_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = container_of(work,
+						       काष्ठा ixgbevf_adapter,
 						       service_task);
-	struct ixgbe_hw *hw = &adapter->hw;
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
 
-	if (IXGBE_REMOVED(hw->hw_addr)) {
-		if (!test_bit(__IXGBEVF_DOWN, &adapter->state)) {
+	अगर (IXGBE_REMOVED(hw->hw_addr)) अणु
+		अगर (!test_bit(__IXGBEVF_DOWN, &adapter->state)) अणु
 			rtnl_lock();
-			ixgbevf_down(adapter);
+			ixgbevf_करोwn(adapter);
 			rtnl_unlock();
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	ixgbevf_queue_reset_subtask(adapter);
 	ixgbevf_reset_subtask(adapter);
-	ixgbevf_watchdog_subtask(adapter);
+	ixgbevf_watchकरोg_subtask(adapter);
 	ixgbevf_check_hang_subtask(adapter);
 
 	ixgbevf_service_event_complete(adapter);
-}
+पूर्ण
 
 /**
- * ixgbevf_free_tx_resources - Free Tx Resources per Queue
- * @tx_ring: Tx descriptor ring for a specific queue
+ * ixgbevf_मुक्त_tx_resources - Free Tx Resources per Queue
+ * @tx_ring: Tx descriptor ring क्रम a specअगरic queue
  *
  * Free all transmit software resources
  **/
-void ixgbevf_free_tx_resources(struct ixgbevf_ring *tx_ring)
-{
+व्योम ixgbevf_मुक्त_tx_resources(काष्ठा ixgbevf_ring *tx_ring)
+अणु
 	ixgbevf_clean_tx_ring(tx_ring);
 
-	vfree(tx_ring->tx_buffer_info);
-	tx_ring->tx_buffer_info = NULL;
+	vमुक्त(tx_ring->tx_buffer_info);
+	tx_ring->tx_buffer_info = शून्य;
 
-	/* if not set, then don't free */
-	if (!tx_ring->desc)
-		return;
+	/* अगर not set, then करोn't मुक्त */
+	अगर (!tx_ring->desc)
+		वापस;
 
-	dma_free_coherent(tx_ring->dev, tx_ring->size, tx_ring->desc,
+	dma_मुक्त_coherent(tx_ring->dev, tx_ring->size, tx_ring->desc,
 			  tx_ring->dma);
 
-	tx_ring->desc = NULL;
-}
+	tx_ring->desc = शून्य;
+पूर्ण
 
 /**
- * ixgbevf_free_all_tx_resources - Free Tx Resources for All Queues
- * @adapter: board private structure
+ * ixgbevf_मुक्त_all_tx_resources - Free Tx Resources क्रम All Queues
+ * @adapter: board निजी काष्ठाure
  *
  * Free all transmit software resources
  **/
-static void ixgbevf_free_all_tx_resources(struct ixgbevf_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbevf_मुक्त_all_tx_resources(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
-		if (adapter->tx_ring[i]->desc)
-			ixgbevf_free_tx_resources(adapter->tx_ring[i]);
-	for (i = 0; i < adapter->num_xdp_queues; i++)
-		if (adapter->xdp_ring[i]->desc)
-			ixgbevf_free_tx_resources(adapter->xdp_ring[i]);
-}
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
+		अगर (adapter->tx_ring[i]->desc)
+			ixgbevf_मुक्त_tx_resources(adapter->tx_ring[i]);
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++)
+		अगर (adapter->xdp_ring[i]->desc)
+			ixgbevf_मुक्त_tx_resources(adapter->xdp_ring[i]);
+पूर्ण
 
 /**
  * ixgbevf_setup_tx_resources - allocate Tx resources (Descriptors)
- * @tx_ring: Tx descriptor ring (for a specific queue) to setup
+ * @tx_ring: Tx descriptor ring (क्रम a specअगरic queue) to setup
  *
  * Return 0 on success, negative on failure
  **/
-int ixgbevf_setup_tx_resources(struct ixgbevf_ring *tx_ring)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(tx_ring->netdev);
-	int size;
+पूर्णांक ixgbevf_setup_tx_resources(काष्ठा ixgbevf_ring *tx_ring)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(tx_ring->netdev);
+	पूर्णांक size;
 
-	size = sizeof(struct ixgbevf_tx_buffer) * tx_ring->count;
-	tx_ring->tx_buffer_info = vmalloc(size);
-	if (!tx_ring->tx_buffer_info)
-		goto err;
+	size = माप(काष्ठा ixgbevf_tx_buffer) * tx_ring->count;
+	tx_ring->tx_buffer_info = vदो_स्मृति(size);
+	अगर (!tx_ring->tx_buffer_info)
+		जाओ err;
 
 	u64_stats_init(&tx_ring->syncp);
 
 	/* round up to nearest 4K */
-	tx_ring->size = tx_ring->count * sizeof(union ixgbe_adv_tx_desc);
+	tx_ring->size = tx_ring->count * माप(जोड़ ixgbe_adv_tx_desc);
 	tx_ring->size = ALIGN(tx_ring->size, 4096);
 
 	tx_ring->desc = dma_alloc_coherent(tx_ring->dev, tx_ring->size,
 					   &tx_ring->dma, GFP_KERNEL);
-	if (!tx_ring->desc)
-		goto err;
+	अगर (!tx_ring->desc)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	vfree(tx_ring->tx_buffer_info);
-	tx_ring->tx_buffer_info = NULL;
+	vमुक्त(tx_ring->tx_buffer_info);
+	tx_ring->tx_buffer_info = शून्य;
 	hw_dbg(&adapter->hw, "Unable to allocate memory for the transmit descriptor ring\n");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * ixgbevf_setup_all_tx_resources - allocate all queues Tx resources
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
- * If this function returns with an error, then it's possible one or
- * more of the rings is populated (while the rest are not).  It is the
+ * If this function वापसs with an error, then it's possible one or
+ * more of the rings is populated (जबतक the rest are not).  It is the
  * callers duty to clean those orphaned rings.
  *
  * Return 0 on success, negative on failure
  **/
-static int ixgbevf_setup_all_tx_resources(struct ixgbevf_adapter *adapter)
-{
-	int i, j = 0, err = 0;
+अटल पूर्णांक ixgbevf_setup_all_tx_resources(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक i, j = 0, err = 0;
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
 		err = ixgbevf_setup_tx_resources(adapter->tx_ring[i]);
-		if (!err)
-			continue;
+		अगर (!err)
+			जारी;
 		hw_dbg(&adapter->hw, "Allocation for Tx Queue %u failed\n", i);
-		goto err_setup_tx;
-	}
+		जाओ err_setup_tx;
+	पूर्ण
 
-	for (j = 0; j < adapter->num_xdp_queues; j++) {
+	क्रम (j = 0; j < adapter->num_xdp_queues; j++) अणु
 		err = ixgbevf_setup_tx_resources(adapter->xdp_ring[j]);
-		if (!err)
-			continue;
+		अगर (!err)
+			जारी;
 		hw_dbg(&adapter->hw, "Allocation for XDP Queue %u failed\n", j);
-		goto err_setup_tx;
-	}
+		जाओ err_setup_tx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_setup_tx:
-	/* rewind the index freeing the rings as we go */
-	while (j--)
-		ixgbevf_free_tx_resources(adapter->xdp_ring[j]);
-	while (i--)
-		ixgbevf_free_tx_resources(adapter->tx_ring[i]);
+	/* शुरुआत the index मुक्तing the rings as we go */
+	जबतक (j--)
+		ixgbevf_मुक्त_tx_resources(adapter->xdp_ring[j]);
+	जबतक (i--)
+		ixgbevf_मुक्त_tx_resources(adapter->tx_ring[i]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * ixgbevf_setup_rx_resources - allocate Rx resources (Descriptors)
- * @adapter: board private structure
- * @rx_ring: Rx descriptor ring (for a specific queue) to setup
+ * @adapter: board निजी काष्ठाure
+ * @rx_ring: Rx descriptor ring (क्रम a specअगरic queue) to setup
  *
  * Returns 0 on success, negative on failure
  **/
-int ixgbevf_setup_rx_resources(struct ixgbevf_adapter *adapter,
-			       struct ixgbevf_ring *rx_ring)
-{
-	int size;
+पूर्णांक ixgbevf_setup_rx_resources(काष्ठा ixgbevf_adapter *adapter,
+			       काष्ठा ixgbevf_ring *rx_ring)
+अणु
+	पूर्णांक size;
 
-	size = sizeof(struct ixgbevf_rx_buffer) * rx_ring->count;
-	rx_ring->rx_buffer_info = vmalloc(size);
-	if (!rx_ring->rx_buffer_info)
-		goto err;
+	size = माप(काष्ठा ixgbevf_rx_buffer) * rx_ring->count;
+	rx_ring->rx_buffer_info = vदो_स्मृति(size);
+	अगर (!rx_ring->rx_buffer_info)
+		जाओ err;
 
 	u64_stats_init(&rx_ring->syncp);
 
 	/* Round up to nearest 4K */
-	rx_ring->size = rx_ring->count * sizeof(union ixgbe_adv_rx_desc);
+	rx_ring->size = rx_ring->count * माप(जोड़ ixgbe_adv_rx_desc);
 	rx_ring->size = ALIGN(rx_ring->size, 4096);
 
 	rx_ring->desc = dma_alloc_coherent(rx_ring->dev, rx_ring->size,
 					   &rx_ring->dma, GFP_KERNEL);
 
-	if (!rx_ring->desc)
-		goto err;
+	अगर (!rx_ring->desc)
+		जाओ err;
 
 	/* XDP RX-queue info */
-	if (xdp_rxq_info_reg(&rx_ring->xdp_rxq, adapter->netdev,
+	अगर (xdp_rxq_info_reg(&rx_ring->xdp_rxq, adapter->netdev,
 			     rx_ring->queue_index, 0) < 0)
-		goto err;
+		जाओ err;
 
 	rx_ring->xdp_prog = adapter->xdp_prog;
 
-	return 0;
+	वापस 0;
 err:
-	vfree(rx_ring->rx_buffer_info);
-	rx_ring->rx_buffer_info = NULL;
+	vमुक्त(rx_ring->rx_buffer_info);
+	rx_ring->rx_buffer_info = शून्य;
 	dev_err(rx_ring->dev, "Unable to allocate memory for the Rx descriptor ring\n");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * ixgbevf_setup_all_rx_resources - allocate all queues Rx resources
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
- * If this function returns with an error, then it's possible one or
- * more of the rings is populated (while the rest are not).  It is the
+ * If this function वापसs with an error, then it's possible one or
+ * more of the rings is populated (जबतक the rest are not).  It is the
  * callers duty to clean those orphaned rings.
  *
  * Return 0 on success, negative on failure
  **/
-static int ixgbevf_setup_all_rx_resources(struct ixgbevf_adapter *adapter)
-{
-	int i, err = 0;
+अटल पूर्णांक ixgbevf_setup_all_rx_resources(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < adapter->num_rx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
 		err = ixgbevf_setup_rx_resources(adapter, adapter->rx_ring[i]);
-		if (!err)
-			continue;
+		अगर (!err)
+			जारी;
 		hw_dbg(&adapter->hw, "Allocation for Rx Queue %u failed\n", i);
-		goto err_setup_rx;
-	}
+		जाओ err_setup_rx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_setup_rx:
-	/* rewind the index freeing the rings as we go */
-	while (i--)
-		ixgbevf_free_rx_resources(adapter->rx_ring[i]);
-	return err;
-}
+	/* शुरुआत the index मुक्तing the rings as we go */
+	जबतक (i--)
+		ixgbevf_मुक्त_rx_resources(adapter->rx_ring[i]);
+	वापस err;
+पूर्ण
 
 /**
- * ixgbevf_free_rx_resources - Free Rx Resources
+ * ixgbevf_मुक्त_rx_resources - Free Rx Resources
  * @rx_ring: ring to clean the resources from
  *
  * Free all receive software resources
  **/
-void ixgbevf_free_rx_resources(struct ixgbevf_ring *rx_ring)
-{
+व्योम ixgbevf_मुक्त_rx_resources(काष्ठा ixgbevf_ring *rx_ring)
+अणु
 	ixgbevf_clean_rx_ring(rx_ring);
 
-	rx_ring->xdp_prog = NULL;
+	rx_ring->xdp_prog = शून्य;
 	xdp_rxq_info_unreg(&rx_ring->xdp_rxq);
-	vfree(rx_ring->rx_buffer_info);
-	rx_ring->rx_buffer_info = NULL;
+	vमुक्त(rx_ring->rx_buffer_info);
+	rx_ring->rx_buffer_info = शून्य;
 
-	dma_free_coherent(rx_ring->dev, rx_ring->size, rx_ring->desc,
+	dma_मुक्त_coherent(rx_ring->dev, rx_ring->size, rx_ring->desc,
 			  rx_ring->dma);
 
-	rx_ring->desc = NULL;
-}
+	rx_ring->desc = शून्य;
+पूर्ण
 
 /**
- * ixgbevf_free_all_rx_resources - Free Rx Resources for All Queues
- * @adapter: board private structure
+ * ixgbevf_मुक्त_all_rx_resources - Free Rx Resources क्रम All Queues
+ * @adapter: board निजी काष्ठाure
  *
  * Free all receive software resources
  **/
-static void ixgbevf_free_all_rx_resources(struct ixgbevf_adapter *adapter)
-{
-	int i;
+अटल व्योम ixgbevf_मुक्त_all_rx_resources(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_rx_queues; i++)
-		if (adapter->rx_ring[i]->desc)
-			ixgbevf_free_rx_resources(adapter->rx_ring[i]);
-}
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
+		अगर (adapter->rx_ring[i]->desc)
+			ixgbevf_मुक्त_rx_resources(adapter->rx_ring[i]);
+पूर्ण
 
 /**
- * ixgbevf_open - Called when a network interface is made active
- * @netdev: network interface device structure
+ * ixgbevf_खोलो - Called when a network पूर्णांकerface is made active
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Returns 0 on success, negative value on failure
  *
- * The open entry point is called when a network interface is made
- * active by the system (IFF_UP).  At this point all resources needed
- * for transmit and receive operations are allocated, the interrupt
- * handler is registered with the OS, the watchdog timer is started,
- * and the stack is notified that the interface is ready.
+ * The खोलो entry poपूर्णांक is called when a network पूर्णांकerface is made
+ * active by the प्रणाली (IFF_UP).  At this poपूर्णांक all resources needed
+ * क्रम transmit and receive operations are allocated, the पूर्णांकerrupt
+ * handler is रेजिस्टरed with the OS, the watchकरोg समयr is started,
+ * and the stack is notअगरied that the पूर्णांकerface is पढ़ोy.
  **/
-int ixgbevf_open(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	int err;
+पूर्णांक ixgbevf_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
-	/* A previous failure to open the device because of a lack of
+	/* A previous failure to खोलो the device because of a lack of
 	 * available MSIX vector resources may have reset the number
 	 * of msix vectors variable to zero.  The only way to recover
-	 * is to unload/reload the driver and hope that the system has
+	 * is to unload/reload the driver and hope that the प्रणाली has
 	 * been able to recover some MSIX vector resources.
 	 */
-	if (!adapter->num_msix_vectors)
-		return -ENOMEM;
+	अगर (!adapter->num_msix_vectors)
+		वापस -ENOMEM;
 
-	if (hw->adapter_stopped) {
+	अगर (hw->adapter_stopped) अणु
 		ixgbevf_reset(adapter);
-		/* if adapter is still stopped then PF isn't up and
+		/* अगर adapter is still stopped then PF isn't up and
 		 * the VF can't start.
 		 */
-		if (hw->adapter_stopped) {
+		अगर (hw->adapter_stopped) अणु
 			err = IXGBE_ERR_MBX;
 			pr_err("Unable to start - perhaps the PF Driver isn't up yet\n");
-			goto err_setup_reset;
-		}
-	}
+			जाओ err_setup_reset;
+		पूर्ण
+	पूर्ण
 
-	/* disallow open during test */
-	if (test_bit(__IXGBEVF_TESTING, &adapter->state))
-		return -EBUSY;
+	/* disallow खोलो during test */
+	अगर (test_bit(__IXGBEVF_TESTING, &adapter->state))
+		वापस -EBUSY;
 
-	netif_carrier_off(netdev);
+	netअगर_carrier_off(netdev);
 
 	/* allocate transmit descriptors */
 	err = ixgbevf_setup_all_tx_resources(adapter);
-	if (err)
-		goto err_setup_tx;
+	अगर (err)
+		जाओ err_setup_tx;
 
 	/* allocate receive descriptors */
 	err = ixgbevf_setup_all_rx_resources(adapter);
-	if (err)
-		goto err_setup_rx;
+	अगर (err)
+		जाओ err_setup_rx;
 
 	ixgbevf_configure(adapter);
 
 	err = ixgbevf_request_irq(adapter);
-	if (err)
-		goto err_req_irq;
+	अगर (err)
+		जाओ err_req_irq;
 
-	/* Notify the stack of the actual queue counts. */
-	err = netif_set_real_num_tx_queues(netdev, adapter->num_tx_queues);
-	if (err)
-		goto err_set_queues;
+	/* Notअगरy the stack of the actual queue counts. */
+	err = netअगर_set_real_num_tx_queues(netdev, adapter->num_tx_queues);
+	अगर (err)
+		जाओ err_set_queues;
 
-	err = netif_set_real_num_rx_queues(netdev, adapter->num_rx_queues);
-	if (err)
-		goto err_set_queues;
+	err = netअगर_set_real_num_rx_queues(netdev, adapter->num_rx_queues);
+	अगर (err)
+		जाओ err_set_queues;
 
 	ixgbevf_up_complete(adapter);
 
-	return 0;
+	वापस 0;
 
 err_set_queues:
-	ixgbevf_free_irq(adapter);
+	ixgbevf_मुक्त_irq(adapter);
 err_req_irq:
-	ixgbevf_free_all_rx_resources(adapter);
+	ixgbevf_मुक्त_all_rx_resources(adapter);
 err_setup_rx:
-	ixgbevf_free_all_tx_resources(adapter);
+	ixgbevf_मुक्त_all_tx_resources(adapter);
 err_setup_tx:
 	ixgbevf_reset(adapter);
 err_setup_reset:
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ixgbevf_close_suspend - actions necessary to both suspend and close flows
- * @adapter: the private adapter struct
+ * ixgbevf_बंद_suspend - actions necessary to both suspend and बंद flows
+ * @adapter: the निजी adapter काष्ठा
  *
  * This function should contain the necessary work common to both suspending
  * and closing of the device.
  */
-static void ixgbevf_close_suspend(struct ixgbevf_adapter *adapter)
-{
-	ixgbevf_down(adapter);
-	ixgbevf_free_irq(adapter);
-	ixgbevf_free_all_tx_resources(adapter);
-	ixgbevf_free_all_rx_resources(adapter);
-}
+अटल व्योम ixgbevf_बंद_suspend(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	ixgbevf_करोwn(adapter);
+	ixgbevf_मुक्त_irq(adapter);
+	ixgbevf_मुक्त_all_tx_resources(adapter);
+	ixgbevf_मुक्त_all_rx_resources(adapter);
+पूर्ण
 
 /**
- * ixgbevf_close - Disables a network interface
- * @netdev: network interface device structure
+ * ixgbevf_बंद - Disables a network पूर्णांकerface
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
  * Returns 0, this is not allowed to fail
  *
- * The close entry point is called when an interface is de-activated
+ * The बंद entry poपूर्णांक is called when an पूर्णांकerface is de-activated
  * by the OS.  The hardware is still under the drivers control, but
  * needs to be disabled.  A global MAC reset is issued to stop the
- * hardware, and all transmit and receive resources are freed.
+ * hardware, and all transmit and receive resources are मुक्तd.
  **/
-int ixgbevf_close(struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+पूर्णांक ixgbevf_बंद(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	if (netif_device_present(netdev))
-		ixgbevf_close_suspend(adapter);
+	अगर (netअगर_device_present(netdev))
+		ixgbevf_बंद_suspend(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ixgbevf_queue_reset_subtask(struct ixgbevf_adapter *adapter)
-{
-	struct net_device *dev = adapter->netdev;
+अटल व्योम ixgbevf_queue_reset_subtask(काष्ठा ixgbevf_adapter *adapter)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
 
-	if (!test_and_clear_bit(__IXGBEVF_QUEUE_RESET_REQUESTED,
+	अगर (!test_and_clear_bit(__IXGBEVF_QUEUE_RESET_REQUESTED,
 				&adapter->state))
-		return;
+		वापस;
 
-	/* if interface is down do nothing */
-	if (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
+	/* अगर पूर्णांकerface is करोwn करो nothing */
+	अगर (test_bit(__IXGBEVF_DOWN, &adapter->state) ||
 	    test_bit(__IXGBEVF_RESETTING, &adapter->state))
-		return;
+		वापस;
 
-	/* Hardware has to reinitialize queues and interrupts to
-	 * match packet buffer alignment. Unfortunately, the
-	 * hardware is not flexible enough to do this dynamically.
+	/* Hardware has to reinitialize queues and पूर्णांकerrupts to
+	 * match packet buffer alignment. Unक्रमtunately, the
+	 * hardware is not flexible enough to करो this dynamically.
 	 */
 	rtnl_lock();
 
-	if (netif_running(dev))
-		ixgbevf_close(dev);
+	अगर (netअगर_running(dev))
+		ixgbevf_बंद(dev);
 
-	ixgbevf_clear_interrupt_scheme(adapter);
-	ixgbevf_init_interrupt_scheme(adapter);
+	ixgbevf_clear_पूर्णांकerrupt_scheme(adapter);
+	ixgbevf_init_पूर्णांकerrupt_scheme(adapter);
 
-	if (netif_running(dev))
-		ixgbevf_open(dev);
+	अगर (netअगर_running(dev))
+		ixgbevf_खोलो(dev);
 
 	rtnl_unlock();
-}
+पूर्ण
 
-static void ixgbevf_tx_ctxtdesc(struct ixgbevf_ring *tx_ring,
+अटल व्योम ixgbevf_tx_ctxtdesc(काष्ठा ixgbevf_ring *tx_ring,
 				u32 vlan_macip_lens, u32 fceof_saidx,
 				u32 type_tucmd, u32 mss_l4len_idx)
-{
-	struct ixgbe_adv_tx_context_desc *context_desc;
+अणु
+	काष्ठा ixgbe_adv_tx_context_desc *context_desc;
 	u16 i = tx_ring->next_to_use;
 
 	context_desc = IXGBEVF_TX_CTXTDESC(tx_ring, i);
@@ -3736,48 +3737,48 @@ static void ixgbevf_tx_ctxtdesc(struct ixgbevf_ring *tx_ring,
 	i++;
 	tx_ring->next_to_use = (i < tx_ring->count) ? i : 0;
 
-	/* set bits to identify this as an advanced context descriptor */
+	/* set bits to identअगरy this as an advanced context descriptor */
 	type_tucmd |= IXGBE_TXD_CMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
 
 	context_desc->vlan_macip_lens	= cpu_to_le32(vlan_macip_lens);
 	context_desc->fceof_saidx	= cpu_to_le32(fceof_saidx);
 	context_desc->type_tucmd_mlhl	= cpu_to_le32(type_tucmd);
 	context_desc->mss_l4len_idx	= cpu_to_le32(mss_l4len_idx);
-}
+पूर्ण
 
-static int ixgbevf_tso(struct ixgbevf_ring *tx_ring,
-		       struct ixgbevf_tx_buffer *first,
+अटल पूर्णांक ixgbevf_tso(काष्ठा ixgbevf_ring *tx_ring,
+		       काष्ठा ixgbevf_tx_buffer *first,
 		       u8 *hdr_len,
-		       struct ixgbevf_ipsec_tx_data *itd)
-{
+		       काष्ठा ixgbevf_ipsec_tx_data *itd)
+अणु
 	u32 vlan_macip_lens, type_tucmd, mss_l4len_idx;
-	struct sk_buff *skb = first->skb;
-	union {
-		struct iphdr *v4;
-		struct ipv6hdr *v6;
-		unsigned char *hdr;
-	} ip;
-	union {
-		struct tcphdr *tcp;
-		unsigned char *hdr;
-	} l4;
+	काष्ठा sk_buff *skb = first->skb;
+	जोड़ अणु
+		काष्ठा iphdr *v4;
+		काष्ठा ipv6hdr *v6;
+		अचिन्हित अक्षर *hdr;
+	पूर्ण ip;
+	जोड़ अणु
+		काष्ठा tcphdr *tcp;
+		अचिन्हित अक्षर *hdr;
+	पूर्ण l4;
 	u32 paylen, l4_offset;
 	u32 fceof_saidx = 0;
-	int err;
+	पूर्णांक err;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return 0;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस 0;
 
-	if (!skb_is_gso(skb))
-		return 0;
+	अगर (!skb_is_gso(skb))
+		वापस 0;
 
 	err = skb_cow_head(skb, 0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (eth_p_mpls(first->protocol))
+	अगर (eth_p_mpls(first->protocol))
 		ip.hdr = skb_inner_network_header(skb);
-	else
+	अन्यथा
 		ip.hdr = skb_network_header(skb);
 	l4.hdr = skb_checksum_start(skb);
 
@@ -3785,14 +3786,14 @@ static int ixgbevf_tso(struct ixgbevf_ring *tx_ring,
 	type_tucmd = IXGBE_ADVTXD_TUCMD_L4T_TCP;
 
 	/* initialize outer IP header fields */
-	if (ip.v4->version == 4) {
-		unsigned char *csum_start = skb_checksum_start(skb);
-		unsigned char *trans_start = ip.hdr + (ip.v4->ihl * 4);
-		int len = csum_start - trans_start;
+	अगर (ip.v4->version == 4) अणु
+		अचिन्हित अक्षर *csum_start = skb_checksum_start(skb);
+		अचिन्हित अक्षर *trans_start = ip.hdr + (ip.v4->ihl * 4);
+		पूर्णांक len = csum_start - trans_start;
 
 		/* IP header will have to cancel out any data that
 		 * is not a part of the outer IP header, so set to
-		 * a reverse csum if needed, else init check to 0.
+		 * a reverse csum अगर needed, अन्यथा init check to 0.
 		 */
 		ip.v4->check = (skb_shinfo(skb)->gso_type & SKB_GSO_PARTIAL) ?
 					   csum_fold(csum_partial(trans_start,
@@ -3803,27 +3804,27 @@ static int ixgbevf_tso(struct ixgbevf_ring *tx_ring,
 		first->tx_flags |= IXGBE_TX_FLAGS_TSO |
 				   IXGBE_TX_FLAGS_CSUM |
 				   IXGBE_TX_FLAGS_IPV4;
-	} else {
+	पूर्ण अन्यथा अणु
 		ip.v6->payload_len = 0;
 		first->tx_flags |= IXGBE_TX_FLAGS_TSO |
 				   IXGBE_TX_FLAGS_CSUM;
-	}
+	पूर्ण
 
 	/* determine offset of inner transport header */
 	l4_offset = l4.hdr - skb->data;
 
 	/* compute length of segmentation header */
-	*hdr_len = (l4.tcp->doff * 4) + l4_offset;
+	*hdr_len = (l4.tcp->करोff * 4) + l4_offset;
 
-	/* remove payload length from inner checksum */
+	/* हटाओ payload length from inner checksum */
 	paylen = skb->len - l4_offset;
-	csum_replace_by_diff(&l4.tcp->check, htonl(paylen));
+	csum_replace_by_dअगरf(&l4.tcp->check, htonl(paylen));
 
 	/* update gso size and bytecount with header size */
 	first->gso_segs = skb_shinfo(skb)->gso_segs;
 	first->bytecount += (first->gso_segs - 1) * *hdr_len;
 
-	/* mss_l4len_id: use 1 as index for TSO */
+	/* mss_l4len_id: use 1 as index क्रम TSO */
 	mss_l4len_idx = (*hdr_len - l4_offset) << IXGBE_ADVTXD_L4LEN_SHIFT;
 	mss_l4len_idx |= skb_shinfo(skb)->gso_size << IXGBE_ADVTXD_MSS_SHIFT;
 	mss_l4len_idx |= (1u << IXGBE_ADVTXD_IDX_SHIFT);
@@ -3839,40 +3840,40 @@ static int ixgbevf_tso(struct ixgbevf_ring *tx_ring,
 	ixgbevf_tx_ctxtdesc(tx_ring, vlan_macip_lens, fceof_saidx, type_tucmd,
 			    mss_l4len_idx);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void ixgbevf_tx_csum(struct ixgbevf_ring *tx_ring,
-			    struct ixgbevf_tx_buffer *first,
-			    struct ixgbevf_ipsec_tx_data *itd)
-{
-	struct sk_buff *skb = first->skb;
+अटल व्योम ixgbevf_tx_csum(काष्ठा ixgbevf_ring *tx_ring,
+			    काष्ठा ixgbevf_tx_buffer *first,
+			    काष्ठा ixgbevf_ipsec_tx_data *itd)
+अणु
+	काष्ठा sk_buff *skb = first->skb;
 	u32 vlan_macip_lens = 0;
 	u32 fceof_saidx = 0;
 	u32 type_tucmd = 0;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		goto no_csum;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		जाओ no_csum;
 
-	switch (skb->csum_offset) {
-	case offsetof(struct tcphdr, check):
+	चयन (skb->csum_offset) अणु
+	हाल दुरत्व(काष्ठा tcphdr, check):
 		type_tucmd = IXGBE_ADVTXD_TUCMD_L4T_TCP;
 		fallthrough;
-	case offsetof(struct udphdr, check):
-		break;
-	case offsetof(struct sctphdr, checksum):
+	हाल दुरत्व(काष्ठा udphdr, check):
+		अवरोध;
+	हाल दुरत्व(काष्ठा sctphdr, checksum):
 		/* validate that this is actually an SCTP request */
-		if (skb_csum_is_sctp(skb)) {
+		अगर (skb_csum_is_sctp(skb)) अणु
 			type_tucmd = IXGBE_ADVTXD_TUCMD_L4T_SCTP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		skb_checksum_help(skb);
-		goto no_csum;
-	}
+		जाओ no_csum;
+	पूर्ण
 
-	if (first->protocol == htons(ETH_P_IP))
+	अगर (first->protocol == htons(ETH_P_IP))
 		type_tucmd |= IXGBE_ADVTXD_TUCMD_IPV4;
 
 	/* update TX checksum flag */
@@ -3889,65 +3890,65 @@ no_csum:
 
 	ixgbevf_tx_ctxtdesc(tx_ring, vlan_macip_lens,
 			    fceof_saidx, type_tucmd, 0);
-}
+पूर्ण
 
-static __le32 ixgbevf_tx_cmd_type(u32 tx_flags)
-{
-	/* set type for advanced descriptor with frame checksum insertion */
+अटल __le32 ixgbevf_tx_cmd_type(u32 tx_flags)
+अणु
+	/* set type क्रम advanced descriptor with frame checksum insertion */
 	__le32 cmd_type = cpu_to_le32(IXGBE_ADVTXD_DTYP_DATA |
 				      IXGBE_ADVTXD_DCMD_IFCS |
 				      IXGBE_ADVTXD_DCMD_DEXT);
 
-	/* set HW VLAN bit if VLAN is present */
-	if (tx_flags & IXGBE_TX_FLAGS_VLAN)
+	/* set HW VLAN bit अगर VLAN is present */
+	अगर (tx_flags & IXGBE_TX_FLAGS_VLAN)
 		cmd_type |= cpu_to_le32(IXGBE_ADVTXD_DCMD_VLE);
 
-	/* set segmentation enable bits for TSO/FSO */
-	if (tx_flags & IXGBE_TX_FLAGS_TSO)
+	/* set segmentation enable bits क्रम TSO/FSO */
+	अगर (tx_flags & IXGBE_TX_FLAGS_TSO)
 		cmd_type |= cpu_to_le32(IXGBE_ADVTXD_DCMD_TSE);
 
-	return cmd_type;
-}
+	वापस cmd_type;
+पूर्ण
 
-static void ixgbevf_tx_olinfo_status(union ixgbe_adv_tx_desc *tx_desc,
-				     u32 tx_flags, unsigned int paylen)
-{
+अटल व्योम ixgbevf_tx_olinfo_status(जोड़ ixgbe_adv_tx_desc *tx_desc,
+				     u32 tx_flags, अचिन्हित पूर्णांक paylen)
+अणु
 	__le32 olinfo_status = cpu_to_le32(paylen << IXGBE_ADVTXD_PAYLEN_SHIFT);
 
-	/* enable L4 checksum for TSO and TX checksum offload */
-	if (tx_flags & IXGBE_TX_FLAGS_CSUM)
+	/* enable L4 checksum क्रम TSO and TX checksum offload */
+	अगर (tx_flags & IXGBE_TX_FLAGS_CSUM)
 		olinfo_status |= cpu_to_le32(IXGBE_ADVTXD_POPTS_TXSM);
 
-	/* enble IPv4 checksum for TSO */
-	if (tx_flags & IXGBE_TX_FLAGS_IPV4)
+	/* enble IPv4 checksum क्रम TSO */
+	अगर (tx_flags & IXGBE_TX_FLAGS_IPV4)
 		olinfo_status |= cpu_to_le32(IXGBE_ADVTXD_POPTS_IXSM);
 
 	/* enable IPsec */
-	if (tx_flags & IXGBE_TX_FLAGS_IPSEC)
+	अगर (tx_flags & IXGBE_TX_FLAGS_IPSEC)
 		olinfo_status |= cpu_to_le32(IXGBE_ADVTXD_POPTS_IPSEC);
 
-	/* use index 1 context for TSO/FSO/FCOE/IPSEC */
-	if (tx_flags & (IXGBE_TX_FLAGS_TSO | IXGBE_TX_FLAGS_IPSEC))
+	/* use index 1 context क्रम TSO/FSO/FCOE/IPSEC */
+	अगर (tx_flags & (IXGBE_TX_FLAGS_TSO | IXGBE_TX_FLAGS_IPSEC))
 		olinfo_status |= cpu_to_le32(1u << IXGBE_ADVTXD_IDX_SHIFT);
 
-	/* Check Context must be set if Tx switch is enabled, which it
-	 * always is for case where virtual functions are running
+	/* Check Context must be set अगर Tx चयन is enabled, which it
+	 * always is क्रम हाल where भव functions are running
 	 */
 	olinfo_status |= cpu_to_le32(IXGBE_ADVTXD_CC);
 
-	tx_desc->read.olinfo_status = olinfo_status;
-}
+	tx_desc->पढ़ो.olinfo_status = olinfo_status;
+पूर्ण
 
-static void ixgbevf_tx_map(struct ixgbevf_ring *tx_ring,
-			   struct ixgbevf_tx_buffer *first,
-			   const u8 hdr_len)
-{
-	struct sk_buff *skb = first->skb;
-	struct ixgbevf_tx_buffer *tx_buffer;
-	union ixgbe_adv_tx_desc *tx_desc;
+अटल व्योम ixgbevf_tx_map(काष्ठा ixgbevf_ring *tx_ring,
+			   काष्ठा ixgbevf_tx_buffer *first,
+			   स्थिर u8 hdr_len)
+अणु
+	काष्ठा sk_buff *skb = first->skb;
+	काष्ठा ixgbevf_tx_buffer *tx_buffer;
+	जोड़ ixgbe_adv_tx_desc *tx_desc;
 	skb_frag_t *frag;
 	dma_addr_t dma;
-	unsigned int data_len, size;
+	अचिन्हित पूर्णांक data_len, size;
 	u32 tx_flags = first->tx_flags;
 	__le32 cmd_type = ixgbevf_tx_cmd_type(tx_flags);
 	u16 i = tx_ring->next_to_use;
@@ -3963,46 +3964,46 @@ static void ixgbevf_tx_map(struct ixgbevf_ring *tx_ring,
 
 	tx_buffer = first;
 
-	for (frag = &skb_shinfo(skb)->frags[0];; frag++) {
-		if (dma_mapping_error(tx_ring->dev, dma))
-			goto dma_error;
+	क्रम (frag = &skb_shinfo(skb)->frags[0];; frag++) अणु
+		अगर (dma_mapping_error(tx_ring->dev, dma))
+			जाओ dma_error;
 
 		/* record length, and DMA address */
 		dma_unmap_len_set(tx_buffer, len, size);
 		dma_unmap_addr_set(tx_buffer, dma, dma);
 
-		tx_desc->read.buffer_addr = cpu_to_le64(dma);
+		tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
 
-		while (unlikely(size > IXGBE_MAX_DATA_PER_TXD)) {
-			tx_desc->read.cmd_type_len =
+		जबतक (unlikely(size > IXGBE_MAX_DATA_PER_TXD)) अणु
+			tx_desc->पढ़ो.cmd_type_len =
 				cmd_type | cpu_to_le32(IXGBE_MAX_DATA_PER_TXD);
 
 			i++;
 			tx_desc++;
-			if (i == tx_ring->count) {
+			अगर (i == tx_ring->count) अणु
 				tx_desc = IXGBEVF_TX_DESC(tx_ring, 0);
 				i = 0;
-			}
-			tx_desc->read.olinfo_status = 0;
+			पूर्ण
+			tx_desc->पढ़ो.olinfo_status = 0;
 
 			dma += IXGBE_MAX_DATA_PER_TXD;
 			size -= IXGBE_MAX_DATA_PER_TXD;
 
-			tx_desc->read.buffer_addr = cpu_to_le64(dma);
-		}
+			tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
+		पूर्ण
 
-		if (likely(!data_len))
-			break;
+		अगर (likely(!data_len))
+			अवरोध;
 
-		tx_desc->read.cmd_type_len = cmd_type | cpu_to_le32(size);
+		tx_desc->पढ़ो.cmd_type_len = cmd_type | cpu_to_le32(size);
 
 		i++;
 		tx_desc++;
-		if (i == tx_ring->count) {
+		अगर (i == tx_ring->count) अणु
 			tx_desc = IXGBEVF_TX_DESC(tx_ring, 0);
 			i = 0;
-		}
-		tx_desc->read.olinfo_status = 0;
+		पूर्ण
+		tx_desc->पढ़ो.olinfo_status = 0;
 
 		size = skb_frag_size(frag);
 		data_len -= size;
@@ -4011,23 +4012,23 @@ static void ixgbevf_tx_map(struct ixgbevf_ring *tx_ring,
 				       DMA_TO_DEVICE);
 
 		tx_buffer = &tx_ring->tx_buffer_info[i];
-	}
+	पूर्ण
 
-	/* write last descriptor with RS and EOP bits */
+	/* ग_लिखो last descriptor with RS and EOP bits */
 	cmd_type |= cpu_to_le32(size) | cpu_to_le32(IXGBE_TXD_CMD);
-	tx_desc->read.cmd_type_len = cmd_type;
+	tx_desc->पढ़ो.cmd_type_len = cmd_type;
 
-	/* set the timestamp */
-	first->time_stamp = jiffies;
+	/* set the बारtamp */
+	first->समय_stamp = jअगरfies;
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
-	/* Force memory writes to complete before letting h/w know there
-	 * are new descriptors to fetch.  (Only applicable for weak-ordered
+	/* Force memory ग_लिखोs to complete beक्रमe letting h/w know there
+	 * are new descriptors to fetch.  (Only applicable क्रम weak-ordered
 	 * memory model archs, such as IA-64).
 	 *
 	 * We also need this memory barrier (wmb) to make certain all of the
-	 * status bits have been updated before next_to_watch is written.
+	 * status bits have been updated beक्रमe next_to_watch is written.
 	 */
 	wmb();
 
@@ -4035,192 +4036,192 @@ static void ixgbevf_tx_map(struct ixgbevf_ring *tx_ring,
 	first->next_to_watch = tx_desc;
 
 	i++;
-	if (i == tx_ring->count)
+	अगर (i == tx_ring->count)
 		i = 0;
 
 	tx_ring->next_to_use = i;
 
-	/* notify HW of packet */
-	ixgbevf_write_tail(tx_ring, i);
+	/* notअगरy HW of packet */
+	ixgbevf_ग_लिखो_tail(tx_ring, i);
 
-	return;
+	वापस;
 dma_error:
 	dev_err(tx_ring->dev, "TX DMA map failed\n");
 	tx_buffer = &tx_ring->tx_buffer_info[i];
 
-	/* clear dma mappings for failed tx_buffer_info map */
-	while (tx_buffer != first) {
-		if (dma_unmap_len(tx_buffer, len))
+	/* clear dma mappings क्रम failed tx_buffer_info map */
+	जबतक (tx_buffer != first) अणु
+		अगर (dma_unmap_len(tx_buffer, len))
 			dma_unmap_page(tx_ring->dev,
 				       dma_unmap_addr(tx_buffer, dma),
 				       dma_unmap_len(tx_buffer, len),
 				       DMA_TO_DEVICE);
 		dma_unmap_len_set(tx_buffer, len, 0);
 
-		if (i-- == 0)
+		अगर (i-- == 0)
 			i += tx_ring->count;
 		tx_buffer = &tx_ring->tx_buffer_info[i];
-	}
+	पूर्ण
 
-	if (dma_unmap_len(tx_buffer, len))
+	अगर (dma_unmap_len(tx_buffer, len))
 		dma_unmap_single(tx_ring->dev,
 				 dma_unmap_addr(tx_buffer, dma),
 				 dma_unmap_len(tx_buffer, len),
 				 DMA_TO_DEVICE);
 	dma_unmap_len_set(tx_buffer, len, 0);
 
-	dev_kfree_skb_any(tx_buffer->skb);
-	tx_buffer->skb = NULL;
+	dev_kमुक्त_skb_any(tx_buffer->skb);
+	tx_buffer->skb = शून्य;
 
 	tx_ring->next_to_use = i;
-}
+पूर्ण
 
-static int __ixgbevf_maybe_stop_tx(struct ixgbevf_ring *tx_ring, int size)
-{
-	netif_stop_subqueue(tx_ring->netdev, tx_ring->queue_index);
+अटल पूर्णांक __ixgbevf_maybe_stop_tx(काष्ठा ixgbevf_ring *tx_ring, पूर्णांक size)
+अणु
+	netअगर_stop_subqueue(tx_ring->netdev, tx_ring->queue_index);
 	/* Herbert's original patch had:
-	 *  smp_mb__after_netif_stop_queue();
-	 * but since that doesn't exist yet, just open code it.
+	 *  smp_mb__after_netअगर_stop_queue();
+	 * but since that करोesn't exist yet, just खोलो code it.
 	 */
 	smp_mb();
 
-	/* We need to check again in a case another CPU has just
+	/* We need to check again in a हाल another CPU has just
 	 * made room available.
 	 */
-	if (likely(ixgbevf_desc_unused(tx_ring) < size))
-		return -EBUSY;
+	अगर (likely(ixgbevf_desc_unused(tx_ring) < size))
+		वापस -EBUSY;
 
-	/* A reprieve! - use start_queue because it doesn't call schedule */
-	netif_start_subqueue(tx_ring->netdev, tx_ring->queue_index);
+	/* A reprieve! - use start_queue because it करोesn't call schedule */
+	netअगर_start_subqueue(tx_ring->netdev, tx_ring->queue_index);
 	++tx_ring->tx_stats.restart_queue;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbevf_maybe_stop_tx(struct ixgbevf_ring *tx_ring, int size)
-{
-	if (likely(ixgbevf_desc_unused(tx_ring) >= size))
-		return 0;
-	return __ixgbevf_maybe_stop_tx(tx_ring, size);
-}
+अटल पूर्णांक ixgbevf_maybe_stop_tx(काष्ठा ixgbevf_ring *tx_ring, पूर्णांक size)
+अणु
+	अगर (likely(ixgbevf_desc_unused(tx_ring) >= size))
+		वापस 0;
+	वापस __ixgbevf_maybe_stop_tx(tx_ring, size);
+पूर्ण
 
-static int ixgbevf_xmit_frame_ring(struct sk_buff *skb,
-				   struct ixgbevf_ring *tx_ring)
-{
-	struct ixgbevf_tx_buffer *first;
-	int tso;
+अटल पूर्णांक ixgbevf_xmit_frame_ring(काष्ठा sk_buff *skb,
+				   काष्ठा ixgbevf_ring *tx_ring)
+अणु
+	काष्ठा ixgbevf_tx_buffer *first;
+	पूर्णांक tso;
 	u32 tx_flags = 0;
 	u16 count = TXD_USE_COUNT(skb_headlen(skb));
-	struct ixgbevf_ipsec_tx_data ipsec_tx = { 0 };
-#if PAGE_SIZE > IXGBE_MAX_DATA_PER_TXD
-	unsigned short f;
-#endif
+	काष्ठा ixgbevf_ipsec_tx_data ipsec_tx = अणु 0 पूर्ण;
+#अगर PAGE_SIZE > IXGBE_MAX_DATA_PER_TXD
+	अचिन्हित लघु f;
+#पूर्ण_अगर
 	u8 hdr_len = 0;
-	u8 *dst_mac = skb_header_pointer(skb, 0, 0, NULL);
+	u8 *dst_mac = skb_header_poपूर्णांकer(skb, 0, 0, शून्य);
 
-	if (!dst_mac || is_link_local_ether_addr(dst_mac)) {
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+	अगर (!dst_mac || is_link_local_ether_addr(dst_mac)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	/* need: 1 descriptor per page * PAGE_SIZE/IXGBE_MAX_DATA_PER_TXD,
-	 *       + 1 desc for skb_headlen/IXGBE_MAX_DATA_PER_TXD,
+	 *       + 1 desc क्रम skb_headlen/IXGBE_MAX_DATA_PER_TXD,
 	 *       + 2 desc gap to keep tail from touching head,
-	 *       + 1 desc for context descriptor,
-	 * otherwise try next time
+	 *       + 1 desc क्रम context descriptor,
+	 * otherwise try next समय
 	 */
-#if PAGE_SIZE > IXGBE_MAX_DATA_PER_TXD
-	for (f = 0; f < skb_shinfo(skb)->nr_frags; f++) {
+#अगर PAGE_SIZE > IXGBE_MAX_DATA_PER_TXD
+	क्रम (f = 0; f < skb_shinfo(skb)->nr_frags; f++) अणु
 		skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
 
 		count += TXD_USE_COUNT(skb_frag_size(frag));
-	}
-#else
+	पूर्ण
+#अन्यथा
 	count += skb_shinfo(skb)->nr_frags;
-#endif
-	if (ixgbevf_maybe_stop_tx(tx_ring, count + 3)) {
+#पूर्ण_अगर
+	अगर (ixgbevf_maybe_stop_tx(tx_ring, count + 3)) अणु
 		tx_ring->tx_stats.tx_busy++;
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	/* record the location of the first descriptor for this packet */
+	/* record the location of the first descriptor क्रम this packet */
 	first = &tx_ring->tx_buffer_info[tx_ring->next_to_use];
 	first->skb = skb;
 	first->bytecount = skb->len;
 	first->gso_segs = 1;
 
-	if (skb_vlan_tag_present(skb)) {
+	अगर (skb_vlan_tag_present(skb)) अणु
 		tx_flags |= skb_vlan_tag_get(skb);
 		tx_flags <<= IXGBE_TX_FLAGS_VLAN_SHIFT;
 		tx_flags |= IXGBE_TX_FLAGS_VLAN;
-	}
+	पूर्ण
 
 	/* record initial flags and protocol */
 	first->tx_flags = tx_flags;
 	first->protocol = vlan_get_protocol(skb);
 
-#ifdef CONFIG_IXGBEVF_IPSEC
-	if (xfrm_offload(skb) && !ixgbevf_ipsec_tx(tx_ring, first, &ipsec_tx))
-		goto out_drop;
-#endif
+#अगर_घोषित CONFIG_IXGBEVF_IPSEC
+	अगर (xfrm_offload(skb) && !ixgbevf_ipsec_tx(tx_ring, first, &ipsec_tx))
+		जाओ out_drop;
+#पूर्ण_अगर
 	tso = ixgbevf_tso(tx_ring, first, &hdr_len, &ipsec_tx);
-	if (tso < 0)
-		goto out_drop;
-	else if (!tso)
+	अगर (tso < 0)
+		जाओ out_drop;
+	अन्यथा अगर (!tso)
 		ixgbevf_tx_csum(tx_ring, first, &ipsec_tx);
 
 	ixgbevf_tx_map(tx_ring, first, hdr_len);
 
 	ixgbevf_maybe_stop_tx(tx_ring, DESC_NEEDED);
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 out_drop:
-	dev_kfree_skb_any(first->skb);
-	first->skb = NULL;
+	dev_kमुक्त_skb_any(first->skb);
+	first->skb = शून्य;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static netdev_tx_t ixgbevf_xmit_frame(struct sk_buff *skb, struct net_device *netdev)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbevf_ring *tx_ring;
+अटल netdev_tx_t ixgbevf_xmit_frame(काष्ठा sk_buff *skb, काष्ठा net_device *netdev)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbevf_ring *tx_ring;
 
-	if (skb->len <= 0) {
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+	अगर (skb->len <= 0) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	/* The minimum packet size for olinfo paylen is 17 so pad the skb
+	/* The minimum packet size क्रम olinfo paylen is 17 so pad the skb
 	 * in order to meet this minimum size requirement.
 	 */
-	if (skb->len < 17) {
-		if (skb_padto(skb, 17))
-			return NETDEV_TX_OK;
+	अगर (skb->len < 17) अणु
+		अगर (skb_padto(skb, 17))
+			वापस NETDEV_TX_OK;
 		skb->len = 17;
-	}
+	पूर्ण
 
 	tx_ring = adapter->tx_ring[skb->queue_mapping];
-	return ixgbevf_xmit_frame_ring(skb, tx_ring);
-}
+	वापस ixgbevf_xmit_frame_ring(skb, tx_ring);
+पूर्ण
 
 /**
  * ixgbevf_set_mac - Change the Ethernet Address of the NIC
- * @netdev: network interface device structure
- * @p: pointer to an address structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @p: poपूर्णांकer to an address काष्ठाure
  *
  * Returns 0 on success, negative on failure
  **/
-static int ixgbevf_set_mac(struct net_device *netdev, void *p)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	struct sockaddr *addr = p;
-	int err;
+अटल पूर्णांक ixgbevf_set_mac(काष्ठा net_device *netdev, व्योम *p)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	काष्ठा sockaddr *addr = p;
+	पूर्णांक err;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
 	spin_lock_bh(&adapter->mbx_lock);
 
@@ -4228,315 +4229,315 @@ static int ixgbevf_set_mac(struct net_device *netdev, void *p)
 
 	spin_unlock_bh(&adapter->mbx_lock);
 
-	if (err)
-		return -EPERM;
+	अगर (err)
+		वापस -EPERM;
 
 	ether_addr_copy(hw->mac.addr, addr->sa_data);
 	ether_addr_copy(hw->mac.perm_addr, addr->sa_data);
 	ether_addr_copy(netdev->dev_addr, addr->sa_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ixgbevf_change_mtu - Change the Maximum Transfer Unit
- * @netdev: network interface device structure
- * @new_mtu: new value for maximum frame size
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @new_mtu: new value क्रम maximum frame size
  *
  * Returns 0 on success, negative on failure
  **/
-static int ixgbevf_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	struct ixgbe_hw *hw = &adapter->hw;
-	int max_frame = new_mtu + ETH_HLEN + ETH_FCS_LEN;
-	int ret;
+अटल पूर्णांक ixgbevf_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	काष्ठा ixgbe_hw *hw = &adapter->hw;
+	पूर्णांक max_frame = new_mtu + ETH_HLEN + ETH_FCS_LEN;
+	पूर्णांक ret;
 
 	/* prevent MTU being changed to a size unsupported by XDP */
-	if (adapter->xdp_prog) {
+	अगर (adapter->xdp_prog) अणु
 		dev_warn(&adapter->pdev->dev, "MTU cannot be changed while XDP program is loaded\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	spin_lock_bh(&adapter->mbx_lock);
-	/* notify the PF of our intent to use this size of frame */
+	/* notअगरy the PF of our पूर्णांकent to use this size of frame */
 	ret = hw->mac.ops.set_rlpml(hw, max_frame);
 	spin_unlock_bh(&adapter->mbx_lock);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	hw_dbg(hw, "changing MTU from %d to %d\n",
 	       netdev->mtu, new_mtu);
 
-	/* must set new MTU before calling down or up */
+	/* must set new MTU beक्रमe calling करोwn or up */
 	netdev->mtu = new_mtu;
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		ixgbevf_reinit_locked(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ixgbevf_suspend(struct device *dev_d)
-{
-	struct net_device *netdev = dev_get_drvdata(dev_d);
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक __maybe_unused ixgbevf_suspend(काष्ठा device *dev_d)
+अणु
+	काष्ठा net_device *netdev = dev_get_drvdata(dev_d);
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
 	rtnl_lock();
-	netif_device_detach(netdev);
+	netअगर_device_detach(netdev);
 
-	if (netif_running(netdev))
-		ixgbevf_close_suspend(adapter);
+	अगर (netअगर_running(netdev))
+		ixgbevf_बंद_suspend(adapter);
 
-	ixgbevf_clear_interrupt_scheme(adapter);
+	ixgbevf_clear_पूर्णांकerrupt_scheme(adapter);
 	rtnl_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ixgbevf_resume(struct device *dev_d)
-{
-	struct pci_dev *pdev = to_pci_dev(dev_d);
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक __maybe_unused ixgbevf_resume(काष्ठा device *dev_d)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_d);
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 	u32 err;
 
 	adapter->hw.hw_addr = adapter->io_addr;
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(__IXGBEVF_DISABLED, &adapter->state);
 	pci_set_master(pdev);
 
 	ixgbevf_reset(adapter);
 
 	rtnl_lock();
-	err = ixgbevf_init_interrupt_scheme(adapter);
-	if (!err && netif_running(netdev))
-		err = ixgbevf_open(netdev);
+	err = ixgbevf_init_पूर्णांकerrupt_scheme(adapter);
+	अगर (!err && netअगर_running(netdev))
+		err = ixgbevf_खोलो(netdev);
 	rtnl_unlock();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	netif_device_attach(netdev);
+	netअगर_device_attach(netdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ixgbevf_shutdown(struct pci_dev *pdev)
-{
+अटल व्योम ixgbevf_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
 	ixgbevf_suspend(&pdev->dev);
-}
+पूर्ण
 
-static void ixgbevf_get_tx_ring_stats(struct rtnl_link_stats64 *stats,
-				      const struct ixgbevf_ring *ring)
-{
+अटल व्योम ixgbevf_get_tx_ring_stats(काष्ठा rtnl_link_stats64 *stats,
+				      स्थिर काष्ठा ixgbevf_ring *ring)
+अणु
 	u64 bytes, packets;
-	unsigned int start;
+	अचिन्हित पूर्णांक start;
 
-	if (ring) {
-		do {
+	अगर (ring) अणु
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			bytes = ring->stats.bytes;
 			packets = ring->stats.packets;
-		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
 		stats->tx_bytes += bytes;
 		stats->tx_packets += packets;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ixgbevf_get_stats(struct net_device *netdev,
-			      struct rtnl_link_stats64 *stats)
-{
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
-	unsigned int start;
+अटल व्योम ixgbevf_get_stats(काष्ठा net_device *netdev,
+			      काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
+	अचिन्हित पूर्णांक start;
 	u64 bytes, packets;
-	const struct ixgbevf_ring *ring;
-	int i;
+	स्थिर काष्ठा ixgbevf_ring *ring;
+	पूर्णांक i;
 
 	ixgbevf_update_stats(adapter);
 
 	stats->multicast = adapter->stats.vfmprc - adapter->stats.base_vfmprc;
 
-	rcu_read_lock();
-	for (i = 0; i < adapter->num_rx_queues; i++) {
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
 		ring = adapter->rx_ring[i];
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->syncp);
 			bytes = ring->stats.bytes;
 			packets = ring->stats.packets;
-		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->syncp, start));
 		stats->rx_bytes += bytes;
 		stats->rx_packets += packets;
-	}
+	पूर्ण
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
 		ring = adapter->tx_ring[i];
 		ixgbevf_get_tx_ring_stats(stats, ring);
-	}
+	पूर्ण
 
-	for (i = 0; i < adapter->num_xdp_queues; i++) {
+	क्रम (i = 0; i < adapter->num_xdp_queues; i++) अणु
 		ring = adapter->xdp_ring[i];
 		ixgbevf_get_tx_ring_stats(stats, ring);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-#define IXGBEVF_MAX_MAC_HDR_LEN		127
-#define IXGBEVF_MAX_NETWORK_HDR_LEN	511
+#घोषणा IXGBEVF_MAX_MAC_HDR_LEN		127
+#घोषणा IXGBEVF_MAX_NETWORK_HDR_LEN	511
 
-static netdev_features_t
-ixgbevf_features_check(struct sk_buff *skb, struct net_device *dev,
+अटल netdev_features_t
+ixgbevf_features_check(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
 		       netdev_features_t features)
-{
-	unsigned int network_hdr_len, mac_hdr_len;
+अणु
+	अचिन्हित पूर्णांक network_hdr_len, mac_hdr_len;
 
 	/* Make certain the headers can be described by a context descriptor */
 	mac_hdr_len = skb_network_header(skb) - skb->data;
-	if (unlikely(mac_hdr_len > IXGBEVF_MAX_MAC_HDR_LEN))
-		return features & ~(NETIF_F_HW_CSUM |
+	अगर (unlikely(mac_hdr_len > IXGBEVF_MAX_MAC_HDR_LEN))
+		वापस features & ~(NETIF_F_HW_CSUM |
 				    NETIF_F_SCTP_CRC |
 				    NETIF_F_HW_VLAN_CTAG_TX |
 				    NETIF_F_TSO |
 				    NETIF_F_TSO6);
 
 	network_hdr_len = skb_checksum_start(skb) - skb_network_header(skb);
-	if (unlikely(network_hdr_len >  IXGBEVF_MAX_NETWORK_HDR_LEN))
-		return features & ~(NETIF_F_HW_CSUM |
+	अगर (unlikely(network_hdr_len >  IXGBEVF_MAX_NETWORK_HDR_LEN))
+		वापस features & ~(NETIF_F_HW_CSUM |
 				    NETIF_F_SCTP_CRC |
 				    NETIF_F_TSO |
 				    NETIF_F_TSO6);
 
-	/* We can only support IPV4 TSO in tunnels if we can mangle the
-	 * inner IP ID field, so strip TSO if MANGLEID is not supported.
+	/* We can only support IPV4 TSO in tunnels अगर we can mangle the
+	 * inner IP ID field, so strip TSO अगर MANGLEID is not supported.
 	 */
-	if (skb->encapsulation && !(features & NETIF_F_TSO_MANGLEID))
+	अगर (skb->encapsulation && !(features & NETIF_F_TSO_MANGLEID))
 		features &= ~NETIF_F_TSO;
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static int ixgbevf_xdp_setup(struct net_device *dev, struct bpf_prog *prog)
-{
-	int i, frame_size = dev->mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
-	struct ixgbevf_adapter *adapter = netdev_priv(dev);
-	struct bpf_prog *old_prog;
+अटल पूर्णांक ixgbevf_xdp_setup(काष्ठा net_device *dev, काष्ठा bpf_prog *prog)
+अणु
+	पूर्णांक i, frame_size = dev->mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(dev);
+	काष्ठा bpf_prog *old_prog;
 
-	/* verify ixgbevf ring attributes are sufficient for XDP */
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct ixgbevf_ring *ring = adapter->rx_ring[i];
+	/* verअगरy ixgbevf ring attributes are sufficient क्रम XDP */
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा ixgbevf_ring *ring = adapter->rx_ring[i];
 
-		if (frame_size > ixgbevf_rx_bufsz(ring))
-			return -EINVAL;
-	}
+		अगर (frame_size > ixgbevf_rx_bufsz(ring))
+			वापस -EINVAL;
+	पूर्ण
 
 	old_prog = xchg(&adapter->xdp_prog, prog);
 
 	/* If transitioning XDP modes reconfigure rings */
-	if (!!prog != !!old_prog) {
-		/* Hardware has to reinitialize queues and interrupts to
-		 * match packet buffer alignment. Unfortunately, the
-		 * hardware is not flexible enough to do this dynamically.
+	अगर (!!prog != !!old_prog) अणु
+		/* Hardware has to reinitialize queues and पूर्णांकerrupts to
+		 * match packet buffer alignment. Unक्रमtunately, the
+		 * hardware is not flexible enough to करो this dynamically.
 		 */
-		if (netif_running(dev))
-			ixgbevf_close(dev);
+		अगर (netअगर_running(dev))
+			ixgbevf_बंद(dev);
 
-		ixgbevf_clear_interrupt_scheme(adapter);
-		ixgbevf_init_interrupt_scheme(adapter);
+		ixgbevf_clear_पूर्णांकerrupt_scheme(adapter);
+		ixgbevf_init_पूर्णांकerrupt_scheme(adapter);
 
-		if (netif_running(dev))
-			ixgbevf_open(dev);
-	} else {
-		for (i = 0; i < adapter->num_rx_queues; i++)
+		अगर (netअगर_running(dev))
+			ixgbevf_खोलो(dev);
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < adapter->num_rx_queues; i++)
 			xchg(&adapter->rx_ring[i]->xdp_prog, adapter->xdp_prog);
-	}
+	पूर्ण
 
-	if (old_prog)
+	अगर (old_prog)
 		bpf_prog_put(old_prog);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ixgbevf_xdp(struct net_device *dev, struct netdev_bpf *xdp)
-{
-	switch (xdp->command) {
-	case XDP_SETUP_PROG:
-		return ixgbevf_xdp_setup(dev, xdp->prog);
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक ixgbevf_xdp(काष्ठा net_device *dev, काष्ठा netdev_bpf *xdp)
+अणु
+	चयन (xdp->command) अणु
+	हाल XDP_SETUP_PROG:
+		वापस ixgbevf_xdp_setup(dev, xdp->prog);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct net_device_ops ixgbevf_netdev_ops = {
-	.ndo_open		= ixgbevf_open,
-	.ndo_stop		= ixgbevf_close,
-	.ndo_start_xmit		= ixgbevf_xmit_frame,
-	.ndo_set_rx_mode	= ixgbevf_set_rx_mode,
-	.ndo_get_stats64	= ixgbevf_get_stats,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= ixgbevf_set_mac,
-	.ndo_change_mtu		= ixgbevf_change_mtu,
-	.ndo_tx_timeout		= ixgbevf_tx_timeout,
-	.ndo_vlan_rx_add_vid	= ixgbevf_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= ixgbevf_vlan_rx_kill_vid,
-	.ndo_features_check	= ixgbevf_features_check,
-	.ndo_bpf		= ixgbevf_xdp,
-};
+अटल स्थिर काष्ठा net_device_ops ixgbevf_netdev_ops = अणु
+	.nकरो_खोलो		= ixgbevf_खोलो,
+	.nकरो_stop		= ixgbevf_बंद,
+	.nकरो_start_xmit		= ixgbevf_xmit_frame,
+	.nकरो_set_rx_mode	= ixgbevf_set_rx_mode,
+	.nकरो_get_stats64	= ixgbevf_get_stats,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= ixgbevf_set_mac,
+	.nकरो_change_mtu		= ixgbevf_change_mtu,
+	.nकरो_tx_समयout		= ixgbevf_tx_समयout,
+	.nकरो_vlan_rx_add_vid	= ixgbevf_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	= ixgbevf_vlan_rx_समाप्त_vid,
+	.nकरो_features_check	= ixgbevf_features_check,
+	.nकरो_bpf		= ixgbevf_xdp,
+पूर्ण;
 
-static void ixgbevf_assign_netdev_ops(struct net_device *dev)
-{
+अटल व्योम ixgbevf_assign_netdev_ops(काष्ठा net_device *dev)
+अणु
 	dev->netdev_ops = &ixgbevf_netdev_ops;
 	ixgbevf_set_ethtool_ops(dev);
-	dev->watchdog_timeo = 5 * HZ;
-}
+	dev->watchकरोg_समयo = 5 * HZ;
+पूर्ण
 
 /**
  * ixgbevf_probe - Device Initialization Routine
- * @pdev: PCI device information struct
+ * @pdev: PCI device inक्रमmation काष्ठा
  * @ent: entry in ixgbevf_pci_tbl
  *
  * Returns 0 on success, negative on failure
  *
- * ixgbevf_probe initializes an adapter identified by a pci_dev structure.
- * The OS initialization, configuring of the adapter private structure,
+ * ixgbevf_probe initializes an adapter identअगरied by a pci_dev काष्ठाure.
+ * The OS initialization, configuring of the adapter निजी काष्ठाure,
  * and a hardware reset occur.
  **/
-static int ixgbevf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct net_device *netdev;
-	struct ixgbevf_adapter *adapter = NULL;
-	struct ixgbe_hw *hw = NULL;
-	const struct ixgbevf_info *ii = ixgbevf_info_tbl[ent->driver_data];
-	int err, pci_using_dac;
+अटल पूर्णांक ixgbevf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा net_device *netdev;
+	काष्ठा ixgbevf_adapter *adapter = शून्य;
+	काष्ठा ixgbe_hw *hw = शून्य;
+	स्थिर काष्ठा ixgbevf_info *ii = ixgbevf_info_tbl[ent->driver_data];
+	पूर्णांक err, pci_using_dac;
 	bool disable_dev = false;
 
 	err = pci_enable_device(pdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) {
+	अगर (!dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) अणु
 		pci_using_dac = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev, "No usable DMA configuration, aborting\n");
-			goto err_dma;
-		}
+			जाओ err_dma;
+		पूर्ण
 		pci_using_dac = 0;
-	}
+	पूर्ण
 
 	err = pci_request_regions(pdev, ixgbevf_driver_name);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "pci_request_regions failed 0x%x\n", err);
-		goto err_pci_reg;
-	}
+		जाओ err_pci_reg;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	netdev = alloc_etherdev_mq(sizeof(struct ixgbevf_adapter),
+	netdev = alloc_etherdev_mq(माप(काष्ठा ixgbevf_adapter),
 				   MAX_TX_QUEUES);
-	if (!netdev) {
+	अगर (!netdev) अणु
 		err = -ENOMEM;
-		goto err_alloc_etherdev;
-	}
+		जाओ err_alloc_etherdev;
+	पूर्ण
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
@@ -4546,41 +4547,41 @@ static int ixgbevf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	adapter->pdev = pdev;
 	hw = &adapter->hw;
 	hw->back = adapter;
-	adapter->msg_enable = netif_msg_init(debug, DEFAULT_MSG_ENABLE);
+	adapter->msg_enable = netअगर_msg_init(debug, DEFAULT_MSG_ENABLE);
 
 	/* call save state here in standalone driver because it relies on
-	 * adapter struct to exist, and needs to call netdev_priv
+	 * adapter काष्ठा to exist, and needs to call netdev_priv
 	 */
 	pci_save_state(pdev);
 
 	hw->hw_addr = ioremap(pci_resource_start(pdev, 0),
 			      pci_resource_len(pdev, 0));
 	adapter->io_addr = hw->hw_addr;
-	if (!hw->hw_addr) {
+	अगर (!hw->hw_addr) अणु
 		err = -EIO;
-		goto err_ioremap;
-	}
+		जाओ err_ioremap;
+	पूर्ण
 
 	ixgbevf_assign_netdev_ops(netdev);
 
 	/* Setup HW API */
-	memcpy(&hw->mac.ops, ii->mac_ops, sizeof(hw->mac.ops));
+	स_नकल(&hw->mac.ops, ii->mac_ops, माप(hw->mac.ops));
 	hw->mac.type  = ii->mac;
 
-	memcpy(&hw->mbx.ops, &ixgbevf_mbx_ops,
-	       sizeof(struct ixgbe_mbx_operations));
+	स_नकल(&hw->mbx.ops, &ixgbevf_mbx_ops,
+	       माप(काष्ठा ixgbe_mbx_operations));
 
-	/* setup the private structure */
+	/* setup the निजी काष्ठाure */
 	err = ixgbevf_sw_init(adapter);
-	if (err)
-		goto err_sw_init;
+	अगर (err)
+		जाओ err_sw_init;
 
 	/* The HW MAC address was set and/or determined in sw_init */
-	if (!is_valid_ether_addr(netdev->dev_addr)) {
+	अगर (!is_valid_ether_addr(netdev->dev_addr)) अणु
 		pr_err("invalid MAC address\n");
 		err = -EIO;
-		goto err_sw_init;
-	}
+		जाओ err_sw_init;
+	पूर्ण
 
 	netdev->hw_features = NETIF_F_SG |
 			      NETIF_F_TSO |
@@ -4589,7 +4590,7 @@ static int ixgbevf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 			      NETIF_F_HW_CSUM |
 			      NETIF_F_SCTP_CRC;
 
-#define IXGBEVF_GSO_PARTIAL_FEATURES (NETIF_F_GSO_GRE | \
+#घोषणा IXGBEVF_GSO_PARTIAL_FEATURES (NETIF_F_GSO_GRE | \
 				      NETIF_F_GSO_GRE_CSUM | \
 				      NETIF_F_GSO_IPXIP4 | \
 				      NETIF_F_GSO_IPXIP6 | \
@@ -4602,7 +4603,7 @@ static int ixgbevf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	netdev->features = netdev->hw_features;
 
-	if (pci_using_dac)
+	अगर (pci_using_dac)
 		netdev->features |= NETIF_F_HIGHDMA;
 
 	netdev->vlan_features |= netdev->features | NETIF_F_TSO_MANGLEID;
@@ -4622,286 +4623,286 @@ static int ixgbevf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	/* MTU range: 68 - 1504 or 9710 */
 	netdev->min_mtu = ETH_MIN_MTU;
-	switch (adapter->hw.api_version) {
-	case ixgbe_mbox_api_11:
-	case ixgbe_mbox_api_12:
-	case ixgbe_mbox_api_13:
-	case ixgbe_mbox_api_14:
+	चयन (adapter->hw.api_version) अणु
+	हाल ixgbe_mbox_api_11:
+	हाल ixgbe_mbox_api_12:
+	हाल ixgbe_mbox_api_13:
+	हाल ixgbe_mbox_api_14:
 		netdev->max_mtu = IXGBE_MAX_JUMBO_FRAME_SIZE -
 				  (ETH_HLEN + ETH_FCS_LEN);
-		break;
-	default:
-		if (adapter->hw.mac.type != ixgbe_mac_82599_vf)
+		अवरोध;
+	शेष:
+		अगर (adapter->hw.mac.type != ixgbe_mac_82599_vf)
 			netdev->max_mtu = IXGBE_MAX_JUMBO_FRAME_SIZE -
 					  (ETH_HLEN + ETH_FCS_LEN);
-		else
+		अन्यथा
 			netdev->max_mtu = ETH_DATA_LEN + ETH_FCS_LEN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (IXGBE_REMOVED(hw->hw_addr)) {
+	अगर (IXGBE_REMOVED(hw->hw_addr)) अणु
 		err = -EIO;
-		goto err_sw_init;
-	}
+		जाओ err_sw_init;
+	पूर्ण
 
-	timer_setup(&adapter->service_timer, ixgbevf_service_timer, 0);
+	समयr_setup(&adapter->service_समयr, ixgbevf_service_समयr, 0);
 
 	INIT_WORK(&adapter->service_task, ixgbevf_service_task);
 	set_bit(__IXGBEVF_SERVICE_INITED, &adapter->state);
 	clear_bit(__IXGBEVF_SERVICE_SCHED, &adapter->state);
 
-	err = ixgbevf_init_interrupt_scheme(adapter);
-	if (err)
-		goto err_sw_init;
+	err = ixgbevf_init_पूर्णांकerrupt_scheme(adapter);
+	अगर (err)
+		जाओ err_sw_init;
 
-	strcpy(netdev->name, "eth%d");
+	म_नकल(netdev->name, "eth%d");
 
-	err = register_netdev(netdev);
-	if (err)
-		goto err_register;
+	err = रेजिस्टर_netdev(netdev);
+	अगर (err)
+		जाओ err_रेजिस्टर;
 
 	pci_set_drvdata(pdev, netdev);
-	netif_carrier_off(netdev);
+	netअगर_carrier_off(netdev);
 	ixgbevf_init_ipsec_offload(adapter);
 
 	ixgbevf_init_last_counter_stats(adapter);
 
-	/* print the VF info */
+	/* prपूर्णांक the VF info */
 	dev_info(&pdev->dev, "%pM\n", netdev->dev_addr);
 	dev_info(&pdev->dev, "MAC: %d\n", hw->mac.type);
 
-	switch (hw->mac.type) {
-	case ixgbe_mac_X550_vf:
+	चयन (hw->mac.type) अणु
+	हाल ixgbe_mac_X550_vf:
 		dev_info(&pdev->dev, "Intel(R) X550 Virtual Function\n");
-		break;
-	case ixgbe_mac_X540_vf:
+		अवरोध;
+	हाल ixgbe_mac_X540_vf:
 		dev_info(&pdev->dev, "Intel(R) X540 Virtual Function\n");
-		break;
-	case ixgbe_mac_82599_vf:
-	default:
+		अवरोध;
+	हाल ixgbe_mac_82599_vf:
+	शेष:
 		dev_info(&pdev->dev, "Intel(R) 82599 Virtual Function\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_register:
-	ixgbevf_clear_interrupt_scheme(adapter);
+err_रेजिस्टर:
+	ixgbevf_clear_पूर्णांकerrupt_scheme(adapter);
 err_sw_init:
-	ixgbevf_reset_interrupt_capability(adapter);
+	ixgbevf_reset_पूर्णांकerrupt_capability(adapter);
 	iounmap(adapter->io_addr);
-	kfree(adapter->rss_key);
+	kमुक्त(adapter->rss_key);
 err_ioremap:
 	disable_dev = !test_and_set_bit(__IXGBEVF_DISABLED, &adapter->state);
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 err_alloc_etherdev:
 	pci_release_regions(pdev);
 err_pci_reg:
 err_dma:
-	if (!adapter || disable_dev)
+	अगर (!adapter || disable_dev)
 		pci_disable_device(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * ixgbevf_remove - Device Removal Routine
- * @pdev: PCI device information struct
+ * ixgbevf_हटाओ - Device Removal Routine
+ * @pdev: PCI device inक्रमmation काष्ठा
  *
- * ixgbevf_remove is called by the PCI subsystem to alert the driver
+ * ixgbevf_हटाओ is called by the PCI subप्रणाली to alert the driver
  * that it should release a PCI device.  The could be caused by a
- * Hot-Plug event, or because the driver is going to be removed from
+ * Hot-Plug event, or because the driver is going to be हटाओd from
  * memory.
  **/
-static void ixgbevf_remove(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct ixgbevf_adapter *adapter;
+अटल व्योम ixgbevf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा ixgbevf_adapter *adapter;
 	bool disable_dev;
 
-	if (!netdev)
-		return;
+	अगर (!netdev)
+		वापस;
 
 	adapter = netdev_priv(netdev);
 
 	set_bit(__IXGBEVF_REMOVING, &adapter->state);
 	cancel_work_sync(&adapter->service_task);
 
-	if (netdev->reg_state == NETREG_REGISTERED)
-		unregister_netdev(netdev);
+	अगर (netdev->reg_state == NETREG_REGISTERED)
+		unरेजिस्टर_netdev(netdev);
 
 	ixgbevf_stop_ipsec_offload(adapter);
-	ixgbevf_clear_interrupt_scheme(adapter);
-	ixgbevf_reset_interrupt_capability(adapter);
+	ixgbevf_clear_पूर्णांकerrupt_scheme(adapter);
+	ixgbevf_reset_पूर्णांकerrupt_capability(adapter);
 
 	iounmap(adapter->io_addr);
 	pci_release_regions(pdev);
 
 	hw_dbg(&adapter->hw, "Remove complete\n");
 
-	kfree(adapter->rss_key);
+	kमुक्त(adapter->rss_key);
 	disable_dev = !test_and_set_bit(__IXGBEVF_DISABLED, &adapter->state);
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 
-	if (disable_dev)
+	अगर (disable_dev)
 		pci_disable_device(pdev);
-}
+पूर्ण
 
 /**
  * ixgbevf_io_error_detected - called when PCI error is detected
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  * @state: The current pci connection state
  *
  * This function is called after a PCI bus error affecting
  * this device has been detected.
  **/
-static pci_ers_result_t ixgbevf_io_error_detected(struct pci_dev *pdev,
+अटल pci_ers_result_t ixgbevf_io_error_detected(काष्ठा pci_dev *pdev,
 						  pci_channel_state_t state)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	if (!test_bit(__IXGBEVF_SERVICE_INITED, &adapter->state))
-		return PCI_ERS_RESULT_DISCONNECT;
+	अगर (!test_bit(__IXGBEVF_SERVICE_INITED, &adapter->state))
+		वापस PCI_ERS_RESULT_DISCONNECT;
 
 	rtnl_lock();
-	netif_device_detach(netdev);
+	netअगर_device_detach(netdev);
 
-	if (netif_running(netdev))
-		ixgbevf_close_suspend(adapter);
+	अगर (netअगर_running(netdev))
+		ixgbevf_बंद_suspend(adapter);
 
-	if (state == pci_channel_io_perm_failure) {
+	अगर (state == pci_channel_io_perm_failure) अणु
 		rtnl_unlock();
-		return PCI_ERS_RESULT_DISCONNECT;
-	}
+		वापस PCI_ERS_RESULT_DISCONNECT;
+	पूर्ण
 
-	if (!test_and_set_bit(__IXGBEVF_DISABLED, &adapter->state))
+	अगर (!test_and_set_bit(__IXGBEVF_DISABLED, &adapter->state))
 		pci_disable_device(pdev);
 	rtnl_unlock();
 
 	/* Request a slot slot reset. */
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
 /**
  * ixgbevf_io_slot_reset - called after the pci bus has been reset.
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  *
- * Restart the card from scratch, as if from a cold-boot. Implementation
+ * Restart the card from scratch, as अगर from a cold-boot. Implementation
  * resembles the first-half of the ixgbevf_resume routine.
  **/
-static pci_ers_result_t ixgbevf_io_slot_reset(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct ixgbevf_adapter *adapter = netdev_priv(netdev);
+अटल pci_ers_result_t ixgbevf_io_slot_reset(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा ixgbevf_adapter *adapter = netdev_priv(netdev);
 
-	if (pci_enable_device_mem(pdev)) {
+	अगर (pci_enable_device_mem(pdev)) अणु
 		dev_err(&pdev->dev,
 			"Cannot re-enable PCI device after reset.\n");
-		return PCI_ERS_RESULT_DISCONNECT;
-	}
+		वापस PCI_ERS_RESULT_DISCONNECT;
+	पूर्ण
 
 	adapter->hw.hw_addr = adapter->io_addr;
-	smp_mb__before_atomic();
+	smp_mb__beक्रमe_atomic();
 	clear_bit(__IXGBEVF_DISABLED, &adapter->state);
 	pci_set_master(pdev);
 
 	ixgbevf_reset(adapter);
 
-	return PCI_ERS_RESULT_RECOVERED;
-}
+	वापस PCI_ERS_RESULT_RECOVERED;
+पूर्ण
 
 /**
  * ixgbevf_io_resume - called when traffic can start flowing again.
- * @pdev: Pointer to PCI device
+ * @pdev: Poपूर्णांकer to PCI device
  *
  * This callback is called when the error recovery driver tells us that
  * its OK to resume normal operation. Implementation resembles the
  * second-half of the ixgbevf_resume routine.
  **/
-static void ixgbevf_io_resume(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
+अटल व्योम ixgbevf_io_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
 
 	rtnl_lock();
-	if (netif_running(netdev))
-		ixgbevf_open(netdev);
+	अगर (netअगर_running(netdev))
+		ixgbevf_खोलो(netdev);
 
-	netif_device_attach(netdev);
+	netअगर_device_attach(netdev);
 	rtnl_unlock();
-}
+पूर्ण
 
 /* PCI Error Recovery (ERS) */
-static const struct pci_error_handlers ixgbevf_err_handler = {
+अटल स्थिर काष्ठा pci_error_handlers ixgbevf_err_handler = अणु
 	.error_detected = ixgbevf_io_error_detected,
 	.slot_reset = ixgbevf_io_slot_reset,
 	.resume = ixgbevf_io_resume,
-};
+पूर्ण;
 
-static SIMPLE_DEV_PM_OPS(ixgbevf_pm_ops, ixgbevf_suspend, ixgbevf_resume);
+अटल SIMPLE_DEV_PM_OPS(ixgbevf_pm_ops, ixgbevf_suspend, ixgbevf_resume);
 
-static struct pci_driver ixgbevf_driver = {
+अटल काष्ठा pci_driver ixgbevf_driver = अणु
 	.name		= ixgbevf_driver_name,
 	.id_table	= ixgbevf_pci_tbl,
 	.probe		= ixgbevf_probe,
-	.remove		= ixgbevf_remove,
+	.हटाओ		= ixgbevf_हटाओ,
 
 	/* Power Management Hooks */
 	.driver.pm	= &ixgbevf_pm_ops,
 
-	.shutdown	= ixgbevf_shutdown,
+	.shutकरोwn	= ixgbevf_shutकरोwn,
 	.err_handler	= &ixgbevf_err_handler
-};
+पूर्ण;
 
 /**
  * ixgbevf_init_module - Driver Registration Routine
  *
  * ixgbevf_init_module is the first routine called when the driver is
- * loaded. All it does is register with the PCI subsystem.
+ * loaded. All it करोes is रेजिस्टर with the PCI subप्रणाली.
  **/
-static int __init ixgbevf_init_module(void)
-{
+अटल पूर्णांक __init ixgbevf_init_module(व्योम)
+अणु
 	pr_info("%s\n", ixgbevf_driver_string);
 	pr_info("%s\n", ixgbevf_copyright);
-	ixgbevf_wq = create_singlethread_workqueue(ixgbevf_driver_name);
-	if (!ixgbevf_wq) {
+	ixgbevf_wq = create_singlethपढ़ो_workqueue(ixgbevf_driver_name);
+	अगर (!ixgbevf_wq) अणु
 		pr_err("%s: Failed to create workqueue\n", ixgbevf_driver_name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return pci_register_driver(&ixgbevf_driver);
-}
+	वापस pci_रेजिस्टर_driver(&ixgbevf_driver);
+पूर्ण
 
 module_init(ixgbevf_init_module);
 
 /**
- * ixgbevf_exit_module - Driver Exit Cleanup Routine
+ * ixgbevf_निकास_module - Driver Exit Cleanup Routine
  *
- * ixgbevf_exit_module is called just before the driver is removed
+ * ixgbevf_निकास_module is called just beक्रमe the driver is हटाओd
  * from memory.
  **/
-static void __exit ixgbevf_exit_module(void)
-{
-	pci_unregister_driver(&ixgbevf_driver);
-	if (ixgbevf_wq) {
+अटल व्योम __निकास ixgbevf_निकास_module(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&ixgbevf_driver);
+	अगर (ixgbevf_wq) अणु
 		destroy_workqueue(ixgbevf_wq);
-		ixgbevf_wq = NULL;
-	}
-}
+		ixgbevf_wq = शून्य;
+	पूर्ण
+पूर्ण
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 /**
- * ixgbevf_get_hw_dev_name - return device name string
- * used by hardware layer to print debugging information
- * @hw: pointer to private hardware struct
+ * ixgbevf_get_hw_dev_name - वापस device name string
+ * used by hardware layer to prपूर्णांक debugging inक्रमmation
+ * @hw: poपूर्णांकer to निजी hardware काष्ठा
  **/
-char *ixgbevf_get_hw_dev_name(struct ixgbe_hw *hw)
-{
-	struct ixgbevf_adapter *adapter = hw->back;
+अक्षर *ixgbevf_get_hw_dev_name(काष्ठा ixgbe_hw *hw)
+अणु
+	काष्ठा ixgbevf_adapter *adapter = hw->back;
 
-	return adapter->netdev->name;
-}
+	वापस adapter->netdev->name;
+पूर्ण
 
-#endif
-module_exit(ixgbevf_exit_module);
+#पूर्ण_अगर
+module_निकास(ixgbevf_निकास_module);
 
-/* ixgbevf_main.c */
+/* ixgbevf_मुख्य.c */

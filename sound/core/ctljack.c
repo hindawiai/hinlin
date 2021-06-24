@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Helper functions for jack-detection kcontrols
+ * Helper functions क्रम jack-detection kcontrols
  *
  * Copyright (c) 2011 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <sound/core.h>
-#include <sound/control.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <sound/core.h>
+#समावेश <sound/control.h>
 
-#define jack_detect_kctl_info	snd_ctl_boolean_mono_info
+#घोषणा jack_detect_kctl_info	snd_ctl_boolean_mono_info
 
-static int jack_detect_kctl_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	ucontrol->value.integer.value[0] = kcontrol->private_value;
-	return 0;
-}
+अटल पूर्णांक jack_detect_kctl_get(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	ucontrol->value.पूर्णांकeger.value[0] = kcontrol->निजी_value;
+	वापस 0;
+पूर्ण
 
-static const struct snd_kcontrol_new jack_detect_kctl = {
+अटल स्थिर काष्ठा snd_kcontrol_new jack_detect_kctl = अणु
 	/* name is filled later */
-	.iface = SNDRV_CTL_ELEM_IFACE_CARD,
+	.अगरace = SNDRV_CTL_ELEM_IFACE_CARD,
 	.access = SNDRV_CTL_ELEM_ACCESS_READ,
 	.info = jack_detect_kctl_info,
 	.get = jack_detect_kctl_get,
-};
+पूर्ण;
 
-static int get_available_index(struct snd_card *card, const char *name)
-{
-	struct snd_ctl_elem_id sid;
+अटल पूर्णांक get_available_index(काष्ठा snd_card *card, स्थिर अक्षर *name)
+अणु
+	काष्ठा snd_ctl_elem_id sid;
 
-	memset(&sid, 0, sizeof(sid));
+	स_रखो(&sid, 0, माप(sid));
 
 	sid.index = 0;
-	sid.iface = SNDRV_CTL_ELEM_IFACE_CARD;
-	strscpy(sid.name, name, sizeof(sid.name));
+	sid.अगरace = SNDRV_CTL_ELEM_IFACE_CARD;
+	strscpy(sid.name, name, माप(sid.name));
 
-	while (snd_ctl_find_id(card, &sid)) {
+	जबतक (snd_ctl_find_id(card, &sid)) अणु
 		sid.index++;
 		/* reset numid; otherwise snd_ctl_find_id() hits this again */
 		sid.numid = 0;
-	}
+	पूर्ण
 
-	return sid.index;
-}
+	वापस sid.index;
+पूर्ण
 
-static void jack_kctl_name_gen(char *name, const char *src_name, int size)
-{
-	size_t count = strlen(src_name);
+अटल व्योम jack_kctl_name_gen(अक्षर *name, स्थिर अक्षर *src_name, पूर्णांक size)
+अणु
+	माप_प्रकार count = म_माप(src_name);
 	bool need_cat = true;
 
-	/* remove redundant " Jack" from src_name */
-	if (count >= 5)
-		need_cat = strncmp(&src_name[count - 5], " Jack", 5) ? true : false;
+	/* हटाओ redundant " Jack" from src_name */
+	अगर (count >= 5)
+		need_cat = म_भेदन(&src_name[count - 5], " Jack", 5) ? true : false;
 
-	snprintf(name, size, need_cat ? "%s Jack" : "%s", src_name);
+	snम_लिखो(name, size, need_cat ? "%s Jack" : "%s", src_name);
 
-}
+पूर्ण
 
-struct snd_kcontrol *
-snd_kctl_jack_new(const char *name, struct snd_card *card)
-{
-	struct snd_kcontrol *kctl;
+काष्ठा snd_kcontrol *
+snd_kctl_jack_new(स्थिर अक्षर *name, काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_kcontrol *kctl;
 
-	kctl = snd_ctl_new1(&jack_detect_kctl, NULL);
-	if (!kctl)
-		return NULL;
+	kctl = snd_ctl_new1(&jack_detect_kctl, शून्य);
+	अगर (!kctl)
+		वापस शून्य;
 
-	jack_kctl_name_gen(kctl->id.name, name, sizeof(kctl->id.name));
+	jack_kctl_name_gen(kctl->id.name, name, माप(kctl->id.name));
 	kctl->id.index = get_available_index(card, kctl->id.name);
-	kctl->private_value = 0;
-	return kctl;
-}
+	kctl->निजी_value = 0;
+	वापस kctl;
+पूर्ण
 
-void snd_kctl_jack_report(struct snd_card *card,
-			  struct snd_kcontrol *kctl, bool status)
-{
-	if (kctl->private_value == status)
-		return;
-	kctl->private_value = status;
-	snd_ctl_notify(card, SNDRV_CTL_EVENT_MASK_VALUE, &kctl->id);
-}
+व्योम snd_kctl_jack_report(काष्ठा snd_card *card,
+			  काष्ठा snd_kcontrol *kctl, bool status)
+अणु
+	अगर (kctl->निजी_value == status)
+		वापस;
+	kctl->निजी_value = status;
+	snd_ctl_notअगरy(card, SNDRV_CTL_EVENT_MASK_VALUE, &kctl->id);
+पूर्ण

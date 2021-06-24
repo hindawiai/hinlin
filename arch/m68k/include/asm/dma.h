@@ -1,196 +1,197 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_DMA_H
-#define _M68K_DMA_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_DMA_H
+#घोषणा _M68K_DMA_H 1
 
-#ifdef CONFIG_COLDFIRE
+#अगर_घोषित CONFIG_COLDFIRE
 /*
  * ColdFire DMA Model:
- *   ColdFire DMA supports two forms of DMA: Single and Dual address. Single
+ *   ColdFire DMA supports two क्रमms of DMA: Single and Dual address. Single
  * address mode emits a source address, and expects that the device will either
  * pick up the data (DMA READ) or source data (DMA WRITE). This implies that
  * the device will place data on the correct byte(s) of the data bus, as the
  * memory transactions are always 32 bits. This implies that only 32 bit
  * devices will find single mode transfers useful. Dual address DMA mode
- * performs two cycles: source read and destination write. ColdFire will
+ * perक्रमms two cycles: source पढ़ो and destination ग_लिखो. ColdFire will
  * align the data so that the device will always get the correct bytes, thus
- * is useful for 8 and 16 bit devices. This is the mode that is supported
+ * is useful क्रम 8 and 16 bit devices. This is the mode that is supported
  * below.
  *
- * AUG/22/2000 : added support for 32-bit Dual-Address-Mode (K) 2000
+ * AUG/22/2000 : added support क्रम 32-bit Dual-Address-Mode (K) 2000
  *               Oliver Kamphenkel (O.Kamphenkel@tu-bs.de)
  *
- * AUG/25/2000 : added support for 8, 16 and 32-bit Single-Address-Mode (K)2000
+ * AUG/25/2000 : added support क्रम 8, 16 and 32-bit Single-Address-Mode (K)2000
  *               Oliver Kamphenkel (O.Kamphenkel@tu-bs.de)
  *
- * APR/18/2002 : added proper support for MCF5272 DMA controller.
+ * APR/18/2002 : added proper support क्रम MCF5272 DMA controller.
  *               Arthur Shipkowski (art@videon-central.com)
  */
 
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
-#include <asm/mcfdma.h>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
+#समावेश <यंत्र/mcfdma.h>
 
 /*
- * Set number of channels of DMA on ColdFire for different implementations.
+ * Set number of channels of DMA on ColdFire क्रम dअगरferent implementations.
  */
-#if defined(CONFIG_M5249) || defined(CONFIG_M5307) || defined(CONFIG_M5407) || \
+#अगर defined(CONFIG_M5249) || defined(CONFIG_M5307) || defined(CONFIG_M5407) || \
 	defined(CONFIG_M523x) || defined(CONFIG_M527x) || \
 	defined(CONFIG_M528x) || defined(CONFIG_M525x)
 
-#define MAX_M68K_DMA_CHANNELS 4
-#elif defined(CONFIG_M5272)
-#define MAX_M68K_DMA_CHANNELS 1
-#elif defined(CONFIG_M53xx)
-#define MAX_M68K_DMA_CHANNELS 0
-#else
-#define MAX_M68K_DMA_CHANNELS 2
-#endif
+#घोषणा MAX_M68K_DMA_CHANNELS 4
+#या_अगर defined(CONFIG_M5272)
+#घोषणा MAX_M68K_DMA_CHANNELS 1
+#या_अगर defined(CONFIG_M53xx)
+#घोषणा MAX_M68K_DMA_CHANNELS 0
+#अन्यथा
+#घोषणा MAX_M68K_DMA_CHANNELS 2
+#पूर्ण_अगर
 
-extern unsigned int dma_base_addr[MAX_M68K_DMA_CHANNELS];
-extern unsigned int dma_device_address[MAX_M68K_DMA_CHANNELS];
+बाह्य अचिन्हित पूर्णांक dma_base_addr[MAX_M68K_DMA_CHANNELS];
+बाह्य अचिन्हित पूर्णांक dma_device_address[MAX_M68K_DMA_CHANNELS];
 
-#if !defined(CONFIG_M5272)
-#define DMA_MODE_WRITE_BIT  0x01  /* Memory/IO to IO/Memory select */
-#define DMA_MODE_WORD_BIT   0x02  /* 8 or 16 bit transfers */
-#define DMA_MODE_LONG_BIT   0x04  /* or 32 bit transfers */
-#define DMA_MODE_SINGLE_BIT 0x08  /* single-address-mode */
+#अगर !defined(CONFIG_M5272)
+#घोषणा DMA_MODE_WRITE_BIT  0x01  /* Memory/IO to IO/Memory select */
+#घोषणा DMA_MODE_WORD_BIT   0x02  /* 8 or 16 bit transfers */
+#घोषणा DMA_MODE_LONG_BIT   0x04  /* or 32 bit transfers */
+#घोषणा DMA_MODE_SINGLE_BIT 0x08  /* single-address-mode */
 
 /* I/O to memory, 8 bits, mode */
-#define DMA_MODE_READ	            0
+#घोषणा DMA_MODE_READ	            0
 /* memory to I/O, 8 bits, mode */
-#define DMA_MODE_WRITE	            1
+#घोषणा DMA_MODE_WRITE	            1
 /* I/O to memory, 16 bits, mode */
-#define DMA_MODE_READ_WORD          2
+#घोषणा DMA_MODE_READ_WORD          2
 /* memory to I/O, 16 bits, mode */
-#define DMA_MODE_WRITE_WORD         3
+#घोषणा DMA_MODE_WRITE_WORD         3
 /* I/O to memory, 32 bits, mode */
-#define DMA_MODE_READ_LONG          4
+#घोषणा DMA_MODE_READ_LONG          4
 /* memory to I/O, 32 bits, mode */
-#define DMA_MODE_WRITE_LONG         5
+#घोषणा DMA_MODE_WRITE_LONG         5
 /* I/O to memory, 8 bits, single-address-mode */
-#define DMA_MODE_READ_SINGLE        8
+#घोषणा DMA_MODE_READ_SINGLE        8
 /* memory to I/O, 8 bits, single-address-mode */
-#define DMA_MODE_WRITE_SINGLE       9
+#घोषणा DMA_MODE_WRITE_SINGLE       9
 /* I/O to memory, 16 bits, single-address-mode */
-#define DMA_MODE_READ_WORD_SINGLE  10
+#घोषणा DMA_MODE_READ_WORD_SINGLE  10
 /* memory to I/O, 16 bits, single-address-mode */
-#define DMA_MODE_WRITE_WORD_SINGLE 11
+#घोषणा DMA_MODE_WRITE_WORD_SINGLE 11
 /* I/O to memory, 32 bits, single-address-mode */
-#define DMA_MODE_READ_LONG_SINGLE  12
+#घोषणा DMA_MODE_READ_LONG_SINGLE  12
 /* memory to I/O, 32 bits, single-address-mode */
-#define DMA_MODE_WRITE_LONG_SINGLE 13
+#घोषणा DMA_MODE_WRITE_LONG_SINGLE 13
 
-#else /* CONFIG_M5272 is defined */
+#अन्यथा /* CONFIG_M5272 is defined */
 
-/* Source static-address mode */
-#define DMA_MODE_SRC_SA_BIT 0x01
+/* Source अटल-address mode */
+#घोषणा DMA_MODE_SRC_SA_BIT 0x01
 /* Two bits to select between all four modes */
-#define DMA_MODE_SSIZE_MASK 0x06
-/* Offset to shift bits in */
-#define DMA_MODE_SSIZE_OFF  0x01
-/* Destination static-address mode */
-#define DMA_MODE_DES_SA_BIT 0x10
+#घोषणा DMA_MODE_SSIZE_MASK 0x06
+/* Offset to shअगरt bits in */
+#घोषणा DMA_MODE_SSIZE_OFF  0x01
+/* Destination अटल-address mode */
+#घोषणा DMA_MODE_DES_SA_BIT 0x10
 /* Two bits to select between all four modes */
-#define DMA_MODE_DSIZE_MASK 0x60
-/* Offset to shift bits in */
-#define DMA_MODE_DSIZE_OFF  0x05
-/* Size modifiers */
-#define DMA_MODE_SIZE_LONG  0x00
-#define DMA_MODE_SIZE_BYTE  0x01
-#define DMA_MODE_SIZE_WORD  0x02
-#define DMA_MODE_SIZE_LINE  0x03
+#घोषणा DMA_MODE_DSIZE_MASK 0x60
+/* Offset to shअगरt bits in */
+#घोषणा DMA_MODE_DSIZE_OFF  0x05
+/* Size modअगरiers */
+#घोषणा DMA_MODE_SIZE_LONG  0x00
+#घोषणा DMA_MODE_SIZE_BYTE  0x01
+#घोषणा DMA_MODE_SIZE_WORD  0x02
+#घोषणा DMA_MODE_SIZE_LINE  0x03
 
 /*
  * Aliases to help speed quick ports; these may be suboptimal, however. They
- * do not include the SINGLE mode modifiers since the MCF5272 does not have a
+ * करो not include the SINGLE mode modअगरiers since the MCF5272 करोes not have a
  * mode where the device is in control of its addressing.
  */
 
 /* I/O to memory, 8 bits, mode */
-#define DMA_MODE_READ	              ((DMA_MODE_SIZE_BYTE << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_BYTE << DMA_MODE_SSIZE_OFF) | DMA_SRC_SA_BIT)
+#घोषणा DMA_MODE_READ	              ((DMA_MODE_SIZE_BYTE << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_BYTE << DMA_MODE_SSIZE_OFF) | DMA_SRC_SA_BIT)
 /* memory to I/O, 8 bits, mode */
-#define DMA_MODE_WRITE	            ((DMA_MODE_SIZE_BYTE << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_BYTE << DMA_MODE_SSIZE_OFF) | DMA_DES_SA_BIT)
+#घोषणा DMA_MODE_WRITE	            ((DMA_MODE_SIZE_BYTE << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_BYTE << DMA_MODE_SSIZE_OFF) | DMA_DES_SA_BIT)
 /* I/O to memory, 16 bits, mode */
-#define DMA_MODE_READ_WORD	        ((DMA_MODE_SIZE_WORD << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_WORD << DMA_MODE_SSIZE_OFF) | DMA_SRC_SA_BIT)
+#घोषणा DMA_MODE_READ_WORD	        ((DMA_MODE_SIZE_WORD << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_WORD << DMA_MODE_SSIZE_OFF) | DMA_SRC_SA_BIT)
 /* memory to I/O, 16 bits, mode */
-#define DMA_MODE_WRITE_WORD         ((DMA_MODE_SIZE_WORD << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_WORD << DMA_MODE_SSIZE_OFF) | DMA_DES_SA_BIT)
+#घोषणा DMA_MODE_WRITE_WORD         ((DMA_MODE_SIZE_WORD << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_WORD << DMA_MODE_SSIZE_OFF) | DMA_DES_SA_BIT)
 /* I/O to memory, 32 bits, mode */
-#define DMA_MODE_READ_LONG	        ((DMA_MODE_SIZE_LONG << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_LONG << DMA_MODE_SSIZE_OFF) | DMA_SRC_SA_BIT)
+#घोषणा DMA_MODE_READ_LONG	        ((DMA_MODE_SIZE_LONG << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_LONG << DMA_MODE_SSIZE_OFF) | DMA_SRC_SA_BIT)
 /* memory to I/O, 32 bits, mode */
-#define DMA_MODE_WRITE_LONG         ((DMA_MODE_SIZE_LONG << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_LONG << DMA_MODE_SSIZE_OFF) | DMA_DES_SA_BIT)
+#घोषणा DMA_MODE_WRITE_LONG         ((DMA_MODE_SIZE_LONG << DMA_MODE_DSIZE_OFF) | (DMA_MODE_SIZE_LONG << DMA_MODE_SSIZE_OFF) | DMA_DES_SA_BIT)
 
-#endif /* !defined(CONFIG_M5272) */
+#पूर्ण_अगर /* !defined(CONFIG_M5272) */
 
-#if !defined(CONFIG_M5272)
-/* enable/disable a specific DMA channel */
-static __inline__ void enable_dma(unsigned int dmanr)
-{
-  volatile unsigned short *dmawp;
+#अगर !defined(CONFIG_M5272)
+/* enable/disable a specअगरic DMA channel */
+अटल __अंतरभूत__ व्योम enable_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+  अस्थिर अचिन्हित लघु *dmawp;
 
-#ifdef DMA_DEBUG
-  printk("enable_dma(dmanr=%d)\n", dmanr);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("enable_dma(dmanr=%d)\n", dmanr);
+#पूर्ण_अगर
 
-  dmawp = (unsigned short *) dma_base_addr[dmanr];
+  dmawp = (अचिन्हित लघु *) dma_base_addr[dmanr];
   dmawp[MCFDMA_DCR] |= MCFDMA_DCR_EEXT;
-}
+पूर्ण
 
-static __inline__ void disable_dma(unsigned int dmanr)
-{
-  volatile unsigned short *dmawp;
-  volatile unsigned char  *dmapb;
+अटल __अंतरभूत__ व्योम disable_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+  अस्थिर अचिन्हित लघु *dmawp;
+  अस्थिर अचिन्हित अक्षर  *dmapb;
 
-#ifdef DMA_DEBUG
-  printk("disable_dma(dmanr=%d)\n", dmanr);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("disable_dma(dmanr=%d)\n", dmanr);
+#पूर्ण_अगर
 
-  dmawp = (unsigned short *) dma_base_addr[dmanr];
-  dmapb = (unsigned char *) dma_base_addr[dmanr];
+  dmawp = (अचिन्हित लघु *) dma_base_addr[dmanr];
+  dmapb = (अचिन्हित अक्षर *) dma_base_addr[dmanr];
 
-  /* Turn off external requests, and stop any DMA in progress */
+  /* Turn off बाह्यal requests, and stop any DMA in progress */
   dmawp[MCFDMA_DCR] &= ~MCFDMA_DCR_EEXT;
   dmapb[MCFDMA_DSR] = MCFDMA_DSR_DONE;
-}
+पूर्ण
 
 /*
  * Clear the 'DMA Pointer Flip Flop'.
- * Write 0 for LSB/MSB, 1 for MSB/LSB access.
+ * Write 0 क्रम LSB/MSB, 1 क्रम MSB/LSB access.
  * Use this once to initialize the FF to a known state.
  * After that, keep track of it. :-)
- * --- In order to do that, the DMA routines below should ---
- * --- only be used while interrupts are disabled! ---
+ * --- In order to करो that, the DMA routines below should ---
+ * --- only be used जबतक पूर्णांकerrupts are disabled! ---
  *
- * This is a NOP for ColdFire. Provide a stub for compatibility.
+ * This is a NOP क्रम ColdFire. Provide a stub क्रम compatibility.
  */
-static __inline__ void clear_dma_ff(unsigned int dmanr)
-{
-}
+अटल __अंतरभूत__ व्योम clear_dma_ff(अचिन्हित पूर्णांक dmanr)
+अणु
+पूर्ण
 
-/* set mode (above) for a specific DMA channel */
-static __inline__ void set_dma_mode(unsigned int dmanr, char mode)
-{
+/* set mode (above) क्रम a specअगरic DMA channel */
+अटल __अंतरभूत__ व्योम set_dma_mode(अचिन्हित पूर्णांक dmanr, अक्षर mode)
+अणु
 
-  volatile unsigned char  *dmabp;
-  volatile unsigned short *dmawp;
+  अस्थिर अचिन्हित अक्षर  *dmabp;
+  अस्थिर अचिन्हित लघु *dmawp;
 
-#ifdef DMA_DEBUG
-  printk("set_dma_mode(dmanr=%d,mode=%d)\n", dmanr, mode);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_mode(dmanr=%d,mode=%d)\n", dmanr, mode);
+#पूर्ण_अगर
 
-  dmabp = (unsigned char *) dma_base_addr[dmanr];
-  dmawp = (unsigned short *) dma_base_addr[dmanr];
+  dmabp = (अचिन्हित अक्षर *) dma_base_addr[dmanr];
+  dmawp = (अचिन्हित लघु *) dma_base_addr[dmanr];
 
   /* Clear config errors */
   dmabp[MCFDMA_DSR] = MCFDMA_DSR_DONE;
 
-  /* Set command register */
+  /* Set command रेजिस्टर */
   dmawp[MCFDMA_DCR] =
     MCFDMA_DCR_INT |         /* Enable completion irq */
     MCFDMA_DCR_CS |          /* Force one xfer per request */
-    MCFDMA_DCR_AA |          /* Enable auto alignment */
+    MCFDMA_DCR_AA |          /* Enable स्वतः alignment */
     /* single-address-mode */
     ((mode & DMA_MODE_SINGLE_BIT) ? MCFDMA_DCR_SAA : 0) |
-    /* sets s_rw (-> r/w) high if Memory to I/0 */
+    /* sets s_rw (-> r/w) high अगर Memory to I/0 */
     ((mode & DMA_MODE_WRITE_BIT) ? MCFDMA_DCR_S_RW : 0) |
     /* Memory to I/O or I/O to Memory */
     ((mode & DMA_MODE_WRITE_BIT) ? MCFDMA_DCR_SINC : MCFDMA_DCR_DINC) |
@@ -202,297 +203,297 @@ static __inline__ void set_dma_mode(unsigned int dmanr, char mode)
      ((mode & DMA_MODE_LONG_BIT) ? MCFDMA_DCR_DSIZE_LONG :
                                    MCFDMA_DCR_DSIZE_BYTE));
 
-#ifdef DEBUG_DMA
-  printk("%s(%d): dmanr=%d DSR[%x]=%x DCR[%x]=%x\n", __FILE__, __LINE__,
-         dmanr, (int) &dmabp[MCFDMA_DSR], dmabp[MCFDMA_DSR],
-	 (int) &dmawp[MCFDMA_DCR], dmawp[MCFDMA_DCR]);
-#endif
-}
+#अगर_घोषित DEBUG_DMA
+  prपूर्णांकk("%s(%d): dmanr=%d DSR[%x]=%x DCR[%x]=%x\n", __खाता__, __LINE__,
+         dmanr, (पूर्णांक) &dmabp[MCFDMA_DSR], dmabp[MCFDMA_DSR],
+	 (पूर्णांक) &dmawp[MCFDMA_DCR], dmawp[MCFDMA_DCR]);
+#पूर्ण_अगर
+पूर्ण
 
-/* Set transfer address for specific DMA channel */
-static __inline__ void set_dma_addr(unsigned int dmanr, unsigned int a)
-{
-  volatile unsigned short *dmawp;
-  volatile unsigned int   *dmalp;
+/* Set transfer address क्रम specअगरic DMA channel */
+अटल __अंतरभूत__ व्योम set_dma_addr(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक a)
+अणु
+  अस्थिर अचिन्हित लघु *dmawp;
+  अस्थिर अचिन्हित पूर्णांक   *dmalp;
 
-#ifdef DMA_DEBUG
-  printk("set_dma_addr(dmanr=%d,a=%x)\n", dmanr, a);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_addr(dmanr=%d,a=%x)\n", dmanr, a);
+#पूर्ण_अगर
 
-  dmawp = (unsigned short *) dma_base_addr[dmanr];
-  dmalp = (unsigned int *) dma_base_addr[dmanr];
+  dmawp = (अचिन्हित लघु *) dma_base_addr[dmanr];
+  dmalp = (अचिन्हित पूर्णांक *) dma_base_addr[dmanr];
 
-  /* Determine which address registers are used for memory/device accesses */
-  if (dmawp[MCFDMA_DCR] & MCFDMA_DCR_SINC) {
+  /* Determine which address रेजिस्टरs are used क्रम memory/device accesses */
+  अगर (dmawp[MCFDMA_DCR] & MCFDMA_DCR_SINC) अणु
     /* Source incrementing, must be memory */
     dmalp[MCFDMA_SAR] = a;
     /* Set dest address, must be device */
     dmalp[MCFDMA_DAR] = dma_device_address[dmanr];
-  } else {
+  पूर्ण अन्यथा अणु
     /* Destination incrementing, must be memory */
     dmalp[MCFDMA_DAR] = a;
     /* Set source address, must be device */
     dmalp[MCFDMA_SAR] = dma_device_address[dmanr];
-  }
+  पूर्ण
 
-#ifdef DEBUG_DMA
-  printk("%s(%d): dmanr=%d DCR[%x]=%x SAR[%x]=%08x DAR[%x]=%08x\n",
-	__FILE__, __LINE__, dmanr, (int) &dmawp[MCFDMA_DCR], dmawp[MCFDMA_DCR],
-	(int) &dmalp[MCFDMA_SAR], dmalp[MCFDMA_SAR],
-	(int) &dmalp[MCFDMA_DAR], dmalp[MCFDMA_DAR]);
-#endif
-}
+#अगर_घोषित DEBUG_DMA
+  prपूर्णांकk("%s(%d): dmanr=%d DCR[%x]=%x SAR[%x]=%08x DAR[%x]=%08x\n",
+	__खाता__, __LINE__, dmanr, (पूर्णांक) &dmawp[MCFDMA_DCR], dmawp[MCFDMA_DCR],
+	(पूर्णांक) &dmalp[MCFDMA_SAR], dmalp[MCFDMA_SAR],
+	(पूर्णांक) &dmalp[MCFDMA_DAR], dmalp[MCFDMA_DAR]);
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Specific for Coldfire - sets device address.
- * Should be called after the mode set call, and before set DMA address.
+ * Specअगरic क्रम Coldfire - sets device address.
+ * Should be called after the mode set call, and beक्रमe set DMA address.
  */
-static __inline__ void set_dma_device_addr(unsigned int dmanr, unsigned int a)
-{
-#ifdef DMA_DEBUG
-  printk("set_dma_device_addr(dmanr=%d,a=%x)\n", dmanr, a);
-#endif
+अटल __अंतरभूत__ व्योम set_dma_device_addr(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक a)
+अणु
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_device_addr(dmanr=%d,a=%x)\n", dmanr, a);
+#पूर्ण_अगर
 
   dma_device_address[dmanr] = a;
-}
+पूर्ण
 
 /*
  * NOTE 2: "count" represents _bytes_.
  */
-static __inline__ void set_dma_count(unsigned int dmanr, unsigned int count)
-{
-  volatile unsigned short *dmawp;
+अटल __अंतरभूत__ व्योम set_dma_count(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक count)
+अणु
+  अस्थिर अचिन्हित लघु *dmawp;
 
-#ifdef DMA_DEBUG
-  printk("set_dma_count(dmanr=%d,count=%d)\n", dmanr, count);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_count(dmanr=%d,count=%d)\n", dmanr, count);
+#पूर्ण_अगर
 
-  dmawp = (unsigned short *) dma_base_addr[dmanr];
-  dmawp[MCFDMA_BCR] = (unsigned short)count;
-}
+  dmawp = (अचिन्हित लघु *) dma_base_addr[dmanr];
+  dmawp[MCFDMA_BCR] = (अचिन्हित लघु)count;
+पूर्ण
 
 /*
  * Get DMA residue count. After a DMA transfer, this
- * should return zero. Reading this while a DMA transfer is
- * still in progress will return unpredictable results.
- * Otherwise, it returns the number of _bytes_ left to transfer.
+ * should वापस zero. Reading this जबतक a DMA transfer is
+ * still in progress will वापस unpredictable results.
+ * Otherwise, it वापसs the number of _bytes_ left to transfer.
  */
-static __inline__ int get_dma_residue(unsigned int dmanr)
-{
-  volatile unsigned short *dmawp;
-  unsigned short count;
+अटल __अंतरभूत__ पूर्णांक get_dma_residue(अचिन्हित पूर्णांक dmanr)
+अणु
+  अस्थिर अचिन्हित लघु *dmawp;
+  अचिन्हित लघु count;
 
-#ifdef DMA_DEBUG
-  printk("get_dma_residue(dmanr=%d)\n", dmanr);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("get_dma_residue(dmanr=%d)\n", dmanr);
+#पूर्ण_अगर
 
-  dmawp = (unsigned short *) dma_base_addr[dmanr];
+  dmawp = (अचिन्हित लघु *) dma_base_addr[dmanr];
   count = dmawp[MCFDMA_BCR];
-  return((int) count);
-}
-#else /* CONFIG_M5272 is defined */
+  वापस((पूर्णांक) count);
+पूर्ण
+#अन्यथा /* CONFIG_M5272 is defined */
 
 /*
- * The MCF5272 DMA controller is very different than the controller defined above
- * in terms of register mapping.  For instance, with the exception of the 16-bit
- * interrupt register (IRQ#85, for reference), all of the registers are 32-bit.
+ * The MCF5272 DMA controller is very dअगरferent than the controller defined above
+ * in terms of रेजिस्टर mapping.  For instance, with the exception of the 16-bit
+ * पूर्णांकerrupt रेजिस्टर (IRQ#85, क्रम reference), all of the रेजिस्टरs are 32-bit.
  *
- * The big difference, however, is the lack of device-requested DMA.  All modes
+ * The big dअगरference, however, is the lack of device-requested DMA.  All modes
  * are dual address transfer, and there is no 'device' setup or direction bit.
  * You can DMA between a device and memory, between memory and memory, or even between
  * two devices directly, with any combination of incrementing and non-incrementing
- * addresses you choose.  This puts a crimp in distinguishing between the 'device
+ * addresses you choose.  This माला_दो a crimp in distinguishing between the 'device
  * address' set up by set_dma_device_addr.
  *
- * Therefore, there are two options.  One is to use set_dma_addr and set_dma_device_addr,
- * which will act exactly as above in -- it will look to see if the source is set to
- * autoincrement, and if so it will make the source use the set_dma_addr value and the
+ * Thereक्रमe, there are two options.  One is to use set_dma_addr and set_dma_device_addr,
+ * which will act exactly as above in -- it will look to see अगर the source is set to
+ * स्वतःincrement, and अगर so it will make the source use the set_dma_addr value and the
  * destination the set_dma_device_addr value.  Otherwise the source will be set to the
  * set_dma_device_addr value and the destination will get the set_dma_addr value.
  *
  * The other is to use the provided set_dma_src_addr and set_dma_dest_addr functions
- * and make it explicit.  Depending on what you're doing, one of these two should work
- * for you, but don't mix them in the same transfer setup.
+ * and make it explicit.  Depending on what you're करोing, one of these two should work
+ * क्रम you, but करोn't mix them in the same transfer setup.
  */
 
-/* enable/disable a specific DMA channel */
-static __inline__ void enable_dma(unsigned int dmanr)
-{
-  volatile unsigned int  *dmalp;
+/* enable/disable a specअगरic DMA channel */
+अटल __अंतरभूत__ व्योम enable_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+  अस्थिर अचिन्हित पूर्णांक  *dmalp;
 
-#ifdef DMA_DEBUG
-  printk("enable_dma(dmanr=%d)\n", dmanr);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("enable_dma(dmanr=%d)\n", dmanr);
+#पूर्ण_अगर
 
-  dmalp = (unsigned int *) dma_base_addr[dmanr];
+  dmalp = (अचिन्हित पूर्णांक *) dma_base_addr[dmanr];
   dmalp[MCFDMA_DMR] |= MCFDMA_DMR_EN;
-}
+पूर्ण
 
-static __inline__ void disable_dma(unsigned int dmanr)
-{
-  volatile unsigned int   *dmalp;
+अटल __अंतरभूत__ व्योम disable_dma(अचिन्हित पूर्णांक dmanr)
+अणु
+  अस्थिर अचिन्हित पूर्णांक   *dmalp;
 
-#ifdef DMA_DEBUG
-  printk("disable_dma(dmanr=%d)\n", dmanr);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("disable_dma(dmanr=%d)\n", dmanr);
+#पूर्ण_अगर
 
-  dmalp = (unsigned int *) dma_base_addr[dmanr];
+  dmalp = (अचिन्हित पूर्णांक *) dma_base_addr[dmanr];
 
-  /* Turn off external requests, and stop any DMA in progress */
+  /* Turn off बाह्यal requests, and stop any DMA in progress */
   dmalp[MCFDMA_DMR] &= ~MCFDMA_DMR_EN;
   dmalp[MCFDMA_DMR] |= MCFDMA_DMR_RESET;
-}
+पूर्ण
 
 /*
  * Clear the 'DMA Pointer Flip Flop'.
- * Write 0 for LSB/MSB, 1 for MSB/LSB access.
+ * Write 0 क्रम LSB/MSB, 1 क्रम MSB/LSB access.
  * Use this once to initialize the FF to a known state.
  * After that, keep track of it. :-)
- * --- In order to do that, the DMA routines below should ---
- * --- only be used while interrupts are disabled! ---
+ * --- In order to करो that, the DMA routines below should ---
+ * --- only be used जबतक पूर्णांकerrupts are disabled! ---
  *
- * This is a NOP for ColdFire. Provide a stub for compatibility.
+ * This is a NOP क्रम ColdFire. Provide a stub क्रम compatibility.
  */
-static __inline__ void clear_dma_ff(unsigned int dmanr)
-{
-}
+अटल __अंतरभूत__ व्योम clear_dma_ff(अचिन्हित पूर्णांक dmanr)
+अणु
+पूर्ण
 
-/* set mode (above) for a specific DMA channel */
-static __inline__ void set_dma_mode(unsigned int dmanr, char mode)
-{
+/* set mode (above) क्रम a specअगरic DMA channel */
+अटल __अंतरभूत__ व्योम set_dma_mode(अचिन्हित पूर्णांक dmanr, अक्षर mode)
+अणु
 
-  volatile unsigned int   *dmalp;
-  volatile unsigned short *dmawp;
+  अस्थिर अचिन्हित पूर्णांक   *dmalp;
+  अस्थिर अचिन्हित लघु *dmawp;
 
-#ifdef DMA_DEBUG
-  printk("set_dma_mode(dmanr=%d,mode=%d)\n", dmanr, mode);
-#endif
-  dmalp = (unsigned int *) dma_base_addr[dmanr];
-  dmawp = (unsigned short *) dma_base_addr[dmanr];
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_mode(dmanr=%d,mode=%d)\n", dmanr, mode);
+#पूर्ण_अगर
+  dmalp = (अचिन्हित पूर्णांक *) dma_base_addr[dmanr];
+  dmawp = (अचिन्हित लघु *) dma_base_addr[dmanr];
 
   /* Clear config errors */
   dmalp[MCFDMA_DMR] |= MCFDMA_DMR_RESET;
 
-  /* Set command register */
+  /* Set command रेजिस्टर */
   dmalp[MCFDMA_DMR] =
     MCFDMA_DMR_RQM_DUAL |         /* Mandatory Request Mode setting */
     MCFDMA_DMR_DSTT_SD  |         /* Set up addressing types; set to supervisor-data. */
     MCFDMA_DMR_SRCT_SD  |         /* Set up addressing types; set to supervisor-data. */
-    /* source static-address-mode */
+    /* source अटल-address-mode */
     ((mode & DMA_MODE_SRC_SA_BIT) ? MCFDMA_DMR_SRCM_SA : MCFDMA_DMR_SRCM_IA) |
-    /* dest static-address-mode */
+    /* dest अटल-address-mode */
     ((mode & DMA_MODE_DES_SA_BIT) ? MCFDMA_DMR_DSTM_SA : MCFDMA_DMR_DSTM_IA) |
     /* burst, 32 bit, 16 bit or 8 bit transfers are separately configurable on the MCF5272 */
     (((mode & DMA_MODE_SSIZE_MASK) >> DMA_MODE_SSIZE_OFF) << MCFDMA_DMR_DSTS_OFF) |
     (((mode & DMA_MODE_SSIZE_MASK) >> DMA_MODE_SSIZE_OFF) << MCFDMA_DMR_SRCS_OFF);
 
-  dmawp[MCFDMA_DIR] |= MCFDMA_DIR_ASCEN;   /* Enable completion interrupts */
+  dmawp[MCFDMA_सूची] |= MCFDMA_सूची_ASCEN;   /* Enable completion पूर्णांकerrupts */
 
-#ifdef DEBUG_DMA
-  printk("%s(%d): dmanr=%d DMR[%x]=%x DIR[%x]=%x\n", __FILE__, __LINE__,
-	 dmanr, (int) &dmalp[MCFDMA_DMR], dmalp[MCFDMA_DMR],
-	 (int) &dmawp[MCFDMA_DIR], dmawp[MCFDMA_DIR]);
-#endif
-}
+#अगर_घोषित DEBUG_DMA
+  prपूर्णांकk("%s(%d): dmanr=%d DMR[%x]=%x DIR[%x]=%x\n", __खाता__, __LINE__,
+	 dmanr, (पूर्णांक) &dmalp[MCFDMA_DMR], dmalp[MCFDMA_DMR],
+	 (पूर्णांक) &dmawp[MCFDMA_सूची], dmawp[MCFDMA_सूची]);
+#पूर्ण_अगर
+पूर्ण
 
-/* Set transfer address for specific DMA channel */
-static __inline__ void set_dma_addr(unsigned int dmanr, unsigned int a)
-{
-  volatile unsigned int   *dmalp;
+/* Set transfer address क्रम specअगरic DMA channel */
+अटल __अंतरभूत__ व्योम set_dma_addr(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक a)
+अणु
+  अस्थिर अचिन्हित पूर्णांक   *dmalp;
 
-#ifdef DMA_DEBUG
-  printk("set_dma_addr(dmanr=%d,a=%x)\n", dmanr, a);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_addr(dmanr=%d,a=%x)\n", dmanr, a);
+#पूर्ण_अगर
 
-  dmalp = (unsigned int *) dma_base_addr[dmanr];
+  dmalp = (अचिन्हित पूर्णांक *) dma_base_addr[dmanr];
 
-  /* Determine which address registers are used for memory/device accesses */
-  if (dmalp[MCFDMA_DMR] & MCFDMA_DMR_SRCM) {
+  /* Determine which address रेजिस्टरs are used क्रम memory/device accesses */
+  अगर (dmalp[MCFDMA_DMR] & MCFDMA_DMR_SRCM) अणु
     /* Source incrementing, must be memory */
     dmalp[MCFDMA_DSAR] = a;
     /* Set dest address, must be device */
     dmalp[MCFDMA_DDAR] = dma_device_address[dmanr];
-  } else {
+  पूर्ण अन्यथा अणु
     /* Destination incrementing, must be memory */
     dmalp[MCFDMA_DDAR] = a;
     /* Set source address, must be device */
     dmalp[MCFDMA_DSAR] = dma_device_address[dmanr];
-  }
+  पूर्ण
 
-#ifdef DEBUG_DMA
-  printk("%s(%d): dmanr=%d DMR[%x]=%x SAR[%x]=%08x DAR[%x]=%08x\n",
-	__FILE__, __LINE__, dmanr, (int) &dmalp[MCFDMA_DMR], dmalp[MCFDMA_DMR],
-	(int) &dmalp[MCFDMA_DSAR], dmalp[MCFDMA_DSAR],
-	(int) &dmalp[MCFDMA_DDAR], dmalp[MCFDMA_DDAR]);
-#endif
-}
+#अगर_घोषित DEBUG_DMA
+  prपूर्णांकk("%s(%d): dmanr=%d DMR[%x]=%x SAR[%x]=%08x DAR[%x]=%08x\n",
+	__खाता__, __LINE__, dmanr, (पूर्णांक) &dmalp[MCFDMA_DMR], dmalp[MCFDMA_DMR],
+	(पूर्णांक) &dmalp[MCFDMA_DSAR], dmalp[MCFDMA_DSAR],
+	(पूर्णांक) &dmalp[MCFDMA_DDAR], dmalp[MCFDMA_DDAR]);
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Specific for Coldfire - sets device address.
- * Should be called after the mode set call, and before set DMA address.
+ * Specअगरic क्रम Coldfire - sets device address.
+ * Should be called after the mode set call, and beक्रमe set DMA address.
  */
-static __inline__ void set_dma_device_addr(unsigned int dmanr, unsigned int a)
-{
-#ifdef DMA_DEBUG
-  printk("set_dma_device_addr(dmanr=%d,a=%x)\n", dmanr, a);
-#endif
+अटल __अंतरभूत__ व्योम set_dma_device_addr(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक a)
+अणु
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_device_addr(dmanr=%d,a=%x)\n", dmanr, a);
+#पूर्ण_अगर
 
   dma_device_address[dmanr] = a;
-}
+पूर्ण
 
 /*
  * NOTE 2: "count" represents _bytes_.
  *
- * NOTE 3: While a 32-bit register, "count" is only a maximum 24-bit value.
+ * NOTE 3: While a 32-bit रेजिस्टर, "count" is only a maximum 24-bit value.
  */
-static __inline__ void set_dma_count(unsigned int dmanr, unsigned int count)
-{
-  volatile unsigned int *dmalp;
+अटल __अंतरभूत__ व्योम set_dma_count(अचिन्हित पूर्णांक dmanr, अचिन्हित पूर्णांक count)
+अणु
+  अस्थिर अचिन्हित पूर्णांक *dmalp;
 
-#ifdef DMA_DEBUG
-  printk("set_dma_count(dmanr=%d,count=%d)\n", dmanr, count);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("set_dma_count(dmanr=%d,count=%d)\n", dmanr, count);
+#पूर्ण_अगर
 
-  dmalp = (unsigned int *) dma_base_addr[dmanr];
+  dmalp = (अचिन्हित पूर्णांक *) dma_base_addr[dmanr];
   dmalp[MCFDMA_DBCR] = count;
-}
+पूर्ण
 
 /*
  * Get DMA residue count. After a DMA transfer, this
- * should return zero. Reading this while a DMA transfer is
- * still in progress will return unpredictable results.
- * Otherwise, it returns the number of _bytes_ left to transfer.
+ * should वापस zero. Reading this जबतक a DMA transfer is
+ * still in progress will वापस unpredictable results.
+ * Otherwise, it वापसs the number of _bytes_ left to transfer.
  */
-static __inline__ int get_dma_residue(unsigned int dmanr)
-{
-  volatile unsigned int *dmalp;
-  unsigned int count;
+अटल __अंतरभूत__ पूर्णांक get_dma_residue(अचिन्हित पूर्णांक dmanr)
+अणु
+  अस्थिर अचिन्हित पूर्णांक *dmalp;
+  अचिन्हित पूर्णांक count;
 
-#ifdef DMA_DEBUG
-  printk("get_dma_residue(dmanr=%d)\n", dmanr);
-#endif
+#अगर_घोषित DMA_DEBUG
+  prपूर्णांकk("get_dma_residue(dmanr=%d)\n", dmanr);
+#पूर्ण_अगर
 
-  dmalp = (unsigned int *) dma_base_addr[dmanr];
+  dmalp = (अचिन्हित पूर्णांक *) dma_base_addr[dmanr];
   count = dmalp[MCFDMA_DBCR];
-  return(count);
-}
+  वापस(count);
+पूर्ण
 
-#endif /* !defined(CONFIG_M5272) */
-#endif /* CONFIG_COLDFIRE */
+#पूर्ण_अगर /* !defined(CONFIG_M5272) */
+#पूर्ण_अगर /* CONFIG_COLDFIRE */
 
-/* it's useless on the m68k, but unfortunately needed by the new
-   bootmem allocator (but this should do it for this) */
-#define MAX_DMA_ADDRESS PAGE_OFFSET
+/* it's useless on the m68k, but unक्रमtunately needed by the new
+   booपंचांगem allocator (but this should करो it क्रम this) */
+#घोषणा MAX_DMA_ADDRESS PAGE_OFFSET
 
-#define MAX_DMA_CHANNELS 8
+#घोषणा MAX_DMA_CHANNELS 8
 
-extern int request_dma(unsigned int dmanr, const char * device_id);	/* reserve a DMA channel */
-extern void free_dma(unsigned int dmanr);	/* release it again */
+बाह्य पूर्णांक request_dma(अचिन्हित पूर्णांक dmanr, स्थिर अक्षर * device_id);	/* reserve a DMA channel */
+बाह्य व्योम मुक्त_dma(अचिन्हित पूर्णांक dmanr);	/* release it again */
 
-#ifdef CONFIG_PCI
-extern int isa_dma_bridge_buggy;
-#else
-#define isa_dma_bridge_buggy    (0)
-#endif
+#अगर_घोषित CONFIG_PCI
+बाह्य पूर्णांक isa_dma_bridge_buggy;
+#अन्यथा
+#घोषणा isa_dma_bridge_buggy    (0)
+#पूर्ण_अगर
 
-#endif /* _M68K_DMA_H */
+#पूर्ण_अगर /* _M68K_DMA_H */

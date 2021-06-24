@@ -1,189 +1,190 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2019, Vladimir Oltean <olteanv@gmail.com>
  */
-#ifndef _SJA1105_PTP_H
-#define _SJA1105_PTP_H
+#अगर_अघोषित _SJA1105_PTP_H
+#घोषणा _SJA1105_PTP_H
 
-#include <linux/timer.h>
+#समावेश <linux/समयr.h>
 
-#if IS_ENABLED(CONFIG_NET_DSA_SJA1105_PTP)
+#अगर IS_ENABLED(CONFIG_NET_DSA_SJA1105_PTP)
 
-/* Timestamps are in units of 8 ns clock ticks (equivalent to
- * a fixed 125 MHz clock).
+/* Timestamps are in units of 8 ns घड़ी ticks (equivalent to
+ * a fixed 125 MHz घड़ी).
  */
-#define SJA1105_TICK_NS			8
+#घोषणा SJA1105_TICK_NS			8
 
-static inline s64 ns_to_sja1105_ticks(s64 ns)
-{
-	return ns / SJA1105_TICK_NS;
-}
+अटल अंतरभूत s64 ns_to_sja1105_ticks(s64 ns)
+अणु
+	वापस ns / SJA1105_TICK_NS;
+पूर्ण
 
-static inline s64 sja1105_ticks_to_ns(s64 ticks)
-{
-	return ticks * SJA1105_TICK_NS;
-}
+अटल अंतरभूत s64 sja1105_ticks_to_ns(s64 ticks)
+अणु
+	वापस ticks * SJA1105_TICK_NS;
+पूर्ण
 
-/* Calculate the first base_time in the future that satisfies this
+/* Calculate the first base_समय in the future that satisfies this
  * relationship:
  *
- * future_base_time = base_time + N x cycle_time >= now, or
+ * future_base_समय = base_समय + N x cycle_समय >= now, or
  *
- *      now - base_time
+ *      now - base_समय
  * N >= ---------------
- *         cycle_time
+ *         cycle_समय
  *
- * Because N is an integer, the ceiling value of the above "a / b" ratio
- * is in fact precisely the floor value of "(a + b - 1) / b", which is
- * easier to calculate only having integer division tools.
+ * Because N is an पूर्णांकeger, the उच्चमानing value of the above "a / b" ratio
+ * is in fact precisely the न्यूनमान value of "(a + b - 1) / b", which is
+ * easier to calculate only having पूर्णांकeger भागision tools.
  */
-static inline s64 future_base_time(s64 base_time, s64 cycle_time, s64 now)
-{
+अटल अंतरभूत s64 future_base_समय(s64 base_समय, s64 cycle_समय, s64 now)
+अणु
 	s64 a, b, n;
 
-	if (base_time >= now)
-		return base_time;
+	अगर (base_समय >= now)
+		वापस base_समय;
 
-	a = now - base_time;
-	b = cycle_time;
-	n = div_s64(a + b - 1, b);
+	a = now - base_समय;
+	b = cycle_समय;
+	n = भाग_s64(a + b - 1, b);
 
-	return base_time + n * cycle_time;
-}
+	वापस base_समय + n * cycle_समय;
+पूर्ण
 
 /* This is not a preprocessor macro because the "ns" argument may or may not be
- * s64 at caller side. This ensures it is properly type-cast before div_s64.
+ * s64 at caller side. This ensures it is properly type-cast beक्रमe भाग_s64.
  */
-static inline s64 ns_to_sja1105_delta(s64 ns)
-{
-	return div_s64(ns, 200);
-}
+अटल अंतरभूत s64 ns_to_sja1105_delta(s64 ns)
+अणु
+	वापस भाग_s64(ns, 200);
+पूर्ण
 
-static inline s64 sja1105_delta_to_ns(s64 delta)
-{
-	return delta * 200;
-}
+अटल अंतरभूत s64 sja1105_delta_to_ns(s64 delta)
+अणु
+	वापस delta * 200;
+पूर्ण
 
-struct sja1105_ptp_cmd {
+काष्ठा sja1105_ptp_cmd अणु
 	u64 startptpcp;		/* start toggling PTP_CLK pin */
 	u64 stopptpcp;		/* stop toggling PTP_CLK pin */
 	u64 ptpstrtsch;		/* start schedule */
 	u64 ptpstopsch;		/* stop schedule */
 	u64 resptp;		/* reset */
-	u64 corrclk4ts;		/* use the corrected clock for timestamps */
-	u64 ptpclkadd;		/* enum sja1105_ptp_clk_mode */
-};
+	u64 corrclk4ts;		/* use the corrected घड़ी क्रम बारtamps */
+	u64 ptpclkadd;		/* क्रमागत sja1105_ptp_clk_mode */
+पूर्ण;
 
-struct sja1105_ptp_data {
-	struct timer_list extts_timer;
-	struct sk_buff_head skb_rxtstamp_queue;
-	struct ptp_clock_info caps;
-	struct ptp_clock *clock;
-	struct sja1105_ptp_cmd cmd;
-	/* Serializes all operations on the PTP hardware clock */
-	struct mutex lock;
+काष्ठा sja1105_ptp_data अणु
+	काष्ठा समयr_list extts_समयr;
+	काष्ठा sk_buff_head skb_rxtstamp_queue;
+	काष्ठा ptp_घड़ी_info caps;
+	काष्ठा ptp_घड़ी *घड़ी;
+	काष्ठा sja1105_ptp_cmd cmd;
+	/* Serializes all operations on the PTP hardware घड़ी */
+	काष्ठा mutex lock;
 	bool extts_enabled;
 	u64 ptpsyncts;
-};
+पूर्ण;
 
-int sja1105_ptp_clock_register(struct dsa_switch *ds);
+पूर्णांक sja1105_ptp_घड़ी_रेजिस्टर(काष्ठा dsa_चयन *ds);
 
-void sja1105_ptp_clock_unregister(struct dsa_switch *ds);
+व्योम sja1105_ptp_घड़ी_unरेजिस्टर(काष्ठा dsa_चयन *ds);
 
-void sja1105et_ptp_cmd_packing(u8 *buf, struct sja1105_ptp_cmd *cmd,
-			       enum packing_op op);
+व्योम sja1105et_ptp_cmd_packing(u8 *buf, काष्ठा sja1105_ptp_cmd *cmd,
+			       क्रमागत packing_op op);
 
-void sja1105pqrs_ptp_cmd_packing(u8 *buf, struct sja1105_ptp_cmd *cmd,
-				 enum packing_op op);
+व्योम sja1105pqrs_ptp_cmd_packing(u8 *buf, काष्ठा sja1105_ptp_cmd *cmd,
+				 क्रमागत packing_op op);
 
-int sja1105_get_ts_info(struct dsa_switch *ds, int port,
-			struct ethtool_ts_info *ts);
+पूर्णांक sja1105_get_ts_info(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			काष्ठा ethtool_ts_info *ts);
 
-void sja1105_ptp_txtstamp_skb(struct dsa_switch *ds, int slot,
-			      struct sk_buff *clone);
+व्योम sja1105_ptp_txtstamp_skb(काष्ठा dsa_चयन *ds, पूर्णांक slot,
+			      काष्ठा sk_buff *clone);
 
-bool sja1105_port_rxtstamp(struct dsa_switch *ds, int port,
-			   struct sk_buff *skb, unsigned int type);
+bool sja1105_port_rxtstamp(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   काष्ठा sk_buff *skb, अचिन्हित पूर्णांक type);
 
-void sja1105_port_txtstamp(struct dsa_switch *ds, int port,
-			   struct sk_buff *skb);
+व्योम sja1105_port_txtstamp(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   काष्ठा sk_buff *skb);
 
-int sja1105_hwtstamp_get(struct dsa_switch *ds, int port, struct ifreq *ifr);
+पूर्णांक sja1105_hwtstamp_get(काष्ठा dsa_चयन *ds, पूर्णांक port, काष्ठा अगरreq *अगरr);
 
-int sja1105_hwtstamp_set(struct dsa_switch *ds, int port, struct ifreq *ifr);
+पूर्णांक sja1105_hwtstamp_set(काष्ठा dsa_चयन *ds, पूर्णांक port, काष्ठा अगरreq *अगरr);
 
-int __sja1105_ptp_gettimex(struct dsa_switch *ds, u64 *ns,
-			   struct ptp_system_timestamp *sts);
+पूर्णांक __sja1105_ptp_समय_लोx(काष्ठा dsa_चयन *ds, u64 *ns,
+			   काष्ठा ptp_प्रणाली_बारtamp *sts);
 
-int __sja1105_ptp_settime(struct dsa_switch *ds, u64 ns,
-			  struct ptp_system_timestamp *ptp_sts);
+पूर्णांक __sja1105_ptp_समय_रखो(काष्ठा dsa_चयन *ds, u64 ns,
+			  काष्ठा ptp_प्रणाली_बारtamp *ptp_sts);
 
-int __sja1105_ptp_adjtime(struct dsa_switch *ds, s64 delta);
+पूर्णांक __sja1105_ptp_adjसमय(काष्ठा dsa_चयन *ds, s64 delta);
 
-int sja1105_ptp_commit(struct dsa_switch *ds, struct sja1105_ptp_cmd *cmd,
+पूर्णांक sja1105_ptp_commit(काष्ठा dsa_चयन *ds, काष्ठा sja1105_ptp_cmd *cmd,
 		       sja1105_spi_rw_mode_t rw);
 
-#else
+#अन्यथा
 
-struct sja1105_ptp_cmd;
+काष्ठा sja1105_ptp_cmd;
 
 /* Structures cannot be empty in C. Bah!
- * Keep the mutex as the only element, which is a bit more difficult to
- * refactor out of sja1105_main.c anyway.
+ * Keep the mutex as the only element, which is a bit more dअगरficult to
+ * refactor out of sja1105_मुख्य.c anyway.
  */
-struct sja1105_ptp_data {
-	struct mutex lock;
-};
+काष्ठा sja1105_ptp_data अणु
+	काष्ठा mutex lock;
+पूर्ण;
 
-static inline int sja1105_ptp_clock_register(struct dsa_switch *ds)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक sja1105_ptp_घड़ी_रेजिस्टर(काष्ठा dsa_चयन *ds)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sja1105_ptp_clock_unregister(struct dsa_switch *ds) { }
+अटल अंतरभूत व्योम sja1105_ptp_घड़ी_unरेजिस्टर(काष्ठा dsa_चयन *ds) अणु पूर्ण
 
-static inline void sja1105_ptp_txtstamp_skb(struct dsa_switch *ds, int slot,
-					    struct sk_buff *clone)
-{
-}
+अटल अंतरभूत व्योम sja1105_ptp_txtstamp_skb(काष्ठा dsa_चयन *ds, पूर्णांक slot,
+					    काष्ठा sk_buff *clone)
+अणु
+पूर्ण
 
-static inline int __sja1105_ptp_gettimex(struct dsa_switch *ds, u64 *ns,
-					 struct ptp_system_timestamp *sts)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __sja1105_ptp_समय_लोx(काष्ठा dsa_चयन *ds, u64 *ns,
+					 काष्ठा ptp_प्रणाली_बारtamp *sts)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int __sja1105_ptp_settime(struct dsa_switch *ds, u64 ns,
-					struct ptp_system_timestamp *ptp_sts)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __sja1105_ptp_समय_रखो(काष्ठा dsa_चयन *ds, u64 ns,
+					काष्ठा ptp_प्रणाली_बारtamp *ptp_sts)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int __sja1105_ptp_adjtime(struct dsa_switch *ds, s64 delta)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __sja1105_ptp_adjसमय(काष्ठा dsa_चयन *ds, s64 delta)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int sja1105_ptp_commit(struct dsa_switch *ds,
-				     struct sja1105_ptp_cmd *cmd,
+अटल अंतरभूत पूर्णांक sja1105_ptp_commit(काष्ठा dsa_चयन *ds,
+				     काष्ठा sja1105_ptp_cmd *cmd,
 				     sja1105_spi_rw_mode_t rw)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-#define sja1105et_ptp_cmd_packing NULL
+#घोषणा sja1105et_ptp_cmd_packing शून्य
 
-#define sja1105pqrs_ptp_cmd_packing NULL
+#घोषणा sja1105pqrs_ptp_cmd_packing शून्य
 
-#define sja1105_get_ts_info NULL
+#घोषणा sja1105_get_ts_info शून्य
 
-#define sja1105_port_rxtstamp NULL
+#घोषणा sja1105_port_rxtstamp शून्य
 
-#define sja1105_port_txtstamp NULL
+#घोषणा sja1105_port_txtstamp शून्य
 
-#define sja1105_hwtstamp_get NULL
+#घोषणा sja1105_hwtstamp_get शून्य
 
-#define sja1105_hwtstamp_set NULL
+#घोषणा sja1105_hwtstamp_set शून्य
 
-#endif /* IS_ENABLED(CONFIG_NET_DSA_SJA1105_PTP) */
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_NET_DSA_SJA1105_PTP) */
 
-#endif /* _SJA1105_PTP_H */
+#पूर्ण_अगर /* _SJA1105_PTP_H */

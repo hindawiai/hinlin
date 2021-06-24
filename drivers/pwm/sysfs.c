@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * A simple sysfs interface for the generic PWM framework
+ * A simple sysfs पूर्णांकerface क्रम the generic PWM framework
  *
  * Copyright (C) 2013 H Hartley Sweeten <hsweeten@visionengravers.com>
  *
  * Based on previous work by Lars Poeschel <poeschel@lemonage.de>
  */
 
-#include <linux/device.h>
-#include <linux/mutex.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/kdev_t.h>
-#include <linux/pwm.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/pwm.h>
 
-struct pwm_export {
-	struct device child;
-	struct pwm_device *pwm;
-	struct mutex lock;
-	struct pwm_state suspend;
-};
+काष्ठा pwm_export अणु
+	काष्ठा device child;
+	काष्ठा pwm_device *pwm;
+	काष्ठा mutex lock;
+	काष्ठा pwm_state suspend;
+पूर्ण;
 
-static struct pwm_export *child_to_pwm_export(struct device *child)
-{
-	return container_of(child, struct pwm_export, child);
-}
+अटल काष्ठा pwm_export *child_to_pwm_export(काष्ठा device *child)
+अणु
+	वापस container_of(child, काष्ठा pwm_export, child);
+पूर्ण
 
-static struct pwm_device *child_to_pwm_device(struct device *child)
-{
-	struct pwm_export *export = child_to_pwm_export(child);
+अटल काष्ठा pwm_device *child_to_pwm_device(काष्ठा device *child)
+अणु
+	काष्ठा pwm_export *export = child_to_pwm_export(child);
 
-	return export->pwm;
-}
+	वापस export->pwm;
+पूर्ण
 
-static ssize_t period_show(struct device *child,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	const struct pwm_device *pwm = child_to_pwm_device(child);
-	struct pwm_state state;
+अटल sमाप_प्रकार period_show(काष्ठा device *child,
+			   काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	स्थिर काष्ठा pwm_device *pwm = child_to_pwm_device(child);
+	काष्ठा pwm_state state;
 
 	pwm_get_state(pwm, &state);
 
-	return sprintf(buf, "%llu\n", state.period);
-}
+	वापस प्र_लिखो(buf, "%llu\n", state.period);
+पूर्ण
 
-static ssize_t period_store(struct device *child,
-			    struct device_attribute *attr,
-			    const char *buf, size_t size)
-{
-	struct pwm_export *export = child_to_pwm_export(child);
-	struct pwm_device *pwm = export->pwm;
-	struct pwm_state state;
+अटल sमाप_प्रकार period_store(काष्ठा device *child,
+			    काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pwm_export *export = child_to_pwm_export(child);
+	काष्ठा pwm_device *pwm = export->pwm;
+	काष्ठा pwm_state state;
 	u64 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou64(buf, 0, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&export->lock);
 	pwm_get_state(pwm, &state);
@@ -65,34 +66,34 @@ static ssize_t period_store(struct device *child,
 	ret = pwm_apply_state(pwm, &state);
 	mutex_unlock(&export->lock);
 
-	return ret ? : size;
-}
+	वापस ret ? : size;
+पूर्ण
 
-static ssize_t duty_cycle_show(struct device *child,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	const struct pwm_device *pwm = child_to_pwm_device(child);
-	struct pwm_state state;
+अटल sमाप_प्रकार duty_cycle_show(काष्ठा device *child,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	स्थिर काष्ठा pwm_device *pwm = child_to_pwm_device(child);
+	काष्ठा pwm_state state;
 
 	pwm_get_state(pwm, &state);
 
-	return sprintf(buf, "%llu\n", state.duty_cycle);
-}
+	वापस प्र_लिखो(buf, "%llu\n", state.duty_cycle);
+पूर्ण
 
-static ssize_t duty_cycle_store(struct device *child,
-				struct device_attribute *attr,
-				const char *buf, size_t size)
-{
-	struct pwm_export *export = child_to_pwm_export(child);
-	struct pwm_device *pwm = export->pwm;
-	struct pwm_state state;
+अटल sमाप_प्रकार duty_cycle_store(काष्ठा device *child,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pwm_export *export = child_to_pwm_export(child);
+	काष्ठा pwm_device *pwm = export->pwm;
+	काष्ठा pwm_state state;
 	u64 val;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kstrtou64(buf, 0, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&export->lock);
 	pwm_get_state(pwm, &state);
@@ -100,96 +101,96 @@ static ssize_t duty_cycle_store(struct device *child,
 	ret = pwm_apply_state(pwm, &state);
 	mutex_unlock(&export->lock);
 
-	return ret ? : size;
-}
+	वापस ret ? : size;
+पूर्ण
 
-static ssize_t enable_show(struct device *child,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	const struct pwm_device *pwm = child_to_pwm_device(child);
-	struct pwm_state state;
+अटल sमाप_प्रकार enable_show(काष्ठा device *child,
+			   काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	स्थिर काष्ठा pwm_device *pwm = child_to_pwm_device(child);
+	काष्ठा pwm_state state;
 
 	pwm_get_state(pwm, &state);
 
-	return sprintf(buf, "%d\n", state.enabled);
-}
+	वापस प्र_लिखो(buf, "%d\n", state.enabled);
+पूर्ण
 
-static ssize_t enable_store(struct device *child,
-			    struct device_attribute *attr,
-			    const char *buf, size_t size)
-{
-	struct pwm_export *export = child_to_pwm_export(child);
-	struct pwm_device *pwm = export->pwm;
-	struct pwm_state state;
-	int val, ret;
+अटल sमाप_प्रकार enable_store(काष्ठा device *child,
+			    काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pwm_export *export = child_to_pwm_export(child);
+	काष्ठा pwm_device *pwm = export->pwm;
+	काष्ठा pwm_state state;
+	पूर्णांक val, ret;
 
-	ret = kstrtoint(buf, 0, &val);
-	if (ret)
-		return ret;
+	ret = kstrtoपूर्णांक(buf, 0, &val);
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&export->lock);
 
 	pwm_get_state(pwm, &state);
 
-	switch (val) {
-	case 0:
+	चयन (val) अणु
+	हाल 0:
 		state.enabled = false;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		state.enabled = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	ret = pwm_apply_state(pwm, &state);
 
 unlock:
 	mutex_unlock(&export->lock);
-	return ret ? : size;
-}
+	वापस ret ? : size;
+पूर्ण
 
-static ssize_t polarity_show(struct device *child,
-			     struct device_attribute *attr,
-			     char *buf)
-{
-	const struct pwm_device *pwm = child_to_pwm_device(child);
-	const char *polarity = "unknown";
-	struct pwm_state state;
+अटल sमाप_प्रकार polarity_show(काष्ठा device *child,
+			     काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	स्थिर काष्ठा pwm_device *pwm = child_to_pwm_device(child);
+	स्थिर अक्षर *polarity = "unknown";
+	काष्ठा pwm_state state;
 
 	pwm_get_state(pwm, &state);
 
-	switch (state.polarity) {
-	case PWM_POLARITY_NORMAL:
+	चयन (state.polarity) अणु
+	हाल PWM_POLARITY_NORMAL:
 		polarity = "normal";
-		break;
+		अवरोध;
 
-	case PWM_POLARITY_INVERSED:
+	हाल PWM_POLARITY_INVERSED:
 		polarity = "inversed";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return sprintf(buf, "%s\n", polarity);
-}
+	वापस प्र_लिखो(buf, "%s\n", polarity);
+पूर्ण
 
-static ssize_t polarity_store(struct device *child,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	struct pwm_export *export = child_to_pwm_export(child);
-	struct pwm_device *pwm = export->pwm;
-	enum pwm_polarity polarity;
-	struct pwm_state state;
-	int ret;
+अटल sमाप_प्रकार polarity_store(काष्ठा device *child,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा pwm_export *export = child_to_pwm_export(child);
+	काष्ठा pwm_device *pwm = export->pwm;
+	क्रमागत pwm_polarity polarity;
+	काष्ठा pwm_state state;
+	पूर्णांक ret;
 
-	if (sysfs_streq(buf, "normal"))
+	अगर (sysfs_streq(buf, "normal"))
 		polarity = PWM_POLARITY_NORMAL;
-	else if (sysfs_streq(buf, "inversed"))
+	अन्यथा अगर (sysfs_streq(buf, "inversed"))
 		polarity = PWM_POLARITY_INVERSED;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	mutex_lock(&export->lock);
 	pwm_get_state(pwm, &state);
@@ -197,61 +198,61 @@ static ssize_t polarity_store(struct device *child,
 	ret = pwm_apply_state(pwm, &state);
 	mutex_unlock(&export->lock);
 
-	return ret ? : size;
-}
+	वापस ret ? : size;
+पूर्ण
 
-static ssize_t capture_show(struct device *child,
-			    struct device_attribute *attr,
-			    char *buf)
-{
-	struct pwm_device *pwm = child_to_pwm_device(child);
-	struct pwm_capture result;
-	int ret;
+अटल sमाप_प्रकार capture_show(काष्ठा device *child,
+			    काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा pwm_device *pwm = child_to_pwm_device(child);
+	काष्ठा pwm_capture result;
+	पूर्णांक ret;
 
-	ret = pwm_capture(pwm, &result, jiffies_to_msecs(HZ));
-	if (ret)
-		return ret;
+	ret = pwm_capture(pwm, &result, jअगरfies_to_msecs(HZ));
+	अगर (ret)
+		वापस ret;
 
-	return sprintf(buf, "%u %u\n", result.period, result.duty_cycle);
-}
+	वापस प्र_लिखो(buf, "%u %u\n", result.period, result.duty_cycle);
+पूर्ण
 
-static DEVICE_ATTR_RW(period);
-static DEVICE_ATTR_RW(duty_cycle);
-static DEVICE_ATTR_RW(enable);
-static DEVICE_ATTR_RW(polarity);
-static DEVICE_ATTR_RO(capture);
+अटल DEVICE_ATTR_RW(period);
+अटल DEVICE_ATTR_RW(duty_cycle);
+अटल DEVICE_ATTR_RW(enable);
+अटल DEVICE_ATTR_RW(polarity);
+अटल DEVICE_ATTR_RO(capture);
 
-static struct attribute *pwm_attrs[] = {
+अटल काष्ठा attribute *pwm_attrs[] = अणु
 	&dev_attr_period.attr,
 	&dev_attr_duty_cycle.attr,
 	&dev_attr_enable.attr,
 	&dev_attr_polarity.attr,
 	&dev_attr_capture.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(pwm);
 
-static void pwm_export_release(struct device *child)
-{
-	struct pwm_export *export = child_to_pwm_export(child);
+अटल व्योम pwm_export_release(काष्ठा device *child)
+अणु
+	काष्ठा pwm_export *export = child_to_pwm_export(child);
 
-	kfree(export);
-}
+	kमुक्त(export);
+पूर्ण
 
-static int pwm_export_child(struct device *parent, struct pwm_device *pwm)
-{
-	struct pwm_export *export;
-	char *pwm_prop[2];
-	int ret;
+अटल पूर्णांक pwm_export_child(काष्ठा device *parent, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा pwm_export *export;
+	अक्षर *pwm_prop[2];
+	पूर्णांक ret;
 
-	if (test_and_set_bit(PWMF_EXPORTED, &pwm->flags))
-		return -EBUSY;
+	अगर (test_and_set_bit(PWMF_EXPORTED, &pwm->flags))
+		वापस -EBUSY;
 
-	export = kzalloc(sizeof(*export), GFP_KERNEL);
-	if (!export) {
+	export = kzalloc(माप(*export), GFP_KERNEL);
+	अगर (!export) अणु
 		clear_bit(PWMF_EXPORTED, &pwm->flags);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	export->pwm = pwm;
 	mutex_init(&export->lock);
@@ -262,232 +263,232 @@ static int pwm_export_child(struct device *parent, struct pwm_device *pwm)
 	export->child.groups = pwm_groups;
 	dev_set_name(&export->child, "pwm%u", pwm->hwpwm);
 
-	ret = device_register(&export->child);
-	if (ret) {
+	ret = device_रेजिस्टर(&export->child);
+	अगर (ret) अणु
 		clear_bit(PWMF_EXPORTED, &pwm->flags);
 		put_device(&export->child);
-		export = NULL;
-		return ret;
-	}
-	pwm_prop[0] = kasprintf(GFP_KERNEL, "EXPORT=pwm%u", pwm->hwpwm);
-	pwm_prop[1] = NULL;
+		export = शून्य;
+		वापस ret;
+	पूर्ण
+	pwm_prop[0] = kaप्र_लिखो(GFP_KERNEL, "EXPORT=pwm%u", pwm->hwpwm);
+	pwm_prop[1] = शून्य;
 	kobject_uevent_env(&parent->kobj, KOBJ_CHANGE, pwm_prop);
-	kfree(pwm_prop[0]);
+	kमुक्त(pwm_prop[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwm_unexport_match(struct device *child, void *data)
-{
-	return child_to_pwm_device(child) == data;
-}
+अटल पूर्णांक pwm_unexport_match(काष्ठा device *child, व्योम *data)
+अणु
+	वापस child_to_pwm_device(child) == data;
+पूर्ण
 
-static int pwm_unexport_child(struct device *parent, struct pwm_device *pwm)
-{
-	struct device *child;
-	char *pwm_prop[2];
+अटल पूर्णांक pwm_unexport_child(काष्ठा device *parent, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा device *child;
+	अक्षर *pwm_prop[2];
 
-	if (!test_and_clear_bit(PWMF_EXPORTED, &pwm->flags))
-		return -ENODEV;
+	अगर (!test_and_clear_bit(PWMF_EXPORTED, &pwm->flags))
+		वापस -ENODEV;
 
 	child = device_find_child(parent, pwm, pwm_unexport_match);
-	if (!child)
-		return -ENODEV;
+	अगर (!child)
+		वापस -ENODEV;
 
-	pwm_prop[0] = kasprintf(GFP_KERNEL, "UNEXPORT=pwm%u", pwm->hwpwm);
-	pwm_prop[1] = NULL;
+	pwm_prop[0] = kaप्र_लिखो(GFP_KERNEL, "UNEXPORT=pwm%u", pwm->hwpwm);
+	pwm_prop[1] = शून्य;
 	kobject_uevent_env(&parent->kobj, KOBJ_CHANGE, pwm_prop);
-	kfree(pwm_prop[0]);
+	kमुक्त(pwm_prop[0]);
 
-	/* for device_find_child() */
+	/* क्रम device_find_child() */
 	put_device(child);
-	device_unregister(child);
+	device_unरेजिस्टर(child);
 	pwm_put(pwm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t export_store(struct device *parent,
-			    struct device_attribute *attr,
-			    const char *buf, size_t len)
-{
-	struct pwm_chip *chip = dev_get_drvdata(parent);
-	struct pwm_device *pwm;
-	unsigned int hwpwm;
-	int ret;
+अटल sमाप_प्रकार export_store(काष्ठा device *parent,
+			    काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा pwm_chip *chip = dev_get_drvdata(parent);
+	काष्ठा pwm_device *pwm;
+	अचिन्हित पूर्णांक hwpwm;
+	पूर्णांक ret;
 
-	ret = kstrtouint(buf, 0, &hwpwm);
-	if (ret < 0)
-		return ret;
+	ret = kstrtouपूर्णांक(buf, 0, &hwpwm);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (hwpwm >= chip->npwm)
-		return -ENODEV;
+	अगर (hwpwm >= chip->npwm)
+		वापस -ENODEV;
 
 	pwm = pwm_request_from_chip(chip, hwpwm, "sysfs");
-	if (IS_ERR(pwm))
-		return PTR_ERR(pwm);
+	अगर (IS_ERR(pwm))
+		वापस PTR_ERR(pwm);
 
 	ret = pwm_export_child(parent, pwm);
-	if (ret < 0)
+	अगर (ret < 0)
 		pwm_put(pwm);
 
-	return ret ? : len;
-}
-static DEVICE_ATTR_WO(export);
+	वापस ret ? : len;
+पूर्ण
+अटल DEVICE_ATTR_WO(export);
 
-static ssize_t unexport_store(struct device *parent,
-			      struct device_attribute *attr,
-			      const char *buf, size_t len)
-{
-	struct pwm_chip *chip = dev_get_drvdata(parent);
-	unsigned int hwpwm;
-	int ret;
+अटल sमाप_प्रकार unexport_store(काष्ठा device *parent,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा pwm_chip *chip = dev_get_drvdata(parent);
+	अचिन्हित पूर्णांक hwpwm;
+	पूर्णांक ret;
 
-	ret = kstrtouint(buf, 0, &hwpwm);
-	if (ret < 0)
-		return ret;
+	ret = kstrtouपूर्णांक(buf, 0, &hwpwm);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (hwpwm >= chip->npwm)
-		return -ENODEV;
+	अगर (hwpwm >= chip->npwm)
+		वापस -ENODEV;
 
 	ret = pwm_unexport_child(parent, &chip->pwms[hwpwm]);
 
-	return ret ? : len;
-}
-static DEVICE_ATTR_WO(unexport);
+	वापस ret ? : len;
+पूर्ण
+अटल DEVICE_ATTR_WO(unexport);
 
-static ssize_t npwm_show(struct device *parent, struct device_attribute *attr,
-			 char *buf)
-{
-	const struct pwm_chip *chip = dev_get_drvdata(parent);
+अटल sमाप_प्रकार npwm_show(काष्ठा device *parent, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	स्थिर काष्ठा pwm_chip *chip = dev_get_drvdata(parent);
 
-	return sprintf(buf, "%u\n", chip->npwm);
-}
-static DEVICE_ATTR_RO(npwm);
+	वापस प्र_लिखो(buf, "%u\n", chip->npwm);
+पूर्ण
+अटल DEVICE_ATTR_RO(npwm);
 
-static struct attribute *pwm_chip_attrs[] = {
+अटल काष्ठा attribute *pwm_chip_attrs[] = अणु
 	&dev_attr_export.attr,
 	&dev_attr_unexport.attr,
 	&dev_attr_npwm.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(pwm_chip);
 
 /* takes export->lock on success */
-static struct pwm_export *pwm_class_get_state(struct device *parent,
-					      struct pwm_device *pwm,
-					      struct pwm_state *state)
-{
-	struct device *child;
-	struct pwm_export *export;
+अटल काष्ठा pwm_export *pwm_class_get_state(काष्ठा device *parent,
+					      काष्ठा pwm_device *pwm,
+					      काष्ठा pwm_state *state)
+अणु
+	काष्ठा device *child;
+	काष्ठा pwm_export *export;
 
-	if (!test_bit(PWMF_EXPORTED, &pwm->flags))
-		return NULL;
+	अगर (!test_bit(PWMF_EXPORTED, &pwm->flags))
+		वापस शून्य;
 
 	child = device_find_child(parent, pwm, pwm_unexport_match);
-	if (!child)
-		return NULL;
+	अगर (!child)
+		वापस शून्य;
 
 	export = child_to_pwm_export(child);
-	put_device(child);	/* for device_find_child() */
+	put_device(child);	/* क्रम device_find_child() */
 
 	mutex_lock(&export->lock);
 	pwm_get_state(pwm, state);
 
-	return export;
-}
+	वापस export;
+पूर्ण
 
-static int pwm_class_apply_state(struct pwm_export *export,
-				 struct pwm_device *pwm,
-				 struct pwm_state *state)
-{
-	int ret = pwm_apply_state(pwm, state);
+अटल पूर्णांक pwm_class_apply_state(काष्ठा pwm_export *export,
+				 काष्ठा pwm_device *pwm,
+				 काष्ठा pwm_state *state)
+अणु
+	पूर्णांक ret = pwm_apply_state(pwm, state);
 
 	/* release lock taken in pwm_class_get_state */
 	mutex_unlock(&export->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pwm_class_resume_npwm(struct device *parent, unsigned int npwm)
-{
-	struct pwm_chip *chip = dev_get_drvdata(parent);
-	unsigned int i;
-	int ret = 0;
+अटल पूर्णांक pwm_class_resume_npwm(काष्ठा device *parent, अचिन्हित पूर्णांक npwm)
+अणु
+	काष्ठा pwm_chip *chip = dev_get_drvdata(parent);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	for (i = 0; i < npwm; i++) {
-		struct pwm_device *pwm = &chip->pwms[i];
-		struct pwm_state state;
-		struct pwm_export *export;
+	क्रम (i = 0; i < npwm; i++) अणु
+		काष्ठा pwm_device *pwm = &chip->pwms[i];
+		काष्ठा pwm_state state;
+		काष्ठा pwm_export *export;
 
 		export = pwm_class_get_state(parent, pwm, &state);
-		if (!export)
-			continue;
+		अगर (!export)
+			जारी;
 
 		state.enabled = export->suspend.enabled;
 		ret = pwm_class_apply_state(export, pwm, &state);
-		if (ret < 0)
-			break;
-	}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused pwm_class_suspend(struct device *parent)
-{
-	struct pwm_chip *chip = dev_get_drvdata(parent);
-	unsigned int i;
-	int ret = 0;
+अटल पूर्णांक __maybe_unused pwm_class_suspend(काष्ठा device *parent)
+अणु
+	काष्ठा pwm_chip *chip = dev_get_drvdata(parent);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	for (i = 0; i < chip->npwm; i++) {
-		struct pwm_device *pwm = &chip->pwms[i];
-		struct pwm_state state;
-		struct pwm_export *export;
+	क्रम (i = 0; i < chip->npwm; i++) अणु
+		काष्ठा pwm_device *pwm = &chip->pwms[i];
+		काष्ठा pwm_state state;
+		काष्ठा pwm_export *export;
 
 		export = pwm_class_get_state(parent, pwm, &state);
-		if (!export)
-			continue;
+		अगर (!export)
+			जारी;
 
 		export->suspend = state;
 		state.enabled = false;
 		ret = pwm_class_apply_state(export, pwm, &state);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			/*
 			 * roll back the PWM devices that were disabled by
 			 * this suspend function.
 			 */
 			pwm_class_resume_npwm(parent, i);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused pwm_class_resume(struct device *parent)
-{
-	struct pwm_chip *chip = dev_get_drvdata(parent);
+अटल पूर्णांक __maybe_unused pwm_class_resume(काष्ठा device *parent)
+अणु
+	काष्ठा pwm_chip *chip = dev_get_drvdata(parent);
 
-	return pwm_class_resume_npwm(parent, chip->npwm);
-}
+	वापस pwm_class_resume_npwm(parent, chip->npwm);
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(pwm_class_pm_ops, pwm_class_suspend, pwm_class_resume);
+अटल SIMPLE_DEV_PM_OPS(pwm_class_pm_ops, pwm_class_suspend, pwm_class_resume);
 
-static struct class pwm_class = {
+अटल काष्ठा class pwm_class = अणु
 	.name = "pwm",
 	.owner = THIS_MODULE,
 	.dev_groups = pwm_chip_groups,
 	.pm = &pwm_class_pm_ops,
-};
+पूर्ण;
 
-static int pwmchip_sysfs_match(struct device *parent, const void *data)
-{
-	return dev_get_drvdata(parent) == data;
-}
+अटल पूर्णांक pwmchip_sysfs_match(काष्ठा device *parent, स्थिर व्योम *data)
+अणु
+	वापस dev_get_drvdata(parent) == data;
+पूर्ण
 
-void pwmchip_sysfs_export(struct pwm_chip *chip)
-{
-	struct device *parent;
+व्योम pwmchip_sysfs_export(काष्ठा pwm_chip *chip)
+अणु
+	काष्ठा device *parent;
 
 	/*
 	 * If device_create() fails the pwm_chip is still usable by
@@ -495,35 +496,35 @@ void pwmchip_sysfs_export(struct pwm_chip *chip)
 	 */
 	parent = device_create(&pwm_class, chip->dev, MKDEV(0, 0), chip,
 			       "pwmchip%d", chip->base);
-	if (IS_ERR(parent)) {
+	अगर (IS_ERR(parent)) अणु
 		dev_warn(chip->dev,
 			 "device_create failed for pwm_chip sysfs export\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void pwmchip_sysfs_unexport(struct pwm_chip *chip)
-{
-	struct device *parent;
-	unsigned int i;
+व्योम pwmchip_sysfs_unexport(काष्ठा pwm_chip *chip)
+अणु
+	काष्ठा device *parent;
+	अचिन्हित पूर्णांक i;
 
-	parent = class_find_device(&pwm_class, NULL, chip,
+	parent = class_find_device(&pwm_class, शून्य, chip,
 				   pwmchip_sysfs_match);
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
-	for (i = 0; i < chip->npwm; i++) {
-		struct pwm_device *pwm = &chip->pwms[i];
+	क्रम (i = 0; i < chip->npwm; i++) अणु
+		काष्ठा pwm_device *pwm = &chip->pwms[i];
 
-		if (test_bit(PWMF_EXPORTED, &pwm->flags))
+		अगर (test_bit(PWMF_EXPORTED, &pwm->flags))
 			pwm_unexport_child(parent, pwm);
-	}
+	पूर्ण
 
 	put_device(parent);
-	device_unregister(parent);
-}
+	device_unरेजिस्टर(parent);
+पूर्ण
 
-static int __init pwm_sysfs_init(void)
-{
-	return class_register(&pwm_class);
-}
+अटल पूर्णांक __init pwm_sysfs_init(व्योम)
+अणु
+	वापस class_रेजिस्टर(&pwm_class);
+पूर्ण
 subsys_initcall(pwm_sysfs_init);

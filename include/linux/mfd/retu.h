@@ -1,28 +1,29 @@
+<शैली गुरु>
 /*
- * Retu/Tahvo MFD driver interface
+ * Retu/Tahvo MFD driver पूर्णांकerface
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file "COPYING" in the main directory of this
- * archive for more details.
+ * Public License. See the file "COPYING" in the मुख्य directory of this
+ * archive क्रम more details.
  */
 
-#ifndef __LINUX_MFD_RETU_H
-#define __LINUX_MFD_RETU_H
+#अगर_अघोषित __LINUX_MFD_RETU_H
+#घोषणा __LINUX_MFD_RETU_H
 
-struct retu_dev;
+काष्ठा retu_dev;
 
-int retu_read(struct retu_dev *, u8);
-int retu_write(struct retu_dev *, u8, u16);
+पूर्णांक retu_पढ़ो(काष्ठा retu_dev *, u8);
+पूर्णांक retu_ग_लिखो(काष्ठा retu_dev *, u8, u16);
 
 /* Registers */
-#define RETU_REG_WATCHDOG	0x17		/* Watchdog */
-#define RETU_REG_CC1		0x0d		/* Common control register 1 */
-#define RETU_REG_STATUS		0x16		/* Status register */
+#घोषणा RETU_REG_WATCHDOG	0x17		/* Watchकरोg */
+#घोषणा RETU_REG_CC1		0x0d		/* Common control रेजिस्टर 1 */
+#घोषणा RETU_REG_STATUS		0x16		/* Status रेजिस्टर */
 
 /* Interrupt sources */
-#define TAHVO_INT_VBUS		0		/* VBUS state */
+#घोषणा TAHVO_INT_VBUS		0		/* VBUS state */
 
 /* Interrupt status */
-#define TAHVO_STAT_VBUS		(1 << TAHVO_INT_VBUS)
+#घोषणा TAHVO_STAT_VBUS		(1 << TAHVO_INT_VBUS)
 
-#endif /* __LINUX_MFD_RETU_H */
+#पूर्ण_अगर /* __LINUX_MFD_RETU_H */

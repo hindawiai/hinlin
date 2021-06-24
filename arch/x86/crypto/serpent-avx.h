@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASM_X86_SERPENT_AVX_H
-#define ASM_X86_SERPENT_AVX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASM_X86_SERPENT_AVX_H
+#घोषणा ASM_X86_SERPENT_AVX_H
 
-#include <crypto/b128ops.h>
-#include <crypto/serpent.h>
-#include <linux/types.h>
+#समावेश <crypto/b128ops.h>
+#समावेश <crypto/serpent.h>
+#समावेश <linux/types.h>
 
-struct crypto_skcipher;
+काष्ठा crypto_skcipher;
 
-#define SERPENT_PARALLEL_BLOCKS 8
+#घोषणा SERPENT_PARALLEL_BLOCKS 8
 
-asmlinkage void serpent_ecb_enc_8way_avx(const void *ctx, u8 *dst,
-					 const u8 *src);
-asmlinkage void serpent_ecb_dec_8way_avx(const void *ctx, u8 *dst,
-					 const u8 *src);
+यंत्रlinkage व्योम serpent_ecb_enc_8way_avx(स्थिर व्योम *ctx, u8 *dst,
+					 स्थिर u8 *src);
+यंत्रlinkage व्योम serpent_ecb_dec_8way_avx(स्थिर व्योम *ctx, u8 *dst,
+					 स्थिर u8 *src);
 
-asmlinkage void serpent_cbc_dec_8way_avx(const void *ctx, u8 *dst,
-					 const u8 *src);
+यंत्रlinkage व्योम serpent_cbc_dec_8way_avx(स्थिर व्योम *ctx, u8 *dst,
+					 स्थिर u8 *src);
 
-#endif
+#पूर्ण_अगर

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *	TURBOchannel architecture calls.
  *
@@ -6,90 +7,90 @@
  *	Copyright (c) 2005  James Simmons
  *
  *	This file is subject to the terms and conditions of the GNU
- *	General Public License.  See the file "COPYING" in the main
- *	directory of this archive for more details.
+ *	General Public License.  See the file "COPYING" in the मुख्य
+ *	directory of this archive क्रम more details.
  */
-#include <linux/compiler.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/tc.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/tc.h>
+#समावेश <linux/types.h>
 
-#include <asm/addrspace.h>
-#include <asm/bootinfo.h>
-#include <asm/paccess.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/paccess.h>
 
-#include <asm/dec/interrupts.h>
-#include <asm/dec/prom.h>
-#include <asm/dec/system.h>
+#समावेश <यंत्र/dec/पूर्णांकerrupts.h>
+#समावेश <यंत्र/dec/prom.h>
+#समावेश <यंत्र/dec/प्रणाली.h>
 
 /*
- * Protected read byte from TURBOchannel slot space.
+ * Protected पढ़ो byte from TURBOchannel slot space.
  */
-int tc_preadb(u8 *valp, void __iomem *addr)
-{
-	return get_dbe(*valp, (u8 *)addr);
-}
+पूर्णांक tc_pपढ़ोb(u8 *valp, व्योम __iomem *addr)
+अणु
+	वापस get_dbe(*valp, (u8 *)addr);
+पूर्ण
 
 /*
- * Get TURBOchannel bus information as specified by the spec, plus
+ * Get TURBOchannel bus inक्रमmation as specअगरied by the spec, plus
  * the slot space base address and the number of slots.
  */
-int __init tc_bus_get_info(struct tc_bus *tbus)
-{
-	if (!dec_tc_bus)
-		return -ENXIO;
+पूर्णांक __init tc_bus_get_info(काष्ठा tc_bus *tbus)
+अणु
+	अगर (!dec_tc_bus)
+		वापस -ENXIO;
 
-	memcpy(&tbus->info, rex_gettcinfo(), sizeof(tbus->info));
-	tbus->slot_base = CPHYSADDR((long)rex_slot_address(0));
+	स_नकल(&tbus->info, rex_gettcinfo(), माप(tbus->info));
+	tbus->slot_base = CPHYSADDR((दीर्घ)rex_slot_address(0));
 
-	switch (mips_machtype) {
-	case MACH_DS5000_200:
+	चयन (mips_machtype) अणु
+	हाल MACH_DS5000_200:
 		tbus->num_tcslots = 7;
-		break;
-	case MACH_DS5000_2X0:
-	case MACH_DS5900:
+		अवरोध;
+	हाल MACH_DS5000_2X0:
+	हाल MACH_DS5900:
 		tbus->ext_slot_base = 0x20000000;
 		tbus->ext_slot_size = 0x20000000;
 		fallthrough;
-	case MACH_DS5000_1XX:
+	हाल MACH_DS5000_1XX:
 		tbus->num_tcslots = 3;
-		break;
-	case MACH_DS5000_XX:
+		अवरोध;
+	हाल MACH_DS5000_XX:
 		tbus->num_tcslots = 2;
-	default:
-		break;
-	}
-	return 0;
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Get the IRQ for the specified slot.
+ * Get the IRQ क्रम the specअगरied slot.
  */
-void __init tc_device_get_irq(struct tc_dev *tdev)
-{
-	switch (tdev->slot) {
-	case 0:
-		tdev->interrupt = dec_interrupt[DEC_IRQ_TC0];
-		break;
-	case 1:
-		tdev->interrupt = dec_interrupt[DEC_IRQ_TC1];
-		break;
-	case 2:
-		tdev->interrupt = dec_interrupt[DEC_IRQ_TC2];
-		break;
+व्योम __init tc_device_get_irq(काष्ठा tc_dev *tdev)
+अणु
+	चयन (tdev->slot) अणु
+	हाल 0:
+		tdev->पूर्णांकerrupt = dec_पूर्णांकerrupt[DEC_IRQ_TC0];
+		अवरोध;
+	हाल 1:
+		tdev->पूर्णांकerrupt = dec_पूर्णांकerrupt[DEC_IRQ_TC1];
+		अवरोध;
+	हाल 2:
+		tdev->पूर्णांकerrupt = dec_पूर्णांकerrupt[DEC_IRQ_TC2];
+		अवरोध;
 	/*
 	 * Yuck! DS5000/200 onboard devices
 	 */
-	case 5:
-		tdev->interrupt = dec_interrupt[DEC_IRQ_TC5];
-		break;
-	case 6:
-		tdev->interrupt = dec_interrupt[DEC_IRQ_TC6];
-		break;
-	default:
-		tdev->interrupt = -1;
-		break;
-	}
-}
+	हाल 5:
+		tdev->पूर्णांकerrupt = dec_पूर्णांकerrupt[DEC_IRQ_TC5];
+		अवरोध;
+	हाल 6:
+		tdev->पूर्णांकerrupt = dec_पूर्णांकerrupt[DEC_IRQ_TC6];
+		अवरोध;
+	शेष:
+		tdev->पूर्णांकerrupt = -1;
+		अवरोध;
+	पूर्ण
+पूर्ण

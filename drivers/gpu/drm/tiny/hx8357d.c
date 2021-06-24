@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * DRM driver for the HX8357D LCD controller
+ * DRM driver क्रम the HX8357D LCD controller
  *
  * Copyright 2018 Broadcom
  * Copyright 2018 David Lechner <david@lechnology.com>
- * Copyright 2016 Noralf Trønnes
+ * Copyright 2016 Noralf Trथचnnes
  * Copyright (C) 2015 Adafruit Industries
  * Copyright (C) 2013 Christian Vogelgsang
  */
 
-#include <linux/backlight.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/property.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/property.h>
+#समावेश <linux/spi/spi.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_mipi_dbi.h>
-#include <drm/drm_modeset_helper.h>
-#include <video/mipi_display.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_mipi_dbi.h>
+#समावेश <drm/drm_modeset_helper.h>
+#समावेश <video/mipi_display.h>
 
-#define HX8357D_SETOSC 0xb0
-#define HX8357D_SETPOWER 0xb1
-#define HX8357D_SETRGB 0xb3
-#define HX8357D_SETCYC 0xb3
-#define HX8357D_SETCOM 0xb6
-#define HX8357D_SETEXTC 0xb9
-#define HX8357D_SETSTBA 0xc0
-#define HX8357D_SETPANEL 0xcc
-#define HX8357D_SETGAMMA 0xe0
+#घोषणा HX8357D_SETOSC 0xb0
+#घोषणा HX8357D_SETPOWER 0xb1
+#घोषणा HX8357D_SETRGB 0xb3
+#घोषणा HX8357D_SETCYC 0xb3
+#घोषणा HX8357D_SETCOM 0xb6
+#घोषणा HX8357D_SETEXTC 0xb9
+#घोषणा HX8357D_SETSTBA 0xc0
+#घोषणा HX8357D_SETPANEL 0xcc
+#घोषणा HX8357D_SETGAMMA 0xe0
 
-#define HX8357D_MADCTL_MY  0x80
-#define HX8357D_MADCTL_MX  0x40
-#define HX8357D_MADCTL_MV  0x20
-#define HX8357D_MADCTL_ML  0x10
-#define HX8357D_MADCTL_RGB 0x00
-#define HX8357D_MADCTL_BGR 0x08
-#define HX8357D_MADCTL_MH  0x04
+#घोषणा HX8357D_MADCTL_MY  0x80
+#घोषणा HX8357D_MADCTL_MX  0x40
+#घोषणा HX8357D_MADCTL_MV  0x20
+#घोषणा HX8357D_MADCTL_ML  0x10
+#घोषणा HX8357D_MADCTL_RGB 0x00
+#घोषणा HX8357D_MADCTL_BGR 0x08
+#घोषणा HX8357D_MADCTL_MH  0x04
 
-static void yx240qv29_enable(struct drm_simple_display_pipe *pipe,
-			     struct drm_crtc_state *crtc_state,
-			     struct drm_plane_state *plane_state)
-{
-	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
-	struct mipi_dbi *dbi = &dbidev->dbi;
+अटल व्योम yx240qv29_enable(काष्ठा drm_simple_display_pipe *pipe,
+			     काष्ठा drm_crtc_state *crtc_state,
+			     काष्ठा drm_plane_state *plane_state)
+अणु
+	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
+	काष्ठा mipi_dbi *dbi = &dbidev->dbi;
 	u8 addr_mode;
-	int ret, idx;
+	पूर्णांक ret, idx;
 
-	if (!drm_dev_enter(pipe->crtc.dev, &idx))
-		return;
+	अगर (!drm_dev_enter(pipe->crtc.dev, &idx))
+		वापस;
 
 	DRM_DEBUG_KMS("\n");
 
-	ret = mipi_dbi_poweron_conditional_reset(dbidev);
-	if (ret < 0)
-		goto out_exit;
-	if (ret == 1)
-		goto out_enable;
+	ret = mipi_dbi_घातeron_conditional_reset(dbidev);
+	अगर (ret < 0)
+		जाओ out_निकास;
+	अगर (ret == 1)
+		जाओ out_enable;
 
 	/* setextc */
 	mipi_dbi_command(dbi, HX8357D_SETEXTC, 0xFF, 0x83, 0x57);
@@ -160,40 +161,40 @@ static void yx240qv29_enable(struct drm_simple_display_pipe *pipe,
 	usleep_range(5000, 7000);
 
 out_enable:
-	switch (dbidev->rotation) {
-	default:
+	चयन (dbidev->rotation) अणु
+	शेष:
 		addr_mode = HX8357D_MADCTL_MX | HX8357D_MADCTL_MY;
-		break;
-	case 90:
+		अवरोध;
+	हाल 90:
 		addr_mode = HX8357D_MADCTL_MV | HX8357D_MADCTL_MY;
-		break;
-	case 180:
+		अवरोध;
+	हाल 180:
 		addr_mode = 0;
-		break;
-	case 270:
+		अवरोध;
+	हाल 270:
 		addr_mode = HX8357D_MADCTL_MV | HX8357D_MADCTL_MX;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mipi_dbi_command(dbi, MIPI_DCS_SET_ADDRESS_MODE, addr_mode);
 	mipi_dbi_enable_flush(dbidev, crtc_state, plane_state);
-out_exit:
-	drm_dev_exit(idx);
-}
+out_निकास:
+	drm_dev_निकास(idx);
+पूर्ण
 
-static const struct drm_simple_display_pipe_funcs hx8357d_pipe_funcs = {
+अटल स्थिर काष्ठा drm_simple_display_pipe_funcs hx8357d_pipe_funcs = अणु
 	.enable = yx240qv29_enable,
 	.disable = mipi_dbi_pipe_disable,
 	.update = mipi_dbi_pipe_update,
 	.prepare_fb = drm_gem_simple_display_pipe_prepare_fb,
-};
+पूर्ण;
 
-static const struct drm_display_mode yx350hv15_mode = {
+अटल स्थिर काष्ठा drm_display_mode yx350hv15_mode = अणु
 	DRM_SIMPLE_MODE(320, 480, 60, 75),
-};
+पूर्ण;
 
 DEFINE_DRM_GEM_CMA_FOPS(hx8357d_fops);
 
-static const struct drm_driver hx8357d_driver = {
+अटल स्थिर काष्ठा drm_driver hx8357d_driver = अणु
 	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	.fops			= &hx8357d_fops,
 	DRM_GEM_CMA_DRIVER_OPS_VMAP,
@@ -203,94 +204,94 @@ static const struct drm_driver hx8357d_driver = {
 	.date			= "20181023",
 	.major			= 1,
 	.minor			= 0,
-};
+पूर्ण;
 
-static const struct of_device_id hx8357d_of_match[] = {
-	{ .compatible = "adafruit,yx350hv15" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id hx8357d_of_match[] = अणु
+	अणु .compatible = "adafruit,yx350hv15" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hx8357d_of_match);
 
-static const struct spi_device_id hx8357d_id[] = {
-	{ "yx350hv15", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id hx8357d_id[] = अणु
+	अणु "yx350hv15", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, hx8357d_id);
 
-static int hx8357d_probe(struct spi_device *spi)
-{
-	struct device *dev = &spi->dev;
-	struct mipi_dbi_dev *dbidev;
-	struct drm_device *drm;
-	struct gpio_desc *dc;
+अटल पूर्णांक hx8357d_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा mipi_dbi_dev *dbidev;
+	काष्ठा drm_device *drm;
+	काष्ठा gpio_desc *dc;
 	u32 rotation = 0;
-	int ret;
+	पूर्णांक ret;
 
 	dbidev = devm_drm_dev_alloc(dev, &hx8357d_driver,
-				    struct mipi_dbi_dev, drm);
-	if (IS_ERR(dbidev))
-		return PTR_ERR(dbidev);
+				    काष्ठा mipi_dbi_dev, drm);
+	अगर (IS_ERR(dbidev))
+		वापस PTR_ERR(dbidev);
 
 	drm = &dbidev->drm;
 
 	dc = devm_gpiod_get(dev, "dc", GPIOD_OUT_LOW);
-	if (IS_ERR(dc)) {
+	अगर (IS_ERR(dc)) अणु
 		DRM_DEV_ERROR(dev, "Failed to get gpio 'dc'\n");
-		return PTR_ERR(dc);
-	}
+		वापस PTR_ERR(dc);
+	पूर्ण
 
 	dbidev->backlight = devm_of_find_backlight(dev);
-	if (IS_ERR(dbidev->backlight))
-		return PTR_ERR(dbidev->backlight);
+	अगर (IS_ERR(dbidev->backlight))
+		वापस PTR_ERR(dbidev->backlight);
 
-	device_property_read_u32(dev, "rotation", &rotation);
+	device_property_पढ़ो_u32(dev, "rotation", &rotation);
 
 	ret = mipi_dbi_spi_init(spi, &dbidev->dbi, dc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = mipi_dbi_dev_init(dbidev, &hx8357d_pipe_funcs, &yx350hv15_mode, rotation);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_mode_config_reset(drm);
 
-	ret = drm_dev_register(drm, 0);
-	if (ret)
-		return ret;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret)
+		वापस ret;
 
 	spi_set_drvdata(spi, drm);
 
 	drm_fbdev_generic_setup(drm, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hx8357d_remove(struct spi_device *spi)
-{
-	struct drm_device *drm = spi_get_drvdata(spi);
+अटल पूर्णांक hx8357d_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा drm_device *drm = spi_get_drvdata(spi);
 
 	drm_dev_unplug(drm);
-	drm_atomic_helper_shutdown(drm);
+	drm_atomic_helper_shutकरोwn(drm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hx8357d_shutdown(struct spi_device *spi)
-{
-	drm_atomic_helper_shutdown(spi_get_drvdata(spi));
-}
+अटल व्योम hx8357d_shutकरोwn(काष्ठा spi_device *spi)
+अणु
+	drm_atomic_helper_shutकरोwn(spi_get_drvdata(spi));
+पूर्ण
 
-static struct spi_driver hx8357d_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver hx8357d_spi_driver = अणु
+	.driver = अणु
 		.name = "hx8357d",
 		.of_match_table = hx8357d_of_match,
-	},
+	पूर्ण,
 	.id_table = hx8357d_id,
 	.probe = hx8357d_probe,
-	.remove = hx8357d_remove,
-	.shutdown = hx8357d_shutdown,
-};
+	.हटाओ = hx8357d_हटाओ,
+	.shutकरोwn = hx8357d_shutकरोwn,
+पूर्ण;
 module_spi_driver(hx8357d_spi_driver);
 
 MODULE_DESCRIPTION("HX8357D DRM driver");

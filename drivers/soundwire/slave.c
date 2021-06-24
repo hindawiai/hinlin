@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 // Copyright(c) 2015-17 Intel Corporation.
 
-#include <linux/acpi.h>
-#include <linux/of.h>
-#include <linux/soundwire/sdw.h>
-#include <linux/soundwire/sdw_type.h>
-#include "bus.h"
-#include "sysfs_local.h"
+#समावेश <linux/acpi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश <linux/soundwire/sdw_type.h>
+#समावेश "bus.h"
+#समावेश "sysfs_local.h"
 
-static void sdw_slave_release(struct device *dev)
-{
-	struct sdw_slave *slave = dev_to_sdw_dev(dev);
+अटल व्योम sdw_slave_release(काष्ठा device *dev)
+अणु
+	काष्ठा sdw_slave *slave = dev_to_sdw_dev(dev);
 
-	kfree(slave);
-}
+	kमुक्त(slave);
+पूर्ण
 
-struct device_type sdw_slave_type = {
+काष्ठा device_type sdw_slave_type = अणु
 	.name =		"sdw_slave",
 	.release =	sdw_slave_release,
 	.uevent =	sdw_slave_uevent,
-};
+पूर्ण;
 
-int sdw_slave_add(struct sdw_bus *bus,
-		  struct sdw_slave_id *id, struct fwnode_handle *fwnode)
-{
-	struct sdw_slave *slave;
-	int ret;
-	int i;
+पूर्णांक sdw_slave_add(काष्ठा sdw_bus *bus,
+		  काष्ठा sdw_slave_id *id, काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा sdw_slave *slave;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	slave = kzalloc(sizeof(*slave), GFP_KERNEL);
-	if (!slave)
-		return -ENOMEM;
+	slave = kzalloc(माप(*slave), GFP_KERNEL);
+	अगर (!slave)
+		वापस -ENOMEM;
 
-	/* Initialize data structure */
-	memcpy(&slave->id, id, sizeof(*id));
+	/* Initialize data काष्ठाure */
+	स_नकल(&slave->id, id, माप(*id));
 	slave->dev.parent = bus->dev;
 	slave->dev.fwnode = fwnode;
 
-	if (id->unique_id == SDW_IGNORED_UNIQUE_ID) {
+	अगर (id->unique_id == SDW_IGNORED_UNIQUE_ID) अणु
 		/* name shall be sdw:link:mfg:part:class */
 		dev_set_name(&slave->dev, "sdw:%x:%x:%x:%x",
 			     bus->link_id, id->mfg_id, id->part_id,
 			     id->class_id);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* name shall be sdw:link:mfg:part:class:unique */
 		dev_set_name(&slave->dev, "sdw:%x:%x:%x:%x:%x",
 			     bus->link_id, id->mfg_id, id->part_id,
 			     id->class_id, id->unique_id);
-	}
+	पूर्ण
 
 	slave->dev.bus = &sdw_bus_type;
 	slave->dev.of_node = of_node_get(to_of_node(fwnode));
@@ -55,26 +56,26 @@ int sdw_slave_add(struct sdw_bus *bus,
 	slave->dev.groups = sdw_slave_status_attr_groups;
 	slave->bus = bus;
 	slave->status = SDW_SLAVE_UNATTACHED;
-	init_completion(&slave->enumeration_complete);
+	init_completion(&slave->क्रमागतeration_complete);
 	init_completion(&slave->initialization_complete);
 	slave->dev_num = 0;
 	init_completion(&slave->probe_complete);
 	slave->probed = false;
-	slave->first_interrupt_done = false;
+	slave->first_पूर्णांकerrupt_करोne = false;
 
-	for (i = 0; i < SDW_MAX_PORTS; i++)
-		init_completion(&slave->port_ready[i]);
+	क्रम (i = 0; i < SDW_MAX_PORTS; i++)
+		init_completion(&slave->port_पढ़ोy[i]);
 
 	mutex_lock(&bus->bus_lock);
 	list_add_tail(&slave->node, &bus->slaves);
 	mutex_unlock(&bus->bus_lock);
 
-	ret = device_register(&slave->dev);
-	if (ret) {
+	ret = device_रेजिस्टर(&slave->dev);
+	अगर (ret) अणु
 		dev_err(bus->dev, "Failed to add slave: ret %d\n", ret);
 
 		/*
-		 * On err, don't free but drop ref as this will be freed
+		 * On err, करोn't मुक्त but drop ref as this will be मुक्तd
 		 * when release method is invoked.
 		 */
 		mutex_lock(&bus->bus_lock);
@@ -82,167 +83,167 @@ int sdw_slave_add(struct sdw_bus *bus,
 		mutex_unlock(&bus->bus_lock);
 		put_device(&slave->dev);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	sdw_slave_debugfs_init(slave);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_slave_add);
 
-#if IS_ENABLED(CONFIG_ACPI)
+#अगर IS_ENABLED(CONFIG_ACPI)
 
-static bool find_slave(struct sdw_bus *bus,
-		       struct acpi_device *adev,
-		       struct sdw_slave_id *id)
-{
+अटल bool find_slave(काष्ठा sdw_bus *bus,
+		       काष्ठा acpi_device *adev,
+		       काष्ठा sdw_slave_id *id)
+अणु
 	u64 addr;
-	unsigned int link_id;
+	अचिन्हित पूर्णांक link_id;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(adev->handle,
-				       METHOD_NAME__ADR, NULL, &addr);
+	status = acpi_evaluate_पूर्णांकeger(adev->handle,
+				       METHOD_NAME__ADR, शून्य, &addr);
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(bus->dev, "_ADR resolution failed: %x\n",
 			status);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (bus->ops->override_adr)
+	अगर (bus->ops->override_adr)
 		addr = bus->ops->override_adr(bus, addr);
 
-	if (!addr)
-		return false;
+	अगर (!addr)
+		वापस false;
 
 	/* Extract link id from ADR, Bit 51 to 48 (included) */
 	link_id = SDW_DISCO_LINK_ID(addr);
 
-	/* Check for link_id match */
-	if (link_id != bus->link_id)
-		return false;
+	/* Check क्रम link_id match */
+	अगर (link_id != bus->link_id)
+		वापस false;
 
 	sdw_extract_slave_id(bus, addr, id);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * sdw_acpi_find_slaves() - Find Slave devices in Master ACPI node
  * @bus: SDW bus instance
  *
- * Scans Master ACPI node for SDW child Slave devices and registers it.
+ * Scans Master ACPI node क्रम SDW child Slave devices and रेजिस्टरs it.
  */
-int sdw_acpi_find_slaves(struct sdw_bus *bus)
-{
-	struct acpi_device *adev, *parent;
-	struct acpi_device *adev2, *parent2;
+पूर्णांक sdw_acpi_find_slaves(काष्ठा sdw_bus *bus)
+अणु
+	काष्ठा acpi_device *adev, *parent;
+	काष्ठा acpi_device *adev2, *parent2;
 
 	parent = ACPI_COMPANION(bus->dev);
-	if (!parent) {
+	अगर (!parent) अणु
 		dev_err(bus->dev, "Can't find parent for acpi bind\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	list_for_each_entry(adev, &parent->children, node) {
-		struct sdw_slave_id id;
-		struct sdw_slave_id id2;
+	list_क्रम_each_entry(adev, &parent->children, node) अणु
+		काष्ठा sdw_slave_id id;
+		काष्ठा sdw_slave_id id2;
 		bool ignore_unique_id = true;
 
-		if (!find_slave(bus, adev, &id))
-			continue;
+		अगर (!find_slave(bus, adev, &id))
+			जारी;
 
-		/* brute-force O(N^2) search for duplicates */
+		/* brute-क्रमce O(N^2) search क्रम duplicates */
 		parent2 = parent;
-		list_for_each_entry(adev2, &parent2->children, node) {
+		list_क्रम_each_entry(adev2, &parent2->children, node) अणु
 
-			if (adev == adev2)
-				continue;
+			अगर (adev == adev2)
+				जारी;
 
-			if (!find_slave(bus, adev2, &id2))
-				continue;
+			अगर (!find_slave(bus, adev2, &id2))
+				जारी;
 
-			if (id.sdw_version != id2.sdw_version ||
+			अगर (id.sdw_version != id2.sdw_version ||
 			    id.mfg_id != id2.mfg_id ||
 			    id.part_id != id2.part_id ||
 			    id.class_id != id2.class_id)
-				continue;
+				जारी;
 
-			if (id.unique_id != id2.unique_id) {
+			अगर (id.unique_id != id2.unique_id) अणु
 				dev_dbg(bus->dev,
 					"Valid unique IDs 0x%x 0x%x for Slave mfg_id 0x%04x, part_id 0x%04x\n",
 					id.unique_id, id2.unique_id, id.mfg_id, id.part_id);
 				ignore_unique_id = false;
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_err(bus->dev,
 					"Invalid unique IDs 0x%x 0x%x for Slave mfg_id 0x%04x, part_id 0x%04x\n",
 					id.unique_id, id2.unique_id, id.mfg_id, id.part_id);
-				return -ENODEV;
-			}
-		}
+				वापस -ENODEV;
+			पूर्ण
+		पूर्ण
 
-		if (ignore_unique_id)
+		अगर (ignore_unique_id)
 			id.unique_id = SDW_IGNORED_UNIQUE_ID;
 
 		/*
-		 * don't error check for sdw_slave_add as we want to continue
+		 * करोn't error check क्रम sdw_slave_add as we want to जारी
 		 * adding Slaves
 		 */
 		sdw_slave_add(bus, &id, acpi_fwnode_handle(adev));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
  * sdw_of_find_slaves() - Find Slave devices in master device tree node
  * @bus: SDW bus instance
  *
- * Scans Master DT node for SDW child Slave devices and registers it.
+ * Scans Master DT node क्रम SDW child Slave devices and रेजिस्टरs it.
  */
-int sdw_of_find_slaves(struct sdw_bus *bus)
-{
-	struct device *dev = bus->dev;
-	struct device_node *node;
+पूर्णांक sdw_of_find_slaves(काष्ठा sdw_bus *bus)
+अणु
+	काष्ठा device *dev = bus->dev;
+	काष्ठा device_node *node;
 
-	for_each_child_of_node(bus->dev->of_node, node) {
-		int link_id, ret, len;
-		unsigned int sdw_version;
-		const char *compat = NULL;
-		struct sdw_slave_id id;
-		const __be32 *addr;
+	क्रम_each_child_of_node(bus->dev->of_node, node) अणु
+		पूर्णांक link_id, ret, len;
+		अचिन्हित पूर्णांक sdw_version;
+		स्थिर अक्षर *compat = शून्य;
+		काष्ठा sdw_slave_id id;
+		स्थिर __be32 *addr;
 
-		compat = of_get_property(node, "compatible", NULL);
-		if (!compat)
-			continue;
+		compat = of_get_property(node, "compatible", शून्य);
+		अगर (!compat)
+			जारी;
 
-		ret = sscanf(compat, "sdw%01x%04hx%04hx%02hhx", &sdw_version,
+		ret = माला_पूछो(compat, "sdw%01x%04hx%04hx%02hhx", &sdw_version,
 			     &id.mfg_id, &id.part_id, &id.class_id);
 
-		if (ret != 4) {
+		अगर (ret != 4) अणु
 			dev_err(dev, "Invalid compatible string found %s\n",
 				compat);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		addr = of_get_property(node, "reg", &len);
-		if (!addr || (len < 2 * sizeof(u32))) {
+		अगर (!addr || (len < 2 * माप(u32))) अणु
 			dev_err(dev, "Invalid Link and Instance ID\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		link_id = be32_to_cpup(addr++);
 		id.unique_id = be32_to_cpup(addr);
 		id.sdw_version = sdw_version;
 
-		/* Check for link_id match */
-		if (link_id != bus->link_id)
-			continue;
+		/* Check क्रम link_id match */
+		अगर (link_id != bus->link_id)
+			जारी;
 
 		sdw_slave_add(bus, &id, of_fwnode_handle(node));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

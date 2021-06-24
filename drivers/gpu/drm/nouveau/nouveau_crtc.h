@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2008 Maarten Maathuis.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,61 +25,61 @@
  *
  */
 
-#ifndef __NOUVEAU_CRTC_H__
-#define __NOUVEAU_CRTC_H__
+#अगर_अघोषित __NOUVEAU_CRTC_H__
+#घोषणा __NOUVEAU_CRTC_H__
 
-#include <drm/drm_crtc.h>
+#समावेश <drm/drm_crtc.h>
 
-#include <nvif/notify.h>
+#समावेश <nvअगर/notअगरy.h>
 
-struct nouveau_crtc {
-	struct drm_crtc base;
+काष्ठा nouveau_crtc अणु
+	काष्ठा drm_crtc base;
 
-	int index;
-	struct nvif_notify vblank;
+	पूर्णांक index;
+	काष्ठा nvअगर_notअगरy vblank;
 
-	uint32_t dpms_saved_fp_control;
-	uint32_t fp_users;
-	int saturation;
-	int sharpness;
-	int last_dpms;
+	uपूर्णांक32_t dpms_saved_fp_control;
+	uपूर्णांक32_t fp_users;
+	पूर्णांक saturation;
+	पूर्णांक sharpness;
+	पूर्णांक last_dpms;
 
-	int cursor_saved_x, cursor_saved_y;
+	पूर्णांक cursor_saved_x, cursor_saved_y;
 
-	struct {
-		int cpp;
+	काष्ठा अणु
+		पूर्णांक cpp;
 		bool blanked;
-		uint32_t offset;
-		uint32_t handle;
-	} fb;
+		uपूर्णांक32_t offset;
+		uपूर्णांक32_t handle;
+	पूर्ण fb;
 
-	struct {
-		struct nouveau_bo *nvbo;
-		uint32_t offset;
-		void (*set_offset)(struct nouveau_crtc *, uint32_t offset);
-		void (*set_pos)(struct nouveau_crtc *, int x, int y);
-		void (*hide)(struct nouveau_crtc *, bool update);
-		void (*show)(struct nouveau_crtc *, bool update);
-	} cursor;
+	काष्ठा अणु
+		काष्ठा nouveau_bo *nvbo;
+		uपूर्णांक32_t offset;
+		व्योम (*set_offset)(काष्ठा nouveau_crtc *, uपूर्णांक32_t offset);
+		व्योम (*set_pos)(काष्ठा nouveau_crtc *, पूर्णांक x, पूर्णांक y);
+		व्योम (*hide)(काष्ठा nouveau_crtc *, bool update);
+		व्योम (*show)(काष्ठा nouveau_crtc *, bool update);
+	पूर्ण cursor;
 
-	struct {
-		int depth;
-	} lut;
+	काष्ठा अणु
+		पूर्णांक depth;
+	पूर्ण lut;
 
-	void (*save)(struct drm_crtc *crtc);
-	void (*restore)(struct drm_crtc *crtc);
-};
+	व्योम (*save)(काष्ठा drm_crtc *crtc);
+	व्योम (*restore)(काष्ठा drm_crtc *crtc);
+पूर्ण;
 
-static inline struct nouveau_crtc *nouveau_crtc(struct drm_crtc *crtc)
-{
-	return crtc ? container_of(crtc, struct nouveau_crtc, base) : NULL;
-}
+अटल अंतरभूत काष्ठा nouveau_crtc *nouveau_crtc(काष्ठा drm_crtc *crtc)
+अणु
+	वापस crtc ? container_of(crtc, काष्ठा nouveau_crtc, base) : शून्य;
+पूर्ण
 
-static inline struct drm_crtc *to_drm_crtc(struct nouveau_crtc *crtc)
-{
-	return &crtc->base;
-}
+अटल अंतरभूत काष्ठा drm_crtc *to_drm_crtc(काष्ठा nouveau_crtc *crtc)
+अणु
+	वापस &crtc->base;
+पूर्ण
 
-int nv04_cursor_init(struct nouveau_crtc *);
+पूर्णांक nv04_cursor_init(काष्ठा nouveau_crtc *);
 
-#endif /* __NOUVEAU_CRTC_H__ */
+#पूर्ण_अगर /* __NOUVEAU_CRTC_H__ */

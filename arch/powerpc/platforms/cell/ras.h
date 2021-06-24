@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef RAS_H
-#define RAS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित RAS_H
+#घोषणा RAS_H
 
-#include <asm/interrupt.h>
+#समावेश <यंत्र/पूर्णांकerrupt.h>
 
-DECLARE_INTERRUPT_HANDLER(cbe_system_error_exception);
-DECLARE_INTERRUPT_HANDLER(cbe_maintenance_exception);
+DECLARE_INTERRUPT_HANDLER(cbe_प्रणाली_error_exception);
+DECLARE_INTERRUPT_HANDLER(cbe_मुख्यtenance_exception);
 DECLARE_INTERRUPT_HANDLER(cbe_thermal_exception);
 
-extern void cbe_ras_init(void);
+बाह्य व्योम cbe_ras_init(व्योम);
 
-#endif /* RAS_H */
+#पूर्ण_अगर /* RAS_H */

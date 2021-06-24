@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Copyright (C) 2021 Christian Hewitt <christianshewitt@gmail.com>
 
-#include <media/rc-map.h>
-#include <linux/module.h>
+#समावेश <media/rc-map.h>
+#समावेश <linux/module.h>
 
 //
-// Keytable for the Mecool Kii Pro remote control
+// Keytable क्रम the Mecool Kii Pro remote control
 //
 
-static struct rc_map_table mecool_kii_pro[] = {
-	{ 0x59, KEY_POWER },
-	{ 0x19, KEY_MUTE },
+अटल काष्ठा rc_map_table mecool_kii_pro[] = अणु
+	अणु 0x59, KEY_POWER पूर्ण,
+	अणु 0x19, KEY_MUTE पूर्ण,
 
-	{ 0x42, KEY_RED },
-	{ 0x40, KEY_GREEN },
-	{ 0x00, KEY_YELLOW},
-	{ 0x03, KEY_BLUE },
+	अणु 0x42, KEY_RED पूर्ण,
+	अणु 0x40, KEY_GREEN पूर्ण,
+	अणु 0x00, KEY_YELLOWपूर्ण,
+	अणु 0x03, KEY_BLUE पूर्ण,
 
-	{ 0x4a, KEY_REWIND },
-	{ 0x48, KEY_FORWARD },
-	{ 0x08, KEY_PREVIOUSSONG},
-	{ 0x0b, KEY_NEXTSONG},
+	अणु 0x4a, KEY_REWIND पूर्ण,
+	अणु 0x48, KEY_FORWARD पूर्ण,
+	अणु 0x08, KEY_PREVIOUSSONGपूर्ण,
+	अणु 0x0b, KEY_NEXTSONGपूर्ण,
 
-	{ 0x46, KEY_PLAYPAUSE },
-	{ 0x44, KEY_STOP },
-	{ 0x1f, KEY_FAVORITES},
-	{ 0x04, KEY_PVR },
+	अणु 0x46, KEY_PLAYPAUSE पूर्ण,
+	अणु 0x44, KEY_STOP पूर्ण,
+	अणु 0x1f, KEY_FAVORITESपूर्ण,
+	अणु 0x04, KEY_PVR पूर्ण,
 
-	{ 0x4d, KEY_EPG },
-	{ 0x02, KEY_INFO },
-	{ 0x09, KEY_SUBTITLE },
-	{ 0x01, KEY_LANGUAGE }, // AUDIO
+	अणु 0x4d, KEY_EPG पूर्ण,
+	अणु 0x02, KEY_INFO पूर्ण,
+	अणु 0x09, KEY_SUBTITLE पूर्ण,
+	अणु 0x01, KEY_LANGUAGE पूर्ण, // AUDIO
 
-	{ 0x0d, KEY_HOME },
-	{ 0x11, KEY_TV },
-	{ 0x45, KEY_MENU },
-	{ 0x05, KEY_EXIT },
+	अणु 0x0d, KEY_HOME पूर्ण,
+	अणु 0x11, KEY_TV पूर्ण,
+	अणु 0x45, KEY_MENU पूर्ण,
+	अणु 0x05, KEY_EXIT पूर्ण,
 
-	{ 0x5a, KEY_LEFT },
-	{ 0x1b, KEY_RIGHT },
-	{ 0x06, KEY_UP },
-	{ 0x16, KEY_DOWN },
-	{ 0x1a, KEY_OK },
+	अणु 0x5a, KEY_LEFT पूर्ण,
+	अणु 0x1b, KEY_RIGHT पूर्ण,
+	अणु 0x06, KEY_UP पूर्ण,
+	अणु 0x16, KEY_DOWN पूर्ण,
+	अणु 0x1a, KEY_OK पूर्ण,
 
-	{ 0x13, KEY_VOLUMEUP },
-	{ 0x17, KEY_VOLUMEDOWN },
-	{ 0x58, KEY_APPSELECT }, // APPS
-	{ 0x12, KEY_CONTEXT_MENU }, // MOUSE
-	{ 0x55, KEY_CHANNELUP }, // PAGE_UP
-	{ 0x15, KEY_CHANNELDOWN }, // PAGE_DOWN
+	अणु 0x13, KEY_VOLUMEUP पूर्ण,
+	अणु 0x17, KEY_VOLUMEDOWN पूर्ण,
+	अणु 0x58, KEY_APPSELECT पूर्ण, // APPS
+	अणु 0x12, KEY_CONTEXT_MENU पूर्ण, // MOUSE
+	अणु 0x55, KEY_CHANNELUP पूर्ण, // PAGE_UP
+	अणु 0x15, KEY_CHANNELDOWN पूर्ण, // PAGE_DOWN
 
-	{ 0x52, KEY_1 },
-	{ 0x50, KEY_2 },
-	{ 0x10, KEY_3 },
-	{ 0x56, KEY_4 },
-	{ 0x54, KEY_5 },
-	{ 0x14, KEY_6 },
-	{ 0x4e, KEY_7 },
-	{ 0x4c, KEY_8 },
-	{ 0x0c, KEY_9 },
-	{ 0x18, KEY_WWW },
-	{ 0x0f, KEY_0 },
-	{ 0x51, KEY_DELETE },
-};
+	अणु 0x52, KEY_1 पूर्ण,
+	अणु 0x50, KEY_2 पूर्ण,
+	अणु 0x10, KEY_3 पूर्ण,
+	अणु 0x56, KEY_4 पूर्ण,
+	अणु 0x54, KEY_5 पूर्ण,
+	अणु 0x14, KEY_6 पूर्ण,
+	अणु 0x4e, KEY_7 पूर्ण,
+	अणु 0x4c, KEY_8 पूर्ण,
+	अणु 0x0c, KEY_9 पूर्ण,
+	अणु 0x18, KEY_WWW पूर्ण,
+	अणु 0x0f, KEY_0 पूर्ण,
+	अणु 0x51, KEY_DELETE पूर्ण,
+पूर्ण;
 
-static struct rc_map_list mecool_kii_pro_map = {
-	.map = {
+अटल काष्ठा rc_map_list mecool_kii_pro_map = अणु
+	.map = अणु
 		.scan     = mecool_kii_pro,
 		.size     = ARRAY_SIZE(mecool_kii_pro),
 		.rc_proto = RC_PROTO_NEC,
 		.name     = RC_MAP_MECOOL_KII_PRO,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init init_rc_map_mecool_kii_pro(void)
-{
-	return rc_map_register(&mecool_kii_pro_map);
-}
+अटल पूर्णांक __init init_rc_map_mecool_kii_pro(व्योम)
+अणु
+	वापस rc_map_रेजिस्टर(&mecool_kii_pro_map);
+पूर्ण
 
-static void __exit exit_rc_map_mecool_kii_pro(void)
-{
-	rc_map_unregister(&mecool_kii_pro_map);
-}
+अटल व्योम __निकास निकास_rc_map_mecool_kii_pro(व्योम)
+अणु
+	rc_map_unरेजिस्टर(&mecool_kii_pro_map);
+पूर्ण
 
 module_init(init_rc_map_mecool_kii_pro)
-module_exit(exit_rc_map_mecool_kii_pro)
+module_निकास(निकास_rc_map_mecool_kii_pro)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Hewitt <christianshewitt@gmail.com");

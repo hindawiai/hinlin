@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __DT_SC7180_LPASS_H
-#define __DT_SC7180_LPASS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __DT_SC7180_LPASS_H
+#घोषणा __DT_SC7180_LPASS_H
 
-#include <dt-bindings/sound/qcom,lpass.h>
+#समावेश <dt-bindings/sound/qcom,lpass.h>
 
-/* NOTE: Use qcom,lpass.h to define any AIF ID's for LPASS */
+/* NOTE: Use qcom,lpass.h to define any AIF ID's क्रम LPASS */
 
-#endif /* __DT_APQ8016_LPASS_H */
+#पूर्ण_अगर /* __DT_APQ8016_LPASS_H */

@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
 
-#include "msm_drv.h"
-#include "mdp_kms.h"
+#समावेश "msm_drv.h"
+#समावेश "mdp_kms.h"
 
 
-struct mdp_irq_wait {
-	struct mdp_irq irq;
-	int count;
-};
+काष्ठा mdp_irq_रुको अणु
+	काष्ठा mdp_irq irq;
+	पूर्णांक count;
+पूर्ण;
 
-static DECLARE_WAIT_QUEUE_HEAD(wait_event);
+अटल DECLARE_WAIT_QUEUE_HEAD(रुको_event);
 
-static DEFINE_SPINLOCK(list_lock);
+अटल DEFINE_SPINLOCK(list_lock);
 
-static void update_irq(struct mdp_kms *mdp_kms)
-{
-	struct mdp_irq *irq;
-	uint32_t irqmask = mdp_kms->vblank_mask;
+अटल व्योम update_irq(काष्ठा mdp_kms *mdp_kms)
+अणु
+	काष्ठा mdp_irq *irq;
+	uपूर्णांक32_t irqmask = mdp_kms->vblank_mask;
 
-	assert_spin_locked(&list_lock);
+	निश्चित_spin_locked(&list_lock);
 
-	list_for_each_entry(irq, &mdp_kms->irq_list, node)
+	list_क्रम_each_entry(irq, &mdp_kms->irq_list, node)
 		irqmask |= irq->irqmask;
 
 	mdp_kms->funcs->set_irqmask(mdp_kms, irqmask, mdp_kms->cur_irq_mask);
 	mdp_kms->cur_irq_mask = irqmask;
-}
+पूर्ण
 
-/* if an mdp_irq's irqmask has changed, such as when mdp5 crtc<->encoder
+/* अगर an mdp_irq's irqmask has changed, such as when mdp5 crtc<->encoder
  * link changes, this must be called to figure out the new global irqmask
  */
-void mdp_irq_update(struct mdp_kms *mdp_kms)
-{
-	unsigned long flags;
+व्योम mdp_irq_update(काष्ठा mdp_kms *mdp_kms)
+अणु
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&list_lock, flags);
 	update_irq(mdp_kms);
 	spin_unlock_irqrestore(&list_lock, flags);
-}
+पूर्ण
 
-void mdp_dispatch_irqs(struct mdp_kms *mdp_kms, uint32_t status)
-{
-	struct mdp_irq *handler, *n;
-	unsigned long flags;
+व्योम mdp_dispatch_irqs(काष्ठा mdp_kms *mdp_kms, uपूर्णांक32_t status)
+अणु
+	काष्ठा mdp_irq *handler, *n;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&list_lock, flags);
 	mdp_kms->in_irq = true;
-	list_for_each_entry_safe(handler, n, &mdp_kms->irq_list, node) {
-		if (handler->irqmask & status) {
+	list_क्रम_each_entry_safe(handler, n, &mdp_kms->irq_list, node) अणु
+		अगर (handler->irqmask & status) अणु
 			spin_unlock_irqrestore(&list_lock, flags);
 			handler->irq(handler, handler->irqmask & status);
 			spin_lock_irqsave(&list_lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mdp_kms->in_irq = false;
 	update_irq(mdp_kms);
 	spin_unlock_irqrestore(&list_lock, flags);
 
-}
+पूर्ण
 
-void mdp_update_vblank_mask(struct mdp_kms *mdp_kms, uint32_t mask, bool enable)
-{
-	unsigned long flags;
+व्योम mdp_update_vblank_mask(काष्ठा mdp_kms *mdp_kms, uपूर्णांक32_t mask, bool enable)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&list_lock, flags);
-	if (enable)
+	अगर (enable)
 		mdp_kms->vblank_mask |= mask;
-	else
+	अन्यथा
 		mdp_kms->vblank_mask &= ~mask;
 	update_irq(mdp_kms);
 	spin_unlock_irqrestore(&list_lock, flags);
-}
+पूर्ण
 
-static void wait_irq(struct mdp_irq *irq, uint32_t irqstatus)
-{
-	struct mdp_irq_wait *wait =
-			container_of(irq, struct mdp_irq_wait, irq);
-	wait->count--;
-	wake_up_all(&wait_event);
-}
+अटल व्योम रुको_irq(काष्ठा mdp_irq *irq, uपूर्णांक32_t irqstatus)
+अणु
+	काष्ठा mdp_irq_रुको *रुको =
+			container_of(irq, काष्ठा mdp_irq_रुको, irq);
+	रुको->count--;
+	wake_up_all(&रुको_event);
+पूर्ण
 
-void mdp_irq_wait(struct mdp_kms *mdp_kms, uint32_t irqmask)
-{
-	struct mdp_irq_wait wait = {
-		.irq = {
-			.irq = wait_irq,
+व्योम mdp_irq_रुको(काष्ठा mdp_kms *mdp_kms, uपूर्णांक32_t irqmask)
+अणु
+	काष्ठा mdp_irq_रुको रुको = अणु
+		.irq = अणु
+			.irq = रुको_irq,
 			.irqmask = irqmask,
-		},
+		पूर्ण,
 		.count = 1,
-	};
-	mdp_irq_register(mdp_kms, &wait.irq);
-	wait_event_timeout(wait_event, (wait.count <= 0),
-			msecs_to_jiffies(100));
-	mdp_irq_unregister(mdp_kms, &wait.irq);
-}
+	पूर्ण;
+	mdp_irq_रेजिस्टर(mdp_kms, &रुको.irq);
+	रुको_event_समयout(रुको_event, (रुको.count <= 0),
+			msecs_to_jअगरfies(100));
+	mdp_irq_unरेजिस्टर(mdp_kms, &रुको.irq);
+पूर्ण
 
-void mdp_irq_register(struct mdp_kms *mdp_kms, struct mdp_irq *irq)
-{
-	unsigned long flags;
+व्योम mdp_irq_रेजिस्टर(काष्ठा mdp_kms *mdp_kms, काष्ठा mdp_irq *irq)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool needs_update = false;
 
 	spin_lock_irqsave(&list_lock, flags);
 
-	if (!irq->registered) {
-		irq->registered = true;
+	अगर (!irq->रेजिस्टरed) अणु
+		irq->रेजिस्टरed = true;
 		list_add(&irq->node, &mdp_kms->irq_list);
 		needs_update = !mdp_kms->in_irq;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&list_lock, flags);
 
-	if (needs_update)
+	अगर (needs_update)
 		mdp_irq_update(mdp_kms);
-}
+पूर्ण
 
-void mdp_irq_unregister(struct mdp_kms *mdp_kms, struct mdp_irq *irq)
-{
-	unsigned long flags;
+व्योम mdp_irq_unरेजिस्टर(काष्ठा mdp_kms *mdp_kms, काष्ठा mdp_irq *irq)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool needs_update = false;
 
 	spin_lock_irqsave(&list_lock, flags);
 
-	if (irq->registered) {
-		irq->registered = false;
+	अगर (irq->रेजिस्टरed) अणु
+		irq->रेजिस्टरed = false;
 		list_del(&irq->node);
 		needs_update = !mdp_kms->in_irq;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&list_lock, flags);
 
-	if (needs_update)
+	अगर (needs_update)
 		mdp_irq_update(mdp_kms);
-}
+पूर्ण

@@ -1,290 +1,291 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/export.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/sort.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sort.h>
 
-#include <soc/tegra/fuse.h>
+#समावेश <soc/tegra/fuse.h>
 
-#include "mc.h"
+#समावेश "mc.h"
 
-static const struct of_device_id tegra_mc_of_match[] = {
-#ifdef CONFIG_ARCH_TEGRA_2x_SOC
-	{ .compatible = "nvidia,tegra20-mc-gart", .data = &tegra20_mc_soc },
-#endif
-#ifdef CONFIG_ARCH_TEGRA_3x_SOC
-	{ .compatible = "nvidia,tegra30-mc", .data = &tegra30_mc_soc },
-#endif
-#ifdef CONFIG_ARCH_TEGRA_114_SOC
-	{ .compatible = "nvidia,tegra114-mc", .data = &tegra114_mc_soc },
-#endif
-#ifdef CONFIG_ARCH_TEGRA_124_SOC
-	{ .compatible = "nvidia,tegra124-mc", .data = &tegra124_mc_soc },
-#endif
-#ifdef CONFIG_ARCH_TEGRA_132_SOC
-	{ .compatible = "nvidia,tegra132-mc", .data = &tegra132_mc_soc },
-#endif
-#ifdef CONFIG_ARCH_TEGRA_210_SOC
-	{ .compatible = "nvidia,tegra210-mc", .data = &tegra210_mc_soc },
-#endif
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id tegra_mc_of_match[] = अणु
+#अगर_घोषित CONFIG_ARCH_TEGRA_2x_SOC
+	अणु .compatible = "nvidia,tegra20-mc-gart", .data = &tegra20_mc_soc पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_TEGRA_3x_SOC
+	अणु .compatible = "nvidia,tegra30-mc", .data = &tegra30_mc_soc पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_TEGRA_114_SOC
+	अणु .compatible = "nvidia,tegra114-mc", .data = &tegra114_mc_soc पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_TEGRA_124_SOC
+	अणु .compatible = "nvidia,tegra124-mc", .data = &tegra124_mc_soc पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_TEGRA_132_SOC
+	अणु .compatible = "nvidia,tegra132-mc", .data = &tegra132_mc_soc पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARCH_TEGRA_210_SOC
+	अणु .compatible = "nvidia,tegra210-mc", .data = &tegra210_mc_soc पूर्ण,
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tegra_mc_of_match);
 
-static void tegra_mc_devm_action_put_device(void *data)
-{
-	struct tegra_mc *mc = data;
+अटल व्योम tegra_mc_devm_action_put_device(व्योम *data)
+अणु
+	काष्ठा tegra_mc *mc = data;
 
 	put_device(mc->dev);
-}
+पूर्ण
 
 /**
  * devm_tegra_memory_controller_get() - get Tegra Memory Controller handle
- * @dev: device pointer for the consumer device
+ * @dev: device poपूर्णांकer क्रम the consumer device
  *
- * This function will search for the Memory Controller node in a device-tree
+ * This function will search क्रम the Memory Controller node in a device-tree
  * and retrieve the Memory Controller handle.
  *
- * Return: ERR_PTR() on error or a valid pointer to a struct tegra_mc.
+ * Return: ERR_PTR() on error or a valid poपूर्णांकer to a काष्ठा tegra_mc.
  */
-struct tegra_mc *devm_tegra_memory_controller_get(struct device *dev)
-{
-	struct platform_device *pdev;
-	struct device_node *np;
-	struct tegra_mc *mc;
-	int err;
+काष्ठा tegra_mc *devm_tegra_memory_controller_get(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device_node *np;
+	काष्ठा tegra_mc *mc;
+	पूर्णांक err;
 
 	np = of_parse_phandle(dev->of_node, "nvidia,memory-controller", 0);
-	if (!np)
-		return ERR_PTR(-ENOENT);
+	अगर (!np)
+		वापस ERR_PTR(-ENOENT);
 
 	pdev = of_find_device_by_node(np);
 	of_node_put(np);
-	if (!pdev)
-		return ERR_PTR(-ENODEV);
+	अगर (!pdev)
+		वापस ERR_PTR(-ENODEV);
 
-	mc = platform_get_drvdata(pdev);
-	if (!mc) {
+	mc = platक्रमm_get_drvdata(pdev);
+	अगर (!mc) अणु
 		put_device(&pdev->dev);
-		return ERR_PTR(-EPROBE_DEFER);
-	}
+		वापस ERR_PTR(-EPROBE_DEFER);
+	पूर्ण
 
 	err = devm_add_action(dev, tegra_mc_devm_action_put_device, mc);
-	if (err) {
+	अगर (err) अणु
 		put_device(mc->dev);
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return mc;
-}
+	वापस mc;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_tegra_memory_controller_get);
 
-static int tegra_mc_block_dma_common(struct tegra_mc *mc,
-				     const struct tegra_mc_reset *rst)
-{
-	unsigned long flags;
+अटल पूर्णांक tegra_mc_block_dma_common(काष्ठा tegra_mc *mc,
+				     स्थिर काष्ठा tegra_mc_reset *rst)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
 	spin_lock_irqsave(&mc->lock, flags);
 
-	value = mc_readl(mc, rst->control) | BIT(rst->bit);
-	mc_writel(mc, value, rst->control);
+	value = mc_पढ़ोl(mc, rst->control) | BIT(rst->bit);
+	mc_ग_लिखोl(mc, value, rst->control);
 
 	spin_unlock_irqrestore(&mc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool tegra_mc_dma_idling_common(struct tegra_mc *mc,
-				       const struct tegra_mc_reset *rst)
-{
-	return (mc_readl(mc, rst->status) & BIT(rst->bit)) != 0;
-}
+अटल bool tegra_mc_dma_idling_common(काष्ठा tegra_mc *mc,
+				       स्थिर काष्ठा tegra_mc_reset *rst)
+अणु
+	वापस (mc_पढ़ोl(mc, rst->status) & BIT(rst->bit)) != 0;
+पूर्ण
 
-static int tegra_mc_unblock_dma_common(struct tegra_mc *mc,
-				       const struct tegra_mc_reset *rst)
-{
-	unsigned long flags;
+अटल पूर्णांक tegra_mc_unblock_dma_common(काष्ठा tegra_mc *mc,
+				       स्थिर काष्ठा tegra_mc_reset *rst)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
 	spin_lock_irqsave(&mc->lock, flags);
 
-	value = mc_readl(mc, rst->control) & ~BIT(rst->bit);
-	mc_writel(mc, value, rst->control);
+	value = mc_पढ़ोl(mc, rst->control) & ~BIT(rst->bit);
+	mc_ग_लिखोl(mc, value, rst->control);
 
 	spin_unlock_irqrestore(&mc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_mc_reset_status_common(struct tegra_mc *mc,
-					const struct tegra_mc_reset *rst)
-{
-	return (mc_readl(mc, rst->control) & BIT(rst->bit)) != 0;
-}
+अटल पूर्णांक tegra_mc_reset_status_common(काष्ठा tegra_mc *mc,
+					स्थिर काष्ठा tegra_mc_reset *rst)
+अणु
+	वापस (mc_पढ़ोl(mc, rst->control) & BIT(rst->bit)) != 0;
+पूर्ण
 
-const struct tegra_mc_reset_ops tegra_mc_reset_ops_common = {
+स्थिर काष्ठा tegra_mc_reset_ops tegra_mc_reset_ops_common = अणु
 	.block_dma = tegra_mc_block_dma_common,
 	.dma_idling = tegra_mc_dma_idling_common,
 	.unblock_dma = tegra_mc_unblock_dma_common,
 	.reset_status = tegra_mc_reset_status_common,
-};
+पूर्ण;
 
-static inline struct tegra_mc *reset_to_mc(struct reset_controller_dev *rcdev)
-{
-	return container_of(rcdev, struct tegra_mc, reset);
-}
+अटल अंतरभूत काष्ठा tegra_mc *reset_to_mc(काष्ठा reset_controller_dev *rcdev)
+अणु
+	वापस container_of(rcdev, काष्ठा tegra_mc, reset);
+पूर्ण
 
-static const struct tegra_mc_reset *tegra_mc_reset_find(struct tegra_mc *mc,
-							unsigned long id)
-{
-	unsigned int i;
+अटल स्थिर काष्ठा tegra_mc_reset *tegra_mc_reset_find(काष्ठा tegra_mc *mc,
+							अचिन्हित दीर्घ id)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < mc->soc->num_resets; i++)
-		if (mc->soc->resets[i].id == id)
-			return &mc->soc->resets[i];
+	क्रम (i = 0; i < mc->soc->num_resets; i++)
+		अगर (mc->soc->resets[i].id == id)
+			वापस &mc->soc->resets[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int tegra_mc_hotreset_assert(struct reset_controller_dev *rcdev,
-				    unsigned long id)
-{
-	struct tegra_mc *mc = reset_to_mc(rcdev);
-	const struct tegra_mc_reset_ops *rst_ops;
-	const struct tegra_mc_reset *rst;
-	int retries = 500;
-	int err;
+अटल पूर्णांक tegra_mc_hotreset_निश्चित(काष्ठा reset_controller_dev *rcdev,
+				    अचिन्हित दीर्घ id)
+अणु
+	काष्ठा tegra_mc *mc = reset_to_mc(rcdev);
+	स्थिर काष्ठा tegra_mc_reset_ops *rst_ops;
+	स्थिर काष्ठा tegra_mc_reset *rst;
+	पूर्णांक retries = 500;
+	पूर्णांक err;
 
 	rst = tegra_mc_reset_find(mc, id);
-	if (!rst)
-		return -ENODEV;
+	अगर (!rst)
+		वापस -ENODEV;
 
 	rst_ops = mc->soc->reset_ops;
-	if (!rst_ops)
-		return -ENODEV;
+	अगर (!rst_ops)
+		वापस -ENODEV;
 
-	/* DMA flushing will fail if reset is already asserted */
-	if (rst_ops->reset_status) {
-		/* check whether reset is asserted */
-		if (rst_ops->reset_status(mc, rst))
-			return 0;
-	}
+	/* DMA flushing will fail अगर reset is alपढ़ोy निश्चितed */
+	अगर (rst_ops->reset_status) अणु
+		/* check whether reset is निश्चितed */
+		अगर (rst_ops->reset_status(mc, rst))
+			वापस 0;
+	पूर्ण
 
-	if (rst_ops->block_dma) {
+	अगर (rst_ops->block_dma) अणु
 		/* block clients DMA requests */
 		err = rst_ops->block_dma(mc, rst);
-		if (err) {
+		अगर (err) अणु
 			dev_err(mc->dev, "failed to block %s DMA: %d\n",
 				rst->name, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (rst_ops->dma_idling) {
-		/* wait for completion of the outstanding DMA requests */
-		while (!rst_ops->dma_idling(mc, rst)) {
-			if (!retries--) {
+	अगर (rst_ops->dma_idling) अणु
+		/* रुको क्रम completion of the outstanding DMA requests */
+		जबतक (!rst_ops->dma_idling(mc, rst)) अणु
+			अगर (!retries--) अणु
 				dev_err(mc->dev, "failed to flush %s DMA\n",
 					rst->name);
-				return -EBUSY;
-			}
+				वापस -EBUSY;
+			पूर्ण
 
 			usleep_range(10, 100);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rst_ops->hotreset_assert) {
-		/* clear clients DMA requests sitting before arbitration */
-		err = rst_ops->hotreset_assert(mc, rst);
-		if (err) {
+	अगर (rst_ops->hotreset_निश्चित) अणु
+		/* clear clients DMA requests sitting beक्रमe arbitration */
+		err = rst_ops->hotreset_निश्चित(mc, rst);
+		अगर (err) अणु
 			dev_err(mc->dev, "failed to hot reset %s: %d\n",
 				rst->name, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_mc_hotreset_deassert(struct reset_controller_dev *rcdev,
-				      unsigned long id)
-{
-	struct tegra_mc *mc = reset_to_mc(rcdev);
-	const struct tegra_mc_reset_ops *rst_ops;
-	const struct tegra_mc_reset *rst;
-	int err;
+अटल पूर्णांक tegra_mc_hotreset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+				      अचिन्हित दीर्घ id)
+अणु
+	काष्ठा tegra_mc *mc = reset_to_mc(rcdev);
+	स्थिर काष्ठा tegra_mc_reset_ops *rst_ops;
+	स्थिर काष्ठा tegra_mc_reset *rst;
+	पूर्णांक err;
 
 	rst = tegra_mc_reset_find(mc, id);
-	if (!rst)
-		return -ENODEV;
+	अगर (!rst)
+		वापस -ENODEV;
 
 	rst_ops = mc->soc->reset_ops;
-	if (!rst_ops)
-		return -ENODEV;
+	अगर (!rst_ops)
+		वापस -ENODEV;
 
-	if (rst_ops->hotreset_deassert) {
+	अगर (rst_ops->hotreset_deनिश्चित) अणु
 		/* take out client from hot reset */
-		err = rst_ops->hotreset_deassert(mc, rst);
-		if (err) {
+		err = rst_ops->hotreset_deनिश्चित(mc, rst);
+		अगर (err) अणु
 			dev_err(mc->dev, "failed to deassert hot reset %s: %d\n",
 				rst->name, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (rst_ops->unblock_dma) {
+	अगर (rst_ops->unblock_dma) अणु
 		/* allow new DMA requests to proceed to arbitration */
 		err = rst_ops->unblock_dma(mc, rst);
-		if (err) {
+		अगर (err) अणु
 			dev_err(mc->dev, "failed to unblock %s DMA : %d\n",
 				rst->name, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_mc_hotreset_status(struct reset_controller_dev *rcdev,
-				    unsigned long id)
-{
-	struct tegra_mc *mc = reset_to_mc(rcdev);
-	const struct tegra_mc_reset_ops *rst_ops;
-	const struct tegra_mc_reset *rst;
+अटल पूर्णांक tegra_mc_hotreset_status(काष्ठा reset_controller_dev *rcdev,
+				    अचिन्हित दीर्घ id)
+अणु
+	काष्ठा tegra_mc *mc = reset_to_mc(rcdev);
+	स्थिर काष्ठा tegra_mc_reset_ops *rst_ops;
+	स्थिर काष्ठा tegra_mc_reset *rst;
 
 	rst = tegra_mc_reset_find(mc, id);
-	if (!rst)
-		return -ENODEV;
+	अगर (!rst)
+		वापस -ENODEV;
 
 	rst_ops = mc->soc->reset_ops;
-	if (!rst_ops)
-		return -ENODEV;
+	अगर (!rst_ops)
+		वापस -ENODEV;
 
-	return rst_ops->reset_status(mc, rst);
-}
+	वापस rst_ops->reset_status(mc, rst);
+पूर्ण
 
-static const struct reset_control_ops tegra_mc_reset_ops = {
-	.assert = tegra_mc_hotreset_assert,
-	.deassert = tegra_mc_hotreset_deassert,
+अटल स्थिर काष्ठा reset_control_ops tegra_mc_reset_ops = अणु
+	.निश्चित = tegra_mc_hotreset_निश्चित,
+	.deनिश्चित = tegra_mc_hotreset_deनिश्चित,
 	.status = tegra_mc_hotreset_status,
-};
+पूर्ण;
 
-static int tegra_mc_reset_setup(struct tegra_mc *mc)
-{
-	int err;
+अटल पूर्णांक tegra_mc_reset_setup(काष्ठा tegra_mc *mc)
+अणु
+	पूर्णांक err;
 
 	mc->reset.ops = &tegra_mc_reset_ops;
 	mc->reset.owner = THIS_MODULE;
@@ -292,174 +293,174 @@ static int tegra_mc_reset_setup(struct tegra_mc *mc)
 	mc->reset.of_reset_n_cells = 1;
 	mc->reset.nr_resets = mc->soc->num_resets;
 
-	err = reset_controller_register(&mc->reset);
-	if (err < 0)
-		return err;
+	err = reset_controller_रेजिस्टर(&mc->reset);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_mc_setup_latency_allowance(struct tegra_mc *mc)
-{
-	unsigned long long tick;
-	unsigned int i;
+अटल पूर्णांक tegra_mc_setup_latency_allowance(काष्ठा tegra_mc *mc)
+अणु
+	अचिन्हित दीर्घ दीर्घ tick;
+	अचिन्हित पूर्णांक i;
 	u32 value;
 
-	/* compute the number of MC clock cycles per tick */
-	tick = (unsigned long long)mc->tick * clk_get_rate(mc->clk);
-	do_div(tick, NSEC_PER_SEC);
+	/* compute the number of MC घड़ी cycles per tick */
+	tick = (अचिन्हित दीर्घ दीर्घ)mc->tick * clk_get_rate(mc->clk);
+	करो_भाग(tick, NSEC_PER_SEC);
 
-	value = mc_readl(mc, MC_EMEM_ARB_CFG);
+	value = mc_पढ़ोl(mc, MC_EMEM_ARB_CFG);
 	value &= ~MC_EMEM_ARB_CFG_CYCLES_PER_UPDATE_MASK;
 	value |= MC_EMEM_ARB_CFG_CYCLES_PER_UPDATE(tick);
-	mc_writel(mc, value, MC_EMEM_ARB_CFG);
+	mc_ग_लिखोl(mc, value, MC_EMEM_ARB_CFG);
 
-	/* write latency allowance defaults */
-	for (i = 0; i < mc->soc->num_clients; i++) {
-		const struct tegra_mc_la *la = &mc->soc->clients[i].la;
+	/* ग_लिखो latency allowance शेषs */
+	क्रम (i = 0; i < mc->soc->num_clients; i++) अणु
+		स्थिर काष्ठा tegra_mc_la *la = &mc->soc->clients[i].la;
 		u32 value;
 
-		value = mc_readl(mc, la->reg);
-		value &= ~(la->mask << la->shift);
-		value |= (la->def & la->mask) << la->shift;
-		mc_writel(mc, value, la->reg);
-	}
+		value = mc_पढ़ोl(mc, la->reg);
+		value &= ~(la->mask << la->shअगरt);
+		value |= (la->def & la->mask) << la->shअगरt;
+		mc_ग_लिखोl(mc, value, la->reg);
+	पूर्ण
 
 	/* latch new values */
-	mc_writel(mc, MC_TIMING_UPDATE, MC_TIMING_CONTROL);
+	mc_ग_लिखोl(mc, MC_TIMING_UPDATE, MC_TIMING_CONTROL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tegra_mc_write_emem_configuration(struct tegra_mc *mc, unsigned long rate)
-{
-	unsigned int i;
-	struct tegra_mc_timing *timing = NULL;
+पूर्णांक tegra_mc_ग_लिखो_emem_configuration(काष्ठा tegra_mc *mc, अचिन्हित दीर्घ rate)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा tegra_mc_timing *timing = शून्य;
 
-	for (i = 0; i < mc->num_timings; i++) {
-		if (mc->timings[i].rate == rate) {
+	क्रम (i = 0; i < mc->num_timings; i++) अणु
+		अगर (mc->timings[i].rate == rate) अणु
 			timing = &mc->timings[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!timing) {
+	अगर (!timing) अणु
 		dev_err(mc->dev, "no memory timing registered for rate %lu\n",
 			rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < mc->soc->num_emem_regs; ++i)
-		mc_writel(mc, timing->emem_data[i], mc->soc->emem_regs[i]);
+	क्रम (i = 0; i < mc->soc->num_emem_regs; ++i)
+		mc_ग_लिखोl(mc, timing->emem_data[i], mc->soc->emem_regs[i]);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra_mc_write_emem_configuration);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra_mc_ग_लिखो_emem_configuration);
 
-unsigned int tegra_mc_get_emem_device_count(struct tegra_mc *mc)
-{
+अचिन्हित पूर्णांक tegra_mc_get_emem_device_count(काष्ठा tegra_mc *mc)
+अणु
 	u8 dram_count;
 
-	dram_count = mc_readl(mc, MC_EMEM_ADR_CFG);
+	dram_count = mc_पढ़ोl(mc, MC_EMEM_ADR_CFG);
 	dram_count &= MC_EMEM_ADR_CFG_EMEM_NUMDEV;
 	dram_count++;
 
-	return dram_count;
-}
+	वापस dram_count;
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra_mc_get_emem_device_count);
 
-static int load_one_timing(struct tegra_mc *mc,
-			   struct tegra_mc_timing *timing,
-			   struct device_node *node)
-{
-	int err;
-	u32 tmp;
+अटल पूर्णांक load_one_timing(काष्ठा tegra_mc *mc,
+			   काष्ठा tegra_mc_timing *timing,
+			   काष्ठा device_node *node)
+अणु
+	पूर्णांक err;
+	u32 पंचांगp;
 
-	err = of_property_read_u32(node, "clock-frequency", &tmp);
-	if (err) {
+	err = of_property_पढ़ो_u32(node, "clock-frequency", &पंचांगp);
+	अगर (err) अणु
 		dev_err(mc->dev,
 			"timing %pOFn: failed to read rate\n", node);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	timing->rate = tmp;
-	timing->emem_data = devm_kcalloc(mc->dev, mc->soc->num_emem_regs,
-					 sizeof(u32), GFP_KERNEL);
-	if (!timing->emem_data)
-		return -ENOMEM;
+	timing->rate = पंचांगp;
+	timing->emem_data = devm_kसुस्मृति(mc->dev, mc->soc->num_emem_regs,
+					 माप(u32), GFP_KERNEL);
+	अगर (!timing->emem_data)
+		वापस -ENOMEM;
 
-	err = of_property_read_u32_array(node, "nvidia,emem-configuration",
+	err = of_property_पढ़ो_u32_array(node, "nvidia,emem-configuration",
 					 timing->emem_data,
 					 mc->soc->num_emem_regs);
-	if (err) {
+	अगर (err) अणु
 		dev_err(mc->dev,
 			"timing %pOFn: failed to read EMEM configuration\n",
 			node);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int load_timings(struct tegra_mc *mc, struct device_node *node)
-{
-	struct device_node *child;
-	struct tegra_mc_timing *timing;
-	int child_count = of_get_child_count(node);
-	int i = 0, err;
+अटल पूर्णांक load_timings(काष्ठा tegra_mc *mc, काष्ठा device_node *node)
+अणु
+	काष्ठा device_node *child;
+	काष्ठा tegra_mc_timing *timing;
+	पूर्णांक child_count = of_get_child_count(node);
+	पूर्णांक i = 0, err;
 
-	mc->timings = devm_kcalloc(mc->dev, child_count, sizeof(*timing),
+	mc->timings = devm_kसुस्मृति(mc->dev, child_count, माप(*timing),
 				   GFP_KERNEL);
-	if (!mc->timings)
-		return -ENOMEM;
+	अगर (!mc->timings)
+		वापस -ENOMEM;
 
 	mc->num_timings = child_count;
 
-	for_each_child_of_node(node, child) {
+	क्रम_each_child_of_node(node, child) अणु
 		timing = &mc->timings[i++];
 
 		err = load_one_timing(mc, timing, child);
-		if (err) {
+		अगर (err) अणु
 			of_node_put(child);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_mc_setup_timings(struct tegra_mc *mc)
-{
-	struct device_node *node;
+अटल पूर्णांक tegra_mc_setup_timings(काष्ठा tegra_mc *mc)
+अणु
+	काष्ठा device_node *node;
 	u32 ram_code, node_ram_code;
-	int err;
+	पूर्णांक err;
 
-	ram_code = tegra_read_ram_code();
+	ram_code = tegra_पढ़ो_ram_code();
 
 	mc->num_timings = 0;
 
-	for_each_child_of_node(mc->dev->of_node, node) {
-		err = of_property_read_u32(node, "nvidia,ram-code",
+	क्रम_each_child_of_node(mc->dev->of_node, node) अणु
+		err = of_property_पढ़ो_u32(node, "nvidia,ram-code",
 					   &node_ram_code);
-		if (err || (node_ram_code != ram_code))
-			continue;
+		अगर (err || (node_ram_code != ram_code))
+			जारी;
 
 		err = load_timings(mc, node);
 		of_node_put(node);
-		if (err)
-			return err;
-		break;
-	}
+		अगर (err)
+			वापस err;
+		अवरोध;
+	पूर्ण
 
-	if (mc->num_timings == 0)
+	अगर (mc->num_timings == 0)
 		dev_warn(mc->dev,
 			 "no memory timings for RAM code %u registered\n",
 			 ram_code);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *const status_names[32] = {
+अटल स्थिर अक्षर *स्थिर status_names[32] = अणु
 	[ 1] = "External interrupt",
 	[ 6] = "EMEM address decode error",
 	[ 7] = "GART page fault",
@@ -470,195 +471,195 @@ static const char *const status_names[32] = {
 	[12] = "VPR violation",
 	[13] = "Secure carveout violation",
 	[16] = "MTS carveout violation",
-};
+पूर्ण;
 
-static const char *const error_names[8] = {
+अटल स्थिर अक्षर *स्थिर error_names[8] = अणु
 	[2] = "EMEM decode error",
 	[3] = "TrustZone violation",
 	[4] = "Carveout violation",
 	[6] = "SMMU translation error",
-};
+पूर्ण;
 
-static irqreturn_t tegra_mc_irq(int irq, void *data)
-{
-	struct tegra_mc *mc = data;
-	unsigned long status;
-	unsigned int bit;
+अटल irqवापस_t tegra_mc_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा tegra_mc *mc = data;
+	अचिन्हित दीर्घ status;
+	अचिन्हित पूर्णांक bit;
 
-	/* mask all interrupts to avoid flooding */
-	status = mc_readl(mc, MC_INTSTATUS) & mc->soc->intmask;
-	if (!status)
-		return IRQ_NONE;
+	/* mask all पूर्णांकerrupts to aव्योम flooding */
+	status = mc_पढ़ोl(mc, MC_INTSTATUS) & mc->soc->पूर्णांकmask;
+	अगर (!status)
+		वापस IRQ_NONE;
 
-	for_each_set_bit(bit, &status, 32) {
-		const char *error = status_names[bit] ?: "unknown";
-		const char *client = "unknown", *desc;
-		const char *direction, *secure;
+	क्रम_each_set_bit(bit, &status, 32) अणु
+		स्थिर अक्षर *error = status_names[bit] ?: "unknown";
+		स्थिर अक्षर *client = "unknown", *desc;
+		स्थिर अक्षर *direction, *secure;
 		phys_addr_t addr = 0;
-		unsigned int i;
-		char perm[7];
+		अचिन्हित पूर्णांक i;
+		अक्षर perm[7];
 		u8 id, type;
 		u32 value;
 
-		value = mc_readl(mc, MC_ERR_STATUS);
+		value = mc_पढ़ोl(mc, MC_ERR_STATUS);
 
-#ifdef CONFIG_PHYS_ADDR_T_64BIT
-		if (mc->soc->num_address_bits > 32) {
+#अगर_घोषित CONFIG_PHYS_ADDR_T_64BIT
+		अगर (mc->soc->num_address_bits > 32) अणु
 			addr = ((value >> MC_ERR_STATUS_ADR_HI_SHIFT) &
 				MC_ERR_STATUS_ADR_HI_MASK);
 			addr <<= 32;
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 
-		if (value & MC_ERR_STATUS_RW)
+		अगर (value & MC_ERR_STATUS_RW)
 			direction = "write";
-		else
+		अन्यथा
 			direction = "read";
 
-		if (value & MC_ERR_STATUS_SECURITY)
+		अगर (value & MC_ERR_STATUS_SECURITY)
 			secure = "secure ";
-		else
+		अन्यथा
 			secure = "";
 
 		id = value & mc->soc->client_id_mask;
 
-		for (i = 0; i < mc->soc->num_clients; i++) {
-			if (mc->soc->clients[i].id == id) {
+		क्रम (i = 0; i < mc->soc->num_clients; i++) अणु
+			अगर (mc->soc->clients[i].id == id) अणु
 				client = mc->soc->clients[i].name;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		type = (value & MC_ERR_STATUS_TYPE_MASK) >>
 		       MC_ERR_STATUS_TYPE_SHIFT;
 		desc = error_names[type];
 
-		switch (value & MC_ERR_STATUS_TYPE_MASK) {
-		case MC_ERR_STATUS_TYPE_INVALID_SMMU_PAGE:
+		चयन (value & MC_ERR_STATUS_TYPE_MASK) अणु
+		हाल MC_ERR_STATUS_TYPE_INVALID_SMMU_PAGE:
 			perm[0] = ' ';
 			perm[1] = '[';
 
-			if (value & MC_ERR_STATUS_READABLE)
+			अगर (value & MC_ERR_STATUS_READABLE)
 				perm[2] = 'R';
-			else
+			अन्यथा
 				perm[2] = '-';
 
-			if (value & MC_ERR_STATUS_WRITABLE)
+			अगर (value & MC_ERR_STATUS_WRITABLE)
 				perm[3] = 'W';
-			else
+			अन्यथा
 				perm[3] = '-';
 
-			if (value & MC_ERR_STATUS_NONSECURE)
+			अगर (value & MC_ERR_STATUS_NONSECURE)
 				perm[4] = '-';
-			else
+			अन्यथा
 				perm[4] = 'S';
 
 			perm[5] = ']';
 			perm[6] = '\0';
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			perm[0] = '\0';
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		value = mc_readl(mc, MC_ERR_ADR);
+		value = mc_पढ़ोl(mc, MC_ERR_ADR);
 		addr |= value;
 
 		dev_err_ratelimited(mc->dev, "%s: %s%s @%pa: %s (%s%s)\n",
 				    client, secure, direction, &addr, error,
 				    desc, perm);
-	}
+	पूर्ण
 
-	/* clear interrupts */
-	mc_writel(mc, status, MC_INTSTATUS);
+	/* clear पूर्णांकerrupts */
+	mc_ग_लिखोl(mc, status, MC_INTSTATUS);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static __maybe_unused irqreturn_t tegra20_mc_irq(int irq, void *data)
-{
-	struct tegra_mc *mc = data;
-	unsigned long status;
-	unsigned int bit;
+अटल __maybe_unused irqवापस_t tegra20_mc_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा tegra_mc *mc = data;
+	अचिन्हित दीर्घ status;
+	अचिन्हित पूर्णांक bit;
 
-	/* mask all interrupts to avoid flooding */
-	status = mc_readl(mc, MC_INTSTATUS) & mc->soc->intmask;
-	if (!status)
-		return IRQ_NONE;
+	/* mask all पूर्णांकerrupts to aव्योम flooding */
+	status = mc_पढ़ोl(mc, MC_INTSTATUS) & mc->soc->पूर्णांकmask;
+	अगर (!status)
+		वापस IRQ_NONE;
 
-	for_each_set_bit(bit, &status, 32) {
-		const char *direction = "read", *secure = "";
-		const char *error = status_names[bit];
-		const char *client, *desc;
+	क्रम_each_set_bit(bit, &status, 32) अणु
+		स्थिर अक्षर *direction = "read", *secure = "";
+		स्थिर अक्षर *error = status_names[bit];
+		स्थिर अक्षर *client, *desc;
 		phys_addr_t addr;
 		u32 value, reg;
 		u8 id, type;
 
-		switch (BIT(bit)) {
-		case MC_INT_DECERR_EMEM:
+		चयन (BIT(bit)) अणु
+		हाल MC_INT_DECERR_EMEM:
 			reg = MC_DECERR_EMEM_OTHERS_STATUS;
-			value = mc_readl(mc, reg);
+			value = mc_पढ़ोl(mc, reg);
 
 			id = value & mc->soc->client_id_mask;
 			desc = error_names[2];
 
-			if (value & BIT(31))
+			अगर (value & BIT(31))
 				direction = "write";
-			break;
+			अवरोध;
 
-		case MC_INT_INVALID_GART_PAGE:
+		हाल MC_INT_INVALID_GART_PAGE:
 			reg = MC_GART_ERROR_REQ;
-			value = mc_readl(mc, reg);
+			value = mc_पढ़ोl(mc, reg);
 
 			id = (value >> 1) & mc->soc->client_id_mask;
 			desc = error_names[2];
 
-			if (value & BIT(0))
+			अगर (value & BIT(0))
 				direction = "write";
-			break;
+			अवरोध;
 
-		case MC_INT_SECURITY_VIOLATION:
+		हाल MC_INT_SECURITY_VIOLATION:
 			reg = MC_SECURITY_VIOLATION_STATUS;
-			value = mc_readl(mc, reg);
+			value = mc_पढ़ोl(mc, reg);
 
 			id = value & mc->soc->client_id_mask;
 			type = (value & BIT(30)) ? 4 : 3;
 			desc = error_names[type];
 			secure = "secure ";
 
-			if (value & BIT(31))
+			अगर (value & BIT(31))
 				direction = "write";
-			break;
+			अवरोध;
 
-		default:
-			continue;
-		}
+		शेष:
+			जारी;
+		पूर्ण
 
 		client = mc->soc->clients[id].name;
-		addr = mc_readl(mc, reg + sizeof(u32));
+		addr = mc_पढ़ोl(mc, reg + माप(u32));
 
 		dev_err_ratelimited(mc->dev, "%s: %s%s @%pa: %s (%s)\n",
 				    client, secure, direction, &addr, error,
 				    desc);
-	}
+	पूर्ण
 
-	/* clear interrupts */
-	mc_writel(mc, status, MC_INTSTATUS);
+	/* clear पूर्णांकerrupts */
+	mc_ग_लिखोl(mc, status, MC_INTSTATUS);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * Memory Controller (MC) has few Memory Clients that are issuing memory
- * bandwidth allocation requests to the MC interconnect provider. The MC
+ * bandwidth allocation requests to the MC पूर्णांकerconnect provider. The MC
  * provider aggregates the requests and then sends the aggregated request
- * up to the External Memory Controller (EMC) interconnect provider which
- * re-configures hardware interface to External Memory (EMEM) in accordance
- * to the required bandwidth. Each MC interconnect node represents an
- * individual Memory Client.
+ * up to the External Memory Controller (EMC) पूर्णांकerconnect provider which
+ * re-configures hardware पूर्णांकerface to External Memory (EMEM) in accordance
+ * to the required bandwidth. Each MC पूर्णांकerconnect node represents an
+ * inभागidual Memory Client.
  *
- * Memory interconnect topology:
+ * Memory पूर्णांकerconnect topology:
  *
  *               +----+
  * +--------+    |    |
@@ -672,16 +673,16 @@ static __maybe_unused irqreturn_t tegra20_mc_irq(int irq, void *data)
  * +--------+    |    |
  *               +----+
  */
-static int tegra_mc_interconnect_setup(struct tegra_mc *mc)
-{
-	struct icc_node *node;
-	unsigned int i;
-	int err;
+अटल पूर्णांक tegra_mc_पूर्णांकerconnect_setup(काष्ठा tegra_mc *mc)
+अणु
+	काष्ठा icc_node *node;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	/* older device-trees don't have interconnect properties */
-	if (!device_property_present(mc->dev, "#interconnect-cells") ||
+	/* older device-trees करोn't have पूर्णांकerconnect properties */
+	अगर (!device_property_present(mc->dev, "#interconnect-cells") ||
 	    !mc->soc->icc_ops)
-		return 0;
+		वापस 0;
 
 	mc->provider.dev = mc->dev;
 	mc->provider.data = &mc->provider;
@@ -690,73 +691,73 @@ static int tegra_mc_interconnect_setup(struct tegra_mc *mc)
 	mc->provider.xlate_extended = mc->soc->icc_ops->xlate_extended;
 
 	err = icc_provider_add(&mc->provider);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* create Memory Controller node */
 	node = icc_node_create(TEGRA_ICC_MC);
-	if (IS_ERR(node)) {
+	अगर (IS_ERR(node)) अणु
 		err = PTR_ERR(node);
-		goto del_provider;
-	}
+		जाओ del_provider;
+	पूर्ण
 
 	node->name = "Memory Controller";
 	icc_node_add(node, &mc->provider);
 
 	/* link Memory Controller to External Memory Controller */
 	err = icc_link_create(node, TEGRA_ICC_EMC);
-	if (err)
-		goto remove_nodes;
+	अगर (err)
+		जाओ हटाओ_nodes;
 
-	for (i = 0; i < mc->soc->num_clients; i++) {
+	क्रम (i = 0; i < mc->soc->num_clients; i++) अणु
 		/* create MC client node */
 		node = icc_node_create(mc->soc->clients[i].id);
-		if (IS_ERR(node)) {
+		अगर (IS_ERR(node)) अणु
 			err = PTR_ERR(node);
-			goto remove_nodes;
-		}
+			जाओ हटाओ_nodes;
+		पूर्ण
 
 		node->name = mc->soc->clients[i].name;
 		icc_node_add(node, &mc->provider);
 
 		/* link Memory Client to Memory Controller */
 		err = icc_link_create(node, TEGRA_ICC_MC);
-		if (err)
-			goto remove_nodes;
-	}
+		अगर (err)
+			जाओ हटाओ_nodes;
+	पूर्ण
 
 	/*
-	 * MC driver is registered too early, so early that generic driver
-	 * syncing doesn't work for the MC. But it doesn't really matter
-	 * since syncing works for the EMC drivers, hence we can sync the
+	 * MC driver is रेजिस्टरed too early, so early that generic driver
+	 * syncing करोesn't work for the MC. But it doesn't really matter
+	 * since syncing works क्रम the EMC drivers, hence we can sync the
 	 * MC driver by ourselves and then EMC will complete syncing of
 	 * the whole ICC state.
 	 */
 	icc_sync_state(mc->dev);
 
-	return 0;
+	वापस 0;
 
-remove_nodes:
-	icc_nodes_remove(&mc->provider);
+हटाओ_nodes:
+	icc_nodes_हटाओ(&mc->provider);
 del_provider:
 	icc_provider_del(&mc->provider);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tegra_mc_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct tegra_mc *mc;
-	void *isr;
+अटल पूर्णांक tegra_mc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा tegra_mc *mc;
+	व्योम *isr;
 	u64 mask;
-	int err;
+	पूर्णांक err;
 
-	mc = devm_kzalloc(&pdev->dev, sizeof(*mc), GFP_KERNEL);
-	if (!mc)
-		return -ENOMEM;
+	mc = devm_kzalloc(&pdev->dev, माप(*mc), GFP_KERNEL);
+	अगर (!mc)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, mc);
+	platक्रमm_set_drvdata(pdev, mc);
 	spin_lock_init(&mc->lock);
 	mc->soc = of_device_get_match_data(&pdev->dev);
 	mc->dev = &pdev->dev;
@@ -764,157 +765,157 @@ static int tegra_mc_probe(struct platform_device *pdev)
 	mask = DMA_BIT_MASK(mc->soc->num_address_bits);
 
 	err = dma_coerce_mask_and_coherent(&pdev->dev, mask);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to set DMA mask: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* length of MC tick in nanoseconds */
 	mc->tick = 30;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	mc->regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(mc->regs))
-		return PTR_ERR(mc->regs);
+	अगर (IS_ERR(mc->regs))
+		वापस PTR_ERR(mc->regs);
 
 	mc->clk = devm_clk_get(&pdev->dev, "mc");
-	if (IS_ERR(mc->clk)) {
+	अगर (IS_ERR(mc->clk)) अणु
 		dev_err(&pdev->dev, "failed to get MC clock: %ld\n",
 			PTR_ERR(mc->clk));
-		return PTR_ERR(mc->clk);
-	}
+		वापस PTR_ERR(mc->clk);
+	पूर्ण
 
-#ifdef CONFIG_ARCH_TEGRA_2x_SOC
-	if (mc->soc == &tegra20_mc_soc) {
+#अगर_घोषित CONFIG_ARCH_TEGRA_2x_SOC
+	अगर (mc->soc == &tegra20_mc_soc) अणु
 		isr = tegra20_mc_irq;
-	} else
-#endif
-	{
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
 		/* ensure that debug features are disabled */
-		mc_writel(mc, 0x00000000, MC_TIMING_CONTROL_DBG);
+		mc_ग_लिखोl(mc, 0x00000000, MC_TIMING_CONTROL_DBG);
 
 		err = tegra_mc_setup_latency_allowance(mc);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev,
 				"failed to setup latency allowance: %d\n",
 				err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		isr = tegra_mc_irq;
 
 		err = tegra_mc_setup_timings(mc);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev, "failed to setup timings: %d\n",
 				err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	mc->irq = platform_get_irq(pdev, 0);
-	if (mc->irq < 0)
-		return mc->irq;
+	mc->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (mc->irq < 0)
+		वापस mc->irq;
 
 	WARN(!mc->soc->client_id_mask, "missing client ID mask for this SoC\n");
 
-	mc_writel(mc, mc->soc->intmask, MC_INTMASK);
+	mc_ग_लिखोl(mc, mc->soc->पूर्णांकmask, MC_INTMASK);
 
 	err = devm_request_irq(&pdev->dev, mc->irq, isr, 0,
 			       dev_name(&pdev->dev), mc);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "failed to request IRQ#%u: %d\n", mc->irq,
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	mc->debugfs.root = debugfs_create_dir("mc", NULL);
+	mc->debugfs.root = debugfs_create_dir("mc", शून्य);
 
-	if (mc->soc->init) {
+	अगर (mc->soc->init) अणु
 		err = mc->soc->init(mc);
-		if (err < 0)
+		अगर (err < 0)
 			dev_err(&pdev->dev, "failed to initialize SoC driver: %d\n",
 				err);
-	}
+	पूर्ण
 
 	err = tegra_mc_reset_setup(mc);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&pdev->dev, "failed to register reset controller: %d\n",
 			err);
 
-	err = tegra_mc_interconnect_setup(mc);
-	if (err < 0)
+	err = tegra_mc_पूर्णांकerconnect_setup(mc);
+	अगर (err < 0)
 		dev_err(&pdev->dev, "failed to initialize interconnect: %d\n",
 			err);
 
-	if (IS_ENABLED(CONFIG_TEGRA_IOMMU_SMMU) && mc->soc->smmu) {
+	अगर (IS_ENABLED(CONFIG_TEGRA_IOMMU_SMMU) && mc->soc->smmu) अणु
 		mc->smmu = tegra_smmu_probe(&pdev->dev, mc->soc->smmu, mc);
-		if (IS_ERR(mc->smmu)) {
+		अगर (IS_ERR(mc->smmu)) अणु
 			dev_err(&pdev->dev, "failed to probe SMMU: %ld\n",
 				PTR_ERR(mc->smmu));
-			mc->smmu = NULL;
-		}
-	}
+			mc->smmu = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_TEGRA_IOMMU_GART) && !mc->soc->smmu) {
+	अगर (IS_ENABLED(CONFIG_TEGRA_IOMMU_GART) && !mc->soc->smmu) अणु
 		mc->gart = tegra_gart_probe(&pdev->dev, mc);
-		if (IS_ERR(mc->gart)) {
+		अगर (IS_ERR(mc->gart)) अणु
 			dev_err(&pdev->dev, "failed to probe GART: %ld\n",
 				PTR_ERR(mc->gart));
-			mc->gart = NULL;
-		}
-	}
+			mc->gart = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_mc_suspend(struct device *dev)
-{
-	struct tegra_mc *mc = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक tegra_mc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_mc *mc = dev_get_drvdata(dev);
+	पूर्णांक err;
 
-	if (IS_ENABLED(CONFIG_TEGRA_IOMMU_GART) && mc->gart) {
+	अगर (IS_ENABLED(CONFIG_TEGRA_IOMMU_GART) && mc->gart) अणु
 		err = tegra_gart_suspend(mc->gart);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra_mc_resume(struct device *dev)
-{
-	struct tegra_mc *mc = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक tegra_mc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tegra_mc *mc = dev_get_drvdata(dev);
+	पूर्णांक err;
 
-	if (IS_ENABLED(CONFIG_TEGRA_IOMMU_GART) && mc->gart) {
+	अगर (IS_ENABLED(CONFIG_TEGRA_IOMMU_GART) && mc->gart) अणु
 		err = tegra_gart_resume(mc->gart);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops tegra_mc_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops tegra_mc_pm_ops = अणु
 	.suspend = tegra_mc_suspend,
 	.resume = tegra_mc_resume,
-};
+पूर्ण;
 
-static struct platform_driver tegra_mc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra_mc_driver = अणु
+	.driver = अणु
 		.name = "tegra-mc",
 		.of_match_table = tegra_mc_of_match,
 		.pm = &tegra_mc_pm_ops,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.prevent_deferred_probe = true,
 	.probe = tegra_mc_probe,
-};
+पूर्ण;
 
-static int tegra_mc_init(void)
-{
-	return platform_driver_register(&tegra_mc_driver);
-}
+अटल पूर्णांक tegra_mc_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&tegra_mc_driver);
+पूर्ण
 arch_initcall(tegra_mc_init);
 
 MODULE_AUTHOR("Thierry Reding <treding@nvidia.com>");

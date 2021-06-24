@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic HDLC support routines for Linux
+ * Generic HDLC support routines क्रम Linux
  *
  * Copyright (C) 1999 - 2008 Krzysztof Halasa <khc@pm.waw.pl>
  *
@@ -13,221 +14,221 @@
  *
  * Use sethdlc utility to set line parameters, protocol and PVCs
  *
- * How does it work:
- * - proto->open(), close(), start(), stop() calls are serialized.
- *   The order is: open, [ start, stop ... ] close ...
+ * How करोes it work:
+ * - proto->खोलो(), बंद(), start(), stop() calls are serialized.
+ *   The order is: खोलो, [ start, stop ... ] बंद ...
  * - proto->start() and stop() are called with spin_lock_irq held.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/errno.h>
-#include <linux/hdlc.h>
-#include <linux/if_arp.h>
-#include <linux/inetdevice.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <linux/pkt_sched.h>
-#include <linux/poll.h>
-#include <linux/rtnetlink.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <net/net_namespace.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/hdlc.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <net/net_namespace.h>
 
 
-static const char* version = "HDLC support module revision 1.22";
+अटल स्थिर अक्षर* version = "HDLC support module revision 1.22";
 
-#undef DEBUG_LINK
+#अघोषित DEBUG_LINK
 
-static struct hdlc_proto *first_proto;
+अटल काष्ठा hdlc_proto *first_proto;
 
-static int hdlc_rcv(struct sk_buff *skb, struct net_device *dev,
-		    struct packet_type *p, struct net_device *orig_dev)
-{
-	struct hdlc_device *hdlc;
+अटल पूर्णांक hdlc_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+		    काष्ठा packet_type *p, काष्ठा net_device *orig_dev)
+अणु
+	काष्ठा hdlc_device *hdlc;
 
 	/* First make sure "dev" is an HDLC device */
-	if (!(dev->priv_flags & IFF_WAN_HDLC)) {
-		kfree_skb(skb);
-		return NET_RX_SUCCESS;
-	}
+	अगर (!(dev->priv_flags & IFF_WAN_HDLC)) अणु
+		kमुक्त_skb(skb);
+		वापस NET_RX_SUCCESS;
+	पूर्ण
 
 	hdlc = dev_to_hdlc(dev);
 
-	if (!net_eq(dev_net(dev), &init_net)) {
-		kfree_skb(skb);
-		return 0;
-	}
+	अगर (!net_eq(dev_net(dev), &init_net)) अणु
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	BUG_ON(!hdlc->proto->netif_rx);
-	return hdlc->proto->netif_rx(skb);
-}
+	BUG_ON(!hdlc->proto->netअगर_rx);
+	वापस hdlc->proto->netअगर_rx(skb);
+पूर्ण
 
-netdev_tx_t hdlc_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
+netdev_tx_t hdlc_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
 
-	if (hdlc->proto->xmit)
-		return hdlc->proto->xmit(skb, dev);
+	अगर (hdlc->proto->xmit)
+		वापस hdlc->proto->xmit(skb, dev);
 
-	return hdlc->xmit(skb, dev); /* call hardware driver directly */
-}
+	वापस hdlc->xmit(skb, dev); /* call hardware driver directly */
+पूर्ण
 
-static inline void hdlc_proto_start(struct net_device *dev)
-{
+अटल अंतरभूत व्योम hdlc_proto_start(काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	if (hdlc->proto->start)
+	अगर (hdlc->proto->start)
 		hdlc->proto->start(dev);
-}
+पूर्ण
 
 
 
-static inline void hdlc_proto_stop(struct net_device *dev)
-{
+अटल अंतरभूत व्योम hdlc_proto_stop(काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	if (hdlc->proto->stop)
+	अगर (hdlc->proto->stop)
 		hdlc->proto->stop(dev);
-}
+पूर्ण
 
 
 
-static int hdlc_device_event(struct notifier_block *this, unsigned long event,
-			     void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक hdlc_device_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event,
+			     व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
 	hdlc_device *hdlc;
-	unsigned long flags;
-	int on;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक on;
 
-	if (!net_eq(dev_net(dev), &init_net))
-		return NOTIFY_DONE;
+	अगर (!net_eq(dev_net(dev), &init_net))
+		वापस NOTIFY_DONE;
 
-	if (!(dev->priv_flags & IFF_WAN_HDLC))
-		return NOTIFY_DONE; /* not an HDLC device */
+	अगर (!(dev->priv_flags & IFF_WAN_HDLC))
+		वापस NOTIFY_DONE; /* not an HDLC device */
 
-	if (event != NETDEV_CHANGE)
-		return NOTIFY_DONE; /* Only interested in carrier changes */
+	अगर (event != NETDEV_CHANGE)
+		वापस NOTIFY_DONE; /* Only पूर्णांकerested in carrier changes */
 
-	on = netif_carrier_ok(dev);
+	on = netअगर_carrier_ok(dev);
 
-#ifdef DEBUG_LINK
-	printk(KERN_DEBUG "%s: hdlc_device_event NETDEV_CHANGE, carrier %i\n",
+#अगर_घोषित DEBUG_LINK
+	prपूर्णांकk(KERN_DEBUG "%s: hdlc_device_event NETDEV_CHANGE, carrier %i\n",
 	       dev->name, on);
-#endif
+#पूर्ण_अगर
 
 	hdlc = dev_to_hdlc(dev);
 	spin_lock_irqsave(&hdlc->state_lock, flags);
 
-	if (hdlc->carrier == on)
-		goto carrier_exit; /* no change in DCD line level */
+	अगर (hdlc->carrier == on)
+		जाओ carrier_निकास; /* no change in DCD line level */
 
 	hdlc->carrier = on;
 
-	if (!hdlc->open)
-		goto carrier_exit;
+	अगर (!hdlc->खोलो)
+		जाओ carrier_निकास;
 
-	if (hdlc->carrier) {
+	अगर (hdlc->carrier) अणु
 		netdev_info(dev, "Carrier detected\n");
 		hdlc_proto_start(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_info(dev, "Carrier lost\n");
 		hdlc_proto_stop(dev);
-	}
+	पूर्ण
 
-carrier_exit:
+carrier_निकास:
 	spin_unlock_irqrestore(&hdlc->state_lock, flags);
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 
 
-/* Must be called by hardware driver when HDLC device is being opened */
-int hdlc_open(struct net_device *dev)
-{
+/* Must be called by hardware driver when HDLC device is being खोलोed */
+पूर्णांक hdlc_खोलो(काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-#ifdef DEBUG_LINK
-	printk(KERN_DEBUG "%s: hdlc_open() carrier %i open %i\n", dev->name,
-	       hdlc->carrier, hdlc->open);
-#endif
+#अगर_घोषित DEBUG_LINK
+	prपूर्णांकk(KERN_DEBUG "%s: hdlc_open() carrier %i open %i\n", dev->name,
+	       hdlc->carrier, hdlc->खोलो);
+#पूर्ण_अगर
 
-	if (hdlc->proto == NULL)
-		return -ENOSYS;	/* no protocol attached */
+	अगर (hdlc->proto == शून्य)
+		वापस -ENOSYS;	/* no protocol attached */
 
-	if (hdlc->proto->open) {
-		int result = hdlc->proto->open(dev);
-		if (result)
-			return result;
-	}
+	अगर (hdlc->proto->खोलो) अणु
+		पूर्णांक result = hdlc->proto->खोलो(dev);
+		अगर (result)
+			वापस result;
+	पूर्ण
 
 	spin_lock_irq(&hdlc->state_lock);
 
-	if (hdlc->carrier) {
+	अगर (hdlc->carrier) अणु
 		netdev_info(dev, "Carrier detected\n");
 		hdlc_proto_start(dev);
-	} else
+	पूर्ण अन्यथा
 		netdev_info(dev, "No carrier\n");
 
-	hdlc->open = 1;
+	hdlc->खोलो = 1;
 
 	spin_unlock_irq(&hdlc->state_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
-/* Must be called by hardware driver when HDLC device is being closed */
-void hdlc_close(struct net_device *dev)
-{
+/* Must be called by hardware driver when HDLC device is being बंदd */
+व्योम hdlc_बंद(काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-#ifdef DEBUG_LINK
-	printk(KERN_DEBUG "%s: hdlc_close() carrier %i open %i\n", dev->name,
-	       hdlc->carrier, hdlc->open);
-#endif
+#अगर_घोषित DEBUG_LINK
+	prपूर्णांकk(KERN_DEBUG "%s: hdlc_close() carrier %i open %i\n", dev->name,
+	       hdlc->carrier, hdlc->खोलो);
+#पूर्ण_अगर
 
 	spin_lock_irq(&hdlc->state_lock);
 
-	hdlc->open = 0;
-	if (hdlc->carrier)
+	hdlc->खोलो = 0;
+	अगर (hdlc->carrier)
 		hdlc_proto_stop(dev);
 
 	spin_unlock_irq(&hdlc->state_lock);
 
-	if (hdlc->proto->close)
-		hdlc->proto->close(dev);
-}
+	अगर (hdlc->proto->बंद)
+		hdlc->proto->बंद(dev);
+पूर्ण
 
 
 
-int hdlc_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	struct hdlc_proto *proto = first_proto;
-	int result;
+पूर्णांक hdlc_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा hdlc_proto *proto = first_proto;
+	पूर्णांक result;
 
-	if (cmd != SIOCWANDEV)
-		return -EINVAL;
+	अगर (cmd != SIOCWANDEV)
+		वापस -EINVAL;
 
-	if (dev_to_hdlc(dev)->proto) {
-		result = dev_to_hdlc(dev)->proto->ioctl(dev, ifr);
-		if (result != -EINVAL)
-			return result;
-	}
+	अगर (dev_to_hdlc(dev)->proto) अणु
+		result = dev_to_hdlc(dev)->proto->ioctl(dev, अगरr);
+		अगर (result != -EINVAL)
+			वापस result;
+	पूर्ण
 
-	/* Not handled by currently attached protocol (if any) */
+	/* Not handled by currently attached protocol (अगर any) */
 
-	while (proto) {
-		if ((result = proto->ioctl(dev, ifr)) != -EINVAL)
-			return result;
+	जबतक (proto) अणु
+		अगर ((result = proto->ioctl(dev, अगरr)) != -EINVAL)
+			वापस result;
 		proto = proto->next;
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static const struct header_ops hdlc_null_ops;
+अटल स्थिर काष्ठा header_ops hdlc_null_ops;
 
-static void hdlc_setup_dev(struct net_device *dev)
-{
+अटल व्योम hdlc_setup_dev(काष्ठा net_device *dev)
+अणु
 	/* Re-init all variables changed by HDLC protocol drivers,
 	 * including ether_setup() called from hdlc_raw_eth.c.
 	 */
@@ -241,111 +242,111 @@ static void hdlc_setup_dev(struct net_device *dev)
 	dev->needed_headroom	 = 0;
 	dev->addr_len		 = 0;
 	dev->header_ops		 = &hdlc_null_ops;
-}
+पूर्ण
 
-static void hdlc_setup(struct net_device *dev)
-{
+अटल व्योम hdlc_setup(काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
 
 	hdlc_setup_dev(dev);
 	hdlc->carrier = 1;
-	hdlc->open = 0;
+	hdlc->खोलो = 0;
 	spin_lock_init(&hdlc->state_lock);
-}
+पूर्ण
 
-struct net_device *alloc_hdlcdev(void *priv)
-{
-	struct net_device *dev;
-	dev = alloc_netdev(sizeof(struct hdlc_device), "hdlc%d",
+काष्ठा net_device *alloc_hdlcdev(व्योम *priv)
+अणु
+	काष्ठा net_device *dev;
+	dev = alloc_netdev(माप(काष्ठा hdlc_device), "hdlc%d",
 			   NET_NAME_UNKNOWN, hdlc_setup);
-	if (dev)
+	अगर (dev)
 		dev_to_hdlc(dev)->priv = priv;
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-void unregister_hdlc_device(struct net_device *dev)
-{
+व्योम unरेजिस्टर_hdlc_device(काष्ठा net_device *dev)
+अणु
 	rtnl_lock();
 	detach_hdlc_protocol(dev);
-	unregister_netdevice(dev);
+	unरेजिस्टर_netdevice(dev);
 	rtnl_unlock();
-}
+पूर्ण
 
 
 
-int attach_hdlc_protocol(struct net_device *dev, struct hdlc_proto *proto,
-			 size_t size)
-{
-	int err;
+पूर्णांक attach_hdlc_protocol(काष्ठा net_device *dev, काष्ठा hdlc_proto *proto,
+			 माप_प्रकार size)
+अणु
+	पूर्णांक err;
 
 	err = detach_hdlc_protocol(dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!try_module_get(proto->module))
-		return -ENOSYS;
+	अगर (!try_module_get(proto->module))
+		वापस -ENOSYS;
 
-	if (size) {
-		dev_to_hdlc(dev)->state = kmalloc(size, GFP_KERNEL);
-		if (dev_to_hdlc(dev)->state == NULL) {
+	अगर (size) अणु
+		dev_to_hdlc(dev)->state = kदो_स्मृति(size, GFP_KERNEL);
+		अगर (dev_to_hdlc(dev)->state == शून्य) अणु
 			module_put(proto->module);
-			return -ENOBUFS;
-		}
-	}
+			वापस -ENOBUFS;
+		पूर्ण
+	पूर्ण
 	dev_to_hdlc(dev)->proto = proto;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int detach_hdlc_protocol(struct net_device *dev)
-{
+पूर्णांक detach_hdlc_protocol(काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	int err;
+	पूर्णांक err;
 
-	if (hdlc->proto) {
-		err = call_netdevice_notifiers(NETDEV_PRE_TYPE_CHANGE, dev);
-		err = notifier_to_errno(err);
-		if (err) {
+	अगर (hdlc->proto) अणु
+		err = call_netdevice_notअगरiers(NETDEV_PRE_TYPE_CHANGE, dev);
+		err = notअगरier_to_त्रुटि_सं(err);
+		अगर (err) अणु
 			netdev_err(dev, "Refused to change device type\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		if (hdlc->proto->detach)
+		अगर (hdlc->proto->detach)
 			hdlc->proto->detach(dev);
 		module_put(hdlc->proto->module);
-		hdlc->proto = NULL;
-	}
-	kfree(hdlc->state);
-	hdlc->state = NULL;
+		hdlc->proto = शून्य;
+	पूर्ण
+	kमुक्त(hdlc->state);
+	hdlc->state = शून्य;
 	hdlc_setup_dev(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-void register_hdlc_protocol(struct hdlc_proto *proto)
-{
+व्योम रेजिस्टर_hdlc_protocol(काष्ठा hdlc_proto *proto)
+अणु
 	rtnl_lock();
 	proto->next = first_proto;
 	first_proto = proto;
 	rtnl_unlock();
-}
+पूर्ण
 
 
-void unregister_hdlc_protocol(struct hdlc_proto *proto)
-{
-	struct hdlc_proto **p;
+व्योम unरेजिस्टर_hdlc_protocol(काष्ठा hdlc_proto *proto)
+अणु
+	काष्ठा hdlc_proto **p;
 
 	rtnl_lock();
 	p = &first_proto;
-	while (*p != proto) {
+	जबतक (*p != proto) अणु
 		BUG_ON(!*p);
 		p = &((*p)->next);
-	}
+	पूर्ण
 	*p = proto->next;
 	rtnl_unlock();
-}
+पूर्ण
 
 
 
@@ -354,46 +355,46 @@ MODULE_DESCRIPTION("HDLC support module");
 MODULE_LICENSE("GPL v2");
 
 EXPORT_SYMBOL(hdlc_start_xmit);
-EXPORT_SYMBOL(hdlc_open);
-EXPORT_SYMBOL(hdlc_close);
+EXPORT_SYMBOL(hdlc_खोलो);
+EXPORT_SYMBOL(hdlc_बंद);
 EXPORT_SYMBOL(hdlc_ioctl);
 EXPORT_SYMBOL(alloc_hdlcdev);
-EXPORT_SYMBOL(unregister_hdlc_device);
-EXPORT_SYMBOL(register_hdlc_protocol);
-EXPORT_SYMBOL(unregister_hdlc_protocol);
+EXPORT_SYMBOL(unरेजिस्टर_hdlc_device);
+EXPORT_SYMBOL(रेजिस्टर_hdlc_protocol);
+EXPORT_SYMBOL(unरेजिस्टर_hdlc_protocol);
 EXPORT_SYMBOL(attach_hdlc_protocol);
 EXPORT_SYMBOL(detach_hdlc_protocol);
 
-static struct packet_type hdlc_packet_type __read_mostly = {
+अटल काष्ठा packet_type hdlc_packet_type __पढ़ो_mostly = अणु
 	.type = cpu_to_be16(ETH_P_HDLC),
 	.func = hdlc_rcv,
-};
+पूर्ण;
 
 
-static struct notifier_block hdlc_notifier = {
-	.notifier_call = hdlc_device_event,
-};
+अटल काष्ठा notअगरier_block hdlc_notअगरier = अणु
+	.notअगरier_call = hdlc_device_event,
+पूर्ण;
 
 
-static int __init hdlc_module_init(void)
-{
-	int result;
+अटल पूर्णांक __init hdlc_module_init(व्योम)
+अणु
+	पूर्णांक result;
 
 	pr_info("%s\n", version);
-	if ((result = register_netdevice_notifier(&hdlc_notifier)) != 0)
-		return result;
+	अगर ((result = रेजिस्टर_netdevice_notअगरier(&hdlc_notअगरier)) != 0)
+		वापस result;
 	dev_add_pack(&hdlc_packet_type);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
-static void __exit hdlc_module_exit(void)
-{
-	dev_remove_pack(&hdlc_packet_type);
-	unregister_netdevice_notifier(&hdlc_notifier);
-}
+अटल व्योम __निकास hdlc_module_निकास(व्योम)
+अणु
+	dev_हटाओ_pack(&hdlc_packet_type);
+	unरेजिस्टर_netdevice_notअगरier(&hdlc_notअगरier);
+पूर्ण
 
 
 module_init(hdlc_module_init);
-module_exit(hdlc_module_exit);
+module_निकास(hdlc_module_निकास);

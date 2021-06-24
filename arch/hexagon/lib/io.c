@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * I/O access functions for Hexagon
+ * I/O access functions क्रम Hexagon
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
 /*  These are all FIFO routines!  */
 
 /*
- * __raw_readsw - read words a short at a time
+ * __raw_पढ़ोsw - पढ़ो words a लघु at a समय
  * @addr:  source address
  * @data:  data address
- * @len: number of shorts to read
+ * @len: number of लघुs to पढ़ो
  */
-void __raw_readsw(const void __iomem *addr, void *data, int len)
-{
-	const volatile short int *src = (short int *) addr;
-	short int *dst = (short int *) data;
+व्योम __raw_पढ़ोsw(स्थिर व्योम __iomem *addr, व्योम *data, पूर्णांक len)
+अणु
+	स्थिर अस्थिर लघु पूर्णांक *src = (लघु पूर्णांक *) addr;
+	लघु पूर्णांक *dst = (लघु पूर्णांक *) data;
 
-	if ((u32)data & 0x1)
+	अगर ((u32)data & 0x1)
 		panic("unaligned pointer to readsw");
 
-	while (len-- > 0)
+	जबतक (len-- > 0)
 		*dst++ = *src;
 
-}
+पूर्ण
 
 /*
- * __raw_writesw - read words a short at a time
+ * __raw_ग_लिखोsw - पढ़ो words a लघु at a समय
  * @addr:  source address
  * @data:  data address
- * @len: number of shorts to read
+ * @len: number of लघुs to पढ़ो
  */
-void __raw_writesw(void __iomem *addr, const void *data, int len)
-{
-	const short int *src = (short int *)data;
-	volatile short int *dst = (short int *)addr;
+व्योम __raw_ग_लिखोsw(व्योम __iomem *addr, स्थिर व्योम *data, पूर्णांक len)
+अणु
+	स्थिर लघु पूर्णांक *src = (लघु पूर्णांक *)data;
+	अस्थिर लघु पूर्णांक *dst = (लघु पूर्णांक *)addr;
 
-	if ((u32)data & 0x1)
+	अगर ((u32)data & 0x1)
 		panic("unaligned pointer to writesw");
 
-	while (len-- > 0)
+	जबतक (len-- > 0)
 		*dst = *src++;
 
 
-}
+पूर्ण
 
-/*  Pretty sure len is pre-adjusted for the length of the access already */
-void __raw_readsl(const void __iomem *addr, void *data, int len)
-{
-	const volatile long *src = (long *) addr;
-	long *dst = (long *) data;
+/*  Pretty sure len is pre-adjusted क्रम the length of the access alपढ़ोy */
+व्योम __raw_पढ़ोsl(स्थिर व्योम __iomem *addr, व्योम *data, पूर्णांक len)
+अणु
+	स्थिर अस्थिर दीर्घ *src = (दीर्घ *) addr;
+	दीर्घ *dst = (दीर्घ *) data;
 
-	if ((u32)data & 0x3)
+	अगर ((u32)data & 0x3)
 		panic("unaligned pointer to readsl");
 
-	while (len-- > 0)
+	जबतक (len-- > 0)
 		*dst++ = *src;
 
 
-}
+पूर्ण
 
-void __raw_writesl(void __iomem *addr, const void *data, int len)
-{
-	const long *src = (long *)data;
-	volatile long *dst = (long *)addr;
+व्योम __raw_ग_लिखोsl(व्योम __iomem *addr, स्थिर व्योम *data, पूर्णांक len)
+अणु
+	स्थिर दीर्घ *src = (दीर्घ *)data;
+	अस्थिर दीर्घ *dst = (दीर्घ *)addr;
 
-	if ((u32)data & 0x3)
+	अगर ((u32)data & 0x3)
 		panic("unaligned pointer to writesl");
 
-	while (len-- > 0)
+	जबतक (len-- > 0)
 		*dst = *src++;
 
 
-}
+पूर्ण

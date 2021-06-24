@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_IA64_FCNTL_H
-#define _ASM_IA64_FCNTL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_IA64_FCNTL_H
+#घोषणा _ASM_IA64_FCNTL_H
 /*
- * Modified 1998-2000
+ * Modअगरied 1998-2000
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co.
  */
 
-#define force_o_largefile()	\
+#घोषणा क्रमce_o_largefile()	\
 		(personality(current->personality) != PER_LINUX32)
 
-#include <linux/personality.h>
-#include <asm-generic/fcntl.h>
+#समावेश <linux/personality.h>
+#समावेश <यंत्र-generic/fcntl.h>
 
-#endif /* _ASM_IA64_FCNTL_H */
+#पूर्ण_अगर /* _ASM_IA64_FCNTL_H */

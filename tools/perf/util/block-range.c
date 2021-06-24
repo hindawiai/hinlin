@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "block-range.h"
-#include "annotate.h"
-#include <assert.h>
-#include <stdlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "block-range.h"
+#समावेश "annotate.h"
+#समावेश <निश्चित.स>
+#समावेश <मानककोष.स>
 
-struct {
-	struct rb_root root;
+काष्ठा अणु
+	काष्ठा rb_root root;
 	u64 blocks;
-} block_ranges;
+पूर्ण block_ranges;
 
-static void block_range__debug(void)
-{
+अटल व्योम block_range__debug(व्योम)
+अणु
 	/*
-	 * XXX still paranoid for now; see if we can make this depend on
+	 * XXX still paranoid क्रम now; see अगर we can make this depend on
 	 * DEBUG=1 builds.
 	 */
-#if 1
-	struct rb_node *rb;
-	u64 old = 0; /* NULL isn't executable */
+#अगर 1
+	काष्ठा rb_node *rb;
+	u64 old = 0; /* शून्य isn't executable */
 
-	for (rb = rb_first(&block_ranges.root); rb; rb = rb_next(rb)) {
-		struct block_range *entry = rb_entry(rb, struct block_range, node);
+	क्रम (rb = rb_first(&block_ranges.root); rb; rb = rb_next(rb)) अणु
+		काष्ठा block_range *entry = rb_entry(rb, काष्ठा block_range, node);
 
-		assert(old < entry->start);
-		assert(entry->start <= entry->end); /* single instruction block; jump to a jump */
+		निश्चित(old < entry->start);
+		निश्चित(entry->start <= entry->end); /* single inकाष्ठाion block; jump to a jump */
 
 		old = entry->end;
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-struct block_range *block_range__find(u64 addr)
-{
-	struct rb_node **p = &block_ranges.root.rb_node;
-	struct rb_node *parent = NULL;
-	struct block_range *entry;
+काष्ठा block_range *block_range__find(u64 addr)
+अणु
+	काष्ठा rb_node **p = &block_ranges.root.rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा block_range *entry;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		parent = *p;
-		entry = rb_entry(parent, struct block_range, node);
+		entry = rb_entry(parent, काष्ठा block_range, node);
 
-		if (addr < entry->start)
+		अगर (addr < entry->start)
 			p = &parent->rb_left;
-		else if (addr > entry->end)
+		अन्यथा अगर (addr > entry->end)
 			p = &parent->rb_right;
-		else
-			return entry;
-	}
+		अन्यथा
+			वापस entry;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void rb_link_left_of_node(struct rb_node *left, struct rb_node *node)
-{
-	struct rb_node **p = &node->rb_left;
-	while (*p) {
+अटल अंतरभूत व्योम rb_link_left_of_node(काष्ठा rb_node *left, काष्ठा rb_node *node)
+अणु
+	काष्ठा rb_node **p = &node->rb_left;
+	जबतक (*p) अणु
 		node = *p;
 		p = &node->rb_right;
-	}
+	पूर्ण
 	rb_link_node(left, node, p);
-}
+पूर्ण
 
-static inline void rb_link_right_of_node(struct rb_node *right, struct rb_node *node)
-{
-	struct rb_node **p = &node->rb_right;
-	while (*p) {
+अटल अंतरभूत व्योम rb_link_right_of_node(काष्ठा rb_node *right, काष्ठा rb_node *node)
+अणु
+	काष्ठा rb_node **p = &node->rb_right;
+	जबतक (*p) अणु
 		node = *p;
 		p = &node->rb_left;
-	}
+	पूर्ण
 	rb_link_node(right, node, p);
-}
+पूर्ण
 
 /**
  * block_range__create
@@ -78,78 +79,78 @@ static inline void rb_link_right_of_node(struct rb_node *right, struct rb_node *
  *
  * Create all the required block ranges to precisely span the given range.
  */
-struct block_range_iter block_range__create(u64 start, u64 end)
-{
-	struct rb_node **p = &block_ranges.root.rb_node;
-	struct rb_node *n, *parent = NULL;
-	struct block_range *next, *entry = NULL;
-	struct block_range_iter iter = { NULL, NULL };
+काष्ठा block_range_iter block_range__create(u64 start, u64 end)
+अणु
+	काष्ठा rb_node **p = &block_ranges.root.rb_node;
+	काष्ठा rb_node *n, *parent = शून्य;
+	काष्ठा block_range *next, *entry = शून्य;
+	काष्ठा block_range_iter iter = अणु शून्य, शून्य पूर्ण;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		parent = *p;
-		entry = rb_entry(parent, struct block_range, node);
+		entry = rb_entry(parent, काष्ठा block_range, node);
 
-		if (start < entry->start)
+		अगर (start < entry->start)
 			p = &parent->rb_left;
-		else if (start > entry->end)
+		अन्यथा अगर (start > entry->end)
 			p = &parent->rb_right;
-		else
-			break;
-	}
+		अन्यथा
+			अवरोध;
+	पूर्ण
 
 	/*
 	 * Didn't find anything.. there's a hole at @start, however @end might
 	 * be inside/behind the next range.
 	 */
-	if (!*p) {
-		if (!entry) /* tree empty */
-			goto do_whole;
+	अगर (!*p) अणु
+		अगर (!entry) /* tree empty */
+			जाओ करो_whole;
 
 		/*
-		 * If the last node is before, advance one to find the next.
+		 * If the last node is beक्रमe, advance one to find the next.
 		 */
 		n = parent;
-		if (entry->end < start) {
+		अगर (entry->end < start) अणु
 			n = rb_next(n);
-			if (!n)
-				goto do_whole;
-		}
-		next = rb_entry(n, struct block_range, node);
+			अगर (!n)
+				जाओ करो_whole;
+		पूर्ण
+		next = rb_entry(n, काष्ठा block_range, node);
 
-		if (next->start <= end) { /* add head: [start...][n->start...] */
-			struct block_range *head = malloc(sizeof(struct block_range));
-			if (!head)
-				return iter;
+		अगर (next->start <= end) अणु /* add head: [start...][n->start...] */
+			काष्ठा block_range *head = दो_स्मृति(माप(काष्ठा block_range));
+			अगर (!head)
+				वापस iter;
 
-			*head = (struct block_range){
+			*head = (काष्ठा block_range)अणु
 				.start		= start,
 				.end		= next->start - 1,
 				.is_target	= 1,
 				.is_branch	= 0,
-			};
+			पूर्ण;
 
 			rb_link_left_of_node(&head->node, &next->node);
 			rb_insert_color(&head->node, &block_ranges.root);
 			block_range__debug();
 
 			iter.start = head;
-			goto do_tail;
-		}
+			जाओ करो_tail;
+		पूर्ण
 
-do_whole:
+करो_whole:
 		/*
 		 * The whole [start..end] range is non-overlapping.
 		 */
-		entry = malloc(sizeof(struct block_range));
-		if (!entry)
-			return iter;
+		entry = दो_स्मृति(माप(काष्ठा block_range));
+		अगर (!entry)
+			वापस iter;
 
-		*entry = (struct block_range){
+		*entry = (काष्ठा block_range)अणु
 			.start		= start,
 			.end		= end,
 			.is_target	= 1,
 			.is_branch	= 1,
-		};
+		पूर्ण;
 
 		rb_link_node(&entry->node, parent, p);
 		rb_insert_color(&entry->node, &block_ranges.root);
@@ -157,18 +158,18 @@ do_whole:
 
 		iter.start = entry;
 		iter.end   = entry;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/*
-	 * We found a range that overlapped with ours, split if needed.
+	 * We found a range that overlapped with ours, split अगर needed.
 	 */
-	if (entry->start < start) { /* split: [e->start...][start...] */
-		struct block_range *head = malloc(sizeof(struct block_range));
-		if (!head)
-			return iter;
+	अगर (entry->start < start) अणु /* split: [e->start...][start...] */
+		काष्ठा block_range *head = दो_स्मृति(माप(काष्ठा block_range));
+		अगर (!head)
+			वापस iter;
 
-		*head = (struct block_range){
+		*head = (काष्ठा block_range)अणु
 			.start		= entry->start,
 			.end		= start - 1,
 			.is_target	= entry->is_target,
@@ -176,7 +177,7 @@ do_whole:
 
 			.coverage	= entry->coverage,
 			.entry		= entry->entry,
-		};
+		पूर्ण;
 
 		entry->start		= start;
 		entry->is_target	= 1;
@@ -186,27 +187,27 @@ do_whole:
 		rb_insert_color(&head->node, &block_ranges.root);
 		block_range__debug();
 
-	} else if (entry->start == start)
+	पूर्ण अन्यथा अगर (entry->start == start)
 		entry->is_target = 1;
 
 	iter.start = entry;
 
-do_tail:
+करो_tail:
 	/*
-	 * At this point we've got: @iter.start = [@start...] but @end can still be
+	 * At this poपूर्णांक we've got: @iter.start = [@start...] but @end can still be
 	 * inside or beyond it.
 	 */
 	entry = iter.start;
-	for (;;) {
+	क्रम (;;) अणु
 		/*
 		 * If @end is inside @entry, split.
 		 */
-		if (end < entry->end) { /* split: [...end][...e->end] */
-			struct block_range *tail = malloc(sizeof(struct block_range));
-			if (!tail)
-				return iter;
+		अगर (end < entry->end) अणु /* split: [...end][...e->end] */
+			काष्ठा block_range *tail = दो_स्मृति(माप(काष्ठा block_range));
+			अगर (!tail)
+				वापस iter;
 
-			*tail = (struct block_range){
+			*tail = (काष्ठा block_range)अणु
 				.start		= end + 1,
 				.end		= entry->end,
 				.is_target	= 0,
@@ -215,7 +216,7 @@ do_tail:
 				.coverage	= entry->coverage,
 				.taken		= entry->taken,
 				.pred		= entry->pred,
-			};
+			पूर्ण;
 
 			entry->end		= end;
 			entry->is_branch	= 1;
@@ -227,78 +228,78 @@ do_tail:
 			block_range__debug();
 
 			iter.end = entry;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		/*
-		 * If @end matches @entry, done
+		 * If @end matches @entry, करोne
 		 */
-		if (end == entry->end) {
+		अगर (end == entry->end) अणु
 			entry->is_branch = 1;
 			iter.end = entry;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		next = block_range__next(entry);
-		if (!next)
-			goto add_tail;
+		अगर (!next)
+			जाओ add_tail;
 
 		/*
 		 * If @end is in beyond @entry but not inside @next, add tail.
 		 */
-		if (end < next->start) { /* add tail: [...e->end][...end] */
-			struct block_range *tail;
+		अगर (end < next->start) अणु /* add tail: [...e->end][...end] */
+			काष्ठा block_range *tail;
 add_tail:
-			tail = malloc(sizeof(struct block_range));
-			if (!tail)
-				return iter;
+			tail = दो_स्मृति(माप(काष्ठा block_range));
+			अगर (!tail)
+				वापस iter;
 
-			*tail = (struct block_range){
+			*tail = (काष्ठा block_range)अणु
 				.start		= entry->end + 1,
 				.end		= end,
 				.is_target	= 0,
 				.is_branch	= 1,
-			};
+			पूर्ण;
 
 			rb_link_right_of_node(&tail->node, &entry->node);
 			rb_insert_color(&tail->node, &block_ranges.root);
 			block_range__debug();
 
 			iter.end = tail;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		/*
 		 * If there is a hole between @entry and @next, fill it.
 		 */
-		if (entry->end + 1 != next->start) {
-			struct block_range *hole = malloc(sizeof(struct block_range));
-			if (!hole)
-				return iter;
+		अगर (entry->end + 1 != next->start) अणु
+			काष्ठा block_range *hole = दो_स्मृति(माप(काष्ठा block_range));
+			अगर (!hole)
+				वापस iter;
 
-			*hole = (struct block_range){
+			*hole = (काष्ठा block_range)अणु
 				.start		= entry->end + 1,
 				.end		= next->start - 1,
 				.is_target	= 0,
 				.is_branch	= 0,
-			};
+			पूर्ण;
 
 			rb_link_left_of_node(&hole->node, &next->node);
 			rb_insert_color(&hole->node, &block_ranges.root);
 			block_range__debug();
-		}
+		पूर्ण
 
 		entry = next;
-	}
+	पूर्ण
 
-done:
-	assert(iter.start->start == start && iter.start->is_target);
-	assert(iter.end->end == end && iter.end->is_branch);
+करोne:
+	निश्चित(iter.start->start == start && iter.start->is_target);
+	निश्चित(iter.end->end == end && iter.end->is_branch);
 
 	block_ranges.blocks++;
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
 
 /*
@@ -309,23 +310,23 @@ done:
  * This ensures each symbol has a 100% spot, to reflect that each symbol has a
  * most covered section.
  *
- * Returns [0-1] for coverage and -1 if we had no data what so ever or the
- * symbol does not exist.
+ * Returns [0-1] क्रम coverage and -1 अगर we had no data what so ever or the
+ * symbol करोes not exist.
  */
-double block_range__coverage(struct block_range *br)
-{
-	struct symbol *sym;
+द्विगुन block_range__coverage(काष्ठा block_range *br)
+अणु
+	काष्ठा symbol *sym;
 
-	if (!br) {
-		if (block_ranges.blocks)
-			return 0;
+	अगर (!br) अणु
+		अगर (block_ranges.blocks)
+			वापस 0;
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	sym = br->sym;
-	if (!sym)
-		return -1;
+	अगर (!sym)
+		वापस -1;
 
-	return (double)br->coverage / symbol__annotation(sym)->max_coverage;
-}
+	वापस (द्विगुन)br->coverage / symbol__annotation(sym)->max_coverage;
+पूर्ण

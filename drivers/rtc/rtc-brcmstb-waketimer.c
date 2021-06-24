@@ -1,326 +1,327 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright © 2014-2017 Broadcom
+ * Copyright तऊ 2014-2017 Broadcom
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irqreturn.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/pm_wakeup.h>
-#include <linux/reboot.h>
-#include <linux/rtc.h>
-#include <linux/stat.h>
-#include <linux/suspend.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_wakeup.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/suspend.h>
 
-struct brcmstb_waketmr {
-	struct rtc_device *rtc;
-	struct device *dev;
-	void __iomem *base;
-	int irq;
-	struct notifier_block reboot_notifier;
-	struct clk *clk;
+काष्ठा brcmstb_wakeपंचांगr अणु
+	काष्ठा rtc_device *rtc;
+	काष्ठा device *dev;
+	व्योम __iomem *base;
+	पूर्णांक irq;
+	काष्ठा notअगरier_block reboot_notअगरier;
+	काष्ठा clk *clk;
 	u32 rate;
-};
+पूर्ण;
 
-#define BRCMSTB_WKTMR_EVENT		0x00
-#define BRCMSTB_WKTMR_COUNTER		0x04
-#define BRCMSTB_WKTMR_ALARM		0x08
-#define BRCMSTB_WKTMR_PRESCALER		0x0C
-#define BRCMSTB_WKTMR_PRESCALER_VAL	0x10
+#घोषणा BRCMSTB_WKTMR_EVENT		0x00
+#घोषणा BRCMSTB_WKTMR_COUNTER		0x04
+#घोषणा BRCMSTB_WKTMR_ALARM		0x08
+#घोषणा BRCMSTB_WKTMR_PRESCALER		0x0C
+#घोषणा BRCMSTB_WKTMR_PRESCALER_VAL	0x10
 
-#define BRCMSTB_WKTMR_DEFAULT_FREQ	27000000
+#घोषणा BRCMSTB_WKTMR_DEFAULT_FREQ	27000000
 
-static inline void brcmstb_waketmr_clear_alarm(struct brcmstb_waketmr *timer)
-{
-	writel_relaxed(1, timer->base + BRCMSTB_WKTMR_EVENT);
-	(void)readl_relaxed(timer->base + BRCMSTB_WKTMR_EVENT);
-}
+अटल अंतरभूत व्योम brcmstb_wakeपंचांगr_clear_alarm(काष्ठा brcmstb_wakeपंचांगr *समयr)
+अणु
+	ग_लिखोl_relaxed(1, समयr->base + BRCMSTB_WKTMR_EVENT);
+	(व्योम)पढ़ोl_relaxed(समयr->base + BRCMSTB_WKTMR_EVENT);
+पूर्ण
 
-static void brcmstb_waketmr_set_alarm(struct brcmstb_waketmr *timer,
-				      unsigned int secs)
-{
-	brcmstb_waketmr_clear_alarm(timer);
+अटल व्योम brcmstb_wakeपंचांगr_set_alarm(काष्ठा brcmstb_wakeपंचांगr *समयr,
+				      अचिन्हित पूर्णांक secs)
+अणु
+	brcmstb_wakeपंचांगr_clear_alarm(समयr);
 
 	/* Make sure we are actually counting in seconds */
-	writel_relaxed(timer->rate, timer->base + BRCMSTB_WKTMR_PRESCALER);
+	ग_लिखोl_relaxed(समयr->rate, समयr->base + BRCMSTB_WKTMR_PRESCALER);
 
-	writel_relaxed(secs + 1, timer->base + BRCMSTB_WKTMR_ALARM);
-}
+	ग_लिखोl_relaxed(secs + 1, समयr->base + BRCMSTB_WKTMR_ALARM);
+पूर्ण
 
-static irqreturn_t brcmstb_waketmr_irq(int irq, void *data)
-{
-	struct brcmstb_waketmr *timer = data;
+अटल irqवापस_t brcmstb_wakeपंचांगr_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = data;
 
-	pm_wakeup_event(timer->dev, 0);
+	pm_wakeup_event(समयr->dev, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-struct wktmr_time {
+काष्ठा wkपंचांगr_समय अणु
 	u32 sec;
 	u32 pre;
-};
+पूर्ण;
 
-static void wktmr_read(struct brcmstb_waketmr *timer,
-		       struct wktmr_time *t)
-{
-	u32 tmp;
+अटल व्योम wkपंचांगr_पढ़ो(काष्ठा brcmstb_wakeपंचांगr *समयr,
+		       काष्ठा wkपंचांगr_समय *t)
+अणु
+	u32 पंचांगp;
 
-	do {
-		t->sec = readl_relaxed(timer->base + BRCMSTB_WKTMR_COUNTER);
-		tmp = readl_relaxed(timer->base + BRCMSTB_WKTMR_PRESCALER_VAL);
-	} while (tmp >= timer->rate);
+	करो अणु
+		t->sec = पढ़ोl_relaxed(समयr->base + BRCMSTB_WKTMR_COUNTER);
+		पंचांगp = पढ़ोl_relaxed(समयr->base + BRCMSTB_WKTMR_PRESCALER_VAL);
+	पूर्ण जबतक (पंचांगp >= समयr->rate);
 
-	t->pre = timer->rate - tmp;
-}
+	t->pre = समयr->rate - पंचांगp;
+पूर्ण
 
-static int brcmstb_waketmr_prepare_suspend(struct brcmstb_waketmr *timer)
-{
-	struct device *dev = timer->dev;
-	int ret = 0;
+अटल पूर्णांक brcmstb_wakeपंचांगr_prepare_suspend(काष्ठा brcmstb_wakeपंचांगr *समयr)
+अणु
+	काष्ठा device *dev = समयr->dev;
+	पूर्णांक ret = 0;
 
-	if (device_may_wakeup(dev)) {
-		ret = enable_irq_wake(timer->irq);
-		if (ret) {
+	अगर (device_may_wakeup(dev)) अणु
+		ret = enable_irq_wake(समयr->irq);
+		अगर (ret) अणु
 			dev_err(dev, "failed to enable wake-up interrupt\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* If enabled as a wakeup-source, arm the timer when powering off */
-static int brcmstb_waketmr_reboot(struct notifier_block *nb,
-		unsigned long action, void *data)
-{
-	struct brcmstb_waketmr *timer;
+/* If enabled as a wakeup-source, arm the समयr when घातering off */
+अटल पूर्णांक brcmstb_wakeपंचांगr_reboot(काष्ठा notअगरier_block *nb,
+		अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr;
 
-	timer = container_of(nb, struct brcmstb_waketmr, reboot_notifier);
+	समयr = container_of(nb, काष्ठा brcmstb_wakeपंचांगr, reboot_notअगरier);
 
-	/* Set timer for cold boot */
-	if (action == SYS_POWER_OFF)
-		brcmstb_waketmr_prepare_suspend(timer);
+	/* Set समयr क्रम cold boot */
+	अगर (action == SYS_POWER_OFF)
+		brcmstb_wakeपंचांगr_prepare_suspend(समयr);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int brcmstb_waketmr_gettime(struct device *dev,
-				   struct rtc_time *tm)
-{
-	struct brcmstb_waketmr *timer = dev_get_drvdata(dev);
-	struct wktmr_time now;
+अटल पूर्णांक brcmstb_wakeपंचांगr_समय_लो(काष्ठा device *dev,
+				   काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = dev_get_drvdata(dev);
+	काष्ठा wkपंचांगr_समय now;
 
-	wktmr_read(timer, &now);
+	wkपंचांगr_पढ़ो(समयr, &now);
 
-	rtc_time64_to_tm(now.sec, tm);
+	rtc_समय64_to_पंचांग(now.sec, पंचांग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_waketmr_settime(struct device *dev,
-				   struct rtc_time *tm)
-{
-	struct brcmstb_waketmr *timer = dev_get_drvdata(dev);
-	time64_t sec;
+अटल पूर्णांक brcmstb_wakeपंचांगr_समय_रखो(काष्ठा device *dev,
+				   काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = dev_get_drvdata(dev);
+	समय64_t sec;
 
-	sec = rtc_tm_to_time64(tm);
+	sec = rtc_पंचांग_to_समय64(पंचांग);
 
-	writel_relaxed(sec, timer->base + BRCMSTB_WKTMR_COUNTER);
+	ग_लिखोl_relaxed(sec, समयr->base + BRCMSTB_WKTMR_COUNTER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_waketmr_getalarm(struct device *dev,
-				    struct rtc_wkalrm *alarm)
-{
-	struct brcmstb_waketmr *timer = dev_get_drvdata(dev);
-	time64_t sec;
+अटल पूर्णांक brcmstb_wakeपंचांगr_getalarm(काष्ठा device *dev,
+				    काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = dev_get_drvdata(dev);
+	समय64_t sec;
 	u32 reg;
 
-	sec = readl_relaxed(timer->base + BRCMSTB_WKTMR_ALARM);
-	if (sec != 0) {
+	sec = पढ़ोl_relaxed(समयr->base + BRCMSTB_WKTMR_ALARM);
+	अगर (sec != 0) अणु
 		/* Alarm is enabled */
 		alarm->enabled = 1;
-		rtc_time64_to_tm(sec, &alarm->time);
-	}
+		rtc_समय64_to_पंचांग(sec, &alarm->समय);
+	पूर्ण
 
-	reg = readl_relaxed(timer->base + BRCMSTB_WKTMR_EVENT);
+	reg = पढ़ोl_relaxed(समयr->base + BRCMSTB_WKTMR_EVENT);
 	alarm->pending = !!(reg & 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_waketmr_setalarm(struct device *dev,
-				     struct rtc_wkalrm *alarm)
-{
-	struct brcmstb_waketmr *timer = dev_get_drvdata(dev);
-	time64_t sec;
+अटल पूर्णांक brcmstb_wakeपंचांगr_setalarm(काष्ठा device *dev,
+				     काष्ठा rtc_wkalrm *alarm)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = dev_get_drvdata(dev);
+	समय64_t sec;
 
-	if (alarm->enabled)
-		sec = rtc_tm_to_time64(&alarm->time);
-	else
+	अगर (alarm->enabled)
+		sec = rtc_पंचांग_to_समय64(&alarm->समय);
+	अन्यथा
 		sec = 0;
 
-	brcmstb_waketmr_set_alarm(timer, sec);
+	brcmstb_wakeपंचांगr_set_alarm(समयr, sec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Does not do much but keep the RTC class happy. We always support
+ * Does not करो much but keep the RTC class happy. We always support
  * alarms.
  */
-static int brcmstb_waketmr_alarm_enable(struct device *dev,
-					unsigned int enabled)
-{
-	return 0;
-}
+अटल पूर्णांक brcmstb_wakeपंचांगr_alarm_enable(काष्ठा device *dev,
+					अचिन्हित पूर्णांक enabled)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops brcmstb_waketmr_ops = {
-	.read_time	= brcmstb_waketmr_gettime,
-	.set_time	= brcmstb_waketmr_settime,
-	.read_alarm	= brcmstb_waketmr_getalarm,
-	.set_alarm	= brcmstb_waketmr_setalarm,
-	.alarm_irq_enable = brcmstb_waketmr_alarm_enable,
-};
+अटल स्थिर काष्ठा rtc_class_ops brcmstb_wakeपंचांगr_ops = अणु
+	.पढ़ो_समय	= brcmstb_wakeपंचांगr_समय_लो,
+	.set_समय	= brcmstb_wakeपंचांगr_समय_रखो,
+	.पढ़ो_alarm	= brcmstb_wakeपंचांगr_getalarm,
+	.set_alarm	= brcmstb_wakeपंचांगr_setalarm,
+	.alarm_irq_enable = brcmstb_wakeपंचांगr_alarm_enable,
+पूर्ण;
 
-static int brcmstb_waketmr_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct brcmstb_waketmr *timer;
-	int ret;
+अटल पूर्णांक brcmstb_wakeपंचांगr_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा brcmstb_wakeपंचांगr *समयr;
+	पूर्णांक ret;
 
-	timer = devm_kzalloc(dev, sizeof(*timer), GFP_KERNEL);
-	if (!timer)
-		return -ENOMEM;
+	समयr = devm_kzalloc(dev, माप(*समयr), GFP_KERNEL);
+	अगर (!समयr)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, timer);
-	timer->dev = dev;
+	platक्रमm_set_drvdata(pdev, समयr);
+	समयr->dev = dev;
 
-	timer->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(timer->base))
-		return PTR_ERR(timer->base);
+	समयr->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(समयr->base))
+		वापस PTR_ERR(समयr->base);
 
-	timer->rtc = devm_rtc_allocate_device(dev);
-	if (IS_ERR(timer->rtc))
-		return PTR_ERR(timer->rtc);
+	समयr->rtc = devm_rtc_allocate_device(dev);
+	अगर (IS_ERR(समयr->rtc))
+		वापस PTR_ERR(समयr->rtc);
 
 	/*
-	 * Set wakeup capability before requesting wakeup interrupt, so we can
-	 * process boot-time "wakeups" (e.g., from S5 soft-off)
+	 * Set wakeup capability beक्रमe requesting wakeup पूर्णांकerrupt, so we can
+	 * process boot-समय "wakeups" (e.g., from S5 soft-off)
 	 */
 	device_set_wakeup_capable(dev, true);
 	device_wakeup_enable(dev);
 
-	timer->irq = platform_get_irq(pdev, 0);
-	if (timer->irq < 0)
-		return -ENODEV;
+	समयr->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (समयr->irq < 0)
+		वापस -ENODEV;
 
-	timer->clk = devm_clk_get(dev, NULL);
-	if (!IS_ERR(timer->clk)) {
-		ret = clk_prepare_enable(timer->clk);
-		if (ret)
-			return ret;
-		timer->rate = clk_get_rate(timer->clk);
-		if (!timer->rate)
-			timer->rate = BRCMSTB_WKTMR_DEFAULT_FREQ;
-	} else {
-		timer->rate = BRCMSTB_WKTMR_DEFAULT_FREQ;
-		timer->clk = NULL;
-	}
+	समयr->clk = devm_clk_get(dev, शून्य);
+	अगर (!IS_ERR(समयr->clk)) अणु
+		ret = clk_prepare_enable(समयr->clk);
+		अगर (ret)
+			वापस ret;
+		समयr->rate = clk_get_rate(समयr->clk);
+		अगर (!समयr->rate)
+			समयr->rate = BRCMSTB_WKTMR_DEFAULT_FREQ;
+	पूर्ण अन्यथा अणु
+		समयr->rate = BRCMSTB_WKTMR_DEFAULT_FREQ;
+		समयr->clk = शून्य;
+	पूर्ण
 
-	ret = devm_request_irq(dev, timer->irq, brcmstb_waketmr_irq, 0,
-			       "brcmstb-waketimer", timer);
-	if (ret < 0)
-		goto err_clk;
+	ret = devm_request_irq(dev, समयr->irq, brcmstb_wakeपंचांगr_irq, 0,
+			       "brcmstb-waketimer", समयr);
+	अगर (ret < 0)
+		जाओ err_clk;
 
-	timer->reboot_notifier.notifier_call = brcmstb_waketmr_reboot;
-	register_reboot_notifier(&timer->reboot_notifier);
+	समयr->reboot_notअगरier.notअगरier_call = brcmstb_wakeपंचांगr_reboot;
+	रेजिस्टर_reboot_notअगरier(&समयr->reboot_notअगरier);
 
-	timer->rtc->ops = &brcmstb_waketmr_ops;
-	timer->rtc->range_max = U32_MAX;
+	समयr->rtc->ops = &brcmstb_wakeपंचांगr_ops;
+	समयr->rtc->range_max = U32_MAX;
 
-	ret = devm_rtc_register_device(timer->rtc);
-	if (ret)
-		goto err_notifier;
+	ret = devm_rtc_रेजिस्टर_device(समयr->rtc);
+	अगर (ret)
+		जाओ err_notअगरier;
 
-	dev_info(dev, "registered, with irq %d\n", timer->irq);
+	dev_info(dev, "registered, with irq %d\n", समयr->irq);
 
-	return 0;
+	वापस 0;
 
-err_notifier:
-	unregister_reboot_notifier(&timer->reboot_notifier);
+err_notअगरier:
+	unरेजिस्टर_reboot_notअगरier(&समयr->reboot_notअगरier);
 
 err_clk:
-	clk_disable_unprepare(timer->clk);
+	clk_disable_unprepare(समयr->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int brcmstb_waketmr_remove(struct platform_device *pdev)
-{
-	struct brcmstb_waketmr *timer = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक brcmstb_wakeपंचांगr_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = dev_get_drvdata(&pdev->dev);
 
-	unregister_reboot_notifier(&timer->reboot_notifier);
-	clk_disable_unprepare(timer->clk);
+	unरेजिस्टर_reboot_notअगरier(&समयr->reboot_notअगरier);
+	clk_disable_unprepare(समयr->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int brcmstb_waketmr_suspend(struct device *dev)
-{
-	struct brcmstb_waketmr *timer = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक brcmstb_wakeपंचांगr_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = dev_get_drvdata(dev);
 
-	return brcmstb_waketmr_prepare_suspend(timer);
-}
+	वापस brcmstb_wakeपंचांगr_prepare_suspend(समयr);
+पूर्ण
 
-static int brcmstb_waketmr_resume(struct device *dev)
-{
-	struct brcmstb_waketmr *timer = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक brcmstb_wakeपंचांगr_resume(काष्ठा device *dev)
+अणु
+	काष्ठा brcmstb_wakeपंचांगr *समयr = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (!device_may_wakeup(dev))
-		return 0;
+	अगर (!device_may_wakeup(dev))
+		वापस 0;
 
-	ret = disable_irq_wake(timer->irq);
+	ret = disable_irq_wake(समयr->irq);
 
-	brcmstb_waketmr_clear_alarm(timer);
+	brcmstb_wakeपंचांगr_clear_alarm(समयr);
 
-	return ret;
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static SIMPLE_DEV_PM_OPS(brcmstb_waketmr_pm_ops,
-			 brcmstb_waketmr_suspend, brcmstb_waketmr_resume);
+अटल SIMPLE_DEV_PM_OPS(brcmstb_wakeपंचांगr_pm_ops,
+			 brcmstb_wakeपंचांगr_suspend, brcmstb_wakeपंचांगr_resume);
 
-static const __maybe_unused struct of_device_id brcmstb_waketmr_of_match[] = {
-	{ .compatible = "brcm,brcmstb-waketimer" },
-	{ /* sentinel */ },
-};
+अटल स्थिर __maybe_unused काष्ठा of_device_id brcmstb_wakeपंचांगr_of_match[] = अणु
+	अणु .compatible = "brcm,brcmstb-waketimer" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static struct platform_driver brcmstb_waketmr_driver = {
-	.probe			= brcmstb_waketmr_probe,
-	.remove			= brcmstb_waketmr_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver brcmstb_wakeपंचांगr_driver = अणु
+	.probe			= brcmstb_wakeपंचांगr_probe,
+	.हटाओ			= brcmstb_wakeपंचांगr_हटाओ,
+	.driver = अणु
 		.name		= "brcmstb-waketimer",
-		.pm		= &brcmstb_waketmr_pm_ops,
-		.of_match_table	= of_match_ptr(brcmstb_waketmr_of_match),
-	}
-};
-module_platform_driver(brcmstb_waketmr_driver);
+		.pm		= &brcmstb_wakeपंचांगr_pm_ops,
+		.of_match_table	= of_match_ptr(brcmstb_wakeपंचांगr_of_match),
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(brcmstb_wakeपंचांगr_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Brian Norris");

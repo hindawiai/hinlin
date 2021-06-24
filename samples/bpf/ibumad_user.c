@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 
 /**
  * ibumad BPF sample user side
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  *
  * Copyright(c) 2018 Ira Weiny, Intel Corporation
  */
 
-#include <linux/bpf.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <limits.h>
+#समावेश <linux/bpf.h>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <सीमा.स>
 
-#include <sys/resource.h>
-#include <getopt.h>
-#include <net/if.h>
+#समावेश <sys/resource.h>
+#समावेश <getopt.h>
+#समावेश <net/अगर.h>
 
-#include <bpf/bpf.h>
-#include "bpf_util.h"
-#include <bpf/libbpf.h>
+#समावेश <bpf/bpf.h>
+#समावेश "bpf_util.h"
+#समावेश <bpf/libbpf.h>
 
-static struct bpf_link *tp_links[3];
-static struct bpf_object *obj;
-static int map_fd[2];
-static int tp_cnt;
+अटल काष्ठा bpf_link *tp_links[3];
+अटल काष्ठा bpf_object *obj;
+अटल पूर्णांक map_fd[2];
+अटल पूर्णांक tp_cnt;
 
-static void dump_counts(int fd)
-{
+अटल व्योम dump_counts(पूर्णांक fd)
+अणु
 	__u32 key;
 	__u64 value;
 
-	for (key = 0; key < 256; key++) {
-		if (bpf_map_lookup_elem(fd, &key, &value)) {
-			printf("failed to read key %u\n", key);
-			continue;
-		}
-		if (value)
-			printf("0x%02x : %llu\n", key, value);
-	}
-}
+	क्रम (key = 0; key < 256; key++) अणु
+		अगर (bpf_map_lookup_elem(fd, &key, &value)) अणु
+			म_लिखो("failed to read key %u\n", key);
+			जारी;
+		पूर्ण
+		अगर (value)
+			म_लिखो("0x%02x : %llu\n", key, value);
+	पूर्ण
+पूर्ण
 
-static void dump_all_counts(void)
-{
-	printf("Read 'Class : count'\n");
+अटल व्योम dump_all_counts(व्योम)
+अणु
+	म_लिखो("Read 'Class : count'\n");
 	dump_counts(map_fd[0]);
-	printf("Write 'Class : count'\n");
+	म_लिखो("Write 'Class : count'\n");
 	dump_counts(map_fd[1]);
-}
+पूर्ण
 
-static void dump_exit(int sig)
-{
+अटल व्योम dump_निकास(पूर्णांक sig)
+अणु
 	dump_all_counts();
-	/* Detach tracepoints */
-	while (tp_cnt)
+	/* Detach tracepoपूर्णांकs */
+	जबतक (tp_cnt)
 		bpf_link__destroy(tp_links[--tp_cnt]);
 
-	bpf_object__close(obj);
-	exit(0);
-}
+	bpf_object__बंद(obj);
+	निकास(0);
+पूर्ण
 
-static const struct option long_options[] = {
-	{"help",      no_argument,       NULL, 'h'},
-	{"delay",     required_argument, NULL, 'd'},
-};
+अटल स्थिर काष्ठा option दीर्घ_options[] = अणु
+	अणु"help",      no_argument,       शून्य, 'h'पूर्ण,
+	अणु"delay",     required_argument, शून्य, 'd'पूर्ण,
+पूर्ण;
 
-static void usage(char *cmd)
-{
-	printf("eBPF test program to count packets from various IP addresses\n"
+अटल व्योम usage(अक्षर *cmd)
+अणु
+	म_लिखो("eBPF test program to count packets from various IP addresses\n"
 		"Usage: %s <options>\n"
 		"       --help,   -h  this menu\n"
 		"       --delay,  -d  <delay>  wait <delay> sec between prints [1 - 1000000]\n"
 		, cmd
 		);
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	struct bpf_program *prog;
-	unsigned long delay = 5;
-	char filename[256];
-	int longindex = 0;
-	int opt, err = -1;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_program *prog;
+	अचिन्हित दीर्घ delay = 5;
+	अक्षर filename[256];
+	पूर्णांक दीर्घindex = 0;
+	पूर्णांक opt, err = -1;
 
-	while ((opt = getopt_long(argc, argv, "hd:rSw",
-				  long_options, &longindex)) != -1) {
-		switch (opt) {
-		case 'd':
-			delay = strtoul(optarg, NULL, 0);
-			if (delay == ULONG_MAX || delay < 0 ||
-			    delay > 1000000) {
-				fprintf(stderr, "ERROR: invalid delay : %s\n",
+	जबतक ((opt = getopt_दीर्घ(argc, argv, "hd:rSw",
+				  दीर्घ_options, &दीर्घindex)) != -1) अणु
+		चयन (opt) अणु
+		हाल 'd':
+			delay = म_से_अदीर्घ(optarg, शून्य, 0);
+			अगर (delay == अच_दीर्घ_उच्च || delay < 0 ||
+			    delay > 1000000) अणु
+				ख_लिखो(मानक_त्रुटि, "ERROR: invalid delay : %s\n",
 					optarg);
 				usage(argv[0]);
-				return 1;
-			}
-			break;
-		default:
-		case 'h':
+				वापस 1;
+			पूर्ण
+			अवरोध;
+		शेष:
+		हाल 'h':
 			usage(argv[0]);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	/* Do one final dump when exiting */
-	signal(SIGINT, dump_exit);
-	signal(SIGTERM, dump_exit);
+	/* Do one final dump when निकासing */
+	संकेत(संक_विघ्न, dump_निकास);
+	संकेत(संक_इति, dump_निकास);
 
-	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
-	obj = bpf_object__open_file(filename, NULL);
-	if (libbpf_get_error(obj)) {
-		fprintf(stderr, "ERROR: opening BPF object file failed\n");
-		return err;
-	}
+	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
+	obj = bpf_object__खोलो_file(filename, शून्य);
+	अगर (libbpf_get_error(obj)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: opening BPF object file failed\n");
+		वापस err;
+	पूर्ण
 
 	/* load BPF program */
-	if (bpf_object__load(obj)) {
-		fprintf(stderr, "ERROR: loading BPF object file failed\n");
-		goto cleanup;
-	}
+	अगर (bpf_object__load(obj)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: loading BPF object file failed\n");
+		जाओ cleanup;
+	पूर्ण
 
 	map_fd[0] = bpf_object__find_map_fd_by_name(obj, "read_count");
 	map_fd[1] = bpf_object__find_map_fd_by_name(obj, "write_count");
-	if (map_fd[0] < 0 || map_fd[1] < 0) {
-		fprintf(stderr, "ERROR: finding a map in obj file failed\n");
-		goto cleanup;
-	}
+	अगर (map_fd[0] < 0 || map_fd[1] < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: finding a map in obj file failed\n");
+		जाओ cleanup;
+	पूर्ण
 
-	bpf_object__for_each_program(prog, obj) {
+	bpf_object__क्रम_each_program(prog, obj) अणु
 		tp_links[tp_cnt] = bpf_program__attach(prog);
-		if (libbpf_get_error(tp_links[tp_cnt])) {
-			fprintf(stderr, "ERROR: bpf_program__attach failed\n");
-			tp_links[tp_cnt] = NULL;
-			goto cleanup;
-		}
+		अगर (libbpf_get_error(tp_links[tp_cnt])) अणु
+			ख_लिखो(मानक_त्रुटि, "ERROR: bpf_program__attach failed\n");
+			tp_links[tp_cnt] = शून्य;
+			जाओ cleanup;
+		पूर्ण
 		tp_cnt++;
-	}
+	पूर्ण
 
-	while (1) {
+	जबतक (1) अणु
 		sleep(delay);
 		dump_all_counts();
-	}
+	पूर्ण
 	err = 0;
 
 cleanup:
-	/* Detach tracepoints */
-	while (tp_cnt)
+	/* Detach tracepoपूर्णांकs */
+	जबतक (tp_cnt)
 		bpf_link__destroy(tp_links[--tp_cnt]);
 
-	bpf_object__close(obj);
-	return err;
-}
+	bpf_object__बंद(obj);
+	वापस err;
+पूर्ण

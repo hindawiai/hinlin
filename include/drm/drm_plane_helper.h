@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011-2013 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,24 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef DRM_PLANE_HELPER_H
-#define DRM_PLANE_HELPER_H
+#अगर_अघोषित DRM_PLANE_HELPER_H
+#घोषणा DRM_PLANE_HELPER_H
 
-#include <drm/drm_rect.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_modeset_helper_vtables.h>
-#include <drm/drm_modeset_helper.h>
+#समावेश <drm/drm_rect.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_modeset_helper_vtables.h>
+#समावेश <drm/drm_modeset_helper.h>
 
 /*
- * Drivers that don't allow primary plane scaling may pass this macro in place
+ * Drivers that करोn't allow primary plane scaling may pass this macro in place
  * of the min/max scale parameters of the update checker function.
  *
- * Due to src being in 16.16 fixed point and dest being in integer pixels,
+ * Due to src being in 16.16 fixed poपूर्णांक and dest being in पूर्णांकeger pixels,
  * 1<<16 represents no scaling.
  */
-#define DRM_PLANE_HELPER_NO_SCALING (1<<16)
+#घोषणा DRM_PLANE_HELPER_NO_SCALING (1<<16)
 
-void drm_primary_helper_destroy(struct drm_plane *plane);
-extern const struct drm_plane_funcs drm_primary_helper_funcs;
+व्योम drm_primary_helper_destroy(काष्ठा drm_plane *plane);
+बाह्य स्थिर काष्ठा drm_plane_funcs drm_primary_helper_funcs;
 
-#endif
+#पूर्ण_अगर

@@ -1,288 +1,289 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Mac80211 SDIO driver for ST-Ericsson CW1200 device
+ * Mac80211 SDIO driver क्रम ST-Ericsson CW1200 device
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/gpio.h>
-#include <linux/delay.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/sdio.h>
-#include <linux/mmc/sdio_ids.h>
-#include <net/mac80211.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/sdपन.स>
+#समावेश <linux/mmc/sdio_ids.h>
+#समावेश <net/mac80211.h>
 
-#include "cw1200.h"
-#include "hwbus.h"
-#include <linux/platform_data/net-cw1200.h>
-#include "hwio.h"
+#समावेश "cw1200.h"
+#समावेश "hwbus.h"
+#समावेश <linux/platक्रमm_data/net-cw1200.h>
+#समावेश "hwio.h"
 
 MODULE_AUTHOR("Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>");
 MODULE_DESCRIPTION("mac80211 ST-Ericsson CW1200 SDIO driver");
 MODULE_LICENSE("GPL");
 
-#define SDIO_BLOCK_SIZE (512)
+#घोषणा SDIO_BLOCK_SIZE (512)
 
-/* Default platform data for Sagrad modules */
-static struct cw1200_platform_data_sdio sagrad_109x_evk_platform_data = {
+/* Default platक्रमm data क्रम Sagrad modules */
+अटल काष्ठा cw1200_platक्रमm_data_sdio sagrad_109x_evk_platक्रमm_data = अणु
 	.ref_clk = 38400,
 	.have_5ghz = false,
 	.sdd_file = "sdd_sagrad_1091_1098.bin",
-};
+पूर्ण;
 
-/* Allow platform data to be overridden */
-static struct cw1200_platform_data_sdio *global_plat_data = &sagrad_109x_evk_platform_data;
+/* Allow platक्रमm data to be overridden */
+अटल काष्ठा cw1200_platक्रमm_data_sdio *global_plat_data = &sagrad_109x_evk_platक्रमm_data;
 
-void __init cw1200_sdio_set_platform_data(struct cw1200_platform_data_sdio *pdata)
-{
+व्योम __init cw1200_sdio_set_platक्रमm_data(काष्ठा cw1200_platक्रमm_data_sdio *pdata)
+अणु
 	global_plat_data = pdata;
-}
+पूर्ण
 
-struct hwbus_priv {
-	struct sdio_func	*func;
-	struct cw1200_common	*core;
-	const struct cw1200_platform_data_sdio *pdata;
-};
+काष्ठा hwbus_priv अणु
+	काष्ठा sdio_func	*func;
+	काष्ठा cw1200_common	*core;
+	स्थिर काष्ठा cw1200_platक्रमm_data_sdio *pdata;
+पूर्ण;
 
-static const struct sdio_device_id cw1200_sdio_ids[] = {
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_STE, SDIO_DEVICE_ID_STE_CW1200) },
-	{ /* end: all zeroes */			},
-};
+अटल स्थिर काष्ठा sdio_device_id cw1200_sdio_ids[] = अणु
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_STE, SDIO_DEVICE_ID_STE_CW1200) पूर्ण,
+	अणु /* end: all zeroes */			पूर्ण,
+पूर्ण;
 
 /* hwbus_ops implemetation */
 
-static int cw1200_sdio_memcpy_fromio(struct hwbus_priv *self,
-				     unsigned int addr,
-				     void *dst, int count)
-{
-	return sdio_memcpy_fromio(self->func, dst, addr, count);
-}
+अटल पूर्णांक cw1200_sdio_स_नकल_fromio(काष्ठा hwbus_priv *self,
+				     अचिन्हित पूर्णांक addr,
+				     व्योम *dst, पूर्णांक count)
+अणु
+	वापस sdio_स_नकल_fromio(self->func, dst, addr, count);
+पूर्ण
 
-static int cw1200_sdio_memcpy_toio(struct hwbus_priv *self,
-				   unsigned int addr,
-				   const void *src, int count)
-{
-	return sdio_memcpy_toio(self->func, addr, (void *)src, count);
-}
+अटल पूर्णांक cw1200_sdio_स_नकल_toio(काष्ठा hwbus_priv *self,
+				   अचिन्हित पूर्णांक addr,
+				   स्थिर व्योम *src, पूर्णांक count)
+अणु
+	वापस sdio_स_नकल_toio(self->func, addr, (व्योम *)src, count);
+पूर्ण
 
-static void cw1200_sdio_lock(struct hwbus_priv *self)
-{
+अटल व्योम cw1200_sdio_lock(काष्ठा hwbus_priv *self)
+अणु
 	sdio_claim_host(self->func);
-}
+पूर्ण
 
-static void cw1200_sdio_unlock(struct hwbus_priv *self)
-{
+अटल व्योम cw1200_sdio_unlock(काष्ठा hwbus_priv *self)
+अणु
 	sdio_release_host(self->func);
-}
+पूर्ण
 
-static void cw1200_sdio_irq_handler(struct sdio_func *func)
-{
-	struct hwbus_priv *self = sdio_get_drvdata(func);
+अटल व्योम cw1200_sdio_irq_handler(काष्ठा sdio_func *func)
+अणु
+	काष्ठा hwbus_priv *self = sdio_get_drvdata(func);
 
-	/* note:  sdio_host already claimed here. */
-	if (self->core)
+	/* note:  sdio_host alपढ़ोy claimed here. */
+	अगर (self->core)
 		cw1200_irq_handler(self->core);
-}
+पूर्ण
 
-static irqreturn_t cw1200_gpio_hardirq(int irq, void *dev_id)
-{
-	return IRQ_WAKE_THREAD;
-}
+अटल irqवापस_t cw1200_gpio_hardirq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static irqreturn_t cw1200_gpio_irq(int irq, void *dev_id)
-{
-	struct hwbus_priv *self = dev_id;
+अटल irqवापस_t cw1200_gpio_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा hwbus_priv *self = dev_id;
 
-	if (self->core) {
+	अगर (self->core) अणु
 		cw1200_sdio_lock(self);
 		cw1200_irq_handler(self->core);
 		cw1200_sdio_unlock(self);
-		return IRQ_HANDLED;
-	} else {
-		return IRQ_NONE;
-	}
-}
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अणु
+		वापस IRQ_NONE;
+	पूर्ण
+पूर्ण
 
-static int cw1200_request_irq(struct hwbus_priv *self)
-{
-	int ret;
+अटल पूर्णांक cw1200_request_irq(काष्ठा hwbus_priv *self)
+अणु
+	पूर्णांक ret;
 	u8 cccr;
 
-	cccr = sdio_f0_readb(self->func, SDIO_CCCR_IENx, &ret);
-	if (WARN_ON(ret))
-		goto err;
+	cccr = sdio_f0_पढ़ोb(self->func, SDIO_CCCR_IENx, &ret);
+	अगर (WARN_ON(ret))
+		जाओ err;
 
-	/* Master interrupt enable ... */
+	/* Master पूर्णांकerrupt enable ... */
 	cccr |= BIT(0);
 
-	/* ... for our function */
+	/* ... क्रम our function */
 	cccr |= BIT(self->func->num);
 
-	sdio_f0_writeb(self->func, cccr, SDIO_CCCR_IENx, &ret);
-	if (WARN_ON(ret))
-		goto err;
+	sdio_f0_ग_लिखोb(self->func, cccr, SDIO_CCCR_IENx, &ret);
+	अगर (WARN_ON(ret))
+		जाओ err;
 
 	ret = enable_irq_wake(self->pdata->irq);
-	if (WARN_ON(ret))
-		goto err;
+	अगर (WARN_ON(ret))
+		जाओ err;
 
 	/* Request the IRQ */
-	ret =  request_threaded_irq(self->pdata->irq, cw1200_gpio_hardirq,
+	ret =  request_thपढ़ोed_irq(self->pdata->irq, cw1200_gpio_hardirq,
 				    cw1200_gpio_irq,
 				    IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 				    "cw1200_wlan_irq", self);
-	if (WARN_ON(ret))
-		goto err;
+	अगर (WARN_ON(ret))
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cw1200_sdio_irq_subscribe(struct hwbus_priv *self)
-{
-	int ret = 0;
+अटल पूर्णांक cw1200_sdio_irq_subscribe(काष्ठा hwbus_priv *self)
+अणु
+	पूर्णांक ret = 0;
 
 	pr_debug("SW IRQ subscribe\n");
 	sdio_claim_host(self->func);
-	if (self->pdata->irq)
+	अगर (self->pdata->irq)
 		ret = cw1200_request_irq(self);
-	else
+	अन्यथा
 		ret = sdio_claim_irq(self->func, cw1200_sdio_irq_handler);
 
 	sdio_release_host(self->func);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cw1200_sdio_irq_unsubscribe(struct hwbus_priv *self)
-{
-	int ret = 0;
+अटल पूर्णांक cw1200_sdio_irq_unsubscribe(काष्ठा hwbus_priv *self)
+अणु
+	पूर्णांक ret = 0;
 
 	pr_debug("SW IRQ unsubscribe\n");
 
-	if (self->pdata->irq) {
+	अगर (self->pdata->irq) अणु
 		disable_irq_wake(self->pdata->irq);
-		free_irq(self->pdata->irq, self);
-	} else {
+		मुक्त_irq(self->pdata->irq, self);
+	पूर्ण अन्यथा अणु
 		sdio_claim_host(self->func);
 		ret = sdio_release_irq(self->func);
 		sdio_release_host(self->func);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cw1200_sdio_off(const struct cw1200_platform_data_sdio *pdata)
-{
-	if (pdata->reset) {
+अटल पूर्णांक cw1200_sdio_off(स्थिर काष्ठा cw1200_platक्रमm_data_sdio *pdata)
+अणु
+	अगर (pdata->reset) अणु
 		gpio_set_value(pdata->reset, 0);
 		msleep(30); /* Min is 2 * CLK32K cycles */
-		gpio_free(pdata->reset);
-	}
+		gpio_मुक्त(pdata->reset);
+	पूर्ण
 
-	if (pdata->power_ctrl)
-		pdata->power_ctrl(pdata, false);
-	if (pdata->clk_ctrl)
+	अगर (pdata->घातer_ctrl)
+		pdata->घातer_ctrl(pdata, false);
+	अगर (pdata->clk_ctrl)
 		pdata->clk_ctrl(pdata, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cw1200_sdio_on(const struct cw1200_platform_data_sdio *pdata)
-{
+अटल पूर्णांक cw1200_sdio_on(स्थिर काष्ठा cw1200_platक्रमm_data_sdio *pdata)
+अणु
 	/* Ensure I/Os are pulled low */
-	if (pdata->reset) {
+	अगर (pdata->reset) अणु
 		gpio_request(pdata->reset, "cw1200_wlan_reset");
 		gpio_direction_output(pdata->reset, 0);
-	}
-	if (pdata->powerup) {
-		gpio_request(pdata->powerup, "cw1200_wlan_powerup");
-		gpio_direction_output(pdata->powerup, 0);
-	}
-	if (pdata->reset || pdata->powerup)
-		msleep(10); /* Settle time? */
+	पूर्ण
+	अगर (pdata->घातerup) अणु
+		gpio_request(pdata->घातerup, "cw1200_wlan_powerup");
+		gpio_direction_output(pdata->घातerup, 0);
+	पूर्ण
+	अगर (pdata->reset || pdata->घातerup)
+		msleep(10); /* Settle समय? */
 
 	/* Enable 3v3 and 1v8 to hardware */
-	if (pdata->power_ctrl) {
-		if (pdata->power_ctrl(pdata, true)) {
+	अगर (pdata->घातer_ctrl) अणु
+		अगर (pdata->घातer_ctrl(pdata, true)) अणु
 			pr_err("power_ctrl() failed!\n");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
 	/* Enable CLK32K */
-	if (pdata->clk_ctrl) {
-		if (pdata->clk_ctrl(pdata, true)) {
+	अगर (pdata->clk_ctrl) अणु
+		अगर (pdata->clk_ctrl(pdata, true)) अणु
 			pr_err("clk_ctrl() failed!\n");
-			return -1;
-		}
-		msleep(10); /* Delay until clock is stable for 2 cycles */
-	}
+			वापस -1;
+		पूर्ण
+		msleep(10); /* Delay until घड़ी is stable क्रम 2 cycles */
+	पूर्ण
 
-	/* Enable POWERUP signal */
-	if (pdata->powerup) {
-		gpio_set_value(pdata->powerup, 1);
+	/* Enable POWERUP संकेत */
+	अगर (pdata->घातerup) अणु
+		gpio_set_value(pdata->घातerup, 1);
 		msleep(250); /* or more..? */
-	}
-	/* Enable RSTn signal */
-	if (pdata->reset) {
+	पूर्ण
+	/* Enable RSTn संकेत */
+	अगर (pdata->reset) अणु
 		gpio_set_value(pdata->reset, 1);
 		msleep(50); /* Or more..? */
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static size_t cw1200_sdio_align_size(struct hwbus_priv *self, size_t size)
-{
-	if (self->pdata->no_nptb)
+अटल माप_प्रकार cw1200_sdio_align_size(काष्ठा hwbus_priv *self, माप_प्रकार size)
+अणु
+	अगर (self->pdata->no_nptb)
 		size = round_up(size, SDIO_BLOCK_SIZE);
-	else
+	अन्यथा
 		size = sdio_align_size(self->func, size);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int cw1200_sdio_pm(struct hwbus_priv *self, bool suspend)
-{
-	int ret = 0;
+अटल पूर्णांक cw1200_sdio_pm(काष्ठा hwbus_priv *self, bool suspend)
+अणु
+	पूर्णांक ret = 0;
 
-	if (self->pdata->irq)
+	अगर (self->pdata->irq)
 		ret = irq_set_irq_wake(self->pdata->irq, suspend);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct hwbus_ops cw1200_sdio_hwbus_ops = {
-	.hwbus_memcpy_fromio	= cw1200_sdio_memcpy_fromio,
-	.hwbus_memcpy_toio	= cw1200_sdio_memcpy_toio,
+अटल स्थिर काष्ठा hwbus_ops cw1200_sdio_hwbus_ops = अणु
+	.hwbus_स_नकल_fromio	= cw1200_sdio_स_नकल_fromio,
+	.hwbus_स_नकल_toio	= cw1200_sdio_स_नकल_toio,
 	.lock			= cw1200_sdio_lock,
 	.unlock			= cw1200_sdio_unlock,
 	.align_size		= cw1200_sdio_align_size,
-	.power_mgmt		= cw1200_sdio_pm,
-};
+	.घातer_mgmt		= cw1200_sdio_pm,
+पूर्ण;
 
 /* Probe Function to be called by SDIO stack when device is discovered */
-static int cw1200_sdio_probe(struct sdio_func *func,
-			     const struct sdio_device_id *id)
-{
-	struct hwbus_priv *self;
-	int status;
+अटल पूर्णांक cw1200_sdio_probe(काष्ठा sdio_func *func,
+			     स्थिर काष्ठा sdio_device_id *id)
+अणु
+	काष्ठा hwbus_priv *self;
+	पूर्णांक status;
 
 	pr_info("cw1200_wlan_sdio: Probe called\n");
 
 	/* We are only able to handle the wlan function */
-	if (func->num != 0x01)
-		return -ENODEV;
+	अगर (func->num != 0x01)
+		वापस -ENODEV;
 
-	self = kzalloc(sizeof(*self), GFP_KERNEL);
-	if (!self) {
+	self = kzalloc(माप(*self), GFP_KERNEL);
+	अगर (!self) अणु
 		pr_err("Can't allocate SDIO hwbus_priv.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	func->card->quirks |= MMC_QUIRK_LENIENT_FN0;
 
@@ -301,116 +302,116 @@ static int cw1200_sdio_probe(struct sdio_func *func,
 				   self->pdata->macaddr,
 				   self->pdata->sdd_file,
 				   self->pdata->have_5ghz);
-	if (status) {
+	अगर (status) अणु
 		cw1200_sdio_irq_unsubscribe(self);
 		sdio_claim_host(func);
 		sdio_disable_func(func);
 		sdio_release_host(func);
-		sdio_set_drvdata(func, NULL);
-		kfree(self);
-	}
+		sdio_set_drvdata(func, शून्य);
+		kमुक्त(self);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* Disconnect Function to be called by SDIO stack when
  * device is disconnected
  */
-static void cw1200_sdio_disconnect(struct sdio_func *func)
-{
-	struct hwbus_priv *self = sdio_get_drvdata(func);
+अटल व्योम cw1200_sdio_disconnect(काष्ठा sdio_func *func)
+अणु
+	काष्ठा hwbus_priv *self = sdio_get_drvdata(func);
 
-	if (self) {
+	अगर (self) अणु
 		cw1200_sdio_irq_unsubscribe(self);
-		if (self->core) {
+		अगर (self->core) अणु
 			cw1200_core_release(self->core);
-			self->core = NULL;
-		}
+			self->core = शून्य;
+		पूर्ण
 		sdio_claim_host(func);
 		sdio_disable_func(func);
 		sdio_release_host(func);
-		sdio_set_drvdata(func, NULL);
-		kfree(self);
-	}
-}
+		sdio_set_drvdata(func, शून्य);
+		kमुक्त(self);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM
-static int cw1200_sdio_suspend(struct device *dev)
-{
-	int ret;
-	struct sdio_func *func = dev_to_sdio_func(dev);
-	struct hwbus_priv *self = sdio_get_drvdata(func);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक cw1200_sdio_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+	काष्ठा hwbus_priv *self = sdio_get_drvdata(func);
 
-	if (!cw1200_can_suspend(self->core))
-		return -EAGAIN;
+	अगर (!cw1200_can_suspend(self->core))
+		वापस -EAGAIN;
 
-	/* Notify SDIO that CW1200 will remain powered during suspend */
+	/* Notअगरy SDIO that CW1200 will reमुख्य घातered during suspend */
 	ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
-	if (ret)
+	अगर (ret)
 		pr_err("Error setting SDIO pm flags: %i\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cw1200_sdio_resume(struct device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक cw1200_sdio_resume(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops cw1200_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops cw1200_pm_ops = अणु
 	.suspend = cw1200_sdio_suspend,
 	.resume = cw1200_sdio_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct sdio_driver sdio_driver = {
+अटल काष्ठा sdio_driver sdio_driver = अणु
 	.name		= "cw1200_wlan_sdio",
 	.id_table	= cw1200_sdio_ids,
 	.probe		= cw1200_sdio_probe,
-	.remove		= cw1200_sdio_disconnect,
-#ifdef CONFIG_PM
-	.drv = {
+	.हटाओ		= cw1200_sdio_disconnect,
+#अगर_घोषित CONFIG_PM
+	.drv = अणु
 		.pm = &cw1200_pm_ops,
-	}
-#endif
-};
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण;
 
 /* Init Module function -> Called by insmod */
-static int __init cw1200_sdio_init(void)
-{
-	const struct cw1200_platform_data_sdio *pdata;
-	int ret;
+अटल पूर्णांक __init cw1200_sdio_init(व्योम)
+अणु
+	स्थिर काष्ठा cw1200_platक्रमm_data_sdio *pdata;
+	पूर्णांक ret;
 
 	/* FIXME -- this won't support multiple devices */
 	pdata = global_plat_data;
 
-	if (cw1200_sdio_on(pdata)) {
+	अगर (cw1200_sdio_on(pdata)) अणु
 		ret = -1;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = sdio_register_driver(&sdio_driver);
-	if (ret)
-		goto err;
+	ret = sdio_रेजिस्टर_driver(&sdio_driver);
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
 	cw1200_sdio_off(pdata);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Called at Driver Unloading */
-static void __exit cw1200_sdio_exit(void)
-{
-	const struct cw1200_platform_data_sdio *pdata;
+अटल व्योम __निकास cw1200_sdio_निकास(व्योम)
+अणु
+	स्थिर काष्ठा cw1200_platक्रमm_data_sdio *pdata;
 
 	/* FIXME -- this won't support multiple devices */
 	pdata = global_plat_data;
-	sdio_unregister_driver(&sdio_driver);
+	sdio_unरेजिस्टर_driver(&sdio_driver);
 	cw1200_sdio_off(pdata);
-}
+पूर्ण
 
 
 module_init(cw1200_sdio_init);
-module_exit(cw1200_sdio_exit);
+module_निकास(cw1200_sdio_निकास);

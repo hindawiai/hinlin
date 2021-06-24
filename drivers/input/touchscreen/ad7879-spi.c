@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * AD7879/AD7889 touchscreen (SPI bus)
  *
  * Copyright (C) 2008-2010 Michael Hennerich, Analog Devices Inc.
  */
 
-#include <linux/input.h>	/* BUS_SPI */
-#include <linux/pm.h>
-#include <linux/spi/spi.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
+#समावेश <linux/input.h>	/* BUS_SPI */
+#समावेश <linux/pm.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
 
-#include "ad7879.h"
+#समावेश "ad7879.h"
 
-#define AD7879_DEVID		0x7A	/* AD7879/AD7889 */
+#घोषणा AD7879_DEVID		0x7A	/* AD7879/AD7889 */
 
-#define MAX_SPI_FREQ_HZ      5000000
+#घोषणा MAX_SPI_FREQ_HZ      5000000
 
-#define AD7879_CMD_MAGIC     0xE0
-#define AD7879_CMD_READ      BIT(2)
+#घोषणा AD7879_CMD_MAGIC     0xE0
+#घोषणा AD7879_CMD_READ      BIT(2)
 
-static const struct regmap_config ad7879_spi_regmap_config = {
+अटल स्थिर काष्ठा regmap_config ad7879_spi_regmap_config = अणु
 	.reg_bits = 16,
 	.val_bits = 16,
-	.max_register = 15,
-	.read_flag_mask = AD7879_CMD_MAGIC | AD7879_CMD_READ,
-	.write_flag_mask = AD7879_CMD_MAGIC,
-};
+	.max_रेजिस्टर = 15,
+	.पढ़ो_flag_mask = AD7879_CMD_MAGIC | AD7879_CMD_READ,
+	.ग_लिखो_flag_mask = AD7879_CMD_MAGIC,
+पूर्ण;
 
-static int ad7879_spi_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
+अटल पूर्णांक ad7879_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
 
-	/* don't exceed max specified SPI CLK frequency */
-	if (spi->max_speed_hz > MAX_SPI_FREQ_HZ) {
+	/* करोn't exceed max specअगरied SPI CLK frequency */
+	अगर (spi->max_speed_hz > MAX_SPI_FREQ_HZ) अणु
 		dev_err(&spi->dev, "SPI CLK %d Hz?\n", spi->max_speed_hz);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap = devm_regmap_init_spi(spi, &ad7879_spi_regmap_config);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	return ad7879_probe(&spi->dev, regmap, spi->irq, BUS_SPI, AD7879_DEVID);
-}
+	वापस ad7879_probe(&spi->dev, regmap, spi->irq, BUS_SPI, AD7879_DEVID);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id ad7879_spi_dt_ids[] = {
-	{ .compatible = "adi,ad7879", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id ad7879_spi_dt_ids[] = अणु
+	अणु .compatible = "adi,ad7879", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ad7879_spi_dt_ids);
-#endif
+#पूर्ण_अगर
 
-static struct spi_driver ad7879_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ad7879_spi_driver = अणु
+	.driver = अणु
 		.name	= "ad7879",
 		.pm	= &ad7879_pm_ops,
 		.of_match_table = of_match_ptr(ad7879_spi_dt_ids),
-	},
+	पूर्ण,
 	.probe		= ad7879_spi_probe,
-};
+पूर्ण;
 
 module_spi_driver(ad7879_spi_driver);
 

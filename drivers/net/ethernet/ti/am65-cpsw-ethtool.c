@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Texas Instruments K3 AM65 Ethernet Switch SubSystem Driver ethtool ops
  *
  * Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com/
  *
  */
 
-#include <linux/net_tstamp.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/net_tstamp.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "am65-cpsw-nuss.h"
-#include "cpsw_ale.h"
-#include "am65-cpts.h"
+#समावेश "am65-cpsw-nuss.h"
+#समावेश "cpsw_ale.h"
+#समावेश "am65-cpts.h"
 
-#define AM65_CPSW_REGDUMP_VER 0x1
+#घोषणा AM65_CPSW_REGDUMP_VER 0x1
 
-enum {
+क्रमागत अणु
 	AM65_CPSW_REGDUMP_MOD_NUSS = 1,
 	AM65_CPSW_REGDUMP_MOD_RGMII_STATUS = 2,
 	AM65_CPSW_REGDUMP_MOD_MDIO = 3,
@@ -27,47 +28,47 @@ enum {
 	AM65_CPSW_REGDUMP_MOD_CPSW_ALE = 8,
 	AM65_CPSW_REGDUMP_MOD_CPSW_ALE_TBL = 9,
 	AM65_CPSW_REGDUMP_MOD_LAST,
-};
+पूर्ण;
 
 /**
- * struct am65_cpsw_regdump_hdr - regdump record header
+ * काष्ठा am65_cpsw_regdump_hdr - regdump record header
  *
  * @module_id: CPSW module ID
- * @len: CPSW module registers space length in u32
+ * @len: CPSW module रेजिस्टरs space length in u32
  */
 
-struct am65_cpsw_regdump_hdr {
+काष्ठा am65_cpsw_regdump_hdr अणु
 	u32 module_id;
 	u32 len;
-};
+पूर्ण;
 
 /**
- * struct am65_cpsw_regdump_item - regdump module description
+ * काष्ठा am65_cpsw_regdump_item - regdump module description
  *
  * @hdr: CPSW module header
- * @start_ofs: CPSW module registers start addr
- * @end_ofs: CPSW module registers end addr
+ * @start_ofs: CPSW module रेजिस्टरs start addr
+ * @end_ofs: CPSW module रेजिस्टरs end addr
  *
- * Registers dump provided in the format:
+ * Registers dump provided in the क्रमmat:
  *  u32 : module ID
  *  u32 : dump length
- *  u32[..len]: registers values
+ *  u32[..len]: रेजिस्टरs values
  */
-struct am65_cpsw_regdump_item {
-	struct am65_cpsw_regdump_hdr hdr;
+काष्ठा am65_cpsw_regdump_item अणु
+	काष्ठा am65_cpsw_regdump_hdr hdr;
 	u32 start_ofs;
 	u32 end_ofs;
-};
+पूर्ण;
 
-#define AM65_CPSW_REGDUMP_REC(mod, start, end) { \
+#घोषणा AM65_CPSW_REGDUMP_REC(mod, start, end) अणु \
 	.hdr.module_id = (mod), \
-	.hdr.len = (((u32 *)(end)) - ((u32 *)(start)) + 1) * sizeof(u32) * 2 + \
-		   sizeof(struct am65_cpsw_regdump_hdr), \
+	.hdr.len = (((u32 *)(end)) - ((u32 *)(start)) + 1) * माप(u32) * 2 + \
+		   माप(काष्ठा am65_cpsw_regdump_hdr), \
 	.start_ofs = (start), \
 	.end_ofs = end, \
-}
+पूर्ण
 
-static const struct am65_cpsw_regdump_item am65_cpsw_regdump[] = {
+अटल स्थिर काष्ठा am65_cpsw_regdump_item am65_cpsw_regdump[] = अणु
 	AM65_CPSW_REGDUMP_REC(AM65_CPSW_REGDUMP_MOD_NUSS, 0x0, 0x1c),
 	AM65_CPSW_REGDUMP_REC(AM65_CPSW_REGDUMP_MOD_RGMII_STATUS, 0x30, 0x4c),
 	AM65_CPSW_REGDUMP_REC(AM65_CPSW_REGDUMP_MOD_MDIO, 0xf00, 0xffc),
@@ -78,13 +79,13 @@ static const struct am65_cpsw_regdump_item am65_cpsw_regdump[] = {
 			      0x3d000, 0x3d048),
 	AM65_CPSW_REGDUMP_REC(AM65_CPSW_REGDUMP_MOD_CPSW_ALE, 0x3e000, 0x3e13c),
 	AM65_CPSW_REGDUMP_REC(AM65_CPSW_REGDUMP_MOD_CPSW_ALE_TBL, 0, 0),
-};
+पूर्ण;
 
-struct am65_cpsw_stats_regs {
+काष्ठा am65_cpsw_stats_regs अणु
 	u32	rx_good_frames;
 	u32	rx_broadcast_frames;
 	u32	rx_multicast_frames;
-	u32	rx_pause_frames;		/* slave */
+	u32	rx_छोड़ो_frames;		/* slave */
 	u32	rx_crc_errors;
 	u32	rx_align_code_errors;		/* slave */
 	u32	rx_oversized_frames;
@@ -97,7 +98,7 @@ struct am65_cpsw_stats_regs {
 	u32	tx_good_frames;
 	u32	tx_broadcast_frames;
 	u32	tx_multicast_frames;
-	u32	tx_pause_frames;		/* slave */
+	u32	tx_छोड़ो_frames;		/* slave */
 	u32	tx_deferred_frames;		/* slave */
 	u32	tx_collision_frames;		/* slave */
 	u32	tx_single_coll_frames;		/* slave */
@@ -114,9 +115,9 @@ struct am65_cpsw_stats_regs {
 	u32	tx_512_to_1023B_frames;
 	u32	tx_1024B_frames;
 	u32	net_octets;
-	u32	rx_bottom_fifo_drop;
+	u32	rx_bottom_fअगरo_drop;
 	u32	rx_port_mask_drop;
-	u32	rx_top_fifo_drop;
+	u32	rx_top_fअगरo_drop;
 	u32	ale_rate_limit_drop;
 	u32	ale_vid_ingress_drop;
 	u32	ale_da_eq_sa_drop;
@@ -179,20 +180,20 @@ struct am65_cpsw_stats_regs {
 	u32	tx_pri5_drop_bcnt;
 	u32	tx_pri6_drop_bcnt;
 	u32	tx_pri7_drop_bcnt;
-};
+पूर्ण;
 
-struct am65_cpsw_ethtool_stat {
-	char desc[ETH_GSTRING_LEN];
-	int offset;
-};
+काष्ठा am65_cpsw_ethtool_stat अणु
+	अक्षर desc[ETH_GSTRING_LEN];
+	पूर्णांक offset;
+पूर्ण;
 
-#define AM65_CPSW_STATS(prefix, field)			\
-{							\
+#घोषणा AM65_CPSW_STATS(prefix, field)			\
+अणु							\
 	#prefix#field,					\
-	offsetof(struct am65_cpsw_stats_regs, field)	\
-}
+	दुरत्व(काष्ठा am65_cpsw_stats_regs, field)	\
+पूर्ण
 
-static const struct am65_cpsw_ethtool_stat am65_host_stats[] = {
+अटल स्थिर काष्ठा am65_cpsw_ethtool_stat am65_host_stats[] = अणु
 	AM65_CPSW_STATS(p0_, rx_good_frames),
 	AM65_CPSW_STATS(p0_, rx_broadcast_frames),
 	AM65_CPSW_STATS(p0_, rx_multicast_frames),
@@ -213,9 +214,9 @@ static const struct am65_cpsw_ethtool_stat am65_host_stats[] = {
 	AM65_CPSW_STATS(p0_, tx_512_to_1023B_frames),
 	AM65_CPSW_STATS(p0_, tx_1024B_frames),
 	AM65_CPSW_STATS(p0_, net_octets),
-	AM65_CPSW_STATS(p0_, rx_bottom_fifo_drop),
+	AM65_CPSW_STATS(p0_, rx_bottom_fअगरo_drop),
 	AM65_CPSW_STATS(p0_, rx_port_mask_drop),
-	AM65_CPSW_STATS(p0_, rx_top_fifo_drop),
+	AM65_CPSW_STATS(p0_, rx_top_fअगरo_drop),
 	AM65_CPSW_STATS(p0_, ale_rate_limit_drop),
 	AM65_CPSW_STATS(p0_, ale_vid_ingress_drop),
 	AM65_CPSW_STATS(p0_, ale_da_eq_sa_drop),
@@ -269,13 +270,13 @@ static const struct am65_cpsw_ethtool_stat am65_host_stats[] = {
 	AM65_CPSW_STATS(p0_, tx_pri5_drop_bcnt),
 	AM65_CPSW_STATS(p0_, tx_pri6_drop_bcnt),
 	AM65_CPSW_STATS(p0_, tx_pri7_drop_bcnt),
-};
+पूर्ण;
 
-static const struct am65_cpsw_ethtool_stat am65_slave_stats[] = {
+अटल स्थिर काष्ठा am65_cpsw_ethtool_stat am65_slave_stats[] = अणु
 	AM65_CPSW_STATS(, rx_good_frames),
 	AM65_CPSW_STATS(, rx_broadcast_frames),
 	AM65_CPSW_STATS(, rx_multicast_frames),
-	AM65_CPSW_STATS(, rx_pause_frames),
+	AM65_CPSW_STATS(, rx_छोड़ो_frames),
 	AM65_CPSW_STATS(, rx_crc_errors),
 	AM65_CPSW_STATS(, rx_align_code_errors),
 	AM65_CPSW_STATS(, rx_oversized_frames),
@@ -288,7 +289,7 @@ static const struct am65_cpsw_ethtool_stat am65_slave_stats[] = {
 	AM65_CPSW_STATS(, tx_good_frames),
 	AM65_CPSW_STATS(, tx_broadcast_frames),
 	AM65_CPSW_STATS(, tx_multicast_frames),
-	AM65_CPSW_STATS(, tx_pause_frames),
+	AM65_CPSW_STATS(, tx_छोड़ो_frames),
 	AM65_CPSW_STATS(, tx_deferred_frames),
 	AM65_CPSW_STATS(, tx_collision_frames),
 	AM65_CPSW_STATS(, tx_single_coll_frames),
@@ -305,9 +306,9 @@ static const struct am65_cpsw_ethtool_stat am65_slave_stats[] = {
 	AM65_CPSW_STATS(, tx_512_to_1023B_frames),
 	AM65_CPSW_STATS(, tx_1024B_frames),
 	AM65_CPSW_STATS(, net_octets),
-	AM65_CPSW_STATS(, rx_bottom_fifo_drop),
+	AM65_CPSW_STATS(, rx_bottom_fअगरo_drop),
 	AM65_CPSW_STATS(, rx_port_mask_drop),
-	AM65_CPSW_STATS(, rx_top_fifo_drop),
+	AM65_CPSW_STATS(, rx_top_fअगरo_drop),
 	AM65_CPSW_STATS(, ale_rate_limit_drop),
 	AM65_CPSW_STATS(, ale_vid_ingress_drop),
 	AM65_CPSW_STATS(, ale_da_eq_sa_drop),
@@ -367,232 +368,232 @@ static const struct am65_cpsw_ethtool_stat am65_slave_stats[] = {
 	AM65_CPSW_STATS(, tx_pri5_drop_bcnt),
 	AM65_CPSW_STATS(, tx_pri6_drop_bcnt),
 	AM65_CPSW_STATS(, tx_pri7_drop_bcnt),
-};
+पूर्ण;
 
 /* Ethtool priv_flags */
-static const char am65_cpsw_ethtool_priv_flags[][ETH_GSTRING_LEN] = {
-#define	AM65_CPSW_PRIV_P0_RX_PTYPE_RROBIN	BIT(0)
+अटल स्थिर अक्षर am65_cpsw_ethtool_priv_flags[][ETH_GSTRING_LEN] = अणु
+#घोषणा	AM65_CPSW_PRIV_P0_RX_PTYPE_RROBIN	BIT(0)
 	"p0-rx-ptype-rrobin",
-};
+पूर्ण;
 
-static int am65_cpsw_ethtool_op_begin(struct net_device *ndev)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
-	int ret;
+अटल पूर्णांक am65_cpsw_ethtool_op_begin(काष्ठा net_device *ndev)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(common->dev);
-	if (ret < 0) {
+	ret = pm_runसमय_get_sync(common->dev);
+	अगर (ret < 0) अणु
 		dev_err(common->dev, "ethtool begin failed %d\n", ret);
-		pm_runtime_put_noidle(common->dev);
-	}
+		pm_runसमय_put_noidle(common->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void am65_cpsw_ethtool_op_complete(struct net_device *ndev)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
-	int ret;
+अटल व्योम am65_cpsw_ethtool_op_complete(काष्ठा net_device *ndev)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
+	पूर्णांक ret;
 
-	ret = pm_runtime_put(common->dev);
-	if (ret < 0 && ret != -EBUSY)
+	ret = pm_runसमय_put(common->dev);
+	अगर (ret < 0 && ret != -EBUSY)
 		dev_err(common->dev, "ethtool complete failed %d\n", ret);
-}
+पूर्ण
 
-static void am65_cpsw_get_drvinfo(struct net_device *ndev,
-				  struct ethtool_drvinfo *info)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल व्योम am65_cpsw_get_drvinfo(काष्ठा net_device *ndev,
+				  काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 
 	strlcpy(info->driver, dev_driver_string(common->dev),
-		sizeof(info->driver));
-	strlcpy(info->bus_info, dev_name(common->dev), sizeof(info->bus_info));
-}
+		माप(info->driver));
+	strlcpy(info->bus_info, dev_name(common->dev), माप(info->bus_info));
+पूर्ण
 
-static u32 am65_cpsw_get_msglevel(struct net_device *ndev)
-{
-	struct am65_cpsw_ndev_priv *priv = am65_ndev_to_priv(ndev);
+अटल u32 am65_cpsw_get_msglevel(काष्ठा net_device *ndev)
+अणु
+	काष्ठा am65_cpsw_ndev_priv *priv = am65_ndev_to_priv(ndev);
 
-	return priv->msg_enable;
-}
+	वापस priv->msg_enable;
+पूर्ण
 
-static void am65_cpsw_set_msglevel(struct net_device *ndev, u32 value)
-{
-	struct am65_cpsw_ndev_priv *priv = am65_ndev_to_priv(ndev);
+अटल व्योम am65_cpsw_set_msglevel(काष्ठा net_device *ndev, u32 value)
+अणु
+	काष्ठा am65_cpsw_ndev_priv *priv = am65_ndev_to_priv(ndev);
 
 	priv->msg_enable = value;
-}
+पूर्ण
 
-static void am65_cpsw_get_channels(struct net_device *ndev,
-				   struct ethtool_channels *ch)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल व्योम am65_cpsw_get_channels(काष्ठा net_device *ndev,
+				   काष्ठा ethtool_channels *ch)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 
 	ch->max_rx = AM65_CPSW_MAX_RX_QUEUES;
 	ch->max_tx = AM65_CPSW_MAX_TX_QUEUES;
 	ch->rx_count = AM65_CPSW_MAX_RX_QUEUES;
 	ch->tx_count = common->tx_ch_num;
-}
+पूर्ण
 
-static int am65_cpsw_set_channels(struct net_device *ndev,
-				  struct ethtool_channels *chs)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल पूर्णांक am65_cpsw_set_channels(काष्ठा net_device *ndev,
+				  काष्ठा ethtool_channels *chs)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 
-	if (!chs->rx_count || !chs->tx_count)
-		return -EINVAL;
+	अगर (!chs->rx_count || !chs->tx_count)
+		वापस -EINVAL;
 
-	/* Check if interface is up. Can change the num queues when
-	 * the interface is down.
+	/* Check अगर पूर्णांकerface is up. Can change the num queues when
+	 * the पूर्णांकerface is करोwn.
 	 */
-	if (common->usage_count)
-		return -EBUSY;
+	अगर (common->usage_count)
+		वापस -EBUSY;
 
-	am65_cpsw_nuss_remove_tx_chns(common);
+	am65_cpsw_nuss_हटाओ_tx_chns(common);
 
-	return am65_cpsw_nuss_update_tx_chns(common, chs->tx_count);
-}
+	वापस am65_cpsw_nuss_update_tx_chns(common, chs->tx_count);
+पूर्ण
 
-static void am65_cpsw_get_ringparam(struct net_device *ndev,
-				    struct ethtool_ringparam *ering)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल व्योम am65_cpsw_get_ringparam(काष्ठा net_device *ndev,
+				    काष्ठा ethtool_ringparam *ering)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 
 	/* not supported */
 	ering->tx_pending = common->tx_chns[0].descs_num;
 	ering->rx_pending = common->rx_chns.descs_num;
-}
+पूर्ण
 
-static void am65_cpsw_get_pauseparam(struct net_device *ndev,
-				     struct ethtool_pauseparam *pause)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल व्योम am65_cpsw_get_छोड़ोparam(काष्ठा net_device *ndev,
+				     काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	pause->autoneg = AUTONEG_DISABLE;
-	pause->rx_pause = salve->rx_pause ? true : false;
-	pause->tx_pause = salve->tx_pause ? true : false;
-}
+	छोड़ो->स्वतःneg = AUTONEG_DISABLE;
+	छोड़ो->rx_छोड़ो = salve->rx_छोड़ो ? true : false;
+	छोड़ो->tx_छोड़ो = salve->tx_छोड़ो ? true : false;
+पूर्ण
 
-static int am65_cpsw_set_pauseparam(struct net_device *ndev,
-				    struct ethtool_pauseparam *pause)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल पूर्णांक am65_cpsw_set_छोड़ोparam(काष्ठा net_device *ndev,
+				    काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	if (!salve->phy)
-		return -EINVAL;
+	अगर (!salve->phy)
+		वापस -EINVAL;
 
-	if (!phy_validate_pause(salve->phy, pause))
-		return -EINVAL;
+	अगर (!phy_validate_छोड़ो(salve->phy, छोड़ो))
+		वापस -EINVAL;
 
-	salve->rx_pause = pause->rx_pause ? true : false;
-	salve->tx_pause = pause->tx_pause ? true : false;
+	salve->rx_छोड़ो = छोड़ो->rx_छोड़ो ? true : false;
+	salve->tx_छोड़ो = छोड़ो->tx_छोड़ो ? true : false;
 
-	phy_set_asym_pause(salve->phy, salve->rx_pause, salve->tx_pause);
+	phy_set_asym_छोड़ो(salve->phy, salve->rx_छोड़ो, salve->tx_छोड़ो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void am65_cpsw_get_wol(struct net_device *ndev,
-			      struct ethtool_wolinfo *wol)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल व्योम am65_cpsw_get_wol(काष्ठा net_device *ndev,
+			      काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
 	wol->supported = 0;
 	wol->wolopts = 0;
 
-	if (salve->phy)
+	अगर (salve->phy)
 		phy_ethtool_get_wol(salve->phy, wol);
-}
+पूर्ण
 
-static int am65_cpsw_set_wol(struct net_device *ndev,
-			     struct ethtool_wolinfo *wol)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल पूर्णांक am65_cpsw_set_wol(काष्ठा net_device *ndev,
+			     काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	if (!salve->phy)
-		return -EOPNOTSUPP;
+	अगर (!salve->phy)
+		वापस -EOPNOTSUPP;
 
-	return phy_ethtool_set_wol(salve->phy, wol);
-}
+	वापस phy_ethtool_set_wol(salve->phy, wol);
+पूर्ण
 
-static int am65_cpsw_get_link_ksettings(struct net_device *ndev,
-					struct ethtool_link_ksettings *ecmd)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल पूर्णांक am65_cpsw_get_link_ksettings(काष्ठा net_device *ndev,
+					काष्ठा ethtool_link_ksettings *ecmd)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	if (!salve->phy)
-		return -EOPNOTSUPP;
+	अगर (!salve->phy)
+		वापस -EOPNOTSUPP;
 
 	phy_ethtool_ksettings_get(salve->phy, ecmd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-am65_cpsw_set_link_ksettings(struct net_device *ndev,
-			     const struct ethtool_link_ksettings *ecmd)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल पूर्णांक
+am65_cpsw_set_link_ksettings(काष्ठा net_device *ndev,
+			     स्थिर काष्ठा ethtool_link_ksettings *ecmd)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	if (!salve->phy || phy_is_pseudo_fixed_link(salve->phy))
-		return -EOPNOTSUPP;
+	अगर (!salve->phy || phy_is_pseuकरो_fixed_link(salve->phy))
+		वापस -EOPNOTSUPP;
 
-	return phy_ethtool_ksettings_set(salve->phy, ecmd);
-}
+	वापस phy_ethtool_ksettings_set(salve->phy, ecmd);
+पूर्ण
 
-static int am65_cpsw_get_eee(struct net_device *ndev, struct ethtool_eee *edata)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल पूर्णांक am65_cpsw_get_eee(काष्ठा net_device *ndev, काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	if (!salve->phy || phy_is_pseudo_fixed_link(salve->phy))
-		return -EOPNOTSUPP;
+	अगर (!salve->phy || phy_is_pseuकरो_fixed_link(salve->phy))
+		वापस -EOPNOTSUPP;
 
-	return phy_ethtool_get_eee(salve->phy, edata);
-}
+	वापस phy_ethtool_get_eee(salve->phy, edata);
+पूर्ण
 
-static int am65_cpsw_set_eee(struct net_device *ndev, struct ethtool_eee *edata)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल पूर्णांक am65_cpsw_set_eee(काष्ठा net_device *ndev, काष्ठा ethtool_eee *edata)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	if (!salve->phy || phy_is_pseudo_fixed_link(salve->phy))
-		return -EOPNOTSUPP;
+	अगर (!salve->phy || phy_is_pseuकरो_fixed_link(salve->phy))
+		वापस -EOPNOTSUPP;
 
-	return phy_ethtool_set_eee(salve->phy, edata);
-}
+	वापस phy_ethtool_set_eee(salve->phy, edata);
+पूर्ण
 
-static int am65_cpsw_nway_reset(struct net_device *ndev)
-{
-	struct am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
+अटल पूर्णांक am65_cpsw_nway_reset(काष्ठा net_device *ndev)
+अणु
+	काष्ठा am65_cpsw_slave_data *salve = am65_ndev_to_slave(ndev);
 
-	if (!salve->phy || phy_is_pseudo_fixed_link(salve->phy))
-		return -EOPNOTSUPP;
+	अगर (!salve->phy || phy_is_pseuकरो_fixed_link(salve->phy))
+		वापस -EOPNOTSUPP;
 
-	return phy_restart_aneg(salve->phy);
-}
+	वापस phy_restart_aneg(salve->phy);
+पूर्ण
 
-static int am65_cpsw_get_regs_len(struct net_device *ndev)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल पूर्णांक am65_cpsw_get_regs_len(काष्ठा net_device *ndev)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 	u32 ale_entries, i, regdump_len = 0;
 
 	ale_entries = cpsw_ale_get_num_entries(common->ale);
-	for (i = 0; i < ARRAY_SIZE(am65_cpsw_regdump); i++) {
-		if (am65_cpsw_regdump[i].hdr.module_id ==
-		    AM65_CPSW_REGDUMP_MOD_CPSW_ALE_TBL) {
-			regdump_len += sizeof(struct am65_cpsw_regdump_hdr);
+	क्रम (i = 0; i < ARRAY_SIZE(am65_cpsw_regdump); i++) अणु
+		अगर (am65_cpsw_regdump[i].hdr.module_id ==
+		    AM65_CPSW_REGDUMP_MOD_CPSW_ALE_TBL) अणु
+			regdump_len += माप(काष्ठा am65_cpsw_regdump_hdr);
 			regdump_len += ale_entries *
-				       ALE_ENTRY_WORDS * sizeof(u32);
-			continue;
-		}
+				       ALE_ENTRY_WORDS * माप(u32);
+			जारी;
+		पूर्ण
 		regdump_len += am65_cpsw_regdump[i].hdr.len;
-	}
+	पूर्ण
 
-	return regdump_len;
-}
+	वापस regdump_len;
+पूर्ण
 
-static void am65_cpsw_get_regs(struct net_device *ndev,
-			       struct ethtool_regs *regs, void *p)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल व्योम am65_cpsw_get_regs(काष्ठा net_device *ndev,
+			       काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 	u32 ale_entries, i, j, pos, *reg = p;
 
 	/* update CPSW IP version */
@@ -600,112 +601,112 @@ static void am65_cpsw_get_regs(struct net_device *ndev,
 	ale_entries = cpsw_ale_get_num_entries(common->ale);
 
 	pos = 0;
-	for (i = 0; i < ARRAY_SIZE(am65_cpsw_regdump); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(am65_cpsw_regdump); i++) अणु
 		reg[pos++] = am65_cpsw_regdump[i].hdr.module_id;
 
-		if (am65_cpsw_regdump[i].hdr.module_id ==
-		    AM65_CPSW_REGDUMP_MOD_CPSW_ALE_TBL) {
+		अगर (am65_cpsw_regdump[i].hdr.module_id ==
+		    AM65_CPSW_REGDUMP_MOD_CPSW_ALE_TBL) अणु
 			u32 ale_tbl_len = ale_entries *
-					  ALE_ENTRY_WORDS * sizeof(u32) +
-					  sizeof(struct am65_cpsw_regdump_hdr);
+					  ALE_ENTRY_WORDS * माप(u32) +
+					  माप(काष्ठा am65_cpsw_regdump_hdr);
 			reg[pos++] = ale_tbl_len;
 			cpsw_ale_dump(common->ale, &reg[pos]);
 			pos += ale_tbl_len;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		reg[pos++] = am65_cpsw_regdump[i].hdr.len;
 
 		j = am65_cpsw_regdump[i].start_ofs;
-		do {
+		करो अणु
 			reg[pos++] = j;
-			reg[pos++] = readl_relaxed(common->ss_base + j);
-			j += sizeof(u32);
-		} while (j <= am65_cpsw_regdump[i].end_ofs);
-	}
-}
+			reg[pos++] = पढ़ोl_relaxed(common->ss_base + j);
+			j += माप(u32);
+		पूर्ण जबतक (j <= am65_cpsw_regdump[i].end_ofs);
+	पूर्ण
+पूर्ण
 
-static int am65_cpsw_get_sset_count(struct net_device *ndev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return ARRAY_SIZE(am65_host_stats) +
+अटल पूर्णांक am65_cpsw_get_sset_count(काष्ठा net_device *ndev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस ARRAY_SIZE(am65_host_stats) +
 		       ARRAY_SIZE(am65_slave_stats);
-	case ETH_SS_PRIV_FLAGS:
-		return ARRAY_SIZE(am65_cpsw_ethtool_priv_flags);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	हाल ETH_SS_PRIV_FLAGS:
+		वापस ARRAY_SIZE(am65_cpsw_ethtool_priv_flags);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void am65_cpsw_get_strings(struct net_device *ndev,
+अटल व्योम am65_cpsw_get_strings(काष्ठा net_device *ndev,
 				  u32 stringset, u8 *data)
-{
-	const struct am65_cpsw_ethtool_stat *hw_stats;
+अणु
+	स्थिर काष्ठा am65_cpsw_ethtool_stat *hw_stats;
 	u32 i, num_stats;
 	u8 *p = data;
 
-	switch (stringset) {
-	case ETH_SS_STATS:
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
 		num_stats = ARRAY_SIZE(am65_host_stats);
 		hw_stats = am65_host_stats;
-		for (i = 0; i < num_stats; i++) {
-			memcpy(p, hw_stats[i].desc, ETH_GSTRING_LEN);
+		क्रम (i = 0; i < num_stats; i++) अणु
+			स_नकल(p, hw_stats[i].desc, ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
+		पूर्ण
 
 		num_stats = ARRAY_SIZE(am65_slave_stats);
 		hw_stats = am65_slave_stats;
-		for (i = 0; i < num_stats; i++) {
-			memcpy(p, hw_stats[i].desc, ETH_GSTRING_LEN);
+		क्रम (i = 0; i < num_stats; i++) अणु
+			स_नकल(p, hw_stats[i].desc, ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		break;
-	case ETH_SS_PRIV_FLAGS:
+		पूर्ण
+		अवरोध;
+	हाल ETH_SS_PRIV_FLAGS:
 		num_stats = ARRAY_SIZE(am65_cpsw_ethtool_priv_flags);
 
-		for (i = 0; i < num_stats; i++) {
-			memcpy(p, am65_cpsw_ethtool_priv_flags[i],
+		क्रम (i = 0; i < num_stats; i++) अणु
+			स_नकल(p, am65_cpsw_ethtool_priv_flags[i],
 			       ETH_GSTRING_LEN);
 			p += ETH_GSTRING_LEN;
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void am65_cpsw_get_ethtool_stats(struct net_device *ndev,
-					struct ethtool_stats *stats, u64 *data)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
-	const struct am65_cpsw_ethtool_stat *hw_stats;
-	struct am65_cpsw_host *host_p;
-	struct am65_cpsw_port *port;
+अटल व्योम am65_cpsw_get_ethtool_stats(काष्ठा net_device *ndev,
+					काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
+	स्थिर काष्ठा am65_cpsw_ethtool_stat *hw_stats;
+	काष्ठा am65_cpsw_host *host_p;
+	काष्ठा am65_cpsw_port *port;
 	u32 i, num_stats;
 
 	host_p = am65_common_get_host(common);
 	port = am65_ndev_to_port(ndev);
 	num_stats = ARRAY_SIZE(am65_host_stats);
 	hw_stats = am65_host_stats;
-	for (i = 0; i < num_stats; i++)
-		*data++ = readl_relaxed(host_p->stat_base +
+	क्रम (i = 0; i < num_stats; i++)
+		*data++ = पढ़ोl_relaxed(host_p->stat_base +
 					hw_stats[i].offset);
 
 	num_stats = ARRAY_SIZE(am65_slave_stats);
 	hw_stats = am65_slave_stats;
-	for (i = 0; i < num_stats; i++)
-		*data++ = readl_relaxed(port->stat_base +
+	क्रम (i = 0; i < num_stats; i++)
+		*data++ = पढ़ोl_relaxed(port->stat_base +
 					hw_stats[i].offset);
-}
+पूर्ण
 
-static int am65_cpsw_get_ethtool_ts_info(struct net_device *ndev,
-					 struct ethtool_ts_info *info)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल पूर्णांक am65_cpsw_get_ethtool_ts_info(काष्ठा net_device *ndev,
+					 काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 
-	if (!IS_ENABLED(CONFIG_TI_K3_AM65_CPTS))
-		return ethtool_op_get_ts_info(ndev, info);
+	अगर (!IS_ENABLED(CONFIG_TI_K3_AM65_CPTS))
+		वापस ethtool_op_get_ts_info(ndev, info);
 
-	info->so_timestamping =
+	info->so_बारtamping =
 		SOF_TIMESTAMPING_TX_HARDWARE |
 		SOF_TIMESTAMPING_TX_SOFTWARE |
 		SOF_TIMESTAMPING_RX_HARDWARE |
@@ -715,42 +716,42 @@ static int am65_cpsw_get_ethtool_ts_info(struct net_device *ndev,
 	info->phc_index = am65_cpts_phc_index(common->cpts);
 	info->tx_types = BIT(HWTSTAMP_TX_OFF) | BIT(HWTSTAMP_TX_ON);
 	info->rx_filters = BIT(HWTSTAMP_FILTER_NONE) | BIT(HWTSTAMP_FILTER_ALL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 am65_cpsw_get_ethtool_priv_flags(struct net_device *ndev)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
+अटल u32 am65_cpsw_get_ethtool_priv_flags(काष्ठा net_device *ndev)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
 	u32 priv_flags = 0;
 
-	if (common->pf_p0_rx_ptype_rrobin)
+	अगर (common->pf_p0_rx_ptype_rrobin)
 		priv_flags |= AM65_CPSW_PRIV_P0_RX_PTYPE_RROBIN;
 
-	return priv_flags;
-}
+	वापस priv_flags;
+पूर्ण
 
-static int am65_cpsw_set_ethtool_priv_flags(struct net_device *ndev, u32 flags)
-{
-	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
-	int rrobin;
+अटल पूर्णांक am65_cpsw_set_ethtool_priv_flags(काष्ठा net_device *ndev, u32 flags)
+अणु
+	काष्ठा am65_cpsw_common *common = am65_ndev_to_common(ndev);
+	पूर्णांक rrobin;
 
 	rrobin = !!(flags & AM65_CPSW_PRIV_P0_RX_PTYPE_RROBIN);
 
-	if (common->usage_count)
-		return -EBUSY;
+	अगर (common->usage_count)
+		वापस -EBUSY;
 
-	if (common->est_enabled && rrobin) {
+	अगर (common->est_enabled && rrobin) अणु
 		netdev_err(ndev,
 			   "p0-rx-ptype-rrobin flag conflicts with QOS\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	common->pf_p0_rx_ptype_rrobin = rrobin;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct ethtool_ops am65_cpsw_ethtool_ops_slave = {
+स्थिर काष्ठा ethtool_ops am65_cpsw_ethtool_ops_slave = अणु
 	.begin			= am65_cpsw_ethtool_op_begin,
 	.complete		= am65_cpsw_ethtool_op_complete,
 	.get_drvinfo		= am65_cpsw_get_drvinfo,
@@ -771,11 +772,11 @@ const struct ethtool_ops am65_cpsw_ethtool_ops_slave = {
 	.get_link		= ethtool_op_get_link,
 	.get_link_ksettings	= am65_cpsw_get_link_ksettings,
 	.set_link_ksettings	= am65_cpsw_set_link_ksettings,
-	.get_pauseparam		= am65_cpsw_get_pauseparam,
-	.set_pauseparam		= am65_cpsw_set_pauseparam,
+	.get_छोड़ोparam		= am65_cpsw_get_छोड़ोparam,
+	.set_छोड़ोparam		= am65_cpsw_set_छोड़ोparam,
 	.get_wol		= am65_cpsw_get_wol,
 	.set_wol		= am65_cpsw_set_wol,
 	.get_eee		= am65_cpsw_get_eee,
 	.set_eee		= am65_cpsw_set_eee,
 	.nway_reset		= am65_cpsw_nway_reset,
-};
+पूर्ण;

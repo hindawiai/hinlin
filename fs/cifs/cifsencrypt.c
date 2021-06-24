@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
- *   fs/cifs/cifsencrypt.c
+ *   fs/cअगरs/cअगरsencrypt.c
  *
  *   Encryption and hashing operations relating to NTLM, NTLMv2.  See MS-NLMP
- *   for more detailed information
+ *   क्रम more detailed inक्रमmation
  *
  *   Copyright (C) International Business Machines  Corp., 2005,2013
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -15,371 +16,371 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include "cifspdu.h"
-#include "cifsglob.h"
-#include "cifs_debug.h"
-#include "cifs_unicode.h"
-#include "cifsproto.h"
-#include "ntlmssp.h"
-#include <linux/ctype.h>
-#include <linux/random.h>
-#include <linux/highmem.h>
-#include <linux/fips.h>
-#include <crypto/arc4.h>
-#include <crypto/aead.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश "cifspdu.h"
+#समावेश "cifsglob.h"
+#समावेश "cifs_debug.h"
+#समावेश "cifs_unicode.h"
+#समावेश "cifsproto.h"
+#समावेश "ntlmssp.h"
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/fips.h>
+#समावेश <crypto/arc4.h>
+#समावेश <crypto/aead.h>
 
-int __cifs_calc_signature(struct smb_rqst *rqst,
-			struct TCP_Server_Info *server, char *signature,
-			struct shash_desc *shash)
-{
-	int i;
-	int rc;
-	struct kvec *iov = rqst->rq_iov;
-	int n_vec = rqst->rq_nvec;
-	int is_smb2 = server->vals->header_preamble_size == 0;
+पूर्णांक __cअगरs_calc_signature(काष्ठा smb_rqst *rqst,
+			काष्ठा TCP_Server_Info *server, अक्षर *signature,
+			काष्ठा shash_desc *shash)
+अणु
+	पूर्णांक i;
+	पूर्णांक rc;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	पूर्णांक n_vec = rqst->rq_nvec;
+	पूर्णांक is_smb2 = server->vals->header_preamble_size == 0;
 
-	/* iov[0] is actual data and not the rfc1002 length for SMB2+ */
-	if (is_smb2) {
-		if (iov[0].iov_len <= 4)
-			return -EIO;
+	/* iov[0] is actual data and not the rfc1002 length क्रम SMB2+ */
+	अगर (is_smb2) अणु
+		अगर (iov[0].iov_len <= 4)
+			वापस -EIO;
 		i = 0;
-	} else {
-		if (n_vec < 2 || iov[0].iov_len != 4)
-			return -EIO;
+	पूर्ण अन्यथा अणु
+		अगर (n_vec < 2 || iov[0].iov_len != 4)
+			वापस -EIO;
 		i = 1; /* skip rfc1002 length */
-	}
+	पूर्ण
 
-	for (; i < n_vec; i++) {
-		if (iov[i].iov_len == 0)
-			continue;
-		if (iov[i].iov_base == NULL) {
-			cifs_dbg(VFS, "null iovec entry\n");
-			return -EIO;
-		}
+	क्रम (; i < n_vec; i++) अणु
+		अगर (iov[i].iov_len == 0)
+			जारी;
+		अगर (iov[i].iov_base == शून्य) अणु
+			cअगरs_dbg(VFS, "null iovec entry\n");
+			वापस -EIO;
+		पूर्ण
 
 		rc = crypto_shash_update(shash,
 					 iov[i].iov_base, iov[i].iov_len);
-		if (rc) {
-			cifs_dbg(VFS, "%s: Could not update with payload\n",
+		अगर (rc) अणु
+			cअगरs_dbg(VFS, "%s: Could not update with payload\n",
 				 __func__);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
 	/* now hash over the rq_pages array */
-	for (i = 0; i < rqst->rq_npages; i++) {
-		void *kaddr;
-		unsigned int len, offset;
+	क्रम (i = 0; i < rqst->rq_npages; i++) अणु
+		व्योम *kaddr;
+		अचिन्हित पूर्णांक len, offset;
 
 		rqst_page_get_length(rqst, i, &len, &offset);
 
-		kaddr = (char *) kmap(rqst->rq_pages[i]) + offset;
+		kaddr = (अक्षर *) kmap(rqst->rq_pages[i]) + offset;
 
 		rc = crypto_shash_update(shash, kaddr, len);
-		if (rc) {
-			cifs_dbg(VFS, "%s: Could not update with payload\n",
+		अगर (rc) अणु
+			cअगरs_dbg(VFS, "%s: Could not update with payload\n",
 				 __func__);
 			kunmap(rqst->rq_pages[i]);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
 		kunmap(rqst->rq_pages[i]);
-	}
+	पूर्ण
 
 	rc = crypto_shash_final(shash, signature);
-	if (rc)
-		cifs_dbg(VFS, "%s: Could not generate hash\n", __func__);
+	अगर (rc)
+		cअगरs_dbg(VFS, "%s: Could not generate hash\n", __func__);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Calculate and return the CIFS signature based on the mac key and SMB PDU.
+ * Calculate and वापस the CIFS signature based on the mac key and SMB PDU.
  * The 16 byte signature must be allocated by the caller. Note we only use the
  * 1st eight bytes and that the smb header signature field on input contains
- * the sequence number before this function is called. Also, this function
+ * the sequence number beक्रमe this function is called. Also, this function
  * should be called with the server->srv_mutex held.
  */
-static int cifs_calc_signature(struct smb_rqst *rqst,
-			struct TCP_Server_Info *server, char *signature)
-{
-	int rc;
+अटल पूर्णांक cअगरs_calc_signature(काष्ठा smb_rqst *rqst,
+			काष्ठा TCP_Server_Info *server, अक्षर *signature)
+अणु
+	पूर्णांक rc;
 
-	if (!rqst->rq_iov || !signature || !server)
-		return -EINVAL;
+	अगर (!rqst->rq_iov || !signature || !server)
+		वापस -EINVAL;
 
-	rc = cifs_alloc_hash("md5", &server->secmech.md5,
+	rc = cअगरs_alloc_hash("md5", &server->secmech.md5,
 			     &server->secmech.sdescmd5);
-	if (rc)
-		return -1;
+	अगर (rc)
+		वापस -1;
 
 	rc = crypto_shash_init(&server->secmech.sdescmd5->shash);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not init md5\n", __func__);
-		return rc;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not init md5\n", __func__);
+		वापस rc;
+	पूर्ण
 
 	rc = crypto_shash_update(&server->secmech.sdescmd5->shash,
 		server->session_key.response, server->session_key.len);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not update with response\n", __func__);
-		return rc;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not update with response\n", __func__);
+		वापस rc;
+	पूर्ण
 
-	return __cifs_calc_signature(rqst, server, signature,
+	वापस __cअगरs_calc_signature(rqst, server, signature,
 				     &server->secmech.sdescmd5->shash);
-}
+पूर्ण
 
 /* must be called with server->srv_mutex held */
-int cifs_sign_rqst(struct smb_rqst *rqst, struct TCP_Server_Info *server,
+पूर्णांक cअगरs_sign_rqst(काष्ठा smb_rqst *rqst, काष्ठा TCP_Server_Info *server,
 		   __u32 *pexpected_response_sequence_number)
-{
-	int rc = 0;
-	char smb_signature[20];
-	struct smb_hdr *cifs_pdu = (struct smb_hdr *)rqst->rq_iov[0].iov_base;
+अणु
+	पूर्णांक rc = 0;
+	अक्षर smb_signature[20];
+	काष्ठा smb_hdr *cअगरs_pdu = (काष्ठा smb_hdr *)rqst->rq_iov[0].iov_base;
 
-	if (rqst->rq_iov[0].iov_len != 4 ||
+	अगर (rqst->rq_iov[0].iov_len != 4 ||
 	    rqst->rq_iov[0].iov_base + 4 != rqst->rq_iov[1].iov_base)
-		return -EIO;
+		वापस -EIO;
 
-	if ((cifs_pdu == NULL) || (server == NULL))
-		return -EINVAL;
+	अगर ((cअगरs_pdu == शून्य) || (server == शून्य))
+		वापस -EINVAL;
 
-	if (!(cifs_pdu->Flags2 & SMBFLG2_SECURITY_SIGNATURE) ||
-	    server->tcpStatus == CifsNeedNegotiate)
-		return rc;
+	अगर (!(cअगरs_pdu->Flags2 & SMBFLG2_SECURITY_SIGNATURE) ||
+	    server->tcpStatus == CअगरsNeedNegotiate)
+		वापस rc;
 
-	if (!server->session_estab) {
-		memcpy(cifs_pdu->Signature.SecuritySignature, "BSRSPYL", 8);
-		return rc;
-	}
+	अगर (!server->session_estab) अणु
+		स_नकल(cअगरs_pdu->Signature.SecuritySignature, "BSRSPYL", 8);
+		वापस rc;
+	पूर्ण
 
-	cifs_pdu->Signature.Sequence.SequenceNumber =
+	cअगरs_pdu->Signature.Sequence.SequenceNumber =
 				cpu_to_le32(server->sequence_number);
-	cifs_pdu->Signature.Sequence.Reserved = 0;
+	cअगरs_pdu->Signature.Sequence.Reserved = 0;
 
 	*pexpected_response_sequence_number = ++server->sequence_number;
 	++server->sequence_number;
 
-	rc = cifs_calc_signature(rqst, server, smb_signature);
-	if (rc)
-		memset(cifs_pdu->Signature.SecuritySignature, 0, 8);
-	else
-		memcpy(cifs_pdu->Signature.SecuritySignature, smb_signature, 8);
+	rc = cअगरs_calc_signature(rqst, server, smb_signature);
+	अगर (rc)
+		स_रखो(cअगरs_pdu->Signature.SecuritySignature, 0, 8);
+	अन्यथा
+		स_नकल(cअगरs_pdu->Signature.SecuritySignature, smb_signature, 8);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int cifs_sign_smbv(struct kvec *iov, int n_vec, struct TCP_Server_Info *server,
+पूर्णांक cअगरs_sign_smbv(काष्ठा kvec *iov, पूर्णांक n_vec, काष्ठा TCP_Server_Info *server,
 		   __u32 *pexpected_response_sequence)
-{
-	struct smb_rqst rqst = { .rq_iov = iov,
-				 .rq_nvec = n_vec };
+अणु
+	काष्ठा smb_rqst rqst = अणु .rq_iov = iov,
+				 .rq_nvec = n_vec पूर्ण;
 
-	return cifs_sign_rqst(&rqst, server, pexpected_response_sequence);
-}
+	वापस cअगरs_sign_rqst(&rqst, server, pexpected_response_sequence);
+पूर्ण
 
 /* must be called with server->srv_mutex held */
-int cifs_sign_smb(struct smb_hdr *cifs_pdu, struct TCP_Server_Info *server,
+पूर्णांक cअगरs_sign_smb(काष्ठा smb_hdr *cअगरs_pdu, काष्ठा TCP_Server_Info *server,
 		  __u32 *pexpected_response_sequence_number)
-{
-	struct kvec iov[2];
+अणु
+	काष्ठा kvec iov[2];
 
-	iov[0].iov_base = cifs_pdu;
+	iov[0].iov_base = cअगरs_pdu;
 	iov[0].iov_len = 4;
-	iov[1].iov_base = (char *)cifs_pdu + 4;
-	iov[1].iov_len = be32_to_cpu(cifs_pdu->smb_buf_length);
+	iov[1].iov_base = (अक्षर *)cअगरs_pdu + 4;
+	iov[1].iov_len = be32_to_cpu(cअगरs_pdu->smb_buf_length);
 
-	return cifs_sign_smbv(iov, 2, server,
+	वापस cअगरs_sign_smbv(iov, 2, server,
 			      pexpected_response_sequence_number);
-}
+पूर्ण
 
-int cifs_verify_signature(struct smb_rqst *rqst,
-			  struct TCP_Server_Info *server,
+पूर्णांक cअगरs_verअगरy_signature(काष्ठा smb_rqst *rqst,
+			  काष्ठा TCP_Server_Info *server,
 			  __u32 expected_sequence_number)
-{
-	unsigned int rc;
-	char server_response_sig[8];
-	char what_we_think_sig_should_be[20];
-	struct smb_hdr *cifs_pdu = (struct smb_hdr *)rqst->rq_iov[0].iov_base;
+अणु
+	अचिन्हित पूर्णांक rc;
+	अक्षर server_response_sig[8];
+	अक्षर what_we_think_sig_should_be[20];
+	काष्ठा smb_hdr *cअगरs_pdu = (काष्ठा smb_hdr *)rqst->rq_iov[0].iov_base;
 
-	if (rqst->rq_iov[0].iov_len != 4 ||
+	अगर (rqst->rq_iov[0].iov_len != 4 ||
 	    rqst->rq_iov[0].iov_base + 4 != rqst->rq_iov[1].iov_base)
-		return -EIO;
+		वापस -EIO;
 
-	if (cifs_pdu == NULL || server == NULL)
-		return -EINVAL;
+	अगर (cअगरs_pdu == शून्य || server == शून्य)
+		वापस -EINVAL;
 
-	if (!server->session_estab)
-		return 0;
+	अगर (!server->session_estab)
+		वापस 0;
 
-	if (cifs_pdu->Command == SMB_COM_LOCKING_ANDX) {
-		struct smb_com_lock_req *pSMB =
-			(struct smb_com_lock_req *)cifs_pdu;
-		if (pSMB->LockType & LOCKING_ANDX_OPLOCK_RELEASE)
-			return 0;
-	}
+	अगर (cअगरs_pdu->Command == SMB_COM_LOCKING_ANDX) अणु
+		काष्ठा smb_com_lock_req *pSMB =
+			(काष्ठा smb_com_lock_req *)cअगरs_pdu;
+		अगर (pSMB->LockType & LOCKING_ANDX_OPLOCK_RELEASE)
+			वापस 0;
+	पूर्ण
 
-	/* BB what if signatures are supposed to be on for session but
-	   server does not send one? BB */
+	/* BB what अगर signatures are supposed to be on क्रम session but
+	   server करोes not send one? BB */
 
-	/* Do not need to verify session setups with signature "BSRSPYL "  */
-	if (memcmp(cifs_pdu->Signature.SecuritySignature, "BSRSPYL ", 8) == 0)
-		cifs_dbg(FYI, "dummy signature received for smb command 0x%x\n",
-			 cifs_pdu->Command);
+	/* Do not need to verअगरy session setups with signature "BSRSPYL "  */
+	अगर (स_भेद(cअगरs_pdu->Signature.SecuritySignature, "BSRSPYL ", 8) == 0)
+		cअगरs_dbg(FYI, "dummy signature received for smb command 0x%x\n",
+			 cअगरs_pdu->Command);
 
-	/* save off the origiginal signature so we can modify the smb and check
+	/* save off the origiginal signature so we can modअगरy the smb and check
 		its signature against what the server sent */
-	memcpy(server_response_sig, cifs_pdu->Signature.SecuritySignature, 8);
+	स_नकल(server_response_sig, cअगरs_pdu->Signature.SecuritySignature, 8);
 
-	cifs_pdu->Signature.Sequence.SequenceNumber =
+	cअगरs_pdu->Signature.Sequence.SequenceNumber =
 					cpu_to_le32(expected_sequence_number);
-	cifs_pdu->Signature.Sequence.Reserved = 0;
+	cअगरs_pdu->Signature.Sequence.Reserved = 0;
 
 	mutex_lock(&server->srv_mutex);
-	rc = cifs_calc_signature(rqst, server, what_we_think_sig_should_be);
+	rc = cअगरs_calc_signature(rqst, server, what_we_think_sig_should_be);
 	mutex_unlock(&server->srv_mutex);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-/*	cifs_dump_mem("what we think it should be: ",
+/*	cअगरs_dump_mem("what we think it should be: ",
 		      what_we_think_sig_should_be, 16); */
 
-	if (memcmp(server_response_sig, what_we_think_sig_should_be, 8))
-		return -EACCES;
-	else
-		return 0;
+	अगर (स_भेद(server_response_sig, what_we_think_sig_should_be, 8))
+		वापस -EACCES;
+	अन्यथा
+		वापस 0;
 
-}
+पूर्ण
 
 /* first calculate 24 bytes ntlm response and then 16 byte session key */
-int setup_ntlm_response(struct cifs_ses *ses, const struct nls_table *nls_cp)
-{
-	int rc = 0;
-	unsigned int temp_len = CIFS_SESS_KEY_SIZE + CIFS_AUTH_RESP_SIZE;
-	char temp_key[CIFS_SESS_KEY_SIZE];
+पूर्णांक setup_ntlm_response(काष्ठा cअगरs_ses *ses, स्थिर काष्ठा nls_table *nls_cp)
+अणु
+	पूर्णांक rc = 0;
+	अचिन्हित पूर्णांक temp_len = CIFS_SESS_KEY_SIZE + CIFS_AUTH_RESP_SIZE;
+	अक्षर temp_key[CIFS_SESS_KEY_SIZE];
 
-	if (!ses)
-		return -EINVAL;
+	अगर (!ses)
+		वापस -EINVAL;
 
-	ses->auth_key.response = kmalloc(temp_len, GFP_KERNEL);
-	if (!ses->auth_key.response)
-		return -ENOMEM;
+	ses->auth_key.response = kदो_स्मृति(temp_len, GFP_KERNEL);
+	अगर (!ses->auth_key.response)
+		वापस -ENOMEM;
 
 	ses->auth_key.len = temp_len;
 
 	rc = SMBNTencrypt(ses->password, ses->server->cryptkey,
 			ses->auth_key.response + CIFS_SESS_KEY_SIZE, nls_cp);
-	if (rc) {
-		cifs_dbg(FYI, "%s Can't generate NTLM response, error: %d\n",
+	अगर (rc) अणु
+		cअगरs_dbg(FYI, "%s Can't generate NTLM response, error: %d\n",
 			 __func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = E_md4hash(ses->password, temp_key, nls_cp);
-	if (rc) {
-		cifs_dbg(FYI, "%s Can't generate NT hash, error: %d\n",
+	अगर (rc) अणु
+		cअगरs_dbg(FYI, "%s Can't generate NT hash, error: %d\n",
 			 __func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = mdfour(ses->auth_key.response, temp_key, CIFS_SESS_KEY_SIZE);
-	if (rc)
-		cifs_dbg(FYI, "%s Can't generate NTLM session key, error: %d\n",
+	अगर (rc)
+		cअगरs_dbg(FYI, "%s Can't generate NTLM session key, error: %d\n",
 			 __func__, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-int calc_lanman_hash(const char *password, const char *cryptkey, bool encrypt,
-			char *lnm_session_key)
-{
-	int i, len;
-	int rc;
-	char password_with_pad[CIFS_ENCPWD_SIZE] = {0};
+#अगर_घोषित CONFIG_CIFS_WEAK_PW_HASH
+पूर्णांक calc_lanman_hash(स्थिर अक्षर *password, स्थिर अक्षर *cryptkey, bool encrypt,
+			अक्षर *lnm_session_key)
+अणु
+	पूर्णांक i, len;
+	पूर्णांक rc;
+	अक्षर password_with_pad[CIFS_ENCPWD_SIZE] = अणु0पूर्ण;
 
-	if (password) {
-		for (len = 0; len < CIFS_ENCPWD_SIZE; len++)
-			if (!password[len])
-				break;
+	अगर (password) अणु
+		क्रम (len = 0; len < CIFS_ENCPWD_SIZE; len++)
+			अगर (!password[len])
+				अवरोध;
 
-		memcpy(password_with_pad, password, len);
-	}
+		स_नकल(password_with_pad, password, len);
+	पूर्ण
 
-	if (!encrypt && global_secflags & CIFSSEC_MAY_PLNTXT) {
-		memcpy(lnm_session_key, password_with_pad,
+	अगर (!encrypt && global_secflags & CIFSSEC_MAY_PLNTXT) अणु
+		स_नकल(lnm_session_key, password_with_pad,
 			CIFS_ENCPWD_SIZE);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* calculate old style session key */
-	/* calling toupper is less broken than repeatedly
-	calling nls_toupper would be since that will never
-	work for UTF8, but neither handles multibyte code pages
+	/* calling बड़े is less broken than repeatedly
+	calling nls_बड़े would be since that will never
+	work क्रम UTF8, but neither handles multibyte code pages
 	but the only alternative would be converting to UCS-16 (Unicode)
 	(using a routine something like UniStrupr) then
 	uppercasing and then converting back from Unicode - which
-	would only worth doing it if we knew it were utf8. Basically
+	would only worth करोing it अगर we knew it were utf8. Basically
 	utf8 and other multibyte codepages each need their own strupper
-	function since a byte at a time will ont work. */
+	function since a byte at a समय will ont work. */
 
-	for (i = 0; i < CIFS_ENCPWD_SIZE; i++)
-		password_with_pad[i] = toupper(password_with_pad[i]);
+	क्रम (i = 0; i < CIFS_ENCPWD_SIZE; i++)
+		password_with_pad[i] = बड़े(password_with_pad[i]);
 
 	rc = SMBencrypt(password_with_pad, cryptkey, lnm_session_key);
 
-	return rc;
-}
-#endif /* CIFS_WEAK_PW_HASH */
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर /* CIFS_WEAK_PW_HASH */
 
 /* Build a proper attribute value/target info pairs blob.
- * Fill in netbios and dns domain name and workstation name
- * and client time (total five av pairs and + one end of fields indicator.
- * Allocate domain name which gets freed when session struct is deallocated.
+ * Fill in netbios and dns करोमुख्य name and workstation name
+ * and client समय (total five av pairs and + one end of fields indicator.
+ * Allocate करोमुख्य name which माला_लो मुक्तd when session काष्ठा is deallocated.
  */
-static int
-build_avpair_blob(struct cifs_ses *ses, const struct nls_table *nls_cp)
-{
-	unsigned int dlen;
-	unsigned int size = 2 * sizeof(struct ntlmssp2_name);
-	char *defdmname = "WORKGROUP";
-	unsigned char *blobptr;
-	struct ntlmssp2_name *attrptr;
+अटल पूर्णांक
+build_avpair_blob(काष्ठा cअगरs_ses *ses, स्थिर काष्ठा nls_table *nls_cp)
+अणु
+	अचिन्हित पूर्णांक dlen;
+	अचिन्हित पूर्णांक size = 2 * माप(काष्ठा ntlmssp2_name);
+	अक्षर *defdmname = "WORKGROUP";
+	अचिन्हित अक्षर *blobptr;
+	काष्ठा ntlmssp2_name *attrptr;
 
-	if (!ses->domainName) {
-		ses->domainName = kstrdup(defdmname, GFP_KERNEL);
-		if (!ses->domainName)
-			return -ENOMEM;
-	}
+	अगर (!ses->करोमुख्यName) अणु
+		ses->करोमुख्यName = kstrdup(defdmname, GFP_KERNEL);
+		अगर (!ses->करोमुख्यName)
+			वापस -ENOMEM;
+	पूर्ण
 
-	dlen = strlen(ses->domainName);
+	dlen = म_माप(ses->करोमुख्यName);
 
 	/*
-	 * The length of this blob is two times the size of a
-	 * structure (av pair) which holds name/size
-	 * ( for NTLMSSP_AV_NB_DOMAIN_NAME followed by NTLMSSP_AV_EOL ) +
-	 * unicode length of a netbios domain name
+	 * The length of this blob is two बार the size of a
+	 * काष्ठाure (av pair) which holds name/size
+	 * ( क्रम NTLMSSP_AV_NB_DOMAIN_NAME followed by NTLMSSP_AV_EOL ) +
+	 * unicode length of a netbios करोमुख्य name
 	 */
 	ses->auth_key.len = size + 2 * dlen;
 	ses->auth_key.response = kzalloc(ses->auth_key.len, GFP_KERNEL);
-	if (!ses->auth_key.response) {
+	अगर (!ses->auth_key.response) अणु
 		ses->auth_key.len = 0;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	blobptr = ses->auth_key.response;
-	attrptr = (struct ntlmssp2_name *) blobptr;
+	attrptr = (काष्ठा ntlmssp2_name *) blobptr;
 
 	/*
 	 * As defined in MS-NTLM 3.3.2, just this av pair field
@@ -387,471 +388,471 @@ build_avpair_blob(struct cifs_ses *ses, const struct nls_table *nls_cp)
 	 */
 	attrptr->type = cpu_to_le16(NTLMSSP_AV_NB_DOMAIN_NAME);
 	attrptr->length = cpu_to_le16(2 * dlen);
-	blobptr = (unsigned char *)attrptr + sizeof(struct ntlmssp2_name);
-	cifs_strtoUTF16((__le16 *)blobptr, ses->domainName, dlen, nls_cp);
+	blobptr = (अचिन्हित अक्षर *)attrptr + माप(काष्ठा ntlmssp2_name);
+	cअगरs_strtoUTF16((__le16 *)blobptr, ses->करोमुख्यName, dlen, nls_cp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Server has provided av pairs/target info in the type 2 challenge
  * packet and we have plucked it and stored within smb session.
- * We parse that blob here to find netbios domain name to be used
- * as part of ntlmv2 authentication (in Target String), if not already
- * specified on the command line.
- * If this function returns without any error but without fetching
- * domain name, authentication may fail against some server but
+ * We parse that blob here to find netbios करोमुख्य name to be used
+ * as part of ntlmv2 authentication (in Target String), अगर not alपढ़ोy
+ * specअगरied on the command line.
+ * If this function वापसs without any error but without fetching
+ * करोमुख्य name, authentication may fail against some server but
  * may not fail against other (those who are not very particular
- * about target string i.e. for some, just user name might suffice.
+ * about target string i.e. क्रम some, just user name might suffice.
  */
-static int
-find_domain_name(struct cifs_ses *ses, const struct nls_table *nls_cp)
-{
-	unsigned int attrsize;
-	unsigned int type;
-	unsigned int onesize = sizeof(struct ntlmssp2_name);
-	unsigned char *blobptr;
-	unsigned char *blobend;
-	struct ntlmssp2_name *attrptr;
+अटल पूर्णांक
+find_करोमुख्य_name(काष्ठा cअगरs_ses *ses, स्थिर काष्ठा nls_table *nls_cp)
+अणु
+	अचिन्हित पूर्णांक attrsize;
+	अचिन्हित पूर्णांक type;
+	अचिन्हित पूर्णांक onesize = माप(काष्ठा ntlmssp2_name);
+	अचिन्हित अक्षर *blobptr;
+	अचिन्हित अक्षर *blobend;
+	काष्ठा ntlmssp2_name *attrptr;
 
-	if (!ses->auth_key.len || !ses->auth_key.response)
-		return 0;
+	अगर (!ses->auth_key.len || !ses->auth_key.response)
+		वापस 0;
 
 	blobptr = ses->auth_key.response;
 	blobend = blobptr + ses->auth_key.len;
 
-	while (blobptr + onesize < blobend) {
-		attrptr = (struct ntlmssp2_name *) blobptr;
+	जबतक (blobptr + onesize < blobend) अणु
+		attrptr = (काष्ठा ntlmssp2_name *) blobptr;
 		type = le16_to_cpu(attrptr->type);
-		if (type == NTLMSSP_AV_EOL)
-			break;
+		अगर (type == NTLMSSP_AV_EOL)
+			अवरोध;
 		blobptr += 2; /* advance attr type */
 		attrsize = le16_to_cpu(attrptr->length);
 		blobptr += 2; /* advance attr size */
-		if (blobptr + attrsize > blobend)
-			break;
-		if (type == NTLMSSP_AV_NB_DOMAIN_NAME) {
-			if (!attrsize || attrsize >= CIFS_MAX_DOMAINNAME_LEN)
-				break;
-			if (!ses->domainName) {
-				ses->domainName =
-					kmalloc(attrsize + 1, GFP_KERNEL);
-				if (!ses->domainName)
-						return -ENOMEM;
-				cifs_from_utf16(ses->domainName,
+		अगर (blobptr + attrsize > blobend)
+			अवरोध;
+		अगर (type == NTLMSSP_AV_NB_DOMAIN_NAME) अणु
+			अगर (!attrsize || attrsize >= CIFS_MAX_DOMAINNAME_LEN)
+				अवरोध;
+			अगर (!ses->करोमुख्यName) अणु
+				ses->करोमुख्यName =
+					kदो_स्मृति(attrsize + 1, GFP_KERNEL);
+				अगर (!ses->करोमुख्यName)
+						वापस -ENOMEM;
+				cअगरs_from_utf16(ses->करोमुख्यName,
 					(__le16 *)blobptr, attrsize, attrsize,
 					nls_cp, NO_MAP_UNI_RSVD);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		blobptr += attrsize; /* advance attr  value */
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Server has provided av pairs/target info in the type 2 challenge
  * packet and we have plucked it and stored within smb session.
- * We parse that blob here to find the server given timestamp
- * as part of ntlmv2 authentication (or local current time as
- * default in case of failure)
+ * We parse that blob here to find the server given बारtamp
+ * as part of ntlmv2 authentication (or local current समय as
+ * शेष in हाल of failure)
  */
-static __le64
-find_timestamp(struct cifs_ses *ses)
-{
-	unsigned int attrsize;
-	unsigned int type;
-	unsigned int onesize = sizeof(struct ntlmssp2_name);
-	unsigned char *blobptr;
-	unsigned char *blobend;
-	struct ntlmssp2_name *attrptr;
-	struct timespec64 ts;
+अटल __le64
+find_बारtamp(काष्ठा cअगरs_ses *ses)
+अणु
+	अचिन्हित पूर्णांक attrsize;
+	अचिन्हित पूर्णांक type;
+	अचिन्हित पूर्णांक onesize = माप(काष्ठा ntlmssp2_name);
+	अचिन्हित अक्षर *blobptr;
+	अचिन्हित अक्षर *blobend;
+	काष्ठा ntlmssp2_name *attrptr;
+	काष्ठा बारpec64 ts;
 
-	if (!ses->auth_key.len || !ses->auth_key.response)
-		return 0;
+	अगर (!ses->auth_key.len || !ses->auth_key.response)
+		वापस 0;
 
 	blobptr = ses->auth_key.response;
 	blobend = blobptr + ses->auth_key.len;
 
-	while (blobptr + onesize < blobend) {
-		attrptr = (struct ntlmssp2_name *) blobptr;
+	जबतक (blobptr + onesize < blobend) अणु
+		attrptr = (काष्ठा ntlmssp2_name *) blobptr;
 		type = le16_to_cpu(attrptr->type);
-		if (type == NTLMSSP_AV_EOL)
-			break;
+		अगर (type == NTLMSSP_AV_EOL)
+			अवरोध;
 		blobptr += 2; /* advance attr type */
 		attrsize = le16_to_cpu(attrptr->length);
 		blobptr += 2; /* advance attr size */
-		if (blobptr + attrsize > blobend)
-			break;
-		if (type == NTLMSSP_AV_TIMESTAMP) {
-			if (attrsize == sizeof(u64))
-				return *((__le64 *)blobptr);
-		}
+		अगर (blobptr + attrsize > blobend)
+			अवरोध;
+		अगर (type == NTLMSSP_AV_TIMESTAMP) अणु
+			अगर (attrsize == माप(u64))
+				वापस *((__le64 *)blobptr);
+		पूर्ण
 		blobptr += attrsize; /* advance attr value */
-	}
+	पूर्ण
 
-	ktime_get_real_ts64(&ts);
-	return cpu_to_le64(cifs_UnixTimeToNT(ts));
-}
+	kसमय_get_real_ts64(&ts);
+	वापस cpu_to_le64(cअगरs_UnixTimeToNT(ts));
+पूर्ण
 
-static int calc_ntlmv2_hash(struct cifs_ses *ses, char *ntlmv2_hash,
-			    const struct nls_table *nls_cp)
-{
-	int rc = 0;
-	int len;
-	char nt_hash[CIFS_NTHASH_SIZE];
+अटल पूर्णांक calc_ntlmv2_hash(काष्ठा cअगरs_ses *ses, अक्षर *ntlmv2_hash,
+			    स्थिर काष्ठा nls_table *nls_cp)
+अणु
+	पूर्णांक rc = 0;
+	पूर्णांक len;
+	अक्षर nt_hash[CIFS_NTHASH_SIZE];
 	__le16 *user;
-	wchar_t *domain;
-	wchar_t *server;
+	ब_अक्षर_प्रकार *करोमुख्य;
+	ब_अक्षर_प्रकार *server;
 
-	if (!ses->server->secmech.sdeschmacmd5) {
-		cifs_dbg(VFS, "%s: can't generate ntlmv2 hash\n", __func__);
-		return -1;
-	}
+	अगर (!ses->server->secmech.sdeschmacmd5) अणु
+		cअगरs_dbg(VFS, "%s: can't generate ntlmv2 hash\n", __func__);
+		वापस -1;
+	पूर्ण
 
 	/* calculate md4 hash of password */
 	E_md4hash(ses->password, nt_hash, nls_cp);
 
 	rc = crypto_shash_setkey(ses->server->secmech.hmacmd5, nt_hash,
 				CIFS_NTHASH_SIZE);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not set NT Hash as a key\n", __func__);
-		return rc;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not set NT Hash as a key\n", __func__);
+		वापस rc;
+	पूर्ण
 
 	rc = crypto_shash_init(&ses->server->secmech.sdeschmacmd5->shash);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not init hmacmd5\n", __func__);
-		return rc;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not init hmacmd5\n", __func__);
+		वापस rc;
+	पूर्ण
 
 	/* convert ses->user_name to unicode */
-	len = ses->user_name ? strlen(ses->user_name) : 0;
-	user = kmalloc(2 + (len * 2), GFP_KERNEL);
-	if (user == NULL) {
+	len = ses->user_name ? म_माप(ses->user_name) : 0;
+	user = kदो_स्मृति(2 + (len * 2), GFP_KERNEL);
+	अगर (user == शून्य) अणु
 		rc = -ENOMEM;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (len) {
-		len = cifs_strtoUTF16(user, ses->user_name, len, nls_cp);
+	अगर (len) अणु
+		len = cअगरs_strtoUTF16(user, ses->user_name, len, nls_cp);
 		UniStrupr(user);
-	} else {
-		memset(user, '\0', 2);
-	}
+	पूर्ण अन्यथा अणु
+		स_रखो(user, '\0', 2);
+	पूर्ण
 
 	rc = crypto_shash_update(&ses->server->secmech.sdeschmacmd5->shash,
-				(char *)user, 2 * len);
-	kfree(user);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not update with user\n", __func__);
-		return rc;
-	}
+				(अक्षर *)user, 2 * len);
+	kमुक्त(user);
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not update with user\n", __func__);
+		वापस rc;
+	पूर्ण
 
-	/* convert ses->domainName to unicode and uppercase */
-	if (ses->domainName) {
-		len = strlen(ses->domainName);
+	/* convert ses->करोमुख्यName to unicode and upperहाल */
+	अगर (ses->करोमुख्यName) अणु
+		len = म_माप(ses->करोमुख्यName);
 
-		domain = kmalloc(2 + (len * 2), GFP_KERNEL);
-		if (domain == NULL) {
+		करोमुख्य = kदो_स्मृति(2 + (len * 2), GFP_KERNEL);
+		अगर (करोमुख्य == शून्य) अणु
 			rc = -ENOMEM;
-			return rc;
-		}
-		len = cifs_strtoUTF16((__le16 *)domain, ses->domainName, len,
+			वापस rc;
+		पूर्ण
+		len = cअगरs_strtoUTF16((__le16 *)करोमुख्य, ses->करोमुख्यName, len,
 				      nls_cp);
 		rc =
 		crypto_shash_update(&ses->server->secmech.sdeschmacmd5->shash,
-					(char *)domain, 2 * len);
-		kfree(domain);
-		if (rc) {
-			cifs_dbg(VFS, "%s: Could not update with domain\n",
+					(अक्षर *)करोमुख्य, 2 * len);
+		kमुक्त(करोमुख्य);
+		अगर (rc) अणु
+			cअगरs_dbg(VFS, "%s: Could not update with domain\n",
 				 __func__);
-			return rc;
-		}
-	} else {
-		/* We use ses->ip_addr if no domain name available */
-		len = strlen(ses->ip_addr);
+			वापस rc;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* We use ses->ip_addr अगर no करोमुख्य name available */
+		len = म_माप(ses->ip_addr);
 
-		server = kmalloc(2 + (len * 2), GFP_KERNEL);
-		if (server == NULL) {
+		server = kदो_स्मृति(2 + (len * 2), GFP_KERNEL);
+		अगर (server == शून्य) अणु
 			rc = -ENOMEM;
-			return rc;
-		}
-		len = cifs_strtoUTF16((__le16 *)server, ses->ip_addr, len,
+			वापस rc;
+		पूर्ण
+		len = cअगरs_strtoUTF16((__le16 *)server, ses->ip_addr, len,
 					nls_cp);
 		rc =
 		crypto_shash_update(&ses->server->secmech.sdeschmacmd5->shash,
-					(char *)server, 2 * len);
-		kfree(server);
-		if (rc) {
-			cifs_dbg(VFS, "%s: Could not update with server\n",
+					(अक्षर *)server, 2 * len);
+		kमुक्त(server);
+		अगर (rc) अणु
+			cअगरs_dbg(VFS, "%s: Could not update with server\n",
 				 __func__);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
 	rc = crypto_shash_final(&ses->server->secmech.sdeschmacmd5->shash,
 					ntlmv2_hash);
-	if (rc)
-		cifs_dbg(VFS, "%s: Could not generate md5 hash\n", __func__);
+	अगर (rc)
+		cअगरs_dbg(VFS, "%s: Could not generate md5 hash\n", __func__);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-CalcNTLMv2_response(const struct cifs_ses *ses, char *ntlmv2_hash)
-{
-	int rc;
-	struct ntlmv2_resp *ntlmv2 = (struct ntlmv2_resp *)
+अटल पूर्णांक
+CalcNTLMv2_response(स्थिर काष्ठा cअगरs_ses *ses, अक्षर *ntlmv2_hash)
+अणु
+	पूर्णांक rc;
+	काष्ठा ntlmv2_resp *ntlmv2 = (काष्ठा ntlmv2_resp *)
 	    (ses->auth_key.response + CIFS_SESS_KEY_SIZE);
-	unsigned int hash_len;
+	अचिन्हित पूर्णांक hash_len;
 
 	/* The MD5 hash starts at challenge_key.key */
 	hash_len = ses->auth_key.len - (CIFS_SESS_KEY_SIZE +
-		offsetof(struct ntlmv2_resp, challenge.key[0]));
+		दुरत्व(काष्ठा ntlmv2_resp, challenge.key[0]));
 
-	if (!ses->server->secmech.sdeschmacmd5) {
-		cifs_dbg(VFS, "%s: can't generate ntlmv2 hash\n", __func__);
-		return -1;
-	}
+	अगर (!ses->server->secmech.sdeschmacmd5) अणु
+		cअगरs_dbg(VFS, "%s: can't generate ntlmv2 hash\n", __func__);
+		वापस -1;
+	पूर्ण
 
 	rc = crypto_shash_setkey(ses->server->secmech.hmacmd5,
 				 ntlmv2_hash, CIFS_HMAC_MD5_HASH_SIZE);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not set NTLMV2 Hash as a key\n",
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not set NTLMV2 Hash as a key\n",
 			 __func__);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = crypto_shash_init(&ses->server->secmech.sdeschmacmd5->shash);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not init hmacmd5\n", __func__);
-		return rc;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not init hmacmd5\n", __func__);
+		वापस rc;
+	पूर्ण
 
-	if (ses->server->negflavor == CIFS_NEGFLAVOR_EXTENDED)
-		memcpy(ntlmv2->challenge.key,
+	अगर (ses->server->negflavor == CIFS_NEGFLAVOR_EXTENDED)
+		स_नकल(ntlmv2->challenge.key,
 		       ses->ntlmssp->cryptkey, CIFS_SERVER_CHALLENGE_SIZE);
-	else
-		memcpy(ntlmv2->challenge.key,
+	अन्यथा
+		स_नकल(ntlmv2->challenge.key,
 		       ses->server->cryptkey, CIFS_SERVER_CHALLENGE_SIZE);
 	rc = crypto_shash_update(&ses->server->secmech.sdeschmacmd5->shash,
 				 ntlmv2->challenge.key, hash_len);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not update with response\n", __func__);
-		return rc;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not update with response\n", __func__);
+		वापस rc;
+	पूर्ण
 
-	/* Note that the MD5 digest over writes anon.challenge_key.key */
+	/* Note that the MD5 digest over ग_लिखोs anon.challenge_key.key */
 	rc = crypto_shash_final(&ses->server->secmech.sdeschmacmd5->shash,
 				ntlmv2->ntlmv2_hash);
-	if (rc)
-		cifs_dbg(VFS, "%s: Could not generate md5 hash\n", __func__);
+	अगर (rc)
+		cअगरs_dbg(VFS, "%s: Could not generate md5 hash\n", __func__);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-setup_ntlmv2_rsp(struct cifs_ses *ses, const struct nls_table *nls_cp)
-{
-	int rc;
-	int baselen;
-	unsigned int tilen;
-	struct ntlmv2_resp *ntlmv2;
-	char ntlmv2_hash[16];
-	unsigned char *tiblob = NULL; /* target info blob */
-	__le64 rsp_timestamp;
+पूर्णांक
+setup_ntlmv2_rsp(काष्ठा cअगरs_ses *ses, स्थिर काष्ठा nls_table *nls_cp)
+अणु
+	पूर्णांक rc;
+	पूर्णांक baselen;
+	अचिन्हित पूर्णांक tilen;
+	काष्ठा ntlmv2_resp *ntlmv2;
+	अक्षर ntlmv2_hash[16];
+	अचिन्हित अक्षर *tiblob = शून्य; /* target info blob */
+	__le64 rsp_बारtamp;
 
-	if (nls_cp == NULL) {
-		cifs_dbg(VFS, "%s called with nls_cp==NULL\n", __func__);
-		return -EINVAL;
-	}
+	अगर (nls_cp == शून्य) अणु
+		cअगरs_dbg(VFS, "%s called with nls_cp==NULL\n", __func__);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ses->server->negflavor == CIFS_NEGFLAVOR_EXTENDED) {
-		if (!ses->domainName) {
-			if (ses->domainAuto) {
-				rc = find_domain_name(ses, nls_cp);
-				if (rc) {
-					cifs_dbg(VFS, "error %d finding domain name\n",
+	अगर (ses->server->negflavor == CIFS_NEGFLAVOR_EXTENDED) अणु
+		अगर (!ses->करोमुख्यName) अणु
+			अगर (ses->करोमुख्यAuto) अणु
+				rc = find_करोमुख्य_name(ses, nls_cp);
+				अगर (rc) अणु
+					cअगरs_dbg(VFS, "error %d finding domain name\n",
 						 rc);
-					goto setup_ntlmv2_rsp_ret;
-				}
-			} else {
-				ses->domainName = kstrdup("", GFP_KERNEL);
-			}
-		}
-	} else {
+					जाओ setup_ntlmv2_rsp_ret;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				ses->करोमुख्यName = kstrdup("", GFP_KERNEL);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rc = build_avpair_blob(ses, nls_cp);
-		if (rc) {
-			cifs_dbg(VFS, "error %d building av pair blob\n", rc);
-			goto setup_ntlmv2_rsp_ret;
-		}
-	}
+		अगर (rc) अणु
+			cअगरs_dbg(VFS, "error %d building av pair blob\n", rc);
+			जाओ setup_ntlmv2_rsp_ret;
+		पूर्ण
+	पूर्ण
 
 	/* Must be within 5 minutes of the server (or in range +/-2h
-	 * in case of Mac OS X), so simply carry over server timestamp
-	 * (as Windows 7 does)
+	 * in हाल of Mac OS X), so simply carry over server बारtamp
+	 * (as Winकरोws 7 करोes)
 	 */
-	rsp_timestamp = find_timestamp(ses);
+	rsp_बारtamp = find_बारtamp(ses);
 
-	baselen = CIFS_SESS_KEY_SIZE + sizeof(struct ntlmv2_resp);
+	baselen = CIFS_SESS_KEY_SIZE + माप(काष्ठा ntlmv2_resp);
 	tilen = ses->auth_key.len;
 	tiblob = ses->auth_key.response;
 
-	ses->auth_key.response = kmalloc(baselen + tilen, GFP_KERNEL);
-	if (!ses->auth_key.response) {
+	ses->auth_key.response = kदो_स्मृति(baselen + tilen, GFP_KERNEL);
+	अगर (!ses->auth_key.response) अणु
 		rc = -ENOMEM;
 		ses->auth_key.len = 0;
-		goto setup_ntlmv2_rsp_ret;
-	}
+		जाओ setup_ntlmv2_rsp_ret;
+	पूर्ण
 	ses->auth_key.len += baselen;
 
-	ntlmv2 = (struct ntlmv2_resp *)
+	ntlmv2 = (काष्ठा ntlmv2_resp *)
 			(ses->auth_key.response + CIFS_SESS_KEY_SIZE);
 	ntlmv2->blob_signature = cpu_to_le32(0x00000101);
 	ntlmv2->reserved = 0;
-	ntlmv2->time = rsp_timestamp;
+	ntlmv2->समय = rsp_बारtamp;
 
-	get_random_bytes(&ntlmv2->client_chal, sizeof(ntlmv2->client_chal));
+	get_अक्रमom_bytes(&ntlmv2->client_chal, माप(ntlmv2->client_chal));
 	ntlmv2->reserved2 = 0;
 
-	memcpy(ses->auth_key.response + baselen, tiblob, tilen);
+	स_नकल(ses->auth_key.response + baselen, tiblob, tilen);
 
 	mutex_lock(&ses->server->srv_mutex);
 
-	rc = cifs_alloc_hash("hmac(md5)",
+	rc = cअगरs_alloc_hash("hmac(md5)",
 			     &ses->server->secmech.hmacmd5,
 			     &ses->server->secmech.sdeschmacmd5);
-	if (rc) {
-		goto unlock;
-	}
+	अगर (rc) अणु
+		जाओ unlock;
+	पूर्ण
 
 	/* calculate ntlmv2_hash */
 	rc = calc_ntlmv2_hash(ses, ntlmv2_hash, nls_cp);
-	if (rc) {
-		cifs_dbg(VFS, "Could not get v2 hash rc %d\n", rc);
-		goto unlock;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "Could not get v2 hash rc %d\n", rc);
+		जाओ unlock;
+	पूर्ण
 
 	/* calculate first part of the client response (CR1) */
 	rc = CalcNTLMv2_response(ses, ntlmv2_hash);
-	if (rc) {
-		cifs_dbg(VFS, "Could not calculate CR1 rc: %d\n", rc);
-		goto unlock;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "Could not calculate CR1 rc: %d\n", rc);
+		जाओ unlock;
+	पूर्ण
 
-	/* now calculate the session key for NTLMv2 */
+	/* now calculate the session key क्रम NTLMv2 */
 	rc = crypto_shash_setkey(ses->server->secmech.hmacmd5,
 		ntlmv2_hash, CIFS_HMAC_MD5_HASH_SIZE);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not set NTLMV2 Hash as a key\n",
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not set NTLMV2 Hash as a key\n",
 			 __func__);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	rc = crypto_shash_init(&ses->server->secmech.sdeschmacmd5->shash);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not init hmacmd5\n", __func__);
-		goto unlock;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not init hmacmd5\n", __func__);
+		जाओ unlock;
+	पूर्ण
 
 	rc = crypto_shash_update(&ses->server->secmech.sdeschmacmd5->shash,
 		ntlmv2->ntlmv2_hash,
 		CIFS_HMAC_MD5_HASH_SIZE);
-	if (rc) {
-		cifs_dbg(VFS, "%s: Could not update with response\n", __func__);
-		goto unlock;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(VFS, "%s: Could not update with response\n", __func__);
+		जाओ unlock;
+	पूर्ण
 
 	rc = crypto_shash_final(&ses->server->secmech.sdeschmacmd5->shash,
 		ses->auth_key.response);
-	if (rc)
-		cifs_dbg(VFS, "%s: Could not generate md5 hash\n", __func__);
+	अगर (rc)
+		cअगरs_dbg(VFS, "%s: Could not generate md5 hash\n", __func__);
 
 unlock:
 	mutex_unlock(&ses->server->srv_mutex);
 setup_ntlmv2_rsp_ret:
-	kfree(tiblob);
+	kमुक्त(tiblob);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-calc_seckey(struct cifs_ses *ses)
-{
-	unsigned char sec_key[CIFS_SESS_KEY_SIZE]; /* a nonce */
-	struct arc4_ctx *ctx_arc4;
+पूर्णांक
+calc_seckey(काष्ठा cअगरs_ses *ses)
+अणु
+	अचिन्हित अक्षर sec_key[CIFS_SESS_KEY_SIZE]; /* a nonce */
+	काष्ठा arc4_ctx *ctx_arc4;
 
-	if (fips_enabled)
-		return -ENODEV;
+	अगर (fips_enabled)
+		वापस -ENODEV;
 
-	get_random_bytes(sec_key, CIFS_SESS_KEY_SIZE);
+	get_अक्रमom_bytes(sec_key, CIFS_SESS_KEY_SIZE);
 
-	ctx_arc4 = kmalloc(sizeof(*ctx_arc4), GFP_KERNEL);
-	if (!ctx_arc4) {
-		cifs_dbg(VFS, "Could not allocate arc4 context\n");
-		return -ENOMEM;
-	}
+	ctx_arc4 = kदो_स्मृति(माप(*ctx_arc4), GFP_KERNEL);
+	अगर (!ctx_arc4) अणु
+		cअगरs_dbg(VFS, "Could not allocate arc4 context\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	arc4_setkey(ctx_arc4, ses->auth_key.response, CIFS_SESS_KEY_SIZE);
 	arc4_crypt(ctx_arc4, ses->ntlmssp->ciphertext, sec_key,
 		   CIFS_CPHTXT_SIZE);
 
 	/* make secondary_key/nonce as session key */
-	memcpy(ses->auth_key.response, sec_key, CIFS_SESS_KEY_SIZE);
+	स_नकल(ses->auth_key.response, sec_key, CIFS_SESS_KEY_SIZE);
 	/* and make len as that of session key only */
 	ses->auth_key.len = CIFS_SESS_KEY_SIZE;
 
 	memzero_explicit(sec_key, CIFS_SESS_KEY_SIZE);
-	kfree_sensitive(ctx_arc4);
-	return 0;
-}
+	kमुक्त_sensitive(ctx_arc4);
+	वापस 0;
+पूर्ण
 
-void
-cifs_crypto_secmech_release(struct TCP_Server_Info *server)
-{
-	if (server->secmech.cmacaes) {
-		crypto_free_shash(server->secmech.cmacaes);
-		server->secmech.cmacaes = NULL;
-	}
+व्योम
+cअगरs_crypto_secmech_release(काष्ठा TCP_Server_Info *server)
+अणु
+	अगर (server->secmech.cmacaes) अणु
+		crypto_मुक्त_shash(server->secmech.cmacaes);
+		server->secmech.cmacaes = शून्य;
+	पूर्ण
 
-	if (server->secmech.hmacsha256) {
-		crypto_free_shash(server->secmech.hmacsha256);
-		server->secmech.hmacsha256 = NULL;
-	}
+	अगर (server->secmech.hmacsha256) अणु
+		crypto_मुक्त_shash(server->secmech.hmacsha256);
+		server->secmech.hmacsha256 = शून्य;
+	पूर्ण
 
-	if (server->secmech.md5) {
-		crypto_free_shash(server->secmech.md5);
-		server->secmech.md5 = NULL;
-	}
+	अगर (server->secmech.md5) अणु
+		crypto_मुक्त_shash(server->secmech.md5);
+		server->secmech.md5 = शून्य;
+	पूर्ण
 
-	if (server->secmech.sha512) {
-		crypto_free_shash(server->secmech.sha512);
-		server->secmech.sha512 = NULL;
-	}
+	अगर (server->secmech.sha512) अणु
+		crypto_मुक्त_shash(server->secmech.sha512);
+		server->secmech.sha512 = शून्य;
+	पूर्ण
 
-	if (server->secmech.hmacmd5) {
-		crypto_free_shash(server->secmech.hmacmd5);
-		server->secmech.hmacmd5 = NULL;
-	}
+	अगर (server->secmech.hmacmd5) अणु
+		crypto_मुक्त_shash(server->secmech.hmacmd5);
+		server->secmech.hmacmd5 = शून्य;
+	पूर्ण
 
-	if (server->secmech.ccmaesencrypt) {
-		crypto_free_aead(server->secmech.ccmaesencrypt);
-		server->secmech.ccmaesencrypt = NULL;
-	}
+	अगर (server->secmech.ccmaesencrypt) अणु
+		crypto_मुक्त_aead(server->secmech.ccmaesencrypt);
+		server->secmech.ccmaesencrypt = शून्य;
+	पूर्ण
 
-	if (server->secmech.ccmaesdecrypt) {
-		crypto_free_aead(server->secmech.ccmaesdecrypt);
-		server->secmech.ccmaesdecrypt = NULL;
-	}
+	अगर (server->secmech.ccmaesdecrypt) अणु
+		crypto_मुक्त_aead(server->secmech.ccmaesdecrypt);
+		server->secmech.ccmaesdecrypt = शून्य;
+	पूर्ण
 
-	kfree(server->secmech.sdesccmacaes);
-	server->secmech.sdesccmacaes = NULL;
-	kfree(server->secmech.sdeschmacsha256);
-	server->secmech.sdeschmacsha256 = NULL;
-	kfree(server->secmech.sdeschmacmd5);
-	server->secmech.sdeschmacmd5 = NULL;
-	kfree(server->secmech.sdescmd5);
-	server->secmech.sdescmd5 = NULL;
-	kfree(server->secmech.sdescsha512);
-	server->secmech.sdescsha512 = NULL;
-}
+	kमुक्त(server->secmech.sdesccmacaes);
+	server->secmech.sdesccmacaes = शून्य;
+	kमुक्त(server->secmech.sdeschmacsha256);
+	server->secmech.sdeschmacsha256 = शून्य;
+	kमुक्त(server->secmech.sdeschmacmd5);
+	server->secmech.sdeschmacmd5 = शून्य;
+	kमुक्त(server->secmech.sdescmd5);
+	server->secmech.sdescmd5 = शून्य;
+	kमुक्त(server->secmech.sdescsha512);
+	server->secmech.sdescsha512 = शून्य;
+पूर्ण

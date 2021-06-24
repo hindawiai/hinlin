@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * mISDNinfineon.c
- *		Support for cards based on following Infineon ISDN chipsets
+ *		Support क्रम cards based on following Infineon ISDN chipsets
  *		- ISAC + HSCX
  *		- IPAC and IPAC-X
  *		- ISAC-SX + HSCX
@@ -13,8 +14,8 @@
  *		- Dialogic Diva 2.02
  *		- Sedlbauer Speedwin
  *		- HST Saphir3
- *		- Develo (former ELSA) Microlink PCI (Quickstep 1000)
- *		- Develo (former ELSA) Quickstep 3000
+ *		- Develo (क्रमmer ELSA) Microlink PCI (Quickstep 1000)
+ *		- Develo (क्रमmer ELSA) Quickstep 3000
  *		- Berkom Scitel BRIX Quadro
  *		- Dr.Neuhaus (Sagem) Niccy
  *
@@ -23,21 +24,21 @@
  * Copyright 2009  by Karsten Keil <keil@isdn4linux.de>
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/mISDNhw.h>
-#include <linux/slab.h>
-#include "ipac.h"
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mISDNhw.h>
+#समावेश <linux/slab.h>
+#समावेश "ipac.h"
 
-#define INFINEON_REV	"1.0"
+#घोषणा INFINEON_REV	"1.0"
 
-static int inf_cnt;
-static u32 debug;
-static u32 irqloops = 4;
+अटल पूर्णांक inf_cnt;
+अटल u32 debug;
+अटल u32 irqloops = 4;
 
-enum inf_types {
+क्रमागत inf_types अणु
 	INF_NONE,
 	INF_DIVA20,
 	INF_DIVA20U,
@@ -54,202 +55,202 @@ enum inf_types {
 	INF_SCT_4,
 	INF_GAZEL_R685,
 	INF_GAZEL_R753
-};
+पूर्ण;
 
-enum addr_mode {
+क्रमागत addr_mode अणु
 	AM_NONE = 0,
 	AM_IO,
 	AM_MEMIO,
 	AM_IND_IO,
-};
+पूर्ण;
 
-struct inf_cinfo {
-	enum inf_types	typ;
-	const char	*full;
-	const char	*name;
-	enum addr_mode	cfg_mode;
-	enum addr_mode	addr_mode;
+काष्ठा inf_cinfo अणु
+	क्रमागत inf_types	typ;
+	स्थिर अक्षर	*full;
+	स्थिर अक्षर	*name;
+	क्रमागत addr_mode	cfg_mode;
+	क्रमागत addr_mode	addr_mode;
 	u8		cfg_bar;
 	u8		addr_bar;
-	void		*irqfunc;
-};
+	व्योम		*irqfunc;
+पूर्ण;
 
-struct _ioaddr {
-	enum addr_mode	mode;
-	union {
-		void __iomem	*p;
-		struct _ioport	io;
-	} a;
-};
+काष्ठा _ioaddr अणु
+	क्रमागत addr_mode	mode;
+	जोड़ अणु
+		व्योम __iomem	*p;
+		काष्ठा _ioport	io;
+	पूर्ण a;
+पूर्ण;
 
-struct _iohandle {
-	enum addr_mode	mode;
-	resource_size_t	size;
-	resource_size_t	start;
-	void __iomem	*p;
-};
+काष्ठा _iohandle अणु
+	क्रमागत addr_mode	mode;
+	resource_माप_प्रकार	size;
+	resource_माप_प्रकार	start;
+	व्योम __iomem	*p;
+पूर्ण;
 
-struct inf_hw {
-	struct list_head	list;
-	struct pci_dev		*pdev;
-	const struct inf_cinfo	*ci;
-	char			name[MISDN_MAX_IDLEN];
+काष्ठा inf_hw अणु
+	काष्ठा list_head	list;
+	काष्ठा pci_dev		*pdev;
+	स्थिर काष्ठा inf_cinfo	*ci;
+	अक्षर			name[MISDN_MAX_IDLEN];
 	u32			irq;
 	u32			irqcnt;
-	struct _iohandle	cfg;
-	struct _iohandle	addr;
-	struct _ioaddr		isac;
-	struct _ioaddr		hscx;
+	काष्ठा _iohandle	cfg;
+	काष्ठा _iohandle	addr;
+	काष्ठा _ioaddr		isac;
+	काष्ठा _ioaddr		hscx;
 	spinlock_t		lock;	/* HW access lock */
-	struct ipac_hw		ipac;
-	struct inf_hw		*sc[3];	/* slave cards */
-};
+	काष्ठा ipac_hw		ipac;
+	काष्ठा inf_hw		*sc[3];	/* slave cards */
+पूर्ण;
 
 
-#define PCI_SUBVENDOR_HST_SAPHIR3       0x52
-#define PCI_SUBVENDOR_SEDLBAUER_PCI     0x53
-#define PCI_SUB_ID_SEDLBAUER            0x01
+#घोषणा PCI_SUBVENDOR_HST_SAPHIR3       0x52
+#घोषणा PCI_SUBVENDOR_SEDLBAUER_PCI     0x53
+#घोषणा PCI_SUB_ID_SEDLBAUER            0x01
 
-static struct pci_device_id infineon_ids[] = {
-	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA20), INF_DIVA20 },
-	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA20_U), INF_DIVA20U },
-	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA201), INF_DIVA201 },
-	{ PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA202), INF_DIVA202 },
-	{ PCI_VENDOR_ID_TIGERJET, PCI_DEVICE_ID_TIGERJET_100,
+अटल काष्ठा pci_device_id infineon_ids[] = अणु
+	अणु PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA20), INF_DIVA20 पूर्ण,
+	अणु PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA20_U), INF_DIVA20U पूर्ण,
+	अणु PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA201), INF_DIVA201 पूर्ण,
+	अणु PCI_VDEVICE(EICON, PCI_DEVICE_ID_EICON_DIVA202), INF_DIVA202 पूर्ण,
+	अणु PCI_VENDOR_ID_TIGERJET, PCI_DEVICE_ID_TIGERJET_100,
 	  PCI_SUBVENDOR_SEDLBAUER_PCI, PCI_SUB_ID_SEDLBAUER, 0, 0,
-	  INF_SPEEDWIN },
-	{ PCI_VENDOR_ID_TIGERJET, PCI_DEVICE_ID_TIGERJET_100,
-	  PCI_SUBVENDOR_HST_SAPHIR3, PCI_SUB_ID_SEDLBAUER, 0, 0, INF_SAPHIR3 },
-	{ PCI_VDEVICE(ELSA, PCI_DEVICE_ID_ELSA_MICROLINK), INF_QS1000 },
-	{ PCI_VDEVICE(ELSA, PCI_DEVICE_ID_ELSA_QS3000), INF_QS3000 },
-	{ PCI_VDEVICE(SATSAGEM, PCI_DEVICE_ID_SATSAGEM_NICCY), INF_NICCY },
-	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
+	  INF_SPEEDWIN पूर्ण,
+	अणु PCI_VENDOR_ID_TIGERJET, PCI_DEVICE_ID_TIGERJET_100,
+	  PCI_SUBVENDOR_HST_SAPHIR3, PCI_SUB_ID_SEDLBAUER, 0, 0, INF_SAPHIR3 पूर्ण,
+	अणु PCI_VDEVICE(ELSA, PCI_DEVICE_ID_ELSA_MICROLINK), INF_QS1000 पूर्ण,
+	अणु PCI_VDEVICE(ELSA, PCI_DEVICE_ID_ELSA_QS3000), INF_QS3000 पूर्ण,
+	अणु PCI_VDEVICE(SATSAGEM, PCI_DEVICE_ID_SATSAGEM_NICCY), INF_NICCY पूर्ण,
+	अणु PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
 	  PCI_VENDOR_ID_BERKOM, PCI_DEVICE_ID_BERKOM_SCITEL_QUADRO, 0, 0,
-	  INF_SCT_1 },
-	{ PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_R685), INF_GAZEL_R685 },
-	{ PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_R753), INF_GAZEL_R753 },
-	{ PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_DJINN_ITOO), INF_GAZEL_R753 },
-	{ PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_OLITEC), INF_GAZEL_R753 },
-	{ }
-};
+	  INF_SCT_1 पूर्ण,
+	अणु PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_R685), INF_GAZEL_R685 पूर्ण,
+	अणु PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_R753), INF_GAZEL_R753 पूर्ण,
+	अणु PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_DJINN_ITOO), INF_GAZEL_R753 पूर्ण,
+	अणु PCI_VDEVICE(PLX, PCI_DEVICE_ID_PLX_OLITEC), INF_GAZEL_R753 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, infineon_ids);
 
-/* PCI interface specific defines */
+/* PCI पूर्णांकerface specअगरic defines */
 /* Diva 2.0/2.0U */
-#define DIVA_HSCX_PORT		0x00
-#define DIVA_HSCX_ALE		0x04
-#define DIVA_ISAC_PORT		0x08
-#define DIVA_ISAC_ALE		0x0C
-#define DIVA_PCI_CTRL           0x10
+#घोषणा DIVA_HSCX_PORT		0x00
+#घोषणा DIVA_HSCX_ALE		0x04
+#घोषणा DIVA_ISAC_PORT		0x08
+#घोषणा DIVA_ISAC_ALE		0x0C
+#घोषणा DIVA_PCI_CTRL           0x10
 
 /* DIVA_PCI_CTRL bits */
-#define DIVA_IRQ_BIT		0x01
-#define DIVA_RESET_BIT		0x08
-#define DIVA_EEPROM_CLK		0x40
-#define DIVA_LED_A		0x10
-#define DIVA_LED_B		0x20
-#define DIVA_IRQ_CLR		0x80
+#घोषणा DIVA_IRQ_BIT		0x01
+#घोषणा DIVA_RESET_BIT		0x08
+#घोषणा DIVA_EEPROM_CLK		0x40
+#घोषणा DIVA_LED_A		0x10
+#घोषणा DIVA_LED_B		0x20
+#घोषणा DIVA_IRQ_CLR		0x80
 
 /* Diva 2.01/2.02 */
 /* Siemens PITA */
-#define PITA_ICR_REG		0x00
-#define PITA_INT0_STATUS	0x02
+#घोषणा PITA_ICR_REG		0x00
+#घोषणा PITA_INT0_STATUS	0x02
 
-#define PITA_MISC_REG		0x1c
-#define PITA_PARA_SOFTRESET	0x01000000
-#define PITA_SER_SOFTRESET	0x02000000
-#define PITA_PARA_MPX_MODE	0x04000000
-#define PITA_INT0_ENABLE	0x00020000
+#घोषणा PITA_MISC_REG		0x1c
+#घोषणा PITA_PARA_SOFTRESET	0x01000000
+#घोषणा PITA_SER_SOFTRESET	0x02000000
+#घोषणा PITA_PARA_MPX_MODE	0x04000000
+#घोषणा PITA_INT0_ENABLE	0x00020000
 
 /* TIGER 100 Registers */
-#define TIGER_RESET_ADDR	0x00
-#define TIGER_EXTERN_RESET	0x01
-#define TIGER_AUX_CTRL		0x02
-#define TIGER_AUX_DATA		0x03
-#define TIGER_AUX_IRQMASK	0x05
-#define TIGER_AUX_STATUS	0x07
+#घोषणा TIGER_RESET_ADDR	0x00
+#घोषणा TIGER_EXTERN_RESET	0x01
+#घोषणा TIGER_AUX_CTRL		0x02
+#घोषणा TIGER_AUX_DATA		0x03
+#घोषणा TIGER_AUX_IRQMASK	0x05
+#घोषणा TIGER_AUX_STATUS	0x07
 
 /* Tiger AUX BITs */
-#define TIGER_IOMASK		0xdd	/* 1 and 5 are inputs */
-#define TIGER_IRQ_BIT		0x02
+#घोषणा TIGER_IOMASK		0xdd	/* 1 and 5 are inमाला_दो */
+#घोषणा TIGER_IRQ_BIT		0x02
 
-#define TIGER_IPAC_ALE		0xC0
-#define TIGER_IPAC_PORT		0xC8
+#घोषणा TIGER_IPAC_ALE		0xC0
+#घोषणा TIGER_IPAC_PORT		0xC8
 
 /* ELSA (now Develo) PCI cards */
-#define ELSA_IRQ_ADDR		0x4c
-#define ELSA_IRQ_MASK		0x04
-#define QS1000_IRQ_OFF		0x01
-#define QS3000_IRQ_OFF		0x03
-#define QS1000_IRQ_ON		0x41
-#define QS3000_IRQ_ON		0x43
+#घोषणा ELSA_IRQ_ADDR		0x4c
+#घोषणा ELSA_IRQ_MASK		0x04
+#घोषणा QS1000_IRQ_OFF		0x01
+#घोषणा QS3000_IRQ_OFF		0x03
+#घोषणा QS1000_IRQ_ON		0x41
+#घोषणा QS3000_IRQ_ON		0x43
 
 /* Dr Neuhaus/Sagem Niccy */
-#define NICCY_ISAC_PORT		0x00
-#define NICCY_HSCX_PORT		0x01
-#define NICCY_ISAC_ALE		0x02
-#define NICCY_HSCX_ALE		0x03
+#घोषणा NICCY_ISAC_PORT		0x00
+#घोषणा NICCY_HSCX_PORT		0x01
+#घोषणा NICCY_ISAC_ALE		0x02
+#घोषणा NICCY_HSCX_ALE		0x03
 
-#define NICCY_IRQ_CTRL_REG	0x38
-#define NICCY_IRQ_ENABLE	0x001f00
-#define NICCY_IRQ_DISABLE	0xff0000
-#define NICCY_IRQ_BIT		0x800000
+#घोषणा NICCY_IRQ_CTRL_REG	0x38
+#घोषणा NICCY_IRQ_ENABLE	0x001f00
+#घोषणा NICCY_IRQ_DISABLE	0xff0000
+#घोषणा NICCY_IRQ_BIT		0x800000
 
 
 /* Scitel PLX */
-#define SCT_PLX_IRQ_ADDR	0x4c
-#define SCT_PLX_RESET_ADDR	0x50
-#define SCT_PLX_IRQ_ENABLE	0x41
-#define SCT_PLX_RESET_BIT	0x04
+#घोषणा SCT_PLX_IRQ_ADDR	0x4c
+#घोषणा SCT_PLX_RESET_ADDR	0x50
+#घोषणा SCT_PLX_IRQ_ENABLE	0x41
+#घोषणा SCT_PLX_RESET_BIT	0x04
 
 /* Gazel */
-#define	GAZEL_IPAC_DATA_PORT	0x04
+#घोषणा	GAZEL_IPAC_DATA_PORT	0x04
 /* Gazel PLX */
-#define GAZEL_CNTRL		0x50
-#define GAZEL_RESET		0x04
-#define GAZEL_RESET_9050	0x40000000
-#define GAZEL_INCSR		0x4C
-#define GAZEL_ISAC_EN		0x08
-#define GAZEL_INT_ISAC		0x20
-#define GAZEL_HSCX_EN		0x01
-#define GAZEL_INT_HSCX		0x04
-#define GAZEL_PCI_EN		0x40
-#define GAZEL_IPAC_EN		0x03
+#घोषणा GAZEL_CNTRL		0x50
+#घोषणा GAZEL_RESET		0x04
+#घोषणा GAZEL_RESET_9050	0x40000000
+#घोषणा GAZEL_INCSR		0x4C
+#घोषणा GAZEL_ISAC_EN		0x08
+#घोषणा GAZEL_INT_ISAC		0x20
+#घोषणा GAZEL_HSCX_EN		0x01
+#घोषणा GAZEL_INT_HSCX		0x04
+#घोषणा GAZEL_PCI_EN		0x40
+#घोषणा GAZEL_IPAC_EN		0x03
 
 
-static LIST_HEAD(Cards);
-static DEFINE_RWLOCK(card_lock); /* protect Cards */
+अटल LIST_HEAD(Cards);
+अटल DEFINE_RWLOCK(card_lock); /* protect Cards */
 
-static void
-_set_debug(struct inf_hw *card)
-{
+अटल व्योम
+_set_debug(काष्ठा inf_hw *card)
+अणु
 	card->ipac.isac.dch.debug = debug;
 	card->ipac.hscx[0].bch.debug = debug;
 	card->ipac.hscx[1].bch.debug = debug;
-}
+पूर्ण
 
-static int
-set_debug(const char *val, const struct kernel_param *kp)
-{
-	int ret;
-	struct inf_hw *card;
+अटल पूर्णांक
+set_debug(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक ret;
+	काष्ठा inf_hw *card;
 
-	ret = param_set_uint(val, kp);
-	if (!ret) {
-		read_lock(&card_lock);
-		list_for_each_entry(card, &Cards, list)
+	ret = param_set_uपूर्णांक(val, kp);
+	अगर (!ret) अणु
+		पढ़ो_lock(&card_lock);
+		list_क्रम_each_entry(card, &Cards, list)
 			_set_debug(card);
-		read_unlock(&card_lock);
-	}
-	return ret;
-}
+		पढ़ो_unlock(&card_lock);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 MODULE_AUTHOR("Karsten Keil");
 MODULE_LICENSE("GPL v2");
 MODULE_VERSION(INFINEON_REV);
-module_param_call(debug, set_debug, param_get_uint, &debug, S_IRUGO | S_IWUSR);
+module_param_call(debug, set_debug, param_get_uपूर्णांक, &debug, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug, "infineon debug mask");
-module_param(irqloops, uint, S_IRUGO | S_IWUSR);
+module_param(irqloops, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(irqloops, "infineon maximal irqloops (default 4)");
 
 /* Interface functions */
@@ -261,234 +262,234 @@ IOFUNC_IND(IPAC, inf_hw, hscx.a.io)
 IOFUNC_MEMIO(ISAC, inf_hw, u32, isac.a.p)
 IOFUNC_MEMIO(IPAC, inf_hw, u32, hscx.a.p)
 
-static irqreturn_t
-diva_irq(int intno, void *dev_id)
-{
-	struct inf_hw *hw = dev_id;
+अटल irqवापस_t
+भागa_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	काष्ठा inf_hw *hw = dev_id;
 	u8 val;
 
 	spin_lock(&hw->lock);
 	val = inb((u32)hw->cfg.start + DIVA_PCI_CTRL);
-	if (!(val & DIVA_IRQ_BIT)) { /* for us or shared ? */
+	अगर (!(val & DIVA_IRQ_BIT)) अणु /* क्रम us or shared ? */
 		spin_unlock(&hw->lock);
-		return IRQ_NONE; /* shared */
-	}
+		वापस IRQ_NONE; /* shared */
+	पूर्ण
 	hw->irqcnt++;
 	mISDNipac_irq(&hw->ipac, irqloops);
 	spin_unlock(&hw->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t
-diva20x_irq(int intno, void *dev_id)
-{
-	struct inf_hw *hw = dev_id;
+अटल irqवापस_t
+भागa20x_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	काष्ठा inf_hw *hw = dev_id;
 	u8 val;
 
 	spin_lock(&hw->lock);
-	val = readb(hw->cfg.p);
-	if (!(val & PITA_INT0_STATUS)) { /* for us or shared ? */
+	val = पढ़ोb(hw->cfg.p);
+	अगर (!(val & PITA_INT0_STATUS)) अणु /* क्रम us or shared ? */
 		spin_unlock(&hw->lock);
-		return IRQ_NONE; /* shared */
-	}
+		वापस IRQ_NONE; /* shared */
+	पूर्ण
 	hw->irqcnt++;
 	mISDNipac_irq(&hw->ipac, irqloops);
-	writeb(PITA_INT0_STATUS, hw->cfg.p); /* ACK PITA INT0 */
+	ग_लिखोb(PITA_INT0_STATUS, hw->cfg.p); /* ACK PITA INT0 */
 	spin_unlock(&hw->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t
-tiger_irq(int intno, void *dev_id)
-{
-	struct inf_hw *hw = dev_id;
+अटल irqवापस_t
+tiger_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	काष्ठा inf_hw *hw = dev_id;
 	u8 val;
 
 	spin_lock(&hw->lock);
 	val = inb((u32)hw->cfg.start + TIGER_AUX_STATUS);
-	if (val & TIGER_IRQ_BIT) { /* for us or shared ? */
+	अगर (val & TIGER_IRQ_BIT) अणु /* क्रम us or shared ? */
 		spin_unlock(&hw->lock);
-		return IRQ_NONE; /* shared */
-	}
+		वापस IRQ_NONE; /* shared */
+	पूर्ण
 	hw->irqcnt++;
 	mISDNipac_irq(&hw->ipac, irqloops);
 	spin_unlock(&hw->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t
-elsa_irq(int intno, void *dev_id)
-{
-	struct inf_hw *hw = dev_id;
+अटल irqवापस_t
+elsa_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	काष्ठा inf_hw *hw = dev_id;
 	u8 val;
 
 	spin_lock(&hw->lock);
 	val = inb((u32)hw->cfg.start + ELSA_IRQ_ADDR);
-	if (!(val & ELSA_IRQ_MASK)) {
+	अगर (!(val & ELSA_IRQ_MASK)) अणु
 		spin_unlock(&hw->lock);
-		return IRQ_NONE; /* shared */
-	}
+		वापस IRQ_NONE; /* shared */
+	पूर्ण
 	hw->irqcnt++;
 	mISDNipac_irq(&hw->ipac, irqloops);
 	spin_unlock(&hw->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t
-niccy_irq(int intno, void *dev_id)
-{
-	struct inf_hw *hw = dev_id;
+अटल irqवापस_t
+niccy_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	काष्ठा inf_hw *hw = dev_id;
 	u32 val;
 
 	spin_lock(&hw->lock);
 	val = inl((u32)hw->cfg.start + NICCY_IRQ_CTRL_REG);
-	if (!(val & NICCY_IRQ_BIT)) { /* for us or shared ? */
+	अगर (!(val & NICCY_IRQ_BIT)) अणु /* क्रम us or shared ? */
 		spin_unlock(&hw->lock);
-		return IRQ_NONE; /* shared */
-	}
+		वापस IRQ_NONE; /* shared */
+	पूर्ण
 	outl(val, (u32)hw->cfg.start + NICCY_IRQ_CTRL_REG);
 	hw->irqcnt++;
 	mISDNipac_irq(&hw->ipac, irqloops);
 	spin_unlock(&hw->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t
-gazel_irq(int intno, void *dev_id)
-{
-	struct inf_hw *hw = dev_id;
-	irqreturn_t ret;
+अटल irqवापस_t
+gazel_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	काष्ठा inf_hw *hw = dev_id;
+	irqवापस_t ret;
 
 	spin_lock(&hw->lock);
 	ret = mISDNipac_irq(&hw->ipac, irqloops);
 	spin_unlock(&hw->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t
-ipac_irq(int intno, void *dev_id)
-{
-	struct inf_hw *hw = dev_id;
+अटल irqवापस_t
+ipac_irq(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	काष्ठा inf_hw *hw = dev_id;
 	u8 val;
 
 	spin_lock(&hw->lock);
-	val = hw->ipac.read_reg(hw, IPAC_ISTA);
-	if (!(val & 0x3f)) {
+	val = hw->ipac.पढ़ो_reg(hw, IPAC_ISTA);
+	अगर (!(val & 0x3f)) अणु
 		spin_unlock(&hw->lock);
-		return IRQ_NONE; /* shared */
-	}
+		वापस IRQ_NONE; /* shared */
+	पूर्ण
 	hw->irqcnt++;
 	mISDNipac_irq(&hw->ipac, irqloops);
 	spin_unlock(&hw->lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void
-enable_hwirq(struct inf_hw *hw)
-{
+अटल व्योम
+enable_hwirq(काष्ठा inf_hw *hw)
+अणु
 	u16 w;
 	u32 val;
 
-	switch (hw->ci->typ) {
-	case INF_DIVA201:
-	case INF_DIVA202:
-		writel(PITA_INT0_ENABLE, hw->cfg.p);
-		break;
-	case INF_SPEEDWIN:
-	case INF_SAPHIR3:
+	चयन (hw->ci->typ) अणु
+	हाल INF_DIVA201:
+	हाल INF_DIVA202:
+		ग_लिखोl(PITA_INT0_ENABLE, hw->cfg.p);
+		अवरोध;
+	हाल INF_SPEEDWIN:
+	हाल INF_SAPHIR3:
 		outb(TIGER_IRQ_BIT, (u32)hw->cfg.start + TIGER_AUX_IRQMASK);
-		break;
-	case INF_QS1000:
+		अवरोध;
+	हाल INF_QS1000:
 		outb(QS1000_IRQ_ON, (u32)hw->cfg.start + ELSA_IRQ_ADDR);
-		break;
-	case INF_QS3000:
+		अवरोध;
+	हाल INF_QS3000:
 		outb(QS3000_IRQ_ON, (u32)hw->cfg.start + ELSA_IRQ_ADDR);
-		break;
-	case INF_NICCY:
+		अवरोध;
+	हाल INF_NICCY:
 		val = inl((u32)hw->cfg.start + NICCY_IRQ_CTRL_REG);
 		val |= NICCY_IRQ_ENABLE;
 		outl(val, (u32)hw->cfg.start + NICCY_IRQ_CTRL_REG);
-		break;
-	case INF_SCT_1:
+		अवरोध;
+	हाल INF_SCT_1:
 		w = inw((u32)hw->cfg.start + SCT_PLX_IRQ_ADDR);
 		w |= SCT_PLX_IRQ_ENABLE;
 		outw(w, (u32)hw->cfg.start + SCT_PLX_IRQ_ADDR);
-		break;
-	case INF_GAZEL_R685:
+		अवरोध;
+	हाल INF_GAZEL_R685:
 		outb(GAZEL_ISAC_EN + GAZEL_HSCX_EN + GAZEL_PCI_EN,
 		     (u32)hw->cfg.start + GAZEL_INCSR);
-		break;
-	case INF_GAZEL_R753:
+		अवरोध;
+	हाल INF_GAZEL_R753:
 		outb(GAZEL_IPAC_EN + GAZEL_PCI_EN,
 		     (u32)hw->cfg.start + GAZEL_INCSR);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-disable_hwirq(struct inf_hw *hw)
-{
+अटल व्योम
+disable_hwirq(काष्ठा inf_hw *hw)
+अणु
 	u16 w;
 	u32 val;
 
-	switch (hw->ci->typ) {
-	case INF_DIVA201:
-	case INF_DIVA202:
-		writel(0, hw->cfg.p);
-		break;
-	case INF_SPEEDWIN:
-	case INF_SAPHIR3:
+	चयन (hw->ci->typ) अणु
+	हाल INF_DIVA201:
+	हाल INF_DIVA202:
+		ग_लिखोl(0, hw->cfg.p);
+		अवरोध;
+	हाल INF_SPEEDWIN:
+	हाल INF_SAPHIR3:
 		outb(0, (u32)hw->cfg.start + TIGER_AUX_IRQMASK);
-		break;
-	case INF_QS1000:
+		अवरोध;
+	हाल INF_QS1000:
 		outb(QS1000_IRQ_OFF, (u32)hw->cfg.start + ELSA_IRQ_ADDR);
-		break;
-	case INF_QS3000:
+		अवरोध;
+	हाल INF_QS3000:
 		outb(QS3000_IRQ_OFF, (u32)hw->cfg.start + ELSA_IRQ_ADDR);
-		break;
-	case INF_NICCY:
+		अवरोध;
+	हाल INF_NICCY:
 		val = inl((u32)hw->cfg.start + NICCY_IRQ_CTRL_REG);
 		val &= NICCY_IRQ_DISABLE;
 		outl(val, (u32)hw->cfg.start + NICCY_IRQ_CTRL_REG);
-		break;
-	case INF_SCT_1:
+		अवरोध;
+	हाल INF_SCT_1:
 		w = inw((u32)hw->cfg.start + SCT_PLX_IRQ_ADDR);
 		w &= (~SCT_PLX_IRQ_ENABLE);
 		outw(w, (u32)hw->cfg.start + SCT_PLX_IRQ_ADDR);
-		break;
-	case INF_GAZEL_R685:
-	case INF_GAZEL_R753:
+		अवरोध;
+	हाल INF_GAZEL_R685:
+	हाल INF_GAZEL_R753:
 		outb(0, (u32)hw->cfg.start + GAZEL_INCSR);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-ipac_chip_reset(struct inf_hw *hw)
-{
-	hw->ipac.write_reg(hw, IPAC_POTA2, 0x20);
+अटल व्योम
+ipac_chip_reset(काष्ठा inf_hw *hw)
+अणु
+	hw->ipac.ग_लिखो_reg(hw, IPAC_POTA2, 0x20);
 	mdelay(5);
-	hw->ipac.write_reg(hw, IPAC_POTA2, 0x00);
+	hw->ipac.ग_लिखो_reg(hw, IPAC_POTA2, 0x00);
 	mdelay(5);
-	hw->ipac.write_reg(hw, IPAC_CONF, hw->ipac.conf);
-	hw->ipac.write_reg(hw, IPAC_MASK, 0xc0);
-}
+	hw->ipac.ग_लिखो_reg(hw, IPAC_CONF, hw->ipac.conf);
+	hw->ipac.ग_लिखो_reg(hw, IPAC_MASK, 0xc0);
+पूर्ण
 
-static void
-reset_inf(struct inf_hw *hw)
-{
+अटल व्योम
+reset_inf(काष्ठा inf_hw *hw)
+अणु
 	u16 w;
 	u32 val;
 
-	if (debug & DEBUG_HW)
+	अगर (debug & DEBUG_HW)
 		pr_notice("%s: resetting card\n", hw->name);
-	switch (hw->ci->typ) {
-	case INF_DIVA20:
-	case INF_DIVA20U:
+	चयन (hw->ci->typ) अणु
+	हाल INF_DIVA20:
+	हाल INF_DIVA20U:
 		outb(0, (u32)hw->cfg.start + DIVA_PCI_CTRL);
 		mdelay(10);
 		outb(DIVA_RESET_BIT, (u32)hw->cfg.start + DIVA_PCI_CTRL);
@@ -497,39 +498,39 @@ reset_inf(struct inf_hw *hw)
 		outb(9, (u32)hw->cfg.start + 0x69);
 		outb(DIVA_RESET_BIT | DIVA_LED_A,
 		     (u32)hw->cfg.start + DIVA_PCI_CTRL);
-		break;
-	case INF_DIVA201:
-		writel(PITA_PARA_SOFTRESET | PITA_PARA_MPX_MODE,
+		अवरोध;
+	हाल INF_DIVA201:
+		ग_लिखोl(PITA_PARA_SOFTRESET | PITA_PARA_MPX_MODE,
 		       hw->cfg.p + PITA_MISC_REG);
 		mdelay(1);
-		writel(PITA_PARA_MPX_MODE, hw->cfg.p + PITA_MISC_REG);
+		ग_लिखोl(PITA_PARA_MPX_MODE, hw->cfg.p + PITA_MISC_REG);
 		mdelay(10);
-		break;
-	case INF_DIVA202:
-		writel(PITA_PARA_SOFTRESET | PITA_PARA_MPX_MODE,
+		अवरोध;
+	हाल INF_DIVA202:
+		ग_लिखोl(PITA_PARA_SOFTRESET | PITA_PARA_MPX_MODE,
 		       hw->cfg.p + PITA_MISC_REG);
 		mdelay(1);
-		writel(PITA_PARA_MPX_MODE | PITA_SER_SOFTRESET,
+		ग_लिखोl(PITA_PARA_MPX_MODE | PITA_SER_SOFTRESET,
 		       hw->cfg.p + PITA_MISC_REG);
 		mdelay(10);
-		break;
-	case INF_SPEEDWIN:
-	case INF_SAPHIR3:
+		अवरोध;
+	हाल INF_SPEEDWIN:
+	हाल INF_SAPHIR3:
 		ipac_chip_reset(hw);
-		hw->ipac.write_reg(hw, IPAC_ACFG, 0xff);
-		hw->ipac.write_reg(hw, IPAC_AOE, 0x00);
-		hw->ipac.write_reg(hw, IPAC_PCFG, 0x12);
-		break;
-	case INF_QS1000:
-	case INF_QS3000:
+		hw->ipac.ग_लिखो_reg(hw, IPAC_ACFG, 0xff);
+		hw->ipac.ग_लिखो_reg(hw, IPAC_AOE, 0x00);
+		hw->ipac.ग_लिखो_reg(hw, IPAC_PCFG, 0x12);
+		अवरोध;
+	हाल INF_QS1000:
+	हाल INF_QS3000:
 		ipac_chip_reset(hw);
-		hw->ipac.write_reg(hw, IPAC_ACFG, 0x00);
-		hw->ipac.write_reg(hw, IPAC_AOE, 0x3c);
-		hw->ipac.write_reg(hw, IPAC_ATX, 0xff);
-		break;
-	case INF_NICCY:
-		break;
-	case INF_SCT_1:
+		hw->ipac.ग_लिखो_reg(hw, IPAC_ACFG, 0x00);
+		hw->ipac.ग_लिखो_reg(hw, IPAC_AOE, 0x3c);
+		hw->ipac.ग_लिखो_reg(hw, IPAC_ATX, 0xff);
+		अवरोध;
+	हाल INF_NICCY:
+		अवरोध;
+	हाल INF_SCT_1:
 		w = inw((u32)hw->cfg.start + SCT_PLX_RESET_ADDR);
 		w &= (~SCT_PLX_RESET_BIT);
 		outw(w, (u32)hw->cfg.start + SCT_PLX_RESET_ADDR);
@@ -538,8 +539,8 @@ reset_inf(struct inf_hw *hw)
 		w |= SCT_PLX_RESET_BIT;
 		outw(w, (u32)hw->cfg.start + SCT_PLX_RESET_ADDR);
 		mdelay(10);
-		break;
-	case INF_GAZEL_R685:
+		अवरोध;
+	हाल INF_GAZEL_R685:
 		val = inl((u32)hw->cfg.start + GAZEL_CNTRL);
 		val |= (GAZEL_RESET_9050 + GAZEL_RESET);
 		outl(val, (u32)hw->cfg.start + GAZEL_CNTRL);
@@ -550,8 +551,8 @@ reset_inf(struct inf_hw *hw)
 		hw->ipac.isac.adf2 = 0x87;
 		hw->ipac.hscx[0].slot = 0x1f;
 		hw->ipac.hscx[1].slot = 0x23;
-		break;
-	case INF_GAZEL_R753:
+		अवरोध;
+	हाल INF_GAZEL_R753:
 		val = inl((u32)hw->cfg.start + GAZEL_CNTRL);
 		val |= (GAZEL_RESET_9050 + GAZEL_RESET);
 		outl(val, (u32)hw->cfg.start + GAZEL_CNTRL);
@@ -560,164 +561,164 @@ reset_inf(struct inf_hw *hw)
 		outl(val, (u32)hw->cfg.start + GAZEL_CNTRL);
 		mdelay(10);
 		ipac_chip_reset(hw);
-		hw->ipac.write_reg(hw, IPAC_ACFG, 0xff);
-		hw->ipac.write_reg(hw, IPAC_AOE, 0x00);
+		hw->ipac.ग_लिखो_reg(hw, IPAC_ACFG, 0xff);
+		hw->ipac.ग_लिखो_reg(hw, IPAC_AOE, 0x00);
 		hw->ipac.conf = 0x01; /* IOM off */
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 	enable_hwirq(hw);
-}
+पूर्ण
 
-static int
-inf_ctrl(struct inf_hw *hw, u32 cmd, u_long arg)
-{
-	int ret = 0;
+अटल पूर्णांक
+inf_ctrl(काष्ठा inf_hw *hw, u32 cmd, u_दीर्घ arg)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (cmd) {
-	case HW_RESET_REQ:
+	चयन (cmd) अणु
+	हाल HW_RESET_REQ:
 		reset_inf(hw);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("%s: %s unknown command %x %lx\n",
 			hw->name, __func__, cmd, arg);
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int
-init_irq(struct inf_hw *hw)
-{
-	int	ret, cnt = 3;
-	u_long	flags;
+अटल पूर्णांक
+init_irq(काष्ठा inf_hw *hw)
+अणु
+	पूर्णांक	ret, cnt = 3;
+	u_दीर्घ	flags;
 
-	if (!hw->ci->irqfunc)
-		return -EINVAL;
+	अगर (!hw->ci->irqfunc)
+		वापस -EINVAL;
 	ret = request_irq(hw->irq, hw->ci->irqfunc, IRQF_SHARED, hw->name, hw);
-	if (ret) {
+	अगर (ret) अणु
 		pr_info("%s: couldn't get interrupt %d\n", hw->name, hw->irq);
-		return ret;
-	}
-	while (cnt--) {
+		वापस ret;
+	पूर्ण
+	जबतक (cnt--) अणु
 		spin_lock_irqsave(&hw->lock, flags);
 		reset_inf(hw);
 		ret = hw->ipac.init(&hw->ipac);
-		if (ret) {
+		अगर (ret) अणु
 			spin_unlock_irqrestore(&hw->lock, flags);
 			pr_info("%s: ISAC init failed with %d\n",
 				hw->name, ret);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock_irqrestore(&hw->lock, flags);
-		msleep_interruptible(10);
-		if (debug & DEBUG_HW)
+		msleep_पूर्णांकerruptible(10);
+		अगर (debug & DEBUG_HW)
 			pr_notice("%s: IRQ %d count %d\n", hw->name,
 				  hw->irq, hw->irqcnt);
-		if (!hw->irqcnt) {
+		अगर (!hw->irqcnt) अणु
 			pr_info("%s: IRQ(%d) got no requests during init %d\n",
 				hw->name, hw->irq, 3 - cnt);
-		} else
-			return 0;
-	}
-	free_irq(hw->irq, hw);
-	return -EIO;
-}
+		पूर्ण अन्यथा
+			वापस 0;
+	पूर्ण
+	मुक्त_irq(hw->irq, hw);
+	वापस -EIO;
+पूर्ण
 
-static void
-release_io(struct inf_hw *hw)
-{
-	if (hw->cfg.mode) {
-		if (hw->cfg.mode == AM_MEMIO) {
+अटल व्योम
+release_io(काष्ठा inf_hw *hw)
+अणु
+	अगर (hw->cfg.mode) अणु
+		अगर (hw->cfg.mode == AM_MEMIO) अणु
 			release_mem_region(hw->cfg.start, hw->cfg.size);
-			if (hw->cfg.p)
+			अगर (hw->cfg.p)
 				iounmap(hw->cfg.p);
-		} else
+		पूर्ण अन्यथा
 			release_region(hw->cfg.start, hw->cfg.size);
 		hw->cfg.mode = AM_NONE;
-	}
-	if (hw->addr.mode) {
-		if (hw->addr.mode == AM_MEMIO) {
+	पूर्ण
+	अगर (hw->addr.mode) अणु
+		अगर (hw->addr.mode == AM_MEMIO) अणु
 			release_mem_region(hw->addr.start, hw->addr.size);
-			if (hw->addr.p)
+			अगर (hw->addr.p)
 				iounmap(hw->addr.p);
-		} else
+		पूर्ण अन्यथा
 			release_region(hw->addr.start, hw->addr.size);
 		hw->addr.mode = AM_NONE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-setup_io(struct inf_hw *hw)
-{
-	int err = 0;
+अटल पूर्णांक
+setup_io(काष्ठा inf_hw *hw)
+अणु
+	पूर्णांक err = 0;
 
-	if (hw->ci->cfg_mode) {
+	अगर (hw->ci->cfg_mode) अणु
 		hw->cfg.start = pci_resource_start(hw->pdev, hw->ci->cfg_bar);
 		hw->cfg.size = pci_resource_len(hw->pdev, hw->ci->cfg_bar);
-		if (hw->ci->cfg_mode == AM_MEMIO) {
-			if (!request_mem_region(hw->cfg.start, hw->cfg.size,
+		अगर (hw->ci->cfg_mode == AM_MEMIO) अणु
+			अगर (!request_mem_region(hw->cfg.start, hw->cfg.size,
 						hw->name))
 				err = -EBUSY;
-		} else {
-			if (!request_region(hw->cfg.start, hw->cfg.size,
+		पूर्ण अन्यथा अणु
+			अगर (!request_region(hw->cfg.start, hw->cfg.size,
 					    hw->name))
 				err = -EBUSY;
-		}
-		if (err) {
+		पूर्ण
+		अगर (err) अणु
 			pr_info("mISDN: %s config port %lx (%lu bytes)"
 				"already in use\n", hw->name,
-				(ulong)hw->cfg.start, (ulong)hw->cfg.size);
-			return err;
-		}
+				(uदीर्घ)hw->cfg.start, (uदीर्घ)hw->cfg.size);
+			वापस err;
+		पूर्ण
 		hw->cfg.mode = hw->ci->cfg_mode;
-		if (hw->ci->cfg_mode == AM_MEMIO) {
+		अगर (hw->ci->cfg_mode == AM_MEMIO) अणु
 			hw->cfg.p = ioremap(hw->cfg.start, hw->cfg.size);
-			if (!hw->cfg.p)
-				return -ENOMEM;
-		}
-		if (debug & DEBUG_HW)
+			अगर (!hw->cfg.p)
+				वापस -ENOMEM;
+		पूर्ण
+		अगर (debug & DEBUG_HW)
 			pr_notice("%s: IO cfg %lx (%lu bytes) mode%d\n",
-				  hw->name, (ulong)hw->cfg.start,
-				  (ulong)hw->cfg.size, hw->ci->cfg_mode);
+				  hw->name, (uदीर्घ)hw->cfg.start,
+				  (uदीर्घ)hw->cfg.size, hw->ci->cfg_mode);
 
-	}
-	if (hw->ci->addr_mode) {
+	पूर्ण
+	अगर (hw->ci->addr_mode) अणु
 		hw->addr.start = pci_resource_start(hw->pdev, hw->ci->addr_bar);
 		hw->addr.size = pci_resource_len(hw->pdev, hw->ci->addr_bar);
-		if (hw->ci->addr_mode == AM_MEMIO) {
-			if (!request_mem_region(hw->addr.start, hw->addr.size,
+		अगर (hw->ci->addr_mode == AM_MEMIO) अणु
+			अगर (!request_mem_region(hw->addr.start, hw->addr.size,
 						hw->name))
 				err = -EBUSY;
-		} else {
-			if (!request_region(hw->addr.start, hw->addr.size,
+		पूर्ण अन्यथा अणु
+			अगर (!request_region(hw->addr.start, hw->addr.size,
 					    hw->name))
 				err = -EBUSY;
-		}
-		if (err) {
+		पूर्ण
+		अगर (err) अणु
 			pr_info("mISDN: %s address port %lx (%lu bytes)"
 				"already in use\n", hw->name,
-				(ulong)hw->addr.start, (ulong)hw->addr.size);
-			return err;
-		}
+				(uदीर्घ)hw->addr.start, (uदीर्घ)hw->addr.size);
+			वापस err;
+		पूर्ण
 		hw->addr.mode = hw->ci->addr_mode;
-		if (hw->ci->addr_mode == AM_MEMIO) {
+		अगर (hw->ci->addr_mode == AM_MEMIO) अणु
 			hw->addr.p = ioremap(hw->addr.start, hw->addr.size);
-			if (!hw->addr.p)
-				return -ENOMEM;
-		}
-		if (debug & DEBUG_HW)
+			अगर (!hw->addr.p)
+				वापस -ENOMEM;
+		पूर्ण
+		अगर (debug & DEBUG_HW)
 			pr_notice("%s: IO addr %lx (%lu bytes) mode%d\n",
-				  hw->name, (ulong)hw->addr.start,
-				  (ulong)hw->addr.size, hw->ci->addr_mode);
+				  hw->name, (uदीर्घ)hw->addr.start,
+				  (uदीर्घ)hw->addr.size, hw->ci->addr_mode);
 
-	}
+	पूर्ण
 
-	switch (hw->ci->typ) {
-	case INF_DIVA20:
-	case INF_DIVA20U:
+	चयन (hw->ci->typ) अणु
+	हाल INF_DIVA20:
+	हाल INF_DIVA20U:
 		hw->ipac.type = IPAC_TYPE_ISAC | IPAC_TYPE_HSCX;
 		hw->isac.mode = hw->cfg.mode;
 		hw->isac.a.io.ale = (u32)hw->cfg.start + DIVA_ISAC_ALE;
@@ -725,24 +726,24 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.mode = hw->cfg.mode;
 		hw->hscx.a.io.ale = (u32)hw->cfg.start + DIVA_HSCX_ALE;
 		hw->hscx.a.io.port = (u32)hw->cfg.start + DIVA_HSCX_PORT;
-		break;
-	case INF_DIVA201:
+		अवरोध;
+	हाल INF_DIVA201:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.mode = hw->addr.mode;
 		hw->isac.a.p = hw->addr.p;
 		hw->hscx.mode = hw->addr.mode;
 		hw->hscx.a.p = hw->addr.p;
-		break;
-	case INF_DIVA202:
+		अवरोध;
+	हाल INF_DIVA202:
 		hw->ipac.type = IPAC_TYPE_IPACX;
 		hw->isac.mode = hw->addr.mode;
 		hw->isac.a.p = hw->addr.p;
 		hw->hscx.mode = hw->addr.mode;
 		hw->hscx.a.p = hw->addr.p;
-		break;
-	case INF_SPEEDWIN:
-	case INF_SAPHIR3:
+		अवरोध;
+	हाल INF_SPEEDWIN:
+	हाल INF_SAPHIR3:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.mode = hw->cfg.mode;
@@ -751,14 +752,14 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.mode = hw->cfg.mode;
 		hw->hscx.a.io.ale = (u32)hw->cfg.start + TIGER_IPAC_ALE;
 		hw->hscx.a.io.port = (u32)hw->cfg.start + TIGER_IPAC_PORT;
-		outb(0xff, (ulong)hw->cfg.start);
+		outb(0xff, (uदीर्घ)hw->cfg.start);
 		mdelay(1);
-		outb(0x00, (ulong)hw->cfg.start);
+		outb(0x00, (uदीर्घ)hw->cfg.start);
 		mdelay(1);
-		outb(TIGER_IOMASK, (ulong)hw->cfg.start + TIGER_AUX_CTRL);
-		break;
-	case INF_QS1000:
-	case INF_QS3000:
+		outb(TIGER_IOMASK, (uदीर्घ)hw->cfg.start + TIGER_AUX_CTRL);
+		अवरोध;
+	हाल INF_QS1000:
+	हाल INF_QS3000:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.a.io.ale = (u32)hw->addr.start;
@@ -767,8 +768,8 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.a.io.ale = (u32)hw->addr.start;
 		hw->hscx.a.io.port = (u32)hw->addr.start + 1;
 		hw->hscx.mode = hw->addr.mode;
-		break;
-	case INF_NICCY:
+		अवरोध;
+	हाल INF_NICCY:
 		hw->ipac.type = IPAC_TYPE_ISAC | IPAC_TYPE_HSCX;
 		hw->isac.mode = hw->addr.mode;
 		hw->isac.a.io.ale = (u32)hw->addr.start + NICCY_ISAC_ALE;
@@ -776,8 +777,8 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.mode = hw->addr.mode;
 		hw->hscx.a.io.ale = (u32)hw->addr.start + NICCY_HSCX_ALE;
 		hw->hscx.a.io.port = (u32)hw->addr.start + NICCY_HSCX_PORT;
-		break;
-	case INF_SCT_1:
+		अवरोध;
+	हाल INF_SCT_1:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.a.io.ale = (u32)hw->addr.start;
@@ -786,8 +787,8 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.a.io.ale = hw->isac.a.io.ale;
 		hw->hscx.a.io.port = hw->isac.a.io.port;
 		hw->hscx.mode = hw->addr.mode;
-		break;
-	case INF_SCT_2:
+		अवरोध;
+	हाल INF_SCT_2:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.a.io.ale = (u32)hw->addr.start + 0x08;
@@ -796,8 +797,8 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.a.io.ale = hw->isac.a.io.ale;
 		hw->hscx.a.io.port = hw->isac.a.io.port;
 		hw->hscx.mode = hw->addr.mode;
-		break;
-	case INF_SCT_3:
+		अवरोध;
+	हाल INF_SCT_3:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.a.io.ale = (u32)hw->addr.start + 0x10;
@@ -806,8 +807,8 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.a.io.ale = hw->isac.a.io.ale;
 		hw->hscx.a.io.port = hw->isac.a.io.port;
 		hw->hscx.mode = hw->addr.mode;
-		break;
-	case INF_SCT_4:
+		अवरोध;
+	हाल INF_SCT_4:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.a.io.ale = (u32)hw->addr.start + 0x20;
@@ -816,16 +817,16 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.a.io.ale = hw->isac.a.io.ale;
 		hw->hscx.a.io.port = hw->isac.a.io.port;
 		hw->hscx.mode = hw->addr.mode;
-		break;
-	case INF_GAZEL_R685:
+		अवरोध;
+	हाल INF_GAZEL_R685:
 		hw->ipac.type = IPAC_TYPE_ISAC | IPAC_TYPE_HSCX;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.mode = hw->addr.mode;
 		hw->isac.a.io.port = (u32)hw->addr.start;
 		hw->hscx.mode = hw->addr.mode;
 		hw->hscx.a.io.port = hw->isac.a.io.port;
-		break;
-	case INF_GAZEL_R753:
+		अवरोध;
+	हाल INF_GAZEL_R753:
 		hw->ipac.type = IPAC_TYPE_IPAC;
 		hw->ipac.isac.off = 0x80;
 		hw->isac.mode = hw->addr.mode;
@@ -834,73 +835,73 @@ setup_io(struct inf_hw *hw)
 		hw->hscx.mode = hw->addr.mode;
 		hw->hscx.a.io.ale = hw->isac.a.io.ale;
 		hw->hscx.a.io.port = hw->isac.a.io.port;
-		break;
-	default:
-		return -EINVAL;
-	}
-	switch (hw->isac.mode) {
-	case AM_MEMIO:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	चयन (hw->isac.mode) अणु
+	हाल AM_MEMIO:
 		ASSIGN_FUNC_IPAC(MIO, hw->ipac);
-		break;
-	case AM_IND_IO:
+		अवरोध;
+	हाल AM_IND_IO:
 		ASSIGN_FUNC_IPAC(IND, hw->ipac);
-		break;
-	case AM_IO:
+		अवरोध;
+	हाल AM_IO:
 		ASSIGN_FUNC_IPAC(IO, hw->ipac);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void
-release_card(struct inf_hw *card) {
-	ulong	flags;
-	int	i;
+अटल व्योम
+release_card(काष्ठा inf_hw *card) अणु
+	uदीर्घ	flags;
+	पूर्णांक	i;
 
 	spin_lock_irqsave(&card->lock, flags);
 	disable_hwirq(card);
 	spin_unlock_irqrestore(&card->lock, flags);
 	card->ipac.isac.release(&card->ipac.isac);
-	free_irq(card->irq, card);
-	mISDN_unregister_device(&card->ipac.isac.dch.dev);
+	मुक्त_irq(card->irq, card);
+	mISDN_unरेजिस्टर_device(&card->ipac.isac.dch.dev);
 	release_io(card);
-	write_lock_irqsave(&card_lock, flags);
+	ग_लिखो_lock_irqsave(&card_lock, flags);
 	list_del(&card->list);
-	write_unlock_irqrestore(&card_lock, flags);
-	switch (card->ci->typ) {
-	case INF_SCT_2:
-	case INF_SCT_3:
-	case INF_SCT_4:
-		break;
-	case INF_SCT_1:
-		for (i = 0; i < 3; i++) {
-			if (card->sc[i])
+	ग_लिखो_unlock_irqrestore(&card_lock, flags);
+	चयन (card->ci->typ) अणु
+	हाल INF_SCT_2:
+	हाल INF_SCT_3:
+	हाल INF_SCT_4:
+		अवरोध;
+	हाल INF_SCT_1:
+		क्रम (i = 0; i < 3; i++) अणु
+			अगर (card->sc[i])
 				release_card(card->sc[i]);
-			card->sc[i] = NULL;
-		}
+			card->sc[i] = शून्य;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		pci_disable_device(card->pdev);
-		pci_set_drvdata(card->pdev, NULL);
-		break;
-	}
-	kfree(card);
+		pci_set_drvdata(card->pdev, शून्य);
+		अवरोध;
+	पूर्ण
+	kमुक्त(card);
 	inf_cnt--;
-}
+पूर्ण
 
-static int
-setup_instance(struct inf_hw *card)
-{
-	int err;
-	ulong flags;
+अटल पूर्णांक
+setup_instance(काष्ठा inf_hw *card)
+अणु
+	पूर्णांक err;
+	uदीर्घ flags;
 
-	snprintf(card->name, MISDN_MAX_IDLEN - 1, "%s.%d", card->ci->name,
+	snम_लिखो(card->name, MISDN_MAX_IDLEN - 1, "%s.%d", card->ci->name,
 		 inf_cnt + 1);
-	write_lock_irqsave(&card_lock, flags);
+	ग_लिखो_lock_irqsave(&card_lock, flags);
 	list_add_tail(&card->list, &Cards);
-	write_unlock_irqrestore(&card_lock, flags);
+	ग_लिखो_unlock_irqrestore(&card_lock, flags);
 
 	_set_debug(card);
 	card->ipac.isac.name = card->name;
@@ -909,259 +910,259 @@ setup_instance(struct inf_hw *card)
 	spin_lock_init(&card->lock);
 	card->ipac.isac.hwlock = &card->lock;
 	card->ipac.hwlock = &card->lock;
-	card->ipac.ctrl = (void *)&inf_ctrl;
+	card->ipac.ctrl = (व्योम *)&inf_ctrl;
 
 	err = setup_io(card);
-	if (err)
-		goto error_setup;
+	अगर (err)
+		जाओ error_setup;
 
 	card->ipac.isac.dch.dev.Bprotocols =
 		mISDNipac_init(&card->ipac, card);
 
-	if (card->ipac.isac.dch.dev.Bprotocols == 0)
-		goto error_setup;
+	अगर (card->ipac.isac.dch.dev.Bprotocols == 0)
+		जाओ error_setup;
 
-	err = mISDN_register_device(&card->ipac.isac.dch.dev,
+	err = mISDN_रेजिस्टर_device(&card->ipac.isac.dch.dev,
 				    &card->pdev->dev, card->name);
-	if (err)
-		goto error;
+	अगर (err)
+		जाओ error;
 
 	err = init_irq(card);
-	if (!err)  {
+	अगर (!err)  अणु
 		inf_cnt++;
 		pr_notice("Infineon %d cards installed\n", inf_cnt);
-		return 0;
-	}
-	mISDN_unregister_device(&card->ipac.isac.dch.dev);
+		वापस 0;
+	पूर्ण
+	mISDN_unरेजिस्टर_device(&card->ipac.isac.dch.dev);
 error:
 	card->ipac.release(&card->ipac);
 error_setup:
 	release_io(card);
-	write_lock_irqsave(&card_lock, flags);
+	ग_लिखो_lock_irqsave(&card_lock, flags);
 	list_del(&card->list);
-	write_unlock_irqrestore(&card_lock, flags);
-	return err;
-}
+	ग_लिखो_unlock_irqrestore(&card_lock, flags);
+	वापस err;
+पूर्ण
 
-static const struct inf_cinfo inf_card_info[] = {
-	{
+अटल स्थिर काष्ठा inf_cinfo inf_card_info[] = अणु
+	अणु
 		INF_DIVA20,
 		"Dialogic Diva 2.0",
 		"diva20",
 		AM_IND_IO, AM_NONE, 2, 0,
-		&diva_irq
-	},
-	{
+		&भागa_irq
+	पूर्ण,
+	अणु
 		INF_DIVA20U,
 		"Dialogic Diva 2.0U",
 		"diva20U",
 		AM_IND_IO, AM_NONE, 2, 0,
-		&diva_irq
-	},
-	{
+		&भागa_irq
+	पूर्ण,
+	अणु
 		INF_DIVA201,
 		"Dialogic Diva 2.01",
 		"diva201",
 		AM_MEMIO, AM_MEMIO, 0, 1,
-		&diva20x_irq
-	},
-	{
+		&भागa20x_irq
+	पूर्ण,
+	अणु
 		INF_DIVA202,
 		"Dialogic Diva 2.02",
 		"diva202",
 		AM_MEMIO, AM_MEMIO, 0, 1,
-		&diva20x_irq
-	},
-	{
+		&भागa20x_irq
+	पूर्ण,
+	अणु
 		INF_SPEEDWIN,
 		"Sedlbauer SpeedWin PCI",
 		"speedwin",
 		AM_IND_IO, AM_NONE, 0, 0,
 		&tiger_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_SAPHIR3,
 		"HST Saphir 3",
 		"saphir",
 		AM_IND_IO, AM_NONE, 0, 0,
 		&tiger_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_QS1000,
 		"Develo Microlink PCI",
 		"qs1000",
 		AM_IO, AM_IND_IO, 1, 3,
 		&elsa_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_QS3000,
 		"Develo QuickStep 3000",
 		"qs3000",
 		AM_IO, AM_IND_IO, 1, 3,
 		&elsa_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_NICCY,
 		"Sagem NICCY",
 		"niccy",
 		AM_IO, AM_IND_IO, 0, 1,
 		&niccy_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_SCT_1,
 		"SciTel Quadro",
 		"p1_scitel",
 		AM_IO, AM_IND_IO, 1, 5,
 		&ipac_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_SCT_2,
 		"SciTel Quadro",
 		"p2_scitel",
 		AM_NONE, AM_IND_IO, 0, 4,
 		&ipac_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_SCT_3,
 		"SciTel Quadro",
 		"p3_scitel",
 		AM_NONE, AM_IND_IO, 0, 3,
 		&ipac_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_SCT_4,
 		"SciTel Quadro",
 		"p4_scitel",
 		AM_NONE, AM_IND_IO, 0, 2,
 		&ipac_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_GAZEL_R685,
 		"Gazel R685",
 		"gazel685",
 		AM_IO, AM_IO, 1, 2,
 		&gazel_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_GAZEL_R753,
 		"Gazel R753",
 		"gazel753",
 		AM_IO, AM_IND_IO, 1, 2,
 		&ipac_irq
-	},
-	{
+	पूर्ण,
+	अणु
 		INF_NONE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct inf_cinfo *
-get_card_info(enum inf_types typ)
-{
-	const struct inf_cinfo *ci = inf_card_info;
+अटल स्थिर काष्ठा inf_cinfo *
+get_card_info(क्रमागत inf_types typ)
+अणु
+	स्थिर काष्ठा inf_cinfo *ci = inf_card_info;
 
-	while (ci->typ != INF_NONE) {
-		if (ci->typ == typ)
-			return ci;
+	जबतक (ci->typ != INF_NONE) अणु
+		अगर (ci->typ == typ)
+			वापस ci;
 		ci++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int
-inf_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	int err = -ENOMEM;
-	struct inf_hw *card;
+अटल पूर्णांक
+inf_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक err = -ENOMEM;
+	काष्ठा inf_hw *card;
 
-	card = kzalloc(sizeof(struct inf_hw), GFP_KERNEL);
-	if (!card) {
+	card = kzalloc(माप(काष्ठा inf_hw), GFP_KERNEL);
+	अगर (!card) अणु
 		pr_info("No memory for Infineon ISDN card\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	card->pdev = pdev;
 	err = pci_enable_device(pdev);
-	if (err) {
-		kfree(card);
-		return err;
-	}
+	अगर (err) अणु
+		kमुक्त(card);
+		वापस err;
+	पूर्ण
 	card->ci = get_card_info(ent->driver_data);
-	if (!card->ci) {
+	अगर (!card->ci) अणु
 		pr_info("mISDN: do not have information about adapter at %s\n",
 			pci_name(pdev));
-		kfree(card);
+		kमुक्त(card);
 		pci_disable_device(pdev);
-		return -EINVAL;
-	} else
+		वापस -EINVAL;
+	पूर्ण अन्यथा
 		pr_notice("mISDN: found adapter %s at %s\n",
 			  card->ci->full, pci_name(pdev));
 
 	card->irq = pdev->irq;
 	pci_set_drvdata(pdev, card);
 	err = setup_instance(card);
-	if (err) {
+	अगर (err) अणु
 		pci_disable_device(pdev);
-		kfree(card);
-		pci_set_drvdata(pdev, NULL);
-	} else if (ent->driver_data == INF_SCT_1) {
-		int i;
-		struct inf_hw *sc;
+		kमुक्त(card);
+		pci_set_drvdata(pdev, शून्य);
+	पूर्ण अन्यथा अगर (ent->driver_data == INF_SCT_1) अणु
+		पूर्णांक i;
+		काष्ठा inf_hw *sc;
 
-		for (i = 1; i < 4; i++) {
-			sc = kzalloc(sizeof(struct inf_hw), GFP_KERNEL);
-			if (!sc) {
+		क्रम (i = 1; i < 4; i++) अणु
+			sc = kzalloc(माप(काष्ठा inf_hw), GFP_KERNEL);
+			अगर (!sc) अणु
 				release_card(card);
 				pci_disable_device(pdev);
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 			sc->irq = card->irq;
 			sc->pdev = card->pdev;
 			sc->ci = card->ci + i;
 			err = setup_instance(sc);
-			if (err) {
+			अगर (err) अणु
 				pci_disable_device(pdev);
-				kfree(sc);
+				kमुक्त(sc);
 				release_card(card);
-				break;
-			} else
+				अवरोध;
+			पूर्ण अन्यथा
 				card->sc[i - 1] = sc;
-		}
-	}
-	return err;
-}
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static void
-inf_remove(struct pci_dev *pdev)
-{
-	struct inf_hw	*card = pci_get_drvdata(pdev);
+अटल व्योम
+inf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा inf_hw	*card = pci_get_drvdata(pdev);
 
-	if (card)
+	अगर (card)
 		release_card(card);
-	else
+	अन्यथा
 		pr_debug("%s: drvdata already removed\n", __func__);
-}
+पूर्ण
 
-static struct pci_driver infineon_driver = {
+अटल काष्ठा pci_driver infineon_driver = अणु
 	.name = "ISDN Infineon pci",
 	.probe = inf_probe,
-	.remove = inf_remove,
+	.हटाओ = inf_हटाओ,
 	.id_table = infineon_ids,
-};
+पूर्ण;
 
-static int __init
-infineon_init(void)
-{
-	int err;
+अटल पूर्णांक __init
+infineon_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	pr_notice("Infineon ISDN Driver Rev. %s\n", INFINEON_REV);
-	err = pci_register_driver(&infineon_driver);
-	return err;
-}
+	err = pci_रेजिस्टर_driver(&infineon_driver);
+	वापस err;
+पूर्ण
 
-static void __exit
-infineon_cleanup(void)
-{
-	pci_unregister_driver(&infineon_driver);
-}
+अटल व्योम __निकास
+infineon_cleanup(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&infineon_driver);
+पूर्ण
 
 module_init(infineon_init);
-module_exit(infineon_cleanup);
+module_निकास(infineon_cleanup);

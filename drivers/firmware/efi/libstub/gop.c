@@ -1,260 +1,261 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* -----------------------------------------------------------------------
  *
  *   Copyright 2011 Intel Corporation; author Matt Fleming
  *
  * ----------------------------------------------------------------------- */
 
-#include <linux/bitops.h>
-#include <linux/ctype.h>
-#include <linux/efi.h>
-#include <linux/screen_info.h>
-#include <linux/string.h>
-#include <asm/efi.h>
-#include <asm/setup.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/efi.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/efi.h>
+#समावेश <यंत्र/setup.h>
 
-#include "efistub.h"
+#समावेश "efistub.h"
 
-enum efi_cmdline_option {
+क्रमागत efi_cmdline_option अणु
 	EFI_CMDLINE_NONE,
 	EFI_CMDLINE_MODE_NUM,
 	EFI_CMDLINE_RES,
 	EFI_CMDLINE_AUTO,
 	EFI_CMDLINE_LIST
-};
+पूर्ण;
 
-static struct {
-	enum efi_cmdline_option option;
-	union {
+अटल काष्ठा अणु
+	क्रमागत efi_cmdline_option option;
+	जोड़ अणु
 		u32 mode;
-		struct {
+		काष्ठा अणु
 			u32 width, height;
-			int format;
+			पूर्णांक क्रमmat;
 			u8 depth;
-		} res;
-	};
-} cmdline = { .option = EFI_CMDLINE_NONE };
+		पूर्ण res;
+	पूर्ण;
+पूर्ण cmdline = अणु .option = EFI_CMDLINE_NONE पूर्ण;
 
-static bool parse_modenum(char *option, char **next)
-{
+अटल bool parse_modक्रमागत(अक्षर *option, अक्षर **next)
+अणु
 	u32 m;
 
-	if (!strstarts(option, "mode="))
-		return false;
-	option += strlen("mode=");
-	m = simple_strtoull(option, &option, 0);
-	if (*option && *option++ != ',')
-		return false;
+	अगर (!strstarts(option, "mode="))
+		वापस false;
+	option += म_माप("mode=");
+	m = simple_म_से_अदीर्घl(option, &option, 0);
+	अगर (*option && *option++ != ',')
+		वापस false;
 	cmdline.option = EFI_CMDLINE_MODE_NUM;
 	cmdline.mode   = m;
 
 	*next = option;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool parse_res(char *option, char **next)
-{
+अटल bool parse_res(अक्षर *option, अक्षर **next)
+अणु
 	u32 w, h, d = 0;
-	int pf = -1;
+	पूर्णांक pf = -1;
 
-	if (!isdigit(*option))
-		return false;
-	w = simple_strtoull(option, &option, 10);
-	if (*option++ != 'x' || !isdigit(*option))
-		return false;
-	h = simple_strtoull(option, &option, 10);
-	if (*option == '-') {
+	अगर (!है_अंक(*option))
+		वापस false;
+	w = simple_म_से_अदीर्घl(option, &option, 10);
+	अगर (*option++ != 'x' || !है_अंक(*option))
+		वापस false;
+	h = simple_म_से_अदीर्घl(option, &option, 10);
+	अगर (*option == '-') अणु
 		option++;
-		if (strstarts(option, "rgb")) {
-			option += strlen("rgb");
+		अगर (strstarts(option, "rgb")) अणु
+			option += म_माप("rgb");
 			pf = PIXEL_RGB_RESERVED_8BIT_PER_COLOR;
-		} else if (strstarts(option, "bgr")) {
-			option += strlen("bgr");
+		पूर्ण अन्यथा अगर (strstarts(option, "bgr")) अणु
+			option += म_माप("bgr");
 			pf = PIXEL_BGR_RESERVED_8BIT_PER_COLOR;
-		} else if (isdigit(*option))
-			d = simple_strtoull(option, &option, 10);
-		else
-			return false;
-	}
-	if (*option && *option++ != ',')
-		return false;
+		पूर्ण अन्यथा अगर (है_अंक(*option))
+			d = simple_म_से_अदीर्घl(option, &option, 10);
+		अन्यथा
+			वापस false;
+	पूर्ण
+	अगर (*option && *option++ != ',')
+		वापस false;
 	cmdline.option     = EFI_CMDLINE_RES;
 	cmdline.res.width  = w;
 	cmdline.res.height = h;
-	cmdline.res.format = pf;
+	cmdline.res.क्रमmat = pf;
 	cmdline.res.depth  = d;
 
 	*next = option;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool parse_auto(char *option, char **next)
-{
-	if (!strstarts(option, "auto"))
-		return false;
-	option += strlen("auto");
-	if (*option && *option++ != ',')
-		return false;
+अटल bool parse_स्वतः(अक्षर *option, अक्षर **next)
+अणु
+	अगर (!strstarts(option, "auto"))
+		वापस false;
+	option += म_माप("auto");
+	अगर (*option && *option++ != ',')
+		वापस false;
 	cmdline.option = EFI_CMDLINE_AUTO;
 
 	*next = option;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool parse_list(char *option, char **next)
-{
-	if (!strstarts(option, "list"))
-		return false;
-	option += strlen("list");
-	if (*option && *option++ != ',')
-		return false;
+अटल bool parse_list(अक्षर *option, अक्षर **next)
+अणु
+	अगर (!strstarts(option, "list"))
+		वापस false;
+	option += म_माप("list");
+	अगर (*option && *option++ != ',')
+		वापस false;
 	cmdline.option = EFI_CMDLINE_LIST;
 
 	*next = option;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void efi_parse_option_graphics(char *option)
-{
-	while (*option) {
-		if (parse_modenum(option, &option))
-			continue;
-		if (parse_res(option, &option))
-			continue;
-		if (parse_auto(option, &option))
-			continue;
-		if (parse_list(option, &option))
-			continue;
+व्योम efi_parse_option_graphics(अक्षर *option)
+अणु
+	जबतक (*option) अणु
+		अगर (parse_modक्रमागत(option, &option))
+			जारी;
+		अगर (parse_res(option, &option))
+			जारी;
+		अगर (parse_स्वतः(option, &option))
+			जारी;
+		अगर (parse_list(option, &option))
+			जारी;
 
-		while (*option && *option++ != ',')
+		जबतक (*option && *option++ != ',')
 			;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u32 choose_mode_modenum(efi_graphics_output_protocol_t *gop)
-{
+अटल u32 choose_mode_modक्रमागत(efi_graphics_output_protocol_t *gop)
+अणु
 	efi_status_t status;
 
 	efi_graphics_output_protocol_mode_t *mode;
 	efi_graphics_output_mode_info_t *info;
-	unsigned long info_size;
+	अचिन्हित दीर्घ info_size;
 
 	u32 max_mode, cur_mode;
-	int pf;
+	पूर्णांक pf;
 
 	mode = efi_table_attr(gop, mode);
 
 	cur_mode = efi_table_attr(mode, mode);
-	if (cmdline.mode == cur_mode)
-		return cur_mode;
+	अगर (cmdline.mode == cur_mode)
+		वापस cur_mode;
 
 	max_mode = efi_table_attr(mode, max_mode);
-	if (cmdline.mode >= max_mode) {
+	अगर (cmdline.mode >= max_mode) अणु
 		efi_err("Requested mode is invalid\n");
-		return cur_mode;
-	}
+		वापस cur_mode;
+	पूर्ण
 
 	status = efi_call_proto(gop, query_mode, cmdline.mode,
 				&info_size, &info);
-	if (status != EFI_SUCCESS) {
+	अगर (status != EFI_SUCCESS) अणु
 		efi_err("Couldn't get mode information\n");
-		return cur_mode;
-	}
+		वापस cur_mode;
+	पूर्ण
 
-	pf = info->pixel_format;
+	pf = info->pixel_क्रमmat;
 
-	efi_bs_call(free_pool, info);
+	efi_bs_call(मुक्त_pool, info);
 
-	if (pf == PIXEL_BLT_ONLY || pf >= PIXEL_FORMAT_MAX) {
+	अगर (pf == PIXEL_BLT_ONLY || pf >= PIXEL_FORMAT_MAX) अणु
 		efi_err("Invalid PixelFormat\n");
-		return cur_mode;
-	}
+		वापस cur_mode;
+	पूर्ण
 
-	return cmdline.mode;
-}
+	वापस cmdline.mode;
+पूर्ण
 
-static u8 pixel_bpp(int pixel_format, efi_pixel_bitmask_t pixel_info)
-{
-	if (pixel_format == PIXEL_BIT_MASK) {
+अटल u8 pixel_bpp(पूर्णांक pixel_क्रमmat, efi_pixel_biपंचांगask_t pixel_info)
+अणु
+	अगर (pixel_क्रमmat == PIXEL_BIT_MASK) अणु
 		u32 mask = pixel_info.red_mask | pixel_info.green_mask |
 			   pixel_info.blue_mask | pixel_info.reserved_mask;
-		if (!mask)
-			return 0;
-		return __fls(mask) - __ffs(mask) + 1;
-	} else
-		return 32;
-}
+		अगर (!mask)
+			वापस 0;
+		वापस __fls(mask) - __ffs(mask) + 1;
+	पूर्ण अन्यथा
+		वापस 32;
+पूर्ण
 
-static u32 choose_mode_res(efi_graphics_output_protocol_t *gop)
-{
+अटल u32 choose_mode_res(efi_graphics_output_protocol_t *gop)
+अणु
 	efi_status_t status;
 
 	efi_graphics_output_protocol_mode_t *mode;
 	efi_graphics_output_mode_info_t *info;
-	unsigned long info_size;
+	अचिन्हित दीर्घ info_size;
 
 	u32 max_mode, cur_mode;
-	int pf;
-	efi_pixel_bitmask_t pi;
+	पूर्णांक pf;
+	efi_pixel_biपंचांगask_t pi;
 	u32 m, w, h;
 
 	mode = efi_table_attr(gop, mode);
 
 	cur_mode = efi_table_attr(mode, mode);
 	info = efi_table_attr(mode, info);
-	pf = info->pixel_format;
-	pi = info->pixel_information;
+	pf = info->pixel_क्रमmat;
+	pi = info->pixel_inक्रमmation;
 	w  = info->horizontal_resolution;
 	h  = info->vertical_resolution;
 
-	if (w == cmdline.res.width && h == cmdline.res.height &&
-	    (cmdline.res.format < 0 || cmdline.res.format == pf) &&
+	अगर (w == cmdline.res.width && h == cmdline.res.height &&
+	    (cmdline.res.क्रमmat < 0 || cmdline.res.क्रमmat == pf) &&
 	    (!cmdline.res.depth || cmdline.res.depth == pixel_bpp(pf, pi)))
-		return cur_mode;
+		वापस cur_mode;
 
 	max_mode = efi_table_attr(mode, max_mode);
 
-	for (m = 0; m < max_mode; m++) {
-		if (m == cur_mode)
-			continue;
+	क्रम (m = 0; m < max_mode; m++) अणु
+		अगर (m == cur_mode)
+			जारी;
 
 		status = efi_call_proto(gop, query_mode, m,
 					&info_size, &info);
-		if (status != EFI_SUCCESS)
-			continue;
+		अगर (status != EFI_SUCCESS)
+			जारी;
 
-		pf = info->pixel_format;
-		pi = info->pixel_information;
+		pf = info->pixel_क्रमmat;
+		pi = info->pixel_inक्रमmation;
 		w  = info->horizontal_resolution;
 		h  = info->vertical_resolution;
 
-		efi_bs_call(free_pool, info);
+		efi_bs_call(मुक्त_pool, info);
 
-		if (pf == PIXEL_BLT_ONLY || pf >= PIXEL_FORMAT_MAX)
-			continue;
-		if (w == cmdline.res.width && h == cmdline.res.height &&
-		    (cmdline.res.format < 0 || cmdline.res.format == pf) &&
+		अगर (pf == PIXEL_BLT_ONLY || pf >= PIXEL_FORMAT_MAX)
+			जारी;
+		अगर (w == cmdline.res.width && h == cmdline.res.height &&
+		    (cmdline.res.क्रमmat < 0 || cmdline.res.क्रमmat == pf) &&
 		    (!cmdline.res.depth || cmdline.res.depth == pixel_bpp(pf, pi)))
-			return m;
-	}
+			वापस m;
+	पूर्ण
 
 	efi_err("Couldn't find requested mode\n");
 
-	return cur_mode;
-}
+	वापस cur_mode;
+पूर्ण
 
-static u32 choose_mode_auto(efi_graphics_output_protocol_t *gop)
-{
+अटल u32 choose_mode_स्वतः(efi_graphics_output_protocol_t *gop)
+अणु
 	efi_status_t status;
 
 	efi_graphics_output_protocol_mode_t *mode;
 	efi_graphics_output_mode_info_t *info;
-	unsigned long info_size;
+	अचिन्हित दीर्घ info_size;
 
 	u32 max_mode, cur_mode, best_mode, area;
 	u8 depth;
-	int pf;
-	efi_pixel_bitmask_t pi;
+	पूर्णांक pf;
+	efi_pixel_biपंचांगask_t pi;
 	u32 m, w, h, a;
 	u8 d;
 
@@ -265,8 +266,8 @@ static u32 choose_mode_auto(efi_graphics_output_protocol_t *gop)
 
 	info = efi_table_attr(mode, info);
 
-	pf = info->pixel_format;
-	pi = info->pixel_information;
+	pf = info->pixel_क्रमmat;
+	pi = info->pixel_inक्रमmation;
 	w  = info->horizontal_resolution;
 	h  = info->vertical_resolution;
 
@@ -274,52 +275,52 @@ static u32 choose_mode_auto(efi_graphics_output_protocol_t *gop)
 	area = w * h;
 	depth = pixel_bpp(pf, pi);
 
-	for (m = 0; m < max_mode; m++) {
-		if (m == cur_mode)
-			continue;
+	क्रम (m = 0; m < max_mode; m++) अणु
+		अगर (m == cur_mode)
+			जारी;
 
 		status = efi_call_proto(gop, query_mode, m,
 					&info_size, &info);
-		if (status != EFI_SUCCESS)
-			continue;
+		अगर (status != EFI_SUCCESS)
+			जारी;
 
-		pf = info->pixel_format;
-		pi = info->pixel_information;
+		pf = info->pixel_क्रमmat;
+		pi = info->pixel_inक्रमmation;
 		w  = info->horizontal_resolution;
 		h  = info->vertical_resolution;
 
-		efi_bs_call(free_pool, info);
+		efi_bs_call(मुक्त_pool, info);
 
-		if (pf == PIXEL_BLT_ONLY || pf >= PIXEL_FORMAT_MAX)
-			continue;
+		अगर (pf == PIXEL_BLT_ONLY || pf >= PIXEL_FORMAT_MAX)
+			जारी;
 		a = w * h;
-		if (a < area)
-			continue;
+		अगर (a < area)
+			जारी;
 		d = pixel_bpp(pf, pi);
-		if (a > area || d > depth) {
+		अगर (a > area || d > depth) अणु
 			best_mode = m;
 			area = a;
 			depth = d;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return best_mode;
-}
+	वापस best_mode;
+पूर्ण
 
-static u32 choose_mode_list(efi_graphics_output_protocol_t *gop)
-{
+अटल u32 choose_mode_list(efi_graphics_output_protocol_t *gop)
+अणु
 	efi_status_t status;
 
 	efi_graphics_output_protocol_mode_t *mode;
 	efi_graphics_output_mode_info_t *info;
-	unsigned long info_size;
+	अचिन्हित दीर्घ info_size;
 
 	u32 max_mode, cur_mode;
-	int pf;
-	efi_pixel_bitmask_t pi;
+	पूर्णांक pf;
+	efi_pixel_biपंचांगask_t pi;
 	u32 m, w, h;
 	u8 d;
-	const char *dstr;
+	स्थिर अक्षर *dstr;
 	bool valid;
 	efi_input_key_t key;
 
@@ -328,109 +329,109 @@ static u32 choose_mode_list(efi_graphics_output_protocol_t *gop)
 	cur_mode = efi_table_attr(mode, mode);
 	max_mode = efi_table_attr(mode, max_mode);
 
-	efi_printk("Available graphics modes are 0-%u\n", max_mode-1);
-	efi_puts("  * = current mode\n"
+	efi_prपूर्णांकk("Available graphics modes are 0-%u\n", max_mode-1);
+	efi_माला_दो("  * = current mode\n"
 		 "  - = unusable mode\n");
-	for (m = 0; m < max_mode; m++) {
+	क्रम (m = 0; m < max_mode; m++) अणु
 		status = efi_call_proto(gop, query_mode, m,
 					&info_size, &info);
-		if (status != EFI_SUCCESS)
-			continue;
+		अगर (status != EFI_SUCCESS)
+			जारी;
 
-		pf = info->pixel_format;
-		pi = info->pixel_information;
+		pf = info->pixel_क्रमmat;
+		pi = info->pixel_inक्रमmation;
 		w  = info->horizontal_resolution;
 		h  = info->vertical_resolution;
 
-		efi_bs_call(free_pool, info);
+		efi_bs_call(मुक्त_pool, info);
 
 		valid = !(pf == PIXEL_BLT_ONLY || pf >= PIXEL_FORMAT_MAX);
 		d = 0;
-		switch (pf) {
-		case PIXEL_RGB_RESERVED_8BIT_PER_COLOR:
+		चयन (pf) अणु
+		हाल PIXEL_RGB_RESERVED_8BIT_PER_COLOR:
 			dstr = "rgb";
-			break;
-		case PIXEL_BGR_RESERVED_8BIT_PER_COLOR:
+			अवरोध;
+		हाल PIXEL_BGR_RESERVED_8BIT_PER_COLOR:
 			dstr = "bgr";
-			break;
-		case PIXEL_BIT_MASK:
+			अवरोध;
+		हाल PIXEL_BIT_MASK:
 			dstr = "";
 			d = pixel_bpp(pf, pi);
-			break;
-		case PIXEL_BLT_ONLY:
+			अवरोध;
+		हाल PIXEL_BLT_ONLY:
 			dstr = "blt";
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dstr = "xxx";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		efi_printk("Mode %3u %c%c: Resolution %ux%u-%s%.0hhu\n",
+		efi_prपूर्णांकk("Mode %3u %c%c: Resolution %ux%u-%s%.0hhu\n",
 			   m,
 			   m == cur_mode ? '*' : ' ',
 			   !valid ? '-' : ' ',
 			   w, h, dstr, d);
-	}
+	पूर्ण
 
-	efi_puts("\nPress any key to continue (or wait 10 seconds)\n");
-	status = efi_wait_for_key(10 * EFI_USEC_PER_SEC, &key);
-	if (status != EFI_SUCCESS && status != EFI_TIMEOUT) {
+	efi_माला_दो("\nPress any key to continue (or wait 10 seconds)\n");
+	status = efi_रुको_क्रम_key(10 * EFI_USEC_PER_SEC, &key);
+	अगर (status != EFI_SUCCESS && status != EFI_TIMEOUT) अणु
 		efi_err("Unable to read key, continuing in 10 seconds\n");
 		efi_bs_call(stall, 10 * EFI_USEC_PER_SEC);
-	}
+	पूर्ण
 
-	return cur_mode;
-}
+	वापस cur_mode;
+पूर्ण
 
-static void set_mode(efi_graphics_output_protocol_t *gop)
-{
+अटल व्योम set_mode(efi_graphics_output_protocol_t *gop)
+अणु
 	efi_graphics_output_protocol_mode_t *mode;
 	u32 cur_mode, new_mode;
 
-	switch (cmdline.option) {
-	case EFI_CMDLINE_MODE_NUM:
-		new_mode = choose_mode_modenum(gop);
-		break;
-	case EFI_CMDLINE_RES:
+	चयन (cmdline.option) अणु
+	हाल EFI_CMDLINE_MODE_NUM:
+		new_mode = choose_mode_modक्रमागत(gop);
+		अवरोध;
+	हाल EFI_CMDLINE_RES:
 		new_mode = choose_mode_res(gop);
-		break;
-	case EFI_CMDLINE_AUTO:
-		new_mode = choose_mode_auto(gop);
-		break;
-	case EFI_CMDLINE_LIST:
+		अवरोध;
+	हाल EFI_CMDLINE_AUTO:
+		new_mode = choose_mode_स्वतः(gop);
+		अवरोध;
+	हाल EFI_CMDLINE_LIST:
 		new_mode = choose_mode_list(gop);
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	mode = efi_table_attr(gop, mode);
 	cur_mode = efi_table_attr(mode, mode);
 
-	if (new_mode == cur_mode)
-		return;
+	अगर (new_mode == cur_mode)
+		वापस;
 
-	if (efi_call_proto(gop, set_mode, new_mode) != EFI_SUCCESS)
+	अगर (efi_call_proto(gop, set_mode, new_mode) != EFI_SUCCESS)
 		efi_err("Failed to set requested mode\n");
-}
+पूर्ण
 
-static void find_bits(u32 mask, u8 *pos, u8 *size)
-{
-	if (!mask) {
+अटल व्योम find_bits(u32 mask, u8 *pos, u8 *size)
+अणु
+	अगर (!mask) अणु
 		*pos = *size = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* UEFI spec guarantees that the set bits are contiguous */
 	*pos  = __ffs(mask);
 	*size = __fls(mask) - *pos + 1;
-}
+पूर्ण
 
-static void
-setup_pixel_info(struct screen_info *si, u32 pixels_per_scan_line,
-		 efi_pixel_bitmask_t pixel_info, int pixel_format)
-{
-	if (pixel_format == PIXEL_BIT_MASK) {
+अटल व्योम
+setup_pixel_info(काष्ठा screen_info *si, u32 pixels_per_scan_line,
+		 efi_pixel_biपंचांगask_t pixel_info, पूर्णांक pixel_क्रमmat)
+अणु
+	अगर (pixel_क्रमmat == PIXEL_BIT_MASK) अणु
 		find_bits(pixel_info.red_mask,
 			  &si->red_pos, &si->red_size);
 		find_bits(pixel_info.green_mask,
@@ -442,14 +443,14 @@ setup_pixel_info(struct screen_info *si, u32 pixels_per_scan_line,
 		si->lfb_depth = si->red_size + si->green_size +
 			si->blue_size + si->rsvd_size;
 		si->lfb_linelength = (pixels_per_scan_line * si->lfb_depth) / 8;
-	} else {
-		if (pixel_format == PIXEL_RGB_RESERVED_8BIT_PER_COLOR) {
+	पूर्ण अन्यथा अणु
+		अगर (pixel_क्रमmat == PIXEL_RGB_RESERVED_8BIT_PER_COLOR) अणु
 			si->red_pos   = 0;
 			si->blue_pos  = 16;
-		} else /* PIXEL_BGR_RESERVED_8BIT_PER_COLOR */ {
+		पूर्ण अन्यथा /* PIXEL_BGR_RESERVED_8BIT_PER_COLOR */ अणु
 			si->blue_pos  = 0;
 			si->red_pos   = 16;
-		}
+		पूर्ण
 
 		si->green_pos = 8;
 		si->rsvd_pos  = 24;
@@ -458,19 +459,19 @@ setup_pixel_info(struct screen_info *si, u32 pixels_per_scan_line,
 
 		si->lfb_depth = 32;
 		si->lfb_linelength = pixels_per_scan_line * 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static efi_graphics_output_protocol_t *
-find_gop(efi_guid_t *proto, unsigned long size, void **handles)
-{
+अटल efi_graphics_output_protocol_t *
+find_gop(efi_guid_t *proto, अचिन्हित दीर्घ size, व्योम **handles)
+अणु
 	efi_graphics_output_protocol_t *first_gop;
 	efi_handle_t h;
-	int i;
+	पूर्णांक i;
 
-	first_gop = NULL;
+	first_gop = शून्य;
 
-	for_each_efi_handle(h, handles, size, i) {
+	क्रम_each_efi_handle(h, handles, size, i) अणु
 		efi_status_t status;
 
 		efi_graphics_output_protocol_t *gop;
@@ -478,42 +479,42 @@ find_gop(efi_guid_t *proto, unsigned long size, void **handles)
 		efi_graphics_output_mode_info_t *info;
 
 		efi_guid_t conout_proto = EFI_CONSOLE_OUT_DEVICE_GUID;
-		void *dummy = NULL;
+		व्योम *dummy = शून्य;
 
-		status = efi_bs_call(handle_protocol, h, proto, (void **)&gop);
-		if (status != EFI_SUCCESS)
-			continue;
+		status = efi_bs_call(handle_protocol, h, proto, (व्योम **)&gop);
+		अगर (status != EFI_SUCCESS)
+			जारी;
 
 		mode = efi_table_attr(gop, mode);
 		info = efi_table_attr(mode, info);
-		if (info->pixel_format == PIXEL_BLT_ONLY ||
-		    info->pixel_format >= PIXEL_FORMAT_MAX)
-			continue;
+		अगर (info->pixel_क्रमmat == PIXEL_BLT_ONLY ||
+		    info->pixel_क्रमmat >= PIXEL_FORMAT_MAX)
+			जारी;
 
 		/*
 		 * Systems that use the UEFI Console Splitter may
 		 * provide multiple GOP devices, not all of which are
 		 * backed by real hardware. The workaround is to search
-		 * for a GOP implementing the ConOut protocol, and if
+		 * क्रम a GOP implementing the ConOut protocol, and अगर
 		 * one isn't found, to just fall back to the first GOP.
 		 *
 		 * Once we've found a GOP supporting ConOut,
-		 * don't bother looking any further.
+		 * करोn't bother looking any further.
 		 */
 		status = efi_bs_call(handle_protocol, h, &conout_proto, &dummy);
-		if (status == EFI_SUCCESS)
-			return gop;
+		अगर (status == EFI_SUCCESS)
+			वापस gop;
 
-		if (!first_gop)
+		अगर (!first_gop)
 			first_gop = gop;
-	}
+	पूर्ण
 
-	return first_gop;
-}
+	वापस first_gop;
+पूर्ण
 
-static efi_status_t setup_gop(struct screen_info *si, efi_guid_t *proto,
-			      unsigned long size, void **handles)
-{
+अटल efi_status_t setup_gop(काष्ठा screen_info *si, efi_guid_t *proto,
+			      अचिन्हित दीर्घ size, व्योम **handles)
+अणु
 	efi_graphics_output_protocol_t *gop;
 	efi_graphics_output_protocol_mode_t *mode;
 	efi_graphics_output_mode_info_t *info;
@@ -521,10 +522,10 @@ static efi_status_t setup_gop(struct screen_info *si, efi_guid_t *proto,
 	gop = find_gop(proto, size, handles);
 
 	/* Did we find any GOPs? */
-	if (!gop)
-		return EFI_NOT_FOUND;
+	अगर (!gop)
+		वापस EFI_NOT_FOUND;
 
-	/* Change mode if requested */
+	/* Change mode अगर requested */
 	set_mode(gop);
 
 	/* EFI framebuffer */
@@ -538,43 +539,43 @@ static efi_status_t setup_gop(struct screen_info *si, efi_guid_t *proto,
 
 	efi_set_u64_split(efi_table_attr(mode, frame_buffer_base),
 			  &si->lfb_base, &si->ext_lfb_base);
-	if (si->ext_lfb_base)
+	अगर (si->ext_lfb_base)
 		si->capabilities |= VIDEO_CAPABILITY_64BIT_BASE;
 
 	si->pages = 1;
 
 	setup_pixel_info(si, info->pixels_per_scan_line,
-			     info->pixel_information, info->pixel_format);
+			     info->pixel_inक्रमmation, info->pixel_क्रमmat);
 
 	si->lfb_size = si->lfb_linelength * si->lfb_height;
 
 	si->capabilities |= VIDEO_CAPABILITY_SKIP_QUIRKS;
 
-	return EFI_SUCCESS;
-}
+	वापस EFI_SUCCESS;
+पूर्ण
 
 /*
- * See if we have Graphics Output Protocol
+ * See अगर we have Graphics Output Protocol
  */
-efi_status_t efi_setup_gop(struct screen_info *si, efi_guid_t *proto,
-			   unsigned long size)
-{
+efi_status_t efi_setup_gop(काष्ठा screen_info *si, efi_guid_t *proto,
+			   अचिन्हित दीर्घ size)
+अणु
 	efi_status_t status;
-	void **gop_handle = NULL;
+	व्योम **gop_handle = शून्य;
 
 	status = efi_bs_call(allocate_pool, EFI_LOADER_DATA, size,
-			     (void **)&gop_handle);
-	if (status != EFI_SUCCESS)
-		return status;
+			     (व्योम **)&gop_handle);
+	अगर (status != EFI_SUCCESS)
+		वापस status;
 
-	status = efi_bs_call(locate_handle, EFI_LOCATE_BY_PROTOCOL, proto, NULL,
+	status = efi_bs_call(locate_handle, EFI_LOCATE_BY_PROTOCOL, proto, शून्य,
 			     &size, gop_handle);
-	if (status != EFI_SUCCESS)
-		goto free_handle;
+	अगर (status != EFI_SUCCESS)
+		जाओ मुक्त_handle;
 
 	status = setup_gop(si, proto, size, gop_handle);
 
-free_handle:
-	efi_bs_call(free_pool, gop_handle);
-	return status;
-}
+मुक्त_handle:
+	efi_bs_call(मुक्त_pool, gop_handle);
+	वापस status;
+पूर्ण

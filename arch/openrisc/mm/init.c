@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * OpenRISC idle.c
  *
@@ -6,65 +7,65 @@
  * others.  All original copyrights apply as per the original source
  * declaration.
  *
- * Modifications for the OpenRISC architecture:
+ * Modअगरications क्रम the OpenRISC architecture:
  * Copyright (C) 2003 Matjaz Breskvar <phoenix@bsemi.com>
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/ptrace.h>
-#include <linux/mman.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/smp.h>
-#include <linux/memblock.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/blkdev.h>	/* for initrd_* */
-#include <linux/pagemap.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/blkdev.h>	/* क्रम initrd_* */
+#समावेश <linux/pagemap.h>
 
-#include <asm/pgalloc.h>
-#include <asm/dma.h>
-#include <asm/io.h>
-#include <asm/tlb.h>
-#include <asm/mmu_context.h>
-#include <asm/fixmap.h>
-#include <asm/tlbflush.h>
-#include <asm/sections.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/sections.h>
 
-int mem_init_done;
+पूर्णांक mem_init_करोne;
 
-DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
+DEFINE_PER_CPU(काष्ठा mmu_gather, mmu_gathers);
 
-static void __init zone_sizes_init(void)
-{
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0 };
+अटल व्योम __init zone_sizes_init(व्योम)
+अणु
+	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु 0 पूर्ण;
 
 	/*
 	 * We use only ZONE_NORMAL
 	 */
 	max_zone_pfn[ZONE_NORMAL] = max_low_pfn;
 
-	free_area_init(max_zone_pfn);
-}
+	मुक्त_area_init(max_zone_pfn);
+पूर्ण
 
-extern const char _s_kernel_ro[], _e_kernel_ro[];
+बाह्य स्थिर अक्षर _s_kernel_ro[], _e_kernel_ro[];
 
 /*
- * Map all physical memory into kernel's address space.
+ * Map all physical memory पूर्णांकo kernel's address space.
  *
- * This is explicitly coded for two-level page tables, so if you need
- * something else then this needs to change.
+ * This is explicitly coded क्रम two-level page tables, so अगर you need
+ * something अन्यथा then this needs to change.
  */
-static void __init map_ram(void)
-{
+अटल व्योम __init map_ram(व्योम)
+अणु
 	phys_addr_t start, end;
-	unsigned long v, p, e;
+	अचिन्हित दीर्घ v, p, e;
 	pgprot_t prot;
 	pgd_t *pge;
 	p4d_t *p4e;
@@ -72,74 +73,74 @@ static void __init map_ram(void)
 	pmd_t *pme;
 	pte_t *pte;
 	u64 i;
-	/* These mark extents of read-only kernel pages...
+	/* These mark extents of पढ़ो-only kernel pages...
 	 * ...from vmlinux.lds.S
 	 */
 
 	v = PAGE_OFFSET;
 
-	for_each_mem_range(i, &start, &end) {
+	क्रम_each_mem_range(i, &start, &end) अणु
 		p = (u32) start & PAGE_MASK;
 		e = (u32) end;
 
 		v = (u32) __va(p);
 		pge = pgd_offset_k(v);
 
-		while (p < e) {
-			int j;
+		जबतक (p < e) अणु
+			पूर्णांक j;
 			p4e = p4d_offset(pge, v);
 			pue = pud_offset(p4e, v);
 			pme = pmd_offset(pue, v);
 
-			if ((u32) pue != (u32) pge || (u32) pme != (u32) pge) {
+			अगर ((u32) pue != (u32) pge || (u32) pme != (u32) pge) अणु
 				panic("%s: OR1K kernel hardcoded for "
 				      "two-level page tables",
 				     __func__);
-			}
+			पूर्ण
 
-			/* Alloc one page for holding PTE's... */
+			/* Alloc one page क्रम holding PTE's... */
 			pte = memblock_alloc_raw(PAGE_SIZE, PAGE_SIZE);
-			if (!pte)
+			अगर (!pte)
 				panic("%s: Failed to allocate page for PTEs\n",
 				      __func__);
 			set_pmd(pme, __pmd(_KERNPG_TABLE + __pa(pte)));
 
 			/* Fill the newly allocated page with PTE'S */
-			for (j = 0; p < e && j < PTRS_PER_PTE;
-			     v += PAGE_SIZE, p += PAGE_SIZE, j++, pte++) {
-				if (v >= (u32) _e_kernel_ro ||
+			क्रम (j = 0; p < e && j < PTRS_PER_PTE;
+			     v += PAGE_SIZE, p += PAGE_SIZE, j++, pte++) अणु
+				अगर (v >= (u32) _e_kernel_ro ||
 				    v < (u32) _s_kernel_ro)
 					prot = PAGE_KERNEL;
-				else
+				अन्यथा
 					prot = PAGE_KERNEL_RO;
 
 				set_pte(pte, mk_pte_phys(p, prot));
-			}
+			पूर्ण
 
 			pge++;
-		}
+		पूर्ण
 
-		printk(KERN_INFO "%s: Memory: 0x%x-0x%x\n", __func__,
+		prपूर्णांकk(KERN_INFO "%s: Memory: 0x%x-0x%x\n", __func__,
 		       start, end);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init paging_init(void)
-{
-	extern void tlb_init(void);
+व्योम __init paging_init(व्योम)
+अणु
+	बाह्य व्योम tlb_init(व्योम);
 
-	int i;
+	पूर्णांक i;
 
-	printk(KERN_INFO "Setting up paging and PTEs.\n");
+	prपूर्णांकk(KERN_INFO "Setting up paging and PTEs.\n");
 
 	/* clear out the init_mm.pgd that will contain the kernel's mappings */
 
-	for (i = 0; i < PTRS_PER_PGD; i++)
+	क्रम (i = 0; i < PTRS_PER_PGD; i++)
 		swapper_pg_dir[i] = __pgd(0);
 
-	/* make sure the current pgd table points to something sane
-	 * (even if it is most probably not used until the next
-	 *  switch_mm)
+	/* make sure the current pgd table poपूर्णांकs to something sane
+	 * (even अगर it is most probably not used until the next
+	 *  चयन_mm)
 	 */
 	current_pgd[smp_processor_id()] = init_mm.pgd;
 
@@ -147,67 +148,67 @@ void __init paging_init(void)
 
 	zone_sizes_init();
 
-	/* self modifying code ;) */
+	/* self modअगरying code ;) */
 	/* Since the old TLB miss handler has been running up until now,
-	 * the kernel pages are still all RW, so we can still modify the
+	 * the kernel pages are still all RW, so we can still modअगरy the
 	 * text directly... after this change and a TLB flush, the kernel
 	 * pages will become RO.
 	 */
-	{
-		extern unsigned long dtlb_miss_handler;
-		extern unsigned long itlb_miss_handler;
+	अणु
+		बाह्य अचिन्हित दीर्घ dtlb_miss_handler;
+		बाह्य अचिन्हित दीर्घ itlb_miss_handler;
 
-		unsigned long *dtlb_vector = __va(0x900);
-		unsigned long *itlb_vector = __va(0xa00);
+		अचिन्हित दीर्घ *dtlb_vector = __va(0x900);
+		अचिन्हित दीर्घ *itlb_vector = __va(0xa00);
 
-		printk(KERN_INFO "itlb_miss_handler %p\n", &itlb_miss_handler);
-		*itlb_vector = ((unsigned long)&itlb_miss_handler -
-				(unsigned long)itlb_vector) >> 2;
+		prपूर्णांकk(KERN_INFO "itlb_miss_handler %p\n", &itlb_miss_handler);
+		*itlb_vector = ((अचिन्हित दीर्घ)&itlb_miss_handler -
+				(अचिन्हित दीर्घ)itlb_vector) >> 2;
 
-		/* Soft ordering constraint to ensure that dtlb_vector is
+		/* Soft ordering स्थिरraपूर्णांक to ensure that dtlb_vector is
 		 * the last thing updated
 		 */
 		barrier();
 
-		printk(KERN_INFO "dtlb_miss_handler %p\n", &dtlb_miss_handler);
-		*dtlb_vector = ((unsigned long)&dtlb_miss_handler -
-				(unsigned long)dtlb_vector) >> 2;
+		prपूर्णांकk(KERN_INFO "dtlb_miss_handler %p\n", &dtlb_miss_handler);
+		*dtlb_vector = ((अचिन्हित दीर्घ)&dtlb_miss_handler -
+				(अचिन्हित दीर्घ)dtlb_vector) >> 2;
 
-	}
+	पूर्ण
 
-	/* Soft ordering constraint to ensure that cache invalidation and
-	 * TLB flush really happen _after_ code has been modified.
+	/* Soft ordering स्थिरraपूर्णांक to ensure that cache invalidation and
+	 * TLB flush really happen _after_ code has been modअगरied.
 	 */
 	barrier();
 
-	/* Invalidate instruction caches after code modification */
+	/* Invalidate inकाष्ठाion caches after code modअगरication */
 	mtspr(SPR_ICBIR, 0x900);
 	mtspr(SPR_ICBIR, 0xa00);
 
 	/* New TLB miss handlers and kernel page tables are in now place.
-	 * Make sure that page flags get updated for all pages in TLB by
-	 * flushing the TLB and forcing all TLB entries to be recreated
+	 * Make sure that page flags get updated क्रम all pages in TLB by
+	 * flushing the TLB and क्रमcing all TLB entries to be recreated
 	 * from their page table flags.
 	 */
 	flush_tlb_all();
-}
+पूर्ण
 
 /* References to section boundaries */
 
-void __init mem_init(void)
-{
+व्योम __init mem_init(व्योम)
+अणु
 	BUG_ON(!mem_map);
 
 	max_mapnr = max_low_pfn;
-	high_memory = (void *)__va(max_low_pfn * PAGE_SIZE);
+	high_memory = (व्योम *)__va(max_low_pfn * PAGE_SIZE);
 
 	/* clear the zero-page */
-	memset((void *)empty_zero_page, 0, PAGE_SIZE);
+	स_रखो((व्योम *)empty_zero_page, 0, PAGE_SIZE);
 
-	/* this will put all low memory onto the freelists */
-	memblock_free_all();
+	/* this will put all low memory onto the मुक्तlists */
+	memblock_मुक्त_all();
 
-	printk("mem_init_done ...........................................\n");
-	mem_init_done = 1;
-	return;
-}
+	prपूर्णांकk("mem_init_done ...........................................\n");
+	mem_init_करोne = 1;
+	वापस;
+पूर्ण

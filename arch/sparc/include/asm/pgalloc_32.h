@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC_PGALLOC_H
-#define _SPARC_PGALLOC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC_PGALLOC_H
+#घोषणा _SPARC_PGALLOC_H
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/pgtsrmmu.h>
-#include <asm/vaddrs.h>
-#include <asm/page.h>
+#समावेश <यंत्र/pgtsrmmu.h>
+#समावेश <यंत्र/vaddrs.h>
+#समावेश <यंत्र/page.h>
 
-struct page;
+काष्ठा page;
 
-void *srmmu_get_nocache(int size, int align);
-void srmmu_free_nocache(void *addr, int size);
+व्योम *srmmu_get_nocache(पूर्णांक size, पूर्णांक align);
+व्योम srmmu_मुक्त_nocache(व्योम *addr, पूर्णांक size);
 
-extern struct resource sparc_iomap;
+बाह्य काष्ठा resource sparc_iomap;
 
-pgd_t *get_pgd_fast(void);
-static inline void free_pgd_fast(pgd_t *pgd)
-{
-	srmmu_free_nocache(pgd, SRMMU_PGD_TABLE_SIZE);
-}
+pgd_t *get_pgd_fast(व्योम);
+अटल अंतरभूत व्योम मुक्त_pgd_fast(pgd_t *pgd)
+अणु
+	srmmu_मुक्त_nocache(pgd, SRMMU_PGD_TABLE_SIZE);
+पूर्ण
 
-#define pgd_free(mm, pgd)	free_pgd_fast(pgd)
-#define pgd_alloc(mm)	get_pgd_fast()
+#घोषणा pgd_मुक्त(mm, pgd)	मुक्त_pgd_fast(pgd)
+#घोषणा pgd_alloc(mm)	get_pgd_fast()
 
-static inline void pud_set(pud_t * pudp, pmd_t * pmdp)
-{
-	unsigned long pa = __nocache_pa(pmdp);
+अटल अंतरभूत व्योम pud_set(pud_t * pudp, pmd_t * pmdp)
+अणु
+	अचिन्हित दीर्घ pa = __nocache_pa(pmdp);
 
 	set_pte((pte_t *)pudp, __pte((SRMMU_ET_PTD | (pa >> 4))));
-}
+पूर्ण
 
-#define pud_populate(MM, PGD, PMD)      pud_set(PGD, PMD)
+#घोषणा pud_populate(MM, PGD, PMD)      pud_set(PGD, PMD)
 
-static inline pmd_t *pmd_alloc_one(struct mm_struct *mm,
-				   unsigned long address)
-{
-	return srmmu_get_nocache(SRMMU_PMD_TABLE_SIZE,
+अटल अंतरभूत pmd_t *pmd_alloc_one(काष्ठा mm_काष्ठा *mm,
+				   अचिन्हित दीर्घ address)
+अणु
+	वापस srmmu_get_nocache(SRMMU_PMD_TABLE_SIZE,
 				 SRMMU_PMD_TABLE_SIZE);
-}
+पूर्ण
 
-static inline void free_pmd_fast(pmd_t * pmd)
-{
-	srmmu_free_nocache(pmd, SRMMU_PMD_TABLE_SIZE);
-}
+अटल अंतरभूत व्योम मुक्त_pmd_fast(pmd_t * pmd)
+अणु
+	srmmu_मुक्त_nocache(pmd, SRMMU_PMD_TABLE_SIZE);
+पूर्ण
 
-#define pmd_free(mm, pmd)		free_pmd_fast(pmd)
-#define __pmd_free_tlb(tlb, pmd, addr)	pmd_free((tlb)->mm, pmd)
+#घोषणा pmd_मुक्त(mm, pmd)		मुक्त_pmd_fast(pmd)
+#घोषणा __pmd_मुक्त_tlb(tlb, pmd, addr)	pmd_मुक्त((tlb)->mm, pmd)
 
-#define pmd_populate(mm, pmd, pte)	pmd_set(pmd, pte)
-#define pmd_pgtable(pmd)		(pgtable_t)__pmd_page(pmd)
+#घोषणा pmd_populate(mm, pmd, pte)	pmd_set(pmd, pte)
+#घोषणा pmd_pgtable(pmd)		(pgtable_t)__pmd_page(pmd)
 
-void pmd_set(pmd_t *pmdp, pte_t *ptep);
-#define pmd_populate_kernel		pmd_populate
+व्योम pmd_set(pmd_t *pmdp, pte_t *ptep);
+#घोषणा pmd_populate_kernel		pmd_populate
 
-pgtable_t pte_alloc_one(struct mm_struct *mm);
+pgtable_t pte_alloc_one(काष्ठा mm_काष्ठा *mm);
 
-static inline pte_t *pte_alloc_one_kernel(struct mm_struct *mm)
-{
-	return srmmu_get_nocache(SRMMU_PTE_TABLE_SIZE,
+अटल अंतरभूत pte_t *pte_alloc_one_kernel(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस srmmu_get_nocache(SRMMU_PTE_TABLE_SIZE,
 				 SRMMU_PTE_TABLE_SIZE);
-}
+पूर्ण
 
 
-static inline void free_pte_fast(pte_t *pte)
-{
-	srmmu_free_nocache(pte, SRMMU_PTE_TABLE_SIZE);
-}
+अटल अंतरभूत व्योम मुक्त_pte_fast(pte_t *pte)
+अणु
+	srmmu_मुक्त_nocache(pte, SRMMU_PTE_TABLE_SIZE);
+पूर्ण
 
-#define pte_free_kernel(mm, pte)	free_pte_fast(pte)
+#घोषणा pte_मुक्त_kernel(mm, pte)	मुक्त_pte_fast(pte)
 
-void pte_free(struct mm_struct * mm, pgtable_t pte);
-#define __pte_free_tlb(tlb, pte, addr)	pte_free((tlb)->mm, pte)
+व्योम pte_मुक्त(काष्ठा mm_काष्ठा * mm, pgtable_t pte);
+#घोषणा __pte_मुक्त_tlb(tlb, pte, addr)	pte_मुक्त((tlb)->mm, pte)
 
-#endif /* _SPARC_PGALLOC_H */
+#पूर्ण_अगर /* _SPARC_PGALLOC_H */

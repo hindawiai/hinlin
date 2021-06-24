@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Keystone2 based boards and SOC related code.
  *
@@ -6,103 +7,103 @@
  *	Cyril Chemparathy <cyril@ti.com>
  *	Santosh Shilimkar <santosh.shillimkar@ti.com>
  */
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/dma-map-ops.h>
-#include <linux/init.h>
-#include <linux/of_platform.h>
-#include <linux/of_address.h>
-#include <linux/memblock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/setup.h>
-#include <asm/mach/map.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/time.h>
-#include <asm/smp_plat.h>
-#include <asm/memory.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/समय.स>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/memory.h>
 
-#include "memory.h"
+#समावेश "memory.h"
 
-#include "keystone.h"
+#समावेश "keystone.h"
 
-#ifdef CONFIG_ARM_LPAE
-static int keystone_platform_notifier(struct notifier_block *nb,
-				      unsigned long event, void *data)
-{
-	struct device *dev = data;
+#अगर_घोषित CONFIG_ARM_LPAE
+अटल पूर्णांक keystone_platक्रमm_notअगरier(काष्ठा notअगरier_block *nb,
+				      अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा device *dev = data;
 
-	if (event != BUS_NOTIFY_ADD_DEVICE)
-		return NOTIFY_DONE;
+	अगर (event != BUS_NOTIFY_ADD_DEVICE)
+		वापस NOTIFY_DONE;
 
-	if (!dev)
-		return NOTIFY_BAD;
+	अगर (!dev)
+		वापस NOTIFY_BAD;
 
-	if (!dev->of_node) {
-		int ret = dma_direct_set_offset(dev, KEYSTONE_HIGH_PHYS_START,
+	अगर (!dev->of_node) अणु
+		पूर्णांक ret = dma_direct_set_offset(dev, KEYSTONE_HIGH_PHYS_START,
 						KEYSTONE_LOW_PHYS_START,
 						KEYSTONE_HIGH_PHYS_SIZE);
 		dev_err(dev, "set dma_offset%08llx%s\n",
 			KEYSTONE_HIGH_PHYS_START - KEYSTONE_LOW_PHYS_START,
 			ret ? " failed" : "");
-	}
-	return NOTIFY_OK;
-}
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block platform_nb = {
-	.notifier_call = keystone_platform_notifier,
-};
-#endif /* CONFIG_ARM_LPAE */
+अटल काष्ठा notअगरier_block platक्रमm_nb = अणु
+	.notअगरier_call = keystone_platक्रमm_notअगरier,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_ARM_LPAE */
 
-static void __init keystone_init(void)
-{
-#ifdef CONFIG_ARM_LPAE
-	if (PHYS_OFFSET >= KEYSTONE_HIGH_PHYS_START)
-		bus_register_notifier(&platform_bus_type, &platform_nb);
-#endif
-	keystone_pm_runtime_init();
-}
+अटल व्योम __init keystone_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_ARM_LPAE
+	अगर (PHYS_OFFSET >= KEYSTONE_HIGH_PHYS_START)
+		bus_रेजिस्टर_notअगरier(&platक्रमm_bus_type, &platक्रमm_nb);
+#पूर्ण_अगर
+	keystone_pm_runसमय_init();
+पूर्ण
 
-static long long __init keystone_pv_fixup(void)
-{
-	long long offset;
+अटल दीर्घ दीर्घ __init keystone_pv_fixup(व्योम)
+अणु
+	दीर्घ दीर्घ offset;
 	u64 mem_start, mem_end;
 
 	mem_start = memblock_start_of_DRAM();
 	mem_end = memblock_end_of_DRAM();
 
-	/* nothing to do if we are running out of the <32-bit space */
-	if (mem_start >= KEYSTONE_LOW_PHYS_START &&
+	/* nothing to करो अगर we are running out of the <32-bit space */
+	अगर (mem_start >= KEYSTONE_LOW_PHYS_START &&
 	    mem_end   <= KEYSTONE_LOW_PHYS_END)
-		return 0;
+		वापस 0;
 
-	if (mem_start < KEYSTONE_HIGH_PHYS_START ||
-	    mem_end   > KEYSTONE_HIGH_PHYS_END) {
+	अगर (mem_start < KEYSTONE_HIGH_PHYS_START ||
+	    mem_end   > KEYSTONE_HIGH_PHYS_END) अणु
 		pr_crit("Invalid address space for memory (%08llx-%08llx)\n",
 		        mem_start, mem_end);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	offset = KEYSTONE_HIGH_PHYS_START - KEYSTONE_LOW_PHYS_START;
 
 	/* Populate the arch idmap hook */
 	arch_phys_to_idmap_offset = -offset;
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
-static const char *const keystone_match[] __initconst = {
+अटल स्थिर अक्षर *स्थिर keystone_match[] __initस्थिर = अणु
 	"ti,k2hk",
 	"ti,k2e",
 	"ti,k2l",
 	"ti,k2g",
 	"ti,keystone",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(KEYSTONE, "Keystone")
-#if defined(CONFIG_ZONE_DMA) && defined(CONFIG_ARM_LPAE)
+#अगर defined(CONFIG_ZONE_DMA) && defined(CONFIG_ARM_LPAE)
 	.dma_zone_size	= SZ_2G,
-#endif
+#पूर्ण_अगर
 	.smp		= smp_ops(keystone_smp_ops),
 	.init_machine	= keystone_init,
 	.dt_compat	= keystone_match,

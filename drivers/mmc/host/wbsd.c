@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  linux/drivers/mmc/host/wbsd.c - Winbond W83L51xD SD/MMC driver
  *
@@ -6,171 +7,171 @@
  *
  * Warning!
  *
- * Changes to the FIFO system should be done with extreme care since
+ * Changes to the FIFO प्रणाली should be करोne with extreme care since
  * the hardware is full of bugs related to the FIFO. Known issues are:
  *
  * - FIFO size field in FSR is always zero.
  *
- * - FIFO interrupts tend not to work as they should. Interrupts are
- *   triggered only for full/empty events, not for threshold values.
+ * - FIFO पूर्णांकerrupts tend not to work as they should. Interrupts are
+ *   triggered only क्रम full/empty events, not क्रम threshold values.
  *
- * - On APIC systems the FIFO empty interrupt is sometimes lost.
+ * - On APIC प्रणालीs the FIFO empty पूर्णांकerrupt is someबार lost.
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <linux/pnp.h>
-#include <linux/highmem.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/sd.h>
-#include <linux/scatterlist.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pnp.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/sd.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/slab.h>
 
-#include <asm/io.h>
-#include <asm/dma.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
 
-#include "wbsd.h"
+#समावेश "wbsd.h"
 
-#define DRIVER_NAME "wbsd"
+#घोषणा DRIVER_NAME "wbsd"
 
-#define DBG(x...) \
+#घोषणा DBG(x...) \
 	pr_debug(DRIVER_NAME ": " x)
-#define DBGF(f, x...) \
+#घोषणा DBGF(f, x...) \
 	pr_debug(DRIVER_NAME " [%s()]: " f, __func__ , ##x)
 
 /*
  * Device resources
  */
 
-#ifdef CONFIG_PNP
+#अगर_घोषित CONFIG_PNP
 
-static const struct pnp_device_id pnp_dev_table[] = {
-	{ "WEC0517", 0 },
-	{ "WEC0518", 0 },
-	{ "", 0 },
-};
+अटल स्थिर काष्ठा pnp_device_id pnp_dev_table[] = अणु
+	अणु "WEC0517", 0 पूर्ण,
+	अणु "WEC0518", 0 पूर्ण,
+	अणु "", 0 पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pnp, pnp_dev_table);
 
-#endif /* CONFIG_PNP */
+#पूर्ण_अगर /* CONFIG_PNP */
 
-static const int config_ports[] = { 0x2E, 0x4E };
-static const int unlock_codes[] = { 0x83, 0x87 };
+अटल स्थिर पूर्णांक config_ports[] = अणु 0x2E, 0x4E पूर्ण;
+अटल स्थिर पूर्णांक unlock_codes[] = अणु 0x83, 0x87 पूर्ण;
 
-static const int valid_ids[] = {
+अटल स्थिर पूर्णांक valid_ids[] = अणु
 	0x7112,
-};
+पूर्ण;
 
-#ifdef CONFIG_PNP
-static unsigned int param_nopnp = 0;
-#else
-static const unsigned int param_nopnp = 1;
-#endif
-static unsigned int param_io = 0x248;
-static unsigned int param_irq = 6;
-static int param_dma = 2;
+#अगर_घोषित CONFIG_PNP
+अटल अचिन्हित पूर्णांक param_nopnp = 0;
+#अन्यथा
+अटल स्थिर अचिन्हित पूर्णांक param_nopnp = 1;
+#पूर्ण_अगर
+अटल अचिन्हित पूर्णांक param_io = 0x248;
+अटल अचिन्हित पूर्णांक param_irq = 6;
+अटल पूर्णांक param_dma = 2;
 
 /*
  * Basic functions
  */
 
-static inline void wbsd_unlock_config(struct wbsd_host *host)
-{
+अटल अंतरभूत व्योम wbsd_unlock_config(काष्ठा wbsd_host *host)
+अणु
 	BUG_ON(host->config == 0);
 
 	outb(host->unlock_code, host->config);
 	outb(host->unlock_code, host->config);
-}
+पूर्ण
 
-static inline void wbsd_lock_config(struct wbsd_host *host)
-{
+अटल अंतरभूत व्योम wbsd_lock_config(काष्ठा wbsd_host *host)
+अणु
 	BUG_ON(host->config == 0);
 
 	outb(LOCK_CODE, host->config);
-}
+पूर्ण
 
-static inline void wbsd_write_config(struct wbsd_host *host, u8 reg, u8 value)
-{
+अटल अंतरभूत व्योम wbsd_ग_लिखो_config(काष्ठा wbsd_host *host, u8 reg, u8 value)
+अणु
 	BUG_ON(host->config == 0);
 
 	outb(reg, host->config);
 	outb(value, host->config + 1);
-}
+पूर्ण
 
-static inline u8 wbsd_read_config(struct wbsd_host *host, u8 reg)
-{
+अटल अंतरभूत u8 wbsd_पढ़ो_config(काष्ठा wbsd_host *host, u8 reg)
+अणु
 	BUG_ON(host->config == 0);
 
 	outb(reg, host->config);
-	return inb(host->config + 1);
-}
+	वापस inb(host->config + 1);
+पूर्ण
 
-static inline void wbsd_write_index(struct wbsd_host *host, u8 index, u8 value)
-{
+अटल अंतरभूत व्योम wbsd_ग_लिखो_index(काष्ठा wbsd_host *host, u8 index, u8 value)
+अणु
 	outb(index, host->base + WBSD_IDXR);
 	outb(value, host->base + WBSD_DATAR);
-}
+पूर्ण
 
-static inline u8 wbsd_read_index(struct wbsd_host *host, u8 index)
-{
+अटल अंतरभूत u8 wbsd_पढ़ो_index(काष्ठा wbsd_host *host, u8 index)
+अणु
 	outb(index, host->base + WBSD_IDXR);
-	return inb(host->base + WBSD_DATAR);
-}
+	वापस inb(host->base + WBSD_DATAR);
+पूर्ण
 
 /*
  * Common routines
  */
 
-static void wbsd_init_device(struct wbsd_host *host)
-{
+अटल व्योम wbsd_init_device(काष्ठा wbsd_host *host)
+अणु
 	u8 setup, ier;
 
 	/*
-	 * Reset chip (SD/MMC part) and fifo.
+	 * Reset chip (SD/MMC part) and fअगरo.
 	 */
-	setup = wbsd_read_index(host, WBSD_IDX_SETUP);
+	setup = wbsd_पढ़ो_index(host, WBSD_IDX_SETUP);
 	setup |= WBSD_FIFO_RESET | WBSD_SOFT_RESET;
-	wbsd_write_index(host, WBSD_IDX_SETUP, setup);
+	wbsd_ग_लिखो_index(host, WBSD_IDX_SETUP, setup);
 
 	/*
 	 * Set DAT3 to input
 	 */
 	setup &= ~WBSD_DAT3_H;
-	wbsd_write_index(host, WBSD_IDX_SETUP, setup);
+	wbsd_ग_लिखो_index(host, WBSD_IDX_SETUP, setup);
 	host->flags &= ~WBSD_FIGNORE_DETECT;
 
 	/*
-	 * Read back default clock.
+	 * Read back शेष घड़ी.
 	 */
-	host->clk = wbsd_read_index(host, WBSD_IDX_CLK);
+	host->clk = wbsd_पढ़ो_index(host, WBSD_IDX_CLK);
 
 	/*
-	 * Power down port.
+	 * Power करोwn port.
 	 */
 	outb(WBSD_POWER_N, host->base + WBSD_CSR);
 
 	/*
-	 * Set maximum timeout.
+	 * Set maximum समयout.
 	 */
-	wbsd_write_index(host, WBSD_IDX_TAAC, 0x7F);
+	wbsd_ग_लिखो_index(host, WBSD_IDX_TAAC, 0x7F);
 
 	/*
-	 * Test for card presence
+	 * Test क्रम card presence
 	 */
-	if (inb(host->base + WBSD_CSR) & WBSD_CARDPRESENT)
+	अगर (inb(host->base + WBSD_CSR) & WBSD_CARDPRESENT)
 		host->flags |= WBSD_FCARD_PRESENT;
-	else
+	अन्यथा
 		host->flags &= ~WBSD_FCARD_PRESENT;
 
 	/*
-	 * Enable interesting interrupts.
+	 * Enable पूर्णांकeresting पूर्णांकerrupts.
 	 */
 	ier = 0;
 	ier |= WBSD_EINT_CARD;
@@ -182,13 +183,13 @@ static void wbsd_init_device(struct wbsd_host *host)
 	outb(ier, host->base + WBSD_EIR);
 
 	/*
-	 * Clear interrupts.
+	 * Clear पूर्णांकerrupts.
 	 */
 	inb(host->base + WBSD_ISR);
-}
+पूर्ण
 
-static void wbsd_reset(struct wbsd_host *host)
-{
+अटल व्योम wbsd_reset(काष्ठा wbsd_host *host)
+अणु
 	u8 setup;
 
 	pr_err("%s: Resetting chip\n", mmc_hostname(host->mmc));
@@ -196,16 +197,16 @@ static void wbsd_reset(struct wbsd_host *host)
 	/*
 	 * Soft reset of chip (SD/MMC part).
 	 */
-	setup = wbsd_read_index(host, WBSD_IDX_SETUP);
+	setup = wbsd_पढ़ो_index(host, WBSD_IDX_SETUP);
 	setup |= WBSD_SOFT_RESET;
-	wbsd_write_index(host, WBSD_IDX_SETUP, setup);
-}
+	wbsd_ग_लिखो_index(host, WBSD_IDX_SETUP, setup);
+पूर्ण
 
-static void wbsd_request_end(struct wbsd_host *host, struct mmc_request *mrq)
-{
-	unsigned long dmaflags;
+अटल व्योम wbsd_request_end(काष्ठा wbsd_host *host, काष्ठा mmc_request *mrq)
+अणु
+	अचिन्हित दीर्घ dmaflags;
 
-	if (host->dma >= 0) {
+	अगर (host->dma >= 0) अणु
 		/*
 		 * Release ISA DMA controller.
 		 */
@@ -217,37 +218,37 @@ static void wbsd_request_end(struct wbsd_host *host, struct mmc_request *mrq)
 		/*
 		 * Disable DMA on host.
 		 */
-		wbsd_write_index(host, WBSD_IDX_DMA, 0);
-	}
+		wbsd_ग_लिखो_index(host, WBSD_IDX_DMA, 0);
+	पूर्ण
 
-	host->mrq = NULL;
+	host->mrq = शून्य;
 
 	/*
-	 * MMC layer might call back into the driver so first unlock.
+	 * MMC layer might call back पूर्णांकo the driver so first unlock.
 	 */
 	spin_unlock(&host->lock);
-	mmc_request_done(host->mmc, mrq);
+	mmc_request_करोne(host->mmc, mrq);
 	spin_lock(&host->lock);
-}
+पूर्ण
 
 /*
  * Scatter/gather functions
  */
 
-static inline void wbsd_init_sg(struct wbsd_host *host, struct mmc_data *data)
-{
+अटल अंतरभूत व्योम wbsd_init_sg(काष्ठा wbsd_host *host, काष्ठा mmc_data *data)
+अणु
 	/*
-	 * Get info. about SG list from data structure.
+	 * Get info. about SG list from data काष्ठाure.
 	 */
 	host->cur_sg = data->sg;
 	host->num_sg = data->sg_len;
 
 	host->offset = 0;
-	host->remain = host->cur_sg->length;
-}
+	host->reमुख्य = host->cur_sg->length;
+पूर्ण
 
-static inline int wbsd_next_sg(struct wbsd_host *host)
-{
+अटल अंतरभूत पूर्णांक wbsd_next_sg(काष्ठा wbsd_host *host)
+अणु
 	/*
 	 * Skip to next SG entry.
 	 */
@@ -257,93 +258,93 @@ static inline int wbsd_next_sg(struct wbsd_host *host)
 	/*
 	 * Any entries left?
 	 */
-	if (host->num_sg > 0) {
+	अगर (host->num_sg > 0) अणु
 		host->offset = 0;
-		host->remain = host->cur_sg->length;
-	}
+		host->reमुख्य = host->cur_sg->length;
+	पूर्ण
 
-	return host->num_sg;
-}
+	वापस host->num_sg;
+पूर्ण
 
-static inline char *wbsd_map_sg(struct wbsd_host *host)
-{
-	return kmap_atomic(sg_page(host->cur_sg)) + host->cur_sg->offset;
-}
+अटल अंतरभूत अक्षर *wbsd_map_sg(काष्ठा wbsd_host *host)
+अणु
+	वापस kmap_atomic(sg_page(host->cur_sg)) + host->cur_sg->offset;
+पूर्ण
 
-static inline void wbsd_sg_to_dma(struct wbsd_host *host, struct mmc_data *data)
-{
-	size_t len = 0;
-	int i;
+अटल अंतरभूत व्योम wbsd_sg_to_dma(काष्ठा wbsd_host *host, काष्ठा mmc_data *data)
+अणु
+	माप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < data->sg_len; i++)
+	क्रम (i = 0; i < data->sg_len; i++)
 		len += data->sg[i].length;
 	sg_copy_to_buffer(data->sg, data->sg_len, host->dma_buffer, len);
-}
+पूर्ण
 
-static inline void wbsd_dma_to_sg(struct wbsd_host *host, struct mmc_data *data)
-{
-	size_t len = 0;
-	int i;
+अटल अंतरभूत व्योम wbsd_dma_to_sg(काष्ठा wbsd_host *host, काष्ठा mmc_data *data)
+अणु
+	माप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < data->sg_len; i++)
+	क्रम (i = 0; i < data->sg_len; i++)
 		len += data->sg[i].length;
 	sg_copy_from_buffer(data->sg, data->sg_len, host->dma_buffer, len);
-}
+पूर्ण
 
 /*
  * Command handling
  */
 
-static inline void wbsd_get_short_reply(struct wbsd_host *host,
-					struct mmc_command *cmd)
-{
+अटल अंतरभूत व्योम wbsd_get_लघु_reply(काष्ठा wbsd_host *host,
+					काष्ठा mmc_command *cmd)
+अणु
 	/*
 	 * Correct response type?
 	 */
-	if (wbsd_read_index(host, WBSD_IDX_RSPLEN) != WBSD_RSP_SHORT) {
+	अगर (wbsd_पढ़ो_index(host, WBSD_IDX_RSPLEN) != WBSD_RSP_SHORT) अणु
 		cmd->error = -EILSEQ;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	cmd->resp[0]  = wbsd_read_index(host, WBSD_IDX_RESP12) << 24;
-	cmd->resp[0] |= wbsd_read_index(host, WBSD_IDX_RESP13) << 16;
-	cmd->resp[0] |= wbsd_read_index(host, WBSD_IDX_RESP14) << 8;
-	cmd->resp[0] |= wbsd_read_index(host, WBSD_IDX_RESP15) << 0;
-	cmd->resp[1]  = wbsd_read_index(host, WBSD_IDX_RESP16) << 24;
-}
+	cmd->resp[0]  = wbsd_पढ़ो_index(host, WBSD_IDX_RESP12) << 24;
+	cmd->resp[0] |= wbsd_पढ़ो_index(host, WBSD_IDX_RESP13) << 16;
+	cmd->resp[0] |= wbsd_पढ़ो_index(host, WBSD_IDX_RESP14) << 8;
+	cmd->resp[0] |= wbsd_पढ़ो_index(host, WBSD_IDX_RESP15) << 0;
+	cmd->resp[1]  = wbsd_पढ़ो_index(host, WBSD_IDX_RESP16) << 24;
+पूर्ण
 
-static inline void wbsd_get_long_reply(struct wbsd_host *host,
-	struct mmc_command *cmd)
-{
-	int i;
+अटल अंतरभूत व्योम wbsd_get_दीर्घ_reply(काष्ठा wbsd_host *host,
+	काष्ठा mmc_command *cmd)
+अणु
+	पूर्णांक i;
 
 	/*
 	 * Correct response type?
 	 */
-	if (wbsd_read_index(host, WBSD_IDX_RSPLEN) != WBSD_RSP_LONG) {
+	अगर (wbsd_पढ़ो_index(host, WBSD_IDX_RSPLEN) != WBSD_RSP_LONG) अणु
 		cmd->error = -EILSEQ;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		cmd->resp[i] =
-			wbsd_read_index(host, WBSD_IDX_RESP1 + i * 4) << 24;
+			wbsd_पढ़ो_index(host, WBSD_IDX_RESP1 + i * 4) << 24;
 		cmd->resp[i] |=
-			wbsd_read_index(host, WBSD_IDX_RESP2 + i * 4) << 16;
+			wbsd_पढ़ो_index(host, WBSD_IDX_RESP2 + i * 4) << 16;
 		cmd->resp[i] |=
-			wbsd_read_index(host, WBSD_IDX_RESP3 + i * 4) << 8;
+			wbsd_पढ़ो_index(host, WBSD_IDX_RESP3 + i * 4) << 8;
 		cmd->resp[i] |=
-			wbsd_read_index(host, WBSD_IDX_RESP4 + i * 4) << 0;
-	}
-}
+			wbsd_पढ़ो_index(host, WBSD_IDX_RESP4 + i * 4) << 0;
+	पूर्ण
+पूर्ण
 
-static void wbsd_send_command(struct wbsd_host *host, struct mmc_command *cmd)
-{
-	int i;
+अटल व्योम wbsd_send_command(काष्ठा wbsd_host *host, काष्ठा mmc_command *cmd)
+अणु
+	पूर्णांक i;
 	u8 status, isr;
 
 	/*
-	 * Clear accumulated ISR. The interrupt routine
+	 * Clear accumulated ISR. The पूर्णांकerrupt routine
 	 * will fill this one with events that occur during
 	 * transfer.
 	 */
@@ -353,186 +354,186 @@ static void wbsd_send_command(struct wbsd_host *host, struct mmc_command *cmd)
 	 * Send the command (CRC calculated by host).
 	 */
 	outb(cmd->opcode, host->base + WBSD_CMDR);
-	for (i = 3; i >= 0; i--)
+	क्रम (i = 3; i >= 0; i--)
 		outb((cmd->arg >> (i * 8)) & 0xff, host->base + WBSD_CMDR);
 
 	cmd->error = 0;
 
 	/*
-	 * Wait for the request to complete.
+	 * Wait क्रम the request to complete.
 	 */
-	do {
-		status = wbsd_read_index(host, WBSD_IDX_STATUS);
-	} while (status & WBSD_CARDTRAFFIC);
+	करो अणु
+		status = wbsd_पढ़ो_index(host, WBSD_IDX_STATUS);
+	पूर्ण जबतक (status & WBSD_CARDTRAFFIC);
 
 	/*
 	 * Do we expect a reply?
 	 */
-	if (cmd->flags & MMC_RSP_PRESENT) {
+	अगर (cmd->flags & MMC_RSP_PRESENT) अणु
 		/*
 		 * Read back status.
 		 */
 		isr = host->isr;
 
-		/* Card removed? */
-		if (isr & WBSD_INT_CARD)
+		/* Card हटाओd? */
+		अगर (isr & WBSD_INT_CARD)
 			cmd->error = -ENOMEDIUM;
 		/* Timeout? */
-		else if (isr & WBSD_INT_TIMEOUT)
+		अन्यथा अगर (isr & WBSD_INT_TIMEOUT)
 			cmd->error = -ETIMEDOUT;
 		/* CRC? */
-		else if ((cmd->flags & MMC_RSP_CRC) && (isr & WBSD_INT_CRC))
+		अन्यथा अगर ((cmd->flags & MMC_RSP_CRC) && (isr & WBSD_INT_CRC))
 			cmd->error = -EILSEQ;
 		/* All ok */
-		else {
-			if (cmd->flags & MMC_RSP_136)
-				wbsd_get_long_reply(host, cmd);
-			else
-				wbsd_get_short_reply(host, cmd);
-		}
-	}
-}
+		अन्यथा अणु
+			अगर (cmd->flags & MMC_RSP_136)
+				wbsd_get_दीर्घ_reply(host, cmd);
+			अन्यथा
+				wbsd_get_लघु_reply(host, cmd);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Data functions
  */
 
-static void wbsd_empty_fifo(struct wbsd_host *host)
-{
-	struct mmc_data *data = host->mrq->cmd->data;
-	char *buffer;
-	int i, idx, fsr, fifo;
+अटल व्योम wbsd_empty_fअगरo(काष्ठा wbsd_host *host)
+अणु
+	काष्ठा mmc_data *data = host->mrq->cmd->data;
+	अक्षर *buffer;
+	पूर्णांक i, idx, fsr, fअगरo;
 
 	/*
 	 * Handle excessive data.
 	 */
-	if (host->num_sg == 0)
-		return;
+	अगर (host->num_sg == 0)
+		वापस;
 
 	buffer = wbsd_map_sg(host) + host->offset;
 	idx = 0;
 
 	/*
-	 * Drain the fifo. This has a tendency to loop longer
+	 * Drain the fअगरo. This has a tendency to loop दीर्घer
 	 * than the FIFO length (usually one block).
 	 */
-	while (!((fsr = inb(host->base + WBSD_FSR)) & WBSD_FIFO_EMPTY)) {
+	जबतक (!((fsr = inb(host->base + WBSD_FSR)) & WBSD_FIFO_EMPTY)) अणु
 		/*
 		 * The size field in the FSR is broken so we have to
-		 * do some guessing.
+		 * करो some guessing.
 		 */
-		if (fsr & WBSD_FIFO_FULL)
-			fifo = 16;
-		else if (fsr & WBSD_FIFO_FUTHRE)
-			fifo = 8;
-		else
-			fifo = 1;
+		अगर (fsr & WBSD_FIFO_FULL)
+			fअगरo = 16;
+		अन्यथा अगर (fsr & WBSD_FIFO_FUTHRE)
+			fअगरo = 8;
+		अन्यथा
+			fअगरo = 1;
 
-		for (i = 0; i < fifo; i++) {
+		क्रम (i = 0; i < fअगरo; i++) अणु
 			buffer[idx++] = inb(host->base + WBSD_DFR);
 			host->offset++;
-			host->remain--;
+			host->reमुख्य--;
 
 			data->bytes_xfered++;
 
 			/*
 			 * End of scatter list entry?
 			 */
-			if (host->remain == 0) {
+			अगर (host->reमुख्य == 0) अणु
 				kunmap_atomic(buffer);
 				/*
-				 * Get next entry. Check if last.
+				 * Get next entry. Check अगर last.
 				 */
-				if (!wbsd_next_sg(host))
-					return;
+				अगर (!wbsd_next_sg(host))
+					वापस;
 
 				buffer = wbsd_map_sg(host);
 				idx = 0;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	kunmap_atomic(buffer);
 
 	/*
 	 * This is a very dirty hack to solve a
-	 * hardware problem. The chip doesn't trigger
-	 * FIFO threshold interrupts properly.
+	 * hardware problem. The chip करोesn't trigger
+	 * FIFO threshold पूर्णांकerrupts properly.
 	 */
-	if ((data->blocks * data->blksz - data->bytes_xfered) < 16)
-		tasklet_schedule(&host->fifo_tasklet);
-}
+	अगर ((data->blocks * data->blksz - data->bytes_xfered) < 16)
+		tasklet_schedule(&host->fअगरo_tasklet);
+पूर्ण
 
-static void wbsd_fill_fifo(struct wbsd_host *host)
-{
-	struct mmc_data *data = host->mrq->cmd->data;
-	char *buffer;
-	int i, idx, fsr, fifo;
+अटल व्योम wbsd_fill_fअगरo(काष्ठा wbsd_host *host)
+अणु
+	काष्ठा mmc_data *data = host->mrq->cmd->data;
+	अक्षर *buffer;
+	पूर्णांक i, idx, fsr, fअगरo;
 
 	/*
 	 * Check that we aren't being called after the
 	 * entire buffer has been transferred.
 	 */
-	if (host->num_sg == 0)
-		return;
+	अगर (host->num_sg == 0)
+		वापस;
 
 	buffer = wbsd_map_sg(host) + host->offset;
 	idx = 0;
 
 	/*
-	 * Fill the fifo. This has a tendency to loop longer
+	 * Fill the fअगरo. This has a tendency to loop दीर्घer
 	 * than the FIFO length (usually one block).
 	 */
-	while (!((fsr = inb(host->base + WBSD_FSR)) & WBSD_FIFO_FULL)) {
+	जबतक (!((fsr = inb(host->base + WBSD_FSR)) & WBSD_FIFO_FULL)) अणु
 		/*
 		 * The size field in the FSR is broken so we have to
-		 * do some guessing.
+		 * करो some guessing.
 		 */
-		if (fsr & WBSD_FIFO_EMPTY)
-			fifo = 0;
-		else if (fsr & WBSD_FIFO_EMTHRE)
-			fifo = 8;
-		else
-			fifo = 15;
+		अगर (fsr & WBSD_FIFO_EMPTY)
+			fअगरo = 0;
+		अन्यथा अगर (fsr & WBSD_FIFO_EMTHRE)
+			fअगरo = 8;
+		अन्यथा
+			fअगरo = 15;
 
-		for (i = 16; i > fifo; i--) {
+		क्रम (i = 16; i > fअगरo; i--) अणु
 			outb(buffer[idx], host->base + WBSD_DFR);
 			host->offset++;
-			host->remain--;
+			host->reमुख्य--;
 
 			data->bytes_xfered++;
 
 			/*
 			 * End of scatter list entry?
 			 */
-			if (host->remain == 0) {
+			अगर (host->reमुख्य == 0) अणु
 				kunmap_atomic(buffer);
 				/*
-				 * Get next entry. Check if last.
+				 * Get next entry. Check अगर last.
 				 */
-				if (!wbsd_next_sg(host))
-					return;
+				अगर (!wbsd_next_sg(host))
+					वापस;
 
 				buffer = wbsd_map_sg(host);
 				idx = 0;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	kunmap_atomic(buffer);
 
 	/*
-	 * The controller stops sending interrupts for
+	 * The controller stops sending पूर्णांकerrupts क्रम
 	 * 'FIFO empty' under certain conditions. So we
 	 * need to be a bit more pro-active.
 	 */
-	tasklet_schedule(&host->fifo_tasklet);
-}
+	tasklet_schedule(&host->fअगरo_tasklet);
+पूर्ण
 
-static void wbsd_prepare_data(struct wbsd_host *host, struct mmc_data *data)
-{
+अटल व्योम wbsd_prepare_data(काष्ठा wbsd_host *host, काष्ठा mmc_data *data)
+अणु
 	u16 blksize;
 	u8 setup;
-	unsigned long dmaflags;
-	unsigned int size;
+	अचिन्हित दीर्घ dmaflags;
+	अचिन्हित पूर्णांक size;
 
 	/*
 	 * Calculate size.
@@ -540,72 +541,72 @@ static void wbsd_prepare_data(struct wbsd_host *host, struct mmc_data *data)
 	size = data->blocks * data->blksz;
 
 	/*
-	 * Check timeout values for overflow.
+	 * Check समयout values क्रम overflow.
 	 * (Yes, some cards cause this value to overflow).
 	 */
-	if (data->timeout_ns > 127000000)
-		wbsd_write_index(host, WBSD_IDX_TAAC, 127);
-	else {
-		wbsd_write_index(host, WBSD_IDX_TAAC,
-			data->timeout_ns / 1000000);
-	}
+	अगर (data->समयout_ns > 127000000)
+		wbsd_ग_लिखो_index(host, WBSD_IDX_TAAC, 127);
+	अन्यथा अणु
+		wbsd_ग_लिखो_index(host, WBSD_IDX_TAAC,
+			data->समयout_ns / 1000000);
+	पूर्ण
 
-	if (data->timeout_clks > 255)
-		wbsd_write_index(host, WBSD_IDX_NSAC, 255);
-	else
-		wbsd_write_index(host, WBSD_IDX_NSAC, data->timeout_clks);
+	अगर (data->समयout_clks > 255)
+		wbsd_ग_लिखो_index(host, WBSD_IDX_NSAC, 255);
+	अन्यथा
+		wbsd_ग_लिखो_index(host, WBSD_IDX_NSAC, data->समयout_clks);
 
 	/*
-	 * Inform the chip of how large blocks will be
+	 * Inक्रमm the chip of how large blocks will be
 	 * sent. It needs this to determine when to
 	 * calculate CRC.
 	 *
-	 * Space for CRC must be included in the size.
-	 * Two bytes are needed for each data line.
+	 * Space क्रम CRC must be included in the size.
+	 * Two bytes are needed क्रम each data line.
 	 */
-	if (host->bus_width == MMC_BUS_WIDTH_1) {
+	अगर (host->bus_width == MMC_BUS_WIDTH_1) अणु
 		blksize = data->blksz + 2;
 
-		wbsd_write_index(host, WBSD_IDX_PBSMSB, (blksize >> 4) & 0xF0);
-		wbsd_write_index(host, WBSD_IDX_PBSLSB, blksize & 0xFF);
-	} else if (host->bus_width == MMC_BUS_WIDTH_4) {
+		wbsd_ग_लिखो_index(host, WBSD_IDX_PBSMSB, (blksize >> 4) & 0xF0);
+		wbsd_ग_लिखो_index(host, WBSD_IDX_PBSLSB, blksize & 0xFF);
+	पूर्ण अन्यथा अगर (host->bus_width == MMC_BUS_WIDTH_4) अणु
 		blksize = data->blksz + 2 * 4;
 
-		wbsd_write_index(host, WBSD_IDX_PBSMSB,
+		wbsd_ग_लिखो_index(host, WBSD_IDX_PBSMSB,
 			((blksize >> 4) & 0xF0) | WBSD_DATA_WIDTH);
-		wbsd_write_index(host, WBSD_IDX_PBSLSB, blksize & 0xFF);
-	} else {
+		wbsd_ग_लिखो_index(host, WBSD_IDX_PBSLSB, blksize & 0xFF);
+	पूर्ण अन्यथा अणु
 		data->error = -EINVAL;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Clear the FIFO. This is needed even for DMA
+	 * Clear the FIFO. This is needed even क्रम DMA
 	 * transfers since the chip still uses the FIFO
-	 * internally.
+	 * पूर्णांकernally.
 	 */
-	setup = wbsd_read_index(host, WBSD_IDX_SETUP);
+	setup = wbsd_पढ़ो_index(host, WBSD_IDX_SETUP);
 	setup |= WBSD_FIFO_RESET;
-	wbsd_write_index(host, WBSD_IDX_SETUP, setup);
+	wbsd_ग_लिखो_index(host, WBSD_IDX_SETUP, setup);
 
 	/*
 	 * DMA transfer?
 	 */
-	if (host->dma >= 0) {
+	अगर (host->dma >= 0) अणु
 		/*
-		 * The buffer for DMA is only 64 kB.
+		 * The buffer क्रम DMA is only 64 kB.
 		 */
 		BUG_ON(size > 0x10000);
-		if (size > 0x10000) {
+		अगर (size > 0x10000) अणु
 			data->error = -EINVAL;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/*
 		 * Transfer data from the SG list to
 		 * the DMA buffer.
 		 */
-		if (data->flags & MMC_DATA_WRITE)
+		अगर (data->flags & MMC_DATA_WRITE)
 			wbsd_sg_to_dma(host, data);
 
 		/*
@@ -614,9 +615,9 @@ static void wbsd_prepare_data(struct wbsd_host *host, struct mmc_data *data)
 		dmaflags = claim_dma_lock();
 		disable_dma(host->dma);
 		clear_dma_ff(host->dma);
-		if (data->flags & MMC_DATA_READ)
+		अगर (data->flags & MMC_DATA_READ)
 			set_dma_mode(host->dma, DMA_MODE_READ & ~0x40);
-		else
+		अन्यथा
 			set_dma_mode(host->dma, DMA_MODE_WRITE & ~0x40);
 		set_dma_addr(host->dma, host->dma_addr);
 		set_dma_count(host->dma, size);
@@ -627,10 +628,10 @@ static void wbsd_prepare_data(struct wbsd_host *host, struct mmc_data *data)
 		/*
 		 * Enable DMA on the host.
 		 */
-		wbsd_write_index(host, WBSD_IDX_DMA, WBSD_DMA_ENABLE);
-	} else {
+		wbsd_ग_लिखो_index(host, WBSD_IDX_DMA, WBSD_DMA_ENABLE);
+	पूर्ण अन्यथा अणु
 		/*
-		 * This flag is used to keep printk
+		 * This flag is used to keep prपूर्णांकk
 		 * output to a minimum.
 		 */
 		host->firsterr = 1;
@@ -643,55 +644,55 @@ static void wbsd_prepare_data(struct wbsd_host *host, struct mmc_data *data)
 		/*
 		 * Turn off DMA.
 		 */
-		wbsd_write_index(host, WBSD_IDX_DMA, 0);
+		wbsd_ग_लिखो_index(host, WBSD_IDX_DMA, 0);
 
 		/*
 		 * Set up FIFO threshold levels (and fill
-		 * buffer if doing a write).
+		 * buffer अगर करोing a ग_लिखो).
 		 */
-		if (data->flags & MMC_DATA_READ) {
-			wbsd_write_index(host, WBSD_IDX_FIFOEN,
+		अगर (data->flags & MMC_DATA_READ) अणु
+			wbsd_ग_लिखो_index(host, WBSD_IDX_FIFOEN,
 				WBSD_FIFOEN_FULL | 8);
-		} else {
-			wbsd_write_index(host, WBSD_IDX_FIFOEN,
+		पूर्ण अन्यथा अणु
+			wbsd_ग_लिखो_index(host, WBSD_IDX_FIFOEN,
 				WBSD_FIFOEN_EMPTY | 8);
-			wbsd_fill_fifo(host);
-		}
-	}
+			wbsd_fill_fअगरo(host);
+		पूर्ण
+	पूर्ण
 
 	data->error = 0;
-}
+पूर्ण
 
-static void wbsd_finish_data(struct wbsd_host *host, struct mmc_data *data)
-{
-	unsigned long dmaflags;
-	int count;
+अटल व्योम wbsd_finish_data(काष्ठा wbsd_host *host, काष्ठा mmc_data *data)
+अणु
+	अचिन्हित दीर्घ dmaflags;
+	पूर्णांक count;
 	u8 status;
 
-	WARN_ON(host->mrq == NULL);
+	WARN_ON(host->mrq == शून्य);
 
 	/*
-	 * Send a stop command if needed.
+	 * Send a stop command अगर needed.
 	 */
-	if (data->stop)
+	अगर (data->stop)
 		wbsd_send_command(host, data->stop);
 
 	/*
-	 * Wait for the controller to leave data
+	 * Wait क्रम the controller to leave data
 	 * transfer state.
 	 */
-	do {
-		status = wbsd_read_index(host, WBSD_IDX_STATUS);
-	} while (status & (WBSD_BLOCK_READ | WBSD_BLOCK_WRITE));
+	करो अणु
+		status = wbsd_पढ़ो_index(host, WBSD_IDX_STATUS);
+	पूर्ण जबतक (status & (WBSD_BLOCK_READ | WBSD_BLOCK_WRITE));
 
 	/*
 	 * DMA transfer?
 	 */
-	if (host->dma >= 0) {
+	अगर (host->dma >= 0) अणु
 		/*
 		 * Disable DMA on the host.
 		 */
-		wbsd_write_index(host, WBSD_IDX_DMA, 0);
+		wbsd_ग_लिखो_index(host, WBSD_IDX_DMA, 0);
 
 		/*
 		 * Turn of ISA DMA controller.
@@ -709,30 +710,30 @@ static void wbsd_finish_data(struct wbsd_host *host, struct mmc_data *data)
 		/*
 		 * Any leftover data?
 		 */
-		if (count) {
+		अगर (count) अणु
 			pr_err("%s: Incomplete DMA transfer. "
 				"%d bytes left.\n",
 				mmc_hostname(host->mmc), count);
 
-			if (!data->error)
+			अगर (!data->error)
 				data->error = -EIO;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Transfer data from DMA buffer to
 			 * SG list.
 			 */
-			if (data->flags & MMC_DATA_READ)
+			अगर (data->flags & MMC_DATA_READ)
 				wbsd_dma_to_sg(host, data);
-		}
+		पूर्ण
 
-		if (data->error) {
-			if (data->bytes_xfered)
+		अगर (data->error) अणु
+			अगर (data->bytes_xfered)
 				data->bytes_xfered -= data->blksz;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	wbsd_request_end(host, host->mrq);
-}
+पूर्ण
 
 /*****************************************************************************\
  *                                                                           *
@@ -740,17 +741,17 @@ static void wbsd_finish_data(struct wbsd_host *host, struct mmc_data *data)
  *                                                                           *
 \*****************************************************************************/
 
-static void wbsd_request(struct mmc_host *mmc, struct mmc_request *mrq)
-{
-	struct wbsd_host *host = mmc_priv(mmc);
-	struct mmc_command *cmd;
+अटल व्योम wbsd_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा wbsd_host *host = mmc_priv(mmc);
+	काष्ठा mmc_command *cmd;
 
 	/*
-	 * Disable tasklets to avoid a deadlock.
+	 * Disable tasklets to aव्योम a deadlock.
 	 */
 	spin_lock_bh(&host->lock);
 
-	BUG_ON(host->mrq != NULL);
+	BUG_ON(host->mrq != शून्य);
 
 	cmd = mrq->cmd;
 
@@ -759,55 +760,55 @@ static void wbsd_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	/*
 	 * Check that there is actually a card in the slot.
 	 */
-	if (!(host->flags & WBSD_FCARD_PRESENT)) {
+	अगर (!(host->flags & WBSD_FCARD_PRESENT)) अणु
 		cmd->error = -ENOMEDIUM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (cmd->data) {
+	अगर (cmd->data) अणु
 		/*
 		 * The hardware is so delightfully stupid that it has a list
 		 * of "data" commands. If a command isn't on this list, it'll
 		 * just go back to the idle state and won't send any data
-		 * interrupts.
+		 * पूर्णांकerrupts.
 		 */
-		switch (cmd->opcode) {
-		case SD_SWITCH_VOLTAGE:
-		case MMC_READ_SINGLE_BLOCK:
-		case MMC_READ_MULTIPLE_BLOCK:
-		case MMC_WRITE_DAT_UNTIL_STOP:
-		case MMC_WRITE_BLOCK:
-		case MMC_WRITE_MULTIPLE_BLOCK:
-		case MMC_PROGRAM_CID:
-		case MMC_PROGRAM_CSD:
-		case MMC_SEND_WRITE_PROT:
-		case MMC_LOCK_UNLOCK:
-		case MMC_GEN_CMD:
-			break;
+		चयन (cmd->opcode) अणु
+		हाल SD_SWITCH_VOLTAGE:
+		हाल MMC_READ_SINGLE_BLOCK:
+		हाल MMC_READ_MULTIPLE_BLOCK:
+		हाल MMC_WRITE_DAT_UNTIL_STOP:
+		हाल MMC_WRITE_BLOCK:
+		हाल MMC_WRITE_MULTIPLE_BLOCK:
+		हाल MMC_PROGRAM_CID:
+		हाल MMC_PROGRAM_CSD:
+		हाल MMC_SEND_WRITE_PROT:
+		हाल MMC_LOCK_UNLOCK:
+		हाल MMC_GEN_CMD:
+			अवरोध;
 
-		/* ACMDs. We don't keep track of state, so we just treat them
+		/* ACMDs. We करोn't keep track of state, so we just treat them
 		 * like any other command. */
-		case SD_APP_SEND_SCR:
-			break;
+		हाल SD_APP_SEND_SCR:
+			अवरोध;
 
-		default:
+		शेष:
 			pr_warn("%s: Data command %d is not supported by this controller\n",
 				mmc_hostname(host->mmc), cmd->opcode);
 			cmd->error = -EINVAL;
 
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Does the request include data?
 	 */
-	if (cmd->data) {
+	अगर (cmd->data) अणु
 		wbsd_prepare_data(host, cmd->data);
 
-		if (cmd->data->error)
-			goto done;
-	}
+		अगर (cmd->data->error)
+			जाओ करोne;
+	पूर्ण
 
 	wbsd_send_command(host, cmd);
 
@@ -816,100 +817,100 @@ static void wbsd_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	 * will be finished after the data has
 	 * transferred.
 	 */
-	if (cmd->data && !cmd->error) {
+	अगर (cmd->data && !cmd->error) अणु
 		/*
-		 * Dirty fix for hardware bug.
+		 * Dirty fix क्रम hardware bug.
 		 */
-		if (host->dma == -1)
-			tasklet_schedule(&host->fifo_tasklet);
+		अगर (host->dma == -1)
+			tasklet_schedule(&host->fअगरo_tasklet);
 
 		spin_unlock_bh(&host->lock);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-done:
+करोne:
 	wbsd_request_end(host, mrq);
 
 	spin_unlock_bh(&host->lock);
-}
+पूर्ण
 
-static void wbsd_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
-{
-	struct wbsd_host *host = mmc_priv(mmc);
+अटल व्योम wbsd_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा wbsd_host *host = mmc_priv(mmc);
 	u8 clk, setup, pwr;
 
 	spin_lock_bh(&host->lock);
 
 	/*
-	 * Reset the chip on each power off.
+	 * Reset the chip on each घातer off.
 	 * Should clear out any weird states.
 	 */
-	if (ios->power_mode == MMC_POWER_OFF)
+	अगर (ios->घातer_mode == MMC_POWER_OFF)
 		wbsd_init_device(host);
 
-	if (ios->clock >= 24000000)
+	अगर (ios->घड़ी >= 24000000)
 		clk = WBSD_CLK_24M;
-	else if (ios->clock >= 16000000)
+	अन्यथा अगर (ios->घड़ी >= 16000000)
 		clk = WBSD_CLK_16M;
-	else if (ios->clock >= 12000000)
+	अन्यथा अगर (ios->घड़ी >= 12000000)
 		clk = WBSD_CLK_12M;
-	else
+	अन्यथा
 		clk = WBSD_CLK_375K;
 
 	/*
-	 * Only write to the clock register when
+	 * Only ग_लिखो to the घड़ी रेजिस्टर when
 	 * there is an actual change.
 	 */
-	if (clk != host->clk) {
-		wbsd_write_index(host, WBSD_IDX_CLK, clk);
+	अगर (clk != host->clk) अणु
+		wbsd_ग_लिखो_index(host, WBSD_IDX_CLK, clk);
 		host->clk = clk;
-	}
+	पूर्ण
 
 	/*
 	 * Power up card.
 	 */
-	if (ios->power_mode != MMC_POWER_OFF) {
+	अगर (ios->घातer_mode != MMC_POWER_OFF) अणु
 		pwr = inb(host->base + WBSD_CSR);
 		pwr &= ~WBSD_POWER_N;
 		outb(pwr, host->base + WBSD_CSR);
-	}
+	पूर्ण
 
 	/*
 	 * MMC cards need to have pin 1 high during init.
 	 * It wreaks havoc with the card detection though so
 	 * that needs to be disabled.
 	 */
-	setup = wbsd_read_index(host, WBSD_IDX_SETUP);
-	if (ios->chip_select == MMC_CS_HIGH) {
+	setup = wbsd_पढ़ो_index(host, WBSD_IDX_SETUP);
+	अगर (ios->chip_select == MMC_CS_HIGH) अणु
 		BUG_ON(ios->bus_width != MMC_BUS_WIDTH_1);
 		setup |= WBSD_DAT3_H;
 		host->flags |= WBSD_FIGNORE_DETECT;
-	} else {
-		if (setup & WBSD_DAT3_H) {
+	पूर्ण अन्यथा अणु
+		अगर (setup & WBSD_DAT3_H) अणु
 			setup &= ~WBSD_DAT3_H;
 
 			/*
 			 * We cannot resume card detection immediately
 			 * because of capacitance and delays in the chip.
 			 */
-			mod_timer(&host->ignore_timer, jiffies + HZ / 100);
-		}
-	}
-	wbsd_write_index(host, WBSD_IDX_SETUP, setup);
+			mod_समयr(&host->ignore_समयr, jअगरfies + HZ / 100);
+		पूर्ण
+	पूर्ण
+	wbsd_ग_लिखो_index(host, WBSD_IDX_SETUP, setup);
 
 	/*
-	 * Store bus width for later. Will be used when
+	 * Store bus width क्रम later. Will be used when
 	 * setting up the data transfer.
 	 */
 	host->bus_width = ios->bus_width;
 
 	spin_unlock_bh(&host->lock);
-}
+पूर्ण
 
-static int wbsd_get_ro(struct mmc_host *mmc)
-{
-	struct wbsd_host *host = mmc_priv(mmc);
+अटल पूर्णांक wbsd_get_ro(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा wbsd_host *host = mmc_priv(mmc);
 	u8 csr;
 
 	spin_lock_bh(&host->lock);
@@ -926,14 +927,14 @@ static int wbsd_get_ro(struct mmc_host *mmc)
 
 	spin_unlock_bh(&host->lock);
 
-	return !!(csr & WBSD_WRPT);
-}
+	वापस !!(csr & WBSD_WRPT);
+पूर्ण
 
-static const struct mmc_host_ops wbsd_ops = {
+अटल स्थिर काष्ठा mmc_host_ops wbsd_ops = अणु
 	.request	= wbsd_request,
 	.set_ios	= wbsd_set_ios,
 	.get_ro		= wbsd_get_ro,
-};
+पूर्ण;
 
 /*****************************************************************************\
  *                                                                           *
@@ -945,11 +946,11 @@ static const struct mmc_host_ops wbsd_ops = {
  * Helper function to reset detection ignore
  */
 
-static void wbsd_reset_ignore(struct timer_list *t)
-{
-	struct wbsd_host *host = from_timer(host, t, ignore_timer);
+अटल व्योम wbsd_reset_ignore(काष्ठा समयr_list *t)
+अणु
+	काष्ठा wbsd_host *host = from_समयr(host, t, ignore_समयr);
 
-	BUG_ON(host == NULL);
+	BUG_ON(host == शून्य);
 
 	DBG("Resetting card detection ignore\n");
 
@@ -964,67 +965,67 @@ static void wbsd_reset_ignore(struct timer_list *t)
 	tasklet_schedule(&host->card_tasklet);
 
 	spin_unlock_bh(&host->lock);
-}
+पूर्ण
 
 /*
  * Tasklets
  */
 
-static inline struct mmc_data *wbsd_get_data(struct wbsd_host *host)
-{
+अटल अंतरभूत काष्ठा mmc_data *wbsd_get_data(काष्ठा wbsd_host *host)
+अणु
 	WARN_ON(!host->mrq);
-	if (!host->mrq)
-		return NULL;
+	अगर (!host->mrq)
+		वापस शून्य;
 
 	WARN_ON(!host->mrq->cmd);
-	if (!host->mrq->cmd)
-		return NULL;
+	अगर (!host->mrq->cmd)
+		वापस शून्य;
 
 	WARN_ON(!host->mrq->cmd->data);
-	if (!host->mrq->cmd->data)
-		return NULL;
+	अगर (!host->mrq->cmd->data)
+		वापस शून्य;
 
-	return host->mrq->cmd->data;
-}
+	वापस host->mrq->cmd->data;
+पूर्ण
 
-static void wbsd_tasklet_card(struct tasklet_struct *t)
-{
-	struct wbsd_host *host = from_tasklet(host, t, card_tasklet);
+अटल व्योम wbsd_tasklet_card(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा wbsd_host *host = from_tasklet(host, t, card_tasklet);
 	u8 csr;
-	int delay = -1;
+	पूर्णांक delay = -1;
 
 	spin_lock(&host->lock);
 
-	if (host->flags & WBSD_FIGNORE_DETECT) {
+	अगर (host->flags & WBSD_FIGNORE_DETECT) अणु
 		spin_unlock(&host->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	csr = inb(host->base + WBSD_CSR);
 	WARN_ON(csr == 0xff);
 
-	if (csr & WBSD_CARDPRESENT) {
-		if (!(host->flags & WBSD_FCARD_PRESENT)) {
+	अगर (csr & WBSD_CARDPRESENT) अणु
+		अगर (!(host->flags & WBSD_FCARD_PRESENT)) अणु
 			DBG("Card inserted\n");
 			host->flags |= WBSD_FCARD_PRESENT;
 
 			delay = 500;
-		}
-	} else if (host->flags & WBSD_FCARD_PRESENT) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (host->flags & WBSD_FCARD_PRESENT) अणु
 		DBG("Card removed\n");
 		host->flags &= ~WBSD_FCARD_PRESENT;
 
-		if (host->mrq) {
+		अगर (host->mrq) अणु
 			pr_err("%s: Card removed during transfer!\n",
 				mmc_hostname(host->mmc));
 			wbsd_reset(host);
 
 			host->mrq->cmd->error = -ENOMEDIUM;
 			tasklet_schedule(&host->finish_tasklet);
-		}
+		पूर्ण
 
 		delay = 0;
-	}
+	पूर्ण
 
 	/*
 	 * Unlock first since we might get a call back.
@@ -1032,54 +1033,54 @@ static void wbsd_tasklet_card(struct tasklet_struct *t)
 
 	spin_unlock(&host->lock);
 
-	if (delay != -1)
-		mmc_detect_change(host->mmc, msecs_to_jiffies(delay));
-}
+	अगर (delay != -1)
+		mmc_detect_change(host->mmc, msecs_to_jअगरfies(delay));
+पूर्ण
 
-static void wbsd_tasklet_fifo(struct tasklet_struct *t)
-{
-	struct wbsd_host *host = from_tasklet(host, t, fifo_tasklet);
-	struct mmc_data *data;
+अटल व्योम wbsd_tasklet_fअगरo(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा wbsd_host *host = from_tasklet(host, t, fअगरo_tasklet);
+	काष्ठा mmc_data *data;
 
 	spin_lock(&host->lock);
 
-	if (!host->mrq)
-		goto end;
+	अगर (!host->mrq)
+		जाओ end;
 
 	data = wbsd_get_data(host);
-	if (!data)
-		goto end;
+	अगर (!data)
+		जाओ end;
 
-	if (data->flags & MMC_DATA_WRITE)
-		wbsd_fill_fifo(host);
-	else
-		wbsd_empty_fifo(host);
+	अगर (data->flags & MMC_DATA_WRITE)
+		wbsd_fill_fअगरo(host);
+	अन्यथा
+		wbsd_empty_fअगरo(host);
 
 	/*
 	 * Done?
 	 */
-	if (host->num_sg == 0) {
-		wbsd_write_index(host, WBSD_IDX_FIFOEN, 0);
+	अगर (host->num_sg == 0) अणु
+		wbsd_ग_लिखो_index(host, WBSD_IDX_FIFOEN, 0);
 		tasklet_schedule(&host->finish_tasklet);
-	}
+	पूर्ण
 
 end:
 	spin_unlock(&host->lock);
-}
+पूर्ण
 
-static void wbsd_tasklet_crc(struct tasklet_struct *t)
-{
-	struct wbsd_host *host = from_tasklet(host, t, crc_tasklet);
-	struct mmc_data *data;
+अटल व्योम wbsd_tasklet_crc(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा wbsd_host *host = from_tasklet(host, t, crc_tasklet);
+	काष्ठा mmc_data *data;
 
 	spin_lock(&host->lock);
 
-	if (!host->mrq)
-		goto end;
+	अगर (!host->mrq)
+		जाओ end;
 
 	data = wbsd_get_data(host);
-	if (!data)
-		goto end;
+	अगर (!data)
+		जाओ end;
 
 	DBGF("CRC error\n");
 
@@ -1089,21 +1090,21 @@ static void wbsd_tasklet_crc(struct tasklet_struct *t)
 
 end:
 	spin_unlock(&host->lock);
-}
+पूर्ण
 
-static void wbsd_tasklet_timeout(struct tasklet_struct *t)
-{
-	struct wbsd_host *host = from_tasklet(host, t, timeout_tasklet);
-	struct mmc_data *data;
+अटल व्योम wbsd_tasklet_समयout(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा wbsd_host *host = from_tasklet(host, t, समयout_tasklet);
+	काष्ठा mmc_data *data;
 
 	spin_lock(&host->lock);
 
-	if (!host->mrq)
-		goto end;
+	अगर (!host->mrq)
+		जाओ end;
 
 	data = wbsd_get_data(host);
-	if (!data)
-		goto end;
+	अगर (!data)
+		जाओ end;
 
 	DBGF("Timeout\n");
 
@@ -1113,86 +1114,86 @@ static void wbsd_tasklet_timeout(struct tasklet_struct *t)
 
 end:
 	spin_unlock(&host->lock);
-}
+पूर्ण
 
-static void wbsd_tasklet_finish(struct tasklet_struct *t)
-{
-	struct wbsd_host *host = from_tasklet(host, t, finish_tasklet);
-	struct mmc_data *data;
+अटल व्योम wbsd_tasklet_finish(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा wbsd_host *host = from_tasklet(host, t, finish_tasklet);
+	काष्ठा mmc_data *data;
 
 	spin_lock(&host->lock);
 
 	WARN_ON(!host->mrq);
-	if (!host->mrq)
-		goto end;
+	अगर (!host->mrq)
+		जाओ end;
 
 	data = wbsd_get_data(host);
-	if (!data)
-		goto end;
+	अगर (!data)
+		जाओ end;
 
 	wbsd_finish_data(host, data);
 
 end:
 	spin_unlock(&host->lock);
-}
+पूर्ण
 
 /*
  * Interrupt handling
  */
 
-static irqreturn_t wbsd_irq(int irq, void *dev_id)
-{
-	struct wbsd_host *host = dev_id;
-	int isr;
+अटल irqवापस_t wbsd_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा wbsd_host *host = dev_id;
+	पूर्णांक isr;
 
 	isr = inb(host->base + WBSD_ISR);
 
 	/*
-	 * Was it actually our hardware that caused the interrupt?
+	 * Was it actually our hardware that caused the पूर्णांकerrupt?
 	 */
-	if (isr == 0xff || isr == 0x00)
-		return IRQ_NONE;
+	अगर (isr == 0xff || isr == 0x00)
+		वापस IRQ_NONE;
 
 	host->isr |= isr;
 
 	/*
 	 * Schedule tasklets as needed.
 	 */
-	if (isr & WBSD_INT_CARD)
+	अगर (isr & WBSD_INT_CARD)
 		tasklet_schedule(&host->card_tasklet);
-	if (isr & WBSD_INT_FIFO_THRE)
-		tasklet_schedule(&host->fifo_tasklet);
-	if (isr & WBSD_INT_CRC)
+	अगर (isr & WBSD_INT_FIFO_THRE)
+		tasklet_schedule(&host->fअगरo_tasklet);
+	अगर (isr & WBSD_INT_CRC)
 		tasklet_hi_schedule(&host->crc_tasklet);
-	if (isr & WBSD_INT_TIMEOUT)
-		tasklet_hi_schedule(&host->timeout_tasklet);
-	if (isr & WBSD_INT_TC)
+	अगर (isr & WBSD_INT_TIMEOUT)
+		tasklet_hi_schedule(&host->समयout_tasklet);
+	अगर (isr & WBSD_INT_TC)
 		tasklet_schedule(&host->finish_tasklet);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*****************************************************************************\
  *                                                                           *
- * Device initialisation and shutdown                                        *
+ * Device initialisation and shutकरोwn                                        *
  *                                                                           *
 \*****************************************************************************/
 
 /*
- * Allocate/free MMC structure.
+ * Allocate/मुक्त MMC काष्ठाure.
  */
 
-static int wbsd_alloc_mmc(struct device *dev)
-{
-	struct mmc_host *mmc;
-	struct wbsd_host *host;
+अटल पूर्णांक wbsd_alloc_mmc(काष्ठा device *dev)
+अणु
+	काष्ठा mmc_host *mmc;
+	काष्ठा wbsd_host *host;
 
 	/*
-	 * Allocate MMC structure.
+	 * Allocate MMC काष्ठाure.
 	 */
-	mmc = mmc_alloc_host(sizeof(struct wbsd_host), dev);
-	if (!mmc)
-		return -ENOMEM;
+	mmc = mmc_alloc_host(माप(काष्ठा wbsd_host), dev);
+	अगर (!mmc)
+		वापस -ENOMEM;
 
 	host = mmc_priv(mmc);
 	host->mmc = mmc;
@@ -1211,12 +1212,12 @@ static int wbsd_alloc_mmc(struct device *dev)
 	spin_lock_init(&host->lock);
 
 	/*
-	 * Set up timers
+	 * Set up समयrs
 	 */
-	timer_setup(&host->ignore_timer, wbsd_reset_ignore, 0);
+	समयr_setup(&host->ignore_समयr, wbsd_reset_ignore, 0);
 
 	/*
-	 * Maximum number of segments. Worst case is one sector per segment
+	 * Maximum number of segments. Worst हाल is one sector per segment
 	 * so this will be 64kB/512.
 	 */
 	mmc->max_segs = 128;
@@ -1234,7 +1235,7 @@ static int wbsd_alloc_mmc(struct device *dev)
 
 	/*
 	 * Maximum block size. We have 12 bits (= 4095) but have to subtract
-	 * space for CRC. So the maximum is 4095 - 4*2 = 4087.
+	 * space क्रम CRC. So the maximum is 4095 - 4*2 = 4087.
 	 */
 	mmc->max_blk_size = 4087;
 
@@ -1246,46 +1247,46 @@ static int wbsd_alloc_mmc(struct device *dev)
 
 	dev_set_drvdata(dev, mmc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wbsd_free_mmc(struct device *dev)
-{
-	struct mmc_host *mmc;
-	struct wbsd_host *host;
+अटल व्योम wbsd_मुक्त_mmc(काष्ठा device *dev)
+अणु
+	काष्ठा mmc_host *mmc;
+	काष्ठा wbsd_host *host;
 
 	mmc = dev_get_drvdata(dev);
-	if (!mmc)
-		return;
+	अगर (!mmc)
+		वापस;
 
 	host = mmc_priv(mmc);
-	BUG_ON(host == NULL);
+	BUG_ON(host == शून्य);
 
-	del_timer_sync(&host->ignore_timer);
+	del_समयr_sync(&host->ignore_समयr);
 
-	mmc_free_host(mmc);
+	mmc_मुक्त_host(mmc);
 
-	dev_set_drvdata(dev, NULL);
-}
+	dev_set_drvdata(dev, शून्य);
+पूर्ण
 
 /*
- * Scan for known chip id:s
+ * Scan क्रम known chip id:s
  */
 
-static int wbsd_scan(struct wbsd_host *host)
-{
-	int i, j, k;
-	int id;
+अटल पूर्णांक wbsd_scan(काष्ठा wbsd_host *host)
+अणु
+	पूर्णांक i, j, k;
+	पूर्णांक id;
 
 	/*
 	 * Iterate through all ports, all codes to
 	 * find hardware that is in our known list.
 	 */
-	for (i = 0; i < ARRAY_SIZE(config_ports); i++) {
-		if (!request_region(config_ports[i], 2, DRIVER_NAME))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(config_ports); i++) अणु
+		अगर (!request_region(config_ports[i], 2, DRIVER_NAME))
+			जारी;
 
-		for (j = 0; j < ARRAY_SIZE(unlock_codes); j++) {
+		क्रम (j = 0; j < ARRAY_SIZE(unlock_codes); j++) अणु
 			id = 0xFFFF;
 
 			host->config = config_ports[i];
@@ -1301,102 +1302,102 @@ static int wbsd_scan(struct wbsd_host *host)
 
 			wbsd_lock_config(host);
 
-			for (k = 0; k < ARRAY_SIZE(valid_ids); k++) {
-				if (id == valid_ids[k]) {
+			क्रम (k = 0; k < ARRAY_SIZE(valid_ids); k++) अणु
+				अगर (id == valid_ids[k]) अणु
 					host->chip_id = id;
 
-					return 0;
-				}
-			}
+					वापस 0;
+				पूर्ण
+			पूर्ण
 
-			if (id != 0xFFFF) {
+			अगर (id != 0xFFFF) अणु
 				DBG("Unknown hardware (id %x) found at %x\n",
 					id, config_ports[i]);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		release_region(config_ports[i], 2);
-	}
+	पूर्ण
 
 	host->config = 0;
 	host->unlock_code = 0;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /*
- * Allocate/free io port ranges
+ * Allocate/मुक्त io port ranges
  */
 
-static int wbsd_request_region(struct wbsd_host *host, int base)
-{
-	if (base & 0x7)
-		return -EINVAL;
+अटल पूर्णांक wbsd_request_region(काष्ठा wbsd_host *host, पूर्णांक base)
+अणु
+	अगर (base & 0x7)
+		वापस -EINVAL;
 
-	if (!request_region(base, 8, DRIVER_NAME))
-		return -EIO;
+	अगर (!request_region(base, 8, DRIVER_NAME))
+		वापस -EIO;
 
 	host->base = base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wbsd_release_regions(struct wbsd_host *host)
-{
-	if (host->base)
+अटल व्योम wbsd_release_regions(काष्ठा wbsd_host *host)
+अणु
+	अगर (host->base)
 		release_region(host->base, 8);
 
 	host->base = 0;
 
-	if (host->config)
+	अगर (host->config)
 		release_region(host->config, 2);
 
 	host->config = 0;
-}
+पूर्ण
 
 /*
- * Allocate/free DMA port and buffer
+ * Allocate/मुक्त DMA port and buffer
  */
 
-static void wbsd_request_dma(struct wbsd_host *host, int dma)
-{
-	if (dma < 0)
-		return;
+अटल व्योम wbsd_request_dma(काष्ठा wbsd_host *host, पूर्णांक dma)
+अणु
+	अगर (dma < 0)
+		वापस;
 
-	if (request_dma(dma, DRIVER_NAME))
-		goto err;
+	अगर (request_dma(dma, DRIVER_NAME))
+		जाओ err;
 
 	/*
 	 * We need to allocate a special buffer in
-	 * order for ISA to be able to DMA to it.
+	 * order क्रम ISA to be able to DMA to it.
 	 */
-	host->dma_buffer = kmalloc(WBSD_DMA_SIZE,
+	host->dma_buffer = kदो_स्मृति(WBSD_DMA_SIZE,
 		GFP_NOIO | GFP_DMA | __GFP_RETRY_MAYFAIL | __GFP_NOWARN);
-	if (!host->dma_buffer)
-		goto free;
+	अगर (!host->dma_buffer)
+		जाओ मुक्त;
 
 	/*
 	 * Translate the address to a physical address.
 	 */
 	host->dma_addr = dma_map_single(mmc_dev(host->mmc), host->dma_buffer,
-		WBSD_DMA_SIZE, DMA_BIDIRECTIONAL);
-	if (dma_mapping_error(mmc_dev(host->mmc), host->dma_addr))
-		goto kfree;
+		WBSD_DMA_SIZE, DMA_BIसूचीECTIONAL);
+	अगर (dma_mapping_error(mmc_dev(host->mmc), host->dma_addr))
+		जाओ kमुक्त;
 
 	/*
 	 * ISA DMA must be aligned on a 64k basis.
 	 */
-	if ((host->dma_addr & 0xffff) != 0)
-		goto unmap;
+	अगर ((host->dma_addr & 0xffff) != 0)
+		जाओ unmap;
 	/*
 	 * ISA cannot access memory above 16 MB.
 	 */
-	else if (host->dma_addr >= 0x1000000)
-		goto unmap;
+	अन्यथा अगर (host->dma_addr >= 0x1000000)
+		जाओ unmap;
 
 	host->dma = dma;
 
-	return;
+	वापस;
 
 unmap:
 	/*
@@ -1405,419 +1406,419 @@ unmap:
 	BUG_ON(1);
 
 	dma_unmap_single(mmc_dev(host->mmc), host->dma_addr,
-		WBSD_DMA_SIZE, DMA_BIDIRECTIONAL);
+		WBSD_DMA_SIZE, DMA_BIसूचीECTIONAL);
 	host->dma_addr = 0;
 
-kfree:
-	kfree(host->dma_buffer);
-	host->dma_buffer = NULL;
+kमुक्त:
+	kमुक्त(host->dma_buffer);
+	host->dma_buffer = शून्य;
 
-free:
-	free_dma(dma);
+मुक्त:
+	मुक्त_dma(dma);
 
 err:
 	pr_warn(DRIVER_NAME ": Unable to allocate DMA %d - falling back on FIFO\n",
 		dma);
-}
+पूर्ण
 
-static void wbsd_release_dma(struct wbsd_host *host)
-{
+अटल व्योम wbsd_release_dma(काष्ठा wbsd_host *host)
+अणु
 	/*
-	 * host->dma_addr is valid here iff host->dma_buffer is not NULL.
+	 * host->dma_addr is valid here अगरf host->dma_buffer is not शून्य.
 	 */
-	if (host->dma_buffer) {
+	अगर (host->dma_buffer) अणु
 		dma_unmap_single(mmc_dev(host->mmc), host->dma_addr,
-			WBSD_DMA_SIZE, DMA_BIDIRECTIONAL);
-		kfree(host->dma_buffer);
-	}
-	if (host->dma >= 0)
-		free_dma(host->dma);
+			WBSD_DMA_SIZE, DMA_BIसूचीECTIONAL);
+		kमुक्त(host->dma_buffer);
+	पूर्ण
+	अगर (host->dma >= 0)
+		मुक्त_dma(host->dma);
 
 	host->dma = -1;
-	host->dma_buffer = NULL;
+	host->dma_buffer = शून्य;
 	host->dma_addr = 0;
-}
+पूर्ण
 
 /*
- * Allocate/free IRQ.
+ * Allocate/मुक्त IRQ.
  */
 
-static int wbsd_request_irq(struct wbsd_host *host, int irq)
-{
-	int ret;
+अटल पूर्णांक wbsd_request_irq(काष्ठा wbsd_host *host, पूर्णांक irq)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * Set up tasklets. Must be done before requesting interrupt.
+	 * Set up tasklets. Must be करोne beक्रमe requesting पूर्णांकerrupt.
 	 */
 	tasklet_setup(&host->card_tasklet, wbsd_tasklet_card);
-	tasklet_setup(&host->fifo_tasklet, wbsd_tasklet_fifo);
+	tasklet_setup(&host->fअगरo_tasklet, wbsd_tasklet_fअगरo);
 	tasklet_setup(&host->crc_tasklet, wbsd_tasklet_crc);
-	tasklet_setup(&host->timeout_tasklet, wbsd_tasklet_timeout);
+	tasklet_setup(&host->समयout_tasklet, wbsd_tasklet_समयout);
 	tasklet_setup(&host->finish_tasklet, wbsd_tasklet_finish);
 
 	/*
-	 * Allocate interrupt.
+	 * Allocate पूर्णांकerrupt.
 	 */
 	ret = request_irq(irq, wbsd_irq, IRQF_SHARED, DRIVER_NAME, host);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	host->irq = irq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void  wbsd_release_irq(struct wbsd_host *host)
-{
-	if (!host->irq)
-		return;
+अटल व्योम  wbsd_release_irq(काष्ठा wbsd_host *host)
+अणु
+	अगर (!host->irq)
+		वापस;
 
-	free_irq(host->irq, host);
+	मुक्त_irq(host->irq, host);
 
 	host->irq = 0;
 
-	tasklet_kill(&host->card_tasklet);
-	tasklet_kill(&host->fifo_tasklet);
-	tasklet_kill(&host->crc_tasklet);
-	tasklet_kill(&host->timeout_tasklet);
-	tasklet_kill(&host->finish_tasklet);
-}
+	tasklet_समाप्त(&host->card_tasklet);
+	tasklet_समाप्त(&host->fअगरo_tasklet);
+	tasklet_समाप्त(&host->crc_tasklet);
+	tasklet_समाप्त(&host->समयout_tasklet);
+	tasklet_समाप्त(&host->finish_tasklet);
+पूर्ण
 
 /*
- * Allocate all resources for the host.
+ * Allocate all resources क्रम the host.
  */
 
-static int wbsd_request_resources(struct wbsd_host *host,
-	int base, int irq, int dma)
-{
-	int ret;
+अटल पूर्णांक wbsd_request_resources(काष्ठा wbsd_host *host,
+	पूर्णांक base, पूर्णांक irq, पूर्णांक dma)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * Allocate I/O ports.
 	 */
 	ret = wbsd_request_region(host, base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Allocate interrupt.
+	 * Allocate पूर्णांकerrupt.
 	 */
 	ret = wbsd_request_irq(host, irq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Allocate DMA.
 	 */
 	wbsd_request_dma(host, dma);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Release all resources for the host.
+ * Release all resources क्रम the host.
  */
 
-static void wbsd_release_resources(struct wbsd_host *host)
-{
+अटल व्योम wbsd_release_resources(काष्ठा wbsd_host *host)
+अणु
 	wbsd_release_dma(host);
 	wbsd_release_irq(host);
 	wbsd_release_regions(host);
-}
+पूर्ण
 
 /*
  * Configure the resources the chip should use.
  */
 
-static void wbsd_chip_config(struct wbsd_host *host)
-{
+अटल व्योम wbsd_chip_config(काष्ठा wbsd_host *host)
+अणु
 	wbsd_unlock_config(host);
 
 	/*
 	 * Reset the chip.
 	 */
-	wbsd_write_config(host, WBSD_CONF_SWRST, 1);
-	wbsd_write_config(host, WBSD_CONF_SWRST, 0);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_SWRST, 1);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_SWRST, 0);
 
 	/*
 	 * Select SD/MMC function.
 	 */
-	wbsd_write_config(host, WBSD_CONF_DEVICE, DEVICE_SD);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_DEVICE, DEVICE_SD);
 
 	/*
 	 * Set up card detection.
 	 */
-	wbsd_write_config(host, WBSD_CONF_PINS, WBSD_PINS_DETECT_GP11);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_PINS, WBSD_PINS_DETECT_GP11);
 
 	/*
 	 * Configure chip
 	 */
-	wbsd_write_config(host, WBSD_CONF_PORT_HI, host->base >> 8);
-	wbsd_write_config(host, WBSD_CONF_PORT_LO, host->base & 0xff);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_PORT_HI, host->base >> 8);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_PORT_LO, host->base & 0xff);
 
-	wbsd_write_config(host, WBSD_CONF_IRQ, host->irq);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_IRQ, host->irq);
 
-	if (host->dma >= 0)
-		wbsd_write_config(host, WBSD_CONF_DRQ, host->dma);
+	अगर (host->dma >= 0)
+		wbsd_ग_लिखो_config(host, WBSD_CONF_DRQ, host->dma);
 
 	/*
-	 * Enable and power up chip.
+	 * Enable and घातer up chip.
 	 */
-	wbsd_write_config(host, WBSD_CONF_ENABLE, 1);
-	wbsd_write_config(host, WBSD_CONF_POWER, 0x20);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_ENABLE, 1);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_POWER, 0x20);
 
 	wbsd_lock_config(host);
-}
+पूर्ण
 
 /*
  * Check that configured resources are correct.
  */
 
-static int wbsd_chip_validate(struct wbsd_host *host)
-{
-	int base, irq, dma;
+अटल पूर्णांक wbsd_chip_validate(काष्ठा wbsd_host *host)
+अणु
+	पूर्णांक base, irq, dma;
 
 	wbsd_unlock_config(host);
 
 	/*
 	 * Select SD/MMC function.
 	 */
-	wbsd_write_config(host, WBSD_CONF_DEVICE, DEVICE_SD);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_DEVICE, DEVICE_SD);
 
 	/*
 	 * Read configuration.
 	 */
-	base = wbsd_read_config(host, WBSD_CONF_PORT_HI) << 8;
-	base |= wbsd_read_config(host, WBSD_CONF_PORT_LO);
+	base = wbsd_पढ़ो_config(host, WBSD_CONF_PORT_HI) << 8;
+	base |= wbsd_पढ़ो_config(host, WBSD_CONF_PORT_LO);
 
-	irq = wbsd_read_config(host, WBSD_CONF_IRQ);
+	irq = wbsd_पढ़ो_config(host, WBSD_CONF_IRQ);
 
-	dma = wbsd_read_config(host, WBSD_CONF_DRQ);
+	dma = wbsd_पढ़ो_config(host, WBSD_CONF_DRQ);
 
 	wbsd_lock_config(host);
 
 	/*
 	 * Validate against given configuration.
 	 */
-	if (base != host->base)
-		return 0;
-	if (irq != host->irq)
-		return 0;
-	if ((dma != host->dma) && (host->dma != -1))
-		return 0;
+	अगर (base != host->base)
+		वापस 0;
+	अगर (irq != host->irq)
+		वापस 0;
+	अगर ((dma != host->dma) && (host->dma != -1))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Powers down the SD function
+ * Powers करोwn the SD function
  */
 
-static void wbsd_chip_poweroff(struct wbsd_host *host)
-{
+अटल व्योम wbsd_chip_घातeroff(काष्ठा wbsd_host *host)
+अणु
 	wbsd_unlock_config(host);
 
-	wbsd_write_config(host, WBSD_CONF_DEVICE, DEVICE_SD);
-	wbsd_write_config(host, WBSD_CONF_ENABLE, 0);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_DEVICE, DEVICE_SD);
+	wbsd_ग_लिखो_config(host, WBSD_CONF_ENABLE, 0);
 
 	wbsd_lock_config(host);
-}
+पूर्ण
 
 /*****************************************************************************\
  *                                                                           *
- * Devices setup and shutdown                                                *
+ * Devices setup and shutकरोwn                                                *
  *                                                                           *
 \*****************************************************************************/
 
-static int wbsd_init(struct device *dev, int base, int irq, int dma,
-	int pnp)
-{
-	struct wbsd_host *host = NULL;
-	struct mmc_host *mmc = NULL;
-	int ret;
+अटल पूर्णांक wbsd_init(काष्ठा device *dev, पूर्णांक base, पूर्णांक irq, पूर्णांक dma,
+	पूर्णांक pnp)
+अणु
+	काष्ठा wbsd_host *host = शून्य;
+	काष्ठा mmc_host *mmc = शून्य;
+	पूर्णांक ret;
 
 	ret = wbsd_alloc_mmc(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mmc = dev_get_drvdata(dev);
 	host = mmc_priv(mmc);
 
 	/*
-	 * Scan for hardware.
+	 * Scan क्रम hardware.
 	 */
 	ret = wbsd_scan(host);
-	if (ret) {
-		if (pnp && (ret == -ENODEV)) {
+	अगर (ret) अणु
+		अगर (pnp && (ret == -ENODEV)) अणु
 			pr_warn(DRIVER_NAME ": Unable to confirm device presence - you may experience lock-ups\n");
-		} else {
-			wbsd_free_mmc(dev);
-			return ret;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			wbsd_मुक्त_mmc(dev);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Request resources.
 	 */
 	ret = wbsd_request_resources(host, base, irq, dma);
-	if (ret) {
+	अगर (ret) अणु
 		wbsd_release_resources(host);
-		wbsd_free_mmc(dev);
-		return ret;
-	}
+		wbsd_मुक्त_mmc(dev);
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * See if chip needs to be configured.
+	 * See अगर chip needs to be configured.
 	 */
-	if (pnp) {
-		if ((host->config != 0) && !wbsd_chip_validate(host)) {
+	अगर (pnp) अणु
+		अगर ((host->config != 0) && !wbsd_chip_validate(host)) अणु
 			pr_warn(DRIVER_NAME ": PnP active but chip not configured! You probably have a buggy BIOS. Configuring chip manually.\n");
 			wbsd_chip_config(host);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		wbsd_chip_config(host);
 
 	/*
 	 * Power Management stuff. No idea how this works.
 	 * Not tested.
 	 */
-#ifdef CONFIG_PM
-	if (host->config) {
+#अगर_घोषित CONFIG_PM
+	अगर (host->config) अणु
 		wbsd_unlock_config(host);
-		wbsd_write_config(host, WBSD_CONF_PME, 0xA0);
+		wbsd_ग_लिखो_config(host, WBSD_CONF_PME, 0xA0);
 		wbsd_lock_config(host);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	/*
 	 * Allow device to initialise itself properly.
 	 */
 	mdelay(5);
 
 	/*
-	 * Reset the chip into a known state.
+	 * Reset the chip पूर्णांकo a known state.
 	 */
 	wbsd_init_device(host);
 
 	mmc_add_host(mmc);
 
 	pr_info("%s: W83L51xD", mmc_hostname(mmc));
-	if (host->chip_id != 0)
-		printk(" id %x", (int)host->chip_id);
-	printk(" at 0x%x irq %d", (int)host->base, (int)host->irq);
-	if (host->dma >= 0)
-		printk(" dma %d", (int)host->dma);
-	else
-		printk(" FIFO");
-	if (pnp)
-		printk(" PnP");
-	printk("\n");
+	अगर (host->chip_id != 0)
+		prपूर्णांकk(" id %x", (पूर्णांक)host->chip_id);
+	prपूर्णांकk(" at 0x%x irq %d", (पूर्णांक)host->base, (पूर्णांक)host->irq);
+	अगर (host->dma >= 0)
+		prपूर्णांकk(" dma %d", (पूर्णांक)host->dma);
+	अन्यथा
+		prपूर्णांकk(" FIFO");
+	अगर (pnp)
+		prपूर्णांकk(" PnP");
+	prपूर्णांकk("\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wbsd_shutdown(struct device *dev, int pnp)
-{
-	struct mmc_host *mmc = dev_get_drvdata(dev);
-	struct wbsd_host *host;
+अटल व्योम wbsd_shutकरोwn(काष्ठा device *dev, पूर्णांक pnp)
+अणु
+	काष्ठा mmc_host *mmc = dev_get_drvdata(dev);
+	काष्ठा wbsd_host *host;
 
-	if (!mmc)
-		return;
+	अगर (!mmc)
+		वापस;
 
 	host = mmc_priv(mmc);
 
-	mmc_remove_host(mmc);
+	mmc_हटाओ_host(mmc);
 
 	/*
-	 * Power down the SD/MMC function.
+	 * Power करोwn the SD/MMC function.
 	 */
-	if (!pnp)
-		wbsd_chip_poweroff(host);
+	अगर (!pnp)
+		wbsd_chip_घातeroff(host);
 
 	wbsd_release_resources(host);
 
-	wbsd_free_mmc(dev);
-}
+	wbsd_मुक्त_mmc(dev);
+पूर्ण
 
 /*
  * Non-PnP
  */
 
-static int wbsd_probe(struct platform_device *dev)
-{
-	/* Use the module parameters for resources */
-	return wbsd_init(&dev->dev, param_io, param_irq, param_dma, 0);
-}
+अटल पूर्णांक wbsd_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	/* Use the module parameters क्रम resources */
+	वापस wbsd_init(&dev->dev, param_io, param_irq, param_dma, 0);
+पूर्ण
 
-static int wbsd_remove(struct platform_device *dev)
-{
-	wbsd_shutdown(&dev->dev, 0);
+अटल पूर्णांक wbsd_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	wbsd_shutकरोwn(&dev->dev, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * PnP
  */
 
-#ifdef CONFIG_PNP
+#अगर_घोषित CONFIG_PNP
 
-static int
-wbsd_pnp_probe(struct pnp_dev *pnpdev, const struct pnp_device_id *dev_id)
-{
-	int io, irq, dma;
+अटल पूर्णांक
+wbsd_pnp_probe(काष्ठा pnp_dev *pnpdev, स्थिर काष्ठा pnp_device_id *dev_id)
+अणु
+	पूर्णांक io, irq, dma;
 
 	/*
 	 * Get resources from PnP layer.
 	 */
 	io = pnp_port_start(pnpdev, 0);
 	irq = pnp_irq(pnpdev, 0);
-	if (pnp_dma_valid(pnpdev, 0))
+	अगर (pnp_dma_valid(pnpdev, 0))
 		dma = pnp_dma(pnpdev, 0);
-	else
+	अन्यथा
 		dma = -1;
 
 	DBGF("PnP resources: port %3x irq %d dma %d\n", io, irq, dma);
 
-	return wbsd_init(&pnpdev->dev, io, irq, dma, 1);
-}
+	वापस wbsd_init(&pnpdev->dev, io, irq, dma, 1);
+पूर्ण
 
-static void wbsd_pnp_remove(struct pnp_dev *dev)
-{
-	wbsd_shutdown(&dev->dev, 1);
-}
+अटल व्योम wbsd_pnp_हटाओ(काष्ठा pnp_dev *dev)
+अणु
+	wbsd_shutकरोwn(&dev->dev, 1);
+पूर्ण
 
-#endif /* CONFIG_PNP */
+#पूर्ण_अगर /* CONFIG_PNP */
 
 /*
  * Power management
  */
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int wbsd_platform_suspend(struct platform_device *dev,
+अटल पूर्णांक wbsd_platक्रमm_suspend(काष्ठा platक्रमm_device *dev,
 				 pm_message_t state)
-{
-	struct mmc_host *mmc = platform_get_drvdata(dev);
-	struct wbsd_host *host;
+अणु
+	काष्ठा mmc_host *mmc = platक्रमm_get_drvdata(dev);
+	काष्ठा wbsd_host *host;
 
-	if (mmc == NULL)
-		return 0;
+	अगर (mmc == शून्य)
+		वापस 0;
 
 	DBGF("Suspending...\n");
 
 	host = mmc_priv(mmc);
 
-	wbsd_chip_poweroff(host);
-	return 0;
-}
+	wbsd_chip_घातeroff(host);
+	वापस 0;
+पूर्ण
 
-static int wbsd_platform_resume(struct platform_device *dev)
-{
-	struct mmc_host *mmc = platform_get_drvdata(dev);
-	struct wbsd_host *host;
+अटल पूर्णांक wbsd_platक्रमm_resume(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा mmc_host *mmc = platक्रमm_get_drvdata(dev);
+	काष्ठा wbsd_host *host;
 
-	if (mmc == NULL)
-		return 0;
+	अगर (mmc == शून्य)
+		वापस 0;
 
 	DBGF("Resuming...\n");
 
@@ -1831,43 +1832,43 @@ static int wbsd_platform_resume(struct platform_device *dev)
 	mdelay(5);
 
 	wbsd_init_device(host);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PNP
+#अगर_घोषित CONFIG_PNP
 
-static int wbsd_pnp_suspend(struct pnp_dev *pnp_dev, pm_message_t state)
-{
-	struct mmc_host *mmc = dev_get_drvdata(&pnp_dev->dev);
+अटल पूर्णांक wbsd_pnp_suspend(काष्ठा pnp_dev *pnp_dev, pm_message_t state)
+अणु
+	काष्ठा mmc_host *mmc = dev_get_drvdata(&pnp_dev->dev);
 
-	if (mmc == NULL)
-		return 0;
+	अगर (mmc == शून्य)
+		वापस 0;
 
 	DBGF("Suspending...\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wbsd_pnp_resume(struct pnp_dev *pnp_dev)
-{
-	struct mmc_host *mmc = dev_get_drvdata(&pnp_dev->dev);
-	struct wbsd_host *host;
+अटल पूर्णांक wbsd_pnp_resume(काष्ठा pnp_dev *pnp_dev)
+अणु
+	काष्ठा mmc_host *mmc = dev_get_drvdata(&pnp_dev->dev);
+	काष्ठा wbsd_host *host;
 
-	if (mmc == NULL)
-		return 0;
+	अगर (mmc == शून्य)
+		वापस 0;
 
 	DBGF("Resuming...\n");
 
 	host = mmc_priv(mmc);
 
 	/*
-	 * See if chip needs to be configured.
+	 * See अगर chip needs to be configured.
 	 */
-	if (host->config != 0) {
-		if (!wbsd_chip_validate(host)) {
+	अगर (host->config != 0) अणु
+		अगर (!wbsd_chip_validate(host)) अणु
 			pr_warn(DRIVER_NAME ": PnP active but chip not configured! You probably have a buggy BIOS. Configuring chip manually.\n");
 			wbsd_chip_config(host);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Allow device to initialise itself properly.
@@ -1875,126 +1876,126 @@ static int wbsd_pnp_resume(struct pnp_dev *pnp_dev)
 	mdelay(5);
 
 	wbsd_init_device(host);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PNP */
+#पूर्ण_अगर /* CONFIG_PNP */
 
-#else /* CONFIG_PM */
+#अन्यथा /* CONFIG_PM */
 
-#define wbsd_platform_suspend NULL
-#define wbsd_platform_resume NULL
+#घोषणा wbsd_platक्रमm_suspend शून्य
+#घोषणा wbsd_platक्रमm_resume शून्य
 
-#define wbsd_pnp_suspend NULL
-#define wbsd_pnp_resume NULL
+#घोषणा wbsd_pnp_suspend शून्य
+#घोषणा wbsd_pnp_resume शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static struct platform_device *wbsd_device;
+अटल काष्ठा platक्रमm_device *wbsd_device;
 
-static struct platform_driver wbsd_driver = {
+अटल काष्ठा platक्रमm_driver wbsd_driver = अणु
 	.probe		= wbsd_probe,
-	.remove		= wbsd_remove,
+	.हटाओ		= wbsd_हटाओ,
 
-	.suspend	= wbsd_platform_suspend,
-	.resume		= wbsd_platform_resume,
-	.driver		= {
+	.suspend	= wbsd_platक्रमm_suspend,
+	.resume		= wbsd_platक्रमm_resume,
+	.driver		= अणु
 		.name	= DRIVER_NAME,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_PNP
+#अगर_घोषित CONFIG_PNP
 
-static struct pnp_driver wbsd_pnp_driver = {
+अटल काष्ठा pnp_driver wbsd_pnp_driver = अणु
 	.name		= DRIVER_NAME,
 	.id_table	= pnp_dev_table,
 	.probe		= wbsd_pnp_probe,
-	.remove		= wbsd_pnp_remove,
+	.हटाओ		= wbsd_pnp_हटाओ,
 
 	.suspend	= wbsd_pnp_suspend,
 	.resume		= wbsd_pnp_resume,
-};
+पूर्ण;
 
-#endif /* CONFIG_PNP */
+#पूर्ण_अगर /* CONFIG_PNP */
 
 /*
  * Module loading/unloading
  */
 
-static int __init wbsd_drv_init(void)
-{
-	int result;
+अटल पूर्णांक __init wbsd_drv_init(व्योम)
+अणु
+	पूर्णांक result;
 
 	pr_info(DRIVER_NAME
 		": Winbond W83L51xD SD/MMC card interface driver\n");
 	pr_info(DRIVER_NAME ": Copyright(c) Pierre Ossman\n");
 
-#ifdef CONFIG_PNP
+#अगर_घोषित CONFIG_PNP
 
-	if (!param_nopnp) {
-		result = pnp_register_driver(&wbsd_pnp_driver);
-		if (result < 0)
-			return result;
-	}
-#endif /* CONFIG_PNP */
+	अगर (!param_nopnp) अणु
+		result = pnp_रेजिस्टर_driver(&wbsd_pnp_driver);
+		अगर (result < 0)
+			वापस result;
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_PNP */
 
-	if (param_nopnp) {
-		result = platform_driver_register(&wbsd_driver);
-		if (result < 0)
-			return result;
+	अगर (param_nopnp) अणु
+		result = platक्रमm_driver_रेजिस्टर(&wbsd_driver);
+		अगर (result < 0)
+			वापस result;
 
-		wbsd_device = platform_device_alloc(DRIVER_NAME, -1);
-		if (!wbsd_device) {
-			platform_driver_unregister(&wbsd_driver);
-			return -ENOMEM;
-		}
+		wbsd_device = platक्रमm_device_alloc(DRIVER_NAME, -1);
+		अगर (!wbsd_device) अणु
+			platक्रमm_driver_unरेजिस्टर(&wbsd_driver);
+			वापस -ENOMEM;
+		पूर्ण
 
-		result = platform_device_add(wbsd_device);
-		if (result) {
-			platform_device_put(wbsd_device);
-			platform_driver_unregister(&wbsd_driver);
-			return result;
-		}
-	}
+		result = platक्रमm_device_add(wbsd_device);
+		अगर (result) अणु
+			platक्रमm_device_put(wbsd_device);
+			platक्रमm_driver_unरेजिस्टर(&wbsd_driver);
+			वापस result;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit wbsd_drv_exit(void)
-{
-#ifdef CONFIG_PNP
+अटल व्योम __निकास wbsd_drv_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_PNP
 
-	if (!param_nopnp)
-		pnp_unregister_driver(&wbsd_pnp_driver);
+	अगर (!param_nopnp)
+		pnp_unरेजिस्टर_driver(&wbsd_pnp_driver);
 
-#endif /* CONFIG_PNP */
+#पूर्ण_अगर /* CONFIG_PNP */
 
-	if (param_nopnp) {
-		platform_device_unregister(wbsd_device);
+	अगर (param_nopnp) अणु
+		platक्रमm_device_unरेजिस्टर(wbsd_device);
 
-		platform_driver_unregister(&wbsd_driver);
-	}
+		platक्रमm_driver_unरेजिस्टर(&wbsd_driver);
+	पूर्ण
 
 	DBG("unloaded\n");
-}
+पूर्ण
 
 module_init(wbsd_drv_init);
-module_exit(wbsd_drv_exit);
-#ifdef CONFIG_PNP
-module_param_hw_named(nopnp, param_nopnp, uint, other, 0444);
-#endif
-module_param_hw_named(io, param_io, uint, ioport, 0444);
-module_param_hw_named(irq, param_irq, uint, irq, 0444);
-module_param_hw_named(dma, param_dma, int, dma, 0444);
+module_निकास(wbsd_drv_निकास);
+#अगर_घोषित CONFIG_PNP
+module_param_hw_named(nopnp, param_nopnp, uपूर्णांक, other, 0444);
+#पूर्ण_अगर
+module_param_hw_named(io, param_io, uपूर्णांक, ioport, 0444);
+module_param_hw_named(irq, param_irq, uपूर्णांक, irq, 0444);
+module_param_hw_named(dma, param_dma, पूर्णांक, dma, 0444);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pierre Ossman <pierre@ossman.eu>");
 MODULE_DESCRIPTION("Winbond W83L51xD SD/MMC card interface driver");
 
-#ifdef CONFIG_PNP
+#अगर_घोषित CONFIG_PNP
 MODULE_PARM_DESC(nopnp, "Scan for device instead of relying on PNP. (default 0)");
-#endif
+#पूर्ण_अगर
 MODULE_PARM_DESC(io, "I/O base to allocate. Must be 8 byte aligned. (default 0x248)");
 MODULE_PARM_DESC(irq, "IRQ to allocate. (default 6)");
 MODULE_PARM_DESC(dma, "DMA channel to allocate. -1 for no DMA. (default 2)");

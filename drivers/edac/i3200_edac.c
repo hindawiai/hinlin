@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Intel 3200/3210 Memory Controller kernel module
  * Copyright (C) 2008-2009 Akamai Technologies, Inc.
@@ -7,41 +8,41 @@
  * GNU General Public License.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/edac.h>
-#include <linux/io.h>
-#include "edac_module.h"
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/edac.h>
+#समावेश <linux/पन.स>
+#समावेश "edac_module.h"
 
-#include <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
 
-#define EDAC_MOD_STR        "i3200_edac"
+#घोषणा EDAC_MOD_STR        "i3200_edac"
 
-#define PCI_DEVICE_ID_INTEL_3200_HB    0x29f0
+#घोषणा PCI_DEVICE_ID_INTEL_3200_HB    0x29f0
 
-#define I3200_DIMMS		4
-#define I3200_RANKS		8
-#define I3200_RANKS_PER_CHANNEL	4
-#define I3200_CHANNELS		2
+#घोषणा I3200_DIMMS		4
+#घोषणा I3200_RANKS		8
+#घोषणा I3200_RANKS_PER_CHANNEL	4
+#घोषणा I3200_CHANNELS		2
 
-/* Intel 3200 register addresses - device 0 function 0 - DRAM Controller */
+/* Intel 3200 रेजिस्टर addresses - device 0 function 0 - DRAM Controller */
 
-#define I3200_MCHBAR_LOW	0x48	/* MCH Memory Mapped Register BAR */
-#define I3200_MCHBAR_HIGH	0x4c
-#define I3200_MCHBAR_MASK	0xfffffc000ULL	/* bits 35:14 */
-#define I3200_MMR_WINDOW_SIZE	16384
+#घोषणा I3200_MCHBAR_LOW	0x48	/* MCH Memory Mapped Register BAR */
+#घोषणा I3200_MCHBAR_HIGH	0x4c
+#घोषणा I3200_MCHBAR_MASK	0xfffffc000ULL	/* bits 35:14 */
+#घोषणा I3200_MMR_WINDOW_SIZE	16384
 
-#define I3200_TOM		0xa0	/* Top of Memory (16b)
+#घोषणा I3200_TOM		0xa0	/* Top of Memory (16b)
 		 *
 		 * 15:10 reserved
 		 *  9:0  total populated physical memory
 		 */
-#define I3200_TOM_MASK		0x3ff	/* bits 9:0 */
-#define I3200_TOM_SHIFT		26	/* 64MiB grain */
+#घोषणा I3200_TOM_MASK		0x3ff	/* bits 9:0 */
+#घोषणा I3200_TOM_SHIFT		26	/* 64MiB grain */
 
-#define I3200_ERRSTS		0xc8	/* Error Status Register (16b)
+#घोषणा I3200_ERRSTS		0xc8	/* Error Status Register (16b)
 		 *
 		 * 15    reserved
 		 * 14    Isochronous TBWRR Run Behind FIFO Full
@@ -50,7 +51,7 @@
 		 *       (ITSTV)
 		 * 12    reserved
 		 * 11    MCH Thermal Sensor Event
-		 *       for SMI/SCI/SERR (GTSE)
+		 *       क्रम SMI/SCI/SERR (GTSE)
 		 * 10    reserved
 		 *  9    LOCK to non-DRAM Memory Flag (LCKF)
 		 *  8    reserved
@@ -59,23 +60,23 @@
 		 *  1    Multi-bit DRAM ECC Error Flag (DMERR)
 		 *  0    Single-bit DRAM ECC Error Flag (DSERR)
 		 */
-#define I3200_ERRSTS_UE		0x0002
-#define I3200_ERRSTS_CE		0x0001
-#define I3200_ERRSTS_BITS	(I3200_ERRSTS_UE | I3200_ERRSTS_CE)
+#घोषणा I3200_ERRSTS_UE		0x0002
+#घोषणा I3200_ERRSTS_CE		0x0001
+#घोषणा I3200_ERRSTS_BITS	(I3200_ERRSTS_UE | I3200_ERRSTS_CE)
 
 
-/* Intel  MMIO register space - device 0 function 0 - MMR space */
+/* Intel  MMIO रेजिस्टर space - device 0 function 0 - MMR space */
 
-#define I3200_C0DRB	0x200	/* Channel 0 DRAM Rank Boundary (16b x 4)
+#घोषणा I3200_C0DRB	0x200	/* Channel 0 DRAM Rank Boundary (16b x 4)
 		 *
 		 * 15:10 reserved
 		 *  9:0  Channel 0 DRAM Rank Boundary Address
 		 */
-#define I3200_C1DRB	0x600	/* Channel 1 DRAM Rank Boundary (16b x 4) */
-#define I3200_DRB_MASK	0x3ff	/* bits 9:0 */
-#define I3200_DRB_SHIFT	26	/* 64MiB grain */
+#घोषणा I3200_C1DRB	0x600	/* Channel 1 DRAM Rank Boundary (16b x 4) */
+#घोषणा I3200_DRB_MASK	0x3ff	/* bits 9:0 */
+#घोषणा I3200_DRB_SHIFT	26	/* 64MiB grain */
 
-#define I3200_C0ECCERRLOG	0x280	/* Channel 0 ECC Error Log (64b)
+#घोषणा I3200_C0ECCERRLOG	0x280	/* Channel 0 ECC Error Log (64b)
 		 *
 		 * 63:48 Error Column Address (ERRCOL)
 		 * 47:32 Error Row Address (ERRROW)
@@ -87,85 +88,85 @@
 		 *    1  Multiple Bit Error Status (MERRSTS)
 		 *    0  Correctable Error Status (CERRSTS)
 		 */
-#define I3200_C1ECCERRLOG		0x680	/* Chan 1 ECC Error Log (64b) */
-#define I3200_ECCERRLOG_CE		0x1
-#define I3200_ECCERRLOG_UE		0x2
-#define I3200_ECCERRLOG_RANK_BITS	0x18000000
-#define I3200_ECCERRLOG_RANK_SHIFT	27
-#define I3200_ECCERRLOG_SYNDROME_BITS	0xff0000
-#define I3200_ECCERRLOG_SYNDROME_SHIFT	16
-#define I3200_CAPID0			0xe0	/* P.95 of spec for details */
+#घोषणा I3200_C1ECCERRLOG		0x680	/* Chan 1 ECC Error Log (64b) */
+#घोषणा I3200_ECCERRLOG_CE		0x1
+#घोषणा I3200_ECCERRLOG_UE		0x2
+#घोषणा I3200_ECCERRLOG_RANK_BITS	0x18000000
+#घोषणा I3200_ECCERRLOG_RANK_SHIFT	27
+#घोषणा I3200_ECCERRLOG_SYNDROME_BITS	0xff0000
+#घोषणा I3200_ECCERRLOG_SYNDROME_SHIFT	16
+#घोषणा I3200_CAPID0			0xe0	/* P.95 of spec क्रम details */
 
-struct i3200_priv {
-	void __iomem *window;
-};
+काष्ठा i3200_priv अणु
+	व्योम __iomem *winकरोw;
+पूर्ण;
 
-static int nr_channels;
+अटल पूर्णांक nr_channels;
 
-static int how_many_channels(struct pci_dev *pdev)
-{
-	int n_channels;
+अटल पूर्णांक how_many_channels(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक n_channels;
 
-	unsigned char capid0_8b; /* 8th byte of CAPID0 */
+	अचिन्हित अक्षर capid0_8b; /* 8th byte of CAPID0 */
 
-	pci_read_config_byte(pdev, I3200_CAPID0 + 8, &capid0_8b);
+	pci_पढ़ो_config_byte(pdev, I3200_CAPID0 + 8, &capid0_8b);
 
-	if (capid0_8b & 0x20) { /* check DCD: Dual Channel Disable */
+	अगर (capid0_8b & 0x20) अणु /* check DCD: Dual Channel Disable */
 		edac_dbg(0, "In single channel mode\n");
 		n_channels = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		edac_dbg(0, "In dual channel mode\n");
 		n_channels = 2;
-	}
+	पूर्ण
 
-	if (capid0_8b & 0x10) /* check if both channels are filled */
+	अगर (capid0_8b & 0x10) /* check अगर both channels are filled */
 		edac_dbg(0, "2 DIMMS per channel disabled\n");
-	else
+	अन्यथा
 		edac_dbg(0, "2 DIMMS per channel enabled\n");
 
-	return n_channels;
-}
+	वापस n_channels;
+पूर्ण
 
-static unsigned long eccerrlog_syndrome(u64 log)
-{
-	return (log & I3200_ECCERRLOG_SYNDROME_BITS) >>
+अटल अचिन्हित दीर्घ eccerrlog_syndrome(u64 log)
+अणु
+	वापस (log & I3200_ECCERRLOG_SYNDROME_BITS) >>
 		I3200_ECCERRLOG_SYNDROME_SHIFT;
-}
+पूर्ण
 
-static int eccerrlog_row(int channel, u64 log)
-{
+अटल पूर्णांक eccerrlog_row(पूर्णांक channel, u64 log)
+अणु
 	u64 rank = ((log & I3200_ECCERRLOG_RANK_BITS) >>
 		I3200_ECCERRLOG_RANK_SHIFT);
-	return rank | (channel * I3200_RANKS_PER_CHANNEL);
-}
+	वापस rank | (channel * I3200_RANKS_PER_CHANNEL);
+पूर्ण
 
-enum i3200_chips {
+क्रमागत i3200_chips अणु
 	I3200 = 0,
-};
+पूर्ण;
 
-struct i3200_dev_info {
-	const char *ctl_name;
-};
+काष्ठा i3200_dev_info अणु
+	स्थिर अक्षर *ctl_name;
+पूर्ण;
 
-struct i3200_error_info {
+काष्ठा i3200_error_info अणु
 	u16 errsts;
 	u16 errsts2;
 	u64 eccerrlog[I3200_CHANNELS];
-};
+पूर्ण;
 
-static const struct i3200_dev_info i3200_devs[] = {
-	[I3200] = {
+अटल स्थिर काष्ठा i3200_dev_info i3200_devs[] = अणु
+	[I3200] = अणु
 		.ctl_name = "i3200"
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pci_dev *mci_pdev;
-static int i3200_registered = 1;
+अटल काष्ठा pci_dev *mci_pdev;
+अटल पूर्णांक i3200_रेजिस्टरed = 1;
 
 
-static void i3200_clear_error_info(struct mem_ctl_info *mci)
-{
-	struct pci_dev *pdev;
+अटल व्योम i3200_clear_error_info(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा pci_dev *pdev;
 
 	pdev = to_pci_dev(mci->pdev);
 
@@ -173,183 +174,183 @@ static void i3200_clear_error_info(struct mem_ctl_info *mci)
 	 * Clear any error bits.
 	 * (Yes, we really clear bits by writing 1 to them.)
 	 */
-	pci_write_bits16(pdev, I3200_ERRSTS, I3200_ERRSTS_BITS,
+	pci_ग_लिखो_bits16(pdev, I3200_ERRSTS, I3200_ERRSTS_BITS,
 		I3200_ERRSTS_BITS);
-}
+पूर्ण
 
-static void i3200_get_and_clear_error_info(struct mem_ctl_info *mci,
-		struct i3200_error_info *info)
-{
-	struct pci_dev *pdev;
-	struct i3200_priv *priv = mci->pvt_info;
-	void __iomem *window = priv->window;
+अटल व्योम i3200_get_and_clear_error_info(काष्ठा mem_ctl_info *mci,
+		काष्ठा i3200_error_info *info)
+अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा i3200_priv *priv = mci->pvt_info;
+	व्योम __iomem *winकरोw = priv->winकरोw;
 
 	pdev = to_pci_dev(mci->pdev);
 
 	/*
-	 * This is a mess because there is no atomic way to read all the
-	 * registers at once and the registers can transition from CE being
+	 * This is a mess because there is no atomic way to पढ़ो all the
+	 * रेजिस्टरs at once and the रेजिस्टरs can transition from CE being
 	 * overwritten by UE.
 	 */
-	pci_read_config_word(pdev, I3200_ERRSTS, &info->errsts);
-	if (!(info->errsts & I3200_ERRSTS_BITS))
-		return;
+	pci_पढ़ो_config_word(pdev, I3200_ERRSTS, &info->errsts);
+	अगर (!(info->errsts & I3200_ERRSTS_BITS))
+		वापस;
 
-	info->eccerrlog[0] = readq(window + I3200_C0ECCERRLOG);
-	if (nr_channels == 2)
-		info->eccerrlog[1] = readq(window + I3200_C1ECCERRLOG);
+	info->eccerrlog[0] = पढ़ोq(winकरोw + I3200_C0ECCERRLOG);
+	अगर (nr_channels == 2)
+		info->eccerrlog[1] = पढ़ोq(winकरोw + I3200_C1ECCERRLOG);
 
-	pci_read_config_word(pdev, I3200_ERRSTS, &info->errsts2);
+	pci_पढ़ो_config_word(pdev, I3200_ERRSTS, &info->errsts2);
 
 	/*
-	 * If the error is the same for both reads then the first set
-	 * of reads is valid.  If there is a change then there is a CE
-	 * with no info and the second set of reads is valid and
+	 * If the error is the same क्रम both पढ़ोs then the first set
+	 * of पढ़ोs is valid.  If there is a change then there is a CE
+	 * with no info and the second set of पढ़ोs is valid and
 	 * should be UE info.
 	 */
-	if ((info->errsts ^ info->errsts2) & I3200_ERRSTS_BITS) {
-		info->eccerrlog[0] = readq(window + I3200_C0ECCERRLOG);
-		if (nr_channels == 2)
-			info->eccerrlog[1] = readq(window + I3200_C1ECCERRLOG);
-	}
+	अगर ((info->errsts ^ info->errsts2) & I3200_ERRSTS_BITS) अणु
+		info->eccerrlog[0] = पढ़ोq(winकरोw + I3200_C0ECCERRLOG);
+		अगर (nr_channels == 2)
+			info->eccerrlog[1] = पढ़ोq(winकरोw + I3200_C1ECCERRLOG);
+	पूर्ण
 
 	i3200_clear_error_info(mci);
-}
+पूर्ण
 
-static void i3200_process_error_info(struct mem_ctl_info *mci,
-		struct i3200_error_info *info)
-{
-	int channel;
+अटल व्योम i3200_process_error_info(काष्ठा mem_ctl_info *mci,
+		काष्ठा i3200_error_info *info)
+अणु
+	पूर्णांक channel;
 	u64 log;
 
-	if (!(info->errsts & I3200_ERRSTS_BITS))
-		return;
+	अगर (!(info->errsts & I3200_ERRSTS_BITS))
+		वापस;
 
-	if ((info->errsts ^ info->errsts2) & I3200_ERRSTS_BITS) {
+	अगर ((info->errsts ^ info->errsts2) & I3200_ERRSTS_BITS) अणु
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1, 0, 0, 0,
 				     -1, -1, -1, "UE overwrote CE", "");
 		info->errsts = info->errsts2;
-	}
+	पूर्ण
 
-	for (channel = 0; channel < nr_channels; channel++) {
+	क्रम (channel = 0; channel < nr_channels; channel++) अणु
 		log = info->eccerrlog[channel];
-		if (log & I3200_ECCERRLOG_UE) {
+		अगर (log & I3200_ECCERRLOG_UE) अणु
 			edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 					     0, 0, 0,
 					     eccerrlog_row(channel, log),
 					     -1, -1,
 					     "i3000 UE", "");
-		} else if (log & I3200_ECCERRLOG_CE) {
+		पूर्ण अन्यथा अगर (log & I3200_ECCERRLOG_CE) अणु
 			edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 					     0, 0, eccerrlog_syndrome(log),
 					     eccerrlog_row(channel, log),
 					     -1, -1,
 					     "i3000 CE", "");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void i3200_check(struct mem_ctl_info *mci)
-{
-	struct i3200_error_info info;
+अटल व्योम i3200_check(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा i3200_error_info info;
 
 	i3200_get_and_clear_error_info(mci, &info);
 	i3200_process_error_info(mci, &info);
-}
+पूर्ण
 
-static void __iomem *i3200_map_mchbar(struct pci_dev *pdev)
-{
-	union {
+अटल व्योम __iomem *i3200_map_mchbar(काष्ठा pci_dev *pdev)
+अणु
+	जोड़ अणु
 		u64 mchbar;
-		struct {
+		काष्ठा अणु
 			u32 mchbar_low;
 			u32 mchbar_high;
-		};
-	} u;
-	void __iomem *window;
+		पूर्ण;
+	पूर्ण u;
+	व्योम __iomem *winकरोw;
 
-	pci_read_config_dword(pdev, I3200_MCHBAR_LOW, &u.mchbar_low);
-	pci_read_config_dword(pdev, I3200_MCHBAR_HIGH, &u.mchbar_high);
+	pci_पढ़ो_config_dword(pdev, I3200_MCHBAR_LOW, &u.mchbar_low);
+	pci_पढ़ो_config_dword(pdev, I3200_MCHBAR_HIGH, &u.mchbar_high);
 	u.mchbar &= I3200_MCHBAR_MASK;
 
-	if (u.mchbar != (resource_size_t)u.mchbar) {
-		printk(KERN_ERR
+	अगर (u.mchbar != (resource_माप_प्रकार)u.mchbar) अणु
+		prपूर्णांकk(KERN_ERR
 			"i3200: mmio space beyond accessible range (0x%llx)\n",
-			(unsigned long long)u.mchbar);
-		return NULL;
-	}
+			(अचिन्हित दीर्घ दीर्घ)u.mchbar);
+		वापस शून्य;
+	पूर्ण
 
-	window = ioremap(u.mchbar, I3200_MMR_WINDOW_SIZE);
-	if (!window)
-		printk(KERN_ERR "i3200: cannot map mmio space at 0x%llx\n",
-			(unsigned long long)u.mchbar);
+	winकरोw = ioremap(u.mchbar, I3200_MMR_WINDOW_SIZE);
+	अगर (!winकरोw)
+		prपूर्णांकk(KERN_ERR "i3200: cannot map mmio space at 0x%llx\n",
+			(अचिन्हित दीर्घ दीर्घ)u.mchbar);
 
-	return window;
-}
+	वापस winकरोw;
+पूर्ण
 
 
-static void i3200_get_drbs(void __iomem *window,
+अटल व्योम i3200_get_drbs(व्योम __iomem *winकरोw,
 	u16 drbs[I3200_CHANNELS][I3200_RANKS_PER_CHANNEL])
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < I3200_RANKS_PER_CHANNEL; i++) {
-		drbs[0][i] = readw(window + I3200_C0DRB + 2*i) & I3200_DRB_MASK;
-		drbs[1][i] = readw(window + I3200_C1DRB + 2*i) & I3200_DRB_MASK;
+	क्रम (i = 0; i < I3200_RANKS_PER_CHANNEL; i++) अणु
+		drbs[0][i] = पढ़ोw(winकरोw + I3200_C0DRB + 2*i) & I3200_DRB_MASK;
+		drbs[1][i] = पढ़ोw(winकरोw + I3200_C1DRB + 2*i) & I3200_DRB_MASK;
 
 		edac_dbg(0, "drb[0][%d] = %d, drb[1][%d] = %d\n", i, drbs[0][i], i, drbs[1][i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool i3200_is_stacked(struct pci_dev *pdev,
+अटल bool i3200_is_stacked(काष्ठा pci_dev *pdev,
 	u16 drbs[I3200_CHANNELS][I3200_RANKS_PER_CHANNEL])
-{
+अणु
 	u16 tom;
 
-	pci_read_config_word(pdev, I3200_TOM, &tom);
+	pci_पढ़ो_config_word(pdev, I3200_TOM, &tom);
 	tom &= I3200_TOM_MASK;
 
-	return drbs[I3200_CHANNELS - 1][I3200_RANKS_PER_CHANNEL - 1] == tom;
-}
+	वापस drbs[I3200_CHANNELS - 1][I3200_RANKS_PER_CHANNEL - 1] == tom;
+पूर्ण
 
-static unsigned long drb_to_nr_pages(
+अटल अचिन्हित दीर्घ drb_to_nr_pages(
 	u16 drbs[I3200_CHANNELS][I3200_RANKS_PER_CHANNEL], bool stacked,
-	int channel, int rank)
-{
-	int n;
+	पूर्णांक channel, पूर्णांक rank)
+अणु
+	पूर्णांक n;
 
 	n = drbs[channel][rank];
-	if (!n)
-		return 0;
+	अगर (!n)
+		वापस 0;
 
-	if (rank > 0)
+	अगर (rank > 0)
 		n -= drbs[channel][rank - 1];
-	if (stacked && (channel == 1) &&
+	अगर (stacked && (channel == 1) &&
 	drbs[channel][rank] == drbs[channel][I3200_RANKS_PER_CHANNEL - 1])
 		n -= drbs[0][I3200_RANKS_PER_CHANNEL - 1];
 
 	n <<= (I3200_DRB_SHIFT - PAGE_SHIFT);
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static int i3200_probe1(struct pci_dev *pdev, int dev_idx)
-{
-	int rc;
-	int i, j;
-	struct mem_ctl_info *mci = NULL;
-	struct edac_mc_layer layers[2];
+अटल पूर्णांक i3200_probe1(काष्ठा pci_dev *pdev, पूर्णांक dev_idx)
+अणु
+	पूर्णांक rc;
+	पूर्णांक i, j;
+	काष्ठा mem_ctl_info *mci = शून्य;
+	काष्ठा edac_mc_layer layers[2];
 	u16 drbs[I3200_CHANNELS][I3200_RANKS_PER_CHANNEL];
 	bool stacked;
-	void __iomem *window;
-	struct i3200_priv *priv;
+	व्योम __iomem *winकरोw;
+	काष्ठा i3200_priv *priv;
 
 	edac_dbg(0, "MC:\n");
 
-	window = i3200_map_mchbar(pdev);
-	if (!window)
-		return -ENODEV;
+	winकरोw = i3200_map_mchbar(pdev);
+	अगर (!winकरोw)
+		वापस -ENODEV;
 
-	i3200_get_drbs(window, drbs);
+	i3200_get_drbs(winकरोw, drbs);
 	nr_channels = how_many_channels(pdev);
 
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
@@ -359,9 +360,9 @@ static int i3200_probe1(struct pci_dev *pdev, int dev_idx)
 	layers[1].size = nr_channels;
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers,
-			    sizeof(struct i3200_priv));
-	if (!mci)
-		return -ENOMEM;
+			    माप(काष्ठा i3200_priv));
+	अगर (!mci)
+		वापस -ENOMEM;
 
 	edac_dbg(3, "MC: init mci\n");
 
@@ -375,27 +376,27 @@ static int i3200_probe1(struct pci_dev *pdev, int dev_idx)
 	mci->ctl_name = i3200_devs[dev_idx].ctl_name;
 	mci->dev_name = pci_name(pdev);
 	mci->edac_check = i3200_check;
-	mci->ctl_page_to_phys = NULL;
+	mci->ctl_page_to_phys = शून्य;
 	priv = mci->pvt_info;
-	priv->window = window;
+	priv->winकरोw = winकरोw;
 
 	stacked = i3200_is_stacked(pdev, drbs);
 
 	/*
 	 * The dram rank boundary (DRB) reg values are boundary addresses
-	 * for each DRAM rank with a granularity of 64MB.  DRB regs are
+	 * क्रम each DRAM rank with a granularity of 64MB.  DRB regs are
 	 * cumulative; the last one will contain the total memory
 	 * contained in all ranks.
 	 */
-	for (i = 0; i < I3200_DIMMS; i++) {
-		unsigned long nr_pages;
+	क्रम (i = 0; i < I3200_DIMMS; i++) अणु
+		अचिन्हित दीर्घ nr_pages;
 
-		for (j = 0; j < nr_channels; j++) {
-			struct dimm_info *dimm = edac_get_dimm(mci, i, j, 0);
+		क्रम (j = 0; j < nr_channels; j++) अणु
+			काष्ठा dimm_info *dimm = edac_get_dimm(mci, i, j, 0);
 
 			nr_pages = drb_to_nr_pages(drbs, stacked, j, i);
-			if (nr_pages == 0)
-				continue;
+			अगर (nr_pages == 0)
+				जारी;
 
 			edac_dbg(0, "csrow %d, channel %d%s, size = %ld MiB\n", i, j,
 				 stacked ? " (stacked)" : "", PAGES_TO_MiB(nr_pages));
@@ -405,141 +406,141 @@ static int i3200_probe1(struct pci_dev *pdev, int dev_idx)
 			dimm->mtype = MEM_DDR2;
 			dimm->dtype = DEV_UNKNOWN;
 			dimm->edac_mode = EDAC_UNKNOWN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	i3200_clear_error_info(mci);
 
 	rc = -ENODEV;
-	if (edac_mc_add_mc(mci)) {
+	अगर (edac_mc_add_mc(mci)) अणु
 		edac_dbg(3, "MC: failed edac_mc_add_mc()\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* get this far and it's successful */
 	edac_dbg(3, "MC: success\n");
-	return 0;
+	वापस 0;
 
 fail:
-	iounmap(window);
-	if (mci)
-		edac_mc_free(mci);
+	iounmap(winकरोw);
+	अगर (mci)
+		edac_mc_मुक्त(mci);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int i3200_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	int rc;
+अटल पूर्णांक i3200_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक rc;
 
 	edac_dbg(0, "MC:\n");
 
-	if (pci_enable_device(pdev) < 0)
-		return -EIO;
+	अगर (pci_enable_device(pdev) < 0)
+		वापस -EIO;
 
 	rc = i3200_probe1(pdev, ent->driver_data);
-	if (!mci_pdev)
+	अगर (!mci_pdev)
 		mci_pdev = pci_dev_get(pdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void i3200_remove_one(struct pci_dev *pdev)
-{
-	struct mem_ctl_info *mci;
-	struct i3200_priv *priv;
+अटल व्योम i3200_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा i3200_priv *priv;
 
 	edac_dbg(0, "\n");
 
 	mci = edac_mc_del_mc(&pdev->dev);
-	if (!mci)
-		return;
+	अगर (!mci)
+		वापस;
 
 	priv = mci->pvt_info;
-	iounmap(priv->window);
+	iounmap(priv->winकरोw);
 
-	edac_mc_free(mci);
+	edac_mc_मुक्त(mci);
 
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static const struct pci_device_id i3200_pci_tbl[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id i3200_pci_tbl[] = अणु
+	अणु
 		PCI_VEND_DEV(INTEL, 3200_HB), PCI_ANY_ID, PCI_ANY_ID, 0, 0,
-		I3200},
-	{
+		I3200पूर्ण,
+	अणु
 		0,
-	}            /* 0 terminated list. */
-};
+	पूर्ण            /* 0 terminated list. */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, i3200_pci_tbl);
 
-static struct pci_driver i3200_driver = {
+अटल काष्ठा pci_driver i3200_driver = अणु
 	.name = EDAC_MOD_STR,
 	.probe = i3200_init_one,
-	.remove = i3200_remove_one,
+	.हटाओ = i3200_हटाओ_one,
 	.id_table = i3200_pci_tbl,
-};
+पूर्ण;
 
-static int __init i3200_init(void)
-{
-	int pci_rc;
+अटल पूर्णांक __init i3200_init(व्योम)
+अणु
+	पूर्णांक pci_rc;
 
 	edac_dbg(3, "MC:\n");
 
-	/* Ensure that the OPSTATE is set correctly for POLL or NMI */
+	/* Ensure that the OPSTATE is set correctly क्रम POLL or NMI */
 	opstate_init();
 
-	pci_rc = pci_register_driver(&i3200_driver);
-	if (pci_rc < 0)
-		goto fail0;
+	pci_rc = pci_रेजिस्टर_driver(&i3200_driver);
+	अगर (pci_rc < 0)
+		जाओ fail0;
 
-	if (!mci_pdev) {
-		i3200_registered = 0;
+	अगर (!mci_pdev) अणु
+		i3200_रेजिस्टरed = 0;
 		mci_pdev = pci_get_device(PCI_VENDOR_ID_INTEL,
-				PCI_DEVICE_ID_INTEL_3200_HB, NULL);
-		if (!mci_pdev) {
+				PCI_DEVICE_ID_INTEL_3200_HB, शून्य);
+		अगर (!mci_pdev) अणु
 			edac_dbg(0, "i3200 pci_get_device fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
+			जाओ fail1;
+		पूर्ण
 
 		pci_rc = i3200_init_one(mci_pdev, i3200_pci_tbl);
-		if (pci_rc < 0) {
+		अगर (pci_rc < 0) अणु
 			edac_dbg(0, "i3200 init fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
-	}
+			जाओ fail1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail1:
-	pci_unregister_driver(&i3200_driver);
+	pci_unरेजिस्टर_driver(&i3200_driver);
 
 fail0:
 	pci_dev_put(mci_pdev);
 
-	return pci_rc;
-}
+	वापस pci_rc;
+पूर्ण
 
-static void __exit i3200_exit(void)
-{
+अटल व्योम __निकास i3200_निकास(व्योम)
+अणु
 	edac_dbg(3, "MC:\n");
 
-	pci_unregister_driver(&i3200_driver);
-	if (!i3200_registered) {
-		i3200_remove_one(mci_pdev);
+	pci_unरेजिस्टर_driver(&i3200_driver);
+	अगर (!i3200_रेजिस्टरed) अणु
+		i3200_हटाओ_one(mci_pdev);
 		pci_dev_put(mci_pdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 module_init(i3200_init);
-module_exit(i3200_exit);
+module_निकास(i3200_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Akamai Technologies, Inc.");
 MODULE_DESCRIPTION("MC support for Intel 3200 memory hub controllers");
 
-module_param(edac_op_state, int, 0444);
+module_param(edac_op_state, पूर्णांक, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");

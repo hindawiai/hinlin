@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <string.h>
-#include "perf_regs.h"
-#include "thread.h"
-#include "map.h"
-#include "maps.h"
-#include "event.h"
-#include "debug.h"
-#include "tests/tests.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <माला.स>
+#समावेश "perf_regs.h"
+#समावेश "thread.h"
+#समावेश "map.h"
+#समावेश "maps.h"
+#समावेश "event.h"
+#समावेश "debug.h"
+#समावेश "tests/tests.h"
 
-#define STACK_SIZE 8192
+#घोषणा STACK_SIZE 8192
 
-static int sample_ustack(struct perf_sample *sample,
-		struct thread *thread, u64 *regs)
-{
-	struct stack_dump *stack = &sample->user_stack;
-	struct map *map;
-	unsigned long sp;
+अटल पूर्णांक sample_ustack(काष्ठा perf_sample *sample,
+		काष्ठा thपढ़ो *thपढ़ो, u64 *regs)
+अणु
+	काष्ठा stack_dump *stack = &sample->user_stack;
+	काष्ठा map *map;
+	अचिन्हित दीर्घ sp;
 	u64 stack_size, *buf;
 
-	buf = malloc(STACK_SIZE);
-	if (!buf) {
+	buf = दो_स्मृति(STACK_SIZE);
+	अगर (!buf) अणु
 		pr_debug("failed to allocate sample uregs data\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	sp = (unsigned long) regs[PERF_REG_ARM64_SP];
+	sp = (अचिन्हित दीर्घ) regs[PERF_REG_ARM64_SP];
 
-	map = maps__find(thread->maps, (u64)sp);
-	if (!map) {
+	map = maps__find(thपढ़ो->maps, (u64)sp);
+	अगर (!map) अणु
 		pr_debug("failed to get stack map\n");
-		free(buf);
-		return -1;
-	}
+		मुक्त(buf);
+		वापस -1;
+	पूर्ण
 
 	stack_size = map->end - sp;
 	stack_size = stack_size > STACK_SIZE ? STACK_SIZE : stack_size;
 
-	memcpy(buf, (void *) sp, stack_size);
-	stack->data = (char *) buf;
+	स_नकल(buf, (व्योम *) sp, stack_size);
+	stack->data = (अक्षर *) buf;
 	stack->size = stack_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test__arch_unwind_sample(struct perf_sample *sample,
-		struct thread *thread)
-{
-	struct regs_dump *regs = &sample->user_regs;
+पूर्णांक test__arch_unwind_sample(काष्ठा perf_sample *sample,
+		काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा regs_dump *regs = &sample->user_regs;
 	u64 *buf;
 
-	buf = calloc(1, sizeof(u64) * PERF_REGS_MAX);
-	if (!buf) {
+	buf = सुस्मृति(1, माप(u64) * PERF_REGS_MAX);
+	अगर (!buf) अणु
 		pr_debug("failed to allocate sample uregs data\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	perf_regs_load(buf);
 	regs->abi  = PERF_SAMPLE_REGS_ABI;
 	regs->regs = buf;
 	regs->mask = PERF_REGS_MASK;
 
-	return sample_ustack(sample, thread, buf);
-}
+	वापस sample_ustack(sample, thपढ़ो, buf);
+पूर्ण

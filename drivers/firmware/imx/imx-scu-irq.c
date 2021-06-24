@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2019 NXP
  *
@@ -6,73 +7,73 @@
  *
  */
 
-#include <dt-bindings/firmware/imx/rsrc.h>
-#include <linux/firmware/imx/ipc.h>
-#include <linux/firmware/imx/sci.h>
-#include <linux/mailbox_client.h>
-#include <linux/suspend.h>
+#समावेश <dt-bindings/firmware/imx/rsrc.h>
+#समावेश <linux/firmware/imx/ipc.h>
+#समावेश <linux/firmware/imx/sci.h>
+#समावेश <linux/mailbox_client.h>
+#समावेश <linux/suspend.h>
 
-#define IMX_SC_IRQ_FUNC_ENABLE	1
-#define IMX_SC_IRQ_FUNC_STATUS	2
-#define IMX_SC_IRQ_NUM_GROUP	4
+#घोषणा IMX_SC_IRQ_FUNC_ENABLE	1
+#घोषणा IMX_SC_IRQ_FUNC_STATUS	2
+#घोषणा IMX_SC_IRQ_NUM_GROUP	4
 
-static u32 mu_resource_id;
+अटल u32 mu_resource_id;
 
-struct imx_sc_msg_irq_get_status {
-	struct imx_sc_rpc_msg hdr;
-	union {
-		struct {
+काष्ठा imx_sc_msg_irq_get_status अणु
+	काष्ठा imx_sc_rpc_msg hdr;
+	जोड़ अणु
+		काष्ठा अणु
 			u16 resource;
 			u8 group;
 			u8 reserved;
-		} __packed req;
-		struct {
+		पूर्ण __packed req;
+		काष्ठा अणु
 			u32 status;
-		} resp;
-	} data;
-};
+		पूर्ण resp;
+	पूर्ण data;
+पूर्ण;
 
-struct imx_sc_msg_irq_enable {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_irq_enable अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	u32 mask;
 	u16 resource;
 	u8 group;
 	u8 enable;
-} __packed;
+पूर्ण __packed;
 
-static struct imx_sc_ipc *imx_sc_irq_ipc_handle;
-static struct work_struct imx_sc_irq_work;
-static ATOMIC_NOTIFIER_HEAD(imx_scu_irq_notifier_chain);
+अटल काष्ठा imx_sc_ipc *imx_sc_irq_ipc_handle;
+अटल काष्ठा work_काष्ठा imx_sc_irq_work;
+अटल ATOMIC_NOTIFIER_HEAD(imx_scu_irq_notअगरier_chain);
 
-int imx_scu_irq_register_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(
-		&imx_scu_irq_notifier_chain, nb);
-}
-EXPORT_SYMBOL(imx_scu_irq_register_notifier);
+पूर्णांक imx_scu_irq_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(
+		&imx_scu_irq_notअगरier_chain, nb);
+पूर्ण
+EXPORT_SYMBOL(imx_scu_irq_रेजिस्टर_notअगरier);
 
-int imx_scu_irq_unregister_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_unregister(
-		&imx_scu_irq_notifier_chain, nb);
-}
-EXPORT_SYMBOL(imx_scu_irq_unregister_notifier);
+पूर्णांक imx_scu_irq_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_unरेजिस्टर(
+		&imx_scu_irq_notअगरier_chain, nb);
+पूर्ण
+EXPORT_SYMBOL(imx_scu_irq_unरेजिस्टर_notअगरier);
 
-static int imx_scu_irq_notifier_call_chain(unsigned long status, u8 *group)
-{
-	return atomic_notifier_call_chain(&imx_scu_irq_notifier_chain,
-		status, (void *)group);
-}
+अटल पूर्णांक imx_scu_irq_notअगरier_call_chain(अचिन्हित दीर्घ status, u8 *group)
+अणु
+	वापस atomic_notअगरier_call_chain(&imx_scu_irq_notअगरier_chain,
+		status, (व्योम *)group);
+पूर्ण
 
-static void imx_scu_irq_work_handler(struct work_struct *work)
-{
-	struct imx_sc_msg_irq_get_status msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
+अटल व्योम imx_scu_irq_work_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा imx_sc_msg_irq_get_status msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
 	u32 irq_status;
-	int ret;
+	पूर्णांक ret;
 	u8 i;
 
-	for (i = 0; i < IMX_SC_IRQ_NUM_GROUP; i++) {
+	क्रम (i = 0; i < IMX_SC_IRQ_NUM_GROUP; i++) अणु
 		hdr->ver = IMX_SC_RPC_VERSION;
 		hdr->svc = IMX_SC_RPC_SVC_IRQ;
 		hdr->func = IMX_SC_IRQ_FUNC_STATUS;
@@ -82,29 +83,29 @@ static void imx_scu_irq_work_handler(struct work_struct *work)
 		msg.data.req.group = i;
 
 		ret = imx_scu_call_rpc(imx_sc_irq_ipc_handle, &msg, true);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("get irq group %d status failed, ret %d\n",
 			       i, ret);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		irq_status = msg.data.resp.status;
-		if (!irq_status)
-			continue;
+		अगर (!irq_status)
+			जारी;
 
-		pm_system_wakeup();
-		imx_scu_irq_notifier_call_chain(irq_status, &i);
-	}
-}
+		pm_प्रणाली_wakeup();
+		imx_scu_irq_notअगरier_call_chain(irq_status, &i);
+	पूर्ण
+पूर्ण
 
-int imx_scu_irq_group_enable(u8 group, u32 mask, u8 enable)
-{
-	struct imx_sc_msg_irq_enable msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
-	int ret;
+पूर्णांक imx_scu_irq_group_enable(u8 group, u32 mask, u8 enable)
+अणु
+	काष्ठा imx_sc_msg_irq_enable msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+	पूर्णांक ret;
 
-	if (!imx_sc_irq_ipc_handle)
-		return -EPROBE_DEFER;
+	अगर (!imx_sc_irq_ipc_handle)
+		वापस -EPROBE_DEFER;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_IRQ;
@@ -117,58 +118,58 @@ int imx_scu_irq_group_enable(u8 group, u32 mask, u8 enable)
 	msg.enable = enable;
 
 	ret = imx_scu_call_rpc(imx_sc_irq_ipc_handle, &msg, true);
-	if (ret)
+	अगर (ret)
 		pr_err("enable irq failed, group %d, mask %d, ret %d\n",
 			group, mask, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(imx_scu_irq_group_enable);
 
-static void imx_scu_irq_callback(struct mbox_client *c, void *msg)
-{
+अटल व्योम imx_scu_irq_callback(काष्ठा mbox_client *c, व्योम *msg)
+अणु
 	schedule_work(&imx_sc_irq_work);
-}
+पूर्ण
 
-int imx_scu_enable_general_irq_channel(struct device *dev)
-{
-	struct of_phandle_args spec;
-	struct mbox_client *cl;
-	struct mbox_chan *ch;
-	int ret = 0, i = 0;
+पूर्णांक imx_scu_enable_general_irq_channel(काष्ठा device *dev)
+अणु
+	काष्ठा of_phandle_args spec;
+	काष्ठा mbox_client *cl;
+	काष्ठा mbox_chan *ch;
+	पूर्णांक ret = 0, i = 0;
 
 	ret = imx_scu_get_handle(&imx_sc_irq_ipc_handle);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	cl = devm_kzalloc(dev, sizeof(*cl), GFP_KERNEL);
-	if (!cl)
-		return -ENOMEM;
+	cl = devm_kzalloc(dev, माप(*cl), GFP_KERNEL);
+	अगर (!cl)
+		वापस -ENOMEM;
 
 	cl->dev = dev;
 	cl->rx_callback = imx_scu_irq_callback;
 
-	/* SCU general IRQ uses general interrupt channel 3 */
+	/* SCU general IRQ uses general पूर्णांकerrupt channel 3 */
 	ch = mbox_request_channel_byname(cl, "gip3");
-	if (IS_ERR(ch)) {
+	अगर (IS_ERR(ch)) अणु
 		ret = PTR_ERR(ch);
 		dev_err(dev, "failed to request mbox chan gip3, ret %d\n", ret);
-		devm_kfree(dev, cl);
-		return ret;
-	}
+		devm_kमुक्त(dev, cl);
+		वापस ret;
+	पूर्ण
 
 	INIT_WORK(&imx_sc_irq_work, imx_scu_irq_work_handler);
 
-	if (!of_parse_phandle_with_args(dev->of_node, "mboxes",
+	अगर (!of_parse_phandle_with_args(dev->of_node, "mboxes",
 				       "#mbox-cells", 0, &spec))
 		i = of_alias_get_id(spec.np, "mu");
 
-	/* use mu1 as general mu irq channel if failed */
-	if (i < 0)
+	/* use mu1 as general mu irq channel अगर failed */
+	अगर (i < 0)
 		i = 1;
 
 	mu_resource_id = IMX_SC_R_MU_0A + i;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(imx_scu_enable_general_irq_channel);

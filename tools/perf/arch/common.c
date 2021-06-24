@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "common.h"
-#include "../util/env.h"
-#include "../util/debug.h"
-#include <linux/zalloc.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <सीमा.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश "common.h"
+#समावेश "../util/env.h"
+#समावेश "../util/debug.h"
+#समावेश <linux/zभाग.स>
 
-const char *const arc_triplets[] = {
+स्थिर अक्षर *स्थिर arc_triplets[] = अणु
 	"arc-linux-",
 	"arc-snps-linux-uclibc-",
 	"arc-snps-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const arm_triplets[] = {
+स्थिर अक्षर *स्थिर arm_triplets[] = अणु
 	"arm-eabi-",
 	"arm-linux-androideabi-",
 	"arm-unknown-linux-",
@@ -25,46 +26,46 @@ const char *const arm_triplets[] = {
 	"arm-linux-gnu-",
 	"arm-linux-gnueabihf-",
 	"arm-none-eabi-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const arm64_triplets[] = {
+स्थिर अक्षर *स्थिर arm64_triplets[] = अणु
 	"aarch64-linux-android-",
 	"aarch64-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const powerpc_triplets[] = {
+स्थिर अक्षर *स्थिर घातerpc_triplets[] = अणु
 	"powerpc-unknown-linux-gnu-",
 	"powerpc-linux-gnu-",
 	"powerpc64-unknown-linux-gnu-",
 	"powerpc64-linux-gnu-",
 	"powerpc64le-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const s390_triplets[] = {
+स्थिर अक्षर *स्थिर s390_triplets[] = अणु
 	"s390-ibm-linux-",
 	"s390x-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const sh_triplets[] = {
+स्थिर अक्षर *स्थिर sh_triplets[] = अणु
 	"sh-unknown-linux-gnu-",
 	"sh64-unknown-linux-gnu-",
 	"sh-linux-gnu-",
 	"sh64-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const sparc_triplets[] = {
+स्थिर अक्षर *स्थिर sparc_triplets[] = अणु
 	"sparc-unknown-linux-gnu-",
 	"sparc64-unknown-linux-gnu-",
 	"sparc64-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const x86_triplets[] = {
+स्थिर अक्षर *स्थिर x86_triplets[] = अणु
 	"x86_64-pc-linux-gnu-",
 	"x86_64-unknown-linux-gnu-",
 	"i686-pc-linux-gnu-",
@@ -75,10 +76,10 @@ const char *const x86_triplets[] = {
 	"i686-android-linux-",
 	"x86_64-linux-gnu-",
 	"i586-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-const char *const mips_triplets[] = {
+स्थिर अक्षर *स्थिर mips_triplets[] = अणु
 	"mips-unknown-linux-gnu-",
 	"mipsel-linux-android-",
 	"mips-linux-gnu-",
@@ -86,140 +87,140 @@ const char *const mips_triplets[] = {
 	"mips64el-linux-gnuabi64-",
 	"mips64-linux-gnuabi64-",
 	"mipsel-linux-gnu-",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static bool lookup_path(char *name)
-{
+अटल bool lookup_path(अक्षर *name)
+अणु
 	bool found = false;
-	char *path, *tmp = NULL;
-	char buf[PATH_MAX];
-	char *env = getenv("PATH");
+	अक्षर *path, *पंचांगp = शून्य;
+	अक्षर buf[PATH_MAX];
+	अक्षर *env = दो_पर्या("PATH");
 
-	if (!env)
-		return false;
+	अगर (!env)
+		वापस false;
 
 	env = strdup(env);
-	if (!env)
-		return false;
+	अगर (!env)
+		वापस false;
 
-	path = strtok_r(env, ":", &tmp);
-	while (path) {
-		scnprintf(buf, sizeof(buf), "%s/%s", path, name);
-		if (access(buf, F_OK) == 0) {
+	path = म_मोहर_r(env, ":", &पंचांगp);
+	जबतक (path) अणु
+		scnम_लिखो(buf, माप(buf), "%s/%s", path, name);
+		अगर (access(buf, F_OK) == 0) अणु
 			found = true;
-			break;
-		}
-		path = strtok_r(NULL, ":", &tmp);
-	}
-	free(env);
-	return found;
-}
+			अवरोध;
+		पूर्ण
+		path = म_मोहर_r(शून्य, ":", &पंचांगp);
+	पूर्ण
+	मुक्त(env);
+	वापस found;
+पूर्ण
 
-static int lookup_triplets(const char *const *triplets, const char *name)
-{
-	int i;
-	char buf[PATH_MAX];
+अटल पूर्णांक lookup_triplets(स्थिर अक्षर *स्थिर *triplets, स्थिर अक्षर *name)
+अणु
+	पूर्णांक i;
+	अक्षर buf[PATH_MAX];
 
-	for (i = 0; triplets[i] != NULL; i++) {
-		scnprintf(buf, sizeof(buf), "%s%s", triplets[i], name);
-		if (lookup_path(buf))
-			return i;
-	}
-	return -1;
-}
+	क्रम (i = 0; triplets[i] != शून्य; i++) अणु
+		scnम_लिखो(buf, माप(buf), "%s%s", triplets[i], name);
+		अगर (lookup_path(buf))
+			वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int perf_env__lookup_binutils_path(struct perf_env *env,
-					  const char *name, const char **path)
-{
-	int idx;
-	const char *arch = perf_env__arch(env), *cross_env;
-	const char *const *path_list;
-	char *buf = NULL;
+अटल पूर्णांक perf_env__lookup_binutils_path(काष्ठा perf_env *env,
+					  स्थिर अक्षर *name, स्थिर अक्षर **path)
+अणु
+	पूर्णांक idx;
+	स्थिर अक्षर *arch = perf_env__arch(env), *cross_env;
+	स्थिर अक्षर *स्थिर *path_list;
+	अक्षर *buf = शून्य;
 
 	/*
-	 * We don't need to try to find objdump path for native system.
-	 * Just use default binutils path (e.g.: "objdump").
+	 * We करोn't need to try to find objdump path क्रम native प्रणाली.
+	 * Just use शेष binutils path (e.g.: "objdump").
 	 */
-	if (!strcmp(perf_env__arch(NULL), arch))
-		goto out;
+	अगर (!म_भेद(perf_env__arch(शून्य), arch))
+		जाओ out;
 
-	cross_env = getenv("CROSS_COMPILE");
-	if (cross_env) {
-		if (asprintf(&buf, "%s%s", cross_env, name) < 0)
-			goto out_error;
-		if (buf[0] == '/') {
-			if (access(buf, F_OK) == 0)
-				goto out;
-			goto out_error;
-		}
-		if (lookup_path(buf))
-			goto out;
-		zfree(&buf);
-	}
+	cross_env = दो_पर्या("CROSS_COMPILE");
+	अगर (cross_env) अणु
+		अगर (aप्र_लिखो(&buf, "%s%s", cross_env, name) < 0)
+			जाओ out_error;
+		अगर (buf[0] == '/') अणु
+			अगर (access(buf, F_OK) == 0)
+				जाओ out;
+			जाओ out_error;
+		पूर्ण
+		अगर (lookup_path(buf))
+			जाओ out;
+		zमुक्त(&buf);
+	पूर्ण
 
-	if (!strcmp(arch, "arc"))
+	अगर (!म_भेद(arch, "arc"))
 		path_list = arc_triplets;
-	else if (!strcmp(arch, "arm"))
+	अन्यथा अगर (!म_भेद(arch, "arm"))
 		path_list = arm_triplets;
-	else if (!strcmp(arch, "arm64"))
+	अन्यथा अगर (!म_भेद(arch, "arm64"))
 		path_list = arm64_triplets;
-	else if (!strcmp(arch, "powerpc"))
-		path_list = powerpc_triplets;
-	else if (!strcmp(arch, "sh"))
+	अन्यथा अगर (!म_भेद(arch, "powerpc"))
+		path_list = घातerpc_triplets;
+	अन्यथा अगर (!म_भेद(arch, "sh"))
 		path_list = sh_triplets;
-	else if (!strcmp(arch, "s390"))
+	अन्यथा अगर (!म_भेद(arch, "s390"))
 		path_list = s390_triplets;
-	else if (!strcmp(arch, "sparc"))
+	अन्यथा अगर (!म_भेद(arch, "sparc"))
 		path_list = sparc_triplets;
-	else if (!strcmp(arch, "x86"))
+	अन्यथा अगर (!म_भेद(arch, "x86"))
 		path_list = x86_triplets;
-	else if (!strcmp(arch, "mips"))
+	अन्यथा अगर (!म_भेद(arch, "mips"))
 		path_list = mips_triplets;
-	else {
+	अन्यथा अणु
 		ui__error("binutils for %s not supported.\n", arch);
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
 	idx = lookup_triplets(path_list, name);
-	if (idx < 0) {
+	अगर (idx < 0) अणु
 		ui__error("Please install %s for %s.\n"
 			  "You can add it to PATH, set CROSS_COMPILE or "
 			  "override the default using --%s.\n",
 			  name, arch, name);
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
-	if (asprintf(&buf, "%s%s", path_list[idx], name) < 0)
-		goto out_error;
+	अगर (aप्र_लिखो(&buf, "%s%s", path_list[idx], name) < 0)
+		जाओ out_error;
 
 out:
 	*path = buf;
-	return 0;
+	वापस 0;
 out_error:
-	free(buf);
-	*path = NULL;
-	return -1;
-}
+	मुक्त(buf);
+	*path = शून्य;
+	वापस -1;
+पूर्ण
 
-int perf_env__lookup_objdump(struct perf_env *env, const char **path)
-{
+पूर्णांक perf_env__lookup_objdump(काष्ठा perf_env *env, स्थिर अक्षर **path)
+अणु
 	/*
-	 * For live mode, env->arch will be NULL and we can use
+	 * For live mode, env->arch will be शून्य and we can use
 	 * the native objdump tool.
 	 */
-	if (env->arch == NULL)
-		return 0;
+	अगर (env->arch == शून्य)
+		वापस 0;
 
-	return perf_env__lookup_binutils_path(env, "objdump", path);
-}
+	वापस perf_env__lookup_binutils_path(env, "objdump", path);
+पूर्ण
 
 /*
- * Some architectures have a single address space for kernel and user addresses,
- * which makes it possible to determine if an address is in kernel space or user
+ * Some architectures have a single address space क्रम kernel and user addresses,
+ * which makes it possible to determine अगर an address is in kernel space or user
  * space.
  */
-bool perf_env__single_address_space(struct perf_env *env)
-{
-	return strcmp(perf_env__arch(env), "sparc");
-}
+bool perf_env__single_address_space(काष्ठा perf_env *env)
+अणु
+	वापस म_भेद(perf_env__arch(env), "sparc");
+पूर्ण

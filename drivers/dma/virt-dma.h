@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Virtual DMA channel support for DMAengine
+ * Virtual DMA channel support क्रम DMAengine
  *
  * Copyright (C) 2012 Russell King
  */
-#ifndef VIRT_DMA_H
-#define VIRT_DMA_H
+#अगर_अघोषित VIRT_DMA_H
+#घोषणा VIRT_DMA_H
 
-#include <linux/dmaengine.h>
-#include <linux/interrupt.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "dmaengine.h"
+#समावेश "dmaengine.h"
 
-struct virt_dma_desc {
-	struct dma_async_tx_descriptor tx;
-	struct dmaengine_result tx_result;
-	/* protected by vc.lock */
-	struct list_head node;
-};
+काष्ठा virt_dma_desc अणु
+	काष्ठा dma_async_tx_descriptor tx;
+	काष्ठा dmaengine_result tx_result;
+	/* रक्षित by vc.lock */
+	काष्ठा list_head node;
+पूर्ण;
 
-struct virt_dma_chan {
-	struct dma_chan	chan;
-	struct tasklet_struct task;
-	void (*desc_free)(struct virt_dma_desc *);
+काष्ठा virt_dma_chan अणु
+	काष्ठा dma_chan	chan;
+	काष्ठा tasklet_काष्ठा task;
+	व्योम (*desc_मुक्त)(काष्ठा virt_dma_desc *);
 
 	spinlock_t lock;
 
-	/* protected by vc.lock */
-	struct list_head desc_allocated;
-	struct list_head desc_submitted;
-	struct list_head desc_issued;
-	struct list_head desc_completed;
-	struct list_head desc_terminated;
+	/* रक्षित by vc.lock */
+	काष्ठा list_head desc_allocated;
+	काष्ठा list_head desc_submitted;
+	काष्ठा list_head desc_issued;
+	काष्ठा list_head desc_completed;
+	काष्ठा list_head desc_terminated;
 
-	struct virt_dma_desc *cyclic;
-};
+	काष्ठा virt_dma_desc *cyclic;
+पूर्ण;
 
-static inline struct virt_dma_chan *to_virt_chan(struct dma_chan *chan)
-{
-	return container_of(chan, struct virt_dma_chan, chan);
-}
+अटल अंतरभूत काष्ठा virt_dma_chan *to_virt_chan(काष्ठा dma_chan *chan)
+अणु
+	वापस container_of(chan, काष्ठा virt_dma_chan, chan);
+पूर्ण
 
-void vchan_dma_desc_free_list(struct virt_dma_chan *vc, struct list_head *head);
-void vchan_init(struct virt_dma_chan *vc, struct dma_device *dmadev);
-struct virt_dma_desc *vchan_find_desc(struct virt_dma_chan *, dma_cookie_t);
-extern dma_cookie_t vchan_tx_submit(struct dma_async_tx_descriptor *);
-extern int vchan_tx_desc_free(struct dma_async_tx_descriptor *);
+व्योम vchan_dma_desc_मुक्त_list(काष्ठा virt_dma_chan *vc, काष्ठा list_head *head);
+व्योम vchan_init(काष्ठा virt_dma_chan *vc, काष्ठा dma_device *dmadev);
+काष्ठा virt_dma_desc *vchan_find_desc(काष्ठा virt_dma_chan *, dma_cookie_t);
+बाह्य dma_cookie_t vchan_tx_submit(काष्ठा dma_async_tx_descriptor *);
+बाह्य पूर्णांक vchan_tx_desc_मुक्त(काष्ठा dma_async_tx_descriptor *);
 
 /**
  * vchan_tx_prep - prepare a descriptor
- * @vc: virtual channel allocating this descriptor
- * @vd: virtual descriptor to prepare
+ * @vc: भव channel allocating this descriptor
+ * @vd: भव descriptor to prepare
  * @tx_flags: flags argument passed in to prepare function
  */
-static inline struct dma_async_tx_descriptor *vchan_tx_prep(struct virt_dma_chan *vc,
-	struct virt_dma_desc *vd, unsigned long tx_flags)
-{
-	unsigned long flags;
+अटल अंतरभूत काष्ठा dma_async_tx_descriptor *vchan_tx_prep(काष्ठा virt_dma_chan *vc,
+	काष्ठा virt_dma_desc *vd, अचिन्हित दीर्घ tx_flags)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	dma_async_tx_descriptor_init(&vd->tx, &vc->chan);
 	vd->tx.flags = tx_flags;
 	vd->tx.tx_submit = vchan_tx_submit;
-	vd->tx.desc_free = vchan_tx_desc_free;
+	vd->tx.desc_मुक्त = vchan_tx_desc_मुक्त;
 
 	vd->tx_result.result = DMA_TRANS_NOERROR;
 	vd->tx_result.residue = 0;
@@ -70,30 +71,30 @@ static inline struct dma_async_tx_descriptor *vchan_tx_prep(struct virt_dma_chan
 	list_add_tail(&vd->node, &vc->desc_allocated);
 	spin_unlock_irqrestore(&vc->lock, flags);
 
-	return &vd->tx;
-}
+	वापस &vd->tx;
+पूर्ण
 
 /**
  * vchan_issue_pending - move submitted descriptors to issued list
- * @vc: virtual channel to update
+ * @vc: भव channel to update
  *
  * vc.lock must be held by caller
  */
-static inline bool vchan_issue_pending(struct virt_dma_chan *vc)
-{
+अटल अंतरभूत bool vchan_issue_pending(काष्ठा virt_dma_chan *vc)
+अणु
 	list_splice_tail_init(&vc->desc_submitted, &vc->desc_issued);
-	return !list_empty(&vc->desc_issued);
-}
+	वापस !list_empty(&vc->desc_issued);
+पूर्ण
 
 /**
  * vchan_cookie_complete - report completion of a descriptor
- * @vd: virtual descriptor to update
+ * @vd: भव descriptor to update
  *
  * vc.lock must be held by caller
  */
-static inline void vchan_cookie_complete(struct virt_dma_desc *vd)
-{
-	struct virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
+अटल अंतरभूत व्योम vchan_cookie_complete(काष्ठा virt_dma_desc *vd)
+अणु
+	काष्ठा virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
 	dma_cookie_t cookie;
 
 	cookie = vd->tx.cookie;
@@ -103,117 +104,117 @@ static inline void vchan_cookie_complete(struct virt_dma_desc *vd)
 	list_add_tail(&vd->node, &vc->desc_completed);
 
 	tasklet_schedule(&vc->task);
-}
+पूर्ण
 
 /**
  * vchan_vdesc_fini - Free or reuse a descriptor
- * @vd: virtual descriptor to free/reuse
+ * @vd: भव descriptor to मुक्त/reuse
  */
-static inline void vchan_vdesc_fini(struct virt_dma_desc *vd)
-{
-	struct virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
+अटल अंतरभूत व्योम vchan_vdesc_fini(काष्ठा virt_dma_desc *vd)
+अणु
+	काष्ठा virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
 
-	if (dmaengine_desc_test_reuse(&vd->tx)) {
-		unsigned long flags;
+	अगर (dmaengine_desc_test_reuse(&vd->tx)) अणु
+		अचिन्हित दीर्घ flags;
 
 		spin_lock_irqsave(&vc->lock, flags);
 		list_add(&vd->node, &vc->desc_allocated);
 		spin_unlock_irqrestore(&vc->lock, flags);
-	} else {
-		vc->desc_free(vd);
-	}
-}
+	पूर्ण अन्यथा अणु
+		vc->desc_मुक्त(vd);
+	पूर्ण
+पूर्ण
 
 /**
  * vchan_cyclic_callback - report the completion of a period
- * @vd: virtual descriptor
+ * @vd: भव descriptor
  */
-static inline void vchan_cyclic_callback(struct virt_dma_desc *vd)
-{
-	struct virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
+अटल अंतरभूत व्योम vchan_cyclic_callback(काष्ठा virt_dma_desc *vd)
+अणु
+	काष्ठा virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
 
 	vc->cyclic = vd;
 	tasklet_schedule(&vc->task);
-}
+पूर्ण
 
 /**
  * vchan_terminate_vdesc - Disable pending cyclic callback
- * @vd: virtual descriptor to be terminated
+ * @vd: भव descriptor to be terminated
  *
  * vc.lock must be held by caller
  */
-static inline void vchan_terminate_vdesc(struct virt_dma_desc *vd)
-{
-	struct virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
+अटल अंतरभूत व्योम vchan_terminate_vdesc(काष्ठा virt_dma_desc *vd)
+अणु
+	काष्ठा virt_dma_chan *vc = to_virt_chan(vd->tx.chan);
 
 	list_add_tail(&vd->node, &vc->desc_terminated);
 
-	if (vc->cyclic == vd)
-		vc->cyclic = NULL;
-}
+	अगर (vc->cyclic == vd)
+		vc->cyclic = शून्य;
+पूर्ण
 
 /**
  * vchan_next_desc - peek at the next descriptor to be processed
- * @vc: virtual channel to obtain descriptor from
+ * @vc: भव channel to obtain descriptor from
  *
  * vc.lock must be held by caller
  */
-static inline struct virt_dma_desc *vchan_next_desc(struct virt_dma_chan *vc)
-{
-	return list_first_entry_or_null(&vc->desc_issued,
-					struct virt_dma_desc, node);
-}
+अटल अंतरभूत काष्ठा virt_dma_desc *vchan_next_desc(काष्ठा virt_dma_chan *vc)
+अणु
+	वापस list_first_entry_or_null(&vc->desc_issued,
+					काष्ठा virt_dma_desc, node);
+पूर्ण
 
 /**
  * vchan_get_all_descriptors - obtain all submitted and issued descriptors
- * @vc: virtual channel to get descriptors from
+ * @vc: भव channel to get descriptors from
  * @head: list of descriptors found
  *
  * vc.lock must be held by caller
  *
- * Removes all submitted and issued descriptors from internal lists, and
+ * Removes all submitted and issued descriptors from पूर्णांकernal lists, and
  * provides a list of all descriptors found
  */
-static inline void vchan_get_all_descriptors(struct virt_dma_chan *vc,
-	struct list_head *head)
-{
+अटल अंतरभूत व्योम vchan_get_all_descriptors(काष्ठा virt_dma_chan *vc,
+	काष्ठा list_head *head)
+अणु
 	list_splice_tail_init(&vc->desc_allocated, head);
 	list_splice_tail_init(&vc->desc_submitted, head);
 	list_splice_tail_init(&vc->desc_issued, head);
 	list_splice_tail_init(&vc->desc_completed, head);
 	list_splice_tail_init(&vc->desc_terminated, head);
-}
+पूर्ण
 
-static inline void vchan_free_chan_resources(struct virt_dma_chan *vc)
-{
-	struct virt_dma_desc *vd;
-	unsigned long flags;
+अटल अंतरभूत व्योम vchan_मुक्त_chan_resources(काष्ठा virt_dma_chan *vc)
+अणु
+	काष्ठा virt_dma_desc *vd;
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(head);
 
 	spin_lock_irqsave(&vc->lock, flags);
 	vchan_get_all_descriptors(vc, &head);
-	list_for_each_entry(vd, &head, node)
+	list_क्रम_each_entry(vd, &head, node)
 		dmaengine_desc_clear_reuse(&vd->tx);
 	spin_unlock_irqrestore(&vc->lock, flags);
 
-	vchan_dma_desc_free_list(vc, &head);
-}
+	vchan_dma_desc_मुक्त_list(vc, &head);
+पूर्ण
 
 /**
  * vchan_synchronize() - synchronize callback execution to the current context
- * @vc: virtual channel to synchronize
+ * @vc: भव channel to synchronize
  *
  * Makes sure that all scheduled or active callbacks have finished running. For
  * proper operation the caller has to ensure that no new callbacks are scheduled
  * after the invocation of this function started.
  * Free up the terminated cyclic descriptor to prevent memory leakage.
  */
-static inline void vchan_synchronize(struct virt_dma_chan *vc)
-{
+अटल अंतरभूत व्योम vchan_synchronize(काष्ठा virt_dma_chan *vc)
+अणु
 	LIST_HEAD(head);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	tasklet_kill(&vc->task);
+	tasklet_समाप्त(&vc->task);
 
 	spin_lock_irqsave(&vc->lock, flags);
 
@@ -221,7 +222,7 @@ static inline void vchan_synchronize(struct virt_dma_chan *vc)
 
 	spin_unlock_irqrestore(&vc->lock, flags);
 
-	vchan_dma_desc_free_list(vc, &head);
-}
+	vchan_dma_desc_मुक्त_list(vc, &head);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

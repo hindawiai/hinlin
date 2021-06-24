@@ -1,260 +1,261 @@
-#include <stddef.h>
-#include <inttypes.h>
-#include <errno.h>
-#include <linux/seg6_local.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+<शैली गुरु>
+#समावेश <मानकघोष.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/seg6_local.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
 /* Packet parsing state machine helpers. */
-#define cursor_advance(_cursor, _len) \
-	({ void *_tmp = _cursor; _cursor += _len; _tmp; })
+#घोषणा cursor_advance(_cursor, _len) \
+	(अणु व्योम *_पंचांगp = _cursor; _cursor += _len; _पंचांगp; पूर्ण)
 
-#define SR6_FLAG_ALERT (1 << 4)
+#घोषणा SR6_FLAG_ALERT (1 << 4)
 
-#define BPF_PACKET_HEADER __attribute__((packed))
+#घोषणा BPF_PACKET_HEADER __attribute__((packed))
 
-struct ip6_t {
-	unsigned int ver:4;
-	unsigned int priority:8;
-	unsigned int flow_label:20;
-	unsigned short payload_len;
-	unsigned char next_header;
-	unsigned char hop_limit;
-	unsigned long long src_hi;
-	unsigned long long src_lo;
-	unsigned long long dst_hi;
-	unsigned long long dst_lo;
-} BPF_PACKET_HEADER;
+काष्ठा ip6_t अणु
+	अचिन्हित पूर्णांक ver:4;
+	अचिन्हित पूर्णांक priority:8;
+	अचिन्हित पूर्णांक flow_label:20;
+	अचिन्हित लघु payload_len;
+	अचिन्हित अक्षर next_header;
+	अचिन्हित अक्षर hop_limit;
+	अचिन्हित दीर्घ दीर्घ src_hi;
+	अचिन्हित दीर्घ दीर्घ src_lo;
+	अचिन्हित दीर्घ दीर्घ dst_hi;
+	अचिन्हित दीर्घ दीर्घ dst_lo;
+पूर्ण BPF_PACKET_HEADER;
 
-struct ip6_addr_t {
-	unsigned long long hi;
-	unsigned long long lo;
-} BPF_PACKET_HEADER;
+काष्ठा ip6_addr_t अणु
+	अचिन्हित दीर्घ दीर्घ hi;
+	अचिन्हित दीर्घ दीर्घ lo;
+पूर्ण BPF_PACKET_HEADER;
 
-struct ip6_srh_t {
-	unsigned char nexthdr;
-	unsigned char hdrlen;
-	unsigned char type;
-	unsigned char segments_left;
-	unsigned char first_segment;
-	unsigned char flags;
-	unsigned short tag;
+काष्ठा ip6_srh_t अणु
+	अचिन्हित अक्षर nexthdr;
+	अचिन्हित अक्षर hdrlen;
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर segments_left;
+	अचिन्हित अक्षर first_segment;
+	अचिन्हित अक्षर flags;
+	अचिन्हित लघु tag;
 
-	struct ip6_addr_t segments[0];
-} BPF_PACKET_HEADER;
+	काष्ठा ip6_addr_t segments[0];
+पूर्ण BPF_PACKET_HEADER;
 
-struct sr6_tlv_t {
-	unsigned char type;
-	unsigned char len;
-	unsigned char value[0];
-} BPF_PACKET_HEADER;
+काष्ठा sr6_tlv_t अणु
+	अचिन्हित अक्षर type;
+	अचिन्हित अक्षर len;
+	अचिन्हित अक्षर value[0];
+पूर्ण BPF_PACKET_HEADER;
 
-static __always_inline struct ip6_srh_t *get_srh(struct __sk_buff *skb)
-{
-	void *cursor, *data_end;
-	struct ip6_srh_t *srh;
-	struct ip6_t *ip;
-	uint8_t *ipver;
+अटल __always_अंतरभूत काष्ठा ip6_srh_t *get_srh(काष्ठा __sk_buff *skb)
+अणु
+	व्योम *cursor, *data_end;
+	काष्ठा ip6_srh_t *srh;
+	काष्ठा ip6_t *ip;
+	uपूर्णांक8_t *ipver;
 
-	data_end = (void *)(long)skb->data_end;
-	cursor = (void *)(long)skb->data;
-	ipver = (uint8_t *)cursor;
+	data_end = (व्योम *)(दीर्घ)skb->data_end;
+	cursor = (व्योम *)(दीर्घ)skb->data;
+	ipver = (uपूर्णांक8_t *)cursor;
 
-	if ((void *)ipver + sizeof(*ipver) > data_end)
-		return NULL;
+	अगर ((व्योम *)ipver + माप(*ipver) > data_end)
+		वापस शून्य;
 
-	if ((*ipver >> 4) != 6)
-		return NULL;
+	अगर ((*ipver >> 4) != 6)
+		वापस शून्य;
 
-	ip = cursor_advance(cursor, sizeof(*ip));
-	if ((void *)ip + sizeof(*ip) > data_end)
-		return NULL;
+	ip = cursor_advance(cursor, माप(*ip));
+	अगर ((व्योम *)ip + माप(*ip) > data_end)
+		वापस शून्य;
 
-	if (ip->next_header != 43)
-		return NULL;
+	अगर (ip->next_header != 43)
+		वापस शून्य;
 
-	srh = cursor_advance(cursor, sizeof(*srh));
-	if ((void *)srh + sizeof(*srh) > data_end)
-		return NULL;
+	srh = cursor_advance(cursor, माप(*srh));
+	अगर ((व्योम *)srh + माप(*srh) > data_end)
+		वापस शून्य;
 
-	if (srh->type != 4)
-		return NULL;
+	अगर (srh->type != 4)
+		वापस शून्य;
 
-	return srh;
-}
+	वापस srh;
+पूर्ण
 
-static __always_inline int update_tlv_pad(struct __sk_buff *skb,
-					  uint32_t new_pad, uint32_t old_pad,
-					  uint32_t pad_off)
-{
-	int err;
+अटल __always_अंतरभूत पूर्णांक update_tlv_pad(काष्ठा __sk_buff *skb,
+					  uपूर्णांक32_t new_pad, uपूर्णांक32_t old_pad,
+					  uपूर्णांक32_t pad_off)
+अणु
+	पूर्णांक err;
 
-	if (new_pad != old_pad) {
+	अगर (new_pad != old_pad) अणु
 		err = bpf_lwt_seg6_adjust_srh(skb, pad_off,
-					  (int) new_pad - (int) old_pad);
-		if (err)
-			return err;
-	}
+					  (पूर्णांक) new_pad - (पूर्णांक) old_pad);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (new_pad > 0) {
-		char pad_tlv_buf[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0};
-		struct sr6_tlv_t *pad_tlv = (struct sr6_tlv_t *) pad_tlv_buf;
+	अगर (new_pad > 0) अणु
+		अक्षर pad_tlv_buf[16] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0पूर्ण;
+		काष्ठा sr6_tlv_t *pad_tlv = (काष्ठा sr6_tlv_t *) pad_tlv_buf;
 
 		pad_tlv->type = SR6_TLV_PADDING;
 		pad_tlv->len = new_pad - 2;
 
 		err = bpf_lwt_seg6_store_bytes(skb, pad_off,
-					       (void *)pad_tlv_buf, new_pad);
-		if (err)
-			return err;
-	}
+					       (व्योम *)pad_tlv_buf, new_pad);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __always_inline int is_valid_tlv_boundary(struct __sk_buff *skb,
-						 struct ip6_srh_t *srh,
-						 uint32_t *tlv_off,
-						 uint32_t *pad_size,
-						 uint32_t *pad_off)
-{
-	uint32_t srh_off, cur_off;
-	int offset_valid = 0;
-	int err;
+अटल __always_अंतरभूत पूर्णांक is_valid_tlv_boundary(काष्ठा __sk_buff *skb,
+						 काष्ठा ip6_srh_t *srh,
+						 uपूर्णांक32_t *tlv_off,
+						 uपूर्णांक32_t *pad_size,
+						 uपूर्णांक32_t *pad_off)
+अणु
+	uपूर्णांक32_t srh_off, cur_off;
+	पूर्णांक offset_valid = 0;
+	पूर्णांक err;
 
-	srh_off = (char *)srh - (char *)(long)skb->data;
+	srh_off = (अक्षर *)srh - (अक्षर *)(दीर्घ)skb->data;
 	// cur_off = end of segments, start of possible TLVs
-	cur_off = srh_off + sizeof(*srh) +
-		sizeof(struct ip6_addr_t) * (srh->first_segment + 1);
+	cur_off = srh_off + माप(*srh) +
+		माप(काष्ठा ip6_addr_t) * (srh->first_segment + 1);
 
 	*pad_off = 0;
 
 	// we can only go as far as ~10 TLVs due to the BPF max stack size
 	// workaround: define induction variable "i" as "long" instead
-	// of "int" to prevent alu32 sub-register spilling.
-	#pragma clang loop unroll(disable)
-	for (long i = 0; i < 100; i++) {
-		struct sr6_tlv_t tlv;
+	// of "int" to prevent alu32 sub-रेजिस्टर spilling.
+	#आशय clang loop unroll(disable)
+	क्रम (दीर्घ i = 0; i < 100; i++) अणु
+		काष्ठा sr6_tlv_t tlv;
 
-		if (cur_off == *tlv_off)
+		अगर (cur_off == *tlv_off)
 			offset_valid = 1;
 
-		if (cur_off >= srh_off + ((srh->hdrlen + 1) << 3))
-			break;
+		अगर (cur_off >= srh_off + ((srh->hdrlen + 1) << 3))
+			अवरोध;
 
-		err = bpf_skb_load_bytes(skb, cur_off, &tlv, sizeof(tlv));
-		if (err)
-			return err;
+		err = bpf_skb_load_bytes(skb, cur_off, &tlv, माप(tlv));
+		अगर (err)
+			वापस err;
 
-		if (tlv.type == SR6_TLV_PADDING) {
-			*pad_size = tlv.len + sizeof(tlv);
+		अगर (tlv.type == SR6_TLV_PADDING) अणु
+			*pad_size = tlv.len + माप(tlv);
 			*pad_off = cur_off;
 
-			if (*tlv_off == srh_off) {
+			अगर (*tlv_off == srh_off) अणु
 				*tlv_off = cur_off;
 				offset_valid = 1;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		} else if (tlv.type == SR6_TLV_HMAC) {
-			break;
-		}
+		पूर्ण अन्यथा अगर (tlv.type == SR6_TLV_HMAC) अणु
+			अवरोध;
+		पूर्ण
 
-		cur_off += sizeof(tlv) + tlv.len;
-	} // we reached the padding or HMAC TLVs, or the end of the SRH
+		cur_off += माप(tlv) + tlv.len;
+	पूर्ण // we reached the padding or HMAC TLVs, or the end of the SRH
 
-	if (*pad_off == 0)
+	अगर (*pad_off == 0)
 		*pad_off = cur_off;
 
-	if (*tlv_off == -1)
+	अगर (*tlv_off == -1)
 		*tlv_off = cur_off;
-	else if (!offset_valid)
-		return -EINVAL;
+	अन्यथा अगर (!offset_valid)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __always_inline int add_tlv(struct __sk_buff *skb,
-				   struct ip6_srh_t *srh, uint32_t tlv_off,
-				   struct sr6_tlv_t *itlv, uint8_t tlv_size)
-{
-	uint32_t srh_off = (char *)srh - (char *)(long)skb->data;
-	uint8_t len_remaining, new_pad;
-	uint32_t pad_off = 0;
-	uint32_t pad_size = 0;
-	uint32_t partial_srh_len;
-	int err;
+अटल __always_अंतरभूत पूर्णांक add_tlv(काष्ठा __sk_buff *skb,
+				   काष्ठा ip6_srh_t *srh, uपूर्णांक32_t tlv_off,
+				   काष्ठा sr6_tlv_t *itlv, uपूर्णांक8_t tlv_size)
+अणु
+	uपूर्णांक32_t srh_off = (अक्षर *)srh - (अक्षर *)(दीर्घ)skb->data;
+	uपूर्णांक8_t len_reमुख्यing, new_pad;
+	uपूर्णांक32_t pad_off = 0;
+	uपूर्णांक32_t pad_size = 0;
+	uपूर्णांक32_t partial_srh_len;
+	पूर्णांक err;
 
-	if (tlv_off != -1)
+	अगर (tlv_off != -1)
 		tlv_off += srh_off;
 
-	if (itlv->type == SR6_TLV_PADDING || itlv->type == SR6_TLV_HMAC)
-		return -EINVAL;
+	अगर (itlv->type == SR6_TLV_PADDING || itlv->type == SR6_TLV_HMAC)
+		वापस -EINVAL;
 
 	err = is_valid_tlv_boundary(skb, srh, &tlv_off, &pad_size, &pad_off);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = bpf_lwt_seg6_adjust_srh(skb, tlv_off, sizeof(*itlv) + itlv->len);
-	if (err)
-		return err;
+	err = bpf_lwt_seg6_adjust_srh(skb, tlv_off, माप(*itlv) + itlv->len);
+	अगर (err)
+		वापस err;
 
-	err = bpf_lwt_seg6_store_bytes(skb, tlv_off, (void *)itlv, tlv_size);
-	if (err)
-		return err;
+	err = bpf_lwt_seg6_store_bytes(skb, tlv_off, (व्योम *)itlv, tlv_size);
+	अगर (err)
+		वापस err;
 
 	// the following can't be moved inside update_tlv_pad because the
-	// bpf verifier has some issues with it
-	pad_off += sizeof(*itlv) + itlv->len;
+	// bpf verअगरier has some issues with it
+	pad_off += माप(*itlv) + itlv->len;
 	partial_srh_len = pad_off - srh_off;
-	len_remaining = partial_srh_len % 8;
-	new_pad = 8 - len_remaining;
+	len_reमुख्यing = partial_srh_len % 8;
+	new_pad = 8 - len_reमुख्यing;
 
-	if (new_pad == 1) // cannot pad for 1 byte only
+	अगर (new_pad == 1) // cannot pad क्रम 1 byte only
 		new_pad = 9;
-	else if (new_pad == 8)
+	अन्यथा अगर (new_pad == 8)
 		new_pad = 0;
 
-	return update_tlv_pad(skb, new_pad, pad_size, pad_off);
-}
+	वापस update_tlv_pad(skb, new_pad, pad_size, pad_off);
+पूर्ण
 
 // Add an Egress TLV fc00::4, add the flag A,
 // and apply End.X action to fc42::1
 SEC("lwt_seg6local")
-int __add_egr_x(struct __sk_buff *skb)
-{
-	unsigned long long hi = 0xfc42000000000000;
-	unsigned long long lo = 0x1;
-	struct ip6_srh_t *srh = get_srh(skb);
-	uint8_t new_flags = SR6_FLAG_ALERT;
-	struct ip6_addr_t addr;
-	int err, offset;
+पूर्णांक __add_egr_x(काष्ठा __sk_buff *skb)
+अणु
+	अचिन्हित दीर्घ दीर्घ hi = 0xfc42000000000000;
+	अचिन्हित दीर्घ दीर्घ lo = 0x1;
+	काष्ठा ip6_srh_t *srh = get_srh(skb);
+	uपूर्णांक8_t new_flags = SR6_FLAG_ALERT;
+	काष्ठा ip6_addr_t addr;
+	पूर्णांक err, offset;
 
-	if (srh == NULL)
-		return BPF_DROP;
+	अगर (srh == शून्य)
+		वापस BPF_DROP;
 
-	uint8_t tlv[20] = {2, 18, 0, 0, 0xfd, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-			   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4};
+	uपूर्णांक8_t tlv[20] = अणु2, 18, 0, 0, 0xfd, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+			   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x4पूर्ण;
 
 	err = add_tlv(skb, srh, (srh->hdrlen+1) << 3,
-		      (struct sr6_tlv_t *)&tlv, 20);
-	if (err)
-		return BPF_DROP;
+		      (काष्ठा sr6_tlv_t *)&tlv, 20);
+	अगर (err)
+		वापस BPF_DROP;
 
-	offset = sizeof(struct ip6_t) + offsetof(struct ip6_srh_t, flags);
+	offset = माप(काष्ठा ip6_t) + दुरत्व(काष्ठा ip6_srh_t, flags);
 	err = bpf_lwt_seg6_store_bytes(skb, offset,
-				       (void *)&new_flags, sizeof(new_flags));
-	if (err)
-		return BPF_DROP;
+				       (व्योम *)&new_flags, माप(new_flags));
+	अगर (err)
+		वापस BPF_DROP;
 
 	addr.lo = bpf_cpu_to_be64(lo);
 	addr.hi = bpf_cpu_to_be64(hi);
 	err = bpf_lwt_seg6_action(skb, SEG6_LOCAL_ACTION_END_X,
-				  (void *)&addr, sizeof(addr));
-	if (err)
-		return BPF_DROP;
-	return BPF_REDIRECT;
-}
-char __license[] SEC("license") = "GPL";
+				  (व्योम *)&addr, माप(addr));
+	अगर (err)
+		वापस BPF_DROP;
+	वापस BPF_REसूचीECT;
+पूर्ण
+अक्षर __license[] SEC("license") = "GPL";

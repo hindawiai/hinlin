@@ -1,199 +1,200 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* ECDH key-agreement protocol
  *
  * Copyright (c) 2016, Intel Corporation
- * Authors: Salvator Benedetto <salvatore.benedetto@intel.com>
+ * Authors: Salvator Benedetto <salvatore.benedetto@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <crypto/internal/kpp.h>
-#include <crypto/kpp.h>
-#include <crypto/ecdh.h>
-#include <linux/scatterlist.h>
-#include "ecc.h"
+#समावेश <linux/module.h>
+#समावेश <crypto/पूर्णांकernal/kpp.h>
+#समावेश <crypto/kpp.h>
+#समावेश <crypto/ecdh.h>
+#समावेश <linux/scatterlist.h>
+#समावेश "ecc.h"
 
-struct ecdh_ctx {
-	unsigned int curve_id;
-	unsigned int ndigits;
-	u64 private_key[ECC_MAX_DIGITS];
-};
+काष्ठा ecdh_ctx अणु
+	अचिन्हित पूर्णांक curve_id;
+	अचिन्हित पूर्णांक ndigits;
+	u64 निजी_key[ECC_MAX_DIGITS];
+पूर्ण;
 
-static inline struct ecdh_ctx *ecdh_get_ctx(struct crypto_kpp *tfm)
-{
-	return kpp_tfm_ctx(tfm);
-}
+अटल अंतरभूत काष्ठा ecdh_ctx *ecdh_get_ctx(काष्ठा crypto_kpp *tfm)
+अणु
+	वापस kpp_tfm_ctx(tfm);
+पूर्ण
 
-static int ecdh_set_secret(struct crypto_kpp *tfm, const void *buf,
-			   unsigned int len)
-{
-	struct ecdh_ctx *ctx = ecdh_get_ctx(tfm);
-	struct ecdh params;
+अटल पूर्णांक ecdh_set_secret(काष्ठा crypto_kpp *tfm, स्थिर व्योम *buf,
+			   अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा ecdh_ctx *ctx = ecdh_get_ctx(tfm);
+	काष्ठा ecdh params;
 
-	if (crypto_ecdh_decode_key(buf, len, &params) < 0 ||
-	    params.key_size > sizeof(u64) * ctx->ndigits)
-		return -EINVAL;
+	अगर (crypto_ecdh_decode_key(buf, len, &params) < 0 ||
+	    params.key_size > माप(u64) * ctx->ndigits)
+		वापस -EINVAL;
 
-	if (!params.key || !params.key_size)
-		return ecc_gen_privkey(ctx->curve_id, ctx->ndigits,
-				       ctx->private_key);
+	अगर (!params.key || !params.key_size)
+		वापस ecc_gen_privkey(ctx->curve_id, ctx->ndigits,
+				       ctx->निजी_key);
 
-	memcpy(ctx->private_key, params.key, params.key_size);
+	स_नकल(ctx->निजी_key, params.key, params.key_size);
 
-	if (ecc_is_key_valid(ctx->curve_id, ctx->ndigits,
-			     ctx->private_key, params.key_size) < 0) {
-		memzero_explicit(ctx->private_key, params.key_size);
-		return -EINVAL;
-	}
-	return 0;
-}
+	अगर (ecc_is_key_valid(ctx->curve_id, ctx->ndigits,
+			     ctx->निजी_key, params.key_size) < 0) अणु
+		memzero_explicit(ctx->निजी_key, params.key_size);
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ecdh_compute_value(struct kpp_request *req)
-{
-	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-	struct ecdh_ctx *ctx = ecdh_get_ctx(tfm);
-	u64 *public_key;
-	u64 *shared_secret = NULL;
-	void *buf;
-	size_t copied, nbytes, public_key_sz;
-	int ret = -ENOMEM;
+अटल पूर्णांक ecdh_compute_value(काष्ठा kpp_request *req)
+अणु
+	काष्ठा crypto_kpp *tfm = crypto_kpp_reqtfm(req);
+	काष्ठा ecdh_ctx *ctx = ecdh_get_ctx(tfm);
+	u64 *खुला_key;
+	u64 *shared_secret = शून्य;
+	व्योम *buf;
+	माप_प्रकार copied, nbytes, खुला_key_sz;
+	पूर्णांक ret = -ENOMEM;
 
 	nbytes = ctx->ndigits << ECC_DIGITS_TO_BYTES_SHIFT;
-	/* Public part is a point thus it has both coordinates */
-	public_key_sz = 2 * nbytes;
+	/* Public part is a poपूर्णांक thus it has both coordinates */
+	खुला_key_sz = 2 * nbytes;
 
-	public_key = kmalloc(public_key_sz, GFP_KERNEL);
-	if (!public_key)
-		return -ENOMEM;
+	खुला_key = kदो_स्मृति(खुला_key_sz, GFP_KERNEL);
+	अगर (!खुला_key)
+		वापस -ENOMEM;
 
-	if (req->src) {
-		shared_secret = kmalloc(nbytes, GFP_KERNEL);
-		if (!shared_secret)
-			goto free_pubkey;
+	अगर (req->src) अणु
+		shared_secret = kदो_स्मृति(nbytes, GFP_KERNEL);
+		अगर (!shared_secret)
+			जाओ मुक्त_pubkey;
 
 		/* from here on it's invalid parameters */
 		ret = -EINVAL;
 
-		/* must have exactly two points to be on the curve */
-		if (public_key_sz != req->src_len)
-			goto free_all;
+		/* must have exactly two poपूर्णांकs to be on the curve */
+		अगर (खुला_key_sz != req->src_len)
+			जाओ मुक्त_all;
 
 		copied = sg_copy_to_buffer(req->src,
-					   sg_nents_for_len(req->src,
-							    public_key_sz),
-					   public_key, public_key_sz);
-		if (copied != public_key_sz)
-			goto free_all;
+					   sg_nents_क्रम_len(req->src,
+							    खुला_key_sz),
+					   खुला_key, खुला_key_sz);
+		अगर (copied != खुला_key_sz)
+			जाओ मुक्त_all;
 
 		ret = crypto_ecdh_shared_secret(ctx->curve_id, ctx->ndigits,
-						ctx->private_key, public_key,
+						ctx->निजी_key, खुला_key,
 						shared_secret);
 
 		buf = shared_secret;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ecc_make_pub_key(ctx->curve_id, ctx->ndigits,
-				       ctx->private_key, public_key);
-		buf = public_key;
-		nbytes = public_key_sz;
-	}
+				       ctx->निजी_key, खुला_key);
+		buf = खुला_key;
+		nbytes = खुला_key_sz;
+	पूर्ण
 
-	if (ret < 0)
-		goto free_all;
+	अगर (ret < 0)
+		जाओ मुक्त_all;
 
 	/* might want less than we've got */
-	nbytes = min_t(size_t, nbytes, req->dst_len);
-	copied = sg_copy_from_buffer(req->dst, sg_nents_for_len(req->dst,
+	nbytes = min_t(माप_प्रकार, nbytes, req->dst_len);
+	copied = sg_copy_from_buffer(req->dst, sg_nents_क्रम_len(req->dst,
 								nbytes),
 				     buf, nbytes);
-	if (copied != nbytes)
+	अगर (copied != nbytes)
 		ret = -EINVAL;
 
 	/* fall through */
-free_all:
-	kfree_sensitive(shared_secret);
-free_pubkey:
-	kfree(public_key);
-	return ret;
-}
+मुक्त_all:
+	kमुक्त_sensitive(shared_secret);
+मुक्त_pubkey:
+	kमुक्त(खुला_key);
+	वापस ret;
+पूर्ण
 
-static unsigned int ecdh_max_size(struct crypto_kpp *tfm)
-{
-	struct ecdh_ctx *ctx = ecdh_get_ctx(tfm);
+अटल अचिन्हित पूर्णांक ecdh_max_size(काष्ठा crypto_kpp *tfm)
+अणु
+	काष्ठा ecdh_ctx *ctx = ecdh_get_ctx(tfm);
 
-	/* Public key is made of two coordinates, add one to the left shift */
-	return ctx->ndigits << (ECC_DIGITS_TO_BYTES_SHIFT + 1);
-}
+	/* Public key is made of two coordinates, add one to the left shअगरt */
+	वापस ctx->ndigits << (ECC_DIGITS_TO_BYTES_SHIFT + 1);
+पूर्ण
 
-static int ecdh_nist_p192_init_tfm(struct crypto_kpp *tfm)
-{
-	struct ecdh_ctx *ctx = ecdh_get_ctx(tfm);
+अटल पूर्णांक ecdh_nist_p192_init_tfm(काष्ठा crypto_kpp *tfm)
+अणु
+	काष्ठा ecdh_ctx *ctx = ecdh_get_ctx(tfm);
 
 	ctx->curve_id = ECC_CURVE_NIST_P192;
 	ctx->ndigits = ECC_CURVE_NIST_P192_DIGITS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct kpp_alg ecdh_nist_p192 = {
+अटल काष्ठा kpp_alg ecdh_nist_p192 = अणु
 	.set_secret = ecdh_set_secret,
-	.generate_public_key = ecdh_compute_value,
+	.generate_खुला_key = ecdh_compute_value,
 	.compute_shared_secret = ecdh_compute_value,
 	.max_size = ecdh_max_size,
 	.init = ecdh_nist_p192_init_tfm,
-	.base = {
+	.base = अणु
 		.cra_name = "ecdh-nist-p192",
 		.cra_driver_name = "ecdh-generic",
 		.cra_priority = 100,
 		.cra_module = THIS_MODULE,
-		.cra_ctxsize = sizeof(struct ecdh_ctx),
-	},
-};
+		.cra_ctxsize = माप(काष्ठा ecdh_ctx),
+	पूर्ण,
+पूर्ण;
 
-static int ecdh_nist_p256_init_tfm(struct crypto_kpp *tfm)
-{
-	struct ecdh_ctx *ctx = ecdh_get_ctx(tfm);
+अटल पूर्णांक ecdh_nist_p256_init_tfm(काष्ठा crypto_kpp *tfm)
+अणु
+	काष्ठा ecdh_ctx *ctx = ecdh_get_ctx(tfm);
 
 	ctx->curve_id = ECC_CURVE_NIST_P256;
 	ctx->ndigits = ECC_CURVE_NIST_P256_DIGITS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct kpp_alg ecdh_nist_p256 = {
+अटल काष्ठा kpp_alg ecdh_nist_p256 = अणु
 	.set_secret = ecdh_set_secret,
-	.generate_public_key = ecdh_compute_value,
+	.generate_खुला_key = ecdh_compute_value,
 	.compute_shared_secret = ecdh_compute_value,
 	.max_size = ecdh_max_size,
 	.init = ecdh_nist_p256_init_tfm,
-	.base = {
+	.base = अणु
 		.cra_name = "ecdh-nist-p256",
 		.cra_driver_name = "ecdh-generic",
 		.cra_priority = 100,
 		.cra_module = THIS_MODULE,
-		.cra_ctxsize = sizeof(struct ecdh_ctx),
-	},
-};
+		.cra_ctxsize = माप(काष्ठा ecdh_ctx),
+	पूर्ण,
+पूर्ण;
 
-static bool ecdh_nist_p192_registered;
+अटल bool ecdh_nist_p192_रेजिस्टरed;
 
-static int ecdh_init(void)
-{
-	int ret;
+अटल पूर्णांक ecdh_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = crypto_register_kpp(&ecdh_nist_p192);
-	ecdh_nist_p192_registered = ret == 0;
+	ret = crypto_रेजिस्टर_kpp(&ecdh_nist_p192);
+	ecdh_nist_p192_रेजिस्टरed = ret == 0;
 
-	return crypto_register_kpp(&ecdh_nist_p256);
-}
+	वापस crypto_रेजिस्टर_kpp(&ecdh_nist_p256);
+पूर्ण
 
-static void ecdh_exit(void)
-{
-	if (ecdh_nist_p192_registered)
-		crypto_unregister_kpp(&ecdh_nist_p192);
-	crypto_unregister_kpp(&ecdh_nist_p256);
-}
+अटल व्योम ecdh_निकास(व्योम)
+अणु
+	अगर (ecdh_nist_p192_रेजिस्टरed)
+		crypto_unरेजिस्टर_kpp(&ecdh_nist_p192);
+	crypto_unरेजिस्टर_kpp(&ecdh_nist_p256);
+पूर्ण
 
 subsys_initcall(ecdh_init);
-module_exit(ecdh_exit);
+module_निकास(ecdh_निकास);
 MODULE_ALIAS_CRYPTO("ecdh");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("ECDH generic algorithm");

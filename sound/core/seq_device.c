@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  ALSA sequencer device management
  *  Copyright (c) 1999 by Takashi Iwai <tiwai@suse.de>
@@ -6,12 +7,12 @@
  *----------------------------------------------------------------
  *
  * This device handler separates the card driver module from sequencer
- * stuff (sequencer core, synth drivers, etc), so that user can avoid
- * to spend unnecessary resources e.g. if he needs only listening to
+ * stuff (sequencer core, synth drivers, etc), so that user can aव्योम
+ * to spend unnecessary resources e.g. अगर he needs only listening to
  * MP3s.
  *
  * The card (or lowlevel) driver creates a sequencer device entry
- * via snd_seq_device_new().  This is an entry pointer to communicate
+ * via snd_seq_device_new().  This is an entry poपूर्णांकer to communicate
  * with the sequencer device "driver", which is involved with the
  * actual part to communicate with the sequencer core.
  * Each sequencer device entry has an id string and the corresponding
@@ -21,17 +22,17 @@
  * resources like i/o port are passed via snd_seq_device argument.
  */
 
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/seq_device.h>
-#include <sound/seq_kernel.h>
-#include <sound/initval.h>
-#include <linux/kmod.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/seq_device.h>
+#समावेश <sound/seq_kernel.h>
+#समावेश <sound/initval.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
 
 MODULE_AUTHOR("Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("ALSA sequencer device management");
@@ -40,183 +41,183 @@ MODULE_LICENSE("GPL");
 /*
  * bus definition
  */
-static int snd_seq_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct snd_seq_device *sdev = to_seq_dev(dev);
-	struct snd_seq_driver *sdrv = to_seq_drv(drv);
+अटल पूर्णांक snd_seq_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा snd_seq_device *sdev = to_seq_dev(dev);
+	काष्ठा snd_seq_driver *sdrv = to_seq_drv(drv);
 
-	return strcmp(sdrv->id, sdev->id) == 0 &&
+	वापस म_भेद(sdrv->id, sdev->id) == 0 &&
 		sdrv->argsize == sdev->argsize;
-}
+पूर्ण
 
-static struct bus_type snd_seq_bus_type = {
+अटल काष्ठा bus_type snd_seq_bus_type = अणु
 	.name = "snd_seq",
 	.match = snd_seq_bus_match,
-};
+पूर्ण;
 
 /*
- * proc interface -- just for compatibility
+ * proc पूर्णांकerface -- just क्रम compatibility
  */
-#ifdef CONFIG_SND_PROC_FS
-static struct snd_info_entry *info_entry;
+#अगर_घोषित CONFIG_SND_PROC_FS
+अटल काष्ठा snd_info_entry *info_entry;
 
-static int print_dev_info(struct device *dev, void *data)
-{
-	struct snd_seq_device *sdev = to_seq_dev(dev);
-	struct snd_info_buffer *buffer = data;
+अटल पूर्णांक prपूर्णांक_dev_info(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा snd_seq_device *sdev = to_seq_dev(dev);
+	काष्ठा snd_info_buffer *buffer = data;
 
-	snd_iprintf(buffer, "snd-%s,%s,%d\n", sdev->id,
+	snd_iम_लिखो(buffer, "snd-%s,%s,%d\n", sdev->id,
 		    dev->driver ? "loaded" : "empty",
 		    dev->driver ? 1 : 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_seq_device_info(struct snd_info_entry *entry,
-				struct snd_info_buffer *buffer)
-{
-	bus_for_each_dev(&snd_seq_bus_type, NULL, buffer, print_dev_info);
-}
-#endif
+अटल व्योम snd_seq_device_info(काष्ठा snd_info_entry *entry,
+				काष्ठा snd_info_buffer *buffer)
+अणु
+	bus_क्रम_each_dev(&snd_seq_bus_type, शून्य, buffer, prपूर्णांक_dev_info);
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * load all registered drivers (called from seq_clientmgr.c)
+ * load all रेजिस्टरed drivers (called from seq_clienपंचांगgr.c)
  */
 
-#ifdef CONFIG_MODULES
-/* flag to block auto-loading */
-static atomic_t snd_seq_in_init = ATOMIC_INIT(1); /* blocked as default */
+#अगर_घोषित CONFIG_MODULES
+/* flag to block स्वतः-loading */
+अटल atomic_t snd_seq_in_init = ATOMIC_INIT(1); /* blocked as शेष */
 
-static int request_seq_drv(struct device *dev, void *data)
-{
-	struct snd_seq_device *sdev = to_seq_dev(dev);
+अटल पूर्णांक request_seq_drv(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा snd_seq_device *sdev = to_seq_dev(dev);
 
-	if (!dev->driver)
+	अगर (!dev->driver)
 		request_module("snd-%s", sdev->id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void autoload_drivers(struct work_struct *work)
-{
-	/* avoid reentrance */
-	if (atomic_inc_return(&snd_seq_in_init) == 1)
-		bus_for_each_dev(&snd_seq_bus_type, NULL, NULL,
+अटल व्योम स्वतःload_drivers(काष्ठा work_काष्ठा *work)
+अणु
+	/* aव्योम reentrance */
+	अगर (atomic_inc_वापस(&snd_seq_in_init) == 1)
+		bus_क्रम_each_dev(&snd_seq_bus_type, शून्य, शून्य,
 				 request_seq_drv);
 	atomic_dec(&snd_seq_in_init);
-}
+पूर्ण
 
-static DECLARE_WORK(autoload_work, autoload_drivers);
+अटल DECLARE_WORK(स्वतःload_work, स्वतःload_drivers);
 
-static void queue_autoload_drivers(void)
-{
-	schedule_work(&autoload_work);
-}
+अटल व्योम queue_स्वतःload_drivers(व्योम)
+अणु
+	schedule_work(&स्वतःload_work);
+पूर्ण
 
-void snd_seq_autoload_init(void)
-{
+व्योम snd_seq_स्वतःload_init(व्योम)
+अणु
 	atomic_dec(&snd_seq_in_init);
-#ifdef CONFIG_SND_SEQUENCER_MODULE
-	/* initial autoload only when snd-seq is a module */
-	queue_autoload_drivers();
-#endif
-}
-EXPORT_SYMBOL(snd_seq_autoload_init);
+#अगर_घोषित CONFIG_SND_SEQUENCER_MODULE
+	/* initial स्वतःload only when snd-seq is a module */
+	queue_स्वतःload_drivers();
+#पूर्ण_अगर
+पूर्ण
+EXPORT_SYMBOL(snd_seq_स्वतःload_init);
 
-void snd_seq_autoload_exit(void)
-{
+व्योम snd_seq_स्वतःload_निकास(व्योम)
+अणु
 	atomic_inc(&snd_seq_in_init);
-}
-EXPORT_SYMBOL(snd_seq_autoload_exit);
+पूर्ण
+EXPORT_SYMBOL(snd_seq_स्वतःload_निकास);
 
-void snd_seq_device_load_drivers(void)
-{
-	queue_autoload_drivers();
-	flush_work(&autoload_work);
-}
+व्योम snd_seq_device_load_drivers(व्योम)
+अणु
+	queue_स्वतःload_drivers();
+	flush_work(&स्वतःload_work);
+पूर्ण
 EXPORT_SYMBOL(snd_seq_device_load_drivers);
 
-static inline void cancel_autoload_drivers(void)
-{
-	cancel_work_sync(&autoload_work);
-}
-#else
-static inline void queue_autoload_drivers(void)
-{
-}
+अटल अंतरभूत व्योम cancel_स्वतःload_drivers(व्योम)
+अणु
+	cancel_work_sync(&स्वतःload_work);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम queue_स्वतःload_drivers(व्योम)
+अणु
+पूर्ण
 
-static inline void cancel_autoload_drivers(void)
-{
-}
-#endif
+अटल अंतरभूत व्योम cancel_स्वतःload_drivers(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * device management
  */
-static int snd_seq_device_dev_free(struct snd_device *device)
-{
-	struct snd_seq_device *dev = device->device_data;
+अटल पूर्णांक snd_seq_device_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_seq_device *dev = device->device_data;
 
-	cancel_autoload_drivers();
+	cancel_स्वतःload_drivers();
 	put_device(&dev->dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_seq_device_dev_register(struct snd_device *device)
-{
-	struct snd_seq_device *dev = device->device_data;
-	int err;
+अटल पूर्णांक snd_seq_device_dev_रेजिस्टर(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_seq_device *dev = device->device_data;
+	पूर्णांक err;
 
 	err = device_add(&dev->dev);
-	if (err < 0)
-		return err;
-	if (!dev->dev.driver)
-		queue_autoload_drivers();
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	अगर (!dev->dev.driver)
+		queue_स्वतःload_drivers();
+	वापस 0;
+पूर्ण
 
-static int snd_seq_device_dev_disconnect(struct snd_device *device)
-{
-	struct snd_seq_device *dev = device->device_data;
+अटल पूर्णांक snd_seq_device_dev_disconnect(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_seq_device *dev = device->device_data;
 
 	device_del(&dev->dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_seq_dev_release(struct device *dev)
-{
-	struct snd_seq_device *sdev = to_seq_dev(dev);
+अटल व्योम snd_seq_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा snd_seq_device *sdev = to_seq_dev(dev);
 
-	if (sdev->private_free)
-		sdev->private_free(sdev);
-	kfree(sdev);
-}
+	अगर (sdev->निजी_मुक्त)
+		sdev->निजी_मुक्त(sdev);
+	kमुक्त(sdev);
+पूर्ण
 
 /*
- * register a sequencer device
+ * रेजिस्टर a sequencer device
  * card = card info
- * device = device number (if any)
+ * device = device number (अगर any)
  * id = id of driver
- * result = return pointer (NULL allowed if unnecessary)
+ * result = वापस poपूर्णांकer (शून्य allowed अगर unnecessary)
  */
-int snd_seq_device_new(struct snd_card *card, int device, const char *id,
-		       int argsize, struct snd_seq_device **result)
-{
-	struct snd_seq_device *dev;
-	int err;
-	static const struct snd_device_ops dops = {
-		.dev_free = snd_seq_device_dev_free,
-		.dev_register = snd_seq_device_dev_register,
+पूर्णांक snd_seq_device_new(काष्ठा snd_card *card, पूर्णांक device, स्थिर अक्षर *id,
+		       पूर्णांक argsize, काष्ठा snd_seq_device **result)
+अणु
+	काष्ठा snd_seq_device *dev;
+	पूर्णांक err;
+	अटल स्थिर काष्ठा snd_device_ops करोps = अणु
+		.dev_मुक्त = snd_seq_device_dev_मुक्त,
+		.dev_रेजिस्टर = snd_seq_device_dev_रेजिस्टर,
 		.dev_disconnect = snd_seq_device_dev_disconnect,
-	};
+	पूर्ण;
 
-	if (result)
-		*result = NULL;
+	अगर (result)
+		*result = शून्य;
 
-	if (snd_BUG_ON(!id))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!id))
+		वापस -EINVAL;
 
-	dev = kzalloc(sizeof(*dev) + argsize, GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = kzalloc(माप(*dev) + argsize, GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	/* set up device info */
 	dev->card = card;
@@ -231,82 +232,82 @@ int snd_seq_device_new(struct snd_card *card, int device, const char *id,
 	dev_set_name(&dev->dev, "%s-%d-%d", dev->id, card->number, device);
 
 	/* add this device to the list */
-	err = snd_device_new(card, SNDRV_DEV_SEQUENCER, dev, &dops);
-	if (err < 0) {
+	err = snd_device_new(card, SNDRV_DEV_SEQUENCER, dev, &करोps);
+	अगर (err < 0) अणु
 		put_device(&dev->dev);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	
-	if (result)
+	अगर (result)
 		*result = dev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_seq_device_new);
 
 /*
  * driver registration
  */
-int __snd_seq_driver_register(struct snd_seq_driver *drv, struct module *mod)
-{
-	if (WARN_ON(!drv->driver.name || !drv->id))
-		return -EINVAL;
+पूर्णांक __snd_seq_driver_रेजिस्टर(काष्ठा snd_seq_driver *drv, काष्ठा module *mod)
+अणु
+	अगर (WARN_ON(!drv->driver.name || !drv->id))
+		वापस -EINVAL;
 	drv->driver.bus = &snd_seq_bus_type;
 	drv->driver.owner = mod;
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(__snd_seq_driver_register);
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(__snd_seq_driver_रेजिस्टर);
 
-void snd_seq_driver_unregister(struct snd_seq_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL_GPL(snd_seq_driver_unregister);
+व्योम snd_seq_driver_unरेजिस्टर(काष्ठा snd_seq_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_seq_driver_unरेजिस्टर);
 
 /*
  * module part
  */
 
-static int __init seq_dev_proc_init(void)
-{
-#ifdef CONFIG_SND_PROC_FS
+अटल पूर्णांक __init seq_dev_proc_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_SND_PROC_FS
 	info_entry = snd_info_create_module_entry(THIS_MODULE, "drivers",
 						  snd_seq_root);
-	if (info_entry == NULL)
-		return -ENOMEM;
+	अगर (info_entry == शून्य)
+		वापस -ENOMEM;
 	info_entry->content = SNDRV_INFO_CONTENT_TEXT;
-	info_entry->c.text.read = snd_seq_device_info;
-	if (snd_info_register(info_entry) < 0) {
-		snd_info_free_entry(info_entry);
-		return -ENOMEM;
-	}
-#endif
-	return 0;
-}
+	info_entry->c.text.पढ़ो = snd_seq_device_info;
+	अगर (snd_info_रेजिस्टर(info_entry) < 0) अणु
+		snd_info_मुक्त_entry(info_entry);
+		वापस -ENOMEM;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int __init alsa_seq_device_init(void)
-{
-	int err;
+अटल पूर्णांक __init alsa_seq_device_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = bus_register(&snd_seq_bus_type);
-	if (err < 0)
-		return err;
+	err = bus_रेजिस्टर(&snd_seq_bus_type);
+	अगर (err < 0)
+		वापस err;
 	err = seq_dev_proc_init();
-	if (err < 0)
-		bus_unregister(&snd_seq_bus_type);
-	return err;
-}
+	अगर (err < 0)
+		bus_unरेजिस्टर(&snd_seq_bus_type);
+	वापस err;
+पूर्ण
 
-static void __exit alsa_seq_device_exit(void)
-{
-#ifdef CONFIG_MODULES
-	cancel_work_sync(&autoload_work);
-#endif
-#ifdef CONFIG_SND_PROC_FS
-	snd_info_free_entry(info_entry);
-#endif
-	bus_unregister(&snd_seq_bus_type);
-}
+अटल व्योम __निकास alsa_seq_device_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_MODULES
+	cancel_work_sync(&स्वतःload_work);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SND_PROC_FS
+	snd_info_मुक्त_entry(info_entry);
+#पूर्ण_अगर
+	bus_unरेजिस्टर(&snd_seq_bus_type);
+पूर्ण
 
 subsys_initcall(alsa_seq_device_init)
-module_exit(alsa_seq_device_exit)
+module_निकास(alsa_seq_device_निकास)

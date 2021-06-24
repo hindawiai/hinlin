@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Free Electrons
  *
- * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
+ * Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
  *
- * Allwinner A31 APB0 clock driver
+ * Allwinner A31 APB0 घड़ी driver
  */
 
-#include <linux/clk-provider.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
 /*
- * The APB0 clk has a configurable divisor.
+ * The APB0 clk has a configurable भागisor.
  *
- * We must use a clk_div_table and not a regular power of 2
- * divisor here, because the first 2 values divide the clock
+ * We must use a clk_भाग_प्रकारable and not a regular घातer of 2
+ * भागisor here, because the first 2 values भागide the घड़ी
  * by 2.
  */
-static const struct clk_div_table sun6i_a31_apb0_divs[] = {
-	{ .val = 0, .div = 2, },
-	{ .val = 1, .div = 2, },
-	{ .val = 2, .div = 4, },
-	{ .val = 3, .div = 8, },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा clk_भाग_प्रकारable sun6i_a31_apb0_भागs[] = अणु
+	अणु .val = 0, .भाग = 2, पूर्ण,
+	अणु .val = 1, .भाग = 2, पूर्ण,
+	अणु .val = 2, .भाग = 4, पूर्ण,
+	अणु .val = 3, .भाग = 8, पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static int sun6i_a31_apb0_clk_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	const char *clk_name = np->name;
-	const char *clk_parent;
-	struct resource *r;
-	void __iomem *reg;
-	struct clk *clk;
+अटल पूर्णांक sun6i_a31_apb0_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर अक्षर *clk_name = np->name;
+	स्थिर अक्षर *clk_parent;
+	काष्ठा resource *r;
+	व्योम __iomem *reg;
+	काष्ठा clk *clk;
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	reg = devm_ioremap_resource(&pdev->dev, r);
-	if (IS_ERR(reg))
-		return PTR_ERR(reg);
+	अगर (IS_ERR(reg))
+		वापस PTR_ERR(reg);
 
 	clk_parent = of_clk_get_parent_name(np, 0);
-	if (!clk_parent)
-		return -EINVAL;
+	अगर (!clk_parent)
+		वापस -EINVAL;
 
-	of_property_read_string(np, "clock-output-names", &clk_name);
+	of_property_पढ़ो_string(np, "clock-output-names", &clk_name);
 
-	clk = clk_register_divider_table(&pdev->dev, clk_name, clk_parent,
-					 0, reg, 0, 2, 0, sun6i_a31_apb0_divs,
-					 NULL);
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	clk = clk_रेजिस्टर_भागider_table(&pdev->dev, clk_name, clk_parent,
+					 0, reg, 0, 2, 0, sun6i_a31_apb0_भागs,
+					 शून्य);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
-	return of_clk_add_provider(np, of_clk_src_simple_get, clk);
-}
+	वापस of_clk_add_provider(np, of_clk_src_simple_get, clk);
+पूर्ण
 
-static const struct of_device_id sun6i_a31_apb0_clk_dt_ids[] = {
-	{ .compatible = "allwinner,sun6i-a31-apb0-clk" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id sun6i_a31_apb0_clk_dt_ids[] = अणु
+	अणु .compatible = "allwinner,sun6i-a31-apb0-clk" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver sun6i_a31_apb0_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sun6i_a31_apb0_clk_driver = अणु
+	.driver = अणु
 		.name = "sun6i-a31-apb0-clk",
 		.of_match_table = sun6i_a31_apb0_clk_dt_ids,
-	},
+	पूर्ण,
 	.probe = sun6i_a31_apb0_clk_probe,
-};
-builtin_platform_driver(sun6i_a31_apb0_clk_driver);
+पूर्ण;
+builtin_platक्रमm_driver(sun6i_a31_apb0_clk_driver);

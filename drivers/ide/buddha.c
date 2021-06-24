@@ -1,237 +1,238 @@
+<शैली गुरु>
 /*
  *  Amiga Buddha, Catweasel and X-Surf IDE Driver
  *
  *	Copyright (C) 1997, 2001 by Geert Uytterhoeven and others
  *
- *  This driver was written based on the specifications in README.buddha and
+ *  This driver was written based on the specअगरications in README.buddha and
  *  the X-Surf info from Inside_XSurf.txt available at
  *  http://www.jschoenfeld.com
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive for
+ *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  *
  *  TODO:
  *    - test it :-)
- *    - tune the timings using the speed-register
+ *    - tune the timings using the speed-रेजिस्टर
  */
 
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/blkdev.h>
-#include <linux/zorro.h>
-#include <linux/ide.h>
-#include <linux/init.h>
-#include <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/zorro.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
 
-#include <asm/amigahw.h>
-#include <asm/amigaints.h>
+#समावेश <यंत्र/amigahw.h>
+#समावेश <यंत्र/amigaपूर्णांकs.h>
 
-
-    /*
-     *  The Buddha has 2 IDE interfaces, the Catweasel has 3, X-Surf has 2
-     */
-
-#define BUDDHA_NUM_HWIFS	2
-#define CATWEASEL_NUM_HWIFS	3
-#define XSURF_NUM_HWIFS         2
-
-#define MAX_NUM_HWIFS		3
 
     /*
-     *  Bases of the IDE interfaces (relative to the board address)
+     *  The Buddha has 2 IDE पूर्णांकerfaces, the Catweasel has 3, X-Surf has 2
      */
 
-#define BUDDHA_BASE1	0x800
-#define BUDDHA_BASE2	0xa00
-#define BUDDHA_BASE3	0xc00
+#घोषणा BUDDHA_NUM_HWIFS	2
+#घोषणा CATWEASEL_NUM_HWIFS	3
+#घोषणा XSURF_NUM_HWIFS         2
 
-#define XSURF_BASE1     0xb000 /* 2.5" Interface */
-#define XSURF_BASE2     0xd000 /* 3.5" Interface */
+#घोषणा MAX_NUM_HWIFS		3
 
-static u_int buddha_bases[CATWEASEL_NUM_HWIFS] __initdata = {
+    /*
+     *  Bases of the IDE पूर्णांकerfaces (relative to the board address)
+     */
+
+#घोषणा BUDDHA_BASE1	0x800
+#घोषणा BUDDHA_BASE2	0xa00
+#घोषणा BUDDHA_BASE3	0xc00
+
+#घोषणा XSURF_BASE1     0xb000 /* 2.5" Interface */
+#घोषणा XSURF_BASE2     0xd000 /* 3.5" Interface */
+
+अटल u_पूर्णांक buddha_bases[CATWEASEL_NUM_HWIFS] __initdata = अणु
     BUDDHA_BASE1, BUDDHA_BASE2, BUDDHA_BASE3
-};
+पूर्ण;
 
-static u_int xsurf_bases[XSURF_NUM_HWIFS] __initdata = {
+अटल u_पूर्णांक xsurf_bases[XSURF_NUM_HWIFS] __initdata = अणु
      XSURF_BASE1, XSURF_BASE2
-};
+पूर्ण;
 
     /*
      *  Offsets from one of the above bases
      */
 
-#define BUDDHA_CONTROL	0x11a
+#घोषणा BUDDHA_CONTROL	0x11a
 
     /*
-     *  Other registers
+     *  Other रेजिस्टरs
      */
 
-#define BUDDHA_IRQ1	0xf00		/* MSB = 1, Harddisk is source of */
-#define BUDDHA_IRQ2	0xf40		/* interrupt */
-#define BUDDHA_IRQ3	0xf80
+#घोषणा BUDDHA_IRQ1	0xf00		/* MSB = 1, Harddisk is source of */
+#घोषणा BUDDHA_IRQ2	0xf40		/* पूर्णांकerrupt */
+#घोषणा BUDDHA_IRQ3	0xf80
 
-#define XSURF_IRQ1      0x7e
-#define XSURF_IRQ2      0x7e
+#घोषणा XSURF_IRQ1      0x7e
+#घोषणा XSURF_IRQ2      0x7e
 
-static int buddha_irqports[CATWEASEL_NUM_HWIFS] __initdata = {
+अटल पूर्णांक buddha_irqports[CATWEASEL_NUM_HWIFS] __initdata = अणु
     BUDDHA_IRQ1, BUDDHA_IRQ2, BUDDHA_IRQ3
-};
+पूर्ण;
 
-static int xsurf_irqports[XSURF_NUM_HWIFS] __initdata = {
+अटल पूर्णांक xsurf_irqports[XSURF_NUM_HWIFS] __initdata = अणु
     XSURF_IRQ1, XSURF_IRQ2
-};
+पूर्ण;
 
-#define BUDDHA_IRQ_MR	0xfc0		/* master interrupt enable */
+#घोषणा BUDDHA_IRQ_MR	0xfc0		/* master पूर्णांकerrupt enable */
 
 
     /*
-     *  Board information
+     *  Board inक्रमmation
      */
 
-typedef enum BuddhaType_Enum {
+प्रकार क्रमागत BuddhaType_Enum अणु
     BOARD_BUDDHA, BOARD_CATWEASEL, BOARD_XSURF
-} BuddhaType;
+पूर्ण BuddhaType;
 
-static const char *buddha_board_name[] = { "Buddha", "Catweasel", "X-Surf" };
+अटल स्थिर अक्षर *buddha_board_name[] = अणु "Buddha", "Catweasel", "X-Surf" पूर्ण;
 
     /*
-     *  Check and acknowledge the interrupt status
+     *  Check and acknowledge the पूर्णांकerrupt status
      */
 
-static int buddha_test_irq(ide_hwif_t *hwif)
-{
-    unsigned char ch;
+अटल पूर्णांक buddha_test_irq(ide_hwअगर_t *hwअगर)
+अणु
+    अचिन्हित अक्षर ch;
 
-    ch = z_readb(hwif->io_ports.irq_addr);
-    if (!(ch & 0x80))
-	    return 0;
-    return 1;
-}
+    ch = z_पढ़ोb(hwअगर->io_ports.irq_addr);
+    अगर (!(ch & 0x80))
+	    वापस 0;
+    वापस 1;
+पूर्ण
 
-static void xsurf_clear_irq(ide_drive_t *drive)
-{
+अटल व्योम xsurf_clear_irq(ide_drive_t *drive)
+अणु
     /*
-     * X-Surf needs 0 written to IRQ register to ensure ISA bit A11 stays at 0
+     * X-Surf needs 0 written to IRQ रेजिस्टर to ensure ISA bit A11 stays at 0
      */
-    z_writeb(0, drive->hwif->io_ports.irq_addr);
-}
+    z_ग_लिखोb(0, drive->hwअगर->io_ports.irq_addr);
+पूर्ण
 
-static void __init buddha_setup_ports(struct ide_hw *hw, unsigned long base,
-				      unsigned long ctl, unsigned long irq_port)
-{
-	int i;
+अटल व्योम __init buddha_setup_ports(काष्ठा ide_hw *hw, अचिन्हित दीर्घ base,
+				      अचिन्हित दीर्घ ctl, अचिन्हित दीर्घ irq_port)
+अणु
+	पूर्णांक i;
 
-	memset(hw, 0, sizeof(*hw));
+	स_रखो(hw, 0, माप(*hw));
 
 	hw->io_ports.data_addr = base;
 
-	for (i = 1; i < 8; i++)
+	क्रम (i = 1; i < 8; i++)
 		hw->io_ports_array[i] = base + 2 + i * 4;
 
 	hw->io_ports.ctl_addr = ctl;
 	hw->io_ports.irq_addr = irq_port;
 
 	hw->irq = IRQ_AMIGA_PORTS;
-}
+पूर्ण
 
-static const struct ide_port_ops buddha_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops buddha_port_ops = अणु
 	.test_irq		= buddha_test_irq,
-};
+पूर्ण;
 
-static const struct ide_port_ops xsurf_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops xsurf_port_ops = अणु
 	.clear_irq		= xsurf_clear_irq,
 	.test_irq		= buddha_test_irq,
-};
+पूर्ण;
 
-static const struct ide_port_info buddha_port_info = {
+अटल स्थिर काष्ठा ide_port_info buddha_port_info = अणु
 	.port_ops		= &buddha_port_ops,
 	.host_flags		= IDE_HFLAG_MMIO | IDE_HFLAG_NO_DMA,
 	.irq_flags		= IRQF_SHARED,
 	.chipset		= ide_generic,
-};
+पूर्ण;
 
     /*
-     *  Probe for a Buddha or Catweasel IDE interface
+     *  Probe क्रम a Buddha or Catweasel IDE पूर्णांकerface
      */
 
-static int __init buddha_init(void)
-{
-	struct zorro_dev *z = NULL;
-	u_long buddha_board = 0;
+अटल पूर्णांक __init buddha_init(व्योम)
+अणु
+	काष्ठा zorro_dev *z = शून्य;
+	u_दीर्घ buddha_board = 0;
 	BuddhaType type;
-	int buddha_num_hwifs, i;
+	पूर्णांक buddha_num_hwअगरs, i;
 
-	while ((z = zorro_find_device(ZORRO_WILDCARD, z))) {
-		unsigned long board;
-		struct ide_hw hw[MAX_NUM_HWIFS], *hws[MAX_NUM_HWIFS];
-		struct ide_port_info d = buddha_port_info;
+	जबतक ((z = zorro_find_device(ZORRO_WILDCARD, z))) अणु
+		अचिन्हित दीर्घ board;
+		काष्ठा ide_hw hw[MAX_NUM_HWIFS], *hws[MAX_NUM_HWIFS];
+		काष्ठा ide_port_info d = buddha_port_info;
 
-		if (z->id == ZORRO_PROD_INDIVIDUAL_COMPUTERS_BUDDHA) {
-			buddha_num_hwifs = BUDDHA_NUM_HWIFS;
+		अगर (z->id == ZORRO_PROD_INDIVIDUAL_COMPUTERS_BUDDHA) अणु
+			buddha_num_hwअगरs = BUDDHA_NUM_HWIFS;
 			type=BOARD_BUDDHA;
-		} else if (z->id == ZORRO_PROD_INDIVIDUAL_COMPUTERS_CATWEASEL) {
-			buddha_num_hwifs = CATWEASEL_NUM_HWIFS;
+		पूर्ण अन्यथा अगर (z->id == ZORRO_PROD_INDIVIDUAL_COMPUTERS_CATWEASEL) अणु
+			buddha_num_hwअगरs = CATWEASEL_NUM_HWIFS;
 			type=BOARD_CATWEASEL;
-		} else if (z->id == ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF) {
-			buddha_num_hwifs = XSURF_NUM_HWIFS;
+		पूर्ण अन्यथा अगर (z->id == ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF) अणु
+			buddha_num_hwअगरs = XSURF_NUM_HWIFS;
 			type=BOARD_XSURF;
 			d.port_ops = &xsurf_port_ops;
-		} else 
-			continue;
+		पूर्ण अन्यथा 
+			जारी;
 		
 		board = z->resource.start;
 
-		if(type != BOARD_XSURF) {
-			if (!request_mem_region(board+BUDDHA_BASE1, 0x800, "IDE"))
-				continue;
-		} else {
-			if (!request_mem_region(board+XSURF_BASE1, 0x1000, "IDE"))
-				continue;
-			if (!request_mem_region(board+XSURF_BASE2, 0x1000, "IDE"))
-				goto fail_base2;
-			if (!request_mem_region(board+XSURF_IRQ1, 0x8, "IDE")) {
+		अगर(type != BOARD_XSURF) अणु
+			अगर (!request_mem_region(board+BUDDHA_BASE1, 0x800, "IDE"))
+				जारी;
+		पूर्ण अन्यथा अणु
+			अगर (!request_mem_region(board+XSURF_BASE1, 0x1000, "IDE"))
+				जारी;
+			अगर (!request_mem_region(board+XSURF_BASE2, 0x1000, "IDE"))
+				जाओ fail_base2;
+			अगर (!request_mem_region(board+XSURF_IRQ1, 0x8, "IDE")) अणु
 				release_mem_region(board+XSURF_BASE2, 0x1000);
 fail_base2:
 				release_mem_region(board+XSURF_BASE1, 0x1000);
-				continue;
-			}
-		}	  
-		buddha_board = (unsigned long)ZTWO_VADDR(board);
+				जारी;
+			पूर्ण
+		पूर्ण	  
+		buddha_board = (अचिन्हित दीर्घ)ZTWO_VADDR(board);
 		
-		/* write to BUDDHA_IRQ_MR to enable the board IRQ */
-		/* X-Surf doesn't have this.  IRQs are always on */
-		if (type != BOARD_XSURF)
-			z_writeb(0, buddha_board+BUDDHA_IRQ_MR);
+		/* ग_लिखो to BUDDHA_IRQ_MR to enable the board IRQ */
+		/* X-Surf करोesn't have this.  IRQs are always on */
+		अगर (type != BOARD_XSURF)
+			z_ग_लिखोb(0, buddha_board+BUDDHA_IRQ_MR);
 
-		printk(KERN_INFO "ide: %s IDE controller\n",
+		prपूर्णांकk(KERN_INFO "ide: %s IDE controller\n",
 				 buddha_board_name[type]);
 
-		for (i = 0; i < buddha_num_hwifs; i++) {
-			unsigned long base, ctl, irq_port;
+		क्रम (i = 0; i < buddha_num_hwअगरs; i++) अणु
+			अचिन्हित दीर्घ base, ctl, irq_port;
 
-			if (type != BOARD_XSURF) {
+			अगर (type != BOARD_XSURF) अणु
 				base = buddha_board + buddha_bases[i];
 				ctl = base + BUDDHA_CONTROL;
 				irq_port = buddha_board + buddha_irqports[i];
-			} else {
+			पूर्ण अन्यथा अणु
 				base = buddha_board + xsurf_bases[i];
 				/* X-Surf has no CS1* (Control/AltStat) */
 				ctl = 0;
 				irq_port = buddha_board + xsurf_irqports[i];
-			}
+			पूर्ण
 
 			buddha_setup_ports(&hw[i], base, ctl, irq_port);
 
 			hws[i] = &hw[i];
-		}
+		पूर्ण
 
-		ide_host_add(&d, hws, i, NULL);
-	}
+		ide_host_add(&d, hws, i, शून्य);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(buddha_init);
 

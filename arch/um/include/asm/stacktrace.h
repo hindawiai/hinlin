@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_UML_STACKTRACE_H
-#define _ASM_UML_STACKTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_UML_STACKTRACE_H
+#घोषणा _ASM_UML_STACKTRACE_H
 
-#include <linux/uaccess.h>
-#include <linux/ptrace.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ptrace.h>
 
-struct stack_frame {
-	struct stack_frame *next_frame;
-	unsigned long return_address;
-};
+काष्ठा stack_frame अणु
+	काष्ठा stack_frame *next_frame;
+	अचिन्हित दीर्घ वापस_address;
+पूर्ण;
 
-struct stacktrace_ops {
-	void (*address)(void *data, unsigned long address, int reliable);
-};
+काष्ठा stacktrace_ops अणु
+	व्योम (*address)(व्योम *data, अचिन्हित दीर्घ address, पूर्णांक reliable);
+पूर्ण;
 
-#ifdef CONFIG_FRAME_POINTER
-static inline unsigned long
-get_frame_pointer(struct task_struct *task, struct pt_regs *segv_regs)
-{
-	if (!task || task == current)
-		return segv_regs ? PT_REGS_BP(segv_regs) : current_bp();
-	return KSTK_EBP(task);
-}
-#else
-static inline unsigned long
-get_frame_pointer(struct task_struct *task, struct pt_regs *segv_regs)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_FRAME_POINTER
+अटल अंतरभूत अचिन्हित दीर्घ
+get_frame_poपूर्णांकer(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *segv_regs)
+अणु
+	अगर (!task || task == current)
+		वापस segv_regs ? PT_REGS_BP(segv_regs) : current_bp();
+	वापस KSTK_EBP(task);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत अचिन्हित दीर्घ
+get_frame_poपूर्णांकer(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *segv_regs)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static inline unsigned long
-*get_stack_pointer(struct task_struct *task, struct pt_regs *segv_regs)
-{
-	if (!task || task == current)
-		return segv_regs ? (unsigned long *)PT_REGS_SP(segv_regs) : current_sp();
-	return (unsigned long *)KSTK_ESP(task);
-}
+अटल अंतरभूत अचिन्हित दीर्घ
+*get_stack_poपूर्णांकer(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *segv_regs)
+अणु
+	अगर (!task || task == current)
+		वापस segv_regs ? (अचिन्हित दीर्घ *)PT_REGS_SP(segv_regs) : current_sp();
+	वापस (अचिन्हित दीर्घ *)KSTK_ESP(task);
+पूर्ण
 
-void dump_trace(struct task_struct *tsk, const struct stacktrace_ops *ops, void *data);
+व्योम dump_trace(काष्ठा task_काष्ठा *tsk, स्थिर काष्ठा stacktrace_ops *ops, व्योम *data);
 
-#endif /* _ASM_UML_STACKTRACE_H */
+#पूर्ण_अगर /* _ASM_UML_STACKTRACE_H */

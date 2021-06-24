@@ -1,105 +1,106 @@
-/* SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-2-Clause) */
-#ifndef LIBFDT_INTERNAL_H
-#define LIBFDT_INTERNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-or-later OR BSD-2-Clause) */
+#अगर_अघोषित LIBFDT_INTERNAL_H
+#घोषणा LIBFDT_INTERNAL_H
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
  */
-#include <fdt.h>
+#समावेश <fdt.h>
 
-#define FDT_ALIGN(x, a)		(((x) + (a) - 1) & ~((a) - 1))
-#define FDT_TAGALIGN(x)		(FDT_ALIGN((x), FDT_TAGSIZE))
+#घोषणा FDT_ALIGN(x, a)		(((x) + (a) - 1) & ~((a) - 1))
+#घोषणा FDT_TAGALIGN(x)		(FDT_ALIGN((x), FDT_TAGSIZE))
 
-int32_t fdt_ro_probe_(const void *fdt);
-#define FDT_RO_PROBE(fdt)					\
-	{							\
-		int32_t totalsize_;				\
-		if ((totalsize_ = fdt_ro_probe_(fdt)) < 0)	\
-			return totalsize_;			\
-	}
+पूर्णांक32_t fdt_ro_probe_(स्थिर व्योम *fdt);
+#घोषणा FDT_RO_PROBE(fdt)					\
+	अणु							\
+		पूर्णांक32_t totalsize_;				\
+		अगर ((totalsize_ = fdt_ro_probe_(fdt)) < 0)	\
+			वापस totalsize_;			\
+	पूर्ण
 
-int fdt_check_node_offset_(const void *fdt, int offset);
-int fdt_check_prop_offset_(const void *fdt, int offset);
-const char *fdt_find_string_(const char *strtab, int tabsize, const char *s);
-int fdt_node_end_offset_(void *fdt, int nodeoffset);
+पूर्णांक fdt_check_node_offset_(स्थिर व्योम *fdt, पूर्णांक offset);
+पूर्णांक fdt_check_prop_offset_(स्थिर व्योम *fdt, पूर्णांक offset);
+स्थिर अक्षर *fdt_find_string_(स्थिर अक्षर *strtab, पूर्णांक tअसलize, स्थिर अक्षर *s);
+पूर्णांक fdt_node_end_offset_(व्योम *fdt, पूर्णांक nodeoffset);
 
-static inline const void *fdt_offset_ptr_(const void *fdt, int offset)
-{
-	return (const char *)fdt + fdt_off_dt_struct(fdt) + offset;
-}
+अटल अंतरभूत स्थिर व्योम *fdt_offset_ptr_(स्थिर व्योम *fdt, पूर्णांक offset)
+अणु
+	वापस (स्थिर अक्षर *)fdt + fdt_off_dt_काष्ठा(fdt) + offset;
+पूर्ण
 
-static inline void *fdt_offset_ptr_w_(void *fdt, int offset)
-{
-	return (void *)(uintptr_t)fdt_offset_ptr_(fdt, offset);
-}
+अटल अंतरभूत व्योम *fdt_offset_ptr_w_(व्योम *fdt, पूर्णांक offset)
+अणु
+	वापस (व्योम *)(uपूर्णांकptr_t)fdt_offset_ptr_(fdt, offset);
+पूर्ण
 
-static inline const struct fdt_reserve_entry *fdt_mem_rsv_(const void *fdt, int n)
-{
-	const struct fdt_reserve_entry *rsv_table =
-		(const struct fdt_reserve_entry *)
-		((const char *)fdt + fdt_off_mem_rsvmap(fdt));
+अटल अंतरभूत स्थिर काष्ठा fdt_reserve_entry *fdt_mem_rsv_(स्थिर व्योम *fdt, पूर्णांक n)
+अणु
+	स्थिर काष्ठा fdt_reserve_entry *rsv_table =
+		(स्थिर काष्ठा fdt_reserve_entry *)
+		((स्थिर अक्षर *)fdt + fdt_off_mem_rsvmap(fdt));
 
-	return rsv_table + n;
-}
-static inline struct fdt_reserve_entry *fdt_mem_rsv_w_(void *fdt, int n)
-{
-	return (void *)(uintptr_t)fdt_mem_rsv_(fdt, n);
-}
+	वापस rsv_table + n;
+पूर्ण
+अटल अंतरभूत काष्ठा fdt_reserve_entry *fdt_mem_rsv_w_(व्योम *fdt, पूर्णांक n)
+अणु
+	वापस (व्योम *)(uपूर्णांकptr_t)fdt_mem_rsv_(fdt, n);
+पूर्ण
 
 /*
  * Internal helpers to access tructural elements of the device tree
- * blob (rather than for exaple reading integers from within property
+ * blob (rather than क्रम exaple पढ़ोing पूर्णांकegers from within property
  * values).  We assume that we are either given a naturally aligned
- * address for the platform or if we are not, we are on a platform
- * where unaligned memory reads will be handled in a graceful manner.
- * If not the external helpers fdtXX_ld() from libfdt.h can be used
+ * address क्रम the platक्रमm or अगर we are not, we are on a platक्रमm
+ * where unaligned memory पढ़ोs will be handled in a graceful manner.
+ * If not the बाह्यal helpers fdtXX_ld() from libfdt.h can be used
  * instead.
  */
-static inline uint32_t fdt32_ld_(const fdt32_t *p)
-{
-	return fdt32_to_cpu(*p);
-}
+अटल अंतरभूत uपूर्णांक32_t fdt32_ld_(स्थिर fdt32_t *p)
+अणु
+	वापस fdt32_to_cpu(*p);
+पूर्ण
 
-static inline uint64_t fdt64_ld_(const fdt64_t *p)
-{
-	return fdt64_to_cpu(*p);
-}
+अटल अंतरभूत uपूर्णांक64_t fdt64_ld_(स्थिर fdt64_t *p)
+अणु
+	वापस fdt64_to_cpu(*p);
+पूर्ण
 
-#define FDT_SW_MAGIC		(~FDT_MAGIC)
+#घोषणा FDT_SW_MAGIC		(~FDT_MAGIC)
 
 /**********************************************************************/
 /* Checking controls                                                  */
 /**********************************************************************/
 
-#ifndef FDT_ASSUME_MASK
-#define FDT_ASSUME_MASK 0
-#endif
+#अगर_अघोषित FDT_ASSUME_MASK
+#घोषणा FDT_ASSUME_MASK 0
+#पूर्ण_अगर
 
 /*
  * Defines assumptions which can be enabled. Each of these can be enabled
- * individually. For maximum safety, don't enable any assumptions!
+ * inभागidually. For maximum safety, करोn't enable any assumptions!
  *
  * For minimal code size and no safety, use ASSUME_PERFECT at your own risk.
  * You should have another method of validating the device tree, such as a
- * signature or hash check before using libfdt.
+ * signature or hash check beक्रमe using libfdt.
  *
  * For situations where security is not a concern it may be safe to enable
  * ASSUME_SANE.
  */
-enum {
+क्रमागत अणु
 	/*
-	 * This does essentially no checks. Only the latest device-tree
+	 * This करोes essentially no checks. Only the latest device-tree
 	 * version is correctly handled. Inconsistencies or errors in the device
 	 * tree may cause undefined behaviour or crashes. Invalid parameters
-	 * passed to libfdt may do the same.
+	 * passed to libfdt may करो the same.
 	 *
-	 * If an error occurs when modifying the tree it may leave the tree in
-	 * an intermediate (but valid) state. As an example, adding a property
+	 * If an error occurs when modअगरying the tree it may leave the tree in
+	 * an पूर्णांकermediate (but valid) state. As an example, adding a property
 	 * where there is insufficient space may result in the property name
 	 * being added to the string table even though the property itself is
-	 * not added to the struct section.
+	 * not added to the काष्ठा section.
 	 *
-	 * Only use this if you have a fully validated device tree with
+	 * Only use this अगर you have a fully validated device tree with
 	 * the latest supported version and wish to minimise code size.
 	 */
 	ASSUME_PERFECT		= 0xff,
@@ -127,22 +128,22 @@ enum {
 	 * extensive checking of parameters and the device tree, making various
 	 * assumptions about correctness.
 	 *
-	 * It doesn't make sense to enable this assumption unless
+	 * It करोesn't make sense to enable this assumption unless
 	 * ASSUME_VALID_DTB is also enabled.
 	 */
 	ASSUME_VALID_INPUT	= 1 << 1,
 
 	/*
-	 * This disables checks for device-tree version and removes all code
+	 * This disables checks क्रम device-tree version and हटाओs all code
 	 * which handles older versions.
 	 *
-	 * Only enable this if you know you have a device tree with the latest
+	 * Only enable this अगर you know you have a device tree with the latest
 	 * version.
 	 */
 	ASSUME_LATEST		= 1 << 2,
 
 	/*
-	 * This assumes that it is OK for a failed addition to the device tree,
+	 * This assumes that it is OK क्रम a failed addition to the device tree,
 	 * due to lack of space or some other problem, to skip any rollback
 	 * steps (such as dropping the property name from the string table).
 	 * This is safe to enable in most circumstances, even though it may
@@ -152,41 +153,41 @@ enum {
 
 	/*
 	 * This assumes that the device tree components appear in a 'convenient'
-	 * order, i.e. the memory reservation block first, then the structure
+	 * order, i.e. the memory reservation block first, then the काष्ठाure
 	 * block and finally the string block.
 	 *
-	 * This order is not specified by the device-tree specification,
+	 * This order is not specअगरied by the device-tree specअगरication,
 	 * but is expected by libfdt. The device-tree compiler always created
 	 * device trees with this order.
 	 *
-	 * This assumption disables a check in fdt_open_into() and removes the
-	 * ability to fix the problem there. This is safe if you know that the
+	 * This assumption disables a check in fdt_खोलो_पूर्णांकo() and हटाओs the
+	 * ability to fix the problem there. This is safe अगर you know that the
 	 * device tree is correctly ordered. See fdt_blocks_misordered_().
 	 */
 	ASSUME_LIBFDT_ORDER	= 1 << 4,
 
 	/*
-	 * This assumes that libfdt itself does not have any internal bugs. It
+	 * This assumes that libfdt itself करोes not have any पूर्णांकernal bugs. It
 	 * drops certain checks that should never be needed unless libfdt has an
 	 * undiscovered bug.
 	 *
 	 * This can generally be considered safe to enable.
 	 */
 	ASSUME_LIBFDT_FLAWLESS	= 1 << 5,
-};
+पूर्ण;
 
 /**
- * can_assume_() - check if a particular assumption is enabled
+ * can_assume_() - check अगर a particular assumption is enabled
  *
  * @mask: Mask to check (ASSUME_...)
- * @return true if that assumption is enabled, else false
+ * @वापस true अगर that assumption is enabled, अन्यथा false
  */
-static inline bool can_assume_(int mask)
-{
-	return FDT_ASSUME_MASK & mask;
-}
+अटल अंतरभूत bool can_assume_(पूर्णांक mask)
+अणु
+	वापस FDT_ASSUME_MASK & mask;
+पूर्ण
 
-/** helper macros for checking assumptions */
-#define can_assume(_assume)	can_assume_(ASSUME_ ## _assume)
+/** helper macros क्रम checking assumptions */
+#घोषणा can_assume(_assume)	can_assume_(ASSUME_ ## _assume)
 
-#endif /* LIBFDT_INTERNAL_H */
+#पूर्ण_अगर /* LIBFDT_INTERNAL_H */

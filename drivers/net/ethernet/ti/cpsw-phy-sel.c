@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Texas Instruments Ethernet Switch Driver
  *
  * Copyright (C) 2013 Texas Instruments
@@ -7,176 +8,176 @@
  *
  */
 
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/netdevice.h>
-#include <linux/phy.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include "cpsw.h"
+#समावेश "cpsw.h"
 
-/* AM33xx SoC specific definitions for the CONTROL port */
-#define AM33XX_GMII_SEL_MODE_MII	0
-#define AM33XX_GMII_SEL_MODE_RMII	1
-#define AM33XX_GMII_SEL_MODE_RGMII	2
+/* AM33xx SoC specअगरic definitions क्रम the CONTROL port */
+#घोषणा AM33XX_GMII_SEL_MODE_MII	0
+#घोषणा AM33XX_GMII_SEL_MODE_RMII	1
+#घोषणा AM33XX_GMII_SEL_MODE_RGMII	2
 
-#define AM33XX_GMII_SEL_RMII2_IO_CLK_EN	BIT(7)
-#define AM33XX_GMII_SEL_RMII1_IO_CLK_EN	BIT(6)
-#define AM33XX_GMII_SEL_RGMII2_IDMODE	BIT(5)
-#define AM33XX_GMII_SEL_RGMII1_IDMODE	BIT(4)
+#घोषणा AM33XX_GMII_SEL_RMII2_IO_CLK_EN	BIT(7)
+#घोषणा AM33XX_GMII_SEL_RMII1_IO_CLK_EN	BIT(6)
+#घोषणा AM33XX_GMII_SEL_RGMII2_IDMODE	BIT(5)
+#घोषणा AM33XX_GMII_SEL_RGMII1_IDMODE	BIT(4)
 
-#define GMII_SEL_MODE_MASK		0x3
+#घोषणा GMII_SEL_MODE_MASK		0x3
 
-struct cpsw_phy_sel_priv {
-	struct device	*dev;
+काष्ठा cpsw_phy_sel_priv अणु
+	काष्ठा device	*dev;
 	u32 __iomem	*gmii_sel;
-	bool		rmii_clock_external;
-	void (*cpsw_phy_sel)(struct cpsw_phy_sel_priv *priv,
-			     phy_interface_t phy_mode, int slave);
-};
+	bool		rmii_घड़ी_बाह्यal;
+	व्योम (*cpsw_phy_sel)(काष्ठा cpsw_phy_sel_priv *priv,
+			     phy_पूर्णांकerface_t phy_mode, पूर्णांक slave);
+पूर्ण;
 
 
-static void cpsw_gmii_sel_am3352(struct cpsw_phy_sel_priv *priv,
-				 phy_interface_t phy_mode, int slave)
-{
+अटल व्योम cpsw_gmii_sel_am3352(काष्ठा cpsw_phy_sel_priv *priv,
+				 phy_पूर्णांकerface_t phy_mode, पूर्णांक slave)
+अणु
 	u32 reg;
 	u32 mask;
 	u32 mode = 0;
 	bool rgmii_id = false;
 
-	reg = readl(priv->gmii_sel);
+	reg = पढ़ोl(priv->gmii_sel);
 
-	switch (phy_mode) {
-	case PHY_INTERFACE_MODE_RMII:
+	चयन (phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RMII:
 		mode = AM33XX_GMII_SEL_MODE_RMII;
-		break;
+		अवरोध;
 
-	case PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII:
 		mode = AM33XX_GMII_SEL_MODE_RGMII;
-		break;
+		अवरोध;
 
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		mode = AM33XX_GMII_SEL_MODE_RGMII;
 		rgmii_id = true;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(priv->dev,
 			 "Unsupported PHY mode: \"%s\". Defaulting to MII.\n",
 			phy_modes(phy_mode));
 		fallthrough;
-	case PHY_INTERFACE_MODE_MII:
+	हाल PHY_INTERFACE_MODE_MII:
 		mode = AM33XX_GMII_SEL_MODE_MII;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mask = GMII_SEL_MODE_MASK << (slave * 2) | BIT(slave + 6);
 	mask |= BIT(slave + 4);
 	mode <<= slave * 2;
 
-	if (priv->rmii_clock_external) {
-		if (slave == 0)
+	अगर (priv->rmii_घड़ी_बाह्यal) अणु
+		अगर (slave == 0)
 			mode |= AM33XX_GMII_SEL_RMII1_IO_CLK_EN;
-		else
+		अन्यथा
 			mode |= AM33XX_GMII_SEL_RMII2_IO_CLK_EN;
-	}
+	पूर्ण
 
-	if (rgmii_id) {
-		if (slave == 0)
+	अगर (rgmii_id) अणु
+		अगर (slave == 0)
 			mode |= AM33XX_GMII_SEL_RGMII1_IDMODE;
-		else
+		अन्यथा
 			mode |= AM33XX_GMII_SEL_RGMII2_IDMODE;
-	}
+	पूर्ण
 
 	reg &= ~mask;
 	reg |= mode;
 
-	writel(reg, priv->gmii_sel);
-}
+	ग_लिखोl(reg, priv->gmii_sel);
+पूर्ण
 
-static void cpsw_gmii_sel_dra7xx(struct cpsw_phy_sel_priv *priv,
-				 phy_interface_t phy_mode, int slave)
-{
+अटल व्योम cpsw_gmii_sel_dra7xx(काष्ठा cpsw_phy_sel_priv *priv,
+				 phy_पूर्णांकerface_t phy_mode, पूर्णांक slave)
+अणु
 	u32 reg;
 	u32 mask;
 	u32 mode = 0;
 
-	reg = readl(priv->gmii_sel);
+	reg = पढ़ोl(priv->gmii_sel);
 
-	switch (phy_mode) {
-	case PHY_INTERFACE_MODE_RMII:
+	चयन (phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_RMII:
 		mode = AM33XX_GMII_SEL_MODE_RMII;
-		break;
+		अवरोध;
 
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		mode = AM33XX_GMII_SEL_MODE_RGMII;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(priv->dev,
 			 "Unsupported PHY mode: \"%s\". Defaulting to MII.\n",
 			phy_modes(phy_mode));
 		fallthrough;
-	case PHY_INTERFACE_MODE_MII:
+	हाल PHY_INTERFACE_MODE_MII:
 		mode = AM33XX_GMII_SEL_MODE_MII;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (slave) {
-	case 0:
+	चयन (slave) अणु
+	हाल 0:
 		mask = GMII_SEL_MODE_MASK;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		mask = GMII_SEL_MODE_MASK << 4;
 		mode <<= 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(priv->dev, "invalid slave number...\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (priv->rmii_clock_external)
+	अगर (priv->rmii_घड़ी_बाह्यal)
 		dev_err(priv->dev, "RMII External clock is not supported\n");
 
 	reg &= ~mask;
 	reg |= mode;
 
-	writel(reg, priv->gmii_sel);
-}
+	ग_लिखोl(reg, priv->gmii_sel);
+पूर्ण
 
-static struct platform_driver cpsw_phy_sel_driver;
-static int match(struct device *dev, const void *data)
-{
-	const struct device_node *node = (const struct device_node *)data;
-	return dev->of_node == node &&
+अटल काष्ठा platक्रमm_driver cpsw_phy_sel_driver;
+अटल पूर्णांक match(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा device_node *node = (स्थिर काष्ठा device_node *)data;
+	वापस dev->of_node == node &&
 		dev->driver == &cpsw_phy_sel_driver.driver;
-}
+पूर्ण
 
-void cpsw_phy_sel(struct device *dev, phy_interface_t phy_mode, int slave)
-{
-	struct device_node *node;
-	struct cpsw_phy_sel_priv *priv;
+व्योम cpsw_phy_sel(काष्ठा device *dev, phy_पूर्णांकerface_t phy_mode, पूर्णांक slave)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा cpsw_phy_sel_priv *priv;
 
 	node = of_parse_phandle(dev->of_node, "cpsw-phy-sel", 0);
-	if (!node) {
+	अगर (!node) अणु
 		node = of_get_child_by_name(dev->of_node, "cpsw-phy-sel");
-		if (!node) {
+		अगर (!node) अणु
 			dev_err(dev, "Phy mode driver DT not found\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	dev = bus_find_device(&platform_bus_type, NULL, node, match);
-	if (!dev) {
+	dev = bus_find_device(&platक्रमm_bus_type, शून्य, node, match);
+	अगर (!dev) अणु
 		dev_err(dev, "unable to find platform device for %pOF\n", node);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	priv = dev_get_drvdata(dev);
 
@@ -185,62 +186,62 @@ void cpsw_phy_sel(struct device *dev, phy_interface_t phy_mode, int slave)
 	put_device(dev);
 out:
 	of_node_put(node);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cpsw_phy_sel);
 
-static const struct of_device_id cpsw_phy_sel_id_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id cpsw_phy_sel_id_table[] = अणु
+	अणु
 		.compatible	= "ti,am3352-cpsw-phy-sel",
 		.data		= &cpsw_gmii_sel_am3352,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible	= "ti,dra7xx-cpsw-phy-sel",
 		.data		= &cpsw_gmii_sel_dra7xx,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible	= "ti,am43xx-cpsw-phy-sel",
 		.data		= &cpsw_gmii_sel_am3352,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int cpsw_phy_sel_probe(struct platform_device *pdev)
-{
-	struct resource	*res;
-	const struct of_device_id *of_id;
-	struct cpsw_phy_sel_priv *priv;
+अटल पूर्णांक cpsw_phy_sel_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource	*res;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा cpsw_phy_sel_priv *priv;
 
 	of_id = of_match_node(cpsw_phy_sel_id_table, pdev->dev.of_node);
-	if (!of_id)
-		return -EINVAL;
+	अगर (!of_id)
+		वापस -EINVAL;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		dev_err(&pdev->dev, "unable to alloc memory for cpsw phy sel\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	priv->dev = &pdev->dev;
 	priv->cpsw_phy_sel = of_id->data;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "gmii-sel");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "gmii-sel");
 	priv->gmii_sel = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(priv->gmii_sel))
-		return PTR_ERR(priv->gmii_sel);
+	अगर (IS_ERR(priv->gmii_sel))
+		वापस PTR_ERR(priv->gmii_sel);
 
-	if (of_find_property(pdev->dev.of_node, "rmii-clock-ext", NULL))
-		priv->rmii_clock_external = true;
+	अगर (of_find_property(pdev->dev.of_node, "rmii-clock-ext", शून्य))
+		priv->rmii_घड़ी_बाह्यal = true;
 
 	dev_set_drvdata(&pdev->dev, priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver cpsw_phy_sel_driver = {
+अटल काष्ठा platक्रमm_driver cpsw_phy_sel_driver = अणु
 	.probe		= cpsw_phy_sel_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "cpsw-phy-sel",
 		.of_match_table = cpsw_phy_sel_id_table,
-	},
-};
-builtin_platform_driver(cpsw_phy_sel_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(cpsw_phy_sel_driver);

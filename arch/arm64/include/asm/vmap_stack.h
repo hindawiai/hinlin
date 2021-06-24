@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2017 Arm Ltd.
-#ifndef __ASM_VMAP_STACK_H
-#define __ASM_VMAP_STACK_H
+#अगर_अघोषित __ASM_VMAP_STACK_H
+#घोषणा __ASM_VMAP_STACK_H
 
-#include <linux/bug.h>
-#include <linux/gfp.h>
-#include <linux/kconfig.h>
-#include <linux/vmalloc.h>
-#include <linux/pgtable.h>
-#include <asm/memory.h>
-#include <asm/thread_info.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/kconfig.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/pgtable.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
 
 /*
  * To ensure that VMAP'd stack overflow detection works correctly, all VMAP'd
  * stacks need to have the same alignment.
  */
-static inline unsigned long *arch_alloc_vmap_stack(size_t stack_size, int node)
-{
+अटल अंतरभूत अचिन्हित दीर्घ *arch_alloc_vmap_stack(माप_प्रकार stack_size, पूर्णांक node)
+अणु
 	BUILD_BUG_ON(!IS_ENABLED(CONFIG_VMAP_STACK));
 
-	return __vmalloc_node(stack_size, THREAD_ALIGN, THREADINFO_GFP, node,
-			__builtin_return_address(0));
-}
+	वापस __vदो_स्मृति_node(stack_size, THREAD_ALIGN, THREADINFO_GFP, node,
+			__builtin_वापस_address(0));
+पूर्ण
 
-#endif /* __ASM_VMAP_STACK_H */
+#पूर्ण_अगर /* __ASM_VMAP_STACK_H */

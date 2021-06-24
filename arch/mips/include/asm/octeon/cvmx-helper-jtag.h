@@ -1,3 +1,4 @@
+<शैली गुरु>
 /***********************license start***************
  * Author: Cavium Networks
  *
@@ -6,38 +7,38 @@
  *
  * Copyright (c) 2003-2008 Cavium Networks
  *
- * This file is free software; you can redistribute it and/or modify
+ * This file is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License for more
+ * NONINFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this file; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ * aदीर्घ with this file; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fअगरth Floor, Boston, MA 02110-1301 USA
  * or visit http://www.gnu.org/licenses/.
  *
- * This file may also be available under a different license from Cavium.
- * Contact Cavium Networks for more information
+ * This file may also be available under a dअगरferent license from Cavium.
+ * Contact Cavium Networks क्रम more inक्रमmation
  ***********************license end**************************************/
 
 /**
  * @file
  *
- *  Helper utilities for qlm_jtag.
+ *  Helper utilities क्रम qlm_jtag.
  *
  */
 
-#ifndef __CVMX_HELPER_JTAG_H__
-#define __CVMX_HELPER_JTAG_H__
+#अगर_अघोषित __CVMX_HELPER_JTAG_H__
+#घोषणा __CVMX_HELPER_JTAG_H__
 
-extern void cvmx_helper_qlm_jtag_init(void);
-extern uint32_t cvmx_helper_qlm_jtag_shift(int qlm, int bits, uint32_t data);
-extern void cvmx_helper_qlm_jtag_shift_zeros(int qlm, int bits);
-extern void cvmx_helper_qlm_jtag_update(int qlm);
+बाह्य व्योम cvmx_helper_qlm_jtag_init(व्योम);
+बाह्य uपूर्णांक32_t cvmx_helper_qlm_jtag_shअगरt(पूर्णांक qlm, पूर्णांक bits, uपूर्णांक32_t data);
+बाह्य व्योम cvmx_helper_qlm_jtag_shअगरt_zeros(पूर्णांक qlm, पूर्णांक bits);
+बाह्य व्योम cvmx_helper_qlm_jtag_update(पूर्णांक qlm);
 
-#endif /* __CVMX_HELPER_JTAG_H__ */
+#पूर्ण_अगर /* __CVMX_HELPER_JTAG_H__ */

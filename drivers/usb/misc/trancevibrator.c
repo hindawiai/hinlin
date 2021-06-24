@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * PlayStation 2 Trance Vibrator driver
  *
@@ -6,52 +7,52 @@
  */
 
 /* Standard include files */
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/usb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
 
-#define DRIVER_AUTHOR "Sam Hocevar, sam@zoy.org"
-#define DRIVER_DESC "PlayStation 2 Trance Vibrator driver"
+#घोषणा DRIVER_AUTHOR "Sam Hocevar, sam@zoy.org"
+#घोषणा DRIVER_DESC "PlayStation 2 Trance Vibrator driver"
 
-#define TRANCEVIBRATOR_VENDOR_ID	0x0b49	/* ASCII Corporation */
-#define TRANCEVIBRATOR_PRODUCT_ID	0x064f	/* Trance Vibrator */
+#घोषणा TRANCEVIBRATOR_VENDOR_ID	0x0b49	/* ASCII Corporation */
+#घोषणा TRANCEVIBRATOR_PRODUCT_ID	0x064f	/* Trance Vibrator */
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(TRANCEVIBRATOR_VENDOR_ID, TRANCEVIBRATOR_PRODUCT_ID) },
-	{ },
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(TRANCEVIBRATOR_VENDOR_ID, TRANCEVIBRATOR_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE (usb, id_table);
 
-/* Driver-local specific stuff */
-struct trancevibrator {
-	struct usb_device *udev;
-	unsigned int speed;
-};
+/* Driver-local specअगरic stuff */
+काष्ठा trancevibrator अणु
+	काष्ठा usb_device *udev;
+	अचिन्हित पूर्णांक speed;
+पूर्ण;
 
-static ssize_t speed_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct trancevibrator *tv = usb_get_intfdata(intf);
+अटल sमाप_प्रकार speed_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा trancevibrator *tv = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	return sprintf(buf, "%d\n", tv->speed);
-}
+	वापस प्र_लिखो(buf, "%d\n", tv->speed);
+पूर्ण
 
-static ssize_t speed_store(struct device *dev, struct device_attribute *attr,
-			 const char *buf, size_t count)
-{
-	struct usb_interface *intf = to_usb_interface(dev);
-	struct trancevibrator *tv = usb_get_intfdata(intf);
-	int temp, retval, old;
+अटल sमाप_प्रकार speed_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(dev);
+	काष्ठा trancevibrator *tv = usb_get_पूर्णांकfdata(पूर्णांकf);
+	पूर्णांक temp, retval, old;
 
-	retval = kstrtoint(buf, 10, &temp);
-	if (retval)
-		return retval;
-	if (temp > 255)
+	retval = kstrtoपूर्णांक(buf, 10, &temp);
+	अगर (retval)
+		वापस retval;
+	अगर (temp > 255)
 		temp = 255;
-	else if (temp < 0)
+	अन्यथा अगर (temp < 0)
 		temp = 0;
 	old = tv->speed;
 	tv->speed = temp;
@@ -60,66 +61,66 @@ static ssize_t speed_store(struct device *dev, struct device_attribute *attr,
 
 	/* Set speed */
 	retval = usb_control_msg(tv->udev, usb_sndctrlpipe(tv->udev, 0),
-				 0x01, /* vendor request: set speed */
-				 USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
+				 0x01, /* venकरोr request: set speed */
+				 USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_OTHER,
 				 tv->speed, /* speed value */
-				 0, NULL, 0, USB_CTRL_SET_TIMEOUT);
-	if (retval) {
+				 0, शून्य, 0, USB_CTRL_SET_TIMEOUT);
+	अगर (retval) अणु
 		tv->speed = old;
 		dev_dbg(&tv->udev->dev, "retval = %d\n", retval);
-		return retval;
-	}
-	return count;
-}
-static DEVICE_ATTR_RW(speed);
+		वापस retval;
+	पूर्ण
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(speed);
 
-static struct attribute *tv_attrs[] = {
+अटल काष्ठा attribute *tv_attrs[] = अणु
 	&dev_attr_speed.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(tv);
 
-static int tv_probe(struct usb_interface *interface,
-		    const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct trancevibrator *dev;
-	int retval;
+अटल पूर्णांक tv_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+		    स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा trancevibrator *dev;
+	पूर्णांक retval;
 
-	dev = kzalloc(sizeof(struct trancevibrator), GFP_KERNEL);
-	if (!dev) {
+	dev = kzalloc(माप(काष्ठा trancevibrator), GFP_KERNEL);
+	अगर (!dev) अणु
 		retval = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	dev->udev = usb_get_dev(udev);
-	usb_set_intfdata(interface, dev);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
 
-	return 0;
+	वापस 0;
 
 error:
-	kfree(dev);
-	return retval;
-}
+	kमुक्त(dev);
+	वापस retval;
+पूर्ण
 
-static void tv_disconnect(struct usb_interface *interface)
-{
-	struct trancevibrator *dev;
+अटल व्योम tv_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा trancevibrator *dev;
 
-	dev = usb_get_intfdata (interface);
-	usb_set_intfdata(interface, NULL);
+	dev = usb_get_पूर्णांकfdata (पूर्णांकerface);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
 	usb_put_dev(dev->udev);
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
-/* USB subsystem object */
-static struct usb_driver tv_driver = {
+/* USB subप्रणाली object */
+अटल काष्ठा usb_driver tv_driver = अणु
 	.name =		"trancevibrator",
 	.probe =	tv_probe,
 	.disconnect =	tv_disconnect,
 	.id_table =	id_table,
 	.dev_groups =	tv_groups,
-};
+पूर्ण;
 
 module_usb_driver(tv_driver);
 

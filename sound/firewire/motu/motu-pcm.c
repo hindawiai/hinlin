@@ -1,370 +1,371 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * motu-pcm.c - a part of driver for MOTU FireWire series
+ * motu-pcm.c - a part of driver क्रम MOTU FireWire series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto <o-takashi@sakamocchi.jp>
  */
 
-#include <sound/pcm_params.h>
-#include "motu.h"
+#समावेश <sound/pcm_params.h>
+#समावेश "motu.h"
 
-static int motu_rate_constraint(struct snd_pcm_hw_params *params,
-				struct snd_pcm_hw_rule *rule)
-{
-	struct snd_motu_packet_format *formats = rule->private;
+अटल पूर्णांक motu_rate_स्थिरraपूर्णांक(काष्ठा snd_pcm_hw_params *params,
+				काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_motu_packet_क्रमmat *क्रमmats = rule->निजी;
 
-	const struct snd_interval *c =
-		hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval *r =
-		hw_param_interval(params, SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_interval rates = {
-		.min = UINT_MAX, .max = 0, .integer = 1
-	};
-	unsigned int i, pcm_channels, rate, mode;
+	स्थिर काष्ठा snd_पूर्णांकerval *c =
+		hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval *r =
+		hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_RATE);
+	काष्ठा snd_पूर्णांकerval rates = अणु
+		.min = अच_पूर्णांक_उच्च, .max = 0, .पूर्णांकeger = 1
+	पूर्ण;
+	अचिन्हित पूर्णांक i, pcm_channels, rate, mode;
 
-	for (i = 0; i < ARRAY_SIZE(snd_motu_clock_rates); ++i) {
-		rate = snd_motu_clock_rates[i];
+	क्रम (i = 0; i < ARRAY_SIZE(snd_motu_घड़ी_rates); ++i) अणु
+		rate = snd_motu_घड़ी_rates[i];
 		mode = i / 2;
 
-		pcm_channels = formats->pcm_chunks[mode];
-		if (!snd_interval_test(c, pcm_channels))
-			continue;
+		pcm_channels = क्रमmats->pcm_chunks[mode];
+		अगर (!snd_पूर्णांकerval_test(c, pcm_channels))
+			जारी;
 
 		rates.min = min(rates.min, rate);
 		rates.max = max(rates.max, rate);
-	}
+	पूर्ण
 
-	return snd_interval_refine(r, &rates);
-}
+	वापस snd_पूर्णांकerval_refine(r, &rates);
+पूर्ण
 
-static int motu_channels_constraint(struct snd_pcm_hw_params *params,
-				    struct snd_pcm_hw_rule *rule)
-{
-	struct snd_motu_packet_format *formats = rule->private;
+अटल पूर्णांक motu_channels_स्थिरraपूर्णांक(काष्ठा snd_pcm_hw_params *params,
+				    काष्ठा snd_pcm_hw_rule *rule)
+अणु
+	काष्ठा snd_motu_packet_क्रमmat *क्रमmats = rule->निजी;
 
-	const struct snd_interval *r =
-		hw_param_interval_c(params, SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_interval *c =
-		hw_param_interval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
-	struct snd_interval channels = {
-		.min = UINT_MAX, .max = 0, .integer = 1
-	};
-	unsigned int i, pcm_channels, rate, mode;
+	स्थिर काष्ठा snd_पूर्णांकerval *r =
+		hw_param_पूर्णांकerval_c(params, SNDRV_PCM_HW_PARAM_RATE);
+	काष्ठा snd_पूर्णांकerval *c =
+		hw_param_पूर्णांकerval(params, SNDRV_PCM_HW_PARAM_CHANNELS);
+	काष्ठा snd_पूर्णांकerval channels = अणु
+		.min = अच_पूर्णांक_उच्च, .max = 0, .पूर्णांकeger = 1
+	पूर्ण;
+	अचिन्हित पूर्णांक i, pcm_channels, rate, mode;
 
-	for (i = 0; i < ARRAY_SIZE(snd_motu_clock_rates); ++i) {
-		rate = snd_motu_clock_rates[i];
+	क्रम (i = 0; i < ARRAY_SIZE(snd_motu_घड़ी_rates); ++i) अणु
+		rate = snd_motu_घड़ी_rates[i];
 		mode = i / 2;
 
-		if (!snd_interval_test(r, rate))
-			continue;
+		अगर (!snd_पूर्णांकerval_test(r, rate))
+			जारी;
 
-		pcm_channels = formats->pcm_chunks[mode];
+		pcm_channels = क्रमmats->pcm_chunks[mode];
 		channels.min = min(channels.min, pcm_channels);
 		channels.max = max(channels.max, pcm_channels);
-	}
+	पूर्ण
 
-	return snd_interval_refine(c, &channels);
-}
+	वापस snd_पूर्णांकerval_refine(c, &channels);
+पूर्ण
 
-static void limit_channels_and_rates(struct snd_motu *motu,
-				     struct snd_pcm_runtime *runtime,
-				     struct snd_motu_packet_format *formats)
-{
-	struct snd_pcm_hardware *hw = &runtime->hw;
-	unsigned int i, pcm_channels, rate, mode;
+अटल व्योम limit_channels_and_rates(काष्ठा snd_motu *motu,
+				     काष्ठा snd_pcm_runसमय *runसमय,
+				     काष्ठा snd_motu_packet_क्रमmat *क्रमmats)
+अणु
+	काष्ठा snd_pcm_hardware *hw = &runसमय->hw;
+	अचिन्हित पूर्णांक i, pcm_channels, rate, mode;
 
-	hw->channels_min = UINT_MAX;
+	hw->channels_min = अच_पूर्णांक_उच्च;
 	hw->channels_max = 0;
 
-	for (i = 0; i < ARRAY_SIZE(snd_motu_clock_rates); ++i) {
-		rate = snd_motu_clock_rates[i];
+	क्रम (i = 0; i < ARRAY_SIZE(snd_motu_घड़ी_rates); ++i) अणु
+		rate = snd_motu_घड़ी_rates[i];
 		mode = i / 2;
 
-		pcm_channels = formats->pcm_chunks[mode];
-		if (pcm_channels == 0)
-			continue;
+		pcm_channels = क्रमmats->pcm_chunks[mode];
+		अगर (pcm_channels == 0)
+			जारी;
 
 		hw->rates |= snd_pcm_rate_to_rate_bit(rate);
 		hw->channels_min = min(hw->channels_min, pcm_channels);
 		hw->channels_max = max(hw->channels_max, pcm_channels);
-	}
+	पूर्ण
 
-	snd_pcm_limit_hw_rates(runtime);
-}
+	snd_pcm_limit_hw_rates(runसमय);
+पूर्ण
 
-static int init_hw_info(struct snd_motu *motu,
-			struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct snd_pcm_hardware *hw = &runtime->hw;
-	struct amdtp_stream *stream;
-	struct snd_motu_packet_format *formats;
-	int err;
+अटल पूर्णांक init_hw_info(काष्ठा snd_motu *motu,
+			काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा snd_pcm_hardware *hw = &runसमय->hw;
+	काष्ठा amdtp_stream *stream;
+	काष्ठा snd_motu_packet_क्रमmat *क्रमmats;
+	पूर्णांक err;
 
-	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
-		hw->formats = SNDRV_PCM_FMTBIT_S32;
+	अगर (substream->stream == SNDRV_PCM_STREAM_CAPTURE) अणु
+		hw->क्रमmats = SNDRV_PCM_FMTBIT_S32;
 		stream = &motu->tx_stream;
-		formats = &motu->tx_packet_formats;
-	} else {
-		hw->formats = SNDRV_PCM_FMTBIT_S32;
+		क्रमmats = &motu->tx_packet_क्रमmats;
+	पूर्ण अन्यथा अणु
+		hw->क्रमmats = SNDRV_PCM_FMTBIT_S32;
 		stream = &motu->rx_stream;
-		formats = &motu->rx_packet_formats;
-	}
+		क्रमmats = &motu->rx_packet_क्रमmats;
+	पूर्ण
 
-	limit_channels_and_rates(motu, runtime, formats);
+	limit_channels_and_rates(motu, runसमय, क्रमmats);
 
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
-				  motu_rate_constraint, formats,
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_RATE,
+				  motu_rate_स्थिरraपूर्णांक, क्रमmats,
 				  SNDRV_PCM_HW_PARAM_CHANNELS, -1);
-	if (err < 0)
-		return err;
-	err = snd_pcm_hw_rule_add(runtime, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
-				  motu_channels_constraint, formats,
+	अगर (err < 0)
+		वापस err;
+	err = snd_pcm_hw_rule_add(runसमय, 0, SNDRV_PCM_HW_PARAM_CHANNELS,
+				  motu_channels_स्थिरraपूर्णांक, क्रमmats,
 				  SNDRV_PCM_HW_PARAM_RATE, -1);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return amdtp_motu_add_pcm_hw_constraints(stream, runtime);
-}
+	वापस amdtp_motu_add_pcm_hw_स्थिरraपूर्णांकs(stream, runसमय);
+पूर्ण
 
-static int pcm_open(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
-	struct amdtp_domain *d = &motu->domain;
-	enum snd_motu_clock_source src;
-	int err;
+अटल पूर्णांक pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
+	काष्ठा amdtp_करोमुख्य *d = &motu->करोमुख्य;
+	क्रमागत snd_motu_घड़ी_source src;
+	पूर्णांक err;
 
 	err = snd_motu_stream_lock_try(motu);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	mutex_lock(&motu->mutex);
 
-	err = snd_motu_stream_cache_packet_formats(motu);
-	if (err < 0)
-		goto err_locked;
+	err = snd_motu_stream_cache_packet_क्रमmats(motu);
+	अगर (err < 0)
+		जाओ err_locked;
 
 	err = init_hw_info(motu, substream);
-	if (err < 0)
-		goto err_locked;
+	अगर (err < 0)
+		जाओ err_locked;
 
-	err = snd_motu_protocol_get_clock_source(motu, &src);
-	if (err < 0)
-		goto err_locked;
+	err = snd_motu_protocol_get_घड़ी_source(motu, &src);
+	अगर (err < 0)
+		जाओ err_locked;
 
-	// When source of clock is not internal or any stream is reserved for
+	// When source of घड़ी is not पूर्णांकernal or any stream is reserved क्रम
 	// transmission of PCM frames, the available sampling rate is limited
 	// at current one.
-	if ((src != SND_MOTU_CLOCK_SOURCE_INTERNAL &&
+	अगर ((src != SND_MOTU_CLOCK_SOURCE_INTERNAL &&
 	     src != SND_MOTU_CLOCK_SOURCE_SPH) ||
-	    (motu->substreams_counter > 0 && d->events_per_period > 0)) {
-		unsigned int frames_per_period = d->events_per_period;
-		unsigned int frames_per_buffer = d->events_per_buffer;
-		unsigned int rate;
+	    (motu->substreams_counter > 0 && d->events_per_period > 0)) अणु
+		अचिन्हित पूर्णांक frames_per_period = d->events_per_period;
+		अचिन्हित पूर्णांक frames_per_buffer = d->events_per_buffer;
+		अचिन्हित पूर्णांक rate;
 
-		err = snd_motu_protocol_get_clock_rate(motu, &rate);
-		if (err < 0)
-			goto err_locked;
+		err = snd_motu_protocol_get_घड़ी_rate(motu, &rate);
+		अगर (err < 0)
+			जाओ err_locked;
 
-		substream->runtime->hw.rate_min = rate;
-		substream->runtime->hw.rate_max = rate;
+		substream->runसमय->hw.rate_min = rate;
+		substream->runसमय->hw.rate_max = rate;
 
-		if (frames_per_period > 0) {
-			err = snd_pcm_hw_constraint_minmax(substream->runtime,
+		अगर (frames_per_period > 0) अणु
+			err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
 					SNDRV_PCM_HW_PARAM_PERIOD_SIZE,
 					frames_per_period, frames_per_period);
-			if (err < 0)
-				goto err_locked;
+			अगर (err < 0)
+				जाओ err_locked;
 
-			err = snd_pcm_hw_constraint_minmax(substream->runtime,
+			err = snd_pcm_hw_स्थिरraपूर्णांक_minmax(substream->runसमय,
 					SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
 					frames_per_buffer, frames_per_buffer);
-			if (err < 0)
-				goto err_locked;
-		}
-	}
+			अगर (err < 0)
+				जाओ err_locked;
+		पूर्ण
+	पूर्ण
 
 	snd_pcm_set_sync(substream);
 
 	mutex_unlock(&motu->mutex);
 
-	return 0;
+	वापस 0;
 err_locked:
 	mutex_unlock(&motu->mutex);
 	snd_motu_stream_lock_release(motu);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_close(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
+अटल पूर्णांक pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
 	snd_motu_stream_lock_release(motu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcm_hw_params(struct snd_pcm_substream *substream,
-			 struct snd_pcm_hw_params *hw_params)
-{
-	struct snd_motu *motu = substream->private_data;
-	int err = 0;
+अटल पूर्णांक pcm_hw_params(काष्ठा snd_pcm_substream *substream,
+			 काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
+	पूर्णांक err = 0;
 
-	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN) {
-		unsigned int rate = params_rate(hw_params);
-		unsigned int frames_per_period = params_period_size(hw_params);
-		unsigned int frames_per_buffer = params_buffer_size(hw_params);
+	अगर (substream->runसमय->status->state == SNDRV_PCM_STATE_OPEN) अणु
+		अचिन्हित पूर्णांक rate = params_rate(hw_params);
+		अचिन्हित पूर्णांक frames_per_period = params_period_size(hw_params);
+		अचिन्हित पूर्णांक frames_per_buffer = params_buffer_size(hw_params);
 
 		mutex_lock(&motu->mutex);
 		err = snd_motu_stream_reserve_duplex(motu, rate,
 					frames_per_period, frames_per_buffer);
-		if (err >= 0)
+		अगर (err >= 0)
 			++motu->substreams_counter;
 		mutex_unlock(&motu->mutex);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcm_hw_free(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
+अटल पूर्णांक pcm_hw_मुक्त(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
 	mutex_lock(&motu->mutex);
 
-	if (substream->runtime->status->state != SNDRV_PCM_STATE_OPEN)
+	अगर (substream->runसमय->status->state != SNDRV_PCM_STATE_OPEN)
 		--motu->substreams_counter;
 
 	snd_motu_stream_stop_duplex(motu);
 
 	mutex_unlock(&motu->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int capture_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
-	int err;
+अटल पूर्णांक capture_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
+	पूर्णांक err;
 
 	mutex_lock(&motu->mutex);
 	err = snd_motu_stream_start_duplex(motu);
 	mutex_unlock(&motu->mutex);
-	if (err >= 0)
+	अगर (err >= 0)
 		amdtp_stream_pcm_prepare(&motu->tx_stream);
 
-	return 0;
-}
-static int playback_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
-	int err;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक playback_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
+	पूर्णांक err;
 
 	mutex_lock(&motu->mutex);
 	err = snd_motu_stream_start_duplex(motu);
 	mutex_unlock(&motu->mutex);
-	if (err >= 0)
+	अगर (err >= 0)
 		amdtp_stream_pcm_prepare(&motu->rx_stream);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int capture_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_motu *motu = substream->private_data;
+अटल पूर्णांक capture_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		amdtp_stream_pcm_trigger(&motu->tx_stream, substream);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		amdtp_stream_pcm_trigger(&motu->tx_stream, NULL);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		amdtp_stream_pcm_trigger(&motu->tx_stream, शून्य);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
-static int playback_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_motu *motu = substream->private_data;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक playback_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		amdtp_stream_pcm_trigger(&motu->rx_stream, substream);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		amdtp_stream_pcm_trigger(&motu->rx_stream, NULL);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		amdtp_stream_pcm_trigger(&motu->rx_stream, शून्य);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t capture_pointer(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
+अटल snd_pcm_uframes_t capture_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_pointer(&motu->domain, &motu->tx_stream);
-}
-static snd_pcm_uframes_t playback_pointer(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
+	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&motu->करोमुख्य, &motu->tx_stream);
+पूर्ण
+अटल snd_pcm_uframes_t playback_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_pointer(&motu->domain, &motu->rx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_poपूर्णांकer(&motu->करोमुख्य, &motu->rx_stream);
+पूर्ण
 
-static int capture_ack(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
+अटल पूर्णांक capture_ack(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_ack(&motu->domain, &motu->tx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_ack(&motu->करोमुख्य, &motu->tx_stream);
+पूर्ण
 
-static int playback_ack(struct snd_pcm_substream *substream)
-{
-	struct snd_motu *motu = substream->private_data;
+अटल पूर्णांक playback_ack(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_motu *motu = substream->निजी_data;
 
-	return amdtp_domain_stream_pcm_ack(&motu->domain, &motu->rx_stream);
-}
+	वापस amdtp_करोमुख्य_stream_pcm_ack(&motu->करोमुख्य, &motu->rx_stream);
+पूर्ण
 
-int snd_motu_create_pcm_devices(struct snd_motu *motu)
-{
-	static const struct snd_pcm_ops capture_ops = {
-		.open      = pcm_open,
-		.close     = pcm_close,
+पूर्णांक snd_motu_create_pcm_devices(काष्ठा snd_motu *motu)
+अणु
+	अटल स्थिर काष्ठा snd_pcm_ops capture_ops = अणु
+		.खोलो      = pcm_खोलो,
+		.बंद     = pcm_बंद,
 		.hw_params = pcm_hw_params,
-		.hw_free   = pcm_hw_free,
+		.hw_मुक्त   = pcm_hw_मुक्त,
 		.prepare   = capture_prepare,
 		.trigger   = capture_trigger,
-		.pointer   = capture_pointer,
+		.poपूर्णांकer   = capture_poपूर्णांकer,
 		.ack       = capture_ack,
-	};
-	static const struct snd_pcm_ops playback_ops = {
-		.open      = pcm_open,
-		.close     = pcm_close,
+	पूर्ण;
+	अटल स्थिर काष्ठा snd_pcm_ops playback_ops = अणु
+		.खोलो      = pcm_खोलो,
+		.बंद     = pcm_बंद,
 		.hw_params = pcm_hw_params,
-		.hw_free   = pcm_hw_free,
+		.hw_मुक्त   = pcm_hw_मुक्त,
 		.prepare   = playback_prepare,
 		.trigger   = playback_trigger,
-		.pointer   = playback_pointer,
+		.poपूर्णांकer   = playback_poपूर्णांकer,
 		.ack       = playback_ack,
-	};
-	struct snd_pcm *pcm;
-	int err;
+	पूर्ण;
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err;
 
 	err = snd_pcm_new(motu->card, motu->card->driver, 0, 1, 1, &pcm);
-	if (err < 0)
-		return err;
-	pcm->private_data = motu;
-	strcpy(pcm->name, motu->card->shortname);
+	अगर (err < 0)
+		वापस err;
+	pcm->निजी_data = motu;
+	म_नकल(pcm->name, motu->card->लघुname);
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &capture_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &playback_ops);
-	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, NULL, 0, 0);
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, शून्य, 0, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

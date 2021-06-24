@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Linux VM pressure
  *
@@ -9,33 +10,33 @@
  * Leonid Moiseichuk, Mel Gorman, Minchan Kim and Pekka Enberg.
  */
 
-#include <linux/cgroup.h>
-#include <linux/fs.h>
-#include <linux/log2.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/vmstat.h>
-#include <linux/eventfd.h>
-#include <linux/slab.h>
-#include <linux/swap.h>
-#include <linux/printk.h>
-#include <linux/vmpressure.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/vmस्थिति.स>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/vmpressure.h>
 
 /*
- * The window size (vmpressure_win) is the number of scanned pages before
- * we try to analyze scanned/reclaimed ratio. So the window is used as a
- * rate-limit tunable for the "low" level notification, and also for
- * averaging the ratio for medium/critical levels. Using small window
- * sizes can cause lot of false positives, but too big window size will
- * delay the notifications.
+ * The winकरोw size (vmpressure_win) is the number of scanned pages beक्रमe
+ * we try to analyze scanned/reclaimed ratio. So the winकरोw is used as a
+ * rate-limit tunable क्रम the "low" level notअगरication, and also क्रम
+ * averaging the ratio क्रम medium/critical levels. Using small winकरोw
+ * sizes can cause lot of false positives, but too big winकरोw size will
+ * delay the notअगरications.
  *
  * As the vmscan reclaimer logic works with chunks which are multiple of
- * SWAP_CLUSTER_MAX, it makes sense to use it for the window size as well.
+ * SWAP_CLUSTER_MAX, it makes sense to use it क्रम the winकरोw size as well.
  *
- * TODO: Make the window size depend on machine size, as we do for vmstat
- * thresholds. Currently we set it to 512 pages (2MB for 4KB pages).
+ * TODO: Make the winकरोw size depend on machine size, as we करो क्रम vmstat
+ * thresholds. Currently we set it to 512 pages (2MB क्रम 4KB pages).
  */
-static const unsigned long vmpressure_win = SWAP_CLUSTER_MAX * 16;
+अटल स्थिर अचिन्हित दीर्घ vmpressure_win = SWAP_CLUSTER_MAX * 16;
 
 /*
  * These thresholds are used when we account memory pressure through
@@ -43,99 +44,99 @@ static const unsigned long vmpressure_win = SWAP_CLUSTER_MAX * 16;
  * essence, they are percents: the higher the value, the more number
  * unsuccessful reclaims there were.
  */
-static const unsigned int vmpressure_level_med = 60;
-static const unsigned int vmpressure_level_critical = 95;
+अटल स्थिर अचिन्हित पूर्णांक vmpressure_level_med = 60;
+अटल स्थिर अचिन्हित पूर्णांक vmpressure_level_critical = 95;
 
 /*
  * When there are too little pages left to scan, vmpressure() may miss the
  * critical pressure as number of pages will be less than "window size".
- * However, in that case the vmscan priority will raise fast as the
+ * However, in that हाल the vmscan priority will उठाओ fast as the
  * reclaimer will try to scan LRUs more deeply.
  *
  * The vmscan logic considers these special priorities:
  *
  * prio == DEF_PRIORITY (12): reclaimer starts with that value
  * prio <= DEF_PRIORITY - 2 : kswapd becomes somewhat overwhelmed
- * prio == 0                : close to OOM, kernel scans every page in an lru
+ * prio == 0                : बंद to OOM, kernel scans every page in an lru
  *
- * Any value in this range is acceptable for this tunable (i.e. from 12 to
- * 0). Current value for the vmpressure_level_critical_prio is chosen
+ * Any value in this range is acceptable क्रम this tunable (i.e. from 12 to
+ * 0). Current value क्रम the vmpressure_level_critical_prio is chosen
  * empirically, but the number, in essence, means that we consider
  * critical level when scanning depth is ~10% of the lru size (vmscan
  * scans 'lru_size >> prio' pages, so it is actually 12.5%, or one
  * eights).
  */
-static const unsigned int vmpressure_level_critical_prio = ilog2(100 / 10);
+अटल स्थिर अचिन्हित पूर्णांक vmpressure_level_critical_prio = ilog2(100 / 10);
 
-static struct vmpressure *work_to_vmpressure(struct work_struct *work)
-{
-	return container_of(work, struct vmpressure, work);
-}
+अटल काष्ठा vmpressure *work_to_vmpressure(काष्ठा work_काष्ठा *work)
+अणु
+	वापस container_of(work, काष्ठा vmpressure, work);
+पूर्ण
 
-static struct vmpressure *vmpressure_parent(struct vmpressure *vmpr)
-{
-	struct cgroup_subsys_state *css = vmpressure_to_css(vmpr);
-	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+अटल काष्ठा vmpressure *vmpressure_parent(काष्ठा vmpressure *vmpr)
+अणु
+	काष्ठा cgroup_subsys_state *css = vmpressure_to_css(vmpr);
+	काष्ठा mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	memcg = parent_mem_cgroup(memcg);
-	if (!memcg)
-		return NULL;
-	return memcg_to_vmpressure(memcg);
-}
+	अगर (!memcg)
+		वापस शून्य;
+	वापस memcg_to_vmpressure(memcg);
+पूर्ण
 
-enum vmpressure_levels {
+क्रमागत vmpressure_levels अणु
 	VMPRESSURE_LOW = 0,
 	VMPRESSURE_MEDIUM,
 	VMPRESSURE_CRITICAL,
 	VMPRESSURE_NUM_LEVELS,
-};
+पूर्ण;
 
-enum vmpressure_modes {
+क्रमागत vmpressure_modes अणु
 	VMPRESSURE_NO_PASSTHROUGH = 0,
 	VMPRESSURE_HIERARCHY,
 	VMPRESSURE_LOCAL,
 	VMPRESSURE_NUM_MODES,
-};
+पूर्ण;
 
-static const char * const vmpressure_str_levels[] = {
+अटल स्थिर अक्षर * स्थिर vmpressure_str_levels[] = अणु
 	[VMPRESSURE_LOW] = "low",
 	[VMPRESSURE_MEDIUM] = "medium",
 	[VMPRESSURE_CRITICAL] = "critical",
-};
+पूर्ण;
 
-static const char * const vmpressure_str_modes[] = {
+अटल स्थिर अक्षर * स्थिर vmpressure_str_modes[] = अणु
 	[VMPRESSURE_NO_PASSTHROUGH] = "default",
 	[VMPRESSURE_HIERARCHY] = "hierarchy",
 	[VMPRESSURE_LOCAL] = "local",
-};
+पूर्ण;
 
-static enum vmpressure_levels vmpressure_level(unsigned long pressure)
-{
-	if (pressure >= vmpressure_level_critical)
-		return VMPRESSURE_CRITICAL;
-	else if (pressure >= vmpressure_level_med)
-		return VMPRESSURE_MEDIUM;
-	return VMPRESSURE_LOW;
-}
+अटल क्रमागत vmpressure_levels vmpressure_level(अचिन्हित दीर्घ pressure)
+अणु
+	अगर (pressure >= vmpressure_level_critical)
+		वापस VMPRESSURE_CRITICAL;
+	अन्यथा अगर (pressure >= vmpressure_level_med)
+		वापस VMPRESSURE_MEDIUM;
+	वापस VMPRESSURE_LOW;
+पूर्ण
 
-static enum vmpressure_levels vmpressure_calc_level(unsigned long scanned,
-						    unsigned long reclaimed)
-{
-	unsigned long scale = scanned + reclaimed;
-	unsigned long pressure = 0;
+अटल क्रमागत vmpressure_levels vmpressure_calc_level(अचिन्हित दीर्घ scanned,
+						    अचिन्हित दीर्घ reclaimed)
+अणु
+	अचिन्हित दीर्घ scale = scanned + reclaimed;
+	अचिन्हित दीर्घ pressure = 0;
 
 	/*
-	 * reclaimed can be greater than scanned for things such as reclaimed
+	 * reclaimed can be greater than scanned क्रम things such as reclaimed
 	 * slab pages. shrink_node() just adds reclaimed pages without a
 	 * related increment to scanned pages.
 	 */
-	if (reclaimed >= scanned)
-		goto out;
+	अगर (reclaimed >= scanned)
+		जाओ out;
 	/*
 	 * We calculate the ratio (in percents) of how many pages were
-	 * scanned vs. reclaimed in a given time frame (window). Note that
-	 * time is in VM reclaimer's "ticks", i.e. number of pages
-	 * scanned. This makes it possible to set desired reaction time
+	 * scanned vs. reclaimed in a given समय frame (winकरोw). Note that
+	 * समय is in VM reclaimer's "ticks", i.e. number of pages
+	 * scanned. This makes it possible to set desired reaction समय
 	 * and serves as a ratelimit.
 	 */
 	pressure = scale - (reclaimed * scale / scanned);
@@ -145,62 +146,62 @@ out:
 	pr_debug("%s: %3lu  (s: %lu  r: %lu)\n", __func__, pressure,
 		 scanned, reclaimed);
 
-	return vmpressure_level(pressure);
-}
+	वापस vmpressure_level(pressure);
+पूर्ण
 
-struct vmpressure_event {
-	struct eventfd_ctx *efd;
-	enum vmpressure_levels level;
-	enum vmpressure_modes mode;
-	struct list_head node;
-};
+काष्ठा vmpressure_event अणु
+	काष्ठा eventfd_ctx *efd;
+	क्रमागत vmpressure_levels level;
+	क्रमागत vmpressure_modes mode;
+	काष्ठा list_head node;
+पूर्ण;
 
-static bool vmpressure_event(struct vmpressure *vmpr,
-			     const enum vmpressure_levels level,
-			     bool ancestor, bool signalled)
-{
-	struct vmpressure_event *ev;
+अटल bool vmpressure_event(काष्ठा vmpressure *vmpr,
+			     स्थिर क्रमागत vmpressure_levels level,
+			     bool ancestor, bool संकेतled)
+अणु
+	काष्ठा vmpressure_event *ev;
 	bool ret = false;
 
 	mutex_lock(&vmpr->events_lock);
-	list_for_each_entry(ev, &vmpr->events, node) {
-		if (ancestor && ev->mode == VMPRESSURE_LOCAL)
-			continue;
-		if (signalled && ev->mode == VMPRESSURE_NO_PASSTHROUGH)
-			continue;
-		if (level < ev->level)
-			continue;
-		eventfd_signal(ev->efd, 1);
+	list_क्रम_each_entry(ev, &vmpr->events, node) अणु
+		अगर (ancestor && ev->mode == VMPRESSURE_LOCAL)
+			जारी;
+		अगर (संकेतled && ev->mode == VMPRESSURE_NO_PASSTHROUGH)
+			जारी;
+		अगर (level < ev->level)
+			जारी;
+		eventfd_संकेत(ev->efd, 1);
 		ret = true;
-	}
+	पूर्ण
 	mutex_unlock(&vmpr->events_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vmpressure_work_fn(struct work_struct *work)
-{
-	struct vmpressure *vmpr = work_to_vmpressure(work);
-	unsigned long scanned;
-	unsigned long reclaimed;
-	enum vmpressure_levels level;
+अटल व्योम vmpressure_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा vmpressure *vmpr = work_to_vmpressure(work);
+	अचिन्हित दीर्घ scanned;
+	अचिन्हित दीर्घ reclaimed;
+	क्रमागत vmpressure_levels level;
 	bool ancestor = false;
-	bool signalled = false;
+	bool संकेतled = false;
 
 	spin_lock(&vmpr->sr_lock);
 	/*
 	 * Several contexts might be calling vmpressure(), so it is
-	 * possible that the work was rescheduled again before the old
-	 * work context cleared the counters. In that case we will run
-	 * just after the old work returns, but then scanned might be zero
-	 * here. No need for any locks here since we don't care if
+	 * possible that the work was rescheduled again beक्रमe the old
+	 * work context cleared the counters. In that हाल we will run
+	 * just after the old work वापसs, but then scanned might be zero
+	 * here. No need क्रम any locks here since we करोn't care अगर
 	 * vmpr->reclaimed is in sync.
 	 */
 	scanned = vmpr->tree_scanned;
-	if (!scanned) {
+	अगर (!scanned) अणु
 		spin_unlock(&vmpr->sr_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	reclaimed = vmpr->tree_reclaimed;
 	vmpr->tree_scanned = 0;
@@ -209,12 +210,12 @@ static void vmpressure_work_fn(struct work_struct *work)
 
 	level = vmpressure_calc_level(scanned, reclaimed);
 
-	do {
-		if (vmpressure_event(vmpr, level, ancestor, signalled))
-			signalled = true;
+	करो अणु
+		अगर (vmpressure_event(vmpr, level, ancestor, संकेतled))
+			संकेतled = true;
 		ancestor = true;
-	} while ((vmpr = vmpressure_parent(vmpr)));
-}
+	पूर्ण जबतक ((vmpr = vmpressure_parent(vmpr)));
+पूर्ण
 
 /**
  * vmpressure() - Account memory pressure through scanned/reclaimed ratio
@@ -226,88 +227,88 @@ static void vmpressure_work_fn(struct work_struct *work)
  *
  * This function should be called from the vmscan reclaim path to account
  * "instantaneous" memory pressure (scanned/reclaimed ratio). The raw
- * pressure index is then further refined and averaged over time.
+ * pressure index is then further refined and averaged over समय.
  *
  * If @tree is set, vmpressure is in traditional userspace reporting
  * mode: @memcg is considered the pressure root and userspace is
- * notified of the entire subtree's reclaim efficiency.
+ * notअगरied of the entire subtree's reclaim efficiency.
  *
- * If @tree is not set, reclaim efficiency is recorded for @memcg, and
- * only in-kernel users are notified.
+ * If @tree is not set, reclaim efficiency is recorded क्रम @memcg, and
+ * only in-kernel users are notअगरied.
  *
- * This function does not return any value.
+ * This function करोes not वापस any value.
  */
-void vmpressure(gfp_t gfp, struct mem_cgroup *memcg, bool tree,
-		unsigned long scanned, unsigned long reclaimed)
-{
-	struct vmpressure *vmpr = memcg_to_vmpressure(memcg);
+व्योम vmpressure(gfp_t gfp, काष्ठा mem_cgroup *memcg, bool tree,
+		अचिन्हित दीर्घ scanned, अचिन्हित दीर्घ reclaimed)
+अणु
+	काष्ठा vmpressure *vmpr = memcg_to_vmpressure(memcg);
 
 	/*
 	 * Here we only want to account pressure that userland is able to
 	 * help us with. For example, suppose that DMA zone is under
-	 * pressure; if we notify userland about that kind of pressure,
+	 * pressure; अगर we notअगरy userland about that kind of pressure,
 	 * then it will be mostly a waste as it will trigger unnecessary
-	 * freeing of memory by userland (since userland is more likely to
+	 * मुक्तing of memory by userland (since userland is more likely to
 	 * have HIGHMEM/MOVABLE pages instead of the DMA fallback). That
 	 * is why we include only movable, highmem and FS/IO pages.
 	 * Indirect reclaim (kswapd) sets sc->gfp_mask to GFP_KERNEL, so
 	 * we account it too.
 	 */
-	if (!(gfp & (__GFP_HIGHMEM | __GFP_MOVABLE | __GFP_IO | __GFP_FS)))
-		return;
+	अगर (!(gfp & (__GFP_HIGHMEM | __GFP_MOVABLE | __GFP_IO | __GFP_FS)))
+		वापस;
 
 	/*
 	 * If we got here with no pages scanned, then that is an indicator
 	 * that reclaimer was unable to find any shrinkable LRUs at the
-	 * current scanning depth. But it does not mean that we should
+	 * current scanning depth. But it करोes not mean that we should
 	 * report the critical pressure, yet. If the scanning priority
-	 * (scanning depth) goes too high (deep), we will be notified
+	 * (scanning depth) goes too high (deep), we will be notअगरied
 	 * through vmpressure_prio(). But so far, keep calm.
 	 */
-	if (!scanned)
-		return;
+	अगर (!scanned)
+		वापस;
 
-	if (tree) {
+	अगर (tree) अणु
 		spin_lock(&vmpr->sr_lock);
 		scanned = vmpr->tree_scanned += scanned;
 		vmpr->tree_reclaimed += reclaimed;
 		spin_unlock(&vmpr->sr_lock);
 
-		if (scanned < vmpressure_win)
-			return;
+		अगर (scanned < vmpressure_win)
+			वापस;
 		schedule_work(&vmpr->work);
-	} else {
-		enum vmpressure_levels level;
+	पूर्ण अन्यथा अणु
+		क्रमागत vmpressure_levels level;
 
-		/* For now, no users for root-level efficiency */
-		if (!memcg || mem_cgroup_is_root(memcg))
-			return;
+		/* For now, no users क्रम root-level efficiency */
+		अगर (!memcg || mem_cgroup_is_root(memcg))
+			वापस;
 
 		spin_lock(&vmpr->sr_lock);
 		scanned = vmpr->scanned += scanned;
 		reclaimed = vmpr->reclaimed += reclaimed;
-		if (scanned < vmpressure_win) {
+		अगर (scanned < vmpressure_win) अणु
 			spin_unlock(&vmpr->sr_lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 		vmpr->scanned = vmpr->reclaimed = 0;
 		spin_unlock(&vmpr->sr_lock);
 
 		level = vmpressure_calc_level(scanned, reclaimed);
 
-		if (level > VMPRESSURE_LOW) {
+		अगर (level > VMPRESSURE_LOW) अणु
 			/*
 			 * Let the socket buffer allocator know that
 			 * we are having trouble reclaiming LRU pages.
 			 *
 			 * For hysteresis keep the pressure state
-			 * asserted for a second in which subsequent
+			 * निश्चितed क्रम a second in which subsequent
 			 * pressure events can occur.
 			 */
-			memcg->socket_pressure = jiffies + HZ;
-		}
-	}
-}
+			memcg->socket_pressure = jअगरfies + HZ;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * vmpressure_prio() - Account memory pressure through reclaimer priority level
@@ -315,40 +316,40 @@ void vmpressure(gfp_t gfp, struct mem_cgroup *memcg, bool tree,
  * @memcg:	cgroup memory controller handle
  * @prio:	reclaimer's priority
  *
- * This function should be called from the reclaim path every time when
+ * This function should be called from the reclaim path every समय when
  * the vmscan's reclaiming priority (scanning depth) changes.
  *
- * This function does not return any value.
+ * This function करोes not वापस any value.
  */
-void vmpressure_prio(gfp_t gfp, struct mem_cgroup *memcg, int prio)
-{
+व्योम vmpressure_prio(gfp_t gfp, काष्ठा mem_cgroup *memcg, पूर्णांक prio)
+अणु
 	/*
-	 * We only use prio for accounting critical level. For more info
-	 * see comment for vmpressure_level_critical_prio variable above.
+	 * We only use prio क्रम accounting critical level. For more info
+	 * see comment क्रम vmpressure_level_critical_prio variable above.
 	 */
-	if (prio > vmpressure_level_critical_prio)
-		return;
+	अगर (prio > vmpressure_level_critical_prio)
+		वापस;
 
 	/*
 	 * OK, the prio is below the threshold, updating vmpressure
-	 * information before shrinker dives into long shrinking of long
+	 * inक्रमmation beक्रमe shrinker भागes पूर्णांकo दीर्घ shrinking of दीर्घ
 	 * range vmscan. Passing scanned = vmpressure_win, reclaimed = 0
-	 * to the vmpressure() basically means that we signal 'critical'
+	 * to the vmpressure() basically means that we संकेत 'critical'
 	 * level.
 	 */
 	vmpressure(gfp, memcg, true, vmpressure_win, 0);
-}
+पूर्ण
 
-#define MAX_VMPRESSURE_ARGS_LEN	(strlen("critical") + strlen("hierarchy") + 2)
+#घोषणा MAX_VMPRESSURE_ARGS_LEN	(म_माप("critical") + म_माप("hierarchy") + 2)
 
 /**
- * vmpressure_register_event() - Bind vmpressure notifications to an eventfd
- * @memcg:	memcg that is interested in vmpressure notifications
- * @eventfd:	eventfd context to link notifications with
+ * vmpressure_रेजिस्टर_event() - Bind vmpressure notअगरications to an eventfd
+ * @memcg:	memcg that is पूर्णांकerested in vmpressure notअगरications
+ * @eventfd:	eventfd context to link notअगरications with
  * @args:	event arguments (pressure level threshold, optional mode)
  *
  * This function associates eventfd context with the vmpressure
- * infrastructure, so that the notifications will be delivered to the
+ * infraकाष्ठाure, so that the notअगरications will be delivered to the
  * @eventfd. The @args parameter is a comma-delimited string that denotes a
  * pressure level threshold (one of vmpressure_str_levels, i.e. "low", "medium",
  * or "critical") and an optional mode (one of vmpressure_str_modes, i.e.
@@ -356,45 +357,45 @@ void vmpressure_prio(gfp_t gfp, struct mem_cgroup *memcg, int prio)
  *
  * To be used as memcg event method.
  *
- * Return: 0 on success, -ENOMEM on memory failure or -EINVAL if @args could
+ * Return: 0 on success, -ENOMEM on memory failure or -EINVAL अगर @args could
  * not be parsed.
  */
-int vmpressure_register_event(struct mem_cgroup *memcg,
-			      struct eventfd_ctx *eventfd, const char *args)
-{
-	struct vmpressure *vmpr = memcg_to_vmpressure(memcg);
-	struct vmpressure_event *ev;
-	enum vmpressure_modes mode = VMPRESSURE_NO_PASSTHROUGH;
-	enum vmpressure_levels level;
-	char *spec, *spec_orig;
-	char *token;
-	int ret = 0;
+पूर्णांक vmpressure_रेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+			      काष्ठा eventfd_ctx *eventfd, स्थिर अक्षर *args)
+अणु
+	काष्ठा vmpressure *vmpr = memcg_to_vmpressure(memcg);
+	काष्ठा vmpressure_event *ev;
+	क्रमागत vmpressure_modes mode = VMPRESSURE_NO_PASSTHROUGH;
+	क्रमागत vmpressure_levels level;
+	अक्षर *spec, *spec_orig;
+	अक्षर *token;
+	पूर्णांक ret = 0;
 
 	spec_orig = spec = kstrndup(args, MAX_VMPRESSURE_ARGS_LEN, GFP_KERNEL);
-	if (!spec)
-		return -ENOMEM;
+	अगर (!spec)
+		वापस -ENOMEM;
 
 	/* Find required level */
 	token = strsep(&spec, ",");
 	ret = match_string(vmpressure_str_levels, VMPRESSURE_NUM_LEVELS, token);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 	level = ret;
 
 	/* Find optional mode */
 	token = strsep(&spec, ",");
-	if (token) {
+	अगर (token) अणु
 		ret = match_string(vmpressure_str_modes, VMPRESSURE_NUM_MODES, token);
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 		mode = ret;
-	}
+	पूर्ण
 
-	ev = kzalloc(sizeof(*ev), GFP_KERNEL);
-	if (!ev) {
+	ev = kzalloc(माप(*ev), GFP_KERNEL);
+	अगर (!ev) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ev->efd = eventfd;
 	ev->level = level;
@@ -405,65 +406,65 @@ int vmpressure_register_event(struct mem_cgroup *memcg,
 	mutex_unlock(&vmpr->events_lock);
 	ret = 0;
 out:
-	kfree(spec_orig);
-	return ret;
-}
+	kमुक्त(spec_orig);
+	वापस ret;
+पूर्ण
 
 /**
- * vmpressure_unregister_event() - Unbind eventfd from vmpressure
+ * vmpressure_unरेजिस्टर_event() - Unbind eventfd from vmpressure
  * @memcg:	memcg handle
  * @eventfd:	eventfd context that was used to link vmpressure with the @cg
  *
- * This function does internal manipulations to detach the @eventfd from
- * the vmpressure notifications, and then frees internal resources
- * associated with the @eventfd (but the @eventfd itself is not freed).
+ * This function करोes पूर्णांकernal manipulations to detach the @eventfd from
+ * the vmpressure notअगरications, and then मुक्तs पूर्णांकernal resources
+ * associated with the @eventfd (but the @eventfd itself is not मुक्तd).
  *
  * To be used as memcg event method.
  */
-void vmpressure_unregister_event(struct mem_cgroup *memcg,
-				 struct eventfd_ctx *eventfd)
-{
-	struct vmpressure *vmpr = memcg_to_vmpressure(memcg);
-	struct vmpressure_event *ev;
+व्योम vmpressure_unरेजिस्टर_event(काष्ठा mem_cgroup *memcg,
+				 काष्ठा eventfd_ctx *eventfd)
+अणु
+	काष्ठा vmpressure *vmpr = memcg_to_vmpressure(memcg);
+	काष्ठा vmpressure_event *ev;
 
 	mutex_lock(&vmpr->events_lock);
-	list_for_each_entry(ev, &vmpr->events, node) {
-		if (ev->efd != eventfd)
-			continue;
+	list_क्रम_each_entry(ev, &vmpr->events, node) अणु
+		अगर (ev->efd != eventfd)
+			जारी;
 		list_del(&ev->node);
-		kfree(ev);
-		break;
-	}
+		kमुक्त(ev);
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&vmpr->events_lock);
-}
+पूर्ण
 
 /**
- * vmpressure_init() - Initialize vmpressure control structure
+ * vmpressure_init() - Initialize vmpressure control काष्ठाure
  * @vmpr:	Structure to be initialized
  *
- * This function should be called on every allocated vmpressure structure
- * before any usage.
+ * This function should be called on every allocated vmpressure काष्ठाure
+ * beक्रमe any usage.
  */
-void vmpressure_init(struct vmpressure *vmpr)
-{
+व्योम vmpressure_init(काष्ठा vmpressure *vmpr)
+अणु
 	spin_lock_init(&vmpr->sr_lock);
 	mutex_init(&vmpr->events_lock);
 	INIT_LIST_HEAD(&vmpr->events);
 	INIT_WORK(&vmpr->work, vmpressure_work_fn);
-}
+पूर्ण
 
 /**
- * vmpressure_cleanup() - shuts down vmpressure control structure
+ * vmpressure_cleanup() - shuts करोwn vmpressure control काष्ठाure
  * @vmpr:	Structure to be cleaned up
  *
- * This function should be called before the structure in which it is
+ * This function should be called beक्रमe the काष्ठाure in which it is
  * embedded is cleaned up.
  */
-void vmpressure_cleanup(struct vmpressure *vmpr)
-{
+व्योम vmpressure_cleanup(काष्ठा vmpressure *vmpr)
+अणु
 	/*
-	 * Make sure there is no pending work before eventfd infrastructure
+	 * Make sure there is no pending work beक्रमe eventfd infraकाष्ठाure
 	 * goes away.
 	 */
 	flush_work(&vmpr->work);
-}
+पूर्ण

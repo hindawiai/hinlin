@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#include "rxe.h"
-#include "rxe_net.h"
+#समावेश "rxe.h"
+#समावेश "rxe_net.h"
 
-/* Copy argument and remove trailing CR. Return the new length. */
-static int sanitize_arg(const char *val, char *intf, int intf_len)
-{
-	int len;
+/* Copy argument and हटाओ trailing CR. Return the new length. */
+अटल पूर्णांक sanitize_arg(स्थिर अक्षर *val, अक्षर *पूर्णांकf, पूर्णांक पूर्णांकf_len)
+अणु
+	पूर्णांक len;
 
-	if (!val)
-		return 0;
+	अगर (!val)
+		वापस 0;
 
 	/* Remove newline. */
-	for (len = 0; len < intf_len - 1 && val[len] && val[len] != '\n'; len++)
-		intf[len] = val[len];
-	intf[len] = 0;
+	क्रम (len = 0; len < पूर्णांकf_len - 1 && val[len] && val[len] != '\n'; len++)
+		पूर्णांकf[len] = val[len];
+	पूर्णांकf[len] = 0;
 
-	if (len == 0 || (val[len] != 0 && val[len] != '\n'))
-		return 0;
+	अगर (len == 0 || (val[len] != 0 && val[len] != '\n'))
+		वापस 0;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int rxe_param_set_add(const char *val, const struct kernel_param *kp)
-{
-	int len;
-	int err = 0;
-	char intf[32];
-	struct net_device *ndev;
-	struct rxe_dev *exists;
+अटल पूर्णांक rxe_param_set_add(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक len;
+	पूर्णांक err = 0;
+	अक्षर पूर्णांकf[32];
+	काष्ठा net_device *ndev;
+	काष्ठा rxe_dev *exists;
 
-	if (!rxe_initialized) {
+	अगर (!rxe_initialized) अणु
 		pr_err("Module parameters are not supported, use rdma link add or rxe_cfg\n");
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	len = sanitize_arg(val, intf, sizeof(intf));
-	if (!len) {
+	len = sanitize_arg(val, पूर्णांकf, माप(पूर्णांकf));
+	अगर (!len) अणु
 		pr_err("add: invalid interface name\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ndev = dev_get_by_name(&init_net, intf);
-	if (!ndev) {
-		pr_err("interface %s not found\n", intf);
-		return -EINVAL;
-	}
+	ndev = dev_get_by_name(&init_net, पूर्णांकf);
+	अगर (!ndev) अणु
+		pr_err("interface %s not found\n", पूर्णांकf);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (is_vlan_dev(ndev)) {
+	अगर (is_vlan_dev(ndev)) अणु
 		pr_err("rxe creation allowed on top of a real device only\n");
 		err = -EPERM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	exists = rxe_get_dev_from_net(ndev);
-	if (exists) {
+	अगर (exists) अणु
 		ib_device_put(&exists->ib_dev);
-		pr_err("already configured on %s\n", intf);
+		pr_err("already configured on %s\n", पूर्णांकf);
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	err = rxe_net_add("rxe%d", ndev);
-	if (err) {
-		pr_err("failed to add %s\n", intf);
-		goto err;
-	}
+	अगर (err) अणु
+		pr_err("failed to add %s\n", पूर्णांकf);
+		जाओ err;
+	पूर्ण
 
 err:
 	dev_put(ndev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rxe_param_set_remove(const char *val, const struct kernel_param *kp)
-{
-	int len;
-	char intf[32];
-	struct ib_device *ib_dev;
+अटल पूर्णांक rxe_param_set_हटाओ(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक len;
+	अक्षर पूर्णांकf[32];
+	काष्ठा ib_device *ib_dev;
 
-	len = sanitize_arg(val, intf, sizeof(intf));
-	if (!len) {
+	len = sanitize_arg(val, पूर्णांकf, माप(पूर्णांकf));
+	अगर (!len) अणु
 		pr_err("add: invalid interface name\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (strncmp("all", intf, len) == 0) {
+	अगर (म_भेदन("all", पूर्णांकf, len) == 0) अणु
 		pr_info("rxe_sys: remove all");
-		ib_unregister_driver(RDMA_DRIVER_RXE);
-		return 0;
-	}
+		ib_unरेजिस्टर_driver(RDMA_DRIVER_RXE);
+		वापस 0;
+	पूर्ण
 
-	ib_dev = ib_device_get_by_name(intf, RDMA_DRIVER_RXE);
-	if (!ib_dev) {
-		pr_err("not configured on %s\n", intf);
-		return -EINVAL;
-	}
+	ib_dev = ib_device_get_by_name(पूर्णांकf, RDMA_DRIVER_RXE);
+	अगर (!ib_dev) अणु
+		pr_err("not configured on %s\n", पूर्णांकf);
+		वापस -EINVAL;
+	पूर्ण
 
-	ib_unregister_device_and_put(ib_dev);
+	ib_unरेजिस्टर_device_and_put(ib_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct kernel_param_ops rxe_add_ops = {
+अटल स्थिर काष्ठा kernel_param_ops rxe_add_ops = अणु
 	.set = rxe_param_set_add,
-};
+पूर्ण;
 
-static const struct kernel_param_ops rxe_remove_ops = {
-	.set = rxe_param_set_remove,
-};
+अटल स्थिर काष्ठा kernel_param_ops rxe_हटाओ_ops = अणु
+	.set = rxe_param_set_हटाओ,
+पूर्ण;
 
-module_param_cb(add, &rxe_add_ops, NULL, 0200);
+module_param_cb(add, &rxe_add_ops, शून्य, 0200);
 MODULE_PARM_DESC(add, "DEPRECATED.  Create RXE device over network interface");
-module_param_cb(remove, &rxe_remove_ops, NULL, 0200);
-MODULE_PARM_DESC(remove, "DEPRECATED.  Remove RXE device over network interface");
+module_param_cb(हटाओ, &rxe_हटाओ_ops, शून्य, 0200);
+MODULE_PARM_DESC(हटाओ, "DEPRECATED.  Remove RXE device over network interface");

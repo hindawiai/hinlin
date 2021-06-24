@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/ipc/util.h
  * Copyright (C) 1999 Christoph Rohland
  *
- * ipc helper functions (c) 1999 Manfred Spraul <manfred@colorfullife.com>
+ * ipc helper functions (c) 1999 Manfred Spraul <manfred@colorfullअगरe.com>
  * namespaces support.      2006 OpenVZ, SWsoft Inc.
- *                               Pavel Emelianov <xemul@openvz.org>
+ *                               Pavel Emelianov <xemul@खोलोvz.org>
  */
 
-#ifndef _IPC_UTIL_H
-#define _IPC_UTIL_H
+#अगर_अघोषित _IPC_UTIL_H
+#घोषणा _IPC_UTIL_H
 
-#include <linux/unistd.h>
-#include <linux/err.h>
-#include <linux/ipc_namespace.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/err.h>
+#समावेश <linux/ipc_namespace.h>
 
 /*
  * The IPC ID contains 2 separate numbers - index and sequence number.
- * By default,
+ * By शेष,
  *   bits  0-14: index (32k, 15 bits)
  *   bits 15-30: sequence number (64k, 16 bits)
  *
@@ -25,266 +26,266 @@
  *   bits  0-23: index (16M, 24 bits)
  *   bits 24-30: sequence number (128, 7 bits)
  */
-#define IPCMNI_SHIFT		15
-#define IPCMNI_EXTEND_SHIFT	24
-#define IPCMNI_EXTEND_MIN_CYCLE	(RADIX_TREE_MAP_SIZE * RADIX_TREE_MAP_SIZE)
-#define IPCMNI			(1 << IPCMNI_SHIFT)
-#define IPCMNI_EXTEND		(1 << IPCMNI_EXTEND_SHIFT)
+#घोषणा IPCMNI_SHIFT		15
+#घोषणा IPCMNI_EXTEND_SHIFT	24
+#घोषणा IPCMNI_EXTEND_MIN_CYCLE	(RADIX_TREE_MAP_SIZE * RADIX_TREE_MAP_SIZE)
+#घोषणा IPCMNI			(1 << IPCMNI_SHIFT)
+#घोषणा IPCMNI_EXTEND		(1 << IPCMNI_EXTEND_SHIFT)
 
-#ifdef CONFIG_SYSVIPC_SYSCTL
-extern int ipc_mni;
-extern int ipc_mni_shift;
-extern int ipc_min_cycle;
+#अगर_घोषित CONFIG_SYSVIPC_SYSCTL
+बाह्य पूर्णांक ipc_mni;
+बाह्य पूर्णांक ipc_mni_shअगरt;
+बाह्य पूर्णांक ipc_min_cycle;
 
-#define ipcmni_seq_shift()	ipc_mni_shift
-#define IPCMNI_IDX_MASK		((1 << ipc_mni_shift) - 1)
+#घोषणा ipcmni_seq_shअगरt()	ipc_mni_shअगरt
+#घोषणा IPCMNI_IDX_MASK		((1 << ipc_mni_shअगरt) - 1)
 
-#else /* CONFIG_SYSVIPC_SYSCTL */
+#अन्यथा /* CONFIG_SYSVIPC_SYSCTL */
 
-#define ipc_mni			IPCMNI
-#define ipc_min_cycle		((int)RADIX_TREE_MAP_SIZE)
-#define ipcmni_seq_shift()	IPCMNI_SHIFT
-#define IPCMNI_IDX_MASK		((1 << IPCMNI_SHIFT) - 1)
-#endif /* CONFIG_SYSVIPC_SYSCTL */
+#घोषणा ipc_mni			IPCMNI
+#घोषणा ipc_min_cycle		((पूर्णांक)RADIX_TREE_MAP_SIZE)
+#घोषणा ipcmni_seq_shअगरt()	IPCMNI_SHIFT
+#घोषणा IPCMNI_IDX_MASK		((1 << IPCMNI_SHIFT) - 1)
+#पूर्ण_अगर /* CONFIG_SYSVIPC_SYSCTL */
 
-void sem_init(void);
-void msg_init(void);
-void shm_init(void);
+व्योम sem_init(व्योम);
+व्योम msg_init(व्योम);
+व्योम shm_init(व्योम);
 
-struct ipc_namespace;
-struct pid_namespace;
+काष्ठा ipc_namespace;
+काष्ठा pid_namespace;
 
-#ifdef CONFIG_POSIX_MQUEUE
-extern void mq_clear_sbinfo(struct ipc_namespace *ns);
-extern void mq_put_mnt(struct ipc_namespace *ns);
-#else
-static inline void mq_clear_sbinfo(struct ipc_namespace *ns) { }
-static inline void mq_put_mnt(struct ipc_namespace *ns) { }
-#endif
+#अगर_घोषित CONFIG_POSIX_MQUEUE
+बाह्य व्योम mq_clear_sbinfo(काष्ठा ipc_namespace *ns);
+बाह्य व्योम mq_put_mnt(काष्ठा ipc_namespace *ns);
+#अन्यथा
+अटल अंतरभूत व्योम mq_clear_sbinfo(काष्ठा ipc_namespace *ns) अणु पूर्ण
+अटल अंतरभूत व्योम mq_put_mnt(काष्ठा ipc_namespace *ns) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SYSVIPC
-void sem_init_ns(struct ipc_namespace *ns);
-void msg_init_ns(struct ipc_namespace *ns);
-void shm_init_ns(struct ipc_namespace *ns);
+#अगर_घोषित CONFIG_SYSVIPC
+व्योम sem_init_ns(काष्ठा ipc_namespace *ns);
+व्योम msg_init_ns(काष्ठा ipc_namespace *ns);
+व्योम shm_init_ns(काष्ठा ipc_namespace *ns);
 
-void sem_exit_ns(struct ipc_namespace *ns);
-void msg_exit_ns(struct ipc_namespace *ns);
-void shm_exit_ns(struct ipc_namespace *ns);
-#else
-static inline void sem_init_ns(struct ipc_namespace *ns) { }
-static inline void msg_init_ns(struct ipc_namespace *ns) { }
-static inline void shm_init_ns(struct ipc_namespace *ns) { }
+व्योम sem_निकास_ns(काष्ठा ipc_namespace *ns);
+व्योम msg_निकास_ns(काष्ठा ipc_namespace *ns);
+व्योम shm_निकास_ns(काष्ठा ipc_namespace *ns);
+#अन्यथा
+अटल अंतरभूत व्योम sem_init_ns(काष्ठा ipc_namespace *ns) अणु पूर्ण
+अटल अंतरभूत व्योम msg_init_ns(काष्ठा ipc_namespace *ns) अणु पूर्ण
+अटल अंतरभूत व्योम shm_init_ns(काष्ठा ipc_namespace *ns) अणु पूर्ण
 
-static inline void sem_exit_ns(struct ipc_namespace *ns) { }
-static inline void msg_exit_ns(struct ipc_namespace *ns) { }
-static inline void shm_exit_ns(struct ipc_namespace *ns) { }
-#endif
+अटल अंतरभूत व्योम sem_निकास_ns(काष्ठा ipc_namespace *ns) अणु पूर्ण
+अटल अंतरभूत व्योम msg_निकास_ns(काष्ठा ipc_namespace *ns) अणु पूर्ण
+अटल अंतरभूत व्योम shm_निकास_ns(काष्ठा ipc_namespace *ns) अणु पूर्ण
+#पूर्ण_अगर
 
 /*
  * Structure that holds the parameters needed by the ipc operations
  * (see after)
  */
-struct ipc_params {
+काष्ठा ipc_params अणु
 	key_t key;
-	int flg;
-	union {
-		size_t size;	/* for shared memories */
-		int nsems;	/* for semaphores */
-	} u;			/* holds the getnew() specific param */
-};
+	पूर्णांक flg;
+	जोड़ अणु
+		माप_प्रकार size;	/* क्रम shared memories */
+		पूर्णांक nsems;	/* क्रम semaphores */
+	पूर्ण u;			/* holds the getnew() specअगरic param */
+पूर्ण;
 
 /*
- * Structure that holds some ipc operations. This structure is used to unify
+ * Structure that holds some ipc operations. This काष्ठाure is used to unअगरy
  * the calls to sys_msgget(), sys_semget(), sys_shmget()
  *      . routine to call to create a new ipc object. Can be one of newque,
  *        newary, newseg
- *      . routine to call to check permissions for a new ipc object.
+ *      . routine to call to check permissions क्रम a new ipc object.
  *        Can be one of security_msg_associate, security_sem_associate,
  *        security_shm_associate
- *      . routine to call for an extra check if needed
+ *      . routine to call क्रम an extra check अगर needed
  */
-struct ipc_ops {
-	int (*getnew)(struct ipc_namespace *, struct ipc_params *);
-	int (*associate)(struct kern_ipc_perm *, int);
-	int (*more_checks)(struct kern_ipc_perm *, struct ipc_params *);
-};
+काष्ठा ipc_ops अणु
+	पूर्णांक (*getnew)(काष्ठा ipc_namespace *, काष्ठा ipc_params *);
+	पूर्णांक (*associate)(काष्ठा kern_ipc_perm *, पूर्णांक);
+	पूर्णांक (*more_checks)(काष्ठा kern_ipc_perm *, काष्ठा ipc_params *);
+पूर्ण;
 
-struct seq_file;
-struct ipc_ids;
+काष्ठा seq_file;
+काष्ठा ipc_ids;
 
-void ipc_init_ids(struct ipc_ids *ids);
-#ifdef CONFIG_PROC_FS
-void __init ipc_init_proc_interface(const char *path, const char *header,
-		int ids, int (*show)(struct seq_file *, void *));
-struct pid_namespace *ipc_seq_pid_ns(struct seq_file *);
-#else
-#define ipc_init_proc_interface(path, header, ids, show) do {} while (0)
-#endif
+व्योम ipc_init_ids(काष्ठा ipc_ids *ids);
+#अगर_घोषित CONFIG_PROC_FS
+व्योम __init ipc_init_proc_पूर्णांकerface(स्थिर अक्षर *path, स्थिर अक्षर *header,
+		पूर्णांक ids, पूर्णांक (*show)(काष्ठा seq_file *, व्योम *));
+काष्ठा pid_namespace *ipc_seq_pid_ns(काष्ठा seq_file *);
+#अन्यथा
+#घोषणा ipc_init_proc_पूर्णांकerface(path, header, ids, show) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define IPC_SEM_IDS	0
-#define IPC_MSG_IDS	1
-#define IPC_SHM_IDS	2
+#घोषणा IPC_SEM_IDS	0
+#घोषणा IPC_MSG_IDS	1
+#घोषणा IPC_SHM_IDS	2
 
-#define ipcid_to_idx(id)  ((id) & IPCMNI_IDX_MASK)
-#define ipcid_to_seqx(id) ((id) >> ipcmni_seq_shift())
-#define ipcid_seq_max()	  (INT_MAX >> ipcmni_seq_shift())
+#घोषणा ipcid_to_idx(id)  ((id) & IPCMNI_IDX_MASK)
+#घोषणा ipcid_to_seqx(id) ((id) >> ipcmni_seq_shअगरt())
+#घोषणा ipcid_seq_max()	  (पूर्णांक_उच्च >> ipcmni_seq_shअगरt())
 
-/* must be called with ids->rwsem acquired for writing */
-int ipc_addid(struct ipc_ids *, struct kern_ipc_perm *, int);
-
-/* must be called with both locks acquired. */
-void ipc_rmid(struct ipc_ids *, struct kern_ipc_perm *);
+/* must be called with ids->rwsem acquired क्रम writing */
+पूर्णांक ipc_addid(काष्ठा ipc_ids *, काष्ठा kern_ipc_perm *, पूर्णांक);
 
 /* must be called with both locks acquired. */
-void ipc_set_key_private(struct ipc_ids *, struct kern_ipc_perm *);
+व्योम ipc_rmid(काष्ठा ipc_ids *, काष्ठा kern_ipc_perm *);
+
+/* must be called with both locks acquired. */
+व्योम ipc_set_key_निजी(काष्ठा ipc_ids *, काष्ठा kern_ipc_perm *);
 
 /* must be called with ipcp locked */
-int ipcperms(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp, short flg);
+पूर्णांक ipcperms(काष्ठा ipc_namespace *ns, काष्ठा kern_ipc_perm *ipcp, लघु flg);
 
 /**
- * ipc_get_maxidx - get the highest assigned index
- * @ids: ipc identifier set
+ * ipc_get_maxidx - get the highest asचिन्हित index
+ * @ids: ipc identअगरier set
  *
- * Called with ipc_ids.rwsem held for reading.
+ * Called with ipc_ids.rwsem held क्रम पढ़ोing.
  */
-static inline int ipc_get_maxidx(struct ipc_ids *ids)
-{
-	if (ids->in_use == 0)
-		return -1;
+अटल अंतरभूत पूर्णांक ipc_get_maxidx(काष्ठा ipc_ids *ids)
+अणु
+	अगर (ids->in_use == 0)
+		वापस -1;
 
-	if (ids->in_use == ipc_mni)
-		return ipc_mni - 1;
+	अगर (ids->in_use == ipc_mni)
+		वापस ipc_mni - 1;
 
-	return ids->max_idx;
-}
+	वापस ids->max_idx;
+पूर्ण
 
 /*
- * For allocation that need to be freed by RCU.
+ * For allocation that need to be मुक्तd by RCU.
  * Objects are reference counted, they start with reference count 1.
  * getref increases the refcount, the putref call that reduces the recount
- * to 0 schedules the rcu destruction. Caller must guarantee locking.
+ * to 0 schedules the rcu deकाष्ठाion. Caller must guarantee locking.
  *
- * refcount is initialized by ipc_addid(), before that point call_rcu()
+ * refcount is initialized by ipc_addid(), beक्रमe that poपूर्णांक call_rcu()
  * must be used.
  */
-bool ipc_rcu_getref(struct kern_ipc_perm *ptr);
-void ipc_rcu_putref(struct kern_ipc_perm *ptr,
-			void (*func)(struct rcu_head *head));
+bool ipc_rcu_getref(काष्ठा kern_ipc_perm *ptr);
+व्योम ipc_rcu_putref(काष्ठा kern_ipc_perm *ptr,
+			व्योम (*func)(काष्ठा rcu_head *head));
 
-struct kern_ipc_perm *ipc_obtain_object_idr(struct ipc_ids *ids, int id);
+काष्ठा kern_ipc_perm *ipc_obtain_object_idr(काष्ठा ipc_ids *ids, पूर्णांक id);
 
-void kernel_to_ipc64_perm(struct kern_ipc_perm *in, struct ipc64_perm *out);
-void ipc64_perm_to_ipc_perm(struct ipc64_perm *in, struct ipc_perm *out);
-int ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out);
-struct kern_ipc_perm *ipcctl_obtain_check(struct ipc_namespace *ns,
-					     struct ipc_ids *ids, int id, int cmd,
-					     struct ipc64_perm *perm, int extra_perm);
+व्योम kernel_to_ipc64_perm(काष्ठा kern_ipc_perm *in, काष्ठा ipc64_perm *out);
+व्योम ipc64_perm_to_ipc_perm(काष्ठा ipc64_perm *in, काष्ठा ipc_perm *out);
+पूर्णांक ipc_update_perm(काष्ठा ipc64_perm *in, काष्ठा kern_ipc_perm *out);
+काष्ठा kern_ipc_perm *ipcctl_obtain_check(काष्ठा ipc_namespace *ns,
+					     काष्ठा ipc_ids *ids, पूर्णांक id, पूर्णांक cmd,
+					     काष्ठा ipc64_perm *perm, पूर्णांक extra_perm);
 
-static inline void ipc_update_pid(struct pid **pos, struct pid *pid)
-{
-	struct pid *old = *pos;
-	if (old != pid) {
+अटल अंतरभूत व्योम ipc_update_pid(काष्ठा pid **pos, काष्ठा pid *pid)
+अणु
+	काष्ठा pid *old = *pos;
+	अगर (old != pid) अणु
 		*pos = get_pid(pid);
 		put_pid(old);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_ARCH_WANT_IPC_PARSE_VERSION
-int ipc_parse_version(int *cmd);
-#endif
+#अगर_घोषित CONFIG_ARCH_WANT_IPC_PARSE_VERSION
+पूर्णांक ipc_parse_version(पूर्णांक *cmd);
+#पूर्ण_अगर
 
-extern void free_msg(struct msg_msg *msg);
-extern struct msg_msg *load_msg(const void __user *src, size_t len);
-extern struct msg_msg *copy_msg(struct msg_msg *src, struct msg_msg *dst);
-extern int store_msg(void __user *dest, struct msg_msg *msg, size_t len);
+बाह्य व्योम मुक्त_msg(काष्ठा msg_msg *msg);
+बाह्य काष्ठा msg_msg *load_msg(स्थिर व्योम __user *src, माप_प्रकार len);
+बाह्य काष्ठा msg_msg *copy_msg(काष्ठा msg_msg *src, काष्ठा msg_msg *dst);
+बाह्य पूर्णांक store_msg(व्योम __user *dest, काष्ठा msg_msg *msg, माप_प्रकार len);
 
-static inline int ipc_checkid(struct kern_ipc_perm *ipcp, int id)
-{
-	return ipcid_to_seqx(id) != ipcp->seq;
-}
+अटल अंतरभूत पूर्णांक ipc_checkid(काष्ठा kern_ipc_perm *ipcp, पूर्णांक id)
+अणु
+	वापस ipcid_to_seqx(id) != ipcp->seq;
+पूर्ण
 
-static inline void ipc_lock_object(struct kern_ipc_perm *perm)
-{
+अटल अंतरभूत व्योम ipc_lock_object(काष्ठा kern_ipc_perm *perm)
+अणु
 	spin_lock(&perm->lock);
-}
+पूर्ण
 
-static inline void ipc_unlock_object(struct kern_ipc_perm *perm)
-{
+अटल अंतरभूत व्योम ipc_unlock_object(काष्ठा kern_ipc_perm *perm)
+अणु
 	spin_unlock(&perm->lock);
-}
+पूर्ण
 
-static inline void ipc_assert_locked_object(struct kern_ipc_perm *perm)
-{
-	assert_spin_locked(&perm->lock);
-}
+अटल अंतरभूत व्योम ipc_निश्चित_locked_object(काष्ठा kern_ipc_perm *perm)
+अणु
+	निश्चित_spin_locked(&perm->lock);
+पूर्ण
 
-static inline void ipc_unlock(struct kern_ipc_perm *perm)
-{
+अटल अंतरभूत व्योम ipc_unlock(काष्ठा kern_ipc_perm *perm)
+अणु
 	ipc_unlock_object(perm);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /*
- * ipc_valid_object() - helper to sort out IPC_RMID races for codepaths
- * where the respective ipc_ids.rwsem is not being held down.
- * Checks whether the ipc object is still around or if it's gone already, as
- * ipc_rmid() may have already freed the ID while the ipc lock was spinning.
- * Needs to be called with kern_ipc_perm.lock held -- exception made for one
- * checkpoint case at sys_semtimedop() as noted in code commentary.
+ * ipc_valid_object() - helper to sort out IPC_RMID races क्रम codepaths
+ * where the respective ipc_ids.rwsem is not being held करोwn.
+ * Checks whether the ipc object is still around or अगर it's gone alपढ़ोy, as
+ * ipc_rmid() may have alपढ़ोy मुक्तd the ID जबतक the ipc lock was spinning.
+ * Needs to be called with kern_ipc_perm.lock held -- exception made क्रम one
+ * checkpoपूर्णांक हाल at sys_semसमयकरोp() as noted in code commentary.
  */
-static inline bool ipc_valid_object(struct kern_ipc_perm *perm)
-{
-	return !perm->deleted;
-}
+अटल अंतरभूत bool ipc_valid_object(काष्ठा kern_ipc_perm *perm)
+अणु
+	वापस !perm->deleted;
+पूर्ण
 
-struct kern_ipc_perm *ipc_obtain_object_check(struct ipc_ids *ids, int id);
-int ipcget(struct ipc_namespace *ns, struct ipc_ids *ids,
-			const struct ipc_ops *ops, struct ipc_params *params);
-void free_ipcs(struct ipc_namespace *ns, struct ipc_ids *ids,
-		void (*free)(struct ipc_namespace *, struct kern_ipc_perm *));
+काष्ठा kern_ipc_perm *ipc_obtain_object_check(काष्ठा ipc_ids *ids, पूर्णांक id);
+पूर्णांक ipcget(काष्ठा ipc_namespace *ns, काष्ठा ipc_ids *ids,
+			स्थिर काष्ठा ipc_ops *ops, काष्ठा ipc_params *params);
+व्योम मुक्त_ipcs(काष्ठा ipc_namespace *ns, काष्ठा ipc_ids *ids,
+		व्योम (*मुक्त)(काष्ठा ipc_namespace *, काष्ठा kern_ipc_perm *));
 
-static inline int sem_check_semmni(struct ipc_namespace *ns) {
+अटल अंतरभूत पूर्णांक sem_check_semmni(काष्ठा ipc_namespace *ns) अणु
 	/*
 	 * Check semmni range [0, ipc_mni]
 	 * semmni is the last element of sem_ctls[4] array
 	 */
-	return ((ns->sem_ctls[3] < 0) || (ns->sem_ctls[3] > ipc_mni))
-		? -ERANGE : 0;
-}
+	वापस ((ns->sem_ctls[3] < 0) || (ns->sem_ctls[3] > ipc_mni))
+		? -दुस्फल : 0;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-#include <linux/compat.h>
-struct compat_ipc_perm {
+#अगर_घोषित CONFIG_COMPAT
+#समावेश <linux/compat.h>
+काष्ठा compat_ipc_perm अणु
 	key_t key;
 	__compat_uid_t uid;
 	__compat_gid_t gid;
 	__compat_uid_t cuid;
 	__compat_gid_t cgid;
 	compat_mode_t mode;
-	unsigned short seq;
-};
+	अचिन्हित लघु seq;
+पूर्ण;
 
-void to_compat_ipc_perm(struct compat_ipc_perm *, struct ipc64_perm *);
-void to_compat_ipc64_perm(struct compat_ipc64_perm *, struct ipc64_perm *);
-int get_compat_ipc_perm(struct ipc64_perm *, struct compat_ipc_perm __user *);
-int get_compat_ipc64_perm(struct ipc64_perm *,
-			  struct compat_ipc64_perm __user *);
+व्योम to_compat_ipc_perm(काष्ठा compat_ipc_perm *, काष्ठा ipc64_perm *);
+व्योम to_compat_ipc64_perm(काष्ठा compat_ipc64_perm *, काष्ठा ipc64_perm *);
+पूर्णांक get_compat_ipc_perm(काष्ठा ipc64_perm *, काष्ठा compat_ipc_perm __user *);
+पूर्णांक get_compat_ipc64_perm(काष्ठा ipc64_perm *,
+			  काष्ठा compat_ipc64_perm __user *);
 
-static inline int compat_ipc_parse_version(int *cmd)
-{
-	int version = *cmd & IPC_64;
+अटल अंतरभूत पूर्णांक compat_ipc_parse_version(पूर्णांक *cmd)
+अणु
+	पूर्णांक version = *cmd & IPC_64;
 	*cmd &= ~IPC_64;
-	return version;
-}
+	वापस version;
+पूर्ण
 
-long compat_ksys_old_semctl(int semid, int semnum, int cmd, int arg);
-long compat_ksys_old_msgctl(int msqid, int cmd, void __user *uptr);
-long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
-			compat_long_t msgtyp, int msgflg);
-long compat_ksys_msgsnd(int msqid, compat_uptr_t msgp,
-		       compat_ssize_t msgsz, int msgflg);
-long compat_ksys_old_shmctl(int shmid, int cmd, void __user *uptr);
+दीर्घ compat_ksys_old_semctl(पूर्णांक semid, पूर्णांक semnum, पूर्णांक cmd, पूर्णांक arg);
+दीर्घ compat_ksys_old_msgctl(पूर्णांक msqid, पूर्णांक cmd, व्योम __user *uptr);
+दीर्घ compat_ksys_msgrcv(पूर्णांक msqid, compat_uptr_t msgp, compat_sमाप_प्रकार msgsz,
+			compat_दीर्घ_t msgtyp, पूर्णांक msgflg);
+दीर्घ compat_ksys_msgsnd(पूर्णांक msqid, compat_uptr_t msgp,
+		       compat_sमाप_प्रकार msgsz, पूर्णांक msgflg);
+दीर्घ compat_ksys_old_shmctl(पूर्णांक shmid, पूर्णांक cmd, व्योम __user *uptr);
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

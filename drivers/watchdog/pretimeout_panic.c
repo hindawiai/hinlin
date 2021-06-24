@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015-2016 Mentor Graphics
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/watchdog.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/watchकरोg.h>
 
-#include "watchdog_pretimeout.h"
+#समावेश "watchdog_pretimeout.h"
 
 /**
- * pretimeout_panic - Panic on watchdog pretimeout event
- * @wdd - watchdog_device
+ * preसमयout_panic - Panic on watchकरोg preसमयout event
+ * @wdd - watchकरोg_device
  *
- * Panic, watchdog has not been fed till pretimeout event.
+ * Panic, watchकरोg has not been fed till preसमयout event.
  */
-static void pretimeout_panic(struct watchdog_device *wdd)
-{
+अटल व्योम preसमयout_panic(काष्ठा watchकरोg_device *wdd)
+अणु
 	panic("watchdog pretimeout event\n");
-}
+पूर्ण
 
-static struct watchdog_governor watchdog_gov_panic = {
+अटल काष्ठा watchकरोg_governor watchकरोg_gov_panic = अणु
 	.name		= "panic",
-	.pretimeout	= pretimeout_panic,
-};
+	.preसमयout	= preसमयout_panic,
+पूर्ण;
 
-static int __init watchdog_gov_panic_register(void)
-{
-	return watchdog_register_governor(&watchdog_gov_panic);
-}
+अटल पूर्णांक __init watchकरोg_gov_panic_रेजिस्टर(व्योम)
+अणु
+	वापस watchकरोg_रेजिस्टर_governor(&watchकरोg_gov_panic);
+पूर्ण
 
-static void __exit watchdog_gov_panic_unregister(void)
-{
-	watchdog_unregister_governor(&watchdog_gov_panic);
-}
-module_init(watchdog_gov_panic_register);
-module_exit(watchdog_gov_panic_unregister);
+अटल व्योम __निकास watchकरोg_gov_panic_unरेजिस्टर(व्योम)
+अणु
+	watchकरोg_unरेजिस्टर_governor(&watchकरोg_gov_panic);
+पूर्ण
+module_init(watchकरोg_gov_panic_रेजिस्टर);
+module_निकास(watchकरोg_gov_panic_unरेजिस्टर);
 
 MODULE_AUTHOR("Vladimir Zapolskiy <vladimir_zapolskiy@mentor.com>");
 MODULE_DESCRIPTION("Panic watchdog pretimeout governor");

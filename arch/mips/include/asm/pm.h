@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2014 Imagination Technologies Ltd
  *
- * PM helper macros for CPU power off (e.g. Suspend-to-RAM).
+ * PM helper macros क्रम CPU घातer off (e.g. Suspend-to-RAM).
  */
 
-#ifndef __ASM_PM_H
-#define __ASM_PM_H
+#अगर_अघोषित __ASM_PM_H
+#घोषणा __ASM_PM_H
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-#include <asm/asm-offsets.h>
-#include <asm/asm.h>
-#include <asm/mipsregs.h>
-#include <asm/regdef.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/regdef.h>
 
-/* Save CPU state to stack for suspend to RAM */
+/* Save CPU state to stack क्रम suspend to RAM */
 .macro SUSPEND_SAVE_REGS
 	subu	sp, PT_SIZE
 	/* Call preserved GPRs */
@@ -30,7 +31,7 @@
 	LONG_S	$28, PT_R28(sp)
 	LONG_S	$30, PT_R30(sp)
 	LONG_S	$31, PT_R31(sp)
-	/* A couple of CP0 registers with space in pt_regs */
+	/* A couple of CP0 रेजिस्टरs with space in pt_regs */
 	mfc0	k0, CP0_STATUS
 	LONG_S	k0, PT_STATUS(sp)
 .endm
@@ -39,7 +40,7 @@
 .macro RESUME_RESTORE_REGS_RETURN
 	.set	push
 	.set	noreorder
-	/* A couple of CP0 registers with space in pt_regs */
+	/* A couple of CP0 रेजिस्टरs with space in pt_regs */
 	LONG_L	k0, PT_STATUS(sp)
 	mtc0	k0, CP0_STATUS
 	/* Call preserved GPRs */
@@ -54,20 +55,20 @@
 	LONG_L	$28, PT_R28(sp)
 	LONG_L	$30, PT_R30(sp)
 	LONG_L	$31, PT_R31(sp)
-	/* Pop and return */
+	/* Pop and वापस */
 	jr	ra
 	 addiu	sp, PT_SIZE
 	.set	pop
 .endm
 
-/* Get address of static suspend state into t1 */
+/* Get address of अटल suspend state पूर्णांकo t1 */
 .macro LA_STATIC_SUSPEND
-	la	t1, mips_static_suspend_state
+	la	t1, mips_अटल_suspend_state
 .endm
 
-/* Save important CPU state for early restoration to global data */
+/* Save important CPU state क्रम early restoration to global data */
 .macro SUSPEND_SAVE_STATIC
-#ifdef CONFIG_EVA
+#अगर_घोषित CONFIG_EVA
 	/*
 	 * Segment configuration is saved in global data where it can be easily
 	 * reloaded without depending on the segment configuration.
@@ -78,14 +79,14 @@
 	LONG_S	k0, SSS_SEGCTL1(t1)
 	mfc0	k0, CP0_PAGEMASK, 4	/* SegCtl2 */
 	LONG_S	k0, SSS_SEGCTL2(t1)
-#endif
-	/* save stack pointer (pointing to GPRs) */
+#पूर्ण_अगर
+	/* save stack poपूर्णांकer (poपूर्णांकing to GPRs) */
 	LONG_S	sp, SSS_SP(t1)
 .endm
 
 /* Restore important CPU state early from global data */
 .macro RESUME_RESTORE_STATIC
-#ifdef CONFIG_EVA
+#अगर_घोषित CONFIG_EVA
 	/*
 	 * Segment configuration must be restored prior to any access to
 	 * allocated memory, as it may reside outside of the legacy kernel
@@ -98,14 +99,14 @@
 	LONG_L	k0, SSS_SEGCTL2(t1)
 	mtc0	k0, CP0_PAGEMASK, 4	/* SegCtl2 */
 	tlbw_use_hazard
-#endif
-	/* restore stack pointer (pointing to GPRs) */
+#पूर्ण_अगर
+	/* restore stack poपूर्णांकer (poपूर्णांकing to GPRs) */
 	LONG_L	sp, SSS_SP(t1)
 .endm
 
 /* flush caches to make sure context has reached memory */
 .macro SUSPEND_CACHE_FLUSH
-	.extern	__wback_cache_all
+	.बाह्य	__wback_cache_all
 	.set	push
 	.set	noreorder
 	la	t1, __wback_cache_all
@@ -123,33 +124,33 @@
 	SUSPEND_CACHE_FLUSH
 .endm
 
-/* Restore saved state after resume from RAM and return */
+/* Restore saved state after resume from RAM and वापस */
 .macro RESUME_RESTORE_RETURN
 	LA_STATIC_SUSPEND
 	RESUME_RESTORE_STATIC
 	RESUME_RESTORE_REGS_RETURN
 .endm
 
-#else /* __ASSEMBLY__ */
+#अन्यथा /* __ASSEMBLY__ */
 
 /**
- * struct mips_static_suspend_state - Core saved CPU state across S2R.
- * @segctl:	CP0 Segment control registers.
- * @sp:		Stack frame where GP register context is saved.
+ * काष्ठा mips_अटल_suspend_state - Core saved CPU state across S2R.
+ * @segctl:	CP0 Segment control रेजिस्टरs.
+ * @sp:		Stack frame where GP रेजिस्टर context is saved.
  *
- * This structure contains minimal CPU state that must be saved in static kernel
+ * This काष्ठाure contains minimal CPU state that must be saved in अटल kernel
  * data in order to be able to restore the rest of the state. This includes
- * segmentation configuration in the case of EVA being enabled, as they must be
- * restored prior to any kmalloc'd memory being referenced (even the stack
- * pointer).
+ * segmentation configuration in the हाल of EVA being enabled, as they must be
+ * restored prior to any kदो_स्मृति'd memory being referenced (even the stack
+ * poपूर्णांकer).
  */
-struct mips_static_suspend_state {
-#ifdef CONFIG_EVA
-	unsigned long segctl[3];
-#endif
-	unsigned long sp;
-};
+काष्ठा mips_अटल_suspend_state अणु
+#अगर_घोषित CONFIG_EVA
+	अचिन्हित दीर्घ segctl[3];
+#पूर्ण_अगर
+	अचिन्हित दीर्घ sp;
+पूर्ण;
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __ASM_PM_HELPERS_H */
+#पूर्ण_अगर /* __ASM_PM_HELPERS_H */

@@ -1,63 +1,64 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *  linux/include/linux/nfs_fs.h
  *
  *  Copyright (C) 1992  Rick Sladkey
  *
- *  OS-specific nfs filesystem definitions and declarations
+ *  OS-specअगरic nfs fileप्रणाली definitions and declarations
  */
 
-#ifndef _UAPI_LINUX_NFS_FS_H
-#define _UAPI_LINUX_NFS_FS_H
+#अगर_अघोषित _UAPI_LINUX_NFS_FS_H
+#घोषणा _UAPI_LINUX_NFS_FS_H
 
-#include <linux/magic.h>
+#समावेश <linux/magic.h>
 
-/* Default timeout values */
-#define NFS_DEF_UDP_TIMEO	(11)
-#define NFS_DEF_UDP_RETRANS	(3)
-#define NFS_DEF_TCP_TIMEO	(600)
-#define NFS_DEF_TCP_RETRANS	(2)
+/* Default समयout values */
+#घोषणा NFS_DEF_UDP_TIMEO	(11)
+#घोषणा NFS_DEF_UDP_RETRANS	(3)
+#घोषणा NFS_DEF_TCP_TIMEO	(600)
+#घोषणा NFS_DEF_TCP_RETRANS	(2)
 
-#define NFS_MAX_UDP_TIMEOUT	(60*HZ)
-#define NFS_MAX_TCP_TIMEOUT	(600*HZ)
+#घोषणा NFS_MAX_UDP_TIMEOUT	(60*HZ)
+#घोषणा NFS_MAX_TCP_TIMEOUT	(600*HZ)
 
-#define NFS_DEF_ACREGMIN	(3)
-#define NFS_DEF_ACREGMAX	(60)
-#define NFS_DEF_ACDIRMIN	(30)
-#define NFS_DEF_ACDIRMAX	(60)
+#घोषणा NFS_DEF_ACREGMIN	(3)
+#घोषणा NFS_DEF_ACREGMAX	(60)
+#घोषणा NFS_DEF_ACसूचीMIN	(30)
+#घोषणा NFS_DEF_ACसूचीMAX	(60)
 
 /*
- * When flushing a cluster of dirty pages, there can be different
+ * When flushing a cluster of dirty pages, there can be dअगरferent
  * strategies:
  */
-#define FLUSH_SYNC		1	/* file being synced, or contention */
-#define FLUSH_STABLE		4	/* commit to stable storage */
-#define FLUSH_LOWPRI		8	/* low priority background flush */
-#define FLUSH_HIGHPRI		16	/* high priority memory reclaim flush */
-#define FLUSH_COND_STABLE	32	/* conditional stable write - only stable
-					 * if everything fits in one RPC */
+#घोषणा FLUSH_SYNC		1	/* file being synced, or contention */
+#घोषणा FLUSH_STABLE		4	/* commit to stable storage */
+#घोषणा FLUSH_LOWPRI		8	/* low priority background flush */
+#घोषणा FLUSH_HIGHPRI		16	/* high priority memory reclaim flush */
+#घोषणा FLUSH_COND_STABLE	32	/* conditional stable ग_लिखो - only stable
+					 * अगर everything fits in one RPC */
 
 
 /*
  * NFS debug flags
  */
-#define NFSDBG_VFS		0x0001
-#define NFSDBG_DIRCACHE		0x0002
-#define NFSDBG_LOOKUPCACHE	0x0004
-#define NFSDBG_PAGECACHE	0x0008
-#define NFSDBG_PROC		0x0010
-#define NFSDBG_XDR		0x0020
-#define NFSDBG_FILE		0x0040
-#define NFSDBG_ROOT		0x0080
-#define NFSDBG_CALLBACK		0x0100
-#define NFSDBG_CLIENT		0x0200
-#define NFSDBG_MOUNT		0x0400
-#define NFSDBG_FSCACHE		0x0800
-#define NFSDBG_PNFS		0x1000
-#define NFSDBG_PNFS_LD		0x2000
-#define NFSDBG_STATE		0x4000
-#define NFSDBG_XATTRCACHE	0x8000
-#define NFSDBG_ALL		0xFFFF
+#घोषणा NFSDBG_VFS		0x0001
+#घोषणा NFSDBG_सूचीCACHE		0x0002
+#घोषणा NFSDBG_LOOKUPCACHE	0x0004
+#घोषणा NFSDBG_PAGECACHE	0x0008
+#घोषणा NFSDBG_PROC		0x0010
+#घोषणा NFSDBG_XDR		0x0020
+#घोषणा NFSDBG_खाता		0x0040
+#घोषणा NFSDBG_ROOT		0x0080
+#घोषणा NFSDBG_CALLBACK		0x0100
+#घोषणा NFSDBG_CLIENT		0x0200
+#घोषणा NFSDBG_MOUNT		0x0400
+#घोषणा NFSDBG_FSCACHE		0x0800
+#घोषणा NFSDBG_PNFS		0x1000
+#घोषणा NFSDBG_PNFS_LD		0x2000
+#घोषणा NFSDBG_STATE		0x4000
+#घोषणा NFSDBG_XATTRCACHE	0x8000
+#घोषणा NFSDBG_ALL		0xFFFF
 
 
-#endif /* _UAPI_LINUX_NFS_FS_H */
+#पूर्ण_अगर /* _UAPI_LINUX_NFS_FS_H */

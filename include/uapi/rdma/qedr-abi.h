@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR Linux-OpenIB) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ((GPL-2.0 WITH Linux-syscall-note) OR Linux-OpenIB) */
 /* QLogic qedr NIC Driver
  * Copyright (c) 2015-2016  QLogic Corporation
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and /or other materials
+ *        disclaimer in the करोcumentation and /or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,39 +31,39 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef __QEDR_USER_H__
-#define __QEDR_USER_H__
+#अगर_अघोषित __QEDR_USER_H__
+#घोषणा __QEDR_USER_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define QEDR_ABI_VERSION		(8)
+#घोषणा QEDR_ABI_VERSION		(8)
 
-/* user kernel communication data structures. */
-enum qedr_alloc_ucontext_flags {
+/* user kernel communication data काष्ठाures. */
+क्रमागत qedr_alloc_ucontext_flags अणु
 	QEDR_ALLOC_UCTX_EDPM_MODE	= 1 << 0,
 	QEDR_ALLOC_UCTX_DB_REC		= 1 << 1,
 	QEDR_SUPPORT_DPM_SIZES		= 1 << 2,
-};
+पूर्ण;
 
-struct qedr_alloc_ucontext_req {
+काष्ठा qedr_alloc_ucontext_req अणु
 	__u32 context_flags;
 	__u32 reserved;
-};
+पूर्ण;
 
-#define QEDR_LDPM_MAX_SIZE	(8192)
-#define QEDR_EDPM_TRANS_SIZE	(64)
-#define QEDR_EDPM_MAX_SIZE	(ROCE_REQ_MAX_INLINE_DATA_SIZE)
+#घोषणा QEDR_LDPM_MAX_SIZE	(8192)
+#घोषणा QEDR_EDPM_TRANS_SIZE	(64)
+#घोषणा QEDR_EDPM_MAX_SIZE	(ROCE_REQ_MAX_INLINE_DATA_SIZE)
 
-enum qedr_rdma_dpm_type {
+क्रमागत qedr_rdma_dpm_type अणु
 	QEDR_DPM_TYPE_NONE		= 0,
 	QEDR_DPM_TYPE_ROCE_ENHANCED	= 1 << 0,
 	QEDR_DPM_TYPE_ROCE_LEGACY	= 1 << 1,
 	QEDR_DPM_TYPE_IWARP_LEGACY	= 1 << 2,
 	QEDR_DPM_TYPE_ROCE_EDPM_MODE	= 1 << 3,
 	QEDR_DPM_SIZES_SET		= 1 << 4,
-};
+पूर्ण;
 
-struct qedr_alloc_ucontext_resp {
+काष्ठा qedr_alloc_ucontext_resp अणु
 	__aligned_u64 db_pa;
 	__u32 db_size;
 
@@ -81,49 +82,49 @@ struct qedr_alloc_ucontext_resp {
 	__u8 reserved;
 	__u16 edpm_limit_size;
 	__u8 padding[6];
-};
+पूर्ण;
 
-struct qedr_alloc_pd_ureq {
+काष्ठा qedr_alloc_pd_ureq अणु
 	__aligned_u64 rsvd1;
-};
+पूर्ण;
 
-struct qedr_alloc_pd_uresp {
+काष्ठा qedr_alloc_pd_uresp अणु
 	__u32 pd_id;
 	__u32 reserved;
-};
+पूर्ण;
 
-struct qedr_create_cq_ureq {
+काष्ठा qedr_create_cq_ureq अणु
 	__aligned_u64 addr;
 	__aligned_u64 len;
-};
+पूर्ण;
 
-struct qedr_create_cq_uresp {
+काष्ठा qedr_create_cq_uresp अणु
 	__u32 db_offset;
 	__u16 icid;
 	__u16 reserved;
 	__aligned_u64 db_rec_addr;
-};
+पूर्ण;
 
-struct qedr_create_qp_ureq {
+काष्ठा qedr_create_qp_ureq अणु
 	__u32 qp_handle_hi;
 	__u32 qp_handle_lo;
 
 	/* SQ */
-	/* user space virtual address of SQ buffer */
+	/* user space भव address of SQ buffer */
 	__aligned_u64 sq_addr;
 
 	/* length of SQ buffer */
 	__aligned_u64 sq_len;
 
 	/* RQ */
-	/* user space virtual address of RQ buffer */
+	/* user space भव address of RQ buffer */
 	__aligned_u64 rq_addr;
 
 	/* length of RQ buffer */
 	__aligned_u64 rq_len;
-};
+पूर्ण;
 
-struct qedr_create_qp_uresp {
+काष्ठा qedr_create_qp_uresp अणु
 	__u32 qp_id;
 	__u32 atomic_supported;
 
@@ -138,37 +139,37 @@ struct qedr_create_qp_uresp {
 	__u32 rq_db2_offset;
 	__u32 reserved;
 
-	/* address of SQ doorbell recovery user entry */
+	/* address of SQ करोorbell recovery user entry */
 	__aligned_u64 sq_db_rec_addr;
 
-	/* address of RQ doorbell recovery user entry */
+	/* address of RQ करोorbell recovery user entry */
 	__aligned_u64 rq_db_rec_addr;
 
-};
+पूर्ण;
 
-struct qedr_create_srq_ureq {
-	/* user space virtual address of producer pair */
+काष्ठा qedr_create_srq_ureq अणु
+	/* user space भव address of producer pair */
 	__aligned_u64 prod_pair_addr;
 
-	/* user space virtual address of SRQ buffer */
+	/* user space भव address of SRQ buffer */
 	__aligned_u64 srq_addr;
 
 	/* length of SRQ buffer */
 	__aligned_u64 srq_len;
-};
+पूर्ण;
 
-struct qedr_create_srq_uresp {
+काष्ठा qedr_create_srq_uresp अणु
 	__u16 srq_id;
 	__u16 reserved0;
 	__u32 reserved1;
-};
+पूर्ण;
 
-/* doorbell recovery entry allocated and populated by userspace doorbelling
- * entities and mapped to kernel. Kernel uses this to register doorbell
- * information with doorbell drop recovery mechanism.
+/* करोorbell recovery entry allocated and populated by userspace करोorbelling
+ * entities and mapped to kernel. Kernel uses this to रेजिस्टर करोorbell
+ * inक्रमmation with करोorbell drop recovery mechanism.
  */
-struct qedr_user_db_rec {
-	__aligned_u64 db_data; /* doorbell data */
-};
+काष्ठा qedr_user_db_rec अणु
+	__aligned_u64 db_data; /* करोorbell data */
+पूर्ण;
 
-#endif /* __QEDR_USER_H__ */
+#पूर्ण_अगर /* __QEDR_USER_H__ */

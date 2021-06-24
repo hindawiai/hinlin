@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __INPUT_FORMATTER_PRIVATE_H_INCLUDED__
-#define __INPUT_FORMATTER_PRIVATE_H_INCLUDED__
+#अगर_अघोषित __INPUT_FORMATTER_PRIVATE_H_INCLUDED__
+#घोषणा __INPUT_FORMATTER_PRIVATE_H_INCLUDED__
 
-#include "input_formatter_public.h"
+#समावेश "input_formatter_public.h"
 
-#include "device_access.h"
+#समावेश "device_access.h"
 
-#include "assert_support.h"
+#समावेश "assert_support.h"
 
-STORAGE_CLASS_INPUT_FORMATTER_C void input_formatter_reg_store(
-    const input_formatter_ID_t		ID,
-    const hrt_address			reg_addr,
-    const hrt_data				value)
-{
-	assert(ID < N_INPUT_FORMATTER_ID);
-	assert(INPUT_FORMATTER_BASE[ID] != (hrt_address)-1);
-	assert((reg_addr % sizeof(hrt_data)) == 0);
-	ia_css_device_store_uint32(INPUT_FORMATTER_BASE[ID] + reg_addr, value);
-	return;
-}
+STORAGE_CLASS_INPUT_FORMATTER_C व्योम input_क्रमmatter_reg_store(
+    स्थिर input_क्रमmatter_ID_t		ID,
+    स्थिर hrt_address			reg_addr,
+    स्थिर hrt_data				value)
+अणु
+	निश्चित(ID < N_INPUT_FORMATTER_ID);
+	निश्चित(INPUT_FORMATTER_BASE[ID] != (hrt_address)-1);
+	निश्चित((reg_addr % माप(hrt_data)) == 0);
+	ia_css_device_store_uपूर्णांक32(INPUT_FORMATTER_BASE[ID] + reg_addr, value);
+	वापस;
+पूर्ण
 
-STORAGE_CLASS_INPUT_FORMATTER_C hrt_data input_formatter_reg_load(
-    const input_formatter_ID_t	ID,
-    const unsigned int			reg_addr)
-{
-	assert(ID < N_INPUT_FORMATTER_ID);
-	assert(INPUT_FORMATTER_BASE[ID] != (hrt_address)-1);
-	assert((reg_addr % sizeof(hrt_data)) == 0);
-	return ia_css_device_load_uint32(INPUT_FORMATTER_BASE[ID] + reg_addr);
-}
+STORAGE_CLASS_INPUT_FORMATTER_C hrt_data input_क्रमmatter_reg_load(
+    स्थिर input_क्रमmatter_ID_t	ID,
+    स्थिर अचिन्हित पूर्णांक			reg_addr)
+अणु
+	निश्चित(ID < N_INPUT_FORMATTER_ID);
+	निश्चित(INPUT_FORMATTER_BASE[ID] != (hrt_address)-1);
+	निश्चित((reg_addr % माप(hrt_data)) == 0);
+	वापस ia_css_device_load_uपूर्णांक32(INPUT_FORMATTER_BASE[ID] + reg_addr);
+पूर्ण
 
-#endif /* __INPUT_FORMATTER_PRIVATE_H_INCLUDED__ */
+#पूर्ण_अगर /* __INPUT_FORMATTER_PRIVATE_H_INCLUDED__ */

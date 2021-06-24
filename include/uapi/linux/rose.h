@@ -1,91 +1,92 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * These are the public elements of the Linux kernel Rose implementation.
- * For kernel AX.25 see the file ax25.h. This file requires ax25.h for the
- * definition of the ax25_address structure.
+ * These are the खुला elements of the Linux kernel Rose implementation.
+ * For kernel AX.25 see the file ax25.h. This file requires ax25.h क्रम the
+ * definition of the ax25_address काष्ठाure.
  */
 
-#ifndef	ROSE_KERNEL_H
-#define	ROSE_KERNEL_H
+#अगर_अघोषित	ROSE_KERNEL_H
+#घोषणा	ROSE_KERNEL_H
 
-#include <linux/socket.h>
-#include <linux/ax25.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/ax25.h>
 
-#define ROSE_MTU	251
+#घोषणा ROSE_MTU	251
 
-#define ROSE_MAX_DIGIS 6
+#घोषणा ROSE_MAX_DIGIS 6
 
-#define	ROSE_DEFER	1
-#define ROSE_T1		2
-#define	ROSE_T2		3
-#define	ROSE_T3		4
-#define	ROSE_IDLE	5
-#define	ROSE_QBITINCL	6
-#define	ROSE_HOLDBACK	7
+#घोषणा	ROSE_DEFER	1
+#घोषणा ROSE_T1		2
+#घोषणा	ROSE_T2		3
+#घोषणा	ROSE_T3		4
+#घोषणा	ROSE_IDLE	5
+#घोषणा	ROSE_QBITINCL	6
+#घोषणा	ROSE_HOLDBACK	7
 
-#define	SIOCRSGCAUSE		(SIOCPROTOPRIVATE+0)
-#define	SIOCRSSCAUSE		(SIOCPROTOPRIVATE+1)
-#define	SIOCRSL2CALL		(SIOCPROTOPRIVATE+2)
-#define	SIOCRSSL2CALL		(SIOCPROTOPRIVATE+2)
-#define	SIOCRSACCEPT		(SIOCPROTOPRIVATE+3)
-#define	SIOCRSCLRRT		(SIOCPROTOPRIVATE+4)
-#define	SIOCRSGL2CALL		(SIOCPROTOPRIVATE+5)
-#define	SIOCRSGFACILITIES	(SIOCPROTOPRIVATE+6)
+#घोषणा	SIOCRSGCAUSE		(SIOCPROTOPRIVATE+0)
+#घोषणा	SIOCRSSCAUSE		(SIOCPROTOPRIVATE+1)
+#घोषणा	SIOCRSL2CALL		(SIOCPROTOPRIVATE+2)
+#घोषणा	SIOCRSSL2CALL		(SIOCPROTOPRIVATE+2)
+#घोषणा	SIOCRSACCEPT		(SIOCPROTOPRIVATE+3)
+#घोषणा	SIOCRSCLRRT		(SIOCPROTOPRIVATE+4)
+#घोषणा	SIOCRSGL2CALL		(SIOCPROTOPRIVATE+5)
+#घोषणा	SIOCRSGFACILITIES	(SIOCPROTOPRIVATE+6)
 
-#define	ROSE_DTE_ORIGINATED	0x00
-#define	ROSE_NUMBER_BUSY	0x01
-#define	ROSE_INVALID_FACILITY	0x03
-#define	ROSE_NETWORK_CONGESTION	0x05
-#define	ROSE_OUT_OF_ORDER	0x09
-#define	ROSE_ACCESS_BARRED	0x0B
-#define	ROSE_NOT_OBTAINABLE	0x0D
-#define	ROSE_REMOTE_PROCEDURE	0x11
-#define	ROSE_LOCAL_PROCEDURE	0x13
-#define	ROSE_SHIP_ABSENT	0x39
+#घोषणा	ROSE_DTE_ORIGINATED	0x00
+#घोषणा	ROSE_NUMBER_BUSY	0x01
+#घोषणा	ROSE_INVALID_FACILITY	0x03
+#घोषणा	ROSE_NETWORK_CONGESTION	0x05
+#घोषणा	ROSE_OUT_OF_ORDER	0x09
+#घोषणा	ROSE_ACCESS_BARRED	0x0B
+#घोषणा	ROSE_NOT_OBTAINABLE	0x0D
+#घोषणा	ROSE_REMOTE_PROCEDURE	0x11
+#घोषणा	ROSE_LOCAL_PROCEDURE	0x13
+#घोषणा	ROSE_SHIP_ABSENT	0x39
 
-typedef struct {
-	char		rose_addr[5];
-} rose_address;
+प्रकार काष्ठा अणु
+	अक्षर		rose_addr[5];
+पूर्ण rose_address;
 
-struct sockaddr_rose {
+काष्ठा sockaddr_rose अणु
 	__kernel_sa_family_t srose_family;
 	rose_address	srose_addr;
 	ax25_address	srose_call;
-	int		srose_ndigis;
+	पूर्णांक		srose_ndigis;
 	ax25_address	srose_digi;
-};
+पूर्ण;
 
-struct full_sockaddr_rose {
+काष्ठा full_sockaddr_rose अणु
 	__kernel_sa_family_t srose_family;
 	rose_address	srose_addr;
 	ax25_address	srose_call;
-	unsigned int	srose_ndigis;
+	अचिन्हित पूर्णांक	srose_ndigis;
 	ax25_address	srose_digis[ROSE_MAX_DIGIS];
-};
+पूर्ण;
 
-struct rose_route_struct {
+काष्ठा rose_route_काष्ठा अणु
 	rose_address	address;
-	unsigned short	mask;
+	अचिन्हित लघु	mask;
 	ax25_address	neighbour;
-	char		device[16];
-	unsigned char	ndigis;
+	अक्षर		device[16];
+	अचिन्हित अक्षर	ndigis;
 	ax25_address	digipeaters[AX25_MAX_DIGIS];
-};
+पूर्ण;
 
-struct rose_cause_struct {
-	unsigned char	cause;
-	unsigned char	diagnostic;
-};
+काष्ठा rose_cause_काष्ठा अणु
+	अचिन्हित अक्षर	cause;
+	अचिन्हित अक्षर	diagnostic;
+पूर्ण;
 
-struct rose_facilities_struct {
+काष्ठा rose_facilities_काष्ठा अणु
 	rose_address	source_addr,   dest_addr;
 	ax25_address	source_call,   dest_call;
-	unsigned char	source_ndigis, dest_ndigis;
+	अचिन्हित अक्षर	source_ndigis, dest_ndigis;
 	ax25_address	source_digis[ROSE_MAX_DIGIS];
 	ax25_address	dest_digis[ROSE_MAX_DIGIS];
-	unsigned int	rand;
+	अचिन्हित पूर्णांक	अक्रम;
 	rose_address	fail_addr;
 	ax25_address	fail_call;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

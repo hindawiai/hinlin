@@ -1,136 +1,137 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _KBD_KERN_H
-#define _KBD_KERN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _KBD_KERN_H
+#घोषणा _KBD_KERN_H
 
-#include <linux/tty.h>
-#include <linux/interrupt.h>
-#include <linux/keyboard.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/keyboard.h>
 
-extern char *func_table[MAX_NR_FUNC];
+बाह्य अक्षर *func_table[MAX_NR_FUNC];
 
 /*
  * kbd->xxx contains the VC-local things (flag settings etc..)
  *
- * Note: externally visible are LED_SCR, LED_NUM, LED_CAP defined in kd.h
- *       The code in KDGETLED / KDSETLED depends on the internal and
- *       external order being the same.
+ * Note: बाह्यally visible are LED_SCR, LED_NUM, LED_CAP defined in kd.h
+ *       The code in KDGETLED / KDSETLED depends on the पूर्णांकernal and
+ *       बाह्यal order being the same.
  *
  * Note: lockstate is used as index in the array key_map.
  */
-struct kbd_struct {
+काष्ठा kbd_काष्ठा अणु
 
-	unsigned char lockstate;
-/* 8 modifiers - the names do not have any meaning at all;
+	अचिन्हित अक्षर lockstate;
+/* 8 modअगरiers - the names करो not have any meaning at all;
    they can be associated to arbitrarily chosen keys */
-#define VC_SHIFTLOCK	KG_SHIFT	/* shift lock mode */
-#define VC_ALTGRLOCK	KG_ALTGR	/* altgr lock mode */
-#define VC_CTRLLOCK	KG_CTRL 	/* control lock mode */
-#define VC_ALTLOCK	KG_ALT  	/* alt lock mode */
-#define VC_SHIFTLLOCK	KG_SHIFTL	/* shiftl lock mode */
-#define VC_SHIFTRLOCK	KG_SHIFTR	/* shiftr lock mode */
-#define VC_CTRLLLOCK	KG_CTRLL 	/* ctrll lock mode */
-#define VC_CTRLRLOCK	KG_CTRLR 	/* ctrlr lock mode */
-	unsigned char slockstate; 	/* for `sticky' Shift, Ctrl, etc. */
+#घोषणा VC_SHIFTLOCK	KG_SHIFT	/* shअगरt lock mode */
+#घोषणा VC_ALTGRLOCK	KG_ALTGR	/* altgr lock mode */
+#घोषणा VC_CTRLLOCK	KG_CTRL 	/* control lock mode */
+#घोषणा VC_ALTLOCK	KG_ALT  	/* alt lock mode */
+#घोषणा VC_SHIFTLLOCK	KG_SHIFTL	/* shअगरtl lock mode */
+#घोषणा VC_SHIFTRLOCK	KG_SHIFTR	/* shअगरtr lock mode */
+#घोषणा VC_CTRLLLOCK	KG_CTRLL 	/* ctrll lock mode */
+#घोषणा VC_CTRLRLOCK	KG_CTRLR 	/* ctrlr lock mode */
+	अचिन्हित अक्षर slockstate; 	/* क्रम `sticky' Shअगरt, Ctrl, etc. */
 
-	unsigned char ledmode:1;
-#define LED_SHOW_FLAGS 0        /* traditional state */
-#define LED_SHOW_IOCTL 1        /* only change leds upon ioctl */
+	अचिन्हित अक्षर ledmode:1;
+#घोषणा LED_SHOW_FLAGS 0        /* traditional state */
+#घोषणा LED_SHOW_IOCTL 1        /* only change leds upon ioctl */
 
-	unsigned char ledflagstate:4;	/* flags, not lights */
-	unsigned char default_ledflagstate:4;
-#define VC_SCROLLOCK	0	/* scroll-lock mode */
-#define VC_NUMLOCK	1	/* numeric lock mode */
-#define VC_CAPSLOCK	2	/* capslock mode */
-#define VC_KANALOCK	3	/* kanalock mode */
+	अचिन्हित अक्षर ledflagstate:4;	/* flags, not lights */
+	अचिन्हित अक्षर शेष_ledflagstate:4;
+#घोषणा VC_SCROLLOCK	0	/* scroll-lock mode */
+#घोषणा VC_NUMLOCK	1	/* numeric lock mode */
+#घोषणा VC_CAPSLOCK	2	/* capslock mode */
+#घोषणा VC_KANALOCK	3	/* kanalock mode */
 
-	unsigned char kbdmode:3;	/* one 3-bit value */
-#define VC_XLATE	0	/* translate keycodes using keymap */
-#define VC_MEDIUMRAW	1	/* medium raw (keycode) mode */
-#define VC_RAW		2	/* raw (scancode) mode */
-#define VC_UNICODE	3	/* Unicode mode */
-#define VC_OFF		4	/* disabled mode */
+	अचिन्हित अक्षर kbdmode:3;	/* one 3-bit value */
+#घोषणा VC_XLATE	0	/* translate keycodes using keymap */
+#घोषणा VC_MEDIUMRAW	1	/* medium raw (keycode) mode */
+#घोषणा VC_RAW		2	/* raw (scancode) mode */
+#घोषणा VC_UNICODE	3	/* Unicode mode */
+#घोषणा VC_OFF		4	/* disabled mode */
 
-	unsigned char modeflags:5;
-#define VC_APPLIC	0	/* application key mode */
-#define VC_CKMODE	1	/* cursor key mode */
-#define VC_REPEAT	2	/* keyboard repeat */
-#define VC_CRLF		3	/* 0 - enter sends CR, 1 - enter sends CRLF */
-#define VC_META		4	/* 0 - meta, 1 - meta=prefix with ESC */
-};
+	अचिन्हित अक्षर modeflags:5;
+#घोषणा VC_APPLIC	0	/* application key mode */
+#घोषणा VC_CKMODE	1	/* cursor key mode */
+#घोषणा VC_REPEAT	2	/* keyboard repeat */
+#घोषणा VC_CRLF		3	/* 0 - enter sends CR, 1 - enter sends CRLF */
+#घोषणा VC_META		4	/* 0 - meta, 1 - meta=prefix with ESC */
+पूर्ण;
 
-extern int kbd_init(void);
+बाह्य पूर्णांक kbd_init(व्योम);
 
-extern void setledstate(struct kbd_struct *kbd, unsigned int led);
+बाह्य व्योम setledstate(काष्ठा kbd_काष्ठा *kbd, अचिन्हित पूर्णांक led);
 
-extern int do_poke_blanked_console;
+बाह्य पूर्णांक करो_poke_blanked_console;
 
-extern void (*kbd_ledfunc)(unsigned int led);
+बाह्य व्योम (*kbd_ledfunc)(अचिन्हित पूर्णांक led);
 
-extern int set_console(int nr);
-extern void schedule_console_callback(void);
+बाह्य पूर्णांक set_console(पूर्णांक nr);
+बाह्य व्योम schedule_console_callback(व्योम);
 
-static inline int vc_kbd_mode(struct kbd_struct * kbd, int flag)
-{
-	return ((kbd->modeflags >> flag) & 1);
-}
+अटल अंतरभूत पूर्णांक vc_kbd_mode(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
+	वापस ((kbd->modeflags >> flag) & 1);
+पूर्ण
 
-static inline int vc_kbd_led(struct kbd_struct * kbd, int flag)
-{
-	return ((kbd->ledflagstate >> flag) & 1);
-}
+अटल अंतरभूत पूर्णांक vc_kbd_led(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
+	वापस ((kbd->ledflagstate >> flag) & 1);
+पूर्ण
 
-static inline void set_vc_kbd_mode(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम set_vc_kbd_mode(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->modeflags |= 1 << flag;
-}
+पूर्ण
 
-static inline void set_vc_kbd_led(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम set_vc_kbd_led(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->ledflagstate |= 1 << flag;
-}
+पूर्ण
 
-static inline void clr_vc_kbd_mode(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम clr_vc_kbd_mode(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->modeflags &= ~(1 << flag);
-}
+पूर्ण
 
-static inline void clr_vc_kbd_led(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम clr_vc_kbd_led(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->ledflagstate &= ~(1 << flag);
-}
+पूर्ण
 
-static inline void chg_vc_kbd_lock(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम chg_vc_kbd_lock(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->lockstate ^= 1 << flag;
-}
+पूर्ण
 
-static inline void chg_vc_kbd_slock(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम chg_vc_kbd_slock(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->slockstate ^= 1 << flag;
-}
+पूर्ण
 
-static inline void chg_vc_kbd_mode(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम chg_vc_kbd_mode(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->modeflags ^= 1 << flag;
-}
+पूर्ण
 
-static inline void chg_vc_kbd_led(struct kbd_struct * kbd, int flag)
-{
+अटल अंतरभूत व्योम chg_vc_kbd_led(काष्ठा kbd_काष्ठा * kbd, पूर्णांक flag)
+अणु
 	kbd->ledflagstate ^= 1 << flag;
-}
+पूर्ण
 
-#define U(x) ((x) ^ 0xf000)
+#घोषणा U(x) ((x) ^ 0xf000)
 
-#define BRL_UC_ROW 0x2800
+#घोषणा BRL_UC_ROW 0x2800
 
 /* keyboard.c */
 
-struct console;
+काष्ठा console;
 
-void vt_set_leds_compute_shiftstate(void);
+व्योम vt_set_leds_compute_shअगरtstate(व्योम);
 
 /* defkeymap.c */
 
-extern unsigned int keymap_count;
+बाह्य अचिन्हित पूर्णांक keymap_count;
 
-#endif
+#पूर्ण_अगर

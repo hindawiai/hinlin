@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright(c) 2007 Yuri Tikhonov <yur@emcraft.com>
  * Copyright(c) 2009 Intel Corporation
  */
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/dma-mapping.h>
-#include <linux/raid/pq.h>
-#include <linux/async_tx.h>
-#include <linux/gfp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/raid/pq.h>
+#समावेश <linux/async_tx.h>
+#समावेश <linux/gfp.h>
 
 /**
- * pq_scribble_page - space to hold throwaway P or Q buffer for
+ * pq_scribble_page - space to hold throwaway P or Q buffer क्रम
  * synchronous gen_syndrome
  */
-static struct page *pq_scribble_page;
+अटल काष्ठा page *pq_scribble_page;
 
-/* the struct page *blocks[] parameter passed to async_gen_syndrome()
+/* the काष्ठा page *blocks[] parameter passed to async_gen_syndrome()
  * and async_syndrome_val() contains the 'P' destination address at
  * blocks[disks-2] and the 'Q' destination address at blocks[disks-1]
  *
  * note: these are macros as they are used as lvalues
  */
-#define P(b, d) (b[d-2])
-#define Q(b, d) (b[d-1])
+#घोषणा P(b, d) (b[d-2])
+#घोषणा Q(b, d) (b[d-1])
 
-#define MAX_DISKS 255
+#घोषणा MAX_DISKS 255
 
 /**
- * do_async_gen_syndrome - asynchronously calculate P and/or Q
+ * करो_async_gen_syndrome - asynchronously calculate P and/or Q
  */
-static __async_inline struct dma_async_tx_descriptor *
-do_async_gen_syndrome(struct dma_chan *chan,
-		      const unsigned char *scfs, int disks,
-		      struct dmaengine_unmap_data *unmap,
-		      enum dma_ctrl_flags dma_flags,
-		      struct async_submit_ctl *submit)
-{
-	struct dma_async_tx_descriptor *tx = NULL;
-	struct dma_device *dma = chan->device;
-	enum async_tx_flags flags_orig = submit->flags;
+अटल __async_अंतरभूत काष्ठा dma_async_tx_descriptor *
+करो_async_gen_syndrome(काष्ठा dma_chan *chan,
+		      स्थिर अचिन्हित अक्षर *scfs, पूर्णांक disks,
+		      काष्ठा dmaengine_unmap_data *unmap,
+		      क्रमागत dma_ctrl_flags dma_flags,
+		      काष्ठा async_submit_ctl *submit)
+अणु
+	काष्ठा dma_async_tx_descriptor *tx = शून्य;
+	काष्ठा dma_device *dma = chan->device;
+	क्रमागत async_tx_flags flags_orig = submit->flags;
 	dma_async_tx_callback cb_fn_orig = submit->cb_fn;
 	dma_async_tx_callback cb_param_orig = submit->cb_param;
-	int src_cnt = disks - 2;
-	unsigned short pq_src_cnt;
+	पूर्णांक src_cnt = disks - 2;
+	अचिन्हित लघु pq_src_cnt;
 	dma_addr_t dma_dest[2];
-	int src_off = 0;
+	पूर्णांक src_off = 0;
 
-	while (src_cnt > 0) {
+	जबतक (src_cnt > 0) अणु
 		submit->flags = flags_orig;
 		pq_src_cnt = min(src_cnt, dma_maxpq(dma, dma_flags));
-		/* if we are submitting additional pqs, leave the chain open,
+		/* अगर we are submitting additional pqs, leave the chain खोलो,
 		 * clear the callback parameters, and leave the destination
 		 * buffers mapped
 		 */
-		if (src_cnt > pq_src_cnt) {
+		अगर (src_cnt > pq_src_cnt) अणु
 			submit->flags &= ~ASYNC_TX_ACK;
 			submit->flags |= ASYNC_TX_FENCE;
-			submit->cb_fn = NULL;
-			submit->cb_param = NULL;
-		} else {
+			submit->cb_fn = शून्य;
+			submit->cb_param = शून्य;
+		पूर्ण अन्यथा अणु
 			submit->cb_fn = cb_fn_orig;
 			submit->cb_param = cb_param_orig;
-			if (cb_fn_orig)
+			अगर (cb_fn_orig)
 				dma_flags |= DMA_PREP_INTERRUPT;
-		}
-		if (submit->flags & ASYNC_TX_FENCE)
+		पूर्ण
+		अगर (submit->flags & ASYNC_TX_FENCE)
 			dma_flags |= DMA_PREP_FENCE;
 
-		/* Drivers force forward progress in case they can not provide
+		/* Drivers क्रमce क्रमward progress in हाल they can not provide
 		 * a descriptor
 		 */
-		for (;;) {
+		क्रम (;;) अणु
 			dma_dest[0] = unmap->addr[disks - 2];
 			dma_dest[1] = unmap->addr[disks - 1];
 			tx = dma->device_prep_dma_pq(chan, dma_dest,
@@ -80,11 +81,11 @@ do_async_gen_syndrome(struct dma_chan *chan,
 						     pq_src_cnt,
 						     &scfs[src_off], unmap->len,
 						     dma_flags);
-			if (likely(tx))
-				break;
+			अगर (likely(tx))
+				अवरोध;
 			async_tx_quiesce(&submit->depend_tx);
 			dma_async_issue_pending(chan);
-		}
+		पूर्ण
 
 		dma_set_unmap(tx, unmap);
 		async_tx_submit(chan, tx, submit);
@@ -95,109 +96,109 @@ do_async_gen_syndrome(struct dma_chan *chan,
 		src_off += pq_src_cnt;
 
 		dma_flags |= DMA_PREP_CONTINUE;
-	}
+	पूर्ण
 
-	return tx;
-}
+	वापस tx;
+पूर्ण
 
 /**
- * do_sync_gen_syndrome - synchronously calculate a raid6 syndrome
+ * करो_sync_gen_syndrome - synchronously calculate a raid6 syndrome
  */
-static void
-do_sync_gen_syndrome(struct page **blocks, unsigned int *offsets, int disks,
-		     size_t len, struct async_submit_ctl *submit)
-{
-	void **srcs;
-	int i;
-	int start = -1, stop = disks - 3;
+अटल व्योम
+करो_sync_gen_syndrome(काष्ठा page **blocks, अचिन्हित पूर्णांक *offsets, पूर्णांक disks,
+		     माप_प्रकार len, काष्ठा async_submit_ctl *submit)
+अणु
+	व्योम **srcs;
+	पूर्णांक i;
+	पूर्णांक start = -1, stop = disks - 3;
 
-	if (submit->scribble)
+	अगर (submit->scribble)
 		srcs = submit->scribble;
-	else
-		srcs = (void **) blocks;
+	अन्यथा
+		srcs = (व्योम **) blocks;
 
-	for (i = 0; i < disks; i++) {
-		if (blocks[i] == NULL) {
+	क्रम (i = 0; i < disks; i++) अणु
+		अगर (blocks[i] == शून्य) अणु
 			BUG_ON(i > disks - 3); /* P or Q can't be zero */
-			srcs[i] = (void*)raid6_empty_zero_page;
-		} else {
+			srcs[i] = (व्योम*)raid6_empty_zero_page;
+		पूर्ण अन्यथा अणु
 			srcs[i] = page_address(blocks[i]) + offsets[i];
 
-			if (i < disks - 2) {
+			अगर (i < disks - 2) अणु
 				stop = i;
-				if (start == -1)
+				अगर (start == -1)
 					start = i;
-			}
-		}
-	}
-	if (submit->flags & ASYNC_TX_PQ_XOR_DST) {
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (submit->flags & ASYNC_TX_PQ_XOR_DST) अणु
 		BUG_ON(!raid6_call.xor_syndrome);
-		if (start >= 0)
+		अगर (start >= 0)
 			raid6_call.xor_syndrome(disks, start, stop, len, srcs);
-	} else
+	पूर्ण अन्यथा
 		raid6_call.gen_syndrome(disks, len, srcs);
 	async_tx_sync_epilog(submit);
-}
+पूर्ण
 
-static inline bool
-is_dma_pq_aligned_offs(struct dma_device *dev, unsigned int *offs,
-				     int src_cnt, size_t len)
-{
-	int i;
+अटल अंतरभूत bool
+is_dma_pq_aligned_offs(काष्ठा dma_device *dev, अचिन्हित पूर्णांक *offs,
+				     पूर्णांक src_cnt, माप_प्रकार len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < src_cnt; i++) {
-		if (!is_dma_pq_aligned(dev, offs[i], 0, len))
-			return false;
-	}
-	return true;
-}
+	क्रम (i = 0; i < src_cnt; i++) अणु
+		अगर (!is_dma_pq_aligned(dev, offs[i], 0, len))
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /**
  * async_gen_syndrome - asynchronously calculate a raid6 syndrome
  * @blocks: source blocks from idx 0..disks-3, P @ disks-2 and Q @ disks-1
- * @offsets: offset array into each block (src and dest) to start transaction
+ * @offsets: offset array पूर्णांकo each block (src and dest) to start transaction
  * @disks: number of blocks (including missing P or Q, see below)
  * @len: length of operation in bytes
- * @submit: submission/completion modifiers
+ * @submit: submission/completion modअगरiers
  *
  * General note: This routine assumes a field of GF(2^8) with a
- * primitive polynomial of 0x11d and a generator of {02}.
+ * primitive polynomial of 0x11d and a generator of अणु02पूर्ण.
  *
  * 'disks' note: callers can optionally omit either P or Q (but not
  * both) from the calculation by setting blocks[disks-2] or
- * blocks[disks-1] to NULL.  When P or Q is omitted 'len' must be <=
+ * blocks[disks-1] to शून्य.  When P or Q is omitted 'len' must be <=
  * PAGE_SIZE as a temporary buffer of this size is used in the
- * synchronous path.  'disks' always accounts for both destination
+ * synchronous path.  'disks' always accounts क्रम both destination
  * buffers.  If any source buffers (blocks[i] where i < disks - 2) are
- * set to NULL those buffers will be replaced with the raid6_zero_page
+ * set to शून्य those buffers will be replaced with the raid6_zero_page
  * in the synchronous path and omitted in the hardware-asynchronous
  * path.
  */
-struct dma_async_tx_descriptor *
-async_gen_syndrome(struct page **blocks, unsigned int *offsets, int disks,
-		   size_t len, struct async_submit_ctl *submit)
-{
-	int src_cnt = disks - 2;
-	struct dma_chan *chan = async_tx_find_channel(submit, DMA_PQ,
+काष्ठा dma_async_tx_descriptor *
+async_gen_syndrome(काष्ठा page **blocks, अचिन्हित पूर्णांक *offsets, पूर्णांक disks,
+		   माप_प्रकार len, काष्ठा async_submit_ctl *submit)
+अणु
+	पूर्णांक src_cnt = disks - 2;
+	काष्ठा dma_chan *chan = async_tx_find_channel(submit, DMA_PQ,
 						      &P(blocks, disks), 2,
 						      blocks, src_cnt, len);
-	struct dma_device *device = chan ? chan->device : NULL;
-	struct dmaengine_unmap_data *unmap = NULL;
+	काष्ठा dma_device *device = chan ? chan->device : शून्य;
+	काष्ठा dmaengine_unmap_data *unmap = शून्य;
 
 	BUG_ON(disks > MAX_DISKS || !(P(blocks, disks) || Q(blocks, disks)));
 
-	if (device)
+	अगर (device)
 		unmap = dmaengine_get_unmap_data(device->dev, disks, GFP_NOWAIT);
 
 	/* XORing P/Q is only implemented in software */
-	if (unmap && !(submit->flags & ASYNC_TX_PQ_XOR_DST) &&
+	अगर (unmap && !(submit->flags & ASYNC_TX_PQ_XOR_DST) &&
 	    (src_cnt <= dma_maxpq(device, 0) ||
 	     dma_maxpq(device, DMA_PREP_CONTINUE) > 0) &&
-	    is_dma_pq_aligned_offs(device, offsets, disks, len)) {
-		struct dma_async_tx_descriptor *tx;
-		enum dma_ctrl_flags dma_flags = 0;
-		unsigned char coefs[MAX_DISKS];
-		int i, j;
+	    is_dma_pq_aligned_offs(device, offsets, disks, len)) अणु
+		काष्ठा dma_async_tx_descriptor *tx;
+		क्रमागत dma_ctrl_flags dma_flags = 0;
+		अचिन्हित अक्षर coefs[MAX_DISKS];
+		पूर्णांक i, j;
 
 		/* run the p+q asynchronously */
 		pr_debug("%s: (async) disks: %d len: %zu\n",
@@ -207,122 +208,122 @@ async_gen_syndrome(struct page **blocks, unsigned int *offsets, int disks,
 		 * sources and update the coefficients accordingly
 		 */
 		unmap->len = len;
-		for (i = 0, j = 0; i < src_cnt; i++) {
-			if (blocks[i] == NULL)
-				continue;
+		क्रम (i = 0, j = 0; i < src_cnt; i++) अणु
+			अगर (blocks[i] == शून्य)
+				जारी;
 			unmap->addr[j] = dma_map_page(device->dev, blocks[i],
 						offsets[i], len, DMA_TO_DEVICE);
 			coefs[j] = raid6_gfexp[i];
 			unmap->to_cnt++;
 			j++;
-		}
+		पूर्ण
 
 		/*
 		 * DMAs use destinations as sources,
-		 * so use BIDIRECTIONAL mapping
+		 * so use BIसूचीECTIONAL mapping
 		 */
 		unmap->bidi_cnt++;
-		if (P(blocks, disks))
+		अगर (P(blocks, disks))
 			unmap->addr[j++] = dma_map_page(device->dev, P(blocks, disks),
 							P(offsets, disks),
-							len, DMA_BIDIRECTIONAL);
-		else {
+							len, DMA_BIसूचीECTIONAL);
+		अन्यथा अणु
 			unmap->addr[j++] = 0;
 			dma_flags |= DMA_PREP_PQ_DISABLE_P;
-		}
+		पूर्ण
 
 		unmap->bidi_cnt++;
-		if (Q(blocks, disks))
+		अगर (Q(blocks, disks))
 			unmap->addr[j++] = dma_map_page(device->dev, Q(blocks, disks),
 							Q(offsets, disks),
-							len, DMA_BIDIRECTIONAL);
-		else {
+							len, DMA_BIसूचीECTIONAL);
+		अन्यथा अणु
 			unmap->addr[j++] = 0;
 			dma_flags |= DMA_PREP_PQ_DISABLE_Q;
-		}
+		पूर्ण
 
-		tx = do_async_gen_syndrome(chan, coefs, j, unmap, dma_flags, submit);
+		tx = करो_async_gen_syndrome(chan, coefs, j, unmap, dma_flags, submit);
 		dmaengine_unmap_put(unmap);
-		return tx;
-	}
+		वापस tx;
+	पूर्ण
 
 	dmaengine_unmap_put(unmap);
 
 	/* run the pq synchronously */
 	pr_debug("%s: (sync) disks: %d len: %zu\n", __func__, disks, len);
 
-	/* wait for any prerequisite operations */
+	/* रुको क्रम any prerequisite operations */
 	async_tx_quiesce(&submit->depend_tx);
 
-	if (!P(blocks, disks)) {
+	अगर (!P(blocks, disks)) अणु
 		P(blocks, disks) = pq_scribble_page;
 		P(offsets, disks) = 0;
-	}
-	if (!Q(blocks, disks)) {
+	पूर्ण
+	अगर (!Q(blocks, disks)) अणु
 		Q(blocks, disks) = pq_scribble_page;
 		Q(offsets, disks) = 0;
-	}
-	do_sync_gen_syndrome(blocks, offsets, disks, len, submit);
+	पूर्ण
+	करो_sync_gen_syndrome(blocks, offsets, disks, len, submit);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(async_gen_syndrome);
 
-static inline struct dma_chan *
-pq_val_chan(struct async_submit_ctl *submit, struct page **blocks, int disks, size_t len)
-{
-	#ifdef CONFIG_ASYNC_TX_DISABLE_PQ_VAL_DMA
-	return NULL;
-	#endif
-	return async_tx_find_channel(submit, DMA_PQ_VAL, NULL, 0,  blocks,
+अटल अंतरभूत काष्ठा dma_chan *
+pq_val_chan(काष्ठा async_submit_ctl *submit, काष्ठा page **blocks, पूर्णांक disks, माप_प्रकार len)
+अणु
+	#अगर_घोषित CONFIG_ASYNC_TX_DISABLE_PQ_VAL_DMA
+	वापस शून्य;
+	#पूर्ण_अगर
+	वापस async_tx_find_channel(submit, DMA_PQ_VAL, शून्य, 0,  blocks,
 				     disks, len);
-}
+पूर्ण
 
 /**
  * async_syndrome_val - asynchronously validate a raid6 syndrome
  * @blocks: source blocks from idx 0..disks-3, P @ disks-2 and Q @ disks-1
- * @offset: common offset into each block (src and dest) to start transaction
+ * @offset: common offset पूर्णांकo each block (src and dest) to start transaction
  * @disks: number of blocks (including missing P or Q, see below)
  * @len: length of operation in bytes
  * @pqres: on val failure SUM_CHECK_P_RESULT and/or SUM_CHECK_Q_RESULT are set
- * @spare: temporary result buffer for the synchronous case
+ * @spare: temporary result buffer क्रम the synchronous हाल
  * @s_off: spare buffer page offset
- * @submit: submission / completion modifiers
+ * @submit: submission / completion modअगरiers
  *
  * The same notes from async_gen_syndrome apply to the 'blocks',
  * and 'disks' parameters of this routine.  The synchronous path
  * requires a temporary result buffer and submit->scribble to be
- * specified.
+ * specअगरied.
  */
-struct dma_async_tx_descriptor *
-async_syndrome_val(struct page **blocks, unsigned int *offsets, int disks,
-		   size_t len, enum sum_check_flags *pqres, struct page *spare,
-		   unsigned int s_off, struct async_submit_ctl *submit)
-{
-	struct dma_chan *chan = pq_val_chan(submit, blocks, disks, len);
-	struct dma_device *device = chan ? chan->device : NULL;
-	struct dma_async_tx_descriptor *tx;
-	unsigned char coefs[MAX_DISKS];
-	enum dma_ctrl_flags dma_flags = submit->cb_fn ? DMA_PREP_INTERRUPT : 0;
-	struct dmaengine_unmap_data *unmap = NULL;
+काष्ठा dma_async_tx_descriptor *
+async_syndrome_val(काष्ठा page **blocks, अचिन्हित पूर्णांक *offsets, पूर्णांक disks,
+		   माप_प्रकार len, क्रमागत sum_check_flags *pqres, काष्ठा page *spare,
+		   अचिन्हित पूर्णांक s_off, काष्ठा async_submit_ctl *submit)
+अणु
+	काष्ठा dma_chan *chan = pq_val_chan(submit, blocks, disks, len);
+	काष्ठा dma_device *device = chan ? chan->device : शून्य;
+	काष्ठा dma_async_tx_descriptor *tx;
+	अचिन्हित अक्षर coefs[MAX_DISKS];
+	क्रमागत dma_ctrl_flags dma_flags = submit->cb_fn ? DMA_PREP_INTERRUPT : 0;
+	काष्ठा dmaengine_unmap_data *unmap = शून्य;
 
 	BUG_ON(disks < 4 || disks > MAX_DISKS);
 
-	if (device)
+	अगर (device)
 		unmap = dmaengine_get_unmap_data(device->dev, disks, GFP_NOWAIT);
 
-	if (unmap && disks <= dma_maxpq(device, 0) &&
-	    is_dma_pq_aligned_offs(device, offsets, disks, len)) {
-		struct device *dev = device->dev;
+	अगर (unmap && disks <= dma_maxpq(device, 0) &&
+	    is_dma_pq_aligned_offs(device, offsets, disks, len)) अणु
+		काष्ठा device *dev = device->dev;
 		dma_addr_t pq[2];
-		int i, j = 0, src_cnt = 0;
+		पूर्णांक i, j = 0, src_cnt = 0;
 
 		pr_debug("%s: (async) disks: %d len: %zu\n",
 			 __func__, disks, len);
 
 		unmap->len = len;
-		for (i = 0; i < disks-2; i++)
-			if (likely(blocks[i])) {
+		क्रम (i = 0; i < disks-2; i++)
+			अगर (likely(blocks[i])) अणु
 				unmap->addr[j] = dma_map_page(dev, blocks[i],
 							      offsets[i], len,
 							      DMA_TO_DEVICE);
@@ -330,56 +331,56 @@ async_syndrome_val(struct page **blocks, unsigned int *offsets, int disks,
 				unmap->to_cnt++;
 				src_cnt++;
 				j++;
-			}
+			पूर्ण
 
-		if (!P(blocks, disks)) {
+		अगर (!P(blocks, disks)) अणु
 			pq[0] = 0;
 			dma_flags |= DMA_PREP_PQ_DISABLE_P;
-		} else {
+		पूर्ण अन्यथा अणु
 			pq[0] = dma_map_page(dev, P(blocks, disks),
 					     P(offsets, disks), len,
 					     DMA_TO_DEVICE);
 			unmap->addr[j++] = pq[0];
 			unmap->to_cnt++;
-		}
-		if (!Q(blocks, disks)) {
+		पूर्ण
+		अगर (!Q(blocks, disks)) अणु
 			pq[1] = 0;
 			dma_flags |= DMA_PREP_PQ_DISABLE_Q;
-		} else {
+		पूर्ण अन्यथा अणु
 			pq[1] = dma_map_page(dev, Q(blocks, disks),
 					     Q(offsets, disks), len,
 					     DMA_TO_DEVICE);
 			unmap->addr[j++] = pq[1];
 			unmap->to_cnt++;
-		}
+		पूर्ण
 
-		if (submit->flags & ASYNC_TX_FENCE)
+		अगर (submit->flags & ASYNC_TX_FENCE)
 			dma_flags |= DMA_PREP_FENCE;
-		for (;;) {
+		क्रम (;;) अणु
 			tx = device->device_prep_dma_pq_val(chan, pq,
 							    unmap->addr,
 							    src_cnt,
 							    coefs,
 							    len, pqres,
 							    dma_flags);
-			if (likely(tx))
-				break;
+			अगर (likely(tx))
+				अवरोध;
 			async_tx_quiesce(&submit->depend_tx);
 			dma_async_issue_pending(chan);
-		}
+		पूर्ण
 
 		dma_set_unmap(tx, unmap);
 		async_tx_submit(chan, tx, submit);
-	} else {
-		struct page *p_src = P(blocks, disks);
-		unsigned int p_off = P(offsets, disks);
-		struct page *q_src = Q(blocks, disks);
-		unsigned int q_off = Q(offsets, disks);
-		enum async_tx_flags flags_orig = submit->flags;
+	पूर्ण अन्यथा अणु
+		काष्ठा page *p_src = P(blocks, disks);
+		अचिन्हित पूर्णांक p_off = P(offsets, disks);
+		काष्ठा page *q_src = Q(blocks, disks);
+		अचिन्हित पूर्णांक q_off = Q(offsets, disks);
+		क्रमागत async_tx_flags flags_orig = submit->flags;
 		dma_async_tx_callback cb_fn_orig = submit->cb_fn;
-		void *scribble = submit->scribble;
-		void *cb_param_orig = submit->cb_param;
-		void *p, *q, *s;
+		व्योम *scribble = submit->scribble;
+		व्योम *cb_param_orig = submit->cb_param;
+		व्योम *p, *q, *s;
 
 		pr_debug("%s: (sync) disks: %d len: %zu\n",
 			 __func__, disks, len);
@@ -389,37 +390,37 @@ async_syndrome_val(struct page **blocks, unsigned int *offsets, int disks,
 		 */
 		BUG_ON(!spare || !scribble);
 
-		/* wait for any prerequisite operations */
+		/* रुको क्रम any prerequisite operations */
 		async_tx_quiesce(&submit->depend_tx);
 
-		/* recompute p and/or q into the temporary buffer and then
+		/* recompute p and/or q पूर्णांकo the temporary buffer and then
 		 * check to see the result matches the current value
 		 */
-		tx = NULL;
+		tx = शून्य;
 		*pqres = 0;
-		if (p_src) {
-			init_async_submit(submit, ASYNC_TX_XOR_ZERO_DST, NULL,
-					  NULL, NULL, scribble);
+		अगर (p_src) अणु
+			init_async_submit(submit, ASYNC_TX_XOR_ZERO_DST, शून्य,
+					  शून्य, शून्य, scribble);
 			tx = async_xor_offs(spare, s_off,
 					blocks, offsets, disks-2, len, submit);
 			async_tx_quiesce(&tx);
 			p = page_address(p_src) + p_off;
 			s = page_address(spare) + s_off;
-			*pqres |= !!memcmp(p, s, len) << SUM_CHECK_P;
-		}
+			*pqres |= !!स_भेद(p, s, len) << SUM_CHECK_P;
+		पूर्ण
 
-		if (q_src) {
-			P(blocks, disks) = NULL;
+		अगर (q_src) अणु
+			P(blocks, disks) = शून्य;
 			Q(blocks, disks) = spare;
 			Q(offsets, disks) = s_off;
-			init_async_submit(submit, 0, NULL, NULL, NULL, scribble);
+			init_async_submit(submit, 0, शून्य, शून्य, शून्य, scribble);
 			tx = async_gen_syndrome(blocks, offsets, disks,
 					len, submit);
 			async_tx_quiesce(&tx);
 			q = page_address(q_src) + q_off;
 			s = page_address(spare) + s_off;
-			*pqres |= !!memcmp(q, s, len) << SUM_CHECK_Q;
-		}
+			*pqres |= !!स_भेद(q, s, len) << SUM_CHECK_Q;
+		पूर्ण
 
 		/* restore P, Q and submit */
 		P(blocks, disks) = p_src;
@@ -431,33 +432,33 @@ async_syndrome_val(struct page **blocks, unsigned int *offsets, int disks,
 		submit->cb_param = cb_param_orig;
 		submit->flags = flags_orig;
 		async_tx_sync_epilog(submit);
-		tx = NULL;
-	}
+		tx = शून्य;
+	पूर्ण
 	dmaengine_unmap_put(unmap);
 
-	return tx;
-}
+	वापस tx;
+पूर्ण
 EXPORT_SYMBOL_GPL(async_syndrome_val);
 
-static int __init async_pq_init(void)
-{
+अटल पूर्णांक __init async_pq_init(व्योम)
+अणु
 	pq_scribble_page = alloc_page(GFP_KERNEL);
 
-	if (pq_scribble_page)
-		return 0;
+	अगर (pq_scribble_page)
+		वापस 0;
 
 	pr_err("%s: failed to allocate required spare page\n", __func__);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void __exit async_pq_exit(void)
-{
-	__free_page(pq_scribble_page);
-}
+अटल व्योम __निकास async_pq_निकास(व्योम)
+अणु
+	__मुक्त_page(pq_scribble_page);
+पूर्ण
 
 module_init(async_pq_init);
-module_exit(async_pq_exit);
+module_निकास(async_pq_निकास);
 
 MODULE_DESCRIPTION("asynchronous raid6 syndrome generation/validation");
 MODULE_LICENSE("GPL");

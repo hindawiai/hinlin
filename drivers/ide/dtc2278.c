@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 1996  Linus Torvalds & author (see below)
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/timer.h>
-#include <linux/mm.h>
-#include <linux/ioport.h>
-#include <linux/blkdev.h>
-#include <linux/ide.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/init.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define DRV_NAME "dtc2278"
+#घोषणा DRV_NAME "dtc2278"
 
 /*
- * Changing this #undef to #define may solve start up problems in some systems.
+ * Changing this #अघोषित to #घोषणा may solve start up problems in some प्रणालीs.
  */
-#undef ALWAYS_SET_DTC2278_PIO_MODE
+#अघोषित ALWAYS_SET_DTC2278_PIO_MODE
 
 /*
  * From: andy@cercle.cts.com (Dyan Wile)
  *
- * Below is a patch for DTC-2278 - alike software-programmable controllers
+ * Below is a patch क्रम DTC-2278 - alike software-programmable controllers
  * The code enables the secondary IDE controller and the PIO4 (3?) timings on
  * the primary (EIDE). You may probably have to enable the 32-bit support to
- * get the full speed. You better get the disk interrupts disabled ( hdparm -u0
- * /dev/hd.. ) for the drives connected to the EIDE interface. (I get my
- * filesystem  corrupted with -u1, but under heavy disk load only :-)
+ * get the full speed. You better get the disk पूर्णांकerrupts disabled ( hdparm -u0
+ * /dev/hd.. ) क्रम the drives connected to the EIDE पूर्णांकerface. (I get my
+ * fileप्रणाली  corrupted with -u1, but under heavy disk load only :-)
  *
- * This card is now forced to use the "serialize" feature,
+ * This card is now क्रमced to use the "serialize" feature,
  * and irq-unmasking is disallowed.  If io_32bit is enabled,
- * it must be done for BOTH drives on each interface.
+ * it must be करोne क्रम BOTH drives on each पूर्णांकerface.
  *
- * This code was written for the DTC2278E, but might work with any of these:
+ * This code was written क्रम the DTC2278E, but might work with any of these:
  *
- * DTC2278S has only a single IDE interface.
- * DTC2278D has two IDE interfaces and is otherwise identical to the S version.
- * DTC2278E also has serial ports and a printer port
- * DTC2278EB: has onboard BIOS, and "works like a charm" -- Kent Bradford <kent@theory.caltech.edu>
+ * DTC2278S has only a single IDE पूर्णांकerface.
+ * DTC2278D has two IDE पूर्णांकerfaces and is otherwise identical to the S version.
+ * DTC2278E also has serial ports and a prपूर्णांकer port
+ * DTC2278EB: has onboard BIOS, and "works like a charm" -- Kent Bradक्रमd <kent@theory.caltech.edu>
  *
  * There may be a fourth controller type. The S and D versions use the
- * Winbond chip, and I think the E version does also.
+ * Winbond chip, and I think the E version करोes also.
  *
  */
 
-static void sub22 (char b, char c)
-{
-	int i;
+अटल व्योम sub22 (अक्षर b, अक्षर c)
+अणु
+	पूर्णांक i;
 
-	for(i = 0; i < 3; ++i) {
+	क्रम(i = 0; i < 3; ++i) अणु
 		inb(0x3f6);
 		outb_p(b,0xb0);
 		inb(0x3f6);
 		outb_p(c,0xb4);
 		inb(0x3f6);
-		if(inb(0xb4) == c) {
+		अगर(inb(0xb4) == c) अणु
 			outb_p(7,0xb0);
 			inb(0x3f6);
-			return;	/* success */
-		}
-	}
-}
+			वापस;	/* success */
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static DEFINE_SPINLOCK(dtc2278_lock);
+अटल DEFINE_SPINLOCK(dtc2278_lock);
 
-static void dtc2278_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	unsigned long flags;
+अटल व्योम dtc2278_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (drive->pio_mode >= XFER_PIO_3) {
+	अगर (drive->pio_mode >= XFER_PIO_3) अणु
 		spin_lock_irqsave(&dtc2278_lock, flags);
 		/*
-		 * This enables PIO mode4 (3?) on the first interface
+		 * This enables PIO mode4 (3?) on the first पूर्णांकerface
 		 */
 		sub22(1,0xc3);
 		sub22(0,0xa0);
 		spin_unlock_irqrestore(&dtc2278_lock, flags);
-	} else {
-		/* we don't know how to set it back again.. */
-		/* Actually we do - there is a data sheet available for the
-		   Winbond but does anyone actually care */
-	}
-}
+	पूर्ण अन्यथा अणु
+		/* we करोn't know how to set it back again.. */
+		/* Actually we करो - there is a data sheet available क्रम the
+		   Winbond but करोes anyone actually care */
+	पूर्ण
+पूर्ण
 
-static const struct ide_port_ops dtc2278_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops dtc2278_port_ops = अणु
 	.set_pio_mode		= dtc2278_set_pio_mode,
-};
+पूर्ण;
 
-static const struct ide_port_info dtc2278_port_info __initconst = {
+अटल स्थिर काष्ठा ide_port_info dtc2278_port_info __initस्थिर = अणु
 	.name			= DRV_NAME,
 	.chipset		= ide_dtc2278,
 	.port_ops		= &dtc2278_port_ops,
@@ -104,49 +105,49 @@ static const struct ide_port_info dtc2278_port_info __initconst = {
 				  IDE_HFLAG_NO_DMA |
 				  IDE_HFLAG_DTC2278,
 	.pio_mask		= ATA_PIO4,
-};
+पूर्ण;
 
-static int __init dtc2278_probe(void)
-{
-	unsigned long flags;
+अटल पूर्णांक __init dtc2278_probe(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	/*
-	 * This enables the second interface
+	 * This enables the second पूर्णांकerface
 	 */
 	outb_p(4,0xb0);
 	inb(0x3f6);
 	outb_p(0x20,0xb4);
 	inb(0x3f6);
-#ifdef ALWAYS_SET_DTC2278_PIO_MODE
+#अगर_घोषित ALWAYS_SET_DTC2278_PIO_MODE
 	/*
-	 * This enables PIO mode4 (3?) on the first interface
-	 * and may solve start-up problems for some people.
+	 * This enables PIO mode4 (3?) on the first पूर्णांकerface
+	 * and may solve start-up problems क्रम some people.
 	 */
 	sub22(1,0xc3);
 	sub22(0,0xa0);
-#endif
+#पूर्ण_अगर
 	local_irq_restore(flags);
 
-	return ide_legacy_device_add(&dtc2278_port_info, 0);
-}
+	वापस ide_legacy_device_add(&dtc2278_port_info, 0);
+पूर्ण
 
-static bool probe_dtc2278;
+अटल bool probe_dtc2278;
 
 module_param_named(probe, probe_dtc2278, bool, 0);
 MODULE_PARM_DESC(probe, "probe for DTC2278xx chipsets");
 
-static int __init dtc2278_init(void)
-{
-	if (probe_dtc2278 == 0)
-		return -ENODEV;
+अटल पूर्णांक __init dtc2278_init(व्योम)
+अणु
+	अगर (probe_dtc2278 == 0)
+		वापस -ENODEV;
 
-	if (dtc2278_probe()) {
-		printk(KERN_ERR "dtc2278: ide interfaces already in use!\n");
-		return -EBUSY;
-	}
-	return 0;
-}
+	अगर (dtc2278_probe()) अणु
+		prपूर्णांकk(KERN_ERR "dtc2278: ide interfaces already in use!\n");
+		वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 module_init(dtc2278_init);
 

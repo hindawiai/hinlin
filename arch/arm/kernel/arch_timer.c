@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/arch/arm/kernel/arch_timer.c
+ *  linux/arch/arm/kernel/arch_समयr.c
  *
  *  Copyright (C) 2011 ARM Ltd.
  *  All Rights Reserved
  */
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/errno.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#include <asm/delay.h>
-#include <asm/arch_timer.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <यंत्र/arch_समयr.h>
 
-#include <clocksource/arm_arch_timer.h>
+#समावेश <घड़ीsource/arm_arch_समयr.h>
 
-static unsigned long arch_timer_read_counter_long(void)
-{
-	return arch_timer_read_counter();
-}
+अटल अचिन्हित दीर्घ arch_समयr_पढ़ो_counter_दीर्घ(व्योम)
+अणु
+	वापस arch_समयr_पढ़ो_counter();
+पूर्ण
 
-static struct delay_timer arch_delay_timer;
+अटल काष्ठा delay_समयr arch_delay_समयr;
 
-static void __init arch_timer_delay_timer_register(void)
-{
-	/* Use the architected timer for the delay loop. */
-	arch_delay_timer.read_current_timer = arch_timer_read_counter_long;
-	arch_delay_timer.freq = arch_timer_get_rate();
-	register_current_timer_delay(&arch_delay_timer);
-}
+अटल व्योम __init arch_समयr_delay_समयr_रेजिस्टर(व्योम)
+अणु
+	/* Use the architected समयr क्रम the delay loop. */
+	arch_delay_समयr.पढ़ो_current_समयr = arch_समयr_पढ़ो_counter_दीर्घ;
+	arch_delay_समयr.freq = arch_समयr_get_rate();
+	रेजिस्टर_current_समयr_delay(&arch_delay_समयr);
+पूर्ण
 
-int __init arch_timer_arch_init(void)
-{
-        u32 arch_timer_rate = arch_timer_get_rate();
+पूर्णांक __init arch_समयr_arch_init(व्योम)
+अणु
+        u32 arch_समयr_rate = arch_समयr_get_rate();
 
-	if (arch_timer_rate == 0)
-		return -ENXIO;
+	अगर (arch_समयr_rate == 0)
+		वापस -ENXIO;
 
-	arch_timer_delay_timer_register();
+	arch_समयr_delay_समयr_रेजिस्टर();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

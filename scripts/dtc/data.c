@@ -1,256 +1,257 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  */
 
-#include "dtc.h"
+#समावेश "dtc.h"
 
-void data_free(struct data d)
-{
-	struct marker *m, *nm;
+व्योम data_मुक्त(काष्ठा data d)
+अणु
+	काष्ठा marker *m, *nm;
 
 	m = d.markers;
-	while (m) {
+	जबतक (m) अणु
 		nm = m->next;
-		free(m->ref);
-		free(m);
+		मुक्त(m->ref);
+		मुक्त(m);
 		m = nm;
-	}
+	पूर्ण
 
-	if (d.val)
-		free(d.val);
-}
+	अगर (d.val)
+		मुक्त(d.val);
+पूर्ण
 
-struct data data_grow_for(struct data d, unsigned int xlen)
-{
-	struct data nd;
-	unsigned int newsize;
+काष्ठा data data_grow_क्रम(काष्ठा data d, अचिन्हित पूर्णांक xlen)
+अणु
+	काष्ठा data nd;
+	अचिन्हित पूर्णांक newsize;
 
-	if (xlen == 0)
-		return d;
+	अगर (xlen == 0)
+		वापस d;
 
 	nd = d;
 
 	newsize = xlen;
 
-	while ((d.len + xlen) > newsize)
+	जबतक ((d.len + xlen) > newsize)
 		newsize *= 2;
 
-	nd.val = xrealloc(d.val, newsize);
+	nd.val = xपुनः_स्मृति(d.val, newsize);
 
-	return nd;
-}
+	वापस nd;
+पूर्ण
 
-struct data data_copy_mem(const char *mem, int len)
-{
-	struct data d;
+काष्ठा data data_copy_mem(स्थिर अक्षर *mem, पूर्णांक len)
+अणु
+	काष्ठा data d;
 
-	d = data_grow_for(empty_data, len);
+	d = data_grow_क्रम(empty_data, len);
 
 	d.len = len;
-	memcpy(d.val, mem, len);
+	स_नकल(d.val, mem, len);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-struct data data_copy_escape_string(const char *s, int len)
-{
-	int i = 0;
-	struct data d;
-	char *q;
+काष्ठा data data_copy_escape_string(स्थिर अक्षर *s, पूर्णांक len)
+अणु
+	पूर्णांक i = 0;
+	काष्ठा data d;
+	अक्षर *q;
 
-	d = data_add_marker(empty_data, TYPE_STRING, NULL);
-	d = data_grow_for(d, len + 1);
+	d = data_add_marker(empty_data, TYPE_STRING, शून्य);
+	d = data_grow_क्रम(d, len + 1);
 
 	q = d.val;
-	while (i < len) {
-		char c = s[i++];
+	जबतक (i < len) अणु
+		अक्षर c = s[i++];
 
-		if (c == '\\')
-			c = get_escape_char(s, &i);
+		अगर (c == '\\')
+			c = get_escape_अक्षर(s, &i);
 
 		q[d.len++] = c;
-	}
+	पूर्ण
 
 	q[d.len++] = '\0';
-	return d;
-}
+	वापस d;
+पूर्ण
 
-struct data data_copy_file(FILE *f, size_t maxlen)
-{
-	struct data d = empty_data;
+काष्ठा data data_copy_file(खाता *f, माप_प्रकार maxlen)
+अणु
+	काष्ठा data d = empty_data;
 
-	d = data_add_marker(d, TYPE_NONE, NULL);
-	while (!feof(f) && (d.len < maxlen)) {
-		size_t chunksize, ret;
+	d = data_add_marker(d, TYPE_NONE, शून्य);
+	जबतक (!ख_पूर्ण(f) && (d.len < maxlen)) अणु
+		माप_प्रकार chunksize, ret;
 
-		if (maxlen == (size_t)-1)
+		अगर (maxlen == (माप_प्रकार)-1)
 			chunksize = 4096;
-		else
+		अन्यथा
 			chunksize = maxlen - d.len;
 
-		d = data_grow_for(d, chunksize);
-		ret = fread(d.val + d.len, 1, chunksize, f);
+		d = data_grow_क्रम(d, chunksize);
+		ret = ख_पढ़ो(d.val + d.len, 1, chunksize, f);
 
-		if (ferror(f))
-			die("Error reading file into data: %s", strerror(errno));
+		अगर (ख_त्रुटि(f))
+			die("Error reading file into data: %s", म_त्रुटि(त्रुटि_सं));
 
-		if (d.len + ret < d.len)
+		अगर (d.len + ret < d.len)
 			die("Overflow reading file into data\n");
 
 		d.len += ret;
-	}
+	पूर्ण
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-struct data data_append_data(struct data d, const void *p, int len)
-{
-	d = data_grow_for(d, len);
-	memcpy(d.val + d.len, p, len);
+काष्ठा data data_append_data(काष्ठा data d, स्थिर व्योम *p, पूर्णांक len)
+अणु
+	d = data_grow_क्रम(d, len);
+	स_नकल(d.val + d.len, p, len);
 	d.len += len;
-	return d;
-}
+	वापस d;
+पूर्ण
 
-struct data data_insert_at_marker(struct data d, struct marker *m,
-				  const void *p, int len)
-{
-	d = data_grow_for(d, len);
-	memmove(d.val + m->offset + len, d.val + m->offset, d.len - m->offset);
-	memcpy(d.val + m->offset, p, len);
+काष्ठा data data_insert_at_marker(काष्ठा data d, काष्ठा marker *m,
+				  स्थिर व्योम *p, पूर्णांक len)
+अणु
+	d = data_grow_क्रम(d, len);
+	स_हटाओ(d.val + m->offset + len, d.val + m->offset, d.len - m->offset);
+	स_नकल(d.val + m->offset, p, len);
 	d.len += len;
 
 	/* Adjust all markers after the one we're inserting at */
 	m = m->next;
-	for_each_marker(m)
+	क्रम_each_marker(m)
 		m->offset += len;
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static struct data data_append_markers(struct data d, struct marker *m)
-{
-	struct marker **mp = &d.markers;
+अटल काष्ठा data data_append_markers(काष्ठा data d, काष्ठा marker *m)
+अणु
+	काष्ठा marker **mp = &d.markers;
 
 	/* Find the end of the markerlist */
-	while (*mp)
+	जबतक (*mp)
 		mp = &((*mp)->next);
 	*mp = m;
-	return d;
-}
+	वापस d;
+पूर्ण
 
-struct data data_merge(struct data d1, struct data d2)
-{
-	struct data d;
-	struct marker *m2 = d2.markers;
+काष्ठा data data_merge(काष्ठा data d1, काष्ठा data d2)
+अणु
+	काष्ठा data d;
+	काष्ठा marker *m2 = d2.markers;
 
 	d = data_append_markers(data_append_data(d1, d2.val, d2.len), m2);
 
-	/* Adjust for the length of d1 */
-	for_each_marker(m2)
+	/* Adjust क्रम the length of d1 */
+	क्रम_each_marker(m2)
 		m2->offset += d1.len;
 
-	d2.markers = NULL; /* So data_free() doesn't clobber them */
-	data_free(d2);
+	d2.markers = शून्य; /* So data_मुक्त() करोesn't clobber them */
+	data_मुक्त(d2);
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-struct data data_append_integer(struct data d, uint64_t value, int bits)
-{
-	uint8_t value_8;
+काष्ठा data data_append_पूर्णांकeger(काष्ठा data d, uपूर्णांक64_t value, पूर्णांक bits)
+अणु
+	uपूर्णांक8_t value_8;
 	fdt16_t value_16;
 	fdt32_t value_32;
 	fdt64_t value_64;
 
-	switch (bits) {
-	case 8:
+	चयन (bits) अणु
+	हाल 8:
 		value_8 = value;
-		return data_append_data(d, &value_8, 1);
+		वापस data_append_data(d, &value_8, 1);
 
-	case 16:
+	हाल 16:
 		value_16 = cpu_to_fdt16(value);
-		return data_append_data(d, &value_16, 2);
+		वापस data_append_data(d, &value_16, 2);
 
-	case 32:
+	हाल 32:
 		value_32 = cpu_to_fdt32(value);
-		return data_append_data(d, &value_32, 4);
+		वापस data_append_data(d, &value_32, 4);
 
-	case 64:
+	हाल 64:
 		value_64 = cpu_to_fdt64(value);
-		return data_append_data(d, &value_64, 8);
+		वापस data_append_data(d, &value_64, 8);
 
-	default:
+	शेष:
 		die("Invalid literal size (%d)\n", bits);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct data data_append_re(struct data d, uint64_t address, uint64_t size)
-{
-	struct fdt_reserve_entry re;
+काष्ठा data data_append_re(काष्ठा data d, uपूर्णांक64_t address, uपूर्णांक64_t size)
+अणु
+	काष्ठा fdt_reserve_entry re;
 
 	re.address = cpu_to_fdt64(address);
 	re.size = cpu_to_fdt64(size);
 
-	return data_append_data(d, &re, sizeof(re));
-}
+	वापस data_append_data(d, &re, माप(re));
+पूर्ण
 
-struct data data_append_cell(struct data d, cell_t word)
-{
-	return data_append_integer(d, word, sizeof(word) * 8);
-}
+काष्ठा data data_append_cell(काष्ठा data d, cell_t word)
+अणु
+	वापस data_append_पूर्णांकeger(d, word, माप(word) * 8);
+पूर्ण
 
-struct data data_append_addr(struct data d, uint64_t addr)
-{
-	return data_append_integer(d, addr, sizeof(addr) * 8);
-}
+काष्ठा data data_append_addr(काष्ठा data d, uपूर्णांक64_t addr)
+अणु
+	वापस data_append_पूर्णांकeger(d, addr, माप(addr) * 8);
+पूर्ण
 
-struct data data_append_byte(struct data d, uint8_t byte)
-{
-	return data_append_data(d, &byte, 1);
-}
+काष्ठा data data_append_byte(काष्ठा data d, uपूर्णांक8_t byte)
+अणु
+	वापस data_append_data(d, &byte, 1);
+पूर्ण
 
-struct data data_append_zeroes(struct data d, int len)
-{
-	d = data_grow_for(d, len);
+काष्ठा data data_append_zeroes(काष्ठा data d, पूर्णांक len)
+अणु
+	d = data_grow_क्रम(d, len);
 
-	memset(d.val + d.len, 0, len);
+	स_रखो(d.val + d.len, 0, len);
 	d.len += len;
-	return d;
-}
+	वापस d;
+पूर्ण
 
-struct data data_append_align(struct data d, int align)
-{
-	int newlen = ALIGN(d.len, align);
-	return data_append_zeroes(d, newlen - d.len);
-}
+काष्ठा data data_append_align(काष्ठा data d, पूर्णांक align)
+अणु
+	पूर्णांक newlen = ALIGN(d.len, align);
+	वापस data_append_zeroes(d, newlen - d.len);
+पूर्ण
 
-struct data data_add_marker(struct data d, enum markertype type, char *ref)
-{
-	struct marker *m;
+काष्ठा data data_add_marker(काष्ठा data d, क्रमागत markertype type, अक्षर *ref)
+अणु
+	काष्ठा marker *m;
 
-	m = xmalloc(sizeof(*m));
+	m = xदो_स्मृति(माप(*m));
 	m->offset = d.len;
 	m->type = type;
 	m->ref = ref;
-	m->next = NULL;
+	m->next = शून्य;
 
-	return data_append_markers(d, m);
-}
+	वापस data_append_markers(d, m);
+पूर्ण
 
-bool data_is_one_string(struct data d)
-{
-	int i;
-	int len = d.len;
+bool data_is_one_string(काष्ठा data d)
+अणु
+	पूर्णांक i;
+	पूर्णांक len = d.len;
 
-	if (len == 0)
-		return false;
+	अगर (len == 0)
+		वापस false;
 
-	for (i = 0; i < len-1; i++)
-		if (d.val[i] == '\0')
-			return false;
+	क्रम (i = 0; i < len-1; i++)
+		अगर (d.val[i] == '\0')
+			वापस false;
 
-	if (d.val[len-1] != '\0')
-		return false;
+	अगर (d.val[len-1] != '\0')
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण

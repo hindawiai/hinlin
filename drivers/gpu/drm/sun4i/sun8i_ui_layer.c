@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) Icenowy Zheng <icenowy@aosc.io>
  *
@@ -6,27 +7,27 @@
  *   Copyright (C) 2015 Free Electrons
  *   Copyright (C) 2015 NextThing Co
  *
- *   Maxime Ripard <maxime.ripard@free-electrons.com>
+ *   Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "sun8i_mixer.h"
-#include "sun8i_ui_layer.h"
-#include "sun8i_ui_scaler.h"
+#समावेश "sun8i_mixer.h"
+#समावेश "sun8i_ui_layer.h"
+#समावेश "sun8i_ui_scaler.h"
 
-static void sun8i_ui_layer_enable(struct sun8i_mixer *mixer, int channel,
-				  int overlay, bool enable, unsigned int zpos,
-				  unsigned int old_zpos)
-{
+अटल व्योम sun8i_ui_layer_enable(काष्ठा sun8i_mixer *mixer, पूर्णांक channel,
+				  पूर्णांक overlay, bool enable, अचिन्हित पूर्णांक zpos,
+				  अचिन्हित पूर्णांक old_zpos)
+अणु
 	u32 val, bld_base, ch_base;
 
 	bld_base = sun8i_blender_base(mixer);
@@ -35,16 +36,16 @@ static void sun8i_ui_layer_enable(struct sun8i_mixer *mixer, int channel,
 	DRM_DEBUG_DRIVER("%sabling channel %d overlay %d\n",
 			 enable ? "En" : "Dis", channel, overlay);
 
-	if (enable)
+	अगर (enable)
 		val = SUN8I_MIXER_CHAN_UI_LAYER_ATTR_EN;
-	else
+	अन्यथा
 		val = 0;
 
 	regmap_update_bits(mixer->engine.regs,
 			   SUN8I_MIXER_CHAN_UI_LAYER_ATTR(ch_base, overlay),
 			   SUN8I_MIXER_CHAN_UI_LAYER_ATTR_EN, val);
 
-	if (!enable || zpos != old_zpos) {
+	अगर (!enable || zpos != old_zpos) अणु
 		regmap_update_bits(mixer->engine.regs,
 				   SUN8I_MIXER_BLEND_PIPE_CTL(bld_base),
 				   SUN8I_MIXER_BLEND_PIPE_CTL_EN(old_zpos),
@@ -54,9 +55,9 @@ static void sun8i_ui_layer_enable(struct sun8i_mixer *mixer, int channel,
 				   SUN8I_MIXER_BLEND_ROUTE(bld_base),
 				   SUN8I_MIXER_BLEND_ROUTE_PIPE_MSK(old_zpos),
 				   0);
-	}
+	पूर्ण
 
-	if (enable) {
+	अगर (enable) अणु
 		val = SUN8I_MIXER_BLEND_PIPE_CTL_EN(zpos);
 
 		regmap_update_bits(mixer->engine.regs,
@@ -69,12 +70,12 @@ static void sun8i_ui_layer_enable(struct sun8i_mixer *mixer, int channel,
 				   SUN8I_MIXER_BLEND_ROUTE(bld_base),
 				   SUN8I_MIXER_BLEND_ROUTE_PIPE_MSK(zpos),
 				   val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sun8i_ui_layer_update_alpha(struct sun8i_mixer *mixer, int channel,
-					int overlay, struct drm_plane *plane)
-{
+अटल व्योम sun8i_ui_layer_update_alpha(काष्ठा sun8i_mixer *mixer, पूर्णांक channel,
+					पूर्णांक overlay, काष्ठा drm_plane *plane)
+अणु
 	u32 mask, val, ch_base;
 
 	ch_base = sun8i_channel_base(mixer, channel);
@@ -91,13 +92,13 @@ static void sun8i_ui_layer_update_alpha(struct sun8i_mixer *mixer, int channel,
 	regmap_update_bits(mixer->engine.regs,
 			   SUN8I_MIXER_CHAN_UI_LAYER_ATTR(ch_base, overlay),
 			   mask, val);
-}
+पूर्ण
 
-static int sun8i_ui_layer_update_coord(struct sun8i_mixer *mixer, int channel,
-				       int overlay, struct drm_plane *plane,
-				       unsigned int zpos)
-{
-	struct drm_plane_state *state = plane->state;
+अटल पूर्णांक sun8i_ui_layer_update_coord(काष्ठा sun8i_mixer *mixer, पूर्णांक channel,
+				       पूर्णांक overlay, काष्ठा drm_plane *plane,
+				       अचिन्हित पूर्णांक zpos)
+अणु
+	काष्ठा drm_plane_state *state = plane->state;
 	u32 src_w, src_h, dst_w, dst_h;
 	u32 bld_base, ch_base;
 	u32 outsize, insize;
@@ -120,25 +121,25 @@ static int sun8i_ui_layer_update_coord(struct sun8i_mixer *mixer, int channel,
 	insize = SUN8I_MIXER_SIZE(src_w, src_h);
 	outsize = SUN8I_MIXER_SIZE(dst_w, dst_h);
 
-	if (plane->type == DRM_PLANE_TYPE_PRIMARY) {
-		bool interlaced = false;
+	अगर (plane->type == DRM_PLANE_TYPE_PRIMARY) अणु
+		bool पूर्णांकerlaced = false;
 		u32 val;
 
 		DRM_DEBUG_DRIVER("Primary layer, updating global size W: %u H: %u\n",
 				 dst_w, dst_h);
-		regmap_write(mixer->engine.regs,
+		regmap_ग_लिखो(mixer->engine.regs,
 			     SUN8I_MIXER_GLOBAL_SIZE,
 			     outsize);
-		regmap_write(mixer->engine.regs,
+		regmap_ग_लिखो(mixer->engine.regs,
 			     SUN8I_MIXER_BLEND_OUTSIZE(bld_base), outsize);
 
-		if (state->crtc)
-			interlaced = state->crtc->state->adjusted_mode.flags
+		अगर (state->crtc)
+			पूर्णांकerlaced = state->crtc->state->adjusted_mode.flags
 				& DRM_MODE_FLAG_INTERLACE;
 
-		if (interlaced)
+		अगर (पूर्णांकerlaced)
 			val = SUN8I_MIXER_BLEND_OUTCTL_INTERLACED;
-		else
+		अन्यथा
 			val = 0;
 
 		regmap_update_bits(mixer->engine.regs,
@@ -147,21 +148,21 @@ static int sun8i_ui_layer_update_coord(struct sun8i_mixer *mixer, int channel,
 				   val);
 
 		DRM_DEBUG_DRIVER("Switching display mixer interlaced mode %s\n",
-				 interlaced ? "on" : "off");
-	}
+				 पूर्णांकerlaced ? "on" : "off");
+	पूर्ण
 
 	/* Set height and width */
 	DRM_DEBUG_DRIVER("Layer source offset X: %d Y: %d\n",
 			 state->src.x1 >> 16, state->src.y1 >> 16);
 	DRM_DEBUG_DRIVER("Layer source size W: %d H: %d\n", src_w, src_h);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_MIXER_CHAN_UI_LAYER_SIZE(ch_base, overlay),
 		     insize);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_MIXER_CHAN_UI_OVL_SIZE(ch_base),
 		     insize);
 
-	if (insize != outsize || hphase || vphase) {
+	अगर (insize != outsize || hphase || vphase) अणु
 		u32 hscale, vscale;
 
 		DRM_DEBUG_DRIVER("HW scaling is enabled\n");
@@ -172,59 +173,59 @@ static int sun8i_ui_layer_update_coord(struct sun8i_mixer *mixer, int channel,
 		sun8i_ui_scaler_setup(mixer, channel, src_w, src_h, dst_w,
 				      dst_h, hscale, vscale, hphase, vphase);
 		sun8i_ui_scaler_enable(mixer, channel, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		DRM_DEBUG_DRIVER("HW scaling is not needed\n");
 		sun8i_ui_scaler_enable(mixer, channel, false);
-	}
+	पूर्ण
 
 	/* Set base coordinates */
 	DRM_DEBUG_DRIVER("Layer destination coordinates X: %d Y: %d\n",
 			 state->dst.x1, state->dst.y1);
 	DRM_DEBUG_DRIVER("Layer destination size W: %d H: %d\n", dst_w, dst_h);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_MIXER_BLEND_ATTR_COORD(bld_base, zpos),
 		     SUN8I_MIXER_COORD(state->dst.x1, state->dst.y1));
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_MIXER_BLEND_ATTR_INSIZE(bld_base, zpos),
 		     outsize);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun8i_ui_layer_update_formats(struct sun8i_mixer *mixer, int channel,
-					 int overlay, struct drm_plane *plane)
-{
-	struct drm_plane_state *state = plane->state;
-	const struct drm_format_info *fmt;
+अटल पूर्णांक sun8i_ui_layer_update_क्रमmats(काष्ठा sun8i_mixer *mixer, पूर्णांक channel,
+					 पूर्णांक overlay, काष्ठा drm_plane *plane)
+अणु
+	काष्ठा drm_plane_state *state = plane->state;
+	स्थिर काष्ठा drm_क्रमmat_info *fmt;
 	u32 val, ch_base, hw_fmt;
-	int ret;
+	पूर्णांक ret;
 
 	ch_base = sun8i_channel_base(mixer, channel);
 
-	fmt = state->fb->format;
-	ret = sun8i_mixer_drm_format_to_hw(fmt->format, &hw_fmt);
-	if (ret || fmt->is_yuv) {
+	fmt = state->fb->क्रमmat;
+	ret = sun8i_mixer_drm_क्रमmat_to_hw(fmt->क्रमmat, &hw_fmt);
+	अगर (ret || fmt->is_yuv) अणु
 		DRM_DEBUG_DRIVER("Invalid format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	val = hw_fmt << SUN8I_MIXER_CHAN_UI_LAYER_ATTR_FBFMT_OFFSET;
 	regmap_update_bits(mixer->engine.regs,
 			   SUN8I_MIXER_CHAN_UI_LAYER_ATTR(ch_base, overlay),
 			   SUN8I_MIXER_CHAN_UI_LAYER_ATTR_FBFMT_MASK, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun8i_ui_layer_update_buffer(struct sun8i_mixer *mixer, int channel,
-					int overlay, struct drm_plane *plane)
-{
-	struct drm_plane_state *state = plane->state;
-	struct drm_framebuffer *fb = state->fb;
-	struct drm_gem_cma_object *gem;
+अटल पूर्णांक sun8i_ui_layer_update_buffer(काष्ठा sun8i_mixer *mixer, पूर्णांक channel,
+					पूर्णांक overlay, काष्ठा drm_plane *plane)
+अणु
+	काष्ठा drm_plane_state *state = plane->state;
+	काष्ठा drm_framebuffer *fb = state->fb;
+	काष्ठा drm_gem_cma_object *gem;
 	dma_addr_t paddr;
 	u32 ch_base;
-	int bpp;
+	पूर्णांक bpp;
 
 	ch_base = sun8i_channel_base(mixer, channel);
 
@@ -234,120 +235,120 @@ static int sun8i_ui_layer_update_buffer(struct sun8i_mixer *mixer, int channel,
 	DRM_DEBUG_DRIVER("Using GEM @ %pad\n", &gem->paddr);
 
 	/* Compute the start of the displayed memory */
-	bpp = fb->format->cpp[0];
+	bpp = fb->क्रमmat->cpp[0];
 	paddr = gem->paddr + fb->offsets[0];
 
-	/* Fixup framebuffer address for src coordinates */
+	/* Fixup framebuffer address क्रम src coordinates */
 	paddr += (state->src.x1 >> 16) * bpp;
 	paddr += (state->src.y1 >> 16) * fb->pitches[0];
 
 	/* Set the line width */
 	DRM_DEBUG_DRIVER("Layer line width: %d bytes\n", fb->pitches[0]);
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_MIXER_CHAN_UI_LAYER_PITCH(ch_base, overlay),
 		     fb->pitches[0]);
 
 	DRM_DEBUG_DRIVER("Setting buffer address to %pad\n", &paddr);
 
-	regmap_write(mixer->engine.regs,
+	regmap_ग_लिखो(mixer->engine.regs,
 		     SUN8I_MIXER_CHAN_UI_LAYER_TOP_LADDR(ch_base, overlay),
 		     lower_32_bits(paddr));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun8i_ui_layer_atomic_check(struct drm_plane *plane,
-				       struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+अटल पूर्णांक sun8i_ui_layer_atomic_check(काष्ठा drm_plane *plane,
+				       काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	struct sun8i_ui_layer *layer = plane_to_sun8i_ui_layer(plane);
-	struct drm_crtc *crtc = new_plane_state->crtc;
-	struct drm_crtc_state *crtc_state;
-	int min_scale, max_scale;
+	काष्ठा sun8i_ui_layer *layer = plane_to_sun8i_ui_layer(plane);
+	काष्ठा drm_crtc *crtc = new_plane_state->crtc;
+	काष्ठा drm_crtc_state *crtc_state;
+	पूर्णांक min_scale, max_scale;
 
-	if (!crtc)
-		return 0;
+	अगर (!crtc)
+		वापस 0;
 
 	crtc_state = drm_atomic_get_existing_crtc_state(state,
 							crtc);
-	if (WARN_ON(!crtc_state))
-		return -EINVAL;
+	अगर (WARN_ON(!crtc_state))
+		वापस -EINVAL;
 
 	min_scale = DRM_PLANE_HELPER_NO_SCALING;
 	max_scale = DRM_PLANE_HELPER_NO_SCALING;
 
-	if (layer->mixer->cfg->scaler_mask & BIT(layer->channel)) {
+	अगर (layer->mixer->cfg->scaler_mask & BIT(layer->channel)) अणु
 		min_scale = SUN8I_UI_SCALER_SCALE_MIN;
 		max_scale = SUN8I_UI_SCALER_SCALE_MAX;
-	}
+	पूर्ण
 
-	return drm_atomic_helper_check_plane_state(new_plane_state,
+	वापस drm_atomic_helper_check_plane_state(new_plane_state,
 						   crtc_state,
 						   min_scale, max_scale,
 						   true, true);
-}
+पूर्ण
 
-static void sun8i_ui_layer_atomic_disable(struct drm_plane *plane,
-					  struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+अटल व्योम sun8i_ui_layer_atomic_disable(काष्ठा drm_plane *plane,
+					  काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	struct sun8i_ui_layer *layer = plane_to_sun8i_ui_layer(plane);
-	unsigned int old_zpos = old_state->normalized_zpos;
-	struct sun8i_mixer *mixer = layer->mixer;
+	काष्ठा sun8i_ui_layer *layer = plane_to_sun8i_ui_layer(plane);
+	अचिन्हित पूर्णांक old_zpos = old_state->normalized_zpos;
+	काष्ठा sun8i_mixer *mixer = layer->mixer;
 
 	sun8i_ui_layer_enable(mixer, layer->channel, layer->overlay, false, 0,
 			      old_zpos);
-}
+पूर्ण
 
-static void sun8i_ui_layer_atomic_update(struct drm_plane *plane,
-					 struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
+अटल व्योम sun8i_ui_layer_atomic_update(काष्ठा drm_plane *plane,
+					 काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
-	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 									   plane);
-	struct sun8i_ui_layer *layer = plane_to_sun8i_ui_layer(plane);
-	unsigned int zpos = new_state->normalized_zpos;
-	unsigned int old_zpos = old_state->normalized_zpos;
-	struct sun8i_mixer *mixer = layer->mixer;
+	काष्ठा sun8i_ui_layer *layer = plane_to_sun8i_ui_layer(plane);
+	अचिन्हित पूर्णांक zpos = new_state->normalized_zpos;
+	अचिन्हित पूर्णांक old_zpos = old_state->normalized_zpos;
+	काष्ठा sun8i_mixer *mixer = layer->mixer;
 
-	if (!new_state->visible) {
+	अगर (!new_state->visible) अणु
 		sun8i_ui_layer_enable(mixer, layer->channel,
 				      layer->overlay, false, 0, old_zpos);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sun8i_ui_layer_update_coord(mixer, layer->channel,
 				    layer->overlay, plane, zpos);
 	sun8i_ui_layer_update_alpha(mixer, layer->channel,
 				    layer->overlay, plane);
-	sun8i_ui_layer_update_formats(mixer, layer->channel,
+	sun8i_ui_layer_update_क्रमmats(mixer, layer->channel,
 				      layer->overlay, plane);
 	sun8i_ui_layer_update_buffer(mixer, layer->channel,
 				     layer->overlay, plane);
 	sun8i_ui_layer_enable(mixer, layer->channel, layer->overlay,
 			      true, zpos, old_zpos);
-}
+पूर्ण
 
-static const struct drm_plane_helper_funcs sun8i_ui_layer_helper_funcs = {
+अटल स्थिर काष्ठा drm_plane_helper_funcs sun8i_ui_layer_helper_funcs = अणु
 	.prepare_fb	= drm_gem_plane_helper_prepare_fb,
 	.atomic_check	= sun8i_ui_layer_atomic_check,
 	.atomic_disable	= sun8i_ui_layer_atomic_disable,
 	.atomic_update	= sun8i_ui_layer_atomic_update,
-};
+पूर्ण;
 
-static const struct drm_plane_funcs sun8i_ui_layer_funcs = {
+अटल स्थिर काष्ठा drm_plane_funcs sun8i_ui_layer_funcs = अणु
 	.atomic_destroy_state	= drm_atomic_helper_plane_destroy_state,
 	.atomic_duplicate_state	= drm_atomic_helper_plane_duplicate_state,
 	.destroy		= drm_plane_cleanup,
 	.disable_plane		= drm_atomic_helper_disable_plane,
 	.reset			= drm_atomic_helper_plane_reset,
 	.update_plane		= drm_atomic_helper_update_plane,
-};
+पूर्ण;
 
-static const u32 sun8i_ui_layer_formats[] = {
+अटल स्थिर u32 sun8i_ui_layer_क्रमmats[] = अणु
 	DRM_FORMAT_ABGR1555,
 	DRM_FORMAT_ABGR4444,
 	DRM_FORMAT_ABGR8888,
@@ -368,55 +369,55 @@ static const u32 sun8i_ui_layer_formats[] = {
 	DRM_FORMAT_RGBX8888,
 	DRM_FORMAT_XBGR8888,
 	DRM_FORMAT_XRGB8888,
-};
+पूर्ण;
 
-struct sun8i_ui_layer *sun8i_ui_layer_init_one(struct drm_device *drm,
-					       struct sun8i_mixer *mixer,
-					       int index)
-{
-	enum drm_plane_type type = DRM_PLANE_TYPE_OVERLAY;
-	int channel = mixer->cfg->vi_num + index;
-	struct sun8i_ui_layer *layer;
-	unsigned int plane_cnt;
-	int ret;
+काष्ठा sun8i_ui_layer *sun8i_ui_layer_init_one(काष्ठा drm_device *drm,
+					       काष्ठा sun8i_mixer *mixer,
+					       पूर्णांक index)
+अणु
+	क्रमागत drm_plane_type type = DRM_PLANE_TYPE_OVERLAY;
+	पूर्णांक channel = mixer->cfg->vi_num + index;
+	काष्ठा sun8i_ui_layer *layer;
+	अचिन्हित पूर्णांक plane_cnt;
+	पूर्णांक ret;
 
-	layer = devm_kzalloc(drm->dev, sizeof(*layer), GFP_KERNEL);
-	if (!layer)
-		return ERR_PTR(-ENOMEM);
+	layer = devm_kzalloc(drm->dev, माप(*layer), GFP_KERNEL);
+	अगर (!layer)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (index == 0)
+	अगर (index == 0)
 		type = DRM_PLANE_TYPE_PRIMARY;
 
 	/* possible crtcs are set later */
 	ret = drm_universal_plane_init(drm, &layer->plane, 0,
 				       &sun8i_ui_layer_funcs,
-				       sun8i_ui_layer_formats,
-				       ARRAY_SIZE(sun8i_ui_layer_formats),
-				       NULL, type, NULL);
-	if (ret) {
+				       sun8i_ui_layer_क्रमmats,
+				       ARRAY_SIZE(sun8i_ui_layer_क्रमmats),
+				       शून्य, type, शून्य);
+	अगर (ret) अणु
 		dev_err(drm->dev, "Couldn't initialize layer\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	plane_cnt = mixer->cfg->ui_num + mixer->cfg->vi_num;
 
 	ret = drm_plane_create_alpha_property(&layer->plane);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(drm->dev, "Couldn't add alpha property\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	ret = drm_plane_create_zpos_property(&layer->plane, channel,
 					     0, plane_cnt - 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(drm->dev, "Couldn't add zpos property\n");
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	drm_plane_helper_add(&layer->plane, &sun8i_ui_layer_helper_funcs);
 	layer->mixer = mixer;
 	layer->channel = channel;
 	layer->overlay = 0;
 
-	return layer;
-}
+	वापस layer;
+पूर्ण

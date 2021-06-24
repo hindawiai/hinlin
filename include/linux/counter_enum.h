@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Counter interface enum functions
+ * Counter पूर्णांकerface क्रमागत functions
  * Copyright (C) 2018 William Breathitt Gray
  */
-#ifndef _COUNTER_ENUM_H_
-#define _COUNTER_ENUM_H_
+#अगर_अघोषित _COUNTER_ENUM_H_
+#घोषणा _COUNTER_ENUM_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct counter_device;
-struct counter_signal;
-struct counter_count;
+काष्ठा counter_device;
+काष्ठा counter_संकेत;
+काष्ठा counter_count;
 
-ssize_t counter_signal_enum_read(struct counter_device *counter,
-				 struct counter_signal *signal, void *priv,
-				 char *buf);
-ssize_t counter_signal_enum_write(struct counter_device *counter,
-				  struct counter_signal *signal, void *priv,
-				  const char *buf, size_t len);
+sमाप_प्रकार counter_संकेत_क्रमागत_पढ़ो(काष्ठा counter_device *counter,
+				 काष्ठा counter_संकेत *संकेत, व्योम *priv,
+				 अक्षर *buf);
+sमाप_प्रकार counter_संकेत_क्रमागत_ग_लिखो(काष्ठा counter_device *counter,
+				  काष्ठा counter_संकेत *संकेत, व्योम *priv,
+				  स्थिर अक्षर *buf, माप_प्रकार len);
 
-ssize_t counter_signal_enum_available_read(struct counter_device *counter,
-					   struct counter_signal *signal,
-					   void *priv, char *buf);
+sमाप_प्रकार counter_संकेत_क्रमागत_available_पढ़ो(काष्ठा counter_device *counter,
+					   काष्ठा counter_संकेत *संकेत,
+					   व्योम *priv, अक्षर *buf);
 
-ssize_t counter_count_enum_read(struct counter_device *counter,
-				struct counter_count *count, void *priv,
-				char *buf);
-ssize_t counter_count_enum_write(struct counter_device *counter,
-				 struct counter_count *count, void *priv,
-				 const char *buf, size_t len);
+sमाप_प्रकार counter_count_क्रमागत_पढ़ो(काष्ठा counter_device *counter,
+				काष्ठा counter_count *count, व्योम *priv,
+				अक्षर *buf);
+sमाप_प्रकार counter_count_क्रमागत_ग_लिखो(काष्ठा counter_device *counter,
+				 काष्ठा counter_count *count, व्योम *priv,
+				 स्थिर अक्षर *buf, माप_प्रकार len);
 
-ssize_t counter_count_enum_available_read(struct counter_device *counter,
-					  struct counter_count *count,
-					  void *priv, char *buf);
+sमाप_प्रकार counter_count_क्रमागत_available_पढ़ो(काष्ठा counter_device *counter,
+					  काष्ठा counter_count *count,
+					  व्योम *priv, अक्षर *buf);
 
-ssize_t counter_device_enum_read(struct counter_device *counter, void *priv,
-				 char *buf);
-ssize_t counter_device_enum_write(struct counter_device *counter, void *priv,
-				  const char *buf, size_t len);
+sमाप_प्रकार counter_device_क्रमागत_पढ़ो(काष्ठा counter_device *counter, व्योम *priv,
+				 अक्षर *buf);
+sमाप_प्रकार counter_device_क्रमागत_ग_लिखो(काष्ठा counter_device *counter, व्योम *priv,
+				  स्थिर अक्षर *buf, माप_प्रकार len);
 
-ssize_t counter_device_enum_available_read(struct counter_device *counter,
-					   void *priv, char *buf);
+sमाप_प्रकार counter_device_क्रमागत_available_पढ़ो(काष्ठा counter_device *counter,
+					   व्योम *priv, अक्षर *buf);
 
-#endif /* _COUNTER_ENUM_H_ */
+#पूर्ण_अगर /* _COUNTER_ENUM_H_ */

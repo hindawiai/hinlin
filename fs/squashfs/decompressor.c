@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed read only filesystem for Linux
+ * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
  *
  * Copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
  * Phillip Lougher <phillip@squashfs.org.uk>
@@ -8,61 +9,61 @@
  * decompressor.c
  */
 
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/buffer_head.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/buffer_head.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "decompressor.h"
-#include "squashfs.h"
-#include "page_actor.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "decompressor.h"
+#समावेश "squashfs.h"
+#समावेश "page_actor.h"
 
 /*
- * This file (and decompressor.h) implements a decompressor framework for
+ * This file (and decompressor.h) implements a decompressor framework क्रम
  * Squashfs, allowing multiple decompressors to be easily supported
  */
 
-static const struct squashfs_decompressor squashfs_lzma_unsupported_comp_ops = {
-	NULL, NULL, NULL, NULL, LZMA_COMPRESSION, "lzma", 0
-};
+अटल स्थिर काष्ठा squashfs_decompressor squashfs_lzma_unsupported_comp_ops = अणु
+	शून्य, शून्य, शून्य, शून्य, LZMA_COMPRESSION, "lzma", 0
+पूर्ण;
 
-#ifndef CONFIG_SQUASHFS_LZ4
-static const struct squashfs_decompressor squashfs_lz4_comp_ops = {
-	NULL, NULL, NULL, NULL, LZ4_COMPRESSION, "lz4", 0
-};
-#endif
+#अगर_अघोषित CONFIG_SQUASHFS_LZ4
+अटल स्थिर काष्ठा squashfs_decompressor squashfs_lz4_comp_ops = अणु
+	शून्य, शून्य, शून्य, शून्य, LZ4_COMPRESSION, "lz4", 0
+पूर्ण;
+#पूर्ण_अगर
 
-#ifndef CONFIG_SQUASHFS_LZO
-static const struct squashfs_decompressor squashfs_lzo_comp_ops = {
-	NULL, NULL, NULL, NULL, LZO_COMPRESSION, "lzo", 0
-};
-#endif
+#अगर_अघोषित CONFIG_SQUASHFS_LZO
+अटल स्थिर काष्ठा squashfs_decompressor squashfs_lzo_comp_ops = अणु
+	शून्य, शून्य, शून्य, शून्य, LZO_COMPRESSION, "lzo", 0
+पूर्ण;
+#पूर्ण_अगर
 
-#ifndef CONFIG_SQUASHFS_XZ
-static const struct squashfs_decompressor squashfs_xz_comp_ops = {
-	NULL, NULL, NULL, NULL, XZ_COMPRESSION, "xz", 0
-};
-#endif
+#अगर_अघोषित CONFIG_SQUASHFS_XZ
+अटल स्थिर काष्ठा squashfs_decompressor squashfs_xz_comp_ops = अणु
+	शून्य, शून्य, शून्य, शून्य, XZ_COMPRESSION, "xz", 0
+पूर्ण;
+#पूर्ण_अगर
 
-#ifndef CONFIG_SQUASHFS_ZLIB
-static const struct squashfs_decompressor squashfs_zlib_comp_ops = {
-	NULL, NULL, NULL, NULL, ZLIB_COMPRESSION, "zlib", 0
-};
-#endif
+#अगर_अघोषित CONFIG_SQUASHFS_ZLIB
+अटल स्थिर काष्ठा squashfs_decompressor squashfs_zlib_comp_ops = अणु
+	शून्य, शून्य, शून्य, शून्य, ZLIB_COMPRESSION, "zlib", 0
+पूर्ण;
+#पूर्ण_अगर
 
-#ifndef CONFIG_SQUASHFS_ZSTD
-static const struct squashfs_decompressor squashfs_zstd_comp_ops = {
-	NULL, NULL, NULL, NULL, ZSTD_COMPRESSION, "zstd", 0
-};
-#endif
+#अगर_अघोषित CONFIG_SQUASHFS_ZSTD
+अटल स्थिर काष्ठा squashfs_decompressor squashfs_zstd_comp_ops = अणु
+	शून्य, शून्य, शून्य, शून्य, ZSTD_COMPRESSION, "zstd", 0
+पूर्ण;
+#पूर्ण_अगर
 
-static const struct squashfs_decompressor squashfs_unknown_comp_ops = {
-	NULL, NULL, NULL, NULL, 0, "unknown", 0
-};
+अटल स्थिर काष्ठा squashfs_decompressor squashfs_unknown_comp_ops = अणु
+	शून्य, शून्य, शून्य, शून्य, 0, "unknown", 0
+पूर्ण;
 
-static const struct squashfs_decompressor *decompressor[] = {
+अटल स्थिर काष्ठा squashfs_decompressor *decompressor[] = अणु
 	&squashfs_zlib_comp_ops,
 	&squashfs_lz4_comp_ops,
 	&squashfs_lzo_comp_ops,
@@ -70,73 +71,73 @@ static const struct squashfs_decompressor *decompressor[] = {
 	&squashfs_lzma_unsupported_comp_ops,
 	&squashfs_zstd_comp_ops,
 	&squashfs_unknown_comp_ops
-};
+पूर्ण;
 
 
-const struct squashfs_decompressor *squashfs_lookup_decompressor(int id)
-{
-	int i;
+स्थिर काष्ठा squashfs_decompressor *squashfs_lookup_decompressor(पूर्णांक id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; decompressor[i]->id; i++)
-		if (id == decompressor[i]->id)
-			break;
+	क्रम (i = 0; decompressor[i]->id; i++)
+		अगर (id == decompressor[i]->id)
+			अवरोध;
 
-	return decompressor[i];
-}
+	वापस decompressor[i];
+पूर्ण
 
 
-static void *get_comp_opts(struct super_block *sb, unsigned short flags)
-{
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
-	void *buffer = NULL, *comp_opts;
-	struct squashfs_page_actor *actor = NULL;
-	int length = 0;
+अटल व्योम *get_comp_opts(काष्ठा super_block *sb, अचिन्हित लघु flags)
+अणु
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
+	व्योम *buffer = शून्य, *comp_opts;
+	काष्ठा squashfs_page_actor *actor = शून्य;
+	पूर्णांक length = 0;
 
 	/*
-	 * Read decompressor specific options from file system if present
+	 * Read decompressor specअगरic options from file प्रणाली अगर present
 	 */
-	if (SQUASHFS_COMP_OPTS(flags)) {
-		buffer = kmalloc(PAGE_SIZE, GFP_KERNEL);
-		if (buffer == NULL) {
+	अगर (SQUASHFS_COMP_OPTS(flags)) अणु
+		buffer = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+		अगर (buffer == शून्य) अणु
 			comp_opts = ERR_PTR(-ENOMEM);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		actor = squashfs_page_actor_init(&buffer, 1, 0);
-		if (actor == NULL) {
+		अगर (actor == शून्य) अणु
 			comp_opts = ERR_PTR(-ENOMEM);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		length = squashfs_read_data(sb,
-			sizeof(struct squashfs_super_block), 0, NULL, actor);
+		length = squashfs_पढ़ो_data(sb,
+			माप(काष्ठा squashfs_super_block), 0, शून्य, actor);
 
-		if (length < 0) {
+		अगर (length < 0) अणु
 			comp_opts = ERR_PTR(length);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	comp_opts = squashfs_comp_opts(msblk, buffer, length);
 
 out:
-	kfree(actor);
-	kfree(buffer);
-	return comp_opts;
-}
+	kमुक्त(actor);
+	kमुक्त(buffer);
+	वापस comp_opts;
+पूर्ण
 
 
-void *squashfs_decompressor_setup(struct super_block *sb, unsigned short flags)
-{
-	struct squashfs_sb_info *msblk = sb->s_fs_info;
-	void *stream, *comp_opts = get_comp_opts(sb, flags);
+व्योम *squashfs_decompressor_setup(काष्ठा super_block *sb, अचिन्हित लघु flags)
+अणु
+	काष्ठा squashfs_sb_info *msblk = sb->s_fs_info;
+	व्योम *stream, *comp_opts = get_comp_opts(sb, flags);
 
-	if (IS_ERR(comp_opts))
-		return comp_opts;
+	अगर (IS_ERR(comp_opts))
+		वापस comp_opts;
 
 	stream = squashfs_decompressor_create(msblk, comp_opts);
-	if (IS_ERR(stream))
-		kfree(comp_opts);
+	अगर (IS_ERR(stream))
+		kमुक्त(comp_opts);
 
-	return stream;
-}
+	वापस stream;
+पूर्ण

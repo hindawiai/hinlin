@@ -1,2 +1,3 @@
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+<शैली गुरु>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"

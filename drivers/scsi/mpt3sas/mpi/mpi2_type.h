@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Copyright 2000-2014 Avago Technologies.  All rights reserved.
  *
@@ -14,45 +15,45 @@
  *
  *  Date      Version   Description
  *  --------  --------  ------------------------------------------------------
- *  04-30-07  02.00.00  Corresponds to Fusion-MPT MPI Specification Rev A.
- *  11-18-14  02.00.01  Updated copyright information.
+ *  04-30-07  02.00.00  Corresponds to Fusion-MPT MPI Specअगरication Rev A.
+ *  11-18-14  02.00.01  Updated copyright inक्रमmation.
  *  --------------------------------------------------------------------------
  */
 
-#ifndef MPI2_TYPE_H
-#define MPI2_TYPE_H
+#अगर_अघोषित MPI2_TYPE_H
+#घोषणा MPI2_TYPE_H
 
 /*******************************************************************************
- * Define * if it hasn't already been defined. By default
- * * is defined to be a near pointer. MPI2_POINTER can be defined as
- * a far pointer by defining * as "far *" before this header file is
+ * Define * अगर it hasn't alपढ़ोy been defined. By शेष
+ * * is defined to be a near poपूर्णांकer. MPI2_POINTER can be defined as
+ * a far poपूर्णांकer by defining * as "far *" beक्रमe this header file is
  * included.
  */
 
-/* the basic types may have already been included by mpi_type.h */
-#ifndef MPI_TYPE_H
+/* the basic types may have alपढ़ोy been included by mpi_type.h */
+#अगर_अघोषित MPI_TYPE_H
 /*****************************************************************************
 *
 *               Basic Types
 *
 *****************************************************************************/
 
-typedef u8 U8;
-typedef __le16 U16;
-typedef __le32 U32;
-typedef __le64 U64 __attribute__ ((aligned(4)));
+प्रकार u8 U8;
+प्रकार __le16 U16;
+प्रकार __le32 U32;
+प्रकार __le64 U64 __attribute__ ((aligned(4)));
 
 /*****************************************************************************
 *
-*               Pointer Types
+*               Poपूर्णांकer Types
 *
 *****************************************************************************/
 
-typedef U8 *PU8;
-typedef U16 *PU16;
-typedef U32 *PU32;
-typedef U64 *PU64;
+प्रकार U8 *PU8;
+प्रकार U16 *PU16;
+प्रकार U32 *PU32;
+प्रकार U64 *PU64;
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

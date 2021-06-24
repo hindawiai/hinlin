@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2007 Ben Skeggs.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,90 +25,90 @@
  *
  */
 
-#ifndef __NOUVEAU_DMA_H__
-#define __NOUVEAU_DMA_H__
+#अगर_अघोषित __NOUVEAU_DMA_H__
+#घोषणा __NOUVEAU_DMA_H__
 
-#include "nouveau_bo.h"
-#include "nouveau_chan.h"
+#समावेश "nouveau_bo.h"
+#समावेश "nouveau_chan.h"
 
-int nouveau_dma_wait(struct nouveau_channel *, int slots, int size);
-void nv50_dma_push(struct nouveau_channel *, u64 addr, int length);
+पूर्णांक nouveau_dma_रुको(काष्ठा nouveau_channel *, पूर्णांक slots, पूर्णांक size);
+व्योम nv50_dma_push(काष्ठा nouveau_channel *, u64 addr, पूर्णांक length);
 
 /*
  * There's a hw race condition where you can't jump to your PUT offset,
- * to avoid this we jump to offset + SKIPS and fill the difference with
+ * to aव्योम this we jump to offset + SKIPS and fill the dअगरference with
  * NOPs.
  *
  * xf86-video-nv configures the DMA fetch size to 32 bytes, and uses
- * a SKIPS value of 8.  Lets assume that the race condition is to do
- * with writing into the fetch area, we configure a fetch size of 128
+ * a SKIPS value of 8.  Lets assume that the race condition is to करो
+ * with writing पूर्णांकo the fetch area, we configure a fetch size of 128
  * bytes so we need a larger SKIPS value.
  */
-#define NOUVEAU_DMA_SKIPS (128 / 4)
+#घोषणा NOUVEAU_DMA_SKIPS (128 / 4)
 
-/* Object handles - for stuff that's doesn't use handle == oclass. */
-enum {
+/* Object handles - क्रम stuff that's doesn't use handle == oclass. */
+क्रमागत अणु
 	NvDmaFB		= 0x80000002,
 	NvDmaTT		= 0x80000003,
-	NvNotify0       = 0x80000006,
+	NvNotअगरy0       = 0x80000006,
 	NvSema		= 0x8000000f,
 	NvEvoSema0	= 0x80000010,
 	NvEvoSema1	= 0x80000011,
-};
+पूर्ण;
 
-static __must_check inline int
-RING_SPACE(struct nouveau_channel *chan, int size)
-{
-	int ret;
+अटल __must_check अंतरभूत पूर्णांक
+RING_SPACE(काष्ठा nouveau_channel *chan, पूर्णांक size)
+अणु
+	पूर्णांक ret;
 
-	ret = nouveau_dma_wait(chan, 1, size);
-	if (ret)
-		return ret;
+	ret = nouveau_dma_रुको(chan, 1, size);
+	अगर (ret)
+		वापस ret;
 
-	chan->dma.free -= size;
-	return 0;
-}
+	chan->dma.मुक्त -= size;
+	वापस 0;
+पूर्ण
 
-static inline void
-OUT_RING(struct nouveau_channel *chan, int data)
-{
+अटल अंतरभूत व्योम
+OUT_RING(काष्ठा nouveau_channel *chan, पूर्णांक data)
+अणु
 	nouveau_bo_wr32(chan->push.buffer, chan->dma.cur++, data);
-}
+पूर्ण
 
-#define WRITE_PUT(val) do {                                                    \
+#घोषणा WRITE_PUT(val) करो अणु                                                    \
 	mb();                                                   \
 	nouveau_bo_rd32(chan->push.buffer, 0);                                 \
-	nvif_wr32(&chan->user, chan->user_put, ((val) << 2) + chan->push.addr);\
-} while (0)
+	nvअगर_wr32(&chan->user, chan->user_put, ((val) << 2) + chan->push.addr);\
+पूर्ण जबतक (0)
 
-static inline void
-FIRE_RING(struct nouveau_channel *chan)
-{
-	if (chan->dma.cur == chan->dma.put)
-		return;
-	chan->accel_done = true;
+अटल अंतरभूत व्योम
+FIRE_RING(काष्ठा nouveau_channel *chan)
+अणु
+	अगर (chan->dma.cur == chan->dma.put)
+		वापस;
+	chan->accel_करोne = true;
 
-	if (chan->dma.ib_max) {
+	अगर (chan->dma.ib_max) अणु
 		nv50_dma_push(chan, chan->push.addr + (chan->dma.put << 2),
 			      (chan->dma.cur - chan->dma.put) << 2);
-	} else {
+	पूर्ण अन्यथा अणु
 		WRITE_PUT(chan->dma.cur);
-	}
+	पूर्ण
 
 	chan->dma.put = chan->dma.cur;
-}
+पूर्ण
 
-static inline void
-WIND_RING(struct nouveau_channel *chan)
-{
+अटल अंतरभूत व्योम
+WIND_RING(काष्ठा nouveau_channel *chan)
+अणु
 	chan->dma.cur = chan->dma.put;
-}
+पूर्ण
 
 /* NV_SW object class */
-#define NV_SW_DMA_VBLSEM                                             0x0000018c
-#define NV_SW_VBLSEM_OFFSET                                          0x00000400
-#define NV_SW_VBLSEM_RELEASE_VALUE                                   0x00000404
-#define NV_SW_VBLSEM_RELEASE                                         0x00000408
-#define NV_SW_PAGE_FLIP                                              0x00000500
+#घोषणा NV_SW_DMA_VBLSEM                                             0x0000018c
+#घोषणा NV_SW_VBLSEM_OFFSET                                          0x00000400
+#घोषणा NV_SW_VBLSEM_RELEASE_VALUE                                   0x00000404
+#घोषणा NV_SW_VBLSEM_RELEASE                                         0x00000408
+#घोषणा NV_SW_PAGE_FLIP                                              0x00000500
 
-#endif
+#पूर्ण_अगर

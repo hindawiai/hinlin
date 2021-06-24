@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  linux/include/linux/clk.h
  *
@@ -6,507 +7,507 @@
  *  Written by Deep Blue Solutions Limited.
  *  Copyright (C) 2011-2012 Linaro Ltd <mturquette@linaro.org>
  */
-#ifndef __LINUX_CLK_H
-#define __LINUX_CLK_H
+#अगर_अघोषित __LINUX_CLK_H
+#घोषणा __LINUX_CLK_H
 
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/notifier.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/notअगरier.h>
 
-struct device;
-struct clk;
-struct device_node;
-struct of_phandle_args;
+काष्ठा device;
+काष्ठा clk;
+काष्ठा device_node;
+काष्ठा of_phandle_args;
 
 /**
- * DOC: clk notifier callback types
+ * DOC: clk notअगरier callback types
  *
- * PRE_RATE_CHANGE - called immediately before the clk rate is changed,
+ * PRE_RATE_CHANGE - called immediately beक्रमe the clk rate is changed,
  *     to indicate that the rate change will proceed.  Drivers must
  *     immediately terminate any operations that will be affected by the
- *     rate change.  Callbacks may either return NOTIFY_DONE, NOTIFY_OK,
+ *     rate change.  Callbacks may either वापस NOTIFY_DONE, NOTIFY_OK,
  *     NOTIFY_STOP or NOTIFY_BAD.
  *
- * ABORT_RATE_CHANGE: called if the rate change failed for some reason
- *     after PRE_RATE_CHANGE.  In this case, all registered notifiers on
+ * ABORT_RATE_CHANGE: called अगर the rate change failed क्रम some reason
+ *     after PRE_RATE_CHANGE.  In this हाल, all रेजिस्टरed notअगरiers on
  *     the clk will be called with ABORT_RATE_CHANGE. Callbacks must
- *     always return NOTIFY_DONE or NOTIFY_OK.
+ *     always वापस NOTIFY_DONE or NOTIFY_OK.
  *
  * POST_RATE_CHANGE - called after the clk rate change has successfully
- *     completed.  Callbacks must always return NOTIFY_DONE or NOTIFY_OK.
+ *     completed.  Callbacks must always वापस NOTIFY_DONE or NOTIFY_OK.
  *
  */
-#define PRE_RATE_CHANGE			BIT(0)
-#define POST_RATE_CHANGE		BIT(1)
-#define ABORT_RATE_CHANGE		BIT(2)
+#घोषणा PRE_RATE_CHANGE			BIT(0)
+#घोषणा POST_RATE_CHANGE		BIT(1)
+#घोषणा ABORT_RATE_CHANGE		BIT(2)
 
 /**
- * struct clk_notifier - associate a clk with a notifier
- * @clk: struct clk * to associate the notifier with
- * @notifier_head: a blocking_notifier_head for this clk
- * @node: linked list pointers
+ * काष्ठा clk_notअगरier - associate a clk with a notअगरier
+ * @clk: काष्ठा clk * to associate the notअगरier with
+ * @notअगरier_head: a blocking_notअगरier_head क्रम this clk
+ * @node: linked list poपूर्णांकers
  *
- * A list of struct clk_notifier is maintained by the notifier code.
- * An entry is created whenever code registers the first notifier on a
- * particular @clk.  Future notifiers on that @clk are added to the
- * @notifier_head.
+ * A list of काष्ठा clk_notअगरier is मुख्यtained by the notअगरier code.
+ * An entry is created whenever code रेजिस्टरs the first notअगरier on a
+ * particular @clk.  Future notअगरiers on that @clk are added to the
+ * @notअगरier_head.
  */
-struct clk_notifier {
-	struct clk			*clk;
-	struct srcu_notifier_head	notifier_head;
-	struct list_head		node;
-};
+काष्ठा clk_notअगरier अणु
+	काष्ठा clk			*clk;
+	काष्ठा srcu_notअगरier_head	notअगरier_head;
+	काष्ठा list_head		node;
+पूर्ण;
 
 /**
- * struct clk_notifier_data - rate data to pass to the notifier callback
- * @clk: struct clk * being changed
+ * काष्ठा clk_notअगरier_data - rate data to pass to the notअगरier callback
+ * @clk: काष्ठा clk * being changed
  * @old_rate: previous rate of this clk
  * @new_rate: new rate of this clk
  *
- * For a pre-notifier, old_rate is the clk's rate before this rate
+ * For a pre-notअगरier, old_rate is the clk's rate beक्रमe this rate
  * change, and new_rate is what the rate will be in the future.  For a
- * post-notifier, old_rate and new_rate are both set to the clk's
- * current rate (this was done to optimize the implementation).
+ * post-notअगरier, old_rate and new_rate are both set to the clk's
+ * current rate (this was करोne to optimize the implementation).
  */
-struct clk_notifier_data {
-	struct clk		*clk;
-	unsigned long		old_rate;
-	unsigned long		new_rate;
-};
+काष्ठा clk_notअगरier_data अणु
+	काष्ठा clk		*clk;
+	अचिन्हित दीर्घ		old_rate;
+	अचिन्हित दीर्घ		new_rate;
+पूर्ण;
 
 /**
- * struct clk_bulk_data - Data used for bulk clk operations.
+ * काष्ठा clk_bulk_data - Data used क्रम bulk clk operations.
  *
- * @id: clock consumer ID
- * @clk: struct clk * to store the associated clock
+ * @id: घड़ी consumer ID
+ * @clk: काष्ठा clk * to store the associated घड़ी
  *
  * The CLK APIs provide a series of clk_bulk_() API calls as
  * a convenience to consumers which require multiple clks.  This
- * structure is used to manage data for these calls.
+ * काष्ठाure is used to manage data क्रम these calls.
  */
-struct clk_bulk_data {
-	const char		*id;
-	struct clk		*clk;
-};
+काष्ठा clk_bulk_data अणु
+	स्थिर अक्षर		*id;
+	काष्ठा clk		*clk;
+पूर्ण;
 
-#ifdef CONFIG_COMMON_CLK
+#अगर_घोषित CONFIG_COMMON_CLK
 
 /**
- * clk_notifier_register - register a clock rate-change notifier callback
- * @clk: clock whose rate we are interested in
- * @nb: notifier block with callback function pointer
+ * clk_notअगरier_रेजिस्टर - रेजिस्टर a घड़ी rate-change notअगरier callback
+ * @clk: घड़ी whose rate we are पूर्णांकerested in
+ * @nb: notअगरier block with callback function poपूर्णांकer
  *
- * ProTip: debugging across notifier chains can be frustrating. Make sure that
- * your notifier callback function prints a nice big warning in case of
+ * ProTip: debugging across notअगरier chains can be frustrating. Make sure that
+ * your notअगरier callback function prपूर्णांकs a nice big warning in हाल of
  * failure.
  */
-int clk_notifier_register(struct clk *clk, struct notifier_block *nb);
+पूर्णांक clk_notअगरier_रेजिस्टर(काष्ठा clk *clk, काष्ठा notअगरier_block *nb);
 
 /**
- * clk_notifier_unregister - unregister a clock rate-change notifier callback
- * @clk: clock whose rate we are no longer interested in
- * @nb: notifier block which will be unregistered
+ * clk_notअगरier_unरेजिस्टर - unरेजिस्टर a घड़ी rate-change notअगरier callback
+ * @clk: घड़ी whose rate we are no दीर्घer पूर्णांकerested in
+ * @nb: notअगरier block which will be unरेजिस्टरed
  */
-int clk_notifier_unregister(struct clk *clk, struct notifier_block *nb);
+पूर्णांक clk_notअगरier_unरेजिस्टर(काष्ठा clk *clk, काष्ठा notअगरier_block *nb);
 
 /**
- * devm_clk_notifier_register - register a managed rate-change notifier callback
- * @dev: device for clock "consumer"
- * @clk: clock whose rate we are interested in
- * @nb: notifier block with callback function pointer
+ * devm_clk_notअगरier_रेजिस्टर - रेजिस्टर a managed rate-change notअगरier callback
+ * @dev: device क्रम घड़ी "consumer"
+ * @clk: घड़ी whose rate we are पूर्णांकerested in
+ * @nb: notअगरier block with callback function poपूर्णांकer
  *
  * Returns 0 on success, -EERROR otherwise
  */
-int devm_clk_notifier_register(struct device *dev, struct clk *clk,
-			       struct notifier_block *nb);
+पूर्णांक devm_clk_notअगरier_रेजिस्टर(काष्ठा device *dev, काष्ठा clk *clk,
+			       काष्ठा notअगरier_block *nb);
 
 /**
- * clk_get_accuracy - obtain the clock accuracy in ppb (parts per billion)
- *		      for a clock source.
- * @clk: clock source
+ * clk_get_accuracy - obtain the घड़ी accuracy in ppb (parts per billion)
+ *		      क्रम a घड़ी source.
+ * @clk: घड़ी source
  *
- * This gets the clock source accuracy expressed in ppb.
- * A perfect clock returns 0.
+ * This माला_लो the घड़ी source accuracy expressed in ppb.
+ * A perfect घड़ी वापसs 0.
  */
-long clk_get_accuracy(struct clk *clk);
+दीर्घ clk_get_accuracy(काष्ठा clk *clk);
 
 /**
- * clk_set_phase - adjust the phase shift of a clock signal
- * @clk: clock signal source
- * @degrees: number of degrees the signal is shifted
+ * clk_set_phase - adjust the phase shअगरt of a घड़ी संकेत
+ * @clk: घड़ी संकेत source
+ * @degrees: number of degrees the संकेत is shअगरted
  *
- * Shifts the phase of a clock signal by the specified degrees. Returns 0 on
+ * Shअगरts the phase of a घड़ी संकेत by the specअगरied degrees. Returns 0 on
  * success, -EERROR otherwise.
  */
-int clk_set_phase(struct clk *clk, int degrees);
+पूर्णांक clk_set_phase(काष्ठा clk *clk, पूर्णांक degrees);
 
 /**
- * clk_get_phase - return the phase shift of a clock signal
- * @clk: clock signal source
+ * clk_get_phase - वापस the phase shअगरt of a घड़ी संकेत
+ * @clk: घड़ी संकेत source
  *
- * Returns the phase shift of a clock node in degrees, otherwise returns
+ * Returns the phase shअगरt of a घड़ी node in degrees, otherwise वापसs
  * -EERROR.
  */
-int clk_get_phase(struct clk *clk);
+पूर्णांक clk_get_phase(काष्ठा clk *clk);
 
 /**
- * clk_set_duty_cycle - adjust the duty cycle ratio of a clock signal
- * @clk: clock signal source
+ * clk_set_duty_cycle - adjust the duty cycle ratio of a घड़ी संकेत
+ * @clk: घड़ी संकेत source
  * @num: numerator of the duty cycle ratio to be applied
  * @den: denominator of the duty cycle ratio to be applied
  *
- * Adjust the duty cycle of a clock signal by the specified ratio. Returns 0 on
+ * Adjust the duty cycle of a घड़ी संकेत by the specअगरied ratio. Returns 0 on
  * success, -EERROR otherwise.
  */
-int clk_set_duty_cycle(struct clk *clk, unsigned int num, unsigned int den);
+पूर्णांक clk_set_duty_cycle(काष्ठा clk *clk, अचिन्हित पूर्णांक num, अचिन्हित पूर्णांक den);
 
 /**
- * clk_get_scaled_duty_cycle - return the duty cycle ratio of a clock signal
- * @clk: clock signal source
- * @scale: scaling factor to be applied to represent the ratio as an integer
+ * clk_get_scaled_duty_cycle - वापस the duty cycle ratio of a घड़ी संकेत
+ * @clk: घड़ी संकेत source
+ * @scale: scaling factor to be applied to represent the ratio as an पूर्णांकeger
  *
  * Returns the duty cycle ratio multiplied by the scale provided, otherwise
- * returns -EERROR.
+ * वापसs -EERROR.
  */
-int clk_get_scaled_duty_cycle(struct clk *clk, unsigned int scale);
+पूर्णांक clk_get_scaled_duty_cycle(काष्ठा clk *clk, अचिन्हित पूर्णांक scale);
 
 /**
- * clk_is_match - check if two clk's point to the same hardware clock
+ * clk_is_match - check अगर two clk's poपूर्णांक to the same hardware घड़ी
  * @p: clk compared against q
  * @q: clk compared against p
  *
- * Returns true if the two struct clk pointers both point to the same hardware
- * clock node. Put differently, returns true if @p and @q
- * share the same &struct clk_core object.
+ * Returns true अगर the two काष्ठा clk poपूर्णांकers both poपूर्णांक to the same hardware
+ * घड़ी node. Put dअगरferently, वापसs true अगर @p and @q
+ * share the same &काष्ठा clk_core object.
  *
- * Returns false otherwise. Note that two NULL clks are treated as matching.
+ * Returns false otherwise. Note that two शून्य clks are treated as matching.
  */
-bool clk_is_match(const struct clk *p, const struct clk *q);
+bool clk_is_match(स्थिर काष्ठा clk *p, स्थिर काष्ठा clk *q);
 
-#else
+#अन्यथा
 
-static inline int clk_notifier_register(struct clk *clk,
-					struct notifier_block *nb)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक clk_notअगरier_रेजिस्टर(काष्ठा clk *clk,
+					काष्ठा notअगरier_block *nb)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline int clk_notifier_unregister(struct clk *clk,
-					  struct notifier_block *nb)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक clk_notअगरier_unरेजिस्टर(काष्ठा clk *clk,
+					  काष्ठा notअगरier_block *nb)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline int devm_clk_notifier_register(struct device *dev,
-					     struct clk *clk,
-					     struct notifier_block *nb)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक devm_clk_notअगरier_रेजिस्टर(काष्ठा device *dev,
+					     काष्ठा clk *clk,
+					     काष्ठा notअगरier_block *nb)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline long clk_get_accuracy(struct clk *clk)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत दीर्घ clk_get_accuracy(काष्ठा clk *clk)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline long clk_set_phase(struct clk *clk, int phase)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत दीर्घ clk_set_phase(काष्ठा clk *clk, पूर्णांक phase)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline long clk_get_phase(struct clk *clk)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत दीर्घ clk_get_phase(काष्ठा clk *clk)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline int clk_set_duty_cycle(struct clk *clk, unsigned int num,
-				     unsigned int den)
-{
-	return -ENOTSUPP;
-}
+अटल अंतरभूत पूर्णांक clk_set_duty_cycle(काष्ठा clk *clk, अचिन्हित पूर्णांक num,
+				     अचिन्हित पूर्णांक den)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static inline unsigned int clk_get_scaled_duty_cycle(struct clk *clk,
-						     unsigned int scale)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक clk_get_scaled_duty_cycle(काष्ठा clk *clk,
+						     अचिन्हित पूर्णांक scale)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool clk_is_match(const struct clk *p, const struct clk *q)
-{
-	return p == q;
-}
+अटल अंतरभूत bool clk_is_match(स्थिर काष्ठा clk *p, स्थिर काष्ठा clk *q)
+अणु
+	वापस p == q;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_CLK_PREPARE
+#अगर_घोषित CONFIG_HAVE_CLK_PREPARE
 /**
- * clk_prepare - prepare a clock source
- * @clk: clock source
+ * clk_prepare - prepare a घड़ी source
+ * @clk: घड़ी source
  *
- * This prepares the clock source for use.
+ * This prepares the घड़ी source क्रम use.
  *
  * Must not be called from within atomic context.
  */
-int clk_prepare(struct clk *clk);
-int __must_check clk_bulk_prepare(int num_clks,
-				  const struct clk_bulk_data *clks);
+पूर्णांक clk_prepare(काष्ठा clk *clk);
+पूर्णांक __must_check clk_bulk_prepare(पूर्णांक num_clks,
+				  स्थिर काष्ठा clk_bulk_data *clks);
 
 /**
- * clk_is_enabled_when_prepared - indicate if preparing a clock also enables it.
- * @clk: clock source
+ * clk_is_enabled_when_prepared - indicate अगर preparing a घड़ी also enables it.
+ * @clk: घड़ी source
  *
- * Returns true if clk_prepare() implicitly enables the clock, effectively
+ * Returns true अगर clk_prepare() implicitly enables the घड़ी, effectively
  * making clk_enable()/clk_disable() no-ops, false otherwise.
  *
- * This is of interest mainly to the power management code where actually
- * disabling the clock also requires unpreparing it to have any material
+ * This is of पूर्णांकerest मुख्यly to the घातer management code where actually
+ * disabling the घड़ी also requires unpreparing it to have any material
  * effect.
  *
- * Regardless of the value returned here, the caller must always invoke
- * clk_enable() or clk_prepare_enable()  and counterparts for usage counts
+ * Regardless of the value वापसed here, the caller must always invoke
+ * clk_enable() or clk_prepare_enable()  and counterparts क्रम usage counts
  * to be right.
  */
-bool clk_is_enabled_when_prepared(struct clk *clk);
-#else
-static inline int clk_prepare(struct clk *clk)
-{
+bool clk_is_enabled_when_prepared(काष्ठा clk *clk);
+#अन्यथा
+अटल अंतरभूत पूर्णांक clk_prepare(काष्ठा clk *clk)
+अणु
 	might_sleep();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int __must_check
-clk_bulk_prepare(int num_clks, const struct clk_bulk_data *clks)
-{
+अटल अंतरभूत पूर्णांक __must_check
+clk_bulk_prepare(पूर्णांक num_clks, स्थिर काष्ठा clk_bulk_data *clks)
+अणु
 	might_sleep();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool clk_is_enabled_when_prepared(struct clk *clk)
-{
-	return false;
-}
-#endif
+अटल अंतरभूत bool clk_is_enabled_when_prepared(काष्ठा clk *clk)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * clk_unprepare - undo preparation of a clock source
- * @clk: clock source
+ * clk_unprepare - unकरो preparation of a घड़ी source
+ * @clk: घड़ी source
  *
- * This undoes a previously prepared clock.  The caller must balance
+ * This unकरोes a previously prepared घड़ी.  The caller must balance
  * the number of prepare and unprepare calls.
  *
  * Must not be called from within atomic context.
  */
-#ifdef CONFIG_HAVE_CLK_PREPARE
-void clk_unprepare(struct clk *clk);
-void clk_bulk_unprepare(int num_clks, const struct clk_bulk_data *clks);
-#else
-static inline void clk_unprepare(struct clk *clk)
-{
+#अगर_घोषित CONFIG_HAVE_CLK_PREPARE
+व्योम clk_unprepare(काष्ठा clk *clk);
+व्योम clk_bulk_unprepare(पूर्णांक num_clks, स्थिर काष्ठा clk_bulk_data *clks);
+#अन्यथा
+अटल अंतरभूत व्योम clk_unprepare(काष्ठा clk *clk)
+अणु
 	might_sleep();
-}
-static inline void clk_bulk_unprepare(int num_clks,
-				      const struct clk_bulk_data *clks)
-{
+पूर्ण
+अटल अंतरभूत व्योम clk_bulk_unprepare(पूर्णांक num_clks,
+				      स्थिर काष्ठा clk_bulk_data *clks)
+अणु
 	might_sleep();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HAVE_CLK
+#अगर_घोषित CONFIG_HAVE_CLK
 /**
- * clk_get - lookup and obtain a reference to a clock producer.
- * @dev: device for clock "consumer"
- * @id: clock consumer ID
+ * clk_get - lookup and obtain a reference to a घड़ी producer.
+ * @dev: device क्रम घड़ी "consumer"
+ * @id: घड़ी consumer ID
  *
- * Returns a struct clk corresponding to the clock producer, or
- * valid IS_ERR() condition containing errno.  The implementation
- * uses @dev and @id to determine the clock consumer, and thereby
- * the clock producer.  (IOW, @id may be identical strings, but
- * clk_get may return different clock producers depending on @dev.)
+ * Returns a काष्ठा clk corresponding to the घड़ी producer, or
+ * valid IS_ERR() condition containing त्रुटि_सं.  The implementation
+ * uses @dev and @id to determine the घड़ी consumer, and thereby
+ * the घड़ी producer.  (IOW, @id may be identical strings, but
+ * clk_get may वापस dअगरferent घड़ी producers depending on @dev.)
  *
- * Drivers must assume that the clock source is not enabled.
+ * Drivers must assume that the घड़ी source is not enabled.
  *
- * clk_get should not be called from within interrupt context.
+ * clk_get should not be called from within पूर्णांकerrupt context.
  */
-struct clk *clk_get(struct device *dev, const char *id);
+काष्ठा clk *clk_get(काष्ठा device *dev, स्थिर अक्षर *id);
 
 /**
- * clk_bulk_get - lookup and obtain a number of references to clock producer.
- * @dev: device for clock "consumer"
+ * clk_bulk_get - lookup and obtain a number of references to घड़ी producer.
+ * @dev: device क्रम घड़ी "consumer"
  * @num_clks: the number of clk_bulk_data
  * @clks: the clk_bulk_data table of consumer
  *
  * This helper function allows drivers to get several clk consumers in one
  * operation. If any of the clk cannot be acquired then any clks
- * that were obtained will be freed before returning to the caller.
+ * that were obtained will be मुक्तd beक्रमe वापसing to the caller.
  *
- * Returns 0 if all clocks specified in clk_bulk_data table are obtained
- * successfully, or valid IS_ERR() condition containing errno.
+ * Returns 0 अगर all घड़ीs specअगरied in clk_bulk_data table are obtained
+ * successfully, or valid IS_ERR() condition containing त्रुटि_सं.
  * The implementation uses @dev and @clk_bulk_data.id to determine the
- * clock consumer, and thereby the clock producer.
- * The clock returned is stored in each @clk_bulk_data.clk field.
+ * घड़ी consumer, and thereby the घड़ी producer.
+ * The घड़ी वापसed is stored in each @clk_bulk_data.clk field.
  *
- * Drivers must assume that the clock source is not enabled.
+ * Drivers must assume that the घड़ी source is not enabled.
  *
- * clk_bulk_get should not be called from within interrupt context.
+ * clk_bulk_get should not be called from within पूर्णांकerrupt context.
  */
-int __must_check clk_bulk_get(struct device *dev, int num_clks,
-			      struct clk_bulk_data *clks);
+पूर्णांक __must_check clk_bulk_get(काष्ठा device *dev, पूर्णांक num_clks,
+			      काष्ठा clk_bulk_data *clks);
 /**
- * clk_bulk_get_all - lookup and obtain all available references to clock
+ * clk_bulk_get_all - lookup and obtain all available references to घड़ी
  *		      producer.
- * @dev: device for clock "consumer"
- * @clks: pointer to the clk_bulk_data table of consumer
+ * @dev: device क्रम घड़ी "consumer"
+ * @clks: poपूर्णांकer to the clk_bulk_data table of consumer
  *
  * This helper function allows drivers to get all clk consumers in one
  * operation. If any of the clk cannot be acquired then any clks
- * that were obtained will be freed before returning to the caller.
+ * that were obtained will be मुक्तd beक्रमe वापसing to the caller.
  *
- * Returns a positive value for the number of clocks obtained while the
- * clock references are stored in the clk_bulk_data table in @clks field.
- * Returns 0 if there're none and a negative value if something failed.
+ * Returns a positive value क्रम the number of घड़ीs obtained जबतक the
+ * घड़ी references are stored in the clk_bulk_data table in @clks field.
+ * Returns 0 अगर there're none and a negative value अगर something failed.
  *
- * Drivers must assume that the clock source is not enabled.
+ * Drivers must assume that the घड़ी source is not enabled.
  *
- * clk_bulk_get should not be called from within interrupt context.
+ * clk_bulk_get should not be called from within पूर्णांकerrupt context.
  */
-int __must_check clk_bulk_get_all(struct device *dev,
-				  struct clk_bulk_data **clks);
+पूर्णांक __must_check clk_bulk_get_all(काष्ठा device *dev,
+				  काष्ठा clk_bulk_data **clks);
 
 /**
- * clk_bulk_get_optional - lookup and obtain a number of references to clock producer
- * @dev: device for clock "consumer"
+ * clk_bulk_get_optional - lookup and obtain a number of references to घड़ी producer
+ * @dev: device क्रम घड़ी "consumer"
  * @num_clks: the number of clk_bulk_data
  * @clks: the clk_bulk_data table of consumer
  *
- * Behaves the same as clk_bulk_get() except where there is no clock producer.
- * In this case, instead of returning -ENOENT, the function returns 0 and
- * NULL for a clk for which a clock producer could not be determined.
+ * Behaves the same as clk_bulk_get() except where there is no घड़ी producer.
+ * In this हाल, instead of वापसing -ENOENT, the function वापसs 0 and
+ * शून्य क्रम a clk क्रम which a घड़ी producer could not be determined.
  */
-int __must_check clk_bulk_get_optional(struct device *dev, int num_clks,
-				       struct clk_bulk_data *clks);
+पूर्णांक __must_check clk_bulk_get_optional(काष्ठा device *dev, पूर्णांक num_clks,
+				       काष्ठा clk_bulk_data *clks);
 /**
  * devm_clk_bulk_get - managed get multiple clk consumers
- * @dev: device for clock "consumer"
+ * @dev: device क्रम घड़ी "consumer"
  * @num_clks: the number of clk_bulk_data
  * @clks: the clk_bulk_data table of consumer
  *
- * Return 0 on success, an errno on failure.
+ * Return 0 on success, an त्रुटि_सं on failure.
  *
  * This helper function allows drivers to get several clk
  * consumers in one operation with management, the clks will
- * automatically be freed when the device is unbound.
+ * स्वतःmatically be मुक्तd when the device is unbound.
  */
-int __must_check devm_clk_bulk_get(struct device *dev, int num_clks,
-				   struct clk_bulk_data *clks);
+पूर्णांक __must_check devm_clk_bulk_get(काष्ठा device *dev, पूर्णांक num_clks,
+				   काष्ठा clk_bulk_data *clks);
 /**
- * devm_clk_bulk_get_optional - managed get multiple optional consumer clocks
- * @dev: device for clock "consumer"
+ * devm_clk_bulk_get_optional - managed get multiple optional consumer घड़ीs
+ * @dev: device क्रम घड़ी "consumer"
  * @num_clks: the number of clk_bulk_data
- * @clks: pointer to the clk_bulk_data table of consumer
+ * @clks: poपूर्णांकer to the clk_bulk_data table of consumer
  *
- * Behaves the same as devm_clk_bulk_get() except where there is no clock
- * producer.  In this case, instead of returning -ENOENT, the function returns
- * NULL for given clk. It is assumed all clocks in clk_bulk_data are optional.
+ * Behaves the same as devm_clk_bulk_get() except where there is no घड़ी
+ * producer.  In this हाल, instead of वापसing -ENOENT, the function वापसs
+ * शून्य क्रम given clk. It is assumed all घड़ीs in clk_bulk_data are optional.
  *
- * Returns 0 if all clocks specified in clk_bulk_data table are obtained
- * successfully or for any clk there was no clk provider available, otherwise
- * returns valid IS_ERR() condition containing errno.
+ * Returns 0 अगर all घड़ीs specअगरied in clk_bulk_data table are obtained
+ * successfully or क्रम any clk there was no clk provider available, otherwise
+ * वापसs valid IS_ERR() condition containing त्रुटि_सं.
  * The implementation uses @dev and @clk_bulk_data.id to determine the
- * clock consumer, and thereby the clock producer.
- * The clock returned is stored in each @clk_bulk_data.clk field.
+ * घड़ी consumer, and thereby the घड़ी producer.
+ * The घड़ी वापसed is stored in each @clk_bulk_data.clk field.
  *
- * Drivers must assume that the clock source is not enabled.
+ * Drivers must assume that the घड़ी source is not enabled.
  *
- * clk_bulk_get should not be called from within interrupt context.
+ * clk_bulk_get should not be called from within पूर्णांकerrupt context.
  */
-int __must_check devm_clk_bulk_get_optional(struct device *dev, int num_clks,
-					    struct clk_bulk_data *clks);
+पूर्णांक __must_check devm_clk_bulk_get_optional(काष्ठा device *dev, पूर्णांक num_clks,
+					    काष्ठा clk_bulk_data *clks);
 /**
  * devm_clk_bulk_get_all - managed get multiple clk consumers
- * @dev: device for clock "consumer"
- * @clks: pointer to the clk_bulk_data table of consumer
+ * @dev: device क्रम घड़ी "consumer"
+ * @clks: poपूर्णांकer to the clk_bulk_data table of consumer
  *
- * Returns a positive value for the number of clocks obtained while the
- * clock references are stored in the clk_bulk_data table in @clks field.
- * Returns 0 if there're none and a negative value if something failed.
+ * Returns a positive value क्रम the number of घड़ीs obtained जबतक the
+ * घड़ी references are stored in the clk_bulk_data table in @clks field.
+ * Returns 0 अगर there're none and a negative value अगर something failed.
  *
  * This helper function allows drivers to get several clk
  * consumers in one operation with management, the clks will
- * automatically be freed when the device is unbound.
+ * स्वतःmatically be मुक्तd when the device is unbound.
  */
 
-int __must_check devm_clk_bulk_get_all(struct device *dev,
-				       struct clk_bulk_data **clks);
+पूर्णांक __must_check devm_clk_bulk_get_all(काष्ठा device *dev,
+				       काष्ठा clk_bulk_data **clks);
 
 /**
- * devm_clk_get - lookup and obtain a managed reference to a clock producer.
- * @dev: device for clock "consumer"
- * @id: clock consumer ID
+ * devm_clk_get - lookup and obtain a managed reference to a घड़ी producer.
+ * @dev: device क्रम घड़ी "consumer"
+ * @id: घड़ी consumer ID
  *
- * Returns a struct clk corresponding to the clock producer, or
- * valid IS_ERR() condition containing errno.  The implementation
- * uses @dev and @id to determine the clock consumer, and thereby
- * the clock producer.  (IOW, @id may be identical strings, but
- * clk_get may return different clock producers depending on @dev.)
+ * Returns a काष्ठा clk corresponding to the घड़ी producer, or
+ * valid IS_ERR() condition containing त्रुटि_सं.  The implementation
+ * uses @dev and @id to determine the घड़ी consumer, and thereby
+ * the घड़ी producer.  (IOW, @id may be identical strings, but
+ * clk_get may वापस dअगरferent घड़ी producers depending on @dev.)
  *
- * Drivers must assume that the clock source is not enabled.
+ * Drivers must assume that the घड़ी source is not enabled.
  *
- * devm_clk_get should not be called from within interrupt context.
+ * devm_clk_get should not be called from within पूर्णांकerrupt context.
  *
- * The clock will automatically be freed when the device is unbound
+ * The घड़ी will स्वतःmatically be मुक्तd when the device is unbound
  * from the bus.
  */
-struct clk *devm_clk_get(struct device *dev, const char *id);
+काष्ठा clk *devm_clk_get(काष्ठा device *dev, स्थिर अक्षर *id);
 
 /**
  * devm_clk_get_optional - lookup and obtain a managed reference to an optional
- *			   clock producer.
- * @dev: device for clock "consumer"
- * @id: clock consumer ID
+ *			   घड़ी producer.
+ * @dev: device क्रम घड़ी "consumer"
+ * @id: घड़ी consumer ID
  *
- * Behaves the same as devm_clk_get() except where there is no clock producer.
- * In this case, instead of returning -ENOENT, the function returns NULL.
+ * Behaves the same as devm_clk_get() except where there is no घड़ी producer.
+ * In this हाल, instead of वापसing -ENOENT, the function वापसs शून्य.
  */
-struct clk *devm_clk_get_optional(struct device *dev, const char *id);
+काष्ठा clk *devm_clk_get_optional(काष्ठा device *dev, स्थिर अक्षर *id);
 
 /**
  * devm_get_clk_from_child - lookup and obtain a managed reference to a
- *			     clock producer from child node.
- * @dev: device for clock "consumer"
- * @np: pointer to clock consumer node
- * @con_id: clock consumer ID
+ *			     घड़ी producer from child node.
+ * @dev: device क्रम घड़ी "consumer"
+ * @np: poपूर्णांकer to घड़ी consumer node
+ * @con_id: घड़ी consumer ID
  *
- * This function parses the clocks, and uses them to look up the
- * struct clk from the registered list of clock providers by using
+ * This function parses the घड़ीs, and uses them to look up the
+ * काष्ठा clk from the रेजिस्टरed list of घड़ी providers by using
  * @np and @con_id
  *
- * The clock will automatically be freed when the device is unbound
+ * The घड़ी will स्वतःmatically be मुक्तd when the device is unbound
  * from the bus.
  */
-struct clk *devm_get_clk_from_child(struct device *dev,
-				    struct device_node *np, const char *con_id);
+काष्ठा clk *devm_get_clk_from_child(काष्ठा device *dev,
+				    काष्ठा device_node *np, स्थिर अक्षर *con_id);
 /**
  * clk_rate_exclusive_get - get exclusivity over the rate control of a
  *                          producer
- * @clk: clock source
+ * @clk: घड़ी source
  *
  * This function allows drivers to get exclusive control over the rate of a
  * provider. It prevents any other consumer to execute, even indirectly,
  * opereation which could alter the rate of the provider or cause glitches
  *
- * If exlusivity is claimed more than once on clock, even by the same driver,
- * the rate effectively gets locked as exclusivity can't be preempted.
+ * If exlusivity is claimed more than once on घड़ी, even by the same driver,
+ * the rate effectively माला_लो locked as exclusivity can't be preempted.
  *
  * Must not be called from within atomic context.
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_rate_exclusive_get(struct clk *clk);
+पूर्णांक clk_rate_exclusive_get(काष्ठा clk *clk);
 
 /**
  * clk_rate_exclusive_put - release exclusivity over the rate control of a
  *                          producer
- * @clk: clock source
+ * @clk: घड़ी source
  *
  * This function allows drivers to release the exclusivity it previously got
  * from clk_rate_exclusive_get()
@@ -516,136 +517,136 @@ int clk_rate_exclusive_get(struct clk *clk);
  *
  * Must not be called from within atomic context.
  */
-void clk_rate_exclusive_put(struct clk *clk);
+व्योम clk_rate_exclusive_put(काष्ठा clk *clk);
 
 /**
- * clk_enable - inform the system when the clock source should be running.
- * @clk: clock source
+ * clk_enable - inक्रमm the प्रणाली when the घड़ी source should be running.
+ * @clk: घड़ी source
  *
- * If the clock can not be enabled/disabled, this should return success.
+ * If the घड़ी can not be enabled/disabled, this should वापस success.
  *
  * May be called from atomic contexts.
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_enable(struct clk *clk);
+पूर्णांक clk_enable(काष्ठा clk *clk);
 
 /**
- * clk_bulk_enable - inform the system when the set of clks should be running.
+ * clk_bulk_enable - inक्रमm the प्रणाली when the set of clks should be running.
  * @num_clks: the number of clk_bulk_data
  * @clks: the clk_bulk_data table of consumer
  *
  * May be called from atomic contexts.
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int __must_check clk_bulk_enable(int num_clks,
-				 const struct clk_bulk_data *clks);
+पूर्णांक __must_check clk_bulk_enable(पूर्णांक num_clks,
+				 स्थिर काष्ठा clk_bulk_data *clks);
 
 /**
- * clk_disable - inform the system when the clock source is no longer required.
- * @clk: clock source
+ * clk_disable - inक्रमm the प्रणाली when the घड़ी source is no दीर्घer required.
+ * @clk: घड़ी source
  *
- * Inform the system that a clock source is no longer required by
- * a driver and may be shut down.
+ * Inक्रमm the प्रणाली that a घड़ी source is no दीर्घer required by
+ * a driver and may be shut करोwn.
  *
  * May be called from atomic contexts.
  *
- * Implementation detail: if the clock source is shared between
+ * Implementation detail: अगर the घड़ी source is shared between
  * multiple drivers, clk_enable() calls must be balanced by the
- * same number of clk_disable() calls for the clock source to be
+ * same number of clk_disable() calls क्रम the घड़ी source to be
  * disabled.
  */
-void clk_disable(struct clk *clk);
+व्योम clk_disable(काष्ठा clk *clk);
 
 /**
- * clk_bulk_disable - inform the system when the set of clks is no
- *		      longer required.
+ * clk_bulk_disable - inक्रमm the प्रणाली when the set of clks is no
+ *		      दीर्घer required.
  * @num_clks: the number of clk_bulk_data
  * @clks: the clk_bulk_data table of consumer
  *
- * Inform the system that a set of clks is no longer required by
- * a driver and may be shut down.
+ * Inक्रमm the प्रणाली that a set of clks is no दीर्घer required by
+ * a driver and may be shut करोwn.
  *
  * May be called from atomic contexts.
  *
- * Implementation detail: if the set of clks is shared between
+ * Implementation detail: अगर the set of clks is shared between
  * multiple drivers, clk_bulk_enable() calls must be balanced by the
- * same number of clk_bulk_disable() calls for the clock source to be
+ * same number of clk_bulk_disable() calls क्रम the घड़ी source to be
  * disabled.
  */
-void clk_bulk_disable(int num_clks, const struct clk_bulk_data *clks);
+व्योम clk_bulk_disable(पूर्णांक num_clks, स्थिर काष्ठा clk_bulk_data *clks);
 
 /**
- * clk_get_rate - obtain the current clock rate (in Hz) for a clock source.
- *		  This is only valid once the clock source has been enabled.
- * @clk: clock source
+ * clk_get_rate - obtain the current घड़ी rate (in Hz) क्रम a घड़ी source.
+ *		  This is only valid once the घड़ी source has been enabled.
+ * @clk: घड़ी source
  */
-unsigned long clk_get_rate(struct clk *clk);
+अचिन्हित दीर्घ clk_get_rate(काष्ठा clk *clk);
 
 /**
- * clk_put	- "free" the clock source
- * @clk: clock source
+ * clk_put	- "free" the घड़ी source
+ * @clk: घड़ी source
  *
  * Note: drivers must ensure that all clk_enable calls made on this
- * clock source are balanced by clk_disable calls prior to calling
+ * घड़ी source are balanced by clk_disable calls prior to calling
  * this function.
  *
- * clk_put should not be called from within interrupt context.
+ * clk_put should not be called from within पूर्णांकerrupt context.
  */
-void clk_put(struct clk *clk);
+व्योम clk_put(काष्ठा clk *clk);
 
 /**
- * clk_bulk_put	- "free" the clock source
+ * clk_bulk_put	- "free" the घड़ी source
  * @num_clks: the number of clk_bulk_data
  * @clks: the clk_bulk_data table of consumer
  *
  * Note: drivers must ensure that all clk_bulk_enable calls made on this
- * clock source are balanced by clk_bulk_disable calls prior to calling
+ * घड़ी source are balanced by clk_bulk_disable calls prior to calling
  * this function.
  *
- * clk_bulk_put should not be called from within interrupt context.
+ * clk_bulk_put should not be called from within पूर्णांकerrupt context.
  */
-void clk_bulk_put(int num_clks, struct clk_bulk_data *clks);
+व्योम clk_bulk_put(पूर्णांक num_clks, काष्ठा clk_bulk_data *clks);
 
 /**
- * clk_bulk_put_all - "free" all the clock source
+ * clk_bulk_put_all - "free" all the घड़ी source
  * @num_clks: the number of clk_bulk_data
  * @clks: the clk_bulk_data table of consumer
  *
  * Note: drivers must ensure that all clk_bulk_enable calls made on this
- * clock source are balanced by clk_bulk_disable calls prior to calling
+ * घड़ी source are balanced by clk_bulk_disable calls prior to calling
  * this function.
  *
- * clk_bulk_put_all should not be called from within interrupt context.
+ * clk_bulk_put_all should not be called from within पूर्णांकerrupt context.
  */
-void clk_bulk_put_all(int num_clks, struct clk_bulk_data *clks);
+व्योम clk_bulk_put_all(पूर्णांक num_clks, काष्ठा clk_bulk_data *clks);
 
 /**
- * devm_clk_put	- "free" a managed clock source
- * @dev: device used to acquire the clock
- * @clk: clock source acquired with devm_clk_get()
+ * devm_clk_put	- "free" a managed घड़ी source
+ * @dev: device used to acquire the घड़ी
+ * @clk: घड़ी source acquired with devm_clk_get()
  *
  * Note: drivers must ensure that all clk_enable calls made on this
- * clock source are balanced by clk_disable calls prior to calling
+ * घड़ी source are balanced by clk_disable calls prior to calling
  * this function.
  *
- * clk_put should not be called from within interrupt context.
+ * clk_put should not be called from within पूर्णांकerrupt context.
  */
-void devm_clk_put(struct device *dev, struct clk *clk);
+व्योम devm_clk_put(काष्ठा device *dev, काष्ठा clk *clk);
 
 /*
- * The remaining APIs are optional for machine class support.
+ * The reमुख्यing APIs are optional क्रम machine class support.
  */
 
 
 /**
- * clk_round_rate - adjust a rate to the exact rate a clock can provide
- * @clk: clock source
- * @rate: desired clock rate in Hz
+ * clk_round_rate - adjust a rate to the exact rate a घड़ी can provide
+ * @clk: घड़ी source
+ * @rate: desired घड़ी rate in Hz
  *
- * This answers the question "if I were to pass @rate to clk_set_rate(),
- * what clock rate would I end up with?" without changing the hardware
+ * This answers the question "अगर I were to pass @rate to clk_set_rate(),
+ * what घड़ी rate would I end up with?" without changing the hardware
  * in any way.  In other words:
  *
  *   rate = clk_round_rate(clk, r);
@@ -655,30 +656,30 @@ void devm_clk_put(struct device *dev, struct clk *clk);
  *   clk_set_rate(clk, r);
  *   rate = clk_get_rate(clk);
  *
- * are equivalent except the former does not modify the clock hardware
+ * are equivalent except the क्रमmer करोes not modअगरy the घड़ी hardware
  * in any way.
  *
- * Returns rounded clock rate in Hz, or negative errno.
+ * Returns rounded घड़ी rate in Hz, or negative त्रुटि_सं.
  */
-long clk_round_rate(struct clk *clk, unsigned long rate);
+दीर्घ clk_round_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate);
 
 /**
- * clk_set_rate - set the clock rate for a clock source
- * @clk: clock source
- * @rate: desired clock rate in Hz
+ * clk_set_rate - set the घड़ी rate क्रम a घड़ी source
+ * @clk: घड़ी source
+ * @rate: desired घड़ी rate in Hz
  *
- * Updating the rate starts at the top-most affected clock and then
- * walks the tree down to the bottom-most clock that needs updating.
+ * Updating the rate starts at the top-most affected घड़ी and then
+ * walks the tree करोwn to the bottom-most घड़ी that needs updating.
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_set_rate(struct clk *clk, unsigned long rate);
+पूर्णांक clk_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate);
 
 /**
- * clk_set_rate_exclusive- set the clock rate and claim exclusivity over
- *                         clock source
- * @clk: clock source
- * @rate: desired clock rate in Hz
+ * clk_set_rate_exclusive- set the घड़ी rate and claim exclusivity over
+ *                         घड़ी source
+ * @clk: घड़ी source
+ * @rate: desired घड़ी rate in Hz
  *
  * This helper function allows drivers to atomically set the rate of a producer
  * and claim exclusivity over the rate control of the producer.
@@ -687,342 +688,342 @@ int clk_set_rate(struct clk *clk, unsigned long rate);
  * clk_rate_exclusite_get(). Caller must balance this call with a call to
  * clk_rate_exclusive_put()
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_set_rate_exclusive(struct clk *clk, unsigned long rate);
+पूर्णांक clk_set_rate_exclusive(काष्ठा clk *clk, अचिन्हित दीर्घ rate);
 
 /**
- * clk_has_parent - check if a clock is a possible parent for another
- * @clk: clock source
- * @parent: parent clock source
+ * clk_has_parent - check अगर a घड़ी is a possible parent क्रम another
+ * @clk: घड़ी source
+ * @parent: parent घड़ी source
  *
- * This function can be used in drivers that need to check that a clock can be
+ * This function can be used in drivers that need to check that a घड़ी can be
  * the parent of another without actually changing the parent.
  *
- * Returns true if @parent is a possible parent for @clk, false otherwise.
+ * Returns true अगर @parent is a possible parent क्रम @clk, false otherwise.
  */
-bool clk_has_parent(struct clk *clk, struct clk *parent);
+bool clk_has_parent(काष्ठा clk *clk, काष्ठा clk *parent);
 
 /**
- * clk_set_rate_range - set a rate range for a clock source
- * @clk: clock source
- * @min: desired minimum clock rate in Hz, inclusive
- * @max: desired maximum clock rate in Hz, inclusive
+ * clk_set_rate_range - set a rate range क्रम a घड़ी source
+ * @clk: घड़ी source
+ * @min: desired minimum घड़ी rate in Hz, inclusive
+ * @max: desired maximum घड़ी rate in Hz, inclusive
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_set_rate_range(struct clk *clk, unsigned long min, unsigned long max);
+पूर्णांक clk_set_rate_range(काष्ठा clk *clk, अचिन्हित दीर्घ min, अचिन्हित दीर्घ max);
 
 /**
- * clk_set_min_rate - set a minimum clock rate for a clock source
- * @clk: clock source
- * @rate: desired minimum clock rate in Hz, inclusive
+ * clk_set_min_rate - set a minimum घड़ी rate क्रम a घड़ी source
+ * @clk: घड़ी source
+ * @rate: desired minimum घड़ी rate in Hz, inclusive
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_set_min_rate(struct clk *clk, unsigned long rate);
+पूर्णांक clk_set_min_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate);
 
 /**
- * clk_set_max_rate - set a maximum clock rate for a clock source
- * @clk: clock source
- * @rate: desired maximum clock rate in Hz, inclusive
+ * clk_set_max_rate - set a maximum घड़ी rate क्रम a घड़ी source
+ * @clk: घड़ी source
+ * @rate: desired maximum घड़ी rate in Hz, inclusive
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_set_max_rate(struct clk *clk, unsigned long rate);
+पूर्णांक clk_set_max_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate);
 
 /**
- * clk_set_parent - set the parent clock source for this clock
- * @clk: clock source
- * @parent: parent clock source
+ * clk_set_parent - set the parent घड़ी source क्रम this घड़ी
+ * @clk: घड़ी source
+ * @parent: parent घड़ी source
  *
- * Returns success (0) or negative errno.
+ * Returns success (0) or negative त्रुटि_सं.
  */
-int clk_set_parent(struct clk *clk, struct clk *parent);
+पूर्णांक clk_set_parent(काष्ठा clk *clk, काष्ठा clk *parent);
 
 /**
- * clk_get_parent - get the parent clock source for this clock
- * @clk: clock source
+ * clk_get_parent - get the parent घड़ी source क्रम this घड़ी
+ * @clk: घड़ी source
  *
- * Returns struct clk corresponding to parent clock source, or
- * valid IS_ERR() condition containing errno.
+ * Returns काष्ठा clk corresponding to parent घड़ी source, or
+ * valid IS_ERR() condition containing त्रुटि_सं.
  */
-struct clk *clk_get_parent(struct clk *clk);
+काष्ठा clk *clk_get_parent(काष्ठा clk *clk);
 
 /**
- * clk_get_sys - get a clock based upon the device name
+ * clk_get_sys - get a घड़ी based upon the device name
  * @dev_id: device name
  * @con_id: connection ID
  *
- * Returns a struct clk corresponding to the clock producer, or
- * valid IS_ERR() condition containing errno.  The implementation
- * uses @dev_id and @con_id to determine the clock consumer, and
- * thereby the clock producer. In contrast to clk_get() this function
- * takes the device name instead of the device itself for identification.
+ * Returns a काष्ठा clk corresponding to the घड़ी producer, or
+ * valid IS_ERR() condition containing त्रुटि_सं.  The implementation
+ * uses @dev_id and @con_id to determine the घड़ी consumer, and
+ * thereby the घड़ी producer. In contrast to clk_get() this function
+ * takes the device name instead of the device itself क्रम identअगरication.
  *
- * Drivers must assume that the clock source is not enabled.
+ * Drivers must assume that the घड़ी source is not enabled.
  *
- * clk_get_sys should not be called from within interrupt context.
+ * clk_get_sys should not be called from within पूर्णांकerrupt context.
  */
-struct clk *clk_get_sys(const char *dev_id, const char *con_id);
+काष्ठा clk *clk_get_sys(स्थिर अक्षर *dev_id, स्थिर अक्षर *con_id);
 
 /**
- * clk_save_context - save clock context for poweroff
+ * clk_save_context - save घड़ी context क्रम घातeroff
  *
- * Saves the context of the clock register for powerstates in which the
- * contents of the registers will be lost. Occurs deep within the suspend
+ * Saves the context of the घड़ी रेजिस्टर क्रम घातerstates in which the
+ * contents of the रेजिस्टरs will be lost. Occurs deep within the suspend
  * code so locking is not necessary.
  */
-int clk_save_context(void);
+पूर्णांक clk_save_context(व्योम);
 
 /**
- * clk_restore_context - restore clock context after poweroff
+ * clk_restore_context - restore घड़ी context after घातeroff
  *
- * This occurs with all clocks enabled. Occurs deep within the resume code
+ * This occurs with all घड़ीs enabled. Occurs deep within the resume code
  * so locking is not necessary.
  */
-void clk_restore_context(void);
+व्योम clk_restore_context(व्योम);
 
-#else /* !CONFIG_HAVE_CLK */
+#अन्यथा /* !CONFIG_HAVE_CLK */
 
-static inline struct clk *clk_get(struct device *dev, const char *id)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा clk *clk_get(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int __must_check clk_bulk_get(struct device *dev, int num_clks,
-					    struct clk_bulk_data *clks)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __must_check clk_bulk_get(काष्ठा device *dev, पूर्णांक num_clks,
+					    काष्ठा clk_bulk_data *clks)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int __must_check clk_bulk_get_optional(struct device *dev,
-				int num_clks, struct clk_bulk_data *clks)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __must_check clk_bulk_get_optional(काष्ठा device *dev,
+				पूर्णांक num_clks, काष्ठा clk_bulk_data *clks)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int __must_check clk_bulk_get_all(struct device *dev,
-					 struct clk_bulk_data **clks)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __must_check clk_bulk_get_all(काष्ठा device *dev,
+					 काष्ठा clk_bulk_data **clks)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct clk *devm_clk_get(struct device *dev, const char *id)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा clk *devm_clk_get(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct clk *devm_clk_get_optional(struct device *dev,
-						const char *id)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा clk *devm_clk_get_optional(काष्ठा device *dev,
+						स्थिर अक्षर *id)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int __must_check devm_clk_bulk_get(struct device *dev, int num_clks,
-						 struct clk_bulk_data *clks)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __must_check devm_clk_bulk_get(काष्ठा device *dev, पूर्णांक num_clks,
+						 काष्ठा clk_bulk_data *clks)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int __must_check devm_clk_bulk_get_optional(struct device *dev,
-				int num_clks, struct clk_bulk_data *clks)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __must_check devm_clk_bulk_get_optional(काष्ठा device *dev,
+				पूर्णांक num_clks, काष्ठा clk_bulk_data *clks)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int __must_check devm_clk_bulk_get_all(struct device *dev,
-						     struct clk_bulk_data **clks)
-{
+अटल अंतरभूत पूर्णांक __must_check devm_clk_bulk_get_all(काष्ठा device *dev,
+						     काष्ठा clk_bulk_data **clks)
+अणु
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline struct clk *devm_get_clk_from_child(struct device *dev,
-				struct device_node *np, const char *con_id)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा clk *devm_get_clk_from_child(काष्ठा device *dev,
+				काष्ठा device_node *np, स्थिर अक्षर *con_id)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void clk_put(struct clk *clk) {}
+अटल अंतरभूत व्योम clk_put(काष्ठा clk *clk) अणुपूर्ण
 
-static inline void clk_bulk_put(int num_clks, struct clk_bulk_data *clks) {}
+अटल अंतरभूत व्योम clk_bulk_put(पूर्णांक num_clks, काष्ठा clk_bulk_data *clks) अणुपूर्ण
 
-static inline void clk_bulk_put_all(int num_clks, struct clk_bulk_data *clks) {}
+अटल अंतरभूत व्योम clk_bulk_put_all(पूर्णांक num_clks, काष्ठा clk_bulk_data *clks) अणुपूर्ण
 
-static inline void devm_clk_put(struct device *dev, struct clk *clk) {}
-
-
-static inline int clk_rate_exclusive_get(struct clk *clk)
-{
-	return 0;
-}
-
-static inline void clk_rate_exclusive_put(struct clk *clk) {}
-
-static inline int clk_enable(struct clk *clk)
-{
-	return 0;
-}
-
-static inline int __must_check clk_bulk_enable(int num_clks,
-					       const struct clk_bulk_data *clks)
-{
-	return 0;
-}
-
-static inline void clk_disable(struct clk *clk) {}
+अटल अंतरभूत व्योम devm_clk_put(काष्ठा device *dev, काष्ठा clk *clk) अणुपूर्ण
 
 
-static inline void clk_bulk_disable(int num_clks,
-				    const struct clk_bulk_data *clks) {}
+अटल अंतरभूत पूर्णांक clk_rate_exclusive_get(काष्ठा clk *clk)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned long clk_get_rate(struct clk *clk)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम clk_rate_exclusive_put(काष्ठा clk *clk) अणुपूर्ण
 
-static inline int clk_set_rate(struct clk *clk, unsigned long rate)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक clk_enable(काष्ठा clk *clk)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int clk_set_rate_exclusive(struct clk *clk, unsigned long rate)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक __must_check clk_bulk_enable(पूर्णांक num_clks,
+					       स्थिर काष्ठा clk_bulk_data *clks)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline long clk_round_rate(struct clk *clk, unsigned long rate)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम clk_disable(काष्ठा clk *clk) अणुपूर्ण
 
-static inline bool clk_has_parent(struct clk *clk, struct clk *parent)
-{
-	return true;
-}
 
-static inline int clk_set_rate_range(struct clk *clk, unsigned long min,
-				     unsigned long max)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम clk_bulk_disable(पूर्णांक num_clks,
+				    स्थिर काष्ठा clk_bulk_data *clks) अणुपूर्ण
 
-static inline int clk_set_min_rate(struct clk *clk, unsigned long rate)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ clk_get_rate(काष्ठा clk *clk)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int clk_set_max_rate(struct clk *clk, unsigned long rate)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक clk_set_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int clk_set_parent(struct clk *clk, struct clk *parent)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक clk_set_rate_exclusive(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct clk *clk_get_parent(struct clk *clk)
-{
-	return NULL;
-}
+अटल अंतरभूत दीर्घ clk_round_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct clk *clk_get_sys(const char *dev_id, const char *con_id)
-{
-	return NULL;
-}
+अटल अंतरभूत bool clk_has_parent(काष्ठा clk *clk, काष्ठा clk *parent)
+अणु
+	वापस true;
+पूर्ण
 
-static inline int clk_save_context(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक clk_set_rate_range(काष्ठा clk *clk, अचिन्हित दीर्घ min,
+				     अचिन्हित दीर्घ max)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void clk_restore_context(void) {}
+अटल अंतरभूत पूर्णांक clk_set_min_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+अटल अंतरभूत पूर्णांक clk_set_max_rate(काष्ठा clk *clk, अचिन्हित दीर्घ rate)
+अणु
+	वापस 0;
+पूर्ण
 
-/* clk_prepare_enable helps cases using clk_enable in non-atomic context. */
-static inline int clk_prepare_enable(struct clk *clk)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक clk_set_parent(काष्ठा clk *clk, काष्ठा clk *parent)
+अणु
+	वापस 0;
+पूर्ण
+
+अटल अंतरभूत काष्ठा clk *clk_get_parent(काष्ठा clk *clk)
+अणु
+	वापस शून्य;
+पूर्ण
+
+अटल अंतरभूत काष्ठा clk *clk_get_sys(स्थिर अक्षर *dev_id, स्थिर अक्षर *con_id)
+अणु
+	वापस शून्य;
+पूर्ण
+
+अटल अंतरभूत पूर्णांक clk_save_context(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+
+अटल अंतरभूत व्योम clk_restore_context(व्योम) अणुपूर्ण
+
+#पूर्ण_अगर
+
+/* clk_prepare_enable helps हालs using clk_enable in non-atomic context. */
+अटल अंतरभूत पूर्णांक clk_prepare_enable(काष्ठा clk *clk)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_prepare(clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = clk_enable(clk);
-	if (ret)
+	अगर (ret)
 		clk_unprepare(clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* clk_disable_unprepare helps cases using clk_disable in non-atomic context. */
-static inline void clk_disable_unprepare(struct clk *clk)
-{
+/* clk_disable_unprepare helps हालs using clk_disable in non-atomic context. */
+अटल अंतरभूत व्योम clk_disable_unprepare(काष्ठा clk *clk)
+अणु
 	clk_disable(clk);
 	clk_unprepare(clk);
-}
+पूर्ण
 
-static inline int __must_check
-clk_bulk_prepare_enable(int num_clks, const struct clk_bulk_data *clks)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक __must_check
+clk_bulk_prepare_enable(पूर्णांक num_clks, स्थिर काष्ठा clk_bulk_data *clks)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_bulk_prepare(num_clks, clks);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = clk_bulk_enable(num_clks, clks);
-	if (ret)
+	अगर (ret)
 		clk_bulk_unprepare(num_clks, clks);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void clk_bulk_disable_unprepare(int num_clks,
-					      const struct clk_bulk_data *clks)
-{
+अटल अंतरभूत व्योम clk_bulk_disable_unprepare(पूर्णांक num_clks,
+					      स्थिर काष्ठा clk_bulk_data *clks)
+अणु
 	clk_bulk_disable(num_clks, clks);
 	clk_bulk_unprepare(num_clks, clks);
-}
+पूर्ण
 
 /**
- * clk_get_optional - lookup and obtain a reference to an optional clock
+ * clk_get_optional - lookup and obtain a reference to an optional घड़ी
  *		      producer.
- * @dev: device for clock "consumer"
- * @id: clock consumer ID
+ * @dev: device क्रम घड़ी "consumer"
+ * @id: घड़ी consumer ID
  *
- * Behaves the same as clk_get() except where there is no clock producer. In
- * this case, instead of returning -ENOENT, the function returns NULL.
+ * Behaves the same as clk_get() except where there is no घड़ी producer. In
+ * this हाल, instead of वापसing -ENOENT, the function वापसs शून्य.
  */
-static inline struct clk *clk_get_optional(struct device *dev, const char *id)
-{
-	struct clk *clk = clk_get(dev, id);
+अटल अंतरभूत काष्ठा clk *clk_get_optional(काष्ठा device *dev, स्थिर अक्षर *id)
+अणु
+	काष्ठा clk *clk = clk_get(dev, id);
 
-	if (clk == ERR_PTR(-ENOENT))
-		return NULL;
+	अगर (clk == ERR_PTR(-ENOENT))
+		वापस शून्य;
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-#if defined(CONFIG_OF) && defined(CONFIG_COMMON_CLK)
-struct clk *of_clk_get(struct device_node *np, int index);
-struct clk *of_clk_get_by_name(struct device_node *np, const char *name);
-struct clk *of_clk_get_from_provider(struct of_phandle_args *clkspec);
-#else
-static inline struct clk *of_clk_get(struct device_node *np, int index)
-{
-	return ERR_PTR(-ENOENT);
-}
-static inline struct clk *of_clk_get_by_name(struct device_node *np,
-					     const char *name)
-{
-	return ERR_PTR(-ENOENT);
-}
-static inline struct clk *of_clk_get_from_provider(struct of_phandle_args *clkspec)
-{
-	return ERR_PTR(-ENOENT);
-}
-#endif
+#अगर defined(CONFIG_OF) && defined(CONFIG_COMMON_CLK)
+काष्ठा clk *of_clk_get(काष्ठा device_node *np, पूर्णांक index);
+काष्ठा clk *of_clk_get_by_name(काष्ठा device_node *np, स्थिर अक्षर *name);
+काष्ठा clk *of_clk_get_from_provider(काष्ठा of_phandle_args *clkspec);
+#अन्यथा
+अटल अंतरभूत काष्ठा clk *of_clk_get(काष्ठा device_node *np, पूर्णांक index)
+अणु
+	वापस ERR_PTR(-ENOENT);
+पूर्ण
+अटल अंतरभूत काष्ठा clk *of_clk_get_by_name(काष्ठा device_node *np,
+					     स्थिर अक्षर *name)
+अणु
+	वापस ERR_PTR(-ENOENT);
+पूर्ण
+अटल अंतरभूत काष्ठा clk *of_clk_get_from_provider(काष्ठा of_phandle_args *clkspec)
+अणु
+	वापस ERR_PTR(-ENOENT);
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

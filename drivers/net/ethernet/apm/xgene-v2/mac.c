@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Applied Micro X-Gene SoC Ethernet v2 Driver
  *
@@ -7,64 +8,64 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
-#include "main.h"
+#समावेश "main.h"
 
-void xge_mac_reset(struct xge_pdata *pdata)
-{
+व्योम xge_mac_reset(काष्ठा xge_pdata *pdata)
+अणु
 	xge_wr_csr(pdata, MAC_CONFIG_1, SOFT_RESET);
 	xge_wr_csr(pdata, MAC_CONFIG_1, 0);
-}
+पूर्ण
 
-void xge_mac_set_speed(struct xge_pdata *pdata)
-{
+व्योम xge_mac_set_speed(काष्ठा xge_pdata *pdata)
+अणु
 	u32 icm0, icm2, ecm0, mc2;
-	u32 intf_ctrl, rgmii;
+	u32 पूर्णांकf_ctrl, rgmii;
 
 	icm0 = xge_rd_csr(pdata, ICM_CONFIG0_REG_0);
 	icm2 = xge_rd_csr(pdata, ICM_CONFIG2_REG_0);
 	ecm0 = xge_rd_csr(pdata, ECM_CONFIG0_REG_0);
 	rgmii = xge_rd_csr(pdata, RGMII_REG_0);
 	mc2 = xge_rd_csr(pdata, MAC_CONFIG_2);
-	intf_ctrl = xge_rd_csr(pdata, INTERFACE_CONTROL);
+	पूर्णांकf_ctrl = xge_rd_csr(pdata, INTERFACE_CONTROL);
 	icm2 |= CFG_WAITASYNCRD_EN;
 
-	switch (pdata->phy_speed) {
-	case SPEED_10:
+	चयन (pdata->phy_speed) अणु
+	हाल SPEED_10:
 		SET_REG_BITS(&mc2, INTF_MODE, 1);
-		SET_REG_BITS(&intf_ctrl, HD_MODE, 0);
+		SET_REG_BITS(&पूर्णांकf_ctrl, HD_MODE, 0);
 		SET_REG_BITS(&icm0, CFG_MACMODE, 0);
 		SET_REG_BITS(&icm2, CFG_WAITASYNCRD, 500);
 		SET_REG_BIT(&rgmii, CFG_SPEED_125, 0);
-		break;
-	case SPEED_100:
+		अवरोध;
+	हाल SPEED_100:
 		SET_REG_BITS(&mc2, INTF_MODE, 1);
-		SET_REG_BITS(&intf_ctrl, HD_MODE, 1);
+		SET_REG_BITS(&पूर्णांकf_ctrl, HD_MODE, 1);
 		SET_REG_BITS(&icm0, CFG_MACMODE, 1);
 		SET_REG_BITS(&icm2, CFG_WAITASYNCRD, 80);
 		SET_REG_BIT(&rgmii, CFG_SPEED_125, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		SET_REG_BITS(&mc2, INTF_MODE, 2);
-		SET_REG_BITS(&intf_ctrl, HD_MODE, 2);
+		SET_REG_BITS(&पूर्णांकf_ctrl, HD_MODE, 2);
 		SET_REG_BITS(&icm0, CFG_MACMODE, 2);
 		SET_REG_BITS(&icm2, CFG_WAITASYNCRD, 16);
 		SET_REG_BIT(&rgmii, CFG_SPEED_125, 1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mc2 |= FULL_DUPLEX | CRC_EN | PAD_CRC;
 	SET_REG_BITS(&ecm0, CFG_WFIFOFULLTHR, 0x32);
 
 	xge_wr_csr(pdata, MAC_CONFIG_2, mc2);
-	xge_wr_csr(pdata, INTERFACE_CONTROL, intf_ctrl);
+	xge_wr_csr(pdata, INTERFACE_CONTROL, पूर्णांकf_ctrl);
 	xge_wr_csr(pdata, RGMII_REG_0, rgmii);
 	xge_wr_csr(pdata, ICM_CONFIG0_REG_0, icm0);
 	xge_wr_csr(pdata, ICM_CONFIG2_REG_0, icm2);
 	xge_wr_csr(pdata, ECM_CONFIG0_REG_0, ecm0);
-}
+पूर्ण
 
-void xge_mac_set_station_addr(struct xge_pdata *pdata)
-{
+व्योम xge_mac_set_station_addr(काष्ठा xge_pdata *pdata)
+अणु
 	u8 *dev_addr = pdata->ndev->dev_addr;
 	u32 addr0, addr1;
 
@@ -74,17 +75,17 @@ void xge_mac_set_station_addr(struct xge_pdata *pdata)
 
 	xge_wr_csr(pdata, STATION_ADDR0, addr0);
 	xge_wr_csr(pdata, STATION_ADDR1, addr1);
-}
+पूर्ण
 
-void xge_mac_init(struct xge_pdata *pdata)
-{
+व्योम xge_mac_init(काष्ठा xge_pdata *pdata)
+अणु
 	xge_mac_reset(pdata);
 	xge_mac_set_speed(pdata);
 	xge_mac_set_station_addr(pdata);
-}
+पूर्ण
 
-void xge_mac_enable(struct xge_pdata *pdata)
-{
+व्योम xge_mac_enable(काष्ठा xge_pdata *pdata)
+अणु
 	u32 data;
 
 	data = xge_rd_csr(pdata, MAC_CONFIG_1);
@@ -92,13 +93,13 @@ void xge_mac_enable(struct xge_pdata *pdata)
 	xge_wr_csr(pdata, MAC_CONFIG_1, data);
 
 	data = xge_rd_csr(pdata, MAC_CONFIG_1);
-}
+पूर्ण
 
-void xge_mac_disable(struct xge_pdata *pdata)
-{
+व्योम xge_mac_disable(काष्ठा xge_pdata *pdata)
+अणु
 	u32 data;
 
 	data = xge_rd_csr(pdata, MAC_CONFIG_1);
 	data &= ~(TX_EN | RX_EN);
 	xge_wr_csr(pdata, MAC_CONFIG_1, data);
-}
+पूर्ण

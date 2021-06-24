@@ -1,148 +1,149 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * Copyright(c) 2018 Intel Corporation. All rights reserved.
  */
 
-#ifndef __INCLUDE_SOUND_SOF_STREAM_H__
-#define __INCLUDE_SOUND_SOF_STREAM_H__
+#अगर_अघोषित __INCLUDE_SOUND_SOF_STREAM_H__
+#घोषणा __INCLUDE_SOUND_SOF_STREAM_H__
 
-#include <sound/sof/header.h>
+#समावेश <sound/sof/header.h>
 
 /*
  * Stream configuration.
  */
 
-#define SOF_IPC_MAX_CHANNELS			8
+#घोषणा SOF_IPC_MAX_CHANNELS			8
 
-/* common sample rates for use in masks */
-#define SOF_RATE_8000		(1 <<  0) /**< 8000Hz  */
-#define SOF_RATE_11025		(1 <<  1) /**< 11025Hz */
-#define SOF_RATE_12000		(1 <<  2) /**< 12000Hz */
-#define SOF_RATE_16000		(1 <<  3) /**< 16000Hz */
-#define SOF_RATE_22050		(1 <<  4) /**< 22050Hz */
-#define SOF_RATE_24000		(1 <<  5) /**< 24000Hz */
-#define SOF_RATE_32000		(1 <<  6) /**< 32000Hz */
-#define SOF_RATE_44100		(1 <<  7) /**< 44100Hz */
-#define SOF_RATE_48000		(1 <<  8) /**< 48000Hz */
-#define SOF_RATE_64000		(1 <<  9) /**< 64000Hz */
-#define SOF_RATE_88200		(1 << 10) /**< 88200Hz */
-#define SOF_RATE_96000		(1 << 11) /**< 96000Hz */
-#define SOF_RATE_176400		(1 << 12) /**< 176400Hz */
-#define SOF_RATE_192000		(1 << 13) /**< 192000Hz */
+/* common sample rates क्रम use in masks */
+#घोषणा SOF_RATE_8000		(1 <<  0) /**< 8000Hz  */
+#घोषणा SOF_RATE_11025		(1 <<  1) /**< 11025Hz */
+#घोषणा SOF_RATE_12000		(1 <<  2) /**< 12000Hz */
+#घोषणा SOF_RATE_16000		(1 <<  3) /**< 16000Hz */
+#घोषणा SOF_RATE_22050		(1 <<  4) /**< 22050Hz */
+#घोषणा SOF_RATE_24000		(1 <<  5) /**< 24000Hz */
+#घोषणा SOF_RATE_32000		(1 <<  6) /**< 32000Hz */
+#घोषणा SOF_RATE_44100		(1 <<  7) /**< 44100Hz */
+#घोषणा SOF_RATE_48000		(1 <<  8) /**< 48000Hz */
+#घोषणा SOF_RATE_64000		(1 <<  9) /**< 64000Hz */
+#घोषणा SOF_RATE_88200		(1 << 10) /**< 88200Hz */
+#घोषणा SOF_RATE_96000		(1 << 11) /**< 96000Hz */
+#घोषणा SOF_RATE_176400		(1 << 12) /**< 176400Hz */
+#घोषणा SOF_RATE_192000		(1 << 13) /**< 192000Hz */
 
-/* continuous and non-standard rates for flexibility */
-#define SOF_RATE_CONTINUOUS	(1 << 30)  /**< range */
-#define SOF_RATE_KNOT		(1 << 31)  /**< non-continuous */
+/* continuous and non-standard rates क्रम flexibility */
+#घोषणा SOF_RATE_CONTINUOUS	(1 << 30)  /**< range */
+#घोषणा SOF_RATE_KNOT		(1 << 31)  /**< non-continuous */
 
-/* generic PCM flags for runtime settings */
-#define SOF_PCM_FLAG_XRUN_STOP	(1 << 0) /**< Stop on any XRUN */
+/* generic PCM flags क्रम runसमय settings */
+#घोषणा SOF_PCM_FLAG_XRUN_STOP	(1 << 0) /**< Stop on any XRUN */
 
-/* stream PCM frame format */
-enum sof_ipc_frame {
+/* stream PCM frame क्रमmat */
+क्रमागत sof_ipc_frame अणु
 	SOF_IPC_FRAME_S16_LE = 0,
 	SOF_IPC_FRAME_S24_4LE,
 	SOF_IPC_FRAME_S32_LE,
 	SOF_IPC_FRAME_FLOAT,
-	/* other formats here */
-};
+	/* other क्रमmats here */
+पूर्ण;
 
-/* stream buffer format */
-enum sof_ipc_buffer_format {
+/* stream buffer क्रमmat */
+क्रमागत sof_ipc_buffer_क्रमmat अणु
 	SOF_IPC_BUFFER_INTERLEAVED,
 	SOF_IPC_BUFFER_NONINTERLEAVED,
-	/* other formats here */
-};
+	/* other क्रमmats here */
+पूर्ण;
 
 /* stream direction */
-enum sof_ipc_stream_direction {
+क्रमागत sof_ipc_stream_direction अणु
 	SOF_IPC_STREAM_PLAYBACK = 0,
 	SOF_IPC_STREAM_CAPTURE,
-};
+पूर्ण;
 
 /* stream ring info */
-struct sof_ipc_host_buffer {
-	struct sof_ipc_hdr hdr;
-	uint32_t phy_addr;
-	uint32_t pages;
-	uint32_t size;
-	uint32_t reserved[3];
-} __packed;
+काष्ठा sof_ipc_host_buffer अणु
+	काष्ठा sof_ipc_hdr hdr;
+	uपूर्णांक32_t phy_addr;
+	uपूर्णांक32_t pages;
+	uपूर्णांक32_t size;
+	uपूर्णांक32_t reserved[3];
+पूर्ण __packed;
 
-struct sof_ipc_stream_params {
-	struct sof_ipc_hdr hdr;
-	struct sof_ipc_host_buffer buffer;
-	uint32_t direction;	/**< enum sof_ipc_stream_direction */
-	uint32_t frame_fmt;	/**< enum sof_ipc_frame */
-	uint32_t buffer_fmt;	/**< enum sof_ipc_buffer_format */
-	uint32_t rate;
-	uint16_t stream_tag;
-	uint16_t channels;
-	uint16_t sample_valid_bytes;
-	uint16_t sample_container_bytes;
+काष्ठा sof_ipc_stream_params अणु
+	काष्ठा sof_ipc_hdr hdr;
+	काष्ठा sof_ipc_host_buffer buffer;
+	uपूर्णांक32_t direction;	/**< क्रमागत sof_ipc_stream_direction */
+	uपूर्णांक32_t frame_fmt;	/**< क्रमागत sof_ipc_frame */
+	uपूर्णांक32_t buffer_fmt;	/**< क्रमागत sof_ipc_buffer_क्रमmat */
+	uपूर्णांक32_t rate;
+	uपूर्णांक16_t stream_tag;
+	uपूर्णांक16_t channels;
+	uपूर्णांक16_t sample_valid_bytes;
+	uपूर्णांक16_t sample_container_bytes;
 
-	uint32_t host_period_bytes;
-	uint16_t no_stream_position; /**< 1 means don't send stream position */
+	uपूर्णांक32_t host_period_bytes;
+	uपूर्णांक16_t no_stream_position; /**< 1 means करोn't send stream position */
 
-	uint16_t reserved[3];
-	uint16_t chmap[SOF_IPC_MAX_CHANNELS];	/**< channel map - SOF_CHMAP_ */
-} __packed;
+	uपूर्णांक16_t reserved[3];
+	uपूर्णांक16_t chmap[SOF_IPC_MAX_CHANNELS];	/**< channel map - SOF_CHMAP_ */
+पूर्ण __packed;
 
 /* PCM params info - SOF_IPC_STREAM_PCM_PARAMS */
-struct sof_ipc_pcm_params {
-	struct sof_ipc_cmd_hdr hdr;
-	uint32_t comp_id;
-	uint32_t flags;		/**< generic PCM flags - SOF_PCM_FLAG_ */
-	uint32_t reserved[2];
-	struct sof_ipc_stream_params params;
-}  __packed;
+काष्ठा sof_ipc_pcm_params अणु
+	काष्ठा sof_ipc_cmd_hdr hdr;
+	uपूर्णांक32_t comp_id;
+	uपूर्णांक32_t flags;		/**< generic PCM flags - SOF_PCM_FLAG_ */
+	uपूर्णांक32_t reserved[2];
+	काष्ठा sof_ipc_stream_params params;
+पूर्ण  __packed;
 
 /* PCM params info reply - SOF_IPC_STREAM_PCM_PARAMS_REPLY */
-struct sof_ipc_pcm_params_reply {
-	struct sof_ipc_reply rhdr;
-	uint32_t comp_id;
-	uint32_t posn_offset;
-} __packed;
+काष्ठा sof_ipc_pcm_params_reply अणु
+	काष्ठा sof_ipc_reply rhdr;
+	uपूर्णांक32_t comp_id;
+	uपूर्णांक32_t posn_offset;
+पूर्ण __packed;
 
-/* free stream - SOF_IPC_STREAM_PCM_PARAMS */
-struct sof_ipc_stream {
-	struct sof_ipc_cmd_hdr hdr;
-	uint32_t comp_id;
-} __packed;
+/* मुक्त stream - SOF_IPC_STREAM_PCM_PARAMS */
+काष्ठा sof_ipc_stream अणु
+	काष्ठा sof_ipc_cmd_hdr hdr;
+	uपूर्णांक32_t comp_id;
+पूर्ण __packed;
 
-/* flags indicating which time stamps are in sync with each other */
-#define	SOF_TIME_HOST_SYNC	(1 << 0)
-#define	SOF_TIME_DAI_SYNC	(1 << 1)
-#define	SOF_TIME_WALL_SYNC	(1 << 2)
-#define	SOF_TIME_STAMP_SYNC	(1 << 3)
+/* flags indicating which समय stamps are in sync with each other */
+#घोषणा	SOF_TIME_HOST_SYNC	(1 << 0)
+#घोषणा	SOF_TIME_DAI_SYNC	(1 << 1)
+#घोषणा	SOF_TIME_WALL_SYNC	(1 << 2)
+#घोषणा	SOF_TIME_STAMP_SYNC	(1 << 3)
 
-/* flags indicating which time stamps are valid */
-#define	SOF_TIME_HOST_VALID	(1 << 8)
-#define	SOF_TIME_DAI_VALID	(1 << 9)
-#define	SOF_TIME_WALL_VALID	(1 << 10)
-#define	SOF_TIME_STAMP_VALID	(1 << 11)
+/* flags indicating which समय stamps are valid */
+#घोषणा	SOF_TIME_HOST_VALID	(1 << 8)
+#घोषणा	SOF_TIME_DAI_VALID	(1 << 9)
+#घोषणा	SOF_TIME_WALL_VALID	(1 << 10)
+#घोषणा	SOF_TIME_STAMP_VALID	(1 << 11)
 
-/* flags indicating time stamps are 64bit else 3use low 32bit */
-#define	SOF_TIME_HOST_64	(1 << 16)
-#define	SOF_TIME_DAI_64		(1 << 17)
-#define	SOF_TIME_WALL_64	(1 << 18)
-#define	SOF_TIME_STAMP_64	(1 << 19)
+/* flags indicating समय stamps are 64bit अन्यथा 3use low 32bit */
+#घोषणा	SOF_TIME_HOST_64	(1 << 16)
+#घोषणा	SOF_TIME_DAI_64		(1 << 17)
+#घोषणा	SOF_TIME_WALL_64	(1 << 18)
+#घोषणा	SOF_TIME_STAMP_64	(1 << 19)
 
-struct sof_ipc_stream_posn {
-	struct sof_ipc_reply rhdr;
-	uint32_t comp_id;	/**< host component ID */
-	uint32_t flags;		/**< SOF_TIME_ */
-	uint32_t wallclock_hz;	/**< frequency of wallclock in Hz */
-	uint32_t timestamp_ns;	/**< resolution of timestamp in ns */
-	uint64_t host_posn;	/**< host DMA position in bytes */
-	uint64_t dai_posn;	/**< DAI DMA position in bytes */
-	uint64_t comp_posn;	/**< comp position in bytes */
-	uint64_t wallclock;	/**< audio wall clock */
-	uint64_t timestamp;	/**< system time stamp */
-	uint32_t xrun_comp_id;	/**< comp ID of XRUN component */
-	int32_t xrun_size;	/**< XRUN size in bytes */
-}  __packed;
+काष्ठा sof_ipc_stream_posn अणु
+	काष्ठा sof_ipc_reply rhdr;
+	uपूर्णांक32_t comp_id;	/**< host component ID */
+	uपूर्णांक32_t flags;		/**< SOF_TIME_ */
+	uपूर्णांक32_t wallघड़ी_hz;	/**< frequency of wallघड़ी in Hz */
+	uपूर्णांक32_t बारtamp_ns;	/**< resolution of बारtamp in ns */
+	uपूर्णांक64_t host_posn;	/**< host DMA position in bytes */
+	uपूर्णांक64_t dai_posn;	/**< DAI DMA position in bytes */
+	uपूर्णांक64_t comp_posn;	/**< comp position in bytes */
+	uपूर्णांक64_t wallघड़ी;	/**< audio wall घड़ी */
+	uपूर्णांक64_t बारtamp;	/**< प्रणाली समय stamp */
+	uपूर्णांक32_t xrun_comp_id;	/**< comp ID of XRUN component */
+	पूर्णांक32_t xrun_size;	/**< XRUN size in bytes */
+पूर्ण  __packed;
 
-#endif
+#पूर्ण_अगर

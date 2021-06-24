@@ -1,261 +1,262 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* MCP23S08 SPI GPIO driver */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/property.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
 
-#include "pinctrl-mcp23s08.h"
+#समावेश "pinctrl-mcp23s08.h"
 
-#define MCP_MAX_DEV_PER_CS	8
+#घोषणा MCP_MAX_DEV_PER_CS	8
 
 /*
  * A given spi_device can represent up to eight mcp23sxx chips
- * sharing the same chipselect but using different addresses
+ * sharing the same chipselect but using dअगरferent addresses
  * (e.g. chips #0 and #3 might be populated, but not #1 or #2).
  * Driver data holds all the per-chip data.
  */
-struct mcp23s08_driver_data {
-	unsigned		ngpio;
-	struct mcp23s08		*mcp[8];
-	struct mcp23s08		chip[];
-};
+काष्ठा mcp23s08_driver_data अणु
+	अचिन्हित		ngpio;
+	काष्ठा mcp23s08		*mcp[8];
+	काष्ठा mcp23s08		chip[];
+पूर्ण;
 
-static int mcp23sxx_spi_write(void *context, const void *data, size_t count)
-{
-	struct mcp23s08 *mcp = context;
-	struct spi_device *spi = to_spi_device(mcp->dev);
-	struct spi_message m;
-	struct spi_transfer t[2] = { { .tx_buf = &mcp->addr, .len = 1, },
-				     { .tx_buf = data, .len = count, }, };
+अटल पूर्णांक mcp23sxx_spi_ग_लिखो(व्योम *context, स्थिर व्योम *data, माप_प्रकार count)
+अणु
+	काष्ठा mcp23s08 *mcp = context;
+	काष्ठा spi_device *spi = to_spi_device(mcp->dev);
+	काष्ठा spi_message m;
+	काष्ठा spi_transfer t[2] = अणु अणु .tx_buf = &mcp->addr, .len = 1, पूर्ण,
+				     अणु .tx_buf = data, .len = count, पूर्ण, पूर्ण;
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t[0], &m);
 	spi_message_add_tail(&t[1], &m);
 
-	return spi_sync(spi, &m);
-}
+	वापस spi_sync(spi, &m);
+पूर्ण
 
-static int mcp23sxx_spi_gather_write(void *context,
-				const void *reg, size_t reg_size,
-				const void *val, size_t val_size)
-{
-	struct mcp23s08 *mcp = context;
-	struct spi_device *spi = to_spi_device(mcp->dev);
-	struct spi_message m;
-	struct spi_transfer t[3] = { { .tx_buf = &mcp->addr, .len = 1, },
-				     { .tx_buf = reg, .len = reg_size, },
-				     { .tx_buf = val, .len = val_size, }, };
+अटल पूर्णांक mcp23sxx_spi_gather_ग_लिखो(व्योम *context,
+				स्थिर व्योम *reg, माप_प्रकार reg_size,
+				स्थिर व्योम *val, माप_प्रकार val_size)
+अणु
+	काष्ठा mcp23s08 *mcp = context;
+	काष्ठा spi_device *spi = to_spi_device(mcp->dev);
+	काष्ठा spi_message m;
+	काष्ठा spi_transfer t[3] = अणु अणु .tx_buf = &mcp->addr, .len = 1, पूर्ण,
+				     अणु .tx_buf = reg, .len = reg_size, पूर्ण,
+				     अणु .tx_buf = val, .len = val_size, पूर्ण, पूर्ण;
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t[0], &m);
 	spi_message_add_tail(&t[1], &m);
 	spi_message_add_tail(&t[2], &m);
 
-	return spi_sync(spi, &m);
-}
+	वापस spi_sync(spi, &m);
+पूर्ण
 
-static int mcp23sxx_spi_read(void *context, const void *reg, size_t reg_size,
-				void *val, size_t val_size)
-{
-	struct mcp23s08 *mcp = context;
-	struct spi_device *spi = to_spi_device(mcp->dev);
+अटल पूर्णांक mcp23sxx_spi_पढ़ो(व्योम *context, स्थिर व्योम *reg, माप_प्रकार reg_size,
+				व्योम *val, माप_प्रकार val_size)
+अणु
+	काष्ठा mcp23s08 *mcp = context;
+	काष्ठा spi_device *spi = to_spi_device(mcp->dev);
 	u8 tx[2];
 
-	if (reg_size != 1)
-		return -EINVAL;
+	अगर (reg_size != 1)
+		वापस -EINVAL;
 
 	tx[0] = mcp->addr | 0x01;
 	tx[1] = *((u8 *) reg);
 
-	return spi_write_then_read(spi, tx, sizeof(tx), val, val_size);
-}
+	वापस spi_ग_लिखो_then_पढ़ो(spi, tx, माप(tx), val, val_size);
+पूर्ण
 
-static const struct regmap_bus mcp23sxx_spi_regmap = {
-	.write = mcp23sxx_spi_write,
-	.gather_write = mcp23sxx_spi_gather_write,
-	.read = mcp23sxx_spi_read,
-};
+अटल स्थिर काष्ठा regmap_bus mcp23sxx_spi_regmap = अणु
+	.ग_लिखो = mcp23sxx_spi_ग_लिखो,
+	.gather_ग_लिखो = mcp23sxx_spi_gather_ग_लिखो,
+	.पढ़ो = mcp23sxx_spi_पढ़ो,
+पूर्ण;
 
-static int mcp23s08_spi_regmap_init(struct mcp23s08 *mcp, struct device *dev,
-				    unsigned int addr, unsigned int type)
-{
-	const struct regmap_config *config;
-	struct regmap_config *copy;
-	const char *name;
+अटल पूर्णांक mcp23s08_spi_regmap_init(काष्ठा mcp23s08 *mcp, काष्ठा device *dev,
+				    अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक type)
+अणु
+	स्थिर काष्ठा regmap_config *config;
+	काष्ठा regmap_config *copy;
+	स्थिर अक्षर *name;
 
-	switch (type) {
-	case MCP_TYPE_S08:
-		mcp->reg_shift = 0;
+	चयन (type) अणु
+	हाल MCP_TYPE_S08:
+		mcp->reg_shअगरt = 0;
 		mcp->chip.ngpio = 8;
-		mcp->chip.label = devm_kasprintf(dev, GFP_KERNEL, "mcp23s08.%d", addr);
+		mcp->chip.label = devm_kaप्र_लिखो(dev, GFP_KERNEL, "mcp23s08.%d", addr);
 
 		config = &mcp23x08_regmap;
-		name = devm_kasprintf(dev, GFP_KERNEL, "%d", addr);
-		break;
+		name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%d", addr);
+		अवरोध;
 
-	case MCP_TYPE_S17:
-		mcp->reg_shift = 1;
+	हाल MCP_TYPE_S17:
+		mcp->reg_shअगरt = 1;
 		mcp->chip.ngpio = 16;
-		mcp->chip.label = devm_kasprintf(dev, GFP_KERNEL, "mcp23s17.%d", addr);
+		mcp->chip.label = devm_kaप्र_लिखो(dev, GFP_KERNEL, "mcp23s17.%d", addr);
 
 		config = &mcp23x17_regmap;
-		name = devm_kasprintf(dev, GFP_KERNEL, "%d", addr);
-		break;
+		name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "%d", addr);
+		अवरोध;
 
-	case MCP_TYPE_S18:
-		mcp->reg_shift = 1;
+	हाल MCP_TYPE_S18:
+		mcp->reg_shअगरt = 1;
 		mcp->chip.ngpio = 16;
 		mcp->chip.label = "mcp23s18";
 
 		config = &mcp23x17_regmap;
 		name = config->name;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev, "invalid device type (%d)\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	copy = devm_kmemdup(dev, config, sizeof(*config), GFP_KERNEL);
-	if (!copy)
-		return -ENOMEM;
+	copy = devm_kmemdup(dev, config, माप(*config), GFP_KERNEL);
+	अगर (!copy)
+		वापस -ENOMEM;
 
 	copy->name = name;
 
 	mcp->regmap = devm_regmap_init(dev, &mcp23sxx_spi_regmap, mcp, copy);
-	if (IS_ERR(mcp->regmap))
+	अगर (IS_ERR(mcp->regmap))
 		dev_err(dev, "regmap init failed for %s\n", mcp->chip.label);
-	return PTR_ERR_OR_ZERO(mcp->regmap);
-}
+	वापस PTR_ERR_OR_ZERO(mcp->regmap);
+पूर्ण
 
-static int mcp23s08_probe(struct spi_device *spi)
-{
-	struct device *dev = &spi->dev;
-	struct mcp23s08_driver_data *data;
-	unsigned long spi_present_mask;
-	const void *match;
-	unsigned int addr;
-	unsigned int ngpio = 0;
-	int chips;
-	int type;
-	int ret;
+अटल पूर्णांक mcp23s08_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा mcp23s08_driver_data *data;
+	अचिन्हित दीर्घ spi_present_mask;
+	स्थिर व्योम *match;
+	अचिन्हित पूर्णांक addr;
+	अचिन्हित पूर्णांक ngpio = 0;
+	पूर्णांक chips;
+	पूर्णांक type;
+	पूर्णांक ret;
 	u32 v;
 
 	match = device_get_match_data(dev);
-	if (match)
-		type = (int)(uintptr_t)match;
-	else
+	अगर (match)
+		type = (पूर्णांक)(uपूर्णांकptr_t)match;
+	अन्यथा
 		type = spi_get_device_id(spi)->driver_data;
 
-	ret = device_property_read_u32(dev, "microchip,spi-present-mask", &v);
-	if (ret) {
-		ret = device_property_read_u32(dev, "mcp,spi-present-mask", &v);
-		if (ret) {
+	ret = device_property_पढ़ो_u32(dev, "microchip,spi-present-mask", &v);
+	अगर (ret) अणु
+		ret = device_property_पढ़ो_u32(dev, "mcp,spi-present-mask", &v);
+		अगर (ret) अणु
 			dev_err(dev, "missing spi-present-mask");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	spi_present_mask = v;
 
-	if (!spi_present_mask || spi_present_mask >= BIT(MCP_MAX_DEV_PER_CS)) {
+	अगर (!spi_present_mask || spi_present_mask >= BIT(MCP_MAX_DEV_PER_CS)) अणु
 		dev_err(dev, "invalid spi-present-mask");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	chips = hweight_long(spi_present_mask);
+	chips = hweight_दीर्घ(spi_present_mask);
 
-	data = devm_kzalloc(dev, struct_size(data, chip, chips), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, काष्ठा_size(data, chip, chips), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	spi_set_drvdata(spi, data);
 
-	for_each_set_bit(addr, &spi_present_mask, MCP_MAX_DEV_PER_CS) {
+	क्रम_each_set_bit(addr, &spi_present_mask, MCP_MAX_DEV_PER_CS) अणु
 		data->mcp[addr] = &data->chip[--chips];
 		data->mcp[addr]->irq = spi->irq;
 
 		ret = mcp23s08_spi_regmap_init(data->mcp[addr], dev, addr, type);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		data->mcp[addr]->pinctrl_desc.name = devm_kasprintf(dev, GFP_KERNEL,
+		data->mcp[addr]->pinctrl_desc.name = devm_kaप्र_लिखो(dev, GFP_KERNEL,
 								    "mcp23xxx-pinctrl.%d",
 								    addr);
-		if (!data->mcp[addr]->pinctrl_desc.name)
-			return -ENOMEM;
+		अगर (!data->mcp[addr]->pinctrl_desc.name)
+			वापस -ENOMEM;
 
 		ret = mcp23s08_probe_one(data->mcp[addr], dev, 0x40 | (addr << 1), type, -1);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		ngpio += data->mcp[addr]->chip.ngpio;
-	}
+	पूर्ण
 	data->ngpio = ngpio;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id mcp23s08_ids[] = {
-	{ "mcp23s08", MCP_TYPE_S08 },
-	{ "mcp23s17", MCP_TYPE_S17 },
-	{ "mcp23s18", MCP_TYPE_S18 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id mcp23s08_ids[] = अणु
+	अणु "mcp23s08", MCP_TYPE_S08 पूर्ण,
+	अणु "mcp23s17", MCP_TYPE_S17 पूर्ण,
+	अणु "mcp23s18", MCP_TYPE_S18 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, mcp23s08_ids);
 
-static const struct of_device_id mcp23s08_spi_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mcp23s08_spi_of_match[] = अणु
+	अणु
 		.compatible = "microchip,mcp23s08",
-		.data = (void *) MCP_TYPE_S08,
-	},
-	{
+		.data = (व्योम *) MCP_TYPE_S08,
+	पूर्ण,
+	अणु
 		.compatible = "microchip,mcp23s17",
-		.data = (void *) MCP_TYPE_S17,
-	},
-	{
+		.data = (व्योम *) MCP_TYPE_S17,
+	पूर्ण,
+	अणु
 		.compatible = "microchip,mcp23s18",
-		.data = (void *) MCP_TYPE_S18,
-	},
-/* NOTE: The use of the mcp prefix is deprecated and will be removed. */
-	{
+		.data = (व्योम *) MCP_TYPE_S18,
+	पूर्ण,
+/* NOTE: The use of the mcp prefix is deprecated and will be हटाओd. */
+	अणु
 		.compatible = "mcp,mcp23s08",
-		.data = (void *) MCP_TYPE_S08,
-	},
-	{
+		.data = (व्योम *) MCP_TYPE_S08,
+	पूर्ण,
+	अणु
 		.compatible = "mcp,mcp23s17",
-		.data = (void *) MCP_TYPE_S17,
-	},
-	{ }
-};
+		.data = (व्योम *) MCP_TYPE_S17,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mcp23s08_spi_of_match);
 
-static struct spi_driver mcp23s08_driver = {
+अटल काष्ठा spi_driver mcp23s08_driver = अणु
 	.probe		= mcp23s08_probe,
 	.id_table	= mcp23s08_ids,
-	.driver = {
+	.driver = अणु
 		.name	= "mcp23s08",
 		.of_match_table = mcp23s08_spi_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init mcp23s08_spi_init(void)
-{
-	return spi_register_driver(&mcp23s08_driver);
-}
+अटल पूर्णांक __init mcp23s08_spi_init(व्योम)
+अणु
+	वापस spi_रेजिस्टर_driver(&mcp23s08_driver);
+पूर्ण
 
 /*
- * Register after SPI postcore initcall and before
+ * Register after SPI postcore initcall and beक्रमe
  * subsys initcalls that may rely on these GPIOs.
  */
 subsys_initcall(mcp23s08_spi_init);
 
-static void mcp23s08_spi_exit(void)
-{
-	spi_unregister_driver(&mcp23s08_driver);
-}
-module_exit(mcp23s08_spi_exit);
+अटल व्योम mcp23s08_spi_निकास(व्योम)
+अणु
+	spi_unरेजिस्टर_driver(&mcp23s08_driver);
+पूर्ण
+module_निकास(mcp23s08_spi_निकास);
 
 MODULE_LICENSE("GPL");

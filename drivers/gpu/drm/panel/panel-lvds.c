@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Generic LVDS panel driver
  *
- * Copyright (C) 2016 Laurent Pinchart
+ * Copyright (C) 2016 Laurent Pinअक्षरt
  * Copyright (C) 2016 Renesas Electronics Corporation
  *
- * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
+ * Contact: Laurent Pinअक्षरt (laurent.pinअक्षरt@ideasonboard.com)
  */
 
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
 
-#include <video/display_timing.h>
-#include <video/of_display_timing.h>
-#include <video/videomode.h>
+#समावेश <video/display_timing.h>
+#समावेश <video/of_display_timing.h>
+#समावेश <video/videomode.h>
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_panel.h>
 
-struct panel_lvds {
-	struct drm_panel panel;
-	struct device *dev;
+काष्ठा panel_lvds अणु
+	काष्ठा drm_panel panel;
+	काष्ठा device *dev;
 
-	const char *label;
-	unsigned int width;
-	unsigned int height;
-	struct videomode video_mode;
-	unsigned int bus_format;
+	स्थिर अक्षर *label;
+	अचिन्हित पूर्णांक width;
+	अचिन्हित पूर्णांक height;
+	काष्ठा videomode video_mode;
+	अचिन्हित पूर्णांक bus_क्रमmat;
 	bool data_mirror;
 
-	struct regulator *supply;
+	काष्ठा regulator *supply;
 
-	struct gpio_desc *enable_gpio;
-	struct gpio_desc *reset_gpio;
+	काष्ठा gpio_desc *enable_gpio;
+	काष्ठा gpio_desc *reset_gpio;
 
-	enum drm_panel_orientation orientation;
-};
+	क्रमागत drm_panel_orientation orientation;
+पूर्ण;
 
-static inline struct panel_lvds *to_panel_lvds(struct drm_panel *panel)
-{
-	return container_of(panel, struct panel_lvds, panel);
-}
+अटल अंतरभूत काष्ठा panel_lvds *to_panel_lvds(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा panel_lvds, panel);
+पूर्ण
 
-static int panel_lvds_unprepare(struct drm_panel *panel)
-{
-	struct panel_lvds *lvds = to_panel_lvds(panel);
+अटल पूर्णांक panel_lvds_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा panel_lvds *lvds = to_panel_lvds(panel);
 
-	if (lvds->enable_gpio)
+	अगर (lvds->enable_gpio)
 		gpiod_set_value_cansleep(lvds->enable_gpio, 0);
 
-	if (lvds->supply)
+	अगर (lvds->supply)
 		regulator_disable(lvds->supply);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int panel_lvds_prepare(struct drm_panel *panel)
-{
-	struct panel_lvds *lvds = to_panel_lvds(panel);
+अटल पूर्णांक panel_lvds_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा panel_lvds *lvds = to_panel_lvds(panel);
 
-	if (lvds->supply) {
-		int err;
+	अगर (lvds->supply) अणु
+		पूर्णांक err;
 
 		err = regulator_enable(lvds->supply);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(lvds->dev, "failed to enable supply: %d\n",
 				err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (lvds->enable_gpio)
+	अगर (lvds->enable_gpio)
 		gpiod_set_value_cansleep(lvds->enable_gpio, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int panel_lvds_get_modes(struct drm_panel *panel,
-				struct drm_connector *connector)
-{
-	struct panel_lvds *lvds = to_panel_lvds(panel);
-	struct drm_display_mode *mode;
+अटल पूर्णांक panel_lvds_get_modes(काष्ठा drm_panel *panel,
+				काष्ठा drm_connector *connector)
+अणु
+	काष्ठा panel_lvds *lvds = to_panel_lvds(panel);
+	काष्ठा drm_display_mode *mode;
 
 	mode = drm_mode_create(connector->dev);
-	if (!mode)
-		return 0;
+	अगर (!mode)
+		वापस 0;
 
 	drm_display_mode_from_videomode(&lvds->video_mode, mode);
 	mode->type |= DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
@@ -96,135 +97,135 @@ static int panel_lvds_get_modes(struct drm_panel *panel,
 
 	connector->display_info.width_mm = lvds->width;
 	connector->display_info.height_mm = lvds->height;
-	drm_display_info_set_bus_formats(&connector->display_info,
-					 &lvds->bus_format, 1);
+	drm_display_info_set_bus_क्रमmats(&connector->display_info,
+					 &lvds->bus_क्रमmat, 1);
 	connector->display_info.bus_flags = lvds->data_mirror
 					  ? DRM_BUS_FLAG_DATA_LSB_TO_MSB
 					  : DRM_BUS_FLAG_DATA_MSB_TO_LSB;
 	drm_connector_set_panel_orientation(connector, lvds->orientation);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_panel_funcs panel_lvds_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs panel_lvds_funcs = अणु
 	.unprepare = panel_lvds_unprepare,
 	.prepare = panel_lvds_prepare,
 	.get_modes = panel_lvds_get_modes,
-};
+पूर्ण;
 
-static int panel_lvds_parse_dt(struct panel_lvds *lvds)
-{
-	struct device_node *np = lvds->dev->of_node;
-	struct display_timing timing;
-	const char *mapping;
-	int ret;
+अटल पूर्णांक panel_lvds_parse_dt(काष्ठा panel_lvds *lvds)
+अणु
+	काष्ठा device_node *np = lvds->dev->of_node;
+	काष्ठा display_timing timing;
+	स्थिर अक्षर *mapping;
+	पूर्णांक ret;
 
 	ret = of_drm_get_panel_orientation(np, &lvds->orientation);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(lvds->dev, "%pOF: failed to get orientation %d\n", np, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = of_get_display_timing(np, "panel-timing", &timing);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(lvds->dev, "%pOF: problems parsing panel-timing (%d)\n",
 			np, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	videomode_from_timing(&timing, &lvds->video_mode);
 
-	ret = of_property_read_u32(np, "width-mm", &lvds->width);
-	if (ret < 0) {
+	ret = of_property_पढ़ो_u32(np, "width-mm", &lvds->width);
+	अगर (ret < 0) अणु
 		dev_err(lvds->dev, "%pOF: invalid or missing %s DT property\n",
 			np, "width-mm");
-		return -ENODEV;
-	}
-	ret = of_property_read_u32(np, "height-mm", &lvds->height);
-	if (ret < 0) {
+		वापस -ENODEV;
+	पूर्ण
+	ret = of_property_पढ़ो_u32(np, "height-mm", &lvds->height);
+	अगर (ret < 0) अणु
 		dev_err(lvds->dev, "%pOF: invalid or missing %s DT property\n",
 			np, "height-mm");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	of_property_read_string(np, "label", &lvds->label);
+	of_property_पढ़ो_string(np, "label", &lvds->label);
 
-	ret = of_property_read_string(np, "data-mapping", &mapping);
-	if (ret < 0) {
+	ret = of_property_पढ़ो_string(np, "data-mapping", &mapping);
+	अगर (ret < 0) अणु
 		dev_err(lvds->dev, "%pOF: invalid or missing %s DT property\n",
 			np, "data-mapping");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!strcmp(mapping, "jeida-18")) {
-		lvds->bus_format = MEDIA_BUS_FMT_RGB666_1X7X3_SPWG;
-	} else if (!strcmp(mapping, "jeida-24")) {
-		lvds->bus_format = MEDIA_BUS_FMT_RGB888_1X7X4_JEIDA;
-	} else if (!strcmp(mapping, "vesa-24")) {
-		lvds->bus_format = MEDIA_BUS_FMT_RGB888_1X7X4_SPWG;
-	} else {
+	अगर (!म_भेद(mapping, "jeida-18")) अणु
+		lvds->bus_क्रमmat = MEDIA_BUS_FMT_RGB666_1X7X3_SPWG;
+	पूर्ण अन्यथा अगर (!म_भेद(mapping, "jeida-24")) अणु
+		lvds->bus_क्रमmat = MEDIA_BUS_FMT_RGB888_1X7X4_JEIDA;
+	पूर्ण अन्यथा अगर (!म_भेद(mapping, "vesa-24")) अणु
+		lvds->bus_क्रमmat = MEDIA_BUS_FMT_RGB888_1X7X4_SPWG;
+	पूर्ण अन्यथा अणु
 		dev_err(lvds->dev, "%pOF: invalid or missing %s DT property\n",
 			np, "data-mapping");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	lvds->data_mirror = of_property_read_bool(np, "data-mirror");
+	lvds->data_mirror = of_property_पढ़ो_bool(np, "data-mirror");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int panel_lvds_probe(struct platform_device *pdev)
-{
-	struct panel_lvds *lvds;
-	int ret;
+अटल पूर्णांक panel_lvds_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_lvds *lvds;
+	पूर्णांक ret;
 
-	lvds = devm_kzalloc(&pdev->dev, sizeof(*lvds), GFP_KERNEL);
-	if (!lvds)
-		return -ENOMEM;
+	lvds = devm_kzalloc(&pdev->dev, माप(*lvds), GFP_KERNEL);
+	अगर (!lvds)
+		वापस -ENOMEM;
 
 	lvds->dev = &pdev->dev;
 
 	ret = panel_lvds_parse_dt(lvds);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	lvds->supply = devm_regulator_get_optional(lvds->dev, "power");
-	if (IS_ERR(lvds->supply)) {
+	अगर (IS_ERR(lvds->supply)) अणु
 		ret = PTR_ERR(lvds->supply);
 
-		if (ret != -ENODEV) {
-			if (ret != -EPROBE_DEFER)
+		अगर (ret != -ENODEV) अणु
+			अगर (ret != -EPROBE_DEFER)
 				dev_err(lvds->dev, "failed to request regulator: %d\n",
 					ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		lvds->supply = NULL;
-	}
+		lvds->supply = शून्य;
+	पूर्ण
 
 	/* Get GPIOs and backlight controller. */
 	lvds->enable_gpio = devm_gpiod_get_optional(lvds->dev, "enable",
 						     GPIOD_OUT_LOW);
-	if (IS_ERR(lvds->enable_gpio)) {
+	अगर (IS_ERR(lvds->enable_gpio)) अणु
 		ret = PTR_ERR(lvds->enable_gpio);
 		dev_err(lvds->dev, "failed to request %s GPIO: %d\n",
 			"enable", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	lvds->reset_gpio = devm_gpiod_get_optional(lvds->dev, "reset",
 						     GPIOD_OUT_HIGH);
-	if (IS_ERR(lvds->reset_gpio)) {
+	अगर (IS_ERR(lvds->reset_gpio)) अणु
 		ret = PTR_ERR(lvds->reset_gpio);
 		dev_err(lvds->dev, "failed to request %s GPIO: %d\n",
 			"reset", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * TODO: Handle all power supplies specified in the DT node in a generic
-	 * way for panels that don't care about power supply ordering. LVDS
-	 * panels that require a specific power sequence will need a dedicated
+	 * TODO: Handle all घातer supplies specअगरied in the DT node in a generic
+	 * way क्रम panels that करोn't care about घातer supply ordering. LVDS
+	 * panels that require a specअगरic घातer sequence will need a dedicated
 	 * driver.
 	 */
 
@@ -233,43 +234,43 @@ static int panel_lvds_probe(struct platform_device *pdev)
 		       DRM_MODE_CONNECTOR_LVDS);
 
 	ret = drm_panel_of_backlight(&lvds->panel);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_panel_add(&lvds->panel);
 
 	dev_set_drvdata(lvds->dev, lvds);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int panel_lvds_remove(struct platform_device *pdev)
-{
-	struct panel_lvds *lvds = platform_get_drvdata(pdev);
+अटल पूर्णांक panel_lvds_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_lvds *lvds = platक्रमm_get_drvdata(pdev);
 
-	drm_panel_remove(&lvds->panel);
+	drm_panel_हटाओ(&lvds->panel);
 
 	drm_panel_disable(&lvds->panel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id panel_lvds_of_table[] = {
-	{ .compatible = "panel-lvds", },
-	{ /* Sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id panel_lvds_of_table[] = अणु
+	अणु .compatible = "panel-lvds", पूर्ण,
+	अणु /* Sentinel */ पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, panel_lvds_of_table);
 
-static struct platform_driver panel_lvds_driver = {
+अटल काष्ठा platक्रमm_driver panel_lvds_driver = अणु
 	.probe		= panel_lvds_probe,
-	.remove		= panel_lvds_remove,
-	.driver		= {
+	.हटाओ		= panel_lvds_हटाओ,
+	.driver		= अणु
 		.name	= "panel-lvds",
 		.of_match_table = panel_lvds_of_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(panel_lvds_driver);
+module_platक्रमm_driver(panel_lvds_driver);
 
 MODULE_AUTHOR("Laurent Pinchart <laurent.pinchart@ideasonboard.com>");
 MODULE_DESCRIPTION("LVDS Panel Driver");

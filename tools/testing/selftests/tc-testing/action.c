@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  * Copyright (c) 2018 Davide Caratti, Red Hat inc.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
 
-#include <linux/bpf.h>
-#include <linux/pkt_cls.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/pkt_cls.h>
 
-__attribute__((section("action-ok"),used)) int action_ok(struct __sk_buff *s)
-{
-	return TC_ACT_OK;
-}
+__attribute__((section("action-ok"),used)) पूर्णांक action_ok(काष्ठा __sk_buff *s)
+अणु
+	वापस TC_ACT_OK;
+पूर्ण
 
-__attribute__((section("action-ko"),used)) int action_ko(struct __sk_buff *s)
-{
+__attribute__((section("action-ko"),used)) पूर्णांक action_ko(काष्ठा __sk_buff *s)
+अणु
 	s->data = 0x0;
-	return TC_ACT_OK;
-}
+	वापस TC_ACT_OK;
+पूर्ण
 
-char _license[] __attribute__((section("license"),used)) = "GPL";
+अक्षर _license[] __attribute__((section("license"),used)) = "GPL";

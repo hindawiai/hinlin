@@ -1,239 +1,240 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_ANNOTATE_H
-#define __PERF_ANNOTATE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_ANNOTATE_H
+#घोषणा __PERF_ANNOTATE_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/rbtree.h>
-#include <pthread.h>
-#include <asm/bug.h>
-#include "symbol_conf.h"
-#include "spark.h"
+#समावेश <stdbool.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rbtree.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <यंत्र/bug.h>
+#समावेश "symbol_conf.h"
+#समावेश "spark.h"
 
-struct hist_browser_timer;
-struct hist_entry;
-struct ins_ops;
-struct map;
-struct map_symbol;
-struct addr_map_symbol;
-struct option;
-struct perf_sample;
-struct evsel;
-struct symbol;
+काष्ठा hist_browser_समयr;
+काष्ठा hist_entry;
+काष्ठा ins_ops;
+काष्ठा map;
+काष्ठा map_symbol;
+काष्ठा addr_map_symbol;
+काष्ठा option;
+काष्ठा perf_sample;
+काष्ठा evsel;
+काष्ठा symbol;
 
-struct ins {
-	const char     *name;
-	struct ins_ops *ops;
-};
+काष्ठा ins अणु
+	स्थिर अक्षर     *name;
+	काष्ठा ins_ops *ops;
+पूर्ण;
 
-struct ins_operands {
-	char	*raw;
-	char	*raw_comment;
-	char	*raw_func_start;
-	struct {
-		char	*raw;
-		char	*name;
-		struct symbol *sym;
+काष्ठा ins_opeअक्रमs अणु
+	अक्षर	*raw;
+	अक्षर	*raw_comment;
+	अक्षर	*raw_func_start;
+	काष्ठा अणु
+		अक्षर	*raw;
+		अक्षर	*name;
+		काष्ठा symbol *sym;
 		u64	addr;
 		s64	offset;
 		bool	offset_avail;
 		bool	outside;
-	} target;
-	union {
-		struct {
-			char	*raw;
-			char	*name;
+	पूर्ण target;
+	जोड़ अणु
+		काष्ठा अणु
+			अक्षर	*raw;
+			अक्षर	*name;
 			u64	addr;
-		} source;
-		struct {
-			struct ins	    ins;
-			struct ins_operands *ops;
-		} locked;
-	};
-};
+		पूर्ण source;
+		काष्ठा अणु
+			काष्ठा ins	    ins;
+			काष्ठा ins_opeअक्रमs *ops;
+		पूर्ण locked;
+	पूर्ण;
+पूर्ण;
 
-struct arch;
+काष्ठा arch;
 
-struct ins_ops {
-	void (*free)(struct ins_operands *ops);
-	int (*parse)(struct arch *arch, struct ins_operands *ops, struct map_symbol *ms);
-	int (*scnprintf)(struct ins *ins, char *bf, size_t size,
-			 struct ins_operands *ops, int max_ins_name);
-};
+काष्ठा ins_ops अणु
+	व्योम (*मुक्त)(काष्ठा ins_opeअक्रमs *ops);
+	पूर्णांक (*parse)(काष्ठा arch *arch, काष्ठा ins_opeअक्रमs *ops, काष्ठा map_symbol *ms);
+	पूर्णांक (*scnम_लिखो)(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
+			 काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name);
+पूर्ण;
 
-bool ins__is_jump(const struct ins *ins);
-bool ins__is_call(const struct ins *ins);
-bool ins__is_ret(const struct ins *ins);
-bool ins__is_lock(const struct ins *ins);
-int ins__scnprintf(struct ins *ins, char *bf, size_t size, struct ins_operands *ops, int max_ins_name);
-bool ins__is_fused(struct arch *arch, const char *ins1, const char *ins2);
+bool ins__is_jump(स्थिर काष्ठा ins *ins);
+bool ins__is_call(स्थिर काष्ठा ins *ins);
+bool ins__is_ret(स्थिर काष्ठा ins *ins);
+bool ins__is_lock(स्थिर काष्ठा ins *ins);
+पूर्णांक ins__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size, काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name);
+bool ins__is_fused(काष्ठा arch *arch, स्थिर अक्षर *ins1, स्थिर अक्षर *ins2);
 
-#define ANNOTATION__IPC_WIDTH 6
-#define ANNOTATION__CYCLES_WIDTH 6
-#define ANNOTATION__MINMAX_CYCLES_WIDTH 19
-#define ANNOTATION__AVG_IPC_WIDTH 36
-#define ANNOTATION_DUMMY_LEN	256
+#घोषणा ANNOTATION__IPC_WIDTH 6
+#घोषणा ANNOTATION__CYCLES_WIDTH 6
+#घोषणा ANNOTATION__MINMAX_CYCLES_WIDTH 19
+#घोषणा ANNOTATION__AVG_IPC_WIDTH 36
+#घोषणा ANNOTATION_DUMMY_LEN	256
 
-struct annotation_options {
+काष्ठा annotation_options अणु
 	bool hide_src_code,
 	     use_offset,
 	     jump_arrows,
-	     print_lines,
+	     prपूर्णांक_lines,
 	     full_path,
 	     show_linenr,
 	     show_fileloc,
 	     show_nr_jumps,
 	     show_minmax_cycle,
-	     show_asm_raw,
+	     show_यंत्र_raw,
 	     annotate_src;
 	u8   offset_level;
-	int  min_pcnt;
-	int  max_lines;
-	int  context;
-	const char *objdump_path;
-	const char *disassembler_style;
-	const char *prefix;
-	const char *prefix_strip;
-	unsigned int percent_type;
-};
+	पूर्णांक  min_pcnt;
+	पूर्णांक  max_lines;
+	पूर्णांक  context;
+	स्थिर अक्षर *objdump_path;
+	स्थिर अक्षर *disassembler_style;
+	स्थिर अक्षर *prefix;
+	स्थिर अक्षर *prefix_strip;
+	अचिन्हित पूर्णांक percent_type;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	ANNOTATION__OFFSET_JUMP_TARGETS = 1,
 	ANNOTATION__OFFSET_CALL,
 	ANNOTATION__MAX_OFFSET_LEVEL,
-};
+पूर्ण;
 
-#define ANNOTATION__MIN_OFFSET_LEVEL ANNOTATION__OFFSET_JUMP_TARGETS
+#घोषणा ANNOTATION__MIN_OFFSET_LEVEL ANNOTATION__OFFSET_JUMP_TARGETS
 
-extern struct annotation_options annotation__default_options;
+बाह्य काष्ठा annotation_options annotation__शेष_options;
 
-struct annotation;
+काष्ठा annotation;
 
-struct sym_hist_entry {
+काष्ठा sym_hist_entry अणु
 	u64		nr_samples;
 	u64		period;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PERCENT_HITS_LOCAL,
 	PERCENT_HITS_GLOBAL,
 	PERCENT_PERIOD_LOCAL,
 	PERCENT_PERIOD_GLOBAL,
 	PERCENT_MAX,
-};
+पूर्ण;
 
-struct annotation_data {
-	double			 percent[PERCENT_MAX];
-	double			 percent_sum;
-	struct sym_hist_entry	 he;
-};
+काष्ठा annotation_data अणु
+	द्विगुन			 percent[PERCENT_MAX];
+	द्विगुन			 percent_sum;
+	काष्ठा sym_hist_entry	 he;
+पूर्ण;
 
-struct annotation_line {
-	struct list_head	 node;
-	struct rb_node		 rb_node;
+काष्ठा annotation_line अणु
+	काष्ठा list_head	 node;
+	काष्ठा rb_node		 rb_node;
 	s64			 offset;
-	char			*line;
-	int			 line_nr;
-	char			*fileloc;
-	int			 jump_sources;
-	float			 ipc;
+	अक्षर			*line;
+	पूर्णांक			 line_nr;
+	अक्षर			*fileloc;
+	पूर्णांक			 jump_sources;
+	भग्न			 ipc;
 	u64			 cycles;
 	u64			 cycles_max;
 	u64			 cycles_min;
-	char			*path;
+	अक्षर			*path;
 	u32			 idx;
-	int			 idx_asm;
-	int			 data_nr;
-	struct annotation_data	 data[];
-};
+	पूर्णांक			 idx_यंत्र;
+	पूर्णांक			 data_nr;
+	काष्ठा annotation_data	 data[];
+पूर्ण;
 
-struct disasm_line {
-	struct ins		 ins;
-	struct ins_operands	 ops;
+काष्ठा disयंत्र_line अणु
+	काष्ठा ins		 ins;
+	काष्ठा ins_opeअक्रमs	 ops;
 
 	/* This needs to be at the end. */
-	struct annotation_line	 al;
-};
+	काष्ठा annotation_line	 al;
+पूर्ण;
 
-static inline double annotation_data__percent(struct annotation_data *data,
-					      unsigned int which)
-{
-	return which < PERCENT_MAX ? data->percent[which] : -1;
-}
+अटल अंतरभूत द्विगुन annotation_data__percent(काष्ठा annotation_data *data,
+					      अचिन्हित पूर्णांक which)
+अणु
+	वापस which < PERCENT_MAX ? data->percent[which] : -1;
+पूर्ण
 
-static inline const char *percent_type_str(unsigned int type)
-{
-	static const char *str[PERCENT_MAX] = {
+अटल अंतरभूत स्थिर अक्षर *percent_type_str(अचिन्हित पूर्णांक type)
+अणु
+	अटल स्थिर अक्षर *str[PERCENT_MAX] = अणु
 		"local hits",
 		"global hits",
 		"local period",
 		"global period",
-	};
+	पूर्ण;
 
-	if (WARN_ON(type >= PERCENT_MAX))
-		return "N/A";
+	अगर (WARN_ON(type >= PERCENT_MAX))
+		वापस "N/A";
 
-	return str[type];
-}
+	वापस str[type];
+पूर्ण
 
-static inline struct disasm_line *disasm_line(struct annotation_line *al)
-{
-	return al ? container_of(al, struct disasm_line, al) : NULL;
-}
+अटल अंतरभूत काष्ठा disयंत्र_line *disयंत्र_line(काष्ठा annotation_line *al)
+अणु
+	वापस al ? container_of(al, काष्ठा disयंत्र_line, al) : शून्य;
+पूर्ण
 
 /*
  * Is this offset in the same function as the line it is used?
- * asm functions jump to other functions, for instance.
+ * यंत्र functions jump to other functions, क्रम instance.
  */
-static inline bool disasm_line__has_local_offset(const struct disasm_line *dl)
-{
-	return dl->ops.target.offset_avail && !dl->ops.target.outside;
-}
+अटल अंतरभूत bool disयंत्र_line__has_local_offset(स्थिर काष्ठा disयंत्र_line *dl)
+अणु
+	वापस dl->ops.target.offset_avail && !dl->ops.target.outside;
+पूर्ण
 
 /*
- * Can we draw an arrow from the jump to its target, for instance? I.e.
+ * Can we draw an arrow from the jump to its target, क्रम instance? I.e.
  * is the jump and its target in the same function?
  */
-bool disasm_line__is_valid_local_jump(struct disasm_line *dl, struct symbol *sym);
+bool disयंत्र_line__is_valid_local_jump(काष्ठा disयंत्र_line *dl, काष्ठा symbol *sym);
 
-void disasm_line__free(struct disasm_line *dl);
-struct annotation_line *
-annotation_line__next(struct annotation_line *pos, struct list_head *head);
+व्योम disयंत्र_line__मुक्त(काष्ठा disयंत्र_line *dl);
+काष्ठा annotation_line *
+annotation_line__next(काष्ठा annotation_line *pos, काष्ठा list_head *head);
 
-struct annotation_write_ops {
+काष्ठा annotation_ग_लिखो_ops अणु
 	bool first_line, current_entry, change_color;
-	int  width;
-	void *obj;
-	int  (*set_color)(void *obj, int color);
-	void (*set_percent_color)(void *obj, double percent, bool current);
-	int  (*set_jumps_percent_color)(void *obj, int nr, bool current);
-	void (*printf)(void *obj, const char *fmt, ...);
-	void (*write_graph)(void *obj, int graph);
-};
+	पूर्णांक  width;
+	व्योम *obj;
+	पूर्णांक  (*set_color)(व्योम *obj, पूर्णांक color);
+	व्योम (*set_percent_color)(व्योम *obj, द्विगुन percent, bool current);
+	पूर्णांक  (*set_jumps_percent_color)(व्योम *obj, पूर्णांक nr, bool current);
+	व्योम (*म_लिखो)(व्योम *obj, स्थिर अक्षर *fmt, ...);
+	व्योम (*ग_लिखो_graph)(व्योम *obj, पूर्णांक graph);
+पूर्ण;
 
-void annotation_line__write(struct annotation_line *al, struct annotation *notes,
-			    struct annotation_write_ops *ops,
-			    struct annotation_options *opts);
+व्योम annotation_line__ग_लिखो(काष्ठा annotation_line *al, काष्ठा annotation *notes,
+			    काष्ठा annotation_ग_लिखो_ops *ops,
+			    काष्ठा annotation_options *opts);
 
-int __annotation__scnprintf_samples_period(struct annotation *notes,
-					   char *bf, size_t size,
-					   struct evsel *evsel,
+पूर्णांक __annotation__scnम_लिखो_samples_period(काष्ठा annotation *notes,
+					   अक्षर *bf, माप_प्रकार size,
+					   काष्ठा evsel *evsel,
 					   bool show_freq);
 
-int disasm_line__scnprintf(struct disasm_line *dl, char *bf, size_t size, bool raw, int max_ins_name);
-size_t disasm__fprintf(struct list_head *head, FILE *fp);
-void symbol__calc_percent(struct symbol *sym, struct evsel *evsel);
+पूर्णांक disयंत्र_line__scnम_लिखो(काष्ठा disयंत्र_line *dl, अक्षर *bf, माप_प्रकार size, bool raw, पूर्णांक max_ins_name);
+माप_प्रकार disयंत्र__ख_लिखो(काष्ठा list_head *head, खाता *fp);
+व्योम symbol__calc_percent(काष्ठा symbol *sym, काष्ठा evsel *evsel);
 
-struct sym_hist {
+काष्ठा sym_hist अणु
 	u64		      nr_samples;
 	u64		      period;
-	struct sym_hist_entry addr[];
-};
+	काष्ठा sym_hist_entry addr[];
+पूर्ण;
 
-struct cyc_hist {
+काष्ठा cyc_hist अणु
 	u64	start;
 	u64	cycles;
 	u64	cycles_aggr;
@@ -245,130 +246,130 @@ struct cyc_hist {
 	u8	have_start;
 	/* 1 byte padding */
 	u16	reset;
-};
+पूर्ण;
 
-/** struct annotated_source - symbols with hits have this attached as in sannotation
+/** काष्ठा annotated_source - symbols with hits have this attached as in sannotation
  *
  * @histograms: Array of addr hit histograms per event being monitored
- * nr_histograms: This may not be the same as evsel->evlist->core.nr_entries if
+ * nr_histograms: This may not be the same as evsel->evlist->core.nr_entries अगर
  * 		  we have more than a group in a evlist, where we will want
  * 		  to see each group separately, that is why symbol__annotate2()
  * 		  sets src->nr_histograms to evsel->nr_members.
- * @lines: If 'print_lines' is specified, per source code line percentages
+ * @lines: If 'print_lines' is specअगरied, per source code line percentages
  * @source: source parsed from a disassembler like objdump -dS
  * @cyc_hist: Average cycles per basic block
  *
  * lines is allocated, percentages calculated and all sorted by percentage
- * when the annotation is about to be presented, so the percentages are for
- * one of the entries in the histogram array, i.e. for the event/counter being
- * presented. It is deallocated right after symbol__{tui,tty,etc}_annotate
- * returns.
+ * when the annotation is about to be presented, so the percentages are क्रम
+ * one of the entries in the histogram array, i.e. क्रम the event/counter being
+ * presented. It is deallocated right after symbol__अणुtui,tty,etcपूर्ण_annotate
+ * वापसs.
  */
-struct annotated_source {
-	struct list_head   source;
-	int    		   nr_histograms;
-	size_t		   sizeof_sym_hist;
-	struct cyc_hist	   *cycles_hist;
-	struct sym_hist	   *histograms;
-};
+काष्ठा annotated_source अणु
+	काष्ठा list_head   source;
+	पूर्णांक    		   nr_histograms;
+	माप_प्रकार		   माप_sym_hist;
+	काष्ठा cyc_hist	   *cycles_hist;
+	काष्ठा sym_hist	   *histograms;
+पूर्ण;
 
-struct annotation {
-	pthread_mutex_t		lock;
+काष्ठा annotation अणु
+	pthपढ़ो_mutex_t		lock;
 	u64			max_coverage;
 	u64			start;
 	u64			hit_cycles;
 	u64			hit_insn;
-	unsigned int		total_insn;
-	unsigned int		cover_insn;
-	struct annotation_options *options;
-	struct annotation_line	**offsets;
-	int			nr_events;
-	int			max_jump_sources;
-	int			nr_entries;
-	int			nr_asm_entries;
+	अचिन्हित पूर्णांक		total_insn;
+	अचिन्हित पूर्णांक		cover_insn;
+	काष्ठा annotation_options *options;
+	काष्ठा annotation_line	**offsets;
+	पूर्णांक			nr_events;
+	पूर्णांक			max_jump_sources;
+	पूर्णांक			nr_entries;
+	पूर्णांक			nr_यंत्र_entries;
 	u16			max_line_len;
-	struct {
+	काष्ठा अणु
 		u8		addr;
 		u8		jumps;
 		u8		target;
 		u8		min_addr;
 		u8		max_addr;
 		u8		max_ins_name;
-	} widths;
+	पूर्ण widths;
 	bool			have_cycles;
-	struct annotated_source *src;
-};
+	काष्ठा annotated_source *src;
+पूर्ण;
 
-static inline int annotation__cycles_width(struct annotation *notes)
-{
-	if (notes->have_cycles && notes->options->show_minmax_cycle)
-		return ANNOTATION__IPC_WIDTH + ANNOTATION__MINMAX_CYCLES_WIDTH;
+अटल अंतरभूत पूर्णांक annotation__cycles_width(काष्ठा annotation *notes)
+अणु
+	अगर (notes->have_cycles && notes->options->show_minmax_cycle)
+		वापस ANNOTATION__IPC_WIDTH + ANNOTATION__MINMAX_CYCLES_WIDTH;
 
-	return notes->have_cycles ? ANNOTATION__IPC_WIDTH + ANNOTATION__CYCLES_WIDTH : 0;
-}
+	वापस notes->have_cycles ? ANNOTATION__IPC_WIDTH + ANNOTATION__CYCLES_WIDTH : 0;
+पूर्ण
 
-static inline int annotation__pcnt_width(struct annotation *notes)
-{
-	return (symbol_conf.show_total_period ? 12 : 7) * notes->nr_events;
-}
+अटल अंतरभूत पूर्णांक annotation__pcnt_width(काष्ठा annotation *notes)
+अणु
+	वापस (symbol_conf.show_total_period ? 12 : 7) * notes->nr_events;
+पूर्ण
 
-static inline bool annotation_line__filter(struct annotation_line *al, struct annotation *notes)
-{
-	return notes->options->hide_src_code && al->offset == -1;
-}
+अटल अंतरभूत bool annotation_line__filter(काष्ठा annotation_line *al, काष्ठा annotation *notes)
+अणु
+	वापस notes->options->hide_src_code && al->offset == -1;
+पूर्ण
 
-void annotation__set_offsets(struct annotation *notes, s64 size);
-void annotation__compute_ipc(struct annotation *notes, size_t size);
-void annotation__mark_jump_targets(struct annotation *notes, struct symbol *sym);
-void annotation__update_column_widths(struct annotation *notes);
-void annotation__init_column_widths(struct annotation *notes, struct symbol *sym);
+व्योम annotation__set_offsets(काष्ठा annotation *notes, s64 size);
+व्योम annotation__compute_ipc(काष्ठा annotation *notes, माप_प्रकार size);
+व्योम annotation__mark_jump_tarमाला_लो(काष्ठा annotation *notes, काष्ठा symbol *sym);
+व्योम annotation__update_column_widths(काष्ठा annotation *notes);
+व्योम annotation__init_column_widths(काष्ठा annotation *notes, काष्ठा symbol *sym);
 
-static inline struct sym_hist *annotated_source__histogram(struct annotated_source *src, int idx)
-{
-	return ((void *)src->histograms) + (src->sizeof_sym_hist * idx);
-}
+अटल अंतरभूत काष्ठा sym_hist *annotated_source__histogram(काष्ठा annotated_source *src, पूर्णांक idx)
+अणु
+	वापस ((व्योम *)src->histograms) + (src->माप_sym_hist * idx);
+पूर्ण
 
-static inline struct sym_hist *annotation__histogram(struct annotation *notes, int idx)
-{
-	return annotated_source__histogram(notes->src, idx);
-}
+अटल अंतरभूत काष्ठा sym_hist *annotation__histogram(काष्ठा annotation *notes, पूर्णांक idx)
+अणु
+	वापस annotated_source__histogram(notes->src, idx);
+पूर्ण
 
-static inline struct annotation *symbol__annotation(struct symbol *sym)
-{
-	return (void *)sym - symbol_conf.priv_size;
-}
+अटल अंतरभूत काष्ठा annotation *symbol__annotation(काष्ठा symbol *sym)
+अणु
+	वापस (व्योम *)sym - symbol_conf.priv_size;
+पूर्ण
 
-int addr_map_symbol__inc_samples(struct addr_map_symbol *ams, struct perf_sample *sample,
-				 struct evsel *evsel);
+पूर्णांक addr_map_symbol__inc_samples(काष्ठा addr_map_symbol *ams, काष्ठा perf_sample *sample,
+				 काष्ठा evsel *evsel);
 
-int addr_map_symbol__account_cycles(struct addr_map_symbol *ams,
-				    struct addr_map_symbol *start,
-				    unsigned cycles);
+पूर्णांक addr_map_symbol__account_cycles(काष्ठा addr_map_symbol *ams,
+				    काष्ठा addr_map_symbol *start,
+				    अचिन्हित cycles);
 
-int hist_entry__inc_addr_samples(struct hist_entry *he, struct perf_sample *sample,
-				 struct evsel *evsel, u64 addr);
+पूर्णांक hist_entry__inc_addr_samples(काष्ठा hist_entry *he, काष्ठा perf_sample *sample,
+				 काष्ठा evsel *evsel, u64 addr);
 
-struct annotated_source *symbol__hists(struct symbol *sym, int nr_hists);
-void symbol__annotate_zero_histograms(struct symbol *sym);
+काष्ठा annotated_source *symbol__hists(काष्ठा symbol *sym, पूर्णांक nr_hists);
+व्योम symbol__annotate_zero_histograms(काष्ठा symbol *sym);
 
-int symbol__annotate(struct map_symbol *ms,
-		     struct evsel *evsel,
-		     struct annotation_options *options,
-		     struct arch **parch);
-int symbol__annotate2(struct map_symbol *ms,
-		      struct evsel *evsel,
-		      struct annotation_options *options,
-		      struct arch **parch);
+पूर्णांक symbol__annotate(काष्ठा map_symbol *ms,
+		     काष्ठा evsel *evsel,
+		     काष्ठा annotation_options *options,
+		     काष्ठा arch **parch);
+पूर्णांक symbol__annotate2(काष्ठा map_symbol *ms,
+		      काष्ठा evsel *evsel,
+		      काष्ठा annotation_options *options,
+		      काष्ठा arch **parch);
 
-enum symbol_disassemble_errno {
+क्रमागत symbol_disassemble_त्रुटि_सं अणु
 	SYMBOL_ANNOTATE_ERRNO__SUCCESS		= 0,
 
 	/*
 	 * Choose an arbitrary negative big number not to clash with standard
-	 * errno since SUS requires the errno has distinct positive values.
+	 * त्रुटि_सं since SUS requires the त्रुटि_सं has distinct positive values.
 	 * See 'Issue 6' in the link below.
 	 *
-	 * http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/errno.h.html
+	 * http://pubs.खोलोgroup.org/onlinepubs/9699919799/basedefs/त्रुटिसं.स.hपंचांगl
 	 */
 	__SYMBOL_ANNOTATE_ERRNO__START		= -10000,
 
@@ -376,48 +377,48 @@ enum symbol_disassemble_errno {
 	SYMBOL_ANNOTATE_ERRNO__NO_LIBOPCODES_FOR_BPF,
 	SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_CPUID_PARSING,
 	SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_REGEXP,
-	SYMBOL_ANNOTATE_ERRNO__BPF_INVALID_FILE,
+	SYMBOL_ANNOTATE_ERRNO__BPF_INVALID_खाता,
 	SYMBOL_ANNOTATE_ERRNO__BPF_MISSING_BTF,
 
 	__SYMBOL_ANNOTATE_ERRNO__END,
-};
+पूर्ण;
 
-int symbol__strerror_disassemble(struct map_symbol *ms, int errnum, char *buf, size_t buflen);
+पूर्णांक symbol__म_त्रुटि_disassemble(काष्ठा map_symbol *ms, पूर्णांक errnum, अक्षर *buf, माप_प्रकार buflen);
 
-int symbol__annotate_printf(struct map_symbol *ms, struct evsel *evsel,
-			    struct annotation_options *options);
-void symbol__annotate_zero_histogram(struct symbol *sym, int evidx);
-void symbol__annotate_decay_histogram(struct symbol *sym, int evidx);
-void annotated_source__purge(struct annotated_source *as);
+पूर्णांक symbol__annotate_म_लिखो(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
+			    काष्ठा annotation_options *options);
+व्योम symbol__annotate_zero_histogram(काष्ठा symbol *sym, पूर्णांक evidx);
+व्योम symbol__annotate_decay_histogram(काष्ठा symbol *sym, पूर्णांक evidx);
+व्योम annotated_source__purge(काष्ठा annotated_source *as);
 
-int map_symbol__annotation_dump(struct map_symbol *ms, struct evsel *evsel,
-				struct annotation_options *opts);
+पूर्णांक map_symbol__annotation_dump(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
+				काष्ठा annotation_options *opts);
 
-bool ui__has_annotation(void);
+bool ui__has_annotation(व्योम);
 
-int symbol__tty_annotate(struct map_symbol *ms, struct evsel *evsel, struct annotation_options *opts);
+पूर्णांक symbol__tty_annotate(काष्ठा map_symbol *ms, काष्ठा evsel *evsel, काष्ठा annotation_options *opts);
 
-int symbol__tty_annotate2(struct map_symbol *ms, struct evsel *evsel, struct annotation_options *opts);
+पूर्णांक symbol__tty_annotate2(काष्ठा map_symbol *ms, काष्ठा evsel *evsel, काष्ठा annotation_options *opts);
 
-#ifdef HAVE_SLANG_SUPPORT
-int symbol__tui_annotate(struct map_symbol *ms, struct evsel *evsel,
-			 struct hist_browser_timer *hbt,
-			 struct annotation_options *opts);
-#else
-static inline int symbol__tui_annotate(struct map_symbol *ms __maybe_unused,
-				struct evsel *evsel  __maybe_unused,
-				struct hist_browser_timer *hbt __maybe_unused,
-				struct annotation_options *opts __maybe_unused)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित HAVE_SLANG_SUPPORT
+पूर्णांक symbol__tui_annotate(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
+			 काष्ठा hist_browser_समयr *hbt,
+			 काष्ठा annotation_options *opts);
+#अन्यथा
+अटल अंतरभूत पूर्णांक symbol__tui_annotate(काष्ठा map_symbol *ms __maybe_unused,
+				काष्ठा evsel *evsel  __maybe_unused,
+				काष्ठा hist_browser_समयr *hbt __maybe_unused,
+				काष्ठा annotation_options *opts __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-void annotation_config__init(struct annotation_options *opt);
+व्योम annotation_config__init(काष्ठा annotation_options *opt);
 
-int annotate_parse_percent_type(const struct option *opt, const char *_str,
-				int unset);
+पूर्णांक annotate_parse_percent_type(स्थिर काष्ठा option *opt, स्थिर अक्षर *_str,
+				पूर्णांक unset);
 
-int annotate_check_args(struct annotation_options *args);
+पूर्णांक annotate_check_args(काष्ठा annotation_options *args);
 
-#endif	/* __PERF_ANNOTATE_H */
+#पूर्ण_अगर	/* __PERF_ANNOTATE_H */

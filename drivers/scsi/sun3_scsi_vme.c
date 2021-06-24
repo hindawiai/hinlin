@@ -1,3 +1,4 @@
-#define SUN3_SCSI_VME
+<शैली गुरु>
+#घोषणा SUN3_SCSI_VME
 
-#include "sun3_scsi.c"
+#समावेश "sun3_scsi.c"

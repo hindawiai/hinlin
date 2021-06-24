@@ -1,432 +1,433 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Secure Digital Host Controller Interface ACPI driver.
  *
  * Copyright (c) 2012, Intel Corporation.
  */
 
-#include <linux/bitfield.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/ioport.h>
-#include <linux/io.h>
-#include <linux/dma-mapping.h>
-#include <linux/compiler.h>
-#include <linux/stddef.h>
-#include <linux/bitops.h>
-#include <linux/types.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/acpi.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include <linux/delay.h>
-#include <linux/dmi.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmi.h>
 
-#include <linux/mmc/host.h>
-#include <linux/mmc/pm.h>
-#include <linux/mmc/slot-gpio.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/pm.h>
+#समावेश <linux/mmc/slot-gpपन.स>
 
-#ifdef CONFIG_X86
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
-#include <asm/iosf_mbi.h>
-#include <linux/pci.h>
-#endif
+#अगर_घोषित CONFIG_X86
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/iosf_mbi.h>
+#समावेश <linux/pci.h>
+#पूर्ण_अगर
 
-#include "sdhci.h"
+#समावेश "sdhci.h"
 
-enum {
+क्रमागत अणु
 	SDHCI_ACPI_SD_CD		= BIT(0),
 	SDHCI_ACPI_RUNTIME_PM		= BIT(1),
 	SDHCI_ACPI_SD_CD_OVERRIDE_LEVEL	= BIT(2),
-};
+पूर्ण;
 
-struct sdhci_acpi_chip {
-	const struct	sdhci_ops *ops;
-	unsigned int	quirks;
-	unsigned int	quirks2;
-	unsigned long	caps;
-	unsigned int	caps2;
+काष्ठा sdhci_acpi_chip अणु
+	स्थिर काष्ठा	sdhci_ops *ops;
+	अचिन्हित पूर्णांक	quirks;
+	अचिन्हित पूर्णांक	quirks2;
+	अचिन्हित दीर्घ	caps;
+	अचिन्हित पूर्णांक	caps2;
 	mmc_pm_flag_t	pm_caps;
-};
+पूर्ण;
 
-struct sdhci_acpi_slot {
-	const struct	sdhci_acpi_chip *chip;
-	unsigned int	quirks;
-	unsigned int	quirks2;
-	unsigned long	caps;
-	unsigned int	caps2;
+काष्ठा sdhci_acpi_slot अणु
+	स्थिर काष्ठा	sdhci_acpi_chip *chip;
+	अचिन्हित पूर्णांक	quirks;
+	अचिन्हित पूर्णांक	quirks2;
+	अचिन्हित दीर्घ	caps;
+	अचिन्हित पूर्णांक	caps2;
 	mmc_pm_flag_t	pm_caps;
-	unsigned int	flags;
-	size_t		priv_size;
-	int (*probe_slot)(struct platform_device *, struct acpi_device *);
-	int (*remove_slot)(struct platform_device *);
-	int (*free_slot)(struct platform_device *pdev);
-	int (*setup_host)(struct platform_device *pdev);
-};
+	अचिन्हित पूर्णांक	flags;
+	माप_प्रकार		priv_size;
+	पूर्णांक (*probe_slot)(काष्ठा platक्रमm_device *, काष्ठा acpi_device *);
+	पूर्णांक (*हटाओ_slot)(काष्ठा platक्रमm_device *);
+	पूर्णांक (*मुक्त_slot)(काष्ठा platक्रमm_device *pdev);
+	पूर्णांक (*setup_host)(काष्ठा platक्रमm_device *pdev);
+पूर्ण;
 
-struct sdhci_acpi_host {
-	struct sdhci_host		*host;
-	const struct sdhci_acpi_slot	*slot;
-	struct platform_device		*pdev;
-	bool				use_runtime_pm;
-	bool				is_intel;
-	bool				reset_signal_volt_on_suspend;
-	unsigned long			private[] ____cacheline_aligned;
-};
+काष्ठा sdhci_acpi_host अणु
+	काष्ठा sdhci_host		*host;
+	स्थिर काष्ठा sdhci_acpi_slot	*slot;
+	काष्ठा platक्रमm_device		*pdev;
+	bool				use_runसमय_pm;
+	bool				is_पूर्णांकel;
+	bool				reset_संकेत_volt_on_suspend;
+	अचिन्हित दीर्घ			निजी[] ____cacheline_aligned;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	DMI_QUIRK_RESET_SD_SIGNAL_VOLT_ON_SUSP			= BIT(0),
 	DMI_QUIRK_SD_NO_WRITE_PROTECT				= BIT(1),
-};
+पूर्ण;
 
-static inline void *sdhci_acpi_priv(struct sdhci_acpi_host *c)
-{
-	return (void *)c->private;
-}
+अटल अंतरभूत व्योम *sdhci_acpi_priv(काष्ठा sdhci_acpi_host *c)
+अणु
+	वापस (व्योम *)c->निजी;
+पूर्ण
 
-static inline bool sdhci_acpi_flag(struct sdhci_acpi_host *c, unsigned int flag)
-{
-	return c->slot && (c->slot->flags & flag);
-}
+अटल अंतरभूत bool sdhci_acpi_flag(काष्ठा sdhci_acpi_host *c, अचिन्हित पूर्णांक flag)
+अणु
+	वापस c->slot && (c->slot->flags & flag);
+पूर्ण
 
-#define INTEL_DSM_HS_CAPS_SDR25		BIT(0)
-#define INTEL_DSM_HS_CAPS_DDR50		BIT(1)
-#define INTEL_DSM_HS_CAPS_SDR50		BIT(2)
-#define INTEL_DSM_HS_CAPS_SDR104	BIT(3)
+#घोषणा INTEL_DSM_HS_CAPS_SDR25		BIT(0)
+#घोषणा INTEL_DSM_HS_CAPS_DDR50		BIT(1)
+#घोषणा INTEL_DSM_HS_CAPS_SDR50		BIT(2)
+#घोषणा INTEL_DSM_HS_CAPS_SDR104	BIT(3)
 
-enum {
+क्रमागत अणु
 	INTEL_DSM_FNS		=  0,
 	INTEL_DSM_V18_SWITCH	=  3,
 	INTEL_DSM_V33_SWITCH	=  4,
 	INTEL_DSM_HS_CAPS	=  8,
-};
+पूर्ण;
 
-struct intel_host {
+काष्ठा पूर्णांकel_host अणु
 	u32	dsm_fns;
 	u32	hs_caps;
-};
+पूर्ण;
 
-static const guid_t intel_dsm_guid =
+अटल स्थिर guid_t पूर्णांकel_dsm_guid =
 	GUID_INIT(0xF6C13EA5, 0x65CD, 0x461F,
 		  0xAB, 0x7A, 0x29, 0xF7, 0xE8, 0xD5, 0xBD, 0x61);
 
-static int __intel_dsm(struct intel_host *intel_host, struct device *dev,
-		       unsigned int fn, u32 *result)
-{
-	union acpi_object *obj;
-	int err = 0;
+अटल पूर्णांक __पूर्णांकel_dsm(काष्ठा पूर्णांकel_host *पूर्णांकel_host, काष्ठा device *dev,
+		       अचिन्हित पूर्णांक fn, u32 *result)
+अणु
+	जोड़ acpi_object *obj;
+	पूर्णांक err = 0;
 
-	obj = acpi_evaluate_dsm(ACPI_HANDLE(dev), &intel_dsm_guid, 0, fn, NULL);
-	if (!obj)
-		return -EOPNOTSUPP;
+	obj = acpi_evaluate_dsm(ACPI_HANDLE(dev), &पूर्णांकel_dsm_guid, 0, fn, शून्य);
+	अगर (!obj)
+		वापस -EOPNOTSUPP;
 
-	if (obj->type == ACPI_TYPE_INTEGER) {
-		*result = obj->integer.value;
-	} else if (obj->type == ACPI_TYPE_BUFFER && obj->buffer.length > 0) {
-		size_t len = min_t(size_t, obj->buffer.length, 4);
+	अगर (obj->type == ACPI_TYPE_INTEGER) अणु
+		*result = obj->पूर्णांकeger.value;
+	पूर्ण अन्यथा अगर (obj->type == ACPI_TYPE_BUFFER && obj->buffer.length > 0) अणु
+		माप_प्रकार len = min_t(माप_प्रकार, obj->buffer.length, 4);
 
 		*result = 0;
-		memcpy(result, obj->buffer.pointer, len);
-	} else {
+		स_नकल(result, obj->buffer.poपूर्णांकer, len);
+	पूर्ण अन्यथा अणु
 		dev_err(dev, "%s DSM fn %u obj->type %d obj->buffer.length %d\n",
 			__func__, fn, obj->type, obj->buffer.length);
 		err = -EINVAL;
-	}
+	पूर्ण
 
 	ACPI_FREE(obj);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int intel_dsm(struct intel_host *intel_host, struct device *dev,
-		     unsigned int fn, u32 *result)
-{
-	if (fn > 31 || !(intel_host->dsm_fns & (1 << fn)))
-		return -EOPNOTSUPP;
+अटल पूर्णांक पूर्णांकel_dsm(काष्ठा पूर्णांकel_host *पूर्णांकel_host, काष्ठा device *dev,
+		     अचिन्हित पूर्णांक fn, u32 *result)
+अणु
+	अगर (fn > 31 || !(पूर्णांकel_host->dsm_fns & (1 << fn)))
+		वापस -EOPNOTSUPP;
 
-	return __intel_dsm(intel_host, dev, fn, result);
-}
+	वापस __पूर्णांकel_dsm(पूर्णांकel_host, dev, fn, result);
+पूर्ण
 
-static void intel_dsm_init(struct intel_host *intel_host, struct device *dev,
-			   struct mmc_host *mmc)
-{
-	int err;
+अटल व्योम पूर्णांकel_dsm_init(काष्ठा पूर्णांकel_host *पूर्णांकel_host, काष्ठा device *dev,
+			   काष्ठा mmc_host *mmc)
+अणु
+	पूर्णांक err;
 
-	intel_host->hs_caps = ~0;
+	पूर्णांकel_host->hs_caps = ~0;
 
-	err = __intel_dsm(intel_host, dev, INTEL_DSM_FNS, &intel_host->dsm_fns);
-	if (err) {
+	err = __पूर्णांकel_dsm(पूर्णांकel_host, dev, INTEL_DSM_FNS, &पूर्णांकel_host->dsm_fns);
+	अगर (err) अणु
 		pr_debug("%s: DSM not supported, error %d\n",
 			 mmc_hostname(mmc), err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_debug("%s: DSM function mask %#x\n",
-		 mmc_hostname(mmc), intel_host->dsm_fns);
+		 mmc_hostname(mmc), पूर्णांकel_host->dsm_fns);
 
-	intel_dsm(intel_host, dev, INTEL_DSM_HS_CAPS, &intel_host->hs_caps);
-}
+	पूर्णांकel_dsm(पूर्णांकel_host, dev, INTEL_DSM_HS_CAPS, &पूर्णांकel_host->hs_caps);
+पूर्ण
 
-static int intel_start_signal_voltage_switch(struct mmc_host *mmc,
-					     struct mmc_ios *ios)
-{
-	struct device *dev = mmc_dev(mmc);
-	struct sdhci_acpi_host *c = dev_get_drvdata(dev);
-	struct intel_host *intel_host = sdhci_acpi_priv(c);
-	unsigned int fn;
+अटल पूर्णांक पूर्णांकel_start_संकेत_voltage_चयन(काष्ठा mmc_host *mmc,
+					     काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा device *dev = mmc_dev(mmc);
+	काष्ठा sdhci_acpi_host *c = dev_get_drvdata(dev);
+	काष्ठा पूर्णांकel_host *पूर्णांकel_host = sdhci_acpi_priv(c);
+	अचिन्हित पूर्णांक fn;
 	u32 result = 0;
-	int err;
+	पूर्णांक err;
 
-	err = sdhci_start_signal_voltage_switch(mmc, ios);
-	if (err)
-		return err;
+	err = sdhci_start_संकेत_voltage_चयन(mmc, ios);
+	अगर (err)
+		वापस err;
 
-	switch (ios->signal_voltage) {
-	case MMC_SIGNAL_VOLTAGE_330:
+	चयन (ios->संकेत_voltage) अणु
+	हाल MMC_SIGNAL_VOLTAGE_330:
 		fn = INTEL_DSM_V33_SWITCH;
-		break;
-	case MMC_SIGNAL_VOLTAGE_180:
+		अवरोध;
+	हाल MMC_SIGNAL_VOLTAGE_180:
 		fn = INTEL_DSM_V18_SWITCH;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	err = intel_dsm(intel_host, dev, fn, &result);
+	err = पूर्णांकel_dsm(पूर्णांकel_host, dev, fn, &result);
 	pr_debug("%s: %s DSM fn %u error %d result %u\n",
 		 mmc_hostname(mmc), __func__, fn, err, result);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sdhci_acpi_int_hw_reset(struct sdhci_host *host)
-{
+अटल व्योम sdhci_acpi_पूर्णांक_hw_reset(काष्ठा sdhci_host *host)
+अणु
 	u8 reg;
 
-	reg = sdhci_readb(host, SDHCI_POWER_CONTROL);
+	reg = sdhci_पढ़ोb(host, SDHCI_POWER_CONTROL);
 	reg |= 0x10;
-	sdhci_writeb(host, reg, SDHCI_POWER_CONTROL);
-	/* For eMMC, minimum is 1us but give it 9us for good measure */
+	sdhci_ग_लिखोb(host, reg, SDHCI_POWER_CONTROL);
+	/* For eMMC, minimum is 1us but give it 9us क्रम good measure */
 	udelay(9);
 	reg &= ~0x10;
-	sdhci_writeb(host, reg, SDHCI_POWER_CONTROL);
-	/* For eMMC, minimum is 200us but give it 300us for good measure */
+	sdhci_ग_लिखोb(host, reg, SDHCI_POWER_CONTROL);
+	/* For eMMC, minimum is 200us but give it 300us क्रम good measure */
 	usleep_range(300, 1000);
-}
+पूर्ण
 
-static const struct sdhci_ops sdhci_acpi_ops_dflt = {
-	.set_clock = sdhci_set_clock,
+अटल स्थिर काष्ठा sdhci_ops sdhci_acpi_ops_dflt = अणु
+	.set_घड़ी = sdhci_set_घड़ी,
 	.set_bus_width = sdhci_set_bus_width,
 	.reset = sdhci_reset,
-	.set_uhs_signaling = sdhci_set_uhs_signaling,
-};
+	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
+पूर्ण;
 
-static const struct sdhci_ops sdhci_acpi_ops_int = {
-	.set_clock = sdhci_set_clock,
+अटल स्थिर काष्ठा sdhci_ops sdhci_acpi_ops_पूर्णांक = अणु
+	.set_घड़ी = sdhci_set_घड़ी,
 	.set_bus_width = sdhci_set_bus_width,
 	.reset = sdhci_reset,
-	.set_uhs_signaling = sdhci_set_uhs_signaling,
-	.hw_reset   = sdhci_acpi_int_hw_reset,
-};
+	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
+	.hw_reset   = sdhci_acpi_पूर्णांक_hw_reset,
+पूर्ण;
 
-static const struct sdhci_acpi_chip sdhci_acpi_chip_int = {
-	.ops = &sdhci_acpi_ops_int,
-};
+अटल स्थिर काष्ठा sdhci_acpi_chip sdhci_acpi_chip_पूर्णांक = अणु
+	.ops = &sdhci_acpi_ops_पूर्णांक,
+पूर्ण;
 
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 
-static bool sdhci_acpi_byt(void)
-{
-	static const struct x86_cpu_id byt[] = {
-		X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT, NULL),
-		{}
-	};
+अटल bool sdhci_acpi_byt(व्योम)
+अणु
+	अटल स्थिर काष्ठा x86_cpu_id byt[] = अणु
+		X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT, शून्य),
+		अणुपूर्ण
+	पूर्ण;
 
-	return x86_match_cpu(byt);
-}
+	वापस x86_match_cpu(byt);
+पूर्ण
 
-static bool sdhci_acpi_cht(void)
-{
-	static const struct x86_cpu_id cht[] = {
-		X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT, NULL),
-		{}
-	};
+अटल bool sdhci_acpi_cht(व्योम)
+अणु
+	अटल स्थिर काष्ठा x86_cpu_id cht[] = अणु
+		X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT, शून्य),
+		अणुपूर्ण
+	पूर्ण;
 
-	return x86_match_cpu(cht);
-}
+	वापस x86_match_cpu(cht);
+पूर्ण
 
-#define BYT_IOSF_SCCEP			0x63
-#define BYT_IOSF_OCP_NETCTRL0		0x1078
-#define BYT_IOSF_OCP_TIMEOUT_BASE	GENMASK(10, 8)
+#घोषणा BYT_IOSF_SCCEP			0x63
+#घोषणा BYT_IOSF_OCP_NETCTRL0		0x1078
+#घोषणा BYT_IOSF_OCP_TIMEOUT_BASE	GENMASK(10, 8)
 
-static void sdhci_acpi_byt_setting(struct device *dev)
-{
+अटल व्योम sdhci_acpi_byt_setting(काष्ठा device *dev)
+अणु
 	u32 val = 0;
 
-	if (!sdhci_acpi_byt())
-		return;
+	अगर (!sdhci_acpi_byt())
+		वापस;
 
-	if (iosf_mbi_read(BYT_IOSF_SCCEP, MBI_CR_READ, BYT_IOSF_OCP_NETCTRL0,
-			  &val)) {
+	अगर (iosf_mbi_पढ़ो(BYT_IOSF_SCCEP, MBI_CR_READ, BYT_IOSF_OCP_NETCTRL0,
+			  &val)) अणु
 		dev_err(dev, "%s read error\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(val & BYT_IOSF_OCP_TIMEOUT_BASE))
-		return;
+	अगर (!(val & BYT_IOSF_OCP_TIMEOUT_BASE))
+		वापस;
 
 	val &= ~BYT_IOSF_OCP_TIMEOUT_BASE;
 
-	if (iosf_mbi_write(BYT_IOSF_SCCEP, MBI_CR_WRITE, BYT_IOSF_OCP_NETCTRL0,
-			   val)) {
+	अगर (iosf_mbi_ग_लिखो(BYT_IOSF_SCCEP, MBI_CR_WRITE, BYT_IOSF_OCP_NETCTRL0,
+			   val)) अणु
 		dev_err(dev, "%s write error\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_dbg(dev, "%s completed\n", __func__);
-}
+पूर्ण
 
-static bool sdhci_acpi_byt_defer(struct device *dev)
-{
-	if (!sdhci_acpi_byt())
-		return false;
+अटल bool sdhci_acpi_byt_defer(काष्ठा device *dev)
+अणु
+	अगर (!sdhci_acpi_byt())
+		वापस false;
 
-	if (!iosf_mbi_available())
-		return true;
+	अगर (!iosf_mbi_available())
+		वापस true;
 
 	sdhci_acpi_byt_setting(dev);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool sdhci_acpi_cht_pci_wifi(unsigned int vendor, unsigned int device,
-				    unsigned int slot, unsigned int parent_slot)
-{
-	struct pci_dev *dev, *parent, *from = NULL;
+अटल bool sdhci_acpi_cht_pci_wअगरi(अचिन्हित पूर्णांक venकरोr, अचिन्हित पूर्णांक device,
+				    अचिन्हित पूर्णांक slot, अचिन्हित पूर्णांक parent_slot)
+अणु
+	काष्ठा pci_dev *dev, *parent, *from = शून्य;
 
-	while (1) {
-		dev = pci_get_device(vendor, device, from);
+	जबतक (1) अणु
+		dev = pci_get_device(venकरोr, device, from);
 		pci_dev_put(from);
-		if (!dev)
-			break;
+		अगर (!dev)
+			अवरोध;
 		parent = pci_upstream_bridge(dev);
-		if (ACPI_COMPANION(&dev->dev) && PCI_SLOT(dev->devfn) == slot &&
+		अगर (ACPI_COMPANION(&dev->dev) && PCI_SLOT(dev->devfn) == slot &&
 		    parent && PCI_SLOT(parent->devfn) == parent_slot &&
-		    !pci_upstream_bridge(parent)) {
+		    !pci_upstream_bridge(parent)) अणु
 			pci_dev_put(dev);
-			return true;
-		}
+			वापस true;
+		पूर्ण
 		from = dev;
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * GPDwin uses PCI wifi which conflicts with SDIO's use of
- * acpi_device_fix_up_power() on child device nodes. Identifying GPDwin is
- * problematic, but since SDIO is only used for wifi, the presence of the PCI
- * wifi card in the expected slot with an ACPI companion node, is used to
- * indicate that acpi_device_fix_up_power() should be avoided.
+ * GPDwin uses PCI wअगरi which conflicts with SDIO's use of
+ * acpi_device_fix_up_घातer() on child device nodes. Identअगरying GPDwin is
+ * problematic, but since SDIO is only used क्रम wअगरi, the presence of the PCI
+ * wअगरi card in the expected slot with an ACPI companion node, is used to
+ * indicate that acpi_device_fix_up_घातer() should be aव्योमed.
  */
-static inline bool sdhci_acpi_no_fixup_child_power(struct acpi_device *adev)
-{
-	return sdhci_acpi_cht() &&
+अटल अंतरभूत bool sdhci_acpi_no_fixup_child_घातer(काष्ठा acpi_device *adev)
+अणु
+	वापस sdhci_acpi_cht() &&
 	       acpi_dev_hid_uid_match(adev, "80860F14", "2") &&
-	       sdhci_acpi_cht_pci_wifi(0x14e4, 0x43ec, 0, 28);
-}
+	       sdhci_acpi_cht_pci_wअगरi(0x14e4, 0x43ec, 0, 28);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void sdhci_acpi_byt_setting(struct device *dev)
-{
-}
+अटल अंतरभूत व्योम sdhci_acpi_byt_setting(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static inline bool sdhci_acpi_byt_defer(struct device *dev)
-{
-	return false;
-}
+अटल अंतरभूत bool sdhci_acpi_byt_defer(काष्ठा device *dev)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool sdhci_acpi_no_fixup_child_power(struct acpi_device *adev)
-{
-	return false;
-}
+अटल अंतरभूत bool sdhci_acpi_no_fixup_child_घातer(काष्ठा acpi_device *adev)
+अणु
+	वापस false;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int bxt_get_cd(struct mmc_host *mmc)
-{
-	int gpio_cd = mmc_gpio_get_cd(mmc);
-	struct sdhci_host *host = mmc_priv(mmc);
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक bxt_get_cd(काष्ठा mmc_host *mmc)
+अणु
+	पूर्णांक gpio_cd = mmc_gpio_get_cd(mmc);
+	काष्ठा sdhci_host *host = mmc_priv(mmc);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (!gpio_cd)
-		return 0;
+	अगर (!gpio_cd)
+		वापस 0;
 
 	spin_lock_irqsave(&host->lock, flags);
 
-	if (host->flags & SDHCI_DEVICE_DEAD)
-		goto out;
+	अगर (host->flags & SDHCI_DEVICE_DEAD)
+		जाओ out;
 
-	ret = !!(sdhci_readl(host, SDHCI_PRESENT_STATE) & SDHCI_CARD_PRESENT);
+	ret = !!(sdhci_पढ़ोl(host, SDHCI_PRESENT_STATE) & SDHCI_CARD_PRESENT);
 out:
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int intel_probe_slot(struct platform_device *pdev, struct acpi_device *adev)
-{
-	struct sdhci_acpi_host *c = platform_get_drvdata(pdev);
-	struct intel_host *intel_host = sdhci_acpi_priv(c);
-	struct sdhci_host *host = c->host;
+अटल पूर्णांक पूर्णांकel_probe_slot(काष्ठा platक्रमm_device *pdev, काष्ठा acpi_device *adev)
+अणु
+	काष्ठा sdhci_acpi_host *c = platक्रमm_get_drvdata(pdev);
+	काष्ठा पूर्णांकel_host *पूर्णांकel_host = sdhci_acpi_priv(c);
+	काष्ठा sdhci_host *host = c->host;
 
-	if (acpi_dev_hid_uid_match(adev, "80860F14", "1") &&
-	    sdhci_readl(host, SDHCI_CAPABILITIES) == 0x446cc8b2 &&
-	    sdhci_readl(host, SDHCI_CAPABILITIES_1) == 0x00000807)
-		host->timeout_clk = 1000; /* 1000 kHz i.e. 1 MHz */
+	अगर (acpi_dev_hid_uid_match(adev, "80860F14", "1") &&
+	    sdhci_पढ़ोl(host, SDHCI_CAPABILITIES) == 0x446cc8b2 &&
+	    sdhci_पढ़ोl(host, SDHCI_CAPABILITIES_1) == 0x00000807)
+		host->समयout_clk = 1000; /* 1000 kHz i.e. 1 MHz */
 
-	if (acpi_dev_hid_uid_match(adev, "80865ACA", NULL))
+	अगर (acpi_dev_hid_uid_match(adev, "80865ACA", शून्य))
 		host->mmc_host_ops.get_cd = bxt_get_cd;
 
-	intel_dsm_init(intel_host, &pdev->dev, host->mmc);
+	पूर्णांकel_dsm_init(पूर्णांकel_host, &pdev->dev, host->mmc);
 
-	host->mmc_host_ops.start_signal_voltage_switch =
-					intel_start_signal_voltage_switch;
+	host->mmc_host_ops.start_संकेत_voltage_चयन =
+					पूर्णांकel_start_संकेत_voltage_चयन;
 
-	c->is_intel = true;
+	c->is_पूर्णांकel = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_setup_host(struct platform_device *pdev)
-{
-	struct sdhci_acpi_host *c = platform_get_drvdata(pdev);
-	struct intel_host *intel_host = sdhci_acpi_priv(c);
+अटल पूर्णांक पूर्णांकel_setup_host(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sdhci_acpi_host *c = platक्रमm_get_drvdata(pdev);
+	काष्ठा पूर्णांकel_host *पूर्णांकel_host = sdhci_acpi_priv(c);
 
-	if (!(intel_host->hs_caps & INTEL_DSM_HS_CAPS_SDR25))
+	अगर (!(पूर्णांकel_host->hs_caps & INTEL_DSM_HS_CAPS_SDR25))
 		c->host->mmc->caps &= ~MMC_CAP_UHS_SDR25;
 
-	if (!(intel_host->hs_caps & INTEL_DSM_HS_CAPS_SDR50))
+	अगर (!(पूर्णांकel_host->hs_caps & INTEL_DSM_HS_CAPS_SDR50))
 		c->host->mmc->caps &= ~MMC_CAP_UHS_SDR50;
 
-	if (!(intel_host->hs_caps & INTEL_DSM_HS_CAPS_DDR50))
+	अगर (!(पूर्णांकel_host->hs_caps & INTEL_DSM_HS_CAPS_DDR50))
 		c->host->mmc->caps &= ~MMC_CAP_UHS_DDR50;
 
-	if (!(intel_host->hs_caps & INTEL_DSM_HS_CAPS_SDR104))
+	अगर (!(पूर्णांकel_host->hs_caps & INTEL_DSM_HS_CAPS_SDR104))
 		c->host->mmc->caps &= ~MMC_CAP_UHS_SDR104;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sdhci_acpi_slot sdhci_acpi_slot_int_emmc = {
-	.chip    = &sdhci_acpi_chip_int,
+अटल स्थिर काष्ठा sdhci_acpi_slot sdhci_acpi_slot_पूर्णांक_emmc = अणु
+	.chip    = &sdhci_acpi_chip_पूर्णांक,
 	.caps    = MMC_CAP_8_BIT_DATA | MMC_CAP_NONREMOVABLE |
 		   MMC_CAP_HW_RESET | MMC_CAP_1_8V_DDR |
 		   MMC_CAP_CMD_DURING_TFR | MMC_CAP_WAIT_WHILE_BUSY,
@@ -436,12 +437,12 @@ static const struct sdhci_acpi_slot sdhci_acpi_slot_int_emmc = {
 	.quirks2 = SDHCI_QUIRK2_PRESET_VALUE_BROKEN |
 		   SDHCI_QUIRK2_STOP_WITH_TC |
 		   SDHCI_QUIRK2_CAPS_BIT63_FOR_HS400,
-	.probe_slot	= intel_probe_slot,
-	.setup_host	= intel_setup_host,
-	.priv_size	= sizeof(struct intel_host),
-};
+	.probe_slot	= पूर्णांकel_probe_slot,
+	.setup_host	= पूर्णांकel_setup_host,
+	.priv_size	= माप(काष्ठा पूर्णांकel_host),
+पूर्ण;
 
-static const struct sdhci_acpi_slot sdhci_acpi_slot_int_sdio = {
+अटल स्थिर काष्ठा sdhci_acpi_slot sdhci_acpi_slot_पूर्णांक_sdio = अणु
 	.quirks  = SDHCI_QUIRK_BROKEN_CARD_DETECTION |
 		   SDHCI_QUIRK_NO_LED |
 		   SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC,
@@ -450,12 +451,12 @@ static const struct sdhci_acpi_slot sdhci_acpi_slot_int_sdio = {
 		   MMC_CAP_WAIT_WHILE_BUSY,
 	.flags   = SDHCI_ACPI_RUNTIME_PM,
 	.pm_caps = MMC_PM_KEEP_POWER,
-	.probe_slot	= intel_probe_slot,
-	.setup_host	= intel_setup_host,
-	.priv_size	= sizeof(struct intel_host),
-};
+	.probe_slot	= पूर्णांकel_probe_slot,
+	.setup_host	= पूर्णांकel_setup_host,
+	.priv_size	= माप(काष्ठा पूर्णांकel_host),
+पूर्ण;
 
-static const struct sdhci_acpi_slot sdhci_acpi_slot_int_sd = {
+अटल स्थिर काष्ठा sdhci_acpi_slot sdhci_acpi_slot_पूर्णांक_sd = अणु
 	.flags   = SDHCI_ACPI_SD_CD | SDHCI_ACPI_SD_CD_OVERRIDE_LEVEL |
 		   SDHCI_ACPI_RUNTIME_PM,
 	.quirks  = SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC |
@@ -463,234 +464,234 @@ static const struct sdhci_acpi_slot sdhci_acpi_slot_int_sd = {
 	.quirks2 = SDHCI_QUIRK2_CARD_ON_NEEDS_BUS_ON |
 		   SDHCI_QUIRK2_STOP_WITH_TC,
 	.caps    = MMC_CAP_WAIT_WHILE_BUSY | MMC_CAP_AGGRESSIVE_PM,
-	.probe_slot	= intel_probe_slot,
-	.setup_host	= intel_setup_host,
-	.priv_size	= sizeof(struct intel_host),
-};
+	.probe_slot	= पूर्णांकel_probe_slot,
+	.setup_host	= पूर्णांकel_setup_host,
+	.priv_size	= माप(काष्ठा पूर्णांकel_host),
+पूर्ण;
 
-#define VENDOR_SPECIFIC_PWRCTL_CLEAR_REG	0x1a8
-#define VENDOR_SPECIFIC_PWRCTL_CTL_REG		0x1ac
-static irqreturn_t sdhci_acpi_qcom_handler(int irq, void *ptr)
-{
-	struct sdhci_host *host = ptr;
+#घोषणा VENDOR_SPECIFIC_PWRCTL_CLEAR_REG	0x1a8
+#घोषणा VENDOR_SPECIFIC_PWRCTL_CTL_REG		0x1ac
+अटल irqवापस_t sdhci_acpi_qcom_handler(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा sdhci_host *host = ptr;
 
-	sdhci_writel(host, 0x3, VENDOR_SPECIFIC_PWRCTL_CLEAR_REG);
-	sdhci_writel(host, 0x1, VENDOR_SPECIFIC_PWRCTL_CTL_REG);
+	sdhci_ग_लिखोl(host, 0x3, VENDOR_SPECIFIC_PWRCTL_CLEAR_REG);
+	sdhci_ग_लिखोl(host, 0x1, VENDOR_SPECIFIC_PWRCTL_CTL_REG);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int qcom_probe_slot(struct platform_device *pdev, struct acpi_device *adev)
-{
-	struct sdhci_acpi_host *c = platform_get_drvdata(pdev);
-	struct sdhci_host *host = c->host;
-	int *irq = sdhci_acpi_priv(c);
+अटल पूर्णांक qcom_probe_slot(काष्ठा platक्रमm_device *pdev, काष्ठा acpi_device *adev)
+अणु
+	काष्ठा sdhci_acpi_host *c = platक्रमm_get_drvdata(pdev);
+	काष्ठा sdhci_host *host = c->host;
+	पूर्णांक *irq = sdhci_acpi_priv(c);
 
 	*irq = -EINVAL;
 
-	if (!acpi_dev_hid_uid_match(adev, "QCOM8051", NULL))
-		return 0;
+	अगर (!acpi_dev_hid_uid_match(adev, "QCOM8051", शून्य))
+		वापस 0;
 
-	*irq = platform_get_irq(pdev, 1);
-	if (*irq < 0)
-		return 0;
+	*irq = platक्रमm_get_irq(pdev, 1);
+	अगर (*irq < 0)
+		वापस 0;
 
-	return request_threaded_irq(*irq, NULL, sdhci_acpi_qcom_handler,
+	वापस request_thपढ़ोed_irq(*irq, शून्य, sdhci_acpi_qcom_handler,
 				    IRQF_ONESHOT | IRQF_TRIGGER_HIGH,
 				    "sdhci_qcom", host);
-}
+पूर्ण
 
-static int qcom_free_slot(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct sdhci_acpi_host *c = platform_get_drvdata(pdev);
-	struct sdhci_host *host = c->host;
-	struct acpi_device *adev;
-	int *irq = sdhci_acpi_priv(c);
+अटल पूर्णांक qcom_मुक्त_slot(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा sdhci_acpi_host *c = platक्रमm_get_drvdata(pdev);
+	काष्ठा sdhci_host *host = c->host;
+	काष्ठा acpi_device *adev;
+	पूर्णांक *irq = sdhci_acpi_priv(c);
 
 	adev = ACPI_COMPANION(dev);
-	if (!adev)
-		return -ENODEV;
+	अगर (!adev)
+		वापस -ENODEV;
 
-	if (!acpi_dev_hid_uid_match(adev, "QCOM8051", NULL))
-		return 0;
+	अगर (!acpi_dev_hid_uid_match(adev, "QCOM8051", शून्य))
+		वापस 0;
 
-	if (*irq < 0)
-		return 0;
+	अगर (*irq < 0)
+		वापस 0;
 
-	free_irq(*irq, host);
-	return 0;
-}
+	मुक्त_irq(*irq, host);
+	वापस 0;
+पूर्ण
 
-static const struct sdhci_acpi_slot sdhci_acpi_slot_qcom_sd_3v = {
+अटल स्थिर काष्ठा sdhci_acpi_slot sdhci_acpi_slot_qcom_sd_3v = अणु
 	.quirks  = SDHCI_QUIRK_BROKEN_CARD_DETECTION,
 	.quirks2 = SDHCI_QUIRK2_NO_1_8_V,
 	.caps    = MMC_CAP_NONREMOVABLE,
-	.priv_size	= sizeof(int),
+	.priv_size	= माप(पूर्णांक),
 	.probe_slot	= qcom_probe_slot,
-	.free_slot	= qcom_free_slot,
-};
+	.मुक्त_slot	= qcom_मुक्त_slot,
+पूर्ण;
 
-static const struct sdhci_acpi_slot sdhci_acpi_slot_qcom_sd = {
+अटल स्थिर काष्ठा sdhci_acpi_slot sdhci_acpi_slot_qcom_sd = अणु
 	.quirks  = SDHCI_QUIRK_BROKEN_CARD_DETECTION,
 	.caps    = MMC_CAP_NONREMOVABLE,
-};
+पूर्ण;
 
-struct amd_sdhci_host {
-	bool	tuned_clock;
+काष्ठा amd_sdhci_host अणु
+	bool	tuned_घड़ी;
 	bool	dll_enabled;
-};
+पूर्ण;
 
-/* AMD sdhci reset dll register. */
-#define SDHCI_AMD_RESET_DLL_REGISTER    0x908
+/* AMD sdhci reset dll रेजिस्टर. */
+#घोषणा SDHCI_AMD_RESET_DLL_REGISTER    0x908
 
-static int amd_select_drive_strength(struct mmc_card *card,
-				     unsigned int max_dtr, int host_drv,
-				     int card_drv, int *host_driver_strength)
-{
-	struct sdhci_host *host = mmc_priv(card->host);
+अटल पूर्णांक amd_select_drive_strength(काष्ठा mmc_card *card,
+				     अचिन्हित पूर्णांक max_dtr, पूर्णांक host_drv,
+				     पूर्णांक card_drv, पूर्णांक *host_driver_strength)
+अणु
+	काष्ठा sdhci_host *host = mmc_priv(card->host);
 	u16 preset, preset_driver_strength;
 
 	/*
 	 * This method is only called by mmc_select_hs200 so we only need to
-	 * read from the HS200 (SDR104) preset register.
+	 * पढ़ो from the HS200 (SDR104) preset रेजिस्टर.
 	 *
-	 * Firmware that has "invalid/default" presets return a driver strength
+	 * Firmware that has "invalid/default" presets वापस a driver strength
 	 * of A. This matches the previously hard coded value.
 	 */
-	preset = sdhci_readw(host, SDHCI_PRESET_FOR_SDR104);
+	preset = sdhci_पढ़ोw(host, SDHCI_PRESET_FOR_SDR104);
 	preset_driver_strength = FIELD_GET(SDHCI_PRESET_DRV_MASK, preset);
 
 	/*
 	 * We want the controller driver strength to match the card's driver
-	 * strength so they have similar rise/fall times.
+	 * strength so they have similar rise/fall बार.
 	 *
-	 * The controller driver strength set by this method is sticky for all
-	 * timings after this method is called. This unfortunately means that
-	 * while HS400 tuning is in progress we end up with mismatched driver
+	 * The controller driver strength set by this method is sticky क्रम all
+	 * timings after this method is called. This unक्रमtunately means that
+	 * जबतक HS400 tuning is in progress we end up with mismatched driver
 	 * strengths between the controller and the card. HS400 tuning requires
-	 * switching from HS400->DDR52->HS->HS200->HS400. So the driver mismatch
-	 * happens while in DDR52 and HS modes. This has not been observed to
+	 * चयनing from HS400->DDR52->HS->HS200->HS400. So the driver mismatch
+	 * happens जबतक in DDR52 and HS modes. This has not been observed to
 	 * cause problems. Enabling presets would fix this issue.
 	 */
 	*host_driver_strength = preset_driver_strength;
 
 	/*
-	 * The resulting card driver strength is only set when switching the
-	 * card's timing to HS200 or HS400. The card will use the default driver
-	 * strength (B) for any other mode.
+	 * The resulting card driver strength is only set when चयनing the
+	 * card's timing to HS200 or HS400. The card will use the शेष driver
+	 * strength (B) क्रम any other mode.
 	 */
-	return preset_driver_strength;
-}
+	वापस preset_driver_strength;
+पूर्ण
 
-static void sdhci_acpi_amd_hs400_dll(struct sdhci_host *host, bool enable)
-{
-	struct sdhci_acpi_host *acpi_host = sdhci_priv(host);
-	struct amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
+अटल व्योम sdhci_acpi_amd_hs400_dll(काष्ठा sdhci_host *host, bool enable)
+अणु
+	काष्ठा sdhci_acpi_host *acpi_host = sdhci_priv(host);
+	काष्ठा amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
 
-	/* AMD Platform requires dll setting */
-	sdhci_writel(host, 0x40003210, SDHCI_AMD_RESET_DLL_REGISTER);
+	/* AMD Platक्रमm requires dll setting */
+	sdhci_ग_लिखोl(host, 0x40003210, SDHCI_AMD_RESET_DLL_REGISTER);
 	usleep_range(10, 20);
-	if (enable)
-		sdhci_writel(host, 0x40033210, SDHCI_AMD_RESET_DLL_REGISTER);
+	अगर (enable)
+		sdhci_ग_लिखोl(host, 0x40033210, SDHCI_AMD_RESET_DLL_REGISTER);
 
 	amd_host->dll_enabled = enable;
-}
+पूर्ण
 
 /*
- * The initialization sequence for HS400 is:
- *     HS->HS200->Perform Tuning->HS->HS400
+ * The initialization sequence क्रम HS400 is:
+ *     HS->HS200->Perक्रमm Tuning->HS->HS400
  *
  * The re-tuning sequence is:
- *     HS400->DDR52->HS->HS200->Perform Tuning->HS->HS400
+ *     HS400->DDR52->HS->HS200->Perक्रमm Tuning->HS->HS400
  *
- * The AMD eMMC Controller can only use the tuned clock while in HS200 and HS400
- * mode. If we switch to a different mode, we need to disable the tuned clock.
- * If we have previously performed tuning and switch back to HS200 or
- * HS400, we can re-enable the tuned clock.
+ * The AMD eMMC Controller can only use the tuned घड़ी जबतक in HS200 and HS400
+ * mode. If we चयन to a dअगरferent mode, we need to disable the tuned घड़ी.
+ * If we have previously perक्रमmed tuning and चयन back to HS200 or
+ * HS400, we can re-enable the tuned घड़ी.
  *
  */
-static void amd_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
-{
-	struct sdhci_host *host = mmc_priv(mmc);
-	struct sdhci_acpi_host *acpi_host = sdhci_priv(host);
-	struct amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
-	unsigned int old_timing = host->timing;
+अटल व्योम amd_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा sdhci_host *host = mmc_priv(mmc);
+	काष्ठा sdhci_acpi_host *acpi_host = sdhci_priv(host);
+	काष्ठा amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
+	अचिन्हित पूर्णांक old_timing = host->timing;
 	u16 val;
 
 	sdhci_set_ios(mmc, ios);
 
-	if (old_timing != host->timing && amd_host->tuned_clock) {
-		if (host->timing == MMC_TIMING_MMC_HS400 ||
-		    host->timing == MMC_TIMING_MMC_HS200) {
-			val = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+	अगर (old_timing != host->timing && amd_host->tuned_घड़ी) अणु
+		अगर (host->timing == MMC_TIMING_MMC_HS400 ||
+		    host->timing == MMC_TIMING_MMC_HS200) अणु
+			val = sdhci_पढ़ोw(host, SDHCI_HOST_CONTROL2);
 			val |= SDHCI_CTRL_TUNED_CLK;
-			sdhci_writew(host, val, SDHCI_HOST_CONTROL2);
-		} else {
-			val = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+			sdhci_ग_लिखोw(host, val, SDHCI_HOST_CONTROL2);
+		पूर्ण अन्यथा अणु
+			val = sdhci_पढ़ोw(host, SDHCI_HOST_CONTROL2);
 			val &= ~SDHCI_CTRL_TUNED_CLK;
-			sdhci_writew(host, val, SDHCI_HOST_CONTROL2);
-		}
+			sdhci_ग_लिखोw(host, val, SDHCI_HOST_CONTROL2);
+		पूर्ण
 
-		/* DLL is only required for HS400 */
-		if (host->timing == MMC_TIMING_MMC_HS400 &&
+		/* DLL is only required क्रम HS400 */
+		अगर (host->timing == MMC_TIMING_MMC_HS400 &&
 		    !amd_host->dll_enabled)
 			sdhci_acpi_amd_hs400_dll(host, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int amd_sdhci_execute_tuning(struct mmc_host *mmc, u32 opcode)
-{
-	int err;
-	struct sdhci_host *host = mmc_priv(mmc);
-	struct sdhci_acpi_host *acpi_host = sdhci_priv(host);
-	struct amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
+अटल पूर्णांक amd_sdhci_execute_tuning(काष्ठा mmc_host *mmc, u32 opcode)
+अणु
+	पूर्णांक err;
+	काष्ठा sdhci_host *host = mmc_priv(mmc);
+	काष्ठा sdhci_acpi_host *acpi_host = sdhci_priv(host);
+	काष्ठा amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
 
-	amd_host->tuned_clock = false;
+	amd_host->tuned_घड़ी = false;
 
 	err = sdhci_execute_tuning(mmc, opcode);
 
-	if (!err && !host->tuning_err)
-		amd_host->tuned_clock = true;
+	अगर (!err && !host->tuning_err)
+		amd_host->tuned_घड़ी = true;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void amd_sdhci_reset(struct sdhci_host *host, u8 mask)
-{
-	struct sdhci_acpi_host *acpi_host = sdhci_priv(host);
-	struct amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
+अटल व्योम amd_sdhci_reset(काष्ठा sdhci_host *host, u8 mask)
+अणु
+	काष्ठा sdhci_acpi_host *acpi_host = sdhci_priv(host);
+	काष्ठा amd_sdhci_host *amd_host = sdhci_acpi_priv(acpi_host);
 
-	if (mask & SDHCI_RESET_ALL) {
-		amd_host->tuned_clock = false;
+	अगर (mask & SDHCI_RESET_ALL) अणु
+		amd_host->tuned_घड़ी = false;
 		sdhci_acpi_amd_hs400_dll(host, false);
-	}
+	पूर्ण
 
 	sdhci_reset(host, mask);
-}
+पूर्ण
 
-static const struct sdhci_ops sdhci_acpi_ops_amd = {
-	.set_clock	= sdhci_set_clock,
+अटल स्थिर काष्ठा sdhci_ops sdhci_acpi_ops_amd = अणु
+	.set_घड़ी	= sdhci_set_घड़ी,
 	.set_bus_width	= sdhci_set_bus_width,
 	.reset		= amd_sdhci_reset,
-	.set_uhs_signaling = sdhci_set_uhs_signaling,
-};
+	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
+पूर्ण;
 
-static const struct sdhci_acpi_chip sdhci_acpi_chip_amd = {
+अटल स्थिर काष्ठा sdhci_acpi_chip sdhci_acpi_chip_amd = अणु
 	.ops = &sdhci_acpi_ops_amd,
-};
+पूर्ण;
 
-static int sdhci_acpi_emmc_amd_probe_slot(struct platform_device *pdev,
-					  struct acpi_device *adev)
-{
-	struct sdhci_acpi_host *c = platform_get_drvdata(pdev);
-	struct sdhci_host *host   = c->host;
+अटल पूर्णांक sdhci_acpi_emmc_amd_probe_slot(काष्ठा platक्रमm_device *pdev,
+					  काष्ठा acpi_device *adev)
+अणु
+	काष्ठा sdhci_acpi_host *c = platक्रमm_get_drvdata(pdev);
+	काष्ठा sdhci_host *host   = c->host;
 
-	sdhci_read_caps(host);
-	if (host->caps1 & SDHCI_SUPPORT_DDR50)
+	sdhci_पढ़ो_caps(host);
+	अगर (host->caps1 & SDHCI_SUPPORT_DDR50)
 		host->mmc->caps = MMC_CAP_1_8V_DDR;
 
-	if ((host->caps1 & SDHCI_SUPPORT_SDR104) &&
+	अगर ((host->caps1 & SDHCI_SUPPORT_SDR104) &&
 	    (host->mmc->caps & MMC_CAP_1_8V_DDR))
 		host->mmc->caps2 = MMC_CAP2_HS400_1_8V;
 
@@ -698,35 +699,35 @@ static int sdhci_acpi_emmc_amd_probe_slot(struct platform_device *pdev,
 	 * There are two types of presets out in the wild:
 	 * 1) Default/broken presets.
 	 *    These presets have two sets of problems:
-	 *    a) The clock divisor for SDR12, SDR25, and SDR50 is too small.
-	 *       This results in clock frequencies that are 2x higher than
+	 *    a) The घड़ी भागisor क्रम SDR12, SDR25, and SDR50 is too small.
+	 *       This results in घड़ी frequencies that are 2x higher than
 	 *       acceptable. i.e., SDR12 = 25 MHz, SDR25 = 50 MHz, SDR50 =
 	 *       100 MHz.x
-	 *    b) The HS200 and HS400 driver strengths don't match.
-	 *       By default, the SDR104 preset register has a driver strength of
-	 *       A, but the (internal) HS400 preset register has a driver
+	 *    b) The HS200 and HS400 driver strengths करोn't match.
+	 *       By शेष, the SDR104 preset रेजिस्टर has a driver strength of
+	 *       A, but the (पूर्णांकernal) HS400 preset रेजिस्टर has a driver
 	 *       strength of B. As part of initializing HS400, HS200 tuning
-	 *       needs to be performed. Having different driver strengths
-	 *       between tuning and operation is wrong. It results in different
-	 *       rise/fall times that lead to incorrect sampling.
+	 *       needs to be perक्रमmed. Having dअगरferent driver strengths
+	 *       between tuning and operation is wrong. It results in dअगरferent
+	 *       rise/fall बार that lead to incorrect sampling.
 	 * 2) Firmware with properly initialized presets.
-	 *    These presets have proper clock divisors. i.e., SDR12 => 12MHz,
+	 *    These presets have proper घड़ी भागisors. i.e., SDR12 => 12MHz,
 	 *    SDR25 => 25 MHz, SDR50 => 50 MHz. Additionally the HS200 and
 	 *    HS400 preset driver strengths match.
 	 *
-	 *    Enabling presets for HS400 doesn't work for the following reasons:
+	 *    Enabling presets क्रम HS400 करोesn't work क्रम the following reasons:
 	 *    1) sdhci_set_ios has a hard coded list of timings that are used
-	 *       to determine if presets should be enabled.
-	 *    2) sdhci_get_preset_value is using a non-standard register to
-	 *       read out HS400 presets. The AMD controller doesn't support this
-	 *       non-standard register. In fact, it doesn't expose the HS400
-	 *       preset register anywhere in the SDHCI memory map. This results
-	 *       in reading a garbage value and using the wrong presets.
+	 *       to determine अगर presets should be enabled.
+	 *    2) sdhci_get_preset_value is using a non-standard रेजिस्टर to
+	 *       पढ़ो out HS400 presets. The AMD controller करोesn't support this
+	 *       non-standard रेजिस्टर. In fact, it करोesn't expose the HS400
+	 *       preset रेजिस्टर anywhere in the SDHCI memory map. This results
+	 *       in पढ़ोing a garbage value and using the wrong presets.
 	 *
 	 *       Since HS400 and HS200 presets must be identical, we could
-	 *       instead use the the SDR104 preset register.
+	 *       instead use the the SDR104 preset रेजिस्टर.
 	 *
-	 *    If the above issues are resolved we could remove this quirk for
+	 *    If the above issues are resolved we could हटाओ this quirk क्रम
 	 *    firmware that that has valid presets (i.e., SDR12 <= 12 MHz).
 	 */
 	host->quirks2 |= SDHCI_QUIRK2_PRESET_VALUE_BROKEN;
@@ -734,10 +735,10 @@ static int sdhci_acpi_emmc_amd_probe_slot(struct platform_device *pdev,
 	host->mmc_host_ops.select_drive_strength = amd_select_drive_strength;
 	host->mmc_host_ops.set_ios = amd_set_ios;
 	host->mmc_host_ops.execute_tuning = amd_sdhci_execute_tuning;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sdhci_acpi_slot sdhci_acpi_slot_amd_emmc = {
+अटल स्थिर काष्ठा sdhci_acpi_slot sdhci_acpi_slot_amd_emmc = अणु
 	.chip		= &sdhci_acpi_chip_amd,
 	.caps		= MMC_CAP_8_BIT_DATA | MMC_CAP_NONREMOVABLE,
 	.quirks		= SDHCI_QUIRK_32BIT_DMA_ADDR |
@@ -745,368 +746,368 @@ static const struct sdhci_acpi_slot sdhci_acpi_slot_amd_emmc = {
 			  SDHCI_QUIRK_32BIT_ADMA_SIZE,
 	.quirks2	= SDHCI_QUIRK2_BROKEN_64_BIT_DMA,
 	.probe_slot     = sdhci_acpi_emmc_amd_probe_slot,
-	.priv_size	= sizeof(struct amd_sdhci_host),
-};
+	.priv_size	= माप(काष्ठा amd_sdhci_host),
+पूर्ण;
 
-struct sdhci_acpi_uid_slot {
-	const char *hid;
-	const char *uid;
-	const struct sdhci_acpi_slot *slot;
-};
+काष्ठा sdhci_acpi_uid_slot अणु
+	स्थिर अक्षर *hid;
+	स्थिर अक्षर *uid;
+	स्थिर काष्ठा sdhci_acpi_slot *slot;
+पूर्ण;
 
-static const struct sdhci_acpi_uid_slot sdhci_acpi_uids[] = {
-	{ "80865ACA", NULL, &sdhci_acpi_slot_int_sd },
-	{ "80865ACC", NULL, &sdhci_acpi_slot_int_emmc },
-	{ "80865AD0", NULL, &sdhci_acpi_slot_int_sdio },
-	{ "80860F14" , "1" , &sdhci_acpi_slot_int_emmc },
-	{ "80860F14" , "2" , &sdhci_acpi_slot_int_sdio },
-	{ "80860F14" , "3" , &sdhci_acpi_slot_int_sd   },
-	{ "80860F16" , NULL, &sdhci_acpi_slot_int_sd   },
-	{ "INT33BB"  , "2" , &sdhci_acpi_slot_int_sdio },
-	{ "INT33BB"  , "3" , &sdhci_acpi_slot_int_sd },
-	{ "INT33C6"  , NULL, &sdhci_acpi_slot_int_sdio },
-	{ "INT3436"  , NULL, &sdhci_acpi_slot_int_sdio },
-	{ "INT344D"  , NULL, &sdhci_acpi_slot_int_sdio },
-	{ "PNP0FFF"  , "3" , &sdhci_acpi_slot_int_sd   },
-	{ "PNP0D40"  },
-	{ "QCOM8051", NULL, &sdhci_acpi_slot_qcom_sd_3v },
-	{ "QCOM8052", NULL, &sdhci_acpi_slot_qcom_sd },
-	{ "AMDI0040", NULL, &sdhci_acpi_slot_amd_emmc },
-	{ "AMDI0041", NULL, &sdhci_acpi_slot_amd_emmc },
-	{ },
-};
+अटल स्थिर काष्ठा sdhci_acpi_uid_slot sdhci_acpi_uids[] = अणु
+	अणु "80865ACA", शून्य, &sdhci_acpi_slot_पूर्णांक_sd पूर्ण,
+	अणु "80865ACC", शून्य, &sdhci_acpi_slot_पूर्णांक_emmc पूर्ण,
+	अणु "80865AD0", शून्य, &sdhci_acpi_slot_पूर्णांक_sdio पूर्ण,
+	अणु "80860F14" , "1" , &sdhci_acpi_slot_पूर्णांक_emmc पूर्ण,
+	अणु "80860F14" , "2" , &sdhci_acpi_slot_पूर्णांक_sdio पूर्ण,
+	अणु "80860F14" , "3" , &sdhci_acpi_slot_पूर्णांक_sd   पूर्ण,
+	अणु "80860F16" , शून्य, &sdhci_acpi_slot_पूर्णांक_sd   पूर्ण,
+	अणु "INT33BB"  , "2" , &sdhci_acpi_slot_पूर्णांक_sdio पूर्ण,
+	अणु "INT33BB"  , "3" , &sdhci_acpi_slot_पूर्णांक_sd पूर्ण,
+	अणु "INT33C6"  , शून्य, &sdhci_acpi_slot_पूर्णांक_sdio पूर्ण,
+	अणु "INT3436"  , शून्य, &sdhci_acpi_slot_पूर्णांक_sdio पूर्ण,
+	अणु "INT344D"  , शून्य, &sdhci_acpi_slot_पूर्णांक_sdio पूर्ण,
+	अणु "PNP0FFF"  , "3" , &sdhci_acpi_slot_पूर्णांक_sd   पूर्ण,
+	अणु "PNP0D40"  पूर्ण,
+	अणु "QCOM8051", शून्य, &sdhci_acpi_slot_qcom_sd_3v पूर्ण,
+	अणु "QCOM8052", शून्य, &sdhci_acpi_slot_qcom_sd पूर्ण,
+	अणु "AMDI0040", शून्य, &sdhci_acpi_slot_amd_emmc पूर्ण,
+	अणु "AMDI0041", शून्य, &sdhci_acpi_slot_amd_emmc पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct acpi_device_id sdhci_acpi_ids[] = {
-	{ "80865ACA" },
-	{ "80865ACC" },
-	{ "80865AD0" },
-	{ "80860F14" },
-	{ "80860F16" },
-	{ "INT33BB"  },
-	{ "INT33C6"  },
-	{ "INT3436"  },
-	{ "INT344D"  },
-	{ "PNP0D40"  },
-	{ "QCOM8051" },
-	{ "QCOM8052" },
-	{ "AMDI0040" },
-	{ "AMDI0041" },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id sdhci_acpi_ids[] = अणु
+	अणु "80865ACA" पूर्ण,
+	अणु "80865ACC" पूर्ण,
+	अणु "80865AD0" पूर्ण,
+	अणु "80860F14" पूर्ण,
+	अणु "80860F16" पूर्ण,
+	अणु "INT33BB"  पूर्ण,
+	अणु "INT33C6"  पूर्ण,
+	अणु "INT3436"  पूर्ण,
+	अणु "INT344D"  पूर्ण,
+	अणु "PNP0D40"  पूर्ण,
+	अणु "QCOM8051" पूर्ण,
+	अणु "QCOM8052" पूर्ण,
+	अणु "AMDI0040" पूर्ण,
+	अणु "AMDI0041" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, sdhci_acpi_ids);
 
-static const struct dmi_system_id sdhci_acpi_quirks[] = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id sdhci_acpi_quirks[] = अणु
+	अणु
 		/*
 		 * The Lenovo Miix 320-10ICR has a bug in the _PS0 method of
 		 * the SHC1 ACPI device, this bug causes it to reprogram the
-		 * wrong LDO (DLDO3) to 1.8V if 1.8V modes are used and the
-		 * card is (runtime) suspended + resumed. DLDO3 is used for
+		 * wrong LDO (DLDO3) to 1.8V अगर 1.8V modes are used and the
+		 * card is (runसमय) suspended + resumed. DLDO3 is used क्रम
 		 * the LCD and setting it to 1.8V causes the LCD to go black.
 		 */
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "Lenovo MIIX 320-10ICR"),
-		},
-		.driver_data = (void *)DMI_QUIRK_RESET_SD_SIGNAL_VOLT_ON_SUSP,
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)DMI_QUIRK_RESET_SD_SIGNAL_VOLT_ON_SUSP,
+	पूर्ण,
+	अणु
 		/*
 		 * The Acer Aspire Switch 10 (SW5-012) microSD slot always
-		 * reports the card being write-protected even though microSD
-		 * cards do not have a write-protect switch at all.
+		 * reports the card being ग_लिखो-रक्षित even though microSD
+		 * cards करो not have a ग_लिखो-protect चयन at all.
 		 */
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Acer"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Aspire SW5-012"),
-		},
-		.driver_data = (void *)DMI_QUIRK_SD_NO_WRITE_PROTECT,
-	},
-	{} /* Terminating entry */
-};
+		पूर्ण,
+		.driver_data = (व्योम *)DMI_QUIRK_SD_NO_WRITE_PROTECT,
+	पूर्ण,
+	अणुपूर्ण /* Terminating entry */
+पूर्ण;
 
-static const struct sdhci_acpi_slot *sdhci_acpi_get_slot(struct acpi_device *adev)
-{
-	const struct sdhci_acpi_uid_slot *u;
+अटल स्थिर काष्ठा sdhci_acpi_slot *sdhci_acpi_get_slot(काष्ठा acpi_device *adev)
+अणु
+	स्थिर काष्ठा sdhci_acpi_uid_slot *u;
 
-	for (u = sdhci_acpi_uids; u->hid; u++) {
-		if (acpi_dev_hid_uid_match(adev, u->hid, u->uid))
-			return u->slot;
-	}
-	return NULL;
-}
+	क्रम (u = sdhci_acpi_uids; u->hid; u++) अणु
+		अगर (acpi_dev_hid_uid_match(adev, u->hid, u->uid))
+			वापस u->slot;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int sdhci_acpi_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct sdhci_acpi_slot *slot;
-	struct acpi_device *device, *child;
-	const struct dmi_system_id *id;
-	struct sdhci_acpi_host *c;
-	struct sdhci_host *host;
-	struct resource *iomem;
-	resource_size_t len;
-	size_t priv_size;
-	int quirks = 0;
-	int err;
+अटल पूर्णांक sdhci_acpi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा sdhci_acpi_slot *slot;
+	काष्ठा acpi_device *device, *child;
+	स्थिर काष्ठा dmi_प्रणाली_id *id;
+	काष्ठा sdhci_acpi_host *c;
+	काष्ठा sdhci_host *host;
+	काष्ठा resource *iomem;
+	resource_माप_प्रकार len;
+	माप_प्रकार priv_size;
+	पूर्णांक quirks = 0;
+	पूर्णांक err;
 
 	device = ACPI_COMPANION(dev);
-	if (!device)
-		return -ENODEV;
+	अगर (!device)
+		वापस -ENODEV;
 
 	id = dmi_first_match(sdhci_acpi_quirks);
-	if (id)
-		quirks = (long)id->driver_data;
+	अगर (id)
+		quirks = (दीर्घ)id->driver_data;
 
 	slot = sdhci_acpi_get_slot(device);
 
 	/* Power on the SDHCI controller and its children */
-	acpi_device_fix_up_power(device);
-	if (!sdhci_acpi_no_fixup_child_power(device)) {
-		list_for_each_entry(child, &device->children, node)
-			if (child->status.present && child->status.enabled)
-				acpi_device_fix_up_power(child);
-	}
+	acpi_device_fix_up_घातer(device);
+	अगर (!sdhci_acpi_no_fixup_child_घातer(device)) अणु
+		list_क्रम_each_entry(child, &device->children, node)
+			अगर (child->status.present && child->status.enabled)
+				acpi_device_fix_up_घातer(child);
+	पूर्ण
 
-	if (sdhci_acpi_byt_defer(dev))
-		return -EPROBE_DEFER;
+	अगर (sdhci_acpi_byt_defer(dev))
+		वापस -EPROBE_DEFER;
 
-	iomem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!iomem)
-		return -ENOMEM;
+	iomem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!iomem)
+		वापस -ENOMEM;
 
 	len = resource_size(iomem);
-	if (len < 0x100)
+	अगर (len < 0x100)
 		dev_err(dev, "Invalid iomem size!\n");
 
-	if (!devm_request_mem_region(dev, iomem->start, len, dev_name(dev)))
-		return -ENOMEM;
+	अगर (!devm_request_mem_region(dev, iomem->start, len, dev_name(dev)))
+		वापस -ENOMEM;
 
 	priv_size = slot ? slot->priv_size : 0;
-	host = sdhci_alloc_host(dev, sizeof(struct sdhci_acpi_host) + priv_size);
-	if (IS_ERR(host))
-		return PTR_ERR(host);
+	host = sdhci_alloc_host(dev, माप(काष्ठा sdhci_acpi_host) + priv_size);
+	अगर (IS_ERR(host))
+		वापस PTR_ERR(host);
 
 	c = sdhci_priv(host);
 	c->host = host;
 	c->slot = slot;
 	c->pdev = pdev;
-	c->use_runtime_pm = sdhci_acpi_flag(c, SDHCI_ACPI_RUNTIME_PM);
+	c->use_runसमय_pm = sdhci_acpi_flag(c, SDHCI_ACPI_RUNTIME_PM);
 
-	platform_set_drvdata(pdev, c);
+	platक्रमm_set_drvdata(pdev, c);
 
 	host->hw_name	= "ACPI";
 	host->ops	= &sdhci_acpi_ops_dflt;
-	host->irq	= platform_get_irq(pdev, 0);
-	if (host->irq < 0) {
+	host->irq	= platक्रमm_get_irq(pdev, 0);
+	अगर (host->irq < 0) अणु
 		err = -EINVAL;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	host->ioaddr = devm_ioremap(dev, iomem->start,
 					    resource_size(iomem));
-	if (host->ioaddr == NULL) {
+	अगर (host->ioaddr == शून्य) अणु
 		err = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	if (c->slot) {
-		if (c->slot->probe_slot) {
+	अगर (c->slot) अणु
+		अगर (c->slot->probe_slot) अणु
 			err = c->slot->probe_slot(pdev, device);
-			if (err)
-				goto err_free;
-		}
-		if (c->slot->chip) {
+			अगर (err)
+				जाओ err_मुक्त;
+		पूर्ण
+		अगर (c->slot->chip) अणु
 			host->ops            = c->slot->chip->ops;
 			host->quirks        |= c->slot->chip->quirks;
 			host->quirks2       |= c->slot->chip->quirks2;
 			host->mmc->caps     |= c->slot->chip->caps;
 			host->mmc->caps2    |= c->slot->chip->caps2;
 			host->mmc->pm_caps  |= c->slot->chip->pm_caps;
-		}
+		पूर्ण
 		host->quirks        |= c->slot->quirks;
 		host->quirks2       |= c->slot->quirks2;
 		host->mmc->caps     |= c->slot->caps;
 		host->mmc->caps2    |= c->slot->caps2;
 		host->mmc->pm_caps  |= c->slot->pm_caps;
-	}
+	पूर्ण
 
 	host->mmc->caps2 |= MMC_CAP2_NO_PRESCAN_POWERUP;
 
-	if (sdhci_acpi_flag(c, SDHCI_ACPI_SD_CD)) {
+	अगर (sdhci_acpi_flag(c, SDHCI_ACPI_SD_CD)) अणु
 		bool v = sdhci_acpi_flag(c, SDHCI_ACPI_SD_CD_OVERRIDE_LEVEL);
 
-		err = mmc_gpiod_request_cd(host->mmc, NULL, 0, v, 0);
-		if (err) {
-			if (err == -EPROBE_DEFER)
-				goto err_free;
+		err = mmc_gpiod_request_cd(host->mmc, शून्य, 0, v, 0);
+		अगर (err) अणु
+			अगर (err == -EPROBE_DEFER)
+				जाओ err_मुक्त;
 			dev_warn(dev, "failed to setup card detect gpio\n");
-			c->use_runtime_pm = false;
-		}
+			c->use_runसमय_pm = false;
+		पूर्ण
 
-		if (quirks & DMI_QUIRK_RESET_SD_SIGNAL_VOLT_ON_SUSP)
-			c->reset_signal_volt_on_suspend = true;
+		अगर (quirks & DMI_QUIRK_RESET_SD_SIGNAL_VOLT_ON_SUSP)
+			c->reset_संकेत_volt_on_suspend = true;
 
-		if (quirks & DMI_QUIRK_SD_NO_WRITE_PROTECT)
+		अगर (quirks & DMI_QUIRK_SD_NO_WRITE_PROTECT)
 			host->mmc->caps2 |= MMC_CAP2_NO_WRITE_PROTECT;
-	}
+	पूर्ण
 
 	err = sdhci_setup_host(host);
-	if (err)
-		goto err_free;
+	अगर (err)
+		जाओ err_मुक्त;
 
-	if (c->slot && c->slot->setup_host) {
+	अगर (c->slot && c->slot->setup_host) अणु
 		err = c->slot->setup_host(pdev);
-		if (err)
-			goto err_cleanup;
-	}
+		अगर (err)
+			जाओ err_cleanup;
+	पूर्ण
 
 	err = __sdhci_add_host(host);
-	if (err)
-		goto err_cleanup;
+	अगर (err)
+		जाओ err_cleanup;
 
-	if (c->use_runtime_pm) {
-		pm_runtime_set_active(dev);
+	अगर (c->use_runसमय_pm) अणु
+		pm_runसमय_set_active(dev);
 		pm_suspend_ignore_children(dev, 1);
-		pm_runtime_set_autosuspend_delay(dev, 50);
-		pm_runtime_use_autosuspend(dev);
-		pm_runtime_enable(dev);
-	}
+		pm_runसमय_set_स्वतःsuspend_delay(dev, 50);
+		pm_runसमय_use_स्वतःsuspend(dev);
+		pm_runसमय_enable(dev);
+	पूर्ण
 
 	device_enable_async_suspend(dev);
 
-	return 0;
+	वापस 0;
 
 err_cleanup:
 	sdhci_cleanup_host(c->host);
-err_free:
-	if (c->slot && c->slot->free_slot)
-		c->slot->free_slot(pdev);
+err_मुक्त:
+	अगर (c->slot && c->slot->मुक्त_slot)
+		c->slot->मुक्त_slot(pdev);
 
-	sdhci_free_host(c->host);
-	return err;
-}
+	sdhci_मुक्त_host(c->host);
+	वापस err;
+पूर्ण
 
-static int sdhci_acpi_remove(struct platform_device *pdev)
-{
-	struct sdhci_acpi_host *c = platform_get_drvdata(pdev);
-	struct device *dev = &pdev->dev;
-	int dead;
+अटल पूर्णांक sdhci_acpi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sdhci_acpi_host *c = platक्रमm_get_drvdata(pdev);
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक dead;
 
-	if (c->use_runtime_pm) {
-		pm_runtime_get_sync(dev);
-		pm_runtime_disable(dev);
-		pm_runtime_put_noidle(dev);
-	}
+	अगर (c->use_runसमय_pm) अणु
+		pm_runसमय_get_sync(dev);
+		pm_runसमय_disable(dev);
+		pm_runसमय_put_noidle(dev);
+	पूर्ण
 
-	if (c->slot && c->slot->remove_slot)
-		c->slot->remove_slot(pdev);
+	अगर (c->slot && c->slot->हटाओ_slot)
+		c->slot->हटाओ_slot(pdev);
 
-	dead = (sdhci_readl(c->host, SDHCI_INT_STATUS) == ~0);
-	sdhci_remove_host(c->host, dead);
+	dead = (sdhci_पढ़ोl(c->host, SDHCI_INT_STATUS) == ~0);
+	sdhci_हटाओ_host(c->host, dead);
 
-	if (c->slot && c->slot->free_slot)
-		c->slot->free_slot(pdev);
+	अगर (c->slot && c->slot->मुक्त_slot)
+		c->slot->मुक्त_slot(pdev);
 
-	sdhci_free_host(c->host);
+	sdhci_मुक्त_host(c->host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __maybe_unused sdhci_acpi_reset_signal_voltage_if_needed(
-	struct device *dev)
-{
-	struct sdhci_acpi_host *c = dev_get_drvdata(dev);
-	struct sdhci_host *host = c->host;
+अटल व्योम __maybe_unused sdhci_acpi_reset_संकेत_voltage_अगर_needed(
+	काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_acpi_host *c = dev_get_drvdata(dev);
+	काष्ठा sdhci_host *host = c->host;
 
-	if (c->is_intel && c->reset_signal_volt_on_suspend &&
-	    host->mmc->ios.signal_voltage != MMC_SIGNAL_VOLTAGE_330) {
-		struct intel_host *intel_host = sdhci_acpi_priv(c);
-		unsigned int fn = INTEL_DSM_V33_SWITCH;
+	अगर (c->is_पूर्णांकel && c->reset_संकेत_volt_on_suspend &&
+	    host->mmc->ios.संकेत_voltage != MMC_SIGNAL_VOLTAGE_330) अणु
+		काष्ठा पूर्णांकel_host *पूर्णांकel_host = sdhci_acpi_priv(c);
+		अचिन्हित पूर्णांक fn = INTEL_DSM_V33_SWITCH;
 		u32 result = 0;
 
-		intel_dsm(intel_host, dev, fn, &result);
-	}
-}
+		पूर्णांकel_dsm(पूर्णांकel_host, dev, fn, &result);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
-static int sdhci_acpi_suspend(struct device *dev)
-{
-	struct sdhci_acpi_host *c = dev_get_drvdata(dev);
-	struct sdhci_host *host = c->host;
-	int ret;
+अटल पूर्णांक sdhci_acpi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_acpi_host *c = dev_get_drvdata(dev);
+	काष्ठा sdhci_host *host = c->host;
+	पूर्णांक ret;
 
-	if (host->tuning_mode != SDHCI_TUNING_MODE_3)
+	अगर (host->tuning_mode != SDHCI_TUNING_MODE_3)
 		mmc_retune_needed(host->mmc);
 
 	ret = sdhci_suspend_host(host);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	sdhci_acpi_reset_signal_voltage_if_needed(dev);
-	return 0;
-}
+	sdhci_acpi_reset_संकेत_voltage_अगर_needed(dev);
+	वापस 0;
+पूर्ण
 
-static int sdhci_acpi_resume(struct device *dev)
-{
-	struct sdhci_acpi_host *c = dev_get_drvdata(dev);
+अटल पूर्णांक sdhci_acpi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_acpi_host *c = dev_get_drvdata(dev);
 
 	sdhci_acpi_byt_setting(&c->pdev->dev);
 
-	return sdhci_resume_host(c->host);
-}
+	वापस sdhci_resume_host(c->host);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int sdhci_acpi_runtime_suspend(struct device *dev)
-{
-	struct sdhci_acpi_host *c = dev_get_drvdata(dev);
-	struct sdhci_host *host = c->host;
-	int ret;
+अटल पूर्णांक sdhci_acpi_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_acpi_host *c = dev_get_drvdata(dev);
+	काष्ठा sdhci_host *host = c->host;
+	पूर्णांक ret;
 
-	if (host->tuning_mode != SDHCI_TUNING_MODE_3)
+	अगर (host->tuning_mode != SDHCI_TUNING_MODE_3)
 		mmc_retune_needed(host->mmc);
 
-	ret = sdhci_runtime_suspend_host(host);
-	if (ret)
-		return ret;
+	ret = sdhci_runसमय_suspend_host(host);
+	अगर (ret)
+		वापस ret;
 
-	sdhci_acpi_reset_signal_voltage_if_needed(dev);
-	return 0;
-}
+	sdhci_acpi_reset_संकेत_voltage_अगर_needed(dev);
+	वापस 0;
+पूर्ण
 
-static int sdhci_acpi_runtime_resume(struct device *dev)
-{
-	struct sdhci_acpi_host *c = dev_get_drvdata(dev);
+अटल पूर्णांक sdhci_acpi_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_acpi_host *c = dev_get_drvdata(dev);
 
 	sdhci_acpi_byt_setting(&c->pdev->dev);
 
-	return sdhci_runtime_resume_host(c->host, 0);
-}
+	वापस sdhci_runसमय_resume_host(c->host, 0);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static const struct dev_pm_ops sdhci_acpi_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops sdhci_acpi_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(sdhci_acpi_suspend, sdhci_acpi_resume)
-	SET_RUNTIME_PM_OPS(sdhci_acpi_runtime_suspend,
-			sdhci_acpi_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(sdhci_acpi_runसमय_suspend,
+			sdhci_acpi_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver sdhci_acpi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sdhci_acpi_driver = अणु
+	.driver = अणु
 		.name			= "sdhci-acpi",
 		.probe_type		= PROBE_PREFER_ASYNCHRONOUS,
 		.acpi_match_table	= sdhci_acpi_ids,
 		.pm			= &sdhci_acpi_pm_ops,
-	},
+	पूर्ण,
 	.probe	= sdhci_acpi_probe,
-	.remove	= sdhci_acpi_remove,
-};
+	.हटाओ	= sdhci_acpi_हटाओ,
+पूर्ण;
 
-module_platform_driver(sdhci_acpi_driver);
+module_platक्रमm_driver(sdhci_acpi_driver);
 
 MODULE_DESCRIPTION("Secure Digital Host Controller Interface ACPI driver");
 MODULE_AUTHOR("Adrian Hunter");

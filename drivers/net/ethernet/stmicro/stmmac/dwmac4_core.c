@@ -1,240 +1,241 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * This is the driver for the GMAC on-chip Ethernet controller for ST SoCs.
- * DWC Ether MAC version 4.00  has been used for developing this code.
+ * This is the driver क्रम the GMAC on-chip Ethernet controller क्रम ST SoCs.
+ * DWC Ether MAC version 4.00  has been used क्रम developing this code.
  *
- * This only implements the mac core functions for this chip.
+ * This only implements the mac core functions क्रम this chip.
  *
  * Copyright (C) 2015  STMicroelectronics Ltd
  *
  * Author: Alexandre Torgue <alexandre.torgue@st.com>
  */
 
-#include <linux/crc32.h>
-#include <linux/slab.h>
-#include <linux/ethtool.h>
-#include <linux/io.h>
-#include <net/dsa.h>
-#include "stmmac.h"
-#include "stmmac_pcs.h"
-#include "dwmac4.h"
-#include "dwmac5.h"
+#समावेश <linux/crc32.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/पन.स>
+#समावेश <net/dsa.h>
+#समावेश "stmmac.h"
+#समावेश "stmmac_pcs.h"
+#समावेश "dwmac4.h"
+#समावेश "dwmac5.h"
 
-static void dwmac4_core_init(struct mac_device_info *hw,
-			     struct net_device *dev)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 value = readl(ioaddr + GMAC_CONFIG);
+अटल व्योम dwmac4_core_init(काष्ठा mac_device_info *hw,
+			     काष्ठा net_device *dev)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 value = पढ़ोl(ioaddr + GMAC_CONFIG);
 
 	value |= GMAC_CORE_INIT;
 
-	if (hw->ps) {
+	अगर (hw->ps) अणु
 		value |= GMAC_CONFIG_TE;
 
 		value &= hw->link.speed_mask;
-		switch (hw->ps) {
-		case SPEED_1000:
+		चयन (hw->ps) अणु
+		हाल SPEED_1000:
 			value |= hw->link.speed1000;
-			break;
-		case SPEED_100:
+			अवरोध;
+		हाल SPEED_100:
 			value |= hw->link.speed100;
-			break;
-		case SPEED_10:
+			अवरोध;
+		हाल SPEED_10:
 			value |= hw->link.speed10;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	writel(value, ioaddr + GMAC_CONFIG);
+	ग_लिखोl(value, ioaddr + GMAC_CONFIG);
 
-	/* Enable GMAC interrupts */
+	/* Enable GMAC पूर्णांकerrupts */
 	value = GMAC_INT_DEFAULT_ENABLE;
 
-	if (hw->pcs)
+	अगर (hw->pcs)
 		value |= GMAC_PCS_IRQ_DEFAULT;
 
-	/* Enable FPE interrupt */
-	if ((GMAC_HW_FEAT_FPESEL & readl(ioaddr + GMAC_HW_FEATURE3)) >> 26)
+	/* Enable FPE पूर्णांकerrupt */
+	अगर ((GMAC_HW_FEAT_FPESEL & पढ़ोl(ioaddr + GMAC_HW_FEATURE3)) >> 26)
 		value |= GMAC_INT_FPE_EN;
 
-	writel(value, ioaddr + GMAC_INT_EN);
-}
+	ग_लिखोl(value, ioaddr + GMAC_INT_EN);
+पूर्ण
 
-static void dwmac4_rx_queue_enable(struct mac_device_info *hw,
+अटल व्योम dwmac4_rx_queue_enable(काष्ठा mac_device_info *hw,
 				   u8 mode, u32 queue)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 value = readl(ioaddr + GMAC_RXQ_CTRL0);
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 value = पढ़ोl(ioaddr + GMAC_RXQ_CTRL0);
 
 	value &= GMAC_RX_QUEUE_CLEAR(queue);
-	if (mode == MTL_QUEUE_AVB)
+	अगर (mode == MTL_QUEUE_AVB)
 		value |= GMAC_RX_AV_QUEUE_ENABLE(queue);
-	else if (mode == MTL_QUEUE_DCB)
+	अन्यथा अगर (mode == MTL_QUEUE_DCB)
 		value |= GMAC_RX_DCB_QUEUE_ENABLE(queue);
 
-	writel(value, ioaddr + GMAC_RXQ_CTRL0);
-}
+	ग_लिखोl(value, ioaddr + GMAC_RXQ_CTRL0);
+पूर्ण
 
-static void dwmac4_rx_queue_priority(struct mac_device_info *hw,
+अटल व्योम dwmac4_rx_queue_priority(काष्ठा mac_device_info *hw,
 				     u32 prio, u32 queue)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 base_register;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 base_रेजिस्टर;
 	u32 value;
 
-	base_register = (queue < 4) ? GMAC_RXQ_CTRL2 : GMAC_RXQ_CTRL3;
-	if (queue >= 4)
+	base_रेजिस्टर = (queue < 4) ? GMAC_RXQ_CTRL2 : GMAC_RXQ_CTRL3;
+	अगर (queue >= 4)
 		queue -= 4;
 
-	value = readl(ioaddr + base_register);
+	value = पढ़ोl(ioaddr + base_रेजिस्टर);
 
 	value &= ~GMAC_RXQCTRL_PSRQX_MASK(queue);
 	value |= (prio << GMAC_RXQCTRL_PSRQX_SHIFT(queue)) &
 						GMAC_RXQCTRL_PSRQX_MASK(queue);
-	writel(value, ioaddr + base_register);
-}
+	ग_लिखोl(value, ioaddr + base_रेजिस्टर);
+पूर्ण
 
-static void dwmac4_tx_queue_priority(struct mac_device_info *hw,
+अटल व्योम dwmac4_tx_queue_priority(काष्ठा mac_device_info *hw,
 				     u32 prio, u32 queue)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 base_register;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 base_रेजिस्टर;
 	u32 value;
 
-	base_register = (queue < 4) ? GMAC_TXQ_PRTY_MAP0 : GMAC_TXQ_PRTY_MAP1;
-	if (queue >= 4)
+	base_रेजिस्टर = (queue < 4) ? GMAC_TXQ_PRTY_MAP0 : GMAC_TXQ_PRTY_MAP1;
+	अगर (queue >= 4)
 		queue -= 4;
 
-	value = readl(ioaddr + base_register);
+	value = पढ़ोl(ioaddr + base_रेजिस्टर);
 
 	value &= ~GMAC_TXQCTRL_PSTQX_MASK(queue);
 	value |= (prio << GMAC_TXQCTRL_PSTQX_SHIFT(queue)) &
 						GMAC_TXQCTRL_PSTQX_MASK(queue);
 
-	writel(value, ioaddr + base_register);
-}
+	ग_लिखोl(value, ioaddr + base_रेजिस्टर);
+पूर्ण
 
-static void dwmac4_rx_queue_routing(struct mac_device_info *hw,
+अटल व्योम dwmac4_rx_queue_routing(काष्ठा mac_device_info *hw,
 				    u8 packet, u32 queue)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	static const struct stmmac_rx_routing route_possibilities[] = {
-		{ GMAC_RXQCTRL_AVCPQ_MASK, GMAC_RXQCTRL_AVCPQ_SHIFT },
-		{ GMAC_RXQCTRL_PTPQ_MASK, GMAC_RXQCTRL_PTPQ_SHIFT },
-		{ GMAC_RXQCTRL_DCBCPQ_MASK, GMAC_RXQCTRL_DCBCPQ_SHIFT },
-		{ GMAC_RXQCTRL_UPQ_MASK, GMAC_RXQCTRL_UPQ_SHIFT },
-		{ GMAC_RXQCTRL_MCBCQ_MASK, GMAC_RXQCTRL_MCBCQ_SHIFT },
-	};
+	अटल स्थिर काष्ठा sपंचांगmac_rx_routing route_possibilities[] = अणु
+		अणु GMAC_RXQCTRL_AVCPQ_MASK, GMAC_RXQCTRL_AVCPQ_SHIFT पूर्ण,
+		अणु GMAC_RXQCTRL_PTPQ_MASK, GMAC_RXQCTRL_PTPQ_SHIFT पूर्ण,
+		अणु GMAC_RXQCTRL_DCBCPQ_MASK, GMAC_RXQCTRL_DCBCPQ_SHIFT पूर्ण,
+		अणु GMAC_RXQCTRL_UPQ_MASK, GMAC_RXQCTRL_UPQ_SHIFT पूर्ण,
+		अणु GMAC_RXQCTRL_MCBCQ_MASK, GMAC_RXQCTRL_MCBCQ_SHIFT पूर्ण,
+	पूर्ण;
 
-	value = readl(ioaddr + GMAC_RXQ_CTRL1);
+	value = पढ़ोl(ioaddr + GMAC_RXQ_CTRL1);
 
 	/* routing configuration */
 	value &= ~route_possibilities[packet - 1].reg_mask;
-	value |= (queue << route_possibilities[packet-1].reg_shift) &
+	value |= (queue << route_possibilities[packet-1].reg_shअगरt) &
 		 route_possibilities[packet - 1].reg_mask;
 
 	/* some packets require extra ops */
-	if (packet == PACKET_AVCPQ) {
+	अगर (packet == PACKET_AVCPQ) अणु
 		value &= ~GMAC_RXQCTRL_TACPQE;
 		value |= 0x1 << GMAC_RXQCTRL_TACPQE_SHIFT;
-	} else if (packet == PACKET_MCBCQ) {
+	पूर्ण अन्यथा अगर (packet == PACKET_MCBCQ) अणु
 		value &= ~GMAC_RXQCTRL_MCBCQEN;
 		value |= 0x1 << GMAC_RXQCTRL_MCBCQEN_SHIFT;
-	}
+	पूर्ण
 
-	writel(value, ioaddr + GMAC_RXQ_CTRL1);
-}
+	ग_लिखोl(value, ioaddr + GMAC_RXQ_CTRL1);
+पूर्ण
 
-static void dwmac4_prog_mtl_rx_algorithms(struct mac_device_info *hw,
+अटल व्योम dwmac4_prog_mtl_rx_algorithms(काष्ठा mac_device_info *hw,
 					  u32 rx_alg)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 value = readl(ioaddr + MTL_OPERATION_MODE);
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 value = पढ़ोl(ioaddr + MTL_OPERATION_MODE);
 
 	value &= ~MTL_OPERATION_RAA;
-	switch (rx_alg) {
-	case MTL_RX_ALGORITHM_SP:
+	चयन (rx_alg) अणु
+	हाल MTL_RX_ALGORITHM_SP:
 		value |= MTL_OPERATION_RAA_SP;
-		break;
-	case MTL_RX_ALGORITHM_WSP:
+		अवरोध;
+	हाल MTL_RX_ALGORITHM_WSP:
 		value |= MTL_OPERATION_RAA_WSP;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	writel(value, ioaddr + MTL_OPERATION_MODE);
-}
+	ग_लिखोl(value, ioaddr + MTL_OPERATION_MODE);
+पूर्ण
 
-static void dwmac4_prog_mtl_tx_algorithms(struct mac_device_info *hw,
+अटल व्योम dwmac4_prog_mtl_tx_algorithms(काष्ठा mac_device_info *hw,
 					  u32 tx_alg)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 value = readl(ioaddr + MTL_OPERATION_MODE);
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 value = पढ़ोl(ioaddr + MTL_OPERATION_MODE);
 
 	value &= ~MTL_OPERATION_SCHALG_MASK;
-	switch (tx_alg) {
-	case MTL_TX_ALGORITHM_WRR:
+	चयन (tx_alg) अणु
+	हाल MTL_TX_ALGORITHM_WRR:
 		value |= MTL_OPERATION_SCHALG_WRR;
-		break;
-	case MTL_TX_ALGORITHM_WFQ:
+		अवरोध;
+	हाल MTL_TX_ALGORITHM_WFQ:
 		value |= MTL_OPERATION_SCHALG_WFQ;
-		break;
-	case MTL_TX_ALGORITHM_DWRR:
+		अवरोध;
+	हाल MTL_TX_ALGORITHM_DWRR:
 		value |= MTL_OPERATION_SCHALG_DWRR;
-		break;
-	case MTL_TX_ALGORITHM_SP:
+		अवरोध;
+	हाल MTL_TX_ALGORITHM_SP:
 		value |= MTL_OPERATION_SCHALG_SP;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	writel(value, ioaddr + MTL_OPERATION_MODE);
-}
+	ग_लिखोl(value, ioaddr + MTL_OPERATION_MODE);
+पूर्ण
 
-static void dwmac4_set_mtl_tx_queue_weight(struct mac_device_info *hw,
+अटल व्योम dwmac4_set_mtl_tx_queue_weight(काष्ठा mac_device_info *hw,
 					   u32 weight, u32 queue)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 value = readl(ioaddr + MTL_TXQX_WEIGHT_BASE_ADDR(queue));
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 value = पढ़ोl(ioaddr + MTL_TXQX_WEIGHT_BASE_ADDR(queue));
 
 	value &= ~MTL_TXQ_WEIGHT_ISCQW_MASK;
 	value |= weight & MTL_TXQ_WEIGHT_ISCQW_MASK;
-	writel(value, ioaddr + MTL_TXQX_WEIGHT_BASE_ADDR(queue));
-}
+	ग_लिखोl(value, ioaddr + MTL_TXQX_WEIGHT_BASE_ADDR(queue));
+पूर्ण
 
-static void dwmac4_map_mtl_dma(struct mac_device_info *hw, u32 queue, u32 chan)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_map_mtl_dma(काष्ठा mac_device_info *hw, u32 queue, u32 chan)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	if (queue < 4)
-		value = readl(ioaddr + MTL_RXQ_DMA_MAP0);
-	else
-		value = readl(ioaddr + MTL_RXQ_DMA_MAP1);
+	अगर (queue < 4)
+		value = पढ़ोl(ioaddr + MTL_RXQ_DMA_MAP0);
+	अन्यथा
+		value = पढ़ोl(ioaddr + MTL_RXQ_DMA_MAP1);
 
-	if (queue == 0 || queue == 4) {
+	अगर (queue == 0 || queue == 4) अणु
 		value &= ~MTL_RXQ_DMA_Q04MDMACH_MASK;
 		value |= MTL_RXQ_DMA_Q04MDMACH(chan);
-	} else {
+	पूर्ण अन्यथा अणु
 		value &= ~MTL_RXQ_DMA_QXMDMACH_MASK(queue);
 		value |= MTL_RXQ_DMA_QXMDMACH(chan, queue);
-	}
+	पूर्ण
 
-	if (queue < 4)
-		writel(value, ioaddr + MTL_RXQ_DMA_MAP0);
-	else
-		writel(value, ioaddr + MTL_RXQ_DMA_MAP1);
-}
+	अगर (queue < 4)
+		ग_लिखोl(value, ioaddr + MTL_RXQ_DMA_MAP0);
+	अन्यथा
+		ग_लिखोl(value, ioaddr + MTL_RXQ_DMA_MAP1);
+पूर्ण
 
-static void dwmac4_config_cbs(struct mac_device_info *hw,
+अटल व्योम dwmac4_config_cbs(काष्ठा mac_device_info *hw,
 			      u32 send_slope, u32 idle_slope,
 			      u32 high_credit, u32 low_credit, u32 queue)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
 	pr_debug("Queue %d configured as AVB. Parameters:\n", queue);
@@ -244,933 +245,933 @@ static void dwmac4_config_cbs(struct mac_device_info *hw,
 	pr_debug("\tlow_credit: 0x%08x\n", low_credit);
 
 	/* enable AV algorithm */
-	value = readl(ioaddr + MTL_ETSX_CTRL_BASE_ADDR(queue));
+	value = पढ़ोl(ioaddr + MTL_ETSX_CTRL_BASE_ADDR(queue));
 	value |= MTL_ETS_CTRL_AVALG;
 	value |= MTL_ETS_CTRL_CC;
-	writel(value, ioaddr + MTL_ETSX_CTRL_BASE_ADDR(queue));
+	ग_लिखोl(value, ioaddr + MTL_ETSX_CTRL_BASE_ADDR(queue));
 
 	/* configure send slope */
-	value = readl(ioaddr + MTL_SEND_SLP_CREDX_BASE_ADDR(queue));
+	value = पढ़ोl(ioaddr + MTL_SEND_SLP_CREDX_BASE_ADDR(queue));
 	value &= ~MTL_SEND_SLP_CRED_SSC_MASK;
 	value |= send_slope & MTL_SEND_SLP_CRED_SSC_MASK;
-	writel(value, ioaddr + MTL_SEND_SLP_CREDX_BASE_ADDR(queue));
+	ग_लिखोl(value, ioaddr + MTL_SEND_SLP_CREDX_BASE_ADDR(queue));
 
-	/* configure idle slope (same register as tx weight) */
+	/* configure idle slope (same रेजिस्टर as tx weight) */
 	dwmac4_set_mtl_tx_queue_weight(hw, idle_slope, queue);
 
 	/* configure high credit */
-	value = readl(ioaddr + MTL_HIGH_CREDX_BASE_ADDR(queue));
+	value = पढ़ोl(ioaddr + MTL_HIGH_CREDX_BASE_ADDR(queue));
 	value &= ~MTL_HIGH_CRED_HC_MASK;
 	value |= high_credit & MTL_HIGH_CRED_HC_MASK;
-	writel(value, ioaddr + MTL_HIGH_CREDX_BASE_ADDR(queue));
+	ग_लिखोl(value, ioaddr + MTL_HIGH_CREDX_BASE_ADDR(queue));
 
 	/* configure high credit */
-	value = readl(ioaddr + MTL_LOW_CREDX_BASE_ADDR(queue));
+	value = पढ़ोl(ioaddr + MTL_LOW_CREDX_BASE_ADDR(queue));
 	value &= ~MTL_HIGH_CRED_LC_MASK;
 	value |= low_credit & MTL_HIGH_CRED_LC_MASK;
-	writel(value, ioaddr + MTL_LOW_CREDX_BASE_ADDR(queue));
-}
+	ग_लिखोl(value, ioaddr + MTL_LOW_CREDX_BASE_ADDR(queue));
+पूर्ण
 
-static void dwmac4_dump_regs(struct mac_device_info *hw, u32 *reg_space)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	int i;
+अटल व्योम dwmac4_dump_regs(काष्ठा mac_device_info *hw, u32 *reg_space)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	पूर्णांक i;
 
-	for (i = 0; i < GMAC_REG_NUM; i++)
-		reg_space[i] = readl(ioaddr + i * 4);
-}
+	क्रम (i = 0; i < GMAC_REG_NUM; i++)
+		reg_space[i] = पढ़ोl(ioaddr + i * 4);
+पूर्ण
 
-static int dwmac4_rx_ipc_enable(struct mac_device_info *hw)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 value = readl(ioaddr + GMAC_CONFIG);
+अटल पूर्णांक dwmac4_rx_ipc_enable(काष्ठा mac_device_info *hw)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 value = पढ़ोl(ioaddr + GMAC_CONFIG);
 
-	if (hw->rx_csum)
+	अगर (hw->rx_csum)
 		value |= GMAC_CONFIG_IPC;
-	else
+	अन्यथा
 		value &= ~GMAC_CONFIG_IPC;
 
-	writel(value, ioaddr + GMAC_CONFIG);
+	ग_लिखोl(value, ioaddr + GMAC_CONFIG);
 
-	value = readl(ioaddr + GMAC_CONFIG);
+	value = पढ़ोl(ioaddr + GMAC_CONFIG);
 
-	return !!(value & GMAC_CONFIG_IPC);
-}
+	वापस !!(value & GMAC_CONFIG_IPC);
+पूर्ण
 
-static void dwmac4_pmt(struct mac_device_info *hw, unsigned long mode)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	unsigned int pmt = 0;
+अटल व्योम dwmac4_pmt(काष्ठा mac_device_info *hw, अचिन्हित दीर्घ mode)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	अचिन्हित पूर्णांक pmt = 0;
 	u32 config;
 
-	if (mode & WAKE_MAGIC) {
+	अगर (mode & WAKE_MAGIC) अणु
 		pr_debug("GMAC: WOL Magic frame\n");
-		pmt |= power_down | magic_pkt_en;
-	}
-	if (mode & WAKE_UCAST) {
+		pmt |= घातer_करोwn | magic_pkt_en;
+	पूर्ण
+	अगर (mode & WAKE_UCAST) अणु
 		pr_debug("GMAC: WOL on global unicast\n");
-		pmt |= power_down | global_unicast | wake_up_frame_en;
-	}
+		pmt |= घातer_करोwn | global_unicast | wake_up_frame_en;
+	पूर्ण
 
-	if (pmt) {
-		/* The receiver must be enabled for WOL before powering down */
-		config = readl(ioaddr + GMAC_CONFIG);
+	अगर (pmt) अणु
+		/* The receiver must be enabled क्रम WOL beक्रमe घातering करोwn */
+		config = पढ़ोl(ioaddr + GMAC_CONFIG);
 		config |= GMAC_CONFIG_RE;
-		writel(config, ioaddr + GMAC_CONFIG);
-	}
-	writel(pmt, ioaddr + GMAC_PMT);
-}
+		ग_लिखोl(config, ioaddr + GMAC_CONFIG);
+	पूर्ण
+	ग_लिखोl(pmt, ioaddr + GMAC_PMT);
+पूर्ण
 
-static void dwmac4_set_umac_addr(struct mac_device_info *hw,
-				 unsigned char *addr, unsigned int reg_n)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_set_umac_addr(काष्ठा mac_device_info *hw,
+				 अचिन्हित अक्षर *addr, अचिन्हित पूर्णांक reg_n)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 
-	stmmac_dwmac4_set_mac_addr(ioaddr, addr, GMAC_ADDR_HIGH(reg_n),
+	sपंचांगmac_dwmac4_set_mac_addr(ioaddr, addr, GMAC_ADDR_HIGH(reg_n),
 				   GMAC_ADDR_LOW(reg_n));
-}
+पूर्ण
 
-static void dwmac4_get_umac_addr(struct mac_device_info *hw,
-				 unsigned char *addr, unsigned int reg_n)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_get_umac_addr(काष्ठा mac_device_info *hw,
+				 अचिन्हित अक्षर *addr, अचिन्हित पूर्णांक reg_n)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 
-	stmmac_dwmac4_get_mac_addr(ioaddr, addr, GMAC_ADDR_HIGH(reg_n),
+	sपंचांगmac_dwmac4_get_mac_addr(ioaddr, addr, GMAC_ADDR_HIGH(reg_n),
 				   GMAC_ADDR_LOW(reg_n));
-}
+पूर्ण
 
-static void dwmac4_set_eee_mode(struct mac_device_info *hw,
-				bool en_tx_lpi_clockgating)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_set_eee_mode(काष्ठा mac_device_info *hw,
+				bool en_tx_lpi_घड़ीgating)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
 	/* Enable the link status receive on RGMII, SGMII ore SMII
-	 * receive path and instruct the transmit to enter in LPI
+	 * receive path and inकाष्ठा the transmit to enter in LPI
 	 * state.
 	 */
-	value = readl(ioaddr + GMAC4_LPI_CTRL_STATUS);
+	value = पढ़ोl(ioaddr + GMAC4_LPI_CTRL_STATUS);
 	value |= GMAC4_LPI_CTRL_STATUS_LPIEN | GMAC4_LPI_CTRL_STATUS_LPITXA;
 
-	if (en_tx_lpi_clockgating)
+	अगर (en_tx_lpi_घड़ीgating)
 		value |= GMAC4_LPI_CTRL_STATUS_LPITCSE;
 
-	writel(value, ioaddr + GMAC4_LPI_CTRL_STATUS);
-}
+	ग_लिखोl(value, ioaddr + GMAC4_LPI_CTRL_STATUS);
+पूर्ण
 
-static void dwmac4_reset_eee_mode(struct mac_device_info *hw)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_reset_eee_mode(काष्ठा mac_device_info *hw)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	value = readl(ioaddr + GMAC4_LPI_CTRL_STATUS);
+	value = पढ़ोl(ioaddr + GMAC4_LPI_CTRL_STATUS);
 	value &= ~(GMAC4_LPI_CTRL_STATUS_LPIEN | GMAC4_LPI_CTRL_STATUS_LPITXA);
-	writel(value, ioaddr + GMAC4_LPI_CTRL_STATUS);
-}
+	ग_लिखोl(value, ioaddr + GMAC4_LPI_CTRL_STATUS);
+पूर्ण
 
-static void dwmac4_set_eee_pls(struct mac_device_info *hw, int link)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_set_eee_pls(काष्ठा mac_device_info *hw, पूर्णांक link)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	value = readl(ioaddr + GMAC4_LPI_CTRL_STATUS);
+	value = पढ़ोl(ioaddr + GMAC4_LPI_CTRL_STATUS);
 
-	if (link)
+	अगर (link)
 		value |= GMAC4_LPI_CTRL_STATUS_PLS;
-	else
+	अन्यथा
 		value &= ~GMAC4_LPI_CTRL_STATUS_PLS;
 
-	writel(value, ioaddr + GMAC4_LPI_CTRL_STATUS);
-}
+	ग_लिखोl(value, ioaddr + GMAC4_LPI_CTRL_STATUS);
+पूर्ण
 
-static void dwmac4_set_eee_lpi_entry_timer(struct mac_device_info *hw, int et)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	int value = et & STMMAC_ET_MAX;
-	int regval;
+अटल व्योम dwmac4_set_eee_lpi_entry_समयr(काष्ठा mac_device_info *hw, पूर्णांक et)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	पूर्णांक value = et & STMMAC_ET_MAX;
+	पूर्णांक regval;
 
-	/* Program LPI entry timer value into register */
-	writel(value, ioaddr + GMAC4_LPI_ENTRY_TIMER);
+	/* Program LPI entry समयr value पूर्णांकo रेजिस्टर */
+	ग_लिखोl(value, ioaddr + GMAC4_LPI_ENTRY_TIMER);
 
-	/* Enable/disable LPI entry timer */
-	regval = readl(ioaddr + GMAC4_LPI_CTRL_STATUS);
+	/* Enable/disable LPI entry समयr */
+	regval = पढ़ोl(ioaddr + GMAC4_LPI_CTRL_STATUS);
 	regval |= GMAC4_LPI_CTRL_STATUS_LPIEN | GMAC4_LPI_CTRL_STATUS_LPITXA;
 
-	if (et)
+	अगर (et)
 		regval |= GMAC4_LPI_CTRL_STATUS_LPIATE;
-	else
+	अन्यथा
 		regval &= ~GMAC4_LPI_CTRL_STATUS_LPIATE;
 
-	writel(regval, ioaddr + GMAC4_LPI_CTRL_STATUS);
-}
+	ग_लिखोl(regval, ioaddr + GMAC4_LPI_CTRL_STATUS);
+पूर्ण
 
-static void dwmac4_set_eee_timer(struct mac_device_info *hw, int ls, int tw)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	int value = ((tw & 0xffff)) | ((ls & 0x3ff) << 16);
+अटल व्योम dwmac4_set_eee_समयr(काष्ठा mac_device_info *hw, पूर्णांक ls, पूर्णांक tw)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	पूर्णांक value = ((tw & 0xffff)) | ((ls & 0x3ff) << 16);
 
-	/* Program the timers in the LPI timer control register:
-	 * LS: minimum time (ms) for which the link
-	 *  status from PHY should be ok before transmitting
+	/* Program the समयrs in the LPI समयr control रेजिस्टर:
+	 * LS: minimum समय (ms) क्रम which the link
+	 *  status from PHY should be ok beक्रमe transmitting
 	 *  the LPI pattern.
-	 * TW: minimum time (us) for which the core waits
+	 * TW: minimum समय (us) क्रम which the core रुकोs
 	 *  after it has stopped transmitting the LPI pattern.
 	 */
-	writel(value, ioaddr + GMAC4_LPI_TIMER_CTRL);
-}
+	ग_लिखोl(value, ioaddr + GMAC4_LPI_TIMER_CTRL);
+पूर्ण
 
-static void dwmac4_write_single_vlan(struct net_device *dev, u16 vid)
-{
-	void __iomem *ioaddr = (void __iomem *)dev->base_addr;
+अटल व्योम dwmac4_ग_लिखो_single_vlan(काष्ठा net_device *dev, u16 vid)
+अणु
+	व्योम __iomem *ioaddr = (व्योम __iomem *)dev->base_addr;
 	u32 val;
 
-	val = readl(ioaddr + GMAC_VLAN_TAG);
+	val = पढ़ोl(ioaddr + GMAC_VLAN_TAG);
 	val &= ~GMAC_VLAN_TAG_VID;
 	val |= GMAC_VLAN_TAG_ETV | vid;
 
-	writel(val, ioaddr + GMAC_VLAN_TAG);
-}
+	ग_लिखोl(val, ioaddr + GMAC_VLAN_TAG);
+पूर्ण
 
-static int dwmac4_write_vlan_filter(struct net_device *dev,
-				    struct mac_device_info *hw,
+अटल पूर्णांक dwmac4_ग_लिखो_vlan_filter(काष्ठा net_device *dev,
+				    काष्ठा mac_device_info *hw,
 				    u8 index, u32 data)
-{
-	void __iomem *ioaddr = (void __iomem *)dev->base_addr;
-	int i, timeout = 10;
+अणु
+	व्योम __iomem *ioaddr = (व्योम __iomem *)dev->base_addr;
+	पूर्णांक i, समयout = 10;
 	u32 val;
 
-	if (index >= hw->num_vlan)
-		return -EINVAL;
+	अगर (index >= hw->num_vlan)
+		वापस -EINVAL;
 
-	writel(data, ioaddr + GMAC_VLAN_TAG_DATA);
+	ग_लिखोl(data, ioaddr + GMAC_VLAN_TAG_DATA);
 
-	val = readl(ioaddr + GMAC_VLAN_TAG);
+	val = पढ़ोl(ioaddr + GMAC_VLAN_TAG);
 	val &= ~(GMAC_VLAN_TAG_CTRL_OFS_MASK |
 		GMAC_VLAN_TAG_CTRL_CT |
 		GMAC_VLAN_TAG_CTRL_OB);
 	val |= (index << GMAC_VLAN_TAG_CTRL_OFS_SHIFT) | GMAC_VLAN_TAG_CTRL_OB;
 
-	writel(val, ioaddr + GMAC_VLAN_TAG);
+	ग_लिखोl(val, ioaddr + GMAC_VLAN_TAG);
 
-	for (i = 0; i < timeout; i++) {
-		val = readl(ioaddr + GMAC_VLAN_TAG);
-		if (!(val & GMAC_VLAN_TAG_CTRL_OB))
-			return 0;
+	क्रम (i = 0; i < समयout; i++) अणु
+		val = पढ़ोl(ioaddr + GMAC_VLAN_TAG);
+		अगर (!(val & GMAC_VLAN_TAG_CTRL_OB))
+			वापस 0;
 		udelay(1);
-	}
+	पूर्ण
 
 	netdev_err(dev, "Timeout accessing MAC_VLAN_Tag_Filter\n");
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int dwmac4_add_hw_vlan_rx_fltr(struct net_device *dev,
-				      struct mac_device_info *hw,
+अटल पूर्णांक dwmac4_add_hw_vlan_rx_fltr(काष्ठा net_device *dev,
+				      काष्ठा mac_device_info *hw,
 				      __be16 proto, u16 vid)
-{
-	int index = -1;
+अणु
+	पूर्णांक index = -1;
 	u32 val = 0;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	if (vid > 4095)
-		return -EINVAL;
+	अगर (vid > 4095)
+		वापस -EINVAL;
 
-	if (hw->promisc) {
+	अगर (hw->promisc) अणु
 		netdev_err(dev,
 			   "Adding VLAN in promisc mode not supported\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	/* Single Rx VLAN Filter */
-	if (hw->num_vlan == 1) {
+	अगर (hw->num_vlan == 1) अणु
 		/* For single VLAN filter, VID 0 means VLAN promiscuous */
-		if (vid == 0) {
+		अगर (vid == 0) अणु
 			netdev_warn(dev, "Adding VLAN ID 0 is not supported\n");
-			return -EPERM;
-		}
+			वापस -EPERM;
+		पूर्ण
 
-		if (hw->vlan_filter[0] & GMAC_VLAN_TAG_VID) {
+		अगर (hw->vlan_filter[0] & GMAC_VLAN_TAG_VID) अणु
 			netdev_err(dev, "Only single VLAN ID supported\n");
-			return -EPERM;
-		}
+			वापस -EPERM;
+		पूर्ण
 
 		hw->vlan_filter[0] = vid;
-		dwmac4_write_single_vlan(dev, vid);
+		dwmac4_ग_लिखो_single_vlan(dev, vid);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Extended Rx VLAN Filter Enable */
 	val |= GMAC_VLAN_TAG_DATA_ETV | GMAC_VLAN_TAG_DATA_VEN | vid;
 
-	for (i = 0; i < hw->num_vlan; i++) {
-		if (hw->vlan_filter[i] == val)
-			return 0;
-		else if (!(hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN))
+	क्रम (i = 0; i < hw->num_vlan; i++) अणु
+		अगर (hw->vlan_filter[i] == val)
+			वापस 0;
+		अन्यथा अगर (!(hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN))
 			index = i;
-	}
+	पूर्ण
 
-	if (index == -1) {
+	अगर (index == -1) अणु
 		netdev_err(dev, "MAC_VLAN_Tag_Filter full (size: %0u)\n",
 			   hw->num_vlan);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	ret = dwmac4_write_vlan_filter(dev, hw, index, val);
+	ret = dwmac4_ग_लिखो_vlan_filter(dev, hw, index, val);
 
-	if (!ret)
+	अगर (!ret)
 		hw->vlan_filter[index] = val;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dwmac4_del_hw_vlan_rx_fltr(struct net_device *dev,
-				      struct mac_device_info *hw,
+अटल पूर्णांक dwmac4_del_hw_vlan_rx_fltr(काष्ठा net_device *dev,
+				      काष्ठा mac_device_info *hw,
 				      __be16 proto, u16 vid)
-{
-	int i, ret = 0;
+अणु
+	पूर्णांक i, ret = 0;
 
-	if (hw->promisc) {
+	अगर (hw->promisc) अणु
 		netdev_err(dev,
 			   "Deleting VLAN in promisc mode not supported\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	/* Single Rx VLAN Filter */
-	if (hw->num_vlan == 1) {
-		if ((hw->vlan_filter[0] & GMAC_VLAN_TAG_VID) == vid) {
+	अगर (hw->num_vlan == 1) अणु
+		अगर ((hw->vlan_filter[0] & GMAC_VLAN_TAG_VID) == vid) अणु
 			hw->vlan_filter[0] = 0;
-			dwmac4_write_single_vlan(dev, 0);
-		}
-		return 0;
-	}
+			dwmac4_ग_लिखो_single_vlan(dev, 0);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	/* Extended Rx VLAN Filter Enable */
-	for (i = 0; i < hw->num_vlan; i++) {
-		if ((hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VID) == vid) {
-			ret = dwmac4_write_vlan_filter(dev, hw, i, 0);
+	क्रम (i = 0; i < hw->num_vlan; i++) अणु
+		अगर ((hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VID) == vid) अणु
+			ret = dwmac4_ग_लिखो_vlan_filter(dev, hw, i, 0);
 
-			if (!ret)
+			अगर (!ret)
 				hw->vlan_filter[i] = 0;
-			else
-				return ret;
-		}
-	}
+			अन्यथा
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dwmac4_vlan_promisc_enable(struct net_device *dev,
-				       struct mac_device_info *hw)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_vlan_promisc_enable(काष्ठा net_device *dev,
+				       काष्ठा mac_device_info *hw)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 	u32 hash;
 	u32 val;
-	int i;
+	पूर्णांक i;
 
 	/* Single Rx VLAN Filter */
-	if (hw->num_vlan == 1) {
-		dwmac4_write_single_vlan(dev, 0);
-		return;
-	}
+	अगर (hw->num_vlan == 1) अणु
+		dwmac4_ग_लिखो_single_vlan(dev, 0);
+		वापस;
+	पूर्ण
 
 	/* Extended Rx VLAN Filter Enable */
-	for (i = 0; i < hw->num_vlan; i++) {
-		if (hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN) {
+	क्रम (i = 0; i < hw->num_vlan; i++) अणु
+		अगर (hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN) अणु
 			val = hw->vlan_filter[i] & ~GMAC_VLAN_TAG_DATA_VEN;
-			dwmac4_write_vlan_filter(dev, hw, i, val);
-		}
-	}
+			dwmac4_ग_लिखो_vlan_filter(dev, hw, i, val);
+		पूर्ण
+	पूर्ण
 
-	hash = readl(ioaddr + GMAC_VLAN_HASH_TABLE);
-	if (hash & GMAC_VLAN_VLHT) {
-		value = readl(ioaddr + GMAC_VLAN_TAG);
-		if (value & GMAC_VLAN_VTHM) {
+	hash = पढ़ोl(ioaddr + GMAC_VLAN_HASH_TABLE);
+	अगर (hash & GMAC_VLAN_VLHT) अणु
+		value = पढ़ोl(ioaddr + GMAC_VLAN_TAG);
+		अगर (value & GMAC_VLAN_VTHM) अणु
 			value &= ~GMAC_VLAN_VTHM;
-			writel(value, ioaddr + GMAC_VLAN_TAG);
-		}
-	}
-}
+			ग_लिखोl(value, ioaddr + GMAC_VLAN_TAG);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void dwmac4_restore_hw_vlan_rx_fltr(struct net_device *dev,
-					   struct mac_device_info *hw)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_restore_hw_vlan_rx_fltr(काष्ठा net_device *dev,
+					   काष्ठा mac_device_info *hw)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 	u32 hash;
 	u32 val;
-	int i;
+	पूर्णांक i;
 
 	/* Single Rx VLAN Filter */
-	if (hw->num_vlan == 1) {
-		dwmac4_write_single_vlan(dev, hw->vlan_filter[0]);
-		return;
-	}
+	अगर (hw->num_vlan == 1) अणु
+		dwmac4_ग_लिखो_single_vlan(dev, hw->vlan_filter[0]);
+		वापस;
+	पूर्ण
 
 	/* Extended Rx VLAN Filter Enable */
-	for (i = 0; i < hw->num_vlan; i++) {
-		if (hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN) {
+	क्रम (i = 0; i < hw->num_vlan; i++) अणु
+		अगर (hw->vlan_filter[i] & GMAC_VLAN_TAG_DATA_VEN) अणु
 			val = hw->vlan_filter[i];
-			dwmac4_write_vlan_filter(dev, hw, i, val);
-		}
-	}
+			dwmac4_ग_लिखो_vlan_filter(dev, hw, i, val);
+		पूर्ण
+	पूर्ण
 
-	hash = readl(ioaddr + GMAC_VLAN_HASH_TABLE);
-	if (hash & GMAC_VLAN_VLHT) {
-		value = readl(ioaddr + GMAC_VLAN_TAG);
+	hash = पढ़ोl(ioaddr + GMAC_VLAN_HASH_TABLE);
+	अगर (hash & GMAC_VLAN_VLHT) अणु
+		value = पढ़ोl(ioaddr + GMAC_VLAN_TAG);
 		value |= GMAC_VLAN_VTHM;
-		writel(value, ioaddr + GMAC_VLAN_TAG);
-	}
-}
+		ग_लिखोl(value, ioaddr + GMAC_VLAN_TAG);
+	पूर्ण
+पूर्ण
 
-static void dwmac4_set_filter(struct mac_device_info *hw,
-			      struct net_device *dev)
-{
-	void __iomem *ioaddr = (void __iomem *)dev->base_addr;
-	int numhashregs = (hw->multicast_filter_bins >> 5);
-	int mcbitslog2 = hw->mcast_bits_log2;
-	unsigned int value;
+अटल व्योम dwmac4_set_filter(काष्ठा mac_device_info *hw,
+			      काष्ठा net_device *dev)
+अणु
+	व्योम __iomem *ioaddr = (व्योम __iomem *)dev->base_addr;
+	पूर्णांक numhashregs = (hw->multicast_filter_bins >> 5);
+	पूर्णांक mcbitslog2 = hw->mcast_bits_log2;
+	अचिन्हित पूर्णांक value;
 	u32 mc_filter[8];
-	int i;
+	पूर्णांक i;
 
-	memset(mc_filter, 0, sizeof(mc_filter));
+	स_रखो(mc_filter, 0, माप(mc_filter));
 
-	value = readl(ioaddr + GMAC_PACKET_FILTER);
+	value = पढ़ोl(ioaddr + GMAC_PACKET_FILTER);
 	value &= ~GMAC_PACKET_FILTER_HMC;
 	value &= ~GMAC_PACKET_FILTER_HPF;
 	value &= ~GMAC_PACKET_FILTER_PCF;
 	value &= ~GMAC_PACKET_FILTER_PM;
 	value &= ~GMAC_PACKET_FILTER_PR;
 	value &= ~GMAC_PACKET_FILTER_RA;
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		/* VLAN Tag Filter Fail Packets Queuing */
-		if (hw->vlan_fail_q_en) {
-			value = readl(ioaddr + GMAC_RXQ_CTRL4);
+		अगर (hw->vlan_fail_q_en) अणु
+			value = पढ़ोl(ioaddr + GMAC_RXQ_CTRL4);
 			value &= ~GMAC_RXQCTRL_VFFQ_MASK;
 			value |= GMAC_RXQCTRL_VFFQE |
 				 (hw->vlan_fail_q << GMAC_RXQCTRL_VFFQ_SHIFT);
-			writel(value, ioaddr + GMAC_RXQ_CTRL4);
+			ग_लिखोl(value, ioaddr + GMAC_RXQ_CTRL4);
 			value = GMAC_PACKET_FILTER_PR | GMAC_PACKET_FILTER_RA;
-		} else {
+		पूर्ण अन्यथा अणु
 			value = GMAC_PACKET_FILTER_PR | GMAC_PACKET_FILTER_PCF;
-		}
+		पूर्ण
 
-	} else if ((dev->flags & IFF_ALLMULTI) ||
-		   (netdev_mc_count(dev) > hw->multicast_filter_bins)) {
+	पूर्ण अन्यथा अगर ((dev->flags & IFF_ALLMULTI) ||
+		   (netdev_mc_count(dev) > hw->multicast_filter_bins)) अणु
 		/* Pass all multi */
 		value |= GMAC_PACKET_FILTER_PM;
 		/* Set all the bits of the HASH tab */
-		memset(mc_filter, 0xff, sizeof(mc_filter));
-	} else if (!netdev_mc_empty(dev) && (dev->flags & IFF_MULTICAST)) {
-		struct netdev_hw_addr *ha;
+		स_रखो(mc_filter, 0xff, माप(mc_filter));
+	पूर्ण अन्यथा अगर (!netdev_mc_empty(dev) && (dev->flags & IFF_MULTICAST)) अणु
+		काष्ठा netdev_hw_addr *ha;
 
-		/* Hash filter for multicast */
+		/* Hash filter क्रम multicast */
 		value |= GMAC_PACKET_FILTER_HMC;
 
-		netdev_for_each_mc_addr(ha, dev) {
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
 			/* The upper n bits of the calculated CRC are used to
 			 * index the contents of the hash table. The number of
 			 * bits used depends on the hardware configuration
-			 * selected at core configuration time.
+			 * selected at core configuration समय.
 			 */
 			u32 bit_nr = bitrev32(~crc32_le(~0, ha->addr,
 					ETH_ALEN)) >> (32 - mcbitslog2);
-			/* The most significant bit determines the register to
-			 * use (H/L) while the other 5 bits determine the bit
-			 * within the register.
+			/* The most signअगरicant bit determines the रेजिस्टर to
+			 * use (H/L) जबतक the other 5 bits determine the bit
+			 * within the रेजिस्टर.
 			 */
 			mc_filter[bit_nr >> 5] |= (1 << (bit_nr & 0x1f));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < numhashregs; i++)
-		writel(mc_filter[i], ioaddr + GMAC_HASH_TAB(i));
+	क्रम (i = 0; i < numhashregs; i++)
+		ग_लिखोl(mc_filter[i], ioaddr + GMAC_HASH_TAB(i));
 
 	value |= GMAC_PACKET_FILTER_HPF;
 
 	/* Handle multiple unicast addresses */
-	if (netdev_uc_count(dev) > hw->unicast_filter_entries) {
-		/* Switch to promiscuous mode if more than 128 addrs
+	अगर (netdev_uc_count(dev) > hw->unicast_filter_entries) अणु
+		/* Switch to promiscuous mode अगर more than 128 addrs
 		 * are required
 		 */
 		value |= GMAC_PACKET_FILTER_PR;
-	} else {
-		struct netdev_hw_addr *ha;
-		int reg = 1;
+	पूर्ण अन्यथा अणु
+		काष्ठा netdev_hw_addr *ha;
+		पूर्णांक reg = 1;
 
-		netdev_for_each_uc_addr(ha, dev) {
+		netdev_क्रम_each_uc_addr(ha, dev) अणु
 			dwmac4_set_umac_addr(hw, ha->addr, reg);
 			reg++;
-		}
+		पूर्ण
 
-		while (reg < GMAC_MAX_PERFECT_ADDRESSES) {
-			writel(0, ioaddr + GMAC_ADDR_HIGH(reg));
-			writel(0, ioaddr + GMAC_ADDR_LOW(reg));
+		जबतक (reg < GMAC_MAX_PERFECT_ADDRESSES) अणु
+			ग_लिखोl(0, ioaddr + GMAC_ADDR_HIGH(reg));
+			ग_लिखोl(0, ioaddr + GMAC_ADDR_LOW(reg));
 			reg++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* VLAN filtering */
-	if (dev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
+	अगर (dev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
 		value |= GMAC_PACKET_FILTER_VTFE;
 
-	writel(value, ioaddr + GMAC_PACKET_FILTER);
+	ग_लिखोl(value, ioaddr + GMAC_PACKET_FILTER);
 
-	if (dev->flags & IFF_PROMISC && !hw->vlan_fail_q_en) {
-		if (!hw->promisc) {
+	अगर (dev->flags & IFF_PROMISC && !hw->vlan_fail_q_en) अणु
+		अगर (!hw->promisc) अणु
 			hw->promisc = 1;
 			dwmac4_vlan_promisc_enable(dev, hw);
-		}
-	} else {
-		if (hw->promisc) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (hw->promisc) अणु
 			hw->promisc = 0;
 			dwmac4_restore_hw_vlan_rx_fltr(dev, hw);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void dwmac4_flow_ctrl(struct mac_device_info *hw, unsigned int duplex,
-			     unsigned int fc, unsigned int pause_time,
+अटल व्योम dwmac4_flow_ctrl(काष्ठा mac_device_info *hw, अचिन्हित पूर्णांक duplex,
+			     अचिन्हित पूर्णांक fc, अचिन्हित पूर्णांक छोड़ो_समय,
 			     u32 tx_cnt)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	unsigned int flow = 0;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	अचिन्हित पूर्णांक flow = 0;
 	u32 queue = 0;
 
 	pr_debug("GMAC Flow-Control:\n");
-	if (fc & FLOW_RX) {
+	अगर (fc & FLOW_RX) अणु
 		pr_debug("\tReceive Flow-Control ON\n");
 		flow |= GMAC_RX_FLOW_CTRL_RFE;
-	}
-	writel(flow, ioaddr + GMAC_RX_FLOW_CTRL);
+	पूर्ण
+	ग_लिखोl(flow, ioaddr + GMAC_RX_FLOW_CTRL);
 
-	if (fc & FLOW_TX) {
+	अगर (fc & FLOW_TX) अणु
 		pr_debug("\tTransmit Flow-Control ON\n");
 
-		if (duplex)
-			pr_debug("\tduplex mode: PAUSE %d\n", pause_time);
+		अगर (duplex)
+			pr_debug("\tduplex mode: PAUSE %d\n", छोड़ो_समय);
 
-		for (queue = 0; queue < tx_cnt; queue++) {
+		क्रम (queue = 0; queue < tx_cnt; queue++) अणु
 			flow = GMAC_TX_FLOW_CTRL_TFE;
 
-			if (duplex)
+			अगर (duplex)
 				flow |=
-				(pause_time << GMAC_TX_FLOW_CTRL_PT_SHIFT);
+				(छोड़ो_समय << GMAC_TX_FLOW_CTRL_PT_SHIFT);
 
-			writel(flow, ioaddr + GMAC_QX_TX_FLOW_CTRL(queue));
-		}
-	} else {
-		for (queue = 0; queue < tx_cnt; queue++)
-			writel(0, ioaddr + GMAC_QX_TX_FLOW_CTRL(queue));
-	}
-}
+			ग_लिखोl(flow, ioaddr + GMAC_QX_TX_FLOW_CTRL(queue));
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (queue = 0; queue < tx_cnt; queue++)
+			ग_लिखोl(0, ioaddr + GMAC_QX_TX_FLOW_CTRL(queue));
+	पूर्ण
+पूर्ण
 
-static void dwmac4_ctrl_ane(void __iomem *ioaddr, bool ane, bool srgmi_ral,
+अटल व्योम dwmac4_ctrl_ane(व्योम __iomem *ioaddr, bool ane, bool srgmi_ral,
 			    bool loopback)
-{
+अणु
 	dwmac_ctrl_ane(ioaddr, GMAC_PCS_BASE, ane, srgmi_ral, loopback);
-}
+पूर्ण
 
-static void dwmac4_rane(void __iomem *ioaddr, bool restart)
-{
+अटल व्योम dwmac4_rane(व्योम __iomem *ioaddr, bool restart)
+अणु
 	dwmac_rane(ioaddr, GMAC_PCS_BASE, restart);
-}
+पूर्ण
 
-static void dwmac4_get_adv_lp(void __iomem *ioaddr, struct rgmii_adv *adv)
-{
+अटल व्योम dwmac4_get_adv_lp(व्योम __iomem *ioaddr, काष्ठा rgmii_adv *adv)
+अणु
 	dwmac_get_adv_lp(ioaddr, GMAC_PCS_BASE, adv);
-}
+पूर्ण
 
-/* RGMII or SMII interface */
-static void dwmac4_phystatus(void __iomem *ioaddr, struct stmmac_extra_stats *x)
-{
+/* RGMII or SMII पूर्णांकerface */
+अटल व्योम dwmac4_phystatus(व्योम __iomem *ioaddr, काष्ठा sपंचांगmac_extra_stats *x)
+अणु
 	u32 status;
 
-	status = readl(ioaddr + GMAC_PHYIF_CONTROL_STATUS);
+	status = पढ़ोl(ioaddr + GMAC_PHYIF_CONTROL_STATUS);
 	x->irq_rgmii_n++;
 
 	/* Check the link status */
-	if (status & GMAC_PHYIF_CTRLSTATUS_LNKSTS) {
-		int speed_value;
+	अगर (status & GMAC_PHYIF_CTRLSTATUS_LNKSTS) अणु
+		पूर्णांक speed_value;
 
 		x->pcs_link = 1;
 
 		speed_value = ((status & GMAC_PHYIF_CTRLSTATUS_SPEED) >>
 			       GMAC_PHYIF_CTRLSTATUS_SPEED_SHIFT);
-		if (speed_value == GMAC_PHYIF_CTRLSTATUS_SPEED_125)
+		अगर (speed_value == GMAC_PHYIF_CTRLSTATUS_SPEED_125)
 			x->pcs_speed = SPEED_1000;
-		else if (speed_value == GMAC_PHYIF_CTRLSTATUS_SPEED_25)
+		अन्यथा अगर (speed_value == GMAC_PHYIF_CTRLSTATUS_SPEED_25)
 			x->pcs_speed = SPEED_100;
-		else
+		अन्यथा
 			x->pcs_speed = SPEED_10;
 
 		x->pcs_duplex = (status & GMAC_PHYIF_CTRLSTATUS_LNKMOD_MASK);
 
-		pr_info("Link is Up - %d/%s\n", (int)x->pcs_speed,
+		pr_info("Link is Up - %d/%s\n", (पूर्णांक)x->pcs_speed,
 			x->pcs_duplex ? "Full" : "Half");
-	} else {
+	पूर्ण अन्यथा अणु
 		x->pcs_link = 0;
 		pr_info("Link is Down\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int dwmac4_irq_mtl_status(struct mac_device_info *hw, u32 chan)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 mtl_int_qx_status;
-	int ret = 0;
+अटल पूर्णांक dwmac4_irq_mtl_status(काष्ठा mac_device_info *hw, u32 chan)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 mtl_पूर्णांक_qx_status;
+	पूर्णांक ret = 0;
 
-	mtl_int_qx_status = readl(ioaddr + MTL_INT_STATUS);
+	mtl_पूर्णांक_qx_status = पढ़ोl(ioaddr + MTL_INT_STATUS);
 
 	/* Check MTL Interrupt */
-	if (mtl_int_qx_status & MTL_INT_QX(chan)) {
-		/* read Queue x Interrupt status */
-		u32 status = readl(ioaddr + MTL_CHAN_INT_CTRL(chan));
+	अगर (mtl_पूर्णांक_qx_status & MTL_INT_QX(chan)) अणु
+		/* पढ़ो Queue x Interrupt status */
+		u32 status = पढ़ोl(ioaddr + MTL_CHAN_INT_CTRL(chan));
 
-		if (status & MTL_RX_OVERFLOW_INT) {
+		अगर (status & MTL_RX_OVERFLOW_INT) अणु
 			/*  clear Interrupt */
-			writel(status | MTL_RX_OVERFLOW_INT,
+			ग_लिखोl(status | MTL_RX_OVERFLOW_INT,
 			       ioaddr + MTL_CHAN_INT_CTRL(chan));
 			ret = CORE_IRQ_MTL_RX_OVERFLOW;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dwmac4_irq_status(struct mac_device_info *hw,
-			     struct stmmac_extra_stats *x)
-{
-	void __iomem *ioaddr = hw->pcsr;
-	u32 intr_status = readl(ioaddr + GMAC_INT_STATUS);
-	u32 intr_enable = readl(ioaddr + GMAC_INT_EN);
-	int ret = 0;
+अटल पूर्णांक dwmac4_irq_status(काष्ठा mac_device_info *hw,
+			     काष्ठा sपंचांगmac_extra_stats *x)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
+	u32 पूर्णांकr_status = पढ़ोl(ioaddr + GMAC_INT_STATUS);
+	u32 पूर्णांकr_enable = पढ़ोl(ioaddr + GMAC_INT_EN);
+	पूर्णांक ret = 0;
 
 	/* Discard disabled bits */
-	intr_status &= intr_enable;
+	पूर्णांकr_status &= पूर्णांकr_enable;
 
-	/* Not used events (e.g. MMC interrupts) are not handled. */
-	if ((intr_status & mmc_tx_irq))
+	/* Not used events (e.g. MMC पूर्णांकerrupts) are not handled. */
+	अगर ((पूर्णांकr_status & mmc_tx_irq))
 		x->mmc_tx_irq_n++;
-	if (unlikely(intr_status & mmc_rx_irq))
+	अगर (unlikely(पूर्णांकr_status & mmc_rx_irq))
 		x->mmc_rx_irq_n++;
-	if (unlikely(intr_status & mmc_rx_csum_offload_irq))
+	अगर (unlikely(पूर्णांकr_status & mmc_rx_csum_offload_irq))
 		x->mmc_rx_csum_offload_irq_n++;
-	/* Clear the PMT bits 5 and 6 by reading the PMT status reg */
-	if (unlikely(intr_status & pmt_irq)) {
-		readl(ioaddr + GMAC_PMT);
+	/* Clear the PMT bits 5 and 6 by पढ़ोing the PMT status reg */
+	अगर (unlikely(पूर्णांकr_status & pmt_irq)) अणु
+		पढ़ोl(ioaddr + GMAC_PMT);
 		x->irq_receive_pmt_irq_n++;
-	}
+	पूर्ण
 
-	/* MAC tx/rx EEE LPI entry/exit interrupts */
-	if (intr_status & lpi_irq) {
-		/* Clear LPI interrupt by reading MAC_LPI_Control_Status */
-		u32 status = readl(ioaddr + GMAC4_LPI_CTRL_STATUS);
+	/* MAC tx/rx EEE LPI entry/निकास पूर्णांकerrupts */
+	अगर (पूर्णांकr_status & lpi_irq) अणु
+		/* Clear LPI पूर्णांकerrupt by पढ़ोing MAC_LPI_Control_Status */
+		u32 status = पढ़ोl(ioaddr + GMAC4_LPI_CTRL_STATUS);
 
-		if (status & GMAC4_LPI_CTRL_STATUS_TLPIEN) {
+		अगर (status & GMAC4_LPI_CTRL_STATUS_TLPIEN) अणु
 			ret |= CORE_IRQ_TX_PATH_IN_LPI_MODE;
 			x->irq_tx_path_in_lpi_mode_n++;
-		}
-		if (status & GMAC4_LPI_CTRL_STATUS_TLPIEX) {
+		पूर्ण
+		अगर (status & GMAC4_LPI_CTRL_STATUS_TLPIEX) अणु
 			ret |= CORE_IRQ_TX_PATH_EXIT_LPI_MODE;
-			x->irq_tx_path_exit_lpi_mode_n++;
-		}
-		if (status & GMAC4_LPI_CTRL_STATUS_RLPIEN)
+			x->irq_tx_path_निकास_lpi_mode_n++;
+		पूर्ण
+		अगर (status & GMAC4_LPI_CTRL_STATUS_RLPIEN)
 			x->irq_rx_path_in_lpi_mode_n++;
-		if (status & GMAC4_LPI_CTRL_STATUS_RLPIEX)
-			x->irq_rx_path_exit_lpi_mode_n++;
-	}
+		अगर (status & GMAC4_LPI_CTRL_STATUS_RLPIEX)
+			x->irq_rx_path_निकास_lpi_mode_n++;
+	पूर्ण
 
-	dwmac_pcs_isr(ioaddr, GMAC_PCS_BASE, intr_status, x);
-	if (intr_status & PCS_RGSMIIIS_IRQ)
+	dwmac_pcs_isr(ioaddr, GMAC_PCS_BASE, पूर्णांकr_status, x);
+	अगर (पूर्णांकr_status & PCS_RGSMIIIS_IRQ)
 		dwmac4_phystatus(ioaddr, x);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dwmac4_debug(void __iomem *ioaddr, struct stmmac_extra_stats *x,
+अटल व्योम dwmac4_debug(व्योम __iomem *ioaddr, काष्ठा sपंचांगmac_extra_stats *x,
 			 u32 rx_queues, u32 tx_queues)
-{
+अणु
 	u32 value;
 	u32 queue;
 
-	for (queue = 0; queue < tx_queues; queue++) {
-		value = readl(ioaddr + MTL_CHAN_TX_DEBUG(queue));
+	क्रम (queue = 0; queue < tx_queues; queue++) अणु
+		value = पढ़ोl(ioaddr + MTL_CHAN_TX_DEBUG(queue));
 
-		if (value & MTL_DEBUG_TXSTSFSTS)
-			x->mtl_tx_status_fifo_full++;
-		if (value & MTL_DEBUG_TXFSTS)
-			x->mtl_tx_fifo_not_empty++;
-		if (value & MTL_DEBUG_TWCSTS)
-			x->mmtl_fifo_ctrl++;
-		if (value & MTL_DEBUG_TRCSTS_MASK) {
+		अगर (value & MTL_DEBUG_TXSTSFSTS)
+			x->mtl_tx_status_fअगरo_full++;
+		अगर (value & MTL_DEBUG_TXFSTS)
+			x->mtl_tx_fअगरo_not_empty++;
+		अगर (value & MTL_DEBUG_TWCSTS)
+			x->mmtl_fअगरo_ctrl++;
+		अगर (value & MTL_DEBUG_TRCSTS_MASK) अणु
 			u32 trcsts = (value & MTL_DEBUG_TRCSTS_MASK)
 				     >> MTL_DEBUG_TRCSTS_SHIFT;
-			if (trcsts == MTL_DEBUG_TRCSTS_WRITE)
-				x->mtl_tx_fifo_read_ctrl_write++;
-			else if (trcsts == MTL_DEBUG_TRCSTS_TXW)
-				x->mtl_tx_fifo_read_ctrl_wait++;
-			else if (trcsts == MTL_DEBUG_TRCSTS_READ)
-				x->mtl_tx_fifo_read_ctrl_read++;
-			else
-				x->mtl_tx_fifo_read_ctrl_idle++;
-		}
-		if (value & MTL_DEBUG_TXPAUSED)
-			x->mac_tx_in_pause++;
-	}
+			अगर (trcsts == MTL_DEBUG_TRCSTS_WRITE)
+				x->mtl_tx_fअगरo_पढ़ो_ctrl_ग_लिखो++;
+			अन्यथा अगर (trcsts == MTL_DEBUG_TRCSTS_TXW)
+				x->mtl_tx_fअगरo_पढ़ो_ctrl_रुको++;
+			अन्यथा अगर (trcsts == MTL_DEBUG_TRCSTS_READ)
+				x->mtl_tx_fअगरo_पढ़ो_ctrl_पढ़ो++;
+			अन्यथा
+				x->mtl_tx_fअगरo_पढ़ो_ctrl_idle++;
+		पूर्ण
+		अगर (value & MTL_DEBUG_TXPAUSED)
+			x->mac_tx_in_छोड़ो++;
+	पूर्ण
 
-	for (queue = 0; queue < rx_queues; queue++) {
-		value = readl(ioaddr + MTL_CHAN_RX_DEBUG(queue));
+	क्रम (queue = 0; queue < rx_queues; queue++) अणु
+		value = पढ़ोl(ioaddr + MTL_CHAN_RX_DEBUG(queue));
 
-		if (value & MTL_DEBUG_RXFSTS_MASK) {
+		अगर (value & MTL_DEBUG_RXFSTS_MASK) अणु
 			u32 rxfsts = (value & MTL_DEBUG_RXFSTS_MASK)
 				     >> MTL_DEBUG_RRCSTS_SHIFT;
 
-			if (rxfsts == MTL_DEBUG_RXFSTS_FULL)
-				x->mtl_rx_fifo_fill_level_full++;
-			else if (rxfsts == MTL_DEBUG_RXFSTS_AT)
-				x->mtl_rx_fifo_fill_above_thresh++;
-			else if (rxfsts == MTL_DEBUG_RXFSTS_BT)
-				x->mtl_rx_fifo_fill_below_thresh++;
-			else
-				x->mtl_rx_fifo_fill_level_empty++;
-		}
-		if (value & MTL_DEBUG_RRCSTS_MASK) {
+			अगर (rxfsts == MTL_DEBUG_RXFSTS_FULL)
+				x->mtl_rx_fअगरo_fill_level_full++;
+			अन्यथा अगर (rxfsts == MTL_DEBUG_RXFSTS_AT)
+				x->mtl_rx_fअगरo_fill_above_thresh++;
+			अन्यथा अगर (rxfsts == MTL_DEBUG_RXFSTS_BT)
+				x->mtl_rx_fअगरo_fill_below_thresh++;
+			अन्यथा
+				x->mtl_rx_fअगरo_fill_level_empty++;
+		पूर्ण
+		अगर (value & MTL_DEBUG_RRCSTS_MASK) अणु
 			u32 rrcsts = (value & MTL_DEBUG_RRCSTS_MASK) >>
 				     MTL_DEBUG_RRCSTS_SHIFT;
 
-			if (rrcsts == MTL_DEBUG_RRCSTS_FLUSH)
-				x->mtl_rx_fifo_read_ctrl_flush++;
-			else if (rrcsts == MTL_DEBUG_RRCSTS_RSTAT)
-				x->mtl_rx_fifo_read_ctrl_read_data++;
-			else if (rrcsts == MTL_DEBUG_RRCSTS_RDATA)
-				x->mtl_rx_fifo_read_ctrl_status++;
-			else
-				x->mtl_rx_fifo_read_ctrl_idle++;
-		}
-		if (value & MTL_DEBUG_RWCSTS)
-			x->mtl_rx_fifo_ctrl_active++;
-	}
+			अगर (rrcsts == MTL_DEBUG_RRCSTS_FLUSH)
+				x->mtl_rx_fअगरo_पढ़ो_ctrl_flush++;
+			अन्यथा अगर (rrcsts == MTL_DEBUG_RRCSTS_RSTAT)
+				x->mtl_rx_fअगरo_पढ़ो_ctrl_पढ़ो_data++;
+			अन्यथा अगर (rrcsts == MTL_DEBUG_RRCSTS_RDATA)
+				x->mtl_rx_fअगरo_पढ़ो_ctrl_status++;
+			अन्यथा
+				x->mtl_rx_fअगरo_पढ़ो_ctrl_idle++;
+		पूर्ण
+		अगर (value & MTL_DEBUG_RWCSTS)
+			x->mtl_rx_fअगरo_ctrl_active++;
+	पूर्ण
 
 	/* GMAC debug */
-	value = readl(ioaddr + GMAC_DEBUG);
+	value = पढ़ोl(ioaddr + GMAC_DEBUG);
 
-	if (value & GMAC_DEBUG_TFCSTS_MASK) {
+	अगर (value & GMAC_DEBUG_TFCSTS_MASK) अणु
 		u32 tfcsts = (value & GMAC_DEBUG_TFCSTS_MASK)
 			      >> GMAC_DEBUG_TFCSTS_SHIFT;
 
-		if (tfcsts == GMAC_DEBUG_TFCSTS_XFER)
+		अगर (tfcsts == GMAC_DEBUG_TFCSTS_XFER)
 			x->mac_tx_frame_ctrl_xfer++;
-		else if (tfcsts == GMAC_DEBUG_TFCSTS_GEN_PAUSE)
-			x->mac_tx_frame_ctrl_pause++;
-		else if (tfcsts == GMAC_DEBUG_TFCSTS_WAIT)
-			x->mac_tx_frame_ctrl_wait++;
-		else
+		अन्यथा अगर (tfcsts == GMAC_DEBUG_TFCSTS_GEN_PAUSE)
+			x->mac_tx_frame_ctrl_छोड़ो++;
+		अन्यथा अगर (tfcsts == GMAC_DEBUG_TFCSTS_WAIT)
+			x->mac_tx_frame_ctrl_रुको++;
+		अन्यथा
 			x->mac_tx_frame_ctrl_idle++;
-	}
-	if (value & GMAC_DEBUG_TPESTS)
+	पूर्ण
+	अगर (value & GMAC_DEBUG_TPESTS)
 		x->mac_gmii_tx_proto_engine++;
-	if (value & GMAC_DEBUG_RFCFCSTS_MASK)
-		x->mac_rx_frame_ctrl_fifo = (value & GMAC_DEBUG_RFCFCSTS_MASK)
+	अगर (value & GMAC_DEBUG_RFCFCSTS_MASK)
+		x->mac_rx_frame_ctrl_fअगरo = (value & GMAC_DEBUG_RFCFCSTS_MASK)
 					    >> GMAC_DEBUG_RFCFCSTS_SHIFT;
-	if (value & GMAC_DEBUG_RPESTS)
+	अगर (value & GMAC_DEBUG_RPESTS)
 		x->mac_gmii_rx_proto_engine++;
-}
+पूर्ण
 
-static void dwmac4_set_mac_loopback(void __iomem *ioaddr, bool enable)
-{
-	u32 value = readl(ioaddr + GMAC_CONFIG);
+अटल व्योम dwmac4_set_mac_loopback(व्योम __iomem *ioaddr, bool enable)
+अणु
+	u32 value = पढ़ोl(ioaddr + GMAC_CONFIG);
 
-	if (enable)
+	अगर (enable)
 		value |= GMAC_CONFIG_LM;
-	else
+	अन्यथा
 		value &= ~GMAC_CONFIG_LM;
 
-	writel(value, ioaddr + GMAC_CONFIG);
-}
+	ग_लिखोl(value, ioaddr + GMAC_CONFIG);
+पूर्ण
 
-static void dwmac4_update_vlan_hash(struct mac_device_info *hw, u32 hash,
-				    __le16 perfect_match, bool is_double)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_update_vlan_hash(काष्ठा mac_device_info *hw, u32 hash,
+				    __le16 perfect_match, bool is_द्विगुन)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	writel(hash, ioaddr + GMAC_VLAN_HASH_TABLE);
+	ग_लिखोl(hash, ioaddr + GMAC_VLAN_HASH_TABLE);
 
-	value = readl(ioaddr + GMAC_VLAN_TAG);
+	value = पढ़ोl(ioaddr + GMAC_VLAN_TAG);
 
-	if (hash) {
+	अगर (hash) अणु
 		value |= GMAC_VLAN_VTHM | GMAC_VLAN_ETV;
-		if (is_double) {
+		अगर (is_द्विगुन) अणु
 			value |= GMAC_VLAN_EDVLP;
 			value |= GMAC_VLAN_ESVL;
 			value |= GMAC_VLAN_DOVLTC;
-		}
+		पूर्ण
 
-		writel(value, ioaddr + GMAC_VLAN_TAG);
-	} else if (perfect_match) {
+		ग_लिखोl(value, ioaddr + GMAC_VLAN_TAG);
+	पूर्ण अन्यथा अगर (perfect_match) अणु
 		u32 value = GMAC_VLAN_ETV;
 
-		if (is_double) {
+		अगर (is_द्विगुन) अणु
 			value |= GMAC_VLAN_EDVLP;
 			value |= GMAC_VLAN_ESVL;
 			value |= GMAC_VLAN_DOVLTC;
-		}
+		पूर्ण
 
-		writel(value | perfect_match, ioaddr + GMAC_VLAN_TAG);
-	} else {
+		ग_लिखोl(value | perfect_match, ioaddr + GMAC_VLAN_TAG);
+	पूर्ण अन्यथा अणु
 		value &= ~(GMAC_VLAN_VTHM | GMAC_VLAN_ETV);
 		value &= ~(GMAC_VLAN_EDVLP | GMAC_VLAN_ESVL);
 		value &= ~GMAC_VLAN_DOVLTC;
 		value &= ~GMAC_VLAN_VID;
 
-		writel(value, ioaddr + GMAC_VLAN_TAG);
-	}
-}
+		ग_लिखोl(value, ioaddr + GMAC_VLAN_TAG);
+	पूर्ण
+पूर्ण
 
-static void dwmac4_sarc_configure(void __iomem *ioaddr, int val)
-{
-	u32 value = readl(ioaddr + GMAC_CONFIG);
+अटल व्योम dwmac4_sarc_configure(व्योम __iomem *ioaddr, पूर्णांक val)
+अणु
+	u32 value = पढ़ोl(ioaddr + GMAC_CONFIG);
 
 	value &= ~GMAC_CONFIG_SARC;
 	value |= val << GMAC_CONFIG_SARC_SHIFT;
 
-	writel(value, ioaddr + GMAC_CONFIG);
-}
+	ग_लिखोl(value, ioaddr + GMAC_CONFIG);
+पूर्ण
 
-static void dwmac4_enable_vlan(struct mac_device_info *hw, u32 type)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अटल व्योम dwmac4_enable_vlan(काष्ठा mac_device_info *hw, u32 type)
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	value = readl(ioaddr + GMAC_VLAN_INCL);
+	value = पढ़ोl(ioaddr + GMAC_VLAN_INCL);
 	value |= GMAC_VLAN_VLTI;
 	value |= GMAC_VLAN_CSVL; /* Only use SVLAN */
 	value &= ~GMAC_VLAN_VLC;
 	value |= (type << GMAC_VLAN_VLC_SHIFT) & GMAC_VLAN_VLC;
-	writel(value, ioaddr + GMAC_VLAN_INCL);
-}
+	ग_लिखोl(value, ioaddr + GMAC_VLAN_INCL);
+पूर्ण
 
-static void dwmac4_set_arp_offload(struct mac_device_info *hw, bool en,
+अटल व्योम dwmac4_set_arp_offload(काष्ठा mac_device_info *hw, bool en,
 				   u32 addr)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	writel(addr, ioaddr + GMAC_ARP_ADDR);
+	ग_लिखोl(addr, ioaddr + GMAC_ARP_ADDR);
 
-	value = readl(ioaddr + GMAC_CONFIG);
-	if (en)
+	value = पढ़ोl(ioaddr + GMAC_CONFIG);
+	अगर (en)
 		value |= GMAC_CONFIG_ARPEN;
-	else
+	अन्यथा
 		value &= ~GMAC_CONFIG_ARPEN;
-	writel(value, ioaddr + GMAC_CONFIG);
-}
+	ग_लिखोl(value, ioaddr + GMAC_CONFIG);
+पूर्ण
 
-static int dwmac4_config_l3_filter(struct mac_device_info *hw, u32 filter_no,
+अटल पूर्णांक dwmac4_config_l3_filter(काष्ठा mac_device_info *hw, u32 filter_no,
 				   bool en, bool ipv6, bool sa, bool inv,
 				   u32 match)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	value = readl(ioaddr + GMAC_PACKET_FILTER);
+	value = पढ़ोl(ioaddr + GMAC_PACKET_FILTER);
 	value |= GMAC_PACKET_FILTER_IPFE;
-	writel(value, ioaddr + GMAC_PACKET_FILTER);
+	ग_लिखोl(value, ioaddr + GMAC_PACKET_FILTER);
 
-	value = readl(ioaddr + GMAC_L3L4_CTRL(filter_no));
+	value = पढ़ोl(ioaddr + GMAC_L3L4_CTRL(filter_no));
 
 	/* For IPv6 not both SA/DA filters can be active */
-	if (ipv6) {
+	अगर (ipv6) अणु
 		value |= GMAC_L3PEN0;
 		value &= ~(GMAC_L3SAM0 | GMAC_L3SAIM0);
 		value &= ~(GMAC_L3DAM0 | GMAC_L3DAIM0);
-		if (sa) {
+		अगर (sa) अणु
 			value |= GMAC_L3SAM0;
-			if (inv)
+			अगर (inv)
 				value |= GMAC_L3SAIM0;
-		} else {
+		पूर्ण अन्यथा अणु
 			value |= GMAC_L3DAM0;
-			if (inv)
+			अगर (inv)
 				value |= GMAC_L3DAIM0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		value &= ~GMAC_L3PEN0;
-		if (sa) {
+		अगर (sa) अणु
 			value |= GMAC_L3SAM0;
-			if (inv)
+			अगर (inv)
 				value |= GMAC_L3SAIM0;
-		} else {
+		पूर्ण अन्यथा अणु
 			value |= GMAC_L3DAM0;
-			if (inv)
+			अगर (inv)
 				value |= GMAC_L3DAIM0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	writel(value, ioaddr + GMAC_L3L4_CTRL(filter_no));
+	ग_लिखोl(value, ioaddr + GMAC_L3L4_CTRL(filter_no));
 
-	if (sa) {
-		writel(match, ioaddr + GMAC_L3_ADDR0(filter_no));
-	} else {
-		writel(match, ioaddr + GMAC_L3_ADDR1(filter_no));
-	}
+	अगर (sa) अणु
+		ग_लिखोl(match, ioaddr + GMAC_L3_ADDR0(filter_no));
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(match, ioaddr + GMAC_L3_ADDR1(filter_no));
+	पूर्ण
 
-	if (!en)
-		writel(0, ioaddr + GMAC_L3L4_CTRL(filter_no));
+	अगर (!en)
+		ग_लिखोl(0, ioaddr + GMAC_L3L4_CTRL(filter_no));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwmac4_config_l4_filter(struct mac_device_info *hw, u32 filter_no,
+अटल पूर्णांक dwmac4_config_l4_filter(काष्ठा mac_device_info *hw, u32 filter_no,
 				   bool en, bool udp, bool sa, bool inv,
 				   u32 match)
-{
-	void __iomem *ioaddr = hw->pcsr;
+अणु
+	व्योम __iomem *ioaddr = hw->pcsr;
 	u32 value;
 
-	value = readl(ioaddr + GMAC_PACKET_FILTER);
+	value = पढ़ोl(ioaddr + GMAC_PACKET_FILTER);
 	value |= GMAC_PACKET_FILTER_IPFE;
-	writel(value, ioaddr + GMAC_PACKET_FILTER);
+	ग_लिखोl(value, ioaddr + GMAC_PACKET_FILTER);
 
-	value = readl(ioaddr + GMAC_L3L4_CTRL(filter_no));
-	if (udp) {
+	value = पढ़ोl(ioaddr + GMAC_L3L4_CTRL(filter_no));
+	अगर (udp) अणु
 		value |= GMAC_L4PEN0;
-	} else {
+	पूर्ण अन्यथा अणु
 		value &= ~GMAC_L4PEN0;
-	}
+	पूर्ण
 
 	value &= ~(GMAC_L4SPM0 | GMAC_L4SPIM0);
 	value &= ~(GMAC_L4DPM0 | GMAC_L4DPIM0);
-	if (sa) {
+	अगर (sa) अणु
 		value |= GMAC_L4SPM0;
-		if (inv)
+		अगर (inv)
 			value |= GMAC_L4SPIM0;
-	} else {
+	पूर्ण अन्यथा अणु
 		value |= GMAC_L4DPM0;
-		if (inv)
+		अगर (inv)
 			value |= GMAC_L4DPIM0;
-	}
+	पूर्ण
 
-	writel(value, ioaddr + GMAC_L3L4_CTRL(filter_no));
+	ग_लिखोl(value, ioaddr + GMAC_L3L4_CTRL(filter_no));
 
-	if (sa) {
+	अगर (sa) अणु
 		value = match & GMAC_L4SP0;
-	} else {
+	पूर्ण अन्यथा अणु
 		value = (match << GMAC_L4DP0_SHIFT) & GMAC_L4DP0;
-	}
+	पूर्ण
 
-	writel(value, ioaddr + GMAC_L4_ADDR(filter_no));
+	ग_लिखोl(value, ioaddr + GMAC_L4_ADDR(filter_no));
 
-	if (!en)
-		writel(0, ioaddr + GMAC_L3L4_CTRL(filter_no));
+	अगर (!en)
+		ग_लिखोl(0, ioaddr + GMAC_L3L4_CTRL(filter_no));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct stmmac_ops dwmac4_ops = {
+स्थिर काष्ठा sपंचांगmac_ops dwmac4_ops = अणु
 	.core_init = dwmac4_core_init,
-	.set_mac = stmmac_set_mac,
+	.set_mac = sपंचांगmac_set_mac,
 	.rx_ipc = dwmac4_rx_ipc_enable,
 	.rx_queue_enable = dwmac4_rx_queue_enable,
 	.rx_queue_prio = dwmac4_rx_queue_priority,
@@ -1190,8 +1191,8 @@ const struct stmmac_ops dwmac4_ops = {
 	.get_umac_addr = dwmac4_get_umac_addr,
 	.set_eee_mode = dwmac4_set_eee_mode,
 	.reset_eee_mode = dwmac4_reset_eee_mode,
-	.set_eee_lpi_entry_timer = dwmac4_set_eee_lpi_entry_timer,
-	.set_eee_timer = dwmac4_set_eee_timer,
+	.set_eee_lpi_entry_समयr = dwmac4_set_eee_lpi_entry_समयr,
+	.set_eee_समयr = dwmac4_set_eee_समयr,
 	.set_eee_pls = dwmac4_set_eee_pls,
 	.pcs_ctrl_ane = dwmac4_ctrl_ane,
 	.pcs_rane = dwmac4_rane,
@@ -1208,11 +1209,11 @@ const struct stmmac_ops dwmac4_ops = {
 	.add_hw_vlan_rx_fltr = dwmac4_add_hw_vlan_rx_fltr,
 	.del_hw_vlan_rx_fltr = dwmac4_del_hw_vlan_rx_fltr,
 	.restore_hw_vlan_rx_fltr = dwmac4_restore_hw_vlan_rx_fltr,
-};
+पूर्ण;
 
-const struct stmmac_ops dwmac410_ops = {
+स्थिर काष्ठा sपंचांगmac_ops dwmac410_ops = अणु
 	.core_init = dwmac4_core_init,
-	.set_mac = stmmac_dwmac4_set_mac,
+	.set_mac = sपंचांगmac_dwmac4_set_mac,
 	.rx_ipc = dwmac4_rx_ipc_enable,
 	.rx_queue_enable = dwmac4_rx_queue_enable,
 	.rx_queue_prio = dwmac4_rx_queue_priority,
@@ -1232,8 +1233,8 @@ const struct stmmac_ops dwmac410_ops = {
 	.get_umac_addr = dwmac4_get_umac_addr,
 	.set_eee_mode = dwmac4_set_eee_mode,
 	.reset_eee_mode = dwmac4_reset_eee_mode,
-	.set_eee_lpi_entry_timer = dwmac4_set_eee_lpi_entry_timer,
-	.set_eee_timer = dwmac4_set_eee_timer,
+	.set_eee_lpi_entry_समयr = dwmac4_set_eee_lpi_entry_समयr,
+	.set_eee_समयr = dwmac4_set_eee_समयr,
 	.set_eee_pls = dwmac4_set_eee_pls,
 	.pcs_ctrl_ane = dwmac4_ctrl_ane,
 	.pcs_rane = dwmac4_rane,
@@ -1255,11 +1256,11 @@ const struct stmmac_ops dwmac410_ops = {
 	.add_hw_vlan_rx_fltr = dwmac4_add_hw_vlan_rx_fltr,
 	.del_hw_vlan_rx_fltr = dwmac4_del_hw_vlan_rx_fltr,
 	.restore_hw_vlan_rx_fltr = dwmac4_restore_hw_vlan_rx_fltr,
-};
+पूर्ण;
 
-const struct stmmac_ops dwmac510_ops = {
+स्थिर काष्ठा sपंचांगmac_ops dwmac510_ops = अणु
 	.core_init = dwmac4_core_init,
-	.set_mac = stmmac_dwmac4_set_mac,
+	.set_mac = sपंचांगmac_dwmac4_set_mac,
 	.rx_ipc = dwmac4_rx_ipc_enable,
 	.rx_queue_enable = dwmac4_rx_queue_enable,
 	.rx_queue_prio = dwmac4_rx_queue_priority,
@@ -1279,8 +1280,8 @@ const struct stmmac_ops dwmac510_ops = {
 	.get_umac_addr = dwmac4_get_umac_addr,
 	.set_eee_mode = dwmac4_set_eee_mode,
 	.reset_eee_mode = dwmac4_reset_eee_mode,
-	.set_eee_lpi_entry_timer = dwmac4_set_eee_lpi_entry_timer,
-	.set_eee_timer = dwmac4_set_eee_timer,
+	.set_eee_lpi_entry_समयr = dwmac4_set_eee_lpi_entry_समयr,
+	.set_eee_समयr = dwmac4_set_eee_समयr,
 	.set_eee_pls = dwmac4_set_eee_pls,
 	.pcs_ctrl_ane = dwmac4_ctrl_ane,
 	.pcs_rane = dwmac4_rane,
@@ -1306,42 +1307,42 @@ const struct stmmac_ops dwmac510_ops = {
 	.add_hw_vlan_rx_fltr = dwmac4_add_hw_vlan_rx_fltr,
 	.del_hw_vlan_rx_fltr = dwmac4_del_hw_vlan_rx_fltr,
 	.restore_hw_vlan_rx_fltr = dwmac4_restore_hw_vlan_rx_fltr,
-};
+पूर्ण;
 
-static u32 dwmac4_get_num_vlan(void __iomem *ioaddr)
-{
+अटल u32 dwmac4_get_num_vlan(व्योम __iomem *ioaddr)
+अणु
 	u32 val, num_vlan;
 
-	val = readl(ioaddr + GMAC_HW_FEATURE3);
-	switch (val & GMAC_HW_FEAT_NRVF) {
-	case 0:
+	val = पढ़ोl(ioaddr + GMAC_HW_FEATURE3);
+	चयन (val & GMAC_HW_FEAT_NRVF) अणु
+	हाल 0:
 		num_vlan = 1;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		num_vlan = 4;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		num_vlan = 8;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		num_vlan = 16;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		num_vlan = 24;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		num_vlan = 32;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		num_vlan = 1;
-	}
+	पूर्ण
 
-	return num_vlan;
-}
+	वापस num_vlan;
+पूर्ण
 
-int dwmac4_setup(struct stmmac_priv *priv)
-{
-	struct mac_device_info *mac = priv->hw;
+पूर्णांक dwmac4_setup(काष्ठा sपंचांगmac_priv *priv)
+अणु
+	काष्ठा mac_device_info *mac = priv->hw;
 
 	dev_info(priv->device, "\tDWMAC4/5\n");
 
@@ -1351,7 +1352,7 @@ int dwmac4_setup(struct stmmac_priv *priv)
 	mac->unicast_filter_entries = priv->plat->unicast_filter_entries;
 	mac->mcast_bits_log2 = 0;
 
-	if (mac->multicast_filter_bins)
+	अगर (mac->multicast_filter_bins)
 		mac->mcast_bits_log2 = ilog2(mac->multicast_filter_bins);
 
 	mac->link.duplex = GMAC_CONFIG_DM;
@@ -1361,13 +1362,13 @@ int dwmac4_setup(struct stmmac_priv *priv)
 	mac->link.speed_mask = GMAC_CONFIG_FES | GMAC_CONFIG_PS;
 	mac->mii.addr = GMAC_MDIO_ADDR;
 	mac->mii.data = GMAC_MDIO_DATA;
-	mac->mii.addr_shift = 21;
+	mac->mii.addr_shअगरt = 21;
 	mac->mii.addr_mask = GENMASK(25, 21);
-	mac->mii.reg_shift = 16;
+	mac->mii.reg_shअगरt = 16;
 	mac->mii.reg_mask = GENMASK(20, 16);
-	mac->mii.clk_csr_shift = 8;
+	mac->mii.clk_csr_shअगरt = 8;
 	mac->mii.clk_csr_mask = GENMASK(11, 8);
 	mac->num_vlan = dwmac4_get_num_vlan(priv->ioaddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

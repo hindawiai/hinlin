@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack for Linux
+   BlueZ - Bluetooth protocol stack क्रम Linux
    Copyright (C) 2000-2001 Qualcomm Incorporated
-   Copyright (C) 2009-2010 Gustavo F. Padovan <gustavo@padovan.org>
+   Copyright (C) 2009-2010 Gustavo F. Paकरोvan <gustavo@paकरोvan.org>
    Copyright (C) 2010 Google Inc.
    Copyright (C) 2011 ProFUSION Embedded Systems
 
    Written 2000,2001 by Maxim Krasnyansky <maxk@qualcomm.com>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -15,7 +16,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -27,158 +28,158 @@
 
 /* Bluetooth L2CAP sockets. */
 
-#include <linux/module.h>
-#include <linux/export.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/module.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
-#include <net/bluetooth/l2cap.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/l2cap.h>
 
-#include "smp.h"
+#समावेश "smp.h"
 
-static struct bt_sock_list l2cap_sk_list = {
+अटल काष्ठा bt_sock_list l2cap_sk_list = अणु
 	.lock = __RW_LOCK_UNLOCKED(l2cap_sk_list.lock)
-};
+पूर्ण;
 
-static const struct proto_ops l2cap_sock_ops;
-static void l2cap_sock_init(struct sock *sk, struct sock *parent);
-static struct sock *l2cap_sock_alloc(struct net *net, struct socket *sock,
-				     int proto, gfp_t prio, int kern);
+अटल स्थिर काष्ठा proto_ops l2cap_sock_ops;
+अटल व्योम l2cap_sock_init(काष्ठा sock *sk, काष्ठा sock *parent);
+अटल काष्ठा sock *l2cap_sock_alloc(काष्ठा net *net, काष्ठा socket *sock,
+				     पूर्णांक proto, gfp_t prio, पूर्णांक kern);
 
-bool l2cap_is_socket(struct socket *sock)
-{
-	return sock && sock->ops == &l2cap_sock_ops;
-}
+bool l2cap_is_socket(काष्ठा socket *sock)
+अणु
+	वापस sock && sock->ops == &l2cap_sock_ops;
+पूर्ण
 EXPORT_SYMBOL(l2cap_is_socket);
 
-static int l2cap_validate_bredr_psm(u16 psm)
-{
+अटल पूर्णांक l2cap_validate_bredr_psm(u16 psm)
+अणु
 	/* PSM must be odd and lsb of upper byte must be 0 */
-	if ((psm & 0x0101) != 0x0001)
-		return -EINVAL;
+	अगर ((psm & 0x0101) != 0x0001)
+		वापस -EINVAL;
 
 	/* Restrict usage of well-known PSMs */
-	if (psm < L2CAP_PSM_DYN_START && !capable(CAP_NET_BIND_SERVICE))
-		return -EACCES;
+	अगर (psm < L2CAP_PSM_DYN_START && !capable(CAP_NET_BIND_SERVICE))
+		वापस -EACCES;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int l2cap_validate_le_psm(u16 psm)
-{
+अटल पूर्णांक l2cap_validate_le_psm(u16 psm)
+अणु
 	/* Valid LE_PSM ranges are defined only until 0x00ff */
-	if (psm > L2CAP_PSM_LE_DYN_END)
-		return -EINVAL;
+	अगर (psm > L2CAP_PSM_LE_DYN_END)
+		वापस -EINVAL;
 
-	/* Restrict fixed, SIG assigned PSM values to CAP_NET_BIND_SERVICE */
-	if (psm < L2CAP_PSM_LE_DYN_START && !capable(CAP_NET_BIND_SERVICE))
-		return -EACCES;
+	/* Restrict fixed, SIG asचिन्हित PSM values to CAP_NET_BIND_SERVICE */
+	अगर (psm < L2CAP_PSM_LE_DYN_START && !capable(CAP_NET_BIND_SERVICE))
+		वापस -EACCES;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int l2cap_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	struct sockaddr_l2 la;
-	int len, err = 0;
+अटल पूर्णांक l2cap_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *addr, पूर्णांक alen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	काष्ठा sockaddr_l2 la;
+	पूर्णांक len, err = 0;
 
 	BT_DBG("sk %p", sk);
 
-	if (!addr || alen < offsetofend(struct sockaddr, sa_family) ||
+	अगर (!addr || alen < दुरत्वend(काष्ठा sockaddr, sa_family) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memset(&la, 0, sizeof(la));
-	len = min_t(unsigned int, sizeof(la), alen);
-	memcpy(&la, addr, len);
+	स_रखो(&la, 0, माप(la));
+	len = min_t(अचिन्हित पूर्णांक, माप(la), alen);
+	स_नकल(&la, addr, len);
 
-	if (la.l2_cid && la.l2_psm)
-		return -EINVAL;
+	अगर (la.l2_cid && la.l2_psm)
+		वापस -EINVAL;
 
-	if (!bdaddr_type_is_valid(la.l2_bdaddr_type))
-		return -EINVAL;
+	अगर (!bdaddr_type_is_valid(la.l2_bdaddr_type))
+		वापस -EINVAL;
 
-	if (bdaddr_type_is_le(la.l2_bdaddr_type)) {
+	अगर (bdaddr_type_is_le(la.l2_bdaddr_type)) अणु
 		/* We only allow ATT user space socket */
-		if (la.l2_cid &&
+		अगर (la.l2_cid &&
 		    la.l2_cid != cpu_to_le16(L2CAP_CID_ATT))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
 	lock_sock(sk);
 
-	if (sk->sk_state != BT_OPEN) {
+	अगर (sk->sk_state != BT_OPEN) अणु
 		err = -EBADFD;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (la.l2_psm) {
+	अगर (la.l2_psm) अणु
 		__u16 psm = __le16_to_cpu(la.l2_psm);
 
-		if (la.l2_bdaddr_type == BDADDR_BREDR)
+		अगर (la.l2_bdaddr_type == BDADDR_BREDR)
 			err = l2cap_validate_bredr_psm(psm);
-		else
+		अन्यथा
 			err = l2cap_validate_le_psm(psm);
 
-		if (err)
-			goto done;
-	}
+		अगर (err)
+			जाओ करोne;
+	पूर्ण
 
 	bacpy(&chan->src, &la.l2_bdaddr);
 	chan->src_type = la.l2_bdaddr_type;
 
-	if (la.l2_cid)
+	अगर (la.l2_cid)
 		err = l2cap_add_scid(chan, __le16_to_cpu(la.l2_cid));
-	else
+	अन्यथा
 		err = l2cap_add_psm(chan, &la.l2_bdaddr, la.l2_psm);
 
-	if (err < 0)
-		goto done;
+	अगर (err < 0)
+		जाओ करोne;
 
-	switch (chan->chan_type) {
-	case L2CAP_CHAN_CONN_LESS:
-		if (__le16_to_cpu(la.l2_psm) == L2CAP_PSM_3DSP)
+	चयन (chan->chan_type) अणु
+	हाल L2CAP_CHAN_CONN_LESS:
+		अगर (__le16_to_cpu(la.l2_psm) == L2CAP_PSM_3DSP)
 			chan->sec_level = BT_SECURITY_SDP;
-		break;
-	case L2CAP_CHAN_CONN_ORIENTED:
-		if (__le16_to_cpu(la.l2_psm) == L2CAP_PSM_SDP ||
+		अवरोध;
+	हाल L2CAP_CHAN_CONN_ORIENTED:
+		अगर (__le16_to_cpu(la.l2_psm) == L2CAP_PSM_SDP ||
 		    __le16_to_cpu(la.l2_psm) == L2CAP_PSM_RFCOMM)
 			chan->sec_level = BT_SECURITY_SDP;
-		break;
-	case L2CAP_CHAN_RAW:
+		अवरोध;
+	हाल L2CAP_CHAN_RAW:
 		chan->sec_level = BT_SECURITY_SDP;
-		break;
-	case L2CAP_CHAN_FIXED:
-		/* Fixed channels default to the L2CAP core not holding a
-		 * hci_conn reference for them. For fixed channels mapping to
-		 * L2CAP sockets we do want to hold a reference so set the
+		अवरोध;
+	हाल L2CAP_CHAN_FIXED:
+		/* Fixed channels शेष to the L2CAP core not holding a
+		 * hci_conn reference क्रम them. For fixed channels mapping to
+		 * L2CAP sockets we करो want to hold a reference so set the
 		 * appropriate flag to request it.
 		 */
 		set_bit(FLAG_HOLD_HCI_CONN, &chan->flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (chan->psm && bdaddr_type_is_le(chan->src_type))
+	अगर (chan->psm && bdaddr_type_is_le(chan->src_type))
 		chan->mode = L2CAP_MODE_LE_FLOWCTL;
 
 	chan->state = BT_BOUND;
 	sk->sk_state = BT_BOUND;
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_connect(struct socket *sock, struct sockaddr *addr,
-			      int alen, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	struct sockaddr_l2 la;
-	int len, err = 0;
+अटल पूर्णांक l2cap_sock_connect(काष्ठा socket *sock, काष्ठा sockaddr *addr,
+			      पूर्णांक alen, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	काष्ठा sockaddr_l2 la;
+	पूर्णांक len, err = 0;
 	bool zapped;
 
 	BT_DBG("sk %p", sk);
@@ -187,284 +188,284 @@ static int l2cap_sock_connect(struct socket *sock, struct sockaddr *addr,
 	zapped = sock_flag(sk, SOCK_ZAPPED);
 	release_sock(sk);
 
-	if (zapped)
-		return -EINVAL;
+	अगर (zapped)
+		वापस -EINVAL;
 
-	if (!addr || alen < offsetofend(struct sockaddr, sa_family) ||
+	अगर (!addr || alen < दुरत्वend(काष्ठा sockaddr, sa_family) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	memset(&la, 0, sizeof(la));
-	len = min_t(unsigned int, sizeof(la), alen);
-	memcpy(&la, addr, len);
+	स_रखो(&la, 0, माप(la));
+	len = min_t(अचिन्हित पूर्णांक, माप(la), alen);
+	स_नकल(&la, addr, len);
 
-	if (la.l2_cid && la.l2_psm)
-		return -EINVAL;
+	अगर (la.l2_cid && la.l2_psm)
+		वापस -EINVAL;
 
-	if (!bdaddr_type_is_valid(la.l2_bdaddr_type))
-		return -EINVAL;
+	अगर (!bdaddr_type_is_valid(la.l2_bdaddr_type))
+		वापस -EINVAL;
 
 	/* Check that the socket wasn't bound to something that
 	 * conflicts with the address given to connect(). If chan->src
-	 * is BDADDR_ANY it means bind() was never used, in which case
-	 * chan->src_type and la.l2_bdaddr_type do not need to match.
+	 * is BDADDR_ANY it means bind() was never used, in which हाल
+	 * chan->src_type and la.l2_bdaddr_type करो not need to match.
 	 */
-	if (chan->src_type == BDADDR_BREDR && bacmp(&chan->src, BDADDR_ANY) &&
-	    bdaddr_type_is_le(la.l2_bdaddr_type)) {
+	अगर (chan->src_type == BDADDR_BREDR && bacmp(&chan->src, BDADDR_ANY) &&
+	    bdaddr_type_is_le(la.l2_bdaddr_type)) अणु
 		/* Old user space versions will try to incorrectly bind
 		 * the ATT socket using BDADDR_BREDR. We need to accept
 		 * this and fix up the source address type only when
 		 * both the source CID and destination CID indicate
-		 * ATT. Anything else is an invalid combination.
+		 * ATT. Anything अन्यथा is an invalid combination.
 		 */
-		if (chan->scid != L2CAP_CID_ATT ||
+		अगर (chan->scid != L2CAP_CID_ATT ||
 		    la.l2_cid != cpu_to_le16(L2CAP_CID_ATT))
-			return -EINVAL;
+			वापस -EINVAL;
 
-		/* We don't have the hdev available here to make a
-		 * better decision on random vs public, but since all
-		 * user space versions that exhibit this issue anyway do
-		 * not support random local addresses assuming public
+		/* We करोn't have the hdev available here to make a
+		 * better decision on अक्रमom vs खुला, but since all
+		 * user space versions that exhibit this issue anyway करो
+		 * not support अक्रमom local addresses assuming खुला
 		 * here is good enough.
 		 */
 		chan->src_type = BDADDR_LE_PUBLIC;
-	}
+	पूर्ण
 
-	if (chan->src_type != BDADDR_BREDR && la.l2_bdaddr_type == BDADDR_BREDR)
-		return -EINVAL;
+	अगर (chan->src_type != BDADDR_BREDR && la.l2_bdaddr_type == BDADDR_BREDR)
+		वापस -EINVAL;
 
-	if (bdaddr_type_is_le(la.l2_bdaddr_type)) {
+	अगर (bdaddr_type_is_le(la.l2_bdaddr_type)) अणु
 		/* We only allow ATT user space socket */
-		if (la.l2_cid &&
+		अगर (la.l2_cid &&
 		    la.l2_cid != cpu_to_le16(L2CAP_CID_ATT))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	if (chan->psm && bdaddr_type_is_le(chan->src_type) && !chan->mode)
+	अगर (chan->psm && bdaddr_type_is_le(chan->src_type) && !chan->mode)
 		chan->mode = L2CAP_MODE_LE_FLOWCTL;
 
 	err = l2cap_chan_connect(chan, la.l2_psm, __le16_to_cpu(la.l2_cid),
 				 &la.l2_bdaddr, la.l2_bdaddr_type);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	lock_sock(sk);
 
-	err = bt_sock_wait_state(sk, BT_CONNECTED,
-				 sock_sndtimeo(sk, flags & O_NONBLOCK));
+	err = bt_sock_रुको_state(sk, BT_CONNECTED,
+				 sock_sndसमयo(sk, flags & O_NONBLOCK));
 
 	release_sock(sk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_listen(struct socket *sock, int backlog)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	int err = 0;
+अटल पूर्णांक l2cap_sock_listen(काष्ठा socket *sock, पूर्णांक backlog)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	पूर्णांक err = 0;
 
 	BT_DBG("sk %p backlog %d", sk, backlog);
 
 	lock_sock(sk);
 
-	if (sk->sk_state != BT_BOUND) {
+	अगर (sk->sk_state != BT_BOUND) अणु
 		err = -EBADFD;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (sk->sk_type != SOCK_SEQPACKET && sk->sk_type != SOCK_STREAM) {
+	अगर (sk->sk_type != SOCK_SEQPACKET && sk->sk_type != SOCK_STREAM) अणु
 		err = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	switch (chan->mode) {
-	case L2CAP_MODE_BASIC:
-	case L2CAP_MODE_LE_FLOWCTL:
-		break;
-	case L2CAP_MODE_EXT_FLOWCTL:
-		if (!enable_ecred) {
+	चयन (chan->mode) अणु
+	हाल L2CAP_MODE_BASIC:
+	हाल L2CAP_MODE_LE_FLOWCTL:
+		अवरोध;
+	हाल L2CAP_MODE_EXT_FLOWCTL:
+		अगर (!enable_ecred) अणु
 			err = -EOPNOTSUPP;
-			goto done;
-		}
-		break;
-	case L2CAP_MODE_ERTM:
-	case L2CAP_MODE_STREAMING:
-		if (!disable_ertm)
-			break;
+			जाओ करोne;
+		पूर्ण
+		अवरोध;
+	हाल L2CAP_MODE_ERTM:
+	हाल L2CAP_MODE_STREAMING:
+		अगर (!disable_erपंचांग)
+			अवरोध;
 		fallthrough;
-	default:
+	शेष:
 		err = -EOPNOTSUPP;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	sk->sk_max_ack_backlog = backlog;
 	sk->sk_ack_backlog = 0;
 
 	/* Listening channels need to use nested locking in order not to
 	 * cause lockdep warnings when the created child channels end up
-	 * being locked in the same thread as the parent channel.
+	 * being locked in the same thपढ़ो as the parent channel.
 	 */
 	atomic_set(&chan->nesting, L2CAP_NESTING_PARENT);
 
 	chan->state = BT_LISTEN;
 	sk->sk_state = BT_LISTEN;
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_accept(struct socket *sock, struct socket *newsock,
-			     int flags, bool kern)
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	struct sock *sk = sock->sk, *nsk;
-	long timeo;
-	int err = 0;
+अटल पूर्णांक l2cap_sock_accept(काष्ठा socket *sock, काष्ठा socket *newsock,
+			     पूर्णांक flags, bool kern)
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	काष्ठा sock *sk = sock->sk, *nsk;
+	दीर्घ समयo;
+	पूर्णांक err = 0;
 
 	lock_sock_nested(sk, L2CAP_NESTING_PARENT);
 
-	timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
+	समयo = sock_rcvसमयo(sk, flags & O_NONBLOCK);
 
-	BT_DBG("sk %p timeo %ld", sk, timeo);
+	BT_DBG("sk %p timeo %ld", sk, समयo);
 
-	/* Wait for an incoming connection. (wake-one). */
-	add_wait_queue_exclusive(sk_sleep(sk), &wait);
-	while (1) {
-		if (sk->sk_state != BT_LISTEN) {
+	/* Wait क्रम an incoming connection. (wake-one). */
+	add_रुको_queue_exclusive(sk_sleep(sk), &रुको);
+	जबतक (1) अणु
+		अगर (sk->sk_state != BT_LISTEN) अणु
 			err = -EBADFD;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		nsk = bt_accept_dequeue(sk, newsock);
-		if (nsk)
-			break;
+		अगर (nsk)
+			अवरोध;
 
-		if (!timeo) {
+		अगर (!समयo) अणु
 			err = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (signal_pending(current)) {
-			err = sock_intr_errno(timeo);
-			break;
-		}
+		अगर (संकेत_pending(current)) अणु
+			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+			अवरोध;
+		पूर्ण
 
 		release_sock(sk);
 
-		timeo = wait_woken(&wait, TASK_INTERRUPTIBLE, timeo);
+		समयo = रुको_woken(&रुको, TASK_INTERRUPTIBLE, समयo);
 
 		lock_sock_nested(sk, L2CAP_NESTING_PARENT);
-	}
-	remove_wait_queue(sk_sleep(sk), &wait);
+	पूर्ण
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	newsock->state = SS_CONNECTED;
 
 	BT_DBG("new socket %p", nsk);
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_getname(struct socket *sock, struct sockaddr *addr,
-			      int peer)
-{
-	struct sockaddr_l2 *la = (struct sockaddr_l2 *) addr;
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
+अटल पूर्णांक l2cap_sock_getname(काष्ठा socket *sock, काष्ठा sockaddr *addr,
+			      पूर्णांक peer)
+अणु
+	काष्ठा sockaddr_l2 *la = (काष्ठा sockaddr_l2 *) addr;
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
-	if (peer && sk->sk_state != BT_CONNECTED &&
+	अगर (peer && sk->sk_state != BT_CONNECTED &&
 	    sk->sk_state != BT_CONNECT && sk->sk_state != BT_CONNECT2 &&
 	    sk->sk_state != BT_CONFIG)
-		return -ENOTCONN;
+		वापस -ENOTCONN;
 
-	memset(la, 0, sizeof(struct sockaddr_l2));
+	स_रखो(la, 0, माप(काष्ठा sockaddr_l2));
 	addr->sa_family = AF_BLUETOOTH;
 
 	la->l2_psm = chan->psm;
 
-	if (peer) {
+	अगर (peer) अणु
 		bacpy(&la->l2_bdaddr, &chan->dst);
 		la->l2_cid = cpu_to_le16(chan->dcid);
 		la->l2_bdaddr_type = chan->dst_type;
-	} else {
+	पूर्ण अन्यथा अणु
 		bacpy(&la->l2_bdaddr, &chan->src);
 		la->l2_cid = cpu_to_le16(chan->scid);
 		la->l2_bdaddr_type = chan->src_type;
-	}
+	पूर्ण
 
-	return sizeof(struct sockaddr_l2);
-}
+	वापस माप(काष्ठा sockaddr_l2);
+पूर्ण
 
-static int l2cap_get_mode(struct l2cap_chan *chan)
-{
-	switch (chan->mode) {
-	case L2CAP_MODE_BASIC:
-		return BT_MODE_BASIC;
-	case L2CAP_MODE_ERTM:
-		return BT_MODE_ERTM;
-	case L2CAP_MODE_STREAMING:
-		return BT_MODE_STREAMING;
-	case L2CAP_MODE_LE_FLOWCTL:
-		return BT_MODE_LE_FLOWCTL;
-	case L2CAP_MODE_EXT_FLOWCTL:
-		return BT_MODE_EXT_FLOWCTL;
-	}
+अटल पूर्णांक l2cap_get_mode(काष्ठा l2cap_chan *chan)
+अणु
+	चयन (chan->mode) अणु
+	हाल L2CAP_MODE_BASIC:
+		वापस BT_MODE_BASIC;
+	हाल L2CAP_MODE_ERTM:
+		वापस BT_MODE_ERTM;
+	हाल L2CAP_MODE_STREAMING:
+		वापस BT_MODE_STREAMING;
+	हाल L2CAP_MODE_LE_FLOWCTL:
+		वापस BT_MODE_LE_FLOWCTL;
+	हाल L2CAP_MODE_EXT_FLOWCTL:
+		वापस BT_MODE_EXT_FLOWCTL;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int l2cap_sock_getsockopt_old(struct socket *sock, int optname,
-				     char __user *optval, int __user *optlen)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	struct l2cap_options opts;
-	struct l2cap_conninfo cinfo;
-	int len, err = 0;
+अटल पूर्णांक l2cap_sock_माला_लोockopt_old(काष्ठा socket *sock, पूर्णांक optname,
+				     अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	काष्ठा l2cap_options opts;
+	काष्ठा l2cap_conninfo cinfo;
+	पूर्णांक len, err = 0;
 	u32 opt;
 
 	BT_DBG("sk %p", sk);
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case L2CAP_OPTIONS:
+	चयन (optname) अणु
+	हाल L2CAP_OPTIONS:
 		/* LE sockets should use BT_SNDMTU/BT_RCVMTU, but since
-		 * legacy ATT code depends on getsockopt for
+		 * legacy ATT code depends on माला_लोockopt क्रम
 		 * L2CAP_OPTIONS we need to let this pass.
 		 */
-		if (bdaddr_type_is_le(chan->src_type) &&
-		    chan->scid != L2CAP_CID_ATT) {
+		अगर (bdaddr_type_is_le(chan->src_type) &&
+		    chan->scid != L2CAP_CID_ATT) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Only BR/EDR modes are supported here */
-		switch (chan->mode) {
-		case L2CAP_MODE_BASIC:
-		case L2CAP_MODE_ERTM:
-		case L2CAP_MODE_STREAMING:
-			break;
-		default:
+		चयन (chan->mode) अणु
+		हाल L2CAP_MODE_BASIC:
+		हाल L2CAP_MODE_ERTM:
+		हाल L2CAP_MODE_STREAMING:
+			अवरोध;
+		शेष:
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (err < 0)
-			break;
+		अगर (err < 0)
+			अवरोध;
 
-		memset(&opts, 0, sizeof(opts));
+		स_रखो(&opts, 0, माप(opts));
 		opts.imtu     = chan->imtu;
 		opts.omtu     = chan->omtu;
 		opts.flush_to = chan->flush_to;
@@ -475,265 +476,265 @@ static int l2cap_sock_getsockopt_old(struct socket *sock, int optname,
 
 		BT_DBG("mode 0x%2.2x", chan->mode);
 
-		len = min_t(unsigned int, len, sizeof(opts));
-		if (copy_to_user(optval, (char *) &opts, len))
+		len = min_t(अचिन्हित पूर्णांक, len, माप(opts));
+		अगर (copy_to_user(optval, (अक्षर *) &opts, len))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case L2CAP_LM:
-		switch (chan->sec_level) {
-		case BT_SECURITY_LOW:
+	हाल L2CAP_LM:
+		चयन (chan->sec_level) अणु
+		हाल BT_SECURITY_LOW:
 			opt = L2CAP_LM_AUTH;
-			break;
-		case BT_SECURITY_MEDIUM:
+			अवरोध;
+		हाल BT_SECURITY_MEDIUM:
 			opt = L2CAP_LM_AUTH | L2CAP_LM_ENCRYPT;
-			break;
-		case BT_SECURITY_HIGH:
+			अवरोध;
+		हाल BT_SECURITY_HIGH:
 			opt = L2CAP_LM_AUTH | L2CAP_LM_ENCRYPT |
 			      L2CAP_LM_SECURE;
-			break;
-		case BT_SECURITY_FIPS:
+			अवरोध;
+		हाल BT_SECURITY_FIPS:
 			opt = L2CAP_LM_AUTH | L2CAP_LM_ENCRYPT |
 			      L2CAP_LM_SECURE | L2CAP_LM_FIPS;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			opt = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (test_bit(FLAG_ROLE_SWITCH, &chan->flags))
+		अगर (test_bit(FLAG_ROLE_SWITCH, &chan->flags))
 			opt |= L2CAP_LM_MASTER;
 
-		if (test_bit(FLAG_FORCE_RELIABLE, &chan->flags))
+		अगर (test_bit(FLAG_FORCE_RELIABLE, &chan->flags))
 			opt |= L2CAP_LM_RELIABLE;
 
-		if (put_user(opt, (u32 __user *) optval))
+		अगर (put_user(opt, (u32 __user *) optval))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case L2CAP_CONNINFO:
-		if (sk->sk_state != BT_CONNECTED &&
+	हाल L2CAP_CONNINFO:
+		अगर (sk->sk_state != BT_CONNECTED &&
 		    !(sk->sk_state == BT_CONNECT2 &&
-		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) {
+		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) अणु
 			err = -ENOTCONN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		memset(&cinfo, 0, sizeof(cinfo));
+		स_रखो(&cinfo, 0, माप(cinfo));
 		cinfo.hci_handle = chan->conn->hcon->handle;
-		memcpy(cinfo.dev_class, chan->conn->hcon->dev_class, 3);
+		स_नकल(cinfo.dev_class, chan->conn->hcon->dev_class, 3);
 
-		len = min_t(unsigned int, len, sizeof(cinfo));
-		if (copy_to_user(optval, (char *) &cinfo, len))
+		len = min_t(अचिन्हित पूर्णांक, len, माप(cinfo));
+		अगर (copy_to_user(optval, (अक्षर *) &cinfo, len))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
-				 char __user *optval, int __user *optlen)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	struct bt_security sec;
-	struct bt_power pwr;
+अटल पूर्णांक l2cap_sock_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+				 अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	काष्ठा bt_security sec;
+	काष्ठा bt_घातer pwr;
 	u32 phys;
-	int len, mode, err = 0;
+	पूर्णांक len, mode, err = 0;
 
 	BT_DBG("sk %p", sk);
 
-	if (level == SOL_L2CAP)
-		return l2cap_sock_getsockopt_old(sock, optname, optval, optlen);
+	अगर (level == SOL_L2CAP)
+		वापस l2cap_sock_माला_लोockopt_old(sock, optname, optval, optlen);
 
-	if (level != SOL_BLUETOOTH)
-		return -ENOPROTOOPT;
+	अगर (level != SOL_BLUETOOTH)
+		वापस -ENOPROTOOPT;
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case BT_SECURITY:
-		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
+	चयन (optname) अणु
+	हाल BT_SECURITY:
+		अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
 		    chan->chan_type != L2CAP_CHAN_FIXED &&
-		    chan->chan_type != L2CAP_CHAN_RAW) {
+		    chan->chan_type != L2CAP_CHAN_RAW) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		memset(&sec, 0, sizeof(sec));
-		if (chan->conn) {
+		स_रखो(&sec, 0, माप(sec));
+		अगर (chan->conn) अणु
 			sec.level = chan->conn->hcon->sec_level;
 
-			if (sk->sk_state == BT_CONNECTED)
+			अगर (sk->sk_state == BT_CONNECTED)
 				sec.key_size = chan->conn->hcon->enc_key_size;
-		} else {
+		पूर्ण अन्यथा अणु
 			sec.level = chan->sec_level;
-		}
+		पूर्ण
 
-		len = min_t(unsigned int, len, sizeof(sec));
-		if (copy_to_user(optval, (char *) &sec, len))
+		len = min_t(अचिन्हित पूर्णांक, len, माप(sec));
+		अगर (copy_to_user(optval, (अक्षर *) &sec, len))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case BT_DEFER_SETUP:
-		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
+	हाल BT_DEFER_SETUP:
+		अगर (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (put_user(test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags),
+		अगर (put_user(test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags),
 			     (u32 __user *) optval))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case BT_FLUSHABLE:
-		if (put_user(test_bit(FLAG_FLUSHABLE, &chan->flags),
+	हाल BT_FLUSHABLE:
+		अगर (put_user(test_bit(FLAG_FLUSHABLE, &chan->flags),
 			     (u32 __user *) optval))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case BT_POWER:
-		if (sk->sk_type != SOCK_SEQPACKET && sk->sk_type != SOCK_STREAM
-		    && sk->sk_type != SOCK_RAW) {
+	हाल BT_POWER:
+		अगर (sk->sk_type != SOCK_SEQPACKET && sk->sk_type != SOCK_STREAM
+		    && sk->sk_type != SOCK_RAW) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		pwr.force_active = test_bit(FLAG_FORCE_ACTIVE, &chan->flags);
+		pwr.क्रमce_active = test_bit(FLAG_FORCE_ACTIVE, &chan->flags);
 
-		len = min_t(unsigned int, len, sizeof(pwr));
-		if (copy_to_user(optval, (char *) &pwr, len))
+		len = min_t(अचिन्हित पूर्णांक, len, माप(pwr));
+		अगर (copy_to_user(optval, (अक्षर *) &pwr, len))
 			err = -EFAULT;
 
-		break;
+		अवरोध;
 
-	case BT_CHANNEL_POLICY:
-		if (put_user(chan->chan_policy, (u32 __user *) optval))
+	हाल BT_CHANNEL_POLICY:
+		अगर (put_user(chan->chan_policy, (u32 __user *) optval))
 			err = -EFAULT;
-		break;
+		अवरोध;
 
-	case BT_SNDMTU:
-		if (!bdaddr_type_is_le(chan->src_type)) {
+	हाल BT_SNDMTU:
+		अगर (!bdaddr_type_is_le(chan->src_type)) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (sk->sk_state != BT_CONNECTED) {
+		अगर (sk->sk_state != BT_CONNECTED) अणु
 			err = -ENOTCONN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (put_user(chan->omtu, (u16 __user *) optval))
+		अगर (put_user(chan->omtu, (u16 __user *) optval))
 			err = -EFAULT;
-		break;
+		अवरोध;
 
-	case BT_RCVMTU:
-		if (!bdaddr_type_is_le(chan->src_type)) {
+	हाल BT_RCVMTU:
+		अगर (!bdaddr_type_is_le(chan->src_type)) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (put_user(chan->imtu, (u16 __user *) optval))
+		अगर (put_user(chan->imtu, (u16 __user *) optval))
 			err = -EFAULT;
-		break;
+		अवरोध;
 
-	case BT_PHY:
-		if (sk->sk_state != BT_CONNECTED) {
+	हाल BT_PHY:
+		अगर (sk->sk_state != BT_CONNECTED) अणु
 			err = -ENOTCONN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		phys = hci_conn_get_phy(chan->conn->hcon);
 
-		if (put_user(phys, (u32 __user *) optval))
+		अगर (put_user(phys, (u32 __user *) optval))
 			err = -EFAULT;
-		break;
+		अवरोध;
 
-	case BT_MODE:
-		if (!enable_ecred) {
+	हाल BT_MODE:
+		अगर (!enable_ecred) अणु
 			err = -ENOPROTOOPT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) {
+		अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mode = l2cap_get_mode(chan);
-		if (mode < 0) {
+		अगर (mode < 0) अणु
 			err = mode;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (put_user(mode, (u8 __user *) optval))
+		अगर (put_user(mode, (u8 __user *) optval))
 			err = -EFAULT;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool l2cap_valid_mtu(struct l2cap_chan *chan, u16 mtu)
-{
-	switch (chan->scid) {
-	case L2CAP_CID_ATT:
-		if (mtu < L2CAP_LE_MIN_MTU)
-			return false;
-		break;
+अटल bool l2cap_valid_mtu(काष्ठा l2cap_chan *chan, u16 mtu)
+अणु
+	चयन (chan->scid) अणु
+	हाल L2CAP_CID_ATT:
+		अगर (mtu < L2CAP_LE_MIN_MTU)
+			वापस false;
+		अवरोध;
 
-	default:
-		if (mtu < L2CAP_DEFAULT_MIN_MTU)
-			return false;
-	}
+	शेष:
+		अगर (mtu < L2CAP_DEFAULT_MIN_MTU)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
-				     sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	struct l2cap_options opts;
-	int len, err = 0;
+अटल पूर्णांक l2cap_sock_setsockopt_old(काष्ठा socket *sock, पूर्णांक optname,
+				     sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	काष्ठा l2cap_options opts;
+	पूर्णांक len, err = 0;
 	u32 opt;
 
 	BT_DBG("sk %p", sk);
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case L2CAP_OPTIONS:
-		if (bdaddr_type_is_le(chan->src_type)) {
+	चयन (optname) अणु
+	हाल L2CAP_OPTIONS:
+		अगर (bdaddr_type_is_le(chan->src_type)) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (sk->sk_state == BT_CONNECTED) {
+		अगर (sk->sk_state == BT_CONNECTED) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		opts.imtu     = chan->imtu;
 		opts.omtu     = chan->omtu;
@@ -743,39 +744,39 @@ static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
 		opts.max_tx   = chan->max_tx;
 		opts.txwin_size = chan->tx_win;
 
-		len = min_t(unsigned int, sizeof(opts), optlen);
-		if (copy_from_sockptr(&opts, optval, len)) {
+		len = min_t(अचिन्हित पूर्णांक, माप(opts), optlen);
+		अगर (copy_from_sockptr(&opts, optval, len)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opts.txwin_size > L2CAP_DEFAULT_EXT_WINDOW) {
+		अगर (opts.txwin_size > L2CAP_DEFAULT_EXT_WINDOW) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!l2cap_valid_mtu(chan, opts.imtu)) {
+		अगर (!l2cap_valid_mtu(chan, opts.imtu)) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Only BR/EDR modes are supported here */
-		switch (opts.mode) {
-		case L2CAP_MODE_BASIC:
+		चयन (opts.mode) अणु
+		हाल L2CAP_MODE_BASIC:
 			clear_bit(CONF_STATE2_DEVICE, &chan->conf_state);
-			break;
-		case L2CAP_MODE_ERTM:
-		case L2CAP_MODE_STREAMING:
-			if (!disable_ertm)
-				break;
+			अवरोध;
+		हाल L2CAP_MODE_ERTM:
+		हाल L2CAP_MODE_STREAMING:
+			अगर (!disable_erपंचांग)
+				अवरोध;
 			fallthrough;
-		default:
+		शेष:
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (err < 0)
-			break;
+		अगर (err < 0)
+			अवरोध;
 
 		chan->mode = opts.mode;
 
@@ -787,436 +788,436 @@ static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
 		chan->max_tx = opts.max_tx;
 		chan->tx_win = opts.txwin_size;
 		chan->flush_to = opts.flush_to;
-		break;
+		अवरोध;
 
-	case L2CAP_LM:
-		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
+	हाल L2CAP_LM:
+		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt & L2CAP_LM_FIPS) {
+		अगर (opt & L2CAP_LM_FIPS) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt & L2CAP_LM_AUTH)
+		अगर (opt & L2CAP_LM_AUTH)
 			chan->sec_level = BT_SECURITY_LOW;
-		if (opt & L2CAP_LM_ENCRYPT)
+		अगर (opt & L2CAP_LM_ENCRYPT)
 			chan->sec_level = BT_SECURITY_MEDIUM;
-		if (opt & L2CAP_LM_SECURE)
+		अगर (opt & L2CAP_LM_SECURE)
 			chan->sec_level = BT_SECURITY_HIGH;
 
-		if (opt & L2CAP_LM_MASTER)
+		अगर (opt & L2CAP_LM_MASTER)
 			set_bit(FLAG_ROLE_SWITCH, &chan->flags);
-		else
+		अन्यथा
 			clear_bit(FLAG_ROLE_SWITCH, &chan->flags);
 
-		if (opt & L2CAP_LM_RELIABLE)
+		अगर (opt & L2CAP_LM_RELIABLE)
 			set_bit(FLAG_FORCE_RELIABLE, &chan->flags);
-		else
+		अन्यथा
 			clear_bit(FLAG_FORCE_RELIABLE, &chan->flags);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_set_mode(struct l2cap_chan *chan, u8 mode)
-{
-	switch (mode) {
-	case BT_MODE_BASIC:
-		if (bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+अटल पूर्णांक l2cap_set_mode(काष्ठा l2cap_chan *chan, u8 mode)
+अणु
+	चयन (mode) अणु
+	हाल BT_MODE_BASIC:
+		अगर (bdaddr_type_is_le(chan->src_type))
+			वापस -EINVAL;
 		mode = L2CAP_MODE_BASIC;
 		clear_bit(CONF_STATE2_DEVICE, &chan->conf_state);
-		break;
-	case BT_MODE_ERTM:
-		if (!disable_ertm || bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+		अवरोध;
+	हाल BT_MODE_ERTM:
+		अगर (!disable_erपंचांग || bdaddr_type_is_le(chan->src_type))
+			वापस -EINVAL;
 		mode = L2CAP_MODE_ERTM;
-		break;
-	case BT_MODE_STREAMING:
-		if (!disable_ertm || bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+		अवरोध;
+	हाल BT_MODE_STREAMING:
+		अगर (!disable_erपंचांग || bdaddr_type_is_le(chan->src_type))
+			वापस -EINVAL;
 		mode = L2CAP_MODE_STREAMING;
-		break;
-	case BT_MODE_LE_FLOWCTL:
-		if (!bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+		अवरोध;
+	हाल BT_MODE_LE_FLOWCTL:
+		अगर (!bdaddr_type_is_le(chan->src_type))
+			वापस -EINVAL;
 		mode = L2CAP_MODE_LE_FLOWCTL;
-		break;
-	case BT_MODE_EXT_FLOWCTL:
-		/* TODO: Add support for ECRED PDUs to BR/EDR */
-		if (!bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+		अवरोध;
+	हाल BT_MODE_EXT_FLOWCTL:
+		/* TODO: Add support क्रम ECRED PDUs to BR/EDR */
+		अगर (!bdaddr_type_is_le(chan->src_type))
+			वापस -EINVAL;
 		mode = L2CAP_MODE_EXT_FLOWCTL;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	chan->mode = mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
-				 sockptr_t optval, unsigned int optlen)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	struct bt_security sec;
-	struct bt_power pwr;
-	struct l2cap_conn *conn;
-	int len, err = 0;
+अटल पूर्णांक l2cap_sock_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+				 sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	काष्ठा bt_security sec;
+	काष्ठा bt_घातer pwr;
+	काष्ठा l2cap_conn *conn;
+	पूर्णांक len, err = 0;
 	u32 opt;
 
 	BT_DBG("sk %p", sk);
 
-	if (level == SOL_L2CAP)
-		return l2cap_sock_setsockopt_old(sock, optname, optval, optlen);
+	अगर (level == SOL_L2CAP)
+		वापस l2cap_sock_setsockopt_old(sock, optname, optval, optlen);
 
-	if (level != SOL_BLUETOOTH)
-		return -ENOPROTOOPT;
+	अगर (level != SOL_BLUETOOTH)
+		वापस -ENOPROTOOPT;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case BT_SECURITY:
-		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
+	चयन (optname) अणु
+	हाल BT_SECURITY:
+		अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
 		    chan->chan_type != L2CAP_CHAN_FIXED &&
-		    chan->chan_type != L2CAP_CHAN_RAW) {
+		    chan->chan_type != L2CAP_CHAN_RAW) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		sec.level = BT_SECURITY_LOW;
 
-		len = min_t(unsigned int, sizeof(sec), optlen);
-		if (copy_from_sockptr(&sec, optval, len)) {
+		len = min_t(अचिन्हित पूर्णांक, माप(sec), optlen);
+		अगर (copy_from_sockptr(&sec, optval, len)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (sec.level < BT_SECURITY_LOW ||
-		    sec.level > BT_SECURITY_FIPS) {
+		अगर (sec.level < BT_SECURITY_LOW ||
+		    sec.level > BT_SECURITY_FIPS) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		chan->sec_level = sec.level;
 
-		if (!chan->conn)
-			break;
+		अगर (!chan->conn)
+			अवरोध;
 
 		conn = chan->conn;
 
-		/* change security for LE channels */
-		if (chan->scid == L2CAP_CID_ATT) {
-			if (smp_conn_security(conn->hcon, sec.level)) {
+		/* change security क्रम LE channels */
+		अगर (chan->scid == L2CAP_CID_ATT) अणु
+			अगर (smp_conn_security(conn->hcon, sec.level)) अणु
 				err = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			set_bit(FLAG_PENDING_SECURITY, &chan->flags);
 			sk->sk_state = BT_CONFIG;
 			chan->state = BT_CONFIG;
 
-		/* or for ACL link */
-		} else if ((sk->sk_state == BT_CONNECT2 &&
+		/* or क्रम ACL link */
+		पूर्ण अन्यथा अगर ((sk->sk_state == BT_CONNECT2 &&
 			    test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags)) ||
-			   sk->sk_state == BT_CONNECTED) {
-			if (!l2cap_chan_check_security(chan, true))
+			   sk->sk_state == BT_CONNECTED) अणु
+			अगर (!l2cap_chan_check_security(chan, true))
 				set_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags);
-			else
+			अन्यथा
 				sk->sk_state_change(sk);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = -EINVAL;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case BT_DEFER_SETUP:
-		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
+	हाल BT_DEFER_SETUP:
+		अगर (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
+		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt) {
+		अगर (opt) अणु
 			set_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags);
 			set_bit(FLAG_DEFER_SETUP, &chan->flags);
-		} else {
+		पूर्ण अन्यथा अणु
 			clear_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags);
 			clear_bit(FLAG_DEFER_SETUP, &chan->flags);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case BT_FLUSHABLE:
-		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
+	हाल BT_FLUSHABLE:
+		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt > BT_FLUSHABLE_ON) {
+		अगर (opt > BT_FLUSHABLE_ON) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt == BT_FLUSHABLE_OFF) {
+		अगर (opt == BT_FLUSHABLE_OFF) अणु
 			conn = chan->conn;
 			/* proceed further only when we have l2cap_conn and
 			   No Flush support in the LM */
-			if (!conn || !lmp_no_flush_capable(conn->hcon->hdev)) {
+			अगर (!conn || !lmp_no_flush_capable(conn->hcon->hdev)) अणु
 				err = -EINVAL;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (opt)
+		अगर (opt)
 			set_bit(FLAG_FLUSHABLE, &chan->flags);
-		else
+		अन्यथा
 			clear_bit(FLAG_FLUSHABLE, &chan->flags);
-		break;
+		अवरोध;
 
-	case BT_POWER:
-		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
-		    chan->chan_type != L2CAP_CHAN_RAW) {
+	हाल BT_POWER:
+		अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
+		    chan->chan_type != L2CAP_CHAN_RAW) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		pwr.force_active = BT_POWER_FORCE_ACTIVE_ON;
+		pwr.क्रमce_active = BT_POWER_FORCE_ACTIVE_ON;
 
-		len = min_t(unsigned int, sizeof(pwr), optlen);
-		if (copy_from_sockptr(&pwr, optval, len)) {
+		len = min_t(अचिन्हित पूर्णांक, माप(pwr), optlen);
+		अगर (copy_from_sockptr(&pwr, optval, len)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (pwr.force_active)
+		अगर (pwr.क्रमce_active)
 			set_bit(FLAG_FORCE_ACTIVE, &chan->flags);
-		else
+		अन्यथा
 			clear_bit(FLAG_FORCE_ACTIVE, &chan->flags);
-		break;
+		अवरोध;
 
-	case BT_CHANNEL_POLICY:
-		if (copy_from_sockptr(&opt, optval, sizeof(u32))) {
+	हाल BT_CHANNEL_POLICY:
+		अगर (copy_from_sockptr(&opt, optval, माप(u32))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (opt > BT_CHANNEL_POLICY_AMP_PREFERRED) {
+		अगर (opt > BT_CHANNEL_POLICY_AMP_PREFERRED) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (chan->mode != L2CAP_MODE_ERTM &&
-		    chan->mode != L2CAP_MODE_STREAMING) {
+		अगर (chan->mode != L2CAP_MODE_ERTM &&
+		    chan->mode != L2CAP_MODE_STREAMING) अणु
 			err = -EOPNOTSUPP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		chan->chan_policy = (u8) opt;
 
-		if (sk->sk_state == BT_CONNECTED &&
+		अगर (sk->sk_state == BT_CONNECTED &&
 		    chan->move_role == L2CAP_MOVE_ROLE_NONE)
 			l2cap_move_start(chan);
 
-		break;
+		अवरोध;
 
-	case BT_SNDMTU:
-		if (!bdaddr_type_is_le(chan->src_type)) {
+	हाल BT_SNDMTU:
+		अगर (!bdaddr_type_is_le(chan->src_type)) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Setting is not supported as it's the remote side that
 		 * decides this.
 		 */
 		err = -EPERM;
-		break;
+		अवरोध;
 
-	case BT_RCVMTU:
-		if (!bdaddr_type_is_le(chan->src_type)) {
+	हाल BT_RCVMTU:
+		अगर (!bdaddr_type_is_le(chan->src_type)) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (chan->mode == L2CAP_MODE_LE_FLOWCTL &&
-		    sk->sk_state == BT_CONNECTED) {
+		अगर (chan->mode == L2CAP_MODE_LE_FLOWCTL &&
+		    sk->sk_state == BT_CONNECTED) अणु
 			err = -EISCONN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (copy_from_sockptr(&opt, optval, sizeof(u16))) {
+		अगर (copy_from_sockptr(&opt, optval, माप(u16))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (chan->mode == L2CAP_MODE_EXT_FLOWCTL &&
+		अगर (chan->mode == L2CAP_MODE_EXT_FLOWCTL &&
 		    sk->sk_state == BT_CONNECTED)
 			err = l2cap_chan_reconfigure(chan, opt);
-		else
+		अन्यथा
 			chan->imtu = opt;
 
-		break;
+		अवरोध;
 
-	case BT_MODE:
-		if (!enable_ecred) {
+	हाल BT_MODE:
+		अगर (!enable_ecred) अणु
 			err = -ENOPROTOOPT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		BT_DBG("sk->sk_state %u", sk->sk_state);
 
-		if (sk->sk_state != BT_BOUND) {
+		अगर (sk->sk_state != BT_BOUND) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) {
+		अगर (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (copy_from_sockptr(&opt, optval, sizeof(u8))) {
+		अगर (copy_from_sockptr(&opt, optval, माप(u8))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		BT_DBG("opt %u", opt);
 
 		err = l2cap_set_mode(chan, opt);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		BT_DBG("mode 0x%2.2x", chan->mode);
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_sendmsg(struct socket *sock, struct msghdr *msg,
-			      size_t len)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
-	int err;
+अटल पूर्णांक l2cap_sock_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			      माप_प्रकार len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
+	पूर्णांक err;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
 	err = sock_error(sk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+	अगर (msg->msg_flags & MSG_OOB)
+		वापस -EOPNOTSUPP;
 
-	if (sk->sk_state != BT_CONNECTED)
-		return -ENOTCONN;
+	अगर (sk->sk_state != BT_CONNECTED)
+		वापस -ENOTCONN;
 
 	lock_sock(sk);
-	err = bt_sock_wait_ready(sk, msg->msg_flags);
+	err = bt_sock_रुको_पढ़ोy(sk, msg->msg_flags);
 	release_sock(sk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	l2cap_chan_lock(chan);
 	err = l2cap_chan_send(chan, msg, len);
 	l2cap_chan_unlock(chan);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_recvmsg(struct socket *sock, struct msghdr *msg,
-			      size_t len, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_pinfo *pi = l2cap_pi(sk);
-	int err;
+अटल पूर्णांक l2cap_sock_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			      माप_प्रकार len, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_pinfo *pi = l2cap_pi(sk);
+	पूर्णांक err;
 
 	lock_sock(sk);
 
-	if (sk->sk_state == BT_CONNECT2 && test_bit(BT_SK_DEFER_SETUP,
-						    &bt_sk(sk)->flags)) {
-		if (pi->chan->mode == L2CAP_MODE_EXT_FLOWCTL) {
+	अगर (sk->sk_state == BT_CONNECT2 && test_bit(BT_SK_DEFER_SETUP,
+						    &bt_sk(sk)->flags)) अणु
+		अगर (pi->chan->mode == L2CAP_MODE_EXT_FLOWCTL) अणु
 			sk->sk_state = BT_CONNECTED;
 			pi->chan->state = BT_CONNECTED;
 			__l2cap_ecred_conn_rsp_defer(pi->chan);
-		} else if (bdaddr_type_is_le(pi->chan->src_type)) {
+		पूर्ण अन्यथा अगर (bdaddr_type_is_le(pi->chan->src_type)) अणु
 			sk->sk_state = BT_CONNECTED;
 			pi->chan->state = BT_CONNECTED;
 			__l2cap_le_connect_rsp_defer(pi->chan);
-		} else {
+		पूर्ण अन्यथा अणु
 			sk->sk_state = BT_CONFIG;
 			pi->chan->state = BT_CONFIG;
 			__l2cap_connect_rsp_defer(pi->chan);
-		}
+		पूर्ण
 
 		err = 0;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	release_sock(sk);
 
-	if (sock->type == SOCK_STREAM)
+	अगर (sock->type == SOCK_STREAM)
 		err = bt_sock_stream_recvmsg(sock, msg, len, flags);
-	else
+	अन्यथा
 		err = bt_sock_recvmsg(sock, msg, len, flags);
 
-	if (pi->chan->mode != L2CAP_MODE_ERTM)
-		return err;
+	अगर (pi->chan->mode != L2CAP_MODE_ERTM)
+		वापस err;
 
 	/* Attempt to put pending rx data in the socket buffer */
 
 	lock_sock(sk);
 
-	if (!test_bit(CONN_LOCAL_BUSY, &pi->chan->conn_state))
-		goto done;
+	अगर (!test_bit(CONN_LOCAL_BUSY, &pi->chan->conn_state))
+		जाओ करोne;
 
-	if (pi->rx_busy_skb) {
-		if (!__sock_queue_rcv_skb(sk, pi->rx_busy_skb))
-			pi->rx_busy_skb = NULL;
-		else
-			goto done;
-	}
+	अगर (pi->rx_busy_skb) अणु
+		अगर (!__sock_queue_rcv_skb(sk, pi->rx_busy_skb))
+			pi->rx_busy_skb = शून्य;
+		अन्यथा
+			जाओ करोne;
+	पूर्ण
 
 	/* Restore data flow when half of the receive buffer is
-	 * available.  This avoids resending large numbers of
+	 * available.  This aव्योमs resending large numbers of
 	 * frames.
 	 */
-	if (atomic_read(&sk->sk_rmem_alloc) <= sk->sk_rcvbuf >> 1)
+	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) <= sk->sk_rcvbuf >> 1)
 		l2cap_chan_busy(pi->chan, 0);
 
-done:
+करोne:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Kill socket (only if zapped and orphan)
+/* Kill socket (only अगर zapped and orphan)
  * Must be called on unlocked socket, with l2cap channel lock.
  */
-static void l2cap_sock_kill(struct sock *sk)
-{
-	if (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket)
-		return;
+अटल व्योम l2cap_sock_समाप्त(काष्ठा sock *sk)
+अणु
+	अगर (!sock_flag(sk, SOCK_ZAPPED) || sk->sk_socket)
+		वापस;
 
 	BT_DBG("sk %p state %s", sk, state_to_string(sk->sk_state));
 
@@ -1225,193 +1226,193 @@ static void l2cap_sock_kill(struct sock *sk)
 	l2cap_chan_put(l2cap_pi(sk)->chan);
 	sock_set_flag(sk, SOCK_DEAD);
 	sock_put(sk);
-}
+पूर्ण
 
-static int __l2cap_wait_ack(struct sock *sk, struct l2cap_chan *chan)
-{
-	DECLARE_WAITQUEUE(wait, current);
-	int err = 0;
-	int timeo = L2CAP_WAIT_ACK_POLL_PERIOD;
+अटल पूर्णांक __l2cap_रुको_ack(काष्ठा sock *sk, काष्ठा l2cap_chan *chan)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
+	पूर्णांक err = 0;
+	पूर्णांक समयo = L2CAP_WAIT_ACK_POLL_PERIOD;
 	/* Timeout to prevent infinite loop */
-	unsigned long timeout = jiffies + L2CAP_WAIT_ACK_TIMEOUT;
+	अचिन्हित दीर्घ समयout = jअगरfies + L2CAP_WAIT_ACK_TIMEOUT;
 
-	add_wait_queue(sk_sleep(sk), &wait);
+	add_रुको_queue(sk_sleep(sk), &रुको);
 	set_current_state(TASK_INTERRUPTIBLE);
-	do {
+	करो अणु
 		BT_DBG("Waiting for %d ACKs, timeout %04d ms",
-		       chan->unacked_frames, time_after(jiffies, timeout) ? 0 :
-		       jiffies_to_msecs(timeout - jiffies));
+		       chan->unacked_frames, समय_after(jअगरfies, समयout) ? 0 :
+		       jअगरfies_to_msecs(समयout - jअगरfies));
 
-		if (!timeo)
-			timeo = L2CAP_WAIT_ACK_POLL_PERIOD;
+		अगर (!समयo)
+			समयo = L2CAP_WAIT_ACK_POLL_PERIOD;
 
-		if (signal_pending(current)) {
-			err = sock_intr_errno(timeo);
-			break;
-		}
+		अगर (संकेत_pending(current)) अणु
+			err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+			अवरोध;
+		पूर्ण
 
 		release_sock(sk);
-		timeo = schedule_timeout(timeo);
+		समयo = schedule_समयout(समयo);
 		lock_sock(sk);
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		err = sock_error(sk);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
-		if (time_after(jiffies, timeout)) {
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			err = -ENOLINK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	} while (chan->unacked_frames > 0 &&
+	पूर्ण जबतक (chan->unacked_frames > 0 &&
 		 chan->state == BT_CONNECTED);
 
 	set_current_state(TASK_RUNNING);
-	remove_wait_queue(sk_sleep(sk), &wait);
-	return err;
-}
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_shutdown(struct socket *sock, int how)
-{
-	struct sock *sk = sock->sk;
-	struct l2cap_chan *chan;
-	struct l2cap_conn *conn;
-	int err = 0;
+अटल पूर्णांक l2cap_sock_shutकरोwn(काष्ठा socket *sock, पूर्णांक how)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा l2cap_chan *chan;
+	काष्ठा l2cap_conn *conn;
+	पूर्णांक err = 0;
 
 	BT_DBG("sock %p, sk %p, how %d", sock, sk, how);
 
-	/* 'how' parameter is mapped to sk_shutdown as follows:
+	/* 'how' parameter is mapped to sk_shutकरोwn as follows:
 	 * SHUT_RD   (0) --> RCV_SHUTDOWN  (1)
 	 * SHUT_WR   (1) --> SEND_SHUTDOWN (2)
 	 * SHUT_RDWR (2) --> SHUTDOWN_MASK (3)
 	 */
 	how++;
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	lock_sock(sk);
 
-	if ((sk->sk_shutdown & how) == how)
-		goto shutdown_already;
+	अगर ((sk->sk_shutकरोwn & how) == how)
+		जाओ shutकरोwn_alपढ़ोy;
 
 	BT_DBG("Handling sock shutdown");
 
-	/* prevent sk structure from being freed whilst unlocked */
+	/* prevent sk काष्ठाure from being मुक्तd whilst unlocked */
 	sock_hold(sk);
 
 	chan = l2cap_pi(sk)->chan;
-	/* prevent chan structure from being freed whilst unlocked */
+	/* prevent chan काष्ठाure from being मुक्तd whilst unlocked */
 	l2cap_chan_hold(chan);
 
 	BT_DBG("chan %p state %s", chan, state_to_string(chan->state));
 
-	if (chan->mode == L2CAP_MODE_ERTM &&
+	अगर (chan->mode == L2CAP_MODE_ERTM &&
 	    chan->unacked_frames > 0 &&
-	    chan->state == BT_CONNECTED) {
-		err = __l2cap_wait_ack(sk, chan);
+	    chan->state == BT_CONNECTED) अणु
+		err = __l2cap_रुको_ack(sk, chan);
 
-		/* After waiting for ACKs, check whether shutdown
-		 * has already been actioned to close the L2CAP
+		/* After रुकोing क्रम ACKs, check whether shutकरोwn
+		 * has alपढ़ोy been actioned to बंद the L2CAP
 		 * link such as by l2cap_disconnection_req().
 		 */
-		if ((sk->sk_shutdown & how) == how)
-			goto shutdown_matched;
-	}
+		अगर ((sk->sk_shutकरोwn & how) == how)
+			जाओ shutकरोwn_matched;
+	पूर्ण
 
-	/* Try setting the RCV_SHUTDOWN bit, return early if SEND_SHUTDOWN
-	 * is already set
+	/* Try setting the RCV_SHUTDOWN bit, वापस early अगर SEND_SHUTDOWN
+	 * is alपढ़ोy set
 	 */
-	if ((how & RCV_SHUTDOWN) && !(sk->sk_shutdown & RCV_SHUTDOWN)) {
-		sk->sk_shutdown |= RCV_SHUTDOWN;
-		if ((sk->sk_shutdown & how) == how)
-			goto shutdown_matched;
-	}
+	अगर ((how & RCV_SHUTDOWN) && !(sk->sk_shutकरोwn & RCV_SHUTDOWN)) अणु
+		sk->sk_shutकरोwn |= RCV_SHUTDOWN;
+		अगर ((sk->sk_shutकरोwn & how) == how)
+			जाओ shutकरोwn_matched;
+	पूर्ण
 
-	sk->sk_shutdown |= SEND_SHUTDOWN;
+	sk->sk_shutकरोwn |= SEND_SHUTDOWN;
 	release_sock(sk);
 
 	l2cap_chan_lock(chan);
 	conn = chan->conn;
-	if (conn)
-		/* prevent conn structure from being freed */
+	अगर (conn)
+		/* prevent conn काष्ठाure from being मुक्तd */
 		l2cap_conn_get(conn);
 	l2cap_chan_unlock(chan);
 
-	if (conn)
-		/* mutex lock must be taken before l2cap_chan_lock() */
+	अगर (conn)
+		/* mutex lock must be taken beक्रमe l2cap_chan_lock() */
 		mutex_lock(&conn->chan_lock);
 
 	l2cap_chan_lock(chan);
-	l2cap_chan_close(chan, 0);
+	l2cap_chan_बंद(chan, 0);
 	l2cap_chan_unlock(chan);
 
-	if (conn) {
+	अगर (conn) अणु
 		mutex_unlock(&conn->chan_lock);
 		l2cap_conn_put(conn);
-	}
+	पूर्ण
 
 	lock_sock(sk);
 
-	if (sock_flag(sk, SOCK_LINGER) && sk->sk_lingertime &&
+	अगर (sock_flag(sk, SOCK_LINGER) && sk->sk_lingerसमय &&
 	    !(current->flags & PF_EXITING))
-		err = bt_sock_wait_state(sk, BT_CLOSED,
-					 sk->sk_lingertime);
+		err = bt_sock_रुको_state(sk, BT_CLOSED,
+					 sk->sk_lingerसमय);
 
-shutdown_matched:
+shutकरोwn_matched:
 	l2cap_chan_put(chan);
 	sock_put(sk);
 
-shutdown_already:
-	if (!err && sk->sk_err)
+shutकरोwn_alपढ़ोy:
+	अगर (!err && sk->sk_err)
 		err = -sk->sk_err;
 
 	release_sock(sk);
 
 	BT_DBG("Sock shutdown complete err: %d", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int l2cap_sock_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	int err;
-	struct l2cap_chan *chan;
+अटल पूर्णांक l2cap_sock_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक err;
+	काष्ठा l2cap_chan *chan;
 
 	BT_DBG("sock %p, sk %p", sock, sk);
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	bt_sock_unlink(&l2cap_sk_list, sk);
 
-	err = l2cap_sock_shutdown(sock, SHUT_RDWR);
+	err = l2cap_sock_shutकरोwn(sock, SHUT_RDWR);
 	chan = l2cap_pi(sk)->chan;
 
 	l2cap_chan_hold(chan);
 	l2cap_chan_lock(chan);
 
 	sock_orphan(sk);
-	l2cap_sock_kill(sk);
+	l2cap_sock_समाप्त(sk);
 
 	l2cap_chan_unlock(chan);
 	l2cap_chan_put(chan);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void l2cap_sock_cleanup_listen(struct sock *parent)
-{
-	struct sock *sk;
+अटल व्योम l2cap_sock_cleanup_listen(काष्ठा sock *parent)
+अणु
+	काष्ठा sock *sk;
 
 	BT_DBG("parent %p state %s", parent,
 	       state_to_string(parent->sk_state));
 
 	/* Close not yet accepted channels */
-	while ((sk = bt_accept_dequeue(parent, NULL))) {
-		struct l2cap_chan *chan = l2cap_pi(sk)->chan;
+	जबतक ((sk = bt_accept_dequeue(parent, शून्य))) अणु
+		काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
 
 		BT_DBG("child chan %p state %s", chan,
 		       state_to_string(chan->state));
@@ -1419,36 +1420,36 @@ static void l2cap_sock_cleanup_listen(struct sock *parent)
 		l2cap_chan_hold(chan);
 		l2cap_chan_lock(chan);
 
-		__clear_chan_timer(chan);
-		l2cap_chan_close(chan, ECONNRESET);
-		l2cap_sock_kill(sk);
+		__clear_chan_समयr(chan);
+		l2cap_chan_बंद(chan, ECONNRESET);
+		l2cap_sock_समाप्त(sk);
 
 		l2cap_chan_unlock(chan);
 		l2cap_chan_put(chan);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct l2cap_chan *l2cap_sock_new_connection_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk, *parent = chan->data;
+अटल काष्ठा l2cap_chan *l2cap_sock_new_connection_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk, *parent = chan->data;
 
 	lock_sock(parent);
 
-	/* Check for backlog size */
-	if (sk_acceptq_is_full(parent)) {
+	/* Check क्रम backlog size */
+	अगर (sk_acceptq_is_full(parent)) अणु
 		BT_DBG("backlog full %d", parent->sk_ack_backlog);
 		release_sock(parent);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	sk = l2cap_sock_alloc(sock_net(parent), NULL, BTPROTO_L2CAP,
+	sk = l2cap_sock_alloc(sock_net(parent), शून्य, BTPROTO_L2CAP,
 			      GFP_ATOMIC, 0);
-	if (!sk) {
+	अगर (!sk) अणु
 		release_sock(parent);
-		return NULL;
-        }
+		वापस शून्य;
+        पूर्ण
 
-	bt_sock_reclassify_lock(sk, BTPROTO_L2CAP);
+	bt_sock_reclassअगरy_lock(sk, BTPROTO_L2CAP);
 
 	l2cap_sock_init(sk, parent);
 
@@ -1456,149 +1457,149 @@ static struct l2cap_chan *l2cap_sock_new_connection_cb(struct l2cap_chan *chan)
 
 	release_sock(parent);
 
-	return l2cap_pi(sk)->chan;
-}
+	वापस l2cap_pi(sk)->chan;
+पूर्ण
 
-static int l2cap_sock_recv_cb(struct l2cap_chan *chan, struct sk_buff *skb)
-{
-	struct sock *sk = chan->data;
-	int err;
+अटल पूर्णांक l2cap_sock_recv_cb(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk = chan->data;
+	पूर्णांक err;
 
 	lock_sock(sk);
 
-	if (l2cap_pi(sk)->rx_busy_skb) {
+	अगर (l2cap_pi(sk)->rx_busy_skb) अणु
 		err = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (chan->mode != L2CAP_MODE_ERTM &&
-	    chan->mode != L2CAP_MODE_STREAMING) {
-		/* Even if no filter is attached, we could potentially
+	अगर (chan->mode != L2CAP_MODE_ERTM &&
+	    chan->mode != L2CAP_MODE_STREAMING) अणु
+		/* Even अगर no filter is attached, we could potentially
 		 * get errors from security modules, etc.
 		 */
 		err = sk_filter(sk, skb);
-		if (err)
-			goto done;
-	}
+		अगर (err)
+			जाओ करोne;
+	पूर्ण
 
 	err = __sock_queue_rcv_skb(sk, skb);
 
-	/* For ERTM, handle one skb that doesn't fit into the recv
-	 * buffer.  This is important to do because the data frames
-	 * have already been acked, so the skb cannot be discarded.
+	/* For ERTM, handle one skb that करोesn't fit पूर्णांकo the recv
+	 * buffer.  This is important to करो because the data frames
+	 * have alपढ़ोy been acked, so the skb cannot be discarded.
 	 *
-	 * Notify the l2cap core that the buffer is full, so the
+	 * Notअगरy the l2cap core that the buffer is full, so the
 	 * LOCAL_BUSY state is entered and no more frames are
 	 * acked and reassembled until there is buffer space
 	 * available.
 	 */
-	if (err < 0 && chan->mode == L2CAP_MODE_ERTM) {
+	अगर (err < 0 && chan->mode == L2CAP_MODE_ERTM) अणु
 		l2cap_pi(sk)->rx_busy_skb = skb;
 		l2cap_chan_busy(chan, 1);
 		err = 0;
-	}
+	पूर्ण
 
-done:
+करोne:
 	release_sock(sk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void l2cap_sock_close_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk = chan->data;
+अटल व्योम l2cap_sock_बंद_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk = chan->data;
 
-	l2cap_sock_kill(sk);
-}
+	l2cap_sock_समाप्त(sk);
+पूर्ण
 
-static void l2cap_sock_teardown_cb(struct l2cap_chan *chan, int err)
-{
-	struct sock *sk = chan->data;
-	struct sock *parent;
+अटल व्योम l2cap_sock_tearकरोwn_cb(काष्ठा l2cap_chan *chan, पूर्णांक err)
+अणु
+	काष्ठा sock *sk = chan->data;
+	काष्ठा sock *parent;
 
 	BT_DBG("chan %p state %s", chan, state_to_string(chan->state));
 
-	/* This callback can be called both for server (BT_LISTEN)
-	 * sockets as well as "normal" ones. To avoid lockdep warnings
+	/* This callback can be called both क्रम server (BT_LISTEN)
+	 * sockets as well as "normal" ones. To aव्योम lockdep warnings
 	 * with child socket locking (through l2cap_sock_cleanup_listen)
-	 * we need separation into separate nesting levels. The simplest
+	 * we need separation पूर्णांकo separate nesting levels. The simplest
 	 * way to accomplish this is to inherit the nesting level used
-	 * for the channel.
+	 * क्रम the channel.
 	 */
-	lock_sock_nested(sk, atomic_read(&chan->nesting));
+	lock_sock_nested(sk, atomic_पढ़ो(&chan->nesting));
 
 	parent = bt_sk(sk)->parent;
 
-	switch (chan->state) {
-	case BT_OPEN:
-	case BT_BOUND:
-	case BT_CLOSED:
-		break;
-	case BT_LISTEN:
+	चयन (chan->state) अणु
+	हाल BT_OPEN:
+	हाल BT_BOUND:
+	हाल BT_CLOSED:
+		अवरोध;
+	हाल BT_LISTEN:
 		l2cap_sock_cleanup_listen(sk);
 		sk->sk_state = BT_CLOSED;
 		chan->state = BT_CLOSED;
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sk->sk_state = BT_CLOSED;
 		chan->state = BT_CLOSED;
 
 		sk->sk_err = err;
 
-		if (parent) {
+		अगर (parent) अणु
 			bt_accept_unlink(sk);
-			parent->sk_data_ready(parent);
-		} else {
+			parent->sk_data_पढ़ोy(parent);
+		पूर्ण अन्यथा अणु
 			sk->sk_state_change(sk);
-		}
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	release_sock(sk);
 
-	/* Only zap after cleanup to avoid use after free race */
+	/* Only zap after cleanup to aव्योम use after मुक्त race */
 	sock_set_flag(sk, SOCK_ZAPPED);
 
-}
+पूर्ण
 
-static void l2cap_sock_state_change_cb(struct l2cap_chan *chan, int state,
-				       int err)
-{
-	struct sock *sk = chan->data;
+अटल व्योम l2cap_sock_state_change_cb(काष्ठा l2cap_chan *chan, पूर्णांक state,
+				       पूर्णांक err)
+अणु
+	काष्ठा sock *sk = chan->data;
 
 	sk->sk_state = state;
 
-	if (err)
+	अगर (err)
 		sk->sk_err = err;
-}
+पूर्ण
 
-static struct sk_buff *l2cap_sock_alloc_skb_cb(struct l2cap_chan *chan,
-					       unsigned long hdr_len,
-					       unsigned long len, int nb)
-{
-	struct sock *sk = chan->data;
-	struct sk_buff *skb;
-	int err;
+अटल काष्ठा sk_buff *l2cap_sock_alloc_skb_cb(काष्ठा l2cap_chan *chan,
+					       अचिन्हित दीर्घ hdr_len,
+					       अचिन्हित दीर्घ len, पूर्णांक nb)
+अणु
+	काष्ठा sock *sk = chan->data;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err;
 
 	l2cap_chan_unlock(chan);
 	skb = bt_skb_send_alloc(sk, hdr_len + len, nb, &err);
 	l2cap_chan_lock(chan);
 
-	if (!skb)
-		return ERR_PTR(err);
+	अगर (!skb)
+		वापस ERR_PTR(err);
 
 	skb->priority = sk->sk_priority;
 
 	bt_cb(skb)->l2cap.chan = chan;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static void l2cap_sock_ready_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk = chan->data;
-	struct sock *parent;
+अटल व्योम l2cap_sock_पढ़ोy_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk = chan->data;
+	काष्ठा sock *parent;
 
 	lock_sock(sk);
 
@@ -1609,137 +1610,137 @@ static void l2cap_sock_ready_cb(struct l2cap_chan *chan)
 	sk->sk_state = BT_CONNECTED;
 	sk->sk_state_change(sk);
 
-	if (parent)
-		parent->sk_data_ready(parent);
+	अगर (parent)
+		parent->sk_data_पढ़ोy(parent);
 
 	release_sock(sk);
-}
+पूर्ण
 
-static void l2cap_sock_defer_cb(struct l2cap_chan *chan)
-{
-	struct sock *parent, *sk = chan->data;
+अटल व्योम l2cap_sock_defer_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *parent, *sk = chan->data;
 
 	lock_sock(sk);
 
 	parent = bt_sk(sk)->parent;
-	if (parent)
-		parent->sk_data_ready(parent);
+	अगर (parent)
+		parent->sk_data_पढ़ोy(parent);
 
 	release_sock(sk);
-}
+पूर्ण
 
-static void l2cap_sock_resume_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk = chan->data;
+अटल व्योम l2cap_sock_resume_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk = chan->data;
 
-	if (test_and_clear_bit(FLAG_PENDING_SECURITY, &chan->flags)) {
+	अगर (test_and_clear_bit(FLAG_PENDING_SECURITY, &chan->flags)) अणु
 		sk->sk_state = BT_CONNECTED;
 		chan->state = BT_CONNECTED;
-	}
+	पूर्ण
 
 	clear_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags);
 	sk->sk_state_change(sk);
-}
+पूर्ण
 
-static void l2cap_sock_set_shutdown_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk = chan->data;
+अटल व्योम l2cap_sock_set_shutकरोwn_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk = chan->data;
 
 	lock_sock(sk);
-	sk->sk_shutdown = SHUTDOWN_MASK;
+	sk->sk_shutकरोwn = SHUTDOWN_MASK;
 	release_sock(sk);
-}
+पूर्ण
 
-static long l2cap_sock_get_sndtimeo_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk = chan->data;
+अटल दीर्घ l2cap_sock_get_sndसमयo_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk = chan->data;
 
-	return sk->sk_sndtimeo;
-}
+	वापस sk->sk_sndसमयo;
+पूर्ण
 
-static struct pid *l2cap_sock_get_peer_pid_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk = chan->data;
+अटल काष्ठा pid *l2cap_sock_get_peer_pid_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk = chan->data;
 
-	return sk->sk_peer_pid;
-}
+	वापस sk->sk_peer_pid;
+पूर्ण
 
-static void l2cap_sock_suspend_cb(struct l2cap_chan *chan)
-{
-	struct sock *sk = chan->data;
+अटल व्योम l2cap_sock_suspend_cb(काष्ठा l2cap_chan *chan)
+अणु
+	काष्ठा sock *sk = chan->data;
 
 	set_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags);
 	sk->sk_state_change(sk);
-}
+पूर्ण
 
-static int l2cap_sock_filter(struct l2cap_chan *chan, struct sk_buff *skb)
-{
-	struct sock *sk = chan->data;
+अटल पूर्णांक l2cap_sock_filter(काष्ठा l2cap_chan *chan, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk = chan->data;
 
-	switch (chan->mode) {
-	case L2CAP_MODE_ERTM:
-	case L2CAP_MODE_STREAMING:
-		return sk_filter(sk, skb);
-	}
+	चयन (chan->mode) अणु
+	हाल L2CAP_MODE_ERTM:
+	हाल L2CAP_MODE_STREAMING:
+		वापस sk_filter(sk, skb);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct l2cap_ops l2cap_chan_ops = {
+अटल स्थिर काष्ठा l2cap_ops l2cap_chan_ops = अणु
 	.name			= "L2CAP Socket Interface",
 	.new_connection		= l2cap_sock_new_connection_cb,
 	.recv			= l2cap_sock_recv_cb,
-	.close			= l2cap_sock_close_cb,
-	.teardown		= l2cap_sock_teardown_cb,
+	.बंद			= l2cap_sock_बंद_cb,
+	.tearकरोwn		= l2cap_sock_tearकरोwn_cb,
 	.state_change		= l2cap_sock_state_change_cb,
-	.ready			= l2cap_sock_ready_cb,
+	.पढ़ोy			= l2cap_sock_पढ़ोy_cb,
 	.defer			= l2cap_sock_defer_cb,
 	.resume			= l2cap_sock_resume_cb,
 	.suspend		= l2cap_sock_suspend_cb,
-	.set_shutdown		= l2cap_sock_set_shutdown_cb,
-	.get_sndtimeo		= l2cap_sock_get_sndtimeo_cb,
+	.set_shutकरोwn		= l2cap_sock_set_shutकरोwn_cb,
+	.get_sndसमयo		= l2cap_sock_get_sndसमयo_cb,
 	.get_peer_pid		= l2cap_sock_get_peer_pid_cb,
 	.alloc_skb		= l2cap_sock_alloc_skb_cb,
 	.filter			= l2cap_sock_filter,
-};
+पूर्ण;
 
-static void l2cap_sock_destruct(struct sock *sk)
-{
+अटल व्योम l2cap_sock_deकाष्ठा(काष्ठा sock *sk)
+अणु
 	BT_DBG("sk %p", sk);
 
-	if (l2cap_pi(sk)->chan)
+	अगर (l2cap_pi(sk)->chan)
 		l2cap_chan_put(l2cap_pi(sk)->chan);
 
-	if (l2cap_pi(sk)->rx_busy_skb) {
-		kfree_skb(l2cap_pi(sk)->rx_busy_skb);
-		l2cap_pi(sk)->rx_busy_skb = NULL;
-	}
+	अगर (l2cap_pi(sk)->rx_busy_skb) अणु
+		kमुक्त_skb(l2cap_pi(sk)->rx_busy_skb);
+		l2cap_pi(sk)->rx_busy_skb = शून्य;
+	पूर्ण
 
 	skb_queue_purge(&sk->sk_receive_queue);
-	skb_queue_purge(&sk->sk_write_queue);
-}
+	skb_queue_purge(&sk->sk_ग_लिखो_queue);
+पूर्ण
 
-static void l2cap_skb_msg_name(struct sk_buff *skb, void *msg_name,
-			       int *msg_namelen)
-{
-	DECLARE_SOCKADDR(struct sockaddr_l2 *, la, msg_name);
+अटल व्योम l2cap_skb_msg_name(काष्ठा sk_buff *skb, व्योम *msg_name,
+			       पूर्णांक *msg_namelen)
+अणु
+	DECLARE_SOCKADDR(काष्ठा sockaddr_l2 *, la, msg_name);
 
-	memset(la, 0, sizeof(struct sockaddr_l2));
+	स_रखो(la, 0, माप(काष्ठा sockaddr_l2));
 	la->l2_family = AF_BLUETOOTH;
 	la->l2_psm = bt_cb(skb)->l2cap.psm;
 	bacpy(&la->l2_bdaddr, &bt_cb(skb)->l2cap.bdaddr);
 
-	*msg_namelen = sizeof(struct sockaddr_l2);
-}
+	*msg_namelen = माप(काष्ठा sockaddr_l2);
+पूर्ण
 
-static void l2cap_sock_init(struct sock *sk, struct sock *parent)
-{
-	struct l2cap_chan *chan = l2cap_pi(sk)->chan;
+अटल व्योम l2cap_sock_init(काष्ठा sock *sk, काष्ठा sock *parent)
+अणु
+	काष्ठा l2cap_chan *chan = l2cap_pi(sk)->chan;
 
 	BT_DBG("sk %p", sk);
 
-	if (parent) {
-		struct l2cap_chan *pchan = l2cap_pi(parent)->chan;
+	अगर (parent) अणु
+		काष्ठा l2cap_chan *pchan = l2cap_pi(parent)->chan;
 
 		sk->sk_type = parent->sk_type;
 		bt_sk(sk)->flags = bt_sk(parent)->flags;
@@ -1758,67 +1759,67 @@ static void l2cap_sock_init(struct sock *sk, struct sock *parent)
 		chan->tx_credits = pchan->tx_credits;
 		chan->rx_credits = pchan->rx_credits;
 
-		if (chan->chan_type == L2CAP_CHAN_FIXED) {
+		अगर (chan->chan_type == L2CAP_CHAN_FIXED) अणु
 			chan->scid = pchan->scid;
 			chan->dcid = pchan->scid;
-		}
+		पूर्ण
 
 		security_sk_clone(parent, sk);
-	} else {
-		switch (sk->sk_type) {
-		case SOCK_RAW:
+	पूर्ण अन्यथा अणु
+		चयन (sk->sk_type) अणु
+		हाल SOCK_RAW:
 			chan->chan_type = L2CAP_CHAN_RAW;
-			break;
-		case SOCK_DGRAM:
+			अवरोध;
+		हाल SOCK_DGRAM:
 			chan->chan_type = L2CAP_CHAN_CONN_LESS;
 			bt_sk(sk)->skb_msg_name = l2cap_skb_msg_name;
-			break;
-		case SOCK_SEQPACKET:
-		case SOCK_STREAM:
+			अवरोध;
+		हाल SOCK_SEQPACKET:
+		हाल SOCK_STREAM:
 			chan->chan_type = L2CAP_CHAN_CONN_ORIENTED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		chan->imtu = L2CAP_DEFAULT_MTU;
 		chan->omtu = 0;
-		if (!disable_ertm && sk->sk_type == SOCK_STREAM) {
+		अगर (!disable_erपंचांग && sk->sk_type == SOCK_STREAM) अणु
 			chan->mode = L2CAP_MODE_ERTM;
 			set_bit(CONF_STATE2_DEVICE, &chan->conf_state);
-		} else {
+		पूर्ण अन्यथा अणु
 			chan->mode = L2CAP_MODE_BASIC;
-		}
+		पूर्ण
 
-		l2cap_chan_set_defaults(chan);
-	}
+		l2cap_chan_set_शेषs(chan);
+	पूर्ण
 
 	/* Default config options */
 	chan->flush_to = L2CAP_DEFAULT_FLUSH_TO;
 
 	chan->data = sk;
 	chan->ops = &l2cap_chan_ops;
-}
+पूर्ण
 
-static struct proto l2cap_proto = {
+अटल काष्ठा proto l2cap_proto = अणु
 	.name		= "L2CAP",
 	.owner		= THIS_MODULE,
-	.obj_size	= sizeof(struct l2cap_pinfo)
-};
+	.obj_size	= माप(काष्ठा l2cap_pinfo)
+पूर्ण;
 
-static struct sock *l2cap_sock_alloc(struct net *net, struct socket *sock,
-				     int proto, gfp_t prio, int kern)
-{
-	struct sock *sk;
-	struct l2cap_chan *chan;
+अटल काष्ठा sock *l2cap_sock_alloc(काष्ठा net *net, काष्ठा socket *sock,
+				     पूर्णांक proto, gfp_t prio, पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा l2cap_chan *chan;
 
 	sk = sk_alloc(net, PF_BLUETOOTH, prio, &l2cap_proto, kern);
-	if (!sk)
-		return NULL;
+	अगर (!sk)
+		वापस शून्य;
 
 	sock_init_data(sock, sk);
 	INIT_LIST_HEAD(&bt_sk(sk)->accept_q);
 
-	sk->sk_destruct = l2cap_sock_destruct;
-	sk->sk_sndtimeo = L2CAP_CONN_TIMEOUT;
+	sk->sk_deकाष्ठा = l2cap_sock_deकाष्ठा;
+	sk->sk_sndसमयo = L2CAP_CONN_TIMEOUT;
 
 	sock_reset_flag(sk, SOCK_ZAPPED);
 
@@ -1826,46 +1827,46 @@ static struct sock *l2cap_sock_alloc(struct net *net, struct socket *sock,
 	sk->sk_state = BT_OPEN;
 
 	chan = l2cap_chan_create();
-	if (!chan) {
-		sk_free(sk);
-		return NULL;
-	}
+	अगर (!chan) अणु
+		sk_मुक्त(sk);
+		वापस शून्य;
+	पूर्ण
 
 	l2cap_chan_hold(chan);
 
 	l2cap_pi(sk)->chan = chan;
 
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static int l2cap_sock_create(struct net *net, struct socket *sock, int protocol,
-			     int kern)
-{
-	struct sock *sk;
+अटल पूर्णांक l2cap_sock_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
+			     पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
 
 	BT_DBG("sock %p", sock);
 
 	sock->state = SS_UNCONNECTED;
 
-	if (sock->type != SOCK_SEQPACKET && sock->type != SOCK_STREAM &&
+	अगर (sock->type != SOCK_SEQPACKET && sock->type != SOCK_STREAM &&
 	    sock->type != SOCK_DGRAM && sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+		वापस -ESOCKTNOSUPPORT;
 
-	if (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
-		return -EPERM;
+	अगर (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
+		वापस -EPERM;
 
 	sock->ops = &l2cap_sock_ops;
 
 	sk = l2cap_sock_alloc(net, sock, protocol, GFP_ATOMIC, kern);
-	if (!sk)
-		return -ENOMEM;
+	अगर (!sk)
+		वापस -ENOMEM;
 
-	l2cap_sock_init(sk, NULL);
+	l2cap_sock_init(sk, शून्य);
 	bt_sock_link(&l2cap_sk_list, sk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct proto_ops l2cap_sock_ops = {
+अटल स्थिर काष्ठा proto_ops l2cap_sock_ops = अणु
 	.family		= PF_BLUETOOTH,
 	.owner		= THIS_MODULE,
 	.release	= l2cap_sock_release,
@@ -1881,53 +1882,53 @@ static const struct proto_ops l2cap_sock_ops = {
 	.gettstamp	= sock_gettstamp,
 	.mmap		= sock_no_mmap,
 	.socketpair	= sock_no_socketpair,
-	.shutdown	= l2cap_sock_shutdown,
+	.shutकरोwn	= l2cap_sock_shutकरोwn,
 	.setsockopt	= l2cap_sock_setsockopt,
-	.getsockopt	= l2cap_sock_getsockopt
-};
+	.माला_लोockopt	= l2cap_sock_माला_लोockopt
+पूर्ण;
 
-static const struct net_proto_family l2cap_sock_family_ops = {
+अटल स्थिर काष्ठा net_proto_family l2cap_sock_family_ops = अणु
 	.family	= PF_BLUETOOTH,
 	.owner	= THIS_MODULE,
 	.create	= l2cap_sock_create,
-};
+पूर्ण;
 
-int __init l2cap_init_sockets(void)
-{
-	int err;
+पूर्णांक __init l2cap_init_sockets(व्योम)
+अणु
+	पूर्णांक err;
 
-	BUILD_BUG_ON(sizeof(struct sockaddr_l2) > sizeof(struct sockaddr));
+	BUILD_BUG_ON(माप(काष्ठा sockaddr_l2) > माप(काष्ठा sockaddr));
 
-	err = proto_register(&l2cap_proto, 0);
-	if (err < 0)
-		return err;
+	err = proto_रेजिस्टर(&l2cap_proto, 0);
+	अगर (err < 0)
+		वापस err;
 
-	err = bt_sock_register(BTPROTO_L2CAP, &l2cap_sock_family_ops);
-	if (err < 0) {
+	err = bt_sock_रेजिस्टर(BTPROTO_L2CAP, &l2cap_sock_family_ops);
+	अगर (err < 0) अणु
 		BT_ERR("L2CAP socket registration failed");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	err = bt_procfs_init(&init_net, "l2cap", &l2cap_sk_list,
-			     NULL);
-	if (err < 0) {
+			     शून्य);
+	अगर (err < 0) अणु
 		BT_ERR("Failed to create L2CAP proc file");
-		bt_sock_unregister(BTPROTO_L2CAP);
-		goto error;
-	}
+		bt_sock_unरेजिस्टर(BTPROTO_L2CAP);
+		जाओ error;
+	पूर्ण
 
 	BT_INFO("L2CAP socket layer initialized");
 
-	return 0;
+	वापस 0;
 
 error:
-	proto_unregister(&l2cap_proto);
-	return err;
-}
+	proto_unरेजिस्टर(&l2cap_proto);
+	वापस err;
+पूर्ण
 
-void l2cap_cleanup_sockets(void)
-{
+व्योम l2cap_cleanup_sockets(व्योम)
+अणु
 	bt_procfs_cleanup(&init_net, "l2cap");
-	bt_sock_unregister(BTPROTO_L2CAP);
-	proto_unregister(&l2cap_proto);
-}
+	bt_sock_unरेजिस्टर(BTPROTO_L2CAP);
+	proto_unरेजिस्टर(&l2cap_proto);
+पूर्ण

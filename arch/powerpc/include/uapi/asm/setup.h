@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ASM_POWERPC_SETUP_H
-#define _UAPI_ASM_POWERPC_SETUP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ASM_POWERPC_SETUP_H
+#घोषणा _UAPI_ASM_POWERPC_SETUP_H
 
-#define COMMAND_LINE_SIZE	2048
+#घोषणा COMMAND_LINE_SIZE	2048
 
-#endif /* _UAPI_ASM_POWERPC_SETUP_H */
+#पूर्ण_अगर /* _UAPI_ASM_POWERPC_SETUP_H */

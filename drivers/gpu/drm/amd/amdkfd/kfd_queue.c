@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,13 +22,13 @@
  *
  */
 
-#include <linux/slab.h>
-#include "kfd_priv.h"
+#समावेश <linux/slab.h>
+#समावेश "kfd_priv.h"
 
-void print_queue_properties(struct queue_properties *q)
-{
-	if (!q)
-		return;
+व्योम prपूर्णांक_queue_properties(काष्ठा queue_properties *q)
+अणु
+	अगर (!q)
+		वापस;
 
 	pr_debug("Printing queue properties:\n");
 	pr_debug("Queue Type: %u\n", q->type);
@@ -36,16 +37,16 @@ void print_queue_properties(struct queue_properties *q)
 	pr_debug("Queue Address: 0x%llX\n", q->queue_address);
 	pr_debug("Queue Id: %u\n", q->queue_id);
 	pr_debug("Queue Process Vmid: %u\n", q->vmid);
-	pr_debug("Queue Read Pointer: 0x%px\n", q->read_ptr);
-	pr_debug("Queue Write Pointer: 0x%px\n", q->write_ptr);
-	pr_debug("Queue Doorbell Pointer: 0x%p\n", q->doorbell_ptr);
-	pr_debug("Queue Doorbell Offset: %u\n", q->doorbell_off);
-}
+	pr_debug("Queue Read Pointer: 0x%px\n", q->पढ़ो_ptr);
+	pr_debug("Queue Write Pointer: 0x%px\n", q->ग_लिखो_ptr);
+	pr_debug("Queue Doorbell Pointer: 0x%p\n", q->करोorbell_ptr);
+	pr_debug("Queue Doorbell Offset: %u\n", q->करोorbell_off);
+पूर्ण
 
-void print_queue(struct queue *q)
-{
-	if (!q)
-		return;
+व्योम prपूर्णांक_queue(काष्ठा queue *q)
+अणु
+	अगर (!q)
+		वापस;
 	pr_debug("Printing queue:\n");
 	pr_debug("Queue Type: %u\n", q->properties.type);
 	pr_debug("Queue Size: %llu\n", q->properties.queue_size);
@@ -53,31 +54,31 @@ void print_queue(struct queue *q)
 	pr_debug("Queue Address: 0x%llX\n", q->properties.queue_address);
 	pr_debug("Queue Id: %u\n", q->properties.queue_id);
 	pr_debug("Queue Process Vmid: %u\n", q->properties.vmid);
-	pr_debug("Queue Read Pointer: 0x%px\n", q->properties.read_ptr);
-	pr_debug("Queue Write Pointer: 0x%px\n", q->properties.write_ptr);
-	pr_debug("Queue Doorbell Pointer: 0x%p\n", q->properties.doorbell_ptr);
-	pr_debug("Queue Doorbell Offset: %u\n", q->properties.doorbell_off);
+	pr_debug("Queue Read Pointer: 0x%px\n", q->properties.पढ़ो_ptr);
+	pr_debug("Queue Write Pointer: 0x%px\n", q->properties.ग_लिखो_ptr);
+	pr_debug("Queue Doorbell Pointer: 0x%p\n", q->properties.करोorbell_ptr);
+	pr_debug("Queue Doorbell Offset: %u\n", q->properties.करोorbell_off);
 	pr_debug("Queue MQD Address: 0x%p\n", q->mqd);
 	pr_debug("Queue MQD Gart: 0x%llX\n", q->gart_mqd_addr);
 	pr_debug("Queue Process Address: 0x%p\n", q->process);
 	pr_debug("Queue Device Address: 0x%p\n", q->device);
-}
+पूर्ण
 
-int init_queue(struct queue **q, const struct queue_properties *properties)
-{
-	struct queue *tmp_q;
+पूर्णांक init_queue(काष्ठा queue **q, स्थिर काष्ठा queue_properties *properties)
+अणु
+	काष्ठा queue *पंचांगp_q;
 
-	tmp_q = kzalloc(sizeof(*tmp_q), GFP_KERNEL);
-	if (!tmp_q)
-		return -ENOMEM;
+	पंचांगp_q = kzalloc(माप(*पंचांगp_q), GFP_KERNEL);
+	अगर (!पंचांगp_q)
+		वापस -ENOMEM;
 
-	memcpy(&tmp_q->properties, properties, sizeof(*properties));
+	स_नकल(&पंचांगp_q->properties, properties, माप(*properties));
 
-	*q = tmp_q;
-	return 0;
-}
+	*q = पंचांगp_q;
+	वापस 0;
+पूर्ण
 
-void uninit_queue(struct queue *q)
-{
-	kfree(q);
-}
+व्योम uninit_queue(काष्ठा queue *q)
+अणु
+	kमुक्त(q);
+पूर्ण

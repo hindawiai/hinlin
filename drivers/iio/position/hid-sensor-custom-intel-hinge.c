@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HID Sensors Driver
  * Copyright (c) 2020, Intel Corporation.
  */
-#include <linux/hid-sensor-hub.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/iio.h>
-#include <linux/platform_device.h>
+#समावेश <linux/hid-sensor-hub.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "../common/hid-sensors/hid-sensor-trigger.h"
+#समावेश "../common/hid-sensors/hid-sensor-trigger.h"
 
-enum hinge_channel {
+क्रमागत hinge_channel अणु
 	CHANNEL_SCAN_INDEX_HINGE_ANGLE,
 	CHANNEL_SCAN_INDEX_SCREEN_ANGLE,
 	CHANNEL_SCAN_INDEX_KEYBOARD_ANGLE,
 	CHANNEL_SCAN_INDEX_MAX,
-};
+पूर्ण;
 
-#define CHANNEL_SCAN_INDEX_TIMESTAMP CHANNEL_SCAN_INDEX_MAX
+#घोषणा CHANNEL_SCAN_INDEX_TIMESTAMP CHANNEL_SCAN_INDEX_MAX
 
-static const u32 hinge_addresses[CHANNEL_SCAN_INDEX_MAX] = {
+अटल स्थिर u32 hinge_addresses[CHANNEL_SCAN_INDEX_MAX] = अणु
 	HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(1),
 	HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(2),
 	HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(3)
-};
+पूर्ण;
 
-static const char *const hinge_labels[CHANNEL_SCAN_INDEX_MAX] = { "hinge",
+अटल स्थिर अक्षर *स्थिर hinge_labels[CHANNEL_SCAN_INDEX_MAX] = अणु "hinge",
 								  "screen",
-								  "keyboard" };
+								  "keyboard" पूर्ण;
 
-struct hinge_state {
-	struct iio_dev *indio_dev;
-	struct hid_sensor_hub_attribute_info hinge[CHANNEL_SCAN_INDEX_MAX];
-	struct hid_sensor_hub_callbacks callbacks;
-	struct hid_sensor_common common_attributes;
-	const char *labels[CHANNEL_SCAN_INDEX_MAX];
-	struct {
+काष्ठा hinge_state अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा hid_sensor_hub_attribute_info hinge[CHANNEL_SCAN_INDEX_MAX];
+	काष्ठा hid_sensor_hub_callbacks callbacks;
+	काष्ठा hid_sensor_common common_attributes;
+	स्थिर अक्षर *labels[CHANNEL_SCAN_INDEX_MAX];
+	काष्ठा अणु
 		u32 hinge_val[3];
-		u64 timestamp __aligned(8);
-	} scan;
+		u64 बारtamp __aligned(8);
+	पूर्ण scan;
 
-	int scale_pre_decml;
-	int scale_post_decml;
-	int scale_precision;
-	int value_offset;
-	u64 timestamp;
-};
+	पूर्णांक scale_pre_decml;
+	पूर्णांक scale_post_decml;
+	पूर्णांक scale_precision;
+	पूर्णांक value_offset;
+	u64 बारtamp;
+पूर्ण;
 
-static const u32 hinge_sensitivity_addresses[] = {
+अटल स्थिर u32 hinge_sensitivity_addresses[] = अणु
 	HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(1),
-};
+पूर्ण;
 
 /* Channel definitions */
-static const struct iio_chan_spec hinge_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec hinge_channels[] = अणु
+	अणु
 		.type = IIO_ANGL,
 		.indexed = 1,
 		.channel = 0,
@@ -62,11 +63,11 @@ static const struct iio_chan_spec hinge_channels[] = {
 			BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_SCALE) |
 			BIT(IIO_CHAN_INFO_SAMP_FREQ) | BIT(IIO_CHAN_INFO_HYSTERESIS),
 		.scan_index = CHANNEL_SCAN_INDEX_HINGE_ANGLE,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 's',
 			.storagebits = 32,
-		},
-	}, {
+		पूर्ण,
+	पूर्ण, अणु
 		.type = IIO_ANGL,
 		.indexed = 1,
 		.channel = 1,
@@ -75,11 +76,11 @@ static const struct iio_chan_spec hinge_channels[] = {
 			BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_SCALE) |
 			BIT(IIO_CHAN_INFO_SAMP_FREQ) | BIT(IIO_CHAN_INFO_HYSTERESIS),
 		.scan_index = CHANNEL_SCAN_INDEX_SCREEN_ANGLE,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 's',
 			.storagebits = 32,
-		},
-	}, {
+		पूर्ण,
+	पूर्ण, अणु
 		.type = IIO_ANGL,
 		.indexed = 1,
 		.channel = 2,
@@ -88,41 +89,41 @@ static const struct iio_chan_spec hinge_channels[] = {
 			BIT(IIO_CHAN_INFO_OFFSET) | BIT(IIO_CHAN_INFO_SCALE) |
 			BIT(IIO_CHAN_INFO_SAMP_FREQ) | BIT(IIO_CHAN_INFO_HYSTERESIS),
 		.scan_index = CHANNEL_SCAN_INDEX_KEYBOARD_ANGLE,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 's',
 			.storagebits = 32,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	IIO_CHAN_SOFT_TIMESTAMP(CHANNEL_SCAN_INDEX_TIMESTAMP)
-};
+पूर्ण;
 
 /* Adjust channel real bits based on report descriptor */
-static void hinge_adjust_channel_realbits(struct iio_chan_spec *channels,
-					  int channel, int size)
-{
+अटल व्योम hinge_adjust_channel_realbits(काष्ठा iio_chan_spec *channels,
+					  पूर्णांक channel, पूर्णांक size)
+अणु
 	channels[channel].scan_type.realbits = size * 8;
-}
+पूर्ण
 
-/* Channel read_raw handler */
-static int hinge_read_raw(struct iio_dev *indio_dev,
-			  struct iio_chan_spec const *chan, int *val, int *val2,
-			  long mask)
-{
-	struct hinge_state *st = iio_priv(indio_dev);
-	struct hid_sensor_hub_device *hsdev;
-	int report_id;
+/* Channel पढ़ो_raw handler */
+अटल पूर्णांक hinge_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			  काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val, पूर्णांक *val2,
+			  दीर्घ mask)
+अणु
+	काष्ठा hinge_state *st = iio_priv(indio_dev);
+	काष्ठा hid_sensor_hub_device *hsdev;
+	पूर्णांक report_id;
 	s32 min;
 
 	hsdev = st->common_attributes.hsdev;
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		hid_sensor_power_state(&st->common_attributes, true);
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		hid_sensor_घातer_state(&st->common_attributes, true);
 		report_id = st->hinge[chan->scan_index].report_id;
 		min = st->hinge[chan->scan_index].logical_minimum;
-		if (report_id < 0) {
-			hid_sensor_power_state(&st->common_attributes, false);
-			return -EINVAL;
-		}
+		अगर (report_id < 0) अणु
+			hid_sensor_घातer_state(&st->common_attributes, false);
+			वापस -EINVAL;
+		पूर्ण
 
 		*val = sensor_hub_input_attr_get_raw_value(st->common_attributes.hsdev,
 							   hsdev->usage,
@@ -130,249 +131,249 @@ static int hinge_read_raw(struct iio_dev *indio_dev,
 							   report_id,
 							   SENSOR_HUB_SYNC, min < 0);
 
-		hid_sensor_power_state(&st->common_attributes, false);
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		hid_sensor_घातer_state(&st->common_attributes, false);
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = st->scale_pre_decml;
 		*val2 = st->scale_post_decml;
-		return st->scale_precision;
-	case IIO_CHAN_INFO_OFFSET:
+		वापस st->scale_precision;
+	हाल IIO_CHAN_INFO_OFFSET:
 		*val = st->value_offset;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		return hid_sensor_read_samp_freq_value(&st->common_attributes,
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		वापस hid_sensor_पढ़ो_samp_freq_value(&st->common_attributes,
 						       val, val2);
-	case IIO_CHAN_INFO_HYSTERESIS:
-		return hid_sensor_read_raw_hyst_value(&st->common_attributes,
+	हाल IIO_CHAN_INFO_HYSTERESIS:
+		वापस hid_sensor_पढ़ो_raw_hyst_value(&st->common_attributes,
 						      val, val2);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-/* Channel write_raw handler */
-static int hinge_write_raw(struct iio_dev *indio_dev,
-			   struct iio_chan_spec const *chan, int val, int val2,
-			   long mask)
-{
-	struct hinge_state *st = iio_priv(indio_dev);
+/* Channel ग_लिखो_raw handler */
+अटल पूर्णांक hinge_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val, पूर्णांक val2,
+			   दीर्घ mask)
+अणु
+	काष्ठा hinge_state *st = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		return hid_sensor_write_samp_freq_value(&st->common_attributes,
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		वापस hid_sensor_ग_लिखो_samp_freq_value(&st->common_attributes,
 							val, val2);
-	case IIO_CHAN_INFO_HYSTERESIS:
-		return hid_sensor_write_raw_hyst_value(&st->common_attributes,
+	हाल IIO_CHAN_INFO_HYSTERESIS:
+		वापस hid_sensor_ग_लिखो_raw_hyst_value(&st->common_attributes,
 						       val, val2);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int hinge_read_label(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan, char *label)
-{
-	struct hinge_state *st = iio_priv(indio_dev);
+अटल पूर्णांक hinge_पढ़ो_label(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan, अक्षर *label)
+अणु
+	काष्ठा hinge_state *st = iio_priv(indio_dev);
 
-	return sprintf(label, "%s\n", st->labels[chan->channel]);
-}
+	वापस प्र_लिखो(label, "%s\n", st->labels[chan->channel]);
+पूर्ण
 
-static const struct iio_info hinge_info = {
-	.read_raw = hinge_read_raw,
-	.write_raw = hinge_write_raw,
-	.read_label = hinge_read_label,
-};
+अटल स्थिर काष्ठा iio_info hinge_info = अणु
+	.पढ़ो_raw = hinge_पढ़ो_raw,
+	.ग_लिखो_raw = hinge_ग_लिखो_raw,
+	.पढ़ो_label = hinge_पढ़ो_label,
+पूर्ण;
 
 /*
  * Callback handler to send event after all samples are received
  * and captured.
  */
-static int hinge_proc_event(struct hid_sensor_hub_device *hsdev,
-			    unsigned int usage_id, void *priv)
-{
-	struct iio_dev *indio_dev = platform_get_drvdata(priv);
-	struct hinge_state *st = iio_priv(indio_dev);
+अटल पूर्णांक hinge_proc_event(काष्ठा hid_sensor_hub_device *hsdev,
+			    अचिन्हित पूर्णांक usage_id, व्योम *priv)
+अणु
+	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(priv);
+	काष्ठा hinge_state *st = iio_priv(indio_dev);
 
-	if (atomic_read(&st->common_attributes.data_ready)) {
-		if (!st->timestamp)
-			st->timestamp = iio_get_time_ns(indio_dev);
+	अगर (atomic_पढ़ो(&st->common_attributes.data_पढ़ोy)) अणु
+		अगर (!st->बारtamp)
+			st->बारtamp = iio_get_समय_ns(indio_dev);
 
-		iio_push_to_buffers_with_timestamp(indio_dev, &st->scan,
-						   st->timestamp);
+		iio_push_to_buffers_with_बारtamp(indio_dev, &st->scan,
+						   st->बारtamp);
 
-		st->timestamp = 0;
-	}
-	return 0;
-}
+		st->बारtamp = 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Capture samples in local storage */
-static int hinge_capture_sample(struct hid_sensor_hub_device *hsdev,
-				unsigned int usage_id, size_t raw_len,
-				char *raw_data, void *priv)
-{
-	struct iio_dev *indio_dev = platform_get_drvdata(priv);
-	struct hinge_state *st = iio_priv(indio_dev);
-	int offset;
+अटल पूर्णांक hinge_capture_sample(काष्ठा hid_sensor_hub_device *hsdev,
+				अचिन्हित पूर्णांक usage_id, माप_प्रकार raw_len,
+				अक्षर *raw_data, व्योम *priv)
+अणु
+	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(priv);
+	काष्ठा hinge_state *st = iio_priv(indio_dev);
+	पूर्णांक offset;
 
-	switch (usage_id) {
-	case HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(1):
-	case HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(2):
-	case HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(3):
+	चयन (usage_id) अणु
+	हाल HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(1):
+	हाल HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(2):
+	हाल HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(3):
 		offset = usage_id - HID_USAGE_SENSOR_DATA_FIELD_CUSTOM_VALUE(1);
 		st->scan.hinge_val[offset] = *(u32 *)raw_data;
-		return 0;
-	case HID_USAGE_SENSOR_TIME_TIMESTAMP:
-		st->timestamp = hid_sensor_convert_timestamp(&st->common_attributes,
-							     *(int64_t *)raw_data);
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	हाल HID_USAGE_SENSOR_TIME_TIMESTAMP:
+		st->बारtamp = hid_sensor_convert_बारtamp(&st->common_attributes,
+							     *(पूर्णांक64_t *)raw_data);
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-/* Parse report which is specific to an usage id */
-static int hinge_parse_report(struct platform_device *pdev,
-			      struct hid_sensor_hub_device *hsdev,
-			      struct iio_chan_spec *channels,
-			      unsigned int usage_id, struct hinge_state *st)
-{
-	int ret;
-	int i;
+/* Parse report which is specअगरic to an usage id */
+अटल पूर्णांक hinge_parse_report(काष्ठा platक्रमm_device *pdev,
+			      काष्ठा hid_sensor_hub_device *hsdev,
+			      काष्ठा iio_chan_spec *channels,
+			      अचिन्हित पूर्णांक usage_id, काष्ठा hinge_state *st)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < CHANNEL_SCAN_INDEX_MAX; ++i) {
+	क्रम (i = 0; i < CHANNEL_SCAN_INDEX_MAX; ++i) अणु
 		ret = sensor_hub_input_get_attribute_info(hsdev,
 							  HID_INPUT_REPORT,
 							  usage_id,
 							  hinge_addresses[i],
 							  &st->hinge[i]);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		hinge_adjust_channel_realbits(channels, i, st->hinge[i].size);
-	}
+	पूर्ण
 
-	st->scale_precision = hid_sensor_format_scale(HID_USAGE_SENSOR_HINGE,
+	st->scale_precision = hid_sensor_क्रमmat_scale(HID_USAGE_SENSOR_HINGE,
 			&st->hinge[CHANNEL_SCAN_INDEX_HINGE_ANGLE],
 			&st->scale_pre_decml, &st->scale_post_decml);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Function to initialize the processing for usage id */
-static int hid_hinge_probe(struct platform_device *pdev)
-{
-	struct hinge_state *st;
-	struct iio_dev *indio_dev;
-	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
-	int ret;
-	int i;
+/* Function to initialize the processing क्रम usage id */
+अटल पूर्णांक hid_hinge_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hinge_state *st;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*st));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*st));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, indio_dev);
+	platक्रमm_set_drvdata(pdev, indio_dev);
 
 	st = iio_priv(indio_dev);
 	st->common_attributes.hsdev = hsdev;
 	st->common_attributes.pdev = pdev;
 	st->indio_dev = indio_dev;
-	for (i = 0; i < CHANNEL_SCAN_INDEX_MAX; i++)
+	क्रम (i = 0; i < CHANNEL_SCAN_INDEX_MAX; i++)
 		st->labels[i] = hinge_labels[i];
 
 	ret = hid_sensor_parse_common_attributes(hsdev, hsdev->usage,
 						 &st->common_attributes,
 						 hinge_sensitivity_addresses,
 						 ARRAY_SIZE(hinge_sensitivity_addresses));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to setup common attributes\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	indio_dev->num_channels = ARRAY_SIZE(hinge_channels);
 	indio_dev->channels = devm_kmemdup(&indio_dev->dev, hinge_channels,
-					   sizeof(hinge_channels), GFP_KERNEL);
-	if (!indio_dev->channels)
-		return -ENOMEM;
+					   माप(hinge_channels), GFP_KERNEL);
+	अगर (!indio_dev->channels)
+		वापस -ENOMEM;
 
 	ret = hinge_parse_report(pdev, hsdev,
-				 (struct iio_chan_spec *)indio_dev->channels,
+				 (काष्ठा iio_chan_spec *)indio_dev->channels,
 				 hsdev->usage, st);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to setup attributes\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	indio_dev->dev.parent = &pdev->dev;
 	indio_dev->info = &hinge_info;
 	indio_dev->name = "hinge";
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
-	atomic_set(&st->common_attributes.data_ready, 0);
+	atomic_set(&st->common_attributes.data_पढ़ोy, 0);
 	ret = hid_sensor_setup_trigger(indio_dev, indio_dev->name,
 				       &st->common_attributes);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "trigger setup failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	st->callbacks.send_event = hinge_proc_event;
 	st->callbacks.capture_sample = hinge_capture_sample;
 	st->callbacks.pdev = pdev;
-	ret = sensor_hub_register_callback(hsdev, hsdev->usage, &st->callbacks);
-	if (ret < 0) {
+	ret = sensor_hub_रेजिस्टर_callback(hsdev, hsdev->usage, &st->callbacks);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "callback reg failed\n");
-		goto error_remove_trigger;
-	}
+		जाओ error_हटाओ_trigger;
+	पूर्ण
 
-	ret = iio_device_register(indio_dev);
-	if (ret) {
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "device register failed\n");
-		goto error_remove_callback;
-	}
+		जाओ error_हटाओ_callback;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-error_remove_callback:
-	sensor_hub_remove_callback(hsdev, hsdev->usage);
-error_remove_trigger:
-	hid_sensor_remove_trigger(indio_dev, &st->common_attributes);
-	return ret;
-}
+error_हटाओ_callback:
+	sensor_hub_हटाओ_callback(hsdev, hsdev->usage);
+error_हटाओ_trigger:
+	hid_sensor_हटाओ_trigger(indio_dev, &st->common_attributes);
+	वापस ret;
+पूर्ण
 
-/* Function to deinitialize the processing for usage id */
-static int hid_hinge_remove(struct platform_device *pdev)
-{
-	struct hid_sensor_hub_device *hsdev = pdev->dev.platform_data;
-	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
-	struct hinge_state *st = iio_priv(indio_dev);
+/* Function to deinitialize the processing क्रम usage id */
+अटल पूर्णांक hid_hinge_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hid_sensor_hub_device *hsdev = pdev->dev.platक्रमm_data;
+	काष्ठा iio_dev *indio_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा hinge_state *st = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
-	sensor_hub_remove_callback(hsdev, hsdev->usage);
-	hid_sensor_remove_trigger(indio_dev, &st->common_attributes);
+	iio_device_unरेजिस्टर(indio_dev);
+	sensor_hub_हटाओ_callback(hsdev, hsdev->usage);
+	hid_sensor_हटाओ_trigger(indio_dev, &st->common_attributes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id hid_hinge_ids[] = {
-	{
-		/* Format: HID-SENSOR-INT-usage_id_in_hex_lowercase */
+अटल स्थिर काष्ठा platक्रमm_device_id hid_hinge_ids[] = अणु
+	अणु
+		/* Format: HID-SENSOR-INT-usage_id_in_hex_lowerहाल */
 		.name = "HID-SENSOR-INT-020b",
-	},
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(platform, hid_hinge_ids);
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, hid_hinge_ids);
 
-static struct platform_driver hid_hinge_platform_driver = {
+अटल काष्ठा platक्रमm_driver hid_hinge_platक्रमm_driver = अणु
 	.id_table = hid_hinge_ids,
-	.driver = {
+	.driver = अणु
 		.name	= KBUILD_MODNAME,
 		.pm	= &hid_sensor_pm_ops,
-	},
+	पूर्ण,
 	.probe		= hid_hinge_probe,
-	.remove		= hid_hinge_remove,
-};
-module_platform_driver(hid_hinge_platform_driver);
+	.हटाओ		= hid_hinge_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(hid_hinge_platक्रमm_driver);
 
 MODULE_DESCRIPTION("HID Sensor INTEL Hinge");
 MODULE_AUTHOR("Ye Xiang <xiang.ye@intel.com>");

@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_FB_H_
-#define _ASM_FB_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_FB_H_
+#घोषणा _ASM_FB_H_
 
-#include <linux/fb.h>
-#include <linux/fs.h>
-#include <asm/page.h>
-#include <asm/setup.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/fs.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/setup.h>
 
-#ifdef CONFIG_MMU
-#ifdef CONFIG_SUN3
-static inline void fb_pgprotect(struct file *file, struct vm_area_struct *vma,
-				unsigned long off)
-{
+#अगर_घोषित CONFIG_MMU
+#अगर_घोषित CONFIG_SUN3
+अटल अंतरभूत व्योम fb_pgprotect(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित दीर्घ off)
+अणु
 	pgprot_val(vma->vm_page_prot) |= SUN3_PAGE_NOCACHE;
-}
-#else
-static inline void fb_pgprotect(struct file *file, struct vm_area_struct *vma,
-				unsigned long off)
-{
-	if (CPU_IS_020_OR_030)
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम fb_pgprotect(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित दीर्घ off)
+अणु
+	अगर (CPU_IS_020_OR_030)
 		pgprot_val(vma->vm_page_prot) |= _PAGE_NOCACHE030;
-	if (CPU_IS_040_OR_060) {
+	अगर (CPU_IS_040_OR_060) अणु
 		pgprot_val(vma->vm_page_prot) &= _CACHEMASK040;
 		/* Use no-cache mode, serialized */
 		pgprot_val(vma->vm_page_prot) |= _PAGE_NOCACHE_S;
-	}
-}
-#endif /* CONFIG_SUN3 */
-#else
-#define fb_pgprotect(...) do {} while (0)
-#endif /* CONFIG_MMU */
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SUN3 */
+#अन्यथा
+#घोषणा fb_pgprotect(...) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर /* CONFIG_MMU */
 
-static inline int fb_is_primary_device(struct fb_info *info)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक fb_is_primary_device(काष्ठा fb_info *info)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* _ASM_FB_H_ */
+#पूर्ण_अगर /* _ASM_FB_H_ */

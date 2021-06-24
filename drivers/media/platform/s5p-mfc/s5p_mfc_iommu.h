@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Samsung Electronics Co.Ltd
  * Authors: Marek Szyprowski <m.szyprowski@samsung.com>
  */
 
-#ifndef S5P_MFC_IOMMU_H_
-#define S5P_MFC_IOMMU_H_
+#अगर_अघोषित S5P_MFC_IOMMU_H_
+#घोषणा S5P_MFC_IOMMU_H_
 
-#if defined(CONFIG_EXYNOS_IOMMU)
+#अगर defined(CONFIG_EXYNOS_IOMMU)
 
-#include <linux/iommu.h>
+#समावेश <linux/iommu.h>
 
-static inline bool exynos_is_iommu_available(struct device *dev)
-{
-	return dev_iommu_priv_get(dev) != NULL;
-}
+अटल अंतरभूत bool exynos_is_iommu_available(काष्ठा device *dev)
+अणु
+	वापस dev_iommu_priv_get(dev) != शून्य;
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline bool exynos_is_iommu_available(struct device *dev)
-{
-	return false;
-}
+अटल अंतरभूत bool exynos_is_iommu_available(काष्ठा device *dev)
+अणु
+	वापस false;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* S5P_MFC_IOMMU_H_ */
+#पूर्ण_अगर /* S5P_MFC_IOMMU_H_ */

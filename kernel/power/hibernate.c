@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * kernel/power/hibernate.c - Hibernation (a.k.a suspend-to-disk) support.
+ * kernel/घातer/hibernate.c - Hibernation (a.k.a suspend-to-disk) support.
  *
  * Copyright (c) 2003 Patrick Mochel
  * Copyright (c) 2003 Open Source Development Lab
@@ -9,310 +10,310 @@
  * Copyright (C) 2012 Bojan Smojver <bojan@rexursive.com>
  */
 
-#define pr_fmt(fmt) "PM: hibernation: " fmt
+#घोषणा pr_fmt(fmt) "PM: hibernation: " fmt
 
-#include <linux/export.h>
-#include <linux/suspend.h>
-#include <linux/reboot.h>
-#include <linux/string.h>
-#include <linux/device.h>
-#include <linux/async.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/pm.h>
-#include <linux/nmi.h>
-#include <linux/console.h>
-#include <linux/cpu.h>
-#include <linux/freezer.h>
-#include <linux/gfp.h>
-#include <linux/syscore_ops.h>
-#include <linux/ctype.h>
-#include <linux/genhd.h>
-#include <linux/ktime.h>
-#include <linux/security.h>
-#include <trace/events/power.h>
+#समावेश <linux/export.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/device.h>
+#समावेश <linux/async.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/console.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/genhd.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/security.h>
+#समावेश <trace/events/घातer.h>
 
-#include "power.h"
+#समावेश "power.h"
 
 
-static int nocompress;
-static int noresume;
-static int nohibernate;
-static int resume_wait;
-static unsigned int resume_delay;
-static char resume_file[256] = CONFIG_PM_STD_PARTITION;
+अटल पूर्णांक nocompress;
+अटल पूर्णांक noresume;
+अटल पूर्णांक nohibernate;
+अटल पूर्णांक resume_रुको;
+अटल अचिन्हित पूर्णांक resume_delay;
+अटल अक्षर resume_file[256] = CONFIG_PM_STD_PARTITION;
 dev_t swsusp_resume_device;
 sector_t swsusp_resume_block;
-__visible int in_suspend __nosavedata;
+__visible पूर्णांक in_suspend __nosavedata;
 
-enum {
+क्रमागत अणु
 	HIBERNATION_INVALID,
 	HIBERNATION_PLATFORM,
 	HIBERNATION_SHUTDOWN,
 	HIBERNATION_REBOOT,
-#ifdef CONFIG_SUSPEND
+#अगर_घोषित CONFIG_SUSPEND
 	HIBERNATION_SUSPEND,
-#endif
+#पूर्ण_अगर
 	HIBERNATION_TEST_RESUME,
 	/* keep last */
 	__HIBERNATION_AFTER_LAST
-};
-#define HIBERNATION_MAX (__HIBERNATION_AFTER_LAST-1)
-#define HIBERNATION_FIRST (HIBERNATION_INVALID + 1)
+पूर्ण;
+#घोषणा HIBERNATION_MAX (__HIBERNATION_AFTER_LAST-1)
+#घोषणा HIBERNATION_FIRST (HIBERNATION_INVALID + 1)
 
-static int hibernation_mode = HIBERNATION_SHUTDOWN;
+अटल पूर्णांक hibernation_mode = HIBERNATION_SHUTDOWN;
 
-bool freezer_test_done;
+bool मुक्तzer_test_करोne;
 
-static const struct platform_hibernation_ops *hibernation_ops;
+अटल स्थिर काष्ठा platक्रमm_hibernation_ops *hibernation_ops;
 
-static atomic_t hibernate_atomic = ATOMIC_INIT(1);
+अटल atomic_t hibernate_atomic = ATOMIC_INIT(1);
 
-bool hibernate_acquire(void)
-{
-	return atomic_add_unless(&hibernate_atomic, -1, 0);
-}
+bool hibernate_acquire(व्योम)
+अणु
+	वापस atomic_add_unless(&hibernate_atomic, -1, 0);
+पूर्ण
 
-void hibernate_release(void)
-{
+व्योम hibernate_release(व्योम)
+अणु
 	atomic_inc(&hibernate_atomic);
-}
+पूर्ण
 
-bool hibernation_available(void)
-{
-	return nohibernate == 0 && !security_locked_down(LOCKDOWN_HIBERNATION);
-}
+bool hibernation_available(व्योम)
+अणु
+	वापस nohibernate == 0 && !security_locked_करोwn(LOCKDOWN_HIBERNATION);
+पूर्ण
 
 /**
  * hibernation_set_ops - Set the global hibernate operations.
  * @ops: Hibernation operations to use in subsequent hibernation transitions.
  */
-void hibernation_set_ops(const struct platform_hibernation_ops *ops)
-{
-	if (ops && !(ops->begin && ops->end &&  ops->pre_snapshot
+व्योम hibernation_set_ops(स्थिर काष्ठा platक्रमm_hibernation_ops *ops)
+अणु
+	अगर (ops && !(ops->begin && ops->end &&  ops->pre_snapshot
 	    && ops->prepare && ops->finish && ops->enter && ops->pre_restore
-	    && ops->restore_cleanup && ops->leave)) {
+	    && ops->restore_cleanup && ops->leave)) अणु
 		WARN_ON(1);
-		return;
-	}
-	lock_system_sleep();
+		वापस;
+	पूर्ण
+	lock_प्रणाली_sleep();
 	hibernation_ops = ops;
-	if (ops)
+	अगर (ops)
 		hibernation_mode = HIBERNATION_PLATFORM;
-	else if (hibernation_mode == HIBERNATION_PLATFORM)
+	अन्यथा अगर (hibernation_mode == HIBERNATION_PLATFORM)
 		hibernation_mode = HIBERNATION_SHUTDOWN;
 
-	unlock_system_sleep();
-}
+	unlock_प्रणाली_sleep();
+पूर्ण
 EXPORT_SYMBOL_GPL(hibernation_set_ops);
 
-static bool entering_platform_hibernation;
+अटल bool entering_platक्रमm_hibernation;
 
-bool system_entering_hibernation(void)
-{
-	return entering_platform_hibernation;
-}
-EXPORT_SYMBOL(system_entering_hibernation);
+bool प्रणाली_entering_hibernation(व्योम)
+अणु
+	वापस entering_platक्रमm_hibernation;
+पूर्ण
+EXPORT_SYMBOL(प्रणाली_entering_hibernation);
 
-#ifdef CONFIG_PM_DEBUG
-static void hibernation_debug_sleep(void)
-{
+#अगर_घोषित CONFIG_PM_DEBUG
+अटल व्योम hibernation_debug_sleep(व्योम)
+अणु
 	pr_info("debug: Waiting for 5 seconds.\n");
 	mdelay(5000);
-}
+पूर्ण
 
-static int hibernation_test(int level)
-{
-	if (pm_test_level == level) {
+अटल पूर्णांक hibernation_test(पूर्णांक level)
+अणु
+	अगर (pm_test_level == level) अणु
 		hibernation_debug_sleep();
-		return 1;
-	}
-	return 0;
-}
-#else /* !CONFIG_PM_DEBUG */
-static int hibernation_test(int level) { return 0; }
-#endif /* !CONFIG_PM_DEBUG */
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#अन्यथा /* !CONFIG_PM_DEBUG */
+अटल पूर्णांक hibernation_test(पूर्णांक level) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* !CONFIG_PM_DEBUG */
 
 /**
- * platform_begin - Call platform to start hibernation.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_begin - Call platक्रमm to start hibernation.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  */
-static int platform_begin(int platform_mode)
-{
-	return (platform_mode && hibernation_ops) ?
+अटल पूर्णांक platक्रमm_begin(पूर्णांक platक्रमm_mode)
+अणु
+	वापस (platक्रमm_mode && hibernation_ops) ?
 		hibernation_ops->begin(PMSG_FREEZE) : 0;
-}
+पूर्ण
 
 /**
- * platform_end - Call platform to finish transition to the working state.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_end - Call platक्रमm to finish transition to the working state.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  */
-static void platform_end(int platform_mode)
-{
-	if (platform_mode && hibernation_ops)
+अटल व्योम platक्रमm_end(पूर्णांक platक्रमm_mode)
+अणु
+	अगर (platक्रमm_mode && hibernation_ops)
 		hibernation_ops->end();
-}
+पूर्ण
 
 /**
- * platform_pre_snapshot - Call platform to prepare the machine for hibernation.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_pre_snapshot - Call platक्रमm to prepare the machine क्रम hibernation.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  *
- * Use the platform driver to prepare the system for creating a hibernate image,
- * if so configured, and return an error code if that fails.
+ * Use the platक्रमm driver to prepare the प्रणाली क्रम creating a hibernate image,
+ * अगर so configured, and वापस an error code अगर that fails.
  */
 
-static int platform_pre_snapshot(int platform_mode)
-{
-	return (platform_mode && hibernation_ops) ?
+अटल पूर्णांक platक्रमm_pre_snapshot(पूर्णांक platक्रमm_mode)
+अणु
+	वापस (platक्रमm_mode && hibernation_ops) ?
 		hibernation_ops->pre_snapshot() : 0;
-}
+पूर्ण
 
 /**
- * platform_leave - Call platform to prepare a transition to the working state.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_leave - Call platक्रमm to prepare a transition to the working state.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  *
- * Use the platform driver prepare to prepare the machine for switching to the
+ * Use the platक्रमm driver prepare to prepare the machine क्रम चयनing to the
  * normal mode of operation.
  *
- * This routine is called on one CPU with interrupts disabled.
+ * This routine is called on one CPU with पूर्णांकerrupts disabled.
  */
-static void platform_leave(int platform_mode)
-{
-	if (platform_mode && hibernation_ops)
+अटल व्योम platक्रमm_leave(पूर्णांक platक्रमm_mode)
+अणु
+	अगर (platक्रमm_mode && hibernation_ops)
 		hibernation_ops->leave();
-}
+पूर्ण
 
 /**
- * platform_finish - Call platform to switch the system to the working state.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_finish - Call platक्रमm to चयन the प्रणाली to the working state.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  *
- * Use the platform driver to switch the machine to the normal mode of
+ * Use the platक्रमm driver to चयन the machine to the normal mode of
  * operation.
  *
- * This routine must be called after platform_prepare().
+ * This routine must be called after platक्रमm_prepare().
  */
-static void platform_finish(int platform_mode)
-{
-	if (platform_mode && hibernation_ops)
+अटल व्योम platक्रमm_finish(पूर्णांक platक्रमm_mode)
+अणु
+	अगर (platक्रमm_mode && hibernation_ops)
 		hibernation_ops->finish();
-}
+पूर्ण
 
 /**
- * platform_pre_restore - Prepare for hibernate image restoration.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_pre_restore - Prepare क्रम hibernate image restoration.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  *
- * Use the platform driver to prepare the system for resume from a hibernation
+ * Use the platक्रमm driver to prepare the प्रणाली क्रम resume from a hibernation
  * image.
  *
  * If the restore fails after this function has been called,
- * platform_restore_cleanup() must be called.
+ * platक्रमm_restore_cleanup() must be called.
  */
-static int platform_pre_restore(int platform_mode)
-{
-	return (platform_mode && hibernation_ops) ?
+अटल पूर्णांक platक्रमm_pre_restore(पूर्णांक platक्रमm_mode)
+अणु
+	वापस (platक्रमm_mode && hibernation_ops) ?
 		hibernation_ops->pre_restore() : 0;
-}
+पूर्ण
 
 /**
- * platform_restore_cleanup - Switch to the working state after failing restore.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_restore_cleanup - Switch to the working state after failing restore.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  *
- * Use the platform driver to switch the system to the normal mode of operation
+ * Use the platक्रमm driver to चयन the प्रणाली to the normal mode of operation
  * after a failing restore.
  *
- * If platform_pre_restore() has been called before the failing restore, this
+ * If platक्रमm_pre_restore() has been called beक्रमe the failing restore, this
  * function must be called too, regardless of the result of
- * platform_pre_restore().
+ * platक्रमm_pre_restore().
  */
-static void platform_restore_cleanup(int platform_mode)
-{
-	if (platform_mode && hibernation_ops)
+अटल व्योम platक्रमm_restore_cleanup(पूर्णांक platक्रमm_mode)
+अणु
+	अगर (platक्रमm_mode && hibernation_ops)
 		hibernation_ops->restore_cleanup();
-}
+पूर्ण
 
 /**
- * platform_recover - Recover from a failure to suspend devices.
- * @platform_mode: Whether or not to use the platform driver.
+ * platक्रमm_recover - Recover from a failure to suspend devices.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  */
-static void platform_recover(int platform_mode)
-{
-	if (platform_mode && hibernation_ops && hibernation_ops->recover)
+अटल व्योम platक्रमm_recover(पूर्णांक platक्रमm_mode)
+अणु
+	अगर (platक्रमm_mode && hibernation_ops && hibernation_ops->recover)
 		hibernation_ops->recover();
-}
+पूर्ण
 
 /**
- * swsusp_show_speed - Print time elapsed between two events during hibernation.
+ * swsusp_show_speed - Prपूर्णांक समय elapsed between two events during hibernation.
  * @start: Starting event.
  * @stop: Final event.
  * @nr_pages: Number of memory pages processed between @start and @stop.
- * @msg: Additional diagnostic message to print.
+ * @msg: Additional diagnostic message to prपूर्णांक.
  */
-void swsusp_show_speed(ktime_t start, ktime_t stop,
-		      unsigned nr_pages, char *msg)
-{
-	ktime_t diff;
+व्योम swsusp_show_speed(kसमय_प्रकार start, kसमय_प्रकार stop,
+		      अचिन्हित nr_pages, अक्षर *msg)
+अणु
+	kसमय_प्रकार dअगरf;
 	u64 elapsed_centisecs64;
-	unsigned int centisecs;
-	unsigned int k;
-	unsigned int kps;
+	अचिन्हित पूर्णांक centisecs;
+	अचिन्हित पूर्णांक k;
+	अचिन्हित पूर्णांक kps;
 
-	diff = ktime_sub(stop, start);
-	elapsed_centisecs64 = ktime_divns(diff, 10*NSEC_PER_MSEC);
+	dअगरf = kसमय_sub(stop, start);
+	elapsed_centisecs64 = kसमय_भागns(dअगरf, 10*NSEC_PER_MSEC);
 	centisecs = elapsed_centisecs64;
-	if (centisecs == 0)
-		centisecs = 1;	/* avoid div-by-zero */
+	अगर (centisecs == 0)
+		centisecs = 1;	/* aव्योम भाग-by-zero */
 	k = nr_pages * (PAGE_SIZE / 1024);
 	kps = (k * 100) / centisecs;
 	pr_info("%s %u kbytes in %u.%02u seconds (%u.%02u MB/s)\n",
 		msg, k, centisecs / 100, centisecs % 100, kps / 1000,
 		(kps % 1000) / 10);
-}
+पूर्ण
 
-__weak int arch_resume_nosmt(void)
-{
-	return 0;
-}
+__weak पूर्णांक arch_resume_nosmt(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
  * create_image - Create a hibernation image.
- * @platform_mode: Whether or not to use the platform driver.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  *
- * Execute device drivers' "late" and "noirq" freeze callbacks, create a
+ * Execute device drivers' "late" and "noirq" मुक्तze callbacks, create a
  * hibernation image and run the drivers' "noirq" and "early" thaw callbacks.
  *
  * Control reappears in this routine after the subsequent restore.
  */
-static int create_image(int platform_mode)
-{
-	int error;
+अटल पूर्णांक create_image(पूर्णांक platक्रमm_mode)
+अणु
+	पूर्णांक error;
 
 	error = dpm_suspend_end(PMSG_FREEZE);
-	if (error) {
+	अगर (error) अणु
 		pr_err("Some devices failed to power down, aborting\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = platform_pre_snapshot(platform_mode);
-	if (error || hibernation_test(TEST_PLATFORM))
-		goto Platform_finish;
+	error = platक्रमm_pre_snapshot(platक्रमm_mode);
+	अगर (error || hibernation_test(TEST_PLATFORM))
+		जाओ Platक्रमm_finish;
 
 	error = suspend_disable_secondary_cpus();
-	if (error || hibernation_test(TEST_CPUS))
-		goto Enable_cpus;
+	अगर (error || hibernation_test(TEST_CPUS))
+		जाओ Enable_cpus;
 
 	local_irq_disable();
 
-	system_state = SYSTEM_SUSPEND;
+	प्रणाली_state = SYSTEM_SUSPEND;
 
 	error = syscore_suspend();
-	if (error) {
+	अगर (error) अणु
 		pr_err("Some system devices failed to power down, aborting\n");
-		goto Enable_irqs;
-	}
+		जाओ Enable_irqs;
+	पूर्ण
 
-	if (hibernation_test(TEST_CORE) || pm_wakeup_pending())
-		goto Power_up;
+	अगर (hibernation_test(TEST_CORE) || pm_wakeup_pending())
+		जाओ Power_up;
 
 	in_suspend = 1;
 	save_processor_state();
@@ -321,166 +322,166 @@ static int create_image(int platform_mode)
 	/* Restore control flow magically appears here */
 	restore_processor_state();
 	trace_suspend_resume(TPS("machine_suspend"), PM_EVENT_HIBERNATE, false);
-	if (error)
+	अगर (error)
 		pr_err("Error %d creating image\n", error);
 
-	if (!in_suspend) {
+	अगर (!in_suspend) अणु
 		events_check_enabled = false;
-		clear_or_poison_free_pages();
-	}
+		clear_or_poison_मुक्त_pages();
+	पूर्ण
 
-	platform_leave(platform_mode);
+	platक्रमm_leave(platक्रमm_mode);
 
  Power_up:
 	syscore_resume();
 
  Enable_irqs:
-	system_state = SYSTEM_RUNNING;
+	प्रणाली_state = SYSTEM_RUNNING;
 	local_irq_enable();
 
  Enable_cpus:
 	suspend_enable_secondary_cpus();
 
-	/* Allow architectures to do nosmt-specific post-resume dances */
-	if (!in_suspend)
+	/* Allow architectures to करो nosmt-specअगरic post-resume dances */
+	अगर (!in_suspend)
 		error = arch_resume_nosmt();
 
- Platform_finish:
-	platform_finish(platform_mode);
+ Platक्रमm_finish:
+	platक्रमm_finish(platक्रमm_mode);
 
 	dpm_resume_start(in_suspend ?
 		(error ? PMSG_RECOVER : PMSG_THAW) : PMSG_RESTORE);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * hibernation_snapshot - Quiesce devices and create a hibernation image.
- * @platform_mode: If set, use platform driver to prepare for the transition.
+ * @platक्रमm_mode: If set, use platक्रमm driver to prepare क्रम the transition.
  *
- * This routine must be called with system_transition_mutex held.
+ * This routine must be called with प्रणाली_transition_mutex held.
  */
-int hibernation_snapshot(int platform_mode)
-{
+पूर्णांक hibernation_snapshot(पूर्णांक platक्रमm_mode)
+अणु
 	pm_message_t msg;
-	int error;
+	पूर्णांक error;
 
 	pm_suspend_clear_flags();
-	error = platform_begin(platform_mode);
-	if (error)
-		goto Close;
+	error = platक्रमm_begin(platक्रमm_mode);
+	अगर (error)
+		जाओ Close;
 
-	/* Preallocate image memory before shutting down devices. */
-	error = hibernate_preallocate_memory();
-	if (error)
-		goto Close;
+	/* Pपुनः_स्मृतिate image memory beक्रमe shutting करोwn devices. */
+	error = hibernate_pपुनः_स्मृतिate_memory();
+	अगर (error)
+		जाओ Close;
 
-	error = freeze_kernel_threads();
-	if (error)
-		goto Cleanup;
+	error = मुक्तze_kernel_thपढ़ोs();
+	अगर (error)
+		जाओ Cleanup;
 
-	if (hibernation_test(TEST_FREEZER)) {
+	अगर (hibernation_test(TEST_FREEZER)) अणु
 
 		/*
-		 * Indicate to the caller that we are returning due to a
-		 * successful freezer test.
+		 * Indicate to the caller that we are वापसing due to a
+		 * successful मुक्तzer test.
 		 */
-		freezer_test_done = true;
-		goto Thaw;
-	}
+		मुक्तzer_test_करोne = true;
+		जाओ Thaw;
+	पूर्ण
 
 	error = dpm_prepare(PMSG_FREEZE);
-	if (error) {
+	अगर (error) अणु
 		dpm_complete(PMSG_RECOVER);
-		goto Thaw;
-	}
+		जाओ Thaw;
+	पूर्ण
 
 	suspend_console();
 	pm_restrict_gfp_mask();
 
 	error = dpm_suspend(PMSG_FREEZE);
 
-	if (error || hibernation_test(TEST_DEVICES))
-		platform_recover(platform_mode);
-	else
-		error = create_image(platform_mode);
+	अगर (error || hibernation_test(TEST_DEVICES))
+		platक्रमm_recover(platक्रमm_mode);
+	अन्यथा
+		error = create_image(platक्रमm_mode);
 
 	/*
-	 * In the case that we call create_image() above, the control
-	 * returns here (1) after the image has been created or the
+	 * In the हाल that we call create_image() above, the control
+	 * वापसs here (1) after the image has been created or the
 	 * image creation has failed and (2) after a successful restore.
 	 */
 
-	/* We may need to release the preallocated image pages here. */
-	if (error || !in_suspend)
-		swsusp_free();
+	/* We may need to release the pपुनः_स्मृतिated image pages here. */
+	अगर (error || !in_suspend)
+		swsusp_मुक्त();
 
 	msg = in_suspend ? (error ? PMSG_RECOVER : PMSG_THAW) : PMSG_RESTORE;
 	dpm_resume(msg);
 
-	if (error || !in_suspend)
+	अगर (error || !in_suspend)
 		pm_restore_gfp_mask();
 
 	resume_console();
 	dpm_complete(msg);
 
  Close:
-	platform_end(platform_mode);
-	return error;
+	platक्रमm_end(platक्रमm_mode);
+	वापस error;
 
  Thaw:
-	thaw_kernel_threads();
+	thaw_kernel_thपढ़ोs();
  Cleanup:
-	swsusp_free();
-	goto Close;
-}
+	swsusp_मुक्त();
+	जाओ Close;
+पूर्ण
 
-int __weak hibernate_resume_nonboot_cpu_disable(void)
-{
-	return suspend_disable_secondary_cpus();
-}
+पूर्णांक __weak hibernate_resume_nonboot_cpu_disable(व्योम)
+अणु
+	वापस suspend_disable_secondary_cpus();
+पूर्ण
 
 /**
- * resume_target_kernel - Restore system state from a hibernation image.
- * @platform_mode: Whether or not to use the platform driver.
+ * resume_target_kernel - Restore प्रणाली state from a hibernation image.
+ * @platक्रमm_mode: Whether or not to use the platक्रमm driver.
  *
- * Execute device drivers' "noirq" and "late" freeze callbacks, restore the
+ * Execute device drivers' "noirq" and "late" मुक्तze callbacks, restore the
  * contents of highmem that have not been restored yet from the image and run
- * the low-level code that will restore the remaining contents of memory and
- * switch to the just restored target kernel.
+ * the low-level code that will restore the reमुख्यing contents of memory and
+ * चयन to the just restored target kernel.
  */
-static int resume_target_kernel(bool platform_mode)
-{
-	int error;
+अटल पूर्णांक resume_target_kernel(bool platक्रमm_mode)
+अणु
+	पूर्णांक error;
 
 	error = dpm_suspend_end(PMSG_QUIESCE);
-	if (error) {
+	अगर (error) अणु
 		pr_err("Some devices failed to power down, aborting resume\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = platform_pre_restore(platform_mode);
-	if (error)
-		goto Cleanup;
+	error = platक्रमm_pre_restore(platक्रमm_mode);
+	अगर (error)
+		जाओ Cleanup;
 
 	error = hibernate_resume_nonboot_cpu_disable();
-	if (error)
-		goto Enable_cpus;
+	अगर (error)
+		जाओ Enable_cpus;
 
 	local_irq_disable();
-	system_state = SYSTEM_SUSPEND;
+	प्रणाली_state = SYSTEM_SUSPEND;
 
 	error = syscore_suspend();
-	if (error)
-		goto Enable_irqs;
+	अगर (error)
+		जाओ Enable_irqs;
 
 	save_processor_state();
 	error = restore_highmem();
-	if (!error) {
+	अगर (!error) अणु
 		error = swsusp_arch_resume();
 		/*
-		 * The code below is only ever reached in case of a failure.
-		 * Otherwise, execution continues at the place where
+		 * The code below is only ever reached in हाल of a failure.
+		 * Otherwise, execution जारीs at the place where
 		 * swsusp_arch_suspend() was called.
 		 */
 		BUG_ON(!error);
@@ -489,373 +490,373 @@ static int resume_target_kernel(bool platform_mode)
 		 * the previous one.
 		 */
 		restore_highmem();
-	}
+	पूर्ण
 	/*
 	 * The only reason why swsusp_arch_resume() can fail is memory being
-	 * very tight, so we have to free it as soon as we can to avoid
+	 * very tight, so we have to मुक्त it as soon as we can to aव्योम
 	 * subsequent failures.
 	 */
-	swsusp_free();
+	swsusp_मुक्त();
 	restore_processor_state();
-	touch_softlockup_watchdog();
+	touch_softlockup_watchकरोg();
 
 	syscore_resume();
 
  Enable_irqs:
-	system_state = SYSTEM_RUNNING;
+	प्रणाली_state = SYSTEM_RUNNING;
 	local_irq_enable();
 
  Enable_cpus:
 	suspend_enable_secondary_cpus();
 
  Cleanup:
-	platform_restore_cleanup(platform_mode);
+	platक्रमm_restore_cleanup(platक्रमm_mode);
 
 	dpm_resume_start(PMSG_RECOVER);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * hibernation_restore - Quiesce devices and restore from a hibernation image.
- * @platform_mode: If set, use platform driver to prepare for the transition.
+ * @platक्रमm_mode: If set, use platक्रमm driver to prepare क्रम the transition.
  *
- * This routine must be called with system_transition_mutex held.  If it is
+ * This routine must be called with प्रणाली_transition_mutex held.  If it is
  * successful, control reappears in the restored target kernel in
  * hibernation_snapshot().
  */
-int hibernation_restore(int platform_mode)
-{
-	int error;
+पूर्णांक hibernation_restore(पूर्णांक platक्रमm_mode)
+अणु
+	पूर्णांक error;
 
 	pm_prepare_console();
 	suspend_console();
 	pm_restrict_gfp_mask();
 	error = dpm_suspend_start(PMSG_QUIESCE);
-	if (!error) {
-		error = resume_target_kernel(platform_mode);
+	अगर (!error) अणु
+		error = resume_target_kernel(platक्रमm_mode);
 		/*
 		 * The above should either succeed and jump to the new kernel,
-		 * or return with an error. Otherwise things are just
+		 * or वापस with an error. Otherwise things are just
 		 * undefined, so let's be paranoid.
 		 */
 		BUG_ON(!error);
-	}
+	पूर्ण
 	dpm_resume_end(PMSG_RECOVER);
 	pm_restore_gfp_mask();
 	resume_console();
 	pm_restore_console();
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * hibernation_platform_enter - Power off the system using the platform driver.
+ * hibernation_platक्रमm_enter - Power off the प्रणाली using the platक्रमm driver.
  */
-int hibernation_platform_enter(void)
-{
-	int error;
+पूर्णांक hibernation_platक्रमm_enter(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (!hibernation_ops)
-		return -ENOSYS;
+	अगर (!hibernation_ops)
+		वापस -ENOSYS;
 
 	/*
-	 * We have cancelled the power transition by running
-	 * hibernation_ops->finish() before saving the image, so we should let
+	 * We have cancelled the घातer transition by running
+	 * hibernation_ops->finish() beक्रमe saving the image, so we should let
 	 * the firmware know that we're going to enter the sleep state after all
 	 */
 	error = hibernation_ops->begin(PMSG_HIBERNATE);
-	if (error)
-		goto Close;
+	अगर (error)
+		जाओ Close;
 
-	entering_platform_hibernation = true;
+	entering_platक्रमm_hibernation = true;
 	suspend_console();
 	error = dpm_suspend_start(PMSG_HIBERNATE);
-	if (error) {
-		if (hibernation_ops->recover)
+	अगर (error) अणु
+		अगर (hibernation_ops->recover)
 			hibernation_ops->recover();
-		goto Resume_devices;
-	}
+		जाओ Resume_devices;
+	पूर्ण
 
 	error = dpm_suspend_end(PMSG_HIBERNATE);
-	if (error)
-		goto Resume_devices;
+	अगर (error)
+		जाओ Resume_devices;
 
 	error = hibernation_ops->prepare();
-	if (error)
-		goto Platform_finish;
+	अगर (error)
+		जाओ Platक्रमm_finish;
 
 	error = suspend_disable_secondary_cpus();
-	if (error)
-		goto Enable_cpus;
+	अगर (error)
+		जाओ Enable_cpus;
 
 	local_irq_disable();
-	system_state = SYSTEM_SUSPEND;
+	प्रणाली_state = SYSTEM_SUSPEND;
 	syscore_suspend();
-	if (pm_wakeup_pending()) {
+	अगर (pm_wakeup_pending()) अणु
 		error = -EAGAIN;
-		goto Power_up;
-	}
+		जाओ Power_up;
+	पूर्ण
 
 	hibernation_ops->enter();
 	/* We should never get here */
-	while (1);
+	जबतक (1);
 
  Power_up:
 	syscore_resume();
-	system_state = SYSTEM_RUNNING;
+	प्रणाली_state = SYSTEM_RUNNING;
 	local_irq_enable();
 
  Enable_cpus:
 	suspend_enable_secondary_cpus();
 
- Platform_finish:
+ Platक्रमm_finish:
 	hibernation_ops->finish();
 
 	dpm_resume_start(PMSG_RESTORE);
 
  Resume_devices:
-	entering_platform_hibernation = false;
+	entering_platक्रमm_hibernation = false;
 	dpm_resume_end(PMSG_RESTORE);
 	resume_console();
 
  Close:
 	hibernation_ops->end();
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * power_down - Shut the machine down for hibernation.
+ * घातer_करोwn - Shut the machine करोwn क्रम hibernation.
  *
- * Use the platform driver, if configured, to put the system into the sleep
- * state corresponding to hibernation, or try to power it off or reboot,
+ * Use the platक्रमm driver, अगर configured, to put the प्रणाली पूर्णांकo the sleep
+ * state corresponding to hibernation, or try to घातer it off or reboot,
  * depending on the value of hibernation_mode.
  */
-static void power_down(void)
-{
-#ifdef CONFIG_SUSPEND
-	int error;
+अटल व्योम घातer_करोwn(व्योम)
+अणु
+#अगर_घोषित CONFIG_SUSPEND
+	पूर्णांक error;
 
-	if (hibernation_mode == HIBERNATION_SUSPEND) {
+	अगर (hibernation_mode == HIBERNATION_SUSPEND) अणु
 		error = suspend_devices_and_enter(PM_SUSPEND_MEM);
-		if (error) {
+		अगर (error) अणु
 			hibernation_mode = hibernation_ops ?
 						HIBERNATION_PLATFORM :
 						HIBERNATION_SHUTDOWN;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Restore swap signature. */
 			error = swsusp_unmark();
-			if (error)
+			अगर (error)
 				pr_err("Swap will be unusable! Try swapon -a.\n");
 
-			return;
-		}
-	}
-#endif
+			वापस;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	switch (hibernation_mode) {
-	case HIBERNATION_REBOOT:
-		kernel_restart(NULL);
-		break;
-	case HIBERNATION_PLATFORM:
-		hibernation_platform_enter();
+	चयन (hibernation_mode) अणु
+	हाल HIBERNATION_REBOOT:
+		kernel_restart(शून्य);
+		अवरोध;
+	हाल HIBERNATION_PLATFORM:
+		hibernation_platक्रमm_enter();
 		fallthrough;
-	case HIBERNATION_SHUTDOWN:
-		if (pm_power_off)
-			kernel_power_off();
-		break;
-	}
+	हाल HIBERNATION_SHUTDOWN:
+		अगर (pm_घातer_off)
+			kernel_घातer_off();
+		अवरोध;
+	पूर्ण
 	kernel_halt();
 	/*
-	 * Valid image is on the disk, if we continue we risk serious data
+	 * Valid image is on the disk, अगर we जारी we risk serious data
 	 * corruption after resume.
 	 */
 	pr_crit("Power down manually\n");
-	while (1)
+	जबतक (1)
 		cpu_relax();
-}
+पूर्ण
 
-static int load_image_and_restore(void)
-{
-	int error;
-	unsigned int flags;
+अटल पूर्णांक load_image_and_restore(व्योम)
+अणु
+	पूर्णांक error;
+	अचिन्हित पूर्णांक flags;
 
 	pm_pr_dbg("Loading hibernation image.\n");
 
 	lock_device_hotplug();
-	error = create_basic_memory_bitmaps();
-	if (error)
-		goto Unlock;
+	error = create_basic_memory_biपंचांगaps();
+	अगर (error)
+		जाओ Unlock;
 
-	error = swsusp_read(&flags);
-	swsusp_close(FMODE_READ);
-	if (!error)
+	error = swsusp_पढ़ो(&flags);
+	swsusp_बंद(FMODE_READ);
+	अगर (!error)
 		error = hibernation_restore(flags & SF_PLATFORM_MODE);
 
 	pr_err("Failed to load image, recovering.\n");
-	swsusp_free();
-	free_basic_memory_bitmaps();
+	swsusp_मुक्त();
+	मुक्त_basic_memory_biपंचांगaps();
  Unlock:
 	unlock_device_hotplug();
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * hibernate - Carry out system hibernation, including saving the image.
+ * hibernate - Carry out प्रणाली hibernation, including saving the image.
  */
-int hibernate(void)
-{
+पूर्णांक hibernate(व्योम)
+अणु
 	bool snapshot_test = false;
-	int error;
+	पूर्णांक error;
 
-	if (!hibernation_available()) {
+	अगर (!hibernation_available()) अणु
 		pm_pr_dbg("Hibernation not available.\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	lock_system_sleep();
-	/* The snapshot device should not be opened while we're running */
-	if (!hibernate_acquire()) {
+	lock_प्रणाली_sleep();
+	/* The snapshot device should not be खोलोed जबतक we're running */
+	अगर (!hibernate_acquire()) अणु
 		error = -EBUSY;
-		goto Unlock;
-	}
+		जाओ Unlock;
+	पूर्ण
 
 	pr_info("hibernation entry\n");
 	pm_prepare_console();
-	error = pm_notifier_call_chain_robust(PM_HIBERNATION_PREPARE, PM_POST_HIBERNATION);
-	if (error)
-		goto Restore;
+	error = pm_notअगरier_call_chain_robust(PM_HIBERNATION_PREPARE, PM_POST_HIBERNATION);
+	अगर (error)
+		जाओ Restore;
 
 	ksys_sync_helper();
 
-	error = freeze_processes();
-	if (error)
-		goto Exit;
+	error = मुक्तze_processes();
+	अगर (error)
+		जाओ Exit;
 
 	lock_device_hotplug();
-	/* Allocate memory management structures */
-	error = create_basic_memory_bitmaps();
-	if (error)
-		goto Thaw;
+	/* Allocate memory management काष्ठाures */
+	error = create_basic_memory_biपंचांगaps();
+	अगर (error)
+		जाओ Thaw;
 
 	error = hibernation_snapshot(hibernation_mode == HIBERNATION_PLATFORM);
-	if (error || freezer_test_done)
-		goto Free_bitmaps;
+	अगर (error || मुक्तzer_test_करोne)
+		जाओ Free_biपंचांगaps;
 
-	if (in_suspend) {
-		unsigned int flags = 0;
+	अगर (in_suspend) अणु
+		अचिन्हित पूर्णांक flags = 0;
 
-		if (hibernation_mode == HIBERNATION_PLATFORM)
+		अगर (hibernation_mode == HIBERNATION_PLATFORM)
 			flags |= SF_PLATFORM_MODE;
-		if (nocompress)
+		अगर (nocompress)
 			flags |= SF_NOCOMPRESS_MODE;
-		else
+		अन्यथा
 		        flags |= SF_CRC32_MODE;
 
 		pm_pr_dbg("Writing hibernation image.\n");
-		error = swsusp_write(flags);
-		swsusp_free();
-		if (!error) {
-			if (hibernation_mode == HIBERNATION_TEST_RESUME)
+		error = swsusp_ग_लिखो(flags);
+		swsusp_मुक्त();
+		अगर (!error) अणु
+			अगर (hibernation_mode == HIBERNATION_TEST_RESUME)
 				snapshot_test = true;
-			else
-				power_down();
-		}
+			अन्यथा
+				घातer_करोwn();
+		पूर्ण
 		in_suspend = 0;
 		pm_restore_gfp_mask();
-	} else {
+	पूर्ण अन्यथा अणु
 		pm_pr_dbg("Hibernation image restored successfully.\n");
-	}
+	पूर्ण
 
- Free_bitmaps:
-	free_basic_memory_bitmaps();
+ Free_biपंचांगaps:
+	मुक्त_basic_memory_biपंचांगaps();
  Thaw:
 	unlock_device_hotplug();
-	if (snapshot_test) {
+	अगर (snapshot_test) अणु
 		pm_pr_dbg("Checking hibernation image\n");
 		error = swsusp_check();
-		if (!error)
+		अगर (!error)
 			error = load_image_and_restore();
-	}
+	पूर्ण
 	thaw_processes();
 
-	/* Don't bother checking whether freezer_test_done is true */
-	freezer_test_done = false;
+	/* Don't bother checking whether मुक्तzer_test_करोne is true */
+	मुक्तzer_test_करोne = false;
  Exit:
-	pm_notifier_call_chain(PM_POST_HIBERNATION);
+	pm_notअगरier_call_chain(PM_POST_HIBERNATION);
  Restore:
 	pm_restore_console();
 	hibernate_release();
  Unlock:
-	unlock_system_sleep();
+	unlock_प्रणाली_sleep();
 	pr_info("hibernation exit\n");
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * hibernate_quiet_exec - Execute a function with all devices frozen.
  * @func: Function to execute.
- * @data: Data pointer to pass to @func.
+ * @data: Data poपूर्णांकer to pass to @func.
  *
- * Return the @func return value or an error code if it cannot be executed.
+ * Return the @func वापस value or an error code अगर it cannot be executed.
  */
-int hibernate_quiet_exec(int (*func)(void *data), void *data)
-{
-	int error;
+पूर्णांक hibernate_quiet_exec(पूर्णांक (*func)(व्योम *data), व्योम *data)
+अणु
+	पूर्णांक error;
 
-	lock_system_sleep();
+	lock_प्रणाली_sleep();
 
-	if (!hibernate_acquire()) {
+	अगर (!hibernate_acquire()) अणु
 		error = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	pm_prepare_console();
 
-	error = pm_notifier_call_chain_robust(PM_HIBERNATION_PREPARE, PM_POST_HIBERNATION);
-	if (error)
-		goto restore;
+	error = pm_notअगरier_call_chain_robust(PM_HIBERNATION_PREPARE, PM_POST_HIBERNATION);
+	अगर (error)
+		जाओ restore;
 
-	error = freeze_processes();
-	if (error)
-		goto exit;
+	error = मुक्तze_processes();
+	अगर (error)
+		जाओ निकास;
 
 	lock_device_hotplug();
 
 	pm_suspend_clear_flags();
 
-	error = platform_begin(true);
-	if (error)
-		goto thaw;
+	error = platक्रमm_begin(true);
+	अगर (error)
+		जाओ thaw;
 
-	error = freeze_kernel_threads();
-	if (error)
-		goto thaw;
+	error = मुक्तze_kernel_thपढ़ोs();
+	अगर (error)
+		जाओ thaw;
 
 	error = dpm_prepare(PMSG_FREEZE);
-	if (error)
-		goto dpm_complete;
+	अगर (error)
+		जाओ dpm_complete;
 
 	suspend_console();
 
 	error = dpm_suspend(PMSG_FREEZE);
-	if (error)
-		goto dpm_resume;
+	अगर (error)
+		जाओ dpm_resume;
 
 	error = dpm_suspend_end(PMSG_FREEZE);
-	if (error)
-		goto dpm_resume;
+	अगर (error)
+		जाओ dpm_resume;
 
-	error = platform_pre_snapshot(true);
-	if (error)
-		goto skip;
+	error = platक्रमm_pre_snapshot(true);
+	अगर (error)
+		जाओ skip;
 
 	error = func(data);
 
 skip:
-	platform_finish(true);
+	platक्रमm_finish(true);
 
 	dpm_resume_start(PMSG_THAW);
 
@@ -867,17 +868,17 @@ dpm_resume:
 dpm_complete:
 	dpm_complete(PMSG_THAW);
 
-	thaw_kernel_threads();
+	thaw_kernel_thपढ़ोs();
 
 thaw:
-	platform_end(true);
+	platक्रमm_end(true);
 
 	unlock_device_hotplug();
 
 	thaw_processes();
 
-exit:
-	pm_notifier_call_chain(PM_POST_HIBERNATION);
+निकास:
+	pm_notअगरier_call_chain(PM_POST_HIBERNATION);
 
 restore:
 	pm_restore_console();
@@ -885,86 +886,86 @@ restore:
 	hibernate_release();
 
 unlock:
-	unlock_system_sleep();
+	unlock_प्रणाली_sleep();
 
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL_GPL(hibernate_quiet_exec);
 
 /**
  * software_resume - Resume from a saved hibernation image.
  *
  * This routine is called as a late initcall, when all devices have been
- * discovered and initialized already.
+ * discovered and initialized alपढ़ोy.
  *
- * The image reading code is called to see if there is a hibernation image
- * available for reading.  If that is the case, devices are quiesced and the
+ * The image पढ़ोing code is called to see अगर there is a hibernation image
+ * available क्रम पढ़ोing.  If that is the हाल, devices are quiesced and the
  * contents of memory is restored from the saved image.
  *
  * If this is successful, control reappears in the restored target kernel in
- * hibernation_snapshot() which returns to hibernate().  Otherwise, the routine
- * attempts to recover gracefully and make the kernel return to the normal mode
+ * hibernation_snapshot() which वापसs to hibernate().  Otherwise, the routine
+ * attempts to recover gracefully and make the kernel वापस to the normal mode
  * of operation.
  */
-static int software_resume(void)
-{
-	int error;
+अटल पूर्णांक software_resume(व्योम)
+अणु
+	पूर्णांक error;
 
 	/*
 	 * If the user said "noresume".. bail out early.
 	 */
-	if (noresume || !hibernation_available())
-		return 0;
+	अगर (noresume || !hibernation_available())
+		वापस 0;
 
 	/*
 	 * name_to_dev_t() below takes a sysfs buffer mutex when sysfs
-	 * is configured into the kernel. Since the regular hibernate
-	 * trigger path is via sysfs which takes a buffer mutex before
-	 * calling hibernate functions (which take system_transition_mutex)
+	 * is configured पूर्णांकo the kernel. Since the regular hibernate
+	 * trigger path is via sysfs which takes a buffer mutex beक्रमe
+	 * calling hibernate functions (which take प्रणाली_transition_mutex)
 	 * this can cause lockdep to complain about a possible ABBA deadlock
 	 * which cannot happen since we're in the boot code here and
-	 * sysfs can't be invoked yet. Therefore, we use a subclass
-	 * here to avoid lockdep complaining.
+	 * sysfs can't be invoked yet. Thereक्रमe, we use a subclass
+	 * here to aव्योम lockdep complaining.
 	 */
-	mutex_lock_nested(&system_transition_mutex, SINGLE_DEPTH_NESTING);
+	mutex_lock_nested(&प्रणाली_transition_mutex, SINGLE_DEPTH_NESTING);
 
-	if (swsusp_resume_device)
-		goto Check_image;
+	अगर (swsusp_resume_device)
+		जाओ Check_image;
 
-	if (!strlen(resume_file)) {
+	अगर (!म_माप(resume_file)) अणु
 		error = -ENOENT;
-		goto Unlock;
-	}
+		जाओ Unlock;
+	पूर्ण
 
 	pm_pr_dbg("Checking hibernation image partition %s\n", resume_file);
 
-	if (resume_delay) {
+	अगर (resume_delay) अणु
 		pr_info("Waiting %dsec before reading resume device ...\n",
 			resume_delay);
 		ssleep(resume_delay);
-	}
+	पूर्ण
 
-	/* Check if the device is there */
+	/* Check अगर the device is there */
 	swsusp_resume_device = name_to_dev_t(resume_file);
-	if (!swsusp_resume_device) {
+	अगर (!swsusp_resume_device) अणु
 		/*
 		 * Some device discovery might still be in progress; we need
-		 * to wait for this to finish.
+		 * to रुको क्रम this to finish.
 		 */
-		wait_for_device_probe();
+		रुको_क्रम_device_probe();
 
-		if (resume_wait) {
-			while ((swsusp_resume_device = name_to_dev_t(resume_file)) == 0)
+		अगर (resume_रुको) अणु
+			जबतक ((swsusp_resume_device = name_to_dev_t(resume_file)) == 0)
 				msleep(10);
 			async_synchronize_full();
-		}
+		पूर्ण
 
 		swsusp_resume_device = name_to_dev_t(resume_file);
-		if (!swsusp_resume_device) {
+		अगर (!swsusp_resume_device) अणु
 			error = -ENODEV;
-			goto Unlock;
-		}
-	}
+			जाओ Unlock;
+		पूर्ण
+	पूर्ण
 
  Check_image:
 	pm_pr_dbg("Hibernation image partition %d:%d present\n",
@@ -972,372 +973,372 @@ static int software_resume(void)
 
 	pm_pr_dbg("Looking for hibernation image.\n");
 	error = swsusp_check();
-	if (error)
-		goto Unlock;
+	अगर (error)
+		जाओ Unlock;
 
-	/* The snapshot device should not be opened while we're running */
-	if (!hibernate_acquire()) {
+	/* The snapshot device should not be खोलोed जबतक we're running */
+	अगर (!hibernate_acquire()) अणु
 		error = -EBUSY;
-		swsusp_close(FMODE_READ);
-		goto Unlock;
-	}
+		swsusp_बंद(FMODE_READ);
+		जाओ Unlock;
+	पूर्ण
 
 	pr_info("resume from hibernation\n");
 	pm_prepare_console();
-	error = pm_notifier_call_chain_robust(PM_RESTORE_PREPARE, PM_POST_RESTORE);
-	if (error)
-		goto Restore;
+	error = pm_notअगरier_call_chain_robust(PM_RESTORE_PREPARE, PM_POST_RESTORE);
+	अगर (error)
+		जाओ Restore;
 
 	pm_pr_dbg("Preparing processes for hibernation restore.\n");
-	error = freeze_processes();
-	if (error)
-		goto Close_Finish;
+	error = मुक्तze_processes();
+	अगर (error)
+		जाओ Close_Finish;
 
-	error = freeze_kernel_threads();
-	if (error) {
+	error = मुक्तze_kernel_thपढ़ोs();
+	अगर (error) अणु
 		thaw_processes();
-		goto Close_Finish;
-	}
+		जाओ Close_Finish;
+	पूर्ण
 
 	error = load_image_and_restore();
 	thaw_processes();
  Finish:
-	pm_notifier_call_chain(PM_POST_RESTORE);
+	pm_notअगरier_call_chain(PM_POST_RESTORE);
  Restore:
 	pm_restore_console();
 	pr_info("resume failed (%d)\n", error);
 	hibernate_release();
-	/* For success case, the suspend path will release the lock */
+	/* For success हाल, the suspend path will release the lock */
  Unlock:
-	mutex_unlock(&system_transition_mutex);
+	mutex_unlock(&प्रणाली_transition_mutex);
 	pm_pr_dbg("Hibernation image not present or could not be loaded.\n");
-	return error;
+	वापस error;
  Close_Finish:
-	swsusp_close(FMODE_READ);
-	goto Finish;
-}
+	swsusp_बंद(FMODE_READ);
+	जाओ Finish;
+पूर्ण
 
 late_initcall_sync(software_resume);
 
 
-static const char * const hibernation_modes[] = {
+अटल स्थिर अक्षर * स्थिर hibernation_modes[] = अणु
 	[HIBERNATION_PLATFORM]	= "platform",
 	[HIBERNATION_SHUTDOWN]	= "shutdown",
 	[HIBERNATION_REBOOT]	= "reboot",
-#ifdef CONFIG_SUSPEND
+#अगर_घोषित CONFIG_SUSPEND
 	[HIBERNATION_SUSPEND]	= "suspend",
-#endif
+#पूर्ण_अगर
 	[HIBERNATION_TEST_RESUME]	= "test_resume",
-};
+पूर्ण;
 
 /*
- * /sys/power/disk - Control hibernation mode.
+ * /sys/घातer/disk - Control hibernation mode.
  *
- * Hibernation can be handled in several ways.  There are a few different ways
- * to put the system into the sleep state: using the platform driver (e.g. ACPI
- * or other hibernation_ops), powering it off or rebooting it (for testing
+ * Hibernation can be handled in several ways.  There are a few dअगरferent ways
+ * to put the प्रणाली पूर्णांकo the sleep state: using the platक्रमm driver (e.g. ACPI
+ * or other hibernation_ops), घातering it off or rebooting it (क्रम testing
  * mostly).
  *
- * The sysfs file /sys/power/disk provides an interface for selecting the
+ * The sysfs file /sys/घातer/disk provides an पूर्णांकerface क्रम selecting the
  * hibernation mode to use.  Reading from this file causes the available modes
- * to be printed.  There are 3 modes that can be supported:
+ * to be prपूर्णांकed.  There are 3 modes that can be supported:
  *
  *	'platform'
  *	'shutdown'
  *	'reboot'
  *
- * If a platform hibernation driver is in use, 'platform' will be supported
- * and will be used by default.  Otherwise, 'shutdown' will be used by default.
+ * If a platक्रमm hibernation driver is in use, 'platform' will be supported
+ * and will be used by शेष.  Otherwise, 'shutdown' will be used by शेष.
  * The selected option (i.e. the one corresponding to the current value of
- * hibernation_mode) is enclosed by a square bracket.
+ * hibernation_mode) is enबंदd by a square bracket.
  *
- * To select a given hibernation mode it is necessary to write the mode's
- * string representation (as returned by reading from /sys/power/disk) back
- * into /sys/power/disk.
+ * To select a given hibernation mode it is necessary to ग_लिखो the mode's
+ * string representation (as वापसed by पढ़ोing from /sys/घातer/disk) back
+ * पूर्णांकo /sys/घातer/disk.
  */
 
-static ssize_t disk_show(struct kobject *kobj, struct kobj_attribute *attr,
-			 char *buf)
-{
-	int i;
-	char *start = buf;
+अटल sमाप_प्रकार disk_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			 अक्षर *buf)
+अणु
+	पूर्णांक i;
+	अक्षर *start = buf;
 
-	if (!hibernation_available())
-		return sprintf(buf, "[disabled]\n");
+	अगर (!hibernation_available())
+		वापस प्र_लिखो(buf, "[disabled]\n");
 
-	for (i = HIBERNATION_FIRST; i <= HIBERNATION_MAX; i++) {
-		if (!hibernation_modes[i])
-			continue;
-		switch (i) {
-		case HIBERNATION_SHUTDOWN:
-		case HIBERNATION_REBOOT:
-#ifdef CONFIG_SUSPEND
-		case HIBERNATION_SUSPEND:
-#endif
-		case HIBERNATION_TEST_RESUME:
-			break;
-		case HIBERNATION_PLATFORM:
-			if (hibernation_ops)
-				break;
-			/* not a valid mode, continue with loop */
-			continue;
-		}
-		if (i == hibernation_mode)
-			buf += sprintf(buf, "[%s] ", hibernation_modes[i]);
-		else
-			buf += sprintf(buf, "%s ", hibernation_modes[i]);
-	}
-	buf += sprintf(buf, "\n");
-	return buf-start;
-}
+	क्रम (i = HIBERNATION_FIRST; i <= HIBERNATION_MAX; i++) अणु
+		अगर (!hibernation_modes[i])
+			जारी;
+		चयन (i) अणु
+		हाल HIBERNATION_SHUTDOWN:
+		हाल HIBERNATION_REBOOT:
+#अगर_घोषित CONFIG_SUSPEND
+		हाल HIBERNATION_SUSPEND:
+#पूर्ण_अगर
+		हाल HIBERNATION_TEST_RESUME:
+			अवरोध;
+		हाल HIBERNATION_PLATFORM:
+			अगर (hibernation_ops)
+				अवरोध;
+			/* not a valid mode, जारी with loop */
+			जारी;
+		पूर्ण
+		अगर (i == hibernation_mode)
+			buf += प्र_लिखो(buf, "[%s] ", hibernation_modes[i]);
+		अन्यथा
+			buf += प्र_लिखो(buf, "%s ", hibernation_modes[i]);
+	पूर्ण
+	buf += प्र_लिखो(buf, "\n");
+	वापस buf-start;
+पूर्ण
 
-static ssize_t disk_store(struct kobject *kobj, struct kobj_attribute *attr,
-			  const char *buf, size_t n)
-{
-	int error = 0;
-	int i;
-	int len;
-	char *p;
-	int mode = HIBERNATION_INVALID;
+अटल sमाप_प्रकार disk_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार n)
+अणु
+	पूर्णांक error = 0;
+	पूर्णांक i;
+	पूर्णांक len;
+	अक्षर *p;
+	पूर्णांक mode = HIBERNATION_INVALID;
 
-	if (!hibernation_available())
-		return -EPERM;
+	अगर (!hibernation_available())
+		वापस -EPERM;
 
-	p = memchr(buf, '\n', n);
+	p = स_प्रथम(buf, '\n', n);
 	len = p ? p - buf : n;
 
-	lock_system_sleep();
-	for (i = HIBERNATION_FIRST; i <= HIBERNATION_MAX; i++) {
-		if (len == strlen(hibernation_modes[i])
-		    && !strncmp(buf, hibernation_modes[i], len)) {
+	lock_प्रणाली_sleep();
+	क्रम (i = HIBERNATION_FIRST; i <= HIBERNATION_MAX; i++) अणु
+		अगर (len == म_माप(hibernation_modes[i])
+		    && !म_भेदन(buf, hibernation_modes[i], len)) अणु
 			mode = i;
-			break;
-		}
-	}
-	if (mode != HIBERNATION_INVALID) {
-		switch (mode) {
-		case HIBERNATION_SHUTDOWN:
-		case HIBERNATION_REBOOT:
-#ifdef CONFIG_SUSPEND
-		case HIBERNATION_SUSPEND:
-#endif
-		case HIBERNATION_TEST_RESUME:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (mode != HIBERNATION_INVALID) अणु
+		चयन (mode) अणु
+		हाल HIBERNATION_SHUTDOWN:
+		हाल HIBERNATION_REBOOT:
+#अगर_घोषित CONFIG_SUSPEND
+		हाल HIBERNATION_SUSPEND:
+#पूर्ण_अगर
+		हाल HIBERNATION_TEST_RESUME:
 			hibernation_mode = mode;
-			break;
-		case HIBERNATION_PLATFORM:
-			if (hibernation_ops)
+			अवरोध;
+		हाल HIBERNATION_PLATFORM:
+			अगर (hibernation_ops)
 				hibernation_mode = mode;
-			else
+			अन्यथा
 				error = -EINVAL;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		error = -EINVAL;
 
-	if (!error)
+	अगर (!error)
 		pm_pr_dbg("Hibernation mode set to '%s'\n",
 			       hibernation_modes[mode]);
-	unlock_system_sleep();
-	return error ? error : n;
-}
+	unlock_प्रणाली_sleep();
+	वापस error ? error : n;
+पूर्ण
 
-power_attr(disk);
+घातer_attr(disk);
 
-static ssize_t resume_show(struct kobject *kobj, struct kobj_attribute *attr,
-			   char *buf)
-{
-	return sprintf(buf, "%d:%d\n", MAJOR(swsusp_resume_device),
+अटल sमाप_प्रकार resume_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			   अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d:%d\n", MAJOR(swsusp_resume_device),
 		       MINOR(swsusp_resume_device));
-}
+पूर्ण
 
-static ssize_t resume_store(struct kobject *kobj, struct kobj_attribute *attr,
-			    const char *buf, size_t n)
-{
+अटल sमाप_प्रकार resume_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार n)
+अणु
 	dev_t res;
-	int len = n;
-	char *name;
+	पूर्णांक len = n;
+	अक्षर *name;
 
-	if (len && buf[len-1] == '\n')
+	अगर (len && buf[len-1] == '\n')
 		len--;
 	name = kstrndup(buf, len, GFP_KERNEL);
-	if (!name)
-		return -ENOMEM;
+	अगर (!name)
+		वापस -ENOMEM;
 
 	res = name_to_dev_t(name);
-	kfree(name);
-	if (!res)
-		return -EINVAL;
+	kमुक्त(name);
+	अगर (!res)
+		वापस -EINVAL;
 
-	lock_system_sleep();
+	lock_प्रणाली_sleep();
 	swsusp_resume_device = res;
-	unlock_system_sleep();
+	unlock_प्रणाली_sleep();
 	pm_pr_dbg("Configured hibernation resume from disk to %u\n",
 		  swsusp_resume_device);
 	noresume = 0;
 	software_resume();
-	return n;
-}
+	वापस n;
+पूर्ण
 
-power_attr(resume);
+घातer_attr(resume);
 
-static ssize_t resume_offset_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%llu\n", (unsigned long long)swsusp_resume_block);
-}
+अटल sमाप_प्रकार resume_offset_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n", (अचिन्हित दीर्घ दीर्घ)swsusp_resume_block);
+पूर्ण
 
-static ssize_t resume_offset_store(struct kobject *kobj,
-				   struct kobj_attribute *attr, const char *buf,
-				   size_t n)
-{
-	unsigned long long offset;
-	int rc;
+अटल sमाप_प्रकार resume_offset_store(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr, स्थिर अक्षर *buf,
+				   माप_प्रकार n)
+अणु
+	अचिन्हित दीर्घ दीर्घ offset;
+	पूर्णांक rc;
 
-	rc = kstrtoull(buf, 0, &offset);
-	if (rc)
-		return rc;
+	rc = kम_से_अदीर्घl(buf, 0, &offset);
+	अगर (rc)
+		वापस rc;
 	swsusp_resume_block = offset;
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-power_attr(resume_offset);
+घातer_attr(resume_offset);
 
-static ssize_t image_size_show(struct kobject *kobj, struct kobj_attribute *attr,
-			       char *buf)
-{
-	return sprintf(buf, "%lu\n", image_size);
-}
+अटल sमाप_प्रकार image_size_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			       अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%lu\n", image_size);
+पूर्ण
 
-static ssize_t image_size_store(struct kobject *kobj, struct kobj_attribute *attr,
-				const char *buf, size_t n)
-{
-	unsigned long size;
+अटल sमाप_प्रकार image_size_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार n)
+अणु
+	अचिन्हित दीर्घ size;
 
-	if (sscanf(buf, "%lu", &size) == 1) {
+	अगर (माला_पूछो(buf, "%lu", &size) == 1) अणु
 		image_size = size;
-		return n;
-	}
+		वापस n;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-power_attr(image_size);
+घातer_attr(image_size);
 
-static ssize_t reserved_size_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%lu\n", reserved_size);
-}
+अटल sमाप_प्रकार reserved_size_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%lu\n", reserved_size);
+पूर्ण
 
-static ssize_t reserved_size_store(struct kobject *kobj,
-				   struct kobj_attribute *attr,
-				   const char *buf, size_t n)
-{
-	unsigned long size;
+अटल sमाप_प्रकार reserved_size_store(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार n)
+अणु
+	अचिन्हित दीर्घ size;
 
-	if (sscanf(buf, "%lu", &size) == 1) {
+	अगर (माला_पूछो(buf, "%lu", &size) == 1) अणु
 		reserved_size = size;
-		return n;
-	}
+		वापस n;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-power_attr(reserved_size);
+घातer_attr(reserved_size);
 
-static struct attribute *g[] = {
+अटल काष्ठा attribute *g[] = अणु
 	&disk_attr.attr,
 	&resume_offset_attr.attr,
 	&resume_attr.attr,
 	&image_size_attr.attr,
 	&reserved_size_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 
-static const struct attribute_group attr_group = {
+अटल स्थिर काष्ठा attribute_group attr_group = अणु
 	.attrs = g,
-};
+पूर्ण;
 
 
-static int __init pm_disk_init(void)
-{
-	return sysfs_create_group(power_kobj, &attr_group);
-}
+अटल पूर्णांक __init pm_disk_init(व्योम)
+अणु
+	वापस sysfs_create_group(घातer_kobj, &attr_group);
+पूर्ण
 
 core_initcall(pm_disk_init);
 
 
-static int __init resume_setup(char *str)
-{
-	if (noresume)
-		return 1;
+अटल पूर्णांक __init resume_setup(अक्षर *str)
+अणु
+	अगर (noresume)
+		वापस 1;
 
-	strncpy(resume_file, str, 255);
-	return 1;
-}
+	म_नकलन(resume_file, str, 255);
+	वापस 1;
+पूर्ण
 
-static int __init resume_offset_setup(char *str)
-{
-	unsigned long long offset;
+अटल पूर्णांक __init resume_offset_setup(अक्षर *str)
+अणु
+	अचिन्हित दीर्घ दीर्घ offset;
 
-	if (noresume)
-		return 1;
+	अगर (noresume)
+		वापस 1;
 
-	if (sscanf(str, "%llu", &offset) == 1)
+	अगर (माला_पूछो(str, "%llu", &offset) == 1)
 		swsusp_resume_block = offset;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __init hibernate_setup(char *str)
-{
-	if (!strncmp(str, "noresume", 8)) {
+अटल पूर्णांक __init hibernate_setup(अक्षर *str)
+अणु
+	अगर (!म_भेदन(str, "noresume", 8)) अणु
 		noresume = 1;
-	} else if (!strncmp(str, "nocompress", 10)) {
+	पूर्ण अन्यथा अगर (!म_भेदन(str, "nocompress", 10)) अणु
 		nocompress = 1;
-	} else if (!strncmp(str, "no", 2)) {
+	पूर्ण अन्यथा अगर (!म_भेदन(str, "no", 2)) अणु
 		noresume = 1;
 		nohibernate = 1;
-	} else if (IS_ENABLED(CONFIG_STRICT_KERNEL_RWX)
-		   && !strncmp(str, "protect_image", 13)) {
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_STRICT_KERNEL_RWX)
+		   && !म_भेदन(str, "protect_image", 13)) अणु
 		enable_restore_image_protection();
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int __init noresume_setup(char *str)
-{
+अटल पूर्णांक __init noresume_setup(अक्षर *str)
+अणु
 	noresume = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __init resumewait_setup(char *str)
-{
-	resume_wait = 1;
-	return 1;
-}
+अटल पूर्णांक __init resumeरुको_setup(अक्षर *str)
+अणु
+	resume_रुको = 1;
+	वापस 1;
+पूर्ण
 
-static int __init resumedelay_setup(char *str)
-{
-	int rc = kstrtouint(str, 0, &resume_delay);
+अटल पूर्णांक __init resumedelay_setup(अक्षर *str)
+अणु
+	पूर्णांक rc = kstrtouपूर्णांक(str, 0, &resume_delay);
 
-	if (rc)
-		return rc;
-	return 1;
-}
+	अगर (rc)
+		वापस rc;
+	वापस 1;
+पूर्ण
 
-static int __init nohibernate_setup(char *str)
-{
+अटल पूर्णांक __init nohibernate_setup(अक्षर *str)
+अणु
 	noresume = 1;
 	nohibernate = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("noresume", noresume_setup);
 __setup("resume_offset=", resume_offset_setup);
 __setup("resume=", resume_setup);
 __setup("hibernate=", hibernate_setup);
-__setup("resumewait", resumewait_setup);
+__setup("resumewait", resumeरुको_setup);
 __setup("resumedelay=", resumedelay_setup);
 __setup("nohibernate", nohibernate_setup);

@@ -1,168 +1,169 @@
+<शैली गुरु>
 /*
- * Copyright © 2018 Alexey Dobriyan <adobriyan@gmail.com>
+ * Copyright तऊ 2018 Alexey Dobriyan <aकरोbriyan@gmail.com>
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modअगरy, and distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 // Test /proc/*/fd lookup.
 
-#undef NDEBUG
-#include <assert.h>
-#include <dirent.h>
-#include <errno.h>
-#include <limits.h>
-#include <sched.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#अघोषित न_संशोधन
+#समावेश <निश्चित.स>
+#समावेश <dirent.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <सीमा.स>
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
 
-#include "proc.h"
+#समावेश "proc.h"
 
-/* lstat(2) has more "coverage" in case non-symlink pops up somehow. */
-static void test_lookup_pass(const char *pathname)
-{
-	struct stat st;
-	ssize_t rv;
+/* lstat(2) has more "coverage" in हाल non-symlink pops up somehow. */
+अटल व्योम test_lookup_pass(स्थिर अक्षर *pathname)
+अणु
+	काष्ठा stat st;
+	sमाप_प्रकार rv;
 
-	memset(&st, 0, sizeof(struct stat));
+	स_रखो(&st, 0, माप(काष्ठा stat));
 	rv = lstat(pathname, &st);
-	assert(rv == 0);
-	assert(S_ISLNK(st.st_mode));
-}
+	निश्चित(rv == 0);
+	निश्चित(S_ISLNK(st.st_mode));
+पूर्ण
 
-static void test_lookup_fail(const char *pathname)
-{
-	struct stat st;
-	ssize_t rv;
+अटल व्योम test_lookup_fail(स्थिर अक्षर *pathname)
+अणु
+	काष्ठा stat st;
+	sमाप_प्रकार rv;
 
 	rv = lstat(pathname, &st);
-	assert(rv == -1 && errno == ENOENT);
-}
+	निश्चित(rv == -1 && त्रुटि_सं == ENOENT);
+पूर्ण
 
-static void test_lookup(unsigned int fd)
-{
-	char buf[64];
-	unsigned int c;
-	unsigned int u;
-	int i;
+अटल व्योम test_lookup(अचिन्हित पूर्णांक fd)
+अणु
+	अक्षर buf[64];
+	अचिन्हित पूर्णांक c;
+	अचिन्हित पूर्णांक u;
+	पूर्णांक i;
 
-	snprintf(buf, sizeof(buf), "/proc/self/fd/%u", fd);
+	snम_लिखो(buf, माप(buf), "/proc/self/fd/%u", fd);
 	test_lookup_pass(buf);
 
 	/* leading junk */
-	for (c = 1; c <= 255; c++) {
-		if (c == '/')
-			continue;
-		snprintf(buf, sizeof(buf), "/proc/self/fd/%c%u", c, fd);
+	क्रम (c = 1; c <= 255; c++) अणु
+		अगर (c == '/')
+			जारी;
+		snम_लिखो(buf, माप(buf), "/proc/self/fd/%c%u", c, fd);
 		test_lookup_fail(buf);
-	}
+	पूर्ण
 
 	/* trailing junk */
-	for (c = 1; c <= 255; c++) {
-		if (c == '/')
-			continue;
-		snprintf(buf, sizeof(buf), "/proc/self/fd/%u%c", fd, c);
+	क्रम (c = 1; c <= 255; c++) अणु
+		अगर (c == '/')
+			जारी;
+		snम_लिखो(buf, माप(buf), "/proc/self/fd/%u%c", fd, c);
 		test_lookup_fail(buf);
-	}
+	पूर्ण
 
-	for (i = INT_MIN; i < INT_MIN + 1024; i++) {
-		snprintf(buf, sizeof(buf), "/proc/self/fd/%d", i);
+	क्रम (i = पूर्णांक_न्यून; i < पूर्णांक_न्यून + 1024; i++) अणु
+		snम_लिखो(buf, माप(buf), "/proc/self/fd/%d", i);
 		test_lookup_fail(buf);
-	}
-	for (i = -1024; i < 0; i++) {
-		snprintf(buf, sizeof(buf), "/proc/self/fd/%d", i);
+	पूर्ण
+	क्रम (i = -1024; i < 0; i++) अणु
+		snम_लिखो(buf, माप(buf), "/proc/self/fd/%d", i);
 		test_lookup_fail(buf);
-	}
-	for (u = INT_MAX - 1024; u <= (unsigned int)INT_MAX + 1024; u++) {
-		snprintf(buf, sizeof(buf), "/proc/self/fd/%u", u);
+	पूर्ण
+	क्रम (u = पूर्णांक_उच्च - 1024; u <= (अचिन्हित पूर्णांक)पूर्णांक_उच्च + 1024; u++) अणु
+		snम_लिखो(buf, माप(buf), "/proc/self/fd/%u", u);
 		test_lookup_fail(buf);
-	}
-	for (u = UINT_MAX - 1024; u != 0; u++) {
-		snprintf(buf, sizeof(buf), "/proc/self/fd/%u", u);
+	पूर्ण
+	क्रम (u = अच_पूर्णांक_उच्च - 1024; u != 0; u++) अणु
+		snम_लिखो(buf, माप(buf), "/proc/self/fd/%u", u);
 		test_lookup_fail(buf);
-	}
+	पूर्ण
 
 
-}
+पूर्ण
 
-int main(void)
-{
-	struct dirent *de;
-	unsigned int fd, target_fd;
+पूर्णांक मुख्य(व्योम)
+अणु
+	काष्ठा dirent *de;
+	अचिन्हित पूर्णांक fd, target_fd;
 
-	if (unshare(CLONE_FILES) == -1)
-		return 1;
+	अगर (unshare(CLONE_खाताS) == -1)
+		वापस 1;
 
 	/* Wipe fdtable. */
-	do {
-		DIR *d;
+	करो अणु
+		सूची *d;
 
-		d = opendir("/proc/self/fd");
-		if (!d)
-			return 1;
+		d = सूची_खोलो("/proc/self/fd");
+		अगर (!d)
+			वापस 1;
 
-		de = xreaddir(d);
-		assert(de->d_type == DT_DIR);
-		assert(streq(de->d_name, "."));
+		de = xसूची_पढ़ो(d);
+		निश्चित(de->d_type == DT_सूची);
+		निश्चित(streq(de->d_name, "."));
 
-		de = xreaddir(d);
-		assert(de->d_type == DT_DIR);
-		assert(streq(de->d_name, ".."));
+		de = xसूची_पढ़ो(d);
+		निश्चित(de->d_type == DT_सूची);
+		निश्चित(streq(de->d_name, ".."));
 next:
-		de = xreaddir(d);
-		if (de) {
-			unsigned long long fd_ull;
-			unsigned int fd;
-			char *end;
+		de = xसूची_पढ़ो(d);
+		अगर (de) अणु
+			अचिन्हित दीर्घ दीर्घ fd_ull;
+			अचिन्हित पूर्णांक fd;
+			अक्षर *end;
 
-			assert(de->d_type == DT_LNK);
+			निश्चित(de->d_type == DT_LNK);
 
-			fd_ull = xstrtoull(de->d_name, &end);
-			assert(*end == '\0');
-			assert(fd_ull == (unsigned int)fd_ull);
+			fd_ull = xम_से_अदीर्घl(de->d_name, &end);
+			निश्चित(*end == '\0');
+			निश्चित(fd_ull == (अचिन्हित पूर्णांक)fd_ull);
 
 			fd = fd_ull;
-			if (fd == dirfd(d))
-				goto next;
-			close(fd);
-		}
+			अगर (fd == dirfd(d))
+				जाओ next;
+			बंद(fd);
+		पूर्ण
 
-		closedir(d);
-	} while (de);
+		बंद_सूची(d);
+	पूर्ण जबतक (de);
 
 	/* Now fdtable is clean. */
 
-	fd = open("/", O_PATH|O_DIRECTORY);
-	assert(fd == 0);
+	fd = खोलो("/", O_PATH|O_सूचीECTORY);
+	निश्चित(fd == 0);
 	test_lookup(fd);
-	close(fd);
+	बंद(fd);
 
 	/* Clean again! */
 
-	fd = open("/", O_PATH|O_DIRECTORY);
-	assert(fd == 0);
-	/* Default RLIMIT_NOFILE-1 */
+	fd = खोलो("/", O_PATH|O_सूचीECTORY);
+	निश्चित(fd == 0);
+	/* Default RLIMIT_NOखाता-1 */
 	target_fd = 1023;
-	while (target_fd > 0) {
-		if (dup2(fd, target_fd) == target_fd)
-			break;
+	जबतक (target_fd > 0) अणु
+		अगर (dup2(fd, target_fd) == target_fd)
+			अवरोध;
 		target_fd /= 2;
-	}
-	assert(target_fd > 0);
-	close(fd);
+	पूर्ण
+	निश्चित(target_fd > 0);
+	बंद(fd);
 	test_lookup(target_fd);
-	close(target_fd);
+	बंद(target_fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

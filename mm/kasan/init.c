@@ -1,491 +1,492 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * This file contains KASAN shadow initialization code.
+ * This file contains KASAN shaकरोw initialization code.
  *
  * Copyright (c) 2015 Samsung Electronics Co., Ltd.
  * Author: Andrey Ryabinin <ryabinin.a.a@gmail.com>
  */
 
-#include <linux/memblock.h>
-#include <linux/init.h>
-#include <linux/kasan.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/pfn.h>
-#include <linux/slab.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kasan.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/slab.h>
 
-#include <asm/page.h>
-#include <asm/pgalloc.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/pgभाग.स>
 
-#include "kasan.h"
+#समावेश "kasan.h"
 
 /*
  * This page serves two purposes:
- *   - It used as early shadow memory. The entire shadow region populated
- *     with this page, before we will be able to setup normal shadow memory.
- *   - Latter it reused it as zero shadow to cover large ranges of memory
- *     that allowed to access, but not handled by kasan (vmalloc/vmemmap ...).
+ *   - It used as early shaकरोw memory. The entire shaकरोw region populated
+ *     with this page, beक्रमe we will be able to setup normal shaकरोw memory.
+ *   - Latter it reused it as zero shaकरोw to cover large ranges of memory
+ *     that allowed to access, but not handled by kasan (vदो_स्मृति/vmemmap ...).
  */
-unsigned char kasan_early_shadow_page[PAGE_SIZE] __page_aligned_bss;
+अचिन्हित अक्षर kasan_early_shaकरोw_page[PAGE_SIZE] __page_aligned_bss;
 
-#if CONFIG_PGTABLE_LEVELS > 4
-p4d_t kasan_early_shadow_p4d[MAX_PTRS_PER_P4D] __page_aligned_bss;
-static inline bool kasan_p4d_table(pgd_t pgd)
-{
-	return pgd_page(pgd) == virt_to_page(lm_alias(kasan_early_shadow_p4d));
-}
-#else
-static inline bool kasan_p4d_table(pgd_t pgd)
-{
-	return false;
-}
-#endif
-#if CONFIG_PGTABLE_LEVELS > 3
-pud_t kasan_early_shadow_pud[PTRS_PER_PUD] __page_aligned_bss;
-static inline bool kasan_pud_table(p4d_t p4d)
-{
-	return p4d_page(p4d) == virt_to_page(lm_alias(kasan_early_shadow_pud));
-}
-#else
-static inline bool kasan_pud_table(p4d_t p4d)
-{
-	return false;
-}
-#endif
-#if CONFIG_PGTABLE_LEVELS > 2
-pmd_t kasan_early_shadow_pmd[PTRS_PER_PMD] __page_aligned_bss;
-static inline bool kasan_pmd_table(pud_t pud)
-{
-	return pud_page(pud) == virt_to_page(lm_alias(kasan_early_shadow_pmd));
-}
-#else
-static inline bool kasan_pmd_table(pud_t pud)
-{
-	return false;
-}
-#endif
-pte_t kasan_early_shadow_pte[PTRS_PER_PTE + PTE_HWTABLE_PTRS]
+#अगर CONFIG_PGTABLE_LEVELS > 4
+p4d_t kasan_early_shaकरोw_p4d[MAX_PTRS_PER_P4D] __page_aligned_bss;
+अटल अंतरभूत bool kasan_p4d_table(pgd_t pgd)
+अणु
+	वापस pgd_page(pgd) == virt_to_page(lm_alias(kasan_early_shaकरोw_p4d));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool kasan_p4d_table(pgd_t pgd)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
+#अगर CONFIG_PGTABLE_LEVELS > 3
+pud_t kasan_early_shaकरोw_pud[PTRS_PER_PUD] __page_aligned_bss;
+अटल अंतरभूत bool kasan_pud_table(p4d_t p4d)
+अणु
+	वापस p4d_page(p4d) == virt_to_page(lm_alias(kasan_early_shaकरोw_pud));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool kasan_pud_table(p4d_t p4d)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
+#अगर CONFIG_PGTABLE_LEVELS > 2
+pmd_t kasan_early_shaकरोw_pmd[PTRS_PER_PMD] __page_aligned_bss;
+अटल अंतरभूत bool kasan_pmd_table(pud_t pud)
+अणु
+	वापस pud_page(pud) == virt_to_page(lm_alias(kasan_early_shaकरोw_pmd));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool kasan_pmd_table(pud_t pud)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
+pte_t kasan_early_shaकरोw_pte[PTRS_PER_PTE + PTE_HWTABLE_PTRS]
 	__page_aligned_bss;
 
-static inline bool kasan_pte_table(pmd_t pmd)
-{
-	return pmd_page(pmd) == virt_to_page(lm_alias(kasan_early_shadow_pte));
-}
+अटल अंतरभूत bool kasan_pte_table(pmd_t pmd)
+अणु
+	वापस pmd_page(pmd) == virt_to_page(lm_alias(kasan_early_shaकरोw_pte));
+पूर्ण
 
-static inline bool kasan_early_shadow_page_entry(pte_t pte)
-{
-	return pte_page(pte) == virt_to_page(lm_alias(kasan_early_shadow_page));
-}
+अटल अंतरभूत bool kasan_early_shaकरोw_page_entry(pte_t pte)
+अणु
+	वापस pte_page(pte) == virt_to_page(lm_alias(kasan_early_shaकरोw_page));
+पूर्ण
 
-static __init void *early_alloc(size_t size, int node)
-{
-	void *ptr = memblock_alloc_try_nid(size, size, __pa(MAX_DMA_ADDRESS),
+अटल __init व्योम *early_alloc(माप_प्रकार size, पूर्णांक node)
+अणु
+	व्योम *ptr = memblock_alloc_try_nid(size, size, __pa(MAX_DMA_ADDRESS),
 					   MEMBLOCK_ALLOC_ACCESSIBLE, node);
 
-	if (!ptr)
+	अगर (!ptr)
 		panic("%s: Failed to allocate %zu bytes align=%zx nid=%d from=%llx\n",
 		      __func__, size, size, node, (u64)__pa(MAX_DMA_ADDRESS));
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static void __ref zero_pte_populate(pmd_t *pmd, unsigned long addr,
-				unsigned long end)
-{
+अटल व्योम __ref zero_pte_populate(pmd_t *pmd, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
 	pte_t *pte = pte_offset_kernel(pmd, addr);
 	pte_t zero_pte;
 
-	zero_pte = pfn_pte(PFN_DOWN(__pa_symbol(kasan_early_shadow_page)),
+	zero_pte = pfn_pte(PFN_DOWN(__pa_symbol(kasan_early_shaकरोw_page)),
 				PAGE_KERNEL);
 	zero_pte = pte_wrprotect(zero_pte);
 
-	while (addr + PAGE_SIZE <= end) {
+	जबतक (addr + PAGE_SIZE <= end) अणु
 		set_pte_at(&init_mm, addr, pte, zero_pte);
 		addr += PAGE_SIZE;
 		pte = pte_offset_kernel(pmd, addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __ref zero_pmd_populate(pud_t *pud, unsigned long addr,
-				unsigned long end)
-{
+अटल पूर्णांक __ref zero_pmd_populate(pud_t *pud, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
 	pmd_t *pmd = pmd_offset(pud, addr);
-	unsigned long next;
+	अचिन्हित दीर्घ next;
 
-	do {
+	करो अणु
 		next = pmd_addr_end(addr, end);
 
-		if (IS_ALIGNED(addr, PMD_SIZE) && end - addr >= PMD_SIZE) {
+		अगर (IS_ALIGNED(addr, PMD_SIZE) && end - addr >= PMD_SIZE) अणु
 			pmd_populate_kernel(&init_mm, pmd,
-					lm_alias(kasan_early_shadow_pte));
-			continue;
-		}
+					lm_alias(kasan_early_shaकरोw_pte));
+			जारी;
+		पूर्ण
 
-		if (pmd_none(*pmd)) {
+		अगर (pmd_none(*pmd)) अणु
 			pte_t *p;
 
-			if (slab_is_available())
+			अगर (slab_is_available())
 				p = pte_alloc_one_kernel(&init_mm);
-			else
+			अन्यथा
 				p = early_alloc(PAGE_SIZE, NUMA_NO_NODE);
-			if (!p)
-				return -ENOMEM;
+			अगर (!p)
+				वापस -ENOMEM;
 
 			pmd_populate_kernel(&init_mm, pmd, p);
-		}
+		पूर्ण
 		zero_pte_populate(pmd, addr, next);
-	} while (pmd++, addr = next, addr != end);
+	पूर्ण जबतक (pmd++, addr = next, addr != end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __ref zero_pud_populate(p4d_t *p4d, unsigned long addr,
-				unsigned long end)
-{
+अटल पूर्णांक __ref zero_pud_populate(p4d_t *p4d, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
 	pud_t *pud = pud_offset(p4d, addr);
-	unsigned long next;
+	अचिन्हित दीर्घ next;
 
-	do {
+	करो अणु
 		next = pud_addr_end(addr, end);
-		if (IS_ALIGNED(addr, PUD_SIZE) && end - addr >= PUD_SIZE) {
+		अगर (IS_ALIGNED(addr, PUD_SIZE) && end - addr >= PUD_SIZE) अणु
 			pmd_t *pmd;
 
 			pud_populate(&init_mm, pud,
-					lm_alias(kasan_early_shadow_pmd));
+					lm_alias(kasan_early_shaकरोw_pmd));
 			pmd = pmd_offset(pud, addr);
 			pmd_populate_kernel(&init_mm, pmd,
-					lm_alias(kasan_early_shadow_pte));
-			continue;
-		}
+					lm_alias(kasan_early_shaकरोw_pte));
+			जारी;
+		पूर्ण
 
-		if (pud_none(*pud)) {
+		अगर (pud_none(*pud)) अणु
 			pmd_t *p;
 
-			if (slab_is_available()) {
+			अगर (slab_is_available()) अणु
 				p = pmd_alloc(&init_mm, pud, addr);
-				if (!p)
-					return -ENOMEM;
-			} else {
+				अगर (!p)
+					वापस -ENOMEM;
+			पूर्ण अन्यथा अणु
 				pud_populate(&init_mm, pud,
 					early_alloc(PAGE_SIZE, NUMA_NO_NODE));
-			}
-		}
+			पूर्ण
+		पूर्ण
 		zero_pmd_populate(pud, addr, next);
-	} while (pud++, addr = next, addr != end);
+	पूर्ण जबतक (pud++, addr = next, addr != end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __ref zero_p4d_populate(pgd_t *pgd, unsigned long addr,
-				unsigned long end)
-{
+अटल पूर्णांक __ref zero_p4d_populate(pgd_t *pgd, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
 	p4d_t *p4d = p4d_offset(pgd, addr);
-	unsigned long next;
+	अचिन्हित दीर्घ next;
 
-	do {
+	करो अणु
 		next = p4d_addr_end(addr, end);
-		if (IS_ALIGNED(addr, P4D_SIZE) && end - addr >= P4D_SIZE) {
+		अगर (IS_ALIGNED(addr, P4D_SIZE) && end - addr >= P4D_SIZE) अणु
 			pud_t *pud;
 			pmd_t *pmd;
 
 			p4d_populate(&init_mm, p4d,
-					lm_alias(kasan_early_shadow_pud));
+					lm_alias(kasan_early_shaकरोw_pud));
 			pud = pud_offset(p4d, addr);
 			pud_populate(&init_mm, pud,
-					lm_alias(kasan_early_shadow_pmd));
+					lm_alias(kasan_early_shaकरोw_pmd));
 			pmd = pmd_offset(pud, addr);
 			pmd_populate_kernel(&init_mm, pmd,
-					lm_alias(kasan_early_shadow_pte));
-			continue;
-		}
+					lm_alias(kasan_early_shaकरोw_pte));
+			जारी;
+		पूर्ण
 
-		if (p4d_none(*p4d)) {
+		अगर (p4d_none(*p4d)) अणु
 			pud_t *p;
 
-			if (slab_is_available()) {
+			अगर (slab_is_available()) अणु
 				p = pud_alloc(&init_mm, p4d, addr);
-				if (!p)
-					return -ENOMEM;
-			} else {
+				अगर (!p)
+					वापस -ENOMEM;
+			पूर्ण अन्यथा अणु
 				p4d_populate(&init_mm, p4d,
 					early_alloc(PAGE_SIZE, NUMA_NO_NODE));
-			}
-		}
+			पूर्ण
+		पूर्ण
 		zero_pud_populate(p4d, addr, next);
-	} while (p4d++, addr = next, addr != end);
+	पूर्ण जबतक (p4d++, addr = next, addr != end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * kasan_populate_early_shadow - populate shadow memory region with
- *                               kasan_early_shadow_page
- * @shadow_start: start of the memory range to populate
- * @shadow_end: end of the memory range to populate
+ * kasan_populate_early_shaकरोw - populate shaकरोw memory region with
+ *                               kasan_early_shaकरोw_page
+ * @shaकरोw_start: start of the memory range to populate
+ * @shaकरोw_end: end of the memory range to populate
  */
-int __ref kasan_populate_early_shadow(const void *shadow_start,
-					const void *shadow_end)
-{
-	unsigned long addr = (unsigned long)shadow_start;
-	unsigned long end = (unsigned long)shadow_end;
+पूर्णांक __ref kasan_populate_early_shaकरोw(स्थिर व्योम *shaकरोw_start,
+					स्थिर व्योम *shaकरोw_end)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)shaकरोw_start;
+	अचिन्हित दीर्घ end = (अचिन्हित दीर्घ)shaकरोw_end;
 	pgd_t *pgd = pgd_offset_k(addr);
-	unsigned long next;
+	अचिन्हित दीर्घ next;
 
-	do {
+	करो अणु
 		next = pgd_addr_end(addr, end);
 
-		if (IS_ALIGNED(addr, PGDIR_SIZE) && end - addr >= PGDIR_SIZE) {
+		अगर (IS_ALIGNED(addr, PGसूची_SIZE) && end - addr >= PGसूची_SIZE) अणु
 			p4d_t *p4d;
 			pud_t *pud;
 			pmd_t *pmd;
 
 			/*
-			 * kasan_early_shadow_pud should be populated with pmds
+			 * kasan_early_shaकरोw_pud should be populated with pmds
 			 * at this moment.
-			 * [pud,pmd]_populate*() below needed only for
-			 * 3,2 - level page tables where we don't have
+			 * [pud,pmd]_populate*() below needed only क्रम
+			 * 3,2 - level page tables where we करोn't have
 			 * puds,pmds, so pgd_populate(), pud_populate()
 			 * is noops.
 			 */
 			pgd_populate(&init_mm, pgd,
-					lm_alias(kasan_early_shadow_p4d));
+					lm_alias(kasan_early_shaकरोw_p4d));
 			p4d = p4d_offset(pgd, addr);
 			p4d_populate(&init_mm, p4d,
-					lm_alias(kasan_early_shadow_pud));
+					lm_alias(kasan_early_shaकरोw_pud));
 			pud = pud_offset(p4d, addr);
 			pud_populate(&init_mm, pud,
-					lm_alias(kasan_early_shadow_pmd));
+					lm_alias(kasan_early_shaकरोw_pmd));
 			pmd = pmd_offset(pud, addr);
 			pmd_populate_kernel(&init_mm, pmd,
-					lm_alias(kasan_early_shadow_pte));
-			continue;
-		}
+					lm_alias(kasan_early_shaकरोw_pte));
+			जारी;
+		पूर्ण
 
-		if (pgd_none(*pgd)) {
+		अगर (pgd_none(*pgd)) अणु
 			p4d_t *p;
 
-			if (slab_is_available()) {
+			अगर (slab_is_available()) अणु
 				p = p4d_alloc(&init_mm, pgd, addr);
-				if (!p)
-					return -ENOMEM;
-			} else {
+				अगर (!p)
+					वापस -ENOMEM;
+			पूर्ण अन्यथा अणु
 				pgd_populate(&init_mm, pgd,
 					early_alloc(PAGE_SIZE, NUMA_NO_NODE));
-			}
-		}
+			पूर्ण
+		पूर्ण
 		zero_p4d_populate(pgd, addr, next);
-	} while (pgd++, addr = next, addr != end);
+	पूर्ण जबतक (pgd++, addr = next, addr != end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kasan_free_pte(pte_t *pte_start, pmd_t *pmd)
-{
+अटल व्योम kasan_मुक्त_pte(pte_t *pte_start, pmd_t *pmd)
+अणु
 	pte_t *pte;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < PTRS_PER_PTE; i++) {
+	क्रम (i = 0; i < PTRS_PER_PTE; i++) अणु
 		pte = pte_start + i;
-		if (!pte_none(*pte))
-			return;
-	}
+		अगर (!pte_none(*pte))
+			वापस;
+	पूर्ण
 
-	pte_free_kernel(&init_mm, (pte_t *)page_to_virt(pmd_page(*pmd)));
+	pte_मुक्त_kernel(&init_mm, (pte_t *)page_to_virt(pmd_page(*pmd)));
 	pmd_clear(pmd);
-}
+पूर्ण
 
-static void kasan_free_pmd(pmd_t *pmd_start, pud_t *pud)
-{
+अटल व्योम kasan_मुक्त_pmd(pmd_t *pmd_start, pud_t *pud)
+अणु
 	pmd_t *pmd;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < PTRS_PER_PMD; i++) {
+	क्रम (i = 0; i < PTRS_PER_PMD; i++) अणु
 		pmd = pmd_start + i;
-		if (!pmd_none(*pmd))
-			return;
-	}
+		अगर (!pmd_none(*pmd))
+			वापस;
+	पूर्ण
 
-	pmd_free(&init_mm, (pmd_t *)page_to_virt(pud_page(*pud)));
+	pmd_मुक्त(&init_mm, (pmd_t *)page_to_virt(pud_page(*pud)));
 	pud_clear(pud);
-}
+पूर्ण
 
-static void kasan_free_pud(pud_t *pud_start, p4d_t *p4d)
-{
+अटल व्योम kasan_मुक्त_pud(pud_t *pud_start, p4d_t *p4d)
+अणु
 	pud_t *pud;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < PTRS_PER_PUD; i++) {
+	क्रम (i = 0; i < PTRS_PER_PUD; i++) अणु
 		pud = pud_start + i;
-		if (!pud_none(*pud))
-			return;
-	}
+		अगर (!pud_none(*pud))
+			वापस;
+	पूर्ण
 
-	pud_free(&init_mm, (pud_t *)page_to_virt(p4d_page(*p4d)));
+	pud_मुक्त(&init_mm, (pud_t *)page_to_virt(p4d_page(*p4d)));
 	p4d_clear(p4d);
-}
+पूर्ण
 
-static void kasan_free_p4d(p4d_t *p4d_start, pgd_t *pgd)
-{
+अटल व्योम kasan_मुक्त_p4d(p4d_t *p4d_start, pgd_t *pgd)
+अणु
 	p4d_t *p4d;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < PTRS_PER_P4D; i++) {
+	क्रम (i = 0; i < PTRS_PER_P4D; i++) अणु
 		p4d = p4d_start + i;
-		if (!p4d_none(*p4d))
-			return;
-	}
+		अगर (!p4d_none(*p4d))
+			वापस;
+	पूर्ण
 
-	p4d_free(&init_mm, (p4d_t *)page_to_virt(pgd_page(*pgd)));
+	p4d_मुक्त(&init_mm, (p4d_t *)page_to_virt(pgd_page(*pgd)));
 	pgd_clear(pgd);
-}
+पूर्ण
 
-static void kasan_remove_pte_table(pte_t *pte, unsigned long addr,
-				unsigned long end)
-{
-	unsigned long next;
+अटल व्योम kasan_हटाओ_pte_table(pte_t *pte, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ next;
 
-	for (; addr < end; addr = next, pte++) {
+	क्रम (; addr < end; addr = next, pte++) अणु
 		next = (addr + PAGE_SIZE) & PAGE_MASK;
-		if (next > end)
+		अगर (next > end)
 			next = end;
 
-		if (!pte_present(*pte))
-			continue;
+		अगर (!pte_present(*pte))
+			जारी;
 
-		if (WARN_ON(!kasan_early_shadow_page_entry(*pte)))
-			continue;
+		अगर (WARN_ON(!kasan_early_shaकरोw_page_entry(*pte)))
+			जारी;
 		pte_clear(&init_mm, addr, pte);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void kasan_remove_pmd_table(pmd_t *pmd, unsigned long addr,
-				unsigned long end)
-{
-	unsigned long next;
+अटल व्योम kasan_हटाओ_pmd_table(pmd_t *pmd, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ next;
 
-	for (; addr < end; addr = next, pmd++) {
+	क्रम (; addr < end; addr = next, pmd++) अणु
 		pte_t *pte;
 
 		next = pmd_addr_end(addr, end);
 
-		if (!pmd_present(*pmd))
-			continue;
+		अगर (!pmd_present(*pmd))
+			जारी;
 
-		if (kasan_pte_table(*pmd)) {
-			if (IS_ALIGNED(addr, PMD_SIZE) &&
-			    IS_ALIGNED(next, PMD_SIZE)) {
+		अगर (kasan_pte_table(*pmd)) अणु
+			अगर (IS_ALIGNED(addr, PMD_SIZE) &&
+			    IS_ALIGNED(next, PMD_SIZE)) अणु
 				pmd_clear(pmd);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 		pte = pte_offset_kernel(pmd, addr);
-		kasan_remove_pte_table(pte, addr, next);
-		kasan_free_pte(pte_offset_kernel(pmd, 0), pmd);
-	}
-}
+		kasan_हटाओ_pte_table(pte, addr, next);
+		kasan_मुक्त_pte(pte_offset_kernel(pmd, 0), pmd);
+	पूर्ण
+पूर्ण
 
-static void kasan_remove_pud_table(pud_t *pud, unsigned long addr,
-				unsigned long end)
-{
-	unsigned long next;
+अटल व्योम kasan_हटाओ_pud_table(pud_t *pud, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ next;
 
-	for (; addr < end; addr = next, pud++) {
+	क्रम (; addr < end; addr = next, pud++) अणु
 		pmd_t *pmd, *pmd_base;
 
 		next = pud_addr_end(addr, end);
 
-		if (!pud_present(*pud))
-			continue;
+		अगर (!pud_present(*pud))
+			जारी;
 
-		if (kasan_pmd_table(*pud)) {
-			if (IS_ALIGNED(addr, PUD_SIZE) &&
-			    IS_ALIGNED(next, PUD_SIZE)) {
+		अगर (kasan_pmd_table(*pud)) अणु
+			अगर (IS_ALIGNED(addr, PUD_SIZE) &&
+			    IS_ALIGNED(next, PUD_SIZE)) अणु
 				pud_clear(pud);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 		pmd = pmd_offset(pud, addr);
 		pmd_base = pmd_offset(pud, 0);
-		kasan_remove_pmd_table(pmd, addr, next);
-		kasan_free_pmd(pmd_base, pud);
-	}
-}
+		kasan_हटाओ_pmd_table(pmd, addr, next);
+		kasan_मुक्त_pmd(pmd_base, pud);
+	पूर्ण
+पूर्ण
 
-static void kasan_remove_p4d_table(p4d_t *p4d, unsigned long addr,
-				unsigned long end)
-{
-	unsigned long next;
+अटल व्योम kasan_हटाओ_p4d_table(p4d_t *p4d, अचिन्हित दीर्घ addr,
+				अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ next;
 
-	for (; addr < end; addr = next, p4d++) {
+	क्रम (; addr < end; addr = next, p4d++) अणु
 		pud_t *pud;
 
 		next = p4d_addr_end(addr, end);
 
-		if (!p4d_present(*p4d))
-			continue;
+		अगर (!p4d_present(*p4d))
+			जारी;
 
-		if (kasan_pud_table(*p4d)) {
-			if (IS_ALIGNED(addr, P4D_SIZE) &&
-			    IS_ALIGNED(next, P4D_SIZE)) {
+		अगर (kasan_pud_table(*p4d)) अणु
+			अगर (IS_ALIGNED(addr, P4D_SIZE) &&
+			    IS_ALIGNED(next, P4D_SIZE)) अणु
 				p4d_clear(p4d);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 		pud = pud_offset(p4d, addr);
-		kasan_remove_pud_table(pud, addr, next);
-		kasan_free_pud(pud_offset(p4d, 0), p4d);
-	}
-}
+		kasan_हटाओ_pud_table(pud, addr, next);
+		kasan_मुक्त_pud(pud_offset(p4d, 0), p4d);
+	पूर्ण
+पूर्ण
 
-void kasan_remove_zero_shadow(void *start, unsigned long size)
-{
-	unsigned long addr, end, next;
+व्योम kasan_हटाओ_zero_shaकरोw(व्योम *start, अचिन्हित दीर्घ size)
+अणु
+	अचिन्हित दीर्घ addr, end, next;
 	pgd_t *pgd;
 
-	addr = (unsigned long)kasan_mem_to_shadow(start);
+	addr = (अचिन्हित दीर्घ)kasan_mem_to_shaकरोw(start);
 	end = addr + (size >> KASAN_SHADOW_SCALE_SHIFT);
 
-	if (WARN_ON((unsigned long)start % KASAN_MEMORY_PER_SHADOW_PAGE) ||
+	अगर (WARN_ON((अचिन्हित दीर्घ)start % KASAN_MEMORY_PER_SHADOW_PAGE) ||
 	    WARN_ON(size % KASAN_MEMORY_PER_SHADOW_PAGE))
-		return;
+		वापस;
 
-	for (; addr < end; addr = next) {
+	क्रम (; addr < end; addr = next) अणु
 		p4d_t *p4d;
 
 		next = pgd_addr_end(addr, end);
 
 		pgd = pgd_offset_k(addr);
-		if (!pgd_present(*pgd))
-			continue;
+		अगर (!pgd_present(*pgd))
+			जारी;
 
-		if (kasan_p4d_table(*pgd)) {
-			if (IS_ALIGNED(addr, PGDIR_SIZE) &&
-			    IS_ALIGNED(next, PGDIR_SIZE)) {
+		अगर (kasan_p4d_table(*pgd)) अणु
+			अगर (IS_ALIGNED(addr, PGसूची_SIZE) &&
+			    IS_ALIGNED(next, PGसूची_SIZE)) अणु
 				pgd_clear(pgd);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		p4d = p4d_offset(pgd, addr);
-		kasan_remove_p4d_table(p4d, addr, next);
-		kasan_free_p4d(p4d_offset(pgd, 0), pgd);
-	}
-}
+		kasan_हटाओ_p4d_table(p4d, addr, next);
+		kasan_मुक्त_p4d(p4d_offset(pgd, 0), pgd);
+	पूर्ण
+पूर्ण
 
-int kasan_add_zero_shadow(void *start, unsigned long size)
-{
-	int ret;
-	void *shadow_start, *shadow_end;
+पूर्णांक kasan_add_zero_shaकरोw(व्योम *start, अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक ret;
+	व्योम *shaकरोw_start, *shaकरोw_end;
 
-	shadow_start = kasan_mem_to_shadow(start);
-	shadow_end = shadow_start + (size >> KASAN_SHADOW_SCALE_SHIFT);
+	shaकरोw_start = kasan_mem_to_shaकरोw(start);
+	shaकरोw_end = shaकरोw_start + (size >> KASAN_SHADOW_SCALE_SHIFT);
 
-	if (WARN_ON((unsigned long)start % KASAN_MEMORY_PER_SHADOW_PAGE) ||
+	अगर (WARN_ON((अचिन्हित दीर्घ)start % KASAN_MEMORY_PER_SHADOW_PAGE) ||
 	    WARN_ON(size % KASAN_MEMORY_PER_SHADOW_PAGE))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	ret = kasan_populate_early_shadow(shadow_start, shadow_end);
-	if (ret)
-		kasan_remove_zero_shadow(start, size);
-	return ret;
-}
+	ret = kasan_populate_early_shaकरोw(shaकरोw_start, shaकरोw_end);
+	अगर (ret)
+		kasan_हटाओ_zero_shaकरोw(start, size);
+	वापस ret;
+पूर्ण

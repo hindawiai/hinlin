@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 * Filename: dma.c
 *
@@ -8,42 +9,42 @@
 * (C) Copyright 2013 IBM Corporation
 */
 
-#include <linux/slab.h>
-#include "rsxx_priv.h"
+#समावेश <linux/slab.h>
+#समावेश "rsxx_priv.h"
 
-struct rsxx_dma {
-	struct list_head	 list;
+काष्ठा rsxx_dma अणु
+	काष्ठा list_head	 list;
 	u8			 cmd;
-	unsigned int		 laddr;     /* Logical address */
-	struct {
+	अचिन्हित पूर्णांक		 laddr;     /* Logical address */
+	काष्ठा अणु
 		u32		 off;
 		u32		 cnt;
-	} sub_page;
+	पूर्ण sub_page;
 	dma_addr_t		 dma_addr;
-	struct page		 *page;
-	unsigned int		 pg_off;    /* Page Offset */
+	काष्ठा page		 *page;
+	अचिन्हित पूर्णांक		 pg_off;    /* Page Offset */
 	rsxx_dma_cb		 cb;
-	void			 *cb_data;
-};
+	व्योम			 *cb_data;
+पूर्ण;
 
-/* This timeout is used to detect a stalled DMA channel */
-#define DMA_ACTIVITY_TIMEOUT	msecs_to_jiffies(10000)
+/* This समयout is used to detect a stalled DMA channel */
+#घोषणा DMA_ACTIVITY_TIMEOUT	msecs_to_jअगरfies(10000)
 
-struct hw_status {
+काष्ठा hw_status अणु
 	u8	status;
 	u8	tag;
 	__le16	count;
 	__le32	_rsvd2;
 	__le64	_rsvd3;
-} __packed;
+पूर्ण __packed;
 
-enum rsxx_dma_status {
+क्रमागत rsxx_dma_status अणु
 	DMA_SW_ERR    = 0x1,
 	DMA_HW_FAULT  = 0x2,
 	DMA_CANCELLED = 0x4,
-};
+पूर्ण;
 
-struct hw_cmd {
+काष्ठा hw_cmd अणु
 	u8	command;
 	u8	tag;
 	u8	_rsvd;
@@ -51,112 +52,112 @@ struct hw_cmd {
 			  /* Bit[4:6]: 512byte count */
 	__le32	device_addr;
 	__le64	host_addr;
-} __packed;
+पूर्ण __packed;
 
-enum rsxx_hw_cmd {
+क्रमागत rsxx_hw_cmd अणु
 	HW_CMD_BLK_DISCARD	= 0x70,
 	HW_CMD_BLK_WRITE	= 0x80,
 	HW_CMD_BLK_READ		= 0xC0,
 	HW_CMD_BLK_RECON_READ	= 0xE0,
-};
+पूर्ण;
 
-enum rsxx_hw_status {
+क्रमागत rsxx_hw_status अणु
 	HW_STATUS_CRC		= 0x01,
 	HW_STATUS_HARD_ERR	= 0x02,
 	HW_STATUS_SOFT_ERR	= 0x04,
 	HW_STATUS_FAULT		= 0x08,
-};
+पूर्ण;
 
-static struct kmem_cache *rsxx_dma_pool;
+अटल काष्ठा kmem_cache *rsxx_dma_pool;
 
-struct dma_tracker {
-	int			next_tag;
-	struct rsxx_dma	*dma;
-};
+काष्ठा dma_tracker अणु
+	पूर्णांक			next_tag;
+	काष्ठा rsxx_dma	*dma;
+पूर्ण;
 
-#define DMA_TRACKER_LIST_SIZE8 (sizeof(struct dma_tracker_list) + \
-		(sizeof(struct dma_tracker) * RSXX_MAX_OUTSTANDING_CMDS))
+#घोषणा DMA_TRACKER_LIST_SIZE8 (माप(काष्ठा dma_tracker_list) + \
+		(माप(काष्ठा dma_tracker) * RSXX_MAX_OUTSTANDING_CMDS))
 
-struct dma_tracker_list {
+काष्ठा dma_tracker_list अणु
 	spinlock_t		lock;
-	int			head;
-	struct dma_tracker	list[];
-};
+	पूर्णांक			head;
+	काष्ठा dma_tracker	list[];
+पूर्ण;
 
 
 /*----------------- Misc Utility Functions -------------------*/
-static unsigned int rsxx_addr8_to_laddr(u64 addr8, struct rsxx_cardinfo *card)
-{
-	unsigned long long tgt_addr8;
+अटल अचिन्हित पूर्णांक rsxx_addr8_to_laddr(u64 addr8, काष्ठा rsxx_cardinfo *card)
+अणु
+	अचिन्हित दीर्घ दीर्घ tgt_addr8;
 
-	tgt_addr8 = ((addr8 >> card->_stripe.upper_shift) &
+	tgt_addr8 = ((addr8 >> card->_stripe.upper_shअगरt) &
 		      card->_stripe.upper_mask) |
 		    ((addr8) & card->_stripe.lower_mask);
-	do_div(tgt_addr8, RSXX_HW_BLK_SIZE);
-	return tgt_addr8;
-}
+	करो_भाग(tgt_addr8, RSXX_HW_BLK_SIZE);
+	वापस tgt_addr8;
+पूर्ण
 
-static unsigned int rsxx_get_dma_tgt(struct rsxx_cardinfo *card, u64 addr8)
-{
-	unsigned int tgt;
+अटल अचिन्हित पूर्णांक rsxx_get_dma_tgt(काष्ठा rsxx_cardinfo *card, u64 addr8)
+अणु
+	अचिन्हित पूर्णांक tgt;
 
-	tgt = (addr8 >> card->_stripe.target_shift) & card->_stripe.target_mask;
+	tgt = (addr8 >> card->_stripe.target_shअगरt) & card->_stripe.target_mask;
 
-	return tgt;
-}
+	वापस tgt;
+पूर्ण
 
-void rsxx_dma_queue_reset(struct rsxx_cardinfo *card)
-{
+व्योम rsxx_dma_queue_reset(काष्ठा rsxx_cardinfo *card)
+अणु
 	/* Reset all DMA Command/Status Queues */
-	iowrite32(DMA_QUEUE_RESET, card->regmap + RESET);
-}
+	ioग_लिखो32(DMA_QUEUE_RESET, card->regmap + RESET);
+पूर्ण
 
-static unsigned int get_dma_size(struct rsxx_dma *dma)
-{
-	if (dma->sub_page.cnt)
-		return dma->sub_page.cnt << 9;
-	else
-		return RSXX_HW_BLK_SIZE;
-}
+अटल अचिन्हित पूर्णांक get_dma_size(काष्ठा rsxx_dma *dma)
+अणु
+	अगर (dma->sub_page.cnt)
+		वापस dma->sub_page.cnt << 9;
+	अन्यथा
+		वापस RSXX_HW_BLK_SIZE;
+पूर्ण
 
 
 /*----------------- DMA Tracker -------------------*/
-static void set_tracker_dma(struct dma_tracker_list *trackers,
-			    int tag,
-			    struct rsxx_dma *dma)
-{
+अटल व्योम set_tracker_dma(काष्ठा dma_tracker_list *trackers,
+			    पूर्णांक tag,
+			    काष्ठा rsxx_dma *dma)
+अणु
 	trackers->list[tag].dma = dma;
-}
+पूर्ण
 
-static struct rsxx_dma *get_tracker_dma(struct dma_tracker_list *trackers,
-					    int tag)
-{
-	return trackers->list[tag].dma;
-}
+अटल काष्ठा rsxx_dma *get_tracker_dma(काष्ठा dma_tracker_list *trackers,
+					    पूर्णांक tag)
+अणु
+	वापस trackers->list[tag].dma;
+पूर्ण
 
-static int pop_tracker(struct dma_tracker_list *trackers)
-{
-	int tag;
+अटल पूर्णांक pop_tracker(काष्ठा dma_tracker_list *trackers)
+अणु
+	पूर्णांक tag;
 
 	spin_lock(&trackers->lock);
 	tag = trackers->head;
-	if (tag != -1) {
+	अगर (tag != -1) अणु
 		trackers->head = trackers->list[tag].next_tag;
 		trackers->list[tag].next_tag = -1;
-	}
+	पूर्ण
 	spin_unlock(&trackers->lock);
 
-	return tag;
-}
+	वापस tag;
+पूर्ण
 
-static void push_tracker(struct dma_tracker_list *trackers, int tag)
-{
+अटल व्योम push_tracker(काष्ठा dma_tracker_list *trackers, पूर्णांक tag)
+अणु
 	spin_lock(&trackers->lock);
 	trackers->list[tag].next_tag = trackers->head;
 	trackers->head = tag;
-	trackers->list[tag].dma = NULL;
+	trackers->list[tag].dma = शून्य;
 	spin_unlock(&trackers->lock);
-}
+पूर्ण
 
 
 /*----------------- Interrupt Coalescing -------------*/
@@ -166,101 +167,101 @@ static void push_tracker(struct dma_tracker_list *trackers, int tag)
  * Interrupt Count [24:16]
  * Reserved [31:25]
 */
-#define INTR_COAL_LATENCY_MASK       (0x0000ffff)
+#घोषणा INTR_COAL_LATENCY_MASK       (0x0000ffff)
 
-#define INTR_COAL_COUNT_SHIFT        16
-#define INTR_COAL_COUNT_BITS         9
-#define INTR_COAL_COUNT_MASK         (((1 << INTR_COAL_COUNT_BITS) - 1) << \
+#घोषणा INTR_COAL_COUNT_SHIFT        16
+#घोषणा INTR_COAL_COUNT_BITS         9
+#घोषणा INTR_COAL_COUNT_MASK         (((1 << INTR_COAL_COUNT_BITS) - 1) << \
 					INTR_COAL_COUNT_SHIFT)
-#define INTR_COAL_LATENCY_UNITS_NS   64
+#घोषणा INTR_COAL_LATENCY_UNITS_NS   64
 
 
-static u32 dma_intr_coal_val(u32 mode, u32 count, u32 latency)
-{
+अटल u32 dma_पूर्णांकr_coal_val(u32 mode, u32 count, u32 latency)
+अणु
 	u32 latency_units = latency / INTR_COAL_LATENCY_UNITS_NS;
 
-	if (mode == RSXX_INTR_COAL_DISABLED)
-		return 0;
+	अगर (mode == RSXX_INTR_COAL_DISABLED)
+		वापस 0;
 
-	return ((count << INTR_COAL_COUNT_SHIFT) & INTR_COAL_COUNT_MASK) |
+	वापस ((count << INTR_COAL_COUNT_SHIFT) & INTR_COAL_COUNT_MASK) |
 			(latency_units & INTR_COAL_LATENCY_MASK);
 
-}
+पूर्ण
 
-static void dma_intr_coal_auto_tune(struct rsxx_cardinfo *card)
-{
-	int i;
+अटल व्योम dma_पूर्णांकr_coal_स्वतः_tune(काष्ठा rsxx_cardinfo *card)
+अणु
+	पूर्णांक i;
 	u32 q_depth = 0;
-	u32 intr_coal;
+	u32 पूर्णांकr_coal;
 
-	if (card->config.data.intr_coal.mode != RSXX_INTR_COAL_AUTO_TUNE ||
+	अगर (card->config.data.पूर्णांकr_coal.mode != RSXX_INTR_COAL_AUTO_TUNE ||
 	    unlikely(card->eeh_state))
-		return;
+		वापस;
 
-	for (i = 0; i < card->n_targets; i++)
-		q_depth += atomic_read(&card->ctrl[i].stats.hw_q_depth);
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++)
+		q_depth += atomic_पढ़ो(&card->ctrl[i].stats.hw_q_depth);
 
-	intr_coal = dma_intr_coal_val(card->config.data.intr_coal.mode,
+	पूर्णांकr_coal = dma_पूर्णांकr_coal_val(card->config.data.पूर्णांकr_coal.mode,
 				      q_depth / 2,
-				      card->config.data.intr_coal.latency);
-	iowrite32(intr_coal, card->regmap + INTR_COAL);
-}
+				      card->config.data.पूर्णांकr_coal.latency);
+	ioग_लिखो32(पूर्णांकr_coal, card->regmap + INTR_COAL);
+पूर्ण
 
 /*----------------- RSXX DMA Handling -------------------*/
-static void rsxx_free_dma(struct rsxx_dma_ctrl *ctrl, struct rsxx_dma *dma)
-{
-	if (dma->cmd != HW_CMD_BLK_DISCARD) {
-		if (!dma_mapping_error(&ctrl->card->dev->dev, dma->dma_addr)) {
+अटल व्योम rsxx_मुक्त_dma(काष्ठा rsxx_dma_ctrl *ctrl, काष्ठा rsxx_dma *dma)
+अणु
+	अगर (dma->cmd != HW_CMD_BLK_DISCARD) अणु
+		अगर (!dma_mapping_error(&ctrl->card->dev->dev, dma->dma_addr)) अणु
 			dma_unmap_page(&ctrl->card->dev->dev, dma->dma_addr,
 				       get_dma_size(dma),
 				       dma->cmd == HW_CMD_BLK_WRITE ?
 						   DMA_TO_DEVICE :
 						   DMA_FROM_DEVICE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	kmem_cache_free(rsxx_dma_pool, dma);
-}
+	kmem_cache_मुक्त(rsxx_dma_pool, dma);
+पूर्ण
 
-static void rsxx_complete_dma(struct rsxx_dma_ctrl *ctrl,
-				  struct rsxx_dma *dma,
-				  unsigned int status)
-{
-	if (status & DMA_SW_ERR)
+अटल व्योम rsxx_complete_dma(काष्ठा rsxx_dma_ctrl *ctrl,
+				  काष्ठा rsxx_dma *dma,
+				  अचिन्हित पूर्णांक status)
+अणु
+	अगर (status & DMA_SW_ERR)
 		ctrl->stats.dma_sw_err++;
-	if (status & DMA_HW_FAULT)
+	अगर (status & DMA_HW_FAULT)
 		ctrl->stats.dma_hw_fault++;
-	if (status & DMA_CANCELLED)
+	अगर (status & DMA_CANCELLED)
 		ctrl->stats.dma_cancelled++;
 
-	if (dma->cb)
+	अगर (dma->cb)
 		dma->cb(ctrl->card, dma->cb_data, status ? 1 : 0);
 
-	rsxx_free_dma(ctrl, dma);
-}
+	rsxx_मुक्त_dma(ctrl, dma);
+पूर्ण
 
-int rsxx_cleanup_dma_queue(struct rsxx_dma_ctrl *ctrl,
-			   struct list_head *q, unsigned int done)
-{
-	struct rsxx_dma *dma;
-	struct rsxx_dma *tmp;
-	int cnt = 0;
+पूर्णांक rsxx_cleanup_dma_queue(काष्ठा rsxx_dma_ctrl *ctrl,
+			   काष्ठा list_head *q, अचिन्हित पूर्णांक करोne)
+अणु
+	काष्ठा rsxx_dma *dma;
+	काष्ठा rsxx_dma *पंचांगp;
+	पूर्णांक cnt = 0;
 
-	list_for_each_entry_safe(dma, tmp, q, list) {
+	list_क्रम_each_entry_safe(dma, पंचांगp, q, list) अणु
 		list_del(&dma->list);
-		if (done & COMPLETE_DMA)
+		अगर (करोne & COMPLETE_DMA)
 			rsxx_complete_dma(ctrl, dma, DMA_CANCELLED);
-		else
-			rsxx_free_dma(ctrl, dma);
+		अन्यथा
+			rsxx_मुक्त_dma(ctrl, dma);
 		cnt++;
-	}
+	पूर्ण
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static void rsxx_requeue_dma(struct rsxx_dma_ctrl *ctrl,
-				 struct rsxx_dma *dma)
-{
+अटल व्योम rsxx_requeue_dma(काष्ठा rsxx_dma_ctrl *ctrl,
+				 काष्ठा rsxx_dma *dma)
+अणु
 	/*
 	 * Requeued DMAs go to the front of the queue so they are issued
 	 * first.
@@ -269,97 +270,97 @@ static void rsxx_requeue_dma(struct rsxx_dma_ctrl *ctrl,
 	ctrl->stats.sw_q_depth++;
 	list_add(&dma->list, &ctrl->queue);
 	spin_unlock_bh(&ctrl->queue_lock);
-}
+पूर्ण
 
-static void rsxx_handle_dma_error(struct rsxx_dma_ctrl *ctrl,
-				      struct rsxx_dma *dma,
+अटल व्योम rsxx_handle_dma_error(काष्ठा rsxx_dma_ctrl *ctrl,
+				      काष्ठा rsxx_dma *dma,
 				      u8 hw_st)
-{
-	unsigned int status = 0;
-	int requeue_cmd = 0;
+अणु
+	अचिन्हित पूर्णांक status = 0;
+	पूर्णांक requeue_cmd = 0;
 
 	dev_dbg(CARD_TO_DEV(ctrl->card),
 		"Handling DMA error(cmd x%02x, laddr x%08x st:x%02x)\n",
 		dma->cmd, dma->laddr, hw_st);
 
-	if (hw_st & HW_STATUS_CRC)
+	अगर (hw_st & HW_STATUS_CRC)
 		ctrl->stats.crc_errors++;
-	if (hw_st & HW_STATUS_HARD_ERR)
+	अगर (hw_st & HW_STATUS_HARD_ERR)
 		ctrl->stats.hard_errors++;
-	if (hw_st & HW_STATUS_SOFT_ERR)
+	अगर (hw_st & HW_STATUS_SOFT_ERR)
 		ctrl->stats.soft_errors++;
 
-	switch (dma->cmd) {
-	case HW_CMD_BLK_READ:
-		if (hw_st & (HW_STATUS_CRC | HW_STATUS_HARD_ERR)) {
-			if (ctrl->card->scrub_hard) {
+	चयन (dma->cmd) अणु
+	हाल HW_CMD_BLK_READ:
+		अगर (hw_st & (HW_STATUS_CRC | HW_STATUS_HARD_ERR)) अणु
+			अगर (ctrl->card->scrub_hard) अणु
 				dma->cmd = HW_CMD_BLK_RECON_READ;
 				requeue_cmd = 1;
-				ctrl->stats.reads_retried++;
-			} else {
+				ctrl->stats.पढ़ोs_retried++;
+			पूर्ण अन्यथा अणु
 				status |= DMA_HW_FAULT;
-				ctrl->stats.reads_failed++;
-			}
-		} else if (hw_st & HW_STATUS_FAULT) {
+				ctrl->stats.पढ़ोs_failed++;
+			पूर्ण
+		पूर्ण अन्यथा अगर (hw_st & HW_STATUS_FAULT) अणु
 			status |= DMA_HW_FAULT;
-			ctrl->stats.reads_failed++;
-		}
+			ctrl->stats.पढ़ोs_failed++;
+		पूर्ण
 
-		break;
-	case HW_CMD_BLK_RECON_READ:
-		if (hw_st & (HW_STATUS_CRC | HW_STATUS_HARD_ERR)) {
-			/* Data could not be reconstructed. */
+		अवरोध;
+	हाल HW_CMD_BLK_RECON_READ:
+		अगर (hw_st & (HW_STATUS_CRC | HW_STATUS_HARD_ERR)) अणु
+			/* Data could not be reस्थिरructed. */
 			status |= DMA_HW_FAULT;
-			ctrl->stats.reads_failed++;
-		}
+			ctrl->stats.पढ़ोs_failed++;
+		पूर्ण
 
-		break;
-	case HW_CMD_BLK_WRITE:
+		अवरोध;
+	हाल HW_CMD_BLK_WRITE:
 		status |= DMA_HW_FAULT;
-		ctrl->stats.writes_failed++;
+		ctrl->stats.ग_लिखोs_failed++;
 
-		break;
-	case HW_CMD_BLK_DISCARD:
+		अवरोध;
+	हाल HW_CMD_BLK_DISCARD:
 		status |= DMA_HW_FAULT;
 		ctrl->stats.discards_failed++;
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(CARD_TO_DEV(ctrl->card),
 			"Unknown command in DMA!(cmd: x%02x "
 			   "laddr x%08x st: x%02x\n",
 			   dma->cmd, dma->laddr, hw_st);
 		status |= DMA_SW_ERR;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (requeue_cmd)
+	अगर (requeue_cmd)
 		rsxx_requeue_dma(ctrl, dma);
-	else
+	अन्यथा
 		rsxx_complete_dma(ctrl, dma, status);
-}
+पूर्ण
 
-static void dma_engine_stalled(struct timer_list *t)
-{
-	struct rsxx_dma_ctrl *ctrl = from_timer(ctrl, t, activity_timer);
-	int cnt;
+अटल व्योम dma_engine_stalled(काष्ठा समयr_list *t)
+अणु
+	काष्ठा rsxx_dma_ctrl *ctrl = from_समयr(ctrl, t, activity_समयr);
+	पूर्णांक cnt;
 
-	if (atomic_read(&ctrl->stats.hw_q_depth) == 0 ||
+	अगर (atomic_पढ़ो(&ctrl->stats.hw_q_depth) == 0 ||
 	    unlikely(ctrl->card->eeh_state))
-		return;
+		वापस;
 
-	if (ctrl->cmd.idx != ioread32(ctrl->regmap + SW_CMD_IDX)) {
+	अगर (ctrl->cmd.idx != ioपढ़ो32(ctrl->regmap + SW_CMD_IDX)) अणु
 		/*
-		 * The dma engine was stalled because the SW_CMD_IDX write
+		 * The dma engine was stalled because the SW_CMD_IDX ग_लिखो
 		 * was lost. Issue it again to recover.
 		 */
 		dev_warn(CARD_TO_DEV(ctrl->card),
 			"SW_CMD_IDX write was lost, re-writing...\n");
-		iowrite32(ctrl->cmd.idx, ctrl->regmap + SW_CMD_IDX);
-		mod_timer(&ctrl->activity_timer,
-			  jiffies + DMA_ACTIVITY_TIMEOUT);
-	} else {
+		ioग_लिखो32(ctrl->cmd.idx, ctrl->regmap + SW_CMD_IDX);
+		mod_समयr(&ctrl->activity_समयr,
+			  jअगरfies + DMA_ACTIVITY_TIMEOUT);
+	पूर्ण अन्यथा अणु
 		dev_warn(CARD_TO_DEV(ctrl->card),
 			"DMA channel %d has stalled, faulting interface.\n",
 			ctrl->id);
@@ -372,66 +373,66 @@ static void dma_engine_stalled(struct timer_list *t)
 
 		cnt += rsxx_dma_cancel(ctrl);
 
-		if (cnt)
+		अगर (cnt)
 			dev_info(CARD_TO_DEV(ctrl->card),
 				"Freed %d queued DMAs on channel %d\n",
 				cnt, ctrl->id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rsxx_issue_dmas(struct rsxx_dma_ctrl *ctrl)
-{
-	struct rsxx_dma *dma;
-	int tag;
-	int cmds_pending = 0;
-	struct hw_cmd *hw_cmd_buf;
-	int dir;
+अटल व्योम rsxx_issue_dmas(काष्ठा rsxx_dma_ctrl *ctrl)
+अणु
+	काष्ठा rsxx_dma *dma;
+	पूर्णांक tag;
+	पूर्णांक cmds_pending = 0;
+	काष्ठा hw_cmd *hw_cmd_buf;
+	पूर्णांक dir;
 
 	hw_cmd_buf = ctrl->cmd.buf;
 
-	if (unlikely(ctrl->card->halt) ||
+	अगर (unlikely(ctrl->card->halt) ||
 	    unlikely(ctrl->card->eeh_state))
-		return;
+		वापस;
 
-	while (1) {
+	जबतक (1) अणु
 		spin_lock_bh(&ctrl->queue_lock);
-		if (list_empty(&ctrl->queue)) {
+		अगर (list_empty(&ctrl->queue)) अणु
 			spin_unlock_bh(&ctrl->queue_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock_bh(&ctrl->queue_lock);
 
 		tag = pop_tracker(ctrl->trackers);
-		if (tag == -1)
-			break;
+		अगर (tag == -1)
+			अवरोध;
 
 		spin_lock_bh(&ctrl->queue_lock);
-		dma = list_entry(ctrl->queue.next, struct rsxx_dma, list);
+		dma = list_entry(ctrl->queue.next, काष्ठा rsxx_dma, list);
 		list_del(&dma->list);
 		ctrl->stats.sw_q_depth--;
 		spin_unlock_bh(&ctrl->queue_lock);
 
 		/*
-		 * This will catch any DMAs that slipped in right before the
+		 * This will catch any DMAs that slipped in right beक्रमe the
 		 * fault, but was queued after all the other DMAs were
 		 * cancelled.
 		 */
-		if (unlikely(ctrl->card->dma_fault)) {
+		अगर (unlikely(ctrl->card->dma_fault)) अणु
 			push_tracker(ctrl->trackers, tag);
 			rsxx_complete_dma(ctrl, dma, DMA_CANCELLED);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (dma->cmd != HW_CMD_BLK_DISCARD) {
-			if (dma->cmd == HW_CMD_BLK_WRITE)
+		अगर (dma->cmd != HW_CMD_BLK_DISCARD) अणु
+			अगर (dma->cmd == HW_CMD_BLK_WRITE)
 				dir = DMA_TO_DEVICE;
-			else
+			अन्यथा
 				dir = DMA_FROM_DEVICE;
 
 			/*
 			 * The function dma_map_page is placed here because we
 			 * can only, by design, issue up to 255 commands to the
-			 * hardware at one time per DMA channel. So the maximum
+			 * hardware at one समय per DMA channel. So the maximum
 			 * amount of mapped memory would be 255 * 4 channels *
 			 * 4096 Bytes which is less than 2GB, the limit of a x8
 			 * Non-HWWD PCIe slot. This way the dma_map_page
@@ -440,12 +441,12 @@ static void rsxx_issue_dmas(struct rsxx_dma_ctrl *ctrl)
 			 */
 			dma->dma_addr = dma_map_page(&ctrl->card->dev->dev, dma->page,
 					dma->pg_off, dma->sub_page.cnt << 9, dir);
-			if (dma_mapping_error(&ctrl->card->dev->dev, dma->dma_addr)) {
+			अगर (dma_mapping_error(&ctrl->card->dev->dev, dma->dma_addr)) अणु
 				push_tracker(ctrl->trackers, tag);
 				rsxx_complete_dma(ctrl, dma, DMA_CANCELLED);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		set_tracker_dma(ctrl->trackers, tag, dma);
 		hw_cmd_buf[ctrl->cmd.idx].command  = dma->cmd;
@@ -468,53 +469,53 @@ static void rsxx_issue_dmas(struct rsxx_dma_ctrl *ctrl)
 		ctrl->cmd.idx = (ctrl->cmd.idx + 1) & RSXX_CS_IDX_MASK;
 		cmds_pending++;
 
-		if (dma->cmd == HW_CMD_BLK_WRITE)
-			ctrl->stats.writes_issued++;
-		else if (dma->cmd == HW_CMD_BLK_DISCARD)
+		अगर (dma->cmd == HW_CMD_BLK_WRITE)
+			ctrl->stats.ग_लिखोs_issued++;
+		अन्यथा अगर (dma->cmd == HW_CMD_BLK_DISCARD)
 			ctrl->stats.discards_issued++;
-		else
-			ctrl->stats.reads_issued++;
-	}
+		अन्यथा
+			ctrl->stats.पढ़ोs_issued++;
+	पूर्ण
 
 	/* Let HW know we've queued commands. */
-	if (cmds_pending) {
+	अगर (cmds_pending) अणु
 		atomic_add(cmds_pending, &ctrl->stats.hw_q_depth);
-		mod_timer(&ctrl->activity_timer,
-			  jiffies + DMA_ACTIVITY_TIMEOUT);
+		mod_समयr(&ctrl->activity_समयr,
+			  jअगरfies + DMA_ACTIVITY_TIMEOUT);
 
-		if (unlikely(ctrl->card->eeh_state)) {
-			del_timer_sync(&ctrl->activity_timer);
-			return;
-		}
+		अगर (unlikely(ctrl->card->eeh_state)) अणु
+			del_समयr_sync(&ctrl->activity_समयr);
+			वापस;
+		पूर्ण
 
-		iowrite32(ctrl->cmd.idx, ctrl->regmap + SW_CMD_IDX);
-	}
-}
+		ioग_लिखो32(ctrl->cmd.idx, ctrl->regmap + SW_CMD_IDX);
+	पूर्ण
+पूर्ण
 
-static void rsxx_dma_done(struct rsxx_dma_ctrl *ctrl)
-{
-	struct rsxx_dma *dma;
-	unsigned long flags;
+अटल व्योम rsxx_dma_करोne(काष्ठा rsxx_dma_ctrl *ctrl)
+अणु
+	काष्ठा rsxx_dma *dma;
+	अचिन्हित दीर्घ flags;
 	u16 count;
 	u8 status;
 	u8 tag;
-	struct hw_status *hw_st_buf;
+	काष्ठा hw_status *hw_st_buf;
 
 	hw_st_buf = ctrl->status.buf;
 
-	if (unlikely(ctrl->card->halt) ||
+	अगर (unlikely(ctrl->card->halt) ||
 	    unlikely(ctrl->card->dma_fault) ||
 	    unlikely(ctrl->card->eeh_state))
-		return;
+		वापस;
 
 	count = le16_to_cpu(hw_st_buf[ctrl->status.idx].count);
 
-	while (count == ctrl->e_cnt) {
+	जबतक (count == ctrl->e_cnt) अणु
 		/*
-		 * The read memory-barrier is necessary to keep aggressive
+		 * The पढ़ो memory-barrier is necessary to keep aggressive
 		 * processors/optimizers (such as the PPC Apple G5) from
-		 * reordering the following status-buffer tag & status read
-		 * *before* the count read on subsequent iterations of the
+		 * reordering the following status-buffer tag & status पढ़ो
+		 * *beक्रमe* the count पढ़ो on subsequent iterations of the
 		 * loop!
 		 */
 		rmb();
@@ -523,7 +524,7 @@ static void rsxx_dma_done(struct rsxx_dma_ctrl *ctrl)
 		tag    = hw_st_buf[ctrl->status.idx].tag;
 
 		dma = get_tracker_dma(ctrl->trackers, tag);
-		if (dma == NULL) {
+		अगर (dma == शून्य) अणु
 			spin_lock_irqsave(&ctrl->card->irq_lock, flags);
 			rsxx_disable_ier(ctrl->card, CR_INTR_DMA_ALL);
 			spin_unlock_irqrestore(&ctrl->card->irq_lock, flags);
@@ -532,8 +533,8 @@ static void rsxx_dma_done(struct rsxx_dma_ctrl *ctrl)
 				"No tracker for tag %d "
 				"(idx %d id %d)\n",
 				tag, ctrl->status.idx, ctrl->id);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		dev_dbg(CARD_TO_DEV(ctrl->card),
 			"Completing DMA%d"
@@ -543,12 +544,12 @@ static void rsxx_dma_done(struct rsxx_dma_ctrl *ctrl)
 
 		atomic_dec(&ctrl->stats.hw_q_depth);
 
-		mod_timer(&ctrl->activity_timer,
-			  jiffies + DMA_ACTIVITY_TIMEOUT);
+		mod_समयr(&ctrl->activity_समयr,
+			  jअगरfies + DMA_ACTIVITY_TIMEOUT);
 
-		if (status)
+		अगर (status)
 			rsxx_handle_dma_error(ctrl, dma, status);
-		else
+		अन्यथा
 			rsxx_complete_dma(ctrl, dma, 0);
 
 		push_tracker(ctrl->trackers, tag);
@@ -558,63 +559,63 @@ static void rsxx_dma_done(struct rsxx_dma_ctrl *ctrl)
 		ctrl->e_cnt++;
 
 		count = le16_to_cpu(hw_st_buf[ctrl->status.idx].count);
-	}
+	पूर्ण
 
-	dma_intr_coal_auto_tune(ctrl->card);
+	dma_पूर्णांकr_coal_स्वतः_tune(ctrl->card);
 
-	if (atomic_read(&ctrl->stats.hw_q_depth) == 0)
-		del_timer_sync(&ctrl->activity_timer);
+	अगर (atomic_पढ़ो(&ctrl->stats.hw_q_depth) == 0)
+		del_समयr_sync(&ctrl->activity_समयr);
 
 	spin_lock_irqsave(&ctrl->card->irq_lock, flags);
 	rsxx_enable_ier(ctrl->card, CR_INTR_DMA(ctrl->id));
 	spin_unlock_irqrestore(&ctrl->card->irq_lock, flags);
 
 	spin_lock_bh(&ctrl->queue_lock);
-	if (ctrl->stats.sw_q_depth)
+	अगर (ctrl->stats.sw_q_depth)
 		queue_work(ctrl->issue_wq, &ctrl->issue_dma_work);
 	spin_unlock_bh(&ctrl->queue_lock);
-}
+पूर्ण
 
-static void rsxx_schedule_issue(struct work_struct *work)
-{
-	struct rsxx_dma_ctrl *ctrl;
+अटल व्योम rsxx_schedule_issue(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rsxx_dma_ctrl *ctrl;
 
-	ctrl = container_of(work, struct rsxx_dma_ctrl, issue_dma_work);
+	ctrl = container_of(work, काष्ठा rsxx_dma_ctrl, issue_dma_work);
 
 	mutex_lock(&ctrl->work_lock);
 	rsxx_issue_dmas(ctrl);
 	mutex_unlock(&ctrl->work_lock);
-}
+पूर्ण
 
-static void rsxx_schedule_done(struct work_struct *work)
-{
-	struct rsxx_dma_ctrl *ctrl;
+अटल व्योम rsxx_schedule_करोne(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rsxx_dma_ctrl *ctrl;
 
-	ctrl = container_of(work, struct rsxx_dma_ctrl, dma_done_work);
+	ctrl = container_of(work, काष्ठा rsxx_dma_ctrl, dma_करोne_work);
 
 	mutex_lock(&ctrl->work_lock);
-	rsxx_dma_done(ctrl);
+	rsxx_dma_करोne(ctrl);
 	mutex_unlock(&ctrl->work_lock);
-}
+पूर्ण
 
-static blk_status_t rsxx_queue_discard(struct rsxx_cardinfo *card,
-				  struct list_head *q,
-				  unsigned int laddr,
+अटल blk_status_t rsxx_queue_discard(काष्ठा rsxx_cardinfo *card,
+				  काष्ठा list_head *q,
+				  अचिन्हित पूर्णांक laddr,
 				  rsxx_dma_cb cb,
-				  void *cb_data)
-{
-	struct rsxx_dma *dma;
+				  व्योम *cb_data)
+अणु
+	काष्ठा rsxx_dma *dma;
 
 	dma = kmem_cache_alloc(rsxx_dma_pool, GFP_KERNEL);
-	if (!dma)
-		return BLK_STS_RESOURCE;
+	अगर (!dma)
+		वापस BLK_STS_RESOURCE;
 
 	dma->cmd          = HW_CMD_BLK_DISCARD;
 	dma->laddr        = laddr;
 	dma->dma_addr     = 0;
 	dma->sub_page.off = 0;
 	dma->sub_page.cnt = 0;
-	dma->page         = NULL;
+	dma->page         = शून्य;
 	dma->pg_off       = 0;
 	dma->cb	          = cb;
 	dma->cb_data      = cb_data;
@@ -623,25 +624,25 @@ static blk_status_t rsxx_queue_discard(struct rsxx_cardinfo *card,
 
 	list_add_tail(&dma->list, q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static blk_status_t rsxx_queue_dma(struct rsxx_cardinfo *card,
-			      struct list_head *q,
-			      int dir,
-			      unsigned int dma_off,
-			      unsigned int dma_len,
-			      unsigned int laddr,
-			      struct page *page,
-			      unsigned int pg_off,
+अटल blk_status_t rsxx_queue_dma(काष्ठा rsxx_cardinfo *card,
+			      काष्ठा list_head *q,
+			      पूर्णांक dir,
+			      अचिन्हित पूर्णांक dma_off,
+			      अचिन्हित पूर्णांक dma_len,
+			      अचिन्हित पूर्णांक laddr,
+			      काष्ठा page *page,
+			      अचिन्हित पूर्णांक pg_off,
 			      rsxx_dma_cb cb,
-			      void *cb_data)
-{
-	struct rsxx_dma *dma;
+			      व्योम *cb_data)
+अणु
+	काष्ठा rsxx_dma *dma;
 
 	dma = kmem_cache_alloc(rsxx_dma_pool, GFP_KERNEL);
-	if (!dma)
-		return BLK_STS_RESOURCE;
+	अगर (!dma)
+		वापस BLK_STS_RESOURCE;
 
 	dma->cmd          = dir ? HW_CMD_BLK_WRITE : HW_CMD_BLK_READ;
 	dma->laddr        = laddr;
@@ -660,60 +661,60 @@ static blk_status_t rsxx_queue_dma(struct rsxx_cardinfo *card,
 	/* Queue the DMA */
 	list_add_tail(&dma->list, q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-blk_status_t rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
-			   struct bio *bio,
+blk_status_t rsxx_dma_queue_bio(काष्ठा rsxx_cardinfo *card,
+			   काष्ठा bio *bio,
 			   atomic_t *n_dmas,
 			   rsxx_dma_cb cb,
-			   void *cb_data)
-{
-	struct list_head dma_list[RSXX_MAX_TARGETS];
-	struct bio_vec bvec;
-	struct bvec_iter iter;
-	unsigned long long addr8;
-	unsigned int laddr;
-	unsigned int bv_len;
-	unsigned int bv_off;
-	unsigned int dma_off;
-	unsigned int dma_len;
-	int dma_cnt[RSXX_MAX_TARGETS];
-	int tgt;
+			   व्योम *cb_data)
+अणु
+	काष्ठा list_head dma_list[RSXX_MAX_TARGETS];
+	काष्ठा bio_vec bvec;
+	काष्ठा bvec_iter iter;
+	अचिन्हित दीर्घ दीर्घ addr8;
+	अचिन्हित पूर्णांक laddr;
+	अचिन्हित पूर्णांक bv_len;
+	अचिन्हित पूर्णांक bv_off;
+	अचिन्हित पूर्णांक dma_off;
+	अचिन्हित पूर्णांक dma_len;
+	पूर्णांक dma_cnt[RSXX_MAX_TARGETS];
+	पूर्णांक tgt;
 	blk_status_t st;
-	int i;
+	पूर्णांक i;
 
 	addr8 = bio->bi_iter.bi_sector << 9; /* sectors are 512 bytes */
 	atomic_set(n_dmas, 0);
 
-	for (i = 0; i < card->n_targets; i++) {
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
 		INIT_LIST_HEAD(&dma_list[i]);
 		dma_cnt[i] = 0;
-	}
+	पूर्ण
 
-	if (bio_op(bio) == REQ_OP_DISCARD) {
+	अगर (bio_op(bio) == REQ_OP_DISCARD) अणु
 		bv_len = bio->bi_iter.bi_size;
 
-		while (bv_len > 0) {
+		जबतक (bv_len > 0) अणु
 			tgt   = rsxx_get_dma_tgt(card, addr8);
 			laddr = rsxx_addr8_to_laddr(addr8, card);
 
 			st = rsxx_queue_discard(card, &dma_list[tgt], laddr,
 						    cb, cb_data);
-			if (st)
-				goto bvec_err;
+			अगर (st)
+				जाओ bvec_err;
 
 			dma_cnt[tgt]++;
 			atomic_inc(n_dmas);
 			addr8  += RSXX_HW_BLK_SIZE;
 			bv_len -= RSXX_HW_BLK_SIZE;
-		}
-	} else {
-		bio_for_each_segment(bvec, bio, iter) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		bio_क्रम_each_segment(bvec, bio, iter) अणु
 			bv_len = bvec.bv_len;
 			bv_off = bvec.bv_offset;
 
-			while (bv_len > 0) {
+			जबतक (bv_len > 0) अणु
 				tgt   = rsxx_get_dma_tgt(card, addr8);
 				laddr = rsxx_addr8_to_laddr(addr8, card);
 				dma_off = addr8 & RSXX_HW_BLK_MASK;
@@ -725,20 +726,20 @@ blk_status_t rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
 							dma_off, dma_len,
 							laddr, bvec.bv_page,
 							bv_off, cb, cb_data);
-				if (st)
-					goto bvec_err;
+				अगर (st)
+					जाओ bvec_err;
 
 				dma_cnt[tgt]++;
 				atomic_inc(n_dmas);
 				addr8  += dma_len;
 				bv_off += dma_len;
 				bv_len -= dma_len;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < card->n_targets; i++) {
-		if (!list_empty(&dma_list[i])) {
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
+		अगर (!list_empty(&dma_list[i])) अणु
 			spin_lock_bh(&card->ctrl[i].queue_lock);
 			card->ctrl[i].stats.sw_q_depth += dma_cnt[i];
 			list_splice_tail(&dma_list[i], &card->ctrl[i].queue);
@@ -746,77 +747,77 @@ blk_status_t rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
 
 			queue_work(card->ctrl[i].issue_wq,
 				   &card->ctrl[i].issue_dma_work);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 bvec_err:
-	for (i = 0; i < card->n_targets; i++)
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++)
 		rsxx_cleanup_dma_queue(&card->ctrl[i], &dma_list[i],
 					FREE_DMA);
-	return st;
-}
+	वापस st;
+पूर्ण
 
 
 /*----------------- DMA Engine Initialization & Setup -------------------*/
-int rsxx_hw_buffers_init(struct pci_dev *dev, struct rsxx_dma_ctrl *ctrl)
-{
+पूर्णांक rsxx_hw_buffers_init(काष्ठा pci_dev *dev, काष्ठा rsxx_dma_ctrl *ctrl)
+अणु
 	ctrl->status.buf = dma_alloc_coherent(&dev->dev, STATUS_BUFFER_SIZE8,
 				&ctrl->status.dma_addr, GFP_KERNEL);
 	ctrl->cmd.buf = dma_alloc_coherent(&dev->dev, COMMAND_BUFFER_SIZE8,
 				&ctrl->cmd.dma_addr, GFP_KERNEL);
-	if (ctrl->status.buf == NULL || ctrl->cmd.buf == NULL)
-		return -ENOMEM;
+	अगर (ctrl->status.buf == शून्य || ctrl->cmd.buf == शून्य)
+		वापस -ENOMEM;
 
-	memset(ctrl->status.buf, 0xac, STATUS_BUFFER_SIZE8);
-	iowrite32(lower_32_bits(ctrl->status.dma_addr),
+	स_रखो(ctrl->status.buf, 0xac, STATUS_BUFFER_SIZE8);
+	ioग_लिखो32(lower_32_bits(ctrl->status.dma_addr),
 		ctrl->regmap + SB_ADD_LO);
-	iowrite32(upper_32_bits(ctrl->status.dma_addr),
+	ioग_लिखो32(upper_32_bits(ctrl->status.dma_addr),
 		ctrl->regmap + SB_ADD_HI);
 
-	memset(ctrl->cmd.buf, 0x83, COMMAND_BUFFER_SIZE8);
-	iowrite32(lower_32_bits(ctrl->cmd.dma_addr), ctrl->regmap + CB_ADD_LO);
-	iowrite32(upper_32_bits(ctrl->cmd.dma_addr), ctrl->regmap + CB_ADD_HI);
+	स_रखो(ctrl->cmd.buf, 0x83, COMMAND_BUFFER_SIZE8);
+	ioग_लिखो32(lower_32_bits(ctrl->cmd.dma_addr), ctrl->regmap + CB_ADD_LO);
+	ioग_लिखो32(upper_32_bits(ctrl->cmd.dma_addr), ctrl->regmap + CB_ADD_HI);
 
-	ctrl->status.idx = ioread32(ctrl->regmap + HW_STATUS_CNT);
-	if (ctrl->status.idx > RSXX_MAX_OUTSTANDING_CMDS) {
+	ctrl->status.idx = ioपढ़ो32(ctrl->regmap + HW_STATUS_CNT);
+	अगर (ctrl->status.idx > RSXX_MAX_OUTSTANDING_CMDS) अणु
 		dev_crit(&dev->dev, "Failed reading status cnt x%x\n",
 			ctrl->status.idx);
-		return -EINVAL;
-	}
-	iowrite32(ctrl->status.idx, ctrl->regmap + HW_STATUS_CNT);
-	iowrite32(ctrl->status.idx, ctrl->regmap + SW_STATUS_CNT);
+		वापस -EINVAL;
+	पूर्ण
+	ioग_लिखो32(ctrl->status.idx, ctrl->regmap + HW_STATUS_CNT);
+	ioग_लिखो32(ctrl->status.idx, ctrl->regmap + SW_STATUS_CNT);
 
-	ctrl->cmd.idx = ioread32(ctrl->regmap + HW_CMD_IDX);
-	if (ctrl->cmd.idx > RSXX_MAX_OUTSTANDING_CMDS) {
+	ctrl->cmd.idx = ioपढ़ो32(ctrl->regmap + HW_CMD_IDX);
+	अगर (ctrl->cmd.idx > RSXX_MAX_OUTSTANDING_CMDS) अणु
 		dev_crit(&dev->dev, "Failed reading cmd cnt x%x\n",
 			ctrl->status.idx);
-		return -EINVAL;
-	}
-	iowrite32(ctrl->cmd.idx, ctrl->regmap + HW_CMD_IDX);
-	iowrite32(ctrl->cmd.idx, ctrl->regmap + SW_CMD_IDX);
+		वापस -EINVAL;
+	पूर्ण
+	ioग_लिखो32(ctrl->cmd.idx, ctrl->regmap + HW_CMD_IDX);
+	ioग_लिखो32(ctrl->cmd.idx, ctrl->regmap + SW_CMD_IDX);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsxx_dma_ctrl_init(struct pci_dev *dev,
-				  struct rsxx_dma_ctrl *ctrl)
-{
-	int i;
-	int st;
+अटल पूर्णांक rsxx_dma_ctrl_init(काष्ठा pci_dev *dev,
+				  काष्ठा rsxx_dma_ctrl *ctrl)
+अणु
+	पूर्णांक i;
+	पूर्णांक st;
 
-	memset(&ctrl->stats, 0, sizeof(ctrl->stats));
+	स_रखो(&ctrl->stats, 0, माप(ctrl->stats));
 
-	ctrl->trackers = vmalloc(DMA_TRACKER_LIST_SIZE8);
-	if (!ctrl->trackers)
-		return -ENOMEM;
+	ctrl->trackers = vदो_स्मृति(DMA_TRACKER_LIST_SIZE8);
+	अगर (!ctrl->trackers)
+		वापस -ENOMEM;
 
 	ctrl->trackers->head = 0;
-	for (i = 0; i < RSXX_MAX_OUTSTANDING_CMDS; i++) {
+	क्रम (i = 0; i < RSXX_MAX_OUTSTANDING_CMDS; i++) अणु
 		ctrl->trackers->list[i].next_tag = i + 1;
-		ctrl->trackers->list[i].dma = NULL;
-	}
+		ctrl->trackers->list[i].dma = शून्य;
+	पूर्ण
 	ctrl->trackers->list[RSXX_MAX_OUTSTANDING_CMDS-1].next_tag = -1;
 	spin_lock_init(&ctrl->trackers->lock);
 
@@ -824,81 +825,81 @@ static int rsxx_dma_ctrl_init(struct pci_dev *dev,
 	mutex_init(&ctrl->work_lock);
 	INIT_LIST_HEAD(&ctrl->queue);
 
-	timer_setup(&ctrl->activity_timer, dma_engine_stalled, 0);
+	समयr_setup(&ctrl->activity_समयr, dma_engine_stalled, 0);
 
 	ctrl->issue_wq = alloc_ordered_workqueue(DRIVER_NAME"_issue", 0);
-	if (!ctrl->issue_wq)
-		return -ENOMEM;
+	अगर (!ctrl->issue_wq)
+		वापस -ENOMEM;
 
-	ctrl->done_wq = alloc_ordered_workqueue(DRIVER_NAME"_done", 0);
-	if (!ctrl->done_wq)
-		return -ENOMEM;
+	ctrl->करोne_wq = alloc_ordered_workqueue(DRIVER_NAME"_done", 0);
+	अगर (!ctrl->करोne_wq)
+		वापस -ENOMEM;
 
 	INIT_WORK(&ctrl->issue_dma_work, rsxx_schedule_issue);
-	INIT_WORK(&ctrl->dma_done_work, rsxx_schedule_done);
+	INIT_WORK(&ctrl->dma_करोne_work, rsxx_schedule_करोne);
 
 	st = rsxx_hw_buffers_init(dev, ctrl);
-	if (st)
-		return st;
+	अगर (st)
+		वापस st;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsxx_dma_stripe_setup(struct rsxx_cardinfo *card,
-			      unsigned int stripe_size8)
-{
-	if (!is_power_of_2(stripe_size8)) {
+अटल पूर्णांक rsxx_dma_stripe_setup(काष्ठा rsxx_cardinfo *card,
+			      अचिन्हित पूर्णांक stripe_size8)
+अणु
+	अगर (!is_घातer_of_2(stripe_size8)) अणु
 		dev_err(CARD_TO_DEV(card),
 			"stripe_size is NOT a power of 2!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	card->_stripe.lower_mask = stripe_size8 - 1;
 
 	card->_stripe.upper_mask  = ~(card->_stripe.lower_mask);
-	card->_stripe.upper_shift = ffs(card->n_targets) - 1;
+	card->_stripe.upper_shअगरt = ffs(card->n_tarमाला_लो) - 1;
 
-	card->_stripe.target_mask = card->n_targets - 1;
-	card->_stripe.target_shift = ffs(stripe_size8) - 1;
+	card->_stripe.target_mask = card->n_tarमाला_लो - 1;
+	card->_stripe.target_shअगरt = ffs(stripe_size8) - 1;
 
 	dev_dbg(CARD_TO_DEV(card), "_stripe.lower_mask   = x%016llx\n",
 		card->_stripe.lower_mask);
 	dev_dbg(CARD_TO_DEV(card), "_stripe.upper_shift  = x%016llx\n",
-		card->_stripe.upper_shift);
+		card->_stripe.upper_shअगरt);
 	dev_dbg(CARD_TO_DEV(card), "_stripe.upper_mask   = x%016llx\n",
 		card->_stripe.upper_mask);
 	dev_dbg(CARD_TO_DEV(card), "_stripe.target_mask  = x%016llx\n",
 		card->_stripe.target_mask);
 	dev_dbg(CARD_TO_DEV(card), "_stripe.target_shift = x%016llx\n",
-		card->_stripe.target_shift);
+		card->_stripe.target_shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rsxx_dma_configure(struct rsxx_cardinfo *card)
-{
-	u32 intr_coal;
+पूर्णांक rsxx_dma_configure(काष्ठा rsxx_cardinfo *card)
+अणु
+	u32 पूर्णांकr_coal;
 
-	intr_coal = dma_intr_coal_val(card->config.data.intr_coal.mode,
-				      card->config.data.intr_coal.count,
-				      card->config.data.intr_coal.latency);
-	iowrite32(intr_coal, card->regmap + INTR_COAL);
+	पूर्णांकr_coal = dma_पूर्णांकr_coal_val(card->config.data.पूर्णांकr_coal.mode,
+				      card->config.data.पूर्णांकr_coal.count,
+				      card->config.data.पूर्णांकr_coal.latency);
+	ioग_लिखो32(पूर्णांकr_coal, card->regmap + INTR_COAL);
 
-	return rsxx_dma_stripe_setup(card, card->config.data.stripe_size);
-}
+	वापस rsxx_dma_stripe_setup(card, card->config.data.stripe_size);
+पूर्ण
 
-int rsxx_dma_setup(struct rsxx_cardinfo *card)
-{
-	unsigned long flags;
-	int st;
-	int i;
+पूर्णांक rsxx_dma_setup(काष्ठा rsxx_cardinfo *card)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक st;
+	पूर्णांक i;
 
 	dev_info(CARD_TO_DEV(card),
 		"Initializing %d DMA targets\n",
-		card->n_targets);
+		card->n_tarमाला_लो);
 
-	/* Regmap is divided up into 4K chunks. One for each DMA channel */
-	for (i = 0; i < card->n_targets; i++)
+	/* Regmap is भागided up पूर्णांकo 4K chunks. One क्रम each DMA channel */
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++)
 		card->ctrl[i].regmap = card->regmap + (i * 4096);
 
 	card->dma_fault = 0;
@@ -907,97 +908,97 @@ int rsxx_dma_setup(struct rsxx_cardinfo *card)
 	rsxx_dma_queue_reset(card);
 
 	/************* Setup DMA Control *************/
-	for (i = 0; i < card->n_targets; i++) {
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
 		st = rsxx_dma_ctrl_init(card->dev, &card->ctrl[i]);
-		if (st)
-			goto failed_dma_setup;
+		अगर (st)
+			जाओ failed_dma_setup;
 
 		card->ctrl[i].card = card;
 		card->ctrl[i].id = i;
-	}
+	पूर्ण
 
 	card->scrub_hard = 1;
 
-	if (card->config_valid)
+	अगर (card->config_valid)
 		rsxx_dma_configure(card);
 
-	/* Enable the interrupts after all setup has completed. */
-	for (i = 0; i < card->n_targets; i++) {
+	/* Enable the पूर्णांकerrupts after all setup has completed. */
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
 		spin_lock_irqsave(&card->irq_lock, flags);
 		rsxx_enable_ier_and_isr(card, CR_INTR_DMA(i));
 		spin_unlock_irqrestore(&card->irq_lock, flags);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 failed_dma_setup:
-	for (i = 0; i < card->n_targets; i++) {
-		struct rsxx_dma_ctrl *ctrl = &card->ctrl[i];
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
+		काष्ठा rsxx_dma_ctrl *ctrl = &card->ctrl[i];
 
-		if (ctrl->issue_wq) {
+		अगर (ctrl->issue_wq) अणु
 			destroy_workqueue(ctrl->issue_wq);
-			ctrl->issue_wq = NULL;
-		}
+			ctrl->issue_wq = शून्य;
+		पूर्ण
 
-		if (ctrl->done_wq) {
-			destroy_workqueue(ctrl->done_wq);
-			ctrl->done_wq = NULL;
-		}
+		अगर (ctrl->करोne_wq) अणु
+			destroy_workqueue(ctrl->करोne_wq);
+			ctrl->करोne_wq = शून्य;
+		पूर्ण
 
-		vfree(ctrl->trackers);
+		vमुक्त(ctrl->trackers);
 
-		if (ctrl->status.buf)
-			dma_free_coherent(&card->dev->dev, STATUS_BUFFER_SIZE8,
+		अगर (ctrl->status.buf)
+			dma_मुक्त_coherent(&card->dev->dev, STATUS_BUFFER_SIZE8,
 					  ctrl->status.buf,
 					  ctrl->status.dma_addr);
-		if (ctrl->cmd.buf)
-			dma_free_coherent(&card->dev->dev, COMMAND_BUFFER_SIZE8,
+		अगर (ctrl->cmd.buf)
+			dma_मुक्त_coherent(&card->dev->dev, COMMAND_BUFFER_SIZE8,
 					  ctrl->cmd.buf, ctrl->cmd.dma_addr);
-	}
+	पूर्ण
 
-	return st;
-}
+	वापस st;
+पूर्ण
 
-int rsxx_dma_cancel(struct rsxx_dma_ctrl *ctrl)
-{
-	struct rsxx_dma *dma;
-	int i;
-	int cnt = 0;
+पूर्णांक rsxx_dma_cancel(काष्ठा rsxx_dma_ctrl *ctrl)
+अणु
+	काष्ठा rsxx_dma *dma;
+	पूर्णांक i;
+	पूर्णांक cnt = 0;
 
 	/* Clean up issued DMAs */
-	for (i = 0; i < RSXX_MAX_OUTSTANDING_CMDS; i++) {
+	क्रम (i = 0; i < RSXX_MAX_OUTSTANDING_CMDS; i++) अणु
 		dma = get_tracker_dma(ctrl->trackers, i);
-		if (dma) {
+		अगर (dma) अणु
 			atomic_dec(&ctrl->stats.hw_q_depth);
 			rsxx_complete_dma(ctrl, dma, DMA_CANCELLED);
 			push_tracker(ctrl->trackers, i);
 			cnt++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-void rsxx_dma_destroy(struct rsxx_cardinfo *card)
-{
-	struct rsxx_dma_ctrl *ctrl;
-	int i;
+व्योम rsxx_dma_destroy(काष्ठा rsxx_cardinfo *card)
+अणु
+	काष्ठा rsxx_dma_ctrl *ctrl;
+	पूर्णांक i;
 
-	for (i = 0; i < card->n_targets; i++) {
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
 		ctrl = &card->ctrl[i];
 
-		if (ctrl->issue_wq) {
+		अगर (ctrl->issue_wq) अणु
 			destroy_workqueue(ctrl->issue_wq);
-			ctrl->issue_wq = NULL;
-		}
+			ctrl->issue_wq = शून्य;
+		पूर्ण
 
-		if (ctrl->done_wq) {
-			destroy_workqueue(ctrl->done_wq);
-			ctrl->done_wq = NULL;
-		}
+		अगर (ctrl->करोne_wq) अणु
+			destroy_workqueue(ctrl->करोne_wq);
+			ctrl->करोne_wq = शून्य;
+		पूर्ण
 
-		if (timer_pending(&ctrl->activity_timer))
-			del_timer_sync(&ctrl->activity_timer);
+		अगर (समयr_pending(&ctrl->activity_समयr))
+			del_समयr_sync(&ctrl->activity_समयr);
 
 		/* Clean up the DMA queue */
 		spin_lock_bh(&ctrl->queue_lock);
@@ -1006,55 +1007,55 @@ void rsxx_dma_destroy(struct rsxx_cardinfo *card)
 
 		rsxx_dma_cancel(ctrl);
 
-		vfree(ctrl->trackers);
+		vमुक्त(ctrl->trackers);
 
-		dma_free_coherent(&card->dev->dev, STATUS_BUFFER_SIZE8,
+		dma_मुक्त_coherent(&card->dev->dev, STATUS_BUFFER_SIZE8,
 				  ctrl->status.buf, ctrl->status.dma_addr);
-		dma_free_coherent(&card->dev->dev, COMMAND_BUFFER_SIZE8,
+		dma_मुक्त_coherent(&card->dev->dev, COMMAND_BUFFER_SIZE8,
 				  ctrl->cmd.buf, ctrl->cmd.dma_addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int rsxx_eeh_save_issued_dmas(struct rsxx_cardinfo *card)
-{
-	int i;
-	int j;
-	int cnt;
-	struct rsxx_dma *dma;
-	struct list_head *issued_dmas;
+पूर्णांक rsxx_eeh_save_issued_dmas(काष्ठा rsxx_cardinfo *card)
+अणु
+	पूर्णांक i;
+	पूर्णांक j;
+	पूर्णांक cnt;
+	काष्ठा rsxx_dma *dma;
+	काष्ठा list_head *issued_dmas;
 
-	issued_dmas = kcalloc(card->n_targets, sizeof(*issued_dmas),
+	issued_dmas = kसुस्मृति(card->n_tarमाला_लो, माप(*issued_dmas),
 			      GFP_KERNEL);
-	if (!issued_dmas)
-		return -ENOMEM;
+	अगर (!issued_dmas)
+		वापस -ENOMEM;
 
-	for (i = 0; i < card->n_targets; i++) {
+	क्रम (i = 0; i < card->n_tarमाला_लो; i++) अणु
 		INIT_LIST_HEAD(&issued_dmas[i]);
 		cnt = 0;
-		for (j = 0; j < RSXX_MAX_OUTSTANDING_CMDS; j++) {
+		क्रम (j = 0; j < RSXX_MAX_OUTSTANDING_CMDS; j++) अणु
 			dma = get_tracker_dma(card->ctrl[i].trackers, j);
-			if (dma == NULL)
-				continue;
+			अगर (dma == शून्य)
+				जारी;
 
-			if (dma->cmd == HW_CMD_BLK_WRITE)
-				card->ctrl[i].stats.writes_issued--;
-			else if (dma->cmd == HW_CMD_BLK_DISCARD)
+			अगर (dma->cmd == HW_CMD_BLK_WRITE)
+				card->ctrl[i].stats.ग_लिखोs_issued--;
+			अन्यथा अगर (dma->cmd == HW_CMD_BLK_DISCARD)
 				card->ctrl[i].stats.discards_issued--;
-			else
-				card->ctrl[i].stats.reads_issued--;
+			अन्यथा
+				card->ctrl[i].stats.पढ़ोs_issued--;
 
-			if (dma->cmd != HW_CMD_BLK_DISCARD) {
+			अगर (dma->cmd != HW_CMD_BLK_DISCARD) अणु
 				dma_unmap_page(&card->dev->dev, dma->dma_addr,
 					       get_dma_size(dma),
 					       dma->cmd == HW_CMD_BLK_WRITE ?
 					       DMA_TO_DEVICE :
 					       DMA_FROM_DEVICE);
-			}
+			पूर्ण
 
 			list_add_tail(&dma->list, &issued_dmas[i]);
 			push_tracker(card->ctrl[i].trackers, j);
 			cnt++;
-		}
+		पूर्ण
 
 		spin_lock_bh(&card->ctrl[i].queue_lock);
 		list_splice(&issued_dmas[i], &card->ctrl[i].queue);
@@ -1063,25 +1064,25 @@ int rsxx_eeh_save_issued_dmas(struct rsxx_cardinfo *card)
 		card->ctrl[i].stats.sw_q_depth += cnt;
 		card->ctrl[i].e_cnt = 0;
 		spin_unlock_bh(&card->ctrl[i].queue_lock);
-	}
+	पूर्ण
 
-	kfree(issued_dmas);
+	kमुक्त(issued_dmas);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rsxx_dma_init(void)
-{
+पूर्णांक rsxx_dma_init(व्योम)
+अणु
 	rsxx_dma_pool = KMEM_CACHE(rsxx_dma, SLAB_HWCACHE_ALIGN);
-	if (!rsxx_dma_pool)
-		return -ENOMEM;
+	अगर (!rsxx_dma_pool)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-void rsxx_dma_cleanup(void)
-{
+व्योम rsxx_dma_cleanup(व्योम)
+अणु
 	kmem_cache_destroy(rsxx_dma_pool);
-}
+पूर्ण
 

@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __TAG_GLOBAL_H_INCLUDED__
-#define __TAG_GLOBAL_H_INCLUDED__
+#अगर_अघोषित __TAG_GLOBAL_H_INCLUDED__
+#घोषणा __TAG_GLOBAL_H_INCLUDED__
 
-/* offsets for encoding/decoding the tag into an uint32_t */
+/* offsets क्रम encoding/decoding the tag पूर्णांकo an uपूर्णांक32_t */
 
-#define TAG_CAP	1
-#define TAG_EXP	2
+#घोषणा TAG_CAP	1
+#घोषणा TAG_EXP	2
 
-#define TAG_NUM_CAPTURES_SIGN_SHIFT	 6
-#define TAG_OFFSET_SIGN_SHIFT		 7
-#define TAG_NUM_CAPTURES_SHIFT		 8
-#define TAG_OFFSET_SHIFT		16
-#define TAG_SKIP_SHIFT			24
+#घोषणा TAG_NUM_CAPTURES_SIGN_SHIFT	 6
+#घोषणा TAG_OFFSET_SIGN_SHIFT		 7
+#घोषणा TAG_NUM_CAPTURES_SHIFT		 8
+#घोषणा TAG_OFFSET_SHIFT		16
+#घोषणा TAG_SKIP_SHIFT			24
 
-#define TAG_EXP_ID_SHIFT		 8
+#घोषणा TAG_EXP_ID_SHIFT		 8
 
-/* Data structure containing the tagging information which is used in
- * continuous mode to specify which frames should be captured.
+/* Data काष्ठाure containing the tagging inक्रमmation which is used in
+ * continuous mode to specअगरy which frames should be captured.
  * num_captures		The number of RAW frames to be processed to
  *                      YUV. Setting this to -1 will make continuous
  *                      capture run until it is stopped.
@@ -44,14 +45,14 @@
  * exp_id		Exposure id of the RAW frame to tag.
  *
  * NOTE: Either exp_id = 0 or all other fields are 0
- *	 (so yeah, this could be a union)
+ *	 (so yeah, this could be a जोड़)
  */
 
-struct sh_css_tag_descr {
-	int num_captures;
-	unsigned int skip;
-	int offset;
-	unsigned int exp_id;
-};
+काष्ठा sh_css_tag_descr अणु
+	पूर्णांक num_captures;
+	अचिन्हित पूर्णांक skip;
+	पूर्णांक offset;
+	अचिन्हित पूर्णांक exp_id;
+पूर्ण;
 
-#endif /* __TAG_GLOBAL_H_INCLUDED__ */
+#पूर्ण_अगर /* __TAG_GLOBAL_H_INCLUDED__ */

@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_NETFILTER_CORE_H_
-#define __LINUX_NETFILTER_CORE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_NETFILTER_CORE_H_
+#घोषणा __LINUX_NETFILTER_CORE_H_
 
-#include <uapi/linux/netfilter.h>
+#समावेश <uapi/linux/netfilter.h>
 
-/* in/out/forward only */
-#define NF_ARP_NUMHOOKS 3
+/* in/out/क्रमward only */
+#घोषणा NF_ARP_NUMHOOKS 3
 
 /* max hook is NF_DN_ROUTE (6), also see uapi/linux/netfilter_decnet.h */
-#define NF_DN_NUMHOOKS 7
+#घोषणा NF_DN_NUMHOOKS 7
 
-#if IS_ENABLED(CONFIG_DECNET)
+#अगर IS_ENABLED(CONFIG_DECNET)
 /* Largest hook number + 1, see uapi/linux/netfilter_decnet.h */
-#define NF_MAX_HOOKS	NF_DN_NUMHOOKS
-#else
-#define NF_MAX_HOOKS	NF_INET_NUMHOOKS
-#endif
+#घोषणा NF_MAX_HOOKS	NF_DN_NUMHOOKS
+#अन्यथा
+#घोषणा NF_MAX_HOOKS	NF_INET_NUMHOOKS
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

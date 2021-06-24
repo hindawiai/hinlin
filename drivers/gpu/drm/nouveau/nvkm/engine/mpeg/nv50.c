@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,75 +22,75 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/gpuobj.h>
-#include <core/object.h>
-#include <subdev/timer.h>
+#समावेश <core/gpuobj.h>
+#समावेश <core/object.h>
+#समावेश <subdev/समयr.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
 /*******************************************************************************
  * PMPEG context
  ******************************************************************************/
 
-static int
-nv50_mpeg_cclass_bind(struct nvkm_object *object, struct nvkm_gpuobj *parent,
-		      int align, struct nvkm_gpuobj **pgpuobj)
-{
-	int ret = nvkm_gpuobj_new(object->engine->subdev.device, 128 * 4,
+अटल पूर्णांक
+nv50_mpeg_cclass_bind(काष्ठा nvkm_object *object, काष्ठा nvkm_gpuobj *parent,
+		      पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	पूर्णांक ret = nvkm_gpuobj_new(object->engine->subdev.device, 128 * 4,
 				  align, true, parent, pgpuobj);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		nvkm_kmap(*pgpuobj);
 		nvkm_wo32(*pgpuobj, 0x70, 0x00801ec1);
 		nvkm_wo32(*pgpuobj, 0x7c, 0x0000037c);
-		nvkm_done(*pgpuobj);
-	}
-	return ret;
-}
+		nvkm_करोne(*pgpuobj);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-const struct nvkm_object_func
-nv50_mpeg_cclass = {
+स्थिर काष्ठा nvkm_object_func
+nv50_mpeg_cclass = अणु
 	.bind = nv50_mpeg_cclass_bind,
-};
+पूर्ण;
 
 /*******************************************************************************
  * PMPEG engine/subdev functions
  ******************************************************************************/
 
-void
-nv50_mpeg_intr(struct nvkm_engine *mpeg)
-{
-	struct nvkm_subdev *subdev = &mpeg->subdev;
-	struct nvkm_device *device = subdev->device;
+व्योम
+nv50_mpeg_पूर्णांकr(काष्ठा nvkm_engine *mpeg)
+अणु
+	काष्ठा nvkm_subdev *subdev = &mpeg->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 stat = nvkm_rd32(device, 0x00b100);
 	u32 type = nvkm_rd32(device, 0x00b230);
 	u32 mthd = nvkm_rd32(device, 0x00b234);
 	u32 data = nvkm_rd32(device, 0x00b238);
 	u32 show = stat;
 
-	if (stat & 0x01000000) {
+	अगर (stat & 0x01000000) अणु
 		/* happens on initial binding of the object */
-		if (type == 0x00000020 && mthd == 0x0000) {
+		अगर (type == 0x00000020 && mthd == 0x0000) अणु
 			nvkm_wr32(device, 0x00b308, 0x00000100);
 			show &= ~0x01000000;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (show) {
+	अगर (show) अणु
 		nvkm_info(subdev, "%08x %08x %08x %08x\n",
 			  stat, type, mthd, data);
-	}
+	पूर्ण
 
 	nvkm_wr32(device, 0x00b100, stat);
 	nvkm_wr32(device, 0x00b230, 0x00000001);
-}
+पूर्ण
 
-int
-nv50_mpeg_init(struct nvkm_engine *mpeg)
-{
-	struct nvkm_subdev *subdev = &mpeg->subdev;
-	struct nvkm_device *device = subdev->device;
+पूर्णांक
+nv50_mpeg_init(काष्ठा nvkm_engine *mpeg)
+अणु
+	काष्ठा nvkm_subdev *subdev = &mpeg->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 
 	nvkm_wr32(device, 0x00b32c, 0x00000000);
 	nvkm_wr32(device, 0x00b314, 0x00000100);
@@ -105,32 +106,32 @@ nv50_mpeg_init(struct nvkm_engine *mpeg)
 	nvkm_wr32(device, 0x00b100, 0xffffffff);
 	nvkm_wr32(device, 0x00b140, 0xffffffff);
 
-	if (nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, 0x00b200) & 0x00000001))
-			break;
-	) < 0) {
+	अगर (nvkm_msec(device, 2000,
+		अगर (!(nvkm_rd32(device, 0x00b200) & 0x00000001))
+			अवरोध;
+	) < 0) अणु
 		nvkm_error(subdev, "timeout %08x\n",
 			   nvkm_rd32(device, 0x00b200));
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_engine_func
-nv50_mpeg = {
+अटल स्थिर काष्ठा nvkm_engine_func
+nv50_mpeg = अणु
 	.init = nv50_mpeg_init,
-	.intr = nv50_mpeg_intr,
+	.पूर्णांकr = nv50_mpeg_पूर्णांकr,
 	.cclass = &nv50_mpeg_cclass,
-	.sclass = {
-		{ -1, -1, NV31_MPEG, &nv31_mpeg_object },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, NV31_MPEG, &nv31_mpeg_object पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-nv50_mpeg_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_engine **pmpeg)
-{
-	return nvkm_engine_new_(&nv50_mpeg, device, type, inst, true, pmpeg);
-}
+पूर्णांक
+nv50_mpeg_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_engine **pmpeg)
+अणु
+	वापस nvkm_engine_new_(&nv50_mpeg, device, type, inst, true, pmpeg);
+पूर्ण

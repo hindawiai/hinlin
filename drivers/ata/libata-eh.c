@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  libata-eh.c - libata error handling
  *
  *  Copyright 2006 Tejun Heo <htejun@gmail.com>
  *
- *  libata documentation is available via 'make {ps|pdf}docs',
+ *  libata करोcumentation is available via 'make {ps|pdf}docs',
  *  as Documentation/driver-api/libata.rst
  *
- *  Hardware documentation available from http://www.t13.org/ and
+ *  Hardware करोcumentation available from http://www.t13.org/ and
  *  http://www.sata-io.org/
  */
 
-#include <linux/kernel.h>
-#include <linux/blkdev.h>
-#include <linux/export.h>
-#include <linux/pci.h>
-#include <scsi/scsi.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_eh.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_dbg.h>
-#include "../scsi/scsi_transport_api.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pci.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_eh.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश "../scsi/scsi_transport_api.h"
 
-#include <linux/libata.h>
+#समावेश <linux/libata.h>
 
-#include <trace/events/libata.h>
-#include "libata.h"
+#समावेश <trace/events/libata.h>
+#समावेश "libata.h"
 
-enum {
-	/* speed down verdicts */
+क्रमागत अणु
+	/* speed करोwn verdicts */
 	ATA_EH_SPDN_NCQ_OFF		= (1 << 0),
 	ATA_EH_SPDN_SPEED_DOWN		= (1 << 1),
 	ATA_EH_SPDN_FALLBACK_TO_PIO	= (1 << 2),
@@ -53,139 +54,139 @@ enum {
 
 	ATA_EH_CMD_DFL_TIMEOUT		=  5000,
 
-	/* always put at least this amount of time between resets */
+	/* always put at least this amount of समय between resets */
 	ATA_EH_RESET_COOL_DOWN		=  5000,
 
 	/* Waiting in ->prereset can never be reliable.  It's
-	 * sometimes nice to wait there but it can't be depended upon;
+	 * someबार nice to रुको there but it can't be depended upon;
 	 * otherwise, we wouldn't be resetting.  Just give it enough
-	 * time for most drives to spin up.
+	 * समय क्रम most drives to spin up.
 	 */
 	ATA_EH_PRERESET_TIMEOUT		= 10000,
 	ATA_EH_FASTDRAIN_INTERVAL	=  3000,
 
 	ATA_EH_UA_TRIES			= 5,
 
-	/* probe speed down parameters, see ata_eh_schedule_probe() */
+	/* probe speed करोwn parameters, see ata_eh_schedule_probe() */
 	ATA_EH_PROBE_TRIAL_INTERVAL	= 60000,	/* 1 min */
 	ATA_EH_PROBE_TRIALS		= 2,
-};
+पूर्ण;
 
 /* The following table determines how we sequence resets.  Each entry
- * represents timeout for that try.  The first try can be soft or
- * hardreset.  All others are hardreset if available.  In most cases
- * the first reset w/ 10sec timeout should succeed.  Following entries
- * are mostly for error handling, hotplug and those outlier devices that
- * take an exceptionally long time to recover from reset.
+ * represents समयout क्रम that try.  The first try can be soft or
+ * hardreset.  All others are hardreset अगर available.  In most हालs
+ * the first reset w/ 10sec समयout should succeed.  Following entries
+ * are mostly क्रम error handling, hotplug and those outlier devices that
+ * take an exceptionally दीर्घ समय to recover from reset.
  */
-static const unsigned long ata_eh_reset_timeouts[] = {
+अटल स्थिर अचिन्हित दीर्घ ata_eh_reset_समयouts[] = अणु
 	10000,	/* most drives spin up by 10sec */
-	10000,	/* > 99% working drives spin up before 20sec */
-	35000,	/* give > 30 secs of idleness for outlier devices */
+	10000,	/* > 99% working drives spin up beक्रमe 20sec */
+	35000,	/* give > 30 secs of idleness क्रम outlier devices */
 	 5000,	/* and sweet one last chance */
-	ULONG_MAX, /* > 1 min has elapsed, give up */
-};
+	अच_दीर्घ_उच्च, /* > 1 min has elapsed, give up */
+पूर्ण;
 
-static const unsigned long ata_eh_identify_timeouts[] = {
+अटल स्थिर अचिन्हित दीर्घ ata_eh_identअगरy_समयouts[] = अणु
 	 5000,	/* covers > 99% of successes and not too boring on failures */
-	10000,  /* combined time till here is enough even for media access */
-	30000,	/* for true idiots */
-	ULONG_MAX,
-};
+	10000,  /* combined समय till here is enough even क्रम media access */
+	30000,	/* क्रम true idiots */
+	अच_दीर्घ_उच्च,
+पूर्ण;
 
-static const unsigned long ata_eh_flush_timeouts[] = {
+अटल स्थिर अचिन्हित दीर्घ ata_eh_flush_समयouts[] = अणु
 	15000,	/* be generous with flush */
 	15000,  /* ditto */
 	30000,	/* and even more generous */
-	ULONG_MAX,
-};
+	अच_दीर्घ_उच्च,
+पूर्ण;
 
-static const unsigned long ata_eh_other_timeouts[] = {
-	 5000,	/* same rationale as identify timeout */
+अटल स्थिर अचिन्हित दीर्घ ata_eh_other_समयouts[] = अणु
+	 5000,	/* same rationale as identअगरy समयout */
 	10000,	/* ditto */
-	/* but no merciful 30sec for other commands, it just isn't worth it */
-	ULONG_MAX,
-};
+	/* but no mercअगरul 30sec क्रम other commands, it just isn't worth it */
+	अच_दीर्घ_उच्च,
+पूर्ण;
 
-struct ata_eh_cmd_timeout_ent {
-	const u8		*commands;
-	const unsigned long	*timeouts;
-};
+काष्ठा ata_eh_cmd_समयout_ent अणु
+	स्थिर u8		*commands;
+	स्थिर अचिन्हित दीर्घ	*समयouts;
+पूर्ण;
 
-/* The following table determines timeouts to use for EH internal
+/* The following table determines समयouts to use क्रम EH पूर्णांकernal
  * commands.  Each table entry is a command class and matches the
- * commands the entry applies to and the timeout table to use.
+ * commands the entry applies to and the समयout table to use.
  *
- * On the retry after a command timed out, the next timeout value from
- * the table is used.  If the table doesn't contain further entries,
+ * On the retry after a command समयd out, the next समयout value from
+ * the table is used.  If the table करोesn't contain further entries,
  * the last value is used.
  *
- * ehc->cmd_timeout_idx keeps track of which timeout to use per
- * command class, so if SET_FEATURES times out on the first try, the
- * next try will use the second timeout value only for that class.
+ * ehc->cmd_समयout_idx keeps track of which समयout to use per
+ * command class, so अगर SET_FEATURES बार out on the first try, the
+ * next try will use the second समयout value only क्रम that class.
  */
-#define CMDS(cmds...)	(const u8 []){ cmds, 0 }
-static const struct ata_eh_cmd_timeout_ent
-ata_eh_cmd_timeout_table[ATA_EH_CMD_TIMEOUT_TABLE_SIZE] = {
-	{ .commands = CMDS(ATA_CMD_ID_ATA, ATA_CMD_ID_ATAPI),
-	  .timeouts = ata_eh_identify_timeouts, },
-	{ .commands = CMDS(ATA_CMD_READ_NATIVE_MAX, ATA_CMD_READ_NATIVE_MAX_EXT),
-	  .timeouts = ata_eh_other_timeouts, },
-	{ .commands = CMDS(ATA_CMD_SET_MAX, ATA_CMD_SET_MAX_EXT),
-	  .timeouts = ata_eh_other_timeouts, },
-	{ .commands = CMDS(ATA_CMD_SET_FEATURES),
-	  .timeouts = ata_eh_other_timeouts, },
-	{ .commands = CMDS(ATA_CMD_INIT_DEV_PARAMS),
-	  .timeouts = ata_eh_other_timeouts, },
-	{ .commands = CMDS(ATA_CMD_FLUSH, ATA_CMD_FLUSH_EXT),
-	  .timeouts = ata_eh_flush_timeouts },
-};
-#undef CMDS
+#घोषणा CMDS(cmds...)	(स्थिर u8 [])अणु cmds, 0 पूर्ण
+अटल स्थिर काष्ठा ata_eh_cmd_समयout_ent
+ata_eh_cmd_समयout_table[ATA_EH_CMD_TIMEOUT_TABLE_SIZE] = अणु
+	अणु .commands = CMDS(ATA_CMD_ID_ATA, ATA_CMD_ID_ATAPI),
+	  .समयouts = ata_eh_identअगरy_समयouts, पूर्ण,
+	अणु .commands = CMDS(ATA_CMD_READ_NATIVE_MAX, ATA_CMD_READ_NATIVE_MAX_EXT),
+	  .समयouts = ata_eh_other_समयouts, पूर्ण,
+	अणु .commands = CMDS(ATA_CMD_SET_MAX, ATA_CMD_SET_MAX_EXT),
+	  .समयouts = ata_eh_other_समयouts, पूर्ण,
+	अणु .commands = CMDS(ATA_CMD_SET_FEATURES),
+	  .समयouts = ata_eh_other_समयouts, पूर्ण,
+	अणु .commands = CMDS(ATA_CMD_INIT_DEV_PARAMS),
+	  .समयouts = ata_eh_other_समयouts, पूर्ण,
+	अणु .commands = CMDS(ATA_CMD_FLUSH, ATA_CMD_FLUSH_EXT),
+	  .समयouts = ata_eh_flush_समयouts पूर्ण,
+पूर्ण;
+#अघोषित CMDS
 
-static void __ata_port_freeze(struct ata_port *ap);
-#ifdef CONFIG_PM
-static void ata_eh_handle_port_suspend(struct ata_port *ap);
-static void ata_eh_handle_port_resume(struct ata_port *ap);
-#else /* CONFIG_PM */
-static void ata_eh_handle_port_suspend(struct ata_port *ap)
-{ }
+अटल व्योम __ata_port_मुक्तze(काष्ठा ata_port *ap);
+#अगर_घोषित CONFIG_PM
+अटल व्योम ata_eh_handle_port_suspend(काष्ठा ata_port *ap);
+अटल व्योम ata_eh_handle_port_resume(काष्ठा ata_port *ap);
+#अन्यथा /* CONFIG_PM */
+अटल व्योम ata_eh_handle_port_suspend(काष्ठा ata_port *ap)
+अणु पूर्ण
 
-static void ata_eh_handle_port_resume(struct ata_port *ap)
-{ }
-#endif /* CONFIG_PM */
+अटल व्योम ata_eh_handle_port_resume(काष्ठा ata_port *ap)
+अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static __printf(2, 0) void __ata_ehi_pushv_desc(struct ata_eh_info *ehi,
-				 const char *fmt, va_list args)
-{
-	ehi->desc_len += vscnprintf(ehi->desc + ehi->desc_len,
+अटल __म_लिखो(2, 0) व्योम __ata_ehi_pushv_desc(काष्ठा ata_eh_info *ehi,
+				 स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	ehi->desc_len += vscnम_लिखो(ehi->desc + ehi->desc_len,
 				     ATA_EH_DESC_LEN - ehi->desc_len,
 				     fmt, args);
-}
+पूर्ण
 
 /**
  *	__ata_ehi_push_desc - push error description without adding separator
  *	@ehi: target EHI
- *	@fmt: printf format string
+ *	@fmt: म_लिखो क्रमmat string
  *
  *	Format string according to @fmt and append it to @ehi->desc.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-void __ata_ehi_push_desc(struct ata_eh_info *ehi, const char *fmt, ...)
-{
-	va_list args;
+व्योम __ata_ehi_push_desc(काष्ठा ata_eh_info *ehi, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	__ata_ehi_pushv_desc(ehi, fmt, args);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL_GPL(__ata_ehi_push_desc);
 
 /**
  *	ata_ehi_push_desc - push error description with separator
  *	@ehi: target EHI
- *	@fmt: printf format string
+ *	@fmt: म_लिखो क्रमmat string
  *
  *	Format string according to @fmt and append it to @ehi->desc.
  *	If @ehi->desc is not empty, ", " is added in-between.
@@ -193,17 +194,17 @@ EXPORT_SYMBOL_GPL(__ata_ehi_push_desc);
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-void ata_ehi_push_desc(struct ata_eh_info *ehi, const char *fmt, ...)
-{
-	va_list args;
+व्योम ata_ehi_push_desc(काष्ठा ata_eh_info *ehi, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	if (ehi->desc_len)
+	अगर (ehi->desc_len)
 		__ata_ehi_push_desc(ehi, ", ");
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	__ata_ehi_pushv_desc(ehi, fmt, args);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_ehi_push_desc);
 
 /**
@@ -215,50 +216,50 @@ EXPORT_SYMBOL_GPL(ata_ehi_push_desc);
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-void ata_ehi_clear_desc(struct ata_eh_info *ehi)
-{
+व्योम ata_ehi_clear_desc(काष्ठा ata_eh_info *ehi)
+अणु
 	ehi->desc[0] = '\0';
 	ehi->desc_len = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_ehi_clear_desc);
 
 /**
  *	ata_port_desc - append port description
  *	@ap: target ATA port
- *	@fmt: printf format string
+ *	@fmt: म_लिखो क्रमmat string
  *
  *	Format string according to @fmt and append it to port
  *	description.  If port description is not empty, " " is added
- *	in-between.  This function is to be used while initializing
- *	ata_host.  The description is printed on host registration.
+ *	in-between.  This function is to be used जबतक initializing
+ *	ata_host.  The description is prपूर्णांकed on host registration.
  *
  *	LOCKING:
  *	None.
  */
-void ata_port_desc(struct ata_port *ap, const char *fmt, ...)
-{
-	va_list args;
+व्योम ata_port_desc(काष्ठा ata_port *ap, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
 	WARN_ON(!(ap->pflags & ATA_PFLAG_INITIALIZING));
 
-	if (ap->link.eh_info.desc_len)
+	अगर (ap->link.eh_info.desc_len)
 		__ata_ehi_push_desc(&ap->link.eh_info, " ");
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	__ata_ehi_pushv_desc(&ap->link.eh_info, fmt, args);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_port_desc);
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 /**
  *	ata_port_pbar_desc - append PCI BAR description
  *	@ap: target ATA port
  *	@bar: target PCI BAR
- *	@offset: offset into PCI BAR
+ *	@offset: offset पूर्णांकo PCI BAR
  *	@name: name of the area
  *
- *	If @offset is negative, this function formats a string which
+ *	If @offset is negative, this function क्रमmats a string which
  *	contains the name, address, size and type of the BAR and
  *	appends it to the port description.  If @offset is zero or
  *	positive, only name and offsetted address is appended.
@@ -266,101 +267,101 @@ EXPORT_SYMBOL_GPL(ata_port_desc);
  *	LOCKING:
  *	None.
  */
-void ata_port_pbar_desc(struct ata_port *ap, int bar, ssize_t offset,
-			const char *name)
-{
-	struct pci_dev *pdev = to_pci_dev(ap->host->dev);
-	char *type = "";
-	unsigned long long start, len;
+व्योम ata_port_pbar_desc(काष्ठा ata_port *ap, पूर्णांक bar, sमाप_प्रकार offset,
+			स्थिर अक्षर *name)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(ap->host->dev);
+	अक्षर *type = "";
+	अचिन्हित दीर्घ दीर्घ start, len;
 
-	if (pci_resource_flags(pdev, bar) & IORESOURCE_MEM)
+	अगर (pci_resource_flags(pdev, bar) & IORESOURCE_MEM)
 		type = "m";
-	else if (pci_resource_flags(pdev, bar) & IORESOURCE_IO)
+	अन्यथा अगर (pci_resource_flags(pdev, bar) & IORESOURCE_IO)
 		type = "i";
 
-	start = (unsigned long long)pci_resource_start(pdev, bar);
-	len = (unsigned long long)pci_resource_len(pdev, bar);
+	start = (अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, bar);
+	len = (अचिन्हित दीर्घ दीर्घ)pci_resource_len(pdev, bar);
 
-	if (offset < 0)
+	अगर (offset < 0)
 		ata_port_desc(ap, "%s %s%llu@0x%llx", name, type, len, start);
-	else
+	अन्यथा
 		ata_port_desc(ap, "%s 0x%llx", name,
-				start + (unsigned long long)offset);
-}
+				start + (अचिन्हित दीर्घ दीर्घ)offset);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_port_pbar_desc);
-#endif /* CONFIG_PCI */
+#पूर्ण_अगर /* CONFIG_PCI */
 
-static int ata_lookup_timeout_table(u8 cmd)
-{
-	int i;
+अटल पूर्णांक ata_lookup_समयout_table(u8 cmd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ATA_EH_CMD_TIMEOUT_TABLE_SIZE; i++) {
-		const u8 *cur;
+	क्रम (i = 0; i < ATA_EH_CMD_TIMEOUT_TABLE_SIZE; i++) अणु
+		स्थिर u8 *cur;
 
-		for (cur = ata_eh_cmd_timeout_table[i].commands; *cur; cur++)
-			if (*cur == cmd)
-				return i;
-	}
+		क्रम (cur = ata_eh_cmd_समयout_table[i].commands; *cur; cur++)
+			अगर (*cur == cmd)
+				वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /**
- *	ata_internal_cmd_timeout - determine timeout for an internal command
+ *	ata_पूर्णांकernal_cmd_समयout - determine समयout क्रम an पूर्णांकernal command
  *	@dev: target device
- *	@cmd: internal command to be issued
+ *	@cmd: पूर्णांकernal command to be issued
  *
- *	Determine timeout for internal command @cmd for @dev.
+ *	Determine समयout क्रम पूर्णांकernal command @cmd क्रम @dev.
  *
  *	LOCKING:
  *	EH context.
  *
  *	RETURNS:
- *	Determined timeout.
+ *	Determined समयout.
  */
-unsigned long ata_internal_cmd_timeout(struct ata_device *dev, u8 cmd)
-{
-	struct ata_eh_context *ehc = &dev->link->eh_context;
-	int ent = ata_lookup_timeout_table(cmd);
-	int idx;
+अचिन्हित दीर्घ ata_पूर्णांकernal_cmd_समयout(काष्ठा ata_device *dev, u8 cmd)
+अणु
+	काष्ठा ata_eh_context *ehc = &dev->link->eh_context;
+	पूर्णांक ent = ata_lookup_समयout_table(cmd);
+	पूर्णांक idx;
 
-	if (ent < 0)
-		return ATA_EH_CMD_DFL_TIMEOUT;
+	अगर (ent < 0)
+		वापस ATA_EH_CMD_DFL_TIMEOUT;
 
-	idx = ehc->cmd_timeout_idx[dev->devno][ent];
-	return ata_eh_cmd_timeout_table[ent].timeouts[idx];
-}
+	idx = ehc->cmd_समयout_idx[dev->devno][ent];
+	वापस ata_eh_cmd_समयout_table[ent].समयouts[idx];
+पूर्ण
 
 /**
- *	ata_internal_cmd_timed_out - notification for internal command timeout
+ *	ata_पूर्णांकernal_cmd_समयd_out - notअगरication क्रम पूर्णांकernal command समयout
  *	@dev: target device
- *	@cmd: internal command which timed out
+ *	@cmd: पूर्णांकernal command which समयd out
  *
- *	Notify EH that internal command @cmd for @dev timed out.  This
- *	function should be called only for commands whose timeouts are
- *	determined using ata_internal_cmd_timeout().
+ *	Notअगरy EH that पूर्णांकernal command @cmd क्रम @dev समयd out.  This
+ *	function should be called only क्रम commands whose समयouts are
+ *	determined using ata_पूर्णांकernal_cmd_समयout().
  *
  *	LOCKING:
  *	EH context.
  */
-void ata_internal_cmd_timed_out(struct ata_device *dev, u8 cmd)
-{
-	struct ata_eh_context *ehc = &dev->link->eh_context;
-	int ent = ata_lookup_timeout_table(cmd);
-	int idx;
+व्योम ata_पूर्णांकernal_cmd_समयd_out(काष्ठा ata_device *dev, u8 cmd)
+अणु
+	काष्ठा ata_eh_context *ehc = &dev->link->eh_context;
+	पूर्णांक ent = ata_lookup_समयout_table(cmd);
+	पूर्णांक idx;
 
-	if (ent < 0)
-		return;
+	अगर (ent < 0)
+		वापस;
 
-	idx = ehc->cmd_timeout_idx[dev->devno][ent];
-	if (ata_eh_cmd_timeout_table[ent].timeouts[idx + 1] != ULONG_MAX)
-		ehc->cmd_timeout_idx[dev->devno][ent]++;
-}
+	idx = ehc->cmd_समयout_idx[dev->devno][ent];
+	अगर (ata_eh_cmd_समयout_table[ent].समयouts[idx + 1] != अच_दीर्घ_उच्च)
+		ehc->cmd_समयout_idx[dev->devno][ent]++;
+पूर्ण
 
-static void ata_ering_record(struct ata_ering *ering, unsigned int eflags,
-			     unsigned int err_mask)
-{
-	struct ata_ering_entry *ent;
+अटल व्योम ata_ering_record(काष्ठा ata_ering *ering, अचिन्हित पूर्णांक eflags,
+			     अचिन्हित पूर्णांक err_mask)
+अणु
+	काष्ठा ata_ering_entry *ent;
 
 	WARN_ON(!err_mask);
 
@@ -370,142 +371,142 @@ static void ata_ering_record(struct ata_ering *ering, unsigned int eflags,
 	ent = &ering->ring[ering->cursor];
 	ent->eflags = eflags;
 	ent->err_mask = err_mask;
-	ent->timestamp = get_jiffies_64();
-}
+	ent->बारtamp = get_jअगरfies_64();
+पूर्ण
 
-static struct ata_ering_entry *ata_ering_top(struct ata_ering *ering)
-{
-	struct ata_ering_entry *ent = &ering->ring[ering->cursor];
+अटल काष्ठा ata_ering_entry *ata_ering_top(काष्ठा ata_ering *ering)
+अणु
+	काष्ठा ata_ering_entry *ent = &ering->ring[ering->cursor];
 
-	if (ent->err_mask)
-		return ent;
-	return NULL;
-}
+	अगर (ent->err_mask)
+		वापस ent;
+	वापस शून्य;
+पूर्ण
 
-int ata_ering_map(struct ata_ering *ering,
-		  int (*map_fn)(struct ata_ering_entry *, void *),
-		  void *arg)
-{
-	int idx, rc = 0;
-	struct ata_ering_entry *ent;
+पूर्णांक ata_ering_map(काष्ठा ata_ering *ering,
+		  पूर्णांक (*map_fn)(काष्ठा ata_ering_entry *, व्योम *),
+		  व्योम *arg)
+अणु
+	पूर्णांक idx, rc = 0;
+	काष्ठा ata_ering_entry *ent;
 
 	idx = ering->cursor;
-	do {
+	करो अणु
 		ent = &ering->ring[idx];
-		if (!ent->err_mask)
-			break;
+		अगर (!ent->err_mask)
+			अवरोध;
 		rc = map_fn(ent, arg);
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 		idx = (idx - 1 + ATA_ERING_SIZE) % ATA_ERING_SIZE;
-	} while (idx != ering->cursor);
+	पूर्ण जबतक (idx != ering->cursor);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ata_ering_clear_cb(struct ata_ering_entry *ent, void *void_arg)
-{
+अटल पूर्णांक ata_ering_clear_cb(काष्ठा ata_ering_entry *ent, व्योम *व्योम_arg)
+अणु
 	ent->eflags |= ATA_EFLAG_OLD_ER;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ata_ering_clear(struct ata_ering *ering)
-{
-	ata_ering_map(ering, ata_ering_clear_cb, NULL);
-}
+अटल व्योम ata_ering_clear(काष्ठा ata_ering *ering)
+अणु
+	ata_ering_map(ering, ata_ering_clear_cb, शून्य);
+पूर्ण
 
-static unsigned int ata_eh_dev_action(struct ata_device *dev)
-{
-	struct ata_eh_context *ehc = &dev->link->eh_context;
+अटल अचिन्हित पूर्णांक ata_eh_dev_action(काष्ठा ata_device *dev)
+अणु
+	काष्ठा ata_eh_context *ehc = &dev->link->eh_context;
 
-	return ehc->i.action | ehc->i.dev_action[dev->devno];
-}
+	वापस ehc->i.action | ehc->i.dev_action[dev->devno];
+पूर्ण
 
-static void ata_eh_clear_action(struct ata_link *link, struct ata_device *dev,
-				struct ata_eh_info *ehi, unsigned int action)
-{
-	struct ata_device *tdev;
+अटल व्योम ata_eh_clear_action(काष्ठा ata_link *link, काष्ठा ata_device *dev,
+				काष्ठा ata_eh_info *ehi, अचिन्हित पूर्णांक action)
+अणु
+	काष्ठा ata_device *tdev;
 
-	if (!dev) {
+	अगर (!dev) अणु
 		ehi->action &= ~action;
-		ata_for_each_dev(tdev, link, ALL)
+		ata_क्रम_each_dev(tdev, link, ALL)
 			ehi->dev_action[tdev->devno] &= ~action;
-	} else {
-		/* doesn't make sense for port-wide EH actions */
+	पूर्ण अन्यथा अणु
+		/* करोesn't make sense क्रम port-wide EH actions */
 		WARN_ON(!(action & ATA_EH_PERDEV_MASK));
 
-		/* break ehi->action into ehi->dev_action */
-		if (ehi->action & action) {
-			ata_for_each_dev(tdev, link, ALL)
+		/* अवरोध ehi->action पूर्णांकo ehi->dev_action */
+		अगर (ehi->action & action) अणु
+			ata_क्रम_each_dev(tdev, link, ALL)
 				ehi->dev_action[tdev->devno] |=
 					ehi->action & action;
 			ehi->action &= ~action;
-		}
+		पूर्ण
 
-		/* turn off the specified per-dev action */
+		/* turn off the specअगरied per-dev action */
 		ehi->dev_action[dev->devno] &= ~action;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *	ata_eh_acquire - acquire EH ownership
- *	@ap: ATA port to acquire EH ownership for
+ *	@ap: ATA port to acquire EH ownership क्रम
  *
- *	Acquire EH ownership for @ap.  This is the basic exclusion
- *	mechanism for ports sharing a host.  Only one port hanging off
+ *	Acquire EH ownership क्रम @ap.  This is the basic exclusion
+ *	mechanism क्रम ports sharing a host.  Only one port hanging off
  *	the same host can claim the ownership of EH.
  *
  *	LOCKING:
  *	EH context.
  */
-void ata_eh_acquire(struct ata_port *ap)
-{
+व्योम ata_eh_acquire(काष्ठा ata_port *ap)
+अणु
 	mutex_lock(&ap->host->eh_mutex);
 	WARN_ON_ONCE(ap->host->eh_owner);
 	ap->host->eh_owner = current;
-}
+पूर्ण
 
 /**
  *	ata_eh_release - release EH ownership
- *	@ap: ATA port to release EH ownership for
+ *	@ap: ATA port to release EH ownership क्रम
  *
- *	Release EH ownership for @ap if the caller.  The caller must
+ *	Release EH ownership क्रम @ap अगर the caller.  The caller must
  *	have acquired EH ownership using ata_eh_acquire() previously.
  *
  *	LOCKING:
  *	EH context.
  */
-void ata_eh_release(struct ata_port *ap)
-{
+व्योम ata_eh_release(काष्ठा ata_port *ap)
+अणु
 	WARN_ON_ONCE(ap->host->eh_owner != current);
-	ap->host->eh_owner = NULL;
+	ap->host->eh_owner = शून्य;
 	mutex_unlock(&ap->host->eh_mutex);
-}
+पूर्ण
 
-static void ata_eh_unload(struct ata_port *ap)
-{
-	struct ata_link *link;
-	struct ata_device *dev;
-	unsigned long flags;
+अटल व्योम ata_eh_unload(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_link *link;
+	काष्ठा ata_device *dev;
+	अचिन्हित दीर्घ flags;
 
-	/* Restore SControl IPM and SPD for the next driver and
+	/* Restore SControl IPM and SPD क्रम the next driver and
 	 * disable attached devices.
 	 */
-	ata_for_each_link(link, ap, PMP_FIRST) {
-		sata_scr_write(link, SCR_CONTROL, link->saved_scontrol & 0xff0);
-		ata_for_each_dev(dev, link, ALL)
+	ata_क्रम_each_link(link, ap, PMP_FIRST) अणु
+		sata_scr_ग_लिखो(link, SCR_CONTROL, link->saved_scontrol & 0xff0);
+		ata_क्रम_each_dev(dev, link, ALL)
 			ata_dev_disable(dev);
-	}
+	पूर्ण
 
-	/* freeze and set UNLOADED */
+	/* मुक्तze and set UNLOADED */
 	spin_lock_irqsave(ap->lock, flags);
 
-	ata_port_freeze(ap);			/* won't be thawed */
-	ap->pflags &= ~ATA_PFLAG_EH_PENDING;	/* clear pending from freeze */
+	ata_port_मुक्तze(ap);			/* won't be thawed */
+	ap->pflags &= ~ATA_PFLAG_EH_PENDING;	/* clear pending from मुक्तze */
 	ap->pflags |= ATA_PFLAG_UNLOADED;
 
 	spin_unlock_irqrestore(ap->lock, flags);
-}
+पूर्ण
 
 /**
  *	ata_scsi_error - SCSI layer error handler callback
@@ -519,10 +520,10 @@ static void ata_eh_unload(struct ata_port *ap)
  *	RETURNS:
  *	Zero.
  */
-void ata_scsi_error(struct Scsi_Host *host)
-{
-	struct ata_port *ap = ata_shost_to_port(host);
-	unsigned long flags;
+व्योम ata_scsi_error(काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा ata_port *ap = ata_shost_to_port(host);
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(eh_work_q);
 
 	DPRINTK("ENTER\n");
@@ -533,109 +534,109 @@ void ata_scsi_error(struct Scsi_Host *host)
 
 	ata_scsi_cmd_error_handler(host, ap, &eh_work_q);
 
-	/* If we timed raced normal completion and there is nothing to
-	   recover nr_timedout == 0 why exactly are we doing error recovery ? */
+	/* If we समयd raced normal completion and there is nothing to
+	   recover nr_समयकरोut == 0 why exactly are we करोing error recovery ? */
 	ata_scsi_port_error_handler(host, ap);
 
 	/* finish or retry handled scmd's and clean up */
 	WARN_ON(!list_empty(&eh_work_q));
 
 	DPRINTK("EXIT\n");
-}
+पूर्ण
 
 /**
- * ata_scsi_cmd_error_handler - error callback for a list of commands
+ * ata_scsi_cmd_error_handler - error callback क्रम a list of commands
  * @host:	scsi host containing the port
  * @ap:		ATA port within the host
  * @eh_work_q:	list of commands to process
  *
- * process the given list of commands and return those finished to the
- * ap->eh_done_q.  This function is the first part of the libata error
+ * process the given list of commands and वापस those finished to the
+ * ap->eh_करोne_q.  This function is the first part of the libata error
  * handler which processes a given list of failed commands.
  */
-void ata_scsi_cmd_error_handler(struct Scsi_Host *host, struct ata_port *ap,
-				struct list_head *eh_work_q)
-{
-	int i;
-	unsigned long flags;
+व्योम ata_scsi_cmd_error_handler(काष्ठा Scsi_Host *host, काष्ठा ata_port *ap,
+				काष्ठा list_head *eh_work_q)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
 	/* make sure sff pio task is not running */
 	ata_sff_flush_pio_task(ap);
 
-	/* synchronize with host lock and sort out timeouts */
+	/* synchronize with host lock and sort out समयouts */
 
 	/* For new EH, all qcs are finished in one of three ways -
-	 * normal completion, error completion, and SCSI timeout.
-	 * Both completions can race against SCSI timeout.  When normal
+	 * normal completion, error completion, and SCSI समयout.
+	 * Both completions can race against SCSI समयout.  When normal
 	 * completion wins, the qc never reaches EH.  When error
 	 * completion wins, the qc has ATA_QCFLAG_FAILED set.
 	 *
-	 * When SCSI timeout wins, things are a bit more complex.
-	 * Normal or error completion can occur after the timeout but
-	 * before this point.  In such cases, both types of
+	 * When SCSI समयout wins, things are a bit more complex.
+	 * Normal or error completion can occur after the समयout but
+	 * beक्रमe this poपूर्णांक.  In such हालs, both types of
 	 * completions are honored.  A scmd is determined to have
-	 * timed out iff its associated qc is active and not failed.
+	 * समयd out अगरf its associated qc is active and not failed.
 	 */
 	spin_lock_irqsave(ap->lock, flags);
-	if (ap->ops->error_handler) {
-		struct scsi_cmnd *scmd, *tmp;
-		int nr_timedout = 0;
+	अगर (ap->ops->error_handler) अणु
+		काष्ठा scsi_cmnd *scmd, *पंचांगp;
+		पूर्णांक nr_समयकरोut = 0;
 
-		/* This must occur under the ap->lock as we don't want
-		   a polled recovery to race the real interrupt handler
+		/* This must occur under the ap->lock as we करोn't want
+		   a polled recovery to race the real पूर्णांकerrupt handler
 
-		   The lost_interrupt handler checks for any completed but
-		   non-notified command and completes much like an IRQ handler.
+		   The lost_पूर्णांकerrupt handler checks क्रम any completed but
+		   non-notअगरied command and completes much like an IRQ handler.
 
-		   We then fall into the error recovery code which will treat
-		   this as if normal completion won the race */
+		   We then fall पूर्णांकo the error recovery code which will treat
+		   this as अगर normal completion won the race */
 
-		if (ap->ops->lost_interrupt)
-			ap->ops->lost_interrupt(ap);
+		अगर (ap->ops->lost_पूर्णांकerrupt)
+			ap->ops->lost_पूर्णांकerrupt(ap);
 
-		list_for_each_entry_safe(scmd, tmp, eh_work_q, eh_entry) {
-			struct ata_queued_cmd *qc;
+		list_क्रम_each_entry_safe(scmd, पंचांगp, eh_work_q, eh_entry) अणु
+			काष्ठा ata_queued_cmd *qc;
 
-			ata_qc_for_each_raw(ap, qc, i) {
-				if (qc->flags & ATA_QCFLAG_ACTIVE &&
+			ata_qc_क्रम_each_raw(ap, qc, i) अणु
+				अगर (qc->flags & ATA_QCFLAG_ACTIVE &&
 				    qc->scsicmd == scmd)
-					break;
-			}
+					अवरोध;
+			पूर्ण
 
-			if (i < ATA_MAX_QUEUE) {
+			अगर (i < ATA_MAX_QUEUE) अणु
 				/* the scmd has an associated qc */
-				if (!(qc->flags & ATA_QCFLAG_FAILED)) {
-					/* which hasn't failed yet, timeout */
+				अगर (!(qc->flags & ATA_QCFLAG_FAILED)) अणु
+					/* which hasn't failed yet, समयout */
 					qc->err_mask |= AC_ERR_TIMEOUT;
 					qc->flags |= ATA_QCFLAG_FAILED;
-					nr_timedout++;
-				}
-			} else {
+					nr_समयकरोut++;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* Normal completion occurred after
-				 * SCSI timeout but before this point.
+				 * SCSI समयout but beक्रमe this poपूर्णांक.
 				 * Successfully complete it.
 				 */
 				scmd->retries = scmd->allowed;
-				scsi_eh_finish_cmd(scmd, &ap->eh_done_q);
-			}
-		}
+				scsi_eh_finish_cmd(scmd, &ap->eh_करोne_q);
+			पूर्ण
+		पूर्ण
 
-		/* If we have timed out qcs.  They belong to EH from
-		 * this point but the state of the controller is
+		/* If we have समयd out qcs.  They beदीर्घ to EH from
+		 * this poपूर्णांक but the state of the controller is
 		 * unknown.  Freeze the port to make sure the IRQ
-		 * handler doesn't diddle with those qcs.  This must
-		 * be done atomically w.r.t. setting QCFLAG_FAILED.
+		 * handler करोesn't diddle with those qcs.  This must
+		 * be करोne atomically w.r.t. setting QCFLAG_FAILED.
 		 */
-		if (nr_timedout)
-			__ata_port_freeze(ap);
+		अगर (nr_समयकरोut)
+			__ata_port_मुक्तze(ap);
 
 
 		/* initialize eh_tries */
 		ap->eh_tries = ATA_EH_MAX_TRIES;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(ap->lock, flags);
 
-}
+पूर्ण
 EXPORT_SYMBOL(ata_scsi_cmd_error_handler);
 
 /**
@@ -646,19 +647,19 @@ EXPORT_SYMBOL(ata_scsi_cmd_error_handler);
  * Handle the recovery of the port @ap after all the commands
  * have been recovered.
  */
-void ata_scsi_port_error_handler(struct Scsi_Host *host, struct ata_port *ap)
-{
-	unsigned long flags;
+व्योम ata_scsi_port_error_handler(काष्ठा Scsi_Host *host, काष्ठा ata_port *ap)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/* invoke error handler */
-	if (ap->ops->error_handler) {
-		struct ata_link *link;
+	अगर (ap->ops->error_handler) अणु
+		काष्ठा ata_link *link;
 
 		/* acquire EH ownership */
 		ata_eh_acquire(ap);
  repeat:
-		/* kill fast drain timer */
-		del_timer_sync(&ap->fastdrain_timer);
+		/* समाप्त fast drain समयr */
+		del_समयr_sync(&ap->fastdrain_समयr);
 
 		/* process port resume request */
 		ata_eh_handle_port_resume(ap);
@@ -666,342 +667,342 @@ void ata_scsi_port_error_handler(struct Scsi_Host *host, struct ata_port *ap)
 		/* fetch & clear EH info */
 		spin_lock_irqsave(ap->lock, flags);
 
-		ata_for_each_link(link, ap, HOST_FIRST) {
-			struct ata_eh_context *ehc = &link->eh_context;
-			struct ata_device *dev;
+		ata_क्रम_each_link(link, ap, HOST_FIRST) अणु
+			काष्ठा ata_eh_context *ehc = &link->eh_context;
+			काष्ठा ata_device *dev;
 
-			memset(&link->eh_context, 0, sizeof(link->eh_context));
+			स_रखो(&link->eh_context, 0, माप(link->eh_context));
 			link->eh_context.i = link->eh_info;
-			memset(&link->eh_info, 0, sizeof(link->eh_info));
+			स_रखो(&link->eh_info, 0, माप(link->eh_info));
 
-			ata_for_each_dev(dev, link, ENABLED) {
-				int devno = dev->devno;
+			ata_क्रम_each_dev(dev, link, ENABLED) अणु
+				पूर्णांक devno = dev->devno;
 
 				ehc->saved_xfer_mode[devno] = dev->xfer_mode;
-				if (ata_ncq_enabled(dev))
+				अगर (ata_ncq_enabled(dev))
 					ehc->saved_ncq_enabled |= 1 << devno;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		ap->pflags |= ATA_PFLAG_EH_IN_PROGRESS;
 		ap->pflags &= ~ATA_PFLAG_EH_PENDING;
-		ap->excl_link = NULL;	/* don't maintain exclusion over EH */
+		ap->excl_link = शून्य;	/* करोn't मुख्यtain exclusion over EH */
 
 		spin_unlock_irqrestore(ap->lock, flags);
 
-		/* invoke EH, skip if unloading or suspended */
-		if (!(ap->pflags & (ATA_PFLAG_UNLOADING | ATA_PFLAG_SUSPENDED)))
+		/* invoke EH, skip अगर unloading or suspended */
+		अगर (!(ap->pflags & (ATA_PFLAG_UNLOADING | ATA_PFLAG_SUSPENDED)))
 			ap->ops->error_handler(ap);
-		else {
-			/* if unloading, commence suicide */
-			if ((ap->pflags & ATA_PFLAG_UNLOADING) &&
+		अन्यथा अणु
+			/* अगर unloading, commence suicide */
+			अगर ((ap->pflags & ATA_PFLAG_UNLOADING) &&
 			    !(ap->pflags & ATA_PFLAG_UNLOADED))
 				ata_eh_unload(ap);
 			ata_eh_finish(ap);
-		}
+		पूर्ण
 
 		/* process port suspend request */
 		ata_eh_handle_port_suspend(ap);
 
 		/* Exception might have happened after ->error_handler
-		 * recovered the port but before this point.  Repeat
-		 * EH in such case.
+		 * recovered the port but beक्रमe this poपूर्णांक.  Repeat
+		 * EH in such हाल.
 		 */
 		spin_lock_irqsave(ap->lock, flags);
 
-		if (ap->pflags & ATA_PFLAG_EH_PENDING) {
-			if (--ap->eh_tries) {
+		अगर (ap->pflags & ATA_PFLAG_EH_PENDING) अणु
+			अगर (--ap->eh_tries) अणु
 				spin_unlock_irqrestore(ap->lock, flags);
-				goto repeat;
-			}
+				जाओ repeat;
+			पूर्ण
 			ata_port_err(ap,
 				     "EH pending after %d tries, giving up\n",
 				     ATA_EH_MAX_TRIES);
 			ap->pflags &= ~ATA_PFLAG_EH_PENDING;
-		}
+		पूर्ण
 
 		/* this run is complete, make sure EH info is clear */
-		ata_for_each_link(link, ap, HOST_FIRST)
-			memset(&link->eh_info, 0, sizeof(link->eh_info));
+		ata_क्रम_each_link(link, ap, HOST_FIRST)
+			स_रखो(&link->eh_info, 0, माप(link->eh_info));
 
-		/* end eh (clear host_eh_scheduled) while holding
-		 * ap->lock such that if exception occurs after this
-		 * point but before EH completion, SCSI midlayer will
+		/* end eh (clear host_eh_scheduled) जबतक holding
+		 * ap->lock such that अगर exception occurs after this
+		 * poपूर्णांक but beक्रमe EH completion, SCSI midlayer will
 		 * re-initiate EH.
 		 */
 		ap->ops->end_eh(ap);
 
 		spin_unlock_irqrestore(ap->lock, flags);
 		ata_eh_release(ap);
-	} else {
-		WARN_ON(ata_qc_from_tag(ap, ap->link.active_tag) == NULL);
-		ap->ops->eng_timeout(ap);
-	}
+	पूर्ण अन्यथा अणु
+		WARN_ON(ata_qc_from_tag(ap, ap->link.active_tag) == शून्य);
+		ap->ops->eng_समयout(ap);
+	पूर्ण
 
-	scsi_eh_flush_done_q(&ap->eh_done_q);
+	scsi_eh_flush_करोne_q(&ap->eh_करोne_q);
 
 	/* clean up */
 	spin_lock_irqsave(ap->lock, flags);
 
-	if (ap->pflags & ATA_PFLAG_LOADING)
+	अगर (ap->pflags & ATA_PFLAG_LOADING)
 		ap->pflags &= ~ATA_PFLAG_LOADING;
-	else if ((ap->pflags & ATA_PFLAG_SCSI_HOTPLUG) &&
+	अन्यथा अगर ((ap->pflags & ATA_PFLAG_SCSI_HOTPLUG) &&
 		!(ap->flags & ATA_FLAG_SAS_HOST))
 		schedule_delayed_work(&ap->hotplug_task, 0);
 
-	if (ap->pflags & ATA_PFLAG_RECOVERED)
+	अगर (ap->pflags & ATA_PFLAG_RECOVERED)
 		ata_port_info(ap, "EH complete\n");
 
 	ap->pflags &= ~(ATA_PFLAG_SCSI_HOTPLUG | ATA_PFLAG_RECOVERED);
 
-	/* tell wait_eh that we're done */
+	/* tell रुको_eh that we're करोne */
 	ap->pflags &= ~ATA_PFLAG_EH_IN_PROGRESS;
-	wake_up_all(&ap->eh_wait_q);
+	wake_up_all(&ap->eh_रुको_q);
 
 	spin_unlock_irqrestore(ap->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_scsi_port_error_handler);
 
 /**
- *	ata_port_wait_eh - Wait for the currently pending EH to complete
- *	@ap: Port to wait EH for
+ *	ata_port_रुको_eh - Wait क्रम the currently pending EH to complete
+ *	@ap: Port to रुको EH क्रम
  *
  *	Wait until the currently pending EH is complete.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-void ata_port_wait_eh(struct ata_port *ap)
-{
-	unsigned long flags;
-	DEFINE_WAIT(wait);
+व्योम ata_port_रुको_eh(काष्ठा ata_port *ap)
+अणु
+	अचिन्हित दीर्घ flags;
+	DEFINE_WAIT(रुको);
 
  retry:
 	spin_lock_irqsave(ap->lock, flags);
 
-	while (ap->pflags & (ATA_PFLAG_EH_PENDING | ATA_PFLAG_EH_IN_PROGRESS)) {
-		prepare_to_wait(&ap->eh_wait_q, &wait, TASK_UNINTERRUPTIBLE);
+	जबतक (ap->pflags & (ATA_PFLAG_EH_PENDING | ATA_PFLAG_EH_IN_PROGRESS)) अणु
+		prepare_to_रुको(&ap->eh_रुको_q, &रुको, TASK_UNINTERRUPTIBLE);
 		spin_unlock_irqrestore(ap->lock, flags);
 		schedule();
 		spin_lock_irqsave(ap->lock, flags);
-	}
-	finish_wait(&ap->eh_wait_q, &wait);
+	पूर्ण
+	finish_रुको(&ap->eh_रुको_q, &रुको);
 
 	spin_unlock_irqrestore(ap->lock, flags);
 
 	/* make sure SCSI EH is complete */
-	if (scsi_host_in_recovery(ap->scsi_host)) {
+	अगर (scsi_host_in_recovery(ap->scsi_host)) अणु
 		ata_msleep(ap, 10);
-		goto retry;
-	}
-}
-EXPORT_SYMBOL_GPL(ata_port_wait_eh);
+		जाओ retry;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(ata_port_रुको_eh);
 
-static int ata_eh_nr_in_flight(struct ata_port *ap)
-{
-	struct ata_queued_cmd *qc;
-	unsigned int tag;
-	int nr = 0;
+अटल पूर्णांक ata_eh_nr_in_flight(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_queued_cmd *qc;
+	अचिन्हित पूर्णांक tag;
+	पूर्णांक nr = 0;
 
-	/* count only non-internal commands */
-	ata_qc_for_each(ap, qc, tag) {
-		if (qc)
+	/* count only non-पूर्णांकernal commands */
+	ata_qc_क्रम_each(ap, qc, tag) अणु
+		अगर (qc)
 			nr++;
-	}
+	पूर्ण
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-void ata_eh_fastdrain_timerfn(struct timer_list *t)
-{
-	struct ata_port *ap = from_timer(ap, t, fastdrain_timer);
-	unsigned long flags;
-	int cnt;
+व्योम ata_eh_fastdrain_समयrfn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ata_port *ap = from_समयr(ap, t, fastdrain_समयr);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक cnt;
 
 	spin_lock_irqsave(ap->lock, flags);
 
 	cnt = ata_eh_nr_in_flight(ap);
 
-	/* are we done? */
-	if (!cnt)
-		goto out_unlock;
+	/* are we करोne? */
+	अगर (!cnt)
+		जाओ out_unlock;
 
-	if (cnt == ap->fastdrain_cnt) {
-		struct ata_queued_cmd *qc;
-		unsigned int tag;
+	अगर (cnt == ap->fastdrain_cnt) अणु
+		काष्ठा ata_queued_cmd *qc;
+		अचिन्हित पूर्णांक tag;
 
-		/* No progress during the last interval, tag all
-		 * in-flight qcs as timed out and freeze the port.
+		/* No progress during the last पूर्णांकerval, tag all
+		 * in-flight qcs as समयd out and मुक्तze the port.
 		 */
-		ata_qc_for_each(ap, qc, tag) {
-			if (qc)
+		ata_qc_क्रम_each(ap, qc, tag) अणु
+			अगर (qc)
 				qc->err_mask |= AC_ERR_TIMEOUT;
-		}
+		पूर्ण
 
-		ata_port_freeze(ap);
-	} else {
+		ata_port_मुक्तze(ap);
+	पूर्ण अन्यथा अणु
 		/* some qcs have finished, give it another chance */
 		ap->fastdrain_cnt = cnt;
-		ap->fastdrain_timer.expires =
-			ata_deadline(jiffies, ATA_EH_FASTDRAIN_INTERVAL);
-		add_timer(&ap->fastdrain_timer);
-	}
+		ap->fastdrain_समयr.expires =
+			ata_deadline(jअगरfies, ATA_EH_FASTDRAIN_INTERVAL);
+		add_समयr(&ap->fastdrain_समयr);
+	पूर्ण
 
  out_unlock:
 	spin_unlock_irqrestore(ap->lock, flags);
-}
+पूर्ण
 
 /**
  *	ata_eh_set_pending - set ATA_PFLAG_EH_PENDING and activate fast drain
  *	@ap: target ATA port
  *	@fastdrain: activate fast drain
  *
- *	Set ATA_PFLAG_EH_PENDING and activate fast drain if @fastdrain
- *	is non-zero and EH wasn't pending before.  Fast drain ensures
- *	that EH kicks in in timely manner.
+ *	Set ATA_PFLAG_EH_PENDING and activate fast drain अगर @fastdrain
+ *	is non-zero and EH wasn't pending beक्रमe.  Fast drain ensures
+ *	that EH kicks in in समयly manner.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-static void ata_eh_set_pending(struct ata_port *ap, int fastdrain)
-{
-	int cnt;
+अटल व्योम ata_eh_set_pending(काष्ठा ata_port *ap, पूर्णांक fastdrain)
+अणु
+	पूर्णांक cnt;
 
-	/* already scheduled? */
-	if (ap->pflags & ATA_PFLAG_EH_PENDING)
-		return;
+	/* alपढ़ोy scheduled? */
+	अगर (ap->pflags & ATA_PFLAG_EH_PENDING)
+		वापस;
 
 	ap->pflags |= ATA_PFLAG_EH_PENDING;
 
-	if (!fastdrain)
-		return;
+	अगर (!fastdrain)
+		वापस;
 
-	/* do we have in-flight qcs? */
+	/* करो we have in-flight qcs? */
 	cnt = ata_eh_nr_in_flight(ap);
-	if (!cnt)
-		return;
+	अगर (!cnt)
+		वापस;
 
 	/* activate fast drain */
 	ap->fastdrain_cnt = cnt;
-	ap->fastdrain_timer.expires =
-		ata_deadline(jiffies, ATA_EH_FASTDRAIN_INTERVAL);
-	add_timer(&ap->fastdrain_timer);
-}
+	ap->fastdrain_समयr.expires =
+		ata_deadline(jअगरfies, ATA_EH_FASTDRAIN_INTERVAL);
+	add_समयr(&ap->fastdrain_समयr);
+पूर्ण
 
 /**
- *	ata_qc_schedule_eh - schedule qc for error handling
- *	@qc: command to schedule error handling for
+ *	ata_qc_schedule_eh - schedule qc क्रम error handling
+ *	@qc: command to schedule error handling क्रम
  *
- *	Schedule error handling for @qc.  EH will kick in as soon as
+ *	Schedule error handling क्रम @qc.  EH will kick in as soon as
  *	other commands are drained.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-void ata_qc_schedule_eh(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
+व्योम ata_qc_schedule_eh(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
 
 	WARN_ON(!ap->ops->error_handler);
 
 	qc->flags |= ATA_QCFLAG_FAILED;
 	ata_eh_set_pending(ap, 1);
 
-	/* The following will fail if timeout has already expired.
+	/* The following will fail अगर समयout has alपढ़ोy expired.
 	 * ata_scsi_error() takes care of such scmds on EH entry.
 	 * Note that ATA_QCFLAG_FAILED is unconditionally set after
 	 * this function completes.
 	 */
-	blk_abort_request(qc->scsicmd->request);
-}
+	blk_पात_request(qc->scsicmd->request);
+पूर्ण
 
 /**
  * ata_std_sched_eh - non-libsas ata_ports issue eh with this common routine
- * @ap: ATA port to schedule EH for
+ * @ap: ATA port to schedule EH क्रम
  *
  *	LOCKING: inherited from ata_port_schedule_eh
  *	spin_lock_irqsave(host lock)
  */
-void ata_std_sched_eh(struct ata_port *ap)
-{
+व्योम ata_std_sched_eh(काष्ठा ata_port *ap)
+अणु
 	WARN_ON(!ap->ops->error_handler);
 
-	if (ap->pflags & ATA_PFLAG_INITIALIZING)
-		return;
+	अगर (ap->pflags & ATA_PFLAG_INITIALIZING)
+		वापस;
 
 	ata_eh_set_pending(ap, 1);
 	scsi_schedule_eh(ap->scsi_host);
 
 	DPRINTK("port EH scheduled\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_std_sched_eh);
 
 /**
  * ata_std_end_eh - non-libsas ata_ports complete eh with this common routine
- * @ap: ATA port to end EH for
+ * @ap: ATA port to end EH क्रम
  *
  * In the libata object model there is a 1:1 mapping of ata_port to
  * shost, so host fields can be directly manipulated under ap->lock, in
- * the libsas case we need to hold a lock at the ha->level to coordinate
+ * the libsas हाल we need to hold a lock at the ha->level to coordinate
  * these events.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-void ata_std_end_eh(struct ata_port *ap)
-{
-	struct Scsi_Host *host = ap->scsi_host;
+व्योम ata_std_end_eh(काष्ठा ata_port *ap)
+अणु
+	काष्ठा Scsi_Host *host = ap->scsi_host;
 
 	host->host_eh_scheduled = 0;
-}
+पूर्ण
 EXPORT_SYMBOL(ata_std_end_eh);
 
 
 /**
  *	ata_port_schedule_eh - schedule error handling without a qc
- *	@ap: ATA port to schedule EH for
+ *	@ap: ATA port to schedule EH क्रम
  *
- *	Schedule error handling for @ap.  EH will kick in as soon as
+ *	Schedule error handling क्रम @ap.  EH will kick in as soon as
  *	all commands are drained.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-void ata_port_schedule_eh(struct ata_port *ap)
-{
+व्योम ata_port_schedule_eh(काष्ठा ata_port *ap)
+अणु
 	/* see: ata_std_sched_eh, unless you know better */
 	ap->ops->sched_eh(ap);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_port_schedule_eh);
 
-static int ata_do_link_abort(struct ata_port *ap, struct ata_link *link)
-{
-	struct ata_queued_cmd *qc;
-	int tag, nr_aborted = 0;
+अटल पूर्णांक ata_करो_link_पात(काष्ठा ata_port *ap, काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_queued_cmd *qc;
+	पूर्णांक tag, nr_पातed = 0;
 
 	WARN_ON(!ap->ops->error_handler);
 
-	/* we're gonna abort all commands, no need for fast drain */
+	/* we're gonna पात all commands, no need क्रम fast drain */
 	ata_eh_set_pending(ap, 0);
 
-	/* include internal tag in iteration */
-	ata_qc_for_each_with_internal(ap, qc, tag) {
-		if (qc && (!link || qc->dev->link == link)) {
+	/* include पूर्णांकernal tag in iteration */
+	ata_qc_क्रम_each_with_पूर्णांकernal(ap, qc, tag) अणु
+		अगर (qc && (!link || qc->dev->link == link)) अणु
 			qc->flags |= ATA_QCFLAG_FAILED;
 			ata_qc_complete(qc);
-			nr_aborted++;
-		}
-	}
+			nr_पातed++;
+		पूर्ण
+	पूर्ण
 
-	if (!nr_aborted)
+	अगर (!nr_पातed)
 		ata_port_schedule_eh(ap);
 
-	return nr_aborted;
-}
+	वापस nr_पातed;
+पूर्ण
 
 /**
- *	ata_link_abort - abort all qc's on the link
- *	@link: ATA link to abort qc's for
+ *	ata_link_पात - पात all qc's on the link
+ *	@link: ATA link to पात qc's क्रम
  *
  *	Abort all active qc's active on @link and schedule EH.
  *
@@ -1009,17 +1010,17 @@ static int ata_do_link_abort(struct ata_port *ap, struct ata_link *link)
  *	spin_lock_irqsave(host lock)
  *
  *	RETURNS:
- *	Number of aborted qc's.
+ *	Number of पातed qc's.
  */
-int ata_link_abort(struct ata_link *link)
-{
-	return ata_do_link_abort(link->ap, link);
-}
-EXPORT_SYMBOL_GPL(ata_link_abort);
+पूर्णांक ata_link_पात(काष्ठा ata_link *link)
+अणु
+	वापस ata_करो_link_पात(link->ap, link);
+पूर्ण
+EXPORT_SYMBOL_GPL(ata_link_पात);
 
 /**
- *	ata_port_abort - abort all qc's on the port
- *	@ap: ATA port to abort qc's for
+ *	ata_port_पात - पात all qc's on the port
+ *	@ap: ATA port to पात qc's क्रम
  *
  *	Abort all active qc's of @ap and schedule EH.
  *
@@ -1027,92 +1028,92 @@ EXPORT_SYMBOL_GPL(ata_link_abort);
  *	spin_lock_irqsave(host_set lock)
  *
  *	RETURNS:
- *	Number of aborted qc's.
+ *	Number of पातed qc's.
  */
-int ata_port_abort(struct ata_port *ap)
-{
-	return ata_do_link_abort(ap, NULL);
-}
-EXPORT_SYMBOL_GPL(ata_port_abort);
+पूर्णांक ata_port_पात(काष्ठा ata_port *ap)
+अणु
+	वापस ata_करो_link_पात(ap, शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(ata_port_पात);
 
 /**
- *	__ata_port_freeze - freeze port
- *	@ap: ATA port to freeze
+ *	__ata_port_मुक्तze - मुक्तze port
+ *	@ap: ATA port to मुक्तze
  *
  *	This function is called when HSM violation or some other
  *	condition disrupts normal operation of the port.  Frozen port
- *	is not allowed to perform any operation until the port is
+ *	is not allowed to perक्रमm any operation until the port is
  *	thawed, which usually follows a successful reset.
  *
- *	ap->ops->freeze() callback can be used for freezing the port
- *	hardware-wise (e.g. mask interrupt and stop DMA engine).  If a
- *	port cannot be frozen hardware-wise, the interrupt handler
- *	must ack and clear interrupts unconditionally while the port
+ *	ap->ops->मुक्तze() callback can be used क्रम मुक्तzing the port
+ *	hardware-wise (e.g. mask पूर्णांकerrupt and stop DMA engine).  If a
+ *	port cannot be frozen hardware-wise, the पूर्णांकerrupt handler
+ *	must ack and clear पूर्णांकerrupts unconditionally जबतक the port
  *	is frozen.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  */
-static void __ata_port_freeze(struct ata_port *ap)
-{
+अटल व्योम __ata_port_मुक्तze(काष्ठा ata_port *ap)
+अणु
 	WARN_ON(!ap->ops->error_handler);
 
-	if (ap->ops->freeze)
-		ap->ops->freeze(ap);
+	अगर (ap->ops->मुक्तze)
+		ap->ops->मुक्तze(ap);
 
 	ap->pflags |= ATA_PFLAG_FROZEN;
 
-	DPRINTK("ata%u port frozen\n", ap->print_id);
-}
+	DPRINTK("ata%u port frozen\n", ap->prपूर्णांक_id);
+पूर्ण
 
 /**
- *	ata_port_freeze - abort & freeze port
- *	@ap: ATA port to freeze
+ *	ata_port_मुक्तze - पात & मुक्तze port
+ *	@ap: ATA port to मुक्तze
  *
- *	Abort and freeze @ap.  The freeze operation must be called
+ *	Abort and मुक्तze @ap.  The मुक्तze operation must be called
  *	first, because some hardware requires special operations
- *	before the taskfile registers are accessible.
+ *	beक्रमe the taskfile रेजिस्टरs are accessible.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  *
  *	RETURNS:
- *	Number of aborted commands.
+ *	Number of पातed commands.
  */
-int ata_port_freeze(struct ata_port *ap)
-{
-	int nr_aborted;
+पूर्णांक ata_port_मुक्तze(काष्ठा ata_port *ap)
+अणु
+	पूर्णांक nr_पातed;
 
 	WARN_ON(!ap->ops->error_handler);
 
-	__ata_port_freeze(ap);
-	nr_aborted = ata_port_abort(ap);
+	__ata_port_मुक्तze(ap);
+	nr_पातed = ata_port_पात(ap);
 
-	return nr_aborted;
-}
-EXPORT_SYMBOL_GPL(ata_port_freeze);
+	वापस nr_पातed;
+पूर्ण
+EXPORT_SYMBOL_GPL(ata_port_मुक्तze);
 
 /**
- *	ata_eh_freeze_port - EH helper to freeze port
- *	@ap: ATA port to freeze
+ *	ata_eh_मुक्तze_port - EH helper to मुक्तze port
+ *	@ap: ATA port to मुक्तze
  *
  *	Freeze @ap.
  *
  *	LOCKING:
  *	None.
  */
-void ata_eh_freeze_port(struct ata_port *ap)
-{
-	unsigned long flags;
+व्योम ata_eh_मुक्तze_port(काष्ठा ata_port *ap)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!ap->ops->error_handler)
-		return;
+	अगर (!ap->ops->error_handler)
+		वापस;
 
 	spin_lock_irqsave(ap->lock, flags);
-	__ata_port_freeze(ap);
+	__ata_port_मुक्तze(ap);
 	spin_unlock_irqrestore(ap->lock, flags);
-}
-EXPORT_SYMBOL_GPL(ata_eh_freeze_port);
+पूर्ण
+EXPORT_SYMBOL_GPL(ata_eh_मुक्तze_port);
 
 /**
  *	ata_eh_thaw_port - EH helper to thaw port
@@ -1123,44 +1124,44 @@ EXPORT_SYMBOL_GPL(ata_eh_freeze_port);
  *	LOCKING:
  *	None.
  */
-void ata_eh_thaw_port(struct ata_port *ap)
-{
-	unsigned long flags;
+व्योम ata_eh_thaw_port(काष्ठा ata_port *ap)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!ap->ops->error_handler)
-		return;
+	अगर (!ap->ops->error_handler)
+		वापस;
 
 	spin_lock_irqsave(ap->lock, flags);
 
 	ap->pflags &= ~ATA_PFLAG_FROZEN;
 
-	if (ap->ops->thaw)
+	अगर (ap->ops->thaw)
 		ap->ops->thaw(ap);
 
 	spin_unlock_irqrestore(ap->lock, flags);
 
-	DPRINTK("ata%u port thawed\n", ap->print_id);
-}
+	DPRINTK("ata%u port thawed\n", ap->prपूर्णांक_id);
+पूर्ण
 
-static void ata_eh_scsidone(struct scsi_cmnd *scmd)
-{
+अटल व्योम ata_eh_scsiकरोne(काष्ठा scsi_cmnd *scmd)
+अणु
 	/* nada */
-}
+पूर्ण
 
-static void __ata_eh_qc_complete(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	struct scsi_cmnd *scmd = qc->scsicmd;
-	unsigned long flags;
+अटल व्योम __ata_eh_qc_complete(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	काष्ठा scsi_cmnd *scmd = qc->scsicmd;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(ap->lock, flags);
-	qc->scsidone = ata_eh_scsidone;
+	qc->scsiकरोne = ata_eh_scsiकरोne;
 	__ata_qc_complete(qc);
 	WARN_ON(ata_tag_valid(qc->tag));
 	spin_unlock_irqrestore(ap->lock, flags);
 
-	scsi_eh_finish_cmd(scmd, &ap->eh_done_q);
-}
+	scsi_eh_finish_cmd(scmd, &ap->eh_करोne_q);
+पूर्ण
 
 /**
  *	ata_eh_qc_complete - Complete an active ATA command from EH
@@ -1169,12 +1170,12 @@ static void __ata_eh_qc_complete(struct ata_queued_cmd *qc)
  *	Indicate to the mid and upper layers that an ATA command has
  *	completed.  To be used from EH.
  */
-void ata_eh_qc_complete(struct ata_queued_cmd *qc)
-{
-	struct scsi_cmnd *scmd = qc->scsicmd;
+व्योम ata_eh_qc_complete(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा scsi_cmnd *scmd = qc->scsicmd;
 	scmd->retries = scmd->allowed;
 	__ata_eh_qc_complete(qc);
-}
+पूर्ण
 
 /**
  *	ata_eh_qc_retry - Tell midlayer to retry an ATA command after EH
@@ -1184,16 +1185,16 @@ void ata_eh_qc_complete(struct ata_queued_cmd *qc)
  *	should be retried.  To be used from EH.
  *
  *	SCSI midlayer limits the number of retries to scmd->allowed.
- *	scmd->allowed is incremented for commands which get retried
+ *	scmd->allowed is incremented क्रम commands which get retried
  *	due to unrelated failures (qc->err_mask is zero).
  */
-void ata_eh_qc_retry(struct ata_queued_cmd *qc)
-{
-	struct scsi_cmnd *scmd = qc->scsicmd;
-	if (!qc->err_mask)
+व्योम ata_eh_qc_retry(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा scsi_cmnd *scmd = qc->scsicmd;
+	अगर (!qc->err_mask)
 		scmd->allowed++;
 	__ata_eh_qc_complete(qc);
-}
+पूर्ण
 
 /**
  *	ata_dev_disable - disable ATA device
@@ -1204,22 +1205,22 @@ void ata_eh_qc_retry(struct ata_queued_cmd *qc)
  *	Locking:
  *	EH context.
  */
-void ata_dev_disable(struct ata_device *dev)
-{
-	if (!ata_dev_enabled(dev))
-		return;
+व्योम ata_dev_disable(काष्ठा ata_device *dev)
+अणु
+	अगर (!ata_dev_enabled(dev))
+		वापस;
 
-	if (ata_msg_drv(dev->link->ap))
+	अगर (ata_msg_drv(dev->link->ap))
 		ata_dev_warn(dev, "disabled\n");
 	ata_acpi_on_disable(dev);
-	ata_down_xfermask_limit(dev, ATA_DNXFER_FORCE_PIO0 | ATA_DNXFER_QUIET);
+	ata_करोwn_xfermask_limit(dev, ATA_DNXFER_FORCE_PIO0 | ATA_DNXFER_QUIET);
 	dev->class++;
 
 	/* From now till the next successful probe, ering is used to
 	 * track probe failures.  Clear accumulated device error info.
 	 */
 	ata_ering_clear(&dev->ering);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_dev_disable);
 
 /**
@@ -1231,12 +1232,12 @@ EXPORT_SYMBOL_GPL(ata_dev_disable);
  *	LOCKING:
  *	None.
  */
-void ata_eh_detach_dev(struct ata_device *dev)
-{
-	struct ata_link *link = dev->link;
-	struct ata_port *ap = link->ap;
-	struct ata_eh_context *ehc = &link->eh_context;
-	unsigned long flags;
+व्योम ata_eh_detach_dev(काष्ठा ata_device *dev)
+अणु
+	काष्ठा ata_link *link = dev->link;
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	अचिन्हित दीर्घ flags;
 
 	ata_dev_disable(dev);
 
@@ -1244,10 +1245,10 @@ void ata_eh_detach_dev(struct ata_device *dev)
 
 	dev->flags &= ~ATA_DFLAG_DETACH;
 
-	if (ata_scsi_offline_dev(dev)) {
+	अगर (ata_scsi_offline_dev(dev)) अणु
 		dev->flags |= ATA_DFLAG_DETACHED;
 		ap->pflags |= ATA_PFLAG_SCSI_HOTPLUG;
-	}
+	पूर्ण
 
 	/* clear per-dev EH info */
 	ata_eh_clear_action(link, dev, &link->eh_info, ATA_EH_PERDEV_MASK);
@@ -1256,61 +1257,61 @@ void ata_eh_detach_dev(struct ata_device *dev)
 	ehc->saved_ncq_enabled &= ~(1 << dev->devno);
 
 	spin_unlock_irqrestore(ap->lock, flags);
-}
+पूर्ण
 
 /**
- *	ata_eh_about_to_do - about to perform eh_action
+ *	ata_eh_about_to_करो - about to perक्रमm eh_action
  *	@link: target ATA link
- *	@dev: target ATA dev for per-dev action (can be NULL)
- *	@action: action about to be performed
+ *	@dev: target ATA dev क्रम per-dev action (can be शून्य)
+ *	@action: action about to be perक्रमmed
  *
- *	Called just before performing EH actions to clear related bits
+ *	Called just beक्रमe perक्रमming EH actions to clear related bits
  *	in @link->eh_info such that eh actions are not unnecessarily
  *	repeated.
  *
  *	LOCKING:
  *	None.
  */
-void ata_eh_about_to_do(struct ata_link *link, struct ata_device *dev,
-			unsigned int action)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_eh_info *ehi = &link->eh_info;
-	struct ata_eh_context *ehc = &link->eh_context;
-	unsigned long flags;
+व्योम ata_eh_about_to_करो(काष्ठा ata_link *link, काष्ठा ata_device *dev,
+			अचिन्हित पूर्णांक action)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_eh_info *ehi = &link->eh_info;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(ap->lock, flags);
 
 	ata_eh_clear_action(link, dev, ehi, action);
 
 	/* About to take EH action, set RECOVERED.  Ignore actions on
-	 * slave links as master will do them again.
+	 * slave links as master will करो them again.
 	 */
-	if (!(ehc->i.flags & ATA_EHI_QUIET) && link != ap->slave_link)
+	अगर (!(ehc->i.flags & ATA_EHI_QUIET) && link != ap->slave_link)
 		ap->pflags |= ATA_PFLAG_RECOVERED;
 
 	spin_unlock_irqrestore(ap->lock, flags);
-}
+पूर्ण
 
 /**
- *	ata_eh_done - EH action complete
- *	@link: ATA link for which EH actions are complete
- *	@dev: target ATA dev for per-dev action (can be NULL)
+ *	ata_eh_करोne - EH action complete
+ *	@link: ATA link क्रम which EH actions are complete
+ *	@dev: target ATA dev क्रम per-dev action (can be शून्य)
  *	@action: action just completed
  *
- *	Called right after performing EH actions to clear related bits
+ *	Called right after perक्रमming EH actions to clear related bits
  *	in @link->eh_context.
  *
  *	LOCKING:
  *	None.
  */
-void ata_eh_done(struct ata_link *link, struct ata_device *dev,
-		 unsigned int action)
-{
-	struct ata_eh_context *ehc = &link->eh_context;
+व्योम ata_eh_करोne(काष्ठा ata_link *link, काष्ठा ata_device *dev,
+		 अचिन्हित पूर्णांक action)
+अणु
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
 
 	ata_eh_clear_action(link, dev, &ehc->i, action);
-}
+पूर्ण
 
 /**
  *	ata_err_string - convert err_mask to descriptive string
@@ -1324,39 +1325,39 @@ void ata_eh_done(struct ata_link *link, struct ata_device *dev,
  *	None.
  *
  *	RETURNS:
- *	Descriptive string for @err_mask
+ *	Descriptive string क्रम @err_mask
  */
-static const char *ata_err_string(unsigned int err_mask)
-{
-	if (err_mask & AC_ERR_HOST_BUS)
-		return "host bus error";
-	if (err_mask & AC_ERR_ATA_BUS)
-		return "ATA bus error";
-	if (err_mask & AC_ERR_TIMEOUT)
-		return "timeout";
-	if (err_mask & AC_ERR_HSM)
-		return "HSM violation";
-	if (err_mask & AC_ERR_SYSTEM)
-		return "internal error";
-	if (err_mask & AC_ERR_MEDIA)
-		return "media error";
-	if (err_mask & AC_ERR_INVALID)
-		return "invalid argument";
-	if (err_mask & AC_ERR_DEV)
-		return "device error";
-	if (err_mask & AC_ERR_NCQ)
-		return "NCQ error";
-	if (err_mask & AC_ERR_NODEV_HINT)
-		return "Polling detection error";
-	return "unknown error";
-}
+अटल स्थिर अक्षर *ata_err_string(अचिन्हित पूर्णांक err_mask)
+अणु
+	अगर (err_mask & AC_ERR_HOST_BUS)
+		वापस "host bus error";
+	अगर (err_mask & AC_ERR_ATA_BUS)
+		वापस "ATA bus error";
+	अगर (err_mask & AC_ERR_TIMEOUT)
+		वापस "timeout";
+	अगर (err_mask & AC_ERR_HSM)
+		वापस "HSM violation";
+	अगर (err_mask & AC_ERR_SYSTEM)
+		वापस "internal error";
+	अगर (err_mask & AC_ERR_MEDIA)
+		वापस "media error";
+	अगर (err_mask & AC_ERR_INVALID)
+		वापस "invalid argument";
+	अगर (err_mask & AC_ERR_DEV)
+		वापस "device error";
+	अगर (err_mask & AC_ERR_NCQ)
+		वापस "NCQ error";
+	अगर (err_mask & AC_ERR_NODEV_HINT)
+		वापस "Polling detection error";
+	वापस "unknown error";
+पूर्ण
 
 /**
- *	atapi_eh_tur - perform ATAPI TEST_UNIT_READY
+ *	atapi_eh_tur - perक्रमm ATAPI TEST_UNIT_READY
  *	@dev: target ATAPI device
- *	@r_sense_key: out parameter for sense_key
+ *	@r_sense_key: out parameter क्रम sense_key
  *
- *	Perform ATAPI TEST_UNIT_READY.
+ *	Perक्रमm ATAPI TEST_UNIT_READY.
  *
  *	LOCKING:
  *	EH context (may sleep).
@@ -1364,11 +1365,11 @@ static const char *ata_err_string(unsigned int err_mask)
  *	RETURNS:
  *	0 on success, AC_ERR_* mask on failure.
  */
-unsigned int atapi_eh_tur(struct ata_device *dev, u8 *r_sense_key)
-{
-	u8 cdb[ATAPI_CDB_LEN] = { TEST_UNIT_READY, 0, 0, 0, 0, 0 };
-	struct ata_taskfile tf;
-	unsigned int err_mask;
+अचिन्हित पूर्णांक atapi_eh_tur(काष्ठा ata_device *dev, u8 *r_sense_key)
+अणु
+	u8 cdb[ATAPI_CDB_LEN] = अणु TEST_UNIT_READY, 0, 0, 0, 0, 0 पूर्ण;
+	काष्ठा ata_taskfile tf;
+	अचिन्हित पूर्णांक err_mask;
 
 	ata_tf_init(dev, &tf);
 
@@ -1376,42 +1377,42 @@ unsigned int atapi_eh_tur(struct ata_device *dev, u8 *r_sense_key)
 	tf.command = ATA_CMD_PACKET;
 	tf.protocol = ATAPI_PROT_NODATA;
 
-	err_mask = ata_exec_internal(dev, &tf, cdb, DMA_NONE, NULL, 0, 0);
-	if (err_mask == AC_ERR_DEV)
+	err_mask = ata_exec_पूर्णांकernal(dev, &tf, cdb, DMA_NONE, शून्य, 0, 0);
+	अगर (err_mask == AC_ERR_DEV)
 		*r_sense_key = tf.feature >> 4;
-	return err_mask;
-}
+	वापस err_mask;
+पूर्ण
 
 /**
- *	ata_eh_request_sense - perform REQUEST_SENSE_DATA_EXT
- *	@qc: qc to perform REQUEST_SENSE_SENSE_DATA_EXT to
- *	@cmd: scsi command for which the sense code should be set
+ *	ata_eh_request_sense - perक्रमm REQUEST_SENSE_DATA_EXT
+ *	@qc: qc to perक्रमm REQUEST_SENSE_SENSE_DATA_EXT to
+ *	@cmd: scsi command क्रम which the sense code should be set
  *
- *	Perform REQUEST_SENSE_DATA_EXT after the device reported CHECK
+ *	Perक्रमm REQUEST_SENSE_DATA_EXT after the device reported CHECK
  *	SENSE.  This function is an EH helper.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-static void ata_eh_request_sense(struct ata_queued_cmd *qc,
-				 struct scsi_cmnd *cmd)
-{
-	struct ata_device *dev = qc->dev;
-	struct ata_taskfile tf;
-	unsigned int err_mask;
+अटल व्योम ata_eh_request_sense(काष्ठा ata_queued_cmd *qc,
+				 काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा ata_device *dev = qc->dev;
+	काष्ठा ata_taskfile tf;
+	अचिन्हित पूर्णांक err_mask;
 
-	if (qc->ap->pflags & ATA_PFLAG_FROZEN) {
+	अगर (qc->ap->pflags & ATA_PFLAG_FROZEN) अणु
 		ata_dev_warn(dev, "sense data available but port frozen\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!cmd || qc->flags & ATA_QCFLAG_SENSE_VALID)
-		return;
+	अगर (!cmd || qc->flags & ATA_QCFLAG_SENSE_VALID)
+		वापस;
 
-	if (!ata_id_sense_reporting_enabled(dev->id)) {
+	अगर (!ata_id_sense_reporting_enabled(dev->id)) अणु
 		ata_dev_warn(qc->dev, "sense data reporting disabled\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DPRINTK("ATA request sense\n");
 
@@ -1421,290 +1422,290 @@ static void ata_eh_request_sense(struct ata_queued_cmd *qc,
 	tf.command = ATA_CMD_REQ_SENSE_DATA;
 	tf.protocol = ATA_PROT_NODATA;
 
-	err_mask = ata_exec_internal(dev, &tf, NULL, DMA_NONE, NULL, 0, 0);
+	err_mask = ata_exec_पूर्णांकernal(dev, &tf, शून्य, DMA_NONE, शून्य, 0, 0);
 	/* Ignore err_mask; ATA_ERR might be set */
-	if (tf.command & ATA_SENSE) {
+	अगर (tf.command & ATA_SENSE) अणु
 		ata_scsi_set_sense(dev, cmd, tf.lbah, tf.lbam, tf.lbal);
 		qc->flags |= ATA_QCFLAG_SENSE_VALID;
-	} else {
+	पूर्ण अन्यथा अणु
 		ata_dev_warn(dev, "request sense failed stat %02x emask %x\n",
 			     tf.command, err_mask);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- *	atapi_eh_request_sense - perform ATAPI REQUEST_SENSE
- *	@dev: device to perform REQUEST_SENSE to
- *	@sense_buf: result sense data buffer (SCSI_SENSE_BUFFERSIZE bytes long)
- *	@dfl_sense_key: default sense key to use
+ *	atapi_eh_request_sense - perक्रमm ATAPI REQUEST_SENSE
+ *	@dev: device to perक्रमm REQUEST_SENSE to
+ *	@sense_buf: result sense data buffer (SCSI_SENSE_BUFFERSIZE bytes दीर्घ)
+ *	@dfl_sense_key: शेष sense key to use
  *
- *	Perform ATAPI REQUEST_SENSE after the device reported CHECK
+ *	Perक्रमm ATAPI REQUEST_SENSE after the device reported CHECK
  *	SENSE.  This function is EH helper.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  *
  *	RETURNS:
  *	0 on success, AC_ERR_* mask on failure
  */
-unsigned int atapi_eh_request_sense(struct ata_device *dev,
+अचिन्हित पूर्णांक atapi_eh_request_sense(काष्ठा ata_device *dev,
 					   u8 *sense_buf, u8 dfl_sense_key)
-{
+अणु
 	u8 cdb[ATAPI_CDB_LEN] =
-		{ REQUEST_SENSE, 0, 0, 0, SCSI_SENSE_BUFFERSIZE, 0 };
-	struct ata_port *ap = dev->link->ap;
-	struct ata_taskfile tf;
+		अणु REQUEST_SENSE, 0, 0, 0, SCSI_SENSE_BUFFERSIZE, 0 पूर्ण;
+	काष्ठा ata_port *ap = dev->link->ap;
+	काष्ठा ata_taskfile tf;
 
 	DPRINTK("ATAPI request sense\n");
 
-	memset(sense_buf, 0, SCSI_SENSE_BUFFERSIZE);
+	स_रखो(sense_buf, 0, SCSI_SENSE_BUFFERSIZE);
 
-	/* initialize sense_buf with the error register,
-	 * for the case where they are -not- overwritten
+	/* initialize sense_buf with the error रेजिस्टर,
+	 * क्रम the हाल where they are -not- overwritten
 	 */
 	sense_buf[0] = 0x70;
 	sense_buf[2] = dfl_sense_key;
 
-	/* some devices time out if garbage left in tf */
+	/* some devices समय out अगर garbage left in tf */
 	ata_tf_init(dev, &tf);
 
 	tf.flags |= ATA_TFLAG_ISADDR | ATA_TFLAG_DEVICE;
 	tf.command = ATA_CMD_PACKET;
 
-	/* is it pointless to prefer PIO for "safety reasons"? */
-	if (ap->flags & ATA_FLAG_PIO_DMA) {
+	/* is it poपूर्णांकless to prefer PIO क्रम "safety reasons"? */
+	अगर (ap->flags & ATA_FLAG_PIO_DMA) अणु
 		tf.protocol = ATAPI_PROT_DMA;
 		tf.feature |= ATAPI_PKT_DMA;
-	} else {
+	पूर्ण अन्यथा अणु
 		tf.protocol = ATAPI_PROT_PIO;
 		tf.lbam = SCSI_SENSE_BUFFERSIZE;
 		tf.lbah = 0;
-	}
+	पूर्ण
 
-	return ata_exec_internal(dev, &tf, cdb, DMA_FROM_DEVICE,
+	वापस ata_exec_पूर्णांकernal(dev, &tf, cdb, DMA_FROM_DEVICE,
 				 sense_buf, SCSI_SENSE_BUFFERSIZE, 0);
-}
+पूर्ण
 
 /**
- *	ata_eh_analyze_serror - analyze SError for a failed port
- *	@link: ATA link to analyze SError for
+ *	ata_eh_analyze_serror - analyze SError क्रम a failed port
+ *	@link: ATA link to analyze SError क्रम
  *
- *	Analyze SError if available and further determine cause of
+ *	Analyze SError अगर available and further determine cause of
  *	failure.
  *
  *	LOCKING:
  *	None.
  */
-static void ata_eh_analyze_serror(struct ata_link *link)
-{
-	struct ata_eh_context *ehc = &link->eh_context;
+अटल व्योम ata_eh_analyze_serror(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
 	u32 serror = ehc->i.serror;
-	unsigned int err_mask = 0, action = 0;
+	अचिन्हित पूर्णांक err_mask = 0, action = 0;
 	u32 hotplug_mask;
 
-	if (serror & (SERR_PERSISTENT | SERR_DATA)) {
+	अगर (serror & (SERR_PERSISTENT | SERR_DATA)) अणु
 		err_mask |= AC_ERR_ATA_BUS;
 		action |= ATA_EH_RESET;
-	}
-	if (serror & SERR_PROTOCOL) {
+	पूर्ण
+	अगर (serror & SERR_PROTOCOL) अणु
 		err_mask |= AC_ERR_HSM;
 		action |= ATA_EH_RESET;
-	}
-	if (serror & SERR_INTERNAL) {
+	पूर्ण
+	अगर (serror & SERR_INTERNAL) अणु
 		err_mask |= AC_ERR_SYSTEM;
 		action |= ATA_EH_RESET;
-	}
+	पूर्ण
 
 	/* Determine whether a hotplug event has occurred.  Both
-	 * SError.N/X are considered hotplug events for enabled or
+	 * SError.N/X are considered hotplug events क्रम enabled or
 	 * host links.  For disabled PMP links, only N bit is
-	 * considered as X bit is left at 1 for link plugging.
+	 * considered as X bit is left at 1 क्रम link plugging.
 	 */
-	if (link->lpm_policy > ATA_LPM_MAX_POWER)
-		hotplug_mask = 0;	/* hotplug doesn't work w/ LPM */
-	else if (!(link->flags & ATA_LFLAG_DISABLED) || ata_is_host_link(link))
+	अगर (link->lpm_policy > ATA_LPM_MAX_POWER)
+		hotplug_mask = 0;	/* hotplug करोesn't work w/ LPM */
+	अन्यथा अगर (!(link->flags & ATA_LFLAG_DISABLED) || ata_is_host_link(link))
 		hotplug_mask = SERR_PHYRDY_CHG | SERR_DEV_XCHG;
-	else
+	अन्यथा
 		hotplug_mask = SERR_PHYRDY_CHG;
 
-	if (serror & hotplug_mask)
+	अगर (serror & hotplug_mask)
 		ata_ehi_hotplugged(&ehc->i);
 
 	ehc->i.err_mask |= err_mask;
 	ehc->i.action |= action;
-}
+पूर्ण
 
 /**
  *	ata_eh_analyze_tf - analyze taskfile of a failed qc
  *	@qc: qc to analyze
- *	@tf: Taskfile registers to analyze
+ *	@tf: Taskfile रेजिस्टरs to analyze
  *
  *	Analyze taskfile of @qc and further determine cause of
- *	failure.  This function also requests ATAPI sense data if
+ *	failure.  This function also requests ATAPI sense data अगर
  *	available.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  *
  *	RETURNS:
  *	Determined recovery action
  */
-static unsigned int ata_eh_analyze_tf(struct ata_queued_cmd *qc,
-				      const struct ata_taskfile *tf)
-{
-	unsigned int tmp, action = 0;
+अटल अचिन्हित पूर्णांक ata_eh_analyze_tf(काष्ठा ata_queued_cmd *qc,
+				      स्थिर काष्ठा ata_taskfile *tf)
+अणु
+	अचिन्हित पूर्णांक पंचांगp, action = 0;
 	u8 stat = tf->command, err = tf->feature;
 
-	if ((stat & (ATA_BUSY | ATA_DRQ | ATA_DRDY)) != ATA_DRDY) {
+	अगर ((stat & (ATA_BUSY | ATA_DRQ | ATA_DRDY)) != ATA_DRDY) अणु
 		qc->err_mask |= AC_ERR_HSM;
-		return ATA_EH_RESET;
-	}
+		वापस ATA_EH_RESET;
+	पूर्ण
 
-	if (stat & (ATA_ERR | ATA_DF)) {
+	अगर (stat & (ATA_ERR | ATA_DF)) अणु
 		qc->err_mask |= AC_ERR_DEV;
 		/*
-		 * Sense data reporting does not work if the
+		 * Sense data reporting करोes not work अगर the
 		 * device fault bit is set.
 		 */
-		if (stat & ATA_DF)
+		अगर (stat & ATA_DF)
 			stat &= ~ATA_SENSE;
-	} else {
-		return 0;
-	}
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
 
-	switch (qc->dev->class) {
-	case ATA_DEV_ZAC:
-		if (stat & ATA_SENSE)
+	चयन (qc->dev->class) अणु
+	हाल ATA_DEV_ZAC:
+		अगर (stat & ATA_SENSE)
 			ata_eh_request_sense(qc, qc->scsicmd);
 		fallthrough;
-	case ATA_DEV_ATA:
-		if (err & ATA_ICRC)
+	हाल ATA_DEV_ATA:
+		अगर (err & ATA_ICRC)
 			qc->err_mask |= AC_ERR_ATA_BUS;
-		if (err & (ATA_UNC | ATA_AMNF))
+		अगर (err & (ATA_UNC | ATA_AMNF))
 			qc->err_mask |= AC_ERR_MEDIA;
-		if (err & ATA_IDNF)
+		अगर (err & ATA_IDNF)
 			qc->err_mask |= AC_ERR_INVALID;
-		break;
+		अवरोध;
 
-	case ATA_DEV_ATAPI:
-		if (!(qc->ap->pflags & ATA_PFLAG_FROZEN)) {
-			tmp = atapi_eh_request_sense(qc->dev,
+	हाल ATA_DEV_ATAPI:
+		अगर (!(qc->ap->pflags & ATA_PFLAG_FROZEN)) अणु
+			पंचांगp = atapi_eh_request_sense(qc->dev,
 						qc->scsicmd->sense_buffer,
 						qc->result_tf.feature >> 4);
-			if (!tmp)
+			अगर (!पंचांगp)
 				qc->flags |= ATA_QCFLAG_SENSE_VALID;
-			else
-				qc->err_mask |= tmp;
-		}
-	}
+			अन्यथा
+				qc->err_mask |= पंचांगp;
+		पूर्ण
+	पूर्ण
 
-	if (qc->flags & ATA_QCFLAG_SENSE_VALID) {
-		enum scsi_disposition ret = scsi_check_sense(qc->scsicmd);
+	अगर (qc->flags & ATA_QCFLAG_SENSE_VALID) अणु
+		क्रमागत scsi_disposition ret = scsi_check_sense(qc->scsicmd);
 		/*
 		 * SUCCESS here means that the sense code could be
 		 * evaluated and should be passed to the upper layers
-		 * for correct evaluation.
-		 * FAILED means the sense code could not be interpreted
+		 * क्रम correct evaluation.
+		 * FAILED means the sense code could not be पूर्णांकerpreted
 		 * and the device would need to be reset.
 		 * NEEDS_RETRY and ADD_TO_MLQUEUE means that the
 		 * command would need to be retried.
 		 */
-		if (ret == NEEDS_RETRY || ret == ADD_TO_MLQUEUE) {
+		अगर (ret == NEEDS_RETRY || ret == ADD_TO_MLQUEUE) अणु
 			qc->flags |= ATA_QCFLAG_RETRY;
 			qc->err_mask |= AC_ERR_OTHER;
-		} else if (ret != SUCCESS) {
+		पूर्ण अन्यथा अगर (ret != SUCCESS) अणु
 			qc->err_mask |= AC_ERR_HSM;
-		}
-	}
-	if (qc->err_mask & (AC_ERR_HSM | AC_ERR_TIMEOUT | AC_ERR_ATA_BUS))
+		पूर्ण
+	पूर्ण
+	अगर (qc->err_mask & (AC_ERR_HSM | AC_ERR_TIMEOUT | AC_ERR_ATA_BUS))
 		action |= ATA_EH_RESET;
 
-	return action;
-}
+	वापस action;
+पूर्ण
 
-static int ata_eh_categorize_error(unsigned int eflags, unsigned int err_mask,
-				   int *xfer_ok)
-{
-	int base = 0;
+अटल पूर्णांक ata_eh_categorize_error(अचिन्हित पूर्णांक eflags, अचिन्हित पूर्णांक err_mask,
+				   पूर्णांक *xfer_ok)
+अणु
+	पूर्णांक base = 0;
 
-	if (!(eflags & ATA_EFLAG_DUBIOUS_XFER))
+	अगर (!(eflags & ATA_EFLAG_DUBIOUS_XFER))
 		*xfer_ok = 1;
 
-	if (!*xfer_ok)
+	अगर (!*xfer_ok)
 		base = ATA_ECAT_DUBIOUS_NONE;
 
-	if (err_mask & AC_ERR_ATA_BUS)
-		return base + ATA_ECAT_ATA_BUS;
+	अगर (err_mask & AC_ERR_ATA_BUS)
+		वापस base + ATA_ECAT_ATA_BUS;
 
-	if (err_mask & AC_ERR_TIMEOUT)
-		return base + ATA_ECAT_TOUT_HSM;
+	अगर (err_mask & AC_ERR_TIMEOUT)
+		वापस base + ATA_ECAT_TOUT_HSM;
 
-	if (eflags & ATA_EFLAG_IS_IO) {
-		if (err_mask & AC_ERR_HSM)
-			return base + ATA_ECAT_TOUT_HSM;
-		if ((err_mask &
+	अगर (eflags & ATA_EFLAG_IS_IO) अणु
+		अगर (err_mask & AC_ERR_HSM)
+			वापस base + ATA_ECAT_TOUT_HSM;
+		अगर ((err_mask &
 		     (AC_ERR_DEV|AC_ERR_MEDIA|AC_ERR_INVALID)) == AC_ERR_DEV)
-			return base + ATA_ECAT_UNK_DEV;
-	}
+			वापस base + ATA_ECAT_UNK_DEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct speed_down_verdict_arg {
+काष्ठा speed_करोwn_verdict_arg अणु
 	u64 since;
-	int xfer_ok;
-	int nr_errors[ATA_ECAT_NR];
-};
+	पूर्णांक xfer_ok;
+	पूर्णांक nr_errors[ATA_ECAT_NR];
+पूर्ण;
 
-static int speed_down_verdict_cb(struct ata_ering_entry *ent, void *void_arg)
-{
-	struct speed_down_verdict_arg *arg = void_arg;
-	int cat;
+अटल पूर्णांक speed_करोwn_verdict_cb(काष्ठा ata_ering_entry *ent, व्योम *व्योम_arg)
+अणु
+	काष्ठा speed_करोwn_verdict_arg *arg = व्योम_arg;
+	पूर्णांक cat;
 
-	if ((ent->eflags & ATA_EFLAG_OLD_ER) || (ent->timestamp < arg->since))
-		return -1;
+	अगर ((ent->eflags & ATA_EFLAG_OLD_ER) || (ent->बारtamp < arg->since))
+		वापस -1;
 
 	cat = ata_eh_categorize_error(ent->eflags, ent->err_mask,
 				      &arg->xfer_ok);
 	arg->nr_errors[cat]++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	ata_eh_speed_down_verdict - Determine speed down verdict
- *	@dev: Device of interest
+ *	ata_eh_speed_करोwn_verdict - Determine speed करोwn verdict
+ *	@dev: Device of पूर्णांकerest
  *
  *	This function examines error ring of @dev and determines
  *	whether NCQ needs to be turned off, transfer speed should be
- *	stepped down, or falling back to PIO is necessary.
+ *	stepped करोwn, or falling back to PIO is necessary.
  *
- *	ECAT_ATA_BUS	: ATA_BUS error for any command
+ *	ECAT_ATA_BUS	: ATA_BUS error क्रम any command
  *
- *	ECAT_TOUT_HSM	: TIMEOUT for any command or HSM violation for
+ *	ECAT_TOUT_HSM	: TIMEOUT क्रम any command or HSM violation क्रम
  *			  IO commands
  *
- *	ECAT_UNK_DEV	: Unknown DEV error for IO commands
+ *	ECAT_UNK_DEV	: Unknown DEV error क्रम IO commands
  *
- *	ECAT_DUBIOUS_*	: Identical to above three but occurred while
- *			  data transfer hasn't been verified.
+ *	ECAT_DUBIOUS_*	: Identical to above three but occurred जबतक
+ *			  data transfer hasn't been verअगरied.
  *
  *	Verdicts are
  *
  *	NCQ_OFF		: Turn off NCQ.
  *
- *	SPEED_DOWN	: Speed down transfer speed but don't fall back
+ *	SPEED_DOWN	: Speed करोwn transfer speed but करोn't fall back
  *			  to PIO.
  *
  *	FALLBACK_TO_PIO	: Fall back to PIO.
  *
- *	Even if multiple verdicts are returned, only one action is
+ *	Even अगर multiple verdicts are वापसed, only one action is
  *	taken per error.  An action triggered by non-DUBIOUS errors
- *	clears ering, while one triggered by DUBIOUS_* errors doesn't.
- *	This is to expedite speed down decisions right after device is
+ *	clears ering, जबतक one triggered by DUBIOUS_* errors करोesn't.
+ *	This is to expedite speed करोwn decisions right after device is
  *	initially configured.
  *
- *	The following are speed down rules.  #1 and #2 deal with
+ *	The following are speed करोwn rules.  #1 and #2 deal with
  *	DUBIOUS errors.
  *
  *	1. If more than one DUBIOUS_ATA_BUS or DUBIOUS_TOUT_HSM errors
@@ -1728,229 +1729,229 @@ static int speed_down_verdict_cb(struct ata_ering_entry *ent, void *void_arg)
  *	RETURNS:
  *	OR of ATA_EH_SPDN_* flags.
  */
-static unsigned int ata_eh_speed_down_verdict(struct ata_device *dev)
-{
-	const u64 j5mins = 5LLU * 60 * HZ, j10mins = 10LLU * 60 * HZ;
-	u64 j64 = get_jiffies_64();
-	struct speed_down_verdict_arg arg;
-	unsigned int verdict = 0;
+अटल अचिन्हित पूर्णांक ata_eh_speed_करोwn_verdict(काष्ठा ata_device *dev)
+अणु
+	स्थिर u64 j5mins = 5LLU * 60 * HZ, j10mins = 10LLU * 60 * HZ;
+	u64 j64 = get_jअगरfies_64();
+	काष्ठा speed_करोwn_verdict_arg arg;
+	अचिन्हित पूर्णांक verdict = 0;
 
 	/* scan past 5 mins of error history */
-	memset(&arg, 0, sizeof(arg));
+	स_रखो(&arg, 0, माप(arg));
 	arg.since = j64 - min(j64, j5mins);
-	ata_ering_map(&dev->ering, speed_down_verdict_cb, &arg);
+	ata_ering_map(&dev->ering, speed_करोwn_verdict_cb, &arg);
 
-	if (arg.nr_errors[ATA_ECAT_DUBIOUS_ATA_BUS] +
+	अगर (arg.nr_errors[ATA_ECAT_DUBIOUS_ATA_BUS] +
 	    arg.nr_errors[ATA_ECAT_DUBIOUS_TOUT_HSM] > 1)
 		verdict |= ATA_EH_SPDN_SPEED_DOWN |
 			ATA_EH_SPDN_FALLBACK_TO_PIO | ATA_EH_SPDN_KEEP_ERRORS;
 
-	if (arg.nr_errors[ATA_ECAT_DUBIOUS_TOUT_HSM] +
+	अगर (arg.nr_errors[ATA_ECAT_DUBIOUS_TOUT_HSM] +
 	    arg.nr_errors[ATA_ECAT_DUBIOUS_UNK_DEV] > 1)
 		verdict |= ATA_EH_SPDN_NCQ_OFF | ATA_EH_SPDN_KEEP_ERRORS;
 
-	if (arg.nr_errors[ATA_ECAT_ATA_BUS] +
+	अगर (arg.nr_errors[ATA_ECAT_ATA_BUS] +
 	    arg.nr_errors[ATA_ECAT_TOUT_HSM] +
 	    arg.nr_errors[ATA_ECAT_UNK_DEV] > 6)
 		verdict |= ATA_EH_SPDN_FALLBACK_TO_PIO;
 
 	/* scan past 10 mins of error history */
-	memset(&arg, 0, sizeof(arg));
+	स_रखो(&arg, 0, माप(arg));
 	arg.since = j64 - min(j64, j10mins);
-	ata_ering_map(&dev->ering, speed_down_verdict_cb, &arg);
+	ata_ering_map(&dev->ering, speed_करोwn_verdict_cb, &arg);
 
-	if (arg.nr_errors[ATA_ECAT_TOUT_HSM] +
+	अगर (arg.nr_errors[ATA_ECAT_TOUT_HSM] +
 	    arg.nr_errors[ATA_ECAT_UNK_DEV] > 3)
 		verdict |= ATA_EH_SPDN_NCQ_OFF;
 
-	if (arg.nr_errors[ATA_ECAT_ATA_BUS] +
+	अगर (arg.nr_errors[ATA_ECAT_ATA_BUS] +
 	    arg.nr_errors[ATA_ECAT_TOUT_HSM] > 3 ||
 	    arg.nr_errors[ATA_ECAT_UNK_DEV] > 6)
 		verdict |= ATA_EH_SPDN_SPEED_DOWN;
 
-	return verdict;
-}
+	वापस verdict;
+पूर्ण
 
 /**
- *	ata_eh_speed_down - record error and speed down if necessary
+ *	ata_eh_speed_करोwn - record error and speed करोwn अगर necessary
  *	@dev: Failed device
  *	@eflags: mask of ATA_EFLAG_* flags
  *	@err_mask: err_mask of the error
  *
  *	Record error and examine error history to determine whether
  *	adjusting transmission speed is necessary.  It also sets
- *	transmission limits appropriately if such adjustment is
+ *	transmission limits appropriately अगर such adjusपंचांगent is
  *	necessary.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  *
  *	RETURNS:
  *	Determined recovery action.
  */
-static unsigned int ata_eh_speed_down(struct ata_device *dev,
-				unsigned int eflags, unsigned int err_mask)
-{
-	struct ata_link *link = ata_dev_phys_link(dev);
-	int xfer_ok = 0;
-	unsigned int verdict;
-	unsigned int action = 0;
+अटल अचिन्हित पूर्णांक ata_eh_speed_करोwn(काष्ठा ata_device *dev,
+				अचिन्हित पूर्णांक eflags, अचिन्हित पूर्णांक err_mask)
+अणु
+	काष्ठा ata_link *link = ata_dev_phys_link(dev);
+	पूर्णांक xfer_ok = 0;
+	अचिन्हित पूर्णांक verdict;
+	अचिन्हित पूर्णांक action = 0;
 
-	/* don't bother if Cat-0 error */
-	if (ata_eh_categorize_error(eflags, err_mask, &xfer_ok) == 0)
-		return 0;
+	/* करोn't bother अगर Cat-0 error */
+	अगर (ata_eh_categorize_error(eflags, err_mask, &xfer_ok) == 0)
+		वापस 0;
 
-	/* record error and determine whether speed down is necessary */
+	/* record error and determine whether speed करोwn is necessary */
 	ata_ering_record(&dev->ering, eflags, err_mask);
-	verdict = ata_eh_speed_down_verdict(dev);
+	verdict = ata_eh_speed_करोwn_verdict(dev);
 
 	/* turn off NCQ? */
-	if ((verdict & ATA_EH_SPDN_NCQ_OFF) &&
+	अगर ((verdict & ATA_EH_SPDN_NCQ_OFF) &&
 	    (dev->flags & (ATA_DFLAG_PIO | ATA_DFLAG_NCQ |
-			   ATA_DFLAG_NCQ_OFF)) == ATA_DFLAG_NCQ) {
+			   ATA_DFLAG_NCQ_OFF)) == ATA_DFLAG_NCQ) अणु
 		dev->flags |= ATA_DFLAG_NCQ_OFF;
 		ata_dev_warn(dev, "NCQ disabled due to excessive errors\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* speed down? */
-	if (verdict & ATA_EH_SPDN_SPEED_DOWN) {
-		/* speed down SATA link speed if possible */
-		if (sata_down_spd_limit(link, 0) == 0) {
+	/* speed करोwn? */
+	अगर (verdict & ATA_EH_SPDN_SPEED_DOWN) अणु
+		/* speed करोwn SATA link speed अगर possible */
+		अगर (sata_करोwn_spd_limit(link, 0) == 0) अणु
 			action |= ATA_EH_RESET;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		/* lower transfer mode */
-		if (dev->spdn_cnt < 2) {
-			static const int dma_dnxfer_sel[] =
-				{ ATA_DNXFER_DMA, ATA_DNXFER_40C };
-			static const int pio_dnxfer_sel[] =
-				{ ATA_DNXFER_PIO, ATA_DNXFER_FORCE_PIO0 };
-			int sel;
+		अगर (dev->spdn_cnt < 2) अणु
+			अटल स्थिर पूर्णांक dma_dnxfer_sel[] =
+				अणु ATA_DNXFER_DMA, ATA_DNXFER_40C पूर्ण;
+			अटल स्थिर पूर्णांक pio_dnxfer_sel[] =
+				अणु ATA_DNXFER_PIO, ATA_DNXFER_FORCE_PIO0 पूर्ण;
+			पूर्णांक sel;
 
-			if (dev->xfer_shift != ATA_SHIFT_PIO)
+			अगर (dev->xfer_shअगरt != ATA_SHIFT_PIO)
 				sel = dma_dnxfer_sel[dev->spdn_cnt];
-			else
+			अन्यथा
 				sel = pio_dnxfer_sel[dev->spdn_cnt];
 
 			dev->spdn_cnt++;
 
-			if (ata_down_xfermask_limit(dev, sel) == 0) {
+			अगर (ata_करोwn_xfermask_limit(dev, sel) == 0) अणु
 				action |= ATA_EH_RESET;
-				goto done;
-			}
-		}
-	}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Fall back to PIO?  Slowing down to PIO is meaningless for
-	 * SATA ATA devices.  Consider it only for PATA and SATAPI.
+	/* Fall back to PIO?  Slowing करोwn to PIO is meaningless क्रम
+	 * SATA ATA devices.  Consider it only क्रम PATA and SATAPI.
 	 */
-	if ((verdict & ATA_EH_SPDN_FALLBACK_TO_PIO) && (dev->spdn_cnt >= 2) &&
+	अगर ((verdict & ATA_EH_SPDN_FALLBACK_TO_PIO) && (dev->spdn_cnt >= 2) &&
 	    (link->ap->cbl != ATA_CBL_SATA || dev->class == ATA_DEV_ATAPI) &&
-	    (dev->xfer_shift != ATA_SHIFT_PIO)) {
-		if (ata_down_xfermask_limit(dev, ATA_DNXFER_FORCE_PIO) == 0) {
+	    (dev->xfer_shअगरt != ATA_SHIFT_PIO)) अणु
+		अगर (ata_करोwn_xfermask_limit(dev, ATA_DNXFER_FORCE_PIO) == 0) अणु
 			dev->spdn_cnt = 0;
 			action |= ATA_EH_RESET;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	return 0;
- done:
-	/* device has been slowed down, blow error history */
-	if (!(verdict & ATA_EH_SPDN_KEEP_ERRORS))
+	वापस 0;
+ करोne:
+	/* device has been slowed करोwn, blow error history */
+	अगर (!(verdict & ATA_EH_SPDN_KEEP_ERRORS))
 		ata_ering_clear(&dev->ering);
-	return action;
-}
+	वापस action;
+पूर्ण
 
 /**
  *	ata_eh_worth_retry - analyze error and decide whether to retry
  *	@qc: qc to possibly retry
  *
- *	Look at the cause of the error and decide if a retry
- * 	might be useful or not.  We don't want to retry media errors
- *	because the drive itself has probably already taken 10-30 seconds
- *	doing its own internal retries before reporting the failure.
+ *	Look at the cause of the error and decide अगर a retry
+ * 	might be useful or not.  We करोn't want to retry media errors
+ *	because the drive itself has probably alपढ़ोy taken 10-30 seconds
+ *	करोing its own पूर्णांकernal retries beक्रमe reporting the failure.
  */
-static inline int ata_eh_worth_retry(struct ata_queued_cmd *qc)
-{
-	if (qc->err_mask & AC_ERR_MEDIA)
-		return 0;	/* don't retry media errors */
-	if (qc->flags & ATA_QCFLAG_IO)
-		return 1;	/* otherwise retry anything from fs stack */
-	if (qc->err_mask & AC_ERR_INVALID)
-		return 0;	/* don't retry these */
-	return qc->err_mask != AC_ERR_DEV;  /* retry if not dev error */
-}
+अटल अंतरभूत पूर्णांक ata_eh_worth_retry(काष्ठा ata_queued_cmd *qc)
+अणु
+	अगर (qc->err_mask & AC_ERR_MEDIA)
+		वापस 0;	/* करोn't retry media errors */
+	अगर (qc->flags & ATA_QCFLAG_IO)
+		वापस 1;	/* otherwise retry anything from fs stack */
+	अगर (qc->err_mask & AC_ERR_INVALID)
+		वापस 0;	/* करोn't retry these */
+	वापस qc->err_mask != AC_ERR_DEV;  /* retry अगर not dev error */
+पूर्ण
 
 /**
- *      ata_eh_quiet - check if we need to be quiet about a command error
+ *      ata_eh_quiet - check अगर we need to be quiet about a command error
  *      @qc: qc to check
  *
  *      Look at the qc flags anbd its scsi command request flags to determine
- *      if we need to be quiet about the command failure.
+ *      अगर we need to be quiet about the command failure.
  */
-static inline bool ata_eh_quiet(struct ata_queued_cmd *qc)
-{
-	if (qc->scsicmd &&
+अटल अंतरभूत bool ata_eh_quiet(काष्ठा ata_queued_cmd *qc)
+अणु
+	अगर (qc->scsicmd &&
 	    qc->scsicmd->request->rq_flags & RQF_QUIET)
 		qc->flags |= ATA_QCFLAG_QUIET;
-	return qc->flags & ATA_QCFLAG_QUIET;
-}
+	वापस qc->flags & ATA_QCFLAG_QUIET;
+पूर्ण
 
 /**
- *	ata_eh_link_autopsy - analyze error and determine recovery action
- *	@link: host link to perform autopsy on
+ *	ata_eh_link_स्वतःpsy - analyze error and determine recovery action
+ *	@link: host link to perक्रमm स्वतःpsy on
  *
  *	Analyze why @link failed and determine which recovery actions
  *	are needed.  This function also sets more detailed AC_ERR_*
- *	values and fills sense data for ATAPI CHECK SENSE.
+ *	values and fills sense data क्रम ATAPI CHECK SENSE.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-static void ata_eh_link_autopsy(struct ata_link *link)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_eh_context *ehc = &link->eh_context;
-	struct ata_queued_cmd *qc;
-	struct ata_device *dev;
-	unsigned int all_err_mask = 0, eflags = 0;
-	int tag, nr_failed = 0, nr_quiet = 0;
+अटल व्योम ata_eh_link_स्वतःpsy(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	काष्ठा ata_queued_cmd *qc;
+	काष्ठा ata_device *dev;
+	अचिन्हित पूर्णांक all_err_mask = 0, eflags = 0;
+	पूर्णांक tag, nr_failed = 0, nr_quiet = 0;
 	u32 serror;
-	int rc;
+	पूर्णांक rc;
 
 	DPRINTK("ENTER\n");
 
-	if (ehc->i.flags & ATA_EHI_NO_AUTOPSY)
-		return;
+	अगर (ehc->i.flags & ATA_EHI_NO_AUTOPSY)
+		वापस;
 
 	/* obtain and analyze SError */
-	rc = sata_scr_read(link, SCR_ERROR, &serror);
-	if (rc == 0) {
+	rc = sata_scr_पढ़ो(link, SCR_ERROR, &serror);
+	अगर (rc == 0) अणु
 		ehc->i.serror |= serror;
 		ata_eh_analyze_serror(link);
-	} else if (rc != -EOPNOTSUPP) {
-		/* SError read failed, force reset and probing */
+	पूर्ण अन्यथा अगर (rc != -EOPNOTSUPP) अणु
+		/* SError पढ़ो failed, क्रमce reset and probing */
 		ehc->i.probe_mask |= ATA_ALL_DEVICES;
 		ehc->i.action |= ATA_EH_RESET;
 		ehc->i.err_mask |= AC_ERR_OTHER;
-	}
+	पूर्ण
 
 	/* analyze NCQ failure */
 	ata_eh_analyze_ncq_error(link);
 
 	/* any real error trumps AC_ERR_OTHER */
-	if (ehc->i.err_mask & ~AC_ERR_OTHER)
+	अगर (ehc->i.err_mask & ~AC_ERR_OTHER)
 		ehc->i.err_mask &= ~AC_ERR_OTHER;
 
 	all_err_mask |= ehc->i.err_mask;
 
-	ata_qc_for_each_raw(ap, qc, tag) {
-		if (!(qc->flags & ATA_QCFLAG_FAILED) ||
+	ata_qc_क्रम_each_raw(ap, qc, tag) अणु
+		अगर (!(qc->flags & ATA_QCFLAG_FAILED) ||
 		    ata_dev_phys_link(qc->dev) != link)
-			continue;
+			जारी;
 
 		/* inherit upper level err_mask */
 		qc->err_mask |= ehc->i.err_mask;
@@ -1958,246 +1959,246 @@ static void ata_eh_link_autopsy(struct ata_link *link)
 		/* analyze TF */
 		ehc->i.action |= ata_eh_analyze_tf(qc, &qc->result_tf);
 
-		/* DEV errors are probably spurious in case of ATA_BUS error */
-		if (qc->err_mask & AC_ERR_ATA_BUS)
+		/* DEV errors are probably spurious in हाल of ATA_BUS error */
+		अगर (qc->err_mask & AC_ERR_ATA_BUS)
 			qc->err_mask &= ~(AC_ERR_DEV | AC_ERR_MEDIA |
 					  AC_ERR_INVALID);
 
 		/* any real error trumps unknown error */
-		if (qc->err_mask & ~AC_ERR_OTHER)
+		अगर (qc->err_mask & ~AC_ERR_OTHER)
 			qc->err_mask &= ~AC_ERR_OTHER;
 
 		/*
 		 * SENSE_VALID trumps dev/unknown error and revalidation. Upper
 		 * layers will determine whether the command is worth retrying
 		 * based on the sense data and device class/type. Otherwise,
-		 * determine directly if the command is worth retrying using its
+		 * determine directly अगर the command is worth retrying using its
 		 * error mask and flags.
 		 */
-		if (qc->flags & ATA_QCFLAG_SENSE_VALID)
+		अगर (qc->flags & ATA_QCFLAG_SENSE_VALID)
 			qc->err_mask &= ~(AC_ERR_DEV | AC_ERR_OTHER);
-		else if (ata_eh_worth_retry(qc))
+		अन्यथा अगर (ata_eh_worth_retry(qc))
 			qc->flags |= ATA_QCFLAG_RETRY;
 
 		/* accumulate error info */
 		ehc->i.dev = qc->dev;
 		all_err_mask |= qc->err_mask;
-		if (qc->flags & ATA_QCFLAG_IO)
+		अगर (qc->flags & ATA_QCFLAG_IO)
 			eflags |= ATA_EFLAG_IS_IO;
-		trace_ata_eh_link_autopsy_qc(qc);
+		trace_ata_eh_link_स्वतःpsy_qc(qc);
 
 		/* Count quiet errors */
-		if (ata_eh_quiet(qc))
+		अगर (ata_eh_quiet(qc))
 			nr_quiet++;
 		nr_failed++;
-	}
+	पूर्ण
 
 	/* If all failed commands requested silence, then be quiet */
-	if (nr_quiet == nr_failed)
+	अगर (nr_quiet == nr_failed)
 		ehc->i.flags |= ATA_EHI_QUIET;
 
-	/* enforce default EH actions */
-	if (ap->pflags & ATA_PFLAG_FROZEN ||
+	/* enक्रमce शेष EH actions */
+	अगर (ap->pflags & ATA_PFLAG_FROZEN ||
 	    all_err_mask & (AC_ERR_HSM | AC_ERR_TIMEOUT))
 		ehc->i.action |= ATA_EH_RESET;
-	else if (((eflags & ATA_EFLAG_IS_IO) && all_err_mask) ||
+	अन्यथा अगर (((eflags & ATA_EFLAG_IS_IO) && all_err_mask) ||
 		 (!(eflags & ATA_EFLAG_IS_IO) && (all_err_mask & ~AC_ERR_DEV)))
 		ehc->i.action |= ATA_EH_REVALIDATE;
 
 	/* If we have offending qcs and the associated failed device,
-	 * perform per-dev EH action only on the offending device.
+	 * perक्रमm per-dev EH action only on the offending device.
 	 */
-	if (ehc->i.dev) {
+	अगर (ehc->i.dev) अणु
 		ehc->i.dev_action[ehc->i.dev->devno] |=
 			ehc->i.action & ATA_EH_PERDEV_MASK;
 		ehc->i.action &= ~ATA_EH_PERDEV_MASK;
-	}
+	पूर्ण
 
-	/* propagate timeout to host link */
-	if ((all_err_mask & AC_ERR_TIMEOUT) && !ata_is_host_link(link))
+	/* propagate समयout to host link */
+	अगर ((all_err_mask & AC_ERR_TIMEOUT) && !ata_is_host_link(link))
 		ap->link.eh_context.i.err_mask |= AC_ERR_TIMEOUT;
 
-	/* record error and consider speeding down */
+	/* record error and consider speeding करोwn */
 	dev = ehc->i.dev;
-	if (!dev && ((ata_link_max_devices(link) == 1 &&
+	अगर (!dev && ((ata_link_max_devices(link) == 1 &&
 		      ata_dev_enabled(link->device))))
 	    dev = link->device;
 
-	if (dev) {
-		if (dev->flags & ATA_DFLAG_DUBIOUS_XFER)
+	अगर (dev) अणु
+		अगर (dev->flags & ATA_DFLAG_DUBIOUS_XFER)
 			eflags |= ATA_EFLAG_DUBIOUS_XFER;
-		ehc->i.action |= ata_eh_speed_down(dev, eflags, all_err_mask);
-		trace_ata_eh_link_autopsy(dev, ehc->i.action, all_err_mask);
-	}
+		ehc->i.action |= ata_eh_speed_करोwn(dev, eflags, all_err_mask);
+		trace_ata_eh_link_स्वतःpsy(dev, ehc->i.action, all_err_mask);
+	पूर्ण
 	DPRINTK("EXIT\n");
-}
+पूर्ण
 
 /**
- *	ata_eh_autopsy - analyze error and determine recovery action
- *	@ap: host port to perform autopsy on
+ *	ata_eh_स्वतःpsy - analyze error and determine recovery action
+ *	@ap: host port to perक्रमm स्वतःpsy on
  *
  *	Analyze all links of @ap and determine why they failed and
  *	which recovery actions are needed.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-void ata_eh_autopsy(struct ata_port *ap)
-{
-	struct ata_link *link;
+व्योम ata_eh_स्वतःpsy(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_link *link;
 
-	ata_for_each_link(link, ap, EDGE)
-		ata_eh_link_autopsy(link);
+	ata_क्रम_each_link(link, ap, EDGE)
+		ata_eh_link_स्वतःpsy(link);
 
-	/* Handle the frigging slave link.  Autopsy is done similarly
+	/* Handle the frigging slave link.  Autopsy is करोne similarly
 	 * but actions and flags are transferred over to the master
 	 * link and handled from there.
 	 */
-	if (ap->slave_link) {
-		struct ata_eh_context *mehc = &ap->link.eh_context;
-		struct ata_eh_context *sehc = &ap->slave_link->eh_context;
+	अगर (ap->slave_link) अणु
+		काष्ठा ata_eh_context *mehc = &ap->link.eh_context;
+		काष्ठा ata_eh_context *sehc = &ap->slave_link->eh_context;
 
 		/* transfer control flags from master to slave */
 		sehc->i.flags |= mehc->i.flags & ATA_EHI_TO_SLAVE_MASK;
 
-		/* perform autopsy on the slave link */
-		ata_eh_link_autopsy(ap->slave_link);
+		/* perक्रमm स्वतःpsy on the slave link */
+		ata_eh_link_स्वतःpsy(ap->slave_link);
 
 		/* transfer actions from slave to master and clear slave */
-		ata_eh_about_to_do(ap->slave_link, NULL, ATA_EH_ALL_ACTIONS);
+		ata_eh_about_to_करो(ap->slave_link, शून्य, ATA_EH_ALL_ACTIONS);
 		mehc->i.action		|= sehc->i.action;
 		mehc->i.dev_action[1]	|= sehc->i.dev_action[1];
 		mehc->i.flags		|= sehc->i.flags;
-		ata_eh_done(ap->slave_link, NULL, ATA_EH_ALL_ACTIONS);
-	}
+		ata_eh_करोne(ap->slave_link, शून्य, ATA_EH_ALL_ACTIONS);
+	पूर्ण
 
-	/* Autopsy of fanout ports can affect host link autopsy.
-	 * Perform host link autopsy last.
+	/* Autopsy of fanout ports can affect host link स्वतःpsy.
+	 * Perक्रमm host link स्वतःpsy last.
 	 */
-	if (sata_pmp_attached(ap))
-		ata_eh_link_autopsy(&ap->link);
-}
+	अगर (sata_pmp_attached(ap))
+		ata_eh_link_स्वतःpsy(&ap->link);
+पूर्ण
 
 /**
- *	ata_get_cmd_descript - get description for ATA command
- *	@command: ATA command code to get description for
+ *	ata_get_cmd_descript - get description क्रम ATA command
+ *	@command: ATA command code to get description क्रम
  *
- *	Return a textual description of the given command, or NULL if the
+ *	Return a textual description of the given command, or शून्य अगर the
  *	command is not known.
  *
  *	LOCKING:
  *	None
  */
-const char *ata_get_cmd_descript(u8 command)
-{
-#ifdef CONFIG_ATA_VERBOSE_ERROR
-	static const struct
-	{
+स्थिर अक्षर *ata_get_cmd_descript(u8 command)
+अणु
+#अगर_घोषित CONFIG_ATA_VERBOSE_ERROR
+	अटल स्थिर काष्ठा
+	अणु
 		u8 command;
-		const char *text;
-	} cmd_descr[] = {
-		{ ATA_CMD_DEV_RESET,		"DEVICE RESET" },
-		{ ATA_CMD_CHK_POWER,		"CHECK POWER MODE" },
-		{ ATA_CMD_STANDBY,		"STANDBY" },
-		{ ATA_CMD_IDLE,			"IDLE" },
-		{ ATA_CMD_EDD,			"EXECUTE DEVICE DIAGNOSTIC" },
-		{ ATA_CMD_DOWNLOAD_MICRO,	"DOWNLOAD MICROCODE" },
-		{ ATA_CMD_DOWNLOAD_MICRO_DMA,	"DOWNLOAD MICROCODE DMA" },
-		{ ATA_CMD_NOP,			"NOP" },
-		{ ATA_CMD_FLUSH,		"FLUSH CACHE" },
-		{ ATA_CMD_FLUSH_EXT,		"FLUSH CACHE EXT" },
-		{ ATA_CMD_ID_ATA,		"IDENTIFY DEVICE" },
-		{ ATA_CMD_ID_ATAPI,		"IDENTIFY PACKET DEVICE" },
-		{ ATA_CMD_SERVICE,		"SERVICE" },
-		{ ATA_CMD_READ,			"READ DMA" },
-		{ ATA_CMD_READ_EXT,		"READ DMA EXT" },
-		{ ATA_CMD_READ_QUEUED,		"READ DMA QUEUED" },
-		{ ATA_CMD_READ_STREAM_EXT,	"READ STREAM EXT" },
-		{ ATA_CMD_READ_STREAM_DMA_EXT,  "READ STREAM DMA EXT" },
-		{ ATA_CMD_WRITE,		"WRITE DMA" },
-		{ ATA_CMD_WRITE_EXT,		"WRITE DMA EXT" },
-		{ ATA_CMD_WRITE_QUEUED,		"WRITE DMA QUEUED EXT" },
-		{ ATA_CMD_WRITE_STREAM_EXT,	"WRITE STREAM EXT" },
-		{ ATA_CMD_WRITE_STREAM_DMA_EXT, "WRITE STREAM DMA EXT" },
-		{ ATA_CMD_WRITE_FUA_EXT,	"WRITE DMA FUA EXT" },
-		{ ATA_CMD_WRITE_QUEUED_FUA_EXT, "WRITE DMA QUEUED FUA EXT" },
-		{ ATA_CMD_FPDMA_READ,		"READ FPDMA QUEUED" },
-		{ ATA_CMD_FPDMA_WRITE,		"WRITE FPDMA QUEUED" },
-		{ ATA_CMD_FPDMA_SEND,		"SEND FPDMA QUEUED" },
-		{ ATA_CMD_FPDMA_RECV,		"RECEIVE FPDMA QUEUED" },
-		{ ATA_CMD_PIO_READ,		"READ SECTOR(S)" },
-		{ ATA_CMD_PIO_READ_EXT,		"READ SECTOR(S) EXT" },
-		{ ATA_CMD_PIO_WRITE,		"WRITE SECTOR(S)" },
-		{ ATA_CMD_PIO_WRITE_EXT,	"WRITE SECTOR(S) EXT" },
-		{ ATA_CMD_READ_MULTI,		"READ MULTIPLE" },
-		{ ATA_CMD_READ_MULTI_EXT,	"READ MULTIPLE EXT" },
-		{ ATA_CMD_WRITE_MULTI,		"WRITE MULTIPLE" },
-		{ ATA_CMD_WRITE_MULTI_EXT,	"WRITE MULTIPLE EXT" },
-		{ ATA_CMD_WRITE_MULTI_FUA_EXT,	"WRITE MULTIPLE FUA EXT" },
-		{ ATA_CMD_SET_FEATURES,		"SET FEATURES" },
-		{ ATA_CMD_SET_MULTI,		"SET MULTIPLE MODE" },
-		{ ATA_CMD_VERIFY,		"READ VERIFY SECTOR(S)" },
-		{ ATA_CMD_VERIFY_EXT,		"READ VERIFY SECTOR(S) EXT" },
-		{ ATA_CMD_WRITE_UNCORR_EXT,	"WRITE UNCORRECTABLE EXT" },
-		{ ATA_CMD_STANDBYNOW1,		"STANDBY IMMEDIATE" },
-		{ ATA_CMD_IDLEIMMEDIATE,	"IDLE IMMEDIATE" },
-		{ ATA_CMD_SLEEP,		"SLEEP" },
-		{ ATA_CMD_INIT_DEV_PARAMS,	"INITIALIZE DEVICE PARAMETERS" },
-		{ ATA_CMD_READ_NATIVE_MAX,	"READ NATIVE MAX ADDRESS" },
-		{ ATA_CMD_READ_NATIVE_MAX_EXT,	"READ NATIVE MAX ADDRESS EXT" },
-		{ ATA_CMD_SET_MAX,		"SET MAX ADDRESS" },
-		{ ATA_CMD_SET_MAX_EXT,		"SET MAX ADDRESS EXT" },
-		{ ATA_CMD_READ_LOG_EXT,		"READ LOG EXT" },
-		{ ATA_CMD_WRITE_LOG_EXT,	"WRITE LOG EXT" },
-		{ ATA_CMD_READ_LOG_DMA_EXT,	"READ LOG DMA EXT" },
-		{ ATA_CMD_WRITE_LOG_DMA_EXT,	"WRITE LOG DMA EXT" },
-		{ ATA_CMD_TRUSTED_NONDATA,	"TRUSTED NON-DATA" },
-		{ ATA_CMD_TRUSTED_RCV,		"TRUSTED RECEIVE" },
-		{ ATA_CMD_TRUSTED_RCV_DMA,	"TRUSTED RECEIVE DMA" },
-		{ ATA_CMD_TRUSTED_SND,		"TRUSTED SEND" },
-		{ ATA_CMD_TRUSTED_SND_DMA,	"TRUSTED SEND DMA" },
-		{ ATA_CMD_PMP_READ,		"READ BUFFER" },
-		{ ATA_CMD_PMP_READ_DMA,		"READ BUFFER DMA" },
-		{ ATA_CMD_PMP_WRITE,		"WRITE BUFFER" },
-		{ ATA_CMD_PMP_WRITE_DMA,	"WRITE BUFFER DMA" },
-		{ ATA_CMD_CONF_OVERLAY,		"DEVICE CONFIGURATION OVERLAY" },
-		{ ATA_CMD_SEC_SET_PASS,		"SECURITY SET PASSWORD" },
-		{ ATA_CMD_SEC_UNLOCK,		"SECURITY UNLOCK" },
-		{ ATA_CMD_SEC_ERASE_PREP,	"SECURITY ERASE PREPARE" },
-		{ ATA_CMD_SEC_ERASE_UNIT,	"SECURITY ERASE UNIT" },
-		{ ATA_CMD_SEC_FREEZE_LOCK,	"SECURITY FREEZE LOCK" },
-		{ ATA_CMD_SEC_DISABLE_PASS,	"SECURITY DISABLE PASSWORD" },
-		{ ATA_CMD_CONFIG_STREAM,	"CONFIGURE STREAM" },
-		{ ATA_CMD_SMART,		"SMART" },
-		{ ATA_CMD_MEDIA_LOCK,		"DOOR LOCK" },
-		{ ATA_CMD_MEDIA_UNLOCK,		"DOOR UNLOCK" },
-		{ ATA_CMD_DSM,			"DATA SET MANAGEMENT" },
-		{ ATA_CMD_CHK_MED_CRD_TYP,	"CHECK MEDIA CARD TYPE" },
-		{ ATA_CMD_CFA_REQ_EXT_ERR,	"CFA REQUEST EXTENDED ERROR" },
-		{ ATA_CMD_CFA_WRITE_NE,		"CFA WRITE SECTORS WITHOUT ERASE" },
-		{ ATA_CMD_CFA_TRANS_SECT,	"CFA TRANSLATE SECTOR" },
-		{ ATA_CMD_CFA_ERASE,		"CFA ERASE SECTORS" },
-		{ ATA_CMD_CFA_WRITE_MULT_NE,	"CFA WRITE MULTIPLE WITHOUT ERASE" },
-		{ ATA_CMD_REQ_SENSE_DATA,	"REQUEST SENSE DATA EXT" },
-		{ ATA_CMD_SANITIZE_DEVICE,	"SANITIZE DEVICE" },
-		{ ATA_CMD_ZAC_MGMT_IN,		"ZAC MANAGEMENT IN" },
-		{ ATA_CMD_ZAC_MGMT_OUT,		"ZAC MANAGEMENT OUT" },
-		{ ATA_CMD_READ_LONG,		"READ LONG (with retries)" },
-		{ ATA_CMD_READ_LONG_ONCE,	"READ LONG (without retries)" },
-		{ ATA_CMD_WRITE_LONG,		"WRITE LONG (with retries)" },
-		{ ATA_CMD_WRITE_LONG_ONCE,	"WRITE LONG (without retries)" },
-		{ ATA_CMD_RESTORE,		"RECALIBRATE" },
-		{ 0,				NULL } /* terminate list */
-	};
+		स्थिर अक्षर *text;
+	पूर्ण cmd_descr[] = अणु
+		अणु ATA_CMD_DEV_RESET,		"DEVICE RESET" पूर्ण,
+		अणु ATA_CMD_CHK_POWER,		"CHECK POWER MODE" पूर्ण,
+		अणु ATA_CMD_STANDBY,		"STANDBY" पूर्ण,
+		अणु ATA_CMD_IDLE,			"IDLE" पूर्ण,
+		अणु ATA_CMD_EDD,			"EXECUTE DEVICE DIAGNOSTIC" पूर्ण,
+		अणु ATA_CMD_DOWNLOAD_MICRO,	"DOWNLOAD MICROCODE" पूर्ण,
+		अणु ATA_CMD_DOWNLOAD_MICRO_DMA,	"DOWNLOAD MICROCODE DMA" पूर्ण,
+		अणु ATA_CMD_NOP,			"NOP" पूर्ण,
+		अणु ATA_CMD_FLUSH,		"FLUSH CACHE" पूर्ण,
+		अणु ATA_CMD_FLUSH_EXT,		"FLUSH CACHE EXT" पूर्ण,
+		अणु ATA_CMD_ID_ATA,		"IDENTIFY DEVICE" पूर्ण,
+		अणु ATA_CMD_ID_ATAPI,		"IDENTIFY PACKET DEVICE" पूर्ण,
+		अणु ATA_CMD_SERVICE,		"SERVICE" पूर्ण,
+		अणु ATA_CMD_READ,			"READ DMA" पूर्ण,
+		अणु ATA_CMD_READ_EXT,		"READ DMA EXT" पूर्ण,
+		अणु ATA_CMD_READ_QUEUED,		"READ DMA QUEUED" पूर्ण,
+		अणु ATA_CMD_READ_STREAM_EXT,	"READ STREAM EXT" पूर्ण,
+		अणु ATA_CMD_READ_STREAM_DMA_EXT,  "READ STREAM DMA EXT" पूर्ण,
+		अणु ATA_CMD_WRITE,		"WRITE DMA" पूर्ण,
+		अणु ATA_CMD_WRITE_EXT,		"WRITE DMA EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_QUEUED,		"WRITE DMA QUEUED EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_STREAM_EXT,	"WRITE STREAM EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_STREAM_DMA_EXT, "WRITE STREAM DMA EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_FUA_EXT,	"WRITE DMA FUA EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_QUEUED_FUA_EXT, "WRITE DMA QUEUED FUA EXT" पूर्ण,
+		अणु ATA_CMD_FPDMA_READ,		"READ FPDMA QUEUED" पूर्ण,
+		अणु ATA_CMD_FPDMA_WRITE,		"WRITE FPDMA QUEUED" पूर्ण,
+		अणु ATA_CMD_FPDMA_SEND,		"SEND FPDMA QUEUED" पूर्ण,
+		अणु ATA_CMD_FPDMA_RECV,		"RECEIVE FPDMA QUEUED" पूर्ण,
+		अणु ATA_CMD_PIO_READ,		"READ SECTOR(S)" पूर्ण,
+		अणु ATA_CMD_PIO_READ_EXT,		"READ SECTOR(S) EXT" पूर्ण,
+		अणु ATA_CMD_PIO_WRITE,		"WRITE SECTOR(S)" पूर्ण,
+		अणु ATA_CMD_PIO_WRITE_EXT,	"WRITE SECTOR(S) EXT" पूर्ण,
+		अणु ATA_CMD_READ_MULTI,		"READ MULTIPLE" पूर्ण,
+		अणु ATA_CMD_READ_MULTI_EXT,	"READ MULTIPLE EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_MULTI,		"WRITE MULTIPLE" पूर्ण,
+		अणु ATA_CMD_WRITE_MULTI_EXT,	"WRITE MULTIPLE EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_MULTI_FUA_EXT,	"WRITE MULTIPLE FUA EXT" पूर्ण,
+		अणु ATA_CMD_SET_FEATURES,		"SET FEATURES" पूर्ण,
+		अणु ATA_CMD_SET_MULTI,		"SET MULTIPLE MODE" पूर्ण,
+		अणु ATA_CMD_VERIFY,		"READ VERIFY SECTOR(S)" पूर्ण,
+		अणु ATA_CMD_VERIFY_EXT,		"READ VERIFY SECTOR(S) EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_UNCORR_EXT,	"WRITE UNCORRECTABLE EXT" पूर्ण,
+		अणु ATA_CMD_STANDBYNOW1,		"STANDBY IMMEDIATE" पूर्ण,
+		अणु ATA_CMD_IDLEIMMEDIATE,	"IDLE IMMEDIATE" पूर्ण,
+		अणु ATA_CMD_SLEEP,		"SLEEP" पूर्ण,
+		अणु ATA_CMD_INIT_DEV_PARAMS,	"INITIALIZE DEVICE PARAMETERS" पूर्ण,
+		अणु ATA_CMD_READ_NATIVE_MAX,	"READ NATIVE MAX ADDRESS" पूर्ण,
+		अणु ATA_CMD_READ_NATIVE_MAX_EXT,	"READ NATIVE MAX ADDRESS EXT" पूर्ण,
+		अणु ATA_CMD_SET_MAX,		"SET MAX ADDRESS" पूर्ण,
+		अणु ATA_CMD_SET_MAX_EXT,		"SET MAX ADDRESS EXT" पूर्ण,
+		अणु ATA_CMD_READ_LOG_EXT,		"READ LOG EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_LOG_EXT,	"WRITE LOG EXT" पूर्ण,
+		अणु ATA_CMD_READ_LOG_DMA_EXT,	"READ LOG DMA EXT" पूर्ण,
+		अणु ATA_CMD_WRITE_LOG_DMA_EXT,	"WRITE LOG DMA EXT" पूर्ण,
+		अणु ATA_CMD_TRUSTED_NONDATA,	"TRUSTED NON-DATA" पूर्ण,
+		अणु ATA_CMD_TRUSTED_RCV,		"TRUSTED RECEIVE" पूर्ण,
+		अणु ATA_CMD_TRUSTED_RCV_DMA,	"TRUSTED RECEIVE DMA" पूर्ण,
+		अणु ATA_CMD_TRUSTED_SND,		"TRUSTED SEND" पूर्ण,
+		अणु ATA_CMD_TRUSTED_SND_DMA,	"TRUSTED SEND DMA" पूर्ण,
+		अणु ATA_CMD_PMP_READ,		"READ BUFFER" पूर्ण,
+		अणु ATA_CMD_PMP_READ_DMA,		"READ BUFFER DMA" पूर्ण,
+		अणु ATA_CMD_PMP_WRITE,		"WRITE BUFFER" पूर्ण,
+		अणु ATA_CMD_PMP_WRITE_DMA,	"WRITE BUFFER DMA" पूर्ण,
+		अणु ATA_CMD_CONF_OVERLAY,		"DEVICE CONFIGURATION OVERLAY" पूर्ण,
+		अणु ATA_CMD_SEC_SET_PASS,		"SECURITY SET PASSWORD" पूर्ण,
+		अणु ATA_CMD_SEC_UNLOCK,		"SECURITY UNLOCK" पूर्ण,
+		अणु ATA_CMD_SEC_ERASE_PREP,	"SECURITY ERASE PREPARE" पूर्ण,
+		अणु ATA_CMD_SEC_ERASE_UNIT,	"SECURITY ERASE UNIT" पूर्ण,
+		अणु ATA_CMD_SEC_FREEZE_LOCK,	"SECURITY FREEZE LOCK" पूर्ण,
+		अणु ATA_CMD_SEC_DISABLE_PASS,	"SECURITY DISABLE PASSWORD" पूर्ण,
+		अणु ATA_CMD_CONFIG_STREAM,	"CONFIGURE STREAM" पूर्ण,
+		अणु ATA_CMD_SMART,		"SMART" पूर्ण,
+		अणु ATA_CMD_MEDIA_LOCK,		"DOOR LOCK" पूर्ण,
+		अणु ATA_CMD_MEDIA_UNLOCK,		"DOOR UNLOCK" पूर्ण,
+		अणु ATA_CMD_DSM,			"DATA SET MANAGEMENT" पूर्ण,
+		अणु ATA_CMD_CHK_MED_CRD_TYP,	"CHECK MEDIA CARD TYPE" पूर्ण,
+		अणु ATA_CMD_CFA_REQ_EXT_ERR,	"CFA REQUEST EXTENDED ERROR" पूर्ण,
+		अणु ATA_CMD_CFA_WRITE_NE,		"CFA WRITE SECTORS WITHOUT ERASE" पूर्ण,
+		अणु ATA_CMD_CFA_TRANS_SECT,	"CFA TRANSLATE SECTOR" पूर्ण,
+		अणु ATA_CMD_CFA_ERASE,		"CFA ERASE SECTORS" पूर्ण,
+		अणु ATA_CMD_CFA_WRITE_MULT_NE,	"CFA WRITE MULTIPLE WITHOUT ERASE" पूर्ण,
+		अणु ATA_CMD_REQ_SENSE_DATA,	"REQUEST SENSE DATA EXT" पूर्ण,
+		अणु ATA_CMD_SANITIZE_DEVICE,	"SANITIZE DEVICE" पूर्ण,
+		अणु ATA_CMD_ZAC_MGMT_IN,		"ZAC MANAGEMENT IN" पूर्ण,
+		अणु ATA_CMD_ZAC_MGMT_OUT,		"ZAC MANAGEMENT OUT" पूर्ण,
+		अणु ATA_CMD_READ_LONG,		"READ LONG (with retries)" पूर्ण,
+		अणु ATA_CMD_READ_LONG_ONCE,	"READ LONG (without retries)" पूर्ण,
+		अणु ATA_CMD_WRITE_LONG,		"WRITE LONG (with retries)" पूर्ण,
+		अणु ATA_CMD_WRITE_LONG_ONCE,	"WRITE LONG (without retries)" पूर्ण,
+		अणु ATA_CMD_RESTORE,		"RECALIBRATE" पूर्ण,
+		अणु 0,				शून्य पूर्ण /* terminate list */
+	पूर्ण;
 
-	unsigned int i;
-	for (i = 0; cmd_descr[i].text; i++)
-		if (cmd_descr[i].command == command)
-			return cmd_descr[i].text;
-#endif
+	अचिन्हित पूर्णांक i;
+	क्रम (i = 0; cmd_descr[i].text; i++)
+		अगर (cmd_descr[i].command == command)
+			वापस cmd_descr[i].text;
+#पूर्ण_अगर
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_get_cmd_descript);
 
 /**
@@ -2209,63 +2210,63 @@ EXPORT_SYMBOL_GPL(ata_get_cmd_descript);
  *	LOCKING:
  *	None.
  */
-static void ata_eh_link_report(struct ata_link *link)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_eh_context *ehc = &link->eh_context;
-	struct ata_queued_cmd *qc;
-	const char *frozen, *desc;
-	char tries_buf[6] = "";
-	int tag, nr_failed = 0;
+अटल व्योम ata_eh_link_report(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	काष्ठा ata_queued_cmd *qc;
+	स्थिर अक्षर *frozen, *desc;
+	अक्षर tries_buf[6] = "";
+	पूर्णांक tag, nr_failed = 0;
 
-	if (ehc->i.flags & ATA_EHI_QUIET)
-		return;
+	अगर (ehc->i.flags & ATA_EHI_QUIET)
+		वापस;
 
-	desc = NULL;
-	if (ehc->i.desc[0] != '\0')
+	desc = शून्य;
+	अगर (ehc->i.desc[0] != '\0')
 		desc = ehc->i.desc;
 
-	ata_qc_for_each_raw(ap, qc, tag) {
-		if (!(qc->flags & ATA_QCFLAG_FAILED) ||
+	ata_qc_क्रम_each_raw(ap, qc, tag) अणु
+		अगर (!(qc->flags & ATA_QCFLAG_FAILED) ||
 		    ata_dev_phys_link(qc->dev) != link ||
 		    ((qc->flags & ATA_QCFLAG_QUIET) &&
 		     qc->err_mask == AC_ERR_DEV))
-			continue;
-		if (qc->flags & ATA_QCFLAG_SENSE_VALID && !qc->err_mask)
-			continue;
+			जारी;
+		अगर (qc->flags & ATA_QCFLAG_SENSE_VALID && !qc->err_mask)
+			जारी;
 
 		nr_failed++;
-	}
+	पूर्ण
 
-	if (!nr_failed && !ehc->i.err_mask)
-		return;
+	अगर (!nr_failed && !ehc->i.err_mask)
+		वापस;
 
 	frozen = "";
-	if (ap->pflags & ATA_PFLAG_FROZEN)
+	अगर (ap->pflags & ATA_PFLAG_FROZEN)
 		frozen = " frozen";
 
-	if (ap->eh_tries < ATA_EH_MAX_TRIES)
-		snprintf(tries_buf, sizeof(tries_buf), " t%d",
+	अगर (ap->eh_tries < ATA_EH_MAX_TRIES)
+		snम_लिखो(tries_buf, माप(tries_buf), " t%d",
 			 ap->eh_tries);
 
-	if (ehc->i.dev) {
+	अगर (ehc->i.dev) अणु
 		ata_dev_err(ehc->i.dev, "exception Emask 0x%x "
 			    "SAct 0x%x SErr 0x%x action 0x%x%s%s\n",
 			    ehc->i.err_mask, link->sactive, ehc->i.serror,
 			    ehc->i.action, frozen, tries_buf);
-		if (desc)
+		अगर (desc)
 			ata_dev_err(ehc->i.dev, "%s\n", desc);
-	} else {
+	पूर्ण अन्यथा अणु
 		ata_link_err(link, "exception Emask 0x%x "
 			     "SAct 0x%x SErr 0x%x action 0x%x%s%s\n",
 			     ehc->i.err_mask, link->sactive, ehc->i.serror,
 			     ehc->i.action, frozen, tries_buf);
-		if (desc)
+		अगर (desc)
 			ata_link_err(link, "%s\n", desc);
-	}
+	पूर्ण
 
-#ifdef CONFIG_ATA_VERBOSE_ERROR
-	if (ehc->i.serror)
+#अगर_घोषित CONFIG_ATA_VERBOSE_ERROR
+	अगर (ehc->i.serror)
 		ata_link_err(link,
 		  "SError: { %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s}\n",
 		  ehc->i.serror & SERR_DATA_RECOVERED ? "RecovData " : "",
@@ -2285,74 +2286,74 @@ static void ata_eh_link_report(struct ata_link *link)
 		  ehc->i.serror & SERR_TRANS_ST_ERROR ? "TrStaTrns " : "",
 		  ehc->i.serror & SERR_UNRECOG_FIS ? "UnrecFIS " : "",
 		  ehc->i.serror & SERR_DEV_XCHG ? "DevExch " : "");
-#endif
+#पूर्ण_अगर
 
-	ata_qc_for_each_raw(ap, qc, tag) {
-		struct ata_taskfile *cmd = &qc->tf, *res = &qc->result_tf;
-		char data_buf[20] = "";
-		char cdb_buf[70] = "";
+	ata_qc_क्रम_each_raw(ap, qc, tag) अणु
+		काष्ठा ata_taskfile *cmd = &qc->tf, *res = &qc->result_tf;
+		अक्षर data_buf[20] = "";
+		अक्षर cdb_buf[70] = "";
 
-		if (!(qc->flags & ATA_QCFLAG_FAILED) ||
+		अगर (!(qc->flags & ATA_QCFLAG_FAILED) ||
 		    ata_dev_phys_link(qc->dev) != link || !qc->err_mask)
-			continue;
+			जारी;
 
-		if (qc->dma_dir != DMA_NONE) {
-			static const char *dma_str[] = {
-				[DMA_BIDIRECTIONAL]	= "bidi",
+		अगर (qc->dma_dir != DMA_NONE) अणु
+			अटल स्थिर अक्षर *dma_str[] = अणु
+				[DMA_BIसूचीECTIONAL]	= "bidi",
 				[DMA_TO_DEVICE]		= "out",
 				[DMA_FROM_DEVICE]	= "in",
-			};
-			const char *prot_str = NULL;
+			पूर्ण;
+			स्थिर अक्षर *prot_str = शून्य;
 
-			switch (qc->tf.protocol) {
-			case ATA_PROT_UNKNOWN:
+			चयन (qc->tf.protocol) अणु
+			हाल ATA_PROT_UNKNOWN:
 				prot_str = "unknown";
-				break;
-			case ATA_PROT_NODATA:
+				अवरोध;
+			हाल ATA_PROT_NODATA:
 				prot_str = "nodata";
-				break;
-			case ATA_PROT_PIO:
+				अवरोध;
+			हाल ATA_PROT_PIO:
 				prot_str = "pio";
-				break;
-			case ATA_PROT_DMA:
+				अवरोध;
+			हाल ATA_PROT_DMA:
 				prot_str = "dma";
-				break;
-			case ATA_PROT_NCQ:
+				अवरोध;
+			हाल ATA_PROT_NCQ:
 				prot_str = "ncq dma";
-				break;
-			case ATA_PROT_NCQ_NODATA:
+				अवरोध;
+			हाल ATA_PROT_NCQ_NODATA:
 				prot_str = "ncq nodata";
-				break;
-			case ATAPI_PROT_NODATA:
+				अवरोध;
+			हाल ATAPI_PROT_NODATA:
 				prot_str = "nodata";
-				break;
-			case ATAPI_PROT_PIO:
+				अवरोध;
+			हाल ATAPI_PROT_PIO:
 				prot_str = "pio";
-				break;
-			case ATAPI_PROT_DMA:
+				अवरोध;
+			हाल ATAPI_PROT_DMA:
 				prot_str = "dma";
-				break;
-			}
-			snprintf(data_buf, sizeof(data_buf), " %s %u %s",
+				अवरोध;
+			पूर्ण
+			snम_लिखो(data_buf, माप(data_buf), " %s %u %s",
 				 prot_str, qc->nbytes, dma_str[qc->dma_dir]);
-		}
+		पूर्ण
 
-		if (ata_is_atapi(qc->tf.protocol)) {
-			const u8 *cdb = qc->cdb;
-			size_t cdb_len = qc->dev->cdb_len;
+		अगर (ata_is_atapi(qc->tf.protocol)) अणु
+			स्थिर u8 *cdb = qc->cdb;
+			माप_प्रकार cdb_len = qc->dev->cdb_len;
 
-			if (qc->scsicmd) {
+			अगर (qc->scsicmd) अणु
 				cdb = qc->scsicmd->cmnd;
 				cdb_len = qc->scsicmd->cmd_len;
-			}
-			__scsi_format_command(cdb_buf, sizeof(cdb_buf),
+			पूर्ण
+			__scsi_क्रमmat_command(cdb_buf, माप(cdb_buf),
 					      cdb, cdb_len);
-		} else {
-			const char *descr = ata_get_cmd_descript(cmd->command);
-			if (descr)
+		पूर्ण अन्यथा अणु
+			स्थिर अक्षर *descr = ata_get_cmd_descript(cmd->command);
+			अगर (descr)
 				ata_dev_err(qc->dev, "failed command: %s\n",
 					    descr);
-		}
+		पूर्ण
 
 		ata_dev_err(qc->dev,
 			"cmd %02x/%02x:%02x:%02x:%02x:%02x/%02x:%02x:%02x:%02x:%02x/%02x "
@@ -2371,21 +2372,21 @@ static void ata_eh_link_report(struct ata_link *link)
 			res->device, qc->err_mask, ata_err_string(qc->err_mask),
 			qc->err_mask & AC_ERR_NCQ ? " <F>" : "");
 
-#ifdef CONFIG_ATA_VERBOSE_ERROR
-		if (res->command & (ATA_BUSY | ATA_DRDY | ATA_DF | ATA_DRQ |
-				    ATA_SENSE | ATA_ERR)) {
-			if (res->command & ATA_BUSY)
+#अगर_घोषित CONFIG_ATA_VERBOSE_ERROR
+		अगर (res->command & (ATA_BUSY | ATA_DRDY | ATA_DF | ATA_DRQ |
+				    ATA_SENSE | ATA_ERR)) अणु
+			अगर (res->command & ATA_BUSY)
 				ata_dev_err(qc->dev, "status: { Busy }\n");
-			else
+			अन्यथा
 				ata_dev_err(qc->dev, "status: { %s%s%s%s%s}\n",
 				  res->command & ATA_DRDY ? "DRDY " : "",
 				  res->command & ATA_DF ? "DF " : "",
 				  res->command & ATA_DRQ ? "DRQ " : "",
 				  res->command & ATA_SENSE ? "SENSE " : "",
 				  res->command & ATA_ERR ? "ERR " : "");
-		}
+		पूर्ण
 
-		if (cmd->command != ATA_CMD_PACKET &&
+		अगर (cmd->command != ATA_CMD_PACKET &&
 		    (res->feature & (ATA_ICRC | ATA_UNC | ATA_AMNF |
 				     ATA_IDNF | ATA_ABORTED)))
 			ata_dev_err(qc->dev, "error: { %s%s%s%s%s}\n",
@@ -2394,9 +2395,9 @@ static void ata_eh_link_report(struct ata_link *link)
 			  res->feature & ATA_AMNF ? "AMNF " : "",
 			  res->feature & ATA_IDNF ? "IDNF " : "",
 			  res->feature & ATA_ABORTED ? "ABRT " : "");
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
 /**
  *	ata_eh_report - report error handling to user
@@ -2407,91 +2408,91 @@ static void ata_eh_link_report(struct ata_link *link)
  *	LOCKING:
  *	None.
  */
-void ata_eh_report(struct ata_port *ap)
-{
-	struct ata_link *link;
+व्योम ata_eh_report(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_link *link;
 
-	ata_for_each_link(link, ap, HOST_FIRST)
+	ata_क्रम_each_link(link, ap, HOST_FIRST)
 		ata_eh_link_report(link);
-}
+पूर्ण
 
-static int ata_do_reset(struct ata_link *link, ata_reset_fn_t reset,
-			unsigned int *classes, unsigned long deadline,
+अटल पूर्णांक ata_करो_reset(काष्ठा ata_link *link, ata_reset_fn_t reset,
+			अचिन्हित पूर्णांक *classes, अचिन्हित दीर्घ deadline,
 			bool clear_classes)
-{
-	struct ata_device *dev;
+अणु
+	काष्ठा ata_device *dev;
 
-	if (clear_classes)
-		ata_for_each_dev(dev, link, ALL)
+	अगर (clear_classes)
+		ata_क्रम_each_dev(dev, link, ALL)
 			classes[dev->devno] = ATA_DEV_UNKNOWN;
 
-	return reset(link, classes, deadline);
-}
+	वापस reset(link, classes, deadline);
+पूर्ण
 
-static int ata_eh_followup_srst_needed(struct ata_link *link, int rc)
-{
-	if ((link->flags & ATA_LFLAG_NO_SRST) || ata_link_offline(link))
-		return 0;
-	if (rc == -EAGAIN)
-		return 1;
-	if (sata_pmp_supported(link->ap) && ata_is_host_link(link))
-		return 1;
-	return 0;
-}
+अटल पूर्णांक ata_eh_followup_srst_needed(काष्ठा ata_link *link, पूर्णांक rc)
+अणु
+	अगर ((link->flags & ATA_LFLAG_NO_SRST) || ata_link_offline(link))
+		वापस 0;
+	अगर (rc == -EAGAIN)
+		वापस 1;
+	अगर (sata_pmp_supported(link->ap) && ata_is_host_link(link))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-int ata_eh_reset(struct ata_link *link, int classify,
+पूर्णांक ata_eh_reset(काष्ठा ata_link *link, पूर्णांक classअगरy,
 		 ata_prereset_fn_t prereset, ata_reset_fn_t softreset,
 		 ata_reset_fn_t hardreset, ata_postreset_fn_t postreset)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_link *slave = ap->slave_link;
-	struct ata_eh_context *ehc = &link->eh_context;
-	struct ata_eh_context *sehc = slave ? &slave->eh_context : NULL;
-	unsigned int *classes = ehc->classes;
-	unsigned int lflags = link->flags;
-	int verbose = !(ehc->i.flags & ATA_EHI_QUIET);
-	int max_tries = 0, try = 0;
-	struct ata_link *failed_link;
-	struct ata_device *dev;
-	unsigned long deadline, now;
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_link *slave = ap->slave_link;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	काष्ठा ata_eh_context *sehc = slave ? &slave->eh_context : शून्य;
+	अचिन्हित पूर्णांक *classes = ehc->classes;
+	अचिन्हित पूर्णांक lflags = link->flags;
+	पूर्णांक verbose = !(ehc->i.flags & ATA_EHI_QUIET);
+	पूर्णांक max_tries = 0, try = 0;
+	काष्ठा ata_link *failed_link;
+	काष्ठा ata_device *dev;
+	अचिन्हित दीर्घ deadline, now;
 	ata_reset_fn_t reset;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 sstatus;
-	int nr_unknown, rc;
+	पूर्णांक nr_unknown, rc;
 
 	/*
 	 * Prepare to reset
 	 */
-	while (ata_eh_reset_timeouts[max_tries] != ULONG_MAX)
+	जबतक (ata_eh_reset_समयouts[max_tries] != अच_दीर्घ_उच्च)
 		max_tries++;
-	if (link->flags & ATA_LFLAG_RST_ONCE)
+	अगर (link->flags & ATA_LFLAG_RST_ONCE)
 		max_tries = 1;
-	if (link->flags & ATA_LFLAG_NO_HRST)
-		hardreset = NULL;
-	if (link->flags & ATA_LFLAG_NO_SRST)
-		softreset = NULL;
+	अगर (link->flags & ATA_LFLAG_NO_HRST)
+		hardreset = शून्य;
+	अगर (link->flags & ATA_LFLAG_NO_SRST)
+		softreset = शून्य;
 
 	/* make sure each reset attempt is at least COOL_DOWN apart */
-	if (ehc->i.flags & ATA_EHI_DID_RESET) {
-		now = jiffies;
-		WARN_ON(time_after(ehc->last_reset, now));
+	अगर (ehc->i.flags & ATA_EHI_DID_RESET) अणु
+		now = jअगरfies;
+		WARN_ON(समय_after(ehc->last_reset, now));
 		deadline = ata_deadline(ehc->last_reset,
 					ATA_EH_RESET_COOL_DOWN);
-		if (time_before(now, deadline))
-			schedule_timeout_uninterruptible(deadline - now);
-	}
+		अगर (समय_beक्रमe(now, deadline))
+			schedule_समयout_unपूर्णांकerruptible(deadline - now);
+	पूर्ण
 
 	spin_lock_irqsave(ap->lock, flags);
 	ap->pflags |= ATA_PFLAG_RESETTING;
 	spin_unlock_irqrestore(ap->lock, flags);
 
-	ata_eh_about_to_do(link, NULL, ATA_EH_RESET);
+	ata_eh_about_to_करो(link, शून्य, ATA_EH_RESET);
 
-	ata_for_each_dev(dev, link, ALL) {
+	ata_क्रम_each_dev(dev, link, ALL) अणु
 		/* If we issue an SRST then an ATA drive (not ATAPI)
 		 * may change configuration and be in PIO0 timing. If
-		 * we do a hard reset (or are coming from power on)
-		 * this is true for ATA or ATAPI. Until we've set a
+		 * we करो a hard reset (or are coming from घातer on)
+		 * this is true क्रम ATA or ATAPI. Until we've set a
 		 * suitable controller mode we should not touch the
 		 * bus as we may be talking too fast.
 		 */
@@ -2503,158 +2504,158 @@ int ata_eh_reset(struct ata_link *link, int classify,
 		 * touch the DMA setup as that will be dealt with when
 		 * configuring devices.
 		 */
-		if (ap->ops->set_piomode)
+		अगर (ap->ops->set_piomode)
 			ap->ops->set_piomode(ap, dev);
-	}
+	पूर्ण
 
 	/* prefer hardreset */
-	reset = NULL;
+	reset = शून्य;
 	ehc->i.action &= ~ATA_EH_RESET;
-	if (hardreset) {
+	अगर (hardreset) अणु
 		reset = hardreset;
 		ehc->i.action |= ATA_EH_HARDRESET;
-	} else if (softreset) {
+	पूर्ण अन्यथा अगर (softreset) अणु
 		reset = softreset;
 		ehc->i.action |= ATA_EH_SOFTRESET;
-	}
+	पूर्ण
 
-	if (prereset) {
-		unsigned long deadline = ata_deadline(jiffies,
+	अगर (prereset) अणु
+		अचिन्हित दीर्घ deadline = ata_deadline(jअगरfies,
 						      ATA_EH_PRERESET_TIMEOUT);
 
-		if (slave) {
+		अगर (slave) अणु
 			sehc->i.action &= ~ATA_EH_RESET;
 			sehc->i.action |= ehc->i.action;
-		}
+		पूर्ण
 
 		rc = prereset(link, deadline);
 
-		/* If present, do prereset on slave link too.  Reset
-		 * is skipped iff both master and slave links report
+		/* If present, करो prereset on slave link too.  Reset
+		 * is skipped अगरf both master and slave links report
 		 * -ENOENT or clear ATA_EH_RESET.
 		 */
-		if (slave && (rc == 0 || rc == -ENOENT)) {
-			int tmp;
+		अगर (slave && (rc == 0 || rc == -ENOENT)) अणु
+			पूर्णांक पंचांगp;
 
-			tmp = prereset(slave, deadline);
-			if (tmp != -ENOENT)
-				rc = tmp;
+			पंचांगp = prereset(slave, deadline);
+			अगर (पंचांगp != -ENOENT)
+				rc = पंचांगp;
 
 			ehc->i.action |= sehc->i.action;
-		}
+		पूर्ण
 
-		if (rc) {
-			if (rc == -ENOENT) {
+		अगर (rc) अणु
+			अगर (rc == -ENOENT) अणु
 				ata_link_dbg(link, "port disabled--ignoring\n");
 				ehc->i.action &= ~ATA_EH_RESET;
 
-				ata_for_each_dev(dev, link, ALL)
+				ata_क्रम_each_dev(dev, link, ALL)
 					classes[dev->devno] = ATA_DEV_NONE;
 
 				rc = 0;
-			} else
+			पूर्ण अन्यथा
 				ata_link_err(link,
 					     "prereset failed (errno=%d)\n",
 					     rc);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* prereset() might have cleared ATA_EH_RESET.  If so,
-		 * bang classes, thaw and return.
+		 * bang classes, thaw and वापस.
 		 */
-		if (reset && !(ehc->i.action & ATA_EH_RESET)) {
-			ata_for_each_dev(dev, link, ALL)
+		अगर (reset && !(ehc->i.action & ATA_EH_RESET)) अणु
+			ata_क्रम_each_dev(dev, link, ALL)
 				classes[dev->devno] = ATA_DEV_NONE;
-			if ((ap->pflags & ATA_PFLAG_FROZEN) &&
+			अगर ((ap->pflags & ATA_PFLAG_FROZEN) &&
 			    ata_is_host_link(link))
 				ata_eh_thaw_port(ap);
 			rc = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
  retry:
 	/*
-	 * Perform reset
+	 * Perक्रमm reset
 	 */
-	if (ata_is_host_link(link))
-		ata_eh_freeze_port(ap);
+	अगर (ata_is_host_link(link))
+		ata_eh_मुक्तze_port(ap);
 
-	deadline = ata_deadline(jiffies, ata_eh_reset_timeouts[try++]);
+	deadline = ata_deadline(jअगरfies, ata_eh_reset_समयouts[try++]);
 
-	if (reset) {
-		if (verbose)
+	अगर (reset) अणु
+		अगर (verbose)
 			ata_link_info(link, "%s resetting link\n",
 				      reset == softreset ? "soft" : "hard");
 
 		/* mark that this EH session started with reset */
-		ehc->last_reset = jiffies;
-		if (reset == hardreset)
+		ehc->last_reset = jअगरfies;
+		अगर (reset == hardreset)
 			ehc->i.flags |= ATA_EHI_DID_HARDRESET;
-		else
+		अन्यथा
 			ehc->i.flags |= ATA_EHI_DID_SOFTRESET;
 
-		rc = ata_do_reset(link, reset, classes, deadline, true);
-		if (rc && rc != -EAGAIN) {
+		rc = ata_करो_reset(link, reset, classes, deadline, true);
+		अगर (rc && rc != -EAGAIN) अणु
 			failed_link = link;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
-		/* hardreset slave link if existent */
-		if (slave && reset == hardreset) {
-			int tmp;
+		/* hardreset slave link अगर existent */
+		अगर (slave && reset == hardreset) अणु
+			पूर्णांक पंचांगp;
 
-			if (verbose)
+			अगर (verbose)
 				ata_link_info(slave, "hard resetting link\n");
 
-			ata_eh_about_to_do(slave, NULL, ATA_EH_RESET);
-			tmp = ata_do_reset(slave, reset, classes, deadline,
+			ata_eh_about_to_करो(slave, शून्य, ATA_EH_RESET);
+			पंचांगp = ata_करो_reset(slave, reset, classes, deadline,
 					   false);
-			switch (tmp) {
-			case -EAGAIN:
+			चयन (पंचांगp) अणु
+			हाल -EAGAIN:
 				rc = -EAGAIN;
-				break;
-			case 0:
-				break;
-			default:
+				अवरोध;
+			हाल 0:
+				अवरोध;
+			शेष:
 				failed_link = slave;
-				rc = tmp;
-				goto fail;
-			}
-		}
+				rc = पंचांगp;
+				जाओ fail;
+			पूर्ण
+		पूर्ण
 
-		/* perform follow-up SRST if necessary */
-		if (reset == hardreset &&
-		    ata_eh_followup_srst_needed(link, rc)) {
+		/* perक्रमm follow-up SRST अगर necessary */
+		अगर (reset == hardreset &&
+		    ata_eh_followup_srst_needed(link, rc)) अणु
 			reset = softreset;
 
-			if (!reset) {
+			अगर (!reset) अणु
 				ata_link_err(link,
 	     "follow-up softreset required but no softreset available\n");
 				failed_link = link;
 				rc = -EINVAL;
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
-			ata_eh_about_to_do(link, NULL, ATA_EH_RESET);
-			rc = ata_do_reset(link, reset, classes, deadline, true);
-			if (rc) {
+			ata_eh_about_to_करो(link, शून्य, ATA_EH_RESET);
+			rc = ata_करो_reset(link, reset, classes, deadline, true);
+			अगर (rc) अणु
 				failed_link = link;
-				goto fail;
-			}
-		}
-	} else {
-		if (verbose)
+				जाओ fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (verbose)
 			ata_link_info(link,
 	"no reset method available, skipping reset\n");
-		if (!(lflags & ATA_LFLAG_ASSUME_CLASS))
+		अगर (!(lflags & ATA_LFLAG_ASSUME_CLASS))
 			lflags |= ATA_LFLAG_ASSUME_ATA;
-	}
+	पूर्ण
 
 	/*
 	 * Post-reset processing
 	 */
-	ata_for_each_dev(dev, link, ALL) {
+	ata_क्रम_each_dev(dev, link, ALL) अणु
 		/* After the reset, the device state is PIO 0 and the
 		 * controller state is undefined.  Reset also wakes up
 		 * drives from sleeping mode.
@@ -2662,104 +2663,104 @@ int ata_eh_reset(struct ata_link *link, int classify,
 		dev->pio_mode = XFER_PIO_0;
 		dev->flags &= ~ATA_DFLAG_SLEEPING;
 
-		if (ata_phys_link_offline(ata_dev_phys_link(dev)))
-			continue;
+		अगर (ata_phys_link_offline(ata_dev_phys_link(dev)))
+			जारी;
 
 		/* apply class override */
-		if (lflags & ATA_LFLAG_ASSUME_ATA)
+		अगर (lflags & ATA_LFLAG_ASSUME_ATA)
 			classes[dev->devno] = ATA_DEV_ATA;
-		else if (lflags & ATA_LFLAG_ASSUME_SEMB)
+		अन्यथा अगर (lflags & ATA_LFLAG_ASSUME_SEMB)
 			classes[dev->devno] = ATA_DEV_SEMB_UNSUP;
-	}
+	पूर्ण
 
 	/* record current link speed */
-	if (sata_scr_read(link, SCR_STATUS, &sstatus) == 0)
+	अगर (sata_scr_पढ़ो(link, SCR_STATUS, &sstatus) == 0)
 		link->sata_spd = (sstatus >> 4) & 0xf;
-	if (slave && sata_scr_read(slave, SCR_STATUS, &sstatus) == 0)
+	अगर (slave && sata_scr_पढ़ो(slave, SCR_STATUS, &sstatus) == 0)
 		slave->sata_spd = (sstatus >> 4) & 0xf;
 
 	/* thaw the port */
-	if (ata_is_host_link(link))
+	अगर (ata_is_host_link(link))
 		ata_eh_thaw_port(ap);
 
 	/* postreset() should clear hardware SError.  Although SError
 	 * is cleared during link resume, clearing SError here is
-	 * necessary as some PHYs raise hotplug events after SRST.
-	 * This introduces race condition where hotplug occurs between
+	 * necessary as some PHYs उठाओ hotplug events after SRST.
+	 * This पूर्णांकroduces race condition where hotplug occurs between
 	 * reset and here.  This race is mediated by cross checking
-	 * link onlineness and classification result later.
+	 * link onlineness and classअगरication result later.
 	 */
-	if (postreset) {
+	अगर (postreset) अणु
 		postreset(link, classes);
-		if (slave)
+		अगर (slave)
 			postreset(slave, classes);
-	}
+	पूर्ण
 
 	/*
 	 * Some controllers can't be frozen very well and may set spurious
 	 * error conditions during reset.  Clear accumulated error
-	 * information and re-thaw the port if frozen.  As reset is the
+	 * inक्रमmation and re-thaw the port अगर frozen.  As reset is the
 	 * final recovery action and we cross check link onlineness against
-	 * device classification later, no hotplug event is lost by this.
+	 * device classअगरication later, no hotplug event is lost by this.
 	 */
 	spin_lock_irqsave(link->ap->lock, flags);
-	memset(&link->eh_info, 0, sizeof(link->eh_info));
-	if (slave)
-		memset(&slave->eh_info, 0, sizeof(link->eh_info));
+	स_रखो(&link->eh_info, 0, माप(link->eh_info));
+	अगर (slave)
+		स_रखो(&slave->eh_info, 0, माप(link->eh_info));
 	ap->pflags &= ~ATA_PFLAG_EH_PENDING;
 	spin_unlock_irqrestore(link->ap->lock, flags);
 
-	if (ap->pflags & ATA_PFLAG_FROZEN)
+	अगर (ap->pflags & ATA_PFLAG_FROZEN)
 		ata_eh_thaw_port(ap);
 
 	/*
-	 * Make sure onlineness and classification result correspond.
+	 * Make sure onlineness and classअगरication result correspond.
 	 * Hotplug could have happened during reset and some
-	 * controllers fail to wait while a drive is spinning up after
+	 * controllers fail to रुको जबतक a drive is spinning up after
 	 * being hotplugged causing misdetection.  By cross checking
-	 * link on/offlineness and classification result, those
+	 * link on/offlineness and classअगरication result, those
 	 * conditions can be reliably detected and retried.
 	 */
 	nr_unknown = 0;
-	ata_for_each_dev(dev, link, ALL) {
-		if (ata_phys_link_online(ata_dev_phys_link(dev))) {
-			if (classes[dev->devno] == ATA_DEV_UNKNOWN) {
+	ata_क्रम_each_dev(dev, link, ALL) अणु
+		अगर (ata_phys_link_online(ata_dev_phys_link(dev))) अणु
+			अगर (classes[dev->devno] == ATA_DEV_UNKNOWN) अणु
 				ata_dev_dbg(dev, "link online but device misclassified\n");
 				classes[dev->devno] = ATA_DEV_NONE;
 				nr_unknown++;
-			}
-		} else if (ata_phys_link_offline(ata_dev_phys_link(dev))) {
-			if (ata_class_enabled(classes[dev->devno]))
+			पूर्ण
+		पूर्ण अन्यथा अगर (ata_phys_link_offline(ata_dev_phys_link(dev))) अणु
+			अगर (ata_class_enabled(classes[dev->devno]))
 				ata_dev_dbg(dev,
 					    "link offline, clearing class %d to NONE\n",
 					    classes[dev->devno]);
 			classes[dev->devno] = ATA_DEV_NONE;
-		} else if (classes[dev->devno] == ATA_DEV_UNKNOWN) {
+		पूर्ण अन्यथा अगर (classes[dev->devno] == ATA_DEV_UNKNOWN) अणु
 			ata_dev_dbg(dev,
 				    "link status unknown, clearing UNKNOWN to NONE\n");
 			classes[dev->devno] = ATA_DEV_NONE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (classify && nr_unknown) {
-		if (try < max_tries) {
+	अगर (classअगरy && nr_unknown) अणु
+		अगर (try < max_tries) अणु
 			ata_link_warn(link,
 				      "link online but %d devices misclassified, retrying\n",
 				      nr_unknown);
 			failed_link = link;
 			rc = -EAGAIN;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		ata_link_warn(link,
 			      "link online but %d devices misclassified, "
 			      "device detection might fail\n", nr_unknown);
-	}
+	पूर्ण
 
 	/* reset successful, schedule revalidation */
-	ata_eh_done(link, NULL, ATA_EH_RESET);
-	if (slave)
-		ata_eh_done(slave, NULL, ATA_EH_RESET);
-	ehc->last_reset = jiffies;		/* update to completion time */
+	ata_eh_करोne(link, शून्य, ATA_EH_RESET);
+	अगर (slave)
+		ata_eh_करोne(slave, शून्य, ATA_EH_RESET);
+	ehc->last_reset = jअगरfies;		/* update to completion समय */
 	ehc->i.action |= ATA_EH_REVALIDATE;
 	link->lpm_policy = ATA_LPM_UNKNOWN;	/* reset LPM state */
 
@@ -2767,181 +2768,181 @@ int ata_eh_reset(struct ata_link *link, int classify,
  out:
 	/* clear hotplug flag */
 	ehc->i.flags &= ~ATA_EHI_HOTPLUGGED;
-	if (slave)
+	अगर (slave)
 		sehc->i.flags &= ~ATA_EHI_HOTPLUGGED;
 
 	spin_lock_irqsave(ap->lock, flags);
 	ap->pflags &= ~ATA_PFLAG_RESETTING;
 	spin_unlock_irqrestore(ap->lock, flags);
 
-	return rc;
+	वापस rc;
 
  fail:
-	/* if SCR isn't accessible on a fan-out port, PMP needs to be reset */
-	if (!ata_is_host_link(link) &&
-	    sata_scr_read(link, SCR_STATUS, &sstatus))
+	/* अगर SCR isn't accessible on a fan-out port, PMP needs to be reset */
+	अगर (!ata_is_host_link(link) &&
+	    sata_scr_पढ़ो(link, SCR_STATUS, &sstatus))
 		rc = -ERESTART;
 
-	if (try >= max_tries) {
+	अगर (try >= max_tries) अणु
 		/*
-		 * Thaw host port even if reset failed, so that the port
+		 * Thaw host port even अगर reset failed, so that the port
 		 * can be retried on the next phy event.  This risks
 		 * repeated EH runs but seems to be a better tradeoff than
-		 * shutting down a port after a botched hotplug attempt.
+		 * shutting करोwn a port after a botched hotplug attempt.
 		 */
-		if (ata_is_host_link(link))
+		अगर (ata_is_host_link(link))
 			ata_eh_thaw_port(ap);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	now = jiffies;
-	if (time_before(now, deadline)) {
-		unsigned long delta = deadline - now;
+	now = jअगरfies;
+	अगर (समय_beक्रमe(now, deadline)) अणु
+		अचिन्हित दीर्घ delta = deadline - now;
 
 		ata_link_warn(failed_link,
 			"reset failed (errno=%d), retrying in %u secs\n",
-			rc, DIV_ROUND_UP(jiffies_to_msecs(delta), 1000));
+			rc, DIV_ROUND_UP(jअगरfies_to_msecs(delta), 1000));
 
 		ata_eh_release(ap);
-		while (delta)
-			delta = schedule_timeout_uninterruptible(delta);
+		जबतक (delta)
+			delta = schedule_समयout_unपूर्णांकerruptible(delta);
 		ata_eh_acquire(ap);
-	}
+	पूर्ण
 
 	/*
 	 * While disks spinup behind PMP, some controllers fail sending SRST.
-	 * They need to be reset - as well as the PMP - before retrying.
+	 * They need to be reset - as well as the PMP - beक्रमe retrying.
 	 */
-	if (rc == -ERESTART) {
-		if (ata_is_host_link(link))
+	अगर (rc == -ERESTART) अणु
+		अगर (ata_is_host_link(link))
 			ata_eh_thaw_port(ap);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (try == max_tries - 1) {
-		sata_down_spd_limit(link, 0);
-		if (slave)
-			sata_down_spd_limit(slave, 0);
-	} else if (rc == -EPIPE)
-		sata_down_spd_limit(failed_link, 0);
+	अगर (try == max_tries - 1) अणु
+		sata_करोwn_spd_limit(link, 0);
+		अगर (slave)
+			sata_करोwn_spd_limit(slave, 0);
+	पूर्ण अन्यथा अगर (rc == -EPIPE)
+		sata_करोwn_spd_limit(failed_link, 0);
 
-	if (hardreset)
+	अगर (hardreset)
 		reset = hardreset;
-	goto retry;
-}
+	जाओ retry;
+पूर्ण
 
-static inline void ata_eh_pull_park_action(struct ata_port *ap)
-{
-	struct ata_link *link;
-	struct ata_device *dev;
-	unsigned long flags;
+अटल अंतरभूत व्योम ata_eh_pull_park_action(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_link *link;
+	काष्ठा ata_device *dev;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * This function can be thought of as an extended version of
-	 * ata_eh_about_to_do() specially crafted to accommodate the
-	 * requirements of ATA_EH_PARK handling. Since the EH thread
-	 * does not leave the do {} while () loop in ata_eh_recover as
-	 * long as the timeout for a park request to *one* device on
+	 * ata_eh_about_to_करो() specially crafted to accommodate the
+	 * requirements of ATA_EH_PARK handling. Since the EH thपढ़ो
+	 * करोes not leave the करो अणुपूर्ण जबतक () loop in ata_eh_recover as
+	 * दीर्घ as the समयout क्रम a park request to *one* device on
 	 * the port has not expired, and since we still want to pick
 	 * up park requests to other devices on the same port or
-	 * timeout updates for the same device, we have to pull
-	 * ATA_EH_PARK actions from eh_info into eh_context.i
+	 * समयout updates क्रम the same device, we have to pull
+	 * ATA_EH_PARK actions from eh_info पूर्णांकo eh_context.i
 	 * ourselves at the beginning of each pass over the loop.
 	 *
-	 * Additionally, all write accesses to &ap->park_req_pending
+	 * Additionally, all ग_लिखो accesses to &ap->park_req_pending
 	 * through reinit_completion() (see below) or complete_all()
-	 * (see ata_scsi_park_store()) are protected by the host lock.
-	 * As a result we have that park_req_pending.done is zero on
-	 * exit from this function, i.e. when ATA_EH_PARK actions for
-	 * *all* devices on port ap have been pulled into the
-	 * respective eh_context structs. If, and only if,
-	 * park_req_pending.done is non-zero by the time we reach
-	 * wait_for_completion_timeout(), another ATA_EH_PARK action
-	 * has been scheduled for at least one of the devices on port
-	 * ap and we have to cycle over the do {} while () loop in
+	 * (see ata_scsi_park_store()) are रक्षित by the host lock.
+	 * As a result we have that park_req_pending.करोne is zero on
+	 * निकास from this function, i.e. when ATA_EH_PARK actions क्रम
+	 * *all* devices on port ap have been pulled पूर्णांकo the
+	 * respective eh_context काष्ठाs. If, and only अगर,
+	 * park_req_pending.करोne is non-zero by the समय we reach
+	 * रुको_क्रम_completion_समयout(), another ATA_EH_PARK action
+	 * has been scheduled क्रम at least one of the devices on port
+	 * ap and we have to cycle over the करो अणुपूर्ण जबतक () loop in
 	 * ata_eh_recover() again.
 	 */
 
 	spin_lock_irqsave(ap->lock, flags);
 	reinit_completion(&ap->park_req_pending);
-	ata_for_each_link(link, ap, EDGE) {
-		ata_for_each_dev(dev, link, ALL) {
-			struct ata_eh_info *ehi = &link->eh_info;
+	ata_क्रम_each_link(link, ap, EDGE) अणु
+		ata_क्रम_each_dev(dev, link, ALL) अणु
+			काष्ठा ata_eh_info *ehi = &link->eh_info;
 
 			link->eh_context.i.dev_action[dev->devno] |=
 				ehi->dev_action[dev->devno] & ATA_EH_PARK;
 			ata_eh_clear_action(link, dev, ehi, ATA_EH_PARK);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(ap->lock, flags);
-}
+पूर्ण
 
-static void ata_eh_park_issue_cmd(struct ata_device *dev, int park)
-{
-	struct ata_eh_context *ehc = &dev->link->eh_context;
-	struct ata_taskfile tf;
-	unsigned int err_mask;
+अटल व्योम ata_eh_park_issue_cmd(काष्ठा ata_device *dev, पूर्णांक park)
+अणु
+	काष्ठा ata_eh_context *ehc = &dev->link->eh_context;
+	काष्ठा ata_taskfile tf;
+	अचिन्हित पूर्णांक err_mask;
 
 	ata_tf_init(dev, &tf);
-	if (park) {
+	अगर (park) अणु
 		ehc->unloaded_mask |= 1 << dev->devno;
 		tf.command = ATA_CMD_IDLEIMMEDIATE;
 		tf.feature = 0x44;
 		tf.lbal = 0x4c;
 		tf.lbam = 0x4e;
 		tf.lbah = 0x55;
-	} else {
+	पूर्ण अन्यथा अणु
 		ehc->unloaded_mask &= ~(1 << dev->devno);
 		tf.command = ATA_CMD_CHK_POWER;
-	}
+	पूर्ण
 
 	tf.flags |= ATA_TFLAG_DEVICE | ATA_TFLAG_ISADDR;
 	tf.protocol = ATA_PROT_NODATA;
-	err_mask = ata_exec_internal(dev, &tf, NULL, DMA_NONE, NULL, 0, 0);
-	if (park && (err_mask || tf.lbal != 0xc4)) {
+	err_mask = ata_exec_पूर्णांकernal(dev, &tf, शून्य, DMA_NONE, शून्य, 0, 0);
+	अगर (park && (err_mask || tf.lbal != 0xc4)) अणु
 		ata_dev_err(dev, "head unload failed!\n");
 		ehc->unloaded_mask &= ~(1 << dev->devno);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ata_eh_revalidate_and_attach(struct ata_link *link,
-					struct ata_device **r_failed_dev)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_eh_context *ehc = &link->eh_context;
-	struct ata_device *dev;
-	unsigned int new_mask = 0;
-	unsigned long flags;
-	int rc = 0;
+अटल पूर्णांक ata_eh_revalidate_and_attach(काष्ठा ata_link *link,
+					काष्ठा ata_device **r_failed_dev)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	काष्ठा ata_device *dev;
+	अचिन्हित पूर्णांक new_mask = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc = 0;
 
 	DPRINTK("ENTER\n");
 
 	/* For PATA drive side cable detection to work, IDENTIFY must
-	 * be done backwards such that PDIAG- is released by the slave
-	 * device before the master device is identified.
+	 * be करोne backwards such that PDIAG- is released by the slave
+	 * device beक्रमe the master device is identअगरied.
 	 */
-	ata_for_each_dev(dev, link, ALL_REVERSE) {
-		unsigned int action = ata_eh_dev_action(dev);
-		unsigned int readid_flags = 0;
+	ata_क्रम_each_dev(dev, link, ALL_REVERSE) अणु
+		अचिन्हित पूर्णांक action = ata_eh_dev_action(dev);
+		अचिन्हित पूर्णांक पढ़ोid_flags = 0;
 
-		if (ehc->i.flags & ATA_EHI_DID_RESET)
-			readid_flags |= ATA_READID_POSTRESET;
+		अगर (ehc->i.flags & ATA_EHI_DID_RESET)
+			पढ़ोid_flags |= ATA_READID_POSTRESET;
 
-		if ((action & ATA_EH_REVALIDATE) && ata_dev_enabled(dev)) {
+		अगर ((action & ATA_EH_REVALIDATE) && ata_dev_enabled(dev)) अणु
 			WARN_ON(dev->class == ATA_DEV_PMP);
 
-			if (ata_phys_link_offline(ata_dev_phys_link(dev))) {
+			अगर (ata_phys_link_offline(ata_dev_phys_link(dev))) अणु
 				rc = -EIO;
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 
-			ata_eh_about_to_do(link, dev, ATA_EH_REVALIDATE);
+			ata_eh_about_to_करो(link, dev, ATA_EH_REVALIDATE);
 			rc = ata_dev_revalidate(dev, ehc->classes[dev->devno],
-						readid_flags);
-			if (rc)
-				goto err;
+						पढ़ोid_flags);
+			अगर (rc)
+				जाओ err;
 
-			ata_eh_done(link, dev, ATA_EH_REVALIDATE);
+			ata_eh_करोne(link, dev, ATA_EH_REVALIDATE);
 
 			/* Configuration may have changed, reconfigure
 			 * transfer mode.
@@ -2950,72 +2951,72 @@ static int ata_eh_revalidate_and_attach(struct ata_link *link,
 
 			/* schedule the scsi_rescan_device() here */
 			schedule_work(&(ap->scsi_rescan_task));
-		} else if (dev->class == ATA_DEV_UNKNOWN &&
+		पूर्ण अन्यथा अगर (dev->class == ATA_DEV_UNKNOWN &&
 			   ehc->tries[dev->devno] &&
-			   ata_class_enabled(ehc->classes[dev->devno])) {
+			   ata_class_enabled(ehc->classes[dev->devno])) अणु
 			/* Temporarily set dev->class, it will be
 			 * permanently set once all configurations are
 			 * complete.  This is necessary because new
-			 * device configuration is done in two
+			 * device configuration is करोne in two
 			 * separate loops.
 			 */
 			dev->class = ehc->classes[dev->devno];
 
-			if (dev->class == ATA_DEV_PMP)
+			अगर (dev->class == ATA_DEV_PMP)
 				rc = sata_pmp_attach(dev);
-			else
-				rc = ata_dev_read_id(dev, &dev->class,
-						     readid_flags, dev->id);
+			अन्यथा
+				rc = ata_dev_पढ़ो_id(dev, &dev->class,
+						     पढ़ोid_flags, dev->id);
 
-			/* read_id might have changed class, store and reset */
+			/* पढ़ो_id might have changed class, store and reset */
 			ehc->classes[dev->devno] = dev->class;
 			dev->class = ATA_DEV_UNKNOWN;
 
-			switch (rc) {
-			case 0:
+			चयन (rc) अणु
+			हाल 0:
 				/* clear error info accumulated during probe */
 				ata_ering_clear(&dev->ering);
 				new_mask |= 1 << dev->devno;
-				break;
-			case -ENOENT:
+				अवरोध;
+			हाल -ENOENT:
 				/* IDENTIFY was issued to non-existent
 				 * device.  No need to reset.  Just
 				 * thaw and ignore the device.
 				 */
 				ata_eh_thaw_port(ap);
-				break;
-			default:
-				goto err;
-			}
-		}
-	}
+				अवरोध;
+			शेष:
+				जाओ err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* PDIAG- should have been released, ask cable type if post-reset */
-	if ((ehc->i.flags & ATA_EHI_DID_RESET) && ata_is_host_link(link)) {
-		if (ap->ops->cable_detect)
+	/* PDIAG- should have been released, ask cable type अगर post-reset */
+	अगर ((ehc->i.flags & ATA_EHI_DID_RESET) && ata_is_host_link(link)) अणु
+		अगर (ap->ops->cable_detect)
 			ap->cbl = ap->ops->cable_detect(ap);
-		ata_force_cbl(ap);
-	}
+		ata_क्रमce_cbl(ap);
+	पूर्ण
 
-	/* Configure new devices forward such that user doesn't see
+	/* Configure new devices क्रमward such that user करोesn't see
 	 * device detection messages backwards.
 	 */
-	ata_for_each_dev(dev, link, ALL) {
-		if (!(new_mask & (1 << dev->devno)))
-			continue;
+	ata_क्रम_each_dev(dev, link, ALL) अणु
+		अगर (!(new_mask & (1 << dev->devno)))
+			जारी;
 
 		dev->class = ehc->classes[dev->devno];
 
-		if (dev->class == ATA_DEV_PMP)
-			continue;
+		अगर (dev->class == ATA_DEV_PMP)
+			जारी;
 
 		ehc->i.flags |= ATA_EHI_PRINTINFO;
 		rc = ata_dev_configure(dev);
 		ehc->i.flags &= ~ATA_EHI_PRINTINFO;
-		if (rc) {
+		अगर (rc) अणु
 			dev->class = ATA_DEV_UNKNOWN;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		spin_lock_irqsave(ap->lock, flags);
 		ap->pflags |= ATA_PFLAG_SCSI_HOTPLUG;
@@ -3023,73 +3024,73 @@ static int ata_eh_revalidate_and_attach(struct ata_link *link,
 
 		/* new device discovered, configure xfermode */
 		ehc->i.flags |= ATA_EHI_SETMODE;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  err:
 	*r_failed_dev = dev;
 	DPRINTK("EXIT rc=%d\n", rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  *	ata_set_mode - Program timings and issue SET FEATURES - XFER
  *	@link: link on which timings will be programmed
- *	@r_failed_dev: out parameter for failed device
+ *	@r_failed_dev: out parameter क्रम failed device
  *
  *	Set ATA device disk transfer mode (PIO3, UDMA6, etc.).  If
- *	ata_set_mode() fails, pointer to the failing device is
- *	returned in @r_failed_dev.
+ *	ata_set_mode() fails, poपूर्णांकer to the failing device is
+ *	वापसed in @r_failed_dev.
  *
  *	LOCKING:
  *	PCI/etc. bus probe sem.
  *
  *	RETURNS:
- *	0 on success, negative errno otherwise
+ *	0 on success, negative त्रुटि_सं otherwise
  */
-int ata_set_mode(struct ata_link *link, struct ata_device **r_failed_dev)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_device *dev;
-	int rc;
+पूर्णांक ata_set_mode(काष्ठा ata_link *link, काष्ठा ata_device **r_failed_dev)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_device *dev;
+	पूर्णांक rc;
 
-	/* if data transfer is verified, clear DUBIOUS_XFER on ering top */
-	ata_for_each_dev(dev, link, ENABLED) {
-		if (!(dev->flags & ATA_DFLAG_DUBIOUS_XFER)) {
-			struct ata_ering_entry *ent;
+	/* अगर data transfer is verअगरied, clear DUBIOUS_XFER on ering top */
+	ata_क्रम_each_dev(dev, link, ENABLED) अणु
+		अगर (!(dev->flags & ATA_DFLAG_DUBIOUS_XFER)) अणु
+			काष्ठा ata_ering_entry *ent;
 
 			ent = ata_ering_top(&dev->ering);
-			if (ent)
+			अगर (ent)
 				ent->eflags &= ~ATA_EFLAG_DUBIOUS_XFER;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* has private set_mode? */
-	if (ap->ops->set_mode)
+	/* has निजी set_mode? */
+	अगर (ap->ops->set_mode)
 		rc = ap->ops->set_mode(link, r_failed_dev);
-	else
-		rc = ata_do_set_mode(link, r_failed_dev);
+	अन्यथा
+		rc = ata_करो_set_mode(link, r_failed_dev);
 
-	/* if transfer mode has changed, set DUBIOUS_XFER on device */
-	ata_for_each_dev(dev, link, ENABLED) {
-		struct ata_eh_context *ehc = &link->eh_context;
+	/* अगर transfer mode has changed, set DUBIOUS_XFER on device */
+	ata_क्रम_each_dev(dev, link, ENABLED) अणु
+		काष्ठा ata_eh_context *ehc = &link->eh_context;
 		u8 saved_xfer_mode = ehc->saved_xfer_mode[dev->devno];
 		u8 saved_ncq = !!(ehc->saved_ncq_enabled & (1 << dev->devno));
 
-		if (dev->xfer_mode != saved_xfer_mode ||
+		अगर (dev->xfer_mode != saved_xfer_mode ||
 		    ata_ncq_enabled(dev) != saved_ncq)
 			dev->flags |= ATA_DFLAG_DUBIOUS_XFER;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  *	atapi_eh_clear_ua - Clear ATAPI UNIT ATTENTION after reset
- *	@dev: ATAPI device to clear UA for
+ *	@dev: ATAPI device to clear UA क्रम
  *
- *	Resets and other operations can make an ATAPI device raise
+ *	Resets and other operations can make an ATAPI device उठाओ
  *	UNIT ATTENTION which causes the next operation to fail.  This
  *	function clears UA.
  *
@@ -3097,82 +3098,82 @@ int ata_set_mode(struct ata_link *link, struct ata_device **r_failed_dev)
  *	EH context (may sleep).
  *
  *	RETURNS:
- *	0 on success, -errno on failure.
+ *	0 on success, -त्रुटि_सं on failure.
  */
-static int atapi_eh_clear_ua(struct ata_device *dev)
-{
-	int i;
+अटल पूर्णांक atapi_eh_clear_ua(काष्ठा ata_device *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ATA_EH_UA_TRIES; i++) {
+	क्रम (i = 0; i < ATA_EH_UA_TRIES; i++) अणु
 		u8 *sense_buffer = dev->link->ap->sector_buf;
 		u8 sense_key = 0;
-		unsigned int err_mask;
+		अचिन्हित पूर्णांक err_mask;
 
 		err_mask = atapi_eh_tur(dev, &sense_key);
-		if (err_mask != 0 && err_mask != AC_ERR_DEV) {
+		अगर (err_mask != 0 && err_mask != AC_ERR_DEV) अणु
 			ata_dev_warn(dev,
 				     "TEST_UNIT_READY failed (err_mask=0x%x)\n",
 				     err_mask);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		if (!err_mask || sense_key != UNIT_ATTENTION)
-			return 0;
+		अगर (!err_mask || sense_key != UNIT_ATTENTION)
+			वापस 0;
 
 		err_mask = atapi_eh_request_sense(dev, sense_buffer, sense_key);
-		if (err_mask) {
+		अगर (err_mask) अणु
 			ata_dev_warn(dev, "failed to clear "
 				"UNIT ATTENTION (err_mask=0x%x)\n", err_mask);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	ata_dev_warn(dev, "UNIT ATTENTION persists after %d tries\n",
 		     ATA_EH_UA_TRIES);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	ata_eh_maybe_retry_flush - Retry FLUSH if necessary
+ *	ata_eh_maybe_retry_flush - Retry FLUSH अगर necessary
  *	@dev: ATA device which may need FLUSH retry
  *
  *	If @dev failed FLUSH, it needs to be reported upper layer
- *	immediately as it means that @dev failed to remap and already
+ *	immediately as it means that @dev failed to remap and alपढ़ोy
  *	lost at least a sector and further FLUSH retrials won't make
- *	any difference to the lost sector.  However, if FLUSH failed
- *	for other reasons, for example transmission error, FLUSH needs
+ *	any dअगरference to the lost sector.  However, अगर FLUSH failed
+ *	क्रम other reasons, क्रम example transmission error, FLUSH needs
  *	to be retried.
  *
  *	This function determines whether FLUSH failure retry is
- *	necessary and performs it if so.
+ *	necessary and perक्रमms it अगर so.
  *
  *	RETURNS:
- *	0 if EH can continue, -errno if EH needs to be repeated.
+ *	0 अगर EH can जारी, -त्रुटि_सं अगर EH needs to be repeated.
  */
-static int ata_eh_maybe_retry_flush(struct ata_device *dev)
-{
-	struct ata_link *link = dev->link;
-	struct ata_port *ap = link->ap;
-	struct ata_queued_cmd *qc;
-	struct ata_taskfile tf;
-	unsigned int err_mask;
-	int rc = 0;
+अटल पूर्णांक ata_eh_maybe_retry_flush(काष्ठा ata_device *dev)
+अणु
+	काष्ठा ata_link *link = dev->link;
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_queued_cmd *qc;
+	काष्ठा ata_taskfile tf;
+	अचिन्हित पूर्णांक err_mask;
+	पूर्णांक rc = 0;
 
-	/* did flush fail for this device? */
-	if (!ata_tag_valid(link->active_tag))
-		return 0;
+	/* did flush fail क्रम this device? */
+	अगर (!ata_tag_valid(link->active_tag))
+		वापस 0;
 
 	qc = __ata_qc_from_tag(ap, link->active_tag);
-	if (qc->dev != dev || (qc->tf.command != ATA_CMD_FLUSH_EXT &&
+	अगर (qc->dev != dev || (qc->tf.command != ATA_CMD_FLUSH_EXT &&
 			       qc->tf.command != ATA_CMD_FLUSH))
-		return 0;
+		वापस 0;
 
-	/* if the device failed it, it should be reported to upper layers */
-	if (qc->err_mask & AC_ERR_DEV)
-		return 0;
+	/* अगर the device failed it, it should be reported to upper layers */
+	अगर (qc->err_mask & AC_ERR_DEV)
+		वापस 0;
 
-	/* flush failed for some other reason, give it another shot */
+	/* flush failed क्रम some other reason, give it another shot */
 	ata_tf_init(dev, &tf);
 
 	tf.command = qc->tf.command;
@@ -3182,244 +3183,244 @@ static int ata_eh_maybe_retry_flush(struct ata_device *dev)
 	ata_dev_warn(dev, "retrying FLUSH 0x%x Emask 0x%x\n",
 		       tf.command, qc->err_mask);
 
-	err_mask = ata_exec_internal(dev, &tf, NULL, DMA_NONE, NULL, 0, 0);
-	if (!err_mask) {
+	err_mask = ata_exec_पूर्णांकernal(dev, &tf, शून्य, DMA_NONE, शून्य, 0, 0);
+	अगर (!err_mask) अणु
 		/*
 		 * FLUSH is complete but there's no way to
 		 * successfully complete a failed command from EH.
 		 * Making sure retry is allowed at least once and
-		 * retrying it should do the trick - whatever was in
-		 * the cache is already on the platter and this won't
+		 * retrying it should करो the trick - whatever was in
+		 * the cache is alपढ़ोy on the platter and this won't
 		 * cause infinite loop.
 		 */
 		qc->scsicmd->allowed = max(qc->scsicmd->allowed, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		ata_dev_warn(dev, "FLUSH failed Emask 0x%x\n",
 			       err_mask);
 		rc = -EIO;
 
-		/* if device failed it, report it to upper layers */
-		if (err_mask & AC_ERR_DEV) {
+		/* अगर device failed it, report it to upper layers */
+		अगर (err_mask & AC_ERR_DEV) अणु
 			qc->err_mask |= AC_ERR_DEV;
 			qc->result_tf = tf;
-			if (!(ap->pflags & ATA_PFLAG_FROZEN))
+			अगर (!(ap->pflags & ATA_PFLAG_FROZEN))
 				rc = 0;
-		}
-	}
-	return rc;
-}
+		पूर्ण
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /**
- *	ata_eh_set_lpm - configure SATA interface power management
- *	@link: link to configure power management
- *	@policy: the link power management policy
- *	@r_failed_dev: out parameter for failed device
+ *	ata_eh_set_lpm - configure SATA पूर्णांकerface घातer management
+ *	@link: link to configure घातer management
+ *	@policy: the link घातer management policy
+ *	@r_failed_dev: out parameter क्रम failed device
  *
- *	Enable SATA Interface power management.  This will enable
- *	Device Interface Power Management (DIPM) for min_power and
- *	medium_power_with_dipm policies, and then call driver specific
- *	callbacks for enabling Host Initiated Power management.
+ *	Enable SATA Interface घातer management.  This will enable
+ *	Device Interface Power Management (DIPM) क्रम min_घातer and
+ *	medium_घातer_with_dipm policies, and then call driver specअगरic
+ *	callbacks क्रम enabling Host Initiated Power management.
  *
  *	LOCKING:
  *	EH context.
  *
  *	RETURNS:
- *	0 on success, -errno on failure.
+ *	0 on success, -त्रुटि_सं on failure.
  */
-static int ata_eh_set_lpm(struct ata_link *link, enum ata_lpm_policy policy,
-			  struct ata_device **r_failed_dev)
-{
-	struct ata_port *ap = ata_is_host_link(link) ? link->ap : NULL;
-	struct ata_eh_context *ehc = &link->eh_context;
-	struct ata_device *dev, *link_dev = NULL, *lpm_dev = NULL;
-	enum ata_lpm_policy old_policy = link->lpm_policy;
+अटल पूर्णांक ata_eh_set_lpm(काष्ठा ata_link *link, क्रमागत ata_lpm_policy policy,
+			  काष्ठा ata_device **r_failed_dev)
+अणु
+	काष्ठा ata_port *ap = ata_is_host_link(link) ? link->ap : शून्य;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	काष्ठा ata_device *dev, *link_dev = शून्य, *lpm_dev = शून्य;
+	क्रमागत ata_lpm_policy old_policy = link->lpm_policy;
 	bool no_dipm = link->ap->flags & ATA_FLAG_NO_DIPM;
-	unsigned int hints = ATA_LPM_EMPTY | ATA_LPM_HIPM;
-	unsigned int err_mask;
-	int rc;
+	अचिन्हित पूर्णांक hपूर्णांकs = ATA_LPM_EMPTY | ATA_LPM_HIPM;
+	अचिन्हित पूर्णांक err_mask;
+	पूर्णांक rc;
 
-	/* if the link or host doesn't do LPM, noop */
-	if (!IS_ENABLED(CONFIG_SATA_HOST) ||
+	/* अगर the link or host करोesn't करो LPM, noop */
+	अगर (!IS_ENABLED(CONFIG_SATA_HOST) ||
 	    (link->flags & ATA_LFLAG_NO_LPM) || (ap && !ap->ops->set_lpm))
-		return 0;
+		वापस 0;
 
 	/*
-	 * DIPM is enabled only for MIN_POWER as some devices
+	 * DIPM is enabled only क्रम MIN_POWER as some devices
 	 * misbehave when the host NACKs transition to SLUMBER.  Order
 	 * device and link configurations such that the host always
 	 * allows DIPM requests.
 	 */
-	ata_for_each_dev(dev, link, ENABLED) {
+	ata_क्रम_each_dev(dev, link, ENABLED) अणु
 		bool hipm = ata_id_has_hipm(dev->id);
 		bool dipm = ata_id_has_dipm(dev->id) && !no_dipm;
 
 		/* find the first enabled and LPM enabled devices */
-		if (!link_dev)
+		अगर (!link_dev)
 			link_dev = dev;
 
-		if (!lpm_dev && (hipm || dipm))
+		अगर (!lpm_dev && (hipm || dipm))
 			lpm_dev = dev;
 
-		hints &= ~ATA_LPM_EMPTY;
-		if (!hipm)
-			hints &= ~ATA_LPM_HIPM;
+		hपूर्णांकs &= ~ATA_LPM_EMPTY;
+		अगर (!hipm)
+			hपूर्णांकs &= ~ATA_LPM_HIPM;
 
-		/* disable DIPM before changing link config */
-		if (policy < ATA_LPM_MED_POWER_WITH_DIPM && dipm) {
+		/* disable DIPM beक्रमe changing link config */
+		अगर (policy < ATA_LPM_MED_POWER_WITH_DIPM && dipm) अणु
 			err_mask = ata_dev_set_feature(dev,
 					SETFEATURES_SATA_DISABLE, SATA_DIPM);
-			if (err_mask && err_mask != AC_ERR_DEV) {
+			अगर (err_mask && err_mask != AC_ERR_DEV) अणु
 				ata_dev_warn(dev,
 					     "failed to disable DIPM, Emask 0x%x\n",
 					     err_mask);
 				rc = -EIO;
-				goto fail;
-			}
-		}
-	}
+				जाओ fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (ap) {
-		rc = ap->ops->set_lpm(link, policy, hints);
-		if (!rc && ap->slave_link)
-			rc = ap->ops->set_lpm(ap->slave_link, policy, hints);
-	} else
-		rc = sata_pmp_set_lpm(link, policy, hints);
+	अगर (ap) अणु
+		rc = ap->ops->set_lpm(link, policy, hपूर्णांकs);
+		अगर (!rc && ap->slave_link)
+			rc = ap->ops->set_lpm(ap->slave_link, policy, hपूर्णांकs);
+	पूर्ण अन्यथा
+		rc = sata_pmp_set_lpm(link, policy, hपूर्णांकs);
 
 	/*
 	 * Attribute link config failure to the first (LPM) enabled
 	 * device on the link.
 	 */
-	if (rc) {
-		if (rc == -EOPNOTSUPP) {
+	अगर (rc) अणु
+		अगर (rc == -EOPNOTSUPP) अणु
 			link->flags |= ATA_LFLAG_NO_LPM;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		dev = lpm_dev ? lpm_dev : link_dev;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/*
 	 * Low level driver acked the transition.  Issue DIPM command
 	 * with the new policy set.
 	 */
 	link->lpm_policy = policy;
-	if (ap && ap->slave_link)
+	अगर (ap && ap->slave_link)
 		ap->slave_link->lpm_policy = policy;
 
-	/* host config updated, enable DIPM if transitioning to MIN_POWER */
-	ata_for_each_dev(dev, link, ENABLED) {
-		if (policy >= ATA_LPM_MED_POWER_WITH_DIPM && !no_dipm &&
-		    ata_id_has_dipm(dev->id)) {
+	/* host config updated, enable DIPM अगर transitioning to MIN_POWER */
+	ata_क्रम_each_dev(dev, link, ENABLED) अणु
+		अगर (policy >= ATA_LPM_MED_POWER_WITH_DIPM && !no_dipm &&
+		    ata_id_has_dipm(dev->id)) अणु
 			err_mask = ata_dev_set_feature(dev,
 					SETFEATURES_SATA_ENABLE, SATA_DIPM);
-			if (err_mask && err_mask != AC_ERR_DEV) {
+			अगर (err_mask && err_mask != AC_ERR_DEV) अणु
 				ata_dev_warn(dev,
 					"failed to enable DIPM, Emask 0x%x\n",
 					err_mask);
 				rc = -EIO;
-				goto fail;
-			}
-		}
-	}
+				जाओ fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	link->last_lpm_change = jiffies;
+	link->last_lpm_change = jअगरfies;
 	link->flags |= ATA_LFLAG_CHANGED;
 
-	return 0;
+	वापस 0;
 
 fail:
 	/* restore the old policy */
 	link->lpm_policy = old_policy;
-	if (ap && ap->slave_link)
+	अगर (ap && ap->slave_link)
 		ap->slave_link->lpm_policy = old_policy;
 
-	/* if no device or only one more chance is left, disable LPM */
-	if (!dev || ehc->tries[dev->devno] <= 2) {
+	/* अगर no device or only one more chance is left, disable LPM */
+	अगर (!dev || ehc->tries[dev->devno] <= 2) अणु
 		ata_link_warn(link, "disabling LPM on the link\n");
 		link->flags |= ATA_LFLAG_NO_LPM;
-	}
-	if (r_failed_dev)
+	पूर्ण
+	अगर (r_failed_dev)
 		*r_failed_dev = dev;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int ata_link_nr_enabled(struct ata_link *link)
-{
-	struct ata_device *dev;
-	int cnt = 0;
+पूर्णांक ata_link_nr_enabled(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_device *dev;
+	पूर्णांक cnt = 0;
 
-	ata_for_each_dev(dev, link, ENABLED)
+	ata_क्रम_each_dev(dev, link, ENABLED)
 		cnt++;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static int ata_link_nr_vacant(struct ata_link *link)
-{
-	struct ata_device *dev;
-	int cnt = 0;
+अटल पूर्णांक ata_link_nr_vacant(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_device *dev;
+	पूर्णांक cnt = 0;
 
-	ata_for_each_dev(dev, link, ALL)
-		if (dev->class == ATA_DEV_UNKNOWN)
+	ata_क्रम_each_dev(dev, link, ALL)
+		अगर (dev->class == ATA_DEV_UNKNOWN)
 			cnt++;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static int ata_eh_skip_recovery(struct ata_link *link)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_eh_context *ehc = &link->eh_context;
-	struct ata_device *dev;
+अटल पूर्णांक ata_eh_skip_recovery(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	काष्ठा ata_device *dev;
 
 	/* skip disabled links */
-	if (link->flags & ATA_LFLAG_DISABLED)
-		return 1;
+	अगर (link->flags & ATA_LFLAG_DISABLED)
+		वापस 1;
 
-	/* skip if explicitly requested */
-	if (ehc->i.flags & ATA_EHI_NO_RECOVERY)
-		return 1;
+	/* skip अगर explicitly requested */
+	अगर (ehc->i.flags & ATA_EHI_NO_RECOVERY)
+		वापस 1;
 
 	/* thaw frozen port and recover failed devices */
-	if ((ap->pflags & ATA_PFLAG_FROZEN) || ata_link_nr_enabled(link))
-		return 0;
+	अगर ((ap->pflags & ATA_PFLAG_FROZEN) || ata_link_nr_enabled(link))
+		वापस 0;
 
-	/* reset at least once if reset is requested */
-	if ((ehc->i.action & ATA_EH_RESET) &&
+	/* reset at least once अगर reset is requested */
+	अगर ((ehc->i.action & ATA_EH_RESET) &&
 	    !(ehc->i.flags & ATA_EHI_DID_RESET))
-		return 0;
+		वापस 0;
 
-	/* skip if class codes for all vacant slots are ATA_DEV_NONE */
-	ata_for_each_dev(dev, link, ALL) {
-		if (dev->class == ATA_DEV_UNKNOWN &&
+	/* skip अगर class codes क्रम all vacant slots are ATA_DEV_NONE */
+	ata_क्रम_each_dev(dev, link, ALL) अणु
+		अगर (dev->class == ATA_DEV_UNKNOWN &&
 		    ehc->classes[dev->devno] != ATA_DEV_NONE)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ata_count_probe_trials_cb(struct ata_ering_entry *ent, void *void_arg)
-{
-	u64 interval = msecs_to_jiffies(ATA_EH_PROBE_TRIAL_INTERVAL);
-	u64 now = get_jiffies_64();
-	int *trials = void_arg;
+अटल पूर्णांक ata_count_probe_trials_cb(काष्ठा ata_ering_entry *ent, व्योम *व्योम_arg)
+अणु
+	u64 पूर्णांकerval = msecs_to_jअगरfies(ATA_EH_PROBE_TRIAL_INTERVAL);
+	u64 now = get_jअगरfies_64();
+	पूर्णांक *trials = व्योम_arg;
 
-	if ((ent->eflags & ATA_EFLAG_OLD_ER) ||
-	    (ent->timestamp < now - min(now, interval)))
-		return -1;
+	अगर ((ent->eflags & ATA_EFLAG_OLD_ER) ||
+	    (ent->बारtamp < now - min(now, पूर्णांकerval)))
+		वापस -1;
 
 	(*trials)++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ata_eh_schedule_probe(struct ata_device *dev)
-{
-	struct ata_eh_context *ehc = &dev->link->eh_context;
-	struct ata_link *link = ata_dev_phys_link(dev);
-	int trials = 0;
+अटल पूर्णांक ata_eh_schedule_probe(काष्ठा ata_device *dev)
+अणु
+	काष्ठा ata_eh_context *ehc = &dev->link->eh_context;
+	काष्ठा ata_link *link = ata_dev_phys_link(dev);
+	पूर्णांक trials = 0;
 
-	if (!(ehc->i.probe_mask & (1 << dev->devno)) ||
+	अगर (!(ehc->i.probe_mask & (1 << dev->devno)) ||
 	    (ehc->did_probe_mask & (1 << dev->devno)))
-		return 0;
+		वापस 0;
 
 	ata_eh_detach_dev(dev);
 	ata_dev_init(dev);
@@ -3429,97 +3430,97 @@ static int ata_eh_schedule_probe(struct ata_device *dev)
 	ehc->saved_ncq_enabled &= ~(1 << dev->devno);
 
 	/* the link maybe in a deep sleep, wake it up */
-	if (link->lpm_policy > ATA_LPM_MAX_POWER) {
-		if (ata_is_host_link(link))
+	अगर (link->lpm_policy > ATA_LPM_MAX_POWER) अणु
+		अगर (ata_is_host_link(link))
 			link->ap->ops->set_lpm(link, ATA_LPM_MAX_POWER,
 					       ATA_LPM_EMPTY);
-		else
+		अन्यथा
 			sata_pmp_set_lpm(link, ATA_LPM_MAX_POWER,
 					 ATA_LPM_EMPTY);
-	}
+	पूर्ण
 
-	/* Record and count probe trials on the ering.  The specific
+	/* Record and count probe trials on the ering.  The specअगरic
 	 * error mask used is irrelevant.  Because a successful device
-	 * detection clears the ering, this count accumulates only if
+	 * detection clears the ering, this count accumulates only अगर
 	 * there are consecutive failed probes.
 	 *
 	 * If the count is equal to or higher than ATA_EH_PROBE_TRIALS
 	 * in the last ATA_EH_PROBE_TRIAL_INTERVAL, link speed is
-	 * forced to 1.5Gbps.
+	 * क्रमced to 1.5Gbps.
 	 *
-	 * This is to work around cases where failed link speed
+	 * This is to work around हालs where failed link speed
 	 * negotiation results in device misdetection leading to
 	 * infinite DEVXCHG or PHRDY CHG events.
 	 */
 	ata_ering_record(&dev->ering, 0, AC_ERR_OTHER);
 	ata_ering_map(&dev->ering, ata_count_probe_trials_cb, &trials);
 
-	if (trials > ATA_EH_PROBE_TRIALS)
-		sata_down_spd_limit(link, 1);
+	अगर (trials > ATA_EH_PROBE_TRIALS)
+		sata_करोwn_spd_limit(link, 1);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int ata_eh_handle_dev_fail(struct ata_device *dev, int err)
-{
-	struct ata_eh_context *ehc = &dev->link->eh_context;
+अटल पूर्णांक ata_eh_handle_dev_fail(काष्ठा ata_device *dev, पूर्णांक err)
+अणु
+	काष्ठा ata_eh_context *ehc = &dev->link->eh_context;
 
 	/* -EAGAIN from EH routine indicates retry without prejudice.
-	 * The requester is responsible for ensuring forward progress.
+	 * The requester is responsible क्रम ensuring क्रमward progress.
 	 */
-	if (err != -EAGAIN)
+	अगर (err != -EAGAIN)
 		ehc->tries[dev->devno]--;
 
-	switch (err) {
-	case -ENODEV:
+	चयन (err) अणु
+	हाल -ENODEV:
 		/* device missing or wrong IDENTIFY data, schedule probing */
 		ehc->i.probe_mask |= (1 << dev->devno);
 		fallthrough;
-	case -EINVAL:
+	हाल -EINVAL:
 		/* give it just one more chance */
 		ehc->tries[dev->devno] = min(ehc->tries[dev->devno], 1);
 		fallthrough;
-	case -EIO:
-		if (ehc->tries[dev->devno] == 1) {
+	हाल -EIO:
+		अगर (ehc->tries[dev->devno] == 1) अणु
 			/* This is the last chance, better to slow
-			 * down than lose it.
+			 * करोwn than lose it.
 			 */
-			sata_down_spd_limit(ata_dev_phys_link(dev), 0);
-			if (dev->pio_mode > XFER_PIO_0)
-				ata_down_xfermask_limit(dev, ATA_DNXFER_PIO);
-		}
-	}
+			sata_करोwn_spd_limit(ata_dev_phys_link(dev), 0);
+			अगर (dev->pio_mode > XFER_PIO_0)
+				ata_करोwn_xfermask_limit(dev, ATA_DNXFER_PIO);
+		पूर्ण
+	पूर्ण
 
-	if (ata_dev_enabled(dev) && !ehc->tries[dev->devno]) {
-		/* disable device if it has used up all its chances */
+	अगर (ata_dev_enabled(dev) && !ehc->tries[dev->devno]) अणु
+		/* disable device अगर it has used up all its chances */
 		ata_dev_disable(dev);
 
-		/* detach if offline */
-		if (ata_phys_link_offline(ata_dev_phys_link(dev)))
+		/* detach अगर offline */
+		अगर (ata_phys_link_offline(ata_dev_phys_link(dev)))
 			ata_eh_detach_dev(dev);
 
-		/* schedule probe if necessary */
-		if (ata_eh_schedule_probe(dev)) {
+		/* schedule probe अगर necessary */
+		अगर (ata_eh_schedule_probe(dev)) अणु
 			ehc->tries[dev->devno] = ATA_EH_DEV_TRIES;
-			memset(ehc->cmd_timeout_idx[dev->devno], 0,
-			       sizeof(ehc->cmd_timeout_idx[dev->devno]));
-		}
+			स_रखो(ehc->cmd_समयout_idx[dev->devno], 0,
+			       माप(ehc->cmd_समयout_idx[dev->devno]));
+		पूर्ण
 
-		return 1;
-	} else {
+		वापस 1;
+	पूर्ण अन्यथा अणु
 		ehc->i.action |= ATA_EH_RESET;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
  *	ata_eh_recover - recover host port after error
  *	@ap: host port to recover
- *	@prereset: prereset method (can be NULL)
- *	@softreset: softreset method (can be NULL)
- *	@hardreset: hardreset method (can be NULL)
- *	@postreset: postreset method (can be NULL)
- *	@r_failed_link: out parameter for failed link
+ *	@prereset: prereset method (can be शून्य)
+ *	@softreset: softreset method (can be शून्य)
+ *	@hardreset: hardreset method (can be शून्य)
+ *	@postreset: postreset method (can be शून्य)
+ *	@r_failed_link: out parameter क्रम failed link
  *
  *	This is the alpha and omega, eum and yang, heart and soul of
  *	libata exception handling.  On entry, actions required to
@@ -3529,40 +3530,40 @@ static int ata_eh_handle_dev_fail(struct ata_device *dev, int err)
  *	devices, detach goners and greet newcomers.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  *
  *	RETURNS:
- *	0 on success, -errno on failure.
+ *	0 on success, -त्रुटि_सं on failure.
  */
-int ata_eh_recover(struct ata_port *ap, ata_prereset_fn_t prereset,
+पूर्णांक ata_eh_recover(काष्ठा ata_port *ap, ata_prereset_fn_t prereset,
 		   ata_reset_fn_t softreset, ata_reset_fn_t hardreset,
 		   ata_postreset_fn_t postreset,
-		   struct ata_link **r_failed_link)
-{
-	struct ata_link *link;
-	struct ata_device *dev;
-	int rc, nr_fails;
-	unsigned long flags, deadline;
+		   काष्ठा ata_link **r_failed_link)
+अणु
+	काष्ठा ata_link *link;
+	काष्ठा ata_device *dev;
+	पूर्णांक rc, nr_fails;
+	अचिन्हित दीर्घ flags, deadline;
 
 	DPRINTK("ENTER\n");
 
-	/* prep for recovery */
-	ata_for_each_link(link, ap, EDGE) {
-		struct ata_eh_context *ehc = &link->eh_context;
+	/* prep क्रम recovery */
+	ata_क्रम_each_link(link, ap, EDGE) अणु
+		काष्ठा ata_eh_context *ehc = &link->eh_context;
 
 		/* re-enable link? */
-		if (ehc->i.action & ATA_EH_ENABLE_LINK) {
-			ata_eh_about_to_do(link, NULL, ATA_EH_ENABLE_LINK);
+		अगर (ehc->i.action & ATA_EH_ENABLE_LINK) अणु
+			ata_eh_about_to_करो(link, शून्य, ATA_EH_ENABLE_LINK);
 			spin_lock_irqsave(ap->lock, flags);
 			link->flags &= ~ATA_LFLAG_DISABLED;
 			spin_unlock_irqrestore(ap->lock, flags);
-			ata_eh_done(link, NULL, ATA_EH_ENABLE_LINK);
-		}
+			ata_eh_करोne(link, शून्य, ATA_EH_ENABLE_LINK);
+		पूर्ण
 
-		ata_for_each_dev(dev, link, ALL) {
-			if (link->flags & ATA_LFLAG_NO_RETRY)
+		ata_क्रम_each_dev(dev, link, ALL) अणु
+			अगर (link->flags & ATA_LFLAG_NO_RETRY)
 				ehc->tries[dev->devno] = 1;
-			else
+			अन्यथा
 				ehc->tries[dev->devno] = ATA_EH_DEV_TRIES;
 
 			/* collect port action mask recorded in dev actions */
@@ -3571,51 +3572,51 @@ int ata_eh_recover(struct ata_port *ap, ata_prereset_fn_t prereset,
 			ehc->i.dev_action[dev->devno] &= ATA_EH_PERDEV_MASK;
 
 			/* process hotplug request */
-			if (dev->flags & ATA_DFLAG_DETACH)
+			अगर (dev->flags & ATA_DFLAG_DETACH)
 				ata_eh_detach_dev(dev);
 
-			/* schedule probe if necessary */
-			if (!ata_dev_enabled(dev))
+			/* schedule probe अगर necessary */
+			अगर (!ata_dev_enabled(dev))
 				ata_eh_schedule_probe(dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
  retry:
 	rc = 0;
 
-	/* if UNLOADING, finish immediately */
-	if (ap->pflags & ATA_PFLAG_UNLOADING)
-		goto out;
+	/* अगर UNLOADING, finish immediately */
+	अगर (ap->pflags & ATA_PFLAG_UNLOADING)
+		जाओ out;
 
-	/* prep for EH */
-	ata_for_each_link(link, ap, EDGE) {
-		struct ata_eh_context *ehc = &link->eh_context;
+	/* prep क्रम EH */
+	ata_क्रम_each_link(link, ap, EDGE) अणु
+		काष्ठा ata_eh_context *ehc = &link->eh_context;
 
-		/* skip EH if possible. */
-		if (ata_eh_skip_recovery(link))
+		/* skip EH अगर possible. */
+		अगर (ata_eh_skip_recovery(link))
 			ehc->i.action = 0;
 
-		ata_for_each_dev(dev, link, ALL)
+		ata_क्रम_each_dev(dev, link, ALL)
 			ehc->classes[dev->devno] = ATA_DEV_UNKNOWN;
-	}
+	पूर्ण
 
 	/* reset */
-	ata_for_each_link(link, ap, EDGE) {
-		struct ata_eh_context *ehc = &link->eh_context;
+	ata_क्रम_each_link(link, ap, EDGE) अणु
+		काष्ठा ata_eh_context *ehc = &link->eh_context;
 
-		if (!(ehc->i.action & ATA_EH_RESET))
-			continue;
+		अगर (!(ehc->i.action & ATA_EH_RESET))
+			जारी;
 
 		rc = ata_eh_reset(link, ata_link_nr_vacant(link),
 				  prereset, softreset, hardreset, postreset);
-		if (rc) {
+		अगर (rc) अणु
 			ata_link_err(link, "reset failed, giving up\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	do {
-		unsigned long now;
+	करो अणु
+		अचिन्हित दीर्घ now;
 
 		/*
 		 * clears ATA_EH_PARK in eh_info and resets
@@ -3623,143 +3624,143 @@ int ata_eh_recover(struct ata_port *ap, ata_prereset_fn_t prereset,
 		 */
 		ata_eh_pull_park_action(ap);
 
-		deadline = jiffies;
-		ata_for_each_link(link, ap, EDGE) {
-			ata_for_each_dev(dev, link, ALL) {
-				struct ata_eh_context *ehc = &link->eh_context;
-				unsigned long tmp;
+		deadline = jअगरfies;
+		ata_क्रम_each_link(link, ap, EDGE) अणु
+			ata_क्रम_each_dev(dev, link, ALL) अणु
+				काष्ठा ata_eh_context *ehc = &link->eh_context;
+				अचिन्हित दीर्घ पंचांगp;
 
-				if (dev->class != ATA_DEV_ATA &&
+				अगर (dev->class != ATA_DEV_ATA &&
 				    dev->class != ATA_DEV_ZAC)
-					continue;
-				if (!(ehc->i.dev_action[dev->devno] &
+					जारी;
+				अगर (!(ehc->i.dev_action[dev->devno] &
 				      ATA_EH_PARK))
-					continue;
-				tmp = dev->unpark_deadline;
-				if (time_before(deadline, tmp))
-					deadline = tmp;
-				else if (time_before_eq(tmp, jiffies))
-					continue;
-				if (ehc->unloaded_mask & (1 << dev->devno))
-					continue;
+					जारी;
+				पंचांगp = dev->unpark_deadline;
+				अगर (समय_beक्रमe(deadline, पंचांगp))
+					deadline = पंचांगp;
+				अन्यथा अगर (समय_beक्रमe_eq(पंचांगp, jअगरfies))
+					जारी;
+				अगर (ehc->unloaded_mask & (1 << dev->devno))
+					जारी;
 
 				ata_eh_park_issue_cmd(dev, 1);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		now = jiffies;
-		if (time_before_eq(deadline, now))
-			break;
+		now = jअगरfies;
+		अगर (समय_beक्रमe_eq(deadline, now))
+			अवरोध;
 
 		ata_eh_release(ap);
-		deadline = wait_for_completion_timeout(&ap->park_req_pending,
+		deadline = रुको_क्रम_completion_समयout(&ap->park_req_pending,
 						       deadline - now);
 		ata_eh_acquire(ap);
-	} while (deadline);
-	ata_for_each_link(link, ap, EDGE) {
-		ata_for_each_dev(dev, link, ALL) {
-			if (!(link->eh_context.unloaded_mask &
+	पूर्ण जबतक (deadline);
+	ata_क्रम_each_link(link, ap, EDGE) अणु
+		ata_क्रम_each_dev(dev, link, ALL) अणु
+			अगर (!(link->eh_context.unloaded_mask &
 			      (1 << dev->devno)))
-				continue;
+				जारी;
 
 			ata_eh_park_issue_cmd(dev, 0);
-			ata_eh_done(link, dev, ATA_EH_PARK);
-		}
-	}
+			ata_eh_करोne(link, dev, ATA_EH_PARK);
+		पूर्ण
+	पूर्ण
 
 	/* the rest */
 	nr_fails = 0;
-	ata_for_each_link(link, ap, PMP_FIRST) {
-		struct ata_eh_context *ehc = &link->eh_context;
+	ata_क्रम_each_link(link, ap, PMP_FIRST) अणु
+		काष्ठा ata_eh_context *ehc = &link->eh_context;
 
-		if (sata_pmp_attached(ap) && ata_is_host_link(link))
-			goto config_lpm;
+		अगर (sata_pmp_attached(ap) && ata_is_host_link(link))
+			जाओ config_lpm;
 
 		/* revalidate existing devices and attach new ones */
 		rc = ata_eh_revalidate_and_attach(link, &dev);
-		if (rc)
-			goto rest_fail;
+		अगर (rc)
+			जाओ rest_fail;
 
-		/* if PMP got attached, return, pmp EH will take care of it */
-		if (link->device->class == ATA_DEV_PMP) {
+		/* अगर PMP got attached, वापस, pmp EH will take care of it */
+		अगर (link->device->class == ATA_DEV_PMP) अणु
 			ehc->i.action = 0;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		/* configure transfer mode if necessary */
-		if (ehc->i.flags & ATA_EHI_SETMODE) {
+		/* configure transfer mode अगर necessary */
+		अगर (ehc->i.flags & ATA_EHI_SETMODE) अणु
 			rc = ata_set_mode(link, &dev);
-			if (rc)
-				goto rest_fail;
+			अगर (rc)
+				जाओ rest_fail;
 			ehc->i.flags &= ~ATA_EHI_SETMODE;
-		}
+		पूर्ण
 
-		/* If reset has been issued, clear UA to avoid
+		/* If reset has been issued, clear UA to aव्योम
 		 * disrupting the current users of the device.
 		 */
-		if (ehc->i.flags & ATA_EHI_DID_RESET) {
-			ata_for_each_dev(dev, link, ALL) {
-				if (dev->class != ATA_DEV_ATAPI)
-					continue;
+		अगर (ehc->i.flags & ATA_EHI_DID_RESET) अणु
+			ata_क्रम_each_dev(dev, link, ALL) अणु
+				अगर (dev->class != ATA_DEV_ATAPI)
+					जारी;
 				rc = atapi_eh_clear_ua(dev);
-				if (rc)
-					goto rest_fail;
-				if (zpodd_dev_enabled(dev))
-					zpodd_post_poweron(dev);
-			}
-		}
+				अगर (rc)
+					जाओ rest_fail;
+				अगर (zpodd_dev_enabled(dev))
+					zpodd_post_घातeron(dev);
+			पूर्ण
+		पूर्ण
 
-		/* retry flush if necessary */
-		ata_for_each_dev(dev, link, ALL) {
-			if (dev->class != ATA_DEV_ATA &&
+		/* retry flush अगर necessary */
+		ata_क्रम_each_dev(dev, link, ALL) अणु
+			अगर (dev->class != ATA_DEV_ATA &&
 			    dev->class != ATA_DEV_ZAC)
-				continue;
+				जारी;
 			rc = ata_eh_maybe_retry_flush(dev);
-			if (rc)
-				goto rest_fail;
-		}
+			अगर (rc)
+				जाओ rest_fail;
+		पूर्ण
 
 	config_lpm:
-		/* configure link power saving */
-		if (link->lpm_policy != ap->target_lpm_policy) {
+		/* configure link घातer saving */
+		अगर (link->lpm_policy != ap->target_lpm_policy) अणु
 			rc = ata_eh_set_lpm(link, ap->target_lpm_policy, &dev);
-			if (rc)
-				goto rest_fail;
-		}
+			अगर (rc)
+				जाओ rest_fail;
+		पूर्ण
 
 		/* this link is okay now */
 		ehc->i.flags = 0;
-		continue;
+		जारी;
 
 	rest_fail:
 		nr_fails++;
-		if (dev)
+		अगर (dev)
 			ata_eh_handle_dev_fail(dev, rc);
 
-		if (ap->pflags & ATA_PFLAG_FROZEN) {
+		अगर (ap->pflags & ATA_PFLAG_FROZEN) अणु
 			/* PMP reset requires working host port.
 			 * Can't retry if it's frozen.
 			 */
-			if (sata_pmp_attached(ap))
-				goto out;
-			break;
-		}
-	}
+			अगर (sata_pmp_attached(ap))
+				जाओ out;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (nr_fails)
-		goto retry;
+	अगर (nr_fails)
+		जाओ retry;
 
  out:
-	if (rc && r_failed_link)
+	अगर (rc && r_failed_link)
 		*r_failed_link = link;
 
 	DPRINTK("EXIT, rc=%d\n", rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  *	ata_eh_finish - finish up EH
- *	@ap: host port to finish EH for
+ *	@ap: host port to finish EH क्रम
  *
  *	Recovery is complete.  Clean up EH states and retry or finish
  *	failed qcs.
@@ -3767,145 +3768,145 @@ int ata_eh_recover(struct ata_port *ap, ata_prereset_fn_t prereset,
  *	LOCKING:
  *	None.
  */
-void ata_eh_finish(struct ata_port *ap)
-{
-	struct ata_queued_cmd *qc;
-	int tag;
+व्योम ata_eh_finish(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_queued_cmd *qc;
+	पूर्णांक tag;
 
 	/* retry or finish qcs */
-	ata_qc_for_each_raw(ap, qc, tag) {
-		if (!(qc->flags & ATA_QCFLAG_FAILED))
-			continue;
+	ata_qc_क्रम_each_raw(ap, qc, tag) अणु
+		अगर (!(qc->flags & ATA_QCFLAG_FAILED))
+			जारी;
 
-		if (qc->err_mask) {
+		अगर (qc->err_mask) अणु
 			/* FIXME: Once EH migration is complete,
 			 * generate sense data in this function,
 			 * considering both err_mask and tf.
 			 */
-			if (qc->flags & ATA_QCFLAG_RETRY)
+			अगर (qc->flags & ATA_QCFLAG_RETRY)
 				ata_eh_qc_retry(qc);
-			else
+			अन्यथा
 				ata_eh_qc_complete(qc);
-		} else {
-			if (qc->flags & ATA_QCFLAG_SENSE_VALID) {
+		पूर्ण अन्यथा अणु
+			अगर (qc->flags & ATA_QCFLAG_SENSE_VALID) अणु
 				ata_eh_qc_complete(qc);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* feed zero TF to sense generation */
-				memset(&qc->result_tf, 0, sizeof(qc->result_tf));
+				स_रखो(&qc->result_tf, 0, माप(qc->result_tf));
 				ata_eh_qc_retry(qc);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* make sure nr_active_links is zero after EH */
 	WARN_ON(ap->nr_active_links);
 	ap->nr_active_links = 0;
-}
+पूर्ण
 
 /**
- *	ata_do_eh - do standard error handling
- *	@ap: host port to handle error for
+ *	ata_करो_eh - करो standard error handling
+ *	@ap: host port to handle error क्रम
  *
- *	@prereset: prereset method (can be NULL)
- *	@softreset: softreset method (can be NULL)
- *	@hardreset: hardreset method (can be NULL)
- *	@postreset: postreset method (can be NULL)
+ *	@prereset: prereset method (can be शून्य)
+ *	@softreset: softreset method (can be शून्य)
+ *	@hardreset: hardreset method (can be शून्य)
+ *	@postreset: postreset method (can be शून्य)
  *
- *	Perform standard error handling sequence.
+ *	Perक्रमm standard error handling sequence.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-void ata_do_eh(struct ata_port *ap, ata_prereset_fn_t prereset,
+व्योम ata_करो_eh(काष्ठा ata_port *ap, ata_prereset_fn_t prereset,
 	       ata_reset_fn_t softreset, ata_reset_fn_t hardreset,
 	       ata_postreset_fn_t postreset)
-{
-	struct ata_device *dev;
-	int rc;
+अणु
+	काष्ठा ata_device *dev;
+	पूर्णांक rc;
 
-	ata_eh_autopsy(ap);
+	ata_eh_स्वतःpsy(ap);
 	ata_eh_report(ap);
 
 	rc = ata_eh_recover(ap, prereset, softreset, hardreset, postreset,
-			    NULL);
-	if (rc) {
-		ata_for_each_dev(dev, &ap->link, ALL)
+			    शून्य);
+	अगर (rc) अणु
+		ata_क्रम_each_dev(dev, &ap->link, ALL)
 			ata_dev_disable(dev);
-	}
+	पूर्ण
 
 	ata_eh_finish(ap);
-}
+पूर्ण
 
 /**
  *	ata_std_error_handler - standard error handler
- *	@ap: host port to handle error for
+ *	@ap: host port to handle error क्रम
  *
  *	Standard error handler
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-void ata_std_error_handler(struct ata_port *ap)
-{
-	struct ata_port_operations *ops = ap->ops;
+व्योम ata_std_error_handler(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_port_operations *ops = ap->ops;
 	ata_reset_fn_t hardreset = ops->hardreset;
 
-	/* ignore built-in hardreset if SCR access is not available */
-	if (hardreset == sata_std_hardreset && !sata_scr_valid(&ap->link))
-		hardreset = NULL;
+	/* ignore built-in hardreset अगर SCR access is not available */
+	अगर (hardreset == sata_std_hardreset && !sata_scr_valid(&ap->link))
+		hardreset = शून्य;
 
-	ata_do_eh(ap, ops->prereset, ops->softreset, hardreset, ops->postreset);
-}
+	ata_करो_eh(ap, ops->prereset, ops->softreset, hardreset, ops->postreset);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_std_error_handler);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /**
- *	ata_eh_handle_port_suspend - perform port suspend operation
+ *	ata_eh_handle_port_suspend - perक्रमm port suspend operation
  *	@ap: port to suspend
  *
  *	Suspend @ap.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-static void ata_eh_handle_port_suspend(struct ata_port *ap)
-{
-	unsigned long flags;
-	int rc = 0;
-	struct ata_device *dev;
+अटल व्योम ata_eh_handle_port_suspend(काष्ठा ata_port *ap)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc = 0;
+	काष्ठा ata_device *dev;
 
 	/* are we suspending? */
 	spin_lock_irqsave(ap->lock, flags);
-	if (!(ap->pflags & ATA_PFLAG_PM_PENDING) ||
-	    ap->pm_mesg.event & PM_EVENT_RESUME) {
+	अगर (!(ap->pflags & ATA_PFLAG_PM_PENDING) ||
+	    ap->pm_mesg.event & PM_EVENT_RESUME) अणु
 		spin_unlock_irqrestore(ap->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock_irqrestore(ap->lock, flags);
 
 	WARN_ON(ap->pflags & ATA_PFLAG_SUSPENDED);
 
 	/*
 	 * If we have a ZPODD attached, check its zero
-	 * power ready status before the port is frozen.
-	 * Only needed for runtime suspend.
+	 * घातer पढ़ोy status beक्रमe the port is frozen.
+	 * Only needed क्रम runसमय suspend.
 	 */
-	if (PMSG_IS_AUTO(ap->pm_mesg)) {
-		ata_for_each_dev(dev, &ap->link, ENABLED) {
-			if (zpodd_dev_enabled(dev))
+	अगर (PMSG_IS_AUTO(ap->pm_mesg)) अणु
+		ata_क्रम_each_dev(dev, &ap->link, ENABLED) अणु
+			अगर (zpodd_dev_enabled(dev))
 				zpodd_on_suspend(dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* tell ACPI we're suspending */
 	rc = ata_acpi_on_suspend(ap);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	/* suspend */
-	ata_eh_freeze_port(ap);
+	ata_eh_मुक्तze_port(ap);
 
-	if (ap->ops->port_suspend)
+	अगर (ap->ops->port_suspend)
 		rc = ap->ops->port_suspend(ap, ap->pm_mesg);
 
 	ata_acpi_set_state(ap, ap->pm_mesg);
@@ -3914,56 +3915,56 @@ static void ata_eh_handle_port_suspend(struct ata_port *ap)
 	spin_lock_irqsave(ap->lock, flags);
 
 	ap->pflags &= ~ATA_PFLAG_PM_PENDING;
-	if (rc == 0)
+	अगर (rc == 0)
 		ap->pflags |= ATA_PFLAG_SUSPENDED;
-	else if (ap->pflags & ATA_PFLAG_FROZEN)
+	अन्यथा अगर (ap->pflags & ATA_PFLAG_FROZEN)
 		ata_port_schedule_eh(ap);
 
 	spin_unlock_irqrestore(ap->lock, flags);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- *	ata_eh_handle_port_resume - perform port resume operation
+ *	ata_eh_handle_port_resume - perक्रमm port resume operation
  *	@ap: port to resume
  *
  *	Resume @ap.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-static void ata_eh_handle_port_resume(struct ata_port *ap)
-{
-	struct ata_link *link;
-	struct ata_device *dev;
-	unsigned long flags;
+अटल व्योम ata_eh_handle_port_resume(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_link *link;
+	काष्ठा ata_device *dev;
+	अचिन्हित दीर्घ flags;
 
 	/* are we resuming? */
 	spin_lock_irqsave(ap->lock, flags);
-	if (!(ap->pflags & ATA_PFLAG_PM_PENDING) ||
-	    !(ap->pm_mesg.event & PM_EVENT_RESUME)) {
+	अगर (!(ap->pflags & ATA_PFLAG_PM_PENDING) ||
+	    !(ap->pm_mesg.event & PM_EVENT_RESUME)) अणु
 		spin_unlock_irqrestore(ap->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_unlock_irqrestore(ap->lock, flags);
 
 	WARN_ON(!(ap->pflags & ATA_PFLAG_SUSPENDED));
 
 	/*
-	 * Error timestamps are in jiffies which doesn't run while
+	 * Error बारtamps are in jअगरfies which करोesn't run जबतक
 	 * suspended and PHY events during resume isn't too uncommon.
 	 * When the two are combined, it can lead to unnecessary speed
-	 * downs if the machine is suspended and resumed repeatedly.
+	 * करोwns अगर the machine is suspended and resumed repeatedly.
 	 * Clear error history.
 	 */
-	ata_for_each_link(link, ap, HOST_FIRST)
-		ata_for_each_dev(dev, link, ALL)
+	ata_क्रम_each_link(link, ap, HOST_FIRST)
+		ata_क्रम_each_dev(dev, link, ALL)
 			ata_ering_clear(&dev->ering);
 
 	ata_acpi_set_state(ap, ap->pm_mesg);
 
-	if (ap->ops->port_resume)
+	अगर (ap->ops->port_resume)
 		ap->ops->port_resume(ap);
 
 	/* tell ACPI that we're resuming */
@@ -3973,5 +3974,5 @@ static void ata_eh_handle_port_resume(struct ata_port *ap)
 	spin_lock_irqsave(ap->lock, flags);
 	ap->pflags &= ~(ATA_PFLAG_PM_PENDING | ATA_PFLAG_SUSPENDED);
 	spin_unlock_irqrestore(ap->lock, flags);
-}
-#endif /* CONFIG_PM */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */

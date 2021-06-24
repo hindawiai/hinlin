@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include "mt76x2.h"
+#समावेश "mt76x2.h"
 
-static const struct pci_device_id mt76x2e_device_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7662) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7612) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7602) },
-	{ },
-};
+अटल स्थिर काष्ठा pci_device_id mt76x2e_device_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7662) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7612) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_MEDIATEK, 0x7602) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int
-mt76x2e_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	static const struct mt76_driver_ops drv_ops = {
-		.txwi_size = sizeof(struct mt76x02_txwi),
+अटल पूर्णांक
+mt76x2e_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अटल स्थिर काष्ठा mt76_driver_ops drv_ops = अणु
+		.txwi_size = माप(काष्ठा mt76x02_txwi),
 		.drv_flags = MT_DRV_TX_ALIGNED4_SKBS |
 			     MT_DRV_SW_RX_AIRTIME,
 		.survey_flags = SURVEY_INFO_TIME_TX,
@@ -31,32 +32,32 @@ mt76x2e_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 		.rx_poll_complete = mt76x02_rx_poll_complete,
 		.sta_ps = mt76x02_sta_ps,
 		.sta_add = mt76x02_sta_add,
-		.sta_remove = mt76x02_sta_remove,
-	};
-	struct mt76x02_dev *dev;
-	struct mt76_dev *mdev;
-	int ret;
+		.sta_हटाओ = mt76x02_sta_हटाओ,
+	पूर्ण;
+	काष्ठा mt76x02_dev *dev;
+	काष्ठा mt76_dev *mdev;
+	पूर्णांक ret;
 
 	ret = pcim_enable_device(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = pcim_iomap_regions(pdev, BIT(0), pci_name(pdev));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci_set_master(pdev);
 
 	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	mdev = mt76_alloc_device(&pdev->dev, sizeof(*dev), &mt76x2_ops,
+	mdev = mt76_alloc_device(&pdev->dev, माप(*dev), &mt76x2_ops,
 				 &drv_ops);
-	if (!mdev)
-		return -ENOMEM;
+	अगर (!mdev)
+		वापस -ENOMEM;
 
-	dev = container_of(mdev, struct mt76x02_dev, mt76);
+	dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
 	mt76_mmio_init(mdev, pcim_iomap_table(pdev)[0]);
 	mt76x2_reset_wlan(dev, false);
 
@@ -67,12 +68,12 @@ mt76x2e_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	ret = devm_request_irq(mdev->dev, pdev->irq, mt76x02_irq_handler,
 			       IRQF_SHARED, KBUILD_MODNAME, dev);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	ret = mt76x2_register_device(dev);
-	if (ret)
-		goto error;
+	ret = mt76x2_रेजिस्टर_device(dev);
+	अगर (ret)
+		जाओ error;
 
 	/* Fix up ASPM configuration */
 
@@ -87,92 +88,92 @@ mt76x2e_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	mt76_pci_disable_aspm(pdev);
 
-	return 0;
+	वापस 0;
 
 error:
-	mt76_free_device(&dev->mt76);
+	mt76_मुक्त_device(&dev->mt76);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-mt76x2e_remove(struct pci_dev *pdev)
-{
-	struct mt76_dev *mdev = pci_get_drvdata(pdev);
-	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
+अटल व्योम
+mt76x2e_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mt76_dev *mdev = pci_get_drvdata(pdev);
+	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
 
-	mt76_unregister_device(mdev);
+	mt76_unरेजिस्टर_device(mdev);
 	mt76x2_cleanup(dev);
-	mt76_free_device(mdev);
-}
+	mt76_मुक्त_device(mdev);
+पूर्ण
 
-static int __maybe_unused
-mt76x2e_suspend(struct pci_dev *pdev, pm_message_t state)
-{
-	struct mt76_dev *mdev = pci_get_drvdata(pdev);
-	int i, err;
+अटल पूर्णांक __maybe_unused
+mt76x2e_suspend(काष्ठा pci_dev *pdev, pm_message_t state)
+अणु
+	काष्ठा mt76_dev *mdev = pci_get_drvdata(pdev);
+	पूर्णांक i, err;
 
 	napi_disable(&mdev->tx_napi);
-	tasklet_kill(&mdev->pre_tbtt_tasklet);
+	tasklet_समाप्त(&mdev->pre_tbtt_tasklet);
 	mt76_worker_disable(&mdev->tx_worker);
 
-	mt76_for_each_q_rx(mdev, i)
+	mt76_क्रम_each_q_rx(mdev, i)
 		napi_disable(&mdev->napi[i]);
 
 	pci_enable_wake(pdev, pci_choose_state(pdev, state), true);
 	pci_save_state(pdev);
-	err = pci_set_power_state(pdev, pci_choose_state(pdev, state));
-	if (err)
-		goto restore;
+	err = pci_set_घातer_state(pdev, pci_choose_state(pdev, state));
+	अगर (err)
+		जाओ restore;
 
-	return 0;
+	वापस 0;
 
 restore:
-	mt76_for_each_q_rx(mdev, i)
+	mt76_क्रम_each_q_rx(mdev, i)
 		napi_enable(&mdev->napi[i]);
 	napi_enable(&mdev->tx_napi);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __maybe_unused
-mt76x2e_resume(struct pci_dev *pdev)
-{
-	struct mt76_dev *mdev = pci_get_drvdata(pdev);
-	struct mt76x02_dev *dev = container_of(mdev, struct mt76x02_dev, mt76);
-	int i, err;
+अटल पूर्णांक __maybe_unused
+mt76x2e_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mt76_dev *mdev = pci_get_drvdata(pdev);
+	काष्ठा mt76x02_dev *dev = container_of(mdev, काष्ठा mt76x02_dev, mt76);
+	पूर्णांक i, err;
 
-	err = pci_set_power_state(pdev, PCI_D0);
-	if (err)
-		return err;
+	err = pci_set_घातer_state(pdev, PCI_D0);
+	अगर (err)
+		वापस err;
 
 	pci_restore_state(pdev);
 
 	mt76_worker_enable(&mdev->tx_worker);
-	mt76_for_each_q_rx(mdev, i) {
+	mt76_क्रम_each_q_rx(mdev, i) अणु
 		napi_enable(&mdev->napi[i]);
 		napi_schedule(&mdev->napi[i]);
-	}
+	पूर्ण
 	napi_enable(&mdev->tx_napi);
 	napi_schedule(&mdev->tx_napi);
 
-	return mt76x2_resume_device(dev);
-}
+	वापस mt76x2_resume_device(dev);
+पूर्ण
 
 MODULE_DEVICE_TABLE(pci, mt76x2e_device_table);
 MODULE_FIRMWARE(MT7662_FIRMWARE);
 MODULE_FIRMWARE(MT7662_ROM_PATCH);
 MODULE_LICENSE("Dual BSD/GPL");
 
-static struct pci_driver mt76pci_driver = {
+अटल काष्ठा pci_driver mt76pci_driver = अणु
 	.name		= KBUILD_MODNAME,
 	.id_table	= mt76x2e_device_table,
 	.probe		= mt76x2e_probe,
-	.remove		= mt76x2e_remove,
-#ifdef CONFIG_PM
+	.हटाओ		= mt76x2e_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend	= mt76x2e_suspend,
 	.resume		= mt76x2e_resume,
-#endif /* CONFIG_PM */
-};
+#पूर्ण_अगर /* CONFIG_PM */
+पूर्ण;
 
 module_pci_driver(mt76pci_driver);

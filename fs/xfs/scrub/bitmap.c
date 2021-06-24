@@ -1,314 +1,315 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2018 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_btree.h"
-#include "scrub/bitmap.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_btree.h"
+#समावेश "scrub/bitmap.h"
 
 /*
- * Set a range of this bitmap.  Caller must ensure the range is not set.
+ * Set a range of this biपंचांगap.  Caller must ensure the range is not set.
  *
- * This is the logical equivalent of bitmap |= mask(start, len).
+ * This is the logical equivalent of biपंचांगap |= mask(start, len).
  */
-int
-xbitmap_set(
-	struct xbitmap		*bitmap,
-	uint64_t		start,
-	uint64_t		len)
-{
-	struct xbitmap_range	*bmr;
+पूर्णांक
+xbiपंचांगap_set(
+	काष्ठा xbiपंचांगap		*biपंचांगap,
+	uपूर्णांक64_t		start,
+	uपूर्णांक64_t		len)
+अणु
+	काष्ठा xbiपंचांगap_range	*bmr;
 
-	bmr = kmem_alloc(sizeof(struct xbitmap_range), KM_MAYFAIL);
-	if (!bmr)
-		return -ENOMEM;
+	bmr = kmem_alloc(माप(काष्ठा xbiपंचांगap_range), KM_MAYFAIL);
+	अगर (!bmr)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&bmr->list);
 	bmr->start = start;
 	bmr->len = len;
-	list_add_tail(&bmr->list, &bitmap->list);
+	list_add_tail(&bmr->list, &biपंचांगap->list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Free everything related to this bitmap. */
-void
-xbitmap_destroy(
-	struct xbitmap		*bitmap)
-{
-	struct xbitmap_range	*bmr;
-	struct xbitmap_range	*n;
+/* Free everything related to this biपंचांगap. */
+व्योम
+xbiपंचांगap_destroy(
+	काष्ठा xbiपंचांगap		*biपंचांगap)
+अणु
+	काष्ठा xbiपंचांगap_range	*bmr;
+	काष्ठा xbiपंचांगap_range	*n;
 
-	for_each_xbitmap_extent(bmr, n, bitmap) {
+	क्रम_each_xbiपंचांगap_extent(bmr, n, biपंचांगap) अणु
 		list_del(&bmr->list);
-		kmem_free(bmr);
-	}
-}
+		kmem_मुक्त(bmr);
+	पूर्ण
+पूर्ण
 
-/* Set up a per-AG block bitmap. */
-void
-xbitmap_init(
-	struct xbitmap		*bitmap)
-{
-	INIT_LIST_HEAD(&bitmap->list);
-}
+/* Set up a per-AG block biपंचांगap. */
+व्योम
+xbiपंचांगap_init(
+	काष्ठा xbiपंचांगap		*biपंचांगap)
+अणु
+	INIT_LIST_HEAD(&biपंचांगap->list);
+पूर्ण
 
 /* Compare two btree extents. */
-static int
-xbitmap_range_cmp(
-	void			*priv,
-	const struct list_head	*a,
-	const struct list_head	*b)
-{
-	struct xbitmap_range	*ap;
-	struct xbitmap_range	*bp;
+अटल पूर्णांक
+xbiपंचांगap_range_cmp(
+	व्योम			*priv,
+	स्थिर काष्ठा list_head	*a,
+	स्थिर काष्ठा list_head	*b)
+अणु
+	काष्ठा xbiपंचांगap_range	*ap;
+	काष्ठा xbiपंचांगap_range	*bp;
 
-	ap = container_of(a, struct xbitmap_range, list);
-	bp = container_of(b, struct xbitmap_range, list);
+	ap = container_of(a, काष्ठा xbiपंचांगap_range, list);
+	bp = container_of(b, काष्ठा xbiपंचांगap_range, list);
 
-	if (ap->start > bp->start)
-		return 1;
-	if (ap->start < bp->start)
-		return -1;
-	return 0;
-}
+	अगर (ap->start > bp->start)
+		वापस 1;
+	अगर (ap->start < bp->start)
+		वापस -1;
+	वापस 0;
+पूर्ण
 
 /*
- * Remove all the blocks mentioned in @sub from the extents in @bitmap.
+ * Remove all the blocks mentioned in @sub from the extents in @biपंचांगap.
  *
- * The intent is that callers will iterate the rmapbt for all of its records
- * for a given owner to generate @bitmap; and iterate all the blocks of the
- * metadata structures that are not being rebuilt and have the same rmapbt
+ * The पूर्णांकent is that callers will iterate the rmapbt क्रम all of its records
+ * क्रम a given owner to generate @biपंचांगap; and iterate all the blocks of the
+ * metadata काष्ठाures that are not being rebuilt and have the same rmapbt
  * owner to generate @sub.  This routine subtracts all the extents
- * mentioned in sub from all the extents linked in @bitmap, which leaves
- * @bitmap as the list of blocks that are not accounted for, which we assume
- * are the dead blocks of the old metadata structure.  The blocks mentioned in
- * @bitmap can be reaped.
+ * mentioned in sub from all the extents linked in @biपंचांगap, which leaves
+ * @biपंचांगap as the list of blocks that are not accounted क्रम, which we assume
+ * are the dead blocks of the old metadata काष्ठाure.  The blocks mentioned in
+ * @biपंचांगap can be reaped.
  *
- * This is the logical equivalent of bitmap &= ~sub.
+ * This is the logical equivalent of biपंचांगap &= ~sub.
  */
-#define LEFT_ALIGNED	(1 << 0)
-#define RIGHT_ALIGNED	(1 << 1)
-int
-xbitmap_disunion(
-	struct xbitmap		*bitmap,
-	struct xbitmap		*sub)
-{
-	struct list_head	*lp;
-	struct xbitmap_range	*br;
-	struct xbitmap_range	*new_br;
-	struct xbitmap_range	*sub_br;
-	uint64_t		sub_start;
-	uint64_t		sub_len;
-	int			state;
-	int			error = 0;
+#घोषणा LEFT_ALIGNED	(1 << 0)
+#घोषणा RIGHT_ALIGNED	(1 << 1)
+पूर्णांक
+xbiपंचांगap_disजोड़(
+	काष्ठा xbiपंचांगap		*biपंचांगap,
+	काष्ठा xbiपंचांगap		*sub)
+अणु
+	काष्ठा list_head	*lp;
+	काष्ठा xbiपंचांगap_range	*br;
+	काष्ठा xbiपंचांगap_range	*new_br;
+	काष्ठा xbiपंचांगap_range	*sub_br;
+	uपूर्णांक64_t		sub_start;
+	uपूर्णांक64_t		sub_len;
+	पूर्णांक			state;
+	पूर्णांक			error = 0;
 
-	if (list_empty(&bitmap->list) || list_empty(&sub->list))
-		return 0;
+	अगर (list_empty(&biपंचांगap->list) || list_empty(&sub->list))
+		वापस 0;
 	ASSERT(!list_empty(&sub->list));
 
-	list_sort(NULL, &bitmap->list, xbitmap_range_cmp);
-	list_sort(NULL, &sub->list, xbitmap_range_cmp);
+	list_sort(शून्य, &biपंचांगap->list, xbiपंचांगap_range_cmp);
+	list_sort(शून्य, &sub->list, xbiपंचांगap_range_cmp);
 
 	/*
-	 * Now that we've sorted both lists, we iterate bitmap once, rolling
-	 * forward through sub and/or bitmap as necessary until we find an
-	 * overlap or reach the end of either list.  We do not reset lp to the
-	 * head of bitmap nor do we reset sub_br to the head of sub.  The
+	 * Now that we've sorted both lists, we iterate biपंचांगap once, rolling
+	 * क्रमward through sub and/or biपंचांगap as necessary until we find an
+	 * overlap or reach the end of either list.  We करो not reset lp to the
+	 * head of biपंचांगap nor करो we reset sub_br to the head of sub.  The
 	 * list traversal is similar to merge sort, but we're deleting
-	 * instead.  In this manner we avoid O(n^2) operations.
+	 * instead.  In this manner we aव्योम O(n^2) operations.
 	 */
-	sub_br = list_first_entry(&sub->list, struct xbitmap_range,
+	sub_br = list_first_entry(&sub->list, काष्ठा xbiपंचांगap_range,
 			list);
-	lp = bitmap->list.next;
-	while (lp != &bitmap->list) {
-		br = list_entry(lp, struct xbitmap_range, list);
+	lp = biपंचांगap->list.next;
+	जबतक (lp != &biपंचांगap->list) अणु
+		br = list_entry(lp, काष्ठा xbiपंचांगap_range, list);
 
 		/*
 		 * Advance sub_br and/or br until we find a pair that
-		 * intersect or we run out of extents.
+		 * पूर्णांकersect or we run out of extents.
 		 */
-		while (sub_br->start + sub_br->len <= br->start) {
-			if (list_is_last(&sub_br->list, &sub->list))
-				goto out;
+		जबतक (sub_br->start + sub_br->len <= br->start) अणु
+			अगर (list_is_last(&sub_br->list, &sub->list))
+				जाओ out;
 			sub_br = list_next_entry(sub_br, list);
-		}
-		if (sub_br->start >= br->start + br->len) {
+		पूर्ण
+		अगर (sub_br->start >= br->start + br->len) अणु
 			lp = lp->next;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* trim sub_br to fit the extent we have */
 		sub_start = sub_br->start;
 		sub_len = sub_br->len;
-		if (sub_br->start < br->start) {
+		अगर (sub_br->start < br->start) अणु
 			sub_len -= br->start - sub_br->start;
 			sub_start = br->start;
-		}
-		if (sub_len > br->len)
+		पूर्ण
+		अगर (sub_len > br->len)
 			sub_len = br->len;
 
 		state = 0;
-		if (sub_start == br->start)
+		अगर (sub_start == br->start)
 			state |= LEFT_ALIGNED;
-		if (sub_start + sub_len == br->start + br->len)
+		अगर (sub_start + sub_len == br->start + br->len)
 			state |= RIGHT_ALIGNED;
-		switch (state) {
-		case LEFT_ALIGNED:
+		चयन (state) अणु
+		हाल LEFT_ALIGNED:
 			/* Coincides with only the left. */
 			br->start += sub_len;
 			br->len -= sub_len;
-			break;
-		case RIGHT_ALIGNED:
+			अवरोध;
+		हाल RIGHT_ALIGNED:
 			/* Coincides with only the right. */
 			br->len -= sub_len;
 			lp = lp->next;
-			break;
-		case LEFT_ALIGNED | RIGHT_ALIGNED:
+			अवरोध;
+		हाल LEFT_ALIGNED | RIGHT_ALIGNED:
 			/* Total overlap, just delete ex. */
 			lp = lp->next;
 			list_del(&br->list);
-			kmem_free(br);
-			break;
-		case 0:
+			kmem_मुक्त(br);
+			अवरोध;
+		हाल 0:
 			/*
 			 * Deleting from the middle: add the new right extent
 			 * and then shrink the left extent.
 			 */
-			new_br = kmem_alloc(sizeof(struct xbitmap_range),
+			new_br = kmem_alloc(माप(काष्ठा xbiपंचांगap_range),
 					KM_MAYFAIL);
-			if (!new_br) {
+			अगर (!new_br) अणु
 				error = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			INIT_LIST_HEAD(&new_br->list);
 			new_br->start = sub_start + sub_len;
 			new_br->len = br->start + br->len - new_br->start;
 			list_add(&new_br->list, &br->list);
 			br->len = sub_start - br->start;
 			lp = lp->next;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ASSERT(0);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
-	return error;
-}
-#undef LEFT_ALIGNED
-#undef RIGHT_ALIGNED
+	वापस error;
+पूर्ण
+#अघोषित LEFT_ALIGNED
+#अघोषित RIGHT_ALIGNED
 
 /*
- * Record all btree blocks seen while iterating all records of a btree.
+ * Record all btree blocks seen जबतक iterating all records of a btree.
  *
  * We know that the btree query_all function starts at the left edge and walks
- * towards the right edge of the tree.  Therefore, we know that we can walk up
- * the btree cursor towards the root; if the pointer for a given level points
- * to the first record/key in that block, we haven't seen this block before;
- * and therefore we need to remember that we saw this block in the btree.
+ * towards the right edge of the tree.  Thereक्रमe, we know that we can walk up
+ * the btree cursor towards the root; अगर the poपूर्णांकer क्रम a given level poपूर्णांकs
+ * to the first record/key in that block, we haven't seen this block beक्रमe;
+ * and thereक्रमe we need to remember that we saw this block in the btree.
  *
- * So if our btree is:
+ * So अगर our btree is:
  *
  *    4
  *  / | \
  * 1  2  3
  *
- * Pretend for this example that each leaf block has 100 btree records.  For
+ * Pretend क्रम this example that each leaf block has 100 btree records.  For
  * the first btree record, we'll observe that bc_ptrs[0] == 1, so we record
  * that we saw block 1.  Then we observe that bc_ptrs[1] == 1, so we record
  * block 4.  The list is [1, 4].
  *
- * For the second btree record, we see that bc_ptrs[0] == 2, so we exit the
- * loop.  The list remains [1, 4].
+ * For the second btree record, we see that bc_ptrs[0] == 2, so we निकास the
+ * loop.  The list reमुख्यs [1, 4].
  *
  * For the 101st btree record, we've moved onto leaf block 2.  Now
  * bc_ptrs[0] == 1 again, so we record that we saw block 2.  We see that
- * bc_ptrs[1] == 2, so we exit the loop.  The list is now [1, 4, 2].
+ * bc_ptrs[1] == 2, so we निकास the loop.  The list is now [1, 4, 2].
  *
- * For the 102nd record, bc_ptrs[0] == 2, so we continue.
+ * For the 102nd record, bc_ptrs[0] == 2, so we जारी.
  *
  * For the 201st record, we've moved on to leaf block 3.  bc_ptrs[0] == 1, so
  * we add 3 to the list.  Now it is [1, 4, 2, 3].
  *
- * For the 300th record we just exit, with the list being [1, 4, 2, 3].
+ * For the 300th record we just निकास, with the list being [1, 4, 2, 3].
  */
 
 /*
- * Record all the buffers pointed to by the btree cursor.  Callers already
+ * Record all the buffers poपूर्णांकed to by the btree cursor.  Callers alपढ़ोy
  * engaged in a btree walk should call this function to capture the list of
  * blocks going from the leaf towards the root.
  */
-int
-xbitmap_set_btcur_path(
-	struct xbitmap		*bitmap,
-	struct xfs_btree_cur	*cur)
-{
-	struct xfs_buf		*bp;
+पूर्णांक
+xbiपंचांगap_set_btcur_path(
+	काष्ठा xbiपंचांगap		*biपंचांगap,
+	काष्ठा xfs_btree_cur	*cur)
+अणु
+	काष्ठा xfs_buf		*bp;
 	xfs_fsblock_t		fsb;
-	int			i;
-	int			error;
+	पूर्णांक			i;
+	पूर्णांक			error;
 
-	for (i = 0; i < cur->bc_nlevels && cur->bc_ptrs[i] == 1; i++) {
+	क्रम (i = 0; i < cur->bc_nlevels && cur->bc_ptrs[i] == 1; i++) अणु
 		xfs_btree_get_block(cur, i, &bp);
-		if (!bp)
-			continue;
+		अगर (!bp)
+			जारी;
 		fsb = XFS_DADDR_TO_FSB(cur->bc_mp, bp->b_bn);
-		error = xbitmap_set(bitmap, fsb, 1);
-		if (error)
-			return error;
-	}
+		error = xbiपंचांगap_set(biपंचांगap, fsb, 1);
+		अगर (error)
+			वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Collect a btree's block in the bitmap. */
-STATIC int
-xbitmap_collect_btblock(
-	struct xfs_btree_cur	*cur,
-	int			level,
-	void			*priv)
-{
-	struct xbitmap		*bitmap = priv;
-	struct xfs_buf		*bp;
+/* Collect a btree's block in the biपंचांगap. */
+STATIC पूर्णांक
+xbiपंचांगap_collect_btblock(
+	काष्ठा xfs_btree_cur	*cur,
+	पूर्णांक			level,
+	व्योम			*priv)
+अणु
+	काष्ठा xbiपंचांगap		*biपंचांगap = priv;
+	काष्ठा xfs_buf		*bp;
 	xfs_fsblock_t		fsbno;
 
 	xfs_btree_get_block(cur, level, &bp);
-	if (!bp)
-		return 0;
+	अगर (!bp)
+		वापस 0;
 
 	fsbno = XFS_DADDR_TO_FSB(cur->bc_mp, bp->b_bn);
-	return xbitmap_set(bitmap, fsbno, 1);
-}
+	वापस xbiपंचांगap_set(biपंचांगap, fsbno, 1);
+पूर्ण
 
-/* Walk the btree and mark the bitmap wherever a btree block is found. */
-int
-xbitmap_set_btblocks(
-	struct xbitmap		*bitmap,
-	struct xfs_btree_cur	*cur)
-{
-	return xfs_btree_visit_blocks(cur, xbitmap_collect_btblock,
-			XFS_BTREE_VISIT_ALL, bitmap);
-}
+/* Walk the btree and mark the biपंचांगap wherever a btree block is found. */
+पूर्णांक
+xbiपंचांगap_set_btblocks(
+	काष्ठा xbiपंचांगap		*biपंचांगap,
+	काष्ठा xfs_btree_cur	*cur)
+अणु
+	वापस xfs_btree_visit_blocks(cur, xbiपंचांगap_collect_btblock,
+			XFS_BTREE_VISIT_ALL, biपंचांगap);
+पूर्ण
 
-/* How many bits are set in this bitmap? */
-uint64_t
-xbitmap_hweight(
-	struct xbitmap		*bitmap)
-{
-	struct xbitmap_range	*bmr;
-	struct xbitmap_range	*n;
-	uint64_t		ret = 0;
+/* How many bits are set in this biपंचांगap? */
+uपूर्णांक64_t
+xbiपंचांगap_hweight(
+	काष्ठा xbiपंचांगap		*biपंचांगap)
+अणु
+	काष्ठा xbiपंचांगap_range	*bmr;
+	काष्ठा xbiपंचांगap_range	*n;
+	uपूर्णांक64_t		ret = 0;
 
-	for_each_xbitmap_extent(bmr, n, bitmap)
+	क्रम_each_xbiपंचांगap_extent(bmr, n, biपंचांगap)
 		ret += bmr->len;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

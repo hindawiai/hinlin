@@ -1,24 +1,25 @@
-#ifndef _ASM_POWERPC_VMALLOC_H
-#define _ASM_POWERPC_VMALLOC_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_POWERPC_VMALLOC_H
+#घोषणा _ASM_POWERPC_VMALLOC_H
 
-#include <asm/mmu.h>
-#include <asm/page.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/page.h>
 
-#ifdef CONFIG_HAVE_ARCH_HUGE_VMAP
+#अगर_घोषित CONFIG_HAVE_ARCH_HUGE_VMAP
 
-#define arch_vmap_pud_supported arch_vmap_pud_supported
-static inline bool arch_vmap_pud_supported(pgprot_t prot)
-{
-	/* HPT does not cope with large pages in the vmalloc area */
-	return radix_enabled();
-}
+#घोषणा arch_vmap_pud_supported arch_vmap_pud_supported
+अटल अंतरभूत bool arch_vmap_pud_supported(pgprot_t prot)
+अणु
+	/* HPT करोes not cope with large pages in the vदो_स्मृति area */
+	वापस radix_enabled();
+पूर्ण
 
-#define arch_vmap_pmd_supported arch_vmap_pmd_supported
-static inline bool arch_vmap_pmd_supported(pgprot_t prot)
-{
-	return radix_enabled();
-}
+#घोषणा arch_vmap_pmd_supported arch_vmap_pmd_supported
+अटल अंतरभूत bool arch_vmap_pmd_supported(pgprot_t prot)
+अणु
+	वापस radix_enabled();
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_POWERPC_VMALLOC_H */
+#पूर्ण_अगर /* _ASM_POWERPC_VMALLOC_H */

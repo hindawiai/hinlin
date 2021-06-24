@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Fitipower FC0012 & FC0013 tuner driver - common defines
+ * Fitiघातer FC0012 & FC0013 tuner driver - common defines
  *
  * Copyright (C) 2012 Hans-Frieder Vogt <hfvogt@gmx.net>
  */
 
-#ifndef _FC001X_COMMON_H_
-#define _FC001X_COMMON_H_
+#अगर_अघोषित _FC001X_COMMON_H_
+#घोषणा _FC001X_COMMON_H_
 
-enum fc001x_xtal_freq {
+क्रमागत fc001x_xtal_freq अणु
 	FC_XTAL_27_MHZ,		/* 27000000 */
 	FC_XTAL_28_8_MHZ,	/* 28800000 */
 	FC_XTAL_36_MHZ,		/* 36000000 */
-};
+पूर्ण;
 
 /*
- * enum fc001x_fe_callback_commands - Frontend callbacks
+ * क्रमागत fc001x_fe_callback_commands - Frontend callbacks
  *
  * @FC_FE_CALLBACK_VHF_ENABLE: enable VHF or UHF
  */
-enum fc001x_fe_callback_commands {
+क्रमागत fc001x_fe_callback_commands अणु
 	FC_FE_CALLBACK_VHF_ENABLE,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

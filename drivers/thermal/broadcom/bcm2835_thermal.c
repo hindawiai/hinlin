@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Broadcom BCM2835 SoC temperature sensor
+ * Driver क्रम Broadcom BCM2835 SoC temperature sensor
  *
  * Copyright (C) 2016 Martin Sperl
  */
 
-#include <linux/clk.h>
-#include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/thermal.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/thermal.h>
 
-#include "../thermal_hwmon.h"
+#समावेश "../thermal_hwmon.h"
 
-#define BCM2835_TS_TSENSCTL			0x00
-#define BCM2835_TS_TSENSSTAT			0x04
+#घोषणा BCM2835_TS_TSENSCTL			0x00
+#घोषणा BCM2835_TS_TSENSSTAT			0x04
 
-#define BCM2835_TS_TSENSCTL_PRWDW		BIT(0)
-#define BCM2835_TS_TSENSCTL_RSTB		BIT(1)
+#घोषणा BCM2835_TS_TSENSCTL_PRWDW		BIT(0)
+#घोषणा BCM2835_TS_TSENSCTL_RSTB		BIT(1)
 
 /*
  * bandgap reference voltage in 6 mV increments
  * 000b = 1178 mV, 001b = 1184 mV, ... 111b = 1220 mV
  */
-#define BCM2835_TS_TSENSCTL_CTRL_BITS		3
-#define BCM2835_TS_TSENSCTL_CTRL_SHIFT		2
-#define BCM2835_TS_TSENSCTL_CTRL_MASK		    \
+#घोषणा BCM2835_TS_TSENSCTL_CTRL_BITS		3
+#घोषणा BCM2835_TS_TSENSCTL_CTRL_SHIFT		2
+#घोषणा BCM2835_TS_TSENSCTL_CTRL_MASK		    \
 	GENMASK(BCM2835_TS_TSENSCTL_CTRL_BITS +     \
 		BCM2835_TS_TSENSCTL_CTRL_SHIFT - 1, \
 		BCM2835_TS_TSENSCTL_CTRL_SHIFT)
-#define BCM2835_TS_TSENSCTL_CTRL_DEFAULT	1
-#define BCM2835_TS_TSENSCTL_EN_INT		BIT(5)
-#define BCM2835_TS_TSENSCTL_DIRECT		BIT(6)
-#define BCM2835_TS_TSENSCTL_CLR_INT		BIT(7)
-#define BCM2835_TS_TSENSCTL_THOLD_SHIFT		8
-#define BCM2835_TS_TSENSCTL_THOLD_BITS		10
-#define BCM2835_TS_TSENSCTL_THOLD_MASK		     \
+#घोषणा BCM2835_TS_TSENSCTL_CTRL_DEFAULT	1
+#घोषणा BCM2835_TS_TSENSCTL_EN_INT		BIT(5)
+#घोषणा BCM2835_TS_TSENSCTL_सूचीECT		BIT(6)
+#घोषणा BCM2835_TS_TSENSCTL_CLR_INT		BIT(7)
+#घोषणा BCM2835_TS_TSENSCTL_THOLD_SHIFT		8
+#घोषणा BCM2835_TS_TSENSCTL_THOLD_BITS		10
+#घोषणा BCM2835_TS_TSENSCTL_THOLD_MASK		     \
 	GENMASK(BCM2835_TS_TSENSCTL_THOLD_BITS +     \
 		BCM2835_TS_TSENSCTL_THOLD_SHIFT - 1, \
 		BCM2835_TS_TSENSCTL_THOLD_SHIFT)
 /*
- * time how long the block to be asserted in reset
- * which based on a clock counter (TSENS clock assumed)
+ * समय how दीर्घ the block to be निश्चितed in reset
+ * which based on a घड़ी counter (TSENS घड़ी assumed)
  */
-#define BCM2835_TS_TSENSCTL_RSTDELAY_SHIFT	18
-#define BCM2835_TS_TSENSCTL_RSTDELAY_BITS	8
-#define BCM2835_TS_TSENSCTL_REGULEN		BIT(26)
+#घोषणा BCM2835_TS_TSENSCTL_RSTDELAY_SHIFT	18
+#घोषणा BCM2835_TS_TSENSCTL_RSTDELAY_BITS	8
+#घोषणा BCM2835_TS_TSENSCTL_REGULEN		BIT(26)
 
-#define BCM2835_TS_TSENSSTAT_DATA_BITS		10
-#define BCM2835_TS_TSENSSTAT_DATA_SHIFT		0
-#define BCM2835_TS_TSENSSTAT_DATA_MASK		     \
+#घोषणा BCM2835_TS_TSENSSTAT_DATA_BITS		10
+#घोषणा BCM2835_TS_TSENSSTAT_DATA_SHIFT		0
+#घोषणा BCM2835_TS_TSENSSTAT_DATA_MASK		     \
 	GENMASK(BCM2835_TS_TSENSSTAT_DATA_BITS +     \
 		BCM2835_TS_TSENSSTAT_DATA_SHIFT - 1, \
 		BCM2835_TS_TSENSSTAT_DATA_SHIFT)
-#define BCM2835_TS_TSENSSTAT_VALID		BIT(10)
-#define BCM2835_TS_TSENSSTAT_INTERRUPT		BIT(11)
+#घोषणा BCM2835_TS_TSENSSTAT_VALID		BIT(10)
+#घोषणा BCM2835_TS_TSENSSTAT_INTERRUPT		BIT(11)
 
-struct bcm2835_thermal_data {
-	struct thermal_zone_device *tz;
-	void __iomem *regs;
-	struct clk *clk;
-	struct dentry *debugfsdir;
-};
+काष्ठा bcm2835_thermal_data अणु
+	काष्ठा thermal_zone_device *tz;
+	व्योम __iomem *regs;
+	काष्ठा clk *clk;
+	काष्ठा dentry *debugfsdir;
+पूर्ण;
 
-static int bcm2835_thermal_adc2temp(u32 adc, int offset, int slope)
-{
-	return offset + slope * adc;
-}
+अटल पूर्णांक bcm2835_thermal_adc2temp(u32 adc, पूर्णांक offset, पूर्णांक slope)
+अणु
+	वापस offset + slope * adc;
+पूर्ण
 
-static int bcm2835_thermal_temp2adc(int temp, int offset, int slope)
-{
+अटल पूर्णांक bcm2835_thermal_temp2adc(पूर्णांक temp, पूर्णांक offset, पूर्णांक slope)
+अणु
 	temp -= offset;
 	temp /= slope;
 
-	if (temp < 0)
+	अगर (temp < 0)
 		temp = 0;
-	if (temp >= BIT(BCM2835_TS_TSENSSTAT_DATA_BITS))
+	अगर (temp >= BIT(BCM2835_TS_TSENSSTAT_DATA_BITS))
 		temp = BIT(BCM2835_TS_TSENSSTAT_DATA_BITS) - 1;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static int bcm2835_thermal_get_temp(void *d, int *temp)
-{
-	struct bcm2835_thermal_data *data = d;
-	u32 val = readl(data->regs + BCM2835_TS_TSENSSTAT);
+अटल पूर्णांक bcm2835_thermal_get_temp(व्योम *d, पूर्णांक *temp)
+अणु
+	काष्ठा bcm2835_thermal_data *data = d;
+	u32 val = पढ़ोl(data->regs + BCM2835_TS_TSENSSTAT);
 
-	if (!(val & BCM2835_TS_TSENSSTAT_VALID))
-		return -EIO;
+	अगर (!(val & BCM2835_TS_TSENSSTAT_VALID))
+		वापस -EIO;
 
 	val &= BCM2835_TS_TSENSSTAT_DATA_MASK;
 
@@ -103,128 +104,128 @@ static int bcm2835_thermal_get_temp(void *d, int *temp)
 		thermal_zone_get_offset(data->tz),
 		thermal_zone_get_slope(data->tz));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct debugfs_reg32 bcm2835_thermal_regs[] = {
-	{
+अटल स्थिर काष्ठा debugfs_reg32 bcm2835_thermal_regs[] = अणु
+	अणु
 		.name = "ctl",
 		.offset = 0
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "stat",
 		.offset = 4
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static void bcm2835_thermal_debugfs(struct platform_device *pdev)
-{
-	struct bcm2835_thermal_data *data = platform_get_drvdata(pdev);
-	struct debugfs_regset32 *regset;
+अटल व्योम bcm2835_thermal_debugfs(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm2835_thermal_data *data = platक्रमm_get_drvdata(pdev);
+	काष्ठा debugfs_regset32 *regset;
 
-	data->debugfsdir = debugfs_create_dir("bcm2835_thermal", NULL);
+	data->debugfsdir = debugfs_create_dir("bcm2835_thermal", शून्य);
 
-	regset = devm_kzalloc(&pdev->dev, sizeof(*regset), GFP_KERNEL);
-	if (!regset)
-		return;
+	regset = devm_kzalloc(&pdev->dev, माप(*regset), GFP_KERNEL);
+	अगर (!regset)
+		वापस;
 
 	regset->regs = bcm2835_thermal_regs;
 	regset->nregs = ARRAY_SIZE(bcm2835_thermal_regs);
 	regset->base = data->regs;
 
 	debugfs_create_regset32("regset", 0444, data->debugfsdir, regset);
-}
+पूर्ण
 
-static const struct thermal_zone_of_device_ops bcm2835_thermal_ops = {
+अटल स्थिर काष्ठा thermal_zone_of_device_ops bcm2835_thermal_ops = अणु
 	.get_temp = bcm2835_thermal_get_temp,
-};
+पूर्ण;
 
 /*
  * Note: as per Raspberry Foundation FAQ
- * (https://www.raspberrypi.org/help/faqs/#performanceOperatingTemperature)
- * the recommended temperature range for the SoC -40C to +85C
+ * (https://www.raspberrypi.org/help/faqs/#perक्रमmanceOperatingTemperature)
+ * the recommended temperature range क्रम the SoC -40C to +85C
  * so the trip limit is set to 80C.
  * this applies to all the BCM283X SoC
  */
 
-static const struct of_device_id bcm2835_thermal_of_match_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id bcm2835_thermal_of_match_table[] = अणु
+	अणु
 		.compatible = "brcm,bcm2835-thermal",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "brcm,bcm2836-thermal",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "brcm,bcm2837-thermal",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm2835_thermal_of_match_table);
 
-static int bcm2835_thermal_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	struct thermal_zone_device *tz;
-	struct bcm2835_thermal_data *data;
-	struct resource *res;
-	int err = 0;
+अटल पूर्णांक bcm2835_thermal_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा thermal_zone_device *tz;
+	काष्ठा bcm2835_thermal_data *data;
+	काष्ठा resource *res;
+	पूर्णांक err = 0;
 	u32 val;
-	unsigned long rate;
+	अचिन्हित दीर्घ rate;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&pdev->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	match = of_match_device(bcm2835_thermal_of_match_table,
 				&pdev->dev);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	data->regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(data->regs)) {
+	अगर (IS_ERR(data->regs)) अणु
 		err = PTR_ERR(data->regs);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	data->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(data->clk)) {
+	data->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(data->clk)) अणु
 		err = PTR_ERR(data->clk);
-		if (err != -EPROBE_DEFER)
+		अगर (err != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Could not get clk: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = clk_prepare_enable(data->clk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	rate = clk_get_rate(data->clk);
-	if ((rate < 1920000) || (rate > 5000000))
+	अगर ((rate < 1920000) || (rate > 5000000))
 		dev_warn(&pdev->dev,
 			 "Clock %pCn running at %lu Hz is outside of the recommended range: 1.92 to 5MHz\n",
 			 data->clk, rate);
 
-	/* register of thermal sensor and get info from DT */
-	tz = thermal_zone_of_sensor_register(&pdev->dev, 0, data,
+	/* रेजिस्टर of thermal sensor and get info from DT */
+	tz = thermal_zone_of_sensor_रेजिस्टर(&pdev->dev, 0, data,
 					     &bcm2835_thermal_ops);
-	if (IS_ERR(tz)) {
+	अगर (IS_ERR(tz)) अणु
 		err = PTR_ERR(tz);
 		dev_err(&pdev->dev,
 			"Failed to register the thermal device: %d\n",
 			err);
-		goto err_clk;
-	}
+		जाओ err_clk;
+	पूर्ण
 
 	/*
-	 * right now the FW does set up the HW-block, so we are not
-	 * touching the configuration registers.
-	 * But if the HW is not enabled, then set it up
+	 * right now the FW करोes set up the HW-block, so we are not
+	 * touching the configuration रेजिस्टरs.
+	 * But अगर the HW is not enabled, then set it up
 	 * using "sane" values used by the firmware right now.
 	 */
-	val = readl(data->regs + BCM2835_TS_TSENSCTL);
-	if (!(val & BCM2835_TS_TSENSCTL_RSTB)) {
-		int trip_temp, offset, slope;
+	val = पढ़ोl(data->regs + BCM2835_TS_TSENSCTL);
+	अगर (!(val & BCM2835_TS_TSENSCTL_RSTB)) अणु
+		पूर्णांक trip_temp, offset, slope;
 
 		slope = thermal_zone_get_slope(tz);
 		offset = thermal_zone_get_offset(tz);
@@ -233,12 +234,12 @@ static int bcm2835_thermal_probe(struct platform_device *pdev)
 		 * would need to iterate
 		 */
 		err = tz->ops->get_trip_temp(tz, 0, &trip_temp);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev,
 				"Not able to read trip_temp: %d\n",
 				err);
-			goto err_tz;
-		}
+			जाओ err_tz;
+		पूर्ण
 
 		/* set bandgap reference voltage and enable voltage regulator */
 		val = (BCM2835_TS_TSENSCTL_CTRL_DEFAULT <<
@@ -254,57 +255,57 @@ static int bcm2835_thermal_probe(struct platform_device *pdev)
 						slope)
 			<< BCM2835_TS_TSENSCTL_THOLD_SHIFT;
 
-		/* write the value back to the register as 2 steps */
-		writel(val, data->regs + BCM2835_TS_TSENSCTL);
+		/* ग_लिखो the value back to the रेजिस्टर as 2 steps */
+		ग_लिखोl(val, data->regs + BCM2835_TS_TSENSCTL);
 		val |= BCM2835_TS_TSENSCTL_RSTB;
-		writel(val, data->regs + BCM2835_TS_TSENSCTL);
-	}
+		ग_लिखोl(val, data->regs + BCM2835_TS_TSENSCTL);
+	पूर्ण
 
 	data->tz = tz;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
 	/*
-	 * Thermal_zone doesn't enable hwmon as default,
+	 * Thermal_zone करोesn't enable hwmon as शेष,
 	 * enable it here
 	 */
 	tz->tzp->no_hwmon = false;
 	err = thermal_add_hwmon_sysfs(tz);
-	if (err)
-		goto err_tz;
+	अगर (err)
+		जाओ err_tz;
 
 	bcm2835_thermal_debugfs(pdev);
 
-	return 0;
+	वापस 0;
 err_tz:
-	thermal_zone_of_sensor_unregister(&pdev->dev, tz);
+	thermal_zone_of_sensor_unरेजिस्टर(&pdev->dev, tz);
 err_clk:
 	clk_disable_unprepare(data->clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bcm2835_thermal_remove(struct platform_device *pdev)
-{
-	struct bcm2835_thermal_data *data = platform_get_drvdata(pdev);
-	struct thermal_zone_device *tz = data->tz;
+अटल पूर्णांक bcm2835_thermal_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm2835_thermal_data *data = platक्रमm_get_drvdata(pdev);
+	काष्ठा thermal_zone_device *tz = data->tz;
 
-	debugfs_remove_recursive(data->debugfsdir);
-	thermal_zone_of_sensor_unregister(&pdev->dev, tz);
+	debugfs_हटाओ_recursive(data->debugfsdir);
+	thermal_zone_of_sensor_unरेजिस्टर(&pdev->dev, tz);
 	clk_disable_unprepare(data->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver bcm2835_thermal_driver = {
+अटल काष्ठा platक्रमm_driver bcm2835_thermal_driver = अणु
 	.probe = bcm2835_thermal_probe,
-	.remove = bcm2835_thermal_remove,
-	.driver = {
+	.हटाओ = bcm2835_thermal_हटाओ,
+	.driver = अणु
 		.name = "bcm2835_thermal",
 		.of_match_table = bcm2835_thermal_of_match_table,
-	},
-};
-module_platform_driver(bcm2835_thermal_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(bcm2835_thermal_driver);
 
 MODULE_AUTHOR("Martin Sperl");
 MODULE_DESCRIPTION("Thermal driver for bcm2835 chip");

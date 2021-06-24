@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * PM domain driver for Keystone2 devices
+ * PM करोमुख्य driver क्रम Keystone2 devices
  *
  * Copyright 2013 Texas Instruments, Inc.
  *	Santosh Shilimkar <santosh.shillimkar@ti.com>
@@ -9,42 +10,42 @@
  *	Kevin Hilman <khilman@linaro.org>
  */
 
-#include <linux/init.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm_clock.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pm_घड़ी.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
 
-#include "keystone.h"
+#समावेश "keystone.h"
 
-static struct dev_pm_domain keystone_pm_domain = {
-	.ops = {
+अटल काष्ठा dev_pm_करोमुख्य keystone_pm_करोमुख्य = अणु
+	.ops = अणु
 		USE_PM_CLK_RUNTIME_OPS
 		USE_PLATFORM_PM_SLEEP_OPS
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pm_clk_notifier_block platform_domain_notifier = {
-	.pm_domain = &keystone_pm_domain,
-	.con_ids = { NULL },
-};
+अटल काष्ठा pm_clk_notअगरier_block platक्रमm_करोमुख्य_notअगरier = अणु
+	.pm_करोमुख्य = &keystone_pm_करोमुख्य,
+	.con_ids = अणु शून्य पूर्ण,
+पूर्ण;
 
-static const struct of_device_id of_keystone_table[] = {
-	{.compatible = "ti,k2hk"},
-	{.compatible = "ti,k2e"},
-	{.compatible = "ti,k2l"},
-	{ /* end of list */ },
-};
+अटल स्थिर काष्ठा of_device_id of_keystone_table[] = अणु
+	अणु.compatible = "ti,k2hk"पूर्ण,
+	अणु.compatible = "ti,k2e"पूर्ण,
+	अणु.compatible = "ti,k2l"पूर्ण,
+	अणु /* end of list */ पूर्ण,
+पूर्ण;
 
-int __init keystone_pm_runtime_init(void)
-{
-	struct device_node *np;
+पूर्णांक __init keystone_pm_runसमय_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_matching_node(NULL, of_keystone_table);
-	if (!np)
-		return 0;
+	np = of_find_matching_node(शून्य, of_keystone_table);
+	अगर (!np)
+		वापस 0;
 
-	pm_clk_add_notifier(&platform_bus_type, &platform_domain_notifier);
+	pm_clk_add_notअगरier(&platक्रमm_bus_type, &platक्रमm_करोमुख्य_notअगरier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,626 +1,627 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Aztech AZT1605/AZT2316 Driver
  * Copyright (C) 2007,2010  Rene Herman
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/isa.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <asm/processor.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/wss.h>
-#include <sound/mpu401.h>
-#include <sound/opl3.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/isa.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/processor.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/wss.h>
+#समावेश <sound/mpu401.h>
+#समावेश <sound/opl3.h>
 
 MODULE_DESCRIPTION(CRD_NAME);
 MODULE_AUTHOR("Rene Herman");
 MODULE_LICENSE("GPL");
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for " CRD_NAME " soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for " CRD_NAME " soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable " CRD_NAME " soundcard.");
 
-static long port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static long wss_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static long mpu_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static long fm_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
-static int irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
-static int mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
-static int dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
-static int dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
+अटल दीर्घ port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल दीर्घ wss_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल दीर्घ mpu_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल दीर्घ fm_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;
+अटल पूर्णांक irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
+अटल पूर्णांक mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;
+अटल पूर्णांक dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
+अटल पूर्णांक dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;
 
-module_param_hw_array(port, long, ioport, NULL, 0444);
+module_param_hw_array(port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(port, "Port # for " CRD_NAME " driver.");
-module_param_hw_array(wss_port, long, ioport, NULL, 0444);
+module_param_hw_array(wss_port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(wss_port, "WSS port # for " CRD_NAME " driver.");
-module_param_hw_array(mpu_port, long, ioport, NULL, 0444);
+module_param_hw_array(mpu_port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(mpu_port, "MPU-401 port # for " CRD_NAME " driver.");
-module_param_hw_array(fm_port, long, ioport, NULL, 0444);
+module_param_hw_array(fm_port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(fm_port, "FM port # for " CRD_NAME " driver.");
-module_param_hw_array(irq, int, irq, NULL, 0444);
+module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0444);
 MODULE_PARM_DESC(irq, "IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(mpu_irq, int, irq, NULL, 0444);
+module_param_hw_array(mpu_irq, पूर्णांक, irq, शून्य, 0444);
 MODULE_PARM_DESC(mpu_irq, "MPU-401 IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(dma1, int, dma, NULL, 0444);
+module_param_hw_array(dma1, पूर्णांक, dma, शून्य, 0444);
 MODULE_PARM_DESC(dma1, "Playback DMA # for " CRD_NAME " driver.");
-module_param_hw_array(dma2, int, dma, NULL, 0444);
+module_param_hw_array(dma2, पूर्णांक, dma, शून्य, 0444);
 MODULE_PARM_DESC(dma2, "Capture DMA # for " CRD_NAME " driver.");
 
 /*
  * Generic SB DSP support routines
  */
 
-#define DSP_PORT_RESET		0x6
-#define DSP_PORT_READ		0xa
-#define DSP_PORT_COMMAND	0xc
-#define DSP_PORT_STATUS		0xc
-#define DSP_PORT_DATA_AVAIL	0xe
+#घोषणा DSP_PORT_RESET		0x6
+#घोषणा DSP_PORT_READ		0xa
+#घोषणा DSP_PORT_COMMAND	0xc
+#घोषणा DSP_PORT_STATUS		0xc
+#घोषणा DSP_PORT_DATA_AVAIL	0xe
 
-#define DSP_SIGNATURE		0xaa
+#घोषणा DSP_SIGNATURE		0xaa
 
-#define DSP_COMMAND_GET_VERSION	0xe1
+#घोषणा DSP_COMMAND_GET_VERSION	0xe1
 
-static int dsp_get_byte(void __iomem *port, u8 *val)
-{
-	int loops = 1000;
+अटल पूर्णांक dsp_get_byte(व्योम __iomem *port, u8 *val)
+अणु
+	पूर्णांक loops = 1000;
 
-	while (!(ioread8(port + DSP_PORT_DATA_AVAIL) & 0x80)) {
-		if (!loops--)
-			return -EIO;
+	जबतक (!(ioपढ़ो8(port + DSP_PORT_DATA_AVAIL) & 0x80)) अणु
+		अगर (!loops--)
+			वापस -EIO;
 		cpu_relax();
-	}
-	*val = ioread8(port + DSP_PORT_READ);
-	return 0;
-}
+	पूर्ण
+	*val = ioपढ़ो8(port + DSP_PORT_READ);
+	वापस 0;
+पूर्ण
 
-static int dsp_reset(void __iomem *port)
-{
+अटल पूर्णांक dsp_reset(व्योम __iomem *port)
+अणु
 	u8 val;
 
-	iowrite8(1, port + DSP_PORT_RESET);
+	ioग_लिखो8(1, port + DSP_PORT_RESET);
 	udelay(10);
-	iowrite8(0, port + DSP_PORT_RESET);
+	ioग_लिखो8(0, port + DSP_PORT_RESET);
 
-	if (dsp_get_byte(port, &val) < 0 || val != DSP_SIGNATURE)
-		return -ENODEV;
+	अगर (dsp_get_byte(port, &val) < 0 || val != DSP_SIGNATURE)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dsp_command(void __iomem *port, u8 cmd)
-{
-	int loops = 1000;
+अटल पूर्णांक dsp_command(व्योम __iomem *port, u8 cmd)
+अणु
+	पूर्णांक loops = 1000;
 
-	while (ioread8(port + DSP_PORT_STATUS) & 0x80) {
-		if (!loops--)
-			return -EIO;
+	जबतक (ioपढ़ो8(port + DSP_PORT_STATUS) & 0x80) अणु
+		अगर (!loops--)
+			वापस -EIO;
 		cpu_relax();
-	}
-	iowrite8(cmd, port + DSP_PORT_COMMAND);
-	return 0;
-}
+	पूर्ण
+	ioग_लिखो8(cmd, port + DSP_PORT_COMMAND);
+	वापस 0;
+पूर्ण
 
-static int dsp_get_version(void __iomem *port, u8 *major, u8 *minor)
-{
-	int err;
+अटल पूर्णांक dsp_get_version(व्योम __iomem *port, u8 *major, u8 *minor)
+अणु
+	पूर्णांक err;
 
 	err = dsp_command(port, DSP_COMMAND_GET_VERSION);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = dsp_get_byte(port, major);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = dsp_get_byte(port, minor);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Generic WSS support routines
  */
 
-#define WSS_CONFIG_DMA_0	(1 << 0)
-#define WSS_CONFIG_DMA_1	(2 << 0)
-#define WSS_CONFIG_DMA_3	(3 << 0)
-#define WSS_CONFIG_DUPLEX	(1 << 2)
-#define WSS_CONFIG_IRQ_7	(1 << 3)
-#define WSS_CONFIG_IRQ_9	(2 << 3)
-#define WSS_CONFIG_IRQ_10	(3 << 3)
-#define WSS_CONFIG_IRQ_11	(4 << 3)
+#घोषणा WSS_CONFIG_DMA_0	(1 << 0)
+#घोषणा WSS_CONFIG_DMA_1	(2 << 0)
+#घोषणा WSS_CONFIG_DMA_3	(3 << 0)
+#घोषणा WSS_CONFIG_DUPLEX	(1 << 2)
+#घोषणा WSS_CONFIG_IRQ_7	(1 << 3)
+#घोषणा WSS_CONFIG_IRQ_9	(2 << 3)
+#घोषणा WSS_CONFIG_IRQ_10	(3 << 3)
+#घोषणा WSS_CONFIG_IRQ_11	(4 << 3)
 
-#define WSS_PORT_CONFIG		0
-#define WSS_PORT_SIGNATURE	3
+#घोषणा WSS_PORT_CONFIG		0
+#घोषणा WSS_PORT_SIGNATURE	3
 
-#define WSS_SIGNATURE		4
+#घोषणा WSS_SIGNATURE		4
 
-static int wss_detect(void __iomem *wss_port)
-{
-	if ((ioread8(wss_port + WSS_PORT_SIGNATURE) & 0x3f) != WSS_SIGNATURE)
-		return -ENODEV;
+अटल पूर्णांक wss_detect(व्योम __iomem *wss_port)
+अणु
+	अगर ((ioपढ़ो8(wss_port + WSS_PORT_SIGNATURE) & 0x3f) != WSS_SIGNATURE)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wss_set_config(void __iomem *wss_port, u8 wss_config)
-{
-	iowrite8(wss_config, wss_port + WSS_PORT_CONFIG);
-}
+अटल व्योम wss_set_config(व्योम __iomem *wss_port, u8 wss_config)
+अणु
+	ioग_लिखो8(wss_config, wss_port + WSS_PORT_CONFIG);
+पूर्ण
 
 /*
- * Aztech Sound Galaxy specifics
+ * Aztech Sound Galaxy specअगरics
  */
 
-#define GALAXY_PORT_CONFIG	1024
-#define CONFIG_PORT_SET		4
+#घोषणा GALAXY_PORT_CONFIG	1024
+#घोषणा CONFIG_PORT_SET		4
 
-#define DSP_COMMAND_GALAXY_8	8
-#define GALAXY_COMMAND_GET_TYPE	5
+#घोषणा DSP_COMMAND_GALAXY_8	8
+#घोषणा GALAXY_COMMAND_GET_TYPE	5
 
-#define DSP_COMMAND_GALAXY_9	9
-#define GALAXY_COMMAND_WSSMODE	0
-#define GALAXY_COMMAND_SB8MODE	1
+#घोषणा DSP_COMMAND_GALAXY_9	9
+#घोषणा GALAXY_COMMAND_WSSMODE	0
+#घोषणा GALAXY_COMMAND_SB8MODE	1
 
-#define GALAXY_MODE_WSS		GALAXY_COMMAND_WSSMODE
-#define GALAXY_MODE_SB8		GALAXY_COMMAND_SB8MODE
+#घोषणा GALAXY_MODE_WSS		GALAXY_COMMAND_WSSMODE
+#घोषणा GALAXY_MODE_SB8		GALAXY_COMMAND_SB8MODE
 
-struct snd_galaxy {
-	void __iomem *port;
-	void __iomem *config_port;
-	void __iomem *wss_port;
+काष्ठा snd_galaxy अणु
+	व्योम __iomem *port;
+	व्योम __iomem *config_port;
+	व्योम __iomem *wss_port;
 	u32 config;
-	struct resource *res_port;
-	struct resource *res_config_port;
-	struct resource *res_wss_port;
-};
+	काष्ठा resource *res_port;
+	काष्ठा resource *res_config_port;
+	काष्ठा resource *res_wss_port;
+पूर्ण;
 
-static u32 config[SNDRV_CARDS];
-static u8 wss_config[SNDRV_CARDS];
+अटल u32 config[SNDRV_CARDS];
+अटल u8 wss_config[SNDRV_CARDS];
 
-static int snd_galaxy_match(struct device *dev, unsigned int n)
-{
-	if (!enable[n])
-		return 0;
+अटल पूर्णांक snd_galaxy_match(काष्ठा device *dev, अचिन्हित पूर्णांक n)
+अणु
+	अगर (!enable[n])
+		वापस 0;
 
-	switch (port[n]) {
-	case SNDRV_AUTO_PORT:
+	चयन (port[n]) अणु
+	हाल SNDRV_AUTO_PORT:
 		dev_err(dev, "please specify port\n");
-		return 0;
-	case 0x220:
+		वापस 0;
+	हाल 0x220:
 		config[n] |= GALAXY_CONFIG_SBA_220;
-		break;
-	case 0x240:
+		अवरोध;
+	हाल 0x240:
 		config[n] |= GALAXY_CONFIG_SBA_240;
-		break;
-	case 0x260:
+		अवरोध;
+	हाल 0x260:
 		config[n] |= GALAXY_CONFIG_SBA_260;
-		break;
-	case 0x280:
+		अवरोध;
+	हाल 0x280:
 		config[n] |= GALAXY_CONFIG_SBA_280;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "invalid port %#lx\n", port[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (wss_port[n]) {
-	case SNDRV_AUTO_PORT:
+	चयन (wss_port[n]) अणु
+	हाल SNDRV_AUTO_PORT:
 		dev_err(dev,  "please specify wss_port\n");
-		return 0;
-	case 0x530:
+		वापस 0;
+	हाल 0x530:
 		config[n] |= GALAXY_CONFIG_WSS_ENABLE | GALAXY_CONFIG_WSSA_530;
-		break;
-	case 0x604:
+		अवरोध;
+	हाल 0x604:
 		config[n] |= GALAXY_CONFIG_WSS_ENABLE | GALAXY_CONFIG_WSSA_604;
-		break;
-	case 0xe80:
+		अवरोध;
+	हाल 0xe80:
 		config[n] |= GALAXY_CONFIG_WSS_ENABLE | GALAXY_CONFIG_WSSA_E80;
-		break;
-	case 0xf40:
+		अवरोध;
+	हाल 0xf40:
 		config[n] |= GALAXY_CONFIG_WSS_ENABLE | GALAXY_CONFIG_WSSA_F40;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "invalid WSS port %#lx\n", wss_port[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (irq[n]) {
-	case SNDRV_AUTO_IRQ:
+	चयन (irq[n]) अणु
+	हाल SNDRV_AUTO_IRQ:
 		dev_err(dev,  "please specify irq\n");
-		return 0;
-	case 7:
+		वापस 0;
+	हाल 7:
 		wss_config[n] |= WSS_CONFIG_IRQ_7;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		irq[n] = 9;
 		fallthrough;
-	case 9:
+	हाल 9:
 		wss_config[n] |= WSS_CONFIG_IRQ_9;
-		break;
-	case 10:
+		अवरोध;
+	हाल 10:
 		wss_config[n] |= WSS_CONFIG_IRQ_10;
-		break;
-	case 11:
+		अवरोध;
+	हाल 11:
 		wss_config[n] |= WSS_CONFIG_IRQ_11;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "invalid IRQ %d\n", irq[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (dma1[n]) {
-	case SNDRV_AUTO_DMA:
+	चयन (dma1[n]) अणु
+	हाल SNDRV_AUTO_DMA:
 		dev_err(dev,  "please specify dma1\n");
-		return 0;
-	case 0:
+		वापस 0;
+	हाल 0:
 		wss_config[n] |= WSS_CONFIG_DMA_0;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		wss_config[n] |= WSS_CONFIG_DMA_1;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		wss_config[n] |= WSS_CONFIG_DMA_3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "invalid playback DMA %d\n", dma1[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (dma2[n] == SNDRV_AUTO_DMA || dma2[n] == dma1[n]) {
+	अगर (dma2[n] == SNDRV_AUTO_DMA || dma2[n] == dma1[n]) अणु
 		dma2[n] = -1;
-		goto mpu;
-	}
+		जाओ mpu;
+	पूर्ण
 
 	wss_config[n] |= WSS_CONFIG_DUPLEX;
-	switch (dma2[n]) {
-	case 0:
-		break;
-	case 1:
-		if (dma1[n] == 0)
-			break;
+	चयन (dma2[n]) अणु
+	हाल 0:
+		अवरोध;
+	हाल 1:
+		अगर (dma1[n] == 0)
+			अवरोध;
 		fallthrough;
-	default:
+	शेष:
 		dev_err(dev, "invalid capture DMA %d\n", dma2[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 mpu:
-	switch (mpu_port[n]) {
-	case SNDRV_AUTO_PORT:
+	चयन (mpu_port[n]) अणु
+	हाल SNDRV_AUTO_PORT:
 		dev_warn(dev, "mpu_port not specified; not using MPU-401\n");
 		mpu_port[n] = -1;
-		goto fm;
-	case 0x300:
+		जाओ fm;
+	हाल 0x300:
 		config[n] |= GALAXY_CONFIG_MPU_ENABLE | GALAXY_CONFIG_MPUA_300;
-		break;
-	case 0x330:
+		अवरोध;
+	हाल 0x330:
 		config[n] |= GALAXY_CONFIG_MPU_ENABLE | GALAXY_CONFIG_MPUA_330;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "invalid MPU port %#lx\n", mpu_port[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (mpu_irq[n]) {
-	case SNDRV_AUTO_IRQ:
+	चयन (mpu_irq[n]) अणु
+	हाल SNDRV_AUTO_IRQ:
 		dev_warn(dev, "mpu_irq not specified: using polling mode\n");
 		mpu_irq[n] = -1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		mpu_irq[n] = 9;
 		fallthrough;
-	case 9:
+	हाल 9:
 		config[n] |= GALAXY_CONFIG_MPUIRQ_2;
-		break;
-#ifdef AZT1605
-	case 3:
+		अवरोध;
+#अगर_घोषित AZT1605
+	हाल 3:
 		config[n] |= GALAXY_CONFIG_MPUIRQ_3;
-		break;
-#endif
-	case 5:
+		अवरोध;
+#पूर्ण_अगर
+	हाल 5:
 		config[n] |= GALAXY_CONFIG_MPUIRQ_5;
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		config[n] |= GALAXY_CONFIG_MPUIRQ_7;
-		break;
-#ifdef AZT2316
-	case 10:
+		अवरोध;
+#अगर_घोषित AZT2316
+	हाल 10:
 		config[n] |= GALAXY_CONFIG_MPUIRQ_10;
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		dev_err(dev, "invalid MPU IRQ %d\n", mpu_irq[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (mpu_irq[n] == irq[n]) {
+	अगर (mpu_irq[n] == irq[n]) अणु
 		dev_err(dev, "cannot share IRQ between WSS and MPU-401\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 fm:
-	switch (fm_port[n]) {
-	case SNDRV_AUTO_PORT:
+	चयन (fm_port[n]) अणु
+	हाल SNDRV_AUTO_PORT:
 		dev_warn(dev, "fm_port not specified: not using OPL3\n");
 		fm_port[n] = -1;
-		break;
-	case 0x388:
-		break;
-	default:
+		अवरोध;
+	हाल 0x388:
+		अवरोध;
+	शेष:
 		dev_err(dev, "illegal FM port %#lx\n", fm_port[n]);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	config[n] |= GALAXY_CONFIG_GAME_ENABLE;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int galaxy_init(struct snd_galaxy *galaxy, u8 *type)
-{
+अटल पूर्णांक galaxy_init(काष्ठा snd_galaxy *galaxy, u8 *type)
+अणु
 	u8 major;
 	u8 minor;
-	int err;
+	पूर्णांक err;
 
 	err = dsp_reset(galaxy->port);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = dsp_get_version(galaxy->port, &major, &minor);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (major != GALAXY_DSP_MAJOR || minor != GALAXY_DSP_MINOR)
-		return -ENODEV;
+	अगर (major != GALAXY_DSP_MAJOR || minor != GALAXY_DSP_MINOR)
+		वापस -ENODEV;
 
 	err = dsp_command(galaxy->port, DSP_COMMAND_GALAXY_8);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = dsp_command(galaxy->port, GALAXY_COMMAND_GET_TYPE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = dsp_get_byte(galaxy->port, type);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int galaxy_set_mode(struct snd_galaxy *galaxy, u8 mode)
-{
-	int err;
+अटल पूर्णांक galaxy_set_mode(काष्ठा snd_galaxy *galaxy, u8 mode)
+अणु
+	पूर्णांक err;
 
 	err = dsp_command(galaxy->port, DSP_COMMAND_GALAXY_9);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = dsp_command(galaxy->port, mode);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-#ifdef AZT1605
+#अगर_घोषित AZT1605
 	/*
-	 * Needed for MPU IRQ on AZT1605, but AZT2316 loses WSS again
+	 * Needed क्रम MPU IRQ on AZT1605, but AZT2316 loses WSS again
 	 */
 	err = dsp_reset(galaxy->port);
-	if (err < 0)
-		return err;
-#endif
+	अगर (err < 0)
+		वापस err;
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void galaxy_set_config(struct snd_galaxy *galaxy, u32 config)
-{
-	u8 tmp = ioread8(galaxy->config_port + CONFIG_PORT_SET);
-	int i;
+अटल व्योम galaxy_set_config(काष्ठा snd_galaxy *galaxy, u32 config)
+अणु
+	u8 पंचांगp = ioपढ़ो8(galaxy->config_port + CONFIG_PORT_SET);
+	पूर्णांक i;
 
-	iowrite8(tmp | 0x80, galaxy->config_port + CONFIG_PORT_SET);
-	for (i = 0; i < GALAXY_CONFIG_SIZE; i++) {
-		iowrite8(config, galaxy->config_port + i);
+	ioग_लिखो8(पंचांगp | 0x80, galaxy->config_port + CONFIG_PORT_SET);
+	क्रम (i = 0; i < GALAXY_CONFIG_SIZE; i++) अणु
+		ioग_लिखो8(config, galaxy->config_port + i);
 		config >>= 8;
-	}
-	iowrite8(tmp & 0x7f, galaxy->config_port + CONFIG_PORT_SET);
+	पूर्ण
+	ioग_लिखो8(पंचांगp & 0x7f, galaxy->config_port + CONFIG_PORT_SET);
 	msleep(10);
-}
+पूर्ण
 
-static void galaxy_config(struct snd_galaxy *galaxy, u32 config)
-{
-	int i;
+अटल व्योम galaxy_config(काष्ठा snd_galaxy *galaxy, u32 config)
+अणु
+	पूर्णांक i;
 
-	for (i = GALAXY_CONFIG_SIZE; i; i--) {
-		u8 tmp = ioread8(galaxy->config_port + i - 1);
-		galaxy->config = (galaxy->config << 8) | tmp;
-	}
+	क्रम (i = GALAXY_CONFIG_SIZE; i; i--) अणु
+		u8 पंचांगp = ioपढ़ो8(galaxy->config_port + i - 1);
+		galaxy->config = (galaxy->config << 8) | पंचांगp;
+	पूर्ण
 	config |= galaxy->config & GALAXY_CONFIG_MASK;
 	galaxy_set_config(galaxy, config);
-}
+पूर्ण
 
-static int galaxy_wss_config(struct snd_galaxy *galaxy, u8 wss_config)
-{
-	int err;
+अटल पूर्णांक galaxy_wss_config(काष्ठा snd_galaxy *galaxy, u8 wss_config)
+अणु
+	पूर्णांक err;
 
 	err = wss_detect(galaxy->wss_port);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	wss_set_config(galaxy->wss_port, wss_config);
 
 	err = galaxy_set_mode(galaxy, GALAXY_MODE_WSS);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_galaxy_free(struct snd_card *card)
-{
-	struct snd_galaxy *galaxy = card->private_data;
+अटल व्योम snd_galaxy_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_galaxy *galaxy = card->निजी_data;
 
-	if (galaxy->wss_port) {
+	अगर (galaxy->wss_port) अणु
 		wss_set_config(galaxy->wss_port, 0);
 		ioport_unmap(galaxy->wss_port);
-		release_and_free_resource(galaxy->res_wss_port);
-	}
-	if (galaxy->config_port) {
+		release_and_मुक्त_resource(galaxy->res_wss_port);
+	पूर्ण
+	अगर (galaxy->config_port) अणु
 		galaxy_set_config(galaxy, galaxy->config);
 		ioport_unmap(galaxy->config_port);
-		release_and_free_resource(galaxy->res_config_port);
-	}
-	if (galaxy->port) {
+		release_and_मुक्त_resource(galaxy->res_config_port);
+	पूर्ण
+	अगर (galaxy->port) अणु
 		ioport_unmap(galaxy->port);
-		release_and_free_resource(galaxy->res_port);
-	}
-}
+		release_and_मुक्त_resource(galaxy->res_port);
+	पूर्ण
+पूर्ण
 
-static int snd_galaxy_probe(struct device *dev, unsigned int n)
-{
-	struct snd_galaxy *galaxy;
-	struct snd_wss *chip;
-	struct snd_card *card;
+अटल पूर्णांक snd_galaxy_probe(काष्ठा device *dev, अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा snd_galaxy *galaxy;
+	काष्ठा snd_wss *chip;
+	काष्ठा snd_card *card;
 	u8 type;
-	int err;
+	पूर्णांक err;
 
 	err = snd_card_new(dev, index[n], id[n], THIS_MODULE,
-			   sizeof(*galaxy), &card);
-	if (err < 0)
-		return err;
+			   माप(*galaxy), &card);
+	अगर (err < 0)
+		वापस err;
 
-	card->private_free = snd_galaxy_free;
-	galaxy = card->private_data;
+	card->निजी_मुक्त = snd_galaxy_मुक्त;
+	galaxy = card->निजी_data;
 
 	galaxy->res_port = request_region(port[n], 16, DRV_NAME);
-	if (!galaxy->res_port) {
+	अगर (!galaxy->res_port) अणु
 		dev_err(dev, "could not grab ports %#lx-%#lx\n", port[n],
 			port[n] + 15);
 		err = -EBUSY;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	galaxy->port = ioport_map(port[n], 16);
 
 	err = galaxy_init(galaxy, &type);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "did not find a Sound Galaxy at %#lx\n", port[n]);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	dev_info(dev, "Sound Galaxy (type %d) found at %#lx\n", type, port[n]);
 
 	galaxy->res_config_port = request_region(port[n] + GALAXY_PORT_CONFIG,
 						 16, DRV_NAME);
-	if (!galaxy->res_config_port) {
+	अगर (!galaxy->res_config_port) अणु
 		dev_err(dev, "could not grab ports %#lx-%#lx\n",
 			port[n] + GALAXY_PORT_CONFIG,
 			port[n] + GALAXY_PORT_CONFIG + 15);
 		err = -EBUSY;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	galaxy->config_port = ioport_map(port[n] + GALAXY_PORT_CONFIG, 16);
 
 	galaxy_config(galaxy, config[n]);
 
 	galaxy->res_wss_port = request_region(wss_port[n], 4, DRV_NAME);
-	if (!galaxy->res_wss_port)  {
+	अगर (!galaxy->res_wss_port)  अणु
 		dev_err(dev, "could not grab ports %#lx-%#lx\n", wss_port[n],
 			wss_port[n] + 3);
 		err = -EBUSY;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	galaxy->wss_port = ioport_map(wss_port[n], 4);
 
 	err = galaxy_wss_config(galaxy, wss_config[n]);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "could not configure WSS\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	strcpy(card->driver, DRV_NAME);
-	strcpy(card->shortname, DRV_NAME);
-	sprintf(card->longname, "%s at %#lx/%#lx, irq %d, dma %d/%d",
-		card->shortname, port[n], wss_port[n], irq[n], dma1[n],
+	म_नकल(card->driver, DRV_NAME);
+	म_नकल(card->लघुname, DRV_NAME);
+	प्र_लिखो(card->दीर्घname, "%s at %#lx/%#lx, irq %d, dma %d/%d",
+		card->लघुname, port[n], wss_port[n], irq[n], dma1[n],
 		dma2[n]);
 
 	err = snd_wss_create(card, wss_port[n] + 4, -1, irq[n], dma1[n],
 			     dma2[n], WSS_HW_DETECT, 0, &chip);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_wss_pcm(chip, 0);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_wss_mixer(chip);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	err = snd_wss_timer(chip, 0);
-	if (err < 0)
-		goto error;
+	err = snd_wss_समयr(chip, 0);
+	अगर (err < 0)
+		जाओ error;
 
-	if (mpu_port[n] >= 0) {
+	अगर (mpu_port[n] >= 0) अणु
 		err = snd_mpu401_uart_new(card, 0, MPU401_HW_MPU401,
-					  mpu_port[n], 0, mpu_irq[n], NULL);
-		if (err < 0)
-			goto error;
-	}
+					  mpu_port[n], 0, mpu_irq[n], शून्य);
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
-	if (fm_port[n] >= 0) {
-		struct snd_opl3 *opl3;
+	अगर (fm_port[n] >= 0) अणु
+		काष्ठा snd_opl3 *opl3;
 
 		err = snd_opl3_create(card, fm_port[n], fm_port[n] + 2,
 				      OPL3_HW_AUTO, 0, &opl3);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "no OPL device at %#lx\n", fm_port[n]);
-			goto error;
-		}
-		err = snd_opl3_timer_new(opl3, 1, 2);
-		if (err < 0)
-			goto error;
+			जाओ error;
+		पूर्ण
+		err = snd_opl3_समयr_new(opl3, 1, 2);
+		अगर (err < 0)
+			जाओ error;
 
-		err = snd_opl3_hwdep_new(opl3, 0, 1, NULL);
-		if (err < 0)
-			goto error;
-	}
+		err = snd_opl3_hwdep_new(opl3, 0, 1, शून्य);
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto error;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ error;
 
 	dev_set_drvdata(dev, card);
-	return 0;
+	वापस 0;
 
 error:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
-static void snd_galaxy_remove(struct device *dev, unsigned int n)
-{
-	snd_card_free(dev_get_drvdata(dev));
-}
+अटल व्योम snd_galaxy_हटाओ(काष्ठा device *dev, अचिन्हित पूर्णांक n)
+अणु
+	snd_card_मुक्त(dev_get_drvdata(dev));
+पूर्ण
 
-static struct isa_driver snd_galaxy_driver = {
+अटल काष्ठा isa_driver snd_galaxy_driver = अणु
 	.match		= snd_galaxy_match,
 	.probe		= snd_galaxy_probe,
-	.remove		= snd_galaxy_remove,
+	.हटाओ		= snd_galaxy_हटाओ,
 
-	.driver		= {
+	.driver		= अणु
 		.name	= DEV_NAME
-	}
-};
+	पूर्ण
+पूर्ण;
 
 module_isa_driver(snd_galaxy_driver, SNDRV_CARDS);

@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2019 Renesas Electronics Corporation
- * Copyright (C) 2016 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Copyright (C) 2016 Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_graph.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <drm/drm_bridge.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_panel.h>
 
-struct lvds_codec {
-	struct device *dev;
-	struct drm_bridge bridge;
-	struct drm_bridge *panel_bridge;
-	struct regulator *vcc;
-	struct gpio_desc *powerdown_gpio;
+काष्ठा lvds_codec अणु
+	काष्ठा device *dev;
+	काष्ठा drm_bridge bridge;
+	काष्ठा drm_bridge *panel_bridge;
+	काष्ठा regulator *vcc;
+	काष्ठा gpio_desc *घातerकरोwn_gpio;
 	u32 connector_type;
-};
+पूर्ण;
 
-static inline struct lvds_codec *to_lvds_codec(struct drm_bridge *bridge)
-{
-	return container_of(bridge, struct lvds_codec, bridge);
-}
+अटल अंतरभूत काष्ठा lvds_codec *to_lvds_codec(काष्ठा drm_bridge *bridge)
+अणु
+	वापस container_of(bridge, काष्ठा lvds_codec, bridge);
+पूर्ण
 
-static int lvds_codec_attach(struct drm_bridge *bridge,
-			     enum drm_bridge_attach_flags flags)
-{
-	struct lvds_codec *lvds_codec = to_lvds_codec(bridge);
+अटल पूर्णांक lvds_codec_attach(काष्ठा drm_bridge *bridge,
+			     क्रमागत drm_bridge_attach_flags flags)
+अणु
+	काष्ठा lvds_codec *lvds_codec = to_lvds_codec(bridge);
 
-	return drm_bridge_attach(bridge->encoder, lvds_codec->panel_bridge,
+	वापस drm_bridge_attach(bridge->encoder, lvds_codec->panel_bridge,
 				 bridge, flags);
-}
+पूर्ण
 
-static void lvds_codec_enable(struct drm_bridge *bridge)
-{
-	struct lvds_codec *lvds_codec = to_lvds_codec(bridge);
-	int ret;
+अटल व्योम lvds_codec_enable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा lvds_codec *lvds_codec = to_lvds_codec(bridge);
+	पूर्णांक ret;
 
 	ret = regulator_enable(lvds_codec->vcc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(lvds_codec->dev,
 			"Failed to enable regulator \"vcc\": %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (lvds_codec->powerdown_gpio)
-		gpiod_set_value_cansleep(lvds_codec->powerdown_gpio, 0);
-}
+	अगर (lvds_codec->घातerकरोwn_gpio)
+		gpiod_set_value_cansleep(lvds_codec->घातerकरोwn_gpio, 0);
+पूर्ण
 
-static void lvds_codec_disable(struct drm_bridge *bridge)
-{
-	struct lvds_codec *lvds_codec = to_lvds_codec(bridge);
-	int ret;
+अटल व्योम lvds_codec_disable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा lvds_codec *lvds_codec = to_lvds_codec(bridge);
+	पूर्णांक ret;
 
-	if (lvds_codec->powerdown_gpio)
-		gpiod_set_value_cansleep(lvds_codec->powerdown_gpio, 1);
+	अगर (lvds_codec->घातerकरोwn_gpio)
+		gpiod_set_value_cansleep(lvds_codec->घातerकरोwn_gpio, 1);
 
 	ret = regulator_disable(lvds_codec->vcc);
-	if (ret)
+	अगर (ret)
 		dev_err(lvds_codec->dev,
 			"Failed to disable regulator \"vcc\": %d\n", ret);
-}
+पूर्ण
 
-static const struct drm_bridge_funcs funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs funcs = अणु
 	.attach = lvds_codec_attach,
 	.enable = lvds_codec_enable,
 	.disable = lvds_codec_disable,
-};
+पूर्ण;
 
-static int lvds_codec_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *panel_node;
-	struct drm_panel *panel;
-	struct lvds_codec *lvds_codec;
+अटल पूर्णांक lvds_codec_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *panel_node;
+	काष्ठा drm_panel *panel;
+	काष्ठा lvds_codec *lvds_codec;
 
-	lvds_codec = devm_kzalloc(dev, sizeof(*lvds_codec), GFP_KERNEL);
-	if (!lvds_codec)
-		return -ENOMEM;
+	lvds_codec = devm_kzalloc(dev, माप(*lvds_codec), GFP_KERNEL);
+	अगर (!lvds_codec)
+		वापस -ENOMEM;
 
 	lvds_codec->dev = &pdev->dev;
-	lvds_codec->connector_type = (uintptr_t)of_device_get_match_data(dev);
+	lvds_codec->connector_type = (uपूर्णांकptr_t)of_device_get_match_data(dev);
 
 	lvds_codec->vcc = devm_regulator_get(lvds_codec->dev, "power");
-	if (IS_ERR(lvds_codec->vcc))
-		return dev_err_probe(dev, PTR_ERR(lvds_codec->vcc),
+	अगर (IS_ERR(lvds_codec->vcc))
+		वापस dev_err_probe(dev, PTR_ERR(lvds_codec->vcc),
 				     "Unable to get \"vcc\" supply\n");
 
-	lvds_codec->powerdown_gpio = devm_gpiod_get_optional(dev, "powerdown",
+	lvds_codec->घातerकरोwn_gpio = devm_gpiod_get_optional(dev, "powerdown",
 							     GPIOD_OUT_HIGH);
-	if (IS_ERR(lvds_codec->powerdown_gpio))
-		return dev_err_probe(dev, PTR_ERR(lvds_codec->powerdown_gpio),
+	अगर (IS_ERR(lvds_codec->घातerकरोwn_gpio))
+		वापस dev_err_probe(dev, PTR_ERR(lvds_codec->घातerकरोwn_gpio),
 				     "powerdown GPIO failure\n");
 
 	/* Locate the panel DT node. */
 	panel_node = of_graph_get_remote_node(dev->of_node, 1, 0);
-	if (!panel_node) {
+	अगर (!panel_node) अणु
 		dev_dbg(dev, "panel DT node not found\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	panel = of_drm_find_panel(panel_node);
 	of_node_put(panel_node);
-	if (IS_ERR(panel)) {
+	अगर (IS_ERR(panel)) अणु
 		dev_dbg(dev, "panel not found, deferring probe\n");
-		return PTR_ERR(panel);
-	}
+		वापस PTR_ERR(panel);
+	पूर्ण
 
 	lvds_codec->panel_bridge =
 		devm_drm_panel_bridge_add_typed(dev, panel,
 						lvds_codec->connector_type);
-	if (IS_ERR(lvds_codec->panel_bridge))
-		return PTR_ERR(lvds_codec->panel_bridge);
+	अगर (IS_ERR(lvds_codec->panel_bridge))
+		वापस PTR_ERR(lvds_codec->panel_bridge);
 
 	/*
 	 * The panel_bridge bridge is attached to the panel's of_node,
-	 * but we need a bridge attached to our of_node for our user
+	 * but we need a bridge attached to our of_node क्रम our user
 	 * to look up.
 	 */
 	lvds_codec->bridge.of_node = dev->of_node;
 	lvds_codec->bridge.funcs = &funcs;
 	drm_bridge_add(&lvds_codec->bridge);
 
-	platform_set_drvdata(pdev, lvds_codec);
+	platक्रमm_set_drvdata(pdev, lvds_codec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lvds_codec_remove(struct platform_device *pdev)
-{
-	struct lvds_codec *lvds_codec = platform_get_drvdata(pdev);
+अटल पूर्णांक lvds_codec_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lvds_codec *lvds_codec = platक्रमm_get_drvdata(pdev);
 
-	drm_bridge_remove(&lvds_codec->bridge);
+	drm_bridge_हटाओ(&lvds_codec->bridge);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id lvds_codec_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id lvds_codec_match[] = अणु
+	अणु
 		.compatible = "lvds-decoder",
-		.data = (void *)DRM_MODE_CONNECTOR_DPI,
-	},
-	{
+		.data = (व्योम *)DRM_MODE_CONNECTOR_DPI,
+	पूर्ण,
+	अणु
 		.compatible = "lvds-encoder",
-		.data = (void *)DRM_MODE_CONNECTOR_LVDS,
-	},
-	{
+		.data = (व्योम *)DRM_MODE_CONNECTOR_LVDS,
+	पूर्ण,
+	अणु
 		.compatible = "thine,thc63lvdm83d",
-		.data = (void *)DRM_MODE_CONNECTOR_LVDS,
-	},
-	{},
-};
+		.data = (व्योम *)DRM_MODE_CONNECTOR_LVDS,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lvds_codec_match);
 
-static struct platform_driver lvds_codec_driver = {
+अटल काष्ठा platक्रमm_driver lvds_codec_driver = अणु
 	.probe	= lvds_codec_probe,
-	.remove	= lvds_codec_remove,
-	.driver		= {
+	.हटाओ	= lvds_codec_हटाओ,
+	.driver		= अणु
 		.name		= "lvds-codec",
 		.of_match_table	= lvds_codec_match,
-	},
-};
-module_platform_driver(lvds_codec_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lvds_codec_driver);
 
 MODULE_AUTHOR("Laurent Pinchart <laurent.pinchart@ideasonboard.com>");
 MODULE_DESCRIPTION("LVDS encoders and decoders");

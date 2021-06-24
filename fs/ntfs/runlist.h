@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * runlist.h - Defines for runlist handling in NTFS Linux kernel driver.
+ * runlist.h - Defines क्रम runlist handling in NTFS Linux kernel driver.
  *	       Part of the Linux-NTFS project.
  *
  * Copyright (c) 2001-2005 Anton Altaparmakov
- * Copyright (c) 2002 Richard Russon
+ * Copyright (c) 2002 Riअक्षरd Russon
  */
 
-#ifndef _LINUX_NTFS_RUNLIST_H
-#define _LINUX_NTFS_RUNLIST_H
+#अगर_अघोषित _LINUX_NTFS_RUNLIST_H
+#घोषणा _LINUX_NTFS_RUNLIST_H
 
-#include "types.h"
-#include "layout.h"
-#include "volume.h"
+#समावेश "types.h"
+#समावेश "layout.h"
+#समावेश "volume.h"
 
 /**
  * runlist_element - in memory vcn to lcn mapping array element
@@ -25,64 +26,64 @@
  * When lcn == -1 this means that the count vcns starting at vcn are not
  * physically allocated (i.e. this is a hole / data is sparse).
  */
-typedef struct {	/* In memory vcn to lcn mapping structure element. */
-	VCN vcn;	/* vcn = Starting virtual cluster number. */
+प्रकार काष्ठा अणु	/* In memory vcn to lcn mapping काष्ठाure element. */
+	VCN vcn;	/* vcn = Starting भव cluster number. */
 	LCN lcn;	/* lcn = Starting logical cluster number. */
 	s64 length;	/* Run length in clusters. */
-} runlist_element;
+पूर्ण runlist_element;
 
 /**
- * runlist - in memory vcn to lcn mapping array including a read/write lock
- * @rl:		pointer to an array of runlist elements
- * @lock:	read/write spinlock for serializing access to @rl
+ * runlist - in memory vcn to lcn mapping array including a पढ़ो/ग_लिखो lock
+ * @rl:		poपूर्णांकer to an array of runlist elements
+ * @lock:	पढ़ो/ग_लिखो spinlock क्रम serializing access to @rl
  *
  */
-typedef struct {
+प्रकार काष्ठा अणु
 	runlist_element *rl;
-	struct rw_semaphore lock;
-} runlist;
+	काष्ठा rw_semaphore lock;
+पूर्ण runlist;
 
-static inline void ntfs_init_runlist(runlist *rl)
-{
-	rl->rl = NULL;
+अटल अंतरभूत व्योम ntfs_init_runlist(runlist *rl)
+अणु
+	rl->rl = शून्य;
 	init_rwsem(&rl->lock);
-}
+पूर्ण
 
-typedef enum {
+प्रकार क्रमागत अणु
 	LCN_HOLE		= -1,	/* Keep this as highest value or die! */
 	LCN_RL_NOT_MAPPED	= -2,
 	LCN_ENOENT		= -3,
 	LCN_ENOMEM		= -4,
 	LCN_EIO			= -5,
-} LCN_SPECIAL_VALUES;
+पूर्ण LCN_SPECIAL_VALUES;
 
-extern runlist_element *ntfs_runlists_merge(runlist_element *drl,
+बाह्य runlist_element *ntfs_runlists_merge(runlist_element *drl,
 		runlist_element *srl);
 
-extern runlist_element *ntfs_mapping_pairs_decompress(const ntfs_volume *vol,
-		const ATTR_RECORD *attr, runlist_element *old_rl);
+बाह्य runlist_element *ntfs_mapping_pairs_decompress(स्थिर ntfs_volume *vol,
+		स्थिर ATTR_RECORD *attr, runlist_element *old_rl);
 
-extern LCN ntfs_rl_vcn_to_lcn(const runlist_element *rl, const VCN vcn);
+बाह्य LCN ntfs_rl_vcn_to_lcn(स्थिर runlist_element *rl, स्थिर VCN vcn);
 
-#ifdef NTFS_RW
+#अगर_घोषित NTFS_RW
 
-extern runlist_element *ntfs_rl_find_vcn_nolock(runlist_element *rl,
-		const VCN vcn);
+बाह्य runlist_element *ntfs_rl_find_vcn_nolock(runlist_element *rl,
+		स्थिर VCN vcn);
 
-extern int ntfs_get_size_for_mapping_pairs(const ntfs_volume *vol,
-		const runlist_element *rl, const VCN first_vcn,
-		const VCN last_vcn);
+बाह्य पूर्णांक ntfs_get_size_क्रम_mapping_pairs(स्थिर ntfs_volume *vol,
+		स्थिर runlist_element *rl, स्थिर VCN first_vcn,
+		स्थिर VCN last_vcn);
 
-extern int ntfs_mapping_pairs_build(const ntfs_volume *vol, s8 *dst,
-		const int dst_len, const runlist_element *rl,
-		const VCN first_vcn, const VCN last_vcn, VCN *const stop_vcn);
+बाह्य पूर्णांक ntfs_mapping_pairs_build(स्थिर ntfs_volume *vol, s8 *dst,
+		स्थिर पूर्णांक dst_len, स्थिर runlist_element *rl,
+		स्थिर VCN first_vcn, स्थिर VCN last_vcn, VCN *स्थिर stop_vcn);
 
-extern int ntfs_rl_truncate_nolock(const ntfs_volume *vol,
-		runlist *const runlist, const s64 new_length);
+बाह्य पूर्णांक ntfs_rl_truncate_nolock(स्थिर ntfs_volume *vol,
+		runlist *स्थिर runlist, स्थिर s64 new_length);
 
-int ntfs_rl_punch_nolock(const ntfs_volume *vol, runlist *const runlist,
-		const VCN start, const s64 length);
+पूर्णांक ntfs_rl_punch_nolock(स्थिर ntfs_volume *vol, runlist *स्थिर runlist,
+		स्थिर VCN start, स्थिर s64 length);
 
-#endif /* NTFS_RW */
+#पूर्ण_अगर /* NTFS_RW */
 
-#endif /* _LINUX_NTFS_RUNLIST_H */
+#पूर्ण_अगर /* _LINUX_NTFS_RUNLIST_H */

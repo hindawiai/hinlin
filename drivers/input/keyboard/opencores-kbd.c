@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * OpenCores Keyboard Controller Driver
- * http://www.opencores.org/project,keyboardcontroller
+ * http://www.खोलोcores.org/project,keyboardcontroller
  *
  * Copyright 2007-2009 HV Sistemas S.L.
  */
 
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-struct opencores_kbd {
-	struct input_dev *input;
-	void __iomem *addr;
-	int irq;
-	unsigned short keycodes[128];
-};
+काष्ठा खोलोcores_kbd अणु
+	काष्ठा input_dev *input;
+	व्योम __iomem *addr;
+	पूर्णांक irq;
+	अचिन्हित लघु keycodes[128];
+पूर्ण;
 
-static irqreturn_t opencores_kbd_isr(int irq, void *dev_id)
-{
-	struct opencores_kbd *opencores_kbd = dev_id;
-	struct input_dev *input = opencores_kbd->input;
-	unsigned char c;
+अटल irqवापस_t खोलोcores_kbd_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा खोलोcores_kbd *खोलोcores_kbd = dev_id;
+	काष्ठा input_dev *input = खोलोcores_kbd->input;
+	अचिन्हित अक्षर c;
 
-	c = readb(opencores_kbd->addr);
+	c = पढ़ोb(खोलोcores_kbd->addr);
 	input_report_key(input, c & 0x7f, c & 0x80 ? 0 : 1);
 	input_sync(input);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int opencores_kbd_probe(struct platform_device *pdev)
-{
-	struct input_dev *input;
-	struct opencores_kbd *opencores_kbd;
-	struct resource *res;
-	int irq, i, error;
+अटल पूर्णांक खोलोcores_kbd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा input_dev *input;
+	काष्ठा खोलोcores_kbd *खोलोcores_kbd;
+	काष्ठा resource *res;
+	पूर्णांक irq, i, error;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "missing board memory resource\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return -EINVAL;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस -EINVAL;
 
-	opencores_kbd = devm_kzalloc(&pdev->dev, sizeof(*opencores_kbd),
+	खोलोcores_kbd = devm_kzalloc(&pdev->dev, माप(*खोलोcores_kbd),
 				     GFP_KERNEL);
-	if (!opencores_kbd)
-		return -ENOMEM;
+	अगर (!खोलोcores_kbd)
+		वापस -ENOMEM;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	if (!input) {
+	अगर (!input) अणु
 		dev_err(&pdev->dev, "failed to allocate input device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	opencores_kbd->input = input;
+	खोलोcores_kbd->input = input;
 
-	opencores_kbd->addr = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(opencores_kbd->addr))
-		return PTR_ERR(opencores_kbd->addr);
+	खोलोcores_kbd->addr = devm_ioremap_resource(&pdev->dev, res);
+	अगर (IS_ERR(खोलोcores_kbd->addr))
+		वापस PTR_ERR(खोलोcores_kbd->addr);
 
 	input->name = pdev->name;
 	input->phys = "opencores-kbd/input0";
 
 	input->id.bustype = BUS_HOST;
-	input->id.vendor = 0x0001;
+	input->id.venकरोr = 0x0001;
 	input->id.product = 0x0001;
 	input->id.version = 0x0100;
 
-	input->keycode = opencores_kbd->keycodes;
-	input->keycodesize = sizeof(opencores_kbd->keycodes[0]);
-	input->keycodemax = ARRAY_SIZE(opencores_kbd->keycodes);
+	input->keycode = खोलोcores_kbd->keycodes;
+	input->keycodesize = माप(खोलोcores_kbd->keycodes[0]);
+	input->keycodemax = ARRAY_SIZE(खोलोcores_kbd->keycodes);
 
 	__set_bit(EV_KEY, input->evbit);
 
-	for (i = 0; i < ARRAY_SIZE(opencores_kbd->keycodes); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(खोलोcores_kbd->keycodes); i++) अणु
 		/*
 		 * OpenCores controller happens to have scancodes match
 		 * our KEY_* definitions.
 		 */
-		opencores_kbd->keycodes[i] = i;
-		__set_bit(opencores_kbd->keycodes[i], input->keybit);
-	}
+		खोलोcores_kbd->keycodes[i] = i;
+		__set_bit(खोलोcores_kbd->keycodes[i], input->keybit);
+	पूर्ण
 	__clear_bit(KEY_RESERVED, input->keybit);
 
-	error = devm_request_irq(&pdev->dev, irq, &opencores_kbd_isr,
+	error = devm_request_irq(&pdev->dev, irq, &खोलोcores_kbd_isr,
 				 IRQF_TRIGGER_RISING,
-				 pdev->name, opencores_kbd);
-	if (error) {
+				 pdev->name, खोलोcores_kbd);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "unable to claim irq %d\n", irq);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(input);
-	if (error) {
+	error = input_रेजिस्टर_device(input);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "unable to register input device\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver opencores_kbd_device_driver = {
-	.probe    = opencores_kbd_probe,
-	.driver   = {
+अटल काष्ठा platक्रमm_driver खोलोcores_kbd_device_driver = अणु
+	.probe    = खोलोcores_kbd_probe,
+	.driver   = अणु
 		.name = "opencores-kbd",
-	},
-};
-module_platform_driver(opencores_kbd_device_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(खोलोcores_kbd_device_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Javier Herrero <jherrero@hvsistemas.es>");

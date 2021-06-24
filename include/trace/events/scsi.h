@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM scsi
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM scsi
 
-#if !defined(_TRACE_SCSI_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_SCSI_H
+#अगर !defined(_TRACE_SCSI_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_SCSI_H
 
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_host.h>
-#include <linux/tracepoint.h>
-#include <linux/trace_seq.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/trace_seq.h>
 
-#define scsi_opcode_name(opcode)	{ opcode, #opcode }
-#define show_opcode_name(val)					\
-	__print_symbolic(val,					\
+#घोषणा scsi_opcode_name(opcode)	अणु opcode, #opcode पूर्ण
+#घोषणा show_opcode_name(val)					\
+	__prपूर्णांक_symbolic(val,					\
 		scsi_opcode_name(TEST_UNIT_READY),		\
 		scsi_opcode_name(REZERO_UNIT),			\
 		scsi_opcode_name(REQUEST_SENSE),		\
@@ -24,7 +25,7 @@
 		scsi_opcode_name(WRITE_6),			\
 		scsi_opcode_name(SEEK_6),			\
 		scsi_opcode_name(READ_REVERSE),			\
-		scsi_opcode_name(WRITE_FILEMARKS),		\
+		scsi_opcode_name(WRITE_खाताMARKS),		\
 		scsi_opcode_name(SPACE),			\
 		scsi_opcode_name(INQUIRY),			\
 		scsi_opcode_name(RECOVER_BUFFERED_DATA),	\
@@ -78,8 +79,8 @@
 		scsi_opcode_name(PERSISTENT_RESERVE_OUT),	\
 		scsi_opcode_name(VARIABLE_LENGTH_CMD),		\
 		scsi_opcode_name(REPORT_LUNS),			\
-		scsi_opcode_name(MAINTENANCE_IN),		\
-		scsi_opcode_name(MAINTENANCE_OUT),		\
+		scsi_opcode_name(MAINTEन_अंकCE_IN),		\
+		scsi_opcode_name(MAINTEन_अंकCE_OUT),		\
 		scsi_opcode_name(MOVE_MEDIUM),			\
 		scsi_opcode_name(EXCHANGE_MEDIUM),		\
 		scsi_opcode_name(READ_12),			\
@@ -104,9 +105,9 @@
 		scsi_opcode_name(ATA_16),			\
 		scsi_opcode_name(ATA_12))
 
-#define scsi_hostbyte_name(result)	{ result, #result }
-#define show_hostbyte_name(val)					\
-	__print_symbolic(val,					\
+#घोषणा scsi_hostbyte_name(result)	अणु result, #result पूर्ण
+#घोषणा show_hostbyte_name(val)					\
+	__prपूर्णांक_symbolic(val,					\
 		scsi_hostbyte_name(DID_OK),			\
 		scsi_hostbyte_name(DID_NO_CONNECT),		\
 		scsi_hostbyte_name(DID_BUS_BUSY),		\
@@ -124,9 +125,9 @@
 		scsi_hostbyte_name(DID_TRANSPORT_DISRUPTED),	\
 		scsi_hostbyte_name(DID_TRANSPORT_FAILFAST))
 
-#define scsi_driverbyte_name(result)	{ result, #result }
-#define show_driverbyte_name(val)				\
-	__print_symbolic(val,					\
+#घोषणा scsi_driverbyte_name(result)	अणु result, #result पूर्ण
+#घोषणा show_driverbyte_name(val)				\
+	__prपूर्णांक_symbolic(val,					\
 		scsi_driverbyte_name(DRIVER_OK),		\
 		scsi_driverbyte_name(DRIVER_BUSY),		\
 		scsi_driverbyte_name(DRIVER_SOFT),		\
@@ -137,9 +138,9 @@
 		scsi_driverbyte_name(DRIVER_HARD),		\
 		scsi_driverbyte_name(DRIVER_SENSE))
 
-#define scsi_msgbyte_name(result)	{ result, #result }
-#define show_msgbyte_name(val)					\
-	__print_symbolic(val,					\
+#घोषणा scsi_msgbyte_name(result)	अणु result, #result पूर्ण
+#घोषणा show_msgbyte_name(val)					\
+	__prपूर्णांक_symbolic(val,					\
 		scsi_msgbyte_name(COMMAND_COMPLETE),		\
 		scsi_msgbyte_name(EXTENDED_MESSAGE),		\
 		scsi_msgbyte_name(SAVE_POINTERS),		\
@@ -168,9 +169,9 @@
 		scsi_msgbyte_name(BUS_DEVICE_RESET),		\
 		scsi_msgbyte_name(ABORT))
 
-#define scsi_statusbyte_name(result)	{ result, #result }
-#define show_statusbyte_name(val)				\
-	__print_symbolic(val,					\
+#घोषणा scsi_statusbyte_name(result)	अणु result, #result पूर्ण
+#घोषणा show_statusbyte_name(val)				\
+	__prपूर्णांक_symbolic(val,					\
 		scsi_statusbyte_name(SAM_STAT_GOOD),		\
 		scsi_statusbyte_name(SAM_STAT_CHECK_CONDITION),	\
 		scsi_statusbyte_name(SAM_STAT_CONDITION_MET),	\
@@ -183,9 +184,9 @@
 		scsi_statusbyte_name(SAM_STAT_ACA_ACTIVE),	\
 		scsi_statusbyte_name(SAM_STAT_TASK_ABORTED))
 
-#define scsi_prot_op_name(result)	{ result, #result }
-#define show_prot_op_name(val)					\
-	__print_symbolic(val,					\
+#घोषणा scsi_prot_op_name(result)	अणु result, #result पूर्ण
+#घोषणा show_prot_op_name(val)					\
+	__prपूर्णांक_symbolic(val,					\
 		scsi_prot_op_name(SCSI_PROT_NORMAL),		\
 		scsi_prot_op_name(SCSI_PROT_READ_INSERT),	\
 		scsi_prot_op_name(SCSI_PROT_WRITE_STRIP),	\
@@ -194,26 +195,26 @@
 		scsi_prot_op_name(SCSI_PROT_READ_PASS),		\
 		scsi_prot_op_name(SCSI_PROT_WRITE_PASS))
 
-const char *scsi_trace_parse_cdb(struct trace_seq*, unsigned char*, int);
-#define __parse_cdb(cdb, len) scsi_trace_parse_cdb(p, cdb, len)
+स्थिर अक्षर *scsi_trace_parse_cdb(काष्ठा trace_seq*, अचिन्हित अक्षर*, पूर्णांक);
+#घोषणा __parse_cdb(cdb, len) scsi_trace_parse_cdb(p, cdb, len)
 
 TRACE_EVENT(scsi_dispatch_cmd_start,
 
-	TP_PROTO(struct scsi_cmnd *cmd),
+	TP_PROTO(काष्ठा scsi_cmnd *cmd),
 
 	TP_ARGS(cmd),
 
 	TP_STRUCT__entry(
-		__field( unsigned int,	host_no	)
-		__field( unsigned int,	channel	)
-		__field( unsigned int,	id	)
-		__field( unsigned int,	lun	)
-		__field( unsigned int,	opcode	)
-		__field( unsigned int,	cmd_len )
-		__field( unsigned int,	data_sglen )
-		__field( unsigned int,	prot_sglen )
-		__field( unsigned char,	prot_op )
-		__dynamic_array(unsigned char,	cmnd, cmd->cmd_len)
+		__field( अचिन्हित पूर्णांक,	host_no	)
+		__field( अचिन्हित पूर्णांक,	channel	)
+		__field( अचिन्हित पूर्णांक,	id	)
+		__field( अचिन्हित पूर्णांक,	lun	)
+		__field( अचिन्हित पूर्णांक,	opcode	)
+		__field( अचिन्हित पूर्णांक,	cmd_len )
+		__field( अचिन्हित पूर्णांक,	data_sglen )
+		__field( अचिन्हित पूर्णांक,	prot_sglen )
+		__field( अचिन्हित अक्षर,	prot_op )
+		__dynamic_array(अचिन्हित अक्षर,	cmnd, cmd->cmd_len)
 	),
 
 	TP_fast_assign(
@@ -226,37 +227,37 @@ TRACE_EVENT(scsi_dispatch_cmd_start,
 		__entry->data_sglen	= scsi_sg_count(cmd);
 		__entry->prot_sglen	= scsi_prot_sg_count(cmd);
 		__entry->prot_op	= scsi_get_prot_op(cmd);
-		memcpy(__get_dynamic_array(cmnd), cmd->cmnd, cmd->cmd_len);
+		स_नकल(__get_dynamic_array(cmnd), cmd->cmnd, cmd->cmd_len);
 	),
 
-	TP_printk("host_no=%u channel=%u id=%u lun=%u data_sgl=%u prot_sgl=%u" \
+	TP_prपूर्णांकk("host_no=%u channel=%u id=%u lun=%u data_sgl=%u prot_sgl=%u" \
 		  " prot_op=%s cmnd=(%s %s raw=%s)",
 		  __entry->host_no, __entry->channel, __entry->id,
 		  __entry->lun, __entry->data_sglen, __entry->prot_sglen,
 		  show_prot_op_name(__entry->prot_op),
 		  show_opcode_name(__entry->opcode),
 		  __parse_cdb(__get_dynamic_array(cmnd), __entry->cmd_len),
-		  __print_hex(__get_dynamic_array(cmnd), __entry->cmd_len))
+		  __prपूर्णांक_hex(__get_dynamic_array(cmnd), __entry->cmd_len))
 );
 
 TRACE_EVENT(scsi_dispatch_cmd_error,
 
-	TP_PROTO(struct scsi_cmnd *cmd, int rtn),
+	TP_PROTO(काष्ठा scsi_cmnd *cmd, पूर्णांक rtn),
 
 	TP_ARGS(cmd, rtn),
 
 	TP_STRUCT__entry(
-		__field( unsigned int,	host_no	)
-		__field( unsigned int,	channel	)
-		__field( unsigned int,	id	)
-		__field( unsigned int,	lun	)
-		__field( int,		rtn	)
-		__field( unsigned int,	opcode	)
-		__field( unsigned int,	cmd_len )
-		__field( unsigned int,	data_sglen )
-		__field( unsigned int,	prot_sglen )
-		__field( unsigned char,	prot_op )
-		__dynamic_array(unsigned char,	cmnd, cmd->cmd_len)
+		__field( अचिन्हित पूर्णांक,	host_no	)
+		__field( अचिन्हित पूर्णांक,	channel	)
+		__field( अचिन्हित पूर्णांक,	id	)
+		__field( अचिन्हित पूर्णांक,	lun	)
+		__field( पूर्णांक,		rtn	)
+		__field( अचिन्हित पूर्णांक,	opcode	)
+		__field( अचिन्हित पूर्णांक,	cmd_len )
+		__field( अचिन्हित पूर्णांक,	data_sglen )
+		__field( अचिन्हित पूर्णांक,	prot_sglen )
+		__field( अचिन्हित अक्षर,	prot_op )
+		__dynamic_array(अचिन्हित अक्षर,	cmnd, cmd->cmd_len)
 	),
 
 	TP_fast_assign(
@@ -270,38 +271,38 @@ TRACE_EVENT(scsi_dispatch_cmd_error,
 		__entry->data_sglen	= scsi_sg_count(cmd);
 		__entry->prot_sglen	= scsi_prot_sg_count(cmd);
 		__entry->prot_op	= scsi_get_prot_op(cmd);
-		memcpy(__get_dynamic_array(cmnd), cmd->cmnd, cmd->cmd_len);
+		स_नकल(__get_dynamic_array(cmnd), cmd->cmnd, cmd->cmd_len);
 	),
 
-	TP_printk("host_no=%u channel=%u id=%u lun=%u data_sgl=%u prot_sgl=%u" \
+	TP_prपूर्णांकk("host_no=%u channel=%u id=%u lun=%u data_sgl=%u prot_sgl=%u" \
 		  " prot_op=%s cmnd=(%s %s raw=%s) rtn=%d",
 		  __entry->host_no, __entry->channel, __entry->id,
 		  __entry->lun, __entry->data_sglen, __entry->prot_sglen,
 		  show_prot_op_name(__entry->prot_op),
 		  show_opcode_name(__entry->opcode),
 		  __parse_cdb(__get_dynamic_array(cmnd), __entry->cmd_len),
-		  __print_hex(__get_dynamic_array(cmnd), __entry->cmd_len),
+		  __prपूर्णांक_hex(__get_dynamic_array(cmnd), __entry->cmd_len),
 		  __entry->rtn)
 );
 
-DECLARE_EVENT_CLASS(scsi_cmd_done_timeout_template,
+DECLARE_EVENT_CLASS(scsi_cmd_करोne_समयout_ढाँचा,
 
-	TP_PROTO(struct scsi_cmnd *cmd),
+	TP_PROTO(काष्ठा scsi_cmnd *cmd),
 
 	TP_ARGS(cmd),
 
 	TP_STRUCT__entry(
-		__field( unsigned int,	host_no	)
-		__field( unsigned int,	channel	)
-		__field( unsigned int,	id	)
-		__field( unsigned int,	lun	)
-		__field( int,		result	)
-		__field( unsigned int,	opcode	)
-		__field( unsigned int,	cmd_len )
-		__field( unsigned int,	data_sglen )
-		__field( unsigned int,	prot_sglen )
-		__field( unsigned char,	prot_op )
-		__dynamic_array(unsigned char,	cmnd, cmd->cmd_len)
+		__field( अचिन्हित पूर्णांक,	host_no	)
+		__field( अचिन्हित पूर्णांक,	channel	)
+		__field( अचिन्हित पूर्णांक,	id	)
+		__field( अचिन्हित पूर्णांक,	lun	)
+		__field( पूर्णांक,		result	)
+		__field( अचिन्हित पूर्णांक,	opcode	)
+		__field( अचिन्हित पूर्णांक,	cmd_len )
+		__field( अचिन्हित पूर्णांक,	data_sglen )
+		__field( अचिन्हित पूर्णांक,	prot_sglen )
+		__field( अचिन्हित अक्षर,	prot_op )
+		__dynamic_array(अचिन्हित अक्षर,	cmnd, cmd->cmd_len)
 	),
 
 	TP_fast_assign(
@@ -315,10 +316,10 @@ DECLARE_EVENT_CLASS(scsi_cmd_done_timeout_template,
 		__entry->data_sglen	= scsi_sg_count(cmd);
 		__entry->prot_sglen	= scsi_prot_sg_count(cmd);
 		__entry->prot_op	= scsi_get_prot_op(cmd);
-		memcpy(__get_dynamic_array(cmnd), cmd->cmnd, cmd->cmd_len);
+		स_नकल(__get_dynamic_array(cmnd), cmd->cmnd, cmd->cmd_len);
 	),
 
-	TP_printk("host_no=%u channel=%u id=%u lun=%u data_sgl=%u " \
+	TP_prपूर्णांकk("host_no=%u channel=%u id=%u lun=%u data_sgl=%u " \
 		  "prot_sgl=%u prot_op=%s cmnd=(%s %s raw=%s) result=(driver=" \
 		  "%s host=%s message=%s status=%s)",
 		  __entry->host_no, __entry->channel, __entry->id,
@@ -326,39 +327,39 @@ DECLARE_EVENT_CLASS(scsi_cmd_done_timeout_template,
 		  show_prot_op_name(__entry->prot_op),
 		  show_opcode_name(__entry->opcode),
 		  __parse_cdb(__get_dynamic_array(cmnd), __entry->cmd_len),
-		  __print_hex(__get_dynamic_array(cmnd), __entry->cmd_len),
+		  __prपूर्णांक_hex(__get_dynamic_array(cmnd), __entry->cmd_len),
 		  show_driverbyte_name(((__entry->result) >> 24) & 0xff),
 		  show_hostbyte_name(((__entry->result) >> 16) & 0xff),
 		  show_msgbyte_name(((__entry->result) >> 8) & 0xff),
 		  show_statusbyte_name(__entry->result & 0xff))
 );
 
-DEFINE_EVENT(scsi_cmd_done_timeout_template, scsi_dispatch_cmd_done,
-	     TP_PROTO(struct scsi_cmnd *cmd),
+DEFINE_EVENT(scsi_cmd_करोne_समयout_ढाँचा, scsi_dispatch_cmd_करोne,
+	     TP_PROTO(काष्ठा scsi_cmnd *cmd),
 	     TP_ARGS(cmd));
 
-DEFINE_EVENT(scsi_cmd_done_timeout_template, scsi_dispatch_cmd_timeout,
-	     TP_PROTO(struct scsi_cmnd *cmd),
+DEFINE_EVENT(scsi_cmd_करोne_समयout_ढाँचा, scsi_dispatch_cmd_समयout,
+	     TP_PROTO(काष्ठा scsi_cmnd *cmd),
 	     TP_ARGS(cmd));
 
 TRACE_EVENT(scsi_eh_wakeup,
 
-	TP_PROTO(struct Scsi_Host *shost),
+	TP_PROTO(काष्ठा Scsi_Host *shost),
 
 	TP_ARGS(shost),
 
 	TP_STRUCT__entry(
-		__field( unsigned int,	host_no	)
+		__field( अचिन्हित पूर्णांक,	host_no	)
 	),
 
 	TP_fast_assign(
 		__entry->host_no	= shost->host_no;
 	),
 
-	TP_printk("host_no=%u", __entry->host_no)
+	TP_prपूर्णांकk("host_no=%u", __entry->host_no)
 );
 
-#endif /*  _TRACE_SCSI_H */
+#पूर्ण_अगर /*  _TRACE_SCSI_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

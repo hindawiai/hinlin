@@ -1,97 +1,98 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC_MMAN_H__
-#define __SPARC_MMAN_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC_MMAN_H__
+#घोषणा __SPARC_MMAN_H__
 
-#include <uapi/asm/mman.h>
+#समावेश <uapi/यंत्र/mman.h>
 
-#ifndef __ASSEMBLY__
-#define arch_mmap_check(addr,len,flags)	sparc_mmap_check(addr,len)
-int sparc_mmap_check(unsigned long addr, unsigned long len);
+#अगर_अघोषित __ASSEMBLY__
+#घोषणा arch_mmap_check(addr,len,flags)	sparc_mmap_check(addr,len)
+पूर्णांक sparc_mmap_check(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len);
 
-#ifdef CONFIG_SPARC64
-#include <asm/adi_64.h>
+#अगर_घोषित CONFIG_SPARC64
+#समावेश <यंत्र/adi_64.h>
 
-static inline void ipi_set_tstate_mcde(void *arg)
-{
-	struct mm_struct *mm = arg;
+अटल अंतरभूत व्योम ipi_set_tstate_mcde(व्योम *arg)
+अणु
+	काष्ठा mm_काष्ठा *mm = arg;
 
-	/* Set TSTATE_MCDE for the task using address map that ADI has been
-	 * enabled on if the task is running. If not, it will be set
-	 * automatically at the next context switch
+	/* Set TSTATE_MCDE क्रम the task using address map that ADI has been
+	 * enabled on अगर the task is running. If not, it will be set
+	 * स्वतःmatically at the next context चयन
 	 */
-	if (current->mm == mm) {
-		struct pt_regs *regs;
+	अगर (current->mm == mm) अणु
+		काष्ठा pt_regs *regs;
 
 		regs = task_pt_regs(current);
 		regs->tstate |= TSTATE_MCDE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define arch_calc_vm_prot_bits(prot, pkey) sparc_calc_vm_prot_bits(prot)
-static inline unsigned long sparc_calc_vm_prot_bits(unsigned long prot)
-{
-	if (adi_capable() && (prot & PROT_ADI)) {
-		struct pt_regs *regs;
+#घोषणा arch_calc_vm_prot_bits(prot, pkey) sparc_calc_vm_prot_bits(prot)
+अटल अंतरभूत अचिन्हित दीर्घ sparc_calc_vm_prot_bits(अचिन्हित दीर्घ prot)
+अणु
+	अगर (adi_capable() && (prot & PROT_ADI)) अणु
+		काष्ठा pt_regs *regs;
 
-		if (!current->mm->context.adi) {
+		अगर (!current->mm->context.adi) अणु
 			regs = task_pt_regs(current);
 			regs->tstate |= TSTATE_MCDE;
 			current->mm->context.adi = true;
 			on_each_cpu_mask(mm_cpumask(current->mm),
 					 ipi_set_tstate_mcde, current->mm, 0);
-		}
-		return VM_SPARC_ADI;
-	} else {
-		return 0;
-	}
-}
+		पूर्ण
+		वापस VM_SPARC_ADI;
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-#define arch_vm_get_page_prot(vm_flags) sparc_vm_get_page_prot(vm_flags)
-static inline pgprot_t sparc_vm_get_page_prot(unsigned long vm_flags)
-{
-	return (vm_flags & VM_SPARC_ADI) ? __pgprot(_PAGE_MCD_4V) : __pgprot(0);
-}
+#घोषणा arch_vm_get_page_prot(vm_flags) sparc_vm_get_page_prot(vm_flags)
+अटल अंतरभूत pgprot_t sparc_vm_get_page_prot(अचिन्हित दीर्घ vm_flags)
+अणु
+	वापस (vm_flags & VM_SPARC_ADI) ? __pgprot(_PAGE_MCD_4V) : __pgprot(0);
+पूर्ण
 
-#define arch_validate_prot(prot, addr) sparc_validate_prot(prot, addr)
-static inline int sparc_validate_prot(unsigned long prot, unsigned long addr)
-{
-	if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM | PROT_ADI))
-		return 0;
-	return 1;
-}
+#घोषणा arch_validate_prot(prot, addr) sparc_validate_prot(prot, addr)
+अटल अंतरभूत पूर्णांक sparc_validate_prot(अचिन्हित दीर्घ prot, अचिन्हित दीर्घ addr)
+अणु
+	अगर (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM | PROT_ADI))
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-#define arch_validate_flags(vm_flags) arch_validate_flags(vm_flags)
-/* arch_validate_flags() - Ensure combination of flags is valid for a
+#घोषणा arch_validate_flags(vm_flags) arch_validate_flags(vm_flags)
+/* arch_validate_flags() - Ensure combination of flags is valid क्रम a
  *	VMA.
  */
-static inline bool arch_validate_flags(unsigned long vm_flags)
-{
-	/* If ADI is being enabled on this VMA, check for ADI
-	 * capability on the platform and ensure VMA is suitable
-	 * for ADI
+अटल अंतरभूत bool arch_validate_flags(अचिन्हित दीर्घ vm_flags)
+अणु
+	/* If ADI is being enabled on this VMA, check क्रम ADI
+	 * capability on the platक्रमm and ensure VMA is suitable
+	 * क्रम ADI
 	 */
-	if (vm_flags & VM_SPARC_ADI) {
-		if (!adi_capable())
-			return false;
+	अगर (vm_flags & VM_SPARC_ADI) अणु
+		अगर (!adi_capable())
+			वापस false;
 
 		/* ADI can not be enabled on PFN mapped pages */
-		if (vm_flags & (VM_PFNMAP | VM_MIXEDMAP))
-			return false;
+		अगर (vm_flags & (VM_PFNMAP | VM_MIXEDMAP))
+			वापस false;
 
 		/* Mergeable pages can become unmergeable
-		 * if ADI is enabled on them even if they
+		 * अगर ADI is enabled on them even अगर they
 		 * have identical data on them. This can be
 		 * because ADI enabled pages with identical
 		 * data may still not have identical ADI
 		 * tags on them. Disallow ADI on mergeable
 		 * pages.
 		 */
-		if (vm_flags & VM_MERGEABLE)
-			return false;
-	}
-	return true;
-}
-#endif /* CONFIG_SPARC64 */
+		अगर (vm_flags & VM_MERGEABLE)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SPARC64 */
 
-#endif /* __ASSEMBLY__ */
-#endif /* __SPARC_MMAN_H__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __SPARC_MMAN_H__ */

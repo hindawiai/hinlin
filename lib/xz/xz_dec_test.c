@@ -1,72 +1,73 @@
+<शैली गुरु>
 /*
  * XZ decoder tester
  *
  * Author: Lasse Collin <lasse.collin@tukaani.org>
  *
- * This file has been put into the public domain.
- * You can do whatever you want with this file.
+ * This file has been put पूर्णांकo the खुला करोमुख्य.
+ * You can करो whatever you want with this file.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#include <linux/crc32.h>
-#include <linux/xz.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/xz.h>
 
 /* Maximum supported dictionary size */
-#define DICT_MAX (1 << 20)
+#घोषणा DICT_MAX (1 << 20)
 
-/* Device name to pass to register_chrdev(). */
-#define DEVICE_NAME "xz_dec_test"
+/* Device name to pass to रेजिस्टर_chrdev(). */
+#घोषणा DEVICE_NAME "xz_dec_test"
 
 /* Dynamically allocated device major number */
-static int device_major;
+अटल पूर्णांक device_major;
 
 /*
  * We reuse the same decoder state, and thus can decode only one
- * file at a time.
+ * file at a समय.
  */
-static bool device_is_open;
+अटल bool device_is_खोलो;
 
 /* XZ decoder state */
-static struct xz_dec *state;
+अटल काष्ठा xz_dec *state;
 
 /*
- * Return value of xz_dec_run(). We need to avoid calling xz_dec_run() after
- * it has returned XZ_STREAM_END, so we make this static.
+ * Return value of xz_dec_run(). We need to aव्योम calling xz_dec_run() after
+ * it has वापसed XZ_STREAM_END, so we make this अटल.
  */
-static enum xz_ret ret;
+अटल क्रमागत xz_ret ret;
 
 /*
  * Input and output buffers. The input buffer is used as a temporary safe
- * place for the data coming from the userspace.
+ * place क्रम the data coming from the userspace.
  */
-static uint8_t buffer_in[1024];
-static uint8_t buffer_out[1024];
+अटल uपूर्णांक8_t buffer_in[1024];
+अटल uपूर्णांक8_t buffer_out[1024];
 
 /*
  * Structure to pass the input and output buffers to the XZ decoder.
- * A few of the fields are never modified so we initialize them here.
+ * A few of the fields are never modअगरied so we initialize them here.
  */
-static struct xz_buf buffers = {
+अटल काष्ठा xz_buf buffers = अणु
 	.in = buffer_in,
 	.out = buffer_out,
-	.out_size = sizeof(buffer_out)
-};
+	.out_size = माप(buffer_out)
+पूर्ण;
 
 /*
  * CRC32 of uncompressed data. This is used to give the user a simple way
  * to check that the decoder produces correct output.
  */
-static uint32_t crc;
+अटल uपूर्णांक32_t crc;
 
-static int xz_dec_test_open(struct inode *i, struct file *f)
-{
-	if (device_is_open)
-		return -EBUSY;
+अटल पूर्णांक xz_dec_test_खोलो(काष्ठा inode *i, काष्ठा file *f)
+अणु
+	अगर (device_is_खोलो)
+		वापस -EBUSY;
 
-	device_is_open = true;
+	device_is_खोलो = true;
 
 	xz_dec_reset(state);
 	ret = XZ_OK;
@@ -76,145 +77,145 @@ static int xz_dec_test_open(struct inode *i, struct file *f)
 	buffers.in_size = 0;
 	buffers.out_pos = 0;
 
-	printk(KERN_INFO DEVICE_NAME ": opened\n");
-	return 0;
-}
+	prपूर्णांकk(KERN_INFO DEVICE_NAME ": opened\n");
+	वापस 0;
+पूर्ण
 
-static int xz_dec_test_release(struct inode *i, struct file *f)
-{
-	device_is_open = false;
+अटल पूर्णांक xz_dec_test_release(काष्ठा inode *i, काष्ठा file *f)
+अणु
+	device_is_खोलो = false;
 
-	if (ret == XZ_OK)
-		printk(KERN_INFO DEVICE_NAME ": input was truncated\n");
+	अगर (ret == XZ_OK)
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": input was truncated\n");
 
-	printk(KERN_INFO DEVICE_NAME ": closed\n");
-	return 0;
-}
+	prपूर्णांकk(KERN_INFO DEVICE_NAME ": closed\n");
+	वापस 0;
+पूर्ण
 
 /*
  * Decode the data given to us from the userspace. CRC32 of the uncompressed
- * data is calculated and is printed at the end of successful decoding. The
- * uncompressed data isn't stored anywhere for further use.
+ * data is calculated and is prपूर्णांकed at the end of successful decoding. The
+ * uncompressed data isn't stored anywhere क्रम further use.
  *
  * The .xz file must have exactly one Stream and no Stream Padding. The data
  * after the first Stream is considered to be garbage.
  */
-static ssize_t xz_dec_test_write(struct file *file, const char __user *buf,
-				 size_t size, loff_t *pos)
-{
-	size_t remaining;
+अटल sमाप_प्रकार xz_dec_test_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				 माप_प्रकार size, loff_t *pos)
+अणु
+	माप_प्रकार reमुख्यing;
 
-	if (ret != XZ_OK) {
-		if (size > 0)
-			printk(KERN_INFO DEVICE_NAME ": %zu bytes of "
+	अगर (ret != XZ_OK) अणु
+		अगर (size > 0)
+			prपूर्णांकk(KERN_INFO DEVICE_NAME ": %zu bytes of "
 					"garbage at the end of the file\n",
 					size);
 
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	printk(KERN_INFO DEVICE_NAME ": decoding %zu bytes of input\n",
+	prपूर्णांकk(KERN_INFO DEVICE_NAME ": decoding %zu bytes of input\n",
 			size);
 
-	remaining = size;
-	while ((remaining > 0 || buffers.out_pos == buffers.out_size)
-			&& ret == XZ_OK) {
-		if (buffers.in_pos == buffers.in_size) {
+	reमुख्यing = size;
+	जबतक ((reमुख्यing > 0 || buffers.out_pos == buffers.out_size)
+			&& ret == XZ_OK) अणु
+		अगर (buffers.in_pos == buffers.in_size) अणु
 			buffers.in_pos = 0;
-			buffers.in_size = min(remaining, sizeof(buffer_in));
-			if (copy_from_user(buffer_in, buf, buffers.in_size))
-				return -EFAULT;
+			buffers.in_size = min(reमुख्यing, माप(buffer_in));
+			अगर (copy_from_user(buffer_in, buf, buffers.in_size))
+				वापस -EFAULT;
 
 			buf += buffers.in_size;
-			remaining -= buffers.in_size;
-		}
+			reमुख्यing -= buffers.in_size;
+		पूर्ण
 
 		buffers.out_pos = 0;
 		ret = xz_dec_run(state, &buffers);
 		crc = crc32(crc, buffer_out, buffers.out_pos);
-	}
+	पूर्ण
 
-	switch (ret) {
-	case XZ_OK:
-		printk(KERN_INFO DEVICE_NAME ": XZ_OK\n");
-		return size;
+	चयन (ret) अणु
+	हाल XZ_OK:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": XZ_OK\n");
+		वापस size;
 
-	case XZ_STREAM_END:
-		printk(KERN_INFO DEVICE_NAME ": XZ_STREAM_END, "
+	हाल XZ_STREAM_END:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": XZ_STREAM_END, "
 				"CRC32 = 0x%08X\n", ~crc);
-		return size - remaining - (buffers.in_size - buffers.in_pos);
+		वापस size - reमुख्यing - (buffers.in_size - buffers.in_pos);
 
-	case XZ_MEMLIMIT_ERROR:
-		printk(KERN_INFO DEVICE_NAME ": XZ_MEMLIMIT_ERROR\n");
-		break;
+	हाल XZ_MEMLIMIT_ERROR:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": XZ_MEMLIMIT_ERROR\n");
+		अवरोध;
 
-	case XZ_FORMAT_ERROR:
-		printk(KERN_INFO DEVICE_NAME ": XZ_FORMAT_ERROR\n");
-		break;
+	हाल XZ_FORMAT_ERROR:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": XZ_FORMAT_ERROR\n");
+		अवरोध;
 
-	case XZ_OPTIONS_ERROR:
-		printk(KERN_INFO DEVICE_NAME ": XZ_OPTIONS_ERROR\n");
-		break;
+	हाल XZ_OPTIONS_ERROR:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": XZ_OPTIONS_ERROR\n");
+		अवरोध;
 
-	case XZ_DATA_ERROR:
-		printk(KERN_INFO DEVICE_NAME ": XZ_DATA_ERROR\n");
-		break;
+	हाल XZ_DATA_ERROR:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": XZ_DATA_ERROR\n");
+		अवरोध;
 
-	case XZ_BUF_ERROR:
-		printk(KERN_INFO DEVICE_NAME ": XZ_BUF_ERROR\n");
-		break;
+	हाल XZ_BUF_ERROR:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": XZ_BUF_ERROR\n");
+		अवरोध;
 
-	default:
-		printk(KERN_INFO DEVICE_NAME ": Bug detected!\n");
-		break;
-	}
+	शेष:
+		prपूर्णांकk(KERN_INFO DEVICE_NAME ": Bug detected!\n");
+		अवरोध;
+	पूर्ण
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-/* Allocate the XZ decoder state and register the character device. */
-static int __init xz_dec_test_init(void)
-{
-	static const struct file_operations fileops = {
+/* Allocate the XZ decoder state and रेजिस्टर the अक्षरacter device. */
+अटल पूर्णांक __init xz_dec_test_init(व्योम)
+अणु
+	अटल स्थिर काष्ठा file_operations fileops = अणु
 		.owner = THIS_MODULE,
-		.open = &xz_dec_test_open,
+		.खोलो = &xz_dec_test_खोलो,
 		.release = &xz_dec_test_release,
-		.write = &xz_dec_test_write
-	};
+		.ग_लिखो = &xz_dec_test_ग_लिखो
+	पूर्ण;
 
 	state = xz_dec_init(XZ_PREALLOC, DICT_MAX);
-	if (state == NULL)
-		return -ENOMEM;
+	अगर (state == शून्य)
+		वापस -ENOMEM;
 
-	device_major = register_chrdev(0, DEVICE_NAME, &fileops);
-	if (device_major < 0) {
+	device_major = रेजिस्टर_chrdev(0, DEVICE_NAME, &fileops);
+	अगर (device_major < 0) अणु
 		xz_dec_end(state);
-		return device_major;
-	}
+		वापस device_major;
+	पूर्ण
 
-	printk(KERN_INFO DEVICE_NAME ": module loaded\n");
-	printk(KERN_INFO DEVICE_NAME ": Create a device node with "
+	prपूर्णांकk(KERN_INFO DEVICE_NAME ": module loaded\n");
+	prपूर्णांकk(KERN_INFO DEVICE_NAME ": Create a device node with "
 			"'mknod " DEVICE_NAME " c %d 0' and write .xz files "
 			"to it.\n", device_major);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit xz_dec_test_exit(void)
-{
-	unregister_chrdev(device_major, DEVICE_NAME);
+अटल व्योम __निकास xz_dec_test_निकास(व्योम)
+अणु
+	unरेजिस्टर_chrdev(device_major, DEVICE_NAME);
 	xz_dec_end(state);
-	printk(KERN_INFO DEVICE_NAME ": module unloaded\n");
-}
+	prपूर्णांकk(KERN_INFO DEVICE_NAME ": module unloaded\n");
+पूर्ण
 
 module_init(xz_dec_test_init);
-module_exit(xz_dec_test_exit);
+module_निकास(xz_dec_test_निकास);
 
 MODULE_DESCRIPTION("XZ decompressor tester");
 MODULE_VERSION("1.0");
 MODULE_AUTHOR("Lasse Collin <lasse.collin@tukaani.org>");
 
 /*
- * This code is in the public domain, but in Linux it's simplest to just
+ * This code is in the खुला करोमुख्य, but in Linux it's simplest to just
  * say it's GPL and consider the authors as the copyright holders.
  */
 MODULE_LICENSE("GPL");

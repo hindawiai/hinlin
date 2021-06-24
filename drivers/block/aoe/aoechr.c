@@ -1,20 +1,21 @@
-/* Copyright (c) 2012 Coraid, Inc.  See COPYING for GPL terms. */
+<शैली गुरु>
+/* Copyright (c) 2012 Coraid, Inc.  See COPYING क्रम GPL terms. */
 /*
  * aoechr.c
- * AoE character device driver
+ * AoE अक्षरacter device driver
  */
 
-#include <linux/hdreg.h>
-#include <linux/blkdev.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/skbuff.h>
-#include <linux/export.h>
-#include "aoe.h"
+#समावेश <linux/hdreg.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/export.h>
+#समावेश "aoe.h"
 
-enum {
+क्रमागत अणु
 	//MINOR_STAT = 1, (moved to sysfs)
 	MINOR_ERR = 2,
 	MINOR_DISCOVER,
@@ -23,127 +24,127 @@ enum {
 	MINOR_FLUSH,
 	MSGSZ = 2048,
 	NMSG = 100,		/* message backlog to retain */
-};
+पूर्ण;
 
-struct aoe_chardev {
-	ulong minor;
-	char name[32];
-};
+काष्ठा aoe_अक्षरdev अणु
+	uदीर्घ minor;
+	अक्षर name[32];
+पूर्ण;
 
-enum { EMFL_VALID = 1 };
+क्रमागत अणु EMFL_VALID = 1 पूर्ण;
 
-struct ErrMsg {
-	short flags;
-	short len;
-	char *msg;
-};
+काष्ठा ErrMsg अणु
+	लघु flags;
+	लघु len;
+	अक्षर *msg;
+पूर्ण;
 
-static DEFINE_MUTEX(aoechr_mutex);
+अटल DEFINE_MUTEX(aoechr_mutex);
 
-/* A ring buffer of error messages, to be read through
+/* A ring buffer of error messages, to be पढ़ो through
  * "/dev/etherd/err".  When no messages are present,
- * readers will block waiting for messages to appear.
+ * पढ़ोers will block रुकोing क्रम messages to appear.
  */
-static struct ErrMsg emsgs[NMSG];
-static int emsgs_head_idx, emsgs_tail_idx;
-static struct completion emsgs_comp;
-static spinlock_t emsgs_lock;
-static int nblocked_emsgs_readers;
-static struct class *aoe_class;
-static struct aoe_chardev chardevs[] = {
-	{ MINOR_ERR, "err" },
-	{ MINOR_DISCOVER, "discover" },
-	{ MINOR_INTERFACES, "interfaces" },
-	{ MINOR_REVALIDATE, "revalidate" },
-	{ MINOR_FLUSH, "flush" },
-};
+अटल काष्ठा ErrMsg emsgs[NMSG];
+अटल पूर्णांक emsgs_head_idx, emsgs_tail_idx;
+अटल काष्ठा completion emsgs_comp;
+अटल spinlock_t emsgs_lock;
+अटल पूर्णांक nblocked_emsgs_पढ़ोers;
+अटल काष्ठा class *aoe_class;
+अटल काष्ठा aoe_अक्षरdev अक्षरdevs[] = अणु
+	अणु MINOR_ERR, "err" पूर्ण,
+	अणु MINOR_DISCOVER, "discover" पूर्ण,
+	अणु MINOR_INTERFACES, "interfaces" पूर्ण,
+	अणु MINOR_REVALIDATE, "revalidate" पूर्ण,
+	अणु MINOR_FLUSH, "flush" पूर्ण,
+पूर्ण;
 
-static int
-discover(void)
-{
+अटल पूर्णांक
+discover(व्योम)
+अणु
 	aoecmd_cfg(0xffff, 0xff);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-interfaces(const char __user *str, size_t size)
-{
-	if (set_aoe_iflist(str, size)) {
-		printk(KERN_ERR
+अटल पूर्णांक
+पूर्णांकerfaces(स्थिर अक्षर __user *str, माप_प्रकार size)
+अणु
+	अगर (set_aoe_अगरlist(str, size)) अणु
+		prपूर्णांकk(KERN_ERR
 			"aoe: could not set interface list: too many interfaces\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-revalidate(const char __user *str, size_t size)
-{
-	int major, minor, n;
-	ulong flags;
-	struct aoedev *d;
-	struct sk_buff *skb;
-	char buf[16];
+अटल पूर्णांक
+revalidate(स्थिर अक्षर __user *str, माप_प्रकार size)
+अणु
+	पूर्णांक major, minor, n;
+	uदीर्घ flags;
+	काष्ठा aoedev *d;
+	काष्ठा sk_buff *skb;
+	अक्षर buf[16];
 
-	if (size >= sizeof buf)
-		return -EINVAL;
-	buf[sizeof buf - 1] = '\0';
-	if (copy_from_user(buf, str, size))
-		return -EFAULT;
+	अगर (size >= माप buf)
+		वापस -EINVAL;
+	buf[माप buf - 1] = '\0';
+	अगर (copy_from_user(buf, str, size))
+		वापस -EFAULT;
 
-	n = sscanf(buf, "e%d.%d", &major, &minor);
-	if (n != 2) {
+	n = माला_पूछो(buf, "e%d.%d", &major, &minor);
+	अगर (n != 2) अणु
 		pr_err("aoe: invalid device specification %s\n", buf);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	d = aoedev_by_aoeaddr(major, minor, 0);
-	if (!d)
-		return -EINVAL;
+	अगर (!d)
+		वापस -EINVAL;
 	spin_lock_irqsave(&d->lock, flags);
 	aoecmd_cleanslate(d);
 	aoecmd_cfg(major, minor);
 loop:
 	skb = aoecmd_ata_id(d);
 	spin_unlock_irqrestore(&d->lock, flags);
-	/* try again if we are able to sleep a bit,
+	/* try again अगर we are able to sleep a bit,
 	 * otherwise give up this revalidation
 	 */
-	if (!skb && !msleep_interruptible(250)) {
+	अगर (!skb && !msleep_पूर्णांकerruptible(250)) अणु
 		spin_lock_irqsave(&d->lock, flags);
-		goto loop;
-	}
+		जाओ loop;
+	पूर्ण
 	aoedev_put(d);
-	if (skb) {
-		struct sk_buff_head queue;
+	अगर (skb) अणु
+		काष्ठा sk_buff_head queue;
 		__skb_queue_head_init(&queue);
 		__skb_queue_tail(&queue, skb);
 		aoenet_xmit(&queue);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void
-aoechr_error(char *msg)
-{
-	struct ErrMsg *em;
-	char *mp;
-	ulong flags, n;
+व्योम
+aoechr_error(अक्षर *msg)
+अणु
+	काष्ठा ErrMsg *em;
+	अक्षर *mp;
+	uदीर्घ flags, n;
 
-	n = strlen(msg);
+	n = म_माप(msg);
 
 	spin_lock_irqsave(&emsgs_lock, flags);
 
 	em = emsgs + emsgs_tail_idx;
-	if ((em->flags & EMFL_VALID)) {
+	अगर ((em->flags & EMFL_VALID)) अणु
 bail:		spin_unlock_irqrestore(&emsgs_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mp = kmemdup(msg, n, GFP_ATOMIC);
-	if (mp == NULL) {
-		printk(KERN_ERR "aoe: allocation failure, len=%ld\n", n);
-		goto bail;
-	}
+	अगर (mp == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "aoe: allocation failure, len=%ld\n", n);
+		जाओ bail;
+	पूर्ण
 
 	em->msg = mp;
 	em->flags |= EMFL_VALID;
@@ -154,106 +155,106 @@ bail:		spin_unlock_irqrestore(&emsgs_lock, flags);
 
 	spin_unlock_irqrestore(&emsgs_lock, flags);
 
-	if (nblocked_emsgs_readers)
+	अगर (nblocked_emsgs_पढ़ोers)
 		complete(&emsgs_comp);
-}
+पूर्ण
 
-static ssize_t
-aoechr_write(struct file *filp, const char __user *buf, size_t cnt, loff_t *offp)
-{
-	int ret = -EINVAL;
+अटल sमाप_प्रकार
+aoechr_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf, माप_प्रकार cnt, loff_t *offp)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	switch ((unsigned long) filp->private_data) {
-	default:
-		printk(KERN_INFO "aoe: can't write to that file.\n");
-		break;
-	case MINOR_DISCOVER:
+	चयन ((अचिन्हित दीर्घ) filp->निजी_data) अणु
+	शेष:
+		prपूर्णांकk(KERN_INFO "aoe: can't write to that file.\n");
+		अवरोध;
+	हाल MINOR_DISCOVER:
 		ret = discover();
-		break;
-	case MINOR_INTERFACES:
-		ret = interfaces(buf, cnt);
-		break;
-	case MINOR_REVALIDATE:
+		अवरोध;
+	हाल MINOR_INTERFACES:
+		ret = पूर्णांकerfaces(buf, cnt);
+		अवरोध;
+	हाल MINOR_REVALIDATE:
 		ret = revalidate(buf, cnt);
-		break;
-	case MINOR_FLUSH:
+		अवरोध;
+	हाल MINOR_FLUSH:
 		ret = aoedev_flush(buf, cnt);
-		break;
-	}
-	if (ret == 0)
+		अवरोध;
+	पूर्ण
+	अगर (ret == 0)
 		ret = cnt;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-aoechr_open(struct inode *inode, struct file *filp)
-{
-	int n, i;
+अटल पूर्णांक
+aoechr_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	पूर्णांक n, i;
 
 	mutex_lock(&aoechr_mutex);
 	n = iminor(inode);
-	filp->private_data = (void *) (unsigned long) n;
+	filp->निजी_data = (व्योम *) (अचिन्हित दीर्घ) n;
 
-	for (i = 0; i < ARRAY_SIZE(chardevs); ++i)
-		if (chardevs[i].minor == n) {
+	क्रम (i = 0; i < ARRAY_SIZE(अक्षरdevs); ++i)
+		अगर (अक्षरdevs[i].minor == n) अणु
 			mutex_unlock(&aoechr_mutex);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 	mutex_unlock(&aoechr_mutex);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-aoechr_rel(struct inode *inode, struct file *filp)
-{
-	return 0;
-}
+अटल पूर्णांक
+aoechr_rel(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	वापस 0;
+पूर्ण
 
-static ssize_t
-aoechr_read(struct file *filp, char __user *buf, size_t cnt, loff_t *off)
-{
-	unsigned long n;
-	char *mp;
-	struct ErrMsg *em;
-	ssize_t len;
-	ulong flags;
+अटल sमाप_प्रकार
+aoechr_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार cnt, loff_t *off)
+अणु
+	अचिन्हित दीर्घ n;
+	अक्षर *mp;
+	काष्ठा ErrMsg *em;
+	sमाप_प्रकार len;
+	uदीर्घ flags;
 
-	n = (unsigned long) filp->private_data;
-	if (n != MINOR_ERR)
-		return -EFAULT;
+	n = (अचिन्हित दीर्घ) filp->निजी_data;
+	अगर (n != MINOR_ERR)
+		वापस -EFAULT;
 
 	spin_lock_irqsave(&emsgs_lock, flags);
 
-	for (;;) {
+	क्रम (;;) अणु
 		em = emsgs + emsgs_head_idx;
-		if ((em->flags & EMFL_VALID) != 0)
-			break;
-		if (filp->f_flags & O_NDELAY) {
+		अगर ((em->flags & EMFL_VALID) != 0)
+			अवरोध;
+		अगर (filp->f_flags & O_NDELAY) अणु
 			spin_unlock_irqrestore(&emsgs_lock, flags);
-			return -EAGAIN;
-		}
-		nblocked_emsgs_readers++;
+			वापस -EAGAIN;
+		पूर्ण
+		nblocked_emsgs_पढ़ोers++;
 
 		spin_unlock_irqrestore(&emsgs_lock, flags);
 
-		n = wait_for_completion_interruptible(&emsgs_comp);
+		n = रुको_क्रम_completion_पूर्णांकerruptible(&emsgs_comp);
 
 		spin_lock_irqsave(&emsgs_lock, flags);
 
-		nblocked_emsgs_readers--;
+		nblocked_emsgs_पढ़ोers--;
 
-		if (n) {
+		अगर (n) अणु
 			spin_unlock_irqrestore(&emsgs_lock, flags);
-			return -ERESTARTSYS;
-		}
-	}
-	if (em->len > cnt) {
+			वापस -ERESTARTSYS;
+		पूर्ण
+	पूर्ण
+	अगर (em->len > cnt) अणु
 		spin_unlock_irqrestore(&emsgs_lock, flags);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 	mp = em->msg;
 	len = em->len;
-	em->msg = NULL;
+	em->msg = शून्य;
 	em->flags &= ~EMFL_VALID;
 
 	emsgs_head_idx++;
@@ -262,59 +263,59 @@ aoechr_read(struct file *filp, char __user *buf, size_t cnt, loff_t *off)
 	spin_unlock_irqrestore(&emsgs_lock, flags);
 
 	n = copy_to_user(buf, mp, len);
-	kfree(mp);
-	return n == 0 ? len : -EFAULT;
-}
+	kमुक्त(mp);
+	वापस n == 0 ? len : -EFAULT;
+पूर्ण
 
-static const struct file_operations aoe_fops = {
-	.write = aoechr_write,
-	.read = aoechr_read,
-	.open = aoechr_open,
+अटल स्थिर काष्ठा file_operations aoe_fops = अणु
+	.ग_लिखो = aoechr_ग_लिखो,
+	.पढ़ो = aoechr_पढ़ो,
+	.खोलो = aoechr_खोलो,
 	.release = aoechr_rel,
 	.owner = THIS_MODULE,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static char *aoe_devnode(struct device *dev, umode_t *mode)
-{
-	return kasprintf(GFP_KERNEL, "etherd/%s", dev_name(dev));
-}
+अटल अक्षर *aoe_devnode(काष्ठा device *dev, umode_t *mode)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "etherd/%s", dev_name(dev));
+पूर्ण
 
-int __init
-aoechr_init(void)
-{
-	int n, i;
+पूर्णांक __init
+aoechr_init(व्योम)
+अणु
+	पूर्णांक n, i;
 
-	n = register_chrdev(AOE_MAJOR, "aoechr", &aoe_fops);
-	if (n < 0) {
-		printk(KERN_ERR "aoe: can't register char device\n");
-		return n;
-	}
+	n = रेजिस्टर_chrdev(AOE_MAJOR, "aoechr", &aoe_fops);
+	अगर (n < 0) अणु
+		prपूर्णांकk(KERN_ERR "aoe: can't register char device\n");
+		वापस n;
+	पूर्ण
 	init_completion(&emsgs_comp);
 	spin_lock_init(&emsgs_lock);
 	aoe_class = class_create(THIS_MODULE, "aoe");
-	if (IS_ERR(aoe_class)) {
-		unregister_chrdev(AOE_MAJOR, "aoechr");
-		return PTR_ERR(aoe_class);
-	}
+	अगर (IS_ERR(aoe_class)) अणु
+		unरेजिस्टर_chrdev(AOE_MAJOR, "aoechr");
+		वापस PTR_ERR(aoe_class);
+	पूर्ण
 	aoe_class->devnode = aoe_devnode;
 
-	for (i = 0; i < ARRAY_SIZE(chardevs); ++i)
-		device_create(aoe_class, NULL,
-			      MKDEV(AOE_MAJOR, chardevs[i].minor), NULL,
-			      chardevs[i].name);
+	क्रम (i = 0; i < ARRAY_SIZE(अक्षरdevs); ++i)
+		device_create(aoe_class, शून्य,
+			      MKDEV(AOE_MAJOR, अक्षरdevs[i].minor), शून्य,
+			      अक्षरdevs[i].name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-aoechr_exit(void)
-{
-	int i;
+व्योम
+aoechr_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(chardevs); ++i)
-		device_destroy(aoe_class, MKDEV(AOE_MAJOR, chardevs[i].minor));
+	क्रम (i = 0; i < ARRAY_SIZE(अक्षरdevs); ++i)
+		device_destroy(aoe_class, MKDEV(AOE_MAJOR, अक्षरdevs[i].minor));
 	class_destroy(aoe_class);
-	unregister_chrdev(AOE_MAJOR, "aoechr");
-}
+	unरेजिस्टर_chrdev(AOE_MAJOR, "aoechr");
+पूर्ण
 

@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for a keypad w/16 buttons connected to a PCF8574 I2C I/O expander
+ * Driver क्रम a keypad w/16 buttons connected to a PCF8574 I2C I/O expander
  *
  * Copyright 2005-2008 Analog Devices Inc.
  */
 
-#include <linux/module.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/module.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-#define DRV_NAME "pcf8574_keypad"
+#घोषणा DRV_NAME "pcf8574_keypad"
 
-static const unsigned char pcf8574_kp_btncode[] = {
+अटल स्थिर अचिन्हित अक्षर pcf8574_kp_btncode[] = अणु
 	[0] = KEY_RESERVED,
 	[1] = KEY_ENTER,
 	[2] = KEY_BACKSLASH,
@@ -32,189 +33,189 @@ static const unsigned char pcf8574_kp_btncode[] = {
 	[14] = KEY_3,
 	[15] = KEY_2,
 	[16] = KEY_1
-};
+पूर्ण;
 
-struct kp_data {
-	unsigned short btncode[ARRAY_SIZE(pcf8574_kp_btncode)];
-	struct input_dev *idev;
-	struct i2c_client *client;
-	char name[64];
-	char phys[32];
-	unsigned char laststate;
-};
+काष्ठा kp_data अणु
+	अचिन्हित लघु btncode[ARRAY_SIZE(pcf8574_kp_btncode)];
+	काष्ठा input_dev *idev;
+	काष्ठा i2c_client *client;
+	अक्षर name[64];
+	अक्षर phys[32];
+	अचिन्हित अक्षर laststate;
+पूर्ण;
 
-static short read_state(struct kp_data *lp)
-{
-	unsigned char x, y, a, b;
+अटल लघु पढ़ो_state(काष्ठा kp_data *lp)
+अणु
+	अचिन्हित अक्षर x, y, a, b;
 
-	i2c_smbus_write_byte(lp->client, 240);
-	x = 0xF & (~(i2c_smbus_read_byte(lp->client) >> 4));
+	i2c_smbus_ग_लिखो_byte(lp->client, 240);
+	x = 0xF & (~(i2c_smbus_पढ़ो_byte(lp->client) >> 4));
 
-	i2c_smbus_write_byte(lp->client, 15);
-	y = 0xF & (~i2c_smbus_read_byte(lp->client));
+	i2c_smbus_ग_लिखो_byte(lp->client, 15);
+	y = 0xF & (~i2c_smbus_पढ़ो_byte(lp->client));
 
-	for (a = 0; x > 0; a++)
+	क्रम (a = 0; x > 0; a++)
 		x = x >> 1;
-	for (b = 0; y > 0; b++)
+	क्रम (b = 0; y > 0; b++)
 		y = y >> 1;
 
-	return ((a - 1) * 4) + b;
-}
+	वापस ((a - 1) * 4) + b;
+पूर्ण
 
-static irqreturn_t pcf8574_kp_irq_handler(int irq, void *dev_id)
-{
-	struct kp_data *lp = dev_id;
-	unsigned char nextstate = read_state(lp);
+अटल irqवापस_t pcf8574_kp_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा kp_data *lp = dev_id;
+	अचिन्हित अक्षर nextstate = पढ़ो_state(lp);
 
-	if (lp->laststate != nextstate) {
-		int key_down = nextstate < ARRAY_SIZE(lp->btncode);
-		unsigned short keycode = key_down ?
+	अगर (lp->laststate != nextstate) अणु
+		पूर्णांक key_करोwn = nextstate < ARRAY_SIZE(lp->btncode);
+		अचिन्हित लघु keycode = key_करोwn ?
 			lp->btncode[nextstate] : lp->btncode[lp->laststate];
 
-		input_report_key(lp->idev, keycode, key_down);
+		input_report_key(lp->idev, keycode, key_करोwn);
 		input_sync(lp->idev);
 
 		lp->laststate = nextstate;
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int pcf8574_kp_probe(struct i2c_client *client, const struct i2c_device_id *id)
-{
-	int i, ret;
-	struct input_dev *idev;
-	struct kp_data *lp;
+अटल पूर्णांक pcf8574_kp_probe(काष्ठा i2c_client *client, स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा input_dev *idev;
+	काष्ठा kp_data *lp;
 
-	if (i2c_smbus_write_byte(client, 240) < 0) {
+	अगर (i2c_smbus_ग_लिखो_byte(client, 240) < 0) अणु
 		dev_err(&client->dev, "probe: write fail\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	lp = kzalloc(sizeof(*lp), GFP_KERNEL);
-	if (!lp)
-		return -ENOMEM;
+	lp = kzalloc(माप(*lp), GFP_KERNEL);
+	अगर (!lp)
+		वापस -ENOMEM;
 
 	idev = input_allocate_device();
-	if (!idev) {
+	अगर (!idev) अणु
 		dev_err(&client->dev, "Can't allocate input device\n");
 		ret = -ENOMEM;
-		goto fail_allocate;
-	}
+		जाओ fail_allocate;
+	पूर्ण
 
 	lp->idev = idev;
 	lp->client = client;
 
 	idev->evbit[0] = BIT_MASK(EV_KEY);
 	idev->keycode = lp->btncode;
-	idev->keycodesize = sizeof(lp->btncode[0]);
+	idev->keycodesize = माप(lp->btncode[0]);
 	idev->keycodemax = ARRAY_SIZE(lp->btncode);
 
-	for (i = 0; i < ARRAY_SIZE(pcf8574_kp_btncode); i++) {
-		if (lp->btncode[i] <= KEY_MAX) {
+	क्रम (i = 0; i < ARRAY_SIZE(pcf8574_kp_btncode); i++) अणु
+		अगर (lp->btncode[i] <= KEY_MAX) अणु
 			lp->btncode[i] = pcf8574_kp_btncode[i];
 			__set_bit(lp->btncode[i], idev->keybit);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	__clear_bit(KEY_RESERVED, idev->keybit);
 
-	sprintf(lp->name, DRV_NAME);
-	sprintf(lp->phys, "kp_data/input0");
+	प्र_लिखो(lp->name, DRV_NAME);
+	प्र_लिखो(lp->phys, "kp_data/input0");
 
 	idev->name = lp->name;
 	idev->phys = lp->phys;
 	idev->id.bustype = BUS_I2C;
-	idev->id.vendor = 0x0001;
+	idev->id.venकरोr = 0x0001;
 	idev->id.product = 0x0001;
 	idev->id.version = 0x0100;
 
-	lp->laststate = read_state(lp);
+	lp->laststate = पढ़ो_state(lp);
 
-	ret = request_threaded_irq(client->irq, NULL, pcf8574_kp_irq_handler,
+	ret = request_thपढ़ोed_irq(client->irq, शून्य, pcf8574_kp_irq_handler,
 				   IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 				   DRV_NAME, lp);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "IRQ %d is not free\n", client->irq);
-		goto fail_free_device;
-	}
+		जाओ fail_मुक्त_device;
+	पूर्ण
 
-	ret = input_register_device(idev);
-	if (ret) {
+	ret = input_रेजिस्टर_device(idev);
+	अगर (ret) अणु
 		dev_err(&client->dev, "input_register_device() failed\n");
-		goto fail_free_irq;
-	}
+		जाओ fail_मुक्त_irq;
+	पूर्ण
 
 	i2c_set_clientdata(client, lp);
-	return 0;
+	वापस 0;
 
- fail_free_irq:
-	free_irq(client->irq, lp);
- fail_free_device:
-	input_free_device(idev);
+ fail_मुक्त_irq:
+	मुक्त_irq(client->irq, lp);
+ fail_मुक्त_device:
+	input_मुक्त_device(idev);
  fail_allocate:
-	kfree(lp);
+	kमुक्त(lp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pcf8574_kp_remove(struct i2c_client *client)
-{
-	struct kp_data *lp = i2c_get_clientdata(client);
+अटल पूर्णांक pcf8574_kp_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा kp_data *lp = i2c_get_clientdata(client);
 
-	free_irq(client->irq, lp);
+	मुक्त_irq(client->irq, lp);
 
-	input_unregister_device(lp->idev);
-	kfree(lp);
+	input_unरेजिस्टर_device(lp->idev);
+	kमुक्त(lp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int pcf8574_kp_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक pcf8574_kp_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
 	enable_irq(client->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcf8574_kp_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक pcf8574_kp_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
 	disable_irq(client->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops pcf8574_kp_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops pcf8574_kp_pm_ops = अणु
 	.suspend	= pcf8574_kp_suspend,
 	.resume		= pcf8574_kp_resume,
-};
+पूर्ण;
 
-#else
-# define pcf8574_kp_resume  NULL
-# define pcf8574_kp_suspend NULL
-#endif
+#अन्यथा
+# define pcf8574_kp_resume  शून्य
+# define pcf8574_kp_suspend शून्य
+#पूर्ण_अगर
 
-static const struct i2c_device_id pcf8574_kp_id[] = {
-	{ DRV_NAME, 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id pcf8574_kp_id[] = अणु
+	अणु DRV_NAME, 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, pcf8574_kp_id);
 
-static struct i2c_driver pcf8574_kp_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pcf8574_kp_driver = अणु
+	.driver = अणु
 		.name  = DRV_NAME,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		.pm = &pcf8574_kp_pm_ops,
-#endif
-	},
+#पूर्ण_अगर
+	पूर्ण,
 	.probe    = pcf8574_kp_probe,
-	.remove   = pcf8574_kp_remove,
+	.हटाओ   = pcf8574_kp_हटाओ,
 	.id_table = pcf8574_kp_id,
-};
+पूर्ण;
 
 module_i2c_driver(pcf8574_kp_driver);
 

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Focaltech TouchPad PS/2 mouse driver
  *
@@ -10,18 +11,18 @@
  * Hans de Goede <hdegoede@redhat.com>
  */
 
-#ifndef _FOCALTECH_H
-#define _FOCALTECH_H
+#अगर_अघोषित _FOCALTECH_H
+#घोषणा _FOCALTECH_H
 
-int focaltech_detect(struct psmouse *psmouse, bool set_properties);
+पूर्णांक focaltech_detect(काष्ठा psmouse *psmouse, bool set_properties);
 
-#ifdef CONFIG_MOUSE_PS2_FOCALTECH
-int focaltech_init(struct psmouse *psmouse);
-#else
-static inline int focaltech_init(struct psmouse *psmouse)
-{
-	return -ENOSYS;
-}
-#endif
+#अगर_घोषित CONFIG_MOUSE_PS2_FOCALTECH
+पूर्णांक focaltech_init(काष्ठा psmouse *psmouse);
+#अन्यथा
+अटल अंतरभूत पूर्णांक focaltech_init(काष्ठा psmouse *psmouse)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

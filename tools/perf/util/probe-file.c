@@ -1,1072 +1,1073 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * probe-file.c : operate ftrace k/uprobe events files
  *
  * Written by Masami Hiramatsu <masami.hiramatsu.pt@hitachi.com>
  */
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-#include <linux/zalloc.h>
-#include "namespaces.h"
-#include "event.h"
-#include "strlist.h"
-#include "strfilter.h"
-#include "debug.h"
-#include "build-id.h"
-#include "dso.h"
-#include "color.h"
-#include "symbol.h"
-#include "strbuf.h"
-#include <api/fs/tracing_path.h>
-#include "probe-event.h"
-#include "probe-file.h"
-#include "session.h"
-#include "perf_regs.h"
-#include "string2.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश <sys/uपन.स>
+#समावेश <unistd.h>
+#समावेश <linux/zभाग.स>
+#समावेश "namespaces.h"
+#समावेश "event.h"
+#समावेश "strlist.h"
+#समावेश "strfilter.h"
+#समावेश "debug.h"
+#समावेश "build-id.h"
+#समावेश "dso.h"
+#समावेश "color.h"
+#समावेश "symbol.h"
+#समावेश "strbuf.h"
+#समावेश <api/fs/tracing_path.h>
+#समावेश "probe-event.h"
+#समावेश "probe-file.h"
+#समावेश "session.h"
+#समावेश "perf_regs.h"
+#समावेश "string2.h"
 
 /* 4096 - 2 ('\n' + '\0') */
-#define MAX_CMDLEN 4094
+#घोषणा MAX_CMDLEN 4094
 
-static void print_open_warning(int err, bool uprobe)
-{
-	char sbuf[STRERR_BUFSIZE];
+अटल व्योम prपूर्णांक_खोलो_warning(पूर्णांक err, bool uprobe)
+अणु
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	if (err == -ENOENT) {
-		const char *config;
+	अगर (err == -ENOENT) अणु
+		स्थिर अक्षर *config;
 
-		if (uprobe)
+		अगर (uprobe)
 			config = "CONFIG_UPROBE_EVENTS";
-		else
+		अन्यथा
 			config = "CONFIG_KPROBE_EVENTS";
 
 		pr_warning("%cprobe_events file does not exist"
 			   " - please rebuild kernel with %s.\n",
 			   uprobe ? 'u' : 'k', config);
-	} else if (err == -ENOTSUP)
+	पूर्ण अन्यथा अगर (err == -ENOTSUP)
 		pr_warning("Tracefs or debugfs is not mounted.\n");
-	else
+	अन्यथा
 		pr_warning("Failed to open %cprobe_events: %s\n",
 			   uprobe ? 'u' : 'k',
-			   str_error_r(-err, sbuf, sizeof(sbuf)));
-}
+			   str_error_r(-err, sbuf, माप(sbuf)));
+पूर्ण
 
-static void print_both_open_warning(int kerr, int uerr)
-{
+अटल व्योम prपूर्णांक_both_खोलो_warning(पूर्णांक kerr, पूर्णांक uerr)
+अणु
 	/* Both kprobes and uprobes are disabled, warn it. */
-	if (kerr == -ENOTSUP && uerr == -ENOTSUP)
+	अगर (kerr == -ENOTSUP && uerr == -ENOTSUP)
 		pr_warning("Tracefs or debugfs is not mounted.\n");
-	else if (kerr == -ENOENT && uerr == -ENOENT)
+	अन्यथा अगर (kerr == -ENOENT && uerr == -ENOENT)
 		pr_warning("Please rebuild kernel with CONFIG_KPROBE_EVENTS "
 			   "or/and CONFIG_UPROBE_EVENTS.\n");
-	else {
-		char sbuf[STRERR_BUFSIZE];
+	अन्यथा अणु
+		अक्षर sbuf[STRERR_बफ_मानE];
 		pr_warning("Failed to open kprobe events: %s.\n",
-			   str_error_r(-kerr, sbuf, sizeof(sbuf)));
+			   str_error_r(-kerr, sbuf, माप(sbuf)));
 		pr_warning("Failed to open uprobe events: %s.\n",
-			   str_error_r(-uerr, sbuf, sizeof(sbuf)));
-	}
-}
+			   str_error_r(-uerr, sbuf, माप(sbuf)));
+	पूर्ण
+पूर्ण
 
-int open_trace_file(const char *trace_file, bool readwrite)
-{
-	char buf[PATH_MAX];
-	int ret;
+पूर्णांक खोलो_trace_file(स्थिर अक्षर *trace_file, bool पढ़ोग_लिखो)
+अणु
+	अक्षर buf[PATH_MAX];
+	पूर्णांक ret;
 
-	ret = e_snprintf(buf, PATH_MAX, "%s/%s", tracing_path_mount(), trace_file);
-	if (ret >= 0) {
-		pr_debug("Opening %s write=%d\n", buf, readwrite);
-		if (readwrite && !probe_event_dry_run)
-			ret = open(buf, O_RDWR | O_APPEND, 0);
-		else
-			ret = open(buf, O_RDONLY, 0);
+	ret = e_snम_लिखो(buf, PATH_MAX, "%s/%s", tracing_path_mount(), trace_file);
+	अगर (ret >= 0) अणु
+		pr_debug("Opening %s write=%d\n", buf, पढ़ोग_लिखो);
+		अगर (पढ़ोग_लिखो && !probe_event_dry_run)
+			ret = खोलो(buf, O_RDWR | O_APPEND, 0);
+		अन्यथा
+			ret = खोलो(buf, O_RDONLY, 0);
 
-		if (ret < 0)
-			ret = -errno;
-	}
-	return ret;
-}
+		अगर (ret < 0)
+			ret = -त्रुटि_सं;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int open_kprobe_events(bool readwrite)
-{
-	return open_trace_file("kprobe_events", readwrite);
-}
+अटल पूर्णांक खोलो_kprobe_events(bool पढ़ोग_लिखो)
+अणु
+	वापस खोलो_trace_file("kprobe_events", पढ़ोग_लिखो);
+पूर्ण
 
-static int open_uprobe_events(bool readwrite)
-{
-	return open_trace_file("uprobe_events", readwrite);
-}
+अटल पूर्णांक खोलो_uprobe_events(bool पढ़ोग_लिखो)
+अणु
+	वापस खोलो_trace_file("uprobe_events", पढ़ोग_लिखो);
+पूर्ण
 
-int probe_file__open(int flag)
-{
-	int fd;
+पूर्णांक probe_file__खोलो(पूर्णांक flag)
+अणु
+	पूर्णांक fd;
 
-	if (flag & PF_FL_UPROBE)
-		fd = open_uprobe_events(flag & PF_FL_RW);
-	else
-		fd = open_kprobe_events(flag & PF_FL_RW);
-	if (fd < 0)
-		print_open_warning(fd, flag & PF_FL_UPROBE);
+	अगर (flag & PF_FL_UPROBE)
+		fd = खोलो_uprobe_events(flag & PF_FL_RW);
+	अन्यथा
+		fd = खोलो_kprobe_events(flag & PF_FL_RW);
+	अगर (fd < 0)
+		prपूर्णांक_खोलो_warning(fd, flag & PF_FL_UPROBE);
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-int probe_file__open_both(int *kfd, int *ufd, int flag)
-{
-	if (!kfd || !ufd)
-		return -EINVAL;
+पूर्णांक probe_file__खोलो_both(पूर्णांक *kfd, पूर्णांक *ufd, पूर्णांक flag)
+अणु
+	अगर (!kfd || !ufd)
+		वापस -EINVAL;
 
-	*kfd = open_kprobe_events(flag & PF_FL_RW);
-	*ufd = open_uprobe_events(flag & PF_FL_RW);
-	if (*kfd < 0 && *ufd < 0) {
-		print_both_open_warning(*kfd, *ufd);
-		return *kfd;
-	}
+	*kfd = खोलो_kprobe_events(flag & PF_FL_RW);
+	*ufd = खोलो_uprobe_events(flag & PF_FL_RW);
+	अगर (*kfd < 0 && *ufd < 0) अणु
+		prपूर्णांक_both_खोलो_warning(*kfd, *ufd);
+		वापस *kfd;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Get raw string list of current kprobe_events  or uprobe_events */
-struct strlist *probe_file__get_rawlist(int fd)
-{
-	int ret, idx, fddup;
-	FILE *fp;
-	char buf[MAX_CMDLEN];
-	char *p;
-	struct strlist *sl;
+काष्ठा strlist *probe_file__get_rawlist(पूर्णांक fd)
+अणु
+	पूर्णांक ret, idx, fddup;
+	खाता *fp;
+	अक्षर buf[MAX_CMDLEN];
+	अक्षर *p;
+	काष्ठा strlist *sl;
 
-	if (fd < 0)
-		return NULL;
+	अगर (fd < 0)
+		वापस शून्य;
 
-	sl = strlist__new(NULL, NULL);
-	if (sl == NULL)
-		return NULL;
+	sl = strlist__new(शून्य, शून्य);
+	अगर (sl == शून्य)
+		वापस शून्य;
 
 	fddup = dup(fd);
-	if (fddup < 0)
-		goto out_free_sl;
+	अगर (fddup < 0)
+		जाओ out_मुक्त_sl;
 
-	fp = fdopen(fddup, "r");
-	if (!fp)
-		goto out_close_fddup;
+	fp = fकरोpen(fddup, "r");
+	अगर (!fp)
+		जाओ out_बंद_fddup;
 
-	while (!feof(fp)) {
-		p = fgets(buf, MAX_CMDLEN, fp);
-		if (!p)
-			break;
+	जबतक (!ख_पूर्ण(fp)) अणु
+		p = ख_माला_लो(buf, MAX_CMDLEN, fp);
+		अगर (!p)
+			अवरोध;
 
-		idx = strlen(p) - 1;
-		if (p[idx] == '\n')
+		idx = म_माप(p) - 1;
+		अगर (p[idx] == '\n')
 			p[idx] = '\0';
 		ret = strlist__add(sl, buf);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_debug("strlist__add failed (%d)\n", ret);
-			goto out_close_fp;
-		}
-	}
-	fclose(fp);
+			जाओ out_बंद_fp;
+		पूर्ण
+	पूर्ण
+	ख_बंद(fp);
 
-	return sl;
+	वापस sl;
 
-out_close_fp:
-	fclose(fp);
-	goto out_free_sl;
-out_close_fddup:
-	close(fddup);
-out_free_sl:
+out_बंद_fp:
+	ख_बंद(fp);
+	जाओ out_मुक्त_sl;
+out_बंद_fddup:
+	बंद(fddup);
+out_मुक्त_sl:
 	strlist__delete(sl);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct strlist *__probe_file__get_namelist(int fd, bool include_group)
-{
-	char buf[128];
-	struct strlist *sl, *rawlist;
-	struct str_node *ent;
-	struct probe_trace_event tev;
-	int ret = 0;
+अटल काष्ठा strlist *__probe_file__get_namelist(पूर्णांक fd, bool include_group)
+अणु
+	अक्षर buf[128];
+	काष्ठा strlist *sl, *rawlist;
+	काष्ठा str_node *ent;
+	काष्ठा probe_trace_event tev;
+	पूर्णांक ret = 0;
 
-	memset(&tev, 0, sizeof(tev));
+	स_रखो(&tev, 0, माप(tev));
 	rawlist = probe_file__get_rawlist(fd);
-	if (!rawlist)
-		return NULL;
-	sl = strlist__new(NULL, NULL);
-	strlist__for_each_entry(ent, rawlist) {
+	अगर (!rawlist)
+		वापस शून्य;
+	sl = strlist__new(शून्य, शून्य);
+	strlist__क्रम_each_entry(ent, rawlist) अणु
 		ret = parse_probe_trace_command(ent->s, &tev);
-		if (ret < 0)
-			break;
-		if (include_group) {
-			ret = e_snprintf(buf, 128, "%s:%s", tev.group,
+		अगर (ret < 0)
+			अवरोध;
+		अगर (include_group) अणु
+			ret = e_snम_लिखो(buf, 128, "%s:%s", tev.group,
 					tev.event);
-			if (ret >= 0)
+			अगर (ret >= 0)
 				ret = strlist__add(sl, buf);
-		} else
+		पूर्ण अन्यथा
 			ret = strlist__add(sl, tev.event);
 		clear_probe_trace_event(&tev);
-		/* Skip if there is same name multi-probe event in the list */
-		if (ret == -EEXIST)
+		/* Skip अगर there is same name multi-probe event in the list */
+		अगर (ret == -EEXIST)
 			ret = 0;
-		if (ret < 0)
-			break;
-	}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 	strlist__delete(rawlist);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		strlist__delete(sl);
-		return NULL;
-	}
-	return sl;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस sl;
+पूर्ण
 
 /* Get current perf-probe event names */
-struct strlist *probe_file__get_namelist(int fd)
-{
-	return __probe_file__get_namelist(fd, false);
-}
+काष्ठा strlist *probe_file__get_namelist(पूर्णांक fd)
+अणु
+	वापस __probe_file__get_namelist(fd, false);
+पूर्ण
 
-int probe_file__add_event(int fd, struct probe_trace_event *tev)
-{
-	int ret = 0;
-	char *buf = synthesize_probe_trace_command(tev);
-	char sbuf[STRERR_BUFSIZE];
+पूर्णांक probe_file__add_event(पूर्णांक fd, काष्ठा probe_trace_event *tev)
+अणु
+	पूर्णांक ret = 0;
+	अक्षर *buf = synthesize_probe_trace_command(tev);
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	if (!buf) {
+	अगर (!buf) अणु
 		pr_debug("Failed to synthesize probe trace event.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pr_debug("Writing event: %s\n", buf);
-	if (!probe_event_dry_run) {
-		if (write(fd, buf, strlen(buf)) < (int)strlen(buf)) {
-			ret = -errno;
+	अगर (!probe_event_dry_run) अणु
+		अगर (ग_लिखो(fd, buf, म_माप(buf)) < (पूर्णांक)म_माप(buf)) अणु
+			ret = -त्रुटि_सं;
 			pr_warning("Failed to write event: %s\n",
-				   str_error_r(errno, sbuf, sizeof(sbuf)));
-		}
-	}
-	free(buf);
+				   str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		पूर्ण
+	पूर्ण
+	मुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __del_trace_probe_event(int fd, struct str_node *ent)
-{
-	char *p;
-	char buf[128];
-	int ret;
+अटल पूर्णांक __del_trace_probe_event(पूर्णांक fd, काष्ठा str_node *ent)
+अणु
+	अक्षर *p;
+	अक्षर buf[128];
+	पूर्णांक ret;
 
 	/* Convert from perf-probe event to trace-probe event */
-	ret = e_snprintf(buf, 128, "-:%s", ent->s);
-	if (ret < 0)
-		goto error;
+	ret = e_snम_लिखो(buf, 128, "-:%s", ent->s);
+	अगर (ret < 0)
+		जाओ error;
 
-	p = strchr(buf + 2, ':');
-	if (!p) {
+	p = म_अक्षर(buf + 2, ':');
+	अगर (!p) अणु
 		pr_debug("Internal error: %s should have ':' but not.\n",
 			 ent->s);
 		ret = -ENOTSUP;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	*p = '/';
 
 	pr_debug("Writing event: %s\n", buf);
-	ret = write(fd, buf, strlen(buf));
-	if (ret < 0) {
-		ret = -errno;
-		goto error;
-	}
+	ret = ग_लिखो(fd, buf, म_माप(buf));
+	अगर (ret < 0) अणु
+		ret = -त्रुटि_सं;
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
 	pr_warning("Failed to delete event: %s\n",
-		   str_error_r(-ret, buf, sizeof(buf)));
-	return ret;
-}
+		   str_error_r(-ret, buf, माप(buf)));
+	वापस ret;
+पूर्ण
 
-int probe_file__get_events(int fd, struct strfilter *filter,
-			   struct strlist *plist)
-{
-	struct strlist *namelist;
-	struct str_node *ent;
-	const char *p;
-	int ret = -ENOENT;
+पूर्णांक probe_file__get_events(पूर्णांक fd, काष्ठा strfilter *filter,
+			   काष्ठा strlist *plist)
+अणु
+	काष्ठा strlist *namelist;
+	काष्ठा str_node *ent;
+	स्थिर अक्षर *p;
+	पूर्णांक ret = -ENOENT;
 
-	if (!plist)
-		return -EINVAL;
+	अगर (!plist)
+		वापस -EINVAL;
 
 	namelist = __probe_file__get_namelist(fd, true);
-	if (!namelist)
-		return -ENOENT;
+	अगर (!namelist)
+		वापस -ENOENT;
 
-	strlist__for_each_entry(ent, namelist) {
-		p = strchr(ent->s, ':');
-		if ((p && strfilter__compare(filter, p + 1)) ||
-		    strfilter__compare(filter, ent->s)) {
+	strlist__क्रम_each_entry(ent, namelist) अणु
+		p = म_अक्षर(ent->s, ':');
+		अगर ((p && strfilter__compare(filter, p + 1)) ||
+		    strfilter__compare(filter, ent->s)) अणु
 			ret = strlist__add(plist, ent->s);
-			if (ret == -ENOMEM) {
+			अगर (ret == -ENOMEM) अणु
 				pr_err("strlist__add failed with -ENOMEM\n");
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			ret = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	strlist__delete(namelist);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int probe_file__del_strlist(int fd, struct strlist *namelist)
-{
-	int ret = 0;
-	struct str_node *ent;
+पूर्णांक probe_file__del_strlist(पूर्णांक fd, काष्ठा strlist *namelist)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा str_node *ent;
 
-	strlist__for_each_entry(ent, namelist) {
+	strlist__क्रम_each_entry(ent, namelist) अणु
 		ret = __del_trace_probe_event(fd, ent);
-		if (ret < 0)
-			break;
-	}
-	return ret;
-}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int probe_file__del_events(int fd, struct strfilter *filter)
-{
-	struct strlist *namelist;
-	int ret;
+पूर्णांक probe_file__del_events(पूर्णांक fd, काष्ठा strfilter *filter)
+अणु
+	काष्ठा strlist *namelist;
+	पूर्णांक ret;
 
-	namelist = strlist__new(NULL, NULL);
-	if (!namelist)
-		return -ENOMEM;
+	namelist = strlist__new(शून्य, शून्य);
+	अगर (!namelist)
+		वापस -ENOMEM;
 
 	ret = probe_file__get_events(fd, filter, namelist);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = probe_file__del_strlist(fd, namelist);
 	strlist__delete(namelist);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Caller must ensure to remove this entry from list */
-static void probe_cache_entry__delete(struct probe_cache_entry *entry)
-{
-	if (entry) {
+/* Caller must ensure to हटाओ this entry from list */
+अटल व्योम probe_cache_entry__delete(काष्ठा probe_cache_entry *entry)
+अणु
+	अगर (entry) अणु
 		BUG_ON(!list_empty(&entry->node));
 
 		strlist__delete(entry->tevlist);
 		clear_perf_probe_event(&entry->pev);
-		zfree(&entry->spev);
-		free(entry);
-	}
-}
+		zमुक्त(&entry->spev);
+		मुक्त(entry);
+	पूर्ण
+पूर्ण
 
-static struct probe_cache_entry *
-probe_cache_entry__new(struct perf_probe_event *pev)
-{
-	struct probe_cache_entry *entry = zalloc(sizeof(*entry));
+अटल काष्ठा probe_cache_entry *
+probe_cache_entry__new(काष्ठा perf_probe_event *pev)
+अणु
+	काष्ठा probe_cache_entry *entry = zalloc(माप(*entry));
 
-	if (entry) {
+	अगर (entry) अणु
 		INIT_LIST_HEAD(&entry->node);
-		entry->tevlist = strlist__new(NULL, NULL);
-		if (!entry->tevlist)
-			zfree(&entry);
-		else if (pev) {
+		entry->tevlist = strlist__new(शून्य, शून्य);
+		अगर (!entry->tevlist)
+			zमुक्त(&entry);
+		अन्यथा अगर (pev) अणु
 			entry->spev = synthesize_perf_probe_command(pev);
-			if (!entry->spev ||
-			    perf_probe_event__copy(&entry->pev, pev) < 0) {
+			अगर (!entry->spev ||
+			    perf_probe_event__copy(&entry->pev, pev) < 0) अणु
 				probe_cache_entry__delete(entry);
-				return NULL;
-			}
-		}
-	}
+				वापस शून्य;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-int probe_cache_entry__get_event(struct probe_cache_entry *entry,
-				 struct probe_trace_event **tevs)
-{
-	struct probe_trace_event *tev;
-	struct str_node *node;
-	int ret, i;
+पूर्णांक probe_cache_entry__get_event(काष्ठा probe_cache_entry *entry,
+				 काष्ठा probe_trace_event **tevs)
+अणु
+	काष्ठा probe_trace_event *tev;
+	काष्ठा str_node *node;
+	पूर्णांक ret, i;
 
 	ret = strlist__nr_entries(entry->tevlist);
-	if (ret > probe_conf.max_probes)
-		return -E2BIG;
+	अगर (ret > probe_conf.max_probes)
+		वापस -E2BIG;
 
-	*tevs = zalloc(ret * sizeof(*tev));
-	if (!*tevs)
-		return -ENOMEM;
+	*tevs = zalloc(ret * माप(*tev));
+	अगर (!*tevs)
+		वापस -ENOMEM;
 
 	i = 0;
-	strlist__for_each_entry(node, entry->tevlist) {
+	strlist__क्रम_each_entry(node, entry->tevlist) अणु
 		tev = &(*tevs)[i++];
 		ret = parse_probe_trace_command(node->s, tev);
-		if (ret < 0)
-			break;
-	}
-	return i;
-}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
-/* For the kernel probe caches, pass target = NULL or DSO__NAME_KALLSYMS */
-static int probe_cache__open(struct probe_cache *pcache, const char *target,
-			     struct nsinfo *nsi)
-{
-	char cpath[PATH_MAX];
-	char sbuildid[SBUILD_ID_SIZE];
-	char *dir_name = NULL;
+/* For the kernel probe caches, pass target = शून्य or DSO__NAME_KALLSYMS */
+अटल पूर्णांक probe_cache__खोलो(काष्ठा probe_cache *pcache, स्थिर अक्षर *target,
+			     काष्ठा nsinfo *nsi)
+अणु
+	अक्षर cpath[PATH_MAX];
+	अक्षर sbuildid[SBUILD_ID_SIZE];
+	अक्षर *dir_name = शून्य;
 	bool is_kallsyms = false;
-	int ret, fd;
-	struct nscookie nsc;
+	पूर्णांक ret, fd;
+	काष्ठा nscookie nsc;
 
-	if (target && build_id_cache__cached(target)) {
+	अगर (target && build_id_cache__cached(target)) अणु
 		/* This is a cached buildid */
 		strlcpy(sbuildid, target, SBUILD_ID_SIZE);
-		dir_name = build_id_cache__linkname(sbuildid, NULL, 0);
-		goto found;
-	}
+		dir_name = build_id_cache__linkname(sbuildid, शून्य, 0);
+		जाओ found;
+	पूर्ण
 
-	if (!target || !strcmp(target, DSO__NAME_KALLSYMS)) {
+	अगर (!target || !म_भेद(target, DSO__NAME_KALLSYMS)) अणु
 		target = DSO__NAME_KALLSYMS;
 		is_kallsyms = true;
-		ret = sysfs__sprintf_build_id("/", sbuildid);
-	} else {
+		ret = sysfs__प्र_लिखो_build_id("/", sbuildid);
+	पूर्ण अन्यथा अणु
 		nsinfo__mountns_enter(nsi, &nsc);
-		ret = filename__sprintf_build_id(target, sbuildid);
-		nsinfo__mountns_exit(&nsc);
-	}
+		ret = filename__प्र_लिखो_build_id(target, sbuildid);
+		nsinfo__mountns_निकास(&nsc);
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_debug("Failed to get build-id from %s.\n", target);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* If we have no buildid cache, make it */
-	if (!build_id_cache__cached(sbuildid)) {
+	अगर (!build_id_cache__cached(sbuildid)) अणु
 		ret = build_id_cache__add_s(sbuildid, target, nsi,
-					    is_kallsyms, NULL);
-		if (ret < 0) {
+					    is_kallsyms, शून्य);
+		अगर (ret < 0) अणु
 			pr_debug("Failed to add build-id cache: %s\n", target);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	dir_name = build_id_cache__cachedir(sbuildid, target, nsi, is_kallsyms,
 					    false);
 found:
-	if (!dir_name) {
+	अगर (!dir_name) अणु
 		pr_debug("Failed to get cache from %s\n", target);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	snprintf(cpath, PATH_MAX, "%s/probes", dir_name);
-	fd = open(cpath, O_CREAT | O_RDWR, 0644);
-	if (fd < 0)
+	snम_लिखो(cpath, PATH_MAX, "%s/probes", dir_name);
+	fd = खोलो(cpath, O_CREAT | O_RDWR, 0644);
+	अगर (fd < 0)
 		pr_debug("Failed to open cache(%d): %s\n", fd, cpath);
-	free(dir_name);
+	मुक्त(dir_name);
 	pcache->fd = fd;
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static int probe_cache__load(struct probe_cache *pcache)
-{
-	struct probe_cache_entry *entry = NULL;
-	char buf[MAX_CMDLEN], *p;
-	int ret = 0, fddup;
-	FILE *fp;
+अटल पूर्णांक probe_cache__load(काष्ठा probe_cache *pcache)
+अणु
+	काष्ठा probe_cache_entry *entry = शून्य;
+	अक्षर buf[MAX_CMDLEN], *p;
+	पूर्णांक ret = 0, fddup;
+	खाता *fp;
 
 	fddup = dup(pcache->fd);
-	if (fddup < 0)
-		return -errno;
-	fp = fdopen(fddup, "r");
-	if (!fp) {
-		close(fddup);
-		return -EINVAL;
-	}
+	अगर (fddup < 0)
+		वापस -त्रुटि_सं;
+	fp = fकरोpen(fddup, "r");
+	अगर (!fp) अणु
+		बंद(fddup);
+		वापस -EINVAL;
+	पूर्ण
 
-	while (!feof(fp)) {
-		if (!fgets(buf, MAX_CMDLEN, fp))
-			break;
-		p = strchr(buf, '\n');
-		if (p)
+	जबतक (!ख_पूर्ण(fp)) अणु
+		अगर (!ख_माला_लो(buf, MAX_CMDLEN, fp))
+			अवरोध;
+		p = म_अक्षर(buf, '\n');
+		अगर (p)
 			*p = '\0';
 		/* #perf_probe_event or %sdt_event */
-		if (buf[0] == '#' || buf[0] == '%') {
-			entry = probe_cache_entry__new(NULL);
-			if (!entry) {
+		अगर (buf[0] == '#' || buf[0] == '%') अणु
+			entry = probe_cache_entry__new(शून्य);
+			अगर (!entry) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
-			if (buf[0] == '%')
+				जाओ out;
+			पूर्ण
+			अगर (buf[0] == '%')
 				entry->sdt = true;
 			entry->spev = strdup(buf + 1);
-			if (entry->spev)
+			अगर (entry->spev)
 				ret = parse_perf_probe_command(buf + 1,
 								&entry->pev);
-			else
+			अन्यथा
 				ret = -ENOMEM;
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				probe_cache_entry__delete(entry);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			list_add_tail(&entry->node, &pcache->entries);
-		} else {	/* trace_probe_event */
-			if (!entry) {
+		पूर्ण अन्यथा अणु	/* trace_probe_event */
+			अगर (!entry) अणु
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			ret = strlist__add(entry->tevlist, buf);
-			if (ret == -ENOMEM) {
+			अगर (ret == -ENOMEM) अणु
 				pr_err("strlist__add failed with -ENOMEM\n");
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
-	fclose(fp);
-	return ret;
-}
+	ख_बंद(fp);
+	वापस ret;
+पूर्ण
 
-static struct probe_cache *probe_cache__alloc(void)
-{
-	struct probe_cache *pcache = zalloc(sizeof(*pcache));
+अटल काष्ठा probe_cache *probe_cache__alloc(व्योम)
+अणु
+	काष्ठा probe_cache *pcache = zalloc(माप(*pcache));
 
-	if (pcache) {
+	अगर (pcache) अणु
 		INIT_LIST_HEAD(&pcache->entries);
 		pcache->fd = -EINVAL;
-	}
-	return pcache;
-}
+	पूर्ण
+	वापस pcache;
+पूर्ण
 
-void probe_cache__purge(struct probe_cache *pcache)
-{
-	struct probe_cache_entry *entry, *n;
+व्योम probe_cache__purge(काष्ठा probe_cache *pcache)
+अणु
+	काष्ठा probe_cache_entry *entry, *n;
 
-	list_for_each_entry_safe(entry, n, &pcache->entries, node) {
+	list_क्रम_each_entry_safe(entry, n, &pcache->entries, node) अणु
 		list_del_init(&entry->node);
 		probe_cache_entry__delete(entry);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void probe_cache__delete(struct probe_cache *pcache)
-{
-	if (!pcache)
-		return;
+व्योम probe_cache__delete(काष्ठा probe_cache *pcache)
+अणु
+	अगर (!pcache)
+		वापस;
 
 	probe_cache__purge(pcache);
-	if (pcache->fd > 0)
-		close(pcache->fd);
-	free(pcache);
-}
+	अगर (pcache->fd > 0)
+		बंद(pcache->fd);
+	मुक्त(pcache);
+पूर्ण
 
-struct probe_cache *probe_cache__new(const char *target, struct nsinfo *nsi)
-{
-	struct probe_cache *pcache = probe_cache__alloc();
-	int ret;
+काष्ठा probe_cache *probe_cache__new(स्थिर अक्षर *target, काष्ठा nsinfo *nsi)
+अणु
+	काष्ठा probe_cache *pcache = probe_cache__alloc();
+	पूर्णांक ret;
 
-	if (!pcache)
-		return NULL;
+	अगर (!pcache)
+		वापस शून्य;
 
-	ret = probe_cache__open(pcache, target, nsi);
-	if (ret < 0) {
+	ret = probe_cache__खोलो(pcache, target, nsi);
+	अगर (ret < 0) अणु
 		pr_debug("Cache open error: %d\n", ret);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	ret = probe_cache__load(pcache);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_debug("Cache read error: %d\n", ret);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	return pcache;
+	वापस pcache;
 
 out_err:
 	probe_cache__delete(pcache);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool streql(const char *a, const char *b)
-{
-	if (a == b)
-		return true;
+अटल bool streql(स्थिर अक्षर *a, स्थिर अक्षर *b)
+अणु
+	अगर (a == b)
+		वापस true;
 
-	if (!a || !b)
-		return false;
+	अगर (!a || !b)
+		वापस false;
 
-	return !strcmp(a, b);
-}
+	वापस !म_भेद(a, b);
+पूर्ण
 
-struct probe_cache_entry *
-probe_cache__find(struct probe_cache *pcache, struct perf_probe_event *pev)
-{
-	struct probe_cache_entry *entry = NULL;
-	char *cmd = synthesize_perf_probe_command(pev);
+काष्ठा probe_cache_entry *
+probe_cache__find(काष्ठा probe_cache *pcache, काष्ठा perf_probe_event *pev)
+अणु
+	काष्ठा probe_cache_entry *entry = शून्य;
+	अक्षर *cmd = synthesize_perf_probe_command(pev);
 
-	if (!cmd)
-		return NULL;
+	अगर (!cmd)
+		वापस शून्य;
 
-	for_each_probe_cache_entry(entry, pcache) {
-		if (pev->sdt) {
-			if (entry->pev.event &&
+	क्रम_each_probe_cache_entry(entry, pcache) अणु
+		अगर (pev->sdt) अणु
+			अगर (entry->pev.event &&
 			    streql(entry->pev.event, pev->event) &&
 			    (!pev->group ||
 			     streql(entry->pev.group, pev->group)))
-				goto found;
+				जाओ found;
 
-			continue;
-		}
-		/* Hit if same event name or same command-string */
-		if ((pev->event &&
+			जारी;
+		पूर्ण
+		/* Hit अगर same event name or same command-string */
+		अगर ((pev->event &&
 		     (streql(entry->pev.group, pev->group) &&
 		      streql(entry->pev.event, pev->event))) ||
-		    (!strcmp(entry->spev, cmd)))
-			goto found;
-	}
-	entry = NULL;
+		    (!म_भेद(entry->spev, cmd)))
+			जाओ found;
+	पूर्ण
+	entry = शून्य;
 
 found:
-	free(cmd);
-	return entry;
-}
+	मुक्त(cmd);
+	वापस entry;
+पूर्ण
 
-struct probe_cache_entry *
-probe_cache__find_by_name(struct probe_cache *pcache,
-			  const char *group, const char *event)
-{
-	struct probe_cache_entry *entry = NULL;
+काष्ठा probe_cache_entry *
+probe_cache__find_by_name(काष्ठा probe_cache *pcache,
+			  स्थिर अक्षर *group, स्थिर अक्षर *event)
+अणु
+	काष्ठा probe_cache_entry *entry = शून्य;
 
-	for_each_probe_cache_entry(entry, pcache) {
-		/* Hit if same event name or same command-string */
-		if (streql(entry->pev.group, group) &&
+	क्रम_each_probe_cache_entry(entry, pcache) अणु
+		/* Hit अगर same event name or same command-string */
+		अगर (streql(entry->pev.group, group) &&
 		    streql(entry->pev.event, event))
-			goto found;
-	}
-	entry = NULL;
+			जाओ found;
+	पूर्ण
+	entry = शून्य;
 
 found:
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-int probe_cache__add_entry(struct probe_cache *pcache,
-			   struct perf_probe_event *pev,
-			   struct probe_trace_event *tevs, int ntevs)
-{
-	struct probe_cache_entry *entry = NULL;
-	char *command;
-	int i, ret = 0;
+पूर्णांक probe_cache__add_entry(काष्ठा probe_cache *pcache,
+			   काष्ठा perf_probe_event *pev,
+			   काष्ठा probe_trace_event *tevs, पूर्णांक ntevs)
+अणु
+	काष्ठा probe_cache_entry *entry = शून्य;
+	अक्षर *command;
+	पूर्णांक i, ret = 0;
 
-	if (!pcache || !pev || !tevs || ntevs <= 0) {
+	अगर (!pcache || !pev || !tevs || ntevs <= 0) अणु
 		ret = -EINVAL;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Remove old cache entry */
 	entry = probe_cache__find(pcache, pev);
-	if (entry) {
+	अगर (entry) अणु
 		list_del_init(&entry->node);
 		probe_cache_entry__delete(entry);
-	}
+	पूर्ण
 
 	ret = -ENOMEM;
 	entry = probe_cache_entry__new(pev);
-	if (!entry)
-		goto out_err;
+	अगर (!entry)
+		जाओ out_err;
 
-	for (i = 0; i < ntevs; i++) {
-		if (!tevs[i].point.symbol)
-			continue;
+	क्रम (i = 0; i < ntevs; i++) अणु
+		अगर (!tevs[i].poपूर्णांक.symbol)
+			जारी;
 
 		command = synthesize_probe_trace_command(&tevs[i]);
-		if (!command)
-			goto out_err;
+		अगर (!command)
+			जाओ out_err;
 		ret = strlist__add(entry->tevlist, command);
-		if (ret == -ENOMEM) {
+		अगर (ret == -ENOMEM) अणु
 			pr_err("strlist__add failed with -ENOMEM\n");
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
-		free(command);
-	}
+		मुक्त(command);
+	पूर्ण
 	list_add_tail(&entry->node, &pcache->entries);
 	pr_debug("Added probe cache: %d\n", ntevs);
-	return 0;
+	वापस 0;
 
 out_err:
 	pr_debug("Failed to add probe caches\n");
 	probe_cache_entry__delete(entry);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef HAVE_GELF_GETNOTE_SUPPORT
-static unsigned long long sdt_note__get_addr(struct sdt_note *note)
-{
-	return note->bit32 ?
-		(unsigned long long)note->addr.a32[SDT_NOTE_IDX_LOC] :
-		(unsigned long long)note->addr.a64[SDT_NOTE_IDX_LOC];
-}
+#अगर_घोषित HAVE_GELF_GETNOTE_SUPPORT
+अटल अचिन्हित दीर्घ दीर्घ sdt_note__get_addr(काष्ठा sdt_note *note)
+अणु
+	वापस note->bit32 ?
+		(अचिन्हित दीर्घ दीर्घ)note->addr.a32[SDT_NOTE_IDX_LOC] :
+		(अचिन्हित दीर्घ दीर्घ)note->addr.a64[SDT_NOTE_IDX_LOC];
+पूर्ण
 
-static unsigned long long sdt_note__get_ref_ctr_offset(struct sdt_note *note)
-{
-	return note->bit32 ?
-		(unsigned long long)note->addr.a32[SDT_NOTE_IDX_REFCTR] :
-		(unsigned long long)note->addr.a64[SDT_NOTE_IDX_REFCTR];
-}
+अटल अचिन्हित दीर्घ दीर्घ sdt_note__get_ref_ctr_offset(काष्ठा sdt_note *note)
+अणु
+	वापस note->bit32 ?
+		(अचिन्हित दीर्घ दीर्घ)note->addr.a32[SDT_NOTE_IDX_REFCTR] :
+		(अचिन्हित दीर्घ दीर्घ)note->addr.a64[SDT_NOTE_IDX_REFCTR];
+पूर्ण
 
-static const char * const type_to_suffix[] = {
+अटल स्थिर अक्षर * स्थिर type_to_suffix[] = अणु
 	":s64", "", "", "", ":s32", "", ":s16", ":s8",
 	"", ":u8", ":u16", "", ":u32", "", "", "", ":u64"
-};
+पूर्ण;
 
 /*
- * Isolate the string number and convert it into a decimal value;
+ * Isolate the string number and convert it पूर्णांकo a decimal value;
  * this will be an index to get suffix of the uprobe name (defining
  * the type)
  */
-static int sdt_arg_parse_size(char *n_ptr, const char **suffix)
-{
-	long type_idx;
+अटल पूर्णांक sdt_arg_parse_size(अक्षर *n_ptr, स्थिर अक्षर **suffix)
+अणु
+	दीर्घ type_idx;
 
-	type_idx = strtol(n_ptr, NULL, 10);
-	if (type_idx < -8 || type_idx > 8) {
+	type_idx = म_से_दीर्घ(n_ptr, शून्य, 10);
+	अगर (type_idx < -8 || type_idx > 8) अणु
 		pr_debug4("Failed to get a valid sdt type\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	*suffix = type_to_suffix[type_idx + 8];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int synthesize_sdt_probe_arg(struct strbuf *buf, int i, const char *arg)
-{
-	char *op, *desc = strdup(arg), *new_op = NULL;
-	const char *suffix = "";
-	int ret = -1;
+अटल पूर्णांक synthesize_sdt_probe_arg(काष्ठा strbuf *buf, पूर्णांक i, स्थिर अक्षर *arg)
+अणु
+	अक्षर *op, *desc = strdup(arg), *new_op = शून्य;
+	स्थिर अक्षर *suffix = "";
+	पूर्णांक ret = -1;
 
-	if (desc == NULL) {
+	अगर (desc == शून्य) अणु
 		pr_debug4("Allocation error\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Argument is in N@OP format. N is size of the argument and OP is
-	 * the actual assembly operand. N can be omitted; in that case
+	 * Argument is in N@OP क्रमmat. N is size of the argument and OP is
+	 * the actual assembly opeअक्रम. N can be omitted; in that हाल
 	 * argument is just OP(without @).
 	 */
-	op = strchr(desc, '@');
-	if (op) {
+	op = म_अक्षर(desc, '@');
+	अगर (op) अणु
 		op[0] = '\0';
 		op++;
 
-		if (sdt_arg_parse_size(desc, &suffix))
-			goto error;
-	} else {
+		अगर (sdt_arg_parse_size(desc, &suffix))
+			जाओ error;
+	पूर्ण अन्यथा अणु
 		op = desc;
-	}
+	पूर्ण
 
 	ret = arch_sdt_arg_parse_op(op, &new_op);
 
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	if (ret == SDT_ARG_VALID) {
+	अगर (ret == SDT_ARG_VALID) अणु
 		ret = strbuf_addf(buf, " arg%d=%s%s", i + 1, new_op, suffix);
-		if (ret < 0)
-			goto error;
-	}
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण
 
 	ret = 0;
 error:
-	free(desc);
-	free(new_op);
-	return ret;
-}
+	मुक्त(desc);
+	मुक्त(new_op);
+	वापस ret;
+पूर्ण
 
-static char *synthesize_sdt_probe_command(struct sdt_note *note,
-					const char *pathname,
-					const char *sdtgrp)
-{
-	struct strbuf buf;
-	char *ret = NULL;
-	int i, args_count, err;
-	unsigned long long ref_ctr_offset;
-	char *arg;
-	int arg_idx = 0;
+अटल अक्षर *synthesize_sdt_probe_command(काष्ठा sdt_note *note,
+					स्थिर अक्षर *pathname,
+					स्थिर अक्षर *sdtgrp)
+अणु
+	काष्ठा strbuf buf;
+	अक्षर *ret = शून्य;
+	पूर्णांक i, args_count, err;
+	अचिन्हित दीर्घ दीर्घ ref_ctr_offset;
+	अक्षर *arg;
+	पूर्णांक arg_idx = 0;
 
-	if (strbuf_init(&buf, 32) < 0)
-		return NULL;
+	अगर (strbuf_init(&buf, 32) < 0)
+		वापस शून्य;
 
 	err = strbuf_addf(&buf, "p:%s/%s %s:0x%llx",
 			sdtgrp, note->name, pathname,
 			sdt_note__get_addr(note));
 
 	ref_ctr_offset = sdt_note__get_ref_ctr_offset(note);
-	if (ref_ctr_offset && err >= 0)
+	अगर (ref_ctr_offset && err >= 0)
 		err = strbuf_addf(&buf, "(0x%llx)", ref_ctr_offset);
 
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	if (!note->args)
-		goto out;
+	अगर (!note->args)
+		जाओ out;
 
-	if (note->args) {
-		char **args = argv_split(note->args, &args_count);
+	अगर (note->args) अणु
+		अक्षर **args = argv_split(note->args, &args_count);
 
-		if (args == NULL)
-			goto error;
+		अगर (args == शून्य)
+			जाओ error;
 
-		for (i = 0; i < args_count; ) {
+		क्रम (i = 0; i < args_count; ) अणु
 			/*
 			 * FIXUP: Arm64 ELF section '.note.stapsdt' uses string
-			 * format "-4@[sp, NUM]" if a probe is to access data in
-			 * the stack, e.g. below is an example for the SDT
+			 * क्रमmat "-4@[sp, NUM]" अगर a probe is to access data in
+			 * the stack, e.g. below is an example क्रम the SDT
 			 * Arguments:
 			 *
 			 *   Arguments: -4@[sp, 12] -4@[sp, 8] -4@[sp, 4]
 			 *
-			 * Since the string introduces an extra space character
+			 * Since the string पूर्णांकroduces an extra space अक्षरacter
 			 * in the middle of square brackets, the argument is
-			 * divided into two items.  Fixup for this case, if an
+			 * भागided पूर्णांकo two items.  Fixup क्रम this हाल, अगर an
 			 * item contains sub string "[sp,", need to concatenate
 			 * the two items.
 			 */
-			if (strstr(args[i], "[sp,") && (i+1) < args_count) {
-				err = asprintf(&arg, "%s %s", args[i], args[i+1]);
+			अगर (म_माला(args[i], "[sp,") && (i+1) < args_count) अणु
+				err = aप्र_लिखो(&arg, "%s %s", args[i], args[i+1]);
 				i += 2;
-			} else {
-				err = asprintf(&arg, "%s", args[i]);
+			पूर्ण अन्यथा अणु
+				err = aप्र_लिखो(&arg, "%s", args[i]);
 				i += 1;
-			}
+			पूर्ण
 
 			/* Failed to allocate memory */
-			if (err < 0) {
-				argv_free(args);
-				goto error;
-			}
+			अगर (err < 0) अणु
+				argv_मुक्त(args);
+				जाओ error;
+			पूर्ण
 
-			if (synthesize_sdt_probe_arg(&buf, arg_idx, arg) < 0) {
-				free(arg);
-				argv_free(args);
-				goto error;
-			}
+			अगर (synthesize_sdt_probe_arg(&buf, arg_idx, arg) < 0) अणु
+				मुक्त(arg);
+				argv_मुक्त(args);
+				जाओ error;
+			पूर्ण
 
-			free(arg);
+			मुक्त(arg);
 			arg_idx++;
-		}
+		पूर्ण
 
-		argv_free(args);
-	}
+		argv_मुक्त(args);
+	पूर्ण
 
 out:
-	ret = strbuf_detach(&buf, NULL);
+	ret = strbuf_detach(&buf, शून्य);
 error:
 	strbuf_release(&buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int probe_cache__scan_sdt(struct probe_cache *pcache, const char *pathname)
-{
-	struct probe_cache_entry *entry = NULL;
-	struct list_head sdtlist;
-	struct sdt_note *note;
-	char *buf;
-	char sdtgrp[64];
-	int ret;
+पूर्णांक probe_cache__scan_sdt(काष्ठा probe_cache *pcache, स्थिर अक्षर *pathname)
+अणु
+	काष्ठा probe_cache_entry *entry = शून्य;
+	काष्ठा list_head sdtlist;
+	काष्ठा sdt_note *note;
+	अक्षर *buf;
+	अक्षर sdtgrp[64];
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&sdtlist);
 	ret = get_sdt_note_list(&sdtlist, pathname);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_debug4("Failed to get sdt note: %d\n", ret);
-		return ret;
-	}
-	list_for_each_entry(note, &sdtlist, note_list) {
-		ret = snprintf(sdtgrp, 64, "sdt_%s", note->provider);
-		if (ret < 0)
-			break;
+		वापस ret;
+	पूर्ण
+	list_क्रम_each_entry(note, &sdtlist, note_list) अणु
+		ret = snम_लिखो(sdtgrp, 64, "sdt_%s", note->provider);
+		अगर (ret < 0)
+			अवरोध;
 		/* Try to find same-name entry */
 		entry = probe_cache__find_by_name(pcache, sdtgrp, note->name);
-		if (!entry) {
-			entry = probe_cache_entry__new(NULL);
-			if (!entry) {
+		अगर (!entry) अणु
+			entry = probe_cache_entry__new(शून्य);
+			अगर (!entry) अणु
 				ret = -ENOMEM;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			entry->sdt = true;
-			ret = asprintf(&entry->spev, "%s:%s=%s", sdtgrp,
+			ret = aप्र_लिखो(&entry->spev, "%s:%s=%s", sdtgrp,
 					note->name, note->name);
-			if (ret < 0)
-				break;
+			अगर (ret < 0)
+				अवरोध;
 			entry->pev.event = strdup(note->name);
 			entry->pev.group = strdup(sdtgrp);
 			list_add_tail(&entry->node, &pcache->entries);
-		}
+		पूर्ण
 		buf = synthesize_sdt_probe_command(note, pathname, sdtgrp);
-		if (!buf) {
+		अगर (!buf) अणु
 			ret = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = strlist__add(entry->tevlist, buf);
 
-		free(buf);
-		entry = NULL;
+		मुक्त(buf);
+		entry = शून्य;
 
-		if (ret == -ENOMEM) {
+		अगर (ret == -ENOMEM) अणु
 			pr_err("strlist__add failed with -ENOMEM\n");
-			break;
-		}
-	}
-	if (entry) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (entry) अणु
 		list_del_init(&entry->node);
 		probe_cache_entry__delete(entry);
-	}
+	पूर्ण
 	cleanup_sdt_note_list(&sdtlist);
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int probe_cache_entry__write(struct probe_cache_entry *entry, int fd)
-{
-	struct str_node *snode;
-	struct stat st;
-	struct iovec iov[3];
-	const char *prefix = entry->sdt ? "%" : "#";
-	int ret;
-	/* Save stat for rollback */
-	ret = fstat(fd, &st);
-	if (ret < 0)
-		return ret;
+अटल पूर्णांक probe_cache_entry__ग_लिखो(काष्ठा probe_cache_entry *entry, पूर्णांक fd)
+अणु
+	काष्ठा str_node *snode;
+	काष्ठा stat st;
+	काष्ठा iovec iov[3];
+	स्थिर अक्षर *prefix = entry->sdt ? "%" : "#";
+	पूर्णांक ret;
+	/* Save stat क्रम rollback */
+	ret = ख_स्थिति(fd, &st);
+	अगर (ret < 0)
+		वापस ret;
 
 	pr_debug("Writing cache: %s%s\n", prefix, entry->spev);
-	iov[0].iov_base = (void *)prefix; iov[0].iov_len = 1;
-	iov[1].iov_base = entry->spev; iov[1].iov_len = strlen(entry->spev);
-	iov[2].iov_base = (void *)"\n"; iov[2].iov_len = 1;
-	ret = writev(fd, iov, 3);
-	if (ret < (int)iov[1].iov_len + 2)
-		goto rollback;
+	iov[0].iov_base = (व्योम *)prefix; iov[0].iov_len = 1;
+	iov[1].iov_base = entry->spev; iov[1].iov_len = म_माप(entry->spev);
+	iov[2].iov_base = (व्योम *)"\n"; iov[2].iov_len = 1;
+	ret = ग_लिखोv(fd, iov, 3);
+	अगर (ret < (पूर्णांक)iov[1].iov_len + 2)
+		जाओ rollback;
 
-	strlist__for_each_entry(snode, entry->tevlist) {
-		iov[0].iov_base = (void *)snode->s;
-		iov[0].iov_len = strlen(snode->s);
-		iov[1].iov_base = (void *)"\n"; iov[1].iov_len = 1;
-		ret = writev(fd, iov, 2);
-		if (ret < (int)iov[0].iov_len + 1)
-			goto rollback;
-	}
-	return 0;
+	strlist__क्रम_each_entry(snode, entry->tevlist) अणु
+		iov[0].iov_base = (व्योम *)snode->s;
+		iov[0].iov_len = म_माप(snode->s);
+		iov[1].iov_base = (व्योम *)"\n"; iov[1].iov_len = 1;
+		ret = ग_लिखोv(fd, iov, 2);
+		अगर (ret < (पूर्णांक)iov[0].iov_len + 1)
+			जाओ rollback;
+	पूर्ण
+	वापस 0;
 
 rollback:
-	/* Rollback to avoid cache file corruption */
-	if (ret > 0)
+	/* Rollback to aव्योम cache file corruption */
+	अगर (ret > 0)
 		ret = -1;
-	if (ftruncate(fd, st.st_size) < 0)
+	अगर (ftruncate(fd, st.st_size) < 0)
 		ret = -2;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int probe_cache__commit(struct probe_cache *pcache)
-{
-	struct probe_cache_entry *entry;
-	int ret = 0;
+पूर्णांक probe_cache__commit(काष्ठा probe_cache *pcache)
+अणु
+	काष्ठा probe_cache_entry *entry;
+	पूर्णांक ret = 0;
 
-	/* TBD: if we do not update existing entries, skip it */
-	ret = lseek(pcache->fd, 0, SEEK_SET);
-	if (ret < 0)
-		goto out;
+	/* TBD: अगर we करो not update existing entries, skip it */
+	ret = lseek(pcache->fd, 0, शुरू_से);
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = ftruncate(pcache->fd, 0);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	for_each_probe_cache_entry(entry, pcache) {
-		ret = probe_cache_entry__write(entry, pcache->fd);
+	क्रम_each_probe_cache_entry(entry, pcache) अणु
+		ret = probe_cache_entry__ग_लिखो(entry, pcache->fd);
 		pr_debug("Cache committed: %d\n", ret);
-		if (ret < 0)
-			break;
-	}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool probe_cache_entry__compare(struct probe_cache_entry *entry,
-				       struct strfilter *filter)
-{
-	char buf[128], *ptr = entry->spev;
+अटल bool probe_cache_entry__compare(काष्ठा probe_cache_entry *entry,
+				       काष्ठा strfilter *filter)
+अणु
+	अक्षर buf[128], *ptr = entry->spev;
 
-	if (entry->pev.event) {
-		snprintf(buf, 128, "%s:%s", entry->pev.group, entry->pev.event);
+	अगर (entry->pev.event) अणु
+		snम_लिखो(buf, 128, "%s:%s", entry->pev.group, entry->pev.event);
 		ptr = buf;
-	}
-	return strfilter__compare(filter, ptr);
-}
+	पूर्ण
+	वापस strfilter__compare(filter, ptr);
+पूर्ण
 
-int probe_cache__filter_purge(struct probe_cache *pcache,
-			      struct strfilter *filter)
-{
-	struct probe_cache_entry *entry, *tmp;
+पूर्णांक probe_cache__filter_purge(काष्ठा probe_cache *pcache,
+			      काष्ठा strfilter *filter)
+अणु
+	काष्ठा probe_cache_entry *entry, *पंचांगp;
 
-	list_for_each_entry_safe(entry, tmp, &pcache->entries, node) {
-		if (probe_cache_entry__compare(entry, filter)) {
+	list_क्रम_each_entry_safe(entry, पंचांगp, &pcache->entries, node) अणु
+		अगर (probe_cache_entry__compare(entry, filter)) अणु
 			pr_info("Removed cached event: %s\n", entry->spev);
 			list_del_init(&entry->node);
 			probe_cache_entry__delete(entry);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int probe_cache__show_entries(struct probe_cache *pcache,
-				     struct strfilter *filter)
-{
-	struct probe_cache_entry *entry;
+अटल पूर्णांक probe_cache__show_entries(काष्ठा probe_cache *pcache,
+				     काष्ठा strfilter *filter)
+अणु
+	काष्ठा probe_cache_entry *entry;
 
-	for_each_probe_cache_entry(entry, pcache) {
-		if (probe_cache_entry__compare(entry, filter))
-			printf("%s\n", entry->spev);
-	}
-	return 0;
-}
+	क्रम_each_probe_cache_entry(entry, pcache) अणु
+		अगर (probe_cache_entry__compare(entry, filter))
+			म_लिखो("%s\n", entry->spev);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Show all cached probes */
-int probe_cache__show_all_caches(struct strfilter *filter)
-{
-	struct probe_cache *pcache;
-	struct strlist *bidlist;
-	struct str_node *nd;
-	char *buf = strfilter__string(filter);
+पूर्णांक probe_cache__show_all_caches(काष्ठा strfilter *filter)
+अणु
+	काष्ठा probe_cache *pcache;
+	काष्ठा strlist *bidlist;
+	काष्ठा str_node *nd;
+	अक्षर *buf = strfilter__string(filter);
 
 	pr_debug("list cache with filter: %s\n", buf);
-	free(buf);
+	मुक्त(buf);
 
 	bidlist = build_id_cache__list_all(true);
-	if (!bidlist) {
-		pr_debug("Failed to get buildids: %d\n", errno);
-		return -EINVAL;
-	}
-	strlist__for_each_entry(nd, bidlist) {
-		pcache = probe_cache__new(nd->s, NULL);
-		if (!pcache)
-			continue;
-		if (!list_empty(&pcache->entries)) {
+	अगर (!bidlist) अणु
+		pr_debug("Failed to get buildids: %d\n", त्रुटि_सं);
+		वापस -EINVAL;
+	पूर्ण
+	strlist__क्रम_each_entry(nd, bidlist) अणु
+		pcache = probe_cache__new(nd->s, शून्य);
+		अगर (!pcache)
+			जारी;
+		अगर (!list_empty(&pcache->entries)) अणु
 			buf = build_id_cache__origname(nd->s);
-			printf("%s (%s):\n", buf, nd->s);
-			free(buf);
+			म_लिखो("%s (%s):\n", buf, nd->s);
+			मुक्त(buf);
 			probe_cache__show_entries(pcache, filter);
-		}
+		पूर्ण
 		probe_cache__delete(pcache);
-	}
+	पूर्ण
 	strlist__delete(bidlist);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum ftrace_readme {
+क्रमागत ftrace_पढ़ोme अणु
 	FTRACE_README_PROBE_TYPE_X = 0,
 	FTRACE_README_KRETPROBE_OFFSET,
 	FTRACE_README_UPROBE_REF_CTR,
@@ -1074,92 +1075,92 @@ enum ftrace_readme {
 	FTRACE_README_MULTIPROBE_EVENT,
 	FTRACE_README_IMMEDIATE_VALUE,
 	FTRACE_README_END,
-};
+पूर्ण;
 
-static struct {
-	const char *pattern;
+अटल काष्ठा अणु
+	स्थिर अक्षर *pattern;
 	bool avail;
-} ftrace_readme_table[] = {
-#define DEFINE_TYPE(idx, pat)			\
-	[idx] = {.pattern = pat, .avail = false}
+पूर्ण ftrace_पढ़ोme_table[] = अणु
+#घोषणा DEFINE_TYPE(idx, pat)			\
+	[idx] = अणु.pattern = pat, .avail = falseपूर्ण
 	DEFINE_TYPE(FTRACE_README_PROBE_TYPE_X, "*type: * x8/16/32/64,*"),
 	DEFINE_TYPE(FTRACE_README_KRETPROBE_OFFSET, "*place (kretprobe): *"),
 	DEFINE_TYPE(FTRACE_README_UPROBE_REF_CTR, "*ref_ctr_offset*"),
 	DEFINE_TYPE(FTRACE_README_USER_ACCESS, "*u]<offset>*"),
 	DEFINE_TYPE(FTRACE_README_MULTIPROBE_EVENT, "*Create/append/*"),
 	DEFINE_TYPE(FTRACE_README_IMMEDIATE_VALUE, "*\\imm-value,*"),
-};
+पूर्ण;
 
-static bool scan_ftrace_readme(enum ftrace_readme type)
-{
-	int fd;
-	FILE *fp;
-	char *buf = NULL;
-	size_t len = 0;
+अटल bool scan_ftrace_पढ़ोme(क्रमागत ftrace_पढ़ोme type)
+अणु
+	पूर्णांक fd;
+	खाता *fp;
+	अक्षर *buf = शून्य;
+	माप_प्रकार len = 0;
 	bool ret = false;
-	static bool scanned = false;
+	अटल bool scanned = false;
 
-	if (scanned)
-		goto result;
+	अगर (scanned)
+		जाओ result;
 
-	fd = open_trace_file("README", false);
-	if (fd < 0)
-		return ret;
+	fd = खोलो_trace_file("README", false);
+	अगर (fd < 0)
+		वापस ret;
 
-	fp = fdopen(fd, "r");
-	if (!fp) {
-		close(fd);
-		return ret;
-	}
+	fp = fकरोpen(fd, "r");
+	अगर (!fp) अणु
+		बंद(fd);
+		वापस ret;
+	पूर्ण
 
-	while (getline(&buf, &len, fp) > 0)
-		for (enum ftrace_readme i = 0; i < FTRACE_README_END; i++)
-			if (!ftrace_readme_table[i].avail)
-				ftrace_readme_table[i].avail =
-					strglobmatch(buf, ftrace_readme_table[i].pattern);
+	जबतक (getline(&buf, &len, fp) > 0)
+		क्रम (क्रमागत ftrace_पढ़ोme i = 0; i < FTRACE_README_END; i++)
+			अगर (!ftrace_पढ़ोme_table[i].avail)
+				ftrace_पढ़ोme_table[i].avail =
+					strglobmatch(buf, ftrace_पढ़ोme_table[i].pattern);
 	scanned = true;
 
-	fclose(fp);
-	free(buf);
+	ख_बंद(fp);
+	मुक्त(buf);
 
 result:
-	if (type >= FTRACE_README_END)
-		return false;
+	अगर (type >= FTRACE_README_END)
+		वापस false;
 
-	return ftrace_readme_table[type].avail;
-}
+	वापस ftrace_पढ़ोme_table[type].avail;
+पूर्ण
 
-bool probe_type_is_available(enum probe_type type)
-{
-	if (type >= PROBE_TYPE_END)
-		return false;
-	else if (type == PROBE_TYPE_X)
-		return scan_ftrace_readme(FTRACE_README_PROBE_TYPE_X);
+bool probe_type_is_available(क्रमागत probe_type type)
+अणु
+	अगर (type >= PROBE_TYPE_END)
+		वापस false;
+	अन्यथा अगर (type == PROBE_TYPE_X)
+		वापस scan_ftrace_पढ़ोme(FTRACE_README_PROBE_TYPE_X);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool kretprobe_offset_is_supported(void)
-{
-	return scan_ftrace_readme(FTRACE_README_KRETPROBE_OFFSET);
-}
+bool kretprobe_offset_is_supported(व्योम)
+अणु
+	वापस scan_ftrace_पढ़ोme(FTRACE_README_KRETPROBE_OFFSET);
+पूर्ण
 
-bool uprobe_ref_ctr_is_supported(void)
-{
-	return scan_ftrace_readme(FTRACE_README_UPROBE_REF_CTR);
-}
+bool uprobe_ref_ctr_is_supported(व्योम)
+अणु
+	वापस scan_ftrace_पढ़ोme(FTRACE_README_UPROBE_REF_CTR);
+पूर्ण
 
-bool user_access_is_supported(void)
-{
-	return scan_ftrace_readme(FTRACE_README_USER_ACCESS);
-}
+bool user_access_is_supported(व्योम)
+अणु
+	वापस scan_ftrace_पढ़ोme(FTRACE_README_USER_ACCESS);
+पूर्ण
 
-bool multiprobe_event_is_supported(void)
-{
-	return scan_ftrace_readme(FTRACE_README_MULTIPROBE_EVENT);
-}
+bool multiprobe_event_is_supported(व्योम)
+अणु
+	वापस scan_ftrace_पढ़ोme(FTRACE_README_MULTIPROBE_EVENT);
+पूर्ण
 
-bool immediate_value_is_supported(void)
-{
-	return scan_ftrace_readme(FTRACE_README_IMMEDIATE_VALUE);
-}
+bool immediate_value_is_supported(व्योम)
+अणु
+	वापस scan_ftrace_पढ़ोme(FTRACE_README_IMMEDIATE_VALUE);
+पूर्ण

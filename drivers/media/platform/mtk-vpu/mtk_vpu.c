@@ -1,681 +1,682 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
 * Copyright (c) 2016 MediaTek Inc.
 * Author: Andrew-CT Chen <andrew-ct.chen@mediatek.com>
 */
-#include <linux/clk.h>
-#include <linux/debugfs.h>
-#include <linux/firmware.h>
-#include <linux/interrupt.h>
-#include <linux/iommu.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/of_reserved_mem.h>
-#include <linux/sched.h>
-#include <linux/sizes.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_reserved_स्मृति.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/dma-mapping.h>
 
-#include "mtk_vpu.h"
+#समावेश "mtk_vpu.h"
 
 /*
  * VPU (video processor unit) is a tiny processor controlling video hardware
- * related to video codec, scaling and color format converting.
- * VPU interfaces with other blocks by share memory and interrupt.
+ * related to video codec, scaling and color क्रमmat converting.
+ * VPU पूर्णांकerfaces with other blocks by share memory and पूर्णांकerrupt.
  */
 
-#define INIT_TIMEOUT_MS		2000U
-#define IPI_TIMEOUT_MS		2000U
-#define VPU_IDLE_TIMEOUT_MS	1000U
-#define VPU_FW_VER_LEN		16
+#घोषणा INIT_TIMEOUT_MS		2000U
+#घोषणा IPI_TIMEOUT_MS		2000U
+#घोषणा VPU_IDLE_TIMEOUT_MS	1000U
+#घोषणा VPU_FW_VER_LEN		16
 
 /* maximum program/data TCM (Tightly-Coupled Memory) size */
-#define VPU_PTCM_SIZE		(96 * SZ_1K)
-#define VPU_DTCM_SIZE		(32 * SZ_1K)
+#घोषणा VPU_PTCM_SIZE		(96 * SZ_1K)
+#घोषणा VPU_DTCM_SIZE		(32 * SZ_1K)
 /* the offset to get data tcm address */
-#define VPU_DTCM_OFFSET		0x18000UL
+#घोषणा VPU_DTCM_OFFSET		0x18000UL
 /* daynamic allocated maximum extended memory size */
-#define VPU_EXT_P_SIZE		SZ_1M
-#define VPU_EXT_D_SIZE		SZ_4M
+#घोषणा VPU_EXT_P_SIZE		SZ_1M
+#घोषणा VPU_EXT_D_SIZE		SZ_4M
 /* maximum binary firmware size */
-#define VPU_P_FW_SIZE		(VPU_PTCM_SIZE + VPU_EXT_P_SIZE)
-#define VPU_D_FW_SIZE		(VPU_DTCM_SIZE + VPU_EXT_D_SIZE)
+#घोषणा VPU_P_FW_SIZE		(VPU_PTCM_SIZE + VPU_EXT_P_SIZE)
+#घोषणा VPU_D_FW_SIZE		(VPU_DTCM_SIZE + VPU_EXT_D_SIZE)
 /* the size of share buffer between Host and  VPU */
-#define SHARE_BUF_SIZE		48
+#घोषणा SHARE_BUF_SIZE		48
 
 /* binary firmware name */
-#define VPU_P_FW		"vpu_p.bin"
-#define VPU_D_FW		"vpu_d.bin"
-#define VPU_P_FW_NEW		"mediatek/mt8173/vpu_p.bin"
-#define VPU_D_FW_NEW		"mediatek/mt8173/vpu_d.bin"
+#घोषणा VPU_P_FW		"vpu_p.bin"
+#घोषणा VPU_D_FW		"vpu_d.bin"
+#घोषणा VPU_P_FW_NEW		"mediatek/mt8173/vpu_p.bin"
+#घोषणा VPU_D_FW_NEW		"mediatek/mt8173/vpu_d.bin"
 
-#define VPU_RESET		0x0
-#define VPU_TCM_CFG		0x0008
-#define VPU_PMEM_EXT0_ADDR	0x000C
-#define VPU_PMEM_EXT1_ADDR	0x0010
-#define VPU_TO_HOST		0x001C
-#define VPU_DMEM_EXT0_ADDR	0x0014
-#define VPU_DMEM_EXT1_ADDR	0x0018
-#define HOST_TO_VPU		0x0024
-#define VPU_IDLE_REG		0x002C
-#define VPU_INT_STATUS		0x0034
-#define VPU_PC_REG		0x0060
-#define VPU_SP_REG		0x0064
-#define VPU_RA_REG		0x0068
-#define VPU_WDT_REG		0x0084
+#घोषणा VPU_RESET		0x0
+#घोषणा VPU_TCM_CFG		0x0008
+#घोषणा VPU_PMEM_EXT0_ADDR	0x000C
+#घोषणा VPU_PMEM_EXT1_ADDR	0x0010
+#घोषणा VPU_TO_HOST		0x001C
+#घोषणा VPU_DMEM_EXT0_ADDR	0x0014
+#घोषणा VPU_DMEM_EXT1_ADDR	0x0018
+#घोषणा HOST_TO_VPU		0x0024
+#घोषणा VPU_IDLE_REG		0x002C
+#घोषणा VPU_INT_STATUS		0x0034
+#घोषणा VPU_PC_REG		0x0060
+#घोषणा VPU_SP_REG		0x0064
+#घोषणा VPU_RA_REG		0x0068
+#घोषणा VPU_WDT_REG		0x0084
 
-/* vpu inter-processor communication interrupt */
-#define VPU_IPC_INT		BIT(8)
+/* vpu पूर्णांकer-processor communication पूर्णांकerrupt */
+#घोषणा VPU_IPC_INT		BIT(8)
 /* vpu idle state */
-#define VPU_IDLE_STATE		BIT(23)
+#घोषणा VPU_IDLE_STATE		BIT(23)
 
 /**
- * enum vpu_fw_type - VPU firmware type
+ * क्रमागत vpu_fw_type - VPU firmware type
  *
  * @P_FW: program firmware
  * @D_FW: data firmware
  *
  */
-enum vpu_fw_type {
+क्रमागत vpu_fw_type अणु
 	P_FW,
 	D_FW,
-};
+पूर्ण;
 
 /**
- * struct vpu_mem - VPU extended program/data memory information
+ * काष्ठा vpu_mem - VPU extended program/data memory inक्रमmation
  *
- * @va:		the kernel virtual memory address of VPU extended memory
+ * @va:		the kernel भव memory address of VPU extended memory
  * @pa:		the physical memory address of VPU extended memory
  *
  */
-struct vpu_mem {
-	void *va;
+काष्ठा vpu_mem अणु
+	व्योम *va;
 	dma_addr_t pa;
-};
+पूर्ण;
 
 /**
- * struct vpu_regs - VPU TCM and configuration registers
+ * काष्ठा vpu_regs - VPU TCM and configuration रेजिस्टरs
  *
- * @tcm:	the register for VPU Tightly-Coupled Memory
- * @cfg:	the register for VPU configuration
- * @irq:	the irq number for VPU interrupt
+ * @tcm:	the रेजिस्टर क्रम VPU Tightly-Coupled Memory
+ * @cfg:	the रेजिस्टर क्रम VPU configuration
+ * @irq:	the irq number क्रम VPU पूर्णांकerrupt
  */
-struct vpu_regs {
-	void __iomem *tcm;
-	void __iomem *cfg;
-	int irq;
-};
+काष्ठा vpu_regs अणु
+	व्योम __iomem *tcm;
+	व्योम __iomem *cfg;
+	पूर्णांक irq;
+पूर्ण;
 
 /**
- * struct vpu_wdt_handler - VPU watchdog reset handler
+ * काष्ठा vpu_wdt_handler - VPU watchकरोg reset handler
  *
  * @reset_func:	reset handler
- * @priv:	private data
+ * @priv:	निजी data
  */
-struct vpu_wdt_handler {
-	void (*reset_func)(void *);
-	void *priv;
-};
+काष्ठा vpu_wdt_handler अणु
+	व्योम (*reset_func)(व्योम *);
+	व्योम *priv;
+पूर्ण;
 
 /**
- * struct vpu_wdt - VPU watchdog workqueue
+ * काष्ठा vpu_wdt - VPU watchकरोg workqueue
  *
- * @handler:	VPU watchdog reset handler
- * @ws:		workstruct for VPU watchdog
- * @wq:		workqueue for VPU watchdog
+ * @handler:	VPU watchकरोg reset handler
+ * @ws:		workकाष्ठा क्रम VPU watchकरोg
+ * @wq:		workqueue क्रम VPU watchकरोg
  */
-struct vpu_wdt {
-	struct vpu_wdt_handler handler[VPU_RST_MAX];
-	struct work_struct ws;
-	struct workqueue_struct *wq;
-};
+काष्ठा vpu_wdt अणु
+	काष्ठा vpu_wdt_handler handler[VPU_RST_MAX];
+	काष्ठा work_काष्ठा ws;
+	काष्ठा workqueue_काष्ठा *wq;
+पूर्ण;
 
 /**
- * struct vpu_run - VPU initialization status
+ * काष्ठा vpu_run - VPU initialization status
  *
- * @signaled:		the signal of vpu initialization completed
+ * @संकेतed:		the संकेत of vpu initialization completed
  * @fw_ver:		VPU firmware version
- * @dec_capability:	decoder capability which is not used for now and
- *			the value is reserved for future use
- * @enc_capability:	encoder capability which is not used for now and
- *			the value is reserved for future use
- * @wq:			wait queue for VPU initialization status
+ * @dec_capability:	decoder capability which is not used क्रम now and
+ *			the value is reserved क्रम future use
+ * @enc_capability:	encoder capability which is not used क्रम now and
+ *			the value is reserved क्रम future use
+ * @wq:			रुको queue क्रम VPU initialization status
  */
-struct vpu_run {
-	u32 signaled;
-	char fw_ver[VPU_FW_VER_LEN];
-	unsigned int	dec_capability;
-	unsigned int	enc_capability;
-	wait_queue_head_t wq;
-};
+काष्ठा vpu_run अणु
+	u32 संकेतed;
+	अक्षर fw_ver[VPU_FW_VER_LEN];
+	अचिन्हित पूर्णांक	dec_capability;
+	अचिन्हित पूर्णांक	enc_capability;
+	रुको_queue_head_t wq;
+पूर्ण;
 
 /**
- * struct vpu_ipi_desc - VPU IPI descriptor
+ * काष्ठा vpu_ipi_desc - VPU IPI descriptor
  *
  * @handler:	IPI handler
  * @name:	the name of IPI handler
- * @priv:	the private data of IPI handler
+ * @priv:	the निजी data of IPI handler
  */
-struct vpu_ipi_desc {
+काष्ठा vpu_ipi_desc अणु
 	ipi_handler_t handler;
-	const char *name;
-	void *priv;
-};
+	स्थिर अक्षर *name;
+	व्योम *priv;
+पूर्ण;
 
 /**
- * struct share_obj - DTCM (Data Tightly-Coupled Memory) buffer shared with
+ * काष्ठा share_obj - DTCM (Data Tightly-Coupled Memory) buffer shared with
  *		      AP and VPU
  *
  * @id:		IPI id
  * @len:	share buffer length
  * @share_buf:	share buffer data
  */
-struct share_obj {
+काष्ठा share_obj अणु
 	s32 id;
 	u32 len;
-	unsigned char share_buf[SHARE_BUF_SIZE];
-};
+	अचिन्हित अक्षर share_buf[SHARE_BUF_SIZE];
+पूर्ण;
 
 /**
- * struct mtk_vpu - vpu driver data
- * @extmem:		VPU extended memory information
- * @reg:		VPU TCM and configuration registers
+ * काष्ठा mtk_vpu - vpu driver data
+ * @exपंचांगem:		VPU extended memory inक्रमmation
+ * @reg:		VPU TCM and configuration रेजिस्टरs
  * @run:		VPU initialization status
- * @wdt:		VPU watchdog workqueue
+ * @wdt:		VPU watchकरोg workqueue
  * @ipi_desc:		VPU IPI descriptor
- * @recv_buf:		VPU DTCM share buffer for receiving. The
- *			receive buffer is only accessed in interrupt context.
- * @send_buf:		VPU DTCM share buffer for sending
- * @dev:		VPU struct device
- * @clk:		VPU clock on/off
+ * @recv_buf:		VPU DTCM share buffer क्रम receiving. The
+ *			receive buffer is only accessed in पूर्णांकerrupt context.
+ * @send_buf:		VPU DTCM share buffer क्रम sending
+ * @dev:		VPU काष्ठा device
+ * @clk:		VPU घड़ी on/off
  * @fw_loaded:		indicate VPU firmware loaded
  * @enable_4GB:		VPU 4GB mode on/off
  * @vpu_mutex:		protect mtk_vpu (except recv_buf) and ensure only
- *			one client to use VPU service at a time. For example,
+ *			one client to use VPU service at a समय. For example,
  *			suppose a client is using VPU to decode VP8.
  *			If the other client wants to encode VP8,
- *			it has to wait until VP8 decode completes.
- * @wdt_refcnt:		WDT reference count to make sure the watchdog can be
- *			disabled if no other client is using VPU service
- * @ack_wq:		The wait queue for each codec and mdp. When sleeping
+ *			it has to रुको until VP8 decode completes.
+ * @wdt_refcnt:		WDT reference count to make sure the watchकरोg can be
+ *			disabled अगर no other client is using VPU service
+ * @ack_wq:		The रुको queue क्रम each codec and mdp. When sleeping
  *			processes wake up, they will check the condition
  *			"ipi_id_ack" to run the corresponding action or
  *			go back to sleep.
- * @ipi_id_ack:		The ACKs for registered IPI function sending
- *			interrupt to VPU
+ * @ipi_id_ack:		The ACKs क्रम रेजिस्टरed IPI function sending
+ *			पूर्णांकerrupt to VPU
  *
  */
-struct mtk_vpu {
-	struct vpu_mem extmem[2];
-	struct vpu_regs reg;
-	struct vpu_run run;
-	struct vpu_wdt wdt;
-	struct vpu_ipi_desc ipi_desc[IPI_MAX];
-	struct share_obj __iomem *recv_buf;
-	struct share_obj __iomem *send_buf;
-	struct device *dev;
-	struct clk *clk;
+काष्ठा mtk_vpu अणु
+	काष्ठा vpu_mem exपंचांगem[2];
+	काष्ठा vpu_regs reg;
+	काष्ठा vpu_run run;
+	काष्ठा vpu_wdt wdt;
+	काष्ठा vpu_ipi_desc ipi_desc[IPI_MAX];
+	काष्ठा share_obj __iomem *recv_buf;
+	काष्ठा share_obj __iomem *send_buf;
+	काष्ठा device *dev;
+	काष्ठा clk *clk;
 	bool fw_loaded;
 	bool enable_4GB;
-	struct mutex vpu_mutex; /* for protecting vpu data data structure */
+	काष्ठा mutex vpu_mutex; /* क्रम protecting vpu data data काष्ठाure */
 	u32 wdt_refcnt;
-	wait_queue_head_t ack_wq;
+	रुको_queue_head_t ack_wq;
 	bool ipi_id_ack[IPI_MAX];
-};
+पूर्ण;
 
-static inline void vpu_cfg_writel(struct mtk_vpu *vpu, u32 val, u32 offset)
-{
-	writel(val, vpu->reg.cfg + offset);
-}
+अटल अंतरभूत व्योम vpu_cfg_ग_लिखोl(काष्ठा mtk_vpu *vpu, u32 val, u32 offset)
+अणु
+	ग_लिखोl(val, vpu->reg.cfg + offset);
+पूर्ण
 
-static inline u32 vpu_cfg_readl(struct mtk_vpu *vpu, u32 offset)
-{
-	return readl(vpu->reg.cfg + offset);
-}
+अटल अंतरभूत u32 vpu_cfg_पढ़ोl(काष्ठा mtk_vpu *vpu, u32 offset)
+अणु
+	वापस पढ़ोl(vpu->reg.cfg + offset);
+पूर्ण
 
-static inline bool vpu_running(struct mtk_vpu *vpu)
-{
-	return vpu_cfg_readl(vpu, VPU_RESET) & BIT(0);
-}
+अटल अंतरभूत bool vpu_running(काष्ठा mtk_vpu *vpu)
+अणु
+	वापस vpu_cfg_पढ़ोl(vpu, VPU_RESET) & BIT(0);
+पूर्ण
 
-static void vpu_clock_disable(struct mtk_vpu *vpu)
-{
-	/* Disable VPU watchdog */
+अटल व्योम vpu_घड़ी_disable(काष्ठा mtk_vpu *vpu)
+अणु
+	/* Disable VPU watchकरोg */
 	mutex_lock(&vpu->vpu_mutex);
-	if (!--vpu->wdt_refcnt)
-		vpu_cfg_writel(vpu,
-			       vpu_cfg_readl(vpu, VPU_WDT_REG) & ~(1L << 31),
+	अगर (!--vpu->wdt_refcnt)
+		vpu_cfg_ग_लिखोl(vpu,
+			       vpu_cfg_पढ़ोl(vpu, VPU_WDT_REG) & ~(1L << 31),
 			       VPU_WDT_REG);
 	mutex_unlock(&vpu->vpu_mutex);
 
 	clk_disable(vpu->clk);
-}
+पूर्ण
 
-static int vpu_clock_enable(struct mtk_vpu *vpu)
-{
-	int ret;
+अटल पूर्णांक vpu_घड़ी_enable(काष्ठा mtk_vpu *vpu)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_enable(vpu->clk);
-	if (ret)
-		return ret;
-	/* Enable VPU watchdog */
+	अगर (ret)
+		वापस ret;
+	/* Enable VPU watchकरोg */
 	mutex_lock(&vpu->vpu_mutex);
-	if (!vpu->wdt_refcnt++)
-		vpu_cfg_writel(vpu,
-			       vpu_cfg_readl(vpu, VPU_WDT_REG) | (1L << 31),
+	अगर (!vpu->wdt_refcnt++)
+		vpu_cfg_ग_लिखोl(vpu,
+			       vpu_cfg_पढ़ोl(vpu, VPU_WDT_REG) | (1L << 31),
 			       VPU_WDT_REG);
 	mutex_unlock(&vpu->vpu_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vpu_dump_status(struct mtk_vpu *vpu)
-{
+अटल व्योम vpu_dump_status(काष्ठा mtk_vpu *vpu)
+अणु
 	dev_info(vpu->dev,
 		 "vpu: run %x, pc = 0x%x, ra = 0x%x, sp = 0x%x, idle = 0x%x\n"
 		 "vpu: int %x, hv = 0x%x, vh = 0x%x, wdt = 0x%x\n",
-		 vpu_running(vpu), vpu_cfg_readl(vpu, VPU_PC_REG),
-		 vpu_cfg_readl(vpu, VPU_RA_REG), vpu_cfg_readl(vpu, VPU_SP_REG),
-		 vpu_cfg_readl(vpu, VPU_IDLE_REG),
-		 vpu_cfg_readl(vpu, VPU_INT_STATUS),
-		 vpu_cfg_readl(vpu, HOST_TO_VPU),
-		 vpu_cfg_readl(vpu, VPU_TO_HOST),
-		 vpu_cfg_readl(vpu, VPU_WDT_REG));
-}
+		 vpu_running(vpu), vpu_cfg_पढ़ोl(vpu, VPU_PC_REG),
+		 vpu_cfg_पढ़ोl(vpu, VPU_RA_REG), vpu_cfg_पढ़ोl(vpu, VPU_SP_REG),
+		 vpu_cfg_पढ़ोl(vpu, VPU_IDLE_REG),
+		 vpu_cfg_पढ़ोl(vpu, VPU_INT_STATUS),
+		 vpu_cfg_पढ़ोl(vpu, HOST_TO_VPU),
+		 vpu_cfg_पढ़ोl(vpu, VPU_TO_HOST),
+		 vpu_cfg_पढ़ोl(vpu, VPU_WDT_REG));
+पूर्ण
 
-int vpu_ipi_register(struct platform_device *pdev,
-		     enum ipi_id id, ipi_handler_t handler,
-		     const char *name, void *priv)
-{
-	struct mtk_vpu *vpu = platform_get_drvdata(pdev);
-	struct vpu_ipi_desc *ipi_desc;
+पूर्णांक vpu_ipi_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+		     क्रमागत ipi_id id, ipi_handler_t handler,
+		     स्थिर अक्षर *name, व्योम *priv)
+अणु
+	काष्ठा mtk_vpu *vpu = platक्रमm_get_drvdata(pdev);
+	काष्ठा vpu_ipi_desc *ipi_desc;
 
-	if (!vpu) {
+	अगर (!vpu) अणु
 		dev_err(&pdev->dev, "vpu device in not ready\n");
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
-	if (id < IPI_MAX && handler) {
+	अगर (id < IPI_MAX && handler) अणु
 		ipi_desc = vpu->ipi_desc;
 		ipi_desc[id].name = name;
 		ipi_desc[id].handler = handler;
 		ipi_desc[id].priv = priv;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_err(&pdev->dev, "register vpu ipi id %d with invalid arguments\n",
 		id);
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(vpu_ipi_register);
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(vpu_ipi_रेजिस्टर);
 
-int vpu_ipi_send(struct platform_device *pdev,
-		 enum ipi_id id, void *buf,
-		 unsigned int len)
-{
-	struct mtk_vpu *vpu = platform_get_drvdata(pdev);
-	struct share_obj __iomem *send_obj = vpu->send_buf;
-	unsigned long timeout;
-	int ret = 0;
+पूर्णांक vpu_ipi_send(काष्ठा platक्रमm_device *pdev,
+		 क्रमागत ipi_id id, व्योम *buf,
+		 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा mtk_vpu *vpu = platक्रमm_get_drvdata(pdev);
+	काष्ठा share_obj __iomem *send_obj = vpu->send_buf;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक ret = 0;
 
-	if (id <= IPI_VPU_INIT || id >= IPI_MAX ||
-	    len > sizeof(send_obj->share_buf) || !buf) {
+	अगर (id <= IPI_VPU_INIT || id >= IPI_MAX ||
+	    len > माप(send_obj->share_buf) || !buf) अणु
 		dev_err(vpu->dev, "failed to send ipi message\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = vpu_clock_enable(vpu);
-	if (ret) {
+	ret = vpu_घड़ी_enable(vpu);
+	अगर (ret) अणु
 		dev_err(vpu->dev, "failed to enable vpu clock\n");
-		return ret;
-	}
-	if (!vpu_running(vpu)) {
+		वापस ret;
+	पूर्ण
+	अगर (!vpu_running(vpu)) अणु
 		dev_err(vpu->dev, "vpu_ipi_send: VPU is not running\n");
 		ret = -EINVAL;
-		goto clock_disable;
-	}
+		जाओ घड़ी_disable;
+	पूर्ण
 
 	mutex_lock(&vpu->vpu_mutex);
 
 	 /* Wait until VPU receives the last command */
-	timeout = jiffies + msecs_to_jiffies(IPI_TIMEOUT_MS);
-	do {
-		if (time_after(jiffies, timeout)) {
+	समयout = jअगरfies + msecs_to_jअगरfies(IPI_TIMEOUT_MS);
+	करो अणु
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(vpu->dev, "vpu_ipi_send: IPI timeout!\n");
 			ret = -EIO;
 			vpu_dump_status(vpu);
-			goto mut_unlock;
-		}
-	} while (vpu_cfg_readl(vpu, HOST_TO_VPU));
+			जाओ mut_unlock;
+		पूर्ण
+	पूर्ण जबतक (vpu_cfg_पढ़ोl(vpu, HOST_TO_VPU));
 
-	memcpy_toio(send_obj->share_buf, buf, len);
-	writel(len, &send_obj->len);
-	writel(id, &send_obj->id);
+	स_नकल_toio(send_obj->share_buf, buf, len);
+	ग_लिखोl(len, &send_obj->len);
+	ग_लिखोl(id, &send_obj->id);
 
 	vpu->ipi_id_ack[id] = false;
 	/* send the command to VPU */
-	vpu_cfg_writel(vpu, 0x1, HOST_TO_VPU);
+	vpu_cfg_ग_लिखोl(vpu, 0x1, HOST_TO_VPU);
 
 	mutex_unlock(&vpu->vpu_mutex);
 
-	/* wait for VPU's ACK */
-	timeout = msecs_to_jiffies(IPI_TIMEOUT_MS);
-	ret = wait_event_timeout(vpu->ack_wq, vpu->ipi_id_ack[id], timeout);
+	/* रुको क्रम VPU's ACK */
+	समयout = msecs_to_jअगरfies(IPI_TIMEOUT_MS);
+	ret = रुको_event_समयout(vpu->ack_wq, vpu->ipi_id_ack[id], समयout);
 	vpu->ipi_id_ack[id] = false;
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		dev_err(vpu->dev, "vpu ipi %d ack time out !\n", id);
 		ret = -EIO;
 		vpu_dump_status(vpu);
-		goto clock_disable;
-	}
-	vpu_clock_disable(vpu);
+		जाओ घड़ी_disable;
+	पूर्ण
+	vpu_घड़ी_disable(vpu);
 
-	return 0;
+	वापस 0;
 
 mut_unlock:
 	mutex_unlock(&vpu->vpu_mutex);
-clock_disable:
-	vpu_clock_disable(vpu);
+घड़ी_disable:
+	vpu_घड़ी_disable(vpu);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(vpu_ipi_send);
 
-static void vpu_wdt_reset_func(struct work_struct *ws)
-{
-	struct vpu_wdt *wdt = container_of(ws, struct vpu_wdt, ws);
-	struct mtk_vpu *vpu = container_of(wdt, struct mtk_vpu, wdt);
-	struct vpu_wdt_handler *handler = wdt->handler;
-	int index, ret;
+अटल व्योम vpu_wdt_reset_func(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा vpu_wdt *wdt = container_of(ws, काष्ठा vpu_wdt, ws);
+	काष्ठा mtk_vpu *vpu = container_of(wdt, काष्ठा mtk_vpu, wdt);
+	काष्ठा vpu_wdt_handler *handler = wdt->handler;
+	पूर्णांक index, ret;
 
 	dev_info(vpu->dev, "vpu reset\n");
-	ret = vpu_clock_enable(vpu);
-	if (ret) {
+	ret = vpu_घड़ी_enable(vpu);
+	अगर (ret) अणु
 		dev_err(vpu->dev, "[VPU] wdt enables clock failed %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 	mutex_lock(&vpu->vpu_mutex);
-	vpu_cfg_writel(vpu, 0x0, VPU_RESET);
+	vpu_cfg_ग_लिखोl(vpu, 0x0, VPU_RESET);
 	vpu->fw_loaded = false;
 	mutex_unlock(&vpu->vpu_mutex);
-	vpu_clock_disable(vpu);
+	vpu_घड़ी_disable(vpu);
 
-	for (index = 0; index < VPU_RST_MAX; index++) {
-		if (handler[index].reset_func) {
+	क्रम (index = 0; index < VPU_RST_MAX; index++) अणु
+		अगर (handler[index].reset_func) अणु
 			handler[index].reset_func(handler[index].priv);
 			dev_dbg(vpu->dev, "wdt handler func %d\n", index);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int vpu_wdt_reg_handler(struct platform_device *pdev,
-			void wdt_reset(void *),
-			void *priv, enum rst_id id)
-{
-	struct mtk_vpu *vpu = platform_get_drvdata(pdev);
-	struct vpu_wdt_handler *handler;
+पूर्णांक vpu_wdt_reg_handler(काष्ठा platक्रमm_device *pdev,
+			व्योम wdt_reset(व्योम *),
+			व्योम *priv, क्रमागत rst_id id)
+अणु
+	काष्ठा mtk_vpu *vpu = platक्रमm_get_drvdata(pdev);
+	काष्ठा vpu_wdt_handler *handler;
 
-	if (!vpu) {
+	अगर (!vpu) अणु
 		dev_err(&pdev->dev, "vpu device in not ready\n");
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	handler = vpu->wdt.handler;
 
-	if (id < VPU_RST_MAX && wdt_reset) {
+	अगर (id < VPU_RST_MAX && wdt_reset) अणु
 		dev_dbg(vpu->dev, "wdt register id %d\n", id);
 		mutex_lock(&vpu->vpu_mutex);
 		handler[id].reset_func = wdt_reset;
 		handler[id].priv = priv;
 		mutex_unlock(&vpu->vpu_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_err(vpu->dev, "register vpu wdt handler failed\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(vpu_wdt_reg_handler);
 
-unsigned int vpu_get_vdec_hw_capa(struct platform_device *pdev)
-{
-	struct mtk_vpu *vpu = platform_get_drvdata(pdev);
+अचिन्हित पूर्णांक vpu_get_vdec_hw_capa(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_vpu *vpu = platक्रमm_get_drvdata(pdev);
 
-	return vpu->run.dec_capability;
-}
+	वापस vpu->run.dec_capability;
+पूर्ण
 EXPORT_SYMBOL_GPL(vpu_get_vdec_hw_capa);
 
-unsigned int vpu_get_venc_hw_capa(struct platform_device *pdev)
-{
-	struct mtk_vpu *vpu = platform_get_drvdata(pdev);
+अचिन्हित पूर्णांक vpu_get_venc_hw_capa(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_vpu *vpu = platक्रमm_get_drvdata(pdev);
 
-	return vpu->run.enc_capability;
-}
+	वापस vpu->run.enc_capability;
+पूर्ण
 EXPORT_SYMBOL_GPL(vpu_get_venc_hw_capa);
 
-void *vpu_mapping_dm_addr(struct platform_device *pdev,
+व्योम *vpu_mapping_dm_addr(काष्ठा platक्रमm_device *pdev,
 			  u32 dtcm_dmem_addr)
-{
-	struct mtk_vpu *vpu = platform_get_drvdata(pdev);
+अणु
+	काष्ठा mtk_vpu *vpu = platक्रमm_get_drvdata(pdev);
 
-	if (!dtcm_dmem_addr ||
-	    (dtcm_dmem_addr > (VPU_DTCM_SIZE + VPU_EXT_D_SIZE))) {
+	अगर (!dtcm_dmem_addr ||
+	    (dtcm_dmem_addr > (VPU_DTCM_SIZE + VPU_EXT_D_SIZE))) अणु
 		dev_err(vpu->dev, "invalid virtual data memory address\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (dtcm_dmem_addr < VPU_DTCM_SIZE)
-		return (__force void *)(dtcm_dmem_addr + vpu->reg.tcm +
+	अगर (dtcm_dmem_addr < VPU_DTCM_SIZE)
+		वापस (__क्रमce व्योम *)(dtcm_dmem_addr + vpu->reg.tcm +
 					VPU_DTCM_OFFSET);
 
-	return vpu->extmem[D_FW].va + (dtcm_dmem_addr - VPU_DTCM_SIZE);
-}
+	वापस vpu->exपंचांगem[D_FW].va + (dtcm_dmem_addr - VPU_DTCM_SIZE);
+पूर्ण
 EXPORT_SYMBOL_GPL(vpu_mapping_dm_addr);
 
-struct platform_device *vpu_get_plat_device(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *vpu_node;
-	struct platform_device *vpu_pdev;
+काष्ठा platक्रमm_device *vpu_get_plat_device(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *vpu_node;
+	काष्ठा platक्रमm_device *vpu_pdev;
 
 	vpu_node = of_parse_phandle(dev->of_node, "mediatek,vpu", 0);
-	if (!vpu_node) {
+	अगर (!vpu_node) अणु
 		dev_err(dev, "can't get vpu node\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	vpu_pdev = of_find_device_by_node(vpu_node);
 	of_node_put(vpu_node);
-	if (WARN_ON(!vpu_pdev)) {
+	अगर (WARN_ON(!vpu_pdev)) अणु
 		dev_err(dev, "vpu pdev failed\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return vpu_pdev;
-}
+	वापस vpu_pdev;
+पूर्ण
 EXPORT_SYMBOL_GPL(vpu_get_plat_device);
 
 /* load vpu program/data memory */
-static int load_requested_vpu(struct mtk_vpu *vpu,
+अटल पूर्णांक load_requested_vpu(काष्ठा mtk_vpu *vpu,
 			      u8 fw_type)
-{
-	size_t tcm_size = fw_type ? VPU_DTCM_SIZE : VPU_PTCM_SIZE;
-	size_t fw_size = fw_type ? VPU_D_FW_SIZE : VPU_P_FW_SIZE;
-	char *fw_name = fw_type ? VPU_D_FW : VPU_P_FW;
-	char *fw_new_name = fw_type ? VPU_D_FW_NEW : VPU_P_FW_NEW;
-	const struct firmware *vpu_fw;
-	size_t dl_size = 0;
-	size_t extra_fw_size = 0;
-	void *dest;
-	int ret;
+अणु
+	माप_प्रकार tcm_size = fw_type ? VPU_DTCM_SIZE : VPU_PTCM_SIZE;
+	माप_प्रकार fw_size = fw_type ? VPU_D_FW_SIZE : VPU_P_FW_SIZE;
+	अक्षर *fw_name = fw_type ? VPU_D_FW : VPU_P_FW;
+	अक्षर *fw_new_name = fw_type ? VPU_D_FW_NEW : VPU_P_FW_NEW;
+	स्थिर काष्ठा firmware *vpu_fw;
+	माप_प्रकार dl_size = 0;
+	माप_प्रकार extra_fw_size = 0;
+	व्योम *dest;
+	पूर्णांक ret;
 
 	ret = request_firmware(&vpu_fw, fw_new_name, vpu->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_info(vpu->dev, "Failed to load %s, %d, retry\n",
 			 fw_new_name, ret);
 
 		ret = request_firmware(&vpu_fw, fw_name, vpu->dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(vpu->dev, "Failed to load %s, %d\n", fw_name,
 				ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	dl_size = vpu_fw->size;
-	if (dl_size > fw_size) {
+	अगर (dl_size > fw_size) अणु
 		dev_err(vpu->dev, "fw %s size %zu is abnormal\n", fw_name,
 			dl_size);
 		release_firmware(vpu_fw);
-		return  -EFBIG;
-	}
+		वापस  -EFBIG;
+	पूर्ण
 	dev_dbg(vpu->dev, "Downloaded fw %s size: %zu.\n",
 		fw_name,
 		dl_size);
 	/* reset VPU */
-	vpu_cfg_writel(vpu, 0x0, VPU_RESET);
+	vpu_cfg_ग_लिखोl(vpu, 0x0, VPU_RESET);
 
 	/* handle extended firmware size */
-	if (dl_size > tcm_size) {
+	अगर (dl_size > tcm_size) अणु
 		dev_dbg(vpu->dev, "fw size %zu > limited fw size %zu\n",
 			dl_size, tcm_size);
 		extra_fw_size = dl_size - tcm_size;
 		dev_dbg(vpu->dev, "extra_fw_size %zu\n", extra_fw_size);
 		dl_size = tcm_size;
-	}
-	dest = (__force void *)vpu->reg.tcm;
-	if (fw_type == D_FW)
+	पूर्ण
+	dest = (__क्रमce व्योम *)vpu->reg.tcm;
+	अगर (fw_type == D_FW)
 		dest += VPU_DTCM_OFFSET;
-	memcpy(dest, vpu_fw->data, dl_size);
-	/* download to extended memory if need */
-	if (extra_fw_size > 0) {
-		dest = vpu->extmem[fw_type].va;
+	स_नकल(dest, vpu_fw->data, dl_size);
+	/* करोwnload to extended memory अगर need */
+	अगर (extra_fw_size > 0) अणु
+		dest = vpu->exपंचांगem[fw_type].va;
 		dev_dbg(vpu->dev, "download extended memory type %x\n",
 			fw_type);
-		memcpy(dest, vpu_fw->data + tcm_size, extra_fw_size);
-	}
+		स_नकल(dest, vpu_fw->data + tcm_size, extra_fw_size);
+	पूर्ण
 
 	release_firmware(vpu_fw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vpu_load_firmware(struct platform_device *pdev)
-{
-	struct mtk_vpu *vpu;
-	struct device *dev = &pdev->dev;
-	struct vpu_run *run;
-	int ret;
+पूर्णांक vpu_load_firmware(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_vpu *vpu;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा vpu_run *run;
+	पूर्णांक ret;
 
-	if (!pdev) {
+	अगर (!pdev) अणु
 		dev_err(dev, "VPU platform device is invalid\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	vpu = platform_get_drvdata(pdev);
+	vpu = platक्रमm_get_drvdata(pdev);
 	run = &vpu->run;
 
 	mutex_lock(&vpu->vpu_mutex);
-	if (vpu->fw_loaded) {
+	अगर (vpu->fw_loaded) अणु
 		mutex_unlock(&vpu->vpu_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	mutex_unlock(&vpu->vpu_mutex);
 
-	ret = vpu_clock_enable(vpu);
-	if (ret) {
+	ret = vpu_घड़ी_enable(vpu);
+	अगर (ret) अणु
 		dev_err(dev, "enable clock failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_lock(&vpu->vpu_mutex);
 
-	run->signaled = false;
+	run->संकेतed = false;
 	dev_dbg(vpu->dev, "firmware request\n");
 	/* Downloading program firmware to device*/
 	ret = load_requested_vpu(vpu, P_FW);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to request %s, %d\n", VPU_P_FW, ret);
-		goto OUT_LOAD_FW;
-	}
+		जाओ OUT_LOAD_FW;
+	पूर्ण
 
 	/* Downloading data firmware to device */
 	ret = load_requested_vpu(vpu, D_FW);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to request %s, %d\n", VPU_D_FW, ret);
-		goto OUT_LOAD_FW;
-	}
+		जाओ OUT_LOAD_FW;
+	पूर्ण
 
 	vpu->fw_loaded = true;
 	/* boot up vpu */
-	vpu_cfg_writel(vpu, 0x1, VPU_RESET);
+	vpu_cfg_ग_लिखोl(vpu, 0x1, VPU_RESET);
 
-	ret = wait_event_interruptible_timeout(run->wq,
-					       run->signaled,
-					       msecs_to_jiffies(INIT_TIMEOUT_MS)
+	ret = रुको_event_पूर्णांकerruptible_समयout(run->wq,
+					       run->संकेतed,
+					       msecs_to_jअगरfies(INIT_TIMEOUT_MS)
 					       );
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ret = -ETIME;
 		dev_err(dev, "wait vpu initialization timeout!\n");
-		goto OUT_LOAD_FW;
-	} else if (-ERESTARTSYS == ret) {
+		जाओ OUT_LOAD_FW;
+	पूर्ण अन्यथा अगर (-ERESTARTSYS == ret) अणु
 		dev_err(dev, "wait vpu interrupted by a signal!\n");
-		goto OUT_LOAD_FW;
-	}
+		जाओ OUT_LOAD_FW;
+	पूर्ण
 
 	ret = 0;
 	dev_info(dev, "vpu is ready. Fw version %s\n", run->fw_ver);
 
 OUT_LOAD_FW:
 	mutex_unlock(&vpu->vpu_mutex);
-	vpu_clock_disable(vpu);
+	vpu_घड़ी_disable(vpu);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(vpu_load_firmware);
 
-static void vpu_init_ipi_handler(const void *data, unsigned int len, void *priv)
-{
-	struct mtk_vpu *vpu = priv;
-	const struct vpu_run *run = data;
+अटल व्योम vpu_init_ipi_handler(स्थिर व्योम *data, अचिन्हित पूर्णांक len, व्योम *priv)
+अणु
+	काष्ठा mtk_vpu *vpu = priv;
+	स्थिर काष्ठा vpu_run *run = data;
 
-	vpu->run.signaled = run->signaled;
-	strscpy(vpu->run.fw_ver, run->fw_ver, sizeof(vpu->run.fw_ver));
+	vpu->run.संकेतed = run->संकेतed;
+	strscpy(vpu->run.fw_ver, run->fw_ver, माप(vpu->run.fw_ver));
 	vpu->run.dec_capability = run->dec_capability;
 	vpu->run.enc_capability = run->enc_capability;
-	wake_up_interruptible(&vpu->run.wq);
-}
+	wake_up_पूर्णांकerruptible(&vpu->run.wq);
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static ssize_t vpu_debug_read(struct file *file, char __user *user_buf,
-			      size_t count, loff_t *ppos)
-{
-	char buf[256];
-	unsigned int len;
-	unsigned int running, pc, vpu_to_host, host_to_vpu, wdt, idle, ra, sp;
-	int ret;
-	struct device *dev = file->private_data;
-	struct mtk_vpu *vpu = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल sमाप_प्रकार vpu_debug_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर buf[256];
+	अचिन्हित पूर्णांक len;
+	अचिन्हित पूर्णांक running, pc, vpu_to_host, host_to_vpu, wdt, idle, ra, sp;
+	पूर्णांक ret;
+	काष्ठा device *dev = file->निजी_data;
+	काष्ठा mtk_vpu *vpu = dev_get_drvdata(dev);
 
-	ret = vpu_clock_enable(vpu);
-	if (ret) {
+	ret = vpu_घड़ी_enable(vpu);
+	अगर (ret) अणु
 		dev_err(vpu->dev, "[VPU] enable clock failed %d\n", ret);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* vpu register status */
+	/* vpu रेजिस्टर status */
 	running = vpu_running(vpu);
-	pc = vpu_cfg_readl(vpu, VPU_PC_REG);
-	wdt = vpu_cfg_readl(vpu, VPU_WDT_REG);
-	host_to_vpu = vpu_cfg_readl(vpu, HOST_TO_VPU);
-	vpu_to_host = vpu_cfg_readl(vpu, VPU_TO_HOST);
-	ra = vpu_cfg_readl(vpu, VPU_RA_REG);
-	sp = vpu_cfg_readl(vpu, VPU_SP_REG);
-	idle = vpu_cfg_readl(vpu, VPU_IDLE_REG);
+	pc = vpu_cfg_पढ़ोl(vpu, VPU_PC_REG);
+	wdt = vpu_cfg_पढ़ोl(vpu, VPU_WDT_REG);
+	host_to_vpu = vpu_cfg_पढ़ोl(vpu, HOST_TO_VPU);
+	vpu_to_host = vpu_cfg_पढ़ोl(vpu, VPU_TO_HOST);
+	ra = vpu_cfg_पढ़ोl(vpu, VPU_RA_REG);
+	sp = vpu_cfg_पढ़ोl(vpu, VPU_SP_REG);
+	idle = vpu_cfg_पढ़ोl(vpu, VPU_IDLE_REG);
 
-	vpu_clock_disable(vpu);
+	vpu_घड़ी_disable(vpu);
 
-	if (running) {
-		len = snprintf(buf, sizeof(buf), "VPU is running\n\n"
+	अगर (running) अणु
+		len = snम_लिखो(buf, माप(buf), "VPU is running\n\n"
 		"FW Version: %s\n"
 		"PC: 0x%x\n"
 		"WDT: 0x%x\n"
@@ -686,368 +687,368 @@ static ssize_t vpu_debug_read(struct file *file, char __user *user_buf,
 		"idle: 0x%x\n",
 		vpu->run.fw_ver, pc, wdt,
 		host_to_vpu, vpu_to_host, sp, ra, idle);
-	} else {
-		len = snprintf(buf, sizeof(buf), "VPU not running\n");
-	}
+	पूर्ण अन्यथा अणु
+		len = snम_लिखो(buf, माप(buf), "VPU not running\n");
+	पूर्ण
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+पूर्ण
 
-static const struct file_operations vpu_debug_fops = {
-	.open = simple_open,
-	.read = vpu_debug_read,
-};
-#endif /* CONFIG_DEBUG_FS */
+अटल स्थिर काष्ठा file_operations vpu_debug_fops = अणु
+	.खोलो = simple_खोलो,
+	.पढ़ो = vpu_debug_पढ़ो,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-static void vpu_free_ext_mem(struct mtk_vpu *vpu, u8 fw_type)
-{
-	struct device *dev = vpu->dev;
-	size_t fw_ext_size = fw_type ? VPU_EXT_D_SIZE : VPU_EXT_P_SIZE;
+अटल व्योम vpu_मुक्त_ext_mem(काष्ठा mtk_vpu *vpu, u8 fw_type)
+अणु
+	काष्ठा device *dev = vpu->dev;
+	माप_प्रकार fw_ext_size = fw_type ? VPU_EXT_D_SIZE : VPU_EXT_P_SIZE;
 
-	dma_free_coherent(dev, fw_ext_size, vpu->extmem[fw_type].va,
-			  vpu->extmem[fw_type].pa);
-}
+	dma_मुक्त_coherent(dev, fw_ext_size, vpu->exपंचांगem[fw_type].va,
+			  vpu->exपंचांगem[fw_type].pa);
+पूर्ण
 
-static int vpu_alloc_ext_mem(struct mtk_vpu *vpu, u32 fw_type)
-{
-	struct device *dev = vpu->dev;
-	size_t fw_ext_size = fw_type ? VPU_EXT_D_SIZE : VPU_EXT_P_SIZE;
+अटल पूर्णांक vpu_alloc_ext_mem(काष्ठा mtk_vpu *vpu, u32 fw_type)
+अणु
+	काष्ठा device *dev = vpu->dev;
+	माप_प्रकार fw_ext_size = fw_type ? VPU_EXT_D_SIZE : VPU_EXT_P_SIZE;
 	u32 vpu_ext_mem0 = fw_type ? VPU_DMEM_EXT0_ADDR : VPU_PMEM_EXT0_ADDR;
 	u32 vpu_ext_mem1 = fw_type ? VPU_DMEM_EXT1_ADDR : VPU_PMEM_EXT1_ADDR;
 	u32 offset_4gb = vpu->enable_4GB ? 0x40000000 : 0;
 
-	vpu->extmem[fw_type].va = dma_alloc_coherent(dev,
+	vpu->exपंचांगem[fw_type].va = dma_alloc_coherent(dev,
 					       fw_ext_size,
-					       &vpu->extmem[fw_type].pa,
+					       &vpu->exपंचांगem[fw_type].pa,
 					       GFP_KERNEL);
-	if (!vpu->extmem[fw_type].va) {
+	अगर (!vpu->exपंचांगem[fw_type].va) अणु
 		dev_err(dev, "Failed to allocate the extended program memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Disable extend0. Enable extend1 */
-	vpu_cfg_writel(vpu, 0x1, vpu_ext_mem0);
-	vpu_cfg_writel(vpu, (vpu->extmem[fw_type].pa & 0xFFFFF000) + offset_4gb,
+	vpu_cfg_ग_लिखोl(vpu, 0x1, vpu_ext_mem0);
+	vpu_cfg_ग_लिखोl(vpu, (vpu->exपंचांगem[fw_type].pa & 0xFFFFF000) + offset_4gb,
 		       vpu_ext_mem1);
 
 	dev_info(dev, "%s extend memory phy=0x%llx virt=0x%p\n",
 		 fw_type ? "Data" : "Program",
-		 (unsigned long long)vpu->extmem[fw_type].pa,
-		 vpu->extmem[fw_type].va);
+		 (अचिन्हित दीर्घ दीर्घ)vpu->exपंचांगem[fw_type].pa,
+		 vpu->exपंचांगem[fw_type].va);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vpu_ipi_handler(struct mtk_vpu *vpu)
-{
-	struct share_obj __iomem *rcv_obj = vpu->recv_buf;
-	struct vpu_ipi_desc *ipi_desc = vpu->ipi_desc;
-	unsigned char data[SHARE_BUF_SIZE];
-	s32 id = readl(&rcv_obj->id);
+अटल व्योम vpu_ipi_handler(काष्ठा mtk_vpu *vpu)
+अणु
+	काष्ठा share_obj __iomem *rcv_obj = vpu->recv_buf;
+	काष्ठा vpu_ipi_desc *ipi_desc = vpu->ipi_desc;
+	अचिन्हित अक्षर data[SHARE_BUF_SIZE];
+	s32 id = पढ़ोl(&rcv_obj->id);
 
-	memcpy_fromio(data, rcv_obj->share_buf, sizeof(data));
-	if (id < IPI_MAX && ipi_desc[id].handler) {
-		ipi_desc[id].handler(data, readl(&rcv_obj->len),
+	स_नकल_fromio(data, rcv_obj->share_buf, माप(data));
+	अगर (id < IPI_MAX && ipi_desc[id].handler) अणु
+		ipi_desc[id].handler(data, पढ़ोl(&rcv_obj->len),
 				     ipi_desc[id].priv);
-		if (id > IPI_VPU_INIT) {
+		अगर (id > IPI_VPU_INIT) अणु
 			vpu->ipi_id_ack[id] = true;
 			wake_up(&vpu->ack_wq);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(vpu->dev, "No such ipi id = %d\n", id);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vpu_ipi_init(struct mtk_vpu *vpu)
-{
-	/* Disable VPU to host interrupt */
-	vpu_cfg_writel(vpu, 0x0, VPU_TO_HOST);
+अटल पूर्णांक vpu_ipi_init(काष्ठा mtk_vpu *vpu)
+अणु
+	/* Disable VPU to host पूर्णांकerrupt */
+	vpu_cfg_ग_लिखोl(vpu, 0x0, VPU_TO_HOST);
 
 	/* shared buffer initialization */
 	vpu->recv_buf = vpu->reg.tcm + VPU_DTCM_OFFSET;
 	vpu->send_buf = vpu->recv_buf + 1;
-	memset_io(vpu->recv_buf, 0, sizeof(struct share_obj));
-	memset_io(vpu->send_buf, 0, sizeof(struct share_obj));
+	स_रखो_io(vpu->recv_buf, 0, माप(काष्ठा share_obj));
+	स_रखो_io(vpu->send_buf, 0, माप(काष्ठा share_obj));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t vpu_irq_handler(int irq, void *priv)
-{
-	struct mtk_vpu *vpu = priv;
+अटल irqवापस_t vpu_irq_handler(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा mtk_vpu *vpu = priv;
 	u32 vpu_to_host;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Clock should have been enabled already.
-	 * Enable again in case vpu_ipi_send times out
-	 * and has disabled the clock.
+	 * Clock should have been enabled alपढ़ोy.
+	 * Enable again in हाल vpu_ipi_send बार out
+	 * and has disabled the घड़ी.
 	 */
 	ret = clk_enable(vpu->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(vpu->dev, "[VPU] enable clock failed %d\n", ret);
-		return IRQ_NONE;
-	}
-	vpu_to_host = vpu_cfg_readl(vpu, VPU_TO_HOST);
-	if (vpu_to_host & VPU_IPC_INT) {
+		वापस IRQ_NONE;
+	पूर्ण
+	vpu_to_host = vpu_cfg_पढ़ोl(vpu, VPU_TO_HOST);
+	अगर (vpu_to_host & VPU_IPC_INT) अणु
 		vpu_ipi_handler(vpu);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(vpu->dev, "vpu watchdog timeout! 0x%x", vpu_to_host);
 		queue_work(vpu->wdt.wq, &vpu->wdt.ws);
-	}
+	पूर्ण
 
-	/* VPU won't send another interrupt until we set VPU_TO_HOST to 0. */
-	vpu_cfg_writel(vpu, 0x0, VPU_TO_HOST);
+	/* VPU won't send another पूर्णांकerrupt until we set VPU_TO_HOST to 0. */
+	vpu_cfg_ग_लिखोl(vpu, 0x0, VPU_TO_HOST);
 	clk_disable(vpu->clk);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static struct dentry *vpu_debugfs;
-#endif
-static int mtk_vpu_probe(struct platform_device *pdev)
-{
-	struct mtk_vpu *vpu;
-	struct device *dev;
-	struct resource *res;
-	int ret = 0;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल काष्ठा dentry *vpu_debugfs;
+#पूर्ण_अगर
+अटल पूर्णांक mtk_vpu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_vpu *vpu;
+	काष्ठा device *dev;
+	काष्ठा resource *res;
+	पूर्णांक ret = 0;
 
 	dev_dbg(&pdev->dev, "initialization\n");
 
 	dev = &pdev->dev;
-	vpu = devm_kzalloc(dev, sizeof(*vpu), GFP_KERNEL);
-	if (!vpu)
-		return -ENOMEM;
+	vpu = devm_kzalloc(dev, माप(*vpu), GFP_KERNEL);
+	अगर (!vpu)
+		वापस -ENOMEM;
 
 	vpu->dev = &pdev->dev;
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "tcm");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "tcm");
 	vpu->reg.tcm = devm_ioremap_resource(dev, res);
-	if (IS_ERR((__force void *)vpu->reg.tcm))
-		return PTR_ERR((__force void *)vpu->reg.tcm);
+	अगर (IS_ERR((__क्रमce व्योम *)vpu->reg.tcm))
+		वापस PTR_ERR((__क्रमce व्योम *)vpu->reg.tcm);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "cfg_reg");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "cfg_reg");
 	vpu->reg.cfg = devm_ioremap_resource(dev, res);
-	if (IS_ERR((__force void *)vpu->reg.cfg))
-		return PTR_ERR((__force void *)vpu->reg.cfg);
+	अगर (IS_ERR((__क्रमce व्योम *)vpu->reg.cfg))
+		वापस PTR_ERR((__क्रमce व्योम *)vpu->reg.cfg);
 
-	/* Get VPU clock */
+	/* Get VPU घड़ी */
 	vpu->clk = devm_clk_get(dev, "main");
-	if (IS_ERR(vpu->clk)) {
+	अगर (IS_ERR(vpu->clk)) अणु
 		dev_err(dev, "get vpu clock failed\n");
-		return PTR_ERR(vpu->clk);
-	}
+		वापस PTR_ERR(vpu->clk);
+	पूर्ण
 
-	platform_set_drvdata(pdev, vpu);
+	platक्रमm_set_drvdata(pdev, vpu);
 
 	ret = clk_prepare(vpu->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "prepare vpu clock failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* VPU watchdog */
-	vpu->wdt.wq = create_singlethread_workqueue("vpu_wdt");
-	if (!vpu->wdt.wq) {
+	/* VPU watchकरोg */
+	vpu->wdt.wq = create_singlethपढ़ो_workqueue("vpu_wdt");
+	अगर (!vpu->wdt.wq) अणु
 		dev_err(dev, "initialize wdt workqueue failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	INIT_WORK(&vpu->wdt.ws, vpu_wdt_reset_func);
 	mutex_init(&vpu->vpu_mutex);
 
-	ret = vpu_clock_enable(vpu);
-	if (ret) {
+	ret = vpu_घड़ी_enable(vpu);
+	अगर (ret) अणु
 		dev_err(dev, "enable vpu clock failed\n");
-		goto workqueue_destroy;
-	}
+		जाओ workqueue_destroy;
+	पूर्ण
 
 	dev_dbg(dev, "vpu ipi init\n");
 	ret = vpu_ipi_init(vpu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to init ipi\n");
-		goto disable_vpu_clk;
-	}
+		जाओ disable_vpu_clk;
+	पूर्ण
 
-	/* register vpu initialization IPI */
-	ret = vpu_ipi_register(pdev, IPI_VPU_INIT, vpu_init_ipi_handler,
+	/* रेजिस्टर vpu initialization IPI */
+	ret = vpu_ipi_रेजिस्टर(pdev, IPI_VPU_INIT, vpu_init_ipi_handler,
 			       "vpu_init", vpu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register IPI_VPU_INIT\n");
-		goto vpu_mutex_destroy;
-	}
+		जाओ vpu_mutex_destroy;
+	पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-	vpu_debugfs = debugfs_create_file("mtk_vpu", S_IRUGO, NULL, (void *)dev,
+#अगर_घोषित CONFIG_DEBUG_FS
+	vpu_debugfs = debugfs_create_file("mtk_vpu", S_IRUGO, शून्य, (व्योम *)dev,
 					  &vpu_debug_fops);
-#endif
+#पूर्ण_अगर
 
 	/* Set PTCM to 96K and DTCM to 32K */
-	vpu_cfg_writel(vpu, 0x2, VPU_TCM_CFG);
+	vpu_cfg_ग_लिखोl(vpu, 0x2, VPU_TCM_CFG);
 
 	vpu->enable_4GB = !!(totalram_pages() > (SZ_2G >> PAGE_SHIFT));
 	dev_info(dev, "4GB mode %u\n", vpu->enable_4GB);
 
-	if (vpu->enable_4GB) {
+	अगर (vpu->enable_4GB) अणु
 		ret = of_reserved_mem_device_init(dev);
-		if (ret)
+		अगर (ret)
 			dev_info(dev, "init reserved memory failed\n");
-			/* continue to use dynamic allocation if failed */
-	}
+			/* जारी to use dynamic allocation अगर failed */
+	पूर्ण
 
 	ret = vpu_alloc_ext_mem(vpu, D_FW);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Allocate DM failed\n");
-		goto remove_debugfs;
-	}
+		जाओ हटाओ_debugfs;
+	पूर्ण
 
 	ret = vpu_alloc_ext_mem(vpu, P_FW);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Allocate PM failed\n");
-		goto free_d_mem;
-	}
+		जाओ मुक्त_d_mem;
+	पूर्ण
 
-	init_waitqueue_head(&vpu->run.wq);
-	init_waitqueue_head(&vpu->ack_wq);
+	init_रुकोqueue_head(&vpu->run.wq);
+	init_रुकोqueue_head(&vpu->ack_wq);
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!res) अणु
 		dev_err(dev, "get IRQ resource failed.\n");
 		ret = -ENXIO;
-		goto free_p_mem;
-	}
-	vpu->reg.irq = platform_get_irq(pdev, 0);
+		जाओ मुक्त_p_mem;
+	पूर्ण
+	vpu->reg.irq = platक्रमm_get_irq(pdev, 0);
 	ret = devm_request_irq(dev, vpu->reg.irq, vpu_irq_handler, 0,
 			       pdev->name, vpu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to request irq\n");
-		goto free_p_mem;
-	}
+		जाओ मुक्त_p_mem;
+	पूर्ण
 
-	vpu_clock_disable(vpu);
+	vpu_घड़ी_disable(vpu);
 	dev_dbg(dev, "initialization completed\n");
 
-	return 0;
+	वापस 0;
 
-free_p_mem:
-	vpu_free_ext_mem(vpu, P_FW);
-free_d_mem:
-	vpu_free_ext_mem(vpu, D_FW);
-remove_debugfs:
+मुक्त_p_mem:
+	vpu_मुक्त_ext_mem(vpu, P_FW);
+मुक्त_d_mem:
+	vpu_मुक्त_ext_mem(vpu, D_FW);
+हटाओ_debugfs:
 	of_reserved_mem_device_release(dev);
-#ifdef CONFIG_DEBUG_FS
-	debugfs_remove(vpu_debugfs);
-#endif
-	memset(vpu->ipi_desc, 0, sizeof(struct vpu_ipi_desc) * IPI_MAX);
+#अगर_घोषित CONFIG_DEBUG_FS
+	debugfs_हटाओ(vpu_debugfs);
+#पूर्ण_अगर
+	स_रखो(vpu->ipi_desc, 0, माप(काष्ठा vpu_ipi_desc) * IPI_MAX);
 vpu_mutex_destroy:
 	mutex_destroy(&vpu->vpu_mutex);
 disable_vpu_clk:
-	vpu_clock_disable(vpu);
+	vpu_घड़ी_disable(vpu);
 workqueue_destroy:
 	destroy_workqueue(vpu->wdt.wq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id mtk_vpu_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mtk_vpu_match[] = अणु
+	अणु
 		.compatible = "mediatek,mt8173-vpu",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_vpu_match);
 
-static int mtk_vpu_remove(struct platform_device *pdev)
-{
-	struct mtk_vpu *vpu = platform_get_drvdata(pdev);
+अटल पूर्णांक mtk_vpu_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_vpu *vpu = platक्रमm_get_drvdata(pdev);
 
-#ifdef CONFIG_DEBUG_FS
-	debugfs_remove(vpu_debugfs);
-#endif
-	if (vpu->wdt.wq) {
+#अगर_घोषित CONFIG_DEBUG_FS
+	debugfs_हटाओ(vpu_debugfs);
+#पूर्ण_अगर
+	अगर (vpu->wdt.wq) अणु
 		flush_workqueue(vpu->wdt.wq);
 		destroy_workqueue(vpu->wdt.wq);
-	}
-	vpu_free_ext_mem(vpu, P_FW);
-	vpu_free_ext_mem(vpu, D_FW);
+	पूर्ण
+	vpu_मुक्त_ext_mem(vpu, P_FW);
+	vpu_मुक्त_ext_mem(vpu, D_FW);
 	mutex_destroy(&vpu->vpu_mutex);
 	clk_unprepare(vpu->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_vpu_suspend(struct device *dev)
-{
-	struct mtk_vpu *vpu = dev_get_drvdata(dev);
-	unsigned long timeout;
-	int ret;
+अटल पूर्णांक mtk_vpu_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_vpu *vpu = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक ret;
 
-	ret = vpu_clock_enable(vpu);
-	if (ret) {
+	ret = vpu_घड़ी_enable(vpu);
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable vpu clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_lock(&vpu->vpu_mutex);
-	/* disable vpu timer interrupt */
-	vpu_cfg_writel(vpu, vpu_cfg_readl(vpu, VPU_INT_STATUS) | VPU_IDLE_STATE,
+	/* disable vpu समयr पूर्णांकerrupt */
+	vpu_cfg_ग_लिखोl(vpu, vpu_cfg_पढ़ोl(vpu, VPU_INT_STATUS) | VPU_IDLE_STATE,
 		       VPU_INT_STATUS);
-	/* check if vpu is idle for system suspend */
-	timeout = jiffies + msecs_to_jiffies(VPU_IDLE_TIMEOUT_MS);
-	do {
-		if (time_after(jiffies, timeout)) {
+	/* check अगर vpu is idle क्रम प्रणाली suspend */
+	समयout = jअगरfies + msecs_to_jअगरfies(VPU_IDLE_TIMEOUT_MS);
+	करो अणु
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(dev, "vpu idle timeout\n");
 			mutex_unlock(&vpu->vpu_mutex);
-			vpu_clock_disable(vpu);
-			return -EIO;
-		}
-	} while (!vpu_cfg_readl(vpu, VPU_IDLE_REG));
+			vpu_घड़ी_disable(vpu);
+			वापस -EIO;
+		पूर्ण
+	पूर्ण जबतक (!vpu_cfg_पढ़ोl(vpu, VPU_IDLE_REG));
 
 	mutex_unlock(&vpu->vpu_mutex);
-	vpu_clock_disable(vpu);
+	vpu_घड़ी_disable(vpu);
 	clk_unprepare(vpu->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_vpu_resume(struct device *dev)
-{
-	struct mtk_vpu *vpu = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक mtk_vpu_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_vpu *vpu = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	clk_prepare(vpu->clk);
-	ret = vpu_clock_enable(vpu);
-	if (ret) {
+	ret = vpu_घड़ी_enable(vpu);
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable vpu clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_lock(&vpu->vpu_mutex);
-	/* enable vpu timer interrupt */
-	vpu_cfg_writel(vpu,
-		       vpu_cfg_readl(vpu, VPU_INT_STATUS) & ~(VPU_IDLE_STATE),
+	/* enable vpu समयr पूर्णांकerrupt */
+	vpu_cfg_ग_लिखोl(vpu,
+		       vpu_cfg_पढ़ोl(vpu, VPU_INT_STATUS) & ~(VPU_IDLE_STATE),
 		       VPU_INT_STATUS);
 	mutex_unlock(&vpu->vpu_mutex);
-	vpu_clock_disable(vpu);
+	vpu_घड़ी_disable(vpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops mtk_vpu_pm = {
+अटल स्थिर काष्ठा dev_pm_ops mtk_vpu_pm = अणु
 	.suspend = mtk_vpu_suspend,
 	.resume = mtk_vpu_resume,
-};
+पूर्ण;
 
-static struct platform_driver mtk_vpu_driver = {
+अटल काष्ठा platक्रमm_driver mtk_vpu_driver = अणु
 	.probe	= mtk_vpu_probe,
-	.remove	= mtk_vpu_remove,
-	.driver	= {
+	.हटाओ	= mtk_vpu_हटाओ,
+	.driver	= अणु
 		.name	= "mtk_vpu",
 		.pm = &mtk_vpu_pm,
 		.of_match_table = mtk_vpu_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mtk_vpu_driver);
+module_platक्रमm_driver(mtk_vpu_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Mediatek Video Processor Unit driver");

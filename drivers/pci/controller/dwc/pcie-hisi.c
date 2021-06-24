@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCIe host controller driver for HiSilicon SoCs
+ * PCIe host controller driver क्रम HiSilicon SoCs
  *
  * Copyright (C) 2015 HiSilicon Co., Ltd. http://www.hisilicon.com
  *
@@ -8,161 +9,161 @@
  *          Dacai Zhu <zhudacai@hisilicon.com>
  *          Gabriele Paoloni <gabriele.paoloni@huawei.com>
  */
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/pci-acpi.h>
-#include <linux/pci-ecam.h>
-#include "../../pci.h"
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci-acpi.h>
+#समावेश <linux/pci-ecam.h>
+#समावेश "../../pci.h"
 
-#if defined(CONFIG_PCI_HISI) || (defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS))
+#अगर defined(CONFIG_PCI_HISI) || (defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS))
 
-static int hisi_pcie_rd_conf(struct pci_bus *bus, u32 devfn, int where,
-			     int size, u32 *val)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-	int dev = PCI_SLOT(devfn);
+अटल पूर्णांक hisi_pcie_rd_conf(काष्ठा pci_bus *bus, u32 devfn, पूर्णांक where,
+			     पूर्णांक size, u32 *val)
+अणु
+	काष्ठा pci_config_winकरोw *cfg = bus->sysdata;
+	पूर्णांक dev = PCI_SLOT(devfn);
 
-	if (bus->number == cfg->busr.start) {
+	अगर (bus->number == cfg->busr.start) अणु
 		/* access only one slot on each root port */
-		if (dev > 0)
-			return PCIBIOS_DEVICE_NOT_FOUND;
-		else
-			return pci_generic_config_read32(bus, devfn, where,
+		अगर (dev > 0)
+			वापस PCIBIOS_DEVICE_NOT_FOUND;
+		अन्यथा
+			वापस pci_generic_config_पढ़ो32(bus, devfn, where,
 							 size, val);
-	}
+	पूर्ण
 
-	return pci_generic_config_read(bus, devfn, where, size, val);
-}
+	वापस pci_generic_config_पढ़ो(bus, devfn, where, size, val);
+पूर्ण
 
-static int hisi_pcie_wr_conf(struct pci_bus *bus, u32 devfn,
-			     int where, int size, u32 val)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-	int dev = PCI_SLOT(devfn);
+अटल पूर्णांक hisi_pcie_wr_conf(काष्ठा pci_bus *bus, u32 devfn,
+			     पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	काष्ठा pci_config_winकरोw *cfg = bus->sysdata;
+	पूर्णांक dev = PCI_SLOT(devfn);
 
-	if (bus->number == cfg->busr.start) {
+	अगर (bus->number == cfg->busr.start) अणु
 		/* access only one slot on each root port */
-		if (dev > 0)
-			return PCIBIOS_DEVICE_NOT_FOUND;
-		else
-			return pci_generic_config_write32(bus, devfn, where,
+		अगर (dev > 0)
+			वापस PCIBIOS_DEVICE_NOT_FOUND;
+		अन्यथा
+			वापस pci_generic_config_ग_लिखो32(bus, devfn, where,
 							  size, val);
-	}
+	पूर्ण
 
-	return pci_generic_config_write(bus, devfn, where, size, val);
-}
+	वापस pci_generic_config_ग_लिखो(bus, devfn, where, size, val);
+पूर्ण
 
-static void __iomem *hisi_pcie_map_bus(struct pci_bus *bus, unsigned int devfn,
-				       int where)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-	void __iomem *reg_base = cfg->priv;
+अटल व्योम __iomem *hisi_pcie_map_bus(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				       पूर्णांक where)
+अणु
+	काष्ठा pci_config_winकरोw *cfg = bus->sysdata;
+	व्योम __iomem *reg_base = cfg->priv;
 
-	if (bus->number == cfg->busr.start)
-		return reg_base + where;
-	else
-		return pci_ecam_map_bus(bus, devfn, where);
-}
+	अगर (bus->number == cfg->busr.start)
+		वापस reg_base + where;
+	अन्यथा
+		वापस pci_ecam_map_bus(bus, devfn, where);
+पूर्ण
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS)
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS)
 
-static int hisi_pcie_init(struct pci_config_window *cfg)
-{
-	struct device *dev = cfg->parent;
-	struct acpi_device *adev = to_acpi_device(dev);
-	struct acpi_pci_root *root = acpi_driver_data(adev);
-	struct resource *res;
-	void __iomem *reg_base;
-	int ret;
+अटल पूर्णांक hisi_pcie_init(काष्ठा pci_config_winकरोw *cfg)
+अणु
+	काष्ठा device *dev = cfg->parent;
+	काष्ठा acpi_device *adev = to_acpi_device(dev);
+	काष्ठा acpi_pci_root *root = acpi_driver_data(adev);
+	काष्ठा resource *res;
+	व्योम __iomem *reg_base;
+	पूर्णांक ret;
 
 	/*
 	 * Retrieve RC base and size from a HISI0081 device with _UID
 	 * matching our segment.
 	 */
-	res = devm_kzalloc(dev, sizeof(*res), GFP_KERNEL);
-	if (!res)
-		return -ENOMEM;
+	res = devm_kzalloc(dev, माप(*res), GFP_KERNEL);
+	अगर (!res)
+		वापस -ENOMEM;
 
 	ret = acpi_get_rc_resources(dev, "HISI0081", root->segment, res);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "can't get rc base address\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	reg_base = devm_pci_remap_cfgspace(dev, res->start, resource_size(res));
-	if (!reg_base)
-		return -ENOMEM;
+	अगर (!reg_base)
+		वापस -ENOMEM;
 
 	cfg->priv = reg_base;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct pci_ecam_ops hisi_pcie_ops = {
+स्थिर काष्ठा pci_ecam_ops hisi_pcie_ops = अणु
 	.init         =  hisi_pcie_init,
-	.pci_ops      = {
+	.pci_ops      = अणु
 		.map_bus    = hisi_pcie_map_bus,
-		.read       = hisi_pcie_rd_conf,
-		.write      = hisi_pcie_wr_conf,
-	}
-};
+		.पढ़ो       = hisi_pcie_rd_conf,
+		.ग_लिखो      = hisi_pcie_wr_conf,
+	पूर्ण
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PCI_HISI
+#अगर_घोषित CONFIG_PCI_HISI
 
-static int hisi_pcie_platform_init(struct pci_config_window *cfg)
-{
-	struct device *dev = cfg->parent;
-	struct platform_device *pdev = to_platform_device(dev);
-	struct resource *res;
-	void __iomem *reg_base;
+अटल पूर्णांक hisi_pcie_platक्रमm_init(काष्ठा pci_config_winकरोw *cfg)
+अणु
+	काष्ठा device *dev = cfg->parent;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा resource *res;
+	व्योम __iomem *reg_base;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+	अगर (!res) अणु
 		dev_err(dev, "missing \"reg[1]\"property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	reg_base = devm_pci_remap_cfgspace(dev, res->start, resource_size(res));
-	if (!reg_base)
-		return -ENOMEM;
+	अगर (!reg_base)
+		वापस -ENOMEM;
 
 	cfg->priv = reg_base;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_ecam_ops hisi_pcie_platform_ops = {
-	.init         =  hisi_pcie_platform_init,
-	.pci_ops      = {
+अटल स्थिर काष्ठा pci_ecam_ops hisi_pcie_platक्रमm_ops = अणु
+	.init         =  hisi_pcie_platक्रमm_init,
+	.pci_ops      = अणु
 		.map_bus    = hisi_pcie_map_bus,
-		.read       = hisi_pcie_rd_conf,
-		.write      = hisi_pcie_wr_conf,
-	}
-};
+		.पढ़ो       = hisi_pcie_rd_conf,
+		.ग_लिखो      = hisi_pcie_wr_conf,
+	पूर्ण
+पूर्ण;
 
-static const struct of_device_id hisi_pcie_almost_ecam_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id hisi_pcie_almost_ecam_of_match[] = अणु
+	अणु
 		.compatible =  "hisilicon,hip06-pcie-ecam",
-		.data	    =  &hisi_pcie_platform_ops,
-	},
-	{
+		.data	    =  &hisi_pcie_platक्रमm_ops,
+	पूर्ण,
+	अणु
 		.compatible =  "hisilicon,hip07-pcie-ecam",
-		.data       =  &hisi_pcie_platform_ops,
-	},
-	{},
-};
+		.data       =  &hisi_pcie_platक्रमm_ops,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver hisi_pcie_almost_ecam_driver = {
+अटल काष्ठा platक्रमm_driver hisi_pcie_almost_ecam_driver = अणु
 	.probe  = pci_host_common_probe,
-	.driver = {
+	.driver = अणु
 		   .name = "hisi-pcie-almost-ecam",
 		   .of_match_table = hisi_pcie_almost_ecam_of_match,
 		   .suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(hisi_pcie_almost_ecam_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(hisi_pcie_almost_ecam_driver);
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2011 Tobias Klauser <tklauser@distanz.ch>
  */
 
-#ifndef _ASM_NIOS2_CPUINFO_H
-#define _ASM_NIOS2_CPUINFO_H
+#अगर_अघोषित _ASM_NIOS2_CPUINFO_H
+#घोषणा _ASM_NIOS2_CPUINFO_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct cpuinfo {
+काष्ठा cpuinfo अणु
 	/* Core CPU configuration */
-	char cpu_impl[12];
-	u32 cpu_clock_freq;
+	अक्षर cpu_impl[12];
+	u32 cpu_घड़ी_freq;
 	bool mmu;
-	bool has_div;
+	bool has_भाग;
 	bool has_mul;
 	bool has_mulx;
 	bool has_bmx;
@@ -26,7 +27,7 @@ struct cpuinfo {
 	u32 dcache_size;
 
 	/* TLB */
-	u32 tlb_pid_num_bits;	/* number of bits used for the PID in TLBMISC */
+	u32 tlb_pid_num_bits;	/* number of bits used क्रम the PID in TLBMISC */
 	u32 tlb_num_ways;
 	u32 tlb_num_ways_log2;
 	u32 tlb_num_entries;
@@ -37,10 +38,10 @@ struct cpuinfo {
 	u32 reset_addr;
 	u32 exception_addr;
 	u32 fast_tlb_miss_exc_addr;
-};
+पूर्ण;
 
-extern struct cpuinfo cpuinfo;
+बाह्य काष्ठा cpuinfo cpuinfo;
 
-extern void setup_cpuinfo(void);
+बाह्य व्योम setup_cpuinfo(व्योम);
 
-#endif /* _ASM_NIOS2_CPUINFO_H */
+#पूर्ण_अगर /* _ASM_NIOS2_CPUINFO_H */

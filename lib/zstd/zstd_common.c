@@ -1,3 +1,4 @@
+<शैली गुरु>
 /**
  * Copyright (c) 2016-present, Yann Collet, Facebook, Inc.
  * All rights reserved.
@@ -7,7 +8,7 @@
  * An additional grant of patent rights can be found in the PATENTS file in the
  * same directory.
  *
- * This program is free software; you can redistribute it and/or modify it under
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it under
  * the terms of the GNU General Public License version 2 as published by the
  * Free Software Foundation. This program is dual-licensed; you may select
  * either version 2 of the GNU General Public License ("GPL") or BSD license
@@ -17,59 +18,59 @@
 /*-*************************************
 *  Dependencies
 ***************************************/
-#include "error_private.h"
-#include "zstd_internal.h" /* declaration of ZSTD_isError, ZSTD_getErrorName, ZSTD_getErrorCode, ZSTD_getErrorString, ZSTD_versionNumber */
-#include <linux/kernel.h>
+#समावेश "error_private.h"
+#समावेश "zstd_internal.h" /* declaration of ZSTD_isError, ZSTD_getErrorName, ZSTD_getErrorCode, ZSTD_getErrorString, ZSTD_versionNumber */
+#समावेश <linux/kernel.h>
 
 /*=**************************************************************
 *  Custom allocator
 ****************************************************************/
 
-#define stack_push(stack, size)                                 \
-	({                                                      \
-		void *const ptr = ZSTD_PTR_ALIGN((stack)->ptr); \
-		(stack)->ptr = (char *)ptr + (size);            \
-		(stack)->ptr <= (stack)->end ? ptr : NULL;      \
-	})
+#घोषणा stack_push(stack, size)                                 \
+	(अणु                                                      \
+		व्योम *स्थिर ptr = ZSTD_PTR_ALIGN((stack)->ptr); \
+		(stack)->ptr = (अक्षर *)ptr + (size);            \
+		(stack)->ptr <= (stack)->end ? ptr : शून्य;      \
+	पूर्ण)
 
-ZSTD_customMem ZSTD_initStack(void *workspace, size_t workspaceSize)
-{
-	ZSTD_customMem stackMem = {ZSTD_stackAlloc, ZSTD_stackFree, workspace};
+ZSTD_customMem ZSTD_initStack(व्योम *workspace, माप_प्रकार workspaceSize)
+अणु
+	ZSTD_customMem stackMem = अणुZSTD_stackAlloc, ZSTD_stackFree, workspaceपूर्ण;
 	ZSTD_stack *stack = (ZSTD_stack *)workspace;
-	/* Verify preconditions */
-	if (!workspace || workspaceSize < sizeof(ZSTD_stack) || workspace != ZSTD_PTR_ALIGN(workspace)) {
-		ZSTD_customMem error = {NULL, NULL, NULL};
-		return error;
-	}
+	/* Verअगरy preconditions */
+	अगर (!workspace || workspaceSize < माप(ZSTD_stack) || workspace != ZSTD_PTR_ALIGN(workspace)) अणु
+		ZSTD_customMem error = अणुशून्य, शून्य, शून्यपूर्ण;
+		वापस error;
+	पूर्ण
 	/* Initialize the stack */
 	stack->ptr = workspace;
-	stack->end = (char *)workspace + workspaceSize;
-	stack_push(stack, sizeof(ZSTD_stack));
-	return stackMem;
-}
+	stack->end = (अक्षर *)workspace + workspaceSize;
+	stack_push(stack, माप(ZSTD_stack));
+	वापस stackMem;
+पूर्ण
 
-void *ZSTD_stackAllocAll(void *opaque, size_t *size)
-{
+व्योम *ZSTD_stackAllocAll(व्योम *opaque, माप_प्रकार *size)
+अणु
 	ZSTD_stack *stack = (ZSTD_stack *)opaque;
-	*size = (BYTE const *)stack->end - (BYTE *)ZSTD_PTR_ALIGN(stack->ptr);
-	return stack_push(stack, *size);
-}
+	*size = (BYTE स्थिर *)stack->end - (BYTE *)ZSTD_PTR_ALIGN(stack->ptr);
+	वापस stack_push(stack, *size);
+पूर्ण
 
-void *ZSTD_stackAlloc(void *opaque, size_t size)
-{
+व्योम *ZSTD_stackAlloc(व्योम *opaque, माप_प्रकार size)
+अणु
 	ZSTD_stack *stack = (ZSTD_stack *)opaque;
-	return stack_push(stack, size);
-}
-void ZSTD_stackFree(void *opaque, void *address)
-{
-	(void)opaque;
-	(void)address;
-}
+	वापस stack_push(stack, size);
+पूर्ण
+व्योम ZSTD_stackFree(व्योम *opaque, व्योम *address)
+अणु
+	(व्योम)opaque;
+	(व्योम)address;
+पूर्ण
 
-void *ZSTD_malloc(size_t size, ZSTD_customMem customMem) { return customMem.customAlloc(customMem.opaque, size); }
+व्योम *ZSTD_दो_स्मृति(माप_प्रकार size, ZSTD_customMem customMem) अणु वापस customMem.customAlloc(customMem.opaque, size); पूर्ण
 
-void ZSTD_free(void *ptr, ZSTD_customMem customMem)
-{
-	if (ptr != NULL)
+व्योम ZSTD_मुक्त(व्योम *ptr, ZSTD_customMem customMem)
+अणु
+	अगर (ptr != शून्य)
 		customMem.customFree(customMem.opaque, ptr);
-}
+पूर्ण

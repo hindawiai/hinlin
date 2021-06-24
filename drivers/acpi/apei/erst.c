@@ -1,612 +1,613 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * APEI Error Record Serialization Table support
  *
  * ERST is a way provided by APEI to save and retrieve hardware error
- * information to and from a persistent store.
+ * inक्रमmation to and from a persistent store.
  *
- * For more information about ERST, please refer to ACPI Specification
+ * For more inक्रमmation about ERST, please refer to ACPI Specअगरication
  * version 4.0, section 17.4.
  *
  * Copyright 2010 Intel Corp.
- *   Author: Huang Ying <ying.huang@intel.com>
+ *   Author: Huang Ying <ying.huang@पूर्णांकel.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/acpi.h>
-#include <linux/uaccess.h>
-#include <linux/cper.h>
-#include <linux/nmi.h>
-#include <linux/hardirq.h>
-#include <linux/pstore.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h> /* kvfree() */
-#include <acpi/apei.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/acpi.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/cper.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/pstore.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h> /* kvमुक्त() */
+#समावेश <acpi/apei.h>
 
-#include "apei-internal.h"
+#समावेश "apei-internal.h"
 
-#undef pr_fmt
-#define pr_fmt(fmt) "ERST: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) "ERST: " fmt
 
 /* ERST command status */
-#define ERST_STATUS_SUCCESS			0x0
-#define ERST_STATUS_NOT_ENOUGH_SPACE		0x1
-#define ERST_STATUS_HARDWARE_NOT_AVAILABLE	0x2
-#define ERST_STATUS_FAILED			0x3
-#define ERST_STATUS_RECORD_STORE_EMPTY		0x4
-#define ERST_STATUS_RECORD_NOT_FOUND		0x5
+#घोषणा ERST_STATUS_SUCCESS			0x0
+#घोषणा ERST_STATUS_NOT_ENOUGH_SPACE		0x1
+#घोषणा ERST_STATUS_HARDWARE_NOT_AVAILABLE	0x2
+#घोषणा ERST_STATUS_FAILED			0x3
+#घोषणा ERST_STATUS_RECORD_STORE_EMPTY		0x4
+#घोषणा ERST_STATUS_RECORD_NOT_FOUND		0x5
 
-#define ERST_TAB_ENTRY(tab)						\
-	((struct acpi_whea_header *)((char *)(tab) +			\
-				     sizeof(struct acpi_table_erst)))
+#घोषणा ERST_TAB_ENTRY(tab)						\
+	((काष्ठा acpi_whea_header *)((अक्षर *)(tab) +			\
+				     माप(काष्ठा acpi_table_erst)))
 
-#define SPIN_UNIT		100			/* 100ns */
+#घोषणा SPIN_UNIT		100			/* 100ns */
 /* Firmware should respond within 1 milliseconds */
-#define FIRMWARE_TIMEOUT	(1 * NSEC_PER_MSEC)
-#define FIRMWARE_MAX_STALL	50			/* 50us */
+#घोषणा FIRMWARE_TIMEOUT	(1 * NSEC_PER_MSEC)
+#घोषणा FIRMWARE_MAX_STALL	50			/* 50us */
 
-int erst_disable;
+पूर्णांक erst_disable;
 EXPORT_SYMBOL_GPL(erst_disable);
 
-static struct acpi_table_erst *erst_tab;
+अटल काष्ठा acpi_table_erst *erst_tab;
 
 /* ERST Error Log Address Range attributes */
-#define ERST_RANGE_RESERVED	0x0001
-#define ERST_RANGE_NVRAM	0x0002
-#define ERST_RANGE_SLOW		0x0004
+#घोषणा ERST_RANGE_RESERVED	0x0001
+#घोषणा ERST_RANGE_NVRAM	0x0002
+#घोषणा ERST_RANGE_SLOW		0x0004
 
 /*
- * ERST Error Log Address Range, used as buffer for reading/writing
+ * ERST Error Log Address Range, used as buffer क्रम पढ़ोing/writing
  * error records.
  */
-static struct erst_erange {
+अटल काष्ठा erst_erange अणु
 	u64 base;
 	u64 size;
-	void __iomem *vaddr;
+	व्योम __iomem *vaddr;
 	u32 attr;
-} erst_erange;
+पूर्ण erst_erange;
 
 /*
- * Prevent ERST interpreter to run simultaneously, because the
+ * Prevent ERST पूर्णांकerpreter to run simultaneously, because the
  * corresponding firmware implementation may not work properly when
  * invoked simultaneously.
  *
- * It is used to provide exclusive accessing for ERST Error Log
+ * It is used to provide exclusive accessing क्रम ERST Error Log
  * Address Range too.
  */
-static DEFINE_RAW_SPINLOCK(erst_lock);
+अटल DEFINE_RAW_SPINLOCK(erst_lock);
 
-static inline int erst_errno(int command_status)
-{
-	switch (command_status) {
-	case ERST_STATUS_SUCCESS:
-		return 0;
-	case ERST_STATUS_HARDWARE_NOT_AVAILABLE:
-		return -ENODEV;
-	case ERST_STATUS_NOT_ENOUGH_SPACE:
-		return -ENOSPC;
-	case ERST_STATUS_RECORD_STORE_EMPTY:
-	case ERST_STATUS_RECORD_NOT_FOUND:
-		return -ENOENT;
-	default:
-		return -EINVAL;
-	}
-}
+अटल अंतरभूत पूर्णांक erst_त्रुटि_सं(पूर्णांक command_status)
+अणु
+	चयन (command_status) अणु
+	हाल ERST_STATUS_SUCCESS:
+		वापस 0;
+	हाल ERST_STATUS_HARDWARE_NOT_AVAILABLE:
+		वापस -ENODEV;
+	हाल ERST_STATUS_NOT_ENOUGH_SPACE:
+		वापस -ENOSPC;
+	हाल ERST_STATUS_RECORD_STORE_EMPTY:
+	हाल ERST_STATUS_RECORD_NOT_FOUND:
+		वापस -ENOENT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int erst_timedout(u64 *t, u64 spin_unit)
-{
-	if ((s64)*t < spin_unit) {
+अटल पूर्णांक erst_समयकरोut(u64 *t, u64 spin_unit)
+अणु
+	अगर ((s64)*t < spin_unit) अणु
 		pr_warn(FW_WARN "Firmware does not respond in time.\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	*t -= spin_unit;
 	ndelay(spin_unit);
-	touch_nmi_watchdog();
-	return 0;
-}
+	touch_nmi_watchकरोg();
+	वापस 0;
+पूर्ण
 
-static int erst_exec_load_var1(struct apei_exec_context *ctx,
-			       struct acpi_whea_header *entry)
-{
-	return __apei_exec_read_register(entry, &ctx->var1);
-}
+अटल पूर्णांक erst_exec_load_var1(काष्ठा apei_exec_context *ctx,
+			       काष्ठा acpi_whea_header *entry)
+अणु
+	वापस __apei_exec_पढ़ो_रेजिस्टर(entry, &ctx->var1);
+पूर्ण
 
-static int erst_exec_load_var2(struct apei_exec_context *ctx,
-			       struct acpi_whea_header *entry)
-{
-	return __apei_exec_read_register(entry, &ctx->var2);
-}
+अटल पूर्णांक erst_exec_load_var2(काष्ठा apei_exec_context *ctx,
+			       काष्ठा acpi_whea_header *entry)
+अणु
+	वापस __apei_exec_पढ़ो_रेजिस्टर(entry, &ctx->var2);
+पूर्ण
 
-static int erst_exec_store_var1(struct apei_exec_context *ctx,
-				struct acpi_whea_header *entry)
-{
-	return __apei_exec_write_register(entry, ctx->var1);
-}
+अटल पूर्णांक erst_exec_store_var1(काष्ठा apei_exec_context *ctx,
+				काष्ठा acpi_whea_header *entry)
+अणु
+	वापस __apei_exec_ग_लिखो_रेजिस्टर(entry, ctx->var1);
+पूर्ण
 
-static int erst_exec_add(struct apei_exec_context *ctx,
-			 struct acpi_whea_header *entry)
-{
+अटल पूर्णांक erst_exec_add(काष्ठा apei_exec_context *ctx,
+			 काष्ठा acpi_whea_header *entry)
+अणु
 	ctx->var1 += ctx->var2;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erst_exec_subtract(struct apei_exec_context *ctx,
-			      struct acpi_whea_header *entry)
-{
+अटल पूर्णांक erst_exec_subtract(काष्ठा apei_exec_context *ctx,
+			      काष्ठा acpi_whea_header *entry)
+अणु
 	ctx->var1 -= ctx->var2;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erst_exec_add_value(struct apei_exec_context *ctx,
-			       struct acpi_whea_header *entry)
-{
-	int rc;
+अटल पूर्णांक erst_exec_add_value(काष्ठा apei_exec_context *ctx,
+			       काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 	u64 val;
 
-	rc = __apei_exec_read_register(entry, &val);
-	if (rc)
-		return rc;
+	rc = __apei_exec_पढ़ो_रेजिस्टर(entry, &val);
+	अगर (rc)
+		वापस rc;
 	val += ctx->value;
-	rc = __apei_exec_write_register(entry, val);
-	return rc;
-}
+	rc = __apei_exec_ग_लिखो_रेजिस्टर(entry, val);
+	वापस rc;
+पूर्ण
 
-static int erst_exec_subtract_value(struct apei_exec_context *ctx,
-				    struct acpi_whea_header *entry)
-{
-	int rc;
+अटल पूर्णांक erst_exec_subtract_value(काष्ठा apei_exec_context *ctx,
+				    काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 	u64 val;
 
-	rc = __apei_exec_read_register(entry, &val);
-	if (rc)
-		return rc;
+	rc = __apei_exec_पढ़ो_रेजिस्टर(entry, &val);
+	अगर (rc)
+		वापस rc;
 	val -= ctx->value;
-	rc = __apei_exec_write_register(entry, val);
-	return rc;
-}
+	rc = __apei_exec_ग_लिखो_रेजिस्टर(entry, val);
+	वापस rc;
+पूर्ण
 
-static int erst_exec_stall(struct apei_exec_context *ctx,
-			   struct acpi_whea_header *entry)
-{
-	u64 stall_time;
+अटल पूर्णांक erst_exec_stall(काष्ठा apei_exec_context *ctx,
+			   काष्ठा acpi_whea_header *entry)
+अणु
+	u64 stall_समय;
 
-	if (ctx->value > FIRMWARE_MAX_STALL) {
-		if (!in_nmi())
+	अगर (ctx->value > FIRMWARE_MAX_STALL) अणु
+		अगर (!in_nmi())
 			pr_warn(FW_WARN
 			"Too long stall time for stall instruction: 0x%llx.\n",
 				   ctx->value);
-		stall_time = FIRMWARE_MAX_STALL;
-	} else
-		stall_time = ctx->value;
-	udelay(stall_time);
-	return 0;
-}
+		stall_समय = FIRMWARE_MAX_STALL;
+	पूर्ण अन्यथा
+		stall_समय = ctx->value;
+	udelay(stall_समय);
+	वापस 0;
+पूर्ण
 
-static int erst_exec_stall_while_true(struct apei_exec_context *ctx,
-				      struct acpi_whea_header *entry)
-{
-	int rc;
+अटल पूर्णांक erst_exec_stall_जबतक_true(काष्ठा apei_exec_context *ctx,
+				      काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 	u64 val;
-	u64 timeout = FIRMWARE_TIMEOUT;
-	u64 stall_time;
+	u64 समयout = FIRMWARE_TIMEOUT;
+	u64 stall_समय;
 
-	if (ctx->var1 > FIRMWARE_MAX_STALL) {
-		if (!in_nmi())
+	अगर (ctx->var1 > FIRMWARE_MAX_STALL) अणु
+		अगर (!in_nmi())
 			pr_warn(FW_WARN
 		"Too long stall time for stall while true instruction: 0x%llx.\n",
 				   ctx->var1);
-		stall_time = FIRMWARE_MAX_STALL;
-	} else
-		stall_time = ctx->var1;
+		stall_समय = FIRMWARE_MAX_STALL;
+	पूर्ण अन्यथा
+		stall_समय = ctx->var1;
 
-	for (;;) {
-		rc = __apei_exec_read_register(entry, &val);
-		if (rc)
-			return rc;
-		if (val != ctx->value)
-			break;
-		if (erst_timedout(&timeout, stall_time * NSEC_PER_USEC))
-			return -EIO;
-	}
-	return 0;
-}
+	क्रम (;;) अणु
+		rc = __apei_exec_पढ़ो_रेजिस्टर(entry, &val);
+		अगर (rc)
+			वापस rc;
+		अगर (val != ctx->value)
+			अवरोध;
+		अगर (erst_समयकरोut(&समयout, stall_समय * NSEC_PER_USEC))
+			वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int erst_exec_skip_next_instruction_if_true(
-	struct apei_exec_context *ctx,
-	struct acpi_whea_header *entry)
-{
-	int rc;
+अटल पूर्णांक erst_exec_skip_next_inकाष्ठाion_अगर_true(
+	काष्ठा apei_exec_context *ctx,
+	काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 	u64 val;
 
-	rc = __apei_exec_read_register(entry, &val);
-	if (rc)
-		return rc;
-	if (val == ctx->value) {
+	rc = __apei_exec_पढ़ो_रेजिस्टर(entry, &val);
+	अगर (rc)
+		वापस rc;
+	अगर (val == ctx->value) अणु
 		ctx->ip += 2;
-		return APEI_EXEC_SET_IP;
-	}
+		वापस APEI_EXEC_SET_IP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erst_exec_goto(struct apei_exec_context *ctx,
-			  struct acpi_whea_header *entry)
-{
+अटल पूर्णांक erst_exec_जाओ(काष्ठा apei_exec_context *ctx,
+			  काष्ठा acpi_whea_header *entry)
+अणु
 	ctx->ip = ctx->value;
-	return APEI_EXEC_SET_IP;
-}
+	वापस APEI_EXEC_SET_IP;
+पूर्ण
 
-static int erst_exec_set_src_address_base(struct apei_exec_context *ctx,
-					  struct acpi_whea_header *entry)
-{
-	return __apei_exec_read_register(entry, &ctx->src_base);
-}
+अटल पूर्णांक erst_exec_set_src_address_base(काष्ठा apei_exec_context *ctx,
+					  काष्ठा acpi_whea_header *entry)
+अणु
+	वापस __apei_exec_पढ़ो_रेजिस्टर(entry, &ctx->src_base);
+पूर्ण
 
-static int erst_exec_set_dst_address_base(struct apei_exec_context *ctx,
-					  struct acpi_whea_header *entry)
-{
-	return __apei_exec_read_register(entry, &ctx->dst_base);
-}
+अटल पूर्णांक erst_exec_set_dst_address_base(काष्ठा apei_exec_context *ctx,
+					  काष्ठा acpi_whea_header *entry)
+अणु
+	वापस __apei_exec_पढ़ो_रेजिस्टर(entry, &ctx->dst_base);
+पूर्ण
 
-static int erst_exec_move_data(struct apei_exec_context *ctx,
-			       struct acpi_whea_header *entry)
-{
-	int rc;
+अटल पूर्णांक erst_exec_move_data(काष्ठा apei_exec_context *ctx,
+			       काष्ठा acpi_whea_header *entry)
+अणु
+	पूर्णांक rc;
 	u64 offset;
-	void *src, *dst;
+	व्योम *src, *dst;
 
-	/* ioremap does not work in interrupt context */
-	if (in_interrupt()) {
+	/* ioremap करोes not work in पूर्णांकerrupt context */
+	अगर (in_पूर्णांकerrupt()) अणु
 		pr_warn("MOVE_DATA can not be used in interrupt context.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	rc = __apei_exec_read_register(entry, &offset);
-	if (rc)
-		return rc;
+	rc = __apei_exec_पढ़ो_रेजिस्टर(entry, &offset);
+	अगर (rc)
+		वापस rc;
 
 	src = ioremap(ctx->src_base + offset, ctx->var2);
-	if (!src)
-		return -ENOMEM;
+	अगर (!src)
+		वापस -ENOMEM;
 	dst = ioremap(ctx->dst_base + offset, ctx->var2);
-	if (!dst) {
+	अगर (!dst) अणु
 		iounmap(src);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memmove(dst, src, ctx->var2);
+	स_हटाओ(dst, src, ctx->var2);
 
 	iounmap(src);
 	iounmap(dst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct apei_exec_ins_type erst_ins_type[] = {
-	[ACPI_ERST_READ_REGISTER] = {
+अटल काष्ठा apei_exec_ins_type erst_ins_type[] = अणु
+	[ACPI_ERST_READ_REGISTER] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
-		.run = apei_exec_read_register,
-	},
-	[ACPI_ERST_READ_REGISTER_VALUE] = {
+		.run = apei_exec_पढ़ो_रेजिस्टर,
+	पूर्ण,
+	[ACPI_ERST_READ_REGISTER_VALUE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
-		.run = apei_exec_read_register_value,
-	},
-	[ACPI_ERST_WRITE_REGISTER] = {
+		.run = apei_exec_पढ़ो_रेजिस्टर_value,
+	पूर्ण,
+	[ACPI_ERST_WRITE_REGISTER] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
-		.run = apei_exec_write_register,
-	},
-	[ACPI_ERST_WRITE_REGISTER_VALUE] = {
+		.run = apei_exec_ग_लिखो_रेजिस्टर,
+	पूर्ण,
+	[ACPI_ERST_WRITE_REGISTER_VALUE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
-		.run = apei_exec_write_register_value,
-	},
-	[ACPI_ERST_NOOP] = {
+		.run = apei_exec_ग_लिखो_रेजिस्टर_value,
+	पूर्ण,
+	[ACPI_ERST_NOOP] = अणु
 		.flags = 0,
 		.run = apei_exec_noop,
-	},
-	[ACPI_ERST_LOAD_VAR1] = {
+	पूर्ण,
+	[ACPI_ERST_LOAD_VAR1] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_load_var1,
-	},
-	[ACPI_ERST_LOAD_VAR2] = {
+	पूर्ण,
+	[ACPI_ERST_LOAD_VAR2] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_load_var2,
-	},
-	[ACPI_ERST_STORE_VAR1] = {
+	पूर्ण,
+	[ACPI_ERST_STORE_VAR1] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_store_var1,
-	},
-	[ACPI_ERST_ADD] = {
+	पूर्ण,
+	[ACPI_ERST_ADD] = अणु
 		.flags = 0,
 		.run = erst_exec_add,
-	},
-	[ACPI_ERST_SUBTRACT] = {
+	पूर्ण,
+	[ACPI_ERST_SUBTRACT] = अणु
 		.flags = 0,
 		.run = erst_exec_subtract,
-	},
-	[ACPI_ERST_ADD_VALUE] = {
+	पूर्ण,
+	[ACPI_ERST_ADD_VALUE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_add_value,
-	},
-	[ACPI_ERST_SUBTRACT_VALUE] = {
+	पूर्ण,
+	[ACPI_ERST_SUBTRACT_VALUE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_subtract_value,
-	},
-	[ACPI_ERST_STALL] = {
+	पूर्ण,
+	[ACPI_ERST_STALL] = अणु
 		.flags = 0,
 		.run = erst_exec_stall,
-	},
-	[ACPI_ERST_STALL_WHILE_TRUE] = {
+	पूर्ण,
+	[ACPI_ERST_STALL_WHILE_TRUE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
-		.run = erst_exec_stall_while_true,
-	},
-	[ACPI_ERST_SKIP_NEXT_IF_TRUE] = {
+		.run = erst_exec_stall_जबतक_true,
+	पूर्ण,
+	[ACPI_ERST_SKIP_NEXT_IF_TRUE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
-		.run = erst_exec_skip_next_instruction_if_true,
-	},
-	[ACPI_ERST_GOTO] = {
+		.run = erst_exec_skip_next_inकाष्ठाion_अगर_true,
+	पूर्ण,
+	[ACPI_ERST_GOTO] = अणु
 		.flags = 0,
-		.run = erst_exec_goto,
-	},
-	[ACPI_ERST_SET_SRC_ADDRESS_BASE] = {
+		.run = erst_exec_जाओ,
+	पूर्ण,
+	[ACPI_ERST_SET_SRC_ADDRESS_BASE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_set_src_address_base,
-	},
-	[ACPI_ERST_SET_DST_ADDRESS_BASE] = {
+	पूर्ण,
+	[ACPI_ERST_SET_DST_ADDRESS_BASE] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_set_dst_address_base,
-	},
-	[ACPI_ERST_MOVE_DATA] = {
+	पूर्ण,
+	[ACPI_ERST_MOVE_DATA] = अणु
 		.flags = APEI_EXEC_INS_ACCESS_REGISTER,
 		.run = erst_exec_move_data,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static inline void erst_exec_ctx_init(struct apei_exec_context *ctx)
-{
+अटल अंतरभूत व्योम erst_exec_ctx_init(काष्ठा apei_exec_context *ctx)
+अणु
 	apei_exec_ctx_init(ctx, erst_ins_type, ARRAY_SIZE(erst_ins_type),
 			   ERST_TAB_ENTRY(erst_tab), erst_tab->entries);
-}
+पूर्ण
 
-static int erst_get_erange(struct erst_erange *range)
-{
-	struct apei_exec_context ctx;
-	int rc;
+अटल पूर्णांक erst_get_erange(काष्ठा erst_erange *range)
+अणु
+	काष्ठा apei_exec_context ctx;
+	पूर्णांक rc;
 
 	erst_exec_ctx_init(&ctx);
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_ERROR_RANGE);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	range->base = apei_exec_ctx_get_output(&ctx);
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_ERROR_LENGTH);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	range->size = apei_exec_ctx_get_output(&ctx);
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_ERROR_ATTRIBUTES);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	range->attr = apei_exec_ctx_get_output(&ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t __erst_get_record_count(void)
-{
-	struct apei_exec_context ctx;
-	int rc;
+अटल sमाप_प्रकार __erst_get_record_count(व्योम)
+अणु
+	काष्ठा apei_exec_context ctx;
+	पूर्णांक rc;
 
 	erst_exec_ctx_init(&ctx);
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_RECORD_COUNT);
-	if (rc)
-		return rc;
-	return apei_exec_ctx_get_output(&ctx);
-}
+	अगर (rc)
+		वापस rc;
+	वापस apei_exec_ctx_get_output(&ctx);
+पूर्ण
 
-ssize_t erst_get_record_count(void)
-{
-	ssize_t count;
-	unsigned long flags;
+sमाप_प्रकार erst_get_record_count(व्योम)
+अणु
+	sमाप_प्रकार count;
+	अचिन्हित दीर्घ flags;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
 	raw_spin_lock_irqsave(&erst_lock, flags);
 	count = __erst_get_record_count();
 	raw_spin_unlock_irqrestore(&erst_lock, flags);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(erst_get_record_count);
 
-#define ERST_RECORD_ID_CACHE_SIZE_MIN	16
-#define ERST_RECORD_ID_CACHE_SIZE_MAX	1024
+#घोषणा ERST_RECORD_ID_CACHE_SIZE_MIN	16
+#घोषणा ERST_RECORD_ID_CACHE_SIZE_MAX	1024
 
-struct erst_record_id_cache {
-	struct mutex lock;
+काष्ठा erst_record_id_cache अणु
+	काष्ठा mutex lock;
 	u64 *entries;
-	int len;
-	int size;
-	int refcount;
-};
+	पूर्णांक len;
+	पूर्णांक size;
+	पूर्णांक refcount;
+पूर्ण;
 
-static struct erst_record_id_cache erst_record_id_cache = {
+अटल काष्ठा erst_record_id_cache erst_record_id_cache = अणु
 	.lock = __MUTEX_INITIALIZER(erst_record_id_cache.lock),
 	.refcount = 0,
-};
+पूर्ण;
 
-static int __erst_get_next_record_id(u64 *record_id)
-{
-	struct apei_exec_context ctx;
-	int rc;
+अटल पूर्णांक __erst_get_next_record_id(u64 *record_id)
+अणु
+	काष्ठा apei_exec_context ctx;
+	पूर्णांक rc;
 
 	erst_exec_ctx_init(&ctx);
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_RECORD_ID);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	*record_id = apei_exec_ctx_get_output(&ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int erst_get_record_id_begin(int *pos)
-{
-	int rc;
+पूर्णांक erst_get_record_id_begin(पूर्णांक *pos)
+अणु
+	पूर्णांक rc;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
-	rc = mutex_lock_interruptible(&erst_record_id_cache.lock);
-	if (rc)
-		return rc;
+	rc = mutex_lock_पूर्णांकerruptible(&erst_record_id_cache.lock);
+	अगर (rc)
+		वापस rc;
 	erst_record_id_cache.refcount++;
 	mutex_unlock(&erst_record_id_cache.lock);
 
 	*pos = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(erst_get_record_id_begin);
 
 /* erst_record_id_cache.lock must be held by caller */
-static int __erst_record_id_cache_add_one(void)
-{
+अटल पूर्णांक __erst_record_id_cache_add_one(व्योम)
+अणु
 	u64 id, prev_id, first_id;
-	int i, rc;
+	पूर्णांक i, rc;
 	u64 *entries;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	id = prev_id = first_id = APEI_ERST_INVALID_RECORD_ID;
 retry:
 	raw_spin_lock_irqsave(&erst_lock, flags);
 	rc = __erst_get_next_record_id(&id);
 	raw_spin_unlock_irqrestore(&erst_lock, flags);
-	if (rc == -ENOENT)
-		return 0;
-	if (rc)
-		return rc;
-	if (id == APEI_ERST_INVALID_RECORD_ID)
-		return 0;
+	अगर (rc == -ENOENT)
+		वापस 0;
+	अगर (rc)
+		वापस rc;
+	अगर (id == APEI_ERST_INVALID_RECORD_ID)
+		वापस 0;
 	/* can not skip current ID, or loop back to first ID */
-	if (id == prev_id || id == first_id)
-		return 0;
-	if (first_id == APEI_ERST_INVALID_RECORD_ID)
+	अगर (id == prev_id || id == first_id)
+		वापस 0;
+	अगर (first_id == APEI_ERST_INVALID_RECORD_ID)
 		first_id = id;
 	prev_id = id;
 
 	entries = erst_record_id_cache.entries;
-	for (i = 0; i < erst_record_id_cache.len; i++) {
-		if (entries[i] == id)
-			break;
-	}
-	/* record id already in cache, try next */
-	if (i < erst_record_id_cache.len)
-		goto retry;
-	if (erst_record_id_cache.len >= erst_record_id_cache.size) {
-		int new_size;
+	क्रम (i = 0; i < erst_record_id_cache.len; i++) अणु
+		अगर (entries[i] == id)
+			अवरोध;
+	पूर्ण
+	/* record id alपढ़ोy in cache, try next */
+	अगर (i < erst_record_id_cache.len)
+		जाओ retry;
+	अगर (erst_record_id_cache.len >= erst_record_id_cache.size) अणु
+		पूर्णांक new_size;
 		u64 *new_entries;
 
 		new_size = erst_record_id_cache.size * 2;
 		new_size = clamp_val(new_size, ERST_RECORD_ID_CACHE_SIZE_MIN,
 				     ERST_RECORD_ID_CACHE_SIZE_MAX);
-		if (new_size <= erst_record_id_cache.size) {
-			if (printk_ratelimit())
+		अगर (new_size <= erst_record_id_cache.size) अणु
+			अगर (prपूर्णांकk_ratelimit())
 				pr_warn(FW_WARN "too many record IDs!\n");
-			return 0;
-		}
-		new_entries = kvmalloc_array(new_size, sizeof(entries[0]),
+			वापस 0;
+		पूर्ण
+		new_entries = kvदो_स्मृति_array(new_size, माप(entries[0]),
 					     GFP_KERNEL);
-		if (!new_entries)
-			return -ENOMEM;
-		memcpy(new_entries, entries,
-		       erst_record_id_cache.len * sizeof(entries[0]));
-		kvfree(entries);
+		अगर (!new_entries)
+			वापस -ENOMEM;
+		स_नकल(new_entries, entries,
+		       erst_record_id_cache.len * माप(entries[0]));
+		kvमुक्त(entries);
 		erst_record_id_cache.entries = entries = new_entries;
 		erst_record_id_cache.size = new_size;
-	}
+	पूर्ण
 	entries[i] = id;
 	erst_record_id_cache.len++;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Get the record ID of an existing error record on the persistent
  * storage. If there is no error record on the persistent storage, the
- * returned record_id is APEI_ERST_INVALID_RECORD_ID.
+ * वापसed record_id is APEI_ERST_INVALID_RECORD_ID.
  */
-int erst_get_record_id_next(int *pos, u64 *record_id)
-{
-	int rc = 0;
+पूर्णांक erst_get_record_id_next(पूर्णांक *pos, u64 *record_id)
+अणु
+	पूर्णांक rc = 0;
 	u64 *entries;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
-	/* must be enclosed by erst_get_record_id_begin/end */
+	/* must be enबंदd by erst_get_record_id_begin/end */
 	BUG_ON(!erst_record_id_cache.refcount);
 	BUG_ON(*pos < 0 || *pos > erst_record_id_cache.len);
 
 	mutex_lock(&erst_record_id_cache.lock);
 	entries = erst_record_id_cache.entries;
-	for (; *pos < erst_record_id_cache.len; (*pos)++)
-		if (entries[*pos] != APEI_ERST_INVALID_RECORD_ID)
-			break;
+	क्रम (; *pos < erst_record_id_cache.len; (*pos)++)
+		अगर (entries[*pos] != APEI_ERST_INVALID_RECORD_ID)
+			अवरोध;
 	/* found next record id in cache */
-	if (*pos < erst_record_id_cache.len) {
+	अगर (*pos < erst_record_id_cache.len) अणु
 		*record_id = entries[*pos];
 		(*pos)++;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/* Try to add one more record ID to cache */
 	rc = __erst_record_id_cache_add_one();
-	if (rc < 0)
-		goto out_unlock;
+	अगर (rc < 0)
+		जाओ out_unlock;
 	/* successfully add one new ID */
-	if (rc == 1) {
+	अगर (rc == 1) अणु
 		*record_id = erst_record_id_cache.entries[*pos];
 		(*pos)++;
 		rc = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		*pos = -1;
 		*record_id = APEI_ERST_INVALID_RECORD_ID;
-	}
+	पूर्ण
 out_unlock:
 	mutex_unlock(&erst_record_id_cache.lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(erst_get_record_id_next);
 
 /* erst_record_id_cache.lock must be held by caller */
-static void __erst_record_id_cache_compact(void)
-{
-	int i, wpos = 0;
+अटल व्योम __erst_record_id_cache_compact(व्योम)
+अणु
+	पूर्णांक i, wpos = 0;
 	u64 *entries;
 
-	if (erst_record_id_cache.refcount)
-		return;
+	अगर (erst_record_id_cache.refcount)
+		वापस;
 
 	entries = erst_record_id_cache.entries;
-	for (i = 0; i < erst_record_id_cache.len; i++) {
-		if (entries[i] == APEI_ERST_INVALID_RECORD_ID)
-			continue;
-		if (wpos != i)
+	क्रम (i = 0; i < erst_record_id_cache.len; i++) अणु
+		अगर (entries[i] == APEI_ERST_INVALID_RECORD_ID)
+			जारी;
+		अगर (wpos != i)
 			entries[wpos] = entries[i];
 		wpos++;
-	}
+	पूर्ण
 	erst_record_id_cache.len = wpos;
-}
+पूर्ण
 
-void erst_get_record_id_end(void)
-{
+व्योम erst_get_record_id_end(व्योम)
+अणु
 	/*
 	 * erst_disable != 0 should be detected by invoker via the
-	 * return value of erst_get_record_id_begin/next, so this
-	 * function should not be called for erst_disable != 0.
+	 * वापस value of erst_get_record_id_begin/next, so this
+	 * function should not be called क्रम erst_disable != 0.
 	 */
 	BUG_ON(erst_disable);
 
@@ -615,570 +616,570 @@ void erst_get_record_id_end(void)
 	BUG_ON(erst_record_id_cache.refcount < 0);
 	__erst_record_id_cache_compact();
 	mutex_unlock(&erst_record_id_cache.lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(erst_get_record_id_end);
 
-static int __erst_write_to_storage(u64 offset)
-{
-	struct apei_exec_context ctx;
-	u64 timeout = FIRMWARE_TIMEOUT;
+अटल पूर्णांक __erst_ग_लिखो_to_storage(u64 offset)
+अणु
+	काष्ठा apei_exec_context ctx;
+	u64 समयout = FIRMWARE_TIMEOUT;
 	u64 val;
-	int rc;
+	पूर्णांक rc;
 
 	erst_exec_ctx_init(&ctx);
 	rc = apei_exec_run_optional(&ctx, ACPI_ERST_BEGIN_WRITE);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	apei_exec_ctx_set_input(&ctx, offset);
 	rc = apei_exec_run(&ctx, ACPI_ERST_SET_RECORD_OFFSET);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = apei_exec_run(&ctx, ACPI_ERST_EXECUTE_OPERATION);
-	if (rc)
-		return rc;
-	for (;;) {
+	अगर (rc)
+		वापस rc;
+	क्रम (;;) अणु
 		rc = apei_exec_run(&ctx, ACPI_ERST_CHECK_BUSY_STATUS);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		val = apei_exec_ctx_get_output(&ctx);
-		if (!val)
-			break;
-		if (erst_timedout(&timeout, SPIN_UNIT))
-			return -EIO;
-	}
+		अगर (!val)
+			अवरोध;
+		अगर (erst_समयकरोut(&समयout, SPIN_UNIT))
+			वापस -EIO;
+	पूर्ण
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_COMMAND_STATUS);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	val = apei_exec_ctx_get_output(&ctx);
 	rc = apei_exec_run_optional(&ctx, ACPI_ERST_END);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return erst_errno(val);
-}
+	वापस erst_त्रुटि_सं(val);
+पूर्ण
 
-static int __erst_read_from_storage(u64 record_id, u64 offset)
-{
-	struct apei_exec_context ctx;
-	u64 timeout = FIRMWARE_TIMEOUT;
+अटल पूर्णांक __erst_पढ़ो_from_storage(u64 record_id, u64 offset)
+अणु
+	काष्ठा apei_exec_context ctx;
+	u64 समयout = FIRMWARE_TIMEOUT;
 	u64 val;
-	int rc;
+	पूर्णांक rc;
 
 	erst_exec_ctx_init(&ctx);
 	rc = apei_exec_run_optional(&ctx, ACPI_ERST_BEGIN_READ);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	apei_exec_ctx_set_input(&ctx, offset);
 	rc = apei_exec_run(&ctx, ACPI_ERST_SET_RECORD_OFFSET);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	apei_exec_ctx_set_input(&ctx, record_id);
 	rc = apei_exec_run(&ctx, ACPI_ERST_SET_RECORD_ID);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = apei_exec_run(&ctx, ACPI_ERST_EXECUTE_OPERATION);
-	if (rc)
-		return rc;
-	for (;;) {
+	अगर (rc)
+		वापस rc;
+	क्रम (;;) अणु
 		rc = apei_exec_run(&ctx, ACPI_ERST_CHECK_BUSY_STATUS);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		val = apei_exec_ctx_get_output(&ctx);
-		if (!val)
-			break;
-		if (erst_timedout(&timeout, SPIN_UNIT))
-			return -EIO;
-	}
+		अगर (!val)
+			अवरोध;
+		अगर (erst_समयकरोut(&समयout, SPIN_UNIT))
+			वापस -EIO;
+	पूर्ण
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_COMMAND_STATUS);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	val = apei_exec_ctx_get_output(&ctx);
 	rc = apei_exec_run_optional(&ctx, ACPI_ERST_END);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return erst_errno(val);
-}
+	वापस erst_त्रुटि_सं(val);
+पूर्ण
 
-static int __erst_clear_from_storage(u64 record_id)
-{
-	struct apei_exec_context ctx;
-	u64 timeout = FIRMWARE_TIMEOUT;
+अटल पूर्णांक __erst_clear_from_storage(u64 record_id)
+अणु
+	काष्ठा apei_exec_context ctx;
+	u64 समयout = FIRMWARE_TIMEOUT;
 	u64 val;
-	int rc;
+	पूर्णांक rc;
 
 	erst_exec_ctx_init(&ctx);
 	rc = apei_exec_run_optional(&ctx, ACPI_ERST_BEGIN_CLEAR);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	apei_exec_ctx_set_input(&ctx, record_id);
 	rc = apei_exec_run(&ctx, ACPI_ERST_SET_RECORD_ID);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = apei_exec_run(&ctx, ACPI_ERST_EXECUTE_OPERATION);
-	if (rc)
-		return rc;
-	for (;;) {
+	अगर (rc)
+		वापस rc;
+	क्रम (;;) अणु
 		rc = apei_exec_run(&ctx, ACPI_ERST_CHECK_BUSY_STATUS);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		val = apei_exec_ctx_get_output(&ctx);
-		if (!val)
-			break;
-		if (erst_timedout(&timeout, SPIN_UNIT))
-			return -EIO;
-	}
+		अगर (!val)
+			अवरोध;
+		अगर (erst_समयकरोut(&समयout, SPIN_UNIT))
+			वापस -EIO;
+	पूर्ण
 	rc = apei_exec_run(&ctx, ACPI_ERST_GET_COMMAND_STATUS);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	val = apei_exec_ctx_get_output(&ctx);
 	rc = apei_exec_run_optional(&ctx, ACPI_ERST_END);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return erst_errno(val);
-}
+	वापस erst_त्रुटि_सं(val);
+पूर्ण
 
 /* NVRAM ERST Error Log Address Range is not supported yet */
-static void pr_unimpl_nvram(void)
-{
-	if (printk_ratelimit())
+अटल व्योम pr_unimpl_nvram(व्योम)
+अणु
+	अगर (prपूर्णांकk_ratelimit())
 		pr_warn("NVRAM ERST Log Address Range not implemented yet.\n");
-}
+पूर्ण
 
-static int __erst_write_to_nvram(const struct cper_record_header *record)
-{
-	/* do not print message, because printk is not safe for NMI */
-	return -ENOSYS;
-}
+अटल पूर्णांक __erst_ग_लिखो_to_nvram(स्थिर काष्ठा cper_record_header *record)
+अणु
+	/* करो not prपूर्णांक message, because prपूर्णांकk is not safe क्रम NMI */
+	वापस -ENOSYS;
+पूर्ण
 
-static int __erst_read_to_erange_from_nvram(u64 record_id, u64 *offset)
-{
+अटल पूर्णांक __erst_पढ़ो_to_erange_from_nvram(u64 record_id, u64 *offset)
+अणु
 	pr_unimpl_nvram();
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-static int __erst_clear_from_nvram(u64 record_id)
-{
+अटल पूर्णांक __erst_clear_from_nvram(u64 record_id)
+अणु
 	pr_unimpl_nvram();
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-int erst_write(const struct cper_record_header *record)
-{
-	int rc;
-	unsigned long flags;
-	struct cper_record_header *rcd_erange;
+पूर्णांक erst_ग_लिखो(स्थिर काष्ठा cper_record_header *record)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ flags;
+	काष्ठा cper_record_header *rcd_erange;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
-	if (memcmp(record->signature, CPER_SIG_RECORD, CPER_SIG_SIZE))
-		return -EINVAL;
+	अगर (स_भेद(record->signature, CPER_SIG_RECORD, CPER_SIG_SIZE))
+		वापस -EINVAL;
 
-	if (erst_erange.attr & ERST_RANGE_NVRAM) {
-		if (!raw_spin_trylock_irqsave(&erst_lock, flags))
-			return -EBUSY;
-		rc = __erst_write_to_nvram(record);
+	अगर (erst_erange.attr & ERST_RANGE_NVRAM) अणु
+		अगर (!raw_spin_trylock_irqsave(&erst_lock, flags))
+			वापस -EBUSY;
+		rc = __erst_ग_लिखो_to_nvram(record);
 		raw_spin_unlock_irqrestore(&erst_lock, flags);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (record->record_length > erst_erange.size)
-		return -EINVAL;
+	अगर (record->record_length > erst_erange.size)
+		वापस -EINVAL;
 
-	if (!raw_spin_trylock_irqsave(&erst_lock, flags))
-		return -EBUSY;
-	memcpy(erst_erange.vaddr, record, record->record_length);
+	अगर (!raw_spin_trylock_irqsave(&erst_lock, flags))
+		वापस -EBUSY;
+	स_नकल(erst_erange.vaddr, record, record->record_length);
 	rcd_erange = erst_erange.vaddr;
-	/* signature for serialization system */
-	memcpy(&rcd_erange->persistence_information, "ER", 2);
+	/* signature क्रम serialization प्रणाली */
+	स_नकल(&rcd_erange->persistence_inक्रमmation, "ER", 2);
 
-	rc = __erst_write_to_storage(0);
+	rc = __erst_ग_लिखो_to_storage(0);
 	raw_spin_unlock_irqrestore(&erst_lock, flags);
 
-	return rc;
-}
-EXPORT_SYMBOL_GPL(erst_write);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(erst_ग_लिखो);
 
-static int __erst_read_to_erange(u64 record_id, u64 *offset)
-{
-	int rc;
+अटल पूर्णांक __erst_पढ़ो_to_erange(u64 record_id, u64 *offset)
+अणु
+	पूर्णांक rc;
 
-	if (erst_erange.attr & ERST_RANGE_NVRAM)
-		return __erst_read_to_erange_from_nvram(
+	अगर (erst_erange.attr & ERST_RANGE_NVRAM)
+		वापस __erst_पढ़ो_to_erange_from_nvram(
 			record_id, offset);
 
-	rc = __erst_read_from_storage(record_id, 0);
-	if (rc)
-		return rc;
+	rc = __erst_पढ़ो_from_storage(record_id, 0);
+	अगर (rc)
+		वापस rc;
 	*offset = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t __erst_read(u64 record_id, struct cper_record_header *record,
-			   size_t buflen)
-{
-	int rc;
+अटल sमाप_प्रकार __erst_पढ़ो(u64 record_id, काष्ठा cper_record_header *record,
+			   माप_प्रकार buflen)
+अणु
+	पूर्णांक rc;
 	u64 offset, len = 0;
-	struct cper_record_header *rcd_tmp;
+	काष्ठा cper_record_header *rcd_पंचांगp;
 
-	rc = __erst_read_to_erange(record_id, &offset);
-	if (rc)
-		return rc;
-	rcd_tmp = erst_erange.vaddr + offset;
-	len = rcd_tmp->record_length;
-	if (len <= buflen)
-		memcpy(record, rcd_tmp, len);
+	rc = __erst_पढ़ो_to_erange(record_id, &offset);
+	अगर (rc)
+		वापस rc;
+	rcd_पंचांगp = erst_erange.vaddr + offset;
+	len = rcd_पंचांगp->record_length;
+	अगर (len <= buflen)
+		स_नकल(record, rcd_पंचांगp, len);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
- * If return value > buflen, the buffer size is not big enough,
- * else if return value < 0, something goes wrong,
- * else everything is OK, and return value is record length
+ * If वापस value > buflen, the buffer size is not big enough,
+ * अन्यथा अगर वापस value < 0, something goes wrong,
+ * अन्यथा everything is OK, and वापस value is record length
  */
-ssize_t erst_read(u64 record_id, struct cper_record_header *record,
-		  size_t buflen)
-{
-	ssize_t len;
-	unsigned long flags;
+sमाप_प्रकार erst_पढ़ो(u64 record_id, काष्ठा cper_record_header *record,
+		  माप_प्रकार buflen)
+अणु
+	sमाप_प्रकार len;
+	अचिन्हित दीर्घ flags;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
 	raw_spin_lock_irqsave(&erst_lock, flags);
-	len = __erst_read(record_id, record, buflen);
+	len = __erst_पढ़ो(record_id, record, buflen);
 	raw_spin_unlock_irqrestore(&erst_lock, flags);
-	return len;
-}
-EXPORT_SYMBOL_GPL(erst_read);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(erst_पढ़ो);
 
-int erst_clear(u64 record_id)
-{
-	int rc, i;
-	unsigned long flags;
+पूर्णांक erst_clear(u64 record_id)
+अणु
+	पूर्णांक rc, i;
+	अचिन्हित दीर्घ flags;
 	u64 *entries;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
-	rc = mutex_lock_interruptible(&erst_record_id_cache.lock);
-	if (rc)
-		return rc;
+	rc = mutex_lock_पूर्णांकerruptible(&erst_record_id_cache.lock);
+	अगर (rc)
+		वापस rc;
 	raw_spin_lock_irqsave(&erst_lock, flags);
-	if (erst_erange.attr & ERST_RANGE_NVRAM)
+	अगर (erst_erange.attr & ERST_RANGE_NVRAM)
 		rc = __erst_clear_from_nvram(record_id);
-	else
+	अन्यथा
 		rc = __erst_clear_from_storage(record_id);
 	raw_spin_unlock_irqrestore(&erst_lock, flags);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	entries = erst_record_id_cache.entries;
-	for (i = 0; i < erst_record_id_cache.len; i++) {
-		if (entries[i] == record_id)
+	क्रम (i = 0; i < erst_record_id_cache.len; i++) अणु
+		अगर (entries[i] == record_id)
 			entries[i] = APEI_ERST_INVALID_RECORD_ID;
-	}
+	पूर्ण
 	__erst_record_id_cache_compact();
 out:
 	mutex_unlock(&erst_record_id_cache.lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(erst_clear);
 
-static int __init setup_erst_disable(char *str)
-{
+अटल पूर्णांक __init setup_erst_disable(अक्षर *str)
+अणु
 	erst_disable = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __setup("erst_disable", setup_erst_disable);
 
-static int erst_check_table(struct acpi_table_erst *erst_tab)
-{
-	if ((erst_tab->header_length !=
-	     (sizeof(struct acpi_table_erst) - sizeof(erst_tab->header)))
-	    && (erst_tab->header_length != sizeof(struct acpi_table_erst)))
-		return -EINVAL;
-	if (erst_tab->header.length < sizeof(struct acpi_table_erst))
-		return -EINVAL;
-	if (erst_tab->entries !=
-	    (erst_tab->header.length - sizeof(struct acpi_table_erst)) /
-	    sizeof(struct acpi_erst_entry))
-		return -EINVAL;
+अटल पूर्णांक erst_check_table(काष्ठा acpi_table_erst *erst_tab)
+अणु
+	अगर ((erst_tab->header_length !=
+	     (माप(काष्ठा acpi_table_erst) - माप(erst_tab->header)))
+	    && (erst_tab->header_length != माप(काष्ठा acpi_table_erst)))
+		वापस -EINVAL;
+	अगर (erst_tab->header.length < माप(काष्ठा acpi_table_erst))
+		वापस -EINVAL;
+	अगर (erst_tab->entries !=
+	    (erst_tab->header.length - माप(काष्ठा acpi_table_erst)) /
+	    माप(काष्ठा acpi_erst_entry))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erst_open_pstore(struct pstore_info *psi);
-static int erst_close_pstore(struct pstore_info *psi);
-static ssize_t erst_reader(struct pstore_record *record);
-static int erst_writer(struct pstore_record *record);
-static int erst_clearer(struct pstore_record *record);
+अटल पूर्णांक erst_खोलो_pstore(काष्ठा pstore_info *psi);
+अटल पूर्णांक erst_बंद_pstore(काष्ठा pstore_info *psi);
+अटल sमाप_प्रकार erst_पढ़ोer(काष्ठा pstore_record *record);
+अटल पूर्णांक erst_ग_लिखोr(काष्ठा pstore_record *record);
+अटल पूर्णांक erst_clearer(काष्ठा pstore_record *record);
 
-static struct pstore_info erst_info = {
+अटल काष्ठा pstore_info erst_info = अणु
 	.owner		= THIS_MODULE,
 	.name		= "erst",
 	.flags		= PSTORE_FLAGS_DMESG,
-	.open		= erst_open_pstore,
-	.close		= erst_close_pstore,
-	.read		= erst_reader,
-	.write		= erst_writer,
+	.खोलो		= erst_खोलो_pstore,
+	.बंद		= erst_बंद_pstore,
+	.पढ़ो		= erst_पढ़ोer,
+	.ग_लिखो		= erst_ग_लिखोr,
 	.erase		= erst_clearer
-};
+पूर्ण;
 
-#define CPER_CREATOR_PSTORE						\
+#घोषणा CPER_CREATOR_PSTORE						\
 	GUID_INIT(0x75a574e3, 0x5052, 0x4b29, 0x8a, 0x8e, 0xbe, 0x2c,	\
 		  0x64, 0x90, 0xb8, 0x9d)
-#define CPER_SECTION_TYPE_DMESG						\
+#घोषणा CPER_SECTION_TYPE_DMESG						\
 	GUID_INIT(0xc197e04e, 0xd545, 0x4a70, 0x9c, 0x17, 0xa5, 0x54,	\
 		  0x94, 0x19, 0xeb, 0x12)
-#define CPER_SECTION_TYPE_DMESG_Z					\
+#घोषणा CPER_SECTION_TYPE_DMESG_Z					\
 	GUID_INIT(0x4f118707, 0x04dd, 0x4055, 0xb5, 0xdd, 0x95, 0x6d,	\
 		  0x34, 0xdd, 0xfa, 0xc6)
-#define CPER_SECTION_TYPE_MCE						\
+#घोषणा CPER_SECTION_TYPE_MCE						\
 	GUID_INIT(0xfe08ffbe, 0x95e4, 0x4be7, 0xbc, 0x73, 0x40, 0x96,	\
 		  0x04, 0x4a, 0x38, 0xfc)
 
-struct cper_pstore_record {
-	struct cper_record_header hdr;
-	struct cper_section_descriptor sec_hdr;
-	char data[];
-} __packed;
+काष्ठा cper_pstore_record अणु
+	काष्ठा cper_record_header hdr;
+	काष्ठा cper_section_descriptor sec_hdr;
+	अक्षर data[];
+पूर्ण __packed;
 
-static int reader_pos;
+अटल पूर्णांक पढ़ोer_pos;
 
-static int erst_open_pstore(struct pstore_info *psi)
-{
-	int rc;
+अटल पूर्णांक erst_खोलो_pstore(काष्ठा pstore_info *psi)
+अणु
+	पूर्णांक rc;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
-	rc = erst_get_record_id_begin(&reader_pos);
+	rc = erst_get_record_id_begin(&पढ़ोer_pos);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int erst_close_pstore(struct pstore_info *psi)
-{
+अटल पूर्णांक erst_बंद_pstore(काष्ठा pstore_info *psi)
+अणु
 	erst_get_record_id_end();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t erst_reader(struct pstore_record *record)
-{
-	int rc;
-	ssize_t len = 0;
+अटल sमाप_प्रकार erst_पढ़ोer(काष्ठा pstore_record *record)
+अणु
+	पूर्णांक rc;
+	sमाप_प्रकार len = 0;
 	u64 record_id;
-	struct cper_pstore_record *rcd;
-	size_t rcd_len = sizeof(*rcd) + erst_info.bufsize;
+	काष्ठा cper_pstore_record *rcd;
+	माप_प्रकार rcd_len = माप(*rcd) + erst_info.bufsize;
 
-	if (erst_disable)
-		return -ENODEV;
+	अगर (erst_disable)
+		वापस -ENODEV;
 
-	rcd = kmalloc(rcd_len, GFP_KERNEL);
-	if (!rcd) {
+	rcd = kदो_स्मृति(rcd_len, GFP_KERNEL);
+	अगर (!rcd) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 skip:
-	rc = erst_get_record_id_next(&reader_pos, &record_id);
-	if (rc)
-		goto out;
+	rc = erst_get_record_id_next(&पढ़ोer_pos, &record_id);
+	अगर (rc)
+		जाओ out;
 
 	/* no more record */
-	if (record_id == APEI_ERST_INVALID_RECORD_ID) {
+	अगर (record_id == APEI_ERST_INVALID_RECORD_ID) अणु
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = erst_read(record_id, &rcd->hdr, rcd_len);
-	/* The record may be cleared by others, try read next record */
-	if (len == -ENOENT)
-		goto skip;
-	else if (len < 0 || len < sizeof(*rcd)) {
+	len = erst_पढ़ो(record_id, &rcd->hdr, rcd_len);
+	/* The record may be cleared by others, try पढ़ो next record */
+	अगर (len == -ENOENT)
+		जाओ skip;
+	अन्यथा अगर (len < 0 || len < माप(*rcd)) अणु
 		rc = -EIO;
-		goto out;
-	}
-	if (!guid_equal(&rcd->hdr.creator_id, &CPER_CREATOR_PSTORE))
-		goto skip;
+		जाओ out;
+	पूर्ण
+	अगर (!guid_equal(&rcd->hdr.creator_id, &CPER_CREATOR_PSTORE))
+		जाओ skip;
 
-	record->buf = kmalloc(len, GFP_KERNEL);
-	if (record->buf == NULL) {
+	record->buf = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (record->buf == शून्य) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
-	memcpy(record->buf, rcd->data, len - sizeof(*rcd));
+		जाओ out;
+	पूर्ण
+	स_नकल(record->buf, rcd->data, len - माप(*rcd));
 	record->id = record_id;
 	record->compressed = false;
 	record->ecc_notice_size = 0;
-	if (guid_equal(&rcd->sec_hdr.section_type, &CPER_SECTION_TYPE_DMESG_Z)) {
+	अगर (guid_equal(&rcd->sec_hdr.section_type, &CPER_SECTION_TYPE_DMESG_Z)) अणु
 		record->type = PSTORE_TYPE_DMESG;
 		record->compressed = true;
-	} else if (guid_equal(&rcd->sec_hdr.section_type, &CPER_SECTION_TYPE_DMESG))
+	पूर्ण अन्यथा अगर (guid_equal(&rcd->sec_hdr.section_type, &CPER_SECTION_TYPE_DMESG))
 		record->type = PSTORE_TYPE_DMESG;
-	else if (guid_equal(&rcd->sec_hdr.section_type, &CPER_SECTION_TYPE_MCE))
+	अन्यथा अगर (guid_equal(&rcd->sec_hdr.section_type, &CPER_SECTION_TYPE_MCE))
 		record->type = PSTORE_TYPE_MCE;
-	else
+	अन्यथा
 		record->type = PSTORE_TYPE_MAX;
 
-	if (rcd->hdr.validation_bits & CPER_VALID_TIMESTAMP)
-		record->time.tv_sec = rcd->hdr.timestamp;
-	else
-		record->time.tv_sec = 0;
-	record->time.tv_nsec = 0;
+	अगर (rcd->hdr.validation_bits & CPER_VALID_TIMESTAMP)
+		record->समय.tv_sec = rcd->hdr.बारtamp;
+	अन्यथा
+		record->समय.tv_sec = 0;
+	record->समय.tv_nsec = 0;
 
 out:
-	kfree(rcd);
-	return (rc < 0) ? rc : (len - sizeof(*rcd));
-}
+	kमुक्त(rcd);
+	वापस (rc < 0) ? rc : (len - माप(*rcd));
+पूर्ण
 
-static int erst_writer(struct pstore_record *record)
-{
-	struct cper_pstore_record *rcd = (struct cper_pstore_record *)
-					(erst_info.buf - sizeof(*rcd));
-	int ret;
+अटल पूर्णांक erst_ग_लिखोr(काष्ठा pstore_record *record)
+अणु
+	काष्ठा cper_pstore_record *rcd = (काष्ठा cper_pstore_record *)
+					(erst_info.buf - माप(*rcd));
+	पूर्णांक ret;
 
-	memset(rcd, 0, sizeof(*rcd));
-	memcpy(rcd->hdr.signature, CPER_SIG_RECORD, CPER_SIG_SIZE);
+	स_रखो(rcd, 0, माप(*rcd));
+	स_नकल(rcd->hdr.signature, CPER_SIG_RECORD, CPER_SIG_SIZE);
 	rcd->hdr.revision = CPER_RECORD_REV;
 	rcd->hdr.signature_end = CPER_SIG_END;
 	rcd->hdr.section_count = 1;
 	rcd->hdr.error_severity = CPER_SEV_FATAL;
-	/* timestamp valid. platform_id, partition_id are invalid */
+	/* बारtamp valid. platक्रमm_id, partition_id are invalid */
 	rcd->hdr.validation_bits = CPER_VALID_TIMESTAMP;
-	rcd->hdr.timestamp = ktime_get_real_seconds();
-	rcd->hdr.record_length = sizeof(*rcd) + record->size;
+	rcd->hdr.बारtamp = kसमय_get_real_seconds();
+	rcd->hdr.record_length = माप(*rcd) + record->size;
 	rcd->hdr.creator_id = CPER_CREATOR_PSTORE;
-	rcd->hdr.notification_type = CPER_NOTIFY_MCE;
+	rcd->hdr.notअगरication_type = CPER_NOTIFY_MCE;
 	rcd->hdr.record_id = cper_next_record_id();
 	rcd->hdr.flags = CPER_HW_ERROR_FLAGS_PREVERR;
 
-	rcd->sec_hdr.section_offset = sizeof(*rcd);
+	rcd->sec_hdr.section_offset = माप(*rcd);
 	rcd->sec_hdr.section_length = record->size;
 	rcd->sec_hdr.revision = CPER_SEC_REV;
 	/* fru_id and fru_text is invalid */
 	rcd->sec_hdr.validation_bits = 0;
 	rcd->sec_hdr.flags = CPER_SEC_PRIMARY;
-	switch (record->type) {
-	case PSTORE_TYPE_DMESG:
-		if (record->compressed)
+	चयन (record->type) अणु
+	हाल PSTORE_TYPE_DMESG:
+		अगर (record->compressed)
 			rcd->sec_hdr.section_type = CPER_SECTION_TYPE_DMESG_Z;
-		else
+		अन्यथा
 			rcd->sec_hdr.section_type = CPER_SECTION_TYPE_DMESG;
-		break;
-	case PSTORE_TYPE_MCE:
+		अवरोध;
+	हाल PSTORE_TYPE_MCE:
 		rcd->sec_hdr.section_type = CPER_SECTION_TYPE_MCE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	rcd->sec_hdr.section_severity = CPER_SEV_FATAL;
 
-	ret = erst_write(&rcd->hdr);
+	ret = erst_ग_लिखो(&rcd->hdr);
 	record->id = rcd->hdr.record_id;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int erst_clearer(struct pstore_record *record)
-{
-	return erst_clear(record->id);
-}
+अटल पूर्णांक erst_clearer(काष्ठा pstore_record *record)
+अणु
+	वापस erst_clear(record->id);
+पूर्ण
 
-static int __init erst_init(void)
-{
-	int rc = 0;
+अटल पूर्णांक __init erst_init(व्योम)
+अणु
+	पूर्णांक rc = 0;
 	acpi_status status;
-	struct apei_exec_context ctx;
-	struct apei_resources erst_resources;
-	struct resource *r;
-	char *buf;
+	काष्ठा apei_exec_context ctx;
+	काष्ठा apei_resources erst_resources;
+	काष्ठा resource *r;
+	अक्षर *buf;
 
-	if (acpi_disabled)
-		goto err;
+	अगर (acpi_disabled)
+		जाओ err;
 
-	if (erst_disable) {
+	अगर (erst_disable) अणु
 		pr_info(
 	"Error Record Serialization Table (ERST) support is disabled.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	status = acpi_get_table(ACPI_SIG_ERST, 0,
-				(struct acpi_table_header **)&erst_tab);
-	if (status == AE_NOT_FOUND)
-		goto err;
-	else if (ACPI_FAILURE(status)) {
-		const char *msg = acpi_format_exception(status);
+				(काष्ठा acpi_table_header **)&erst_tab);
+	अगर (status == AE_NOT_FOUND)
+		जाओ err;
+	अन्यथा अगर (ACPI_FAILURE(status)) अणु
+		स्थिर अक्षर *msg = acpi_क्रमmat_exception(status);
 		pr_err("Failed to get table, %s\n", msg);
 		rc = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	rc = erst_check_table(erst_tab);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err(FW_BUG "ERST table is invalid.\n");
-		goto err_put_erst_tab;
-	}
+		जाओ err_put_erst_tab;
+	पूर्ण
 
 	apei_resources_init(&erst_resources);
 	erst_exec_ctx_init(&ctx);
 	rc = apei_exec_collect_resources(&ctx, &erst_resources);
-	if (rc)
-		goto err_fini;
+	अगर (rc)
+		जाओ err_fini;
 	rc = apei_resources_request(&erst_resources, "APEI ERST");
-	if (rc)
-		goto err_fini;
+	अगर (rc)
+		जाओ err_fini;
 	rc = apei_exec_pre_map_gars(&ctx);
-	if (rc)
-		goto err_release;
+	अगर (rc)
+		जाओ err_release;
 	rc = erst_get_erange(&erst_erange);
-	if (rc) {
-		if (rc == -ENODEV)
+	अगर (rc) अणु
+		अगर (rc == -ENODEV)
 			pr_info(
 	"The corresponding hardware device or firmware implementation "
 	"is not available.\n");
-		else
+		अन्यथा
 			pr_err("Failed to get Error Log Address Range.\n");
-		goto err_unmap_reg;
-	}
+		जाओ err_unmap_reg;
+	पूर्ण
 
 	r = request_mem_region(erst_erange.base, erst_erange.size, "APEI ERST");
-	if (!r) {
+	अगर (!r) अणु
 		pr_err("Can not request [mem %#010llx-%#010llx] for ERST.\n",
-		       (unsigned long long)erst_erange.base,
-		       (unsigned long long)erst_erange.base + erst_erange.size - 1);
+		       (अचिन्हित दीर्घ दीर्घ)erst_erange.base,
+		       (अचिन्हित दीर्घ दीर्घ)erst_erange.base + erst_erange.size - 1);
 		rc = -EIO;
-		goto err_unmap_reg;
-	}
+		जाओ err_unmap_reg;
+	पूर्ण
 	rc = -ENOMEM;
 	erst_erange.vaddr = ioremap_cache(erst_erange.base,
 					  erst_erange.size);
-	if (!erst_erange.vaddr)
-		goto err_release_erange;
+	अगर (!erst_erange.vaddr)
+		जाओ err_release_erange;
 
 	pr_info(
 	"Error Record Serialization Table (ERST) support is initialized.\n");
 
-	buf = kmalloc(erst_erange.size, GFP_KERNEL);
-	if (buf) {
-		erst_info.buf = buf + sizeof(struct cper_pstore_record);
+	buf = kदो_स्मृति(erst_erange.size, GFP_KERNEL);
+	अगर (buf) अणु
+		erst_info.buf = buf + माप(काष्ठा cper_pstore_record);
 		erst_info.bufsize = erst_erange.size -
-				    sizeof(struct cper_pstore_record);
-		rc = pstore_register(&erst_info);
-		if (rc) {
-			if (rc != -EPERM)
+				    माप(काष्ठा cper_pstore_record);
+		rc = pstore_रेजिस्टर(&erst_info);
+		अगर (rc) अणु
+			अगर (rc != -EPERM)
 				pr_info(
 				"Could not register with persistent store.\n");
-			erst_info.buf = NULL;
+			erst_info.buf = शून्य;
 			erst_info.bufsize = 0;
-			kfree(buf);
-		}
-	} else
+			kमुक्त(buf);
+		पूर्ण
+	पूर्ण अन्यथा
 		pr_err(
 		"Failed to allocate %lld bytes for persistent store error log.\n",
 		erst_erange.size);
@@ -1186,7 +1187,7 @@ static int __init erst_init(void)
 	/* Cleanup ERST Resources */
 	apei_resources_fini(&erst_resources);
 
-	return 0;
+	वापस 0;
 
 err_release_erange:
 	release_mem_region(erst_erange.base, erst_erange.size);
@@ -1197,10 +1198,10 @@ err_release:
 err_fini:
 	apei_resources_fini(&erst_resources);
 err_put_erst_tab:
-	acpi_put_table((struct acpi_table_header *)erst_tab);
+	acpi_put_table((काष्ठा acpi_table_header *)erst_tab);
 err:
 	erst_disable = 1;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 device_initcall(erst_init);

@@ -1,457 +1,458 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2013 NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
 
-static u8 clk_composite_get_parent(struct clk_hw *hw)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *mux_ops = composite->mux_ops;
-	struct clk_hw *mux_hw = composite->mux_hw;
-
-	__clk_hw_set_clk(mux_hw, hw);
-
-	return mux_ops->get_parent(mux_hw);
-}
-
-static int clk_composite_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *mux_ops = composite->mux_ops;
-	struct clk_hw *mux_hw = composite->mux_hw;
+अटल u8 clk_composite_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *mux_ops = composite->mux_ops;
+	काष्ठा clk_hw *mux_hw = composite->mux_hw;
 
 	__clk_hw_set_clk(mux_hw, hw);
 
-	return mux_ops->set_parent(mux_hw, index);
-}
+	वापस mux_ops->get_parent(mux_hw);
+पूर्ण
 
-static unsigned long clk_composite_recalc_rate(struct clk_hw *hw,
-					    unsigned long parent_rate)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *rate_ops = composite->rate_ops;
-	struct clk_hw *rate_hw = composite->rate_hw;
+अटल पूर्णांक clk_composite_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *mux_ops = composite->mux_ops;
+	काष्ठा clk_hw *mux_hw = composite->mux_hw;
+
+	__clk_hw_set_clk(mux_hw, hw);
+
+	वापस mux_ops->set_parent(mux_hw, index);
+पूर्ण
+
+अटल अचिन्हित दीर्घ clk_composite_recalc_rate(काष्ठा clk_hw *hw,
+					    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *rate_ops = composite->rate_ops;
+	काष्ठा clk_hw *rate_hw = composite->rate_hw;
 
 	__clk_hw_set_clk(rate_hw, hw);
 
-	return rate_ops->recalc_rate(rate_hw, parent_rate);
-}
+	वापस rate_ops->recalc_rate(rate_hw, parent_rate);
+पूर्ण
 
-static int clk_composite_determine_rate(struct clk_hw *hw,
-					struct clk_rate_request *req)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *rate_ops = composite->rate_ops;
-	const struct clk_ops *mux_ops = composite->mux_ops;
-	struct clk_hw *rate_hw = composite->rate_hw;
-	struct clk_hw *mux_hw = composite->mux_hw;
-	struct clk_hw *parent;
-	unsigned long parent_rate;
-	long tmp_rate, best_rate = 0;
-	unsigned long rate_diff;
-	unsigned long best_rate_diff = ULONG_MAX;
-	long rate;
-	int i;
+अटल पूर्णांक clk_composite_determine_rate(काष्ठा clk_hw *hw,
+					काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *rate_ops = composite->rate_ops;
+	स्थिर काष्ठा clk_ops *mux_ops = composite->mux_ops;
+	काष्ठा clk_hw *rate_hw = composite->rate_hw;
+	काष्ठा clk_hw *mux_hw = composite->mux_hw;
+	काष्ठा clk_hw *parent;
+	अचिन्हित दीर्घ parent_rate;
+	दीर्घ पंचांगp_rate, best_rate = 0;
+	अचिन्हित दीर्घ rate_dअगरf;
+	अचिन्हित दीर्घ best_rate_dअगरf = अच_दीर्घ_उच्च;
+	दीर्घ rate;
+	पूर्णांक i;
 
-	if (rate_hw && rate_ops && rate_ops->determine_rate) {
+	अगर (rate_hw && rate_ops && rate_ops->determine_rate) अणु
 		__clk_hw_set_clk(rate_hw, hw);
-		return rate_ops->determine_rate(rate_hw, req);
-	} else if (rate_hw && rate_ops && rate_ops->round_rate &&
-		   mux_hw && mux_ops && mux_ops->set_parent) {
-		req->best_parent_hw = NULL;
+		वापस rate_ops->determine_rate(rate_hw, req);
+	पूर्ण अन्यथा अगर (rate_hw && rate_ops && rate_ops->round_rate &&
+		   mux_hw && mux_ops && mux_ops->set_parent) अणु
+		req->best_parent_hw = शून्य;
 
-		if (clk_hw_get_flags(hw) & CLK_SET_RATE_NO_REPARENT) {
+		अगर (clk_hw_get_flags(hw) & CLK_SET_RATE_NO_REPARENT) अणु
 			parent = clk_hw_get_parent(mux_hw);
 			req->best_parent_hw = parent;
 			req->best_parent_rate = clk_hw_get_rate(parent);
 
 			rate = rate_ops->round_rate(rate_hw, req->rate,
 						    &req->best_parent_rate);
-			if (rate < 0)
-				return rate;
+			अगर (rate < 0)
+				वापस rate;
 
 			req->rate = rate;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		for (i = 0; i < clk_hw_get_num_parents(mux_hw); i++) {
+		क्रम (i = 0; i < clk_hw_get_num_parents(mux_hw); i++) अणु
 			parent = clk_hw_get_parent_by_index(mux_hw, i);
-			if (!parent)
-				continue;
+			अगर (!parent)
+				जारी;
 
 			parent_rate = clk_hw_get_rate(parent);
 
-			tmp_rate = rate_ops->round_rate(rate_hw, req->rate,
+			पंचांगp_rate = rate_ops->round_rate(rate_hw, req->rate,
 							&parent_rate);
-			if (tmp_rate < 0)
-				continue;
+			अगर (पंचांगp_rate < 0)
+				जारी;
 
-			rate_diff = abs(req->rate - tmp_rate);
+			rate_dअगरf = असल(req->rate - पंचांगp_rate);
 
-			if (!rate_diff || !req->best_parent_hw
-				       || best_rate_diff > rate_diff) {
+			अगर (!rate_dअगरf || !req->best_parent_hw
+				       || best_rate_dअगरf > rate_dअगरf) अणु
 				req->best_parent_hw = parent;
 				req->best_parent_rate = parent_rate;
-				best_rate_diff = rate_diff;
-				best_rate = tmp_rate;
-			}
+				best_rate_dअगरf = rate_dअगरf;
+				best_rate = पंचांगp_rate;
+			पूर्ण
 
-			if (!rate_diff)
-				return 0;
-		}
+			अगर (!rate_dअगरf)
+				वापस 0;
+		पूर्ण
 
 		req->rate = best_rate;
-		return 0;
-	} else if (mux_hw && mux_ops && mux_ops->determine_rate) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (mux_hw && mux_ops && mux_ops->determine_rate) अणु
 		__clk_hw_set_clk(mux_hw, hw);
-		return mux_ops->determine_rate(mux_hw, req);
-	} else {
+		वापस mux_ops->determine_rate(mux_hw, req);
+	पूर्ण अन्यथा अणु
 		pr_err("clk: clk_composite_determine_rate function called, but no mux or rate callback set!\n");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static long clk_composite_round_rate(struct clk_hw *hw, unsigned long rate,
-				  unsigned long *prate)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *rate_ops = composite->rate_ops;
-	struct clk_hw *rate_hw = composite->rate_hw;
-
-	__clk_hw_set_clk(rate_hw, hw);
-
-	return rate_ops->round_rate(rate_hw, rate, prate);
-}
-
-static int clk_composite_set_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long parent_rate)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *rate_ops = composite->rate_ops;
-	struct clk_hw *rate_hw = composite->rate_hw;
+अटल दीर्घ clk_composite_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *rate_ops = composite->rate_ops;
+	काष्ठा clk_hw *rate_hw = composite->rate_hw;
 
 	__clk_hw_set_clk(rate_hw, hw);
 
-	return rate_ops->set_rate(rate_hw, rate, parent_rate);
-}
+	वापस rate_ops->round_rate(rate_hw, rate, prate);
+पूर्ण
 
-static int clk_composite_set_rate_and_parent(struct clk_hw *hw,
-					     unsigned long rate,
-					     unsigned long parent_rate,
+अटल पूर्णांक clk_composite_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *rate_ops = composite->rate_ops;
+	काष्ठा clk_hw *rate_hw = composite->rate_hw;
+
+	__clk_hw_set_clk(rate_hw, hw);
+
+	वापस rate_ops->set_rate(rate_hw, rate, parent_rate);
+पूर्ण
+
+अटल पूर्णांक clk_composite_set_rate_and_parent(काष्ठा clk_hw *hw,
+					     अचिन्हित दीर्घ rate,
+					     अचिन्हित दीर्घ parent_rate,
 					     u8 index)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *rate_ops = composite->rate_ops;
-	const struct clk_ops *mux_ops = composite->mux_ops;
-	struct clk_hw *rate_hw = composite->rate_hw;
-	struct clk_hw *mux_hw = composite->mux_hw;
-	unsigned long temp_rate;
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *rate_ops = composite->rate_ops;
+	स्थिर काष्ठा clk_ops *mux_ops = composite->mux_ops;
+	काष्ठा clk_hw *rate_hw = composite->rate_hw;
+	काष्ठा clk_hw *mux_hw = composite->mux_hw;
+	अचिन्हित दीर्घ temp_rate;
 
 	__clk_hw_set_clk(rate_hw, hw);
 	__clk_hw_set_clk(mux_hw, hw);
 
 	temp_rate = rate_ops->recalc_rate(rate_hw, parent_rate);
-	if (temp_rate > rate) {
+	अगर (temp_rate > rate) अणु
 		rate_ops->set_rate(rate_hw, rate, parent_rate);
 		mux_ops->set_parent(mux_hw, index);
-	} else {
+	पूर्ण अन्यथा अणु
 		mux_ops->set_parent(mux_hw, index);
 		rate_ops->set_rate(rate_hw, rate, parent_rate);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_composite_is_enabled(struct clk_hw *hw)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *gate_ops = composite->gate_ops;
-	struct clk_hw *gate_hw = composite->gate_hw;
+अटल पूर्णांक clk_composite_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *gate_ops = composite->gate_ops;
+	काष्ठा clk_hw *gate_hw = composite->gate_hw;
 
 	__clk_hw_set_clk(gate_hw, hw);
 
-	return gate_ops->is_enabled(gate_hw);
-}
+	वापस gate_ops->is_enabled(gate_hw);
+पूर्ण
 
-static int clk_composite_enable(struct clk_hw *hw)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *gate_ops = composite->gate_ops;
-	struct clk_hw *gate_hw = composite->gate_hw;
+अटल पूर्णांक clk_composite_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *gate_ops = composite->gate_ops;
+	काष्ठा clk_hw *gate_hw = composite->gate_hw;
 
 	__clk_hw_set_clk(gate_hw, hw);
 
-	return gate_ops->enable(gate_hw);
-}
+	वापस gate_ops->enable(gate_hw);
+पूर्ण
 
-static void clk_composite_disable(struct clk_hw *hw)
-{
-	struct clk_composite *composite = to_clk_composite(hw);
-	const struct clk_ops *gate_ops = composite->gate_ops;
-	struct clk_hw *gate_hw = composite->gate_hw;
+अटल व्योम clk_composite_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_composite *composite = to_clk_composite(hw);
+	स्थिर काष्ठा clk_ops *gate_ops = composite->gate_ops;
+	काष्ठा clk_hw *gate_hw = composite->gate_hw;
 
 	__clk_hw_set_clk(gate_hw, hw);
 
 	gate_ops->disable(gate_hw);
-}
+पूर्ण
 
-static struct clk_hw *__clk_hw_register_composite(struct device *dev,
-			const char *name, const char * const *parent_names,
-			const struct clk_parent_data *pdata, int num_parents,
-			struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
-			struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
-			struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
-			unsigned long flags)
-{
-	struct clk_hw *hw;
-	struct clk_init_data init = {};
-	struct clk_composite *composite;
-	struct clk_ops *clk_composite_ops;
-	int ret;
+अटल काष्ठा clk_hw *__clk_hw_रेजिस्टर_composite(काष्ठा device *dev,
+			स्थिर अक्षर *name, स्थिर अक्षर * स्थिर *parent_names,
+			स्थिर काष्ठा clk_parent_data *pdata, पूर्णांक num_parents,
+			काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
+			काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
+			काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
+			अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	काष्ठा clk_composite *composite;
+	काष्ठा clk_ops *clk_composite_ops;
+	पूर्णांक ret;
 
-	composite = kzalloc(sizeof(*composite), GFP_KERNEL);
-	if (!composite)
-		return ERR_PTR(-ENOMEM);
+	composite = kzalloc(माप(*composite), GFP_KERNEL);
+	अगर (!composite)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.flags = flags;
-	if (parent_names)
+	अगर (parent_names)
 		init.parent_names = parent_names;
-	else
+	अन्यथा
 		init.parent_data = pdata;
 	init.num_parents = num_parents;
 	hw = &composite->hw;
 
 	clk_composite_ops = &composite->ops;
 
-	if (mux_hw && mux_ops) {
-		if (!mux_ops->get_parent) {
+	अगर (mux_hw && mux_ops) अणु
+		अगर (!mux_ops->get_parent) अणु
 			hw = ERR_PTR(-EINVAL);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		composite->mux_hw = mux_hw;
 		composite->mux_ops = mux_ops;
 		clk_composite_ops->get_parent = clk_composite_get_parent;
-		if (mux_ops->set_parent)
+		अगर (mux_ops->set_parent)
 			clk_composite_ops->set_parent = clk_composite_set_parent;
-		if (mux_ops->determine_rate)
+		अगर (mux_ops->determine_rate)
 			clk_composite_ops->determine_rate = clk_composite_determine_rate;
-	}
+	पूर्ण
 
-	if (rate_hw && rate_ops) {
-		if (!rate_ops->recalc_rate) {
+	अगर (rate_hw && rate_ops) अणु
+		अगर (!rate_ops->recalc_rate) अणु
 			hw = ERR_PTR(-EINVAL);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		clk_composite_ops->recalc_rate = clk_composite_recalc_rate;
 
-		if (rate_ops->determine_rate)
+		अगर (rate_ops->determine_rate)
 			clk_composite_ops->determine_rate =
 				clk_composite_determine_rate;
-		else if (rate_ops->round_rate)
+		अन्यथा अगर (rate_ops->round_rate)
 			clk_composite_ops->round_rate =
 				clk_composite_round_rate;
 
 		/* .set_rate requires either .round_rate or .determine_rate */
-		if (rate_ops->set_rate) {
-			if (rate_ops->determine_rate || rate_ops->round_rate)
+		अगर (rate_ops->set_rate) अणु
+			अगर (rate_ops->determine_rate || rate_ops->round_rate)
 				clk_composite_ops->set_rate =
 						clk_composite_set_rate;
-			else
+			अन्यथा
 				WARN(1, "%s: missing round_rate op is required\n",
 						__func__);
-		}
+		पूर्ण
 
 		composite->rate_hw = rate_hw;
 		composite->rate_ops = rate_ops;
-	}
+	पूर्ण
 
-	if (mux_hw && mux_ops && rate_hw && rate_ops) {
-		if (mux_ops->set_parent && rate_ops->set_rate)
+	अगर (mux_hw && mux_ops && rate_hw && rate_ops) अणु
+		अगर (mux_ops->set_parent && rate_ops->set_rate)
 			clk_composite_ops->set_rate_and_parent =
 			clk_composite_set_rate_and_parent;
-	}
+	पूर्ण
 
-	if (gate_hw && gate_ops) {
-		if (!gate_ops->is_enabled || !gate_ops->enable ||
-		    !gate_ops->disable) {
+	अगर (gate_hw && gate_ops) अणु
+		अगर (!gate_ops->is_enabled || !gate_ops->enable ||
+		    !gate_ops->disable) अणु
 			hw = ERR_PTR(-EINVAL);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		composite->gate_hw = gate_hw;
 		composite->gate_ops = gate_ops;
 		clk_composite_ops->is_enabled = clk_composite_is_enabled;
 		clk_composite_ops->enable = clk_composite_enable;
 		clk_composite_ops->disable = clk_composite_disable;
-	}
+	पूर्ण
 
 	init.ops = clk_composite_ops;
 	composite->hw.init = &init;
 
-	ret = clk_hw_register(dev, hw);
-	if (ret) {
+	ret = clk_hw_रेजिस्टर(dev, hw);
+	अगर (ret) अणु
 		hw = ERR_PTR(ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (composite->mux_hw)
+	अगर (composite->mux_hw)
 		composite->mux_hw->clk = hw->clk;
 
-	if (composite->rate_hw)
+	अगर (composite->rate_hw)
 		composite->rate_hw->clk = hw->clk;
 
-	if (composite->gate_hw)
+	अगर (composite->gate_hw)
 		composite->gate_hw->clk = hw->clk;
 
-	return hw;
+	वापस hw;
 
 err:
-	kfree(composite);
-	return hw;
-}
+	kमुक्त(composite);
+	वापस hw;
+पूर्ण
 
-struct clk_hw *clk_hw_register_composite(struct device *dev, const char *name,
-			const char * const *parent_names, int num_parents,
-			struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
-			struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
-			struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
-			unsigned long flags)
-{
-	return __clk_hw_register_composite(dev, name, parent_names, NULL,
+काष्ठा clk_hw *clk_hw_रेजिस्टर_composite(काष्ठा device *dev, स्थिर अक्षर *name,
+			स्थिर अक्षर * स्थिर *parent_names, पूर्णांक num_parents,
+			काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
+			काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
+			काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
+			अचिन्हित दीर्घ flags)
+अणु
+	वापस __clk_hw_रेजिस्टर_composite(dev, name, parent_names, शून्य,
 					   num_parents, mux_hw, mux_ops,
 					   rate_hw, rate_ops, gate_hw,
 					   gate_ops, flags);
-}
-EXPORT_SYMBOL_GPL(clk_hw_register_composite);
+पूर्ण
+EXPORT_SYMBOL_GPL(clk_hw_रेजिस्टर_composite);
 
-struct clk_hw *clk_hw_register_composite_pdata(struct device *dev,
-			const char *name,
-			const struct clk_parent_data *parent_data,
-			int num_parents,
-			struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
-			struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
-			struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
-			unsigned long flags)
-{
-	return __clk_hw_register_composite(dev, name, NULL, parent_data,
+काष्ठा clk_hw *clk_hw_रेजिस्टर_composite_pdata(काष्ठा device *dev,
+			स्थिर अक्षर *name,
+			स्थिर काष्ठा clk_parent_data *parent_data,
+			पूर्णांक num_parents,
+			काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
+			काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
+			काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
+			अचिन्हित दीर्घ flags)
+अणु
+	वापस __clk_hw_रेजिस्टर_composite(dev, name, शून्य, parent_data,
 					   num_parents, mux_hw, mux_ops,
 					   rate_hw, rate_ops, gate_hw,
 					   gate_ops, flags);
-}
+पूर्ण
 
-struct clk *clk_register_composite(struct device *dev, const char *name,
-			const char * const *parent_names, int num_parents,
-			struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
-			struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
-			struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
-			unsigned long flags)
-{
-	struct clk_hw *hw;
+काष्ठा clk *clk_रेजिस्टर_composite(काष्ठा device *dev, स्थिर अक्षर *name,
+			स्थिर अक्षर * स्थिर *parent_names, पूर्णांक num_parents,
+			काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
+			काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
+			काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
+			अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा clk_hw *hw;
 
-	hw = clk_hw_register_composite(dev, name, parent_names, num_parents,
+	hw = clk_hw_रेजिस्टर_composite(dev, name, parent_names, num_parents,
 			mux_hw, mux_ops, rate_hw, rate_ops, gate_hw, gate_ops,
 			flags);
-	if (IS_ERR(hw))
-		return ERR_CAST(hw);
-	return hw->clk;
-}
+	अगर (IS_ERR(hw))
+		वापस ERR_CAST(hw);
+	वापस hw->clk;
+पूर्ण
 
-struct clk *clk_register_composite_pdata(struct device *dev, const char *name,
-			const struct clk_parent_data *parent_data,
-			int num_parents,
-			struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
-			struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
-			struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
-			unsigned long flags)
-{
-	struct clk_hw *hw;
+काष्ठा clk *clk_रेजिस्टर_composite_pdata(काष्ठा device *dev, स्थिर अक्षर *name,
+			स्थिर काष्ठा clk_parent_data *parent_data,
+			पूर्णांक num_parents,
+			काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
+			काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
+			काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
+			अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा clk_hw *hw;
 
-	hw = clk_hw_register_composite_pdata(dev, name, parent_data,
+	hw = clk_hw_रेजिस्टर_composite_pdata(dev, name, parent_data,
 			num_parents, mux_hw, mux_ops, rate_hw, rate_ops,
 			gate_hw, gate_ops, flags);
-	if (IS_ERR(hw))
-		return ERR_CAST(hw);
-	return hw->clk;
-}
+	अगर (IS_ERR(hw))
+		वापस ERR_CAST(hw);
+	वापस hw->clk;
+पूर्ण
 
-void clk_unregister_composite(struct clk *clk)
-{
-	struct clk_composite *composite;
-	struct clk_hw *hw;
+व्योम clk_unरेजिस्टर_composite(काष्ठा clk *clk)
+अणु
+	काष्ठा clk_composite *composite;
+	काष्ठा clk_hw *hw;
 
 	hw = __clk_get_hw(clk);
-	if (!hw)
-		return;
+	अगर (!hw)
+		वापस;
 
 	composite = to_clk_composite(hw);
 
-	clk_unregister(clk);
-	kfree(composite);
-}
+	clk_unरेजिस्टर(clk);
+	kमुक्त(composite);
+पूर्ण
 
-void clk_hw_unregister_composite(struct clk_hw *hw)
-{
-	struct clk_composite *composite;
+व्योम clk_hw_unरेजिस्टर_composite(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_composite *composite;
 
 	composite = to_clk_composite(hw);
 
-	clk_hw_unregister(hw);
-	kfree(composite);
-}
-EXPORT_SYMBOL_GPL(clk_hw_unregister_composite);
+	clk_hw_unरेजिस्टर(hw);
+	kमुक्त(composite);
+पूर्ण
+EXPORT_SYMBOL_GPL(clk_hw_unरेजिस्टर_composite);
 
-static void devm_clk_hw_release_composite(struct device *dev, void *res)
-{
-	clk_hw_unregister_composite(*(struct clk_hw **)res);
-}
+अटल व्योम devm_clk_hw_release_composite(काष्ठा device *dev, व्योम *res)
+अणु
+	clk_hw_unरेजिस्टर_composite(*(काष्ठा clk_hw **)res);
+पूर्ण
 
-static struct clk_hw *__devm_clk_hw_register_composite(struct device *dev,
-			const char *name, const char * const *parent_names,
-			const struct clk_parent_data *pdata, int num_parents,
-			struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
-			struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
-			struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
-			unsigned long flags)
-{
-	struct clk_hw **ptr, *hw;
+अटल काष्ठा clk_hw *__devm_clk_hw_रेजिस्टर_composite(काष्ठा device *dev,
+			स्थिर अक्षर *name, स्थिर अक्षर * स्थिर *parent_names,
+			स्थिर काष्ठा clk_parent_data *pdata, पूर्णांक num_parents,
+			काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
+			काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
+			काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
+			अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा clk_hw **ptr, *hw;
 
-	ptr = devres_alloc(devm_clk_hw_release_composite, sizeof(*ptr),
+	ptr = devres_alloc(devm_clk_hw_release_composite, माप(*ptr),
 			   GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
-	hw = __clk_hw_register_composite(dev, name, parent_names, pdata,
+	hw = __clk_hw_रेजिस्टर_composite(dev, name, parent_names, pdata,
 					 num_parents, mux_hw, mux_ops, rate_hw,
 					 rate_ops, gate_hw, gate_ops, flags);
 
-	if (!IS_ERR(hw)) {
+	अगर (!IS_ERR(hw)) अणु
 		*ptr = hw;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-struct clk_hw *devm_clk_hw_register_composite_pdata(struct device *dev,
-			const char *name,
-			const struct clk_parent_data *parent_data,
-			int num_parents,
-			struct clk_hw *mux_hw, const struct clk_ops *mux_ops,
-			struct clk_hw *rate_hw, const struct clk_ops *rate_ops,
-			struct clk_hw *gate_hw, const struct clk_ops *gate_ops,
-			unsigned long flags)
-{
-	return __devm_clk_hw_register_composite(dev, name, NULL, parent_data,
+काष्ठा clk_hw *devm_clk_hw_रेजिस्टर_composite_pdata(काष्ठा device *dev,
+			स्थिर अक्षर *name,
+			स्थिर काष्ठा clk_parent_data *parent_data,
+			पूर्णांक num_parents,
+			काष्ठा clk_hw *mux_hw, स्थिर काष्ठा clk_ops *mux_ops,
+			काष्ठा clk_hw *rate_hw, स्थिर काष्ठा clk_ops *rate_ops,
+			काष्ठा clk_hw *gate_hw, स्थिर काष्ठा clk_ops *gate_ops,
+			अचिन्हित दीर्घ flags)
+अणु
+	वापस __devm_clk_hw_रेजिस्टर_composite(dev, name, शून्य, parent_data,
 						num_parents, mux_hw, mux_ops,
 						rate_hw, rate_ops, gate_hw,
 						gate_ops, flags);
-}
+पूर्ण

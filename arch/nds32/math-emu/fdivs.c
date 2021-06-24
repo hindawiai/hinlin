@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2018 Andes Technology Corporation
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/soft-fp.h>
-#include <math-emu/single.h>
-void fdivs(void *ft, void *fa, void *fb)
-{
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/soft-fp.h>
+#समावेश <math-emu/single.h>
+व्योम fभागs(व्योम *ft, व्योम *fa, व्योम *fb)
+अणु
 	FP_DECL_S(A);
 	FP_DECL_S(B);
 	FP_DECL_S(R);
@@ -15,7 +16,7 @@ void fdivs(void *ft, void *fa, void *fb)
 	FP_UNPACK_SP(A, fa);
 	FP_UNPACK_SP(B, fb);
 
-	if (B_c == FP_CLS_ZERO && A_c != FP_CLS_ZERO)
+	अगर (B_c == FP_CLS_ZERO && A_c != FP_CLS_ZERO)
 		FP_SET_EXCEPTION(FP_EX_DIVZERO);
 
 	FP_DIV_S(R, A, B);
@@ -23,4 +24,4 @@ void fdivs(void *ft, void *fa, void *fb)
 	FP_PACK_SP(ft, R);
 
 	__FPU_FPCSR |= FP_CUR_EXCEPTIONS;
-}
+पूर्ण

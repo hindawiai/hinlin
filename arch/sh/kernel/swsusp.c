@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * swsusp.c - SuperH hibernation support
  *
  * Copyright (C) 2009 Magnus Damm
  */
 
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <linux/suspend.h>
-#include <asm/suspend.h>
-#include <asm/sections.h>
-#include <asm/tlbflush.h>
-#include <asm/page.h>
-#include <asm/fpu.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/suspend.h>
+#समावेश <यंत्र/suspend.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/fpu.h>
 
-struct swsusp_arch_regs swsusp_arch_regs_cpu0;
+काष्ठा swsusp_arch_regs swsusp_arch_regs_cpu0;
 
-int pfn_is_nosave(unsigned long pfn)
-{
-	unsigned long begin_pfn = __pa(&__nosave_begin) >> PAGE_SHIFT;
-	unsigned long end_pfn = PAGE_ALIGN(__pa(&__nosave_end)) >> PAGE_SHIFT;
+पूर्णांक pfn_is_nosave(अचिन्हित दीर्घ pfn)
+अणु
+	अचिन्हित दीर्घ begin_pfn = __pa(&__nosave_begin) >> PAGE_SHIFT;
+	अचिन्हित दीर्घ end_pfn = PAGE_ALIGN(__pa(&__nosave_end)) >> PAGE_SHIFT;
 
-	return (pfn >= begin_pfn) && (pfn < end_pfn);
-}
+	वापस (pfn >= begin_pfn) && (pfn < end_pfn);
+पूर्ण
 
-void save_processor_state(void)
-{
+व्योम save_processor_state(व्योम)
+अणु
 	init_fpu(current);
-}
+पूर्ण
 
-void restore_processor_state(void)
-{
+व्योम restore_processor_state(व्योम)
+अणु
 	local_flush_tlb_all();
-}
+पूर्ण

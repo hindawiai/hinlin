@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * ADC driver for the RICOH RN5T618 power management chip family
+ * ADC driver क्रम the RICOH RN5T618 घातer management chip family
  *
  * Copyright (C) 2019 Andreas Kemnade
  */
 
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mfd/rn5t618.h>
-#include <linux/platform_device.h>
-#include <linux/completion.h>
-#include <linux/regmap.h>
-#include <linux/iio/iio.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mfd/rn5t618.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/slab.h>
 
-#define RN5T618_ADC_CONVERSION_TIMEOUT   (msecs_to_jiffies(500))
-#define RN5T618_REFERENCE_VOLT 2500
+#घोषणा RN5T618_ADC_CONVERSION_TIMEOUT   (msecs_to_jअगरfies(500))
+#घोषणा RN5T618_REFERENCE_VOLT 2500
 
-/* mask for selecting channels for single conversion */
-#define RN5T618_ADCCNT3_CHANNEL_MASK 0x7
-/* average 4-time conversion mode */
-#define RN5T618_ADCCNT3_AVG BIT(3)
-/* set for starting a single conversion, gets cleared by hw when done */
-#define RN5T618_ADCCNT3_GODONE BIT(4)
-/* automatic conversion, period is in ADCCNT2, selected channels are
+/* mask क्रम selecting channels क्रम single conversion */
+#घोषणा RN5T618_ADCCNT3_CHANNEL_MASK 0x7
+/* average 4-समय conversion mode */
+#घोषणा RN5T618_ADCCNT3_AVG BIT(3)
+/* set क्रम starting a single conversion, माला_लो cleared by hw when करोne */
+#घोषणा RN5T618_ADCCNT3_GODONE BIT(4)
+/* स्वतःmatic conversion, period is in ADCCNT2, selected channels are
  * in ADCCNT1
  */
-#define RN5T618_ADCCNT3_AUTO BIT(5)
-#define RN5T618_ADCEND_IRQ BIT(0)
+#घोषणा RN5T618_ADCCNT3_AUTO BIT(5)
+#घोषणा RN5T618_ADCEND_IRQ BIT(0)
 
-struct rn5t618_adc_data {
-	struct device *dev;
-	struct rn5t618 *rn5t618;
-	struct completion conv_completion;
-	int irq;
-};
+काष्ठा rn5t618_adc_data अणु
+	काष्ठा device *dev;
+	काष्ठा rn5t618 *rn5t618;
+	काष्ठा completion conv_completion;
+	पूर्णांक irq;
+पूर्ण;
 
-struct rn5t618_channel_ratios {
+काष्ठा rn5t618_channel_ratios अणु
 	u16 numerator;
 	u16 denominator;
-};
+पूर्ण;
 
-enum rn5t618_channels {
+क्रमागत rn5t618_channels अणु
 	LIMMON = 0,
 	VBAT,
 	VADP,
@@ -54,121 +55,121 @@ enum rn5t618_channels {
 	VTHM,
 	AIN1,
 	AIN0
-};
+पूर्ण;
 
-static const struct rn5t618_channel_ratios rn5t618_ratios[8] = {
-	[LIMMON] = {50, 32}, /* measured across 20mOhm, amplified by 32 */
-	[VBAT] = {2, 1},
-	[VADP] = {3, 1},
-	[VUSB] = {3, 1},
-	[VSYS] = {3, 1},
-	[VTHM] = {1, 1},
-	[AIN1] = {1, 1},
-	[AIN0] = {1, 1},
-};
+अटल स्थिर काष्ठा rn5t618_channel_ratios rn5t618_ratios[8] = अणु
+	[LIMMON] = अणु50, 32पूर्ण, /* measured across 20mOhm, amplअगरied by 32 */
+	[VBAT] = अणु2, 1पूर्ण,
+	[VADP] = अणु3, 1पूर्ण,
+	[VUSB] = अणु3, 1पूर्ण,
+	[VSYS] = अणु3, 1पूर्ण,
+	[VTHM] = अणु1, 1पूर्ण,
+	[AIN1] = अणु1, 1पूर्ण,
+	[AIN0] = अणु1, 1पूर्ण,
+पूर्ण;
 
-static int rn5t618_read_adc_reg(struct rn5t618 *rn5t618, int reg, u16 *val)
-{
+अटल पूर्णांक rn5t618_पढ़ो_adc_reg(काष्ठा rn5t618 *rn5t618, पूर्णांक reg, u16 *val)
+अणु
 	u8 data[2];
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_bulk_read(rn5t618->regmap, reg, data, sizeof(data));
-	if (ret < 0)
-		return ret;
+	ret = regmap_bulk_पढ़ो(rn5t618->regmap, reg, data, माप(data));
+	अगर (ret < 0)
+		वापस ret;
 
 	*val = (data[0] << 4) | (data[1] & 0xF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t rn5t618_adc_irq(int irq, void *data)
-{
-	struct rn5t618_adc_data *adc = data;
-	unsigned int r = 0;
-	int ret;
+अटल irqवापस_t rn5t618_adc_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा rn5t618_adc_data *adc = data;
+	अचिन्हित पूर्णांक r = 0;
+	पूर्णांक ret;
 
 	/* clear low & high threshold irqs */
-	regmap_write(adc->rn5t618->regmap, RN5T618_IR_ADC1, 0);
-	regmap_write(adc->rn5t618->regmap, RN5T618_IR_ADC2, 0);
+	regmap_ग_लिखो(adc->rn5t618->regmap, RN5T618_IR_ADC1, 0);
+	regmap_ग_लिखो(adc->rn5t618->regmap, RN5T618_IR_ADC2, 0);
 
-	ret = regmap_read(adc->rn5t618->regmap, RN5T618_IR_ADC3, &r);
-	if (ret < 0)
+	ret = regmap_पढ़ो(adc->rn5t618->regmap, RN5T618_IR_ADC3, &r);
+	अगर (ret < 0)
 		dev_err(adc->dev, "failed to read IRQ status: %d\n", ret);
 
-	regmap_write(adc->rn5t618->regmap, RN5T618_IR_ADC3, 0);
+	regmap_ग_लिखो(adc->rn5t618->regmap, RN5T618_IR_ADC3, 0);
 
-	if (r & RN5T618_ADCEND_IRQ)
+	अगर (r & RN5T618_ADCEND_IRQ)
 		complete(&adc->conv_completion);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rn5t618_adc_read(struct iio_dev *iio_dev,
-			    const struct iio_chan_spec *chan,
-			    int *val, int *val2, long mask)
-{
-	struct rn5t618_adc_data *adc = iio_priv(iio_dev);
+अटल पूर्णांक rn5t618_adc_पढ़ो(काष्ठा iio_dev *iio_dev,
+			    स्थिर काष्ठा iio_chan_spec *chan,
+			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा rn5t618_adc_data *adc = iio_priv(iio_dev);
 	u16 raw;
-	int ret;
+	पूर्णांक ret;
 
-	if (mask == IIO_CHAN_INFO_SCALE) {
+	अगर (mask == IIO_CHAN_INFO_SCALE) अणु
 		*val = RN5T618_REFERENCE_VOLT *
 		       rn5t618_ratios[chan->channel].numerator;
 		*val2 = rn5t618_ratios[chan->channel].denominator * 4095;
 
-		return IIO_VAL_FRACTIONAL;
-	}
+		वापस IIO_VAL_FRACTIONAL;
+	पूर्ण
 
 	/* select channel */
 	ret = regmap_update_bits(adc->rn5t618->regmap, RN5T618_ADCCNT3,
 				 RN5T618_ADCCNT3_CHANNEL_MASK,
 				 chan->channel);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = regmap_write(adc->rn5t618->regmap, RN5T618_EN_ADCIR3,
+	ret = regmap_ग_लिखो(adc->rn5t618->regmap, RN5T618_EN_ADCIR3,
 			   RN5T618_ADCEND_IRQ);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = regmap_update_bits(adc->rn5t618->regmap, RN5T618_ADCCNT3,
 				 RN5T618_ADCCNT3_AVG,
 				 mask == IIO_CHAN_INFO_AVERAGE_RAW ?
 				 RN5T618_ADCCNT3_AVG : 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	init_completion(&adc->conv_completion);
 	/* single conversion */
 	ret = regmap_update_bits(adc->rn5t618->regmap, RN5T618_ADCCNT3,
 				 RN5T618_ADCCNT3_GODONE,
 				 RN5T618_ADCCNT3_GODONE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = wait_for_completion_timeout(&adc->conv_completion,
+	ret = रुको_क्रम_completion_समयout(&adc->conv_completion,
 					  RN5T618_ADC_CONVERSION_TIMEOUT);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		dev_warn(adc->dev, "timeout waiting for adc result\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	ret = rn5t618_read_adc_reg(adc->rn5t618,
+	ret = rn5t618_पढ़ो_adc_reg(adc->rn5t618,
 				   RN5T618_ILIMDATAH + 2 * chan->channel,
 				   &raw);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*val = raw;
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static const struct iio_info rn5t618_adc_iio_info = {
-	.read_raw = &rn5t618_adc_read,
-};
+अटल स्थिर काष्ठा iio_info rn5t618_adc_iio_info = अणु
+	.पढ़ो_raw = &rn5t618_adc_पढ़ो,
+पूर्ण;
 
-#define RN5T618_ADC_CHANNEL(_channel, _type, _name) { \
+#घोषणा RN5T618_ADC_CHANNEL(_channel, _type, _name) अणु \
 	.type = _type, \
 	.channel = _channel, \
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) | \
@@ -176,9 +177,9 @@ static const struct iio_info rn5t618_adc_iio_info = {
 			      BIT(IIO_CHAN_INFO_SCALE), \
 	.datasheet_name = _name, \
 	.indexed = 1. \
-}
+पूर्ण
 
-static const struct iio_chan_spec rn5t618_adc_iio_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec rn5t618_adc_iio_channels[] = अणु
 	RN5T618_ADC_CHANNEL(LIMMON, IIO_CURRENT, "LIMMON"),
 	RN5T618_ADC_CHANNEL(VBAT, IIO_VOLTAGE, "VBAT"),
 	RN5T618_ADC_CHANNEL(VADP, IIO_VOLTAGE, "VADP"),
@@ -187,69 +188,69 @@ static const struct iio_chan_spec rn5t618_adc_iio_channels[] = {
 	RN5T618_ADC_CHANNEL(VTHM, IIO_VOLTAGE, "VTHM"),
 	RN5T618_ADC_CHANNEL(AIN1, IIO_VOLTAGE, "AIN1"),
 	RN5T618_ADC_CHANNEL(AIN0, IIO_VOLTAGE, "AIN0")
-};
+पूर्ण;
 
-static int rn5t618_adc_probe(struct platform_device *pdev)
-{
-	int ret;
-	struct iio_dev *iio_dev;
-	struct rn5t618_adc_data *adc;
-	struct rn5t618 *rn5t618 = dev_get_drvdata(pdev->dev.parent);
+अटल पूर्णांक rn5t618_adc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा iio_dev *iio_dev;
+	काष्ठा rn5t618_adc_data *adc;
+	काष्ठा rn5t618 *rn5t618 = dev_get_drvdata(pdev->dev.parent);
 
-	iio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*adc));
-	if (!iio_dev) {
+	iio_dev = devm_iio_device_alloc(&pdev->dev, माप(*adc));
+	अगर (!iio_dev) अणु
 		dev_err(&pdev->dev, "failed allocating iio device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	adc = iio_priv(iio_dev);
 	adc->dev = &pdev->dev;
 	adc->rn5t618 = rn5t618;
 
-	if (rn5t618->irq_data)
+	अगर (rn5t618->irq_data)
 		adc->irq = regmap_irq_get_virq(rn5t618->irq_data,
 					       RN5T618_IRQ_ADC);
 
-	if (adc->irq <= 0) {
+	अगर (adc->irq <= 0) अणु
 		dev_err(&pdev->dev, "get virq failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	init_completion(&adc->conv_completion);
 
 	iio_dev->name = dev_name(&pdev->dev);
 	iio_dev->info = &rn5t618_adc_iio_info;
-	iio_dev->modes = INDIO_DIRECT_MODE;
+	iio_dev->modes = INDIO_सूचीECT_MODE;
 	iio_dev->channels = rn5t618_adc_iio_channels;
 	iio_dev->num_channels = ARRAY_SIZE(rn5t618_adc_iio_channels);
 
-	/* stop any auto-conversion */
-	ret = regmap_write(rn5t618->regmap, RN5T618_ADCCNT3, 0);
-	if (ret < 0)
-		return ret;
+	/* stop any स्वतः-conversion */
+	ret = regmap_ग_लिखो(rn5t618->regmap, RN5T618_ADCCNT3, 0);
+	अगर (ret < 0)
+		वापस ret;
 
-	platform_set_drvdata(pdev, iio_dev);
+	platक्रमm_set_drvdata(pdev, iio_dev);
 
-	ret = devm_request_threaded_irq(adc->dev, adc->irq, NULL,
+	ret = devm_request_thपढ़ोed_irq(adc->dev, adc->irq, शून्य,
 					rn5t618_adc_irq,
 					IRQF_ONESHOT, dev_name(adc->dev),
 					adc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(adc->dev, "request irq %d failed: %d\n", adc->irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return devm_iio_device_register(adc->dev, iio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(adc->dev, iio_dev);
+पूर्ण
 
-static struct platform_driver rn5t618_adc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver rn5t618_adc_driver = अणु
+	.driver = अणु
 		.name   = "rn5t618-adc",
-	},
+	पूर्ण,
 	.probe = rn5t618_adc_probe,
-};
+पूर्ण;
 
-module_platform_driver(rn5t618_adc_driver);
+module_platक्रमm_driver(rn5t618_adc_driver);
 MODULE_ALIAS("platform:rn5t618-adc");
 MODULE_DESCRIPTION("RICOH RN5T618 ADC driver");
 MODULE_LICENSE("GPL");

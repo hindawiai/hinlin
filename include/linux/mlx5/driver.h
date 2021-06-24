@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,66 +31,66 @@
  * SOFTWARE.
  */
 
-#ifndef MLX5_DRIVER_H
-#define MLX5_DRIVER_H
+#अगर_अघोषित MLX5_DRIVER_H
+#घोषणा MLX5_DRIVER_H
 
-#include <linux/kernel.h>
-#include <linux/completion.h>
-#include <linux/pci.h>
-#include <linux/irq.h>
-#include <linux/spinlock_types.h>
-#include <linux/semaphore.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/xarray.h>
-#include <linux/workqueue.h>
-#include <linux/mempool.h>
-#include <linux/interrupt.h>
-#include <linux/idr.h>
-#include <linux/notifier.h>
-#include <linux/refcount.h>
-#include <linux/auxiliary_bus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/xarray.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/auxiliary_bus.h>
 
-#include <linux/mlx5/device.h>
-#include <linux/mlx5/doorbell.h>
-#include <linux/mlx5/eq.h>
-#include <linux/timecounter.h>
-#include <linux/ptp_clock_kernel.h>
-#include <net/devlink.h>
+#समावेश <linux/mlx5/device.h>
+#समावेश <linux/mlx5/करोorbell.h>
+#समावेश <linux/mlx5/eq.h>
+#समावेश <linux/समयcounter.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
+#समावेश <net/devlink.h>
 
-#define MLX5_ADEV_NAME "mlx5_core"
+#घोषणा MLX5_ADEV_NAME "mlx5_core"
 
-enum {
+क्रमागत अणु
 	MLX5_BOARD_ID_LEN = 64,
-};
+पूर्ण;
 
-enum {
-	/* one minute for the sake of bringup. Generally, commands must always
-	 * complete and we may need to increase this timeout value
+क्रमागत अणु
+	/* one minute क्रम the sake of bringup. Generally, commands must always
+	 * complete and we may need to increase this समयout value
 	 */
 	MLX5_CMD_TIMEOUT_MSEC	= 60 * 1000,
 	MLX5_CMD_WQ_MAX_NAME	= 32,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CMD_OWNER_SW		= 0x0,
 	CMD_OWNER_HW		= 0x1,
 	CMD_STATUS_SUCCESS	= 0,
-};
+पूर्ण;
 
-enum mlx5_sqp_t {
+क्रमागत mlx5_sqp_t अणु
 	MLX5_SQP_SMI		= 0,
 	MLX5_SQP_GSI		= 1,
 	MLX5_SQP_IEEE_1588	= 2,
 	MLX5_SQP_SNIFFER	= 3,
 	MLX5_SQP_SYNC_UMR	= 4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MAX_PORTS	= 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_ATOMIC_MODE_OFFSET = 16,
 	MLX5_ATOMIC_MODE_IB_COMP = 1,
 	MLX5_ATOMIC_MODE_CX = 2,
@@ -99,9 +100,9 @@ enum {
 	MLX5_ATOMIC_MODE_64B = 6,
 	MLX5_ATOMIC_MODE_128B = 7,
 	MLX5_ATOMIC_MODE_256B = 8,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_REG_QPTS            = 0x4002,
 	MLX5_REG_QETCR		 = 0x4005,
 	MLX5_REG_QTCT		 = 0x400a,
@@ -154,135 +155,135 @@ enum {
 	MLX5_REG_MIRC		 = 0x9162,
 	MLX5_REG_SBCAM		 = 0xB01F,
 	MLX5_REG_RESOURCE_DUMP   = 0xC000,
-};
+पूर्ण;
 
-enum mlx5_qpts_trust_state {
+क्रमागत mlx5_qpts_trust_state अणु
 	MLX5_QPTS_TRUST_PCP  = 1,
 	MLX5_QPTS_TRUST_DSCP = 2,
-};
+पूर्ण;
 
-enum mlx5_dcbx_oper_mode {
+क्रमागत mlx5_dcbx_oper_mode अणु
 	MLX5E_DCBX_PARAM_VER_OPER_HOST  = 0x0,
 	MLX5E_DCBX_PARAM_VER_OPER_AUTO  = 0x3,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_ATOMIC_OPS_CMP_SWAP	= 1 << 0,
 	MLX5_ATOMIC_OPS_FETCH_ADD	= 1 << 1,
 	MLX5_ATOMIC_OPS_EXTENDED_CMP_SWAP = 1 << 2,
 	MLX5_ATOMIC_OPS_EXTENDED_FETCH_ADD = 1 << 3,
-};
+पूर्ण;
 
-enum mlx5_page_fault_resume_flags {
+क्रमागत mlx5_page_fault_resume_flags अणु
 	MLX5_PAGE_FAULT_RESUME_REQUESTOR = 1 << 0,
 	MLX5_PAGE_FAULT_RESUME_WRITE	 = 1 << 1,
 	MLX5_PAGE_FAULT_RESUME_RDMA	 = 1 << 2,
 	MLX5_PAGE_FAULT_RESUME_ERROR	 = 1 << 7,
-};
+पूर्ण;
 
-enum dbg_rsc_type {
+क्रमागत dbg_rsc_type अणु
 	MLX5_DBG_RSC_QP,
 	MLX5_DBG_RSC_EQ,
 	MLX5_DBG_RSC_CQ,
-};
+पूर्ण;
 
-enum port_state_policy {
+क्रमागत port_state_policy अणु
 	MLX5_POLICY_DOWN	= 0,
 	MLX5_POLICY_UP		= 1,
 	MLX5_POLICY_FOLLOW	= 2,
 	MLX5_POLICY_INVALID	= 0xffffffff
-};
+पूर्ण;
 
-enum mlx5_coredev_type {
+क्रमागत mlx5_coredev_type अणु
 	MLX5_COREDEV_PF,
 	MLX5_COREDEV_VF,
 	MLX5_COREDEV_SF,
-};
+पूर्ण;
 
-struct mlx5_field_desc {
-	int			i;
-};
+काष्ठा mlx5_field_desc अणु
+	पूर्णांक			i;
+पूर्ण;
 
-struct mlx5_rsc_debug {
-	struct mlx5_core_dev   *dev;
-	void		       *object;
-	enum dbg_rsc_type	type;
-	struct dentry	       *root;
-	struct mlx5_field_desc	fields[];
-};
+काष्ठा mlx5_rsc_debug अणु
+	काष्ठा mlx5_core_dev   *dev;
+	व्योम		       *object;
+	क्रमागत dbg_rsc_type	type;
+	काष्ठा dentry	       *root;
+	काष्ठा mlx5_field_desc	fields[];
+पूर्ण;
 
-enum mlx5_dev_event {
+क्रमागत mlx5_dev_event अणु
 	MLX5_DEV_EVENT_SYS_ERROR = 128, /* 0 - 127 are FW events */
 	MLX5_DEV_EVENT_PORT_AFFINITY = 129,
-};
+पूर्ण;
 
-enum mlx5_port_status {
+क्रमागत mlx5_port_status अणु
 	MLX5_PORT_UP        = 1,
 	MLX5_PORT_DOWN      = 2,
-};
+पूर्ण;
 
-enum mlx5_cmdif_state {
+क्रमागत mlx5_cmdअगर_state अणु
 	MLX5_CMDIF_STATE_UNINITIALIZED,
 	MLX5_CMDIF_STATE_UP,
 	MLX5_CMDIF_STATE_DOWN,
-};
+पूर्ण;
 
-struct mlx5_cmd_first {
+काष्ठा mlx5_cmd_first अणु
 	__be32		data[4];
-};
+पूर्ण;
 
-struct mlx5_cmd_msg {
-	struct list_head		list;
-	struct cmd_msg_cache	       *parent;
+काष्ठा mlx5_cmd_msg अणु
+	काष्ठा list_head		list;
+	काष्ठा cmd_msg_cache	       *parent;
 	u32				len;
-	struct mlx5_cmd_first		first;
-	struct mlx5_cmd_mailbox	       *next;
-};
+	काष्ठा mlx5_cmd_first		first;
+	काष्ठा mlx5_cmd_mailbox	       *next;
+पूर्ण;
 
-struct mlx5_cmd_debug {
-	struct dentry	       *dbg_root;
-	void		       *in_msg;
-	void		       *out_msg;
+काष्ठा mlx5_cmd_debug अणु
+	काष्ठा dentry	       *dbg_root;
+	व्योम		       *in_msg;
+	व्योम		       *out_msg;
 	u8			status;
 	u16			inlen;
 	u16			outlen;
-};
+पूर्ण;
 
-struct cmd_msg_cache {
+काष्ठा cmd_msg_cache अणु
 	/* protect block chain allocations
 	 */
 	spinlock_t		lock;
-	struct list_head	head;
-	unsigned int		max_inbox_size;
-	unsigned int		num_ent;
-};
+	काष्ठा list_head	head;
+	अचिन्हित पूर्णांक		max_inbox_size;
+	अचिन्हित पूर्णांक		num_ent;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_NUM_COMMAND_CACHES = 5,
-};
+पूर्ण;
 
-struct mlx5_cmd_stats {
+काष्ठा mlx5_cmd_stats अणु
 	u64		sum;
 	u64		n;
-	struct dentry  *root;
+	काष्ठा dentry  *root;
 	/* protect command average calculations */
 	spinlock_t	lock;
-};
+पूर्ण;
 
-struct mlx5_cmd {
-	struct mlx5_nb    nb;
+काष्ठा mlx5_cmd अणु
+	काष्ठा mlx5_nb    nb;
 
-	enum mlx5_cmdif_state	state;
-	void	       *cmd_alloc_buf;
+	क्रमागत mlx5_cmdअगर_state	state;
+	व्योम	       *cmd_alloc_buf;
 	dma_addr_t	alloc_dma;
-	int		alloc_size;
-	void	       *cmd_buf;
+	पूर्णांक		alloc_size;
+	व्योम	       *cmd_buf;
 	dma_addr_t	dma;
-	u16		cmdif_rev;
+	u16		cmdअगर_rev;
 	u8		log_sz;
 	u8		log_stride;
-	int		max_reg_cmds;
-	int		events;
+	पूर्णांक		max_reg_cmds;
+	पूर्णांक		events;
 	u32 __iomem    *vector;
 
 	/* protect command queue allocations
@@ -293,89 +294,89 @@ struct mlx5_cmd {
 	 */
 	spinlock_t	token_lock;
 	u8		token;
-	unsigned long	bitmask;
-	char		wq_name[MLX5_CMD_WQ_MAX_NAME];
-	struct workqueue_struct *wq;
-	struct semaphore sem;
-	struct semaphore pages_sem;
-	int	mode;
+	अचिन्हित दीर्घ	biपंचांगask;
+	अक्षर		wq_name[MLX5_CMD_WQ_MAX_NAME];
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा semaphore sem;
+	काष्ठा semaphore pages_sem;
+	पूर्णांक	mode;
 	u16     allowed_opcode;
-	struct mlx5_cmd_work_ent *ent_arr[MLX5_MAX_COMMANDS];
-	struct dma_pool *pool;
-	struct mlx5_cmd_debug dbg;
-	struct cmd_msg_cache cache[MLX5_NUM_COMMAND_CACHES];
-	int checksum_disabled;
-	struct mlx5_cmd_stats *stats;
-};
+	काष्ठा mlx5_cmd_work_ent *ent_arr[MLX5_MAX_COMMANDS];
+	काष्ठा dma_pool *pool;
+	काष्ठा mlx5_cmd_debug dbg;
+	काष्ठा cmd_msg_cache cache[MLX5_NUM_COMMAND_CACHES];
+	पूर्णांक checksum_disabled;
+	काष्ठा mlx5_cmd_stats *stats;
+पूर्ण;
 
-struct mlx5_cmd_mailbox {
-	void	       *buf;
+काष्ठा mlx5_cmd_mailbox अणु
+	व्योम	       *buf;
 	dma_addr_t	dma;
-	struct mlx5_cmd_mailbox *next;
-};
+	काष्ठा mlx5_cmd_mailbox *next;
+पूर्ण;
 
-struct mlx5_buf_list {
-	void		       *buf;
+काष्ठा mlx5_buf_list अणु
+	व्योम		       *buf;
 	dma_addr_t		map;
-};
+पूर्ण;
 
-struct mlx5_frag_buf {
-	struct mlx5_buf_list	*frags;
-	int			npages;
-	int			size;
-	u8			page_shift;
-};
+काष्ठा mlx5_frag_buf अणु
+	काष्ठा mlx5_buf_list	*frags;
+	पूर्णांक			npages;
+	पूर्णांक			size;
+	u8			page_shअगरt;
+पूर्ण;
 
-struct mlx5_frag_buf_ctrl {
-	struct mlx5_buf_list   *frags;
+काष्ठा mlx5_frag_buf_ctrl अणु
+	काष्ठा mlx5_buf_list   *frags;
 	u32			sz_m1;
 	u16			frag_sz_m1;
 	u16			strides_offset;
 	u8			log_sz;
 	u8			log_stride;
 	u8			log_frag_strides;
-};
+पूर्ण;
 
-struct mlx5_core_psv {
+काष्ठा mlx5_core_psv अणु
 	u32	psv_idx;
-	struct psv_layout {
+	काष्ठा psv_layout अणु
 		u32	pd;
 		u16	syndrome;
 		u16	reserved;
 		u16	bg;
 		u16	app_tag;
 		u32	ref_tag;
-	} psv;
-};
+	पूर्ण psv;
+पूर्ण;
 
-struct mlx5_core_sig_ctx {
-	struct mlx5_core_psv	psv_memory;
-	struct mlx5_core_psv	psv_wire;
-	struct ib_sig_err       err_item;
+काष्ठा mlx5_core_sig_ctx अणु
+	काष्ठा mlx5_core_psv	psv_memory;
+	काष्ठा mlx5_core_psv	psv_wire;
+	काष्ठा ib_sig_err       err_item;
 	bool			sig_status_checked;
 	bool			sig_err_exists;
 	u32			sigerr_count;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MKEY_MR = 1,
 	MLX5_MKEY_MW,
-	MLX5_MKEY_INDIRECT_DEVX,
-};
+	MLX5_MKEY_INसूचीECT_DEVX,
+पूर्ण;
 
-struct mlx5_core_mkey {
+काष्ठा mlx5_core_mkey अणु
 	u64			iova;
 	u64			size;
 	u32			key;
 	u32			pd;
 	u32			type;
-	struct wait_queue_head wait;
+	काष्ठा रुको_queue_head रुको;
 	refcount_t usecount;
-};
+पूर्ण;
 
-#define MLX5_24BIT_MASK		((1 << 24) - 1)
+#घोषणा MLX5_24BIT_MASK		((1 << 24) - 1)
 
-enum mlx5_res_type {
+क्रमागत mlx5_res_type अणु
 	MLX5_RES_QP	= MLX5_EVENT_QUEUE_TYPE_QP,
 	MLX5_RES_RQ	= MLX5_EVENT_QUEUE_TYPE_RQ,
 	MLX5_RES_SQ	= MLX5_EVENT_QUEUE_TYPE_SQ,
@@ -383,445 +384,445 @@ enum mlx5_res_type {
 	MLX5_RES_XSRQ	= 4,
 	MLX5_RES_XRQ	= 5,
 	MLX5_RES_DCT	= MLX5_EVENT_QUEUE_TYPE_DCT,
-};
+पूर्ण;
 
-struct mlx5_core_rsc_common {
-	enum mlx5_res_type	res;
+काष्ठा mlx5_core_rsc_common अणु
+	क्रमागत mlx5_res_type	res;
 	refcount_t		refcount;
-	struct completion	free;
-};
+	काष्ठा completion	मुक्त;
+पूर्ण;
 
-struct mlx5_uars_page {
-	void __iomem	       *map;
+काष्ठा mlx5_uars_page अणु
+	व्योम __iomem	       *map;
 	bool			wc;
 	u32			index;
-	struct list_head	list;
-	unsigned int		bfregs;
-	unsigned long	       *reg_bitmap; /* for non fast path bf regs */
-	unsigned long	       *fp_bitmap;
-	unsigned int		reg_avail;
-	unsigned int		fp_avail;
-	struct kref		ref_count;
-	struct mlx5_core_dev   *mdev;
-};
+	काष्ठा list_head	list;
+	अचिन्हित पूर्णांक		bfregs;
+	अचिन्हित दीर्घ	       *reg_biपंचांगap; /* क्रम non fast path bf regs */
+	अचिन्हित दीर्घ	       *fp_biपंचांगap;
+	अचिन्हित पूर्णांक		reg_avail;
+	अचिन्हित पूर्णांक		fp_avail;
+	काष्ठा kref		ref_count;
+	काष्ठा mlx5_core_dev   *mdev;
+पूर्ण;
 
-struct mlx5_bfreg_head {
-	/* protect blue flame registers allocations */
-	struct mutex		lock;
-	struct list_head	list;
-};
+काष्ठा mlx5_bfreg_head अणु
+	/* protect blue flame रेजिस्टरs allocations */
+	काष्ठा mutex		lock;
+	काष्ठा list_head	list;
+पूर्ण;
 
-struct mlx5_bfreg_data {
-	struct mlx5_bfreg_head	reg_head;
-	struct mlx5_bfreg_head	wc_head;
-};
+काष्ठा mlx5_bfreg_data अणु
+	काष्ठा mlx5_bfreg_head	reg_head;
+	काष्ठा mlx5_bfreg_head	wc_head;
+पूर्ण;
 
-struct mlx5_sq_bfreg {
-	void __iomem	       *map;
-	struct mlx5_uars_page  *up;
+काष्ठा mlx5_sq_bfreg अणु
+	व्योम __iomem	       *map;
+	काष्ठा mlx5_uars_page  *up;
 	bool			wc;
 	u32			index;
-	unsigned int		offset;
-};
+	अचिन्हित पूर्णांक		offset;
+पूर्ण;
 
-struct mlx5_core_health {
-	struct health_buffer __iomem   *health;
+काष्ठा mlx5_core_health अणु
+	काष्ठा health_buffer __iomem   *health;
 	__be32 __iomem		       *health_counter;
-	struct timer_list		timer;
+	काष्ठा समयr_list		समयr;
 	u32				prev;
-	int				miss_counter;
+	पूर्णांक				miss_counter;
 	u8				synd;
 	u32				fatal_error;
 	u32				crdump_size;
 	/* wq spinlock to synchronize draining */
 	spinlock_t			wq_lock;
-	struct workqueue_struct	       *wq;
-	unsigned long			flags;
-	struct work_struct		fatal_report_work;
-	struct work_struct		report_work;
-	struct devlink_health_reporter *fw_reporter;
-	struct devlink_health_reporter *fw_fatal_reporter;
-};
+	काष्ठा workqueue_काष्ठा	       *wq;
+	अचिन्हित दीर्घ			flags;
+	काष्ठा work_काष्ठा		fatal_report_work;
+	काष्ठा work_काष्ठा		report_work;
+	काष्ठा devlink_health_reporter *fw_reporter;
+	काष्ठा devlink_health_reporter *fw_fatal_reporter;
+पूर्ण;
 
-struct mlx5_qp_table {
-	struct notifier_block   nb;
+काष्ठा mlx5_qp_table अणु
+	काष्ठा notअगरier_block   nb;
 
 	/* protect radix tree
 	 */
 	spinlock_t		lock;
-	struct radix_tree_root	tree;
-};
+	काष्ठा radix_tree_root	tree;
+पूर्ण;
 
-struct mlx5_vf_context {
-	int	enabled;
+काष्ठा mlx5_vf_context अणु
+	पूर्णांक	enabled;
 	u64	port_guid;
 	u64	node_guid;
 	/* Valid bits are used to validate administrative guid only.
-	 * Enabled after ndo_set_vf_guid
+	 * Enabled after nकरो_set_vf_guid
 	 */
 	u8	port_guid_valid:1;
 	u8	node_guid_valid:1;
-	enum port_state_policy	policy;
-};
+	क्रमागत port_state_policy	policy;
+पूर्ण;
 
-struct mlx5_core_sriov {
-	struct mlx5_vf_context	*vfs_ctx;
-	int			num_vfs;
+काष्ठा mlx5_core_sriov अणु
+	काष्ठा mlx5_vf_context	*vfs_ctx;
+	पूर्णांक			num_vfs;
 	u16			max_vfs;
-};
+पूर्ण;
 
-struct mlx5_fc_pool {
-	struct mlx5_core_dev *dev;
-	struct mutex pool_lock; /* protects pool lists */
-	struct list_head fully_used;
-	struct list_head partially_used;
-	struct list_head unused;
-	int available_fcs;
-	int used_fcs;
-	int threshold;
-};
+काष्ठा mlx5_fc_pool अणु
+	काष्ठा mlx5_core_dev *dev;
+	काष्ठा mutex pool_lock; /* protects pool lists */
+	काष्ठा list_head fully_used;
+	काष्ठा list_head partially_used;
+	काष्ठा list_head unused;
+	पूर्णांक available_fcs;
+	पूर्णांक used_fcs;
+	पूर्णांक threshold;
+पूर्ण;
 
-struct mlx5_fc_stats {
+काष्ठा mlx5_fc_stats अणु
 	spinlock_t counters_idr_lock; /* protects counters_idr */
-	struct idr counters_idr;
-	struct list_head counters;
-	struct llist_head addlist;
-	struct llist_head dellist;
+	काष्ठा idr counters_idr;
+	काष्ठा list_head counters;
+	काष्ठा llist_head addlist;
+	काष्ठा llist_head dellist;
 
-	struct workqueue_struct *wq;
-	struct delayed_work work;
-	unsigned long next_query;
-	unsigned long sampling_interval; /* jiffies */
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा delayed_work work;
+	अचिन्हित दीर्घ next_query;
+	अचिन्हित दीर्घ sampling_पूर्णांकerval; /* jअगरfies */
 	u32 *bulk_query_out;
-	struct mlx5_fc_pool fc_pool;
-};
+	काष्ठा mlx5_fc_pool fc_pool;
+पूर्ण;
 
-struct mlx5_events;
-struct mlx5_mpfs;
-struct mlx5_eswitch;
-struct mlx5_lag;
-struct mlx5_devcom;
-struct mlx5_fw_reset;
-struct mlx5_eq_table;
-struct mlx5_irq_table;
-struct mlx5_vhca_state_notifier;
-struct mlx5_sf_dev_table;
-struct mlx5_sf_hw_table;
-struct mlx5_sf_table;
+काष्ठा mlx5_events;
+काष्ठा mlx5_mpfs;
+काष्ठा mlx5_eचयन;
+काष्ठा mlx5_lag;
+काष्ठा mlx5_devcom;
+काष्ठा mlx5_fw_reset;
+काष्ठा mlx5_eq_table;
+काष्ठा mlx5_irq_table;
+काष्ठा mlx5_vhca_state_notअगरier;
+काष्ठा mlx5_sf_dev_table;
+काष्ठा mlx5_sf_hw_table;
+काष्ठा mlx5_sf_table;
 
-struct mlx5_rate_limit {
+काष्ठा mlx5_rate_limit अणु
 	u32			rate;
 	u32			max_burst_sz;
 	u16			typical_pkt_sz;
-};
+पूर्ण;
 
-struct mlx5_rl_entry {
+काष्ठा mlx5_rl_entry अणु
 	u8 rl_raw[MLX5_ST_SZ_BYTES(set_pp_rate_limit_context)];
 	u64 refcount;
 	u16 index;
 	u16 uid;
 	u8 dedicated : 1;
-};
+पूर्ण;
 
-struct mlx5_rl_table {
+काष्ठा mlx5_rl_table अणु
 	/* protect rate limit table */
-	struct mutex            rl_lock;
+	काष्ठा mutex            rl_lock;
 	u16                     max_size;
 	u32                     max_rate;
 	u32                     min_rate;
-	struct mlx5_rl_entry   *rl_entry;
+	काष्ठा mlx5_rl_entry   *rl_entry;
 	u64 refcount;
-};
+पूर्ण;
 
-struct mlx5_core_roce {
-	struct mlx5_flow_table *ft;
-	struct mlx5_flow_group *fg;
-	struct mlx5_flow_handle *allow_rule;
-};
+काष्ठा mlx5_core_roce अणु
+	काष्ठा mlx5_flow_table *ft;
+	काष्ठा mlx5_flow_group *fg;
+	काष्ठा mlx5_flow_handle *allow_rule;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_PRIV_FLAGS_DISABLE_IB_ADEV = 1 << 0,
 	MLX5_PRIV_FLAGS_DISABLE_ALL_ADEV = 1 << 1,
 	/* Set during device detach to block any further devices
 	 * creation/deletion on drivers rescan. Unset during device attach.
 	 */
 	MLX5_PRIV_FLAGS_DETACH = 1 << 2,
-};
+पूर्ण;
 
-struct mlx5_adev {
-	struct auxiliary_device adev;
-	struct mlx5_core_dev *mdev;
-	int idx;
-};
+काष्ठा mlx5_adev अणु
+	काष्ठा auxiliary_device adev;
+	काष्ठा mlx5_core_dev *mdev;
+	पूर्णांक idx;
+पूर्ण;
 
-struct mlx5_priv {
-	/* IRQ table valid only for real pci devices PF or VF */
-	struct mlx5_irq_table   *irq_table;
-	struct mlx5_eq_table	*eq_table;
+काष्ठा mlx5_priv अणु
+	/* IRQ table valid only क्रम real pci devices PF or VF */
+	काष्ठा mlx5_irq_table   *irq_table;
+	काष्ठा mlx5_eq_table	*eq_table;
 
 	/* pages stuff */
-	struct mlx5_nb          pg_nb;
-	struct workqueue_struct *pg_wq;
-	struct xarray           page_root_xa;
-	int			fw_pages;
+	काष्ठा mlx5_nb          pg_nb;
+	काष्ठा workqueue_काष्ठा *pg_wq;
+	काष्ठा xarray           page_root_xa;
+	पूर्णांक			fw_pages;
 	atomic_t		reg_pages;
-	struct list_head	free_list;
-	int			vfs_pages;
-	int			host_pf_pages;
+	काष्ठा list_head	मुक्त_list;
+	पूर्णांक			vfs_pages;
+	पूर्णांक			host_pf_pages;
 
-	struct mlx5_core_health health;
-	struct list_head	traps;
+	काष्ठा mlx5_core_health health;
+	काष्ठा list_head	traps;
 
 	/* start: qp staff */
-	struct dentry	       *qp_debugfs;
-	struct dentry	       *eq_debugfs;
-	struct dentry	       *cq_debugfs;
-	struct dentry	       *cmdif_debugfs;
+	काष्ठा dentry	       *qp_debugfs;
+	काष्ठा dentry	       *eq_debugfs;
+	काष्ठा dentry	       *cq_debugfs;
+	काष्ठा dentry	       *cmdअगर_debugfs;
 	/* end: qp staff */
 
 	/* start: alloc staff */
 	/* protect buffer alocation according to numa node */
-	struct mutex            alloc_mutex;
-	int                     numa_node;
+	काष्ठा mutex            alloc_mutex;
+	पूर्णांक                     numa_node;
 
-	struct mutex            pgdir_mutex;
-	struct list_head        pgdir_list;
+	काष्ठा mutex            pgdir_mutex;
+	काष्ठा list_head        pgdir_list;
 	/* end: alloc staff */
-	struct dentry	       *dbg_root;
+	काष्ठा dentry	       *dbg_root;
 
-	struct list_head        ctx_list;
+	काष्ठा list_head        ctx_list;
 	spinlock_t              ctx_lock;
-	struct mlx5_adev       **adev;
-	int			adev_idx;
-	struct mlx5_events      *events;
+	काष्ठा mlx5_adev       **adev;
+	पूर्णांक			adev_idx;
+	काष्ठा mlx5_events      *events;
 
-	struct mlx5_flow_steering *steering;
-	struct mlx5_mpfs        *mpfs;
-	struct mlx5_eswitch     *eswitch;
-	struct mlx5_core_sriov	sriov;
-	struct mlx5_lag		*lag;
+	काष्ठा mlx5_flow_steering *steering;
+	काष्ठा mlx5_mpfs        *mpfs;
+	काष्ठा mlx5_eचयन     *eचयन;
+	काष्ठा mlx5_core_sriov	sriov;
+	काष्ठा mlx5_lag		*lag;
 	u32			flags;
-	struct mlx5_devcom	*devcom;
-	struct mlx5_fw_reset	*fw_reset;
-	struct mlx5_core_roce	roce;
-	struct mlx5_fc_stats		fc_stats;
-	struct mlx5_rl_table            rl_table;
+	काष्ठा mlx5_devcom	*devcom;
+	काष्ठा mlx5_fw_reset	*fw_reset;
+	काष्ठा mlx5_core_roce	roce;
+	काष्ठा mlx5_fc_stats		fc_stats;
+	काष्ठा mlx5_rl_table            rl_table;
 
-	struct mlx5_bfreg_data		bfregs;
-	struct mlx5_uars_page	       *uar;
-#ifdef CONFIG_MLX5_SF
-	struct mlx5_vhca_state_notifier *vhca_state_notifier;
-	struct mlx5_sf_dev_table *sf_dev_table;
-	struct mlx5_core_dev *parent_mdev;
-#endif
-#ifdef CONFIG_MLX5_SF_MANAGER
-	struct mlx5_sf_hw_table *sf_hw_table;
-	struct mlx5_sf_table *sf_table;
-#endif
-};
+	काष्ठा mlx5_bfreg_data		bfregs;
+	काष्ठा mlx5_uars_page	       *uar;
+#अगर_घोषित CONFIG_MLX5_SF
+	काष्ठा mlx5_vhca_state_notअगरier *vhca_state_notअगरier;
+	काष्ठा mlx5_sf_dev_table *sf_dev_table;
+	काष्ठा mlx5_core_dev *parent_mdev;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MLX5_SF_MANAGER
+	काष्ठा mlx5_sf_hw_table *sf_hw_table;
+	काष्ठा mlx5_sf_table *sf_table;
+#पूर्ण_अगर
+पूर्ण;
 
-enum mlx5_device_state {
+क्रमागत mlx5_device_state अणु
 	MLX5_DEVICE_STATE_UNINITIALIZED,
 	MLX5_DEVICE_STATE_UP,
 	MLX5_DEVICE_STATE_INTERNAL_ERROR,
-};
+पूर्ण;
 
-enum mlx5_interface_state {
+क्रमागत mlx5_पूर्णांकerface_state अणु
 	MLX5_INTERFACE_STATE_UP = BIT(0),
-};
+पूर्ण;
 
-enum mlx5_pci_status {
+क्रमागत mlx5_pci_status अणु
 	MLX5_PCI_STATUS_DISABLED,
 	MLX5_PCI_STATUS_ENABLED,
-};
+पूर्ण;
 
-enum mlx5_pagefault_type_flags {
+क्रमागत mlx5_pagefault_type_flags अणु
 	MLX5_PFAULT_REQUESTOR = 1 << 0,
 	MLX5_PFAULT_WRITE     = 1 << 1,
 	MLX5_PFAULT_RDMA      = 1 << 2,
-};
+पूर्ण;
 
-struct mlx5_td {
-	/* protects tirs list changes while tirs refresh */
-	struct mutex     list_lock;
-	struct list_head tirs_list;
+काष्ठा mlx5_td अणु
+	/* protects tirs list changes जबतक tirs refresh */
+	काष्ठा mutex     list_lock;
+	काष्ठा list_head tirs_list;
 	u32              tdn;
-};
+पूर्ण;
 
-struct mlx5e_resources {
-	struct mlx5e_hw_objs {
+काष्ठा mlx5e_resources अणु
+	काष्ठा mlx5e_hw_objs अणु
 		u32                        pdn;
-		struct mlx5_td             td;
-		struct mlx5_core_mkey      mkey;
-		struct mlx5_sq_bfreg       bfreg;
-	} hw_objs;
-	struct devlink_port dl_port;
-	struct net_device *uplink_netdev;
-};
+		काष्ठा mlx5_td             td;
+		काष्ठा mlx5_core_mkey      mkey;
+		काष्ठा mlx5_sq_bfreg       bfreg;
+	पूर्ण hw_objs;
+	काष्ठा devlink_port dl_port;
+	काष्ठा net_device *uplink_netdev;
+पूर्ण;
 
-enum mlx5_sw_icm_type {
+क्रमागत mlx5_sw_icm_type अणु
 	MLX5_SW_ICM_TYPE_STEERING,
 	MLX5_SW_ICM_TYPE_HEADER_MODIFY,
-};
+पूर्ण;
 
-#define MLX5_MAX_RESERVED_GIDS 8
+#घोषणा MLX5_MAX_RESERVED_GIDS 8
 
-struct mlx5_rsvd_gids {
-	unsigned int start;
-	unsigned int count;
-	struct ida ida;
-};
+काष्ठा mlx5_rsvd_gids अणु
+	अचिन्हित पूर्णांक start;
+	अचिन्हित पूर्णांक count;
+	काष्ठा ida ida;
+पूर्ण;
 
-#define MAX_PIN_NUM	8
-struct mlx5_pps {
+#घोषणा MAX_PIN_NUM	8
+काष्ठा mlx5_pps अणु
 	u8                         pin_caps[MAX_PIN_NUM];
-	struct work_struct         out_work;
+	काष्ठा work_काष्ठा         out_work;
 	u64                        start[MAX_PIN_NUM];
 	u8                         enabled;
-};
+पूर्ण;
 
-struct mlx5_timer {
-	struct cyclecounter        cycles;
-	struct timecounter         tc;
+काष्ठा mlx5_समयr अणु
+	काष्ठा cyclecounter        cycles;
+	काष्ठा समयcounter         tc;
 	u32                        nominal_c_mult;
-	unsigned long              overflow_period;
-	struct delayed_work        overflow_work;
-};
+	अचिन्हित दीर्घ              overflow_period;
+	काष्ठा delayed_work        overflow_work;
+पूर्ण;
 
-struct mlx5_clock {
-	struct mlx5_nb             pps_nb;
+काष्ठा mlx5_घड़ी अणु
+	काष्ठा mlx5_nb             pps_nb;
 	seqlock_t                  lock;
-	struct hwtstamp_config     hwtstamp_config;
-	struct ptp_clock          *ptp;
-	struct ptp_clock_info      ptp_info;
-	struct mlx5_pps            pps_info;
-	struct mlx5_timer          timer;
-};
+	काष्ठा hwtstamp_config     hwtstamp_config;
+	काष्ठा ptp_घड़ी          *ptp;
+	काष्ठा ptp_घड़ी_info      ptp_info;
+	काष्ठा mlx5_pps            pps_info;
+	काष्ठा mlx5_समयr          समयr;
+पूर्ण;
 
-struct mlx5_dm;
-struct mlx5_fw_tracer;
-struct mlx5_vxlan;
-struct mlx5_geneve;
-struct mlx5_hv_vhca;
+काष्ठा mlx5_dm;
+काष्ठा mlx5_fw_tracer;
+काष्ठा mlx5_vxlan;
+काष्ठा mlx5_geneve;
+काष्ठा mlx5_hv_vhca;
 
-#define MLX5_LOG_SW_ICM_BLOCK_SIZE(dev) (MLX5_CAP_DEV_MEM(dev, log_sw_icm_alloc_granularity))
-#define MLX5_SW_ICM_BLOCK_SIZE(dev) (1 << MLX5_LOG_SW_ICM_BLOCK_SIZE(dev))
+#घोषणा MLX5_LOG_SW_ICM_BLOCK_SIZE(dev) (MLX5_CAP_DEV_MEM(dev, log_sw_icm_alloc_granularity))
+#घोषणा MLX5_SW_ICM_BLOCK_SIZE(dev) (1 << MLX5_LOG_SW_ICM_BLOCK_SIZE(dev))
 
-enum {
+क्रमागत अणु
 	MLX5_PROF_MASK_QP_SIZE		= (u64)1 << 0,
 	MLX5_PROF_MASK_MR_CACHE		= (u64)1 << 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MR_CACHE_LAST_STD_ENTRY = 20,
 	MLX5_IMR_MTT_CACHE_ENTRY,
 	MLX5_IMR_KSM_CACHE_ENTRY,
 	MAX_MR_CACHE_ENTRIES
-};
+पूर्ण;
 
-struct mlx5_profile {
+काष्ठा mlx5_profile अणु
 	u64	mask;
 	u8	log_max_qp;
-	struct {
-		int	size;
-		int	limit;
-	} mr_cache[MAX_MR_CACHE_ENTRIES];
-};
+	काष्ठा अणु
+		पूर्णांक	size;
+		पूर्णांक	limit;
+	पूर्ण mr_cache[MAX_MR_CACHE_ENTRIES];
+पूर्ण;
 
-struct mlx5_core_dev {
-	struct device *device;
-	enum mlx5_coredev_type coredev_type;
-	struct pci_dev	       *pdev;
+काष्ठा mlx5_core_dev अणु
+	काष्ठा device *device;
+	क्रमागत mlx5_coredev_type coredev_type;
+	काष्ठा pci_dev	       *pdev;
 	/* sync pci state */
-	struct mutex		pci_status_mutex;
-	enum mlx5_pci_status	pci_status;
+	काष्ठा mutex		pci_status_mutex;
+	क्रमागत mlx5_pci_status	pci_status;
 	u8			rev_id;
-	char			board_id[MLX5_BOARD_ID_LEN];
-	struct mlx5_cmd		cmd;
-	struct {
-		u32 hca_cur[MLX5_CAP_NUM][MLX5_UN_SZ_DW(hca_cap_union)];
-		u32 hca_max[MLX5_CAP_NUM][MLX5_UN_SZ_DW(hca_cap_union)];
+	अक्षर			board_id[MLX5_BOARD_ID_LEN];
+	काष्ठा mlx5_cmd		cmd;
+	काष्ठा अणु
+		u32 hca_cur[MLX5_CAP_NUM][MLX5_UN_SZ_DW(hca_cap_जोड़)];
+		u32 hca_max[MLX5_CAP_NUM][MLX5_UN_SZ_DW(hca_cap_जोड़)];
 		u32 pcam[MLX5_ST_SZ_DW(pcam_reg)];
 		u32 mcam[MLX5_MCAM_REGS_NUM][MLX5_ST_SZ_DW(mcam_reg)];
 		u32 fpga[MLX5_ST_SZ_DW(fpga_cap)];
 		u32 qcam[MLX5_ST_SZ_DW(qcam_reg)];
 		u8  embedded_cpu;
-	} caps;
+	पूर्ण caps;
 	u64			sys_image_guid;
 	phys_addr_t		iseg_base;
-	struct mlx5_init_seg __iomem *iseg;
+	काष्ठा mlx5_init_seg __iomem *iseg;
 	phys_addr_t             bar_addr;
-	enum mlx5_device_state	state;
-	/* sync interface state */
-	struct mutex		intf_state_mutex;
-	unsigned long		intf_state;
-	struct mlx5_priv	priv;
-	struct mlx5_profile	profile;
+	क्रमागत mlx5_device_state	state;
+	/* sync पूर्णांकerface state */
+	काष्ठा mutex		पूर्णांकf_state_mutex;
+	अचिन्हित दीर्घ		पूर्णांकf_state;
+	काष्ठा mlx5_priv	priv;
+	काष्ठा mlx5_profile	profile;
 	u32			issi;
-	struct mlx5e_resources  mlx5e_res;
-	struct mlx5_dm          *dm;
-	struct mlx5_vxlan       *vxlan;
-	struct mlx5_geneve      *geneve;
-	struct {
-		struct mlx5_rsvd_gids	reserved_gids;
+	काष्ठा mlx5e_resources  mlx5e_res;
+	काष्ठा mlx5_dm          *dm;
+	काष्ठा mlx5_vxlan       *vxlan;
+	काष्ठा mlx5_geneve      *geneve;
+	काष्ठा अणु
+		काष्ठा mlx5_rsvd_gids	reserved_gids;
 		u32			roce_en;
-	} roce;
-#ifdef CONFIG_MLX5_FPGA
-	struct mlx5_fpga_device *fpga;
-#endif
-#ifdef CONFIG_MLX5_ACCEL
-	const struct mlx5_accel_ipsec_ops *ipsec_ops;
-#endif
-	struct mlx5_clock        clock;
-	struct mlx5_ib_clock_info  *clock_info;
-	struct mlx5_fw_tracer   *tracer;
-	struct mlx5_rsc_dump    *rsc_dump;
+	पूर्ण roce;
+#अगर_घोषित CONFIG_MLX5_FPGA
+	काष्ठा mlx5_fpga_device *fpga;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MLX5_ACCEL
+	स्थिर काष्ठा mlx5_accel_ipsec_ops *ipsec_ops;
+#पूर्ण_अगर
+	काष्ठा mlx5_घड़ी        घड़ी;
+	काष्ठा mlx5_ib_घड़ी_info  *घड़ी_info;
+	काष्ठा mlx5_fw_tracer   *tracer;
+	काष्ठा mlx5_rsc_dump    *rsc_dump;
 	u32                      vsc_addr;
-	struct mlx5_hv_vhca	*hv_vhca;
-};
+	काष्ठा mlx5_hv_vhca	*hv_vhca;
+पूर्ण;
 
-struct mlx5_db {
+काष्ठा mlx5_db अणु
 	__be32			*db;
-	union {
-		struct mlx5_db_pgdir		*pgdir;
-		struct mlx5_ib_user_db_page	*user_page;
-	}			u;
+	जोड़ अणु
+		काष्ठा mlx5_db_pgdir		*pgdir;
+		काष्ठा mlx5_ib_user_db_page	*user_page;
+	पूर्ण			u;
 	dma_addr_t		dma;
-	int			index;
-};
+	पूर्णांक			index;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_COMP_EQ_SIZE = 1024,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_PTYS_IB = 1 << 0,
 	MLX5_PTYS_EN = 1 << 2,
-};
+पूर्ण;
 
-typedef void (*mlx5_cmd_cbk_t)(int status, void *context);
+प्रकार व्योम (*mlx5_cmd_cbk_t)(पूर्णांक status, व्योम *context);
 
-enum {
+क्रमागत अणु
 	MLX5_CMD_ENT_STATE_PENDING_COMP,
-};
+पूर्ण;
 
-struct mlx5_cmd_work_ent {
-	unsigned long		state;
-	struct mlx5_cmd_msg    *in;
-	struct mlx5_cmd_msg    *out;
-	void		       *uout;
-	int			uout_size;
+काष्ठा mlx5_cmd_work_ent अणु
+	अचिन्हित दीर्घ		state;
+	काष्ठा mlx5_cmd_msg    *in;
+	काष्ठा mlx5_cmd_msg    *out;
+	व्योम		       *uout;
+	पूर्णांक			uout_size;
 	mlx5_cmd_cbk_t		callback;
-	struct delayed_work	cb_timeout_work;
-	void		       *context;
-	int			idx;
-	struct completion	handling;
-	struct completion	done;
-	struct mlx5_cmd        *cmd;
-	struct work_struct	work;
-	struct mlx5_cmd_layout *lay;
-	int			ret;
-	int			page_queue;
+	काष्ठा delayed_work	cb_समयout_work;
+	व्योम		       *context;
+	पूर्णांक			idx;
+	काष्ठा completion	handling;
+	काष्ठा completion	करोne;
+	काष्ठा mlx5_cmd        *cmd;
+	काष्ठा work_काष्ठा	work;
+	काष्ठा mlx5_cmd_layout *lay;
+	पूर्णांक			ret;
+	पूर्णांक			page_queue;
 	u8			status;
 	u8			token;
 	u64			ts1;
@@ -830,25 +831,25 @@ struct mlx5_cmd_work_ent {
 	bool			polling;
 	/* Track the max comp handlers */
 	refcount_t              refcnt;
-};
+पूर्ण;
 
-struct mlx5_pas {
+काष्ठा mlx5_pas अणु
 	u64	pa;
 	u8	log_sz;
-};
+पूर्ण;
 
-enum phy_port_state {
+क्रमागत phy_port_state अणु
 	MLX5_AAA_111
-};
+पूर्ण;
 
-struct mlx5_hca_vport_context {
+काष्ठा mlx5_hca_vport_context अणु
 	u32			field_select;
 	bool			sm_virt_aware;
 	bool			has_smi;
 	bool			has_raw;
-	enum port_state_policy	policy;
-	enum phy_port_state	phys_state;
-	enum ib_port_state	vport_state;
+	क्रमागत port_state_policy	policy;
+	क्रमागत phy_port_state	phys_state;
+	क्रमागत ib_port_state	vport_state;
 	u8			port_physical_state;
 	u64			sys_image_guid;
 	u64			port_guid;
@@ -858,62 +859,62 @@ struct mlx5_hca_vport_context {
 	u16			cap_mask2;
 	u16			cap_mask2_perm;
 	u16			lid;
-	u8			init_type_reply; /* bitmask: see ib spec 14.2.5.6 InitTypeReply */
+	u8			init_type_reply; /* biपंचांगask: see ib spec 14.2.5.6 InitTypeReply */
 	u8			lmc;
-	u8			subnet_timeout;
+	u8			subnet_समयout;
 	u16			sm_lid;
 	u8			sm_sl;
 	u16			qkey_violation_counter;
 	u16			pkey_violation_counter;
 	bool			grh_required;
-};
+पूर्ण;
 
-static inline void *mlx5_buf_offset(struct mlx5_frag_buf *buf, int offset)
-{
-		return buf->frags->buf + offset;
-}
+अटल अंतरभूत व्योम *mlx5_buf_offset(काष्ठा mlx5_frag_buf *buf, पूर्णांक offset)
+अणु
+		वापस buf->frags->buf + offset;
+पूर्ण
 
-#define STRUCT_FIELD(header, field) \
-	.struct_offset_bytes = offsetof(struct ib_unpacked_ ## header, field),      \
-	.struct_size_bytes   = sizeof((struct ib_unpacked_ ## header *)0)->field
+#घोषणा STRUCT_FIELD(header, field) \
+	.काष्ठा_offset_bytes = दुरत्व(काष्ठा ib_unpacked_ ## header, field),      \
+	.काष्ठा_size_bytes   = माप((काष्ठा ib_unpacked_ ## header *)0)->field
 
-static inline struct mlx5_core_dev *pci2mlx5_core_dev(struct pci_dev *pdev)
-{
-	return pci_get_drvdata(pdev);
-}
+अटल अंतरभूत काष्ठा mlx5_core_dev *pci2mlx5_core_dev(काष्ठा pci_dev *pdev)
+अणु
+	वापस pci_get_drvdata(pdev);
+पूर्ण
 
-extern struct dentry *mlx5_debugfs_root;
+बाह्य काष्ठा dentry *mlx5_debugfs_root;
 
-static inline u16 fw_rev_maj(struct mlx5_core_dev *dev)
-{
-	return ioread32be(&dev->iseg->fw_rev) & 0xffff;
-}
+अटल अंतरभूत u16 fw_rev_maj(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस ioपढ़ो32be(&dev->iseg->fw_rev) & 0xffff;
+पूर्ण
 
-static inline u16 fw_rev_min(struct mlx5_core_dev *dev)
-{
-	return ioread32be(&dev->iseg->fw_rev) >> 16;
-}
+अटल अंतरभूत u16 fw_rev_min(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस ioपढ़ो32be(&dev->iseg->fw_rev) >> 16;
+पूर्ण
 
-static inline u16 fw_rev_sub(struct mlx5_core_dev *dev)
-{
-	return ioread32be(&dev->iseg->cmdif_rev_fw_sub) & 0xffff;
-}
+अटल अंतरभूत u16 fw_rev_sub(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस ioपढ़ो32be(&dev->iseg->cmdअगर_rev_fw_sub) & 0xffff;
+पूर्ण
 
-static inline u32 mlx5_base_mkey(const u32 key)
-{
-	return key & 0xffffff00u;
-}
+अटल अंतरभूत u32 mlx5_base_mkey(स्थिर u32 key)
+अणु
+	वापस key & 0xffffff00u;
+पूर्ण
 
-static inline u32 wq_get_byte_sz(u8 log_sz, u8 log_stride)
-{
-	return ((u32)1 << log_sz) << log_stride;
-}
+अटल अंतरभूत u32 wq_get_byte_sz(u8 log_sz, u8 log_stride)
+अणु
+	वापस ((u32)1 << log_sz) << log_stride;
+पूर्ण
 
-static inline void mlx5_init_fbc_offset(struct mlx5_buf_list *frags,
+अटल अंतरभूत व्योम mlx5_init_fbc_offset(काष्ठा mlx5_buf_list *frags,
 					u8 log_stride, u8 log_sz,
 					u16 strides_offset,
-					struct mlx5_frag_buf_ctrl *fbc)
-{
+					काष्ठा mlx5_frag_buf_ctrl *fbc)
+अणु
 	fbc->frags      = frags;
 	fbc->log_stride = log_stride;
 	fbc->log_sz     = log_sz;
@@ -921,334 +922,334 @@ static inline void mlx5_init_fbc_offset(struct mlx5_buf_list *frags,
 	fbc->log_frag_strides = PAGE_SHIFT - fbc->log_stride;
 	fbc->frag_sz_m1	= (1 << fbc->log_frag_strides) - 1;
 	fbc->strides_offset = strides_offset;
-}
+पूर्ण
 
-static inline void mlx5_init_fbc(struct mlx5_buf_list *frags,
+अटल अंतरभूत व्योम mlx5_init_fbc(काष्ठा mlx5_buf_list *frags,
 				 u8 log_stride, u8 log_sz,
-				 struct mlx5_frag_buf_ctrl *fbc)
-{
+				 काष्ठा mlx5_frag_buf_ctrl *fbc)
+अणु
 	mlx5_init_fbc_offset(frags, log_stride, log_sz, 0, fbc);
-}
+पूर्ण
 
-static inline void *mlx5_frag_buf_get_wqe(struct mlx5_frag_buf_ctrl *fbc,
+अटल अंतरभूत व्योम *mlx5_frag_buf_get_wqe(काष्ठा mlx5_frag_buf_ctrl *fbc,
 					  u32 ix)
-{
-	unsigned int frag;
+अणु
+	अचिन्हित पूर्णांक frag;
 
 	ix  += fbc->strides_offset;
 	frag = ix >> fbc->log_frag_strides;
 
-	return fbc->frags[frag].buf + ((fbc->frag_sz_m1 & ix) << fbc->log_stride);
-}
+	वापस fbc->frags[frag].buf + ((fbc->frag_sz_m1 & ix) << fbc->log_stride);
+पूर्ण
 
-static inline u32
-mlx5_frag_buf_get_idx_last_contig_stride(struct mlx5_frag_buf_ctrl *fbc, u32 ix)
-{
+अटल अंतरभूत u32
+mlx5_frag_buf_get_idx_last_contig_stride(काष्ठा mlx5_frag_buf_ctrl *fbc, u32 ix)
+अणु
 	u32 last_frag_stride_idx = (ix + fbc->strides_offset) | fbc->frag_sz_m1;
 
-	return min_t(u32, last_frag_stride_idx - fbc->strides_offset, fbc->sz_m1);
-}
+	वापस min_t(u32, last_frag_stride_idx - fbc->strides_offset, fbc->sz_m1);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	CMD_ALLOWED_OPCODE_ALL,
-};
+पूर्ण;
 
-void mlx5_cmd_use_events(struct mlx5_core_dev *dev);
-void mlx5_cmd_use_polling(struct mlx5_core_dev *dev);
-void mlx5_cmd_allowed_opcode(struct mlx5_core_dev *dev, u16 opcode);
+व्योम mlx5_cmd_use_events(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_cmd_use_polling(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_cmd_allowed_opcode(काष्ठा mlx5_core_dev *dev, u16 opcode);
 
-struct mlx5_async_ctx {
-	struct mlx5_core_dev *dev;
+काष्ठा mlx5_async_ctx अणु
+	काष्ठा mlx5_core_dev *dev;
 	atomic_t num_inflight;
-	struct wait_queue_head wait;
-};
+	काष्ठा रुको_queue_head रुको;
+पूर्ण;
 
-struct mlx5_async_work;
+काष्ठा mlx5_async_work;
 
-typedef void (*mlx5_async_cbk_t)(int status, struct mlx5_async_work *context);
+प्रकार व्योम (*mlx5_async_cbk_t)(पूर्णांक status, काष्ठा mlx5_async_work *context);
 
-struct mlx5_async_work {
-	struct mlx5_async_ctx *ctx;
+काष्ठा mlx5_async_work अणु
+	काष्ठा mlx5_async_ctx *ctx;
 	mlx5_async_cbk_t user_callback;
-};
+पूर्ण;
 
-void mlx5_cmd_init_async_ctx(struct mlx5_core_dev *dev,
-			     struct mlx5_async_ctx *ctx);
-void mlx5_cmd_cleanup_async_ctx(struct mlx5_async_ctx *ctx);
-int mlx5_cmd_exec_cb(struct mlx5_async_ctx *ctx, void *in, int in_size,
-		     void *out, int out_size, mlx5_async_cbk_t callback,
-		     struct mlx5_async_work *work);
+व्योम mlx5_cmd_init_async_ctx(काष्ठा mlx5_core_dev *dev,
+			     काष्ठा mlx5_async_ctx *ctx);
+व्योम mlx5_cmd_cleanup_async_ctx(काष्ठा mlx5_async_ctx *ctx);
+पूर्णांक mlx5_cmd_exec_cb(काष्ठा mlx5_async_ctx *ctx, व्योम *in, पूर्णांक in_size,
+		     व्योम *out, पूर्णांक out_size, mlx5_async_cbk_t callback,
+		     काष्ठा mlx5_async_work *work);
 
-int mlx5_cmd_exec(struct mlx5_core_dev *dev, void *in, int in_size, void *out,
-		  int out_size);
+पूर्णांक mlx5_cmd_exec(काष्ठा mlx5_core_dev *dev, व्योम *in, पूर्णांक in_size, व्योम *out,
+		  पूर्णांक out_size);
 
-#define mlx5_cmd_exec_inout(dev, ifc_cmd, in, out)                             \
-	({                                                                     \
-		mlx5_cmd_exec(dev, in, MLX5_ST_SZ_BYTES(ifc_cmd##_in), out,    \
-			      MLX5_ST_SZ_BYTES(ifc_cmd##_out));                \
-	})
+#घोषणा mlx5_cmd_exec_inout(dev, अगरc_cmd, in, out)                             \
+	(अणु                                                                     \
+		mlx5_cmd_exec(dev, in, MLX5_ST_SZ_BYTES(अगरc_cmd##_in), out,    \
+			      MLX5_ST_SZ_BYTES(अगरc_cmd##_out));                \
+	पूर्ण)
 
-#define mlx5_cmd_exec_in(dev, ifc_cmd, in)                                     \
-	({                                                                     \
-		u32 _out[MLX5_ST_SZ_DW(ifc_cmd##_out)] = {};                   \
-		mlx5_cmd_exec_inout(dev, ifc_cmd, in, _out);                   \
-	})
+#घोषणा mlx5_cmd_exec_in(dev, अगरc_cmd, in)                                     \
+	(अणु                                                                     \
+		u32 _out[MLX5_ST_SZ_DW(अगरc_cmd##_out)] = अणुपूर्ण;                   \
+		mlx5_cmd_exec_inout(dev, अगरc_cmd, in, _out);                   \
+	पूर्ण)
 
-int mlx5_cmd_exec_polling(struct mlx5_core_dev *dev, void *in, int in_size,
-			  void *out, int out_size);
-void mlx5_cmd_mbox_status(void *out, u8 *status, u32 *syndrome);
-bool mlx5_cmd_is_down(struct mlx5_core_dev *dev);
+पूर्णांक mlx5_cmd_exec_polling(काष्ठा mlx5_core_dev *dev, व्योम *in, पूर्णांक in_size,
+			  व्योम *out, पूर्णांक out_size);
+व्योम mlx5_cmd_mbox_status(व्योम *out, u8 *status, u32 *syndrome);
+bool mlx5_cmd_is_करोwn(काष्ठा mlx5_core_dev *dev);
 
-int mlx5_core_get_caps(struct mlx5_core_dev *dev, enum mlx5_cap_type cap_type);
-int mlx5_cmd_alloc_uar(struct mlx5_core_dev *dev, u32 *uarn);
-int mlx5_cmd_free_uar(struct mlx5_core_dev *dev, u32 uarn);
-void mlx5_health_flush(struct mlx5_core_dev *dev);
-void mlx5_health_cleanup(struct mlx5_core_dev *dev);
-int mlx5_health_init(struct mlx5_core_dev *dev);
-void mlx5_start_health_poll(struct mlx5_core_dev *dev);
-void mlx5_stop_health_poll(struct mlx5_core_dev *dev, bool disable_health);
-void mlx5_drain_health_wq(struct mlx5_core_dev *dev);
-void mlx5_trigger_health_work(struct mlx5_core_dev *dev);
-int mlx5_buf_alloc(struct mlx5_core_dev *dev,
-		   int size, struct mlx5_frag_buf *buf);
-void mlx5_buf_free(struct mlx5_core_dev *dev, struct mlx5_frag_buf *buf);
-int mlx5_frag_buf_alloc_node(struct mlx5_core_dev *dev, int size,
-			     struct mlx5_frag_buf *buf, int node);
-void mlx5_frag_buf_free(struct mlx5_core_dev *dev, struct mlx5_frag_buf *buf);
-struct mlx5_cmd_mailbox *mlx5_alloc_cmd_mailbox_chain(struct mlx5_core_dev *dev,
-						      gfp_t flags, int npages);
-void mlx5_free_cmd_mailbox_chain(struct mlx5_core_dev *dev,
-				 struct mlx5_cmd_mailbox *head);
-int mlx5_core_create_mkey(struct mlx5_core_dev *dev,
-			  struct mlx5_core_mkey *mkey,
-			  u32 *in, int inlen);
-int mlx5_core_destroy_mkey(struct mlx5_core_dev *dev,
-			   struct mlx5_core_mkey *mkey);
-int mlx5_core_query_mkey(struct mlx5_core_dev *dev, struct mlx5_core_mkey *mkey,
-			 u32 *out, int outlen);
-int mlx5_core_alloc_pd(struct mlx5_core_dev *dev, u32 *pdn);
-int mlx5_core_dealloc_pd(struct mlx5_core_dev *dev, u32 pdn);
-int mlx5_pagealloc_init(struct mlx5_core_dev *dev);
-void mlx5_pagealloc_cleanup(struct mlx5_core_dev *dev);
-void mlx5_pagealloc_start(struct mlx5_core_dev *dev);
-void mlx5_pagealloc_stop(struct mlx5_core_dev *dev);
-void mlx5_core_req_pages_handler(struct mlx5_core_dev *dev, u16 func_id,
+पूर्णांक mlx5_core_get_caps(काष्ठा mlx5_core_dev *dev, क्रमागत mlx5_cap_type cap_type);
+पूर्णांक mlx5_cmd_alloc_uar(काष्ठा mlx5_core_dev *dev, u32 *uarn);
+पूर्णांक mlx5_cmd_मुक्त_uar(काष्ठा mlx5_core_dev *dev, u32 uarn);
+व्योम mlx5_health_flush(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_health_cleanup(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_health_init(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_start_health_poll(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_stop_health_poll(काष्ठा mlx5_core_dev *dev, bool disable_health);
+व्योम mlx5_drain_health_wq(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_trigger_health_work(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_buf_alloc(काष्ठा mlx5_core_dev *dev,
+		   पूर्णांक size, काष्ठा mlx5_frag_buf *buf);
+व्योम mlx5_buf_मुक्त(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_frag_buf *buf);
+पूर्णांक mlx5_frag_buf_alloc_node(काष्ठा mlx5_core_dev *dev, पूर्णांक size,
+			     काष्ठा mlx5_frag_buf *buf, पूर्णांक node);
+व्योम mlx5_frag_buf_मुक्त(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_frag_buf *buf);
+काष्ठा mlx5_cmd_mailbox *mlx5_alloc_cmd_mailbox_chain(काष्ठा mlx5_core_dev *dev,
+						      gfp_t flags, पूर्णांक npages);
+व्योम mlx5_मुक्त_cmd_mailbox_chain(काष्ठा mlx5_core_dev *dev,
+				 काष्ठा mlx5_cmd_mailbox *head);
+पूर्णांक mlx5_core_create_mkey(काष्ठा mlx5_core_dev *dev,
+			  काष्ठा mlx5_core_mkey *mkey,
+			  u32 *in, पूर्णांक inlen);
+पूर्णांक mlx5_core_destroy_mkey(काष्ठा mlx5_core_dev *dev,
+			   काष्ठा mlx5_core_mkey *mkey);
+पूर्णांक mlx5_core_query_mkey(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_core_mkey *mkey,
+			 u32 *out, पूर्णांक outlen);
+पूर्णांक mlx5_core_alloc_pd(काष्ठा mlx5_core_dev *dev, u32 *pdn);
+पूर्णांक mlx5_core_dealloc_pd(काष्ठा mlx5_core_dev *dev, u32 pdn);
+पूर्णांक mlx5_pagealloc_init(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_pagealloc_cleanup(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_pagealloc_start(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_pagealloc_stop(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_core_req_pages_handler(काष्ठा mlx5_core_dev *dev, u16 func_id,
 				 s32 npages, bool ec_function);
-int mlx5_satisfy_startup_pages(struct mlx5_core_dev *dev, int boot);
-int mlx5_reclaim_startup_pages(struct mlx5_core_dev *dev);
-void mlx5_register_debugfs(void);
-void mlx5_unregister_debugfs(void);
+पूर्णांक mlx5_satisfy_startup_pages(काष्ठा mlx5_core_dev *dev, पूर्णांक boot);
+पूर्णांक mlx5_reclaim_startup_pages(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_रेजिस्टर_debugfs(व्योम);
+व्योम mlx5_unरेजिस्टर_debugfs(व्योम);
 
-void mlx5_fill_page_array(struct mlx5_frag_buf *buf, __be64 *pas);
-void mlx5_fill_page_frag_array_perm(struct mlx5_frag_buf *buf, __be64 *pas, u8 perm);
-void mlx5_fill_page_frag_array(struct mlx5_frag_buf *frag_buf, __be64 *pas);
-int mlx5_vector2eqn(struct mlx5_core_dev *dev, int vector, int *eqn,
-		    unsigned int *irqn);
-int mlx5_core_attach_mcg(struct mlx5_core_dev *dev, union ib_gid *mgid, u32 qpn);
-int mlx5_core_detach_mcg(struct mlx5_core_dev *dev, union ib_gid *mgid, u32 qpn);
+व्योम mlx5_fill_page_array(काष्ठा mlx5_frag_buf *buf, __be64 *pas);
+व्योम mlx5_fill_page_frag_array_perm(काष्ठा mlx5_frag_buf *buf, __be64 *pas, u8 perm);
+व्योम mlx5_fill_page_frag_array(काष्ठा mlx5_frag_buf *frag_buf, __be64 *pas);
+पूर्णांक mlx5_vector2eqn(काष्ठा mlx5_core_dev *dev, पूर्णांक vector, पूर्णांक *eqn,
+		    अचिन्हित पूर्णांक *irqn);
+पूर्णांक mlx5_core_attach_mcg(काष्ठा mlx5_core_dev *dev, जोड़ ib_gid *mgid, u32 qpn);
+पूर्णांक mlx5_core_detach_mcg(काष्ठा mlx5_core_dev *dev, जोड़ ib_gid *mgid, u32 qpn);
 
-void mlx5_qp_debugfs_init(struct mlx5_core_dev *dev);
-void mlx5_qp_debugfs_cleanup(struct mlx5_core_dev *dev);
-int mlx5_core_access_reg(struct mlx5_core_dev *dev, void *data_in,
-			 int size_in, void *data_out, int size_out,
-			 u16 reg_num, int arg, int write);
+व्योम mlx5_qp_debugfs_init(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_qp_debugfs_cleanup(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_core_access_reg(काष्ठा mlx5_core_dev *dev, व्योम *data_in,
+			 पूर्णांक size_in, व्योम *data_out, पूर्णांक size_out,
+			 u16 reg_num, पूर्णांक arg, पूर्णांक ग_लिखो);
 
-int mlx5_db_alloc(struct mlx5_core_dev *dev, struct mlx5_db *db);
-int mlx5_db_alloc_node(struct mlx5_core_dev *dev, struct mlx5_db *db,
-		       int node);
-void mlx5_db_free(struct mlx5_core_dev *dev, struct mlx5_db *db);
+पूर्णांक mlx5_db_alloc(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_db *db);
+पूर्णांक mlx5_db_alloc_node(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_db *db,
+		       पूर्णांक node);
+व्योम mlx5_db_मुक्त(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_db *db);
 
-const char *mlx5_command_str(int command);
-void mlx5_cmdif_debugfs_init(struct mlx5_core_dev *dev);
-void mlx5_cmdif_debugfs_cleanup(struct mlx5_core_dev *dev);
-int mlx5_core_create_psv(struct mlx5_core_dev *dev, u32 pdn,
-			 int npsvs, u32 *sig_index);
-int mlx5_core_destroy_psv(struct mlx5_core_dev *dev, int psv_num);
-void mlx5_core_put_rsc(struct mlx5_core_rsc_common *common);
-int mlx5_query_odp_caps(struct mlx5_core_dev *dev,
-			struct mlx5_odp_caps *odp_caps);
-int mlx5_core_query_ib_ppcnt(struct mlx5_core_dev *dev,
-			     u8 port_num, void *out, size_t sz);
+स्थिर अक्षर *mlx5_command_str(पूर्णांक command);
+व्योम mlx5_cmdअगर_debugfs_init(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_cmdअगर_debugfs_cleanup(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_core_create_psv(काष्ठा mlx5_core_dev *dev, u32 pdn,
+			 पूर्णांक npsvs, u32 *sig_index);
+पूर्णांक mlx5_core_destroy_psv(काष्ठा mlx5_core_dev *dev, पूर्णांक psv_num);
+व्योम mlx5_core_put_rsc(काष्ठा mlx5_core_rsc_common *common);
+पूर्णांक mlx5_query_odp_caps(काष्ठा mlx5_core_dev *dev,
+			काष्ठा mlx5_odp_caps *odp_caps);
+पूर्णांक mlx5_core_query_ib_ppcnt(काष्ठा mlx5_core_dev *dev,
+			     u8 port_num, व्योम *out, माप_प्रकार sz);
 
-int mlx5_init_rl_table(struct mlx5_core_dev *dev);
-void mlx5_cleanup_rl_table(struct mlx5_core_dev *dev);
-int mlx5_rl_add_rate(struct mlx5_core_dev *dev, u16 *index,
-		     struct mlx5_rate_limit *rl);
-void mlx5_rl_remove_rate(struct mlx5_core_dev *dev, struct mlx5_rate_limit *rl);
-bool mlx5_rl_is_in_range(struct mlx5_core_dev *dev, u32 rate);
-int mlx5_rl_add_rate_raw(struct mlx5_core_dev *dev, void *rl_in, u16 uid,
+पूर्णांक mlx5_init_rl_table(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_cleanup_rl_table(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_rl_add_rate(काष्ठा mlx5_core_dev *dev, u16 *index,
+		     काष्ठा mlx5_rate_limit *rl);
+व्योम mlx5_rl_हटाओ_rate(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_rate_limit *rl);
+bool mlx5_rl_is_in_range(काष्ठा mlx5_core_dev *dev, u32 rate);
+पूर्णांक mlx5_rl_add_rate_raw(काष्ठा mlx5_core_dev *dev, व्योम *rl_in, u16 uid,
 			 bool dedicated_entry, u16 *index);
-void mlx5_rl_remove_rate_raw(struct mlx5_core_dev *dev, u16 index);
-bool mlx5_rl_are_equal(struct mlx5_rate_limit *rl_0,
-		       struct mlx5_rate_limit *rl_1);
-int mlx5_alloc_bfreg(struct mlx5_core_dev *mdev, struct mlx5_sq_bfreg *bfreg,
+व्योम mlx5_rl_हटाओ_rate_raw(काष्ठा mlx5_core_dev *dev, u16 index);
+bool mlx5_rl_are_equal(काष्ठा mlx5_rate_limit *rl_0,
+		       काष्ठा mlx5_rate_limit *rl_1);
+पूर्णांक mlx5_alloc_bfreg(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_sq_bfreg *bfreg,
 		     bool map_wc, bool fast_path);
-void mlx5_free_bfreg(struct mlx5_core_dev *mdev, struct mlx5_sq_bfreg *bfreg);
+व्योम mlx5_मुक्त_bfreg(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_sq_bfreg *bfreg);
 
-unsigned int mlx5_comp_vectors_count(struct mlx5_core_dev *dev);
-struct cpumask *
-mlx5_comp_irq_get_affinity_mask(struct mlx5_core_dev *dev, int vector);
-unsigned int mlx5_core_reserved_gids_count(struct mlx5_core_dev *dev);
-int mlx5_core_roce_gid_set(struct mlx5_core_dev *dev, unsigned int index,
-			   u8 roce_version, u8 roce_l3_type, const u8 *gid,
-			   const u8 *mac, bool vlan, u16 vlan_id, u8 port_num);
+अचिन्हित पूर्णांक mlx5_comp_vectors_count(काष्ठा mlx5_core_dev *dev);
+काष्ठा cpumask *
+mlx5_comp_irq_get_affinity_mask(काष्ठा mlx5_core_dev *dev, पूर्णांक vector);
+अचिन्हित पूर्णांक mlx5_core_reserved_gids_count(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_core_roce_gid_set(काष्ठा mlx5_core_dev *dev, अचिन्हित पूर्णांक index,
+			   u8 roce_version, u8 roce_l3_type, स्थिर u8 *gid,
+			   स्थिर u8 *mac, bool vlan, u16 vlan_id, u8 port_num);
 
-static inline u32 mlx5_mkey_to_idx(u32 mkey)
-{
-	return mkey >> 8;
-}
+अटल अंतरभूत u32 mlx5_mkey_to_idx(u32 mkey)
+अणु
+	वापस mkey >> 8;
+पूर्ण
 
-static inline u32 mlx5_idx_to_mkey(u32 mkey_idx)
-{
-	return mkey_idx << 8;
-}
+अटल अंतरभूत u32 mlx5_idx_to_mkey(u32 mkey_idx)
+अणु
+	वापस mkey_idx << 8;
+पूर्ण
 
-static inline u8 mlx5_mkey_variant(u32 mkey)
-{
-	return mkey & 0xff;
-}
+अटल अंतरभूत u8 mlx5_mkey_variant(u32 mkey)
+अणु
+	वापस mkey & 0xff;
+पूर्ण
 
-/* Async-atomic event notifier used by mlx5 core to forward FW
+/* Async-atomic event notअगरier used by mlx5 core to क्रमward FW
  * evetns recived from event queue to mlx5 consumers.
  * Optimise event queue dipatching.
  */
-int mlx5_notifier_register(struct mlx5_core_dev *dev, struct notifier_block *nb);
-int mlx5_notifier_unregister(struct mlx5_core_dev *dev, struct notifier_block *nb);
+पूर्णांक mlx5_notअगरier_रेजिस्टर(काष्ठा mlx5_core_dev *dev, काष्ठा notअगरier_block *nb);
+पूर्णांक mlx5_notअगरier_unरेजिस्टर(काष्ठा mlx5_core_dev *dev, काष्ठा notअगरier_block *nb);
 
-/* Async-atomic event notifier used for forwarding
- * evetns from the event queue into the to mlx5 events dispatcher,
- * eswitch, clock and others.
+/* Async-atomic event notअगरier used क्रम क्रमwarding
+ * evetns from the event queue पूर्णांकo the to mlx5 events dispatcher,
+ * eचयन, घड़ी and others.
  */
-int mlx5_eq_notifier_register(struct mlx5_core_dev *dev, struct mlx5_nb *nb);
-int mlx5_eq_notifier_unregister(struct mlx5_core_dev *dev, struct mlx5_nb *nb);
+पूर्णांक mlx5_eq_notअगरier_रेजिस्टर(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_nb *nb);
+पूर्णांक mlx5_eq_notअगरier_unरेजिस्टर(काष्ठा mlx5_core_dev *dev, काष्ठा mlx5_nb *nb);
 
-/* Blocking event notifier used to forward SW events, used for slow path */
-int mlx5_blocking_notifier_register(struct mlx5_core_dev *dev, struct notifier_block *nb);
-int mlx5_blocking_notifier_unregister(struct mlx5_core_dev *dev, struct notifier_block *nb);
-int mlx5_blocking_notifier_call_chain(struct mlx5_core_dev *dev, unsigned int event,
-				      void *data);
+/* Blocking event notअगरier used to क्रमward SW events, used क्रम slow path */
+पूर्णांक mlx5_blocking_notअगरier_रेजिस्टर(काष्ठा mlx5_core_dev *dev, काष्ठा notअगरier_block *nb);
+पूर्णांक mlx5_blocking_notअगरier_unरेजिस्टर(काष्ठा mlx5_core_dev *dev, काष्ठा notअगरier_block *nb);
+पूर्णांक mlx5_blocking_notअगरier_call_chain(काष्ठा mlx5_core_dev *dev, अचिन्हित पूर्णांक event,
+				      व्योम *data);
 
-int mlx5_core_query_vendor_id(struct mlx5_core_dev *mdev, u32 *vendor_id);
+पूर्णांक mlx5_core_query_venकरोr_id(काष्ठा mlx5_core_dev *mdev, u32 *venकरोr_id);
 
-int mlx5_cmd_create_vport_lag(struct mlx5_core_dev *dev);
-int mlx5_cmd_destroy_vport_lag(struct mlx5_core_dev *dev);
-bool mlx5_lag_is_roce(struct mlx5_core_dev *dev);
-bool mlx5_lag_is_sriov(struct mlx5_core_dev *dev);
-bool mlx5_lag_is_multipath(struct mlx5_core_dev *dev);
-bool mlx5_lag_is_active(struct mlx5_core_dev *dev);
-struct net_device *mlx5_lag_get_roce_netdev(struct mlx5_core_dev *dev);
-u8 mlx5_lag_get_slave_port(struct mlx5_core_dev *dev,
-			   struct net_device *slave);
-int mlx5_lag_query_cong_counters(struct mlx5_core_dev *dev,
+पूर्णांक mlx5_cmd_create_vport_lag(काष्ठा mlx5_core_dev *dev);
+पूर्णांक mlx5_cmd_destroy_vport_lag(काष्ठा mlx5_core_dev *dev);
+bool mlx5_lag_is_roce(काष्ठा mlx5_core_dev *dev);
+bool mlx5_lag_is_sriov(काष्ठा mlx5_core_dev *dev);
+bool mlx5_lag_is_multipath(काष्ठा mlx5_core_dev *dev);
+bool mlx5_lag_is_active(काष्ठा mlx5_core_dev *dev);
+काष्ठा net_device *mlx5_lag_get_roce_netdev(काष्ठा mlx5_core_dev *dev);
+u8 mlx5_lag_get_slave_port(काष्ठा mlx5_core_dev *dev,
+			   काष्ठा net_device *slave);
+पूर्णांक mlx5_lag_query_cong_counters(काष्ठा mlx5_core_dev *dev,
 				 u64 *values,
-				 int num_counters,
-				 size_t *offsets);
-struct mlx5_uars_page *mlx5_get_uars_page(struct mlx5_core_dev *mdev);
-void mlx5_put_uars_page(struct mlx5_core_dev *mdev, struct mlx5_uars_page *up);
-int mlx5_dm_sw_icm_alloc(struct mlx5_core_dev *dev, enum mlx5_sw_icm_type type,
+				 पूर्णांक num_counters,
+				 माप_प्रकार *offsets);
+काष्ठा mlx5_uars_page *mlx5_get_uars_page(काष्ठा mlx5_core_dev *mdev);
+व्योम mlx5_put_uars_page(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5_uars_page *up);
+पूर्णांक mlx5_dm_sw_icm_alloc(काष्ठा mlx5_core_dev *dev, क्रमागत mlx5_sw_icm_type type,
 			 u64 length, u32 log_alignment, u16 uid,
 			 phys_addr_t *addr, u32 *obj_id);
-int mlx5_dm_sw_icm_dealloc(struct mlx5_core_dev *dev, enum mlx5_sw_icm_type type,
+पूर्णांक mlx5_dm_sw_icm_dealloc(काष्ठा mlx5_core_dev *dev, क्रमागत mlx5_sw_icm_type type,
 			   u64 length, u16 uid, phys_addr_t addr, u32 obj_id);
 
-#ifdef CONFIG_MLX5_CORE_IPOIB
-struct net_device *mlx5_rdma_netdev_alloc(struct mlx5_core_dev *mdev,
-					  struct ib_device *ibdev,
-					  const char *name,
-					  void (*setup)(struct net_device *));
-#endif /* CONFIG_MLX5_CORE_IPOIB */
-int mlx5_rdma_rn_get_params(struct mlx5_core_dev *mdev,
-			    struct ib_device *device,
-			    struct rdma_netdev_alloc_params *params);
+#अगर_घोषित CONFIG_MLX5_CORE_IPOIB
+काष्ठा net_device *mlx5_rdma_netdev_alloc(काष्ठा mlx5_core_dev *mdev,
+					  काष्ठा ib_device *ibdev,
+					  स्थिर अक्षर *name,
+					  व्योम (*setup)(काष्ठा net_device *));
+#पूर्ण_अगर /* CONFIG_MLX5_CORE_IPOIB */
+पूर्णांक mlx5_rdma_rn_get_params(काष्ठा mlx5_core_dev *mdev,
+			    काष्ठा ib_device *device,
+			    काष्ठा rdma_netdev_alloc_params *params);
 
-enum {
+क्रमागत अणु
 	MLX5_PCI_DEV_IS_VF		= 1 << 0,
-};
+पूर्ण;
 
-static inline bool mlx5_core_is_pf(const struct mlx5_core_dev *dev)
-{
-	return dev->coredev_type == MLX5_COREDEV_PF;
-}
+अटल अंतरभूत bool mlx5_core_is_pf(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस dev->coredev_type == MLX5_COREDEV_PF;
+पूर्ण
 
-static inline bool mlx5_core_is_vf(const struct mlx5_core_dev *dev)
-{
-	return dev->coredev_type == MLX5_COREDEV_VF;
-}
+अटल अंतरभूत bool mlx5_core_is_vf(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस dev->coredev_type == MLX5_COREDEV_VF;
+पूर्ण
 
-static inline bool mlx5_core_is_ecpf(const struct mlx5_core_dev *dev)
-{
-	return dev->caps.embedded_cpu;
-}
+अटल अंतरभूत bool mlx5_core_is_ecpf(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस dev->caps.embedded_cpu;
+पूर्ण
 
-static inline bool
-mlx5_core_is_ecpf_esw_manager(const struct mlx5_core_dev *dev)
-{
-	return dev->caps.embedded_cpu && MLX5_CAP_GEN(dev, eswitch_manager);
-}
+अटल अंतरभूत bool
+mlx5_core_is_ecpf_esw_manager(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस dev->caps.embedded_cpu && MLX5_CAP_GEN(dev, eचयन_manager);
+पूर्ण
 
-static inline bool mlx5_ecpf_vport_exists(const struct mlx5_core_dev *dev)
-{
-	return mlx5_core_is_pf(dev) && MLX5_CAP_ESW(dev, ecpf_vport_exists);
-}
+अटल अंतरभूत bool mlx5_ecpf_vport_exists(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस mlx5_core_is_pf(dev) && MLX5_CAP_ESW(dev, ecpf_vport_exists);
+पूर्ण
 
-static inline u16 mlx5_core_max_vfs(const struct mlx5_core_dev *dev)
-{
-	return dev->priv.sriov.max_vfs;
-}
+अटल अंतरभूत u16 mlx5_core_max_vfs(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस dev->priv.sriov.max_vfs;
+पूर्ण
 
-static inline int mlx5_get_gid_table_len(u16 param)
-{
-	if (param > 4) {
+अटल अंतरभूत पूर्णांक mlx5_get_gid_table_len(u16 param)
+अणु
+	अगर (param > 4) अणु
 		pr_warn("gid table length is zero\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 8 * (1 << param);
-}
+	वापस 8 * (1 << param);
+पूर्ण
 
-static inline bool mlx5_rl_is_supported(struct mlx5_core_dev *dev)
-{
-	return !!(dev->priv.rl_table.max_size);
-}
+अटल अंतरभूत bool mlx5_rl_is_supported(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस !!(dev->priv.rl_table.max_size);
+पूर्ण
 
-static inline int mlx5_core_is_mp_slave(struct mlx5_core_dev *dev)
-{
-	return MLX5_CAP_GEN(dev, affiliate_nic_vport_criteria) &&
+अटल अंतरभूत पूर्णांक mlx5_core_is_mp_slave(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस MLX5_CAP_GEN(dev, affiliate_nic_vport_criteria) &&
 	       MLX5_CAP_GEN(dev, num_vhca_ports) <= 1;
-}
+पूर्ण
 
-static inline int mlx5_core_is_mp_master(struct mlx5_core_dev *dev)
-{
-	return MLX5_CAP_GEN(dev, num_vhca_ports) > 1;
-}
+अटल अंतरभूत पूर्णांक mlx5_core_is_mp_master(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस MLX5_CAP_GEN(dev, num_vhca_ports) > 1;
+पूर्ण
 
-static inline int mlx5_core_mp_enabled(struct mlx5_core_dev *dev)
-{
-	return mlx5_core_is_mp_slave(dev) ||
+अटल अंतरभूत पूर्णांक mlx5_core_mp_enabled(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस mlx5_core_is_mp_slave(dev) ||
 	       mlx5_core_is_mp_master(dev);
-}
+पूर्ण
 
-static inline int mlx5_core_native_port_num(struct mlx5_core_dev *dev)
-{
-	if (!mlx5_core_mp_enabled(dev))
-		return 1;
+अटल अंतरभूत पूर्णांक mlx5_core_native_port_num(काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!mlx5_core_mp_enabled(dev))
+		वापस 1;
 
-	return MLX5_CAP_GEN(dev, native_port_num);
-}
+	वापस MLX5_CAP_GEN(dev, native_port_num);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	MLX5_TRIGGERED_CMD_COMP = (u64)1 << 32,
-};
+पूर्ण;
 
-static inline bool mlx5_is_roce_init_enabled(struct mlx5_core_dev *dev)
-{
-	struct devlink *devlink = priv_to_devlink(dev);
-	union devlink_param_value val;
+अटल अंतरभूत bool mlx5_is_roce_init_enabled(काष्ठा mlx5_core_dev *dev)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(dev);
+	जोड़ devlink_param_value val;
 
 	devlink_param_driverinit_value_get(devlink,
 					   DEVLINK_PARAM_GENERIC_ID_ENABLE_ROCE,
 					   &val);
-	return val.vbool;
-}
+	वापस val.vbool;
+पूर्ण
 
-#endif /* MLX5_DRIVER_H */
+#पूर्ण_अगर /* MLX5_DRIVER_H */

@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/*  Kernel module help for powerpc.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/*  Kernel module help क्रम घातerpc.
     Copyright (C) 2001, 2003 Rusty Russell IBM Corporation.
     Copyright (C) 2008 Freescale Semiconductor, Inc.
 
 */
-#include <linux/elf.h>
-#include <linux/moduleloader.h>
-#include <linux/err.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-#include <linux/bug.h>
-#include <asm/module.h>
-#include <linux/uaccess.h>
-#include <asm/firmware.h>
-#include <linux/sort.h>
-#include <asm/setup.h>
-#include <asm/sections.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/moduleloader.h>
+#समावेश <linux/err.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/bug.h>
+#समावेश <यंत्र/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <linux/sort.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/sections.h>
 
-static LIST_HEAD(module_bug_list);
+अटल LIST_HEAD(module_bug_list);
 
-static const Elf_Shdr *find_section(const Elf_Ehdr *hdr,
-				    const Elf_Shdr *sechdrs,
-				    const char *name)
-{
-	char *secstrings;
-	unsigned int i;
+अटल स्थिर Elf_Shdr *find_section(स्थिर Elf_Ehdr *hdr,
+				    स्थिर Elf_Shdr *sechdrs,
+				    स्थिर अक्षर *name)
+अणु
+	अक्षर *secstrings;
+	अचिन्हित पूर्णांक i;
 
-	secstrings = (char *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
-	for (i = 1; i < hdr->e_shnum; i++)
-		if (strcmp(secstrings+sechdrs[i].sh_name, name) == 0)
-			return &sechdrs[i];
-	return NULL;
-}
+	secstrings = (अक्षर *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
+	क्रम (i = 1; i < hdr->e_shnum; i++)
+		अगर (म_भेद(secstrings+sechdrs[i].sh_name, name) == 0)
+			वापस &sechdrs[i];
+	वापस शून्य;
+पूर्ण
 
-int module_finalize(const Elf_Ehdr *hdr,
-		const Elf_Shdr *sechdrs, struct module *me)
-{
-	const Elf_Shdr *sect;
-	int rc;
+पूर्णांक module_finalize(स्थिर Elf_Ehdr *hdr,
+		स्थिर Elf_Shdr *sechdrs, काष्ठा module *me)
+अणु
+	स्थिर Elf_Shdr *sect;
+	पूर्णांक rc;
 
 	rc = module_finalize_ftrace(me, sechdrs);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/* Apply feature fixups */
 	sect = find_section(hdr, sechdrs, "__ftr_fixup");
-	if (sect != NULL)
-		do_feature_fixups(cur_cpu_spec->cpu_features,
-				  (void *)sect->sh_addr,
-				  (void *)sect->sh_addr + sect->sh_size);
+	अगर (sect != शून्य)
+		करो_feature_fixups(cur_cpu_spec->cpu_features,
+				  (व्योम *)sect->sh_addr,
+				  (व्योम *)sect->sh_addr + sect->sh_size);
 
 	sect = find_section(hdr, sechdrs, "__mmu_ftr_fixup");
-	if (sect != NULL)
-		do_feature_fixups(cur_cpu_spec->mmu_features,
-				  (void *)sect->sh_addr,
-				  (void *)sect->sh_addr + sect->sh_size);
+	अगर (sect != शून्य)
+		करो_feature_fixups(cur_cpu_spec->mmu_features,
+				  (व्योम *)sect->sh_addr,
+				  (व्योम *)sect->sh_addr + sect->sh_size);
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 	sect = find_section(hdr, sechdrs, "__fw_ftr_fixup");
-	if (sect != NULL)
-		do_feature_fixups(powerpc_firmware_features,
-				  (void *)sect->sh_addr,
-				  (void *)sect->sh_addr + sect->sh_size);
-#endif /* CONFIG_PPC64 */
+	अगर (sect != शून्य)
+		करो_feature_fixups(घातerpc_firmware_features,
+				  (व्योम *)sect->sh_addr,
+				  (व्योम *)sect->sh_addr + sect->sh_size);
+#पूर्ण_अगर /* CONFIG_PPC64 */
 
-#ifdef PPC64_ELF_ABI_v1
+#अगर_घोषित PPC64_ELF_ABI_v1
 	sect = find_section(hdr, sechdrs, ".opd");
-	if (sect != NULL) {
+	अगर (sect != शून्य) अणु
 		me->arch.start_opd = sect->sh_addr;
 		me->arch.end_opd = sect->sh_addr + sect->sh_size;
-	}
-#endif /* PPC64_ELF_ABI_v1 */
+	पूर्ण
+#पूर्ण_अगर /* PPC64_ELF_ABI_v1 */
 
-#ifdef CONFIG_PPC_BARRIER_NOSPEC
+#अगर_घोषित CONFIG_PPC_BARRIER_NOSPEC
 	sect = find_section(hdr, sechdrs, "__spec_barrier_fixup");
-	if (sect != NULL)
-		do_barrier_nospec_fixups_range(barrier_nospec_enabled,
-				  (void *)sect->sh_addr,
-				  (void *)sect->sh_addr + sect->sh_size);
-#endif /* CONFIG_PPC_BARRIER_NOSPEC */
+	अगर (sect != शून्य)
+		करो_barrier_nospec_fixups_range(barrier_nospec_enabled,
+				  (व्योम *)sect->sh_addr,
+				  (व्योम *)sect->sh_addr + sect->sh_size);
+#पूर्ण_अगर /* CONFIG_PPC_BARRIER_NOSPEC */
 
 	sect = find_section(hdr, sechdrs, "__lwsync_fixup");
-	if (sect != NULL)
-		do_lwsync_fixups(cur_cpu_spec->cpu_features,
-				 (void *)sect->sh_addr,
-				 (void *)sect->sh_addr + sect->sh_size);
+	अगर (sect != शून्य)
+		करो_lwsync_fixups(cur_cpu_spec->cpu_features,
+				 (व्योम *)sect->sh_addr,
+				 (व्योम *)sect->sh_addr + sect->sh_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __always_inline void *
-__module_alloc(unsigned long size, unsigned long start, unsigned long end)
-{
+अटल __always_अंतरभूत व्योम *
+__module_alloc(अचिन्हित दीर्घ size, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	/*
-	 * Don't do huge page allocations for modules yet until more testing
-	 * is done. STRICT_MODULE_RWX may require extra work to support this
+	 * Don't करो huge page allocations क्रम modules yet until more testing
+	 * is करोne. STRICT_MODULE_RWX may require extra work to support this
 	 * too.
 	 */
-	return __vmalloc_node_range(size, 1, start, end, GFP_KERNEL, PAGE_KERNEL_EXEC,
+	वापस __vदो_स्मृति_node_range(size, 1, start, end, GFP_KERNEL, PAGE_KERNEL_EXEC,
 				    VM_FLUSH_RESET_PERMS | VM_NO_HUGE_VMAP,
-				    NUMA_NO_NODE, __builtin_return_address(0));
-}
+				    NUMA_NO_NODE, __builtin_वापस_address(0));
+पूर्ण
 
-void *module_alloc(unsigned long size)
-{
-#ifdef MODULES_VADDR
-	unsigned long limit = (unsigned long)_etext - SZ_32M;
-	void *ptr = NULL;
+व्योम *module_alloc(अचिन्हित दीर्घ size)
+अणु
+#अगर_घोषित MODULES_VADDR
+	अचिन्हित दीर्घ limit = (अचिन्हित दीर्घ)_etext - SZ_32M;
+	व्योम *ptr = शून्य;
 
 	BUILD_BUG_ON(TASK_SIZE > MODULES_VADDR);
 
-	/* First try within 32M limit from _etext to avoid branch trampolines */
-	if (MODULES_VADDR < PAGE_OFFSET && MODULES_END > limit)
+	/* First try within 32M limit from _etext to aव्योम branch trampolines */
+	अगर (MODULES_VADDR < PAGE_OFFSET && MODULES_END > limit)
 		ptr = __module_alloc(size, limit, MODULES_END);
 
-	if (!ptr)
+	अगर (!ptr)
 		ptr = __module_alloc(size, MODULES_VADDR, MODULES_END);
 
-	return ptr;
-#else
-	return __module_alloc(size, VMALLOC_START, VMALLOC_END);
-#endif
-}
+	वापस ptr;
+#अन्यथा
+	वापस __module_alloc(size, VMALLOC_START, VMALLOC_END);
+#पूर्ण_अगर
+पूर्ण

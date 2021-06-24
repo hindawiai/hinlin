@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_REGDEF_H
-#define __ASM_CSKY_REGDEF_H
+#अगर_अघोषित __ASM_CSKY_REGDEF_H
+#घोषणा __ASM_CSKY_REGDEF_H
 
-#ifdef __ASSEMBLY__
-#define syscallid	r1
-#else
-#define syscallid	"r1"
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा syscallid	r1
+#अन्यथा
+#घोषणा syscallid	"r1"
+#पूर्ण_अगर
 
-#define regs_syscallid(regs) regs->regs[9]
-#define regs_fp(regs) regs->regs[2]
+#घोषणा regs_syscallid(regs) regs->regs[9]
+#घोषणा regs_fp(regs) regs->regs[2]
 
 /*
- * PSR format:
+ * PSR क्रमmat:
  * | 31 | 30-24 | 23-16 | 15 14 | 13-0 |
  *   S     CPID     VEC     TM
  *
  *    S: Super Mode
- * CPID: Coprocessor id, only 15 for MMU
+ * CPID: Coprocessor id, only 15 क्रम MMU
  *  VEC: Exception Number
  *   TM: Trace Mode
  */
-#define DEFAULT_PSR_VALUE	0x8f000000
+#घोषणा DEFAULT_PSR_VALUE	0x8f000000
 
-#define SYSTRACE_SAVENUM	2
+#घोषणा SYSTRACE_SAVENUM	2
 
-#define TRAP0_SIZE		2
+#घोषणा TRAP0_SIZE		2
 
-#endif /* __ASM_CSKY_REGDEF_H */
+#पूर्ण_अगर /* __ASM_CSKY_REGDEF_H */

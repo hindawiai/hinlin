@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /************************************************************************
 
     AudioScience HPI driver
@@ -9,59 +10,59 @@ Debug macro translation.
 
 ************************************************************************/
 
-#include "hpi_internal.h"
-#include "hpidebug.h"
+#समावेश "hpi_internal.h"
+#समावेश "hpidebug.h"
 
-/* Debug level; 0 quiet; 1 informative, 2 debug, 3 verbose debug.  */
-int hpi_debug_level = HPI_DEBUG_LEVEL_DEFAULT;
+/* Debug level; 0 quiet; 1 inक्रमmative, 2 debug, 3 verbose debug.  */
+पूर्णांक hpi_debug_level = HPI_DEBUG_LEVEL_DEFAULT;
 
-void hpi_debug_init(void)
-{
-	printk(KERN_INFO "debug start\n");
-}
+व्योम hpi_debug_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "debug start\n");
+पूर्ण
 
-int hpi_debug_level_set(int level)
-{
-	int old_level;
+पूर्णांक hpi_debug_level_set(पूर्णांक level)
+अणु
+	पूर्णांक old_level;
 
 	old_level = hpi_debug_level;
 	hpi_debug_level = level;
-	return old_level;
-}
+	वापस old_level;
+पूर्ण
 
-int hpi_debug_level_get(void)
-{
-	return hpi_debug_level;
-}
+पूर्णांक hpi_debug_level_get(व्योम)
+अणु
+	वापस hpi_debug_level;
+पूर्ण
 
-void hpi_debug_message(struct hpi_message *phm, char *sz_fileline)
-{
-	if (phm) {
-		printk(KERN_DEBUG "HPI_MSG%d,%d,%d,%d,%d\n", phm->version,
+व्योम hpi_debug_message(काष्ठा hpi_message *phm, अक्षर *sz_fileline)
+अणु
+	अगर (phm) अणु
+		prपूर्णांकk(KERN_DEBUG "HPI_MSG%d,%d,%d,%d,%d\n", phm->version,
 			phm->adapter_index, phm->obj_index, phm->function,
 			phm->u.c.attribute);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-void hpi_debug_data(u16 *pdata, u32 len)
-{
+व्योम hpi_debug_data(u16 *pdata, u32 len)
+अणु
 	u32 i;
-	int j;
-	int k;
-	int lines;
-	int cols = 8;
+	पूर्णांक j;
+	पूर्णांक k;
+	पूर्णांक lines;
+	पूर्णांक cols = 8;
 
 	lines = DIV_ROUND_UP(len, cols);
-	if (lines > 8)
+	अगर (lines > 8)
 		lines = 8;
 
-	for (i = 0, j = 0; j < lines; j++) {
-		printk(KERN_DEBUG "%p:", (pdata + i));
+	क्रम (i = 0, j = 0; j < lines; j++) अणु
+		prपूर्णांकk(KERN_DEBUG "%p:", (pdata + i));
 
-		for (k = 0; k < cols && i < len; i++, k++)
-			printk(KERN_CONT "%s%04x", k == 0 ? "" : " ", pdata[i]);
+		क्रम (k = 0; k < cols && i < len; i++, k++)
+			prपूर्णांकk(KERN_CONT "%s%04x", k == 0 ? "" : " ", pdata[i]);
 
-		printk(KERN_CONT "\n");
-	}
-}
+		prपूर्णांकk(KERN_CONT "\n");
+	पूर्ण
+पूर्ण

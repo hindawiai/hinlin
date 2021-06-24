@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/kernel/opcodes.c
  *
  *  A32 condition code lookup feature moved from nwfpe/fpopcode.c
  */
 
-#include <linux/module.h>
-#include <asm/opcodes.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/opcodes.h>
 
-#define ARM_OPCODE_CONDITION_UNCOND 0xf
+#घोषणा ARM_OPCODE_CONDITION_UNCOND 0xf
 
 /*
  * condition code lookup table
- * index into the table is test code: EQ, NE, ... LT, GT, AL, NV
+ * index पूर्णांकo the table is test code: EQ, NE, ... LT, GT, AL, NV
  *
- * bit position in short is condition code: NZCV
+ * bit position in लघु is condition code: NZCV
  */
-static const unsigned short cc_map[16] = {
+अटल स्थिर अचिन्हित लघु cc_map[16] = अणु
 	0xF0F0,			/* EQ == Z set            */
 	0x0F0F,			/* NE                     */
 	0xCCCC,			/* CS == C set            */
@@ -33,37 +34,37 @@ static const unsigned short cc_map[16] = {
 	0xF5FA,			/* LE == (Z || (N!=V))    */
 	0xFFFF,			/* AL always              */
 	0			/* NV                     */
-};
+पूर्ण;
 
 /*
  * Returns:
- * ARM_OPCODE_CONDTEST_FAIL   - if condition fails
- * ARM_OPCODE_CONDTEST_PASS   - if condition passes (including AL)
- * ARM_OPCODE_CONDTEST_UNCOND - if NV condition, or separate unconditional
+ * ARM_OPCODE_CONDTEST_FAIL   - अगर condition fails
+ * ARM_OPCODE_CONDTEST_PASS   - अगर condition passes (including AL)
+ * ARM_OPCODE_CONDTEST_UNCOND - अगर NV condition, or separate unconditional
  *                              opcode space from v5 onwards
  *
- * Code that tests whether a conditional instruction would pass its condition
- * check should check that return value == ARM_OPCODE_CONDTEST_PASS.
+ * Code that tests whether a conditional inकाष्ठाion would pass its condition
+ * check should check that वापस value == ARM_OPCODE_CONDTEST_PASS.
  *
- * Code that tests if a condition means that the instruction would be executed
+ * Code that tests अगर a condition means that the inकाष्ठाion would be executed
  * (regardless of conditional or unconditional) should instead check that the
- * return value != ARM_OPCODE_CONDTEST_FAIL.
+ * वापस value != ARM_OPCODE_CONDTEST_FAIL.
  */
-asmlinkage unsigned int arm_check_condition(u32 opcode, u32 psr)
-{
+यंत्रlinkage अचिन्हित पूर्णांक arm_check_condition(u32 opcode, u32 psr)
+अणु
 	u32 cc_bits  = opcode >> 28;
 	u32 psr_cond = psr >> 28;
-	unsigned int ret;
+	अचिन्हित पूर्णांक ret;
 
-	if (cc_bits != ARM_OPCODE_CONDITION_UNCOND) {
-		if ((cc_map[cc_bits] >> (psr_cond)) & 1)
+	अगर (cc_bits != ARM_OPCODE_CONDITION_UNCOND) अणु
+		अगर ((cc_map[cc_bits] >> (psr_cond)) & 1)
 			ret = ARM_OPCODE_CONDTEST_PASS;
-		else
+		अन्यथा
 			ret = ARM_OPCODE_CONDTEST_FAIL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ARM_OPCODE_CONDTEST_UNCOND;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(arm_check_condition);

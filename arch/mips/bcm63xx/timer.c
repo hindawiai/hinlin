@@ -1,206 +1,207 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
+ * Copyright (C) 2008 Maxime Bizon <mbizon@मुक्तbox.fr>
  */
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/clk.h>
-#include <bcm63xx_cpu.h>
-#include <bcm63xx_io.h>
-#include <bcm63xx_timer.h>
-#include <bcm63xx_regs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/clk.h>
+#समावेश <bcm63xx_cpu.h>
+#समावेश <bcm63xx_पन.स>
+#समावेश <bcm63xx_समयr.h>
+#समावेश <bcm63xx_regs.h>
 
-static DEFINE_RAW_SPINLOCK(timer_reg_lock);
-static DEFINE_RAW_SPINLOCK(timer_data_lock);
-static struct clk *periph_clk;
+अटल DEFINE_RAW_SPINLOCK(समयr_reg_lock);
+अटल DEFINE_RAW_SPINLOCK(समयr_data_lock);
+अटल काष्ठा clk *periph_clk;
 
-static struct timer_data {
-	void	(*cb)(void *);
-	void	*data;
-} timer_data[BCM63XX_TIMER_COUNT];
+अटल काष्ठा समयr_data अणु
+	व्योम	(*cb)(व्योम *);
+	व्योम	*data;
+पूर्ण समयr_data[BCM63XX_TIMER_COUNT];
 
-static irqreturn_t timer_interrupt(int irq, void *dev_id)
-{
+अटल irqवापस_t समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
 	u32 stat;
-	int i;
+	पूर्णांक i;
 
-	raw_spin_lock(&timer_reg_lock);
-	stat = bcm_timer_readl(TIMER_IRQSTAT_REG);
-	bcm_timer_writel(stat, TIMER_IRQSTAT_REG);
-	raw_spin_unlock(&timer_reg_lock);
+	raw_spin_lock(&समयr_reg_lock);
+	stat = bcm_समयr_पढ़ोl(TIMER_IRQSTAT_REG);
+	bcm_समयr_ग_लिखोl(stat, TIMER_IRQSTAT_REG);
+	raw_spin_unlock(&समयr_reg_lock);
 
-	for (i = 0; i < BCM63XX_TIMER_COUNT; i++) {
-		if (!(stat & TIMER_IRQSTAT_TIMER_CAUSE(i)))
-			continue;
+	क्रम (i = 0; i < BCM63XX_TIMER_COUNT; i++) अणु
+		अगर (!(stat & TIMER_IRQSTAT_TIMER_CAUSE(i)))
+			जारी;
 
-		raw_spin_lock(&timer_data_lock);
-		if (!timer_data[i].cb) {
-			raw_spin_unlock(&timer_data_lock);
-			continue;
-		}
+		raw_spin_lock(&समयr_data_lock);
+		अगर (!समयr_data[i].cb) अणु
+			raw_spin_unlock(&समयr_data_lock);
+			जारी;
+		पूर्ण
 
-		timer_data[i].cb(timer_data[i].data);
-		raw_spin_unlock(&timer_data_lock);
-	}
+		समयr_data[i].cb(समयr_data[i].data);
+		raw_spin_unlock(&समयr_data_lock);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int bcm63xx_timer_enable(int id)
-{
+पूर्णांक bcm63xx_समयr_enable(पूर्णांक id)
+अणु
 	u32 reg;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (id >= BCM63XX_TIMER_COUNT)
-		return -EINVAL;
+	अगर (id >= BCM63XX_TIMER_COUNT)
+		वापस -EINVAL;
 
-	raw_spin_lock_irqsave(&timer_reg_lock, flags);
+	raw_spin_lock_irqsave(&समयr_reg_lock, flags);
 
-	reg = bcm_timer_readl(TIMER_CTLx_REG(id));
+	reg = bcm_समयr_पढ़ोl(TIMER_CTLx_REG(id));
 	reg |= TIMER_CTL_ENABLE_MASK;
-	bcm_timer_writel(reg, TIMER_CTLx_REG(id));
+	bcm_समयr_ग_लिखोl(reg, TIMER_CTLx_REG(id));
 
-	reg = bcm_timer_readl(TIMER_IRQSTAT_REG);
+	reg = bcm_समयr_पढ़ोl(TIMER_IRQSTAT_REG);
 	reg |= TIMER_IRQSTAT_TIMER_IR_EN(id);
-	bcm_timer_writel(reg, TIMER_IRQSTAT_REG);
+	bcm_समयr_ग_लिखोl(reg, TIMER_IRQSTAT_REG);
 
-	raw_spin_unlock_irqrestore(&timer_reg_lock, flags);
-	return 0;
-}
+	raw_spin_unlock_irqrestore(&समयr_reg_lock, flags);
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(bcm63xx_timer_enable);
+EXPORT_SYMBOL(bcm63xx_समयr_enable);
 
-int bcm63xx_timer_disable(int id)
-{
+पूर्णांक bcm63xx_समयr_disable(पूर्णांक id)
+अणु
 	u32 reg;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (id >= BCM63XX_TIMER_COUNT)
-		return -EINVAL;
+	अगर (id >= BCM63XX_TIMER_COUNT)
+		वापस -EINVAL;
 
-	raw_spin_lock_irqsave(&timer_reg_lock, flags);
+	raw_spin_lock_irqsave(&समयr_reg_lock, flags);
 
-	reg = bcm_timer_readl(TIMER_CTLx_REG(id));
+	reg = bcm_समयr_पढ़ोl(TIMER_CTLx_REG(id));
 	reg &= ~TIMER_CTL_ENABLE_MASK;
-	bcm_timer_writel(reg, TIMER_CTLx_REG(id));
+	bcm_समयr_ग_लिखोl(reg, TIMER_CTLx_REG(id));
 
-	reg = bcm_timer_readl(TIMER_IRQSTAT_REG);
+	reg = bcm_समयr_पढ़ोl(TIMER_IRQSTAT_REG);
 	reg &= ~TIMER_IRQSTAT_TIMER_IR_EN(id);
-	bcm_timer_writel(reg, TIMER_IRQSTAT_REG);
+	bcm_समयr_ग_लिखोl(reg, TIMER_IRQSTAT_REG);
 
-	raw_spin_unlock_irqrestore(&timer_reg_lock, flags);
-	return 0;
-}
+	raw_spin_unlock_irqrestore(&समयr_reg_lock, flags);
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(bcm63xx_timer_disable);
+EXPORT_SYMBOL(bcm63xx_समयr_disable);
 
-int bcm63xx_timer_register(int id, void (*callback)(void *data), void *data)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक bcm63xx_समयr_रेजिस्टर(पूर्णांक id, व्योम (*callback)(व्योम *data), व्योम *data)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (id >= BCM63XX_TIMER_COUNT || !callback)
-		return -EINVAL;
+	अगर (id >= BCM63XX_TIMER_COUNT || !callback)
+		वापस -EINVAL;
 
 	ret = 0;
-	raw_spin_lock_irqsave(&timer_data_lock, flags);
-	if (timer_data[id].cb) {
+	raw_spin_lock_irqsave(&समयr_data_lock, flags);
+	अगर (समयr_data[id].cb) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	timer_data[id].cb = callback;
-	timer_data[id].data = data;
+	समयr_data[id].cb = callback;
+	समयr_data[id].data = data;
 
 out:
-	raw_spin_unlock_irqrestore(&timer_data_lock, flags);
-	return ret;
-}
+	raw_spin_unlock_irqrestore(&समयr_data_lock, flags);
+	वापस ret;
+पूर्ण
 
-EXPORT_SYMBOL(bcm63xx_timer_register);
+EXPORT_SYMBOL(bcm63xx_समयr_रेजिस्टर);
 
-void bcm63xx_timer_unregister(int id)
-{
-	unsigned long flags;
+व्योम bcm63xx_समयr_unरेजिस्टर(पूर्णांक id)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (id >= BCM63XX_TIMER_COUNT)
-		return;
+	अगर (id >= BCM63XX_TIMER_COUNT)
+		वापस;
 
-	raw_spin_lock_irqsave(&timer_data_lock, flags);
-	timer_data[id].cb = NULL;
-	raw_spin_unlock_irqrestore(&timer_data_lock, flags);
-}
+	raw_spin_lock_irqsave(&समयr_data_lock, flags);
+	समयr_data[id].cb = शून्य;
+	raw_spin_unlock_irqrestore(&समयr_data_lock, flags);
+पूर्ण
 
-EXPORT_SYMBOL(bcm63xx_timer_unregister);
+EXPORT_SYMBOL(bcm63xx_समयr_unरेजिस्टर);
 
-unsigned int bcm63xx_timer_countdown(unsigned int countdown_us)
-{
-	return (clk_get_rate(periph_clk) / (1000 * 1000)) * countdown_us;
-}
+अचिन्हित पूर्णांक bcm63xx_समयr_countकरोwn(अचिन्हित पूर्णांक countकरोwn_us)
+अणु
+	वापस (clk_get_rate(periph_clk) / (1000 * 1000)) * countकरोwn_us;
+पूर्ण
 
-EXPORT_SYMBOL(bcm63xx_timer_countdown);
+EXPORT_SYMBOL(bcm63xx_समयr_countकरोwn);
 
-int bcm63xx_timer_set(int id, int monotonic, unsigned int countdown_us)
-{
-	u32 reg, countdown;
-	unsigned long flags;
+पूर्णांक bcm63xx_समयr_set(पूर्णांक id, पूर्णांक monotonic, अचिन्हित पूर्णांक countकरोwn_us)
+अणु
+	u32 reg, countकरोwn;
+	अचिन्हित दीर्घ flags;
 
-	if (id >= BCM63XX_TIMER_COUNT)
-		return -EINVAL;
+	अगर (id >= BCM63XX_TIMER_COUNT)
+		वापस -EINVAL;
 
-	countdown = bcm63xx_timer_countdown(countdown_us);
-	if (countdown & ~TIMER_CTL_COUNTDOWN_MASK)
-		return -EINVAL;
+	countकरोwn = bcm63xx_समयr_countकरोwn(countकरोwn_us);
+	अगर (countकरोwn & ~TIMER_CTL_COUNTDOWN_MASK)
+		वापस -EINVAL;
 
-	raw_spin_lock_irqsave(&timer_reg_lock, flags);
-	reg = bcm_timer_readl(TIMER_CTLx_REG(id));
+	raw_spin_lock_irqsave(&समयr_reg_lock, flags);
+	reg = bcm_समयr_पढ़ोl(TIMER_CTLx_REG(id));
 
-	if (monotonic)
+	अगर (monotonic)
 		reg &= ~TIMER_CTL_MONOTONIC_MASK;
-	else
+	अन्यथा
 		reg |= TIMER_CTL_MONOTONIC_MASK;
 
 	reg &= ~TIMER_CTL_COUNTDOWN_MASK;
-	reg |= countdown;
-	bcm_timer_writel(reg, TIMER_CTLx_REG(id));
+	reg |= countकरोwn;
+	bcm_समयr_ग_लिखोl(reg, TIMER_CTLx_REG(id));
 
-	raw_spin_unlock_irqrestore(&timer_reg_lock, flags);
-	return 0;
-}
+	raw_spin_unlock_irqrestore(&समयr_reg_lock, flags);
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(bcm63xx_timer_set);
+EXPORT_SYMBOL(bcm63xx_समयr_set);
 
-int bcm63xx_timer_init(void)
-{
-	int ret, irq;
+पूर्णांक bcm63xx_समयr_init(व्योम)
+अणु
+	पूर्णांक ret, irq;
 	u32 reg;
 
-	reg = bcm_timer_readl(TIMER_IRQSTAT_REG);
+	reg = bcm_समयr_पढ़ोl(TIMER_IRQSTAT_REG);
 	reg &= ~TIMER_IRQSTAT_TIMER0_IR_EN;
 	reg &= ~TIMER_IRQSTAT_TIMER1_IR_EN;
 	reg &= ~TIMER_IRQSTAT_TIMER2_IR_EN;
-	bcm_timer_writel(reg, TIMER_IRQSTAT_REG);
+	bcm_समयr_ग_लिखोl(reg, TIMER_IRQSTAT_REG);
 
-	periph_clk = clk_get(NULL, "periph");
-	if (IS_ERR(periph_clk))
-		return -ENODEV;
+	periph_clk = clk_get(शून्य, "periph");
+	अगर (IS_ERR(periph_clk))
+		वापस -ENODEV;
 
 	irq = bcm63xx_get_irq_number(IRQ_TIMER);
-	ret = request_irq(irq, timer_interrupt, 0, "bcm63xx_timer", NULL);
-	if (ret) {
+	ret = request_irq(irq, समयr_पूर्णांकerrupt, 0, "bcm63xx_timer", शून्य);
+	अगर (ret) अणु
 		pr_err("%s: failed to register irq\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-arch_initcall(bcm63xx_timer_init);
+arch_initcall(bcm63xx_समयr_init);

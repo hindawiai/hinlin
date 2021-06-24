@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Copyright (C) 2016-2017 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/mod_devicetable.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "pinctrl-uniphier.h"
+#समावेश "pinctrl-uniphier.h"
 
-static const struct pinctrl_pin_desc uniphier_ld20_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc uniphier_ld20_pins[] = अणु
 	UNIPHIER_PINCTRL_PIN(0, "XECS1", UNIPHIER_PIN_IECTRL_EXIST,
 			     0, UNIPHIER_PIN_DRV_3BIT,
 			     0, UNIPHIER_PIN_PULL_UP),
@@ -540,102 +541,102 @@ static const struct pinctrl_pin_desc uniphier_ld20_pins[] = {
 	UNIPHIER_PINCTRL_PIN(175, "PVSYNCO", UNIPHIER_PIN_IECTRL_EXIST,
 			     126, UNIPHIER_PIN_DRV_3BIT,
 			     175, UNIPHIER_PIN_PULL_DOWN),
-};
+पूर्ण;
 
-static const unsigned aout1_pins[] = {137, 138, 139, 140, 141, 142};
-static const int aout1_muxvals[] = {0, 0, 0, 0, 0, 0};
-static const unsigned aout1b_pins[] = {150, 151, 152, 153, 154, 155, 156};
-static const int aout1b_muxvals[] = {1, 1, 1, 1, 1, 1, 1};
-static const unsigned aoutiec1_pins[] = {135, 136};
-static const int aoutiec1_muxvals[] = {0, 0};
-static const unsigned int emmc_pins[] = {19, 20, 21, 22, 23, 24, 25};
-static const int emmc_muxvals[] = {0, 0, 0, 0, 0, 0, 0};
-static const unsigned emmc_dat8_pins[] = {26, 27, 28, 29};
-static const int emmc_dat8_muxvals[] = {0, 0, 0, 0};
-static const unsigned ether_rgmii_pins[] = {30, 31, 32, 33, 34, 35, 36, 37, 38,
-					    39, 40, 41, 42, 43, 44, 45};
-static const int ether_rgmii_muxvals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					  0, 0, 0, 0};
-static const unsigned ether_rmii_pins[] = {30, 31, 32, 33, 34, 35, 36, 37, 39,
-					   41, 42, 45};
-static const int ether_rmii_muxvals[] = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1};
-static const unsigned hscin0_ci_pins[] = {102, 103, 104, 105, 106, 107, 108,
-					  109, 110, 111, 112};
-static const int hscin0_ci_muxvals[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-static const unsigned hscin0_p_pins[] = {102, 103, 104, 105, 106, 107, 108, 109,
-					 110, 111, 112};
-static const int hscin0_p_muxvals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static const unsigned hscin0_s_pins[] = {116, 117, 118, 119};
-static const int hscin0_s_muxvals[] = {3, 3, 3, 3};
-static const unsigned hscin1_p_pins[] = {124, 125, 126, 127, 128, 129, 130, 131,
-					 132, 133, 134};
-static const int hscin1_p_muxvals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static const unsigned hscin1_s_pins[] = {120, 121, 122, 123};
-static const int hscin1_s_muxvals[] = {3, 3, 3, 3};
-static const unsigned hscin2_s_pins[] = {124, 125, 126, 127};
-static const int hscin2_s_muxvals[] = {3, 3, 3, 3};
-static const unsigned hscin3_s_pins[] = {129, 130, 131, 132};
-static const int hscin3_s_muxvals[] = {3, 3, 3, 3};
-static const unsigned hscin4_s_pins[] = {80, 81, 82, 83};
-static const int hscin4_s_muxvals[] = {3, 3, 3, 3};
-static const unsigned hscout0_ci_pins[] = {113, 114, 115, 116, 117, 118, 119,
-					   120, 121, 122, 123};
-static const int hscout0_ci_muxvals[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-static const unsigned hscout0_p_pins[] = {113, 114, 115, 116, 117, 118, 119,
-					  120, 121, 122, 123};
-static const int hscout0_p_muxvals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static const unsigned hscout0_s_pins[] = {116, 117, 118, 119};
-static const int hscout0_s_muxvals[] = {4, 4, 4, 4};
-static const unsigned hscout1_s_pins[] = {120, 121, 122, 123};
-static const int hscout1_s_muxvals[] = {4, 4, 4, 4};
-static const unsigned i2c0_pins[] = {63, 64};
-static const int i2c0_muxvals[] = {0, 0};
-static const unsigned i2c1_pins[] = {65, 66};
-static const int i2c1_muxvals[] = {0, 0};
-static const unsigned i2c3_pins[] = {67, 68};
-static const int i2c3_muxvals[] = {1, 1};
-static const unsigned i2c4_pins[] = {61, 62};
-static const int i2c4_muxvals[] = {1, 1};
-static const unsigned nand_pins[] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-				     15, 16, 17};
-static const int nand_muxvals[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static const unsigned sd_pins[] = {10, 11, 12, 13, 14, 15, 16, 17};
-static const int sd_muxvals[] = {3, 3, 3, 3, 3, 3, 3, 3};  /* No SDVOLC */
-static const unsigned spi0_pins[] = {56, 57, 58, 59};
-static const int spi0_muxvals[] = {0, 0, 0, 0};
-static const unsigned spi1_pins[] = {169, 170, 171, 172};
-static const int spi1_muxvals[] = {1, 1, 1, 1};
-static const unsigned spi2_pins[] = {86, 87, 88, 89};
-static const int spi2_muxvals[] = {1, 1, 1, 1};
-static const unsigned spi3_pins[] = {74, 75, 76, 77};
-static const int spi3_muxvals[] = {1, 1, 1, 1};
-static const unsigned system_bus_pins[] = {1, 2, 6, 7, 8, 9, 10, 11, 12, 13,
-					   14, 15, 16, 17};
-static const int system_bus_muxvals[] = {0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-					 2};
-static const unsigned system_bus_cs1_pins[] = {0};
-static const int system_bus_cs1_muxvals[] = {0};
-static const unsigned uart0_pins[] = {54, 55};
-static const int uart0_muxvals[] = {0, 0};
-static const unsigned uart1_pins[] = {58, 59};
-static const int uart1_muxvals[] = {1, 1};
-static const unsigned uart2_pins[] = {90, 91};
-static const int uart2_muxvals[] = {1, 1};
-static const unsigned uart3_pins[] = {94, 95};
-static const int uart3_muxvals[] = {1, 1};
-static const unsigned uart3_ctsrts_pins[] = {96, 98};
-static const int uart3_ctsrts_muxvals[] = {1, 1};
-static const unsigned uart3_modem_pins[] = {97, 99, 100, 101};
-static const int uart3_modem_muxvals[] = {1, 1, 1, 1};
-static const unsigned usb0_pins[] = {46, 47};
-static const int usb0_muxvals[] = {0, 0};
-static const unsigned usb1_pins[] = {48, 49};
-static const int usb1_muxvals[] = {0, 0};
-static const unsigned usb2_pins[] = {50, 51};
-static const int usb2_muxvals[] = {0, 0};
-static const unsigned usb3_pins[] = {52, 53};
-static const int usb3_muxvals[] = {0, 0};
-static const unsigned int gpio_range0_pins[] = {
+अटल स्थिर अचिन्हित aout1_pins[] = अणु137, 138, 139, 140, 141, 142पूर्ण;
+अटल स्थिर पूर्णांक aout1_muxvals[] = अणु0, 0, 0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित aout1b_pins[] = अणु150, 151, 152, 153, 154, 155, 156पूर्ण;
+अटल स्थिर पूर्णांक aout1b_muxvals[] = अणु1, 1, 1, 1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित aoutiec1_pins[] = अणु135, 136पूर्ण;
+अटल स्थिर पूर्णांक aoutiec1_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक emmc_pins[] = अणु19, 20, 21, 22, 23, 24, 25पूर्ण;
+अटल स्थिर पूर्णांक emmc_muxvals[] = अणु0, 0, 0, 0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित emmc_dat8_pins[] = अणु26, 27, 28, 29पूर्ण;
+अटल स्थिर पूर्णांक emmc_dat8_muxvals[] = अणु0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित ether_rgmii_pins[] = अणु30, 31, 32, 33, 34, 35, 36, 37, 38,
+					    39, 40, 41, 42, 43, 44, 45पूर्ण;
+अटल स्थिर पूर्णांक ether_rgmii_muxvals[] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					  0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित ether_rmii_pins[] = अणु30, 31, 32, 33, 34, 35, 36, 37, 39,
+					   41, 42, 45पूर्ण;
+अटल स्थिर पूर्णांक ether_rmii_muxvals[] = अणु0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित hscin0_ci_pins[] = अणु102, 103, 104, 105, 106, 107, 108,
+					  109, 110, 111, 112पूर्ण;
+अटल स्थिर पूर्णांक hscin0_ci_muxvals[] = अणु1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित hscin0_p_pins[] = अणु102, 103, 104, 105, 106, 107, 108, 109,
+					 110, 111, 112पूर्ण;
+अटल स्थिर पूर्णांक hscin0_p_muxvals[] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित hscin0_s_pins[] = अणु116, 117, 118, 119पूर्ण;
+अटल स्थिर पूर्णांक hscin0_s_muxvals[] = अणु3, 3, 3, 3पूर्ण;
+अटल स्थिर अचिन्हित hscin1_p_pins[] = अणु124, 125, 126, 127, 128, 129, 130, 131,
+					 132, 133, 134पूर्ण;
+अटल स्थिर पूर्णांक hscin1_p_muxvals[] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित hscin1_s_pins[] = अणु120, 121, 122, 123पूर्ण;
+अटल स्थिर पूर्णांक hscin1_s_muxvals[] = अणु3, 3, 3, 3पूर्ण;
+अटल स्थिर अचिन्हित hscin2_s_pins[] = अणु124, 125, 126, 127पूर्ण;
+अटल स्थिर पूर्णांक hscin2_s_muxvals[] = अणु3, 3, 3, 3पूर्ण;
+अटल स्थिर अचिन्हित hscin3_s_pins[] = अणु129, 130, 131, 132पूर्ण;
+अटल स्थिर पूर्णांक hscin3_s_muxvals[] = अणु3, 3, 3, 3पूर्ण;
+अटल स्थिर अचिन्हित hscin4_s_pins[] = अणु80, 81, 82, 83पूर्ण;
+अटल स्थिर पूर्णांक hscin4_s_muxvals[] = अणु3, 3, 3, 3पूर्ण;
+अटल स्थिर अचिन्हित hscout0_ci_pins[] = अणु113, 114, 115, 116, 117, 118, 119,
+					   120, 121, 122, 123पूर्ण;
+अटल स्थिर पूर्णांक hscout0_ci_muxvals[] = अणु1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित hscout0_p_pins[] = अणु113, 114, 115, 116, 117, 118, 119,
+					  120, 121, 122, 123पूर्ण;
+अटल स्थिर पूर्णांक hscout0_p_muxvals[] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित hscout0_s_pins[] = अणु116, 117, 118, 119पूर्ण;
+अटल स्थिर पूर्णांक hscout0_s_muxvals[] = अणु4, 4, 4, 4पूर्ण;
+अटल स्थिर अचिन्हित hscout1_s_pins[] = अणु120, 121, 122, 123पूर्ण;
+अटल स्थिर पूर्णांक hscout1_s_muxvals[] = अणु4, 4, 4, 4पूर्ण;
+अटल स्थिर अचिन्हित i2c0_pins[] = अणु63, 64पूर्ण;
+अटल स्थिर पूर्णांक i2c0_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित i2c1_pins[] = अणु65, 66पूर्ण;
+अटल स्थिर पूर्णांक i2c1_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित i2c3_pins[] = अणु67, 68पूर्ण;
+अटल स्थिर पूर्णांक i2c3_muxvals[] = अणु1, 1पूर्ण;
+अटल स्थिर अचिन्हित i2c4_pins[] = अणु61, 62पूर्ण;
+अटल स्थिर पूर्णांक i2c4_muxvals[] = अणु1, 1पूर्ण;
+अटल स्थिर अचिन्हित nand_pins[] = अणु3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+				     15, 16, 17पूर्ण;
+अटल स्थिर पूर्णांक nand_muxvals[] = अणु0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित sd_pins[] = अणु10, 11, 12, 13, 14, 15, 16, 17पूर्ण;
+अटल स्थिर पूर्णांक sd_muxvals[] = अणु3, 3, 3, 3, 3, 3, 3, 3पूर्ण;  /* No SDVOLC */
+अटल स्थिर अचिन्हित spi0_pins[] = अणु56, 57, 58, 59पूर्ण;
+अटल स्थिर पूर्णांक spi0_muxvals[] = अणु0, 0, 0, 0पूर्ण;
+अटल स्थिर अचिन्हित spi1_pins[] = अणु169, 170, 171, 172पूर्ण;
+अटल स्थिर पूर्णांक spi1_muxvals[] = अणु1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित spi2_pins[] = अणु86, 87, 88, 89पूर्ण;
+अटल स्थिर पूर्णांक spi2_muxvals[] = अणु1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित spi3_pins[] = अणु74, 75, 76, 77पूर्ण;
+अटल स्थिर पूर्णांक spi3_muxvals[] = अणु1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित प्रणाली_bus_pins[] = अणु1, 2, 6, 7, 8, 9, 10, 11, 12, 13,
+					   14, 15, 16, 17पूर्ण;
+अटल स्थिर पूर्णांक प्रणाली_bus_muxvals[] = अणु0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+					 2पूर्ण;
+अटल स्थिर अचिन्हित प्रणाली_bus_cs1_pins[] = अणु0पूर्ण;
+अटल स्थिर पूर्णांक प्रणाली_bus_cs1_muxvals[] = अणु0पूर्ण;
+अटल स्थिर अचिन्हित uart0_pins[] = अणु54, 55पूर्ण;
+अटल स्थिर पूर्णांक uart0_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित uart1_pins[] = अणु58, 59पूर्ण;
+अटल स्थिर पूर्णांक uart1_muxvals[] = अणु1, 1पूर्ण;
+अटल स्थिर अचिन्हित uart2_pins[] = अणु90, 91पूर्ण;
+अटल स्थिर पूर्णांक uart2_muxvals[] = अणु1, 1पूर्ण;
+अटल स्थिर अचिन्हित uart3_pins[] = अणु94, 95पूर्ण;
+अटल स्थिर पूर्णांक uart3_muxvals[] = अणु1, 1पूर्ण;
+अटल स्थिर अचिन्हित uart3_ctsrts_pins[] = अणु96, 98पूर्ण;
+अटल स्थिर पूर्णांक uart3_ctsrts_muxvals[] = अणु1, 1पूर्ण;
+अटल स्थिर अचिन्हित uart3_modem_pins[] = अणु97, 99, 100, 101पूर्ण;
+अटल स्थिर पूर्णांक uart3_modem_muxvals[] = अणु1, 1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित usb0_pins[] = अणु46, 47पूर्ण;
+अटल स्थिर पूर्णांक usb0_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित usb1_pins[] = अणु48, 49पूर्ण;
+अटल स्थिर पूर्णांक usb1_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित usb2_pins[] = अणु50, 51पूर्ण;
+अटल स्थिर पूर्णांक usb2_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित usb3_pins[] = अणु52, 53पूर्ण;
+अटल स्थिर पूर्णांक usb3_muxvals[] = अणु0, 0पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio_range0_pins[] = अणु
 	168, 169, 170, 171, 172, 173, 174, 175,		/* PORT0x */
 	0, 1, 2, 3, 4, 5, 6, 7,				/* PORT1x */
 	8, 9, 10, 11, 12, 13, 14, 15,			/* PORT2x */
@@ -647,8 +648,8 @@ static const unsigned int gpio_range0_pins[] = {
 	75, 76, 77, 78, 79, 80, 81, 82,			/* PORT8x */
 	83, 84, 85, 86, 87, 88, 89, 90,			/* PORT9x */
 	91, 92, 93, 94, 95, 96, 97, 98,			/* PORT10x */
-};
-static const unsigned int gpio_range1_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio_range1_pins[] = अणु
 	99, 100, 101, 102, 103, 104, 105, 106,		/* PORT12x */
 	107, 108, 109, 110, 111, 112, 113, 114,		/* PORT13x */
 	115, 116, 117, 118, 119, 120, 121, 122,		/* PORT14x */
@@ -656,17 +657,17 @@ static const unsigned int gpio_range1_pins[] = {
 	157, 158, 159, 160, 85, 161, 162, 84,		/* XIRQ8-15 */
 	163, 164, 165, 166, 167, 146, 52, 53,		/* XIRQ16-23 */
 	61, 62, 63, 64, 65, 66, 67, 68,			/* PORT18x */
-};
-static const unsigned int gpio_range2_pins[] = {
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio_range2_pins[] = अणु
 	123, 124, 125, 126, 127, 128, 129, 130,		/* PORT20x */
 	131, 132, 133, 134, 135, 136, 137, 138,		/* PORT21x */
 	139, 140, 141, 142, 143, 144, 145, 146,		/* PORT22x */
 	147, 148, 149, 150, 151, 152, 153, 154,		/* PORT23x */
 	155, 156, 157, 158, 159, 160, 161, 162,		/* PORT24x */
 	163, 164, 165, 166, 167,			/* PORT250-254 */
-};
+पूर्ण;
 
-static const struct uniphier_pinctrl_group uniphier_ld20_groups[] = {
+अटल स्थिर काष्ठा uniphier_pinctrl_group uniphier_ld20_groups[] = अणु
 	UNIPHIER_PINCTRL_GROUP(aout1),
 	UNIPHIER_PINCTRL_GROUP(aout1b),
 	UNIPHIER_PINCTRL_GROUP(aoutiec1),
@@ -696,8 +697,8 @@ static const struct uniphier_pinctrl_group uniphier_ld20_groups[] = {
 	UNIPHIER_PINCTRL_GROUP(spi1),
 	UNIPHIER_PINCTRL_GROUP(spi2),
 	UNIPHIER_PINCTRL_GROUP(spi3),
-	UNIPHIER_PINCTRL_GROUP(system_bus),
-	UNIPHIER_PINCTRL_GROUP(system_bus_cs1),
+	UNIPHIER_PINCTRL_GROUP(प्रणाली_bus),
+	UNIPHIER_PINCTRL_GROUP(प्रणाली_bus_cs1),
 	UNIPHIER_PINCTRL_GROUP(uart0),
 	UNIPHIER_PINCTRL_GROUP(uart1),
 	UNIPHIER_PINCTRL_GROUP(uart2),
@@ -711,47 +712,47 @@ static const struct uniphier_pinctrl_group uniphier_ld20_groups[] = {
 	UNIPHIER_PINCTRL_GROUP_GPIO(gpio_range0),
 	UNIPHIER_PINCTRL_GROUP_GPIO(gpio_range1),
 	UNIPHIER_PINCTRL_GROUP_GPIO(gpio_range2),
-};
+पूर्ण;
 
-static const char * const aout1_groups[] = {"aout1", "aout1b"};
-static const char * const aoutiec1_groups[] = {"aoutiec1"};
-static const char * const emmc_groups[] = {"emmc", "emmc_dat8"};
-static const char * const ether_rgmii_groups[] = {"ether_rgmii"};
-static const char * const ether_rmii_groups[] = {"ether_rmii"};
-static const char * const hscin0_groups[] = {"hscin0_ci",
+अटल स्थिर अक्षर * स्थिर aout1_groups[] = अणु"aout1", "aout1b"पूर्ण;
+अटल स्थिर अक्षर * स्थिर aoutiec1_groups[] = अणु"aoutiec1"पूर्ण;
+अटल स्थिर अक्षर * स्थिर emmc_groups[] = अणु"emmc", "emmc_dat8"पूर्ण;
+अटल स्थिर अक्षर * स्थिर ether_rgmii_groups[] = अणु"ether_rgmii"पूर्ण;
+अटल स्थिर अक्षर * स्थिर ether_rmii_groups[] = अणु"ether_rmii"पूर्ण;
+अटल स्थिर अक्षर * स्थिर hscin0_groups[] = अणु"hscin0_ci",
 					     "hscin0_p",
-					     "hscin0_s"};
-static const char * const hscin1_groups[] = {"hscin1_p", "hscin1_s"};
-static const char * const hscin2_groups[] = {"hscin2_s"};
-static const char * const hscin3_groups[] = {"hscin3_s"};
-static const char * const hscin4_groups[] = {"hscin4_s"};
-static const char * const hscout0_groups[] = {"hscout0_ci",
+					     "hscin0_s"पूर्ण;
+अटल स्थिर अक्षर * स्थिर hscin1_groups[] = अणु"hscin1_p", "hscin1_s"पूर्ण;
+अटल स्थिर अक्षर * स्थिर hscin2_groups[] = अणु"hscin2_s"पूर्ण;
+अटल स्थिर अक्षर * स्थिर hscin3_groups[] = अणु"hscin3_s"पूर्ण;
+अटल स्थिर अक्षर * स्थिर hscin4_groups[] = अणु"hscin4_s"पूर्ण;
+अटल स्थिर अक्षर * स्थिर hscout0_groups[] = अणु"hscout0_ci",
 					      "hscout0_p",
-					      "hscout0_s"};
-static const char * const hscout1_groups[] = {"hscout1_s"};
-static const char * const i2c0_groups[] = {"i2c0"};
-static const char * const i2c1_groups[] = {"i2c1"};
-static const char * const i2c3_groups[] = {"i2c3"};
-static const char * const i2c4_groups[] = {"i2c4"};
-static const char * const nand_groups[] = {"nand"};
-static const char * const sd_groups[] = {"sd"};
-static const char * const spi0_groups[] = {"spi0"};
-static const char * const spi1_groups[] = {"spi1"};
-static const char * const spi2_groups[] = {"spi2"};
-static const char * const spi3_groups[] = {"spi3"};
-static const char * const system_bus_groups[] = {"system_bus",
-						 "system_bus_cs1"};
-static const char * const uart0_groups[] = {"uart0"};
-static const char * const uart1_groups[] = {"uart1"};
-static const char * const uart2_groups[] = {"uart2"};
-static const char * const uart3_groups[] = {"uart3", "uart3_ctsrts",
-					    "uart3_modem"};
-static const char * const usb0_groups[] = {"usb0"};
-static const char * const usb1_groups[] = {"usb1"};
-static const char * const usb2_groups[] = {"usb2"};
-static const char * const usb3_groups[] = {"usb3"};
+					      "hscout0_s"पूर्ण;
+अटल स्थिर अक्षर * स्थिर hscout1_groups[] = अणु"hscout1_s"पूर्ण;
+अटल स्थिर अक्षर * स्थिर i2c0_groups[] = अणु"i2c0"पूर्ण;
+अटल स्थिर अक्षर * स्थिर i2c1_groups[] = अणु"i2c1"पूर्ण;
+अटल स्थिर अक्षर * स्थिर i2c3_groups[] = अणु"i2c3"पूर्ण;
+अटल स्थिर अक्षर * स्थिर i2c4_groups[] = अणु"i2c4"पूर्ण;
+अटल स्थिर अक्षर * स्थिर nand_groups[] = अणु"nand"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sd_groups[] = अणु"sd"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi0_groups[] = अणु"spi0"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi1_groups[] = अणु"spi1"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi2_groups[] = अणु"spi2"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi3_groups[] = अणु"spi3"पूर्ण;
+अटल स्थिर अक्षर * स्थिर प्रणाली_bus_groups[] = अणु"system_bus",
+						 "system_bus_cs1"पूर्ण;
+अटल स्थिर अक्षर * स्थिर uart0_groups[] = अणु"uart0"पूर्ण;
+अटल स्थिर अक्षर * स्थिर uart1_groups[] = अणु"uart1"पूर्ण;
+अटल स्थिर अक्षर * स्थिर uart2_groups[] = अणु"uart2"पूर्ण;
+अटल स्थिर अक्षर * स्थिर uart3_groups[] = अणु"uart3", "uart3_ctsrts",
+					    "uart3_modem"पूर्ण;
+अटल स्थिर अक्षर * स्थिर usb0_groups[] = अणु"usb0"पूर्ण;
+अटल स्थिर अक्षर * स्थिर usb1_groups[] = अणु"usb1"पूर्ण;
+अटल स्थिर अक्षर * स्थिर usb2_groups[] = अणु"usb2"पूर्ण;
+अटल स्थिर अक्षर * स्थिर usb3_groups[] = अणु"usb3"पूर्ण;
 
-static const struct uniphier_pinmux_function uniphier_ld20_functions[] = {
+अटल स्थिर काष्ठा uniphier_pinmux_function uniphier_ld20_functions[] = अणु
 	UNIPHIER_PINMUX_FUNCTION(aout1),
 	UNIPHIER_PINMUX_FUNCTION(aoutiec1),
 	UNIPHIER_PINMUX_FUNCTION(emmc),
@@ -774,7 +775,7 @@ static const struct uniphier_pinmux_function uniphier_ld20_functions[] = {
 	UNIPHIER_PINMUX_FUNCTION(spi1),
 	UNIPHIER_PINMUX_FUNCTION(spi2),
 	UNIPHIER_PINMUX_FUNCTION(spi3),
-	UNIPHIER_PINMUX_FUNCTION(system_bus),
+	UNIPHIER_PINMUX_FUNCTION(प्रणाली_bus),
 	UNIPHIER_PINMUX_FUNCTION(uart0),
 	UNIPHIER_PINMUX_FUNCTION(uart1),
 	UNIPHIER_PINMUX_FUNCTION(uart2),
@@ -783,21 +784,21 @@ static const struct uniphier_pinmux_function uniphier_ld20_functions[] = {
 	UNIPHIER_PINMUX_FUNCTION(usb1),
 	UNIPHIER_PINMUX_FUNCTION(usb2),
 	UNIPHIER_PINMUX_FUNCTION(usb3),
-};
+पूर्ण;
 
-static int uniphier_ld20_get_gpio_muxval(unsigned int pin,
-					 unsigned int gpio_offset)
-{
-	if (gpio_offset == 132 || gpio_offset == 135)	/* XIRQ12, 15 */
-		return 13;
+अटल पूर्णांक uniphier_ld20_get_gpio_muxval(अचिन्हित पूर्णांक pin,
+					 अचिन्हित पूर्णांक gpio_offset)
+अणु
+	अगर (gpio_offset == 132 || gpio_offset == 135)	/* XIRQ12, 15 */
+		वापस 13;
 
-	if (gpio_offset >= 120 && gpio_offset <= 143)	/* XIRQx */
-		return 14;
+	अगर (gpio_offset >= 120 && gpio_offset <= 143)	/* XIRQx */
+		वापस 14;
 
-	return 15;
-}
+	वापस 15;
+पूर्ण
 
-static const struct uniphier_pinctrl_socdata uniphier_ld20_pindata = {
+अटल स्थिर काष्ठा uniphier_pinctrl_socdata uniphier_ld20_pindata = अणु
 	.pins = uniphier_ld20_pins,
 	.npins = ARRAY_SIZE(uniphier_ld20_pins),
 	.groups = uniphier_ld20_groups,
@@ -806,24 +807,24 @@ static const struct uniphier_pinctrl_socdata uniphier_ld20_pindata = {
 	.functions_count = ARRAY_SIZE(uniphier_ld20_functions),
 	.get_gpio_muxval = uniphier_ld20_get_gpio_muxval,
 	.caps = UNIPHIER_PINCTRL_CAPS_PERPIN_IECTRL,
-};
+पूर्ण;
 
-static int uniphier_ld20_pinctrl_probe(struct platform_device *pdev)
-{
-	return uniphier_pinctrl_probe(pdev, &uniphier_ld20_pindata);
-}
+अटल पूर्णांक uniphier_ld20_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस uniphier_pinctrl_probe(pdev, &uniphier_ld20_pindata);
+पूर्ण
 
-static const struct of_device_id uniphier_ld20_pinctrl_match[] = {
-	{ .compatible = "socionext,uniphier-ld20-pinctrl" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id uniphier_ld20_pinctrl_match[] = अणु
+	अणु .compatible = "socionext,uniphier-ld20-pinctrl" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver uniphier_ld20_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver uniphier_ld20_pinctrl_driver = अणु
 	.probe = uniphier_ld20_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "uniphier-ld20-pinctrl",
 		.of_match_table = uniphier_ld20_pinctrl_match,
 		.pm = &uniphier_pinctrl_pm_ops,
-	},
-};
-builtin_platform_driver(uniphier_ld20_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(uniphier_ld20_pinctrl_driver);

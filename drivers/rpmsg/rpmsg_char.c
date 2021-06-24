@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2016, Linaro Ltd.
  * Copyright (c) 2012, Michal Simek <monstr@monstr.eu>
@@ -6,107 +7,107 @@
  * Copyright (c) 2011, Texas Instruments, Inc.
  * Copyright (c) 2011, Google, Inc.
  *
- * Based on rpmsg performance statistics driver by Michal Simek, which in turn
+ * Based on rpmsg perक्रमmance statistics driver by Michal Simek, which in turn
  * was based on TI & Google OMX rpmsg driver.
  */
-#include <linux/cdev.h>
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/idr.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/poll.h>
-#include <linux/rpmsg.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <uapi/linux/rpmsg.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/rpmsg.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <uapi/linux/rpmsg.h>
 
-#include "rpmsg_internal.h"
+#समावेश "rpmsg_internal.h"
 
-#define RPMSG_DEV_MAX	(MINORMASK + 1)
+#घोषणा RPMSG_DEV_MAX	(MINORMASK + 1)
 
-static dev_t rpmsg_major;
-static struct class *rpmsg_class;
+अटल dev_t rpmsg_major;
+अटल काष्ठा class *rpmsg_class;
 
-static DEFINE_IDA(rpmsg_ctrl_ida);
-static DEFINE_IDA(rpmsg_ept_ida);
-static DEFINE_IDA(rpmsg_minor_ida);
+अटल DEFINE_IDA(rpmsg_ctrl_ida);
+अटल DEFINE_IDA(rpmsg_ept_ida);
+अटल DEFINE_IDA(rpmsg_minor_ida);
 
-#define dev_to_eptdev(dev) container_of(dev, struct rpmsg_eptdev, dev)
-#define cdev_to_eptdev(i_cdev) container_of(i_cdev, struct rpmsg_eptdev, cdev)
+#घोषणा dev_to_eptdev(dev) container_of(dev, काष्ठा rpmsg_eptdev, dev)
+#घोषणा cdev_to_eptdev(i_cdev) container_of(i_cdev, काष्ठा rpmsg_eptdev, cdev)
 
-#define dev_to_ctrldev(dev) container_of(dev, struct rpmsg_ctrldev, dev)
-#define cdev_to_ctrldev(i_cdev) container_of(i_cdev, struct rpmsg_ctrldev, cdev)
+#घोषणा dev_to_ctrldev(dev) container_of(dev, काष्ठा rpmsg_ctrldev, dev)
+#घोषणा cdev_to_ctrldev(i_cdev) container_of(i_cdev, काष्ठा rpmsg_ctrldev, cdev)
 
 /**
- * struct rpmsg_ctrldev - control device for instantiating endpoint devices
+ * काष्ठा rpmsg_ctrldev - control device क्रम instantiating endpoपूर्णांक devices
  * @rpdev:	underlaying rpmsg device
- * @cdev:	cdev for the ctrl device
- * @dev:	device for the ctrl device
+ * @cdev:	cdev क्रम the ctrl device
+ * @dev:	device क्रम the ctrl device
  */
-struct rpmsg_ctrldev {
-	struct rpmsg_device *rpdev;
-	struct cdev cdev;
-	struct device dev;
-};
+काष्ठा rpmsg_ctrldev अणु
+	काष्ठा rpmsg_device *rpdev;
+	काष्ठा cdev cdev;
+	काष्ठा device dev;
+पूर्ण;
 
 /**
- * struct rpmsg_eptdev - endpoint device context
- * @dev:	endpoint device
- * @cdev:	cdev for the endpoint device
+ * काष्ठा rpmsg_eptdev - endpoपूर्णांक device context
+ * @dev:	endpoपूर्णांक device
+ * @cdev:	cdev क्रम the endpoपूर्णांक device
  * @rpdev:	underlaying rpmsg device
- * @chinfo:	info used to open the endpoint
- * @ept_lock:	synchronization of @ept modifications
- * @ept:	rpmsg endpoint reference, when open
+ * @chinfo:	info used to खोलो the endpoपूर्णांक
+ * @ept_lock:	synchronization of @ept modअगरications
+ * @ept:	rpmsg endpoपूर्णांक reference, when खोलो
  * @queue_lock:	synchronization of @queue operations
  * @queue:	incoming message queue
- * @readq:	wait object for incoming queue
+ * @पढ़ोq:	रुको object क्रम incoming queue
  */
-struct rpmsg_eptdev {
-	struct device dev;
-	struct cdev cdev;
+काष्ठा rpmsg_eptdev अणु
+	काष्ठा device dev;
+	काष्ठा cdev cdev;
 
-	struct rpmsg_device *rpdev;
-	struct rpmsg_channel_info chinfo;
+	काष्ठा rpmsg_device *rpdev;
+	काष्ठा rpmsg_channel_info chinfo;
 
-	struct mutex ept_lock;
-	struct rpmsg_endpoint *ept;
+	काष्ठा mutex ept_lock;
+	काष्ठा rpmsg_endpoपूर्णांक *ept;
 
 	spinlock_t queue_lock;
-	struct sk_buff_head queue;
-	wait_queue_head_t readq;
-};
+	काष्ठा sk_buff_head queue;
+	रुको_queue_head_t पढ़ोq;
+पूर्ण;
 
-static int rpmsg_eptdev_destroy(struct device *dev, void *data)
-{
-	struct rpmsg_eptdev *eptdev = dev_to_eptdev(dev);
+अटल पूर्णांक rpmsg_eptdev_destroy(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = dev_to_eptdev(dev);
 
 	mutex_lock(&eptdev->ept_lock);
-	if (eptdev->ept) {
+	अगर (eptdev->ept) अणु
 		rpmsg_destroy_ept(eptdev->ept);
-		eptdev->ept = NULL;
-	}
+		eptdev->ept = शून्य;
+	पूर्ण
 	mutex_unlock(&eptdev->ept_lock);
 
-	/* wake up any blocked readers */
-	wake_up_interruptible(&eptdev->readq);
+	/* wake up any blocked पढ़ोers */
+	wake_up_पूर्णांकerruptible(&eptdev->पढ़ोq);
 
 	device_del(&eptdev->dev);
 	put_device(&eptdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpmsg_ept_cb(struct rpmsg_device *rpdev, void *buf, int len,
-			void *priv, u32 addr)
-{
-	struct rpmsg_eptdev *eptdev = priv;
-	struct sk_buff *skb;
+अटल पूर्णांक rpmsg_ept_cb(काष्ठा rpmsg_device *rpdev, व्योम *buf, पूर्णांक len,
+			व्योम *priv, u32 addr)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = priv;
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(len, GFP_ATOMIC);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put_data(skb, buf, len);
 
@@ -114,48 +115,48 @@ static int rpmsg_ept_cb(struct rpmsg_device *rpdev, void *buf, int len,
 	skb_queue_tail(&eptdev->queue, skb);
 	spin_unlock(&eptdev->queue_lock);
 
-	/* wake up any blocking processes, waiting for new data */
-	wake_up_interruptible(&eptdev->readq);
+	/* wake up any blocking processes, रुकोing क्रम new data */
+	wake_up_पूर्णांकerruptible(&eptdev->पढ़ोq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpmsg_eptdev_open(struct inode *inode, struct file *filp)
-{
-	struct rpmsg_eptdev *eptdev = cdev_to_eptdev(inode->i_cdev);
-	struct rpmsg_endpoint *ept;
-	struct rpmsg_device *rpdev = eptdev->rpdev;
-	struct device *dev = &eptdev->dev;
+अटल पूर्णांक rpmsg_eptdev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = cdev_to_eptdev(inode->i_cdev);
+	काष्ठा rpmsg_endpoपूर्णांक *ept;
+	काष्ठा rpmsg_device *rpdev = eptdev->rpdev;
+	काष्ठा device *dev = &eptdev->dev;
 
-	if (eptdev->ept)
-		return -EBUSY;
+	अगर (eptdev->ept)
+		वापस -EBUSY;
 
 	get_device(dev);
 
 	ept = rpmsg_create_ept(rpdev, rpmsg_ept_cb, eptdev, eptdev->chinfo);
-	if (!ept) {
+	अगर (!ept) अणु
 		dev_err(dev, "failed to open %s\n", eptdev->chinfo.name);
 		put_device(dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	eptdev->ept = ept;
-	filp->private_data = eptdev;
+	filp->निजी_data = eptdev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpmsg_eptdev_release(struct inode *inode, struct file *filp)
-{
-	struct rpmsg_eptdev *eptdev = cdev_to_eptdev(inode->i_cdev);
-	struct device *dev = &eptdev->dev;
+अटल पूर्णांक rpmsg_eptdev_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = cdev_to_eptdev(inode->i_cdev);
+	काष्ठा device *dev = &eptdev->dev;
 
-	/* Close the endpoint, if it's not already destroyed by the parent */
+	/* Close the endpoपूर्णांक, अगर it's not alपढ़ोy destroyed by the parent */
 	mutex_lock(&eptdev->ept_lock);
-	if (eptdev->ept) {
+	अगर (eptdev->ept) अणु
 		rpmsg_destroy_ept(eptdev->ept);
-		eptdev->ept = NULL;
-	}
+		eptdev->ept = शून्य;
+	पूर्ण
 	mutex_unlock(&eptdev->ept_lock);
 
 	/* Discard all SKBs */
@@ -163,193 +164,193 @@ static int rpmsg_eptdev_release(struct inode *inode, struct file *filp)
 
 	put_device(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t rpmsg_eptdev_read_iter(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct file *filp = iocb->ki_filp;
-	struct rpmsg_eptdev *eptdev = filp->private_data;
-	unsigned long flags;
-	struct sk_buff *skb;
-	int use;
+अटल sमाप_प्रकार rpmsg_eptdev_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा file *filp = iocb->ki_filp;
+	काष्ठा rpmsg_eptdev *eptdev = filp->निजी_data;
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *skb;
+	पूर्णांक use;
 
-	if (!eptdev->ept)
-		return -EPIPE;
+	अगर (!eptdev->ept)
+		वापस -EPIPE;
 
 	spin_lock_irqsave(&eptdev->queue_lock, flags);
 
-	/* Wait for data in the queue */
-	if (skb_queue_empty(&eptdev->queue)) {
+	/* Wait क्रम data in the queue */
+	अगर (skb_queue_empty(&eptdev->queue)) अणु
 		spin_unlock_irqrestore(&eptdev->queue_lock, flags);
 
-		if (filp->f_flags & O_NONBLOCK)
-			return -EAGAIN;
+		अगर (filp->f_flags & O_NONBLOCK)
+			वापस -EAGAIN;
 
-		/* Wait until we get data or the endpoint goes away */
-		if (wait_event_interruptible(eptdev->readq,
+		/* Wait until we get data or the endpoपूर्णांक goes away */
+		अगर (रुको_event_पूर्णांकerruptible(eptdev->पढ़ोq,
 					     !skb_queue_empty(&eptdev->queue) ||
 					     !eptdev->ept))
-			return -ERESTARTSYS;
+			वापस -ERESTARTSYS;
 
-		/* We lost the endpoint while waiting */
-		if (!eptdev->ept)
-			return -EPIPE;
+		/* We lost the endpoपूर्णांक जबतक रुकोing */
+		अगर (!eptdev->ept)
+			वापस -EPIPE;
 
 		spin_lock_irqsave(&eptdev->queue_lock, flags);
-	}
+	पूर्ण
 
 	skb = skb_dequeue(&eptdev->queue);
 	spin_unlock_irqrestore(&eptdev->queue_lock, flags);
-	if (!skb)
-		return -EFAULT;
+	अगर (!skb)
+		वापस -EFAULT;
 
-	use = min_t(size_t, iov_iter_count(to), skb->len);
-	if (copy_to_iter(skb->data, use, to) != use)
+	use = min_t(माप_प्रकार, iov_iter_count(to), skb->len);
+	अगर (copy_to_iter(skb->data, use, to) != use)
 		use = -EFAULT;
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return use;
-}
+	वापस use;
+पूर्ण
 
-static ssize_t rpmsg_eptdev_write_iter(struct kiocb *iocb,
-				       struct iov_iter *from)
-{
-	struct file *filp = iocb->ki_filp;
-	struct rpmsg_eptdev *eptdev = filp->private_data;
-	size_t len = iov_iter_count(from);
-	void *kbuf;
-	int ret;
+अटल sमाप_प्रकार rpmsg_eptdev_ग_लिखो_iter(काष्ठा kiocb *iocb,
+				       काष्ठा iov_iter *from)
+अणु
+	काष्ठा file *filp = iocb->ki_filp;
+	काष्ठा rpmsg_eptdev *eptdev = filp->निजी_data;
+	माप_प्रकार len = iov_iter_count(from);
+	व्योम *kbuf;
+	पूर्णांक ret;
 
 	kbuf = kzalloc(len, GFP_KERNEL);
-	if (!kbuf)
-		return -ENOMEM;
+	अगर (!kbuf)
+		वापस -ENOMEM;
 
-	if (!copy_from_iter_full(kbuf, len, from)) {
+	अगर (!copy_from_iter_full(kbuf, len, from)) अणु
 		ret = -EFAULT;
-		goto free_kbuf;
-	}
+		जाओ मुक्त_kbuf;
+	पूर्ण
 
-	if (mutex_lock_interruptible(&eptdev->ept_lock)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&eptdev->ept_lock)) अणु
 		ret = -ERESTARTSYS;
-		goto free_kbuf;
-	}
+		जाओ मुक्त_kbuf;
+	पूर्ण
 
-	if (!eptdev->ept) {
+	अगर (!eptdev->ept) अणु
 		ret = -EPIPE;
-		goto unlock_eptdev;
-	}
+		जाओ unlock_eptdev;
+	पूर्ण
 
-	if (filp->f_flags & O_NONBLOCK)
+	अगर (filp->f_flags & O_NONBLOCK)
 		ret = rpmsg_trysendto(eptdev->ept, kbuf, len, eptdev->chinfo.dst);
-	else
+	अन्यथा
 		ret = rpmsg_sendto(eptdev->ept, kbuf, len, eptdev->chinfo.dst);
 
 unlock_eptdev:
 	mutex_unlock(&eptdev->ept_lock);
 
-free_kbuf:
-	kfree(kbuf);
-	return ret < 0 ? ret : len;
-}
+मुक्त_kbuf:
+	kमुक्त(kbuf);
+	वापस ret < 0 ? ret : len;
+पूर्ण
 
-static __poll_t rpmsg_eptdev_poll(struct file *filp, poll_table *wait)
-{
-	struct rpmsg_eptdev *eptdev = filp->private_data;
+अटल __poll_t rpmsg_eptdev_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = filp->निजी_data;
 	__poll_t mask = 0;
 
-	if (!eptdev->ept)
-		return EPOLLERR;
+	अगर (!eptdev->ept)
+		वापस EPOLLERR;
 
-	poll_wait(filp, &eptdev->readq, wait);
+	poll_रुको(filp, &eptdev->पढ़ोq, रुको);
 
-	if (!skb_queue_empty(&eptdev->queue))
+	अगर (!skb_queue_empty(&eptdev->queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	mask |= rpmsg_poll(eptdev->ept, filp, wait);
+	mask |= rpmsg_poll(eptdev->ept, filp, रुको);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static long rpmsg_eptdev_ioctl(struct file *fp, unsigned int cmd,
-			       unsigned long arg)
-{
-	struct rpmsg_eptdev *eptdev = fp->private_data;
+अटल दीर्घ rpmsg_eptdev_ioctl(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+			       अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = fp->निजी_data;
 
-	if (cmd != RPMSG_DESTROY_EPT_IOCTL)
-		return -EINVAL;
+	अगर (cmd != RPMSG_DESTROY_EPT_IOCTL)
+		वापस -EINVAL;
 
-	return rpmsg_eptdev_destroy(&eptdev->dev, NULL);
-}
+	वापस rpmsg_eptdev_destroy(&eptdev->dev, शून्य);
+पूर्ण
 
-static const struct file_operations rpmsg_eptdev_fops = {
+अटल स्थिर काष्ठा file_operations rpmsg_eptdev_fops = अणु
 	.owner = THIS_MODULE,
-	.open = rpmsg_eptdev_open,
+	.खोलो = rpmsg_eptdev_खोलो,
 	.release = rpmsg_eptdev_release,
-	.read_iter = rpmsg_eptdev_read_iter,
-	.write_iter = rpmsg_eptdev_write_iter,
+	.पढ़ो_iter = rpmsg_eptdev_पढ़ो_iter,
+	.ग_लिखो_iter = rpmsg_eptdev_ग_लिखो_iter,
 	.poll = rpmsg_eptdev_poll,
 	.unlocked_ioctl = rpmsg_eptdev_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-};
+पूर्ण;
 
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rpmsg_eptdev *eptdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", eptdev->chinfo.name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%s\n", eptdev->chinfo.name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t src_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rpmsg_eptdev *eptdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार src_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", eptdev->chinfo.src);
-}
-static DEVICE_ATTR_RO(src);
+	वापस प्र_लिखो(buf, "%d\n", eptdev->chinfo.src);
+पूर्ण
+अटल DEVICE_ATTR_RO(src);
 
-static ssize_t dst_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rpmsg_eptdev *eptdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार dst_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", eptdev->chinfo.dst);
-}
-static DEVICE_ATTR_RO(dst);
+	वापस प्र_लिखो(buf, "%d\n", eptdev->chinfo.dst);
+पूर्ण
+अटल DEVICE_ATTR_RO(dst);
 
-static struct attribute *rpmsg_eptdev_attrs[] = {
+अटल काष्ठा attribute *rpmsg_eptdev_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_src.attr,
 	&dev_attr_dst.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(rpmsg_eptdev);
 
-static void rpmsg_eptdev_release_device(struct device *dev)
-{
-	struct rpmsg_eptdev *eptdev = dev_to_eptdev(dev);
+अटल व्योम rpmsg_eptdev_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा rpmsg_eptdev *eptdev = dev_to_eptdev(dev);
 
-	ida_simple_remove(&rpmsg_ept_ida, dev->id);
-	ida_simple_remove(&rpmsg_minor_ida, MINOR(eptdev->dev.devt));
+	ida_simple_हटाओ(&rpmsg_ept_ida, dev->id);
+	ida_simple_हटाओ(&rpmsg_minor_ida, MINOR(eptdev->dev.devt));
 	cdev_del(&eptdev->cdev);
-	kfree(eptdev);
-}
+	kमुक्त(eptdev);
+पूर्ण
 
-static int rpmsg_eptdev_create(struct rpmsg_ctrldev *ctrldev,
-			       struct rpmsg_channel_info chinfo)
-{
-	struct rpmsg_device *rpdev = ctrldev->rpdev;
-	struct rpmsg_eptdev *eptdev;
-	struct device *dev;
-	int ret;
+अटल पूर्णांक rpmsg_eptdev_create(काष्ठा rpmsg_ctrldev *ctrldev,
+			       काष्ठा rpmsg_channel_info chinfo)
+अणु
+	काष्ठा rpmsg_device *rpdev = ctrldev->rpdev;
+	काष्ठा rpmsg_eptdev *eptdev;
+	काष्ठा device *dev;
+	पूर्णांक ret;
 
-	eptdev = kzalloc(sizeof(*eptdev), GFP_KERNEL);
-	if (!eptdev)
-		return -ENOMEM;
+	eptdev = kzalloc(माप(*eptdev), GFP_KERNEL);
+	अगर (!eptdev)
+		वापस -ENOMEM;
 
 	dev = &eptdev->dev;
 	eptdev->rpdev = rpdev;
@@ -358,7 +359,7 @@ static int rpmsg_eptdev_create(struct rpmsg_ctrldev *ctrldev,
 	mutex_init(&eptdev->ept_lock);
 	spin_lock_init(&eptdev->queue_lock);
 	skb_queue_head_init(&eptdev->queue);
-	init_waitqueue_head(&eptdev->readq);
+	init_रुकोqueue_head(&eptdev->पढ़ोq);
 
 	device_initialize(dev);
 	dev->class = rpmsg_class;
@@ -370,110 +371,110 @@ static int rpmsg_eptdev_create(struct rpmsg_ctrldev *ctrldev,
 	eptdev->cdev.owner = THIS_MODULE;
 
 	ret = ida_simple_get(&rpmsg_minor_ida, 0, RPMSG_DEV_MAX, GFP_KERNEL);
-	if (ret < 0)
-		goto free_eptdev;
+	अगर (ret < 0)
+		जाओ मुक्त_eptdev;
 	dev->devt = MKDEV(MAJOR(rpmsg_major), ret);
 
 	ret = ida_simple_get(&rpmsg_ept_ida, 0, 0, GFP_KERNEL);
-	if (ret < 0)
-		goto free_minor_ida;
+	अगर (ret < 0)
+		जाओ मुक्त_minor_ida;
 	dev->id = ret;
 	dev_set_name(dev, "rpmsg%d", ret);
 
 	ret = cdev_add(&eptdev->cdev, dev->devt, 1);
-	if (ret)
-		goto free_ept_ida;
+	अगर (ret)
+		जाओ मुक्त_ept_ida;
 
-	/* We can now rely on the release function for cleanup */
+	/* We can now rely on the release function क्रम cleanup */
 	dev->release = rpmsg_eptdev_release_device;
 
 	ret = device_add(dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "device_add failed: %d\n", ret);
 		put_device(dev);
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-free_ept_ida:
-	ida_simple_remove(&rpmsg_ept_ida, dev->id);
-free_minor_ida:
-	ida_simple_remove(&rpmsg_minor_ida, MINOR(dev->devt));
-free_eptdev:
+मुक्त_ept_ida:
+	ida_simple_हटाओ(&rpmsg_ept_ida, dev->id);
+मुक्त_minor_ida:
+	ida_simple_हटाओ(&rpmsg_minor_ida, MINOR(dev->devt));
+मुक्त_eptdev:
 	put_device(dev);
-	kfree(eptdev);
+	kमुक्त(eptdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rpmsg_ctrldev_open(struct inode *inode, struct file *filp)
-{
-	struct rpmsg_ctrldev *ctrldev = cdev_to_ctrldev(inode->i_cdev);
+अटल पूर्णांक rpmsg_ctrldev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rpmsg_ctrldev *ctrldev = cdev_to_ctrldev(inode->i_cdev);
 
 	get_device(&ctrldev->dev);
-	filp->private_data = ctrldev;
+	filp->निजी_data = ctrldev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rpmsg_ctrldev_release(struct inode *inode, struct file *filp)
-{
-	struct rpmsg_ctrldev *ctrldev = cdev_to_ctrldev(inode->i_cdev);
+अटल पूर्णांक rpmsg_ctrldev_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rpmsg_ctrldev *ctrldev = cdev_to_ctrldev(inode->i_cdev);
 
 	put_device(&ctrldev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long rpmsg_ctrldev_ioctl(struct file *fp, unsigned int cmd,
-				unsigned long arg)
-{
-	struct rpmsg_ctrldev *ctrldev = fp->private_data;
-	void __user *argp = (void __user *)arg;
-	struct rpmsg_endpoint_info eptinfo;
-	struct rpmsg_channel_info chinfo;
+अटल दीर्घ rpmsg_ctrldev_ioctl(काष्ठा file *fp, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा rpmsg_ctrldev *ctrldev = fp->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा rpmsg_endpoपूर्णांक_info eptinfo;
+	काष्ठा rpmsg_channel_info chinfo;
 
-	if (cmd != RPMSG_CREATE_EPT_IOCTL)
-		return -EINVAL;
+	अगर (cmd != RPMSG_CREATE_EPT_IOCTL)
+		वापस -EINVAL;
 
-	if (copy_from_user(&eptinfo, argp, sizeof(eptinfo)))
-		return -EFAULT;
+	अगर (copy_from_user(&eptinfo, argp, माप(eptinfo)))
+		वापस -EFAULT;
 
-	memcpy(chinfo.name, eptinfo.name, RPMSG_NAME_SIZE);
+	स_नकल(chinfo.name, eptinfo.name, RPMSG_NAME_SIZE);
 	chinfo.name[RPMSG_NAME_SIZE-1] = '\0';
 	chinfo.src = eptinfo.src;
 	chinfo.dst = eptinfo.dst;
 
-	return rpmsg_eptdev_create(ctrldev, chinfo);
-};
+	वापस rpmsg_eptdev_create(ctrldev, chinfo);
+पूर्ण;
 
-static const struct file_operations rpmsg_ctrldev_fops = {
+अटल स्थिर काष्ठा file_operations rpmsg_ctrldev_fops = अणु
 	.owner = THIS_MODULE,
-	.open = rpmsg_ctrldev_open,
+	.खोलो = rpmsg_ctrldev_खोलो,
 	.release = rpmsg_ctrldev_release,
 	.unlocked_ioctl = rpmsg_ctrldev_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-};
+पूर्ण;
 
-static void rpmsg_ctrldev_release_device(struct device *dev)
-{
-	struct rpmsg_ctrldev *ctrldev = dev_to_ctrldev(dev);
+अटल व्योम rpmsg_ctrldev_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा rpmsg_ctrldev *ctrldev = dev_to_ctrldev(dev);
 
-	ida_simple_remove(&rpmsg_ctrl_ida, dev->id);
-	ida_simple_remove(&rpmsg_minor_ida, MINOR(dev->devt));
+	ida_simple_हटाओ(&rpmsg_ctrl_ida, dev->id);
+	ida_simple_हटाओ(&rpmsg_minor_ida, MINOR(dev->devt));
 	cdev_del(&ctrldev->cdev);
-	kfree(ctrldev);
-}
+	kमुक्त(ctrldev);
+पूर्ण
 
-static int rpmsg_chrdev_probe(struct rpmsg_device *rpdev)
-{
-	struct rpmsg_ctrldev *ctrldev;
-	struct device *dev;
-	int ret;
+अटल पूर्णांक rpmsg_chrdev_probe(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा rpmsg_ctrldev *ctrldev;
+	काष्ठा device *dev;
+	पूर्णांक ret;
 
-	ctrldev = kzalloc(sizeof(*ctrldev), GFP_KERNEL);
-	if (!ctrldev)
-		return -ENOMEM;
+	ctrldev = kzalloc(माप(*ctrldev), GFP_KERNEL);
+	अगर (!ctrldev)
+		वापस -ENOMEM;
 
 	ctrldev->rpdev = rpdev;
 
@@ -486,101 +487,101 @@ static int rpmsg_chrdev_probe(struct rpmsg_device *rpdev)
 	ctrldev->cdev.owner = THIS_MODULE;
 
 	ret = ida_simple_get(&rpmsg_minor_ida, 0, RPMSG_DEV_MAX, GFP_KERNEL);
-	if (ret < 0)
-		goto free_ctrldev;
+	अगर (ret < 0)
+		जाओ मुक्त_ctrldev;
 	dev->devt = MKDEV(MAJOR(rpmsg_major), ret);
 
 	ret = ida_simple_get(&rpmsg_ctrl_ida, 0, 0, GFP_KERNEL);
-	if (ret < 0)
-		goto free_minor_ida;
+	अगर (ret < 0)
+		जाओ मुक्त_minor_ida;
 	dev->id = ret;
 	dev_set_name(&ctrldev->dev, "rpmsg_ctrl%d", ret);
 
 	ret = cdev_add(&ctrldev->cdev, dev->devt, 1);
-	if (ret)
-		goto free_ctrl_ida;
+	अगर (ret)
+		जाओ मुक्त_ctrl_ida;
 
-	/* We can now rely on the release function for cleanup */
+	/* We can now rely on the release function क्रम cleanup */
 	dev->release = rpmsg_ctrldev_release_device;
 
 	ret = device_add(dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&rpdev->dev, "device_add failed: %d\n", ret);
 		put_device(dev);
-	}
+	पूर्ण
 
 	dev_set_drvdata(&rpdev->dev, ctrldev);
 
-	return ret;
+	वापस ret;
 
-free_ctrl_ida:
-	ida_simple_remove(&rpmsg_ctrl_ida, dev->id);
-free_minor_ida:
-	ida_simple_remove(&rpmsg_minor_ida, MINOR(dev->devt));
-free_ctrldev:
+मुक्त_ctrl_ida:
+	ida_simple_हटाओ(&rpmsg_ctrl_ida, dev->id);
+मुक्त_minor_ida:
+	ida_simple_हटाओ(&rpmsg_minor_ida, MINOR(dev->devt));
+मुक्त_ctrldev:
 	put_device(dev);
-	kfree(ctrldev);
+	kमुक्त(ctrldev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rpmsg_chrdev_remove(struct rpmsg_device *rpdev)
-{
-	struct rpmsg_ctrldev *ctrldev = dev_get_drvdata(&rpdev->dev);
-	int ret;
+अटल व्योम rpmsg_chrdev_हटाओ(काष्ठा rpmsg_device *rpdev)
+अणु
+	काष्ठा rpmsg_ctrldev *ctrldev = dev_get_drvdata(&rpdev->dev);
+	पूर्णांक ret;
 
-	/* Destroy all endpoints */
-	ret = device_for_each_child(&ctrldev->dev, NULL, rpmsg_eptdev_destroy);
-	if (ret)
+	/* Destroy all endpoपूर्णांकs */
+	ret = device_क्रम_each_child(&ctrldev->dev, शून्य, rpmsg_eptdev_destroy);
+	अगर (ret)
 		dev_warn(&rpdev->dev, "failed to nuke endpoints: %d\n", ret);
 
 	device_del(&ctrldev->dev);
 	put_device(&ctrldev->dev);
-}
+पूर्ण
 
-static struct rpmsg_driver rpmsg_chrdev_driver = {
+अटल काष्ठा rpmsg_driver rpmsg_chrdev_driver = अणु
 	.probe = rpmsg_chrdev_probe,
-	.remove = rpmsg_chrdev_remove,
-	.drv = {
+	.हटाओ = rpmsg_chrdev_हटाओ,
+	.drv = अणु
 		.name = "rpmsg_chrdev",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int rpmsg_chrdev_init(void)
-{
-	int ret;
+अटल पूर्णांक rpmsg_chrdev_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = alloc_chrdev_region(&rpmsg_major, 0, RPMSG_DEV_MAX, "rpmsg");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("rpmsg: failed to allocate char dev region\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rpmsg_class = class_create(THIS_MODULE, "rpmsg");
-	if (IS_ERR(rpmsg_class)) {
+	अगर (IS_ERR(rpmsg_class)) अणु
 		pr_err("failed to create rpmsg class\n");
-		unregister_chrdev_region(rpmsg_major, RPMSG_DEV_MAX);
-		return PTR_ERR(rpmsg_class);
-	}
+		unरेजिस्टर_chrdev_region(rpmsg_major, RPMSG_DEV_MAX);
+		वापस PTR_ERR(rpmsg_class);
+	पूर्ण
 
-	ret = register_rpmsg_driver(&rpmsg_chrdev_driver);
-	if (ret < 0) {
+	ret = रेजिस्टर_rpmsg_driver(&rpmsg_chrdev_driver);
+	अगर (ret < 0) अणु
 		pr_err("rpmsgchr: failed to register rpmsg driver\n");
 		class_destroy(rpmsg_class);
-		unregister_chrdev_region(rpmsg_major, RPMSG_DEV_MAX);
-	}
+		unरेजिस्टर_chrdev_region(rpmsg_major, RPMSG_DEV_MAX);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 postcore_initcall(rpmsg_chrdev_init);
 
-static void rpmsg_chrdev_exit(void)
-{
-	unregister_rpmsg_driver(&rpmsg_chrdev_driver);
+अटल व्योम rpmsg_chrdev_निकास(व्योम)
+अणु
+	unरेजिस्टर_rpmsg_driver(&rpmsg_chrdev_driver);
 	class_destroy(rpmsg_class);
-	unregister_chrdev_region(rpmsg_major, RPMSG_DEV_MAX);
-}
-module_exit(rpmsg_chrdev_exit);
+	unरेजिस्टर_chrdev_region(rpmsg_major, RPMSG_DEV_MAX);
+पूर्ण
+module_निकास(rpmsg_chrdev_निकास);
 
 MODULE_ALIAS("rpmsg:rpmsg_chrdev");
 MODULE_LICENSE("GPL v2");

@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2007 Alan Stern
  * Copyright (C) IBM Corporation, 2009
  * Copyright (C) 2009, Frederic Weisbecker <fweisbec@gmail.com>
  *
- * Thanks to Ingo Molnar for his many suggestions.
+ * Thanks to Ingo Molnar क्रम his many suggestions.
  *
  * Authors: Alan Stern <stern@rowland.harvard.edu>
  *          K.Prasad <prasad@linux.vnet.ibm.com>
@@ -12,242 +13,242 @@
  */
 
 /*
- * HW_breakpoint: a unified kernel/user-space hardware breakpoint facility,
- * using the CPU's debug registers.
+ * HW_अवरोधpoपूर्णांक: a unअगरied kernel/user-space hardware अवरोधpoपूर्णांक facility,
+ * using the CPU's debug रेजिस्टरs.
  * This file contains the arch-independent routines.
  */
 
-#include <linux/irqflags.h>
-#include <linux/kallsyms.h>
-#include <linux/notifier.h>
-#include <linux/kprobes.h>
-#include <linux/kdebug.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/percpu.h>
-#include <linux/sched.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/cpu.h>
-#include <linux/smp.h>
-#include <linux/bug.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/bug.h>
 
-#include <linux/hw_breakpoint.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
 /*
- * Constraints data
+ * Constraपूर्णांकs data
  */
-struct bp_cpuinfo {
-	/* Number of pinned cpu breakpoints in a cpu */
-	unsigned int	cpu_pinned;
-	/* tsk_pinned[n] is the number of tasks having n+1 breakpoints */
-	unsigned int	*tsk_pinned;
-	/* Number of non-pinned cpu/task breakpoints in a cpu */
-	unsigned int	flexible; /* XXX: placeholder, see fetch_this_slot() */
-};
+काष्ठा bp_cpuinfo अणु
+	/* Number of pinned cpu अवरोधpoपूर्णांकs in a cpu */
+	अचिन्हित पूर्णांक	cpu_pinned;
+	/* tsk_pinned[n] is the number of tasks having n+1 अवरोधpoपूर्णांकs */
+	अचिन्हित पूर्णांक	*tsk_pinned;
+	/* Number of non-pinned cpu/task अवरोधpoपूर्णांकs in a cpu */
+	अचिन्हित पूर्णांक	flexible; /* XXX: placeholder, see fetch_this_slot() */
+पूर्ण;
 
-static DEFINE_PER_CPU(struct bp_cpuinfo, bp_cpuinfo[TYPE_MAX]);
-static int nr_slots[TYPE_MAX];
+अटल DEFINE_PER_CPU(काष्ठा bp_cpuinfo, bp_cpuinfo[TYPE_MAX]);
+अटल पूर्णांक nr_slots[TYPE_MAX];
 
-static struct bp_cpuinfo *get_bp_info(int cpu, enum bp_type_idx type)
-{
-	return per_cpu_ptr(bp_cpuinfo + type, cpu);
-}
+अटल काष्ठा bp_cpuinfo *get_bp_info(पूर्णांक cpu, क्रमागत bp_type_idx type)
+अणु
+	वापस per_cpu_ptr(bp_cpuinfo + type, cpu);
+पूर्ण
 
-/* Keep track of the breakpoints attached to tasks */
-static LIST_HEAD(bp_task_head);
+/* Keep track of the अवरोधpoपूर्णांकs attached to tasks */
+अटल LIST_HEAD(bp_task_head);
 
-static int constraints_initialized;
+अटल पूर्णांक स्थिरraपूर्णांकs_initialized;
 
 /* Gather the number of total pinned and un-pinned bp in a cpuset */
-struct bp_busy_slots {
-	unsigned int pinned;
-	unsigned int flexible;
-};
+काष्ठा bp_busy_slots अणु
+	अचिन्हित पूर्णांक pinned;
+	अचिन्हित पूर्णांक flexible;
+पूर्ण;
 
-/* Serialize accesses to the above constraints */
-static DEFINE_MUTEX(nr_bp_mutex);
+/* Serialize accesses to the above स्थिरraपूर्णांकs */
+अटल DEFINE_MUTEX(nr_bp_mutex);
 
-__weak int hw_breakpoint_weight(struct perf_event *bp)
-{
-	return 1;
-}
+__weak पूर्णांक hw_अवरोधpoपूर्णांक_weight(काष्ठा perf_event *bp)
+अणु
+	वापस 1;
+पूर्ण
 
-static inline enum bp_type_idx find_slot_idx(u64 bp_type)
-{
-	if (bp_type & HW_BREAKPOINT_RW)
-		return TYPE_DATA;
+अटल अंतरभूत क्रमागत bp_type_idx find_slot_idx(u64 bp_type)
+अणु
+	अगर (bp_type & HW_BREAKPOINT_RW)
+		वापस TYPE_DATA;
 
-	return TYPE_INST;
-}
+	वापस TYPE_INST;
+पूर्ण
 
 /*
- * Report the maximum number of pinned breakpoints a task
+ * Report the maximum number of pinned अवरोधpoपूर्णांकs a task
  * have in this cpu
  */
-static unsigned int max_task_bp_pinned(int cpu, enum bp_type_idx type)
-{
-	unsigned int *tsk_pinned = get_bp_info(cpu, type)->tsk_pinned;
-	int i;
+अटल अचिन्हित पूर्णांक max_task_bp_pinned(पूर्णांक cpu, क्रमागत bp_type_idx type)
+अणु
+	अचिन्हित पूर्णांक *tsk_pinned = get_bp_info(cpu, type)->tsk_pinned;
+	पूर्णांक i;
 
-	for (i = nr_slots[type] - 1; i >= 0; i--) {
-		if (tsk_pinned[i] > 0)
-			return i + 1;
-	}
+	क्रम (i = nr_slots[type] - 1; i >= 0; i--) अणु
+		अगर (tsk_pinned[i] > 0)
+			वापस i + 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Count the number of breakpoints of the same type and same task.
+ * Count the number of अवरोधpoपूर्णांकs of the same type and same task.
  * The given event must be not on the list.
  */
-static int task_bp_pinned(int cpu, struct perf_event *bp, enum bp_type_idx type)
-{
-	struct task_struct *tsk = bp->hw.target;
-	struct perf_event *iter;
-	int count = 0;
+अटल पूर्णांक task_bp_pinned(पूर्णांक cpu, काष्ठा perf_event *bp, क्रमागत bp_type_idx type)
+अणु
+	काष्ठा task_काष्ठा *tsk = bp->hw.target;
+	काष्ठा perf_event *iter;
+	पूर्णांक count = 0;
 
-	list_for_each_entry(iter, &bp_task_head, hw.bp_list) {
-		if (iter->hw.target == tsk &&
+	list_क्रम_each_entry(iter, &bp_task_head, hw.bp_list) अणु
+		अगर (iter->hw.target == tsk &&
 		    find_slot_idx(iter->attr.bp_type) == type &&
 		    (iter->cpu < 0 || cpu == iter->cpu))
-			count += hw_breakpoint_weight(iter);
-	}
+			count += hw_अवरोधpoपूर्णांक_weight(iter);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct cpumask *cpumask_of_bp(struct perf_event *bp)
-{
-	if (bp->cpu >= 0)
-		return cpumask_of(bp->cpu);
-	return cpu_possible_mask;
-}
+अटल स्थिर काष्ठा cpumask *cpumask_of_bp(काष्ठा perf_event *bp)
+अणु
+	अगर (bp->cpu >= 0)
+		वापस cpumask_of(bp->cpu);
+	वापस cpu_possible_mask;
+पूर्ण
 
 /*
- * Report the number of pinned/un-pinned breakpoints we have in
+ * Report the number of pinned/un-pinned अवरोधpoपूर्णांकs we have in
  * a given cpu (cpu > -1) or in all of them (cpu = -1).
  */
-static void
-fetch_bp_busy_slots(struct bp_busy_slots *slots, struct perf_event *bp,
-		    enum bp_type_idx type)
-{
-	const struct cpumask *cpumask = cpumask_of_bp(bp);
-	int cpu;
+अटल व्योम
+fetch_bp_busy_slots(काष्ठा bp_busy_slots *slots, काष्ठा perf_event *bp,
+		    क्रमागत bp_type_idx type)
+अणु
+	स्थिर काष्ठा cpumask *cpumask = cpumask_of_bp(bp);
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, cpumask) {
-		struct bp_cpuinfo *info = get_bp_info(cpu, type);
-		int nr;
+	क्रम_each_cpu(cpu, cpumask) अणु
+		काष्ठा bp_cpuinfo *info = get_bp_info(cpu, type);
+		पूर्णांक nr;
 
 		nr = info->cpu_pinned;
-		if (!bp->hw.target)
+		अगर (!bp->hw.target)
 			nr += max_task_bp_pinned(cpu, type);
-		else
+		अन्यथा
 			nr += task_bp_pinned(cpu, bp, type);
 
-		if (nr > slots->pinned)
+		अगर (nr > slots->pinned)
 			slots->pinned = nr;
 
 		nr = info->flexible;
-		if (nr > slots->flexible)
+		अगर (nr > slots->flexible)
 			slots->flexible = nr;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * For now, continue to consider flexible as pinned, until we can
- * ensure no flexible event can ever be scheduled before a pinned event
+ * For now, जारी to consider flexible as pinned, until we can
+ * ensure no flexible event can ever be scheduled beक्रमe a pinned event
  * in a same cpu.
  */
-static void
-fetch_this_slot(struct bp_busy_slots *slots, int weight)
-{
+अटल व्योम
+fetch_this_slot(काष्ठा bp_busy_slots *slots, पूर्णांक weight)
+अणु
 	slots->pinned += weight;
-}
+पूर्ण
 
 /*
- * Add a pinned breakpoint for the given task in our constraint table
+ * Add a pinned अवरोधpoपूर्णांक क्रम the given task in our स्थिरraपूर्णांक table
  */
-static void toggle_bp_task_slot(struct perf_event *bp, int cpu,
-				enum bp_type_idx type, int weight)
-{
-	unsigned int *tsk_pinned = get_bp_info(cpu, type)->tsk_pinned;
-	int old_idx, new_idx;
+अटल व्योम toggle_bp_task_slot(काष्ठा perf_event *bp, पूर्णांक cpu,
+				क्रमागत bp_type_idx type, पूर्णांक weight)
+अणु
+	अचिन्हित पूर्णांक *tsk_pinned = get_bp_info(cpu, type)->tsk_pinned;
+	पूर्णांक old_idx, new_idx;
 
 	old_idx = task_bp_pinned(cpu, bp, type) - 1;
 	new_idx = old_idx + weight;
 
-	if (old_idx >= 0)
+	अगर (old_idx >= 0)
 		tsk_pinned[old_idx]--;
-	if (new_idx >= 0)
+	अगर (new_idx >= 0)
 		tsk_pinned[new_idx]++;
-}
+पूर्ण
 
 /*
- * Add/remove the given breakpoint in our constraint table
+ * Add/हटाओ the given अवरोधpoपूर्णांक in our स्थिरraपूर्णांक table
  */
-static void
-toggle_bp_slot(struct perf_event *bp, bool enable, enum bp_type_idx type,
-	       int weight)
-{
-	const struct cpumask *cpumask = cpumask_of_bp(bp);
-	int cpu;
+अटल व्योम
+toggle_bp_slot(काष्ठा perf_event *bp, bool enable, क्रमागत bp_type_idx type,
+	       पूर्णांक weight)
+अणु
+	स्थिर काष्ठा cpumask *cpumask = cpumask_of_bp(bp);
+	पूर्णांक cpu;
 
-	if (!enable)
+	अगर (!enable)
 		weight = -weight;
 
 	/* Pinned counter cpu profiling */
-	if (!bp->hw.target) {
+	अगर (!bp->hw.target) अणु
 		get_bp_info(bp->cpu, type)->cpu_pinned += weight;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Pinned counter task profiling */
-	for_each_cpu(cpu, cpumask)
+	क्रम_each_cpu(cpu, cpumask)
 		toggle_bp_task_slot(bp, cpu, type, weight);
 
-	if (enable)
+	अगर (enable)
 		list_add_tail(&bp->hw.bp_list, &bp_task_head);
-	else
+	अन्यथा
 		list_del(&bp->hw.bp_list);
-}
+पूर्ण
 
-__weak int arch_reserve_bp_slot(struct perf_event *bp)
-{
-	return 0;
-}
+__weak पूर्णांक arch_reserve_bp_slot(काष्ठा perf_event *bp)
+अणु
+	वापस 0;
+पूर्ण
 
-__weak void arch_release_bp_slot(struct perf_event *bp)
-{
-}
+__weak व्योम arch_release_bp_slot(काष्ठा perf_event *bp)
+अणु
+पूर्ण
 
 /*
- * Function to perform processor-specific cleanup during unregistration
+ * Function to perक्रमm processor-specअगरic cleanup during unregistration
  */
-__weak void arch_unregister_hw_breakpoint(struct perf_event *bp)
-{
+__weak व्योम arch_unरेजिस्टर_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
 	/*
-	 * A weak stub function here for those archs that don't define
-	 * it inside arch/.../kernel/hw_breakpoint.c
+	 * A weak stub function here क्रम those archs that करोn't define
+	 * it inside arch/.../kernel/hw_अवरोधpoपूर्णांक.c
 	 */
-}
+पूर्ण
 
 /*
- * Constraints to check before allowing this new breakpoint counter:
+ * Constraपूर्णांकs to check beक्रमe allowing this new अवरोधpoपूर्णांक counter:
  *
- *  == Non-pinned counter == (Considered as pinned for now)
+ *  == Non-pinned counter == (Considered as pinned क्रम now)
  *
  *   - If attached to a single cpu, check:
  *
  *       (per_cpu(info->flexible, cpu) || (per_cpu(info->cpu_pinned, cpu)
  *           + max(per_cpu(info->tsk_pinned, cpu)))) < HBP_NUM
  *
- *       -> If there are already non-pinned counters in this cpu, it means
- *          there is already a free slot for them.
+ *       -> If there are alपढ़ोy non-pinned counters in this cpu, it means
+ *          there is alपढ़ोy a मुक्त slot क्रम them.
  *          Otherwise, we check that the maximum number of per task
- *          breakpoints (for this cpu) plus the number of per cpu breakpoint
- *          (for this cpu) doesn't cover every registers.
+ *          अवरोधpoपूर्णांकs (क्रम this cpu) plus the number of per cpu अवरोधpoपूर्णांक
+ *          (क्रम this cpu) करोesn't cover every रेजिस्टरs.
  *
  *   - If attached to every cpus, check:
  *
@@ -255,8 +256,8 @@ __weak void arch_unregister_hw_breakpoint(struct perf_event *bp)
  *           + max(per_cpu(info->tsk_pinned, *)))) < HBP_NUM
  *
  *       -> This is roughly the same, except we check the number of per cpu
- *          bp for every cpu and we keep the max one. Same for the per tasks
- *          breakpoints.
+ *          bp क्रम every cpu and we keep the max one. Same क्रम the per tasks
+ *          अवरोधpoपूर्णांकs.
  *
  *
  * == Pinned counter ==
@@ -266,56 +267,56 @@ __weak void arch_unregister_hw_breakpoint(struct perf_event *bp)
  *       ((per_cpu(info->flexible, cpu) > 1) + per_cpu(info->cpu_pinned, cpu)
  *            + max(per_cpu(info->tsk_pinned, cpu))) < HBP_NUM
  *
- *       -> Same checks as before. But now the info->flexible, if any, must keep
- *          one register at least (or they will never be fed).
+ *       -> Same checks as beक्रमe. But now the info->flexible, अगर any, must keep
+ *          one रेजिस्टर at least (or they will never be fed).
  *
  *   - If attached to every cpus, check:
  *
  *       ((per_cpu(info->flexible, *) > 1) + max(per_cpu(info->cpu_pinned, *))
  *            + max(per_cpu(info->tsk_pinned, *))) < HBP_NUM
  */
-static int __reserve_bp_slot(struct perf_event *bp, u64 bp_type)
-{
-	struct bp_busy_slots slots = {0};
-	enum bp_type_idx type;
-	int weight;
-	int ret;
+अटल पूर्णांक __reserve_bp_slot(काष्ठा perf_event *bp, u64 bp_type)
+अणु
+	काष्ठा bp_busy_slots slots = अणु0पूर्ण;
+	क्रमागत bp_type_idx type;
+	पूर्णांक weight;
+	पूर्णांक ret;
 
-	/* We couldn't initialize breakpoint constraints on boot */
-	if (!constraints_initialized)
-		return -ENOMEM;
+	/* We couldn't initialize अवरोधpoपूर्णांक स्थिरraपूर्णांकs on boot */
+	अगर (!स्थिरraपूर्णांकs_initialized)
+		वापस -ENOMEM;
 
 	/* Basic checks */
-	if (bp_type == HW_BREAKPOINT_EMPTY ||
+	अगर (bp_type == HW_BREAKPOINT_EMPTY ||
 	    bp_type == HW_BREAKPOINT_INVALID)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	type = find_slot_idx(bp_type);
-	weight = hw_breakpoint_weight(bp);
+	weight = hw_अवरोधpoपूर्णांक_weight(bp);
 
 	fetch_bp_busy_slots(&slots, bp, type);
 	/*
-	 * Simulate the addition of this breakpoint to the constraints
+	 * Simulate the addition of this अवरोधpoपूर्णांक to the स्थिरraपूर्णांकs
 	 * and see the result.
 	 */
 	fetch_this_slot(&slots, weight);
 
 	/* Flexible counters need to keep at least one slot */
-	if (slots.pinned + (!!slots.flexible) > nr_slots[type])
-		return -ENOSPC;
+	अगर (slots.pinned + (!!slots.flexible) > nr_slots[type])
+		वापस -ENOSPC;
 
 	ret = arch_reserve_bp_slot(bp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	toggle_bp_slot(bp, true, type, weight);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int reserve_bp_slot(struct perf_event *bp)
-{
-	int ret;
+पूर्णांक reserve_bp_slot(काष्ठा perf_event *bp)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&nr_bp_mutex);
 
@@ -323,391 +324,391 @@ int reserve_bp_slot(struct perf_event *bp)
 
 	mutex_unlock(&nr_bp_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __release_bp_slot(struct perf_event *bp, u64 bp_type)
-{
-	enum bp_type_idx type;
-	int weight;
+अटल व्योम __release_bp_slot(काष्ठा perf_event *bp, u64 bp_type)
+अणु
+	क्रमागत bp_type_idx type;
+	पूर्णांक weight;
 
 	arch_release_bp_slot(bp);
 
 	type = find_slot_idx(bp_type);
-	weight = hw_breakpoint_weight(bp);
+	weight = hw_अवरोधpoपूर्णांक_weight(bp);
 	toggle_bp_slot(bp, false, type, weight);
-}
+पूर्ण
 
-void release_bp_slot(struct perf_event *bp)
-{
+व्योम release_bp_slot(काष्ठा perf_event *bp)
+अणु
 	mutex_lock(&nr_bp_mutex);
 
-	arch_unregister_hw_breakpoint(bp);
+	arch_unरेजिस्टर_hw_अवरोधpoपूर्णांक(bp);
 	__release_bp_slot(bp, bp->attr.bp_type);
 
 	mutex_unlock(&nr_bp_mutex);
-}
+पूर्ण
 
-static int __modify_bp_slot(struct perf_event *bp, u64 old_type, u64 new_type)
-{
-	int err;
+अटल पूर्णांक __modअगरy_bp_slot(काष्ठा perf_event *bp, u64 old_type, u64 new_type)
+अणु
+	पूर्णांक err;
 
 	__release_bp_slot(bp, old_type);
 
 	err = __reserve_bp_slot(bp, new_type);
-	if (err) {
+	अगर (err) अणु
 		/*
-		 * Reserve the old_type slot back in case
-		 * there's no space for the new type.
+		 * Reserve the old_type slot back in हाल
+		 * there's no space क्रम the new type.
 		 *
 		 * This must succeed, because we just released
 		 * the old_type slot in the __release_bp_slot
 		 * call above. If not, something is broken.
 		 */
 		WARN_ON(__reserve_bp_slot(bp, old_type));
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int modify_bp_slot(struct perf_event *bp, u64 old_type, u64 new_type)
-{
-	int ret;
+अटल पूर्णांक modअगरy_bp_slot(काष्ठा perf_event *bp, u64 old_type, u64 new_type)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&nr_bp_mutex);
-	ret = __modify_bp_slot(bp, old_type, new_type);
+	ret = __modअगरy_bp_slot(bp, old_type, new_type);
 	mutex_unlock(&nr_bp_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Allow the kernel debugger to reserve breakpoint slots without
- * taking a lock using the dbg_* variant of for the reserve and
- * release breakpoint slots.
+ * Allow the kernel debugger to reserve अवरोधpoपूर्णांक slots without
+ * taking a lock using the dbg_* variant of क्रम the reserve and
+ * release अवरोधpoपूर्णांक slots.
  */
-int dbg_reserve_bp_slot(struct perf_event *bp)
-{
-	if (mutex_is_locked(&nr_bp_mutex))
-		return -1;
+पूर्णांक dbg_reserve_bp_slot(काष्ठा perf_event *bp)
+अणु
+	अगर (mutex_is_locked(&nr_bp_mutex))
+		वापस -1;
 
-	return __reserve_bp_slot(bp, bp->attr.bp_type);
-}
+	वापस __reserve_bp_slot(bp, bp->attr.bp_type);
+पूर्ण
 
-int dbg_release_bp_slot(struct perf_event *bp)
-{
-	if (mutex_is_locked(&nr_bp_mutex))
-		return -1;
+पूर्णांक dbg_release_bp_slot(काष्ठा perf_event *bp)
+अणु
+	अगर (mutex_is_locked(&nr_bp_mutex))
+		वापस -1;
 
 	__release_bp_slot(bp, bp->attr.bp_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw_breakpoint_parse(struct perf_event *bp,
-			       const struct perf_event_attr *attr,
-			       struct arch_hw_breakpoint *hw)
-{
-	int err;
+अटल पूर्णांक hw_अवरोधpoपूर्णांक_parse(काष्ठा perf_event *bp,
+			       स्थिर काष्ठा perf_event_attr *attr,
+			       काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
+	पूर्णांक err;
 
-	err = hw_breakpoint_arch_parse(bp, attr, hw);
-	if (err)
-		return err;
+	err = hw_अवरोधpoपूर्णांक_arch_parse(bp, attr, hw);
+	अगर (err)
+		वापस err;
 
-	if (arch_check_bp_in_kernelspace(hw)) {
-		if (attr->exclude_kernel)
-			return -EINVAL;
+	अगर (arch_check_bp_in_kernelspace(hw)) अणु
+		अगर (attr->exclude_kernel)
+			वापस -EINVAL;
 		/*
-		 * Don't let unprivileged users set a breakpoint in the trap
-		 * path to avoid trap recursion attacks.
+		 * Don't let unprivileged users set a अवरोधpoपूर्णांक in the trap
+		 * path to aव्योम trap recursion attacks.
 		 */
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
-	}
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int register_perf_hw_breakpoint(struct perf_event *bp)
-{
-	struct arch_hw_breakpoint hw = { };
-	int err;
+पूर्णांक रेजिस्टर_perf_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक hw = अणु पूर्ण;
+	पूर्णांक err;
 
 	err = reserve_bp_slot(bp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = hw_breakpoint_parse(bp, &bp->attr, &hw);
-	if (err) {
+	err = hw_अवरोधpoपूर्णांक_parse(bp, &bp->attr, &hw);
+	अगर (err) अणु
 		release_bp_slot(bp);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	bp->hw.info = hw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * register_user_hw_breakpoint - register a hardware breakpoint for user space
- * @attr: breakpoint attributes
- * @triggered: callback to trigger when we hit the breakpoint
- * @tsk: pointer to 'task_struct' of the process to which the address belongs
+ * रेजिस्टर_user_hw_अवरोधpoपूर्णांक - रेजिस्टर a hardware अवरोधpoपूर्णांक क्रम user space
+ * @attr: अवरोधpoपूर्णांक attributes
+ * @triggered: callback to trigger when we hit the अवरोधpoपूर्णांक
+ * @tsk: poपूर्णांकer to 'task_struct' of the process to which the address beदीर्घs
  */
-struct perf_event *
-register_user_hw_breakpoint(struct perf_event_attr *attr,
+काष्ठा perf_event *
+रेजिस्टर_user_hw_अवरोधpoपूर्णांक(काष्ठा perf_event_attr *attr,
 			    perf_overflow_handler_t triggered,
-			    void *context,
-			    struct task_struct *tsk)
-{
-	return perf_event_create_kernel_counter(attr, -1, tsk, triggered,
+			    व्योम *context,
+			    काष्ठा task_काष्ठा *tsk)
+अणु
+	वापस perf_event_create_kernel_counter(attr, -1, tsk, triggered,
 						context);
-}
-EXPORT_SYMBOL_GPL(register_user_hw_breakpoint);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_user_hw_अवरोधpoपूर्णांक);
 
-static void hw_breakpoint_copy_attr(struct perf_event_attr *to,
-				    struct perf_event_attr *from)
-{
+अटल व्योम hw_अवरोधpoपूर्णांक_copy_attr(काष्ठा perf_event_attr *to,
+				    काष्ठा perf_event_attr *from)
+अणु
 	to->bp_addr = from->bp_addr;
 	to->bp_type = from->bp_type;
 	to->bp_len  = from->bp_len;
 	to->disabled = from->disabled;
-}
+पूर्ण
 
-int
-modify_user_hw_breakpoint_check(struct perf_event *bp, struct perf_event_attr *attr,
+पूर्णांक
+modअगरy_user_hw_अवरोधpoपूर्णांक_check(काष्ठा perf_event *bp, काष्ठा perf_event_attr *attr,
 			        bool check)
-{
-	struct arch_hw_breakpoint hw = { };
-	int err;
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक hw = अणु पूर्ण;
+	पूर्णांक err;
 
-	err = hw_breakpoint_parse(bp, attr, &hw);
-	if (err)
-		return err;
+	err = hw_अवरोधpoपूर्णांक_parse(bp, attr, &hw);
+	अगर (err)
+		वापस err;
 
-	if (check) {
-		struct perf_event_attr old_attr;
+	अगर (check) अणु
+		काष्ठा perf_event_attr old_attr;
 
 		old_attr = bp->attr;
-		hw_breakpoint_copy_attr(&old_attr, attr);
-		if (memcmp(&old_attr, attr, sizeof(*attr)))
-			return -EINVAL;
-	}
+		hw_अवरोधpoपूर्णांक_copy_attr(&old_attr, attr);
+		अगर (स_भेद(&old_attr, attr, माप(*attr)))
+			वापस -EINVAL;
+	पूर्ण
 
-	if (bp->attr.bp_type != attr->bp_type) {
-		err = modify_bp_slot(bp, bp->attr.bp_type, attr->bp_type);
-		if (err)
-			return err;
-	}
+	अगर (bp->attr.bp_type != attr->bp_type) अणु
+		err = modअगरy_bp_slot(bp, bp->attr.bp_type, attr->bp_type);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	hw_breakpoint_copy_attr(&bp->attr, attr);
+	hw_अवरोधpoपूर्णांक_copy_attr(&bp->attr, attr);
 	bp->hw.info = hw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * modify_user_hw_breakpoint - modify a user-space hardware breakpoint
- * @bp: the breakpoint structure to modify
- * @attr: new breakpoint attributes
+ * modअगरy_user_hw_अवरोधpoपूर्णांक - modअगरy a user-space hardware अवरोधpoपूर्णांक
+ * @bp: the अवरोधpoपूर्णांक काष्ठाure to modअगरy
+ * @attr: new अवरोधpoपूर्णांक attributes
  */
-int modify_user_hw_breakpoint(struct perf_event *bp, struct perf_event_attr *attr)
-{
-	int err;
+पूर्णांक modअगरy_user_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp, काष्ठा perf_event_attr *attr)
+अणु
+	पूर्णांक err;
 
 	/*
-	 * modify_user_hw_breakpoint can be invoked with IRQs disabled and hence it
-	 * will not be possible to raise IPIs that invoke __perf_event_disable.
+	 * modअगरy_user_hw_अवरोधpoपूर्णांक can be invoked with IRQs disabled and hence it
+	 * will not be possible to उठाओ IPIs that invoke __perf_event_disable.
 	 * So call the function directly after making sure we are targeting the
 	 * current task.
 	 */
-	if (irqs_disabled() && bp->ctx && bp->ctx->task == current)
+	अगर (irqs_disabled() && bp->ctx && bp->ctx->task == current)
 		perf_event_disable_local(bp);
-	else
+	अन्यथा
 		perf_event_disable(bp);
 
-	err = modify_user_hw_breakpoint_check(bp, attr, false);
+	err = modअगरy_user_hw_अवरोधpoपूर्णांक_check(bp, attr, false);
 
-	if (!bp->attr.disabled)
+	अगर (!bp->attr.disabled)
 		perf_event_enable(bp);
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(modify_user_hw_breakpoint);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(modअगरy_user_hw_अवरोधpoपूर्णांक);
 
 /**
- * unregister_hw_breakpoint - unregister a user-space hardware breakpoint
- * @bp: the breakpoint structure to unregister
+ * unरेजिस्टर_hw_अवरोधpoपूर्णांक - unरेजिस्टर a user-space hardware अवरोधpoपूर्णांक
+ * @bp: the अवरोधpoपूर्णांक काष्ठाure to unरेजिस्टर
  */
-void unregister_hw_breakpoint(struct perf_event *bp)
-{
-	if (!bp)
-		return;
+व्योम unरेजिस्टर_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	अगर (!bp)
+		वापस;
 	perf_event_release_kernel(bp);
-}
-EXPORT_SYMBOL_GPL(unregister_hw_breakpoint);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_hw_अवरोधpoपूर्णांक);
 
 /**
- * register_wide_hw_breakpoint - register a wide breakpoint in the kernel
- * @attr: breakpoint attributes
- * @triggered: callback to trigger when we hit the breakpoint
+ * रेजिस्टर_wide_hw_अवरोधpoपूर्णांक - रेजिस्टर a wide अवरोधpoपूर्णांक in the kernel
+ * @attr: अवरोधpoपूर्णांक attributes
+ * @triggered: callback to trigger when we hit the अवरोधpoपूर्णांक
  *
- * @return a set of per_cpu pointers to perf events
+ * @वापस a set of per_cpu poपूर्णांकers to perf events
  */
-struct perf_event * __percpu *
-register_wide_hw_breakpoint(struct perf_event_attr *attr,
+काष्ठा perf_event * __percpu *
+रेजिस्टर_wide_hw_अवरोधpoपूर्णांक(काष्ठा perf_event_attr *attr,
 			    perf_overflow_handler_t triggered,
-			    void *context)
-{
-	struct perf_event * __percpu *cpu_events, *bp;
-	long err = 0;
-	int cpu;
+			    व्योम *context)
+अणु
+	काष्ठा perf_event * __percpu *cpu_events, *bp;
+	दीर्घ err = 0;
+	पूर्णांक cpu;
 
 	cpu_events = alloc_percpu(typeof(*cpu_events));
-	if (!cpu_events)
-		return (void __percpu __force *)ERR_PTR(-ENOMEM);
+	अगर (!cpu_events)
+		वापस (व्योम __percpu __क्रमce *)ERR_PTR(-ENOMEM);
 
 	get_online_cpus();
-	for_each_online_cpu(cpu) {
-		bp = perf_event_create_kernel_counter(attr, cpu, NULL,
+	क्रम_each_online_cpu(cpu) अणु
+		bp = perf_event_create_kernel_counter(attr, cpu, शून्य,
 						      triggered, context);
-		if (IS_ERR(bp)) {
+		अगर (IS_ERR(bp)) अणु
 			err = PTR_ERR(bp);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		per_cpu(*cpu_events, cpu) = bp;
-	}
+	पूर्ण
 	put_online_cpus();
 
-	if (likely(!err))
-		return cpu_events;
+	अगर (likely(!err))
+		वापस cpu_events;
 
-	unregister_wide_hw_breakpoint(cpu_events);
-	return (void __percpu __force *)ERR_PTR(err);
-}
-EXPORT_SYMBOL_GPL(register_wide_hw_breakpoint);
+	unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक(cpu_events);
+	वापस (व्योम __percpu __क्रमce *)ERR_PTR(err);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_wide_hw_अवरोधpoपूर्णांक);
 
 /**
- * unregister_wide_hw_breakpoint - unregister a wide breakpoint in the kernel
- * @cpu_events: the per cpu set of events to unregister
+ * unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक - unरेजिस्टर a wide अवरोधpoपूर्णांक in the kernel
+ * @cpu_events: the per cpu set of events to unरेजिस्टर
  */
-void unregister_wide_hw_breakpoint(struct perf_event * __percpu *cpu_events)
-{
-	int cpu;
+व्योम unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक(काष्ठा perf_event * __percpu *cpu_events)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
-		unregister_hw_breakpoint(per_cpu(*cpu_events, cpu));
+	क्रम_each_possible_cpu(cpu)
+		unरेजिस्टर_hw_अवरोधpoपूर्णांक(per_cpu(*cpu_events, cpu));
 
-	free_percpu(cpu_events);
-}
-EXPORT_SYMBOL_GPL(unregister_wide_hw_breakpoint);
+	मुक्त_percpu(cpu_events);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक);
 
-static struct notifier_block hw_breakpoint_exceptions_nb = {
-	.notifier_call = hw_breakpoint_exceptions_notify,
-	/* we need to be notified first */
+अटल काष्ठा notअगरier_block hw_अवरोधpoपूर्णांक_exceptions_nb = अणु
+	.notअगरier_call = hw_अवरोधpoपूर्णांक_exceptions_notअगरy,
+	/* we need to be notअगरied first */
 	.priority = 0x7fffffff
-};
+पूर्ण;
 
-static void bp_perf_event_destroy(struct perf_event *event)
-{
+अटल व्योम bp_perf_event_destroy(काष्ठा perf_event *event)
+अणु
 	release_bp_slot(event);
-}
+पूर्ण
 
-static int hw_breakpoint_event_init(struct perf_event *bp)
-{
-	int err;
+अटल पूर्णांक hw_अवरोधpoपूर्णांक_event_init(काष्ठा perf_event *bp)
+अणु
+	पूर्णांक err;
 
-	if (bp->attr.type != PERF_TYPE_BREAKPOINT)
-		return -ENOENT;
+	अगर (bp->attr.type != PERF_TYPE_BREAKPOINT)
+		वापस -ENOENT;
 
 	/*
-	 * no branch sampling for breakpoint events
+	 * no branch sampling क्रम अवरोधpoपूर्णांक events
 	 */
-	if (has_branch_stack(bp))
-		return -EOPNOTSUPP;
+	अगर (has_branch_stack(bp))
+		वापस -EOPNOTSUPP;
 
-	err = register_perf_hw_breakpoint(bp);
-	if (err)
-		return err;
+	err = रेजिस्टर_perf_hw_अवरोधpoपूर्णांक(bp);
+	अगर (err)
+		वापस err;
 
 	bp->destroy = bp_perf_event_destroy;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw_breakpoint_add(struct perf_event *bp, int flags)
-{
-	if (!(flags & PERF_EF_START))
+अटल पूर्णांक hw_अवरोधpoपूर्णांक_add(काष्ठा perf_event *bp, पूर्णांक flags)
+अणु
+	अगर (!(flags & PERF_EF_START))
 		bp->hw.state = PERF_HES_STOPPED;
 
-	if (is_sampling_event(bp)) {
+	अगर (is_sampling_event(bp)) अणु
 		bp->hw.last_period = bp->hw.sample_period;
 		perf_swevent_set_period(bp);
-	}
+	पूर्ण
 
-	return arch_install_hw_breakpoint(bp);
-}
+	वापस arch_install_hw_अवरोधpoपूर्णांक(bp);
+पूर्ण
 
-static void hw_breakpoint_del(struct perf_event *bp, int flags)
-{
-	arch_uninstall_hw_breakpoint(bp);
-}
+अटल व्योम hw_अवरोधpoपूर्णांक_del(काष्ठा perf_event *bp, पूर्णांक flags)
+अणु
+	arch_uninstall_hw_अवरोधpoपूर्णांक(bp);
+पूर्ण
 
-static void hw_breakpoint_start(struct perf_event *bp, int flags)
-{
+अटल व्योम hw_अवरोधpoपूर्णांक_start(काष्ठा perf_event *bp, पूर्णांक flags)
+अणु
 	bp->hw.state = 0;
-}
+पूर्ण
 
-static void hw_breakpoint_stop(struct perf_event *bp, int flags)
-{
+अटल व्योम hw_अवरोधpoपूर्णांक_stop(काष्ठा perf_event *bp, पूर्णांक flags)
+अणु
 	bp->hw.state = PERF_HES_STOPPED;
-}
+पूर्ण
 
-static struct pmu perf_breakpoint = {
+अटल काष्ठा pmu perf_अवरोधpoपूर्णांक = अणु
 	.task_ctx_nr	= perf_sw_context, /* could eventually get its own */
 
-	.event_init	= hw_breakpoint_event_init,
-	.add		= hw_breakpoint_add,
-	.del		= hw_breakpoint_del,
-	.start		= hw_breakpoint_start,
-	.stop		= hw_breakpoint_stop,
-	.read		= hw_breakpoint_pmu_read,
-};
+	.event_init	= hw_अवरोधpoपूर्णांक_event_init,
+	.add		= hw_अवरोधpoपूर्णांक_add,
+	.del		= hw_अवरोधpoपूर्णांक_del,
+	.start		= hw_अवरोधpoपूर्णांक_start,
+	.stop		= hw_अवरोधpoपूर्णांक_stop,
+	.पढ़ो		= hw_अवरोधpoपूर्णांक_pmu_पढ़ो,
+पूर्ण;
 
-int __init init_hw_breakpoint(void)
-{
-	int cpu, err_cpu;
-	int i;
+पूर्णांक __init init_hw_अवरोधpoपूर्णांक(व्योम)
+अणु
+	पूर्णांक cpu, err_cpu;
+	पूर्णांक i;
 
-	for (i = 0; i < TYPE_MAX; i++)
-		nr_slots[i] = hw_breakpoint_slots(i);
+	क्रम (i = 0; i < TYPE_MAX; i++)
+		nr_slots[i] = hw_अवरोधpoपूर्णांक_slots(i);
 
-	for_each_possible_cpu(cpu) {
-		for (i = 0; i < TYPE_MAX; i++) {
-			struct bp_cpuinfo *info = get_bp_info(cpu, i);
+	क्रम_each_possible_cpu(cpu) अणु
+		क्रम (i = 0; i < TYPE_MAX; i++) अणु
+			काष्ठा bp_cpuinfo *info = get_bp_info(cpu, i);
 
-			info->tsk_pinned = kcalloc(nr_slots[i], sizeof(int),
+			info->tsk_pinned = kसुस्मृति(nr_slots[i], माप(पूर्णांक),
 							GFP_KERNEL);
-			if (!info->tsk_pinned)
-				goto err_alloc;
-		}
-	}
+			अगर (!info->tsk_pinned)
+				जाओ err_alloc;
+		पूर्ण
+	पूर्ण
 
-	constraints_initialized = 1;
+	स्थिरraपूर्णांकs_initialized = 1;
 
-	perf_pmu_register(&perf_breakpoint, "breakpoint", PERF_TYPE_BREAKPOINT);
+	perf_pmu_रेजिस्टर(&perf_अवरोधpoपूर्णांक, "breakpoint", PERF_TYPE_BREAKPOINT);
 
-	return register_die_notifier(&hw_breakpoint_exceptions_nb);
+	वापस रेजिस्टर_die_notअगरier(&hw_अवरोधpoपूर्णांक_exceptions_nb);
 
  err_alloc:
-	for_each_possible_cpu(err_cpu) {
-		for (i = 0; i < TYPE_MAX; i++)
-			kfree(get_bp_info(err_cpu, i)->tsk_pinned);
-		if (err_cpu == cpu)
-			break;
-	}
+	क्रम_each_possible_cpu(err_cpu) अणु
+		क्रम (i = 0; i < TYPE_MAX; i++)
+			kमुक्त(get_bp_info(err_cpu, i)->tsk_pinned);
+		अगर (err_cpu == cpu)
+			अवरोध;
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 

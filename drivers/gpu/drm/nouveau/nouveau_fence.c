@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2007 Ben Skeggs.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,515 +25,515 @@
  *
  */
 
-#include <linux/ktime.h>
-#include <linux/hrtimer.h>
-#include <linux/sched/signal.h>
-#include <trace/events/dma_fence.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <trace/events/dma_fence.h>
 
-#include <nvif/cl826e.h>
-#include <nvif/notify.h>
-#include <nvif/event.h>
+#समावेश <nvअगर/cl826e.h>
+#समावेश <nvअगर/notअगरy.h>
+#समावेश <nvअगर/event.h>
 
-#include "nouveau_drv.h"
-#include "nouveau_dma.h"
-#include "nouveau_fence.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_dma.h"
+#समावेश "nouveau_fence.h"
 
-static const struct dma_fence_ops nouveau_fence_ops_uevent;
-static const struct dma_fence_ops nouveau_fence_ops_legacy;
+अटल स्थिर काष्ठा dma_fence_ops nouveau_fence_ops_uevent;
+अटल स्थिर काष्ठा dma_fence_ops nouveau_fence_ops_legacy;
 
-static inline struct nouveau_fence *
-from_fence(struct dma_fence *fence)
-{
-	return container_of(fence, struct nouveau_fence, base);
-}
+अटल अंतरभूत काष्ठा nouveau_fence *
+from_fence(काष्ठा dma_fence *fence)
+अणु
+	वापस container_of(fence, काष्ठा nouveau_fence, base);
+पूर्ण
 
-static inline struct nouveau_fence_chan *
-nouveau_fctx(struct nouveau_fence *fence)
-{
-	return container_of(fence->base.lock, struct nouveau_fence_chan, lock);
-}
+अटल अंतरभूत काष्ठा nouveau_fence_chan *
+nouveau_fctx(काष्ठा nouveau_fence *fence)
+अणु
+	वापस container_of(fence->base.lock, काष्ठा nouveau_fence_chan, lock);
+पूर्ण
 
-static int
-nouveau_fence_signal(struct nouveau_fence *fence)
-{
-	int drop = 0;
+अटल पूर्णांक
+nouveau_fence_संकेत(काष्ठा nouveau_fence *fence)
+अणु
+	पूर्णांक drop = 0;
 
-	dma_fence_signal_locked(&fence->base);
+	dma_fence_संकेत_locked(&fence->base);
 	list_del(&fence->head);
-	rcu_assign_pointer(fence->channel, NULL);
+	rcu_assign_poपूर्णांकer(fence->channel, शून्य);
 
-	if (test_bit(DMA_FENCE_FLAG_USER_BITS, &fence->base.flags)) {
-		struct nouveau_fence_chan *fctx = nouveau_fctx(fence);
+	अगर (test_bit(DMA_FENCE_FLAG_USER_BITS, &fence->base.flags)) अणु
+		काष्ठा nouveau_fence_chan *fctx = nouveau_fctx(fence);
 
-		if (!--fctx->notify_ref)
+		अगर (!--fctx->notअगरy_ref)
 			drop = 1;
-	}
+	पूर्ण
 
 	dma_fence_put(&fence->base);
-	return drop;
-}
+	वापस drop;
+पूर्ण
 
-static struct nouveau_fence *
-nouveau_local_fence(struct dma_fence *fence, struct nouveau_drm *drm)
-{
-	if (fence->ops != &nouveau_fence_ops_legacy &&
+अटल काष्ठा nouveau_fence *
+nouveau_local_fence(काष्ठा dma_fence *fence, काष्ठा nouveau_drm *drm)
+अणु
+	अगर (fence->ops != &nouveau_fence_ops_legacy &&
 	    fence->ops != &nouveau_fence_ops_uevent)
-		return NULL;
+		वापस शून्य;
 
-	if (fence->context < drm->chan.context_base ||
+	अगर (fence->context < drm->chan.context_base ||
 	    fence->context >= drm->chan.context_base + drm->chan.nr)
-		return NULL;
+		वापस शून्य;
 
-	return from_fence(fence);
-}
+	वापस from_fence(fence);
+पूर्ण
 
-void
-nouveau_fence_context_kill(struct nouveau_fence_chan *fctx, int error)
-{
-	struct nouveau_fence *fence;
+व्योम
+nouveau_fence_context_समाप्त(काष्ठा nouveau_fence_chan *fctx, पूर्णांक error)
+अणु
+	काष्ठा nouveau_fence *fence;
 
 	spin_lock_irq(&fctx->lock);
-	while (!list_empty(&fctx->pending)) {
+	जबतक (!list_empty(&fctx->pending)) अणु
 		fence = list_entry(fctx->pending.next, typeof(*fence), head);
 
-		if (error)
+		अगर (error)
 			dma_fence_set_error(&fence->base, error);
 
-		if (nouveau_fence_signal(fence))
-			nvif_notify_put(&fctx->notify);
-	}
+		अगर (nouveau_fence_संकेत(fence))
+			nvअगर_notअगरy_put(&fctx->notअगरy);
+	पूर्ण
 	spin_unlock_irq(&fctx->lock);
-}
+पूर्ण
 
-void
-nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
-{
-	nouveau_fence_context_kill(fctx, 0);
-	nvif_notify_dtor(&fctx->notify);
+व्योम
+nouveau_fence_context_del(काष्ठा nouveau_fence_chan *fctx)
+अणु
+	nouveau_fence_context_समाप्त(fctx, 0);
+	nvअगर_notअगरy_dtor(&fctx->notअगरy);
 	fctx->dead = 1;
 
 	/*
-	 * Ensure that all accesses to fence->channel complete before freeing
+	 * Ensure that all accesses to fence->channel complete beक्रमe मुक्तing
 	 * the channel.
 	 */
 	synchronize_rcu();
-}
+पूर्ण
 
-static void
-nouveau_fence_context_put(struct kref *fence_ref)
-{
-	kfree(container_of(fence_ref, struct nouveau_fence_chan, fence_ref));
-}
+अटल व्योम
+nouveau_fence_context_put(काष्ठा kref *fence_ref)
+अणु
+	kमुक्त(container_of(fence_ref, काष्ठा nouveau_fence_chan, fence_ref));
+पूर्ण
 
-void
-nouveau_fence_context_free(struct nouveau_fence_chan *fctx)
-{
+व्योम
+nouveau_fence_context_मुक्त(काष्ठा nouveau_fence_chan *fctx)
+अणु
 	kref_put(&fctx->fence_ref, nouveau_fence_context_put);
-}
+पूर्ण
 
-static int
-nouveau_fence_update(struct nouveau_channel *chan, struct nouveau_fence_chan *fctx)
-{
-	struct nouveau_fence *fence;
-	int drop = 0;
-	u32 seq = fctx->read(chan);
+अटल पूर्णांक
+nouveau_fence_update(काष्ठा nouveau_channel *chan, काष्ठा nouveau_fence_chan *fctx)
+अणु
+	काष्ठा nouveau_fence *fence;
+	पूर्णांक drop = 0;
+	u32 seq = fctx->पढ़ो(chan);
 
-	while (!list_empty(&fctx->pending)) {
+	जबतक (!list_empty(&fctx->pending)) अणु
 		fence = list_entry(fctx->pending.next, typeof(*fence), head);
 
-		if ((int)(seq - fence->base.seqno) < 0)
-			break;
+		अगर ((पूर्णांक)(seq - fence->base.seqno) < 0)
+			अवरोध;
 
-		drop |= nouveau_fence_signal(fence);
-	}
+		drop |= nouveau_fence_संकेत(fence);
+	पूर्ण
 
-	return drop;
-}
+	वापस drop;
+पूर्ण
 
-static int
-nouveau_fence_wait_uevent_handler(struct nvif_notify *notify)
-{
-	struct nouveau_fence_chan *fctx =
-		container_of(notify, typeof(*fctx), notify);
-	unsigned long flags;
-	int ret = NVIF_NOTIFY_KEEP;
+अटल पूर्णांक
+nouveau_fence_रुको_uevent_handler(काष्ठा nvअगर_notअगरy *notअगरy)
+अणु
+	काष्ठा nouveau_fence_chan *fctx =
+		container_of(notअगरy, typeof(*fctx), notअगरy);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = NVIF_NOTIFY_KEEP;
 
 	spin_lock_irqsave(&fctx->lock, flags);
-	if (!list_empty(&fctx->pending)) {
-		struct nouveau_fence *fence;
-		struct nouveau_channel *chan;
+	अगर (!list_empty(&fctx->pending)) अणु
+		काष्ठा nouveau_fence *fence;
+		काष्ठा nouveau_channel *chan;
 
 		fence = list_entry(fctx->pending.next, typeof(*fence), head);
-		chan = rcu_dereference_protected(fence->channel, lockdep_is_held(&fctx->lock));
-		if (nouveau_fence_update(chan, fctx))
+		chan = rcu_dereference_रक्षित(fence->channel, lockdep_is_held(&fctx->lock));
+		अगर (nouveau_fence_update(chan, fctx))
 			ret = NVIF_NOTIFY_DROP;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&fctx->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-nouveau_fence_context_new(struct nouveau_channel *chan, struct nouveau_fence_chan *fctx)
-{
-	struct nouveau_fence_priv *priv = (void*)chan->drm->fence;
-	struct nouveau_cli *cli = (void *)chan->user.client;
-	int ret;
+व्योम
+nouveau_fence_context_new(काष्ठा nouveau_channel *chan, काष्ठा nouveau_fence_chan *fctx)
+अणु
+	काष्ठा nouveau_fence_priv *priv = (व्योम*)chan->drm->fence;
+	काष्ठा nouveau_cli *cli = (व्योम *)chan->user.client;
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&fctx->flip);
 	INIT_LIST_HEAD(&fctx->pending);
 	spin_lock_init(&fctx->lock);
 	fctx->context = chan->drm->chan.context_base + chan->chid;
 
-	if (chan == chan->drm->cechan)
-		strcpy(fctx->name, "copy engine channel");
-	else if (chan == chan->drm->channel)
-		strcpy(fctx->name, "generic kernel channel");
-	else
-		strcpy(fctx->name, nvxx_client(&cli->base)->name);
+	अगर (chan == chan->drm->cechan)
+		म_नकल(fctx->name, "copy engine channel");
+	अन्यथा अगर (chan == chan->drm->channel)
+		म_नकल(fctx->name, "generic kernel channel");
+	अन्यथा
+		म_नकल(fctx->name, nvxx_client(&cli->base)->name);
 
 	kref_init(&fctx->fence_ref);
-	if (!priv->uevent)
-		return;
+	अगर (!priv->uevent)
+		वापस;
 
-	ret = nvif_notify_ctor(&chan->user, "fenceNonStallIntr",
-			       nouveau_fence_wait_uevent_handler,
+	ret = nvअगर_notअगरy_ctor(&chan->user, "fenceNonStallIntr",
+			       nouveau_fence_रुको_uevent_handler,
 			       false, NV826E_V0_NTFY_NON_STALL_INTERRUPT,
-			       &(struct nvif_notify_uevent_req) { },
-			       sizeof(struct nvif_notify_uevent_req),
-			       sizeof(struct nvif_notify_uevent_rep),
-			       &fctx->notify);
+			       &(काष्ठा nvअगर_notअगरy_uevent_req) अणु पूर्ण,
+			       माप(काष्ठा nvअगर_notअगरy_uevent_req),
+			       माप(काष्ठा nvअगर_notअगरy_uevent_rep),
+			       &fctx->notअगरy);
 
 	WARN_ON(ret);
-}
+पूर्ण
 
-int
-nouveau_fence_emit(struct nouveau_fence *fence, struct nouveau_channel *chan)
-{
-	struct nouveau_fence_chan *fctx = chan->fence;
-	struct nouveau_fence_priv *priv = (void*)chan->drm->fence;
-	int ret;
+पूर्णांक
+nouveau_fence_emit(काष्ठा nouveau_fence *fence, काष्ठा nouveau_channel *chan)
+अणु
+	काष्ठा nouveau_fence_chan *fctx = chan->fence;
+	काष्ठा nouveau_fence_priv *priv = (व्योम*)chan->drm->fence;
+	पूर्णांक ret;
 
 	fence->channel  = chan;
-	fence->timeout  = jiffies + (15 * HZ);
+	fence->समयout  = jअगरfies + (15 * HZ);
 
-	if (priv->uevent)
+	अगर (priv->uevent)
 		dma_fence_init(&fence->base, &nouveau_fence_ops_uevent,
 			       &fctx->lock, fctx->context, ++fctx->sequence);
-	else
+	अन्यथा
 		dma_fence_init(&fence->base, &nouveau_fence_ops_legacy,
 			       &fctx->lock, fctx->context, ++fctx->sequence);
 	kref_get(&fctx->fence_ref);
 
 	trace_dma_fence_emit(&fence->base);
 	ret = fctx->emit(fence);
-	if (!ret) {
+	अगर (!ret) अणु
 		dma_fence_get(&fence->base);
 		spin_lock_irq(&fctx->lock);
 
-		if (nouveau_fence_update(chan, fctx))
-			nvif_notify_put(&fctx->notify);
+		अगर (nouveau_fence_update(chan, fctx))
+			nvअगर_notअगरy_put(&fctx->notअगरy);
 
 		list_add_tail(&fence->head, &fctx->pending);
 		spin_unlock_irq(&fctx->lock);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 bool
-nouveau_fence_done(struct nouveau_fence *fence)
-{
-	if (fence->base.ops == &nouveau_fence_ops_legacy ||
-	    fence->base.ops == &nouveau_fence_ops_uevent) {
-		struct nouveau_fence_chan *fctx = nouveau_fctx(fence);
-		struct nouveau_channel *chan;
-		unsigned long flags;
+nouveau_fence_करोne(काष्ठा nouveau_fence *fence)
+अणु
+	अगर (fence->base.ops == &nouveau_fence_ops_legacy ||
+	    fence->base.ops == &nouveau_fence_ops_uevent) अणु
+		काष्ठा nouveau_fence_chan *fctx = nouveau_fctx(fence);
+		काष्ठा nouveau_channel *chan;
+		अचिन्हित दीर्घ flags;
 
-		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->base.flags))
-			return true;
+		अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->base.flags))
+			वापस true;
 
 		spin_lock_irqsave(&fctx->lock, flags);
-		chan = rcu_dereference_protected(fence->channel, lockdep_is_held(&fctx->lock));
-		if (chan && nouveau_fence_update(chan, fctx))
-			nvif_notify_put(&fctx->notify);
+		chan = rcu_dereference_रक्षित(fence->channel, lockdep_is_held(&fctx->lock));
+		अगर (chan && nouveau_fence_update(chan, fctx))
+			nvअगर_notअगरy_put(&fctx->notअगरy);
 		spin_unlock_irqrestore(&fctx->lock, flags);
-	}
-	return dma_fence_is_signaled(&fence->base);
-}
+	पूर्ण
+	वापस dma_fence_is_संकेतed(&fence->base);
+पूर्ण
 
-static long
-nouveau_fence_wait_legacy(struct dma_fence *f, bool intr, long wait)
-{
-	struct nouveau_fence *fence = from_fence(f);
-	unsigned long sleep_time = NSEC_PER_MSEC / 1000;
-	unsigned long t = jiffies, timeout = t + wait;
+अटल दीर्घ
+nouveau_fence_रुको_legacy(काष्ठा dma_fence *f, bool पूर्णांकr, दीर्घ रुको)
+अणु
+	काष्ठा nouveau_fence *fence = from_fence(f);
+	अचिन्हित दीर्घ sleep_समय = NSEC_PER_MSEC / 1000;
+	अचिन्हित दीर्घ t = jअगरfies, समयout = t + रुको;
 
-	while (!nouveau_fence_done(fence)) {
-		ktime_t kt;
+	जबतक (!nouveau_fence_करोne(fence)) अणु
+		kसमय_प्रकार kt;
 
-		t = jiffies;
+		t = jअगरfies;
 
-		if (wait != MAX_SCHEDULE_TIMEOUT && time_after_eq(t, timeout)) {
+		अगर (रुको != MAX_SCHEDULE_TIMEOUT && समय_after_eq(t, समयout)) अणु
 			__set_current_state(TASK_RUNNING);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		__set_current_state(intr ? TASK_INTERRUPTIBLE :
+		__set_current_state(पूर्णांकr ? TASK_INTERRUPTIBLE :
 					   TASK_UNINTERRUPTIBLE);
 
-		kt = sleep_time;
-		schedule_hrtimeout(&kt, HRTIMER_MODE_REL);
-		sleep_time *= 2;
-		if (sleep_time > NSEC_PER_MSEC)
-			sleep_time = NSEC_PER_MSEC;
+		kt = sleep_समय;
+		schedule_hrसमयout(&kt, HRTIMER_MODE_REL);
+		sleep_समय *= 2;
+		अगर (sleep_समय > NSEC_PER_MSEC)
+			sleep_समय = NSEC_PER_MSEC;
 
-		if (intr && signal_pending(current))
-			return -ERESTARTSYS;
-	}
+		अगर (पूर्णांकr && संकेत_pending(current))
+			वापस -ERESTARTSYS;
+	पूर्ण
 
 	__set_current_state(TASK_RUNNING);
 
-	return timeout - t;
-}
+	वापस समयout - t;
+पूर्ण
 
-static int
-nouveau_fence_wait_busy(struct nouveau_fence *fence, bool intr)
-{
-	int ret = 0;
+अटल पूर्णांक
+nouveau_fence_रुको_busy(काष्ठा nouveau_fence *fence, bool पूर्णांकr)
+अणु
+	पूर्णांक ret = 0;
 
-	while (!nouveau_fence_done(fence)) {
-		if (time_after_eq(jiffies, fence->timeout)) {
+	जबतक (!nouveau_fence_करोne(fence)) अणु
+		अगर (समय_after_eq(jअगरfies, fence->समयout)) अणु
 			ret = -EBUSY;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		__set_current_state(intr ?
+		__set_current_state(पूर्णांकr ?
 				    TASK_INTERRUPTIBLE :
 				    TASK_UNINTERRUPTIBLE);
 
-		if (intr && signal_pending(current)) {
+		अगर (पूर्णांकr && संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	__set_current_state(TASK_RUNNING);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-nouveau_fence_wait(struct nouveau_fence *fence, bool lazy, bool intr)
-{
-	long ret;
+पूर्णांक
+nouveau_fence_रुको(काष्ठा nouveau_fence *fence, bool lazy, bool पूर्णांकr)
+अणु
+	दीर्घ ret;
 
-	if (!lazy)
-		return nouveau_fence_wait_busy(fence, intr);
+	अगर (!lazy)
+		वापस nouveau_fence_रुको_busy(fence, पूर्णांकr);
 
-	ret = dma_fence_wait_timeout(&fence->base, intr, 15 * HZ);
-	if (ret < 0)
-		return ret;
-	else if (!ret)
-		return -EBUSY;
-	else
-		return 0;
-}
+	ret = dma_fence_रुको_समयout(&fence->base, पूर्णांकr, 15 * HZ);
+	अगर (ret < 0)
+		वापस ret;
+	अन्यथा अगर (!ret)
+		वापस -EBUSY;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-int
-nouveau_fence_sync(struct nouveau_bo *nvbo, struct nouveau_channel *chan, bool exclusive, bool intr)
-{
-	struct nouveau_fence_chan *fctx = chan->fence;
-	struct dma_fence *fence;
-	struct dma_resv *resv = nvbo->bo.base.resv;
-	struct dma_resv_list *fobj;
-	struct nouveau_fence *f;
-	int ret = 0, i;
+पूर्णांक
+nouveau_fence_sync(काष्ठा nouveau_bo *nvbo, काष्ठा nouveau_channel *chan, bool exclusive, bool पूर्णांकr)
+अणु
+	काष्ठा nouveau_fence_chan *fctx = chan->fence;
+	काष्ठा dma_fence *fence;
+	काष्ठा dma_resv *resv = nvbo->bo.base.resv;
+	काष्ठा dma_resv_list *fobj;
+	काष्ठा nouveau_fence *f;
+	पूर्णांक ret = 0, i;
 
-	if (!exclusive) {
+	अगर (!exclusive) अणु
 		ret = dma_resv_reserve_shared(resv, 1);
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	fobj = dma_resv_get_list(resv);
 	fence = dma_resv_get_excl(resv);
 
-	if (fence && (!exclusive || !fobj || !fobj->shared_count)) {
-		struct nouveau_channel *prev = NULL;
-		bool must_wait = true;
+	अगर (fence && (!exclusive || !fobj || !fobj->shared_count)) अणु
+		काष्ठा nouveau_channel *prev = शून्य;
+		bool must_रुको = true;
 
 		f = nouveau_local_fence(fence, chan->drm);
-		if (f) {
-			rcu_read_lock();
+		अगर (f) अणु
+			rcu_पढ़ो_lock();
 			prev = rcu_dereference(f->channel);
-			if (prev && (prev == chan || fctx->sync(f, prev, chan) == 0))
-				must_wait = false;
-			rcu_read_unlock();
-		}
+			अगर (prev && (prev == chan || fctx->sync(f, prev, chan) == 0))
+				must_रुको = false;
+			rcu_पढ़ो_unlock();
+		पूर्ण
 
-		if (must_wait)
-			ret = dma_fence_wait(fence, intr);
+		अगर (must_रुको)
+			ret = dma_fence_रुको(fence, पूर्णांकr);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!exclusive || !fobj)
-		return ret;
+	अगर (!exclusive || !fobj)
+		वापस ret;
 
-	for (i = 0; i < fobj->shared_count && !ret; ++i) {
-		struct nouveau_channel *prev = NULL;
-		bool must_wait = true;
+	क्रम (i = 0; i < fobj->shared_count && !ret; ++i) अणु
+		काष्ठा nouveau_channel *prev = शून्य;
+		bool must_रुको = true;
 
-		fence = rcu_dereference_protected(fobj->shared[i],
+		fence = rcu_dereference_रक्षित(fobj->shared[i],
 						dma_resv_held(resv));
 
 		f = nouveau_local_fence(fence, chan->drm);
-		if (f) {
-			rcu_read_lock();
+		अगर (f) अणु
+			rcu_पढ़ो_lock();
 			prev = rcu_dereference(f->channel);
-			if (prev && (prev == chan || fctx->sync(f, prev, chan) == 0))
-				must_wait = false;
-			rcu_read_unlock();
-		}
+			अगर (prev && (prev == chan || fctx->sync(f, prev, chan) == 0))
+				must_रुको = false;
+			rcu_पढ़ो_unlock();
+		पूर्ण
 
-		if (must_wait)
-			ret = dma_fence_wait(fence, intr);
-	}
+		अगर (must_रुको)
+			ret = dma_fence_रुको(fence, पूर्णांकr);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-nouveau_fence_unref(struct nouveau_fence **pfence)
-{
-	if (*pfence)
+व्योम
+nouveau_fence_unref(काष्ठा nouveau_fence **pfence)
+अणु
+	अगर (*pfence)
 		dma_fence_put(&(*pfence)->base);
-	*pfence = NULL;
-}
+	*pfence = शून्य;
+पूर्ण
 
-int
-nouveau_fence_new(struct nouveau_channel *chan, bool sysmem,
-		  struct nouveau_fence **pfence)
-{
-	struct nouveau_fence *fence;
-	int ret = 0;
+पूर्णांक
+nouveau_fence_new(काष्ठा nouveau_channel *chan, bool sysmem,
+		  काष्ठा nouveau_fence **pfence)
+अणु
+	काष्ठा nouveau_fence *fence;
+	पूर्णांक ret = 0;
 
-	if (unlikely(!chan->fence))
-		return -ENODEV;
+	अगर (unlikely(!chan->fence))
+		वापस -ENODEV;
 
-	fence = kzalloc(sizeof(*fence), GFP_KERNEL);
-	if (!fence)
-		return -ENOMEM;
+	fence = kzalloc(माप(*fence), GFP_KERNEL);
+	अगर (!fence)
+		वापस -ENOMEM;
 
 	ret = nouveau_fence_emit(fence, chan);
-	if (ret)
+	अगर (ret)
 		nouveau_fence_unref(&fence);
 
 	*pfence = fence;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const char *nouveau_fence_get_get_driver_name(struct dma_fence *fence)
-{
-	return "nouveau";
-}
+अटल स्थिर अक्षर *nouveau_fence_get_get_driver_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "nouveau";
+पूर्ण
 
-static const char *nouveau_fence_get_timeline_name(struct dma_fence *f)
-{
-	struct nouveau_fence *fence = from_fence(f);
-	struct nouveau_fence_chan *fctx = nouveau_fctx(fence);
+अटल स्थिर अक्षर *nouveau_fence_get_समयline_name(काष्ठा dma_fence *f)
+अणु
+	काष्ठा nouveau_fence *fence = from_fence(f);
+	काष्ठा nouveau_fence_chan *fctx = nouveau_fctx(fence);
 
-	return !fctx->dead ? fctx->name : "dead channel";
-}
+	वापस !fctx->dead ? fctx->name : "dead channel";
+पूर्ण
 
 /*
- * In an ideal world, read would not assume the channel context is still alive.
- * This function may be called from another device, running into free memory as a
+ * In an ideal world, पढ़ो would not assume the channel context is still alive.
+ * This function may be called from another device, running पूर्णांकo मुक्त memory as a
  * result. The drm node should still be there, so we can derive the index from
  * the fence context.
  */
-static bool nouveau_fence_is_signaled(struct dma_fence *f)
-{
-	struct nouveau_fence *fence = from_fence(f);
-	struct nouveau_fence_chan *fctx = nouveau_fctx(fence);
-	struct nouveau_channel *chan;
+अटल bool nouveau_fence_is_संकेतed(काष्ठा dma_fence *f)
+अणु
+	काष्ठा nouveau_fence *fence = from_fence(f);
+	काष्ठा nouveau_fence_chan *fctx = nouveau_fctx(fence);
+	काष्ठा nouveau_channel *chan;
 	bool ret = false;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	chan = rcu_dereference(fence->channel);
-	if (chan)
-		ret = (int)(fctx->read(chan) - fence->base.seqno) >= 0;
-	rcu_read_unlock();
+	अगर (chan)
+		ret = (पूर्णांक)(fctx->पढ़ो(chan) - fence->base.seqno) >= 0;
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool nouveau_fence_no_signaling(struct dma_fence *f)
-{
-	struct nouveau_fence *fence = from_fence(f);
+अटल bool nouveau_fence_no_संकेतing(काष्ठा dma_fence *f)
+अणु
+	काष्ठा nouveau_fence *fence = from_fence(f);
 
 	/*
 	 * caller should have a reference on the fence,
-	 * else fence could get freed here
+	 * अन्यथा fence could get मुक्तd here
 	 */
-	WARN_ON(kref_read(&fence->base.refcount) <= 1);
+	WARN_ON(kref_पढ़ो(&fence->base.refcount) <= 1);
 
 	/*
 	 * This needs uevents to work correctly, but dma_fence_add_callback relies on
-	 * being able to enable signaling. It will still get signaled eventually,
+	 * being able to enable संकेतing. It will still get संकेतed eventually,
 	 * just not right away.
 	 */
-	if (nouveau_fence_is_signaled(f)) {
+	अगर (nouveau_fence_is_संकेतed(f)) अणु
 		list_del(&fence->head);
 
 		dma_fence_put(&fence->base);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void nouveau_fence_release(struct dma_fence *f)
-{
-	struct nouveau_fence *fence = from_fence(f);
-	struct nouveau_fence_chan *fctx = nouveau_fctx(fence);
+अटल व्योम nouveau_fence_release(काष्ठा dma_fence *f)
+अणु
+	काष्ठा nouveau_fence *fence = from_fence(f);
+	काष्ठा nouveau_fence_chan *fctx = nouveau_fctx(fence);
 
 	kref_put(&fctx->fence_ref, nouveau_fence_context_put);
-	dma_fence_free(&fence->base);
-}
+	dma_fence_मुक्त(&fence->base);
+पूर्ण
 
-static const struct dma_fence_ops nouveau_fence_ops_legacy = {
+अटल स्थिर काष्ठा dma_fence_ops nouveau_fence_ops_legacy = अणु
 	.get_driver_name = nouveau_fence_get_get_driver_name,
-	.get_timeline_name = nouveau_fence_get_timeline_name,
-	.enable_signaling = nouveau_fence_no_signaling,
-	.signaled = nouveau_fence_is_signaled,
-	.wait = nouveau_fence_wait_legacy,
+	.get_समयline_name = nouveau_fence_get_समयline_name,
+	.enable_संकेतing = nouveau_fence_no_संकेतing,
+	.संकेतed = nouveau_fence_is_संकेतed,
+	.रुको = nouveau_fence_रुको_legacy,
 	.release = nouveau_fence_release
-};
+पूर्ण;
 
-static bool nouveau_fence_enable_signaling(struct dma_fence *f)
-{
-	struct nouveau_fence *fence = from_fence(f);
-	struct nouveau_fence_chan *fctx = nouveau_fctx(fence);
+अटल bool nouveau_fence_enable_संकेतing(काष्ठा dma_fence *f)
+अणु
+	काष्ठा nouveau_fence *fence = from_fence(f);
+	काष्ठा nouveau_fence_chan *fctx = nouveau_fctx(fence);
 	bool ret;
 
-	if (!fctx->notify_ref++)
-		nvif_notify_get(&fctx->notify);
+	अगर (!fctx->notअगरy_ref++)
+		nvअगर_notअगरy_get(&fctx->notअगरy);
 
-	ret = nouveau_fence_no_signaling(f);
-	if (ret)
+	ret = nouveau_fence_no_संकेतing(f);
+	अगर (ret)
 		set_bit(DMA_FENCE_FLAG_USER_BITS, &fence->base.flags);
-	else if (!--fctx->notify_ref)
-		nvif_notify_put(&fctx->notify);
+	अन्यथा अगर (!--fctx->notअगरy_ref)
+		nvअगर_notअगरy_put(&fctx->notअगरy);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dma_fence_ops nouveau_fence_ops_uevent = {
+अटल स्थिर काष्ठा dma_fence_ops nouveau_fence_ops_uevent = अणु
 	.get_driver_name = nouveau_fence_get_get_driver_name,
-	.get_timeline_name = nouveau_fence_get_timeline_name,
-	.enable_signaling = nouveau_fence_enable_signaling,
-	.signaled = nouveau_fence_is_signaled,
+	.get_समयline_name = nouveau_fence_get_समयline_name,
+	.enable_संकेतing = nouveau_fence_enable_संकेतing,
+	.संकेतed = nouveau_fence_is_संकेतed,
 	.release = nouveau_fence_release
-};
+पूर्ण;

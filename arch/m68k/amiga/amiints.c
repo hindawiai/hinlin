@@ -1,146 +1,147 @@
+<शैली गुरु>
 /*
- * Amiga Linux interrupt handling code
+ * Amiga Linux पूर्णांकerrupt handling code
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/errno.h>
-#include <linux/irq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/irq.h>
 
-#include <asm/irq.h>
-#include <asm/traps.h>
-#include <asm/amigahw.h>
-#include <asm/amigaints.h>
-#include <asm/amipcmcia.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/amigahw.h>
+#समावेश <यंत्र/amigaपूर्णांकs.h>
+#समावेश <यंत्र/amipcmcia.h>
 
 
 /*
- * Enable/disable a particular machine specific interrupt source.
- * Note that this may affect other interrupts in case of a shared interrupt.
- * This function should only be called for a _very_ short time to change some
- * internal data, that may not be changed by the interrupt at the same time.
+ * Enable/disable a particular machine specअगरic पूर्णांकerrupt source.
+ * Note that this may affect other पूर्णांकerrupts in हाल of a shared पूर्णांकerrupt.
+ * This function should only be called क्रम a _very_ लघु समय to change some
+ * पूर्णांकernal data, that may not be changed by the पूर्णांकerrupt at the same समय.
  */
 
-static void amiga_irq_enable(struct irq_data *data)
-{
-	amiga_custom.intena = IF_SETCLR | (1 << (data->irq - IRQ_USER));
-}
+अटल व्योम amiga_irq_enable(काष्ठा irq_data *data)
+अणु
+	amiga_custom.पूर्णांकena = IF_SETCLR | (1 << (data->irq - IRQ_USER));
+पूर्ण
 
-static void amiga_irq_disable(struct irq_data *data)
-{
-	amiga_custom.intena = 1 << (data->irq - IRQ_USER);
-}
+अटल व्योम amiga_irq_disable(काष्ठा irq_data *data)
+अणु
+	amiga_custom.पूर्णांकena = 1 << (data->irq - IRQ_USER);
+पूर्ण
 
-static struct irq_chip amiga_irq_chip = {
+अटल काष्ठा irq_chip amiga_irq_chip = अणु
 	.name		= "amiga",
 	.irq_enable	= amiga_irq_enable,
 	.irq_disable	= amiga_irq_disable,
-};
+पूर्ण;
 
 
 /*
- * The builtin Amiga hardware interrupt handlers.
+ * The builtin Amiga hardware पूर्णांकerrupt handlers.
  */
 
-static void ami_int1(struct irq_desc *desc)
-{
-	unsigned short ints = amiga_custom.intreqr & amiga_custom.intenar;
+अटल व्योम ami_पूर्णांक1(काष्ठा irq_desc *desc)
+अणु
+	अचिन्हित लघु पूर्णांकs = amiga_custom.पूर्णांकreqr & amiga_custom.पूर्णांकenar;
 
-	/* if serial transmit buffer empty, interrupt */
-	if (ints & IF_TBE) {
-		amiga_custom.intreq = IF_TBE;
+	/* अगर serial transmit buffer empty, पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_TBE) अणु
+		amiga_custom.पूर्णांकreq = IF_TBE;
 		generic_handle_irq(IRQ_AMIGA_TBE);
-	}
+	पूर्ण
 
-	/* if floppy disk transfer complete, interrupt */
-	if (ints & IF_DSKBLK) {
-		amiga_custom.intreq = IF_DSKBLK;
+	/* अगर floppy disk transfer complete, पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_DSKBLK) अणु
+		amiga_custom.पूर्णांकreq = IF_DSKBLK;
 		generic_handle_irq(IRQ_AMIGA_DSKBLK);
-	}
+	पूर्ण
 
-	/* if software interrupt set, interrupt */
-	if (ints & IF_SOFT) {
-		amiga_custom.intreq = IF_SOFT;
+	/* अगर software पूर्णांकerrupt set, पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_SOFT) अणु
+		amiga_custom.पूर्णांकreq = IF_SOFT;
 		generic_handle_irq(IRQ_AMIGA_SOFT);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ami_int3(struct irq_desc *desc)
-{
-	unsigned short ints = amiga_custom.intreqr & amiga_custom.intenar;
+अटल व्योम ami_पूर्णांक3(काष्ठा irq_desc *desc)
+अणु
+	अचिन्हित लघु पूर्णांकs = amiga_custom.पूर्णांकreqr & amiga_custom.पूर्णांकenar;
 
-	/* if a blitter interrupt */
-	if (ints & IF_BLIT) {
-		amiga_custom.intreq = IF_BLIT;
+	/* अगर a blitter पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_BLIT) अणु
+		amiga_custom.पूर्णांकreq = IF_BLIT;
 		generic_handle_irq(IRQ_AMIGA_BLIT);
-	}
+	पूर्ण
 
-	/* if a copper interrupt */
-	if (ints & IF_COPER) {
-		amiga_custom.intreq = IF_COPER;
+	/* अगर a copper पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_COPER) अणु
+		amiga_custom.पूर्णांकreq = IF_COPER;
 		generic_handle_irq(IRQ_AMIGA_COPPER);
-	}
+	पूर्ण
 
-	/* if a vertical blank interrupt */
-	if (ints & IF_VERTB) {
-		amiga_custom.intreq = IF_VERTB;
+	/* अगर a vertical blank पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_VERTB) अणु
+		amiga_custom.पूर्णांकreq = IF_VERTB;
 		generic_handle_irq(IRQ_AMIGA_VERTB);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ami_int4(struct irq_desc *desc)
-{
-	unsigned short ints = amiga_custom.intreqr & amiga_custom.intenar;
+अटल व्योम ami_पूर्णांक4(काष्ठा irq_desc *desc)
+अणु
+	अचिन्हित लघु पूर्णांकs = amiga_custom.पूर्णांकreqr & amiga_custom.पूर्णांकenar;
 
-	/* if audio 0 interrupt */
-	if (ints & IF_AUD0) {
-		amiga_custom.intreq = IF_AUD0;
+	/* अगर audio 0 पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_AUD0) अणु
+		amiga_custom.पूर्णांकreq = IF_AUD0;
 		generic_handle_irq(IRQ_AMIGA_AUD0);
-	}
+	पूर्ण
 
-	/* if audio 1 interrupt */
-	if (ints & IF_AUD1) {
-		amiga_custom.intreq = IF_AUD1;
+	/* अगर audio 1 पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_AUD1) अणु
+		amiga_custom.पूर्णांकreq = IF_AUD1;
 		generic_handle_irq(IRQ_AMIGA_AUD1);
-	}
+	पूर्ण
 
-	/* if audio 2 interrupt */
-	if (ints & IF_AUD2) {
-		amiga_custom.intreq = IF_AUD2;
+	/* अगर audio 2 पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_AUD2) अणु
+		amiga_custom.पूर्णांकreq = IF_AUD2;
 		generic_handle_irq(IRQ_AMIGA_AUD2);
-	}
+	पूर्ण
 
-	/* if audio 3 interrupt */
-	if (ints & IF_AUD3) {
-		amiga_custom.intreq = IF_AUD3;
+	/* अगर audio 3 पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_AUD3) अणु
+		amiga_custom.पूर्णांकreq = IF_AUD3;
 		generic_handle_irq(IRQ_AMIGA_AUD3);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ami_int5(struct irq_desc *desc)
-{
-	unsigned short ints = amiga_custom.intreqr & amiga_custom.intenar;
+अटल व्योम ami_पूर्णांक5(काष्ठा irq_desc *desc)
+अणु
+	अचिन्हित लघु पूर्णांकs = amiga_custom.पूर्णांकreqr & amiga_custom.पूर्णांकenar;
 
-	/* if serial receive buffer full interrupt */
-	if (ints & IF_RBF) {
-		/* acknowledge of IF_RBF must be done by the serial interrupt */
+	/* अगर serial receive buffer full पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_RBF) अणु
+		/* acknowledge of IF_RBF must be करोne by the serial पूर्णांकerrupt */
 		generic_handle_irq(IRQ_AMIGA_RBF);
-	}
+	पूर्ण
 
-	/* if a disk sync interrupt */
-	if (ints & IF_DSKSYN) {
-		amiga_custom.intreq = IF_DSKSYN;
+	/* अगर a disk sync पूर्णांकerrupt */
+	अगर (पूर्णांकs & IF_DSKSYN) अणु
+		amiga_custom.पूर्णांकreq = IF_DSKSYN;
 		generic_handle_irq(IRQ_AMIGA_DSKSYN);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
- * void amiga_init_IRQ(void)
+ * व्योम amiga_init_IRQ(व्योम)
  *
  * Parameters:	None
  *
@@ -150,25 +151,25 @@ static void ami_int5(struct irq_desc *desc)
  * the amiga IRQ handling routines.
  */
 
-void __init amiga_init_IRQ(void)
-{
+व्योम __init amiga_init_IRQ(व्योम)
+अणु
 	m68k_setup_irq_controller(&amiga_irq_chip, handle_simple_irq, IRQ_USER,
 				  AMI_STD_IRQS);
 
-	irq_set_chained_handler(IRQ_AUTO_1, ami_int1);
-	irq_set_chained_handler(IRQ_AUTO_3, ami_int3);
-	irq_set_chained_handler(IRQ_AUTO_4, ami_int4);
-	irq_set_chained_handler(IRQ_AUTO_5, ami_int5);
+	irq_set_chained_handler(IRQ_AUTO_1, ami_पूर्णांक1);
+	irq_set_chained_handler(IRQ_AUTO_3, ami_पूर्णांक3);
+	irq_set_chained_handler(IRQ_AUTO_4, ami_पूर्णांक4);
+	irq_set_chained_handler(IRQ_AUTO_5, ami_पूर्णांक5);
 
-	/* turn off PCMCIA interrupts */
-	if (AMIGAHW_PRESENT(PCMCIA))
-		gayle.inten = GAYLE_IRQ_IDE;
+	/* turn off PCMCIA पूर्णांकerrupts */
+	अगर (AMIGAHW_PRESENT(PCMCIA))
+		gayle.पूर्णांकen = GAYLE_IRQ_IDE;
 
-	/* turn off all interrupts and enable the master interrupt bit */
-	amiga_custom.intena = 0x7fff;
-	amiga_custom.intreq = 0x7fff;
-	amiga_custom.intena = IF_SETCLR | IF_INTEN;
+	/* turn off all पूर्णांकerrupts and enable the master पूर्णांकerrupt bit */
+	amiga_custom.पूर्णांकena = 0x7fff;
+	amiga_custom.पूर्णांकreq = 0x7fff;
+	amiga_custom.पूर्णांकena = IF_SETCLR | IF_INTEN;
 
 	cia_init_IRQ(&ciaa_base);
 	cia_init_IRQ(&ciab_base);
-}
+पूर्ण

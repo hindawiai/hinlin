@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright 2010 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,64 +17,64 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
 
-#include "vnic_vic.h"
+#समावेश "vnic_vic.h"
 
-struct vic_provinfo *vic_provinfo_alloc(gfp_t flags, const u8 *oui,
-	const u8 type)
-{
-	struct vic_provinfo *vp;
+काष्ठा vic_provinfo *vic_provinfo_alloc(gfp_t flags, स्थिर u8 *oui,
+	स्थिर u8 type)
+अणु
+	काष्ठा vic_provinfo *vp;
 
-	if (!oui)
-		return NULL;
+	अगर (!oui)
+		वापस शून्य;
 
 	vp = kzalloc(VIC_PROVINFO_MAX_DATA, flags);
-	if (!vp)
-		return NULL;
+	अगर (!vp)
+		वापस शून्य;
 
-	memcpy(vp->oui, oui, sizeof(vp->oui));
+	स_नकल(vp->oui, oui, माप(vp->oui));
 	vp->type = type;
-	vp->length = htonl(sizeof(vp->num_tlvs));
+	vp->length = htonl(माप(vp->num_tlvs));
 
-	return vp;
-}
+	वापस vp;
+पूर्ण
 
-void vic_provinfo_free(struct vic_provinfo *vp)
-{
-	kfree(vp);
-}
+व्योम vic_provinfo_मुक्त(काष्ठा vic_provinfo *vp)
+अणु
+	kमुक्त(vp);
+पूर्ण
 
-int vic_provinfo_add_tlv(struct vic_provinfo *vp, u16 type, u16 length,
-	const void *value)
-{
-	struct vic_provinfo_tlv *tlv;
+पूर्णांक vic_provinfo_add_tlv(काष्ठा vic_provinfo *vp, u16 type, u16 length,
+	स्थिर व्योम *value)
+अणु
+	काष्ठा vic_provinfo_tlv *tlv;
 
-	if (!vp || !value)
-		return -EINVAL;
+	अगर (!vp || !value)
+		वापस -EINVAL;
 
-	if (ntohl(vp->length) + offsetof(struct vic_provinfo_tlv, value) +
+	अगर (ntohl(vp->length) + दुरत्व(काष्ठा vic_provinfo_tlv, value) +
 		length > VIC_PROVINFO_MAX_TLV_DATA)
-		return -ENOMEM;
+		वापस -ENOMEM;
 
-	tlv = (struct vic_provinfo_tlv *)((u8 *)vp->tlv +
-		ntohl(vp->length) - sizeof(vp->num_tlvs));
+	tlv = (काष्ठा vic_provinfo_tlv *)((u8 *)vp->tlv +
+		ntohl(vp->length) - माप(vp->num_tlvs));
 
 	tlv->type = htons(type);
 	tlv->length = htons(length);
-	memcpy(tlv->value, value, length);
+	स_नकल(tlv->value, value, length);
 
 	vp->num_tlvs = htonl(ntohl(vp->num_tlvs) + 1);
 	vp->length = htonl(ntohl(vp->length) +
-		offsetof(struct vic_provinfo_tlv, value) + length);
+		दुरत्व(काष्ठा vic_provinfo_tlv, value) + length);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-size_t vic_provinfo_size(struct vic_provinfo *vp)
-{
-	return vp ?  ntohl(vp->length) + sizeof(*vp) - sizeof(vp->num_tlvs) : 0;
-}
+माप_प्रकार vic_provinfo_size(काष्ठा vic_provinfo *vp)
+अणु
+	वापस vp ?  ntohl(vp->length) + माप(*vp) - माप(vp->num_tlvs) : 0;
+पूर्ण

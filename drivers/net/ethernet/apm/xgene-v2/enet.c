@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Applied Micro X-Gene SoC Ethernet v2 Driver
  *
@@ -7,27 +8,27 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
-#include "main.h"
+#समावेश "main.h"
 
-void xge_wr_csr(struct xge_pdata *pdata, u32 offset, u32 val)
-{
-	void __iomem *addr = pdata->resources.base_addr + offset;
+व्योम xge_wr_csr(काष्ठा xge_pdata *pdata, u32 offset, u32 val)
+अणु
+	व्योम __iomem *addr = pdata->resources.base_addr + offset;
 
-	iowrite32(val, addr);
-}
+	ioग_लिखो32(val, addr);
+पूर्ण
 
-u32 xge_rd_csr(struct xge_pdata *pdata, u32 offset)
-{
-	void __iomem *addr = pdata->resources.base_addr + offset;
+u32 xge_rd_csr(काष्ठा xge_pdata *pdata, u32 offset)
+अणु
+	व्योम __iomem *addr = pdata->resources.base_addr + offset;
 
-	return ioread32(addr);
-}
+	वापस ioपढ़ो32(addr);
+पूर्ण
 
-int xge_port_reset(struct net_device *ndev)
-{
-	struct xge_pdata *pdata = netdev_priv(ndev);
-	struct device *dev = &pdata->pdev->dev;
-	u32 data, wait = 10;
+पूर्णांक xge_port_reset(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xge_pdata *pdata = netdev_priv(ndev);
+	काष्ठा device *dev = &pdata->pdev->dev;
+	u32 data, रुको = 10;
 
 	xge_wr_csr(pdata, ENET_CLKEN, 0x3);
 	xge_wr_csr(pdata, ENET_SRST, 0xf);
@@ -35,37 +36,37 @@ int xge_port_reset(struct net_device *ndev)
 	xge_wr_csr(pdata, CFG_MEM_RAM_SHUTDOWN, 1);
 	xge_wr_csr(pdata, CFG_MEM_RAM_SHUTDOWN, 0);
 
-	do {
+	करो अणु
 		usleep_range(100, 110);
 		data = xge_rd_csr(pdata, BLOCK_MEM_RDY);
-	} while (data != MEM_RDY && wait--);
+	पूर्ण जबतक (data != MEM_RDY && रुको--);
 
-	if (data != MEM_RDY) {
+	अगर (data != MEM_RDY) अणु
 		dev_err(dev, "ECC init failed: %x\n", data);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	xge_wr_csr(pdata, ENET_SHIM, DEVM_ARAUX_COH | DEVM_AWAUX_COH);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xge_traffic_resume(struct net_device *ndev)
-{
-	struct xge_pdata *pdata = netdev_priv(ndev);
+अटल व्योम xge_traffic_resume(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xge_pdata *pdata = netdev_priv(ndev);
 
 	xge_wr_csr(pdata, CFG_FORCE_LINK_STATUS_EN, 1);
 	xge_wr_csr(pdata, FORCE_LINK_STATUS, 1);
 
 	xge_wr_csr(pdata, CFG_LINK_AGGR_RESUME, 1);
 	xge_wr_csr(pdata, RX_DV_GATE_REG, 1);
-}
+पूर्ण
 
-void xge_port_init(struct net_device *ndev)
-{
-	struct xge_pdata *pdata = netdev_priv(ndev);
+व्योम xge_port_init(काष्ठा net_device *ndev)
+अणु
+	काष्ठा xge_pdata *pdata = netdev_priv(ndev);
 
 	pdata->phy_speed = SPEED_1000;
 	xge_mac_init(pdata);
 	xge_traffic_resume(ndev);
-}
+पूर्ण

@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  fixup-tb0287.c, The TANBAC TB0287 specific PCI fixups.
+ *  fixup-tb0287.c, The TANBAC TB0287 specअगरic PCI fixups.
  *
  *  Copyright (C) 2005	Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/init.h>
-#include <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
 
-#include <asm/vr41xx/tb0287.h>
+#समावेश <यंत्र/vr41xx/tb0287.h>
 
-int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	unsigned char bus;
-	int irq = -1;
+पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	अचिन्हित अक्षर bus;
+	पूर्णांक irq = -1;
 
 	bus = dev->bus->number;
-	if (bus == 0) {
-		switch (slot) {
-		case 16:
+	अगर (bus == 0) अणु
+		चयन (slot) अणु
+		हाल 16:
 			irq = TB0287_SM501_IRQ;
-			break;
-		case 17:
+			अवरोध;
+		हाल 17:
 			irq = TB0287_SIL680A_IRQ;
-			break;
-		default:
-			break;
-		}
-	} else if (bus == 1) {
-		switch (PCI_SLOT(dev->devfn)) {
-		case 0:
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (bus == 1) अणु
+		चयन (PCI_SLOT(dev->devfn)) अणु
+		हाल 0:
 			irq = TB0287_PCI_SLOT_IRQ;
-			break;
-		case 2:
-		case 3:
+			अवरोध;
+		हाल 2:
+		हाल 3:
 			irq = TB0287_RTL8110_IRQ;
-			break;
-		default:
-			break;
-		}
-	} else if (bus > 1) {
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (bus > 1) अणु
 		irq = TB0287_PCI_SLOT_IRQ;
-	}
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-/* Do platform specific device initialization at pci_enable_device() time */
-int pcibios_plat_dev_init(struct pci_dev *dev)
-{
-	return 0;
-}
+/* Do platक्रमm specअगरic device initialization at pci_enable_device() समय */
+पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev)
+अणु
+	वापस 0;
+पूर्ण

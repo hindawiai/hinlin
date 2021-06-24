@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Machine dependent access functions for RTC registers.
+ * Machine dependent access functions क्रम RTC रेजिस्टरs.
  */
-#ifndef _ASM_X86_MC146818RTC_H
-#define _ASM_X86_MC146818RTC_H
+#अगर_अघोषित _ASM_X86_MC146818RTC_H
+#घोषणा _ASM_X86_MC146818RTC_H
 
-#include <asm/io.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/processor.h>
 
-#ifndef RTC_PORT
-#define RTC_PORT(x)	(0x70 + (x))
-#define RTC_ALWAYS_BCD	1	/* RTC operates in binary mode */
-#endif
+#अगर_अघोषित RTC_PORT
+#घोषणा RTC_PORT(x)	(0x70 + (x))
+#घोषणा RTC_ALWAYS_BCD	1	/* RTC operates in binary mode */
+#पूर्ण_अगर
 
-#if defined(CONFIG_X86_32)
+#अगर defined(CONFIG_X86_32)
 /*
- * This lock provides nmi access to the CMOS/RTC registers.  It has some
- * special properties.  It is owned by a CPU and stores the index register
- * currently being accessed (if owned).  The idea here is that it works
+ * This lock provides nmi access to the CMOS/RTC रेजिस्टरs.  It has some
+ * special properties.  It is owned by a CPU and stores the index रेजिस्टर
+ * currently being accessed (अगर owned).  The idea here is that it works
  * like a normal lock (normally).  However, in an NMI, the NMI code will
- * first check to see if its CPU owns the lock, meaning that the NMI
- * interrupted during the read/write of the device.  If it does, it goes ahead
- * and performs the access and then restores the index register.  If it does
+ * first check to see अगर its CPU owns the lock, meaning that the NMI
+ * पूर्णांकerrupted during the पढ़ो/ग_लिखो of the device.  If it करोes, it goes ahead
+ * and perक्रमms the access and then restores the index रेजिस्टर.  If it करोes
  * not, it locks normally.
  *
  * Note that since we are working with NMIs, we need this lock even in
@@ -30,74 +31,74 @@
  * This only works with compare-and-swap.  There is no other way to
  * atomically claim the lock and set the owner.
  */
-#include <linux/smp.h>
-extern volatile unsigned long cmos_lock;
+#समावेश <linux/smp.h>
+बाह्य अस्थिर अचिन्हित दीर्घ cmos_lock;
 
 /*
- * All of these below must be called with interrupts off, preempt
+ * All of these below must be called with पूर्णांकerrupts off, preempt
  * disabled, etc.
  */
 
-static inline void lock_cmos(unsigned char reg)
-{
-	unsigned long new;
+अटल अंतरभूत व्योम lock_cmos(अचिन्हित अक्षर reg)
+अणु
+	अचिन्हित दीर्घ new;
 	new = ((smp_processor_id() + 1) << 8) | reg;
-	for (;;) {
-		if (cmos_lock) {
+	क्रम (;;) अणु
+		अगर (cmos_lock) अणु
 			cpu_relax();
-			continue;
-		}
-		if (__cmpxchg(&cmos_lock, 0, new, sizeof(cmos_lock)) == 0)
-			return;
-	}
-}
+			जारी;
+		पूर्ण
+		अगर (__cmpxchg(&cmos_lock, 0, new, माप(cmos_lock)) == 0)
+			वापस;
+	पूर्ण
+पूर्ण
 
-static inline void unlock_cmos(void)
-{
+अटल अंतरभूत व्योम unlock_cmos(व्योम)
+अणु
 	cmos_lock = 0;
-}
+पूर्ण
 
-static inline int do_i_have_lock_cmos(void)
-{
-	return (cmos_lock >> 8) == (smp_processor_id() + 1);
-}
+अटल अंतरभूत पूर्णांक करो_i_have_lock_cmos(व्योम)
+अणु
+	वापस (cmos_lock >> 8) == (smp_processor_id() + 1);
+पूर्ण
 
-static inline unsigned char current_lock_cmos_reg(void)
-{
-	return cmos_lock & 0xff;
-}
+अटल अंतरभूत अचिन्हित अक्षर current_lock_cmos_reg(व्योम)
+अणु
+	वापस cmos_lock & 0xff;
+पूर्ण
 
-#define lock_cmos_prefix(reg)			\
-	do {					\
-		unsigned long cmos_flags;	\
+#घोषणा lock_cmos_prefix(reg)			\
+	करो अणु					\
+		अचिन्हित दीर्घ cmos_flags;	\
 		local_irq_save(cmos_flags);	\
 		lock_cmos(reg)
 
-#define lock_cmos_suffix(reg)			\
+#घोषणा lock_cmos_suffix(reg)			\
 	unlock_cmos();				\
 	local_irq_restore(cmos_flags);		\
-	} while (0)
-#else
-#define lock_cmos_prefix(reg) do {} while (0)
-#define lock_cmos_suffix(reg) do {} while (0)
-#define lock_cmos(reg) do { } while (0)
-#define unlock_cmos() do { } while (0)
-#define do_i_have_lock_cmos() 0
-#define current_lock_cmos_reg() 0
-#endif
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा lock_cmos_prefix(reg) करो अणुपूर्ण जबतक (0)
+#घोषणा lock_cmos_suffix(reg) करो अणुपूर्ण जबतक (0)
+#घोषणा lock_cmos(reg) करो अणु पूर्ण जबतक (0)
+#घोषणा unlock_cmos() करो अणु पूर्ण जबतक (0)
+#घोषणा करो_i_have_lock_cmos() 0
+#घोषणा current_lock_cmos_reg() 0
+#पूर्ण_अगर
 
 /*
- * The yet supported machines all access the RTC index register via
- * an ISA port access but the way to access the date register differs ...
+ * The yet supported machines all access the RTC index रेजिस्टर via
+ * an ISA port access but the way to access the date रेजिस्टर dअगरfers ...
  */
-#define CMOS_READ(addr) rtc_cmos_read(addr)
-#define CMOS_WRITE(val, addr) rtc_cmos_write(val, addr)
-unsigned char rtc_cmos_read(unsigned char addr);
-void rtc_cmos_write(unsigned char val, unsigned char addr);
+#घोषणा CMOS_READ(addr) rtc_cmos_पढ़ो(addr)
+#घोषणा CMOS_WRITE(val, addr) rtc_cmos_ग_लिखो(val, addr)
+अचिन्हित अक्षर rtc_cmos_पढ़ो(अचिन्हित अक्षर addr);
+व्योम rtc_cmos_ग_लिखो(अचिन्हित अक्षर val, अचिन्हित अक्षर addr);
 
-extern int mach_set_rtc_mmss(const struct timespec64 *now);
-extern void mach_get_cmos_time(struct timespec64 *now);
+बाह्य पूर्णांक mach_set_rtc_mmss(स्थिर काष्ठा बारpec64 *now);
+बाह्य व्योम mach_get_cmos_समय(काष्ठा बारpec64 *now);
 
-#define RTC_IRQ 8
+#घोषणा RTC_IRQ 8
 
-#endif /* _ASM_X86_MC146818RTC_H */
+#पूर्ण_अगर /* _ASM_X86_MC146818RTC_H */

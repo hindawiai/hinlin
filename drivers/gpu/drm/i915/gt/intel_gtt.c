@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#include <linux/slab.h> /* fault-inject.h is not standalone! */
+#समावेश <linux/slab.h> /* fault-inject.h is not standalone! */
 
-#include <linux/fault-inject.h>
+#समावेश <linux/fault-inject.h>
 
-#include "i915_trace.h"
-#include "intel_gt.h"
-#include "intel_gtt.h"
+#समावेश "i915_trace.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_gtt.h"
 
-struct drm_i915_gem_object *alloc_pt_dma(struct i915_address_space *vm, int sz)
-{
-	struct drm_i915_gem_object *obj;
+काष्ठा drm_i915_gem_object *alloc_pt_dma(काष्ठा i915_address_space *vm, पूर्णांक sz)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
 
-	if (I915_SELFTEST_ONLY(should_fail(&vm->fault_attr, 1)))
+	अगर (I915_SELFTEST_ONLY(should_fail(&vm->fault_attr, 1)))
 		i915_gem_shrink_all(vm->i915);
 
-	obj = i915_gem_object_create_internal(vm->i915, sz);
+	obj = i915_gem_object_create_पूर्णांकernal(vm->i915, sz);
 	/* ensure all dma objects have the same reservation class */
-	if (!IS_ERR(obj))
+	अगर (!IS_ERR(obj))
 		obj->base.resv = &vm->resv;
-	return obj;
-}
+	वापस obj;
+पूर्ण
 
-int pin_pt_dma(struct i915_address_space *vm, struct drm_i915_gem_object *obj)
-{
-	int err;
+पूर्णांक pin_pt_dma(काष्ठा i915_address_space *vm, काष्ठा drm_i915_gem_object *obj)
+अणु
+	पूर्णांक err;
 
-	i915_gem_object_lock(obj, NULL);
+	i915_gem_object_lock(obj, शून्य);
 	err = i915_gem_object_pin_pages(obj);
 	i915_gem_object_unlock(obj);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	i915_gem_object_make_unshrinkable(obj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pin_pt_dma_locked(struct i915_address_space *vm, struct drm_i915_gem_object *obj)
-{
-	int err;
+पूर्णांक pin_pt_dma_locked(काष्ठा i915_address_space *vm, काष्ठा drm_i915_gem_object *obj)
+अणु
+	पूर्णांक err;
 
 	err = i915_gem_object_pin_pages(obj);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	i915_gem_object_make_unshrinkable(obj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __i915_vm_close(struct i915_address_space *vm)
-{
-	struct i915_vma *vma, *vn;
+व्योम __i915_vm_बंद(काष्ठा i915_address_space *vm)
+अणु
+	काष्ठा i915_vma *vma, *vn;
 
-	if (!atomic_dec_and_mutex_lock(&vm->open, &vm->mutex))
-		return;
+	अगर (!atomic_dec_and_mutex_lock(&vm->खोलो, &vm->mutex))
+		वापस;
 
-	list_for_each_entry_safe(vma, vn, &vm->bound_list, vm_link) {
-		struct drm_i915_gem_object *obj = vma->obj;
+	list_क्रम_each_entry_safe(vma, vn, &vm->bound_list, vm_link) अणु
+		काष्ठा drm_i915_gem_object *obj = vma->obj;
 
 		/* Keep the obj (and hence the vma) alive as _we_ destroy it */
-		if (!kref_get_unless_zero(&obj->base.refcount))
-			continue;
+		अगर (!kref_get_unless_zero(&obj->base.refcount))
+			जारी;
 
 		atomic_and(~I915_VMA_PIN_MASK, &vma->flags);
 		WARN_ON(__i915_vma_unbind(vma));
 		__i915_vma_put(vma);
 
 		i915_gem_object_put(obj);
-	}
+	पूर्ण
 	GEM_BUG_ON(!list_empty(&vm->bound_list));
 
 	mutex_unlock(&vm->mutex);
-}
+पूर्ण
 
-/* lock the vm into the current ww, if we lock one, we lock all */
-int i915_vm_lock_objects(struct i915_address_space *vm,
-			 struct i915_gem_ww_ctx *ww)
-{
-	if (vm->scratch[0]->base.resv == &vm->resv) {
-		return i915_gem_object_lock(vm->scratch[0], ww);
-	} else {
-		struct i915_ppgtt *ppgtt = i915_vm_to_ppgtt(vm);
+/* lock the vm पूर्णांकo the current ww, अगर we lock one, we lock all */
+पूर्णांक i915_vm_lock_objects(काष्ठा i915_address_space *vm,
+			 काष्ठा i915_gem_ww_ctx *ww)
+अणु
+	अगर (vm->scratch[0]->base.resv == &vm->resv) अणु
+		वापस i915_gem_object_lock(vm->scratch[0], ww);
+	पूर्ण अन्यथा अणु
+		काष्ठा i915_ppgtt *ppgtt = i915_vm_to_ppgtt(vm);
 
 		/* We borrowed the scratch page from ggtt, take the top level object */
-		return i915_gem_object_lock(ppgtt->pd->pt.base, ww);
-	}
-}
+		वापस i915_gem_object_lock(ppgtt->pd->pt.base, ww);
+	पूर्ण
+पूर्ण
 
-void i915_address_space_fini(struct i915_address_space *vm)
-{
-	drm_mm_takedown(&vm->mm);
+व्योम i915_address_space_fini(काष्ठा i915_address_space *vm)
+अणु
+	drm_mm_takeकरोwn(&vm->mm);
 	mutex_destroy(&vm->mutex);
-}
+पूर्ण
 
-static void __i915_vm_release(struct work_struct *work)
-{
-	struct i915_address_space *vm =
-		container_of(work, struct i915_address_space, rcu.work);
+अटल व्योम __i915_vm_release(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा i915_address_space *vm =
+		container_of(work, काष्ठा i915_address_space, rcu.work);
 
 	vm->cleanup(vm);
 	i915_address_space_fini(vm);
 	dma_resv_fini(&vm->resv);
 
-	kfree(vm);
-}
+	kमुक्त(vm);
+पूर्ण
 
-void i915_vm_release(struct kref *kref)
-{
-	struct i915_address_space *vm =
-		container_of(kref, struct i915_address_space, ref);
+व्योम i915_vm_release(काष्ठा kref *kref)
+अणु
+	काष्ठा i915_address_space *vm =
+		container_of(kref, काष्ठा i915_address_space, ref);
 
 	GEM_BUG_ON(i915_is_ggtt(vm));
 	trace_i915_ppgtt_release(vm);
 
 	queue_rcu_work(vm->i915->wq, &vm->rcu);
-}
+पूर्ण
 
-void i915_address_space_init(struct i915_address_space *vm, int subclass)
-{
+व्योम i915_address_space_init(काष्ठा i915_address_space *vm, पूर्णांक subclass)
+अणु
 	kref_init(&vm->ref);
 	INIT_RCU_WORK(&vm->rcu, __i915_vm_release);
-	atomic_set(&vm->open, 1);
+	atomic_set(&vm->खोलो, 1);
 
 	/*
-	 * The vm->mutex must be reclaim safe (for use in the shrinker).
+	 * The vm->mutex must be reclaim safe (क्रम use in the shrinker).
 	 * Do a dummy acquire now under fs_reclaim so that any allocation
 	 * attempt holding the lock is immediately reported by lockdep.
 	 */
 	mutex_init(&vm->mutex);
 	lockdep_set_subclass(&vm->mutex, subclass);
-	i915_gem_shrinker_taints_mutex(vm->i915, &vm->mutex);
+	i915_gem_shrinker_taपूर्णांकs_mutex(vm->i915, &vm->mutex);
 	dma_resv_init(&vm->resv);
 
 	GEM_BUG_ON(!vm->total);
@@ -140,108 +141,108 @@ void i915_address_space_init(struct i915_address_space *vm, int subclass)
 	vm->mm.head_node.color = I915_COLOR_UNEVICTABLE;
 
 	INIT_LIST_HEAD(&vm->bound_list);
-}
+पूर्ण
 
-void clear_pages(struct i915_vma *vma)
-{
+व्योम clear_pages(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!vma->pages);
 
-	if (vma->pages != vma->obj->mm.pages) {
-		sg_free_table(vma->pages);
-		kfree(vma->pages);
-	}
-	vma->pages = NULL;
+	अगर (vma->pages != vma->obj->mm.pages) अणु
+		sg_मुक्त_table(vma->pages);
+		kमुक्त(vma->pages);
+	पूर्ण
+	vma->pages = शून्य;
 
-	memset(&vma->page_sizes, 0, sizeof(vma->page_sizes));
-}
+	स_रखो(&vma->page_sizes, 0, माप(vma->page_sizes));
+पूर्ण
 
-dma_addr_t __px_dma(struct drm_i915_gem_object *p)
-{
+dma_addr_t __px_dma(काष्ठा drm_i915_gem_object *p)
+अणु
 	GEM_BUG_ON(!i915_gem_object_has_pages(p));
-	return sg_dma_address(p->mm.pages->sgl);
-}
+	वापस sg_dma_address(p->mm.pages->sgl);
+पूर्ण
 
-struct page *__px_page(struct drm_i915_gem_object *p)
-{
+काष्ठा page *__px_page(काष्ठा drm_i915_gem_object *p)
+अणु
 	GEM_BUG_ON(!i915_gem_object_has_pages(p));
-	return sg_page(p->mm.pages->sgl);
-}
+	वापस sg_page(p->mm.pages->sgl);
+पूर्ण
 
-void
-fill_page_dma(struct drm_i915_gem_object *p, const u64 val, unsigned int count)
-{
-	struct page *page = __px_page(p);
-	void *vaddr;
+व्योम
+fill_page_dma(काष्ठा drm_i915_gem_object *p, स्थिर u64 val, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा page *page = __px_page(p);
+	व्योम *vaddr;
 
 	vaddr = kmap(page);
-	memset64(vaddr, val, count);
+	स_रखो64(vaddr, val, count);
 	clflush_cache_range(vaddr, PAGE_SIZE);
 	kunmap(page);
-}
+पूर्ण
 
-static void poison_scratch_page(struct drm_i915_gem_object *scratch)
-{
-	struct sgt_iter sgt;
-	struct page *page;
+अटल व्योम poison_scratch_page(काष्ठा drm_i915_gem_object *scratch)
+अणु
+	काष्ठा sgt_iter sgt;
+	काष्ठा page *page;
 	u8 val;
 
 	val = 0;
-	if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+	अगर (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
 		val = POISON_FREE;
 
-	for_each_sgt_page(page, sgt, scratch->mm.pages) {
-		void *vaddr;
+	क्रम_each_sgt_page(page, sgt, scratch->mm.pages) अणु
+		व्योम *vaddr;
 
 		vaddr = kmap(page);
-		memset(vaddr, val, PAGE_SIZE);
+		स_रखो(vaddr, val, PAGE_SIZE);
 		kunmap(page);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int setup_scratch_page(struct i915_address_space *vm)
-{
-	unsigned long size;
+पूर्णांक setup_scratch_page(काष्ठा i915_address_space *vm)
+अणु
+	अचिन्हित दीर्घ size;
 
 	/*
-	 * In order to utilize 64K pages for an object with a size < 2M, we will
-	 * need to support a 64K scratch page, given that every 16th entry for a
-	 * page-table operating in 64K mode must point to a properly aligned 64K
-	 * region, including any PTEs which happen to point to scratch.
+	 * In order to utilize 64K pages क्रम an object with a size < 2M, we will
+	 * need to support a 64K scratch page, given that every 16th entry क्रम a
+	 * page-table operating in 64K mode must poपूर्णांक to a properly aligned 64K
+	 * region, including any PTEs which happen to poपूर्णांक to scratch.
 	 *
-	 * This is only relevant for the 48b PPGTT where we support
+	 * This is only relevant क्रम the 48b PPGTT where we support
 	 * huge-gtt-pages, see also i915_vma_insert(). However, as we share the
-	 * scratch (read-only) between all vm, we create one 64k scratch page
-	 * for all.
+	 * scratch (पढ़ो-only) between all vm, we create one 64k scratch page
+	 * क्रम all.
 	 */
 	size = I915_GTT_PAGE_SIZE_4K;
-	if (i915_vm_is_4lvl(vm) &&
+	अगर (i915_vm_is_4lvl(vm) &&
 	    HAS_PAGE_SIZES(vm->i915, I915_GTT_PAGE_SIZE_64K))
 		size = I915_GTT_PAGE_SIZE_64K;
 
-	do {
-		struct drm_i915_gem_object *obj;
+	करो अणु
+		काष्ठा drm_i915_gem_object *obj;
 
 		obj = vm->alloc_pt_dma(vm, size);
-		if (IS_ERR(obj))
-			goto skip;
+		अगर (IS_ERR(obj))
+			जाओ skip;
 
-		if (pin_pt_dma(vm, obj))
-			goto skip_obj;
+		अगर (pin_pt_dma(vm, obj))
+			जाओ skip_obj;
 
-		/* We need a single contiguous page for our scratch */
-		if (obj->mm.page_sizes.sg < size)
-			goto skip_obj;
+		/* We need a single contiguous page क्रम our scratch */
+		अगर (obj->mm.page_sizes.sg < size)
+			जाओ skip_obj;
 
 		/* And it needs to be correspondingly aligned */
-		if (__px_dma(obj) & (size - 1))
-			goto skip_obj;
+		अगर (__px_dma(obj) & (size - 1))
+			जाओ skip_obj;
 
 		/*
-		 * Use a non-zero scratch page for debugging.
+		 * Use a non-zero scratch page क्रम debugging.
 		 *
 		 * We want a value that should be reasonably obvious
-		 * to spot in the error state, while also causing a GPU hang
-		 * if executed. We prefer using a clear page in production, so
+		 * to spot in the error state, जबतक also causing a GPU hang
+		 * अगर executed. We prefer using a clear page in production, so
 		 * should it ever be accidentally used, the effect should be
 		 * fairly benign.
 		 */
@@ -249,51 +250,51 @@ int setup_scratch_page(struct i915_address_space *vm)
 
 		vm->scratch[0] = obj;
 		vm->scratch_order = get_order(size);
-		return 0;
+		वापस 0;
 
 skip_obj:
 		i915_gem_object_put(obj);
 skip:
-		if (size == I915_GTT_PAGE_SIZE_4K)
-			return -ENOMEM;
+		अगर (size == I915_GTT_PAGE_SIZE_4K)
+			वापस -ENOMEM;
 
 		size = I915_GTT_PAGE_SIZE_4K;
-	} while (1);
-}
+	पूर्ण जबतक (1);
+पूर्ण
 
-void free_scratch(struct i915_address_space *vm)
-{
-	int i;
+व्योम मुक्त_scratch(काष्ठा i915_address_space *vm)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i <= vm->top; i++)
+	क्रम (i = 0; i <= vm->top; i++)
 		i915_gem_object_put(vm->scratch[i]);
-}
+पूर्ण
 
-void gtt_write_workarounds(struct intel_gt *gt)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_uncore *uncore = gt->uncore;
+व्योम gtt_ग_लिखो_workarounds(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
 
 	/*
-	 * This function is for gtt related workarounds. This function is
+	 * This function is क्रम gtt related workarounds. This function is
 	 * called on driver load and after a GPU reset, so you can place
-	 * workarounds here even if they get overwritten by GPU reset.
+	 * workarounds here even अगर they get overwritten by GPU reset.
 	 */
 	/* WaIncreaseDefaultTLBEntries:chv,bdw,skl,bxt,kbl,glk,cfl,cnl,icl */
-	if (IS_BROADWELL(i915))
-		intel_uncore_write(uncore,
+	अगर (IS_BROADWELL(i915))
+		पूर्णांकel_uncore_ग_लिखो(uncore,
 				   GEN8_L3_LRA_1_GPGPU,
 				   GEN8_L3_LRA_1_GPGPU_DEFAULT_VALUE_BDW);
-	else if (IS_CHERRYVIEW(i915))
-		intel_uncore_write(uncore,
+	अन्यथा अगर (IS_CHERRYVIEW(i915))
+		पूर्णांकel_uncore_ग_लिखो(uncore,
 				   GEN8_L3_LRA_1_GPGPU,
 				   GEN8_L3_LRA_1_GPGPU_DEFAULT_VALUE_CHV);
-	else if (IS_GEN9_LP(i915))
-		intel_uncore_write(uncore,
+	अन्यथा अगर (IS_GEN9_LP(i915))
+		पूर्णांकel_uncore_ग_लिखो(uncore,
 				   GEN8_L3_LRA_1_GPGPU,
 				   GEN9_L3_LRA_1_GPGPU_DEFAULT_VALUE_BXT);
-	else if (INTEL_GEN(i915) >= 9 && INTEL_GEN(i915) <= 11)
-		intel_uncore_write(uncore,
+	अन्यथा अगर (INTEL_GEN(i915) >= 9 && INTEL_GEN(i915) <= 11)
+		पूर्णांकel_uncore_ग_लिखो(uncore,
 				   GEN8_L3_LRA_1_GPGPU,
 				   GEN9_L3_LRA_1_GPGPU_DEFAULT_VALUE_SKL);
 
@@ -303,125 +304,125 @@ void gtt_write_workarounds(struct intel_gt *gt)
 	 * mmio, otherwise the page-walker will simply ignore the IPS bit. This
 	 * shouldn't be needed after GEN10.
 	 *
-	 * 64K pages were first introduced from BDW+, although technically they
-	 * only *work* from gen9+. For pre-BDW we instead have the option for
-	 * 32K pages, but we don't currently have any support for it in our
+	 * 64K pages were first पूर्णांकroduced from BDW+, although technically they
+	 * only *work* from gen9+. For pre-BDW we instead have the option क्रम
+	 * 32K pages, but we करोn't currently have any support क्रम it in our
 	 * driver.
 	 */
-	if (HAS_PAGE_SIZES(i915, I915_GTT_PAGE_SIZE_64K) &&
+	अगर (HAS_PAGE_SIZES(i915, I915_GTT_PAGE_SIZE_64K) &&
 	    INTEL_GEN(i915) <= 10)
-		intel_uncore_rmw(uncore,
+		पूर्णांकel_uncore_rmw(uncore,
 				 GEN8_GAMW_ECO_DEV_RW_IA,
 				 0,
 				 GAMW_ECO_ENABLE_64K_IPS_FIELD);
 
-	if (IS_GEN_RANGE(i915, 8, 11)) {
+	अगर (IS_GEN_RANGE(i915, 8, 11)) अणु
 		bool can_use_gtt_cache = true;
 
 		/*
-		 * According to the BSpec if we use 2M/1G pages then we also
+		 * According to the BSpec अगर we use 2M/1G pages then we also
 		 * need to disable the GTT cache. At least on BDW we can see
 		 * visual corruption when using 2M pages, and not disabling the
 		 * GTT cache.
 		 */
-		if (HAS_PAGE_SIZES(i915, I915_GTT_PAGE_SIZE_2M))
+		अगर (HAS_PAGE_SIZES(i915, I915_GTT_PAGE_SIZE_2M))
 			can_use_gtt_cache = false;
 
 		/* WaGttCachingOffByDefault */
-		intel_uncore_write(uncore,
+		पूर्णांकel_uncore_ग_लिखो(uncore,
 				   HSW_GTT_CACHE_EN,
 				   can_use_gtt_cache ? GTT_CACHE_EN_ALL : 0);
 		drm_WARN_ON_ONCE(&i915->drm, can_use_gtt_cache &&
-				 intel_uncore_read(uncore,
+				 पूर्णांकel_uncore_पढ़ो(uncore,
 						   HSW_GTT_CACHE_EN) == 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void tgl_setup_private_ppat(struct intel_uncore *uncore)
-{
-	/* TGL doesn't support LLC or AGE settings */
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(0), GEN8_PPAT_WB);
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(1), GEN8_PPAT_WC);
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(2), GEN8_PPAT_WT);
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(3), GEN8_PPAT_UC);
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(4), GEN8_PPAT_WB);
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(5), GEN8_PPAT_WB);
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(6), GEN8_PPAT_WB);
-	intel_uncore_write(uncore, GEN12_PAT_INDEX(7), GEN8_PPAT_WB);
-}
+अटल व्योम tgl_setup_निजी_ppat(काष्ठा पूर्णांकel_uncore *uncore)
+अणु
+	/* TGL करोesn't support LLC or AGE settings */
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(0), GEN8_PPAT_WB);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(1), GEN8_PPAT_WC);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(2), GEN8_PPAT_WT);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(3), GEN8_PPAT_UC);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(4), GEN8_PPAT_WB);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(5), GEN8_PPAT_WB);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(6), GEN8_PPAT_WB);
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN12_PAT_INDEX(7), GEN8_PPAT_WB);
+पूर्ण
 
-static void cnl_setup_private_ppat(struct intel_uncore *uncore)
-{
-	intel_uncore_write(uncore,
+अटल व्योम cnl_setup_निजी_ppat(काष्ठा पूर्णांकel_uncore *uncore)
+अणु
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(0),
 			   GEN8_PPAT_WB | GEN8_PPAT_LLC);
-	intel_uncore_write(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(1),
 			   GEN8_PPAT_WC | GEN8_PPAT_LLCELLC);
-	intel_uncore_write(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(2),
 			   GEN8_PPAT_WB | GEN8_PPAT_ELLC_OVERRIDE);
-	intel_uncore_write(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(3),
 			   GEN8_PPAT_UC);
-	intel_uncore_write(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(4),
 			   GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(0));
-	intel_uncore_write(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(5),
 			   GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(1));
-	intel_uncore_write(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(6),
 			   GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(2));
-	intel_uncore_write(uncore,
+	पूर्णांकel_uncore_ग_लिखो(uncore,
 			   GEN10_PAT_INDEX(7),
 			   GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(3));
-}
+पूर्ण
 
 /*
- * The GGTT and PPGTT need a private PPAT setup in order to handle cacheability
+ * The GGTT and PPGTT need a निजी PPAT setup in order to handle cacheability
  * bits. When using advanced contexts each context stores its own PAT, but
- * writing this data shouldn't be harmful even in those cases.
+ * writing this data shouldn't be harmful even in those हालs.
  */
-static void bdw_setup_private_ppat(struct intel_uncore *uncore)
-{
-	struct drm_i915_private *i915 = uncore->i915;
+अटल व्योम bdw_setup_निजी_ppat(काष्ठा पूर्णांकel_uncore *uncore)
+अणु
+	काष्ठा drm_i915_निजी *i915 = uncore->i915;
 	u64 pat;
 
-	pat = GEN8_PPAT(0, GEN8_PPAT_WB | GEN8_PPAT_LLC) |	/* for normal objects, no eLLC */
-	      GEN8_PPAT(1, GEN8_PPAT_WC | GEN8_PPAT_LLCELLC) |	/* for something pointing to ptes? */
-	      GEN8_PPAT(3, GEN8_PPAT_UC) |			/* Uncached objects, mostly for scanout */
+	pat = GEN8_PPAT(0, GEN8_PPAT_WB | GEN8_PPAT_LLC) |	/* क्रम normal objects, no eLLC */
+	      GEN8_PPAT(1, GEN8_PPAT_WC | GEN8_PPAT_LLCELLC) |	/* क्रम something poपूर्णांकing to ptes? */
+	      GEN8_PPAT(3, GEN8_PPAT_UC) |			/* Uncached objects, mostly क्रम scanout */
 	      GEN8_PPAT(4, GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(0)) |
 	      GEN8_PPAT(5, GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(1)) |
 	      GEN8_PPAT(6, GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(2)) |
 	      GEN8_PPAT(7, GEN8_PPAT_WB | GEN8_PPAT_LLCELLC | GEN8_PPAT_AGE(3));
 
-	/* for scanout with eLLC */
-	if (INTEL_GEN(i915) >= 9)
+	/* क्रम scanout with eLLC */
+	अगर (INTEL_GEN(i915) >= 9)
 		pat |= GEN8_PPAT(2, GEN8_PPAT_WB | GEN8_PPAT_ELLC_OVERRIDE);
-	else
+	अन्यथा
 		pat |= GEN8_PPAT(2, GEN8_PPAT_WT | GEN8_PPAT_LLCELLC);
 
-	intel_uncore_write(uncore, GEN8_PRIVATE_PAT_LO, lower_32_bits(pat));
-	intel_uncore_write(uncore, GEN8_PRIVATE_PAT_HI, upper_32_bits(pat));
-}
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_PRIVATE_PAT_LO, lower_32_bits(pat));
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_PRIVATE_PAT_HI, upper_32_bits(pat));
+पूर्ण
 
-static void chv_setup_private_ppat(struct intel_uncore *uncore)
-{
+अटल व्योम chv_setup_निजी_ppat(काष्ठा पूर्णांकel_uncore *uncore)
+अणु
 	u64 pat;
 
 	/*
 	 * Map WB on BDW to snooped on CHV.
 	 *
-	 * Only the snoop bit has meaning for CHV, the rest is
+	 * Only the snoop bit has meaning क्रम CHV, the rest is
 	 * ignored.
 	 *
-	 * The hardware will never snoop for certain types of accesses:
+	 * The hardware will never snoop क्रम certain types of accesses:
 	 * - CPU GTT (GMADR->GGTT->no snoop->memory)
 	 * - PPGTT page tables
 	 * - some other special cycles
 	 *
-	 * As with BDW, we also need to consider the following for GT accesses:
+	 * As with BDW, we also need to consider the following क्रम GT accesses:
 	 * "For GGTT, there is NO pat_sel[2:0] from the entry,
 	 * so RTL will always use the value corresponding to
 	 * pat_sel = 000".
@@ -438,67 +439,67 @@ static void chv_setup_private_ppat(struct intel_uncore *uncore)
 	      GEN8_PPAT(6, CHV_PPAT_SNOOP) |
 	      GEN8_PPAT(7, CHV_PPAT_SNOOP);
 
-	intel_uncore_write(uncore, GEN8_PRIVATE_PAT_LO, lower_32_bits(pat));
-	intel_uncore_write(uncore, GEN8_PRIVATE_PAT_HI, upper_32_bits(pat));
-}
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_PRIVATE_PAT_LO, lower_32_bits(pat));
+	पूर्णांकel_uncore_ग_लिखो(uncore, GEN8_PRIVATE_PAT_HI, upper_32_bits(pat));
+पूर्ण
 
-void setup_private_pat(struct intel_uncore *uncore)
-{
-	struct drm_i915_private *i915 = uncore->i915;
+व्योम setup_निजी_pat(काष्ठा पूर्णांकel_uncore *uncore)
+अणु
+	काष्ठा drm_i915_निजी *i915 = uncore->i915;
 
 	GEM_BUG_ON(INTEL_GEN(i915) < 8);
 
-	if (INTEL_GEN(i915) >= 12)
-		tgl_setup_private_ppat(uncore);
-	else if (INTEL_GEN(i915) >= 10)
-		cnl_setup_private_ppat(uncore);
-	else if (IS_CHERRYVIEW(i915) || IS_GEN9_LP(i915))
-		chv_setup_private_ppat(uncore);
-	else
-		bdw_setup_private_ppat(uncore);
-}
+	अगर (INTEL_GEN(i915) >= 12)
+		tgl_setup_निजी_ppat(uncore);
+	अन्यथा अगर (INTEL_GEN(i915) >= 10)
+		cnl_setup_निजी_ppat(uncore);
+	अन्यथा अगर (IS_CHERRYVIEW(i915) || IS_GEN9_LP(i915))
+		chv_setup_निजी_ppat(uncore);
+	अन्यथा
+		bdw_setup_निजी_ppat(uncore);
+पूर्ण
 
-struct i915_vma *
-__vm_create_scratch_for_read(struct i915_address_space *vm, unsigned long size)
-{
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
+काष्ठा i915_vma *
+__vm_create_scratch_क्रम_पढ़ो(काष्ठा i915_address_space *vm, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
 
-	obj = i915_gem_object_create_internal(vm->i915, PAGE_ALIGN(size));
-	if (IS_ERR(obj))
-		return ERR_CAST(obj);
+	obj = i915_gem_object_create_पूर्णांकernal(vm->i915, PAGE_ALIGN(size));
+	अगर (IS_ERR(obj))
+		वापस ERR_CAST(obj);
 
 	i915_gem_object_set_cache_coherency(obj, I915_CACHING_CACHED);
 
-	vma = i915_vma_instance(obj, vm, NULL);
-	if (IS_ERR(vma)) {
+	vma = i915_vma_instance(obj, vm, शून्य);
+	अगर (IS_ERR(vma)) अणु
 		i915_gem_object_put(obj);
-		return vma;
-	}
+		वापस vma;
+	पूर्ण
 
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-struct i915_vma *
-__vm_create_scratch_for_read_pinned(struct i915_address_space *vm, unsigned long size)
-{
-	struct i915_vma *vma;
-	int err;
+काष्ठा i915_vma *
+__vm_create_scratch_क्रम_पढ़ो_pinned(काष्ठा i915_address_space *vm, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा i915_vma *vma;
+	पूर्णांक err;
 
-	vma = __vm_create_scratch_for_read(vm, size);
-	if (IS_ERR(vma))
-		return vma;
+	vma = __vm_create_scratch_क्रम_पढ़ो(vm, size);
+	अगर (IS_ERR(vma))
+		वापस vma;
 
 	err = i915_vma_pin(vma, 0, 0,
 			   i915_vma_is_ggtt(vma) ? PIN_GLOBAL : PIN_USER);
-	if (err) {
+	अगर (err) अणु
 		i915_vma_put(vma);
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftests/mock_gtt.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftests/mock_gtt.c"
+#पूर्ण_अगर

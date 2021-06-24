@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_NOHASH_TLBFLUSH_H
-#define _ASM_POWERPC_NOHASH_TLBFLUSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_NOHASH_TLBFLUSH_H
+#घोषणा _ASM_POWERPC_NOHASH_TLBFLUSH_H
 
 /*
  * TLB flushing:
  *
- *  - flush_tlb_mm(mm) flushes the specified mm context TLB's
+ *  - flush_tlb_mm(mm) flushes the specअगरied mm context TLB's
  *  - flush_tlb_page(vma, vmaddr) flushes one page
- *  - local_flush_tlb_mm(mm, full) flushes the specified mm context on
+ *  - local_flush_tlb_mm(mm, full) flushes the specअगरied mm context on
  *                           the local processor
  *  - local_flush_tlb_page(vma, vmaddr) flushes one page on the local processor
  *  - flush_tlb_range(vma, start, end) flushes a range of pages
@@ -16,37 +17,37 @@
  */
 
 /*
- * TLB flushing for software loaded TLB chips
+ * TLB flushing क्रम software loaded TLB chips
  *
- * TODO: (CONFIG_FSL_BOOKE) determine if flush_tlb_range &
+ * TODO: (CONFIG_FSL_BOOKE) determine अगर flush_tlb_range &
  * flush_tlb_kernel_range are best implemented as tlbia vs
- * specific tlbie's
+ * specअगरic tlbie's
  */
 
-struct vm_area_struct;
-struct mm_struct;
+काष्ठा vm_area_काष्ठा;
+काष्ठा mm_काष्ठा;
 
-#define MMU_NO_CONTEXT      	((unsigned int)-1)
+#घोषणा MMU_NO_CONTEXT      	((अचिन्हित पूर्णांक)-1)
 
-extern void flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
-			    unsigned long end);
-extern void flush_tlb_kernel_range(unsigned long start, unsigned long end);
+बाह्य व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+			    अचिन्हित दीर्घ end);
+बाह्य व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
 
-extern void local_flush_tlb_mm(struct mm_struct *mm);
-extern void local_flush_tlb_page(struct vm_area_struct *vma, unsigned long vmaddr);
+बाह्य व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vmaddr);
 
-extern void __local_flush_tlb_page(struct mm_struct *mm, unsigned long vmaddr,
-				   int tsize, int ind);
+बाह्य व्योम __local_flush_tlb_page(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr,
+				   पूर्णांक tsize, पूर्णांक ind);
 
-#ifdef CONFIG_SMP
-extern void flush_tlb_mm(struct mm_struct *mm);
-extern void flush_tlb_page(struct vm_area_struct *vma, unsigned long vmaddr);
-extern void __flush_tlb_page(struct mm_struct *mm, unsigned long vmaddr,
-			     int tsize, int ind);
-#else
-#define flush_tlb_mm(mm)		local_flush_tlb_mm(mm)
-#define flush_tlb_page(vma,addr)	local_flush_tlb_page(vma,addr)
-#define __flush_tlb_page(mm,addr,p,i)	__local_flush_tlb_page(mm,addr,p,i)
-#endif
+#अगर_घोषित CONFIG_SMP
+बाह्य व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vmaddr);
+बाह्य व्योम __flush_tlb_page(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ vmaddr,
+			     पूर्णांक tsize, पूर्णांक ind);
+#अन्यथा
+#घोषणा flush_tlb_mm(mm)		local_flush_tlb_mm(mm)
+#घोषणा flush_tlb_page(vma,addr)	local_flush_tlb_page(vma,addr)
+#घोषणा __flush_tlb_page(mm,addr,p,i)	__local_flush_tlb_page(mm,addr,p,i)
+#पूर्ण_अगर
 
-#endif /* _ASM_POWERPC_NOHASH_TLBFLUSH_H */
+#पूर्ण_अगर /* _ASM_POWERPC_NOHASH_TLBFLUSH_H */

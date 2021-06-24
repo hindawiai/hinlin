@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  LZO1X Compressor from LZO
  *
  *  Copyright (C) 1996-2012 Markus F.X.J. Oberhumer <markus@oberhumer.com>
  *
  *  The full LZO package can be found at:
- *  http://www.oberhumer.com/opensource/lzo/
+ *  http://www.oberhumer.com/खोलोsource/lzo/
  *
- *  Changed for Linux kernel use by:
+ *  Changed क्रम Linux kernel use by:
  *  Nitin Gupta <nitingupta910@gmail.com>
- *  Richard Purdie <rpurdie@openedhand.com>
+ *  Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <asm/unaligned.h>
-#include <linux/lzo.h>
-#include "lzodefs.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/lzo.h>
+#समावेश "lzodefs.h"
 
-static noinline size_t
-lzo1x_1_do_compress(const unsigned char *in, size_t in_len,
-		    unsigned char *out, size_t *out_len,
-		    size_t ti, void *wrkmem, signed char *state_offset,
-		    const unsigned char bitstream_version)
-{
-	const unsigned char *ip;
-	unsigned char *op;
-	const unsigned char * const in_end = in + in_len;
-	const unsigned char * const ip_end = in + in_len - 20;
-	const unsigned char *ii;
-	lzo_dict_t * const dict = (lzo_dict_t *) wrkmem;
+अटल noअंतरभूत माप_प्रकार
+lzo1x_1_करो_compress(स्थिर अचिन्हित अक्षर *in, माप_प्रकार in_len,
+		    अचिन्हित अक्षर *out, माप_प्रकार *out_len,
+		    माप_प्रकार ti, व्योम *wrkmem, चिन्हित अक्षर *state_offset,
+		    स्थिर अचिन्हित अक्षर bitstream_version)
+अणु
+	स्थिर अचिन्हित अक्षर *ip;
+	अचिन्हित अक्षर *op;
+	स्थिर अचिन्हित अक्षर * स्थिर in_end = in + in_len;
+	स्थिर अचिन्हित अक्षर * स्थिर ip_end = in + in_len - 20;
+	स्थिर अचिन्हित अक्षर *ii;
+	lzo_dict_t * स्थिर dict = (lzo_dict_t *) wrkmem;
 
 	op = out;
 	ip = in;
 	ii = ip;
 	ip += ti < 4 ? 4 - ti : 0;
 
-	for (;;) {
-		const unsigned char *m_pos = NULL;
-		size_t t, m_len, m_off;
+	क्रम (;;) अणु
+		स्थिर अचिन्हित अक्षर *m_pos = शून्य;
+		माप_प्रकार t, m_len, m_off;
 		u32 dv;
 		u32 run_length = 0;
 literal:
 		ip += 1 + ((ip - ii) >> 5);
 next:
-		if (unlikely(ip >= ip_end))
-			break;
+		अगर (unlikely(ip >= ip_end))
+			अवरोध;
 		dv = get_unaligned_le32(ip);
 
-		if (dv == 0 && bitstream_version) {
-			const unsigned char *ir = ip + 4;
-			const unsigned char *limit = ip_end
+		अगर (dv == 0 && bitstream_version) अणु
+			स्थिर अचिन्हित अक्षर *ir = ip + 4;
+			स्थिर अचिन्हित अक्षर *limit = ip_end
 				< (ip + MAX_ZERO_RUN_LENGTH + 1)
 				? ip_end : ip + MAX_ZERO_RUN_LENGTH + 1;
-#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && \
+#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && \
 	defined(LZO_FAST_64BIT_MEMORY_ACCESS)
 			u64 dv64;
 
-			for (; (ir + 32) <= limit; ir += 32) {
+			क्रम (; (ir + 32) <= limit; ir += 32) अणु
 				dv64 = get_unaligned((u64 *)ir);
 				dv64 |= get_unaligned((u64 *)ir + 1);
 				dv64 |= get_unaligned((u64 *)ir + 2);
 				dv64 |= get_unaligned((u64 *)ir + 3);
-				if (dv64)
-					break;
-			}
-			for (; (ir + 8) <= limit; ir += 8) {
+				अगर (dv64)
+					अवरोध;
+			पूर्ण
+			क्रम (; (ir + 8) <= limit; ir += 8) अणु
 				dv64 = get_unaligned((u64 *)ir);
-				if (dv64) {
-#  if defined(__LITTLE_ENDIAN)
+				अगर (dv64) अणु
+#  अगर defined(__LITTLE_ENDIAN)
 					ir += __builtin_ctzll(dv64) >> 3;
-#  elif defined(__BIG_ENDIAN)
+#  elअगर defined(__BIG_ENDIAN)
 					ir += __builtin_clzll(dv64) >> 3;
-#  else
+#  अन्यथा
 #    error "missing endian definition"
-#  endif
-					break;
-				}
-			}
-#else
-			while ((ir < (const unsigned char *)
-					ALIGN((uintptr_t)ir, 4)) &&
+#  endअगर
+					अवरोध;
+				पूर्ण
+			पूर्ण
+#अन्यथा
+			जबतक ((ir < (स्थिर अचिन्हित अक्षर *)
+					ALIGN((uपूर्णांकptr_t)ir, 4)) &&
 					(ir < limit) && (*ir == 0))
 				ir++;
-			if (IS_ALIGNED((uintptr_t)ir, 4)) {
-				for (; (ir + 4) <= limit; ir += 4) {
+			अगर (IS_ALIGNED((uपूर्णांकptr_t)ir, 4)) अणु
+				क्रम (; (ir + 4) <= limit; ir += 4) अणु
 					dv = *((u32 *)ir);
-					if (dv) {
-#  if defined(__LITTLE_ENDIAN)
+					अगर (dv) अणु
+#  अगर defined(__LITTLE_ENDIAN)
 						ir += __builtin_ctz(dv) >> 3;
-#  elif defined(__BIG_ENDIAN)
+#  elअगर defined(__BIG_ENDIAN)
 						ir += __builtin_clz(dv) >> 3;
-#  else
+#  अन्यथा
 #    error "missing endian definition"
-#  endif
-						break;
-					}
-				}
-			}
-#endif
-			while (likely(ir < limit) && unlikely(*ir == 0))
+#  endअगर
+						अवरोध;
+					पूर्ण
+				पूर्ण
+			पूर्ण
+#पूर्ण_अगर
+			जबतक (likely(ir < limit) && unlikely(*ir == 0))
 				ir++;
 			run_length = ir - ip;
-			if (run_length > MAX_ZERO_RUN_LENGTH)
+			अगर (run_length > MAX_ZERO_RUN_LENGTH)
 				run_length = MAX_ZERO_RUN_LENGTH;
-		} else {
+		पूर्ण अन्यथा अणु
 			t = ((dv * 0x1824429d) >> (32 - D_BITS)) & D_MASK;
 			m_pos = in + dict[t];
 			dict[t] = (lzo_dict_t) (ip - in);
-			if (unlikely(dv != get_unaligned_le32(m_pos)))
-				goto literal;
-		}
+			अगर (unlikely(dv != get_unaligned_le32(m_pos)))
+				जाओ literal;
+		पूर्ण
 
 		ii -= ti;
 		ti = 0;
 		t = ip - ii;
-		if (t != 0) {
-			if (t <= 3) {
+		अगर (t != 0) अणु
+			अगर (t <= 3) अणु
 				op[*state_offset] |= t;
 				COPY4(op, ii);
 				op += t;
-			} else if (t <= 16) {
+			पूर्ण अन्यथा अगर (t <= 16) अणु
 				*op++ = (t - 3);
 				COPY8(op, ii);
 				COPY8(op + 8, ii + 8);
 				op += t;
-			} else {
-				if (t <= 18) {
+			पूर्ण अन्यथा अणु
+				अगर (t <= 18) अणु
 					*op++ = (t - 3);
-				} else {
-					size_t tt = t - 18;
+				पूर्ण अन्यथा अणु
+					माप_प्रकार tt = t - 18;
 					*op++ = 0;
-					while (unlikely(tt > 255)) {
+					जबतक (unlikely(tt > 255)) अणु
 						tt -= 255;
 						*op++ = 0;
-					}
+					पूर्ण
 					*op++ = tt;
-				}
-				do {
+				पूर्ण
+				करो अणु
 					COPY8(op, ii);
 					COPY8(op + 8, ii + 8);
 					op += 16;
 					ii += 16;
 					t -= 16;
-				} while (t >= 16);
-				if (t > 0) do {
+				पूर्ण जबतक (t >= 16);
+				अगर (t > 0) करो अणु
 					*op++ = *ii++;
-				} while (--t > 0);
-			}
-		}
+				पूर्ण जबतक (--t > 0);
+			पूर्ण
+		पूर्ण
 
-		if (unlikely(run_length)) {
+		अगर (unlikely(run_length)) अणु
 			ip += run_length;
 			run_length -= MIN_ZERO_RUN_LENGTH;
 			put_unaligned_le32((run_length << 21) | 0xfffc18
@@ -158,240 +159,240 @@ next:
 			op += 4;
 			run_length = 0;
 			*state_offset = -3;
-			goto finished_writing_instruction;
-		}
+			जाओ finished_writing_inकाष्ठाion;
+		पूर्ण
 
 		m_len = 4;
-		{
-#if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && defined(LZO_USE_CTZ64)
+		अणु
+#अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && defined(LZO_USE_CTZ64)
 		u64 v;
-		v = get_unaligned((const u64 *) (ip + m_len)) ^
-		    get_unaligned((const u64 *) (m_pos + m_len));
-		if (unlikely(v == 0)) {
-			do {
+		v = get_unaligned((स्थिर u64 *) (ip + m_len)) ^
+		    get_unaligned((स्थिर u64 *) (m_pos + m_len));
+		अगर (unlikely(v == 0)) अणु
+			करो अणु
 				m_len += 8;
-				v = get_unaligned((const u64 *) (ip + m_len)) ^
-				    get_unaligned((const u64 *) (m_pos + m_len));
-				if (unlikely(ip + m_len >= ip_end))
-					goto m_len_done;
-			} while (v == 0);
-		}
-#  if defined(__LITTLE_ENDIAN)
-		m_len += (unsigned) __builtin_ctzll(v) / 8;
-#  elif defined(__BIG_ENDIAN)
-		m_len += (unsigned) __builtin_clzll(v) / 8;
-#  else
+				v = get_unaligned((स्थिर u64 *) (ip + m_len)) ^
+				    get_unaligned((स्थिर u64 *) (m_pos + m_len));
+				अगर (unlikely(ip + m_len >= ip_end))
+					जाओ m_len_करोne;
+			पूर्ण जबतक (v == 0);
+		पूर्ण
+#  अगर defined(__LITTLE_ENDIAN)
+		m_len += (अचिन्हित) __builtin_ctzll(v) / 8;
+#  elअगर defined(__BIG_ENDIAN)
+		m_len += (अचिन्हित) __builtin_clzll(v) / 8;
+#  अन्यथा
 #    error "missing endian definition"
-#  endif
-#elif defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && defined(LZO_USE_CTZ32)
+#  endअगर
+#या_अगर defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) && defined(LZO_USE_CTZ32)
 		u32 v;
-		v = get_unaligned((const u32 *) (ip + m_len)) ^
-		    get_unaligned((const u32 *) (m_pos + m_len));
-		if (unlikely(v == 0)) {
-			do {
+		v = get_unaligned((स्थिर u32 *) (ip + m_len)) ^
+		    get_unaligned((स्थिर u32 *) (m_pos + m_len));
+		अगर (unlikely(v == 0)) अणु
+			करो अणु
 				m_len += 4;
-				v = get_unaligned((const u32 *) (ip + m_len)) ^
-				    get_unaligned((const u32 *) (m_pos + m_len));
-				if (v != 0)
-					break;
+				v = get_unaligned((स्थिर u32 *) (ip + m_len)) ^
+				    get_unaligned((स्थिर u32 *) (m_pos + m_len));
+				अगर (v != 0)
+					अवरोध;
 				m_len += 4;
-				v = get_unaligned((const u32 *) (ip + m_len)) ^
-				    get_unaligned((const u32 *) (m_pos + m_len));
-				if (unlikely(ip + m_len >= ip_end))
-					goto m_len_done;
-			} while (v == 0);
-		}
-#  if defined(__LITTLE_ENDIAN)
-		m_len += (unsigned) __builtin_ctz(v) / 8;
-#  elif defined(__BIG_ENDIAN)
-		m_len += (unsigned) __builtin_clz(v) / 8;
-#  else
+				v = get_unaligned((स्थिर u32 *) (ip + m_len)) ^
+				    get_unaligned((स्थिर u32 *) (m_pos + m_len));
+				अगर (unlikely(ip + m_len >= ip_end))
+					जाओ m_len_करोne;
+			पूर्ण जबतक (v == 0);
+		पूर्ण
+#  अगर defined(__LITTLE_ENDIAN)
+		m_len += (अचिन्हित) __builtin_ctz(v) / 8;
+#  elअगर defined(__BIG_ENDIAN)
+		m_len += (अचिन्हित) __builtin_clz(v) / 8;
+#  अन्यथा
 #    error "missing endian definition"
-#  endif
-#else
-		if (unlikely(ip[m_len] == m_pos[m_len])) {
-			do {
+#  endअगर
+#अन्यथा
+		अगर (unlikely(ip[m_len] == m_pos[m_len])) अणु
+			करो अणु
 				m_len += 1;
-				if (ip[m_len] != m_pos[m_len])
-					break;
+				अगर (ip[m_len] != m_pos[m_len])
+					अवरोध;
 				m_len += 1;
-				if (ip[m_len] != m_pos[m_len])
-					break;
+				अगर (ip[m_len] != m_pos[m_len])
+					अवरोध;
 				m_len += 1;
-				if (ip[m_len] != m_pos[m_len])
-					break;
+				अगर (ip[m_len] != m_pos[m_len])
+					अवरोध;
 				m_len += 1;
-				if (ip[m_len] != m_pos[m_len])
-					break;
+				अगर (ip[m_len] != m_pos[m_len])
+					अवरोध;
 				m_len += 1;
-				if (ip[m_len] != m_pos[m_len])
-					break;
+				अगर (ip[m_len] != m_pos[m_len])
+					अवरोध;
 				m_len += 1;
-				if (ip[m_len] != m_pos[m_len])
-					break;
+				अगर (ip[m_len] != m_pos[m_len])
+					अवरोध;
 				m_len += 1;
-				if (ip[m_len] != m_pos[m_len])
-					break;
+				अगर (ip[m_len] != m_pos[m_len])
+					अवरोध;
 				m_len += 1;
-				if (unlikely(ip + m_len >= ip_end))
-					goto m_len_done;
-			} while (ip[m_len] == m_pos[m_len]);
-		}
-#endif
-		}
-m_len_done:
+				अगर (unlikely(ip + m_len >= ip_end))
+					जाओ m_len_करोne;
+			पूर्ण जबतक (ip[m_len] == m_pos[m_len]);
+		पूर्ण
+#पूर्ण_अगर
+		पूर्ण
+m_len_करोne:
 
 		m_off = ip - m_pos;
 		ip += m_len;
-		if (m_len <= M2_MAX_LEN && m_off <= M2_MAX_OFFSET) {
+		अगर (m_len <= M2_MAX_LEN && m_off <= M2_MAX_OFFSET) अणु
 			m_off -= 1;
 			*op++ = (((m_len - 1) << 5) | ((m_off & 7) << 2));
 			*op++ = (m_off >> 3);
-		} else if (m_off <= M3_MAX_OFFSET) {
+		पूर्ण अन्यथा अगर (m_off <= M3_MAX_OFFSET) अणु
 			m_off -= 1;
-			if (m_len <= M3_MAX_LEN)
+			अगर (m_len <= M3_MAX_LEN)
 				*op++ = (M3_MARKER | (m_len - 2));
-			else {
+			अन्यथा अणु
 				m_len -= M3_MAX_LEN;
 				*op++ = M3_MARKER | 0;
-				while (unlikely(m_len > 255)) {
+				जबतक (unlikely(m_len > 255)) अणु
 					m_len -= 255;
 					*op++ = 0;
-				}
+				पूर्ण
 				*op++ = (m_len);
-			}
+			पूर्ण
 			*op++ = (m_off << 2);
 			*op++ = (m_off >> 6);
-		} else {
+		पूर्ण अन्यथा अणु
 			m_off -= 0x4000;
-			if (m_len <= M4_MAX_LEN)
+			अगर (m_len <= M4_MAX_LEN)
 				*op++ = (M4_MARKER | ((m_off >> 11) & 8)
 						| (m_len - 2));
-			else {
-				if (unlikely(((m_off & 0x403f) == 0x403f)
+			अन्यथा अणु
+				अगर (unlikely(((m_off & 0x403f) == 0x403f)
 						&& (m_len >= 261)
 						&& (m_len <= 264))
-						&& likely(bitstream_version)) {
+						&& likely(bitstream_version)) अणु
 					// Under lzo-rle, block copies
-					// for 261 <= length <= 264 and
+					// क्रम 261 <= length <= 264 and
 					// (distance & 0x80f3) == 0x80f3
 					// can result in ambiguous
 					// output. Adjust length
 					// to 260 to prevent ambiguity.
 					ip -= m_len - 260;
 					m_len = 260;
-				}
+				पूर्ण
 				m_len -= M4_MAX_LEN;
 				*op++ = (M4_MARKER | ((m_off >> 11) & 8));
-				while (unlikely(m_len > 255)) {
+				जबतक (unlikely(m_len > 255)) अणु
 					m_len -= 255;
 					*op++ = 0;
-				}
+				पूर्ण
 				*op++ = (m_len);
-			}
+			पूर्ण
 			*op++ = (m_off << 2);
 			*op++ = (m_off >> 6);
-		}
+		पूर्ण
 		*state_offset = -2;
-finished_writing_instruction:
+finished_writing_inकाष्ठाion:
 		ii = ip;
-		goto next;
-	}
+		जाओ next;
+	पूर्ण
 	*out_len = op - out;
-	return in_end - (ii - ti);
-}
+	वापस in_end - (ii - ti);
+पूर्ण
 
-static int lzogeneric1x_1_compress(const unsigned char *in, size_t in_len,
-		     unsigned char *out, size_t *out_len,
-		     void *wrkmem, const unsigned char bitstream_version)
-{
-	const unsigned char *ip = in;
-	unsigned char *op = out;
-	unsigned char *data_start;
-	size_t l = in_len;
-	size_t t = 0;
-	signed char state_offset = -2;
-	unsigned int m4_max_offset;
+अटल पूर्णांक lzogeneric1x_1_compress(स्थिर अचिन्हित अक्षर *in, माप_प्रकार in_len,
+		     अचिन्हित अक्षर *out, माप_प्रकार *out_len,
+		     व्योम *wrkmem, स्थिर अचिन्हित अक्षर bitstream_version)
+अणु
+	स्थिर अचिन्हित अक्षर *ip = in;
+	अचिन्हित अक्षर *op = out;
+	अचिन्हित अक्षर *data_start;
+	माप_प्रकार l = in_len;
+	माप_प्रकार t = 0;
+	चिन्हित अक्षर state_offset = -2;
+	अचिन्हित पूर्णांक m4_max_offset;
 
-	// LZO v0 will never write 17 as first byte (except for zero-length
+	// LZO v0 will never ग_लिखो 17 as first byte (except क्रम zero-length
 	// input), so this is used to version the bitstream
-	if (bitstream_version > 0) {
+	अगर (bitstream_version > 0) अणु
 		*op++ = 17;
 		*op++ = bitstream_version;
 		m4_max_offset = M4_MAX_OFFSET_V1;
-	} else {
+	पूर्ण अन्यथा अणु
 		m4_max_offset = M4_MAX_OFFSET_V0;
-	}
+	पूर्ण
 
 	data_start = op;
 
-	while (l > 20) {
-		size_t ll = l <= (m4_max_offset + 1) ? l : (m4_max_offset + 1);
-		uintptr_t ll_end = (uintptr_t) ip + ll;
-		if ((ll_end + ((t + ll) >> 5)) <= ll_end)
-			break;
-		BUILD_BUG_ON(D_SIZE * sizeof(lzo_dict_t) > LZO1X_1_MEM_COMPRESS);
-		memset(wrkmem, 0, D_SIZE * sizeof(lzo_dict_t));
-		t = lzo1x_1_do_compress(ip, ll, op, out_len, t, wrkmem,
+	जबतक (l > 20) अणु
+		माप_प्रकार ll = l <= (m4_max_offset + 1) ? l : (m4_max_offset + 1);
+		uपूर्णांकptr_t ll_end = (uपूर्णांकptr_t) ip + ll;
+		अगर ((ll_end + ((t + ll) >> 5)) <= ll_end)
+			अवरोध;
+		BUILD_BUG_ON(D_SIZE * माप(lzo_dict_t) > LZO1X_1_MEM_COMPRESS);
+		स_रखो(wrkmem, 0, D_SIZE * माप(lzo_dict_t));
+		t = lzo1x_1_करो_compress(ip, ll, op, out_len, t, wrkmem,
 					&state_offset, bitstream_version);
 		ip += ll;
 		op += *out_len;
 		l  -= ll;
-	}
+	पूर्ण
 	t += l;
 
-	if (t > 0) {
-		const unsigned char *ii = in + in_len - t;
+	अगर (t > 0) अणु
+		स्थिर अचिन्हित अक्षर *ii = in + in_len - t;
 
-		if (op == data_start && t <= 238) {
+		अगर (op == data_start && t <= 238) अणु
 			*op++ = (17 + t);
-		} else if (t <= 3) {
+		पूर्ण अन्यथा अगर (t <= 3) अणु
 			op[state_offset] |= t;
-		} else if (t <= 18) {
+		पूर्ण अन्यथा अगर (t <= 18) अणु
 			*op++ = (t - 3);
-		} else {
-			size_t tt = t - 18;
+		पूर्ण अन्यथा अणु
+			माप_प्रकार tt = t - 18;
 			*op++ = 0;
-			while (tt > 255) {
+			जबतक (tt > 255) अणु
 				tt -= 255;
 				*op++ = 0;
-			}
+			पूर्ण
 			*op++ = tt;
-		}
-		if (t >= 16) do {
+		पूर्ण
+		अगर (t >= 16) करो अणु
 			COPY8(op, ii);
 			COPY8(op + 8, ii + 8);
 			op += 16;
 			ii += 16;
 			t -= 16;
-		} while (t >= 16);
-		if (t > 0) do {
+		पूर्ण जबतक (t >= 16);
+		अगर (t > 0) करो अणु
 			*op++ = *ii++;
-		} while (--t > 0);
-	}
+		पूर्ण जबतक (--t > 0);
+	पूर्ण
 
 	*op++ = M4_MARKER | 1;
 	*op++ = 0;
 	*op++ = 0;
 
 	*out_len = op - out;
-	return LZO_E_OK;
-}
+	वापस LZO_E_OK;
+पूर्ण
 
-int lzo1x_1_compress(const unsigned char *in, size_t in_len,
-		     unsigned char *out, size_t *out_len,
-		     void *wrkmem)
-{
-	return lzogeneric1x_1_compress(in, in_len, out, out_len, wrkmem, 0);
-}
+पूर्णांक lzo1x_1_compress(स्थिर अचिन्हित अक्षर *in, माप_प्रकार in_len,
+		     अचिन्हित अक्षर *out, माप_प्रकार *out_len,
+		     व्योम *wrkmem)
+अणु
+	वापस lzogeneric1x_1_compress(in, in_len, out, out_len, wrkmem, 0);
+पूर्ण
 
-int lzorle1x_1_compress(const unsigned char *in, size_t in_len,
-		     unsigned char *out, size_t *out_len,
-		     void *wrkmem)
-{
-	return lzogeneric1x_1_compress(in, in_len, out, out_len,
+पूर्णांक lzorle1x_1_compress(स्थिर अचिन्हित अक्षर *in, माप_प्रकार in_len,
+		     अचिन्हित अक्षर *out, माप_प्रकार *out_len,
+		     व्योम *wrkmem)
+अणु
+	वापस lzogeneric1x_1_compress(in, in_len, out, out_len,
 				       wrkmem, LZO_VERSION);
-}
+पूर्ण
 
 EXPORT_SYMBOL_GPL(lzo1x_1_compress);
 EXPORT_SYMBOL_GPL(lzorle1x_1_compress);

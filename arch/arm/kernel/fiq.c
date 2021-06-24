@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/arm/kernel/fiq.c
  *
@@ -10,156 +11,156 @@
  *  FIQ support re-written by Russell King to be more generic
  *
  * We now properly support a method by which the FIQ handlers can
- * be stacked onto the vector.  We still do not support sharing
+ * be stacked onto the vector.  We still करो not support sharing
  * the FIQ vector itself.
  *
  * Operation is as follows:
  *  1. Owner A claims FIQ:
- *     - default_fiq relinquishes control.
+ *     - शेष_fiq relinquishes control.
  *  2. Owner A:
  *     - inserts code.
- *     - sets any registers,
+ *     - sets any रेजिस्टरs,
  *     - enables FIQ.
  *  3. Owner B claims FIQ:
- *     - if owner A has a relinquish function.
+ *     - अगर owner A has a relinquish function.
  *       - disable FIQs.
- *       - saves any registers.
- *       - returns zero.
+ *       - saves any रेजिस्टरs.
+ *       - वापसs zero.
  *  4. Owner B:
  *     - inserts code.
- *     - sets any registers,
+ *     - sets any रेजिस्टरs,
  *     - enables FIQ.
  *  5. Owner B releases FIQ:
  *     - Owner A is asked to reacquire FIQ:
  *	 - inserts code.
- *	 - restores saved registers.
+ *	 - restores saved रेजिस्टरs.
  *	 - enables FIQ.
  *  6. Goto 3
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/seq_file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/seq_file.h>
 
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/fiq.h>
-#include <asm/irq.h>
-#include <asm/traps.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/fiq.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/traps.h>
 
-#define FIQ_OFFSET ({					\
-		extern void *vector_fiq_offset;		\
-		(unsigned)&vector_fiq_offset;		\
-	})
+#घोषणा FIQ_OFFSET (अणु					\
+		बाह्य व्योम *vector_fiq_offset;		\
+		(अचिन्हित)&vector_fiq_offset;		\
+	पूर्ण)
 
-static unsigned long dfl_fiq_insn;
-static struct pt_regs dfl_fiq_regs;
+अटल अचिन्हित दीर्घ dfl_fiq_insn;
+अटल काष्ठा pt_regs dfl_fiq_regs;
 
 /* Default reacquire function
  * - we always relinquish FIQ control
  * - we always reacquire FIQ control
  */
-static int fiq_def_op(void *ref, int relinquish)
-{
-	if (!relinquish) {
-		/* Restore default handler and registers */
+अटल पूर्णांक fiq_def_op(व्योम *ref, पूर्णांक relinquish)
+अणु
+	अगर (!relinquish) अणु
+		/* Restore शेष handler and रेजिस्टरs */
 		local_fiq_disable();
 		set_fiq_regs(&dfl_fiq_regs);
-		set_fiq_handler(&dfl_fiq_insn, sizeof(dfl_fiq_insn));
+		set_fiq_handler(&dfl_fiq_insn, माप(dfl_fiq_insn));
 		local_fiq_enable();
 
-		/* FIXME: notify irq controller to standard enable FIQs */
-	}
+		/* FIXME: notअगरy irq controller to standard enable FIQs */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct fiq_handler default_owner = {
+अटल काष्ठा fiq_handler शेष_owner = अणु
 	.name	= "default",
 	.fiq_op = fiq_def_op,
-};
+पूर्ण;
 
-static struct fiq_handler *current_fiq = &default_owner;
+अटल काष्ठा fiq_handler *current_fiq = &शेष_owner;
 
-int show_fiq_list(struct seq_file *p, int prec)
-{
-	if (current_fiq != &default_owner)
-		seq_printf(p, "%*s:              %s\n", prec, "FIQ",
+पूर्णांक show_fiq_list(काष्ठा seq_file *p, पूर्णांक prec)
+अणु
+	अगर (current_fiq != &शेष_owner)
+		seq_म_लिखो(p, "%*s:              %s\n", prec, "FIQ",
 			current_fiq->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void set_fiq_handler(void *start, unsigned int length)
-{
-	void *base = vectors_page;
-	unsigned offset = FIQ_OFFSET;
+व्योम set_fiq_handler(व्योम *start, अचिन्हित पूर्णांक length)
+अणु
+	व्योम *base = vectors_page;
+	अचिन्हित offset = FIQ_OFFSET;
 
-	memcpy(base + offset, start, length);
-	if (!cache_is_vipt_nonaliasing())
-		flush_icache_range((unsigned long)base + offset,
-				   (unsigned long)base + offset + length);
+	स_नकल(base + offset, start, length);
+	अगर (!cache_is_vipt_nonaliasing())
+		flush_icache_range((अचिन्हित दीर्घ)base + offset,
+				   (अचिन्हित दीर्घ)base + offset + length);
 	flush_icache_range(0xffff0000 + offset, 0xffff0000 + offset + length);
-}
+पूर्ण
 
-int claim_fiq(struct fiq_handler *f)
-{
-	int ret = 0;
+पूर्णांक claim_fiq(काष्ठा fiq_handler *f)
+अणु
+	पूर्णांक ret = 0;
 
-	if (current_fiq) {
+	अगर (current_fiq) अणु
 		ret = -EBUSY;
 
-		if (current_fiq->fiq_op != NULL)
+		अगर (current_fiq->fiq_op != शून्य)
 			ret = current_fiq->fiq_op(current_fiq->dev_id, 1);
-	}
+	पूर्ण
 
-	if (!ret) {
+	अगर (!ret) अणु
 		f->next = current_fiq;
 		current_fiq = f;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void release_fiq(struct fiq_handler *f)
-{
-	if (current_fiq != f) {
+व्योम release_fiq(काष्ठा fiq_handler *f)
+अणु
+	अगर (current_fiq != f) अणु
 		pr_err("%s FIQ trying to release %s FIQ\n",
 		       f->name, current_fiq->name);
 		dump_stack();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do
+	करो
 		current_fiq = current_fiq->next;
-	while (current_fiq->fiq_op(current_fiq->dev_id, 0));
-}
+	जबतक (current_fiq->fiq_op(current_fiq->dev_id, 0));
+पूर्ण
 
-static int fiq_start;
+अटल पूर्णांक fiq_start;
 
-void enable_fiq(int fiq)
-{
+व्योम enable_fiq(पूर्णांक fiq)
+अणु
 	enable_irq(fiq + fiq_start);
-}
+पूर्ण
 
-void disable_fiq(int fiq)
-{
+व्योम disable_fiq(पूर्णांक fiq)
+अणु
 	disable_irq(fiq + fiq_start);
-}
+पूर्ण
 
 EXPORT_SYMBOL(set_fiq_handler);
-EXPORT_SYMBOL(__set_fiq_regs);	/* defined in fiqasm.S */
-EXPORT_SYMBOL(__get_fiq_regs);	/* defined in fiqasm.S */
+EXPORT_SYMBOL(__set_fiq_regs);	/* defined in fiqयंत्र.S */
+EXPORT_SYMBOL(__get_fiq_regs);	/* defined in fiqयंत्र.S */
 EXPORT_SYMBOL(claim_fiq);
 EXPORT_SYMBOL(release_fiq);
 EXPORT_SYMBOL(enable_fiq);
 EXPORT_SYMBOL(disable_fiq);
 
-void __init init_FIQ(int start)
-{
-	unsigned offset = FIQ_OFFSET;
-	dfl_fiq_insn = *(unsigned long *)(0xffff0000 + offset);
+व्योम __init init_FIQ(पूर्णांक start)
+अणु
+	अचिन्हित offset = FIQ_OFFSET;
+	dfl_fiq_insn = *(अचिन्हित दीर्घ *)(0xffff0000 + offset);
 	get_fiq_regs(&dfl_fiq_regs);
 	fiq_start = start;
-}
+पूर्ण

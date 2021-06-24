@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/isofs/joliet.c
  *
- *  (C) 1996 Gordon Chaffee
+ *  (C) 1996 Gorकरोn Chaffee
  *
  *  Joliet: Microsoft's Unicode extensions to iso9660
  */
 
-#include <linux/types.h>
-#include <linux/nls.h>
-#include "isofs.h"
+#समावेश <linux/types.h>
+#समावेश <linux/nls.h>
+#समावेश "isofs.h"
 
 /*
  * Convert Unicode 16 to UTF-8 or ASCII.
  */
-static int
-uni16_to_x8(unsigned char *ascii, __be16 *uni, int len, struct nls_table *nls)
-{
+अटल पूर्णांक
+uni16_to_x8(अचिन्हित अक्षर *ascii, __be16 *uni, पूर्णांक len, काष्ठा nls_table *nls)
+अणु
 	__be16 *ip, ch;
-	unsigned char *op;
+	अचिन्हित अक्षर *op;
 
 	ip = uni;
 	op = ascii;
 
-	while ((ch = get_unaligned(ip)) && len) {
-		int llen;
-		llen = nls->uni2char(be16_to_cpu(ch), op, NLS_MAX_CHARSET_SIZE);
-		if (llen > 0)
+	जबतक ((ch = get_unaligned(ip)) && len) अणु
+		पूर्णांक llen;
+		llen = nls->uni2अक्षर(be16_to_cpu(ch), op, NLS_MAX_CHARSET_SIZE);
+		अगर (llen > 0)
 			op += llen;
-		else
+		अन्यथा
 			*op++ = '?';
 		ip++;
 
 		len--;
-	}
+	पूर्ण
 	*op = 0;
-	return (op - ascii);
-}
+	वापस (op - ascii);
+पूर्ण
 
-int
-get_joliet_filename(struct iso_directory_record * de, unsigned char *outname, struct inode * inode)
-{
-	unsigned char utf8;
-	struct nls_table *nls;
-	unsigned char len = 0;
+पूर्णांक
+get_joliet_filename(काष्ठा iso_directory_record * de, अचिन्हित अक्षर *outname, काष्ठा inode * inode)
+अणु
+	अचिन्हित अक्षर utf8;
+	काष्ठा nls_table *nls;
+	अचिन्हित अक्षर len = 0;
 
 	utf8 = ISOFS_SB(inode->i_sb)->s_utf8;
-	nls = ISOFS_SB(inode->i_sb)->s_nls_iocharset;
+	nls = ISOFS_SB(inode->i_sb)->s_nls_ioअक्षरset;
 
-	if (utf8) {
-		len = utf16s_to_utf8s((const wchar_t *) de->name,
+	अगर (utf8) अणु
+		len = utf16s_to_utf8s((स्थिर ब_अक्षर_प्रकार *) de->name,
 				de->name_len[0] >> 1, UTF16_BIG_ENDIAN,
 				outname, PAGE_SIZE);
-	} else {
+	पूर्ण अन्यथा अणु
 		len = uni16_to_x8(outname, (__be16 *) de->name,
 				de->name_len[0] >> 1, nls);
-	}
-	if ((len > 2) && (outname[len-2] == ';') && (outname[len-1] == '1'))
+	पूर्ण
+	अगर ((len > 2) && (outname[len-2] == ';') && (outname[len-1] == '1'))
 		len -= 2;
 
 	/*
-	 * Windows doesn't like periods at the end of a name,
-	 * so neither do we
+	 * Winकरोws करोesn't like periods at the end of a name,
+	 * so neither करो we
 	 */
-	while (len >= 2 && (outname[len-1] == '.'))
+	जबतक (len >= 2 && (outname[len-1] == '.'))
 		len--;
 
-	return len;
-}
+	वापस len;
+पूर्ण

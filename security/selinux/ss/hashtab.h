@@ -1,148 +1,149 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * A hash table (hashtab) maintains associations between
+ * A hash table (hashtab) मुख्यtains associations between
  * key values and datum values.  The type of the key values
  * and the type of the datum values is arbitrary.  The
- * functions for hash computation and key comparison are
+ * functions क्रम hash computation and key comparison are
  * provided by the creator of the table.
  *
  * Author : Stephen Smalley, <sds@tycho.nsa.gov>
  */
-#ifndef _SS_HASHTAB_H_
-#define _SS_HASHTAB_H_
+#अगर_अघोषित _SS_HASHTAB_H_
+#घोषणा _SS_HASHTAB_H_
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
 
-#define HASHTAB_MAX_NODES	U32_MAX
+#घोषणा HASHTAB_MAX_NODES	U32_MAX
 
-struct hashtab_key_params {
-	u32 (*hash)(const void *key);	/* hash function */
-	int (*cmp)(const void *key1, const void *key2);
+काष्ठा hashtab_key_params अणु
+	u32 (*hash)(स्थिर व्योम *key);	/* hash function */
+	पूर्णांक (*cmp)(स्थिर व्योम *key1, स्थिर व्योम *key2);
 					/* key comparison function */
-};
+पूर्ण;
 
-struct hashtab_node {
-	void *key;
-	void *datum;
-	struct hashtab_node *next;
-};
+काष्ठा hashtab_node अणु
+	व्योम *key;
+	व्योम *datum;
+	काष्ठा hashtab_node *next;
+पूर्ण;
 
-struct hashtab {
-	struct hashtab_node **htable;	/* hash table */
+काष्ठा hashtab अणु
+	काष्ठा hashtab_node **htable;	/* hash table */
 	u32 size;			/* number of slots in hash table */
 	u32 nel;			/* number of elements in hash table */
-};
+पूर्ण;
 
-struct hashtab_info {
+काष्ठा hashtab_info अणु
 	u32 slots_used;
 	u32 max_chain_len;
-};
+पूर्ण;
 
 /*
- * Initializes a new hash table with the specified characteristics.
+ * Initializes a new hash table with the specअगरied अक्षरacteristics.
  *
- * Returns -ENOMEM if insufficient space is available or 0 otherwise.
+ * Returns -ENOMEM अगर insufficient space is available or 0 otherwise.
  */
-int hashtab_init(struct hashtab *h, u32 nel_hint);
+पूर्णांक hashtab_init(काष्ठा hashtab *h, u32 nel_hपूर्णांक);
 
-int __hashtab_insert(struct hashtab *h, struct hashtab_node **dst,
-		     void *key, void *datum);
+पूर्णांक __hashtab_insert(काष्ठा hashtab *h, काष्ठा hashtab_node **dst,
+		     व्योम *key, व्योम *datum);
 
 /*
- * Inserts the specified (key, datum) pair into the specified hash table.
+ * Inserts the specअगरied (key, datum) pair पूर्णांकo the specअगरied hash table.
  *
  * Returns -ENOMEM on memory allocation error,
- * -EEXIST if there is already an entry with the same key,
- * -EINVAL for general errors or
+ * -EEXIST अगर there is alपढ़ोy an entry with the same key,
+ * -EINVAL क्रम general errors or
   0 otherwise.
  */
-static inline int hashtab_insert(struct hashtab *h, void *key, void *datum,
-				 struct hashtab_key_params key_params)
-{
+अटल अंतरभूत पूर्णांक hashtab_insert(काष्ठा hashtab *h, व्योम *key, व्योम *datum,
+				 काष्ठा hashtab_key_params key_params)
+अणु
 	u32 hvalue;
-	struct hashtab_node *prev, *cur;
+	काष्ठा hashtab_node *prev, *cur;
 
 	cond_resched();
 
-	if (!h->size || h->nel == HASHTAB_MAX_NODES)
-		return -EINVAL;
+	अगर (!h->size || h->nel == HASHTAB_MAX_NODES)
+		वापस -EINVAL;
 
 	hvalue = key_params.hash(key) & (h->size - 1);
-	prev = NULL;
+	prev = शून्य;
 	cur = h->htable[hvalue];
-	while (cur) {
-		int cmp = key_params.cmp(key, cur->key);
+	जबतक (cur) अणु
+		पूर्णांक cmp = key_params.cmp(key, cur->key);
 
-		if (cmp == 0)
-			return -EEXIST;
-		if (cmp < 0)
-			break;
+		अगर (cmp == 0)
+			वापस -EEXIST;
+		अगर (cmp < 0)
+			अवरोध;
 		prev = cur;
 		cur = cur->next;
-	}
+	पूर्ण
 
-	return __hashtab_insert(h, prev ? &prev->next : &h->htable[hvalue],
+	वापस __hashtab_insert(h, prev ? &prev->next : &h->htable[hvalue],
 				key, datum);
-}
+पूर्ण
 
 /*
- * Searches for the entry with the specified key in the hash table.
+ * Searches क्रम the entry with the specअगरied key in the hash table.
  *
- * Returns NULL if no entry has the specified key or
+ * Returns शून्य अगर no entry has the specअगरied key or
  * the datum of the entry otherwise.
  */
-static inline void *hashtab_search(struct hashtab *h, const void *key,
-				   struct hashtab_key_params key_params)
-{
+अटल अंतरभूत व्योम *hashtab_search(काष्ठा hashtab *h, स्थिर व्योम *key,
+				   काष्ठा hashtab_key_params key_params)
+अणु
 	u32 hvalue;
-	struct hashtab_node *cur;
+	काष्ठा hashtab_node *cur;
 
-	if (!h->size)
-		return NULL;
+	अगर (!h->size)
+		वापस शून्य;
 
 	hvalue = key_params.hash(key) & (h->size - 1);
 	cur = h->htable[hvalue];
-	while (cur) {
-		int cmp = key_params.cmp(key, cur->key);
+	जबतक (cur) अणु
+		पूर्णांक cmp = key_params.cmp(key, cur->key);
 
-		if (cmp == 0)
-			return cur->datum;
-		if (cmp < 0)
-			break;
+		अगर (cmp == 0)
+			वापस cur->datum;
+		अगर (cmp < 0)
+			अवरोध;
 		cur = cur->next;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * Destroys the specified hash table.
+ * Destroys the specअगरied hash table.
  */
-void hashtab_destroy(struct hashtab *h);
+व्योम hashtab_destroy(काष्ठा hashtab *h);
 
 /*
- * Applies the specified apply function to (key,datum,args)
- * for each entry in the specified hash table.
+ * Applies the specअगरied apply function to (key,datum,args)
+ * क्रम each entry in the specअगरied hash table.
  *
  * The order in which the function is applied to the entries
- * is dependent upon the internal structure of the hash table.
+ * is dependent upon the पूर्णांकernal काष्ठाure of the hash table.
  *
- * If apply returns a non-zero status, then hashtab_map will cease
+ * If apply वापसs a non-zero status, then hashtab_map will cease
  * iterating through the hash table and will propagate the error
- * return to its caller.
+ * वापस to its caller.
  */
-int hashtab_map(struct hashtab *h,
-		int (*apply)(void *k, void *d, void *args),
-		void *args);
+पूर्णांक hashtab_map(काष्ठा hashtab *h,
+		पूर्णांक (*apply)(व्योम *k, व्योम *d, व्योम *args),
+		व्योम *args);
 
-int hashtab_duplicate(struct hashtab *new, struct hashtab *orig,
-		int (*copy)(struct hashtab_node *new,
-			struct hashtab_node *orig, void *args),
-		int (*destroy)(void *k, void *d, void *args),
-		void *args);
+पूर्णांक hashtab_duplicate(काष्ठा hashtab *new, काष्ठा hashtab *orig,
+		पूर्णांक (*copy)(काष्ठा hashtab_node *new,
+			काष्ठा hashtab_node *orig, व्योम *args),
+		पूर्णांक (*destroy)(व्योम *k, व्योम *d, व्योम *args),
+		व्योम *args);
 
 /* Fill info with some hash table statistics */
-void hashtab_stat(struct hashtab *h, struct hashtab_info *info);
+व्योम hashtab_stat(काष्ठा hashtab *h, काष्ठा hashtab_info *info);
 
-#endif	/* _SS_HASHTAB_H */
+#पूर्ण_अगर	/* _SS_HASHTAB_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PCI Backend - Provides restricted access to the real PCI bus topology
  *               to the frontend
@@ -6,54 +7,54 @@
  *   Author: Ryan Wilson <hap9@epoch.ncsc.mil>
  */
 
-#include <linux/list.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
-#include "pciback.h"
+#समावेश <linux/list.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mutex.h>
+#समावेश "pciback.h"
 
-struct passthrough_dev_data {
-	/* Access to dev_list must be protected by lock */
-	struct list_head dev_list;
-	struct mutex lock;
-};
+काष्ठा passthrough_dev_data अणु
+	/* Access to dev_list must be रक्षित by lock */
+	काष्ठा list_head dev_list;
+	काष्ठा mutex lock;
+पूर्ण;
 
-static struct pci_dev *__xen_pcibk_get_pci_dev(struct xen_pcibk_device *pdev,
-					       unsigned int domain,
-					       unsigned int bus,
-					       unsigned int devfn)
-{
-	struct passthrough_dev_data *dev_data = pdev->pci_dev_data;
-	struct pci_dev_entry *dev_entry;
-	struct pci_dev *dev = NULL;
+अटल काष्ठा pci_dev *__xen_pcibk_get_pci_dev(काष्ठा xen_pcibk_device *pdev,
+					       अचिन्हित पूर्णांक करोमुख्य,
+					       अचिन्हित पूर्णांक bus,
+					       अचिन्हित पूर्णांक devfn)
+अणु
+	काष्ठा passthrough_dev_data *dev_data = pdev->pci_dev_data;
+	काष्ठा pci_dev_entry *dev_entry;
+	काष्ठा pci_dev *dev = शून्य;
 
 	mutex_lock(&dev_data->lock);
 
-	list_for_each_entry(dev_entry, &dev_data->dev_list, list) {
-		if (domain == (unsigned int)pci_domain_nr(dev_entry->dev->bus)
-		    && bus == (unsigned int)dev_entry->dev->bus->number
-		    && devfn == dev_entry->dev->devfn) {
+	list_क्रम_each_entry(dev_entry, &dev_data->dev_list, list) अणु
+		अगर (करोमुख्य == (अचिन्हित पूर्णांक)pci_करोमुख्य_nr(dev_entry->dev->bus)
+		    && bus == (अचिन्हित पूर्णांक)dev_entry->dev->bus->number
+		    && devfn == dev_entry->dev->devfn) अणु
 			dev = dev_entry->dev;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&dev_data->lock);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static int __xen_pcibk_add_pci_dev(struct xen_pcibk_device *pdev,
-				   struct pci_dev *dev,
-				   int devid, publish_pci_dev_cb publish_cb)
-{
-	struct passthrough_dev_data *dev_data = pdev->pci_dev_data;
-	struct pci_dev_entry *dev_entry;
-	unsigned int domain, bus, devfn;
-	int err;
+अटल पूर्णांक __xen_pcibk_add_pci_dev(काष्ठा xen_pcibk_device *pdev,
+				   काष्ठा pci_dev *dev,
+				   पूर्णांक devid, publish_pci_dev_cb publish_cb)
+अणु
+	काष्ठा passthrough_dev_data *dev_data = pdev->pci_dev_data;
+	काष्ठा pci_dev_entry *dev_entry;
+	अचिन्हित पूर्णांक करोमुख्य, bus, devfn;
+	पूर्णांक err;
 
-	dev_entry = kmalloc(sizeof(*dev_entry), GFP_KERNEL);
-	if (!dev_entry)
-		return -ENOMEM;
+	dev_entry = kदो_स्मृति(माप(*dev_entry), GFP_KERNEL);
+	अगर (!dev_entry)
+		वापस -ENOMEM;
 	dev_entry->dev = dev;
 
 	mutex_lock(&dev_data->lock);
@@ -61,49 +62,49 @@ static int __xen_pcibk_add_pci_dev(struct xen_pcibk_device *pdev,
 	mutex_unlock(&dev_data->lock);
 
 	/* Publish this device. */
-	domain = (unsigned int)pci_domain_nr(dev->bus);
-	bus = (unsigned int)dev->bus->number;
+	करोमुख्य = (अचिन्हित पूर्णांक)pci_करोमुख्य_nr(dev->bus);
+	bus = (अचिन्हित पूर्णांक)dev->bus->number;
 	devfn = dev->devfn;
-	err = publish_cb(pdev, domain, bus, devfn, devid);
+	err = publish_cb(pdev, करोमुख्य, bus, devfn, devid);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __xen_pcibk_release_pci_dev(struct xen_pcibk_device *pdev,
-					struct pci_dev *dev, bool lock)
-{
-	struct passthrough_dev_data *dev_data = pdev->pci_dev_data;
-	struct pci_dev_entry *dev_entry, *t;
-	struct pci_dev *found_dev = NULL;
+अटल व्योम __xen_pcibk_release_pci_dev(काष्ठा xen_pcibk_device *pdev,
+					काष्ठा pci_dev *dev, bool lock)
+अणु
+	काष्ठा passthrough_dev_data *dev_data = pdev->pci_dev_data;
+	काष्ठा pci_dev_entry *dev_entry, *t;
+	काष्ठा pci_dev *found_dev = शून्य;
 
 	mutex_lock(&dev_data->lock);
 
-	list_for_each_entry_safe(dev_entry, t, &dev_data->dev_list, list) {
-		if (dev_entry->dev == dev) {
+	list_क्रम_each_entry_safe(dev_entry, t, &dev_data->dev_list, list) अणु
+		अगर (dev_entry->dev == dev) अणु
 			list_del(&dev_entry->list);
 			found_dev = dev_entry->dev;
-			kfree(dev_entry);
-		}
-	}
+			kमुक्त(dev_entry);
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&dev_data->lock);
 
-	if (found_dev) {
-		if (lock)
+	अगर (found_dev) अणु
+		अगर (lock)
 			device_lock(&found_dev->dev);
 		pcistub_put_pci_dev(found_dev);
-		if (lock)
+		अगर (lock)
 			device_unlock(&found_dev->dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __xen_pcibk_init_devices(struct xen_pcibk_device *pdev)
-{
-	struct passthrough_dev_data *dev_data;
+अटल पूर्णांक __xen_pcibk_init_devices(काष्ठा xen_pcibk_device *pdev)
+अणु
+	काष्ठा passthrough_dev_data *dev_data;
 
-	dev_data = kmalloc(sizeof(*dev_data), GFP_KERNEL);
-	if (!dev_data)
-		return -ENOMEM;
+	dev_data = kदो_स्मृति(माप(*dev_data), GFP_KERNEL);
+	अगर (!dev_data)
+		वापस -ENOMEM;
 
 	mutex_init(&dev_data->lock);
 
@@ -111,87 +112,87 @@ static int __xen_pcibk_init_devices(struct xen_pcibk_device *pdev)
 
 	pdev->pci_dev_data = dev_data;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __xen_pcibk_publish_pci_roots(struct xen_pcibk_device *pdev,
+अटल पूर्णांक __xen_pcibk_publish_pci_roots(काष्ठा xen_pcibk_device *pdev,
 					 publish_pci_root_cb publish_root_cb)
-{
-	int err = 0;
-	struct passthrough_dev_data *dev_data = pdev->pci_dev_data;
-	struct pci_dev_entry *dev_entry, *e;
-	struct pci_dev *dev;
-	int found;
-	unsigned int domain, bus;
+अणु
+	पूर्णांक err = 0;
+	काष्ठा passthrough_dev_data *dev_data = pdev->pci_dev_data;
+	काष्ठा pci_dev_entry *dev_entry, *e;
+	काष्ठा pci_dev *dev;
+	पूर्णांक found;
+	अचिन्हित पूर्णांक करोमुख्य, bus;
 
 	mutex_lock(&dev_data->lock);
 
-	list_for_each_entry(dev_entry, &dev_data->dev_list, list) {
-		/* Only publish this device as a root if none of its
+	list_क्रम_each_entry(dev_entry, &dev_data->dev_list, list) अणु
+		/* Only publish this device as a root अगर none of its
 		 * parent bridges are exported
 		 */
 		found = 0;
 		dev = dev_entry->dev->bus->self;
-		for (; !found && dev != NULL; dev = dev->bus->self) {
-			list_for_each_entry(e, &dev_data->dev_list, list) {
-				if (dev == e->dev) {
+		क्रम (; !found && dev != शून्य; dev = dev->bus->self) अणु
+			list_क्रम_each_entry(e, &dev_data->dev_list, list) अणु
+				अगर (dev == e->dev) अणु
 					found = 1;
-					break;
-				}
-			}
-		}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		domain = (unsigned int)pci_domain_nr(dev_entry->dev->bus);
-		bus = (unsigned int)dev_entry->dev->bus->number;
+		करोमुख्य = (अचिन्हित पूर्णांक)pci_करोमुख्य_nr(dev_entry->dev->bus);
+		bus = (अचिन्हित पूर्णांक)dev_entry->dev->bus->number;
 
-		if (!found) {
-			err = publish_root_cb(pdev, domain, bus);
-			if (err)
-				break;
-		}
-	}
+		अगर (!found) अणु
+			err = publish_root_cb(pdev, करोमुख्य, bus);
+			अगर (err)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&dev_data->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __xen_pcibk_release_devices(struct xen_pcibk_device *pdev)
-{
-	struct passthrough_dev_data *dev_data = pdev->pci_dev_data;
-	struct pci_dev_entry *dev_entry, *t;
+अटल व्योम __xen_pcibk_release_devices(काष्ठा xen_pcibk_device *pdev)
+अणु
+	काष्ठा passthrough_dev_data *dev_data = pdev->pci_dev_data;
+	काष्ठा pci_dev_entry *dev_entry, *t;
 
-	list_for_each_entry_safe(dev_entry, t, &dev_data->dev_list, list) {
-		struct pci_dev *dev = dev_entry->dev;
+	list_क्रम_each_entry_safe(dev_entry, t, &dev_data->dev_list, list) अणु
+		काष्ठा pci_dev *dev = dev_entry->dev;
 		list_del(&dev_entry->list);
 		device_lock(&dev->dev);
 		pcistub_put_pci_dev(dev);
 		device_unlock(&dev->dev);
-		kfree(dev_entry);
-	}
+		kमुक्त(dev_entry);
+	पूर्ण
 
-	kfree(dev_data);
-	pdev->pci_dev_data = NULL;
-}
+	kमुक्त(dev_data);
+	pdev->pci_dev_data = शून्य;
+पूर्ण
 
-static int __xen_pcibk_get_pcifront_dev(struct pci_dev *pcidev,
-					struct xen_pcibk_device *pdev,
-					unsigned int *domain, unsigned int *bus,
-					unsigned int *devfn)
-{
-	*domain = pci_domain_nr(pcidev->bus);
+अटल पूर्णांक __xen_pcibk_get_pcअगरront_dev(काष्ठा pci_dev *pcidev,
+					काष्ठा xen_pcibk_device *pdev,
+					अचिन्हित पूर्णांक *करोमुख्य, अचिन्हित पूर्णांक *bus,
+					अचिन्हित पूर्णांक *devfn)
+अणु
+	*करोमुख्य = pci_करोमुख्य_nr(pcidev->bus);
 	*bus = pcidev->bus->number;
 	*devfn = pcidev->devfn;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-const struct xen_pcibk_backend xen_pcibk_passthrough_backend = {
+स्थिर काष्ठा xen_pcibk_backend xen_pcibk_passthrough_backend = अणु
 	.name           = "passthrough",
 	.init           = __xen_pcibk_init_devices,
-	.free		= __xen_pcibk_release_devices,
-	.find           = __xen_pcibk_get_pcifront_dev,
+	.मुक्त		= __xen_pcibk_release_devices,
+	.find           = __xen_pcibk_get_pcअगरront_dev,
 	.publish        = __xen_pcibk_publish_pci_roots,
 	.release        = __xen_pcibk_release_pci_dev,
 	.add            = __xen_pcibk_add_pci_dev,
 	.get            = __xen_pcibk_get_pci_dev,
-};
+पूर्ण;

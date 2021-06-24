@@ -1,99 +1,100 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_JUMP_LABEL_RATELIMIT_H
-#define _LINUX_JUMP_LABEL_RATELIMIT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_JUMP_LABEL_RATELIMIT_H
+#घोषणा _LINUX_JUMP_LABEL_RATELIMIT_H
 
-#include <linux/jump_label.h>
-#include <linux/workqueue.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/workqueue.h>
 
-#if defined(CONFIG_JUMP_LABEL)
-struct static_key_deferred {
-	struct static_key key;
-	unsigned long timeout;
-	struct delayed_work work;
-};
+#अगर defined(CONFIG_JUMP_LABEL)
+काष्ठा अटल_key_deferred अणु
+	काष्ठा अटल_key key;
+	अचिन्हित दीर्घ समयout;
+	काष्ठा delayed_work work;
+पूर्ण;
 
-struct static_key_true_deferred {
-	struct static_key_true key;
-	unsigned long timeout;
-	struct delayed_work work;
-};
+काष्ठा अटल_key_true_deferred अणु
+	काष्ठा अटल_key_true key;
+	अचिन्हित दीर्घ समयout;
+	काष्ठा delayed_work work;
+पूर्ण;
 
-struct static_key_false_deferred {
-	struct static_key_false key;
-	unsigned long timeout;
-	struct delayed_work work;
-};
+काष्ठा अटल_key_false_deferred अणु
+	काष्ठा अटल_key_false key;
+	अचिन्हित दीर्घ समयout;
+	काष्ठा delayed_work work;
+पूर्ण;
 
-#define static_key_slow_dec_deferred(x)					\
-	__static_key_slow_dec_deferred(&(x)->key, &(x)->work, (x)->timeout)
-#define static_branch_slow_dec_deferred(x)				\
-	__static_key_slow_dec_deferred(&(x)->key.key, &(x)->work, (x)->timeout)
+#घोषणा अटल_key_slow_dec_deferred(x)					\
+	__अटल_key_slow_dec_deferred(&(x)->key, &(x)->work, (x)->समयout)
+#घोषणा अटल_branch_slow_dec_deferred(x)				\
+	__अटल_key_slow_dec_deferred(&(x)->key.key, &(x)->work, (x)->समयout)
 
-#define static_key_deferred_flush(x)					\
-	__static_key_deferred_flush((x), &(x)->work)
+#घोषणा अटल_key_deferred_flush(x)					\
+	__अटल_key_deferred_flush((x), &(x)->work)
 
-extern void
-__static_key_slow_dec_deferred(struct static_key *key,
-			       struct delayed_work *work,
-			       unsigned long timeout);
-extern void __static_key_deferred_flush(void *key, struct delayed_work *work);
-extern void
-jump_label_rate_limit(struct static_key_deferred *key, unsigned long rl);
+बाह्य व्योम
+__अटल_key_slow_dec_deferred(काष्ठा अटल_key *key,
+			       काष्ठा delayed_work *work,
+			       अचिन्हित दीर्घ समयout);
+बाह्य व्योम __अटल_key_deferred_flush(व्योम *key, काष्ठा delayed_work *work);
+बाह्य व्योम
+jump_label_rate_limit(काष्ठा अटल_key_deferred *key, अचिन्हित दीर्घ rl);
 
-extern void jump_label_update_timeout(struct work_struct *work);
+बाह्य व्योम jump_label_update_समयout(काष्ठा work_काष्ठा *work);
 
-#define DEFINE_STATIC_KEY_DEFERRED_TRUE(name, rl)			\
-	struct static_key_true_deferred name = {			\
-		.key =		{ STATIC_KEY_INIT_TRUE },		\
-		.timeout =	(rl),					\
+#घोषणा DEFINE_STATIC_KEY_DEFERRED_TRUE(name, rl)			\
+	काष्ठा अटल_key_true_deferred name = अणु			\
+		.key =		अणु STATIC_KEY_INIT_TRUE पूर्ण,		\
+		.समयout =	(rl),					\
 		.work =	__DELAYED_WORK_INITIALIZER((name).work,		\
-						   jump_label_update_timeout, \
+						   jump_label_update_समयout, \
 						   0),			\
-	}
+	पूर्ण
 
-#define DEFINE_STATIC_KEY_DEFERRED_FALSE(name, rl)			\
-	struct static_key_false_deferred name = {			\
-		.key =		{ STATIC_KEY_INIT_FALSE },		\
-		.timeout =	(rl),					\
+#घोषणा DEFINE_STATIC_KEY_DEFERRED_FALSE(name, rl)			\
+	काष्ठा अटल_key_false_deferred name = अणु			\
+		.key =		अणु STATIC_KEY_INIT_FALSE पूर्ण,		\
+		.समयout =	(rl),					\
 		.work =	__DELAYED_WORK_INITIALIZER((name).work,		\
-						   jump_label_update_timeout, \
+						   jump_label_update_समयout, \
 						   0),			\
-	}
+	पूर्ण
 
-#else	/* !CONFIG_JUMP_LABEL */
-struct static_key_deferred {
-	struct static_key  key;
-};
-struct static_key_true_deferred {
-	struct static_key_true key;
-};
-struct static_key_false_deferred {
-	struct static_key_false key;
-};
-#define DEFINE_STATIC_KEY_DEFERRED_TRUE(name, rl)	\
-	struct static_key_true_deferred name = { STATIC_KEY_TRUE_INIT }
-#define DEFINE_STATIC_KEY_DEFERRED_FALSE(name, rl)	\
-	struct static_key_false_deferred name = { STATIC_KEY_FALSE_INIT }
+#अन्यथा	/* !CONFIG_JUMP_LABEL */
+काष्ठा अटल_key_deferred अणु
+	काष्ठा अटल_key  key;
+पूर्ण;
+काष्ठा अटल_key_true_deferred अणु
+	काष्ठा अटल_key_true key;
+पूर्ण;
+काष्ठा अटल_key_false_deferred अणु
+	काष्ठा अटल_key_false key;
+पूर्ण;
+#घोषणा DEFINE_STATIC_KEY_DEFERRED_TRUE(name, rl)	\
+	काष्ठा अटल_key_true_deferred name = अणु STATIC_KEY_TRUE_INIT पूर्ण
+#घोषणा DEFINE_STATIC_KEY_DEFERRED_FALSE(name, rl)	\
+	काष्ठा अटल_key_false_deferred name = अणु STATIC_KEY_FALSE_INIT पूर्ण
 
-#define static_branch_slow_dec_deferred(x)	static_branch_dec(&(x)->key)
+#घोषणा अटल_branch_slow_dec_deferred(x)	अटल_branch_dec(&(x)->key)
 
-static inline void static_key_slow_dec_deferred(struct static_key_deferred *key)
-{
+अटल अंतरभूत व्योम अटल_key_slow_dec_deferred(काष्ठा अटल_key_deferred *key)
+अणु
 	STATIC_KEY_CHECK_USE(key);
-	static_key_slow_dec(&key->key);
-}
-static inline void static_key_deferred_flush(void *key)
-{
+	अटल_key_slow_dec(&key->key);
+पूर्ण
+अटल अंतरभूत व्योम अटल_key_deferred_flush(व्योम *key)
+अणु
 	STATIC_KEY_CHECK_USE(key);
-}
-static inline void
-jump_label_rate_limit(struct static_key_deferred *key,
-		unsigned long rl)
-{
+पूर्ण
+अटल अंतरभूत व्योम
+jump_label_rate_limit(काष्ठा अटल_key_deferred *key,
+		अचिन्हित दीर्घ rl)
+अणु
 	STATIC_KEY_CHECK_USE(key);
-}
-#endif	/* CONFIG_JUMP_LABEL */
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_JUMP_LABEL */
 
-#define static_branch_deferred_inc(x)	static_branch_inc(&(x)->key)
+#घोषणा अटल_branch_deferred_inc(x)	अटल_branch_inc(&(x)->key)
 
-#endif	/* _LINUX_JUMP_LABEL_RATELIMIT_H */
+#पूर्ण_अगर	/* _LINUX_JUMP_LABEL_RATELIMIT_H */

@@ -1,201 +1,202 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Shared support code for AMD K8 northbridges and derivatives.
- * Copyright 2006 Andi Kleen, SUSE Labs.
+ * Shared support code क्रम AMD K8 northbridges and derivatives.
+ * Copyright 2006 Andi Kleen, SUSE Lअसल.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/spinlock.h>
-#include <linux/pci_ids.h>
-#include <asm/amd_nb.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <यंत्र/amd_nb.h>
 
-#define PCI_DEVICE_ID_AMD_17H_ROOT	0x1450
-#define PCI_DEVICE_ID_AMD_17H_M10H_ROOT	0x15d0
-#define PCI_DEVICE_ID_AMD_17H_M30H_ROOT	0x1480
-#define PCI_DEVICE_ID_AMD_17H_M60H_ROOT	0x1630
-#define PCI_DEVICE_ID_AMD_17H_DF_F4	0x1464
-#define PCI_DEVICE_ID_AMD_17H_M10H_DF_F4 0x15ec
-#define PCI_DEVICE_ID_AMD_17H_M30H_DF_F4 0x1494
-#define PCI_DEVICE_ID_AMD_17H_M60H_DF_F4 0x144c
-#define PCI_DEVICE_ID_AMD_17H_M70H_DF_F4 0x1444
-#define PCI_DEVICE_ID_AMD_19H_DF_F4	0x1654
+#घोषणा PCI_DEVICE_ID_AMD_17H_ROOT	0x1450
+#घोषणा PCI_DEVICE_ID_AMD_17H_M10H_ROOT	0x15d0
+#घोषणा PCI_DEVICE_ID_AMD_17H_M30H_ROOT	0x1480
+#घोषणा PCI_DEVICE_ID_AMD_17H_M60H_ROOT	0x1630
+#घोषणा PCI_DEVICE_ID_AMD_17H_DF_F4	0x1464
+#घोषणा PCI_DEVICE_ID_AMD_17H_M10H_DF_F4 0x15ec
+#घोषणा PCI_DEVICE_ID_AMD_17H_M30H_DF_F4 0x1494
+#घोषणा PCI_DEVICE_ID_AMD_17H_M60H_DF_F4 0x144c
+#घोषणा PCI_DEVICE_ID_AMD_17H_M70H_DF_F4 0x1444
+#घोषणा PCI_DEVICE_ID_AMD_19H_DF_F4	0x1654
 
-/* Protect the PCI config register pairs used for SMN and DF indirect access. */
-static DEFINE_MUTEX(smn_mutex);
+/* Protect the PCI config रेजिस्टर pairs used क्रम SMN and DF indirect access. */
+अटल DEFINE_MUTEX(smn_mutex);
 
-static u32 *flush_words;
+अटल u32 *flush_words;
 
-static const struct pci_device_id amd_root_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_ROOT) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_ROOT) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_ROOT) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M60H_ROOT) },
-	{}
-};
+अटल स्थिर काष्ठा pci_device_id amd_root_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_ROOT) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_ROOT) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_ROOT) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M60H_ROOT) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-#define PCI_DEVICE_ID_AMD_CNB17H_F4     0x1704
+#घोषणा PCI_DEVICE_ID_AMD_CNB17H_F4     0x1704
 
-static const struct pci_device_id amd_nb_misc_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_K8_NB_MISC) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_10H_NB_MISC) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_NB_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M10H_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M30H_NB_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M60H_NB_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_NB_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_M30H_NB_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_DF_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_DF_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_DF_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M60H_DF_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_CNB17H_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M70H_DF_F3) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_19H_DF_F3) },
-	{}
-};
+अटल स्थिर काष्ठा pci_device_id amd_nb_misc_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_K8_NB_MISC) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_10H_NB_MISC) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_NB_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M10H_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M30H_NB_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M60H_NB_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_NB_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_M30H_NB_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_DF_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_DF_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_DF_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M60H_DF_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_CNB17H_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M70H_DF_F3) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_19H_DF_F3) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct pci_device_id amd_nb_link_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_NB_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M30H_NB_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M60H_NB_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_NB_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_M30H_NB_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_DF_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_DF_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_DF_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M60H_DF_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M70H_DF_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_19H_DF_F4) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_CNB17H_F4) },
-	{}
-};
+अटल स्थिर काष्ठा pci_device_id amd_nb_link_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_NB_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M30H_NB_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_15H_M60H_NB_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_NB_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_16H_M30H_NB_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_DF_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M10H_DF_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M30H_DF_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M60H_DF_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_17H_M70H_DF_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_19H_DF_F4) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, PCI_DEVICE_ID_AMD_CNB17H_F4) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct pci_device_id hygon_root_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_HYGON, PCI_DEVICE_ID_AMD_17H_ROOT) },
-	{}
-};
+अटल स्थिर काष्ठा pci_device_id hygon_root_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_HYGON, PCI_DEVICE_ID_AMD_17H_ROOT) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct pci_device_id hygon_nb_misc_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_HYGON, PCI_DEVICE_ID_AMD_17H_DF_F3) },
-	{}
-};
+अटल स्थिर काष्ठा pci_device_id hygon_nb_misc_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_HYGON, PCI_DEVICE_ID_AMD_17H_DF_F3) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct pci_device_id hygon_nb_link_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_HYGON, PCI_DEVICE_ID_AMD_17H_DF_F4) },
-	{}
-};
+अटल स्थिर काष्ठा pci_device_id hygon_nb_link_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_HYGON, PCI_DEVICE_ID_AMD_17H_DF_F4) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-const struct amd_nb_bus_dev_range amd_nb_bus_dev_ranges[] __initconst = {
-	{ 0x00, 0x18, 0x20 },
-	{ 0xff, 0x00, 0x20 },
-	{ 0xfe, 0x00, 0x20 },
-	{ }
-};
+स्थिर काष्ठा amd_nb_bus_dev_range amd_nb_bus_dev_ranges[] __initस्थिर = अणु
+	अणु 0x00, 0x18, 0x20 पूर्ण,
+	अणु 0xff, 0x00, 0x20 पूर्ण,
+	अणु 0xfe, 0x00, 0x20 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct amd_northbridge_info amd_northbridges;
+अटल काष्ठा amd_northbridge_info amd_northbridges;
 
-u16 amd_nb_num(void)
-{
-	return amd_northbridges.num;
-}
+u16 amd_nb_num(व्योम)
+अणु
+	वापस amd_northbridges.num;
+पूर्ण
 EXPORT_SYMBOL_GPL(amd_nb_num);
 
-bool amd_nb_has_feature(unsigned int feature)
-{
-	return ((amd_northbridges.flags & feature) == feature);
-}
+bool amd_nb_has_feature(अचिन्हित पूर्णांक feature)
+अणु
+	वापस ((amd_northbridges.flags & feature) == feature);
+पूर्ण
 EXPORT_SYMBOL_GPL(amd_nb_has_feature);
 
-struct amd_northbridge *node_to_amd_nb(int node)
-{
-	return (node < amd_northbridges.num) ? &amd_northbridges.nb[node] : NULL;
-}
+काष्ठा amd_northbridge *node_to_amd_nb(पूर्णांक node)
+अणु
+	वापस (node < amd_northbridges.num) ? &amd_northbridges.nb[node] : शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(node_to_amd_nb);
 
-static struct pci_dev *next_northbridge(struct pci_dev *dev,
-					const struct pci_device_id *ids)
-{
-	do {
+अटल काष्ठा pci_dev *next_northbridge(काष्ठा pci_dev *dev,
+					स्थिर काष्ठा pci_device_id *ids)
+अणु
+	करो अणु
 		dev = pci_get_device(PCI_ANY_ID, PCI_ANY_ID, dev);
-		if (!dev)
-			break;
-	} while (!pci_match_id(ids, dev));
-	return dev;
-}
+		अगर (!dev)
+			अवरोध;
+	पूर्ण जबतक (!pci_match_id(ids, dev));
+	वापस dev;
+पूर्ण
 
-static int __amd_smn_rw(u16 node, u32 address, u32 *value, bool write)
-{
-	struct pci_dev *root;
-	int err = -ENODEV;
+अटल पूर्णांक __amd_smn_rw(u16 node, u32 address, u32 *value, bool ग_लिखो)
+अणु
+	काष्ठा pci_dev *root;
+	पूर्णांक err = -ENODEV;
 
-	if (node >= amd_northbridges.num)
-		goto out;
+	अगर (node >= amd_northbridges.num)
+		जाओ out;
 
 	root = node_to_amd_nb(node)->root;
-	if (!root)
-		goto out;
+	अगर (!root)
+		जाओ out;
 
 	mutex_lock(&smn_mutex);
 
-	err = pci_write_config_dword(root, 0x60, address);
-	if (err) {
+	err = pci_ग_लिखो_config_dword(root, 0x60, address);
+	अगर (err) अणु
 		pr_warn("Error programming SMN address 0x%x.\n", address);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	err = (write ? pci_write_config_dword(root, 0x64, *value)
-		     : pci_read_config_dword(root, 0x64, value));
-	if (err)
+	err = (ग_लिखो ? pci_ग_लिखो_config_dword(root, 0x64, *value)
+		     : pci_पढ़ो_config_dword(root, 0x64, value));
+	अगर (err)
 		pr_warn("Error %s SMN address 0x%x.\n",
-			(write ? "writing to" : "reading from"), address);
+			(ग_लिखो ? "writing to" : "reading from"), address);
 
 out_unlock:
 	mutex_unlock(&smn_mutex);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int amd_smn_read(u16 node, u32 address, u32 *value)
-{
-	return __amd_smn_rw(node, address, value, false);
-}
-EXPORT_SYMBOL_GPL(amd_smn_read);
+पूर्णांक amd_smn_पढ़ो(u16 node, u32 address, u32 *value)
+अणु
+	वापस __amd_smn_rw(node, address, value, false);
+पूर्ण
+EXPORT_SYMBOL_GPL(amd_smn_पढ़ो);
 
-int amd_smn_write(u16 node, u32 address, u32 value)
-{
-	return __amd_smn_rw(node, address, &value, true);
-}
-EXPORT_SYMBOL_GPL(amd_smn_write);
+पूर्णांक amd_smn_ग_लिखो(u16 node, u32 address, u32 value)
+अणु
+	वापस __amd_smn_rw(node, address, &value, true);
+पूर्ण
+EXPORT_SYMBOL_GPL(amd_smn_ग_लिखो);
 
 /*
  * Data Fabric Indirect Access uses FICAA/FICAD.
  *
- * Fabric Indirect Configuration Access Address (FICAA): Constructed based
- * on the device's Instance Id and the PCI function and register offset of
- * the desired register.
+ * Fabric Indirect Configuration Access Address (FICAA): Conकाष्ठाed based
+ * on the device's Instance Id and the PCI function and रेजिस्टर offset of
+ * the desired रेजिस्टर.
  *
  * Fabric Indirect Configuration Access Data (FICAD): There are FICAD LO
- * and FICAD HI registers but so far we only need the LO register.
+ * and FICAD HI रेजिस्टरs but so far we only need the LO रेजिस्टर.
  */
-int amd_df_indirect_read(u16 node, u8 func, u16 reg, u8 instance_id, u32 *lo)
-{
-	struct pci_dev *F4;
+पूर्णांक amd_df_indirect_पढ़ो(u16 node, u8 func, u16 reg, u8 instance_id, u32 *lo)
+अणु
+	काष्ठा pci_dev *F4;
 	u32 ficaa;
-	int err = -ENODEV;
+	पूर्णांक err = -ENODEV;
 
-	if (node >= amd_northbridges.num)
-		goto out;
+	अगर (node >= amd_northbridges.num)
+		जाओ out;
 
 	F4 = node_to_amd_nb(node)->link;
-	if (!F4)
-		goto out;
+	अगर (!F4)
+		जाओ out;
 
 	ficaa  = 1;
 	ficaa |= reg & 0x3FC;
@@ -204,78 +205,78 @@ int amd_df_indirect_read(u16 node, u8 func, u16 reg, u8 instance_id, u32 *lo)
 
 	mutex_lock(&smn_mutex);
 
-	err = pci_write_config_dword(F4, 0x5C, ficaa);
-	if (err) {
+	err = pci_ग_लिखो_config_dword(F4, 0x5C, ficaa);
+	अगर (err) अणु
 		pr_warn("Error writing DF Indirect FICAA, FICAA=0x%x\n", ficaa);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	err = pci_read_config_dword(F4, 0x98, lo);
-	if (err)
+	err = pci_पढ़ो_config_dword(F4, 0x98, lo);
+	अगर (err)
 		pr_warn("Error reading DF Indirect FICAD LO, FICAA=0x%x.\n", ficaa);
 
 out_unlock:
 	mutex_unlock(&smn_mutex);
 
 out:
-	return err;
-}
-EXPORT_SYMBOL_GPL(amd_df_indirect_read);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(amd_df_indirect_पढ़ो);
 
-int amd_cache_northbridges(void)
-{
-	const struct pci_device_id *misc_ids = amd_nb_misc_ids;
-	const struct pci_device_id *link_ids = amd_nb_link_ids;
-	const struct pci_device_id *root_ids = amd_root_ids;
-	struct pci_dev *root, *misc, *link;
-	struct amd_northbridge *nb;
+पूर्णांक amd_cache_northbridges(व्योम)
+अणु
+	स्थिर काष्ठा pci_device_id *misc_ids = amd_nb_misc_ids;
+	स्थिर काष्ठा pci_device_id *link_ids = amd_nb_link_ids;
+	स्थिर काष्ठा pci_device_id *root_ids = amd_root_ids;
+	काष्ठा pci_dev *root, *misc, *link;
+	काष्ठा amd_northbridge *nb;
 	u16 roots_per_misc = 0;
 	u16 misc_count = 0;
 	u16 root_count = 0;
 	u16 i, j;
 
-	if (amd_northbridges.num)
-		return 0;
+	अगर (amd_northbridges.num)
+		वापस 0;
 
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_HYGON) {
+	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_HYGON) अणु
 		root_ids = hygon_root_ids;
 		misc_ids = hygon_nb_misc_ids;
 		link_ids = hygon_nb_link_ids;
-	}
+	पूर्ण
 
-	misc = NULL;
-	while ((misc = next_northbridge(misc, misc_ids)) != NULL)
+	misc = शून्य;
+	जबतक ((misc = next_northbridge(misc, misc_ids)) != शून्य)
 		misc_count++;
 
-	if (!misc_count)
-		return -ENODEV;
+	अगर (!misc_count)
+		वापस -ENODEV;
 
-	root = NULL;
-	while ((root = next_northbridge(root, root_ids)) != NULL)
+	root = शून्य;
+	जबतक ((root = next_northbridge(root, root_ids)) != शून्य)
 		root_count++;
 
-	if (root_count) {
+	अगर (root_count) अणु
 		roots_per_misc = root_count / misc_count;
 
 		/*
-		 * There should be _exactly_ N roots for each DF/SMN
-		 * interface.
+		 * There should be _exactly_ N roots क्रम each DF/SMN
+		 * पूर्णांकerface.
 		 */
-		if (!roots_per_misc || (root_count % roots_per_misc)) {
+		अगर (!roots_per_misc || (root_count % roots_per_misc)) अणु
 			pr_info("Unsupported AMD DF/PCI configuration found\n");
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
-	nb = kcalloc(misc_count, sizeof(struct amd_northbridge), GFP_KERNEL);
-	if (!nb)
-		return -ENOMEM;
+	nb = kसुस्मृति(misc_count, माप(काष्ठा amd_northbridge), GFP_KERNEL);
+	अगर (!nb)
+		वापस -ENOMEM;
 
 	amd_northbridges.nb = nb;
 	amd_northbridges.num = misc_count;
 
-	link = misc = root = NULL;
-	for (i = 0; i < amd_northbridges.num; i++) {
+	link = misc = root = शून्य;
+	क्रम (i = 0; i < amd_northbridges.num; i++) अणु
 		node_to_amd_nb(i)->root = root =
 			next_northbridge(root, root_ids);
 		node_to_amd_nb(i)->misc = misc =
@@ -285,91 +286,91 @@ int amd_cache_northbridges(void)
 
 		/*
 		 * If there are more PCI root devices than data fabric/
-		 * system management network interfaces, then the (N)
-		 * PCI roots per DF/SMN interface are functionally the
-		 * same (for DF/SMN access) and N-1 are redundant.  N-1
-		 * PCI roots should be skipped per DF/SMN interface so
-		 * the following DF/SMN interfaces get mapped to
+		 * प्रणाली management network पूर्णांकerfaces, then the (N)
+		 * PCI roots per DF/SMN पूर्णांकerface are functionally the
+		 * same (क्रम DF/SMN access) and N-1 are redundant.  N-1
+		 * PCI roots should be skipped per DF/SMN पूर्णांकerface so
+		 * the following DF/SMN पूर्णांकerfaces get mapped to
 		 * correct PCI roots.
 		 */
-		for (j = 1; j < roots_per_misc; j++)
+		क्रम (j = 1; j < roots_per_misc; j++)
 			root = next_northbridge(root, root_ids);
-	}
+	पूर्ण
 
-	if (amd_gart_present())
+	अगर (amd_gart_present())
 		amd_northbridges.flags |= AMD_NB_GART;
 
 	/*
-	 * Check for L3 cache presence.
+	 * Check क्रम L3 cache presence.
 	 */
-	if (!cpuid_edx(0x80000006))
-		return 0;
+	अगर (!cpuid_edx(0x80000006))
+		वापस 0;
 
 	/*
 	 * Some CPU families support L3 Cache Index Disable. There are some
 	 * limitations because of E382 and E388 on family 0x10.
 	 */
-	if (boot_cpu_data.x86 == 0x10 &&
+	अगर (boot_cpu_data.x86 == 0x10 &&
 	    boot_cpu_data.x86_model >= 0x8 &&
 	    (boot_cpu_data.x86_model > 0x9 ||
 	     boot_cpu_data.x86_stepping >= 0x1))
 		amd_northbridges.flags |= AMD_NB_L3_INDEX_DISABLE;
 
-	if (boot_cpu_data.x86 == 0x15)
+	अगर (boot_cpu_data.x86 == 0x15)
 		amd_northbridges.flags |= AMD_NB_L3_INDEX_DISABLE;
 
 	/* L3 cache partitioning is supported on family 0x15 */
-	if (boot_cpu_data.x86 == 0x15)
+	अगर (boot_cpu_data.x86 == 0x15)
 		amd_northbridges.flags |= AMD_NB_L3_PARTITIONING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(amd_cache_northbridges);
 
 /*
- * Ignores subdevice/subvendor but as far as I can figure out
+ * Ignores subdevice/subvenकरोr but as far as I can figure out
  * they're useless anyways
  */
 bool __init early_is_amd_nb(u32 device)
-{
-	const struct pci_device_id *misc_ids = amd_nb_misc_ids;
-	const struct pci_device_id *id;
-	u32 vendor = device & 0xffff;
+अणु
+	स्थिर काष्ठा pci_device_id *misc_ids = amd_nb_misc_ids;
+	स्थिर काष्ठा pci_device_id *id;
+	u32 venकरोr = device & 0xffff;
 
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_AMD &&
-	    boot_cpu_data.x86_vendor != X86_VENDOR_HYGON)
-		return false;
+	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_AMD &&
+	    boot_cpu_data.x86_venकरोr != X86_VENDOR_HYGON)
+		वापस false;
 
-	if (boot_cpu_data.x86_vendor == X86_VENDOR_HYGON)
+	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_HYGON)
 		misc_ids = hygon_nb_misc_ids;
 
 	device >>= 16;
-	for (id = misc_ids; id->vendor; id++)
-		if (vendor == id->vendor && device == id->device)
-			return true;
-	return false;
-}
+	क्रम (id = misc_ids; id->venकरोr; id++)
+		अगर (venकरोr == id->venकरोr && device == id->device)
+			वापस true;
+	वापस false;
+पूर्ण
 
-struct resource *amd_get_mmconfig_range(struct resource *res)
-{
+काष्ठा resource *amd_get_mmconfig_range(काष्ठा resource *res)
+अणु
 	u32 address;
 	u64 base, msr;
-	unsigned int segn_busn_bits;
+	अचिन्हित पूर्णांक segn_busn_bits;
 
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_AMD &&
-	    boot_cpu_data.x86_vendor != X86_VENDOR_HYGON)
-		return NULL;
+	अगर (boot_cpu_data.x86_venकरोr != X86_VENDOR_AMD &&
+	    boot_cpu_data.x86_venकरोr != X86_VENDOR_HYGON)
+		वापस शून्य;
 
 	/* assume all cpus from fam10h have mmconfig */
-	if (boot_cpu_data.x86 < 0x10)
-		return NULL;
+	अगर (boot_cpu_data.x86 < 0x10)
+		वापस शून्य;
 
 	address = MSR_FAM10H_MMIO_CONF_BASE;
 	rdmsrl(address, msr);
 
 	/* mmconfig is not enabled */
-	if (!(msr & FAM10H_MMIO_CONF_ENABLE))
-		return NULL;
+	अगर (!(msr & FAM10H_MMIO_CONF_ENABLE))
+		वापस शून्य;
 
 	base = msr & (FAM10H_MMIO_CONF_BASE_MASK<<FAM10H_MMIO_CONF_BASE_SHIFT);
 
@@ -379,163 +380,163 @@ struct resource *amd_get_mmconfig_range(struct resource *res)
 	res->flags = IORESOURCE_MEM;
 	res->start = base;
 	res->end = base + (1ULL<<(segn_busn_bits + 20)) - 1;
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int amd_get_subcaches(int cpu)
-{
-	struct pci_dev *link = node_to_amd_nb(topology_die_id(cpu))->link;
-	unsigned int mask;
+पूर्णांक amd_get_subcaches(पूर्णांक cpu)
+अणु
+	काष्ठा pci_dev *link = node_to_amd_nb(topology_die_id(cpu))->link;
+	अचिन्हित पूर्णांक mask;
 
-	if (!amd_nb_has_feature(AMD_NB_L3_PARTITIONING))
-		return 0;
+	अगर (!amd_nb_has_feature(AMD_NB_L3_PARTITIONING))
+		वापस 0;
 
-	pci_read_config_dword(link, 0x1d4, &mask);
+	pci_पढ़ो_config_dword(link, 0x1d4, &mask);
 
-	return (mask >> (4 * cpu_data(cpu).cpu_core_id)) & 0xf;
-}
+	वापस (mask >> (4 * cpu_data(cpu).cpu_core_id)) & 0xf;
+पूर्ण
 
-int amd_set_subcaches(int cpu, unsigned long mask)
-{
-	static unsigned int reset, ban;
-	struct amd_northbridge *nb = node_to_amd_nb(topology_die_id(cpu));
-	unsigned int reg;
-	int cuid;
+पूर्णांक amd_set_subcaches(पूर्णांक cpu, अचिन्हित दीर्घ mask)
+अणु
+	अटल अचिन्हित पूर्णांक reset, ban;
+	काष्ठा amd_northbridge *nb = node_to_amd_nb(topology_die_id(cpu));
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक cuid;
 
-	if (!amd_nb_has_feature(AMD_NB_L3_PARTITIONING) || mask > 0xf)
-		return -EINVAL;
+	अगर (!amd_nb_has_feature(AMD_NB_L3_PARTITIONING) || mask > 0xf)
+		वापस -EINVAL;
 
-	/* if necessary, collect reset state of L3 partitioning and BAN mode */
-	if (reset == 0) {
-		pci_read_config_dword(nb->link, 0x1d4, &reset);
-		pci_read_config_dword(nb->misc, 0x1b8, &ban);
+	/* अगर necessary, collect reset state of L3 partitioning and BAN mode */
+	अगर (reset == 0) अणु
+		pci_पढ़ो_config_dword(nb->link, 0x1d4, &reset);
+		pci_पढ़ो_config_dword(nb->misc, 0x1b8, &ban);
 		ban &= 0x180000;
-	}
+	पूर्ण
 
-	/* deactivate BAN mode if any subcaches are to be disabled */
-	if (mask != 0xf) {
-		pci_read_config_dword(nb->misc, 0x1b8, &reg);
-		pci_write_config_dword(nb->misc, 0x1b8, reg & ~0x180000);
-	}
+	/* deactivate BAN mode अगर any subcaches are to be disabled */
+	अगर (mask != 0xf) अणु
+		pci_पढ़ो_config_dword(nb->misc, 0x1b8, &reg);
+		pci_ग_लिखो_config_dword(nb->misc, 0x1b8, reg & ~0x180000);
+	पूर्ण
 
 	cuid = cpu_data(cpu).cpu_core_id;
 	mask <<= 4 * cuid;
 	mask |= (0xf ^ (1 << cuid)) << 26;
 
-	pci_write_config_dword(nb->link, 0x1d4, mask);
+	pci_ग_लिखो_config_dword(nb->link, 0x1d4, mask);
 
-	/* reset BAN mode if L3 partitioning returned to reset state */
-	pci_read_config_dword(nb->link, 0x1d4, &reg);
-	if (reg == reset) {
-		pci_read_config_dword(nb->misc, 0x1b8, &reg);
+	/* reset BAN mode अगर L3 partitioning वापसed to reset state */
+	pci_पढ़ो_config_dword(nb->link, 0x1d4, &reg);
+	अगर (reg == reset) अणु
+		pci_पढ़ो_config_dword(nb->misc, 0x1b8, &reg);
 		reg &= ~0x180000;
-		pci_write_config_dword(nb->misc, 0x1b8, reg | ban);
-	}
+		pci_ग_लिखो_config_dword(nb->misc, 0x1b8, reg | ban);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void amd_cache_gart(void)
-{
+अटल व्योम amd_cache_gart(व्योम)
+अणु
 	u16 i;
 
-	if (!amd_nb_has_feature(AMD_NB_GART))
-		return;
+	अगर (!amd_nb_has_feature(AMD_NB_GART))
+		वापस;
 
-	flush_words = kmalloc_array(amd_northbridges.num, sizeof(u32), GFP_KERNEL);
-	if (!flush_words) {
+	flush_words = kदो_स्मृति_array(amd_northbridges.num, माप(u32), GFP_KERNEL);
+	अगर (!flush_words) अणु
 		amd_northbridges.flags &= ~AMD_NB_GART;
 		pr_notice("Cannot initialize GART flush words, GART support disabled\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i != amd_northbridges.num; i++)
-		pci_read_config_dword(node_to_amd_nb(i)->misc, 0x9c, &flush_words[i]);
-}
+	क्रम (i = 0; i != amd_northbridges.num; i++)
+		pci_पढ़ो_config_dword(node_to_amd_nb(i)->misc, 0x9c, &flush_words[i]);
+पूर्ण
 
-void amd_flush_garts(void)
-{
-	int flushed, i;
-	unsigned long flags;
-	static DEFINE_SPINLOCK(gart_lock);
+व्योम amd_flush_garts(व्योम)
+अणु
+	पूर्णांक flushed, i;
+	अचिन्हित दीर्घ flags;
+	अटल DEFINE_SPINLOCK(gart_lock);
 
-	if (!amd_nb_has_feature(AMD_NB_GART))
-		return;
+	अगर (!amd_nb_has_feature(AMD_NB_GART))
+		वापस;
 
 	/*
-	 * Avoid races between AGP and IOMMU. In theory it's not needed
+	 * Aव्योम races between AGP and IOMMU. In theory it's not needed
 	 * but I'm not sure if the hardware won't lose flush requests
 	 * when another is pending. This whole thing is so expensive anyways
-	 * that it doesn't matter to serialize more. -AK
+	 * that it करोesn't matter to serialize more. -AK
 	 */
 	spin_lock_irqsave(&gart_lock, flags);
 	flushed = 0;
-	for (i = 0; i < amd_northbridges.num; i++) {
-		pci_write_config_dword(node_to_amd_nb(i)->misc, 0x9c,
+	क्रम (i = 0; i < amd_northbridges.num; i++) अणु
+		pci_ग_लिखो_config_dword(node_to_amd_nb(i)->misc, 0x9c,
 				       flush_words[i] | 1);
 		flushed++;
-	}
-	for (i = 0; i < amd_northbridges.num; i++) {
+	पूर्ण
+	क्रम (i = 0; i < amd_northbridges.num; i++) अणु
 		u32 w;
 		/* Make sure the hardware actually executed the flush*/
-		for (;;) {
-			pci_read_config_dword(node_to_amd_nb(i)->misc,
+		क्रम (;;) अणु
+			pci_पढ़ो_config_dword(node_to_amd_nb(i)->misc,
 					      0x9c, &w);
-			if (!(w & 1))
-				break;
+			अगर (!(w & 1))
+				अवरोध;
 			cpu_relax();
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&gart_lock, flags);
-	if (!flushed)
+	अगर (!flushed)
 		pr_notice("nothing to flush?\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(amd_flush_garts);
 
-static void __fix_erratum_688(void *info)
-{
-#define MSR_AMD64_IC_CFG 0xC0011021
+अटल व्योम __fix_erratum_688(व्योम *info)
+अणु
+#घोषणा MSR_AMD64_IC_CFG 0xC0011021
 
 	msr_set_bit(MSR_AMD64_IC_CFG, 3);
 	msr_set_bit(MSR_AMD64_IC_CFG, 14);
-}
+पूर्ण
 
 /* Apply erratum 688 fix so machines without a BIOS fix work. */
-static __init void fix_erratum_688(void)
-{
-	struct pci_dev *F4;
+अटल __init व्योम fix_erratum_688(व्योम)
+अणु
+	काष्ठा pci_dev *F4;
 	u32 val;
 
-	if (boot_cpu_data.x86 != 0x14)
-		return;
+	अगर (boot_cpu_data.x86 != 0x14)
+		वापस;
 
-	if (!amd_northbridges.num)
-		return;
+	अगर (!amd_northbridges.num)
+		वापस;
 
 	F4 = node_to_amd_nb(0)->link;
-	if (!F4)
-		return;
+	अगर (!F4)
+		वापस;
 
-	if (pci_read_config_dword(F4, 0x164, &val))
-		return;
+	अगर (pci_पढ़ो_config_dword(F4, 0x164, &val))
+		वापस;
 
-	if (val & BIT(2))
-		return;
+	अगर (val & BIT(2))
+		वापस;
 
-	on_each_cpu(__fix_erratum_688, NULL, 0);
+	on_each_cpu(__fix_erratum_688, शून्य, 0);
 
 	pr_info("x86/cpu/AMD: CPU erratum 688 worked around\n");
-}
+पूर्ण
 
-static __init int init_amd_nbs(void)
-{
+अटल __init पूर्णांक init_amd_nbs(व्योम)
+अणु
 	amd_cache_northbridges();
 	amd_cache_gart();
 
 	fix_erratum_688();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This has to go after the PCI subsystem */
+/* This has to go after the PCI subप्रणाली */
 fs_initcall(init_amd_nbs);

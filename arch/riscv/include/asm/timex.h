@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  */
 
-#ifndef _ASM_RISCV_TIMEX_H
-#define _ASM_RISCV_TIMEX_H
+#अगर_अघोषित _ASM_RISCV_TIMEX_H
+#घोषणा _ASM_RISCV_TIMEX_H
 
-#include <asm/csr.h>
+#समावेश <यंत्र/csr.h>
 
-typedef unsigned long cycles_t;
+प्रकार अचिन्हित दीर्घ cycles_t;
 
-#ifdef CONFIG_RISCV_M_MODE
+#अगर_घोषित CONFIG_RISCV_M_MODE
 
-#include <asm/clint.h>
+#समावेश <यंत्र/clपूर्णांक.h>
 
-#ifdef CONFIG_64BIT
-static inline cycles_t get_cycles(void)
-{
-	return readq_relaxed(clint_time_val);
-}
-#else /* !CONFIG_64BIT */
-static inline u32 get_cycles(void)
-{
-	return readl_relaxed(((u32 *)clint_time_val));
-}
-#define get_cycles get_cycles
+#अगर_घोषित CONFIG_64BIT
+अटल अंतरभूत cycles_t get_cycles(व्योम)
+अणु
+	वापस पढ़ोq_relaxed(clपूर्णांक_समय_val);
+पूर्ण
+#अन्यथा /* !CONFIG_64BIT */
+अटल अंतरभूत u32 get_cycles(व्योम)
+अणु
+	वापस पढ़ोl_relaxed(((u32 *)clपूर्णांक_समय_val));
+पूर्ण
+#घोषणा get_cycles get_cycles
 
-static inline u32 get_cycles_hi(void)
-{
-	return readl_relaxed(((u32 *)clint_time_val) + 1);
-}
-#define get_cycles_hi get_cycles_hi
-#endif /* CONFIG_64BIT */
+अटल अंतरभूत u32 get_cycles_hi(व्योम)
+अणु
+	वापस पढ़ोl_relaxed(((u32 *)clपूर्णांक_समय_val) + 1);
+पूर्ण
+#घोषणा get_cycles_hi get_cycles_hi
+#पूर्ण_अगर /* CONFIG_64BIT */
 
 /*
- * Much like MIPS, we may not have a viable counter to use at an early point
- * in the boot process. Unfortunately we don't have a fallback, so instead
- * we just return 0.
+ * Much like MIPS, we may not have a viable counter to use at an early poपूर्णांक
+ * in the boot process. Unक्रमtunately we करोn't have a fallback, so instead
+ * we just वापस 0.
  */
-static inline unsigned long random_get_entropy(void)
-{
-	if (unlikely(clint_time_val == NULL))
-		return 0;
-	return get_cycles();
-}
-#define random_get_entropy()	random_get_entropy()
+अटल अंतरभूत अचिन्हित दीर्घ अक्रमom_get_entropy(व्योम)
+अणु
+	अगर (unlikely(clपूर्णांक_समय_val == शून्य))
+		वापस 0;
+	वापस get_cycles();
+पूर्ण
+#घोषणा अक्रमom_get_entropy()	अक्रमom_get_entropy()
 
-#else /* CONFIG_RISCV_M_MODE */
+#अन्यथा /* CONFIG_RISCV_M_MODE */
 
-static inline cycles_t get_cycles(void)
-{
-	return csr_read(CSR_TIME);
-}
-#define get_cycles get_cycles
+अटल अंतरभूत cycles_t get_cycles(व्योम)
+अणु
+	वापस csr_पढ़ो(CSR_TIME);
+पूर्ण
+#घोषणा get_cycles get_cycles
 
-static inline u32 get_cycles_hi(void)
-{
-	return csr_read(CSR_TIMEH);
-}
-#define get_cycles_hi get_cycles_hi
+अटल अंतरभूत u32 get_cycles_hi(व्योम)
+अणु
+	वापस csr_पढ़ो(CSR_TIMEH);
+पूर्ण
+#घोषणा get_cycles_hi get_cycles_hi
 
-#endif /* !CONFIG_RISCV_M_MODE */
+#पूर्ण_अगर /* !CONFIG_RISCV_M_MODE */
 
-#ifdef CONFIG_64BIT
-static inline u64 get_cycles64(void)
-{
-	return get_cycles();
-}
-#else /* CONFIG_64BIT */
-static inline u64 get_cycles64(void)
-{
+#अगर_घोषित CONFIG_64BIT
+अटल अंतरभूत u64 get_cycles64(व्योम)
+अणु
+	वापस get_cycles();
+पूर्ण
+#अन्यथा /* CONFIG_64BIT */
+अटल अंतरभूत u64 get_cycles64(व्योम)
+अणु
 	u32 hi, lo;
 
-	do {
+	करो अणु
 		hi = get_cycles_hi();
 		lo = get_cycles();
-	} while (hi != get_cycles_hi());
+	पूर्ण जबतक (hi != get_cycles_hi());
 
-	return ((u64)hi << 32) | lo;
-}
-#endif /* CONFIG_64BIT */
+	वापस ((u64)hi << 32) | lo;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_64BIT */
 
-#define ARCH_HAS_READ_CURRENT_TIMER
-static inline int read_current_timer(unsigned long *timer_val)
-{
-	*timer_val = get_cycles();
-	return 0;
-}
+#घोषणा ARCH_HAS_READ_CURRENT_TIMER
+अटल अंतरभूत पूर्णांक पढ़ो_current_समयr(अचिन्हित दीर्घ *समयr_val)
+अणु
+	*समयr_val = get_cycles();
+	वापस 0;
+पूर्ण
 
-extern void time_init(void);
+बाह्य व्योम समय_init(व्योम);
 
-#endif /* _ASM_RISCV_TIMEX_H */
+#पूर्ण_अगर /* _ASM_RISCV_TIMEX_H */

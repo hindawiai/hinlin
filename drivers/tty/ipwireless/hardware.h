@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * IPWireless 3G PCMCIA Network Driver
  *
@@ -9,55 +10,55 @@
  * Copyrighted as follows:
  *   Copyright (C) 2004 by Symmetric Systems Ltd (NZ)
  *
- * Various driver changes and rewrites, port to new kernels
+ * Various driver changes and reग_लिखोs, port to new kernels
  *   Copyright (C) 2006-2007 Jiri Kosina
  *
  * Misc code cleanups and updates
  *   Copyright (C) 2007 David Sterba
  */
 
-#ifndef _IPWIRELESS_CS_HARDWARE_H_
-#define _IPWIRELESS_CS_HARDWARE_H_
+#अगर_अघोषित _IPWIRELESS_CS_HARDWARE_H_
+#घोषणा _IPWIRELESS_CS_HARDWARE_H_
 
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#define IPW_CONTROL_LINE_CTS 0x0001
-#define IPW_CONTROL_LINE_DCD 0x0002
-#define IPW_CONTROL_LINE_DSR 0x0004
-#define IPW_CONTROL_LINE_RI  0x0008
-#define IPW_CONTROL_LINE_DTR 0x0010
-#define IPW_CONTROL_LINE_RTS 0x0020
+#घोषणा IPW_CONTROL_LINE_CTS 0x0001
+#घोषणा IPW_CONTROL_LINE_DCD 0x0002
+#घोषणा IPW_CONTROL_LINE_DSR 0x0004
+#घोषणा IPW_CONTROL_LINE_RI  0x0008
+#घोषणा IPW_CONTROL_LINE_DTR 0x0010
+#घोषणा IPW_CONTROL_LINE_RTS 0x0020
 
-struct ipw_hardware;
-struct ipw_network;
+काष्ठा ipw_hardware;
+काष्ठा ipw_network;
 
-struct ipw_hardware *ipwireless_hardware_create(void);
-void ipwireless_hardware_free(struct ipw_hardware *hw);
-irqreturn_t ipwireless_interrupt(int irq, void *dev_id);
-int ipwireless_set_DTR(struct ipw_hardware *hw, unsigned int channel_idx,
-		int state);
-int ipwireless_set_RTS(struct ipw_hardware *hw, unsigned int channel_idx,
-		int state);
-int ipwireless_send_packet(struct ipw_hardware *hw,
-			    unsigned int channel_idx,
-			    const unsigned char *data,
-			    unsigned int length,
-			    void (*packet_sent_callback) (void *cb,
-							  unsigned int length),
-			    void *sent_cb_data);
-void ipwireless_associate_network(struct ipw_hardware *hw,
-		struct ipw_network *net);
-void ipwireless_stop_interrupts(struct ipw_hardware *hw);
-void ipwireless_init_hardware_v1(struct ipw_hardware *hw,
-				 unsigned int base_port,
-				 void __iomem *attr_memory,
-				 void __iomem *common_memory,
-				 int is_v2_card,
-				 void (*reboot_cb) (void *data),
-				 void *reboot_cb_data);
-void ipwireless_init_hardware_v2_v3(struct ipw_hardware *hw);
-void ipwireless_sleep(unsigned int tenths);
+काष्ठा ipw_hardware *ipwireless_hardware_create(व्योम);
+व्योम ipwireless_hardware_मुक्त(काष्ठा ipw_hardware *hw);
+irqवापस_t ipwireless_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id);
+पूर्णांक ipwireless_set_DTR(काष्ठा ipw_hardware *hw, अचिन्हित पूर्णांक channel_idx,
+		पूर्णांक state);
+पूर्णांक ipwireless_set_RTS(काष्ठा ipw_hardware *hw, अचिन्हित पूर्णांक channel_idx,
+		पूर्णांक state);
+पूर्णांक ipwireless_send_packet(काष्ठा ipw_hardware *hw,
+			    अचिन्हित पूर्णांक channel_idx,
+			    स्थिर अचिन्हित अक्षर *data,
+			    अचिन्हित पूर्णांक length,
+			    व्योम (*packet_sent_callback) (व्योम *cb,
+							  अचिन्हित पूर्णांक length),
+			    व्योम *sent_cb_data);
+व्योम ipwireless_associate_network(काष्ठा ipw_hardware *hw,
+		काष्ठा ipw_network *net);
+व्योम ipwireless_stop_पूर्णांकerrupts(काष्ठा ipw_hardware *hw);
+व्योम ipwireless_init_hardware_v1(काष्ठा ipw_hardware *hw,
+				 अचिन्हित पूर्णांक base_port,
+				 व्योम __iomem *attr_memory,
+				 व्योम __iomem *common_memory,
+				 पूर्णांक is_v2_card,
+				 व्योम (*reboot_cb) (व्योम *data),
+				 व्योम *reboot_cb_data);
+व्योम ipwireless_init_hardware_v2_v3(काष्ठा ipw_hardware *hw);
+व्योम ipwireless_sleep(अचिन्हित पूर्णांक tenths);
 
-#endif
+#पूर्ण_अगर

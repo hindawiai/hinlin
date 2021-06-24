@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_CACHE_H
-#define _ASM_IA64_CACHE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_CACHE_H
+#घोषणा _ASM_IA64_CACHE_H
 
 
 /*
@@ -9,22 +10,22 @@
  */
 
 /* Bytes per L1 (data) cache line.  */
-#define L1_CACHE_SHIFT		CONFIG_IA64_L1_CACHE_SHIFT
-#define L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
+#घोषणा L1_CACHE_SHIFT		CONFIG_IA64_L1_CACHE_SHIFT
+#घोषणा L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 # define SMP_CACHE_SHIFT	L1_CACHE_SHIFT
 # define SMP_CACHE_BYTES	L1_CACHE_BYTES
-#else
+#अन्यथा
   /*
    * The "aligned" directive can only _increase_ alignment, so this is
-   * safe and provides an easy way to avoid wasting space on a
+   * safe and provides an easy way to aव्योम wasting space on a
    * uni-processor:
    */
 # define SMP_CACHE_SHIFT	3
 # define SMP_CACHE_BYTES	(1 << 3)
-#endif
+#पूर्ण_अगर
 
-#define __read_mostly __section(".data..read_mostly")
+#घोषणा __पढ़ो_mostly __section(".data..read_mostly")
 
-#endif /* _ASM_IA64_CACHE_H */
+#पूर्ण_अगर /* _ASM_IA64_CACHE_H */

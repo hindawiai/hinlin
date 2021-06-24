@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Spreadtrum clock infrastructure
+// Spपढ़ोtrum घड़ी infraकाष्ठाure
 //
-// Copyright (C) 2017 Spreadtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+// Copyright (C) 2017 Spपढ़ोtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
 
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regmap.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-static const struct regmap_config sprdclk_regmap_config = {
+अटल स्थिर काष्ठा regmap_config sprdclk_regmap_config = अणु
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_register	= 0xffff,
+	.max_रेजिस्टर	= 0xffff,
 	.fast_io	= true,
-};
+पूर्ण;
 
-static void sprd_clk_set_regmap(const struct sprd_clk_desc *desc,
-			 struct regmap *regmap)
-{
-	int i;
-	struct sprd_clk_common *cclk;
+अटल व्योम sprd_clk_set_regmap(स्थिर काष्ठा sprd_clk_desc *desc,
+			 काष्ठा regmap *regmap)
+अणु
+	पूर्णांक i;
+	काष्ठा sprd_clk_common *cclk;
 
-	for (i = 0; i < desc->num_clk_clks; i++) {
+	क्रम (i = 0; i < desc->num_clk_clks; i++) अणु
 		cclk = desc->clk_clks[i];
-		if (!cclk)
-			continue;
+		अगर (!cclk)
+			जारी;
 
 		cclk->regmap = regmap;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int sprd_clk_regmap_init(struct platform_device *pdev,
-			 const struct sprd_clk_desc *desc)
-{
-	void __iomem *base;
-	struct device *dev = &pdev->dev;
-	struct device_node *node = dev->of_node;
-	struct regmap *regmap;
+पूर्णांक sprd_clk_regmap_init(काष्ठा platक्रमm_device *pdev,
+			 स्थिर काष्ठा sprd_clk_desc *desc)
+अणु
+	व्योम __iomem *base;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *node = dev->of_node;
+	काष्ठा regmap *regmap;
 
-	if (of_find_property(node, "sprd,syscon", NULL)) {
+	अगर (of_find_property(node, "sprd,syscon", शून्य)) अणु
 		regmap = syscon_regmap_lookup_by_phandle(node, "sprd,syscon");
-		if (IS_ERR(regmap)) {
+		अगर (IS_ERR(regmap)) अणु
 			pr_err("%s: failed to get syscon regmap\n", __func__);
-			return PTR_ERR(regmap);
-		}
-	} else if (of_device_is_compatible(of_get_parent(dev->of_node),
-			   "syscon")) {
+			वापस PTR_ERR(regmap);
+		पूर्ण
+	पूर्ण अन्यथा अगर (of_device_is_compatible(of_get_parent(dev->of_node),
+			   "syscon")) अणु
 		regmap = device_node_to_regmap(of_get_parent(dev->of_node));
-		if (IS_ERR(regmap)) {
+		अगर (IS_ERR(regmap)) अणु
 			dev_err(dev, "failed to get regmap from its parent.\n");
-			return PTR_ERR(regmap);
-		}
-	} else {
-		base = devm_platform_ioremap_resource(pdev, 0);
-		if (IS_ERR(base))
-			return PTR_ERR(base);
+			वापस PTR_ERR(regmap);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		base = devm_platक्रमm_ioremap_resource(pdev, 0);
+		अगर (IS_ERR(base))
+			वापस PTR_ERR(base);
 
 		regmap = devm_regmap_init_mmio(&pdev->dev, base,
 					       &sprdclk_regmap_config);
-		if (IS_ERR(regmap)) {
+		अगर (IS_ERR(regmap)) अणु
 			pr_err("failed to init regmap\n");
-			return PTR_ERR(regmap);
-		}
-	}
+			वापस PTR_ERR(regmap);
+		पूर्ण
+	पूर्ण
 
 	sprd_clk_set_regmap(desc, regmap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sprd_clk_regmap_init);
 
-int sprd_clk_probe(struct device *dev, struct clk_hw_onecell_data *clkhw)
-{
-	int i, ret;
-	struct clk_hw *hw;
+पूर्णांक sprd_clk_probe(काष्ठा device *dev, काष्ठा clk_hw_onecell_data *clkhw)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा clk_hw *hw;
 
-	for (i = 0; i < clkhw->num; i++) {
-		const char *name;
+	क्रम (i = 0; i < clkhw->num; i++) अणु
+		स्थिर अक्षर *name;
 
 		hw = clkhw->hws[i];
-		if (!hw)
-			continue;
+		अगर (!hw)
+			जारी;
 
 		name = hw->init->name;
-		ret = devm_clk_hw_register(dev, hw);
-		if (ret) {
+		ret = devm_clk_hw_रेजिस्टर(dev, hw);
+		अगर (ret) अणु
 			dev_err(dev, "Couldn't register clock %d - %s\n",
 				i, name);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get, clkhw);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "Failed to add clock provider\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sprd_clk_probe);
 
 MODULE_LICENSE("GPL v2");

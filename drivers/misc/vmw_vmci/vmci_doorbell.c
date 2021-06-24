@@ -1,604 +1,605 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#include <linux/vmw_vmci_defs.h>
-#include <linux/vmw_vmci_api.h>
-#include <linux/completion.h>
-#include <linux/hash.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/vmw_vmci_api.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#include "vmci_datagram.h"
-#include "vmci_doorbell.h"
-#include "vmci_resource.h"
-#include "vmci_driver.h"
-#include "vmci_route.h"
+#समावेश "vmci_datagram.h"
+#समावेश "vmci_doorbell.h"
+#समावेश "vmci_resource.h"
+#समावेश "vmci_driver.h"
+#समावेश "vmci_route.h"
 
 
-#define VMCI_DOORBELL_INDEX_BITS	6
-#define VMCI_DOORBELL_INDEX_TABLE_SIZE	(1 << VMCI_DOORBELL_INDEX_BITS)
-#define VMCI_DOORBELL_HASH(_idx)	hash_32(_idx, VMCI_DOORBELL_INDEX_BITS)
+#घोषणा VMCI_DOORBELL_INDEX_BITS	6
+#घोषणा VMCI_DOORBELL_INDEX_TABLE_SIZE	(1 << VMCI_DOORBELL_INDEX_BITS)
+#घोषणा VMCI_DOORBELL_HASH(_idx)	hash_32(_idx, VMCI_DOORBELL_INDEX_BITS)
 
 /*
- * DoorbellEntry describes the a doorbell notification handle allocated by the
+ * DoorbellEntry describes the a करोorbell notअगरication handle allocated by the
  * host.
  */
-struct dbell_entry {
-	struct vmci_resource resource;
-	struct hlist_node node;
-	struct work_struct work;
-	vmci_callback notify_cb;
-	void *client_data;
+काष्ठा dbell_entry अणु
+	काष्ठा vmci_resource resource;
+	काष्ठा hlist_node node;
+	काष्ठा work_काष्ठा work;
+	vmci_callback notअगरy_cb;
+	व्योम *client_data;
 	u32 idx;
 	u32 priv_flags;
 	bool run_delayed;
 	atomic_t active;	/* Only used by guest personality */
-};
+पूर्ण;
 
-/* The VMCI index table keeps track of currently registered doorbells. */
-struct dbell_index_table {
+/* The VMCI index table keeps track of currently रेजिस्टरed करोorbells. */
+काष्ठा dbell_index_table अणु
 	spinlock_t lock;	/* Index table lock */
-	struct hlist_head entries[VMCI_DOORBELL_INDEX_TABLE_SIZE];
-};
+	काष्ठा hlist_head entries[VMCI_DOORBELL_INDEX_TABLE_SIZE];
+पूर्ण;
 
-static struct dbell_index_table vmci_doorbell_it = {
-	.lock = __SPIN_LOCK_UNLOCKED(vmci_doorbell_it.lock),
-};
-
-/*
- * The max_notify_idx is one larger than the currently known bitmap index in
- * use, and is used to determine how much of the bitmap needs to be scanned.
- */
-static u32 max_notify_idx;
+अटल काष्ठा dbell_index_table vmci_करोorbell_it = अणु
+	.lock = __SPIN_LOCK_UNLOCKED(vmci_करोorbell_it.lock),
+पूर्ण;
 
 /*
- * The notify_idx_count is used for determining whether there are free entries
- * within the bitmap (if notify_idx_count + 1 < max_notify_idx).
+ * The max_notअगरy_idx is one larger than the currently known biपंचांगap index in
+ * use, and is used to determine how much of the biपंचांगap needs to be scanned.
  */
-static u32 notify_idx_count;
+अटल u32 max_notअगरy_idx;
 
 /*
- * The last_notify_idx_reserved is used to track the last index handed out - in
- * the case where multiple handles share a notification index, we hand out
- * indexes round robin based on last_notify_idx_reserved.
+ * The notअगरy_idx_count is used क्रम determining whether there are मुक्त entries
+ * within the biपंचांगap (अगर notअगरy_idx_count + 1 < max_notअगरy_idx).
  */
-static u32 last_notify_idx_reserved;
+अटल u32 notअगरy_idx_count;
+
+/*
+ * The last_notअगरy_idx_reserved is used to track the last index handed out - in
+ * the हाल where multiple handles share a notअगरication index, we hand out
+ * indexes round robin based on last_notअगरy_idx_reserved.
+ */
+अटल u32 last_notअगरy_idx_reserved;
 
 /* This is a one entry cache used to by the index allocation. */
-static u32 last_notify_idx_released = PAGE_SIZE;
+अटल u32 last_notअगरy_idx_released = PAGE_SIZE;
 
 
 /*
  * Utility function that retrieves the privilege flags associated
- * with a given doorbell handle. For guest endpoints, the
- * privileges are determined by the context ID, but for host
- * endpoints privileges are associated with the complete
- * handle. Hypervisor endpoints are not yet supported.
+ * with a given करोorbell handle. For guest endpoपूर्णांकs, the
+ * privileges are determined by the context ID, but क्रम host
+ * endpoपूर्णांकs privileges are associated with the complete
+ * handle. Hypervisor endpoपूर्णांकs are not yet supported.
  */
-int vmci_dbell_get_priv_flags(struct vmci_handle handle, u32 *priv_flags)
-{
-	if (priv_flags == NULL || handle.context == VMCI_INVALID_ID)
-		return VMCI_ERROR_INVALID_ARGS;
+पूर्णांक vmci_dbell_get_priv_flags(काष्ठा vmci_handle handle, u32 *priv_flags)
+अणु
+	अगर (priv_flags == शून्य || handle.context == VMCI_INVALID_ID)
+		वापस VMCI_ERROR_INVALID_ARGS;
 
-	if (handle.context == VMCI_HOST_CONTEXT_ID) {
-		struct dbell_entry *entry;
-		struct vmci_resource *resource;
+	अगर (handle.context == VMCI_HOST_CONTEXT_ID) अणु
+		काष्ठा dbell_entry *entry;
+		काष्ठा vmci_resource *resource;
 
 		resource = vmci_resource_by_handle(handle,
 						   VMCI_RESOURCE_TYPE_DOORBELL);
-		if (!resource)
-			return VMCI_ERROR_NOT_FOUND;
+		अगर (!resource)
+			वापस VMCI_ERROR_NOT_FOUND;
 
-		entry = container_of(resource, struct dbell_entry, resource);
+		entry = container_of(resource, काष्ठा dbell_entry, resource);
 		*priv_flags = entry->priv_flags;
 		vmci_resource_put(resource);
-	} else if (handle.context == VMCI_HYPERVISOR_CONTEXT_ID) {
+	पूर्ण अन्यथा अगर (handle.context == VMCI_HYPERVISOR_CONTEXT_ID) अणु
 		/*
-		 * Hypervisor endpoints for notifications are not
+		 * Hypervisor endpoपूर्णांकs क्रम notअगरications are not
 		 * supported (yet).
 		 */
-		return VMCI_ERROR_INVALID_ARGS;
-	} else {
+		वापस VMCI_ERROR_INVALID_ARGS;
+	पूर्ण अन्यथा अणु
 		*priv_flags = vmci_context_get_priv_flags(handle.context);
-	}
+	पूर्ण
 
-	return VMCI_SUCCESS;
-}
+	वापस VMCI_SUCCESS;
+पूर्ण
 
 /*
- * Find doorbell entry by bitmap index.
+ * Find करोorbell entry by biपंचांगap index.
  */
-static struct dbell_entry *dbell_index_table_find(u32 idx)
-{
+अटल काष्ठा dbell_entry *dbell_index_table_find(u32 idx)
+अणु
 	u32 bucket = VMCI_DOORBELL_HASH(idx);
-	struct dbell_entry *dbell;
+	काष्ठा dbell_entry *dbell;
 
-	hlist_for_each_entry(dbell, &vmci_doorbell_it.entries[bucket],
-			     node) {
-		if (idx == dbell->idx)
-			return dbell;
-	}
+	hlist_क्रम_each_entry(dbell, &vmci_करोorbell_it.entries[bucket],
+			     node) अणु
+		अगर (idx == dbell->idx)
+			वापस dbell;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Add the given entry to the index table.  This willi take a reference to the
- * entry's resource so that the entry is not deleted before it is removed from
+ * entry's resource so that the entry is not deleted beक्रमe it is हटाओd from
  * the * table.
  */
-static void dbell_index_table_add(struct dbell_entry *entry)
-{
+अटल व्योम dbell_index_table_add(काष्ठा dbell_entry *entry)
+अणु
 	u32 bucket;
-	u32 new_notify_idx;
+	u32 new_notअगरy_idx;
 
 	vmci_resource_get(&entry->resource);
 
-	spin_lock_bh(&vmci_doorbell_it.lock);
+	spin_lock_bh(&vmci_करोorbell_it.lock);
 
 	/*
-	 * Below we try to allocate an index in the notification
-	 * bitmap with "not too much" sharing between resources. If we
-	 * use less that the full bitmap, we either add to the end if
+	 * Below we try to allocate an index in the notअगरication
+	 * biपंचांगap with "not too much" sharing between resources. If we
+	 * use less that the full biपंचांगap, we either add to the end अगर
 	 * there are no unused flags within the currently used area,
-	 * or we search for unused ones. If we use the full bitmap, we
+	 * or we search क्रम unused ones. If we use the full biपंचांगap, we
 	 * allocate the index round robin.
 	 */
-	if (max_notify_idx < PAGE_SIZE || notify_idx_count < PAGE_SIZE) {
-		if (last_notify_idx_released < max_notify_idx &&
-		    !dbell_index_table_find(last_notify_idx_released)) {
-			new_notify_idx = last_notify_idx_released;
-			last_notify_idx_released = PAGE_SIZE;
-		} else {
+	अगर (max_notअगरy_idx < PAGE_SIZE || notअगरy_idx_count < PAGE_SIZE) अणु
+		अगर (last_notअगरy_idx_released < max_notअगरy_idx &&
+		    !dbell_index_table_find(last_notअगरy_idx_released)) अणु
+			new_notअगरy_idx = last_notअगरy_idx_released;
+			last_notअगरy_idx_released = PAGE_SIZE;
+		पूर्ण अन्यथा अणु
 			bool reused = false;
-			new_notify_idx = last_notify_idx_reserved;
-			if (notify_idx_count + 1 < max_notify_idx) {
-				do {
-					if (!dbell_index_table_find
-					    (new_notify_idx)) {
+			new_notअगरy_idx = last_notअगरy_idx_reserved;
+			अगर (notअगरy_idx_count + 1 < max_notअगरy_idx) अणु
+				करो अणु
+					अगर (!dbell_index_table_find
+					    (new_notअगरy_idx)) अणु
 						reused = true;
-						break;
-					}
-					new_notify_idx = (new_notify_idx + 1) %
-					    max_notify_idx;
-				} while (new_notify_idx !=
-					 last_notify_idx_released);
-			}
-			if (!reused) {
-				new_notify_idx = max_notify_idx;
-				max_notify_idx++;
-			}
-		}
-	} else {
-		new_notify_idx = (last_notify_idx_reserved + 1) % PAGE_SIZE;
-	}
+						अवरोध;
+					पूर्ण
+					new_notअगरy_idx = (new_notअगरy_idx + 1) %
+					    max_notअगरy_idx;
+				पूर्ण जबतक (new_notअगरy_idx !=
+					 last_notअगरy_idx_released);
+			पूर्ण
+			अगर (!reused) अणु
+				new_notअगरy_idx = max_notअगरy_idx;
+				max_notअगरy_idx++;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		new_notअगरy_idx = (last_notअगरy_idx_reserved + 1) % PAGE_SIZE;
+	पूर्ण
 
-	last_notify_idx_reserved = new_notify_idx;
-	notify_idx_count++;
+	last_notअगरy_idx_reserved = new_notअगरy_idx;
+	notअगरy_idx_count++;
 
-	entry->idx = new_notify_idx;
+	entry->idx = new_notअगरy_idx;
 	bucket = VMCI_DOORBELL_HASH(entry->idx);
-	hlist_add_head(&entry->node, &vmci_doorbell_it.entries[bucket]);
+	hlist_add_head(&entry->node, &vmci_करोorbell_it.entries[bucket]);
 
-	spin_unlock_bh(&vmci_doorbell_it.lock);
-}
+	spin_unlock_bh(&vmci_करोorbell_it.lock);
+पूर्ण
 
 /*
  * Remove the given entry from the index table.  This will release() the
  * entry's resource.
  */
-static void dbell_index_table_remove(struct dbell_entry *entry)
-{
-	spin_lock_bh(&vmci_doorbell_it.lock);
+अटल व्योम dbell_index_table_हटाओ(काष्ठा dbell_entry *entry)
+अणु
+	spin_lock_bh(&vmci_करोorbell_it.lock);
 
 	hlist_del_init(&entry->node);
 
-	notify_idx_count--;
-	if (entry->idx == max_notify_idx - 1) {
+	notअगरy_idx_count--;
+	अगर (entry->idx == max_notअगरy_idx - 1) अणु
 		/*
 		 * If we delete an entry with the maximum known
-		 * notification index, we take the opportunity to
+		 * notअगरication index, we take the opportunity to
 		 * prune the current max. As there might be other
 		 * unused indices immediately below, we lower the
 		 * maximum until we hit an index in use.
 		 */
-		while (max_notify_idx > 0 &&
-		       !dbell_index_table_find(max_notify_idx - 1))
-			max_notify_idx--;
-	}
+		जबतक (max_notअगरy_idx > 0 &&
+		       !dbell_index_table_find(max_notअगरy_idx - 1))
+			max_notअगरy_idx--;
+	पूर्ण
 
-	last_notify_idx_released = entry->idx;
+	last_notअगरy_idx_released = entry->idx;
 
-	spin_unlock_bh(&vmci_doorbell_it.lock);
+	spin_unlock_bh(&vmci_करोorbell_it.lock);
 
 	vmci_resource_put(&entry->resource);
-}
+पूर्ण
 
 /*
- * Creates a link between the given doorbell handle and the given
- * index in the bitmap in the device backend. A notification state
+ * Creates a link between the given करोorbell handle and the given
+ * index in the biपंचांगap in the device backend. A notअगरication state
  * is created in hypervisor.
  */
-static int dbell_link(struct vmci_handle handle, u32 notify_idx)
-{
-	struct vmci_doorbell_link_msg link_msg;
+अटल पूर्णांक dbell_link(काष्ठा vmci_handle handle, u32 notअगरy_idx)
+अणु
+	काष्ठा vmci_करोorbell_link_msg link_msg;
 
 	link_msg.hdr.dst = vmci_make_handle(VMCI_HYPERVISOR_CONTEXT_ID,
 					    VMCI_DOORBELL_LINK);
 	link_msg.hdr.src = VMCI_ANON_SRC_HANDLE;
-	link_msg.hdr.payload_size = sizeof(link_msg) - VMCI_DG_HEADERSIZE;
+	link_msg.hdr.payload_size = माप(link_msg) - VMCI_DG_HEADERSIZE;
 	link_msg.handle = handle;
-	link_msg.notify_idx = notify_idx;
+	link_msg.notअगरy_idx = notअगरy_idx;
 
-	return vmci_send_datagram(&link_msg.hdr);
-}
+	वापस vmci_send_datagram(&link_msg.hdr);
+पूर्ण
 
 /*
- * Unlinks the given doorbell handle from an index in the bitmap in
- * the device backend. The notification state is destroyed in hypervisor.
+ * Unlinks the given करोorbell handle from an index in the biपंचांगap in
+ * the device backend. The notअगरication state is destroyed in hypervisor.
  */
-static int dbell_unlink(struct vmci_handle handle)
-{
-	struct vmci_doorbell_unlink_msg unlink_msg;
+अटल पूर्णांक dbell_unlink(काष्ठा vmci_handle handle)
+अणु
+	काष्ठा vmci_करोorbell_unlink_msg unlink_msg;
 
 	unlink_msg.hdr.dst = vmci_make_handle(VMCI_HYPERVISOR_CONTEXT_ID,
 					      VMCI_DOORBELL_UNLINK);
 	unlink_msg.hdr.src = VMCI_ANON_SRC_HANDLE;
-	unlink_msg.hdr.payload_size = sizeof(unlink_msg) - VMCI_DG_HEADERSIZE;
+	unlink_msg.hdr.payload_size = माप(unlink_msg) - VMCI_DG_HEADERSIZE;
 	unlink_msg.handle = handle;
 
-	return vmci_send_datagram(&unlink_msg.hdr);
-}
+	वापस vmci_send_datagram(&unlink_msg.hdr);
+पूर्ण
 
 /*
- * Notify another guest or the host.  We send a datagram down to the
- * host via the hypervisor with the notification info.
+ * Notअगरy another guest or the host.  We send a datagram करोwn to the
+ * host via the hypervisor with the notअगरication info.
  */
-static int dbell_notify_as_guest(struct vmci_handle handle, u32 priv_flags)
-{
-	struct vmci_doorbell_notify_msg notify_msg;
+अटल पूर्णांक dbell_notअगरy_as_guest(काष्ठा vmci_handle handle, u32 priv_flags)
+अणु
+	काष्ठा vmci_करोorbell_notअगरy_msg notअगरy_msg;
 
-	notify_msg.hdr.dst = vmci_make_handle(VMCI_HYPERVISOR_CONTEXT_ID,
+	notअगरy_msg.hdr.dst = vmci_make_handle(VMCI_HYPERVISOR_CONTEXT_ID,
 					      VMCI_DOORBELL_NOTIFY);
-	notify_msg.hdr.src = VMCI_ANON_SRC_HANDLE;
-	notify_msg.hdr.payload_size = sizeof(notify_msg) - VMCI_DG_HEADERSIZE;
-	notify_msg.handle = handle;
+	notअगरy_msg.hdr.src = VMCI_ANON_SRC_HANDLE;
+	notअगरy_msg.hdr.payload_size = माप(notअगरy_msg) - VMCI_DG_HEADERSIZE;
+	notअगरy_msg.handle = handle;
 
-	return vmci_send_datagram(&notify_msg.hdr);
-}
+	वापस vmci_send_datagram(&notअगरy_msg.hdr);
+पूर्ण
 
 /*
- * Calls the specified callback in a delayed context.
+ * Calls the specअगरied callback in a delayed context.
  */
-static void dbell_delayed_dispatch(struct work_struct *work)
-{
-	struct dbell_entry *entry = container_of(work,
-						 struct dbell_entry, work);
+अटल व्योम dbell_delayed_dispatch(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dbell_entry *entry = container_of(work,
+						 काष्ठा dbell_entry, work);
 
-	entry->notify_cb(entry->client_data);
+	entry->notअगरy_cb(entry->client_data);
 	vmci_resource_put(&entry->resource);
-}
+पूर्ण
 
 /*
- * Dispatches a doorbell notification to the host context.
+ * Dispatches a करोorbell notअगरication to the host context.
  */
-int vmci_dbell_host_context_notify(u32 src_cid, struct vmci_handle handle)
-{
-	struct dbell_entry *entry;
-	struct vmci_resource *resource;
+पूर्णांक vmci_dbell_host_context_notअगरy(u32 src_cid, काष्ठा vmci_handle handle)
+अणु
+	काष्ठा dbell_entry *entry;
+	काष्ठा vmci_resource *resource;
 
-	if (vmci_handle_is_invalid(handle)) {
+	अगर (vmci_handle_is_invalid(handle)) अणु
 		pr_devel("Notifying an invalid doorbell (handle=0x%x:0x%x)\n",
 			 handle.context, handle.resource);
-		return VMCI_ERROR_INVALID_ARGS;
-	}
+		वापस VMCI_ERROR_INVALID_ARGS;
+	पूर्ण
 
 	resource = vmci_resource_by_handle(handle,
 					   VMCI_RESOURCE_TYPE_DOORBELL);
-	if (!resource) {
+	अगर (!resource) अणु
 		pr_devel("Notifying an unknown doorbell (handle=0x%x:0x%x)\n",
 			 handle.context, handle.resource);
-		return VMCI_ERROR_NOT_FOUND;
-	}
+		वापस VMCI_ERROR_NOT_FOUND;
+	पूर्ण
 
-	entry = container_of(resource, struct dbell_entry, resource);
-	if (entry->run_delayed) {
-		if (!schedule_work(&entry->work))
+	entry = container_of(resource, काष्ठा dbell_entry, resource);
+	अगर (entry->run_delayed) अणु
+		अगर (!schedule_work(&entry->work))
 			vmci_resource_put(resource);
-	} else {
-		entry->notify_cb(entry->client_data);
+	पूर्ण अन्यथा अणु
+		entry->notअगरy_cb(entry->client_data);
 		vmci_resource_put(resource);
-	}
+	पूर्ण
 
-	return VMCI_SUCCESS;
-}
+	वापस VMCI_SUCCESS;
+पूर्ण
 
 /*
- * Register the notification bitmap with the host.
+ * Register the notअगरication biपंचांगap with the host.
  */
-bool vmci_dbell_register_notification_bitmap(u64 bitmap_ppn)
-{
-	int result;
-	struct vmci_notify_bm_set_msg bitmap_set_msg = { };
+bool vmci_dbell_रेजिस्टर_notअगरication_biपंचांगap(u64 biपंचांगap_ppn)
+अणु
+	पूर्णांक result;
+	काष्ठा vmci_notअगरy_bm_set_msg biपंचांगap_set_msg = अणु पूर्ण;
 
-	bitmap_set_msg.hdr.dst = vmci_make_handle(VMCI_HYPERVISOR_CONTEXT_ID,
+	biपंचांगap_set_msg.hdr.dst = vmci_make_handle(VMCI_HYPERVISOR_CONTEXT_ID,
 						  VMCI_SET_NOTIFY_BITMAP);
-	bitmap_set_msg.hdr.src = VMCI_ANON_SRC_HANDLE;
-	bitmap_set_msg.hdr.payload_size = sizeof(bitmap_set_msg) -
+	biपंचांगap_set_msg.hdr.src = VMCI_ANON_SRC_HANDLE;
+	biपंचांगap_set_msg.hdr.payload_size = माप(biपंचांगap_set_msg) -
 	    VMCI_DG_HEADERSIZE;
-	if (vmci_use_ppn64())
-		bitmap_set_msg.bitmap_ppn64 = bitmap_ppn;
-	else
-		bitmap_set_msg.bitmap_ppn32 = (u32) bitmap_ppn;
+	अगर (vmci_use_ppn64())
+		biपंचांगap_set_msg.biपंचांगap_ppn64 = biपंचांगap_ppn;
+	अन्यथा
+		biपंचांगap_set_msg.biपंचांगap_ppn32 = (u32) biपंचांगap_ppn;
 
-	result = vmci_send_datagram(&bitmap_set_msg.hdr);
-	if (result != VMCI_SUCCESS) {
+	result = vmci_send_datagram(&biपंचांगap_set_msg.hdr);
+	अगर (result != VMCI_SUCCESS) अणु
 		pr_devel("Failed to register (PPN=%llu) as notification bitmap (error=%d)\n",
-			 bitmap_ppn, result);
-		return false;
-	}
-	return true;
-}
+			 biपंचांगap_ppn, result);
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
- * Executes or schedules the handlers for a given notify index.
+ * Executes or schedules the handlers क्रम a given notअगरy index.
  */
-static void dbell_fire_entries(u32 notify_idx)
-{
-	u32 bucket = VMCI_DOORBELL_HASH(notify_idx);
-	struct dbell_entry *dbell;
+अटल व्योम dbell_fire_entries(u32 notअगरy_idx)
+अणु
+	u32 bucket = VMCI_DOORBELL_HASH(notअगरy_idx);
+	काष्ठा dbell_entry *dbell;
 
-	spin_lock_bh(&vmci_doorbell_it.lock);
+	spin_lock_bh(&vmci_करोorbell_it.lock);
 
-	hlist_for_each_entry(dbell, &vmci_doorbell_it.entries[bucket], node) {
-		if (dbell->idx == notify_idx &&
-		    atomic_read(&dbell->active) == 1) {
-			if (dbell->run_delayed) {
+	hlist_क्रम_each_entry(dbell, &vmci_करोorbell_it.entries[bucket], node) अणु
+		अगर (dbell->idx == notअगरy_idx &&
+		    atomic_पढ़ो(&dbell->active) == 1) अणु
+			अगर (dbell->run_delayed) अणु
 				vmci_resource_get(&dbell->resource);
-				if (!schedule_work(&dbell->work))
+				अगर (!schedule_work(&dbell->work))
 					vmci_resource_put(&dbell->resource);
-			} else {
-				dbell->notify_cb(dbell->client_data);
-			}
-		}
-	}
+			पूर्ण अन्यथा अणु
+				dbell->notअगरy_cb(dbell->client_data);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	spin_unlock_bh(&vmci_doorbell_it.lock);
-}
+	spin_unlock_bh(&vmci_करोorbell_it.lock);
+पूर्ण
 
 /*
- * Scans the notification bitmap, collects pending notifications,
- * resets the bitmap and invokes appropriate callbacks.
+ * Scans the notअगरication biपंचांगap, collects pending notअगरications,
+ * resets the biपंचांगap and invokes appropriate callbacks.
  */
-void vmci_dbell_scan_notification_entries(u8 *bitmap)
-{
+व्योम vmci_dbell_scan_notअगरication_entries(u8 *biपंचांगap)
+अणु
 	u32 idx;
 
-	for (idx = 0; idx < max_notify_idx; idx++) {
-		if (bitmap[idx] & 0x1) {
-			bitmap[idx] &= ~1;
+	क्रम (idx = 0; idx < max_notअगरy_idx; idx++) अणु
+		अगर (biपंचांगap[idx] & 0x1) अणु
+			biपंचांगap[idx] &= ~1;
 			dbell_fire_entries(idx);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * vmci_doorbell_create() - Creates a doorbell
+ * vmci_करोorbell_create() - Creates a करोorbell
  * @handle:     A handle used to track the resource.  Can be invalid.
  * @flags:      Flag that determines context of callback.
  * @priv_flags: Privileges flags.
- * @notify_cb:  The callback to be ivoked when the doorbell fires.
+ * @notअगरy_cb:  The callback to be ivoked when the करोorbell fires.
  * @client_data:        A parameter to be passed to the callback.
  *
- * Creates a doorbell with the given callback. If the handle is
- * VMCI_INVALID_HANDLE, a free handle will be assigned, if
+ * Creates a करोorbell with the given callback. If the handle is
+ * VMCI_INVALID_HANDLE, a मुक्त handle will be asचिन्हित, अगर
  * possible. The callback can be run immediately (potentially with
- * locks held - the default) or delayed (in a kernel thread) by
- * specifying the flag VMCI_FLAG_DELAYED_CB. If delayed execution
- * is selected, a given callback may not be run if the kernel is
- * unable to allocate memory for the delayed execution (highly
+ * locks held - the शेष) or delayed (in a kernel thपढ़ो) by
+ * specअगरying the flag VMCI_FLAG_DELAYED_CB. If delayed execution
+ * is selected, a given callback may not be run अगर the kernel is
+ * unable to allocate memory क्रम the delayed execution (highly
  * unlikely).
  */
-int vmci_doorbell_create(struct vmci_handle *handle,
+पूर्णांक vmci_करोorbell_create(काष्ठा vmci_handle *handle,
 			 u32 flags,
 			 u32 priv_flags,
-			 vmci_callback notify_cb, void *client_data)
-{
-	struct dbell_entry *entry;
-	struct vmci_handle new_handle;
-	int result;
+			 vmci_callback notअगरy_cb, व्योम *client_data)
+अणु
+	काष्ठा dbell_entry *entry;
+	काष्ठा vmci_handle new_handle;
+	पूर्णांक result;
 
-	if (!handle || !notify_cb || flags & ~VMCI_FLAG_DELAYED_CB ||
+	अगर (!handle || !notअगरy_cb || flags & ~VMCI_FLAG_DELAYED_CB ||
 	    priv_flags & ~VMCI_PRIVILEGE_ALL_FLAGS)
-		return VMCI_ERROR_INVALID_ARGS;
+		वापस VMCI_ERROR_INVALID_ARGS;
 
-	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
-	if (entry == NULL) {
+	entry = kदो_स्मृति(माप(*entry), GFP_KERNEL);
+	अगर (entry == शून्य) अणु
 		pr_warn("Failed allocating memory for datagram entry\n");
-		return VMCI_ERROR_NO_MEM;
-	}
+		वापस VMCI_ERROR_NO_MEM;
+	पूर्ण
 
-	if (vmci_handle_is_invalid(*handle)) {
+	अगर (vmci_handle_is_invalid(*handle)) अणु
 		u32 context_id = vmci_get_context_id();
 
-		if (context_id == VMCI_INVALID_ID) {
+		अगर (context_id == VMCI_INVALID_ID) अणु
 			pr_warn("Failed to get context ID\n");
 			result = VMCI_ERROR_NO_RESOURCES;
-			goto free_mem;
-		}
+			जाओ मुक्त_mem;
+		पूर्ण
 
-		/* Let resource code allocate a free ID for us */
+		/* Let resource code allocate a मुक्त ID क्रम us */
 		new_handle = vmci_make_handle(context_id, VMCI_INVALID_ID);
-	} else {
+	पूर्ण अन्यथा अणु
 		bool valid_context = false;
 
 		/*
-		 * Validate the handle.  We must do both of the checks below
+		 * Validate the handle.  We must करो both of the checks below
 		 * because we can be acting as both a host and a guest at the
-		 * same time. We always allow the host context ID, since the
+		 * same समय. We always allow the host context ID, since the
 		 * host functionality is in practice always there with the
-		 * unified driver.
+		 * unअगरied driver.
 		 */
-		if (handle->context == VMCI_HOST_CONTEXT_ID ||
+		अगर (handle->context == VMCI_HOST_CONTEXT_ID ||
 		    (vmci_guest_code_active() &&
-		     vmci_get_context_id() == handle->context)) {
+		     vmci_get_context_id() == handle->context)) अणु
 			valid_context = true;
-		}
+		पूर्ण
 
-		if (!valid_context || handle->resource == VMCI_INVALID_ID) {
+		अगर (!valid_context || handle->resource == VMCI_INVALID_ID) अणु
 			pr_devel("Invalid argument (handle=0x%x:0x%x)\n",
 				 handle->context, handle->resource);
 			result = VMCI_ERROR_INVALID_ARGS;
-			goto free_mem;
-		}
+			जाओ मुक्त_mem;
+		पूर्ण
 
 		new_handle = *handle;
-	}
+	पूर्ण
 
 	entry->idx = 0;
 	INIT_HLIST_NODE(&entry->node);
 	entry->priv_flags = priv_flags;
 	INIT_WORK(&entry->work, dbell_delayed_dispatch);
 	entry->run_delayed = flags & VMCI_FLAG_DELAYED_CB;
-	entry->notify_cb = notify_cb;
+	entry->notअगरy_cb = notअगरy_cb;
 	entry->client_data = client_data;
 	atomic_set(&entry->active, 0);
 
 	result = vmci_resource_add(&entry->resource,
 				   VMCI_RESOURCE_TYPE_DOORBELL,
 				   new_handle);
-	if (result != VMCI_SUCCESS) {
+	अगर (result != VMCI_SUCCESS) अणु
 		pr_warn("Failed to add new resource (handle=0x%x:0x%x), error: %d\n",
 			new_handle.context, new_handle.resource, result);
-		goto free_mem;
-	}
+		जाओ मुक्त_mem;
+	पूर्ण
 
 	new_handle = vmci_resource_handle(&entry->resource);
-	if (vmci_guest_code_active()) {
+	अगर (vmci_guest_code_active()) अणु
 		dbell_index_table_add(entry);
 		result = dbell_link(new_handle, entry->idx);
-		if (VMCI_SUCCESS != result)
-			goto destroy_resource;
+		अगर (VMCI_SUCCESS != result)
+			जाओ destroy_resource;
 
 		atomic_set(&entry->active, 1);
-	}
+	पूर्ण
 
 	*handle = new_handle;
 
-	return result;
+	वापस result;
 
  destroy_resource:
-	dbell_index_table_remove(entry);
-	vmci_resource_remove(&entry->resource);
- free_mem:
-	kfree(entry);
-	return result;
-}
-EXPORT_SYMBOL_GPL(vmci_doorbell_create);
+	dbell_index_table_हटाओ(entry);
+	vmci_resource_हटाओ(&entry->resource);
+ मुक्त_mem:
+	kमुक्त(entry);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL_GPL(vmci_करोorbell_create);
 
 /*
- * vmci_doorbell_destroy() - Destroy a doorbell.
+ * vmci_करोorbell_destroy() - Destroy a करोorbell.
  * @handle:     The handle tracking the resource.
  *
- * Destroys a doorbell previously created with vmcii_doorbell_create. This
- * operation may block waiting for a callback to finish.
+ * Destroys a करोorbell previously created with vmcii_करोorbell_create. This
+ * operation may block रुकोing क्रम a callback to finish.
  */
-int vmci_doorbell_destroy(struct vmci_handle handle)
-{
-	struct dbell_entry *entry;
-	struct vmci_resource *resource;
+पूर्णांक vmci_करोorbell_destroy(काष्ठा vmci_handle handle)
+अणु
+	काष्ठा dbell_entry *entry;
+	काष्ठा vmci_resource *resource;
 
-	if (vmci_handle_is_invalid(handle))
-		return VMCI_ERROR_INVALID_ARGS;
+	अगर (vmci_handle_is_invalid(handle))
+		वापस VMCI_ERROR_INVALID_ARGS;
 
 	resource = vmci_resource_by_handle(handle,
 					   VMCI_RESOURCE_TYPE_DOORBELL);
-	if (!resource) {
+	अगर (!resource) अणु
 		pr_devel("Failed to destroy doorbell (handle=0x%x:0x%x)\n",
 			 handle.context, handle.resource);
-		return VMCI_ERROR_NOT_FOUND;
-	}
+		वापस VMCI_ERROR_NOT_FOUND;
+	पूर्ण
 
-	entry = container_of(resource, struct dbell_entry, resource);
+	entry = container_of(resource, काष्ठा dbell_entry, resource);
 
-	if (!hlist_unhashed(&entry->node)) {
-		int result;
+	अगर (!hlist_unhashed(&entry->node)) अणु
+		पूर्णांक result;
 
-		dbell_index_table_remove(entry);
+		dbell_index_table_हटाओ(entry);
 
 		result = dbell_unlink(handle);
-		if (VMCI_SUCCESS != result) {
+		अगर (VMCI_SUCCESS != result) अणु
 
 			/*
 			 * The only reason this should fail would be
 			 * an inconsistency between guest and
 			 * hypervisor state, where the guest believes
 			 * it has an active registration whereas the
-			 * hypervisor doesn't. One case where this may
-			 * happen is if a doorbell is unregistered
-			 * following a hibernation at a time where the
-			 * doorbell state hasn't been restored on the
+			 * hypervisor करोesn't. One हाल where this may
+			 * happen is अगर a करोorbell is unरेजिस्टरed
+			 * following a hibernation at a समय where the
+			 * करोorbell state hasn't been restored on the
 			 * hypervisor side yet. Since the handle has
-			 * now been removed in the guest, we just
-			 * print a warning and return success.
+			 * now been हटाओd in the guest, we just
+			 * prपूर्णांक a warning and वापस success.
 			 */
 			pr_devel("Unlink of doorbell (handle=0x%x:0x%x) unknown by hypervisor (error=%d)\n",
 				 handle.context, handle.resource, result);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Now remove the resource from the table.  It might still be in use
+	 * Now हटाओ the resource from the table.  It might still be in use
 	 * after this, in a callback or still on the delayed work queue.
 	 */
 	vmci_resource_put(&entry->resource);
-	vmci_resource_remove(&entry->resource);
+	vmci_resource_हटाओ(&entry->resource);
 
-	kfree(entry);
+	kमुक्त(entry);
 
-	return VMCI_SUCCESS;
-}
-EXPORT_SYMBOL_GPL(vmci_doorbell_destroy);
+	वापस VMCI_SUCCESS;
+पूर्ण
+EXPORT_SYMBOL_GPL(vmci_करोorbell_destroy);
 
 /*
- * vmci_doorbell_notify() - Ring the doorbell (and hide in the bushes).
- * @dst:        The handlle identifying the doorbell resource
+ * vmci_करोorbell_notअगरy() - Ring the करोorbell (and hide in the bushes).
+ * @dst:        The handlle identअगरying the करोorbell resource
  * @priv_flags: Priviledge flags.
  *
- * Generates a notification on the doorbell identified by the
- * handle. For host side generation of notifications, the caller
- * can specify what the privilege of the calling side is.
+ * Generates a notअगरication on the करोorbell identअगरied by the
+ * handle. For host side generation of notअगरications, the caller
+ * can specअगरy what the privilege of the calling side is.
  */
-int vmci_doorbell_notify(struct vmci_handle dst, u32 priv_flags)
-{
-	int retval;
-	enum vmci_route route;
-	struct vmci_handle src;
+पूर्णांक vmci_करोorbell_notअगरy(काष्ठा vmci_handle dst, u32 priv_flags)
+अणु
+	पूर्णांक retval;
+	क्रमागत vmci_route route;
+	काष्ठा vmci_handle src;
 
-	if (vmci_handle_is_invalid(dst) ||
+	अगर (vmci_handle_is_invalid(dst) ||
 	    (priv_flags & ~VMCI_PRIVILEGE_ALL_FLAGS))
-		return VMCI_ERROR_INVALID_ARGS;
+		वापस VMCI_ERROR_INVALID_ARGS;
 
 	src = VMCI_INVALID_HANDLE;
 	retval = vmci_route(&src, &dst, false, &route);
-	if (retval < VMCI_SUCCESS)
-		return retval;
+	अगर (retval < VMCI_SUCCESS)
+		वापस retval;
 
-	if (VMCI_ROUTE_AS_HOST == route)
-		return vmci_ctx_notify_dbell(VMCI_HOST_CONTEXT_ID,
+	अगर (VMCI_ROUTE_AS_HOST == route)
+		वापस vmci_ctx_notअगरy_dbell(VMCI_HOST_CONTEXT_ID,
 					     dst, priv_flags);
 
-	if (VMCI_ROUTE_AS_GUEST == route)
-		return dbell_notify_as_guest(dst, priv_flags);
+	अगर (VMCI_ROUTE_AS_GUEST == route)
+		वापस dbell_notअगरy_as_guest(dst, priv_flags);
 
 	pr_warn("Unknown route (%d) for doorbell\n", route);
-	return VMCI_ERROR_DST_UNREACHABLE;
-}
-EXPORT_SYMBOL_GPL(vmci_doorbell_notify);
+	वापस VMCI_ERROR_DST_UNREACHABLE;
+पूर्ण
+EXPORT_SYMBOL_GPL(vmci_करोorbell_notअगरy);

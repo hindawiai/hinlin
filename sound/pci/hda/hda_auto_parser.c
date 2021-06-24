@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * BIOS auto-parser helper functions for HD-audio
+ * BIOS स्वतः-parser helper functions क्रम HD-audio
  *
  * Copyright (c) 2012 Takashi Iwai <tiwai@suse.de>
  */
 
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/sort.h>
-#include <sound/core.h>
-#include <sound/hda_codec.h>
-#include "hda_local.h"
-#include "hda_auto_parser.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sort.h>
+#समावेश <sound/core.h>
+#समावेश <sound/hda_codec.h>
+#समावेश "hda_local.h"
+#समावेश "hda_auto_parser.h"
 
 /*
- * Helper for automatic pin configuration
+ * Helper क्रम स्वतःmatic pin configuration
  */
 
-static int is_in_nid_list(hda_nid_t nid, const hda_nid_t *list)
-{
-	for (; *list; list++)
-		if (*list == nid)
-			return 1;
-	return 0;
-}
+अटल पूर्णांक is_in_nid_list(hda_nid_t nid, स्थिर hda_nid_t *list)
+अणु
+	क्रम (; *list; list++)
+		अगर (*list == nid)
+			वापस 1;
+	वापस 0;
+पूर्ण
 
 /* a pair of input pin and its sequence */
-struct auto_out_pin {
+काष्ठा स्वतः_out_pin अणु
 	hda_nid_t pin;
-	short seq;
-};
+	लघु seq;
+पूर्ण;
 
-static int compare_seq(const void *ap, const void *bp)
-{
-	const struct auto_out_pin *a = ap;
-	const struct auto_out_pin *b = bp;
-	return (int)(a->seq - b->seq);
-}
+अटल पूर्णांक compare_seq(स्थिर व्योम *ap, स्थिर व्योम *bp)
+अणु
+	स्थिर काष्ठा स्वतः_out_pin *a = ap;
+	स्थिर काष्ठा स्वतः_out_pin *b = bp;
+	वापस (पूर्णांक)(a->seq - b->seq);
+पूर्ण
 
 /*
  * Sort an associated group of pins according to their sequence numbers.
  * then store it to a pin array.
  */
-static void sort_pins_by_sequence(hda_nid_t *pins, struct auto_out_pin *list,
-				  int num_pins)
-{
-	int i;
-	sort(list, num_pins, sizeof(list[0]), compare_seq, NULL);
-	for (i = 0; i < num_pins; i++)
+अटल व्योम sort_pins_by_sequence(hda_nid_t *pins, काष्ठा स्वतः_out_pin *list,
+				  पूर्णांक num_pins)
+अणु
+	पूर्णांक i;
+	sort(list, num_pins, माप(list[0]), compare_seq, शून्य);
+	क्रम (i = 0; i < num_pins; i++)
 		pins[i] = list[i].pin;
-}
+पूर्ण
 
 
-/* add the found input-pin to the cfg->inputs[] table */
-static void add_auto_cfg_input_pin(struct hda_codec *codec, struct auto_pin_cfg *cfg,
-				   hda_nid_t nid, int type)
-{
-	if (cfg->num_inputs < AUTO_CFG_MAX_INS) {
-		cfg->inputs[cfg->num_inputs].pin = nid;
-		cfg->inputs[cfg->num_inputs].type = type;
-		cfg->inputs[cfg->num_inputs].has_boost_on_pin =
+/* add the found input-pin to the cfg->inमाला_दो[] table */
+अटल व्योम add_स्वतः_cfg_input_pin(काष्ठा hda_codec *codec, काष्ठा स्वतः_pin_cfg *cfg,
+				   hda_nid_t nid, पूर्णांक type)
+अणु
+	अगर (cfg->num_inमाला_दो < AUTO_CFG_MAX_INS) अणु
+		cfg->inमाला_दो[cfg->num_inमाला_दो].pin = nid;
+		cfg->inमाला_दो[cfg->num_inमाला_दो].type = type;
+		cfg->inमाला_दो[cfg->num_inमाला_दो].has_boost_on_pin =
 			nid_has_volume(codec, nid, HDA_INPUT);
-		cfg->num_inputs++;
-	}
-}
+		cfg->num_inमाला_दो++;
+	पूर्ण
+पूर्ण
 
-static int compare_input_type(const void *ap, const void *bp)
-{
-	const struct auto_pin_cfg_item *a = ap;
-	const struct auto_pin_cfg_item *b = bp;
-	if (a->type != b->type)
-		return (int)(a->type - b->type);
+अटल पूर्णांक compare_input_type(स्थिर व्योम *ap, स्थिर व्योम *bp)
+अणु
+	स्थिर काष्ठा स्वतः_pin_cfg_item *a = ap;
+	स्थिर काष्ठा स्वतः_pin_cfg_item *b = bp;
+	अगर (a->type != b->type)
+		वापस (पूर्णांक)(a->type - b->type);
 
 	/* If has both hs_mic and hp_mic, pick the hs_mic ahead of hp_mic. */
-	if (a->is_headset_mic && b->is_headphone_mic)
-		return -1; /* don't swap */
-	else if (a->is_headphone_mic && b->is_headset_mic)
-		return 1; /* swap */
+	अगर (a->is_headset_mic && b->is_headphone_mic)
+		वापस -1; /* करोn't swap */
+	अन्यथा अगर (a->is_headphone_mic && b->is_headset_mic)
+		वापस 1; /* swap */
 
-	/* In case one has boost and the other one has not,
+	/* In हाल one has boost and the other one has not,
 	   pick the one with boost first. */
-	return (int)(b->has_boost_on_pin - a->has_boost_on_pin);
-}
+	वापस (पूर्णांक)(b->has_boost_on_pin - a->has_boost_on_pin);
+पूर्ण
 
 /* Reorder the surround channels
  * ALSA sequence is front/surr/clfe/side
@@ -90,285 +91,285 @@ static int compare_input_type(const void *ap, const void *bp)
  *    6-ch: front/clfe/surr
  *    8-ch: front/clfe/rear/side|fc
  */
-static void reorder_outputs(unsigned int nums, hda_nid_t *pins)
-{
+अटल व्योम reorder_outमाला_दो(अचिन्हित पूर्णांक nums, hda_nid_t *pins)
+अणु
 	hda_nid_t nid;
 
-	switch (nums) {
-	case 3:
-	case 4:
+	चयन (nums) अणु
+	हाल 3:
+	हाल 4:
 		nid = pins[1];
 		pins[1] = pins[2];
 		pins[2] = nid;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /* check whether the given pin has a proper pin I/O capability bit */
-static bool check_pincap_validity(struct hda_codec *codec, hda_nid_t pin,
-				  unsigned int dev)
-{
-	unsigned int pincap = snd_hda_query_pin_caps(codec, pin);
+अटल bool check_pincap_validity(काष्ठा hda_codec *codec, hda_nid_t pin,
+				  अचिन्हित पूर्णांक dev)
+अणु
+	अचिन्हित पूर्णांक pincap = snd_hda_query_pin_caps(codec, pin);
 
-	/* some old hardware don't return the proper pincaps */
-	if (!pincap)
-		return true;
+	/* some old hardware करोn't वापस the proper pincaps */
+	अगर (!pincap)
+		वापस true;
 
-	switch (dev) {
-	case AC_JACK_LINE_OUT:
-	case AC_JACK_SPEAKER:
-	case AC_JACK_HP_OUT:
-	case AC_JACK_SPDIF_OUT:
-	case AC_JACK_DIG_OTHER_OUT:
-		return !!(pincap & AC_PINCAP_OUT);
-	default:
-		return !!(pincap & AC_PINCAP_IN);
-	}
-}
+	चयन (dev) अणु
+	हाल AC_JACK_LINE_OUT:
+	हाल AC_JACK_SPEAKER:
+	हाल AC_JACK_HP_OUT:
+	हाल AC_JACK_SPDIF_OUT:
+	हाल AC_JACK_DIG_OTHER_OUT:
+		वापस !!(pincap & AC_PINCAP_OUT);
+	शेष:
+		वापस !!(pincap & AC_PINCAP_IN);
+	पूर्ण
+पूर्ण
 
-static bool can_be_headset_mic(struct hda_codec *codec,
-			       struct auto_pin_cfg_item *item,
-			       int seq_number)
-{
-	int attr;
-	unsigned int def_conf;
-	if (item->type != AUTO_PIN_MIC)
-		return false;
+अटल bool can_be_headset_mic(काष्ठा hda_codec *codec,
+			       काष्ठा स्वतः_pin_cfg_item *item,
+			       पूर्णांक seq_number)
+अणु
+	पूर्णांक attr;
+	अचिन्हित पूर्णांक def_conf;
+	अगर (item->type != AUTO_PIN_MIC)
+		वापस false;
 
-	if (item->is_headset_mic || item->is_headphone_mic)
-		return false; /* Already assigned */
+	अगर (item->is_headset_mic || item->is_headphone_mic)
+		वापस false; /* Alपढ़ोy asचिन्हित */
 
 	def_conf = snd_hda_codec_get_pincfg(codec, item->pin);
 	attr = snd_hda_get_input_pin_attr(def_conf);
-	if (attr <= INPUT_PIN_ATTR_DOCK)
-		return false;
+	अगर (attr <= INPUT_PIN_ATTR_DOCK)
+		वापस false;
 
-	if (seq_number >= 0) {
-		int seq = get_defcfg_sequence(def_conf);
-		if (seq != seq_number)
-			return false;
-	}
+	अगर (seq_number >= 0) अणु
+		पूर्णांक seq = get_defcfg_sequence(def_conf);
+		अगर (seq != seq_number)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Parse all pin widgets and store the useful pin nids to cfg
+ * Parse all pin widमाला_लो and store the useful pin nids to cfg
  *
  * The number of line-outs or any primary output is stored in line_outs,
- * and the corresponding output pins are assigned to line_out_pins[],
+ * and the corresponding output pins are asचिन्हित to line_out_pins[],
  * in the order of front, rear, CLFE, side, ...
  *
- * If more extra outputs (speaker and headphone) are found, the pins are
+ * If more extra outमाला_दो (speaker and headphone) are found, the pins are
  * assisnged to hp_pins[] and speaker_pins[], respectively.  If no line-out jack
- * is detected, one of speaker of HP pins is assigned as the primary
+ * is detected, one of speaker of HP pins is asचिन्हित as the primary
  * output, i.e. to line_out_pins[0].  So, line_outs is always positive
- * if any analog output exists.
+ * अगर any analog output exists.
  *
- * The analog input pins are assigned to inputs array.
- * The digital input/output pins are assigned to dig_in_pin and dig_out_pin,
+ * The analog input pins are asचिन्हित to inमाला_दो array.
+ * The digital input/output pins are asचिन्हित to dig_in_pin and dig_out_pin,
  * respectively.
  */
-int snd_hda_parse_pin_defcfg(struct hda_codec *codec,
-			     struct auto_pin_cfg *cfg,
-			     const hda_nid_t *ignore_nids,
-			     unsigned int cond_flags)
-{
+पूर्णांक snd_hda_parse_pin_defcfg(काष्ठा hda_codec *codec,
+			     काष्ठा स्वतः_pin_cfg *cfg,
+			     स्थिर hda_nid_t *ignore_nids,
+			     अचिन्हित पूर्णांक cond_flags)
+अणु
 	hda_nid_t nid;
-	short seq, assoc_line_out;
-	struct auto_out_pin line_out[ARRAY_SIZE(cfg->line_out_pins)];
-	struct auto_out_pin speaker_out[ARRAY_SIZE(cfg->speaker_pins)];
-	struct auto_out_pin hp_out[ARRAY_SIZE(cfg->hp_pins)];
-	int i;
+	लघु seq, assoc_line_out;
+	काष्ठा स्वतः_out_pin line_out[ARRAY_SIZE(cfg->line_out_pins)];
+	काष्ठा स्वतः_out_pin speaker_out[ARRAY_SIZE(cfg->speaker_pins)];
+	काष्ठा स्वतः_out_pin hp_out[ARRAY_SIZE(cfg->hp_pins)];
+	पूर्णांक i;
 
-	if (!snd_hda_get_int_hint(codec, "parser_flags", &i))
+	अगर (!snd_hda_get_पूर्णांक_hपूर्णांक(codec, "parser_flags", &i))
 		cond_flags = i;
 
-	memset(cfg, 0, sizeof(*cfg));
+	स_रखो(cfg, 0, माप(*cfg));
 
-	memset(line_out, 0, sizeof(line_out));
-	memset(speaker_out, 0, sizeof(speaker_out));
-	memset(hp_out, 0, sizeof(hp_out));
+	स_रखो(line_out, 0, माप(line_out));
+	स_रखो(speaker_out, 0, माप(speaker_out));
+	स_रखो(hp_out, 0, माप(hp_out));
 	assoc_line_out = 0;
 
-	for_each_hda_codec_node(nid, codec) {
-		unsigned int wid_caps = get_wcaps(codec, nid);
-		unsigned int wid_type = get_wcaps_type(wid_caps);
-		unsigned int def_conf;
-		short assoc, loc, conn, dev;
+	क्रम_each_hda_codec_node(nid, codec) अणु
+		अचिन्हित पूर्णांक wid_caps = get_wcaps(codec, nid);
+		अचिन्हित पूर्णांक wid_type = get_wcaps_type(wid_caps);
+		अचिन्हित पूर्णांक def_conf;
+		लघु assoc, loc, conn, dev;
 
-		/* read all default configuration for pin complex */
-		if (wid_type != AC_WID_PIN)
-			continue;
-		/* ignore the given nids (e.g. pc-beep returns error) */
-		if (ignore_nids && is_in_nid_list(nid, ignore_nids))
-			continue;
+		/* पढ़ो all शेष configuration क्रम pin complex */
+		अगर (wid_type != AC_WID_PIN)
+			जारी;
+		/* ignore the given nids (e.g. pc-beep वापसs error) */
+		अगर (ignore_nids && is_in_nid_list(nid, ignore_nids))
+			जारी;
 
 		def_conf = snd_hda_codec_get_pincfg(codec, nid);
 		conn = get_defcfg_connect(def_conf);
-		if (conn == AC_JACK_PORT_NONE)
-			continue;
+		अगर (conn == AC_JACK_PORT_NONE)
+			जारी;
 		loc = get_defcfg_location(def_conf);
 		dev = get_defcfg_device(def_conf);
 
-		/* workaround for buggy BIOS setups */
-		if (dev == AC_JACK_LINE_OUT) {
-			if (conn == AC_JACK_PORT_FIXED ||
+		/* workaround क्रम buggy BIOS setups */
+		अगर (dev == AC_JACK_LINE_OUT) अणु
+			अगर (conn == AC_JACK_PORT_FIXED ||
 			    conn == AC_JACK_PORT_BOTH)
 				dev = AC_JACK_SPEAKER;
-		}
+		पूर्ण
 
-		if (!check_pincap_validity(codec, nid, dev))
-			continue;
+		अगर (!check_pincap_validity(codec, nid, dev))
+			जारी;
 
-		switch (dev) {
-		case AC_JACK_LINE_OUT:
+		चयन (dev) अणु
+		हाल AC_JACK_LINE_OUT:
 			seq = get_defcfg_sequence(def_conf);
 			assoc = get_defcfg_association(def_conf);
 
-			if (!(wid_caps & AC_WCAP_STEREO))
-				if (!cfg->mono_out_pin)
+			अगर (!(wid_caps & AC_WCAP_STEREO))
+				अगर (!cfg->mono_out_pin)
 					cfg->mono_out_pin = nid;
-			if (!assoc)
-				continue;
-			if (!assoc_line_out)
+			अगर (!assoc)
+				जारी;
+			अगर (!assoc_line_out)
 				assoc_line_out = assoc;
-			else if (assoc_line_out != assoc) {
+			अन्यथा अगर (assoc_line_out != assoc) अणु
 				codec_info(codec,
 					   "ignore pin 0x%x with mismatching assoc# 0x%x vs 0x%x\n",
 					   nid, assoc, assoc_line_out);
-				continue;
-			}
-			if (cfg->line_outs >= ARRAY_SIZE(cfg->line_out_pins)) {
+				जारी;
+			पूर्ण
+			अगर (cfg->line_outs >= ARRAY_SIZE(cfg->line_out_pins)) अणु
 				codec_info(codec,
 					   "ignore pin 0x%x, too many assigned pins\n",
 					   nid);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			line_out[cfg->line_outs].pin = nid;
 			line_out[cfg->line_outs].seq = seq;
 			cfg->line_outs++;
-			break;
-		case AC_JACK_SPEAKER:
+			अवरोध;
+		हाल AC_JACK_SPEAKER:
 			seq = get_defcfg_sequence(def_conf);
 			assoc = get_defcfg_association(def_conf);
-			if (cfg->speaker_outs >= ARRAY_SIZE(cfg->speaker_pins)) {
+			अगर (cfg->speaker_outs >= ARRAY_SIZE(cfg->speaker_pins)) अणु
 				codec_info(codec,
 					   "ignore pin 0x%x, too many assigned pins\n",
 					   nid);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			speaker_out[cfg->speaker_outs].pin = nid;
 			speaker_out[cfg->speaker_outs].seq = (assoc << 4) | seq;
 			cfg->speaker_outs++;
-			break;
-		case AC_JACK_HP_OUT:
+			अवरोध;
+		हाल AC_JACK_HP_OUT:
 			seq = get_defcfg_sequence(def_conf);
 			assoc = get_defcfg_association(def_conf);
-			if (cfg->hp_outs >= ARRAY_SIZE(cfg->hp_pins)) {
+			अगर (cfg->hp_outs >= ARRAY_SIZE(cfg->hp_pins)) अणु
 				codec_info(codec,
 					   "ignore pin 0x%x, too many assigned pins\n",
 					   nid);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			hp_out[cfg->hp_outs].pin = nid;
 			hp_out[cfg->hp_outs].seq = (assoc << 4) | seq;
 			cfg->hp_outs++;
-			break;
-		case AC_JACK_MIC_IN:
-			add_auto_cfg_input_pin(codec, cfg, nid, AUTO_PIN_MIC);
-			break;
-		case AC_JACK_LINE_IN:
-			add_auto_cfg_input_pin(codec, cfg, nid, AUTO_PIN_LINE_IN);
-			break;
-		case AC_JACK_CD:
-			add_auto_cfg_input_pin(codec, cfg, nid, AUTO_PIN_CD);
-			break;
-		case AC_JACK_AUX:
-			add_auto_cfg_input_pin(codec, cfg, nid, AUTO_PIN_AUX);
-			break;
-		case AC_JACK_SPDIF_OUT:
-		case AC_JACK_DIG_OTHER_OUT:
-			if (cfg->dig_outs >= ARRAY_SIZE(cfg->dig_out_pins)) {
+			अवरोध;
+		हाल AC_JACK_MIC_IN:
+			add_स्वतः_cfg_input_pin(codec, cfg, nid, AUTO_PIN_MIC);
+			अवरोध;
+		हाल AC_JACK_LINE_IN:
+			add_स्वतः_cfg_input_pin(codec, cfg, nid, AUTO_PIN_LINE_IN);
+			अवरोध;
+		हाल AC_JACK_CD:
+			add_स्वतः_cfg_input_pin(codec, cfg, nid, AUTO_PIN_CD);
+			अवरोध;
+		हाल AC_JACK_AUX:
+			add_स्वतः_cfg_input_pin(codec, cfg, nid, AUTO_PIN_AUX);
+			अवरोध;
+		हाल AC_JACK_SPDIF_OUT:
+		हाल AC_JACK_DIG_OTHER_OUT:
+			अगर (cfg->dig_outs >= ARRAY_SIZE(cfg->dig_out_pins)) अणु
 				codec_info(codec,
 					   "ignore pin 0x%x, too many assigned pins\n",
 					   nid);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			cfg->dig_out_pins[cfg->dig_outs] = nid;
 			cfg->dig_out_type[cfg->dig_outs] =
 				(loc == AC_JACK_LOC_HDMI) ?
 				HDA_PCM_TYPE_HDMI : HDA_PCM_TYPE_SPDIF;
 			cfg->dig_outs++;
-			break;
-		case AC_JACK_SPDIF_IN:
-		case AC_JACK_DIG_OTHER_IN:
+			अवरोध;
+		हाल AC_JACK_SPDIF_IN:
+		हाल AC_JACK_DIG_OTHER_IN:
 			cfg->dig_in_pin = nid;
-			if (loc == AC_JACK_LOC_HDMI)
+			अगर (loc == AC_JACK_LOC_HDMI)
 				cfg->dig_in_type = HDA_PCM_TYPE_HDMI;
-			else
+			अन्यथा
 				cfg->dig_in_type = HDA_PCM_TYPE_SPDIF;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Find a pin that could be a headset or headphone mic */
-	if (cond_flags & HDA_PINCFG_HEADSET_MIC || cond_flags & HDA_PINCFG_HEADPHONE_MIC) {
+	अगर (cond_flags & HDA_PINCFG_HEADSET_MIC || cond_flags & HDA_PINCFG_HEADPHONE_MIC) अणु
 		bool hsmic = !!(cond_flags & HDA_PINCFG_HEADSET_MIC);
 		bool hpmic = !!(cond_flags & HDA_PINCFG_HEADPHONE_MIC);
-		for (i = 0; (hsmic || hpmic) && (i < cfg->num_inputs); i++)
-			if (hsmic && can_be_headset_mic(codec, &cfg->inputs[i], 0xc)) {
-				cfg->inputs[i].is_headset_mic = 1;
+		क्रम (i = 0; (hsmic || hpmic) && (i < cfg->num_inमाला_दो); i++)
+			अगर (hsmic && can_be_headset_mic(codec, &cfg->inमाला_दो[i], 0xc)) अणु
+				cfg->inमाला_दो[i].is_headset_mic = 1;
 				hsmic = false;
-			} else if (hpmic && can_be_headset_mic(codec, &cfg->inputs[i], 0xd)) {
-				cfg->inputs[i].is_headphone_mic = 1;
+			पूर्ण अन्यथा अगर (hpmic && can_be_headset_mic(codec, &cfg->inमाला_दो[i], 0xd)) अणु
+				cfg->inमाला_दो[i].is_headphone_mic = 1;
 				hpmic = false;
-			}
+			पूर्ण
 
 		/* If we didn't find our sequence number mark, fall back to any sequence number */
-		for (i = 0; (hsmic || hpmic) && (i < cfg->num_inputs); i++) {
-			if (!can_be_headset_mic(codec, &cfg->inputs[i], -1))
-				continue;
-			if (hsmic) {
-				cfg->inputs[i].is_headset_mic = 1;
+		क्रम (i = 0; (hsmic || hpmic) && (i < cfg->num_inमाला_दो); i++) अणु
+			अगर (!can_be_headset_mic(codec, &cfg->inमाला_दो[i], -1))
+				जारी;
+			अगर (hsmic) अणु
+				cfg->inमाला_दो[i].is_headset_mic = 1;
 				hsmic = false;
-			} else if (hpmic) {
-				cfg->inputs[i].is_headphone_mic = 1;
+			पूर्ण अन्यथा अगर (hpmic) अणु
+				cfg->inमाला_दो[i].is_headphone_mic = 1;
 				hpmic = false;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (hsmic)
+		अगर (hsmic)
 			codec_dbg(codec, "Told to look for a headset mic, but didn't find any.\n");
-		if (hpmic)
+		अगर (hpmic)
 			codec_dbg(codec, "Told to look for a headphone mic, but didn't find any.\n");
-	}
+	पूर्ण
 
 	/* FIX-UP:
 	 * If no line-out is defined but multiple HPs are found,
 	 * some of them might be the real line-outs.
 	 */
-	if (!cfg->line_outs && cfg->hp_outs > 1 &&
-	    !(cond_flags & HDA_PINCFG_NO_HP_FIXUP)) {
+	अगर (!cfg->line_outs && cfg->hp_outs > 1 &&
+	    !(cond_flags & HDA_PINCFG_NO_HP_FIXUP)) अणु
 		i = 0;
-		while (i < cfg->hp_outs) {
+		जबतक (i < cfg->hp_outs) अणु
 			/* The real HPs should have the sequence 0x0f */
-			if ((hp_out[i].seq & 0x0f) == 0x0f) {
+			अगर ((hp_out[i].seq & 0x0f) == 0x0f) अणु
 				i++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			/* Move it to the line-out table */
 			line_out[cfg->line_outs++] = hp_out[i];
 			cfg->hp_outs--;
-			memmove(hp_out + i, hp_out + i + 1,
-				sizeof(hp_out[0]) * (cfg->hp_outs - i));
-		}
-		memset(hp_out + cfg->hp_outs, 0,
-		       sizeof(hp_out[0]) * (AUTO_CFG_MAX_OUTS - cfg->hp_outs));
-		if (!cfg->hp_outs)
+			स_हटाओ(hp_out + i, hp_out + i + 1,
+				माप(hp_out[0]) * (cfg->hp_outs - i));
+		पूर्ण
+		स_रखो(hp_out + cfg->hp_outs, 0,
+		       माप(hp_out[0]) * (AUTO_CFG_MAX_OUTS - cfg->hp_outs));
+		अगर (!cfg->hp_outs)
 			cfg->line_out_type = AUTO_PIN_HP_OUT;
 
-	}
+	पूर्ण
 
 	/* sort by sequence */
 	sort_pins_by_sequence(cfg->line_out_pins, line_out, cfg->line_outs);
@@ -377,38 +378,38 @@ int snd_hda_parse_pin_defcfg(struct hda_codec *codec,
 	sort_pins_by_sequence(cfg->hp_pins, hp_out, cfg->hp_outs);
 
 	/*
-	 * FIX-UP: if no line-outs are detected, try to use speaker or HP pin
+	 * FIX-UP: अगर no line-outs are detected, try to use speaker or HP pin
 	 * as a primary output
 	 */
-	if (!cfg->line_outs &&
-	    !(cond_flags & HDA_PINCFG_NO_LO_FIXUP)) {
-		if (cfg->speaker_outs) {
+	अगर (!cfg->line_outs &&
+	    !(cond_flags & HDA_PINCFG_NO_LO_FIXUP)) अणु
+		अगर (cfg->speaker_outs) अणु
 			cfg->line_outs = cfg->speaker_outs;
-			memcpy(cfg->line_out_pins, cfg->speaker_pins,
-			       sizeof(cfg->speaker_pins));
+			स_नकल(cfg->line_out_pins, cfg->speaker_pins,
+			       माप(cfg->speaker_pins));
 			cfg->speaker_outs = 0;
-			memset(cfg->speaker_pins, 0, sizeof(cfg->speaker_pins));
+			स_रखो(cfg->speaker_pins, 0, माप(cfg->speaker_pins));
 			cfg->line_out_type = AUTO_PIN_SPEAKER_OUT;
-		} else if (cfg->hp_outs) {
+		पूर्ण अन्यथा अगर (cfg->hp_outs) अणु
 			cfg->line_outs = cfg->hp_outs;
-			memcpy(cfg->line_out_pins, cfg->hp_pins,
-			       sizeof(cfg->hp_pins));
+			स_नकल(cfg->line_out_pins, cfg->hp_pins,
+			       माप(cfg->hp_pins));
 			cfg->hp_outs = 0;
-			memset(cfg->hp_pins, 0, sizeof(cfg->hp_pins));
+			स_रखो(cfg->hp_pins, 0, माप(cfg->hp_pins));
 			cfg->line_out_type = AUTO_PIN_HP_OUT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	reorder_outputs(cfg->line_outs, cfg->line_out_pins);
-	reorder_outputs(cfg->hp_outs, cfg->hp_pins);
-	reorder_outputs(cfg->speaker_outs, cfg->speaker_pins);
+	reorder_outमाला_दो(cfg->line_outs, cfg->line_out_pins);
+	reorder_outमाला_दो(cfg->hp_outs, cfg->hp_pins);
+	reorder_outमाला_दो(cfg->speaker_outs, cfg->speaker_pins);
 
-	/* sort inputs in the order of AUTO_PIN_* type */
-	sort(cfg->inputs, cfg->num_inputs, sizeof(cfg->inputs[0]),
-	     compare_input_type, NULL);
+	/* sort inमाला_दो in the order of AUTO_PIN_* type */
+	sort(cfg->inमाला_दो, cfg->num_inमाला_दो, माप(cfg->inमाला_दो[0]),
+	     compare_input_type, शून्य);
 
 	/*
-	 * debug prints of the parsed results
+	 * debug prपूर्णांकs of the parsed results
 	 */
 	codec_info(codec, "autoconfig for %s: line_outs=%d (0x%x/0x%x/0x%x/0x%x/0x%x) type:%s\n",
 		   codec->core.chip_name, cfg->line_outs, cfg->line_out_pins[0],
@@ -426,20 +427,20 @@ int snd_hda_parse_pin_defcfg(struct hda_codec *codec,
 		   cfg->hp_pins[1], cfg->hp_pins[2],
 		   cfg->hp_pins[3], cfg->hp_pins[4]);
 	codec_info(codec, "   mono: mono_out=0x%x\n", cfg->mono_out_pin);
-	if (cfg->dig_outs)
+	अगर (cfg->dig_outs)
 		codec_info(codec, "   dig-out=0x%x/0x%x\n",
 			   cfg->dig_out_pins[0], cfg->dig_out_pins[1]);
 	codec_info(codec, "   inputs:\n");
-	for (i = 0; i < cfg->num_inputs; i++) {
+	क्रम (i = 0; i < cfg->num_inमाला_दो; i++) अणु
 		codec_info(codec, "     %s=0x%x\n",
-			    hda_get_autocfg_input_label(codec, cfg, i),
-			    cfg->inputs[i].pin);
-	}
-	if (cfg->dig_in_pin)
+			    hda_get_स्वतःcfg_input_label(codec, cfg, i),
+			    cfg->inमाला_दो[i].pin);
+	पूर्ण
+	अगर (cfg->dig_in_pin)
 		codec_info(codec, "   dig-in=0x%x\n", cfg->dig_in_pin);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_parse_pin_defcfg);
 
 /**
@@ -447,326 +448,326 @@ EXPORT_SYMBOL_GPL(snd_hda_parse_pin_defcfg);
  * @def_conf: pin configuration value
  *
  * Guess the input pin attribute (INPUT_PIN_ATTR_XXX) from the given
- * default pin configuration value.
+ * शेष pin configuration value.
  */
-int snd_hda_get_input_pin_attr(unsigned int def_conf)
-{
-	unsigned int loc = get_defcfg_location(def_conf);
-	unsigned int conn = get_defcfg_connect(def_conf);
-	if (conn == AC_JACK_PORT_NONE)
-		return INPUT_PIN_ATTR_UNUSED;
-	/* Windows may claim the internal mic to be BOTH, too */
-	if (conn == AC_JACK_PORT_FIXED || conn == AC_JACK_PORT_BOTH)
-		return INPUT_PIN_ATTR_INT;
-	if ((loc & 0x30) == AC_JACK_LOC_INTERNAL)
-		return INPUT_PIN_ATTR_INT;
-	if ((loc & 0x30) == AC_JACK_LOC_SEPARATE)
-		return INPUT_PIN_ATTR_DOCK;
-	if (loc == AC_JACK_LOC_REAR)
-		return INPUT_PIN_ATTR_REAR;
-	if (loc == AC_JACK_LOC_FRONT)
-		return INPUT_PIN_ATTR_FRONT;
-	return INPUT_PIN_ATTR_NORMAL;
-}
+पूर्णांक snd_hda_get_input_pin_attr(अचिन्हित पूर्णांक def_conf)
+अणु
+	अचिन्हित पूर्णांक loc = get_defcfg_location(def_conf);
+	अचिन्हित पूर्णांक conn = get_defcfg_connect(def_conf);
+	अगर (conn == AC_JACK_PORT_NONE)
+		वापस INPUT_PIN_ATTR_UNUSED;
+	/* Winकरोws may claim the पूर्णांकernal mic to be BOTH, too */
+	अगर (conn == AC_JACK_PORT_FIXED || conn == AC_JACK_PORT_BOTH)
+		वापस INPUT_PIN_ATTR_INT;
+	अगर ((loc & 0x30) == AC_JACK_LOC_INTERNAL)
+		वापस INPUT_PIN_ATTR_INT;
+	अगर ((loc & 0x30) == AC_JACK_LOC_SEPARATE)
+		वापस INPUT_PIN_ATTR_DOCK;
+	अगर (loc == AC_JACK_LOC_REAR)
+		वापस INPUT_PIN_ATTR_REAR;
+	अगर (loc == AC_JACK_LOC_FRONT)
+		वापस INPUT_PIN_ATTR_FRONT;
+	वापस INPUT_PIN_ATTR_NORMAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_get_input_pin_attr);
 
 /**
- * hda_get_input_pin_label - Give a label for the given input pin
+ * hda_get_input_pin_label - Give a label क्रम the given input pin
  * @codec: the HDA codec
  * @item: ping config item to refer
  * @pin: the pin NID
  * @check_location: flag to add the jack location prefix
  *
  * When @check_location is true, the function checks the pin location
- * for mic and line-in pins, and set an appropriate prefix like "Front",
+ * क्रम mic and line-in pins, and set an appropriate prefix like "Front",
  * "Rear", "Internal".
  */
-static const char *hda_get_input_pin_label(struct hda_codec *codec,
-					   const struct auto_pin_cfg_item *item,
+अटल स्थिर अक्षर *hda_get_input_pin_label(काष्ठा hda_codec *codec,
+					   स्थिर काष्ठा स्वतः_pin_cfg_item *item,
 					   hda_nid_t pin, bool check_location)
-{
-	unsigned int def_conf;
-	static const char * const mic_names[] = {
+अणु
+	अचिन्हित पूर्णांक def_conf;
+	अटल स्थिर अक्षर * स्थिर mic_names[] = अणु
 		"Internal Mic", "Dock Mic", "Mic", "Rear Mic", "Front Mic"
-	};
-	int attr;
+	पूर्ण;
+	पूर्णांक attr;
 
 	def_conf = snd_hda_codec_get_pincfg(codec, pin);
 
-	switch (get_defcfg_device(def_conf)) {
-	case AC_JACK_MIC_IN:
-		if (item && item->is_headset_mic)
-			return "Headset Mic";
-		if (item && item->is_headphone_mic)
-			return "Headphone Mic";
-		if (!check_location)
-			return "Mic";
+	चयन (get_defcfg_device(def_conf)) अणु
+	हाल AC_JACK_MIC_IN:
+		अगर (item && item->is_headset_mic)
+			वापस "Headset Mic";
+		अगर (item && item->is_headphone_mic)
+			वापस "Headphone Mic";
+		अगर (!check_location)
+			वापस "Mic";
 		attr = snd_hda_get_input_pin_attr(def_conf);
-		if (!attr)
-			return "None";
-		return mic_names[attr - 1];
-	case AC_JACK_LINE_IN:
-		if (!check_location)
-			return "Line";
+		अगर (!attr)
+			वापस "None";
+		वापस mic_names[attr - 1];
+	हाल AC_JACK_LINE_IN:
+		अगर (!check_location)
+			वापस "Line";
 		attr = snd_hda_get_input_pin_attr(def_conf);
-		if (!attr)
-			return "None";
-		if (attr == INPUT_PIN_ATTR_DOCK)
-			return "Dock Line";
-		return "Line";
-	case AC_JACK_AUX:
-		return "Aux";
-	case AC_JACK_CD:
-		return "CD";
-	case AC_JACK_SPDIF_IN:
-		return "SPDIF In";
-	case AC_JACK_DIG_OTHER_IN:
-		return "Digital In";
-	case AC_JACK_HP_OUT:
-		return "Headphone Mic";
-	default:
-		return "Misc";
-	}
-}
+		अगर (!attr)
+			वापस "None";
+		अगर (attr == INPUT_PIN_ATTR_DOCK)
+			वापस "Dock Line";
+		वापस "Line";
+	हाल AC_JACK_AUX:
+		वापस "Aux";
+	हाल AC_JACK_CD:
+		वापस "CD";
+	हाल AC_JACK_SPDIF_IN:
+		वापस "SPDIF In";
+	हाल AC_JACK_DIG_OTHER_IN:
+		वापस "Digital In";
+	हाल AC_JACK_HP_OUT:
+		वापस "Headphone Mic";
+	शेष:
+		वापस "Misc";
+	पूर्ण
+पूर्ण
 
 /* Check whether the location prefix needs to be added to the label.
- * If all mic-jacks are in the same location (e.g. rear panel), we don't
- * have to put "Front" prefix to each label.  In such a case, returns false.
+ * If all mic-jacks are in the same location (e.g. rear panel), we करोn't
+ * have to put "Front" prefix to each label.  In such a हाल, वापसs false.
  */
-static int check_mic_location_need(struct hda_codec *codec,
-				   const struct auto_pin_cfg *cfg,
-				   int input)
-{
-	unsigned int defc;
-	int i, attr, attr2;
+अटल पूर्णांक check_mic_location_need(काष्ठा hda_codec *codec,
+				   स्थिर काष्ठा स्वतः_pin_cfg *cfg,
+				   पूर्णांक input)
+अणु
+	अचिन्हित पूर्णांक defc;
+	पूर्णांक i, attr, attr2;
 
-	defc = snd_hda_codec_get_pincfg(codec, cfg->inputs[input].pin);
+	defc = snd_hda_codec_get_pincfg(codec, cfg->inमाला_दो[input].pin);
 	attr = snd_hda_get_input_pin_attr(defc);
-	/* for internal or docking mics, we need locations */
-	if (attr <= INPUT_PIN_ATTR_NORMAL)
-		return 1;
+	/* क्रम पूर्णांकernal or करोcking mics, we need locations */
+	अगर (attr <= INPUT_PIN_ATTR_NORMAL)
+		वापस 1;
 
 	attr = 0;
-	for (i = 0; i < cfg->num_inputs; i++) {
-		defc = snd_hda_codec_get_pincfg(codec, cfg->inputs[i].pin);
+	क्रम (i = 0; i < cfg->num_inमाला_दो; i++) अणु
+		defc = snd_hda_codec_get_pincfg(codec, cfg->inमाला_दो[i].pin);
 		attr2 = snd_hda_get_input_pin_attr(defc);
-		if (attr2 >= INPUT_PIN_ATTR_NORMAL) {
-			if (attr && attr != attr2)
-				return 1; /* different locations found */
+		अगर (attr2 >= INPUT_PIN_ATTR_NORMAL) अणु
+			अगर (attr && attr != attr2)
+				वापस 1; /* dअगरferent locations found */
 			attr = attr2;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * hda_get_autocfg_input_label - Get a label for the given input
+ * hda_get_स्वतःcfg_input_label - Get a label क्रम the given input
  * @codec: the HDA codec
  * @cfg: the parsed pin configuration
  * @input: the input index number
  *
- * Get a label for the given input pin defined by the autocfg item.
- * Unlike hda_get_input_pin_label(), this function checks all inputs
- * defined in autocfg and avoids the redundant mic/line prefix as much as
+ * Get a label क्रम the given input pin defined by the स्वतःcfg item.
+ * Unlike hda_get_input_pin_label(), this function checks all inमाला_दो
+ * defined in स्वतःcfg and aव्योमs the redundant mic/line prefix as much as
  * possible.
  */
-const char *hda_get_autocfg_input_label(struct hda_codec *codec,
-					const struct auto_pin_cfg *cfg,
-					int input)
-{
-	int type = cfg->inputs[input].type;
-	int has_multiple_pins = 0;
+स्थिर अक्षर *hda_get_स्वतःcfg_input_label(काष्ठा hda_codec *codec,
+					स्थिर काष्ठा स्वतः_pin_cfg *cfg,
+					पूर्णांक input)
+अणु
+	पूर्णांक type = cfg->inमाला_दो[input].type;
+	पूर्णांक has_multiple_pins = 0;
 
-	if ((input > 0 && cfg->inputs[input - 1].type == type) ||
-	    (input < cfg->num_inputs - 1 && cfg->inputs[input + 1].type == type))
+	अगर ((input > 0 && cfg->inमाला_दो[input - 1].type == type) ||
+	    (input < cfg->num_inमाला_दो - 1 && cfg->inमाला_दो[input + 1].type == type))
 		has_multiple_pins = 1;
-	if (has_multiple_pins && type == AUTO_PIN_MIC)
+	अगर (has_multiple_pins && type == AUTO_PIN_MIC)
 		has_multiple_pins &= check_mic_location_need(codec, cfg, input);
-	has_multiple_pins |= codec->force_pin_prefix;
-	return hda_get_input_pin_label(codec, &cfg->inputs[input],
-				       cfg->inputs[input].pin,
+	has_multiple_pins |= codec->क्रमce_pin_prefix;
+	वापस hda_get_input_pin_label(codec, &cfg->inमाला_दो[input],
+				       cfg->inमाला_दो[input].pin,
 				       has_multiple_pins);
-}
-EXPORT_SYMBOL_GPL(hda_get_autocfg_input_label);
+पूर्ण
+EXPORT_SYMBOL_GPL(hda_get_स्वतःcfg_input_label);
 
-/* return the position of NID in the list, or -1 if not found */
-static int find_idx_in_nid_list(hda_nid_t nid, const hda_nid_t *list, int nums)
-{
-	int i;
-	for (i = 0; i < nums; i++)
-		if (list[i] == nid)
-			return i;
-	return -1;
-}
+/* वापस the position of NID in the list, or -1 अगर not found */
+अटल पूर्णांक find_idx_in_nid_list(hda_nid_t nid, स्थिर hda_nid_t *list, पूर्णांक nums)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < nums; i++)
+		अगर (list[i] == nid)
+			वापस i;
+	वापस -1;
+पूर्ण
 
 /* get a unique suffix or an index number */
-static const char *check_output_sfx(hda_nid_t nid, const hda_nid_t *pins,
-				    int num_pins, int *indexp)
-{
-	static const char * const channel_sfx[] = {
+अटल स्थिर अक्षर *check_output_sfx(hda_nid_t nid, स्थिर hda_nid_t *pins,
+				    पूर्णांक num_pins, पूर्णांक *indexp)
+अणु
+	अटल स्थिर अक्षर * स्थिर channel_sfx[] = अणु
 		" Front", " Surround", " CLFE", " Side"
-	};
-	int i;
+	पूर्ण;
+	पूर्णांक i;
 
 	i = find_idx_in_nid_list(nid, pins, num_pins);
-	if (i < 0)
-		return NULL;
-	if (num_pins == 1)
-		return "";
-	if (num_pins > ARRAY_SIZE(channel_sfx)) {
-		if (indexp)
+	अगर (i < 0)
+		वापस शून्य;
+	अगर (num_pins == 1)
+		वापस "";
+	अगर (num_pins > ARRAY_SIZE(channel_sfx)) अणु
+		अगर (indexp)
 			*indexp = i;
-		return "";
-	}
-	return channel_sfx[i];
-}
+		वापस "";
+	पूर्ण
+	वापस channel_sfx[i];
+पूर्ण
 
-static const char *check_output_pfx(struct hda_codec *codec, hda_nid_t nid)
-{
-	unsigned int def_conf = snd_hda_codec_get_pincfg(codec, nid);
-	int attr = snd_hda_get_input_pin_attr(def_conf);
+अटल स्थिर अक्षर *check_output_pfx(काष्ठा hda_codec *codec, hda_nid_t nid)
+अणु
+	अचिन्हित पूर्णांक def_conf = snd_hda_codec_get_pincfg(codec, nid);
+	पूर्णांक attr = snd_hda_get_input_pin_attr(def_conf);
 
 	/* check the location */
-	switch (attr) {
-	case INPUT_PIN_ATTR_DOCK:
-		return "Dock ";
-	case INPUT_PIN_ATTR_FRONT:
-		return "Front ";
-	}
-	return "";
-}
+	चयन (attr) अणु
+	हाल INPUT_PIN_ATTR_DOCK:
+		वापस "Dock ";
+	हाल INPUT_PIN_ATTR_FRONT:
+		वापस "Front ";
+	पूर्ण
+	वापस "";
+पूर्ण
 
-static int get_hp_label_index(struct hda_codec *codec, hda_nid_t nid,
-			      const hda_nid_t *pins, int num_pins)
-{
-	int i, j, idx = 0;
+अटल पूर्णांक get_hp_label_index(काष्ठा hda_codec *codec, hda_nid_t nid,
+			      स्थिर hda_nid_t *pins, पूर्णांक num_pins)
+अणु
+	पूर्णांक i, j, idx = 0;
 
-	const char *pfx = check_output_pfx(codec, nid);
+	स्थिर अक्षर *pfx = check_output_pfx(codec, nid);
 
 	i = find_idx_in_nid_list(nid, pins, num_pins);
-	if (i < 0)
-		return -1;
-	for (j = 0; j < i; j++)
-		if (pfx == check_output_pfx(codec, pins[j]))
+	अगर (i < 0)
+		वापस -1;
+	क्रम (j = 0; j < i; j++)
+		अगर (pfx == check_output_pfx(codec, pins[j]))
 			idx++;
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static int fill_audio_out_name(struct hda_codec *codec, hda_nid_t nid,
-			       const struct auto_pin_cfg *cfg,
-			       const char *name, char *label, int maxlen,
-			       int *indexp)
-{
-	unsigned int def_conf = snd_hda_codec_get_pincfg(codec, nid);
-	int attr = snd_hda_get_input_pin_attr(def_conf);
-	const char *pfx, *sfx = "";
+अटल पूर्णांक fill_audio_out_name(काष्ठा hda_codec *codec, hda_nid_t nid,
+			       स्थिर काष्ठा स्वतः_pin_cfg *cfg,
+			       स्थिर अक्षर *name, अक्षर *label, पूर्णांक maxlen,
+			       पूर्णांक *indexp)
+अणु
+	अचिन्हित पूर्णांक def_conf = snd_hda_codec_get_pincfg(codec, nid);
+	पूर्णांक attr = snd_hda_get_input_pin_attr(def_conf);
+	स्थिर अक्षर *pfx, *sfx = "";
 
-	/* handle as a speaker if it's a fixed line-out */
-	if (!strcmp(name, "Line Out") && attr == INPUT_PIN_ATTR_INT)
+	/* handle as a speaker अगर it's a fixed line-out */
+	अगर (!म_भेद(name, "Line Out") && attr == INPUT_PIN_ATTR_INT)
 		name = "Speaker";
 	pfx = check_output_pfx(codec, nid);
 
-	if (cfg) {
-		/* try to give a unique suffix if needed */
+	अगर (cfg) अणु
+		/* try to give a unique suffix अगर needed */
 		sfx = check_output_sfx(nid, cfg->line_out_pins, cfg->line_outs,
 				       indexp);
-		if (!sfx)
+		अगर (!sfx)
 			sfx = check_output_sfx(nid, cfg->speaker_pins, cfg->speaker_outs,
 					       indexp);
-		if (!sfx) {
-			/* don't add channel suffix for Headphone controls */
-			int idx = get_hp_label_index(codec, nid, cfg->hp_pins,
+		अगर (!sfx) अणु
+			/* करोn't add channel suffix क्रम Headphone controls */
+			पूर्णांक idx = get_hp_label_index(codec, nid, cfg->hp_pins,
 						     cfg->hp_outs);
-			if (idx >= 0 && indexp)
+			अगर (idx >= 0 && indexp)
 				*indexp = idx;
 			sfx = "";
-		}
-	}
-	snprintf(label, maxlen, "%s%s%s", pfx, name, sfx);
-	return 1;
-}
+		पूर्ण
+	पूर्ण
+	snम_लिखो(label, maxlen, "%s%s%s", pfx, name, sfx);
+	वापस 1;
+पूर्ण
 
-#define is_hdmi_cfg(conf) \
+#घोषणा is_hdmi_cfg(conf) \
 	(get_defcfg_location(conf) == AC_JACK_LOC_HDMI)
 
 /**
- * snd_hda_get_pin_label - Get a label for the given I/O pin
+ * snd_hda_get_pin_label - Get a label क्रम the given I/O pin
  * @codec: the HDA codec
  * @nid: pin NID
  * @cfg: the parsed pin configuration
  * @label: the string buffer to store
  * @maxlen: the max length of string buffer (including termination)
- * @indexp: the pointer to return the index number (for multiple ctls)
+ * @indexp: the poपूर्णांकer to वापस the index number (क्रम multiple ctls)
  *
- * Get a label for the given pin.  This function works for both input and
- * output pins.  When @cfg is given as non-NULL, the function tries to get
- * an optimized label using hda_get_autocfg_input_label().
+ * Get a label क्रम the given pin.  This function works क्रम both input and
+ * output pins.  When @cfg is given as non-शून्य, the function tries to get
+ * an optimized label using hda_get_स्वतःcfg_input_label().
  *
- * This function tries to give a unique label string for the pin as much as
+ * This function tries to give a unique label string क्रम the pin as much as
  * possible.  For example, when the multiple line-outs are present, it adds
  * the channel suffix like "Front", "Surround", etc (only when @cfg is given).
- * If no unique name with a suffix is available and @indexp is non-NULL, the
- * index number is stored in the pointer.
+ * If no unique name with a suffix is available and @indexp is non-शून्य, the
+ * index number is stored in the poपूर्णांकer.
  */
-int snd_hda_get_pin_label(struct hda_codec *codec, hda_nid_t nid,
-			  const struct auto_pin_cfg *cfg,
-			  char *label, int maxlen, int *indexp)
-{
-	unsigned int def_conf = snd_hda_codec_get_pincfg(codec, nid);
-	const char *name = NULL;
-	int i;
+पूर्णांक snd_hda_get_pin_label(काष्ठा hda_codec *codec, hda_nid_t nid,
+			  स्थिर काष्ठा स्वतः_pin_cfg *cfg,
+			  अक्षर *label, पूर्णांक maxlen, पूर्णांक *indexp)
+अणु
+	अचिन्हित पूर्णांक def_conf = snd_hda_codec_get_pincfg(codec, nid);
+	स्थिर अक्षर *name = शून्य;
+	पूर्णांक i;
 	bool hdmi;
 
-	if (indexp)
+	अगर (indexp)
 		*indexp = 0;
-	if (get_defcfg_connect(def_conf) == AC_JACK_PORT_NONE)
-		return 0;
+	अगर (get_defcfg_connect(def_conf) == AC_JACK_PORT_NONE)
+		वापस 0;
 
-	switch (get_defcfg_device(def_conf)) {
-	case AC_JACK_LINE_OUT:
-		return fill_audio_out_name(codec, nid, cfg, "Line Out",
+	चयन (get_defcfg_device(def_conf)) अणु
+	हाल AC_JACK_LINE_OUT:
+		वापस fill_audio_out_name(codec, nid, cfg, "Line Out",
 					   label, maxlen, indexp);
-	case AC_JACK_SPEAKER:
-		return fill_audio_out_name(codec, nid, cfg, "Speaker",
+	हाल AC_JACK_SPEAKER:
+		वापस fill_audio_out_name(codec, nid, cfg, "Speaker",
 					   label, maxlen, indexp);
-	case AC_JACK_HP_OUT:
-		return fill_audio_out_name(codec, nid, cfg, "Headphone",
+	हाल AC_JACK_HP_OUT:
+		वापस fill_audio_out_name(codec, nid, cfg, "Headphone",
 					   label, maxlen, indexp);
-	case AC_JACK_SPDIF_OUT:
-	case AC_JACK_DIG_OTHER_OUT:
+	हाल AC_JACK_SPDIF_OUT:
+	हाल AC_JACK_DIG_OTHER_OUT:
 		hdmi = is_hdmi_cfg(def_conf);
 		name = hdmi ? "HDMI" : "SPDIF";
-		if (cfg && indexp)
-			for (i = 0; i < cfg->dig_outs; i++) {
+		अगर (cfg && indexp)
+			क्रम (i = 0; i < cfg->dig_outs; i++) अणु
 				hda_nid_t pin = cfg->dig_out_pins[i];
-				unsigned int c;
-				if (pin == nid)
-					break;
+				अचिन्हित पूर्णांक c;
+				अगर (pin == nid)
+					अवरोध;
 				c = snd_hda_codec_get_pincfg(codec, pin);
-				if (hdmi == is_hdmi_cfg(c))
+				अगर (hdmi == is_hdmi_cfg(c))
 					(*indexp)++;
-			}
-		break;
-	default:
-		if (cfg) {
-			for (i = 0; i < cfg->num_inputs; i++) {
-				if (cfg->inputs[i].pin != nid)
-					continue;
-				name = hda_get_autocfg_input_label(codec, cfg, i);
-				if (name)
-					break;
-			}
-		}
-		if (!name)
-			name = hda_get_input_pin_label(codec, NULL, nid, true);
-		break;
-	}
-	if (!name)
-		return 0;
+			पूर्ण
+		अवरोध;
+	शेष:
+		अगर (cfg) अणु
+			क्रम (i = 0; i < cfg->num_inमाला_दो; i++) अणु
+				अगर (cfg->inमाला_दो[i].pin != nid)
+					जारी;
+				name = hda_get_स्वतःcfg_input_label(codec, cfg, i);
+				अगर (name)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!name)
+			name = hda_get_input_pin_label(codec, शून्य, nid, true);
+		अवरोध;
+	पूर्ण
+	अगर (!name)
+		वापस 0;
 	strscpy(label, name, maxlen);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_get_pin_label);
 
 /**
@@ -775,153 +776,153 @@ EXPORT_SYMBOL_GPL(snd_hda_get_pin_label);
  * @list: zero-terminated verb list to add
  *
  * Append the given verb list to the execution list.  The verbs will be
- * performed at init and resume time via snd_hda_apply_verbs().
+ * perक्रमmed at init and resume समय via snd_hda_apply_verbs().
  */
-int snd_hda_add_verbs(struct hda_codec *codec,
-		      const struct hda_verb *list)
-{
-	const struct hda_verb **v;
+पूर्णांक snd_hda_add_verbs(काष्ठा hda_codec *codec,
+		      स्थिर काष्ठा hda_verb *list)
+अणु
+	स्थिर काष्ठा hda_verb **v;
 	v = snd_array_new(&codec->verbs);
-	if (!v)
-		return -ENOMEM;
+	अगर (!v)
+		वापस -ENOMEM;
 	*v = list;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_add_verbs);
 
 /**
  * snd_hda_apply_verbs - Execute the init verb lists
  * @codec: the HDA codec
  */
-void snd_hda_apply_verbs(struct hda_codec *codec)
-{
-	const struct hda_verb **v;
-	int i;
+व्योम snd_hda_apply_verbs(काष्ठा hda_codec *codec)
+अणु
+	स्थिर काष्ठा hda_verb **v;
+	पूर्णांक i;
 
-	snd_array_for_each(&codec->verbs, i, v)
-		snd_hda_sequence_write(codec, *v);
-}
+	snd_array_क्रम_each(&codec->verbs, i, v)
+		snd_hda_sequence_ग_लिखो(codec, *v);
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_apply_verbs);
 
 /**
  * snd_hda_apply_pincfgs - Set each pin config in the given list
  * @codec: the HDA codec
- * @cfg: NULL-terminated pin config table
+ * @cfg: शून्य-terminated pin config table
  */
-void snd_hda_apply_pincfgs(struct hda_codec *codec,
-			   const struct hda_pintbl *cfg)
-{
-	for (; cfg->nid; cfg++)
+व्योम snd_hda_apply_pincfgs(काष्ठा hda_codec *codec,
+			   स्थिर काष्ठा hda_pपूर्णांकbl *cfg)
+अणु
+	क्रम (; cfg->nid; cfg++)
 		snd_hda_codec_set_pincfg(codec, cfg->nid, cfg->val);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_apply_pincfgs);
 
-static void set_pin_targets(struct hda_codec *codec,
-			    const struct hda_pintbl *cfg)
-{
-	for (; cfg->nid; cfg++)
+अटल व्योम set_pin_tarमाला_लो(काष्ठा hda_codec *codec,
+			    स्थिर काष्ठा hda_pपूर्णांकbl *cfg)
+अणु
+	क्रम (; cfg->nid; cfg++)
 		snd_hda_set_pin_ctl_cache(codec, cfg->nid, cfg->val);
-}
+पूर्ण
 
-static void apply_fixup(struct hda_codec *codec, int id, int action, int depth)
-{
-	const char *modelname = codec->fixup_name;
+अटल व्योम apply_fixup(काष्ठा hda_codec *codec, पूर्णांक id, पूर्णांक action, पूर्णांक depth)
+अणु
+	स्थिर अक्षर *modelname = codec->fixup_name;
 
-	while (id >= 0) {
-		const struct hda_fixup *fix = codec->fixup_list + id;
+	जबतक (id >= 0) अणु
+		स्थिर काष्ठा hda_fixup *fix = codec->fixup_list + id;
 
-		if (++depth > 10)
-			break;
-		if (fix->chained_before)
+		अगर (++depth > 10)
+			अवरोध;
+		अगर (fix->chained_beक्रमe)
 			apply_fixup(codec, fix->chain_id, action, depth + 1);
 
-		switch (fix->type) {
-		case HDA_FIXUP_PINS:
-			if (action != HDA_FIXUP_ACT_PRE_PROBE || !fix->v.pins)
-				break;
+		चयन (fix->type) अणु
+		हाल HDA_FIXUP_PINS:
+			अगर (action != HDA_FIXUP_ACT_PRE_PROBE || !fix->v.pins)
+				अवरोध;
 			codec_dbg(codec, "%s: Apply pincfg for %s\n",
 				    codec->core.chip_name, modelname);
 			snd_hda_apply_pincfgs(codec, fix->v.pins);
-			break;
-		case HDA_FIXUP_VERBS:
-			if (action != HDA_FIXUP_ACT_PROBE || !fix->v.verbs)
-				break;
+			अवरोध;
+		हाल HDA_FIXUP_VERBS:
+			अगर (action != HDA_FIXUP_ACT_PROBE || !fix->v.verbs)
+				अवरोध;
 			codec_dbg(codec, "%s: Apply fix-verbs for %s\n",
 				    codec->core.chip_name, modelname);
 			snd_hda_add_verbs(codec, fix->v.verbs);
-			break;
-		case HDA_FIXUP_FUNC:
-			if (!fix->v.func)
-				break;
+			अवरोध;
+		हाल HDA_FIXUP_FUNC:
+			अगर (!fix->v.func)
+				अवरोध;
 			codec_dbg(codec, "%s: Apply fix-func for %s\n",
 				    codec->core.chip_name, modelname);
 			fix->v.func(codec, fix, action);
-			break;
-		case HDA_FIXUP_PINCTLS:
-			if (action != HDA_FIXUP_ACT_PROBE || !fix->v.pins)
-				break;
+			अवरोध;
+		हाल HDA_FIXUP_PINCTLS:
+			अगर (action != HDA_FIXUP_ACT_PROBE || !fix->v.pins)
+				अवरोध;
 			codec_dbg(codec, "%s: Apply pinctl for %s\n",
 				    codec->core.chip_name, modelname);
-			set_pin_targets(codec, fix->v.pins);
-			break;
-		default:
+			set_pin_tarमाला_लो(codec, fix->v.pins);
+			अवरोध;
+		शेष:
 			codec_err(codec, "%s: Invalid fixup type %d\n",
 				   codec->core.chip_name, fix->type);
-			break;
-		}
-		if (!fix->chained || fix->chained_before)
-			break;
+			अवरोध;
+		पूर्ण
+		अगर (!fix->chained || fix->chained_beक्रमe)
+			अवरोध;
 		id = fix->chain_id;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * snd_hda_apply_fixup - Apply the fixup chain with the given action
  * @codec: the HDA codec
  * @action: fixup action (HDA_FIXUP_ACT_XXX)
  */
-void snd_hda_apply_fixup(struct hda_codec *codec, int action)
-{
-	if (codec->fixup_list)
+व्योम snd_hda_apply_fixup(काष्ठा hda_codec *codec, पूर्णांक action)
+अणु
+	अगर (codec->fixup_list)
 		apply_fixup(codec, codec->fixup_id, action, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_apply_fixup);
 
-#define IGNORE_SEQ_ASSOC (~(AC_DEFCFG_SEQUENCE | AC_DEFCFG_DEF_ASSOC))
+#घोषणा IGNORE_SEQ_ASSOC (~(AC_DEFCFG_SEQUENCE | AC_DEFCFG_DEF_ASSOC))
 
-static bool pin_config_match(struct hda_codec *codec,
-			     const struct hda_pintbl *pins,
+अटल bool pin_config_match(काष्ठा hda_codec *codec,
+			     स्थिर काष्ठा hda_pपूर्णांकbl *pins,
 			     bool match_all_pins)
-{
-	const struct hda_pincfg *pin;
-	int i;
+अणु
+	स्थिर काष्ठा hda_pincfg *pin;
+	पूर्णांक i;
 
-	snd_array_for_each(&codec->init_pins, i, pin) {
+	snd_array_क्रम_each(&codec->init_pins, i, pin) अणु
 		hda_nid_t nid = pin->nid;
 		u32 cfg = pin->cfg;
-		const struct hda_pintbl *t_pins;
-		int found;
+		स्थिर काष्ठा hda_pपूर्णांकbl *t_pins;
+		पूर्णांक found;
 
 		t_pins = pins;
 		found = 0;
-		for (; t_pins->nid; t_pins++) {
-			if (t_pins->nid == nid) {
+		क्रम (; t_pins->nid; t_pins++) अणु
+			अगर (t_pins->nid == nid) अणु
 				found = 1;
-				if ((t_pins->val & IGNORE_SEQ_ASSOC) == (cfg & IGNORE_SEQ_ASSOC))
-					break;
-				else if ((cfg & 0xf0000000) == 0x40000000 && (t_pins->val & 0xf0000000) == 0x40000000)
-					break;
-				else
-					return false;
-			}
-		}
-		if (match_all_pins &&
+				अगर ((t_pins->val & IGNORE_SEQ_ASSOC) == (cfg & IGNORE_SEQ_ASSOC))
+					अवरोध;
+				अन्यथा अगर ((cfg & 0xf0000000) == 0x40000000 && (t_pins->val & 0xf0000000) == 0x40000000)
+					अवरोध;
+				अन्यथा
+					वापस false;
+			पूर्ण
+		पूर्ण
+		अगर (match_all_pins &&
 		    !found && (cfg & 0xf0000000) != 0x40000000)
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * snd_hda_pick_pin_fixup - Pick up a fixup matching with the pin quirk list
@@ -930,117 +931,117 @@ static bool pin_config_match(struct hda_codec *codec,
  * @fixlist: the fixup list
  * @match_all_pins: all valid pins must match with the table entries
  */
-void snd_hda_pick_pin_fixup(struct hda_codec *codec,
-			    const struct snd_hda_pin_quirk *pin_quirk,
-			    const struct hda_fixup *fixlist,
+व्योम snd_hda_pick_pin_fixup(काष्ठा hda_codec *codec,
+			    स्थिर काष्ठा snd_hda_pin_quirk *pin_quirk,
+			    स्थिर काष्ठा hda_fixup *fixlist,
 			    bool match_all_pins)
-{
-	const struct snd_hda_pin_quirk *pq;
+अणु
+	स्थिर काष्ठा snd_hda_pin_quirk *pq;
 
-	if (codec->fixup_id != HDA_FIXUP_ID_NOT_SET)
-		return;
+	अगर (codec->fixup_id != HDA_FIXUP_ID_NOT_SET)
+		वापस;
 
-	for (pq = pin_quirk; pq->subvendor; pq++) {
-		if ((codec->core.subsystem_id & 0xffff0000) != (pq->subvendor << 16))
-			continue;
-		if (codec->core.vendor_id != pq->codec)
-			continue;
-		if (pin_config_match(codec, pq->pins, match_all_pins)) {
+	क्रम (pq = pin_quirk; pq->subvenकरोr; pq++) अणु
+		अगर ((codec->core.subप्रणाली_id & 0xffff0000) != (pq->subvenकरोr << 16))
+			जारी;
+		अगर (codec->core.venकरोr_id != pq->codec)
+			जारी;
+		अगर (pin_config_match(codec, pq->pins, match_all_pins)) अणु
 			codec->fixup_id = pq->value;
-#ifdef CONFIG_SND_DEBUG_VERBOSE
+#अगर_घोषित CONFIG_SND_DEBUG_VERBOSE
 			codec->fixup_name = pq->name;
 			codec_dbg(codec, "%s: picked fixup %s (pin match)\n",
 				  codec->core.chip_name, codec->fixup_name);
-#endif
+#पूर्ण_अगर
 			codec->fixup_list = fixlist;
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_pick_pin_fixup);
 
 /**
  * snd_hda_pick_fixup - Pick up a fixup matching with PCI/codec SSID or model string
  * @codec: the HDA codec
- * @models: NULL-terminated model string list
+ * @models: शून्य-terminated model string list
  * @quirk: zero-terminated PCI/codec SSID quirk list
  * @fixlist: the fixup list
  *
  * Pick up a fixup entry matching with the given model string or SSID.
- * If a fixup was already set beforehand, the function doesn't do anything.
+ * If a fixup was alपढ़ोy set beक्रमehand, the function करोesn't करो anything.
  * When a special model string "nofixup" is given, also no fixup is applied.
  *
- * The function tries to find the matching model name at first, if given.
+ * The function tries to find the matching model name at first, अगर given.
  * If nothing matched, try to look up the PCI SSID.
  * If still nothing matched, try to look up the codec SSID.
  */
-void snd_hda_pick_fixup(struct hda_codec *codec,
-			const struct hda_model_fixup *models,
-			const struct snd_pci_quirk *quirk,
-			const struct hda_fixup *fixlist)
-{
-	const struct snd_pci_quirk *q;
-	int id = HDA_FIXUP_ID_NOT_SET;
-	const char *name = NULL;
+व्योम snd_hda_pick_fixup(काष्ठा hda_codec *codec,
+			स्थिर काष्ठा hda_model_fixup *models,
+			स्थिर काष्ठा snd_pci_quirk *quirk,
+			स्थिर काष्ठा hda_fixup *fixlist)
+अणु
+	स्थिर काष्ठा snd_pci_quirk *q;
+	पूर्णांक id = HDA_FIXUP_ID_NOT_SET;
+	स्थिर अक्षर *name = शून्य;
 
-	if (codec->fixup_id != HDA_FIXUP_ID_NOT_SET)
-		return;
+	अगर (codec->fixup_id != HDA_FIXUP_ID_NOT_SET)
+		वापस;
 
-	/* when model=nofixup is given, don't pick up any fixups */
-	if (codec->modelname && !strcmp(codec->modelname, "nofixup")) {
-		codec->fixup_list = NULL;
-		codec->fixup_name = NULL;
+	/* when model=nofixup is given, करोn't pick up any fixups */
+	अगर (codec->modelname && !म_भेद(codec->modelname, "nofixup")) अणु
+		codec->fixup_list = शून्य;
+		codec->fixup_name = शून्य;
 		codec->fixup_id = HDA_FIXUP_ID_NO_FIXUP;
 		codec_dbg(codec, "%s: picked no fixup (nofixup specified)\n",
 			  codec->core.chip_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (codec->modelname && models) {
-		while (models->name) {
-			if (!strcmp(codec->modelname, models->name)) {
+	अगर (codec->modelname && models) अणु
+		जबतक (models->name) अणु
+			अगर (!म_भेद(codec->modelname, models->name)) अणु
 				codec->fixup_id = models->id;
 				codec->fixup_name = models->name;
 				codec->fixup_list = fixlist;
 				codec_dbg(codec, "%s: picked fixup %s (model specified)\n",
 					  codec->core.chip_name, codec->fixup_name);
-				return;
-			}
+				वापस;
+			पूर्ण
 			models++;
-		}
-	}
-	if (quirk) {
+		पूर्ण
+	पूर्ण
+	अगर (quirk) अणु
 		q = snd_pci_quirk_lookup(codec->bus->pci, quirk);
-		if (q) {
+		अगर (q) अणु
 			id = q->value;
-#ifdef CONFIG_SND_DEBUG_VERBOSE
+#अगर_घोषित CONFIG_SND_DEBUG_VERBOSE
 			name = q->name;
 			codec_dbg(codec, "%s: picked fixup %s (PCI SSID%s)\n",
 				  codec->core.chip_name, name, q->subdevice_mask ? "" : " - vendor generic");
-#endif
-		}
-	}
-	if (id < 0 && quirk) {
-		for (q = quirk; q->subvendor || q->subdevice; q++) {
-			unsigned int vendorid =
-				q->subdevice | (q->subvendor << 16);
-			unsigned int mask = 0xffff0000 | q->subdevice_mask;
-			if ((codec->core.subsystem_id & mask) == (vendorid & mask)) {
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
+	अगर (id < 0 && quirk) अणु
+		क्रम (q = quirk; q->subvenकरोr || q->subdevice; q++) अणु
+			अचिन्हित पूर्णांक venकरोrid =
+				q->subdevice | (q->subvenकरोr << 16);
+			अचिन्हित पूर्णांक mask = 0xffff0000 | q->subdevice_mask;
+			अगर ((codec->core.subप्रणाली_id & mask) == (venकरोrid & mask)) अणु
 				id = q->value;
-#ifdef CONFIG_SND_DEBUG_VERBOSE
+#अगर_घोषित CONFIG_SND_DEBUG_VERBOSE
 				name = q->name;
 				codec_dbg(codec, "%s: picked fixup %s (codec SSID)\n",
 					  codec->core.chip_name, name);
-#endif
-				break;
-			}
-		}
-	}
+#पूर्ण_अगर
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	codec->fixup_id = id;
-	if (id >= 0) {
+	अगर (id >= 0) अणु
 		codec->fixup_list = fixlist;
 		codec->fixup_name = name;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hda_pick_fixup);

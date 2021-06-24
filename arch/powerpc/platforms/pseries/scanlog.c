@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  c 2001 PPC 64 Team, IBM Corp
  *
- * scan-log-data driver for PPC64  Todd Inglett <tinglett@vnet.ibm.com>
+ * scan-log-data driver क्रम PPC64  Todd Inglett <tinglett@vnet.ibm.com>
  *
- * When ppc64 hardware fails the service processor dumps internal state
- * of the system.  After a reboot the operating system can access a dump
- * of this data using this driver.  A dump exists if the device-tree
+ * When ppc64 hardware fails the service processor dumps पूर्णांकernal state
+ * of the प्रणाली.  After a reboot the operating प्रणाली can access a dump
+ * of this data using this driver.  A dump exists अगर the device-tree
  * /chosen/ibm,scan-log-data property exists.
  *
- * This driver exports /proc/powerpc/scan-log-dump which can be read.
- * The driver supports only sequential reads.
+ * This driver exports /proc/घातerpc/scan-log-dump which can be पढ़ो.
+ * The driver supports only sequential पढ़ोs.
  *
- * The driver looks at a write to the driver for the single word "reset".
- * If given, the driver will reset the scanlog so the platform can free it.
+ * The driver looks at a ग_लिखो to the driver क्रम the single word "reset".
+ * If given, the driver will reset the scanlog so the platक्रमm can मुक्त it.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/proc_fs.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <asm/rtas.h>
-#include <asm/prom.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/prom.h>
 
-#define MODULE_VERS "1.0"
-#define MODULE_NAME "scanlog"
+#घोषणा MODULE_VERS "1.0"
+#घोषणा MODULE_NAME "scanlog"
 
-/* Status returns from ibm,scan-log-dump */
-#define SCANLOG_COMPLETE 0
-#define SCANLOG_HWERROR -1
-#define SCANLOG_CONTINUE 1
+/* Status वापसs from ibm,scan-log-dump */
+#घोषणा SCANLOG_COMPLETE 0
+#घोषणा SCANLOG_HWERROR -1
+#घोषणा SCANLOG_CONTINUE 1
 
 
-static unsigned int ibm_scan_log_dump;			/* RTAS token */
-static unsigned int *scanlog_buffer;			/* The data buffer */
+अटल अचिन्हित पूर्णांक ibm_scan_log_dump;			/* RTAS token */
+अटल अचिन्हित पूर्णांक *scanlog_buffer;			/* The data buffer */
 
-static ssize_t scanlog_read(struct file *file, char __user *buf,
-			    size_t count, loff_t *ppos)
-{
-	unsigned int *data = scanlog_buffer;
-	int status;
-	unsigned long len, off;
-	unsigned int wait_time;
+अटल sमाप_प्रकार scanlog_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित पूर्णांक *data = scanlog_buffer;
+	पूर्णांक status;
+	अचिन्हित दीर्घ len, off;
+	अचिन्हित पूर्णांक रुको_समय;
 
-	if (count > RTAS_DATA_BUF_SIZE)
+	अगर (count > RTAS_DATA_BUF_SIZE)
 		count = RTAS_DATA_BUF_SIZE;
 
-	if (count < 1024) {
+	अगर (count < 1024) अणु
 		/* This is the min supported by this RTAS call.  Rather
-		 * than do all the buffering we insist the user code handle
-		 * larger reads.  As long as cp works... :)
+		 * than करो all the buffering we insist the user code handle
+		 * larger पढ़ोs.  As दीर्घ as cp works... :)
 		 */
-		printk(KERN_ERR "scanlog: cannot perform a small read (%ld)\n", count);
-		return -EINVAL;
-	}
+		prपूर्णांकk(KERN_ERR "scanlog: cannot perform a small read (%ld)\n", count);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!access_ok(buf, count))
-		return -EFAULT;
+	अगर (!access_ok(buf, count))
+		वापस -EFAULT;
 
-	for (;;) {
-		wait_time = 500;	/* default wait if no data */
+	क्रम (;;) अणु
+		रुको_समय = 500;	/* शेष रुको अगर no data */
 		spin_lock(&rtas_data_buf_lock);
-		memcpy(rtas_data_buf, data, RTAS_DATA_BUF_SIZE);
-		status = rtas_call(ibm_scan_log_dump, 2, 1, NULL,
+		स_नकल(rtas_data_buf, data, RTAS_DATA_BUF_SIZE);
+		status = rtas_call(ibm_scan_log_dump, 2, 1, शून्य,
 				   (u32) __pa(rtas_data_buf), (u32) count);
-		memcpy(data, rtas_data_buf, RTAS_DATA_BUF_SIZE);
+		स_नकल(data, rtas_data_buf, RTAS_DATA_BUF_SIZE);
 		spin_unlock(&rtas_data_buf_lock);
 
 		pr_debug("scanlog: status=%d, data[0]=%x, data[1]=%x, " \
 			 "data[2]=%x\n", status, data[0], data[1], data[2]);
-		switch (status) {
-		    case SCANLOG_COMPLETE:
+		चयन (status) अणु
+		    हाल SCANLOG_COMPLETE:
 			pr_debug("scanlog: hit eof\n");
-			return 0;
-		    case SCANLOG_HWERROR:
+			वापस 0;
+		    हाल SCANLOG_HWERROR:
 			pr_debug("scanlog: hardware error reading data\n");
-			return -EIO;
-		    case SCANLOG_CONTINUE:
+			वापस -EIO;
+		    हाल SCANLOG_CONTINUE:
 			/* We may or may not have data yet */
 			len = data[1];
 			off = data[2];
-			if (len > 0) {
-				if (copy_to_user(buf, ((char *)data)+off, len))
-					return -EFAULT;
-				return len;
-			}
-			/* Break to sleep default time */
-			break;
-		    default:
+			अगर (len > 0) अणु
+				अगर (copy_to_user(buf, ((अक्षर *)data)+off, len))
+					वापस -EFAULT;
+				वापस len;
+			पूर्ण
+			/* Break to sleep शेष समय */
+			अवरोध;
+		    शेष:
 			/* Assume extended busy */
-			wait_time = rtas_busy_delay_time(status);
-			if (!wait_time) {
-				printk(KERN_ERR "scanlog: unknown error " \
+			रुको_समय = rtas_busy_delay_समय(status);
+			अगर (!रुको_समय) अणु
+				prपूर्णांकk(KERN_ERR "scanlog: unknown error " \
 				       "from rtas: %d\n", status);
-				return -EIO;
-			}
-		}
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
 		/* Apparently no data yet.  Wait and try again. */
-		msleep_interruptible(wait_time);
-	}
+		msleep_पूर्णांकerruptible(रुको_समय);
+	पूर्ण
 	/*NOTREACHED*/
-}
+पूर्ण
 
-static ssize_t scanlog_write(struct file * file, const char __user * buf,
-			     size_t count, loff_t *ppos)
-{
-	char stkbuf[20];
-	int status;
+अटल sमाप_प्रकार scanlog_ग_लिखो(काष्ठा file * file, स्थिर अक्षर __user * buf,
+			     माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर stkbuf[20];
+	पूर्णांक status;
 
-	if (count > 19) count = 19;
-	if (copy_from_user (stkbuf, buf, count)) {
-		return -EFAULT;
-	}
+	अगर (count > 19) count = 19;
+	अगर (copy_from_user (stkbuf, buf, count)) अणु
+		वापस -EFAULT;
+	पूर्ण
 	stkbuf[count] = 0;
 
-	if (buf) {
-		if (strncmp(stkbuf, "reset", 5) == 0) {
+	अगर (buf) अणु
+		अगर (म_भेदन(stkbuf, "reset", 5) == 0) अणु
 			pr_debug("scanlog: reset scanlog\n");
-			status = rtas_call(ibm_scan_log_dump, 2, 1, NULL, 0, 0);
+			status = rtas_call(ibm_scan_log_dump, 2, 1, शून्य, 0, 0);
 			pr_debug("scanlog: rtas returns %d\n", status);
-		}
-	}
-	return count;
-}
+		पूर्ण
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static int scanlog_open(struct inode * inode, struct file * file)
-{
-	unsigned int *data = scanlog_buffer;
+अटल पूर्णांक scanlog_खोलो(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	अचिन्हित पूर्णांक *data = scanlog_buffer;
 
-	if (data[0] != 0) {
+	अगर (data[0] != 0) अणु
 		/* This imperfect test stops a second copy of the
-		 * data (or a reset while data is being copied)
+		 * data (or a reset जबतक data is being copied)
 		 */
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	data[0] = 0;	/* re-init so we restart the scan */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scanlog_release(struct inode * inode, struct file * file)
-{
-	unsigned int *data = scanlog_buffer;
+अटल पूर्णांक scanlog_release(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	अचिन्हित पूर्णांक *data = scanlog_buffer;
 
 	data[0] = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct proc_ops scanlog_proc_ops = {
-	.proc_read	= scanlog_read,
-	.proc_write	= scanlog_write,
-	.proc_open	= scanlog_open,
+अटल स्थिर काष्ठा proc_ops scanlog_proc_ops = अणु
+	.proc_पढ़ो	= scanlog_पढ़ो,
+	.proc_ग_लिखो	= scanlog_ग_लिखो,
+	.proc_खोलो	= scanlog_खोलो,
 	.proc_release	= scanlog_release,
 	.proc_lseek	= noop_llseek,
-};
+पूर्ण;
 
-static int __init scanlog_init(void)
-{
-	struct proc_dir_entry *ent;
-	int err = -ENOMEM;
+अटल पूर्णांक __init scanlog_init(व्योम)
+अणु
+	काष्ठा proc_dir_entry *ent;
+	पूर्णांक err = -ENOMEM;
 
 	ibm_scan_log_dump = rtas_token("ibm,scan-log-dump");
-	if (ibm_scan_log_dump == RTAS_UNKNOWN_SERVICE)
-		return -ENODEV;
+	अगर (ibm_scan_log_dump == RTAS_UNKNOWN_SERVICE)
+		वापस -ENODEV;
 
 	/* Ideally we could allocate a buffer < 4G */
 	scanlog_buffer = kzalloc(RTAS_DATA_BUF_SIZE, GFP_KERNEL);
-	if (!scanlog_buffer)
-		goto err;
+	अगर (!scanlog_buffer)
+		जाओ err;
 
-	ent = proc_create("powerpc/rtas/scan-log-dump", 0400, NULL,
+	ent = proc_create("powerpc/rtas/scan-log-dump", 0400, शून्य,
 			  &scanlog_proc_ops);
-	if (!ent)
-		goto err;
-	return 0;
+	अगर (!ent)
+		जाओ err;
+	वापस 0;
 err:
-	kfree(scanlog_buffer);
-	return err;
-}
+	kमुक्त(scanlog_buffer);
+	वापस err;
+पूर्ण
 
-static void __exit scanlog_cleanup(void)
-{
-	remove_proc_entry("powerpc/rtas/scan-log-dump", NULL);
-	kfree(scanlog_buffer);
-}
+अटल व्योम __निकास scanlog_cleanup(व्योम)
+अणु
+	हटाओ_proc_entry("powerpc/rtas/scan-log-dump", शून्य);
+	kमुक्त(scanlog_buffer);
+पूर्ण
 
 module_init(scanlog_init);
-module_exit(scanlog_cleanup);
+module_निकास(scanlog_cleanup);
 MODULE_LICENSE("GPL");

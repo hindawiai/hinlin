@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*---------------------------------------------------------------------------+
  |  reg_mul.c                                                                |
  |                                                                           |
@@ -8,7 +9,7 @@
  |                  W. Metzenthen, 22 Parker St, Ormond, Vic 3163, Australia |
  |                  E-mail   billm@suburbia.net                              |
  |                                                                           |
- | Returns the tag of the result if no exceptions or errors occurred.        |
+ | Returns the tag of the result अगर no exceptions or errors occurred.        |
  |                                                                           |
  +---------------------------------------------------------------------------*/
 
@@ -16,101 +17,101 @@
  | The destination may be any FPU_REG, including one of the source FPU_REGs. |
  +---------------------------------------------------------------------------*/
 
-#include "fpu_emu.h"
-#include "exception.h"
-#include "reg_constant.h"
-#include "fpu_system.h"
+#समावेश "fpu_emu.h"
+#समावेश "exception.h"
+#समावेश "reg_constant.h"
+#समावेश "fpu_system.h"
 
 /*
-  Multiply two registers to give a register result.
+  Multiply two रेजिस्टरs to give a रेजिस्टर result.
   The sources are st(deststnr) and (b,tagb,signb).
   The destination is st(deststnr).
   */
-/* This routine must be called with non-empty source registers */
-int FPU_mul(FPU_REG const *b, u_char tagb, int deststnr, int control_w)
-{
+/* This routine must be called with non-empty source रेजिस्टरs */
+पूर्णांक FPU_mul(FPU_REG स्थिर *b, u_अक्षर tagb, पूर्णांक deststnr, पूर्णांक control_w)
+अणु
 	FPU_REG *a = &st(deststnr);
 	FPU_REG *dest = a;
-	u_char taga = FPU_gettagi(deststnr);
-	u_char saved_sign = getsign(dest);
-	u_char sign = (getsign(a) ^ getsign(b));
-	int tag;
+	u_अक्षर taga = FPU_gettagi(deststnr);
+	u_अक्षर saved_sign = माला_लोign(dest);
+	u_अक्षर sign = (माला_लोign(a) ^ माला_लोign(b));
+	पूर्णांक tag;
 
-	if (!(taga | tagb)) {
-		/* Both regs Valid, this should be the most common case. */
+	अगर (!(taga | tagb)) अणु
+		/* Both regs Valid, this should be the most common हाल. */
 
 		tag =
 		    FPU_u_mul(a, b, dest, control_w, sign,
 			      exponent(a) + exponent(b));
-		if (tag < 0) {
+		अगर (tag < 0) अणु
 			setsign(dest, saved_sign);
-			return tag;
-		}
+			वापस tag;
+		पूर्ण
 		FPU_settagi(deststnr, tag);
-		return tag;
-	}
+		वापस tag;
+	पूर्ण
 
-	if (taga == TAG_Special)
+	अगर (taga == TAG_Special)
 		taga = FPU_Special(a);
-	if (tagb == TAG_Special)
+	अगर (tagb == TAG_Special)
 		tagb = FPU_Special(b);
 
-	if (((taga == TAG_Valid) && (tagb == TW_Denormal))
+	अगर (((taga == TAG_Valid) && (tagb == TW_Denormal))
 	    || ((taga == TW_Denormal) && (tagb == TAG_Valid))
-	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) {
+	    || ((taga == TW_Denormal) && (tagb == TW_Denormal))) अणु
 		FPU_REG x, y;
-		if (denormal_operand() < 0)
-			return FPU_Exception;
+		अगर (denormal_opeअक्रम() < 0)
+			वापस FPU_Exception;
 
 		FPU_to_exp16(a, &x);
 		FPU_to_exp16(b, &y);
 		tag = FPU_u_mul(&x, &y, dest, control_w, sign,
 				exponent16(&x) + exponent16(&y));
-		if (tag < 0) {
+		अगर (tag < 0) अणु
 			setsign(dest, saved_sign);
-			return tag;
-		}
+			वापस tag;
+		पूर्ण
 		FPU_settagi(deststnr, tag);
-		return tag;
-	} else if ((taga <= TW_Denormal) && (tagb <= TW_Denormal)) {
-		if (((tagb == TW_Denormal) || (taga == TW_Denormal))
-		    && (denormal_operand() < 0))
-			return FPU_Exception;
+		वापस tag;
+	पूर्ण अन्यथा अगर ((taga <= TW_Denormal) && (tagb <= TW_Denormal)) अणु
+		अगर (((tagb == TW_Denormal) || (taga == TW_Denormal))
+		    && (denormal_opeअक्रम() < 0))
+			वापस FPU_Exception;
 
 		/* Must have either both arguments == zero, or
 		   one valid and the other zero.
-		   The result is therefore zero. */
+		   The result is thereक्रमe zero. */
 		FPU_copy_to_regi(&CONST_Z, TAG_Zero, deststnr);
 		/* The 80486 book says that the answer is +0, but a real
 		   80486 behaves this way.
 		   IEEE-754 apparently says it should be this way. */
 		setsign(dest, sign);
-		return TAG_Zero;
-	}
+		वापस TAG_Zero;
+	पूर्ण
 	/* Must have infinities, NaNs, etc */
-	else if ((taga == TW_NaN) || (tagb == TW_NaN)) {
-		return real_2op_NaN(b, tagb, deststnr, &st(0));
-	} else if (((taga == TW_Infinity) && (tagb == TAG_Zero))
-		   || ((tagb == TW_Infinity) && (taga == TAG_Zero))) {
-		return arith_invalid(deststnr);	/* Zero*Infinity is invalid */
-	} else if (((taga == TW_Denormal) || (tagb == TW_Denormal))
-		   && (denormal_operand() < 0)) {
-		return FPU_Exception;
-	} else if (taga == TW_Infinity) {
+	अन्यथा अगर ((taga == TW_NaN) || (tagb == TW_NaN)) अणु
+		वापस real_2op_NaN(b, tagb, deststnr, &st(0));
+	पूर्ण अन्यथा अगर (((taga == TW_Infinity) && (tagb == TAG_Zero))
+		   || ((tagb == TW_Infinity) && (taga == TAG_Zero))) अणु
+		वापस arith_invalid(deststnr);	/* Zero*Infinity is invalid */
+	पूर्ण अन्यथा अगर (((taga == TW_Denormal) || (tagb == TW_Denormal))
+		   && (denormal_opeअक्रम() < 0)) अणु
+		वापस FPU_Exception;
+	पूर्ण अन्यथा अगर (taga == TW_Infinity) अणु
 		FPU_copy_to_regi(a, TAG_Special, deststnr);
 		setsign(dest, sign);
-		return TAG_Special;
-	} else if (tagb == TW_Infinity) {
+		वापस TAG_Special;
+	पूर्ण अन्यथा अगर (tagb == TW_Infinity) अणु
 		FPU_copy_to_regi(b, TAG_Special, deststnr);
 		setsign(dest, sign);
-		return TAG_Special;
-	}
-#ifdef PARANOID
-	else {
+		वापस TAG_Special;
+	पूर्ण
+#अगर_घोषित PARANOID
+	अन्यथा अणु
 		EXCEPTION(EX_INTERNAL | 0x102);
-		return FPU_Exception;
-	}
-#endif /* PARANOID */
+		वापस FPU_Exception;
+	पूर्ण
+#पूर्ण_अगर /* PARANOID */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

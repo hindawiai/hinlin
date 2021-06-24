@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * i.MX6 Video Data Order Adapter (VDOA)
  *
@@ -6,155 +7,155 @@
  * Copyright (C) 2016 Pengutronix, Michael Tretter <kernel@pengutronix.de>
  */
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/dma-mapping.h>
-#include <linux/platform_device.h>
-#include <linux/videodev2.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/slab.h>
 
-#include "imx-vdoa.h"
+#समावेश "imx-vdoa.h"
 
-#define VDOA_NAME "imx-vdoa"
+#घोषणा VDOA_NAME "imx-vdoa"
 
-#define VDOAC		0x00
-#define VDOASRR		0x04
-#define VDOAIE		0x08
-#define VDOAIST		0x0c
-#define VDOAFP		0x10
-#define VDOAIEBA00	0x14
-#define VDOAIEBA01	0x18
-#define VDOAIEBA02	0x1c
-#define VDOAIEBA10	0x20
-#define VDOAIEBA11	0x24
-#define VDOAIEBA12	0x28
-#define VDOASL		0x2c
-#define VDOAIUBO	0x30
-#define VDOAVEBA0	0x34
-#define VDOAVEBA1	0x38
-#define VDOAVEBA2	0x3c
-#define VDOAVUBO	0x40
-#define VDOASR		0x44
+#घोषणा VDOAC		0x00
+#घोषणा VDOASRR		0x04
+#घोषणा VDOAIE		0x08
+#घोषणा VDOAIST		0x0c
+#घोषणा VDOAFP		0x10
+#घोषणा VDOAIEBA00	0x14
+#घोषणा VDOAIEBA01	0x18
+#घोषणा VDOAIEBA02	0x1c
+#घोषणा VDOAIEBA10	0x20
+#घोषणा VDOAIEBA11	0x24
+#घोषणा VDOAIEBA12	0x28
+#घोषणा VDOASL		0x2c
+#घोषणा VDOAIUBO	0x30
+#घोषणा VDOAVEBA0	0x34
+#घोषणा VDOAVEBA1	0x38
+#घोषणा VDOAVEBA2	0x3c
+#घोषणा VDOAVUBO	0x40
+#घोषणा VDOASR		0x44
 
-#define VDOAC_ISEL		BIT(6)
-#define VDOAC_PFS		BIT(5)
-#define VDOAC_SO		BIT(4)
-#define VDOAC_SYNC		BIT(3)
-#define VDOAC_NF		BIT(2)
-#define VDOAC_BNDM_MASK		0x3
-#define VDOAC_BAND_HEIGHT_8	0x0
-#define VDOAC_BAND_HEIGHT_16	0x1
-#define VDOAC_BAND_HEIGHT_32	0x2
+#घोषणा VDOAC_ISEL		BIT(6)
+#घोषणा VDOAC_PFS		BIT(5)
+#घोषणा VDOAC_SO		BIT(4)
+#घोषणा VDOAC_SYNC		BIT(3)
+#घोषणा VDOAC_NF		BIT(2)
+#घोषणा VDOAC_BNDM_MASK		0x3
+#घोषणा VDOAC_BAND_HEIGHT_8	0x0
+#घोषणा VDOAC_BAND_HEIGHT_16	0x1
+#घोषणा VDOAC_BAND_HEIGHT_32	0x2
 
-#define VDOASRR_START		BIT(1)
-#define VDOASRR_SWRST		BIT(0)
+#घोषणा VDOASRR_START		BIT(1)
+#घोषणा VDOASRR_SWRST		BIT(0)
 
-#define VDOAIE_EITERR		BIT(1)
-#define VDOAIE_EIEOT		BIT(0)
+#घोषणा VDOAIE_EITERR		BIT(1)
+#घोषणा VDOAIE_EIEOT		BIT(0)
 
-#define VDOAIST_TERR		BIT(1)
-#define VDOAIST_EOT		BIT(0)
+#घोषणा VDOAIST_TERR		BIT(1)
+#घोषणा VDOAIST_EOT		BIT(0)
 
-#define VDOAFP_FH_MASK		(0x1fff << 16)
-#define VDOAFP_FW_MASK		(0x3fff)
+#घोषणा VDOAFP_FH_MASK		(0x1fff << 16)
+#घोषणा VDOAFP_FW_MASK		(0x3fff)
 
-#define VDOASL_VSLY_MASK	(0x3fff << 16)
-#define VDOASL_ISLY_MASK	(0x7fff)
+#घोषणा VDOASL_VSLY_MASK	(0x3fff << 16)
+#घोषणा VDOASL_ISLY_MASK	(0x7fff)
 
-#define VDOASR_ERRW		BIT(4)
-#define VDOASR_EOB		BIT(3)
-#define VDOASR_CURRENT_FRAME	(0x3 << 1)
-#define VDOASR_CURRENT_BUFFER	BIT(1)
+#घोषणा VDOASR_ERRW		BIT(4)
+#घोषणा VDOASR_EOB		BIT(3)
+#घोषणा VDOASR_CURRENT_FRAME	(0x3 << 1)
+#घोषणा VDOASR_CURRENT_BUFFER	BIT(1)
 
-enum {
+क्रमागत अणु
 	V4L2_M2M_SRC = 0,
 	V4L2_M2M_DST = 1,
-};
+पूर्ण;
 
-struct vdoa_data {
-	struct vdoa_ctx		*curr_ctx;
-	struct device		*dev;
-	struct clk		*vdoa_clk;
-	void __iomem		*regs;
-};
+काष्ठा vकरोa_data अणु
+	काष्ठा vकरोa_ctx		*curr_ctx;
+	काष्ठा device		*dev;
+	काष्ठा clk		*vकरोa_clk;
+	व्योम __iomem		*regs;
+पूर्ण;
 
-struct vdoa_q_data {
-	unsigned int	width;
-	unsigned int	height;
-	unsigned int	bytesperline;
-	unsigned int	sizeimage;
-	u32		pixelformat;
-};
+काष्ठा vकरोa_q_data अणु
+	अचिन्हित पूर्णांक	width;
+	अचिन्हित पूर्णांक	height;
+	अचिन्हित पूर्णांक	bytesperline;
+	अचिन्हित पूर्णांक	sizeimage;
+	u32		pixelक्रमmat;
+पूर्ण;
 
-struct vdoa_ctx {
-	struct vdoa_data	*vdoa;
-	struct completion	completion;
-	struct vdoa_q_data	q_data[2];
-	unsigned int		submitted_job;
-	unsigned int		completed_job;
-};
+काष्ठा vकरोa_ctx अणु
+	काष्ठा vकरोa_data	*vकरोa;
+	काष्ठा completion	completion;
+	काष्ठा vकरोa_q_data	q_data[2];
+	अचिन्हित पूर्णांक		submitted_job;
+	अचिन्हित पूर्णांक		completed_job;
+पूर्ण;
 
-static irqreturn_t vdoa_irq_handler(int irq, void *data)
-{
-	struct vdoa_data *vdoa = data;
-	struct vdoa_ctx *curr_ctx;
+अटल irqवापस_t vकरोa_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा vकरोa_data *vकरोa = data;
+	काष्ठा vकरोa_ctx *curr_ctx;
 	u32 val;
 
-	/* Disable interrupts */
-	writel(0, vdoa->regs + VDOAIE);
+	/* Disable पूर्णांकerrupts */
+	ग_लिखोl(0, vकरोa->regs + VDOAIE);
 
-	curr_ctx = vdoa->curr_ctx;
-	if (!curr_ctx) {
-		dev_warn(vdoa->dev,
+	curr_ctx = vकरोa->curr_ctx;
+	अगर (!curr_ctx) अणु
+		dev_warn(vकरोa->dev,
 			"Instance released before the end of transaction\n");
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	val = readl(vdoa->regs + VDOAIST);
-	writel(val, vdoa->regs + VDOAIST);
-	if (val & VDOAIST_TERR) {
-		val = readl(vdoa->regs + VDOASR) & VDOASR_ERRW;
-		dev_err(vdoa->dev, "AXI %s error\n", val ? "write" : "read");
-	} else if (!(val & VDOAIST_EOT)) {
-		dev_warn(vdoa->dev, "Spurious interrupt\n");
-	}
+	val = पढ़ोl(vकरोa->regs + VDOAIST);
+	ग_लिखोl(val, vकरोa->regs + VDOAIST);
+	अगर (val & VDOAIST_TERR) अणु
+		val = पढ़ोl(vकरोa->regs + VDOASR) & VDOASR_ERRW;
+		dev_err(vकरोa->dev, "AXI %s error\n", val ? "write" : "read");
+	पूर्ण अन्यथा अगर (!(val & VDOAIST_EOT)) अणु
+		dev_warn(vकरोa->dev, "Spurious interrupt\n");
+	पूर्ण
 	curr_ctx->completed_job++;
 	complete(&curr_ctx->completion);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int vdoa_wait_for_completion(struct vdoa_ctx *ctx)
-{
-	struct vdoa_data *vdoa = ctx->vdoa;
+पूर्णांक vकरोa_रुको_क्रम_completion(काष्ठा vकरोa_ctx *ctx)
+अणु
+	काष्ठा vकरोa_data *vकरोa = ctx->vकरोa;
 
-	if (ctx->submitted_job == ctx->completed_job)
-		return 0;
+	अगर (ctx->submitted_job == ctx->completed_job)
+		वापस 0;
 
-	if (!wait_for_completion_timeout(&ctx->completion,
-					 msecs_to_jiffies(300))) {
-		dev_err(vdoa->dev,
+	अगर (!रुको_क्रम_completion_समयout(&ctx->completion,
+					 msecs_to_jअगरfies(300))) अणु
+		dev_err(vकरोa->dev,
 			"Timeout waiting for transfer result\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(vdoa_wait_for_completion);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(vकरोa_रुको_क्रम_completion);
 
-void vdoa_device_run(struct vdoa_ctx *ctx, dma_addr_t dst, dma_addr_t src)
-{
-	struct vdoa_q_data *src_q_data, *dst_q_data;
-	struct vdoa_data *vdoa = ctx->vdoa;
+व्योम vकरोa_device_run(काष्ठा vकरोa_ctx *ctx, dma_addr_t dst, dma_addr_t src)
+अणु
+	काष्ठा vकरोa_q_data *src_q_data, *dst_q_data;
+	काष्ठा vकरोa_data *vकरोa = ctx->vकरोa;
 	u32 val;
 
-	if (vdoa->curr_ctx)
-		vdoa_wait_for_completion(vdoa->curr_ctx);
+	अगर (vकरोa->curr_ctx)
+		vकरोa_रुको_क्रम_completion(vकरोa->curr_ctx);
 
-	vdoa->curr_ctx = ctx;
+	vकरोa->curr_ctx = ctx;
 
 	reinit_completion(&ctx->completion);
 	ctx->submitted_job++;
@@ -163,93 +164,93 @@ void vdoa_device_run(struct vdoa_ctx *ctx, dma_addr_t dst, dma_addr_t src)
 	dst_q_data = &ctx->q_data[V4L2_M2M_DST];
 
 	/* Progressive, no sync, 1 frame per run */
-	if (dst_q_data->pixelformat == V4L2_PIX_FMT_YUYV)
+	अगर (dst_q_data->pixelक्रमmat == V4L2_PIX_FMT_YUYV)
 		val = VDOAC_PFS;
-	else
+	अन्यथा
 		val = 0;
-	writel(val, vdoa->regs + VDOAC);
+	ग_लिखोl(val, vकरोa->regs + VDOAC);
 
-	writel(dst_q_data->height << 16 | dst_q_data->width,
-	       vdoa->regs + VDOAFP);
+	ग_लिखोl(dst_q_data->height << 16 | dst_q_data->width,
+	       vकरोa->regs + VDOAFP);
 
 	val = dst;
-	writel(val, vdoa->regs + VDOAIEBA00);
+	ग_लिखोl(val, vकरोa->regs + VDOAIEBA00);
 
-	writel(src_q_data->bytesperline << 16 | dst_q_data->bytesperline,
-	       vdoa->regs + VDOASL);
+	ग_लिखोl(src_q_data->bytesperline << 16 | dst_q_data->bytesperline,
+	       vकरोa->regs + VDOASL);
 
-	if (dst_q_data->pixelformat == V4L2_PIX_FMT_NV12 ||
-	    dst_q_data->pixelformat == V4L2_PIX_FMT_NV21)
+	अगर (dst_q_data->pixelक्रमmat == V4L2_PIX_FMT_NV12 ||
+	    dst_q_data->pixelक्रमmat == V4L2_PIX_FMT_NV21)
 		val = dst_q_data->bytesperline * dst_q_data->height;
-	else
+	अन्यथा
 		val = 0;
-	writel(val, vdoa->regs + VDOAIUBO);
+	ग_लिखोl(val, vकरोa->regs + VDOAIUBO);
 
 	val = src;
-	writel(val, vdoa->regs + VDOAVEBA0);
+	ग_लिखोl(val, vकरोa->regs + VDOAVEBA0);
 	val = round_up(src_q_data->bytesperline * src_q_data->height, 4096);
-	writel(val, vdoa->regs + VDOAVUBO);
+	ग_लिखोl(val, vकरोa->regs + VDOAVUBO);
 
-	/* Enable interrupts and start transfer */
-	writel(VDOAIE_EITERR | VDOAIE_EIEOT, vdoa->regs + VDOAIE);
-	writel(VDOASRR_START, vdoa->regs + VDOASRR);
-}
-EXPORT_SYMBOL(vdoa_device_run);
+	/* Enable पूर्णांकerrupts and start transfer */
+	ग_लिखोl(VDOAIE_EITERR | VDOAIE_EIEOT, vकरोa->regs + VDOAIE);
+	ग_लिखोl(VDOASRR_START, vकरोa->regs + VDOASRR);
+पूर्ण
+EXPORT_SYMBOL(vकरोa_device_run);
 
-struct vdoa_ctx *vdoa_context_create(struct vdoa_data *vdoa)
-{
-	struct vdoa_ctx *ctx;
-	int err;
+काष्ठा vकरोa_ctx *vकरोa_context_create(काष्ठा vकरोa_data *vकरोa)
+अणु
+	काष्ठा vकरोa_ctx *ctx;
+	पूर्णांक err;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return NULL;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस शून्य;
 
-	err = clk_prepare_enable(vdoa->vdoa_clk);
-	if (err) {
-		kfree(ctx);
-		return NULL;
-	}
+	err = clk_prepare_enable(vकरोa->vकरोa_clk);
+	अगर (err) अणु
+		kमुक्त(ctx);
+		वापस शून्य;
+	पूर्ण
 
 	init_completion(&ctx->completion);
-	ctx->vdoa = vdoa;
+	ctx->vकरोa = vकरोa;
 
-	return ctx;
-}
-EXPORT_SYMBOL(vdoa_context_create);
+	वापस ctx;
+पूर्ण
+EXPORT_SYMBOL(vकरोa_context_create);
 
-void vdoa_context_destroy(struct vdoa_ctx *ctx)
-{
-	struct vdoa_data *vdoa = ctx->vdoa;
+व्योम vकरोa_context_destroy(काष्ठा vकरोa_ctx *ctx)
+अणु
+	काष्ठा vकरोa_data *vकरोa = ctx->vकरोa;
 
-	if (vdoa->curr_ctx == ctx) {
-		vdoa_wait_for_completion(vdoa->curr_ctx);
-		vdoa->curr_ctx = NULL;
-	}
+	अगर (vकरोa->curr_ctx == ctx) अणु
+		vकरोa_रुको_क्रम_completion(vकरोa->curr_ctx);
+		vकरोa->curr_ctx = शून्य;
+	पूर्ण
 
-	clk_disable_unprepare(vdoa->vdoa_clk);
-	kfree(ctx);
-}
-EXPORT_SYMBOL(vdoa_context_destroy);
+	clk_disable_unprepare(vकरोa->vकरोa_clk);
+	kमुक्त(ctx);
+पूर्ण
+EXPORT_SYMBOL(vकरोa_context_destroy);
 
-int vdoa_context_configure(struct vdoa_ctx *ctx,
-			   unsigned int width, unsigned int height,
-			   u32 pixelformat)
-{
-	struct vdoa_q_data *src_q_data;
-	struct vdoa_q_data *dst_q_data;
+पूर्णांक vकरोa_context_configure(काष्ठा vकरोa_ctx *ctx,
+			   अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height,
+			   u32 pixelक्रमmat)
+अणु
+	काष्ठा vकरोa_q_data *src_q_data;
+	काष्ठा vकरोa_q_data *dst_q_data;
 
-	if (width < 16 || width  > 8192 || width % 16 != 0 ||
+	अगर (width < 16 || width  > 8192 || width % 16 != 0 ||
 	    height < 16 || height > 4096 || height % 16 != 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (pixelformat != V4L2_PIX_FMT_YUYV &&
-	    pixelformat != V4L2_PIX_FMT_NV12)
-		return -EINVAL;
+	अगर (pixelक्रमmat != V4L2_PIX_FMT_YUYV &&
+	    pixelक्रमmat != V4L2_PIX_FMT_NV12)
+		वापस -EINVAL;
 
-	/* If no context is passed, only check if the format is valid */
-	if (!ctx)
-		return 0;
+	/* If no context is passed, only check अगर the क्रमmat is valid */
+	अगर (!ctx)
+		वापस 0;
 
 	src_q_data = &ctx->q_data[V4L2_M2M_SRC];
 	dst_q_data = &ctx->q_data[V4L2_M2M_DST];
@@ -263,86 +264,86 @@ int vdoa_context_configure(struct vdoa_ctx *ctx,
 
 	dst_q_data->width = width;
 	dst_q_data->height = height;
-	dst_q_data->pixelformat = pixelformat;
-	switch (pixelformat) {
-	case V4L2_PIX_FMT_YUYV:
+	dst_q_data->pixelक्रमmat = pixelक्रमmat;
+	चयन (pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_YUYV:
 		dst_q_data->bytesperline = width * 2;
 		dst_q_data->sizeimage = dst_q_data->bytesperline * height;
-		break;
-	case V4L2_PIX_FMT_NV12:
-	default:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV12:
+	शेष:
 		dst_q_data->bytesperline = width;
 		dst_q_data->sizeimage =
 			dst_q_data->bytesperline * height * 3 / 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(vdoa_context_configure);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(vकरोa_context_configure);
 
-static int vdoa_probe(struct platform_device *pdev)
-{
-	struct vdoa_data *vdoa;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक vकरोa_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vकरोa_data *vकरोa;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
 	dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
 
-	vdoa = devm_kzalloc(&pdev->dev, sizeof(*vdoa), GFP_KERNEL);
-	if (!vdoa)
-		return -ENOMEM;
+	vकरोa = devm_kzalloc(&pdev->dev, माप(*vकरोa), GFP_KERNEL);
+	अगर (!vकरोa)
+		वापस -ENOMEM;
 
-	vdoa->dev = &pdev->dev;
+	vकरोa->dev = &pdev->dev;
 
-	vdoa->vdoa_clk = devm_clk_get(vdoa->dev, NULL);
-	if (IS_ERR(vdoa->vdoa_clk)) {
-		dev_err(vdoa->dev, "Failed to get clock\n");
-		return PTR_ERR(vdoa->vdoa_clk);
-	}
+	vकरोa->vकरोa_clk = devm_clk_get(vकरोa->dev, शून्य);
+	अगर (IS_ERR(vकरोa->vकरोa_clk)) अणु
+		dev_err(vकरोa->dev, "Failed to get clock\n");
+		वापस PTR_ERR(vकरोa->vकरोa_clk);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	vdoa->regs = devm_ioremap_resource(vdoa->dev, res);
-	if (IS_ERR(vdoa->regs))
-		return PTR_ERR(vdoa->regs);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	vकरोa->regs = devm_ioremap_resource(vकरोa->dev, res);
+	अगर (IS_ERR(vकरोa->regs))
+		वापस PTR_ERR(vकरोa->regs);
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (!res)
-		return -EINVAL;
-	ret = devm_request_threaded_irq(&pdev->dev, res->start, NULL,
-					vdoa_irq_handler, IRQF_ONESHOT,
-					"vdoa", vdoa);
-	if (ret < 0) {
-		dev_err(vdoa->dev, "Failed to get irq\n");
-		return ret;
-	}
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (!res)
+		वापस -EINVAL;
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, res->start, शून्य,
+					vकरोa_irq_handler, IRQF_ONESHOT,
+					"vdoa", vकरोa);
+	अगर (ret < 0) अणु
+		dev_err(vकरोa->dev, "Failed to get irq\n");
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, vdoa);
+	platक्रमm_set_drvdata(pdev, vकरोa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vdoa_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक vकरोa_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id vdoa_dt_ids[] = {
-	{ .compatible = "fsl,imx6q-vdoa" },
-	{}
-};
-MODULE_DEVICE_TABLE(of, vdoa_dt_ids);
+अटल स्थिर काष्ठा of_device_id vकरोa_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx6q-vdoa" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, vकरोa_dt_ids);
 
-static struct platform_driver vdoa_driver = {
-	.probe		= vdoa_probe,
-	.remove		= vdoa_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver vकरोa_driver = अणु
+	.probe		= vकरोa_probe,
+	.हटाओ		= vकरोa_हटाओ,
+	.driver		= अणु
 		.name	= VDOA_NAME,
-		.of_match_table = vdoa_dt_ids,
-	},
-};
+		.of_match_table = vकरोa_dt_ids,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(vdoa_driver);
+module_platक्रमm_driver(vकरोa_driver);
 
 MODULE_DESCRIPTION("Video Data Order Adapter");
 MODULE_AUTHOR("Philipp Zabel <philipp.zabel@gmail.com>");

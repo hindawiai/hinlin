@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2005-2006 Fen Systems Ltd.
  * Copyright 2006-2015 Solarflare Communications Inc.
  */
 
-#ifndef EF4_TX_H
-#define EF4_TX_H
+#अगर_अघोषित EF4_TX_H
+#घोषणा EF4_TX_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-/* Driver internal tx-path related declarations. */
+/* Driver पूर्णांकernal tx-path related declarations. */
 
-unsigned int ef4_tx_limit_len(struct ef4_tx_queue *tx_queue,
-			      dma_addr_t dma_addr, unsigned int len);
+अचिन्हित पूर्णांक ef4_tx_limit_len(काष्ठा ef4_tx_queue *tx_queue,
+			      dma_addr_t dma_addr, अचिन्हित पूर्णांक len);
 
-u8 *ef4_tx_get_copy_buffer_limited(struct ef4_tx_queue *tx_queue,
-				   struct ef4_tx_buffer *buffer, size_t len);
+u8 *ef4_tx_get_copy_buffer_limited(काष्ठा ef4_tx_queue *tx_queue,
+				   काष्ठा ef4_tx_buffer *buffer, माप_प्रकार len);
 
-int ef4_enqueue_skb_tso(struct ef4_tx_queue *tx_queue, struct sk_buff *skb,
+पूर्णांक ef4_enqueue_skb_tso(काष्ठा ef4_tx_queue *tx_queue, काष्ठा sk_buff *skb,
 			bool *data_mapped);
 
-#endif /* EF4_TX_H */
+#पूर्ण_अगर /* EF4_TX_H */

@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  arch/um/kernel/elf_aux.c
  *
  *  Scan the Elf auxiliary vector provided by the host to extract
- *  information about vsyscall-page, etc.
+ *  inक्रमmation about vsyscall-page, etc.
  *
  *  Copyright (C) 2004 Fujitsu Siemens Computers GmbH
- *  Author: Bodo Stroesser (bodo.stroesser@fujitsu-siemens.com)
+ *  Author: Boकरो Stroesser (boकरो.stroesser@fujitsu-siemens.com)
  */
-#include <elf.h>
-#include <stddef.h>
-#include <init.h>
-#include <elf_user.h>
-#include <mem_user.h>
+#समावेश <elf.h>
+#समावेश <मानकघोष.स>
+#समावेश <init.h>
+#समावेश <elf_user.h>
+#समावेश <mem_user.h>
 
-typedef Elf32_auxv_t elf_auxv_t;
+प्रकार Elf32_auxv_t elf_auxv_t;
 
 /* These are initialized very early in boot and never changed */
-char * elf_aux_platform;
-extern long elf_aux_hwcap;
-unsigned long vsyscall_ehdr;
-unsigned long vsyscall_end;
-unsigned long __kernel_vsyscall;
+अक्षर * elf_aux_platक्रमm;
+बाह्य दीर्घ elf_aux_hwcap;
+अचिन्हित दीर्घ vsyscall_ehdr;
+अचिन्हित दीर्घ vsyscall_end;
+अचिन्हित दीर्घ __kernel_vsyscall;
 
-__init void scan_elf_aux( char **envp)
-{
-	long page_size = 0;
+__init व्योम scan_elf_aux( अक्षर **envp)
+अणु
+	दीर्घ page_size = 0;
 	elf_auxv_t * auxv;
 
-	while ( *envp++ != NULL) ;
+	जबतक ( *envp++ != शून्य) ;
 
-	for ( auxv = (elf_auxv_t *)envp; auxv->a_type != AT_NULL; auxv++) {
-		switch ( auxv->a_type ) {
-			case AT_SYSINFO:
+	क्रम ( auxv = (elf_auxv_t *)envp; auxv->a_type != AT_शून्य; auxv++) अणु
+		चयन ( auxv->a_type ) अणु
+			हाल AT_SYSINFO:
 				__kernel_vsyscall = auxv->a_un.a_val;
-				/* See if the page is under TASK_SIZE */
-				if (__kernel_vsyscall < (unsigned long) envp)
+				/* See अगर the page is under TASK_SIZE */
+				अगर (__kernel_vsyscall < (अचिन्हित दीर्घ) envp)
 					__kernel_vsyscall = 0;
-				break;
-			case AT_SYSINFO_EHDR:
+				अवरोध;
+			हाल AT_SYSINFO_EHDR:
 				vsyscall_ehdr = auxv->a_un.a_val;
-				/* See if the page is under TASK_SIZE */
-				if (vsyscall_ehdr < (unsigned long) envp)
+				/* See अगर the page is under TASK_SIZE */
+				अगर (vsyscall_ehdr < (अचिन्हित दीर्घ) envp)
 					vsyscall_ehdr = 0;
-				break;
-			case AT_HWCAP:
+				अवरोध;
+			हाल AT_HWCAP:
 				elf_aux_hwcap = auxv->a_un.a_val;
-				break;
-			case AT_PLATFORM:
-                                /* elf.h removed the pointer elements from
+				अवरोध;
+			हाल AT_PLATFORM:
+                                /* elf.h हटाओd the poपूर्णांकer elements from
                                  * a_un, so we have to use a_val, which is
                                  * all that's left.
                                  */
-				elf_aux_platform =
-					(char *) (long) auxv->a_un.a_val;
-				break;
-			case AT_PAGESZ:
+				elf_aux_platक्रमm =
+					(अक्षर *) (दीर्घ) auxv->a_un.a_val;
+				अवरोध;
+			हाल AT_PAGESZ:
 				page_size = auxv->a_un.a_val;
-				break;
-		}
-	}
-	if ( ! __kernel_vsyscall || ! vsyscall_ehdr ||
-	     ! elf_aux_hwcap || ! elf_aux_platform ||
-	     ! page_size || (vsyscall_ehdr % page_size) ) {
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर ( ! __kernel_vsyscall || ! vsyscall_ehdr ||
+	     ! elf_aux_hwcap || ! elf_aux_platक्रमm ||
+	     ! page_size || (vsyscall_ehdr % page_size) ) अणु
 		__kernel_vsyscall = 0;
 		vsyscall_ehdr = 0;
 		elf_aux_hwcap = 0;
-		elf_aux_platform = "i586";
-	}
-	else {
+		elf_aux_platक्रमm = "i586";
+	पूर्ण
+	अन्यथा अणु
 		vsyscall_end = vsyscall_ehdr + page_size;
-	}
-}
+	पूर्ण
+पूर्ण

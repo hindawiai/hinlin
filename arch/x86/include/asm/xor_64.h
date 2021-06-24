@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_XOR_64_H
-#define _ASM_X86_XOR_64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_XOR_64_H
+#घोषणा _ASM_X86_XOR_64_H
 
-static struct xor_block_template xor_block_sse = {
+अटल काष्ठा xor_block_ढाँचा xor_block_sse = अणु
 	.name = "generic_sse",
-	.do_2 = xor_sse_2,
-	.do_3 = xor_sse_3,
-	.do_4 = xor_sse_4,
-	.do_5 = xor_sse_5,
-};
+	.करो_2 = xor_sse_2,
+	.करो_3 = xor_sse_3,
+	.करो_4 = xor_sse_4,
+	.करो_5 = xor_sse_5,
+पूर्ण;
 
 
 /* Also try the AVX routines */
-#include <asm/xor_avx.h>
+#समावेश <यंत्र/xor_avx.h>
 
-/* We force the use of the SSE xor block because it can write around L2.
-   We may also be able to load into the L1 only depending on how the cpu
+/* We क्रमce the use of the SSE xor block because it can ग_लिखो around L2.
+   We may also be able to load पूर्णांकo the L1 only depending on how the cpu
    deals with a load to a line that is being prefetched.  */
-#undef XOR_TRY_TEMPLATES
-#define XOR_TRY_TEMPLATES			\
-do {						\
+#अघोषित XOR_TRY_TEMPLATES
+#घोषणा XOR_TRY_TEMPLATES			\
+करो अणु						\
 	AVX_XOR_SPEED;				\
 	xor_speed(&xor_block_sse_pf64);		\
 	xor_speed(&xor_block_sse);		\
-} while (0)
+पूर्ण जबतक (0)
 
-#endif /* _ASM_X86_XOR_64_H */
+#पूर्ण_अगर /* _ASM_X86_XOR_64_H */

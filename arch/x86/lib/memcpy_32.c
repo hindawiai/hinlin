@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/string.h>
-#include <linux/export.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/माला.स>
+#समावेश <linux/export.h>
 
-#undef memcpy
-#undef memset
+#अघोषित स_नकल
+#अघोषित स_रखो
 
-__visible void *memcpy(void *to, const void *from, size_t n)
-{
-#if defined(CONFIG_X86_USE_3DNOW) && !defined(CONFIG_FORTIFY_SOURCE)
-	return __memcpy3d(to, from, n);
-#else
-	return __memcpy(to, from, n);
-#endif
-}
-EXPORT_SYMBOL(memcpy);
+__visible व्योम *स_नकल(व्योम *to, स्थिर व्योम *from, माप_प्रकार n)
+अणु
+#अगर defined(CONFIG_X86_USE_3DNOW) && !defined(CONFIG_FORTIFY_SOURCE)
+	वापस __स_नकल3d(to, from, n);
+#अन्यथा
+	वापस __स_नकल(to, from, n);
+#पूर्ण_अगर
+पूर्ण
+EXPORT_SYMBOL(स_नकल);
 
-__visible void *memset(void *s, int c, size_t count)
-{
-	return __memset(s, c, count);
-}
-EXPORT_SYMBOL(memset);
+__visible व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार count)
+अणु
+	वापस __स_रखो(s, c, count);
+पूर्ण
+EXPORT_SYMBOL(स_रखो);
 
-__visible void *memmove(void *dest, const void *src, size_t n)
-{
-	int d0,d1,d2,d3,d4,d5;
-	char *ret = dest;
+__visible व्योम *स_हटाओ(व्योम *dest, स्थिर व्योम *src, माप_प्रकार n)
+अणु
+	पूर्णांक d0,d1,d2,d3,d4,d5;
+	अक्षर *ret = dest;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 		/* Handle more 16 bytes in loop */
 		"cmp $0x10, %0\n\t"
 		"jb	1f\n\t"
 
-		/* Decide forward/backward copy mode */
+		/* Decide क्रमward/backward copy mode */
 		"cmp %2, %1\n\t"
 		"jb	2f\n\t"
 
 		/*
-		 * movs instruction have many startup latency
-		 * so we handle small size by general register.
+		 * movs inकाष्ठाion have many startup latency
+		 * so we handle small size by general रेजिस्टर.
 		 */
 		"cmp  $680, %0\n\t"
 		"jb 3f\n\t"
 		/*
-		 * movs instruction is only good for aligned case.
+		 * movs inकाष्ठाion is only good क्रम aligned हाल.
 		 */
 		"mov %1, %3\n\t"
 		"xor %2, %3\n\t"
@@ -52,7 +53,7 @@ __visible void *memmove(void *dest, const void *src, size_t n)
 		"sub $0x10, %0\n\t"
 
 		/*
-		 * We gobble 16 bytes forward in each loop.
+		 * We gobble 16 bytes क्रमward in each loop.
 		 */
 		"3:\n\t"
 		"sub $0x10, %0\n\t"
@@ -71,7 +72,7 @@ __visible void *memmove(void *dest, const void *src, size_t n)
 		"jmp 1f\n\t"
 
 		/*
-		 * Handle data forward by movs.
+		 * Handle data क्रमward by movs.
 		 */
 		".p2align 4\n\t"
 		"4:\n\t"
@@ -98,7 +99,7 @@ __visible void *memmove(void *dest, const void *src, size_t n)
 		"jmp 11f\n\t"
 
 		/*
-		 * Start to prepare for backward copy.
+		 * Start to prepare क्रम backward copy.
 		 */
 		".p2align 4\n\t"
 		"2:\n\t"
@@ -186,7 +187,7 @@ __visible void *memmove(void *dest, const void *src, size_t n)
 		"jmp 11f\n\t"
 
 		/*
-		 * Move data for 1 byte.
+		 * Move data क्रम 1 byte.
 		 */
 		".p2align 4\n\t"
 		"10:\n\t"
@@ -203,7 +204,7 @@ __visible void *memmove(void *dest, const void *src, size_t n)
 		 "2" (dest)
 		:"memory");
 
-	return ret;
+	वापस ret;
 
-}
-EXPORT_SYMBOL(memmove);
+पूर्ण
+EXPORT_SYMBOL(स_हटाओ);

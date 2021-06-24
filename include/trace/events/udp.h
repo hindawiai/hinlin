@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM udp
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM udp
 
-#if !defined(_TRACE_UDP_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_UDP_H
+#अगर !defined(_TRACE_UDP_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_UDP_H
 
-#include <linux/udp.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(udp_fail_queue_rcv_skb,
 
-	TP_PROTO(int rc, struct sock *sk),
+	TP_PROTO(पूर्णांक rc, काष्ठा sock *sk),
 
 	TP_ARGS(rc, sk),
 
 	TP_STRUCT__entry(
-		__field(int, rc)
+		__field(पूर्णांक, rc)
 		__field(__u16, lport)
 	),
 
@@ -24,10 +25,10 @@ TRACE_EVENT(udp_fail_queue_rcv_skb,
 		__entry->lport = inet_sk(sk)->inet_num;
 	),
 
-	TP_printk("rc=%d port=%hu", __entry->rc, __entry->lport)
+	TP_prपूर्णांकk("rc=%d port=%hu", __entry->rc, __entry->lport)
 );
 
-#endif /* _TRACE_UDP_H */
+#पूर्ण_अगर /* _TRACE_UDP_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

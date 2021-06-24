@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Core driver for Wilco Embedded Controller
+ * Core driver क्रम Wilco Embedded Controller
  *
  * Copyright 2018 Google LLC
  *
- * This is the entry point for the drivers that control the Wilco EC.
+ * This is the entry poपूर्णांक क्रम the drivers that control the Wilco EC.
  */
 
-#include <linux/acpi.h>
-#include <linux/device.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/platform_data/wilco-ec.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/wilco-ec.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "../cros_ec_lpc_mec.h"
+#समावेश "../cros_ec_lpc_mec.h"
 
-#define DRV_NAME "wilco-ec"
+#घोषणा DRV_NAME "wilco-ec"
 
-static struct resource *wilco_get_resource(struct platform_device *pdev,
-					   int index)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
+अटल काष्ठा resource *wilco_get_resource(काष्ठा platक्रमm_device *pdev,
+					   पूर्णांक index)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
 
-	res = platform_get_resource(pdev, IORESOURCE_IO, index);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, index);
+	अगर (!res) अणु
 		dev_dbg(dev, "Couldn't find IO resource %d\n", index);
-		return res;
-	}
+		वापस res;
+	पूर्ण
 
-	return devm_request_region(dev, res->start, resource_size(res),
+	वापस devm_request_region(dev, res->start, resource_size(res),
 				   dev_name(dev));
-}
+पूर्ण
 
-static int wilco_ec_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct wilco_ec_device *ec;
-	int ret;
+अटल पूर्णांक wilco_ec_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा wilco_ec_device *ec;
+	पूर्णांक ret;
 
-	ec = devm_kzalloc(dev, sizeof(*ec), GFP_KERNEL);
-	if (!ec)
-		return -ENOMEM;
+	ec = devm_kzalloc(dev, माप(*ec), GFP_KERNEL);
+	अगर (!ec)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, ec);
+	platक्रमm_set_drvdata(pdev, ec);
 	ec->dev = dev;
 	mutex_init(&ec->mailbox_lock);
 
-	ec->data_size = sizeof(struct wilco_ec_response) + EC_MAILBOX_DATA_SIZE;
+	ec->data_size = माप(काष्ठा wilco_ec_response) + EC_MAILBOX_DATA_SIZE;
 	ec->data_buffer = devm_kzalloc(dev, ec->data_size, GFP_KERNEL);
-	if (!ec->data_buffer)
-		return -ENOMEM;
+	अगर (!ec->data_buffer)
+		वापस -ENOMEM;
 
 	/* Prepare access to IO regions provided by ACPI */
 	ec->io_data = wilco_get_resource(pdev, 0);	/* Host Data */
 	ec->io_command = wilco_get_resource(pdev, 1);	/* Host Command */
 	ec->io_packet = wilco_get_resource(pdev, 2);	/* MEC EMI */
-	if (!ec->io_data || !ec->io_command || !ec->io_packet)
-		return -ENODEV;
+	अगर (!ec->io_data || !ec->io_command || !ec->io_packet)
+		वापस -ENODEV;
 
-	/* Initialize cros_ec register interface for communication */
+	/* Initialize cros_ec रेजिस्टर पूर्णांकerface क्रम communication */
 	cros_ec_lpc_mec_init(ec->io_packet->start,
 			     ec->io_packet->start + EC_MAILBOX_DATA_SIZE);
 
@@ -68,104 +69,104 @@ static int wilco_ec_probe(struct platform_device *pdev)
 	 * Register a child device that will be found by the debugfs driver.
 	 * Ignore failure.
 	 */
-	ec->debugfs_pdev = platform_device_register_data(dev,
+	ec->debugfs_pdev = platक्रमm_device_रेजिस्टर_data(dev,
 							 "wilco-ec-debugfs",
 							 PLATFORM_DEVID_AUTO,
-							 NULL, 0);
+							 शून्य, 0);
 
 	/* Register a child device that will be found by the RTC driver. */
-	ec->rtc_pdev = platform_device_register_data(dev, "rtc-wilco-ec",
+	ec->rtc_pdev = platक्रमm_device_रेजिस्टर_data(dev, "rtc-wilco-ec",
 						     PLATFORM_DEVID_AUTO,
-						     NULL, 0);
-	if (IS_ERR(ec->rtc_pdev)) {
+						     शून्य, 0);
+	अगर (IS_ERR(ec->rtc_pdev)) अणु
 		dev_err(dev, "Failed to create RTC platform device\n");
 		ret = PTR_ERR(ec->rtc_pdev);
-		goto unregister_debugfs;
-	}
+		जाओ unरेजिस्टर_debugfs;
+	पूर्ण
 
 	/* Set up the keyboard backlight LEDs. */
 	ret = wilco_keyboard_leds_init(ec);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev,
 			"Failed to initialize keyboard LEDs: %d\n",
 			ret);
-		goto unregister_rtc;
-	}
+		जाओ unरेजिस्टर_rtc;
+	पूर्ण
 
 	ret = wilco_ec_add_sysfs(ec);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to create sysfs entries: %d\n", ret);
-		goto unregister_rtc;
-	}
+		जाओ unरेजिस्टर_rtc;
+	पूर्ण
 
-	/* Register child device to be found by charger config driver. */
-	ec->charger_pdev = platform_device_register_data(dev, "wilco-charger",
+	/* Register child device to be found by अक्षरger config driver. */
+	ec->अक्षरger_pdev = platक्रमm_device_रेजिस्टर_data(dev, "wilco-charger",
 							 PLATFORM_DEVID_AUTO,
-							 NULL, 0);
-	if (IS_ERR(ec->charger_pdev)) {
+							 शून्य, 0);
+	अगर (IS_ERR(ec->अक्षरger_pdev)) अणु
 		dev_err(dev, "Failed to create charger platform device\n");
-		ret = PTR_ERR(ec->charger_pdev);
-		goto remove_sysfs;
-	}
+		ret = PTR_ERR(ec->अक्षरger_pdev);
+		जाओ हटाओ_sysfs;
+	पूर्ण
 
 	/* Register child device that will be found by the telemetry driver. */
-	ec->telem_pdev = platform_device_register_data(dev, "wilco_telem",
+	ec->telem_pdev = platक्रमm_device_रेजिस्टर_data(dev, "wilco_telem",
 						       PLATFORM_DEVID_AUTO,
-						       ec, sizeof(*ec));
-	if (IS_ERR(ec->telem_pdev)) {
+						       ec, माप(*ec));
+	अगर (IS_ERR(ec->telem_pdev)) अणु
 		dev_err(dev, "Failed to create telemetry platform device\n");
 		ret = PTR_ERR(ec->telem_pdev);
-		goto unregister_charge_config;
-	}
+		जाओ unरेजिस्टर_अक्षरge_config;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-unregister_charge_config:
-	platform_device_unregister(ec->charger_pdev);
-remove_sysfs:
-	wilco_ec_remove_sysfs(ec);
-unregister_rtc:
-	platform_device_unregister(ec->rtc_pdev);
-unregister_debugfs:
-	if (ec->debugfs_pdev)
-		platform_device_unregister(ec->debugfs_pdev);
+unरेजिस्टर_अक्षरge_config:
+	platक्रमm_device_unरेजिस्टर(ec->अक्षरger_pdev);
+हटाओ_sysfs:
+	wilco_ec_हटाओ_sysfs(ec);
+unरेजिस्टर_rtc:
+	platक्रमm_device_unरेजिस्टर(ec->rtc_pdev);
+unरेजिस्टर_debugfs:
+	अगर (ec->debugfs_pdev)
+		platक्रमm_device_unरेजिस्टर(ec->debugfs_pdev);
 	cros_ec_lpc_mec_destroy();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wilco_ec_remove(struct platform_device *pdev)
-{
-	struct wilco_ec_device *ec = platform_get_drvdata(pdev);
+अटल पूर्णांक wilco_ec_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wilco_ec_device *ec = platक्रमm_get_drvdata(pdev);
 
-	platform_device_unregister(ec->telem_pdev);
-	platform_device_unregister(ec->charger_pdev);
-	wilco_ec_remove_sysfs(ec);
-	platform_device_unregister(ec->rtc_pdev);
-	if (ec->debugfs_pdev)
-		platform_device_unregister(ec->debugfs_pdev);
+	platक्रमm_device_unरेजिस्टर(ec->telem_pdev);
+	platक्रमm_device_unरेजिस्टर(ec->अक्षरger_pdev);
+	wilco_ec_हटाओ_sysfs(ec);
+	platक्रमm_device_unरेजिस्टर(ec->rtc_pdev);
+	अगर (ec->debugfs_pdev)
+		platक्रमm_device_unरेजिस्टर(ec->debugfs_pdev);
 
-	/* Teardown cros_ec interface */
+	/* Tearकरोwn cros_ec पूर्णांकerface */
 	cros_ec_lpc_mec_destroy();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id wilco_ec_acpi_device_ids[] = {
-	{ "GOOG000C", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id wilco_ec_acpi_device_ids[] = अणु
+	अणु "GOOG000C", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, wilco_ec_acpi_device_ids);
 
-static struct platform_driver wilco_ec_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver wilco_ec_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.acpi_match_table = wilco_ec_acpi_device_ids,
-	},
+	पूर्ण,
 	.probe = wilco_ec_probe,
-	.remove = wilco_ec_remove,
-};
+	.हटाओ = wilco_ec_हटाओ,
+पूर्ण;
 
-module_platform_driver(wilco_ec_driver);
+module_platक्रमm_driver(wilco_ec_driver);
 
 MODULE_AUTHOR("Nick Crews <ncrews@chromium.org>");
 MODULE_AUTHOR("Duncan Laurie <dlaurie@chromium.org>");

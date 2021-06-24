@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bits.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include "clk.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bits.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश "clk.h"
 
-#define CCM_CCDR			0x4
-#define CCDR_MMDC_CH0_MASK		BIT(17)
-#define CCDR_MMDC_CH1_MASK		BIT(16)
+#घोषणा CCM_CCDR			0x4
+#घोषणा CCDR_MMDC_CH0_MASK		BIT(17)
+#घोषणा CCDR_MMDC_CH1_MASK		BIT(16)
 
 DEFINE_SPINLOCK(imx_ccm_lock);
 EXPORT_SYMBOL_GPL(imx_ccm_lock);
 
-void imx_unregister_clocks(struct clk *clks[], unsigned int count)
-{
-	unsigned int i;
+व्योम imx_unरेजिस्टर_घड़ीs(काष्ठा clk *clks[], अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		clk_unregister(clks[i]);
-}
+	क्रम (i = 0; i < count; i++)
+		clk_unरेजिस्टर(clks[i]);
+पूर्ण
 
-void imx_unregister_hw_clocks(struct clk_hw *hws[], unsigned int count)
-{
-	unsigned int i;
+व्योम imx_unरेजिस्टर_hw_घड़ीs(काष्ठा clk_hw *hws[], अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		clk_hw_unregister(hws[i]);
-}
-EXPORT_SYMBOL_GPL(imx_unregister_hw_clocks);
+	क्रम (i = 0; i < count; i++)
+		clk_hw_unरेजिस्टर(hws[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(imx_unरेजिस्टर_hw_घड़ीs);
 
-void imx_mmdc_mask_handshake(void __iomem *ccm_base,
-				    unsigned int chn)
-{
-	unsigned int reg;
+व्योम imx_mmdc_mask_handshake(व्योम __iomem *ccm_base,
+				    अचिन्हित पूर्णांक chn)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	reg = readl_relaxed(ccm_base + CCM_CCDR);
+	reg = पढ़ोl_relaxed(ccm_base + CCM_CCDR);
 	reg |= chn == 0 ? CCDR_MMDC_CH0_MASK : CCDR_MMDC_CH1_MASK;
-	writel_relaxed(reg, ccm_base + CCM_CCDR);
-}
+	ग_लिखोl_relaxed(reg, ccm_base + CCM_CCDR);
+पूर्ण
 
-void imx_check_clocks(struct clk *clks[], unsigned int count)
-{
-	unsigned i;
+व्योम imx_check_घड़ीs(काष्ठा clk *clks[], अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < count; i++)
-		if (IS_ERR(clks[i]))
+	क्रम (i = 0; i < count; i++)
+		अगर (IS_ERR(clks[i]))
 			pr_err("i.MX clk %u: register failed with %ld\n",
 			       i, PTR_ERR(clks[i]));
-}
+पूर्ण
 
-void imx_check_clk_hws(struct clk_hw *clks[], unsigned int count)
-{
-	unsigned int i;
+व्योम imx_check_clk_hws(काष्ठा clk_hw *clks[], अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count; i++)
-		if (IS_ERR(clks[i]))
+	क्रम (i = 0; i < count; i++)
+		अगर (IS_ERR(clks[i]))
 			pr_err("i.MX clk %u: register failed with %ld\n",
 			       i, PTR_ERR(clks[i]));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_check_clk_hws);
 
-static struct clk *imx_obtain_fixed_clock_from_dt(const char *name)
-{
-	struct of_phandle_args phandle;
-	struct clk *clk = ERR_PTR(-ENODEV);
-	char *path;
+अटल काष्ठा clk *imx_obtain_fixed_घड़ी_from_dt(स्थिर अक्षर *name)
+अणु
+	काष्ठा of_phandle_args phandle;
+	काष्ठा clk *clk = ERR_PTR(-ENODEV);
+	अक्षर *path;
 
-	path = kasprintf(GFP_KERNEL, "/clocks/%s", name);
-	if (!path)
-		return ERR_PTR(-ENOMEM);
+	path = kaप्र_लिखो(GFP_KERNEL, "/clocks/%s", name);
+	अगर (!path)
+		वापस ERR_PTR(-ENOMEM);
 
 	phandle.np = of_find_node_by_path(path);
-	kfree(path);
+	kमुक्त(path);
 
-	if (phandle.np) {
+	अगर (phandle.np) अणु
 		clk = of_clk_get_from_provider(&phandle);
 		of_node_put(phandle.np);
-	}
-	return clk;
-}
+	पूर्ण
+	वापस clk;
+पूर्ण
 
-struct clk *imx_obtain_fixed_clock(
-			const char *name, unsigned long rate)
-{
-	struct clk *clk;
+काष्ठा clk *imx_obtain_fixed_घड़ी(
+			स्थिर अक्षर *name, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk *clk;
 
-	clk = imx_obtain_fixed_clock_from_dt(name);
-	if (IS_ERR(clk))
+	clk = imx_obtain_fixed_घड़ी_from_dt(name);
+	अगर (IS_ERR(clk))
 		clk = imx_clk_fixed(name, rate);
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-struct clk_hw *imx_obtain_fixed_clock_hw(
-			const char *name, unsigned long rate)
-{
-	struct clk *clk;
+काष्ठा clk_hw *imx_obtain_fixed_घड़ी_hw(
+			स्थिर अक्षर *name, अचिन्हित दीर्घ rate)
+अणु
+	काष्ठा clk *clk;
 
-	clk = imx_obtain_fixed_clock_from_dt(name);
-	if (IS_ERR(clk))
+	clk = imx_obtain_fixed_घड़ी_from_dt(name);
+	अगर (IS_ERR(clk))
 		clk = imx_clk_fixed(name, rate);
-	return __clk_get_hw(clk);
-}
+	वापस __clk_get_hw(clk);
+पूर्ण
 
-struct clk_hw * imx_obtain_fixed_clk_hw(struct device_node *np,
-					const char *name)
-{
-	struct clk *clk;
+काष्ठा clk_hw * imx_obtain_fixed_clk_hw(काष्ठा device_node *np,
+					स्थिर अक्षर *name)
+अणु
+	काष्ठा clk *clk;
 
 	clk = of_clk_get_by_name(np, name);
-	if (IS_ERR(clk))
-		return ERR_PTR(-ENOENT);
+	अगर (IS_ERR(clk))
+		वापस ERR_PTR(-ENOENT);
 
-	return __clk_get_hw(clk);
-}
+	वापस __clk_get_hw(clk);
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_obtain_fixed_clk_hw);
 
 /*
- * This fixups the register CCM_CSCMR1 write value.
- * The write/read/divider values of the aclk_podf field
- * of that register have the relationship described by
+ * This fixups the रेजिस्टर CCM_CSCMR1 ग_लिखो value.
+ * The ग_लिखो/पढ़ो/भागider values of the aclk_podf field
+ * of that रेजिस्टर have the relationship described by
  * the following table:
  *
- * write value       read value        divider
+ * ग_लिखो value       पढ़ो value        भागider
  * 3b'000            3b'110            7
  * 3b'001            3b'111            8
  * 3b'010            3b'100            5
@@ -134,79 +135,79 @@ EXPORT_SYMBOL_GPL(imx_obtain_fixed_clk_hw);
  * 3b'100            3b'010            3
  * 3b'101            3b'011            4
  * 3b'110            3b'000            1
- * 3b'111            3b'001            2(default)
+ * 3b'111            3b'001            2(शेष)
  *
- * That's why we do the xor operation below.
+ * That's why we करो the xor operation below.
  */
-#define CSCMR1_FIXUP	0x00600000
+#घोषणा CSCMR1_FIXUP	0x00600000
 
-void imx_cscmr1_fixup(u32 *val)
-{
+व्योम imx_cscmr1_fixup(u32 *val)
+अणु
 	*val ^= CSCMR1_FIXUP;
-	return;
-}
+	वापस;
+पूर्ण
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 
-static bool imx_keep_uart_clocks;
-static int imx_enabled_uart_clocks;
-static struct clk **imx_uart_clocks;
+अटल bool imx_keep_uart_घड़ीs;
+अटल पूर्णांक imx_enabled_uart_घड़ीs;
+अटल काष्ठा clk **imx_uart_घड़ीs;
 
-static int __init imx_keep_uart_clocks_param(char *str)
-{
-	imx_keep_uart_clocks = 1;
+अटल पूर्णांक __init imx_keep_uart_घड़ीs_param(अक्षर *str)
+अणु
+	imx_keep_uart_घड़ीs = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 __setup_param("earlycon", imx_keep_uart_earlycon,
-	      imx_keep_uart_clocks_param, 0);
-__setup_param("earlyprintk", imx_keep_uart_earlyprintk,
-	      imx_keep_uart_clocks_param, 0);
+	      imx_keep_uart_घड़ीs_param, 0);
+__setup_param("earlyprintk", imx_keep_uart_earlyprपूर्णांकk,
+	      imx_keep_uart_घड़ीs_param, 0);
 
-void imx_register_uart_clocks(unsigned int clk_count)
-{
-	imx_enabled_uart_clocks = 0;
+व्योम imx_रेजिस्टर_uart_घड़ीs(अचिन्हित पूर्णांक clk_count)
+अणु
+	imx_enabled_uart_घड़ीs = 0;
 
-/* i.MX boards use device trees now.  For build tests without CONFIG_OF, do nothing */
-#ifdef CONFIG_OF
-	if (imx_keep_uart_clocks) {
-		int i;
+/* i.MX boards use device trees now.  For build tests without CONFIG_OF, करो nothing */
+#अगर_घोषित CONFIG_OF
+	अगर (imx_keep_uart_घड़ीs) अणु
+		पूर्णांक i;
 
-		imx_uart_clocks = kcalloc(clk_count, sizeof(struct clk *), GFP_KERNEL);
+		imx_uart_घड़ीs = kसुस्मृति(clk_count, माप(काष्ठा clk *), GFP_KERNEL);
 
-		if (!of_stdout)
-			return;
+		अगर (!of_मानक_निकास)
+			वापस;
 
-		for (i = 0; i < clk_count; i++) {
-			imx_uart_clocks[imx_enabled_uart_clocks] = of_clk_get(of_stdout, i);
+		क्रम (i = 0; i < clk_count; i++) अणु
+			imx_uart_घड़ीs[imx_enabled_uart_घड़ीs] = of_clk_get(of_मानक_निकास, i);
 
-			/* Stop if there are no more of_stdout references */
-			if (IS_ERR(imx_uart_clocks[imx_enabled_uart_clocks]))
-				return;
+			/* Stop अगर there are no more of_मानक_निकास references */
+			अगर (IS_ERR(imx_uart_घड़ीs[imx_enabled_uart_घड़ीs]))
+				वापस;
 
-			/* Only enable the clock if it's not NULL */
-			if (imx_uart_clocks[imx_enabled_uart_clocks])
-				clk_prepare_enable(imx_uart_clocks[imx_enabled_uart_clocks++]);
-		}
-	}
-#endif
-}
+			/* Only enable the घड़ी अगर it's not शून्य */
+			अगर (imx_uart_घड़ीs[imx_enabled_uart_घड़ीs])
+				clk_prepare_enable(imx_uart_घड़ीs[imx_enabled_uart_घड़ीs++]);
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static int __init imx_clk_disable_uart(void)
-{
-	if (imx_keep_uart_clocks && imx_enabled_uart_clocks) {
-		int i;
+अटल पूर्णांक __init imx_clk_disable_uart(व्योम)
+अणु
+	अगर (imx_keep_uart_घड़ीs && imx_enabled_uart_घड़ीs) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < imx_enabled_uart_clocks; i++) {
-			clk_disable_unprepare(imx_uart_clocks[i]);
-			clk_put(imx_uart_clocks[i]);
-		}
-		kfree(imx_uart_clocks);
-	}
+		क्रम (i = 0; i < imx_enabled_uart_घड़ीs; i++) अणु
+			clk_disable_unprepare(imx_uart_घड़ीs[i]);
+			clk_put(imx_uart_घड़ीs[i]);
+		पूर्ण
+		kमुक्त(imx_uart_घड़ीs);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall_sync(imx_clk_disable_uart);
-#endif
+#पूर्ण_अगर
 
 MODULE_LICENSE("GPL v2");

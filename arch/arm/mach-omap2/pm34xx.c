@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP3 Power Management Routines
  *
@@ -10,511 +11,511 @@
  * Rajendra Nayak <rnayak@ti.com>
  *
  * Copyright (C) 2005 Texas Instruments, Inc.
- * Richard Woodruff <r-woodruff2@ti.com>
+ * Riअक्षरd Woodruff <r-woodruff2@ti.com>
  *
- * Based on pm.c for omap1
+ * Based on pm.c क्रम omap1
  */
 
-#include <linux/cpu_pm.h>
-#include <linux/pm.h>
-#include <linux/suspend.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/omap-gpmc.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/omap-gpmc.h>
 
-#include <trace/events/power.h>
+#समावेश <trace/events/घातer.h>
 
-#include <asm/fncpy.h>
-#include <asm/suspend.h>
-#include <asm/system_misc.h>
+#समावेश <यंत्र/fncpy.h>
+#समावेश <यंत्र/suspend.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include "clockdomain.h"
-#include "powerdomain.h"
-#include "soc.h"
-#include "common.h"
-#include "cm3xxx.h"
-#include "cm-regbits-34xx.h"
-#include "prm-regbits-34xx.h"
-#include "prm3xxx.h"
-#include "pm.h"
-#include "sdrc.h"
-#include "omap-secure.h"
-#include "sram.h"
-#include "control.h"
-#include "vc.h"
+#समावेश "clockdomain.h"
+#समावेश "powerdomain.h"
+#समावेश "soc.h"
+#समावेश "common.h"
+#समावेश "cm3xxx.h"
+#समावेश "cm-regbits-34xx.h"
+#समावेश "prm-regbits-34xx.h"
+#समावेश "prm3xxx.h"
+#समावेश "pm.h"
+#समावेश "sdrc.h"
+#समावेश "omap-secure.h"
+#समावेश "sram.h"
+#समावेश "control.h"
+#समावेश "vc.h"
 
 /* pm34xx errata defined in pm.h */
 u16 pm34xx_errata;
 
-struct power_state {
-	struct powerdomain *pwrdm;
+काष्ठा घातer_state अणु
+	काष्ठा घातerकरोमुख्य *pwrdm;
 	u32 next_state;
-#ifdef CONFIG_SUSPEND
+#अगर_घोषित CONFIG_SUSPEND
 	u32 saved_state;
-#endif
-	struct list_head node;
-};
+#पूर्ण_अगर
+	काष्ठा list_head node;
+पूर्ण;
 
-static LIST_HEAD(pwrst_list);
+अटल LIST_HEAD(pwrst_list);
 
-void (*omap3_do_wfi_sram)(void);
+व्योम (*omap3_करो_wfi_sram)(व्योम);
 
-static struct powerdomain *mpu_pwrdm, *neon_pwrdm;
-static struct powerdomain *core_pwrdm, *per_pwrdm;
+अटल काष्ठा घातerकरोमुख्य *mpu_pwrdm, *neon_pwrdm;
+अटल काष्ठा घातerकरोमुख्य *core_pwrdm, *per_pwrdm;
 
-static void omap3_core_save_context(void)
-{
+अटल व्योम omap3_core_save_context(व्योम)
+अणु
 	omap3_ctrl_save_padconf();
 
 	/*
-	 * Force write last pad into memory, as this can fail in some
-	 * cases according to errata 1.157, 1.185
+	 * Force ग_लिखो last pad पूर्णांकo memory, as this can fail in some
+	 * हालs according to errata 1.157, 1.185
 	 */
-	omap_ctrl_writel(omap_ctrl_readl(OMAP343X_PADCONF_ETK_D14),
+	omap_ctrl_ग_लिखोl(omap_ctrl_पढ़ोl(OMAP343X_PADCONF_ETK_D14),
 		OMAP343X_CONTROL_MEM_WKUP + 0x2a0);
 
 	/* Save the Interrupt controller context */
-	omap_intc_save_context();
+	omap_पूर्णांकc_save_context();
 	/* Save the GPMC context */
 	omap3_gpmc_save_context();
-	/* Save the system control module context, padconf already save above*/
+	/* Save the प्रणाली control module context, padconf alपढ़ोy save above*/
 	omap3_control_save_context();
-}
+पूर्ण
 
-static void omap3_core_restore_context(void)
-{
+अटल व्योम omap3_core_restore_context(व्योम)
+अणु
 	/* Restore the control module context, padconf restored by h/w */
 	omap3_control_restore_context();
 	/* Restore the GPMC context */
 	omap3_gpmc_restore_context();
-	/* Restore the interrupt controller context */
-	omap_intc_restore_context();
-}
+	/* Restore the पूर्णांकerrupt controller context */
+	omap_पूर्णांकc_restore_context();
+पूर्ण
 
 /*
- * FIXME: This function should be called before entering off-mode after
+ * FIXME: This function should be called beक्रमe entering off-mode after
  * OMAP3 secure services have been accessed. Currently it is only called
  * once during boot sequence, but this works as we are not using secure
  * services.
  */
-static void omap3_save_secure_ram_context(void)
-{
+अटल व्योम omap3_save_secure_ram_context(व्योम)
+अणु
 	u32 ret;
-	int mpu_next_state = pwrdm_read_next_pwrst(mpu_pwrdm);
+	पूर्णांक mpu_next_state = pwrdm_पढ़ो_next_pwrst(mpu_pwrdm);
 
-	if (omap_type() != OMAP2_DEVICE_TYPE_GP) {
+	अगर (omap_type() != OMAP2_DEVICE_TYPE_GP) अणु
 		/*
 		 * MPU next state must be set to POWER_ON temporarily,
 		 * otherwise the WFI executed inside the ROM code
-		 * will hang the system.
+		 * will hang the प्रणाली.
 		 */
 		pwrdm_set_next_pwrst(mpu_pwrdm, PWRDM_POWER_ON);
 		ret = omap3_save_secure_ram(omap3_secure_ram_storage,
 					    OMAP3_SAVE_SECURE_RAM_SZ);
 		pwrdm_set_next_pwrst(mpu_pwrdm, mpu_next_state);
-		/* Following is for error tracking, it should not happen */
-		if (ret) {
+		/* Following is क्रम error tracking, it should not happen */
+		अगर (ret) अणु
 			pr_err("save_secure_sram() returns %08x\n", ret);
-			while (1)
+			जबतक (1)
 				;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t _prcm_int_handle_io(int irq, void *unused)
-{
-	int c;
+अटल irqवापस_t _prcm_पूर्णांक_handle_io(पूर्णांक irq, व्योम *unused)
+अणु
+	पूर्णांक c;
 
 	c = omap_prm_clear_mod_irqs(WKUP_MOD, 1, OMAP3430_ST_IO_MASK |
 				    OMAP3430_ST_IO_CHAIN_MASK);
 
-	return c ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस c ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static irqreturn_t _prcm_int_handle_wakeup(int irq, void *unused)
-{
-	int c;
+अटल irqवापस_t _prcm_पूर्णांक_handle_wakeup(पूर्णांक irq, व्योम *unused)
+अणु
+	पूर्णांक c;
 
 	/*
-	 * Clear all except ST_IO and ST_IO_CHAIN for wkup module,
-	 * these are handled in a separate handler to avoid acking
-	 * IO events before parsing in mux code
+	 * Clear all except ST_IO and ST_IO_CHAIN क्रम wkup module,
+	 * these are handled in a separate handler to aव्योम acking
+	 * IO events beक्रमe parsing in mux code
 	 */
 	c = omap_prm_clear_mod_irqs(WKUP_MOD, 1, ~(OMAP3430_ST_IO_MASK |
 						   OMAP3430_ST_IO_CHAIN_MASK));
 	c += omap_prm_clear_mod_irqs(CORE_MOD, 1, ~0);
 	c += omap_prm_clear_mod_irqs(OMAP3430_PER_MOD, 1, ~0);
-	if (omap_rev() > OMAP3430_REV_ES1_0) {
+	अगर (omap_rev() > OMAP3430_REV_ES1_0) अणु
 		c += omap_prm_clear_mod_irqs(CORE_MOD, 3, ~0);
 		c += omap_prm_clear_mod_irqs(OMAP3430ES2_USBHOST_MOD, 1, ~0);
-	}
+	पूर्ण
 
-	return c ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस c ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static void omap34xx_save_context(u32 *save)
-{
+अटल व्योम omap34xx_save_context(u32 *save)
+अणु
 	u32 val;
 
 	/* Read Auxiliary Control Register */
-	asm("mrc p15, 0, %0, c1, c0, 1" : "=r" (val));
+	यंत्र("mrc p15, 0, %0, c1, c0, 1" : "=r" (val));
 	*save++ = 1;
 	*save++ = val;
 
-	/* Read L2 AUX ctrl register */
-	asm("mrc p15, 1, %0, c9, c0, 2" : "=r" (val));
+	/* Read L2 AUX ctrl रेजिस्टर */
+	यंत्र("mrc p15, 1, %0, c9, c0, 2" : "=r" (val));
 	*save++ = 1;
 	*save++ = val;
-}
+पूर्ण
 
-static int omap34xx_do_sram_idle(unsigned long save_state)
-{
+अटल पूर्णांक omap34xx_करो_sram_idle(अचिन्हित दीर्घ save_state)
+अणु
 	omap34xx_cpu_suspend(save_state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void omap_sram_idle(void)
-{
+व्योम omap_sram_idle(व्योम)
+अणु
 	/* Variable to tell what needs to be saved and restored
 	 * in omap_sram_idle*/
 	/* save_state = 0 => Nothing to save and restored */
 	/* save_state = 1 => Only L1 and logic lost */
 	/* save_state = 2 => Only L2 lost */
 	/* save_state = 3 => L1, L2 and logic lost */
-	int save_state = 0;
-	int mpu_next_state = PWRDM_POWER_ON;
-	int per_next_state = PWRDM_POWER_ON;
-	int core_next_state = PWRDM_POWER_ON;
+	पूर्णांक save_state = 0;
+	पूर्णांक mpu_next_state = PWRDM_POWER_ON;
+	पूर्णांक per_next_state = PWRDM_POWER_ON;
+	पूर्णांक core_next_state = PWRDM_POWER_ON;
 	u32 sdrc_pwr = 0;
-	int error;
+	पूर्णांक error;
 
-	mpu_next_state = pwrdm_read_next_pwrst(mpu_pwrdm);
-	switch (mpu_next_state) {
-	case PWRDM_POWER_ON:
-	case PWRDM_POWER_RET:
+	mpu_next_state = pwrdm_पढ़ो_next_pwrst(mpu_pwrdm);
+	चयन (mpu_next_state) अणु
+	हाल PWRDM_POWER_ON:
+	हाल PWRDM_POWER_RET:
 		/* No need to save context */
 		save_state = 0;
-		break;
-	case PWRDM_POWER_OFF:
+		अवरोध;
+	हाल PWRDM_POWER_OFF:
 		save_state = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Invalid state */
 		pr_err("Invalid mpu state in sram_idle\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* NEON control */
-	if (pwrdm_read_pwrst(neon_pwrdm) == PWRDM_POWER_ON)
+	अगर (pwrdm_पढ़ो_pwrst(neon_pwrdm) == PWRDM_POWER_ON)
 		pwrdm_set_next_pwrst(neon_pwrdm, mpu_next_state);
 
 	/* Enable IO-PAD and IO-CHAIN wakeups */
-	per_next_state = pwrdm_read_next_pwrst(per_pwrdm);
-	core_next_state = pwrdm_read_next_pwrst(core_pwrdm);
+	per_next_state = pwrdm_पढ़ो_next_pwrst(per_pwrdm);
+	core_next_state = pwrdm_पढ़ो_next_pwrst(core_pwrdm);
 
-	pwrdm_pre_transition(NULL);
+	pwrdm_pre_transition(शून्य);
 
 	/* PER */
-	if (per_next_state == PWRDM_POWER_OFF) {
+	अगर (per_next_state == PWRDM_POWER_OFF) अणु
 		error = cpu_cluster_pm_enter();
-		if (error)
-			return;
-	}
+		अगर (error)
+			वापस;
+	पूर्ण
 
 	/* CORE */
-	if (core_next_state < PWRDM_POWER_ON) {
-		if (core_next_state == PWRDM_POWER_OFF) {
+	अगर (core_next_state < PWRDM_POWER_ON) अणु
+		अगर (core_next_state == PWRDM_POWER_OFF) अणु
 			omap3_core_save_context();
 			omap3_cm_save_context();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Configure PMIC signaling for I2C4 or sys_off_mode */
-	omap3_vc_set_pmic_signaling(core_next_state);
+	/* Configure PMIC संकेतing क्रम I2C4 or sys_off_mode */
+	omap3_vc_set_pmic_संकेतing(core_next_state);
 
-	omap3_intc_prepare_idle();
+	omap3_पूर्णांकc_prepare_idle();
 
 	/*
 	 * On EMU/HS devices ROM code restores a SRDC value
-	 * from scratchpad which has automatic self refresh on timeout
+	 * from scratchpad which has स्वतःmatic self refresh on समयout
 	 * of AUTO_CNT = 1 enabled. This takes care of erratum ID i443.
-	 * Hence store/restore the SDRC_POWER register here.
+	 * Hence store/restore the SDRC_POWER रेजिस्टर here.
 	 */
-	if (cpu_is_omap3430() && omap_rev() >= OMAP3430_REV_ES3_0 &&
+	अगर (cpu_is_omap3430() && omap_rev() >= OMAP3430_REV_ES3_0 &&
 	    (omap_type() == OMAP2_DEVICE_TYPE_EMU ||
 	     omap_type() == OMAP2_DEVICE_TYPE_SEC) &&
 	    core_next_state == PWRDM_POWER_OFF)
-		sdrc_pwr = sdrc_read_reg(SDRC_POWER);
+		sdrc_pwr = sdrc_पढ़ो_reg(SDRC_POWER);
 
 	/*
 	 * omap3_arm_context is the location where some ARM context
 	 * get saved. The rest is placed on the stack, and restored
-	 * from there before resuming.
+	 * from there beक्रमe resuming.
 	 */
-	if (save_state)
+	अगर (save_state)
 		omap34xx_save_context(omap3_arm_context);
-	if (save_state == 1 || save_state == 3)
-		cpu_suspend(save_state, omap34xx_do_sram_idle);
-	else
-		omap34xx_do_sram_idle(save_state);
+	अगर (save_state == 1 || save_state == 3)
+		cpu_suspend(save_state, omap34xx_करो_sram_idle);
+	अन्यथा
+		omap34xx_करो_sram_idle(save_state);
 
 	/* Restore normal SDRC POWER settings */
-	if (cpu_is_omap3430() && omap_rev() >= OMAP3430_REV_ES3_0 &&
+	अगर (cpu_is_omap3430() && omap_rev() >= OMAP3430_REV_ES3_0 &&
 	    (omap_type() == OMAP2_DEVICE_TYPE_EMU ||
 	     omap_type() == OMAP2_DEVICE_TYPE_SEC) &&
 	    core_next_state == PWRDM_POWER_OFF)
-		sdrc_write_reg(sdrc_pwr, SDRC_POWER);
+		sdrc_ग_लिखो_reg(sdrc_pwr, SDRC_POWER);
 
 	/* CORE */
-	if (core_next_state < PWRDM_POWER_ON &&
-	    pwrdm_read_prev_pwrst(core_pwrdm) == PWRDM_POWER_OFF) {
+	अगर (core_next_state < PWRDM_POWER_ON &&
+	    pwrdm_पढ़ो_prev_pwrst(core_pwrdm) == PWRDM_POWER_OFF) अणु
 		omap3_core_restore_context();
 		omap3_cm_restore_context();
 		omap3_sram_restore_context();
 		omap2_sms_restore_context();
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * In off-mode resume path above, omap3_core_restore_context
-		 * also handles the INTC autoidle restore done here so limit
-		 * this to non-off mode resume paths so we don't do it twice.
+		 * also handles the INTC स्वतःidle restore करोne here so limit
+		 * this to non-off mode resume paths so we करोn't करो it twice.
 		 */
-		omap3_intc_resume_idle();
-	}
+		omap3_पूर्णांकc_resume_idle();
+	पूर्ण
 
-	pwrdm_post_transition(NULL);
+	pwrdm_post_transition(शून्य);
 
 	/* PER */
-	if (per_next_state == PWRDM_POWER_OFF)
-		cpu_cluster_pm_exit();
-}
+	अगर (per_next_state == PWRDM_POWER_OFF)
+		cpu_cluster_pm_निकास();
+पूर्ण
 
-static void omap3_pm_idle(void)
-{
-	if (omap_irq_pending())
-		return;
+अटल व्योम omap3_pm_idle(व्योम)
+अणु
+	अगर (omap_irq_pending())
+		वापस;
 
 	omap_sram_idle();
-}
+पूर्ण
 
-#ifdef CONFIG_SUSPEND
-static int omap3_pm_suspend(void)
-{
-	struct power_state *pwrst;
-	int state, ret = 0;
+#अगर_घोषित CONFIG_SUSPEND
+अटल पूर्णांक omap3_pm_suspend(व्योम)
+अणु
+	काष्ठा घातer_state *pwrst;
+	पूर्णांक state, ret = 0;
 
 	/* Read current next_pwrsts */
-	list_for_each_entry(pwrst, &pwrst_list, node)
-		pwrst->saved_state = pwrdm_read_next_pwrst(pwrst->pwrdm);
+	list_क्रम_each_entry(pwrst, &pwrst_list, node)
+		pwrst->saved_state = pwrdm_पढ़ो_next_pwrst(pwrst->pwrdm);
 	/* Set ones wanted by suspend */
-	list_for_each_entry(pwrst, &pwrst_list, node) {
-		if (omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state))
-			goto restore;
-		if (pwrdm_clear_all_prev_pwrst(pwrst->pwrdm))
-			goto restore;
-	}
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
+		अगर (omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state))
+			जाओ restore;
+		अगर (pwrdm_clear_all_prev_pwrst(pwrst->pwrdm))
+			जाओ restore;
+	पूर्ण
 
-	omap3_intc_suspend();
+	omap3_पूर्णांकc_suspend();
 
 	omap_sram_idle();
 
 restore:
 	/* Restore next_pwrsts */
-	list_for_each_entry(pwrst, &pwrst_list, node) {
-		state = pwrdm_read_prev_pwrst(pwrst->pwrdm);
-		if (state > pwrst->next_state) {
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
+		state = pwrdm_पढ़ो_prev_pwrst(pwrst->pwrdm);
+		अगर (state > pwrst->next_state) अणु
 			pr_info("Powerdomain (%s) didn't enter target state %d\n",
 				pwrst->pwrdm->name, pwrst->next_state);
 			ret = -1;
-		}
+		पूर्ण
 		omap_set_pwrdm_state(pwrst->pwrdm, pwrst->saved_state);
-	}
-	if (ret)
+	पूर्ण
+	अगर (ret)
 		pr_err("Could not enter target state in pm_suspend\n");
-	else
+	अन्यथा
 		pr_info("Successfully put all powerdomains to target state\n");
 
-	return ret;
-}
-#else
-#define omap3_pm_suspend NULL
-#endif /* CONFIG_SUSPEND */
+	वापस ret;
+पूर्ण
+#अन्यथा
+#घोषणा omap3_pm_suspend शून्य
+#पूर्ण_अगर /* CONFIG_SUSPEND */
 
-static void __init prcm_setup_regs(void)
-{
+अटल व्योम __init prcm_setup_regs(व्योम)
+अणु
 	omap3_ctrl_init();
 
 	omap3_prm_init_pm(cpu_is_omap3630(), omap3_has_iva());
-}
+पूर्ण
 
-void omap3_pm_off_mode_enable(int enable)
-{
-	struct power_state *pwrst;
+व्योम omap3_pm_off_mode_enable(पूर्णांक enable)
+अणु
+	काष्ठा घातer_state *pwrst;
 	u32 state;
 
-	if (enable)
+	अगर (enable)
 		state = PWRDM_POWER_OFF;
-	else
+	अन्यथा
 		state = PWRDM_POWER_RET;
 
-	list_for_each_entry(pwrst, &pwrst_list, node) {
-		if (IS_PM34XX_ERRATUM(PM_SDRC_WAKEUP_ERRATUM_i583) &&
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
+		अगर (IS_PM34XX_ERRATUM(PM_SDRC_WAKEUP_ERRATUM_i583) &&
 				pwrst->pwrdm == core_pwrdm &&
-				state == PWRDM_POWER_OFF) {
+				state == PWRDM_POWER_OFF) अणु
 			pwrst->next_state = PWRDM_POWER_RET;
 			pr_warn("%s: Core OFF disabled due to errata i583\n",
 				__func__);
-		} else {
+		पूर्ण अन्यथा अणु
 			pwrst->next_state = state;
-		}
+		पूर्ण
 		omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int omap3_pm_get_suspend_state(struct powerdomain *pwrdm)
-{
-	struct power_state *pwrst;
+पूर्णांक omap3_pm_get_suspend_state(काष्ठा घातerकरोमुख्य *pwrdm)
+अणु
+	काष्ठा घातer_state *pwrst;
 
-	list_for_each_entry(pwrst, &pwrst_list, node) {
-		if (pwrst->pwrdm == pwrdm)
-			return pwrst->next_state;
-	}
-	return -EINVAL;
-}
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
+		अगर (pwrst->pwrdm == pwrdm)
+			वापस pwrst->next_state;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-int omap3_pm_set_suspend_state(struct powerdomain *pwrdm, int state)
-{
-	struct power_state *pwrst;
+पूर्णांक omap3_pm_set_suspend_state(काष्ठा घातerकरोमुख्य *pwrdm, पूर्णांक state)
+अणु
+	काष्ठा घातer_state *pwrst;
 
-	list_for_each_entry(pwrst, &pwrst_list, node) {
-		if (pwrst->pwrdm == pwrdm) {
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
+		अगर (pwrst->pwrdm == pwrdm) अणु
 			pwrst->next_state = state;
-			return 0;
-		}
-	}
-	return -EINVAL;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int __init pwrdms_setup(struct powerdomain *pwrdm, void *unused)
-{
-	struct power_state *pwrst;
+अटल पूर्णांक __init pwrdms_setup(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *unused)
+अणु
+	काष्ठा घातer_state *pwrst;
 
-	if (!pwrdm->pwrsts)
-		return 0;
+	अगर (!pwrdm->pwrsts)
+		वापस 0;
 
-	pwrst = kmalloc(sizeof(struct power_state), GFP_ATOMIC);
-	if (!pwrst)
-		return -ENOMEM;
+	pwrst = kदो_स्मृति(माप(काष्ठा घातer_state), GFP_ATOMIC);
+	अगर (!pwrst)
+		वापस -ENOMEM;
 	pwrst->pwrdm = pwrdm;
 
-	if (enable_off_mode)
+	अगर (enable_off_mode)
 		pwrst->next_state = PWRDM_POWER_OFF;
-	else
+	अन्यथा
 		pwrst->next_state = PWRDM_POWER_RET;
 
 	list_add(&pwrst->node, &pwrst_list);
 
-	if (pwrdm_has_hdwr_sar(pwrdm))
+	अगर (pwrdm_has_hdwr_sar(pwrdm))
 		pwrdm_enable_hdwr_sar(pwrdm);
 
-	return omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state);
-}
+	वापस omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state);
+पूर्ण
 
 /*
  * Push functions to SRAM
  *
- * The minimum set of functions is pushed to SRAM for execution:
- * - omap3_do_wfi for erratum i581 WA,
+ * The minimum set of functions is pushed to SRAM क्रम execution:
+ * - omap3_करो_wfi क्रम erratum i581 WA,
  */
-void omap_push_sram_idle(void)
-{
-	omap3_do_wfi_sram = omap_sram_push(omap3_do_wfi, omap3_do_wfi_sz);
-}
+व्योम omap_push_sram_idle(व्योम)
+अणु
+	omap3_करो_wfi_sram = omap_sram_push(omap3_करो_wfi, omap3_करो_wfi_sz);
+पूर्ण
 
-static void __init pm_errata_configure(void)
-{
-	if (cpu_is_omap3630()) {
+अटल व्योम __init pm_errata_configure(व्योम)
+अणु
+	अगर (cpu_is_omap3630()) अणु
 		pm34xx_errata |= PM_RTA_ERRATUM_i608;
 		/* Enable the l2 cache toggling in sleep logic */
 		enable_omap3630_toggle_l2_on_restore();
-		if (omap_rev() < OMAP3630_REV_ES1_2)
+		अगर (omap_rev() < OMAP3630_REV_ES1_2)
 			pm34xx_errata |= (PM_SDRC_WAKEUP_ERRATUM_i583 |
 					  PM_PER_MEMORIES_ERRATUM_i582);
-	} else if (cpu_is_omap34xx()) {
+	पूर्ण अन्यथा अगर (cpu_is_omap34xx()) अणु
 		pm34xx_errata |= PM_PER_MEMORIES_ERRATUM_i582;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init omap3_pm_check_pmic(void)
-{
-	struct device_node *np;
+अटल व्योम __init omap3_pm_check_pmic(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_compatible_node(NULL, NULL, "ti,twl4030-power-idle");
-	if (!np)
-		np = of_find_compatible_node(NULL, NULL, "ti,twl4030-power-idle-osc-off");
+	np = of_find_compatible_node(शून्य, शून्य, "ti,twl4030-power-idle");
+	अगर (!np)
+		np = of_find_compatible_node(शून्य, शून्य, "ti,twl4030-power-idle-osc-off");
 
-	if (np) {
+	अगर (np) अणु
 		of_node_put(np);
 		enable_off_mode = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		enable_off_mode = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init omap3_pm_init(void)
-{
-	struct power_state *pwrst, *tmp;
-	struct clockdomain *neon_clkdm, *mpu_clkdm, *per_clkdm, *wkup_clkdm;
-	int ret;
+पूर्णांक __init omap3_pm_init(व्योम)
+अणु
+	काष्ठा घातer_state *pwrst, *पंचांगp;
+	काष्ठा घड़ीकरोमुख्य *neon_clkdm, *mpu_clkdm, *per_clkdm, *wkup_clkdm;
+	पूर्णांक ret;
 
-	if (!omap3_has_io_chain_ctrl())
+	अगर (!omap3_has_io_chain_ctrl())
 		pr_warn("PM: no software I/O chain control; some wakeups may be lost\n");
 
 	pm_errata_configure();
 
-	/* XXX prcm_setup_regs needs to be before enabling hw
-	 * supervised mode for powerdomains */
+	/* XXX prcm_setup_regs needs to be beक्रमe enabling hw
+	 * supervised mode क्रम घातerकरोमुख्यs */
 	prcm_setup_regs();
 
 	ret = request_irq(omap_prcm_event_to_irq("wkup"),
-		_prcm_int_handle_wakeup, IRQF_NO_SUSPEND, "pm_wkup", NULL);
+		_prcm_पूर्णांक_handle_wakeup, IRQF_NO_SUSPEND, "pm_wkup", शून्य);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("pm: Failed to request pm_wkup irq\n");
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	/* IO interrupt is shared with mux code */
+	/* IO पूर्णांकerrupt is shared with mux code */
 	ret = request_irq(omap_prcm_event_to_irq("io"),
-		_prcm_int_handle_io, IRQF_SHARED | IRQF_NO_SUSPEND, "pm_io",
+		_prcm_पूर्णांक_handle_io, IRQF_SHARED | IRQF_NO_SUSPEND, "pm_io",
 		omap3_pm_init);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("pm: Failed to request pm_io irq\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	omap3_pm_check_pmic();
 
-	ret = pwrdm_for_each(pwrdms_setup, NULL);
-	if (ret) {
+	ret = pwrdm_क्रम_each(pwrdms_setup, शून्य);
+	अगर (ret) अणु
 		pr_err("Failed to setup powerdomains\n");
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
-	(void) clkdm_for_each(omap_pm_clkdms_setup, NULL);
+	(व्योम) clkdm_क्रम_each(omap_pm_clkdms_setup, शून्य);
 
 	mpu_pwrdm = pwrdm_lookup("mpu_pwrdm");
-	if (mpu_pwrdm == NULL) {
+	अगर (mpu_pwrdm == शून्य) अणु
 		pr_err("Failed to get mpu_pwrdm\n");
 		ret = -EINVAL;
-		goto err3;
-	}
+		जाओ err3;
+	पूर्ण
 
 	neon_pwrdm = pwrdm_lookup("neon_pwrdm");
 	per_pwrdm = pwrdm_lookup("per_pwrdm");
@@ -533,37 +534,37 @@ int __init omap3_pm_init(void)
 	/*
 	 * RTA is disabled during initialization as per erratum i608
 	 * it is safer to disable RTA by the bootloader, but we would like
-	 * to be doubly sure here and prevent any mishaps.
+	 * to be करोubly sure here and prevent any mishaps.
 	 */
-	if (IS_PM34XX_ERRATUM(PM_RTA_ERRATUM_i608))
+	अगर (IS_PM34XX_ERRATUM(PM_RTA_ERRATUM_i608))
 		omap3630_ctrl_disable_rta();
 
 	/*
 	 * The UART3/4 FIFO and the sidetone memory in McBSP2/3 are
-	 * not correctly reset when the PER powerdomain comes back
-	 * from OFF or OSWR when the CORE powerdomain is kept active.
-	 * See OMAP36xx Erratum i582 "PER Domain reset issue after
-	 * Domain-OFF/OSWR Wakeup".  This wakeup dependency is not a
+	 * not correctly reset when the PER घातerकरोमुख्य comes back
+	 * from OFF or OSWR when the CORE घातerकरोमुख्य is kept active.
+	 * See OMAP36xx Erratum i582 "PER Doमुख्य reset issue after
+	 * Doमुख्य-OFF/OSWR Wakeup".  This wakeup dependency is not a
 	 * complete workaround.  The kernel must also prevent the PER
-	 * powerdomain from going to OSWR/OFF while the CORE
-	 * powerdomain is not going to OSWR/OFF.  And if PER last
-	 * power state was off while CORE last power state was ON, the
+	 * घातerकरोमुख्य from going to OSWR/OFF जबतक the CORE
+	 * घातerकरोमुख्य is not going to OSWR/OFF.  And अगर PER last
+	 * घातer state was off जबतक CORE last घातer state was ON, the
 	 * UART3/4 and McBSP2/3 SIDETONE devices need to run a
-	 * self-test using their loopback tests; if that fails, those
+	 * self-test using their loopback tests; अगर that fails, those
 	 * devices are unusable until the PER/CORE can complete a transition
 	 * from ON to OSWR/OFF and then back to ON.
 	 *
-	 * XXX Technically this workaround is only needed if off-mode
+	 * XXX Technically this workaround is only needed अगर off-mode
 	 * or OSWR is enabled.
 	 */
-	if (IS_PM34XX_ERRATUM(PM_PER_MEMORIES_ERRATUM_i582))
+	अगर (IS_PM34XX_ERRATUM(PM_PER_MEMORIES_ERRATUM_i582))
 		clkdm_add_wkdep(per_clkdm, wkup_clkdm);
 
 	clkdm_add_wkdep(neon_clkdm, mpu_clkdm);
-	if (omap_type() != OMAP2_DEVICE_TYPE_GP) {
+	अगर (omap_type() != OMAP2_DEVICE_TYPE_GP) अणु
 		omap3_secure_ram_storage =
-			kmalloc(OMAP3_SAVE_SECURE_RAM_SZ, GFP_KERNEL);
-		if (!omap3_secure_ram_storage)
+			kदो_स्मृति(OMAP3_SAVE_SECURE_RAM_SZ, GFP_KERNEL);
+		अगर (!omap3_secure_ram_storage)
 			pr_err("Memory allocation failed when allocating for secure sram context\n");
 
 		local_irq_disable();
@@ -571,19 +572,19 @@ int __init omap3_pm_init(void)
 		omap3_save_secure_ram_context();
 
 		local_irq_enable();
-	}
+	पूर्ण
 
 	omap3_save_scratchpad_contents();
-	return ret;
+	वापस ret;
 
 err3:
-	list_for_each_entry_safe(pwrst, tmp, &pwrst_list, node) {
+	list_क्रम_each_entry_safe(pwrst, पंचांगp, &pwrst_list, node) अणु
 		list_del(&pwrst->node);
-		kfree(pwrst);
-	}
-	free_irq(omap_prcm_event_to_irq("io"), omap3_pm_init);
+		kमुक्त(pwrst);
+	पूर्ण
+	मुक्त_irq(omap_prcm_event_to_irq("io"), omap3_pm_init);
 err2:
-	free_irq(omap_prcm_event_to_irq("wkup"), NULL);
+	मुक्त_irq(omap_prcm_event_to_irq("wkup"), शून्य);
 err1:
-	return ret;
-}
+	वापस ret;
+पूर्ण

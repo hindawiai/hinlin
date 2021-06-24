@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/mhi.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
+#समावेश <linux/mhi.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
 
-#include "qrtr.h"
+#समावेश "qrtr.h"
 
-struct qrtr_mhi_dev {
-	struct qrtr_endpoint ep;
-	struct mhi_device *mhi_dev;
-	struct device *dev;
-};
+काष्ठा qrtr_mhi_dev अणु
+	काष्ठा qrtr_endpoपूर्णांक ep;
+	काष्ठा mhi_device *mhi_dev;
+	काष्ठा device *dev;
+पूर्ण;
 
 /* From MHI to QRTR */
-static void qcom_mhi_qrtr_dl_callback(struct mhi_device *mhi_dev,
-				      struct mhi_result *mhi_res)
-{
-	struct qrtr_mhi_dev *qdev = dev_get_drvdata(&mhi_dev->dev);
-	int rc;
+अटल व्योम qcom_mhi_qrtr_dl_callback(काष्ठा mhi_device *mhi_dev,
+				      काष्ठा mhi_result *mhi_res)
+अणु
+	काष्ठा qrtr_mhi_dev *qdev = dev_get_drvdata(&mhi_dev->dev);
+	पूर्णांक rc;
 
-	if (!qdev || mhi_res->transaction_status)
-		return;
+	अगर (!qdev || mhi_res->transaction_status)
+		वापस;
 
-	rc = qrtr_endpoint_post(&qdev->ep, mhi_res->buf_addr,
+	rc = qrtr_endpoपूर्णांक_post(&qdev->ep, mhi_res->buf_addr,
 				mhi_res->bytes_xferd);
-	if (rc == -EINVAL)
+	अगर (rc == -EINVAL)
 		dev_err(qdev->dev, "invalid ipcrouter packet\n");
-}
+पूर्ण
 
 /* From QRTR to MHI */
-static void qcom_mhi_qrtr_ul_callback(struct mhi_device *mhi_dev,
-				      struct mhi_result *mhi_res)
-{
-	struct sk_buff *skb = mhi_res->buf_addr;
+अटल व्योम qcom_mhi_qrtr_ul_callback(काष्ठा mhi_device *mhi_dev,
+				      काष्ठा mhi_result *mhi_res)
+अणु
+	काष्ठा sk_buff *skb = mhi_res->buf_addr;
 
-	if (skb->sk)
+	अगर (skb->sk)
 		sock_put(skb->sk);
 	consume_skb(skb);
-}
+पूर्ण
 
 /* Send data over MHI */
-static int qcom_mhi_qrtr_send(struct qrtr_endpoint *ep, struct sk_buff *skb)
-{
-	struct qrtr_mhi_dev *qdev = container_of(ep, struct qrtr_mhi_dev, ep);
-	int rc;
+अटल पूर्णांक qcom_mhi_qrtr_send(काष्ठा qrtr_endpoपूर्णांक *ep, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा qrtr_mhi_dev *qdev = container_of(ep, काष्ठा qrtr_mhi_dev, ep);
+	पूर्णांक rc;
 
-	if (skb->sk)
+	अगर (skb->sk)
 		sock_hold(skb->sk);
 
 	rc = skb_linearize(skb);
-	if (rc)
-		goto free_skb;
+	अगर (rc)
+		जाओ मुक्त_skb;
 
 	rc = mhi_queue_skb(qdev->mhi_dev, DMA_TO_DEVICE, skb, skb->len,
 			   MHI_EOT);
-	if (rc)
-		goto free_skb;
+	अगर (rc)
+		जाओ मुक्त_skb;
 
-	return rc;
+	वापस rc;
 
-free_skb:
-	if (skb->sk)
+मुक्त_skb:
+	अगर (skb->sk)
 		sock_put(skb->sk);
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qcom_mhi_qrtr_probe(struct mhi_device *mhi_dev,
-			       const struct mhi_device_id *id)
-{
-	struct qrtr_mhi_dev *qdev;
-	int rc;
+अटल पूर्णांक qcom_mhi_qrtr_probe(काष्ठा mhi_device *mhi_dev,
+			       स्थिर काष्ठा mhi_device_id *id)
+अणु
+	काष्ठा qrtr_mhi_dev *qdev;
+	पूर्णांक rc;
 
 	/* start channels */
-	rc = mhi_prepare_for_transfer(mhi_dev);
-	if (rc)
-		return rc;
+	rc = mhi_prepare_क्रम_transfer(mhi_dev);
+	अगर (rc)
+		वापस rc;
 
-	qdev = devm_kzalloc(&mhi_dev->dev, sizeof(*qdev), GFP_KERNEL);
-	if (!qdev)
-		return -ENOMEM;
+	qdev = devm_kzalloc(&mhi_dev->dev, माप(*qdev), GFP_KERNEL);
+	अगर (!qdev)
+		वापस -ENOMEM;
 
 	qdev->mhi_dev = mhi_dev;
 	qdev->dev = &mhi_dev->dev;
 	qdev->ep.xmit = qcom_mhi_qrtr_send;
 
 	dev_set_drvdata(&mhi_dev->dev, qdev);
-	rc = qrtr_endpoint_register(&qdev->ep, QRTR_EP_NID_AUTO);
-	if (rc)
-		return rc;
+	rc = qrtr_endpoपूर्णांक_रेजिस्टर(&qdev->ep, QRTR_EP_NID_AUTO);
+	अगर (rc)
+		वापस rc;
 
 	dev_dbg(qdev->dev, "Qualcomm MHI QRTR driver probed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qcom_mhi_qrtr_remove(struct mhi_device *mhi_dev)
-{
-	struct qrtr_mhi_dev *qdev = dev_get_drvdata(&mhi_dev->dev);
+अटल व्योम qcom_mhi_qrtr_हटाओ(काष्ठा mhi_device *mhi_dev)
+अणु
+	काष्ठा qrtr_mhi_dev *qdev = dev_get_drvdata(&mhi_dev->dev);
 
-	qrtr_endpoint_unregister(&qdev->ep);
+	qrtr_endpoपूर्णांक_unरेजिस्टर(&qdev->ep);
 	mhi_unprepare_from_transfer(mhi_dev);
-	dev_set_drvdata(&mhi_dev->dev, NULL);
-}
+	dev_set_drvdata(&mhi_dev->dev, शून्य);
+पूर्ण
 
-static const struct mhi_device_id qcom_mhi_qrtr_id_table[] = {
-	{ .chan = "IPCR" },
-	{}
-};
+अटल स्थिर काष्ठा mhi_device_id qcom_mhi_qrtr_id_table[] = अणु
+	अणु .chan = "IPCR" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(mhi, qcom_mhi_qrtr_id_table);
 
-static struct mhi_driver qcom_mhi_qrtr_driver = {
+अटल काष्ठा mhi_driver qcom_mhi_qrtr_driver = अणु
 	.probe = qcom_mhi_qrtr_probe,
-	.remove = qcom_mhi_qrtr_remove,
+	.हटाओ = qcom_mhi_qrtr_हटाओ,
 	.dl_xfer_cb = qcom_mhi_qrtr_dl_callback,
 	.ul_xfer_cb = qcom_mhi_qrtr_ul_callback,
 	.id_table = qcom_mhi_qrtr_id_table,
-	.driver = {
+	.driver = अणु
 		.name = "qcom_mhi_qrtr",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_mhi_driver(qcom_mhi_qrtr_driver);
 

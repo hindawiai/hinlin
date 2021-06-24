@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (C) 2008, cozybit Inc.
  *  Copyright (C) 2003-2006, Marvell International Ltd.
  */
-#include <linux/wait.h>
-#include <linux/timer.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/समयr.h>
 
-struct lbtf_private;
+काष्ठा lbtf_निजी;
 
 /**
-  * This file contains definition for USB interface.
+  * This file contains definition क्रम USB पूर्णांकerface.
   */
-#define CMD_TYPE_REQUEST		0xF00DFACE
-#define CMD_TYPE_DATA			0xBEADC0DE
-#define CMD_TYPE_INDICATION		0xBEEFFACE
+#घोषणा CMD_TYPE_REQUEST		0xF00DFACE
+#घोषणा CMD_TYPE_DATA			0xBEADC0DE
+#घोषणा CMD_TYPE_INDICATION		0xBEEFFACE
 
-#define BOOT_CMD_FW_BY_USB		0x01
-#define BOOT_CMD_FW_IN_EEPROM		0x02
-#define BOOT_CMD_UPDATE_BOOT2		0x03
-#define BOOT_CMD_UPDATE_FW		0x04
-#define BOOT_CMD_MAGIC_NUMBER		0x4C56524D   /* LVRM */
+#घोषणा BOOT_CMD_FW_BY_USB		0x01
+#घोषणा BOOT_CMD_FW_IN_EEPROM		0x02
+#घोषणा BOOT_CMD_UPDATE_BOOT2		0x03
+#घोषणा BOOT_CMD_UPDATE_FW		0x04
+#घोषणा BOOT_CMD_MAGIC_NUMBER		0x4C56524D   /* LVRM */
 
-struct bootcmd {
+काष्ठा bootcmd अणु
 	__le32	magic;
-	uint8_t	cmd;
-	uint8_t	pad[11];
-};
+	uपूर्णांक8_t	cmd;
+	uपूर्णांक8_t	pad[11];
+पूर्ण;
 
-#define BOOT_CMD_RESP_OK		0x0001
-#define BOOT_CMD_RESP_FAIL		0x0000
+#घोषणा BOOT_CMD_RESP_OK		0x0001
+#घोषणा BOOT_CMD_RESP_FAIL		0x0000
 
-struct bootcmdresp {
+काष्ठा bootcmdresp अणु
 	__le32	magic;
-	uint8_t	cmd;
-	uint8_t	result;
-	uint8_t	pad[2];
-};
+	uपूर्णांक8_t	cmd;
+	uपूर्णांक8_t	result;
+	uपूर्णांक8_t	pad[2];
+पूर्ण;
 
-/** USB card description structure*/
-struct if_usb_card {
-	struct usb_device *udev;
-	struct urb *rx_urb, *tx_urb, *cmd_urb;
-	struct lbtf_private *priv;
+/** USB card description काष्ठाure*/
+काष्ठा अगर_usb_card अणु
+	काष्ठा usb_device *udev;
+	काष्ठा urb *rx_urb, *tx_urb, *cmd_urb;
+	काष्ठा lbtf_निजी *priv;
 
-	struct sk_buff *rx_skb;
+	काष्ठा sk_buff *rx_skb;
 
-	uint8_t ep_in;
-	uint8_t ep_out;
+	uपूर्णांक8_t ep_in;
+	uपूर्णांक8_t ep_out;
 
-	int8_t bootcmdresp;
+	पूर्णांक8_t bootcmdresp;
 
-	int ep_in_size;
+	पूर्णांक ep_in_size;
 
-	void *ep_out_buf;
-	int ep_out_size;
+	व्योम *ep_out_buf;
+	पूर्णांक ep_out_size;
 
-	const struct firmware *fw;
-	struct timer_list fw_timeout;
-	wait_queue_head_t fw_wq;
-	uint32_t fwseqnum;
-	uint32_t totalbytes;
-	uint32_t fwlastblksent;
-	uint8_t CRC_OK;
-	uint8_t fwdnldover;
-	uint8_t fwfinalblk;
+	स्थिर काष्ठा firmware *fw;
+	काष्ठा समयr_list fw_समयout;
+	रुको_queue_head_t fw_wq;
+	uपूर्णांक32_t fwseqnum;
+	uपूर्णांक32_t totalbytes;
+	uपूर्णांक32_t fwlastblksent;
+	uपूर्णांक8_t CRC_OK;
+	uपूर्णांक8_t fwdnlकरोver;
+	uपूर्णांक8_t fwfinalblk;
 
 	__le16 boot2_version;
-};
+पूर्ण;
 
 /** fwheader */
-struct fwheader {
+काष्ठा fwheader अणु
 	__le32 dnldcmd;
 	__le32 baseaddr;
 	__le32 datalength;
 	__le32 CRC;
-};
+पूर्ण;
 
-#define FW_MAX_DATA_BLK_SIZE	600
+#घोषणा FW_MAX_DATA_BLK_SIZE	600
 /** FWData */
-struct fwdata {
-	struct fwheader hdr;
+काष्ठा fwdata अणु
+	काष्ठा fwheader hdr;
 	__le32 seqnum;
-	uint8_t data[];
-};
+	uपूर्णांक8_t data[];
+पूर्ण;
 
 /** fwsyncheader */
-struct fwsyncheader {
+काष्ठा fwsyncheader अणु
 	__le32 cmd;
 	__le32 seqnum;
-};
+पूर्ण;
 
-#define FW_HAS_DATA_TO_RECV		0x00000001
-#define FW_HAS_LAST_BLOCK		0x00000004
+#घोषणा FW_HAS_DATA_TO_RECV		0x00000001
+#घोषणा FW_HAS_LAST_BLOCK		0x00000004

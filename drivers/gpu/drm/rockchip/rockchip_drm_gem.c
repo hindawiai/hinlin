@@ -1,283 +1,284 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Fuzhou Rockchip Electronics Co.Ltd
  * Author:Mark Yao <mark.yao@rock-chips.com>
  */
 
-#include <linux/dma-buf.h>
-#include <linux/iommu.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <drm/drm.h>
-#include <drm/drm_gem.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_prime.h>
-#include <drm/drm_vma_manager.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_gem.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_prime.h>
+#समावेश <drm/drm_vma_manager.h>
 
-#include "rockchip_drm_drv.h"
-#include "rockchip_drm_gem.h"
+#समावेश "rockchip_drm_drv.h"
+#समावेश "rockchip_drm_gem.h"
 
-static int rockchip_gem_iommu_map(struct rockchip_gem_object *rk_obj)
-{
-	struct drm_device *drm = rk_obj->base.dev;
-	struct rockchip_drm_private *private = drm->dev_private;
-	int prot = IOMMU_READ | IOMMU_WRITE;
-	ssize_t ret;
+अटल पूर्णांक rockchip_gem_iommu_map(काष्ठा rockchip_gem_object *rk_obj)
+अणु
+	काष्ठा drm_device *drm = rk_obj->base.dev;
+	काष्ठा rockchip_drm_निजी *निजी = drm->dev_निजी;
+	पूर्णांक prot = IOMMU_READ | IOMMU_WRITE;
+	sमाप_प्रकार ret;
 
-	mutex_lock(&private->mm_lock);
-	ret = drm_mm_insert_node_generic(&private->mm, &rk_obj->mm,
+	mutex_lock(&निजी->mm_lock);
+	ret = drm_mm_insert_node_generic(&निजी->mm, &rk_obj->mm,
 					 rk_obj->base.size, PAGE_SIZE,
 					 0, 0);
-	mutex_unlock(&private->mm_lock);
+	mutex_unlock(&निजी->mm_lock);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_ERROR("out of I/O virtual memory: %zd\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rk_obj->dma_addr = rk_obj->mm.start;
 
-	ret = iommu_map_sgtable(private->domain, rk_obj->dma_addr, rk_obj->sgt,
+	ret = iommu_map_sgtable(निजी->करोमुख्य, rk_obj->dma_addr, rk_obj->sgt,
 				prot);
-	if (ret < rk_obj->base.size) {
+	अगर (ret < rk_obj->base.size) अणु
 		DRM_ERROR("failed to map buffer: size=%zd request_size=%zd\n",
 			  ret, rk_obj->base.size);
 		ret = -ENOMEM;
-		goto err_remove_node;
-	}
+		जाओ err_हटाओ_node;
+	पूर्ण
 
 	rk_obj->size = ret;
 
-	return 0;
+	वापस 0;
 
-err_remove_node:
-	mutex_lock(&private->mm_lock);
-	drm_mm_remove_node(&rk_obj->mm);
-	mutex_unlock(&private->mm_lock);
+err_हटाओ_node:
+	mutex_lock(&निजी->mm_lock);
+	drm_mm_हटाओ_node(&rk_obj->mm);
+	mutex_unlock(&निजी->mm_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rockchip_gem_iommu_unmap(struct rockchip_gem_object *rk_obj)
-{
-	struct drm_device *drm = rk_obj->base.dev;
-	struct rockchip_drm_private *private = drm->dev_private;
+अटल पूर्णांक rockchip_gem_iommu_unmap(काष्ठा rockchip_gem_object *rk_obj)
+अणु
+	काष्ठा drm_device *drm = rk_obj->base.dev;
+	काष्ठा rockchip_drm_निजी *निजी = drm->dev_निजी;
 
-	iommu_unmap(private->domain, rk_obj->dma_addr, rk_obj->size);
+	iommu_unmap(निजी->करोमुख्य, rk_obj->dma_addr, rk_obj->size);
 
-	mutex_lock(&private->mm_lock);
+	mutex_lock(&निजी->mm_lock);
 
-	drm_mm_remove_node(&rk_obj->mm);
+	drm_mm_हटाओ_node(&rk_obj->mm);
 
-	mutex_unlock(&private->mm_lock);
+	mutex_unlock(&निजी->mm_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_gem_get_pages(struct rockchip_gem_object *rk_obj)
-{
-	struct drm_device *drm = rk_obj->base.dev;
-	int ret, i;
-	struct scatterlist *s;
+अटल पूर्णांक rockchip_gem_get_pages(काष्ठा rockchip_gem_object *rk_obj)
+अणु
+	काष्ठा drm_device *drm = rk_obj->base.dev;
+	पूर्णांक ret, i;
+	काष्ठा scatterlist *s;
 
 	rk_obj->pages = drm_gem_get_pages(&rk_obj->base);
-	if (IS_ERR(rk_obj->pages))
-		return PTR_ERR(rk_obj->pages);
+	अगर (IS_ERR(rk_obj->pages))
+		वापस PTR_ERR(rk_obj->pages);
 
 	rk_obj->num_pages = rk_obj->base.size >> PAGE_SHIFT;
 
 	rk_obj->sgt = drm_prime_pages_to_sg(rk_obj->base.dev,
 					    rk_obj->pages, rk_obj->num_pages);
-	if (IS_ERR(rk_obj->sgt)) {
+	अगर (IS_ERR(rk_obj->sgt)) अणु
 		ret = PTR_ERR(rk_obj->sgt);
-		goto err_put_pages;
-	}
+		जाओ err_put_pages;
+	पूर्ण
 
 	/*
-	 * Fake up the SG table so that dma_sync_sg_for_device() can be used
+	 * Fake up the SG table so that dma_sync_sg_क्रम_device() can be used
 	 * to flush the pages associated with it.
 	 *
 	 * TODO: Replace this by drm_clflush_sg() once it can be implemented
 	 * without relying on symbols that are not exported.
 	 */
-	for_each_sgtable_sg(rk_obj->sgt, s, i)
+	क्रम_each_sgtable_sg(rk_obj->sgt, s, i)
 		sg_dma_address(s) = sg_phys(s);
 
-	dma_sync_sgtable_for_device(drm->dev, rk_obj->sgt, DMA_TO_DEVICE);
+	dma_sync_sgtable_क्रम_device(drm->dev, rk_obj->sgt, DMA_TO_DEVICE);
 
-	return 0;
+	वापस 0;
 
 err_put_pages:
 	drm_gem_put_pages(&rk_obj->base, rk_obj->pages, false, false);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void rockchip_gem_put_pages(struct rockchip_gem_object *rk_obj)
-{
-	sg_free_table(rk_obj->sgt);
-	kfree(rk_obj->sgt);
+अटल व्योम rockchip_gem_put_pages(काष्ठा rockchip_gem_object *rk_obj)
+अणु
+	sg_मुक्त_table(rk_obj->sgt);
+	kमुक्त(rk_obj->sgt);
 	drm_gem_put_pages(&rk_obj->base, rk_obj->pages, true, true);
-}
+पूर्ण
 
-static int rockchip_gem_alloc_iommu(struct rockchip_gem_object *rk_obj,
+अटल पूर्णांक rockchip_gem_alloc_iommu(काष्ठा rockchip_gem_object *rk_obj,
 				    bool alloc_kmap)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
 	ret = rockchip_gem_get_pages(rk_obj);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = rockchip_gem_iommu_map(rk_obj);
-	if (ret < 0)
-		goto err_free;
+	अगर (ret < 0)
+		जाओ err_मुक्त;
 
-	if (alloc_kmap) {
+	अगर (alloc_kmap) अणु
 		rk_obj->kvaddr = vmap(rk_obj->pages, rk_obj->num_pages, VM_MAP,
-				      pgprot_writecombine(PAGE_KERNEL));
-		if (!rk_obj->kvaddr) {
+				      pgprot_ग_लिखोcombine(PAGE_KERNEL));
+		अगर (!rk_obj->kvaddr) अणु
 			DRM_ERROR("failed to vmap() buffer\n");
 			ret = -ENOMEM;
-			goto err_unmap;
-		}
-	}
+			जाओ err_unmap;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_unmap:
 	rockchip_gem_iommu_unmap(rk_obj);
-err_free:
+err_मुक्त:
 	rockchip_gem_put_pages(rk_obj);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rockchip_gem_alloc_dma(struct rockchip_gem_object *rk_obj,
+अटल पूर्णांक rockchip_gem_alloc_dma(काष्ठा rockchip_gem_object *rk_obj,
 				  bool alloc_kmap)
-{
-	struct drm_gem_object *obj = &rk_obj->base;
-	struct drm_device *drm = obj->dev;
+अणु
+	काष्ठा drm_gem_object *obj = &rk_obj->base;
+	काष्ठा drm_device *drm = obj->dev;
 
 	rk_obj->dma_attrs = DMA_ATTR_WRITE_COMBINE;
 
-	if (!alloc_kmap)
+	अगर (!alloc_kmap)
 		rk_obj->dma_attrs |= DMA_ATTR_NO_KERNEL_MAPPING;
 
 	rk_obj->kvaddr = dma_alloc_attrs(drm->dev, obj->size,
 					 &rk_obj->dma_addr, GFP_KERNEL,
 					 rk_obj->dma_attrs);
-	if (!rk_obj->kvaddr) {
+	अगर (!rk_obj->kvaddr) अणु
 		DRM_ERROR("failed to allocate %zu byte dma buffer", obj->size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_gem_alloc_buf(struct rockchip_gem_object *rk_obj,
+अटल पूर्णांक rockchip_gem_alloc_buf(काष्ठा rockchip_gem_object *rk_obj,
 				  bool alloc_kmap)
-{
-	struct drm_gem_object *obj = &rk_obj->base;
-	struct drm_device *drm = obj->dev;
-	struct rockchip_drm_private *private = drm->dev_private;
+अणु
+	काष्ठा drm_gem_object *obj = &rk_obj->base;
+	काष्ठा drm_device *drm = obj->dev;
+	काष्ठा rockchip_drm_निजी *निजी = drm->dev_निजी;
 
-	if (private->domain)
-		return rockchip_gem_alloc_iommu(rk_obj, alloc_kmap);
-	else
-		return rockchip_gem_alloc_dma(rk_obj, alloc_kmap);
-}
+	अगर (निजी->करोमुख्य)
+		वापस rockchip_gem_alloc_iommu(rk_obj, alloc_kmap);
+	अन्यथा
+		वापस rockchip_gem_alloc_dma(rk_obj, alloc_kmap);
+पूर्ण
 
-static void rockchip_gem_free_iommu(struct rockchip_gem_object *rk_obj)
-{
+अटल व्योम rockchip_gem_मुक्त_iommu(काष्ठा rockchip_gem_object *rk_obj)
+अणु
 	vunmap(rk_obj->kvaddr);
 	rockchip_gem_iommu_unmap(rk_obj);
 	rockchip_gem_put_pages(rk_obj);
-}
+पूर्ण
 
-static void rockchip_gem_free_dma(struct rockchip_gem_object *rk_obj)
-{
-	struct drm_gem_object *obj = &rk_obj->base;
-	struct drm_device *drm = obj->dev;
+अटल व्योम rockchip_gem_मुक्त_dma(काष्ठा rockchip_gem_object *rk_obj)
+अणु
+	काष्ठा drm_gem_object *obj = &rk_obj->base;
+	काष्ठा drm_device *drm = obj->dev;
 
-	dma_free_attrs(drm->dev, obj->size, rk_obj->kvaddr, rk_obj->dma_addr,
+	dma_मुक्त_attrs(drm->dev, obj->size, rk_obj->kvaddr, rk_obj->dma_addr,
 		       rk_obj->dma_attrs);
-}
+पूर्ण
 
-static void rockchip_gem_free_buf(struct rockchip_gem_object *rk_obj)
-{
-	if (rk_obj->pages)
-		rockchip_gem_free_iommu(rk_obj);
-	else
-		rockchip_gem_free_dma(rk_obj);
-}
+अटल व्योम rockchip_gem_मुक्त_buf(काष्ठा rockchip_gem_object *rk_obj)
+अणु
+	अगर (rk_obj->pages)
+		rockchip_gem_मुक्त_iommu(rk_obj);
+	अन्यथा
+		rockchip_gem_मुक्त_dma(rk_obj);
+पूर्ण
 
-static int rockchip_drm_gem_object_mmap_iommu(struct drm_gem_object *obj,
-					      struct vm_area_struct *vma)
-{
-	struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
-	unsigned int count = obj->size >> PAGE_SHIFT;
-	unsigned long user_count = vma_pages(vma);
+अटल पूर्णांक rockchip_drm_gem_object_mmap_iommu(काष्ठा drm_gem_object *obj,
+					      काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
+	अचिन्हित पूर्णांक count = obj->size >> PAGE_SHIFT;
+	अचिन्हित दीर्घ user_count = vma_pages(vma);
 
-	if (user_count == 0)
-		return -ENXIO;
+	अगर (user_count == 0)
+		वापस -ENXIO;
 
-	return vm_map_pages(vma, rk_obj->pages, count);
-}
+	वापस vm_map_pages(vma, rk_obj->pages, count);
+पूर्ण
 
-static int rockchip_drm_gem_object_mmap_dma(struct drm_gem_object *obj,
-					    struct vm_area_struct *vma)
-{
-	struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
-	struct drm_device *drm = obj->dev;
+अटल पूर्णांक rockchip_drm_gem_object_mmap_dma(काष्ठा drm_gem_object *obj,
+					    काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
+	काष्ठा drm_device *drm = obj->dev;
 
-	return dma_mmap_attrs(drm->dev, vma, rk_obj->kvaddr, rk_obj->dma_addr,
+	वापस dma_mmap_attrs(drm->dev, vma, rk_obj->kvaddr, rk_obj->dma_addr,
 			      obj->size, rk_obj->dma_attrs);
-}
+पूर्ण
 
-static int rockchip_drm_gem_object_mmap(struct drm_gem_object *obj,
-					struct vm_area_struct *vma)
-{
-	int ret;
-	struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
+अटल पूर्णांक rockchip_drm_gem_object_mmap(काष्ठा drm_gem_object *obj,
+					काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक ret;
+	काष्ठा rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
 
 	/*
-	 * We allocated a struct page table for rk_obj, so clear
+	 * We allocated a काष्ठा page table क्रम rk_obj, so clear
 	 * VM_PFNMAP flag that was set by drm_gem_mmap_obj()/drm_gem_mmap().
 	 */
 	vma->vm_flags &= ~VM_PFNMAP;
 
-	if (rk_obj->pages)
+	अगर (rk_obj->pages)
 		ret = rockchip_drm_gem_object_mmap_iommu(obj, vma);
-	else
+	अन्यथा
 		ret = rockchip_drm_gem_object_mmap_dma(obj, vma);
 
-	if (ret)
-		drm_gem_vm_close(vma);
+	अगर (ret)
+		drm_gem_vm_बंद(vma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int rockchip_gem_mmap_buf(struct drm_gem_object *obj,
-			  struct vm_area_struct *vma)
-{
-	int ret;
+पूर्णांक rockchip_gem_mmap_buf(काष्ठा drm_gem_object *obj,
+			  काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक ret;
 
 	ret = drm_gem_mmap_obj(obj, obj->size, vma);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return rockchip_drm_gem_object_mmap(obj, vma);
-}
+	वापस rockchip_drm_gem_object_mmap(obj, vma);
+पूर्ण
 
 /* drm driver mmap file operations */
-int rockchip_gem_mmap(struct file *filp, struct vm_area_struct *vma)
-{
-	struct drm_gem_object *obj;
-	int ret;
+पूर्णांक rockchip_gem_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा drm_gem_object *obj;
+	पूर्णांक ret;
 
 	ret = drm_gem_mmap(filp, vma);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Set vm_pgoff (used as a fake buffer offset by DRM) to 0 and map the
@@ -285,36 +286,36 @@ int rockchip_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 	 */
 	vma->vm_pgoff = 0;
 
-	obj = vma->vm_private_data;
+	obj = vma->vm_निजी_data;
 
-	return rockchip_drm_gem_object_mmap(obj, vma);
-}
+	वापस rockchip_drm_gem_object_mmap(obj, vma);
+पूर्ण
 
-static void rockchip_gem_release_object(struct rockchip_gem_object *rk_obj)
-{
+अटल व्योम rockchip_gem_release_object(काष्ठा rockchip_gem_object *rk_obj)
+अणु
 	drm_gem_object_release(&rk_obj->base);
-	kfree(rk_obj);
-}
+	kमुक्त(rk_obj);
+पूर्ण
 
-static const struct drm_gem_object_funcs rockchip_gem_object_funcs = {
-	.free = rockchip_gem_free_object,
+अटल स्थिर काष्ठा drm_gem_object_funcs rockchip_gem_object_funcs = अणु
+	.मुक्त = rockchip_gem_मुक्त_object,
 	.get_sg_table = rockchip_gem_prime_get_sg_table,
 	.vmap = rockchip_gem_prime_vmap,
 	.vunmap	= rockchip_gem_prime_vunmap,
 	.vm_ops = &drm_gem_cma_vm_ops,
-};
+पूर्ण;
 
-static struct rockchip_gem_object *
-	rockchip_gem_alloc_object(struct drm_device *drm, unsigned int size)
-{
-	struct rockchip_gem_object *rk_obj;
-	struct drm_gem_object *obj;
+अटल काष्ठा rockchip_gem_object *
+	rockchip_gem_alloc_object(काष्ठा drm_device *drm, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj;
+	काष्ठा drm_gem_object *obj;
 
 	size = round_up(size, PAGE_SIZE);
 
-	rk_obj = kzalloc(sizeof(*rk_obj), GFP_KERNEL);
-	if (!rk_obj)
-		return ERR_PTR(-ENOMEM);
+	rk_obj = kzalloc(माप(*rk_obj), GFP_KERNEL);
+	अगर (!rk_obj)
+		वापस ERR_PTR(-ENOMEM);
 
 	obj = &rk_obj->base;
 
@@ -322,110 +323,110 @@ static struct rockchip_gem_object *
 
 	drm_gem_object_init(drm, obj, size);
 
-	return rk_obj;
-}
+	वापस rk_obj;
+पूर्ण
 
-struct rockchip_gem_object *
-rockchip_gem_create_object(struct drm_device *drm, unsigned int size,
+काष्ठा rockchip_gem_object *
+rockchip_gem_create_object(काष्ठा drm_device *drm, अचिन्हित पूर्णांक size,
 			   bool alloc_kmap)
-{
-	struct rockchip_gem_object *rk_obj;
-	int ret;
+अणु
+	काष्ठा rockchip_gem_object *rk_obj;
+	पूर्णांक ret;
 
 	rk_obj = rockchip_gem_alloc_object(drm, size);
-	if (IS_ERR(rk_obj))
-		return rk_obj;
+	अगर (IS_ERR(rk_obj))
+		वापस rk_obj;
 
 	ret = rockchip_gem_alloc_buf(rk_obj, alloc_kmap);
-	if (ret)
-		goto err_free_rk_obj;
+	अगर (ret)
+		जाओ err_मुक्त_rk_obj;
 
-	return rk_obj;
+	वापस rk_obj;
 
-err_free_rk_obj:
+err_मुक्त_rk_obj:
 	rockchip_gem_release_object(rk_obj);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
- * rockchip_gem_free_object - (struct drm_gem_object_funcs)->free
+ * rockchip_gem_मुक्त_object - (काष्ठा drm_gem_object_funcs)->मुक्त
  * callback function
  */
-void rockchip_gem_free_object(struct drm_gem_object *obj)
-{
-	struct drm_device *drm = obj->dev;
-	struct rockchip_drm_private *private = drm->dev_private;
-	struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
+व्योम rockchip_gem_मुक्त_object(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा drm_device *drm = obj->dev;
+	काष्ठा rockchip_drm_निजी *निजी = drm->dev_निजी;
+	काष्ठा rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
 
-	if (obj->import_attach) {
-		if (private->domain) {
+	अगर (obj->import_attach) अणु
+		अगर (निजी->करोमुख्य) अणु
 			rockchip_gem_iommu_unmap(rk_obj);
-		} else {
+		पूर्ण अन्यथा अणु
 			dma_unmap_sgtable(drm->dev, rk_obj->sgt,
-					  DMA_BIDIRECTIONAL, 0);
-		}
+					  DMA_BIसूचीECTIONAL, 0);
+		पूर्ण
 		drm_prime_gem_destroy(obj, rk_obj->sgt);
-	} else {
-		rockchip_gem_free_buf(rk_obj);
-	}
+	पूर्ण अन्यथा अणु
+		rockchip_gem_मुक्त_buf(rk_obj);
+	पूर्ण
 
 	rockchip_gem_release_object(rk_obj);
-}
+पूर्ण
 
 /*
  * rockchip_gem_create_with_handle - allocate an object with the given
  * size and create a gem handle on it
  *
- * returns a struct rockchip_gem_object* on success or ERR_PTR values
+ * वापसs a काष्ठा rockchip_gem_object* on success or ERR_PTR values
  * on failure.
  */
-static struct rockchip_gem_object *
-rockchip_gem_create_with_handle(struct drm_file *file_priv,
-				struct drm_device *drm, unsigned int size,
-				unsigned int *handle)
-{
-	struct rockchip_gem_object *rk_obj;
-	struct drm_gem_object *obj;
-	int ret;
+अटल काष्ठा rockchip_gem_object *
+rockchip_gem_create_with_handle(काष्ठा drm_file *file_priv,
+				काष्ठा drm_device *drm, अचिन्हित पूर्णांक size,
+				अचिन्हित पूर्णांक *handle)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj;
+	काष्ठा drm_gem_object *obj;
+	पूर्णांक ret;
 
 	rk_obj = rockchip_gem_create_object(drm, size, false);
-	if (IS_ERR(rk_obj))
-		return ERR_CAST(rk_obj);
+	अगर (IS_ERR(rk_obj))
+		वापस ERR_CAST(rk_obj);
 
 	obj = &rk_obj->base;
 
 	/*
-	 * allocate a id of idr table where the obj is registered
+	 * allocate a id of idr table where the obj is रेजिस्टरed
 	 * and handle has the id what user can see.
 	 */
 	ret = drm_gem_handle_create(file_priv, obj, handle);
-	if (ret)
-		goto err_handle_create;
+	अगर (ret)
+		जाओ err_handle_create;
 
 	/* drop reference from allocate - handle holds it now. */
 	drm_gem_object_put(obj);
 
-	return rk_obj;
+	वापस rk_obj;
 
 err_handle_create:
-	rockchip_gem_free_object(obj);
+	rockchip_gem_मुक्त_object(obj);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
- * rockchip_gem_dumb_create - (struct drm_driver)->dumb_create callback
+ * rockchip_gem_dumb_create - (काष्ठा drm_driver)->dumb_create callback
  * function
  *
  * This aligns the pitch and size arguments to the minimum required. wrap
- * this into your own function if you need bigger alignment.
+ * this पूर्णांकo your own function अगर you need bigger alignment.
  */
-int rockchip_gem_dumb_create(struct drm_file *file_priv,
-			     struct drm_device *dev,
-			     struct drm_mode_create_dumb *args)
-{
-	struct rockchip_gem_object *rk_obj;
-	int min_pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
+पूर्णांक rockchip_gem_dumb_create(काष्ठा drm_file *file_priv,
+			     काष्ठा drm_device *dev,
+			     काष्ठा drm_mode_create_dumb *args)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj;
+	पूर्णांक min_pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
 
 	/*
 	 * align to 64 bytes since Mali requires it.
@@ -436,130 +437,130 @@ int rockchip_gem_dumb_create(struct drm_file *file_priv,
 	rk_obj = rockchip_gem_create_with_handle(file_priv, dev, args->size,
 						 &args->handle);
 
-	return PTR_ERR_OR_ZERO(rk_obj);
-}
+	वापस PTR_ERR_OR_ZERO(rk_obj);
+पूर्ण
 
 /*
- * Allocate a sg_table for this GEM object.
- * Note: Both the table's contents, and the sg_table itself must be freed by
+ * Allocate a sg_table क्रम this GEM object.
+ * Note: Both the table's contents, and the sg_table itself must be मुक्तd by
  *       the caller.
- * Returns a pointer to the newly allocated sg_table, or an ERR_PTR() error.
+ * Returns a poपूर्णांकer to the newly allocated sg_table, or an ERR_PTR() error.
  */
-struct sg_table *rockchip_gem_prime_get_sg_table(struct drm_gem_object *obj)
-{
-	struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
-	struct drm_device *drm = obj->dev;
-	struct sg_table *sgt;
-	int ret;
+काष्ठा sg_table *rockchip_gem_prime_get_sg_table(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
+	काष्ठा drm_device *drm = obj->dev;
+	काष्ठा sg_table *sgt;
+	पूर्णांक ret;
 
-	if (rk_obj->pages)
-		return drm_prime_pages_to_sg(obj->dev, rk_obj->pages, rk_obj->num_pages);
+	अगर (rk_obj->pages)
+		वापस drm_prime_pages_to_sg(obj->dev, rk_obj->pages, rk_obj->num_pages);
 
-	sgt = kzalloc(sizeof(*sgt), GFP_KERNEL);
-	if (!sgt)
-		return ERR_PTR(-ENOMEM);
+	sgt = kzalloc(माप(*sgt), GFP_KERNEL);
+	अगर (!sgt)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = dma_get_sgtable_attrs(drm->dev, sgt, rk_obj->kvaddr,
 				    rk_obj->dma_addr, obj->size,
 				    rk_obj->dma_attrs);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("failed to allocate sgt, %d\n", ret);
-		kfree(sgt);
-		return ERR_PTR(ret);
-	}
+		kमुक्त(sgt);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return sgt;
-}
+	वापस sgt;
+पूर्ण
 
-static int
-rockchip_gem_iommu_map_sg(struct drm_device *drm,
-			  struct dma_buf_attachment *attach,
-			  struct sg_table *sg,
-			  struct rockchip_gem_object *rk_obj)
-{
+अटल पूर्णांक
+rockchip_gem_iommu_map_sg(काष्ठा drm_device *drm,
+			  काष्ठा dma_buf_attachment *attach,
+			  काष्ठा sg_table *sg,
+			  काष्ठा rockchip_gem_object *rk_obj)
+अणु
 	rk_obj->sgt = sg;
-	return rockchip_gem_iommu_map(rk_obj);
-}
+	वापस rockchip_gem_iommu_map(rk_obj);
+पूर्ण
 
-static int
-rockchip_gem_dma_map_sg(struct drm_device *drm,
-			struct dma_buf_attachment *attach,
-			struct sg_table *sg,
-			struct rockchip_gem_object *rk_obj)
-{
-	int err = dma_map_sgtable(drm->dev, sg, DMA_BIDIRECTIONAL, 0);
-	if (err)
-		return err;
+अटल पूर्णांक
+rockchip_gem_dma_map_sg(काष्ठा drm_device *drm,
+			काष्ठा dma_buf_attachment *attach,
+			काष्ठा sg_table *sg,
+			काष्ठा rockchip_gem_object *rk_obj)
+अणु
+	पूर्णांक err = dma_map_sgtable(drm->dev, sg, DMA_BIसूचीECTIONAL, 0);
+	अगर (err)
+		वापस err;
 
-	if (drm_prime_get_contiguous_size(sg) < attach->dmabuf->size) {
+	अगर (drm_prime_get_contiguous_size(sg) < attach->dmabuf->size) अणु
 		DRM_ERROR("failed to map sg_table to contiguous linear address.\n");
-		dma_unmap_sgtable(drm->dev, sg, DMA_BIDIRECTIONAL, 0);
-		return -EINVAL;
-	}
+		dma_unmap_sgtable(drm->dev, sg, DMA_BIसूचीECTIONAL, 0);
+		वापस -EINVAL;
+	पूर्ण
 
 	rk_obj->dma_addr = sg_dma_address(sg->sgl);
 	rk_obj->sgt = sg;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct drm_gem_object *
-rockchip_gem_prime_import_sg_table(struct drm_device *drm,
-				   struct dma_buf_attachment *attach,
-				   struct sg_table *sg)
-{
-	struct rockchip_drm_private *private = drm->dev_private;
-	struct rockchip_gem_object *rk_obj;
-	int ret;
+काष्ठा drm_gem_object *
+rockchip_gem_prime_import_sg_table(काष्ठा drm_device *drm,
+				   काष्ठा dma_buf_attachment *attach,
+				   काष्ठा sg_table *sg)
+अणु
+	काष्ठा rockchip_drm_निजी *निजी = drm->dev_निजी;
+	काष्ठा rockchip_gem_object *rk_obj;
+	पूर्णांक ret;
 
 	rk_obj = rockchip_gem_alloc_object(drm, attach->dmabuf->size);
-	if (IS_ERR(rk_obj))
-		return ERR_CAST(rk_obj);
+	अगर (IS_ERR(rk_obj))
+		वापस ERR_CAST(rk_obj);
 
-	if (private->domain)
+	अगर (निजी->करोमुख्य)
 		ret = rockchip_gem_iommu_map_sg(drm, attach, sg, rk_obj);
-	else
+	अन्यथा
 		ret = rockchip_gem_dma_map_sg(drm, attach, sg, rk_obj);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_ERROR("failed to import sg table: %d\n", ret);
-		goto err_free_rk_obj;
-	}
+		जाओ err_मुक्त_rk_obj;
+	पूर्ण
 
-	return &rk_obj->base;
+	वापस &rk_obj->base;
 
-err_free_rk_obj:
+err_मुक्त_rk_obj:
 	rockchip_gem_release_object(rk_obj);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-int rockchip_gem_prime_vmap(struct drm_gem_object *obj, struct dma_buf_map *map)
-{
-	struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
+पूर्णांक rockchip_gem_prime_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
 
-	if (rk_obj->pages) {
-		void *vaddr = vmap(rk_obj->pages, rk_obj->num_pages, VM_MAP,
-				  pgprot_writecombine(PAGE_KERNEL));
-		if (!vaddr)
-			return -ENOMEM;
+	अगर (rk_obj->pages) अणु
+		व्योम *vaddr = vmap(rk_obj->pages, rk_obj->num_pages, VM_MAP,
+				  pgprot_ग_लिखोcombine(PAGE_KERNEL));
+		अगर (!vaddr)
+			वापस -ENOMEM;
 		dma_buf_map_set_vaddr(map, vaddr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (rk_obj->dma_attrs & DMA_ATTR_NO_KERNEL_MAPPING)
-		return -ENOMEM;
+	अगर (rk_obj->dma_attrs & DMA_ATTR_NO_KERNEL_MAPPING)
+		वापस -ENOMEM;
 	dma_buf_map_set_vaddr(map, rk_obj->kvaddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rockchip_gem_prime_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map)
-{
-	struct rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
+व्योम rockchip_gem_prime_vunmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा rockchip_gem_object *rk_obj = to_rockchip_obj(obj);
 
-	if (rk_obj->pages) {
+	अगर (rk_obj->pages) अणु
 		vunmap(map->vaddr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Nothing to do if allocated by DMA mapping API. */
-}
+	/* Nothing to करो अगर allocated by DMA mapping API. */
+पूर्ण

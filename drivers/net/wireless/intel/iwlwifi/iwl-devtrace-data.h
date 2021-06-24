@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /******************************************************************************
  *
  * Copyright(c) 2009 - 2014 Intel Corporation. All rights reserved.
  * Copyright(c) 2015        Intel Deutschland GmbH
  * Copyright(c) 2018 - 2019 Intel Corporation
  *
- * Contact Information:
- *  Intel Linux Wireless <linuxwifi@intel.com>
+ * Contact Inक्रमmation:
+ *  Intel Linux Wireless <linuxwअगरi@पूर्णांकel.com>
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *
  *****************************************************************************/
 
-#if !defined(__IWLWIFI_DEVICE_TRACE_DATA) || defined(TRACE_HEADER_MULTI_READ)
-#define __IWLWIFI_DEVICE_TRACE_DATA
+#अगर !defined(__IWLWIFI_DEVICE_TRACE_DATA) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __IWLWIFI_DEVICE_TRACE_DATA
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM iwlwifi_data
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM iwlwअगरi_data
 
-TRACE_EVENT(iwlwifi_dev_tx_tb,
-	TP_PROTO(const struct device *dev, struct sk_buff *skb,
-		 u8 *data_src, dma_addr_t phys, size_t data_len),
+TRACE_EVENT(iwlwअगरi_dev_tx_tb,
+	TP_PROTO(स्थिर काष्ठा device *dev, काष्ठा sk_buff *skb,
+		 u8 *data_src, dma_addr_t phys, माप_प्रकार data_len),
 	TP_ARGS(dev, skb, data_src, phys, data_len),
 	TP_STRUCT__entry(
 		DEV_ENTRY
@@ -33,35 +34,35 @@ TRACE_EVENT(iwlwifi_dev_tx_tb,
 	TP_fast_assign(
 		DEV_ASSIGN;
 		__entry->phys = phys;
-		if (iwl_trace_data(skb))
-			memcpy(__get_dynamic_array(data), data_src, data_len);
+		अगर (iwl_trace_data(skb))
+			स_नकल(__get_dynamic_array(data), data_src, data_len);
 	),
-	TP_printk("[%s] TX frame data", __get_str(dev))
+	TP_prपूर्णांकk("[%s] TX frame data", __get_str(dev))
 );
 
-TRACE_EVENT(iwlwifi_dev_rx_data,
-	TP_PROTO(const struct device *dev,
-		 const struct iwl_trans *trans,
-		 void *rxbuf, size_t len),
+TRACE_EVENT(iwlwअगरi_dev_rx_data,
+	TP_PROTO(स्थिर काष्ठा device *dev,
+		 स्थिर काष्ठा iwl_trans *trans,
+		 व्योम *rxbuf, माप_प्रकार len),
 	TP_ARGS(dev, trans, rxbuf, len),
 	TP_STRUCT__entry(
 		DEV_ENTRY
 		__dynamic_array(u8, data,
-				len - iwl_rx_trace_len(trans, rxbuf, len, NULL))
+				len - iwl_rx_trace_len(trans, rxbuf, len, शून्य))
 	),
 	TP_fast_assign(
-		size_t offs = iwl_rx_trace_len(trans, rxbuf, len, NULL);
+		माप_प्रकार offs = iwl_rx_trace_len(trans, rxbuf, len, शून्य);
 		DEV_ASSIGN;
-		if (offs < len)
-			memcpy(__get_dynamic_array(data),
+		अगर (offs < len)
+			स_नकल(__get_dynamic_array(data),
 			       ((u8 *)rxbuf) + offs, len - offs);
 	),
-	TP_printk("[%s] RX frame data", __get_str(dev))
+	TP_prपूर्णांकk("[%s] RX frame data", __get_str(dev))
 );
-#endif /* __IWLWIFI_DEVICE_TRACE_DATA */
+#पूर्ण_अगर /* __IWLWIFI_DEVICE_TRACE_DATA */
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE iwl-devtrace-data
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता iwl-devtrace-data
+#समावेश <trace/define_trace.h>

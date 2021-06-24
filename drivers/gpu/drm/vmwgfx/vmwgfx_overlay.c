@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2009-2014 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,120 +26,120 @@
  *
  **************************************************************************/
 
-#include <drm/ttm/ttm_placement.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
 
-#include "device_include/svga_overlay.h"
-#include "device_include/svga_escape.h"
+#समावेश "device_include/svga_overlay.h"
+#समावेश "device_include/svga_escape.h"
 
-#include "vmwgfx_drv.h"
+#समावेश "vmwgfx_drv.h"
 
-#define VMW_MAX_NUM_STREAMS 1
-#define VMW_OVERLAY_CAP_MASK (SVGA_FIFO_CAP_VIDEO | SVGA_FIFO_CAP_ESCAPE)
+#घोषणा VMW_MAX_NUM_STREAMS 1
+#घोषणा VMW_OVERLAY_CAP_MASK (SVGA_FIFO_CAP_VIDEO | SVGA_FIFO_CAP_ESCAPE)
 
-struct vmw_stream {
-	struct vmw_buffer_object *buf;
+काष्ठा vmw_stream अणु
+	काष्ठा vmw_buffer_object *buf;
 	bool claimed;
-	bool paused;
-	struct drm_vmw_control_stream_arg saved;
-};
+	bool छोड़ोd;
+	काष्ठा drm_vmw_control_stream_arg saved;
+पूर्ण;
 
 /*
  * Overlay control
  */
-struct vmw_overlay {
+काष्ठा vmw_overlay अणु
 	/*
 	 * Each stream is a single overlay. In Xv these are called ports.
 	 */
-	struct mutex mutex;
-	struct vmw_stream stream[VMW_MAX_NUM_STREAMS];
-};
+	काष्ठा mutex mutex;
+	काष्ठा vmw_stream stream[VMW_MAX_NUM_STREAMS];
+पूर्ण;
 
-static inline struct vmw_overlay *vmw_overlay(struct drm_device *dev)
-{
-	struct vmw_private *dev_priv = vmw_priv(dev);
-	return dev_priv ? dev_priv->overlay_priv : NULL;
-}
+अटल अंतरभूत काष्ठा vmw_overlay *vmw_overlay(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
+	वापस dev_priv ? dev_priv->overlay_priv : शून्य;
+पूर्ण
 
-struct vmw_escape_header {
-	uint32_t cmd;
-	SVGAFifoCmdEscape body;
-};
+काष्ठा vmw_escape_header अणु
+	uपूर्णांक32_t cmd;
+	SVGAFअगरoCmdEscape body;
+पूर्ण;
 
-struct vmw_escape_video_flush {
-	struct vmw_escape_header escape;
+काष्ठा vmw_escape_video_flush अणु
+	काष्ठा vmw_escape_header escape;
 	SVGAEscapeVideoFlush flush;
-};
+पूर्ण;
 
-static inline void fill_escape(struct vmw_escape_header *header,
-			       uint32_t size)
-{
+अटल अंतरभूत व्योम fill_escape(काष्ठा vmw_escape_header *header,
+			       uपूर्णांक32_t size)
+अणु
 	header->cmd = SVGA_CMD_ESCAPE;
 	header->body.nsid = SVGA_ESCAPE_NSID_VMWARE;
 	header->body.size = size;
-}
+पूर्ण
 
-static inline void fill_flush(struct vmw_escape_video_flush *cmd,
-			      uint32_t stream_id)
-{
-	fill_escape(&cmd->escape, sizeof(cmd->flush));
+अटल अंतरभूत व्योम fill_flush(काष्ठा vmw_escape_video_flush *cmd,
+			      uपूर्णांक32_t stream_id)
+अणु
+	fill_escape(&cmd->escape, माप(cmd->flush));
 	cmd->flush.cmdType = SVGA_ESCAPE_VMWARE_VIDEO_FLUSH;
 	cmd->flush.streamId = stream_id;
-}
+पूर्ण
 
 /*
  * Send put command to hw.
  *
  * Returns
- * -ERESTARTSYS if interrupted by a signal.
+ * -ERESTARTSYS अगर पूर्णांकerrupted by a संकेत.
  */
-static int vmw_overlay_send_put(struct vmw_private *dev_priv,
-				struct vmw_buffer_object *buf,
-				struct drm_vmw_control_stream_arg *arg,
-				bool interruptible)
-{
-	struct vmw_escape_video_flush *flush;
-	size_t fifo_size;
+अटल पूर्णांक vmw_overlay_send_put(काष्ठा vmw_निजी *dev_priv,
+				काष्ठा vmw_buffer_object *buf,
+				काष्ठा drm_vmw_control_stream_arg *arg,
+				bool पूर्णांकerruptible)
+अणु
+	काष्ठा vmw_escape_video_flush *flush;
+	माप_प्रकार fअगरo_size;
 	bool have_so = (dev_priv->active_display_unit == vmw_du_screen_object);
-	int i, num_items;
+	पूर्णांक i, num_items;
 	SVGAGuestPtr ptr;
 
-	struct {
-		struct vmw_escape_header escape;
-		struct {
-			uint32_t cmdType;
-			uint32_t streamId;
-		} header;
-	} *cmds;
-	struct {
-		uint32_t registerId;
-		uint32_t value;
-	} *items;
+	काष्ठा अणु
+		काष्ठा vmw_escape_header escape;
+		काष्ठा अणु
+			uपूर्णांक32_t cmdType;
+			uपूर्णांक32_t streamId;
+		पूर्ण header;
+	पूर्ण *cmds;
+	काष्ठा अणु
+		uपूर्णांक32_t रेजिस्टरId;
+		uपूर्णांक32_t value;
+	पूर्ण *items;
 
 	/* defines are a index needs + 1 */
-	if (have_so)
+	अगर (have_so)
 		num_items = SVGA_VIDEO_DST_SCREEN_ID + 1;
-	else
+	अन्यथा
 		num_items = SVGA_VIDEO_PITCH_3 + 1;
 
-	fifo_size = sizeof(*cmds) + sizeof(*flush) + sizeof(*items) * num_items;
+	fअगरo_size = माप(*cmds) + माप(*flush) + माप(*items) * num_items;
 
-	cmds = VMW_CMD_RESERVE(dev_priv, fifo_size);
-	/* hardware has hung, can't do anything here */
-	if (!cmds)
-		return -ENOMEM;
+	cmds = VMW_CMD_RESERVE(dev_priv, fअगरo_size);
+	/* hardware has hung, can't करो anything here */
+	अगर (!cmds)
+		वापस -ENOMEM;
 
 	items = (typeof(items))&cmds[1];
-	flush = (struct vmw_escape_video_flush *)&items[num_items];
+	flush = (काष्ठा vmw_escape_video_flush *)&items[num_items];
 
 	/* the size is header + number of items */
-	fill_escape(&cmds->escape, sizeof(*items) * (num_items + 1));
+	fill_escape(&cmds->escape, माप(*items) * (num_items + 1));
 
 	cmds->header.cmdType = SVGA_ESCAPE_VMWARE_VIDEO_SET_REGS;
 	cmds->header.streamId = arg->stream_id;
 
 	/* the IDs are neatly numbered */
-	for (i = 0; i < num_items; i++)
-		items[i].registerId = i;
+	क्रम (i = 0; i < num_items; i++)
+		items[i].रेजिस्टरId = i;
 
 	vmw_bo_get_guest_ptr(&buf->base, &ptr);
 	ptr.offset += arg->offset;
@@ -146,7 +147,7 @@ static int vmw_overlay_send_put(struct vmw_private *dev_priv,
 	items[SVGA_VIDEO_ENABLED].value     = true;
 	items[SVGA_VIDEO_FLAGS].value       = arg->flags;
 	items[SVGA_VIDEO_DATA_OFFSET].value = ptr.offset;
-	items[SVGA_VIDEO_FORMAT].value      = arg->format;
+	items[SVGA_VIDEO_FORMAT].value      = arg->क्रमmat;
 	items[SVGA_VIDEO_COLORKEY].value    = arg->color_key;
 	items[SVGA_VIDEO_SIZE].value        = arg->size;
 	items[SVGA_VIDEO_WIDTH].value       = arg->width;
@@ -162,230 +163,230 @@ static int vmw_overlay_send_put(struct vmw_private *dev_priv,
 	items[SVGA_VIDEO_PITCH_1].value     = arg->pitch[0];
 	items[SVGA_VIDEO_PITCH_2].value     = arg->pitch[1];
 	items[SVGA_VIDEO_PITCH_3].value     = arg->pitch[2];
-	if (have_so) {
+	अगर (have_so) अणु
 		items[SVGA_VIDEO_DATA_GMRID].value    = ptr.gmrId;
 		items[SVGA_VIDEO_DST_SCREEN_ID].value = SVGA_ID_INVALID;
-	}
+	पूर्ण
 
 	fill_flush(flush, arg->stream_id);
 
-	vmw_cmd_commit(dev_priv, fifo_size);
+	vmw_cmd_commit(dev_priv, fअगरo_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Send stop command to hw.
  *
  * Returns
- * -ERESTARTSYS if interrupted by a signal.
+ * -ERESTARTSYS अगर पूर्णांकerrupted by a संकेत.
  */
-static int vmw_overlay_send_stop(struct vmw_private *dev_priv,
-				 uint32_t stream_id,
-				 bool interruptible)
-{
-	struct {
-		struct vmw_escape_header escape;
+अटल पूर्णांक vmw_overlay_send_stop(काष्ठा vmw_निजी *dev_priv,
+				 uपूर्णांक32_t stream_id,
+				 bool पूर्णांकerruptible)
+अणु
+	काष्ठा अणु
+		काष्ठा vmw_escape_header escape;
 		SVGAEscapeVideoSetRegs body;
-		struct vmw_escape_video_flush flush;
-	} *cmds;
-	int ret;
+		काष्ठा vmw_escape_video_flush flush;
+	पूर्ण *cmds;
+	पूर्णांक ret;
 
-	for (;;) {
-		cmds = VMW_CMD_RESERVE(dev_priv, sizeof(*cmds));
-		if (cmds)
-			break;
+	क्रम (;;) अणु
+		cmds = VMW_CMD_RESERVE(dev_priv, माप(*cmds));
+		अगर (cmds)
+			अवरोध;
 
-		ret = vmw_fallback_wait(dev_priv, false, true, 0,
-					interruptible, 3*HZ);
-		if (interruptible && ret == -ERESTARTSYS)
-			return ret;
-		else
+		ret = vmw_fallback_रुको(dev_priv, false, true, 0,
+					पूर्णांकerruptible, 3*HZ);
+		अगर (पूर्णांकerruptible && ret == -ERESTARTSYS)
+			वापस ret;
+		अन्यथा
 			BUG_ON(ret != 0);
-	}
+	पूर्ण
 
-	fill_escape(&cmds->escape, sizeof(cmds->body));
+	fill_escape(&cmds->escape, माप(cmds->body));
 	cmds->body.header.cmdType = SVGA_ESCAPE_VMWARE_VIDEO_SET_REGS;
 	cmds->body.header.streamId = stream_id;
-	cmds->body.items[0].registerId = SVGA_VIDEO_ENABLED;
+	cmds->body.items[0].रेजिस्टरId = SVGA_VIDEO_ENABLED;
 	cmds->body.items[0].value = false;
 	fill_flush(&cmds->flush, stream_id);
 
-	vmw_cmd_commit(dev_priv, sizeof(*cmds));
+	vmw_cmd_commit(dev_priv, माप(*cmds));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Move a buffer to vram or gmr if @pin is set, else unpin the buffer.
+ * Move a buffer to vram or gmr अगर @pin is set, अन्यथा unpin the buffer.
  *
- * With the introduction of screen objects buffers could now be
+ * With the पूर्णांकroduction of screen objects buffers could now be
  * used with GMRs instead of being locked to vram.
  */
-static int vmw_overlay_move_buffer(struct vmw_private *dev_priv,
-				   struct vmw_buffer_object *buf,
-				   bool pin, bool inter)
-{
-	if (!pin)
-		return vmw_bo_unpin(dev_priv, buf, inter);
+अटल पूर्णांक vmw_overlay_move_buffer(काष्ठा vmw_निजी *dev_priv,
+				   काष्ठा vmw_buffer_object *buf,
+				   bool pin, bool पूर्णांकer)
+अणु
+	अगर (!pin)
+		वापस vmw_bo_unpin(dev_priv, buf, पूर्णांकer);
 
-	if (dev_priv->active_display_unit == vmw_du_legacy)
-		return vmw_bo_pin_in_vram(dev_priv, buf, inter);
+	अगर (dev_priv->active_display_unit == vmw_du_legacy)
+		वापस vmw_bo_pin_in_vram(dev_priv, buf, पूर्णांकer);
 
-	return vmw_bo_pin_in_vram_or_gmr(dev_priv, buf, inter);
-}
+	वापस vmw_bo_pin_in_vram_or_gmr(dev_priv, buf, पूर्णांकer);
+पूर्ण
 
 /*
- * Stop or pause a stream.
+ * Stop or छोड़ो a stream.
  *
- * If the stream is paused the no evict flag is removed from the buffer
- * but left in vram. This allows for instance mode_set to evict it
+ * If the stream is छोड़ोd the no evict flag is हटाओd from the buffer
+ * but left in vram. This allows क्रम instance mode_set to evict it
  * should it need to.
  *
  * The caller must hold the overlay lock.
  *
- * @stream_id which stream to stop/pause.
- * @pause true to pause, false to stop completely.
+ * @stream_id which stream to stop/छोड़ो.
+ * @छोड़ो true to छोड़ो, false to stop completely.
  */
-static int vmw_overlay_stop(struct vmw_private *dev_priv,
-			    uint32_t stream_id, bool pause,
-			    bool interruptible)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	struct vmw_stream *stream = &overlay->stream[stream_id];
-	int ret;
+अटल पूर्णांक vmw_overlay_stop(काष्ठा vmw_निजी *dev_priv,
+			    uपूर्णांक32_t stream_id, bool छोड़ो,
+			    bool पूर्णांकerruptible)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	काष्ठा vmw_stream *stream = &overlay->stream[stream_id];
+	पूर्णांक ret;
 
 	/* no buffer attached the stream is completely stopped */
-	if (!stream->buf)
-		return 0;
+	अगर (!stream->buf)
+		वापस 0;
 
-	/* If the stream is paused this is already done */
-	if (!stream->paused) {
+	/* If the stream is छोड़ोd this is alपढ़ोy करोne */
+	अगर (!stream->छोड़ोd) अणु
 		ret = vmw_overlay_send_stop(dev_priv, stream_id,
-					    interruptible);
-		if (ret)
-			return ret;
+					    पूर्णांकerruptible);
+		अगर (ret)
+			वापस ret;
 
-		/* We just remove the NO_EVICT flag so no -ENOMEM */
+		/* We just हटाओ the NO_EVICT flag so no -ENOMEM */
 		ret = vmw_overlay_move_buffer(dev_priv, stream->buf, false,
-					      interruptible);
-		if (interruptible && ret == -ERESTARTSYS)
-			return ret;
-		else
+					      पूर्णांकerruptible);
+		अगर (पूर्णांकerruptible && ret == -ERESTARTSYS)
+			वापस ret;
+		अन्यथा
 			BUG_ON(ret != 0);
-	}
+	पूर्ण
 
-	if (!pause) {
+	अगर (!छोड़ो) अणु
 		vmw_bo_unreference(&stream->buf);
-		stream->paused = false;
-	} else {
-		stream->paused = true;
-	}
+		stream->छोड़ोd = false;
+	पूर्ण अन्यथा अणु
+		stream->छोड़ोd = true;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Update a stream and send any put or stop fifo commands needed.
+ * Update a stream and send any put or stop fअगरo commands needed.
  *
  * The caller must hold the overlay lock.
  *
  * Returns
- * -ENOMEM if buffer doesn't fit in vram.
- * -ERESTARTSYS if interrupted.
+ * -ENOMEM अगर buffer करोesn't fit in vram.
+ * -ERESTARTSYS अगर पूर्णांकerrupted.
  */
-static int vmw_overlay_update_stream(struct vmw_private *dev_priv,
-				     struct vmw_buffer_object *buf,
-				     struct drm_vmw_control_stream_arg *arg,
-				     bool interruptible)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	struct vmw_stream *stream = &overlay->stream[arg->stream_id];
-	int ret = 0;
+अटल पूर्णांक vmw_overlay_update_stream(काष्ठा vmw_निजी *dev_priv,
+				     काष्ठा vmw_buffer_object *buf,
+				     काष्ठा drm_vmw_control_stream_arg *arg,
+				     bool पूर्णांकerruptible)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	काष्ठा vmw_stream *stream = &overlay->stream[arg->stream_id];
+	पूर्णांक ret = 0;
 
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
 	DRM_DEBUG("   %s: old %p, new %p, %spaused\n", __func__,
-		  stream->buf, buf, stream->paused ? "" : "not ");
+		  stream->buf, buf, stream->छोड़ोd ? "" : "not ");
 
-	if (stream->buf != buf) {
+	अगर (stream->buf != buf) अणु
 		ret = vmw_overlay_stop(dev_priv, arg->stream_id,
-				       false, interruptible);
-		if (ret)
-			return ret;
-	} else if (!stream->paused) {
-		/* If the buffers match and not paused then just send
-		 * the put command, no need to do anything else.
+				       false, पूर्णांकerruptible);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अगर (!stream->छोड़ोd) अणु
+		/* If the buffers match and not छोड़ोd then just send
+		 * the put command, no need to करो anything अन्यथा.
 		 */
-		ret = vmw_overlay_send_put(dev_priv, buf, arg, interruptible);
-		if (ret == 0)
+		ret = vmw_overlay_send_put(dev_priv, buf, arg, पूर्णांकerruptible);
+		अगर (ret == 0)
 			stream->saved = *arg;
-		else
-			BUG_ON(!interruptible);
+		अन्यथा
+			BUG_ON(!पूर्णांकerruptible);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* We don't start the old stream if we are interrupted.
-	 * Might return -ENOMEM if it can't fit the buffer in vram.
+	/* We करोn't start the old stream अगर we are पूर्णांकerrupted.
+	 * Might वापस -ENOMEM अगर it can't fit the buffer in vram.
 	 */
-	ret = vmw_overlay_move_buffer(dev_priv, buf, true, interruptible);
-	if (ret)
-		return ret;
+	ret = vmw_overlay_move_buffer(dev_priv, buf, true, पूर्णांकerruptible);
+	अगर (ret)
+		वापस ret;
 
-	ret = vmw_overlay_send_put(dev_priv, buf, arg, interruptible);
-	if (ret) {
-		/* This one needs to happen no matter what. We only remove
+	ret = vmw_overlay_send_put(dev_priv, buf, arg, पूर्णांकerruptible);
+	अगर (ret) अणु
+		/* This one needs to happen no matter what. We only हटाओ
 		 * the NO_EVICT flag so this is safe from -ENOMEM.
 		 */
 		BUG_ON(vmw_overlay_move_buffer(dev_priv, buf, false, false)
 		       != 0);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (stream->buf != buf)
+	अगर (stream->buf != buf)
 		stream->buf = vmw_bo_reference(buf);
 	stream->saved = *arg;
-	/* stream is no longer stopped/paused */
-	stream->paused = false;
+	/* stream is no दीर्घer stopped/छोड़ोd */
+	stream->छोड़ोd = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Try to resume all paused streams.
+ * Try to resume all छोड़ोd streams.
  *
  * Used by the kms code after moving a new scanout buffer to vram.
  *
  * Takes the overlay lock.
  */
-int vmw_overlay_resume_all(struct vmw_private *dev_priv)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	int i, ret;
+पूर्णांक vmw_overlay_resume_all(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	पूर्णांक i, ret;
 
-	if (!overlay)
-		return 0;
+	अगर (!overlay)
+		वापस 0;
 
 	mutex_lock(&overlay->mutex);
 
-	for (i = 0; i < VMW_MAX_NUM_STREAMS; i++) {
-		struct vmw_stream *stream = &overlay->stream[i];
-		if (!stream->paused)
-			continue;
+	क्रम (i = 0; i < VMW_MAX_NUM_STREAMS; i++) अणु
+		काष्ठा vmw_stream *stream = &overlay->stream[i];
+		अगर (!stream->छोड़ोd)
+			जारी;
 
 		ret = vmw_overlay_update_stream(dev_priv, stream->buf,
 						&stream->saved, false);
-		if (ret != 0)
+		अगर (ret != 0)
 			DRM_INFO("%s: *warning* failed to resume stream %i\n",
 				 __func__, i);
-	}
+	पूर्ण
 
 	mutex_unlock(&overlay->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Pauses all active streams.
@@ -394,66 +395,66 @@ int vmw_overlay_resume_all(struct vmw_private *dev_priv)
  *
  * Takes the overlay lock.
  */
-int vmw_overlay_pause_all(struct vmw_private *dev_priv)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	int i, ret;
+पूर्णांक vmw_overlay_छोड़ो_all(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	पूर्णांक i, ret;
 
-	if (!overlay)
-		return 0;
+	अगर (!overlay)
+		वापस 0;
 
 	mutex_lock(&overlay->mutex);
 
-	for (i = 0; i < VMW_MAX_NUM_STREAMS; i++) {
-		if (overlay->stream[i].paused)
+	क्रम (i = 0; i < VMW_MAX_NUM_STREAMS; i++) अणु
+		अगर (overlay->stream[i].छोड़ोd)
 			DRM_INFO("%s: *warning* stream %i already paused\n",
 				 __func__, i);
 		ret = vmw_overlay_stop(dev_priv, i, true, false);
 		WARN_ON(ret != 0);
-	}
+	पूर्ण
 
 	mutex_unlock(&overlay->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static bool vmw_overlay_available(const struct vmw_private *dev_priv)
-{
-	return (dev_priv->overlay_priv != NULL &&
-		((dev_priv->fifo.capabilities & VMW_OVERLAY_CAP_MASK) ==
+अटल bool vmw_overlay_available(स्थिर काष्ठा vmw_निजी *dev_priv)
+अणु
+	वापस (dev_priv->overlay_priv != शून्य &&
+		((dev_priv->fअगरo.capabilities & VMW_OVERLAY_CAP_MASK) ==
 		 VMW_OVERLAY_CAP_MASK));
-}
+पूर्ण
 
-int vmw_overlay_ioctl(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv)
-{
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	struct vmw_private *dev_priv = vmw_priv(dev);
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	struct drm_vmw_control_stream_arg *arg =
-	    (struct drm_vmw_control_stream_arg *)data;
-	struct vmw_buffer_object *buf;
-	struct vmw_resource *res;
-	int ret;
+पूर्णांक vmw_overlay_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	काष्ठा drm_vmw_control_stream_arg *arg =
+	    (काष्ठा drm_vmw_control_stream_arg *)data;
+	काष्ठा vmw_buffer_object *buf;
+	काष्ठा vmw_resource *res;
+	पूर्णांक ret;
 
-	if (!vmw_overlay_available(dev_priv))
-		return -ENOSYS;
+	अगर (!vmw_overlay_available(dev_priv))
+		वापस -ENOSYS;
 
 	ret = vmw_user_stream_lookup(dev_priv, tfile, &arg->stream_id, &res);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&overlay->mutex);
 
-	if (!arg->enabled) {
+	अगर (!arg->enabled) अणु
 		ret = vmw_overlay_stop(dev_priv, arg->stream_id, false, true);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	ret = vmw_user_bo_lookup(tfile, arg->handle, &buf, NULL);
-	if (ret)
-		goto out_unlock;
+	ret = vmw_user_bo_lookup(tfile, arg->handle, &buf, शून्य);
+	अगर (ret)
+		जाओ out_unlock;
 
 	ret = vmw_overlay_update_stream(dev_priv, buf, arg, true);
 
@@ -463,69 +464,69 @@ out_unlock:
 	mutex_unlock(&overlay->mutex);
 	vmw_resource_unreference(&res);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vmw_overlay_num_overlays(struct vmw_private *dev_priv)
-{
-	if (!vmw_overlay_available(dev_priv))
-		return 0;
+पूर्णांक vmw_overlay_num_overlays(काष्ठा vmw_निजी *dev_priv)
+अणु
+	अगर (!vmw_overlay_available(dev_priv))
+		वापस 0;
 
-	return VMW_MAX_NUM_STREAMS;
-}
+	वापस VMW_MAX_NUM_STREAMS;
+पूर्ण
 
-int vmw_overlay_num_free_overlays(struct vmw_private *dev_priv)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	int i, k;
+पूर्णांक vmw_overlay_num_मुक्त_overlays(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	पूर्णांक i, k;
 
-	if (!vmw_overlay_available(dev_priv))
-		return 0;
+	अगर (!vmw_overlay_available(dev_priv))
+		वापस 0;
 
 	mutex_lock(&overlay->mutex);
 
-	for (i = 0, k = 0; i < VMW_MAX_NUM_STREAMS; i++)
-		if (!overlay->stream[i].claimed)
+	क्रम (i = 0, k = 0; i < VMW_MAX_NUM_STREAMS; i++)
+		अगर (!overlay->stream[i].claimed)
 			k++;
 
 	mutex_unlock(&overlay->mutex);
 
-	return k;
-}
+	वापस k;
+पूर्ण
 
-int vmw_overlay_claim(struct vmw_private *dev_priv, uint32_t *out)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	int i;
+पूर्णांक vmw_overlay_claim(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t *out)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	पूर्णांक i;
 
-	if (!overlay)
-		return -ENOSYS;
+	अगर (!overlay)
+		वापस -ENOSYS;
 
 	mutex_lock(&overlay->mutex);
 
-	for (i = 0; i < VMW_MAX_NUM_STREAMS; i++) {
+	क्रम (i = 0; i < VMW_MAX_NUM_STREAMS; i++) अणु
 
-		if (overlay->stream[i].claimed)
-			continue;
+		अगर (overlay->stream[i].claimed)
+			जारी;
 
 		overlay->stream[i].claimed = true;
 		*out = i;
 		mutex_unlock(&overlay->mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mutex_unlock(&overlay->mutex);
-	return -ESRCH;
-}
+	वापस -ESRCH;
+पूर्ण
 
-int vmw_overlay_unref(struct vmw_private *dev_priv, uint32_t stream_id)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
+पूर्णांक vmw_overlay_unref(काष्ठा vmw_निजी *dev_priv, uपूर्णांक32_t stream_id)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
 
 	BUG_ON(stream_id >= VMW_MAX_NUM_STREAMS);
 
-	if (!overlay)
-		return -ENOSYS;
+	अगर (!overlay)
+		वापस -ENOSYS;
 
 	mutex_lock(&overlay->mutex);
 
@@ -534,53 +535,53 @@ int vmw_overlay_unref(struct vmw_private *dev_priv, uint32_t stream_id)
 	overlay->stream[stream_id].claimed = false;
 
 	mutex_unlock(&overlay->mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vmw_overlay_init(struct vmw_private *dev_priv)
-{
-	struct vmw_overlay *overlay;
-	int i;
+पूर्णांक vmw_overlay_init(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_overlay *overlay;
+	पूर्णांक i;
 
-	if (dev_priv->overlay_priv)
-		return -EINVAL;
+	अगर (dev_priv->overlay_priv)
+		वापस -EINVAL;
 
-	overlay = kzalloc(sizeof(*overlay), GFP_KERNEL);
-	if (!overlay)
-		return -ENOMEM;
+	overlay = kzalloc(माप(*overlay), GFP_KERNEL);
+	अगर (!overlay)
+		वापस -ENOMEM;
 
 	mutex_init(&overlay->mutex);
-	for (i = 0; i < VMW_MAX_NUM_STREAMS; i++) {
-		overlay->stream[i].buf = NULL;
-		overlay->stream[i].paused = false;
+	क्रम (i = 0; i < VMW_MAX_NUM_STREAMS; i++) अणु
+		overlay->stream[i].buf = शून्य;
+		overlay->stream[i].छोड़ोd = false;
 		overlay->stream[i].claimed = false;
-	}
+	पूर्ण
 
 	dev_priv->overlay_priv = overlay;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vmw_overlay_close(struct vmw_private *dev_priv)
-{
-	struct vmw_overlay *overlay = dev_priv->overlay_priv;
-	bool forgotten_buffer = false;
-	int i;
+पूर्णांक vmw_overlay_बंद(काष्ठा vmw_निजी *dev_priv)
+अणु
+	काष्ठा vmw_overlay *overlay = dev_priv->overlay_priv;
+	bool क्रमgotten_buffer = false;
+	पूर्णांक i;
 
-	if (!overlay)
-		return -ENOSYS;
+	अगर (!overlay)
+		वापस -ENOSYS;
 
-	for (i = 0; i < VMW_MAX_NUM_STREAMS; i++) {
-		if (overlay->stream[i].buf) {
-			forgotten_buffer = true;
+	क्रम (i = 0; i < VMW_MAX_NUM_STREAMS; i++) अणु
+		अगर (overlay->stream[i].buf) अणु
+			क्रमgotten_buffer = true;
 			vmw_overlay_stop(dev_priv, i, false, false);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	WARN_ON(forgotten_buffer);
+	WARN_ON(क्रमgotten_buffer);
 
-	dev_priv->overlay_priv = NULL;
-	kfree(overlay);
+	dev_priv->overlay_priv = शून्य;
+	kमुक्त(overlay);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

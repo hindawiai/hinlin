@@ -1,297 +1,298 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Stream Parser
  *
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
-#include <linux/bpf.h>
-#include <linux/errno.h>
-#include <linux/errqueue.h>
-#include <linux/file.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/poll.h>
-#include <linux/rculist.h>
-#include <linux/skbuff.h>
-#include <linux/socket.h>
-#include <linux/uaccess.h>
-#include <linux/workqueue.h>
-#include <net/strparser.h>
-#include <net/netns/generic.h>
-#include <net/sock.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/errqueue.h>
+#समावेश <linux/file.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/workqueue.h>
+#समावेश <net/strparser.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/sock.h>
 
-static struct workqueue_struct *strp_wq;
+अटल काष्ठा workqueue_काष्ठा *strp_wq;
 
-struct _strp_msg {
-	/* Internal cb structure. struct strp_msg must be first for passing
+काष्ठा _strp_msg अणु
+	/* Internal cb काष्ठाure. काष्ठा strp_msg must be first क्रम passing
 	 * to upper layer.
 	 */
-	struct strp_msg strp;
-	int accum_len;
-};
+	काष्ठा strp_msg strp;
+	पूर्णांक accum_len;
+पूर्ण;
 
-static inline struct _strp_msg *_strp_msg(struct sk_buff *skb)
-{
-	return (struct _strp_msg *)((void *)skb->cb +
-		offsetof(struct qdisc_skb_cb, data));
-}
+अटल अंतरभूत काष्ठा _strp_msg *_strp_msg(काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा _strp_msg *)((व्योम *)skb->cb +
+		दुरत्व(काष्ठा qdisc_skb_cb, data));
+पूर्ण
 
 /* Lower lock held */
-static void strp_abort_strp(struct strparser *strp, int err)
-{
+अटल व्योम strp_पात_strp(काष्ठा strparser *strp, पूर्णांक err)
+अणु
 	/* Unrecoverable error in receive */
 
-	cancel_delayed_work(&strp->msg_timer_work);
+	cancel_delayed_work(&strp->msg_समयr_work);
 
-	if (strp->stopped)
-		return;
+	अगर (strp->stopped)
+		वापस;
 
 	strp->stopped = 1;
 
-	if (strp->sk) {
-		struct sock *sk = strp->sk;
+	अगर (strp->sk) अणु
+		काष्ठा sock *sk = strp->sk;
 
 		/* Report an error on the lower socket */
 		sk->sk_err = -err;
 		sk->sk_error_report(sk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void strp_start_timer(struct strparser *strp, long timeo)
-{
-	if (timeo && timeo != LONG_MAX)
-		mod_delayed_work(strp_wq, &strp->msg_timer_work, timeo);
-}
+अटल व्योम strp_start_समयr(काष्ठा strparser *strp, दीर्घ समयo)
+अणु
+	अगर (समयo && समयo != दीर्घ_उच्च)
+		mod_delayed_work(strp_wq, &strp->msg_समयr_work, समयo);
+पूर्ण
 
 /* Lower lock held */
-static void strp_parser_err(struct strparser *strp, int err,
-			    read_descriptor_t *desc)
-{
+अटल व्योम strp_parser_err(काष्ठा strparser *strp, पूर्णांक err,
+			    पढ़ो_descriptor_t *desc)
+अणु
 	desc->error = err;
-	kfree_skb(strp->skb_head);
-	strp->skb_head = NULL;
-	strp->cb.abort_parser(strp, err);
-}
+	kमुक्त_skb(strp->skb_head);
+	strp->skb_head = शून्य;
+	strp->cb.पात_parser(strp, err);
+पूर्ण
 
-static inline int strp_peek_len(struct strparser *strp)
-{
-	if (strp->sk) {
-		struct socket *sock = strp->sk->sk_socket;
+अटल अंतरभूत पूर्णांक strp_peek_len(काष्ठा strparser *strp)
+अणु
+	अगर (strp->sk) अणु
+		काष्ठा socket *sock = strp->sk->sk_socket;
 
-		return sock->ops->peek_len(sock);
-	}
+		वापस sock->ops->peek_len(sock);
+	पूर्ण
 
-	/* If we don't have an associated socket there's nothing to peek.
-	 * Return int max to avoid stopping the strparser.
+	/* If we करोn't have an associated socket there's nothing to peek.
+	 * Return पूर्णांक max to aव्योम stopping the strparser.
 	 */
 
-	return INT_MAX;
-}
+	वापस पूर्णांक_उच्च;
+पूर्ण
 
 /* Lower socket lock held */
-static int __strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
-		       unsigned int orig_offset, size_t orig_len,
-		       size_t max_msg_size, long timeo)
-{
-	struct strparser *strp = (struct strparser *)desc->arg.data;
-	struct _strp_msg *stm;
-	struct sk_buff *head, *skb;
-	size_t eaten = 0, cand_len;
-	ssize_t extra;
-	int err;
+अटल पूर्णांक __strp_recv(पढ़ो_descriptor_t *desc, काष्ठा sk_buff *orig_skb,
+		       अचिन्हित पूर्णांक orig_offset, माप_प्रकार orig_len,
+		       माप_प्रकार max_msg_size, दीर्घ समयo)
+अणु
+	काष्ठा strparser *strp = (काष्ठा strparser *)desc->arg.data;
+	काष्ठा _strp_msg *sपंचांग;
+	काष्ठा sk_buff *head, *skb;
+	माप_प्रकार eaten = 0, cand_len;
+	sमाप_प्रकार extra;
+	पूर्णांक err;
 	bool cloned_orig = false;
 
-	if (strp->paused)
-		return 0;
+	अगर (strp->छोड़ोd)
+		वापस 0;
 
 	head = strp->skb_head;
-	if (head) {
-		/* Message already in progress */
-		if (unlikely(orig_offset)) {
+	अगर (head) अणु
+		/* Message alपढ़ोy in progress */
+		अगर (unlikely(orig_offset)) अणु
 			/* Getting data with a non-zero offset when a message is
-			 * in progress is not expected. If it does happen, we
+			 * in progress is not expected. If it करोes happen, we
 			 * need to clone and pull since we can't deal with
-			 * offsets in the skbs for a message expect in the head.
+			 * offsets in the skbs क्रम a message expect in the head.
 			 */
 			orig_skb = skb_clone(orig_skb, GFP_ATOMIC);
-			if (!orig_skb) {
+			अगर (!orig_skb) अणु
 				STRP_STATS_INCR(strp->stats.mem_fail);
 				desc->error = -ENOMEM;
-				return 0;
-			}
-			if (!pskb_pull(orig_skb, orig_offset)) {
+				वापस 0;
+			पूर्ण
+			अगर (!pskb_pull(orig_skb, orig_offset)) अणु
 				STRP_STATS_INCR(strp->stats.mem_fail);
-				kfree_skb(orig_skb);
+				kमुक्त_skb(orig_skb);
 				desc->error = -ENOMEM;
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			cloned_orig = true;
 			orig_offset = 0;
-		}
+		पूर्ण
 
-		if (!strp->skb_nextp) {
+		अगर (!strp->skb_nextp) अणु
 			/* We are going to append to the frags_list of head.
 			 * Need to unshare the frag_list.
 			 */
 			err = skb_unclone(head, GFP_ATOMIC);
-			if (err) {
+			अगर (err) अणु
 				STRP_STATS_INCR(strp->stats.mem_fail);
 				desc->error = err;
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
-			if (unlikely(skb_shinfo(head)->frag_list)) {
-				/* We can't append to an sk_buff that already
-				 * has a frag_list. We create a new head, point
+			अगर (unlikely(skb_shinfo(head)->frag_list)) अणु
+				/* We can't append to an sk_buff that alपढ़ोy
+				 * has a frag_list. We create a new head, poपूर्णांक
 				 * the frag_list of that to the old head, and
-				 * then are able to use the old head->next for
+				 * then are able to use the old head->next क्रम
 				 * appending to the message.
 				 */
-				if (WARN_ON(head->next)) {
+				अगर (WARN_ON(head->next)) अणु
 					desc->error = -EINVAL;
-					return 0;
-				}
+					वापस 0;
+				पूर्ण
 
-				skb = alloc_skb_for_msg(head);
-				if (!skb) {
+				skb = alloc_skb_क्रम_msg(head);
+				अगर (!skb) अणु
 					STRP_STATS_INCR(strp->stats.mem_fail);
 					desc->error = -ENOMEM;
-					return 0;
-				}
+					वापस 0;
+				पूर्ण
 
 				strp->skb_nextp = &head->next;
 				strp->skb_head = skb;
 				head = skb;
-			} else {
+			पूर्ण अन्यथा अणु
 				strp->skb_nextp =
 				    &skb_shinfo(head)->frag_list;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	while (eaten < orig_len) {
+	जबतक (eaten < orig_len) अणु
 		/* Always clone since we will consume something */
 		skb = skb_clone(orig_skb, GFP_ATOMIC);
-		if (!skb) {
+		अगर (!skb) अणु
 			STRP_STATS_INCR(strp->stats.mem_fail);
 			desc->error = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		cand_len = orig_len - eaten;
 
 		head = strp->skb_head;
-		if (!head) {
+		अगर (!head) अणु
 			head = skb;
 			strp->skb_head = head;
-			/* Will set skb_nextp on next packet if needed */
-			strp->skb_nextp = NULL;
-			stm = _strp_msg(head);
-			memset(stm, 0, sizeof(*stm));
-			stm->strp.offset = orig_offset + eaten;
-		} else {
-			/* Unclone if we are appending to an skb that we
-			 * already share a frag_list with.
+			/* Will set skb_nextp on next packet अगर needed */
+			strp->skb_nextp = शून्य;
+			sपंचांग = _strp_msg(head);
+			स_रखो(sपंचांग, 0, माप(*sपंचांग));
+			sपंचांग->strp.offset = orig_offset + eaten;
+		पूर्ण अन्यथा अणु
+			/* Unclone अगर we are appending to an skb that we
+			 * alपढ़ोy share a frag_list with.
 			 */
-			if (skb_has_frag_list(skb)) {
+			अगर (skb_has_frag_list(skb)) अणु
 				err = skb_unclone(skb, GFP_ATOMIC);
-				if (err) {
+				अगर (err) अणु
 					STRP_STATS_INCR(strp->stats.mem_fail);
 					desc->error = err;
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-			stm = _strp_msg(head);
+			sपंचांग = _strp_msg(head);
 			*strp->skb_nextp = skb;
 			strp->skb_nextp = &skb->next;
 			head->data_len += skb->len;
 			head->len += skb->len;
 			head->truesize += skb->truesize;
-		}
+		पूर्ण
 
-		if (!stm->strp.full_len) {
-			ssize_t len;
+		अगर (!sपंचांग->strp.full_len) अणु
+			sमाप_प्रकार len;
 
 			len = (*strp->cb.parse_msg)(strp, head);
 
-			if (!len) {
+			अगर (!len) अणु
 				/* Need more header to determine length */
-				if (!stm->accum_len) {
-					/* Start RX timer for new message */
-					strp_start_timer(strp, timeo);
-				}
-				stm->accum_len += cand_len;
+				अगर (!sपंचांग->accum_len) अणु
+					/* Start RX समयr क्रम new message */
+					strp_start_समयr(strp, समयo);
+				पूर्ण
+				sपंचांग->accum_len += cand_len;
 				eaten += cand_len;
 				STRP_STATS_INCR(strp->stats.need_more_hdr);
 				WARN_ON(eaten != orig_len);
-				break;
-			} else if (len < 0) {
-				if (len == -ESTRPIPE && stm->accum_len) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (len < 0) अणु
+				अगर (len == -ESTRPIPE && sपंचांग->accum_len) अणु
 					len = -ENODATA;
-					strp->unrecov_intr = 1;
-				} else {
-					strp->interrupted = 1;
-				}
+					strp->unrecov_पूर्णांकr = 1;
+				पूर्ण अन्यथा अणु
+					strp->पूर्णांकerrupted = 1;
+				पूर्ण
 				strp_parser_err(strp, len, desc);
-				break;
-			} else if (len > max_msg_size) {
+				अवरोध;
+			पूर्ण अन्यथा अगर (len > max_msg_size) अणु
 				/* Message length exceeds maximum allowed */
 				STRP_STATS_INCR(strp->stats.msg_too_big);
 				strp_parser_err(strp, -EMSGSIZE, desc);
-				break;
-			} else if (len <= (ssize_t)head->len -
-					  skb->len - stm->strp.offset) {
-				/* Length must be into new skb (and also
+				अवरोध;
+			पूर्ण अन्यथा अगर (len <= (sमाप_प्रकार)head->len -
+					  skb->len - sपंचांग->strp.offset) अणु
+				/* Length must be पूर्णांकo new skb (and also
 				 * greater than zero)
 				 */
 				STRP_STATS_INCR(strp->stats.bad_hdr_len);
 				strp_parser_err(strp, -EPROTO, desc);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			stm->strp.full_len = len;
-		}
+			sपंचांग->strp.full_len = len;
+		पूर्ण
 
-		extra = (ssize_t)(stm->accum_len + cand_len) -
-			stm->strp.full_len;
+		extra = (sमाप_प्रकार)(sपंचांग->accum_len + cand_len) -
+			sपंचांग->strp.full_len;
 
-		if (extra < 0) {
+		अगर (extra < 0) अणु
 			/* Message not complete yet. */
-			if (stm->strp.full_len - stm->accum_len >
-			    strp_peek_len(strp)) {
+			अगर (sपंचांग->strp.full_len - sपंचांग->accum_len >
+			    strp_peek_len(strp)) अणु
 				/* Don't have the whole message in the socket
-				 * buffer. Set strp->need_bytes to wait for
+				 * buffer. Set strp->need_bytes to रुको क्रम
 				 * the rest of the message. Also, set "early
-				 * eaten" since we've already buffered the skb
-				 * but don't consume yet per strp_read_sock.
+				 * eaten" since we've alपढ़ोy buffered the skb
+				 * but करोn't consume yet per strp_पढ़ो_sock.
 				 */
 
-				if (!stm->accum_len) {
-					/* Start RX timer for new message */
-					strp_start_timer(strp, timeo);
-				}
+				अगर (!sपंचांग->accum_len) अणु
+					/* Start RX समयr क्रम new message */
+					strp_start_समयr(strp, समयo);
+				पूर्ण
 
-				stm->accum_len += cand_len;
+				sपंचांग->accum_len += cand_len;
 				eaten += cand_len;
-				strp->need_bytes = stm->strp.full_len -
-						       stm->accum_len;
+				strp->need_bytes = sपंचांग->strp.full_len -
+						       sपंचांग->accum_len;
 				STRP_STATS_ADD(strp->stats.bytes, cand_len);
-				desc->count = 0; /* Stop reading socket */
-				break;
-			}
-			stm->accum_len += cand_len;
+				desc->count = 0; /* Stop पढ़ोing socket */
+				अवरोध;
+			पूर्ण
+			sपंचांग->accum_len += cand_len;
 			eaten += cand_len;
 			WARN_ON(eaten != orig_len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Positive extra indicates more bytes than needed for the
+		/* Positive extra indicates more bytes than needed क्रम the
 		 * message
 		 */
 
@@ -300,175 +301,175 @@ static int __strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
 		eaten += (cand_len - extra);
 
 		/* Hurray, we have a new message! */
-		cancel_delayed_work(&strp->msg_timer_work);
-		strp->skb_head = NULL;
+		cancel_delayed_work(&strp->msg_समयr_work);
+		strp->skb_head = शून्य;
 		strp->need_bytes = 0;
 		STRP_STATS_INCR(strp->stats.msgs);
 
 		/* Give skb to upper layer */
 		strp->cb.rcv_msg(strp, head);
 
-		if (unlikely(strp->paused)) {
-			/* Upper layer paused strp */
-			break;
-		}
-	}
+		अगर (unlikely(strp->छोड़ोd)) अणु
+			/* Upper layer छोड़ोd strp */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (cloned_orig)
-		kfree_skb(orig_skb);
+	अगर (cloned_orig)
+		kमुक्त_skb(orig_skb);
 
 	STRP_STATS_ADD(strp->stats.bytes, eaten);
 
-	return eaten;
-}
+	वापस eaten;
+पूर्ण
 
-int strp_process(struct strparser *strp, struct sk_buff *orig_skb,
-		 unsigned int orig_offset, size_t orig_len,
-		 size_t max_msg_size, long timeo)
-{
-	read_descriptor_t desc; /* Dummy arg to strp_recv */
+पूर्णांक strp_process(काष्ठा strparser *strp, काष्ठा sk_buff *orig_skb,
+		 अचिन्हित पूर्णांक orig_offset, माप_प्रकार orig_len,
+		 माप_प्रकार max_msg_size, दीर्घ समयo)
+अणु
+	पढ़ो_descriptor_t desc; /* Dummy arg to strp_recv */
 
 	desc.arg.data = strp;
 
-	return __strp_recv(&desc, orig_skb, orig_offset, orig_len,
-			   max_msg_size, timeo);
-}
+	वापस __strp_recv(&desc, orig_skb, orig_offset, orig_len,
+			   max_msg_size, समयo);
+पूर्ण
 EXPORT_SYMBOL_GPL(strp_process);
 
-static int strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
-		     unsigned int orig_offset, size_t orig_len)
-{
-	struct strparser *strp = (struct strparser *)desc->arg.data;
+अटल पूर्णांक strp_recv(पढ़ो_descriptor_t *desc, काष्ठा sk_buff *orig_skb,
+		     अचिन्हित पूर्णांक orig_offset, माप_प्रकार orig_len)
+अणु
+	काष्ठा strparser *strp = (काष्ठा strparser *)desc->arg.data;
 
-	return __strp_recv(desc, orig_skb, orig_offset, orig_len,
-			   strp->sk->sk_rcvbuf, strp->sk->sk_rcvtimeo);
-}
+	वापस __strp_recv(desc, orig_skb, orig_offset, orig_len,
+			   strp->sk->sk_rcvbuf, strp->sk->sk_rcvसमयo);
+पूर्ण
 
-static int default_read_sock_done(struct strparser *strp, int err)
-{
-	return err;
-}
+अटल पूर्णांक शेष_पढ़ो_sock_करोne(काष्ठा strparser *strp, पूर्णांक err)
+अणु
+	वापस err;
+पूर्ण
 
 /* Called with lock held on lower socket */
-static int strp_read_sock(struct strparser *strp)
-{
-	struct socket *sock = strp->sk->sk_socket;
-	read_descriptor_t desc;
+अटल पूर्णांक strp_पढ़ो_sock(काष्ठा strparser *strp)
+अणु
+	काष्ठा socket *sock = strp->sk->sk_socket;
+	पढ़ो_descriptor_t desc;
 
-	if (unlikely(!sock || !sock->ops || !sock->ops->read_sock))
-		return -EBUSY;
+	अगर (unlikely(!sock || !sock->ops || !sock->ops->पढ़ो_sock))
+		वापस -EBUSY;
 
 	desc.arg.data = strp;
 	desc.error = 0;
 	desc.count = 1; /* give more than one skb per call */
 
-	/* sk should be locked here, so okay to do read_sock */
-	sock->ops->read_sock(strp->sk, &desc, strp_recv);
+	/* sk should be locked here, so okay to करो पढ़ो_sock */
+	sock->ops->पढ़ो_sock(strp->sk, &desc, strp_recv);
 
-	desc.error = strp->cb.read_sock_done(strp, desc.error);
+	desc.error = strp->cb.पढ़ो_sock_करोne(strp, desc.error);
 
-	return desc.error;
-}
+	वापस desc.error;
+पूर्ण
 
 /* Lower sock lock held */
-void strp_data_ready(struct strparser *strp)
-{
-	if (unlikely(strp->stopped) || strp->paused)
-		return;
+व्योम strp_data_पढ़ोy(काष्ठा strparser *strp)
+अणु
+	अगर (unlikely(strp->stopped) || strp->छोड़ोd)
+		वापस;
 
-	/* This check is needed to synchronize with do_strp_work.
-	 * do_strp_work acquires a process lock (lock_sock) whereas
+	/* This check is needed to synchronize with करो_strp_work.
+	 * करो_strp_work acquires a process lock (lock_sock) whereas
 	 * the lock held here is bh_lock_sock. The two locks can be
-	 * held by different threads at the same time, but bh_lock_sock
-	 * allows a thread in BH context to safely check if the process
-	 * lock is held. In this case, if the lock is held, queue work.
+	 * held by dअगरferent thपढ़ोs at the same समय, but bh_lock_sock
+	 * allows a thपढ़ो in BH context to safely check अगर the process
+	 * lock is held. In this हाल, अगर the lock is held, queue work.
 	 */
-	if (sock_owned_by_user_nocheck(strp->sk)) {
+	अगर (sock_owned_by_user_nocheck(strp->sk)) अणु
 		queue_work(strp_wq, &strp->work);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (strp->need_bytes) {
-		if (strp_peek_len(strp) < strp->need_bytes)
-			return;
-	}
+	अगर (strp->need_bytes) अणु
+		अगर (strp_peek_len(strp) < strp->need_bytes)
+			वापस;
+	पूर्ण
 
-	if (strp_read_sock(strp) == -ENOMEM)
+	अगर (strp_पढ़ो_sock(strp) == -ENOMEM)
 		queue_work(strp_wq, &strp->work);
-}
-EXPORT_SYMBOL_GPL(strp_data_ready);
+पूर्ण
+EXPORT_SYMBOL_GPL(strp_data_पढ़ोy);
 
-static void do_strp_work(struct strparser *strp)
-{
-	/* We need the read lock to synchronize with strp_data_ready. We
-	 * need the socket lock for calling strp_read_sock.
+अटल व्योम करो_strp_work(काष्ठा strparser *strp)
+अणु
+	/* We need the पढ़ो lock to synchronize with strp_data_पढ़ोy. We
+	 * need the socket lock क्रम calling strp_पढ़ो_sock.
 	 */
 	strp->cb.lock(strp);
 
-	if (unlikely(strp->stopped))
-		goto out;
+	अगर (unlikely(strp->stopped))
+		जाओ out;
 
-	if (strp->paused)
-		goto out;
+	अगर (strp->छोड़ोd)
+		जाओ out;
 
-	if (strp_read_sock(strp) == -ENOMEM)
+	अगर (strp_पढ़ो_sock(strp) == -ENOMEM)
 		queue_work(strp_wq, &strp->work);
 
 out:
 	strp->cb.unlock(strp);
-}
+पूर्ण
 
-static void strp_work(struct work_struct *w)
-{
-	do_strp_work(container_of(w, struct strparser, work));
-}
+अटल व्योम strp_work(काष्ठा work_काष्ठा *w)
+अणु
+	करो_strp_work(container_of(w, काष्ठा strparser, work));
+पूर्ण
 
-static void strp_msg_timeout(struct work_struct *w)
-{
-	struct strparser *strp = container_of(w, struct strparser,
-					      msg_timer_work.work);
+अटल व्योम strp_msg_समयout(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा strparser *strp = container_of(w, काष्ठा strparser,
+					      msg_समयr_work.work);
 
-	/* Message assembly timed out */
-	STRP_STATS_INCR(strp->stats.msg_timeouts);
+	/* Message assembly समयd out */
+	STRP_STATS_INCR(strp->stats.msg_समयouts);
 	strp->cb.lock(strp);
-	strp->cb.abort_parser(strp, -ETIMEDOUT);
+	strp->cb.पात_parser(strp, -ETIMEDOUT);
 	strp->cb.unlock(strp);
-}
+पूर्ण
 
-static void strp_sock_lock(struct strparser *strp)
-{
+अटल व्योम strp_sock_lock(काष्ठा strparser *strp)
+अणु
 	lock_sock(strp->sk);
-}
+पूर्ण
 
-static void strp_sock_unlock(struct strparser *strp)
-{
+अटल व्योम strp_sock_unlock(काष्ठा strparser *strp)
+अणु
 	release_sock(strp->sk);
-}
+पूर्ण
 
-int strp_init(struct strparser *strp, struct sock *sk,
-	      const struct strp_callbacks *cb)
-{
+पूर्णांक strp_init(काष्ठा strparser *strp, काष्ठा sock *sk,
+	      स्थिर काष्ठा strp_callbacks *cb)
+अणु
 
-	if (!cb || !cb->rcv_msg || !cb->parse_msg)
-		return -EINVAL;
+	अगर (!cb || !cb->rcv_msg || !cb->parse_msg)
+		वापस -EINVAL;
 
 	/* The sk (sock) arg determines the mode of the stream parser.
 	 *
 	 * If the sock is set then the strparser is in receive callback mode.
-	 * The upper layer calls strp_data_ready to kick receive processing
-	 * and strparser calls the read_sock function on the socket to
+	 * The upper layer calls strp_data_पढ़ोy to kick receive processing
+	 * and strparser calls the पढ़ो_sock function on the socket to
 	 * get packets.
 	 *
 	 * If the sock is not set then the strparser is in general mode.
-	 * The upper layer calls strp_process for each skb to be parsed.
+	 * The upper layer calls strp_process क्रम each skb to be parsed.
 	 */
 
-	if (!sk) {
-		if (!cb->lock || !cb->unlock)
-			return -EINVAL;
-	}
+	अगर (!sk) अणु
+		अगर (!cb->lock || !cb->unlock)
+			वापस -EINVAL;
+	पूर्ण
 
-	memset(strp, 0, sizeof(*strp));
+	स_रखो(strp, 0, माप(*strp));
 
 	strp->sk = sk;
 
@@ -476,75 +477,75 @@ int strp_init(struct strparser *strp, struct sock *sk,
 	strp->cb.unlock = cb->unlock ? : strp_sock_unlock;
 	strp->cb.rcv_msg = cb->rcv_msg;
 	strp->cb.parse_msg = cb->parse_msg;
-	strp->cb.read_sock_done = cb->read_sock_done ? : default_read_sock_done;
-	strp->cb.abort_parser = cb->abort_parser ? : strp_abort_strp;
+	strp->cb.पढ़ो_sock_करोne = cb->पढ़ो_sock_करोne ? : शेष_पढ़ो_sock_करोne;
+	strp->cb.पात_parser = cb->पात_parser ? : strp_पात_strp;
 
-	INIT_DELAYED_WORK(&strp->msg_timer_work, strp_msg_timeout);
+	INIT_DELAYED_WORK(&strp->msg_समयr_work, strp_msg_समयout);
 	INIT_WORK(&strp->work, strp_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(strp_init);
 
 /* Sock process lock held (lock_sock) */
-void __strp_unpause(struct strparser *strp)
-{
-	strp->paused = 0;
+व्योम __strp_unछोड़ो(काष्ठा strparser *strp)
+अणु
+	strp->छोड़ोd = 0;
 
-	if (strp->need_bytes) {
-		if (strp_peek_len(strp) < strp->need_bytes)
-			return;
-	}
-	strp_read_sock(strp);
-}
-EXPORT_SYMBOL_GPL(__strp_unpause);
+	अगर (strp->need_bytes) अणु
+		अगर (strp_peek_len(strp) < strp->need_bytes)
+			वापस;
+	पूर्ण
+	strp_पढ़ो_sock(strp);
+पूर्ण
+EXPORT_SYMBOL_GPL(__strp_unछोड़ो);
 
-void strp_unpause(struct strparser *strp)
-{
-	strp->paused = 0;
+व्योम strp_unछोड़ो(काष्ठा strparser *strp)
+अणु
+	strp->छोड़ोd = 0;
 
-	/* Sync setting paused with RX work */
+	/* Sync setting छोड़ोd with RX work */
 	smp_mb();
 
 	queue_work(strp_wq, &strp->work);
-}
-EXPORT_SYMBOL_GPL(strp_unpause);
+पूर्ण
+EXPORT_SYMBOL_GPL(strp_unछोड़ो);
 
-/* strp must already be stopped so that strp_recv will no longer be called.
- * Note that strp_done is not called with the lower socket held.
+/* strp must alपढ़ोy be stopped so that strp_recv will no दीर्घer be called.
+ * Note that strp_करोne is not called with the lower socket held.
  */
-void strp_done(struct strparser *strp)
-{
+व्योम strp_करोne(काष्ठा strparser *strp)
+अणु
 	WARN_ON(!strp->stopped);
 
-	cancel_delayed_work_sync(&strp->msg_timer_work);
+	cancel_delayed_work_sync(&strp->msg_समयr_work);
 	cancel_work_sync(&strp->work);
 
-	if (strp->skb_head) {
-		kfree_skb(strp->skb_head);
-		strp->skb_head = NULL;
-	}
-}
-EXPORT_SYMBOL_GPL(strp_done);
+	अगर (strp->skb_head) अणु
+		kमुक्त_skb(strp->skb_head);
+		strp->skb_head = शून्य;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(strp_करोne);
 
-void strp_stop(struct strparser *strp)
-{
+व्योम strp_stop(काष्ठा strparser *strp)
+अणु
 	strp->stopped = 1;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(strp_stop);
 
-void strp_check_rcv(struct strparser *strp)
-{
+व्योम strp_check_rcv(काष्ठा strparser *strp)
+अणु
 	queue_work(strp_wq, &strp->work);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(strp_check_rcv);
 
-static int __init strp_dev_init(void)
-{
-	strp_wq = create_singlethread_workqueue("kstrp");
-	if (unlikely(!strp_wq))
-		return -ENOMEM;
+अटल पूर्णांक __init strp_dev_init(व्योम)
+अणु
+	strp_wq = create_singlethपढ़ो_workqueue("kstrp");
+	अगर (unlikely(!strp_wq))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(strp_dev_init);

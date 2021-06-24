@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: dbfileio - Debugger file I/O commands. These can't usually
@@ -6,45 +7,45 @@
  *
  ******************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acdebug.h"
-#include "actables.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acdebug.h"
+#समावेश "actables.h"
 
-#define _COMPONENT          ACPI_CA_DEBUGGER
+#घोषणा _COMPONENT          ACPI_CA_DEBUGGER
 ACPI_MODULE_NAME("dbfileio")
 
-#ifdef ACPI_APPLICATION
-#include "acapps.h"
-#ifdef ACPI_DEBUGGER
+#अगर_घोषित ACPI_APPLICATION
+#समावेश "acapps.h"
+#अगर_घोषित ACPI_DEBUGGER
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_close_debug_file
+ * FUNCTION:    acpi_db_बंद_debug_file
  *
  * PARAMETERS:  None
  *
  * RETURN:      None
  *
- * DESCRIPTION: If open, close the current debug output file
+ * DESCRIPTION: If खोलो, बंद the current debug output file
  *
  ******************************************************************************/
-void acpi_db_close_debug_file(void)
-{
+व्योम acpi_db_बंद_debug_file(व्योम)
+अणु
 
-	if (acpi_gbl_debug_file) {
-		fclose(acpi_gbl_debug_file);
-		acpi_gbl_debug_file = NULL;
+	अगर (acpi_gbl_debug_file) अणु
+		ख_बंद(acpi_gbl_debug_file);
+		acpi_gbl_debug_file = शून्य;
 		acpi_gbl_db_output_to_file = FALSE;
-		acpi_os_printf("Debug output file %s closed\n",
+		acpi_os_म_लिखो("Debug output file %s closed\n",
 			       acpi_gbl_db_debug_filename);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_db_open_debug_file
+ * FUNCTION:    acpi_db_खोलो_debug_file
  *
- * PARAMETERS:  name                - Filename to open
+ * PARAMETERS:  name                - Filename to खोलो
  *
  * RETURN:      None
  *
@@ -52,22 +53,22 @@ void acpi_db_close_debug_file(void)
  *
  ******************************************************************************/
 
-void acpi_db_open_debug_file(char *name)
-{
+व्योम acpi_db_खोलो_debug_file(अक्षर *name)
+अणु
 
-	acpi_db_close_debug_file();
-	acpi_gbl_debug_file = fopen(name, "w+");
-	if (!acpi_gbl_debug_file) {
-		acpi_os_printf("Could not open debug file %s\n", name);
-		return;
-	}
+	acpi_db_बंद_debug_file();
+	acpi_gbl_debug_file = ख_खोलो(name, "w+");
+	अगर (!acpi_gbl_debug_file) अणु
+		acpi_os_म_लिखो("Could not open debug file %s\n", name);
+		वापस;
+	पूर्ण
 
-	acpi_os_printf("Debug output file %s opened\n", name);
-	acpi_ut_safe_strncpy(acpi_gbl_db_debug_filename, name,
-			     sizeof(acpi_gbl_db_debug_filename));
+	acpi_os_म_लिखो("Debug output file %s opened\n", name);
+	acpi_ut_safe_म_नकलन(acpi_gbl_db_debug_filename, name,
+			     माप(acpi_gbl_db_debug_filename));
 	acpi_gbl_db_output_to_file = TRUE;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*******************************************************************************
  *
@@ -77,43 +78,43 @@ void acpi_db_open_debug_file(char *name)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Load ACPI tables from a previously constructed table list.
+ * DESCRIPTION: Load ACPI tables from a previously स्थिरructed table list.
  *
  ******************************************************************************/
 
-acpi_status acpi_db_load_tables(struct acpi_new_table_desc *list_head)
-{
+acpi_status acpi_db_load_tables(काष्ठा acpi_new_table_desc *list_head)
+अणु
 	acpi_status status;
-	struct acpi_new_table_desc *table_list_head;
-	struct acpi_table_header *table;
+	काष्ठा acpi_new_table_desc *table_list_head;
+	काष्ठा acpi_table_header *table;
 
 	/* Load all ACPI tables in the list */
 
 	table_list_head = list_head;
-	while (table_list_head) {
+	जबतक (table_list_head) अणु
 		table = table_list_head->table;
 
-		status = acpi_load_table(table, NULL);
-		if (ACPI_FAILURE(status)) {
-			if (status == AE_ALREADY_EXISTS) {
-				acpi_os_printf
+		status = acpi_load_table(table, शून्य);
+		अगर (ACPI_FAILURE(status)) अणु
+			अगर (status == AE_ALREADY_EXISTS) अणु
+				acpi_os_म_लिखो
 				    ("Table %4.4s is already installed\n",
 				     table->signature);
-			} else {
-				acpi_os_printf("Could not install table, %s\n",
-					       acpi_format_exception(status));
-			}
+			पूर्ण अन्यथा अणु
+				acpi_os_म_लिखो("Could not install table, %s\n",
+					       acpi_क्रमmat_exception(status));
+			पूर्ण
 
-			return (status);
-		}
+			वापस (status);
+		पूर्ण
 
-		acpi_os_printf
+		acpi_os_म_लिखो
 		    ("Acpi table [%4.4s] successfully installed and loaded\n",
 		     table->signature);
 
 		table_list_head = table_list_head->next;
-	}
+	पूर्ण
 
-	return (AE_OK);
-}
-#endif
+	वापस (AE_OK);
+पूर्ण
+#पूर्ण_अगर

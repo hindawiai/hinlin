@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Initialization protocol for ISHTP driver
+ * Initialization protocol क्रम ISHTP driver
  *
  * Copyright (c) 2003-2016, Intel Corporation.
  */
 
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include "ishtp-dev.h"
-#include "hbm.h"
-#include "client.h"
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश "ishtp-dev.h"
+#समावेश "hbm.h"
+#समावेश "client.h"
 
 /**
- * ishtp_dev_state_str() -Convert to string format
+ * ishtp_dev_state_str() -Convert to string क्रमmat
  * @state: state to convert
  *
- * Convert state to string for prints
+ * Convert state to string क्रम prपूर्णांकs
  *
- * Return: character pointer to converted string
+ * Return: अक्षरacter poपूर्णांकer to converted string
  */
-const char *ishtp_dev_state_str(int state)
-{
-	switch (state) {
-	case ISHTP_DEV_INITIALIZING:
-		return	"INITIALIZING";
-	case ISHTP_DEV_INIT_CLIENTS:
-		return	"INIT_CLIENTS";
-	case ISHTP_DEV_ENABLED:
-		return	"ENABLED";
-	case ISHTP_DEV_RESETTING:
-		return	"RESETTING";
-	case ISHTP_DEV_DISABLED:
-		return	"DISABLED";
-	case ISHTP_DEV_POWER_DOWN:
-		return	"POWER_DOWN";
-	case ISHTP_DEV_POWER_UP:
-		return	"POWER_UP";
-	default:
-		return "unknown";
-	}
-}
+स्थिर अक्षर *ishtp_dev_state_str(पूर्णांक state)
+अणु
+	चयन (state) अणु
+	हाल ISHTP_DEV_INITIALIZING:
+		वापस	"INITIALIZING";
+	हाल ISHTP_DEV_INIT_CLIENTS:
+		वापस	"INIT_CLIENTS";
+	हाल ISHTP_DEV_ENABLED:
+		वापस	"ENABLED";
+	हाल ISHTP_DEV_RESETTING:
+		वापस	"RESETTING";
+	हाल ISHTP_DEV_DISABLED:
+		वापस	"DISABLED";
+	हाल ISHTP_DEV_POWER_DOWN:
+		वापस	"POWER_DOWN";
+	हाल ISHTP_DEV_POWER_UP:
+		वापस	"POWER_UP";
+	शेष:
+		वापस "unknown";
+	पूर्ण
+पूर्ण
 
 /**
  * ishtp_device_init() - ishtp device init
  * @dev: ISHTP device instance
  *
  * After ISHTP device is alloacted, this function is used to initialize
- * each field which includes spin lock, work struct and lists
+ * each field which includes spin lock, work काष्ठा and lists
  */
-void ishtp_device_init(struct ishtp_device *dev)
-{
+व्योम ishtp_device_init(काष्ठा ishtp_device *dev)
+अणु
 	dev->dev_state = ISHTP_DEV_INITIALIZING;
 	INIT_LIST_HEAD(&dev->cl_list);
 	INIT_LIST_HEAD(&dev->device_list);
-	dev->rd_msg_fifo_head = 0;
-	dev->rd_msg_fifo_tail = 0;
+	dev->rd_msg_fअगरo_head = 0;
+	dev->rd_msg_fअगरo_tail = 0;
 	spin_lock_init(&dev->rd_msg_spinlock);
 
-	init_waitqueue_head(&dev->wait_hbm_recvd_msg);
-	spin_lock_init(&dev->read_list_spinlock);
+	init_रुकोqueue_head(&dev->रुको_hbm_recvd_msg);
+	spin_lock_init(&dev->पढ़ो_list_spinlock);
 	spin_lock_init(&dev->device_lock);
 	spin_lock_init(&dev->device_list_lock);
 	spin_lock_init(&dev->cl_list_lock);
 	spin_lock_init(&dev->fw_clients_lock);
 	INIT_WORK(&dev->bh_hbm_work, bh_hbm_work_fn);
 
-	bitmap_zero(dev->host_clients_map, ISHTP_CLIENTS_MAX);
-	dev->open_handle_count = 0;
+	biपंचांगap_zero(dev->host_clients_map, ISHTP_CLIENTS_MAX);
+	dev->खोलो_handle_count = 0;
 
 	/*
-	 * Reserving client ID 0 for ISHTP Bus Message communications
+	 * Reserving client ID 0 क्रम ISHTP Bus Message communications
 	 */
-	bitmap_set(dev->host_clients_map, 0, 1);
+	biपंचांगap_set(dev->host_clients_map, 0, 1);
 
-	INIT_LIST_HEAD(&dev->read_list.list);
+	INIT_LIST_HEAD(&dev->पढ़ो_list.list);
 
-}
+पूर्ण
 EXPORT_SYMBOL(ishtp_device_init);
 
 /**
@@ -85,22 +86,22 @@ EXPORT_SYMBOL(ishtp_device_init);
  *
  * Start ISHTP processing by sending query subscriber message
  *
- * Return: 0 on success else -ENODEV
+ * Return: 0 on success अन्यथा -ENODEV
  */
-int ishtp_start(struct ishtp_device *dev)
-{
-	if (ishtp_hbm_start_wait(dev)) {
+पूर्णांक ishtp_start(काष्ठा ishtp_device *dev)
+अणु
+	अगर (ishtp_hbm_start_रुको(dev)) अणु
 		dev_err(dev->devc, "HBM haven't started");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* suspend & resume notification - send QUERY_SUBSCRIBERS msg */
+	/* suspend & resume notअगरication - send QUERY_SUBSCRIBERS msg */
 	ishtp_query_subscribers(dev);
 
-	return 0;
+	वापस 0;
 err:
 	dev_err(dev->devc, "link layer initialization failed.\n");
 	dev->dev_state = ISHTP_DEV_DISABLED;
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL(ishtp_start);

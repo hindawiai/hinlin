@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <asm/mach/arch.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "core.h"
+#समावेश "core.h"
 
-#define SYS_FLAGSSET		0x030
-#define SYS_FLAGSCLR		0x034
+#घोषणा SYS_FLAGSSET		0x030
+#घोषणा SYS_FLAGSCLR		0x034
 
-void vexpress_flags_set(u32 data)
-{
-	static void __iomem *base;
+व्योम vexpress_flags_set(u32 data)
+अणु
+	अटल व्योम __iomem *base;
 
-	if (!base) {
-		struct device_node *node = of_find_compatible_node(NULL, NULL,
+	अगर (!base) अणु
+		काष्ठा device_node *node = of_find_compatible_node(शून्य, शून्य,
 				"arm,vexpress-sysreg");
 
 		base = of_iomap(node, 0);
-	}
+	पूर्ण
 
-	if (WARN_ON(!base))
-		return;
+	अगर (WARN_ON(!base))
+		वापस;
 
-	writel(~0, base + SYS_FLAGSCLR);
-	writel(data, base + SYS_FLAGSSET);
-}
+	ग_लिखोl(~0, base + SYS_FLAGSCLR);
+	ग_लिखोl(data, base + SYS_FLAGSSET);
+पूर्ण
 
-static const char * const v2m_dt_match[] __initconst = {
+अटल स्थिर अक्षर * स्थिर v2m_dt_match[] __initस्थिर = अणु
 	"arm,vexpress",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(VEXPRESS_DT, "ARM-Versatile Express")
 	.dt_compat	= v2m_dt_match,

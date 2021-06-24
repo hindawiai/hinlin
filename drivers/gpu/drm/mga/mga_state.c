@@ -1,16 +1,17 @@
-/* mga_state.c -- State support for MGA G200/G400 -*- linux-c -*-
- * Created: Thu Jan 27 02:53:43 2000 by jhartmann@precisioninsight.com
+<शैली गुरु>
+/* mga_state.c -- State support क्रम MGA G200/G400 -*- linux-c -*-
+ * Created: Thu Jan 27 02:53:43 2000 by jharपंचांगann@precisioninsight.com
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,46 +26,46 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Jeff Hartmann <jhartmann@valinux.com>
+ *    Jeff Harपंचांगann <jharपंचांगann@valinux.com>
  *    Keith Whitwell <keith@tungstengraphics.com>
  *
  * Rewritten by:
  *    Gareth Hughes <gareth@valinux.com>
  */
 
-#include "mga_drv.h"
+#समावेश "mga_drv.h"
 
 /* ================================================================
  * DMA hardware state programming functions
  */
 
-static void mga_emit_clip_rect(drm_mga_private_t *dev_priv,
-			       struct drm_clip_rect *box)
-{
+अटल व्योम mga_emit_clip_rect(drm_mga_निजी_t *dev_priv,
+			       काष्ठा drm_clip_rect *box)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_context_regs_t *ctx = &sarea_priv->context_state;
-	unsigned int pitch = dev_priv->front_pitch;
+	अचिन्हित पूर्णांक pitch = dev_priv->front_pitch;
 	DMA_LOCALS;
 
 	BEGIN_DMA(2);
 
 	/* Force reset of DWGCTL on G400 (eliminates clip disable bit).
 	 */
-	if (dev_priv->chipset >= MGA_CARD_TYPE_G400) {
+	अगर (dev_priv->chipset >= MGA_CARD_TYPE_G400) अणु
 		DMA_BLOCK(MGA_DWGCTL, ctx->dwgctl,
 			  MGA_LEN + MGA_EXEC, 0x80000000,
 			  MGA_DWGCTL, ctx->dwgctl,
 			  MGA_LEN + MGA_EXEC, 0x80000000);
-	}
+	पूर्ण
 	DMA_BLOCK(MGA_DMAPAD, 0x00000000,
 		  MGA_CXBNDRY, ((box->x2 - 1) << 16) | box->x1,
 		  MGA_YTOP, box->y1 * pitch, MGA_YBOT, (box->y2 - 1) * pitch);
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static __inline__ void mga_g200_emit_context(drm_mga_private_t *dev_priv)
-{
+अटल __अंतरभूत__ व्योम mga_g200_emit_context(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_context_regs_t *ctx = &sarea_priv->context_state;
 	DMA_LOCALS;
@@ -84,10 +85,10 @@ static __inline__ void mga_g200_emit_context(drm_mga_private_t *dev_priv)
 		  MGA_DMAPAD, 0x00000000, MGA_DMAPAD, 0x00000000);
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static __inline__ void mga_g400_emit_context(drm_mga_private_t *dev_priv)
-{
+अटल __अंतरभूत__ व्योम mga_g400_emit_context(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_context_regs_t *ctx = &sarea_priv->context_state;
 	DMA_LOCALS;
@@ -111,10 +112,10 @@ static __inline__ void mga_g400_emit_context(drm_mga_private_t *dev_priv)
 		  MGA_DMAPAD, 0x00000000, MGA_DMAPAD, 0x00000000);
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static __inline__ void mga_g200_emit_tex0(drm_mga_private_t *dev_priv)
-{
+अटल __अंतरभूत__ व्योम mga_g200_emit_tex0(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_texture_regs_t *tex = &sarea_priv->tex_state[0];
 	DMA_LOCALS;
@@ -139,15 +140,15 @@ static __inline__ void mga_g200_emit_tex0(drm_mga_private_t *dev_priv)
 		  MGA_TEXTRANSHIGH, 0x0000ffff, MGA_DMAPAD, 0x00000000);
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static __inline__ void mga_g400_emit_tex0(drm_mga_private_t *dev_priv)
-{
+अटल __अंतरभूत__ व्योम mga_g400_emit_tex0(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_texture_regs_t *tex = &sarea_priv->tex_state[0];
 	DMA_LOCALS;
 
-/*	printk("mga_g400_emit_tex0 %x %x %x\n", tex->texorg, */
+/*	prपूर्णांकk("mga_g400_emit_tex0 %x %x %x\n", tex->texorg, */
 /*	       tex->texctl, tex->texctl2); */
 
 	BEGIN_DMA(6);
@@ -179,15 +180,15 @@ static __inline__ void mga_g400_emit_tex0(drm_mga_private_t *dev_priv)
 		  MGA_TEXTRANS, 0x0000ffff, MGA_TEXTRANSHIGH, 0x0000ffff);
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static __inline__ void mga_g400_emit_tex1(drm_mga_private_t *dev_priv)
-{
+अटल __अंतरभूत__ व्योम mga_g400_emit_tex1(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_texture_regs_t *tex = &sarea_priv->tex_state[1];
 	DMA_LOCALS;
 
-/*	printk("mga_g400_emit_tex1 %x %x %x\n", tex->texorg,  */
+/*	prपूर्णांकk("mga_g400_emit_tex1 %x %x %x\n", tex->texorg,  */
 /*	       tex->texctl, tex->texctl2); */
 
 	BEGIN_DMA(5);
@@ -218,12 +219,12 @@ static __inline__ void mga_g400_emit_tex1(drm_mga_private_t *dev_priv)
 		  MGA_TEXCTL2, tex->texctl2 | MGA_G400_TC2_MAGIC);
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static __inline__ void mga_g200_emit_pipe(drm_mga_private_t *dev_priv)
-{
+अटल __अंतरभूत__ व्योम mga_g200_emit_pipe(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	unsigned int pipe = sarea_priv->warp_pipe;
+	अचिन्हित पूर्णांक pipe = sarea_priv->warp_pipe;
 	DMA_LOCALS;
 
 	BEGIN_DMA(3);
@@ -245,15 +246,15 @@ static __inline__ void mga_g200_emit_pipe(drm_mga_private_t *dev_priv)
 			       MGA_WMODE_START | dev_priv->wagp_enable));
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static __inline__ void mga_g400_emit_pipe(drm_mga_private_t *dev_priv)
-{
+अटल __अंतरभूत__ व्योम mga_g400_emit_pipe(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	unsigned int pipe = sarea_priv->warp_pipe;
+	अचिन्हित पूर्णांक pipe = sarea_priv->warp_pipe;
 	DMA_LOCALS;
 
-/*	printk("mga_g400_emit_pipe %x\n", pipe); */
+/*	prपूर्णांकk("mga_g400_emit_pipe %x\n", pipe); */
 
 	BEGIN_DMA(10);
 
@@ -261,7 +262,7 @@ static __inline__ void mga_g400_emit_pipe(drm_mga_private_t *dev_priv)
 		  MGA_DMAPAD, 0x00000000,
 		  MGA_DMAPAD, 0x00000000, MGA_DMAPAD, 0x00000000);
 
-	if (pipe & MGA_T2) {
+	अगर (pipe & MGA_T2) अणु
 		DMA_BLOCK(MGA_WVRTXSZ, 0x00001e09,
 			  MGA_DMAPAD, 0x00000000,
 			  MGA_DMAPAD, 0x00000000, MGA_DMAPAD, 0x00000000);
@@ -270,8 +271,8 @@ static __inline__ void mga_g400_emit_pipe(drm_mga_private_t *dev_priv)
 			  MGA_WACCEPTSEQ, 0x00000000,
 			  MGA_WACCEPTSEQ, 0x00000000,
 			  MGA_WACCEPTSEQ, 0x1e000000);
-	} else {
-		if (dev_priv->warp_pipe & MGA_T2) {
+	पूर्ण अन्यथा अणु
+		अगर (dev_priv->warp_pipe & MGA_T2) अणु
 			/* Flush the WARP pipe */
 			DMA_BLOCK(MGA_YDST, 0x00000000,
 				  MGA_FXLEFT, 0x00000000,
@@ -288,7 +289,7 @@ static __inline__ void mga_g400_emit_pipe(drm_mga_private_t *dev_priv)
 				  MGA_LEN + MGA_EXEC, 0x00000000,
 				  MGA_TEXCTL2, MGA_G400_TC2_MAGIC,
 				  MGA_DMAPAD, 0x00000000);
-		}
+		पूर्ण
 
 		DMA_BLOCK(MGA_WVRTXSZ, 0x00001807,
 			  MGA_DMAPAD, 0x00000000,
@@ -298,7 +299,7 @@ static __inline__ void mga_g400_emit_pipe(drm_mga_private_t *dev_priv)
 			  MGA_WACCEPTSEQ, 0x00000000,
 			  MGA_WACCEPTSEQ, 0x00000000,
 			  MGA_WACCEPTSEQ, 0x18000000);
-	}
+	पूर्ण
 
 	DMA_BLOCK(MGA_WFLAG, 0x00000000,
 		  MGA_WFLAG1, 0x00000000,
@@ -322,169 +323,169 @@ static __inline__ void mga_g400_emit_pipe(drm_mga_private_t *dev_priv)
 				MGA_WMODE_START | dev_priv->wagp_enable));
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
-static void mga_g200_emit_state(drm_mga_private_t *dev_priv)
-{
+अटल व्योम mga_g200_emit_state(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	unsigned int dirty = sarea_priv->dirty;
+	अचिन्हित पूर्णांक dirty = sarea_priv->dirty;
 
-	if (sarea_priv->warp_pipe != dev_priv->warp_pipe) {
+	अगर (sarea_priv->warp_pipe != dev_priv->warp_pipe) अणु
 		mga_g200_emit_pipe(dev_priv);
 		dev_priv->warp_pipe = sarea_priv->warp_pipe;
-	}
+	पूर्ण
 
-	if (dirty & MGA_UPLOAD_CONTEXT) {
+	अगर (dirty & MGA_UPLOAD_CONTEXT) अणु
 		mga_g200_emit_context(dev_priv);
 		sarea_priv->dirty &= ~MGA_UPLOAD_CONTEXT;
-	}
+	पूर्ण
 
-	if (dirty & MGA_UPLOAD_TEX0) {
+	अगर (dirty & MGA_UPLOAD_TEX0) अणु
 		mga_g200_emit_tex0(dev_priv);
 		sarea_priv->dirty &= ~MGA_UPLOAD_TEX0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mga_g400_emit_state(drm_mga_private_t *dev_priv)
-{
+अटल व्योम mga_g400_emit_state(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	unsigned int dirty = sarea_priv->dirty;
-	int multitex = sarea_priv->warp_pipe & MGA_T2;
+	अचिन्हित पूर्णांक dirty = sarea_priv->dirty;
+	पूर्णांक multitex = sarea_priv->warp_pipe & MGA_T2;
 
-	if (sarea_priv->warp_pipe != dev_priv->warp_pipe) {
+	अगर (sarea_priv->warp_pipe != dev_priv->warp_pipe) अणु
 		mga_g400_emit_pipe(dev_priv);
 		dev_priv->warp_pipe = sarea_priv->warp_pipe;
-	}
+	पूर्ण
 
-	if (dirty & MGA_UPLOAD_CONTEXT) {
+	अगर (dirty & MGA_UPLOAD_CONTEXT) अणु
 		mga_g400_emit_context(dev_priv);
 		sarea_priv->dirty &= ~MGA_UPLOAD_CONTEXT;
-	}
+	पूर्ण
 
-	if (dirty & MGA_UPLOAD_TEX0) {
+	अगर (dirty & MGA_UPLOAD_TEX0) अणु
 		mga_g400_emit_tex0(dev_priv);
 		sarea_priv->dirty &= ~MGA_UPLOAD_TEX0;
-	}
+	पूर्ण
 
-	if ((dirty & MGA_UPLOAD_TEX1) && multitex) {
+	अगर ((dirty & MGA_UPLOAD_TEX1) && multitex) अणु
 		mga_g400_emit_tex1(dev_priv);
 		sarea_priv->dirty &= ~MGA_UPLOAD_TEX1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* ================================================================
- * SAREA state verification
+ * SAREA state verअगरication
  */
 
-/* Disallow all write destinations except the front and backbuffer.
+/* Disallow all ग_लिखो destinations except the front and backbuffer.
  */
-static int mga_verify_context(drm_mga_private_t *dev_priv)
-{
+अटल पूर्णांक mga_verअगरy_context(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_context_regs_t *ctx = &sarea_priv->context_state;
 
-	if (ctx->dstorg != dev_priv->front_offset &&
-	    ctx->dstorg != dev_priv->back_offset) {
+	अगर (ctx->dstorg != dev_priv->front_offset &&
+	    ctx->dstorg != dev_priv->back_offset) अणु
 		DRM_ERROR("*** bad DSTORG: %x (front %x, back %x)\n\n",
 			  ctx->dstorg, dev_priv->front_offset,
 			  dev_priv->back_offset);
 		ctx->dstorg = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Disallow texture reads from PCI space.
+/* Disallow texture पढ़ोs from PCI space.
  */
-static int mga_verify_tex(drm_mga_private_t *dev_priv, int unit)
-{
+अटल पूर्णांक mga_verअगरy_tex(drm_mga_निजी_t *dev_priv, पूर्णांक unit)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_texture_regs_t *tex = &sarea_priv->tex_state[unit];
-	unsigned int org;
+	अचिन्हित पूर्णांक org;
 
 	org = tex->texorg & (MGA_TEXORGMAP_MASK | MGA_TEXORGACC_MASK);
 
-	if (org == (MGA_TEXORGMAP_SYSMEM | MGA_TEXORGACC_PCI)) {
+	अगर (org == (MGA_TEXORGMAP_SYSMEM | MGA_TEXORGACC_PCI)) अणु
 		DRM_ERROR("*** bad TEXORG: 0x%x, unit %d\n", tex->texorg, unit);
 		tex->texorg = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_verify_state(drm_mga_private_t *dev_priv)
-{
+अटल पूर्णांक mga_verअगरy_state(drm_mga_निजी_t *dev_priv)
+अणु
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	unsigned int dirty = sarea_priv->dirty;
-	int ret = 0;
+	अचिन्हित पूर्णांक dirty = sarea_priv->dirty;
+	पूर्णांक ret = 0;
 
-	if (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
+	अगर (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = MGA_NR_SAREA_CLIPRECTS;
 
-	if (dirty & MGA_UPLOAD_CONTEXT)
-		ret |= mga_verify_context(dev_priv);
+	अगर (dirty & MGA_UPLOAD_CONTEXT)
+		ret |= mga_verअगरy_context(dev_priv);
 
-	if (dirty & MGA_UPLOAD_TEX0)
-		ret |= mga_verify_tex(dev_priv, 0);
+	अगर (dirty & MGA_UPLOAD_TEX0)
+		ret |= mga_verअगरy_tex(dev_priv, 0);
 
-	if (dev_priv->chipset >= MGA_CARD_TYPE_G400) {
-		if (dirty & MGA_UPLOAD_TEX1)
-			ret |= mga_verify_tex(dev_priv, 1);
+	अगर (dev_priv->chipset >= MGA_CARD_TYPE_G400) अणु
+		अगर (dirty & MGA_UPLOAD_TEX1)
+			ret |= mga_verअगरy_tex(dev_priv, 1);
 
-		if (dirty & MGA_UPLOAD_PIPE)
+		अगर (dirty & MGA_UPLOAD_PIPE)
 			ret |= (sarea_priv->warp_pipe > MGA_MAX_G400_PIPES);
-	} else {
-		if (dirty & MGA_UPLOAD_PIPE)
+	पूर्ण अन्यथा अणु
+		अगर (dirty & MGA_UPLOAD_PIPE)
 			ret |= (sarea_priv->warp_pipe > MGA_MAX_G200_PIPES);
-	}
+	पूर्ण
 
-	return (ret == 0);
-}
+	वापस (ret == 0);
+पूर्ण
 
-static int mga_verify_iload(drm_mga_private_t *dev_priv,
-			    unsigned int dstorg, unsigned int length)
-{
-	if (dstorg < dev_priv->texture_offset ||
+अटल पूर्णांक mga_verअगरy_iload(drm_mga_निजी_t *dev_priv,
+			    अचिन्हित पूर्णांक dstorg, अचिन्हित पूर्णांक length)
+अणु
+	अगर (dstorg < dev_priv->texture_offset ||
 	    dstorg + length > (dev_priv->texture_offset +
-			       dev_priv->texture_size)) {
+			       dev_priv->texture_size)) अणु
 		DRM_ERROR("*** bad iload DSTORG: 0x%x\n", dstorg);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (length & MGA_ILOAD_MASK) {
+	अगर (length & MGA_ILOAD_MASK) अणु
 		DRM_ERROR("*** bad iload length: 0x%x\n",
 			  length & MGA_ILOAD_MASK);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_verify_blit(drm_mga_private_t *dev_priv,
-			   unsigned int srcorg, unsigned int dstorg)
-{
-	if ((srcorg & 0x3) == (MGA_SRCACC_PCI | MGA_SRCMAP_SYSMEM) ||
-	    (dstorg & 0x3) == (MGA_SRCACC_PCI | MGA_SRCMAP_SYSMEM)) {
+अटल पूर्णांक mga_verअगरy_blit(drm_mga_निजी_t *dev_priv,
+			   अचिन्हित पूर्णांक srcorg, अचिन्हित पूर्णांक dstorg)
+अणु
+	अगर ((srcorg & 0x3) == (MGA_SRCACC_PCI | MGA_SRCMAP_SYSMEM) ||
+	    (dstorg & 0x3) == (MGA_SRCACC_PCI | MGA_SRCMAP_SYSMEM)) अणु
 		DRM_ERROR("*** bad blit: src=0x%x dst=0x%x\n", srcorg, dstorg);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ================================================================
  *
  */
 
-static void mga_dma_dispatch_clear(struct drm_device *dev, drm_mga_clear_t *clear)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अटल व्योम mga_dma_dispatch_clear(काष्ठा drm_device *dev, drm_mga_clear_t *clear)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_context_regs_t *ctx = &sarea_priv->context_state;
-	struct drm_clip_rect *pbox = sarea_priv->boxes;
-	int nbox = sarea_priv->nbox;
-	int i;
+	काष्ठा drm_clip_rect *pbox = sarea_priv->boxes;
+	पूर्णांक nbox = sarea_priv->nbox;
+	पूर्णांक i;
 	DMA_LOCALS;
 	DRM_DEBUG("\n");
 
@@ -496,14 +497,14 @@ static void mga_dma_dispatch_clear(struct drm_device *dev, drm_mga_clear_t *clea
 
 	ADVANCE_DMA();
 
-	for (i = 0; i < nbox; i++) {
-		struct drm_clip_rect *box = &pbox[i];
+	क्रम (i = 0; i < nbox; i++) अणु
+		काष्ठा drm_clip_rect *box = &pbox[i];
 		u32 height = box->y2 - box->y1;
 
 		DRM_DEBUG("   from=%d,%d to=%d,%d\n",
 			  box->x1, box->y1, box->x2, box->y2);
 
-		if (clear->flags & MGA_FRONT) {
+		अगर (clear->flags & MGA_FRONT) अणु
 			BEGIN_DMA(2);
 
 			DMA_BLOCK(MGA_DMAPAD, 0x00000000,
@@ -517,9 +518,9 @@ static void mga_dma_dispatch_clear(struct drm_device *dev, drm_mga_clear_t *clea
 				  MGA_DWGCTL + MGA_EXEC, dev_priv->clear_cmd);
 
 			ADVANCE_DMA();
-		}
+		पूर्ण
 
-		if (clear->flags & MGA_BACK) {
+		अगर (clear->flags & MGA_BACK) अणु
 			BEGIN_DMA(2);
 
 			DMA_BLOCK(MGA_DMAPAD, 0x00000000,
@@ -533,9 +534,9 @@ static void mga_dma_dispatch_clear(struct drm_device *dev, drm_mga_clear_t *clea
 				  MGA_DWGCTL + MGA_EXEC, dev_priv->clear_cmd);
 
 			ADVANCE_DMA();
-		}
+		पूर्ण
 
-		if (clear->flags & MGA_DEPTH) {
+		अगर (clear->flags & MGA_DEPTH) अणु
 			BEGIN_DMA(2);
 
 			DMA_BLOCK(MGA_DMAPAD, 0x00000000,
@@ -549,9 +550,9 @@ static void mga_dma_dispatch_clear(struct drm_device *dev, drm_mga_clear_t *clea
 				  MGA_DWGCTL + MGA_EXEC, dev_priv->clear_cmd);
 
 			ADVANCE_DMA();
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
 	BEGIN_DMA(1);
 
@@ -563,16 +564,16 @@ static void mga_dma_dispatch_clear(struct drm_device *dev, drm_mga_clear_t *clea
 	ADVANCE_DMA();
 
 	FLUSH_DMA();
-}
+पूर्ण
 
-static void mga_dma_dispatch_swap(struct drm_device *dev)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अटल व्योम mga_dma_dispatch_swap(काष्ठा drm_device *dev)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_context_regs_t *ctx = &sarea_priv->context_state;
-	struct drm_clip_rect *pbox = sarea_priv->boxes;
-	int nbox = sarea_priv->nbox;
-	int i;
+	काष्ठा drm_clip_rect *pbox = sarea_priv->boxes;
+	पूर्णांक nbox = sarea_priv->nbox;
+	पूर्णांक i;
 	DMA_LOCALS;
 	DRM_DEBUG("\n");
 
@@ -594,8 +595,8 @@ static void mga_dma_dispatch_swap(struct drm_device *dev)
 		  MGA_DMAPAD, 0x00000000,
 		  MGA_PLNWT, 0xffffffff, MGA_DWGCTL, MGA_DWGCTL_COPY);
 
-	for (i = 0; i < nbox; i++) {
-		struct drm_clip_rect *box = &pbox[i];
+	क्रम (i = 0; i < nbox; i++) अणु
+		काष्ठा drm_clip_rect *box = &pbox[i];
 		u32 height = box->y2 - box->y1;
 		u32 start = box->y1 * dev_priv->front_pitch;
 
@@ -606,7 +607,7 @@ static void mga_dma_dispatch_swap(struct drm_device *dev)
 			  MGA_AR3, start + box->x1,
 			  MGA_FXBNDRY, ((box->x2 - 1) << 16) | box->x1,
 			  MGA_YDSTLEN + MGA_EXEC, (box->y1 << 16) | height);
-	}
+	पूर्ण
 
 	DMA_BLOCK(MGA_DMAPAD, 0x00000000,
 		  MGA_PLNWT, ctx->plnwt,
@@ -617,29 +618,29 @@ static void mga_dma_dispatch_swap(struct drm_device *dev)
 	FLUSH_DMA();
 
 	DRM_DEBUG("... done.\n");
-}
+पूर्ण
 
-static void mga_dma_dispatch_vertex(struct drm_device *dev, struct drm_buf *buf)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
+अटल व्योम mga_dma_dispatch_vertex(काष्ठा drm_device *dev, काष्ठा drm_buf *buf)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
+	drm_mga_buf_priv_t *buf_priv = buf->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	u32 address = (u32) buf->bus_address;
 	u32 length = (u32) buf->used;
-	int i = 0;
+	पूर्णांक i = 0;
 	DMA_LOCALS;
 	DRM_DEBUG("buf=%d used=%d\n", buf->idx, buf->used);
 
-	if (buf->used) {
+	अगर (buf->used) अणु
 		buf_priv->dispatched = 1;
 
 		MGA_EMIT_STATE(dev_priv, sarea_priv->dirty);
 
-		do {
-			if (i < sarea_priv->nbox) {
+		करो अणु
+			अगर (i < sarea_priv->nbox) अणु
 				mga_emit_clip_rect(dev_priv,
 						   &sarea_priv->boxes[i]);
-			}
+			पूर्ण
 
 			BEGIN_DMA(1);
 
@@ -651,42 +652,42 @@ static void mga_dma_dispatch_vertex(struct drm_device *dev, struct drm_buf *buf)
 					       dev_priv->dma_access));
 
 			ADVANCE_DMA();
-		} while (++i < sarea_priv->nbox);
-	}
+		पूर्ण जबतक (++i < sarea_priv->nbox);
+	पूर्ण
 
-	if (buf_priv->discard) {
+	अगर (buf_priv->discard) अणु
 		AGE_BUFFER(buf_priv);
 		buf->pending = 0;
 		buf->used = 0;
 		buf_priv->dispatched = 0;
 
-		mga_freelist_put(dev, buf);
-	}
+		mga_मुक्तlist_put(dev, buf);
+	पूर्ण
 
 	FLUSH_DMA();
-}
+पूर्ण
 
-static void mga_dma_dispatch_indices(struct drm_device *dev, struct drm_buf *buf,
-				     unsigned int start, unsigned int end)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
+अटल व्योम mga_dma_dispatch_indices(काष्ठा drm_device *dev, काष्ठा drm_buf *buf,
+				     अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
+	drm_mga_buf_priv_t *buf_priv = buf->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	u32 address = (u32) buf->bus_address;
-	int i = 0;
+	पूर्णांक i = 0;
 	DMA_LOCALS;
 	DRM_DEBUG("buf=%d start=%d end=%d\n", buf->idx, start, end);
 
-	if (start != end) {
+	अगर (start != end) अणु
 		buf_priv->dispatched = 1;
 
 		MGA_EMIT_STATE(dev_priv, sarea_priv->dirty);
 
-		do {
-			if (i < sarea_priv->nbox) {
+		करो अणु
+			अगर (i < sarea_priv->nbox) अणु
 				mga_emit_clip_rect(dev_priv,
 						   &sarea_priv->boxes[i]);
-			}
+			पूर्ण
 
 			BEGIN_DMA(1);
 
@@ -697,29 +698,29 @@ static void mga_dma_dispatch_indices(struct drm_device *dev, struct drm_buf *buf
 						 dev_priv->dma_access));
 
 			ADVANCE_DMA();
-		} while (++i < sarea_priv->nbox);
-	}
+		पूर्ण जबतक (++i < sarea_priv->nbox);
+	पूर्ण
 
-	if (buf_priv->discard) {
+	अगर (buf_priv->discard) अणु
 		AGE_BUFFER(buf_priv);
 		buf->pending = 0;
 		buf->used = 0;
 		buf_priv->dispatched = 0;
 
-		mga_freelist_put(dev, buf);
-	}
+		mga_मुक्तlist_put(dev, buf);
+	पूर्ण
 
 	FLUSH_DMA();
-}
+पूर्ण
 
 /* This copies a 64 byte aligned agp region to the frambuffer with a
- * standard blit, the ioctl needs to do checking.
+ * standard blit, the ioctl needs to करो checking.
  */
-static void mga_dma_dispatch_iload(struct drm_device *dev, struct drm_buf *buf,
-				   unsigned int dstorg, unsigned int length)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
+अटल व्योम mga_dma_dispatch_iload(काष्ठा drm_device *dev, काष्ठा drm_buf *buf,
+				   अचिन्हित पूर्णांक dstorg, अचिन्हित पूर्णांक length)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
+	drm_mga_buf_priv_t *buf_priv = buf->dev_निजी;
 	drm_mga_context_regs_t *ctx = &dev_priv->sarea_priv->context_state;
 	u32 srcorg =
 	    buf->bus_address | dev_priv->dma_access | MGA_SRCMAP_SYSMEM;
@@ -758,18 +759,18 @@ static void mga_dma_dispatch_iload(struct drm_device *dev, struct drm_buf *buf,
 	buf->used = 0;
 	buf_priv->dispatched = 0;
 
-	mga_freelist_put(dev, buf);
+	mga_मुक्तlist_put(dev, buf);
 
 	FLUSH_DMA();
-}
+पूर्ण
 
-static void mga_dma_dispatch_blit(struct drm_device *dev, drm_mga_blit_t *blit)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अटल व्योम mga_dma_dispatch_blit(काष्ठा drm_device *dev, drm_mga_blit_t *blit)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_context_regs_t *ctx = &sarea_priv->context_state;
-	struct drm_clip_rect *pbox = sarea_priv->boxes;
-	int nbox = sarea_priv->nbox;
+	काष्ठा drm_clip_rect *pbox = sarea_priv->boxes;
+	पूर्णांक nbox = sarea_priv->nbox;
 	u32 scandir = 0, i;
 	DMA_LOCALS;
 	DRM_DEBUG("\n");
@@ -789,16 +790,16 @@ static void mga_dma_dispatch_blit(struct drm_device *dev, drm_mga_blit_t *blit)
 		  MGA_AR5, blit->ydir * blit->src_pitch,
 		  MGA_PITCH, blit->dst_pitch);
 
-	for (i = 0; i < nbox; i++) {
-		int srcx = pbox[i].x1 + blit->delta_sx;
-		int srcy = pbox[i].y1 + blit->delta_sy;
-		int dstx = pbox[i].x1 + blit->delta_dx;
-		int dsty = pbox[i].y1 + blit->delta_dy;
-		int h = pbox[i].y2 - pbox[i].y1;
-		int w = pbox[i].x2 - pbox[i].x1 - 1;
-		int start;
+	क्रम (i = 0; i < nbox; i++) अणु
+		पूर्णांक srcx = pbox[i].x1 + blit->delta_sx;
+		पूर्णांक srcy = pbox[i].y1 + blit->delta_sy;
+		पूर्णांक dstx = pbox[i].x1 + blit->delta_dx;
+		पूर्णांक dsty = pbox[i].y1 + blit->delta_dy;
+		पूर्णांक h = pbox[i].y2 - pbox[i].y1;
+		पूर्णांक w = pbox[i].x2 - pbox[i].x1 - 1;
+		पूर्णांक start;
 
-		if (blit->ydir == -1)
+		अगर (blit->ydir == -1)
 			srcy = blit->height - srcy - 1;
 
 		start = srcy * blit->src_pitch + srcx;
@@ -807,7 +808,7 @@ static void mga_dma_dispatch_blit(struct drm_device *dev, drm_mga_blit_t *blit)
 			  MGA_AR3, start,
 			  MGA_FXBNDRY, ((dstx + w) << 16) | (dstx & 0xffff),
 			  MGA_YDSTLEN + MGA_EXEC, (dsty << 16) | h);
-	}
+	पूर्ण
 
 	/* Do something to flush AGP?
 	 */
@@ -818,236 +819,236 @@ static void mga_dma_dispatch_blit(struct drm_device *dev, drm_mga_blit_t *blit)
 		  MGA_PITCH, dev_priv->front_pitch, MGA_DWGCTL, ctx->dwgctl);
 
 	ADVANCE_DMA();
-}
+पूर्ण
 
 /* ================================================================
  *
  */
 
-static int mga_dma_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अटल पूर्णांक mga_dma_clear(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_clear_t *clear = data;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
+	अगर (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = MGA_NR_SAREA_CLIPRECTS;
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
 
 	mga_dma_dispatch_clear(dev, clear);
 
-	/* Make sure we restore the 3D state next time.
+	/* Make sure we restore the 3D state next समय.
 	 */
 	dev_priv->sarea_priv->dirty |= MGA_UPLOAD_CONTEXT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_dma_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अटल पूर्णांक mga_dma_swap(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
+	अगर (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = MGA_NR_SAREA_CLIPRECTS;
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
 
 	mga_dma_dispatch_swap(dev);
 
-	/* Make sure we restore the 3D state next time.
+	/* Make sure we restore the 3D state next समय.
 	 */
 	dev_priv->sarea_priv->dirty |= MGA_UPLOAD_CONTEXT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_buf *buf;
+अटल पूर्णांक mga_dma_vertex(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
+	काष्ठा drm_device_dma *dma = dev->dma;
+	काष्ठा drm_buf *buf;
 	drm_mga_buf_priv_t *buf_priv;
 	drm_mga_vertex_t *vertex = data;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (vertex->idx < 0 || vertex->idx > dma->buf_count)
-		return -EINVAL;
+	अगर (vertex->idx < 0 || vertex->idx > dma->buf_count)
+		वापस -EINVAL;
 	buf = dma->buflist[vertex->idx];
-	buf_priv = buf->dev_private;
+	buf_priv = buf->dev_निजी;
 
 	buf->used = vertex->used;
 	buf_priv->discard = vertex->discard;
 
-	if (!mga_verify_state(dev_priv)) {
-		if (vertex->discard) {
-			if (buf_priv->dispatched == 1)
+	अगर (!mga_verअगरy_state(dev_priv)) अणु
+		अगर (vertex->discard) अणु
+			अगर (buf_priv->dispatched == 1)
 				AGE_BUFFER(buf_priv);
 			buf_priv->dispatched = 0;
-			mga_freelist_put(dev, buf);
-		}
-		return -EINVAL;
-	}
+			mga_मुक्तlist_put(dev, buf);
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
 
 	mga_dma_dispatch_vertex(dev, buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_buf *buf;
+अटल पूर्णांक mga_dma_indices(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
+	काष्ठा drm_device_dma *dma = dev->dma;
+	काष्ठा drm_buf *buf;
 	drm_mga_buf_priv_t *buf_priv;
 	drm_mga_indices_t *indices = data;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (indices->idx < 0 || indices->idx > dma->buf_count)
-		return -EINVAL;
+	अगर (indices->idx < 0 || indices->idx > dma->buf_count)
+		वापस -EINVAL;
 
 	buf = dma->buflist[indices->idx];
-	buf_priv = buf->dev_private;
+	buf_priv = buf->dev_निजी;
 
 	buf_priv->discard = indices->discard;
 
-	if (!mga_verify_state(dev_priv)) {
-		if (indices->discard) {
-			if (buf_priv->dispatched == 1)
+	अगर (!mga_verअगरy_state(dev_priv)) अणु
+		अगर (indices->discard) अणु
+			अगर (buf_priv->dispatched == 1)
 				AGE_BUFFER(buf_priv);
 			buf_priv->dispatched = 0;
-			mga_freelist_put(dev, buf);
-		}
-		return -EINVAL;
-	}
+			mga_मुक्तlist_put(dev, buf);
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
 
 	mga_dma_dispatch_indices(dev, buf, indices->start, indices->end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	struct drm_device_dma *dma = dev->dma;
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	struct drm_buf *buf;
+अटल पूर्णांक mga_dma_iload(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_device_dma *dma = dev->dma;
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
+	काष्ठा drm_buf *buf;
 	drm_mga_iload_t *iload = data;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-#if 0
-	if (mga_do_wait_for_idle(dev_priv) < 0) {
-		if (MGA_DMA_DEBUG)
+#अगर 0
+	अगर (mga_करो_रुको_क्रम_idle(dev_priv) < 0) अणु
+		अगर (MGA_DMA_DEBUG)
 			DRM_INFO("-EBUSY\n");
-		return -EBUSY;
-	}
-#endif
-	if (iload->idx < 0 || iload->idx > dma->buf_count)
-		return -EINVAL;
+		वापस -EBUSY;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (iload->idx < 0 || iload->idx > dma->buf_count)
+		वापस -EINVAL;
 
 	buf = dma->buflist[iload->idx];
 
-	if (mga_verify_iload(dev_priv, iload->dstorg, iload->length)) {
-		mga_freelist_put(dev, buf);
-		return -EINVAL;
-	}
+	अगर (mga_verअगरy_iload(dev_priv, iload->dstorg, iload->length)) अणु
+		mga_मुक्तlist_put(dev, buf);
+		वापस -EINVAL;
+	पूर्ण
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
 
 	mga_dma_dispatch_iload(dev, buf, iload->dstorg, iload->length);
 
-	/* Make sure we restore the 3D state next time.
+	/* Make sure we restore the 3D state next समय.
 	 */
 	dev_priv->sarea_priv->dirty |= MGA_UPLOAD_CONTEXT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_dma_blit(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अटल पूर्णांक mga_dma_blit(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
 	drm_mga_blit_t *blit = data;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
+	अगर (sarea_priv->nbox > MGA_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = MGA_NR_SAREA_CLIPRECTS;
 
-	if (mga_verify_blit(dev_priv, blit->srcorg, blit->dstorg))
-		return -EINVAL;
+	अगर (mga_verअगरy_blit(dev_priv, blit->srcorg, blit->dstorg))
+		वापस -EINVAL;
 
 	WRAP_TEST_WITH_RETURN(dev_priv);
 
 	mga_dma_dispatch_blit(dev, blit);
 
-	/* Make sure we restore the 3D state next time.
+	/* Make sure we restore the 3D state next समय.
 	 */
 	dev_priv->sarea_priv->dirty |= MGA_UPLOAD_CONTEXT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mga_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+पूर्णांक mga_getparam(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	drm_mga_getparam_t *param = data;
-	int value;
+	पूर्णांक value;
 
-	if (!dev_priv) {
+	अगर (!dev_priv) अणु
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	DRM_DEBUG("pid=%d\n", task_pid_nr(current));
 
-	switch (param->param) {
-	case MGA_PARAM_IRQ_NR:
+	चयन (param->param) अणु
+	हाल MGA_PARAM_IRQ_NR:
 		value = dev->pdev->irq;
-		break;
-	case MGA_PARAM_CARD_TYPE:
+		अवरोध;
+	हाल MGA_PARAM_CARD_TYPE:
 		value = dev_priv->chipset;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (copy_to_user(param->value, &value, sizeof(int))) {
+	अगर (copy_to_user(param->value, &value, माप(पूर्णांक))) अणु
 		DRM_ERROR("copy_to_user\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अटल पूर्णांक mga_set_fence(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	u32 *fence = data;
 	DMA_LOCALS;
 
-	if (!dev_priv) {
+	अगर (!dev_priv) अणु
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	DRM_DEBUG("pid=%d\n", task_pid_nr(current));
 
-	/* I would normal do this assignment in the declaration of fence,
-	 * but dev_priv may be NULL.
+	/* I would normal करो this assignment in the declaration of fence,
+	 * but dev_priv may be शून्य.
 	 */
 
 	*fence = dev_priv->next_fence_to_post;
@@ -1059,27 +1060,27 @@ static int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *fi
 		  MGA_DMAPAD, 0x00000000, MGA_SOFTRAP, 0x00000000);
 	ADVANCE_DMA();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *
+अटल पूर्णांक mga_रुको_fence(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *
 file_priv)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
+अणु
+	drm_mga_निजी_t *dev_priv = dev->dev_निजी;
 	u32 *fence = data;
 
-	if (!dev_priv) {
+	अगर (!dev_priv) अणु
 		DRM_ERROR("called with no initialization\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	DRM_DEBUG("pid=%d\n", task_pid_nr(current));
 
-	mga_driver_fence_wait(dev, fence);
-	return 0;
-}
+	mga_driver_fence_रुको(dev, fence);
+	वापस 0;
+पूर्ण
 
-const struct drm_ioctl_desc mga_ioctls[] = {
+स्थिर काष्ठा drm_ioctl_desc mga_ioctls[] = अणु
 	DRM_IOCTL_DEF_DRV(MGA_INIT, mga_dma_init, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(MGA_FLUSH, mga_dma_flush, DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(MGA_RESET, mga_dma_reset, DRM_AUTH),
@@ -1091,8 +1092,8 @@ const struct drm_ioctl_desc mga_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MGA_BLIT, mga_dma_blit, DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(MGA_GETPARAM, mga_getparam, DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(MGA_SET_FENCE, mga_set_fence, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(MGA_WAIT_FENCE, mga_wait_fence, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(MGA_WAIT_FENCE, mga_रुको_fence, DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(MGA_DMA_BOOTSTRAP, mga_dma_bootstrap, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-};
+पूर्ण;
 
-int mga_max_ioctl = ARRAY_SIZE(mga_ioctls);
+पूर्णांक mga_max_ioctl = ARRAY_SIZE(mga_ioctls);

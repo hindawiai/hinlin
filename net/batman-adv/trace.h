@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
  * Sven Eckelmann
  */
 
-#if !defined(_NET_BATMAN_ADV_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
-#define _NET_BATMAN_ADV_TRACE_H_
+#अगर !defined(_NET_BATMAN_ADV_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _NET_BATMAN_ADV_TRACE_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/percpu.h>
-#include <linux/printk.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM batadv
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM batadv
 
 /* provide dummy function when tracing is disabled */
-#if !defined(CONFIG_BATMAN_ADV_TRACING)
+#अगर !defined(CONFIG_BATMAN_ADV_TRACING)
 
-#undef TRACE_EVENT
-#define TRACE_EVENT(name, proto, ...) \
-	static inline void trace_ ## name(proto) {}
+#अघोषित TRACE_EVENT
+#घोषणा TRACE_EVENT(name, proto, ...) \
+	अटल अंतरभूत व्योम trace_ ## name(proto) अणुपूर्ण
 
-#endif /* CONFIG_BATMAN_ADV_TRACING */
+#पूर्ण_अगर /* CONFIG_BATMAN_ADV_TRACING */
 
-#define BATADV_MAX_MSG_LEN	256
+#घोषणा BATADV_MAX_MSG_LEN	256
 
 TRACE_EVENT(batadv_dbg,
 
-	    TP_PROTO(struct batadv_priv *bat_priv,
-		     struct va_format *vaf),
+	    TP_PROTO(काष्ठा batadv_priv *bat_priv,
+		     काष्ठा va_क्रमmat *vaf),
 
 	    TP_ARGS(bat_priv, vaf),
 
 	    TP_STRUCT__entry(
-		    __string(device, bat_priv->soft_iface->name)
+		    __string(device, bat_priv->soft_अगरace->name)
 		    __string(driver, KBUILD_MODNAME)
-		    __dynamic_array(char, msg, BATADV_MAX_MSG_LEN)
+		    __dynamic_array(अक्षर, msg, BATADV_MAX_MSG_LEN)
 	    ),
 
 	    TP_fast_assign(
-		    __assign_str(device, bat_priv->soft_iface->name);
+		    __assign_str(device, bat_priv->soft_अगरace->name);
 		    __assign_str(driver, KBUILD_MODNAME);
-		    WARN_ON_ONCE(vsnprintf(__get_dynamic_array(msg),
+		    WARN_ON_ONCE(vsnम_लिखो(__get_dynamic_array(msg),
 					   BATADV_MAX_MSG_LEN,
 					   vaf->fmt,
 					   *vaf->va) >= BATADV_MAX_MSG_LEN);
 	    ),
 
-	    TP_printk(
+	    TP_prपूर्णांकk(
 		    "%s %s %s",
 		    __get_str(driver),
 		    __get_str(device),
@@ -60,12 +61,12 @@ TRACE_EVENT(batadv_dbg,
 	    )
 );
 
-#endif /* _NET_BATMAN_ADV_TRACE_H_ || TRACE_HEADER_MULTI_READ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_TRACE_H_ || TRACE_HEADER_MULTI_READ */
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता trace
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

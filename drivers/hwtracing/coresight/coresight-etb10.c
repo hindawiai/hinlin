@@ -1,366 +1,367 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * Description: CoreSight Embedded Trace Buffer driver
  */
 
-#include <linux/atomic.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/fs.h>
-#include <linux/miscdevice.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/pm_runtime.h>
-#include <linux/seq_file.h>
-#include <linux/coresight.h>
-#include <linux/amba/bus.h>
-#include <linux/clk.h>
-#include <linux/circ_buf.h>
-#include <linux/mm.h>
-#include <linux/perf_event.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/coresight.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/perf_event.h>
 
 
-#include "coresight-priv.h"
-#include "coresight-etm-perf.h"
+#समावेश "coresight-priv.h"
+#समावेश "coresight-etm-perf.h"
 
-#define ETB_RAM_DEPTH_REG	0x004
-#define ETB_STATUS_REG		0x00c
-#define ETB_RAM_READ_DATA_REG	0x010
-#define ETB_RAM_READ_POINTER	0x014
-#define ETB_RAM_WRITE_POINTER	0x018
-#define ETB_TRG			0x01c
-#define ETB_CTL_REG		0x020
-#define ETB_RWD_REG		0x024
-#define ETB_FFSR		0x300
-#define ETB_FFCR		0x304
-#define ETB_ITMISCOP0		0xee0
-#define ETB_ITTRFLINACK		0xee4
-#define ETB_ITTRFLIN		0xee8
-#define ETB_ITATBDATA0		0xeeC
-#define ETB_ITATBCTR2		0xef0
-#define ETB_ITATBCTR1		0xef4
-#define ETB_ITATBCTR0		0xef8
+#घोषणा ETB_RAM_DEPTH_REG	0x004
+#घोषणा ETB_STATUS_REG		0x00c
+#घोषणा ETB_RAM_READ_DATA_REG	0x010
+#घोषणा ETB_RAM_READ_POINTER	0x014
+#घोषणा ETB_RAM_WRITE_POINTER	0x018
+#घोषणा ETB_TRG			0x01c
+#घोषणा ETB_CTL_REG		0x020
+#घोषणा ETB_RWD_REG		0x024
+#घोषणा ETB_FFSR		0x300
+#घोषणा ETB_FFCR		0x304
+#घोषणा ETB_ITMISCOP0		0xee0
+#घोषणा ETB_ITTRFLINACK		0xee4
+#घोषणा ETB_ITTRFLIN		0xee8
+#घोषणा ETB_ITATBDATA0		0xeeC
+#घोषणा ETB_ITATBCTR2		0xef0
+#घोषणा ETB_ITATBCTR1		0xef4
+#घोषणा ETB_ITATBCTR0		0xef8
 
-/* register description */
+/* रेजिस्टर description */
 /* STS - 0x00C */
-#define ETB_STATUS_RAM_FULL	BIT(0)
+#घोषणा ETB_STATUS_RAM_FULL	BIT(0)
 /* CTL - 0x020 */
-#define ETB_CTL_CAPT_EN		BIT(0)
+#घोषणा ETB_CTL_CAPT_EN		BIT(0)
 /* FFCR - 0x304 */
-#define ETB_FFCR_EN_FTC		BIT(0)
-#define ETB_FFCR_FON_MAN	BIT(6)
-#define ETB_FFCR_STOP_FI	BIT(12)
-#define ETB_FFCR_STOP_TRIGGER	BIT(13)
+#घोषणा ETB_FFCR_EN_FTC		BIT(0)
+#घोषणा ETB_FFCR_FON_MAN	BIT(6)
+#घोषणा ETB_FFCR_STOP_FI	BIT(12)
+#घोषणा ETB_FFCR_STOP_TRIGGER	BIT(13)
 
-#define ETB_FFCR_BIT		6
-#define ETB_FFSR_BIT		1
-#define ETB_FRAME_SIZE_WORDS	4
+#घोषणा ETB_FFCR_BIT		6
+#घोषणा ETB_FFSR_BIT		1
+#घोषणा ETB_FRAME_SIZE_WORDS	4
 
 DEFINE_CORESIGHT_DEVLIST(etb_devs, "etb");
 
 /**
- * struct etb_drvdata - specifics associated to an ETB component
- * @base:	memory mapped base address for this component.
- * @atclk:	optional clock for the core parts of the ETB.
+ * काष्ठा etb_drvdata - specअगरics associated to an ETB component
+ * @base:	memory mapped base address क्रम this component.
+ * @atclk:	optional घड़ी क्रम the core parts of the ETB.
  * @csdev:	component vitals needed by the framework.
- * @miscdev:	specifics to handle "/dev/xyz.etb" entry.
- * @spinlock:	only one at a time pls.
- * @reading:	synchronise user space access to etb buffer.
+ * @miscdev:	specअगरics to handle "/dev/xyz.etb" entry.
+ * @spinlock:	only one at a समय pls.
+ * @पढ़ोing:	synchronise user space access to etb buffer.
  * @pid:	Process ID of the process being monitored by the session
  *		that is using this component.
- * @buf:	area of memory where ETB buffer content gets sent.
+ * @buf:	area of memory where ETB buffer content माला_लो sent.
  * @mode:	this ETB is being used.
  * @buffer_depth: size of @buf.
  * @trigger_cntr: amount of words to store after a trigger.
  */
-struct etb_drvdata {
-	void __iomem		*base;
-	struct clk		*atclk;
-	struct coresight_device	*csdev;
-	struct miscdevice	miscdev;
+काष्ठा etb_drvdata अणु
+	व्योम __iomem		*base;
+	काष्ठा clk		*atclk;
+	काष्ठा coresight_device	*csdev;
+	काष्ठा miscdevice	miscdev;
 	spinlock_t		spinlock;
-	local_t			reading;
+	local_t			पढ़ोing;
 	pid_t			pid;
 	u8			*buf;
 	u32			mode;
 	u32			buffer_depth;
 	u32			trigger_cntr;
-};
+पूर्ण;
 
-static int etb_set_buffer(struct coresight_device *csdev,
-			  struct perf_output_handle *handle);
+अटल पूर्णांक etb_set_buffer(काष्ठा coresight_device *csdev,
+			  काष्ठा perf_output_handle *handle);
 
-static inline unsigned int etb_get_buffer_depth(struct etb_drvdata *drvdata)
-{
-	return readl_relaxed(drvdata->base + ETB_RAM_DEPTH_REG);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक etb_get_buffer_depth(काष्ठा etb_drvdata *drvdata)
+अणु
+	वापस पढ़ोl_relaxed(drvdata->base + ETB_RAM_DEPTH_REG);
+पूर्ण
 
-static void __etb_enable_hw(struct etb_drvdata *drvdata)
-{
-	int i;
+अटल व्योम __etb_enable_hw(काष्ठा etb_drvdata *drvdata)
+अणु
+	पूर्णांक i;
 	u32 depth;
 
 	CS_UNLOCK(drvdata->base);
 
 	depth = drvdata->buffer_depth;
-	/* reset write RAM pointer address */
-	writel_relaxed(0x0, drvdata->base + ETB_RAM_WRITE_POINTER);
+	/* reset ग_लिखो RAM poपूर्णांकer address */
+	ग_लिखोl_relaxed(0x0, drvdata->base + ETB_RAM_WRITE_POINTER);
 	/* clear entire RAM buffer */
-	for (i = 0; i < depth; i++)
-		writel_relaxed(0x0, drvdata->base + ETB_RWD_REG);
+	क्रम (i = 0; i < depth; i++)
+		ग_लिखोl_relaxed(0x0, drvdata->base + ETB_RWD_REG);
 
-	/* reset write RAM pointer address */
-	writel_relaxed(0x0, drvdata->base + ETB_RAM_WRITE_POINTER);
-	/* reset read RAM pointer address */
-	writel_relaxed(0x0, drvdata->base + ETB_RAM_READ_POINTER);
+	/* reset ग_लिखो RAM poपूर्णांकer address */
+	ग_लिखोl_relaxed(0x0, drvdata->base + ETB_RAM_WRITE_POINTER);
+	/* reset पढ़ो RAM poपूर्णांकer address */
+	ग_लिखोl_relaxed(0x0, drvdata->base + ETB_RAM_READ_POINTER);
 
-	writel_relaxed(drvdata->trigger_cntr, drvdata->base + ETB_TRG);
-	writel_relaxed(ETB_FFCR_EN_FTC | ETB_FFCR_STOP_TRIGGER,
+	ग_लिखोl_relaxed(drvdata->trigger_cntr, drvdata->base + ETB_TRG);
+	ग_लिखोl_relaxed(ETB_FFCR_EN_FTC | ETB_FFCR_STOP_TRIGGER,
 		       drvdata->base + ETB_FFCR);
 	/* ETB trace capture enable */
-	writel_relaxed(ETB_CTL_CAPT_EN, drvdata->base + ETB_CTL_REG);
+	ग_लिखोl_relaxed(ETB_CTL_CAPT_EN, drvdata->base + ETB_CTL_REG);
 
 	CS_LOCK(drvdata->base);
-}
+पूर्ण
 
-static int etb_enable_hw(struct etb_drvdata *drvdata)
-{
-	int rc = coresight_claim_device(drvdata->csdev);
+अटल पूर्णांक etb_enable_hw(काष्ठा etb_drvdata *drvdata)
+अणु
+	पूर्णांक rc = coresight_claim_device(drvdata->csdev);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	__etb_enable_hw(drvdata);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int etb_enable_sysfs(struct coresight_device *csdev)
-{
-	int ret = 0;
-	unsigned long flags;
-	struct etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+अटल पूर्णांक etb_enable_sysfs(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
 
 	spin_lock_irqsave(&drvdata->spinlock, flags);
 
 	/* Don't messup with perf sessions. */
-	if (drvdata->mode == CS_MODE_PERF) {
+	अगर (drvdata->mode == CS_MODE_PERF) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (drvdata->mode == CS_MODE_DISABLED) {
+	अगर (drvdata->mode == CS_MODE_DISABLED) अणु
 		ret = etb_enable_hw(drvdata);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		drvdata->mode = CS_MODE_SYSFS;
-	}
+	पूर्ण
 
 	atomic_inc(csdev->refcnt);
 out:
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int etb_enable_perf(struct coresight_device *csdev, void *data)
-{
-	int ret = 0;
+अटल पूर्णांक etb_enable_perf(काष्ठा coresight_device *csdev, व्योम *data)
+अणु
+	पूर्णांक ret = 0;
 	pid_t pid;
-	unsigned long flags;
-	struct etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-	struct perf_output_handle *handle = data;
-	struct cs_buffers *buf = etm_perf_sink_config(handle);
+	अचिन्हित दीर्घ flags;
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	काष्ठा perf_output_handle *handle = data;
+	काष्ठा cs_buffers *buf = eपंचांग_perf_sink_config(handle);
 
 	spin_lock_irqsave(&drvdata->spinlock, flags);
 
-	/* No need to continue if the component is already in used by sysFS. */
-	if (drvdata->mode == CS_MODE_SYSFS) {
+	/* No need to जारी अगर the component is alपढ़ोy in used by sysFS. */
+	अगर (drvdata->mode == CS_MODE_SYSFS) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Get a handle on the pid of the process to monitor */
 	pid = buf->pid;
 
-	if (drvdata->pid != -1 && drvdata->pid != pid) {
+	अगर (drvdata->pid != -1 && drvdata->pid != pid) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * No HW configuration is needed if the sink is already in
-	 * use for this session.
+	 * No HW configuration is needed अगर the sink is alपढ़ोy in
+	 * use क्रम this session.
 	 */
-	if (drvdata->pid == pid) {
+	अगर (drvdata->pid == pid) अणु
 		atomic_inc(csdev->refcnt);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * We don't have an internal state to clean up if we fail to setup
-	 * the perf buffer. So we can perform the step before we turn the
+	 * We करोn't have an पूर्णांकernal state to clean up अगर we fail to setup
+	 * the perf buffer. So we can perक्रमm the step beक्रमe we turn the
 	 * ETB on and leave without cleaning up.
 	 */
 	ret = etb_set_buffer(csdev, handle);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = etb_enable_hw(drvdata);
-	if (!ret) {
+	अगर (!ret) अणु
 		/* Associate with monitored process. */
 		drvdata->pid = pid;
 		drvdata->mode = CS_MODE_PERF;
 		atomic_inc(csdev->refcnt);
-	}
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int etb_enable(struct coresight_device *csdev, u32 mode, void *data)
-{
-	int ret;
+अटल पूर्णांक etb_enable(काष्ठा coresight_device *csdev, u32 mode, व्योम *data)
+अणु
+	पूर्णांक ret;
 
-	switch (mode) {
-	case CS_MODE_SYSFS:
+	चयन (mode) अणु
+	हाल CS_MODE_SYSFS:
 		ret = etb_enable_sysfs(csdev);
-		break;
-	case CS_MODE_PERF:
+		अवरोध;
+	हाल CS_MODE_PERF:
 		ret = etb_enable_perf(csdev, data);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev_dbg(&csdev->dev, "ETB enabled\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __etb_disable_hw(struct etb_drvdata *drvdata)
-{
+अटल व्योम __etb_disable_hw(काष्ठा etb_drvdata *drvdata)
+अणु
 	u32 ffcr;
-	struct device *dev = &drvdata->csdev->dev;
-	struct csdev_access *csa = &drvdata->csdev->access;
+	काष्ठा device *dev = &drvdata->csdev->dev;
+	काष्ठा csdev_access *csa = &drvdata->csdev->access;
 
 	CS_UNLOCK(drvdata->base);
 
-	ffcr = readl_relaxed(drvdata->base + ETB_FFCR);
-	/* stop formatter when a stop has completed */
+	ffcr = पढ़ोl_relaxed(drvdata->base + ETB_FFCR);
+	/* stop क्रमmatter when a stop has completed */
 	ffcr |= ETB_FFCR_STOP_FI;
-	writel_relaxed(ffcr, drvdata->base + ETB_FFCR);
-	/* manually generate a flush of the system */
+	ग_लिखोl_relaxed(ffcr, drvdata->base + ETB_FFCR);
+	/* manually generate a flush of the प्रणाली */
 	ffcr |= ETB_FFCR_FON_MAN;
-	writel_relaxed(ffcr, drvdata->base + ETB_FFCR);
+	ग_लिखोl_relaxed(ffcr, drvdata->base + ETB_FFCR);
 
-	if (coresight_timeout(csa, ETB_FFCR, ETB_FFCR_BIT, 0)) {
+	अगर (coresight_समयout(csa, ETB_FFCR, ETB_FFCR_BIT, 0)) अणु
 		dev_err(dev,
 		"timeout while waiting for completion of Manual Flush\n");
-	}
+	पूर्ण
 
 	/* disable trace capture */
-	writel_relaxed(0x0, drvdata->base + ETB_CTL_REG);
+	ग_लिखोl_relaxed(0x0, drvdata->base + ETB_CTL_REG);
 
-	if (coresight_timeout(csa, ETB_FFSR, ETB_FFSR_BIT, 1)) {
+	अगर (coresight_समयout(csa, ETB_FFSR, ETB_FFSR_BIT, 1)) अणु
 		dev_err(dev,
 			"timeout while waiting for Formatter to Stop\n");
-	}
+	पूर्ण
 
 	CS_LOCK(drvdata->base);
-}
+पूर्ण
 
-static void etb_dump_hw(struct etb_drvdata *drvdata)
-{
+अटल व्योम etb_dump_hw(काष्ठा etb_drvdata *drvdata)
+अणु
 	bool lost = false;
-	int i;
+	पूर्णांक i;
 	u8 *buf_ptr;
-	u32 read_data, depth;
-	u32 read_ptr, write_ptr;
-	u32 frame_off, frame_endoff;
-	struct device *dev = &drvdata->csdev->dev;
+	u32 पढ़ो_data, depth;
+	u32 पढ़ो_ptr, ग_लिखो_ptr;
+	u32 frame_off, frame_enकरोff;
+	काष्ठा device *dev = &drvdata->csdev->dev;
 
 	CS_UNLOCK(drvdata->base);
 
-	read_ptr = readl_relaxed(drvdata->base + ETB_RAM_READ_POINTER);
-	write_ptr = readl_relaxed(drvdata->base + ETB_RAM_WRITE_POINTER);
+	पढ़ो_ptr = पढ़ोl_relaxed(drvdata->base + ETB_RAM_READ_POINTER);
+	ग_लिखो_ptr = पढ़ोl_relaxed(drvdata->base + ETB_RAM_WRITE_POINTER);
 
-	frame_off = write_ptr % ETB_FRAME_SIZE_WORDS;
-	frame_endoff = ETB_FRAME_SIZE_WORDS - frame_off;
-	if (frame_off) {
+	frame_off = ग_लिखो_ptr % ETB_FRAME_SIZE_WORDS;
+	frame_enकरोff = ETB_FRAME_SIZE_WORDS - frame_off;
+	अगर (frame_off) अणु
 		dev_err(dev,
 			"write_ptr: %lu not aligned to formatter frame size\n",
-			(unsigned long)write_ptr);
+			(अचिन्हित दीर्घ)ग_लिखो_ptr);
 		dev_err(dev, "frameoff: %lu, frame_endoff: %lu\n",
-			(unsigned long)frame_off, (unsigned long)frame_endoff);
-		write_ptr += frame_endoff;
-	}
+			(अचिन्हित दीर्घ)frame_off, (अचिन्हित दीर्घ)frame_enकरोff);
+		ग_लिखो_ptr += frame_enकरोff;
+	पूर्ण
 
-	if ((readl_relaxed(drvdata->base + ETB_STATUS_REG)
-		      & ETB_STATUS_RAM_FULL) == 0) {
-		writel_relaxed(0x0, drvdata->base + ETB_RAM_READ_POINTER);
-	} else {
-		writel_relaxed(write_ptr, drvdata->base + ETB_RAM_READ_POINTER);
+	अगर ((पढ़ोl_relaxed(drvdata->base + ETB_STATUS_REG)
+		      & ETB_STATUS_RAM_FULL) == 0) अणु
+		ग_लिखोl_relaxed(0x0, drvdata->base + ETB_RAM_READ_POINTER);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl_relaxed(ग_लिखो_ptr, drvdata->base + ETB_RAM_READ_POINTER);
 		lost = true;
-	}
+	पूर्ण
 
 	depth = drvdata->buffer_depth;
 	buf_ptr = drvdata->buf;
-	for (i = 0; i < depth; i++) {
-		read_data = readl_relaxed(drvdata->base +
+	क्रम (i = 0; i < depth; i++) अणु
+		पढ़ो_data = पढ़ोl_relaxed(drvdata->base +
 					  ETB_RAM_READ_DATA_REG);
-		*(u32 *)buf_ptr = read_data;
+		*(u32 *)buf_ptr = पढ़ो_data;
 		buf_ptr += 4;
-	}
+	पूर्ण
 
-	if (lost)
+	अगर (lost)
 		coresight_insert_barrier_packet(drvdata->buf);
 
-	if (frame_off) {
-		buf_ptr -= (frame_endoff * 4);
-		for (i = 0; i < frame_endoff; i++) {
+	अगर (frame_off) अणु
+		buf_ptr -= (frame_enकरोff * 4);
+		क्रम (i = 0; i < frame_enकरोff; i++) अणु
 			*buf_ptr++ = 0x0;
 			*buf_ptr++ = 0x0;
 			*buf_ptr++ = 0x0;
 			*buf_ptr++ = 0x0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	writel_relaxed(read_ptr, drvdata->base + ETB_RAM_READ_POINTER);
+	ग_लिखोl_relaxed(पढ़ो_ptr, drvdata->base + ETB_RAM_READ_POINTER);
 
 	CS_LOCK(drvdata->base);
-}
+पूर्ण
 
-static void etb_disable_hw(struct etb_drvdata *drvdata)
-{
+अटल व्योम etb_disable_hw(काष्ठा etb_drvdata *drvdata)
+अणु
 	__etb_disable_hw(drvdata);
 	etb_dump_hw(drvdata);
 	coresight_disclaim_device(drvdata->csdev);
-}
+पूर्ण
 
-static int etb_disable(struct coresight_device *csdev)
-{
-	struct etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
-	unsigned long flags;
+अटल पूर्णांक etb_disable(काष्ठा coresight_device *csdev)
+अणु
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&drvdata->spinlock, flags);
 
-	if (atomic_dec_return(csdev->refcnt)) {
+	अगर (atomic_dec_वापस(csdev->refcnt)) अणु
 		spin_unlock_irqrestore(&drvdata->spinlock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Complain if we (somehow) got out of sync */
+	/* Complain अगर we (somehow) got out of sync */
 	WARN_ON_ONCE(drvdata->mode == CS_MODE_DISABLED);
 	etb_disable_hw(drvdata);
 	/* Dissociate from monitored process. */
@@ -369,51 +370,51 @@ static int etb_disable(struct coresight_device *csdev)
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
 
 	dev_dbg(&csdev->dev, "ETB disabled\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *etb_alloc_buffer(struct coresight_device *csdev,
-			      struct perf_event *event, void **pages,
-			      int nr_pages, bool overwrite)
-{
-	int node;
-	struct cs_buffers *buf;
+अटल व्योम *etb_alloc_buffer(काष्ठा coresight_device *csdev,
+			      काष्ठा perf_event *event, व्योम **pages,
+			      पूर्णांक nr_pages, bool overग_लिखो)
+अणु
+	पूर्णांक node;
+	काष्ठा cs_buffers *buf;
 
 	node = (event->cpu == -1) ? NUMA_NO_NODE : cpu_to_node(event->cpu);
 
-	buf = kzalloc_node(sizeof(struct cs_buffers), GFP_KERNEL, node);
-	if (!buf)
-		return NULL;
+	buf = kzalloc_node(माप(काष्ठा cs_buffers), GFP_KERNEL, node);
+	अगर (!buf)
+		वापस शून्य;
 
 	buf->pid = task_pid_nr(event->owner);
-	buf->snapshot = overwrite;
+	buf->snapshot = overग_लिखो;
 	buf->nr_pages = nr_pages;
 	buf->data_pages = pages;
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void etb_free_buffer(void *config)
-{
-	struct cs_buffers *buf = config;
+अटल व्योम etb_मुक्त_buffer(व्योम *config)
+अणु
+	काष्ठा cs_buffers *buf = config;
 
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
-static int etb_set_buffer(struct coresight_device *csdev,
-			  struct perf_output_handle *handle)
-{
-	int ret = 0;
-	unsigned long head;
-	struct cs_buffers *buf = etm_perf_sink_config(handle);
+अटल पूर्णांक etb_set_buffer(काष्ठा coresight_device *csdev,
+			  काष्ठा perf_output_handle *handle)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ head;
+	काष्ठा cs_buffers *buf = eपंचांग_perf_sink_config(handle);
 
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
 	/* wrap head around to the amount of space we have */
 	head = handle->head & ((buf->nr_pages << PAGE_SHIFT) - 1);
 
-	/* find the page to write to */
+	/* find the page to ग_लिखो to */
 	buf->cur = head / PAGE_SIZE;
 
 	/* and offset within that page */
@@ -421,98 +422,98 @@ static int etb_set_buffer(struct coresight_device *csdev,
 
 	local_set(&buf->data_size, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned long etb_update_buffer(struct coresight_device *csdev,
-			      struct perf_output_handle *handle,
-			      void *sink_config)
-{
+अटल अचिन्हित दीर्घ etb_update_buffer(काष्ठा coresight_device *csdev,
+			      काष्ठा perf_output_handle *handle,
+			      व्योम *sink_config)
+अणु
 	bool lost = false;
-	int i, cur;
+	पूर्णांक i, cur;
 	u8 *buf_ptr;
-	const u32 *barrier;
-	u32 read_ptr, write_ptr, capacity;
-	u32 status, read_data;
-	unsigned long offset, to_read = 0, flags;
-	struct cs_buffers *buf = sink_config;
-	struct etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
+	स्थिर u32 *barrier;
+	u32 पढ़ो_ptr, ग_लिखो_ptr, capacity;
+	u32 status, पढ़ो_data;
+	अचिन्हित दीर्घ offset, to_पढ़ो = 0, flags;
+	काष्ठा cs_buffers *buf = sink_config;
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(csdev->dev.parent);
 
-	if (!buf)
-		return 0;
+	अगर (!buf)
+		वापस 0;
 
 	capacity = drvdata->buffer_depth * ETB_FRAME_SIZE_WORDS;
 
 	spin_lock_irqsave(&drvdata->spinlock, flags);
 
-	/* Don't do anything if another tracer is using this sink */
-	if (atomic_read(csdev->refcnt) != 1)
-		goto out;
+	/* Don't करो anything अगर another tracer is using this sink */
+	अगर (atomic_पढ़ो(csdev->refcnt) != 1)
+		जाओ out;
 
 	__etb_disable_hw(drvdata);
 	CS_UNLOCK(drvdata->base);
 
 	/* unit is in words, not bytes */
-	read_ptr = readl_relaxed(drvdata->base + ETB_RAM_READ_POINTER);
-	write_ptr = readl_relaxed(drvdata->base + ETB_RAM_WRITE_POINTER);
+	पढ़ो_ptr = पढ़ोl_relaxed(drvdata->base + ETB_RAM_READ_POINTER);
+	ग_लिखो_ptr = पढ़ोl_relaxed(drvdata->base + ETB_RAM_WRITE_POINTER);
 
 	/*
 	 * Entries should be aligned to the frame size.  If they are not
-	 * go back to the last alignment point to give decoding tools a
+	 * go back to the last alignment poपूर्णांक to give decoding tools a
 	 * chance to fix things.
 	 */
-	if (write_ptr % ETB_FRAME_SIZE_WORDS) {
+	अगर (ग_लिखो_ptr % ETB_FRAME_SIZE_WORDS) अणु
 		dev_err(&csdev->dev,
 			"write_ptr: %lu not aligned to formatter frame size\n",
-			(unsigned long)write_ptr);
+			(अचिन्हित दीर्घ)ग_लिखो_ptr);
 
-		write_ptr &= ~(ETB_FRAME_SIZE_WORDS - 1);
+		ग_लिखो_ptr &= ~(ETB_FRAME_SIZE_WORDS - 1);
 		lost = true;
-	}
+	पूर्ण
 
 	/*
-	 * Get a hold of the status register and see if a wrap around
+	 * Get a hold of the status रेजिस्टर and see अगर a wrap around
 	 * has occurred.  If so adjust things accordingly.  Otherwise
-	 * start at the beginning and go until the write pointer has
+	 * start at the beginning and go until the ग_लिखो poपूर्णांकer has
 	 * been reached.
 	 */
-	status = readl_relaxed(drvdata->base + ETB_STATUS_REG);
-	if (status & ETB_STATUS_RAM_FULL) {
+	status = पढ़ोl_relaxed(drvdata->base + ETB_STATUS_REG);
+	अगर (status & ETB_STATUS_RAM_FULL) अणु
 		lost = true;
-		to_read = capacity;
-		read_ptr = write_ptr;
-	} else {
-		to_read = CIRC_CNT(write_ptr, read_ptr, drvdata->buffer_depth);
-		to_read *= ETB_FRAME_SIZE_WORDS;
-	}
+		to_पढ़ो = capacity;
+		पढ़ो_ptr = ग_लिखो_ptr;
+	पूर्ण अन्यथा अणु
+		to_पढ़ो = CIRC_CNT(ग_लिखो_ptr, पढ़ो_ptr, drvdata->buffer_depth);
+		to_पढ़ो *= ETB_FRAME_SIZE_WORDS;
+	पूर्ण
 
 	/*
-	 * Make sure we don't overwrite data that hasn't been consumed yet.
+	 * Make sure we करोn't overwrite data that hasn't been consumed yet.
 	 * It is entirely possible that the HW buffer has more data than the
 	 * ring buffer can currently handle.  If so adjust the start address
 	 * to take only the last traces.
 	 *
 	 * In snapshot mode we are looking to get the latest traces only and as
-	 * such, we don't care about not overwriting data that hasn't been
+	 * such, we करोn't care about not overwriting data that hasn't been
 	 * processed by user space.
 	 */
-	if (!buf->snapshot && to_read > handle->size) {
+	अगर (!buf->snapshot && to_पढ़ो > handle->size) अणु
 		u32 mask = ~(ETB_FRAME_SIZE_WORDS - 1);
 
-		/* The new read pointer must be frame size aligned */
-		to_read = handle->size & mask;
+		/* The new पढ़ो poपूर्णांकer must be frame size aligned */
+		to_पढ़ो = handle->size & mask;
 		/*
-		 * Move the RAM read pointer up, keeping in mind that
+		 * Move the RAM पढ़ो poपूर्णांकer up, keeping in mind that
 		 * everything is in frame size units.
 		 */
-		read_ptr = (write_ptr + drvdata->buffer_depth) -
-					to_read / ETB_FRAME_SIZE_WORDS;
-		/* Wrap around if need be*/
-		if (read_ptr > (drvdata->buffer_depth - 1))
-			read_ptr -= drvdata->buffer_depth;
+		पढ़ो_ptr = (ग_लिखो_ptr + drvdata->buffer_depth) -
+					to_पढ़ो / ETB_FRAME_SIZE_WORDS;
+		/* Wrap around अगर need be*/
+		अगर (पढ़ो_ptr > (drvdata->buffer_depth - 1))
+			पढ़ो_ptr -= drvdata->buffer_depth;
 		/* let the decoder know we've skipped ahead */
 		lost = true;
-	}
+	पूर्ण
 
 	/*
 	 * Don't set the TRUNCATED flag in snapshot mode because 1) the
@@ -520,144 +521,144 @@ static unsigned long etb_update_buffer(struct coresight_device *csdev,
 	 * prevents the event from being re-enabled by the perf core,
 	 * resulting in stale data being send to user space.
 	 */
-	if (!buf->snapshot && lost)
+	अगर (!buf->snapshot && lost)
 		perf_aux_output_flag(handle, PERF_AUX_FLAG_TRUNCATED);
 
-	/* finally tell HW where we want to start reading from */
-	writel_relaxed(read_ptr, drvdata->base + ETB_RAM_READ_POINTER);
+	/* finally tell HW where we want to start पढ़ोing from */
+	ग_लिखोl_relaxed(पढ़ो_ptr, drvdata->base + ETB_RAM_READ_POINTER);
 
 	cur = buf->cur;
 	offset = buf->offset;
 	barrier = coresight_barrier_pkt;
 
-	for (i = 0; i < to_read; i += 4) {
+	क्रम (i = 0; i < to_पढ़ो; i += 4) अणु
 		buf_ptr = buf->data_pages[cur] + offset;
-		read_data = readl_relaxed(drvdata->base +
+		पढ़ो_data = पढ़ोl_relaxed(drvdata->base +
 					  ETB_RAM_READ_DATA_REG);
-		if (lost && i < CORESIGHT_BARRIER_PKT_SIZE) {
-			read_data = *barrier;
+		अगर (lost && i < CORESIGHT_BARRIER_PKT_SIZE) अणु
+			पढ़ो_data = *barrier;
 			barrier++;
-		}
+		पूर्ण
 
-		*(u32 *)buf_ptr = read_data;
+		*(u32 *)buf_ptr = पढ़ो_data;
 		buf_ptr += 4;
 
 		offset += 4;
-		if (offset >= PAGE_SIZE) {
+		अगर (offset >= PAGE_SIZE) अणु
 			offset = 0;
 			cur++;
 			/* wrap around at the end of the buffer */
 			cur &= buf->nr_pages - 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* reset ETB buffer for next run */
-	writel_relaxed(0x0, drvdata->base + ETB_RAM_READ_POINTER);
-	writel_relaxed(0x0, drvdata->base + ETB_RAM_WRITE_POINTER);
+	/* reset ETB buffer क्रम next run */
+	ग_लिखोl_relaxed(0x0, drvdata->base + ETB_RAM_READ_POINTER);
+	ग_लिखोl_relaxed(0x0, drvdata->base + ETB_RAM_WRITE_POINTER);
 
 	/*
 	 * In snapshot mode we simply increment the head by the number of byte
-	 * that were written.  User space function  cs_etm_find_snapshot() will
+	 * that were written.  User space function  cs_eपंचांग_find_snapshot() will
 	 * figure out how many bytes to get from the AUX buffer based on the
 	 * position of the head.
 	 */
-	if (buf->snapshot)
-		handle->head += to_read;
+	अगर (buf->snapshot)
+		handle->head += to_पढ़ो;
 
 	__etb_enable_hw(drvdata);
 	CS_LOCK(drvdata->base);
 out:
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
 
-	return to_read;
-}
+	वापस to_पढ़ो;
+पूर्ण
 
-static const struct coresight_ops_sink etb_sink_ops = {
+अटल स्थिर काष्ठा coresight_ops_sink etb_sink_ops = अणु
 	.enable		= etb_enable,
 	.disable	= etb_disable,
 	.alloc_buffer	= etb_alloc_buffer,
-	.free_buffer	= etb_free_buffer,
+	.मुक्त_buffer	= etb_मुक्त_buffer,
 	.update_buffer	= etb_update_buffer,
-};
+पूर्ण;
 
-static const struct coresight_ops etb_cs_ops = {
+अटल स्थिर काष्ठा coresight_ops etb_cs_ops = अणु
 	.sink_ops	= &etb_sink_ops,
-};
+पूर्ण;
 
-static void etb_dump(struct etb_drvdata *drvdata)
-{
-	unsigned long flags;
+अटल व्योम etb_dump(काष्ठा etb_drvdata *drvdata)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&drvdata->spinlock, flags);
-	if (drvdata->mode == CS_MODE_SYSFS) {
+	अगर (drvdata->mode == CS_MODE_SYSFS) अणु
 		__etb_disable_hw(drvdata);
 		etb_dump_hw(drvdata);
 		__etb_enable_hw(drvdata);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&drvdata->spinlock, flags);
 
 	dev_dbg(&drvdata->csdev->dev, "ETB dumped\n");
-}
+पूर्ण
 
-static int etb_open(struct inode *inode, struct file *file)
-{
-	struct etb_drvdata *drvdata = container_of(file->private_data,
-						   struct etb_drvdata, miscdev);
+अटल पूर्णांक etb_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा etb_drvdata *drvdata = container_of(file->निजी_data,
+						   काष्ठा etb_drvdata, miscdev);
 
-	if (local_cmpxchg(&drvdata->reading, 0, 1))
-		return -EBUSY;
+	अगर (local_cmpxchg(&drvdata->पढ़ोing, 0, 1))
+		वापस -EBUSY;
 
 	dev_dbg(&drvdata->csdev->dev, "%s: successfully opened\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t etb_read(struct file *file, char __user *data,
-				size_t len, loff_t *ppos)
-{
+अटल sमाप_प्रकार etb_पढ़ो(काष्ठा file *file, अक्षर __user *data,
+				माप_प्रकार len, loff_t *ppos)
+अणु
 	u32 depth;
-	struct etb_drvdata *drvdata = container_of(file->private_data,
-						   struct etb_drvdata, miscdev);
-	struct device *dev = &drvdata->csdev->dev;
+	काष्ठा etb_drvdata *drvdata = container_of(file->निजी_data,
+						   काष्ठा etb_drvdata, miscdev);
+	काष्ठा device *dev = &drvdata->csdev->dev;
 
 	etb_dump(drvdata);
 
 	depth = drvdata->buffer_depth;
-	if (*ppos + len > depth * 4)
+	अगर (*ppos + len > depth * 4)
 		len = depth * 4 - *ppos;
 
-	if (copy_to_user(data, drvdata->buf + *ppos, len)) {
+	अगर (copy_to_user(data, drvdata->buf + *ppos, len)) अणु
 		dev_dbg(dev,
 			"%s: copy_to_user failed\n", __func__);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	*ppos += len;
 
 	dev_dbg(dev, "%s: %zu bytes copied, %d bytes left\n",
-		__func__, len, (int)(depth * 4 - *ppos));
-	return len;
-}
+		__func__, len, (पूर्णांक)(depth * 4 - *ppos));
+	वापस len;
+पूर्ण
 
-static int etb_release(struct inode *inode, struct file *file)
-{
-	struct etb_drvdata *drvdata = container_of(file->private_data,
-						   struct etb_drvdata, miscdev);
-	local_set(&drvdata->reading, 0);
+अटल पूर्णांक etb_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा etb_drvdata *drvdata = container_of(file->निजी_data,
+						   काष्ठा etb_drvdata, miscdev);
+	local_set(&drvdata->पढ़ोing, 0);
 
 	dev_dbg(&drvdata->csdev->dev, "%s: released\n", __func__);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations etb_fops = {
+अटल स्थिर काष्ठा file_operations etb_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= etb_open,
-	.read		= etb_read,
+	.खोलो		= etb_खोलो,
+	.पढ़ो		= etb_पढ़ो,
 	.release	= etb_release,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-#define coresight_etb10_reg(name, offset)		\
-	coresight_simple_reg32(struct etb_drvdata, name, offset)
+#घोषणा coresight_etb10_reg(name, offset)		\
+	coresight_simple_reg32(काष्ठा etb_drvdata, name, offset)
 
 coresight_etb10_reg(rdp, ETB_RAM_DEPTH_REG);
 coresight_etb10_reg(sts, ETB_STATUS_REG);
@@ -668,7 +669,7 @@ coresight_etb10_reg(ctl, ETB_CTL_REG);
 coresight_etb10_reg(ffsr, ETB_FFSR);
 coresight_etb10_reg(ffcr, ETB_FFCR);
 
-static struct attribute *coresight_etb_mgmt_attrs[] = {
+अटल काष्ठा attribute *coresight_etb_mgmt_attrs[] = अणु
 	&dev_attr_rdp.attr,
 	&dev_attr_sts.attr,
 	&dev_attr_rrp.attr,
@@ -677,85 +678,85 @@ static struct attribute *coresight_etb_mgmt_attrs[] = {
 	&dev_attr_ctl.attr,
 	&dev_attr_ffsr.attr,
 	&dev_attr_ffcr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t trigger_cntr_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct etb_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	unsigned long val = drvdata->trigger_cntr;
+अटल sमाप_प्रकार trigger_cntr_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	अचिन्हित दीर्घ val = drvdata->trigger_cntr;
 
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t trigger_cntr_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t size)
-{
-	int ret;
-	unsigned long val;
-	struct etb_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार trigger_cntr_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ val;
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	ret = kstrtoul(buf, 16, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 16, &val);
+	अगर (ret)
+		वापस ret;
 
 	drvdata->trigger_cntr = val;
-	return size;
-}
-static DEVICE_ATTR_RW(trigger_cntr);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(trigger_cntr);
 
-static struct attribute *coresight_etb_attrs[] = {
+अटल काष्ठा attribute *coresight_etb_attrs[] = अणु
 	&dev_attr_trigger_cntr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group coresight_etb_group = {
+अटल स्थिर काष्ठा attribute_group coresight_etb_group = अणु
 	.attrs = coresight_etb_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group coresight_etb_mgmt_group = {
+अटल स्थिर काष्ठा attribute_group coresight_etb_mgmt_group = अणु
 	.attrs = coresight_etb_mgmt_attrs,
 	.name = "mgmt",
-};
+पूर्ण;
 
-static const struct attribute_group *coresight_etb_groups[] = {
+अटल स्थिर काष्ठा attribute_group *coresight_etb_groups[] = अणु
 	&coresight_etb_group,
 	&coresight_etb_mgmt_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int etb_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	int ret;
-	void __iomem *base;
-	struct device *dev = &adev->dev;
-	struct coresight_platform_data *pdata = NULL;
-	struct etb_drvdata *drvdata;
-	struct resource *res = &adev->res;
-	struct coresight_desc desc = { 0 };
+अटल पूर्णांक etb_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	पूर्णांक ret;
+	व्योम __iomem *base;
+	काष्ठा device *dev = &adev->dev;
+	काष्ठा coresight_platक्रमm_data *pdata = शून्य;
+	काष्ठा etb_drvdata *drvdata;
+	काष्ठा resource *res = &adev->res;
+	काष्ठा coresight_desc desc = अणु 0 पूर्ण;
 
 	desc.name = coresight_alloc_device_name(&etb_devs, dev);
-	if (!desc.name)
-		return -ENOMEM;
+	अगर (!desc.name)
+		वापस -ENOMEM;
 
-	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
+	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
+	अगर (!drvdata)
+		वापस -ENOMEM;
 
 	drvdata->atclk = devm_clk_get(&adev->dev, "atclk"); /* optional */
-	if (!IS_ERR(drvdata->atclk)) {
+	अगर (!IS_ERR(drvdata->atclk)) अणु
 		ret = clk_prepare_enable(drvdata->atclk);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 	dev_set_drvdata(dev, drvdata);
 
-	/* validity for the resource is already checked by the AMBA core */
+	/* validity क्रम the resource is alपढ़ोy checked by the AMBA core */
 	base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	drvdata->base = base;
 	desc.access = CSDEV_ACCESS_IOMEM(base);
@@ -764,21 +765,21 @@ static int etb_probe(struct amba_device *adev, const struct amba_id *id)
 
 	drvdata->buffer_depth = etb_get_buffer_depth(drvdata);
 
-	if (drvdata->buffer_depth & 0x80000000)
-		return -EINVAL;
+	अगर (drvdata->buffer_depth & 0x80000000)
+		वापस -EINVAL;
 
-	drvdata->buf = devm_kcalloc(dev,
+	drvdata->buf = devm_kसुस्मृति(dev,
 				    drvdata->buffer_depth, 4, GFP_KERNEL);
-	if (!drvdata->buf)
-		return -ENOMEM;
+	अगर (!drvdata->buf)
+		वापस -ENOMEM;
 
 	/* This device is not associated with a session */
 	drvdata->pid = -1;
 
-	pdata = coresight_get_platform_data(dev);
-	if (IS_ERR(pdata))
-		return PTR_ERR(pdata);
-	adev->dev.platform_data = pdata;
+	pdata = coresight_get_platक्रमm_data(dev);
+	अगर (IS_ERR(pdata))
+		वापस PTR_ERR(pdata);
+	adev->dev.platक्रमm_data = pdata;
 
 	desc.type = CORESIGHT_DEV_TYPE_SINK;
 	desc.subtype.sink_subtype = CORESIGHT_DEV_SUBTYPE_SINK_BUFFER;
@@ -786,86 +787,86 @@ static int etb_probe(struct amba_device *adev, const struct amba_id *id)
 	desc.pdata = pdata;
 	desc.dev = dev;
 	desc.groups = coresight_etb_groups;
-	drvdata->csdev = coresight_register(&desc);
-	if (IS_ERR(drvdata->csdev))
-		return PTR_ERR(drvdata->csdev);
+	drvdata->csdev = coresight_रेजिस्टर(&desc);
+	अगर (IS_ERR(drvdata->csdev))
+		वापस PTR_ERR(drvdata->csdev);
 
 	drvdata->miscdev.name = desc.name;
 	drvdata->miscdev.minor = MISC_DYNAMIC_MINOR;
 	drvdata->miscdev.fops = &etb_fops;
-	ret = misc_register(&drvdata->miscdev);
-	if (ret)
-		goto err_misc_register;
+	ret = misc_रेजिस्टर(&drvdata->miscdev);
+	अगर (ret)
+		जाओ err_misc_रेजिस्टर;
 
-	pm_runtime_put(&adev->dev);
-	return 0;
+	pm_runसमय_put(&adev->dev);
+	वापस 0;
 
-err_misc_register:
-	coresight_unregister(drvdata->csdev);
-	return ret;
-}
+err_misc_रेजिस्टर:
+	coresight_unरेजिस्टर(drvdata->csdev);
+	वापस ret;
+पूर्ण
 
-static void etb_remove(struct amba_device *adev)
-{
-	struct etb_drvdata *drvdata = dev_get_drvdata(&adev->dev);
+अटल व्योम etb_हटाओ(काष्ठा amba_device *adev)
+अणु
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(&adev->dev);
 
 	/*
-	 * Since misc_open() holds a refcount on the f_ops, which is
-	 * etb fops in this case, device is there until last file
-	 * handler to this device is closed.
+	 * Since misc_खोलो() holds a refcount on the f_ops, which is
+	 * etb fops in this हाल, device is there until last file
+	 * handler to this device is बंदd.
 	 */
-	misc_deregister(&drvdata->miscdev);
-	coresight_unregister(drvdata->csdev);
-}
+	misc_deरेजिस्टर(&drvdata->miscdev);
+	coresight_unरेजिस्टर(drvdata->csdev);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int etb_runtime_suspend(struct device *dev)
-{
-	struct etb_drvdata *drvdata = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक etb_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(dev);
 
-	if (drvdata && !IS_ERR(drvdata->atclk))
+	अगर (drvdata && !IS_ERR(drvdata->atclk))
 		clk_disable_unprepare(drvdata->atclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int etb_runtime_resume(struct device *dev)
-{
-	struct etb_drvdata *drvdata = dev_get_drvdata(dev);
+अटल पूर्णांक etb_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा etb_drvdata *drvdata = dev_get_drvdata(dev);
 
-	if (drvdata && !IS_ERR(drvdata->atclk))
+	अगर (drvdata && !IS_ERR(drvdata->atclk))
 		clk_prepare_enable(drvdata->atclk);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops etb_dev_pm_ops = {
-	SET_RUNTIME_PM_OPS(etb_runtime_suspend, etb_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops etb_dev_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(etb_runसमय_suspend, etb_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct amba_id etb_ids[] = {
-	{
+अटल स्थिर काष्ठा amba_id etb_ids[] = अणु
+	अणु
 		.id	= 0x000bb907,
 		.mask	= 0x000fffff,
-	},
-	{ 0, 0},
-};
+	पूर्ण,
+	अणु 0, 0पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(amba, etb_ids);
 
-static struct amba_driver etb_driver = {
-	.drv = {
+अटल काष्ठा amba_driver etb_driver = अणु
+	.drv = अणु
 		.name	= "coresight-etb10",
 		.owner	= THIS_MODULE,
 		.pm	= &etb_dev_pm_ops,
 		.suppress_bind_attrs = true,
 
-	},
+	पूर्ण,
 	.probe		= etb_probe,
-	.remove		= etb_remove,
+	.हटाओ		= etb_हटाओ,
 	.id_table	= etb_ids,
-};
+पूर्ण;
 
 module_amba_driver(etb_driver);
 

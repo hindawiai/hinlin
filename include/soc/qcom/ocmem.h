@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * The On Chip Memory (OCMEM) allocator allows various clients to allocate
- * memory from OCMEM based on performance, latency and power requirements.
+ * memory from OCMEM based on perक्रमmance, latency and घातer requirements.
  * This is typically used by the GPU, camera/video, and audio components on
  * some Snapdragon SoCs.
  *
@@ -9,13 +10,13 @@
  * Copyright (C) 2015 Red Hat. Author: Rob Clark <robdclark@gmail.com>
  */
 
-#include <linux/device.h>
-#include <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
 
-#ifndef __OCMEM_H__
-#define __OCMEM_H__
+#अगर_अघोषित __OCMEM_H__
+#घोषणा __OCMEM_H__
 
-enum ocmem_client {
+क्रमागत ocmem_client अणु
 	/* GMEM clients */
 	OCMEM_GRAPHICS = 0x0,
 	/*
@@ -23,43 +24,43 @@ enum ocmem_client {
 	 * deal with multiple clients.
 	 */
 	OCMEM_CLIENT_MAX,
-};
+पूर्ण;
 
-struct ocmem;
+काष्ठा ocmem;
 
-struct ocmem_buf {
-	unsigned long offset;
-	unsigned long addr;
-	unsigned long len;
-};
+काष्ठा ocmem_buf अणु
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ len;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_QCOM_OCMEM)
+#अगर IS_ENABLED(CONFIG_QCOM_OCMEM)
 
-struct ocmem *of_get_ocmem(struct device *dev);
-struct ocmem_buf *ocmem_allocate(struct ocmem *ocmem, enum ocmem_client client,
-				 unsigned long size);
-void ocmem_free(struct ocmem *ocmem, enum ocmem_client client,
-		struct ocmem_buf *buf);
+काष्ठा ocmem *of_get_ocmem(काष्ठा device *dev);
+काष्ठा ocmem_buf *ocmem_allocate(काष्ठा ocmem *ocmem, क्रमागत ocmem_client client,
+				 अचिन्हित दीर्घ size);
+व्योम ocmem_मुक्त(काष्ठा ocmem *ocmem, क्रमागत ocmem_client client,
+		काष्ठा ocmem_buf *buf);
 
-#else /* IS_ENABLED(CONFIG_QCOM_OCMEM) */
+#अन्यथा /* IS_ENABLED(CONFIG_QCOM_OCMEM) */
 
-static inline struct ocmem *of_get_ocmem(struct device *dev)
-{
-	return ERR_PTR(-ENODEV);
-}
+अटल अंतरभूत काष्ठा ocmem *of_get_ocmem(काष्ठा device *dev)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static inline struct ocmem_buf *ocmem_allocate(struct ocmem *ocmem,
-					       enum ocmem_client client,
-					       unsigned long size)
-{
-	return ERR_PTR(-ENODEV);
-}
+अटल अंतरभूत काष्ठा ocmem_buf *ocmem_allocate(काष्ठा ocmem *ocmem,
+					       क्रमागत ocmem_client client,
+					       अचिन्हित दीर्घ size)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static inline void ocmem_free(struct ocmem *ocmem, enum ocmem_client client,
-			      struct ocmem_buf *buf)
-{
-}
+अटल अंतरभूत व्योम ocmem_मुक्त(काष्ठा ocmem *ocmem, क्रमागत ocmem_client client,
+			      काष्ठा ocmem_buf *buf)
+अणु
+पूर्ण
 
-#endif /* IS_ENABLED(CONFIG_QCOM_OCMEM) */
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_QCOM_OCMEM) */
 
-#endif /* __OCMEM_H__ */
+#पूर्ण_अगर /* __OCMEM_H__ */

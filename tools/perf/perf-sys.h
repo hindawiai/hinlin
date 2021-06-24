@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_SYS_H
-#define _PERF_SYS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_SYS_H
+#घोषणा _PERF_SYS_H
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <linux/compiler.h>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/syscall.h>
+#समावेश <linux/compiler.h>
 
-struct perf_event_attr;
+काष्ठा perf_event_attr;
 
-static inline int
-sys_perf_event_open(struct perf_event_attr *attr,
-		      pid_t pid, int cpu, int group_fd,
-		      unsigned long flags)
-{
-	return syscall(__NR_perf_event_open, attr, pid, cpu,
+अटल अंतरभूत पूर्णांक
+sys_perf_event_खोलो(काष्ठा perf_event_attr *attr,
+		      pid_t pid, पूर्णांक cpu, पूर्णांक group_fd,
+		      अचिन्हित दीर्घ flags)
+अणु
+	वापस syscall(__NR_perf_event_खोलो, attr, pid, cpu,
 		       group_fd, flags);
-}
+पूर्ण
 
-#endif /* _PERF_SYS_H */
+#पूर्ण_अगर /* _PERF_SYS_H */

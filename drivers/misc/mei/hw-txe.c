@@ -1,1149 +1,1150 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2013-2020, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#include <linux/pci.h>
-#include <linux/jiffies.h>
-#include <linux/ktime.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/interrupt.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/mei.h>
+#समावेश <linux/mei.h>
 
-#include "mei_dev.h"
-#include "hw-txe.h"
-#include "client.h"
-#include "hbm.h"
+#समावेश "mei_dev.h"
+#समावेश "hw-txe.h"
+#समावेश "client.h"
+#समावेश "hbm.h"
 
-#include "mei-trace.h"
+#समावेश "mei-trace.h"
 
-#define TXE_HBUF_DEPTH (PAYLOAD_SIZE / MEI_SLOT_SIZE)
-
-/**
- * mei_txe_reg_read - Reads 32bit data from the txe device
- *
- * @base_addr: registers base address
- * @offset: register offset
- *
- * Return: register value
- */
-static inline u32 mei_txe_reg_read(void __iomem *base_addr,
-					unsigned long offset)
-{
-	return ioread32(base_addr + offset);
-}
+#घोषणा TXE_HBUF_DEPTH (PAYLOAD_SIZE / MEI_SLOT_SIZE)
 
 /**
- * mei_txe_reg_write - Writes 32bit data to the txe device
+ * mei_txe_reg_पढ़ो - Reads 32bit data from the txe device
  *
- * @base_addr: registers base address
- * @offset: register offset
- * @value: the value to write
+ * @base_addr: रेजिस्टरs base address
+ * @offset: रेजिस्टर offset
+ *
+ * Return: रेजिस्टर value
  */
-static inline void mei_txe_reg_write(void __iomem *base_addr,
-				unsigned long offset, u32 value)
-{
-	iowrite32(value, base_addr + offset);
-}
+अटल अंतरभूत u32 mei_txe_reg_पढ़ो(व्योम __iomem *base_addr,
+					अचिन्हित दीर्घ offset)
+अणु
+	वापस ioपढ़ो32(base_addr + offset);
+पूर्ण
 
 /**
- * mei_txe_sec_reg_read_silent - Reads 32bit data from the SeC BAR
+ * mei_txe_reg_ग_लिखो - Writes 32bit data to the txe device
  *
- * @hw: the txe hardware structure
- * @offset: register offset
- *
- * Doesn't check for aliveness while Reads 32bit data from the SeC BAR
- *
- * Return: register value
+ * @base_addr: रेजिस्टरs base address
+ * @offset: रेजिस्टर offset
+ * @value: the value to ग_लिखो
  */
-static inline u32 mei_txe_sec_reg_read_silent(struct mei_txe_hw *hw,
-				unsigned long offset)
-{
-	return mei_txe_reg_read(hw->mem_addr[SEC_BAR], offset);
-}
+अटल अंतरभूत व्योम mei_txe_reg_ग_लिखो(व्योम __iomem *base_addr,
+				अचिन्हित दीर्घ offset, u32 value)
+अणु
+	ioग_लिखो32(value, base_addr + offset);
+पूर्ण
 
 /**
- * mei_txe_sec_reg_read - Reads 32bit data from the SeC BAR
+ * mei_txe_sec_reg_पढ़ो_silent - Reads 32bit data from the SeC BAR
  *
- * @hw: the txe hardware structure
- * @offset: register offset
+ * @hw: the txe hardware काष्ठाure
+ * @offset: रेजिस्टर offset
  *
- * Reads 32bit data from the SeC BAR and shout loud if aliveness is not set
+ * Doesn't check क्रम aliveness जबतक Reads 32bit data from the SeC BAR
  *
- * Return: register value
+ * Return: रेजिस्टर value
  */
-static inline u32 mei_txe_sec_reg_read(struct mei_txe_hw *hw,
-				unsigned long offset)
-{
+अटल अंतरभूत u32 mei_txe_sec_reg_पढ़ो_silent(काष्ठा mei_txe_hw *hw,
+				अचिन्हित दीर्घ offset)
+अणु
+	वापस mei_txe_reg_पढ़ो(hw->mem_addr[SEC_BAR], offset);
+पूर्ण
+
+/**
+ * mei_txe_sec_reg_पढ़ो - Reads 32bit data from the SeC BAR
+ *
+ * @hw: the txe hardware काष्ठाure
+ * @offset: रेजिस्टर offset
+ *
+ * Reads 32bit data from the SeC BAR and shout loud अगर aliveness is not set
+ *
+ * Return: रेजिस्टर value
+ */
+अटल अंतरभूत u32 mei_txe_sec_reg_पढ़ो(काष्ठा mei_txe_hw *hw,
+				अचिन्हित दीर्घ offset)
+अणु
 	WARN(!hw->aliveness, "sec read: aliveness not asserted\n");
-	return mei_txe_sec_reg_read_silent(hw, offset);
-}
+	वापस mei_txe_sec_reg_पढ़ो_silent(hw, offset);
+पूर्ण
 /**
- * mei_txe_sec_reg_write_silent - Writes 32bit data to the SeC BAR
- *   doesn't check for aliveness
+ * mei_txe_sec_reg_ग_लिखो_silent - Writes 32bit data to the SeC BAR
+ *   करोesn't check क्रम aliveness
  *
- * @hw: the txe hardware structure
- * @offset: register offset
- * @value: value to write
+ * @hw: the txe hardware काष्ठाure
+ * @offset: रेजिस्टर offset
+ * @value: value to ग_लिखो
  *
- * Doesn't check for aliveness while writes 32bit data from to the SeC BAR
+ * Doesn't check क्रम aliveness जबतक ग_लिखोs 32bit data from to the SeC BAR
  */
-static inline void mei_txe_sec_reg_write_silent(struct mei_txe_hw *hw,
-				unsigned long offset, u32 value)
-{
-	mei_txe_reg_write(hw->mem_addr[SEC_BAR], offset, value);
-}
+अटल अंतरभूत व्योम mei_txe_sec_reg_ग_लिखो_silent(काष्ठा mei_txe_hw *hw,
+				अचिन्हित दीर्घ offset, u32 value)
+अणु
+	mei_txe_reg_ग_लिखो(hw->mem_addr[SEC_BAR], offset, value);
+पूर्ण
 
 /**
- * mei_txe_sec_reg_write - Writes 32bit data to the SeC BAR
+ * mei_txe_sec_reg_ग_लिखो - Writes 32bit data to the SeC BAR
  *
- * @hw: the txe hardware structure
- * @offset: register offset
- * @value: value to write
+ * @hw: the txe hardware काष्ठाure
+ * @offset: रेजिस्टर offset
+ * @value: value to ग_लिखो
  *
- * Writes 32bit data from the SeC BAR and shout loud if aliveness is not set
+ * Writes 32bit data from the SeC BAR and shout loud अगर aliveness is not set
  */
-static inline void mei_txe_sec_reg_write(struct mei_txe_hw *hw,
-				unsigned long offset, u32 value)
-{
+अटल अंतरभूत व्योम mei_txe_sec_reg_ग_लिखो(काष्ठा mei_txe_hw *hw,
+				अचिन्हित दीर्घ offset, u32 value)
+अणु
 	WARN(!hw->aliveness, "sec write: aliveness not asserted\n");
-	mei_txe_sec_reg_write_silent(hw, offset, value);
-}
+	mei_txe_sec_reg_ग_लिखो_silent(hw, offset, value);
+पूर्ण
 /**
- * mei_txe_br_reg_read - Reads 32bit data from the Bridge BAR
+ * mei_txe_br_reg_पढ़ो - Reads 32bit data from the Bridge BAR
  *
- * @hw: the txe hardware structure
- * @offset: offset from which to read the data
+ * @hw: the txe hardware काष्ठाure
+ * @offset: offset from which to पढ़ो the data
  *
- * Return: the byte read.
+ * Return: the byte पढ़ो.
  */
-static inline u32 mei_txe_br_reg_read(struct mei_txe_hw *hw,
-				unsigned long offset)
-{
-	return mei_txe_reg_read(hw->mem_addr[BRIDGE_BAR], offset);
-}
+अटल अंतरभूत u32 mei_txe_br_reg_पढ़ो(काष्ठा mei_txe_hw *hw,
+				अचिन्हित दीर्घ offset)
+अणु
+	वापस mei_txe_reg_पढ़ो(hw->mem_addr[BRIDGE_BAR], offset);
+पूर्ण
 
 /**
- * mei_txe_br_reg_write - Writes 32bit data to the Bridge BAR
+ * mei_txe_br_reg_ग_लिखो - Writes 32bit data to the Bridge BAR
  *
- * @hw: the txe hardware structure
- * @offset: offset from which to write the data
- * @value: the byte to write
+ * @hw: the txe hardware काष्ठाure
+ * @offset: offset from which to ग_लिखो the data
+ * @value: the byte to ग_लिखो
  */
-static inline void mei_txe_br_reg_write(struct mei_txe_hw *hw,
-				unsigned long offset, u32 value)
-{
-	mei_txe_reg_write(hw->mem_addr[BRIDGE_BAR], offset, value);
-}
+अटल अंतरभूत व्योम mei_txe_br_reg_ग_लिखो(काष्ठा mei_txe_hw *hw,
+				अचिन्हित दीर्घ offset, u32 value)
+अणु
+	mei_txe_reg_ग_लिखो(hw->mem_addr[BRIDGE_BAR], offset, value);
+पूर्ण
 
 /**
- * mei_txe_aliveness_set - request for aliveness change
+ * mei_txe_aliveness_set - request क्रम aliveness change
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @req: requested aliveness value
  *
- * Request for aliveness change and returns true if the change is
- *   really needed and false if aliveness is already
+ * Request क्रम aliveness change and वापसs true अगर the change is
+ *   really needed and false अगर aliveness is alपढ़ोy
  *   in the requested state
  *
  * Locking: called under "dev->device_lock" lock
  *
- * Return: true if request was send
+ * Return: true अगर request was send
  */
-static bool mei_txe_aliveness_set(struct mei_device *dev, u32 req)
-{
+अटल bool mei_txe_aliveness_set(काष्ठा mei_device *dev, u32 req)
+अणु
 
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	bool do_req = hw->aliveness != req;
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	bool करो_req = hw->aliveness != req;
 
 	dev_dbg(dev->dev, "Aliveness current=%d request=%d\n",
 				hw->aliveness, req);
-	if (do_req) {
+	अगर (करो_req) अणु
 		dev->pg_event = MEI_PG_EVENT_WAIT;
-		mei_txe_br_reg_write(hw, SICR_HOST_ALIVENESS_REQ_REG, req);
-	}
-	return do_req;
-}
+		mei_txe_br_reg_ग_लिखो(hw, SICR_HOST_ALIVENESS_REQ_REG, req);
+	पूर्ण
+	वापस करो_req;
+पूर्ण
 
 
 /**
- * mei_txe_aliveness_req_get - get aliveness requested register value
+ * mei_txe_aliveness_req_get - get aliveness requested रेजिस्टर value
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Extract HICR_HOST_ALIVENESS_RESP_ACK bit from
- * from HICR_HOST_ALIVENESS_REQ register value
+ * from HICR_HOST_ALIVENESS_REQ रेजिस्टर value
  *
  * Return: SICR_HOST_ALIVENESS_REQ_REQUESTED bit value
  */
-static u32 mei_txe_aliveness_req_get(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल u32 mei_txe_aliveness_req_get(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 	u32 reg;
 
-	reg = mei_txe_br_reg_read(hw, SICR_HOST_ALIVENESS_REQ_REG);
-	return reg & SICR_HOST_ALIVENESS_REQ_REQUESTED;
-}
+	reg = mei_txe_br_reg_पढ़ो(hw, SICR_HOST_ALIVENESS_REQ_REG);
+	वापस reg & SICR_HOST_ALIVENESS_REQ_REQUESTED;
+पूर्ण
 
 /**
- * mei_txe_aliveness_get - get aliveness response register value
+ * mei_txe_aliveness_get - get aliveness response रेजिस्टर value
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: HICR_HOST_ALIVENESS_RESP_ACK bit from HICR_HOST_ALIVENESS_RESP
- *         register
+ *         रेजिस्टर
  */
-static u32 mei_txe_aliveness_get(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल u32 mei_txe_aliveness_get(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 	u32 reg;
 
-	reg = mei_txe_br_reg_read(hw, HICR_HOST_ALIVENESS_RESP_REG);
-	return reg & HICR_HOST_ALIVENESS_RESP_ACK;
-}
+	reg = mei_txe_br_reg_पढ़ो(hw, HICR_HOST_ALIVENESS_RESP_REG);
+	वापस reg & HICR_HOST_ALIVENESS_RESP_ACK;
+पूर्ण
 
 /**
- * mei_txe_aliveness_poll - waits for aliveness to settle
+ * mei_txe_aliveness_poll - रुकोs क्रम aliveness to settle
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @expected: expected aliveness value
  *
- * Polls for HICR_HOST_ALIVENESS_RESP.ALIVENESS_RESP to be set
+ * Polls क्रम HICR_HOST_ALIVENESS_RESP.ALIVENESS_RESP to be set
  *
- * Return: 0 if the expected value was received, -ETIME otherwise
+ * Return: 0 अगर the expected value was received, -ETIME otherwise
  */
-static int mei_txe_aliveness_poll(struct mei_device *dev, u32 expected)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	ktime_t stop, start;
+अटल पूर्णांक mei_txe_aliveness_poll(काष्ठा mei_device *dev, u32 expected)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	kसमय_प्रकार stop, start;
 
-	start = ktime_get();
-	stop = ktime_add(start, ms_to_ktime(SEC_ALIVENESS_WAIT_TIMEOUT));
-	do {
+	start = kसमय_get();
+	stop = kसमय_add(start, ms_to_kसमय(SEC_ALIVENESS_WAIT_TIMEOUT));
+	करो अणु
 		hw->aliveness = mei_txe_aliveness_get(dev);
-		if (hw->aliveness == expected) {
+		अगर (hw->aliveness == expected) अणु
 			dev->pg_event = MEI_PG_EVENT_IDLE;
 			dev_dbg(dev->dev, "aliveness settled after %lld usecs\n",
-				ktime_to_us(ktime_sub(ktime_get(), start)));
-			return 0;
-		}
+				kसमय_प्रकारo_us(kसमय_sub(kसमय_get(), start)));
+			वापस 0;
+		पूर्ण
 		usleep_range(20, 50);
-	} while (ktime_before(ktime_get(), stop));
+	पूर्ण जबतक (kसमय_beक्रमe(kसमय_get(), stop));
 
 	dev->pg_event = MEI_PG_EVENT_IDLE;
 	dev_err(dev->dev, "aliveness timed out\n");
-	return -ETIME;
-}
+	वापस -ETIME;
+पूर्ण
 
 /**
- * mei_txe_aliveness_wait - waits for aliveness to settle
+ * mei_txe_aliveness_रुको - रुकोs क्रम aliveness to settle
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @expected: expected aliveness value
  *
- * Waits for HICR_HOST_ALIVENESS_RESP.ALIVENESS_RESP to be set
+ * Waits क्रम HICR_HOST_ALIVENESS_RESP.ALIVENESS_RESP to be set
  *
  * Return: 0 on success and < 0 otherwise
  */
-static int mei_txe_aliveness_wait(struct mei_device *dev, u32 expected)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	const unsigned long timeout =
-			msecs_to_jiffies(SEC_ALIVENESS_WAIT_TIMEOUT);
-	long err;
-	int ret;
+अटल पूर्णांक mei_txe_aliveness_रुको(काष्ठा mei_device *dev, u32 expected)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	स्थिर अचिन्हित दीर्घ समयout =
+			msecs_to_jअगरfies(SEC_ALIVENESS_WAIT_TIMEOUT);
+	दीर्घ err;
+	पूर्णांक ret;
 
 	hw->aliveness = mei_txe_aliveness_get(dev);
-	if (hw->aliveness == expected)
-		return 0;
+	अगर (hw->aliveness == expected)
+		वापस 0;
 
 	mutex_unlock(&dev->device_lock);
-	err = wait_event_timeout(hw->wait_aliveness_resp,
-			dev->pg_event == MEI_PG_EVENT_RECEIVED, timeout);
+	err = रुको_event_समयout(hw->रुको_aliveness_resp,
+			dev->pg_event == MEI_PG_EVENT_RECEIVED, समयout);
 	mutex_lock(&dev->device_lock);
 
 	hw->aliveness = mei_txe_aliveness_get(dev);
 	ret = hw->aliveness == expected ? 0 : -ETIME;
 
-	if (ret)
+	अगर (ret)
 		dev_warn(dev->dev, "aliveness timed out = %ld aliveness = %d event = %d\n",
 			err, hw->aliveness, dev->pg_event);
-	else
+	अन्यथा
 		dev_dbg(dev->dev, "aliveness settled after = %d msec aliveness = %d event = %d\n",
-			jiffies_to_msecs(timeout - err),
+			jअगरfies_to_msecs(समयout - err),
 			hw->aliveness, dev->pg_event);
 
 	dev->pg_event = MEI_PG_EVENT_IDLE;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mei_txe_aliveness_set_sync - sets an wait for aliveness to complete
+ * mei_txe_aliveness_set_sync - sets an रुको क्रम aliveness to complete
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @req: requested aliveness value
  *
  * Return: 0 on success and < 0 otherwise
  */
-int mei_txe_aliveness_set_sync(struct mei_device *dev, u32 req)
-{
-	if (mei_txe_aliveness_set(dev, req))
-		return mei_txe_aliveness_wait(dev, req);
-	return 0;
-}
+पूर्णांक mei_txe_aliveness_set_sync(काष्ठा mei_device *dev, u32 req)
+अणु
+	अगर (mei_txe_aliveness_set(dev, req))
+		वापस mei_txe_aliveness_रुको(dev, req);
+	वापस 0;
+पूर्ण
 
 /**
  * mei_txe_pg_in_transition - is device now in pg transition
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: true if in pg transition, false otherwise
+ * Return: true अगर in pg transition, false otherwise
  */
-static bool mei_txe_pg_in_transition(struct mei_device *dev)
-{
-	return dev->pg_event == MEI_PG_EVENT_WAIT;
-}
+अटल bool mei_txe_pg_in_transition(काष्ठा mei_device *dev)
+अणु
+	वापस dev->pg_event == MEI_PG_EVENT_WAIT;
+पूर्ण
 
 /**
- * mei_txe_pg_is_enabled - detect if PG is supported by HW
+ * mei_txe_pg_is_enabled - detect अगर PG is supported by HW
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: true is pg supported, false otherwise
  */
-static bool mei_txe_pg_is_enabled(struct mei_device *dev)
-{
-	return true;
-}
+अटल bool mei_txe_pg_is_enabled(काष्ठा mei_device *dev)
+अणु
+	वापस true;
+पूर्ण
 
 /**
- * mei_txe_pg_state  - translate aliveness register value
- *   to the mei power gating state
+ * mei_txe_pg_state  - translate aliveness रेजिस्टर value
+ *   to the mei घातer gating state
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: MEI_PG_OFF if aliveness is on and MEI_PG_ON otherwise
+ * Return: MEI_PG_OFF अगर aliveness is on and MEI_PG_ON otherwise
  */
-static inline enum mei_pg_state mei_txe_pg_state(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल अंतरभूत क्रमागत mei_pg_state mei_txe_pg_state(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	return hw->aliveness ? MEI_PG_OFF : MEI_PG_ON;
-}
+	वापस hw->aliveness ? MEI_PG_OFF : MEI_PG_ON;
+पूर्ण
 
 /**
- * mei_txe_input_ready_interrupt_enable - sets the Input Ready Interrupt
+ * mei_txe_input_पढ़ोy_पूर्णांकerrupt_enable - sets the Input Ready Interrupt
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_txe_input_ready_interrupt_enable(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	u32 hintmsk;
-	/* Enable the SEC_IPC_HOST_INT_MASK_IN_RDY interrupt */
-	hintmsk = mei_txe_sec_reg_read(hw, SEC_IPC_HOST_INT_MASK_REG);
-	hintmsk |= SEC_IPC_HOST_INT_MASK_IN_RDY;
-	mei_txe_sec_reg_write(hw, SEC_IPC_HOST_INT_MASK_REG, hintmsk);
-}
+अटल व्योम mei_txe_input_पढ़ोy_पूर्णांकerrupt_enable(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	u32 hपूर्णांकmsk;
+	/* Enable the SEC_IPC_HOST_INT_MASK_IN_RDY पूर्णांकerrupt */
+	hपूर्णांकmsk = mei_txe_sec_reg_पढ़ो(hw, SEC_IPC_HOST_INT_MASK_REG);
+	hपूर्णांकmsk |= SEC_IPC_HOST_INT_MASK_IN_RDY;
+	mei_txe_sec_reg_ग_लिखो(hw, SEC_IPC_HOST_INT_MASK_REG, hपूर्णांकmsk);
+पूर्ण
 
 /**
- * mei_txe_input_doorbell_set - sets bit 0 in
+ * mei_txe_input_करोorbell_set - sets bit 0 in
  *    SEC_IPC_INPUT_DOORBELL.IPC_INPUT_DOORBELL.
  *
- * @hw: the txe hardware structure
+ * @hw: the txe hardware काष्ठाure
  */
-static void mei_txe_input_doorbell_set(struct mei_txe_hw *hw)
-{
-	/* Clear the interrupt cause */
-	clear_bit(TXE_INTR_IN_READY_BIT, &hw->intr_cause);
-	mei_txe_sec_reg_write(hw, SEC_IPC_INPUT_DOORBELL_REG, 1);
-}
+अटल व्योम mei_txe_input_करोorbell_set(काष्ठा mei_txe_hw *hw)
+अणु
+	/* Clear the पूर्णांकerrupt cause */
+	clear_bit(TXE_INTR_IN_READY_BIT, &hw->पूर्णांकr_cause);
+	mei_txe_sec_reg_ग_लिखो(hw, SEC_IPC_INPUT_DOORBELL_REG, 1);
+पूर्ण
 
 /**
- * mei_txe_output_ready_set - Sets the SICR_SEC_IPC_OUTPUT_STATUS bit to 1
+ * mei_txe_output_पढ़ोy_set - Sets the SICR_SEC_IPC_OUTPUT_STATUS bit to 1
  *
- * @hw: the txe hardware structure
+ * @hw: the txe hardware काष्ठाure
  */
-static void mei_txe_output_ready_set(struct mei_txe_hw *hw)
-{
-	mei_txe_br_reg_write(hw,
+अटल व्योम mei_txe_output_पढ़ोy_set(काष्ठा mei_txe_hw *hw)
+अणु
+	mei_txe_br_reg_ग_लिखो(hw,
 			SICR_SEC_IPC_OUTPUT_STATUS_REG,
 			SEC_IPC_OUTPUT_STATUS_RDY);
-}
+पूर्ण
 
 /**
- * mei_txe_is_input_ready - check if TXE is ready for receiving data
+ * mei_txe_is_input_पढ़ोy - check अगर TXE is पढ़ोy क्रम receiving data
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: true if INPUT STATUS READY bit is set
+ * Return: true अगर INPUT STATUS READY bit is set
  */
-static bool mei_txe_is_input_ready(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल bool mei_txe_is_input_पढ़ोy(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 	u32 status;
 
-	status = mei_txe_sec_reg_read(hw, SEC_IPC_INPUT_STATUS_REG);
-	return !!(SEC_IPC_INPUT_STATUS_RDY & status);
-}
+	status = mei_txe_sec_reg_पढ़ो(hw, SEC_IPC_INPUT_STATUS_REG);
+	वापस !!(SEC_IPC_INPUT_STATUS_RDY & status);
+पूर्ण
 
 /**
- * mei_txe_intr_clear - clear all interrupts
+ * mei_txe_पूर्णांकr_clear - clear all पूर्णांकerrupts
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static inline void mei_txe_intr_clear(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल अंतरभूत व्योम mei_txe_पूर्णांकr_clear(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	mei_txe_sec_reg_write_silent(hw, SEC_IPC_HOST_INT_STATUS_REG,
+	mei_txe_sec_reg_ग_लिखो_silent(hw, SEC_IPC_HOST_INT_STATUS_REG,
 		SEC_IPC_HOST_INT_STATUS_PENDING);
-	mei_txe_br_reg_write(hw, HISR_REG, HISR_INT_STS_MSK);
-	mei_txe_br_reg_write(hw, HHISR_REG, IPC_HHIER_MSK);
-}
+	mei_txe_br_reg_ग_लिखो(hw, HISR_REG, HISR_INT_STS_MSK);
+	mei_txe_br_reg_ग_लिखो(hw, HHISR_REG, IPC_HHIER_MSK);
+पूर्ण
 
 /**
- * mei_txe_intr_disable - disable all interrupts
+ * mei_txe_पूर्णांकr_disable - disable all पूर्णांकerrupts
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_txe_intr_disable(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल व्योम mei_txe_पूर्णांकr_disable(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	mei_txe_br_reg_write(hw, HHIER_REG, 0);
-	mei_txe_br_reg_write(hw, HIER_REG, 0);
-}
+	mei_txe_br_reg_ग_लिखो(hw, HHIER_REG, 0);
+	mei_txe_br_reg_ग_लिखो(hw, HIER_REG, 0);
+पूर्ण
 /**
- * mei_txe_intr_enable - enable all interrupts
+ * mei_txe_पूर्णांकr_enable - enable all पूर्णांकerrupts
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_txe_intr_enable(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल व्योम mei_txe_पूर्णांकr_enable(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	mei_txe_br_reg_write(hw, HHIER_REG, IPC_HHIER_MSK);
-	mei_txe_br_reg_write(hw, HIER_REG, HIER_INT_EN_MSK);
-}
+	mei_txe_br_reg_ग_लिखो(hw, HHIER_REG, IPC_HHIER_MSK);
+	mei_txe_br_reg_ग_लिखो(hw, HIER_REG, HIER_INT_EN_MSK);
+पूर्ण
 
 /**
- * mei_txe_synchronize_irq - wait for pending IRQ handlers
+ * mei_txe_synchronize_irq - रुको क्रम pending IRQ handlers
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_txe_synchronize_irq(struct mei_device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
+अटल व्योम mei_txe_synchronize_irq(काष्ठा mei_device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
 
 	synchronize_irq(pdev->irq);
-}
+पूर्ण
 
 /**
- * mei_txe_pending_interrupts - check if there are pending interrupts
- *	only Aliveness, Input ready, and output doorbell are of relevance
+ * mei_txe_pending_पूर्णांकerrupts - check अगर there are pending पूर्णांकerrupts
+ *	only Aliveness, Input पढ़ोy, and output करोorbell are of relevance
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Checks if there are pending interrupts
- * only Aliveness, Readiness, Input ready, and Output doorbell are relevant
+ * Checks अगर there are pending पूर्णांकerrupts
+ * only Aliveness, Readiness, Input पढ़ोy, and Output करोorbell are relevant
  *
- * Return: true if there are pending interrupts
+ * Return: true अगर there are pending पूर्णांकerrupts
  */
-static bool mei_txe_pending_interrupts(struct mei_device *dev)
-{
+अटल bool mei_txe_pending_पूर्णांकerrupts(काष्ठा mei_device *dev)
+अणु
 
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	bool ret = (hw->intr_cause & (TXE_INTR_READINESS |
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	bool ret = (hw->पूर्णांकr_cause & (TXE_INTR_READINESS |
 				      TXE_INTR_ALIVENESS |
 				      TXE_INTR_IN_READY  |
 				      TXE_INTR_OUT_DB));
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_dbg(dev->dev,
 			"Pending Interrupts InReady=%01d Readiness=%01d, Aliveness=%01d, OutDoor=%01d\n",
-			!!(hw->intr_cause & TXE_INTR_IN_READY),
-			!!(hw->intr_cause & TXE_INTR_READINESS),
-			!!(hw->intr_cause & TXE_INTR_ALIVENESS),
-			!!(hw->intr_cause & TXE_INTR_OUT_DB));
-	}
-	return ret;
-}
+			!!(hw->पूर्णांकr_cause & TXE_INTR_IN_READY),
+			!!(hw->पूर्णांकr_cause & TXE_INTR_READINESS),
+			!!(hw->पूर्णांकr_cause & TXE_INTR_ALIVENESS),
+			!!(hw->पूर्णांकr_cause & TXE_INTR_OUT_DB));
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- * mei_txe_input_payload_write - write a dword to the host buffer
+ * mei_txe_input_payload_ग_लिखो - ग_लिखो a dword to the host buffer
  *	at offset idx
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @idx: index in the host buffer
  * @value: value
  */
-static void mei_txe_input_payload_write(struct mei_device *dev,
-			unsigned long idx, u32 value)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल व्योम mei_txe_input_payload_ग_लिखो(काष्ठा mei_device *dev,
+			अचिन्हित दीर्घ idx, u32 value)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	mei_txe_sec_reg_write(hw, SEC_IPC_INPUT_PAYLOAD_REG +
-			(idx * sizeof(u32)), value);
-}
+	mei_txe_sec_reg_ग_लिखो(hw, SEC_IPC_INPUT_PAYLOAD_REG +
+			(idx * माप(u32)), value);
+पूर्ण
 
 /**
- * mei_txe_out_data_read - read dword from the device buffer
+ * mei_txe_out_data_पढ़ो - पढ़ो dword from the device buffer
  *	at offset idx
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @idx: index in the device buffer
  *
- * Return: register value at index
+ * Return: रेजिस्टर value at index
  */
-static u32 mei_txe_out_data_read(const struct mei_device *dev,
-					unsigned long idx)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल u32 mei_txe_out_data_पढ़ो(स्थिर काष्ठा mei_device *dev,
+					अचिन्हित दीर्घ idx)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	return mei_txe_br_reg_read(hw,
-		BRIDGE_IPC_OUTPUT_PAYLOAD_REG + (idx * sizeof(u32)));
-}
+	वापस mei_txe_br_reg_पढ़ो(hw,
+		BRIDGE_IPC_OUTPUT_PAYLOAD_REG + (idx * माप(u32)));
+पूर्ण
 
 /* Readiness */
 
 /**
- * mei_txe_readiness_set_host_rdy - set host readiness bit
+ * mei_txe_पढ़ोiness_set_host_rdy - set host पढ़ोiness bit
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_txe_readiness_set_host_rdy(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल व्योम mei_txe_पढ़ोiness_set_host_rdy(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	mei_txe_br_reg_write(hw,
+	mei_txe_br_reg_ग_लिखो(hw,
 		SICR_HOST_IPC_READINESS_REQ_REG,
 		SICR_HOST_IPC_READINESS_HOST_RDY);
-}
+पूर्ण
 
 /**
- * mei_txe_readiness_clear - clear host readiness bit
+ * mei_txe_पढ़ोiness_clear - clear host पढ़ोiness bit
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_txe_readiness_clear(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल व्योम mei_txe_पढ़ोiness_clear(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	mei_txe_br_reg_write(hw, SICR_HOST_IPC_READINESS_REQ_REG,
+	mei_txe_br_reg_ग_लिखो(hw, SICR_HOST_IPC_READINESS_REQ_REG,
 				SICR_HOST_IPC_READINESS_RDY_CLR);
-}
+पूर्ण
 /**
- * mei_txe_readiness_get - Reads and returns
- *	the HICR_SEC_IPC_READINESS register value
+ * mei_txe_पढ़ोiness_get - Reads and वापसs
+ *	the HICR_SEC_IPC_READINESS रेजिस्टर value
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: the HICR_SEC_IPC_READINESS register value
+ * Return: the HICR_SEC_IPC_READINESS रेजिस्टर value
  */
-static u32 mei_txe_readiness_get(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल u32 mei_txe_पढ़ोiness_get(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	return mei_txe_br_reg_read(hw, HICR_SEC_IPC_READINESS_REG);
-}
+	वापस mei_txe_br_reg_पढ़ो(hw, HICR_SEC_IPC_READINESS_REG);
+पूर्ण
 
-
-/**
- * mei_txe_readiness_is_sec_rdy - check readiness
- *  for HICR_SEC_IPC_READINESS_SEC_RDY
- *
- * @readiness: cached readiness state
- *
- * Return: true if readiness bit is set
- */
-static inline bool mei_txe_readiness_is_sec_rdy(u32 readiness)
-{
-	return !!(readiness & HICR_SEC_IPC_READINESS_SEC_RDY);
-}
 
 /**
- * mei_txe_hw_is_ready - check if the hw is ready
+ * mei_txe_पढ़ोiness_is_sec_rdy - check पढ़ोiness
+ *  क्रम HICR_SEC_IPC_READINESS_SEC_RDY
  *
- * @dev: the device structure
+ * @पढ़ोiness: cached पढ़ोiness state
  *
- * Return: true if sec is ready
+ * Return: true अगर पढ़ोiness bit is set
  */
-static bool mei_txe_hw_is_ready(struct mei_device *dev)
-{
-	u32 readiness =  mei_txe_readiness_get(dev);
-
-	return mei_txe_readiness_is_sec_rdy(readiness);
-}
+अटल अंतरभूत bool mei_txe_पढ़ोiness_is_sec_rdy(u32 पढ़ोiness)
+अणु
+	वापस !!(पढ़ोiness & HICR_SEC_IPC_READINESS_SEC_RDY);
+पूर्ण
 
 /**
- * mei_txe_host_is_ready - check if the host is ready
+ * mei_txe_hw_is_पढ़ोy - check अगर the hw is पढ़ोy
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: true if host is ready
+ * Return: true अगर sec is पढ़ोy
  */
-static inline bool mei_txe_host_is_ready(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	u32 reg = mei_txe_br_reg_read(hw, HICR_SEC_IPC_READINESS_REG);
+अटल bool mei_txe_hw_is_पढ़ोy(काष्ठा mei_device *dev)
+अणु
+	u32 पढ़ोiness =  mei_txe_पढ़ोiness_get(dev);
 
-	return !!(reg & HICR_SEC_IPC_READINESS_HOST_RDY);
-}
+	वापस mei_txe_पढ़ोiness_is_sec_rdy(पढ़ोiness);
+पूर्ण
 
 /**
- * mei_txe_readiness_wait - wait till readiness settles
+ * mei_txe_host_is_पढ़ोy - check अगर the host is पढ़ोy
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: 0 on success and -ETIME on timeout
+ * Return: true अगर host is पढ़ोy
  */
-static int mei_txe_readiness_wait(struct mei_device *dev)
-{
-	if (mei_txe_hw_is_ready(dev))
-		return 0;
+अटल अंतरभूत bool mei_txe_host_is_पढ़ोy(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	u32 reg = mei_txe_br_reg_पढ़ो(hw, HICR_SEC_IPC_READINESS_REG);
+
+	वापस !!(reg & HICR_SEC_IPC_READINESS_HOST_RDY);
+पूर्ण
+
+/**
+ * mei_txe_पढ़ोiness_रुको - रुको till पढ़ोiness settles
+ *
+ * @dev: the device काष्ठाure
+ *
+ * Return: 0 on success and -ETIME on समयout
+ */
+अटल पूर्णांक mei_txe_पढ़ोiness_रुको(काष्ठा mei_device *dev)
+अणु
+	अगर (mei_txe_hw_is_पढ़ोy(dev))
+		वापस 0;
 
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_hw_ready, dev->recvd_hw_ready,
-			msecs_to_jiffies(SEC_RESET_WAIT_TIMEOUT));
+	रुको_event_समयout(dev->रुको_hw_पढ़ोy, dev->recvd_hw_पढ़ोy,
+			msecs_to_jअगरfies(SEC_RESET_WAIT_TIMEOUT));
 	mutex_lock(&dev->device_lock);
-	if (!dev->recvd_hw_ready) {
+	अगर (!dev->recvd_hw_पढ़ोy) अणु
 		dev_err(dev->dev, "wait for readiness failed\n");
-		return -ETIME;
-	}
+		वापस -ETIME;
+	पूर्ण
 
-	dev->recvd_hw_ready = false;
-	return 0;
-}
+	dev->recvd_hw_पढ़ोy = false;
+	वापस 0;
+पूर्ण
 
-static const struct mei_fw_status mei_txe_fw_sts = {
+अटल स्थिर काष्ठा mei_fw_status mei_txe_fw_sts = अणु
 	.count = 2,
 	.status[0] = PCI_CFG_TXE_FW_STS0,
 	.status[1] = PCI_CFG_TXE_FW_STS1
-};
+पूर्ण;
 
 /**
- * mei_txe_fw_status - read fw status register from pci config space
+ * mei_txe_fw_status - पढ़ो fw status रेजिस्टर from pci config space
  *
  * @dev: mei device
- * @fw_status: fw status register values
+ * @fw_status: fw status रेजिस्टर values
  *
  * Return: 0 on success, error otherwise
  */
-static int mei_txe_fw_status(struct mei_device *dev,
-			     struct mei_fw_status *fw_status)
-{
-	const struct mei_fw_status *fw_src = &mei_txe_fw_sts;
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
-	int ret;
-	int i;
+अटल पूर्णांक mei_txe_fw_status(काष्ठा mei_device *dev,
+			     काष्ठा mei_fw_status *fw_status)
+अणु
+	स्थिर काष्ठा mei_fw_status *fw_src = &mei_txe_fw_sts;
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!fw_status)
-		return -EINVAL;
+	अगर (!fw_status)
+		वापस -EINVAL;
 
 	fw_status->count = fw_src->count;
-	for (i = 0; i < fw_src->count && i < MEI_FW_STATUS_MAX; i++) {
-		ret = pci_read_config_dword(pdev, fw_src->status[i],
+	क्रम (i = 0; i < fw_src->count && i < MEI_FW_STATUS_MAX; i++) अणु
+		ret = pci_पढ़ो_config_dword(pdev, fw_src->status[i],
 					    &fw_status->status[i]);
-		trace_mei_pci_cfg_read(dev->dev, "PCI_CFG_HSF_X",
+		trace_mei_pci_cfg_पढ़ो(dev->dev, "PCI_CFG_HSF_X",
 				       fw_src->status[i],
 				       fw_status->status[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * mei_txe_hw_config - configure hardware at the start of the devices
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Configure hardware at the start of the device should be done only
- *   once at the device probe time
+ * Configure hardware at the start of the device should be करोne only
+ *   once at the device probe समय
  *
  * Return: always 0
  */
-static int mei_txe_hw_config(struct mei_device *dev)
-{
+अटल पूर्णांक mei_txe_hw_config(काष्ठा mei_device *dev)
+अणु
 
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
 	hw->aliveness = mei_txe_aliveness_get(dev);
-	hw->readiness = mei_txe_readiness_get(dev);
+	hw->पढ़ोiness = mei_txe_पढ़ोiness_get(dev);
 
 	dev_dbg(dev->dev, "aliveness_resp = 0x%08x, readiness = 0x%08x.\n",
-		hw->aliveness, hw->readiness);
+		hw->aliveness, hw->पढ़ोiness);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_txe_write - writes a message to device.
+ * mei_txe_ग_लिखो - ग_लिखोs a message to device.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @hdr: header of message
  * @hdr_len: header length in bytes - must multiplication of a slot (4bytes)
  * @data: payload
  * @data_len: paylead length in bytes
  *
- * Return: 0 if success, < 0 - otherwise.
+ * Return: 0 अगर success, < 0 - otherwise.
  */
-static int mei_txe_write(struct mei_device *dev,
-			 const void *hdr, size_t hdr_len,
-			 const void *data, size_t data_len)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	unsigned long rem;
-	const u32 *reg_buf;
+अटल पूर्णांक mei_txe_ग_लिखो(काष्ठा mei_device *dev,
+			 स्थिर व्योम *hdr, माप_प्रकार hdr_len,
+			 स्थिर व्योम *data, माप_प्रकार data_len)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	अचिन्हित दीर्घ rem;
+	स्थिर u32 *reg_buf;
 	u32 slots = TXE_HBUF_DEPTH;
 	u32 dw_cnt;
-	unsigned long i, j;
+	अचिन्हित दीर्घ i, j;
 
-	if (WARN_ON(!hdr || !data || hdr_len & 0x3))
-		return -EINVAL;
+	अगर (WARN_ON(!hdr || !data || hdr_len & 0x3))
+		वापस -EINVAL;
 
-	dev_dbg(dev->dev, MEI_HDR_FMT, MEI_HDR_PRM((struct mei_msg_hdr *)hdr));
+	dev_dbg(dev->dev, MEI_HDR_FMT, MEI_HDR_PRM((काष्ठा mei_msg_hdr *)hdr));
 
 	dw_cnt = mei_data2slots(hdr_len + data_len);
-	if (dw_cnt > slots)
-		return -EMSGSIZE;
+	अगर (dw_cnt > slots)
+		वापस -EMSGSIZE;
 
-	if (WARN(!hw->aliveness, "txe write: aliveness not asserted\n"))
-		return -EAGAIN;
+	अगर (WARN(!hw->aliveness, "txe write: aliveness not asserted\n"))
+		वापस -EAGAIN;
 
 	/* Enable Input Ready Interrupt. */
-	mei_txe_input_ready_interrupt_enable(dev);
+	mei_txe_input_पढ़ोy_पूर्णांकerrupt_enable(dev);
 
-	if (!mei_txe_is_input_ready(dev)) {
-		char fw_sts_str[MEI_FW_STATUS_STR_SZ];
+	अगर (!mei_txe_is_input_पढ़ोy(dev)) अणु
+		अक्षर fw_sts_str[MEI_FW_STATUS_STR_SZ];
 
 		mei_fw_status_str(dev, fw_sts_str, MEI_FW_STATUS_STR_SZ);
 		dev_err(dev->dev, "Input is not ready %s\n", fw_sts_str);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	reg_buf = hdr;
-	for (i = 0; i < hdr_len / MEI_SLOT_SIZE; i++)
-		mei_txe_input_payload_write(dev, i, reg_buf[i]);
+	क्रम (i = 0; i < hdr_len / MEI_SLOT_SIZE; i++)
+		mei_txe_input_payload_ग_लिखो(dev, i, reg_buf[i]);
 
 	reg_buf = data;
-	for (j = 0; j < data_len / MEI_SLOT_SIZE; j++)
-		mei_txe_input_payload_write(dev, i + j, reg_buf[j]);
+	क्रम (j = 0; j < data_len / MEI_SLOT_SIZE; j++)
+		mei_txe_input_payload_ग_लिखो(dev, i + j, reg_buf[j]);
 
 	rem = data_len & 0x3;
-	if (rem > 0) {
+	अगर (rem > 0) अणु
 		u32 reg = 0;
 
-		memcpy(&reg, (const u8 *)data + data_len - rem, rem);
-		mei_txe_input_payload_write(dev, i + j, reg);
-	}
+		स_नकल(&reg, (स्थिर u8 *)data + data_len - rem, rem);
+		mei_txe_input_payload_ग_लिखो(dev, i + j, reg);
+	पूर्ण
 
-	/* after each write the whole buffer is consumed */
+	/* after each ग_लिखो the whole buffer is consumed */
 	hw->slots = 0;
 
 	/* Set Input-Doorbell */
-	mei_txe_input_doorbell_set(hw);
+	mei_txe_input_करोorbell_set(hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * mei_txe_hbuf_depth - mimics the me hbuf circular buffer
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: the TXE_HBUF_DEPTH
  */
-static u32 mei_txe_hbuf_depth(const struct mei_device *dev)
-{
-	return TXE_HBUF_DEPTH;
-}
+अटल u32 mei_txe_hbuf_depth(स्थिर काष्ठा mei_device *dev)
+अणु
+	वापस TXE_HBUF_DEPTH;
+पूर्ण
 
 /**
  * mei_txe_hbuf_empty_slots - mimics the me hbuf circular buffer
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: always TXE_HBUF_DEPTH
  */
-static int mei_txe_hbuf_empty_slots(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल पूर्णांक mei_txe_hbuf_empty_slots(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
-	return hw->slots;
-}
+	वापस hw->slots;
+पूर्ण
 
 /**
- * mei_txe_count_full_read_slots - mimics the me device circular buffer
+ * mei_txe_count_full_पढ़ो_slots - mimics the me device circular buffer
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: always buffer size in dwords count
  */
-static int mei_txe_count_full_read_slots(struct mei_device *dev)
-{
-	/* read buffers has static size */
-	return TXE_HBUF_DEPTH;
-}
+अटल पूर्णांक mei_txe_count_full_पढ़ो_slots(काष्ठा mei_device *dev)
+अणु
+	/* पढ़ो buffers has अटल size */
+	वापस TXE_HBUF_DEPTH;
+पूर्ण
 
 /**
- * mei_txe_read_hdr - read message header which is always in 4 first bytes
+ * mei_txe_पढ़ो_hdr - पढ़ो message header which is always in 4 first bytes
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: mei message header
  */
 
-static u32 mei_txe_read_hdr(const struct mei_device *dev)
-{
-	return mei_txe_out_data_read(dev, 0);
-}
+अटल u32 mei_txe_पढ़ो_hdr(स्थिर काष्ठा mei_device *dev)
+अणु
+	वापस mei_txe_out_data_पढ़ो(dev, 0);
+पूर्ण
 /**
- * mei_txe_read - reads a message from the txe device.
+ * mei_txe_पढ़ो - पढ़ोs a message from the txe device.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @buf: message buffer will be written
- * @len: message size will be read
+ * @len: message size will be पढ़ो
  *
  * Return: -EINVAL on error wrong argument and 0 on success
  */
-static int mei_txe_read(struct mei_device *dev,
-		unsigned char *buf, unsigned long len)
-{
+अटल पूर्णांक mei_txe_पढ़ो(काष्ठा mei_device *dev,
+		अचिन्हित अक्षर *buf, अचिन्हित दीर्घ len)
+अणु
 
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 	u32 *reg_buf, reg;
 	u32 rem;
 	u32 i;
 
-	if (WARN_ON(!buf || !len))
-		return -EINVAL;
+	अगर (WARN_ON(!buf || !len))
+		वापस -EINVAL;
 
 	reg_buf = (u32 *)buf;
 	rem = len & 0x3;
 
 	dev_dbg(dev->dev, "buffer-length = %lu buf[0]0x%08X\n",
-		len, mei_txe_out_data_read(dev, 0));
+		len, mei_txe_out_data_पढ़ो(dev, 0));
 
-	for (i = 0; i < len / MEI_SLOT_SIZE; i++) {
+	क्रम (i = 0; i < len / MEI_SLOT_SIZE; i++) अणु
 		/* skip header: index starts from 1 */
-		reg = mei_txe_out_data_read(dev, i + 1);
+		reg = mei_txe_out_data_पढ़ो(dev, i + 1);
 		dev_dbg(dev->dev, "buf[%d] = 0x%08X\n", i, reg);
 		*reg_buf++ = reg;
-	}
+	पूर्ण
 
-	if (rem) {
-		reg = mei_txe_out_data_read(dev, i + 1);
-		memcpy(reg_buf, &reg, rem);
-	}
+	अगर (rem) अणु
+		reg = mei_txe_out_data_पढ़ो(dev, i + 1);
+		स_नकल(reg_buf, &reg, rem);
+	पूर्ण
 
-	mei_txe_output_ready_set(hw);
-	return 0;
-}
+	mei_txe_output_पढ़ोy_set(hw);
+	वापस 0;
+पूर्ण
 
 /**
  * mei_txe_hw_reset - resets host and fw.
  *
- * @dev: the device structure
- * @intr_enable: if interrupt should be enabled after reset.
+ * @dev: the device काष्ठाure
+ * @पूर्णांकr_enable: अगर पूर्णांकerrupt should be enabled after reset.
  *
- * Return: 0 on success and < 0 in case of error
+ * Return: 0 on success and < 0 in हाल of error
  */
-static int mei_txe_hw_reset(struct mei_device *dev, bool intr_enable)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल पूर्णांक mei_txe_hw_reset(काष्ठा mei_device *dev, bool पूर्णांकr_enable)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
 	u32 aliveness_req;
 	/*
-	 * read input doorbell to ensure consistency between  Bridge and SeC
-	 * return value might be garbage return
+	 * पढ़ो input करोorbell to ensure consistency between  Bridge and SeC
+	 * वापस value might be garbage वापस
 	 */
-	(void)mei_txe_sec_reg_read_silent(hw, SEC_IPC_INPUT_DOORBELL_REG);
+	(व्योम)mei_txe_sec_reg_पढ़ो_silent(hw, SEC_IPC_INPUT_DOORBELL_REG);
 
 	aliveness_req = mei_txe_aliveness_req_get(dev);
 	hw->aliveness = mei_txe_aliveness_get(dev);
 
-	/* Disable interrupts in this stage we will poll */
-	mei_txe_intr_disable(dev);
+	/* Disable पूर्णांकerrupts in this stage we will poll */
+	mei_txe_पूर्णांकr_disable(dev);
 
 	/*
 	 * If Aliveness Request and Aliveness Response are not equal then
-	 * wait for them to be equal
-	 * Since we might have interrupts disabled - poll for it
+	 * रुको क्रम them to be equal
+	 * Since we might have पूर्णांकerrupts disabled - poll क्रम it
 	 */
-	if (aliveness_req != hw->aliveness)
-		if (mei_txe_aliveness_poll(dev, aliveness_req) < 0) {
+	अगर (aliveness_req != hw->aliveness)
+		अगर (mei_txe_aliveness_poll(dev, aliveness_req) < 0) अणु
 			dev_err(dev->dev, "wait for aliveness settle failed ... bailing out\n");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 	/*
 	 * If Aliveness Request and Aliveness Response are set then clear them
 	 */
-	if (aliveness_req) {
+	अगर (aliveness_req) अणु
 		mei_txe_aliveness_set(dev, 0);
-		if (mei_txe_aliveness_poll(dev, 0) < 0) {
+		अगर (mei_txe_aliveness_poll(dev, 0) < 0) अणु
 			dev_err(dev->dev, "wait for aliveness failed ... bailing out\n");
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Set readiness RDY_CLR bit
+	 * Set पढ़ोiness RDY_CLR bit
 	 */
-	mei_txe_readiness_clear(dev);
+	mei_txe_पढ़ोiness_clear(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * mei_txe_hw_start - start the hardware after reset
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-static int mei_txe_hw_start(struct mei_device *dev)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	int ret;
+अटल पूर्णांक mei_txe_hw_start(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	पूर्णांक ret;
 
 	u32 hisr;
 
-	/* bring back interrupts */
-	mei_txe_intr_enable(dev);
+	/* bring back पूर्णांकerrupts */
+	mei_txe_पूर्णांकr_enable(dev);
 
-	ret = mei_txe_readiness_wait(dev);
-	if (ret < 0) {
+	ret = mei_txe_पढ़ोiness_रुको(dev);
+	अगर (ret < 0) अणु
 		dev_err(dev->dev, "waiting for readiness failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * If HISR.INT2_STS interrupt status bit is set then clear it.
+	 * If HISR.INT2_STS पूर्णांकerrupt status bit is set then clear it.
 	 */
-	hisr = mei_txe_br_reg_read(hw, HISR_REG);
-	if (hisr & HISR_INT_2_STS)
-		mei_txe_br_reg_write(hw, HISR_REG, HISR_INT_2_STS);
+	hisr = mei_txe_br_reg_पढ़ो(hw, HISR_REG);
+	अगर (hisr & HISR_INT_2_STS)
+		mei_txe_br_reg_ग_लिखो(hw, HISR_REG, HISR_INT_2_STS);
 
-	/* Clear the interrupt cause of OutputDoorbell */
-	clear_bit(TXE_INTR_OUT_DB_BIT, &hw->intr_cause);
+	/* Clear the पूर्णांकerrupt cause of OutputDoorbell */
+	clear_bit(TXE_INTR_OUT_DB_BIT, &hw->पूर्णांकr_cause);
 
 	ret = mei_txe_aliveness_set_sync(dev, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev->dev, "wait for aliveness failed ... bailing out\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_set_active(dev->dev);
+	pm_runसमय_set_active(dev->dev);
 
-	/* enable input ready interrupts:
+	/* enable input पढ़ोy पूर्णांकerrupts:
 	 * SEC_IPC_HOST_INT_MASK.IPC_INPUT_READY_INT_MASK
 	 */
-	mei_txe_input_ready_interrupt_enable(dev);
+	mei_txe_input_पढ़ोy_पूर्णांकerrupt_enable(dev);
 
 
 	/*  Set the SICR_SEC_IPC_OUTPUT_STATUS.IPC_OUTPUT_READY bit */
-	mei_txe_output_ready_set(hw);
+	mei_txe_output_पढ़ोy_set(hw);
 
 	/* Set bit SICR_HOST_IPC_READINESS.HOST_RDY
 	 */
-	mei_txe_readiness_set_host_rdy(dev);
+	mei_txe_पढ़ोiness_set_host_rdy(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_txe_check_and_ack_intrs - translate multi BAR interrupt into
- *  single bit mask and acknowledge the interrupts
+ * mei_txe_check_and_ack_पूर्णांकrs - translate multi BAR पूर्णांकerrupt पूर्णांकo
+ *  single bit mask and acknowledge the पूर्णांकerrupts
  *
- * @dev: the device structure
- * @do_ack: acknowledge interrupts
+ * @dev: the device काष्ठाure
+ * @करो_ack: acknowledge पूर्णांकerrupts
  *
- * Return: true if found interrupts to process.
+ * Return: true अगर found पूर्णांकerrupts to process.
  */
-static bool mei_txe_check_and_ack_intrs(struct mei_device *dev, bool do_ack)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+अटल bool mei_txe_check_and_ack_पूर्णांकrs(काष्ठा mei_device *dev, bool करो_ack)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 	u32 hisr;
 	u32 hhisr;
 	u32 ipc_isr;
 	u32 aliveness;
 	bool generated;
 
-	/* read interrupt registers */
-	hhisr = mei_txe_br_reg_read(hw, HHISR_REG);
+	/* पढ़ो पूर्णांकerrupt रेजिस्टरs */
+	hhisr = mei_txe_br_reg_पढ़ो(hw, HHISR_REG);
 	generated = (hhisr & IPC_HHIER_MSK);
-	if (!generated)
-		goto out;
+	अगर (!generated)
+		जाओ out;
 
-	hisr = mei_txe_br_reg_read(hw, HISR_REG);
+	hisr = mei_txe_br_reg_पढ़ो(hw, HISR_REG);
 
 	aliveness = mei_txe_aliveness_get(dev);
-	if (hhisr & IPC_HHIER_SEC && aliveness) {
-		ipc_isr = mei_txe_sec_reg_read_silent(hw,
+	अगर (hhisr & IPC_HHIER_SEC && aliveness) अणु
+		ipc_isr = mei_txe_sec_reg_पढ़ो_silent(hw,
 				SEC_IPC_HOST_INT_STATUS_REG);
-	} else {
+	पूर्ण अन्यथा अणु
 		ipc_isr = 0;
 		hhisr &= ~IPC_HHIER_SEC;
-	}
+	पूर्ण
 
 	generated = generated ||
 		(hisr & HISR_INT_STS_MSK) ||
 		(ipc_isr & SEC_IPC_HOST_INT_STATUS_PENDING);
 
-	if (generated && do_ack) {
-		/* Save the interrupt causes */
-		hw->intr_cause |= hisr & HISR_INT_STS_MSK;
-		if (ipc_isr & SEC_IPC_HOST_INT_STATUS_IN_RDY)
-			hw->intr_cause |= TXE_INTR_IN_READY;
+	अगर (generated && करो_ack) अणु
+		/* Save the पूर्णांकerrupt causes */
+		hw->पूर्णांकr_cause |= hisr & HISR_INT_STS_MSK;
+		अगर (ipc_isr & SEC_IPC_HOST_INT_STATUS_IN_RDY)
+			hw->पूर्णांकr_cause |= TXE_INTR_IN_READY;
 
 
-		mei_txe_intr_disable(dev);
-		/* Clear the interrupts in hierarchy:
+		mei_txe_पूर्णांकr_disable(dev);
+		/* Clear the पूर्णांकerrupts in hierarchy:
 		 * IPC and Bridge, than the High Level */
-		mei_txe_sec_reg_write_silent(hw,
+		mei_txe_sec_reg_ग_लिखो_silent(hw,
 			SEC_IPC_HOST_INT_STATUS_REG, ipc_isr);
-		mei_txe_br_reg_write(hw, HISR_REG, hisr);
-		mei_txe_br_reg_write(hw, HHISR_REG, hhisr);
-	}
+		mei_txe_br_reg_ग_लिखो(hw, HISR_REG, hisr);
+		mei_txe_br_reg_ग_लिखो(hw, HHISR_REG, hhisr);
+	पूर्ण
 
 out:
-	return generated;
-}
+	वापस generated;
+पूर्ण
 
 /**
  * mei_txe_irq_quick_handler - The ISR of the MEI device
  *
  * @irq: The irq number
- * @dev_id: pointer to the device structure
+ * @dev_id: poपूर्णांकer to the device काष्ठाure
  *
- * Return: IRQ_WAKE_THREAD if interrupt is designed for the device
+ * Return: IRQ_WAKE_THREAD अगर पूर्णांकerrupt is deचिन्हित क्रम the device
  *         IRQ_NONE otherwise
  */
-irqreturn_t mei_txe_irq_quick_handler(int irq, void *dev_id)
-{
-	struct mei_device *dev = dev_id;
+irqवापस_t mei_txe_irq_quick_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mei_device *dev = dev_id;
 
-	if (mei_txe_check_and_ack_intrs(dev, true))
-		return IRQ_WAKE_THREAD;
-	return IRQ_NONE;
-}
+	अगर (mei_txe_check_and_ack_पूर्णांकrs(dev, true))
+		वापस IRQ_WAKE_THREAD;
+	वापस IRQ_NONE;
+पूर्ण
 
 
 /**
- * mei_txe_irq_thread_handler - txe interrupt thread
+ * mei_txe_irq_thपढ़ो_handler - txe पूर्णांकerrupt thपढ़ो
  *
  * @irq: The irq number
- * @dev_id: pointer to the device structure
+ * @dev_id: poपूर्णांकer to the device काष्ठाure
  *
  * Return: IRQ_HANDLED
  */
-irqreturn_t mei_txe_irq_thread_handler(int irq, void *dev_id)
-{
-	struct mei_device *dev = (struct mei_device *) dev_id;
-	struct mei_txe_hw *hw = to_txe_hw(dev);
-	struct list_head cmpl_list;
+irqवापस_t mei_txe_irq_thपढ़ो_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mei_device *dev = (काष्ठा mei_device *) dev_id;
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
+	काष्ठा list_head cmpl_list;
 	s32 slots;
-	int rets = 0;
+	पूर्णांक rets = 0;
 
 	dev_dbg(dev->dev, "irq thread: Interrupt Registers HHISR|HISR|SEC=%02X|%04X|%02X\n",
-		mei_txe_br_reg_read(hw, HHISR_REG),
-		mei_txe_br_reg_read(hw, HISR_REG),
-		mei_txe_sec_reg_read_silent(hw, SEC_IPC_HOST_INT_STATUS_REG));
+		mei_txe_br_reg_पढ़ो(hw, HHISR_REG),
+		mei_txe_br_reg_पढ़ो(hw, HISR_REG),
+		mei_txe_sec_reg_पढ़ो_silent(hw, SEC_IPC_HOST_INT_STATUS_REG));
 
 
 	/* initialize our complete list */
 	mutex_lock(&dev->device_lock);
 	INIT_LIST_HEAD(&cmpl_list);
 
-	if (pci_dev_msi_enabled(to_pci_dev(dev->dev)))
-		mei_txe_check_and_ack_intrs(dev, true);
+	अगर (pci_dev_msi_enabled(to_pci_dev(dev->dev)))
+		mei_txe_check_and_ack_पूर्णांकrs(dev, true);
 
 	/* show irq events */
-	mei_txe_pending_interrupts(dev);
+	mei_txe_pending_पूर्णांकerrupts(dev);
 
 	hw->aliveness = mei_txe_aliveness_get(dev);
-	hw->readiness = mei_txe_readiness_get(dev);
+	hw->पढ़ोiness = mei_txe_पढ़ोiness_get(dev);
 
 	/* Readiness:
 	 * Detection of TXE driver going through reset
-	 * or TXE driver resetting the HECI interface.
+	 * or TXE driver resetting the HECI पूर्णांकerface.
 	 */
-	if (test_and_clear_bit(TXE_INTR_READINESS_BIT, &hw->intr_cause)) {
+	अगर (test_and_clear_bit(TXE_INTR_READINESS_BIT, &hw->पूर्णांकr_cause)) अणु
 		dev_dbg(dev->dev, "Readiness Interrupt was received...\n");
 
-		/* Check if SeC is going through reset */
-		if (mei_txe_readiness_is_sec_rdy(hw->readiness)) {
+		/* Check अगर SeC is going through reset */
+		अगर (mei_txe_पढ़ोiness_is_sec_rdy(hw->पढ़ोiness)) अणु
 			dev_dbg(dev->dev, "we need to start the dev.\n");
-			dev->recvd_hw_ready = true;
-		} else {
-			dev->recvd_hw_ready = false;
-			if (dev->dev_state != MEI_DEV_RESETTING) {
+			dev->recvd_hw_पढ़ोy = true;
+		पूर्ण अन्यथा अणु
+			dev->recvd_hw_पढ़ोy = false;
+			अगर (dev->dev_state != MEI_DEV_RESETTING) अणु
 
 				dev_warn(dev->dev, "FW not ready: resetting.\n");
 				schedule_work(&dev->reset_work);
-				goto end;
+				जाओ end;
 
-			}
-		}
-		wake_up(&dev->wait_hw_ready);
-	}
+			पूर्ण
+		पूर्ण
+		wake_up(&dev->रुको_hw_पढ़ोy);
+	पूर्ण
 
 	/************************************************************/
-	/* Check interrupt cause:
+	/* Check पूर्णांकerrupt cause:
 	 * Aliveness: Detection of SeC acknowledge of host request that
-	 * it remain alive or host cancellation of that request.
+	 * it reमुख्य alive or host cancellation of that request.
 	 */
 
-	if (test_and_clear_bit(TXE_INTR_ALIVENESS_BIT, &hw->intr_cause)) {
-		/* Clear the interrupt cause */
+	अगर (test_and_clear_bit(TXE_INTR_ALIVENESS_BIT, &hw->पूर्णांकr_cause)) अणु
+		/* Clear the पूर्णांकerrupt cause */
 		dev_dbg(dev->dev,
 			"Aliveness Interrupt: Status: %d\n", hw->aliveness);
 		dev->pg_event = MEI_PG_EVENT_RECEIVED;
-		if (waitqueue_active(&hw->wait_aliveness_resp))
-			wake_up(&hw->wait_aliveness_resp);
-	}
+		अगर (रुकोqueue_active(&hw->रुको_aliveness_resp))
+			wake_up(&hw->रुको_aliveness_resp);
+	पूर्ण
 
 
 	/* Output Doorbell:
 	 * Detection of SeC having sent output to host
 	 */
-	slots = mei_count_full_read_slots(dev);
-	if (test_and_clear_bit(TXE_INTR_OUT_DB_BIT, &hw->intr_cause)) {
+	slots = mei_count_full_पढ़ो_slots(dev);
+	अगर (test_and_clear_bit(TXE_INTR_OUT_DB_BIT, &hw->पूर्णांकr_cause)) अणु
 		/* Read from TXE */
-		rets = mei_irq_read_handler(dev, &cmpl_list, &slots);
-		if (rets &&
+		rets = mei_irq_पढ़ो_handler(dev, &cmpl_list, &slots);
+		अगर (rets &&
 		    (dev->dev_state != MEI_DEV_RESETTING &&
-		     dev->dev_state != MEI_DEV_POWER_DOWN)) {
+		     dev->dev_state != MEI_DEV_POWER_DOWN)) अणु
 			dev_err(dev->dev,
 				"mei_irq_read_handler ret = %d.\n", rets);
 
 			schedule_work(&dev->reset_work);
-			goto end;
-		}
-	}
-	/* Input Ready: Detection if host can write to SeC */
-	if (test_and_clear_bit(TXE_INTR_IN_READY_BIT, &hw->intr_cause)) {
-		dev->hbuf_is_ready = true;
+			जाओ end;
+		पूर्ण
+	पूर्ण
+	/* Input Ready: Detection अगर host can ग_लिखो to SeC */
+	अगर (test_and_clear_bit(TXE_INTR_IN_READY_BIT, &hw->पूर्णांकr_cause)) अणु
+		dev->hbuf_is_पढ़ोy = true;
 		hw->slots = TXE_HBUF_DEPTH;
-	}
+	पूर्ण
 
-	if (hw->aliveness && dev->hbuf_is_ready) {
-		/* get the real register value */
-		dev->hbuf_is_ready = mei_hbuf_is_ready(dev);
-		rets = mei_irq_write_handler(dev, &cmpl_list);
-		if (rets && rets != -EMSGSIZE)
+	अगर (hw->aliveness && dev->hbuf_is_पढ़ोy) अणु
+		/* get the real रेजिस्टर value */
+		dev->hbuf_is_पढ़ोy = mei_hbuf_is_पढ़ोy(dev);
+		rets = mei_irq_ग_लिखो_handler(dev, &cmpl_list);
+		अगर (rets && rets != -EMSGSIZE)
 			dev_err(dev->dev, "mei_irq_write_handler ret = %d.\n",
 				rets);
-		dev->hbuf_is_ready = mei_hbuf_is_ready(dev);
-	}
+		dev->hbuf_is_पढ़ोy = mei_hbuf_is_पढ़ोy(dev);
+	पूर्ण
 
 	mei_irq_compl_handler(dev, &cmpl_list);
 
@@ -1152,18 +1153,18 @@ end:
 
 	mutex_unlock(&dev->device_lock);
 
-	mei_enable_interrupts(dev);
-	return IRQ_HANDLED;
-}
+	mei_enable_पूर्णांकerrupts(dev);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct mei_hw_ops mei_txe_hw_ops = {
+अटल स्थिर काष्ठा mei_hw_ops mei_txe_hw_ops = अणु
 
-	.host_is_ready = mei_txe_host_is_ready,
+	.host_is_पढ़ोy = mei_txe_host_is_पढ़ोy,
 
 	.fw_status = mei_txe_fw_status,
 	.pg_state = mei_txe_pg_state,
 
-	.hw_is_ready = mei_txe_hw_is_ready,
+	.hw_is_पढ़ोy = mei_txe_hw_is_पढ़ोy,
 	.hw_reset = mei_txe_hw_reset,
 	.hw_config = mei_txe_hw_config,
 	.hw_start = mei_txe_hw_start,
@@ -1171,90 +1172,90 @@ static const struct mei_hw_ops mei_txe_hw_ops = {
 	.pg_in_transition = mei_txe_pg_in_transition,
 	.pg_is_enabled = mei_txe_pg_is_enabled,
 
-	.intr_clear = mei_txe_intr_clear,
-	.intr_enable = mei_txe_intr_enable,
-	.intr_disable = mei_txe_intr_disable,
+	.पूर्णांकr_clear = mei_txe_पूर्णांकr_clear,
+	.पूर्णांकr_enable = mei_txe_पूर्णांकr_enable,
+	.पूर्णांकr_disable = mei_txe_पूर्णांकr_disable,
 	.synchronize_irq = mei_txe_synchronize_irq,
 
-	.hbuf_free_slots = mei_txe_hbuf_empty_slots,
-	.hbuf_is_ready = mei_txe_is_input_ready,
+	.hbuf_मुक्त_slots = mei_txe_hbuf_empty_slots,
+	.hbuf_is_पढ़ोy = mei_txe_is_input_पढ़ोy,
 	.hbuf_depth = mei_txe_hbuf_depth,
 
-	.write = mei_txe_write,
+	.ग_लिखो = mei_txe_ग_लिखो,
 
-	.rdbuf_full_slots = mei_txe_count_full_read_slots,
-	.read_hdr = mei_txe_read_hdr,
+	.rdbuf_full_slots = mei_txe_count_full_पढ़ो_slots,
+	.पढ़ो_hdr = mei_txe_पढ़ो_hdr,
 
-	.read = mei_txe_read,
+	.पढ़ो = mei_txe_पढ़ो,
 
-};
+पूर्ण;
 
 /**
- * mei_txe_dev_init - allocates and initializes txe hardware specific structure
+ * mei_txe_dev_init - allocates and initializes txe hardware specअगरic काष्ठाure
  *
  * @pdev: pci device
  *
- * Return: struct mei_device * on success or NULL
+ * Return: काष्ठा mei_device * on success or शून्य
  */
-struct mei_device *mei_txe_dev_init(struct pci_dev *pdev)
-{
-	struct mei_device *dev;
-	struct mei_txe_hw *hw;
+काष्ठा mei_device *mei_txe_dev_init(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mei_device *dev;
+	काष्ठा mei_txe_hw *hw;
 
-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev) + sizeof(*hw), GFP_KERNEL);
-	if (!dev)
-		return NULL;
+	dev = devm_kzalloc(&pdev->dev, माप(*dev) + माप(*hw), GFP_KERNEL);
+	अगर (!dev)
+		वापस शून्य;
 
 	mei_device_init(dev, &pdev->dev, &mei_txe_hw_ops);
 
 	hw = to_txe_hw(dev);
 
-	init_waitqueue_head(&hw->wait_aliveness_resp);
+	init_रुकोqueue_head(&hw->रुको_aliveness_resp);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
 /**
- * mei_txe_setup_satt2 - SATT2 configuration for DMA support.
+ * mei_txe_setup_satt2 - SATT2 configuration क्रम DMA support.
  *
- * @dev:   the device structure
+ * @dev:   the device काष्ठाure
  * @addr:  physical address start of the range
  * @range: physical range size
  *
  * Return: 0 on success an error code otherwise
  */
-int mei_txe_setup_satt2(struct mei_device *dev, phys_addr_t addr, u32 range)
-{
-	struct mei_txe_hw *hw = to_txe_hw(dev);
+पूर्णांक mei_txe_setup_satt2(काष्ठा mei_device *dev, phys_addr_t addr, u32 range)
+अणु
+	काष्ठा mei_txe_hw *hw = to_txe_hw(dev);
 
 	u32 lo32 = lower_32_bits(addr);
 	u32 hi32 = upper_32_bits(addr);
 	u32 ctrl;
 
 	/* SATT is limited to 36 Bits */
-	if (hi32 & ~0xF)
-		return -EINVAL;
+	अगर (hi32 & ~0xF)
+		वापस -EINVAL;
 
 	/* SATT has to be 16Byte aligned */
-	if (lo32 & 0xF)
-		return -EINVAL;
+	अगर (lo32 & 0xF)
+		वापस -EINVAL;
 
 	/* SATT range has to be 4Bytes aligned */
-	if (range & 0x4)
-		return -EINVAL;
+	अगर (range & 0x4)
+		वापस -EINVAL;
 
 	/* SATT is limited to 32 MB range*/
-	if (range > SATT_RANGE_MAX)
-		return -EINVAL;
+	अगर (range > SATT_RANGE_MAX)
+		वापस -EINVAL;
 
 	ctrl = SATT2_CTRL_VALID_MSK;
 	ctrl |= hi32  << SATT2_CTRL_BR_BASE_ADDR_REG_SHIFT;
 
-	mei_txe_br_reg_write(hw, SATT2_SAP_SIZE_REG, range);
-	mei_txe_br_reg_write(hw, SATT2_BRG_BA_LSB_REG, lo32);
-	mei_txe_br_reg_write(hw, SATT2_CTRL_REG, ctrl);
+	mei_txe_br_reg_ग_लिखो(hw, SATT2_SAP_SIZE_REG, range);
+	mei_txe_br_reg_ग_लिखो(hw, SATT2_BRG_BA_LSB_REG, lo32);
+	mei_txe_br_reg_ग_लिखो(hw, SATT2_CTRL_REG, ctrl);
 	dev_dbg(dev->dev, "SATT2: SAP_SIZE_OFFSET=0x%08X, BRG_BA_LSB_OFFSET=0x%08X, CTRL_OFFSET=0x%08X\n",
 		range, lo32, ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Renesas R-Car Gen3 for USB2.0 PHY driver
+ * Renesas R-Car Gen3 क्रम USB2.0 PHY driver
  *
  * Copyright (C) 2015-2017 Renesas Electronics Corporation
  *
@@ -9,113 +10,113 @@
  * Copyright (C) 2014 Cogent Embedded, Inc.
  */
 
-#include <linux/extcon-provider.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/regulator/consumer.h>
-#include <linux/string.h>
-#include <linux/usb/of.h>
-#include <linux/workqueue.h>
+#समावेश <linux/extcon-provider.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/usb/of.h>
+#समावेश <linux/workqueue.h>
 
-/******* USB2.0 Host registers (original offset is +0x200) *******/
-#define USB2_INT_ENABLE		0x000
-#define USB2_USBCTR		0x00c
-#define USB2_SPD_RSM_TIMSET	0x10c
-#define USB2_OC_TIMSET		0x110
-#define USB2_COMMCTRL		0x600
-#define USB2_OBINTSTA		0x604
-#define USB2_OBINTEN		0x608
-#define USB2_VBCTRL		0x60c
-#define USB2_LINECTRL1		0x610
-#define USB2_ADPCTRL		0x630
+/******* USB2.0 Host रेजिस्टरs (original offset is +0x200) *******/
+#घोषणा USB2_INT_ENABLE		0x000
+#घोषणा USB2_USBCTR		0x00c
+#घोषणा USB2_SPD_RSM_TIMSET	0x10c
+#घोषणा USB2_OC_TIMSET		0x110
+#घोषणा USB2_COMMCTRL		0x600
+#घोषणा USB2_OBINTSTA		0x604
+#घोषणा USB2_OBINTEN		0x608
+#घोषणा USB2_VBCTRL		0x60c
+#घोषणा USB2_LINECTRL1		0x610
+#घोषणा USB2_ADPCTRL		0x630
 
 /* INT_ENABLE */
-#define USB2_INT_ENABLE_UCOM_INTEN	BIT(3)
-#define USB2_INT_ENABLE_USBH_INTB_EN	BIT(2)	/* For EHCI */
-#define USB2_INT_ENABLE_USBH_INTA_EN	BIT(1)	/* For OHCI */
+#घोषणा USB2_INT_ENABLE_UCOM_INTEN	BIT(3)
+#घोषणा USB2_INT_ENABLE_USBH_INTB_EN	BIT(2)	/* For EHCI */
+#घोषणा USB2_INT_ENABLE_USBH_INTA_EN	BIT(1)	/* For OHCI */
 
 /* USBCTR */
-#define USB2_USBCTR_DIRPD	BIT(2)
-#define USB2_USBCTR_PLL_RST	BIT(1)
+#घोषणा USB2_USBCTR_सूचीPD	BIT(2)
+#घोषणा USB2_USBCTR_PLL_RST	BIT(1)
 
 /* SPD_RSM_TIMSET */
-#define USB2_SPD_RSM_TIMSET_INIT	0x014e029b
+#घोषणा USB2_SPD_RSM_TIMSET_INIT	0x014e029b
 
 /* OC_TIMSET */
-#define USB2_OC_TIMSET_INIT		0x000209ab
+#घोषणा USB2_OC_TIMSET_INIT		0x000209ab
 
 /* COMMCTRL */
-#define USB2_COMMCTRL_OTG_PERI		BIT(31)	/* 1 = Peripheral mode */
+#घोषणा USB2_COMMCTRL_OTG_PERI		BIT(31)	/* 1 = Peripheral mode */
 
 /* OBINTSTA and OBINTEN */
-#define USB2_OBINT_SESSVLDCHG		BIT(12)
-#define USB2_OBINT_IDDIGCHG		BIT(11)
-#define USB2_OBINT_BITS			(USB2_OBINT_SESSVLDCHG | \
+#घोषणा USB2_OBINT_SESSVLDCHG		BIT(12)
+#घोषणा USB2_OBINT_IDDIGCHG		BIT(11)
+#घोषणा USB2_OBINT_BITS			(USB2_OBINT_SESSVLDCHG | \
 					 USB2_OBINT_IDDIGCHG)
 
 /* VBCTRL */
-#define USB2_VBCTRL_OCCLREN		BIT(16)
-#define USB2_VBCTRL_DRVVBUSSEL		BIT(8)
+#घोषणा USB2_VBCTRL_OCCLREN		BIT(16)
+#घोषणा USB2_VBCTRL_DRVVBUSSEL		BIT(8)
 
 /* LINECTRL1 */
-#define USB2_LINECTRL1_DPRPD_EN		BIT(19)
-#define USB2_LINECTRL1_DP_RPD		BIT(18)
-#define USB2_LINECTRL1_DMRPD_EN		BIT(17)
-#define USB2_LINECTRL1_DM_RPD		BIT(16)
-#define USB2_LINECTRL1_OPMODE_NODRV	BIT(6)
+#घोषणा USB2_LINECTRL1_DPRPD_EN		BIT(19)
+#घोषणा USB2_LINECTRL1_DP_RPD		BIT(18)
+#घोषणा USB2_LINECTRL1_DMRPD_EN		BIT(17)
+#घोषणा USB2_LINECTRL1_DM_RPD		BIT(16)
+#घोषणा USB2_LINECTRL1_OPMODE_NODRV	BIT(6)
 
 /* ADPCTRL */
-#define USB2_ADPCTRL_OTGSESSVLD		BIT(20)
-#define USB2_ADPCTRL_IDDIG		BIT(19)
-#define USB2_ADPCTRL_IDPULLUP		BIT(5)	/* 1 = ID sampling is enabled */
-#define USB2_ADPCTRL_DRVVBUS		BIT(4)
+#घोषणा USB2_ADPCTRL_OTGSESSVLD		BIT(20)
+#घोषणा USB2_ADPCTRL_IDDIG		BIT(19)
+#घोषणा USB2_ADPCTRL_IDPULLUP		BIT(5)	/* 1 = ID sampling is enabled */
+#घोषणा USB2_ADPCTRL_DRVVBUS		BIT(4)
 
-#define NUM_OF_PHYS			4
-enum rcar_gen3_phy_index {
+#घोषणा NUM_OF_PHYS			4
+क्रमागत rcar_gen3_phy_index अणु
 	PHY_INDEX_BOTH_HC,
 	PHY_INDEX_OHCI,
 	PHY_INDEX_EHCI,
 	PHY_INDEX_HSUSB
-};
+पूर्ण;
 
-static const u32 rcar_gen3_int_enable[NUM_OF_PHYS] = {
+अटल स्थिर u32 rcar_gen3_पूर्णांक_enable[NUM_OF_PHYS] = अणु
 	USB2_INT_ENABLE_USBH_INTB_EN | USB2_INT_ENABLE_USBH_INTA_EN,
 	USB2_INT_ENABLE_USBH_INTA_EN,
 	USB2_INT_ENABLE_USBH_INTB_EN,
 	0
-};
+पूर्ण;
 
-struct rcar_gen3_phy {
-	struct phy *phy;
-	struct rcar_gen3_chan *ch;
-	u32 int_enable_bits;
+काष्ठा rcar_gen3_phy अणु
+	काष्ठा phy *phy;
+	काष्ठा rcar_gen3_chan *ch;
+	u32 पूर्णांक_enable_bits;
 	bool initialized;
 	bool otg_initialized;
-	bool powered;
-};
+	bool घातered;
+पूर्ण;
 
-struct rcar_gen3_chan {
-	void __iomem *base;
-	struct device *dev;	/* platform_device's device */
-	struct extcon_dev *extcon;
-	struct rcar_gen3_phy rphys[NUM_OF_PHYS];
-	struct regulator *vbus;
-	struct work_struct work;
-	struct mutex lock;	/* protects rphys[...].powered */
-	enum usb_dr_mode dr_mode;
-	int irq;
+काष्ठा rcar_gen3_chan अणु
+	व्योम __iomem *base;
+	काष्ठा device *dev;	/* platक्रमm_device's device */
+	काष्ठा extcon_dev *extcon;
+	काष्ठा rcar_gen3_phy rphys[NUM_OF_PHYS];
+	काष्ठा regulator *vbus;
+	काष्ठा work_काष्ठा work;
+	काष्ठा mutex lock;	/* protects rphys[...].घातered */
+	क्रमागत usb_dr_mode dr_mode;
+	पूर्णांक irq;
 	bool extcon_host;
 	bool is_otg_channel;
 	bool uses_otg_pins;
-};
+पूर्ण;
 
 /*
  * Combination about is_otg_channel and uses_otg_pins:
@@ -128,605 +129,605 @@ struct rcar_gen3_chan {
  * false                | any		|| disabled	| disabled
  */
 
-static void rcar_gen3_phy_usb2_work(struct work_struct *work)
-{
-	struct rcar_gen3_chan *ch = container_of(work, struct rcar_gen3_chan,
+अटल व्योम rcar_gen3_phy_usb2_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rcar_gen3_chan *ch = container_of(work, काष्ठा rcar_gen3_chan,
 						 work);
 
-	if (ch->extcon_host) {
+	अगर (ch->extcon_host) अणु
 		extcon_set_state_sync(ch->extcon, EXTCON_USB_HOST, true);
 		extcon_set_state_sync(ch->extcon, EXTCON_USB, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		extcon_set_state_sync(ch->extcon, EXTCON_USB_HOST, false);
 		extcon_set_state_sync(ch->extcon, EXTCON_USB, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rcar_gen3_set_host_mode(struct rcar_gen3_chan *ch, int host)
-{
-	void __iomem *usb2_base = ch->base;
-	u32 val = readl(usb2_base + USB2_COMMCTRL);
+अटल व्योम rcar_gen3_set_host_mode(काष्ठा rcar_gen3_chan *ch, पूर्णांक host)
+अणु
+	व्योम __iomem *usb2_base = ch->base;
+	u32 val = पढ़ोl(usb2_base + USB2_COMMCTRL);
 
 	dev_vdbg(ch->dev, "%s: %08x, %d\n", __func__, val, host);
-	if (host)
+	अगर (host)
 		val &= ~USB2_COMMCTRL_OTG_PERI;
-	else
+	अन्यथा
 		val |= USB2_COMMCTRL_OTG_PERI;
-	writel(val, usb2_base + USB2_COMMCTRL);
-}
+	ग_लिखोl(val, usb2_base + USB2_COMMCTRL);
+पूर्ण
 
-static void rcar_gen3_set_linectrl(struct rcar_gen3_chan *ch, int dp, int dm)
-{
-	void __iomem *usb2_base = ch->base;
-	u32 val = readl(usb2_base + USB2_LINECTRL1);
+अटल व्योम rcar_gen3_set_linectrl(काष्ठा rcar_gen3_chan *ch, पूर्णांक dp, पूर्णांक dm)
+अणु
+	व्योम __iomem *usb2_base = ch->base;
+	u32 val = पढ़ोl(usb2_base + USB2_LINECTRL1);
 
 	dev_vdbg(ch->dev, "%s: %08x, %d, %d\n", __func__, val, dp, dm);
 	val &= ~(USB2_LINECTRL1_DP_RPD | USB2_LINECTRL1_DM_RPD);
-	if (dp)
+	अगर (dp)
 		val |= USB2_LINECTRL1_DP_RPD;
-	if (dm)
+	अगर (dm)
 		val |= USB2_LINECTRL1_DM_RPD;
-	writel(val, usb2_base + USB2_LINECTRL1);
-}
+	ग_लिखोl(val, usb2_base + USB2_LINECTRL1);
+पूर्ण
 
-static void rcar_gen3_enable_vbus_ctrl(struct rcar_gen3_chan *ch, int vbus)
-{
-	void __iomem *usb2_base = ch->base;
-	u32 val = readl(usb2_base + USB2_ADPCTRL);
+अटल व्योम rcar_gen3_enable_vbus_ctrl(काष्ठा rcar_gen3_chan *ch, पूर्णांक vbus)
+अणु
+	व्योम __iomem *usb2_base = ch->base;
+	u32 val = पढ़ोl(usb2_base + USB2_ADPCTRL);
 
 	dev_vdbg(ch->dev, "%s: %08x, %d\n", __func__, val, vbus);
-	if (vbus)
+	अगर (vbus)
 		val |= USB2_ADPCTRL_DRVVBUS;
-	else
+	अन्यथा
 		val &= ~USB2_ADPCTRL_DRVVBUS;
-	writel(val, usb2_base + USB2_ADPCTRL);
-}
+	ग_लिखोl(val, usb2_base + USB2_ADPCTRL);
+पूर्ण
 
-static void rcar_gen3_control_otg_irq(struct rcar_gen3_chan *ch, int enable)
-{
-	void __iomem *usb2_base = ch->base;
-	u32 val = readl(usb2_base + USB2_OBINTEN);
+अटल व्योम rcar_gen3_control_otg_irq(काष्ठा rcar_gen3_chan *ch, पूर्णांक enable)
+अणु
+	व्योम __iomem *usb2_base = ch->base;
+	u32 val = पढ़ोl(usb2_base + USB2_OBINTEN);
 
-	if (ch->uses_otg_pins && enable)
+	अगर (ch->uses_otg_pins && enable)
 		val |= USB2_OBINT_BITS;
-	else
+	अन्यथा
 		val &= ~USB2_OBINT_BITS;
-	writel(val, usb2_base + USB2_OBINTEN);
-}
+	ग_लिखोl(val, usb2_base + USB2_OBINTEN);
+पूर्ण
 
-static void rcar_gen3_init_for_host(struct rcar_gen3_chan *ch)
-{
+अटल व्योम rcar_gen3_init_क्रम_host(काष्ठा rcar_gen3_chan *ch)
+अणु
 	rcar_gen3_set_linectrl(ch, 1, 1);
 	rcar_gen3_set_host_mode(ch, 1);
 	rcar_gen3_enable_vbus_ctrl(ch, 1);
 
 	ch->extcon_host = true;
 	schedule_work(&ch->work);
-}
+पूर्ण
 
-static void rcar_gen3_init_for_peri(struct rcar_gen3_chan *ch)
-{
+अटल व्योम rcar_gen3_init_क्रम_peri(काष्ठा rcar_gen3_chan *ch)
+अणु
 	rcar_gen3_set_linectrl(ch, 0, 1);
 	rcar_gen3_set_host_mode(ch, 0);
 	rcar_gen3_enable_vbus_ctrl(ch, 0);
 
 	ch->extcon_host = false;
 	schedule_work(&ch->work);
-}
+पूर्ण
 
-static void rcar_gen3_init_for_b_host(struct rcar_gen3_chan *ch)
-{
-	void __iomem *usb2_base = ch->base;
+अटल व्योम rcar_gen3_init_क्रम_b_host(काष्ठा rcar_gen3_chan *ch)
+अणु
+	व्योम __iomem *usb2_base = ch->base;
 	u32 val;
 
-	val = readl(usb2_base + USB2_LINECTRL1);
-	writel(val | USB2_LINECTRL1_OPMODE_NODRV, usb2_base + USB2_LINECTRL1);
+	val = पढ़ोl(usb2_base + USB2_LINECTRL1);
+	ग_लिखोl(val | USB2_LINECTRL1_OPMODE_NODRV, usb2_base + USB2_LINECTRL1);
 
 	rcar_gen3_set_linectrl(ch, 1, 1);
 	rcar_gen3_set_host_mode(ch, 1);
 	rcar_gen3_enable_vbus_ctrl(ch, 0);
 
-	val = readl(usb2_base + USB2_LINECTRL1);
-	writel(val & ~USB2_LINECTRL1_OPMODE_NODRV, usb2_base + USB2_LINECTRL1);
-}
+	val = पढ़ोl(usb2_base + USB2_LINECTRL1);
+	ग_लिखोl(val & ~USB2_LINECTRL1_OPMODE_NODRV, usb2_base + USB2_LINECTRL1);
+पूर्ण
 
-static void rcar_gen3_init_for_a_peri(struct rcar_gen3_chan *ch)
-{
+अटल व्योम rcar_gen3_init_क्रम_a_peri(काष्ठा rcar_gen3_chan *ch)
+अणु
 	rcar_gen3_set_linectrl(ch, 0, 1);
 	rcar_gen3_set_host_mode(ch, 0);
 	rcar_gen3_enable_vbus_ctrl(ch, 1);
-}
+पूर्ण
 
-static void rcar_gen3_init_from_a_peri_to_a_host(struct rcar_gen3_chan *ch)
-{
+अटल व्योम rcar_gen3_init_from_a_peri_to_a_host(काष्ठा rcar_gen3_chan *ch)
+अणु
 	rcar_gen3_control_otg_irq(ch, 0);
 
 	rcar_gen3_enable_vbus_ctrl(ch, 1);
-	rcar_gen3_init_for_host(ch);
+	rcar_gen3_init_क्रम_host(ch);
 
 	rcar_gen3_control_otg_irq(ch, 1);
-}
+पूर्ण
 
-static bool rcar_gen3_check_id(struct rcar_gen3_chan *ch)
-{
-	if (!ch->uses_otg_pins)
-		return (ch->dr_mode == USB_DR_MODE_HOST) ? false : true;
+अटल bool rcar_gen3_check_id(काष्ठा rcar_gen3_chan *ch)
+अणु
+	अगर (!ch->uses_otg_pins)
+		वापस (ch->dr_mode == USB_DR_MODE_HOST) ? false : true;
 
-	return !!(readl(ch->base + USB2_ADPCTRL) & USB2_ADPCTRL_IDDIG);
-}
+	वापस !!(पढ़ोl(ch->base + USB2_ADPCTRL) & USB2_ADPCTRL_IDDIG);
+पूर्ण
 
-static void rcar_gen3_device_recognition(struct rcar_gen3_chan *ch)
-{
-	if (!rcar_gen3_check_id(ch))
-		rcar_gen3_init_for_host(ch);
-	else
-		rcar_gen3_init_for_peri(ch);
-}
+अटल व्योम rcar_gen3_device_recognition(काष्ठा rcar_gen3_chan *ch)
+अणु
+	अगर (!rcar_gen3_check_id(ch))
+		rcar_gen3_init_क्रम_host(ch);
+	अन्यथा
+		rcar_gen3_init_क्रम_peri(ch);
+पूर्ण
 
-static bool rcar_gen3_is_host(struct rcar_gen3_chan *ch)
-{
-	return !(readl(ch->base + USB2_COMMCTRL) & USB2_COMMCTRL_OTG_PERI);
-}
+अटल bool rcar_gen3_is_host(काष्ठा rcar_gen3_chan *ch)
+अणु
+	वापस !(पढ़ोl(ch->base + USB2_COMMCTRL) & USB2_COMMCTRL_OTG_PERI);
+पूर्ण
 
-static enum phy_mode rcar_gen3_get_phy_mode(struct rcar_gen3_chan *ch)
-{
-	if (rcar_gen3_is_host(ch))
-		return PHY_MODE_USB_HOST;
+अटल क्रमागत phy_mode rcar_gen3_get_phy_mode(काष्ठा rcar_gen3_chan *ch)
+अणु
+	अगर (rcar_gen3_is_host(ch))
+		वापस PHY_MODE_USB_HOST;
 
-	return PHY_MODE_USB_DEVICE;
-}
+	वापस PHY_MODE_USB_DEVICE;
+पूर्ण
 
-static bool rcar_gen3_is_any_rphy_initialized(struct rcar_gen3_chan *ch)
-{
-	int i;
+अटल bool rcar_gen3_is_any_rphy_initialized(काष्ठा rcar_gen3_chan *ch)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_OF_PHYS; i++) {
-		if (ch->rphys[i].initialized)
-			return true;
-	}
+	क्रम (i = 0; i < NUM_OF_PHYS; i++) अणु
+		अगर (ch->rphys[i].initialized)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool rcar_gen3_needs_init_otg(struct rcar_gen3_chan *ch)
-{
-	int i;
+अटल bool rcar_gen3_needs_init_otg(काष्ठा rcar_gen3_chan *ch)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_OF_PHYS; i++) {
-		if (ch->rphys[i].otg_initialized)
-			return false;
-	}
+	क्रम (i = 0; i < NUM_OF_PHYS; i++) अणु
+		अगर (ch->rphys[i].otg_initialized)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool rcar_gen3_are_all_rphys_power_off(struct rcar_gen3_chan *ch)
-{
-	int i;
+अटल bool rcar_gen3_are_all_rphys_घातer_off(काष्ठा rcar_gen3_chan *ch)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NUM_OF_PHYS; i++) {
-		if (ch->rphys[i].powered)
-			return false;
-	}
+	क्रम (i = 0; i < NUM_OF_PHYS; i++) अणु
+		अगर (ch->rphys[i].घातered)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static ssize_t role_store(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t count)
-{
-	struct rcar_gen3_chan *ch = dev_get_drvdata(dev);
+अटल sमाप_प्रकार role_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा rcar_gen3_chan *ch = dev_get_drvdata(dev);
 	bool is_b_device;
-	enum phy_mode cur_mode, new_mode;
+	क्रमागत phy_mode cur_mode, new_mode;
 
-	if (!ch->is_otg_channel || !rcar_gen3_is_any_rphy_initialized(ch))
-		return -EIO;
+	अगर (!ch->is_otg_channel || !rcar_gen3_is_any_rphy_initialized(ch))
+		वापस -EIO;
 
-	if (sysfs_streq(buf, "host"))
+	अगर (sysfs_streq(buf, "host"))
 		new_mode = PHY_MODE_USB_HOST;
-	else if (sysfs_streq(buf, "peripheral"))
+	अन्यथा अगर (sysfs_streq(buf, "peripheral"))
 		new_mode = PHY_MODE_USB_DEVICE;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	/* is_b_device: true is B-Device. false is A-Device. */
 	is_b_device = rcar_gen3_check_id(ch);
 	cur_mode = rcar_gen3_get_phy_mode(ch);
 
-	/* If current and new mode is the same, this returns the error */
-	if (cur_mode == new_mode)
-		return -EINVAL;
+	/* If current and new mode is the same, this वापसs the error */
+	अगर (cur_mode == new_mode)
+		वापस -EINVAL;
 
-	if (new_mode == PHY_MODE_USB_HOST) { /* And is_host must be false */
-		if (!is_b_device)	/* A-Peripheral */
+	अगर (new_mode == PHY_MODE_USB_HOST) अणु /* And is_host must be false */
+		अगर (!is_b_device)	/* A-Peripheral */
 			rcar_gen3_init_from_a_peri_to_a_host(ch);
-		else			/* B-Peripheral */
-			rcar_gen3_init_for_b_host(ch);
-	} else {			/* And is_host must be true */
-		if (!is_b_device)	/* A-Host */
-			rcar_gen3_init_for_a_peri(ch);
-		else			/* B-Host */
-			rcar_gen3_init_for_peri(ch);
-	}
+		अन्यथा			/* B-Peripheral */
+			rcar_gen3_init_क्रम_b_host(ch);
+	पूर्ण अन्यथा अणु			/* And is_host must be true */
+		अगर (!is_b_device)	/* A-Host */
+			rcar_gen3_init_क्रम_a_peri(ch);
+		अन्यथा			/* B-Host */
+			rcar_gen3_init_क्रम_peri(ch);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t role_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct rcar_gen3_chan *ch = dev_get_drvdata(dev);
+अटल sमाप_प्रकार role_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा rcar_gen3_chan *ch = dev_get_drvdata(dev);
 
-	if (!ch->is_otg_channel || !rcar_gen3_is_any_rphy_initialized(ch))
-		return -EIO;
+	अगर (!ch->is_otg_channel || !rcar_gen3_is_any_rphy_initialized(ch))
+		वापस -EIO;
 
-	return sprintf(buf, "%s\n", rcar_gen3_is_host(ch) ? "host" :
+	वापस प्र_लिखो(buf, "%s\n", rcar_gen3_is_host(ch) ? "host" :
 							    "peripheral");
-}
-static DEVICE_ATTR_RW(role);
+पूर्ण
+अटल DEVICE_ATTR_RW(role);
 
-static void rcar_gen3_init_otg(struct rcar_gen3_chan *ch)
-{
-	void __iomem *usb2_base = ch->base;
+अटल व्योम rcar_gen3_init_otg(काष्ठा rcar_gen3_chan *ch)
+अणु
+	व्योम __iomem *usb2_base = ch->base;
 	u32 val;
 
-	/* Should not use functions of read-modify-write a register */
-	val = readl(usb2_base + USB2_LINECTRL1);
+	/* Should not use functions of पढ़ो-modअगरy-ग_लिखो a रेजिस्टर */
+	val = पढ़ोl(usb2_base + USB2_LINECTRL1);
 	val = (val & ~USB2_LINECTRL1_DP_RPD) | USB2_LINECTRL1_DPRPD_EN |
 	      USB2_LINECTRL1_DMRPD_EN | USB2_LINECTRL1_DM_RPD;
-	writel(val, usb2_base + USB2_LINECTRL1);
+	ग_लिखोl(val, usb2_base + USB2_LINECTRL1);
 
-	val = readl(usb2_base + USB2_VBCTRL);
+	val = पढ़ोl(usb2_base + USB2_VBCTRL);
 	val &= ~USB2_VBCTRL_OCCLREN;
-	writel(val | USB2_VBCTRL_DRVVBUSSEL, usb2_base + USB2_VBCTRL);
-	val = readl(usb2_base + USB2_ADPCTRL);
-	writel(val | USB2_ADPCTRL_IDPULLUP, usb2_base + USB2_ADPCTRL);
+	ग_लिखोl(val | USB2_VBCTRL_DRVVBUSSEL, usb2_base + USB2_VBCTRL);
+	val = पढ़ोl(usb2_base + USB2_ADPCTRL);
+	ग_लिखोl(val | USB2_ADPCTRL_IDPULLUP, usb2_base + USB2_ADPCTRL);
 
 	msleep(20);
 
-	writel(0xffffffff, usb2_base + USB2_OBINTSTA);
-	writel(USB2_OBINT_BITS, usb2_base + USB2_OBINTEN);
+	ग_लिखोl(0xffffffff, usb2_base + USB2_OBINTSTA);
+	ग_लिखोl(USB2_OBINT_BITS, usb2_base + USB2_OBINTEN);
 
 	rcar_gen3_device_recognition(ch);
-}
+पूर्ण
 
-static irqreturn_t rcar_gen3_phy_usb2_irq(int irq, void *_ch)
-{
-	struct rcar_gen3_chan *ch = _ch;
-	void __iomem *usb2_base = ch->base;
-	u32 status = readl(usb2_base + USB2_OBINTSTA);
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t rcar_gen3_phy_usb2_irq(पूर्णांक irq, व्योम *_ch)
+अणु
+	काष्ठा rcar_gen3_chan *ch = _ch;
+	व्योम __iomem *usb2_base = ch->base;
+	u32 status = पढ़ोl(usb2_base + USB2_OBINTSTA);
+	irqवापस_t ret = IRQ_NONE;
 
-	if (status & USB2_OBINT_BITS) {
+	अगर (status & USB2_OBINT_BITS) अणु
 		dev_vdbg(ch->dev, "%s: %08x\n", __func__, status);
-		writel(USB2_OBINT_BITS, usb2_base + USB2_OBINTSTA);
+		ग_लिखोl(USB2_OBINT_BITS, usb2_base + USB2_OBINTSTA);
 		rcar_gen3_device_recognition(ch);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rcar_gen3_phy_usb2_init(struct phy *p)
-{
-	struct rcar_gen3_phy *rphy = phy_get_drvdata(p);
-	struct rcar_gen3_chan *channel = rphy->ch;
-	void __iomem *usb2_base = channel->base;
+अटल पूर्णांक rcar_gen3_phy_usb2_init(काष्ठा phy *p)
+अणु
+	काष्ठा rcar_gen3_phy *rphy = phy_get_drvdata(p);
+	काष्ठा rcar_gen3_chan *channel = rphy->ch;
+	व्योम __iomem *usb2_base = channel->base;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (!rcar_gen3_is_any_rphy_initialized(channel) && channel->irq >= 0) {
+	अगर (!rcar_gen3_is_any_rphy_initialized(channel) && channel->irq >= 0) अणु
 		INIT_WORK(&channel->work, rcar_gen3_phy_usb2_work);
 		ret = request_irq(channel->irq, rcar_gen3_phy_usb2_irq,
 				  IRQF_SHARED, dev_name(channel->dev), channel);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(channel->dev, "No irq handler (%d)\n", channel->irq);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* Initialize USB2 part */
-	val = readl(usb2_base + USB2_INT_ENABLE);
-	val |= USB2_INT_ENABLE_UCOM_INTEN | rphy->int_enable_bits;
-	writel(val, usb2_base + USB2_INT_ENABLE);
-	writel(USB2_SPD_RSM_TIMSET_INIT, usb2_base + USB2_SPD_RSM_TIMSET);
-	writel(USB2_OC_TIMSET_INIT, usb2_base + USB2_OC_TIMSET);
+	val = पढ़ोl(usb2_base + USB2_INT_ENABLE);
+	val |= USB2_INT_ENABLE_UCOM_INTEN | rphy->पूर्णांक_enable_bits;
+	ग_लिखोl(val, usb2_base + USB2_INT_ENABLE);
+	ग_लिखोl(USB2_SPD_RSM_TIMSET_INIT, usb2_base + USB2_SPD_RSM_TIMSET);
+	ग_लिखोl(USB2_OC_TIMSET_INIT, usb2_base + USB2_OC_TIMSET);
 
 	/* Initialize otg part */
-	if (channel->is_otg_channel) {
-		if (rcar_gen3_needs_init_otg(channel))
+	अगर (channel->is_otg_channel) अणु
+		अगर (rcar_gen3_needs_init_otg(channel))
 			rcar_gen3_init_otg(channel);
 		rphy->otg_initialized = true;
-	}
+	पूर्ण
 
 	rphy->initialized = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rcar_gen3_phy_usb2_exit(struct phy *p)
-{
-	struct rcar_gen3_phy *rphy = phy_get_drvdata(p);
-	struct rcar_gen3_chan *channel = rphy->ch;
-	void __iomem *usb2_base = channel->base;
+अटल पूर्णांक rcar_gen3_phy_usb2_निकास(काष्ठा phy *p)
+अणु
+	काष्ठा rcar_gen3_phy *rphy = phy_get_drvdata(p);
+	काष्ठा rcar_gen3_chan *channel = rphy->ch;
+	व्योम __iomem *usb2_base = channel->base;
 	u32 val;
 
 	rphy->initialized = false;
 
-	if (channel->is_otg_channel)
+	अगर (channel->is_otg_channel)
 		rphy->otg_initialized = false;
 
-	val = readl(usb2_base + USB2_INT_ENABLE);
-	val &= ~rphy->int_enable_bits;
-	if (!rcar_gen3_is_any_rphy_initialized(channel))
+	val = पढ़ोl(usb2_base + USB2_INT_ENABLE);
+	val &= ~rphy->पूर्णांक_enable_bits;
+	अगर (!rcar_gen3_is_any_rphy_initialized(channel))
 		val &= ~USB2_INT_ENABLE_UCOM_INTEN;
-	writel(val, usb2_base + USB2_INT_ENABLE);
+	ग_लिखोl(val, usb2_base + USB2_INT_ENABLE);
 
-	if (channel->irq >= 0 && !rcar_gen3_is_any_rphy_initialized(channel))
-		free_irq(channel->irq, channel);
+	अगर (channel->irq >= 0 && !rcar_gen3_is_any_rphy_initialized(channel))
+		मुक्त_irq(channel->irq, channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rcar_gen3_phy_usb2_power_on(struct phy *p)
-{
-	struct rcar_gen3_phy *rphy = phy_get_drvdata(p);
-	struct rcar_gen3_chan *channel = rphy->ch;
-	void __iomem *usb2_base = channel->base;
+अटल पूर्णांक rcar_gen3_phy_usb2_घातer_on(काष्ठा phy *p)
+अणु
+	काष्ठा rcar_gen3_phy *rphy = phy_get_drvdata(p);
+	काष्ठा rcar_gen3_chan *channel = rphy->ch;
+	व्योम __iomem *usb2_base = channel->base;
 	u32 val;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&channel->lock);
-	if (!rcar_gen3_are_all_rphys_power_off(channel))
-		goto out;
+	अगर (!rcar_gen3_are_all_rphys_घातer_off(channel))
+		जाओ out;
 
-	if (channel->vbus) {
+	अगर (channel->vbus) अणु
 		ret = regulator_enable(channel->vbus);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	val = readl(usb2_base + USB2_USBCTR);
+	val = पढ़ोl(usb2_base + USB2_USBCTR);
 	val |= USB2_USBCTR_PLL_RST;
-	writel(val, usb2_base + USB2_USBCTR);
+	ग_लिखोl(val, usb2_base + USB2_USBCTR);
 	val &= ~USB2_USBCTR_PLL_RST;
-	writel(val, usb2_base + USB2_USBCTR);
+	ग_लिखोl(val, usb2_base + USB2_USBCTR);
 
 out:
-	/* The powered flag should be set for any other phys anyway */
-	rphy->powered = true;
+	/* The घातered flag should be set क्रम any other phys anyway */
+	rphy->घातered = true;
 	mutex_unlock(&channel->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rcar_gen3_phy_usb2_power_off(struct phy *p)
-{
-	struct rcar_gen3_phy *rphy = phy_get_drvdata(p);
-	struct rcar_gen3_chan *channel = rphy->ch;
-	int ret = 0;
+अटल पूर्णांक rcar_gen3_phy_usb2_घातer_off(काष्ठा phy *p)
+अणु
+	काष्ठा rcar_gen3_phy *rphy = phy_get_drvdata(p);
+	काष्ठा rcar_gen3_chan *channel = rphy->ch;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&channel->lock);
-	rphy->powered = false;
+	rphy->घातered = false;
 
-	if (!rcar_gen3_are_all_rphys_power_off(channel))
-		goto out;
+	अगर (!rcar_gen3_are_all_rphys_घातer_off(channel))
+		जाओ out;
 
-	if (channel->vbus)
+	अगर (channel->vbus)
 		ret = regulator_disable(channel->vbus);
 
 out:
 	mutex_unlock(&channel->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct phy_ops rcar_gen3_phy_usb2_ops = {
+अटल स्थिर काष्ठा phy_ops rcar_gen3_phy_usb2_ops = अणु
 	.init		= rcar_gen3_phy_usb2_init,
-	.exit		= rcar_gen3_phy_usb2_exit,
-	.power_on	= rcar_gen3_phy_usb2_power_on,
-	.power_off	= rcar_gen3_phy_usb2_power_off,
+	.निकास		= rcar_gen3_phy_usb2_निकास,
+	.घातer_on	= rcar_gen3_phy_usb2_घातer_on,
+	.घातer_off	= rcar_gen3_phy_usb2_घातer_off,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const struct phy_ops rz_g1c_phy_usb2_ops = {
+अटल स्थिर काष्ठा phy_ops rz_g1c_phy_usb2_ops = अणु
 	.init		= rcar_gen3_phy_usb2_init,
-	.exit		= rcar_gen3_phy_usb2_exit,
+	.निकास		= rcar_gen3_phy_usb2_निकास,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const struct of_device_id rcar_gen3_phy_usb2_match_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id rcar_gen3_phy_usb2_match_table[] = अणु
+	अणु
 		.compatible = "renesas,usb2-phy-r8a77470",
 		.data = &rz_g1c_phy_usb2_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "renesas,usb2-phy-r8a7795",
 		.data = &rcar_gen3_phy_usb2_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "renesas,usb2-phy-r8a7796",
 		.data = &rcar_gen3_phy_usb2_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "renesas,usb2-phy-r8a77965",
 		.data = &rcar_gen3_phy_usb2_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "renesas,rcar-gen3-usb2-phy",
 		.data = &rcar_gen3_phy_usb2_ops,
-	},
-	{ /* sentinel */ },
-};
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rcar_gen3_phy_usb2_match_table);
 
-static const unsigned int rcar_gen3_phy_cable[] = {
+अटल स्थिर अचिन्हित पूर्णांक rcar_gen3_phy_cable[] = अणु
 	EXTCON_USB,
 	EXTCON_USB_HOST,
 	EXTCON_NONE,
-};
+पूर्ण;
 
-static struct phy *rcar_gen3_phy_usb2_xlate(struct device *dev,
-					    struct of_phandle_args *args)
-{
-	struct rcar_gen3_chan *ch = dev_get_drvdata(dev);
+अटल काष्ठा phy *rcar_gen3_phy_usb2_xlate(काष्ठा device *dev,
+					    काष्ठा of_phandle_args *args)
+अणु
+	काष्ठा rcar_gen3_chan *ch = dev_get_drvdata(dev);
 
-	if (args->args_count == 0)	/* For old version dts */
-		return ch->rphys[PHY_INDEX_BOTH_HC].phy;
-	else if (args->args_count > 1)	/* Prevent invalid args count */
-		return ERR_PTR(-ENODEV);
+	अगर (args->args_count == 0)	/* For old version dts */
+		वापस ch->rphys[PHY_INDEX_BOTH_HC].phy;
+	अन्यथा अगर (args->args_count > 1)	/* Prevent invalid args count */
+		वापस ERR_PTR(-ENODEV);
 
-	if (args->args[0] >= NUM_OF_PHYS)
-		return ERR_PTR(-ENODEV);
+	अगर (args->args[0] >= NUM_OF_PHYS)
+		वापस ERR_PTR(-ENODEV);
 
-	return ch->rphys[args->args[0]].phy;
-}
+	वापस ch->rphys[args->args[0]].phy;
+पूर्ण
 
-static enum usb_dr_mode rcar_gen3_get_dr_mode(struct device_node *np)
-{
-	enum usb_dr_mode candidate = USB_DR_MODE_UNKNOWN;
-	int i;
+अटल क्रमागत usb_dr_mode rcar_gen3_get_dr_mode(काष्ठा device_node *np)
+अणु
+	क्रमागत usb_dr_mode candidate = USB_DR_MODE_UNKNOWN;
+	पूर्णांक i;
 
 	/*
 	 * If one of device nodes has other dr_mode except UNKNOWN,
-	 * this function returns UNKNOWN. To achieve backward compatibility,
+	 * this function वापसs UNKNOWN. To achieve backward compatibility,
 	 * this loop starts the index as 0.
 	 */
-	for (i = 0; i < NUM_OF_PHYS; i++) {
-		enum usb_dr_mode mode = of_usb_get_dr_mode_by_phy(np, i);
+	क्रम (i = 0; i < NUM_OF_PHYS; i++) अणु
+		क्रमागत usb_dr_mode mode = of_usb_get_dr_mode_by_phy(np, i);
 
-		if (mode != USB_DR_MODE_UNKNOWN) {
-			if (candidate == USB_DR_MODE_UNKNOWN)
+		अगर (mode != USB_DR_MODE_UNKNOWN) अणु
+			अगर (candidate == USB_DR_MODE_UNKNOWN)
 				candidate = mode;
-			else if (candidate != mode)
-				return USB_DR_MODE_UNKNOWN;
-		}
-	}
+			अन्यथा अगर (candidate != mode)
+				वापस USB_DR_MODE_UNKNOWN;
+		पूर्ण
+	पूर्ण
 
-	return candidate;
-}
+	वापस candidate;
+पूर्ण
 
-static int rcar_gen3_phy_usb2_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct rcar_gen3_chan *channel;
-	struct phy_provider *provider;
-	const struct phy_ops *phy_usb2_ops;
-	int ret = 0, i;
+अटल पूर्णांक rcar_gen3_phy_usb2_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा rcar_gen3_chan *channel;
+	काष्ठा phy_provider *provider;
+	स्थिर काष्ठा phy_ops *phy_usb2_ops;
+	पूर्णांक ret = 0, i;
 
-	if (!dev->of_node) {
+	अगर (!dev->of_node) अणु
 		dev_err(dev, "This driver needs device tree\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	channel = devm_kzalloc(dev, sizeof(*channel), GFP_KERNEL);
-	if (!channel)
-		return -ENOMEM;
+	channel = devm_kzalloc(dev, माप(*channel), GFP_KERNEL);
+	अगर (!channel)
+		वापस -ENOMEM;
 
-	channel->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(channel->base))
-		return PTR_ERR(channel->base);
+	channel->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(channel->base))
+		वापस PTR_ERR(channel->base);
 
-	/* get irq number here and request_irq for OTG in phy_init */
-	channel->irq = platform_get_irq_optional(pdev, 0);
+	/* get irq number here and request_irq क्रम OTG in phy_init */
+	channel->irq = platक्रमm_get_irq_optional(pdev, 0);
 	channel->dr_mode = rcar_gen3_get_dr_mode(dev->of_node);
-	if (channel->dr_mode != USB_DR_MODE_UNKNOWN) {
-		int ret;
+	अगर (channel->dr_mode != USB_DR_MODE_UNKNOWN) अणु
+		पूर्णांक ret;
 
 		channel->is_otg_channel = true;
-		channel->uses_otg_pins = !of_property_read_bool(dev->of_node,
+		channel->uses_otg_pins = !of_property_पढ़ो_bool(dev->of_node,
 							"renesas,no-otg-pins");
 		channel->extcon = devm_extcon_dev_allocate(dev,
 							rcar_gen3_phy_cable);
-		if (IS_ERR(channel->extcon))
-			return PTR_ERR(channel->extcon);
+		अगर (IS_ERR(channel->extcon))
+			वापस PTR_ERR(channel->extcon);
 
-		ret = devm_extcon_dev_register(dev, channel->extcon);
-		if (ret < 0) {
+		ret = devm_extcon_dev_रेजिस्टर(dev, channel->extcon);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to register extcon\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * devm_phy_create() will call pm_runtime_enable(&phy->dev);
-	 * And then, phy-core will manage runtime pm for this device.
+	 * devm_phy_create() will call pm_runसमय_enable(&phy->dev);
+	 * And then, phy-core will manage runसमय pm क्रम this device.
 	 */
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 	phy_usb2_ops = of_device_get_match_data(dev);
-	if (!phy_usb2_ops) {
+	अगर (!phy_usb2_ops) अणु
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	mutex_init(&channel->lock);
-	for (i = 0; i < NUM_OF_PHYS; i++) {
-		channel->rphys[i].phy = devm_phy_create(dev, NULL,
+	क्रम (i = 0; i < NUM_OF_PHYS; i++) अणु
+		channel->rphys[i].phy = devm_phy_create(dev, शून्य,
 							phy_usb2_ops);
-		if (IS_ERR(channel->rphys[i].phy)) {
+		अगर (IS_ERR(channel->rphys[i].phy)) अणु
 			dev_err(dev, "Failed to create USB2 PHY\n");
 			ret = PTR_ERR(channel->rphys[i].phy);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		channel->rphys[i].ch = channel;
-		channel->rphys[i].int_enable_bits = rcar_gen3_int_enable[i];
+		channel->rphys[i].पूर्णांक_enable_bits = rcar_gen3_पूर्णांक_enable[i];
 		phy_set_drvdata(channel->rphys[i].phy, &channel->rphys[i]);
-	}
+	पूर्ण
 
 	channel->vbus = devm_regulator_get_optional(dev, "vbus");
-	if (IS_ERR(channel->vbus)) {
-		if (PTR_ERR(channel->vbus) == -EPROBE_DEFER) {
+	अगर (IS_ERR(channel->vbus)) अणु
+		अगर (PTR_ERR(channel->vbus) == -EPROBE_DEFER) अणु
 			ret = PTR_ERR(channel->vbus);
-			goto error;
-		}
-		channel->vbus = NULL;
-	}
+			जाओ error;
+		पूर्ण
+		channel->vbus = शून्य;
+	पूर्ण
 
-	platform_set_drvdata(pdev, channel);
+	platक्रमm_set_drvdata(pdev, channel);
 	channel->dev = dev;
 
-	provider = devm_of_phy_provider_register(dev, rcar_gen3_phy_usb2_xlate);
-	if (IS_ERR(provider)) {
+	provider = devm_of_phy_provider_रेजिस्टर(dev, rcar_gen3_phy_usb2_xlate);
+	अगर (IS_ERR(provider)) अणु
 		dev_err(dev, "Failed to register PHY provider\n");
 		ret = PTR_ERR(provider);
-		goto error;
-	} else if (channel->is_otg_channel) {
-		int ret;
+		जाओ error;
+	पूर्ण अन्यथा अगर (channel->is_otg_channel) अणु
+		पूर्णांक ret;
 
 		ret = device_create_file(dev, &dev_attr_role);
-		if (ret < 0)
-			goto error;
-	}
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	pm_runtime_disable(dev);
+	pm_runसमय_disable(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rcar_gen3_phy_usb2_remove(struct platform_device *pdev)
-{
-	struct rcar_gen3_chan *channel = platform_get_drvdata(pdev);
+अटल पूर्णांक rcar_gen3_phy_usb2_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rcar_gen3_chan *channel = platक्रमm_get_drvdata(pdev);
 
-	if (channel->is_otg_channel)
-		device_remove_file(&pdev->dev, &dev_attr_role);
+	अगर (channel->is_otg_channel)
+		device_हटाओ_file(&pdev->dev, &dev_attr_role);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static struct platform_driver rcar_gen3_phy_usb2_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver rcar_gen3_phy_usb2_driver = अणु
+	.driver = अणु
 		.name		= "phy_rcar_gen3_usb2",
 		.of_match_table	= rcar_gen3_phy_usb2_match_table,
-	},
+	पूर्ण,
 	.probe	= rcar_gen3_phy_usb2_probe,
-	.remove = rcar_gen3_phy_usb2_remove,
-};
-module_platform_driver(rcar_gen3_phy_usb2_driver);
+	.हटाओ = rcar_gen3_phy_usb2_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(rcar_gen3_phy_usb2_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Renesas R-Car Gen3 USB 2.0 PHY");

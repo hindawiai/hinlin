@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * File: if_phonet.h
+ * File: अगर_phonet.h
  *
- * Phonet interface kernel definitions
+ * Phonet पूर्णांकerface kernel definitions
  *
  * Copyright (C) 2008 Nokia Corporation. All rights reserved.
  */
-#ifndef LINUX_IF_PHONET_H
-#define LINUX_IF_PHONET_H
+#अगर_अघोषित LINUX_IF_PHONET_H
+#घोषणा LINUX_IF_PHONET_H
 
-#include <uapi/linux/if_phonet.h>
+#समावेश <uapi/linux/अगर_phonet.h>
 
-extern const struct header_ops phonet_header_ops;
-#endif
+बाह्य स्थिर काष्ठा header_ops phonet_header_ops;
+#पूर्ण_अगर

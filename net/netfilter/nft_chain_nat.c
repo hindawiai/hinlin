@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/module.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_nat.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_ipv4.h>
-#include <net/netfilter/nf_tables_ipv6.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_nat.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_ipv4.h>
+#समावेश <net/netfilter/nf_tables_ipv6.h>
 
-static unsigned int nft_nat_do_chain(void *priv, struct sk_buff *skb,
-				     const struct nf_hook_state *state)
-{
-	struct nft_pktinfo pkt;
+अटल अचिन्हित पूर्णांक nft_nat_करो_chain(व्योम *priv, काष्ठा sk_buff *skb,
+				     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा nft_pktinfo pkt;
 
 	nft_set_pktinfo(&pkt, skb, state);
 
-	switch (state->pf) {
-#ifdef CONFIG_NF_TABLES_IPV4
-	case NFPROTO_IPV4:
+	चयन (state->pf) अणु
+#अगर_घोषित CONFIG_NF_TABLES_IPV4
+	हाल NFPROTO_IPV4:
 		nft_set_pktinfo_ipv4(&pkt, skb);
-		break;
-#endif
-#ifdef CONFIG_NF_TABLES_IPV6
-	case NFPROTO_IPV6:
+		अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_TABLES_IPV6
+	हाल NFPROTO_IPV6:
 		nft_set_pktinfo_ipv6(&pkt, skb);
-		break;
-#endif
-	default:
-		break;
-	}
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return nft_do_chain(&pkt, priv);
-}
+	वापस nft_करो_chain(&pkt, priv);
+पूर्ण
 
-#ifdef CONFIG_NF_TABLES_IPV4
-static const struct nft_chain_type nft_chain_nat_ipv4 = {
+#अगर_घोषित CONFIG_NF_TABLES_IPV4
+अटल स्थिर काष्ठा nft_chain_type nft_chain_nat_ipv4 = अणु
 	.name		= "nat",
 	.type		= NFT_CHAIN_T_NAT,
 	.family		= NFPROTO_IPV4,
@@ -42,19 +43,19 @@ static const struct nft_chain_type nft_chain_nat_ipv4 = {
 			  (1 << NF_INET_POST_ROUTING) |
 			  (1 << NF_INET_LOCAL_OUT) |
 			  (1 << NF_INET_LOCAL_IN),
-	.hooks		= {
-		[NF_INET_PRE_ROUTING]	= nft_nat_do_chain,
-		[NF_INET_POST_ROUTING]	= nft_nat_do_chain,
-		[NF_INET_LOCAL_OUT]	= nft_nat_do_chain,
-		[NF_INET_LOCAL_IN]	= nft_nat_do_chain,
-	},
-	.ops_register = nf_nat_ipv4_register_fn,
-	.ops_unregister = nf_nat_ipv4_unregister_fn,
-};
-#endif
+	.hooks		= अणु
+		[NF_INET_PRE_ROUTING]	= nft_nat_करो_chain,
+		[NF_INET_POST_ROUTING]	= nft_nat_करो_chain,
+		[NF_INET_LOCAL_OUT]	= nft_nat_करो_chain,
+		[NF_INET_LOCAL_IN]	= nft_nat_करो_chain,
+	पूर्ण,
+	.ops_रेजिस्टर = nf_nat_ipv4_रेजिस्टर_fn,
+	.ops_unरेजिस्टर = nf_nat_ipv4_unरेजिस्टर_fn,
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_NF_TABLES_IPV6
-static const struct nft_chain_type nft_chain_nat_ipv6 = {
+#अगर_घोषित CONFIG_NF_TABLES_IPV6
+अटल स्थिर काष्ठा nft_chain_type nft_chain_nat_ipv6 = अणु
 	.name		= "nat",
 	.type		= NFT_CHAIN_T_NAT,
 	.family		= NFPROTO_IPV6,
@@ -63,29 +64,29 @@ static const struct nft_chain_type nft_chain_nat_ipv6 = {
 			  (1 << NF_INET_POST_ROUTING) |
 			  (1 << NF_INET_LOCAL_OUT) |
 			  (1 << NF_INET_LOCAL_IN),
-	.hooks		= {
-		[NF_INET_PRE_ROUTING]	= nft_nat_do_chain,
-		[NF_INET_POST_ROUTING]	= nft_nat_do_chain,
-		[NF_INET_LOCAL_OUT]	= nft_nat_do_chain,
-		[NF_INET_LOCAL_IN]	= nft_nat_do_chain,
-	},
-	.ops_register		= nf_nat_ipv6_register_fn,
-	.ops_unregister		= nf_nat_ipv6_unregister_fn,
-};
-#endif
+	.hooks		= अणु
+		[NF_INET_PRE_ROUTING]	= nft_nat_करो_chain,
+		[NF_INET_POST_ROUTING]	= nft_nat_करो_chain,
+		[NF_INET_LOCAL_OUT]	= nft_nat_करो_chain,
+		[NF_INET_LOCAL_IN]	= nft_nat_करो_chain,
+	पूर्ण,
+	.ops_रेजिस्टर		= nf_nat_ipv6_रेजिस्टर_fn,
+	.ops_unरेजिस्टर		= nf_nat_ipv6_unरेजिस्टर_fn,
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_NF_TABLES_INET
-static int nft_nat_inet_reg(struct net *net, const struct nf_hook_ops *ops)
-{
-	return nf_nat_inet_register_fn(net, ops);
-}
+#अगर_घोषित CONFIG_NF_TABLES_INET
+अटल पूर्णांक nft_nat_inet_reg(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	वापस nf_nat_inet_रेजिस्टर_fn(net, ops);
+पूर्ण
 
-static void nft_nat_inet_unreg(struct net *net, const struct nf_hook_ops *ops)
-{
-	nf_nat_inet_unregister_fn(net, ops);
-}
+अटल व्योम nft_nat_inet_unreg(काष्ठा net *net, स्थिर काष्ठा nf_hook_ops *ops)
+अणु
+	nf_nat_inet_unरेजिस्टर_fn(net, ops);
+पूर्ण
 
-static const struct nft_chain_type nft_chain_nat_inet = {
+अटल स्थिर काष्ठा nft_chain_type nft_chain_nat_inet = अणु
 	.name		= "nat",
 	.type		= NFT_CHAIN_T_NAT,
 	.family		= NFPROTO_INET,
@@ -94,55 +95,55 @@ static const struct nft_chain_type nft_chain_nat_inet = {
 			  (1 << NF_INET_LOCAL_IN) |
 			  (1 << NF_INET_LOCAL_OUT) |
 			  (1 << NF_INET_POST_ROUTING),
-	.hooks		= {
-		[NF_INET_PRE_ROUTING]	= nft_nat_do_chain,
-		[NF_INET_LOCAL_IN]	= nft_nat_do_chain,
-		[NF_INET_LOCAL_OUT]	= nft_nat_do_chain,
-		[NF_INET_POST_ROUTING]	= nft_nat_do_chain,
-	},
-	.ops_register		= nft_nat_inet_reg,
-	.ops_unregister		= nft_nat_inet_unreg,
-};
-#endif
+	.hooks		= अणु
+		[NF_INET_PRE_ROUTING]	= nft_nat_करो_chain,
+		[NF_INET_LOCAL_IN]	= nft_nat_करो_chain,
+		[NF_INET_LOCAL_OUT]	= nft_nat_करो_chain,
+		[NF_INET_POST_ROUTING]	= nft_nat_करो_chain,
+	पूर्ण,
+	.ops_रेजिस्टर		= nft_nat_inet_reg,
+	.ops_unरेजिस्टर		= nft_nat_inet_unreg,
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init nft_chain_nat_init(void)
-{
-#ifdef CONFIG_NF_TABLES_IPV6
-	nft_register_chain_type(&nft_chain_nat_ipv6);
-#endif
-#ifdef CONFIG_NF_TABLES_IPV4
-	nft_register_chain_type(&nft_chain_nat_ipv4);
-#endif
-#ifdef CONFIG_NF_TABLES_INET
-	nft_register_chain_type(&nft_chain_nat_inet);
-#endif
+अटल पूर्णांक __init nft_chain_nat_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_NF_TABLES_IPV6
+	nft_रेजिस्टर_chain_type(&nft_chain_nat_ipv6);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_TABLES_IPV4
+	nft_रेजिस्टर_chain_type(&nft_chain_nat_ipv4);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_TABLES_INET
+	nft_रेजिस्टर_chain_type(&nft_chain_nat_inet);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit nft_chain_nat_exit(void)
-{
-#ifdef CONFIG_NF_TABLES_IPV4
-	nft_unregister_chain_type(&nft_chain_nat_ipv4);
-#endif
-#ifdef CONFIG_NF_TABLES_IPV6
-	nft_unregister_chain_type(&nft_chain_nat_ipv6);
-#endif
-#ifdef CONFIG_NF_TABLES_INET
-	nft_unregister_chain_type(&nft_chain_nat_inet);
-#endif
-}
+अटल व्योम __निकास nft_chain_nat_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_NF_TABLES_IPV4
+	nft_unरेजिस्टर_chain_type(&nft_chain_nat_ipv4);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_TABLES_IPV6
+	nft_unरेजिस्टर_chain_type(&nft_chain_nat_ipv6);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_TABLES_INET
+	nft_unरेजिस्टर_chain_type(&nft_chain_nat_inet);
+#पूर्ण_अगर
+पूर्ण
 
 module_init(nft_chain_nat_init);
-module_exit(nft_chain_nat_exit);
+module_निकास(nft_chain_nat_निकास);
 
 MODULE_LICENSE("GPL");
-#ifdef CONFIG_NF_TABLES_IPV4
+#अगर_घोषित CONFIG_NF_TABLES_IPV4
 MODULE_ALIAS_NFT_CHAIN(AF_INET, "nat");
-#endif
-#ifdef CONFIG_NF_TABLES_IPV6
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_TABLES_IPV6
 MODULE_ALIAS_NFT_CHAIN(AF_INET6, "nat");
-#endif
-#ifdef CONFIG_NF_TABLES_INET
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_TABLES_INET
 MODULE_ALIAS_NFT_CHAIN(1, "nat");	/* NFPROTO_INET */
-#endif
+#पूर्ण_अगर

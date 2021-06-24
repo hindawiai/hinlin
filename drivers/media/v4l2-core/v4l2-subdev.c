@@ -1,531 +1,532 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * V4L2 sub-device
  *
  * Copyright (C) 2010 Nokia Corporation
  *
- * Contact: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contact: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	    Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#include <linux/ioctl.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/videodev2.h>
-#include <linux/export.h>
-#include <linux/version.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/export.h>
+#समावेश <linux/version.h>
 
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-event.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-event.h>
 
-#if defined(CONFIG_VIDEO_V4L2_SUBDEV_API)
-static int subdev_fh_init(struct v4l2_subdev_fh *fh, struct v4l2_subdev *sd)
-{
-	if (sd->entity.num_pads) {
+#अगर defined(CONFIG_VIDEO_V4L2_SUBDEV_API)
+अटल पूर्णांक subdev_fh_init(काष्ठा v4l2_subdev_fh *fh, काष्ठा v4l2_subdev *sd)
+अणु
+	अगर (sd->entity.num_pads) अणु
 		fh->pad = v4l2_subdev_alloc_pad_config(sd);
-		if (fh->pad == NULL)
-			return -ENOMEM;
-	}
+		अगर (fh->pad == शून्य)
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void subdev_fh_free(struct v4l2_subdev_fh *fh)
-{
-	v4l2_subdev_free_pad_config(fh->pad);
-	fh->pad = NULL;
-}
+अटल व्योम subdev_fh_मुक्त(काष्ठा v4l2_subdev_fh *fh)
+अणु
+	v4l2_subdev_मुक्त_pad_config(fh->pad);
+	fh->pad = शून्य;
+पूर्ण
 
-static int subdev_open(struct file *file)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
-	struct v4l2_subdev_fh *subdev_fh;
-	int ret;
+अटल पूर्णांक subdev_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
+	काष्ठा v4l2_subdev_fh *subdev_fh;
+	पूर्णांक ret;
 
-	subdev_fh = kzalloc(sizeof(*subdev_fh), GFP_KERNEL);
-	if (subdev_fh == NULL)
-		return -ENOMEM;
+	subdev_fh = kzalloc(माप(*subdev_fh), GFP_KERNEL);
+	अगर (subdev_fh == शून्य)
+		वापस -ENOMEM;
 
 	ret = subdev_fh_init(subdev_fh, sd);
-	if (ret) {
-		kfree(subdev_fh);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(subdev_fh);
+		वापस ret;
+	पूर्ण
 
 	v4l2_fh_init(&subdev_fh->vfh, vdev);
 	v4l2_fh_add(&subdev_fh->vfh);
-	file->private_data = &subdev_fh->vfh;
-#if defined(CONFIG_MEDIA_CONTROLLER)
-	if (sd->v4l2_dev->mdev && sd->entity.graph_obj.mdev->dev) {
-		struct module *owner;
+	file->निजी_data = &subdev_fh->vfh;
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
+	अगर (sd->v4l2_dev->mdev && sd->entity.graph_obj.mdev->dev) अणु
+		काष्ठा module *owner;
 
 		owner = sd->entity.graph_obj.mdev->dev->driver->owner;
-		if (!try_module_get(owner)) {
+		अगर (!try_module_get(owner)) अणु
 			ret = -EBUSY;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		subdev_fh->owner = owner;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (sd->internal_ops && sd->internal_ops->open) {
-		ret = sd->internal_ops->open(sd, subdev_fh);
-		if (ret < 0)
-			goto err;
-	}
+	अगर (sd->पूर्णांकernal_ops && sd->पूर्णांकernal_ops->खोलो) अणु
+		ret = sd->पूर्णांकernal_ops->खोलो(sd, subdev_fh);
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	module_put(subdev_fh->owner);
 	v4l2_fh_del(&subdev_fh->vfh);
-	v4l2_fh_exit(&subdev_fh->vfh);
-	subdev_fh_free(subdev_fh);
-	kfree(subdev_fh);
+	v4l2_fh_निकास(&subdev_fh->vfh);
+	subdev_fh_मुक्त(subdev_fh);
+	kमुक्त(subdev_fh);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int subdev_close(struct file *file)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
-	struct v4l2_fh *vfh = file->private_data;
-	struct v4l2_subdev_fh *subdev_fh = to_v4l2_subdev_fh(vfh);
+अटल पूर्णांक subdev_बंद(काष्ठा file *file)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
+	काष्ठा v4l2_fh *vfh = file->निजी_data;
+	काष्ठा v4l2_subdev_fh *subdev_fh = to_v4l2_subdev_fh(vfh);
 
-	if (sd->internal_ops && sd->internal_ops->close)
-		sd->internal_ops->close(sd, subdev_fh);
+	अगर (sd->पूर्णांकernal_ops && sd->पूर्णांकernal_ops->बंद)
+		sd->पूर्णांकernal_ops->बंद(sd, subdev_fh);
 	module_put(subdev_fh->owner);
 	v4l2_fh_del(vfh);
-	v4l2_fh_exit(vfh);
-	subdev_fh_free(subdev_fh);
-	kfree(subdev_fh);
-	file->private_data = NULL;
+	v4l2_fh_निकास(vfh);
+	subdev_fh_मुक्त(subdev_fh);
+	kमुक्त(subdev_fh);
+	file->निजी_data = शून्य;
 
-	return 0;
-}
-#else /* CONFIG_VIDEO_V4L2_SUBDEV_API */
-static int subdev_open(struct file *file)
-{
-	return -ENODEV;
-}
+	वापस 0;
+पूर्ण
+#अन्यथा /* CONFIG_VIDEO_V4L2_SUBDEV_API */
+अटल पूर्णांक subdev_खोलो(काष्ठा file *file)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static int subdev_close(struct file *file)
-{
-	return -ENODEV;
-}
-#endif /* CONFIG_VIDEO_V4L2_SUBDEV_API */
+अटल पूर्णांक subdev_बंद(काष्ठा file *file)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_VIDEO_V4L2_SUBDEV_API */
 
-static inline int check_which(u32 which)
-{
-	if (which != V4L2_SUBDEV_FORMAT_TRY &&
+अटल अंतरभूत पूर्णांक check_which(u32 which)
+अणु
+	अगर (which != V4L2_SUBDEV_FORMAT_TRY &&
 	    which != V4L2_SUBDEV_FORMAT_ACTIVE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int check_pad(struct v4l2_subdev *sd, u32 pad)
-{
-#if defined(CONFIG_MEDIA_CONTROLLER)
-	if (sd->entity.num_pads) {
-		if (pad >= sd->entity.num_pads)
-			return -EINVAL;
-		return 0;
-	}
-#endif
-	/* allow pad 0 on subdevices not registered as media entities */
-	if (pad > 0)
-		return -EINVAL;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक check_pad(काष्ठा v4l2_subdev *sd, u32 pad)
+अणु
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
+	अगर (sd->entity.num_pads) अणु
+		अगर (pad >= sd->entity.num_pads)
+			वापस -EINVAL;
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	/* allow pad 0 on subdevices not रेजिस्टरed as media entities */
+	अगर (pad > 0)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int check_cfg(u32 which, struct v4l2_subdev_pad_config *cfg)
-{
-	if (which == V4L2_SUBDEV_FORMAT_TRY && !cfg)
-		return -EINVAL;
+अटल पूर्णांक check_cfg(u32 which, काष्ठा v4l2_subdev_pad_config *cfg)
+अणु
+	अगर (which == V4L2_SUBDEV_FORMAT_TRY && !cfg)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int check_format(struct v4l2_subdev *sd,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_format *format)
-{
-	if (!format)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक check_क्रमmat(काष्ठा v4l2_subdev *sd,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	अगर (!क्रमmat)
+		वापस -EINVAL;
 
-	return check_which(format->which) ? : check_pad(sd, format->pad) ? :
-	       check_cfg(format->which, cfg);
-}
+	वापस check_which(क्रमmat->which) ? : check_pad(sd, क्रमmat->pad) ? :
+	       check_cfg(क्रमmat->which, cfg);
+पूर्ण
 
-static int call_get_fmt(struct v4l2_subdev *sd,
-			struct v4l2_subdev_pad_config *cfg,
-			struct v4l2_subdev_format *format)
-{
-	return check_format(sd, cfg, format) ? :
-	       sd->ops->pad->get_fmt(sd, cfg, format);
-}
+अटल पूर्णांक call_get_fmt(काष्ठा v4l2_subdev *sd,
+			काष्ठा v4l2_subdev_pad_config *cfg,
+			काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	वापस check_क्रमmat(sd, cfg, क्रमmat) ? :
+	       sd->ops->pad->get_fmt(sd, cfg, क्रमmat);
+पूर्ण
 
-static int call_set_fmt(struct v4l2_subdev *sd,
-			struct v4l2_subdev_pad_config *cfg,
-			struct v4l2_subdev_format *format)
-{
-	return check_format(sd, cfg, format) ? :
-	       sd->ops->pad->set_fmt(sd, cfg, format);
-}
+अटल पूर्णांक call_set_fmt(काष्ठा v4l2_subdev *sd,
+			काष्ठा v4l2_subdev_pad_config *cfg,
+			काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	वापस check_क्रमmat(sd, cfg, क्रमmat) ? :
+	       sd->ops->pad->set_fmt(sd, cfg, क्रमmat);
+पूर्ण
 
-static int call_enum_mbus_code(struct v4l2_subdev *sd,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_mbus_code_enum *code)
-{
-	if (!code)
-		return -EINVAL;
+अटल पूर्णांक call_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अगर (!code)
+		वापस -EINVAL;
 
-	return check_which(code->which) ? : check_pad(sd, code->pad) ? :
+	वापस check_which(code->which) ? : check_pad(sd, code->pad) ? :
 	       check_cfg(code->which, cfg) ? :
-	       sd->ops->pad->enum_mbus_code(sd, cfg, code);
-}
+	       sd->ops->pad->क्रमागत_mbus_code(sd, cfg, code);
+पूर्ण
 
-static int call_enum_frame_size(struct v4l2_subdev *sd,
-				struct v4l2_subdev_pad_config *cfg,
-				struct v4l2_subdev_frame_size_enum *fse)
-{
-	if (!fse)
-		return -EINVAL;
+अटल पूर्णांक call_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
+				काष्ठा v4l2_subdev_pad_config *cfg,
+				काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
+अणु
+	अगर (!fse)
+		वापस -EINVAL;
 
-	return check_which(fse->which) ? : check_pad(sd, fse->pad) ? :
+	वापस check_which(fse->which) ? : check_pad(sd, fse->pad) ? :
 	       check_cfg(fse->which, cfg) ? :
-	       sd->ops->pad->enum_frame_size(sd, cfg, fse);
-}
+	       sd->ops->pad->क्रमागत_frame_size(sd, cfg, fse);
+पूर्ण
 
-static inline int check_frame_interval(struct v4l2_subdev *sd,
-				       struct v4l2_subdev_frame_interval *fi)
-{
-	if (!fi)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक check_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				       काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
+अणु
+	अगर (!fi)
+		वापस -EINVAL;
 
-	return check_pad(sd, fi->pad);
-}
+	वापस check_pad(sd, fi->pad);
+पूर्ण
 
-static int call_g_frame_interval(struct v4l2_subdev *sd,
-				 struct v4l2_subdev_frame_interval *fi)
-{
-	return check_frame_interval(sd, fi) ? :
-	       sd->ops->video->g_frame_interval(sd, fi);
-}
+अटल पूर्णांक call_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				 काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
+अणु
+	वापस check_frame_पूर्णांकerval(sd, fi) ? :
+	       sd->ops->video->g_frame_पूर्णांकerval(sd, fi);
+पूर्ण
 
-static int call_s_frame_interval(struct v4l2_subdev *sd,
-				 struct v4l2_subdev_frame_interval *fi)
-{
-	return check_frame_interval(sd, fi) ? :
-	       sd->ops->video->s_frame_interval(sd, fi);
-}
+अटल पूर्णांक call_s_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				 काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
+अणु
+	वापस check_frame_पूर्णांकerval(sd, fi) ? :
+	       sd->ops->video->s_frame_पूर्णांकerval(sd, fi);
+पूर्ण
 
-static int call_enum_frame_interval(struct v4l2_subdev *sd,
-				    struct v4l2_subdev_pad_config *cfg,
-				    struct v4l2_subdev_frame_interval_enum *fie)
-{
-	if (!fie)
-		return -EINVAL;
+अटल पूर्णांक call_क्रमागत_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				    काष्ठा v4l2_subdev_pad_config *cfg,
+				    काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत *fie)
+अणु
+	अगर (!fie)
+		वापस -EINVAL;
 
-	return check_which(fie->which) ? : check_pad(sd, fie->pad) ? :
+	वापस check_which(fie->which) ? : check_pad(sd, fie->pad) ? :
 	       check_cfg(fie->which, cfg) ? :
-	       sd->ops->pad->enum_frame_interval(sd, cfg, fie);
-}
+	       sd->ops->pad->क्रमागत_frame_पूर्णांकerval(sd, cfg, fie);
+पूर्ण
 
-static inline int check_selection(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_selection *sel)
-{
-	if (!sel)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक check_selection(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_selection *sel)
+अणु
+	अगर (!sel)
+		वापस -EINVAL;
 
-	return check_which(sel->which) ? : check_pad(sd, sel->pad) ? :
+	वापस check_which(sel->which) ? : check_pad(sd, sel->pad) ? :
 	       check_cfg(sel->which, cfg);
-}
+पूर्ण
 
-static int call_get_selection(struct v4l2_subdev *sd,
-			      struct v4l2_subdev_pad_config *cfg,
-			      struct v4l2_subdev_selection *sel)
-{
-	return check_selection(sd, cfg, sel) ? :
+अटल पूर्णांक call_get_selection(काष्ठा v4l2_subdev *sd,
+			      काष्ठा v4l2_subdev_pad_config *cfg,
+			      काष्ठा v4l2_subdev_selection *sel)
+अणु
+	वापस check_selection(sd, cfg, sel) ? :
 	       sd->ops->pad->get_selection(sd, cfg, sel);
-}
+पूर्ण
 
-static int call_set_selection(struct v4l2_subdev *sd,
-			      struct v4l2_subdev_pad_config *cfg,
-			      struct v4l2_subdev_selection *sel)
-{
-	return check_selection(sd, cfg, sel) ? :
+अटल पूर्णांक call_set_selection(काष्ठा v4l2_subdev *sd,
+			      काष्ठा v4l2_subdev_pad_config *cfg,
+			      काष्ठा v4l2_subdev_selection *sel)
+अणु
+	वापस check_selection(sd, cfg, sel) ? :
 	       sd->ops->pad->set_selection(sd, cfg, sel);
-}
+पूर्ण
 
-static inline int check_edid(struct v4l2_subdev *sd,
-			     struct v4l2_subdev_edid *edid)
-{
-	if (!edid)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक check_edid(काष्ठा v4l2_subdev *sd,
+			     काष्ठा v4l2_subdev_edid *edid)
+अणु
+	अगर (!edid)
+		वापस -EINVAL;
 
-	if (edid->blocks && edid->edid == NULL)
-		return -EINVAL;
+	अगर (edid->blocks && edid->edid == शून्य)
+		वापस -EINVAL;
 
-	return check_pad(sd, edid->pad);
-}
+	वापस check_pad(sd, edid->pad);
+पूर्ण
 
-static int call_get_edid(struct v4l2_subdev *sd, struct v4l2_subdev_edid *edid)
-{
-	return check_edid(sd, edid) ? : sd->ops->pad->get_edid(sd, edid);
-}
+अटल पूर्णांक call_get_edid(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_edid *edid)
+अणु
+	वापस check_edid(sd, edid) ? : sd->ops->pad->get_edid(sd, edid);
+पूर्ण
 
-static int call_set_edid(struct v4l2_subdev *sd, struct v4l2_subdev_edid *edid)
-{
-	return check_edid(sd, edid) ? : sd->ops->pad->set_edid(sd, edid);
-}
+अटल पूर्णांक call_set_edid(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_edid *edid)
+अणु
+	वापस check_edid(sd, edid) ? : sd->ops->pad->set_edid(sd, edid);
+पूर्ण
 
-static int call_dv_timings_cap(struct v4l2_subdev *sd,
-			       struct v4l2_dv_timings_cap *cap)
-{
-	if (!cap)
-		return -EINVAL;
+अटल पूर्णांक call_dv_timings_cap(काष्ठा v4l2_subdev *sd,
+			       काष्ठा v4l2_dv_timings_cap *cap)
+अणु
+	अगर (!cap)
+		वापस -EINVAL;
 
-	return check_pad(sd, cap->pad) ? :
+	वापस check_pad(sd, cap->pad) ? :
 	       sd->ops->pad->dv_timings_cap(sd, cap);
-}
+पूर्ण
 
-static int call_enum_dv_timings(struct v4l2_subdev *sd,
-				struct v4l2_enum_dv_timings *dvt)
-{
-	if (!dvt)
-		return -EINVAL;
+अटल पूर्णांक call_क्रमागत_dv_timings(काष्ठा v4l2_subdev *sd,
+				काष्ठा v4l2_क्रमागत_dv_timings *dvt)
+अणु
+	अगर (!dvt)
+		वापस -EINVAL;
 
-	return check_pad(sd, dvt->pad) ? :
-	       sd->ops->pad->enum_dv_timings(sd, dvt);
-}
+	वापस check_pad(sd, dvt->pad) ? :
+	       sd->ops->pad->क्रमागत_dv_timings(sd, dvt);
+पूर्ण
 
-static int call_get_mbus_config(struct v4l2_subdev *sd, unsigned int pad,
-				struct v4l2_mbus_config *config)
-{
-	return check_pad(sd, pad) ? :
+अटल पूर्णांक call_get_mbus_config(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक pad,
+				काष्ठा v4l2_mbus_config *config)
+अणु
+	वापस check_pad(sd, pad) ? :
 	       sd->ops->pad->get_mbus_config(sd, pad, config);
-}
+पूर्ण
 
-static int call_set_mbus_config(struct v4l2_subdev *sd, unsigned int pad,
-				struct v4l2_mbus_config *config)
-{
-	return check_pad(sd, pad) ? :
+अटल पूर्णांक call_set_mbus_config(काष्ठा v4l2_subdev *sd, अचिन्हित पूर्णांक pad,
+				काष्ठा v4l2_mbus_config *config)
+अणु
+	वापस check_pad(sd, pad) ? :
 	       sd->ops->pad->get_mbus_config(sd, pad, config);
-}
+पूर्ण
 
-static const struct v4l2_subdev_pad_ops v4l2_subdev_call_pad_wrappers = {
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops v4l2_subdev_call_pad_wrappers = अणु
 	.get_fmt		= call_get_fmt,
 	.set_fmt		= call_set_fmt,
-	.enum_mbus_code		= call_enum_mbus_code,
-	.enum_frame_size	= call_enum_frame_size,
-	.enum_frame_interval	= call_enum_frame_interval,
+	.क्रमागत_mbus_code		= call_क्रमागत_mbus_code,
+	.क्रमागत_frame_size	= call_क्रमागत_frame_size,
+	.क्रमागत_frame_पूर्णांकerval	= call_क्रमागत_frame_पूर्णांकerval,
 	.get_selection		= call_get_selection,
 	.set_selection		= call_set_selection,
 	.get_edid		= call_get_edid,
 	.set_edid		= call_set_edid,
 	.dv_timings_cap		= call_dv_timings_cap,
-	.enum_dv_timings	= call_enum_dv_timings,
+	.क्रमागत_dv_timings	= call_क्रमागत_dv_timings,
 	.get_mbus_config	= call_get_mbus_config,
 	.set_mbus_config	= call_set_mbus_config,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops v4l2_subdev_call_video_wrappers = {
-	.g_frame_interval	= call_g_frame_interval,
-	.s_frame_interval	= call_s_frame_interval,
-};
+अटल स्थिर काष्ठा v4l2_subdev_video_ops v4l2_subdev_call_video_wrappers = अणु
+	.g_frame_पूर्णांकerval	= call_g_frame_पूर्णांकerval,
+	.s_frame_पूर्णांकerval	= call_s_frame_पूर्णांकerval,
+पूर्ण;
 
-const struct v4l2_subdev_ops v4l2_subdev_call_wrappers = {
+स्थिर काष्ठा v4l2_subdev_ops v4l2_subdev_call_wrappers = अणु
 	.pad	= &v4l2_subdev_call_pad_wrappers,
 	.video	= &v4l2_subdev_call_video_wrappers,
-};
+पूर्ण;
 EXPORT_SYMBOL(v4l2_subdev_call_wrappers);
 
-#if defined(CONFIG_VIDEO_V4L2_SUBDEV_API)
-static long subdev_do_ioctl(struct file *file, unsigned int cmd, void *arg)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
-	struct v4l2_fh *vfh = file->private_data;
-	struct v4l2_subdev_fh *subdev_fh = to_v4l2_subdev_fh(vfh);
+#अगर defined(CONFIG_VIDEO_V4L2_SUBDEV_API)
+अटल दीर्घ subdev_करो_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
+	काष्ठा v4l2_fh *vfh = file->निजी_data;
+	काष्ठा v4l2_subdev_fh *subdev_fh = to_v4l2_subdev_fh(vfh);
 	bool ro_subdev = test_bit(V4L2_FL_SUBDEV_RO_DEVNODE, &vdev->flags);
-	int rval;
+	पूर्णांक rval;
 
-	switch (cmd) {
-	case VIDIOC_SUBDEV_QUERYCAP: {
-		struct v4l2_subdev_capability *cap = arg;
+	चयन (cmd) अणु
+	हाल VIDIOC_SUBDEV_QUERYCAP: अणु
+		काष्ठा v4l2_subdev_capability *cap = arg;
 
-		memset(cap->reserved, 0, sizeof(cap->reserved));
+		स_रखो(cap->reserved, 0, माप(cap->reserved));
 		cap->version = LINUX_VERSION_CODE;
 		cap->capabilities = ro_subdev ? V4L2_SUBDEV_CAP_RO_SUBDEV : 0;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	case VIDIOC_QUERYCTRL:
+	हाल VIDIOC_QUERYCTRL:
 		/*
-		 * TODO: this really should be folded into v4l2_queryctrl (this
-		 * currently returns -EINVAL for NULL control handlers).
+		 * TODO: this really should be folded पूर्णांकo v4l2_queryctrl (this
+		 * currently वापसs -EINVAL क्रम शून्य control handlers).
 		 * However, v4l2_queryctrl() is still called directly by
 		 * drivers as well and until that has been addressed I believe
-		 * it is safer to do the check here. The same is true for the
+		 * it is safer to करो the check here. The same is true क्रम the
 		 * other control ioctls below.
 		 */
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_queryctrl(vfh->ctrl_handler, arg);
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_queryctrl(vfh->ctrl_handler, arg);
 
-	case VIDIOC_QUERY_EXT_CTRL:
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_query_ext_ctrl(vfh->ctrl_handler, arg);
+	हाल VIDIOC_QUERY_EXT_CTRL:
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_query_ext_ctrl(vfh->ctrl_handler, arg);
 
-	case VIDIOC_QUERYMENU:
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_querymenu(vfh->ctrl_handler, arg);
+	हाल VIDIOC_QUERYMENU:
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_querymenu(vfh->ctrl_handler, arg);
 
-	case VIDIOC_G_CTRL:
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_g_ctrl(vfh->ctrl_handler, arg);
+	हाल VIDIOC_G_CTRL:
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_g_ctrl(vfh->ctrl_handler, arg);
 
-	case VIDIOC_S_CTRL:
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_s_ctrl(vfh, vfh->ctrl_handler, arg);
+	हाल VIDIOC_S_CTRL:
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_s_ctrl(vfh, vfh->ctrl_handler, arg);
 
-	case VIDIOC_G_EXT_CTRLS:
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_g_ext_ctrls(vfh->ctrl_handler,
+	हाल VIDIOC_G_EXT_CTRLS:
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_g_ext_ctrls(vfh->ctrl_handler,
 					vdev, sd->v4l2_dev->mdev, arg);
 
-	case VIDIOC_S_EXT_CTRLS:
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_s_ext_ctrls(vfh, vfh->ctrl_handler,
+	हाल VIDIOC_S_EXT_CTRLS:
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_s_ext_ctrls(vfh, vfh->ctrl_handler,
 					vdev, sd->v4l2_dev->mdev, arg);
 
-	case VIDIOC_TRY_EXT_CTRLS:
-		if (!vfh->ctrl_handler)
-			return -ENOTTY;
-		return v4l2_try_ext_ctrls(vfh->ctrl_handler,
+	हाल VIDIOC_TRY_EXT_CTRLS:
+		अगर (!vfh->ctrl_handler)
+			वापस -ENOTTY;
+		वापस v4l2_try_ext_ctrls(vfh->ctrl_handler,
 					  vdev, sd->v4l2_dev->mdev, arg);
 
-	case VIDIOC_DQEVENT:
-		if (!(sd->flags & V4L2_SUBDEV_FL_HAS_EVENTS))
-			return -ENOIOCTLCMD;
+	हाल VIDIOC_DQEVENT:
+		अगर (!(sd->flags & V4L2_SUBDEV_FL_HAS_EVENTS))
+			वापस -ENOIOCTLCMD;
 
-		return v4l2_event_dequeue(vfh, arg, file->f_flags & O_NONBLOCK);
+		वापस v4l2_event_dequeue(vfh, arg, file->f_flags & O_NONBLOCK);
 
-	case VIDIOC_DQEVENT_TIME32: {
-		struct v4l2_event_time32 *ev32 = arg;
-		struct v4l2_event ev = { };
+	हाल VIDIOC_DQEVENT_TIME32: अणु
+		काष्ठा v4l2_event_समय32 *ev32 = arg;
+		काष्ठा v4l2_event ev = अणु पूर्ण;
 
-		if (!(sd->flags & V4L2_SUBDEV_FL_HAS_EVENTS))
-			return -ENOIOCTLCMD;
+		अगर (!(sd->flags & V4L2_SUBDEV_FL_HAS_EVENTS))
+			वापस -ENOIOCTLCMD;
 
 		rval = v4l2_event_dequeue(vfh, &ev, file->f_flags & O_NONBLOCK);
 
-		*ev32 = (struct v4l2_event_time32) {
+		*ev32 = (काष्ठा v4l2_event_समय32) अणु
 			.type		= ev.type,
 			.pending	= ev.pending,
 			.sequence	= ev.sequence,
-			.timestamp.tv_sec  = ev.timestamp.tv_sec,
-			.timestamp.tv_nsec = ev.timestamp.tv_nsec,
+			.बारtamp.tv_sec  = ev.बारtamp.tv_sec,
+			.बारtamp.tv_nsec = ev.बारtamp.tv_nsec,
 			.id		= ev.id,
-		};
+		पूर्ण;
 
-		memcpy(&ev32->u, &ev.u, sizeof(ev.u));
-		memcpy(&ev32->reserved, &ev.reserved, sizeof(ev.reserved));
+		स_नकल(&ev32->u, &ev.u, माप(ev.u));
+		स_नकल(&ev32->reserved, &ev.reserved, माप(ev.reserved));
 
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
-	case VIDIOC_SUBSCRIBE_EVENT:
-		return v4l2_subdev_call(sd, core, subscribe_event, vfh, arg);
+	हाल VIDIOC_SUBSCRIBE_EVENT:
+		वापस v4l2_subdev_call(sd, core, subscribe_event, vfh, arg);
 
-	case VIDIOC_UNSUBSCRIBE_EVENT:
-		return v4l2_subdev_call(sd, core, unsubscribe_event, vfh, arg);
+	हाल VIDIOC_UNSUBSCRIBE_EVENT:
+		वापस v4l2_subdev_call(sd, core, unsubscribe_event, vfh, arg);
 
-#ifdef CONFIG_VIDEO_ADV_DEBUG
-	case VIDIOC_DBG_G_REGISTER:
-	{
-		struct v4l2_dbg_register *p = arg;
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+	हाल VIDIOC_DBG_G_REGISTER:
+	अणु
+		काष्ठा v4l2_dbg_रेजिस्टर *p = arg;
 
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
-		return v4l2_subdev_call(sd, core, g_register, p);
-	}
-	case VIDIOC_DBG_S_REGISTER:
-	{
-		struct v4l2_dbg_register *p = arg;
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
+		वापस v4l2_subdev_call(sd, core, g_रेजिस्टर, p);
+	पूर्ण
+	हाल VIDIOC_DBG_S_REGISTER:
+	अणु
+		काष्ठा v4l2_dbg_रेजिस्टर *p = arg;
 
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
-		return v4l2_subdev_call(sd, core, s_register, p);
-	}
-	case VIDIOC_DBG_G_CHIP_INFO:
-	{
-		struct v4l2_dbg_chip_info *p = arg;
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
+		वापस v4l2_subdev_call(sd, core, s_रेजिस्टर, p);
+	पूर्ण
+	हाल VIDIOC_DBG_G_CHIP_INFO:
+	अणु
+		काष्ठा v4l2_dbg_chip_info *p = arg;
 
-		if (p->match.type != V4L2_CHIP_MATCH_SUBDEV || p->match.addr)
-			return -EINVAL;
-		if (sd->ops->core && sd->ops->core->s_register)
+		अगर (p->match.type != V4L2_CHIP_MATCH_SUBDEV || p->match.addr)
+			वापस -EINVAL;
+		अगर (sd->ops->core && sd->ops->core->s_रेजिस्टर)
 			p->flags |= V4L2_CHIP_FL_WRITABLE;
-		if (sd->ops->core && sd->ops->core->g_register)
+		अगर (sd->ops->core && sd->ops->core->g_रेजिस्टर)
 			p->flags |= V4L2_CHIP_FL_READABLE;
-		strscpy(p->name, sd->name, sizeof(p->name));
-		return 0;
-	}
-#endif
+		strscpy(p->name, sd->name, माप(p->name));
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
 
-	case VIDIOC_LOG_STATUS: {
-		int ret;
+	हाल VIDIOC_LOG_STATUS: अणु
+		पूर्णांक ret;
 
 		pr_info("%s: =================  START STATUS  =================\n",
 			sd->name);
 		ret = v4l2_subdev_call(sd, core, log_status);
 		pr_info("%s: ==================  END STATUS  ==================\n",
 			sd->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	case VIDIOC_SUBDEV_G_FMT: {
-		struct v4l2_subdev_format *format = arg;
+	हाल VIDIOC_SUBDEV_G_FMT: अणु
+		काष्ठा v4l2_subdev_क्रमmat *क्रमmat = arg;
 
-		memset(format->reserved, 0, sizeof(format->reserved));
-		memset(format->format.reserved, 0, sizeof(format->format.reserved));
-		return v4l2_subdev_call(sd, pad, get_fmt, subdev_fh->pad, format);
-	}
+		स_रखो(क्रमmat->reserved, 0, माप(क्रमmat->reserved));
+		स_रखो(क्रमmat->क्रमmat.reserved, 0, माप(क्रमmat->क्रमmat.reserved));
+		वापस v4l2_subdev_call(sd, pad, get_fmt, subdev_fh->pad, क्रमmat);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_S_FMT: {
-		struct v4l2_subdev_format *format = arg;
+	हाल VIDIOC_SUBDEV_S_FMT: अणु
+		काष्ठा v4l2_subdev_क्रमmat *क्रमmat = arg;
 
-		if (format->which != V4L2_SUBDEV_FORMAT_TRY && ro_subdev)
-			return -EPERM;
+		अगर (क्रमmat->which != V4L2_SUBDEV_FORMAT_TRY && ro_subdev)
+			वापस -EPERM;
 
-		memset(format->reserved, 0, sizeof(format->reserved));
-		memset(format->format.reserved, 0, sizeof(format->format.reserved));
-		return v4l2_subdev_call(sd, pad, set_fmt, subdev_fh->pad, format);
-	}
+		स_रखो(क्रमmat->reserved, 0, माप(क्रमmat->reserved));
+		स_रखो(क्रमmat->क्रमmat.reserved, 0, माप(क्रमmat->क्रमmat.reserved));
+		वापस v4l2_subdev_call(sd, pad, set_fmt, subdev_fh->pad, क्रमmat);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_G_CROP: {
-		struct v4l2_subdev_crop *crop = arg;
-		struct v4l2_subdev_selection sel;
+	हाल VIDIOC_SUBDEV_G_CROP: अणु
+		काष्ठा v4l2_subdev_crop *crop = arg;
+		काष्ठा v4l2_subdev_selection sel;
 
-		memset(crop->reserved, 0, sizeof(crop->reserved));
-		memset(&sel, 0, sizeof(sel));
+		स_रखो(crop->reserved, 0, माप(crop->reserved));
+		स_रखो(&sel, 0, माप(sel));
 		sel.which = crop->which;
 		sel.pad = crop->pad;
 		sel.target = V4L2_SEL_TGT_CROP;
@@ -535,18 +536,18 @@ static long subdev_do_ioctl(struct file *file, unsigned int cmd, void *arg)
 
 		crop->rect = sel.r;
 
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
-	case VIDIOC_SUBDEV_S_CROP: {
-		struct v4l2_subdev_crop *crop = arg;
-		struct v4l2_subdev_selection sel;
+	हाल VIDIOC_SUBDEV_S_CROP: अणु
+		काष्ठा v4l2_subdev_crop *crop = arg;
+		काष्ठा v4l2_subdev_selection sel;
 
-		if (crop->which != V4L2_SUBDEV_FORMAT_TRY && ro_subdev)
-			return -EPERM;
+		अगर (crop->which != V4L2_SUBDEV_FORMAT_TRY && ro_subdev)
+			वापस -EPERM;
 
-		memset(crop->reserved, 0, sizeof(crop->reserved));
-		memset(&sel, 0, sizeof(sel));
+		स_रखो(crop->reserved, 0, माप(crop->reserved));
+		स_रखो(&sel, 0, माप(sel));
 		sel.which = crop->which;
 		sel.pad = crop->pad;
 		sel.target = V4L2_SEL_TGT_CROP;
@@ -557,395 +558,395 @@ static long subdev_do_ioctl(struct file *file, unsigned int cmd, void *arg)
 
 		crop->rect = sel.r;
 
-		return rval;
-	}
+		वापस rval;
+	पूर्ण
 
-	case VIDIOC_SUBDEV_ENUM_MBUS_CODE: {
-		struct v4l2_subdev_mbus_code_enum *code = arg;
+	हाल VIDIOC_SUBDEV_ENUM_MBUS_CODE: अणु
+		काष्ठा v4l2_subdev_mbus_code_क्रमागत *code = arg;
 
-		memset(code->reserved, 0, sizeof(code->reserved));
-		return v4l2_subdev_call(sd, pad, enum_mbus_code, subdev_fh->pad,
+		स_रखो(code->reserved, 0, माप(code->reserved));
+		वापस v4l2_subdev_call(sd, pad, क्रमागत_mbus_code, subdev_fh->pad,
 					code);
-	}
+	पूर्ण
 
-	case VIDIOC_SUBDEV_ENUM_FRAME_SIZE: {
-		struct v4l2_subdev_frame_size_enum *fse = arg;
+	हाल VIDIOC_SUBDEV_ENUM_FRAME_SIZE: अणु
+		काष्ठा v4l2_subdev_frame_size_क्रमागत *fse = arg;
 
-		memset(fse->reserved, 0, sizeof(fse->reserved));
-		return v4l2_subdev_call(sd, pad, enum_frame_size, subdev_fh->pad,
+		स_रखो(fse->reserved, 0, माप(fse->reserved));
+		वापस v4l2_subdev_call(sd, pad, क्रमागत_frame_size, subdev_fh->pad,
 					fse);
-	}
+	पूर्ण
 
-	case VIDIOC_SUBDEV_G_FRAME_INTERVAL: {
-		struct v4l2_subdev_frame_interval *fi = arg;
+	हाल VIDIOC_SUBDEV_G_FRAME_INTERVAL: अणु
+		काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi = arg;
 
-		memset(fi->reserved, 0, sizeof(fi->reserved));
-		return v4l2_subdev_call(sd, video, g_frame_interval, arg);
-	}
+		स_रखो(fi->reserved, 0, माप(fi->reserved));
+		वापस v4l2_subdev_call(sd, video, g_frame_पूर्णांकerval, arg);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_S_FRAME_INTERVAL: {
-		struct v4l2_subdev_frame_interval *fi = arg;
+	हाल VIDIOC_SUBDEV_S_FRAME_INTERVAL: अणु
+		काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi = arg;
 
-		if (ro_subdev)
-			return -EPERM;
+		अगर (ro_subdev)
+			वापस -EPERM;
 
-		memset(fi->reserved, 0, sizeof(fi->reserved));
-		return v4l2_subdev_call(sd, video, s_frame_interval, arg);
-	}
+		स_रखो(fi->reserved, 0, माप(fi->reserved));
+		वापस v4l2_subdev_call(sd, video, s_frame_पूर्णांकerval, arg);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL: {
-		struct v4l2_subdev_frame_interval_enum *fie = arg;
+	हाल VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL: अणु
+		काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत *fie = arg;
 
-		memset(fie->reserved, 0, sizeof(fie->reserved));
-		return v4l2_subdev_call(sd, pad, enum_frame_interval, subdev_fh->pad,
+		स_रखो(fie->reserved, 0, माप(fie->reserved));
+		वापस v4l2_subdev_call(sd, pad, क्रमागत_frame_पूर्णांकerval, subdev_fh->pad,
 					fie);
-	}
+	पूर्ण
 
-	case VIDIOC_SUBDEV_G_SELECTION: {
-		struct v4l2_subdev_selection *sel = arg;
+	हाल VIDIOC_SUBDEV_G_SELECTION: अणु
+		काष्ठा v4l2_subdev_selection *sel = arg;
 
-		memset(sel->reserved, 0, sizeof(sel->reserved));
-		return v4l2_subdev_call(
+		स_रखो(sel->reserved, 0, माप(sel->reserved));
+		वापस v4l2_subdev_call(
 			sd, pad, get_selection, subdev_fh->pad, sel);
-	}
+	पूर्ण
 
-	case VIDIOC_SUBDEV_S_SELECTION: {
-		struct v4l2_subdev_selection *sel = arg;
+	हाल VIDIOC_SUBDEV_S_SELECTION: अणु
+		काष्ठा v4l2_subdev_selection *sel = arg;
 
-		if (sel->which != V4L2_SUBDEV_FORMAT_TRY && ro_subdev)
-			return -EPERM;
+		अगर (sel->which != V4L2_SUBDEV_FORMAT_TRY && ro_subdev)
+			वापस -EPERM;
 
-		memset(sel->reserved, 0, sizeof(sel->reserved));
-		return v4l2_subdev_call(
+		स_रखो(sel->reserved, 0, माप(sel->reserved));
+		वापस v4l2_subdev_call(
 			sd, pad, set_selection, subdev_fh->pad, sel);
-	}
+	पूर्ण
 
-	case VIDIOC_G_EDID: {
-		struct v4l2_subdev_edid *edid = arg;
+	हाल VIDIOC_G_EDID: अणु
+		काष्ठा v4l2_subdev_edid *edid = arg;
 
-		return v4l2_subdev_call(sd, pad, get_edid, edid);
-	}
+		वापस v4l2_subdev_call(sd, pad, get_edid, edid);
+	पूर्ण
 
-	case VIDIOC_S_EDID: {
-		struct v4l2_subdev_edid *edid = arg;
+	हाल VIDIOC_S_EDID: अणु
+		काष्ठा v4l2_subdev_edid *edid = arg;
 
-		return v4l2_subdev_call(sd, pad, set_edid, edid);
-	}
+		वापस v4l2_subdev_call(sd, pad, set_edid, edid);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_DV_TIMINGS_CAP: {
-		struct v4l2_dv_timings_cap *cap = arg;
+	हाल VIDIOC_SUBDEV_DV_TIMINGS_CAP: अणु
+		काष्ठा v4l2_dv_timings_cap *cap = arg;
 
-		return v4l2_subdev_call(sd, pad, dv_timings_cap, cap);
-	}
+		वापस v4l2_subdev_call(sd, pad, dv_timings_cap, cap);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_ENUM_DV_TIMINGS: {
-		struct v4l2_enum_dv_timings *dvt = arg;
+	हाल VIDIOC_SUBDEV_ENUM_DV_TIMINGS: अणु
+		काष्ठा v4l2_क्रमागत_dv_timings *dvt = arg;
 
-		return v4l2_subdev_call(sd, pad, enum_dv_timings, dvt);
-	}
+		वापस v4l2_subdev_call(sd, pad, क्रमागत_dv_timings, dvt);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_QUERY_DV_TIMINGS:
-		return v4l2_subdev_call(sd, video, query_dv_timings, arg);
+	हाल VIDIOC_SUBDEV_QUERY_DV_TIMINGS:
+		वापस v4l2_subdev_call(sd, video, query_dv_timings, arg);
 
-	case VIDIOC_SUBDEV_G_DV_TIMINGS:
-		return v4l2_subdev_call(sd, video, g_dv_timings, arg);
+	हाल VIDIOC_SUBDEV_G_DV_TIMINGS:
+		वापस v4l2_subdev_call(sd, video, g_dv_timings, arg);
 
-	case VIDIOC_SUBDEV_S_DV_TIMINGS:
-		if (ro_subdev)
-			return -EPERM;
+	हाल VIDIOC_SUBDEV_S_DV_TIMINGS:
+		अगर (ro_subdev)
+			वापस -EPERM;
 
-		return v4l2_subdev_call(sd, video, s_dv_timings, arg);
+		वापस v4l2_subdev_call(sd, video, s_dv_timings, arg);
 
-	case VIDIOC_SUBDEV_G_STD:
-		return v4l2_subdev_call(sd, video, g_std, arg);
+	हाल VIDIOC_SUBDEV_G_STD:
+		वापस v4l2_subdev_call(sd, video, g_std, arg);
 
-	case VIDIOC_SUBDEV_S_STD: {
+	हाल VIDIOC_SUBDEV_S_STD: अणु
 		v4l2_std_id *std = arg;
 
-		if (ro_subdev)
-			return -EPERM;
+		अगर (ro_subdev)
+			वापस -EPERM;
 
-		return v4l2_subdev_call(sd, video, s_std, *std);
-	}
+		वापस v4l2_subdev_call(sd, video, s_std, *std);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_ENUMSTD: {
-		struct v4l2_standard *p = arg;
+	हाल VIDIOC_SUBDEV_ENUMSTD: अणु
+		काष्ठा v4l2_standard *p = arg;
 		v4l2_std_id id;
 
-		if (v4l2_subdev_call(sd, video, g_tvnorms, &id))
-			return -EINVAL;
+		अगर (v4l2_subdev_call(sd, video, g_tvnorms, &id))
+			वापस -EINVAL;
 
-		return v4l_video_std_enumstd(p, id);
-	}
+		वापस v4l_video_std_क्रमागतstd(p, id);
+	पूर्ण
 
-	case VIDIOC_SUBDEV_QUERYSTD:
-		return v4l2_subdev_call(sd, video, querystd, arg);
+	हाल VIDIOC_SUBDEV_QUERYSTD:
+		वापस v4l2_subdev_call(sd, video, querystd, arg);
 
-	default:
-		return v4l2_subdev_call(sd, core, ioctl, cmd, arg);
-	}
+	शेष:
+		वापस v4l2_subdev_call(sd, core, ioctl, cmd, arg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long subdev_do_ioctl_lock(struct file *file, unsigned int cmd, void *arg)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct mutex *lock = vdev->lock;
-	long ret = -ENODEV;
+अटल दीर्घ subdev_करो_ioctl_lock(काष्ठा file *file, अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा mutex *lock = vdev->lock;
+	दीर्घ ret = -ENODEV;
 
-	if (lock && mutex_lock_interruptible(lock))
-		return -ERESTARTSYS;
-	if (video_is_registered(vdev))
-		ret = subdev_do_ioctl(file, cmd, arg);
-	if (lock)
+	अगर (lock && mutex_lock_पूर्णांकerruptible(lock))
+		वापस -ERESTARTSYS;
+	अगर (video_is_रेजिस्टरed(vdev))
+		ret = subdev_करो_ioctl(file, cmd, arg);
+	अगर (lock)
 		mutex_unlock(lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long subdev_ioctl(struct file *file, unsigned int cmd,
-	unsigned long arg)
-{
-	return video_usercopy(file, cmd, arg, subdev_do_ioctl_lock);
-}
+अटल दीर्घ subdev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+	अचिन्हित दीर्घ arg)
+अणु
+	वापस video_usercopy(file, cmd, arg, subdev_करो_ioctl_lock);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long subdev_compat_ioctl32(struct file *file, unsigned int cmd,
-	unsigned long arg)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ subdev_compat_ioctl32(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+	अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
 
-	return v4l2_subdev_call(sd, core, compat_ioctl32, cmd, arg);
-}
-#endif
+	वापस v4l2_subdev_call(sd, core, compat_ioctl32, cmd, arg);
+पूर्ण
+#पूर्ण_अगर
 
-#else /* CONFIG_VIDEO_V4L2_SUBDEV_API */
-static long subdev_ioctl(struct file *file, unsigned int cmd,
-			 unsigned long arg)
-{
-	return -ENODEV;
-}
+#अन्यथा /* CONFIG_VIDEO_V4L2_SUBDEV_API */
+अटल दीर्घ subdev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			 अचिन्हित दीर्घ arg)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long subdev_compat_ioctl32(struct file *file, unsigned int cmd,
-				  unsigned long arg)
-{
-	return -ENODEV;
-}
-#endif
-#endif /* CONFIG_VIDEO_V4L2_SUBDEV_API */
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ subdev_compat_ioctl32(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+				  अचिन्हित दीर्घ arg)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_VIDEO_V4L2_SUBDEV_API */
 
-static __poll_t subdev_poll(struct file *file, poll_table *wait)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
-	struct v4l2_fh *fh = file->private_data;
+अटल __poll_t subdev_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा v4l2_subdev *sd = vdev_to_v4l2_subdev(vdev);
+	काष्ठा v4l2_fh *fh = file->निजी_data;
 
-	if (!(sd->flags & V4L2_SUBDEV_FL_HAS_EVENTS))
-		return EPOLLERR;
+	अगर (!(sd->flags & V4L2_SUBDEV_FL_HAS_EVENTS))
+		वापस EPOLLERR;
 
-	poll_wait(file, &fh->wait, wait);
+	poll_रुको(file, &fh->रुको, रुको);
 
-	if (v4l2_event_pending(fh))
-		return EPOLLPRI;
+	अगर (v4l2_event_pending(fh))
+		वापस EPOLLPRI;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct v4l2_file_operations v4l2_subdev_fops = {
+स्थिर काष्ठा v4l2_file_operations v4l2_subdev_fops = अणु
 	.owner = THIS_MODULE,
-	.open = subdev_open,
+	.खोलो = subdev_खोलो,
 	.unlocked_ioctl = subdev_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl32 = subdev_compat_ioctl32,
-#endif
-	.release = subdev_close,
+#पूर्ण_अगर
+	.release = subdev_बंद,
 	.poll = subdev_poll,
-};
+पूर्ण;
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 
-int v4l2_subdev_get_fwnode_pad_1_to_1(struct media_entity *entity,
-				      struct fwnode_endpoint *endpoint)
-{
-	struct fwnode_handle *fwnode;
-	struct v4l2_subdev *sd;
+पूर्णांक v4l2_subdev_get_fwnode_pad_1_to_1(काष्ठा media_entity *entity,
+				      काष्ठा fwnode_endpoपूर्णांक *endpoपूर्णांक)
+अणु
+	काष्ठा fwnode_handle *fwnode;
+	काष्ठा v4l2_subdev *sd;
 
-	if (!is_media_entity_v4l2_subdev(entity))
-		return -EINVAL;
+	अगर (!is_media_entity_v4l2_subdev(entity))
+		वापस -EINVAL;
 
 	sd = media_entity_to_v4l2_subdev(entity);
 
-	fwnode = fwnode_graph_get_port_parent(endpoint->local_fwnode);
+	fwnode = fwnode_graph_get_port_parent(endpoपूर्णांक->local_fwnode);
 	fwnode_handle_put(fwnode);
 
-	if (dev_fwnode(sd->dev) == fwnode)
-		return endpoint->port;
+	अगर (dev_fwnode(sd->dev) == fwnode)
+		वापस endpoपूर्णांक->port;
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_subdev_get_fwnode_pad_1_to_1);
 
-int v4l2_subdev_link_validate_default(struct v4l2_subdev *sd,
-				      struct media_link *link,
-				      struct v4l2_subdev_format *source_fmt,
-				      struct v4l2_subdev_format *sink_fmt)
-{
+पूर्णांक v4l2_subdev_link_validate_शेष(काष्ठा v4l2_subdev *sd,
+				      काष्ठा media_link *link,
+				      काष्ठा v4l2_subdev_क्रमmat *source_fmt,
+				      काष्ठा v4l2_subdev_क्रमmat *sink_fmt)
+अणु
 	bool pass = true;
 
 	/* The width, height and code must match. */
-	if (source_fmt->format.width != sink_fmt->format.width) {
+	अगर (source_fmt->क्रमmat.width != sink_fmt->क्रमmat.width) अणु
 		dev_dbg(sd->entity.graph_obj.mdev->dev,
 			"%s: width does not match (source %u, sink %u)\n",
 			__func__,
-			source_fmt->format.width, sink_fmt->format.width);
+			source_fmt->क्रमmat.width, sink_fmt->क्रमmat.width);
 		pass = false;
-	}
+	पूर्ण
 
-	if (source_fmt->format.height != sink_fmt->format.height) {
+	अगर (source_fmt->क्रमmat.height != sink_fmt->क्रमmat.height) अणु
 		dev_dbg(sd->entity.graph_obj.mdev->dev,
 			"%s: height does not match (source %u, sink %u)\n",
 			__func__,
-			source_fmt->format.height, sink_fmt->format.height);
+			source_fmt->क्रमmat.height, sink_fmt->क्रमmat.height);
 		pass = false;
-	}
+	पूर्ण
 
-	if (source_fmt->format.code != sink_fmt->format.code) {
+	अगर (source_fmt->क्रमmat.code != sink_fmt->क्रमmat.code) अणु
 		dev_dbg(sd->entity.graph_obj.mdev->dev,
 			"%s: media bus code does not match (source 0x%8.8x, sink 0x%8.8x)\n",
 			__func__,
-			source_fmt->format.code, sink_fmt->format.code);
+			source_fmt->क्रमmat.code, sink_fmt->क्रमmat.code);
 		pass = false;
-	}
+	पूर्ण
 
 	/* The field order must match, or the sink field order must be NONE
-	 * to support interlaced hardware connected to bridges that support
-	 * progressive formats only.
+	 * to support पूर्णांकerlaced hardware connected to bridges that support
+	 * progressive क्रमmats only.
 	 */
-	if (source_fmt->format.field != sink_fmt->format.field &&
-	    sink_fmt->format.field != V4L2_FIELD_NONE) {
+	अगर (source_fmt->क्रमmat.field != sink_fmt->क्रमmat.field &&
+	    sink_fmt->क्रमmat.field != V4L2_FIELD_NONE) अणु
 		dev_dbg(sd->entity.graph_obj.mdev->dev,
 			"%s: field does not match (source %u, sink %u)\n",
 			__func__,
-			source_fmt->format.field, sink_fmt->format.field);
+			source_fmt->क्रमmat.field, sink_fmt->क्रमmat.field);
 		pass = false;
-	}
+	पूर्ण
 
-	if (pass)
-		return 0;
+	अगर (pass)
+		वापस 0;
 
 	dev_dbg(sd->entity.graph_obj.mdev->dev,
 		"%s: link was \"%s\":%u -> \"%s\":%u\n", __func__,
 		link->source->entity->name, link->source->index,
 		link->sink->entity->name, link->sink->index);
 
-	return -EPIPE;
-}
-EXPORT_SYMBOL_GPL(v4l2_subdev_link_validate_default);
+	वापस -EPIPE;
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_subdev_link_validate_शेष);
 
-static int
-v4l2_subdev_link_validate_get_format(struct media_pad *pad,
-				     struct v4l2_subdev_format *fmt)
-{
-	if (is_media_entity_v4l2_subdev(pad->entity)) {
-		struct v4l2_subdev *sd =
+अटल पूर्णांक
+v4l2_subdev_link_validate_get_क्रमmat(काष्ठा media_pad *pad,
+				     काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	अगर (is_media_entity_v4l2_subdev(pad->entity)) अणु
+		काष्ठा v4l2_subdev *sd =
 			media_entity_to_v4l2_subdev(pad->entity);
 
 		fmt->which = V4L2_SUBDEV_FORMAT_ACTIVE;
 		fmt->pad = pad->index;
-		return v4l2_subdev_call(sd, pad, get_fmt, NULL, fmt);
-	}
+		वापस v4l2_subdev_call(sd, pad, get_fmt, शून्य, fmt);
+	पूर्ण
 
 	WARN(pad->entity->function != MEDIA_ENT_F_IO_V4L,
 	     "Driver bug! Wrong media entity type 0x%08x, entity %s\n",
 	     pad->entity->function, pad->entity->name);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int v4l2_subdev_link_validate(struct media_link *link)
-{
-	struct v4l2_subdev *sink;
-	struct v4l2_subdev_format sink_fmt, source_fmt;
-	int rval;
+पूर्णांक v4l2_subdev_link_validate(काष्ठा media_link *link)
+अणु
+	काष्ठा v4l2_subdev *sink;
+	काष्ठा v4l2_subdev_क्रमmat sink_fmt, source_fmt;
+	पूर्णांक rval;
 
-	rval = v4l2_subdev_link_validate_get_format(
+	rval = v4l2_subdev_link_validate_get_क्रमmat(
 		link->source, &source_fmt);
-	if (rval < 0)
-		return 0;
+	अगर (rval < 0)
+		वापस 0;
 
-	rval = v4l2_subdev_link_validate_get_format(
+	rval = v4l2_subdev_link_validate_get_क्रमmat(
 		link->sink, &sink_fmt);
-	if (rval < 0)
-		return 0;
+	अगर (rval < 0)
+		वापस 0;
 
 	sink = media_entity_to_v4l2_subdev(link->sink->entity);
 
 	rval = v4l2_subdev_call(sink, pad, link_validate, link,
 				&source_fmt, &sink_fmt);
-	if (rval != -ENOIOCTLCMD)
-		return rval;
+	अगर (rval != -ENOIOCTLCMD)
+		वापस rval;
 
-	return v4l2_subdev_link_validate_default(
+	वापस v4l2_subdev_link_validate_शेष(
 		sink, link, &source_fmt, &sink_fmt);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_subdev_link_validate);
 
-struct v4l2_subdev_pad_config *
-v4l2_subdev_alloc_pad_config(struct v4l2_subdev *sd)
-{
-	struct v4l2_subdev_pad_config *cfg;
-	int ret;
+काष्ठा v4l2_subdev_pad_config *
+v4l2_subdev_alloc_pad_config(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा v4l2_subdev_pad_config *cfg;
+	पूर्णांक ret;
 
-	if (!sd->entity.num_pads)
-		return NULL;
+	अगर (!sd->entity.num_pads)
+		वापस शून्य;
 
-	cfg = kvmalloc_array(sd->entity.num_pads, sizeof(*cfg),
+	cfg = kvदो_स्मृति_array(sd->entity.num_pads, माप(*cfg),
 			     GFP_KERNEL | __GFP_ZERO);
-	if (!cfg)
-		return NULL;
+	अगर (!cfg)
+		वापस शून्य;
 
 	ret = v4l2_subdev_call(sd, pad, init_cfg, cfg);
-	if (ret < 0 && ret != -ENOIOCTLCMD) {
-		kvfree(cfg);
-		return NULL;
-	}
+	अगर (ret < 0 && ret != -ENOIOCTLCMD) अणु
+		kvमुक्त(cfg);
+		वापस शून्य;
+	पूर्ण
 
-	return cfg;
-}
+	वापस cfg;
+पूर्ण
 EXPORT_SYMBOL_GPL(v4l2_subdev_alloc_pad_config);
 
-void v4l2_subdev_free_pad_config(struct v4l2_subdev_pad_config *cfg)
-{
-	kvfree(cfg);
-}
-EXPORT_SYMBOL_GPL(v4l2_subdev_free_pad_config);
-#endif /* CONFIG_MEDIA_CONTROLLER */
+व्योम v4l2_subdev_मुक्त_pad_config(काष्ठा v4l2_subdev_pad_config *cfg)
+अणु
+	kvमुक्त(cfg);
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_subdev_मुक्त_pad_config);
+#पूर्ण_अगर /* CONFIG_MEDIA_CONTROLLER */
 
-void v4l2_subdev_init(struct v4l2_subdev *sd, const struct v4l2_subdev_ops *ops)
-{
+व्योम v4l2_subdev_init(काष्ठा v4l2_subdev *sd, स्थिर काष्ठा v4l2_subdev_ops *ops)
+अणु
 	INIT_LIST_HEAD(&sd->list);
 	BUG_ON(!ops);
 	sd->ops = ops;
-	sd->v4l2_dev = NULL;
+	sd->v4l2_dev = शून्य;
 	sd->flags = 0;
 	sd->name[0] = '\0';
 	sd->grp_id = 0;
-	sd->dev_priv = NULL;
-	sd->host_priv = NULL;
-#if defined(CONFIG_MEDIA_CONTROLLER)
+	sd->dev_priv = शून्य;
+	sd->host_priv = शून्य;
+#अगर defined(CONFIG_MEDIA_CONTROLLER)
 	sd->entity.name = sd->name;
 	sd->entity.obj_type = MEDIA_ENTITY_TYPE_V4L2_SUBDEV;
 	sd->entity.function = MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL(v4l2_subdev_init);
 
-void v4l2_subdev_notify_event(struct v4l2_subdev *sd,
-			      const struct v4l2_event *ev)
-{
+व्योम v4l2_subdev_notअगरy_event(काष्ठा v4l2_subdev *sd,
+			      स्थिर काष्ठा v4l2_event *ev)
+अणु
 	v4l2_event_queue(sd->devnode, ev);
-	v4l2_subdev_notify(sd, V4L2_DEVICE_NOTIFY_EVENT, (void *)ev);
-}
-EXPORT_SYMBOL_GPL(v4l2_subdev_notify_event);
+	v4l2_subdev_notअगरy(sd, V4L2_DEVICE_NOTIFY_EVENT, (व्योम *)ev);
+पूर्ण
+EXPORT_SYMBOL_GPL(v4l2_subdev_notअगरy_event);

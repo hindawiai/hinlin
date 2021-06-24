@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,127 +22,127 @@
  *
  * Authors: Ben Skeggs
  */
-#include "gf100.h"
-#include "ram.h"
+#समावेश "gf100.h"
+#समावेश "ram.h"
 
-#include <core/memory.h>
-#include <core/option.h>
-#include <subdev/therm.h>
+#समावेश <core/memory.h>
+#समावेश <core/option.h>
+#समावेश <subdev/therm.h>
 
-void
-gf100_fb_intr(struct nvkm_fb *base)
-{
-	struct gf100_fb *fb = gf100_fb(base);
-	struct nvkm_subdev *subdev = &fb->base.subdev;
-	struct nvkm_device *device = subdev->device;
-	u32 intr = nvkm_rd32(device, 0x000100);
-	if (intr & 0x08000000)
+व्योम
+gf100_fb_पूर्णांकr(काष्ठा nvkm_fb *base)
+अणु
+	काष्ठा gf100_fb *fb = gf100_fb(base);
+	काष्ठा nvkm_subdev *subdev = &fb->base.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	u32 पूर्णांकr = nvkm_rd32(device, 0x000100);
+	अगर (पूर्णांकr & 0x08000000)
 		nvkm_debug(subdev, "PFFB intr\n");
-	if (intr & 0x00002000)
+	अगर (पूर्णांकr & 0x00002000)
 		nvkm_debug(subdev, "PBFB intr\n");
-}
+पूर्ण
 
-int
-gf100_fb_oneinit(struct nvkm_fb *base)
-{
-	struct gf100_fb *fb = gf100_fb(base);
-	struct nvkm_device *device = fb->base.subdev.device;
-	int ret, size = 1 << (fb->base.page ? fb->base.page : 17);
+पूर्णांक
+gf100_fb_oneinit(काष्ठा nvkm_fb *base)
+अणु
+	काष्ठा gf100_fb *fb = gf100_fb(base);
+	काष्ठा nvkm_device *device = fb->base.subdev.device;
+	पूर्णांक ret, size = 1 << (fb->base.page ? fb->base.page : 17);
 
-	size = nvkm_longopt(device->cfgopt, "MmuDebugBufferSize", size);
+	size = nvkm_दीर्घopt(device->cfgopt, "MmuDebugBufferSize", size);
 	size = max(size, 0x1000);
 
 	ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, size, 0x1000,
 			      true, &fb->base.mmu_rd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, size, 0x1000,
 			      true, &fb->base.mmu_wr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	fb->r100c10_page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-	if (fb->r100c10_page) {
+	अगर (fb->r100c10_page) अणु
 		fb->r100c10 = dma_map_page(device->dev, fb->r100c10_page, 0,
-					   PAGE_SIZE, DMA_BIDIRECTIONAL);
-		if (dma_mapping_error(device->dev, fb->r100c10))
-			return -EFAULT;
-	}
+					   PAGE_SIZE, DMA_BIसूचीECTIONAL);
+		अगर (dma_mapping_error(device->dev, fb->r100c10))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-gf100_fb_init_page(struct nvkm_fb *fb)
-{
-	struct nvkm_device *device = fb->subdev.device;
-	switch (fb->page) {
-	case 16: nvkm_mask(device, 0x100c80, 0x00000001, 0x00000001); break;
-	case 17: nvkm_mask(device, 0x100c80, 0x00000001, 0x00000000); break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+पूर्णांक
+gf100_fb_init_page(काष्ठा nvkm_fb *fb)
+अणु
+	काष्ठा nvkm_device *device = fb->subdev.device;
+	चयन (fb->page) अणु
+	हाल 16: nvkm_mask(device, 0x100c80, 0x00000001, 0x00000001); अवरोध;
+	हाल 17: nvkm_mask(device, 0x100c80, 0x00000001, 0x00000000); अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void
-gf100_fb_init(struct nvkm_fb *base)
-{
-	struct gf100_fb *fb = gf100_fb(base);
-	struct nvkm_device *device = fb->base.subdev.device;
+व्योम
+gf100_fb_init(काष्ठा nvkm_fb *base)
+अणु
+	काष्ठा gf100_fb *fb = gf100_fb(base);
+	काष्ठा nvkm_device *device = fb->base.subdev.device;
 
-	if (fb->r100c10_page)
+	अगर (fb->r100c10_page)
 		nvkm_wr32(device, 0x100c10, fb->r100c10 >> 8);
 
-	if (base->func->clkgate_pack) {
+	अगर (base->func->clkgate_pack) अणु
 		nvkm_therm_clkgate_init(device->therm,
 					base->func->clkgate_pack);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void *
-gf100_fb_dtor(struct nvkm_fb *base)
-{
-	struct gf100_fb *fb = gf100_fb(base);
-	struct nvkm_device *device = fb->base.subdev.device;
+व्योम *
+gf100_fb_dtor(काष्ठा nvkm_fb *base)
+अणु
+	काष्ठा gf100_fb *fb = gf100_fb(base);
+	काष्ठा nvkm_device *device = fb->base.subdev.device;
 
-	if (fb->r100c10_page) {
+	अगर (fb->r100c10_page) अणु
 		dma_unmap_page(device->dev, fb->r100c10, PAGE_SIZE,
-			       DMA_BIDIRECTIONAL);
-		__free_page(fb->r100c10_page);
-	}
+			       DMA_BIसूचीECTIONAL);
+		__मुक्त_page(fb->r100c10_page);
+	पूर्ण
 
-	return fb;
-}
+	वापस fb;
+पूर्ण
 
-int
-gf100_fb_new_(const struct nvkm_fb_func *func, struct nvkm_device *device,
-	      enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
-{
-	struct gf100_fb *fb;
+पूर्णांक
+gf100_fb_new_(स्थिर काष्ठा nvkm_fb_func *func, काष्ठा nvkm_device *device,
+	      क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
+अणु
+	काष्ठा gf100_fb *fb;
 
-	if (!(fb = kzalloc(sizeof(*fb), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(fb = kzalloc(माप(*fb), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_fb_ctor(func, device, type, inst, &fb->base);
 	*pfb = &fb->base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_fb_func
-gf100_fb = {
+अटल स्थिर काष्ठा nvkm_fb_func
+gf100_fb = अणु
 	.dtor = gf100_fb_dtor,
 	.oneinit = gf100_fb_oneinit,
 	.init = gf100_fb_init,
 	.init_page = gf100_fb_init_page,
-	.intr = gf100_fb_intr,
+	.पूर्णांकr = gf100_fb_पूर्णांकr,
 	.ram_new = gf100_ram_new,
-	.default_bigpage = 17,
-};
+	.शेष_bigpage = 17,
+पूर्ण;
 
-int
-gf100_fb_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_fb **pfb)
-{
-	return gf100_fb_new_(&gf100_fb, device, type, inst, pfb);
-}
+पूर्णांक
+gf100_fb_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fb **pfb)
+अणु
+	वापस gf100_fb_new_(&gf100_fb, device, type, inst, pfb);
+पूर्ण

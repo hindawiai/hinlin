@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Process version 3 NFS requests.
  *
  * Copyright (C) 1996, 1997, 1998 Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/fs.h>
-#include <linux/ext2_fs.h>
-#include <linux/magic.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/ext2_fs.h>
+#समावेश <linux/magic.h>
 
-#include "cache.h"
-#include "xdr3.h"
-#include "vfs.h"
+#समावेश "cache.h"
+#समावेश "xdr3.h"
+#समावेश "vfs.h"
 
-#define NFSDDBG_FACILITY		NFSDDBG_PROC
+#घोषणा NFSDDBG_FACILITY		NFSDDBG_PROC
 
-static int	nfs3_ftypes[] = {
+अटल पूर्णांक	nfs3_ftypes[] = अणु
 	0,			/* NF3NON */
 	S_IFREG,		/* NF3REG */
-	S_IFDIR,		/* NF3DIR */
+	S_IFसूची,		/* NF3सूची */
 	S_IFBLK,		/* NF3BLK */
 	S_IFCHR,		/* NF3CHR */
 	S_IFLNK,		/* NF3LNK */
 	S_IFSOCK,		/* NF3SOCK */
 	S_IFIFO,		/* NF3FIFO */
-};
+पूर्ण;
 
 /*
- * NULL call.
+ * शून्य call.
  */
-static __be32
-nfsd3_proc_null(struct svc_rqst *rqstp)
-{
-	return rpc_success;
-}
+अटल __be32
+nfsd3_proc_null(काष्ठा svc_rqst *rqstp)
+अणु
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Get a file's attributes
  */
-static __be32
-nfsd3_proc_getattr(struct svc_rqst *rqstp)
-{
-	struct nfsd_fhandle *argp = rqstp->rq_argp;
-	struct nfsd3_attrstat *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_getattr(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_fhandle *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_attrstat *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: GETATTR(3)  %s\n",
+	dprपूर्णांकk("nfsd: GETATTR(3)  %s\n",
 		SVCFH_fmt(&argp->fh));
 
 	fh_copy(&resp->fh, &argp->fh);
-	resp->status = fh_verify(rqstp, &resp->fh, 0,
+	resp->status = fh_verअगरy(rqstp, &resp->fh, 0,
 				 NFSD_MAY_NOP | NFSD_MAY_BYPASS_GSS_ON_ROOT);
-	if (resp->status != nfs_ok)
-		goto out;
+	अगर (resp->status != nfs_ok)
+		जाओ out;
 
 	resp->status = fh_getattr(&resp->fh, &resp->stat);
 out:
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Set a file's attributes
  */
-static __be32
-nfsd3_proc_setattr(struct svc_rqst *rqstp)
-{
-	struct nfsd3_sattrargs *argp = rqstp->rq_argp;
-	struct nfsd3_attrstat *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_setattr(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_sattrargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_attrstat *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: SETATTR(3)  %s\n",
+	dprपूर्णांकk("nfsd: SETATTR(3)  %s\n",
 				SVCFH_fmt(&argp->fh));
 
 	fh_copy(&resp->fh, &argp->fh);
 	resp->status = nfsd_setattr(rqstp, &resp->fh, &argp->attrs,
-				    argp->check_guard, argp->guardtime);
-	return rpc_success;
-}
+				    argp->check_guard, argp->guardसमय);
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Look up a path name component
  */
-static __be32
-nfsd3_proc_lookup(struct svc_rqst *rqstp)
-{
-	struct nfsd3_diropargs *argp = rqstp->rq_argp;
-	struct nfsd3_diropres  *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_lookup(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_diropargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_diropres  *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: LOOKUP(3)   %s %.*s\n",
+	dprपूर्णांकk("nfsd: LOOKUP(3)   %s %.*s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
 				argp->name);
@@ -96,80 +97,80 @@ nfsd3_proc_lookup(struct svc_rqst *rqstp)
 	resp->status = nfsd_lookup(rqstp, &resp->dirfh,
 				   argp->name, argp->len,
 				   &resp->fh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Check file access
  */
-static __be32
-nfsd3_proc_access(struct svc_rqst *rqstp)
-{
-	struct nfsd3_accessargs *argp = rqstp->rq_argp;
-	struct nfsd3_accessres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_access(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_accessargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_accessres *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: ACCESS(3)   %s 0x%x\n",
+	dprपूर्णांकk("nfsd: ACCESS(3)   %s 0x%x\n",
 				SVCFH_fmt(&argp->fh),
 				argp->access);
 
 	fh_copy(&resp->fh, &argp->fh);
 	resp->access = argp->access;
-	resp->status = nfsd_access(rqstp, &resp->fh, &resp->access, NULL);
-	return rpc_success;
-}
+	resp->status = nfsd_access(rqstp, &resp->fh, &resp->access, शून्य);
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Read a symlink.
  */
-static __be32
-nfsd3_proc_readlink(struct svc_rqst *rqstp)
-{
-	struct nfsd_fhandle *argp = rqstp->rq_argp;
-	struct nfsd3_readlinkres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_पढ़ोlink(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_fhandle *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_पढ़ोlinkres *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: READLINK(3) %s\n", SVCFH_fmt(&argp->fh));
+	dprपूर्णांकk("nfsd: READLINK(3) %s\n", SVCFH_fmt(&argp->fh));
 
 	/* Read the symlink. */
 	fh_copy(&resp->fh, &argp->fh);
 	resp->len = NFS3_MAXPATHLEN;
 	resp->pages = rqstp->rq_next_page++;
-	resp->status = nfsd_readlink(rqstp, &resp->fh,
+	resp->status = nfsd_पढ़ोlink(rqstp, &resp->fh,
 				     page_address(*resp->pages), &resp->len);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Read a portion of a file.
  */
-static __be32
-nfsd3_proc_read(struct svc_rqst *rqstp)
-{
-	struct nfsd3_readargs *argp = rqstp->rq_argp;
-	struct nfsd3_readres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_पढ़ो(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_पढ़ोargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_पढ़ोres *resp = rqstp->rq_resp;
 	u32 max_blocksize = svc_max_payload(rqstp);
-	unsigned int len;
-	int v;
+	अचिन्हित पूर्णांक len;
+	पूर्णांक v;
 
 	argp->count = min_t(u32, argp->count, max_blocksize);
 
-	dprintk("nfsd: READ(3) %s %lu bytes at %Lu\n",
+	dprपूर्णांकk("nfsd: READ(3) %s %lu bytes at %Lu\n",
 				SVCFH_fmt(&argp->fh),
-				(unsigned long) argp->count,
-				(unsigned long long) argp->offset);
+				(अचिन्हित दीर्घ) argp->count,
+				(अचिन्हित दीर्घ दीर्घ) argp->offset);
 
 	v = 0;
 	len = argp->count;
 	resp->pages = rqstp->rq_next_page;
-	while (len > 0) {
-		struct page *page = *(rqstp->rq_next_page++);
+	जबतक (len > 0) अणु
+		काष्ठा page *page = *(rqstp->rq_next_page++);
 
 		rqstp->rq_vec[v].iov_base = page_address(page);
-		rqstp->rq_vec[v].iov_len = min_t(unsigned int, len, PAGE_SIZE);
+		rqstp->rq_vec[v].iov_len = min_t(अचिन्हित पूर्णांक, len, PAGE_SIZE);
 		len -= rqstp->rq_vec[v].iov_len;
 		v++;
-	}
+	पूर्ण
 
-	/* Obtain buffer pointer for payload.
+	/* Obtain buffer poपूर्णांकer क्रम payload.
 	 * 1 (status) + 22 (post_op_attr) + 1 (count) + 1 (eof)
 	 * + 1 (xdr opaque byte count) = 26
 	 */
@@ -177,58 +178,58 @@ nfsd3_proc_read(struct svc_rqst *rqstp)
 	svc_reserve_auth(rqstp, ((1 + NFS3_POST_OP_ATTR_WORDS + 3)<<2) + resp->count +4);
 
 	fh_copy(&resp->fh, &argp->fh);
-	resp->status = nfsd_read(rqstp, &resp->fh, argp->offset,
+	resp->status = nfsd_पढ़ो(rqstp, &resp->fh, argp->offset,
 				 rqstp->rq_vec, v, &resp->count, &resp->eof);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Write data to a file
  */
-static __be32
-nfsd3_proc_write(struct svc_rqst *rqstp)
-{
-	struct nfsd3_writeargs *argp = rqstp->rq_argp;
-	struct nfsd3_writeres *resp = rqstp->rq_resp;
-	unsigned long cnt = argp->len;
-	unsigned int nvecs;
+अटल __be32
+nfsd3_proc_ग_लिखो(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_ग_लिखोargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_ग_लिखोres *resp = rqstp->rq_resp;
+	अचिन्हित दीर्घ cnt = argp->len;
+	अचिन्हित पूर्णांक nvecs;
 
-	dprintk("nfsd: WRITE(3)    %s %d bytes at %Lu%s\n",
+	dprपूर्णांकk("nfsd: WRITE(3)    %s %d bytes at %Lu%s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
-				(unsigned long long) argp->offset,
+				(अचिन्हित दीर्घ दीर्घ) argp->offset,
 				argp->stable? " stable" : "");
 
 	fh_copy(&resp->fh, &argp->fh);
 	resp->committed = argp->stable;
-	nvecs = svc_fill_write_vector(rqstp, rqstp->rq_arg.pages,
+	nvecs = svc_fill_ग_लिखो_vector(rqstp, rqstp->rq_arg.pages,
 				      &argp->first, cnt);
-	if (!nvecs) {
+	अगर (!nvecs) अणु
 		resp->status = nfserr_io;
-		goto out;
-	}
-	resp->status = nfsd_write(rqstp, &resp->fh, argp->offset,
+		जाओ out;
+	पूर्ण
+	resp->status = nfsd_ग_लिखो(rqstp, &resp->fh, argp->offset,
 				  rqstp->rq_vec, nvecs, &cnt,
 				  resp->committed, resp->verf);
 	resp->count = cnt;
 out:
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * With NFSv3, CREATE processing is a lot easier than with NFSv2.
  * At least in theory; we'll see how it fares in practice when the
  * first reports about SunOS compatibility problems start to pour in...
  */
-static __be32
-nfsd3_proc_create(struct svc_rqst *rqstp)
-{
-	struct nfsd3_createargs *argp = rqstp->rq_argp;
-	struct nfsd3_diropres *resp = rqstp->rq_resp;
-	svc_fh		*dirfhp, *newfhp = NULL;
-	struct iattr	*attr;
+अटल __be32
+nfsd3_proc_create(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_createargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_diropres *resp = rqstp->rq_resp;
+	svc_fh		*dirfhp, *newfhp = शून्य;
+	काष्ठा iattr	*attr;
 
-	dprintk("nfsd: CREATE(3)   %s %.*s\n",
+	dprपूर्णांकk("nfsd: CREATE(3)   %s %.*s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
 				argp->name);
@@ -239,30 +240,30 @@ nfsd3_proc_create(struct svc_rqst *rqstp)
 
 	/* Unfudge the mode bits */
 	attr->ia_mode &= ~S_IFMT;
-	if (!(attr->ia_valid & ATTR_MODE)) { 
+	अगर (!(attr->ia_valid & ATTR_MODE)) अणु 
 		attr->ia_valid |= ATTR_MODE;
 		attr->ia_mode = S_IFREG;
-	} else {
+	पूर्ण अन्यथा अणु
 		attr->ia_mode = (attr->ia_mode & ~S_IFMT) | S_IFREG;
-	}
+	पूर्ण
 
 	/* Now create the file and set attributes */
-	resp->status = do_nfsd_create(rqstp, dirfhp, argp->name, argp->len,
+	resp->status = करो_nfsd_create(rqstp, dirfhp, argp->name, argp->len,
 				      attr, newfhp, argp->createmode,
-				      (u32 *)argp->verf, NULL, NULL);
-	return rpc_success;
-}
+				      (u32 *)argp->verf, शून्य, शून्य);
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Make directory. This operation is not idempotent.
  */
-static __be32
-nfsd3_proc_mkdir(struct svc_rqst *rqstp)
-{
-	struct nfsd3_createargs *argp = rqstp->rq_argp;
-	struct nfsd3_diropres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_सूची_गढ़ो(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_createargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_diropres *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: MKDIR(3)    %s %.*s\n",
+	dprपूर्णांकk("nfsd: MKDIR(3)    %s %.*s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
 				argp->name);
@@ -271,35 +272,35 @@ nfsd3_proc_mkdir(struct svc_rqst *rqstp)
 	fh_copy(&resp->dirfh, &argp->fh);
 	fh_init(&resp->fh, NFS3_FHSIZE);
 	resp->status = nfsd_create(rqstp, &resp->dirfh, argp->name, argp->len,
-				   &argp->attrs, S_IFDIR, 0, &resp->fh);
+				   &argp->attrs, S_IFसूची, 0, &resp->fh);
 	fh_unlock(&resp->dirfh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
-static __be32
-nfsd3_proc_symlink(struct svc_rqst *rqstp)
-{
-	struct nfsd3_symlinkargs *argp = rqstp->rq_argp;
-	struct nfsd3_diropres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_symlink(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_symlinkargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_diropres *resp = rqstp->rq_resp;
 
-	if (argp->tlen == 0) {
+	अगर (argp->tlen == 0) अणु
 		resp->status = nfserr_inval;
-		goto out;
-	}
-	if (argp->tlen > NFS3_MAXPATHLEN) {
-		resp->status = nfserr_nametoolong;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
+	अगर (argp->tlen > NFS3_MAXPATHLEN) अणु
+		resp->status = nfserr_nametooदीर्घ;
+		जाओ out;
+	पूर्ण
 
 	argp->tname = svc_fill_symlink_pathname(rqstp, &argp->first,
 						page_address(rqstp->rq_arg.pages[0]),
 						argp->tlen);
-	if (IS_ERR(argp->tname)) {
-		resp->status = nfserrno(PTR_ERR(argp->tname));
-		goto out;
-	}
+	अगर (IS_ERR(argp->tname)) अणु
+		resp->status = nfsत्रुटि_सं(PTR_ERR(argp->tname));
+		जाओ out;
+	पूर्ण
 
-	dprintk("nfsd: SYMLINK(3)  %s %.*s -> %.*s\n",
+	dprपूर्णांकk("nfsd: SYMLINK(3)  %s %.*s -> %.*s\n",
 				SVCFH_fmt(&argp->ffh),
 				argp->flen, argp->fname,
 				argp->tlen, argp->tname);
@@ -308,23 +309,23 @@ nfsd3_proc_symlink(struct svc_rqst *rqstp)
 	fh_init(&resp->fh, NFS3_FHSIZE);
 	resp->status = nfsd_symlink(rqstp, &resp->dirfh, argp->fname,
 				    argp->flen, argp->tname, &resp->fh);
-	kfree(argp->tname);
+	kमुक्त(argp->tname);
 out:
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
- * Make socket/fifo/device.
+ * Make socket/fअगरo/device.
  */
-static __be32
-nfsd3_proc_mknod(struct svc_rqst *rqstp)
-{
-	struct nfsd3_mknodargs *argp = rqstp->rq_argp;
-	struct nfsd3_diropres  *resp = rqstp->rq_resp;
-	int type;
+अटल __be32
+nfsd3_proc_mknod(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_mknodargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_diropres  *resp = rqstp->rq_resp;
+	पूर्णांक type;
 	dev_t	rdev = 0;
 
-	dprintk("nfsd: MKNOD(3)    %s %.*s\n",
+	dprपूर्णांकk("nfsd: MKNOD(3)    %s %.*s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
 				argp->name);
@@ -332,100 +333,100 @@ nfsd3_proc_mknod(struct svc_rqst *rqstp)
 	fh_copy(&resp->dirfh, &argp->fh);
 	fh_init(&resp->fh, NFS3_FHSIZE);
 
-	if (argp->ftype == NF3CHR || argp->ftype == NF3BLK) {
+	अगर (argp->ftype == NF3CHR || argp->ftype == NF3BLK) अणु
 		rdev = MKDEV(argp->major, argp->minor);
-		if (MAJOR(rdev) != argp->major ||
-		    MINOR(rdev) != argp->minor) {
+		अगर (MAJOR(rdev) != argp->major ||
+		    MINOR(rdev) != argp->minor) अणु
 			resp->status = nfserr_inval;
-			goto out;
-		}
-	} else if (argp->ftype != NF3SOCK && argp->ftype != NF3FIFO) {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (argp->ftype != NF3SOCK && argp->ftype != NF3FIFO) अणु
 		resp->status = nfserr_badtype;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	type = nfs3_ftypes[argp->ftype];
 	resp->status = nfsd_create(rqstp, &resp->dirfh, argp->name, argp->len,
 				   &argp->attrs, type, rdev, &resp->fh);
 	fh_unlock(&resp->dirfh);
 out:
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
- * Remove file/fifo/socket etc.
+ * Remove file/fअगरo/socket etc.
  */
-static __be32
-nfsd3_proc_remove(struct svc_rqst *rqstp)
-{
-	struct nfsd3_diropargs *argp = rqstp->rq_argp;
-	struct nfsd3_attrstat *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_हटाओ(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_diropargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_attrstat *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: REMOVE(3)   %s %.*s\n",
+	dprपूर्णांकk("nfsd: REMOVE(3)   %s %.*s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
 				argp->name);
 
-	/* Unlink. -S_IFDIR means file must not be a directory */
+	/* Unlink. -S_IFसूची means file must not be a directory */
 	fh_copy(&resp->fh, &argp->fh);
-	resp->status = nfsd_unlink(rqstp, &resp->fh, -S_IFDIR,
+	resp->status = nfsd_unlink(rqstp, &resp->fh, -S_IFसूची,
 				   argp->name, argp->len);
 	fh_unlock(&resp->fh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Remove a directory
  */
-static __be32
-nfsd3_proc_rmdir(struct svc_rqst *rqstp)
-{
-	struct nfsd3_diropargs *argp = rqstp->rq_argp;
-	struct nfsd3_attrstat *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_सूची_हटाओ(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_diropargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_attrstat *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: RMDIR(3)    %s %.*s\n",
+	dprपूर्णांकk("nfsd: RMDIR(3)    %s %.*s\n",
 				SVCFH_fmt(&argp->fh),
 				argp->len,
 				argp->name);
 
 	fh_copy(&resp->fh, &argp->fh);
-	resp->status = nfsd_unlink(rqstp, &resp->fh, S_IFDIR,
+	resp->status = nfsd_unlink(rqstp, &resp->fh, S_IFसूची,
 				   argp->name, argp->len);
 	fh_unlock(&resp->fh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
-static __be32
-nfsd3_proc_rename(struct svc_rqst *rqstp)
-{
-	struct nfsd3_renameargs *argp = rqstp->rq_argp;
-	struct nfsd3_renameres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_नाम(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_नामargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_नामres *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: RENAME(3)   %s %.*s ->\n",
+	dprपूर्णांकk("nfsd: RENAME(3)   %s %.*s ->\n",
 				SVCFH_fmt(&argp->ffh),
 				argp->flen,
 				argp->fname);
-	dprintk("nfsd: -> %s %.*s\n",
+	dprपूर्णांकk("nfsd: -> %s %.*s\n",
 				SVCFH_fmt(&argp->tfh),
 				argp->tlen,
 				argp->tname);
 
 	fh_copy(&resp->ffh, &argp->ffh);
 	fh_copy(&resp->tfh, &argp->tfh);
-	resp->status = nfsd_rename(rqstp, &resp->ffh, argp->fname, argp->flen,
+	resp->status = nfsd_नाम(rqstp, &resp->ffh, argp->fname, argp->flen,
 				   &resp->tfh, argp->tname, argp->tlen);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
-static __be32
-nfsd3_proc_link(struct svc_rqst *rqstp)
-{
-	struct nfsd3_linkargs *argp = rqstp->rq_argp;
-	struct nfsd3_linkres  *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_link(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_linkargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_linkres  *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: LINK(3)     %s ->\n",
+	dprपूर्णांकk("nfsd: LINK(3)     %s ->\n",
 				SVCFH_fmt(&argp->ffh));
-	dprintk("nfsd:   -> %s %.*s\n",
+	dprपूर्णांकk("nfsd:   -> %s %.*s\n",
 				SVCFH_fmt(&argp->tfh),
 				argp->tlen,
 				argp->tname);
@@ -434,50 +435,50 @@ nfsd3_proc_link(struct svc_rqst *rqstp)
 	fh_copy(&resp->tfh, &argp->tfh);
 	resp->status = nfsd_link(rqstp, &resp->tfh, argp->tname, argp->tlen,
 				 &resp->fh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
-static void nfsd3_init_dirlist_pages(struct svc_rqst *rqstp,
-				     struct nfsd3_readdirres *resp,
-				     int count)
-{
-	struct xdr_buf *buf = &resp->dirlist;
-	struct xdr_stream *xdr = &resp->xdr;
+अटल व्योम nfsd3_init_dirlist_pages(काष्ठा svc_rqst *rqstp,
+				     काष्ठा nfsd3_सूची_पढ़ोres *resp,
+				     पूर्णांक count)
+अणु
+	काष्ठा xdr_buf *buf = &resp->dirlist;
+	काष्ठा xdr_stream *xdr = &resp->xdr;
 
 	count = min_t(u32, count, svc_max_payload(rqstp));
 
-	memset(buf, 0, sizeof(*buf));
+	स_रखो(buf, 0, माप(*buf));
 
-	/* Reserve room for the NULL ptr & eof flag (-2 words) */
+	/* Reserve room क्रम the शून्य ptr & eof flag (-2 words) */
 	buf->buflen = count - XDR_UNIT * 2;
 	buf->pages = rqstp->rq_next_page;
-	while (count > 0) {
+	जबतक (count > 0) अणु
 		rqstp->rq_next_page++;
 		count -= PAGE_SIZE;
-	}
+	पूर्ण
 
 	/* This is xdr_init_encode(), but it assumes that
-	 * the head kvec has already been consumed. */
-	xdr_set_scratch_buffer(xdr, NULL, 0);
+	 * the head kvec has alपढ़ोy been consumed. */
+	xdr_set_scratch_buffer(xdr, शून्य, 0);
 	xdr->buf = buf;
 	xdr->page_ptr = buf->pages;
-	xdr->iov = NULL;
+	xdr->iov = शून्य;
 	xdr->p = page_address(*buf->pages);
 	xdr->end = xdr->p + (PAGE_SIZE >> 2);
-	xdr->rqst = NULL;
-}
+	xdr->rqst = शून्य;
+पूर्ण
 
 /*
  * Read a portion of a directory.
  */
-static __be32
-nfsd3_proc_readdir(struct svc_rqst *rqstp)
-{
-	struct nfsd3_readdirargs *argp = rqstp->rq_argp;
-	struct nfsd3_readdirres  *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_सूची_पढ़ो(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_सूची_पढ़ोargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_सूची_पढ़ोres  *resp = rqstp->rq_resp;
 	loff_t		offset;
 
-	dprintk("nfsd: READDIR(3)  %s %d bytes at %d\n",
+	dprपूर्णांकk("nfsd: READDIR(3)  %s %d bytes at %d\n",
 				SVCFH_fmt(&argp->fh),
 				argp->count, (u32) argp->cookie);
 
@@ -488,29 +489,29 @@ nfsd3_proc_readdir(struct svc_rqst *rqstp)
 	resp->cookie_offset = 0;
 	resp->rqstp = rqstp;
 	offset = argp->cookie;
-	resp->status = nfsd_readdir(rqstp, &resp->fh, &offset,
+	resp->status = nfsd_सूची_पढ़ो(rqstp, &resp->fh, &offset,
 				    &resp->common, nfs3svc_encode_entry3);
-	memcpy(resp->verf, argp->verf, 8);
+	स_नकल(resp->verf, argp->verf, 8);
 	nfs3svc_encode_cookie3(resp, offset);
 
 	/* Recycle only pages that were part of the reply */
 	rqstp->rq_next_page = resp->xdr.page_ptr + 1;
 
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Read a portion of a directory, including file handles and attrs.
  * For now, we choose to ignore the dircount parameter.
  */
-static __be32
-nfsd3_proc_readdirplus(struct svc_rqst *rqstp)
-{
-	struct nfsd3_readdirargs *argp = rqstp->rq_argp;
-	struct nfsd3_readdirres  *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_सूची_पढ़ोplus(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_सूची_पढ़ोargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_सूची_पढ़ोres  *resp = rqstp->rq_resp;
 	loff_t	offset;
 
-	dprintk("nfsd: READDIR+(3) %s %d bytes at %d\n",
+	dprपूर्णांकk("nfsd: READDIR+(3) %s %d bytes at %d\n",
 				SVCFH_fmt(&argp->fh),
 				argp->count, (u32) argp->cookie);
 
@@ -522,420 +523,420 @@ nfsd3_proc_readdirplus(struct svc_rqst *rqstp)
 	resp->rqstp = rqstp;
 	offset = argp->cookie;
 
-	resp->status = fh_verify(rqstp, &resp->fh, S_IFDIR, NFSD_MAY_NOP);
-	if (resp->status != nfs_ok)
-		goto out;
+	resp->status = fh_verअगरy(rqstp, &resp->fh, S_IFसूची, NFSD_MAY_NOP);
+	अगर (resp->status != nfs_ok)
+		जाओ out;
 
-	if (resp->fh.fh_export->ex_flags & NFSEXP_NOREADDIRPLUS) {
+	अगर (resp->fh.fh_export->ex_flags & NFSEXP_NOREADसूचीPLUS) अणु
 		resp->status = nfserr_notsupp;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	resp->status = nfsd_readdir(rqstp, &resp->fh, &offset,
+	resp->status = nfsd_सूची_पढ़ो(rqstp, &resp->fh, &offset,
 				    &resp->common, nfs3svc_encode_entryplus3);
-	memcpy(resp->verf, argp->verf, 8);
+	स_नकल(resp->verf, argp->verf, 8);
 	nfs3svc_encode_cookie3(resp, offset);
 
 	/* Recycle only pages that were part of the reply */
 	rqstp->rq_next_page = resp->xdr.page_ptr + 1;
 
 out:
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
- * Get file system stats
+ * Get file प्रणाली stats
  */
-static __be32
-nfsd3_proc_fsstat(struct svc_rqst *rqstp)
-{
-	struct nfsd_fhandle *argp = rqstp->rq_argp;
-	struct nfsd3_fsstatres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_fsstat(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_fhandle *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_fsstatres *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: FSSTAT(3)   %s\n",
+	dprपूर्णांकk("nfsd: FSSTAT(3)   %s\n",
 				SVCFH_fmt(&argp->fh));
 
 	resp->status = nfsd_statfs(rqstp, &argp->fh, &resp->stats, 0);
 	fh_put(&argp->fh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
- * Get file system info
+ * Get file प्रणाली info
  */
-static __be32
-nfsd3_proc_fsinfo(struct svc_rqst *rqstp)
-{
-	struct nfsd_fhandle *argp = rqstp->rq_argp;
-	struct nfsd3_fsinfores *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_fsinfo(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_fhandle *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_fsinक्रमes *resp = rqstp->rq_resp;
 	u32	max_blocksize = svc_max_payload(rqstp);
 
-	dprintk("nfsd: FSINFO(3)   %s\n",
+	dprपूर्णांकk("nfsd: FSINFO(3)   %s\n",
 				SVCFH_fmt(&argp->fh));
 
-	resp->f_rtmax  = max_blocksize;
+	resp->f_rपंचांगax  = max_blocksize;
 	resp->f_rtpref = max_blocksize;
-	resp->f_rtmult = PAGE_SIZE;
-	resp->f_wtmax  = max_blocksize;
+	resp->f_rपंचांगult = PAGE_SIZE;
+	resp->f_wपंचांगax  = max_blocksize;
 	resp->f_wtpref = max_blocksize;
-	resp->f_wtmult = PAGE_SIZE;
+	resp->f_wपंचांगult = PAGE_SIZE;
 	resp->f_dtpref = max_blocksize;
 	resp->f_maxfilesize = ~(u32) 0;
 	resp->f_properties = NFS3_FSF_DEFAULT;
 
-	resp->status = fh_verify(rqstp, &argp->fh, 0,
+	resp->status = fh_verअगरy(rqstp, &argp->fh, 0,
 				 NFSD_MAY_NOP | NFSD_MAY_BYPASS_GSS_ON_ROOT);
 
-	/* Check special features of the file system. May request
-	 * different read/write sizes for file systems known to have
+	/* Check special features of the file प्रणाली. May request
+	 * dअगरferent पढ़ो/ग_लिखो sizes क्रम file प्रणालीs known to have
 	 * problems with large blocks */
-	if (resp->status == nfs_ok) {
-		struct super_block *sb = argp->fh.fh_dentry->d_sb;
+	अगर (resp->status == nfs_ok) अणु
+		काष्ठा super_block *sb = argp->fh.fh_dentry->d_sb;
 
-		/* Note that we don't care for remote fs's here */
-		if (sb->s_magic == MSDOS_SUPER_MAGIC) {
+		/* Note that we करोn't care for remote fs's here */
+		अगर (sb->s_magic == MSDOS_SUPER_MAGIC) अणु
 			resp->f_properties = NFS3_FSF_BILLYBOY;
-		}
+		पूर्ण
 		resp->f_maxfilesize = sb->s_maxbytes;
-	}
+	पूर्ण
 
 	fh_put(&argp->fh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
- * Get pathconf info for the specified file
+ * Get pathconf info क्रम the specअगरied file
  */
-static __be32
-nfsd3_proc_pathconf(struct svc_rqst *rqstp)
-{
-	struct nfsd_fhandle *argp = rqstp->rq_argp;
-	struct nfsd3_pathconfres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_pathconf(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd_fhandle *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_pathconfres *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: PATHCONF(3) %s\n",
+	dprपूर्णांकk("nfsd: PATHCONF(3) %s\n",
 				SVCFH_fmt(&argp->fh));
 
-	/* Set default pathconf */
+	/* Set शेष pathconf */
 	resp->p_link_max = 255;		/* at least */
 	resp->p_name_max = 255;		/* at least */
 	resp->p_no_trunc = 0;
 	resp->p_chown_restricted = 1;
-	resp->p_case_insensitive = 0;
-	resp->p_case_preserving = 1;
+	resp->p_हाल_insensitive = 0;
+	resp->p_हाल_preserving = 1;
 
-	resp->status = fh_verify(rqstp, &argp->fh, 0, NFSD_MAY_NOP);
+	resp->status = fh_verअगरy(rqstp, &argp->fh, 0, NFSD_MAY_NOP);
 
-	if (resp->status == nfs_ok) {
-		struct super_block *sb = argp->fh.fh_dentry->d_sb;
+	अगर (resp->status == nfs_ok) अणु
+		काष्ठा super_block *sb = argp->fh.fh_dentry->d_sb;
 
-		/* Note that we don't care for remote fs's here */
-		switch (sb->s_magic) {
-		case EXT2_SUPER_MAGIC:
+		/* Note that we करोn't care for remote fs's here */
+		चयन (sb->s_magic) अणु
+		हाल EXT2_SUPER_MAGIC:
 			resp->p_link_max = EXT2_LINK_MAX;
 			resp->p_name_max = EXT2_NAME_LEN;
-			break;
-		case MSDOS_SUPER_MAGIC:
-			resp->p_case_insensitive = 1;
-			resp->p_case_preserving  = 0;
-			break;
-		}
-	}
+			अवरोध;
+		हाल MSDOS_SUPER_MAGIC:
+			resp->p_हाल_insensitive = 1;
+			resp->p_हाल_preserving  = 0;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	fh_put(&argp->fh);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * Commit a file (range) to stable storage.
  */
-static __be32
-nfsd3_proc_commit(struct svc_rqst *rqstp)
-{
-	struct nfsd3_commitargs *argp = rqstp->rq_argp;
-	struct nfsd3_commitres *resp = rqstp->rq_resp;
+अटल __be32
+nfsd3_proc_commit(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nfsd3_commitargs *argp = rqstp->rq_argp;
+	काष्ठा nfsd3_commitres *resp = rqstp->rq_resp;
 
-	dprintk("nfsd: COMMIT(3)   %s %u@%Lu\n",
+	dprपूर्णांकk("nfsd: COMMIT(3)   %s %u@%Lu\n",
 				SVCFH_fmt(&argp->fh),
 				argp->count,
-				(unsigned long long) argp->offset);
+				(अचिन्हित दीर्घ दीर्घ) argp->offset);
 
-	if (argp->offset > NFS_OFFSET_MAX) {
+	अगर (argp->offset > NFS_OFFSET_MAX) अणु
 		resp->status = nfserr_inval;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fh_copy(&resp->fh, &argp->fh);
 	resp->status = nfsd_commit(rqstp, &resp->fh, argp->offset,
 				   argp->count, resp->verf);
 out:
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 
 /*
  * NFSv3 Server procedures.
  * Only the results of non-idempotent operations are cached.
  */
-#define nfs3svc_encode_attrstatres	nfs3svc_encode_attrstat
-#define nfs3svc_encode_wccstatres	nfs3svc_encode_wccstat
-#define nfsd3_mkdirargs			nfsd3_createargs
-#define nfsd3_readdirplusargs		nfsd3_readdirargs
-#define nfsd3_fhandleargs		nfsd_fhandle
-#define nfsd3_attrstatres		nfsd3_attrstat
-#define nfsd3_wccstatres		nfsd3_attrstat
-#define nfsd3_createres			nfsd3_diropres
+#घोषणा nfs3svc_encode_attrstatres	nfs3svc_encode_attrstat
+#घोषणा nfs3svc_encode_wccstatres	nfs3svc_encode_wccstat
+#घोषणा nfsd3_सूची_गढ़ोargs			nfsd3_createargs
+#घोषणा nfsd3_सूची_पढ़ोplusargs		nfsd3_सूची_पढ़ोargs
+#घोषणा nfsd3_fhandleargs		nfsd_fhandle
+#घोषणा nfsd3_attrstatres		nfsd3_attrstat
+#घोषणा nfsd3_wccstatres		nfsd3_attrstat
+#घोषणा nfsd3_createres			nfsd3_diropres
 
-#define ST 1		/* status*/
-#define FH 17		/* filehandle with length */
-#define AT 21		/* attributes */
-#define pAT (1+AT)	/* post attributes - conditional */
-#define WC (7+pAT)	/* WCC attributes */
+#घोषणा ST 1		/* status*/
+#घोषणा FH 17		/* filehandle with length */
+#घोषणा AT 21		/* attributes */
+#घोषणा pAT (1+AT)	/* post attributes - conditional */
+#घोषणा WC (7+pAT)	/* WCC attributes */
 
-static const struct svc_procedure nfsd_procedures3[22] = {
-	[NFS3PROC_NULL] = {
+अटल स्थिर काष्ठा svc_procedure nfsd_procedures3[22] = अणु
+	[NFS3PROC_शून्य] = अणु
 		.pc_func = nfsd3_proc_null,
-		.pc_decode = nfssvc_decode_voidarg,
-		.pc_encode = nfssvc_encode_voidres,
-		.pc_argsize = sizeof(struct nfsd_voidargs),
-		.pc_ressize = sizeof(struct nfsd_voidres),
+		.pc_decode = nfssvc_decode_व्योमarg,
+		.pc_encode = nfssvc_encode_व्योमres,
+		.pc_argsize = माप(काष्ठा nfsd_व्योमargs),
+		.pc_ressize = माप(काष्ठा nfsd_व्योमres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST,
 		.pc_name = "NULL",
-	},
-	[NFS3PROC_GETATTR] = {
+	पूर्ण,
+	[NFS3PROC_GETATTR] = अणु
 		.pc_func = nfsd3_proc_getattr,
 		.pc_decode = nfs3svc_decode_fhandleargs,
 		.pc_encode = nfs3svc_encode_getattrres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd_fhandle),
-		.pc_ressize = sizeof(struct nfsd3_attrstatres),
+		.pc_argsize = माप(काष्ठा nfsd_fhandle),
+		.pc_ressize = माप(काष्ठा nfsd3_attrstatres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+AT,
 		.pc_name = "GETATTR",
-	},
-	[NFS3PROC_SETATTR] = {
+	पूर्ण,
+	[NFS3PROC_SETATTR] = अणु
 		.pc_func = nfsd3_proc_setattr,
 		.pc_decode = nfs3svc_decode_sattrargs,
 		.pc_encode = nfs3svc_encode_wccstatres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_sattrargs),
-		.pc_ressize = sizeof(struct nfsd3_wccstatres),
+		.pc_argsize = माप(काष्ठा nfsd3_sattrargs),
+		.pc_ressize = माप(काष्ठा nfsd3_wccstatres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+WC,
 		.pc_name = "SETATTR",
-	},
-	[NFS3PROC_LOOKUP] = {
+	पूर्ण,
+	[NFS3PROC_LOOKUP] = अणु
 		.pc_func = nfsd3_proc_lookup,
 		.pc_decode = nfs3svc_decode_diropargs,
 		.pc_encode = nfs3svc_encode_lookupres,
 		.pc_release = nfs3svc_release_fhandle2,
-		.pc_argsize = sizeof(struct nfsd3_diropargs),
-		.pc_ressize = sizeof(struct nfsd3_diropres),
+		.pc_argsize = माप(काष्ठा nfsd3_diropargs),
+		.pc_ressize = माप(काष्ठा nfsd3_diropres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+FH+pAT+pAT,
 		.pc_name = "LOOKUP",
-	},
-	[NFS3PROC_ACCESS] = {
+	पूर्ण,
+	[NFS3PROC_ACCESS] = अणु
 		.pc_func = nfsd3_proc_access,
 		.pc_decode = nfs3svc_decode_accessargs,
 		.pc_encode = nfs3svc_encode_accessres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_accessargs),
-		.pc_ressize = sizeof(struct nfsd3_accessres),
+		.pc_argsize = माप(काष्ठा nfsd3_accessargs),
+		.pc_ressize = माप(काष्ठा nfsd3_accessres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+pAT+1,
 		.pc_name = "ACCESS",
-	},
-	[NFS3PROC_READLINK] = {
-		.pc_func = nfsd3_proc_readlink,
+	पूर्ण,
+	[NFS3PROC_READLINK] = अणु
+		.pc_func = nfsd3_proc_पढ़ोlink,
 		.pc_decode = nfs3svc_decode_fhandleargs,
-		.pc_encode = nfs3svc_encode_readlinkres,
+		.pc_encode = nfs3svc_encode_पढ़ोlinkres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd_fhandle),
-		.pc_ressize = sizeof(struct nfsd3_readlinkres),
+		.pc_argsize = माप(काष्ठा nfsd_fhandle),
+		.pc_ressize = माप(काष्ठा nfsd3_पढ़ोlinkres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+pAT+1+NFS3_MAXPATHLEN/4,
 		.pc_name = "READLINK",
-	},
-	[NFS3PROC_READ] = {
-		.pc_func = nfsd3_proc_read,
-		.pc_decode = nfs3svc_decode_readargs,
-		.pc_encode = nfs3svc_encode_readres,
+	पूर्ण,
+	[NFS3PROC_READ] = अणु
+		.pc_func = nfsd3_proc_पढ़ो,
+		.pc_decode = nfs3svc_decode_पढ़ोargs,
+		.pc_encode = nfs3svc_encode_पढ़ोres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_readargs),
-		.pc_ressize = sizeof(struct nfsd3_readres),
+		.pc_argsize = माप(काष्ठा nfsd3_पढ़ोargs),
+		.pc_ressize = माप(काष्ठा nfsd3_पढ़ोres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+pAT+4+NFSSVC_MAXBLKSIZE/4,
 		.pc_name = "READ",
-	},
-	[NFS3PROC_WRITE] = {
-		.pc_func = nfsd3_proc_write,
-		.pc_decode = nfs3svc_decode_writeargs,
-		.pc_encode = nfs3svc_encode_writeres,
+	पूर्ण,
+	[NFS3PROC_WRITE] = अणु
+		.pc_func = nfsd3_proc_ग_लिखो,
+		.pc_decode = nfs3svc_decode_ग_लिखोargs,
+		.pc_encode = nfs3svc_encode_ग_लिखोres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_writeargs),
-		.pc_ressize = sizeof(struct nfsd3_writeres),
+		.pc_argsize = माप(काष्ठा nfsd3_ग_लिखोargs),
+		.pc_ressize = माप(काष्ठा nfsd3_ग_लिखोres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+WC+4,
 		.pc_name = "WRITE",
-	},
-	[NFS3PROC_CREATE] = {
+	पूर्ण,
+	[NFS3PROC_CREATE] = अणु
 		.pc_func = nfsd3_proc_create,
 		.pc_decode = nfs3svc_decode_createargs,
 		.pc_encode = nfs3svc_encode_createres,
 		.pc_release = nfs3svc_release_fhandle2,
-		.pc_argsize = sizeof(struct nfsd3_createargs),
-		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_argsize = माप(काष्ठा nfsd3_createargs),
+		.pc_ressize = माप(काष्ठा nfsd3_createres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+(1+FH+pAT)+WC,
 		.pc_name = "CREATE",
-	},
-	[NFS3PROC_MKDIR] = {
-		.pc_func = nfsd3_proc_mkdir,
-		.pc_decode = nfs3svc_decode_mkdirargs,
+	पूर्ण,
+	[NFS3PROC_MKसूची] = अणु
+		.pc_func = nfsd3_proc_सूची_गढ़ो,
+		.pc_decode = nfs3svc_decode_सूची_गढ़ोargs,
 		.pc_encode = nfs3svc_encode_createres,
 		.pc_release = nfs3svc_release_fhandle2,
-		.pc_argsize = sizeof(struct nfsd3_mkdirargs),
-		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_argsize = माप(काष्ठा nfsd3_सूची_गढ़ोargs),
+		.pc_ressize = माप(काष्ठा nfsd3_createres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+(1+FH+pAT)+WC,
 		.pc_name = "MKDIR",
-	},
-	[NFS3PROC_SYMLINK] = {
+	पूर्ण,
+	[NFS3PROC_SYMLINK] = अणु
 		.pc_func = nfsd3_proc_symlink,
 		.pc_decode = nfs3svc_decode_symlinkargs,
 		.pc_encode = nfs3svc_encode_createres,
 		.pc_release = nfs3svc_release_fhandle2,
-		.pc_argsize = sizeof(struct nfsd3_symlinkargs),
-		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_argsize = माप(काष्ठा nfsd3_symlinkargs),
+		.pc_ressize = माप(काष्ठा nfsd3_createres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+(1+FH+pAT)+WC,
 		.pc_name = "SYMLINK",
-	},
-	[NFS3PROC_MKNOD] = {
+	पूर्ण,
+	[NFS3PROC_MKNOD] = अणु
 		.pc_func = nfsd3_proc_mknod,
 		.pc_decode = nfs3svc_decode_mknodargs,
 		.pc_encode = nfs3svc_encode_createres,
 		.pc_release = nfs3svc_release_fhandle2,
-		.pc_argsize = sizeof(struct nfsd3_mknodargs),
-		.pc_ressize = sizeof(struct nfsd3_createres),
+		.pc_argsize = माप(काष्ठा nfsd3_mknodargs),
+		.pc_ressize = माप(काष्ठा nfsd3_createres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+(1+FH+pAT)+WC,
 		.pc_name = "MKNOD",
-	},
-	[NFS3PROC_REMOVE] = {
-		.pc_func = nfsd3_proc_remove,
+	पूर्ण,
+	[NFS3PROC_REMOVE] = अणु
+		.pc_func = nfsd3_proc_हटाओ,
 		.pc_decode = nfs3svc_decode_diropargs,
 		.pc_encode = nfs3svc_encode_wccstatres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_diropargs),
-		.pc_ressize = sizeof(struct nfsd3_wccstatres),
+		.pc_argsize = माप(काष्ठा nfsd3_diropargs),
+		.pc_ressize = माप(काष्ठा nfsd3_wccstatres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+WC,
 		.pc_name = "REMOVE",
-	},
-	[NFS3PROC_RMDIR] = {
-		.pc_func = nfsd3_proc_rmdir,
+	पूर्ण,
+	[NFS3PROC_RMसूची] = अणु
+		.pc_func = nfsd3_proc_सूची_हटाओ,
 		.pc_decode = nfs3svc_decode_diropargs,
 		.pc_encode = nfs3svc_encode_wccstatres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_diropargs),
-		.pc_ressize = sizeof(struct nfsd3_wccstatres),
+		.pc_argsize = माप(काष्ठा nfsd3_diropargs),
+		.pc_ressize = माप(काष्ठा nfsd3_wccstatres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+WC,
 		.pc_name = "RMDIR",
-	},
-	[NFS3PROC_RENAME] = {
-		.pc_func = nfsd3_proc_rename,
-		.pc_decode = nfs3svc_decode_renameargs,
-		.pc_encode = nfs3svc_encode_renameres,
+	पूर्ण,
+	[NFS3PROC_RENAME] = अणु
+		.pc_func = nfsd3_proc_नाम,
+		.pc_decode = nfs3svc_decode_नामargs,
+		.pc_encode = nfs3svc_encode_नामres,
 		.pc_release = nfs3svc_release_fhandle2,
-		.pc_argsize = sizeof(struct nfsd3_renameargs),
-		.pc_ressize = sizeof(struct nfsd3_renameres),
+		.pc_argsize = माप(काष्ठा nfsd3_नामargs),
+		.pc_ressize = माप(काष्ठा nfsd3_नामres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+WC+WC,
 		.pc_name = "RENAME",
-	},
-	[NFS3PROC_LINK] = {
+	पूर्ण,
+	[NFS3PROC_LINK] = अणु
 		.pc_func = nfsd3_proc_link,
 		.pc_decode = nfs3svc_decode_linkargs,
 		.pc_encode = nfs3svc_encode_linkres,
 		.pc_release = nfs3svc_release_fhandle2,
-		.pc_argsize = sizeof(struct nfsd3_linkargs),
-		.pc_ressize = sizeof(struct nfsd3_linkres),
+		.pc_argsize = माप(काष्ठा nfsd3_linkargs),
+		.pc_ressize = माप(काष्ठा nfsd3_linkres),
 		.pc_cachetype = RC_REPLBUFF,
 		.pc_xdrressize = ST+pAT+WC,
 		.pc_name = "LINK",
-	},
-	[NFS3PROC_READDIR] = {
-		.pc_func = nfsd3_proc_readdir,
-		.pc_decode = nfs3svc_decode_readdirargs,
-		.pc_encode = nfs3svc_encode_readdirres,
+	पूर्ण,
+	[NFS3PROC_READसूची] = अणु
+		.pc_func = nfsd3_proc_सूची_पढ़ो,
+		.pc_decode = nfs3svc_decode_सूची_पढ़ोargs,
+		.pc_encode = nfs3svc_encode_सूची_पढ़ोres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_readdirargs),
-		.pc_ressize = sizeof(struct nfsd3_readdirres),
+		.pc_argsize = माप(काष्ठा nfsd3_सूची_पढ़ोargs),
+		.pc_ressize = माप(काष्ठा nfsd3_सूची_पढ़ोres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_name = "READDIR",
-	},
-	[NFS3PROC_READDIRPLUS] = {
-		.pc_func = nfsd3_proc_readdirplus,
-		.pc_decode = nfs3svc_decode_readdirplusargs,
-		.pc_encode = nfs3svc_encode_readdirres,
+	पूर्ण,
+	[NFS3PROC_READसूचीPLUS] = अणु
+		.pc_func = nfsd3_proc_सूची_पढ़ोplus,
+		.pc_decode = nfs3svc_decode_सूची_पढ़ोplusargs,
+		.pc_encode = nfs3svc_encode_सूची_पढ़ोres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_readdirplusargs),
-		.pc_ressize = sizeof(struct nfsd3_readdirres),
+		.pc_argsize = माप(काष्ठा nfsd3_सूची_पढ़ोplusargs),
+		.pc_ressize = माप(काष्ठा nfsd3_सूची_पढ़ोres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_name = "READDIRPLUS",
-	},
-	[NFS3PROC_FSSTAT] = {
+	पूर्ण,
+	[NFS3PROC_FSSTAT] = अणु
 		.pc_func = nfsd3_proc_fsstat,
 		.pc_decode = nfs3svc_decode_fhandleargs,
 		.pc_encode = nfs3svc_encode_fsstatres,
-		.pc_argsize = sizeof(struct nfsd3_fhandleargs),
-		.pc_ressize = sizeof(struct nfsd3_fsstatres),
+		.pc_argsize = माप(काष्ठा nfsd3_fhandleargs),
+		.pc_ressize = माप(काष्ठा nfsd3_fsstatres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+pAT+2*6+1,
 		.pc_name = "FSSTAT",
-	},
-	[NFS3PROC_FSINFO] = {
+	पूर्ण,
+	[NFS3PROC_FSINFO] = अणु
 		.pc_func = nfsd3_proc_fsinfo,
 		.pc_decode = nfs3svc_decode_fhandleargs,
-		.pc_encode = nfs3svc_encode_fsinfores,
-		.pc_argsize = sizeof(struct nfsd3_fhandleargs),
-		.pc_ressize = sizeof(struct nfsd3_fsinfores),
+		.pc_encode = nfs3svc_encode_fsinक्रमes,
+		.pc_argsize = माप(काष्ठा nfsd3_fhandleargs),
+		.pc_ressize = माप(काष्ठा nfsd3_fsinक्रमes),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+pAT+12,
 		.pc_name = "FSINFO",
-	},
-	[NFS3PROC_PATHCONF] = {
+	पूर्ण,
+	[NFS3PROC_PATHCONF] = अणु
 		.pc_func = nfsd3_proc_pathconf,
 		.pc_decode = nfs3svc_decode_fhandleargs,
 		.pc_encode = nfs3svc_encode_pathconfres,
-		.pc_argsize = sizeof(struct nfsd3_fhandleargs),
-		.pc_ressize = sizeof(struct nfsd3_pathconfres),
+		.pc_argsize = माप(काष्ठा nfsd3_fhandleargs),
+		.pc_ressize = माप(काष्ठा nfsd3_pathconfres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+pAT+6,
 		.pc_name = "PATHCONF",
-	},
-	[NFS3PROC_COMMIT] = {
+	पूर्ण,
+	[NFS3PROC_COMMIT] = अणु
 		.pc_func = nfsd3_proc_commit,
 		.pc_decode = nfs3svc_decode_commitargs,
 		.pc_encode = nfs3svc_encode_commitres,
 		.pc_release = nfs3svc_release_fhandle,
-		.pc_argsize = sizeof(struct nfsd3_commitargs),
-		.pc_ressize = sizeof(struct nfsd3_commitres),
+		.pc_argsize = माप(काष्ठा nfsd3_commitargs),
+		.pc_ressize = माप(काष्ठा nfsd3_commitres),
 		.pc_cachetype = RC_NOCACHE,
 		.pc_xdrressize = ST+WC+2,
 		.pc_name = "COMMIT",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static unsigned int nfsd_count3[ARRAY_SIZE(nfsd_procedures3)];
-const struct svc_version nfsd_version3 = {
+अटल अचिन्हित पूर्णांक nfsd_count3[ARRAY_SIZE(nfsd_procedures3)];
+स्थिर काष्ठा svc_version nfsd_version3 = अणु
 	.vs_vers	= 3,
 	.vs_nproc	= 22,
 	.vs_proc	= nfsd_procedures3,
 	.vs_dispatch	= nfsd_dispatch,
 	.vs_count	= nfsd_count3,
 	.vs_xdrsize	= NFS3_SVC_XDRSIZE,
-};
+पूर्ण;

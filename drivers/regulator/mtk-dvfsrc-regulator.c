@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2020 MediaTek Inc.
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/of_regulator.h>
-#include <linux/soc/mediatek/mtk_dvfsrc.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/of_regulator.h>
+#समावेश <linux/soc/mediatek/mtk_dvfsrc.h>
 
-#define DVFSRC_ID_VCORE		0
-#define DVFSRC_ID_VSCP		1
+#घोषणा DVFSRC_ID_VCORE		0
+#घोषणा DVFSRC_ID_VSCP		1
 
-#define MT_DVFSRC_REGULAR(match, _name,	_volt_table)	\
-[DVFSRC_ID_##_name] = {					\
-	.desc = {					\
+#घोषणा MT_DVFSRC_REGULAR(match, _name,	_volt_table)	\
+[DVFSRC_ID_##_name] = अणु					\
+	.desc = अणु					\
 		.name = match,				\
 		.of_match = of_match_ptr(match),	\
 		.ops = &dvfsrc_vcore_ops,		\
@@ -26,20 +27,20 @@
 		.owner = THIS_MODULE,			\
 		.n_voltages = ARRAY_SIZE(_volt_table),	\
 		.volt_table = _volt_table,		\
-	},	\
-}
+	पूर्ण,	\
+पूर्ण
 
 /*
- * DVFSRC regulators' information
+ * DVFSRC regulators' inक्रमmation
  *
  * @desc: standard fields of regulator description.
- * @voltage_selector:  Selector used for get_voltage_sel() and
+ * @voltage_selector:  Selector used क्रम get_voltage_sel() and
  *			   set_voltage_sel() callbacks
  */
 
-struct dvfsrc_regulator {
-	struct regulator_desc	desc;
-};
+काष्ठा dvfsrc_regulator अणु
+	काष्ठा regulator_desc	desc;
+पूर्ण;
 
 /*
  * MTK DVFSRC regulators' init data
@@ -47,169 +48,169 @@ struct dvfsrc_regulator {
  * @size: num of regulators
  * @regulator_info: regulator info.
  */
-struct dvfsrc_regulator_init_data {
+काष्ठा dvfsrc_regulator_init_data अणु
 	u32 size;
-	struct dvfsrc_regulator *regulator_info;
-};
+	काष्ठा dvfsrc_regulator *regulator_info;
+पूर्ण;
 
-static inline struct device *to_dvfsrc_dev(struct regulator_dev *rdev)
-{
-	return rdev_get_dev(rdev)->parent;
-}
+अटल अंतरभूत काष्ठा device *to_dvfsrc_dev(काष्ठा regulator_dev *rdev)
+अणु
+	वापस rdev_get_dev(rdev)->parent;
+पूर्ण
 
-static int dvfsrc_set_voltage_sel(struct regulator_dev *rdev,
-				  unsigned int selector)
-{
-	struct device *dvfsrc_dev = to_dvfsrc_dev(rdev);
-	int id = rdev_get_id(rdev);
+अटल पूर्णांक dvfsrc_set_voltage_sel(काष्ठा regulator_dev *rdev,
+				  अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा device *dvfsrc_dev = to_dvfsrc_dev(rdev);
+	पूर्णांक id = rdev_get_id(rdev);
 
-	if (id == DVFSRC_ID_VCORE)
+	अगर (id == DVFSRC_ID_VCORE)
 		mtk_dvfsrc_send_request(dvfsrc_dev,
 					MTK_DVFSRC_CMD_VCORE_REQUEST,
 					selector);
-	else if (id == DVFSRC_ID_VSCP)
+	अन्यथा अगर (id == DVFSRC_ID_VSCP)
 		mtk_dvfsrc_send_request(dvfsrc_dev,
 					MTK_DVFSRC_CMD_VSCP_REQUEST,
 					selector);
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvfsrc_get_voltage_sel(struct regulator_dev *rdev)
-{
-	struct device *dvfsrc_dev = to_dvfsrc_dev(rdev);
-	int id = rdev_get_id(rdev);
-	int val, ret;
+अटल पूर्णांक dvfsrc_get_voltage_sel(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा device *dvfsrc_dev = to_dvfsrc_dev(rdev);
+	पूर्णांक id = rdev_get_id(rdev);
+	पूर्णांक val, ret;
 
-	if (id == DVFSRC_ID_VCORE)
+	अगर (id == DVFSRC_ID_VCORE)
 		ret = mtk_dvfsrc_query_info(dvfsrc_dev,
 					    MTK_DVFSRC_CMD_VCORE_LEVEL_QUERY,
 					    &val);
-	else if (id == DVFSRC_ID_VSCP)
+	अन्यथा अगर (id == DVFSRC_ID_VSCP)
 		ret = mtk_dvfsrc_query_info(dvfsrc_dev,
 					    MTK_DVFSRC_CMD_VSCP_LEVEL_QUERY,
 					    &val);
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static const struct regulator_ops dvfsrc_vcore_ops = {
+अटल स्थिर काष्ठा regulator_ops dvfsrc_vcore_ops = अणु
 	.list_voltage = regulator_list_voltage_table,
 	.get_voltage_sel = dvfsrc_get_voltage_sel,
 	.set_voltage_sel = dvfsrc_set_voltage_sel,
-};
+पूर्ण;
 
-static const unsigned int mt8183_voltages[] = {
+अटल स्थिर अचिन्हित पूर्णांक mt8183_voltages[] = अणु
 	725000,
 	800000,
-};
+पूर्ण;
 
-static struct dvfsrc_regulator mt8183_regulators[] = {
+अटल काष्ठा dvfsrc_regulator mt8183_regulators[] = अणु
 	MT_DVFSRC_REGULAR("dvfsrc-vcore", VCORE,
 			  mt8183_voltages),
-};
+पूर्ण;
 
-static const struct dvfsrc_regulator_init_data regulator_mt8183_data = {
+अटल स्थिर काष्ठा dvfsrc_regulator_init_data regulator_mt8183_data = अणु
 	.size = ARRAY_SIZE(mt8183_regulators),
 	.regulator_info = &mt8183_regulators[0],
-};
+पूर्ण;
 
-static const unsigned int mt6873_voltages[] = {
+अटल स्थिर अचिन्हित पूर्णांक mt6873_voltages[] = अणु
 	575000,
 	600000,
 	650000,
 	725000,
-};
+पूर्ण;
 
-static struct dvfsrc_regulator mt6873_regulators[] = {
+अटल काष्ठा dvfsrc_regulator mt6873_regulators[] = अणु
 	MT_DVFSRC_REGULAR("dvfsrc-vcore", VCORE,
 			  mt6873_voltages),
 	MT_DVFSRC_REGULAR("dvfsrc-vscp", VSCP,
 			  mt6873_voltages),
-};
+पूर्ण;
 
-static const struct dvfsrc_regulator_init_data regulator_mt6873_data = {
+अटल स्थिर काष्ठा dvfsrc_regulator_init_data regulator_mt6873_data = अणु
 	.size = ARRAY_SIZE(mt6873_regulators),
 	.regulator_info = &mt6873_regulators[0],
-};
+पूर्ण;
 
-static const struct of_device_id mtk_dvfsrc_regulator_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mtk_dvfsrc_regulator_match[] = अणु
+	अणु
 		.compatible = "mediatek,mt8183-dvfsrc",
 		.data = &regulator_mt8183_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt8192-dvfsrc",
 		.data = &regulator_mt6873_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6873-dvfsrc",
 		.data = &regulator_mt6873_data,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	},
-};
+	पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_dvfsrc_regulator_match);
 
-static int dvfsrc_vcore_regulator_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	struct device *dev = &pdev->dev;
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
-	const struct dvfsrc_regulator_init_data *regulator_init_data;
-	struct dvfsrc_regulator *mt_regulators;
-	int i;
+अटल पूर्णांक dvfsrc_vcore_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
+	स्थिर काष्ठा dvfsrc_regulator_init_data *regulator_init_data;
+	काष्ठा dvfsrc_regulator *mt_regulators;
+	पूर्णांक i;
 
 	match = of_match_node(mtk_dvfsrc_regulator_match, dev->parent->of_node);
 
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(dev, "invalid compatible string\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	regulator_init_data = match->data;
 
 	mt_regulators = regulator_init_data->regulator_info;
-	for (i = 0; i < regulator_init_data->size; i++) {
+	क्रम (i = 0; i < regulator_init_data->size; i++) अणु
 		config.dev = dev->parent;
 		config.driver_data = (mt_regulators + i);
-		rdev = devm_regulator_register(dev->parent,
+		rdev = devm_regulator_रेजिस्टर(dev->parent,
 					       &(mt_regulators + i)->desc,
 					       &config);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			dev_err(dev, "failed to register %s\n",
 				(mt_regulators + i)->desc.name);
-			return PTR_ERR(rdev);
-		}
-	}
+			वापस PTR_ERR(rdev);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mtk_dvfsrc_regulator_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mtk_dvfsrc_regulator_driver = अणु
+	.driver = अणु
 		.name  = "mtk-dvfsrc-regulator",
-	},
+	पूर्ण,
 	.probe = dvfsrc_vcore_regulator_probe,
-};
+पूर्ण;
 
-static int __init mtk_dvfsrc_regulator_init(void)
-{
-	return platform_driver_register(&mtk_dvfsrc_regulator_driver);
-}
+अटल पूर्णांक __init mtk_dvfsrc_regulator_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mtk_dvfsrc_regulator_driver);
+पूर्ण
 subsys_initcall(mtk_dvfsrc_regulator_init);
 
-static void __exit mtk_dvfsrc_regulator_exit(void)
-{
-	platform_driver_unregister(&mtk_dvfsrc_regulator_driver);
-}
-module_exit(mtk_dvfsrc_regulator_exit);
+अटल व्योम __निकास mtk_dvfsrc_regulator_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mtk_dvfsrc_regulator_driver);
+पूर्ण
+module_निकास(mtk_dvfsrc_regulator_निकास);
 
 MODULE_AUTHOR("Arvin wang <arvin.wang@mediatek.com>");
 MODULE_LICENSE("GPL v2");

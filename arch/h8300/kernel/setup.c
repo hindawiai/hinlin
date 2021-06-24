@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/h8300/kernel/setup.c
  *
- *  Copyright (C) 2001-2014 Yoshinori Sato <ysato@users.sourceforge.jp>
+ *  Copyright (C) 2001-2014 Yoshinori Sato <ysato@users.sourceक्रमge.jp>
  */
 
 /*
- * This file handles the architecture-dependent parts of system setup
+ * This file handles the architecture-dependent parts of प्रणाली setup
  */
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/console.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/seq_file.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/of_address.h>
-#include <linux/clk-provider.h>
-#include <linux/memblock.h>
-#include <linux/screen_info.h>
-#include <linux/clocksource.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/console.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/घड़ीsource.h>
 
-#include <asm/setup.h>
-#include <asm/irq.h>
-#include <asm/sections.h>
-#include <asm/page.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/page.h>
 
-#if defined(CONFIG_CPU_H8300H)
-#define CPU "H8/300H"
-#elif defined(CONFIG_CPU_H8S)
-#define CPU "H8S"
-#else
-#define CPU "Unknown"
-#endif
+#अगर defined(CONFIG_CPU_H8300H)
+#घोषणा CPU "H8/300H"
+#या_अगर defined(CONFIG_CPU_H8S)
+#घोषणा CPU "H8S"
+#अन्यथा
+#घोषणा CPU "Unknown"
+#पूर्ण_अगर
 
-unsigned long memory_start;
-unsigned long memory_end;
+अचिन्हित दीर्घ memory_start;
+अचिन्हित दीर्घ memory_end;
 EXPORT_SYMBOL(memory_end);
-static unsigned long freq;
-extern char __dtb_start[];
+अटल अचिन्हित दीर्घ freq;
+बाह्य अक्षर __dtb_start[];
 
-#ifdef CONFIG_VT
-struct screen_info screen_info;
-#endif
+#अगर_घोषित CONFIG_VT
+काष्ठा screen_info screen_info;
+#पूर्ण_अगर
 
-char __initdata command_line[COMMAND_LINE_SIZE];
+अक्षर __initdata command_line[COMMAND_LINE_SIZE];
 
-void sim_console_register(void);
+व्योम sim_console_रेजिस्टर(व्योम);
 
-void __init h8300_fdt_init(void *fdt, char *bootargs)
-{
-	if (!fdt)
+व्योम __init h8300_fdt_init(व्योम *fdt, अक्षर *bootargs)
+अणु
+	अगर (!fdt)
 		fdt = __dtb_start;
-	else
-		strcpy(command_line, bootargs);
+	अन्यथा
+		म_नकल(command_line, bootargs);
 
 	early_init_dt_scan(fdt);
 	memblock_allow_resize();
-}
+पूर्ण
 
-static void __init bootmem_init(void)
-{
-	struct memblock_region *region;
+अटल व्योम __init booपंचांगem_init(व्योम)
+अणु
+	काष्ठा memblock_region *region;
 
 	memory_end = memory_start = 0;
 
-	/* Find main memory where is the kernel */
+	/* Find मुख्य memory where is the kernel */
 	memory_start = memblock_start_of_DRAM();
 	memory_end = memblock_end_of_DRAM();
 
-	if (!memory_end)
+	अगर (!memory_end)
 		panic("No memory!");
 
-	/* setup bootmem globals (we use no_bootmem, but mm still depends on this) */
+	/* setup booपंचांगem globals (we use no_booपंचांगem, but mm still depends on this) */
 	min_low_pfn = PFN_UP(memory_start);
 	max_low_pfn = PFN_DOWN(memory_end);
 	max_pfn = max_low_pfn;
@@ -91,128 +92,128 @@ static void __init bootmem_init(void)
 	early_init_fdt_scan_reserved_mem();
 
 	memblock_dump_all();
-}
+पूर्ण
 
-void __init setup_arch(char **cmdline_p)
-{
+व्योम __init setup_arch(अक्षर **cmdline_p)
+अणु
 	unflatten_and_copy_device_tree();
 
-	init_mm.start_code = (unsigned long) _stext;
-	init_mm.end_code = (unsigned long) _etext;
-	init_mm.end_data = (unsigned long) _edata;
-	init_mm.brk = (unsigned long) 0;
+	init_mm.start_code = (अचिन्हित दीर्घ) _stext;
+	init_mm.end_code = (अचिन्हित दीर्घ) _etext;
+	init_mm.end_data = (अचिन्हित दीर्घ) _edata;
+	init_mm.brk = (अचिन्हित दीर्घ) 0;
 
 	pr_notice("\r\n\nuClinux " CPU "\n");
 	pr_notice("Flat model support (C) 1998,1999 Kenneth Albanowski, D. Jeff Dionne\n");
 
-	if (*command_line)
-		strcpy(boot_command_line, command_line);
+	अगर (*command_line)
+		म_नकल(boot_command_line, command_line);
 	*cmdline_p = boot_command_line;
 
 	parse_early_param();
 
-	bootmem_init();
+	booपंचांगem_init();
 	/*
-	 * get kmalloc into gear
+	 * get kदो_स्मृति पूर्णांकo gear
 	 */
 	paging_init();
-}
+पूर्ण
 
 /*
- *	Get CPU information for use by the procfs.
+ *	Get CPU inक्रमmation क्रम use by the procfs.
  */
 
-static int show_cpuinfo(struct seq_file *m, void *v)
-{
-	char *cpu;
+अटल पूर्णांक show_cpuinfo(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अक्षर *cpu;
 
 	cpu = CPU;
 
-	seq_printf(m,  "CPU:\t\t%s\n"
+	seq_म_लिखो(m,  "CPU:\t\t%s\n"
 		   "Clock:\t\t%lu.%1luMHz\n"
 		   "BogoMips:\t%lu.%02lu\n"
 		   "Calibration:\t%lu loops\n",
 		   cpu,
 		   freq/1000, freq%1000,
-		   (loops_per_jiffy*HZ)/500000,
-		   ((loops_per_jiffy*HZ)/5000)%100,
-		   (loops_per_jiffy*HZ));
+		   (loops_per_jअगरfy*HZ)/500000,
+		   ((loops_per_jअगरfy*HZ)/5000)%100,
+		   (loops_per_jअगरfy*HZ));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *c_start(struct seq_file *m, loff_t *pos)
-{
-	return *pos < num_possible_cpus() ?
-		((void *) 0x12345678) : NULL;
-}
+अटल व्योम *c_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	वापस *pos < num_possible_cpus() ?
+		((व्योम *) 0x12345678) : शून्य;
+पूर्ण
 
-static void *c_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *c_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	++*pos;
-	return c_start(m, pos);
-}
+	वापस c_start(m, pos);
+पूर्ण
 
-static void c_stop(struct seq_file *m, void *v)
-{
-}
+अटल व्योम c_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
 
-const struct seq_operations cpuinfo_op = {
+स्थिर काष्ठा seq_operations cpuinfo_op = अणु
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= show_cpuinfo,
-};
+पूर्ण;
 
-#if defined(CONFIG_CPU_H8300H)
-#define get_wait(base, addr) ({		\
-	int baddr;			\
+#अगर defined(CONFIG_CPU_H8300H)
+#घोषणा get_रुको(base, addr) (अणु		\
+	पूर्णांक baddr;			\
 	baddr = ((addr) / 0x200000 * 2);			     \
-	w *= (readw((base) + 2) & (3 << baddr)) + 1;		     \
-	})
-#endif
-#if defined(CONFIG_CPU_H8S)
-#define get_wait(base, addr) ({		\
-	int baddr;			\
+	w *= (पढ़ोw((base) + 2) & (3 << baddr)) + 1;		     \
+	पूर्ण)
+#पूर्ण_अगर
+#अगर defined(CONFIG_CPU_H8S)
+#घोषणा get_रुको(base, addr) (अणु		\
+	पूर्णांक baddr;			\
 	baddr = ((addr) / 0x200000 * 16);			     \
-	w *= (readl((base) + 2) & (7 << baddr)) + 1;	\
-	})
-#endif
+	w *= (पढ़ोl((base) + 2) & (7 << baddr)) + 1;	\
+	पूर्ण)
+#पूर्ण_अगर
 
-static __init int access_timing(void)
-{
-	struct device_node *bsc;
-	void __iomem *base;
-	unsigned long addr = (unsigned long)&__delay;
-	int bit = 1 << (addr / 0x200000);
-	int w;
+अटल __init पूर्णांक access_timing(व्योम)
+अणु
+	काष्ठा device_node *bsc;
+	व्योम __iomem *base;
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)&__delay;
+	पूर्णांक bit = 1 << (addr / 0x200000);
+	पूर्णांक w;
 
-	bsc = of_find_compatible_node(NULL, NULL, "renesas,h8300-bsc");
+	bsc = of_find_compatible_node(शून्य, शून्य, "renesas,h8300-bsc");
 	base = of_iomap(bsc, 0);
-	w = (readb(base + 0) & bit)?2:1;
-	if (readb(base + 1) & bit)
-		w *= get_wait(base, addr);
-	else
+	w = (पढ़ोb(base + 0) & bit)?2:1;
+	अगर (पढ़ोb(base + 1) & bit)
+		w *= get_रुको(base, addr);
+	अन्यथा
 		w *= 2;
-	return w * 3 / 2;
-}
+	वापस w * 3 / 2;
+पूर्ण
 
-void __init calibrate_delay(void)
-{
-	struct device_node *cpu;
-	int freq;
+व्योम __init calibrate_delay(व्योम)
+अणु
+	काष्ठा device_node *cpu;
+	पूर्णांक freq;
 
-	cpu = of_find_compatible_node(NULL, NULL, "renesas,h8300");
-	of_property_read_s32(cpu, "clock-frequency", &freq);
-	loops_per_jiffy = freq / HZ / (access_timing() * 2);
+	cpu = of_find_compatible_node(शून्य, शून्य, "renesas,h8300");
+	of_property_पढ़ो_s32(cpu, "clock-frequency", &freq);
+	loops_per_jअगरfy = freq / HZ / (access_timing() * 2);
 	pr_cont("%lu.%02lu BogoMIPS (lpj=%lu)\n",
-		loops_per_jiffy / (500000 / HZ),
-		(loops_per_jiffy / (5000 / HZ)) % 100, loops_per_jiffy);
-}
+		loops_per_jअगरfy / (500000 / HZ),
+		(loops_per_jअगरfy / (5000 / HZ)) % 100, loops_per_jअगरfy);
+पूर्ण
 
 
-void __init time_init(void)
-{
-	of_clk_init(NULL);
-	timer_probe();
-}
+व्योम __init समय_init(व्योम)
+अणु
+	of_clk_init(शून्य);
+	समयr_probe();
+पूर्ण

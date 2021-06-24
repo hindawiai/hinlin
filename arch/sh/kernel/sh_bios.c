@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  C interface for trapping into the standard LinuxSH BIOS.
+ *  C पूर्णांकerface क्रम trapping पूर्णांकo the standard LinuxSH BIOS.
  *
  *  Copyright (C) 2000 Greg Banks, Mitch Davis
  *  Copyright (C) 1999, 2000  Niibe Yutaka
  *  Copyright (C) 2002  M. R. Brown
  *  Copyright (C) 2004 - 2010  Paul Mundt
  */
-#include <linux/module.h>
-#include <linux/console.h>
-#include <linux/tty.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <asm/sh_bios.h>
+#समावेश <linux/module.h>
+#समावेश <linux/console.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/sh_मूलप्रण.स>
 
-#define BIOS_CALL_CONSOLE_WRITE		0
-#define BIOS_CALL_ETH_NODE_ADDR		10
-#define BIOS_CALL_SHUTDOWN		11
-#define BIOS_CALL_GDB_DETACH		0xff
+#घोषणा BIOS_CALL_CONSOLE_WRITE		0
+#घोषणा BIOS_CALL_ETH_NODE_ADDR		10
+#घोषणा BIOS_CALL_SHUTDOWN		11
+#घोषणा BIOS_CALL_GDB_DETACH		0xff
 
-void *gdb_vbr_vector = NULL;
+व्योम *gdb_vbr_vector = शून्य;
 
-static inline long sh_bios_call(long func, long arg0, long arg1, long arg2,
-				    long arg3)
-{
-	register long r0 __asm__("r0") = func;
-	register long r4 __asm__("r4") = arg0;
-	register long r5 __asm__("r5") = arg1;
-	register long r6 __asm__("r6") = arg2;
-	register long r7 __asm__("r7") = arg3;
+अटल अंतरभूत दीर्घ sh_bios_call(दीर्घ func, दीर्घ arg0, दीर्घ arg1, दीर्घ arg2,
+				    दीर्घ arg3)
+अणु
+	रेजिस्टर दीर्घ r0 __यंत्र__("r0") = func;
+	रेजिस्टर दीर्घ r4 __यंत्र__("r4") = arg0;
+	रेजिस्टर दीर्घ r5 __यंत्र__("r5") = arg1;
+	रेजिस्टर दीर्घ r6 __यंत्र__("r6") = arg2;
+	रेजिस्टर दीर्घ r7 __यंत्र__("r7") = arg3;
 
-	if (!gdb_vbr_vector)
-		return -ENOSYS;
+	अगर (!gdb_vbr_vector)
+		वापस -ENOSYS;
 
-	__asm__ __volatile__("trapa	#0x3f":"=z"(r0)
+	__यंत्र__ __अस्थिर__("trapa	#0x3f":"=z"(r0)
 			     :"0"(r0), "r"(r4), "r"(r5), "r"(r6), "r"(r7)
 			     :"memory");
-	return r0;
-}
+	वापस r0;
+पूर्ण
 
-void sh_bios_console_write(const char *buf, unsigned int len)
-{
-	sh_bios_call(BIOS_CALL_CONSOLE_WRITE, (long)buf, (long)len, 0, 0);
-}
+व्योम sh_bios_console_ग_लिखो(स्थिर अक्षर *buf, अचिन्हित पूर्णांक len)
+अणु
+	sh_bios_call(BIOS_CALL_CONSOLE_WRITE, (दीर्घ)buf, (दीर्घ)len, 0, 0);
+पूर्ण
 
-void sh_bios_gdb_detach(void)
-{
+व्योम sh_bios_gdb_detach(व्योम)
+अणु
 	sh_bios_call(BIOS_CALL_GDB_DETACH, 0, 0, 0, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sh_bios_gdb_detach);
 
-void sh_bios_get_node_addr(unsigned char *node_addr)
-{
-	sh_bios_call(BIOS_CALL_ETH_NODE_ADDR, 0, (long)node_addr, 0, 0);
-}
+व्योम sh_bios_get_node_addr(अचिन्हित अक्षर *node_addr)
+अणु
+	sh_bios_call(BIOS_CALL_ETH_NODE_ADDR, 0, (दीर्घ)node_addr, 0, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(sh_bios_get_node_addr);
 
-void sh_bios_shutdown(unsigned int how)
-{
+व्योम sh_bios_shutकरोwn(अचिन्हित पूर्णांक how)
+अणु
 	sh_bios_call(BIOS_CALL_SHUTDOWN, how, 0, 0, 0);
-}
+पूर्ण
 
 /*
- * Read the old value of the VBR register to initialise the vector
+ * Read the old value of the VBR रेजिस्टर to initialise the vector
  * through which debug and BIOS traps are delegated by the Linux trap
  * handler.
  */
-void sh_bios_vbr_init(void)
-{
-	unsigned long vbr;
+व्योम sh_bios_vbr_init(व्योम)
+अणु
+	अचिन्हित दीर्घ vbr;
 
-	if (unlikely(gdb_vbr_vector))
-		return;
+	अगर (unlikely(gdb_vbr_vector))
+		वापस;
 
-	__asm__ __volatile__ ("stc vbr, %0" : "=r" (vbr));
+	__यंत्र__ __अस्थिर__ ("stc vbr, %0" : "=r" (vbr));
 
-	if (vbr) {
-		gdb_vbr_vector = (void *)(vbr + 0x100);
-		printk(KERN_NOTICE "Setting GDB trap vector to %p\n",
+	अगर (vbr) अणु
+		gdb_vbr_vector = (व्योम *)(vbr + 0x100);
+		prपूर्णांकk(KERN_NOTICE "Setting GDB trap vector to %p\n",
 		       gdb_vbr_vector);
-	} else
-		printk(KERN_NOTICE "SH-BIOS not detected\n");
-}
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_NOTICE "SH-BIOS not detected\n");
+पूर्ण
 
 /**
- * sh_bios_vbr_reload - Re-load the system VBR from the BIOS vector.
+ * sh_bios_vbr_reload - Re-load the प्रणाली VBR from the BIOS vector.
  *
- * This can be used by save/restore code to reinitialize the system VBR
- * from the fixed BIOS VBR. A no-op if no BIOS VBR is known.
+ * This can be used by save/restore code to reinitialize the प्रणाली VBR
+ * from the fixed BIOS VBR. A no-op अगर no BIOS VBR is known.
  */
-void sh_bios_vbr_reload(void)
-{
-	if (gdb_vbr_vector)
-		__asm__ __volatile__ (
+व्योम sh_bios_vbr_reload(व्योम)
+अणु
+	अगर (gdb_vbr_vector)
+		__यंत्र__ __अस्थिर__ (
 			"ldc %0, vbr"
 			:
-			: "r" (((unsigned long) gdb_vbr_vector) - 0x100)
+			: "r" (((अचिन्हित दीर्घ) gdb_vbr_vector) - 0x100)
 			: "memory"
 		);
-}
+पूर्ण
 
-#ifdef CONFIG_EARLY_PRINTK
+#अगर_घोषित CONFIG_EARLY_PRINTK
 /*
- *	Print a string through the BIOS
+ *	Prपूर्णांक a string through the BIOS
  */
-static void sh_console_write(struct console *co, const char *s,
-				 unsigned count)
-{
-	sh_bios_console_write(s, count);
-}
+अटल व्योम sh_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				 अचिन्हित count)
+अणु
+	sh_bios_console_ग_लिखो(s, count);
+पूर्ण
 
 /*
- *	Setup initial baud/bits/parity. We do two things here:
- *	- construct a cflag setting for the first rs_open()
+ *	Setup initial baud/bits/parity. We करो two things here:
+ *	- स्थिरruct a cflag setting क्रम the first rs_खोलो()
  *	- initialize the serial port
- *	Return non-zero if we didn't find a serial port.
+ *	Return non-zero अगर we didn't find a serial port.
  */
-static int __init sh_console_setup(struct console *co, char *options)
-{
-	int	cflag = CREAD | HUPCL | CLOCAL;
+अटल पूर्णांक __init sh_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	पूर्णांक	cflag = CREAD | HUPCL | CLOCAL;
 
 	/*
-	 *	Now construct a cflag setting.
+	 *	Now स्थिरruct a cflag setting.
 	 *	TODO: this is a totally bogus cflag, as we have
 	 *	no idea what serial settings the BIOS is using, or
-	 *	even if its using the serial port at all.
+	 *	even अगर its using the serial port at all.
 	 */
 	cflag |= B115200 | CS8 | /*no parity*/0;
 
 	co->cflag = cflag;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct console bios_console = {
+अटल काष्ठा console bios_console = अणु
 	.name		= "bios",
-	.write		= sh_console_write,
+	.ग_लिखो		= sh_console_ग_लिखो,
 	.setup		= sh_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
-};
+पूर्ण;
 
-static int __init setup_early_printk(char *buf)
-{
-	int keep_early = 0;
+अटल पूर्णांक __init setup_early_prपूर्णांकk(अक्षर *buf)
+अणु
+	पूर्णांक keep_early = 0;
 
-	if (!buf)
-		return 0;
+	अगर (!buf)
+		वापस 0;
 
-	if (strstr(buf, "keep"))
+	अगर (म_माला(buf, "keep"))
 		keep_early = 1;
 
-	if (!strncmp(buf, "bios", 4))
+	अगर (!म_भेदन(buf, "bios", 4))
 		early_console = &bios_console;
 
-	if (likely(early_console)) {
-		if (keep_early)
+	अगर (likely(early_console)) अणु
+		अगर (keep_early)
 			early_console->flags &= ~CON_BOOT;
-		else
+		अन्यथा
 			early_console->flags |= CON_BOOT;
-		register_console(early_console);
-	}
+		रेजिस्टर_console(early_console);
+	पूर्ण
 
-	return 0;
-}
-early_param("earlyprintk", setup_early_printk);
-#endif
+	वापस 0;
+पूर्ण
+early_param("earlyprintk", setup_early_prपूर्णांकk);
+#पूर्ण_अगर

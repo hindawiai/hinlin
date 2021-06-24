@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/mman.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/mman.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
 
-#ifndef MCL_ONFAULT
-#define MCL_ONFAULT (MCL_FUTURE << 1)
-#endif
+#अगर_अघोषित MCL_ONFAULT
+#घोषणा MCL_ONFAULT (MCL_FUTURE << 1)
+#पूर्ण_अगर
 
-static int test_limit(void)
-{
-	int ret = 1;
-	struct rlimit lims;
-	void *map;
+अटल पूर्णांक test_limit(व्योम)
+अणु
+	पूर्णांक ret = 1;
+	काष्ठा rlimit lims;
+	व्योम *map;
 
-	if (getrlimit(RLIMIT_MEMLOCK, &lims)) {
-		perror("getrlimit");
-		return ret;
-	}
+	अगर (getrlimit(RLIMIT_MEMLOCK, &lims)) अणु
+		लिखो_त्रुटि("getrlimit");
+		वापस ret;
+	पूर्ण
 
-	if (mlockall(MCL_ONFAULT | MCL_FUTURE)) {
-		perror("mlockall");
-		return ret;
-	}
+	अगर (mlockall(MCL_ONFAULT | MCL_FUTURE)) अणु
+		लिखो_त्रुटि("mlockall");
+		वापस ret;
+	पूर्ण
 
-	map = mmap(NULL, 2 * lims.rlim_max, PROT_READ | PROT_WRITE,
+	map = mmap(शून्य, 2 * lims.rlim_max, PROT_READ | PROT_WRITE,
 		   MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE, -1, 0);
-	if (map != MAP_FAILED)
-		printf("mmap should have failed, but didn't\n");
-	else {
+	अगर (map != MAP_FAILED)
+		म_लिखो("mmap should have failed, but didn't\n");
+	अन्यथा अणु
 		ret = 0;
 		munmap(map, 2 * lims.rlim_max);
-	}
+	पूर्ण
 
 	munlockall();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int ret = 0;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक ret = 0;
 
 	ret += test_limit();
-	return ret;
-}
+	वापस ret;
+पूर्ण

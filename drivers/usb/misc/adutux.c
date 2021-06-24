@@ -1,796 +1,797 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * adutux - driver for ADU devices from Ontrak Control Systems
+ * adutux - driver क्रम ADU devices from Ontrak Control Systems
  * This is an experimental driver. Use at your own risk.
  * This driver is not supported by Ontrak Control Systems.
  *
  * Copyright (c) 2003 John Homppi (SCO, leave this notice here)
  *
  * derived from the Lego USB Tower driver 0.56:
- * Copyright (c) 2003 David Glance <davidgsf@sourceforge.net>
+ * Copyright (c) 2003 David Glance <davidgsf@sourceक्रमge.net>
  *               2001 Juergen Stuber <stuber@loria.fr>
  * that was derived from USB Skeleton driver - 0.5
- * Copyright (c) 2001 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (c) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
 
-#define DRIVER_AUTHOR "John Homppi"
-#define DRIVER_DESC "adutux (see www.ontrak.net)"
+#घोषणा DRIVER_AUTHOR "John Homppi"
+#घोषणा DRIVER_DESC "adutux (see www.ontrak.net)"
 
 /* Define these values to match your device */
-#define ADU_VENDOR_ID 0x0a07
-#define ADU_PRODUCT_ID 0x0064
+#घोषणा ADU_VENDOR_ID 0x0a07
+#घोषणा ADU_PRODUCT_ID 0x0064
 
 /* table of devices that work with this driver */
-static const struct usb_device_id device_table[] = {
-	{ USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID) },		/* ADU100 */
-	{ USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+20) },	/* ADU120 */
-	{ USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+30) },	/* ADU130 */
-	{ USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+100) },	/* ADU200 */
-	{ USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+108) },	/* ADU208 */
-	{ USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+118) },	/* ADU218 */
-	{ } /* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
+	अणु USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID) पूर्ण,		/* ADU100 */
+	अणु USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+20) पूर्ण,	/* ADU120 */
+	अणु USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+30) पूर्ण,	/* ADU130 */
+	अणु USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+100) पूर्ण,	/* ADU200 */
+	अणु USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+108) पूर्ण,	/* ADU208 */
+	अणु USB_DEVICE(ADU_VENDOR_ID, ADU_PRODUCT_ID+118) पूर्ण,	/* ADU218 */
+	अणु पूर्ण /* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, device_table);
 
-#ifdef CONFIG_USB_DYNAMIC_MINORS
-#define ADU_MINOR_BASE	0
-#else
-#define ADU_MINOR_BASE	67
-#endif
+#अगर_घोषित CONFIG_USB_DYNAMIC_MINORS
+#घोषणा ADU_MINOR_BASE	0
+#अन्यथा
+#घोषणा ADU_MINOR_BASE	67
+#पूर्ण_अगर
 
 /* we can have up to this number of device plugged in at once */
-#define MAX_DEVICES	16
+#घोषणा MAX_DEVICES	16
 
-#define COMMAND_TIMEOUT	(2*HZ)
+#घोषणा COMMAND_TIMEOUT	(2*HZ)
 
 /*
  * The locking scheme is a vanilla 3-lock:
  *   adu_device.buflock: A spinlock, covers what IRQs touch.
- *   adutux_mutex:       A Static lock to cover open_count. It would also cover
- *                       any globals, but we don't have them in 2.6.
+ *   adutux_mutex:       A Static lock to cover खोलो_count. It would also cover
+ *                       any globals, but we करोn't have them in 2.6.
  *   adu_device.mtx:     A mutex to hold across sleepers like copy_from_user.
- *                       It covers all of adu_device, except the open_count
+ *                       It covers all of adu_device, except the खोलो_count
  *                       and what .buflock covers.
  */
 
-/* Structure to hold all of our device specific stuff */
-struct adu_device {
-	struct mutex		mtx;
-	struct usb_device *udev; /* save off the usb device pointer */
-	struct usb_interface *interface;
-	unsigned int		minor; /* the starting minor number for this device */
-	char			serial_number[8];
+/* Structure to hold all of our device specअगरic stuff */
+काष्ठा adu_device अणु
+	काष्ठा mutex		mtx;
+	काष्ठा usb_device *udev; /* save off the usb device poपूर्णांकer */
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+	अचिन्हित पूर्णांक		minor; /* the starting minor number क्रम this device */
+	अक्षर			serial_number[8];
 
-	int			open_count; /* number of times this port has been opened */
-	unsigned long		disconnected:1;
+	पूर्णांक			खोलो_count; /* number of बार this port has been खोलोed */
+	अचिन्हित दीर्घ		disconnected:1;
 
-	char		*read_buffer_primary;
-	int			read_buffer_length;
-	char		*read_buffer_secondary;
-	int			secondary_head;
-	int			secondary_tail;
+	अक्षर		*पढ़ो_buffer_primary;
+	पूर्णांक			पढ़ो_buffer_length;
+	अक्षर		*पढ़ो_buffer_secondary;
+	पूर्णांक			secondary_head;
+	पूर्णांक			secondary_tail;
 	spinlock_t		buflock;
 
-	wait_queue_head_t	read_wait;
-	wait_queue_head_t	write_wait;
+	रुको_queue_head_t	पढ़ो_रुको;
+	रुको_queue_head_t	ग_लिखो_रुको;
 
-	char		*interrupt_in_buffer;
-	struct usb_endpoint_descriptor *interrupt_in_endpoint;
-	struct urb	*interrupt_in_urb;
-	int			read_urb_finished;
+	अक्षर		*पूर्णांकerrupt_in_buffer;
+	काष्ठा usb_endpoपूर्णांक_descriptor *पूर्णांकerrupt_in_endpoपूर्णांक;
+	काष्ठा urb	*पूर्णांकerrupt_in_urb;
+	पूर्णांक			पढ़ो_urb_finished;
 
-	char		*interrupt_out_buffer;
-	struct usb_endpoint_descriptor *interrupt_out_endpoint;
-	struct urb	*interrupt_out_urb;
-	int			out_urb_finished;
-};
+	अक्षर		*पूर्णांकerrupt_out_buffer;
+	काष्ठा usb_endpoपूर्णांक_descriptor *पूर्णांकerrupt_out_endpoपूर्णांक;
+	काष्ठा urb	*पूर्णांकerrupt_out_urb;
+	पूर्णांक			out_urb_finished;
+पूर्ण;
 
-static DEFINE_MUTEX(adutux_mutex);
+अटल DEFINE_MUTEX(adutux_mutex);
 
-static struct usb_driver adu_driver;
+अटल काष्ठा usb_driver adu_driver;
 
-static inline void adu_debug_data(struct device *dev, const char *function,
-				  int size, const unsigned char *data)
-{
+अटल अंतरभूत व्योम adu_debug_data(काष्ठा device *dev, स्थिर अक्षर *function,
+				  पूर्णांक size, स्थिर अचिन्हित अक्षर *data)
+अणु
 	dev_dbg(dev, "%s - length = %d, data = %*ph\n",
 		function, size, size, data);
-}
+पूर्ण
 
 /*
- * adu_abort_transfers
- *      aborts transfers and frees associated data structures
+ * adu_पात_transfers
+ *      पातs transfers and मुक्तs associated data काष्ठाures
  */
-static void adu_abort_transfers(struct adu_device *dev)
-{
-	unsigned long flags;
+अटल व्योम adu_पात_transfers(काष्ठा adu_device *dev)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (dev->disconnected)
-		return;
+	अगर (dev->disconnected)
+		वापस;
 
-	/* shutdown transfer */
+	/* shutकरोwn transfer */
 
 	/* XXX Anchor these instead */
 	spin_lock_irqsave(&dev->buflock, flags);
-	if (!dev->read_urb_finished) {
+	अगर (!dev->पढ़ो_urb_finished) अणु
 		spin_unlock_irqrestore(&dev->buflock, flags);
-		usb_kill_urb(dev->interrupt_in_urb);
-	} else
+		usb_समाप्त_urb(dev->पूर्णांकerrupt_in_urb);
+	पूर्ण अन्यथा
 		spin_unlock_irqrestore(&dev->buflock, flags);
 
 	spin_lock_irqsave(&dev->buflock, flags);
-	if (!dev->out_urb_finished) {
+	अगर (!dev->out_urb_finished) अणु
 		spin_unlock_irqrestore(&dev->buflock, flags);
-		wait_event_timeout(dev->write_wait, dev->out_urb_finished,
+		रुको_event_समयout(dev->ग_लिखो_रुको, dev->out_urb_finished,
 			COMMAND_TIMEOUT);
-		usb_kill_urb(dev->interrupt_out_urb);
-	} else
+		usb_समाप्त_urb(dev->पूर्णांकerrupt_out_urb);
+	पूर्ण अन्यथा
 		spin_unlock_irqrestore(&dev->buflock, flags);
-}
+पूर्ण
 
-static void adu_delete(struct adu_device *dev)
-{
-	/* free data structures */
-	usb_free_urb(dev->interrupt_in_urb);
-	usb_free_urb(dev->interrupt_out_urb);
-	kfree(dev->read_buffer_primary);
-	kfree(dev->read_buffer_secondary);
-	kfree(dev->interrupt_in_buffer);
-	kfree(dev->interrupt_out_buffer);
+अटल व्योम adu_delete(काष्ठा adu_device *dev)
+अणु
+	/* मुक्त data काष्ठाures */
+	usb_मुक्त_urb(dev->पूर्णांकerrupt_in_urb);
+	usb_मुक्त_urb(dev->पूर्णांकerrupt_out_urb);
+	kमुक्त(dev->पढ़ो_buffer_primary);
+	kमुक्त(dev->पढ़ो_buffer_secondary);
+	kमुक्त(dev->पूर्णांकerrupt_in_buffer);
+	kमुक्त(dev->पूर्णांकerrupt_out_buffer);
 	usb_put_dev(dev->udev);
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
-static void adu_interrupt_in_callback(struct urb *urb)
-{
-	struct adu_device *dev = urb->context;
-	int status = urb->status;
-	unsigned long flags;
+अटल व्योम adu_पूर्णांकerrupt_in_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा adu_device *dev = urb->context;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
 
 	adu_debug_data(&dev->udev->dev, __func__,
 		       urb->actual_length, urb->transfer_buffer);
 
 	spin_lock_irqsave(&dev->buflock, flags);
 
-	if (status != 0) {
-		if ((status != -ENOENT) && (status != -ECONNRESET) &&
-			(status != -ESHUTDOWN)) {
+	अगर (status != 0) अणु
+		अगर ((status != -ENOENT) && (status != -ECONNRESET) &&
+			(status != -ESHUTDOWN)) अणु
 			dev_dbg(&dev->udev->dev,
 				"%s : nonzero status received: %d\n",
 				__func__, status);
-		}
-		goto exit;
-	}
+		पूर्ण
+		जाओ निकास;
+	पूर्ण
 
-	if (urb->actual_length > 0 && dev->interrupt_in_buffer[0] != 0x00) {
-		if (dev->read_buffer_length <
-		    (4 * usb_endpoint_maxp(dev->interrupt_in_endpoint)) -
-		     (urb->actual_length)) {
-			memcpy (dev->read_buffer_primary +
-				dev->read_buffer_length,
-				dev->interrupt_in_buffer, urb->actual_length);
+	अगर (urb->actual_length > 0 && dev->पूर्णांकerrupt_in_buffer[0] != 0x00) अणु
+		अगर (dev->पढ़ो_buffer_length <
+		    (4 * usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_in_endpoपूर्णांक)) -
+		     (urb->actual_length)) अणु
+			स_नकल (dev->पढ़ो_buffer_primary +
+				dev->पढ़ो_buffer_length,
+				dev->पूर्णांकerrupt_in_buffer, urb->actual_length);
 
-			dev->read_buffer_length += urb->actual_length;
+			dev->पढ़ो_buffer_length += urb->actual_length;
 			dev_dbg(&dev->udev->dev, "%s reading  %d\n", __func__,
 				urb->actual_length);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(&dev->udev->dev, "%s : read_buffer overflow\n",
 				__func__);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-exit:
-	dev->read_urb_finished = 1;
+निकास:
+	dev->पढ़ो_urb_finished = 1;
 	spin_unlock_irqrestore(&dev->buflock, flags);
 	/* always wake up so we recover from errors */
-	wake_up_interruptible(&dev->read_wait);
-}
+	wake_up_पूर्णांकerruptible(&dev->पढ़ो_रुको);
+पूर्ण
 
-static void adu_interrupt_out_callback(struct urb *urb)
-{
-	struct adu_device *dev = urb->context;
-	int status = urb->status;
-	unsigned long flags;
+अटल व्योम adu_पूर्णांकerrupt_out_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा adu_device *dev = urb->context;
+	पूर्णांक status = urb->status;
+	अचिन्हित दीर्घ flags;
 
 	adu_debug_data(&dev->udev->dev, __func__,
 		       urb->actual_length, urb->transfer_buffer);
 
-	if (status != 0) {
-		if ((status != -ENOENT) &&
+	अगर (status != 0) अणु
+		अगर ((status != -ENOENT) &&
 		    (status != -ESHUTDOWN) &&
-		    (status != -ECONNRESET)) {
+		    (status != -ECONNRESET)) अणु
 			dev_dbg(&dev->udev->dev,
 				"%s :nonzero status received: %d\n", __func__,
 				status);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&dev->buflock, flags);
 	dev->out_urb_finished = 1;
-	wake_up(&dev->write_wait);
+	wake_up(&dev->ग_लिखो_रुको);
 	spin_unlock_irqrestore(&dev->buflock, flags);
-}
+पूर्ण
 
-static int adu_open(struct inode *inode, struct file *file)
-{
-	struct adu_device *dev = NULL;
-	struct usb_interface *interface;
-	int subminor;
-	int retval;
+अटल पूर्णांक adu_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा adu_device *dev = शून्य;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+	पूर्णांक subminor;
+	पूर्णांक retval;
 
 	subminor = iminor(inode);
 
-	retval = mutex_lock_interruptible(&adutux_mutex);
-	if (retval)
-		goto exit_no_lock;
+	retval = mutex_lock_पूर्णांकerruptible(&adutux_mutex);
+	अगर (retval)
+		जाओ निकास_no_lock;
 
-	interface = usb_find_interface(&adu_driver, subminor);
-	if (!interface) {
+	पूर्णांकerface = usb_find_पूर्णांकerface(&adu_driver, subminor);
+	अगर (!पूर्णांकerface) अणु
 		pr_err("%s - error, can't find device for minor %d\n",
 		       __func__, subminor);
 		retval = -ENODEV;
-		goto exit_no_device;
-	}
+		जाओ निकास_no_device;
+	पूर्ण
 
-	dev = usb_get_intfdata(interface);
-	if (!dev) {
+	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	अगर (!dev) अणु
 		retval = -ENODEV;
-		goto exit_no_device;
-	}
+		जाओ निकास_no_device;
+	पूर्ण
 
-	/* check that nobody else is using the device */
-	if (dev->open_count) {
+	/* check that nobody अन्यथा is using the device */
+	अगर (dev->खोलो_count) अणु
 		retval = -EBUSY;
-		goto exit_no_device;
-	}
+		जाओ निकास_no_device;
+	पूर्ण
 
-	++dev->open_count;
+	++dev->खोलो_count;
 	dev_dbg(&dev->udev->dev, "%s: open count %d\n", __func__,
-		dev->open_count);
+		dev->खोलो_count);
 
-	/* save device in the file's private structure */
-	file->private_data = dev;
+	/* save device in the file's निजी काष्ठाure */
+	file->निजी_data = dev;
 
 	/* initialize in direction */
-	dev->read_buffer_length = 0;
+	dev->पढ़ो_buffer_length = 0;
 
-	/* fixup first read by having urb waiting for it */
-	usb_fill_int_urb(dev->interrupt_in_urb, dev->udev,
-			 usb_rcvintpipe(dev->udev,
-					dev->interrupt_in_endpoint->bEndpointAddress),
-			 dev->interrupt_in_buffer,
-			 usb_endpoint_maxp(dev->interrupt_in_endpoint),
-			 adu_interrupt_in_callback, dev,
-			 dev->interrupt_in_endpoint->bInterval);
-	dev->read_urb_finished = 0;
-	if (usb_submit_urb(dev->interrupt_in_urb, GFP_KERNEL))
-		dev->read_urb_finished = 1;
+	/* fixup first पढ़ो by having urb रुकोing क्रम it */
+	usb_fill_पूर्णांक_urb(dev->पूर्णांकerrupt_in_urb, dev->udev,
+			 usb_rcvपूर्णांकpipe(dev->udev,
+					dev->पूर्णांकerrupt_in_endpoपूर्णांक->bEndpoपूर्णांकAddress),
+			 dev->पूर्णांकerrupt_in_buffer,
+			 usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_in_endpoपूर्णांक),
+			 adu_पूर्णांकerrupt_in_callback, dev,
+			 dev->पूर्णांकerrupt_in_endpoपूर्णांक->bInterval);
+	dev->पढ़ो_urb_finished = 0;
+	अगर (usb_submit_urb(dev->पूर्णांकerrupt_in_urb, GFP_KERNEL))
+		dev->पढ़ो_urb_finished = 1;
 	/* we ignore failure */
-	/* end of fixup for first read */
+	/* end of fixup क्रम first पढ़ो */
 
 	/* initialize out direction */
 	dev->out_urb_finished = 1;
 
 	retval = 0;
 
-exit_no_device:
+निकास_no_device:
 	mutex_unlock(&adutux_mutex);
-exit_no_lock:
-	return retval;
-}
+निकास_no_lock:
+	वापस retval;
+पूर्ण
 
-static void adu_release_internal(struct adu_device *dev)
-{
-	/* decrement our usage count for the device */
-	--dev->open_count;
+अटल व्योम adu_release_पूर्णांकernal(काष्ठा adu_device *dev)
+अणु
+	/* decrement our usage count क्रम the device */
+	--dev->खोलो_count;
 	dev_dbg(&dev->udev->dev, "%s : open count %d\n", __func__,
-		dev->open_count);
-	if (dev->open_count <= 0) {
-		adu_abort_transfers(dev);
-		dev->open_count = 0;
-	}
-}
+		dev->खोलो_count);
+	अगर (dev->खोलो_count <= 0) अणु
+		adu_पात_transfers(dev);
+		dev->खोलो_count = 0;
+	पूर्ण
+पूर्ण
 
-static int adu_release(struct inode *inode, struct file *file)
-{
-	struct adu_device *dev;
-	int retval = 0;
+अटल पूर्णांक adu_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा adu_device *dev;
+	पूर्णांक retval = 0;
 
-	if (file == NULL) {
+	अगर (file == शून्य) अणु
 		retval = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	dev = file->private_data;
-	if (dev == NULL) {
+	dev = file->निजी_data;
+	अगर (dev == शून्य) अणु
 		retval = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	mutex_lock(&adutux_mutex); /* not interruptible */
+	mutex_lock(&adutux_mutex); /* not पूर्णांकerruptible */
 
-	if (dev->open_count <= 0) {
+	अगर (dev->खोलो_count <= 0) अणु
 		dev_dbg(&dev->udev->dev, "%s : device not opened\n", __func__);
 		retval = -ENODEV;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	adu_release_internal(dev);
-	if (dev->disconnected) {
-		/* the device was unplugged before the file was released */
-		if (!dev->open_count)	/* ... and we're the last user */
+	adu_release_पूर्णांकernal(dev);
+	अगर (dev->disconnected) अणु
+		/* the device was unplugged beक्रमe the file was released */
+		अगर (!dev->खोलो_count)	/* ... and we're the last user */
 			adu_delete(dev);
-	}
+	पूर्ण
 unlock:
 	mutex_unlock(&adutux_mutex);
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
-static ssize_t adu_read(struct file *file, __user char *buffer, size_t count,
+अटल sमाप_प्रकार adu_पढ़ो(काष्ठा file *file, __user अक्षर *buffer, माप_प्रकार count,
 			loff_t *ppos)
-{
-	struct adu_device *dev;
-	size_t bytes_read = 0;
-	size_t bytes_to_read = count;
-	int retval = 0;
-	int timeout = 0;
-	int should_submit = 0;
-	unsigned long flags;
-	DECLARE_WAITQUEUE(wait, current);
+अणु
+	काष्ठा adu_device *dev;
+	माप_प्रकार bytes_पढ़ो = 0;
+	माप_प्रकार bytes_to_पढ़ो = count;
+	पूर्णांक retval = 0;
+	पूर्णांक समयout = 0;
+	पूर्णांक should_submit = 0;
+	अचिन्हित दीर्घ flags;
+	DECLARE_WAITQUEUE(रुको, current);
 
-	dev = file->private_data;
-	if (mutex_lock_interruptible(&dev->mtx))
-		return -ERESTARTSYS;
+	dev = file->निजी_data;
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->mtx))
+		वापस -ERESTARTSYS;
 
-	/* verify that the device wasn't unplugged */
-	if (dev->disconnected) {
+	/* verअगरy that the device wasn't unplugged */
+	अगर (dev->disconnected) अणु
 		retval = -ENODEV;
 		pr_err("No device or device unplugged %d\n", retval);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* verify that some data was requested */
-	if (count == 0) {
+	/* verअगरy that some data was requested */
+	अगर (count == 0) अणु
 		dev_dbg(&dev->udev->dev, "%s : read request of 0 bytes\n",
 			__func__);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	timeout = COMMAND_TIMEOUT;
+	समयout = COMMAND_TIMEOUT;
 	dev_dbg(&dev->udev->dev, "%s : about to start looping\n", __func__);
-	while (bytes_to_read) {
-		size_t data_in_secondary = dev->secondary_tail - dev->secondary_head;
+	जबतक (bytes_to_पढ़ो) अणु
+		माप_प्रकार data_in_secondary = dev->secondary_tail - dev->secondary_head;
 		dev_dbg(&dev->udev->dev,
 			"%s : while, data_in_secondary=%zu, status=%d\n",
 			__func__, data_in_secondary,
-			dev->interrupt_in_urb->status);
+			dev->पूर्णांकerrupt_in_urb->status);
 
-		if (data_in_secondary) {
+		अगर (data_in_secondary) अणु
 			/* drain secondary buffer */
-			size_t amount = min(bytes_to_read, data_in_secondary);
-			if (copy_to_user(buffer, dev->read_buffer_secondary+dev->secondary_head, amount)) {
+			माप_प्रकार amount = min(bytes_to_पढ़ो, data_in_secondary);
+			अगर (copy_to_user(buffer, dev->पढ़ो_buffer_secondary+dev->secondary_head, amount)) अणु
 				retval = -EFAULT;
-				goto exit;
-			}
+				जाओ निकास;
+			पूर्ण
 			dev->secondary_head += amount;
-			bytes_read += amount;
-			bytes_to_read -= amount;
-		} else {
+			bytes_पढ़ो += amount;
+			bytes_to_पढ़ो -= amount;
+		पूर्ण अन्यथा अणु
 			/* we check the primary buffer */
 			spin_lock_irqsave (&dev->buflock, flags);
-			if (dev->read_buffer_length) {
+			अगर (dev->पढ़ो_buffer_length) अणु
 				/* we secure access to the primary */
-				char *tmp;
+				अक्षर *पंचांगp;
 				dev_dbg(&dev->udev->dev,
 					"%s : swap, read_buffer_length = %d\n",
-					__func__, dev->read_buffer_length);
-				tmp = dev->read_buffer_secondary;
-				dev->read_buffer_secondary = dev->read_buffer_primary;
-				dev->read_buffer_primary = tmp;
+					__func__, dev->पढ़ो_buffer_length);
+				पंचांगp = dev->पढ़ो_buffer_secondary;
+				dev->पढ़ो_buffer_secondary = dev->पढ़ो_buffer_primary;
+				dev->पढ़ो_buffer_primary = पंचांगp;
 				dev->secondary_head = 0;
-				dev->secondary_tail = dev->read_buffer_length;
-				dev->read_buffer_length = 0;
+				dev->secondary_tail = dev->पढ़ो_buffer_length;
+				dev->पढ़ो_buffer_length = 0;
 				spin_unlock_irqrestore(&dev->buflock, flags);
-				/* we have a free buffer so use it */
+				/* we have a मुक्त buffer so use it */
 				should_submit = 1;
-			} else {
-				/* even the primary was empty - we may need to do IO */
-				if (!dev->read_urb_finished) {
-					/* somebody is doing IO */
+			पूर्ण अन्यथा अणु
+				/* even the primary was empty - we may need to करो IO */
+				अगर (!dev->पढ़ो_urb_finished) अणु
+					/* somebody is करोing IO */
 					spin_unlock_irqrestore(&dev->buflock, flags);
 					dev_dbg(&dev->udev->dev,
 						"%s : submitted already\n",
 						__func__);
-				} else {
+				पूर्ण अन्यथा अणु
 					/* we must initiate input */
 					dev_dbg(&dev->udev->dev,
 						"%s : initiate input\n",
 						__func__);
-					dev->read_urb_finished = 0;
+					dev->पढ़ो_urb_finished = 0;
 					spin_unlock_irqrestore(&dev->buflock, flags);
 
-					usb_fill_int_urb(dev->interrupt_in_urb, dev->udev,
-							usb_rcvintpipe(dev->udev,
-								dev->interrupt_in_endpoint->bEndpointAddress),
-							 dev->interrupt_in_buffer,
-							 usb_endpoint_maxp(dev->interrupt_in_endpoint),
-							 adu_interrupt_in_callback,
+					usb_fill_पूर्णांक_urb(dev->पूर्णांकerrupt_in_urb, dev->udev,
+							usb_rcvपूर्णांकpipe(dev->udev,
+								dev->पूर्णांकerrupt_in_endpoपूर्णांक->bEndpoपूर्णांकAddress),
+							 dev->पूर्णांकerrupt_in_buffer,
+							 usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_in_endpoपूर्णांक),
+							 adu_पूर्णांकerrupt_in_callback,
 							 dev,
-							 dev->interrupt_in_endpoint->bInterval);
-					retval = usb_submit_urb(dev->interrupt_in_urb, GFP_KERNEL);
-					if (retval) {
-						dev->read_urb_finished = 1;
-						if (retval == -ENOMEM) {
-							retval = bytes_read ? bytes_read : -ENOMEM;
-						}
+							 dev->पूर्णांकerrupt_in_endpoपूर्णांक->bInterval);
+					retval = usb_submit_urb(dev->पूर्णांकerrupt_in_urb, GFP_KERNEL);
+					अगर (retval) अणु
+						dev->पढ़ो_urb_finished = 1;
+						अगर (retval == -ENOMEM) अणु
+							retval = bytes_पढ़ो ? bytes_पढ़ो : -ENOMEM;
+						पूर्ण
 						dev_dbg(&dev->udev->dev,
 							"%s : submit failed\n",
 							__func__);
-						goto exit;
-					}
-				}
+						जाओ निकास;
+					पूर्ण
+				पूर्ण
 
-				/* we wait for I/O to complete */
+				/* we रुको क्रम I/O to complete */
 				set_current_state(TASK_INTERRUPTIBLE);
-				add_wait_queue(&dev->read_wait, &wait);
+				add_रुको_queue(&dev->पढ़ो_रुको, &रुको);
 				spin_lock_irqsave(&dev->buflock, flags);
-				if (!dev->read_urb_finished) {
+				अगर (!dev->पढ़ो_urb_finished) अणु
 					spin_unlock_irqrestore(&dev->buflock, flags);
-					timeout = schedule_timeout(COMMAND_TIMEOUT);
-				} else {
+					समयout = schedule_समयout(COMMAND_TIMEOUT);
+				पूर्ण अन्यथा अणु
 					spin_unlock_irqrestore(&dev->buflock, flags);
 					set_current_state(TASK_RUNNING);
-				}
-				remove_wait_queue(&dev->read_wait, &wait);
+				पूर्ण
+				हटाओ_रुको_queue(&dev->पढ़ो_रुको, &रुको);
 
-				if (timeout <= 0) {
+				अगर (समयout <= 0) अणु
 					dev_dbg(&dev->udev->dev,
 						"%s : timeout\n", __func__);
-					retval = bytes_read ? bytes_read : -ETIMEDOUT;
-					goto exit;
-				}
+					retval = bytes_पढ़ो ? bytes_पढ़ो : -ETIMEDOUT;
+					जाओ निकास;
+				पूर्ण
 
-				if (signal_pending(current)) {
+				अगर (संकेत_pending(current)) अणु
 					dev_dbg(&dev->udev->dev,
 						"%s : signal pending\n",
 						__func__);
-					retval = bytes_read ? bytes_read : -EINTR;
-					goto exit;
-				}
-			}
-		}
-	}
+					retval = bytes_पढ़ो ? bytes_पढ़ो : -EINTR;
+					जाओ निकास;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	retval = bytes_read;
-	/* if the primary buffer is empty then use it */
+	retval = bytes_पढ़ो;
+	/* अगर the primary buffer is empty then use it */
 	spin_lock_irqsave(&dev->buflock, flags);
-	if (should_submit && dev->read_urb_finished) {
-		dev->read_urb_finished = 0;
+	अगर (should_submit && dev->पढ़ो_urb_finished) अणु
+		dev->पढ़ो_urb_finished = 0;
 		spin_unlock_irqrestore(&dev->buflock, flags);
-		usb_fill_int_urb(dev->interrupt_in_urb, dev->udev,
-				 usb_rcvintpipe(dev->udev,
-					dev->interrupt_in_endpoint->bEndpointAddress),
-				dev->interrupt_in_buffer,
-				usb_endpoint_maxp(dev->interrupt_in_endpoint),
-				adu_interrupt_in_callback,
+		usb_fill_पूर्णांक_urb(dev->पूर्णांकerrupt_in_urb, dev->udev,
+				 usb_rcvपूर्णांकpipe(dev->udev,
+					dev->पूर्णांकerrupt_in_endpoपूर्णांक->bEndpoपूर्णांकAddress),
+				dev->पूर्णांकerrupt_in_buffer,
+				usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_in_endpoपूर्णांक),
+				adu_पूर्णांकerrupt_in_callback,
 				dev,
-				dev->interrupt_in_endpoint->bInterval);
-		if (usb_submit_urb(dev->interrupt_in_urb, GFP_KERNEL) != 0)
-			dev->read_urb_finished = 1;
+				dev->पूर्णांकerrupt_in_endpoपूर्णांक->bInterval);
+		अगर (usb_submit_urb(dev->पूर्णांकerrupt_in_urb, GFP_KERNEL) != 0)
+			dev->पढ़ो_urb_finished = 1;
 		/* we ignore failure */
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&dev->buflock, flags);
-	}
+	पूर्ण
 
-exit:
+निकास:
 	/* unlock the device */
 	mutex_unlock(&dev->mtx);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t adu_write(struct file *file, const __user char *buffer,
-			 size_t count, loff_t *ppos)
-{
-	DECLARE_WAITQUEUE(waita, current);
-	struct adu_device *dev;
-	size_t bytes_written = 0;
-	size_t bytes_to_write;
-	size_t buffer_size;
-	unsigned long flags;
-	int retval;
+अटल sमाप_प्रकार adu_ग_लिखो(काष्ठा file *file, स्थिर __user अक्षर *buffer,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	DECLARE_WAITQUEUE(रुकोa, current);
+	काष्ठा adu_device *dev;
+	माप_प्रकार bytes_written = 0;
+	माप_प्रकार bytes_to_ग_लिखो;
+	माप_प्रकार buffer_size;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक retval;
 
-	dev = file->private_data;
+	dev = file->निजी_data;
 
-	retval = mutex_lock_interruptible(&dev->mtx);
-	if (retval)
-		goto exit_nolock;
+	retval = mutex_lock_पूर्णांकerruptible(&dev->mtx);
+	अगर (retval)
+		जाओ निकास_nolock;
 
-	/* verify that the device wasn't unplugged */
-	if (dev->disconnected) {
+	/* verअगरy that the device wasn't unplugged */
+	अगर (dev->disconnected) अणु
 		retval = -ENODEV;
 		pr_err("No device or device unplugged %d\n", retval);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* verify that we actually have some data to write */
-	if (count == 0) {
+	/* verअगरy that we actually have some data to ग_लिखो */
+	अगर (count == 0) अणु
 		dev_dbg(&dev->udev->dev, "%s : write request of 0 bytes\n",
 			__func__);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	while (count > 0) {
-		add_wait_queue(&dev->write_wait, &waita);
+	जबतक (count > 0) अणु
+		add_रुको_queue(&dev->ग_लिखो_रुको, &रुकोa);
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_lock_irqsave(&dev->buflock, flags);
-		if (!dev->out_urb_finished) {
+		अगर (!dev->out_urb_finished) अणु
 			spin_unlock_irqrestore(&dev->buflock, flags);
 
 			mutex_unlock(&dev->mtx);
-			if (signal_pending(current)) {
+			अगर (संकेत_pending(current)) अणु
 				dev_dbg(&dev->udev->dev, "%s : interrupted\n",
 					__func__);
 				set_current_state(TASK_RUNNING);
 				retval = -EINTR;
-				goto exit_onqueue;
-			}
-			if (schedule_timeout(COMMAND_TIMEOUT) == 0) {
+				जाओ निकास_onqueue;
+			पूर्ण
+			अगर (schedule_समयout(COMMAND_TIMEOUT) == 0) अणु
 				dev_dbg(&dev->udev->dev,
 					"%s - command timed out.\n", __func__);
 				retval = -ETIMEDOUT;
-				goto exit_onqueue;
-			}
-			remove_wait_queue(&dev->write_wait, &waita);
-			retval = mutex_lock_interruptible(&dev->mtx);
-			if (retval) {
+				जाओ निकास_onqueue;
+			पूर्ण
+			हटाओ_रुको_queue(&dev->ग_लिखो_रुको, &रुकोa);
+			retval = mutex_lock_पूर्णांकerruptible(&dev->mtx);
+			अगर (retval) अणु
 				retval = bytes_written ? bytes_written : retval;
-				goto exit_nolock;
-			}
+				जाओ निकास_nolock;
+			पूर्ण
 
 			dev_dbg(&dev->udev->dev,
 				"%s : in progress, count = %zd\n",
 				__func__, count);
-		} else {
+		पूर्ण अन्यथा अणु
 			spin_unlock_irqrestore(&dev->buflock, flags);
 			set_current_state(TASK_RUNNING);
-			remove_wait_queue(&dev->write_wait, &waita);
+			हटाओ_रुको_queue(&dev->ग_लिखो_रुको, &रुकोa);
 			dev_dbg(&dev->udev->dev, "%s : sending, count = %zd\n",
 				__func__, count);
 
-			/* write the data into interrupt_out_buffer from userspace */
-			buffer_size = usb_endpoint_maxp(dev->interrupt_out_endpoint);
-			bytes_to_write = count > buffer_size ? buffer_size : count;
+			/* ग_लिखो the data पूर्णांकo पूर्णांकerrupt_out_buffer from userspace */
+			buffer_size = usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_out_endpoपूर्णांक);
+			bytes_to_ग_लिखो = count > buffer_size ? buffer_size : count;
 			dev_dbg(&dev->udev->dev,
 				"%s : buffer_size = %zd, count = %zd, bytes_to_write = %zd\n",
-				__func__, buffer_size, count, bytes_to_write);
+				__func__, buffer_size, count, bytes_to_ग_लिखो);
 
-			if (copy_from_user(dev->interrupt_out_buffer, buffer, bytes_to_write) != 0) {
+			अगर (copy_from_user(dev->पूर्णांकerrupt_out_buffer, buffer, bytes_to_ग_लिखो) != 0) अणु
 				retval = -EFAULT;
-				goto exit;
-			}
+				जाओ निकास;
+			पूर्ण
 
 			/* send off the urb */
-			usb_fill_int_urb(
-				dev->interrupt_out_urb,
+			usb_fill_पूर्णांक_urb(
+				dev->पूर्णांकerrupt_out_urb,
 				dev->udev,
-				usb_sndintpipe(dev->udev, dev->interrupt_out_endpoint->bEndpointAddress),
-				dev->interrupt_out_buffer,
-				bytes_to_write,
-				adu_interrupt_out_callback,
+				usb_sndपूर्णांकpipe(dev->udev, dev->पूर्णांकerrupt_out_endpoपूर्णांक->bEndpoपूर्णांकAddress),
+				dev->पूर्णांकerrupt_out_buffer,
+				bytes_to_ग_लिखो,
+				adu_पूर्णांकerrupt_out_callback,
 				dev,
-				dev->interrupt_out_endpoint->bInterval);
-			dev->interrupt_out_urb->actual_length = bytes_to_write;
+				dev->पूर्णांकerrupt_out_endpoपूर्णांक->bInterval);
+			dev->पूर्णांकerrupt_out_urb->actual_length = bytes_to_ग_लिखो;
 			dev->out_urb_finished = 0;
-			retval = usb_submit_urb(dev->interrupt_out_urb, GFP_KERNEL);
-			if (retval < 0) {
+			retval = usb_submit_urb(dev->पूर्णांकerrupt_out_urb, GFP_KERNEL);
+			अगर (retval < 0) अणु
 				dev->out_urb_finished = 1;
 				dev_err(&dev->udev->dev, "Couldn't submit "
 					"interrupt_out_urb %d\n", retval);
-				goto exit;
-			}
+				जाओ निकास;
+			पूर्ण
 
-			buffer += bytes_to_write;
-			count -= bytes_to_write;
+			buffer += bytes_to_ग_लिखो;
+			count -= bytes_to_ग_लिखो;
 
-			bytes_written += bytes_to_write;
-		}
-	}
+			bytes_written += bytes_to_ग_लिखो;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&dev->mtx);
-	return bytes_written;
+	वापस bytes_written;
 
-exit:
+निकास:
 	mutex_unlock(&dev->mtx);
-exit_nolock:
-	return retval;
+निकास_nolock:
+	वापस retval;
 
-exit_onqueue:
-	remove_wait_queue(&dev->write_wait, &waita);
-	return retval;
-}
+निकास_onqueue:
+	हटाओ_रुको_queue(&dev->ग_लिखो_रुको, &रुकोa);
+	वापस retval;
+पूर्ण
 
-/* file operations needed when we register this driver */
-static const struct file_operations adu_fops = {
+/* file operations needed when we रेजिस्टर this driver */
+अटल स्थिर काष्ठा file_operations adu_fops = अणु
 	.owner = THIS_MODULE,
-	.read  = adu_read,
-	.write = adu_write,
-	.open = adu_open,
+	.पढ़ो  = adu_पढ़ो,
+	.ग_लिखो = adu_ग_लिखो,
+	.खोलो = adu_खोलो,
 	.release = adu_release,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
 /*
  * usb class driver info in order to get a minor number from the usb core,
- * and to have the device registered with devfs and the driver core
+ * and to have the device रेजिस्टरed with devfs and the driver core
  */
-static struct usb_class_driver adu_class = {
+अटल काष्ठा usb_class_driver adu_class = अणु
 	.name = "usb/adutux%d",
 	.fops = &adu_fops,
 	.minor_base = ADU_MINOR_BASE,
-};
+पूर्ण;
 
 /*
  * adu_probe
  *
  * Called by the usb core when a new device is connected that it thinks
- * this driver might be interested in.
+ * this driver might be पूर्णांकerested in.
  */
-static int adu_probe(struct usb_interface *interface,
-		     const struct usb_device_id *id)
-{
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct adu_device *dev = NULL;
-	int retval = -ENOMEM;
-	int in_end_size;
-	int out_end_size;
-	int res;
+अटल पूर्णांक adu_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+		     स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा adu_device *dev = शून्य;
+	पूर्णांक retval = -ENOMEM;
+	पूर्णांक in_end_size;
+	पूर्णांक out_end_size;
+	पूर्णांक res;
 
-	/* allocate memory for our device state and initialize it */
-	dev = kzalloc(sizeof(struct adu_device), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	/* allocate memory क्रम our device state and initialize it */
+	dev = kzalloc(माप(काष्ठा adu_device), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	mutex_init(&dev->mtx);
 	spin_lock_init(&dev->buflock);
 	dev->udev = usb_get_dev(udev);
-	init_waitqueue_head(&dev->read_wait);
-	init_waitqueue_head(&dev->write_wait);
+	init_रुकोqueue_head(&dev->पढ़ो_रुको);
+	init_रुकोqueue_head(&dev->ग_लिखो_रुको);
 
-	res = usb_find_common_endpoints_reverse(interface->cur_altsetting,
-			NULL, NULL,
-			&dev->interrupt_in_endpoint,
-			&dev->interrupt_out_endpoint);
-	if (res) {
-		dev_err(&interface->dev, "interrupt endpoints not found\n");
+	res = usb_find_common_endpoपूर्णांकs_reverse(पूर्णांकerface->cur_altsetting,
+			शून्य, शून्य,
+			&dev->पूर्णांकerrupt_in_endpoपूर्णांक,
+			&dev->पूर्णांकerrupt_out_endpoपूर्णांक);
+	अगर (res) अणु
+		dev_err(&पूर्णांकerface->dev, "interrupt endpoints not found\n");
 		retval = res;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	in_end_size = usb_endpoint_maxp(dev->interrupt_in_endpoint);
-	out_end_size = usb_endpoint_maxp(dev->interrupt_out_endpoint);
+	in_end_size = usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_in_endpoपूर्णांक);
+	out_end_size = usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_out_endpoपूर्णांक);
 
-	dev->read_buffer_primary = kmalloc((4 * in_end_size), GFP_KERNEL);
-	if (!dev->read_buffer_primary)
-		goto error;
-
-	/* debug code prime the buffer */
-	memset(dev->read_buffer_primary, 'a', in_end_size);
-	memset(dev->read_buffer_primary + in_end_size, 'b', in_end_size);
-	memset(dev->read_buffer_primary + (2 * in_end_size), 'c', in_end_size);
-	memset(dev->read_buffer_primary + (3 * in_end_size), 'd', in_end_size);
-
-	dev->read_buffer_secondary = kmalloc((4 * in_end_size), GFP_KERNEL);
-	if (!dev->read_buffer_secondary)
-		goto error;
+	dev->पढ़ो_buffer_primary = kदो_स्मृति((4 * in_end_size), GFP_KERNEL);
+	अगर (!dev->पढ़ो_buffer_primary)
+		जाओ error;
 
 	/* debug code prime the buffer */
-	memset(dev->read_buffer_secondary, 'e', in_end_size);
-	memset(dev->read_buffer_secondary + in_end_size, 'f', in_end_size);
-	memset(dev->read_buffer_secondary + (2 * in_end_size), 'g', in_end_size);
-	memset(dev->read_buffer_secondary + (3 * in_end_size), 'h', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_primary, 'a', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_primary + in_end_size, 'b', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_primary + (2 * in_end_size), 'c', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_primary + (3 * in_end_size), 'd', in_end_size);
 
-	dev->interrupt_in_buffer = kmalloc(in_end_size, GFP_KERNEL);
-	if (!dev->interrupt_in_buffer)
-		goto error;
+	dev->पढ़ो_buffer_secondary = kदो_स्मृति((4 * in_end_size), GFP_KERNEL);
+	अगर (!dev->पढ़ो_buffer_secondary)
+		जाओ error;
 
 	/* debug code prime the buffer */
-	memset(dev->interrupt_in_buffer, 'i', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_secondary, 'e', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_secondary + in_end_size, 'f', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_secondary + (2 * in_end_size), 'g', in_end_size);
+	स_रखो(dev->पढ़ो_buffer_secondary + (3 * in_end_size), 'h', in_end_size);
 
-	dev->interrupt_in_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!dev->interrupt_in_urb)
-		goto error;
-	dev->interrupt_out_buffer = kmalloc(out_end_size, GFP_KERNEL);
-	if (!dev->interrupt_out_buffer)
-		goto error;
-	dev->interrupt_out_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!dev->interrupt_out_urb)
-		goto error;
+	dev->पूर्णांकerrupt_in_buffer = kदो_स्मृति(in_end_size, GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_in_buffer)
+		जाओ error;
 
-	if (!usb_string(udev, udev->descriptor.iSerialNumber, dev->serial_number,
-			sizeof(dev->serial_number))) {
-		dev_err(&interface->dev, "Could not retrieve serial number\n");
+	/* debug code prime the buffer */
+	स_रखो(dev->पूर्णांकerrupt_in_buffer, 'i', in_end_size);
+
+	dev->पूर्णांकerrupt_in_urb = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_in_urb)
+		जाओ error;
+	dev->पूर्णांकerrupt_out_buffer = kदो_स्मृति(out_end_size, GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_out_buffer)
+		जाओ error;
+	dev->पूर्णांकerrupt_out_urb = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_out_urb)
+		जाओ error;
+
+	अगर (!usb_string(udev, udev->descriptor.iSerialNumber, dev->serial_number,
+			माप(dev->serial_number))) अणु
+		dev_err(&पूर्णांकerface->dev, "Could not retrieve serial number\n");
 		retval = -EIO;
-		goto error;
-	}
-	dev_dbg(&interface->dev, "serial_number=%s", dev->serial_number);
+		जाओ error;
+	पूर्ण
+	dev_dbg(&पूर्णांकerface->dev, "serial_number=%s", dev->serial_number);
 
-	/* we can register the device now, as it is ready */
-	usb_set_intfdata(interface, dev);
+	/* we can रेजिस्टर the device now, as it is पढ़ोy */
+	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
 
-	retval = usb_register_dev(interface, &adu_class);
+	retval = usb_रेजिस्टर_dev(पूर्णांकerface, &adu_class);
 
-	if (retval) {
-		/* something prevented us from registering this driver */
-		dev_err(&interface->dev, "Not able to get a minor for this device.\n");
-		usb_set_intfdata(interface, NULL);
-		goto error;
-	}
+	अगर (retval) अणु
+		/* something prevented us from रेजिस्टरing this driver */
+		dev_err(&पूर्णांकerface->dev, "Not able to get a minor for this device.\n");
+		usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+		जाओ error;
+	पूर्ण
 
-	dev->minor = interface->minor;
+	dev->minor = पूर्णांकerface->minor;
 
 	/* let the user know what node this device is now attached to */
-	dev_info(&interface->dev, "ADU%d %s now attached to /dev/usb/adutux%d\n",
+	dev_info(&पूर्णांकerface->dev, "ADU%d %s now attached to /dev/usb/adutux%d\n",
 		 le16_to_cpu(udev->descriptor.idProduct), dev->serial_number,
 		 (dev->minor - ADU_MINOR_BASE));
 
-	return 0;
+	वापस 0;
 
 error:
 	adu_delete(dev);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  * adu_disconnect
  *
- * Called by the usb core when the device is removed from the system.
+ * Called by the usb core when the device is हटाओd from the प्रणाली.
  */
-static void adu_disconnect(struct usb_interface *interface)
-{
-	struct adu_device *dev;
+अटल व्योम adu_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा adu_device *dev;
 
-	dev = usb_get_intfdata(interface);
+	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	usb_deregister_dev(interface, &adu_class);
+	usb_deरेजिस्टर_dev(पूर्णांकerface, &adu_class);
 
-	usb_poison_urb(dev->interrupt_in_urb);
-	usb_poison_urb(dev->interrupt_out_urb);
+	usb_poison_urb(dev->पूर्णांकerrupt_in_urb);
+	usb_poison_urb(dev->पूर्णांकerrupt_out_urb);
 
 	mutex_lock(&adutux_mutex);
-	usb_set_intfdata(interface, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
 
-	mutex_lock(&dev->mtx);	/* not interruptible */
+	mutex_lock(&dev->mtx);	/* not पूर्णांकerruptible */
 	dev->disconnected = 1;
 	mutex_unlock(&dev->mtx);
 
-	/* if the device is not opened, then we clean up right now */
-	if (!dev->open_count)
+	/* अगर the device is not खोलोed, then we clean up right now */
+	अगर (!dev->खोलो_count)
 		adu_delete(dev);
 
 	mutex_unlock(&adutux_mutex);
-}
+पूर्ण
 
-/* usb specific object needed to register this driver with the usb subsystem */
-static struct usb_driver adu_driver = {
+/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
+अटल काष्ठा usb_driver adu_driver = अणु
 	.name = "adutux",
 	.probe = adu_probe,
 	.disconnect = adu_disconnect,
 	.id_table = device_table,
-};
+पूर्ण;
 
 module_usb_driver(adu_driver);
 

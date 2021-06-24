@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR MIT) */
 /*
  * Copyright (c) 2017 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -8,30 +9,30 @@
  * Author: Yixun Lan <yixun.lan@amlogic.com>
  */
 
-#ifndef __MESON_AOCLK_H__
-#define __MESON_AOCLK_H__
+#अगर_अघोषित __MESON_AOCLK_H__
+#घोषणा __MESON_AOCLK_H__
 
-#include <linux/clk-provider.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/reset-controller.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset-controller.h>
 
-#include "clk-regmap.h"
+#समावेश "clk-regmap.h"
 
-struct meson_aoclk_data {
-	const unsigned int			reset_reg;
-	const int				num_reset;
-	const unsigned int			*reset;
-	const int				num_clks;
-	struct clk_regmap			**clks;
-	const struct clk_hw_onecell_data	*hw_data;
-};
+काष्ठा meson_aoclk_data अणु
+	स्थिर अचिन्हित पूर्णांक			reset_reg;
+	स्थिर पूर्णांक				num_reset;
+	स्थिर अचिन्हित पूर्णांक			*reset;
+	स्थिर पूर्णांक				num_clks;
+	काष्ठा clk_regmap			**clks;
+	स्थिर काष्ठा clk_hw_onecell_data	*hw_data;
+पूर्ण;
 
-struct meson_aoclk_reset_controller {
-	struct reset_controller_dev		reset;
-	const struct meson_aoclk_data		*data;
-	struct regmap				*regmap;
-};
+काष्ठा meson_aoclk_reset_controller अणु
+	काष्ठा reset_controller_dev		reset;
+	स्थिर काष्ठा meson_aoclk_data		*data;
+	काष्ठा regmap				*regmap;
+पूर्ण;
 
-int meson_aoclkc_probe(struct platform_device *pdev);
-#endif
+पूर्णांक meson_aoclkc_probe(काष्ठा platक्रमm_device *pdev);
+#पूर्ण_अगर

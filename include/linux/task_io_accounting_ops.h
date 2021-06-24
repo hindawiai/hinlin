@@ -1,114 +1,115 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Task I/O accounting operations
  */
-#ifndef __TASK_IO_ACCOUNTING_OPS_INCLUDED
-#define __TASK_IO_ACCOUNTING_OPS_INCLUDED
+#अगर_अघोषित __TASK_IO_ACCOUNTING_OPS_INCLUDED
+#घोषणा __TASK_IO_ACCOUNTING_OPS_INCLUDED
 
-#include <linux/sched.h>
+#समावेश <linux/sched.h>
 
-#ifdef CONFIG_TASK_IO_ACCOUNTING
-static inline void task_io_account_read(size_t bytes)
-{
-	current->ioac.read_bytes += bytes;
-}
-
-/*
- * We approximate number of blocks, because we account bytes only.
- * A 'block' is 512 bytes
- */
-static inline unsigned long task_io_get_inblock(const struct task_struct *p)
-{
-	return p->ioac.read_bytes >> 9;
-}
-
-static inline void task_io_account_write(size_t bytes)
-{
-	current->ioac.write_bytes += bytes;
-}
+#अगर_घोषित CONFIG_TASK_IO_ACCOUNTING
+अटल अंतरभूत व्योम task_io_account_पढ़ो(माप_प्रकार bytes)
+अणु
+	current->ioac.पढ़ो_bytes += bytes;
+पूर्ण
 
 /*
  * We approximate number of blocks, because we account bytes only.
  * A 'block' is 512 bytes
  */
-static inline unsigned long task_io_get_oublock(const struct task_struct *p)
-{
-	return p->ioac.write_bytes >> 9;
-}
+अटल अंतरभूत अचिन्हित दीर्घ task_io_get_inblock(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	वापस p->ioac.पढ़ो_bytes >> 9;
+पूर्ण
 
-static inline void task_io_account_cancelled_write(size_t bytes)
-{
-	current->ioac.cancelled_write_bytes += bytes;
-}
+अटल अंतरभूत व्योम task_io_account_ग_लिखो(माप_प्रकार bytes)
+अणु
+	current->ioac.ग_लिखो_bytes += bytes;
+पूर्ण
 
-static inline void task_io_accounting_init(struct task_io_accounting *ioac)
-{
-	memset(ioac, 0, sizeof(*ioac));
-}
+/*
+ * We approximate number of blocks, because we account bytes only.
+ * A 'block' is 512 bytes
+ */
+अटल अंतरभूत अचिन्हित दीर्घ task_io_get_oublock(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	वापस p->ioac.ग_लिखो_bytes >> 9;
+पूर्ण
 
-static inline void task_blk_io_accounting_add(struct task_io_accounting *dst,
-						struct task_io_accounting *src)
-{
-	dst->read_bytes += src->read_bytes;
-	dst->write_bytes += src->write_bytes;
-	dst->cancelled_write_bytes += src->cancelled_write_bytes;
-}
+अटल अंतरभूत व्योम task_io_account_cancelled_ग_लिखो(माप_प्रकार bytes)
+अणु
+	current->ioac.cancelled_ग_लिखो_bytes += bytes;
+पूर्ण
 
-#else
+अटल अंतरभूत व्योम task_io_accounting_init(काष्ठा task_io_accounting *ioac)
+अणु
+	स_रखो(ioac, 0, माप(*ioac));
+पूर्ण
 
-static inline void task_io_account_read(size_t bytes)
-{
-}
+अटल अंतरभूत व्योम task_blk_io_accounting_add(काष्ठा task_io_accounting *dst,
+						काष्ठा task_io_accounting *src)
+अणु
+	dst->पढ़ो_bytes += src->पढ़ो_bytes;
+	dst->ग_लिखो_bytes += src->ग_लिखो_bytes;
+	dst->cancelled_ग_लिखो_bytes += src->cancelled_ग_लिखो_bytes;
+पूर्ण
 
-static inline unsigned long task_io_get_inblock(const struct task_struct *p)
-{
-	return 0;
-}
+#अन्यथा
 
-static inline void task_io_account_write(size_t bytes)
-{
-}
+अटल अंतरभूत व्योम task_io_account_पढ़ो(माप_प्रकार bytes)
+अणु
+पूर्ण
 
-static inline unsigned long task_io_get_oublock(const struct task_struct *p)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ task_io_get_inblock(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void task_io_account_cancelled_write(size_t bytes)
-{
-}
+अटल अंतरभूत व्योम task_io_account_ग_लिखो(माप_प्रकार bytes)
+अणु
+पूर्ण
 
-static inline void task_io_accounting_init(struct task_io_accounting *ioac)
-{
-}
+अटल अंतरभूत अचिन्हित दीर्घ task_io_get_oublock(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void task_blk_io_accounting_add(struct task_io_accounting *dst,
-						struct task_io_accounting *src)
-{
-}
+अटल अंतरभूत व्योम task_io_account_cancelled_ग_लिखो(माप_प्रकार bytes)
+अणु
+पूर्ण
 
-#endif /* CONFIG_TASK_IO_ACCOUNTING */
+अटल अंतरभूत व्योम task_io_accounting_init(काष्ठा task_io_accounting *ioac)
+अणु
+पूर्ण
 
-#ifdef CONFIG_TASK_XACCT
-static inline void task_chr_io_accounting_add(struct task_io_accounting *dst,
-						struct task_io_accounting *src)
-{
-	dst->rchar += src->rchar;
-	dst->wchar += src->wchar;
+अटल अंतरभूत व्योम task_blk_io_accounting_add(काष्ठा task_io_accounting *dst,
+						काष्ठा task_io_accounting *src)
+अणु
+पूर्ण
+
+#पूर्ण_अगर /* CONFIG_TASK_IO_ACCOUNTING */
+
+#अगर_घोषित CONFIG_TASK_XACCT
+अटल अंतरभूत व्योम task_chr_io_accounting_add(काष्ठा task_io_accounting *dst,
+						काष्ठा task_io_accounting *src)
+अणु
+	dst->rअक्षर += src->rअक्षर;
+	dst->wअक्षर += src->wअक्षर;
 	dst->syscr += src->syscr;
 	dst->syscw += src->syscw;
-}
-#else
-static inline void task_chr_io_accounting_add(struct task_io_accounting *dst,
-						struct task_io_accounting *src)
-{
-}
-#endif /* CONFIG_TASK_XACCT */
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम task_chr_io_accounting_add(काष्ठा task_io_accounting *dst,
+						काष्ठा task_io_accounting *src)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_TASK_XACCT */
 
-static inline void task_io_accounting_add(struct task_io_accounting *dst,
-						struct task_io_accounting *src)
-{
+अटल अंतरभूत व्योम task_io_accounting_add(काष्ठा task_io_accounting *dst,
+						काष्ठा task_io_accounting *src)
+अणु
 	task_chr_io_accounting_add(dst, src);
 	task_blk_io_accounting_add(dst, src);
-}
-#endif /* __TASK_IO_ACCOUNTING_OPS_INCLUDED */
+पूर्ण
+#पूर्ण_अगर /* __TASK_IO_ACCOUNTING_OPS_INCLUDED */

@@ -1,122 +1,123 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_POWERPC_PARAVIRT_H
-#define _ASM_POWERPC_PARAVIRT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_POWERPC_PARAVIRT_H
+#घोषणा _ASM_POWERPC_PARAVIRT_H
 
-#include <linux/jump_label.h>
-#include <asm/smp.h>
-#ifdef CONFIG_PPC64
-#include <asm/paca.h>
-#include <asm/hvcall.h>
-#endif
+#समावेश <linux/jump_label.h>
+#समावेश <यंत्र/smp.h>
+#अगर_घोषित CONFIG_PPC64
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/hvcall.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_SPLPAR
-#include <linux/smp.h>
-#include <asm/kvm_guest.h>
-#include <asm/cputhreads.h>
+#अगर_घोषित CONFIG_PPC_SPLPAR
+#समावेश <linux/smp.h>
+#समावेश <यंत्र/kvm_guest.h>
+#समावेश <यंत्र/cputhपढ़ोs.h>
 
 DECLARE_STATIC_KEY_FALSE(shared_processor);
 
-static inline bool is_shared_processor(void)
-{
-	return static_branch_unlikely(&shared_processor);
-}
+अटल अंतरभूत bool is_shared_processor(व्योम)
+अणु
+	वापस अटल_branch_unlikely(&shared_processor);
+पूर्ण
 
 /* If bit 0 is set, the cpu has been preempted */
-static inline u32 yield_count_of(int cpu)
-{
+अटल अंतरभूत u32 yield_count_of(पूर्णांक cpu)
+अणु
 	__be32 yield_count = READ_ONCE(lppaca_of(cpu).yield_count);
-	return be32_to_cpu(yield_count);
-}
+	वापस be32_to_cpu(yield_count);
+पूर्ण
 
 /*
- * Spinlock code confers and prods, so don't trace the hcalls because the
+ * Spinlock code confers and prods, so करोn't trace the hcalls because the
  * tracing code takes spinlocks which can cause recursion deadlocks.
  *
- * These calls are made while the lock is not held: the lock slowpath yields if
- * it can not acquire the lock, and unlock slow path might prod if a waiter has
- * yielded). So this may not be a problem for simple spin locks because the
- * tracing does not technically recurse on the lock, but we avoid it anyway.
+ * These calls are made जबतक the lock is not held: the lock slowpath yields अगर
+ * it can not acquire the lock, and unlock slow path might prod अगर a रुकोer has
+ * yielded). So this may not be a problem क्रम simple spin locks because the
+ * tracing करोes not technically recurse on the lock, but we aव्योम it anyway.
  *
  * However the queued spin lock contended path is more strictly ordered: the
  * H_CONFER hcall is made after the task has queued itself on the lock, so then
  * recursing on that lock will cause the task to then queue up again behind the
  * first instance (or worse: queued spinlocks use tricks that assume a context
- * never waits on more than one spinlock, so such recursion may cause random
+ * never रुकोs on more than one spinlock, so such recursion may cause अक्रमom
  * corruption in the lock code).
  */
-static inline void yield_to_preempted(int cpu, u32 yield_count)
-{
+अटल अंतरभूत व्योम yield_to_preempted(पूर्णांक cpu, u32 yield_count)
+अणु
 	plpar_hcall_norets_notrace(H_CONFER, get_hard_smp_processor_id(cpu), yield_count);
-}
+पूर्ण
 
-static inline void prod_cpu(int cpu)
-{
+अटल अंतरभूत व्योम prod_cpu(पूर्णांक cpu)
+अणु
 	plpar_hcall_norets_notrace(H_PROD, get_hard_smp_processor_id(cpu));
-}
+पूर्ण
 
-static inline void yield_to_any(void)
-{
+अटल अंतरभूत व्योम yield_to_any(व्योम)
+अणु
 	plpar_hcall_norets_notrace(H_CONFER, -1, 0);
-}
-#else
-static inline bool is_shared_processor(void)
-{
-	return false;
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool is_shared_processor(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline u32 yield_count_of(int cpu)
-{
-	return 0;
-}
+अटल अंतरभूत u32 yield_count_of(पूर्णांक cpu)
+अणु
+	वापस 0;
+पूर्ण
 
-extern void ___bad_yield_to_preempted(void);
-static inline void yield_to_preempted(int cpu, u32 yield_count)
-{
+बाह्य व्योम ___bad_yield_to_preempted(व्योम);
+अटल अंतरभूत व्योम yield_to_preempted(पूर्णांक cpu, u32 yield_count)
+अणु
 	___bad_yield_to_preempted(); /* This would be a bug */
-}
+पूर्ण
 
-extern void ___bad_yield_to_any(void);
-static inline void yield_to_any(void)
-{
+बाह्य व्योम ___bad_yield_to_any(व्योम);
+अटल अंतरभूत व्योम yield_to_any(व्योम)
+अणु
 	___bad_yield_to_any(); /* This would be a bug */
-}
+पूर्ण
 
-extern void ___bad_prod_cpu(void);
-static inline void prod_cpu(int cpu)
-{
+बाह्य व्योम ___bad_prod_cpu(व्योम);
+अटल अंतरभूत व्योम prod_cpu(पूर्णांक cpu)
+अणु
 	___bad_prod_cpu(); /* This would be a bug */
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#define vcpu_is_preempted vcpu_is_preempted
-static inline bool vcpu_is_preempted(int cpu)
-{
-	if (!is_shared_processor())
-		return false;
+#घोषणा vcpu_is_preempted vcpu_is_preempted
+अटल अंतरभूत bool vcpu_is_preempted(पूर्णांक cpu)
+अणु
+	अगर (!is_shared_processor())
+		वापस false;
 
-#ifdef CONFIG_PPC_SPLPAR
-	if (!is_kvm_guest()) {
-		int first_cpu = cpu_first_thread_sibling(smp_processor_id());
+#अगर_घोषित CONFIG_PPC_SPLPAR
+	अगर (!is_kvm_guest()) अणु
+		पूर्णांक first_cpu = cpu_first_thपढ़ो_sibling(smp_processor_id());
 
 		/*
 		 * Preemption can only happen at core granularity. This CPU
-		 * is not preempted if one of the CPU of this core is not
+		 * is not preempted अगर one of the CPU of this core is not
 		 * preempted.
 		 */
-		if (cpu_first_thread_sibling(cpu) == first_cpu)
-			return false;
-	}
-#endif
+		अगर (cpu_first_thपढ़ो_sibling(cpu) == first_cpu)
+			वापस false;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (yield_count_of(cpu) & 1)
-		return true;
-	return false;
-}
+	अगर (yield_count_of(cpu) & 1)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static inline bool pv_is_native_spin_unlock(void)
-{
-	return !is_shared_processor();
-}
+अटल अंतरभूत bool pv_is_native_spin_unlock(व्योम)
+अणु
+	वापस !is_shared_processor();
+पूर्ण
 
-#endif /* _ASM_POWERPC_PARAVIRT_H */
+#पूर्ण_अगर /* _ASM_POWERPC_PARAVIRT_H */

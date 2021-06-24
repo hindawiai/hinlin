@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 
-/* Definitions for RTL8187SE hardware
+/* Definitions क्रम RTL8187SE hardware
  *
  * Copyright 2009 Larry Finger <Larry.Finger@lwfinger.net>
  * Copyright 2014 Andrea Merello <andrea.merello@gmail.com>
@@ -13,46 +14,46 @@
  * Copyright 2007 Andrea Merello <andrea.merello@gmail.com>
  */
 
-#ifndef RTL8187SE_RTL8225_H
-#define RTL8187SE_RTL8225_H
+#अगर_अघोषित RTL8187SE_RTL8225_H
+#घोषणा RTL8187SE_RTL8225_H
 
-#define RTL8225SE_ANAPARAM_ON	0xb0054d00
-#define RTL8225SE_ANAPARAM2_ON	0x000004c6
+#घोषणा RTL8225SE_ANAPARAM_ON	0xb0054d00
+#घोषणा RTL8225SE_ANAPARAM2_ON	0x000004c6
 
 /* all off except PLL */
-#define RTL8225SE_ANAPARAM_OFF	0xb0054dec
+#घोषणा RTL8225SE_ANAPARAM_OFF	0xb0054dec
 /* all on including PLL */
-#define RTL8225SE_ANAPARAM_OFF2	0xb0054dfc
+#घोषणा RTL8225SE_ANAPARAM_OFF2	0xb0054dfc
 
-#define RTL8225SE_ANAPARAM2_OFF	0x00ff04c6
+#घोषणा RTL8225SE_ANAPARAM2_OFF	0x00ff04c6
 
-#define RTL8225SE_ANAPARAM3	0x10
+#घोषणा RTL8225SE_ANAPARAM3	0x10
 
-enum rtl8187se_power_state {
+क्रमागत rtl8187se_घातer_state अणु
 	RTL8187SE_POWER_ON,
 	RTL8187SE_POWER_OFF,
 	RTL8187SE_POWER_SLEEP
-};
+पूर्ण;
 
-static inline void rtl8225se_write_phy_ofdm(struct ieee80211_hw *dev,
+अटल अंतरभूत व्योम rtl8225se_ग_लिखो_phy_ofdm(काष्ठा ieee80211_hw *dev,
 					  u8 addr, u8 data)
-{
-	rtl8180_write_phy(dev, addr, data);
-}
+अणु
+	rtl8180_ग_लिखो_phy(dev, addr, data);
+पूर्ण
 
-static inline void rtl8225se_write_phy_cck(struct ieee80211_hw *dev,
+अटल अंतरभूत व्योम rtl8225se_ग_लिखो_phy_cck(काष्ठा ieee80211_hw *dev,
 					 u8 addr, u8 data)
-{
-	rtl8180_write_phy(dev, addr, data | 0x10000);
-}
+अणु
+	rtl8180_ग_लिखो_phy(dev, addr, data | 0x10000);
+पूर्ण
 
 
-const struct rtl818x_rf_ops *rtl8187se_detect_rf(struct ieee80211_hw *);
-void rtl8225se_rf_stop(struct ieee80211_hw *dev);
-void rtl8225se_rf_set_channel(struct ieee80211_hw *dev,
-				     struct ieee80211_conf *conf);
-void rtl8225se_rf_conf_erp(struct ieee80211_hw *dev,
-				  struct ieee80211_bss_conf *info);
-void rtl8225se_rf_init(struct ieee80211_hw *dev);
+स्थिर काष्ठा rtl818x_rf_ops *rtl8187se_detect_rf(काष्ठा ieee80211_hw *);
+व्योम rtl8225se_rf_stop(काष्ठा ieee80211_hw *dev);
+व्योम rtl8225se_rf_set_channel(काष्ठा ieee80211_hw *dev,
+				     काष्ठा ieee80211_conf *conf);
+व्योम rtl8225se_rf_conf_erp(काष्ठा ieee80211_hw *dev,
+				  काष्ठा ieee80211_bss_conf *info);
+व्योम rtl8225se_rf_init(काष्ठा ieee80211_hw *dev);
 
-#endif /* RTL8187SE_RTL8225_H */
+#पूर्ण_अगर /* RTL8187SE_RTL8225_H */

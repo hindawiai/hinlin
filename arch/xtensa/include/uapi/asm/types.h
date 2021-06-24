@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * include/asm-xtensa/types.h
+ * include/यंत्र-xtensa/types.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#ifndef _UAPI_XTENSA_TYPES_H
-#define _UAPI_XTENSA_TYPES_H
+#अगर_अघोषित _UAPI_XTENSA_TYPES_H
+#घोषणा _UAPI_XTENSA_TYPES_H
 
-#include <asm-generic/int-ll64.h>
+#समावेश <यंत्र-generic/पूर्णांक-ll64.h>
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 # define __XTENSA_UL(x)		(x)
 # define __XTENSA_UL_CONST(x)	x
-#else
-# define __XTENSA_UL(x)		((unsigned long)(x))
+#अन्यथा
+# define __XTENSA_UL(x)		((अचिन्हित दीर्घ)(x))
 # define ___XTENSA_UL_CONST(x)	x##UL
 # define __XTENSA_UL_CONST(x)	___XTENSA_UL_CONST(x)
-#endif
+#पूर्ण_अगर
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _UAPI_XTENSA_TYPES_H */
+#पूर्ण_अगर /* _UAPI_XTENSA_TYPES_H */

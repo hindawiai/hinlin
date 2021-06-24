@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/socket.h>
-#include <linux/timer.h>
-#include <net/ax25.h>
-#include <linux/skbuff.h>
-#include <net/rose.h>
-#include <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/समयr.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/rose.h>
+#समावेश <linux/init.h>
 
-static struct sk_buff_head loopback_queue;
-#define ROSE_LOOPBACK_LIMIT 1000
-static struct timer_list loopback_timer;
+अटल काष्ठा sk_buff_head loopback_queue;
+#घोषणा ROSE_LOOPBACK_LIMIT 1000
+अटल काष्ठा समयr_list loopback_समयr;
 
-static void rose_set_loopback_timer(void);
-static void rose_loopback_timer(struct timer_list *unused);
+अटल व्योम rose_set_loopback_समयr(व्योम);
+अटल व्योम rose_loopback_समयr(काष्ठा समयr_list *unused);
 
-void rose_loopback_init(void)
-{
+व्योम rose_loopback_init(व्योम)
+अणु
 	skb_queue_head_init(&loopback_queue);
 
-	timer_setup(&loopback_timer, rose_loopback_timer, 0);
-}
+	समयr_setup(&loopback_समयr, rose_loopback_समयr, 0);
+पूर्ण
 
-static int rose_loopback_running(void)
-{
-	return timer_pending(&loopback_timer);
-}
+अटल पूर्णांक rose_loopback_running(व्योम)
+अणु
+	वापस समयr_pending(&loopback_समयr);
+पूर्ण
 
-int rose_loopback_queue(struct sk_buff *skb, struct rose_neigh *neigh)
-{
-	struct sk_buff *skbn = NULL;
+पूर्णांक rose_loopback_queue(काष्ठा sk_buff *skb, काष्ठा rose_neigh *neigh)
+अणु
+	काष्ठा sk_buff *skbn = शून्य;
 
-	if (skb_queue_len(&loopback_queue) < ROSE_LOOPBACK_LIMIT)
+	अगर (skb_queue_len(&loopback_queue) < ROSE_LOOPBACK_LIMIT)
 		skbn = skb_clone(skb, GFP_ATOMIC);
 
-	if (skbn) {
+	अगर (skbn) अणु
 		consume_skb(skb);
 		skb_queue_tail(&loopback_queue, skbn);
 
-		if (!rose_loopback_running())
-			rose_set_loopback_timer();
-	} else {
-		kfree_skb(skb);
-	}
+		अगर (!rose_loopback_running())
+			rose_set_loopback_समयr();
+	पूर्ण अन्यथा अणु
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void rose_set_loopback_timer(void)
-{
-	mod_timer(&loopback_timer, jiffies + 10);
-}
+अटल व्योम rose_set_loopback_समयr(व्योम)
+अणु
+	mod_समयr(&loopback_समयr, jअगरfies + 10);
+पूर्ण
 
-static void rose_loopback_timer(struct timer_list *unused)
-{
-	struct sk_buff *skb;
-	struct net_device *dev;
+अटल व्योम rose_loopback_समयr(काष्ठा समयr_list *unused)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा net_device *dev;
 	rose_address *dest;
-	struct sock *sk;
-	unsigned short frametype;
-	unsigned int lci_i, lci_o;
-	int count;
+	काष्ठा sock *sk;
+	अचिन्हित लघु frametype;
+	अचिन्हित पूर्णांक lci_i, lci_o;
+	पूर्णांक count;
 
-	for (count = 0; count < ROSE_LOOPBACK_LIMIT; count++) {
+	क्रम (count = 0; count < ROSE_LOOPBACK_LIMIT; count++) अणु
 		skb = skb_dequeue(&loopback_queue);
-		if (!skb)
-			return;
-		if (skb->len < ROSE_MIN_LEN) {
-			kfree_skb(skb);
-			continue;
-		}
+		अगर (!skb)
+			वापस;
+		अगर (skb->len < ROSE_MIN_LEN) अणु
+			kमुक्त_skb(skb);
+			जारी;
+		पूर्ण
 		lci_i     = ((skb->data[0] << 8) & 0xF00) + ((skb->data[1] << 0) & 0x0FF);
 		frametype = skb->data[2];
-		if (frametype == ROSE_CALL_REQUEST &&
+		अगर (frametype == ROSE_CALL_REQUEST &&
 		    (skb->len <= ROSE_CALL_REQ_FACILITIES_OFF ||
 		     skb->data[ROSE_CALL_REQ_ADDR_LEN_OFF] !=
-		     ROSE_CALL_REQ_ADDR_LEN_VAL)) {
-			kfree_skb(skb);
-			continue;
-		}
+		     ROSE_CALL_REQ_ADDR_LEN_VAL)) अणु
+			kमुक्त_skb(skb);
+			जारी;
+		पूर्ण
 		dest      = (rose_address *)(skb->data + ROSE_CALL_REQ_DEST_ADDR_OFF);
 		lci_o     = ROSE_DEFAULT_MAXVC + 1 - lci_i;
 
 		skb_reset_transport_header(skb);
 
 		sk = rose_find_socket(lci_o, rose_loopback_neigh);
-		if (sk) {
-			if (rose_process_rx_frame(sk, skb) == 0)
-				kfree_skb(skb);
-			continue;
-		}
+		अगर (sk) अणु
+			अगर (rose_process_rx_frame(sk, skb) == 0)
+				kमुक्त_skb(skb);
+			जारी;
+		पूर्ण
 
-		if (frametype == ROSE_CALL_REQUEST) {
-			if (!rose_loopback_neigh->dev) {
-				kfree_skb(skb);
-				continue;
-			}
+		अगर (frametype == ROSE_CALL_REQUEST) अणु
+			अगर (!rose_loopback_neigh->dev) अणु
+				kमुक्त_skb(skb);
+				जारी;
+			पूर्ण
 
 			dev = rose_dev_get(dest);
-			if (!dev) {
-				kfree_skb(skb);
-				continue;
-			}
+			अगर (!dev) अणु
+				kमुक्त_skb(skb);
+				जारी;
+			पूर्ण
 
-			if (rose_rx_call_request(skb, dev, rose_loopback_neigh, lci_o) == 0) {
+			अगर (rose_rx_call_request(skb, dev, rose_loopback_neigh, lci_o) == 0) अणु
 				dev_put(dev);
-				kfree_skb(skb);
-			}
-		} else {
-			kfree_skb(skb);
-		}
-	}
-	if (!skb_queue_empty(&loopback_queue))
-		mod_timer(&loopback_timer, jiffies + 1);
-}
+				kमुक्त_skb(skb);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			kमुक्त_skb(skb);
+		पूर्ण
+	पूर्ण
+	अगर (!skb_queue_empty(&loopback_queue))
+		mod_समयr(&loopback_समयr, jअगरfies + 1);
+पूर्ण
 
-void __exit rose_loopback_clear(void)
-{
-	struct sk_buff *skb;
+व्योम __निकास rose_loopback_clear(व्योम)
+अणु
+	काष्ठा sk_buff *skb;
 
-	del_timer(&loopback_timer);
+	del_समयr(&loopback_समयr);
 
-	while ((skb = skb_dequeue(&loopback_queue)) != NULL) {
-		skb->sk = NULL;
-		kfree_skb(skb);
-	}
-}
+	जबतक ((skb = skb_dequeue(&loopback_queue)) != शून्य) अणु
+		skb->sk = शून्य;
+		kमुक्त_skb(skb);
+	पूर्ण
+पूर्ण

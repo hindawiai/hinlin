@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdlib.h>
-#include <string.h>
-#include <malloc.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <assert.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <दो_स्मृति.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <unistd.h>
+#समावेश <निश्चित.स>
 
-#include <linux/gfp.h>
-#include <linux/poison.h>
-#include <linux/slab.h>
-#include <linux/radix-tree.h>
-#include <urcu/uatomic.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/poison.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/radix-tree.h>
+#समावेश <urcu/uatomic.h>
 
-int nr_allocated;
-int preempt_count;
-int kmalloc_verbose;
-int test_verbose;
+पूर्णांक nr_allocated;
+पूर्णांक preempt_count;
+पूर्णांक kदो_स्मृति_verbose;
+पूर्णांक test_verbose;
 
-struct kmem_cache {
-	pthread_mutex_t lock;
-	unsigned int size;
-	unsigned int align;
-	int nr_objs;
-	void *objs;
-	void (*ctor)(void *);
-};
+काष्ठा kmem_cache अणु
+	pthपढ़ो_mutex_t lock;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक align;
+	पूर्णांक nr_objs;
+	व्योम *objs;
+	व्योम (*ctor)(व्योम *);
+पूर्ण;
 
-void *kmem_cache_alloc(struct kmem_cache *cachep, int gfp)
-{
-	void *p;
+व्योम *kmem_cache_alloc(काष्ठा kmem_cache *cachep, पूर्णांक gfp)
+अणु
+	व्योम *p;
 
-	if (!(gfp & __GFP_DIRECT_RECLAIM))
-		return NULL;
+	अगर (!(gfp & __GFP_सूचीECT_RECLAIM))
+		वापस शून्य;
 
-	pthread_mutex_lock(&cachep->lock);
-	if (cachep->nr_objs) {
-		struct radix_tree_node *node = cachep->objs;
+	pthपढ़ो_mutex_lock(&cachep->lock);
+	अगर (cachep->nr_objs) अणु
+		काष्ठा radix_tree_node *node = cachep->objs;
 		cachep->nr_objs--;
 		cachep->objs = node->parent;
-		pthread_mutex_unlock(&cachep->lock);
-		node->parent = NULL;
+		pthपढ़ो_mutex_unlock(&cachep->lock);
+		node->parent = शून्य;
 		p = node;
-	} else {
-		pthread_mutex_unlock(&cachep->lock);
-		if (cachep->align)
+	पूर्ण अन्यथा अणु
+		pthपढ़ो_mutex_unlock(&cachep->lock);
+		अगर (cachep->align)
 			posix_memalign(&p, cachep->align, cachep->size);
-		else
-			p = malloc(cachep->size);
-		if (cachep->ctor)
+		अन्यथा
+			p = दो_स्मृति(cachep->size);
+		अगर (cachep->ctor)
 			cachep->ctor(p);
-		else if (gfp & __GFP_ZERO)
-			memset(p, 0, cachep->size);
-	}
+		अन्यथा अगर (gfp & __GFP_ZERO)
+			स_रखो(p, 0, cachep->size);
+	पूर्ण
 
 	uatomic_inc(&nr_allocated);
-	if (kmalloc_verbose)
-		printf("Allocating %p from slab\n", p);
-	return p;
-}
+	अगर (kदो_स्मृति_verbose)
+		म_लिखो("Allocating %p from slab\n", p);
+	वापस p;
+पूर्ण
 
-void kmem_cache_free(struct kmem_cache *cachep, void *objp)
-{
-	assert(objp);
+व्योम kmem_cache_मुक्त(काष्ठा kmem_cache *cachep, व्योम *objp)
+अणु
+	निश्चित(objp);
 	uatomic_dec(&nr_allocated);
-	if (kmalloc_verbose)
-		printf("Freeing %p to slab\n", objp);
-	pthread_mutex_lock(&cachep->lock);
-	if (cachep->nr_objs > 10 || cachep->align) {
-		memset(objp, POISON_FREE, cachep->size);
-		free(objp);
-	} else {
-		struct radix_tree_node *node = objp;
+	अगर (kदो_स्मृति_verbose)
+		म_लिखो("Freeing %p to slab\n", objp);
+	pthपढ़ो_mutex_lock(&cachep->lock);
+	अगर (cachep->nr_objs > 10 || cachep->align) अणु
+		स_रखो(objp, POISON_FREE, cachep->size);
+		मुक्त(objp);
+	पूर्ण अन्यथा अणु
+		काष्ठा radix_tree_node *node = objp;
 		cachep->nr_objs++;
 		node->parent = cachep->objs;
 		cachep->objs = node;
-	}
-	pthread_mutex_unlock(&cachep->lock);
-}
+	पूर्ण
+	pthपढ़ो_mutex_unlock(&cachep->lock);
+पूर्ण
 
-void *kmalloc(size_t size, gfp_t gfp)
-{
-	void *ret;
+व्योम *kदो_स्मृति(माप_प्रकार size, gfp_t gfp)
+अणु
+	व्योम *ret;
 
-	if (!(gfp & __GFP_DIRECT_RECLAIM))
-		return NULL;
+	अगर (!(gfp & __GFP_सूचीECT_RECLAIM))
+		वापस शून्य;
 
-	ret = malloc(size);
+	ret = दो_स्मृति(size);
 	uatomic_inc(&nr_allocated);
-	if (kmalloc_verbose)
-		printf("Allocating %p from malloc\n", ret);
-	if (gfp & __GFP_ZERO)
-		memset(ret, 0, size);
-	return ret;
-}
+	अगर (kदो_स्मृति_verbose)
+		म_लिखो("Allocating %p from malloc\n", ret);
+	अगर (gfp & __GFP_ZERO)
+		स_रखो(ret, 0, size);
+	वापस ret;
+पूर्ण
 
-void kfree(void *p)
-{
-	if (!p)
-		return;
+व्योम kमुक्त(व्योम *p)
+अणु
+	अगर (!p)
+		वापस;
 	uatomic_dec(&nr_allocated);
-	if (kmalloc_verbose)
-		printf("Freeing %p to malloc\n", p);
-	free(p);
-}
+	अगर (kदो_स्मृति_verbose)
+		म_लिखो("Freeing %p to malloc\n", p);
+	मुक्त(p);
+पूर्ण
 
-struct kmem_cache *
-kmem_cache_create(const char *name, unsigned int size, unsigned int align,
-		unsigned int flags, void (*ctor)(void *))
-{
-	struct kmem_cache *ret = malloc(sizeof(*ret));
+काष्ठा kmem_cache *
+kmem_cache_create(स्थिर अक्षर *name, अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक align,
+		अचिन्हित पूर्णांक flags, व्योम (*ctor)(व्योम *))
+अणु
+	काष्ठा kmem_cache *ret = दो_स्मृति(माप(*ret));
 
-	pthread_mutex_init(&ret->lock, NULL);
+	pthपढ़ो_mutex_init(&ret->lock, शून्य);
 	ret->size = size;
 	ret->align = align;
 	ret->nr_objs = 0;
-	ret->objs = NULL;
+	ret->objs = शून्य;
 	ret->ctor = ctor;
-	return ret;
-}
+	वापस ret;
+पूर्ण

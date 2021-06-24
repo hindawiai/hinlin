@@ -1,125 +1,126 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * i2sbus driver -- private definitions
+ * i2sbus driver -- निजी definitions
  *
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
-#ifndef __I2SBUS_H
-#define __I2SBUS_H
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/mutex.h>
-#include <linux/completion.h>
+#अगर_अघोषित __I2SBUS_H
+#घोषणा __I2SBUS_H
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/completion.h>
 
-#include <sound/pcm.h>
+#समावेश <sound/pcm.h>
 
-#include <asm/prom.h>
-#include <asm/pmac_feature.h>
-#include <asm/dbdma.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/pmac_feature.h>
+#समावेश <यंत्र/dbdma.h>
 
-#include "interface.h"
-#include "../soundbus.h"
+#समावेश "interface.h"
+#समावेश "../soundbus.h"
 
-struct i2sbus_control {
-	struct list_head list;
-	struct macio_chip *macio;
-};
+काष्ठा i2sbus_control अणु
+	काष्ठा list_head list;
+	काष्ठा macio_chip *macio;
+पूर्ण;
 
-#define MAX_DBDMA_COMMANDS	32
+#घोषणा MAX_DBDMA_COMMANDS	32
 
-struct dbdma_command_mem {
+काष्ठा dbdma_command_mem अणु
 	dma_addr_t bus_addr;
 	dma_addr_t bus_cmd_start;
-	struct dbdma_cmd *cmds;
-	void *space;
-	int size;
+	काष्ठा dbdma_cmd *cmds;
+	व्योम *space;
+	पूर्णांक size;
 	u32 running:1;
 	u32 stopping:1;
-};
+पूर्ण;
 
-struct pcm_info {
+काष्ठा pcm_info अणु
 	u32 created:1, /* has this direction been created with alsa? */
 	    active:1;  /* is this stream active? */
-	/* runtime information */
-	struct snd_pcm_substream *substream;
-	int current_period;
+	/* runसमय inक्रमmation */
+	काष्ठा snd_pcm_substream *substream;
+	पूर्णांक current_period;
 	u32 frame_count;
-	struct dbdma_command_mem dbdma_ring;
-	volatile struct dbdma_regs __iomem *dbdma;
-	struct completion *stop_completion;
-};
+	काष्ठा dbdma_command_mem dbdma_ring;
+	अस्थिर काष्ठा dbdma_regs __iomem *dbdma;
+	काष्ठा completion *stop_completion;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	aoa_resource_i2smmio = 0,
 	aoa_resource_txdbdma,
 	aoa_resource_rxdbdma,
-};
+पूर्ण;
 
-struct i2sbus_dev {
-	struct soundbus_dev sound;
-	struct macio_dev *macio;
-	struct i2sbus_control *control;
-	volatile struct i2s_interface_regs __iomem *intfregs;
+काष्ठा i2sbus_dev अणु
+	काष्ठा soundbus_dev sound;
+	काष्ठा macio_dev *macio;
+	काष्ठा i2sbus_control *control;
+	अस्थिर काष्ठा i2s_पूर्णांकerface_regs __iomem *पूर्णांकfregs;
 
-	struct resource resources[3];
-	struct resource *allocated_resource[3];
-	int interrupts[3];
-	char rnames[3][32];
+	काष्ठा resource resources[3];
+	काष्ठा resource *allocated_resource[3];
+	पूर्णांक पूर्णांकerrupts[3];
+	अक्षर rnames[3][32];
 
 	/* info about currently active substreams */
-	struct pcm_info out, in;
-	snd_pcm_format_t format;
-	unsigned int rate;
+	काष्ठा pcm_info out, in;
+	snd_pcm_क्रमmat_t क्रमmat;
+	अचिन्हित पूर्णांक rate;
 
-	/* list for a single controller */
-	struct list_head item;
+	/* list क्रम a single controller */
+	काष्ठा list_head item;
 	/* number of bus on controller */
-	int bus_number;
-	/* for use by control layer */
-	struct pmf_function *enable,
+	पूर्णांक bus_number;
+	/* क्रम use by control layer */
+	काष्ठा pmf_function *enable,
 			    *cell_enable,
 			    *cell_disable,
-			    *clock_enable,
-			    *clock_disable;
+			    *घड़ी_enable,
+			    *घड़ी_disable;
 
 	/* locks */
-	/* spinlock for low-level interrupt locking */
+	/* spinlock क्रम low-level पूर्णांकerrupt locking */
 	spinlock_t low_lock;
-	/* mutex for high-level consistency */
-	struct mutex lock;
-};
+	/* mutex क्रम high-level consistency */
+	काष्ठा mutex lock;
+पूर्ण;
 
-#define soundbus_dev_to_i2sbus_dev(sdev) \
-		container_of(sdev, struct i2sbus_dev, sound)
+#घोषणा soundbus_dev_to_i2sbus_dev(sdev) \
+		container_of(sdev, काष्ठा i2sbus_dev, sound)
 
-/* pcm specific functions */
-extern int
-i2sbus_attach_codec(struct soundbus_dev *dev, struct snd_card *card,
-		    struct codec_info *ci, void *data);
-extern void
-i2sbus_detach_codec(struct soundbus_dev *dev, void *data);
-extern irqreturn_t
-i2sbus_tx_intr(int irq, void *devid);
-extern irqreturn_t
-i2sbus_rx_intr(int irq, void *devid);
+/* pcm specअगरic functions */
+बाह्य पूर्णांक
+i2sbus_attach_codec(काष्ठा soundbus_dev *dev, काष्ठा snd_card *card,
+		    काष्ठा codec_info *ci, व्योम *data);
+बाह्य व्योम
+i2sbus_detach_codec(काष्ठा soundbus_dev *dev, व्योम *data);
+बाह्य irqवापस_t
+i2sbus_tx_पूर्णांकr(पूर्णांक irq, व्योम *devid);
+बाह्य irqवापस_t
+i2sbus_rx_पूर्णांकr(पूर्णांक irq, व्योम *devid);
 
-extern void i2sbus_wait_for_stop_both(struct i2sbus_dev *i2sdev);
-extern void i2sbus_pcm_prepare_both(struct i2sbus_dev *i2sdev);
+बाह्य व्योम i2sbus_रुको_क्रम_stop_both(काष्ठा i2sbus_dev *i2sdev);
+बाह्य व्योम i2sbus_pcm_prepare_both(काष्ठा i2sbus_dev *i2sdev);
 
-/* control specific functions */
-extern int i2sbus_control_init(struct macio_dev* dev,
-			       struct i2sbus_control **c);
-extern void i2sbus_control_destroy(struct i2sbus_control *c);
-extern int i2sbus_control_add_dev(struct i2sbus_control *c,
-				  struct i2sbus_dev *i2sdev);
-extern void i2sbus_control_remove_dev(struct i2sbus_control *c,
-				      struct i2sbus_dev *i2sdev);
-extern int i2sbus_control_enable(struct i2sbus_control *c,
-				 struct i2sbus_dev *i2sdev);
-extern int i2sbus_control_cell(struct i2sbus_control *c,
-			       struct i2sbus_dev *i2sdev,
-			       int enable);
-extern int i2sbus_control_clock(struct i2sbus_control *c,
-				struct i2sbus_dev *i2sdev,
-				int enable);
-#endif /* __I2SBUS_H */
+/* control specअगरic functions */
+बाह्य पूर्णांक i2sbus_control_init(काष्ठा macio_dev* dev,
+			       काष्ठा i2sbus_control **c);
+बाह्य व्योम i2sbus_control_destroy(काष्ठा i2sbus_control *c);
+बाह्य पूर्णांक i2sbus_control_add_dev(काष्ठा i2sbus_control *c,
+				  काष्ठा i2sbus_dev *i2sdev);
+बाह्य व्योम i2sbus_control_हटाओ_dev(काष्ठा i2sbus_control *c,
+				      काष्ठा i2sbus_dev *i2sdev);
+बाह्य पूर्णांक i2sbus_control_enable(काष्ठा i2sbus_control *c,
+				 काष्ठा i2sbus_dev *i2sdev);
+बाह्य पूर्णांक i2sbus_control_cell(काष्ठा i2sbus_control *c,
+			       काष्ठा i2sbus_dev *i2sdev,
+			       पूर्णांक enable);
+बाह्य पूर्णांक i2sbus_control_घड़ी(काष्ठा i2sbus_control *c,
+				काष्ठा i2sbus_dev *i2sdev,
+				पूर्णांक enable);
+#पूर्ण_अगर /* __I2SBUS_H */

@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2011 Florian Tobias Schandinat <FlorianSchandinat@gmx.de>
  */
 /*
- * infrastructure for devices connected via I2C
+ * infraकाष्ठाure क्रम devices connected via I2C
  */
 
-#include <linux/slab.h>
-#include "via_aux.h"
+#समावेश <linux/slab.h>
+#समावेश "via_aux.h"
 
 
-struct via_aux_bus *via_aux_probe(struct i2c_adapter *adap)
-{
-	struct via_aux_bus *bus;
+काष्ठा via_aux_bus *via_aux_probe(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा via_aux_bus *bus;
 
-	if (!adap)
-		return NULL;
+	अगर (!adap)
+		वापस शून्य;
 
-	bus = kmalloc(sizeof(*bus), GFP_KERNEL);
-	if (!bus)
-		return NULL;
+	bus = kदो_स्मृति(माप(*bus), GFP_KERNEL);
+	अगर (!bus)
+		वापस शून्य;
 
 	bus->adap = adap;
 	INIT_LIST_HEAD(&bus->drivers);
@@ -34,40 +35,40 @@ struct via_aux_bus *via_aux_probe(struct i2c_adapter *adap)
 	via_aux_sii164_probe(bus);
 	via_aux_ch7301_probe(bus);
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 
-void via_aux_free(struct via_aux_bus *bus)
-{
-	struct via_aux_drv *pos, *n;
+व्योम via_aux_मुक्त(काष्ठा via_aux_bus *bus)
+अणु
+	काष्ठा via_aux_drv *pos, *n;
 
-	if (!bus)
-		return;
+	अगर (!bus)
+		वापस;
 
-	list_for_each_entry_safe(pos, n, &bus->drivers, chain) {
-		if (pos->cleanup)
+	list_क्रम_each_entry_safe(pos, n, &bus->drivers, chain) अणु
+		अगर (pos->cleanup)
 			pos->cleanup(pos);
 
 		list_del(&pos->chain);
-		kfree(pos->data);
-		kfree(pos);
-	}
+		kमुक्त(pos->data);
+		kमुक्त(pos);
+	पूर्ण
 
-	kfree(bus);
-}
+	kमुक्त(bus);
+पूर्ण
 
-const struct fb_videomode *via_aux_get_preferred_mode(struct via_aux_bus *bus)
-{
-	struct via_aux_drv *pos;
-	const struct fb_videomode *mode = NULL;
+स्थिर काष्ठा fb_videomode *via_aux_get_preferred_mode(काष्ठा via_aux_bus *bus)
+अणु
+	काष्ठा via_aux_drv *pos;
+	स्थिर काष्ठा fb_videomode *mode = शून्य;
 
-	if (!bus)
-		return NULL;
+	अगर (!bus)
+		वापस शून्य;
 
-	list_for_each_entry(pos, &bus->drivers, chain) {
-		if (pos->get_preferred_mode)
+	list_क्रम_each_entry(pos, &bus->drivers, chain) अणु
+		अगर (pos->get_preferred_mode)
 			mode = pos->get_preferred_mode(pos);
-	}
+	पूर्ण
 
-	return mode;
-}
+	वापस mode;
+पूर्ण

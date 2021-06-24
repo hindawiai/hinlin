@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
  * media_device_test.c - Media Controller Device ioctl loop Test
@@ -9,95 +10,95 @@
  */
 
 /*
- * This file adds a test for Media Controller API.
+ * This file adds a test क्रम Media Controller API.
  * This test should be run as root and should not be
  * included in the Kselftest run. This test should be
  * run when hardware and driver that makes use Media
- * Controller API are present in the system.
+ * Controller API are present in the प्रणाली.
  *
- * This test opens user specified Media Device and calls
+ * This test खोलोs user specअगरied Media Device and calls
  * MEDIA_IOC_DEVICE_INFO ioctl in a loop once every 10
  * seconds.
  *
  * Usage:
- *	sudo ./media_device_test -d /dev/mediaX
+ *	suकरो ./media_device_test -d /dev/mediaX
  *
- *	While test is running, remove the device and
- *	ensure there are no use after free errors and
+ *	While test is running, हटाओ the device and
+ *	ensure there are no use after मुक्त errors and
  *	other Oops in the dmesg. Enable KaSan kernel
- *	config option for use-after-free error detection.
+ *	config option क्रम use-after-मुक्त error detection.
 */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <linux/media.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <fcntl.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <समय.स>
+#समावेश <linux/media.h>
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-int main(int argc, char **argv)
-{
-	int opt;
-	char media_device[256];
-	int count;
-	struct media_device_info mdi;
-	int ret;
-	int fd;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक opt;
+	अक्षर media_device[256];
+	पूर्णांक count;
+	काष्ठा media_device_info mdi;
+	पूर्णांक ret;
+	पूर्णांक fd;
 
-	if (argc < 2) {
-		printf("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
-		exit(-1);
-	}
+	अगर (argc < 2) अणु
+		म_लिखो("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
+		निकास(-1);
+	पूर्ण
 
 	/* Process arguments */
-	while ((opt = getopt(argc, argv, "d:")) != -1) {
-		switch (opt) {
-		case 'd':
-			strncpy(media_device, optarg, sizeof(media_device) - 1);
-			media_device[sizeof(media_device)-1] = '\0';
-			break;
-		default:
-			printf("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
-			exit(-1);
-		}
-	}
+	जबतक ((opt = getopt(argc, argv, "d:")) != -1) अणु
+		चयन (opt) अणु
+		हाल 'd':
+			म_नकलन(media_device, optarg, माप(media_device) - 1);
+			media_device[माप(media_device)-1] = '\0';
+			अवरोध;
+		शेष:
+			म_लिखो("Usage: %s [-d </dev/mediaX>]\n", argv[0]);
+			निकास(-1);
+		पूर्ण
+	पूर्ण
 
-	if (getuid() != 0)
-		ksft_exit_skip("Please run the test as root - Exiting.\n");
+	अगर (getuid() != 0)
+		ksft_निकास_skip("Please run the test as root - Exiting.\n");
 
-	/* Generate random number of interations */
-	srand((unsigned int) time(NULL));
-	count = rand();
+	/* Generate अक्रमom number of पूर्णांकerations */
+	बेक्रम((अचिन्हित पूर्णांक) समय(शून्य));
+	count = अक्रम();
 
-	/* Open Media device and keep it open */
-	fd = open(media_device, O_RDWR);
-	if (fd == -1) {
-		printf("Media Device open errno %s\n", strerror(errno));
-		exit(-1);
-	}
+	/* Open Media device and keep it खोलो */
+	fd = खोलो(media_device, O_RDWR);
+	अगर (fd == -1) अणु
+		म_लिखो("Media Device open errno %s\n", म_त्रुटि(त्रुटि_सं));
+		निकास(-1);
+	पूर्ण
 
-	printf("\nNote:\n"
+	म_लिखो("\nNote:\n"
 	       "While test is running, remove the device and\n"
 	       "ensure there are no use after free errors and\n"
 	       "other Oops in the dmesg. Enable KaSan kernel\n"
 	       "config option for use-after-free error detection.\n\n");
 
-	printf("Running test for %d iterations\n", count);
+	म_लिखो("Running test for %d iterations\n", count);
 
-	while (count > 0) {
+	जबतक (count > 0) अणु
 		ret = ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi);
-		if (ret < 0)
-			printf("Media Device Info errno %s\n", strerror(errno));
-		else
-			printf("Media device model %s driver %s - count %d\n",
+		अगर (ret < 0)
+			म_लिखो("Media Device Info errno %s\n", म_त्रुटि(त्रुटि_सं));
+		अन्यथा
+			म_लिखो("Media device model %s driver %s - count %d\n",
 				mdi.model, mdi.driver, count);
 		sleep(10);
 		count--;
-	}
-}
+	पूर्ण
+पूर्ण

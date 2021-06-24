@@ -1,315 +1,316 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "tests.h"
-#include "debug.h"
-#include "symbol.h"
-#include "sort.h"
-#include "evsel.h"
-#include "evlist.h"
-#include "machine.h"
-#include "parse-events.h"
-#include "hists_common.h"
-#include "util/mmap.h"
-#include <errno.h>
-#include <linux/kernel.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "tests.h"
+#समावेश "debug.h"
+#समावेश "symbol.h"
+#समावेश "sort.h"
+#समावेश "evsel.h"
+#समावेश "evlist.h"
+#समावेश "machine.h"
+#समावेश "parse-events.h"
+#समावेश "hists_common.h"
+#समावेश "util/mmap.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/kernel.h>
 
-struct sample {
+काष्ठा sample अणु
 	u32 pid;
 	u64 ip;
-	struct thread *thread;
-	struct map *map;
-	struct symbol *sym;
-};
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा map *map;
+	काष्ठा symbol *sym;
+पूर्ण;
 
 /* For the numbers, see hists_common.c */
-static struct sample fake_common_samples[] = {
+अटल काष्ठा sample fake_common_samples[] = अणु
 	/* perf [kernel] schedule() */
-	{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_KERNEL_SCHEDULE, },
-	/* perf [perf]   main() */
-	{ .pid = FAKE_PID_PERF2, .ip = FAKE_IP_PERF_MAIN, },
+	अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_KERNEL_SCHEDULE, पूर्ण,
+	/* perf [perf]   मुख्य() */
+	अणु .pid = FAKE_PID_PERF2, .ip = FAKE_IP_PERF_MAIN, पूर्ण,
 	/* perf [perf]   cmd_record() */
-	{ .pid = FAKE_PID_PERF2, .ip = FAKE_IP_PERF_CMD_RECORD, },
-	/* bash [bash]   xmalloc() */
-	{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_XMALLOC, },
-	/* bash [libc]   malloc() */
-	{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_MALLOC, },
-};
+	अणु .pid = FAKE_PID_PERF2, .ip = FAKE_IP_PERF_CMD_RECORD, पूर्ण,
+	/* bash [bash]   xदो_स्मृति() */
+	अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_XMALLOC, पूर्ण,
+	/* bash [libc]   दो_स्मृति() */
+	अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_MALLOC, पूर्ण,
+पूर्ण;
 
-static struct sample fake_samples[][5] = {
-	{
+अटल काष्ठा sample fake_samples[][5] = अणु
+	अणु
 		/* perf [perf]   run_command() */
-		{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_PERF_RUN_COMMAND, },
-		/* perf [libc]   malloc() */
-		{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_LIBC_MALLOC, },
+		अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_PERF_RUN_COMMAND, पूर्ण,
+		/* perf [libc]   दो_स्मृति() */
+		अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_LIBC_MALLOC, पूर्ण,
 		/* perf [kernel] page_fault() */
-		{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_KERNEL_PAGE_FAULT, },
-		/* perf [kernel] sys_perf_event_open() */
-		{ .pid = FAKE_PID_PERF2, .ip = FAKE_IP_KERNEL_SYS_PERF_EVENT_OPEN, },
-		/* bash [libc]   free() */
-		{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_FREE, },
-	},
-	{
-		/* perf [libc]   free() */
-		{ .pid = FAKE_PID_PERF2, .ip = FAKE_IP_LIBC_FREE, },
-		/* bash [libc]   malloc() */
-		{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_MALLOC, }, /* will be merged */
+		अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_KERNEL_PAGE_FAULT, पूर्ण,
+		/* perf [kernel] sys_perf_event_खोलो() */
+		अणु .pid = FAKE_PID_PERF2, .ip = FAKE_IP_KERNEL_SYS_PERF_EVENT_OPEN, पूर्ण,
+		/* bash [libc]   मुक्त() */
+		अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_FREE, पूर्ण,
+	पूर्ण,
+	अणु
+		/* perf [libc]   मुक्त() */
+		अणु .pid = FAKE_PID_PERF2, .ip = FAKE_IP_LIBC_FREE, पूर्ण,
+		/* bash [libc]   दो_स्मृति() */
+		अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_MALLOC, पूर्ण, /* will be merged */
 		/* bash [bash]   xfee() */
-		{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_XFREE, },
-		/* bash [libc]   realloc() */
-		{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_REALLOC, },
+		अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_XFREE, पूर्ण,
+		/* bash [libc]   पुनः_स्मृति() */
+		अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_LIBC_REALLOC, पूर्ण,
 		/* bash [kernel] page_fault() */
-		{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_KERNEL_PAGE_FAULT, },
-	},
-};
+		अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_KERNEL_PAGE_FAULT, पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int add_hist_entries(struct evlist *evlist, struct machine *machine)
-{
-	struct evsel *evsel;
-	struct addr_location al;
-	struct hist_entry *he;
-	struct perf_sample sample = { .period = 1, .weight = 1, };
-	size_t i = 0, k;
+अटल पूर्णांक add_hist_entries(काष्ठा evlist *evlist, काष्ठा machine *machine)
+अणु
+	काष्ठा evsel *evsel;
+	काष्ठा addr_location al;
+	काष्ठा hist_entry *he;
+	काष्ठा perf_sample sample = अणु .period = 1, .weight = 1, पूर्ण;
+	माप_प्रकार i = 0, k;
 
 	/*
 	 * each evsel will have 10 samples - 5 common and 5 distinct.
-	 * However the second evsel also has a collapsed entry for
+	 * However the second evsel also has a collapsed entry क्रम
 	 * "bash [libc] malloc" so total 9 entries will be in the tree.
 	 */
-	evlist__for_each_entry(evlist, evsel) {
-		struct hists *hists = evsel__hists(evsel);
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		काष्ठा hists *hists = evsel__hists(evsel);
 
-		for (k = 0; k < ARRAY_SIZE(fake_common_samples); k++) {
+		क्रम (k = 0; k < ARRAY_SIZE(fake_common_samples); k++) अणु
 			sample.cpumode = PERF_RECORD_MISC_USER;
 			sample.pid = fake_common_samples[k].pid;
 			sample.tid = fake_common_samples[k].pid;
 			sample.ip = fake_common_samples[k].ip;
 
-			if (machine__resolve(machine, &al, &sample) < 0)
-				goto out;
+			अगर (machine__resolve(machine, &al, &sample) < 0)
+				जाओ out;
 
-			he = hists__add_entry(hists, &al, NULL,
-						NULL, NULL, &sample, true);
-			if (he == NULL) {
+			he = hists__add_entry(hists, &al, शून्य,
+						शून्य, शून्य, &sample, true);
+			अगर (he == शून्य) अणु
 				addr_location__put(&al);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			fake_common_samples[k].thread = al.thread;
+			fake_common_samples[k].thपढ़ो = al.thपढ़ो;
 			fake_common_samples[k].map = al.map;
 			fake_common_samples[k].sym = al.sym;
-		}
+		पूर्ण
 
-		for (k = 0; k < ARRAY_SIZE(fake_samples[i]); k++) {
+		क्रम (k = 0; k < ARRAY_SIZE(fake_samples[i]); k++) अणु
 			sample.pid = fake_samples[i][k].pid;
 			sample.tid = fake_samples[i][k].pid;
 			sample.ip = fake_samples[i][k].ip;
-			if (machine__resolve(machine, &al, &sample) < 0)
-				goto out;
+			अगर (machine__resolve(machine, &al, &sample) < 0)
+				जाओ out;
 
-			he = hists__add_entry(hists, &al, NULL,
-						NULL, NULL, &sample, true);
-			if (he == NULL) {
+			he = hists__add_entry(hists, &al, शून्य,
+						शून्य, शून्य, &sample, true);
+			अगर (he == शून्य) अणु
 				addr_location__put(&al);
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			fake_samples[i][k].thread = al.thread;
+			fake_samples[i][k].thपढ़ो = al.thपढ़ो;
 			fake_samples[i][k].map = al.map;
 			fake_samples[i][k].sym = al.sym;
-		}
+		पूर्ण
 		i++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
 	pr_debug("Not enough memory for adding a hist entry\n");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int find_sample(struct sample *samples, size_t nr_samples,
-		       struct thread *t, struct map *m, struct symbol *s)
-{
-	while (nr_samples--) {
-		if (samples->thread == t && samples->map == m &&
+अटल पूर्णांक find_sample(काष्ठा sample *samples, माप_प्रकार nr_samples,
+		       काष्ठा thपढ़ो *t, काष्ठा map *m, काष्ठा symbol *s)
+अणु
+	जबतक (nr_samples--) अणु
+		अगर (samples->thपढ़ो == t && samples->map == m &&
 		    samples->sym == s)
-			return 1;
+			वापस 1;
 		samples++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __validate_match(struct hists *hists)
-{
-	size_t count = 0;
-	struct rb_root_cached *root;
-	struct rb_node *node;
+अटल पूर्णांक __validate_match(काष्ठा hists *hists)
+अणु
+	माप_प्रकार count = 0;
+	काष्ठा rb_root_cached *root;
+	काष्ठा rb_node *node;
 
 	/*
 	 * Only entries from fake_common_samples should have a pair.
 	 */
-	if (hists__has(hists, need_collapse))
+	अगर (hists__has(hists, need_collapse))
 		root = &hists->entries_collapsed;
-	else
+	अन्यथा
 		root = hists->entries_in;
 
 	node = rb_first_cached(root);
-	while (node) {
-		struct hist_entry *he;
+	जबतक (node) अणु
+		काष्ठा hist_entry *he;
 
-		he = rb_entry(node, struct hist_entry, rb_node_in);
+		he = rb_entry(node, काष्ठा hist_entry, rb_node_in);
 
-		if (hist_entry__has_pairs(he)) {
-			if (find_sample(fake_common_samples,
+		अगर (hist_entry__has_pairs(he)) अणु
+			अगर (find_sample(fake_common_samples,
 					ARRAY_SIZE(fake_common_samples),
-					he->thread, he->ms.map, he->ms.sym)) {
+					he->thपढ़ो, he->ms.map, he->ms.sym)) अणु
 				count++;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_debug("Can't find the matched entry\n");
-				return -1;
-			}
-		}
+				वापस -1;
+			पूर्ण
+		पूर्ण
 
 		node = rb_next(node);
-	}
+	पूर्ण
 
-	if (count != ARRAY_SIZE(fake_common_samples)) {
+	अगर (count != ARRAY_SIZE(fake_common_samples)) अणु
 		pr_debug("Invalid count for matched entries: %zd of %zd\n",
 			 count, ARRAY_SIZE(fake_common_samples));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_match(struct hists *leader, struct hists *other)
-{
-	return __validate_match(leader) || __validate_match(other);
-}
+अटल पूर्णांक validate_match(काष्ठा hists *leader, काष्ठा hists *other)
+अणु
+	वापस __validate_match(leader) || __validate_match(other);
+पूर्ण
 
-static int __validate_link(struct hists *hists, int idx)
-{
-	size_t count = 0;
-	size_t count_pair = 0;
-	size_t count_dummy = 0;
-	struct rb_root_cached *root;
-	struct rb_node *node;
+अटल पूर्णांक __validate_link(काष्ठा hists *hists, पूर्णांक idx)
+अणु
+	माप_प्रकार count = 0;
+	माप_प्रकार count_pair = 0;
+	माप_प्रकार count_dummy = 0;
+	काष्ठा rb_root_cached *root;
+	काष्ठा rb_node *node;
 
 	/*
 	 * Leader hists (idx = 0) will have dummy entries from other,
 	 * and some entries will have no pair.  However every entry
 	 * in other hists should have (dummy) pair.
 	 */
-	if (hists__has(hists, need_collapse))
+	अगर (hists__has(hists, need_collapse))
 		root = &hists->entries_collapsed;
-	else
+	अन्यथा
 		root = hists->entries_in;
 
 	node = rb_first_cached(root);
-	while (node) {
-		struct hist_entry *he;
+	जबतक (node) अणु
+		काष्ठा hist_entry *he;
 
-		he = rb_entry(node, struct hist_entry, rb_node_in);
+		he = rb_entry(node, काष्ठा hist_entry, rb_node_in);
 
-		if (hist_entry__has_pairs(he)) {
-			if (!find_sample(fake_common_samples,
+		अगर (hist_entry__has_pairs(he)) अणु
+			अगर (!find_sample(fake_common_samples,
 					 ARRAY_SIZE(fake_common_samples),
-					 he->thread, he->ms.map, he->ms.sym) &&
+					 he->thपढ़ो, he->ms.map, he->ms.sym) &&
 			    !find_sample(fake_samples[idx],
 					 ARRAY_SIZE(fake_samples[idx]),
-					 he->thread, he->ms.map, he->ms.sym)) {
+					 he->thपढ़ो, he->ms.map, he->ms.sym)) अणु
 				count_dummy++;
-			}
+			पूर्ण
 			count_pair++;
-		} else if (idx) {
+		पूर्ण अन्यथा अगर (idx) अणु
 			pr_debug("A entry from the other hists should have pair\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		count++;
 		node = rb_next(node);
-	}
+	पूर्ण
 
 	/*
 	 * Note that we have a entry collapsed in the other (idx = 1) hists.
 	 */
-	if (idx == 0) {
-		if (count_dummy != ARRAY_SIZE(fake_samples[1]) - 1) {
+	अगर (idx == 0) अणु
+		अगर (count_dummy != ARRAY_SIZE(fake_samples[1]) - 1) अणु
 			pr_debug("Invalid count of dummy entries: %zd of %zd\n",
 				 count_dummy, ARRAY_SIZE(fake_samples[1]) - 1);
-			return -1;
-		}
-		if (count != count_pair + ARRAY_SIZE(fake_samples[0])) {
+			वापस -1;
+		पूर्ण
+		अगर (count != count_pair + ARRAY_SIZE(fake_samples[0])) अणु
 			pr_debug("Invalid count of total leader entries: %zd of %zd\n",
 				 count, count_pair + ARRAY_SIZE(fake_samples[0]));
-			return -1;
-		}
-	} else {
-		if (count != count_pair) {
+			वापस -1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (count != count_pair) अणु
 			pr_debug("Invalid count of total other entries: %zd of %zd\n",
 				 count, count_pair);
-			return -1;
-		}
-		if (count_dummy > 0) {
+			वापस -1;
+		पूर्ण
+		अगर (count_dummy > 0) अणु
 			pr_debug("Other hists should not have dummy entries: %zd\n",
 				 count_dummy);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_link(struct hists *leader, struct hists *other)
-{
-	return __validate_link(leader, 0) || __validate_link(other, 1);
-}
+अटल पूर्णांक validate_link(काष्ठा hists *leader, काष्ठा hists *other)
+अणु
+	वापस __validate_link(leader, 0) || __validate_link(other, 1);
+पूर्ण
 
-int test__hists_link(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	int err = -1;
-	struct hists *hists, *first_hists;
-	struct machines machines;
-	struct machine *machine = NULL;
-	struct evsel *evsel, *first;
-	struct evlist *evlist = evlist__new();
+पूर्णांक test__hists_link(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	पूर्णांक err = -1;
+	काष्ठा hists *hists, *first_hists;
+	काष्ठा machines machines;
+	काष्ठा machine *machine = शून्य;
+	काष्ठा evsel *evsel, *first;
+	काष्ठा evlist *evlist = evlist__new();
 
-	if (evlist == NULL)
-                return -ENOMEM;
+	अगर (evlist == शून्य)
+                वापस -ENOMEM;
 
-	err = parse_events(evlist, "cpu-clock", NULL);
-	if (err)
-		goto out;
-	err = parse_events(evlist, "task-clock", NULL);
-	if (err)
-		goto out;
+	err = parse_events(evlist, "cpu-clock", शून्य);
+	अगर (err)
+		जाओ out;
+	err = parse_events(evlist, "task-clock", शून्य);
+	अगर (err)
+		जाओ out;
 
 	err = TEST_FAIL;
-	/* default sort order (comm,dso,sym) will be used */
-	if (setup_sorting(NULL) < 0)
-		goto out;
+	/* शेष sort order (comm,dso,sym) will be used */
+	अगर (setup_sorting(शून्य) < 0)
+		जाओ out;
 
 	machines__init(&machines);
 
-	/* setup threads/dso/map/symbols also */
+	/* setup thपढ़ोs/dso/map/symbols also */
 	machine = setup_fake_machine(&machines);
-	if (!machine)
-		goto out;
+	अगर (!machine)
+		जाओ out;
 
-	if (verbose > 1)
-		machine__fprintf(machine, stderr);
+	अगर (verbose > 1)
+		machine__ख_लिखो(machine, मानक_त्रुटि);
 
 	/* process sample events */
 	err = add_hist_entries(evlist, machine);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	evlist__for_each_entry(evlist, evsel) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
 		hists = evsel__hists(evsel);
-		hists__collapse_resort(hists, NULL);
+		hists__collapse_resort(hists, शून्य);
 
-		if (verbose > 2)
-			print_hists_in(hists);
-	}
+		अगर (verbose > 2)
+			prपूर्णांक_hists_in(hists);
+	पूर्ण
 
 	first = evlist__first(evlist);
 	evsel = evlist__last(evlist);
@@ -320,22 +321,22 @@ int test__hists_link(struct test *test __maybe_unused, int subtest __maybe_unuse
 	/* match common entries */
 	hists__match(first_hists, hists);
 	err = validate_match(first_hists, hists);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	/* link common and/or dummy entries */
 	hists__link(first_hists, hists);
 	err = validate_link(first_hists, hists);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = 0;
 
 out:
-	/* tear down everything */
+	/* tear करोwn everything */
 	evlist__delete(evlist);
 	reset_output_field();
-	machines__exit(&machines);
+	machines__निकास(&machines);
 
-	return err;
-}
+	वापस err;
+पूर्ण

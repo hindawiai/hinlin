@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
  * Allwinner A80 SoCs pinctrl driver.
  *
  * Copyright (C) 2014 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin sun9i_a80_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin sun9i_a80_pins[] = अणु
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -715,32 +716,32 @@ static const struct sunxi_desc_pin sun9i_a80_pins[] = {
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "hdmi")),		/* CEC */
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun9i_a80_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun9i_a80_pinctrl_data = अणु
 	.pins = sun9i_a80_pins,
 	.npins = ARRAY_SIZE(sun9i_a80_pins),
 	.irq_banks = 5,
 	.disable_strict_mode = true,
 	.io_bias_cfg_variant = BIAS_VOLTAGE_GRP_CONFIG,
-};
+पूर्ण;
 
-static int sun9i_a80_pinctrl_probe(struct platform_device *pdev)
-{
-	return sunxi_pinctrl_init(pdev,
+अटल पूर्णांक sun9i_a80_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस sunxi_pinctrl_init(pdev,
 				  &sun9i_a80_pinctrl_data);
-}
+पूर्ण
 
-static const struct of_device_id sun9i_a80_pinctrl_match[] = {
-	{ .compatible = "allwinner,sun9i-a80-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id sun9i_a80_pinctrl_match[] = अणु
+	अणु .compatible = "allwinner,sun9i-a80-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver sun9i_a80_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver sun9i_a80_pinctrl_driver = अणु
 	.probe	= sun9i_a80_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun9i-a80-pinctrl",
 		.of_match_table	= sun9i_a80_pinctrl_match,
-	},
-};
-builtin_platform_driver(sun9i_a80_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun9i_a80_pinctrl_driver);

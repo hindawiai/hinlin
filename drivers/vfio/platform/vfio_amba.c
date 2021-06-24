@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 - Virtual Open Systems
- * Author: Antonios Motakis <a.motakis@virtualopensystems.com>
+ * Author: Antonios Motakis <a.motakis@भवखोलोप्रणालीs.com>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/vfio.h>
-#include <linux/amba/bus.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vfपन.स>
+#समावेश <linux/amba/bus.h>
 
-#include "vfio_platform_private.h"
+#समावेश "vfio_platform_private.h"
 
-#define DRIVER_VERSION  "0.10"
-#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis@virtualopensystems.com>"
-#define DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
+#घोषणा DRIVER_VERSION  "0.10"
+#घोषणा DRIVER_AUTHOR   "Antonios Motakis <a.motakis@virtualopensystems.com>"
+#घोषणा DRIVER_DESC     "VFIO for AMBA devices - User Level meta-driver"
 
 /* probing devices from the AMBA bus */
 
-static struct resource *get_amba_resource(struct vfio_platform_device *vdev,
-					  int i)
-{
-	struct amba_device *adev = (struct amba_device *) vdev->opaque;
+अटल काष्ठा resource *get_amba_resource(काष्ठा vfio_platक्रमm_device *vdev,
+					  पूर्णांक i)
+अणु
+	काष्ठा amba_device *adev = (काष्ठा amba_device *) vdev->opaque;
 
-	if (i == 0)
-		return &adev->res;
+	अगर (i == 0)
+		वापस &adev->res;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int get_amba_irq(struct vfio_platform_device *vdev, int i)
-{
-	struct amba_device *adev = (struct amba_device *) vdev->opaque;
-	int ret = 0;
+अटल पूर्णांक get_amba_irq(काष्ठा vfio_platक्रमm_device *vdev, पूर्णांक i)
+अणु
+	काष्ठा amba_device *adev = (काष्ठा amba_device *) vdev->opaque;
+	पूर्णांक ret = 0;
 
-	if (i < AMBA_NR_IRQS)
+	अगर (i < AMBA_NR_IRQS)
 		ret = adev->irq[i];
 
-	/* zero is an unset IRQ for AMBA devices */
-	return ret ? ret : -ENXIO;
-}
+	/* zero is an unset IRQ क्रम AMBA devices */
+	वापस ret ? ret : -ENXIO;
+पूर्ण
 
-static int vfio_amba_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	struct vfio_platform_device *vdev;
-	int ret;
+अटल पूर्णांक vfio_amba_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	काष्ठा vfio_platक्रमm_device *vdev;
+	पूर्णांक ret;
 
-	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-	if (!vdev)
-		return -ENOMEM;
+	vdev = kzalloc(माप(*vdev), GFP_KERNEL);
+	अगर (!vdev)
+		वापस -ENOMEM;
 
-	vdev->name = kasprintf(GFP_KERNEL, "vfio-amba-%08x", adev->periphid);
-	if (!vdev->name) {
-		kfree(vdev);
-		return -ENOMEM;
-	}
+	vdev->name = kaप्र_लिखो(GFP_KERNEL, "vfio-amba-%08x", adev->periphid);
+	अगर (!vdev->name) अणु
+		kमुक्त(vdev);
+		वापस -ENOMEM;
+	पूर्ण
 
-	vdev->opaque = (void *) adev;
+	vdev->opaque = (व्योम *) adev;
 	vdev->flags = VFIO_DEVICE_FLAGS_AMBA;
 	vdev->get_resource = get_amba_resource;
 	vdev->get_irq = get_amba_irq;
 	vdev->parent_module = THIS_MODULE;
 	vdev->reset_required = false;
 
-	ret = vfio_platform_probe_common(vdev, &adev->dev);
-	if (ret) {
-		kfree(vdev->name);
-		kfree(vdev);
-		return ret;
-	}
+	ret = vfio_platक्रमm_probe_common(vdev, &adev->dev);
+	अगर (ret) अणु
+		kमुक्त(vdev->name);
+		kमुक्त(vdev);
+		वापस ret;
+	पूर्ण
 
 	dev_set_drvdata(&adev->dev, vdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vfio_amba_remove(struct amba_device *adev)
-{
-	struct vfio_platform_device *vdev = dev_get_drvdata(&adev->dev);
+अटल व्योम vfio_amba_हटाओ(काष्ठा amba_device *adev)
+अणु
+	काष्ठा vfio_platक्रमm_device *vdev = dev_get_drvdata(&adev->dev);
 
-	vfio_platform_remove_common(vdev);
-	kfree(vdev->name);
-	kfree(vdev);
-}
+	vfio_platक्रमm_हटाओ_common(vdev);
+	kमुक्त(vdev->name);
+	kमुक्त(vdev);
+पूर्ण
 
-static const struct amba_id pl330_ids[] = {
-	{ 0, 0 },
-};
+अटल स्थिर काष्ठा amba_id pl330_ids[] = अणु
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(amba, pl330_ids);
 
-static struct amba_driver vfio_amba_driver = {
+अटल काष्ठा amba_driver vfio_amba_driver = अणु
 	.probe = vfio_amba_probe,
-	.remove = vfio_amba_remove,
+	.हटाओ = vfio_amba_हटाओ,
 	.id_table = pl330_ids,
-	.drv = {
+	.drv = अणु
 		.name = "vfio-amba",
 		.owner = THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_amba_driver(vfio_amba_driver);
 

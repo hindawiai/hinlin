@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_MMCONFIG_H
-#define _ASM_X86_MMCONFIG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_MMCONFIG_H
+#घोषणा _ASM_X86_MMCONFIG_H
 
-#ifdef CONFIG_PCI_MMCONFIG
-extern void fam10h_check_enable_mmcfg(void);
-extern void check_enable_amd_mmconf_dmi(void);
-#else
-static inline void fam10h_check_enable_mmcfg(void) { }
-static inline void check_enable_amd_mmconf_dmi(void) { }
-#endif
+#अगर_घोषित CONFIG_PCI_MMCONFIG
+बाह्य व्योम fam10h_check_enable_mmcfg(व्योम);
+बाह्य व्योम check_enable_amd_mmconf_dmi(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम fam10h_check_enable_mmcfg(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम check_enable_amd_mmconf_dmi(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_MMCONFIG_H */
+#पूर्ण_अगर /* _ASM_X86_MMCONFIG_H */

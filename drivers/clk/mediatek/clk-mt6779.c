@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 MediaTek Inc.
  * Author: Wendell Lin <wendell.lin@mediatek.com>
  */
 
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "clk-mtk.h"
-#include "clk-mux.h"
-#include "clk-gate.h"
+#समावेश "clk-mtk.h"
+#समावेश "clk-mux.h"
+#समावेश "clk-gate.h"
 
-#include <dt-bindings/clock/mt6779-clk.h>
+#समावेश <dt-bindings/घड़ी/mt6779-clk.h>
 
-static DEFINE_SPINLOCK(mt6779_clk_lock);
+अटल DEFINE_SPINLOCK(mt6779_clk_lock);
 
-static const struct mtk_fixed_clk top_fixed_clks[] = {
+अटल स्थिर काष्ठा mtk_fixed_clk top_fixed_clks[] = अणु
 	FIXED_CLK(CLK_TOP_CLK26M, "f_f26m_ck", "clk26m", 26000000),
-};
+पूर्ण;
 
-static const struct mtk_fixed_factor top_divs[] = {
+अटल स्थिर काष्ठा mtk_fixed_factor top_भागs[] = अणु
 	FACTOR(CLK_TOP_CLK13M, "clk13m", "clk26m", 1, 2),
 	FACTOR(CLK_TOP_F26M_CK_D2, "csw_f26m_ck_d2", "clk26m", 1, 2),
 	FACTOR(CLK_TOP_MAINPLL_CK, "mainpll_ck", "mainpll", 1, 1),
@@ -110,25 +111,25 @@ static const struct mtk_fixed_factor top_divs[] = {
 	FACTOR(CLK_TOP_TVDPLL_MAINPLL_D2_CK, "tvdpll_mainpll_d2_ck",
 	       "tvdpll", 1, 1),
 	FACTOR(CLK_TOP_FMEM_466M_CK, "fmem_466m_ck", "fmem", 1, 1),
-};
+पूर्ण;
 
-static const char * const axi_parents[] = {
+अटल स्थिर अक्षर * स्थिर axi_parents[] = अणु
 	"clk26m",
 	"mainpll_d2_d4",
 	"mainpll_d7",
 	"osc_d4"
-};
+पूर्ण;
 
-static const char * const mm_parents[] = {
+अटल स्थिर अक्षर * स्थिर mm_parents[] = अणु
 	"clk26m",
 	"tvdpll_mainpll_d2_ck",
 	"mmpll_d7",
 	"mmpll_d5_d2",
 	"mainpll_d2_d2",
 	"mainpll_d3_d2"
-};
+पूर्ण;
 
-static const char * const scp_parents[] = {
+अटल स्थिर अक्षर * स्थिर scp_parents[] = अणु
 	"clk26m",
 	"univpll_d2_d8",
 	"mainpll_d2_d4",
@@ -137,9 +138,9 @@ static const char * const scp_parents[] = {
 	"ad_osc2_ck",
 	"osc2_d2",
 	"osc2_d3"
-};
+पूर्ण;
 
-static const char * const img_parents[] = {
+अटल स्थिर अक्षर * स्थिर img_parents[] = अणु
 	"clk26m",
 	"mainpll_d2",
 	"mainpll_d2",
@@ -148,9 +149,9 @@ static const char * const img_parents[] = {
 	"mmpll_d5_d2",
 	"tvdpll_mainpll_d2_ck",
 	"mainpll_d5"
-};
+पूर्ण;
 
-static const char * const ipe_parents[] = {
+अटल स्थिर अक्षर * स्थिर ipe_parents[] = अणु
 	"clk26m",
 	"mainpll_d2",
 	"mmpll_d7",
@@ -159,9 +160,9 @@ static const char * const ipe_parents[] = {
 	"mmpll_d5_d2",
 	"mainpll_d2_d2",
 	"mainpll_d5"
-};
+पूर्ण;
 
-static const char * const dpe_parents[] = {
+अटल स्थिर अक्षर * स्थिर dpe_parents[] = अणु
 	"clk26m",
 	"mainpll_d2",
 	"mmpll_d7",
@@ -170,9 +171,9 @@ static const char * const dpe_parents[] = {
 	"mmpll_d5_d2",
 	"mainpll_d2_d2",
 	"mainpll_d5"
-};
+पूर्ण;
 
-static const char * const cam_parents[] = {
+अटल स्थिर अक्षर * स्थिर cam_parents[] = अणु
 	"clk26m",
 	"mainpll_d2",
 	"mmpll_d6",
@@ -183,9 +184,9 @@ static const char * const cam_parents[] = {
 	"adsppll_d5",
 	"tvdpll_mainpll_d2_ck",
 	"univpll_d3_d2"
-};
+पूर्ण;
 
-static const char * const ccu_parents[] = {
+अटल स्थिर अक्षर * स्थिर ccu_parents[] = अणु
 	"clk26m",
 	"mainpll_d2",
 	"mmpll_d6",
@@ -196,9 +197,9 @@ static const char * const ccu_parents[] = {
 	"mainpll_d2_d2",
 	"adsppll_d5",
 	"univpll_d3_d2"
-};
+पूर्ण;
 
-static const char * const dsp_parents[] = {
+अटल स्थिर अक्षर * स्थिर dsp_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d8",
 	"univpll_d3_d4",
@@ -215,9 +216,9 @@ static const char * const dsp_parents[] = {
 	"tvdpll_mainpll_d2_ck",
 	"univpll_d2",
 	"adsppll_d4"
-};
+पूर्ण;
 
-static const char * const dsp1_parents[] = {
+अटल स्थिर अक्षर * स्थिर dsp1_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d8",
 	"univpll_d3_d4",
@@ -234,9 +235,9 @@ static const char * const dsp1_parents[] = {
 	"tvdpll_mainpll_d2_ck",
 	"univpll_d2",
 	"adsppll_d4"
-};
+पूर्ण;
 
-static const char * const dsp2_parents[] = {
+अटल स्थिर अक्षर * स्थिर dsp2_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d8",
 	"univpll_d3_d4",
@@ -253,9 +254,9 @@ static const char * const dsp2_parents[] = {
 	"tvdpll_mainpll_d2_ck",
 	"univpll_d2",
 	"adsppll_d4"
-};
+पूर्ण;
 
-static const char * const dsp3_parents[] = {
+अटल स्थिर अक्षर * स्थिर dsp3_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d8",
 	"mainpll_d2_d4",
@@ -272,9 +273,9 @@ static const char * const dsp3_parents[] = {
 	"univpll_d2",
 	"adsppll_d4",
 	"mmpll_d4"
-};
+पूर्ण;
 
-static const char * const ipu_if_parents[] = {
+अटल स्थिर अक्षर * स्थिर ipu_अगर_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d8",
 	"univpll_d3_d4",
@@ -291,23 +292,23 @@ static const char * const ipu_if_parents[] = {
 	"tvdpll_mainpll_d2_ck",
 	"univpll_d2",
 	"adsppll_d4"
-};
+पूर्ण;
 
-static const char * const mfg_parents[] = {
+अटल स्थिर अक्षर * स्थिर mfg_parents[] = अणु
 	"clk26m",
 	"mfgpll_ck",
 	"univpll_d3",
 	"mainpll_d5"
-};
+पूर्ण;
 
-static const char * const f52m_mfg_parents[] = {
+अटल स्थिर अक्षर * स्थिर f52m_mfg_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d2",
 	"univpll_d3_d4",
 	"univpll_d3_d8"
-};
+पूर्ण;
 
-static const char * const camtg_parents[] = {
+अटल स्थिर अक्षर * स्थिर camtg_parents[] = अणु
 	"clk26m",
 	"univpll_192m_d8",
 	"univpll_d3_d8",
@@ -316,9 +317,9 @@ static const char * const camtg_parents[] = {
 	"csw_f26m_ck_d2",
 	"univpll_192m_d16",
 	"univpll_192m_d32"
-};
+पूर्ण;
 
-static const char * const camtg2_parents[] = {
+अटल स्थिर अक्षर * स्थिर camtg2_parents[] = अणु
 	"clk26m",
 	"univpll_192m_d8",
 	"univpll_d3_d8",
@@ -327,9 +328,9 @@ static const char * const camtg2_parents[] = {
 	"csw_f26m_ck_d2",
 	"univpll_192m_d16",
 	"univpll_192m_d32"
-};
+पूर्ण;
 
-static const char * const camtg3_parents[] = {
+अटल स्थिर अक्षर * स्थिर camtg3_parents[] = अणु
 	"clk26m",
 	"univpll_192m_d8",
 	"univpll_d3_d8",
@@ -338,9 +339,9 @@ static const char * const camtg3_parents[] = {
 	"csw_f26m_ck_d2",
 	"univpll_192m_d16",
 	"univpll_192m_d32"
-};
+पूर्ण;
 
-static const char * const camtg4_parents[] = {
+अटल स्थिर अक्षर * स्थिर camtg4_parents[] = अणु
 	"clk26m",
 	"univpll_192m_d8",
 	"univpll_d3_d8",
@@ -349,126 +350,126 @@ static const char * const camtg4_parents[] = {
 	"csw_f26m_ck_d2",
 	"univpll_192m_d16",
 	"univpll_192m_d32"
-};
+पूर्ण;
 
-static const char * const uart_parents[] = {
+अटल स्थिर अक्षर * स्थिर uart_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d8"
-};
+पूर्ण;
 
-static const char * const spi_parents[] = {
+अटल स्थिर अक्षर * स्थिर spi_parents[] = अणु
 	"clk26m",
 	"mainpll_d5_d2",
 	"mainpll_d3_d4",
 	"msdcpll_d4"
-};
+पूर्ण;
 
-static const char * const msdc50_hclk_parents[] = {
+अटल स्थिर अक्षर * स्थिर msdc50_hclk_parents[] = अणु
 	"clk26m",
 	"mainpll_d2_d2",
 	"mainpll_d3_d2"
-};
+पूर्ण;
 
-static const char * const msdc50_0_parents[] = {
+अटल स्थिर अक्षर * स्थिर msdc50_0_parents[] = अणु
 	"clk26m",
 	"msdcpll_ck",
 	"msdcpll_d2",
 	"univpll_d2_d4",
 	"mainpll_d3_d2",
 	"univpll_d2_d2"
-};
+पूर्ण;
 
-static const char * const msdc30_1_parents[] = {
+अटल स्थिर अक्षर * स्थिर msdc30_1_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d2",
 	"mainpll_d3_d2",
 	"mainpll_d7",
 	"msdcpll_d2"
-};
+पूर्ण;
 
-static const char * const audio_parents[] = {
+अटल स्थिर अक्षर * स्थिर audio_parents[] = अणु
 	"clk26m",
 	"mainpll_d5_d4",
 	"mainpll_d7_d4",
 	"mainpll_d2_d16"
-};
+पूर्ण;
 
-static const char * const aud_intbus_parents[] = {
+अटल स्थिर अक्षर * स्थिर aud_पूर्णांकbus_parents[] = अणु
 	"clk26m",
 	"mainpll_d2_d4",
 	"mainpll_d7_d2"
-};
+पूर्ण;
 
-static const char * const fpwrap_ulposc_parents[] = {
+अटल स्थिर अक्षर * स्थिर fpwrap_ulposc_parents[] = अणु
 	"osc_d10",
 	"clk26m",
 	"osc_d4",
 	"osc_d8",
 	"osc_d16"
-};
+पूर्ण;
 
-static const char * const atb_parents[] = {
+अटल स्थिर अक्षर * स्थिर atb_parents[] = अणु
 	"clk26m",
 	"mainpll_d2_d2",
 	"mainpll_d5"
-};
+पूर्ण;
 
-static const char * const sspm_parents[] = {
+अटल स्थिर अक्षर * स्थिर sspm_parents[] = अणु
 	"clk26m",
 	"univpll_d2_d4",
 	"mainpll_d2_d2",
 	"univpll_d2_d2",
 	"mainpll_d3"
-};
+पूर्ण;
 
-static const char * const dpi0_parents[] = {
+अटल स्थिर अक्षर * स्थिर dpi0_parents[] = अणु
 	"clk26m",
 	"tvdpll_d2",
 	"tvdpll_d4",
 	"tvdpll_d8",
 	"tvdpll_d16"
-};
+पूर्ण;
 
-static const char * const scam_parents[] = {
+अटल स्थिर अक्षर * स्थिर scam_parents[] = अणु
 	"clk26m",
 	"mainpll_d5_d2"
-};
+पूर्ण;
 
-static const char * const disppwm_parents[] = {
+अटल स्थिर अक्षर * स्थिर disppwm_parents[] = अणु
 	"clk26m",
 	"univpll_d3_d4",
 	"osc_d2",
 	"osc_d4",
 	"osc_d16"
-};
+पूर्ण;
 
-static const char * const usb_top_parents[] = {
+अटल स्थिर अक्षर * स्थिर usb_top_parents[] = अणु
 	"clk26m",
 	"univpll_d5_d4",
 	"univpll_d3_d4",
 	"univpll_d5_d2"
-};
+पूर्ण;
 
-static const char * const ssusb_top_xhci_parents[] = {
+अटल स्थिर अक्षर * स्थिर ssusb_top_xhci_parents[] = अणु
 	"clk26m",
 	"univpll_d5_d4",
 	"univpll_d3_d4",
 	"univpll_d5_d2"
-};
+पूर्ण;
 
-static const char * const spm_parents[] = {
+अटल स्थिर अक्षर * स्थिर spm_parents[] = अणु
 	"clk26m",
 	"osc_d8",
 	"mainpll_d2_d8"
-};
+पूर्ण;
 
-static const char * const i2c_parents[] = {
+अटल स्थिर अक्षर * स्थिर i2c_parents[] = अणु
 	"clk26m",
 	"mainpll_d2_d8",
 	"univpll_d5_d2"
-};
+पूर्ण;
 
-static const char * const seninf_parents[] = {
+अटल स्थिर अक्षर * स्थिर seninf_parents[] = अणु
 	"clk26m",
 	"univpll_d7",
 	"univpll_d3_d2",
@@ -477,9 +478,9 @@ static const char * const seninf_parents[] = {
 	"mmpll_d4_d2",
 	"mmpll_d7",
 	"mmpll_d6"
-};
+पूर्ण;
 
-static const char * const seninf1_parents[] = {
+अटल स्थिर अक्षर * स्थिर seninf1_parents[] = अणु
 	"clk26m",
 	"univpll_d7",
 	"univpll_d3_d2",
@@ -488,9 +489,9 @@ static const char * const seninf1_parents[] = {
 	"mmpll_d4_d2",
 	"mmpll_d7",
 	"mmpll_d6"
-};
+पूर्ण;
 
-static const char * const seninf2_parents[] = {
+अटल स्थिर अक्षर * स्थिर seninf2_parents[] = अणु
 	"clk26m",
 	"univpll_d7",
 	"univpll_d3_d2",
@@ -499,56 +500,56 @@ static const char * const seninf2_parents[] = {
 	"mmpll_d4_d2",
 	"mmpll_d7",
 	"mmpll_d6"
-};
+पूर्ण;
 
-static const char * const dxcc_parents[] = {
+अटल स्थिर अक्षर * स्थिर dxcc_parents[] = अणु
 	"clk26m",
 	"mainpll_d2_d2",
 	"mainpll_d2_d4",
 	"mainpll_d2_d8"
-};
+पूर्ण;
 
-static const char * const aud_engen1_parents[] = {
+अटल स्थिर अक्षर * स्थिर aud_engen1_parents[] = अणु
 	"clk26m",
 	"apll1_d2",
 	"apll1_d4",
 	"apll1_d8"
-};
+पूर्ण;
 
-static const char * const aud_engen2_parents[] = {
+अटल स्थिर अक्षर * स्थिर aud_engen2_parents[] = अणु
 	"clk26m",
 	"apll2_d2",
 	"apll2_d4",
 	"apll2_d8"
-};
+पूर्ण;
 
-static const char * const faes_ufsfde_parents[] = {
+अटल स्थिर अक्षर * स्थिर faes_ufsfde_parents[] = अणु
 	"clk26m",
 	"mainpll_d2",
 	"mainpll_d2_d2",
 	"mainpll_d3",
 	"mainpll_d2_d4",
 	"univpll_d3"
-};
+पूर्ण;
 
-static const char * const fufs_parents[] = {
+अटल स्थिर अक्षर * स्थिर fufs_parents[] = अणु
 	"clk26m",
 	"mainpll_d2_d4",
 	"mainpll_d2_d8",
 	"mainpll_d2_d16"
-};
+पूर्ण;
 
-static const char * const aud_1_parents[] = {
+अटल स्थिर अक्षर * स्थिर aud_1_parents[] = अणु
 	"clk26m",
 	"apll1_ck"
-};
+पूर्ण;
 
-static const char * const aud_2_parents[] = {
+अटल स्थिर अक्षर * स्थिर aud_2_parents[] = अणु
 	"clk26m",
 	"apll2_ck"
-};
+पूर्ण;
 
-static const char * const adsp_parents[] = {
+अटल स्थिर अक्षर * स्थिर adsp_parents[] = अणु
 	"clk26m",
 	"mainpll_d3",
 	"univpll_d2_d4",
@@ -556,18 +557,18 @@ static const char * const adsp_parents[] = {
 	"mmpll_d4",
 	"adsppll_d4",
 	"adsppll_d6"
-};
+पूर्ण;
 
-static const char * const dpmaif_parents[] = {
+अटल स्थिर अक्षर * स्थिर dpmaअगर_parents[] = अणु
 	"clk26m",
 	"univpll_d2_d4",
 	"mainpll_d3",
 	"mainpll_d2_d2",
 	"univpll_d2_d2",
 	"univpll_d3"
-};
+पूर्ण;
 
-static const char * const venc_parents[] = {
+अटल स्थिर अक्षर * स्थिर venc_parents[] = अणु
 	"clk26m",
 	"mmpll_d7",
 	"mainpll_d3",
@@ -582,9 +583,9 @@ static const char * const venc_parents[] = {
 	"mmpll_d5",
 	"univpll_192m_d2"
 
-};
+पूर्ण;
 
-static const char * const vdec_parents[] = {
+अटल स्थिर अक्षर * स्थिर vdec_parents[] = अणु
 	"clk26m",
 	"univpll_d2_d4",
 	"mainpll_d3",
@@ -596,28 +597,28 @@ static const char * const vdec_parents[] = {
 	"mainpll_d2",
 	"univpll_d2",
 	"univpll_192m_d2"
-};
+पूर्ण;
 
-static const char * const camtm_parents[] = {
+अटल स्थिर अक्षर * स्थिर camपंचांग_parents[] = अणु
 	"clk26m",
 	"univpll_d7",
 	"univpll_d3_d2",
 	"univpll_d2_d2"
-};
+पूर्ण;
 
-static const char * const pwm_parents[] = {
+अटल स्थिर अक्षर * स्थिर pwm_parents[] = अणु
 	"clk26m",
 	"univpll_d2_d8"
-};
+पूर्ण;
 
-static const char * const audio_h_parents[] = {
+अटल स्थिर अक्षर * स्थिर audio_h_parents[] = अणु
 	"clk26m",
 	"univpll_d7",
 	"apll1_ck",
 	"apll2_ck"
-};
+पूर्ण;
 
-static const char * const camtg5_parents[] = {
+अटल स्थिर अक्षर * स्थिर camtg5_parents[] = अणु
 	"clk26m",
 	"univpll_192m_d8",
 	"univpll_d3_d8",
@@ -626,15 +627,15 @@ static const char * const camtg5_parents[] = {
 	"csw_f26m_ck_d2",
 	"univpll_192m_d16",
 	"univpll_192m_d32"
-};
+पूर्ण;
 
 /*
  * CRITICAL CLOCK:
- * axi_sel is the main bus clock of whole SOC.
- * spm_sel is the clock of the always-on co-processor.
- * sspm_sel is the clock of the always-on co-processor.
+ * axi_sel is the मुख्य bus घड़ी of whole SOC.
+ * spm_sel is the घड़ी of the always-on co-processor.
+ * sspm_sel is the घड़ी of the always-on co-processor.
  */
-static const struct mtk_mux top_muxes[] = {
+अटल स्थिर काष्ठा mtk_mux top_muxes[] = अणु
 	/* CLK_CFG_0 */
 	MUX_GATE_CLR_SET_UPD_FLAGS(CLK_TOP_AXI, "axi_sel", axi_parents,
 				   0x20, 0x24, 0x28, 0, 2, 7,
@@ -664,7 +665,7 @@ static const struct mtk_mux top_muxes[] = {
 	/* CLK_CFG_3 */
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_DSP3, "dsp3_sel", dsp3_parents,
 			     0x50, 0x54, 0x58, 0, 4, 7, 0x004, 12),
-	MUX_GATE_CLR_SET_UPD(CLK_TOP_IPU_IF, "ipu_if_sel", ipu_if_parents,
+	MUX_GATE_CLR_SET_UPD(CLK_TOP_IPU_IF, "ipu_if_sel", ipu_अगर_parents,
 			     0x50, 0x54, 0x58, 8, 4, 15, 0x004, 13),
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_MFG, "mfg_sel", mfg_parents,
 			     0x50, 0x54, 0x58, 16, 2, 23, 0x004, 14),
@@ -698,7 +699,7 @@ static const struct mtk_mux top_muxes[] = {
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_AUD, "audio_sel", audio_parents,
 			     0x80, 0x84, 0x88, 8, 2, 15, 0x004, 25),
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_AUD_INTBUS, "aud_intbus_sel",
-			     aud_intbus_parents, 0x80, 0x84, 0x88,
+			     aud_पूर्णांकbus_parents, 0x80, 0x84, 0x88,
 			     16, 2, 23, 0x004, 26),
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_FPWRAP_ULPOSC, "fpwrap_ulposc_sel",
 			     fpwrap_ulposc_parents, 0x80, 0x84, 0x88,
@@ -760,13 +761,13 @@ static const struct mtk_mux top_muxes[] = {
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_ADSP, "adsp_sel", adsp_parents,
 			     0xd0, 0xd4, 0xd8, 24, 3, 31, 0x008, 16),
 	/* CLK_CFG_12 */
-	MUX_GATE_CLR_SET_UPD(CLK_TOP_DPMAIF, "dpmaif_sel", dpmaif_parents,
+	MUX_GATE_CLR_SET_UPD(CLK_TOP_DPMAIF, "dpmaif_sel", dpmaअगर_parents,
 			     0xe0, 0xe4, 0xe8, 0, 3, 7, 0x008, 17),
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_VENC, "venc_sel", venc_parents,
 			     0xe0, 0xe4, 0xe8, 8, 4, 15, 0x008, 18),
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_VDEC, "vdec_sel", vdec_parents,
 			     0xe0, 0xe4, 0xe8, 16, 4, 23, 0x008, 19),
-	MUX_GATE_CLR_SET_UPD(CLK_TOP_CAMTM, "camtm_sel", camtm_parents,
+	MUX_GATE_CLR_SET_UPD(CLK_TOP_CAMTM, "camtm_sel", camपंचांग_parents,
 			     0xe0, 0xe4, 0xe8, 24, 2, 31, 0x004, 20),
 	/* CLK_CFG_13 */
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_PWM, "pwm_sel", pwm_parents,
@@ -776,39 +777,39 @@ static const struct mtk_mux top_muxes[] = {
 			     8, 2, 15, 0x008, 22),
 	MUX_GATE_CLR_SET_UPD(CLK_TOP_CAMTG5, "camtg5_sel", camtg5_parents,
 			     0xf0, 0xf4, 0xf8, 24, 3, 31, 0x008, 24),
-};
+पूर्ण;
 
-static const char * const i2s0_m_ck_parents[] = {
+अटल स्थिर अक्षर * स्थिर i2s0_m_ck_parents[] = अणु
 	"aud_1_sel",
 	"aud_2_sel"
-};
+पूर्ण;
 
-static const char * const i2s1_m_ck_parents[] = {
+अटल स्थिर अक्षर * स्थिर i2s1_m_ck_parents[] = अणु
 	"aud_1_sel",
 	"aud_2_sel"
-};
+पूर्ण;
 
-static const char * const i2s2_m_ck_parents[] = {
+अटल स्थिर अक्षर * स्थिर i2s2_m_ck_parents[] = अणु
 	"aud_1_sel",
 	"aud_2_sel"
-};
+पूर्ण;
 
-static const char * const i2s3_m_ck_parents[] = {
+अटल स्थिर अक्षर * स्थिर i2s3_m_ck_parents[] = अणु
 	"aud_1_sel",
 	"aud_2_sel"
-};
+पूर्ण;
 
-static const char * const i2s4_m_ck_parents[] = {
+अटल स्थिर अक्षर * स्थिर i2s4_m_ck_parents[] = अणु
 	"aud_1_sel",
 	"aud_2_sel"
-};
+पूर्ण;
 
-static const char * const i2s5_m_ck_parents[] = {
+अटल स्थिर अक्षर * स्थिर i2s5_m_ck_parents[] = अणु
 	"aud_1_sel",
 	"aud_2_sel"
-};
+पूर्ण;
 
-static const struct mtk_composite top_aud_muxes[] = {
+अटल स्थिर काष्ठा mtk_composite top_aud_muxes[] = अणु
 	MUX(CLK_TOP_I2S0_M_SEL, "i2s0_m_ck_sel", i2s0_m_ck_parents,
 	    0x320, 8, 1),
 	MUX(CLK_TOP_I2S1_M_SEL, "i2s1_m_ck_sel", i2s1_m_ck_parents,
@@ -821,9 +822,9 @@ static const struct mtk_composite top_aud_muxes[] = {
 	    0x320, 12, 1),
 	MUX(CLK_TOP_I2S5_M_SEL, "i2s5_m_ck_sel", i2s5_m_ck_parents,
 	    0x328, 20, 1),
-};
+पूर्ण;
 
-static struct mtk_composite top_aud_divs[] = {
+अटल काष्ठा mtk_composite top_aud_भागs[] = अणु
 	DIV_GATE(CLK_TOP_APLL12_DIV0, "apll12_div0", "i2s0_m_ck_sel",
 		 0x320, 2, 0x324, 8, 0),
 	DIV_GATE(CLK_TOP_APLL12_DIV1, "apll12_div1", "i2s1_m_ck_sel",
@@ -838,46 +839,46 @@ static struct mtk_composite top_aud_divs[] = {
 		 0x320, 7, 0x328, 8, 8),
 	DIV_GATE(CLK_TOP_APLL12_DIV5, "apll12_div5", "i2s5_m_ck_sel",
 		 0x328, 16, 0x328, 4, 28),
-};
+पूर्ण;
 
-static const struct mtk_gate_regs infra0_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs infra0_cg_regs = अणु
 	.set_ofs = 0x80,
 	.clr_ofs = 0x84,
 	.sta_ofs = 0x90,
-};
+पूर्ण;
 
-static const struct mtk_gate_regs infra1_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs infra1_cg_regs = अणु
 	.set_ofs = 0x88,
 	.clr_ofs = 0x8c,
 	.sta_ofs = 0x94,
-};
+पूर्ण;
 
-static const struct mtk_gate_regs infra2_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs infra2_cg_regs = अणु
 	.set_ofs = 0xa4,
 	.clr_ofs = 0xa8,
 	.sta_ofs = 0xac,
-};
+पूर्ण;
 
-static const struct mtk_gate_regs infra3_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs infra3_cg_regs = अणु
 	.set_ofs = 0xc0,
 	.clr_ofs = 0xc4,
 	.sta_ofs = 0xc8,
-};
+पूर्ण;
 
-#define GATE_INFRA0(_id, _name, _parent, _shift)		\
-	GATE_MTK(_id, _name, _parent, &infra0_cg_regs, _shift,	\
+#घोषणा GATE_INFRA0(_id, _name, _parent, _shअगरt)		\
+	GATE_MTK(_id, _name, _parent, &infra0_cg_regs, _shअगरt,	\
 		&mtk_clk_gate_ops_setclr)
-#define GATE_INFRA1(_id, _name, _parent, _shift)		\
-	GATE_MTK(_id, _name, _parent, &infra1_cg_regs, _shift,	\
+#घोषणा GATE_INFRA1(_id, _name, _parent, _shअगरt)		\
+	GATE_MTK(_id, _name, _parent, &infra1_cg_regs, _shअगरt,	\
 		&mtk_clk_gate_ops_setclr)
-#define GATE_INFRA2(_id, _name, _parent, _shift)		\
-	GATE_MTK(_id, _name, _parent, &infra2_cg_regs, _shift,	\
+#घोषणा GATE_INFRA2(_id, _name, _parent, _shअगरt)		\
+	GATE_MTK(_id, _name, _parent, &infra2_cg_regs, _shअगरt,	\
 		&mtk_clk_gate_ops_setclr)
-#define GATE_INFRA3(_id, _name, _parent, _shift)		\
-	GATE_MTK(_id, _name, _parent, &infra3_cg_regs, _shift,	\
+#घोषणा GATE_INFRA3(_id, _name, _parent, _shअगरt)		\
+	GATE_MTK(_id, _name, _parent, &infra3_cg_regs, _shअगरt,	\
 		&mtk_clk_gate_ops_setclr)
 
-static const struct mtk_gate infra_clks[] = {
+अटल स्थिर काष्ठा mtk_gate infra_clks[] = अणु
 	/* INFRA0 */
 	GATE_INFRA0(CLK_INFRA_PMIC_TMR, "infra_pmic_tmr",
 		    "axi_sel", 0),
@@ -1094,26 +1095,26 @@ static const struct mtk_gate infra_clks[] = {
 		    "spi_sel", 30),
 	GATE_INFRA3(CLK_INFRA_SPI7, "infra_spi7",
 		    "spi_sel", 31),
-};
+पूर्ण;
 
-static const struct mtk_gate_regs apmixed_cg_regs = {
+अटल स्थिर काष्ठा mtk_gate_regs apmixed_cg_regs = अणु
 	.set_ofs = 0x20,
 	.clr_ofs = 0x20,
 	.sta_ofs = 0x20,
-};
+पूर्ण;
 
-#define GATE_APMIXED_FLAGS(_id, _name, _parent, _shift, _flags)	\
+#घोषणा GATE_APMIXED_FLAGS(_id, _name, _parent, _shअगरt, _flags)	\
 	GATE_MTK_FLAGS(_id, _name, _parent, &apmixed_cg_regs,		\
-		_shift, &mtk_clk_gate_ops_no_setclr_inv, _flags)
+		_shअगरt, &mtk_clk_gate_ops_no_setclr_inv, _flags)
 
-#define GATE_APMIXED(_id, _name, _parent, _shift)	\
-	GATE_APMIXED_FLAGS(_id, _name, _parent, _shift,	0)
+#घोषणा GATE_APMIXED(_id, _name, _parent, _shअगरt)	\
+	GATE_APMIXED_FLAGS(_id, _name, _parent, _shअगरt,	0)
 
 /*
  * CRITICAL CLOCK:
- * apmixed_appll26m is the toppest clock gate of all PLLs.
+ * apmixed_appll26m is the toppest घड़ी gate of all PLLs.
  */
-static const struct mtk_gate apmixed_clks[] = {
+अटल स्थिर काष्ठा mtk_gate apmixed_clks[] = अणु
 	GATE_APMIXED(CLK_APMIXED_SSUSB26M, "apmixed_ssusb26m",
 		     "f_f26m_ck", 4),
 	GATE_APMIXED_FLAGS(CLK_APMIXED_APPLL26M, "apmixed_appll26m",
@@ -1136,16 +1137,16 @@ static const struct mtk_gate apmixed_clks[] = {
 		     "f_f26m_ck", 16),
 	GATE_APMIXED(CLK_APMIXED_MIPID1_26M, "apmixed_mipid126m",
 		     "f_f26m_ck", 17),
-};
+पूर्ण;
 
-#define MT6779_PLL_FMAX		(3800UL * MHZ)
-#define MT6779_PLL_FMIN		(1500UL * MHZ)
+#घोषणा MT6779_PLL_FMAX		(3800UL * MHZ)
+#घोषणा MT6779_PLL_FMIN		(1500UL * MHZ)
 
-#define PLL_B(_id, _name, _reg, _pwr_reg, _en_mask, _flags,		\
+#घोषणा PLL_B(_id, _name, _reg, _pwr_reg, _en_mask, _flags,		\
 			_rst_bar_mask, _pcwbits, _pcwibits, _pd_reg,	\
-			_pd_shift, _tuner_reg,  _tuner_en_reg,		\
-			_tuner_en_bit, _pcw_reg, _pcw_shift,		\
-			_pcw_chg_reg, _div_table) {			\
+			_pd_shअगरt, _tuner_reg,  _tuner_en_reg,		\
+			_tuner_en_bit, _pcw_reg, _pcw_shअगरt,		\
+			_pcw_chg_reg, _भाग_प्रकारable) अणु			\
 		.id = _id,						\
 		.name = _name,						\
 		.reg = _reg,						\
@@ -1158,28 +1159,28 @@ static const struct mtk_gate apmixed_clks[] = {
 		.pcwbits = _pcwbits,					\
 		.pcwibits = _pcwibits,					\
 		.pd_reg = _pd_reg,					\
-		.pd_shift = _pd_shift,					\
+		.pd_shअगरt = _pd_shअगरt,					\
 		.tuner_reg = _tuner_reg,				\
 		.tuner_en_reg = _tuner_en_reg,				\
 		.tuner_en_bit = _tuner_en_bit,				\
 		.pcw_reg = _pcw_reg,					\
-		.pcw_shift = _pcw_shift,				\
+		.pcw_shअगरt = _pcw_shअगरt,				\
 		.pcw_chg_reg = _pcw_chg_reg,				\
-		.div_table = _div_table,				\
-	}
+		.भाग_प्रकारable = _भाग_प्रकारable,				\
+	पूर्ण
 
-#define PLL(_id, _name, _reg, _pwr_reg, _en_mask, _flags,		\
+#घोषणा PLL(_id, _name, _reg, _pwr_reg, _en_mask, _flags,		\
 			_rst_bar_mask, _pcwbits, _pcwibits, _pd_reg,	\
-			_pd_shift, _tuner_reg, _tuner_en_reg,		\
-			_tuner_en_bit, _pcw_reg, _pcw_shift,		\
+			_pd_shअगरt, _tuner_reg, _tuner_en_reg,		\
+			_tuner_en_bit, _pcw_reg, _pcw_shअगरt,		\
 			_pcw_chg_reg)					\
 		PLL_B(_id, _name, _reg, _pwr_reg, _en_mask, _flags,	\
 			_rst_bar_mask, _pcwbits, _pcwibits, _pd_reg,	\
-			_pd_shift, _tuner_reg, _tuner_en_reg,		\
-			_tuner_en_bit, _pcw_reg, _pcw_shift,		\
-			_pcw_chg_reg, NULL)
+			_pd_shअगरt, _tuner_reg, _tuner_en_reg,		\
+			_tuner_en_bit, _pcw_reg, _pcw_shअगरt,		\
+			_pcw_chg_reg, शून्य)
 
-static const struct mtk_pll_data plls[] = {
+अटल स्थिर काष्ठा mtk_pll_data plls[] = अणु
 	PLL(CLK_APMIXED_ARMPLL_LL, "armpll_ll", 0x0200, 0x020C, BIT(0),
 	    PLL_AO, 0, 22, 8, 0x0204, 24, 0, 0, 0, 0x0204, 0, 0),
 	PLL(CLK_APMIXED_ARMPLL_BL, "armpll_bl", 0x0210, 0x021C, BIT(0),
@@ -1208,109 +1209,109 @@ static const struct mtk_pll_data plls[] = {
 	    0, 0, 32, 8, 0x02C0, 1, 0, 0x14, 0, 0x02C4, 0, 0x2C0),
 	PLL(CLK_APMIXED_APLL2, "apll2", 0x02D4, 0x02E4, BIT(0),
 	    0, 0, 32, 8, 0x02D4, 1, 0, 0x14, 1, 0x02D8, 0, 0x02D4),
-};
+पूर्ण;
 
-static int clk_mt6779_apmixed_probe(struct platform_device *pdev)
-{
-	struct clk_onecell_data *clk_data;
-	struct device_node *node = pdev->dev.of_node;
+अटल पूर्णांक clk_mt6779_apmixed_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_onecell_data *clk_data;
+	काष्ठा device_node *node = pdev->dev.of_node;
 
 	clk_data = mtk_alloc_clk_data(CLK_APMIXED_NR_CLK);
 
-	mtk_clk_register_plls(node, plls, ARRAY_SIZE(plls), clk_data);
+	mtk_clk_रेजिस्टर_plls(node, plls, ARRAY_SIZE(plls), clk_data);
 
-	mtk_clk_register_gates(node, apmixed_clks,
+	mtk_clk_रेजिस्टर_gates(node, apmixed_clks,
 			       ARRAY_SIZE(apmixed_clks), clk_data);
 
-	return of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-}
+	वापस of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
+पूर्ण
 
-static int clk_mt6779_top_probe(struct platform_device *pdev)
-{
-	void __iomem *base;
-	struct clk_onecell_data *clk_data;
-	struct device_node *node = pdev->dev.of_node;
+अटल पूर्णांक clk_mt6779_top_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	व्योम __iomem *base;
+	काष्ठा clk_onecell_data *clk_data;
+	काष्ठा device_node *node = pdev->dev.of_node;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	clk_data = mtk_alloc_clk_data(CLK_TOP_NR_CLK);
 
-	mtk_clk_register_fixed_clks(top_fixed_clks, ARRAY_SIZE(top_fixed_clks),
+	mtk_clk_रेजिस्टर_fixed_clks(top_fixed_clks, ARRAY_SIZE(top_fixed_clks),
 				    clk_data);
 
-	mtk_clk_register_factors(top_divs, ARRAY_SIZE(top_divs), clk_data);
+	mtk_clk_रेजिस्टर_factors(top_भागs, ARRAY_SIZE(top_भागs), clk_data);
 
-	mtk_clk_register_muxes(top_muxes, ARRAY_SIZE(top_muxes),
+	mtk_clk_रेजिस्टर_muxes(top_muxes, ARRAY_SIZE(top_muxes),
 			       node, &mt6779_clk_lock, clk_data);
 
-	mtk_clk_register_composites(top_aud_muxes, ARRAY_SIZE(top_aud_muxes),
+	mtk_clk_रेजिस्टर_composites(top_aud_muxes, ARRAY_SIZE(top_aud_muxes),
 				    base, &mt6779_clk_lock, clk_data);
 
-	mtk_clk_register_composites(top_aud_divs, ARRAY_SIZE(top_aud_divs),
+	mtk_clk_रेजिस्टर_composites(top_aud_भागs, ARRAY_SIZE(top_aud_भागs),
 				    base, &mt6779_clk_lock, clk_data);
 
-	return of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-}
+	वापस of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
+पूर्ण
 
-static int clk_mt6779_infra_probe(struct platform_device *pdev)
-{
-	struct clk_onecell_data *clk_data;
-	struct device_node *node = pdev->dev.of_node;
+अटल पूर्णांक clk_mt6779_infra_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk_onecell_data *clk_data;
+	काष्ठा device_node *node = pdev->dev.of_node;
 
 	clk_data = mtk_alloc_clk_data(CLK_INFRA_NR_CLK);
 
-	mtk_clk_register_gates(node, infra_clks, ARRAY_SIZE(infra_clks),
+	mtk_clk_रेजिस्टर_gates(node, infra_clks, ARRAY_SIZE(infra_clks),
 			       clk_data);
 
-	return of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
-}
+	वापस of_clk_add_provider(node, of_clk_src_onecell_get, clk_data);
+पूर्ण
 
-static const struct of_device_id of_match_clk_mt6779[] = {
-	{
+अटल स्थिर काष्ठा of_device_id of_match_clk_mt6779[] = अणु
+	अणु
 		.compatible = "mediatek,mt6779-apmixed",
 		.data = clk_mt6779_apmixed_probe,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6779-topckgen",
 		.data = clk_mt6779_top_probe,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6779-infracfg_ao",
 		.data = clk_mt6779_infra_probe,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int clk_mt6779_probe(struct platform_device *pdev)
-{
-	int (*clk_probe)(struct platform_device *pdev);
-	int r;
+अटल पूर्णांक clk_mt6779_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक (*clk_probe)(काष्ठा platक्रमm_device *pdev);
+	पूर्णांक r;
 
 	clk_probe = of_device_get_match_data(&pdev->dev);
-	if (!clk_probe)
-		return -EINVAL;
+	अगर (!clk_probe)
+		वापस -EINVAL;
 
 	r = clk_probe(pdev);
-	if (r)
+	अगर (r)
 		dev_err(&pdev->dev,
 			"could not register clock provider: %s: %d\n",
 			pdev->name, r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static struct platform_driver clk_mt6779_drv = {
+अटल काष्ठा platक्रमm_driver clk_mt6779_drv = अणु
 	.probe = clk_mt6779_probe,
-	.driver = {
+	.driver = अणु
 		.name = "clk-mt6779",
 		.of_match_table = of_match_clk_mt6779,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init clk_mt6779_init(void)
-{
-	return platform_driver_register(&clk_mt6779_drv);
-}
+अटल पूर्णांक __init clk_mt6779_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&clk_mt6779_drv);
+पूर्ण
 
 arch_initcall(clk_mt6779_init);

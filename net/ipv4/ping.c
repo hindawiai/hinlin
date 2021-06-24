@@ -1,778 +1,779 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
  *		"Ping" sockets
  *
  * Based on ipv4/udp.c code.
  *
- * Authors:	Vasiliy Kulikov / Openwall (for Linux 2.6),
- *		Pavel Kankovsky (for Linux 2.4.32)
+ * Authors:	Vasiliy Kulikov / Openwall (क्रम Linux 2.6),
+ *		Pavel Kankovsky (क्रम Linux 2.4.32)
  *
  * Pavel gave all rights to bugs to Vasiliy,
  * none of the bugs are Pavel's now.
  */
 
-#include <linux/uaccess.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/socket.h>
-#include <linux/sockios.h>
-#include <linux/in.h>
-#include <linux/errno.h>
-#include <linux/timer.h>
-#include <linux/mm.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <net/snmp.h>
-#include <net/ip.h>
-#include <net/icmp.h>
-#include <net/protocol.h>
-#include <linux/skbuff.h>
-#include <linux/proc_fs.h>
-#include <linux/export.h>
-#include <net/sock.h>
-#include <net/ping.h>
-#include <net/udp.h>
-#include <net/route.h>
-#include <net/inet_common.h>
-#include <net/checksum.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/in.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/snmp.h>
+#समावेश <net/ip.h>
+#समावेश <net/icmp.h>
+#समावेश <net/protocol.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/export.h>
+#समावेश <net/sock.h>
+#समावेश <net/ping.h>
+#समावेश <net/udp.h>
+#समावेश <net/route.h>
+#समावेश <net/inet_common.h>
+#समावेश <net/checksum.h>
 
-#if IS_ENABLED(CONFIG_IPV6)
-#include <linux/in6.h>
-#include <linux/icmpv6.h>
-#include <net/addrconf.h>
-#include <net/ipv6.h>
-#include <net/transp_v6.h>
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+#समावेश <linux/in6.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/transp_v6.h>
+#पूर्ण_अगर
 
-struct ping_table {
-	struct hlist_nulls_head	hash[PING_HTABLE_SIZE];
+काष्ठा ping_table अणु
+	काष्ठा hlist_nulls_head	hash[PING_HTABLE_SIZE];
 	rwlock_t		lock;
-};
+पूर्ण;
 
-static struct ping_table ping_table;
-struct pingv6_ops pingv6_ops;
+अटल काष्ठा ping_table ping_table;
+काष्ठा pingv6_ops pingv6_ops;
 EXPORT_SYMBOL_GPL(pingv6_ops);
 
-static u16 ping_port_rover;
+अटल u16 ping_port_rover;
 
-static inline u32 ping_hashfn(const struct net *net, u32 num, u32 mask)
-{
+अटल अंतरभूत u32 ping_hashfn(स्थिर काष्ठा net *net, u32 num, u32 mask)
+अणु
 	u32 res = (num + net_hash_mix(net)) & mask;
 
 	pr_debug("hash(%u) = %u\n", num, res);
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_hash);
 
-static inline struct hlist_nulls_head *ping_hashslot(struct ping_table *table,
-					     struct net *net, unsigned int num)
-{
-	return &table->hash[ping_hashfn(net, num, PING_HTABLE_MASK)];
-}
+अटल अंतरभूत काष्ठा hlist_nulls_head *ping_hashslot(काष्ठा ping_table *table,
+					     काष्ठा net *net, अचिन्हित पूर्णांक num)
+अणु
+	वापस &table->hash[ping_hashfn(net, num, PING_HTABLE_MASK)];
+पूर्ण
 
-int ping_get_port(struct sock *sk, unsigned short ident)
-{
-	struct hlist_nulls_node *node;
-	struct hlist_nulls_head *hlist;
-	struct inet_sock *isk, *isk2;
-	struct sock *sk2 = NULL;
+पूर्णांक ping_get_port(काष्ठा sock *sk, अचिन्हित लघु ident)
+अणु
+	काष्ठा hlist_nulls_node *node;
+	काष्ठा hlist_nulls_head *hlist;
+	काष्ठा inet_sock *isk, *isk2;
+	काष्ठा sock *sk2 = शून्य;
 
 	isk = inet_sk(sk);
-	write_lock_bh(&ping_table.lock);
-	if (ident == 0) {
+	ग_लिखो_lock_bh(&ping_table.lock);
+	अगर (ident == 0) अणु
 		u32 i;
 		u16 result = ping_port_rover + 1;
 
-		for (i = 0; i < (1L << 16); i++, result++) {
-			if (!result)
-				result++; /* avoid zero */
+		क्रम (i = 0; i < (1L << 16); i++, result++) अणु
+			अगर (!result)
+				result++; /* aव्योम zero */
 			hlist = ping_hashslot(&ping_table, sock_net(sk),
 					    result);
-			ping_portaddr_for_each_entry(sk2, node, hlist) {
+			ping_portaddr_क्रम_each_entry(sk2, node, hlist) अणु
 				isk2 = inet_sk(sk2);
 
-				if (isk2->inet_num == result)
-					goto next_port;
-			}
+				अगर (isk2->inet_num == result)
+					जाओ next_port;
+			पूर्ण
 
 			/* found */
 			ping_port_rover = ident = result;
-			break;
+			अवरोध;
 next_port:
 			;
-		}
-		if (i >= (1L << 16))
-			goto fail;
-	} else {
+		पूर्ण
+		अगर (i >= (1L << 16))
+			जाओ fail;
+	पूर्ण अन्यथा अणु
 		hlist = ping_hashslot(&ping_table, sock_net(sk), ident);
-		ping_portaddr_for_each_entry(sk2, node, hlist) {
+		ping_portaddr_क्रम_each_entry(sk2, node, hlist) अणु
 			isk2 = inet_sk(sk2);
 
 			/* BUG? Why is this reuse and not reuseaddr? ping.c
-			 * doesn't turn off SO_REUSEADDR, and it doesn't expect
+			 * करोesn't turn off SO_REUSEADDR, and it doesn't expect
 			 * that other ping processes can steal its packets.
 			 */
-			if ((isk2->inet_num == ident) &&
+			अगर ((isk2->inet_num == ident) &&
 			    (sk2 != sk) &&
 			    (!sk2->sk_reuse || !sk->sk_reuse))
-				goto fail;
-		}
-	}
+				जाओ fail;
+		पूर्ण
+	पूर्ण
 
 	pr_debug("found port/ident = %d\n", ident);
 	isk->inet_num = ident;
-	if (sk_unhashed(sk)) {
+	अगर (sk_unhashed(sk)) अणु
 		pr_debug("was not hashed\n");
 		sock_hold(sk);
 		hlist_nulls_add_head(&sk->sk_nulls_node, hlist);
 		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, 1);
-	}
-	write_unlock_bh(&ping_table.lock);
-	return 0;
+	पूर्ण
+	ग_लिखो_unlock_bh(&ping_table.lock);
+	वापस 0;
 
 fail:
-	write_unlock_bh(&ping_table.lock);
-	return 1;
-}
+	ग_लिखो_unlock_bh(&ping_table.lock);
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_get_port);
 
-int ping_hash(struct sock *sk)
-{
+पूर्णांक ping_hash(काष्ठा sock *sk)
+अणु
 	pr_debug("ping_hash(sk->port=%u)\n", inet_sk(sk)->inet_num);
 	BUG(); /* "Please do not press this button again." */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ping_unhash(struct sock *sk)
-{
-	struct inet_sock *isk = inet_sk(sk);
+व्योम ping_unhash(काष्ठा sock *sk)
+अणु
+	काष्ठा inet_sock *isk = inet_sk(sk);
 
 	pr_debug("ping_unhash(isk=%p,isk->num=%u)\n", isk, isk->inet_num);
-	write_lock_bh(&ping_table.lock);
-	if (sk_hashed(sk)) {
+	ग_लिखो_lock_bh(&ping_table.lock);
+	अगर (sk_hashed(sk)) अणु
 		hlist_nulls_del(&sk->sk_nulls_node);
 		sk_nulls_node_init(&sk->sk_nulls_node);
 		sock_put(sk);
 		isk->inet_num = 0;
 		isk->inet_sport = 0;
 		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
-	}
-	write_unlock_bh(&ping_table.lock);
-}
+	पूर्ण
+	ग_लिखो_unlock_bh(&ping_table.lock);
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_unhash);
 
-static struct sock *ping_lookup(struct net *net, struct sk_buff *skb, u16 ident)
-{
-	struct hlist_nulls_head *hslot = ping_hashslot(&ping_table, net, ident);
-	struct sock *sk = NULL;
-	struct inet_sock *isk;
-	struct hlist_nulls_node *hnode;
-	int dif = skb->dev->ifindex;
+अटल काष्ठा sock *ping_lookup(काष्ठा net *net, काष्ठा sk_buff *skb, u16 ident)
+अणु
+	काष्ठा hlist_nulls_head *hslot = ping_hashslot(&ping_table, net, ident);
+	काष्ठा sock *sk = शून्य;
+	काष्ठा inet_sock *isk;
+	काष्ठा hlist_nulls_node *hnode;
+	पूर्णांक dअगर = skb->dev->अगरindex;
 
-	if (skb->protocol == htons(ETH_P_IP)) {
+	अगर (skb->protocol == htons(ETH_P_IP)) अणु
 		pr_debug("try to find: num = %d, daddr = %pI4, dif = %d\n",
-			 (int)ident, &ip_hdr(skb)->daddr, dif);
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (skb->protocol == htons(ETH_P_IPV6)) {
+			 (पूर्णांक)ident, &ip_hdr(skb)->daddr, dअगर);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
 		pr_debug("try to find: num = %d, daddr = %pI6c, dif = %d\n",
-			 (int)ident, &ipv6_hdr(skb)->daddr, dif);
-#endif
-	}
+			 (पूर्णांक)ident, &ipv6_hdr(skb)->daddr, dअगर);
+#पूर्ण_अगर
+	पूर्ण
 
-	read_lock_bh(&ping_table.lock);
+	पढ़ो_lock_bh(&ping_table.lock);
 
-	ping_portaddr_for_each_entry(sk, hnode, hslot) {
+	ping_portaddr_क्रम_each_entry(sk, hnode, hslot) अणु
 		isk = inet_sk(sk);
 
 		pr_debug("iterate\n");
-		if (isk->inet_num != ident)
-			continue;
+		अगर (isk->inet_num != ident)
+			जारी;
 
-		if (skb->protocol == htons(ETH_P_IP) &&
-		    sk->sk_family == AF_INET) {
+		अगर (skb->protocol == htons(ETH_P_IP) &&
+		    sk->sk_family == AF_INET) अणु
 			pr_debug("found: %p: num=%d, daddr=%pI4, dif=%d\n", sk,
-				 (int) isk->inet_num, &isk->inet_rcv_saddr,
-				 sk->sk_bound_dev_if);
+				 (पूर्णांक) isk->inet_num, &isk->inet_rcv_saddr,
+				 sk->sk_bound_dev_अगर);
 
-			if (isk->inet_rcv_saddr &&
+			अगर (isk->inet_rcv_saddr &&
 			    isk->inet_rcv_saddr != ip_hdr(skb)->daddr)
-				continue;
-#if IS_ENABLED(CONFIG_IPV6)
-		} else if (skb->protocol == htons(ETH_P_IPV6) &&
-			   sk->sk_family == AF_INET6) {
+				जारी;
+#अगर IS_ENABLED(CONFIG_IPV6)
+		पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6) &&
+			   sk->sk_family == AF_INET6) अणु
 
 			pr_debug("found: %p: num=%d, daddr=%pI6c, dif=%d\n", sk,
-				 (int) isk->inet_num,
+				 (पूर्णांक) isk->inet_num,
 				 &sk->sk_v6_rcv_saddr,
-				 sk->sk_bound_dev_if);
+				 sk->sk_bound_dev_अगर);
 
-			if (!ipv6_addr_any(&sk->sk_v6_rcv_saddr) &&
+			अगर (!ipv6_addr_any(&sk->sk_v6_rcv_saddr) &&
 			    !ipv6_addr_equal(&sk->sk_v6_rcv_saddr,
 					     &ipv6_hdr(skb)->daddr))
-				continue;
-#endif
-		} else {
-			continue;
-		}
+				जारी;
+#पूर्ण_अगर
+		पूर्ण अन्यथा अणु
+			जारी;
+		पूर्ण
 
-		if (sk->sk_bound_dev_if && sk->sk_bound_dev_if != dif)
-			continue;
+		अगर (sk->sk_bound_dev_अगर && sk->sk_bound_dev_अगर != dअगर)
+			जारी;
 
 		sock_hold(sk);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	sk = NULL;
-exit:
-	read_unlock_bh(&ping_table.lock);
+	sk = शून्य;
+निकास:
+	पढ़ो_unlock_bh(&ping_table.lock);
 
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static void inet_get_ping_group_range_net(struct net *net, kgid_t *low,
+अटल व्योम inet_get_ping_group_range_net(काष्ठा net *net, kgid_t *low,
 					  kgid_t *high)
-{
+अणु
 	kgid_t *data = net->ipv4.ping_group_range.range;
-	unsigned int seq;
+	अचिन्हित पूर्णांक seq;
 
-	do {
-		seq = read_seqbegin(&net->ipv4.ping_group_range.lock);
+	करो अणु
+		seq = पढ़ो_seqbegin(&net->ipv4.ping_group_range.lock);
 
 		*low = data[0];
 		*high = data[1];
-	} while (read_seqretry(&net->ipv4.ping_group_range.lock, seq));
-}
+	पूर्ण जबतक (पढ़ो_seqretry(&net->ipv4.ping_group_range.lock, seq));
+पूर्ण
 
 
-int ping_init_sock(struct sock *sk)
-{
-	struct net *net = sock_net(sk);
+पूर्णांक ping_init_sock(काष्ठा sock *sk)
+अणु
+	काष्ठा net *net = sock_net(sk);
 	kgid_t group = current_egid();
-	struct group_info *group_info;
-	int i;
+	काष्ठा group_info *group_info;
+	पूर्णांक i;
 	kgid_t low, high;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (sk->sk_family == AF_INET6)
+	अगर (sk->sk_family == AF_INET6)
 		sk->sk_ipv6only = 1;
 
 	inet_get_ping_group_range_net(net, &low, &high);
-	if (gid_lte(low, group) && gid_lte(group, high))
-		return 0;
+	अगर (gid_lte(low, group) && gid_lte(group, high))
+		वापस 0;
 
 	group_info = get_current_groups();
-	for (i = 0; i < group_info->ngroups; i++) {
+	क्रम (i = 0; i < group_info->ngroups; i++) अणु
 		kgid_t gid = group_info->gid[i];
 
-		if (gid_lte(low, gid) && gid_lte(gid, high))
-			goto out_release_group;
-	}
+		अगर (gid_lte(low, gid) && gid_lte(gid, high))
+			जाओ out_release_group;
+	पूर्ण
 
 	ret = -EACCES;
 
 out_release_group:
 	put_group_info(group_info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_init_sock);
 
-void ping_close(struct sock *sk, long timeout)
-{
+व्योम ping_बंद(काष्ठा sock *sk, दीर्घ समयout)
+अणु
 	pr_debug("ping_close(sk=%p,sk->num=%u)\n",
 		 inet_sk(sk), inet_sk(sk)->inet_num);
-	pr_debug("isk->refcnt = %d\n", refcount_read(&sk->sk_refcnt));
+	pr_debug("isk->refcnt = %d\n", refcount_पढ़ो(&sk->sk_refcnt));
 
 	sk_common_release(sk);
-}
-EXPORT_SYMBOL_GPL(ping_close);
+पूर्ण
+EXPORT_SYMBOL_GPL(ping_बंद);
 
-/* Checks the bind address and possibly modifies sk->sk_bound_dev_if. */
-static int ping_check_bind_addr(struct sock *sk, struct inet_sock *isk,
-				struct sockaddr *uaddr, int addr_len)
-{
-	struct net *net = sock_net(sk);
-	if (sk->sk_family == AF_INET) {
-		struct sockaddr_in *addr = (struct sockaddr_in *) uaddr;
-		int chk_addr_ret;
+/* Checks the bind address and possibly modअगरies sk->sk_bound_dev_अगर. */
+अटल पूर्णांक ping_check_bind_addr(काष्ठा sock *sk, काष्ठा inet_sock *isk,
+				काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	अगर (sk->sk_family == AF_INET) अणु
+		काष्ठा sockaddr_in *addr = (काष्ठा sockaddr_in *) uaddr;
+		पूर्णांक chk_addr_ret;
 
-		if (addr_len < sizeof(*addr))
-			return -EINVAL;
+		अगर (addr_len < माप(*addr))
+			वापस -EINVAL;
 
-		if (addr->sin_family != AF_INET &&
+		अगर (addr->sin_family != AF_INET &&
 		    !(addr->sin_family == AF_UNSPEC &&
 		      addr->sin_addr.s_addr == htonl(INADDR_ANY)))
-			return -EAFNOSUPPORT;
+			वापस -EAFNOSUPPORT;
 
 		pr_debug("ping_check_bind_addr(sk=%p,addr=%pI4,port=%d)\n",
 			 sk, &addr->sin_addr.s_addr, ntohs(addr->sin_port));
 
-		if (addr->sin_addr.s_addr == htonl(INADDR_ANY))
+		अगर (addr->sin_addr.s_addr == htonl(INADDR_ANY))
 			chk_addr_ret = RTN_LOCAL;
-		else
+		अन्यथा
 			chk_addr_ret = inet_addr_type(net, addr->sin_addr.s_addr);
 
-		if ((!inet_can_nonlocal_bind(net, isk) &&
+		अगर ((!inet_can_nonlocal_bind(net, isk) &&
 		     chk_addr_ret != RTN_LOCAL) ||
 		    chk_addr_ret == RTN_MULTICAST ||
 		    chk_addr_ret == RTN_BROADCAST)
-			return -EADDRNOTAVAIL;
+			वापस -EADDRNOTAVAIL;
 
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (sk->sk_family == AF_INET6) {
-		struct sockaddr_in6 *addr = (struct sockaddr_in6 *) uaddr;
-		int addr_type, scoped, has_addr;
-		struct net_device *dev = NULL;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (sk->sk_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *addr = (काष्ठा sockaddr_in6 *) uaddr;
+		पूर्णांक addr_type, scoped, has_addr;
+		काष्ठा net_device *dev = शून्य;
 
-		if (addr_len < sizeof(*addr))
-			return -EINVAL;
+		अगर (addr_len < माप(*addr))
+			वापस -EINVAL;
 
-		if (addr->sin6_family != AF_INET6)
-			return -EAFNOSUPPORT;
+		अगर (addr->sin6_family != AF_INET6)
+			वापस -EAFNOSUPPORT;
 
 		pr_debug("ping_check_bind_addr(sk=%p,addr=%pI6c,port=%d)\n",
 			 sk, addr->sin6_addr.s6_addr, ntohs(addr->sin6_port));
 
 		addr_type = ipv6_addr_type(&addr->sin6_addr);
 		scoped = __ipv6_addr_needs_scope_id(addr_type);
-		if ((addr_type != IPV6_ADDR_ANY &&
+		अगर ((addr_type != IPV6_ADDR_ANY &&
 		     !(addr_type & IPV6_ADDR_UNICAST)) ||
 		    (scoped && !addr->sin6_scope_id))
-			return -EINVAL;
+			वापस -EINVAL;
 
-		rcu_read_lock();
-		if (addr->sin6_scope_id) {
+		rcu_पढ़ो_lock();
+		अगर (addr->sin6_scope_id) अणु
 			dev = dev_get_by_index_rcu(net, addr->sin6_scope_id);
-			if (!dev) {
-				rcu_read_unlock();
-				return -ENODEV;
-			}
-		}
+			अगर (!dev) अणु
+				rcu_पढ़ो_unlock();
+				वापस -ENODEV;
+			पूर्ण
+		पूर्ण
 		has_addr = pingv6_ops.ipv6_chk_addr(net, &addr->sin6_addr, dev,
 						    scoped);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		if (!(ipv6_can_nonlocal_bind(net, isk) || has_addr ||
+		अगर (!(ipv6_can_nonlocal_bind(net, isk) || has_addr ||
 		      addr_type == IPV6_ADDR_ANY))
-			return -EADDRNOTAVAIL;
+			वापस -EADDRNOTAVAIL;
 
-		if (scoped)
-			sk->sk_bound_dev_if = addr->sin6_scope_id;
-#endif
-	} else {
-		return -EAFNOSUPPORT;
-	}
-	return 0;
-}
+		अगर (scoped)
+			sk->sk_bound_dev_अगर = addr->sin6_scope_id;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		वापस -EAFNOSUPPORT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void ping_set_saddr(struct sock *sk, struct sockaddr *saddr)
-{
-	if (saddr->sa_family == AF_INET) {
-		struct inet_sock *isk = inet_sk(sk);
-		struct sockaddr_in *addr = (struct sockaddr_in *) saddr;
+अटल व्योम ping_set_saddr(काष्ठा sock *sk, काष्ठा sockaddr *saddr)
+अणु
+	अगर (saddr->sa_family == AF_INET) अणु
+		काष्ठा inet_sock *isk = inet_sk(sk);
+		काष्ठा sockaddr_in *addr = (काष्ठा sockaddr_in *) saddr;
 		isk->inet_rcv_saddr = isk->inet_saddr = addr->sin_addr.s_addr;
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (saddr->sa_family == AF_INET6) {
-		struct sockaddr_in6 *addr = (struct sockaddr_in6 *) saddr;
-		struct ipv6_pinfo *np = inet6_sk(sk);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (saddr->sa_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *addr = (काष्ठा sockaddr_in6 *) saddr;
+		काष्ठा ipv6_pinfo *np = inet6_sk(sk);
 		sk->sk_v6_rcv_saddr = np->saddr = addr->sin6_addr;
-#endif
-	}
-}
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
 /*
  * We need our own bind because there are no privileged id's == local ports.
- * Moreover, we don't allow binding to multi- and broadcast addresses.
+ * Moreover, we करोn't allow binding to multi- and broadcast addresses.
  */
 
-int ping_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
-{
-	struct inet_sock *isk = inet_sk(sk);
-	unsigned short snum;
-	int err;
-	int dif = sk->sk_bound_dev_if;
+पूर्णांक ping_bind(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक addr_len)
+अणु
+	काष्ठा inet_sock *isk = inet_sk(sk);
+	अचिन्हित लघु snum;
+	पूर्णांक err;
+	पूर्णांक dअगर = sk->sk_bound_dev_अगर;
 
 	err = ping_check_bind_addr(sk, isk, uaddr, addr_len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	lock_sock(sk);
 
 	err = -EINVAL;
-	if (isk->inet_num != 0)
-		goto out;
+	अगर (isk->inet_num != 0)
+		जाओ out;
 
 	err = -EADDRINUSE;
-	snum = ntohs(((struct sockaddr_in *)uaddr)->sin_port);
-	if (ping_get_port(sk, snum) != 0) {
-		/* Restore possibly modified sk->sk_bound_dev_if by ping_check_bind_addr(). */
-		sk->sk_bound_dev_if = dif;
-		goto out;
-	}
+	snum = ntohs(((काष्ठा sockaddr_in *)uaddr)->sin_port);
+	अगर (ping_get_port(sk, snum) != 0) अणु
+		/* Restore possibly modअगरied sk->sk_bound_dev_अगर by ping_check_bind_addr(). */
+		sk->sk_bound_dev_अगर = dअगर;
+		जाओ out;
+	पूर्ण
 	ping_set_saddr(sk, uaddr);
 
 	pr_debug("after bind(): num = %hu, dif = %d\n",
 		 isk->inet_num,
-		 sk->sk_bound_dev_if);
+		 sk->sk_bound_dev_अगर);
 
 	err = 0;
-	if (sk->sk_family == AF_INET && isk->inet_rcv_saddr)
+	अगर (sk->sk_family == AF_INET && isk->inet_rcv_saddr)
 		sk->sk_userlocks |= SOCK_BINDADDR_LOCK;
-#if IS_ENABLED(CONFIG_IPV6)
-	if (sk->sk_family == AF_INET6 && !ipv6_addr_any(&sk->sk_v6_rcv_saddr))
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (sk->sk_family == AF_INET6 && !ipv6_addr_any(&sk->sk_v6_rcv_saddr))
 		sk->sk_userlocks |= SOCK_BINDADDR_LOCK;
-#endif
+#पूर्ण_अगर
 
-	if (snum)
+	अगर (snum)
 		sk->sk_userlocks |= SOCK_BINDPORT_LOCK;
 	isk->inet_sport = htons(isk->inet_num);
 	isk->inet_daddr = 0;
 	isk->inet_dport = 0;
 
-#if IS_ENABLED(CONFIG_IPV6)
-	if (sk->sk_family == AF_INET6)
-		memset(&sk->sk_v6_daddr, 0, sizeof(sk->sk_v6_daddr));
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (sk->sk_family == AF_INET6)
+		स_रखो(&sk->sk_v6_daddr, 0, माप(sk->sk_v6_daddr));
+#पूर्ण_अगर
 
 	sk_dst_reset(sk);
 out:
 	release_sock(sk);
 	pr_debug("ping_v4_bind -> %d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_bind);
 
 /*
  * Is this a supported type of ICMP message?
  */
 
-static inline int ping_supported(int family, int type, int code)
-{
-	return (family == AF_INET && type == ICMP_ECHO && code == 0) ||
+अटल अंतरभूत पूर्णांक ping_supported(पूर्णांक family, पूर्णांक type, पूर्णांक code)
+अणु
+	वापस (family == AF_INET && type == ICMP_ECHO && code == 0) ||
 	       (family == AF_INET && type == ICMP_EXT_ECHO && code == 0) ||
 	       (family == AF_INET6 && type == ICMPV6_ECHO_REQUEST && code == 0) ||
 	       (family == AF_INET6 && type == ICMPV6_EXT_ECHO_REQUEST && code == 0);
-}
+पूर्ण
 
 /*
- * This routine is called by the ICMP module when it gets some
+ * This routine is called by the ICMP module when it माला_लो some
  * sort of error condition.
  */
 
-void ping_err(struct sk_buff *skb, int offset, u32 info)
-{
-	int family;
-	struct icmphdr *icmph;
-	struct inet_sock *inet_sock;
-	int type;
-	int code;
-	struct net *net = dev_net(skb->dev);
-	struct sock *sk;
-	int harderr;
-	int err;
+व्योम ping_err(काष्ठा sk_buff *skb, पूर्णांक offset, u32 info)
+अणु
+	पूर्णांक family;
+	काष्ठा icmphdr *icmph;
+	काष्ठा inet_sock *inet_sock;
+	पूर्णांक type;
+	पूर्णांक code;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा sock *sk;
+	पूर्णांक harderr;
+	पूर्णांक err;
 
-	if (skb->protocol == htons(ETH_P_IP)) {
+	अगर (skb->protocol == htons(ETH_P_IP)) अणु
 		family = AF_INET;
 		type = icmp_hdr(skb)->type;
 		code = icmp_hdr(skb)->code;
-		icmph = (struct icmphdr *)(skb->data + offset);
-	} else if (skb->protocol == htons(ETH_P_IPV6)) {
+		icmph = (काष्ठा icmphdr *)(skb->data + offset);
+	पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
 		family = AF_INET6;
 		type = icmp6_hdr(skb)->icmp6_type;
 		code = icmp6_hdr(skb)->icmp6_code;
-		icmph = (struct icmphdr *) (skb->data + offset);
-	} else {
+		icmph = (काष्ठा icmphdr *) (skb->data + offset);
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
+	पूर्ण
 
-	/* We assume the packet has already been checked by icmp_unreach */
+	/* We assume the packet has alपढ़ोy been checked by icmp_unreach */
 
-	if (!ping_supported(family, icmph->type, icmph->code))
-		return;
+	अगर (!ping_supported(family, icmph->type, icmph->code))
+		वापस;
 
 	pr_debug("ping_err(proto=0x%x,type=%d,code=%d,id=%04x,seq=%04x)\n",
 		 skb->protocol, type, code, ntohs(icmph->un.echo.id),
 		 ntohs(icmph->un.echo.sequence));
 
 	sk = ping_lookup(net, skb, ntohs(icmph->un.echo.id));
-	if (!sk) {
+	अगर (!sk) अणु
 		pr_debug("no socket, dropping\n");
-		return;	/* No socket for error */
-	}
+		वापस;	/* No socket क्रम error */
+	पूर्ण
 	pr_debug("err on socket %p\n", sk);
 
 	err = 0;
 	harderr = 0;
 	inet_sock = inet_sk(sk);
 
-	if (skb->protocol == htons(ETH_P_IP)) {
-		switch (type) {
-		default:
-		case ICMP_TIME_EXCEEDED:
+	अगर (skb->protocol == htons(ETH_P_IP)) अणु
+		चयन (type) अणु
+		शेष:
+		हाल ICMP_TIME_EXCEEDED:
 			err = EHOSTUNREACH;
-			break;
-		case ICMP_SOURCE_QUENCH:
+			अवरोध;
+		हाल ICMP_SOURCE_QUENCH:
 			/* This is not a real error but ping wants to see it.
-			 * Report it with some fake errno.
+			 * Report it with some fake त्रुटि_सं.
 			 */
 			err = EREMOTEIO;
-			break;
-		case ICMP_PARAMETERPROB:
+			अवरोध;
+		हाल ICMP_PARAMETERPROB:
 			err = EPROTO;
 			harderr = 1;
-			break;
-		case ICMP_DEST_UNREACH:
-			if (code == ICMP_FRAG_NEEDED) { /* Path MTU discovery */
+			अवरोध;
+		हाल ICMP_DEST_UNREACH:
+			अगर (code == ICMP_FRAG_NEEDED) अणु /* Path MTU discovery */
 				ipv4_sk_update_pmtu(skb, sk, info);
-				if (inet_sock->pmtudisc != IP_PMTUDISC_DONT) {
+				अगर (inet_sock->pmtudisc != IP_PMTUDISC_DONT) अणु
 					err = EMSGSIZE;
 					harderr = 1;
-					break;
-				}
-				goto out;
-			}
+					अवरोध;
+				पूर्ण
+				जाओ out;
+			पूर्ण
 			err = EHOSTUNREACH;
-			if (code <= NR_ICMP_UNREACH) {
+			अगर (code <= NR_ICMP_UNREACH) अणु
 				harderr = icmp_err_convert[code].fatal;
-				err = icmp_err_convert[code].errno;
-			}
-			break;
-		case ICMP_REDIRECT:
+				err = icmp_err_convert[code].त्रुटि_सं;
+			पूर्ण
+			अवरोध;
+		हाल ICMP_REसूचीECT:
 			/* See ICMP_SOURCE_QUENCH */
 			ipv4_sk_redirect(skb, sk);
 			err = EREMOTEIO;
-			break;
-		}
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (skb->protocol == htons(ETH_P_IPV6)) {
+			अवरोध;
+		पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6)) अणु
 		harderr = pingv6_ops.icmpv6_err_convert(type, code, &err);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	/*
 	 *      RFC1122: OK.  Passes ICMP errors back to application, as per
 	 *	4.1.3.3.
 	 */
-	if ((family == AF_INET && !inet_sock->recverr) ||
-	    (family == AF_INET6 && !inet6_sk(sk)->recverr)) {
-		if (!harderr || sk->sk_state != TCP_ESTABLISHED)
-			goto out;
-	} else {
-		if (family == AF_INET) {
+	अगर ((family == AF_INET && !inet_sock->recverr) ||
+	    (family == AF_INET6 && !inet6_sk(sk)->recverr)) अणु
+		अगर (!harderr || sk->sk_state != TCP_ESTABLISHED)
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		अगर (family == AF_INET) अणु
 			ip_icmp_error(sk, skb, err, 0 /* no remote port */,
 				      info, (u8 *)icmph);
-#if IS_ENABLED(CONFIG_IPV6)
-		} else if (family == AF_INET6) {
+#अगर IS_ENABLED(CONFIG_IPV6)
+		पूर्ण अन्यथा अगर (family == AF_INET6) अणु
 			pingv6_ops.ipv6_icmp_error(sk, skb, err, 0,
 						   info, (u8 *)icmph);
-#endif
-		}
-	}
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
 	sk->sk_err = err;
 	sk->sk_error_report(sk);
 out:
 	sock_put(sk);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_err);
 
 /*
- *	Copy and checksum an ICMP Echo packet from user space into a buffer
+ *	Copy and checksum an ICMP Echo packet from user space पूर्णांकo a buffer
  *	starting from the payload.
  */
 
-int ping_getfrag(void *from, char *to,
-		 int offset, int fraglen, int odd, struct sk_buff *skb)
-{
-	struct pingfakehdr *pfh = (struct pingfakehdr *)from;
+पूर्णांक ping_getfrag(व्योम *from, अक्षर *to,
+		 पूर्णांक offset, पूर्णांक fraglen, पूर्णांक odd, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा pingfakehdr *pfh = (काष्ठा pingfakehdr *)from;
 
-	if (offset == 0) {
-		fraglen -= sizeof(struct icmphdr);
-		if (fraglen < 0)
+	अगर (offset == 0) अणु
+		fraglen -= माप(काष्ठा icmphdr);
+		अगर (fraglen < 0)
 			BUG();
-		if (!csum_and_copy_from_iter_full(to + sizeof(struct icmphdr),
+		अगर (!csum_and_copy_from_iter_full(to + माप(काष्ठा icmphdr),
 			    fraglen, &pfh->wcheck,
 			    &pfh->msg->msg_iter))
-			return -EFAULT;
-	} else if (offset < sizeof(struct icmphdr)) {
+			वापस -EFAULT;
+	पूर्ण अन्यथा अगर (offset < माप(काष्ठा icmphdr)) अणु
 			BUG();
-	} else {
-		if (!csum_and_copy_from_iter_full(to, fraglen, &pfh->wcheck,
+	पूर्ण अन्यथा अणु
+		अगर (!csum_and_copy_from_iter_full(to, fraglen, &pfh->wcheck,
 					    &pfh->msg->msg_iter))
-			return -EFAULT;
-	}
+			वापस -EFAULT;
+	पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-	/* For IPv6, checksum each skb as we go along, as expected by
+#अगर IS_ENABLED(CONFIG_IPV6)
+	/* For IPv6, checksum each skb as we go aदीर्घ, as expected by
 	 * icmpv6_push_pending_frames. For IPv4, accumulate the checksum in
 	 * wcheck, it will be finalized in ping_v4_push_pending_frames.
 	 */
-	if (pfh->family == AF_INET6) {
+	अगर (pfh->family == AF_INET6) अणु
 		skb->csum = pfh->wcheck;
 		skb->ip_summed = CHECKSUM_NONE;
 		pfh->wcheck = 0;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_getfrag);
 
-static int ping_v4_push_pending_frames(struct sock *sk, struct pingfakehdr *pfh,
-				       struct flowi4 *fl4)
-{
-	struct sk_buff *skb = skb_peek(&sk->sk_write_queue);
+अटल पूर्णांक ping_v4_push_pending_frames(काष्ठा sock *sk, काष्ठा pingfakehdr *pfh,
+				       काष्ठा flowi4 *fl4)
+अणु
+	काष्ठा sk_buff *skb = skb_peek(&sk->sk_ग_लिखो_queue);
 
-	if (!skb)
-		return 0;
-	pfh->wcheck = csum_partial((char *)&pfh->icmph,
-		sizeof(struct icmphdr), pfh->wcheck);
+	अगर (!skb)
+		वापस 0;
+	pfh->wcheck = csum_partial((अक्षर *)&pfh->icmph,
+		माप(काष्ठा icmphdr), pfh->wcheck);
 	pfh->icmph.checksum = csum_fold(pfh->wcheck);
-	memcpy(icmp_hdr(skb), &pfh->icmph, sizeof(struct icmphdr));
+	स_नकल(icmp_hdr(skb), &pfh->icmph, माप(काष्ठा icmphdr));
 	skb->ip_summed = CHECKSUM_NONE;
-	return ip_push_pending_frames(sk, fl4);
-}
+	वापस ip_push_pending_frames(sk, fl4);
+पूर्ण
 
-int ping_common_sendmsg(int family, struct msghdr *msg, size_t len,
-			void *user_icmph, size_t icmph_len)
-{
+पूर्णांक ping_common_sendmsg(पूर्णांक family, काष्ठा msghdr *msg, माप_प्रकार len,
+			व्योम *user_icmph, माप_प्रकार icmph_len)
+अणु
 	u8 type, code;
 
-	if (len > 0xFFFF)
-		return -EMSGSIZE;
+	अगर (len > 0xFFFF)
+		वापस -EMSGSIZE;
 
 	/* Must have at least a full ICMP header. */
-	if (len < icmph_len)
-		return -EINVAL;
+	अगर (len < icmph_len)
+		वापस -EINVAL;
 
 	/*
 	 *	Check the flags.
 	 */
 
 	/* Mirror BSD error message compatibility */
-	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+	अगर (msg->msg_flags & MSG_OOB)
+		वापस -EOPNOTSUPP;
 
 	/*
 	 *	Fetch the ICMP header provided by the userland.
-	 *	iovec is modified! The ICMP header is consumed.
+	 *	iovec is modअगरied! The ICMP header is consumed.
 	 */
-	if (memcpy_from_msg(user_icmph, msg, icmph_len))
-		return -EFAULT;
+	अगर (स_नकल_from_msg(user_icmph, msg, icmph_len))
+		वापस -EFAULT;
 
-	if (family == AF_INET) {
-		type = ((struct icmphdr *) user_icmph)->type;
-		code = ((struct icmphdr *) user_icmph)->code;
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (family == AF_INET6) {
-		type = ((struct icmp6hdr *) user_icmph)->icmp6_type;
-		code = ((struct icmp6hdr *) user_icmph)->icmp6_code;
-#endif
-	} else {
+	अगर (family == AF_INET) अणु
+		type = ((काष्ठा icmphdr *) user_icmph)->type;
+		code = ((काष्ठा icmphdr *) user_icmph)->code;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (family == AF_INET6) अणु
+		type = ((काष्ठा icmp6hdr *) user_icmph)->icmp6_type;
+		code = ((काष्ठा icmp6hdr *) user_icmph)->icmp6_code;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
+	पूर्ण
 
-	if (!ping_supported(family, type, code))
-		return -EINVAL;
+	अगर (!ping_supported(family, type, code))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_common_sendmsg);
 
-static int ping_v4_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
-{
-	struct net *net = sock_net(sk);
-	struct flowi4 fl4;
-	struct inet_sock *inet = inet_sk(sk);
-	struct ipcm_cookie ipc;
-	struct icmphdr user_icmph;
-	struct pingfakehdr pfh;
-	struct rtable *rt = NULL;
-	struct ip_options_data opt_copy;
-	int free = 0;
+अटल पूर्णांक ping_v4_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा flowi4 fl4;
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ipcm_cookie ipc;
+	काष्ठा icmphdr user_icmph;
+	काष्ठा pingfakehdr pfh;
+	काष्ठा rtable *rt = शून्य;
+	काष्ठा ip_options_data opt_copy;
+	पूर्णांक मुक्त = 0;
 	__be32 saddr, daddr, faddr;
 	u8  tos;
-	int err;
+	पूर्णांक err;
 
 	pr_debug("ping_v4_sendmsg(sk=%p,sk->num=%u)\n", inet, inet->inet_num);
 
 	err = ping_common_sendmsg(AF_INET, msg, len, &user_icmph,
-				  sizeof(user_icmph));
-	if (err)
-		return err;
+				  माप(user_icmph));
+	अगर (err)
+		वापस err;
 
 	/*
-	 *	Get and verify the address.
+	 *	Get and verअगरy the address.
 	 */
 
-	if (msg->msg_name) {
-		DECLARE_SOCKADDR(struct sockaddr_in *, usin, msg->msg_name);
-		if (msg->msg_namelen < sizeof(*usin))
-			return -EINVAL;
-		if (usin->sin_family != AF_INET)
-			return -EAFNOSUPPORT;
+	अगर (msg->msg_name) अणु
+		DECLARE_SOCKADDR(काष्ठा sockaddr_in *, usin, msg->msg_name);
+		अगर (msg->msg_namelen < माप(*usin))
+			वापस -EINVAL;
+		अगर (usin->sin_family != AF_INET)
+			वापस -EAFNOSUPPORT;
 		daddr = usin->sin_addr.s_addr;
 		/* no remote port */
-	} else {
-		if (sk->sk_state != TCP_ESTABLISHED)
-			return -EDESTADDRREQ;
+	पूर्ण अन्यथा अणु
+		अगर (sk->sk_state != TCP_ESTABLISHED)
+			वापस -EDESTADDRREQ;
 		daddr = inet->inet_daddr;
 		/* no remote port */
-	}
+	पूर्ण
 
 	ipcm_init_sk(&ipc, inet);
 
-	if (msg->msg_controllen) {
+	अगर (msg->msg_controllen) अणु
 		err = ip_cmsg_send(sk, msg, &ipc, false);
-		if (unlikely(err)) {
-			kfree(ipc.opt);
-			return err;
-		}
-		if (ipc.opt)
-			free = 1;
-	}
-	if (!ipc.opt) {
-		struct ip_options_rcu *inet_opt;
+		अगर (unlikely(err)) अणु
+			kमुक्त(ipc.opt);
+			वापस err;
+		पूर्ण
+		अगर (ipc.opt)
+			मुक्त = 1;
+	पूर्ण
+	अगर (!ipc.opt) अणु
+		काष्ठा ip_options_rcu *inet_opt;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		inet_opt = rcu_dereference(inet->inet_opt);
-		if (inet_opt) {
-			memcpy(&opt_copy, inet_opt,
-			       sizeof(*inet_opt) + inet_opt->opt.optlen);
+		अगर (inet_opt) अणु
+			स_नकल(&opt_copy, inet_opt,
+			       माप(*inet_opt) + inet_opt->opt.optlen);
 			ipc.opt = &opt_copy.opt;
-		}
-		rcu_read_unlock();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
 	saddr = ipc.addr;
 	ipc.addr = faddr = daddr;
 
-	if (ipc.opt && ipc.opt->opt.srr) {
-		if (!daddr) {
+	अगर (ipc.opt && ipc.opt->opt.srr) अणु
+		अगर (!daddr) अणु
 			err = -EINVAL;
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 		faddr = ipc.opt->opt.faddr;
-	}
+	पूर्ण
 	tos = get_rttos(&ipc, inet);
-	if (sock_flag(sk, SOCK_LOCALROUTE) ||
+	अगर (sock_flag(sk, SOCK_LOCALROUTE) ||
 	    (msg->msg_flags & MSG_DONTROUTE) ||
-	    (ipc.opt && ipc.opt->opt.is_strictroute)) {
+	    (ipc.opt && ipc.opt->opt.is_strictroute)) अणु
 		tos |= RTO_ONLINK;
-	}
+	पूर्ण
 
-	if (ipv4_is_multicast(daddr)) {
-		if (!ipc.oif || netif_index_is_l3_master(sock_net(sk), ipc.oif))
-			ipc.oif = inet->mc_index;
-		if (!saddr)
+	अगर (ipv4_is_multicast(daddr)) अणु
+		अगर (!ipc.oअगर || netअगर_index_is_l3_master(sock_net(sk), ipc.oअगर))
+			ipc.oअगर = inet->mc_index;
+		अगर (!saddr)
 			saddr = inet->mc_addr;
-	} else if (!ipc.oif)
-		ipc.oif = inet->uc_index;
+	पूर्ण अन्यथा अगर (!ipc.oअगर)
+		ipc.oअगर = inet->uc_index;
 
-	flowi4_init_output(&fl4, ipc.oif, ipc.sockc.mark, tos,
+	flowi4_init_output(&fl4, ipc.oअगर, ipc.sockc.mark, tos,
 			   RT_SCOPE_UNIVERSE, sk->sk_protocol,
 			   inet_sk_flowi_flags(sk), faddr, saddr, 0, 0,
 			   sk->sk_uid);
@@ -780,31 +781,31 @@ static int ping_v4_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	fl4.fl4_icmp_type = user_icmph.type;
 	fl4.fl4_icmp_code = user_icmph.code;
 
-	security_sk_classify_flow(sk, flowi4_to_flowi_common(&fl4));
+	security_sk_classअगरy_flow(sk, flowi4_to_flowi_common(&fl4));
 	rt = ip_route_output_flow(net, &fl4, sk);
-	if (IS_ERR(rt)) {
+	अगर (IS_ERR(rt)) अणु
 		err = PTR_ERR(rt);
-		rt = NULL;
-		if (err == -ENETUNREACH)
+		rt = शून्य;
+		अगर (err == -ENETUNREACH)
 			IP_INC_STATS(net, IPSTATS_MIB_OUTNOROUTES);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = -EACCES;
-	if ((rt->rt_flags & RTCF_BROADCAST) &&
+	अगर ((rt->rt_flags & RTCF_BROADCAST) &&
 	    !sock_flag(sk, SOCK_BROADCAST))
-		goto out;
+		जाओ out;
 
-	if (msg->msg_flags & MSG_CONFIRM)
-		goto do_confirm;
+	अगर (msg->msg_flags & MSG_CONFIRM)
+		जाओ करो_confirm;
 back_from_confirm:
 
-	if (!ipc.addr)
+	अगर (!ipc.addr)
 		ipc.addr = fl4.daddr;
 
 	lock_sock(sk);
 
-	pfh.icmph.type = user_icmph.type; /* already checked */
+	pfh.icmph.type = user_icmph.type; /* alपढ़ोy checked */
 	pfh.icmph.code = user_icmph.code; /* ditto */
 	pfh.icmph.checksum = 0;
 	pfh.icmph.un.echo.id = inet->inet_sport;
@@ -815,148 +816,148 @@ back_from_confirm:
 
 	err = ip_append_data(sk, &fl4, ping_getfrag, &pfh, len,
 			0, &ipc, &rt, msg->msg_flags);
-	if (err)
+	अगर (err)
 		ip_flush_pending_frames(sk);
-	else
+	अन्यथा
 		err = ping_v4_push_pending_frames(sk, &pfh, &fl4);
 	release_sock(sk);
 
 out:
 	ip_rt_put(rt);
-out_free:
-	if (free)
-		kfree(ipc.opt);
-	if (!err) {
+out_मुक्त:
+	अगर (मुक्त)
+		kमुक्त(ipc.opt);
+	अगर (!err) अणु
 		icmp_out_count(sock_net(sk), user_icmph.type);
-		return len;
-	}
-	return err;
+		वापस len;
+	पूर्ण
+	वापस err;
 
-do_confirm:
-	if (msg->msg_flags & MSG_PROBE)
+करो_confirm:
+	अगर (msg->msg_flags & MSG_PROBE)
 		dst_confirm_neigh(&rt->dst, &fl4.daddr);
-	if (!(msg->msg_flags & MSG_PROBE) || len)
-		goto back_from_confirm;
+	अगर (!(msg->msg_flags & MSG_PROBE) || len)
+		जाओ back_from_confirm;
 	err = 0;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-int ping_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int noblock,
-		 int flags, int *addr_len)
-{
-	struct inet_sock *isk = inet_sk(sk);
-	int family = sk->sk_family;
-	struct sk_buff *skb;
-	int copied, err;
+पूर्णांक ping_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len, पूर्णांक noblock,
+		 पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	काष्ठा inet_sock *isk = inet_sk(sk);
+	पूर्णांक family = sk->sk_family;
+	काष्ठा sk_buff *skb;
+	पूर्णांक copied, err;
 
 	pr_debug("ping_recvmsg(sk=%p,sk->num=%u)\n", isk, isk->inet_num);
 
 	err = -EOPNOTSUPP;
-	if (flags & MSG_OOB)
-		goto out;
+	अगर (flags & MSG_OOB)
+		जाओ out;
 
-	if (flags & MSG_ERRQUEUE)
-		return inet_recv_error(sk, msg, len, addr_len);
+	अगर (flags & MSG_ERRQUEUE)
+		वापस inet_recv_error(sk, msg, len, addr_len);
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	copied = skb->len;
-	if (copied > len) {
+	अगर (copied > len) अणु
 		msg->msg_flags |= MSG_TRUNC;
 		copied = len;
-	}
+	पूर्ण
 
 	/* Don't bother checking the checksum */
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
-	sock_recv_timestamp(msg, sk, skb);
+	sock_recv_बारtamp(msg, sk, skb);
 
 	/* Copy the address and add cmsg data. */
-	if (family == AF_INET) {
-		DECLARE_SOCKADDR(struct sockaddr_in *, sin, msg->msg_name);
+	अगर (family == AF_INET) अणु
+		DECLARE_SOCKADDR(काष्ठा sockaddr_in *, sin, msg->msg_name);
 
-		if (sin) {
+		अगर (sin) अणु
 			sin->sin_family = AF_INET;
 			sin->sin_port = 0 /* skb->h.uh->source */;
 			sin->sin_addr.s_addr = ip_hdr(skb)->saddr;
-			memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
-			*addr_len = sizeof(*sin);
-		}
+			स_रखो(sin->sin_zero, 0, माप(sin->sin_zero));
+			*addr_len = माप(*sin);
+		पूर्ण
 
-		if (isk->cmsg_flags)
+		अगर (isk->cmsg_flags)
 			ip_cmsg_recv(msg, skb);
 
-#if IS_ENABLED(CONFIG_IPV6)
-	} else if (family == AF_INET6) {
-		struct ipv6_pinfo *np = inet6_sk(sk);
-		struct ipv6hdr *ip6 = ipv6_hdr(skb);
-		DECLARE_SOCKADDR(struct sockaddr_in6 *, sin6, msg->msg_name);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अगर (family == AF_INET6) अणु
+		काष्ठा ipv6_pinfo *np = inet6_sk(sk);
+		काष्ठा ipv6hdr *ip6 = ipv6_hdr(skb);
+		DECLARE_SOCKADDR(काष्ठा sockaddr_in6 *, sin6, msg->msg_name);
 
-		if (sin6) {
+		अगर (sin6) अणु
 			sin6->sin6_family = AF_INET6;
 			sin6->sin6_port = 0;
 			sin6->sin6_addr = ip6->saddr;
 			sin6->sin6_flowinfo = 0;
-			if (np->sndflow)
+			अगर (np->sndflow)
 				sin6->sin6_flowinfo = ip6_flowinfo(ip6);
 			sin6->sin6_scope_id =
-				ipv6_iface_scope_id(&sin6->sin6_addr,
-						    inet6_iif(skb));
-			*addr_len = sizeof(*sin6);
-		}
+				ipv6_अगरace_scope_id(&sin6->sin6_addr,
+						    inet6_iअगर(skb));
+			*addr_len = माप(*sin6);
+		पूर्ण
 
-		if (inet6_sk(sk)->rxopt.all)
+		अगर (inet6_sk(sk)->rxopt.all)
 			pingv6_ops.ip6_datagram_recv_common_ctl(sk, msg, skb);
-		if (skb->protocol == htons(ETH_P_IPV6) &&
+		अगर (skb->protocol == htons(ETH_P_IPV6) &&
 		    inet6_sk(sk)->rxopt.all)
-			pingv6_ops.ip6_datagram_recv_specific_ctl(sk, msg, skb);
-		else if (skb->protocol == htons(ETH_P_IP) && isk->cmsg_flags)
+			pingv6_ops.ip6_datagram_recv_specअगरic_ctl(sk, msg, skb);
+		अन्यथा अगर (skb->protocol == htons(ETH_P_IP) && isk->cmsg_flags)
 			ip_cmsg_recv(msg, skb);
-#endif
-	} else {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		BUG();
-	}
+	पूर्ण
 
 	err = copied;
 
-done:
-	skb_free_datagram(sk, skb);
+करोne:
+	skb_मुक्त_datagram(sk, skb);
 out:
 	pr_debug("ping_recvmsg -> %d\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_recvmsg);
 
-int ping_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
-{
+पूर्णांक ping_queue_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	pr_debug("ping_queue_rcv_skb(sk=%p,sk->num=%d,skb=%p)\n",
 		 inet_sk(sk), inet_sk(sk)->inet_num, skb);
-	if (sock_queue_rcv_skb(sk, skb) < 0) {
-		kfree_skb(skb);
+	अगर (sock_queue_rcv_skb(sk, skb) < 0) अणु
+		kमुक्त_skb(skb);
 		pr_debug("ping_queue_rcv_skb -> failed\n");
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_queue_rcv_skb);
 
 
 /*
- *	All we need to do is get the socket.
+ *	All we need to करो is get the socket.
  */
 
-bool ping_rcv(struct sk_buff *skb)
-{
-	struct sock *sk;
-	struct net *net = dev_net(skb->dev);
-	struct icmphdr *icmph = icmp_hdr(skb);
+bool ping_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा icmphdr *icmph = icmp_hdr(skb);
 	bool rc = false;
 
-	/* We assume the packet has already been checked by icmp_rcv */
+	/* We assume the packet has alपढ़ोy been checked by icmp_rcv */
 
 	pr_debug("ping_rcv(skb=%p,id=%04x,seq=%04x)\n",
 		 skb, ntohs(icmph->un.echo.id), ntohs(icmph->un.echo.sequence));
@@ -965,31 +966,31 @@ bool ping_rcv(struct sk_buff *skb)
 	skb_push(skb, skb->data - (u8 *)icmph);
 
 	sk = ping_lookup(net, skb, ntohs(icmph->un.echo.id));
-	if (sk) {
-		struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
+	अगर (sk) अणु
+		काष्ठा sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
 
 		pr_debug("rcv on socket %p\n", sk);
-		if (skb2 && !ping_queue_rcv_skb(sk, skb2))
+		अगर (skb2 && !ping_queue_rcv_skb(sk, skb2))
 			rc = true;
 		sock_put(sk);
-	}
+	पूर्ण
 
-	if (!rc)
+	अगर (!rc)
 		pr_debug("no socket, dropping\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_rcv);
 
-struct proto ping_prot = {
+काष्ठा proto ping_prot = अणु
 	.name =		"PING",
 	.owner =	THIS_MODULE,
 	.init =		ping_init_sock,
-	.close =	ping_close,
+	.बंद =	ping_बंद,
 	.connect =	ip4_datagram_connect,
 	.disconnect =	__udp_disconnect,
 	.setsockopt =	ip_setsockopt,
-	.getsockopt =	ip_getsockopt,
+	.माला_लोockopt =	ip_माला_लोockopt,
 	.sendmsg =	ping_v4_sendmsg,
 	.recvmsg =	ping_recvmsg,
 	.bind =		ping_bind,
@@ -998,112 +999,112 @@ struct proto ping_prot = {
 	.hash =		ping_hash,
 	.unhash =	ping_unhash,
 	.get_port =	ping_get_port,
-	.obj_size =	sizeof(struct inet_sock),
-};
+	.obj_size =	माप(काष्ठा inet_sock),
+पूर्ण;
 EXPORT_SYMBOL(ping_prot);
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 
-static struct sock *ping_get_first(struct seq_file *seq, int start)
-{
-	struct sock *sk;
-	struct ping_iter_state *state = seq->private;
-	struct net *net = seq_file_net(seq);
+अटल काष्ठा sock *ping_get_first(काष्ठा seq_file *seq, पूर्णांक start)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा ping_iter_state *state = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
 
-	for (state->bucket = start; state->bucket < PING_HTABLE_SIZE;
-	     ++state->bucket) {
-		struct hlist_nulls_node *node;
-		struct hlist_nulls_head *hslot;
+	क्रम (state->bucket = start; state->bucket < PING_HTABLE_SIZE;
+	     ++state->bucket) अणु
+		काष्ठा hlist_nulls_node *node;
+		काष्ठा hlist_nulls_head *hslot;
 
 		hslot = &ping_table.hash[state->bucket];
 
-		if (hlist_nulls_empty(hslot))
-			continue;
+		अगर (hlist_nulls_empty(hslot))
+			जारी;
 
-		sk_nulls_for_each(sk, node, hslot) {
-			if (net_eq(sock_net(sk), net) &&
+		sk_nulls_क्रम_each(sk, node, hslot) अणु
+			अगर (net_eq(sock_net(sk), net) &&
 			    sk->sk_family == state->family)
-				goto found;
-		}
-	}
-	sk = NULL;
+				जाओ found;
+		पूर्ण
+	पूर्ण
+	sk = शून्य;
 found:
-	return sk;
-}
+	वापस sk;
+पूर्ण
 
-static struct sock *ping_get_next(struct seq_file *seq, struct sock *sk)
-{
-	struct ping_iter_state *state = seq->private;
-	struct net *net = seq_file_net(seq);
+अटल काष्ठा sock *ping_get_next(काष्ठा seq_file *seq, काष्ठा sock *sk)
+अणु
+	काष्ठा ping_iter_state *state = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
 
-	do {
+	करो अणु
 		sk = sk_nulls_next(sk);
-	} while (sk && (!net_eq(sock_net(sk), net)));
+	पूर्ण जबतक (sk && (!net_eq(sock_net(sk), net)));
 
-	if (!sk)
-		return ping_get_first(seq, state->bucket + 1);
-	return sk;
-}
+	अगर (!sk)
+		वापस ping_get_first(seq, state->bucket + 1);
+	वापस sk;
+पूर्ण
 
-static struct sock *ping_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct sock *sk = ping_get_first(seq, 0);
+अटल काष्ठा sock *ping_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा sock *sk = ping_get_first(seq, 0);
 
-	if (sk)
-		while (pos && (sk = ping_get_next(seq, sk)) != NULL)
+	अगर (sk)
+		जबतक (pos && (sk = ping_get_next(seq, sk)) != शून्य)
 			--pos;
-	return pos ? NULL : sk;
-}
+	वापस pos ? शून्य : sk;
+पूर्ण
 
-void *ping_seq_start(struct seq_file *seq, loff_t *pos, sa_family_t family)
+व्योम *ping_seq_start(काष्ठा seq_file *seq, loff_t *pos, sa_family_t family)
 	__acquires(ping_table.lock)
-{
-	struct ping_iter_state *state = seq->private;
+अणु
+	काष्ठा ping_iter_state *state = seq->निजी;
 	state->bucket = 0;
 	state->family = family;
 
-	read_lock_bh(&ping_table.lock);
+	पढ़ो_lock_bh(&ping_table.lock);
 
-	return *pos ? ping_get_idx(seq, *pos-1) : SEQ_START_TOKEN;
-}
+	वापस *pos ? ping_get_idx(seq, *pos-1) : SEQ_START_TOKEN;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_seq_start);
 
-static void *ping_v4_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	return ping_seq_start(seq, pos, AF_INET);
-}
+अटल व्योम *ping_v4_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	वापस ping_seq_start(seq, pos, AF_INET);
+पूर्ण
 
-void *ping_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct sock *sk;
+व्योम *ping_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा sock *sk;
 
-	if (v == SEQ_START_TOKEN)
+	अगर (v == SEQ_START_TOKEN)
 		sk = ping_get_idx(seq, 0);
-	else
+	अन्यथा
 		sk = ping_get_next(seq, v);
 
 	++*pos;
-	return sk;
-}
+	वापस sk;
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_seq_next);
 
-void ping_seq_stop(struct seq_file *seq, void *v)
+व्योम ping_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(ping_table.lock)
-{
-	read_unlock_bh(&ping_table.lock);
-}
+अणु
+	पढ़ो_unlock_bh(&ping_table.lock);
+पूर्ण
 EXPORT_SYMBOL_GPL(ping_seq_stop);
 
-static void ping_v4_format_sock(struct sock *sp, struct seq_file *f,
-		int bucket)
-{
-	struct inet_sock *inet = inet_sk(sp);
+अटल व्योम ping_v4_क्रमmat_sock(काष्ठा sock *sp, काष्ठा seq_file *f,
+		पूर्णांक bucket)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sp);
 	__be32 dest = inet->inet_daddr;
 	__be32 src = inet->inet_rcv_saddr;
 	__u16 destp = ntohs(inet->inet_dport);
 	__u16 srcp = ntohs(inet->inet_sport);
 
-	seq_printf(f, "%5d: %08X:%04X %08X:%04X"
+	seq_म_लिखो(f, "%5d: %08X:%04X %08X:%04X"
 		" %02X %08X:%08X %02X:%08lX %08X %5u %8d %lu %d %pK %u",
 		bucket, src, srcp, dest, destp, sp->sk_state,
 		sk_wmem_alloc_get(sp),
@@ -1111,68 +1112,68 @@ static void ping_v4_format_sock(struct sock *sp, struct seq_file *f,
 		0, 0L, 0,
 		from_kuid_munged(seq_user_ns(f), sock_i_uid(sp)),
 		0, sock_i_ino(sp),
-		refcount_read(&sp->sk_refcnt), sp,
-		atomic_read(&sp->sk_drops));
-}
+		refcount_पढ़ो(&sp->sk_refcnt), sp,
+		atomic_पढ़ो(&sp->sk_drops));
+पूर्ण
 
-static int ping_v4_seq_show(struct seq_file *seq, void *v)
-{
+अटल पूर्णांक ping_v4_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
 	seq_setwidth(seq, 127);
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq, "  sl  local_address rem_address   st tx_queue "
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq, "  sl  local_address rem_address   st tx_queue "
 			   "rx_queue tr tm->when retrnsmt   uid  timeout "
 			   "inode ref pointer drops");
-	else {
-		struct ping_iter_state *state = seq->private;
+	अन्यथा अणु
+		काष्ठा ping_iter_state *state = seq->निजी;
 
-		ping_v4_format_sock(v, seq, state->bucket);
-	}
+		ping_v4_क्रमmat_sock(v, seq, state->bucket);
+	पूर्ण
 	seq_pad(seq, '\n');
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ping_v4_seq_ops = {
+अटल स्थिर काष्ठा seq_operations ping_v4_seq_ops = अणु
 	.start		= ping_v4_seq_start,
 	.show		= ping_v4_seq_show,
 	.next		= ping_seq_next,
 	.stop		= ping_seq_stop,
-};
+पूर्ण;
 
-static int __net_init ping_v4_proc_init_net(struct net *net)
-{
-	if (!proc_create_net("icmp", 0444, net->proc_net, &ping_v4_seq_ops,
-			sizeof(struct ping_iter_state)))
-		return -ENOMEM;
-	return 0;
-}
+अटल पूर्णांक __net_init ping_v4_proc_init_net(काष्ठा net *net)
+अणु
+	अगर (!proc_create_net("icmp", 0444, net->proc_net, &ping_v4_seq_ops,
+			माप(काष्ठा ping_iter_state)))
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void __net_exit ping_v4_proc_exit_net(struct net *net)
-{
-	remove_proc_entry("icmp", net->proc_net);
-}
+अटल व्योम __net_निकास ping_v4_proc_निकास_net(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("icmp", net->proc_net);
+पूर्ण
 
-static struct pernet_operations ping_v4_net_ops = {
+अटल काष्ठा pernet_operations ping_v4_net_ops = अणु
 	.init = ping_v4_proc_init_net,
-	.exit = ping_v4_proc_exit_net,
-};
+	.निकास = ping_v4_proc_निकास_net,
+पूर्ण;
 
-int __init ping_proc_init(void)
-{
-	return register_pernet_subsys(&ping_v4_net_ops);
-}
+पूर्णांक __init ping_proc_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&ping_v4_net_ops);
+पूर्ण
 
-void ping_proc_exit(void)
-{
-	unregister_pernet_subsys(&ping_v4_net_ops);
-}
+व्योम ping_proc_निकास(व्योम)
+अणु
+	unरेजिस्टर_pernet_subsys(&ping_v4_net_ops);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-void __init ping_init(void)
-{
-	int i;
+व्योम __init ping_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PING_HTABLE_SIZE; i++)
-		INIT_HLIST_NULLS_HEAD(&ping_table.hash[i], i);
+	क्रम (i = 0; i < PING_HTABLE_SIZE; i++)
+		INIT_HLIST_शून्यS_HEAD(&ping_table.hash[i], i);
 	rwlock_init(&ping_table.lock);
-}
+पूर्ण

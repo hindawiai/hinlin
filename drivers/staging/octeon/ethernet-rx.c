@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This file is based on code from OCTEON SDK by Cavium Networks.
  *
  * Copyright (c) 2003-2010 Cavium Networks
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/cache.h>
-#include <linux/cpumask.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ip.h>
-#include <linux/string.h>
-#include <linux/prefetch.h>
-#include <linux/ratelimit.h>
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <net/dst.h>
-#ifdef CONFIG_XFRM
-#include <linux/xfrm.h>
-#include <net/xfrm.h>
-#endif /* CONFIG_XFRM */
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <net/dst.h>
+#अगर_घोषित CONFIG_XFRM
+#समावेश <linux/xfrm.h>
+#समावेश <net/xfrm.h>
+#पूर्ण_अगर /* CONFIG_XFRM */
 
-#include "octeon-ethernet.h"
-#include "ethernet-defines.h"
-#include "ethernet-mem.h"
-#include "ethernet-rx.h"
-#include "ethernet-util.h"
+#समावेश "octeon-ethernet.h"
+#समावेश "ethernet-defines.h"
+#समावेश "ethernet-mem.h"
+#समावेश "ethernet-rx.h"
+#समावेश "ethernet-util.h"
 
-static atomic_t oct_rx_ready = ATOMIC_INIT(0);
+अटल atomic_t oct_rx_पढ़ोy = ATOMIC_INIT(0);
 
-static struct oct_rx_group {
-	int irq;
-	int group;
-	struct napi_struct napi;
-} oct_rx_group[16];
+अटल काष्ठा oct_rx_group अणु
+	पूर्णांक irq;
+	पूर्णांक group;
+	काष्ठा napi_काष्ठा napi;
+पूर्ण oct_rx_group[16];
 
 /**
- * cvm_oct_do_interrupt - interrupt handler.
+ * cvm_oct_करो_पूर्णांकerrupt - पूर्णांकerrupt handler.
  * @irq: Interrupt number.
- * @napi_id: Cookie to identify the NAPI instance.
+ * @napi_id: Cookie to identअगरy the NAPI instance.
  *
- * The interrupt occurs whenever the POW has packets in our group.
+ * The पूर्णांकerrupt occurs whenever the POW has packets in our group.
  *
  */
-static irqreturn_t cvm_oct_do_interrupt(int irq, void *napi_id)
-{
+अटल irqवापस_t cvm_oct_करो_पूर्णांकerrupt(पूर्णांक irq, व्योम *napi_id)
+अणु
 	/* Disable the IRQ and start napi_poll. */
 	disable_irq_nosync(irq);
 	napi_schedule(napi_id);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * cvm_oct_check_rcv_error - process receive errors
- * @work: Work queue entry pointing to the packet.
+ * @work: Work queue entry poपूर्णांकing to the packet.
  *
- * Returns Non-zero if the packet can be dropped, zero otherwise.
+ * Returns Non-zero अगर the packet can be dropped, zero otherwise.
  */
-static inline int cvm_oct_check_rcv_error(struct cvmx_wqe *work)
-{
-	int port;
+अटल अंतरभूत पूर्णांक cvm_oct_check_rcv_error(काष्ठा cvmx_wqe *work)
+अणु
+	पूर्णांक port;
 
-	if (octeon_has_feature(OCTEON_FEATURE_PKND))
+	अगर (octeon_has_feature(OCTEON_FEATURE_PKND))
 		port = work->word0.pip.cn68xx.pknd;
-	else
+	अन्यथा
 		port = work->word1.cn38xx.ipprt;
 
-	if ((work->word2.snoip.err_code == 10) && (work->word1.len <= 64))
+	अगर ((work->word2.snoip.err_code == 10) && (work->word1.len <= 64))
 		/*
 		 * Ignore length errors on min size packets. Some
 		 * equipment incorrectly pads packets to 64+4FCS
 		 * instead of 60+4FCS.  Note these packets still get
 		 * counted as frame errors.
 		 */
-		return 0;
+		वापस 0;
 
-	if (work->word2.snoip.err_code == 5 ||
-	    work->word2.snoip.err_code == 7) {
+	अगर (work->word2.snoip.err_code == 5 ||
+	    work->word2.snoip.err_code == 7) अणु
 		/*
 		 * We received a packet with either an alignment error
-		 * or a FCS error. This may be signalling that we are
+		 * or a FCS error. This may be संकेतling that we are
 		 * running 10Mbps with GMXX_RXX_FRM_CTL[PRE_CHK]
-		 * off. If this is the case we need to parse the
-		 * packet to determine if we can remove a non spec
+		 * off. If this is the हाल we need to parse the
+		 * packet to determine अगर we can हटाओ a non spec
 		 * preamble and generate a correct packet.
 		 */
-		int interface = cvmx_helper_get_interface_num(port);
-		int index = cvmx_helper_get_interface_index_num(port);
-		union cvmx_gmxx_rxx_frm_ctl gmxx_rxx_frm_ctl;
+		पूर्णांक पूर्णांकerface = cvmx_helper_get_पूर्णांकerface_num(port);
+		पूर्णांक index = cvmx_helper_get_पूर्णांकerface_index_num(port);
+		जोड़ cvmx_gmxx_rxx_frm_ctl gmxx_rxx_frm_ctl;
 
 		gmxx_rxx_frm_ctl.u64 =
-		    cvmx_read_csr(CVMX_GMXX_RXX_FRM_CTL(index, interface));
-		if (gmxx_rxx_frm_ctl.s.pre_chk == 0) {
+		    cvmx_पढ़ो_csr(CVMX_GMXX_RXX_FRM_CTL(index, पूर्णांकerface));
+		अगर (gmxx_rxx_frm_ctl.s.pre_chk == 0) अणु
 			u8 *ptr =
 			    cvmx_phys_to_ptr(work->packet_ptr.s.addr);
-			int i = 0;
+			पूर्णांक i = 0;
 
-			while (i < work->word1.len - 1) {
-				if (*ptr != 0x55)
-					break;
+			जबतक (i < work->word1.len - 1) अणु
+				अगर (*ptr != 0x55)
+					अवरोध;
 				ptr++;
 				i++;
-			}
+			पूर्ण
 
-			if (*ptr == 0xd5) {
+			अगर (*ptr == 0xd5) अणु
 				/* Port received 0xd5 preamble */
 				work->packet_ptr.s.addr += i + 1;
 				work->word1.len -= i + 5;
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
-			if ((*ptr & 0xf) == 0xd) {
+			अगर ((*ptr & 0xf) == 0xd) अणु
 				/* Port received 0xd preamble */
 				work->packet_ptr.s.addr += i;
 				work->word1.len -= i + 4;
-				for (i = 0; i < work->word1.len; i++) {
+				क्रम (i = 0; i < work->word1.len; i++) अणु
 					*ptr =
 					    ((*ptr & 0xf0) >> 4) |
 					    ((*(ptr + 1) & 0xf) << 4);
 					ptr++;
-				}
-				return 0;
-			}
+				पूर्ण
+				वापस 0;
+			पूर्ण
 
-			printk_ratelimited("Port %d unknown preamble, packet dropped\n",
+			prपूर्णांकk_ratelimited("Port %d unknown preamble, packet dropped\n",
 					   port);
-			cvm_oct_free_work(work);
-			return 1;
-		}
-	}
+			cvm_oct_मुक्त_work(work);
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	printk_ratelimited("Port %d receive error code %d, packet dropped\n",
+	prपूर्णांकk_ratelimited("Port %d receive error code %d, packet dropped\n",
 			   port, work->word2.snoip.err_code);
-	cvm_oct_free_work(work);
-	return 1;
-}
+	cvm_oct_मुक्त_work(work);
+	वापस 1;
+पूर्ण
 
-static void copy_segments_to_skb(struct cvmx_wqe *work, struct sk_buff *skb)
-{
-	int segments = work->word2.s.bufs;
-	union cvmx_buf_ptr segment_ptr = work->packet_ptr;
-	int len = work->word1.len;
-	int segment_size;
+अटल व्योम copy_segments_to_skb(काष्ठा cvmx_wqe *work, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक segments = work->word2.s.bufs;
+	जोड़ cvmx_buf_ptr segment_ptr = work->packet_ptr;
+	पूर्णांक len = work->word1.len;
+	पूर्णांक segment_size;
 
-	while (segments--) {
-		union cvmx_buf_ptr next_ptr;
+	जबतक (segments--) अणु
+		जोड़ cvmx_buf_ptr next_ptr;
 
-		next_ptr = *(union cvmx_buf_ptr *)
+		next_ptr = *(जोड़ cvmx_buf_ptr *)
 			cvmx_phys_to_ptr(segment_ptr.s.addr - 8);
 
 		/*
@@ -159,7 +160,7 @@ static void copy_segments_to_skb(struct cvmx_wqe *work, struct sk_buff *skb)
 		 * the packet pool buffer size.
 		 * When it is fixed, the following line should be replaced
 		 * with this one:
-		 * int segment_size = segment_ptr.s.size;
+		 * पूर्णांक segment_size = segment_ptr.s.size;
 		 */
 		segment_size =
 			CVMX_FPA_PACKET_POOL_SIZE -
@@ -168,239 +169,239 @@ static void copy_segments_to_skb(struct cvmx_wqe *work, struct sk_buff *skb)
 			   segment_ptr.s.back) << 7));
 
 		/* Don't copy more than what is left in the packet */
-		if (segment_size > len)
+		अगर (segment_size > len)
 			segment_size = len;
 
-		/* Copy the data into the packet */
+		/* Copy the data पूर्णांकo the packet */
 		skb_put_data(skb, cvmx_phys_to_ptr(segment_ptr.s.addr),
 			     segment_size);
 		len -= segment_size;
 		segment_ptr = next_ptr;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cvm_oct_poll(struct oct_rx_group *rx_group, int budget)
-{
-	const int	coreid = cvmx_get_core_num();
+अटल पूर्णांक cvm_oct_poll(काष्ठा oct_rx_group *rx_group, पूर्णांक budget)
+अणु
+	स्थिर पूर्णांक	coreid = cvmx_get_core_num();
 	u64	old_group_mask;
 	u64	old_scratch;
-	int		rx_count = 0;
-	int		did_work_request = 0;
-	int		packet_not_copied;
+	पूर्णांक		rx_count = 0;
+	पूर्णांक		did_work_request = 0;
+	पूर्णांक		packet_not_copied;
 
 	/* Prefetch cvm_oct_device since we know we need it soon */
 	prefetch(cvm_oct_device);
 
-	if (USE_ASYNC_IOBDMA) {
-		/* Save scratch in case userspace is using it */
+	अगर (USE_ASYNC_IOBDMA) अणु
+		/* Save scratch in हाल userspace is using it */
 		CVMX_SYNCIOBDMA;
-		old_scratch = cvmx_scratch_read64(CVMX_SCR_SCRATCH);
-	}
+		old_scratch = cvmx_scratch_पढ़ो64(CVMX_SCR_SCRATCH);
+	पूर्ण
 
-	/* Only allow work for our group (and preserve priorities) */
-	if (OCTEON_IS_MODEL(OCTEON_CN68XX)) {
-		old_group_mask = cvmx_read_csr(CVMX_SSO_PPX_GRP_MSK(coreid));
-		cvmx_write_csr(CVMX_SSO_PPX_GRP_MSK(coreid),
+	/* Only allow work क्रम our group (and preserve priorities) */
+	अगर (OCTEON_IS_MODEL(OCTEON_CN68XX)) अणु
+		old_group_mask = cvmx_पढ़ो_csr(CVMX_SSO_PPX_GRP_MSK(coreid));
+		cvmx_ग_लिखो_csr(CVMX_SSO_PPX_GRP_MSK(coreid),
 			       BIT(rx_group->group));
-		cvmx_read_csr(CVMX_SSO_PPX_GRP_MSK(coreid)); /* Flush */
-	} else {
-		old_group_mask = cvmx_read_csr(CVMX_POW_PP_GRP_MSKX(coreid));
-		cvmx_write_csr(CVMX_POW_PP_GRP_MSKX(coreid),
+		cvmx_पढ़ो_csr(CVMX_SSO_PPX_GRP_MSK(coreid)); /* Flush */
+	पूर्ण अन्यथा अणु
+		old_group_mask = cvmx_पढ़ो_csr(CVMX_POW_PP_GRP_MSKX(coreid));
+		cvmx_ग_लिखो_csr(CVMX_POW_PP_GRP_MSKX(coreid),
 			       (old_group_mask & ~0xFFFFull) |
 			       BIT(rx_group->group));
-	}
+	पूर्ण
 
-	if (USE_ASYNC_IOBDMA) {
-		cvmx_pow_work_request_async(CVMX_SCR_SCRATCH, CVMX_POW_NO_WAIT);
+	अगर (USE_ASYNC_IOBDMA) अणु
+		cvmx_घात_work_request_async(CVMX_SCR_SCRATCH, CVMX_POW_NO_WAIT);
 		did_work_request = 1;
-	}
+	पूर्ण
 
-	while (rx_count < budget) {
-		struct sk_buff *skb = NULL;
-		struct sk_buff **pskb = NULL;
-		int skb_in_hw;
-		struct cvmx_wqe *work;
-		int port;
+	जबतक (rx_count < budget) अणु
+		काष्ठा sk_buff *skb = शून्य;
+		काष्ठा sk_buff **pskb = शून्य;
+		पूर्णांक skb_in_hw;
+		काष्ठा cvmx_wqe *work;
+		पूर्णांक port;
 
-		if (USE_ASYNC_IOBDMA && did_work_request)
-			work = cvmx_pow_work_response_async(CVMX_SCR_SCRATCH);
-		else
-			work = cvmx_pow_work_request_sync(CVMX_POW_NO_WAIT);
+		अगर (USE_ASYNC_IOBDMA && did_work_request)
+			work = cvmx_घात_work_response_async(CVMX_SCR_SCRATCH);
+		अन्यथा
+			work = cvmx_घात_work_request_sync(CVMX_POW_NO_WAIT);
 
 		prefetch(work);
 		did_work_request = 0;
-		if (!work) {
-			if (OCTEON_IS_MODEL(OCTEON_CN68XX)) {
-				cvmx_write_csr(CVMX_SSO_WQ_IQ_DIS,
+		अगर (!work) अणु
+			अगर (OCTEON_IS_MODEL(OCTEON_CN68XX)) अणु
+				cvmx_ग_लिखो_csr(CVMX_SSO_WQ_IQ_DIS,
 					       BIT(rx_group->group));
-				cvmx_write_csr(CVMX_SSO_WQ_INT,
+				cvmx_ग_लिखो_csr(CVMX_SSO_WQ_INT,
 					       BIT(rx_group->group));
-			} else {
-				union cvmx_pow_wq_int wq_int;
+			पूर्ण अन्यथा अणु
+				जोड़ cvmx_घात_wq_पूर्णांक wq_पूर्णांक;
 
-				wq_int.u64 = 0;
-				wq_int.s.iq_dis = BIT(rx_group->group);
-				wq_int.s.wq_int = BIT(rx_group->group);
-				cvmx_write_csr(CVMX_POW_WQ_INT, wq_int.u64);
-			}
-			break;
-		}
-		pskb = (struct sk_buff **)
+				wq_पूर्णांक.u64 = 0;
+				wq_पूर्णांक.s.iq_dis = BIT(rx_group->group);
+				wq_पूर्णांक.s.wq_पूर्णांक = BIT(rx_group->group);
+				cvmx_ग_लिखो_csr(CVMX_POW_WQ_INT, wq_पूर्णांक.u64);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		pskb = (काष्ठा sk_buff **)
 			(cvm_oct_get_buffer_ptr(work->packet_ptr) -
-			sizeof(void *));
+			माप(व्योम *));
 		prefetch(pskb);
 
-		if (USE_ASYNC_IOBDMA && rx_count < (budget - 1)) {
-			cvmx_pow_work_request_async_nocheck(CVMX_SCR_SCRATCH,
+		अगर (USE_ASYNC_IOBDMA && rx_count < (budget - 1)) अणु
+			cvmx_घात_work_request_async_nocheck(CVMX_SCR_SCRATCH,
 							    CVMX_POW_NO_WAIT);
 			did_work_request = 1;
-		}
+		पूर्ण
 		rx_count++;
 
 		skb_in_hw = work->word2.s.bufs == 1;
-		if (likely(skb_in_hw)) {
+		अगर (likely(skb_in_hw)) अणु
 			skb = *pskb;
 			prefetch(&skb->head);
 			prefetch(&skb->len);
-		}
+		पूर्ण
 
-		if (octeon_has_feature(OCTEON_FEATURE_PKND))
+		अगर (octeon_has_feature(OCTEON_FEATURE_PKND))
 			port = work->word0.pip.cn68xx.pknd;
-		else
+		अन्यथा
 			port = work->word1.cn38xx.ipprt;
 
 		prefetch(cvm_oct_device[port]);
 
 		/* Immediately throw away all packets with receive errors */
-		if (unlikely(work->word2.snoip.rcv_error)) {
-			if (cvm_oct_check_rcv_error(work))
-				continue;
-		}
+		अगर (unlikely(work->word2.snoip.rcv_error)) अणु
+			अगर (cvm_oct_check_rcv_error(work))
+				जारी;
+		पूर्ण
 
 		/*
-		 * We can only use the zero copy path if skbuffs are
+		 * We can only use the zero copy path अगर skbuffs are
 		 * in the FPA pool and the packet fits in a single
 		 * buffer.
 		 */
-		if (likely(skb_in_hw)) {
+		अगर (likely(skb_in_hw)) अणु
 			skb->data = skb->head + work->packet_ptr.s.addr -
 				cvmx_ptr_to_phys(skb->head);
 			prefetch(skb->data);
 			skb->len = work->word1.len;
-			skb_set_tail_pointer(skb, skb->len);
+			skb_set_tail_poपूर्णांकer(skb, skb->len);
 			packet_not_copied = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * We have to copy the packet. First allocate
-			 * an skbuff for it.
+			 * an skbuff क्रम it.
 			 */
 			skb = dev_alloc_skb(work->word1.len);
-			if (!skb) {
-				cvm_oct_free_work(work);
-				continue;
-			}
+			अगर (!skb) अणु
+				cvm_oct_मुक्त_work(work);
+				जारी;
+			पूर्ण
 
 			/*
-			 * Check if we've received a packet that was
+			 * Check अगर we've received a packet that was
 			 * entirely stored in the work entry.
 			 */
-			if (unlikely(work->word2.s.bufs == 0)) {
+			अगर (unlikely(work->word2.s.bufs == 0)) अणु
 				u8 *ptr = work->packet_data;
 
-				if (likely(!work->word2.s.not_IP)) {
+				अगर (likely(!work->word2.s.not_IP)) अणु
 					/*
 					 * The beginning of the packet
-					 * moves for IP packets.
+					 * moves क्रम IP packets.
 					 */
-					if (work->word2.s.is_v6)
+					अगर (work->word2.s.is_v6)
 						ptr += 2;
-					else
+					अन्यथा
 						ptr += 6;
-				}
+				पूर्ण
 				skb_put_data(skb, ptr, work->word1.len);
-				/* No packet buffers to free */
-			} else {
+				/* No packet buffers to मुक्त */
+			पूर्ण अन्यथा अणु
 				copy_segments_to_skb(work, skb);
-			}
+			पूर्ण
 			packet_not_copied = 0;
-		}
-		if (likely((port < TOTAL_NUMBER_OF_PORTS) &&
-			   cvm_oct_device[port])) {
-			struct net_device *dev = cvm_oct_device[port];
+		पूर्ण
+		अगर (likely((port < TOTAL_NUMBER_OF_PORTS) &&
+			   cvm_oct_device[port])) अणु
+			काष्ठा net_device *dev = cvm_oct_device[port];
 
 			/*
-			 * Only accept packets for devices that are
+			 * Only accept packets क्रम devices that are
 			 * currently up.
 			 */
-			if (likely(dev->flags & IFF_UP)) {
+			अगर (likely(dev->flags & IFF_UP)) अणु
 				skb->protocol = eth_type_trans(skb, dev);
 				skb->dev = dev;
 
-				if (unlikely(work->word2.s.not_IP ||
+				अगर (unlikely(work->word2.s.not_IP ||
 					     work->word2.s.IP_exc ||
 					     work->word2.s.L4_error ||
 					     !work->word2.s.tcp_or_udp))
 					skb->ip_summed = CHECKSUM_NONE;
-				else
+				अन्यथा
 					skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-				/* Increment RX stats for virtual ports */
-				if (port >= CVMX_PIP_NUM_INPUT_PORTS) {
+				/* Increment RX stats क्रम भव ports */
+				अगर (port >= CVMX_PIP_NUM_INPUT_PORTS) अणु
 					dev->stats.rx_packets++;
 					dev->stats.rx_bytes += skb->len;
-				}
-				netif_receive_skb(skb);
-			} else {
+				पूर्ण
+				netअगर_receive_skb(skb);
+			पूर्ण अन्यथा अणु
 				/*
-				 * Drop any packet received for a device that
+				 * Drop any packet received क्रम a device that
 				 * isn't up.
 				 */
 				dev->stats.rx_dropped++;
-				dev_kfree_skb_irq(skb);
-			}
-		} else {
+				dev_kमुक्त_skb_irq(skb);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
-			 * Drop any packet received for a device that
-			 * doesn't exist.
+			 * Drop any packet received क्रम a device that
+			 * करोesn't exist.
 			 */
-			printk_ratelimited("Port %d not controlled by Linux, packet dropped\n",
+			prपूर्णांकk_ratelimited("Port %d not controlled by Linux, packet dropped\n",
 					   port);
-			dev_kfree_skb_irq(skb);
-		}
+			dev_kमुक्त_skb_irq(skb);
+		पूर्ण
 		/*
-		 * Check to see if the skbuff and work share the same
+		 * Check to see अगर the skbuff and work share the same
 		 * packet buffer.
 		 */
-		if (likely(packet_not_copied)) {
+		अगर (likely(packet_not_copied)) अणु
 			/*
 			 * This buffer needs to be replaced, increment
-			 * the number of buffers we need to free by
+			 * the number of buffers we need to मुक्त by
 			 * one.
 			 */
 			cvmx_fau_atomic_add32(FAU_NUM_PACKET_BUFFERS_TO_FREE,
 					      1);
 
-			cvmx_fpa_free(work, CVMX_FPA_WQE_POOL, 1);
-		} else {
-			cvm_oct_free_work(work);
-		}
-	}
+			cvmx_fpa_मुक्त(work, CVMX_FPA_WQE_POOL, 1);
+		पूर्ण अन्यथा अणु
+			cvm_oct_मुक्त_work(work);
+		पूर्ण
+	पूर्ण
 	/* Restore the original POW group mask */
-	if (OCTEON_IS_MODEL(OCTEON_CN68XX)) {
-		cvmx_write_csr(CVMX_SSO_PPX_GRP_MSK(coreid), old_group_mask);
-		cvmx_read_csr(CVMX_SSO_PPX_GRP_MSK(coreid)); /* Flush */
-	} else {
-		cvmx_write_csr(CVMX_POW_PP_GRP_MSKX(coreid), old_group_mask);
-	}
+	अगर (OCTEON_IS_MODEL(OCTEON_CN68XX)) अणु
+		cvmx_ग_लिखो_csr(CVMX_SSO_PPX_GRP_MSK(coreid), old_group_mask);
+		cvmx_पढ़ो_csr(CVMX_SSO_PPX_GRP_MSK(coreid)); /* Flush */
+	पूर्ण अन्यथा अणु
+		cvmx_ग_लिखो_csr(CVMX_POW_PP_GRP_MSKX(coreid), old_group_mask);
+	पूर्ण
 
-	if (USE_ASYNC_IOBDMA) {
+	अगर (USE_ASYNC_IOBDMA) अणु
 		/* Restore the scratch area */
-		cvmx_scratch_write64(CVMX_SCR_SCRATCH, old_scratch);
-	}
+		cvmx_scratch_ग_लिखो64(CVMX_SCR_SCRATCH, old_scratch);
+	पूर्ण
 	cvm_oct_rx_refill_pool(0);
 
-	return rx_count;
-}
+	वापस rx_count;
+पूर्ण
 
 /**
  * cvm_oct_napi_poll - the NAPI poll function.
@@ -409,134 +410,134 @@ static int cvm_oct_poll(struct oct_rx_group *rx_group, int budget)
  *
  * Returns the number of packets processed.
  */
-static int cvm_oct_napi_poll(struct napi_struct *napi, int budget)
-{
-	struct oct_rx_group *rx_group = container_of(napi, struct oct_rx_group,
+अटल पूर्णांक cvm_oct_napi_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा oct_rx_group *rx_group = container_of(napi, काष्ठा oct_rx_group,
 						     napi);
-	int rx_count;
+	पूर्णांक rx_count;
 
 	rx_count = cvm_oct_poll(rx_group, budget);
 
-	if (rx_count < budget) {
+	अगर (rx_count < budget) अणु
 		/* No more work */
-		napi_complete_done(napi, rx_count);
+		napi_complete_करोne(napi, rx_count);
 		enable_irq(rx_group->irq);
-	}
-	return rx_count;
-}
+	पूर्ण
+	वापस rx_count;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
 /**
- * cvm_oct_poll_controller - poll for receive packets
+ * cvm_oct_poll_controller - poll क्रम receive packets
  * device.
  *
  * @dev:    Device to poll. Unused
  */
-void cvm_oct_poll_controller(struct net_device *dev)
-{
-	int i;
+व्योम cvm_oct_poll_controller(काष्ठा net_device *dev)
+अणु
+	पूर्णांक i;
 
-	if (!atomic_read(&oct_rx_ready))
-		return;
+	अगर (!atomic_पढ़ो(&oct_rx_पढ़ोy))
+		वापस;
 
-	for (i = 0; i < ARRAY_SIZE(oct_rx_group); i++) {
-		if (!(pow_receive_groups & BIT(i)))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(oct_rx_group); i++) अणु
+		अगर (!(घात_receive_groups & BIT(i)))
+			जारी;
 
 		cvm_oct_poll(&oct_rx_group[i], 16);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-void cvm_oct_rx_initialize(void)
-{
-	int i;
-	struct net_device *dev_for_napi = NULL;
+व्योम cvm_oct_rx_initialize(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा net_device *dev_क्रम_napi = शून्य;
 
-	for (i = 0; i < TOTAL_NUMBER_OF_PORTS; i++) {
-		if (cvm_oct_device[i]) {
-			dev_for_napi = cvm_oct_device[i];
-			break;
-		}
-	}
+	क्रम (i = 0; i < TOTAL_NUMBER_OF_PORTS; i++) अणु
+		अगर (cvm_oct_device[i]) अणु
+			dev_क्रम_napi = cvm_oct_device[i];
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!dev_for_napi)
+	अगर (!dev_क्रम_napi)
 		panic("No net_devices were allocated.");
 
-	for (i = 0; i < ARRAY_SIZE(oct_rx_group); i++) {
-		int ret;
+	क्रम (i = 0; i < ARRAY_SIZE(oct_rx_group); i++) अणु
+		पूर्णांक ret;
 
-		if (!(pow_receive_groups & BIT(i)))
-			continue;
+		अगर (!(घात_receive_groups & BIT(i)))
+			जारी;
 
-		netif_napi_add(dev_for_napi, &oct_rx_group[i].napi,
+		netअगर_napi_add(dev_क्रम_napi, &oct_rx_group[i].napi,
 			       cvm_oct_napi_poll, rx_napi_weight);
 		napi_enable(&oct_rx_group[i].napi);
 
 		oct_rx_group[i].irq = OCTEON_IRQ_WORKQ0 + i;
 		oct_rx_group[i].group = i;
 
-		/* Register an IRQ handler to receive POW interrupts */
-		ret = request_irq(oct_rx_group[i].irq, cvm_oct_do_interrupt, 0,
+		/* Register an IRQ handler to receive POW पूर्णांकerrupts */
+		ret = request_irq(oct_rx_group[i].irq, cvm_oct_करो_पूर्णांकerrupt, 0,
 				  "Ethernet", &oct_rx_group[i].napi);
-		if (ret)
+		अगर (ret)
 			panic("Could not acquire Ethernet IRQ %d\n",
 			      oct_rx_group[i].irq);
 
 		disable_irq_nosync(oct_rx_group[i].irq);
 
-		/* Enable POW interrupt when our port has at least one packet */
-		if (OCTEON_IS_MODEL(OCTEON_CN68XX)) {
-			union cvmx_sso_wq_int_thrx int_thr;
-			union cvmx_pow_wq_int_pc int_pc;
+		/* Enable POW पूर्णांकerrupt when our port has at least one packet */
+		अगर (OCTEON_IS_MODEL(OCTEON_CN68XX)) अणु
+			जोड़ cvmx_sso_wq_पूर्णांक_thrx पूर्णांक_thr;
+			जोड़ cvmx_घात_wq_पूर्णांक_pc पूर्णांक_pc;
 
-			int_thr.u64 = 0;
-			int_thr.s.tc_en = 1;
-			int_thr.s.tc_thr = 1;
-			cvmx_write_csr(CVMX_SSO_WQ_INT_THRX(i), int_thr.u64);
+			पूर्णांक_thr.u64 = 0;
+			पूर्णांक_thr.s.tc_en = 1;
+			पूर्णांक_thr.s.tc_thr = 1;
+			cvmx_ग_लिखो_csr(CVMX_SSO_WQ_INT_THRX(i), पूर्णांक_thr.u64);
 
-			int_pc.u64 = 0;
-			int_pc.s.pc_thr = 5;
-			cvmx_write_csr(CVMX_SSO_WQ_INT_PC, int_pc.u64);
-		} else {
-			union cvmx_pow_wq_int_thrx int_thr;
-			union cvmx_pow_wq_int_pc int_pc;
+			पूर्णांक_pc.u64 = 0;
+			पूर्णांक_pc.s.pc_thr = 5;
+			cvmx_ग_लिखो_csr(CVMX_SSO_WQ_INT_PC, पूर्णांक_pc.u64);
+		पूर्ण अन्यथा अणु
+			जोड़ cvmx_घात_wq_पूर्णांक_thrx पूर्णांक_thr;
+			जोड़ cvmx_घात_wq_पूर्णांक_pc पूर्णांक_pc;
 
-			int_thr.u64 = 0;
-			int_thr.s.tc_en = 1;
-			int_thr.s.tc_thr = 1;
-			cvmx_write_csr(CVMX_POW_WQ_INT_THRX(i), int_thr.u64);
+			पूर्णांक_thr.u64 = 0;
+			पूर्णांक_thr.s.tc_en = 1;
+			पूर्णांक_thr.s.tc_thr = 1;
+			cvmx_ग_लिखो_csr(CVMX_POW_WQ_INT_THRX(i), पूर्णांक_thr.u64);
 
-			int_pc.u64 = 0;
-			int_pc.s.pc_thr = 5;
-			cvmx_write_csr(CVMX_POW_WQ_INT_PC, int_pc.u64);
-		}
+			पूर्णांक_pc.u64 = 0;
+			पूर्णांक_pc.s.pc_thr = 5;
+			cvmx_ग_लिखो_csr(CVMX_POW_WQ_INT_PC, पूर्णांक_pc.u64);
+		पूर्ण
 
 		/* Schedule NAPI now. This will indirectly enable the
-		 * interrupt.
+		 * पूर्णांकerrupt.
 		 */
 		napi_schedule(&oct_rx_group[i].napi);
-	}
-	atomic_inc(&oct_rx_ready);
-}
+	पूर्ण
+	atomic_inc(&oct_rx_पढ़ोy);
+पूर्ण
 
-void cvm_oct_rx_shutdown(void)
-{
-	int i;
+व्योम cvm_oct_rx_shutकरोwn(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(oct_rx_group); i++) {
-		if (!(pow_receive_groups & BIT(i)))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(oct_rx_group); i++) अणु
+		अगर (!(घात_receive_groups & BIT(i)))
+			जारी;
 
-		/* Disable POW interrupt */
-		if (OCTEON_IS_MODEL(OCTEON_CN68XX))
-			cvmx_write_csr(CVMX_SSO_WQ_INT_THRX(i), 0);
-		else
-			cvmx_write_csr(CVMX_POW_WQ_INT_THRX(i), 0);
+		/* Disable POW पूर्णांकerrupt */
+		अगर (OCTEON_IS_MODEL(OCTEON_CN68XX))
+			cvmx_ग_लिखो_csr(CVMX_SSO_WQ_INT_THRX(i), 0);
+		अन्यथा
+			cvmx_ग_लिखो_csr(CVMX_POW_WQ_INT_THRX(i), 0);
 
-		/* Free the interrupt handler */
-		free_irq(oct_rx_group[i].irq, cvm_oct_device);
+		/* Free the पूर्णांकerrupt handler */
+		मुक्त_irq(oct_rx_group[i].irq, cvm_oct_device);
 
-		netif_napi_del(&oct_rx_group[i].napi);
-	}
-}
+		netअगर_napi_del(&oct_rx_group[i].napi);
+	पूर्ण
+पूर्ण

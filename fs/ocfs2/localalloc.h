@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * localalloc.h
+ * localभाग.स
  *
  * Function prototypes
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_LOCALALLOC_H
-#define OCFS2_LOCALALLOC_H
+#अगर_अघोषित OCFS2_LOCALALLOC_H
+#घोषणा OCFS2_LOCALALLOC_H
 
-int ocfs2_load_local_alloc(struct ocfs2_super *osb);
+पूर्णांक ocfs2_load_local_alloc(काष्ठा ocfs2_super *osb);
 
-void ocfs2_shutdown_local_alloc(struct ocfs2_super *osb);
+व्योम ocfs2_shutकरोwn_local_alloc(काष्ठा ocfs2_super *osb);
 
-void ocfs2_la_set_sizes(struct ocfs2_super *osb, int requested_mb);
-unsigned int ocfs2_la_default_mb(struct ocfs2_super *osb);
+व्योम ocfs2_la_set_sizes(काष्ठा ocfs2_super *osb, पूर्णांक requested_mb);
+अचिन्हित पूर्णांक ocfs2_la_शेष_mb(काष्ठा ocfs2_super *osb);
 
-int ocfs2_begin_local_alloc_recovery(struct ocfs2_super *osb,
-				     int node_num,
-				     struct ocfs2_dinode **alloc_copy);
+पूर्णांक ocfs2_begin_local_alloc_recovery(काष्ठा ocfs2_super *osb,
+				     पूर्णांक node_num,
+				     काष्ठा ocfs2_dinode **alloc_copy);
 
-int ocfs2_complete_local_alloc_recovery(struct ocfs2_super *osb,
-					struct ocfs2_dinode *alloc);
+पूर्णांक ocfs2_complete_local_alloc_recovery(काष्ठा ocfs2_super *osb,
+					काष्ठा ocfs2_dinode *alloc);
 
-int ocfs2_alloc_should_use_local(struct ocfs2_super *osb,
+पूर्णांक ocfs2_alloc_should_use_local(काष्ठा ocfs2_super *osb,
 				 u64 bits);
 
-struct ocfs2_alloc_context;
-int ocfs2_reserve_local_alloc_bits(struct ocfs2_super *osb,
+काष्ठा ocfs2_alloc_context;
+पूर्णांक ocfs2_reserve_local_alloc_bits(काष्ठा ocfs2_super *osb,
 				   u32 bits_wanted,
-				   struct ocfs2_alloc_context *ac);
+				   काष्ठा ocfs2_alloc_context *ac);
 
-int ocfs2_claim_local_alloc_bits(struct ocfs2_super *osb,
+पूर्णांक ocfs2_claim_local_alloc_bits(काष्ठा ocfs2_super *osb,
 				 handle_t *handle,
-				 struct ocfs2_alloc_context *ac,
+				 काष्ठा ocfs2_alloc_context *ac,
 				 u32 bits_wanted,
 				 u32 *bit_off,
 				 u32 *num_bits);
 
-int ocfs2_free_local_alloc_bits(struct ocfs2_super *osb,
+पूर्णांक ocfs2_मुक्त_local_alloc_bits(काष्ठा ocfs2_super *osb,
 				handle_t *handle,
-				struct ocfs2_alloc_context *ac,
+				काष्ठा ocfs2_alloc_context *ac,
 				u32 bit_off,
 				u32 num_bits);
 
-void ocfs2_local_alloc_seen_free_bits(struct ocfs2_super *osb,
-				      unsigned int num_clusters);
-void ocfs2_la_enable_worker(struct work_struct *work);
+व्योम ocfs2_local_alloc_seen_मुक्त_bits(काष्ठा ocfs2_super *osb,
+				      अचिन्हित पूर्णांक num_clusters);
+व्योम ocfs2_la_enable_worker(काष्ठा work_काष्ठा *work);
 
-#endif /* OCFS2_LOCALALLOC_H */
+#पूर्ण_अगर /* OCFS2_LOCALALLOC_H */

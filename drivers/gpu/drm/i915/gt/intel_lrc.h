@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  */
 
-#ifndef __INTEL_LRC_H__
-#define __INTEL_LRC_H__
+#अगर_अघोषित __INTEL_LRC_H__
+#घोषणा __INTEL_LRC_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "intel_context.h"
-#include "intel_lrc_reg.h"
+#समावेश "intel_context.h"
+#समावेश "intel_lrc_reg.h"
 
-struct drm_i915_gem_object;
-struct intel_engine_cs;
-struct intel_ring;
+काष्ठा drm_i915_gem_object;
+काष्ठा पूर्णांकel_engine_cs;
+काष्ठा पूर्णांकel_ring;
 
 /* At the start of the context image is its per-process HWS page */
-#define LRC_PPHWSP_PN	(0)
-#define LRC_PPHWSP_SZ	(1)
-/* After the PPHWSP we have the logical state for the context */
-#define LRC_STATE_PN	(LRC_PPHWSP_PN + LRC_PPHWSP_SZ)
-#define LRC_STATE_OFFSET (LRC_STATE_PN * PAGE_SIZE)
+#घोषणा LRC_PPHWSP_PN	(0)
+#घोषणा LRC_PPHWSP_SZ	(1)
+/* After the PPHWSP we have the logical state क्रम the context */
+#घोषणा LRC_STATE_PN	(LRC_PPHWSP_PN + LRC_PPHWSP_SZ)
+#घोषणा LRC_STATE_OFFSET (LRC_STATE_PN * PAGE_SIZE)
 
 /* Space within PPHWSP reserved to be used as scratch */
-#define LRC_PPHWSP_SCRATCH		0x34
-#define LRC_PPHWSP_SCRATCH_ADDR		(LRC_PPHWSP_SCRATCH * sizeof(u32))
+#घोषणा LRC_PPHWSP_SCRATCH		0x34
+#घोषणा LRC_PPHWSP_SCRATCH_ADDR		(LRC_PPHWSP_SCRATCH * माप(u32))
 
-void lrc_init_wa_ctx(struct intel_engine_cs *engine);
-void lrc_fini_wa_ctx(struct intel_engine_cs *engine);
+व्योम lrc_init_wa_ctx(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम lrc_fini_wa_ctx(काष्ठा पूर्णांकel_engine_cs *engine);
 
-int lrc_alloc(struct intel_context *ce,
-	      struct intel_engine_cs *engine);
-void lrc_reset(struct intel_context *ce);
-void lrc_fini(struct intel_context *ce);
-void lrc_destroy(struct kref *kref);
+पूर्णांक lrc_alloc(काष्ठा पूर्णांकel_context *ce,
+	      काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम lrc_reset(काष्ठा पूर्णांकel_context *ce);
+व्योम lrc_fini(काष्ठा पूर्णांकel_context *ce);
+व्योम lrc_destroy(काष्ठा kref *kref);
 
-int
-lrc_pre_pin(struct intel_context *ce,
-	    struct intel_engine_cs *engine,
-	    struct i915_gem_ww_ctx *ww,
-	    void **vaddr);
-int
-lrc_pin(struct intel_context *ce,
-	struct intel_engine_cs *engine,
-	void *vaddr);
-void lrc_unpin(struct intel_context *ce);
-void lrc_post_unpin(struct intel_context *ce);
+पूर्णांक
+lrc_pre_pin(काष्ठा पूर्णांकel_context *ce,
+	    काष्ठा पूर्णांकel_engine_cs *engine,
+	    काष्ठा i915_gem_ww_ctx *ww,
+	    व्योम **vaddr);
+पूर्णांक
+lrc_pin(काष्ठा पूर्णांकel_context *ce,
+	काष्ठा पूर्णांकel_engine_cs *engine,
+	व्योम *vaddr);
+व्योम lrc_unpin(काष्ठा पूर्णांकel_context *ce);
+व्योम lrc_post_unpin(काष्ठा पूर्णांकel_context *ce);
 
-void lrc_init_state(struct intel_context *ce,
-		    struct intel_engine_cs *engine,
-		    void *state);
+व्योम lrc_init_state(काष्ठा पूर्णांकel_context *ce,
+		    काष्ठा पूर्णांकel_engine_cs *engine,
+		    व्योम *state);
 
-void lrc_init_regs(const struct intel_context *ce,
-		   const struct intel_engine_cs *engine,
+व्योम lrc_init_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		   स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
 		   bool clear);
-void lrc_reset_regs(const struct intel_context *ce,
-		    const struct intel_engine_cs *engine);
+व्योम lrc_reset_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		    स्थिर काष्ठा पूर्णांकel_engine_cs *engine);
 
-u32 lrc_update_regs(const struct intel_context *ce,
-		    const struct intel_engine_cs *engine,
+u32 lrc_update_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		    स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
 		    u32 head);
-void lrc_update_offsets(struct intel_context *ce,
-			struct intel_engine_cs *engine);
+व्योम lrc_update_offsets(काष्ठा पूर्णांकel_context *ce,
+			काष्ठा पूर्णांकel_engine_cs *engine);
 
-void lrc_check_regs(const struct intel_context *ce,
-		    const struct intel_engine_cs *engine,
-		    const char *when);
+व्योम lrc_check_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		    स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+		    स्थिर अक्षर *when);
 
-void lrc_update_runtime(struct intel_context *ce);
-static inline u32 lrc_get_runtime(const struct intel_context *ce)
-{
+व्योम lrc_update_runसमय(काष्ठा पूर्णांकel_context *ce);
+अटल अंतरभूत u32 lrc_get_runसमय(स्थिर काष्ठा पूर्णांकel_context *ce)
+अणु
 	/*
-	 * We can use either ppHWSP[16] which is recorded before the context
-	 * switch (and so excludes the cost of context switches) or use the
+	 * We can use either ppHWSP[16] which is recorded beक्रमe the context
+	 * चयन (and so excludes the cost of context चयनes) or use the
 	 * value from the context image itself, which is saved/restored earlier
 	 * and so includes the cost of the save.
 	 */
-	return READ_ONCE(ce->lrc_reg_state[CTX_TIMESTAMP]);
-}
+	वापस READ_ONCE(ce->lrc_reg_state[CTX_TIMESTAMP]);
+पूर्ण
 
-#endif /* __INTEL_LRC_H__ */
+#पूर्ण_अगर /* __INTEL_LRC_H__ */

@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
-   CMTP implementation for Linux Bluetooth stack (BlueZ).
-   Copyright (C) 2002-2003 Marcel Holtmann <marcel@holtmann.org>
+   CMTP implementation क्रम Linux Bluetooth stack (BlueZ).
+   Copyright (C) 2002-2003 Marcel Holपंचांगann <marcel@holपंचांगann.org>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -10,7 +11,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -20,120 +21,120 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#include <linux/export.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
-#include <linux/fcntl.h>
-#include <linux/skbuff.h>
-#include <linux/socket.h>
-#include <linux/ioctl.h>
-#include <linux/file.h>
-#include <linux/wait.h>
-#include <linux/kthread.h>
-#include <net/sock.h>
+#समावेश <linux/export.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/file.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <net/sock.h>
 
-#include <linux/isdn/capilli.h>
-#include <linux/isdn/capicmd.h>
-#include <linux/isdn/capiutil.h>
+#समावेश <linux/isdn/capilli.h>
+#समावेश <linux/isdn/capicmd.h>
+#समावेश <linux/isdn/capiutil.h>
 
-#include "cmtp.h"
+#समावेश "cmtp.h"
 
-#define CAPI_INTEROPERABILITY		0x20
+#घोषणा CAPI_INTEROPERABILITY		0x20
 
-#define CAPI_INTEROPERABILITY_REQ	CAPICMD(CAPI_INTEROPERABILITY, CAPI_REQ)
-#define CAPI_INTEROPERABILITY_CONF	CAPICMD(CAPI_INTEROPERABILITY, CAPI_CONF)
-#define CAPI_INTEROPERABILITY_IND	CAPICMD(CAPI_INTEROPERABILITY, CAPI_IND)
-#define CAPI_INTEROPERABILITY_RESP	CAPICMD(CAPI_INTEROPERABILITY, CAPI_RESP)
+#घोषणा CAPI_INTEROPERABILITY_REQ	CAPICMD(CAPI_INTEROPERABILITY, CAPI_REQ)
+#घोषणा CAPI_INTEROPERABILITY_CONF	CAPICMD(CAPI_INTEROPERABILITY, CAPI_CONF)
+#घोषणा CAPI_INTEROPERABILITY_IND	CAPICMD(CAPI_INTEROPERABILITY, CAPI_IND)
+#घोषणा CAPI_INTEROPERABILITY_RESP	CAPICMD(CAPI_INTEROPERABILITY, CAPI_RESP)
 
-#define CAPI_INTEROPERABILITY_REQ_LEN	(CAPI_MSG_BASELEN + 2)
-#define CAPI_INTEROPERABILITY_CONF_LEN	(CAPI_MSG_BASELEN + 4)
-#define CAPI_INTEROPERABILITY_IND_LEN	(CAPI_MSG_BASELEN + 2)
-#define CAPI_INTEROPERABILITY_RESP_LEN	(CAPI_MSG_BASELEN + 2)
+#घोषणा CAPI_INTEROPERABILITY_REQ_LEN	(CAPI_MSG_BASELEN + 2)
+#घोषणा CAPI_INTEROPERABILITY_CONF_LEN	(CAPI_MSG_BASELEN + 4)
+#घोषणा CAPI_INTEROPERABILITY_IND_LEN	(CAPI_MSG_BASELEN + 2)
+#घोषणा CAPI_INTEROPERABILITY_RESP_LEN	(CAPI_MSG_BASELEN + 2)
 
-#define CAPI_FUNCTION_REGISTER		0
-#define CAPI_FUNCTION_RELEASE		1
-#define CAPI_FUNCTION_GET_PROFILE	2
-#define CAPI_FUNCTION_GET_MANUFACTURER	3
-#define CAPI_FUNCTION_GET_VERSION	4
-#define CAPI_FUNCTION_GET_SERIAL_NUMBER	5
-#define CAPI_FUNCTION_MANUFACTURER	6
-#define CAPI_FUNCTION_LOOPBACK		7
+#घोषणा CAPI_FUNCTION_REGISTER		0
+#घोषणा CAPI_FUNCTION_RELEASE		1
+#घोषणा CAPI_FUNCTION_GET_PROखाता	2
+#घोषणा CAPI_FUNCTION_GET_MANUFACTURER	3
+#घोषणा CAPI_FUNCTION_GET_VERSION	4
+#घोषणा CAPI_FUNCTION_GET_SERIAL_NUMBER	5
+#घोषणा CAPI_FUNCTION_MANUFACTURER	6
+#घोषणा CAPI_FUNCTION_LOOPBACK		7
 
 
-#define CMTP_MSGNUM	1
-#define CMTP_APPLID	2
-#define CMTP_MAPPING	3
+#घोषणा CMTP_MSGNUM	1
+#घोषणा CMTP_APPLID	2
+#घोषणा CMTP_MAPPING	3
 
-static struct cmtp_application *cmtp_application_add(struct cmtp_session *session, __u16 appl)
-{
-	struct cmtp_application *app = kzalloc(sizeof(*app), GFP_KERNEL);
+अटल काष्ठा cmtp_application *cmtp_application_add(काष्ठा cmtp_session *session, __u16 appl)
+अणु
+	काष्ठा cmtp_application *app = kzalloc(माप(*app), GFP_KERNEL);
 
 	BT_DBG("session %p application %p appl %d", session, app, appl);
 
-	if (!app)
-		return NULL;
+	अगर (!app)
+		वापस शून्य;
 
 	app->state = BT_OPEN;
 	app->appl = appl;
 
 	list_add_tail(&app->list, &session->applications);
 
-	return app;
-}
+	वापस app;
+पूर्ण
 
-static void cmtp_application_del(struct cmtp_session *session, struct cmtp_application *app)
-{
+अटल व्योम cmtp_application_del(काष्ठा cmtp_session *session, काष्ठा cmtp_application *app)
+अणु
 	BT_DBG("session %p application %p", session, app);
 
-	if (app) {
+	अगर (app) अणु
 		list_del(&app->list);
-		kfree(app);
-	}
-}
+		kमुक्त(app);
+	पूर्ण
+पूर्ण
 
-static struct cmtp_application *cmtp_application_get(struct cmtp_session *session, int pattern, __u16 value)
-{
-	struct cmtp_application *app;
+अटल काष्ठा cmtp_application *cmtp_application_get(काष्ठा cmtp_session *session, पूर्णांक pattern, __u16 value)
+अणु
+	काष्ठा cmtp_application *app;
 
-	list_for_each_entry(app, &session->applications, list) {
-		switch (pattern) {
-		case CMTP_MSGNUM:
-			if (app->msgnum == value)
-				return app;
-			break;
-		case CMTP_APPLID:
-			if (app->appl == value)
-				return app;
-			break;
-		case CMTP_MAPPING:
-			if (app->mapping == value)
-				return app;
-			break;
-		}
-	}
+	list_क्रम_each_entry(app, &session->applications, list) अणु
+		चयन (pattern) अणु
+		हाल CMTP_MSGNUM:
+			अगर (app->msgnum == value)
+				वापस app;
+			अवरोध;
+		हाल CMTP_APPLID:
+			अगर (app->appl == value)
+				वापस app;
+			अवरोध;
+		हाल CMTP_MAPPING:
+			अगर (app->mapping == value)
+				वापस app;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int cmtp_msgnum_get(struct cmtp_session *session)
-{
+अटल पूर्णांक cmtp_msgnum_get(काष्ठा cmtp_session *session)
+अणु
 	session->msgnum++;
 
-	if ((session->msgnum & 0xff) > 200)
+	अगर ((session->msgnum & 0xff) > 200)
 		session->msgnum = CMTP_INITIAL_MSGNUM + 1;
 
-	return session->msgnum;
-}
+	वापस session->msgnum;
+पूर्ण
 
-static void cmtp_send_capimsg(struct cmtp_session *session, struct sk_buff *skb)
-{
-	struct cmtp_scb *scb = (void *) skb->cb;
+अटल व्योम cmtp_send_capimsg(काष्ठा cmtp_session *session, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cmtp_scb *scb = (व्योम *) skb->cb;
 
 	BT_DBG("session %p skb %p len %d", session, skb, skb->len);
 
@@ -142,23 +143,23 @@ static void cmtp_send_capimsg(struct cmtp_session *session, struct sk_buff *skb)
 
 	skb_queue_tail(&session->transmit, skb);
 
-	wake_up_interruptible(sk_sleep(session->sock->sk));
-}
+	wake_up_पूर्णांकerruptible(sk_sleep(session->sock->sk));
+पूर्ण
 
-static void cmtp_send_interopmsg(struct cmtp_session *session,
+अटल व्योम cmtp_send_पूर्णांकeropmsg(काष्ठा cmtp_session *session,
 					__u8 subcmd, __u16 appl, __u16 msgnum,
-					__u16 function, unsigned char *buf, int len)
-{
-	struct sk_buff *skb;
-	unsigned char *s;
+					__u16 function, अचिन्हित अक्षर *buf, पूर्णांक len)
+अणु
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *s;
 
 	BT_DBG("session %p subcmd 0x%02x appl %d msgnum %d", session, subcmd, appl, msgnum);
 
 	skb = alloc_skb(CAPI_MSG_BASELEN + 6 + len, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		BT_ERR("Can't allocate memory for interoperability packet");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	s = skb_put(skb, CAPI_MSG_BASELEN + 6 + len);
 
@@ -175,231 +176,231 @@ static void cmtp_send_interopmsg(struct cmtp_session *session,
 	capimsg_setu16(s, 11, function);
 	capimsg_setu8 (s, 13, len);
 
-	if (len > 0)
-		memcpy(s + 14, buf, len);
+	अगर (len > 0)
+		स_नकल(s + 14, buf, len);
 
 	cmtp_send_capimsg(session, skb);
-}
+पूर्ण
 
-static void cmtp_recv_interopmsg(struct cmtp_session *session, struct sk_buff *skb)
-{
-	struct capi_ctr *ctrl = &session->ctrl;
-	struct cmtp_application *application;
+अटल व्योम cmtp_recv_पूर्णांकeropmsg(काष्ठा cmtp_session *session, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा capi_ctr *ctrl = &session->ctrl;
+	काष्ठा cmtp_application *application;
 	__u16 appl, msgnum, func, info;
 	__u32 controller;
 
 	BT_DBG("session %p skb %p len %d", session, skb, skb->len);
 
-	switch (CAPIMSG_SUBCOMMAND(skb->data)) {
-	case CAPI_CONF:
-		if (skb->len < CAPI_MSG_BASELEN + 10)
-			break;
+	चयन (CAPIMSG_SUBCOMMAND(skb->data)) अणु
+	हाल CAPI_CONF:
+		अगर (skb->len < CAPI_MSG_BASELEN + 10)
+			अवरोध;
 
 		func = CAPIMSG_U16(skb->data, CAPI_MSG_BASELEN + 5);
 		info = CAPIMSG_U16(skb->data, CAPI_MSG_BASELEN + 8);
 
-		switch (func) {
-		case CAPI_FUNCTION_REGISTER:
+		चयन (func) अणु
+		हाल CAPI_FUNCTION_REGISTER:
 			msgnum = CAPIMSG_MSGID(skb->data);
 
 			application = cmtp_application_get(session, CMTP_MSGNUM, msgnum);
-			if (application) {
+			अगर (application) अणु
 				application->state = BT_CONNECTED;
 				application->msgnum = 0;
 				application->mapping = CAPIMSG_APPID(skb->data);
-				wake_up_interruptible(&session->wait);
-			}
+				wake_up_पूर्णांकerruptible(&session->रुको);
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case CAPI_FUNCTION_RELEASE:
+		हाल CAPI_FUNCTION_RELEASE:
 			appl = CAPIMSG_APPID(skb->data);
 
 			application = cmtp_application_get(session, CMTP_MAPPING, appl);
-			if (application) {
+			अगर (application) अणु
 				application->state = BT_CLOSED;
 				application->msgnum = 0;
-				wake_up_interruptible(&session->wait);
-			}
+				wake_up_पूर्णांकerruptible(&session->रुको);
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case CAPI_FUNCTION_GET_PROFILE:
-			if (skb->len < CAPI_MSG_BASELEN + 11 + sizeof(capi_profile))
-				break;
+		हाल CAPI_FUNCTION_GET_PROखाता:
+			अगर (skb->len < CAPI_MSG_BASELEN + 11 + माप(capi_profile))
+				अवरोध;
 
 			controller = CAPIMSG_U16(skb->data, CAPI_MSG_BASELEN + 11);
 			msgnum = CAPIMSG_MSGID(skb->data);
 
-			if (!info && (msgnum == CMTP_INITIAL_MSGNUM)) {
+			अगर (!info && (msgnum == CMTP_INITIAL_MSGNUM)) अणु
 				session->ncontroller = controller;
-				wake_up_interruptible(&session->wait);
-				break;
-			}
+				wake_up_पूर्णांकerruptible(&session->रुको);
+				अवरोध;
+			पूर्ण
 
-			if (!info && ctrl) {
-				memcpy(&ctrl->profile,
+			अगर (!info && ctrl) अणु
+				स_नकल(&ctrl->profile,
 					skb->data + CAPI_MSG_BASELEN + 11,
-					sizeof(capi_profile));
+					माप(capi_profile));
 				session->state = BT_CONNECTED;
-				capi_ctr_ready(ctrl);
-			}
+				capi_ctr_पढ़ोy(ctrl);
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case CAPI_FUNCTION_GET_MANUFACTURER:
-			if (skb->len < CAPI_MSG_BASELEN + 15)
-				break;
+		हाल CAPI_FUNCTION_GET_MANUFACTURER:
+			अगर (skb->len < CAPI_MSG_BASELEN + 15)
+				अवरोध;
 
-			if (!info && ctrl) {
-				int len = min_t(uint, CAPI_MANUFACTURER_LEN,
+			अगर (!info && ctrl) अणु
+				पूर्णांक len = min_t(uपूर्णांक, CAPI_MANUFACTURER_LEN,
 						skb->data[CAPI_MSG_BASELEN + 14]);
 
-				memset(ctrl->manu, 0, CAPI_MANUFACTURER_LEN);
-				strncpy(ctrl->manu,
+				स_रखो(ctrl->manu, 0, CAPI_MANUFACTURER_LEN);
+				म_नकलन(ctrl->manu,
 					skb->data + CAPI_MSG_BASELEN + 15, len);
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case CAPI_FUNCTION_GET_VERSION:
-			if (skb->len < CAPI_MSG_BASELEN + 32)
-				break;
+		हाल CAPI_FUNCTION_GET_VERSION:
+			अगर (skb->len < CAPI_MSG_BASELEN + 32)
+				अवरोध;
 
-			if (!info && ctrl) {
+			अगर (!info && ctrl) अणु
 				ctrl->version.majorversion = CAPIMSG_U32(skb->data, CAPI_MSG_BASELEN + 16);
 				ctrl->version.minorversion = CAPIMSG_U32(skb->data, CAPI_MSG_BASELEN + 20);
 				ctrl->version.majormanuversion = CAPIMSG_U32(skb->data, CAPI_MSG_BASELEN + 24);
 				ctrl->version.minormanuversion = CAPIMSG_U32(skb->data, CAPI_MSG_BASELEN + 28);
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case CAPI_FUNCTION_GET_SERIAL_NUMBER:
-			if (skb->len < CAPI_MSG_BASELEN + 17)
-				break;
+		हाल CAPI_FUNCTION_GET_SERIAL_NUMBER:
+			अगर (skb->len < CAPI_MSG_BASELEN + 17)
+				अवरोध;
 
-			if (!info && ctrl) {
-				int len = min_t(uint, CAPI_SERIAL_LEN,
+			अगर (!info && ctrl) अणु
+				पूर्णांक len = min_t(uपूर्णांक, CAPI_SERIAL_LEN,
 						skb->data[CAPI_MSG_BASELEN + 16]);
 
-				memset(ctrl->serial, 0, CAPI_SERIAL_LEN);
-				strncpy(ctrl->serial,
+				स_रखो(ctrl->serial, 0, CAPI_SERIAL_LEN);
+				म_नकलन(ctrl->serial,
 					skb->data + CAPI_MSG_BASELEN + 17, len);
-			}
+			पूर्ण
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case CAPI_IND:
-		if (skb->len < CAPI_MSG_BASELEN + 6)
-			break;
+	हाल CAPI_IND:
+		अगर (skb->len < CAPI_MSG_BASELEN + 6)
+			अवरोध;
 
 		func = CAPIMSG_U16(skb->data, CAPI_MSG_BASELEN + 3);
 
-		if (func == CAPI_FUNCTION_LOOPBACK) {
-			int len = min_t(uint, skb->len - CAPI_MSG_BASELEN - 6,
+		अगर (func == CAPI_FUNCTION_LOOPBACK) अणु
+			पूर्णांक len = min_t(uपूर्णांक, skb->len - CAPI_MSG_BASELEN - 6,
 						skb->data[CAPI_MSG_BASELEN + 5]);
 			appl = CAPIMSG_APPID(skb->data);
 			msgnum = CAPIMSG_MSGID(skb->data);
-			cmtp_send_interopmsg(session, CAPI_RESP, appl, msgnum, func,
+			cmtp_send_पूर्णांकeropmsg(session, CAPI_RESP, appl, msgnum, func,
 						skb->data + CAPI_MSG_BASELEN + 6, len);
-		}
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-void cmtp_recv_capimsg(struct cmtp_session *session, struct sk_buff *skb)
-{
-	struct capi_ctr *ctrl = &session->ctrl;
-	struct cmtp_application *application;
+व्योम cmtp_recv_capimsg(काष्ठा cmtp_session *session, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा capi_ctr *ctrl = &session->ctrl;
+	काष्ठा cmtp_application *application;
 	__u16 appl;
 	__u32 contr;
 
 	BT_DBG("session %p skb %p len %d", session, skb, skb->len);
 
-	if (skb->len < CAPI_MSG_BASELEN)
-		return;
+	अगर (skb->len < CAPI_MSG_BASELEN)
+		वापस;
 
-	if (CAPIMSG_COMMAND(skb->data) == CAPI_INTEROPERABILITY) {
-		cmtp_recv_interopmsg(session, skb);
-		return;
-	}
+	अगर (CAPIMSG_COMMAND(skb->data) == CAPI_INTEROPERABILITY) अणु
+		cmtp_recv_पूर्णांकeropmsg(session, skb);
+		वापस;
+	पूर्ण
 
-	if (session->flags & BIT(CMTP_LOOPBACK)) {
-		kfree_skb(skb);
-		return;
-	}
+	अगर (session->flags & BIT(CMTP_LOOPBACK)) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	appl = CAPIMSG_APPID(skb->data);
 	contr = CAPIMSG_CONTROL(skb->data);
 
 	application = cmtp_application_get(session, CMTP_MAPPING, appl);
-	if (application) {
+	अगर (application) अणु
 		appl = application->appl;
 		CAPIMSG_SETAPPID(skb->data, appl);
-	} else {
+	पूर्ण अन्यथा अणु
 		BT_ERR("Can't find application with id %d", appl);
-		kfree_skb(skb);
-		return;
-	}
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	if ((contr & 0x7f) == 0x01) {
+	अगर ((contr & 0x7f) == 0x01) अणु
 		contr = (contr & 0xffffff80) | session->num;
 		CAPIMSG_SETCONTROL(skb->data, contr);
-	}
+	पूर्ण
 
 	capi_ctr_handle_message(ctrl, appl, skb);
-}
+पूर्ण
 
-static int cmtp_load_firmware(struct capi_ctr *ctrl, capiloaddata *data)
-{
+अटल पूर्णांक cmtp_load_firmware(काष्ठा capi_ctr *ctrl, capiloaddata *data)
+अणु
 	BT_DBG("ctrl %p data %p", ctrl, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cmtp_reset_ctr(struct capi_ctr *ctrl)
-{
-	struct cmtp_session *session = ctrl->driverdata;
+अटल व्योम cmtp_reset_ctr(काष्ठा capi_ctr *ctrl)
+अणु
+	काष्ठा cmtp_session *session = ctrl->driverdata;
 
 	BT_DBG("ctrl %p", ctrl);
 
-	capi_ctr_down(ctrl);
+	capi_ctr_करोwn(ctrl);
 
 	atomic_inc(&session->terminate);
 	wake_up_process(session->task);
-}
+पूर्ण
 
-static void cmtp_register_appl(struct capi_ctr *ctrl, __u16 appl, capi_register_params *rp)
-{
-	DECLARE_WAITQUEUE(wait, current);
-	struct cmtp_session *session = ctrl->driverdata;
-	struct cmtp_application *application;
-	unsigned long timeo = CMTP_INTEROP_TIMEOUT;
-	unsigned char buf[8];
-	int err = 0, nconn, want = rp->level3cnt;
+अटल व्योम cmtp_रेजिस्टर_appl(काष्ठा capi_ctr *ctrl, __u16 appl, capi_रेजिस्टर_params *rp)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
+	काष्ठा cmtp_session *session = ctrl->driverdata;
+	काष्ठा cmtp_application *application;
+	अचिन्हित दीर्घ समयo = CMTP_INTEROP_TIMEOUT;
+	अचिन्हित अक्षर buf[8];
+	पूर्णांक err = 0, nconn, want = rp->level3cnt;
 
 	BT_DBG("ctrl %p appl %d level3cnt %d datablkcnt %d datablklen %d",
 		ctrl, appl, rp->level3cnt, rp->datablkcnt, rp->datablklen);
 
 	application = cmtp_application_add(session, appl);
-	if (!application) {
+	अगर (!application) अणु
 		BT_ERR("Can't allocate memory for new application");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (want < 0)
+	अगर (want < 0)
 		nconn = ctrl->profile.nbchannel * -want;
-	else
+	अन्यथा
 		nconn = want;
 
-	if (nconn == 0)
+	अगर (nconn == 0)
 		nconn = ctrl->profile.nbchannel;
 
 	capimsg_setu16(buf, 0, nconn);
@@ -409,70 +410,70 @@ static void cmtp_register_appl(struct capi_ctr *ctrl, __u16 appl, capi_register_
 	application->state = BT_CONFIG;
 	application->msgnum = cmtp_msgnum_get(session);
 
-	cmtp_send_interopmsg(session, CAPI_REQ, 0x0000, application->msgnum,
+	cmtp_send_पूर्णांकeropmsg(session, CAPI_REQ, 0x0000, application->msgnum,
 				CAPI_FUNCTION_REGISTER, buf, 6);
 
-	add_wait_queue(&session->wait, &wait);
-	while (1) {
+	add_रुको_queue(&session->रुको, &रुको);
+	जबतक (1) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		if (!timeo) {
+		अगर (!समयo) अणु
 			err = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (application->state == BT_CLOSED) {
+		अगर (application->state == BT_CLOSED) अणु
 			err = -application->err;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (application->state == BT_CONNECTED)
-			break;
+		अगर (application->state == BT_CONNECTED)
+			अवरोध;
 
-		if (signal_pending(current)) {
+		अगर (संकेत_pending(current)) अणु
 			err = -EINTR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		timeo = schedule_timeout(timeo);
-	}
+		समयo = schedule_समयout(समयo);
+	पूर्ण
 	set_current_state(TASK_RUNNING);
-	remove_wait_queue(&session->wait, &wait);
+	हटाओ_रुको_queue(&session->रुको, &रुको);
 
-	if (err) {
+	अगर (err) अणु
 		cmtp_application_del(session, application);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void cmtp_release_appl(struct capi_ctr *ctrl, __u16 appl)
-{
-	struct cmtp_session *session = ctrl->driverdata;
-	struct cmtp_application *application;
+अटल व्योम cmtp_release_appl(काष्ठा capi_ctr *ctrl, __u16 appl)
+अणु
+	काष्ठा cmtp_session *session = ctrl->driverdata;
+	काष्ठा cmtp_application *application;
 
 	BT_DBG("ctrl %p appl %d", ctrl, appl);
 
 	application = cmtp_application_get(session, CMTP_APPLID, appl);
-	if (!application) {
+	अगर (!application) अणु
 		BT_ERR("Can't find application");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	application->msgnum = cmtp_msgnum_get(session);
 
-	cmtp_send_interopmsg(session, CAPI_REQ, application->mapping, application->msgnum,
-				CAPI_FUNCTION_RELEASE, NULL, 0);
+	cmtp_send_पूर्णांकeropmsg(session, CAPI_REQ, application->mapping, application->msgnum,
+				CAPI_FUNCTION_RELEASE, शून्य, 0);
 
-	wait_event_interruptible_timeout(session->wait,
+	रुको_event_पूर्णांकerruptible_समयout(session->रुको,
 			(application->state == BT_CLOSED), CMTP_INTEROP_TIMEOUT);
 
 	cmtp_application_del(session, application);
-}
+पूर्ण
 
-static u16 cmtp_send_message(struct capi_ctr *ctrl, struct sk_buff *skb)
-{
-	struct cmtp_session *session = ctrl->driverdata;
-	struct cmtp_application *application;
+अटल u16 cmtp_send_message(काष्ठा capi_ctr *ctrl, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cmtp_session *session = ctrl->driverdata;
+	काष्ठा cmtp_application *application;
 	__u16 appl;
 	__u32 contr;
 
@@ -482,89 +483,89 @@ static u16 cmtp_send_message(struct capi_ctr *ctrl, struct sk_buff *skb)
 	contr = CAPIMSG_CONTROL(skb->data);
 
 	application = cmtp_application_get(session, CMTP_APPLID, appl);
-	if ((!application) || (application->state != BT_CONNECTED)) {
+	अगर ((!application) || (application->state != BT_CONNECTED)) अणु
 		BT_ERR("Can't find application with id %d", appl);
-		return CAPI_ILLAPPNR;
-	}
+		वापस CAPI_ILLAPPNR;
+	पूर्ण
 
 	CAPIMSG_SETAPPID(skb->data, application->mapping);
 
-	if ((contr & 0x7f) == session->num) {
+	अगर ((contr & 0x7f) == session->num) अणु
 		contr = (contr & 0xffffff80) | 0x01;
 		CAPIMSG_SETCONTROL(skb->data, contr);
-	}
+	पूर्ण
 
 	cmtp_send_capimsg(session, skb);
 
-	return CAPI_NOERROR;
-}
+	वापस CAPI_NOERROR;
+पूर्ण
 
-static char *cmtp_procinfo(struct capi_ctr *ctrl)
-{
-	return "CAPI Message Transport Protocol";
-}
+अटल अक्षर *cmtp_procinfo(काष्ठा capi_ctr *ctrl)
+अणु
+	वापस "CAPI Message Transport Protocol";
+पूर्ण
 
-static int cmtp_proc_show(struct seq_file *m, void *v)
-{
-	struct capi_ctr *ctrl = m->private;
-	struct cmtp_session *session = ctrl->driverdata;
-	struct cmtp_application *app;
+अटल पूर्णांक cmtp_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा capi_ctr *ctrl = m->निजी;
+	काष्ठा cmtp_session *session = ctrl->driverdata;
+	काष्ठा cmtp_application *app;
 
-	seq_printf(m, "%s\n\n", cmtp_procinfo(ctrl));
-	seq_printf(m, "addr %s\n", session->name);
-	seq_printf(m, "ctrl %d\n", session->num);
+	seq_म_लिखो(m, "%s\n\n", cmtp_procinfo(ctrl));
+	seq_म_लिखो(m, "addr %s\n", session->name);
+	seq_म_लिखो(m, "ctrl %d\n", session->num);
 
-	list_for_each_entry(app, &session->applications, list) {
-		seq_printf(m, "appl %d -> %d\n", app->appl, app->mapping);
-	}
+	list_क्रम_each_entry(app, &session->applications, list) अणु
+		seq_म_लिखो(m, "appl %d -> %d\n", app->appl, app->mapping);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cmtp_attach_device(struct cmtp_session *session)
-{
-	unsigned char buf[4];
-	long ret;
+पूर्णांक cmtp_attach_device(काष्ठा cmtp_session *session)
+अणु
+	अचिन्हित अक्षर buf[4];
+	दीर्घ ret;
 
 	BT_DBG("session %p", session);
 
 	capimsg_setu32(buf, 0, 0);
 
-	cmtp_send_interopmsg(session, CAPI_REQ, 0xffff, CMTP_INITIAL_MSGNUM,
-				CAPI_FUNCTION_GET_PROFILE, buf, 4);
+	cmtp_send_पूर्णांकeropmsg(session, CAPI_REQ, 0xffff, CMTP_INITIAL_MSGNUM,
+				CAPI_FUNCTION_GET_PROखाता, buf, 4);
 
-	ret = wait_event_interruptible_timeout(session->wait,
+	ret = रुको_event_पूर्णांकerruptible_समयout(session->रुको,
 			session->ncontroller, CMTP_INTEROP_TIMEOUT);
 
 	BT_INFO("Found %d CAPI controller(s) on device %s", session->ncontroller, session->name);
 
-	if (!ret)
-		return -ETIMEDOUT;
+	अगर (!ret)
+		वापस -ETIMEDOUT;
 
-	if (!session->ncontroller)
-		return -ENODEV;
+	अगर (!session->ncontroller)
+		वापस -ENODEV;
 
-	if (session->ncontroller > 1)
+	अगर (session->ncontroller > 1)
 		BT_INFO("Setting up only CAPI controller 1");
 
 	session->ctrl.owner      = THIS_MODULE;
 	session->ctrl.driverdata = session;
-	strcpy(session->ctrl.name, session->name);
+	म_नकल(session->ctrl.name, session->name);
 
 	session->ctrl.driver_name   = "cmtp";
 	session->ctrl.load_firmware = cmtp_load_firmware;
 	session->ctrl.reset_ctr     = cmtp_reset_ctr;
-	session->ctrl.register_appl = cmtp_register_appl;
+	session->ctrl.रेजिस्टर_appl = cmtp_रेजिस्टर_appl;
 	session->ctrl.release_appl  = cmtp_release_appl;
 	session->ctrl.send_message  = cmtp_send_message;
 
 	session->ctrl.procinfo      = cmtp_procinfo;
 	session->ctrl.proc_show     = cmtp_proc_show;
 
-	if (attach_capi_ctr(&session->ctrl) < 0) {
+	अगर (attach_capi_ctr(&session->ctrl) < 0) अणु
 		BT_ERR("Can't attach new controller");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	session->num = session->ctrl.cnr;
 
@@ -572,24 +573,24 @@ int cmtp_attach_device(struct cmtp_session *session)
 
 	capimsg_setu32(buf, 0, 1);
 
-	cmtp_send_interopmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
+	cmtp_send_पूर्णांकeropmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
 				CAPI_FUNCTION_GET_MANUFACTURER, buf, 4);
 
-	cmtp_send_interopmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
+	cmtp_send_पूर्णांकeropmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
 				CAPI_FUNCTION_GET_VERSION, buf, 4);
 
-	cmtp_send_interopmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
+	cmtp_send_पूर्णांकeropmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
 				CAPI_FUNCTION_GET_SERIAL_NUMBER, buf, 4);
 
-	cmtp_send_interopmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
-				CAPI_FUNCTION_GET_PROFILE, buf, 4);
+	cmtp_send_पूर्णांकeropmsg(session, CAPI_REQ, 0xffff, cmtp_msgnum_get(session),
+				CAPI_FUNCTION_GET_PROखाता, buf, 4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cmtp_detach_device(struct cmtp_session *session)
-{
+व्योम cmtp_detach_device(काष्ठा cmtp_session *session)
+अणु
 	BT_DBG("session %p", session);
 
 	detach_capi_ctr(&session->ctrl);
-}
+पूर्ण

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM spmi
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM spmi
 
-#if !defined(_TRACE_SPMI_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_SPMI_H
+#अगर !defined(_TRACE_SPMI_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_SPMI_H
 
-#include <linux/spmi.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/spmi.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 /*
  * drivers/spmi/spmi.c
  */
 
-TRACE_EVENT(spmi_write_begin,
-	TP_PROTO(u8 opcode, u8 sid, u16 addr, u8 len, const u8 *buf),
+TRACE_EVENT(spmi_ग_लिखो_begin,
+	TP_PROTO(u8 opcode, u8 sid, u16 addr, u8 len, स्थिर u8 *buf),
 	TP_ARGS(opcode, sid, addr, len, buf),
 
 	TP_STRUCT__entry(
@@ -29,24 +30,24 @@ TRACE_EVENT(spmi_write_begin,
 		__entry->sid    = sid;
 		__entry->addr   = addr;
 		__entry->len    = len + 1;
-		memcpy(__get_dynamic_array(buf), buf, len + 1);
+		स_नकल(__get_dynamic_array(buf), buf, len + 1);
 	),
 
-	TP_printk("opc=%d sid=%02d addr=0x%04x len=%d buf=0x[%*phD]",
-		  (int)__entry->opcode, (int)__entry->sid,
-		  (int)__entry->addr, (int)__entry->len,
-		  (int)__entry->len, __get_dynamic_array(buf))
+	TP_prपूर्णांकk("opc=%d sid=%02d addr=0x%04x len=%d buf=0x[%*phD]",
+		  (पूर्णांक)__entry->opcode, (पूर्णांक)__entry->sid,
+		  (पूर्णांक)__entry->addr, (पूर्णांक)__entry->len,
+		  (पूर्णांक)__entry->len, __get_dynamic_array(buf))
 );
 
-TRACE_EVENT(spmi_write_end,
-	TP_PROTO(u8 opcode, u8 sid, u16 addr, int ret),
+TRACE_EVENT(spmi_ग_लिखो_end,
+	TP_PROTO(u8 opcode, u8 sid, u16 addr, पूर्णांक ret),
 	TP_ARGS(opcode, sid, addr, ret),
 
 	TP_STRUCT__entry(
 		__field		( u8,         opcode    )
 		__field		( u8,         sid       )
 		__field		( u16,        addr      )
-		__field		( int,        ret       )
+		__field		( पूर्णांक,        ret       )
 	),
 
 	TP_fast_assign(
@@ -56,12 +57,12 @@ TRACE_EVENT(spmi_write_end,
 		__entry->ret    = ret;
 	),
 
-	TP_printk("opc=%d sid=%02d addr=0x%04x ret=%d",
-		  (int)__entry->opcode, (int)__entry->sid,
-		  (int)__entry->addr, __entry->ret)
+	TP_prपूर्णांकk("opc=%d sid=%02d addr=0x%04x ret=%d",
+		  (पूर्णांक)__entry->opcode, (पूर्णांक)__entry->sid,
+		  (पूर्णांक)__entry->addr, __entry->ret)
 );
 
-TRACE_EVENT(spmi_read_begin,
+TRACE_EVENT(spmi_पढ़ो_begin,
 	TP_PROTO(u8 opcode, u8 sid, u16 addr),
 	TP_ARGS(opcode, sid, addr),
 
@@ -77,20 +78,20 @@ TRACE_EVENT(spmi_read_begin,
 		__entry->addr   = addr;
 	),
 
-	TP_printk("opc=%d sid=%02d addr=0x%04x",
-		  (int)__entry->opcode, (int)__entry->sid,
-		  (int)__entry->addr)
+	TP_prपूर्णांकk("opc=%d sid=%02d addr=0x%04x",
+		  (पूर्णांक)__entry->opcode, (पूर्णांक)__entry->sid,
+		  (पूर्णांक)__entry->addr)
 );
 
-TRACE_EVENT(spmi_read_end,
-	TP_PROTO(u8 opcode, u8 sid, u16 addr, int ret, u8 len, const u8 *buf),
+TRACE_EVENT(spmi_पढ़ो_end,
+	TP_PROTO(u8 opcode, u8 sid, u16 addr, पूर्णांक ret, u8 len, स्थिर u8 *buf),
 	TP_ARGS(opcode, sid, addr, ret, len, buf),
 
 	TP_STRUCT__entry(
 		__field		( u8,         opcode    )
 		__field		( u8,         sid       )
 		__field		( u16,        addr      )
-		__field		( int,        ret       )
+		__field		( पूर्णांक,        ret       )
 		__field		( u8,         len       )
 		__dynamic_array	( u8,   buf,  len + 1   )
 	),
@@ -101,23 +102,23 @@ TRACE_EVENT(spmi_read_end,
 		__entry->addr   = addr;
 		__entry->ret    = ret;
 		__entry->len    = len + 1;
-		memcpy(__get_dynamic_array(buf), buf, len + 1);
+		स_नकल(__get_dynamic_array(buf), buf, len + 1);
 	),
 
-	TP_printk("opc=%d sid=%02d addr=0x%04x ret=%d len=%02d buf=0x[%*phD]",
-		  (int)__entry->opcode, (int)__entry->sid,
-		  (int)__entry->addr, __entry->ret, (int)__entry->len,
-		  (int)__entry->len, __get_dynamic_array(buf))
+	TP_prपूर्णांकk("opc=%d sid=%02d addr=0x%04x ret=%d len=%02d buf=0x[%*phD]",
+		  (पूर्णांक)__entry->opcode, (पूर्णांक)__entry->sid,
+		  (पूर्णांक)__entry->addr, __entry->ret, (पूर्णांक)__entry->len,
+		  (पूर्णांक)__entry->len, __get_dynamic_array(buf))
 );
 
 TRACE_EVENT(spmi_cmd,
-	TP_PROTO(u8 opcode, u8 sid, int ret),
+	TP_PROTO(u8 opcode, u8 sid, पूर्णांक ret),
 	TP_ARGS(opcode, sid, ret),
 
 	TP_STRUCT__entry(
 		__field		( u8,         opcode    )
 		__field		( u8,         sid       )
-		__field		( int,        ret       )
+		__field		( पूर्णांक,        ret       )
 	),
 
 	TP_fast_assign(
@@ -126,11 +127,11 @@ TRACE_EVENT(spmi_cmd,
 		__entry->ret    = ret;
 	),
 
-	TP_printk("opc=%d sid=%02d ret=%d", (int)__entry->opcode,
-		  (int)__entry->sid, ret)
+	TP_prपूर्णांकk("opc=%d sid=%02d ret=%d", (पूर्णांक)__entry->opcode,
+		  (पूर्णांक)__entry->sid, ret)
 );
 
-#endif /* _TRACE_SPMI_H */
+#पूर्ण_अगर /* _TRACE_SPMI_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

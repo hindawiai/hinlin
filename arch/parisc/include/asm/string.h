@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PA_STRING_H_
-#define _PA_STRING_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PA_STRING_H_
+#घोषणा _PA_STRING_H_
 
-#define __HAVE_ARCH_MEMSET
-extern void * memset(void *, int, size_t);
+#घोषणा __HAVE_ARCH_MEMSET
+बाह्य व्योम * स_रखो(व्योम *, पूर्णांक, माप_प्रकार);
 
-#define __HAVE_ARCH_MEMCPY
-void * memcpy(void * dest,const void *src,size_t count);
+#घोषणा __HAVE_ARCH_MEMCPY
+व्योम * स_नकल(व्योम * dest,स्थिर व्योम *src,माप_प्रकार count);
 
-#define __HAVE_ARCH_STRLEN
-extern size_t strlen(const char *s);
+#घोषणा __HAVE_ARCH_STRLEN
+बाह्य माप_प्रकार म_माप(स्थिर अक्षर *s);
 
-#define __HAVE_ARCH_STRCPY
-extern char *strcpy(char *dest, const char *src);
+#घोषणा __HAVE_ARCH_STRCPY
+बाह्य अक्षर *म_नकल(अक्षर *dest, स्थिर अक्षर *src);
 
-#define __HAVE_ARCH_STRNCPY
-extern char *strncpy(char *dest, const char *src, size_t count);
+#घोषणा __HAVE_ARCH_STRNCPY
+बाह्य अक्षर *म_नकलन(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count);
 
-#define __HAVE_ARCH_STRCAT
-extern char *strcat(char *dest, const char *src);
+#घोषणा __HAVE_ARCH_STRCAT
+बाह्य अक्षर *म_जोड़ो(अक्षर *dest, स्थिर अक्षर *src);
 
-#define __HAVE_ARCH_MEMSET
-extern void *memset(void *, int, size_t);
+#घोषणा __HAVE_ARCH_MEMSET
+बाह्य व्योम *स_रखो(व्योम *, पूर्णांक, माप_प्रकार);
 
-#endif
+#पूर्ण_अगर

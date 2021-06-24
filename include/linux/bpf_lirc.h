@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BPF_LIRC_H
-#define _BPF_LIRC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BPF_LIRC_H
+#घोषणा _BPF_LIRC_H
 
-#include <uapi/linux/bpf.h>
+#समावेश <uapi/linux/bpf.h>
 
-#ifdef CONFIG_BPF_LIRC_MODE2
-int lirc_prog_attach(const union bpf_attr *attr, struct bpf_prog *prog);
-int lirc_prog_detach(const union bpf_attr *attr);
-int lirc_prog_query(const union bpf_attr *attr, union bpf_attr __user *uattr);
-#else
-static inline int lirc_prog_attach(const union bpf_attr *attr,
-				   struct bpf_prog *prog)
-{
-	return -EINVAL;
-}
+#अगर_घोषित CONFIG_BPF_LIRC_MODE2
+पूर्णांक lirc_prog_attach(स्थिर जोड़ bpf_attr *attr, काष्ठा bpf_prog *prog);
+पूर्णांक lirc_prog_detach(स्थिर जोड़ bpf_attr *attr);
+पूर्णांक lirc_prog_query(स्थिर जोड़ bpf_attr *attr, जोड़ bpf_attr __user *uattr);
+#अन्यथा
+अटल अंतरभूत पूर्णांक lirc_prog_attach(स्थिर जोड़ bpf_attr *attr,
+				   काष्ठा bpf_prog *prog)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int lirc_prog_detach(const union bpf_attr *attr)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक lirc_prog_detach(स्थिर जोड़ bpf_attr *attr)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int lirc_prog_query(const union bpf_attr *attr,
-				  union bpf_attr __user *uattr)
-{
-	return -EINVAL;
-}
-#endif
+अटल अंतरभूत पूर्णांक lirc_prog_query(स्थिर जोड़ bpf_attr *attr,
+				  जोड़ bpf_attr __user *uattr)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _BPF_LIRC_H */
+#पूर्ण_अगर /* _BPF_LIRC_H */

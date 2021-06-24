@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_REBOOT_H
-#define _ASM_X86_REBOOT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_REBOOT_H
+#घोषणा _ASM_X86_REBOOT_H
 
-#include <linux/kdebug.h>
+#समावेश <linux/kdebug.h>
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-struct machine_ops {
-	void (*restart)(char *cmd);
-	void (*halt)(void);
-	void (*power_off)(void);
-	void (*shutdown)(void);
-	void (*crash_shutdown)(struct pt_regs *);
-	void (*emergency_restart)(void);
-};
+काष्ठा machine_ops अणु
+	व्योम (*restart)(अक्षर *cmd);
+	व्योम (*halt)(व्योम);
+	व्योम (*घातer_off)(व्योम);
+	व्योम (*shutकरोwn)(व्योम);
+	व्योम (*crash_shutकरोwn)(काष्ठा pt_regs *);
+	व्योम (*emergency_restart)(व्योम);
+पूर्ण;
 
-extern struct machine_ops machine_ops;
-extern int crashing_cpu;
+बाह्य काष्ठा machine_ops machine_ops;
+बाह्य पूर्णांक crashing_cpu;
 
-void native_machine_crash_shutdown(struct pt_regs *regs);
-void native_machine_shutdown(void);
-void __noreturn machine_real_restart(unsigned int type);
+व्योम native_machine_crash_shutकरोwn(काष्ठा pt_regs *regs);
+व्योम native_machine_shutकरोwn(व्योम);
+व्योम __noवापस machine_real_restart(अचिन्हित पूर्णांक type);
 /* These must match dispatch in arch/x86/realmore/rm/reboot.S */
-#define MRR_BIOS	0
-#define MRR_APM		1
+#घोषणा MRR_BIOS	0
+#घोषणा MRR_APM		1
 
-typedef void (*nmi_shootdown_cb)(int, struct pt_regs*);
-void nmi_panic_self_stop(struct pt_regs *regs);
-void nmi_shootdown_cpus(nmi_shootdown_cb callback);
-void run_crash_ipi_callback(struct pt_regs *regs);
+प्रकार व्योम (*nmi_shootकरोwn_cb)(पूर्णांक, काष्ठा pt_regs*);
+व्योम nmi_panic_self_stop(काष्ठा pt_regs *regs);
+व्योम nmi_shootकरोwn_cpus(nmi_shootकरोwn_cb callback);
+व्योम run_crash_ipi_callback(काष्ठा pt_regs *regs);
 
-#endif /* _ASM_X86_REBOOT_H */
+#पूर्ण_अगर /* _ASM_X86_REBOOT_H */

@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
- /* I2C access for DA9055 PMICs.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+ /* I2C access क्रम DA9055 PMICs.
  *
  * Copyright(c) 2012 Dialog Semiconductor Ltd.
  *
  * Author: David Dajun Chen <dchen@diasemi.com>
  */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include <linux/mfd/da9055/core.h>
+#समावेश <linux/mfd/da9055/core.h>
 
-static int da9055_i2c_probe(struct i2c_client *i2c,
-				      const struct i2c_device_id *id)
-{
-	struct da9055 *da9055;
-	int ret;
+अटल पूर्णांक da9055_i2c_probe(काष्ठा i2c_client *i2c,
+				      स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा da9055 *da9055;
+	पूर्णांक ret;
 
-	da9055 = devm_kzalloc(&i2c->dev, sizeof(struct da9055), GFP_KERNEL);
-	if (!da9055)
-		return -ENOMEM;
+	da9055 = devm_kzalloc(&i2c->dev, माप(काष्ठा da9055), GFP_KERNEL);
+	अगर (!da9055)
+		वापस -ENOMEM;
 
 	da9055->regmap = devm_regmap_init_i2c(i2c, &da9055_regmap_config);
-	if (IS_ERR(da9055->regmap)) {
+	अगर (IS_ERR(da9055->regmap)) अणु
 		ret = PTR_ERR(da9055->regmap);
 		dev_err(&i2c->dev, "Failed to allocate register map: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	da9055->dev = &i2c->dev;
 	da9055->chip_irq = i2c->irq;
 
 	i2c_set_clientdata(i2c, da9055);
 
-	return da9055_device_init(da9055);
-}
+	वापस da9055_device_init(da9055);
+पूर्ण
 
-static int da9055_i2c_remove(struct i2c_client *i2c)
-{
-	struct da9055 *da9055 = i2c_get_clientdata(i2c);
+अटल पूर्णांक da9055_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा da9055 *da9055 = i2c_get_clientdata(i2c);
 
-	da9055_device_exit(da9055);
+	da9055_device_निकास(da9055);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * DO NOT change the device Ids. The naming is intentionally specific as both
+ * DO NOT change the device Ids. The naming is पूर्णांकentionally specअगरic as both
  * the PMIC and CODEC parts of this chip are instantiated separately as I2C
- * devices (both have configurable I2C addresses, and are to all intents and
- * purposes separate). As a result there are specific DA9055 ids for PMIC
- * and CODEC, which must be different to operate together.
+ * devices (both have configurable I2C addresses, and are to all पूर्णांकents and
+ * purposes separate). As a result there are specअगरic DA9055 ids क्रम PMIC
+ * and CODEC, which must be dअगरferent to operate together.
  */
-static const struct i2c_device_id da9055_i2c_id[] = {
-	{"da9055-pmic", 0},
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id da9055_i2c_id[] = अणु
+	अणु"da9055-pmic", 0पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, da9055_i2c_id);
 
-static const struct of_device_id da9055_of_match[] = {
-	{ .compatible = "dlg,da9055-pmic", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id da9055_of_match[] = अणु
+	अणु .compatible = "dlg,da9055-pmic", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct i2c_driver da9055_i2c_driver = {
+अटल काष्ठा i2c_driver da9055_i2c_driver = अणु
 	.probe = da9055_i2c_probe,
-	.remove = da9055_i2c_remove,
+	.हटाओ = da9055_i2c_हटाओ,
 	.id_table = da9055_i2c_id,
-	.driver = {
+	.driver = अणु
 		.name = "da9055-pmic",
 		.of_match_table = da9055_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init da9055_i2c_init(void)
-{
-	int ret;
+अटल पूर्णांक __init da9055_i2c_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = i2c_add_driver(&da9055_i2c_driver);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		pr_err("DA9055 I2C registration failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(da9055_i2c_init);
 
-static void __exit da9055_i2c_exit(void)
-{
+अटल व्योम __निकास da9055_i2c_निकास(व्योम)
+अणु
 	i2c_del_driver(&da9055_i2c_driver);
-}
-module_exit(da9055_i2c_exit);
+पूर्ण
+module_निकास(da9055_i2c_निकास);
 
 MODULE_AUTHOR("David Dajun Chen <dchen@diasemi.com>");
 MODULE_DESCRIPTION("I2C driver for Dialog DA9055 PMIC");

@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/device.h>
-#include <linux/of_mdio.h>
-#include <linux/phy.h>
-#include <linux/stddef.h>
+#समावेश <linux/device.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/मानकघोष.स>
 
-struct mdiobus_devres {
-	struct mii_bus *mii;
-};
+काष्ठा mdiobus_devres अणु
+	काष्ठा mii_bus *mii;
+पूर्ण;
 
-static void devm_mdiobus_free(struct device *dev, void *this)
-{
-	struct mdiobus_devres *dr = this;
+अटल व्योम devm_mdiobus_मुक्त(काष्ठा device *dev, व्योम *this)
+अणु
+	काष्ठा mdiobus_devres *dr = this;
 
-	mdiobus_free(dr->mii);
-}
+	mdiobus_मुक्त(dr->mii);
+पूर्ण
 
 /**
  * devm_mdiobus_alloc_size - Resource-managed mdiobus_alloc_size()
- * @dev:		Device to allocate mii_bus for
- * @sizeof_priv:	Space to allocate for private structure
+ * @dev:		Device to allocate mii_bus क्रम
+ * @माप_priv:	Space to allocate क्रम निजी काष्ठाure
  *
  * Managed mdiobus_alloc_size. mii_bus allocated with this function is
- * automatically freed on driver detach.
+ * स्वतःmatically मुक्तd on driver detach.
  *
  * RETURNS:
- * Pointer to allocated mii_bus on success, NULL on out-of-memory error.
+ * Poपूर्णांकer to allocated mii_bus on success, शून्य on out-of-memory error.
  */
-struct mii_bus *devm_mdiobus_alloc_size(struct device *dev, int sizeof_priv)
-{
-	struct mdiobus_devres *dr;
+काष्ठा mii_bus *devm_mdiobus_alloc_size(काष्ठा device *dev, पूर्णांक माप_priv)
+अणु
+	काष्ठा mdiobus_devres *dr;
 
-	dr = devres_alloc(devm_mdiobus_free, sizeof(*dr), GFP_KERNEL);
-	if (!dr)
-		return NULL;
+	dr = devres_alloc(devm_mdiobus_मुक्त, माप(*dr), GFP_KERNEL);
+	अगर (!dr)
+		वापस शून्य;
 
-	dr->mii = mdiobus_alloc_size(sizeof_priv);
-	if (!dr->mii) {
-		devres_free(dr);
-		return NULL;
-	}
+	dr->mii = mdiobus_alloc_size(माप_priv);
+	अगर (!dr->mii) अणु
+		devres_मुक्त(dr);
+		वापस शून्य;
+	पूर्ण
 
 	devres_add(dev, dr);
-	return dr->mii;
-}
+	वापस dr->mii;
+पूर्ण
 EXPORT_SYMBOL(devm_mdiobus_alloc_size);
 
-static void devm_mdiobus_unregister(struct device *dev, void *this)
-{
-	struct mdiobus_devres *dr = this;
+अटल व्योम devm_mdiobus_unरेजिस्टर(काष्ठा device *dev, व्योम *this)
+अणु
+	काष्ठा mdiobus_devres *dr = this;
 
-	mdiobus_unregister(dr->mii);
-}
+	mdiobus_unरेजिस्टर(dr->mii);
+पूर्ण
 
-static int mdiobus_devres_match(struct device *dev,
-				void *this, void *match_data)
-{
-	struct mdiobus_devres *res = this;
-	struct mii_bus *mii = match_data;
+अटल पूर्णांक mdiobus_devres_match(काष्ठा device *dev,
+				व्योम *this, व्योम *match_data)
+अणु
+	काष्ठा mdiobus_devres *res = this;
+	काष्ठा mii_bus *mii = match_data;
 
-	return mii == res->mii;
-}
+	वापस mii == res->mii;
+पूर्ण
 
 /**
- * __devm_mdiobus_register - Resource-managed variant of mdiobus_register()
- * @dev:	Device to register mii_bus for
- * @bus:	MII bus structure to register
+ * __devm_mdiobus_रेजिस्टर - Resource-managed variant of mdiobus_रेजिस्टर()
+ * @dev:	Device to रेजिस्टर mii_bus क्रम
+ * @bus:	MII bus काष्ठाure to रेजिस्टर
  * @owner:	Owning module
  *
  * Returns 0 on success, negative error number on failure.
  */
-int __devm_mdiobus_register(struct device *dev, struct mii_bus *bus,
-			    struct module *owner)
-{
-	struct mdiobus_devres *dr;
-	int ret;
+पूर्णांक __devm_mdiobus_रेजिस्टर(काष्ठा device *dev, काष्ठा mii_bus *bus,
+			    काष्ठा module *owner)
+अणु
+	काष्ठा mdiobus_devres *dr;
+	पूर्णांक ret;
 
-	if (WARN_ON(!devres_find(dev, devm_mdiobus_free,
+	अगर (WARN_ON(!devres_find(dev, devm_mdiobus_मुक्त,
 				 mdiobus_devres_match, bus)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	dr = devres_alloc(devm_mdiobus_unregister, sizeof(*dr), GFP_KERNEL);
-	if (!dr)
-		return -ENOMEM;
+	dr = devres_alloc(devm_mdiobus_unरेजिस्टर, माप(*dr), GFP_KERNEL);
+	अगर (!dr)
+		वापस -ENOMEM;
 
-	ret = __mdiobus_register(bus, owner);
-	if (ret) {
-		devres_free(dr);
-		return ret;
-	}
+	ret = __mdiobus_रेजिस्टर(bus, owner);
+	अगर (ret) अणु
+		devres_मुक्त(dr);
+		वापस ret;
+	पूर्ण
 
 	dr->mii = bus;
 	devres_add(dev, dr);
-	return 0;
-}
-EXPORT_SYMBOL(__devm_mdiobus_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(__devm_mdiobus_रेजिस्टर);
 
-#if IS_ENABLED(CONFIG_OF_MDIO)
+#अगर IS_ENABLED(CONFIG_OF_MDIO)
 /**
- * devm_of_mdiobus_register - Resource managed variant of of_mdiobus_register()
- * @dev:	Device to register mii_bus for
- * @mdio:	MII bus structure to register
+ * devm_of_mdiobus_रेजिस्टर - Resource managed variant of of_mdiobus_रेजिस्टर()
+ * @dev:	Device to रेजिस्टर mii_bus क्रम
+ * @mdio:	MII bus काष्ठाure to रेजिस्टर
  * @np:		Device node to parse
  */
-int devm_of_mdiobus_register(struct device *dev, struct mii_bus *mdio,
-			     struct device_node *np)
-{
-	struct mdiobus_devres *dr;
-	int ret;
+पूर्णांक devm_of_mdiobus_रेजिस्टर(काष्ठा device *dev, काष्ठा mii_bus *mdio,
+			     काष्ठा device_node *np)
+अणु
+	काष्ठा mdiobus_devres *dr;
+	पूर्णांक ret;
 
-	if (WARN_ON(!devres_find(dev, devm_mdiobus_free,
+	अगर (WARN_ON(!devres_find(dev, devm_mdiobus_मुक्त,
 				 mdiobus_devres_match, mdio)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	dr = devres_alloc(devm_mdiobus_unregister, sizeof(*dr), GFP_KERNEL);
-	if (!dr)
-		return -ENOMEM;
+	dr = devres_alloc(devm_mdiobus_unरेजिस्टर, माप(*dr), GFP_KERNEL);
+	अगर (!dr)
+		वापस -ENOMEM;
 
-	ret = of_mdiobus_register(mdio, np);
-	if (ret) {
-		devres_free(dr);
-		return ret;
-	}
+	ret = of_mdiobus_रेजिस्टर(mdio, np);
+	अगर (ret) अणु
+		devres_मुक्त(dr);
+		वापस ret;
+	पूर्ण
 
 	dr->mii = mdio;
 	devres_add(dev, dr);
-	return 0;
-}
-EXPORT_SYMBOL(devm_of_mdiobus_register);
-#endif /* CONFIG_OF_MDIO */
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(devm_of_mdiobus_रेजिस्टर);
+#पूर्ण_अगर /* CONFIG_OF_MDIO */
 
 MODULE_LICENSE("GPL");

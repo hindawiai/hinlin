@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * lib/bust_spinlocks.c
  *
- * Provides a minimal bust_spinlocks for architectures which don't
+ * Provides a minimal bust_spinlocks क्रम architectures which करोn't
  * have one of their own.
  *
  * bust_spinlocks() clears any spinlocks which would prevent oops, die(), BUG()
- * and panic() information from reaching the user.
+ * and panic() inक्रमmation from reaching the user.
  */
 
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/spinlock.h>
-#include <linux/tty.h>
-#include <linux/wait.h>
-#include <linux/vt_kern.h>
-#include <linux/console.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/console.h>
 
-void bust_spinlocks(int yes)
-{
-	if (yes) {
+व्योम bust_spinlocks(पूर्णांक yes)
+अणु
+	अगर (yes) अणु
 		++oops_in_progress;
-	} else {
-#ifdef CONFIG_VT
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_VT
 		unblank_screen();
-#endif
+#पूर्ण_अगर
 		console_unblank();
-		if (--oops_in_progress == 0)
+		अगर (--oops_in_progress == 0)
 			wake_up_klogd();
-	}
-}
+	पूर्ण
+पूर्ण

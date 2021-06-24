@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * POWER Data Stream Control Register (DSCR) sysfs thread test
+ * POWER Data Stream Control Register (DSCR) sysfs thपढ़ो test
  *
- * This test updates the system wide DSCR default value through
- * sysfs interface which should then update all the CPU specific
- * DSCR default values which must also be then visible to threads
- * executing on individual CPUs on the system.
+ * This test updates the प्रणाली wide DSCR शेष value through
+ * sysfs पूर्णांकerface which should then update all the CPU specअगरic
+ * DSCR शेष values which must also be then visible to thपढ़ोs
+ * executing on inभागidual CPUs on the प्रणाली.
  *
  * Copyright 2015, Anshuman Khandual, IBM Corporation.
  */
-#define _GNU_SOURCE
-#include "dscr.h"
+#घोषणा _GNU_SOURCE
+#समावेश "dscr.h"
 
-static int test_thread_dscr(unsigned long val)
-{
-	unsigned long cur_dscr, cur_dscr_usr;
+अटल पूर्णांक test_thपढ़ो_dscr(अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ cur_dscr, cur_dscr_usr;
 
 	cur_dscr = get_dscr();
 	cur_dscr_usr = get_dscr_usr();
 
-	if (val != cur_dscr) {
-		printf("[cpu %d] Kernel DSCR should be %ld but is %ld\n",
-					sched_getcpu(), val, cur_dscr);
-		return 1;
-	}
+	अगर (val != cur_dscr) अणु
+		म_लिखो("[cpu %d] Kernel DSCR should be %ld but is %ld\n",
+					sched_अ_लोpu(), val, cur_dscr);
+		वापस 1;
+	पूर्ण
 
-	if (val != cur_dscr_usr) {
-		printf("[cpu %d] User DSCR should be %ld but is %ld\n",
-					sched_getcpu(), val, cur_dscr_usr);
-		return 1;
-	}
-	return 0;
-}
+	अगर (val != cur_dscr_usr) अणु
+		म_लिखो("[cpu %d] User DSCR should be %ld but is %ld\n",
+					sched_अ_लोpu(), val, cur_dscr_usr);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int check_cpu_dscr_thread(unsigned long val)
-{
+अटल पूर्णांक check_cpu_dscr_thपढ़ो(अचिन्हित दीर्घ val)
+अणु
 	cpu_set_t mask;
-	int cpu;
+	पूर्णांक cpu;
 
-	for (cpu = 0; cpu < CPU_SETSIZE; cpu++) {
+	क्रम (cpu = 0; cpu < CPU_SETSIZE; cpu++) अणु
 		CPU_ZERO(&mask);
 		CPU_SET(cpu, &mask);
-		if (sched_setaffinity(0, sizeof(mask), &mask))
-			continue;
+		अगर (sched_setaffinity(0, माप(mask), &mask))
+			जारी;
 
-		if (test_thread_dscr(val))
-			return 1;
-	}
-	return 0;
+		अगर (test_thपढ़ो_dscr(val))
+			वापस 1;
+	पूर्ण
+	वापस 0;
 
-}
+पूर्ण
 
-int dscr_sysfs_thread(void)
-{
-	unsigned long orig_dscr_default;
-	int i, j;
+पूर्णांक dscr_sysfs_thपढ़ो(व्योम)
+अणु
+	अचिन्हित दीर्घ orig_dscr_शेष;
+	पूर्णांक i, j;
 
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_DSCR));
 
-	orig_dscr_default = get_default_dscr();
-	for (i = 0; i < COUNT; i++) {
-		for (j = 0; j < DSCR_MAX; j++) {
-			set_default_dscr(j);
-			if (check_cpu_dscr_thread(j))
-				goto fail;
-		}
-	}
-	set_default_dscr(orig_dscr_default);
-	return 0;
+	orig_dscr_शेष = get_शेष_dscr();
+	क्रम (i = 0; i < COUNT; i++) अणु
+		क्रम (j = 0; j < DSCR_MAX; j++) अणु
+			set_शेष_dscr(j);
+			अगर (check_cpu_dscr_thपढ़ो(j))
+				जाओ fail;
+		पूर्ण
+	पूर्ण
+	set_शेष_dscr(orig_dscr_शेष);
+	वापस 0;
 fail:
-	set_default_dscr(orig_dscr_default);
-	return 1;
-}
+	set_शेष_dscr(orig_dscr_शेष);
+	वापस 1;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(dscr_sysfs_thread, "dscr_sysfs_thread_test");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(dscr_sysfs_thपढ़ो, "dscr_sysfs_thread_test");
+पूर्ण

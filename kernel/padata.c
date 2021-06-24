@@ -1,215 +1,216 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * padata.c - generic interface to process data streams in parallel
+ * padata.c - generic पूर्णांकerface to process data streams in parallel
  *
- * See Documentation/core-api/padata.rst for more information.
+ * See Documentation/core-api/padata.rst क्रम more inक्रमmation.
  *
  * Copyright (C) 2008, 2009 secunet Security Networks AG
- * Copyright (C) 2008, 2009 Steffen Klassert <steffen.klassert@secunet.com>
+ * Copyright (C) 2008, 2009 Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
  *
  * Copyright (c) 2020 Oracle and/or its affiliates.
  * Author: Daniel Jordan <daniel.m.jordan@oracle.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License aदीर्घ with
+ * this program; अगर not, ग_लिखो to the Free Software Foundation, Inc.,
+ * 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <linux/completion.h>
-#include <linux/export.h>
-#include <linux/cpumask.h>
-#include <linux/err.h>
-#include <linux/cpu.h>
-#include <linux/padata.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
-#include <linux/rcupdate.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/export.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/err.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/padata.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/rcupdate.h>
 
-#define	PADATA_WORK_ONSTACK	1	/* Work's memory is on stack */
+#घोषणा	PADATA_WORK_ONSTACK	1	/* Work's memory is on stack */
 
-struct padata_work {
-	struct work_struct	pw_work;
-	struct list_head	pw_list;  /* padata_free_works linkage */
-	void			*pw_data;
-};
+काष्ठा padata_work अणु
+	काष्ठा work_काष्ठा	pw_work;
+	काष्ठा list_head	pw_list;  /* padata_मुक्त_works linkage */
+	व्योम			*pw_data;
+पूर्ण;
 
-static DEFINE_SPINLOCK(padata_works_lock);
-static struct padata_work *padata_works;
-static LIST_HEAD(padata_free_works);
+अटल DEFINE_SPINLOCK(padata_works_lock);
+अटल काष्ठा padata_work *padata_works;
+अटल LIST_HEAD(padata_मुक्त_works);
 
-struct padata_mt_job_state {
+काष्ठा padata_mt_job_state अणु
 	spinlock_t		lock;
-	struct completion	completion;
-	struct padata_mt_job	*job;
-	int			nworks;
-	int			nworks_fini;
-	unsigned long		chunk_size;
-};
+	काष्ठा completion	completion;
+	काष्ठा padata_mt_job	*job;
+	पूर्णांक			nworks;
+	पूर्णांक			nworks_fini;
+	अचिन्हित दीर्घ		chunk_size;
+पूर्ण;
 
-static void padata_free_pd(struct parallel_data *pd);
-static void __init padata_mt_helper(struct work_struct *work);
+अटल व्योम padata_मुक्त_pd(काष्ठा parallel_data *pd);
+अटल व्योम __init padata_mt_helper(काष्ठा work_काष्ठा *work);
 
-static int padata_index_to_cpu(struct parallel_data *pd, int cpu_index)
-{
-	int cpu, target_cpu;
+अटल पूर्णांक padata_index_to_cpu(काष्ठा parallel_data *pd, पूर्णांक cpu_index)
+अणु
+	पूर्णांक cpu, target_cpu;
 
 	target_cpu = cpumask_first(pd->cpumask.pcpu);
-	for (cpu = 0; cpu < cpu_index; cpu++)
+	क्रम (cpu = 0; cpu < cpu_index; cpu++)
 		target_cpu = cpumask_next(target_cpu, pd->cpumask.pcpu);
 
-	return target_cpu;
-}
+	वापस target_cpu;
+पूर्ण
 
-static int padata_cpu_hash(struct parallel_data *pd, unsigned int seq_nr)
-{
+अटल पूर्णांक padata_cpu_hash(काष्ठा parallel_data *pd, अचिन्हित पूर्णांक seq_nr)
+अणु
 	/*
 	 * Hash the sequence numbers to the cpus by taking
 	 * seq_nr mod. number of cpus in use.
 	 */
-	int cpu_index = seq_nr % cpumask_weight(pd->cpumask.pcpu);
+	पूर्णांक cpu_index = seq_nr % cpumask_weight(pd->cpumask.pcpu);
 
-	return padata_index_to_cpu(pd, cpu_index);
-}
+	वापस padata_index_to_cpu(pd, cpu_index);
+पूर्ण
 
-static struct padata_work *padata_work_alloc(void)
-{
-	struct padata_work *pw;
+अटल काष्ठा padata_work *padata_work_alloc(व्योम)
+अणु
+	काष्ठा padata_work *pw;
 
-	lockdep_assert_held(&padata_works_lock);
+	lockdep_निश्चित_held(&padata_works_lock);
 
-	if (list_empty(&padata_free_works))
-		return NULL;	/* No more work items allowed to be queued. */
+	अगर (list_empty(&padata_मुक्त_works))
+		वापस शून्य;	/* No more work items allowed to be queued. */
 
-	pw = list_first_entry(&padata_free_works, struct padata_work, pw_list);
+	pw = list_first_entry(&padata_मुक्त_works, काष्ठा padata_work, pw_list);
 	list_del(&pw->pw_list);
-	return pw;
-}
+	वापस pw;
+पूर्ण
 
-static void padata_work_init(struct padata_work *pw, work_func_t work_fn,
-			     void *data, int flags)
-{
-	if (flags & PADATA_WORK_ONSTACK)
+अटल व्योम padata_work_init(काष्ठा padata_work *pw, work_func_t work_fn,
+			     व्योम *data, पूर्णांक flags)
+अणु
+	अगर (flags & PADATA_WORK_ONSTACK)
 		INIT_WORK_ONSTACK(&pw->pw_work, work_fn);
-	else
+	अन्यथा
 		INIT_WORK(&pw->pw_work, work_fn);
 	pw->pw_data = data;
-}
+पूर्ण
 
-static int __init padata_work_alloc_mt(int nworks, void *data,
-				       struct list_head *head)
-{
-	int i;
+अटल पूर्णांक __init padata_work_alloc_mt(पूर्णांक nworks, व्योम *data,
+				       काष्ठा list_head *head)
+अणु
+	पूर्णांक i;
 
 	spin_lock(&padata_works_lock);
 	/* Start at 1 because the current task participates in the job. */
-	for (i = 1; i < nworks; ++i) {
-		struct padata_work *pw = padata_work_alloc();
+	क्रम (i = 1; i < nworks; ++i) अणु
+		काष्ठा padata_work *pw = padata_work_alloc();
 
-		if (!pw)
-			break;
+		अगर (!pw)
+			अवरोध;
 		padata_work_init(pw, padata_mt_helper, data, 0);
 		list_add(&pw->pw_list, head);
-	}
+	पूर्ण
 	spin_unlock(&padata_works_lock);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void padata_work_free(struct padata_work *pw)
-{
-	lockdep_assert_held(&padata_works_lock);
-	list_add(&pw->pw_list, &padata_free_works);
-}
+अटल व्योम padata_work_मुक्त(काष्ठा padata_work *pw)
+अणु
+	lockdep_निश्चित_held(&padata_works_lock);
+	list_add(&pw->pw_list, &padata_मुक्त_works);
+पूर्ण
 
-static void __init padata_works_free(struct list_head *works)
-{
-	struct padata_work *cur, *next;
+अटल व्योम __init padata_works_मुक्त(काष्ठा list_head *works)
+अणु
+	काष्ठा padata_work *cur, *next;
 
-	if (list_empty(works))
-		return;
+	अगर (list_empty(works))
+		वापस;
 
 	spin_lock(&padata_works_lock);
-	list_for_each_entry_safe(cur, next, works, pw_list) {
+	list_क्रम_each_entry_safe(cur, next, works, pw_list) अणु
 		list_del(&cur->pw_list);
-		padata_work_free(cur);
-	}
+		padata_work_मुक्त(cur);
+	पूर्ण
 	spin_unlock(&padata_works_lock);
-}
+पूर्ण
 
-static void padata_parallel_worker(struct work_struct *parallel_work)
-{
-	struct padata_work *pw = container_of(parallel_work, struct padata_work,
+अटल व्योम padata_parallel_worker(काष्ठा work_काष्ठा *parallel_work)
+अणु
+	काष्ठा padata_work *pw = container_of(parallel_work, काष्ठा padata_work,
 					      pw_work);
-	struct padata_priv *padata = pw->pw_data;
+	काष्ठा padata_priv *padata = pw->pw_data;
 
 	local_bh_disable();
 	padata->parallel(padata);
 	spin_lock(&padata_works_lock);
-	padata_work_free(pw);
+	padata_work_मुक्त(pw);
 	spin_unlock(&padata_works_lock);
 	local_bh_enable();
-}
+पूर्ण
 
 /**
- * padata_do_parallel - padata parallelization function
+ * padata_करो_parallel - padata parallelization function
  *
  * @ps: padatashell
  * @padata: object to be parallelized
- * @cb_cpu: pointer to the CPU that the serialization callback function should
+ * @cb_cpu: poपूर्णांकer to the CPU that the serialization callback function should
  *          run on.  If it's not in the serial cpumask of @pinst
- *          (i.e. cpumask.cbcpu), this function selects a fallback CPU and if
- *          none found, returns -EINVAL.
+ *          (i.e. cpumask.cbcpu), this function selects a fallback CPU and अगर
+ *          none found, वापसs -EINVAL.
  *
  * The parallelization callback function will run with BHs off.
- * Note: Every object which is parallelized by padata_do_parallel
- * must be seen by padata_do_serial.
+ * Note: Every object which is parallelized by padata_करो_parallel
+ * must be seen by padata_करो_serial.
  *
- * Return: 0 on success or else negative error code.
+ * Return: 0 on success or अन्यथा negative error code.
  */
-int padata_do_parallel(struct padata_shell *ps,
-		       struct padata_priv *padata, int *cb_cpu)
-{
-	struct padata_instance *pinst = ps->pinst;
-	int i, cpu, cpu_index, err;
-	struct parallel_data *pd;
-	struct padata_work *pw;
+पूर्णांक padata_करो_parallel(काष्ठा padata_shell *ps,
+		       काष्ठा padata_priv *padata, पूर्णांक *cb_cpu)
+अणु
+	काष्ठा padata_instance *pinst = ps->pinst;
+	पूर्णांक i, cpu, cpu_index, err;
+	काष्ठा parallel_data *pd;
+	काष्ठा padata_work *pw;
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 
 	pd = rcu_dereference_bh(ps->pd);
 
 	err = -EINVAL;
-	if (!(pinst->flags & PADATA_INIT) || pinst->flags & PADATA_INVALID)
-		goto out;
+	अगर (!(pinst->flags & PADATA_INIT) || pinst->flags & PADATA_INVALID)
+		जाओ out;
 
-	if (!cpumask_test_cpu(*cb_cpu, pd->cpumask.cbcpu)) {
-		if (!cpumask_weight(pd->cpumask.cbcpu))
-			goto out;
+	अगर (!cpumask_test_cpu(*cb_cpu, pd->cpumask.cbcpu)) अणु
+		अगर (!cpumask_weight(pd->cpumask.cbcpu))
+			जाओ out;
 
-		/* Select an alternate fallback CPU and notify the caller. */
+		/* Select an alternate fallback CPU and notअगरy the caller. */
 		cpu_index = *cb_cpu % cpumask_weight(pd->cpumask.cbcpu);
 
 		cpu = cpumask_first(pd->cpumask.cbcpu);
-		for (i = 0; i < cpu_index; i++)
+		क्रम (i = 0; i < cpu_index; i++)
 			cpu = cpumask_next(cpu, pd->cpumask.cbcpu);
 
 		*cb_cpu = cpu;
-	}
+	पूर्ण
 
 	err =  -EBUSY;
-	if ((pinst->flags & PADATA_RESET))
-		goto out;
+	अगर ((pinst->flags & PADATA_RESET))
+		जाओ out;
 
 	atomic_inc(&pd->refcnt);
 	padata->pd = pd;
@@ -220,101 +221,101 @@ int padata_do_parallel(struct padata_shell *ps,
 	pw = padata_work_alloc();
 	spin_unlock(&padata_works_lock);
 
-	rcu_read_unlock_bh();
+	rcu_पढ़ो_unlock_bh();
 
-	if (pw) {
+	अगर (pw) अणु
 		padata_work_init(pw, padata_parallel_worker, padata, 0);
 		queue_work(pinst->parallel_wq, &pw->pw_work);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Maximum works limit exceeded, run in the current task. */
 		padata->parallel(padata);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
-	rcu_read_unlock_bh();
+	rcu_पढ़ो_unlock_bh();
 
-	return err;
-}
-EXPORT_SYMBOL(padata_do_parallel);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(padata_करो_parallel);
 
 /*
  * padata_find_next - Find the next object that needs serialization.
  *
  * Return:
- * * A pointer to the control struct of the next object that needs
- *   serialization, if present in one of the percpu reorder queues.
- * * NULL, if the next object that needs serialization will
+ * * A poपूर्णांकer to the control काष्ठा of the next object that needs
+ *   serialization, अगर present in one of the percpu reorder queues.
+ * * शून्य, अगर the next object that needs serialization will
  *   be parallel processed by another cpu and is not yet present in
  *   the cpu's reorder queue.
  */
-static struct padata_priv *padata_find_next(struct parallel_data *pd,
-					    bool remove_object)
-{
-	struct padata_priv *padata;
-	struct padata_list *reorder;
-	int cpu = pd->cpu;
+अटल काष्ठा padata_priv *padata_find_next(काष्ठा parallel_data *pd,
+					    bool हटाओ_object)
+अणु
+	काष्ठा padata_priv *padata;
+	काष्ठा padata_list *reorder;
+	पूर्णांक cpu = pd->cpu;
 
 	reorder = per_cpu_ptr(pd->reorder_list, cpu);
 
 	spin_lock(&reorder->lock);
-	if (list_empty(&reorder->list)) {
+	अगर (list_empty(&reorder->list)) अणु
 		spin_unlock(&reorder->lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	padata = list_entry(reorder->list.next, struct padata_priv, list);
+	padata = list_entry(reorder->list.next, काष्ठा padata_priv, list);
 
 	/*
-	 * Checks the rare case where two or more parallel jobs have hashed to
+	 * Checks the rare हाल where two or more parallel jobs have hashed to
 	 * the same CPU and one of the later ones finishes first.
 	 */
-	if (padata->seq_nr != pd->processed) {
+	अगर (padata->seq_nr != pd->processed) अणु
 		spin_unlock(&reorder->lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (remove_object) {
+	अगर (हटाओ_object) अणु
 		list_del_init(&padata->list);
 		++pd->processed;
 		pd->cpu = cpumask_next_wrap(cpu, pd->cpumask.pcpu, -1, false);
-	}
+	पूर्ण
 
 	spin_unlock(&reorder->lock);
-	return padata;
-}
+	वापस padata;
+पूर्ण
 
-static void padata_reorder(struct parallel_data *pd)
-{
-	struct padata_instance *pinst = pd->ps->pinst;
-	int cb_cpu;
-	struct padata_priv *padata;
-	struct padata_serial_queue *squeue;
-	struct padata_list *reorder;
+अटल व्योम padata_reorder(काष्ठा parallel_data *pd)
+अणु
+	काष्ठा padata_instance *pinst = pd->ps->pinst;
+	पूर्णांक cb_cpu;
+	काष्ठा padata_priv *padata;
+	काष्ठा padata_serial_queue *squeue;
+	काष्ठा padata_list *reorder;
 
 	/*
 	 * We need to ensure that only one cpu can work on dequeueing of
-	 * the reorder queue the time. Calculating in which percpu reorder
-	 * queue the next object will arrive takes some time. A spinlock
+	 * the reorder queue the समय. Calculating in which percpu reorder
+	 * queue the next object will arrive takes some समय. A spinlock
 	 * would be highly contended. Also it is not clear in which order
-	 * the objects arrive to the reorder queues. So a cpu could wait to
-	 * get the lock just to notice that there is nothing to do at the
-	 * moment. Therefore we use a trylock and let the holder of the lock
-	 * care for all the objects enqueued during the holdtime of the lock.
+	 * the objects arrive to the reorder queues. So a cpu could रुको to
+	 * get the lock just to notice that there is nothing to करो at the
+	 * moment. Thereक्रमe we use a trylock and let the holder of the lock
+	 * care क्रम all the objects enqueued during the holdसमय of the lock.
 	 */
-	if (!spin_trylock_bh(&pd->lock))
-		return;
+	अगर (!spin_trylock_bh(&pd->lock))
+		वापस;
 
-	while (1) {
+	जबतक (1) अणु
 		padata = padata_find_next(pd, true);
 
 		/*
 		 * If the next object that needs serialization is parallel
 		 * processed by another cpu and is still on it's way to the
-		 * cpu's reorder queue, nothing to do for now.
+		 * cpu's reorder queue, nothing to करो क्रम now.
 		 */
-		if (!padata)
-			break;
+		अगर (!padata)
+			अवरोध;
 
 		cb_cpu = padata->cb_cpu;
 		squeue = per_cpu_ptr(pd->squeue, cb_cpu);
@@ -324,44 +325,44 @@ static void padata_reorder(struct parallel_data *pd)
 		spin_unlock(&squeue->serial.lock);
 
 		queue_work_on(cb_cpu, pinst->serial_wq, &squeue->work);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&pd->lock);
 
 	/*
 	 * The next object that needs serialization might have arrived to
-	 * the reorder queues in the meantime.
+	 * the reorder queues in the meanसमय.
 	 *
-	 * Ensure reorder queue is read after pd->lock is dropped so we see
-	 * new objects from another task in padata_do_serial.  Pairs with
-	 * smp_mb in padata_do_serial.
+	 * Ensure reorder queue is पढ़ो after pd->lock is dropped so we see
+	 * new objects from another task in padata_करो_serial.  Pairs with
+	 * smp_mb in padata_करो_serial.
 	 */
 	smp_mb();
 
 	reorder = per_cpu_ptr(pd->reorder_list, pd->cpu);
-	if (!list_empty(&reorder->list) && padata_find_next(pd, false))
+	अगर (!list_empty(&reorder->list) && padata_find_next(pd, false))
 		queue_work(pinst->serial_wq, &pd->reorder_work);
-}
+पूर्ण
 
-static void invoke_padata_reorder(struct work_struct *work)
-{
-	struct parallel_data *pd;
+अटल व्योम invoke_padata_reorder(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा parallel_data *pd;
 
 	local_bh_disable();
-	pd = container_of(work, struct parallel_data, reorder_work);
+	pd = container_of(work, काष्ठा parallel_data, reorder_work);
 	padata_reorder(pd);
 	local_bh_enable();
-}
+पूर्ण
 
-static void padata_serial_worker(struct work_struct *serial_work)
-{
-	struct padata_serial_queue *squeue;
-	struct parallel_data *pd;
+अटल व्योम padata_serial_worker(काष्ठा work_काष्ठा *serial_work)
+अणु
+	काष्ठा padata_serial_queue *squeue;
+	काष्ठा parallel_data *pd;
 	LIST_HEAD(local_list);
-	int cnt;
+	पूर्णांक cnt;
 
 	local_bh_disable();
-	squeue = container_of(serial_work, struct padata_serial_queue, work);
+	squeue = container_of(serial_work, काष्ठा padata_serial_queue, work);
 	pd = squeue->pd;
 
 	spin_lock(&squeue->serial.lock);
@@ -370,43 +371,43 @@ static void padata_serial_worker(struct work_struct *serial_work)
 
 	cnt = 0;
 
-	while (!list_empty(&local_list)) {
-		struct padata_priv *padata;
+	जबतक (!list_empty(&local_list)) अणु
+		काष्ठा padata_priv *padata;
 
 		padata = list_entry(local_list.next,
-				    struct padata_priv, list);
+				    काष्ठा padata_priv, list);
 
 		list_del_init(&padata->list);
 
 		padata->serial(padata);
 		cnt++;
-	}
+	पूर्ण
 	local_bh_enable();
 
-	if (atomic_sub_and_test(cnt, &pd->refcnt))
-		padata_free_pd(pd);
-}
+	अगर (atomic_sub_and_test(cnt, &pd->refcnt))
+		padata_मुक्त_pd(pd);
+पूर्ण
 
 /**
- * padata_do_serial - padata serialization function
+ * padata_करो_serial - padata serialization function
  *
  * @padata: object to be serialized.
  *
- * padata_do_serial must be called for every parallelized object.
+ * padata_करो_serial must be called क्रम every parallelized object.
  * The serialization callback function will run with BHs off.
  */
-void padata_do_serial(struct padata_priv *padata)
-{
-	struct parallel_data *pd = padata->pd;
-	int hashed_cpu = padata_cpu_hash(pd, padata->seq_nr);
-	struct padata_list *reorder = per_cpu_ptr(pd->reorder_list, hashed_cpu);
-	struct padata_priv *cur;
+व्योम padata_करो_serial(काष्ठा padata_priv *padata)
+अणु
+	काष्ठा parallel_data *pd = padata->pd;
+	पूर्णांक hashed_cpu = padata_cpu_hash(pd, padata->seq_nr);
+	काष्ठा padata_list *reorder = per_cpu_ptr(pd->reorder_list, hashed_cpu);
+	काष्ठा padata_priv *cur;
 
 	spin_lock(&reorder->lock);
 	/* Sort in ascending order of sequence number. */
-	list_for_each_entry_reverse(cur, &reorder->list, list)
-		if (cur->seq_nr < padata->seq_nr)
-			break;
+	list_क्रम_each_entry_reverse(cur, &reorder->list, list)
+		अगर (cur->seq_nr < padata->seq_nr)
+			अवरोध;
 	list_add(&padata->list, &cur->list);
 	spin_unlock(&reorder->lock);
 
@@ -418,40 +419,40 @@ void padata_do_serial(struct padata_priv *padata)
 	smp_mb();
 
 	padata_reorder(pd);
-}
-EXPORT_SYMBOL(padata_do_serial);
+पूर्ण
+EXPORT_SYMBOL(padata_करो_serial);
 
-static int padata_setup_cpumasks(struct padata_instance *pinst)
-{
-	struct workqueue_attrs *attrs;
-	int err;
+अटल पूर्णांक padata_setup_cpumasks(काष्ठा padata_instance *pinst)
+अणु
+	काष्ठा workqueue_attrs *attrs;
+	पूर्णांक err;
 
 	attrs = alloc_workqueue_attrs();
-	if (!attrs)
-		return -ENOMEM;
+	अगर (!attrs)
+		वापस -ENOMEM;
 
 	/* Restrict parallel_wq workers to pd->cpumask.pcpu. */
 	cpumask_copy(attrs->cpumask, pinst->cpumask.pcpu);
 	err = apply_workqueue_attrs(pinst->parallel_wq, attrs);
-	free_workqueue_attrs(attrs);
+	मुक्त_workqueue_attrs(attrs);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __init padata_mt_helper(struct work_struct *w)
-{
-	struct padata_work *pw = container_of(w, struct padata_work, pw_work);
-	struct padata_mt_job_state *ps = pw->pw_data;
-	struct padata_mt_job *job = ps->job;
-	bool done;
+अटल व्योम __init padata_mt_helper(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा padata_work *pw = container_of(w, काष्ठा padata_work, pw_work);
+	काष्ठा padata_mt_job_state *ps = pw->pw_data;
+	काष्ठा padata_mt_job *job = ps->job;
+	bool करोne;
 
 	spin_lock(&ps->lock);
 
-	while (job->size > 0) {
-		unsigned long start, size, end;
+	जबतक (job->size > 0) अणु
+		अचिन्हित दीर्घ start, size, end;
 
 		start = job->start;
-		/* So end is chunk size aligned if enough work remains. */
+		/* So end is chunk size aligned अगर enough work reमुख्यs. */
 		size = roundup(start + 1, ps->chunk_size) - start;
 		size = min(size, job->size);
 		end = start + size;
@@ -460,45 +461,45 @@ static void __init padata_mt_helper(struct work_struct *w)
 		job->size -= size;
 
 		spin_unlock(&ps->lock);
-		job->thread_fn(start, end, job->fn_arg);
+		job->thपढ़ो_fn(start, end, job->fn_arg);
 		spin_lock(&ps->lock);
-	}
+	पूर्ण
 
 	++ps->nworks_fini;
-	done = (ps->nworks_fini == ps->nworks);
+	करोne = (ps->nworks_fini == ps->nworks);
 	spin_unlock(&ps->lock);
 
-	if (done)
+	अगर (करोne)
 		complete(&ps->completion);
-}
+पूर्ण
 
 /**
- * padata_do_multithreaded - run a multithreaded job
+ * padata_करो_multithपढ़ोed - run a multithपढ़ोed job
  * @job: Description of the job.
  *
- * See the definition of struct padata_mt_job for more details.
+ * See the definition of काष्ठा padata_mt_job क्रम more details.
  */
-void __init padata_do_multithreaded(struct padata_mt_job *job)
-{
-	/* In case threads finish at different times. */
-	static const unsigned long load_balance_factor = 4;
-	struct padata_work my_work, *pw;
-	struct padata_mt_job_state ps;
+व्योम __init padata_करो_multithपढ़ोed(काष्ठा padata_mt_job *job)
+अणु
+	/* In हाल thपढ़ोs finish at dअगरferent बार. */
+	अटल स्थिर अचिन्हित दीर्घ load_balance_factor = 4;
+	काष्ठा padata_work my_work, *pw;
+	काष्ठा padata_mt_job_state ps;
 	LIST_HEAD(works);
-	int nworks;
+	पूर्णांक nworks;
 
-	if (job->size == 0)
-		return;
+	अगर (job->size == 0)
+		वापस;
 
-	/* Ensure at least one thread when size < min_chunk. */
+	/* Ensure at least one thपढ़ो when size < min_chunk. */
 	nworks = max(job->size / job->min_chunk, 1ul);
-	nworks = min(nworks, job->max_threads);
+	nworks = min(nworks, job->max_thपढ़ोs);
 
-	if (nworks == 1) {
-		/* Single thread, no coordination needed, cut to the chase. */
-		job->thread_fn(job->start, job->start + job->size, job->fn_arg);
-		return;
-	}
+	अगर (nworks == 1) अणु
+		/* Single thपढ़ो, no coordination needed, cut to the chase. */
+		job->thपढ़ो_fn(job->start, job->start + job->size, job->fn_arg);
+		वापस;
+	पूर्ण
 
 	spin_lock_init(&ps.lock);
 	init_completion(&ps.completion);
@@ -507,8 +508,8 @@ void __init padata_do_multithreaded(struct padata_mt_job *job)
 	ps.nworks_fini = 0;
 
 	/*
-	 * Chunk size is the amount of work a helper does per call to the
-	 * thread function.  Load balance large jobs between threads by
+	 * Chunk size is the amount of work a helper करोes per call to the
+	 * thपढ़ो function.  Load balance large jobs between thपढ़ोs by
 	 * increasing the number of chunks, guarantee at least the minimum
 	 * chunk size from the caller, and honor the caller's alignment.
 	 */
@@ -516,76 +517,76 @@ void __init padata_do_multithreaded(struct padata_mt_job *job)
 	ps.chunk_size = max(ps.chunk_size, job->min_chunk);
 	ps.chunk_size = roundup(ps.chunk_size, job->align);
 
-	list_for_each_entry(pw, &works, pw_list)
-		queue_work(system_unbound_wq, &pw->pw_work);
+	list_क्रम_each_entry(pw, &works, pw_list)
+		queue_work(प्रणाली_unbound_wq, &pw->pw_work);
 
-	/* Use the current thread, which saves starting a workqueue worker. */
+	/* Use the current thपढ़ो, which saves starting a workqueue worker. */
 	padata_work_init(&my_work, padata_mt_helper, &ps, PADATA_WORK_ONSTACK);
 	padata_mt_helper(&my_work.pw_work);
 
-	/* Wait for all the helpers to finish. */
-	wait_for_completion(&ps.completion);
+	/* Wait क्रम all the helpers to finish. */
+	रुको_क्रम_completion(&ps.completion);
 
 	destroy_work_on_stack(&my_work.pw_work);
-	padata_works_free(&works);
-}
+	padata_works_मुक्त(&works);
+पूर्ण
 
-static void __padata_list_init(struct padata_list *pd_list)
-{
+अटल व्योम __padata_list_init(काष्ठा padata_list *pd_list)
+अणु
 	INIT_LIST_HEAD(&pd_list->list);
 	spin_lock_init(&pd_list->lock);
-}
+पूर्ण
 
 /* Initialize all percpu queues used by serial workers */
-static void padata_init_squeues(struct parallel_data *pd)
-{
-	int cpu;
-	struct padata_serial_queue *squeue;
+अटल व्योम padata_init_squeues(काष्ठा parallel_data *pd)
+अणु
+	पूर्णांक cpu;
+	काष्ठा padata_serial_queue *squeue;
 
-	for_each_cpu(cpu, pd->cpumask.cbcpu) {
+	क्रम_each_cpu(cpu, pd->cpumask.cbcpu) अणु
 		squeue = per_cpu_ptr(pd->squeue, cpu);
 		squeue->pd = pd;
 		__padata_list_init(&squeue->serial);
 		INIT_WORK(&squeue->work, padata_serial_worker);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Initialize per-CPU reorder lists */
-static void padata_init_reorder_list(struct parallel_data *pd)
-{
-	int cpu;
-	struct padata_list *list;
+अटल व्योम padata_init_reorder_list(काष्ठा parallel_data *pd)
+अणु
+	पूर्णांक cpu;
+	काष्ठा padata_list *list;
 
-	for_each_cpu(cpu, pd->cpumask.pcpu) {
+	क्रम_each_cpu(cpu, pd->cpumask.pcpu) अणु
 		list = per_cpu_ptr(pd->reorder_list, cpu);
 		__padata_list_init(list);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Allocate and initialize the internal cpumask dependend resources. */
-static struct parallel_data *padata_alloc_pd(struct padata_shell *ps)
-{
-	struct padata_instance *pinst = ps->pinst;
-	struct parallel_data *pd;
+/* Allocate and initialize the पूर्णांकernal cpumask dependend resources. */
+अटल काष्ठा parallel_data *padata_alloc_pd(काष्ठा padata_shell *ps)
+अणु
+	काष्ठा padata_instance *pinst = ps->pinst;
+	काष्ठा parallel_data *pd;
 
-	pd = kzalloc(sizeof(struct parallel_data), GFP_KERNEL);
-	if (!pd)
-		goto err;
+	pd = kzalloc(माप(काष्ठा parallel_data), GFP_KERNEL);
+	अगर (!pd)
+		जाओ err;
 
-	pd->reorder_list = alloc_percpu(struct padata_list);
-	if (!pd->reorder_list)
-		goto err_free_pd;
+	pd->reorder_list = alloc_percpu(काष्ठा padata_list);
+	अगर (!pd->reorder_list)
+		जाओ err_मुक्त_pd;
 
-	pd->squeue = alloc_percpu(struct padata_serial_queue);
-	if (!pd->squeue)
-		goto err_free_reorder_list;
+	pd->squeue = alloc_percpu(काष्ठा padata_serial_queue);
+	अगर (!pd->squeue)
+		जाओ err_मुक्त_reorder_list;
 
 	pd->ps = ps;
 
-	if (!alloc_cpumask_var(&pd->cpumask.pcpu, GFP_KERNEL))
-		goto err_free_squeue;
-	if (!alloc_cpumask_var(&pd->cpumask.cbcpu, GFP_KERNEL))
-		goto err_free_pcpu;
+	अगर (!alloc_cpumask_var(&pd->cpumask.pcpu, GFP_KERNEL))
+		जाओ err_मुक्त_squeue;
+	अगर (!alloc_cpumask_var(&pd->cpumask.cbcpu, GFP_KERNEL))
+		जाओ err_मुक्त_pcpu;
 
 	cpumask_and(pd->cpumask.pcpu, pinst->cpumask.pcpu, cpu_online_mask);
 	cpumask_and(pd->cpumask.cbcpu, pinst->cpumask.cbcpu, cpu_online_mask);
@@ -598,111 +599,111 @@ static struct parallel_data *padata_alloc_pd(struct padata_shell *ps)
 	pd->cpu = cpumask_first(pd->cpumask.pcpu);
 	INIT_WORK(&pd->reorder_work, invoke_padata_reorder);
 
-	return pd;
+	वापस pd;
 
-err_free_pcpu:
-	free_cpumask_var(pd->cpumask.pcpu);
-err_free_squeue:
-	free_percpu(pd->squeue);
-err_free_reorder_list:
-	free_percpu(pd->reorder_list);
-err_free_pd:
-	kfree(pd);
+err_मुक्त_pcpu:
+	मुक्त_cpumask_var(pd->cpumask.pcpu);
+err_मुक्त_squeue:
+	मुक्त_percpu(pd->squeue);
+err_मुक्त_reorder_list:
+	मुक्त_percpu(pd->reorder_list);
+err_मुक्त_pd:
+	kमुक्त(pd);
 err:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void padata_free_pd(struct parallel_data *pd)
-{
-	free_cpumask_var(pd->cpumask.pcpu);
-	free_cpumask_var(pd->cpumask.cbcpu);
-	free_percpu(pd->reorder_list);
-	free_percpu(pd->squeue);
-	kfree(pd);
-}
+अटल व्योम padata_मुक्त_pd(काष्ठा parallel_data *pd)
+अणु
+	मुक्त_cpumask_var(pd->cpumask.pcpu);
+	मुक्त_cpumask_var(pd->cpumask.cbcpu);
+	मुक्त_percpu(pd->reorder_list);
+	मुक्त_percpu(pd->squeue);
+	kमुक्त(pd);
+पूर्ण
 
-static void __padata_start(struct padata_instance *pinst)
-{
+अटल व्योम __padata_start(काष्ठा padata_instance *pinst)
+अणु
 	pinst->flags |= PADATA_INIT;
-}
+पूर्ण
 
-static void __padata_stop(struct padata_instance *pinst)
-{
-	if (!(pinst->flags & PADATA_INIT))
-		return;
+अटल व्योम __padata_stop(काष्ठा padata_instance *pinst)
+अणु
+	अगर (!(pinst->flags & PADATA_INIT))
+		वापस;
 
 	pinst->flags &= ~PADATA_INIT;
 
 	synchronize_rcu();
-}
+पूर्ण
 
-/* Replace the internal control structure with a new one. */
-static int padata_replace_one(struct padata_shell *ps)
-{
-	struct parallel_data *pd_new;
+/* Replace the पूर्णांकernal control काष्ठाure with a new one. */
+अटल पूर्णांक padata_replace_one(काष्ठा padata_shell *ps)
+अणु
+	काष्ठा parallel_data *pd_new;
 
 	pd_new = padata_alloc_pd(ps);
-	if (!pd_new)
-		return -ENOMEM;
+	अगर (!pd_new)
+		वापस -ENOMEM;
 
-	ps->opd = rcu_dereference_protected(ps->pd, 1);
-	rcu_assign_pointer(ps->pd, pd_new);
+	ps->opd = rcu_dereference_रक्षित(ps->pd, 1);
+	rcu_assign_poपूर्णांकer(ps->pd, pd_new);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int padata_replace(struct padata_instance *pinst)
-{
-	struct padata_shell *ps;
-	int err = 0;
+अटल पूर्णांक padata_replace(काष्ठा padata_instance *pinst)
+अणु
+	काष्ठा padata_shell *ps;
+	पूर्णांक err = 0;
 
 	pinst->flags |= PADATA_RESET;
 
-	list_for_each_entry(ps, &pinst->pslist, list) {
+	list_क्रम_each_entry(ps, &pinst->pslist, list) अणु
 		err = padata_replace_one(ps);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
 	synchronize_rcu();
 
-	list_for_each_entry_continue_reverse(ps, &pinst->pslist, list)
-		if (atomic_dec_and_test(&ps->opd->refcnt))
-			padata_free_pd(ps->opd);
+	list_क्रम_each_entry_जारी_reverse(ps, &pinst->pslist, list)
+		अगर (atomic_dec_and_test(&ps->opd->refcnt))
+			padata_मुक्त_pd(ps->opd);
 
 	pinst->flags &= ~PADATA_RESET;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* If cpumask contains no active cpu, we mark the instance as invalid. */
-static bool padata_validate_cpumask(struct padata_instance *pinst,
-				    const struct cpumask *cpumask)
-{
-	if (!cpumask_intersects(cpumask, cpu_online_mask)) {
+अटल bool padata_validate_cpumask(काष्ठा padata_instance *pinst,
+				    स्थिर काष्ठा cpumask *cpumask)
+अणु
+	अगर (!cpumask_पूर्णांकersects(cpumask, cpu_online_mask)) अणु
 		pinst->flags |= PADATA_INVALID;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	pinst->flags &= ~PADATA_INVALID;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __padata_set_cpumasks(struct padata_instance *pinst,
+अटल पूर्णांक __padata_set_cpumasks(काष्ठा padata_instance *pinst,
 				 cpumask_var_t pcpumask,
 				 cpumask_var_t cbcpumask)
-{
-	int valid;
-	int err;
+अणु
+	पूर्णांक valid;
+	पूर्णांक err;
 
 	valid = padata_validate_cpumask(pinst, pcpumask);
-	if (!valid) {
+	अगर (!valid) अणु
 		__padata_stop(pinst);
-		goto out_replace;
-	}
+		जाओ out_replace;
+	पूर्ण
 
 	valid = padata_validate_cpumask(pinst, cbcpumask);
-	if (!valid)
+	अगर (!valid)
 		__padata_stop(pinst);
 
 out_replace:
@@ -711,14 +712,14 @@ out_replace:
 
 	err = padata_setup_cpumasks(pinst) ?: padata_replace(pinst);
 
-	if (valid)
+	अगर (valid)
 		__padata_start(pinst);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * padata_set_cpumask - Sets specified by @cpumask_type cpumask to the value
+ * padata_set_cpumask - Sets specअगरied by @cpumask_type cpumask to the value
  *                      equivalent to @cpumask.
  * @pinst: padata instance
  * @cpumask_type: PADATA_CPU_SERIAL or PADATA_CPU_PARALLEL corresponding
@@ -727,27 +728,27 @@ out_replace:
  *
  * Return: 0 on success or negative error code
  */
-int padata_set_cpumask(struct padata_instance *pinst, int cpumask_type,
+पूर्णांक padata_set_cpumask(काष्ठा padata_instance *pinst, पूर्णांक cpumask_type,
 		       cpumask_var_t cpumask)
-{
-	struct cpumask *serial_mask, *parallel_mask;
-	int err = -EINVAL;
+अणु
+	काष्ठा cpumask *serial_mask, *parallel_mask;
+	पूर्णांक err = -EINVAL;
 
 	get_online_cpus();
 	mutex_lock(&pinst->lock);
 
-	switch (cpumask_type) {
-	case PADATA_CPU_PARALLEL:
+	चयन (cpumask_type) अणु
+	हाल PADATA_CPU_PARALLEL:
 		serial_mask = pinst->cpumask.cbcpu;
 		parallel_mask = cpumask;
-		break;
-	case PADATA_CPU_SERIAL:
+		अवरोध;
+	हाल PADATA_CPU_SERIAL:
 		parallel_mask = pinst->cpumask.pcpu;
 		serial_mask = cpumask;
-		break;
-	default:
-		 goto out;
-	}
+		अवरोध;
+	शेष:
+		 जाओ out;
+	पूर्ण
 
 	err =  __padata_set_cpumasks(pinst, parallel_mask, serial_mask);
 
@@ -755,322 +756,322 @@ out:
 	mutex_unlock(&pinst->lock);
 	put_online_cpus();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(padata_set_cpumask);
 
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 
-static int __padata_add_cpu(struct padata_instance *pinst, int cpu)
-{
-	int err = 0;
+अटल पूर्णांक __padata_add_cpu(काष्ठा padata_instance *pinst, पूर्णांक cpu)
+अणु
+	पूर्णांक err = 0;
 
-	if (cpumask_test_cpu(cpu, cpu_online_mask)) {
+	अगर (cpumask_test_cpu(cpu, cpu_online_mask)) अणु
 		err = padata_replace(pinst);
 
-		if (padata_validate_cpumask(pinst, pinst->cpumask.pcpu) &&
+		अगर (padata_validate_cpumask(pinst, pinst->cpumask.pcpu) &&
 		    padata_validate_cpumask(pinst, pinst->cpumask.cbcpu))
 			__padata_start(pinst);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __padata_remove_cpu(struct padata_instance *pinst, int cpu)
-{
-	int err = 0;
+अटल पूर्णांक __padata_हटाओ_cpu(काष्ठा padata_instance *pinst, पूर्णांक cpu)
+अणु
+	पूर्णांक err = 0;
 
-	if (!cpumask_test_cpu(cpu, cpu_online_mask)) {
-		if (!padata_validate_cpumask(pinst, pinst->cpumask.pcpu) ||
+	अगर (!cpumask_test_cpu(cpu, cpu_online_mask)) अणु
+		अगर (!padata_validate_cpumask(pinst, pinst->cpumask.pcpu) ||
 		    !padata_validate_cpumask(pinst, pinst->cpumask.cbcpu))
 			__padata_stop(pinst);
 
 		err = padata_replace(pinst);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int pinst_has_cpu(struct padata_instance *pinst, int cpu)
-{
-	return cpumask_test_cpu(cpu, pinst->cpumask.pcpu) ||
+अटल अंतरभूत पूर्णांक pinst_has_cpu(काष्ठा padata_instance *pinst, पूर्णांक cpu)
+अणु
+	वापस cpumask_test_cpu(cpu, pinst->cpumask.pcpu) ||
 		cpumask_test_cpu(cpu, pinst->cpumask.cbcpu);
-}
+पूर्ण
 
-static int padata_cpu_online(unsigned int cpu, struct hlist_node *node)
-{
-	struct padata_instance *pinst;
-	int ret;
+अटल पूर्णांक padata_cpu_online(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा padata_instance *pinst;
+	पूर्णांक ret;
 
-	pinst = hlist_entry_safe(node, struct padata_instance, cpu_online_node);
-	if (!pinst_has_cpu(pinst, cpu))
-		return 0;
+	pinst = hlist_entry_safe(node, काष्ठा padata_instance, cpu_online_node);
+	अगर (!pinst_has_cpu(pinst, cpu))
+		वापस 0;
 
 	mutex_lock(&pinst->lock);
 	ret = __padata_add_cpu(pinst, cpu);
 	mutex_unlock(&pinst->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int padata_cpu_dead(unsigned int cpu, struct hlist_node *node)
-{
-	struct padata_instance *pinst;
-	int ret;
+अटल पूर्णांक padata_cpu_dead(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा padata_instance *pinst;
+	पूर्णांक ret;
 
-	pinst = hlist_entry_safe(node, struct padata_instance, cpu_dead_node);
-	if (!pinst_has_cpu(pinst, cpu))
-		return 0;
+	pinst = hlist_entry_safe(node, काष्ठा padata_instance, cpu_dead_node);
+	अगर (!pinst_has_cpu(pinst, cpu))
+		वापस 0;
 
 	mutex_lock(&pinst->lock);
-	ret = __padata_remove_cpu(pinst, cpu);
+	ret = __padata_हटाओ_cpu(pinst, cpu);
 	mutex_unlock(&pinst->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum cpuhp_state hp_online;
-#endif
+अटल क्रमागत cpuhp_state hp_online;
+#पूर्ण_अगर
 
-static void __padata_free(struct padata_instance *pinst)
-{
-#ifdef CONFIG_HOTPLUG_CPU
-	cpuhp_state_remove_instance_nocalls(CPUHP_PADATA_DEAD,
+अटल व्योम __padata_मुक्त(काष्ठा padata_instance *pinst)
+अणु
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	cpuhp_state_हटाओ_instance_nocalls(CPUHP_PADATA_DEAD,
 					    &pinst->cpu_dead_node);
-	cpuhp_state_remove_instance_nocalls(hp_online, &pinst->cpu_online_node);
-#endif
+	cpuhp_state_हटाओ_instance_nocalls(hp_online, &pinst->cpu_online_node);
+#पूर्ण_अगर
 
 	WARN_ON(!list_empty(&pinst->pslist));
 
-	free_cpumask_var(pinst->cpumask.pcpu);
-	free_cpumask_var(pinst->cpumask.cbcpu);
+	मुक्त_cpumask_var(pinst->cpumask.pcpu);
+	मुक्त_cpumask_var(pinst->cpumask.cbcpu);
 	destroy_workqueue(pinst->serial_wq);
 	destroy_workqueue(pinst->parallel_wq);
-	kfree(pinst);
-}
+	kमुक्त(pinst);
+पूर्ण
 
-#define kobj2pinst(_kobj)					\
-	container_of(_kobj, struct padata_instance, kobj)
-#define attr2pentry(_attr)					\
-	container_of(_attr, struct padata_sysfs_entry, attr)
+#घोषणा kobj2pinst(_kobj)					\
+	container_of(_kobj, काष्ठा padata_instance, kobj)
+#घोषणा attr2pentry(_attr)					\
+	container_of(_attr, काष्ठा padata_sysfs_entry, attr)
 
-static void padata_sysfs_release(struct kobject *kobj)
-{
-	struct padata_instance *pinst = kobj2pinst(kobj);
-	__padata_free(pinst);
-}
+अटल व्योम padata_sysfs_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा padata_instance *pinst = kobj2pinst(kobj);
+	__padata_मुक्त(pinst);
+पूर्ण
 
-struct padata_sysfs_entry {
-	struct attribute attr;
-	ssize_t (*show)(struct padata_instance *, struct attribute *, char *);
-	ssize_t (*store)(struct padata_instance *, struct attribute *,
-			 const char *, size_t);
-};
+काष्ठा padata_sysfs_entry अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा padata_instance *, काष्ठा attribute *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा padata_instance *, काष्ठा attribute *,
+			 स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-static ssize_t show_cpumask(struct padata_instance *pinst,
-			    struct attribute *attr,  char *buf)
-{
-	struct cpumask *cpumask;
-	ssize_t len;
+अटल sमाप_प्रकार show_cpumask(काष्ठा padata_instance *pinst,
+			    काष्ठा attribute *attr,  अक्षर *buf)
+अणु
+	काष्ठा cpumask *cpumask;
+	sमाप_प्रकार len;
 
 	mutex_lock(&pinst->lock);
-	if (!strcmp(attr->name, "serial_cpumask"))
+	अगर (!म_भेद(attr->name, "serial_cpumask"))
 		cpumask = pinst->cpumask.cbcpu;
-	else
+	अन्यथा
 		cpumask = pinst->cpumask.pcpu;
 
-	len = snprintf(buf, PAGE_SIZE, "%*pb\n",
+	len = snम_लिखो(buf, PAGE_SIZE, "%*pb\n",
 		       nr_cpu_ids, cpumask_bits(cpumask));
 	mutex_unlock(&pinst->lock);
-	return len < PAGE_SIZE ? len : -EINVAL;
-}
+	वापस len < PAGE_SIZE ? len : -EINVAL;
+पूर्ण
 
-static ssize_t store_cpumask(struct padata_instance *pinst,
-			     struct attribute *attr,
-			     const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_cpumask(काष्ठा padata_instance *pinst,
+			     काष्ठा attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	cpumask_var_t new_cpumask;
-	ssize_t ret;
-	int mask_type;
+	sमाप_प्रकार ret;
+	पूर्णांक mask_type;
 
-	if (!alloc_cpumask_var(&new_cpumask, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!alloc_cpumask_var(&new_cpumask, GFP_KERNEL))
+		वापस -ENOMEM;
 
-	ret = bitmap_parse(buf, count, cpumask_bits(new_cpumask),
+	ret = biपंचांगap_parse(buf, count, cpumask_bits(new_cpumask),
 			   nr_cpumask_bits);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	mask_type = !strcmp(attr->name, "serial_cpumask") ?
+	mask_type = !म_भेद(attr->name, "serial_cpumask") ?
 		PADATA_CPU_SERIAL : PADATA_CPU_PARALLEL;
 	ret = padata_set_cpumask(pinst, mask_type, new_cpumask);
-	if (!ret)
+	अगर (!ret)
 		ret = count;
 
 out:
-	free_cpumask_var(new_cpumask);
-	return ret;
-}
+	मुक्त_cpumask_var(new_cpumask);
+	वापस ret;
+पूर्ण
 
-#define PADATA_ATTR_RW(_name, _show_name, _store_name)		\
-	static struct padata_sysfs_entry _name##_attr =		\
+#घोषणा PADATA_ATTR_RW(_name, _show_name, _store_name)		\
+	अटल काष्ठा padata_sysfs_entry _name##_attr =		\
 		__ATTR(_name, 0644, _show_name, _store_name)
-#define PADATA_ATTR_RO(_name, _show_name)		\
-	static struct padata_sysfs_entry _name##_attr = \
-		__ATTR(_name, 0400, _show_name, NULL)
+#घोषणा PADATA_ATTR_RO(_name, _show_name)		\
+	अटल काष्ठा padata_sysfs_entry _name##_attr = \
+		__ATTR(_name, 0400, _show_name, शून्य)
 
 PADATA_ATTR_RW(serial_cpumask, show_cpumask, store_cpumask);
 PADATA_ATTR_RW(parallel_cpumask, show_cpumask, store_cpumask);
 
 /*
  * Padata sysfs provides the following objects:
- * serial_cpumask   [RW] - cpumask for serial workers
- * parallel_cpumask [RW] - cpumask for parallel workers
+ * serial_cpumask   [RW] - cpumask क्रम serial workers
+ * parallel_cpumask [RW] - cpumask क्रम parallel workers
  */
-static struct attribute *padata_default_attrs[] = {
+अटल काष्ठा attribute *padata_शेष_attrs[] = अणु
 	&serial_cpumask_attr.attr,
 	&parallel_cpumask_attr.attr,
-	NULL,
-};
-ATTRIBUTE_GROUPS(padata_default);
+	शून्य,
+पूर्ण;
+ATTRIBUTE_GROUPS(padata_शेष);
 
-static ssize_t padata_sysfs_show(struct kobject *kobj,
-				 struct attribute *attr, char *buf)
-{
-	struct padata_instance *pinst;
-	struct padata_sysfs_entry *pentry;
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार padata_sysfs_show(काष्ठा kobject *kobj,
+				 काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा padata_instance *pinst;
+	काष्ठा padata_sysfs_entry *pentry;
+	sमाप_प्रकार ret = -EIO;
 
 	pinst = kobj2pinst(kobj);
 	pentry = attr2pentry(attr);
-	if (pentry->show)
+	अगर (pentry->show)
 		ret = pentry->show(pinst, attr, buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t padata_sysfs_store(struct kobject *kobj, struct attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct padata_instance *pinst;
-	struct padata_sysfs_entry *pentry;
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार padata_sysfs_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा padata_instance *pinst;
+	काष्ठा padata_sysfs_entry *pentry;
+	sमाप_प्रकार ret = -EIO;
 
 	pinst = kobj2pinst(kobj);
 	pentry = attr2pentry(attr);
-	if (pentry->show)
+	अगर (pentry->show)
 		ret = pentry->store(pinst, attr, buf, count);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops padata_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops padata_sysfs_ops = अणु
 	.show = padata_sysfs_show,
 	.store = padata_sysfs_store,
-};
+पूर्ण;
 
-static struct kobj_type padata_attr_type = {
+अटल काष्ठा kobj_type padata_attr_type = अणु
 	.sysfs_ops = &padata_sysfs_ops,
-	.default_groups = padata_default_groups,
+	.शेष_groups = padata_शेष_groups,
 	.release = padata_sysfs_release,
-};
+पूर्ण;
 
 /**
  * padata_alloc - allocate and initialize a padata instance
- * @name: used to identify the instance
+ * @name: used to identअगरy the instance
  *
- * Return: new instance on success, NULL on error
+ * Return: new instance on success, शून्य on error
  */
-struct padata_instance *padata_alloc(const char *name)
-{
-	struct padata_instance *pinst;
+काष्ठा padata_instance *padata_alloc(स्थिर अक्षर *name)
+अणु
+	काष्ठा padata_instance *pinst;
 
-	pinst = kzalloc(sizeof(struct padata_instance), GFP_KERNEL);
-	if (!pinst)
-		goto err;
+	pinst = kzalloc(माप(काष्ठा padata_instance), GFP_KERNEL);
+	अगर (!pinst)
+		जाओ err;
 
 	pinst->parallel_wq = alloc_workqueue("%s_parallel", WQ_UNBOUND, 0,
 					     name);
-	if (!pinst->parallel_wq)
-		goto err_free_inst;
+	अगर (!pinst->parallel_wq)
+		जाओ err_मुक्त_inst;
 
 	get_online_cpus();
 
 	pinst->serial_wq = alloc_workqueue("%s_serial", WQ_MEM_RECLAIM |
 					   WQ_CPU_INTENSIVE, 1, name);
-	if (!pinst->serial_wq)
-		goto err_put_cpus;
+	अगर (!pinst->serial_wq)
+		जाओ err_put_cpus;
 
-	if (!alloc_cpumask_var(&pinst->cpumask.pcpu, GFP_KERNEL))
-		goto err_free_serial_wq;
-	if (!alloc_cpumask_var(&pinst->cpumask.cbcpu, GFP_KERNEL)) {
-		free_cpumask_var(pinst->cpumask.pcpu);
-		goto err_free_serial_wq;
-	}
+	अगर (!alloc_cpumask_var(&pinst->cpumask.pcpu, GFP_KERNEL))
+		जाओ err_मुक्त_serial_wq;
+	अगर (!alloc_cpumask_var(&pinst->cpumask.cbcpu, GFP_KERNEL)) अणु
+		मुक्त_cpumask_var(pinst->cpumask.pcpu);
+		जाओ err_मुक्त_serial_wq;
+	पूर्ण
 
 	INIT_LIST_HEAD(&pinst->pslist);
 
 	cpumask_copy(pinst->cpumask.pcpu, cpu_possible_mask);
 	cpumask_copy(pinst->cpumask.cbcpu, cpu_possible_mask);
 
-	if (padata_setup_cpumasks(pinst))
-		goto err_free_masks;
+	अगर (padata_setup_cpumasks(pinst))
+		जाओ err_मुक्त_masks;
 
 	__padata_start(pinst);
 
 	kobject_init(&pinst->kobj, &padata_attr_type);
 	mutex_init(&pinst->lock);
 
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	cpuhp_state_add_instance_nocalls_cpuslocked(hp_online,
 						    &pinst->cpu_online_node);
 	cpuhp_state_add_instance_nocalls_cpuslocked(CPUHP_PADATA_DEAD,
 						    &pinst->cpu_dead_node);
-#endif
+#पूर्ण_अगर
 
 	put_online_cpus();
 
-	return pinst;
+	वापस pinst;
 
-err_free_masks:
-	free_cpumask_var(pinst->cpumask.pcpu);
-	free_cpumask_var(pinst->cpumask.cbcpu);
-err_free_serial_wq:
+err_मुक्त_masks:
+	मुक्त_cpumask_var(pinst->cpumask.pcpu);
+	मुक्त_cpumask_var(pinst->cpumask.cbcpu);
+err_मुक्त_serial_wq:
 	destroy_workqueue(pinst->serial_wq);
 err_put_cpus:
 	put_online_cpus();
 	destroy_workqueue(pinst->parallel_wq);
-err_free_inst:
-	kfree(pinst);
+err_मुक्त_inst:
+	kमुक्त(pinst);
 err:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(padata_alloc);
 
 /**
- * padata_free - free a padata instance
+ * padata_मुक्त - मुक्त a padata instance
  *
- * @pinst: padata instance to free
+ * @pinst: padata instance to मुक्त
  */
-void padata_free(struct padata_instance *pinst)
-{
+व्योम padata_मुक्त(काष्ठा padata_instance *pinst)
+अणु
 	kobject_put(&pinst->kobj);
-}
-EXPORT_SYMBOL(padata_free);
+पूर्ण
+EXPORT_SYMBOL(padata_मुक्त);
 
 /**
  * padata_alloc_shell - Allocate and initialize padata shell.
  *
  * @pinst: Parent padata_instance object.
  *
- * Return: new shell on success, NULL on error
+ * Return: new shell on success, शून्य on error
  */
-struct padata_shell *padata_alloc_shell(struct padata_instance *pinst)
-{
-	struct parallel_data *pd;
-	struct padata_shell *ps;
+काष्ठा padata_shell *padata_alloc_shell(काष्ठा padata_instance *pinst)
+अणु
+	काष्ठा parallel_data *pd;
+	काष्ठा padata_shell *ps;
 
-	ps = kzalloc(sizeof(*ps), GFP_KERNEL);
-	if (!ps)
-		goto out;
+	ps = kzalloc(माप(*ps), GFP_KERNEL);
+	अगर (!ps)
+		जाओ out;
 
 	ps->pinst = pinst;
 
@@ -1078,77 +1079,77 @@ struct padata_shell *padata_alloc_shell(struct padata_instance *pinst)
 	pd = padata_alloc_pd(ps);
 	put_online_cpus();
 
-	if (!pd)
-		goto out_free_ps;
+	अगर (!pd)
+		जाओ out_मुक्त_ps;
 
 	mutex_lock(&pinst->lock);
 	RCU_INIT_POINTER(ps->pd, pd);
 	list_add(&ps->list, &pinst->pslist);
 	mutex_unlock(&pinst->lock);
 
-	return ps;
+	वापस ps;
 
-out_free_ps:
-	kfree(ps);
+out_मुक्त_ps:
+	kमुक्त(ps);
 out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(padata_alloc_shell);
 
 /**
- * padata_free_shell - free a padata shell
+ * padata_मुक्त_shell - मुक्त a padata shell
  *
- * @ps: padata shell to free
+ * @ps: padata shell to मुक्त
  */
-void padata_free_shell(struct padata_shell *ps)
-{
-	if (!ps)
-		return;
+व्योम padata_मुक्त_shell(काष्ठा padata_shell *ps)
+अणु
+	अगर (!ps)
+		वापस;
 
 	mutex_lock(&ps->pinst->lock);
 	list_del(&ps->list);
-	padata_free_pd(rcu_dereference_protected(ps->pd, 1));
+	padata_मुक्त_pd(rcu_dereference_रक्षित(ps->pd, 1));
 	mutex_unlock(&ps->pinst->lock);
 
-	kfree(ps);
-}
-EXPORT_SYMBOL(padata_free_shell);
+	kमुक्त(ps);
+पूर्ण
+EXPORT_SYMBOL(padata_मुक्त_shell);
 
-void __init padata_init(void)
-{
-	unsigned int i, possible_cpus;
-#ifdef CONFIG_HOTPLUG_CPU
-	int ret;
+व्योम __init padata_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, possible_cpus;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	पूर्णांक ret;
 
 	ret = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN, "padata:online",
-				      padata_cpu_online, NULL);
-	if (ret < 0)
-		goto err;
+				      padata_cpu_online, शून्य);
+	अगर (ret < 0)
+		जाओ err;
 	hp_online = ret;
 
 	ret = cpuhp_setup_state_multi(CPUHP_PADATA_DEAD, "padata:dead",
-				      NULL, padata_cpu_dead);
-	if (ret < 0)
-		goto remove_online_state;
-#endif
+				      शून्य, padata_cpu_dead);
+	अगर (ret < 0)
+		जाओ हटाओ_online_state;
+#पूर्ण_अगर
 
 	possible_cpus = num_possible_cpus();
-	padata_works = kmalloc_array(possible_cpus, sizeof(struct padata_work),
+	padata_works = kदो_स्मृति_array(possible_cpus, माप(काष्ठा padata_work),
 				     GFP_KERNEL);
-	if (!padata_works)
-		goto remove_dead_state;
+	अगर (!padata_works)
+		जाओ हटाओ_dead_state;
 
-	for (i = 0; i < possible_cpus; ++i)
-		list_add(&padata_works[i].pw_list, &padata_free_works);
+	क्रम (i = 0; i < possible_cpus; ++i)
+		list_add(&padata_works[i].pw_list, &padata_मुक्त_works);
 
-	return;
+	वापस;
 
-remove_dead_state:
-#ifdef CONFIG_HOTPLUG_CPU
-	cpuhp_remove_multi_state(CPUHP_PADATA_DEAD);
-remove_online_state:
-	cpuhp_remove_multi_state(hp_online);
+हटाओ_dead_state:
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+	cpuhp_हटाओ_multi_state(CPUHP_PADATA_DEAD);
+हटाओ_online_state:
+	cpuhp_हटाओ_multi_state(hp_online);
 err:
-#endif
+#पूर्ण_अगर
 	pr_warn("padata: initialization failed\n");
-}
+पूर्ण

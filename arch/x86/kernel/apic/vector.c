@@ -1,566 +1,567 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Local APIC related interfaces to support IOAPIC, MSI, etc.
+ * Local APIC related पूर्णांकerfaces to support IOAPIC, MSI, etc.
  *
  * Copyright (C) 1997, 1998, 1999, 2000, 2009 Ingo Molnar, Hajnalka Szabo
  *	Moved from arch/x86/kernel/apic/io_apic.c.
- * Jiang Liu <jiang.liu@linux.intel.com>
- *	Enable support of hierarchical irqdomains
+ * Jiang Liu <jiang.liu@linux.पूर्णांकel.com>
+ *	Enable support of hierarchical irqकरोमुख्यs
  */
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/seq_file.h>
-#include <linux/init.h>
-#include <linux/compiler.h>
-#include <linux/slab.h>
-#include <asm/irqdomain.h>
-#include <asm/hw_irq.h>
-#include <asm/traps.h>
-#include <asm/apic.h>
-#include <asm/i8259.h>
-#include <asm/desc.h>
-#include <asm/irq_remapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/irqकरोमुख्य.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/irq_remapping.h>
 
-#include <asm/trace/irq_vectors.h>
+#समावेश <यंत्र/trace/irq_vectors.h>
 
-struct apic_chip_data {
-	struct irq_cfg		hw_irq_cfg;
-	unsigned int		vector;
-	unsigned int		prev_vector;
-	unsigned int		cpu;
-	unsigned int		prev_cpu;
-	unsigned int		irq;
-	struct hlist_node	clist;
-	unsigned int		move_in_progress	: 1,
+काष्ठा apic_chip_data अणु
+	काष्ठा irq_cfg		hw_irq_cfg;
+	अचिन्हित पूर्णांक		vector;
+	अचिन्हित पूर्णांक		prev_vector;
+	अचिन्हित पूर्णांक		cpu;
+	अचिन्हित पूर्णांक		prev_cpu;
+	अचिन्हित पूर्णांक		irq;
+	काष्ठा hlist_node	clist;
+	अचिन्हित पूर्णांक		move_in_progress	: 1,
 				is_managed		: 1,
 				can_reserve		: 1,
 				has_reserved		: 1;
-};
+पूर्ण;
 
-struct irq_domain *x86_vector_domain;
-EXPORT_SYMBOL_GPL(x86_vector_domain);
-static DEFINE_RAW_SPINLOCK(vector_lock);
-static cpumask_var_t vector_searchmask;
-static struct irq_chip lapic_controller;
-static struct irq_matrix *vector_matrix;
-#ifdef CONFIG_SMP
-static DEFINE_PER_CPU(struct hlist_head, cleanup_list);
-#endif
+काष्ठा irq_करोमुख्य *x86_vector_करोमुख्य;
+EXPORT_SYMBOL_GPL(x86_vector_करोमुख्य);
+अटल DEFINE_RAW_SPINLOCK(vector_lock);
+अटल cpumask_var_t vector_searchmask;
+अटल काष्ठा irq_chip lapic_controller;
+अटल काष्ठा irq_matrix *vector_matrix;
+#अगर_घोषित CONFIG_SMP
+अटल DEFINE_PER_CPU(काष्ठा hlist_head, cleanup_list);
+#पूर्ण_अगर
 
-void lock_vector_lock(void)
-{
-	/* Used to the online set of cpus does not change
+व्योम lock_vector_lock(व्योम)
+अणु
+	/* Used to the online set of cpus करोes not change
 	 * during assign_irq_vector.
 	 */
 	raw_spin_lock(&vector_lock);
-}
+पूर्ण
 
-void unlock_vector_lock(void)
-{
+व्योम unlock_vector_lock(व्योम)
+अणु
 	raw_spin_unlock(&vector_lock);
-}
+पूर्ण
 
-void init_irq_alloc_info(struct irq_alloc_info *info,
-			 const struct cpumask *mask)
-{
-	memset(info, 0, sizeof(*info));
+व्योम init_irq_alloc_info(काष्ठा irq_alloc_info *info,
+			 स्थिर काष्ठा cpumask *mask)
+अणु
+	स_रखो(info, 0, माप(*info));
 	info->mask = mask;
-}
+पूर्ण
 
-void copy_irq_alloc_info(struct irq_alloc_info *dst, struct irq_alloc_info *src)
-{
-	if (src)
+व्योम copy_irq_alloc_info(काष्ठा irq_alloc_info *dst, काष्ठा irq_alloc_info *src)
+अणु
+	अगर (src)
 		*dst = *src;
-	else
-		memset(dst, 0, sizeof(*dst));
-}
+	अन्यथा
+		स_रखो(dst, 0, माप(*dst));
+पूर्ण
 
-static struct apic_chip_data *apic_chip_data(struct irq_data *irqd)
-{
-	if (!irqd)
-		return NULL;
+अटल काष्ठा apic_chip_data *apic_chip_data(काष्ठा irq_data *irqd)
+अणु
+	अगर (!irqd)
+		वापस शून्य;
 
-	while (irqd->parent_data)
+	जबतक (irqd->parent_data)
 		irqd = irqd->parent_data;
 
-	return irqd->chip_data;
-}
+	वापस irqd->chip_data;
+पूर्ण
 
-struct irq_cfg *irqd_cfg(struct irq_data *irqd)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
+काष्ठा irq_cfg *irqd_cfg(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
 
-	return apicd ? &apicd->hw_irq_cfg : NULL;
-}
+	वापस apicd ? &apicd->hw_irq_cfg : शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(irqd_cfg);
 
-struct irq_cfg *irq_cfg(unsigned int irq)
-{
-	return irqd_cfg(irq_get_irq_data(irq));
-}
+काष्ठा irq_cfg *irq_cfg(अचिन्हित पूर्णांक irq)
+अणु
+	वापस irqd_cfg(irq_get_irq_data(irq));
+पूर्ण
 
-static struct apic_chip_data *alloc_apic_chip_data(int node)
-{
-	struct apic_chip_data *apicd;
+अटल काष्ठा apic_chip_data *alloc_apic_chip_data(पूर्णांक node)
+अणु
+	काष्ठा apic_chip_data *apicd;
 
-	apicd = kzalloc_node(sizeof(*apicd), GFP_KERNEL, node);
-	if (apicd)
+	apicd = kzalloc_node(माप(*apicd), GFP_KERNEL, node);
+	अगर (apicd)
 		INIT_HLIST_NODE(&apicd->clist);
-	return apicd;
-}
+	वापस apicd;
+पूर्ण
 
-static void free_apic_chip_data(struct apic_chip_data *apicd)
-{
-	kfree(apicd);
-}
+अटल व्योम मुक्त_apic_chip_data(काष्ठा apic_chip_data *apicd)
+अणु
+	kमुक्त(apicd);
+पूर्ण
 
-static void apic_update_irq_cfg(struct irq_data *irqd, unsigned int vector,
-				unsigned int cpu)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
+अटल व्योम apic_update_irq_cfg(काष्ठा irq_data *irqd, अचिन्हित पूर्णांक vector,
+				अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
 
-	lockdep_assert_held(&vector_lock);
+	lockdep_निश्चित_held(&vector_lock);
 
 	apicd->hw_irq_cfg.vector = vector;
 	apicd->hw_irq_cfg.dest_apicid = apic->calc_dest_apicid(cpu);
 	irq_data_update_effective_affinity(irqd, cpumask_of(cpu));
 	trace_vector_config(irqd->irq, vector, cpu,
 			    apicd->hw_irq_cfg.dest_apicid);
-}
+पूर्ण
 
-static void apic_update_vector(struct irq_data *irqd, unsigned int newvec,
-			       unsigned int newcpu)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
-	struct irq_desc *desc = irq_data_to_desc(irqd);
+अटल व्योम apic_update_vector(काष्ठा irq_data *irqd, अचिन्हित पूर्णांक newvec,
+			       अचिन्हित पूर्णांक newcpu)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
+	काष्ठा irq_desc *desc = irq_data_to_desc(irqd);
 	bool managed = irqd_affinity_is_managed(irqd);
 
-	lockdep_assert_held(&vector_lock);
+	lockdep_निश्चित_held(&vector_lock);
 
 	trace_vector_update(irqd->irq, newvec, newcpu, apicd->vector,
 			    apicd->cpu);
 
 	/*
-	 * If there is no vector associated or if the associated vector is
-	 * the shutdown vector, which is associated to make PCI/MSI
-	 * shutdown mode work, then there is nothing to release. Clear out
-	 * prev_vector for this and the offlined target case.
+	 * If there is no vector associated or अगर the associated vector is
+	 * the shutकरोwn vector, which is associated to make PCI/MSI
+	 * shutकरोwn mode work, then there is nothing to release. Clear out
+	 * prev_vector क्रम this and the offlined target हाल.
 	 */
 	apicd->prev_vector = 0;
-	if (!apicd->vector || apicd->vector == MANAGED_IRQ_SHUTDOWN_VECTOR)
-		goto setnew;
+	अगर (!apicd->vector || apicd->vector == MANAGED_IRQ_SHUTDOWN_VECTOR)
+		जाओ setnew;
 	/*
 	 * If the target CPU of the previous vector is online, then mark
-	 * the vector as move in progress and store it for cleanup when the
-	 * first interrupt on the new vector arrives. If the target CPU is
+	 * the vector as move in progress and store it क्रम cleanup when the
+	 * first पूर्णांकerrupt on the new vector arrives. If the target CPU is
 	 * offline then the regular release mechanism via the cleanup
-	 * vector is not possible and the vector can be immediately freed
+	 * vector is not possible and the vector can be immediately मुक्तd
 	 * in the underlying matrix allocator.
 	 */
-	if (cpu_online(apicd->cpu)) {
+	अगर (cpu_online(apicd->cpu)) अणु
 		apicd->move_in_progress = true;
 		apicd->prev_vector = apicd->vector;
 		apicd->prev_cpu = apicd->cpu;
 		WARN_ON_ONCE(apicd->cpu == newcpu);
-	} else {
-		irq_matrix_free(vector_matrix, apicd->cpu, apicd->vector,
+	पूर्ण अन्यथा अणु
+		irq_matrix_मुक्त(vector_matrix, apicd->cpu, apicd->vector,
 				managed);
-	}
+	पूर्ण
 
 setnew:
 	apicd->vector = newvec;
 	apicd->cpu = newcpu;
-	BUG_ON(!IS_ERR_OR_NULL(per_cpu(vector_irq, newcpu)[newvec]));
+	BUG_ON(!IS_ERR_OR_शून्य(per_cpu(vector_irq, newcpu)[newvec]));
 	per_cpu(vector_irq, newcpu)[newvec] = desc;
-}
+पूर्ण
 
-static void vector_assign_managed_shutdown(struct irq_data *irqd)
-{
-	unsigned int cpu = cpumask_first(cpu_online_mask);
+अटल व्योम vector_assign_managed_shutकरोwn(काष्ठा irq_data *irqd)
+अणु
+	अचिन्हित पूर्णांक cpu = cpumask_first(cpu_online_mask);
 
 	apic_update_irq_cfg(irqd, MANAGED_IRQ_SHUTDOWN_VECTOR, cpu);
-}
+पूर्ण
 
-static int reserve_managed_vector(struct irq_data *irqd)
-{
-	const struct cpumask *affmsk = irq_data_get_affinity_mask(irqd);
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक reserve_managed_vector(काष्ठा irq_data *irqd)
+अणु
+	स्थिर काष्ठा cpumask *affmsk = irq_data_get_affinity_mask(irqd);
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
 	apicd->is_managed = true;
 	ret = irq_matrix_reserve_managed(vector_matrix, affmsk);
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
 	trace_vector_reserve_managed(irqd->irq, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void reserve_irq_vector_locked(struct irq_data *irqd)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
+अटल व्योम reserve_irq_vector_locked(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
 
 	irq_matrix_reserve(vector_matrix);
 	apicd->can_reserve = true;
 	apicd->has_reserved = true;
 	irqd_set_can_reserve(irqd);
 	trace_vector_reserve(irqd->irq, 0);
-	vector_assign_managed_shutdown(irqd);
-}
+	vector_assign_managed_shutकरोwn(irqd);
+पूर्ण
 
-static int reserve_irq_vector(struct irq_data *irqd)
-{
-	unsigned long flags;
+अटल पूर्णांक reserve_irq_vector(काष्ठा irq_data *irqd)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
 	reserve_irq_vector_locked(irqd);
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-assign_vector_locked(struct irq_data *irqd, const struct cpumask *dest)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
+अटल पूर्णांक
+assign_vector_locked(काष्ठा irq_data *irqd, स्थिर काष्ठा cpumask *dest)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
 	bool resvd = apicd->has_reserved;
-	unsigned int cpu = apicd->cpu;
-	int vector = apicd->vector;
+	अचिन्हित पूर्णांक cpu = apicd->cpu;
+	पूर्णांक vector = apicd->vector;
 
-	lockdep_assert_held(&vector_lock);
+	lockdep_निश्चित_held(&vector_lock);
 
 	/*
 	 * If the current target CPU is online and in the new requested
-	 * affinity mask, there is no point in moving the interrupt from
+	 * affinity mask, there is no poपूर्णांक in moving the पूर्णांकerrupt from
 	 * one CPU to another.
 	 */
-	if (vector && cpu_online(cpu) && cpumask_test_cpu(cpu, dest))
-		return 0;
+	अगर (vector && cpu_online(cpu) && cpumask_test_cpu(cpu, dest))
+		वापस 0;
 
 	/*
 	 * Careful here. @apicd might either have move_in_progress set or
-	 * be enqueued for cleanup. Assigning a new vector would either
-	 * leave a stale vector on some CPU around or in case of a pending
+	 * be enqueued क्रम cleanup. Assigning a new vector would either
+	 * leave a stale vector on some CPU around or in हाल of a pending
 	 * cleanup corrupt the hlist.
 	 */
-	if (apicd->move_in_progress || !hlist_unhashed(&apicd->clist))
-		return -EBUSY;
+	अगर (apicd->move_in_progress || !hlist_unhashed(&apicd->clist))
+		वापस -EBUSY;
 
 	vector = irq_matrix_alloc(vector_matrix, dest, resvd, &cpu);
 	trace_vector_alloc(irqd->irq, vector, resvd, vector);
-	if (vector < 0)
-		return vector;
+	अगर (vector < 0)
+		वापस vector;
 	apic_update_vector(irqd, vector, cpu);
 	apic_update_irq_cfg(irqd, vector, cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int assign_irq_vector(struct irq_data *irqd, const struct cpumask *dest)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक assign_irq_vector(काष्ठा irq_data *irqd, स्थिर काष्ठा cpumask *dest)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
 	cpumask_and(vector_searchmask, dest, cpu_online_mask);
 	ret = assign_vector_locked(irqd, vector_searchmask);
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int assign_irq_vector_any_locked(struct irq_data *irqd)
-{
-	/* Get the affinity mask - either irq_default_affinity or (user) set */
-	const struct cpumask *affmsk = irq_data_get_affinity_mask(irqd);
-	int node = irq_data_get_node(irqd);
+अटल पूर्णांक assign_irq_vector_any_locked(काष्ठा irq_data *irqd)
+अणु
+	/* Get the affinity mask - either irq_शेष_affinity or (user) set */
+	स्थिर काष्ठा cpumask *affmsk = irq_data_get_affinity_mask(irqd);
+	पूर्णांक node = irq_data_get_node(irqd);
 
-	if (node != NUMA_NO_NODE) {
-		/* Try the intersection of @affmsk and node mask */
+	अगर (node != NUMA_NO_NODE) अणु
+		/* Try the पूर्णांकersection of @affmsk and node mask */
 		cpumask_and(vector_searchmask, cpumask_of_node(node), affmsk);
-		if (!assign_vector_locked(irqd, vector_searchmask))
-			return 0;
-	}
+		अगर (!assign_vector_locked(irqd, vector_searchmask))
+			वापस 0;
+	पूर्ण
 
 	/* Try the full affinity mask */
 	cpumask_and(vector_searchmask, affmsk, cpu_online_mask);
-	if (!assign_vector_locked(irqd, vector_searchmask))
-		return 0;
+	अगर (!assign_vector_locked(irqd, vector_searchmask))
+		वापस 0;
 
-	if (node != NUMA_NO_NODE) {
+	अगर (node != NUMA_NO_NODE) अणु
 		/* Try the node mask */
-		if (!assign_vector_locked(irqd, cpumask_of_node(node)))
-			return 0;
-	}
+		अगर (!assign_vector_locked(irqd, cpumask_of_node(node)))
+			वापस 0;
+	पूर्ण
 
 	/* Try the full online mask */
-	return assign_vector_locked(irqd, cpu_online_mask);
-}
+	वापस assign_vector_locked(irqd, cpu_online_mask);
+पूर्ण
 
-static int
-assign_irq_vector_policy(struct irq_data *irqd, struct irq_alloc_info *info)
-{
-	if (irqd_affinity_is_managed(irqd))
-		return reserve_managed_vector(irqd);
-	if (info->mask)
-		return assign_irq_vector(irqd, info->mask);
+अटल पूर्णांक
+assign_irq_vector_policy(काष्ठा irq_data *irqd, काष्ठा irq_alloc_info *info)
+अणु
+	अगर (irqd_affinity_is_managed(irqd))
+		वापस reserve_managed_vector(irqd);
+	अगर (info->mask)
+		वापस assign_irq_vector(irqd, info->mask);
 	/*
 	 * Make only a global reservation with no guarantee. A real vector
-	 * is associated at activation time.
+	 * is associated at activation समय.
 	 */
-	return reserve_irq_vector(irqd);
-}
+	वापस reserve_irq_vector(irqd);
+पूर्ण
 
-static int
-assign_managed_vector(struct irq_data *irqd, const struct cpumask *dest)
-{
-	const struct cpumask *affmsk = irq_data_get_affinity_mask(irqd);
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
-	int vector, cpu;
+अटल पूर्णांक
+assign_managed_vector(काष्ठा irq_data *irqd, स्थिर काष्ठा cpumask *dest)
+अणु
+	स्थिर काष्ठा cpumask *affmsk = irq_data_get_affinity_mask(irqd);
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
+	पूर्णांक vector, cpu;
 
 	cpumask_and(vector_searchmask, dest, affmsk);
 
-	/* set_affinity might call here for nothing */
-	if (apicd->vector && cpumask_test_cpu(apicd->cpu, vector_searchmask))
-		return 0;
+	/* set_affinity might call here क्रम nothing */
+	अगर (apicd->vector && cpumask_test_cpu(apicd->cpu, vector_searchmask))
+		वापस 0;
 	vector = irq_matrix_alloc_managed(vector_matrix, vector_searchmask,
 					  &cpu);
 	trace_vector_alloc_managed(irqd->irq, vector, vector);
-	if (vector < 0)
-		return vector;
+	अगर (vector < 0)
+		वापस vector;
 	apic_update_vector(irqd, vector, cpu);
 	apic_update_irq_cfg(irqd, vector, cpu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clear_irq_vector(struct irq_data *irqd)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
+अटल व्योम clear_irq_vector(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
 	bool managed = irqd_affinity_is_managed(irqd);
-	unsigned int vector = apicd->vector;
+	अचिन्हित पूर्णांक vector = apicd->vector;
 
-	lockdep_assert_held(&vector_lock);
+	lockdep_निश्चित_held(&vector_lock);
 
-	if (!vector)
-		return;
+	अगर (!vector)
+		वापस;
 
 	trace_vector_clear(irqd->irq, vector, apicd->cpu, apicd->prev_vector,
 			   apicd->prev_cpu);
 
 	per_cpu(vector_irq, apicd->cpu)[vector] = VECTOR_SHUTDOWN;
-	irq_matrix_free(vector_matrix, apicd->cpu, vector, managed);
+	irq_matrix_मुक्त(vector_matrix, apicd->cpu, vector, managed);
 	apicd->vector = 0;
 
 	/* Clean up move in progress */
 	vector = apicd->prev_vector;
-	if (!vector)
-		return;
+	अगर (!vector)
+		वापस;
 
 	per_cpu(vector_irq, apicd->prev_cpu)[vector] = VECTOR_SHUTDOWN;
-	irq_matrix_free(vector_matrix, apicd->prev_cpu, vector, managed);
+	irq_matrix_मुक्त(vector_matrix, apicd->prev_cpu, vector, managed);
 	apicd->prev_vector = 0;
 	apicd->move_in_progress = 0;
 	hlist_del_init(&apicd->clist);
-}
+पूर्ण
 
-static void x86_vector_deactivate(struct irq_domain *dom, struct irq_data *irqd)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
-	unsigned long flags;
+अटल व्योम x86_vector_deactivate(काष्ठा irq_करोमुख्य *करोm, काष्ठा irq_data *irqd)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
+	अचिन्हित दीर्घ flags;
 
 	trace_vector_deactivate(irqd->irq, apicd->is_managed,
 				apicd->can_reserve, false);
 
-	/* Regular fixed assigned interrupt */
-	if (!apicd->is_managed && !apicd->can_reserve)
-		return;
-	/* If the interrupt has a global reservation, nothing to do */
-	if (apicd->has_reserved)
-		return;
+	/* Regular fixed asचिन्हित पूर्णांकerrupt */
+	अगर (!apicd->is_managed && !apicd->can_reserve)
+		वापस;
+	/* If the पूर्णांकerrupt has a global reservation, nothing to करो */
+	अगर (apicd->has_reserved)
+		वापस;
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
 	clear_irq_vector(irqd);
-	if (apicd->can_reserve)
+	अगर (apicd->can_reserve)
 		reserve_irq_vector_locked(irqd);
-	else
-		vector_assign_managed_shutdown(irqd);
+	अन्यथा
+		vector_assign_managed_shutकरोwn(irqd);
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
-}
+पूर्ण
 
-static int activate_reserved(struct irq_data *irqd)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
-	int ret;
+अटल पूर्णांक activate_reserved(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
+	पूर्णांक ret;
 
 	ret = assign_irq_vector_any_locked(irqd);
-	if (!ret) {
+	अगर (!ret) अणु
 		apicd->has_reserved = false;
 		/*
 		 * Core might have disabled reservation mode after
 		 * allocating the irq descriptor. Ideally this should
-		 * happen before allocation time, but that would require
+		 * happen beक्रमe allocation समय, but that would require
 		 * completely convoluted ways of transporting that
-		 * information.
+		 * inक्रमmation.
 		 */
-		if (!irqd_can_reserve(irqd))
+		अगर (!irqd_can_reserve(irqd))
 			apicd->can_reserve = false;
-	}
+	पूर्ण
 
 	/*
 	 * Check to ensure that the effective affinity mask is a subset
-	 * the user supplied affinity mask, and warn the user if it is not
+	 * the user supplied affinity mask, and warn the user अगर it is not
 	 */
-	if (!cpumask_subset(irq_data_get_effective_affinity_mask(irqd),
-			    irq_data_get_affinity_mask(irqd))) {
+	अगर (!cpumask_subset(irq_data_get_effective_affinity_mask(irqd),
+			    irq_data_get_affinity_mask(irqd))) अणु
 		pr_warn("irq %u: Affinity broken due to vector space exhaustion.\n",
 			irqd->irq);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int activate_managed(struct irq_data *irqd)
-{
-	const struct cpumask *dest = irq_data_get_affinity_mask(irqd);
-	int ret;
+अटल पूर्णांक activate_managed(काष्ठा irq_data *irqd)
+अणु
+	स्थिर काष्ठा cpumask *dest = irq_data_get_affinity_mask(irqd);
+	पूर्णांक ret;
 
 	cpumask_and(vector_searchmask, dest, cpu_online_mask);
-	if (WARN_ON_ONCE(cpumask_empty(vector_searchmask))) {
+	अगर (WARN_ON_ONCE(cpumask_empty(vector_searchmask))) अणु
 		/* Something in the core code broke! Survive gracefully */
 		pr_err("Managed startup for irq %u, but no CPU\n", irqd->irq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = assign_managed_vector(irqd, vector_searchmask);
 	/*
 	 * This should not happen. The vector reservation got buggered.  Handle
 	 * it gracefully.
 	 */
-	if (WARN_ON_ONCE(ret < 0)) {
+	अगर (WARN_ON_ONCE(ret < 0)) अणु
 		pr_err("Managed startup irq %u, no vector available\n",
 		       irqd->irq);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int x86_vector_activate(struct irq_domain *dom, struct irq_data *irqd,
+अटल पूर्णांक x86_vector_activate(काष्ठा irq_करोमुख्य *करोm, काष्ठा irq_data *irqd,
 			       bool reserve)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
-	unsigned long flags;
-	int ret = 0;
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	trace_vector_activate(irqd->irq, apicd->is_managed,
 			      apicd->can_reserve, reserve);
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
-	if (!apicd->can_reserve && !apicd->is_managed)
+	अगर (!apicd->can_reserve && !apicd->is_managed)
 		assign_irq_vector_any_locked(irqd);
-	else if (reserve || irqd_is_managed_and_shutdown(irqd))
-		vector_assign_managed_shutdown(irqd);
-	else if (apicd->is_managed)
+	अन्यथा अगर (reserve || irqd_is_managed_and_shutकरोwn(irqd))
+		vector_assign_managed_shutकरोwn(irqd);
+	अन्यथा अगर (apicd->is_managed)
 		ret = activate_managed(irqd);
-	else if (apicd->has_reserved)
+	अन्यथा अगर (apicd->has_reserved)
 		ret = activate_reserved(irqd);
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vector_free_reserved_and_managed(struct irq_data *irqd)
-{
-	const struct cpumask *dest = irq_data_get_affinity_mask(irqd);
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
+अटल व्योम vector_मुक्त_reserved_and_managed(काष्ठा irq_data *irqd)
+अणु
+	स्थिर काष्ठा cpumask *dest = irq_data_get_affinity_mask(irqd);
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
 
-	trace_vector_teardown(irqd->irq, apicd->is_managed,
+	trace_vector_tearकरोwn(irqd->irq, apicd->is_managed,
 			      apicd->has_reserved);
 
-	if (apicd->has_reserved)
-		irq_matrix_remove_reserved(vector_matrix);
-	if (apicd->is_managed)
-		irq_matrix_remove_managed(vector_matrix, dest);
-}
+	अगर (apicd->has_reserved)
+		irq_matrix_हटाओ_reserved(vector_matrix);
+	अगर (apicd->is_managed)
+		irq_matrix_हटाओ_managed(vector_matrix, dest);
+पूर्ण
 
-static void x86_vector_free_irqs(struct irq_domain *domain,
-				 unsigned int virq, unsigned int nr_irqs)
-{
-	struct apic_chip_data *apicd;
-	struct irq_data *irqd;
-	unsigned long flags;
-	int i;
+अटल व्योम x86_vector_मुक्त_irqs(काष्ठा irq_करोमुख्य *करोमुख्य,
+				 अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक nr_irqs)
+अणु
+	काष्ठा apic_chip_data *apicd;
+	काष्ठा irq_data *irqd;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	for (i = 0; i < nr_irqs; i++) {
-		irqd = irq_domain_get_irq_data(x86_vector_domain, virq + i);
-		if (irqd && irqd->chip_data) {
+	क्रम (i = 0; i < nr_irqs; i++) अणु
+		irqd = irq_करोमुख्य_get_irq_data(x86_vector_करोमुख्य, virq + i);
+		अगर (irqd && irqd->chip_data) अणु
 			raw_spin_lock_irqsave(&vector_lock, flags);
 			clear_irq_vector(irqd);
-			vector_free_reserved_and_managed(irqd);
+			vector_मुक्त_reserved_and_managed(irqd);
 			apicd = irqd->chip_data;
-			irq_domain_reset_irq_data(irqd);
+			irq_करोमुख्य_reset_irq_data(irqd);
 			raw_spin_unlock_irqrestore(&vector_lock, flags);
-			free_apic_chip_data(apicd);
-		}
-	}
-}
+			मुक्त_apic_chip_data(apicd);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool vector_configure_legacy(unsigned int virq, struct irq_data *irqd,
-				    struct apic_chip_data *apicd)
-{
-	unsigned long flags;
-	bool realloc = false;
+अटल bool vector_configure_legacy(अचिन्हित पूर्णांक virq, काष्ठा irq_data *irqd,
+				    काष्ठा apic_chip_data *apicd)
+अणु
+	अचिन्हित दीर्घ flags;
+	bool पुनः_स्मृति = false;
 
 	apicd->vector = ISA_IRQ_VECTOR(virq);
 	apicd->cpu = 0;
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
 	/*
-	 * If the interrupt is activated, then it must stay at this vector
-	 * position. That's usually the timer interrupt (0).
+	 * If the पूर्णांकerrupt is activated, then it must stay at this vector
+	 * position. That's usually the समयr पूर्णांकerrupt (0).
 	 */
-	if (irqd_is_activated(irqd)) {
+	अगर (irqd_is_activated(irqd)) अणु
 		trace_vector_setup(virq, true, 0);
 		apic_update_irq_cfg(irqd, apicd->vector, apicd->cpu);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Release the vector */
 		apicd->can_reserve = true;
 		irqd_set_can_reserve(irqd);
 		clear_irq_vector(irqd);
-		realloc = true;
-	}
+		पुनः_स्मृति = true;
+	पूर्ण
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
-	return realloc;
-}
+	वापस पुनः_स्मृति;
+पूर्ण
 
-static int x86_vector_alloc_irqs(struct irq_domain *domain, unsigned int virq,
-				 unsigned int nr_irqs, void *arg)
-{
-	struct irq_alloc_info *info = arg;
-	struct apic_chip_data *apicd;
-	struct irq_data *irqd;
-	int i, err, node;
+अटल पूर्णांक x86_vector_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+				 अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
+अणु
+	काष्ठा irq_alloc_info *info = arg;
+	काष्ठा apic_chip_data *apicd;
+	काष्ठा irq_data *irqd;
+	पूर्णांक i, err, node;
 
-	if (disable_apic)
-		return -ENXIO;
+	अगर (disable_apic)
+		वापस -ENXIO;
 
 	/* Currently vector allocator can't guarantee contiguous allocations */
-	if ((info->flags & X86_IRQ_ALLOC_CONTIGUOUS_VECTORS) && nr_irqs > 1)
-		return -ENOSYS;
+	अगर ((info->flags & X86_IRQ_ALLOC_CONTIGUOUS_VECTORS) && nr_irqs > 1)
+		वापस -ENOSYS;
 
 	/*
-	 * Catch any attempt to touch the cascade interrupt on a PIC
-	 * equipped system.
+	 * Catch any attempt to touch the cascade पूर्णांकerrupt on a PIC
+	 * equipped प्रणाली.
 	 */
-	if (WARN_ON_ONCE(info->flags & X86_IRQ_ALLOC_LEGACY &&
+	अगर (WARN_ON_ONCE(info->flags & X86_IRQ_ALLOC_LEGACY &&
 			 virq == PIC_CASCADE_IR))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	for (i = 0; i < nr_irqs; i++) {
-		irqd = irq_domain_get_irq_data(domain, virq + i);
+	क्रम (i = 0; i < nr_irqs; i++) अणु
+		irqd = irq_करोमुख्य_get_irq_data(करोमुख्य, virq + i);
 		BUG_ON(!irqd);
 		node = irq_data_get_node(irqd);
 		WARN_ON_ONCE(irqd->chip_data);
 		apicd = alloc_apic_chip_data(node);
-		if (!apicd) {
+		अगर (!apicd) अणु
 			err = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		apicd->irq = virq + i;
 		irqd->chip = &lapic_controller;
@@ -568,716 +569,716 @@ static int x86_vector_alloc_irqs(struct irq_domain *domain, unsigned int virq,
 		irqd->hwirq = virq + i;
 		irqd_set_single_target(irqd);
 		/*
-		 * Prevent that any of these interrupts is invoked in
-		 * non interrupt context via e.g. generic_handle_irq()
+		 * Prevent that any of these पूर्णांकerrupts is invoked in
+		 * non पूर्णांकerrupt context via e.g. generic_handle_irq()
 		 * as that can corrupt the affinity move state.
 		 */
-		irqd_set_handle_enforce_irqctx(irqd);
+		irqd_set_handle_enक्रमce_irqctx(irqd);
 
-		/* Don't invoke affinity setter on deactivated interrupts */
+		/* Don't invoke affinity setter on deactivated पूर्णांकerrupts */
 		irqd_set_affinity_on_activate(irqd);
 
 		/*
-		 * Legacy vectors are already assigned when the IOAPIC
+		 * Legacy vectors are alपढ़ोy asचिन्हित when the IOAPIC
 		 * takes them over. They stay on the same vector. This is
-		 * required for check_timer() to work correctly as it might
-		 * switch back to legacy mode. Only update the hardware
+		 * required क्रम check_समयr() to work correctly as it might
+		 * चयन back to legacy mode. Only update the hardware
 		 * config.
 		 */
-		if (info->flags & X86_IRQ_ALLOC_LEGACY) {
-			if (!vector_configure_legacy(virq + i, irqd, apicd))
-				continue;
-		}
+		अगर (info->flags & X86_IRQ_ALLOC_LEGACY) अणु
+			अगर (!vector_configure_legacy(virq + i, irqd, apicd))
+				जारी;
+		पूर्ण
 
 		err = assign_irq_vector_policy(irqd, info);
 		trace_vector_setup(virq + i, false, err);
-		if (err) {
-			irqd->chip_data = NULL;
-			free_apic_chip_data(apicd);
-			goto error;
-		}
-	}
+		अगर (err) अणु
+			irqd->chip_data = शून्य;
+			मुक्त_apic_chip_data(apicd);
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	x86_vector_free_irqs(domain, virq, i);
-	return err;
-}
+	x86_vector_मुक्त_irqs(करोमुख्य, virq, i);
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
-static void x86_vector_debug_show(struct seq_file *m, struct irq_domain *d,
-				  struct irq_data *irqd, int ind)
-{
-	struct apic_chip_data apicd;
-	unsigned long flags;
-	int irq;
+#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
+अटल व्योम x86_vector_debug_show(काष्ठा seq_file *m, काष्ठा irq_करोमुख्य *d,
+				  काष्ठा irq_data *irqd, पूर्णांक ind)
+अणु
+	काष्ठा apic_chip_data apicd;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक irq;
 
-	if (!irqd) {
+	अगर (!irqd) अणु
 		irq_matrix_debug_show(m, vector_matrix, ind);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	irq = irqd->irq;
-	if (irq < nr_legacy_irqs() && !test_bit(irq, &io_apic_irqs)) {
-		seq_printf(m, "%*sVector: %5d\n", ind, "", ISA_IRQ_VECTOR(irq));
-		seq_printf(m, "%*sTarget: Legacy PIC all CPUs\n", ind, "");
-		return;
-	}
+	अगर (irq < nr_legacy_irqs() && !test_bit(irq, &io_apic_irqs)) अणु
+		seq_म_लिखो(m, "%*sVector: %5d\n", ind, "", ISA_IRQ_VECTOR(irq));
+		seq_म_लिखो(m, "%*sTarget: Legacy PIC all CPUs\n", ind, "");
+		वापस;
+	पूर्ण
 
-	if (!irqd->chip_data) {
-		seq_printf(m, "%*sVector: Not assigned\n", ind, "");
-		return;
-	}
+	अगर (!irqd->chip_data) अणु
+		seq_म_लिखो(m, "%*sVector: Not assigned\n", ind, "");
+		वापस;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
-	memcpy(&apicd, irqd->chip_data, sizeof(apicd));
+	स_नकल(&apicd, irqd->chip_data, माप(apicd));
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
 
-	seq_printf(m, "%*sVector: %5u\n", ind, "", apicd.vector);
-	seq_printf(m, "%*sTarget: %5u\n", ind, "", apicd.cpu);
-	if (apicd.prev_vector) {
-		seq_printf(m, "%*sPrevious vector: %5u\n", ind, "", apicd.prev_vector);
-		seq_printf(m, "%*sPrevious target: %5u\n", ind, "", apicd.prev_cpu);
-	}
-	seq_printf(m, "%*smove_in_progress: %u\n", ind, "", apicd.move_in_progress ? 1 : 0);
-	seq_printf(m, "%*sis_managed:       %u\n", ind, "", apicd.is_managed ? 1 : 0);
-	seq_printf(m, "%*scan_reserve:      %u\n", ind, "", apicd.can_reserve ? 1 : 0);
-	seq_printf(m, "%*shas_reserved:     %u\n", ind, "", apicd.has_reserved ? 1 : 0);
-	seq_printf(m, "%*scleanup_pending:  %u\n", ind, "", !hlist_unhashed(&apicd.clist));
-}
-#endif
+	seq_म_लिखो(m, "%*sVector: %5u\n", ind, "", apicd.vector);
+	seq_म_लिखो(m, "%*sTarget: %5u\n", ind, "", apicd.cpu);
+	अगर (apicd.prev_vector) अणु
+		seq_म_लिखो(m, "%*sPrevious vector: %5u\n", ind, "", apicd.prev_vector);
+		seq_म_लिखो(m, "%*sPrevious target: %5u\n", ind, "", apicd.prev_cpu);
+	पूर्ण
+	seq_म_लिखो(m, "%*smove_in_progress: %u\n", ind, "", apicd.move_in_progress ? 1 : 0);
+	seq_म_लिखो(m, "%*sis_managed:       %u\n", ind, "", apicd.is_managed ? 1 : 0);
+	seq_म_लिखो(m, "%*scan_reserve:      %u\n", ind, "", apicd.can_reserve ? 1 : 0);
+	seq_म_लिखो(m, "%*shas_reserved:     %u\n", ind, "", apicd.has_reserved ? 1 : 0);
+	seq_म_लिखो(m, "%*scleanup_pending:  %u\n", ind, "", !hlist_unhashed(&apicd.clist));
+पूर्ण
+#पूर्ण_अगर
 
-int x86_fwspec_is_ioapic(struct irq_fwspec *fwspec)
-{
-	if (fwspec->param_count != 1)
-		return 0;
+पूर्णांक x86_fwspec_is_ioapic(काष्ठा irq_fwspec *fwspec)
+अणु
+	अगर (fwspec->param_count != 1)
+		वापस 0;
 
-	if (is_fwnode_irqchip(fwspec->fwnode)) {
-		const char *fwname = fwnode_get_name(fwspec->fwnode);
-		return fwname && !strncmp(fwname, "IO-APIC-", 8) &&
-			simple_strtol(fwname+8, NULL, 10) == fwspec->param[0];
-	}
-	return to_of_node(fwspec->fwnode) &&
+	अगर (is_fwnode_irqchip(fwspec->fwnode)) अणु
+		स्थिर अक्षर *fwname = fwnode_get_name(fwspec->fwnode);
+		वापस fwname && !म_भेदन(fwname, "IO-APIC-", 8) &&
+			simple_म_से_दीर्घ(fwname+8, शून्य, 10) == fwspec->param[0];
+	पूर्ण
+	वापस to_of_node(fwspec->fwnode) &&
 		of_device_is_compatible(to_of_node(fwspec->fwnode),
 					"intel,ce4100-ioapic");
-}
+पूर्ण
 
-int x86_fwspec_is_hpet(struct irq_fwspec *fwspec)
-{
-	if (fwspec->param_count != 1)
-		return 0;
+पूर्णांक x86_fwspec_is_hpet(काष्ठा irq_fwspec *fwspec)
+अणु
+	अगर (fwspec->param_count != 1)
+		वापस 0;
 
-	if (is_fwnode_irqchip(fwspec->fwnode)) {
-		const char *fwname = fwnode_get_name(fwspec->fwnode);
-		return fwname && !strncmp(fwname, "HPET-MSI-", 9) &&
-			simple_strtol(fwname+9, NULL, 10) == fwspec->param[0];
-	}
-	return 0;
-}
+	अगर (is_fwnode_irqchip(fwspec->fwnode)) अणु
+		स्थिर अक्षर *fwname = fwnode_get_name(fwspec->fwnode);
+		वापस fwname && !म_भेदन(fwname, "HPET-MSI-", 9) &&
+			simple_म_से_दीर्घ(fwname+9, शून्य, 10) == fwspec->param[0];
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int x86_vector_select(struct irq_domain *d, struct irq_fwspec *fwspec,
-			     enum irq_domain_bus_token bus_token)
-{
+अटल पूर्णांक x86_vector_select(काष्ठा irq_करोमुख्य *d, काष्ठा irq_fwspec *fwspec,
+			     क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
 	/*
-	 * HPET and I/OAPIC cannot be parented in the vector domain
-	 * if IRQ remapping is enabled. APIC IDs above 15 bits are
-	 * only permitted if IRQ remapping is enabled, so check that.
+	 * HPET and I/OAPIC cannot be parented in the vector करोमुख्य
+	 * अगर IRQ remapping is enabled. APIC IDs above 15 bits are
+	 * only permitted अगर IRQ remapping is enabled, so check that.
 	 */
-	if (apic->apic_id_valid(32768))
-		return 0;
+	अगर (apic->apic_id_valid(32768))
+		वापस 0;
 
-	return x86_fwspec_is_ioapic(fwspec) || x86_fwspec_is_hpet(fwspec);
-}
+	वापस x86_fwspec_is_ioapic(fwspec) || x86_fwspec_is_hpet(fwspec);
+पूर्ण
 
-static const struct irq_domain_ops x86_vector_domain_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops x86_vector_करोमुख्य_ops = अणु
 	.select		= x86_vector_select,
 	.alloc		= x86_vector_alloc_irqs,
-	.free		= x86_vector_free_irqs,
+	.मुक्त		= x86_vector_मुक्त_irqs,
 	.activate	= x86_vector_activate,
 	.deactivate	= x86_vector_deactivate,
-#ifdef CONFIG_GENERIC_IRQ_DEBUGFS
+#अगर_घोषित CONFIG_GENERIC_IRQ_DEBUGFS
 	.debug_show	= x86_vector_debug_show,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-int __init arch_probe_nr_irqs(void)
-{
-	int nr;
+पूर्णांक __init arch_probe_nr_irqs(व्योम)
+अणु
+	पूर्णांक nr;
 
-	if (nr_irqs > (NR_VECTORS * nr_cpu_ids))
+	अगर (nr_irqs > (NR_VECTORS * nr_cpu_ids))
 		nr_irqs = NR_VECTORS * nr_cpu_ids;
 
 	nr = (gsi_top + nr_legacy_irqs()) + 8 * nr_cpu_ids;
-#if defined(CONFIG_PCI_MSI)
+#अगर defined(CONFIG_PCI_MSI)
 	/*
-	 * for MSI and HT dyn irq
+	 * क्रम MSI and HT dyn irq
 	 */
-	if (gsi_top <= NR_IRQS_LEGACY)
+	अगर (gsi_top <= NR_IRQS_LEGACY)
 		nr +=  8 * nr_cpu_ids;
-	else
+	अन्यथा
 		nr += gsi_top * 16;
-#endif
-	if (nr < nr_irqs)
+#पूर्ण_अगर
+	अगर (nr < nr_irqs)
 		nr_irqs = nr;
 
 	/*
-	 * We don't know if PIC is present at this point so we need to do
+	 * We करोn't know अगर PIC is present at this poपूर्णांक so we need to करो
 	 * probe() to get the right number of legacy IRQs.
 	 */
-	return legacy_pic->probe();
-}
+	वापस legacy_pic->probe();
+पूर्ण
 
-void lapic_assign_legacy_vector(unsigned int irq, bool replace)
-{
+व्योम lapic_assign_legacy_vector(अचिन्हित पूर्णांक irq, bool replace)
+अणु
 	/*
-	 * Use assign system here so it wont get accounted as allocated
+	 * Use assign प्रणाली here so it wont get accounted as allocated
 	 * and moveable in the cpu hotplug check and it prevents managed
 	 * irq reservation from touching it.
 	 */
-	irq_matrix_assign_system(vector_matrix, ISA_IRQ_VECTOR(irq), replace);
-}
+	irq_matrix_assign_प्रणाली(vector_matrix, ISA_IRQ_VECTOR(irq), replace);
+पूर्ण
 
-void __init lapic_update_legacy_vectors(void)
-{
-	unsigned int i;
+व्योम __init lapic_update_legacy_vectors(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (IS_ENABLED(CONFIG_X86_IO_APIC) && nr_ioapics > 0)
-		return;
+	अगर (IS_ENABLED(CONFIG_X86_IO_APIC) && nr_ioapics > 0)
+		वापस;
 
 	/*
 	 * If the IO/APIC is disabled via config, kernel command line or
-	 * lack of enumeration then all legacy interrupts are routed
+	 * lack of क्रमागतeration then all legacy पूर्णांकerrupts are routed
 	 * through the PIC. Make sure that they are marked as legacy
-	 * vectors. PIC_CASCADE_IRQ has already been marked in
-	 * lapic_assign_system_vectors().
+	 * vectors. PIC_CASCADE_IRQ has alपढ़ोy been marked in
+	 * lapic_assign_प्रणाली_vectors().
 	 */
-	for (i = 0; i < nr_legacy_irqs(); i++) {
-		if (i != PIC_CASCADE_IR)
+	क्रम (i = 0; i < nr_legacy_irqs(); i++) अणु
+		अगर (i != PIC_CASCADE_IR)
 			lapic_assign_legacy_vector(i, true);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init lapic_assign_system_vectors(void)
-{
-	unsigned int i, vector = 0;
+व्योम __init lapic_assign_प्रणाली_vectors(व्योम)
+अणु
+	अचिन्हित पूर्णांक i, vector = 0;
 
-	for_each_set_bit_from(vector, system_vectors, NR_VECTORS)
-		irq_matrix_assign_system(vector_matrix, vector, false);
+	क्रम_each_set_bit_from(vector, प्रणाली_vectors, NR_VECTORS)
+		irq_matrix_assign_प्रणाली(vector_matrix, vector, false);
 
-	if (nr_legacy_irqs() > 1)
+	अगर (nr_legacy_irqs() > 1)
 		lapic_assign_legacy_vector(PIC_CASCADE_IR, false);
 
 	/* System vectors are reserved, online it */
 	irq_matrix_online(vector_matrix);
 
-	/* Mark the preallocated legacy interrupts */
-	for (i = 0; i < nr_legacy_irqs(); i++) {
+	/* Mark the pपुनः_स्मृतिated legacy पूर्णांकerrupts */
+	क्रम (i = 0; i < nr_legacy_irqs(); i++) अणु
 		/*
 		 * Don't touch the cascade interrupt. It's unusable
 		 * on PIC equipped machines. See the large comment
 		 * in the IO/APIC code.
 		 */
-		if (i != PIC_CASCADE_IR)
+		अगर (i != PIC_CASCADE_IR)
 			irq_matrix_assign(vector_matrix, ISA_IRQ_VECTOR(i));
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init arch_early_irq_init(void)
-{
-	struct fwnode_handle *fn;
+पूर्णांक __init arch_early_irq_init(व्योम)
+अणु
+	काष्ठा fwnode_handle *fn;
 
-	fn = irq_domain_alloc_named_fwnode("VECTOR");
+	fn = irq_करोमुख्य_alloc_named_fwnode("VECTOR");
 	BUG_ON(!fn);
-	x86_vector_domain = irq_domain_create_tree(fn, &x86_vector_domain_ops,
-						   NULL);
-	BUG_ON(x86_vector_domain == NULL);
-	irq_set_default_host(x86_vector_domain);
+	x86_vector_करोमुख्य = irq_करोमुख्य_create_tree(fn, &x86_vector_करोमुख्य_ops,
+						   शून्य);
+	BUG_ON(x86_vector_करोमुख्य == शून्य);
+	irq_set_शेष_host(x86_vector_करोमुख्य);
 
 	BUG_ON(!alloc_cpumask_var(&vector_searchmask, GFP_KERNEL));
 
 	/*
-	 * Allocate the vector matrix allocator data structure and limit the
+	 * Allocate the vector matrix allocator data काष्ठाure and limit the
 	 * search area.
 	 */
 	vector_matrix = irq_alloc_matrix(NR_VECTORS, FIRST_EXTERNAL_VECTOR,
 					 FIRST_SYSTEM_VECTOR);
 	BUG_ON(!vector_matrix);
 
-	return arch_early_ioapic_init();
-}
+	वापस arch_early_ioapic_init();
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static struct irq_desc *__setup_vector_irq(int vector)
-{
-	int isairq = vector - ISA_IRQ_VECTOR(0);
+अटल काष्ठा irq_desc *__setup_vector_irq(पूर्णांक vector)
+अणु
+	पूर्णांक isairq = vector - ISA_IRQ_VECTOR(0);
 
 	/* Check whether the irq is in the legacy space */
-	if (isairq < 0 || isairq >= nr_legacy_irqs())
-		return VECTOR_UNUSED;
+	अगर (isairq < 0 || isairq >= nr_legacy_irqs())
+		वापस VECTOR_UNUSED;
 	/* Check whether the irq is handled by the IOAPIC */
-	if (test_bit(isairq, &io_apic_irqs))
-		return VECTOR_UNUSED;
-	return irq_to_desc(isairq);
-}
+	अगर (test_bit(isairq, &io_apic_irqs))
+		वापस VECTOR_UNUSED;
+	वापस irq_to_desc(isairq);
+पूर्ण
 
-/* Online the local APIC infrastructure and initialize the vectors */
-void lapic_online(void)
-{
-	unsigned int vector;
+/* Online the local APIC infraकाष्ठाure and initialize the vectors */
+व्योम lapic_online(व्योम)
+अणु
+	अचिन्हित पूर्णांक vector;
 
-	lockdep_assert_held(&vector_lock);
+	lockdep_निश्चित_held(&vector_lock);
 
-	/* Online the vector matrix array for this CPU */
+	/* Online the vector matrix array क्रम this CPU */
 	irq_matrix_online(vector_matrix);
 
 	/*
-	 * The interrupt affinity logic never targets interrupts to offline
-	 * CPUs. The exception are the legacy PIC interrupts. In general
-	 * they are only targeted to CPU0, but depending on the platform
+	 * The पूर्णांकerrupt affinity logic never tarमाला_लो पूर्णांकerrupts to offline
+	 * CPUs. The exception are the legacy PIC पूर्णांकerrupts. In general
+	 * they are only targeted to CPU0, but depending on the platक्रमm
 	 * they can be distributed to any online CPU in hardware. The
 	 * kernel has no influence on that. So all active legacy vectors
-	 * must be installed on all CPUs. All non legacy interrupts can be
+	 * must be installed on all CPUs. All non legacy पूर्णांकerrupts can be
 	 * cleared.
 	 */
-	for (vector = 0; vector < NR_VECTORS; vector++)
-		this_cpu_write(vector_irq[vector], __setup_vector_irq(vector));
-}
+	क्रम (vector = 0; vector < NR_VECTORS; vector++)
+		this_cpu_ग_लिखो(vector_irq[vector], __setup_vector_irq(vector));
+पूर्ण
 
-void lapic_offline(void)
-{
+व्योम lapic_offline(व्योम)
+अणु
 	lock_vector_lock();
 	irq_matrix_offline(vector_matrix);
 	unlock_vector_lock();
-}
+पूर्ण
 
-static int apic_set_affinity(struct irq_data *irqd,
-			     const struct cpumask *dest, bool force)
-{
-	int err;
+अटल पूर्णांक apic_set_affinity(काष्ठा irq_data *irqd,
+			     स्थिर काष्ठा cpumask *dest, bool क्रमce)
+अणु
+	पूर्णांक err;
 
-	if (WARN_ON_ONCE(!irqd_is_activated(irqd)))
-		return -EIO;
+	अगर (WARN_ON_ONCE(!irqd_is_activated(irqd)))
+		वापस -EIO;
 
 	raw_spin_lock(&vector_lock);
 	cpumask_and(vector_searchmask, dest, cpu_online_mask);
-	if (irqd_affinity_is_managed(irqd))
+	अगर (irqd_affinity_is_managed(irqd))
 		err = assign_managed_vector(irqd, vector_searchmask);
-	else
+	अन्यथा
 		err = assign_vector_locked(irqd, vector_searchmask);
 	raw_spin_unlock(&vector_lock);
-	return err ? err : IRQ_SET_MASK_OK;
-}
+	वापस err ? err : IRQ_SET_MASK_OK;
+पूर्ण
 
-#else
-# define apic_set_affinity	NULL
-#endif
+#अन्यथा
+# define apic_set_affinity	शून्य
+#पूर्ण_अगर
 
-static int apic_retrigger_irq(struct irq_data *irqd)
-{
-	struct apic_chip_data *apicd = apic_chip_data(irqd);
-	unsigned long flags;
+अटल पूर्णांक apic_retrigger_irq(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा apic_chip_data *apicd = apic_chip_data(irqd);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&vector_lock, flags);
 	apic->send_IPI(apicd->cpu, apicd->vector);
 	raw_spin_unlock_irqrestore(&vector_lock, flags);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void apic_ack_irq(struct irq_data *irqd)
-{
+व्योम apic_ack_irq(काष्ठा irq_data *irqd)
+अणु
 	irq_move_irq(irqd);
 	ack_APIC_irq();
-}
+पूर्ण
 
-void apic_ack_edge(struct irq_data *irqd)
-{
+व्योम apic_ack_edge(काष्ठा irq_data *irqd)
+अणु
 	irq_complete_move(irqd_cfg(irqd));
 	apic_ack_irq(irqd);
-}
+पूर्ण
 
-static void x86_vector_msi_compose_msg(struct irq_data *data,
-				       struct msi_msg *msg)
-{
+अटल व्योम x86_vector_msi_compose_msg(काष्ठा irq_data *data,
+				       काष्ठा msi_msg *msg)
+अणु
        __irq_msi_compose_msg(irqd_cfg(data), msg, false);
-}
+पूर्ण
 
-static struct irq_chip lapic_controller = {
+अटल काष्ठा irq_chip lapic_controller = अणु
 	.name			= "APIC",
 	.irq_ack		= apic_ack_edge,
 	.irq_set_affinity	= apic_set_affinity,
 	.irq_compose_msi_msg	= x86_vector_msi_compose_msg,
 	.irq_retrigger		= apic_retrigger_irq,
-};
+पूर्ण;
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static void free_moved_vector(struct apic_chip_data *apicd)
-{
-	unsigned int vector = apicd->prev_vector;
-	unsigned int cpu = apicd->prev_cpu;
+अटल व्योम मुक्त_moved_vector(काष्ठा apic_chip_data *apicd)
+अणु
+	अचिन्हित पूर्णांक vector = apicd->prev_vector;
+	अचिन्हित पूर्णांक cpu = apicd->prev_cpu;
 	bool managed = apicd->is_managed;
 
 	/*
-	 * Managed interrupts are usually not migrated away
+	 * Managed पूर्णांकerrupts are usually not migrated away
 	 * from an online CPU, but CPU isolation 'managed_irq'
 	 * can make that happen.
-	 * 1) Activation does not take the isolation into account
+	 * 1) Activation करोes not take the isolation पूर्णांकo account
 	 *    to keep the code simple
 	 * 2) Migration away from an isolated CPU can happen when
 	 *    a non-isolated CPU which is in the calculated
 	 *    affinity mask comes online.
 	 */
-	trace_vector_free_moved(apicd->irq, cpu, vector, managed);
-	irq_matrix_free(vector_matrix, cpu, vector, managed);
+	trace_vector_मुक्त_moved(apicd->irq, cpu, vector, managed);
+	irq_matrix_मुक्त(vector_matrix, cpu, vector, managed);
 	per_cpu(vector_irq, cpu)[vector] = VECTOR_UNUSED;
 	hlist_del_init(&apicd->clist);
 	apicd->prev_vector = 0;
 	apicd->move_in_progress = 0;
-}
+पूर्ण
 
 DEFINE_IDTENTRY_SYSVEC(sysvec_irq_move_cleanup)
-{
-	struct hlist_head *clhead = this_cpu_ptr(&cleanup_list);
-	struct apic_chip_data *apicd;
-	struct hlist_node *tmp;
+अणु
+	काष्ठा hlist_head *clhead = this_cpu_ptr(&cleanup_list);
+	काष्ठा apic_chip_data *apicd;
+	काष्ठा hlist_node *पंचांगp;
 
 	ack_APIC_irq();
 	/* Prevent vectors vanishing under us */
 	raw_spin_lock(&vector_lock);
 
-	hlist_for_each_entry_safe(apicd, tmp, clhead, clist) {
-		unsigned int irr, vector = apicd->prev_vector;
+	hlist_क्रम_each_entry_safe(apicd, पंचांगp, clhead, clist) अणु
+		अचिन्हित पूर्णांक irr, vector = apicd->prev_vector;
 
 		/*
-		 * Paranoia: Check if the vector that needs to be cleaned
-		 * up is registered at the APICs IRR. If so, then this is
-		 * not the best time to clean it up. Clean it up in the
+		 * Paranoia: Check अगर the vector that needs to be cleaned
+		 * up is रेजिस्टरed at the APICs IRR. If so, then this is
+		 * not the best समय to clean it up. Clean it up in the
 		 * next attempt by sending another IRQ_MOVE_CLEANUP_VECTOR
 		 * to this CPU. IRQ_MOVE_CLEANUP_VECTOR is the lowest
-		 * priority external vector, so on return from this
-		 * interrupt the device interrupt will happen first.
+		 * priority बाह्यal vector, so on वापस from this
+		 * पूर्णांकerrupt the device पूर्णांकerrupt will happen first.
 		 */
-		irr = apic_read(APIC_IRR + (vector / 32 * 0x10));
-		if (irr & (1U << (vector % 32))) {
+		irr = apic_पढ़ो(APIC_IRR + (vector / 32 * 0x10));
+		अगर (irr & (1U << (vector % 32))) अणु
 			apic->send_IPI_self(IRQ_MOVE_CLEANUP_VECTOR);
-			continue;
-		}
-		free_moved_vector(apicd);
-	}
+			जारी;
+		पूर्ण
+		मुक्त_moved_vector(apicd);
+	पूर्ण
 
 	raw_spin_unlock(&vector_lock);
-}
+पूर्ण
 
-static void __send_cleanup_vector(struct apic_chip_data *apicd)
-{
-	unsigned int cpu;
+अटल व्योम __send_cleanup_vector(काष्ठा apic_chip_data *apicd)
+अणु
+	अचिन्हित पूर्णांक cpu;
 
 	raw_spin_lock(&vector_lock);
 	apicd->move_in_progress = 0;
 	cpu = apicd->prev_cpu;
-	if (cpu_online(cpu)) {
+	अगर (cpu_online(cpu)) अणु
 		hlist_add_head(&apicd->clist, per_cpu_ptr(&cleanup_list, cpu));
 		apic->send_IPI(cpu, IRQ_MOVE_CLEANUP_VECTOR);
-	} else {
+	पूर्ण अन्यथा अणु
 		apicd->prev_vector = 0;
-	}
+	पूर्ण
 	raw_spin_unlock(&vector_lock);
-}
+पूर्ण
 
-void send_cleanup_vector(struct irq_cfg *cfg)
-{
-	struct apic_chip_data *apicd;
+व्योम send_cleanup_vector(काष्ठा irq_cfg *cfg)
+अणु
+	काष्ठा apic_chip_data *apicd;
 
-	apicd = container_of(cfg, struct apic_chip_data, hw_irq_cfg);
-	if (apicd->move_in_progress)
+	apicd = container_of(cfg, काष्ठा apic_chip_data, hw_irq_cfg);
+	अगर (apicd->move_in_progress)
 		__send_cleanup_vector(apicd);
-}
+पूर्ण
 
-void irq_complete_move(struct irq_cfg *cfg)
-{
-	struct apic_chip_data *apicd;
+व्योम irq_complete_move(काष्ठा irq_cfg *cfg)
+अणु
+	काष्ठा apic_chip_data *apicd;
 
-	apicd = container_of(cfg, struct apic_chip_data, hw_irq_cfg);
-	if (likely(!apicd->move_in_progress))
-		return;
+	apicd = container_of(cfg, काष्ठा apic_chip_data, hw_irq_cfg);
+	अगर (likely(!apicd->move_in_progress))
+		वापस;
 
 	/*
-	 * If the interrupt arrived on the new target CPU, cleanup the
+	 * If the पूर्णांकerrupt arrived on the new target CPU, cleanup the
 	 * vector on the old target CPU. A vector check is not required
-	 * because an interrupt can never move from one vector to another
+	 * because an पूर्णांकerrupt can never move from one vector to another
 	 * on the same CPU.
 	 */
-	if (apicd->cpu == smp_processor_id())
+	अगर (apicd->cpu == smp_processor_id())
 		__send_cleanup_vector(apicd);
-}
+पूर्ण
 
 /*
- * Called from fixup_irqs() with @desc->lock held and interrupts disabled.
+ * Called from fixup_irqs() with @desc->lock held and पूर्णांकerrupts disabled.
  */
-void irq_force_complete_move(struct irq_desc *desc)
-{
-	struct apic_chip_data *apicd;
-	struct irq_data *irqd;
-	unsigned int vector;
+व्योम irq_क्रमce_complete_move(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा apic_chip_data *apicd;
+	काष्ठा irq_data *irqd;
+	अचिन्हित पूर्णांक vector;
 
 	/*
-	 * The function is called for all descriptors regardless of which
-	 * irqdomain they belong to. For example if an IRQ is provided by
-	 * an irq_chip as part of a GPIO driver, the chip data for that
-	 * descriptor is specific to the irq_chip in question.
+	 * The function is called क्रम all descriptors regardless of which
+	 * irqकरोमुख्य they beदीर्घ to. For example अगर an IRQ is provided by
+	 * an irq_chip as part of a GPIO driver, the chip data क्रम that
+	 * descriptor is specअगरic to the irq_chip in question.
 	 *
 	 * Check first that the chip_data is what we expect
-	 * (apic_chip_data) before touching it any further.
+	 * (apic_chip_data) beक्रमe touching it any further.
 	 */
-	irqd = irq_domain_get_irq_data(x86_vector_domain,
+	irqd = irq_करोमुख्य_get_irq_data(x86_vector_करोमुख्य,
 				       irq_desc_get_irq(desc));
-	if (!irqd)
-		return;
+	अगर (!irqd)
+		वापस;
 
 	raw_spin_lock(&vector_lock);
 	apicd = apic_chip_data(irqd);
-	if (!apicd)
-		goto unlock;
+	अगर (!apicd)
+		जाओ unlock;
 
 	/*
 	 * If prev_vector is empty, no action required.
 	 */
 	vector = apicd->prev_vector;
-	if (!vector)
-		goto unlock;
+	अगर (!vector)
+		जाओ unlock;
 
 	/*
 	 * This is tricky. If the cleanup of the old vector has not been
-	 * done yet, then the following setaffinity call will fail with
-	 * -EBUSY. This can leave the interrupt in a stale state.
+	 * करोne yet, then the following setaffinity call will fail with
+	 * -EBUSY. This can leave the पूर्णांकerrupt in a stale state.
 	 *
-	 * All CPUs are stuck in stop machine with interrupts disabled so
-	 * calling __irq_complete_move() would be completely pointless.
+	 * All CPUs are stuck in stop machine with पूर्णांकerrupts disabled so
+	 * calling __irq_complete_move() would be completely poपूर्णांकless.
 	 *
-	 * 1) The interrupt is in move_in_progress state. That means that we
-	 *    have not seen an interrupt since the io_apic was reprogrammed to
+	 * 1) The पूर्णांकerrupt is in move_in_progress state. That means that we
+	 *    have not seen an पूर्णांकerrupt since the io_apic was reprogrammed to
 	 *    the new vector.
 	 *
-	 * 2) The interrupt has fired on the new vector, but the cleanup IPIs
+	 * 2) The पूर्णांकerrupt has fired on the new vector, but the cleanup IPIs
 	 *    have not been processed yet.
 	 */
-	if (apicd->move_in_progress) {
+	अगर (apicd->move_in_progress) अणु
 		/*
 		 * In theory there is a race:
 		 *
-		 * set_ioapic(new_vector) <-- Interrupt is raised before update
-		 *			      is effective, i.e. it's raised on
+		 * set_ioapic(new_vector) <-- Interrupt is उठाओd beक्रमe update
+		 *			      is effective, i.e. it's उठाओd on
 		 *			      the old vector.
 		 *
-		 * So if the target cpu cannot handle that interrupt before
-		 * the old vector is cleaned up, we get a spurious interrupt
-		 * and in the worst case the ioapic irq line becomes stale.
+		 * So अगर the target cpu cannot handle that पूर्णांकerrupt beक्रमe
+		 * the old vector is cleaned up, we get a spurious पूर्णांकerrupt
+		 * and in the worst हाल the ioapic irq line becomes stale.
 		 *
-		 * But in case of cpu hotplug this should be a non issue
-		 * because if the affinity update happens right before all
+		 * But in हाल of cpu hotplug this should be a non issue
+		 * because अगर the affinity update happens right beक्रमe all
 		 * cpus rendezvous in stop machine, there is no way that the
-		 * interrupt can be blocked on the target cpu because all cpus
-		 * loops first with interrupts enabled in stop machine, so the
-		 * old vector is not yet cleaned up when the interrupt fires.
+		 * पूर्णांकerrupt can be blocked on the target cpu because all cpus
+		 * loops first with पूर्णांकerrupts enabled in stop machine, so the
+		 * old vector is not yet cleaned up when the पूर्णांकerrupt fires.
 		 *
-		 * So the only way to run into this issue is if the delivery
-		 * of the interrupt on the apic/system bus would be delayed
-		 * beyond the point where the target cpu disables interrupts
-		 * in stop machine. I doubt that it can happen, but at least
+		 * So the only way to run पूर्णांकo this issue is अगर the delivery
+		 * of the पूर्णांकerrupt on the apic/प्रणाली bus would be delayed
+		 * beyond the poपूर्णांक where the target cpu disables पूर्णांकerrupts
+		 * in stop machine. I करोubt that it can happen, but at least
 		 * there is a theoretical chance. Virtualization might be
 		 * able to expose this, but AFAICT the IOAPIC emulation is not
 		 * as stupid as the real hardware.
 		 *
-		 * Anyway, there is nothing we can do about that at this point
+		 * Anyway, there is nothing we can करो about that at this poपूर्णांक
 		 * w/o refactoring the whole fixup_irq() business completely.
-		 * We print at least the irq number and the old vector number,
-		 * so we have the necessary information when a problem in that
+		 * We prपूर्णांक at least the irq number and the old vector number,
+		 * so we have the necessary inक्रमmation when a problem in that
 		 * area arises.
 		 */
 		pr_warn("IRQ fixup: irq %d move in progress, old vector %d\n",
 			irqd->irq, vector);
-	}
-	free_moved_vector(apicd);
+	पूर्ण
+	मुक्त_moved_vector(apicd);
 unlock:
 	raw_spin_unlock(&vector_lock);
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 /*
  * Note, this is not accurate accounting, but at least good enough to
- * prevent that the actual interrupt move will run out of vectors.
+ * prevent that the actual पूर्णांकerrupt move will run out of vectors.
  */
-int lapic_can_unplug_cpu(void)
-{
-	unsigned int rsvd, avl, tomove, cpu = smp_processor_id();
-	int ret = 0;
+पूर्णांक lapic_can_unplug_cpu(व्योम)
+अणु
+	अचिन्हित पूर्णांक rsvd, avl, tomove, cpu = smp_processor_id();
+	पूर्णांक ret = 0;
 
 	raw_spin_lock(&vector_lock);
 	tomove = irq_matrix_allocated(vector_matrix);
 	avl = irq_matrix_available(vector_matrix, true);
-	if (avl < tomove) {
+	अगर (avl < tomove) अणु
 		pr_warn("CPU %u has %u vectors, %u available. Cannot disable CPU\n",
 			cpu, tomove, avl);
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	rsvd = irq_matrix_reserved(vector_matrix);
-	if (avl < rsvd) {
+	अगर (avl < rsvd) अणु
 		pr_warn("Reserved vectors %u > available %u. IRQ request may fail\n",
 			rsvd, avl);
-	}
+	पूर्ण
 out:
 	raw_spin_unlock(&vector_lock);
-	return ret;
-}
-#endif /* HOTPLUG_CPU */
-#endif /* SMP */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* HOTPLUG_CPU */
+#पूर्ण_अगर /* SMP */
 
-static void __init print_APIC_field(int base)
-{
-	int i;
+अटल व्योम __init prपूर्णांक_APIC_field(पूर्णांक base)
+अणु
+	पूर्णांक i;
 
-	printk(KERN_DEBUG);
+	prपूर्णांकk(KERN_DEBUG);
 
-	for (i = 0; i < 8; i++)
-		pr_cont("%08x", apic_read(base + i*0x10));
+	क्रम (i = 0; i < 8; i++)
+		pr_cont("%08x", apic_पढ़ो(base + i*0x10));
 
 	pr_cont("\n");
-}
+पूर्ण
 
-static void __init print_local_APIC(void *dummy)
-{
-	unsigned int i, v, ver, maxlvt;
+अटल व्योम __init prपूर्णांक_local_APIC(व्योम *dummy)
+अणु
+	अचिन्हित पूर्णांक i, v, ver, maxlvt;
 	u64 icr;
 
 	pr_debug("printing local APIC contents on CPU#%d/%d:\n",
 		 smp_processor_id(), hard_smp_processor_id());
-	v = apic_read(APIC_ID);
-	pr_info("... APIC ID:      %08x (%01x)\n", v, read_apic_id());
-	v = apic_read(APIC_LVR);
+	v = apic_पढ़ो(APIC_ID);
+	pr_info("... APIC ID:      %08x (%01x)\n", v, पढ़ो_apic_id());
+	v = apic_पढ़ो(APIC_LVR);
 	pr_info("... APIC VERSION: %08x\n", v);
 	ver = GET_APIC_VERSION(v);
 	maxlvt = lapic_get_maxlvt();
 
-	v = apic_read(APIC_TASKPRI);
+	v = apic_पढ़ो(APIC_TASKPRI);
 	pr_debug("... APIC TASKPRI: %08x (%02x)\n", v, v & APIC_TPRI_MASK);
 
 	/* !82489DX */
-	if (APIC_INTEGRATED(ver)) {
-		if (!APIC_XAPIC(ver)) {
-			v = apic_read(APIC_ARBPRI);
+	अगर (APIC_INTEGRATED(ver)) अणु
+		अगर (!APIC_XAPIC(ver)) अणु
+			v = apic_पढ़ो(APIC_ARBPRI);
 			pr_debug("... APIC ARBPRI: %08x (%02x)\n",
 				 v, v & APIC_ARBPRI_MASK);
-		}
-		v = apic_read(APIC_PROCPRI);
+		पूर्ण
+		v = apic_पढ़ो(APIC_PROCPRI);
 		pr_debug("... APIC PROCPRI: %08x\n", v);
-	}
+	पूर्ण
 
 	/*
-	 * Remote read supported only in the 82489DX and local APIC for
+	 * Remote पढ़ो supported only in the 82489DX and local APIC क्रम
 	 * Pentium processors.
 	 */
-	if (!APIC_INTEGRATED(ver) || maxlvt == 3) {
-		v = apic_read(APIC_RRR);
+	अगर (!APIC_INTEGRATED(ver) || maxlvt == 3) अणु
+		v = apic_पढ़ो(APIC_RRR);
 		pr_debug("... APIC RRR: %08x\n", v);
-	}
+	पूर्ण
 
-	v = apic_read(APIC_LDR);
+	v = apic_पढ़ो(APIC_LDR);
 	pr_debug("... APIC LDR: %08x\n", v);
-	if (!x2apic_enabled()) {
-		v = apic_read(APIC_DFR);
+	अगर (!x2apic_enabled()) अणु
+		v = apic_पढ़ो(APIC_DFR);
 		pr_debug("... APIC DFR: %08x\n", v);
-	}
-	v = apic_read(APIC_SPIV);
+	पूर्ण
+	v = apic_पढ़ो(APIC_SPIV);
 	pr_debug("... APIC SPIV: %08x\n", v);
 
 	pr_debug("... APIC ISR field:\n");
-	print_APIC_field(APIC_ISR);
+	prपूर्णांक_APIC_field(APIC_ISR);
 	pr_debug("... APIC TMR field:\n");
-	print_APIC_field(APIC_TMR);
+	prपूर्णांक_APIC_field(APIC_TMR);
 	pr_debug("... APIC IRR field:\n");
-	print_APIC_field(APIC_IRR);
+	prपूर्णांक_APIC_field(APIC_IRR);
 
 	/* !82489DX */
-	if (APIC_INTEGRATED(ver)) {
+	अगर (APIC_INTEGRATED(ver)) अणु
 		/* Due to the Pentium erratum 3AP. */
-		if (maxlvt > 3)
-			apic_write(APIC_ESR, 0);
+		अगर (maxlvt > 3)
+			apic_ग_लिखो(APIC_ESR, 0);
 
-		v = apic_read(APIC_ESR);
+		v = apic_पढ़ो(APIC_ESR);
 		pr_debug("... APIC ESR: %08x\n", v);
-	}
+	पूर्ण
 
-	icr = apic_icr_read();
+	icr = apic_icr_पढ़ो();
 	pr_debug("... APIC ICR: %08x\n", (u32)icr);
 	pr_debug("... APIC ICR2: %08x\n", (u32)(icr >> 32));
 
-	v = apic_read(APIC_LVTT);
+	v = apic_पढ़ो(APIC_LVTT);
 	pr_debug("... APIC LVTT: %08x\n", v);
 
-	if (maxlvt > 3) {
+	अगर (maxlvt > 3) अणु
 		/* PC is LVT#4. */
-		v = apic_read(APIC_LVTPC);
+		v = apic_पढ़ो(APIC_LVTPC);
 		pr_debug("... APIC LVTPC: %08x\n", v);
-	}
-	v = apic_read(APIC_LVT0);
+	पूर्ण
+	v = apic_पढ़ो(APIC_LVT0);
 	pr_debug("... APIC LVT0: %08x\n", v);
-	v = apic_read(APIC_LVT1);
+	v = apic_पढ़ो(APIC_LVT1);
 	pr_debug("... APIC LVT1: %08x\n", v);
 
-	if (maxlvt > 2) {
+	अगर (maxlvt > 2) अणु
 		/* ERR is LVT#3. */
-		v = apic_read(APIC_LVTERR);
+		v = apic_पढ़ो(APIC_LVTERR);
 		pr_debug("... APIC LVTERR: %08x\n", v);
-	}
+	पूर्ण
 
-	v = apic_read(APIC_TMICT);
+	v = apic_पढ़ो(APIC_TMICT);
 	pr_debug("... APIC TMICT: %08x\n", v);
-	v = apic_read(APIC_TMCCT);
+	v = apic_पढ़ो(APIC_TMCCT);
 	pr_debug("... APIC TMCCT: %08x\n", v);
-	v = apic_read(APIC_TDCR);
+	v = apic_पढ़ो(APIC_TDCR);
 	pr_debug("... APIC TDCR: %08x\n", v);
 
-	if (boot_cpu_has(X86_FEATURE_EXTAPIC)) {
-		v = apic_read(APIC_EFEAT);
+	अगर (boot_cpu_has(X86_FEATURE_EXTAPIC)) अणु
+		v = apic_पढ़ो(APIC_EFEAT);
 		maxlvt = (v >> 16) & 0xff;
 		pr_debug("... APIC EFEAT: %08x\n", v);
-		v = apic_read(APIC_ECTRL);
+		v = apic_पढ़ो(APIC_ECTRL);
 		pr_debug("... APIC ECTRL: %08x\n", v);
-		for (i = 0; i < maxlvt; i++) {
-			v = apic_read(APIC_EILVTn(i));
+		क्रम (i = 0; i < maxlvt; i++) अणु
+			v = apic_पढ़ो(APIC_EILVTn(i));
 			pr_debug("... APIC EILVT%d: %08x\n", i, v);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	pr_cont("\n");
-}
+पूर्ण
 
-static void __init print_local_APICs(int maxcpu)
-{
-	int cpu;
+अटल व्योम __init prपूर्णांक_local_APICs(पूर्णांक maxcpu)
+अणु
+	पूर्णांक cpu;
 
-	if (!maxcpu)
-		return;
+	अगर (!maxcpu)
+		वापस;
 
 	preempt_disable();
-	for_each_online_cpu(cpu) {
-		if (cpu >= maxcpu)
-			break;
-		smp_call_function_single(cpu, print_local_APIC, NULL, 1);
-	}
+	क्रम_each_online_cpu(cpu) अणु
+		अगर (cpu >= maxcpu)
+			अवरोध;
+		smp_call_function_single(cpu, prपूर्णांक_local_APIC, शून्य, 1);
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
-static void __init print_PIC(void)
-{
-	unsigned int v;
-	unsigned long flags;
+अटल व्योम __init prपूर्णांक_PIC(व्योम)
+अणु
+	अचिन्हित पूर्णांक v;
+	अचिन्हित दीर्घ flags;
 
-	if (!nr_legacy_irqs())
-		return;
+	अगर (!nr_legacy_irqs())
+		वापस;
 
 	pr_debug("\nprinting PIC contents\n");
 
@@ -1301,40 +1302,40 @@ static void __init print_PIC(void)
 
 	v = inb(0x4d1) << 8 | inb(0x4d0);
 	pr_debug("... PIC ELCR: %04x\n", v);
-}
+पूर्ण
 
-static int show_lapic __initdata = 1;
-static __init int setup_show_lapic(char *arg)
-{
-	int num = -1;
+अटल पूर्णांक show_lapic __initdata = 1;
+अटल __init पूर्णांक setup_show_lapic(अक्षर *arg)
+अणु
+	पूर्णांक num = -1;
 
-	if (strcmp(arg, "all") == 0) {
+	अगर (म_भेद(arg, "all") == 0) अणु
 		show_lapic = CONFIG_NR_CPUS;
-	} else {
+	पूर्ण अन्यथा अणु
 		get_option(&arg, &num);
-		if (num >= 0)
+		अगर (num >= 0)
 			show_lapic = num;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("show_lapic=", setup_show_lapic);
 
-static int __init print_ICs(void)
-{
-	if (apic_verbosity == APIC_QUIET)
-		return 0;
+अटल पूर्णांक __init prपूर्णांक_ICs(व्योम)
+अणु
+	अगर (apic_verbosity == APIC_QUIET)
+		वापस 0;
 
-	print_PIC();
+	prपूर्णांक_PIC();
 
-	/* don't print out if apic is not there */
-	if (!boot_cpu_has(X86_FEATURE_APIC) && !apic_from_smp_config())
-		return 0;
+	/* करोn't prपूर्णांक out अगर apic is not there */
+	अगर (!boot_cpu_has(X86_FEATURE_APIC) && !apic_from_smp_config())
+		वापस 0;
 
-	print_local_APICs(show_lapic);
-	print_IO_APICs();
+	prपूर्णांक_local_APICs(show_lapic);
+	prपूर्णांक_IO_APICs();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-late_initcall(print_ICs);
+late_initcall(prपूर्णांक_ICs);

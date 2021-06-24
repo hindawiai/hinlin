@@ -1,218 +1,219 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _RAID1_H
-#define _RAID1_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _RAID1_H
+#घोषणा _RAID1_H
 
 /*
  * each barrier unit size is 64MB fow now
  * note: it must be larger than RESYNC_DEPTH
  */
-#define BARRIER_UNIT_SECTOR_BITS	17
-#define BARRIER_UNIT_SECTOR_SIZE	(1<<17)
+#घोषणा BARRIER_UNIT_SECTOR_BITS	17
+#घोषणा BARRIER_UNIT_SECTOR_SIZE	(1<<17)
 /*
- * In struct r1conf, the following members are related to I/O barrier
+ * In काष्ठा r1conf, the following members are related to I/O barrier
  * buckets,
  *	atomic_t	*nr_pending;
- *	atomic_t	*nr_waiting;
+ *	atomic_t	*nr_रुकोing;
  *	atomic_t	*nr_queued;
  *	atomic_t	*barrier;
- * Each of them points to array of atomic_t variables, each array is
- * designed to have BARRIER_BUCKETS_NR elements and occupy a single
+ * Each of them poपूर्णांकs to array of atomic_t variables, each array is
+ * deचिन्हित to have BARRIER_BUCKETS_NR elements and occupy a single
  * memory page. The data width of atomic_t variables is 4 bytes, equal
- * to 1<<(ilog2(sizeof(atomic_t))), BARRIER_BUCKETS_NR_BITS is defined
- * as (PAGE_SHIFT - ilog2(sizeof(int))) to make sure an array of
+ * to 1<<(ilog2(माप(atomic_t))), BARRIER_BUCKETS_NR_BITS is defined
+ * as (PAGE_SHIFT - ilog2(माप(पूर्णांक))) to make sure an array of
  * atomic_t variables with BARRIER_BUCKETS_NR elements just exactly
  * occupies a single memory page.
  */
-#define BARRIER_BUCKETS_NR_BITS		(PAGE_SHIFT - ilog2(sizeof(atomic_t)))
-#define BARRIER_BUCKETS_NR		(1<<BARRIER_BUCKETS_NR_BITS)
+#घोषणा BARRIER_BUCKETS_NR_BITS		(PAGE_SHIFT - ilog2(माप(atomic_t)))
+#घोषणा BARRIER_BUCKETS_NR		(1<<BARRIER_BUCKETS_NR_BITS)
 
-/* Note: raid1_info.rdev can be set to NULL asynchronously by raid1_remove_disk.
+/* Note: raid1_info.rdev can be set to शून्य asynchronously by raid1_हटाओ_disk.
  * There are three safe ways to access raid1_info.rdev.
  * 1/ when holding mddev->reconfig_mutex
  * 2/ when resync/recovery is known to be happening - i.e. in code that is
- *    called as part of performing resync/recovery.
- * 3/ while holding rcu_read_lock(), use rcu_dereference to get the pointer
- *    and if it is non-NULL, increment rdev->nr_pending before dropping the
+ *    called as part of perक्रमming resync/recovery.
+ * 3/ जबतक holding rcu_पढ़ो_lock(), use rcu_dereference to get the poपूर्णांकer
+ *    and अगर it is non-शून्य, increment rdev->nr_pending beक्रमe dropping the
  *    RCU lock.
- * When .rdev is set to NULL, the nr_pending count checked again and if it has
- * been incremented, the pointer is put back in .rdev.
+ * When .rdev is set to शून्य, the nr_pending count checked again and अगर it has
+ * been incremented, the poपूर्णांकer is put back in .rdev.
  */
 
-struct raid1_info {
-	struct md_rdev	*rdev;
+काष्ठा raid1_info अणु
+	काष्ठा md_rdev	*rdev;
 	sector_t	head_position;
 
-	/* When choose the best device for a read (read_balance())
-	 * we try to keep sequential reads one the same device
+	/* When choose the best device क्रम a पढ़ो (पढ़ो_balance())
+	 * we try to keep sequential पढ़ोs one the same device
 	 */
 	sector_t	next_seq_sect;
 	sector_t	seq_start;
-};
+पूर्ण;
 
 /*
- * memory pools need a pointer to the mddev, so they can force an unplug
+ * memory pools need a poपूर्णांकer to the mddev, so they can क्रमce an unplug
  * when memory is tight, and a count of the number of drives that the
- * pool was allocated for, so they know how much to allocate and free.
- * mddev->raid_disks cannot be used, as it can change while a pool is active
- * These two datums are stored in a kmalloced struct.
+ * pool was allocated क्रम, so they know how much to allocate and मुक्त.
+ * mddev->raid_disks cannot be used, as it can change जबतक a pool is active
+ * These two datums are stored in a kदो_स्मृतिed काष्ठा.
  * The 'raid_disks' here is twice the raid_disks in r1conf.
- * This allows space for each 'real' device can have a replacement in the
+ * This allows space क्रम each 'real' device can have a replacement in the
  * second half of the array.
  */
 
-struct pool_info {
-	struct mddev *mddev;
-	int	raid_disks;
-};
+काष्ठा pool_info अणु
+	काष्ठा mddev *mddev;
+	पूर्णांक	raid_disks;
+पूर्ण;
 
-struct r1conf {
-	struct mddev		*mddev;
-	struct raid1_info	*mirrors;	/* twice 'raid_disks' to
-						 * allow for replacements.
+काष्ठा r1conf अणु
+	काष्ठा mddev		*mddev;
+	काष्ठा raid1_info	*mirrors;	/* twice 'raid_disks' to
+						 * allow क्रम replacements.
 						 */
-	int			raid_disks;
+	पूर्णांक			raid_disks;
 
 	spinlock_t		device_lock;
 
 	/* list of 'struct r1bio' that need to be processed by raid1d,
-	 * whether to retry a read, writeout a resync or recovery
-	 * block, or anything else.
+	 * whether to retry a पढ़ो, ग_लिखोout a resync or recovery
+	 * block, or anything अन्यथा.
 	 */
-	struct list_head	retry_list;
+	काष्ठा list_head	retry_list;
 	/* A separate list of r1bio which just need raid_end_bio_io called.
-	 * This mustn't happen for writes which had any errors if the superblock
+	 * This mustn't happen क्रम ग_लिखोs which had any errors अगर the superblock
 	 * needs to be written.
 	 */
-	struct list_head	bio_end_io_list;
+	काष्ठा list_head	bio_end_io_list;
 
-	/* queue pending writes to be submitted on unplug */
-	struct bio_list		pending_bio_list;
-	int			pending_count;
+	/* queue pending ग_लिखोs to be submitted on unplug */
+	काष्ठा bio_list		pending_bio_list;
+	पूर्णांक			pending_count;
 
-	/* for use when syncing mirrors:
-	 * We don't allow both normal IO and resync/recovery IO at
-	 * the same time - resync/recovery can only happen when there
-	 * is no other IO.  So when either is active, the other has to wait.
-	 * See more details description in raid1.c near raise_barrier().
+	/* क्रम use when syncing mirrors:
+	 * We करोn't allow both normal IO and resync/recovery IO at
+	 * the same समय - resync/recovery can only happen when there
+	 * is no other IO.  So when either is active, the other has to रुको.
+	 * See more details description in raid1.c near उठाओ_barrier().
 	 */
-	wait_queue_head_t	wait_barrier;
+	रुको_queue_head_t	रुको_barrier;
 	spinlock_t		resync_lock;
 	atomic_t		nr_sync_pending;
 	atomic_t		*nr_pending;
-	atomic_t		*nr_waiting;
+	atomic_t		*nr_रुकोing;
 	atomic_t		*nr_queued;
 	atomic_t		*barrier;
-	int			array_frozen;
+	पूर्णांक			array_frozen;
 
-	/* Set to 1 if a full sync is needed, (fresh device added).
+	/* Set to 1 अगर a full sync is needed, (fresh device added).
 	 * Cleared when a sync completes.
 	 */
-	int			fullsync;
+	पूर्णांक			fullsync;
 
-	/* When the same as mddev->recovery_disabled we don't allow
-	 * recovery to be attempted as we expect a read error.
+	/* When the same as mddev->recovery_disabled we करोn't allow
+	 * recovery to be attempted as we expect a पढ़ो error.
 	 */
-	int			recovery_disabled;
+	पूर्णांक			recovery_disabled;
 
-	/* poolinfo contains information about the content of the
+	/* poolinfo contains inक्रमmation about the content of the
 	 * mempools - it changes when the array grows or shrinks
 	 */
-	struct pool_info	*poolinfo;
+	काष्ठा pool_info	*poolinfo;
 	mempool_t		r1bio_pool;
 	mempool_t		r1buf_pool;
 
-	struct bio_set		bio_split;
+	काष्ठा bio_set		bio_split;
 
 	/* temporary buffer to synchronous IO when attempting to repair
-	 * a read error.
+	 * a पढ़ो error.
 	 */
-	struct page		*tmppage;
+	काष्ठा page		*पंचांगppage;
 
-	/* When taking over an array from a different personality, we store
-	 * the new thread here until we fully activate the array.
+	/* When taking over an array from a dअगरferent personality, we store
+	 * the new thपढ़ो here until we fully activate the array.
 	 */
-	struct md_thread	*thread;
+	काष्ठा md_thपढ़ो	*thपढ़ो;
 
-	/* Keep track of cluster resync window to send to other
+	/* Keep track of cluster resync winकरोw to send to other
 	 * nodes.
 	 */
 	sector_t		cluster_sync_low;
 	sector_t		cluster_sync_high;
 
-};
+पूर्ण;
 
 /*
  * this is our 'private' RAID1 bio.
  *
- * it contains information about what kind of IO operations were started
- * for this RAID1 operation, and about their status:
+ * it contains inक्रमmation about what kind of IO operations were started
+ * क्रम this RAID1 operation, and about their status:
  */
 
-struct r1bio {
-	atomic_t		remaining; /* 'have we finished' count,
+काष्ठा r1bio अणु
+	atomic_t		reमुख्यing; /* 'have we finished' count,
 					    * used from IRQ handlers
 					    */
-	atomic_t		behind_remaining; /* number of write-behind ios remaining
+	atomic_t		behind_reमुख्यing; /* number of ग_लिखो-behind ios reमुख्यing
 						 * in this BehindIO request
 						 */
 	sector_t		sector;
-	int			sectors;
-	unsigned long		state;
-	struct mddev		*mddev;
+	पूर्णांक			sectors;
+	अचिन्हित दीर्घ		state;
+	काष्ठा mddev		*mddev;
 	/*
 	 * original bio going to /dev/mdx
 	 */
-	struct bio		*master_bio;
+	काष्ठा bio		*master_bio;
 	/*
-	 * if the IO is in READ direction, then this is where we read
+	 * अगर the IO is in READ direction, then this is where we पढ़ो
 	 */
-	int			read_disk;
+	पूर्णांक			पढ़ो_disk;
 
-	struct list_head	retry_list;
+	काष्ठा list_head	retry_list;
 
 	/*
-	 * When R1BIO_BehindIO is set, we store pages for write behind
+	 * When R1BIO_BehindIO is set, we store pages क्रम ग_लिखो behind
 	 * in behind_master_bio.
 	 */
-	struct bio		*behind_master_bio;
+	काष्ठा bio		*behind_master_bio;
 
 	/*
-	 * if the IO is in WRITE direction, then multiple bios are used.
+	 * अगर the IO is in WRITE direction, then multiple bios are used.
 	 * We choose the number when they are allocated.
 	 */
-	struct bio		*bios[];
+	काष्ठा bio		*bios[];
 	/* DO NOT PUT ANY NEW FIELDS HERE - bios array is contiguously alloced*/
-};
+पूर्ण;
 
-/* bits for r1bio.state */
-enum r1bio_state {
+/* bits क्रम r1bio.state */
+क्रमागत r1bio_state अणु
 	R1BIO_Uptodate,
 	R1BIO_IsSync,
 	R1BIO_Degraded,
 	R1BIO_BehindIO,
-/* Set ReadError on bios that experience a readerror so that
- * raid1d knows what to do with them.
+/* Set ReadError on bios that experience a पढ़ोerror so that
+ * raid1d knows what to करो with them.
  */
 	R1BIO_ReadError,
-/* For write-behind requests, we call bi_end_io when
- * the last non-write-behind device completes, providing
- * any write was successful.  Otherwise we call when
- * any write-behind write succeeds, otherwise we call
- * with failure when last write completes (and all failed).
+/* For ग_लिखो-behind requests, we call bi_end_io when
+ * the last non-ग_लिखो-behind device completes, providing
+ * any ग_लिखो was successful.  Otherwise we call when
+ * any ग_लिखो-behind ग_लिखो succeeds, otherwise we call
+ * with failure when last ग_लिखो completes (and all failed).
  * Record that bi_end_io was called with this flag...
  */
 	R1BIO_Returned,
-/* If a write for this request means we can clear some
+/* If a ग_लिखो क्रम this request means we can clear some
  * known-bad-block records, we set this flag
  */
 	R1BIO_MadeGood,
 	R1BIO_WriteError,
 	R1BIO_FailFast,
-};
+पूर्ण;
 
-static inline int sector_to_idx(sector_t sector)
-{
-	return hash_long(sector >> BARRIER_UNIT_SECTOR_BITS,
+अटल अंतरभूत पूर्णांक sector_to_idx(sector_t sector)
+अणु
+	वापस hash_दीर्घ(sector >> BARRIER_UNIT_SECTOR_BITS,
 			 BARRIER_BUCKETS_NR_BITS);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

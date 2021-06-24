@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Mellanox Technologies. All rights reserved.
@@ -6,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,106 +33,106 @@
  * SOFTWARE.
  */
 
-#include <linux/mm.h>
-#include <linux/dma-mapping.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/mm.h>
-#include <linux/hugetlb.h>
-#include <linux/iommu.h>
-#include <linux/workqueue.h>
-#include <linux/list.h>
-#include <linux/pci.h>
-#include <rdma/ib_verbs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/list.h>
+#समावेश <linux/pci.h>
+#समावेश <rdma/ib_verbs.h>
 
-#include "usnic_log.h"
-#include "usnic_uiom.h"
-#include "usnic_uiom_interval_tree.h"
+#समावेश "usnic_log.h"
+#समावेश "usnic_uiom.h"
+#समावेश "usnic_uiom_interval_tree.h"
 
-#define USNIC_UIOM_PAGE_CHUNK						\
-	((PAGE_SIZE - offsetof(struct usnic_uiom_chunk, page_list))	/\
-	((void *) &((struct usnic_uiom_chunk *) 0)->page_list[1] -	\
-	(void *) &((struct usnic_uiom_chunk *) 0)->page_list[0]))
+#घोषणा USNIC_UIOM_PAGE_CHUNK						\
+	((PAGE_SIZE - दुरत्व(काष्ठा usnic_uiom_chunk, page_list))	/\
+	((व्योम *) &((काष्ठा usnic_uiom_chunk *) 0)->page_list[1] -	\
+	(व्योम *) &((काष्ठा usnic_uiom_chunk *) 0)->page_list[0]))
 
-static int usnic_uiom_dma_fault(struct iommu_domain *domain,
-				struct device *dev,
-				unsigned long iova, int flags,
-				void *token)
-{
+अटल पूर्णांक usnic_uiom_dma_fault(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				काष्ठा device *dev,
+				अचिन्हित दीर्घ iova, पूर्णांक flags,
+				व्योम *token)
+अणु
 	usnic_err("Device %s iommu fault domain 0x%pK va 0x%lx flags 0x%x\n",
 		dev_name(dev),
-		domain, iova, flags);
-	return -ENOSYS;
-}
+		करोमुख्य, iova, flags);
+	वापस -ENOSYS;
+पूर्ण
 
-static void usnic_uiom_put_pages(struct list_head *chunk_list, int dirty)
-{
-	struct usnic_uiom_chunk *chunk, *tmp;
-	struct page *page;
-	struct scatterlist *sg;
-	int i;
+अटल व्योम usnic_uiom_put_pages(काष्ठा list_head *chunk_list, पूर्णांक dirty)
+अणु
+	काष्ठा usnic_uiom_chunk *chunk, *पंचांगp;
+	काष्ठा page *page;
+	काष्ठा scatterlist *sg;
+	पूर्णांक i;
 	dma_addr_t pa;
 
-	list_for_each_entry_safe(chunk, tmp, chunk_list, list) {
-		for_each_sg(chunk->page_list, sg, chunk->nents, i) {
+	list_क्रम_each_entry_safe(chunk, पंचांगp, chunk_list, list) अणु
+		क्रम_each_sg(chunk->page_list, sg, chunk->nents, i) अणु
 			page = sg_page(sg);
 			pa = sg_phys(sg);
 			unpin_user_pages_dirty_lock(&page, 1, dirty);
 			usnic_dbg("pa: %pa\n", &pa);
-		}
-		kfree(chunk);
-	}
-}
+		पूर्ण
+		kमुक्त(chunk);
+	पूर्ण
+पूर्ण
 
-static int usnic_uiom_get_pages(unsigned long addr, size_t size, int writable,
-				int dmasync, struct usnic_uiom_reg *uiomr)
-{
-	struct list_head *chunk_list = &uiomr->chunk_list;
-	struct page **page_list;
-	struct scatterlist *sg;
-	struct usnic_uiom_chunk *chunk;
-	unsigned long locked;
-	unsigned long lock_limit;
-	unsigned long cur_base;
-	unsigned long npages;
-	int ret;
-	int off;
-	int i;
-	int flags;
+अटल पूर्णांक usnic_uiom_get_pages(अचिन्हित दीर्घ addr, माप_प्रकार size, पूर्णांक writable,
+				पूर्णांक dmasync, काष्ठा usnic_uiom_reg *uiomr)
+अणु
+	काष्ठा list_head *chunk_list = &uiomr->chunk_list;
+	काष्ठा page **page_list;
+	काष्ठा scatterlist *sg;
+	काष्ठा usnic_uiom_chunk *chunk;
+	अचिन्हित दीर्घ locked;
+	अचिन्हित दीर्घ lock_limit;
+	अचिन्हित दीर्घ cur_base;
+	अचिन्हित दीर्घ npages;
+	पूर्णांक ret;
+	पूर्णांक off;
+	पूर्णांक i;
+	पूर्णांक flags;
 	dma_addr_t pa;
-	unsigned int gup_flags;
-	struct mm_struct *mm;
+	अचिन्हित पूर्णांक gup_flags;
+	काष्ठा mm_काष्ठा *mm;
 
 	/*
-	 * If the combination of the addr and size requested for this memory
-	 * region causes an integer overflow, return error.
+	 * If the combination of the addr and size requested क्रम this memory
+	 * region causes an पूर्णांकeger overflow, वापस error.
 	 */
-	if (((addr + size) < addr) || PAGE_ALIGN(addr + size) < (addr + size))
-		return -EINVAL;
+	अगर (((addr + size) < addr) || PAGE_ALIGN(addr + size) < (addr + size))
+		वापस -EINVAL;
 
-	if (!size)
-		return -EINVAL;
+	अगर (!size)
+		वापस -EINVAL;
 
-	if (!can_do_mlock())
-		return -EPERM;
+	अगर (!can_करो_mlock())
+		वापस -EPERM;
 
 	INIT_LIST_HEAD(chunk_list);
 
-	page_list = (struct page **) __get_free_page(GFP_KERNEL);
-	if (!page_list)
-		return -ENOMEM;
+	page_list = (काष्ठा page **) __get_मुक्त_page(GFP_KERNEL);
+	अगर (!page_list)
+		वापस -ENOMEM;
 
 	npages = PAGE_ALIGN(size + (addr & ~PAGE_MASK)) >> PAGE_SHIFT;
 
 	uiomr->owning_mm = mm = current->mm;
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 
-	locked = atomic64_add_return(npages, &current->mm->pinned_vm);
+	locked = atomic64_add_वापस(npages, &current->mm->pinned_vm);
 	lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
 
-	if ((locked > lock_limit) && !capable(CAP_IPC_LOCK)) {
+	अगर ((locked > lock_limit) && !capable(CAP_IPC_LOCK)) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	flags = IOMMU_READ | IOMMU_CACHE;
 	flags |= (writable) ? IOMMU_WRITE : 0;
@@ -140,212 +141,212 @@ static int usnic_uiom_get_pages(unsigned long addr, size_t size, int writable,
 	cur_base = addr & PAGE_MASK;
 	ret = 0;
 
-	while (npages) {
+	जबतक (npages) अणु
 		ret = pin_user_pages(cur_base,
-				     min_t(unsigned long, npages,
-				     PAGE_SIZE / sizeof(struct page *)),
+				     min_t(अचिन्हित दीर्घ, npages,
+				     PAGE_SIZE / माप(काष्ठा page *)),
 				     gup_flags | FOLL_LONGTERM,
-				     page_list, NULL);
+				     page_list, शून्य);
 
-		if (ret < 0)
-			goto out;
+		अगर (ret < 0)
+			जाओ out;
 
 		npages -= ret;
 		off = 0;
 
-		while (ret) {
-			chunk = kmalloc(struct_size(chunk, page_list,
-					min_t(int, ret, USNIC_UIOM_PAGE_CHUNK)),
+		जबतक (ret) अणु
+			chunk = kदो_स्मृति(काष्ठा_size(chunk, page_list,
+					min_t(पूर्णांक, ret, USNIC_UIOM_PAGE_CHUNK)),
 					GFP_KERNEL);
-			if (!chunk) {
+			अगर (!chunk) अणु
 				ret = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			chunk->nents = min_t(int, ret, USNIC_UIOM_PAGE_CHUNK);
+			chunk->nents = min_t(पूर्णांक, ret, USNIC_UIOM_PAGE_CHUNK);
 			sg_init_table(chunk->page_list, chunk->nents);
-			for_each_sg(chunk->page_list, sg, chunk->nents, i) {
+			क्रम_each_sg(chunk->page_list, sg, chunk->nents, i) अणु
 				sg_set_page(sg, page_list[i + off],
 						PAGE_SIZE, 0);
 				pa = sg_phys(sg);
 				usnic_dbg("va: 0x%lx pa: %pa\n",
 						cur_base + i*PAGE_SIZE, &pa);
-			}
+			पूर्ण
 			cur_base += chunk->nents * PAGE_SIZE;
 			ret -= chunk->nents;
 			off += chunk->nents;
 			list_add_tail(&chunk->list, chunk_list);
-		}
+		पूर्ण
 
 		ret = 0;
-	}
+	पूर्ण
 
 out:
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		usnic_uiom_put_pages(chunk_list, 0);
 		atomic64_sub(npages, &current->mm->pinned_vm);
-	} else
+	पूर्ण अन्यथा
 		mmgrab(uiomr->owning_mm);
 
-	mmap_read_unlock(mm);
-	free_page((unsigned long) page_list);
-	return ret;
-}
+	mmap_पढ़ो_unlock(mm);
+	मुक्त_page((अचिन्हित दीर्घ) page_list);
+	वापस ret;
+पूर्ण
 
-static void usnic_uiom_unmap_sorted_intervals(struct list_head *intervals,
-						struct usnic_uiom_pd *pd)
-{
-	struct usnic_uiom_interval_node *interval, *tmp;
-	long unsigned va, size;
+अटल व्योम usnic_uiom_unmap_sorted_पूर्णांकervals(काष्ठा list_head *पूर्णांकervals,
+						काष्ठा usnic_uiom_pd *pd)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval, *पंचांगp;
+	दीर्घ अचिन्हित va, size;
 
-	list_for_each_entry_safe(interval, tmp, intervals, link) {
-		va = interval->start << PAGE_SHIFT;
-		size = ((interval->last - interval->start) + 1) << PAGE_SHIFT;
-		while (size > 0) {
-			/* Workaround for RH 970401 */
+	list_क्रम_each_entry_safe(पूर्णांकerval, पंचांगp, पूर्णांकervals, link) अणु
+		va = पूर्णांकerval->start << PAGE_SHIFT;
+		size = ((पूर्णांकerval->last - पूर्णांकerval->start) + 1) << PAGE_SHIFT;
+		जबतक (size > 0) अणु
+			/* Workaround क्रम RH 970401 */
 			usnic_dbg("va 0x%lx size 0x%lx", va, PAGE_SIZE);
-			iommu_unmap(pd->domain, va, PAGE_SIZE);
+			iommu_unmap(pd->करोमुख्य, va, PAGE_SIZE);
 			va += PAGE_SIZE;
 			size -= PAGE_SIZE;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __usnic_uiom_reg_release(struct usnic_uiom_pd *pd,
-					struct usnic_uiom_reg *uiomr,
-					int dirty)
-{
-	int npages;
-	unsigned long vpn_start, vpn_last;
-	struct usnic_uiom_interval_node *interval, *tmp;
-	int writable = 0;
-	LIST_HEAD(rm_intervals);
+अटल व्योम __usnic_uiom_reg_release(काष्ठा usnic_uiom_pd *pd,
+					काष्ठा usnic_uiom_reg *uiomr,
+					पूर्णांक dirty)
+अणु
+	पूर्णांक npages;
+	अचिन्हित दीर्घ vpn_start, vpn_last;
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval, *पंचांगp;
+	पूर्णांक writable = 0;
+	LIST_HEAD(rm_पूर्णांकervals);
 
 	npages = PAGE_ALIGN(uiomr->length + uiomr->offset) >> PAGE_SHIFT;
 	vpn_start = (uiomr->va & PAGE_MASK) >> PAGE_SHIFT;
 	vpn_last = vpn_start + npages - 1;
 
 	spin_lock(&pd->lock);
-	usnic_uiom_remove_interval(&pd->root, vpn_start,
-					vpn_last, &rm_intervals);
-	usnic_uiom_unmap_sorted_intervals(&rm_intervals, pd);
+	usnic_uiom_हटाओ_पूर्णांकerval(&pd->root, vpn_start,
+					vpn_last, &rm_पूर्णांकervals);
+	usnic_uiom_unmap_sorted_पूर्णांकervals(&rm_पूर्णांकervals, pd);
 
-	list_for_each_entry_safe(interval, tmp, &rm_intervals, link) {
-		if (interval->flags & IOMMU_WRITE)
+	list_क्रम_each_entry_safe(पूर्णांकerval, पंचांगp, &rm_पूर्णांकervals, link) अणु
+		अगर (पूर्णांकerval->flags & IOMMU_WRITE)
 			writable = 1;
-		list_del(&interval->link);
-		kfree(interval);
-	}
+		list_del(&पूर्णांकerval->link);
+		kमुक्त(पूर्णांकerval);
+	पूर्ण
 
 	usnic_uiom_put_pages(&uiomr->chunk_list, dirty & writable);
 	spin_unlock(&pd->lock);
-}
+पूर्ण
 
-static int usnic_uiom_map_sorted_intervals(struct list_head *intervals,
-						struct usnic_uiom_reg *uiomr)
-{
-	int i, err;
-	size_t size;
-	struct usnic_uiom_chunk *chunk;
-	struct usnic_uiom_interval_node *interval_node;
+अटल पूर्णांक usnic_uiom_map_sorted_पूर्णांकervals(काष्ठा list_head *पूर्णांकervals,
+						काष्ठा usnic_uiom_reg *uiomr)
+अणु
+	पूर्णांक i, err;
+	माप_प्रकार size;
+	काष्ठा usnic_uiom_chunk *chunk;
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval_node;
 	dma_addr_t pa;
 	dma_addr_t pa_start = 0;
 	dma_addr_t pa_end = 0;
-	long int va_start = -EINVAL;
-	struct usnic_uiom_pd *pd = uiomr->pd;
-	long int va = uiomr->va & PAGE_MASK;
-	int flags = IOMMU_READ | IOMMU_CACHE;
+	दीर्घ पूर्णांक बहु_शुरू = -EINVAL;
+	काष्ठा usnic_uiom_pd *pd = uiomr->pd;
+	दीर्घ पूर्णांक va = uiomr->va & PAGE_MASK;
+	पूर्णांक flags = IOMMU_READ | IOMMU_CACHE;
 
 	flags |= (uiomr->writable) ? IOMMU_WRITE : 0;
-	chunk = list_first_entry(&uiomr->chunk_list, struct usnic_uiom_chunk,
+	chunk = list_first_entry(&uiomr->chunk_list, काष्ठा usnic_uiom_chunk,
 									list);
-	list_for_each_entry(interval_node, intervals, link) {
+	list_क्रम_each_entry(पूर्णांकerval_node, पूर्णांकervals, link) अणु
 iter_chunk:
-		for (i = 0; i < chunk->nents; i++, va += PAGE_SIZE) {
+		क्रम (i = 0; i < chunk->nents; i++, va += PAGE_SIZE) अणु
 			pa = sg_phys(&chunk->page_list[i]);
-			if ((va >> PAGE_SHIFT) < interval_node->start)
-				continue;
+			अगर ((va >> PAGE_SHIFT) < पूर्णांकerval_node->start)
+				जारी;
 
-			if ((va >> PAGE_SHIFT) == interval_node->start) {
-				/* First page of the interval */
-				va_start = va;
+			अगर ((va >> PAGE_SHIFT) == पूर्णांकerval_node->start) अणु
+				/* First page of the पूर्णांकerval */
+				बहु_शुरू = va;
 				pa_start = pa;
 				pa_end = pa;
-			}
+			पूर्ण
 
-			WARN_ON(va_start == -EINVAL);
+			WARN_ON(बहु_शुरू == -EINVAL);
 
-			if ((pa_end + PAGE_SIZE != pa) &&
-					(pa != pa_start)) {
+			अगर ((pa_end + PAGE_SIZE != pa) &&
+					(pa != pa_start)) अणु
 				/* PAs are not contiguous */
 				size = pa_end - pa_start + PAGE_SIZE;
 				usnic_dbg("va 0x%lx pa %pa size 0x%zx flags 0x%x",
-					va_start, &pa_start, size, flags);
-				err = iommu_map(pd->domain, va_start, pa_start,
+					बहु_शुरू, &pa_start, size, flags);
+				err = iommu_map(pd->करोमुख्य, बहु_शुरू, pa_start,
 							size, flags);
-				if (err) {
+				अगर (err) अणु
 					usnic_err("Failed to map va 0x%lx pa %pa size 0x%zx with err %d\n",
-						va_start, &pa_start, size, err);
-					goto err_out;
-				}
-				va_start = va;
+						बहु_शुरू, &pa_start, size, err);
+					जाओ err_out;
+				पूर्ण
+				बहु_शुरू = va;
 				pa_start = pa;
 				pa_end = pa;
-			}
+			पूर्ण
 
-			if ((va >> PAGE_SHIFT) == interval_node->last) {
-				/* Last page of the interval */
+			अगर ((va >> PAGE_SHIFT) == पूर्णांकerval_node->last) अणु
+				/* Last page of the पूर्णांकerval */
 				size = pa - pa_start + PAGE_SIZE;
 				usnic_dbg("va 0x%lx pa %pa size 0x%zx flags 0x%x\n",
-					va_start, &pa_start, size, flags);
-				err = iommu_map(pd->domain, va_start, pa_start,
+					बहु_शुरू, &pa_start, size, flags);
+				err = iommu_map(pd->करोमुख्य, बहु_शुरू, pa_start,
 						size, flags);
-				if (err) {
+				अगर (err) अणु
 					usnic_err("Failed to map va 0x%lx pa %pa size 0x%zx with err %d\n",
-						va_start, &pa_start, size, err);
-					goto err_out;
-				}
-				break;
-			}
+						बहु_शुरू, &pa_start, size, err);
+					जाओ err_out;
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
-			if (pa != pa_start)
+			अगर (pa != pa_start)
 				pa_end += PAGE_SIZE;
-		}
+		पूर्ण
 
-		if (i == chunk->nents) {
+		अगर (i == chunk->nents) अणु
 			/*
 			 * Hit last entry of the chunk,
 			 * hence advance to next chunk
 			 */
 			chunk = list_first_entry(&chunk->list,
-							struct usnic_uiom_chunk,
+							काष्ठा usnic_uiom_chunk,
 							list);
-			goto iter_chunk;
-		}
-	}
+			जाओ iter_chunk;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
-	usnic_uiom_unmap_sorted_intervals(intervals, pd);
-	return err;
-}
+	usnic_uiom_unmap_sorted_पूर्णांकervals(पूर्णांकervals, pd);
+	वापस err;
+पूर्ण
 
-struct usnic_uiom_reg *usnic_uiom_reg_get(struct usnic_uiom_pd *pd,
-						unsigned long addr, size_t size,
-						int writable, int dmasync)
-{
-	struct usnic_uiom_reg *uiomr;
-	unsigned long va_base, vpn_start, vpn_last;
-	unsigned long npages;
-	int offset, err;
-	LIST_HEAD(sorted_diff_intervals);
+काष्ठा usnic_uiom_reg *usnic_uiom_reg_get(काष्ठा usnic_uiom_pd *pd,
+						अचिन्हित दीर्घ addr, माप_प्रकार size,
+						पूर्णांक writable, पूर्णांक dmasync)
+अणु
+	काष्ठा usnic_uiom_reg *uiomr;
+	अचिन्हित दीर्घ va_base, vpn_start, vpn_last;
+	अचिन्हित दीर्घ npages;
+	पूर्णांक offset, err;
+	LIST_HEAD(sorted_dअगरf_पूर्णांकervals);
 
 	/*
-	 * Intel IOMMU map throws an error if a translation entry is
-	 * changed from read to write.  This module may not unmap
+	 * Intel IOMMU map throws an error अगर a translation entry is
+	 * changed from पढ़ो to ग_लिखो.  This module may not unmap
 	 * and then remap the entry after fixing the permission
-	 * b/c this open up a small windows where hw DMA may page fault
+	 * b/c this खोलो up a small winकरोws where hw DMA may page fault
 	 * Hence, make all entries to be writable.
 	 */
 	writable = 1;
@@ -356,9 +357,9 @@ struct usnic_uiom_reg *usnic_uiom_reg_get(struct usnic_uiom_pd *pd,
 	vpn_start = (addr & PAGE_MASK) >> PAGE_SHIFT;
 	vpn_last = vpn_start + npages - 1;
 
-	uiomr = kmalloc(sizeof(*uiomr), GFP_KERNEL);
-	if (!uiomr)
-		return ERR_PTR(-ENOMEM);
+	uiomr = kदो_स्मृति(माप(*uiomr), GFP_KERNEL);
+	अगर (!uiomr)
+		वापस ERR_PTR(-ENOMEM);
 
 	uiomr->va = va_base;
 	uiomr->offset = offset;
@@ -368,201 +369,201 @@ struct usnic_uiom_reg *usnic_uiom_reg_get(struct usnic_uiom_pd *pd,
 
 	err = usnic_uiom_get_pages(addr, size, writable, dmasync,
 				   uiomr);
-	if (err) {
+	अगर (err) अणु
 		usnic_err("Failed get_pages vpn [0x%lx,0x%lx] err %d\n",
 				vpn_start, vpn_last, err);
-		goto out_free_uiomr;
-	}
+		जाओ out_मुक्त_uiomr;
+	पूर्ण
 
 	spin_lock(&pd->lock);
-	err = usnic_uiom_get_intervals_diff(vpn_start, vpn_last,
+	err = usnic_uiom_get_पूर्णांकervals_dअगरf(vpn_start, vpn_last,
 						(writable) ? IOMMU_WRITE : 0,
 						IOMMU_WRITE,
 						&pd->root,
-						&sorted_diff_intervals);
-	if (err) {
+						&sorted_dअगरf_पूर्णांकervals);
+	अगर (err) अणु
 		usnic_err("Failed disjoint interval vpn [0x%lx,0x%lx] err %d\n",
 						vpn_start, vpn_last, err);
-		goto out_put_pages;
-	}
+		जाओ out_put_pages;
+	पूर्ण
 
-	err = usnic_uiom_map_sorted_intervals(&sorted_diff_intervals, uiomr);
-	if (err) {
+	err = usnic_uiom_map_sorted_पूर्णांकervals(&sorted_dअगरf_पूर्णांकervals, uiomr);
+	अगर (err) अणु
 		usnic_err("Failed map interval vpn [0x%lx,0x%lx] err %d\n",
 						vpn_start, vpn_last, err);
-		goto out_put_intervals;
+		जाओ out_put_पूर्णांकervals;
 
-	}
+	पूर्ण
 
-	err = usnic_uiom_insert_interval(&pd->root, vpn_start, vpn_last,
+	err = usnic_uiom_insert_पूर्णांकerval(&pd->root, vpn_start, vpn_last,
 					(writable) ? IOMMU_WRITE : 0);
-	if (err) {
+	अगर (err) अणु
 		usnic_err("Failed insert interval vpn [0x%lx,0x%lx] err %d\n",
 						vpn_start, vpn_last, err);
-		goto out_unmap_intervals;
-	}
+		जाओ out_unmap_पूर्णांकervals;
+	पूर्ण
 
-	usnic_uiom_put_interval_set(&sorted_diff_intervals);
+	usnic_uiom_put_पूर्णांकerval_set(&sorted_dअगरf_पूर्णांकervals);
 	spin_unlock(&pd->lock);
 
-	return uiomr;
+	वापस uiomr;
 
-out_unmap_intervals:
-	usnic_uiom_unmap_sorted_intervals(&sorted_diff_intervals, pd);
-out_put_intervals:
-	usnic_uiom_put_interval_set(&sorted_diff_intervals);
+out_unmap_पूर्णांकervals:
+	usnic_uiom_unmap_sorted_पूर्णांकervals(&sorted_dअगरf_पूर्णांकervals, pd);
+out_put_पूर्णांकervals:
+	usnic_uiom_put_पूर्णांकerval_set(&sorted_dअगरf_पूर्णांकervals);
 out_put_pages:
 	usnic_uiom_put_pages(&uiomr->chunk_list, 0);
 	spin_unlock(&pd->lock);
 	mmdrop(uiomr->owning_mm);
-out_free_uiomr:
-	kfree(uiomr);
-	return ERR_PTR(err);
-}
+out_मुक्त_uiomr:
+	kमुक्त(uiomr);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void __usnic_uiom_release_tail(struct usnic_uiom_reg *uiomr)
-{
+अटल व्योम __usnic_uiom_release_tail(काष्ठा usnic_uiom_reg *uiomr)
+अणु
 	mmdrop(uiomr->owning_mm);
-	kfree(uiomr);
-}
+	kमुक्त(uiomr);
+पूर्ण
 
-static inline size_t usnic_uiom_num_pages(struct usnic_uiom_reg *uiomr)
-{
-	return PAGE_ALIGN(uiomr->length + uiomr->offset) >> PAGE_SHIFT;
-}
+अटल अंतरभूत माप_प्रकार usnic_uiom_num_pages(काष्ठा usnic_uiom_reg *uiomr)
+अणु
+	वापस PAGE_ALIGN(uiomr->length + uiomr->offset) >> PAGE_SHIFT;
+पूर्ण
 
-void usnic_uiom_reg_release(struct usnic_uiom_reg *uiomr)
-{
+व्योम usnic_uiom_reg_release(काष्ठा usnic_uiom_reg *uiomr)
+अणु
 	__usnic_uiom_reg_release(uiomr->pd, uiomr, 1);
 
 	atomic64_sub(usnic_uiom_num_pages(uiomr), &uiomr->owning_mm->pinned_vm);
 	__usnic_uiom_release_tail(uiomr);
-}
+पूर्ण
 
-struct usnic_uiom_pd *usnic_uiom_alloc_pd(void)
-{
-	struct usnic_uiom_pd *pd;
-	void *domain;
+काष्ठा usnic_uiom_pd *usnic_uiom_alloc_pd(व्योम)
+अणु
+	काष्ठा usnic_uiom_pd *pd;
+	व्योम *करोमुख्य;
 
-	pd = kzalloc(sizeof(*pd), GFP_KERNEL);
-	if (!pd)
-		return ERR_PTR(-ENOMEM);
+	pd = kzalloc(माप(*pd), GFP_KERNEL);
+	अगर (!pd)
+		वापस ERR_PTR(-ENOMEM);
 
-	pd->domain = domain = iommu_domain_alloc(&pci_bus_type);
-	if (!domain) {
+	pd->करोमुख्य = करोमुख्य = iommu_करोमुख्य_alloc(&pci_bus_type);
+	अगर (!करोमुख्य) अणु
 		usnic_err("Failed to allocate IOMMU domain");
-		kfree(pd);
-		return ERR_PTR(-ENOMEM);
-	}
+		kमुक्त(pd);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	iommu_set_fault_handler(pd->domain, usnic_uiom_dma_fault, NULL);
+	iommu_set_fault_handler(pd->करोमुख्य, usnic_uiom_dma_fault, शून्य);
 
 	spin_lock_init(&pd->lock);
 	INIT_LIST_HEAD(&pd->devs);
 
-	return pd;
-}
+	वापस pd;
+पूर्ण
 
-void usnic_uiom_dealloc_pd(struct usnic_uiom_pd *pd)
-{
-	iommu_domain_free(pd->domain);
-	kfree(pd);
-}
+व्योम usnic_uiom_dealloc_pd(काष्ठा usnic_uiom_pd *pd)
+अणु
+	iommu_करोमुख्य_मुक्त(pd->करोमुख्य);
+	kमुक्त(pd);
+पूर्ण
 
-int usnic_uiom_attach_dev_to_pd(struct usnic_uiom_pd *pd, struct device *dev)
-{
-	struct usnic_uiom_dev *uiom_dev;
-	int err;
+पूर्णांक usnic_uiom_attach_dev_to_pd(काष्ठा usnic_uiom_pd *pd, काष्ठा device *dev)
+अणु
+	काष्ठा usnic_uiom_dev *uiom_dev;
+	पूर्णांक err;
 
-	uiom_dev = kzalloc(sizeof(*uiom_dev), GFP_ATOMIC);
-	if (!uiom_dev)
-		return -ENOMEM;
+	uiom_dev = kzalloc(माप(*uiom_dev), GFP_ATOMIC);
+	अगर (!uiom_dev)
+		वापस -ENOMEM;
 	uiom_dev->dev = dev;
 
-	err = iommu_attach_device(pd->domain, dev);
-	if (err)
-		goto out_free_dev;
+	err = iommu_attach_device(pd->करोमुख्य, dev);
+	अगर (err)
+		जाओ out_मुक्त_dev;
 
-	if (!iommu_capable(dev->bus, IOMMU_CAP_CACHE_COHERENCY)) {
+	अगर (!iommu_capable(dev->bus, IOMMU_CAP_CACHE_COHERENCY)) अणु
 		usnic_err("IOMMU of %s does not support cache coherency\n",
 				dev_name(dev));
 		err = -EINVAL;
-		goto out_detach_device;
-	}
+		जाओ out_detach_device;
+	पूर्ण
 
 	spin_lock(&pd->lock);
 	list_add_tail(&uiom_dev->link, &pd->devs);
 	pd->dev_cnt++;
 	spin_unlock(&pd->lock);
 
-	return 0;
+	वापस 0;
 
 out_detach_device:
-	iommu_detach_device(pd->domain, dev);
-out_free_dev:
-	kfree(uiom_dev);
-	return err;
-}
+	iommu_detach_device(pd->करोमुख्य, dev);
+out_मुक्त_dev:
+	kमुक्त(uiom_dev);
+	वापस err;
+पूर्ण
 
-void usnic_uiom_detach_dev_from_pd(struct usnic_uiom_pd *pd, struct device *dev)
-{
-	struct usnic_uiom_dev *uiom_dev;
-	int found = 0;
+व्योम usnic_uiom_detach_dev_from_pd(काष्ठा usnic_uiom_pd *pd, काष्ठा device *dev)
+अणु
+	काष्ठा usnic_uiom_dev *uiom_dev;
+	पूर्णांक found = 0;
 
 	spin_lock(&pd->lock);
-	list_for_each_entry(uiom_dev, &pd->devs, link) {
-		if (uiom_dev->dev == dev) {
+	list_क्रम_each_entry(uiom_dev, &pd->devs, link) अणु
+		अगर (uiom_dev->dev == dev) अणु
 			found = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		usnic_err("Unable to free dev %s - not found\n",
 				dev_name(dev));
 		spin_unlock(&pd->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	list_del(&uiom_dev->link);
 	pd->dev_cnt--;
 	spin_unlock(&pd->lock);
 
-	return iommu_detach_device(pd->domain, dev);
-}
+	वापस iommu_detach_device(pd->करोमुख्य, dev);
+पूर्ण
 
-struct device **usnic_uiom_get_dev_list(struct usnic_uiom_pd *pd)
-{
-	struct usnic_uiom_dev *uiom_dev;
-	struct device **devs;
-	int i = 0;
+काष्ठा device **usnic_uiom_get_dev_list(काष्ठा usnic_uiom_pd *pd)
+अणु
+	काष्ठा usnic_uiom_dev *uiom_dev;
+	काष्ठा device **devs;
+	पूर्णांक i = 0;
 
 	spin_lock(&pd->lock);
-	devs = kcalloc(pd->dev_cnt + 1, sizeof(*devs), GFP_ATOMIC);
-	if (!devs) {
+	devs = kसुस्मृति(pd->dev_cnt + 1, माप(*devs), GFP_ATOMIC);
+	अगर (!devs) अणु
 		devs = ERR_PTR(-ENOMEM);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	list_for_each_entry(uiom_dev, &pd->devs, link) {
+	list_क्रम_each_entry(uiom_dev, &pd->devs, link) अणु
 		devs[i++] = uiom_dev->dev;
-	}
+	पूर्ण
 out:
 	spin_unlock(&pd->lock);
-	return devs;
-}
+	वापस devs;
+पूर्ण
 
-void usnic_uiom_free_dev_list(struct device **devs)
-{
-	kfree(devs);
-}
+व्योम usnic_uiom_मुक्त_dev_list(काष्ठा device **devs)
+अणु
+	kमुक्त(devs);
+पूर्ण
 
-int usnic_uiom_init(char *drv_name)
-{
-	if (!iommu_present(&pci_bus_type)) {
+पूर्णांक usnic_uiom_init(अक्षर *drv_name)
+अणु
+	अगर (!iommu_present(&pci_bus_type)) अणु
 		usnic_err("IOMMU required but not present or enabled.  USNIC QPs will not function w/o enabling IOMMU\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

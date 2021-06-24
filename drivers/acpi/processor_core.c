@@ -1,355 +1,356 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2005 Intel Corporation
  * Copyright (C) 2009 Hewlett-Packard Development Company, L.P.
  *
  *	Alex Chiang <achiang@hp.com>
- *	- Unified x86/ia64 implementations
+ *	- Unअगरied x86/ia64 implementations
  *
  * I/O APIC hotplug support
  *	Yinghai Lu <yinghai@kernel.org>
- *	Jiang Liu <jiang.liu@intel.com>
+ *	Jiang Liu <jiang.liu@पूर्णांकel.com>
  */
-#include <linux/export.h>
-#include <linux/acpi.h>
-#include <acpi/processor.h>
+#समावेश <linux/export.h>
+#समावेश <linux/acpi.h>
+#समावेश <acpi/processor.h>
 
-static struct acpi_table_madt *get_madt_table(void)
-{
-	static struct acpi_table_madt *madt;
-	static int read_madt;
+अटल काष्ठा acpi_table_madt *get_madt_table(व्योम)
+अणु
+	अटल काष्ठा acpi_table_madt *madt;
+	अटल पूर्णांक पढ़ो_madt;
 
-	if (!read_madt) {
-		if (ACPI_FAILURE(acpi_get_table(ACPI_SIG_MADT, 0,
-					(struct acpi_table_header **)&madt)))
-			madt = NULL;
-		read_madt++;
-	}
+	अगर (!पढ़ो_madt) अणु
+		अगर (ACPI_FAILURE(acpi_get_table(ACPI_SIG_MADT, 0,
+					(काष्ठा acpi_table_header **)&madt)))
+			madt = शून्य;
+		पढ़ो_madt++;
+	पूर्ण
 
-	return madt;
-}
+	वापस madt;
+पूर्ण
 
-static int map_lapic_id(struct acpi_subtable_header *entry,
+अटल पूर्णांक map_lapic_id(काष्ठा acpi_subtable_header *entry,
 		 u32 acpi_id, phys_cpuid_t *apic_id)
-{
-	struct acpi_madt_local_apic *lapic =
-		container_of(entry, struct acpi_madt_local_apic, header);
+अणु
+	काष्ठा acpi_madt_local_apic *lapic =
+		container_of(entry, काष्ठा acpi_madt_local_apic, header);
 
-	if (!(lapic->lapic_flags & ACPI_MADT_ENABLED))
-		return -ENODEV;
+	अगर (!(lapic->lapic_flags & ACPI_MADT_ENABLED))
+		वापस -ENODEV;
 
-	if (lapic->processor_id != acpi_id)
-		return -EINVAL;
+	अगर (lapic->processor_id != acpi_id)
+		वापस -EINVAL;
 
 	*apic_id = lapic->id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int map_x2apic_id(struct acpi_subtable_header *entry,
-		int device_declaration, u32 acpi_id, phys_cpuid_t *apic_id)
-{
-	struct acpi_madt_local_x2apic *apic =
-		container_of(entry, struct acpi_madt_local_x2apic, header);
+अटल पूर्णांक map_x2apic_id(काष्ठा acpi_subtable_header *entry,
+		पूर्णांक device_declaration, u32 acpi_id, phys_cpuid_t *apic_id)
+अणु
+	काष्ठा acpi_madt_local_x2apic *apic =
+		container_of(entry, काष्ठा acpi_madt_local_x2apic, header);
 
-	if (!(apic->lapic_flags & ACPI_MADT_ENABLED))
-		return -ENODEV;
+	अगर (!(apic->lapic_flags & ACPI_MADT_ENABLED))
+		वापस -ENODEV;
 
-	if (device_declaration && (apic->uid == acpi_id)) {
+	अगर (device_declaration && (apic->uid == acpi_id)) अणु
 		*apic_id = apic->local_apic_id;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int map_lsapic_id(struct acpi_subtable_header *entry,
-		int device_declaration, u32 acpi_id, phys_cpuid_t *apic_id)
-{
-	struct acpi_madt_local_sapic *lsapic =
-		container_of(entry, struct acpi_madt_local_sapic, header);
+अटल पूर्णांक map_lsapic_id(काष्ठा acpi_subtable_header *entry,
+		पूर्णांक device_declaration, u32 acpi_id, phys_cpuid_t *apic_id)
+अणु
+	काष्ठा acpi_madt_local_sapic *lsapic =
+		container_of(entry, काष्ठा acpi_madt_local_sapic, header);
 
-	if (!(lsapic->lapic_flags & ACPI_MADT_ENABLED))
-		return -ENODEV;
+	अगर (!(lsapic->lapic_flags & ACPI_MADT_ENABLED))
+		वापस -ENODEV;
 
-	if (device_declaration) {
-		if ((entry->length < 16) || (lsapic->uid != acpi_id))
-			return -EINVAL;
-	} else if (lsapic->processor_id != acpi_id)
-		return -EINVAL;
+	अगर (device_declaration) अणु
+		अगर ((entry->length < 16) || (lsapic->uid != acpi_id))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अगर (lsapic->processor_id != acpi_id)
+		वापस -EINVAL;
 
 	*apic_id = (lsapic->id << 8) | lsapic->eid;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Retrieve the ARM CPU physical identifier (MPIDR)
+ * Retrieve the ARM CPU physical identअगरier (MPIDR)
  */
-static int map_gicc_mpidr(struct acpi_subtable_header *entry,
-		int device_declaration, u32 acpi_id, phys_cpuid_t *mpidr)
-{
-	struct acpi_madt_generic_interrupt *gicc =
-	    container_of(entry, struct acpi_madt_generic_interrupt, header);
+अटल पूर्णांक map_gicc_mpidr(काष्ठा acpi_subtable_header *entry,
+		पूर्णांक device_declaration, u32 acpi_id, phys_cpuid_t *mpidr)
+अणु
+	काष्ठा acpi_madt_generic_पूर्णांकerrupt *gicc =
+	    container_of(entry, काष्ठा acpi_madt_generic_पूर्णांकerrupt, header);
 
-	if (!(gicc->flags & ACPI_MADT_ENABLED))
-		return -ENODEV;
+	अगर (!(gicc->flags & ACPI_MADT_ENABLED))
+		वापस -ENODEV;
 
 	/* device_declaration means Device object in DSDT, in the
-	 * GIC interrupt model, logical processors are required to
+	 * GIC पूर्णांकerrupt model, logical processors are required to
 	 * have a Processor Device object in the DSDT, so we should
 	 * check device_declaration here
 	 */
-	if (device_declaration && (gicc->uid == acpi_id)) {
+	अगर (device_declaration && (gicc->uid == acpi_id)) अणु
 		*mpidr = gicc->arm_mpidr;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static phys_cpuid_t map_madt_entry(struct acpi_table_madt *madt,
-				   int type, u32 acpi_id)
-{
-	unsigned long madt_end, entry;
+अटल phys_cpuid_t map_madt_entry(काष्ठा acpi_table_madt *madt,
+				   पूर्णांक type, u32 acpi_id)
+अणु
+	अचिन्हित दीर्घ madt_end, entry;
 	phys_cpuid_t phys_id = PHYS_CPUID_INVALID;	/* CPU hardware ID */
 
-	if (!madt)
-		return phys_id;
+	अगर (!madt)
+		वापस phys_id;
 
-	entry = (unsigned long)madt;
+	entry = (अचिन्हित दीर्घ)madt;
 	madt_end = entry + madt->header.length;
 
-	/* Parse all entries looking for a match. */
+	/* Parse all entries looking क्रम a match. */
 
-	entry += sizeof(struct acpi_table_madt);
-	while (entry + sizeof(struct acpi_subtable_header) < madt_end) {
-		struct acpi_subtable_header *header =
-			(struct acpi_subtable_header *)entry;
-		if (header->type == ACPI_MADT_TYPE_LOCAL_APIC) {
-			if (!map_lapic_id(header, acpi_id, &phys_id))
-				break;
-		} else if (header->type == ACPI_MADT_TYPE_LOCAL_X2APIC) {
-			if (!map_x2apic_id(header, type, acpi_id, &phys_id))
-				break;
-		} else if (header->type == ACPI_MADT_TYPE_LOCAL_SAPIC) {
-			if (!map_lsapic_id(header, type, acpi_id, &phys_id))
-				break;
-		} else if (header->type == ACPI_MADT_TYPE_GENERIC_INTERRUPT) {
-			if (!map_gicc_mpidr(header, type, acpi_id, &phys_id))
-				break;
-		}
+	entry += माप(काष्ठा acpi_table_madt);
+	जबतक (entry + माप(काष्ठा acpi_subtable_header) < madt_end) अणु
+		काष्ठा acpi_subtable_header *header =
+			(काष्ठा acpi_subtable_header *)entry;
+		अगर (header->type == ACPI_MADT_TYPE_LOCAL_APIC) अणु
+			अगर (!map_lapic_id(header, acpi_id, &phys_id))
+				अवरोध;
+		पूर्ण अन्यथा अगर (header->type == ACPI_MADT_TYPE_LOCAL_X2APIC) अणु
+			अगर (!map_x2apic_id(header, type, acpi_id, &phys_id))
+				अवरोध;
+		पूर्ण अन्यथा अगर (header->type == ACPI_MADT_TYPE_LOCAL_SAPIC) अणु
+			अगर (!map_lsapic_id(header, type, acpi_id, &phys_id))
+				अवरोध;
+		पूर्ण अन्यथा अगर (header->type == ACPI_MADT_TYPE_GENERIC_INTERRUPT) अणु
+			अगर (!map_gicc_mpidr(header, type, acpi_id, &phys_id))
+				अवरोध;
+		पूर्ण
 		entry += header->length;
-	}
-	return phys_id;
-}
+	पूर्ण
+	वापस phys_id;
+पूर्ण
 
 phys_cpuid_t __init acpi_map_madt_entry(u32 acpi_id)
-{
-	struct acpi_table_madt *madt = NULL;
+अणु
+	काष्ठा acpi_table_madt *madt = शून्य;
 	phys_cpuid_t rv;
 
 	acpi_get_table(ACPI_SIG_MADT, 0,
-		       (struct acpi_table_header **)&madt);
-	if (!madt)
-		return PHYS_CPUID_INVALID;
+		       (काष्ठा acpi_table_header **)&madt);
+	अगर (!madt)
+		वापस PHYS_CPUID_INVALID;
 
 	rv = map_madt_entry(madt, 1, acpi_id);
 
-	acpi_put_table((struct acpi_table_header *)madt);
+	acpi_put_table((काष्ठा acpi_table_header *)madt);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static phys_cpuid_t map_mat_entry(acpi_handle handle, int type, u32 acpi_id)
-{
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
-	struct acpi_subtable_header *header;
+अटल phys_cpuid_t map_mat_entry(acpi_handle handle, पूर्णांक type, u32 acpi_id)
+अणु
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
+	काष्ठा acpi_subtable_header *header;
 	phys_cpuid_t phys_id = PHYS_CPUID_INVALID;
 
-	if (ACPI_FAILURE(acpi_evaluate_object(handle, "_MAT", NULL, &buffer)))
-		goto exit;
+	अगर (ACPI_FAILURE(acpi_evaluate_object(handle, "_MAT", शून्य, &buffer)))
+		जाओ निकास;
 
-	if (!buffer.length || !buffer.pointer)
-		goto exit;
+	अगर (!buffer.length || !buffer.poपूर्णांकer)
+		जाओ निकास;
 
-	obj = buffer.pointer;
-	if (obj->type != ACPI_TYPE_BUFFER ||
-	    obj->buffer.length < sizeof(struct acpi_subtable_header)) {
-		goto exit;
-	}
+	obj = buffer.poपूर्णांकer;
+	अगर (obj->type != ACPI_TYPE_BUFFER ||
+	    obj->buffer.length < माप(काष्ठा acpi_subtable_header)) अणु
+		जाओ निकास;
+	पूर्ण
 
-	header = (struct acpi_subtable_header *)obj->buffer.pointer;
-	if (header->type == ACPI_MADT_TYPE_LOCAL_APIC)
+	header = (काष्ठा acpi_subtable_header *)obj->buffer.poपूर्णांकer;
+	अगर (header->type == ACPI_MADT_TYPE_LOCAL_APIC)
 		map_lapic_id(header, acpi_id, &phys_id);
-	else if (header->type == ACPI_MADT_TYPE_LOCAL_SAPIC)
+	अन्यथा अगर (header->type == ACPI_MADT_TYPE_LOCAL_SAPIC)
 		map_lsapic_id(header, type, acpi_id, &phys_id);
-	else if (header->type == ACPI_MADT_TYPE_LOCAL_X2APIC)
+	अन्यथा अगर (header->type == ACPI_MADT_TYPE_LOCAL_X2APIC)
 		map_x2apic_id(header, type, acpi_id, &phys_id);
-	else if (header->type == ACPI_MADT_TYPE_GENERIC_INTERRUPT)
+	अन्यथा अगर (header->type == ACPI_MADT_TYPE_GENERIC_INTERRUPT)
 		map_gicc_mpidr(header, type, acpi_id, &phys_id);
 
-exit:
-	kfree(buffer.pointer);
-	return phys_id;
-}
+निकास:
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस phys_id;
+पूर्ण
 
-phys_cpuid_t acpi_get_phys_id(acpi_handle handle, int type, u32 acpi_id)
-{
+phys_cpuid_t acpi_get_phys_id(acpi_handle handle, पूर्णांक type, u32 acpi_id)
+अणु
 	phys_cpuid_t phys_id;
 
 	phys_id = map_mat_entry(handle, type, acpi_id);
-	if (invalid_phys_cpuid(phys_id))
+	अगर (invalid_phys_cpuid(phys_id))
 		phys_id = map_madt_entry(get_madt_table(), type, acpi_id);
 
-	return phys_id;
-}
+	वापस phys_id;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_get_phys_id);
 
-int acpi_map_cpuid(phys_cpuid_t phys_id, u32 acpi_id)
-{
-#ifdef CONFIG_SMP
-	int i;
-#endif
+पूर्णांक acpi_map_cpuid(phys_cpuid_t phys_id, u32 acpi_id)
+अणु
+#अगर_घोषित CONFIG_SMP
+	पूर्णांक i;
+#पूर्ण_अगर
 
-	if (invalid_phys_cpuid(phys_id)) {
+	अगर (invalid_phys_cpuid(phys_id)) अणु
 		/*
 		 * On UP processor, there is no _MAT or MADT table.
 		 * So above phys_id is always set to PHYS_CPUID_INVALID.
 		 *
-		 * BIOS may define multiple CPU handles even for UP processor.
+		 * BIOS may define multiple CPU handles even क्रम UP processor.
 		 * For example,
 		 *
 		 * Scope (_PR)
-		 * {
-		 *     Processor (CPU0, 0x00, 0x00000410, 0x06) {}
-		 *     Processor (CPU1, 0x01, 0x00000410, 0x06) {}
-		 *     Processor (CPU2, 0x02, 0x00000410, 0x06) {}
-		 *     Processor (CPU3, 0x03, 0x00000410, 0x06) {}
-		 * }
+		 * अणु
+		 *     Processor (CPU0, 0x00, 0x00000410, 0x06) अणुपूर्ण
+		 *     Processor (CPU1, 0x01, 0x00000410, 0x06) अणुपूर्ण
+		 *     Processor (CPU2, 0x02, 0x00000410, 0x06) अणुपूर्ण
+		 *     Processor (CPU3, 0x03, 0x00000410, 0x06) अणुपूर्ण
+		 * पूर्ण
 		 *
-		 * Ignores phys_id and always returns 0 for the processor
-		 * handle with acpi id 0 if nr_cpu_ids is 1.
-		 * This should be the case if SMP tables are not found.
-		 * Return -EINVAL for other CPU's handle.
+		 * Ignores phys_id and always वापसs 0 क्रम the processor
+		 * handle with acpi id 0 अगर nr_cpu_ids is 1.
+		 * This should be the हाल अगर SMP tables are not found.
+		 * Return -EINVAL क्रम other CPU's handle.
 		 */
-		if (nr_cpu_ids <= 1 && acpi_id == 0)
-			return acpi_id;
-		else
-			return -EINVAL;
-	}
+		अगर (nr_cpu_ids <= 1 && acpi_id == 0)
+			वापस acpi_id;
+		अन्यथा
+			वापस -EINVAL;
+	पूर्ण
 
-#ifdef CONFIG_SMP
-	for_each_possible_cpu(i) {
-		if (cpu_physical_id(i) == phys_id)
-			return i;
-	}
-#else
+#अगर_घोषित CONFIG_SMP
+	क्रम_each_possible_cpu(i) अणु
+		अगर (cpu_physical_id(i) == phys_id)
+			वापस i;
+	पूर्ण
+#अन्यथा
 	/* In UP kernel, only processor 0 is valid */
-	if (phys_id == 0)
-		return phys_id;
-#endif
-	return -ENODEV;
-}
+	अगर (phys_id == 0)
+		वापस phys_id;
+#पूर्ण_अगर
+	वापस -ENODEV;
+पूर्ण
 
-int acpi_get_cpuid(acpi_handle handle, int type, u32 acpi_id)
-{
+पूर्णांक acpi_get_cpuid(acpi_handle handle, पूर्णांक type, u32 acpi_id)
+अणु
 	phys_cpuid_t phys_id;
 
 	phys_id = acpi_get_phys_id(handle, type, acpi_id);
 
-	return acpi_map_cpuid(phys_id, acpi_id);
-}
+	वापस acpi_map_cpuid(phys_id, acpi_id);
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_get_cpuid);
 
-#ifdef CONFIG_ACPI_HOTPLUG_IOAPIC
-static int get_ioapic_id(struct acpi_subtable_header *entry, u32 gsi_base,
-			 u64 *phys_addr, int *ioapic_id)
-{
-	struct acpi_madt_io_apic *ioapic = (struct acpi_madt_io_apic *)entry;
+#अगर_घोषित CONFIG_ACPI_HOTPLUG_IOAPIC
+अटल पूर्णांक get_ioapic_id(काष्ठा acpi_subtable_header *entry, u32 gsi_base,
+			 u64 *phys_addr, पूर्णांक *ioapic_id)
+अणु
+	काष्ठा acpi_madt_io_apic *ioapic = (काष्ठा acpi_madt_io_apic *)entry;
 
-	if (ioapic->global_irq_base != gsi_base)
-		return 0;
+	अगर (ioapic->global_irq_base != gsi_base)
+		वापस 0;
 
 	*phys_addr = ioapic->address;
 	*ioapic_id = ioapic->id;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int parse_madt_ioapic_entry(u32 gsi_base, u64 *phys_addr)
-{
-	struct acpi_subtable_header *hdr;
-	unsigned long madt_end, entry;
-	struct acpi_table_madt *madt;
-	int apic_id = -1;
+अटल पूर्णांक parse_madt_ioapic_entry(u32 gsi_base, u64 *phys_addr)
+अणु
+	काष्ठा acpi_subtable_header *hdr;
+	अचिन्हित दीर्घ madt_end, entry;
+	काष्ठा acpi_table_madt *madt;
+	पूर्णांक apic_id = -1;
 
 	madt = get_madt_table();
-	if (!madt)
-		return apic_id;
+	अगर (!madt)
+		वापस apic_id;
 
-	entry = (unsigned long)madt;
+	entry = (अचिन्हित दीर्घ)madt;
 	madt_end = entry + madt->header.length;
 
-	/* Parse all entries looking for a match. */
-	entry += sizeof(struct acpi_table_madt);
-	while (entry + sizeof(struct acpi_subtable_header) < madt_end) {
-		hdr = (struct acpi_subtable_header *)entry;
-		if (hdr->type == ACPI_MADT_TYPE_IO_APIC &&
+	/* Parse all entries looking क्रम a match. */
+	entry += माप(काष्ठा acpi_table_madt);
+	जबतक (entry + माप(काष्ठा acpi_subtable_header) < madt_end) अणु
+		hdr = (काष्ठा acpi_subtable_header *)entry;
+		अगर (hdr->type == ACPI_MADT_TYPE_IO_APIC &&
 		    get_ioapic_id(hdr, gsi_base, phys_addr, &apic_id))
-			break;
-		else
+			अवरोध;
+		अन्यथा
 			entry += hdr->length;
-	}
+	पूर्ण
 
-	return apic_id;
-}
+	वापस apic_id;
+पूर्ण
 
-static int parse_mat_ioapic_entry(acpi_handle handle, u32 gsi_base,
+अटल पूर्णांक parse_mat_ioapic_entry(acpi_handle handle, u32 gsi_base,
 				  u64 *phys_addr)
-{
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	struct acpi_subtable_header *header;
-	union acpi_object *obj;
-	int apic_id = -1;
+अणु
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	काष्ठा acpi_subtable_header *header;
+	जोड़ acpi_object *obj;
+	पूर्णांक apic_id = -1;
 
-	if (ACPI_FAILURE(acpi_evaluate_object(handle, "_MAT", NULL, &buffer)))
-		goto exit;
+	अगर (ACPI_FAILURE(acpi_evaluate_object(handle, "_MAT", शून्य, &buffer)))
+		जाओ निकास;
 
-	if (!buffer.length || !buffer.pointer)
-		goto exit;
+	अगर (!buffer.length || !buffer.poपूर्णांकer)
+		जाओ निकास;
 
-	obj = buffer.pointer;
-	if (obj->type != ACPI_TYPE_BUFFER ||
-	    obj->buffer.length < sizeof(struct acpi_subtable_header))
-		goto exit;
+	obj = buffer.poपूर्णांकer;
+	अगर (obj->type != ACPI_TYPE_BUFFER ||
+	    obj->buffer.length < माप(काष्ठा acpi_subtable_header))
+		जाओ निकास;
 
-	header = (struct acpi_subtable_header *)obj->buffer.pointer;
-	if (header->type == ACPI_MADT_TYPE_IO_APIC)
+	header = (काष्ठा acpi_subtable_header *)obj->buffer.poपूर्णांकer;
+	अगर (header->type == ACPI_MADT_TYPE_IO_APIC)
 		get_ioapic_id(header, gsi_base, phys_addr, &apic_id);
 
-exit:
-	kfree(buffer.pointer);
-	return apic_id;
-}
+निकास:
+	kमुक्त(buffer.poपूर्णांकer);
+	वापस apic_id;
+पूर्ण
 
 /**
  * acpi_get_ioapic_id - Get IOAPIC ID and physical address matching @gsi_base
- * @handle:	ACPI object for IOAPIC device
+ * @handle:	ACPI object क्रम IOAPIC device
  * @gsi_base:	GSI base to match with
- * @phys_addr:	Pointer to store physical address of matching IOAPIC record
+ * @phys_addr:	Poपूर्णांकer to store physical address of matching IOAPIC record
  *
- * Walk resources returned by ACPI_MAT method, then ACPI MADT table, to search
- * for an ACPI IOAPIC record matching @gsi_base.
- * Return IOAPIC id and store physical address in @phys_addr if found a match,
- * otherwise return <0.
+ * Walk resources वापसed by ACPI_MAT method, then ACPI MADT table, to search
+ * क्रम an ACPI IOAPIC record matching @gsi_base.
+ * Return IOAPIC id and store physical address in @phys_addr अगर found a match,
+ * otherwise वापस <0.
  */
-int acpi_get_ioapic_id(acpi_handle handle, u32 gsi_base, u64 *phys_addr)
-{
-	int apic_id;
+पूर्णांक acpi_get_ioapic_id(acpi_handle handle, u32 gsi_base, u64 *phys_addr)
+अणु
+	पूर्णांक apic_id;
 
 	apic_id = parse_mat_ioapic_entry(handle, gsi_base, phys_addr);
-	if (apic_id == -1)
+	अगर (apic_id == -1)
 		apic_id = parse_madt_ioapic_entry(gsi_base, phys_addr);
 
-	return apic_id;
-}
-#endif /* CONFIG_ACPI_HOTPLUG_IOAPIC */
+	वापस apic_id;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI_HOTPLUG_IOAPIC */

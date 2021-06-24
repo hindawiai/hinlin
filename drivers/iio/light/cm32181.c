@@ -1,283 +1,284 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2013 Capella Microsystems Inc.
+ * Copyright (C) 2013 Capella Microप्रणालीs Inc.
  * Author: Kevin Tsai <ktsai@capellamicro.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/interrupt.h>
-#include <linux/regulator/consumer.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/events.h>
-#include <linux/init.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/init.h>
 
 /* Registers Address */
-#define CM32181_REG_ADDR_CMD		0x00
-#define CM32181_REG_ADDR_WH		0x01
-#define CM32181_REG_ADDR_WL		0x02
-#define CM32181_REG_ADDR_TEST		0x03
-#define CM32181_REG_ADDR_ALS		0x04
-#define CM32181_REG_ADDR_STATUS		0x06
-#define CM32181_REG_ADDR_ID		0x07
+#घोषणा CM32181_REG_ADDR_CMD		0x00
+#घोषणा CM32181_REG_ADDR_WH		0x01
+#घोषणा CM32181_REG_ADDR_WL		0x02
+#घोषणा CM32181_REG_ADDR_TEST		0x03
+#घोषणा CM32181_REG_ADDR_ALS		0x04
+#घोषणा CM32181_REG_ADDR_STATUS		0x06
+#घोषणा CM32181_REG_ADDR_ID		0x07
 
 /* Number of Configurable Registers */
-#define CM32181_CONF_REG_NUM		4
+#घोषणा CM32181_CONF_REG_NUM		4
 
-/* CMD register */
-#define CM32181_CMD_ALS_DISABLE		BIT(0)
-#define CM32181_CMD_ALS_INT_EN		BIT(1)
-#define CM32181_CMD_ALS_THRES_WINDOW	BIT(2)
+/* CMD रेजिस्टर */
+#घोषणा CM32181_CMD_ALS_DISABLE		BIT(0)
+#घोषणा CM32181_CMD_ALS_INT_EN		BIT(1)
+#घोषणा CM32181_CMD_ALS_THRES_WINDOW	BIT(2)
 
-#define CM32181_CMD_ALS_PERS_SHIFT	4
-#define CM32181_CMD_ALS_PERS_MASK	(0x03 << CM32181_CMD_ALS_PERS_SHIFT)
-#define CM32181_CMD_ALS_PERS_DEFAULT	(0x01 << CM32181_CMD_ALS_PERS_SHIFT)
+#घोषणा CM32181_CMD_ALS_PERS_SHIFT	4
+#घोषणा CM32181_CMD_ALS_PERS_MASK	(0x03 << CM32181_CMD_ALS_PERS_SHIFT)
+#घोषणा CM32181_CMD_ALS_PERS_DEFAULT	(0x01 << CM32181_CMD_ALS_PERS_SHIFT)
 
-#define CM32181_CMD_ALS_IT_SHIFT	6
-#define CM32181_CMD_ALS_IT_MASK		(0x0F << CM32181_CMD_ALS_IT_SHIFT)
-#define CM32181_CMD_ALS_IT_DEFAULT	(0x00 << CM32181_CMD_ALS_IT_SHIFT)
+#घोषणा CM32181_CMD_ALS_IT_SHIFT	6
+#घोषणा CM32181_CMD_ALS_IT_MASK		(0x0F << CM32181_CMD_ALS_IT_SHIFT)
+#घोषणा CM32181_CMD_ALS_IT_DEFAULT	(0x00 << CM32181_CMD_ALS_IT_SHIFT)
 
-#define CM32181_CMD_ALS_SM_SHIFT	11
-#define CM32181_CMD_ALS_SM_MASK		(0x03 << CM32181_CMD_ALS_SM_SHIFT)
-#define CM32181_CMD_ALS_SM_DEFAULT	(0x01 << CM32181_CMD_ALS_SM_SHIFT)
+#घोषणा CM32181_CMD_ALS_SM_SHIFT	11
+#घोषणा CM32181_CMD_ALS_SM_MASK		(0x03 << CM32181_CMD_ALS_SM_SHIFT)
+#घोषणा CM32181_CMD_ALS_SM_DEFAULT	(0x01 << CM32181_CMD_ALS_SM_SHIFT)
 
-#define CM32181_LUX_PER_BIT		500	/* ALS_SM=01 IT=800ms */
-#define CM32181_LUX_PER_BIT_RESOLUTION	100000
-#define CM32181_LUX_PER_BIT_BASE_IT	800000	/* Based on IT=800ms */
-#define CM32181_CALIBSCALE_DEFAULT	100000
-#define CM32181_CALIBSCALE_RESOLUTION	100000
+#घोषणा CM32181_LUX_PER_BIT		500	/* ALS_SM=01 IT=800ms */
+#घोषणा CM32181_LUX_PER_BIT_RESOLUTION	100000
+#घोषणा CM32181_LUX_PER_BIT_BASE_IT	800000	/* Based on IT=800ms */
+#घोषणा CM32181_CALIBSCALE_DEFAULT	100000
+#घोषणा CM32181_CALIBSCALE_RESOLUTION	100000
 
-#define SMBUS_ALERT_RESPONSE_ADDRESS	0x0c
+#घोषणा SMBUS_ALERT_RESPONSE_ADDRESS	0x0c
 
-/* CPM0 Index 0: device-id (3218 or 32181), 1: Unknown, 2: init_regs_bitmap */
-#define CPM0_REGS_BITMAP		2
-#define CPM0_HEADER_SIZE		3
+/* CPM0 Index 0: device-id (3218 or 32181), 1: Unknown, 2: init_regs_biपंचांगap */
+#घोषणा CPM0_REGS_BITMAP		2
+#घोषणा CPM0_HEADER_SIZE		3
 
 /* CPM1 Index 0: lux_per_bit, 1: calibscale, 2: resolution (100000) */
-#define CPM1_LUX_PER_BIT		0
-#define CPM1_CALIBSCALE			1
-#define CPM1_SIZE			3
+#घोषणा CPM1_LUX_PER_BIT		0
+#घोषणा CPM1_CALIBSCALE			1
+#घोषणा CPM1_SIZE			3
 
 /* CM3218 Family */
-static const int cm3218_als_it_bits[] = { 0, 1, 2, 3 };
-static const int cm3218_als_it_values[] = { 100000, 200000, 400000, 800000 };
+अटल स्थिर पूर्णांक cm3218_als_it_bits[] = अणु 0, 1, 2, 3 पूर्ण;
+अटल स्थिर पूर्णांक cm3218_als_it_values[] = अणु 100000, 200000, 400000, 800000 पूर्ण;
 
 /* CM32181 Family */
-static const int cm32181_als_it_bits[] = { 12, 8, 0, 1, 2, 3 };
-static const int cm32181_als_it_values[] = {
+अटल स्थिर पूर्णांक cm32181_als_it_bits[] = अणु 12, 8, 0, 1, 2, 3 पूर्ण;
+अटल स्थिर पूर्णांक cm32181_als_it_values[] = अणु
 	25000, 50000, 100000, 200000, 400000, 800000
-};
+पूर्ण;
 
-struct cm32181_chip {
-	struct i2c_client *client;
-	struct device *dev;
-	struct mutex lock;
+काष्ठा cm32181_chip अणु
+	काष्ठा i2c_client *client;
+	काष्ठा device *dev;
+	काष्ठा mutex lock;
 	u16 conf_regs[CM32181_CONF_REG_NUM];
-	unsigned long init_regs_bitmap;
-	int calibscale;
-	int lux_per_bit;
-	int lux_per_bit_base_it;
-	int num_als_it;
-	const int *als_it_bits;
-	const int *als_it_values;
-};
+	अचिन्हित दीर्घ init_regs_biपंचांगap;
+	पूर्णांक calibscale;
+	पूर्णांक lux_per_bit;
+	पूर्णांक lux_per_bit_base_it;
+	पूर्णांक num_als_it;
+	स्थिर पूर्णांक *als_it_bits;
+	स्थिर पूर्णांक *als_it_values;
+पूर्ण;
 
-static int cm32181_read_als_it(struct cm32181_chip *cm32181, int *val2);
+अटल पूर्णांक cm32181_पढ़ो_als_it(काष्ठा cm32181_chip *cm32181, पूर्णांक *val2);
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 /**
  * cm32181_acpi_get_cpm() - Get CPM object from ACPI
- * @dev:	pointer of struct device.
- * @obj_name:	pointer of ACPI object name.
- * @values:	pointer of array for return elements.
- * @count:	maximum size of return array.
+ * @dev:	poपूर्णांकer of काष्ठा device.
+ * @obj_name:	poपूर्णांकer of ACPI object name.
+ * @values:	poपूर्णांकer of array क्रम वापस elements.
+ * @count:	maximum size of वापस array.
  *
  * Convert ACPI CPM table to array.
  *
- * Return: -ENODEV for fail.  Otherwise is number of elements.
+ * Return: -ENODEV क्रम fail.  Otherwise is number of elements.
  */
-static int cm32181_acpi_get_cpm(struct device *dev, char *obj_name,
-				u64 *values, int count)
-{
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *cpm, *elem;
+अटल पूर्णांक cm32181_acpi_get_cpm(काष्ठा device *dev, अक्षर *obj_name,
+				u64 *values, पूर्णांक count)
+अणु
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *cpm, *elem;
 	acpi_handle handle;
 	acpi_status status;
-	int i;
+	पूर्णांक i;
 
 	handle = ACPI_HANDLE(dev);
-	if (!handle)
-		return -ENODEV;
+	अगर (!handle)
+		वापस -ENODEV;
 
-	status = acpi_evaluate_object(handle, obj_name, NULL, &buffer);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_object(handle, obj_name, शून्य, &buffer);
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(dev, "object %s not found\n", obj_name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	cpm = buffer.pointer;
-	if (cpm->package.count > count)
+	cpm = buffer.poपूर्णांकer;
+	अगर (cpm->package.count > count)
 		dev_warn(dev, "%s table contains %u values, only using first %d values\n",
 			 obj_name, cpm->package.count, count);
 
-	count = min_t(int, cpm->package.count, count);
-	for (i = 0; i < count; i++) {
+	count = min_t(पूर्णांक, cpm->package.count, count);
+	क्रम (i = 0; i < count; i++) अणु
 		elem = &(cpm->package.elements[i]);
-		values[i] = elem->integer.value;
-	}
+		values[i] = elem->पूर्णांकeger.value;
+	पूर्ण
 
-	kfree(buffer.pointer);
+	kमुक्त(buffer.poपूर्णांकer);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void cm32181_acpi_parse_cpm_tables(struct cm32181_chip *cm32181)
-{
+अटल व्योम cm32181_acpi_parse_cpm_tables(काष्ठा cm32181_chip *cm32181)
+अणु
 	u64 vals[CPM0_HEADER_SIZE + CM32181_CONF_REG_NUM];
-	struct device *dev = cm32181->dev;
-	int i, count;
+	काष्ठा device *dev = cm32181->dev;
+	पूर्णांक i, count;
 
 	count = cm32181_acpi_get_cpm(dev, "CPM0", vals, ARRAY_SIZE(vals));
-	if (count <= CPM0_HEADER_SIZE)
-		return;
+	अगर (count <= CPM0_HEADER_SIZE)
+		वापस;
 
 	count -= CPM0_HEADER_SIZE;
 
-	cm32181->init_regs_bitmap = vals[CPM0_REGS_BITMAP];
-	cm32181->init_regs_bitmap &= GENMASK(count - 1, 0);
-	for_each_set_bit(i, &cm32181->init_regs_bitmap, count)
+	cm32181->init_regs_biपंचांगap = vals[CPM0_REGS_BITMAP];
+	cm32181->init_regs_biपंचांगap &= GENMASK(count - 1, 0);
+	क्रम_each_set_bit(i, &cm32181->init_regs_biपंचांगap, count)
 		cm32181->conf_regs[i] =	vals[CPM0_HEADER_SIZE + i];
 
 	count = cm32181_acpi_get_cpm(dev, "CPM1", vals, ARRAY_SIZE(vals));
-	if (count != CPM1_SIZE)
-		return;
+	अगर (count != CPM1_SIZE)
+		वापस;
 
 	cm32181->lux_per_bit = vals[CPM1_LUX_PER_BIT];
 
-	/* Check for uncalibrated devices */
-	if (vals[CPM1_CALIBSCALE] == CM32181_CALIBSCALE_DEFAULT)
-		return;
+	/* Check क्रम uncalibrated devices */
+	अगर (vals[CPM1_CALIBSCALE] == CM32181_CALIBSCALE_DEFAULT)
+		वापस;
 
 	cm32181->calibscale = vals[CPM1_CALIBSCALE];
-	/* CPM1 lux_per_bit is for the current it value */
-	cm32181_read_als_it(cm32181, &cm32181->lux_per_bit_base_it);
-}
-#else
-static void cm32181_acpi_parse_cpm_tables(struct cm32181_chip *cm32181)
-{
-}
-#endif /* CONFIG_ACPI */
+	/* CPM1 lux_per_bit is क्रम the current it value */
+	cm32181_पढ़ो_als_it(cm32181, &cm32181->lux_per_bit_base_it);
+पूर्ण
+#अन्यथा
+अटल व्योम cm32181_acpi_parse_cpm_tables(काष्ठा cm32181_chip *cm32181)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI */
 
 /**
- * cm32181_reg_init() - Initialize CM32181 registers
- * @cm32181:	pointer of struct cm32181.
+ * cm32181_reg_init() - Initialize CM32181 रेजिस्टरs
+ * @cm32181:	poपूर्णांकer of काष्ठा cm32181.
  *
- * Initialize CM32181 ambient light sensor register to default values.
+ * Initialize CM32181 ambient light sensor रेजिस्टर to शेष values.
  *
- * Return: 0 for success; otherwise for error code.
+ * Return: 0 क्रम success; otherwise क्रम error code.
  */
-static int cm32181_reg_init(struct cm32181_chip *cm32181)
-{
-	struct i2c_client *client = cm32181->client;
-	int i;
+अटल पूर्णांक cm32181_reg_init(काष्ठा cm32181_chip *cm32181)
+अणु
+	काष्ठा i2c_client *client = cm32181->client;
+	पूर्णांक i;
 	s32 ret;
 
-	ret = i2c_smbus_read_word_data(client, CM32181_REG_ADDR_ID);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_word_data(client, CM32181_REG_ADDR_ID);
+	अगर (ret < 0)
+		वापस ret;
 
 	/* check device ID */
-	switch (ret & 0xFF) {
-	case 0x18: /* CM3218 */
+	चयन (ret & 0xFF) अणु
+	हाल 0x18: /* CM3218 */
 		cm32181->num_als_it = ARRAY_SIZE(cm3218_als_it_bits);
 		cm32181->als_it_bits = cm3218_als_it_bits;
 		cm32181->als_it_values = cm3218_als_it_values;
-		break;
-	case 0x81: /* CM32181 */
-	case 0x82: /* CM32182, fully compat. with CM32181 */
+		अवरोध;
+	हाल 0x81: /* CM32181 */
+	हाल 0x82: /* CM32182, fully compat. with CM32181 */
 		cm32181->num_als_it = ARRAY_SIZE(cm32181_als_it_bits);
 		cm32181->als_it_bits = cm32181_als_it_bits;
 		cm32181->als_it_values = cm32181_als_it_values;
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Default Values */
 	cm32181->conf_regs[CM32181_REG_ADDR_CMD] =
 			CM32181_CMD_ALS_IT_DEFAULT | CM32181_CMD_ALS_SM_DEFAULT;
-	cm32181->init_regs_bitmap = BIT(CM32181_REG_ADDR_CMD);
+	cm32181->init_regs_biपंचांगap = BIT(CM32181_REG_ADDR_CMD);
 	cm32181->calibscale = CM32181_CALIBSCALE_DEFAULT;
 	cm32181->lux_per_bit = CM32181_LUX_PER_BIT;
 	cm32181->lux_per_bit_base_it = CM32181_LUX_PER_BIT_BASE_IT;
 
-	if (ACPI_HANDLE(cm32181->dev))
+	अगर (ACPI_HANDLE(cm32181->dev))
 		cm32181_acpi_parse_cpm_tables(cm32181);
 
-	/* Initialize registers*/
-	for_each_set_bit(i, &cm32181->init_regs_bitmap, CM32181_CONF_REG_NUM) {
-		ret = i2c_smbus_write_word_data(client, i,
+	/* Initialize रेजिस्टरs*/
+	क्रम_each_set_bit(i, &cm32181->init_regs_biपंचांगap, CM32181_CONF_REG_NUM) अणु
+		ret = i2c_smbus_ग_लिखो_word_data(client, i,
 						cm32181->conf_regs[i]);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *  cm32181_read_als_it() - Get sensor integration time (ms)
- *  @cm32181:	pointer of struct cm32181
- *  @val2:	pointer of int to load the als_it value.
+ *  cm32181_पढ़ो_als_it() - Get sensor पूर्णांकegration समय (ms)
+ *  @cm32181:	poपूर्णांकer of काष्ठा cm32181
+ *  @val2:	poपूर्णांकer of पूर्णांक to load the als_it value.
  *
- *  Report the current integration time in milliseconds.
+ *  Report the current पूर्णांकegration समय in milliseconds.
  *
- *  Return: IIO_VAL_INT_PLUS_MICRO for success, otherwise -EINVAL.
+ *  Return: IIO_VAL_INT_PLUS_MICRO क्रम success, otherwise -EINVAL.
  */
-static int cm32181_read_als_it(struct cm32181_chip *cm32181, int *val2)
-{
+अटल पूर्णांक cm32181_पढ़ो_als_it(काष्ठा cm32181_chip *cm32181, पूर्णांक *val2)
+अणु
 	u16 als_it;
-	int i;
+	पूर्णांक i;
 
 	als_it = cm32181->conf_regs[CM32181_REG_ADDR_CMD];
 	als_it &= CM32181_CMD_ALS_IT_MASK;
 	als_it >>= CM32181_CMD_ALS_IT_SHIFT;
-	for (i = 0; i < cm32181->num_als_it; i++) {
-		if (als_it == cm32181->als_it_bits[i]) {
+	क्रम (i = 0; i < cm32181->num_als_it; i++) अणु
+		अगर (als_it == cm32181->als_it_bits[i]) अणु
 			*val2 = cm32181->als_it_values[i];
-			return IIO_VAL_INT_PLUS_MICRO;
-		}
-	}
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * cm32181_write_als_it() - Write sensor integration time
- * @cm32181:	pointer of struct cm32181.
- * @val:	integration time by millisecond.
+ * cm32181_ग_लिखो_als_it() - Write sensor पूर्णांकegration समय
+ * @cm32181:	poपूर्णांकer of काष्ठा cm32181.
+ * @val:	पूर्णांकegration समय by millisecond.
  *
- * Convert integration time (ms) to sensor value.
+ * Convert पूर्णांकegration समय (ms) to sensor value.
  *
- * Return: i2c_smbus_write_word_data command return value.
+ * Return: i2c_smbus_ग_लिखो_word_data command वापस value.
  */
-static int cm32181_write_als_it(struct cm32181_chip *cm32181, int val)
-{
-	struct i2c_client *client = cm32181->client;
+अटल पूर्णांक cm32181_ग_लिखो_als_it(काष्ठा cm32181_chip *cm32181, पूर्णांक val)
+अणु
+	काष्ठा i2c_client *client = cm32181->client;
 	u16 als_it;
-	int ret, i, n;
+	पूर्णांक ret, i, n;
 
 	n = cm32181->num_als_it;
-	for (i = 0; i < n; i++)
-		if (val <= cm32181->als_it_values[i])
-			break;
-	if (i >= n)
+	क्रम (i = 0; i < n; i++)
+		अगर (val <= cm32181->als_it_values[i])
+			अवरोध;
+	अगर (i >= n)
 		i = n - 1;
 
 	als_it = cm32181->als_it_bits[i];
@@ -288,177 +289,177 @@ static int cm32181_write_als_it(struct cm32181_chip *cm32181, int val)
 		~CM32181_CMD_ALS_IT_MASK;
 	cm32181->conf_regs[CM32181_REG_ADDR_CMD] |=
 		als_it;
-	ret = i2c_smbus_write_word_data(client, CM32181_REG_ADDR_CMD,
+	ret = i2c_smbus_ग_लिखो_word_data(client, CM32181_REG_ADDR_CMD,
 			cm32181->conf_regs[CM32181_REG_ADDR_CMD]);
 	mutex_unlock(&cm32181->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * cm32181_get_lux() - report current lux value
- * @cm32181:	pointer of struct cm32181.
+ * @cm32181:	poपूर्णांकer of काष्ठा cm32181.
  *
- * Convert sensor raw data to lux.  It depends on integration
- * time and calibscale variable.
+ * Convert sensor raw data to lux.  It depends on पूर्णांकegration
+ * समय and calibscale variable.
  *
  * Return: Positive value is lux, otherwise is error code.
  */
-static int cm32181_get_lux(struct cm32181_chip *cm32181)
-{
-	struct i2c_client *client = cm32181->client;
-	int ret;
-	int als_it;
+अटल पूर्णांक cm32181_get_lux(काष्ठा cm32181_chip *cm32181)
+अणु
+	काष्ठा i2c_client *client = cm32181->client;
+	पूर्णांक ret;
+	पूर्णांक als_it;
 	u64 lux;
 
-	ret = cm32181_read_als_it(cm32181, &als_it);
-	if (ret < 0)
-		return -EINVAL;
+	ret = cm32181_पढ़ो_als_it(cm32181, &als_it);
+	अगर (ret < 0)
+		वापस -EINVAL;
 
 	lux = cm32181->lux_per_bit;
 	lux *= cm32181->lux_per_bit_base_it;
-	lux = div_u64(lux, als_it);
+	lux = भाग_u64(lux, als_it);
 
-	ret = i2c_smbus_read_word_data(client, CM32181_REG_ADDR_ALS);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_word_data(client, CM32181_REG_ADDR_ALS);
+	अगर (ret < 0)
+		वापस ret;
 
 	lux *= ret;
 	lux *= cm32181->calibscale;
-	lux = div_u64(lux, CM32181_CALIBSCALE_RESOLUTION);
-	lux = div_u64(lux, CM32181_LUX_PER_BIT_RESOLUTION);
+	lux = भाग_u64(lux, CM32181_CALIBSCALE_RESOLUTION);
+	lux = भाग_u64(lux, CM32181_LUX_PER_BIT_RESOLUTION);
 
-	if (lux > 0xFFFF)
+	अगर (lux > 0xFFFF)
 		lux = 0xFFFF;
 
-	return lux;
-}
+	वापस lux;
+पूर्ण
 
-static int cm32181_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan,
-			    int *val, int *val2, long mask)
-{
-	struct cm32181_chip *cm32181 = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक cm32181_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan,
+			    पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा cm32181_chip *cm32181 = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_PROCESSED:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_PROCESSED:
 		ret = cm32181_get_lux(cm32181);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		*val = ret;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_CALIBSCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_CALIBSCALE:
 		*val = cm32181->calibscale;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_INT_TIME:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_INT_TIME:
 		*val = 0;
-		ret = cm32181_read_als_it(cm32181, val2);
-		return ret;
-	}
+		ret = cm32181_पढ़ो_als_it(cm32181, val2);
+		वापस ret;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int cm32181_write_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     int val, int val2, long mask)
-{
-	struct cm32181_chip *cm32181 = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक cm32181_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा cm32181_chip *cm32181 = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_CALIBSCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_CALIBSCALE:
 		cm32181->calibscale = val;
-		return val;
-	case IIO_CHAN_INFO_INT_TIME:
-		ret = cm32181_write_als_it(cm32181, val2);
-		return ret;
-	}
+		वापस val;
+	हाल IIO_CHAN_INFO_INT_TIME:
+		ret = cm32181_ग_लिखो_als_it(cm32181, val2);
+		वापस ret;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * cm32181_get_it_available() - Get available ALS IT value
- * @dev:	pointer of struct device.
- * @attr:	pointer of struct device_attribute.
- * @buf:	pointer of return string buffer.
+ * @dev:	poपूर्णांकer of काष्ठा device.
+ * @attr:	poपूर्णांकer of काष्ठा device_attribute.
+ * @buf:	poपूर्णांकer of वापस string buffer.
  *
- * Display the available integration time values by millisecond.
+ * Display the available पूर्णांकegration समय values by millisecond.
  *
  * Return: string length.
  */
-static ssize_t cm32181_get_it_available(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct cm32181_chip *cm32181 = iio_priv(dev_to_iio_dev(dev));
-	int i, n, len;
+अटल sमाप_प्रकार cm32181_get_it_available(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा cm32181_chip *cm32181 = iio_priv(dev_to_iio_dev(dev));
+	पूर्णांक i, n, len;
 
 	n = cm32181->num_als_it;
-	for (i = 0, len = 0; i < n; i++)
-		len += sprintf(buf + len, "0.%06u ", cm32181->als_it_values[i]);
-	return len + sprintf(buf + len, "\n");
-}
+	क्रम (i = 0, len = 0; i < n; i++)
+		len += प्र_लिखो(buf + len, "0.%06u ", cm32181->als_it_values[i]);
+	वापस len + प्र_लिखो(buf + len, "\n");
+पूर्ण
 
-static const struct iio_chan_spec cm32181_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec cm32181_channels[] = अणु
+	अणु
 		.type = IIO_LIGHT,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_PROCESSED) |
 			BIT(IIO_CHAN_INFO_CALIBSCALE) |
 			BIT(IIO_CHAN_INFO_INT_TIME),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static IIO_DEVICE_ATTR(in_illuminance_integration_time_available,
-			S_IRUGO, cm32181_get_it_available, NULL, 0);
+अटल IIO_DEVICE_ATTR(in_illuminance_पूर्णांकegration_समय_available,
+			S_IRUGO, cm32181_get_it_available, शून्य, 0);
 
-static struct attribute *cm32181_attributes[] = {
-	&iio_dev_attr_in_illuminance_integration_time_available.dev_attr.attr,
-	NULL,
-};
+अटल काष्ठा attribute *cm32181_attributes[] = अणु
+	&iio_dev_attr_in_illuminance_पूर्णांकegration_समय_available.dev_attr.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group cm32181_attribute_group = {
+अटल स्थिर काष्ठा attribute_group cm32181_attribute_group = अणु
 	.attrs = cm32181_attributes
-};
+पूर्ण;
 
-static const struct iio_info cm32181_info = {
-	.read_raw		= &cm32181_read_raw,
-	.write_raw		= &cm32181_write_raw,
+अटल स्थिर काष्ठा iio_info cm32181_info = अणु
+	.पढ़ो_raw		= &cm32181_पढ़ो_raw,
+	.ग_लिखो_raw		= &cm32181_ग_लिखो_raw,
 	.attrs			= &cm32181_attribute_group,
-};
+पूर्ण;
 
-static int cm32181_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct cm32181_chip *cm32181;
-	struct iio_dev *indio_dev;
-	int ret;
+अटल पूर्णांक cm32181_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा cm32181_chip *cm32181;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*cm32181));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*cm32181));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	/*
-	 * Some ACPI systems list 2 I2C resources for the CM3218 sensor, the
+	 * Some ACPI प्रणालीs list 2 I2C resources क्रम the CM3218 sensor, the
 	 * SMBus Alert Response Address (ARA, 0x0c) and the actual I2C address.
 	 * Detect this and take the following step to deal with it:
-	 * 1. When a SMBus Alert capable sensor has an Alert asserted, it will
+	 * 1. When a SMBus Alert capable sensor has an Alert निश्चितed, it will
 	 *    not respond on its actual I2C address. Read a byte from the ARA
 	 *    to clear any pending Alerts.
-	 * 2. Create a "dummy" client for the actual I2C address and
+	 * 2. Create a "dummy" client क्रम the actual I2C address and
 	 *    use that client to communicate with the sensor.
 	 */
-	if (ACPI_HANDLE(dev) && client->addr == SMBUS_ALERT_RESPONSE_ADDRESS) {
-		struct i2c_board_info board_info = { .type = "dummy" };
+	अगर (ACPI_HANDLE(dev) && client->addr == SMBUS_ALERT_RESPONSE_ADDRESS) अणु
+		काष्ठा i2c_board_info board_info = अणु .type = "dummy" पूर्ण;
 
-		i2c_smbus_read_byte(client);
+		i2c_smbus_पढ़ो_byte(client);
 
 		client = i2c_acpi_new_device(dev, 1, &board_info);
-		if (IS_ERR(client))
-			return PTR_ERR(client);
-	}
+		अगर (IS_ERR(client))
+			वापस PTR_ERR(client);
+	पूर्ण
 
 	cm32181 = iio_priv(indio_dev);
 	cm32181->client = client;
@@ -469,46 +470,46 @@ static int cm32181_probe(struct i2c_client *client)
 	indio_dev->num_channels = ARRAY_SIZE(cm32181_channels);
 	indio_dev->info = &cm32181_info;
 	indio_dev->name = dev_name(dev);
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
 	ret = cm32181_reg_init(cm32181);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "%s: register init failed\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_iio_device_register(dev, indio_dev);
-	if (ret) {
+	ret = devm_iio_device_रेजिस्टर(dev, indio_dev);
+	अगर (ret) अणु
 		dev_err(dev, "%s: regist device failed\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id cm32181_of_match[] = {
-	{ .compatible = "capella,cm3218" },
-	{ .compatible = "capella,cm32181" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id cm32181_of_match[] = अणु
+	अणु .compatible = "capella,cm3218" पूर्ण,
+	अणु .compatible = "capella,cm32181" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, cm32181_of_match);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id cm32181_acpi_match[] = {
-	{ "CPLM3218", 0 },
-	{ }
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id cm32181_acpi_match[] = अणु
+	अणु "CPLM3218", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, cm32181_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver cm32181_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver cm32181_driver = अणु
+	.driver = अणु
 		.name	= "cm32181",
 		.acpi_match_table = ACPI_PTR(cm32181_acpi_match),
 		.of_match_table = cm32181_of_match,
-	},
+	पूर्ण,
 	.probe_new	= cm32181_probe,
-};
+पूर्ण;
 
 module_i2c_driver(cm32181_driver);
 

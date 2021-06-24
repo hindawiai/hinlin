@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,98 +23,98 @@
  *
  */
 
-#include <linux/sched/mm.h>
-#include <drm/drm_gem.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <drm/drm_gem.h>
 
-#include "display/intel_frontbuffer.h"
+#समावेश "display/intel_frontbuffer.h"
 
-#include "gt/intel_engine.h"
-#include "gt/intel_engine_heartbeat.h"
-#include "gt/intel_gt.h"
-#include "gt/intel_gt_requests.h"
+#समावेश "gt/intel_engine.h"
+#समावेश "gt/intel_engine_heartbeat.h"
+#समावेश "gt/intel_gt.h"
+#समावेश "gt/intel_gt_requests.h"
 
-#include "i915_drv.h"
-#include "i915_globals.h"
-#include "i915_sw_fence_work.h"
-#include "i915_trace.h"
-#include "i915_vma.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_globals.h"
+#समावेश "i915_sw_fence_work.h"
+#समावेश "i915_trace.h"
+#समावेश "i915_vma.h"
 
-static struct i915_global_vma {
-	struct i915_global base;
-	struct kmem_cache *slab_vmas;
-} global;
+अटल काष्ठा i915_global_vma अणु
+	काष्ठा i915_global base;
+	काष्ठा kmem_cache *slab_vmas;
+पूर्ण global;
 
-struct i915_vma *i915_vma_alloc(void)
-{
-	return kmem_cache_zalloc(global.slab_vmas, GFP_KERNEL);
-}
+काष्ठा i915_vma *i915_vma_alloc(व्योम)
+अणु
+	वापस kmem_cache_zalloc(global.slab_vmas, GFP_KERNEL);
+पूर्ण
 
-void i915_vma_free(struct i915_vma *vma)
-{
-	return kmem_cache_free(global.slab_vmas, vma);
-}
+व्योम i915_vma_मुक्त(काष्ठा i915_vma *vma)
+अणु
+	वापस kmem_cache_मुक्त(global.slab_vmas, vma);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_ERRLOG_GEM) && IS_ENABLED(CONFIG_DRM_DEBUG_MM)
+#अगर IS_ENABLED(CONFIG_DRM_I915_ERRLOG_GEM) && IS_ENABLED(CONFIG_DRM_DEBUG_MM)
 
-#include <linux/stackdepot.h>
+#समावेश <linux/stackdepot.h>
 
-static void vma_print_allocator(struct i915_vma *vma, const char *reason)
-{
-	unsigned long *entries;
-	unsigned int nr_entries;
-	char buf[512];
+अटल व्योम vma_prपूर्णांक_allocator(काष्ठा i915_vma *vma, स्थिर अक्षर *reason)
+अणु
+	अचिन्हित दीर्घ *entries;
+	अचिन्हित पूर्णांक nr_entries;
+	अक्षर buf[512];
 
-	if (!vma->node.stack) {
+	अगर (!vma->node.stack) अणु
 		DRM_DEBUG_DRIVER("vma.node [%08llx + %08llx] %s: unknown owner\n",
 				 vma->node.start, vma->node.size, reason);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	nr_entries = stack_depot_fetch(vma->node.stack, &entries);
-	stack_trace_snprint(buf, sizeof(buf), entries, nr_entries, 0);
+	stack_trace_snprपूर्णांक(buf, माप(buf), entries, nr_entries, 0);
 	DRM_DEBUG_DRIVER("vma.node [%08llx + %08llx] %s: inserted at %s\n",
 			 vma->node.start, vma->node.size, reason, buf);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static void vma_print_allocator(struct i915_vma *vma, const char *reason)
-{
-}
+अटल व्योम vma_prपूर्णांक_allocator(काष्ठा i915_vma *vma, स्थिर अक्षर *reason)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static inline struct i915_vma *active_to_vma(struct i915_active *ref)
-{
-	return container_of(ref, typeof(struct i915_vma), active);
-}
+अटल अंतरभूत काष्ठा i915_vma *active_to_vma(काष्ठा i915_active *ref)
+अणु
+	वापस container_of(ref, typeof(काष्ठा i915_vma), active);
+पूर्ण
 
-static int __i915_vma_active(struct i915_active *ref)
-{
-	return i915_vma_tryget(active_to_vma(ref)) ? 0 : -ENOENT;
-}
+अटल पूर्णांक __i915_vma_active(काष्ठा i915_active *ref)
+अणु
+	वापस i915_vma_tryget(active_to_vma(ref)) ? 0 : -ENOENT;
+पूर्ण
 
 __i915_active_call
-static void __i915_vma_retire(struct i915_active *ref)
-{
+अटल व्योम __i915_vma_retire(काष्ठा i915_active *ref)
+अणु
 	i915_vma_put(active_to_vma(ref));
-}
+पूर्ण
 
-static struct i915_vma *
-vma_create(struct drm_i915_gem_object *obj,
-	   struct i915_address_space *vm,
-	   const struct i915_ggtt_view *view)
-{
-	struct i915_vma *pos = ERR_PTR(-E2BIG);
-	struct i915_vma *vma;
-	struct rb_node *rb, **p;
+अटल काष्ठा i915_vma *
+vma_create(काष्ठा drm_i915_gem_object *obj,
+	   काष्ठा i915_address_space *vm,
+	   स्थिर काष्ठा i915_ggtt_view *view)
+अणु
+	काष्ठा i915_vma *pos = ERR_PTR(-E2BIG);
+	काष्ठा i915_vma *vma;
+	काष्ठा rb_node *rb, **p;
 
 	/* The aliasing_ppgtt should never be used directly! */
 	GEM_BUG_ON(vm == &vm->gt->ggtt->alias->vm);
 
 	vma = i915_vma_alloc();
-	if (vma == NULL)
-		return ERR_PTR(-ENOMEM);
+	अगर (vma == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
 	kref_init(&vma->ref);
 	mutex_init(&vma->pages_mutex);
@@ -126,18 +127,18 @@ vma_create(struct drm_i915_gem_object *obj,
 
 	i915_active_init(&vma->active, __i915_vma_active, __i915_vma_retire);
 
-	/* Declare ourselves safe for use inside shrinkers */
-	if (IS_ENABLED(CONFIG_LOCKDEP)) {
+	/* Declare ourselves safe क्रम use inside shrinkers */
+	अगर (IS_ENABLED(CONFIG_LOCKDEP)) अणु
 		fs_reclaim_acquire(GFP_KERNEL);
 		might_lock(&vma->active.mutex);
 		fs_reclaim_release(GFP_KERNEL);
-	}
+	पूर्ण
 
-	INIT_LIST_HEAD(&vma->closed_link);
+	INIT_LIST_HEAD(&vma->बंदd_link);
 
-	if (view && view->type != I915_GGTT_VIEW_NORMAL) {
+	अगर (view && view->type != I915_GGTT_VIEW_NORMAL) अणु
 		vma->ggtt_view = *view;
-		if (view->type == I915_GGTT_VIEW_PARTIAL) {
+		अगर (view->type == I915_GGTT_VIEW_PARTIAL) अणु
 			GEM_BUG_ON(range_overflows_t(u64,
 						     view->partial.offset,
 						     view->partial.size,
@@ -145,268 +146,268 @@ vma_create(struct drm_i915_gem_object *obj,
 			vma->size = view->partial.size;
 			vma->size <<= PAGE_SHIFT;
 			GEM_BUG_ON(vma->size > obj->base.size);
-		} else if (view->type == I915_GGTT_VIEW_ROTATED) {
-			vma->size = intel_rotation_info_size(&view->rotated);
+		पूर्ण अन्यथा अगर (view->type == I915_GGTT_VIEW_ROTATED) अणु
+			vma->size = पूर्णांकel_rotation_info_size(&view->rotated);
 			vma->size <<= PAGE_SHIFT;
-		} else if (view->type == I915_GGTT_VIEW_REMAPPED) {
-			vma->size = intel_remapped_info_size(&view->remapped);
+		पूर्ण अन्यथा अगर (view->type == I915_GGTT_VIEW_REMAPPED) अणु
+			vma->size = पूर्णांकel_remapped_info_size(&view->remapped);
 			vma->size <<= PAGE_SHIFT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(vma->size > vm->total))
-		goto err_vma;
+	अगर (unlikely(vma->size > vm->total))
+		जाओ err_vma;
 
 	GEM_BUG_ON(!IS_ALIGNED(vma->size, I915_GTT_PAGE_SIZE));
 
 	spin_lock(&obj->vma.lock);
 
-	if (i915_is_ggtt(vm)) {
-		if (unlikely(overflows_type(vma->size, u32)))
-			goto err_unlock;
+	अगर (i915_is_ggtt(vm)) अणु
+		अगर (unlikely(overflows_type(vma->size, u32)))
+			जाओ err_unlock;
 
 		vma->fence_size = i915_gem_fence_size(vm->i915, vma->size,
 						      i915_gem_object_get_tiling(obj),
 						      i915_gem_object_get_stride(obj));
-		if (unlikely(vma->fence_size < vma->size || /* overflow */
+		अगर (unlikely(vma->fence_size < vma->size || /* overflow */
 			     vma->fence_size > vm->total))
-			goto err_unlock;
+			जाओ err_unlock;
 
 		GEM_BUG_ON(!IS_ALIGNED(vma->fence_size, I915_GTT_MIN_ALIGNMENT));
 
 		vma->fence_alignment = i915_gem_fence_alignment(vm->i915, vma->size,
 								i915_gem_object_get_tiling(obj),
 								i915_gem_object_get_stride(obj));
-		GEM_BUG_ON(!is_power_of_2(vma->fence_alignment));
+		GEM_BUG_ON(!is_घातer_of_2(vma->fence_alignment));
 
 		__set_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(vma));
-	}
+	पूर्ण
 
-	rb = NULL;
+	rb = शून्य;
 	p = &obj->vma.tree.rb_node;
-	while (*p) {
-		long cmp;
+	जबतक (*p) अणु
+		दीर्घ cmp;
 
 		rb = *p;
-		pos = rb_entry(rb, struct i915_vma, obj_node);
+		pos = rb_entry(rb, काष्ठा i915_vma, obj_node);
 
 		/*
-		 * If the view already exists in the tree, another thread
-		 * already created a matching vma, so return the older instance
+		 * If the view alपढ़ोy exists in the tree, another thपढ़ो
+		 * alपढ़ोy created a matching vma, so वापस the older instance
 		 * and dispose of ours.
 		 */
 		cmp = i915_vma_compare(pos, vm, view);
-		if (cmp < 0)
+		अगर (cmp < 0)
 			p = &rb->rb_right;
-		else if (cmp > 0)
+		अन्यथा अगर (cmp > 0)
 			p = &rb->rb_left;
-		else
-			goto err_unlock;
-	}
+		अन्यथा
+			जाओ err_unlock;
+	पूर्ण
 	rb_link_node(&vma->obj_node, rb, p);
 	rb_insert_color(&vma->obj_node, &obj->vma.tree);
 
-	if (i915_vma_is_ggtt(vma))
+	अगर (i915_vma_is_ggtt(vma))
 		/*
 		 * We put the GGTT vma at the start of the vma-list, followed
-		 * by the ppGGTT vma. This allows us to break early when
-		 * iterating over only the GGTT vma for an object, see
-		 * for_each_ggtt_vma()
+		 * by the ppGGTT vma. This allows us to अवरोध early when
+		 * iterating over only the GGTT vma क्रम an object, see
+		 * क्रम_each_ggtt_vma()
 		 */
 		list_add(&vma->obj_link, &obj->vma.list);
-	else
+	अन्यथा
 		list_add_tail(&vma->obj_link, &obj->vma.list);
 
 	spin_unlock(&obj->vma.lock);
 
-	return vma;
+	वापस vma;
 
 err_unlock:
 	spin_unlock(&obj->vma.lock);
 err_vma:
 	i915_vm_put(vm);
-	i915_vma_free(vma);
-	return pos;
-}
+	i915_vma_मुक्त(vma);
+	वापस pos;
+पूर्ण
 
-static struct i915_vma *
-i915_vma_lookup(struct drm_i915_gem_object *obj,
-	   struct i915_address_space *vm,
-	   const struct i915_ggtt_view *view)
-{
-	struct rb_node *rb;
+अटल काष्ठा i915_vma *
+i915_vma_lookup(काष्ठा drm_i915_gem_object *obj,
+	   काष्ठा i915_address_space *vm,
+	   स्थिर काष्ठा i915_ggtt_view *view)
+अणु
+	काष्ठा rb_node *rb;
 
 	rb = obj->vma.tree.rb_node;
-	while (rb) {
-		struct i915_vma *vma = rb_entry(rb, struct i915_vma, obj_node);
-		long cmp;
+	जबतक (rb) अणु
+		काष्ठा i915_vma *vma = rb_entry(rb, काष्ठा i915_vma, obj_node);
+		दीर्घ cmp;
 
 		cmp = i915_vma_compare(vma, vm, view);
-		if (cmp == 0)
-			return vma;
+		अगर (cmp == 0)
+			वापस vma;
 
-		if (cmp < 0)
+		अगर (cmp < 0)
 			rb = rb->rb_right;
-		else
+		अन्यथा
 			rb = rb->rb_left;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * i915_vma_instance - return the singleton instance of the VMA
- * @obj: parent &struct drm_i915_gem_object to be mapped
+ * i915_vma_instance - वापस the singleton instance of the VMA
+ * @obj: parent &काष्ठा drm_i915_gem_object to be mapped
  * @vm: address space in which the mapping is located
  * @view: additional mapping requirements
  *
  * i915_vma_instance() looks up an existing VMA of the @obj in the @vm with
- * the same @view characteristics. If a match is not found, one is created.
- * Once created, the VMA is kept until either the object is freed, or the
- * address space is closed.
+ * the same @view अक्षरacteristics. If a match is not found, one is created.
+ * Once created, the VMA is kept until either the object is मुक्तd, or the
+ * address space is बंदd.
  *
- * Returns the vma, or an error pointer.
+ * Returns the vma, or an error poपूर्णांकer.
  */
-struct i915_vma *
-i915_vma_instance(struct drm_i915_gem_object *obj,
-		  struct i915_address_space *vm,
-		  const struct i915_ggtt_view *view)
-{
-	struct i915_vma *vma;
+काष्ठा i915_vma *
+i915_vma_instance(काष्ठा drm_i915_gem_object *obj,
+		  काष्ठा i915_address_space *vm,
+		  स्थिर काष्ठा i915_ggtt_view *view)
+अणु
+	काष्ठा i915_vma *vma;
 
 	GEM_BUG_ON(view && !i915_is_ggtt(vm));
-	GEM_BUG_ON(!atomic_read(&vm->open));
+	GEM_BUG_ON(!atomic_पढ़ो(&vm->खोलो));
 
 	spin_lock(&obj->vma.lock);
 	vma = i915_vma_lookup(obj, vm, view);
 	spin_unlock(&obj->vma.lock);
 
-	/* vma_create() will resolve the race if another creates the vma */
-	if (unlikely(!vma))
+	/* vma_create() will resolve the race अगर another creates the vma */
+	अगर (unlikely(!vma))
 		vma = vma_create(obj, vm, view);
 
 	GEM_BUG_ON(!IS_ERR(vma) && i915_vma_compare(vma, vm, view));
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-struct i915_vma_work {
-	struct dma_fence_work base;
-	struct i915_address_space *vm;
-	struct i915_vm_pt_stash stash;
-	struct i915_vma *vma;
-	struct drm_i915_gem_object *pinned;
-	struct i915_sw_dma_fence_cb cb;
-	enum i915_cache_level cache_level;
-	unsigned int flags;
-};
+काष्ठा i915_vma_work अणु
+	काष्ठा dma_fence_work base;
+	काष्ठा i915_address_space *vm;
+	काष्ठा i915_vm_pt_stash stash;
+	काष्ठा i915_vma *vma;
+	काष्ठा drm_i915_gem_object *pinned;
+	काष्ठा i915_sw_dma_fence_cb cb;
+	क्रमागत i915_cache_level cache_level;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
 
-static int __vma_bind(struct dma_fence_work *work)
-{
-	struct i915_vma_work *vw = container_of(work, typeof(*vw), base);
-	struct i915_vma *vma = vw->vma;
+अटल पूर्णांक __vma_bind(काष्ठा dma_fence_work *work)
+अणु
+	काष्ठा i915_vma_work *vw = container_of(work, typeof(*vw), base);
+	काष्ठा i915_vma *vma = vw->vma;
 
 	vma->ops->bind_vma(vw->vm, &vw->stash,
 			   vma, vw->cache_level, vw->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __vma_release(struct dma_fence_work *work)
-{
-	struct i915_vma_work *vw = container_of(work, typeof(*vw), base);
+अटल व्योम __vma_release(काष्ठा dma_fence_work *work)
+अणु
+	काष्ठा i915_vma_work *vw = container_of(work, typeof(*vw), base);
 
-	if (vw->pinned) {
+	अगर (vw->pinned) अणु
 		__i915_gem_object_unpin_pages(vw->pinned);
 		i915_gem_object_put(vw->pinned);
-	}
+	पूर्ण
 
-	i915_vm_free_pt_stash(vw->vm, &vw->stash);
+	i915_vm_मुक्त_pt_stash(vw->vm, &vw->stash);
 	i915_vm_put(vw->vm);
-}
+पूर्ण
 
-static const struct dma_fence_work_ops bind_ops = {
+अटल स्थिर काष्ठा dma_fence_work_ops bind_ops = अणु
 	.name = "bind",
 	.work = __vma_bind,
 	.release = __vma_release,
-};
+पूर्ण;
 
-struct i915_vma_work *i915_vma_work(void)
-{
-	struct i915_vma_work *vw;
+काष्ठा i915_vma_work *i915_vma_work(व्योम)
+अणु
+	काष्ठा i915_vma_work *vw;
 
-	vw = kzalloc(sizeof(*vw), GFP_KERNEL);
-	if (!vw)
-		return NULL;
+	vw = kzalloc(माप(*vw), GFP_KERNEL);
+	अगर (!vw)
+		वापस शून्य;
 
 	dma_fence_work_init(&vw->base, &bind_ops);
-	vw->base.dma.error = -EAGAIN; /* disable the worker by default */
+	vw->base.dma.error = -EAGAIN; /* disable the worker by शेष */
 
-	return vw;
-}
+	वापस vw;
+पूर्ण
 
-int i915_vma_wait_for_bind(struct i915_vma *vma)
-{
-	int err = 0;
+पूर्णांक i915_vma_रुको_क्रम_bind(काष्ठा i915_vma *vma)
+अणु
+	पूर्णांक err = 0;
 
-	if (rcu_access_pointer(vma->active.excl.fence)) {
-		struct dma_fence *fence;
+	अगर (rcu_access_poपूर्णांकer(vma->active.excl.fence)) अणु
+		काष्ठा dma_fence *fence;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		fence = dma_fence_get_rcu_safe(&vma->active.excl.fence);
-		rcu_read_unlock();
-		if (fence) {
-			err = dma_fence_wait(fence, MAX_SCHEDULE_TIMEOUT);
+		rcu_पढ़ो_unlock();
+		अगर (fence) अणु
+			err = dma_fence_रुको(fence, MAX_SCHEDULE_TIMEOUT);
 			dma_fence_put(fence);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * i915_vma_bind - Sets up PTEs for an VMA in it's corresponding address space.
+ * i915_vma_bind - Sets up PTEs क्रम an VMA in it's corresponding address space.
  * @vma: VMA to map
  * @cache_level: mapping cache level
  * @flags: flags like global or local mapping
- * @work: preallocated worker for allocating and binding the PTE
+ * @work: pपुनः_स्मृतिated worker क्रम allocating and binding the PTE
  *
  * DMA addresses are taken from the scatter-gather table of this object (or of
- * this VMA in case of non-default GGTT views) and PTE entries set up.
+ * this VMA in हाल of non-शेष GGTT views) and PTE entries set up.
  * Note that DMA addresses are also the only part of the SG table we care about.
  */
-int i915_vma_bind(struct i915_vma *vma,
-		  enum i915_cache_level cache_level,
+पूर्णांक i915_vma_bind(काष्ठा i915_vma *vma,
+		  क्रमागत i915_cache_level cache_level,
 		  u32 flags,
-		  struct i915_vma_work *work)
-{
+		  काष्ठा i915_vma_work *work)
+अणु
 	u32 bind_flags;
 	u32 vma_flags;
 
 	GEM_BUG_ON(!drm_mm_node_allocated(&vma->node));
 	GEM_BUG_ON(vma->size > vma->node.size);
 
-	if (GEM_DEBUG_WARN_ON(range_overflows(vma->node.start,
+	अगर (GEM_DEBUG_WARN_ON(range_overflows(vma->node.start,
 					      vma->node.size,
 					      vma->vm->total)))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	if (GEM_DEBUG_WARN_ON(!flags))
-		return -EINVAL;
+	अगर (GEM_DEBUG_WARN_ON(!flags))
+		वापस -EINVAL;
 
 	bind_flags = flags;
 	bind_flags &= I915_VMA_GLOBAL_BIND | I915_VMA_LOCAL_BIND;
 
-	vma_flags = atomic_read(&vma->flags);
+	vma_flags = atomic_पढ़ो(&vma->flags);
 	vma_flags &= I915_VMA_GLOBAL_BIND | I915_VMA_LOCAL_BIND;
 
 	bind_flags &= ~vma_flags;
-	if (bind_flags == 0)
-		return 0;
+	अगर (bind_flags == 0)
+		वापस 0;
 
 	GEM_BUG_ON(!vma->pages);
 
 	trace_i915_vma_bind(vma, bind_flags);
-	if (work && bind_flags & vma->vm->bind_async_flags) {
-		struct dma_fence *prev;
+	अगर (work && bind_flags & vma->vm->bind_async_flags) अणु
+		काष्ठा dma_fence *prev;
 
 		work->vma = vma;
 		work->cache_level = cache_level;
@@ -414,149 +415,149 @@ int i915_vma_bind(struct i915_vma *vma,
 
 		/*
 		 * Note we only want to chain up to the migration fence on
-		 * the pages (not the object itself). As we don't track that,
+		 * the pages (not the object itself). As we करोn't track that,
 		 * yet, we have to use the exclusive fence instead.
 		 *
-		 * Also note that we do not want to track the async vma as
+		 * Also note that we करो not want to track the async vma as
 		 * part of the obj->resv->excl_fence as it only affects
-		 * execution and not content or object's backing store lifetime.
+		 * execution and not content or object's backing store lअगरeसमय.
 		 */
 		prev = i915_active_set_exclusive(&vma->active, &work->base.dma);
-		if (prev) {
-			__i915_sw_fence_await_dma_fence(&work->base.chain,
+		अगर (prev) अणु
+			__i915_sw_fence_aरुको_dma_fence(&work->base.chain,
 							prev,
 							&work->cb);
 			dma_fence_put(prev);
-		}
+		पूर्ण
 
 		work->base.dma.error = 0; /* enable the queue_work() */
 
-		if (vma->obj) {
+		अगर (vma->obj) अणु
 			__i915_gem_object_pin_pages(vma->obj);
 			work->pinned = i915_gem_object_get(vma->obj);
-		}
-	} else {
-		vma->ops->bind_vma(vma->vm, NULL, vma, cache_level, bind_flags);
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		vma->ops->bind_vma(vma->vm, शून्य, vma, cache_level, bind_flags);
+	पूर्ण
 
 	atomic_or(bind_flags, &vma->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __iomem *i915_vma_pin_iomap(struct i915_vma *vma)
-{
-	void __iomem *ptr;
-	int err;
+व्योम __iomem *i915_vma_pin_iomap(काष्ठा i915_vma *vma)
+अणु
+	व्योम __iomem *ptr;
+	पूर्णांक err;
 
-	if (GEM_WARN_ON(!i915_vma_is_map_and_fenceable(vma))) {
+	अगर (GEM_WARN_ON(!i915_vma_is_map_and_fenceable(vma))) अणु
 		err = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	GEM_BUG_ON(!i915_vma_is_ggtt(vma));
 	GEM_BUG_ON(!i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND));
 
 	ptr = READ_ONCE(vma->iomap);
-	if (ptr == NULL) {
+	अगर (ptr == शून्य) अणु
 		ptr = io_mapping_map_wc(&i915_vm_to_ggtt(vma->vm)->iomap,
 					vma->node.start,
 					vma->node.size);
-		if (ptr == NULL) {
+		अगर (ptr == शून्य) अणु
 			err = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		if (unlikely(cmpxchg(&vma->iomap, NULL, ptr))) {
+		अगर (unlikely(cmpxchg(&vma->iomap, शून्य, ptr))) अणु
 			io_mapping_unmap(ptr);
 			ptr = vma->iomap;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	__i915_vma_pin(vma);
 
 	err = i915_vma_pin_fence(vma);
-	if (err)
-		goto err_unpin;
+	अगर (err)
+		जाओ err_unpin;
 
-	i915_vma_set_ggtt_write(vma);
+	i915_vma_set_ggtt_ग_लिखो(vma);
 
 	/* NB Access through the GTT requires the device to be awake. */
-	return ptr;
+	वापस ptr;
 
 err_unpin:
 	__i915_vma_unpin(vma);
 err:
-	return IO_ERR_PTR(err);
-}
+	वापस IO_ERR_PTR(err);
+पूर्ण
 
-void i915_vma_flush_writes(struct i915_vma *vma)
-{
-	if (i915_vma_unset_ggtt_write(vma))
-		intel_gt_flush_ggtt_writes(vma->vm->gt);
-}
+व्योम i915_vma_flush_ग_लिखोs(काष्ठा i915_vma *vma)
+अणु
+	अगर (i915_vma_unset_ggtt_ग_लिखो(vma))
+		पूर्णांकel_gt_flush_ggtt_ग_लिखोs(vma->vm->gt);
+पूर्ण
 
-void i915_vma_unpin_iomap(struct i915_vma *vma)
-{
-	GEM_BUG_ON(vma->iomap == NULL);
+व्योम i915_vma_unpin_iomap(काष्ठा i915_vma *vma)
+अणु
+	GEM_BUG_ON(vma->iomap == शून्य);
 
-	i915_vma_flush_writes(vma);
+	i915_vma_flush_ग_लिखोs(vma);
 
 	i915_vma_unpin_fence(vma);
 	i915_vma_unpin(vma);
-}
+पूर्ण
 
-void i915_vma_unpin_and_release(struct i915_vma **p_vma, unsigned int flags)
-{
-	struct i915_vma *vma;
-	struct drm_i915_gem_object *obj;
+व्योम i915_vma_unpin_and_release(काष्ठा i915_vma **p_vma, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा i915_vma *vma;
+	काष्ठा drm_i915_gem_object *obj;
 
 	vma = fetch_and_zero(p_vma);
-	if (!vma)
-		return;
+	अगर (!vma)
+		वापस;
 
 	obj = vma->obj;
 	GEM_BUG_ON(!obj);
 
 	i915_vma_unpin(vma);
 
-	if (flags & I915_VMA_RELEASE_MAP)
+	अगर (flags & I915_VMA_RELEASE_MAP)
 		i915_gem_object_unpin_map(obj);
 
 	i915_gem_object_put(obj);
-}
+पूर्ण
 
-bool i915_vma_misplaced(const struct i915_vma *vma,
+bool i915_vma_misplaced(स्थिर काष्ठा i915_vma *vma,
 			u64 size, u64 alignment, u64 flags)
-{
-	if (!drm_mm_node_allocated(&vma->node))
-		return false;
+अणु
+	अगर (!drm_mm_node_allocated(&vma->node))
+		वापस false;
 
-	if (test_bit(I915_VMA_ERROR_BIT, __i915_vma_flags(vma)))
-		return true;
+	अगर (test_bit(I915_VMA_ERROR_BIT, __i915_vma_flags(vma)))
+		वापस true;
 
-	if (vma->node.size < size)
-		return true;
+	अगर (vma->node.size < size)
+		वापस true;
 
-	GEM_BUG_ON(alignment && !is_power_of_2(alignment));
-	if (alignment && !IS_ALIGNED(vma->node.start, alignment))
-		return true;
+	GEM_BUG_ON(alignment && !is_घातer_of_2(alignment));
+	अगर (alignment && !IS_ALIGNED(vma->node.start, alignment))
+		वापस true;
 
-	if (flags & PIN_MAPPABLE && !i915_vma_is_map_and_fenceable(vma))
-		return true;
+	अगर (flags & PIN_MAPPABLE && !i915_vma_is_map_and_fenceable(vma))
+		वापस true;
 
-	if (flags & PIN_OFFSET_BIAS &&
+	अगर (flags & PIN_OFFSET_BIAS &&
 	    vma->node.start < (flags & PIN_OFFSET_MASK))
-		return true;
+		वापस true;
 
-	if (flags & PIN_OFFSET_FIXED &&
+	अगर (flags & PIN_OFFSET_FIXED &&
 	    vma->node.start != (flags & PIN_OFFSET_MASK))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void __i915_vma_set_map_and_fenceable(struct i915_vma *vma)
-{
+व्योम __i915_vma_set_map_and_fenceable(काष्ठा i915_vma *vma)
+अणु
 	bool mappable, fenceable;
 
 	GEM_BUG_ON(!i915_vma_is_ggtt(vma));
@@ -567,139 +568,139 @@ void __i915_vma_set_map_and_fenceable(struct i915_vma *vma)
 
 	mappable = vma->node.start + vma->fence_size <= i915_vm_to_ggtt(vma->vm)->mappable_end;
 
-	if (mappable && fenceable)
+	अगर (mappable && fenceable)
 		set_bit(I915_VMA_CAN_FENCE_BIT, __i915_vma_flags(vma));
-	else
+	अन्यथा
 		clear_bit(I915_VMA_CAN_FENCE_BIT, __i915_vma_flags(vma));
-}
+पूर्ण
 
-bool i915_gem_valid_gtt_space(struct i915_vma *vma, unsigned long color)
-{
-	struct drm_mm_node *node = &vma->node;
-	struct drm_mm_node *other;
+bool i915_gem_valid_gtt_space(काष्ठा i915_vma *vma, अचिन्हित दीर्घ color)
+अणु
+	काष्ठा drm_mm_node *node = &vma->node;
+	काष्ठा drm_mm_node *other;
 
 	/*
-	 * On some machines we have to be careful when putting differing types
-	 * of snoopable memory together to avoid the prefetcher crossing memory
-	 * domains and dying. During vm initialisation, we decide whether or not
-	 * these constraints apply and set the drm_mm.color_adjust
+	 * On some machines we have to be careful when putting dअगरfering types
+	 * of snoopable memory together to aव्योम the prefetcher crossing memory
+	 * करोमुख्यs and dying. During vm initialisation, we decide whether or not
+	 * these स्थिरraपूर्णांकs apply and set the drm_mm.color_adjust
 	 * appropriately.
 	 */
-	if (!i915_vm_has_cache_coloring(vma->vm))
-		return true;
+	अगर (!i915_vm_has_cache_coloring(vma->vm))
+		वापस true;
 
-	/* Only valid to be called on an already inserted vma */
+	/* Only valid to be called on an alपढ़ोy inserted vma */
 	GEM_BUG_ON(!drm_mm_node_allocated(node));
 	GEM_BUG_ON(list_empty(&node->node_list));
 
 	other = list_prev_entry(node, node_list);
-	if (i915_node_color_differs(other, color) &&
+	अगर (i915_node_color_dअगरfers(other, color) &&
 	    !drm_mm_hole_follows(other))
-		return false;
+		वापस false;
 
 	other = list_next_entry(node, node_list);
-	if (i915_node_color_differs(other, color) &&
+	अगर (i915_node_color_dअगरfers(other, color) &&
 	    !drm_mm_hole_follows(node))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * i915_vma_insert - finds a slot for the vma in its address space
+ * i915_vma_insert - finds a slot क्रम the vma in its address space
  * @vma: the vma
  * @size: requested size in bytes (can be larger than the VMA)
  * @alignment: required alignment
  * @flags: mask of PIN_* flags to use
  *
- * First we try to allocate some free space that meets the requirements for
- * the VMA. Failiing that, if the flags permit, it will evict an old VMA,
- * preferrably the oldest idle entry to make room for the new VMA.
+ * First we try to allocate some मुक्त space that meets the requirements क्रम
+ * the VMA. Failiing that, अगर the flags permit, it will evict an old VMA,
+ * preferrably the oldest idle entry to make room क्रम the new VMA.
  *
  * Returns:
  * 0 on success, negative error code otherwise.
  */
-static int
-i915_vma_insert(struct i915_vma *vma, u64 size, u64 alignment, u64 flags)
-{
-	unsigned long color;
+अटल पूर्णांक
+i915_vma_insert(काष्ठा i915_vma *vma, u64 size, u64 alignment, u64 flags)
+अणु
+	अचिन्हित दीर्घ color;
 	u64 start, end;
-	int ret;
+	पूर्णांक ret;
 
 	GEM_BUG_ON(i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND | I915_VMA_LOCAL_BIND));
 	GEM_BUG_ON(drm_mm_node_allocated(&vma->node));
 
 	size = max(size, vma->size);
 	alignment = max(alignment, vma->display_alignment);
-	if (flags & PIN_MAPPABLE) {
+	अगर (flags & PIN_MAPPABLE) अणु
 		size = max_t(typeof(size), size, vma->fence_size);
 		alignment = max_t(typeof(alignment),
 				  alignment, vma->fence_alignment);
-	}
+	पूर्ण
 
 	GEM_BUG_ON(!IS_ALIGNED(size, I915_GTT_PAGE_SIZE));
 	GEM_BUG_ON(!IS_ALIGNED(alignment, I915_GTT_MIN_ALIGNMENT));
-	GEM_BUG_ON(!is_power_of_2(alignment));
+	GEM_BUG_ON(!is_घातer_of_2(alignment));
 
 	start = flags & PIN_OFFSET_BIAS ? flags & PIN_OFFSET_MASK : 0;
 	GEM_BUG_ON(!IS_ALIGNED(start, I915_GTT_PAGE_SIZE));
 
 	end = vma->vm->total;
-	if (flags & PIN_MAPPABLE)
+	अगर (flags & PIN_MAPPABLE)
 		end = min_t(u64, end, i915_vm_to_ggtt(vma->vm)->mappable_end);
-	if (flags & PIN_ZONE_4G)
+	अगर (flags & PIN_ZONE_4G)
 		end = min_t(u64, end, (1ULL << 32) - I915_GTT_PAGE_SIZE);
 	GEM_BUG_ON(!IS_ALIGNED(end, I915_GTT_PAGE_SIZE));
 
 	/* If binding the object/GGTT view requires more space than the entire
-	 * aperture has, reject it early before evicting everything in a vain
+	 * aperture has, reject it early beक्रमe evicting everything in a vain
 	 * attempt to find space.
 	 */
-	if (size > end) {
+	अगर (size > end) अणु
 		DRM_DEBUG("Attempting to bind an object larger than the aperture: request=%llu > %s aperture=%llu\n",
 			  size, flags & PIN_MAPPABLE ? "mappable" : "total",
 			  end);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	color = 0;
-	if (vma->obj && i915_vm_has_cache_coloring(vma->vm))
+	अगर (vma->obj && i915_vm_has_cache_coloring(vma->vm))
 		color = vma->obj->cache_level;
 
-	if (flags & PIN_OFFSET_FIXED) {
+	अगर (flags & PIN_OFFSET_FIXED) अणु
 		u64 offset = flags & PIN_OFFSET_MASK;
-		if (!IS_ALIGNED(offset, alignment) ||
+		अगर (!IS_ALIGNED(offset, alignment) ||
 		    range_overflows(offset, size, end))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		ret = i915_gem_gtt_reserve(vma->vm, &vma->node,
 					   size, offset, color,
 					   flags);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		/*
 		 * We only support huge gtt pages through the 48b PPGTT,
-		 * however we also don't want to force any alignment for
-		 * objects which need to be tightly packed into the low 32bits.
+		 * however we also करोn't want to क्रमce any alignment क्रम
+		 * objects which need to be tightly packed पूर्णांकo the low 32bits.
 		 *
-		 * Note that we assume that GGTT are limited to 4GiB for the
-		 * forseeable future. See also i915_ggtt_offset().
+		 * Note that we assume that GGTT are limited to 4GiB क्रम the
+		 * क्रमseeable future. See also i915_ggtt_offset().
 		 */
-		if (upper_32_bits(end - 1) &&
-		    vma->page_sizes.sg > I915_GTT_PAGE_SIZE) {
+		अगर (upper_32_bits(end - 1) &&
+		    vma->page_sizes.sg > I915_GTT_PAGE_SIZE) अणु
 			/*
 			 * We can't mix 64K and 4K PTEs in the same page-table
-			 * (2M block), and so to avoid the ugliness and
-			 * complexity of coloring we opt for just aligning 64K
+			 * (2M block), and so to aव्योम the ugliness and
+			 * complनिकासy of coloring we opt क्रम just aligning 64K
 			 * objects to 2M.
 			 */
 			u64 page_alignment =
-				rounddown_pow_of_two(vma->page_sizes.sg |
+				roundकरोwn_घात_of_two(vma->page_sizes.sg |
 						     I915_GTT_PAGE_SIZE_2M);
 
 			/*
-			 * Check we don't expand for the limited Global GTT
+			 * Check we करोn't expand क्रम the limited Global GTT
 			 * (mappable aperture is even more precious!). This
 			 * also checks that we exclude the aliasing-ppgtt.
 			 */
@@ -707,30 +708,30 @@ i915_vma_insert(struct i915_vma *vma, u64 size, u64 alignment, u64 flags)
 
 			alignment = max(alignment, page_alignment);
 
-			if (vma->page_sizes.sg & I915_GTT_PAGE_SIZE_64K)
+			अगर (vma->page_sizes.sg & I915_GTT_PAGE_SIZE_64K)
 				size = round_up(size, I915_GTT_PAGE_SIZE_2M);
-		}
+		पूर्ण
 
 		ret = i915_gem_gtt_insert(vma->vm, &vma->node,
 					  size, alignment, color,
 					  start, end, flags);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		GEM_BUG_ON(vma->node.start < start);
 		GEM_BUG_ON(vma->node.start + vma->node.size > end);
-	}
+	पूर्ण
 	GEM_BUG_ON(!drm_mm_node_allocated(&vma->node));
 	GEM_BUG_ON(!i915_gem_valid_gtt_space(vma, color));
 
 	list_add_tail(&vma->vm_link, &vma->vm->bound_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-i915_vma_detach(struct i915_vma *vma)
-{
+अटल व्योम
+i915_vma_detach(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(!drm_mm_node_allocated(&vma->node));
 	GEM_BUG_ON(i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND | I915_VMA_LOCAL_BIND));
 
@@ -740,132 +741,132 @@ i915_vma_detach(struct i915_vma *vma)
 	 * it to be reaped by the shrinker.
 	 */
 	list_del(&vma->vm_link);
-}
+पूर्ण
 
-static bool try_qad_pin(struct i915_vma *vma, unsigned int flags)
-{
-	unsigned int bound;
+अटल bool try_qad_pin(काष्ठा i915_vma *vma, अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक bound;
 	bool pinned = true;
 
-	bound = atomic_read(&vma->flags);
-	do {
-		if (unlikely(flags & ~bound))
-			return false;
+	bound = atomic_पढ़ो(&vma->flags);
+	करो अणु
+		अगर (unlikely(flags & ~bound))
+			वापस false;
 
-		if (unlikely(bound & (I915_VMA_OVERFLOW | I915_VMA_ERROR)))
-			return false;
+		अगर (unlikely(bound & (I915_VMA_OVERFLOW | I915_VMA_ERROR)))
+			वापस false;
 
-		if (!(bound & I915_VMA_PIN_MASK))
-			goto unpinned;
+		अगर (!(bound & I915_VMA_PIN_MASK))
+			जाओ unpinned;
 
 		GEM_BUG_ON(((bound + 1) & I915_VMA_PIN_MASK) == 0);
-	} while (!atomic_try_cmpxchg(&vma->flags, &bound, bound + 1));
+	पूर्ण जबतक (!atomic_try_cmpxchg(&vma->flags, &bound, bound + 1));
 
-	return true;
+	वापस true;
 
 unpinned:
 	/*
-	 * If pin_count==0, but we are bound, check under the lock to avoid
+	 * If pin_count==0, but we are bound, check under the lock to aव्योम
 	 * racing with a concurrent i915_vma_unbind().
 	 */
 	mutex_lock(&vma->vm->mutex);
-	do {
-		if (unlikely(bound & (I915_VMA_OVERFLOW | I915_VMA_ERROR))) {
+	करो अणु
+		अगर (unlikely(bound & (I915_VMA_OVERFLOW | I915_VMA_ERROR))) अणु
 			pinned = false;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (unlikely(flags & ~bound)) {
+		अगर (unlikely(flags & ~bound)) अणु
 			pinned = false;
-			break;
-		}
-	} while (!atomic_try_cmpxchg(&vma->flags, &bound, bound + 1));
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!atomic_try_cmpxchg(&vma->flags, &bound, bound + 1));
 	mutex_unlock(&vma->vm->mutex);
 
-	return pinned;
-}
+	वापस pinned;
+पूर्ण
 
-static int vma_get_pages(struct i915_vma *vma)
-{
-	int err = 0;
+अटल पूर्णांक vma_get_pages(काष्ठा i915_vma *vma)
+अणु
+	पूर्णांक err = 0;
 
-	if (atomic_add_unless(&vma->pages_count, 1, 0))
-		return 0;
+	अगर (atomic_add_unless(&vma->pages_count, 1, 0))
+		वापस 0;
 
 	/* Allocations ahoy! */
-	if (mutex_lock_interruptible(&vma->pages_mutex))
-		return -EINTR;
+	अगर (mutex_lock_पूर्णांकerruptible(&vma->pages_mutex))
+		वापस -EINTR;
 
-	if (!atomic_read(&vma->pages_count)) {
-		if (vma->obj) {
+	अगर (!atomic_पढ़ो(&vma->pages_count)) अणु
+		अगर (vma->obj) अणु
 			err = i915_gem_object_pin_pages(vma->obj);
-			if (err)
-				goto unlock;
-		}
+			अगर (err)
+				जाओ unlock;
+		पूर्ण
 
 		err = vma->ops->set_pages(vma);
-		if (err) {
-			if (vma->obj)
+		अगर (err) अणु
+			अगर (vma->obj)
 				i915_gem_object_unpin_pages(vma->obj);
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 	atomic_inc(&vma->pages_count);
 
 unlock:
 	mutex_unlock(&vma->pages_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __vma_put_pages(struct i915_vma *vma, unsigned int count)
-{
+अटल व्योम __vma_put_pages(काष्ठा i915_vma *vma, अचिन्हित पूर्णांक count)
+अणु
 	/* We allocate under vma_get_pages, so beware the shrinker */
 	mutex_lock_nested(&vma->pages_mutex, SINGLE_DEPTH_NESTING);
-	GEM_BUG_ON(atomic_read(&vma->pages_count) < count);
-	if (atomic_sub_return(count, &vma->pages_count) == 0) {
+	GEM_BUG_ON(atomic_पढ़ो(&vma->pages_count) < count);
+	अगर (atomic_sub_वापस(count, &vma->pages_count) == 0) अणु
 		vma->ops->clear_pages(vma);
 		GEM_BUG_ON(vma->pages);
-		if (vma->obj)
+		अगर (vma->obj)
 			i915_gem_object_unpin_pages(vma->obj);
-	}
+	पूर्ण
 	mutex_unlock(&vma->pages_mutex);
-}
+पूर्ण
 
-static void vma_put_pages(struct i915_vma *vma)
-{
-	if (atomic_add_unless(&vma->pages_count, -1, 1))
-		return;
+अटल व्योम vma_put_pages(काष्ठा i915_vma *vma)
+अणु
+	अगर (atomic_add_unless(&vma->pages_count, -1, 1))
+		वापस;
 
 	__vma_put_pages(vma, 1);
-}
+पूर्ण
 
-static void vma_unbind_pages(struct i915_vma *vma)
-{
-	unsigned int count;
+अटल व्योम vma_unbind_pages(काष्ठा i915_vma *vma)
+अणु
+	अचिन्हित पूर्णांक count;
 
-	lockdep_assert_held(&vma->vm->mutex);
+	lockdep_निश्चित_held(&vma->vm->mutex);
 
 	/* The upper portion of pages_count is the number of bindings */
-	count = atomic_read(&vma->pages_count);
+	count = atomic_पढ़ो(&vma->pages_count);
 	count >>= I915_VMA_PAGES_BIAS;
 	GEM_BUG_ON(!count);
 
 	__vma_put_pages(vma, count | count << I915_VMA_PAGES_BIAS);
-}
+पूर्ण
 
-int i915_vma_pin_ww(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
+पूर्णांक i915_vma_pin_ww(काष्ठा i915_vma *vma, काष्ठा i915_gem_ww_ctx *ww,
 		    u64 size, u64 alignment, u64 flags)
-{
-	struct i915_vma_work *work = NULL;
-	intel_wakeref_t wakeref = 0;
-	unsigned int bound;
-	int err;
+अणु
+	काष्ठा i915_vma_work *work = शून्य;
+	पूर्णांकel_wakeref_t wakeref = 0;
+	अचिन्हित पूर्णांक bound;
+	पूर्णांक err;
 
-#ifdef CONFIG_PROVE_LOCKING
-	if (debug_locks && !WARN_ON(!ww) && vma->resv)
-		assert_vma_held(vma);
-#endif
+#अगर_घोषित CONFIG_PROVE_LOCKING
+	अगर (debug_locks && !WARN_ON(!ww) && vma->resv)
+		निश्चित_vma_held(vma);
+#पूर्ण_अगर
 
 	BUILD_BUG_ON(PIN_GLOBAL != I915_VMA_GLOBAL_BIND);
 	BUILD_BUG_ON(PIN_USER != I915_VMA_LOCAL_BIND);
@@ -873,109 +874,109 @@ int i915_vma_pin_ww(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
 	GEM_BUG_ON(!(flags & (PIN_USER | PIN_GLOBAL)));
 
 	/* First try and grab the pin without rebinding the vma */
-	if (try_qad_pin(vma, flags & I915_VMA_BIND_MASK))
-		return 0;
+	अगर (try_qad_pin(vma, flags & I915_VMA_BIND_MASK))
+		वापस 0;
 
 	err = vma_get_pages(vma);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (flags & PIN_GLOBAL)
-		wakeref = intel_runtime_pm_get(&vma->vm->i915->runtime_pm);
+	अगर (flags & PIN_GLOBAL)
+		wakeref = पूर्णांकel_runसमय_pm_get(&vma->vm->i915->runसमय_pm);
 
-	if (flags & vma->vm->bind_async_flags) {
+	अगर (flags & vma->vm->bind_async_flags) अणु
 		/* lock VM */
 		err = i915_vm_lock_objects(vma->vm, ww);
-		if (err)
-			goto err_rpm;
+		अगर (err)
+			जाओ err_rpm;
 
 		work = i915_vma_work();
-		if (!work) {
+		अगर (!work) अणु
 			err = -ENOMEM;
-			goto err_rpm;
-		}
+			जाओ err_rpm;
+		पूर्ण
 
 		work->vm = i915_vm_get(vma->vm);
 
 		/* Allocate enough page directories to used PTE */
-		if (vma->vm->allocate_va_range) {
+		अगर (vma->vm->allocate_va_range) अणु
 			err = i915_vm_alloc_pt_stash(vma->vm,
 						     &work->stash,
 						     vma->size);
-			if (err)
-				goto err_fence;
+			अगर (err)
+				जाओ err_fence;
 
 			err = i915_vm_pin_pt_stash(vma->vm,
 						   &work->stash);
-			if (err)
-				goto err_fence;
-		}
-	}
+			अगर (err)
+				जाओ err_fence;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Differentiate between user/kernel vma inside the aliasing-ppgtt.
+	 * Dअगरferentiate between user/kernel vma inside the aliasing-ppgtt.
 	 *
 	 * We conflate the Global GTT with the user's vma when using the
 	 * aliasing-ppgtt, but it is still vitally important to try and
-	 * keep the use cases distinct. For example, userptr objects are
+	 * keep the use हालs distinct. For example, userptr objects are
 	 * not allowed inside the Global GTT as that will cause lock
-	 * inversions when we have to evict them the mmu_notifier callbacks -
+	 * inversions when we have to evict them the mmu_notअगरier callbacks -
 	 * but they are allowed to be part of the user ppGTT which can never
 	 * be mapped. As such we try to give the distinct users of the same
 	 * mutex, distinct lockclasses [equivalent to how we keep i915_ggtt
 	 * and i915_ppgtt separate].
 	 *
-	 * NB this may cause us to mask real lock inversions -- while the
+	 * NB this may cause us to mask real lock inversions -- जबतक the
 	 * code is safe today, lockdep may not be able to spot future
 	 * transgressions.
 	 */
-	err = mutex_lock_interruptible_nested(&vma->vm->mutex,
+	err = mutex_lock_पूर्णांकerruptible_nested(&vma->vm->mutex,
 					      !(flags & PIN_GLOBAL));
-	if (err)
-		goto err_fence;
+	अगर (err)
+		जाओ err_fence;
 
 	/* No more allocations allowed now we hold vm->mutex */
 
-	if (unlikely(i915_vma_is_closed(vma))) {
+	अगर (unlikely(i915_vma_is_बंदd(vma))) अणु
 		err = -ENOENT;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	bound = atomic_read(&vma->flags);
-	if (unlikely(bound & I915_VMA_ERROR)) {
+	bound = atomic_पढ़ो(&vma->flags);
+	अगर (unlikely(bound & I915_VMA_ERROR)) अणु
 		err = -ENOMEM;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	if (unlikely(!((bound + 1) & I915_VMA_PIN_MASK))) {
+	अगर (unlikely(!((bound + 1) & I915_VMA_PIN_MASK))) अणु
 		err = -EAGAIN; /* pins are meant to be fairly temporary */
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	if (unlikely(!(flags & ~bound & I915_VMA_BIND_MASK))) {
+	अगर (unlikely(!(flags & ~bound & I915_VMA_BIND_MASK))) अणु
 		__i915_vma_pin(vma);
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
 	err = i915_active_acquire(&vma->active);
-	if (err)
-		goto err_unlock;
+	अगर (err)
+		जाओ err_unlock;
 
-	if (!(bound & I915_VMA_BIND_MASK)) {
+	अगर (!(bound & I915_VMA_BIND_MASK)) अणु
 		err = i915_vma_insert(vma, size, alignment, flags);
-		if (err)
-			goto err_active;
+		अगर (err)
+			जाओ err_active;
 
-		if (i915_is_ggtt(vma->vm))
+		अगर (i915_is_ggtt(vma->vm))
 			__i915_vma_set_map_and_fenceable(vma);
-	}
+	पूर्ण
 
 	GEM_BUG_ON(!vma->pages);
 	err = i915_vma_bind(vma,
 			    vma->obj ? vma->obj->cache_level : 0,
 			    flags, work);
-	if (err)
-		goto err_remove;
+	अगर (err)
+		जाओ err_हटाओ;
 
 	/* There should only be at most 2 active bindings (user, global) */
 	GEM_BUG_ON(bound + I915_VMA_PAGES_ACTIVE < bound);
@@ -987,206 +988,206 @@ int i915_vma_pin_ww(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
 	GEM_BUG_ON(!i915_vma_is_bound(vma, flags));
 	GEM_BUG_ON(i915_vma_misplaced(vma, size, alignment, flags));
 
-err_remove:
-	if (!i915_vma_is_bound(vma, I915_VMA_BIND_MASK)) {
+err_हटाओ:
+	अगर (!i915_vma_is_bound(vma, I915_VMA_BIND_MASK)) अणु
 		i915_vma_detach(vma);
-		drm_mm_remove_node(&vma->node);
-	}
+		drm_mm_हटाओ_node(&vma->node);
+	पूर्ण
 err_active:
 	i915_active_release(&vma->active);
 err_unlock:
 	mutex_unlock(&vma->vm->mutex);
 err_fence:
-	if (work)
+	अगर (work)
 		dma_fence_work_commit_imm(&work->base);
 err_rpm:
-	if (wakeref)
-		intel_runtime_pm_put(&vma->vm->i915->runtime_pm, wakeref);
+	अगर (wakeref)
+		पूर्णांकel_runसमय_pm_put(&vma->vm->i915->runसमय_pm, wakeref);
 	vma_put_pages(vma);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void flush_idle_contexts(struct intel_gt *gt)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम flush_idle_contexts(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	for_each_engine(engine, gt, id)
-		intel_engine_flush_barriers(engine);
+	क्रम_each_engine(engine, gt, id)
+		पूर्णांकel_engine_flush_barriers(engine);
 
-	intel_gt_wait_for_idle(gt, MAX_SCHEDULE_TIMEOUT);
-}
+	पूर्णांकel_gt_रुको_क्रम_idle(gt, MAX_SCHEDULE_TIMEOUT);
+पूर्ण
 
-int i915_ggtt_pin(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
-		  u32 align, unsigned int flags)
-{
-	struct i915_address_space *vm = vma->vm;
-	int err;
+पूर्णांक i915_ggtt_pin(काष्ठा i915_vma *vma, काष्ठा i915_gem_ww_ctx *ww,
+		  u32 align, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा i915_address_space *vm = vma->vm;
+	पूर्णांक err;
 
 	GEM_BUG_ON(!i915_vma_is_ggtt(vma));
 
-#ifdef CONFIG_LOCKDEP
+#अगर_घोषित CONFIG_LOCKDEP
 	WARN_ON(!ww && vma->resv && dma_resv_held(vma->resv));
-#endif
+#पूर्ण_अगर
 
-	do {
-		if (ww)
+	करो अणु
+		अगर (ww)
 			err = i915_vma_pin_ww(vma, ww, 0, align, flags | PIN_GLOBAL);
-		else
+		अन्यथा
 			err = i915_vma_pin(vma, 0, align, flags | PIN_GLOBAL);
-		if (err != -ENOSPC) {
-			if (!err) {
-				err = i915_vma_wait_for_bind(vma);
-				if (err)
+		अगर (err != -ENOSPC) अणु
+			अगर (!err) अणु
+				err = i915_vma_रुको_क्रम_bind(vma);
+				अगर (err)
 					i915_vma_unpin(vma);
-			}
-			return err;
-		}
+			पूर्ण
+			वापस err;
+		पूर्ण
 
-		/* Unlike i915_vma_pin, we don't take no for an answer! */
+		/* Unlike i915_vma_pin, we करोn't take no क्रम an answer! */
 		flush_idle_contexts(vm->gt);
-		if (mutex_lock_interruptible(&vm->mutex) == 0) {
+		अगर (mutex_lock_पूर्णांकerruptible(&vm->mutex) == 0) अणु
 			i915_gem_evict_vm(vm);
 			mutex_unlock(&vm->mutex);
-		}
-	} while (1);
-}
+		पूर्ण
+	पूर्ण जबतक (1);
+पूर्ण
 
-static void __vma_close(struct i915_vma *vma, struct intel_gt *gt)
-{
+अटल व्योम __vma_बंद(काष्ठा i915_vma *vma, काष्ठा पूर्णांकel_gt *gt)
+अणु
 	/*
 	 * We defer actually closing, unbinding and destroying the VMA until
-	 * the next idle point, or if the object is freed in the meantime. By
-	 * postponing the unbind, we allow for it to be resurrected by the
-	 * client, avoiding the work required to rebind the VMA. This is
-	 * advantageous for DRI, where the client/server pass objects
-	 * between themselves, temporarily opening a local VMA to the
+	 * the next idle poपूर्णांक, or अगर the object is मुक्तd in the meanसमय. By
+	 * postponing the unbind, we allow क्रम it to be resurrected by the
+	 * client, aव्योमing the work required to rebind the VMA. This is
+	 * advantageous क्रम DRI, where the client/server pass objects
+	 * between themselves, temporarily खोलोing a local VMA to the
 	 * object, and then closing it again. The same object is then reused
 	 * on the next frame (or two, depending on the depth of the swap queue)
 	 * causing us to rebind the VMA once more. This ends up being a lot
-	 * of wasted work for the steady state.
+	 * of wasted work क्रम the steady state.
 	 */
-	GEM_BUG_ON(i915_vma_is_closed(vma));
-	list_add(&vma->closed_link, &gt->closed_vma);
-}
+	GEM_BUG_ON(i915_vma_is_बंदd(vma));
+	list_add(&vma->बंदd_link, &gt->बंदd_vma);
+पूर्ण
 
-void i915_vma_close(struct i915_vma *vma)
-{
-	struct intel_gt *gt = vma->vm->gt;
-	unsigned long flags;
+व्योम i915_vma_बंद(काष्ठा i915_vma *vma)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = vma->vm->gt;
+	अचिन्हित दीर्घ flags;
 
-	if (i915_vma_is_ggtt(vma))
-		return;
+	अगर (i915_vma_is_ggtt(vma))
+		वापस;
 
-	GEM_BUG_ON(!atomic_read(&vma->open_count));
-	if (atomic_dec_and_lock_irqsave(&vma->open_count,
-					&gt->closed_lock,
-					flags)) {
-		__vma_close(vma, gt);
-		spin_unlock_irqrestore(&gt->closed_lock, flags);
-	}
-}
+	GEM_BUG_ON(!atomic_पढ़ो(&vma->खोलो_count));
+	अगर (atomic_dec_and_lock_irqsave(&vma->खोलो_count,
+					&gt->बंदd_lock,
+					flags)) अणु
+		__vma_बंद(vma, gt);
+		spin_unlock_irqrestore(&gt->बंदd_lock, flags);
+	पूर्ण
+पूर्ण
 
-static void __i915_vma_remove_closed(struct i915_vma *vma)
-{
-	struct intel_gt *gt = vma->vm->gt;
+अटल व्योम __i915_vma_हटाओ_बंदd(काष्ठा i915_vma *vma)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = vma->vm->gt;
 
-	spin_lock_irq(&gt->closed_lock);
-	list_del_init(&vma->closed_link);
-	spin_unlock_irq(&gt->closed_lock);
-}
+	spin_lock_irq(&gt->बंदd_lock);
+	list_del_init(&vma->बंदd_link);
+	spin_unlock_irq(&gt->बंदd_lock);
+पूर्ण
 
-void i915_vma_reopen(struct i915_vma *vma)
-{
-	if (i915_vma_is_closed(vma))
-		__i915_vma_remove_closed(vma);
-}
+व्योम i915_vma_reखोलो(काष्ठा i915_vma *vma)
+अणु
+	अगर (i915_vma_is_बंदd(vma))
+		__i915_vma_हटाओ_बंदd(vma);
+पूर्ण
 
-void i915_vma_release(struct kref *ref)
-{
-	struct i915_vma *vma = container_of(ref, typeof(*vma), ref);
+व्योम i915_vma_release(काष्ठा kref *ref)
+अणु
+	काष्ठा i915_vma *vma = container_of(ref, typeof(*vma), ref);
 
-	if (drm_mm_node_allocated(&vma->node)) {
+	अगर (drm_mm_node_allocated(&vma->node)) अणु
 		mutex_lock(&vma->vm->mutex);
 		atomic_and(~I915_VMA_PIN_MASK, &vma->flags);
 		WARN_ON(__i915_vma_unbind(vma));
 		mutex_unlock(&vma->vm->mutex);
 		GEM_BUG_ON(drm_mm_node_allocated(&vma->node));
-	}
+	पूर्ण
 	GEM_BUG_ON(i915_vma_is_active(vma));
 
-	if (vma->obj) {
-		struct drm_i915_gem_object *obj = vma->obj;
+	अगर (vma->obj) अणु
+		काष्ठा drm_i915_gem_object *obj = vma->obj;
 
 		spin_lock(&obj->vma.lock);
 		list_del(&vma->obj_link);
-		if (!RB_EMPTY_NODE(&vma->obj_node))
+		अगर (!RB_EMPTY_NODE(&vma->obj_node))
 			rb_erase(&vma->obj_node, &obj->vma.tree);
 		spin_unlock(&obj->vma.lock);
-	}
+	पूर्ण
 
-	__i915_vma_remove_closed(vma);
+	__i915_vma_हटाओ_बंदd(vma);
 	i915_vm_put(vma->vm);
 
 	i915_active_fini(&vma->active);
-	i915_vma_free(vma);
-}
+	i915_vma_मुक्त(vma);
+पूर्ण
 
-void i915_vma_parked(struct intel_gt *gt)
-{
-	struct i915_vma *vma, *next;
-	LIST_HEAD(closed);
+व्योम i915_vma_parked(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा i915_vma *vma, *next;
+	LIST_HEAD(बंदd);
 
-	spin_lock_irq(&gt->closed_lock);
-	list_for_each_entry_safe(vma, next, &gt->closed_vma, closed_link) {
-		struct drm_i915_gem_object *obj = vma->obj;
-		struct i915_address_space *vm = vma->vm;
+	spin_lock_irq(&gt->बंदd_lock);
+	list_क्रम_each_entry_safe(vma, next, &gt->बंदd_vma, बंदd_link) अणु
+		काष्ठा drm_i915_gem_object *obj = vma->obj;
+		काष्ठा i915_address_space *vm = vma->vm;
 
-		/* XXX All to avoid keeping a reference on i915_vma itself */
+		/* XXX All to aव्योम keeping a reference on i915_vma itself */
 
-		if (!kref_get_unless_zero(&obj->base.refcount))
-			continue;
+		अगर (!kref_get_unless_zero(&obj->base.refcount))
+			जारी;
 
-		if (!i915_vm_tryopen(vm)) {
+		अगर (!i915_vm_tryखोलो(vm)) अणु
 			i915_gem_object_put(obj);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		list_move(&vma->closed_link, &closed);
-	}
-	spin_unlock_irq(&gt->closed_lock);
+		list_move(&vma->बंदd_link, &बंदd);
+	पूर्ण
+	spin_unlock_irq(&gt->बंदd_lock);
 
-	/* As the GT is held idle, no vma can be reopened as we destroy them */
-	list_for_each_entry_safe(vma, next, &closed, closed_link) {
-		struct drm_i915_gem_object *obj = vma->obj;
-		struct i915_address_space *vm = vma->vm;
+	/* As the GT is held idle, no vma can be reखोलोed as we destroy them */
+	list_क्रम_each_entry_safe(vma, next, &बंदd, बंदd_link) अणु
+		काष्ठा drm_i915_gem_object *obj = vma->obj;
+		काष्ठा i915_address_space *vm = vma->vm;
 
-		INIT_LIST_HEAD(&vma->closed_link);
+		INIT_LIST_HEAD(&vma->बंदd_link);
 		__i915_vma_put(vma);
 
 		i915_gem_object_put(obj);
-		i915_vm_close(vm);
-	}
-}
+		i915_vm_बंद(vm);
+	पूर्ण
+पूर्ण
 
-static void __i915_vma_iounmap(struct i915_vma *vma)
-{
+अटल व्योम __i915_vma_iounmap(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(i915_vma_is_pinned(vma));
 
-	if (vma->iomap == NULL)
-		return;
+	अगर (vma->iomap == शून्य)
+		वापस;
 
 	io_mapping_unmap(vma->iomap);
-	vma->iomap = NULL;
-}
+	vma->iomap = शून्य;
+पूर्ण
 
-void i915_vma_revoke_mmap(struct i915_vma *vma)
-{
-	struct drm_vma_offset_node *node;
+व्योम i915_vma_revoke_mmap(काष्ठा i915_vma *vma)
+अणु
+	काष्ठा drm_vma_offset_node *node;
 	u64 vma_offset;
 
-	if (!i915_vma_has_userfault(vma))
-		return;
+	अगर (!i915_vma_has_userfault(vma))
+		वापस;
 
 	GEM_BUG_ON(!i915_vma_is_map_and_fenceable(vma));
 	GEM_BUG_ON(!vma->obj->userfault_count);
@@ -1199,227 +1200,227 @@ void i915_vma_revoke_mmap(struct i915_vma *vma)
 			    1);
 
 	i915_vma_unset_userfault(vma);
-	if (!--vma->obj->userfault_count)
+	अगर (!--vma->obj->userfault_count)
 		list_del(&vma->obj->userfault_link);
-}
+पूर्ण
 
-static int
-__i915_request_await_bind(struct i915_request *rq, struct i915_vma *vma)
-{
-	return __i915_request_await_exclusive(rq, &vma->active);
-}
+अटल पूर्णांक
+__i915_request_aरुको_bind(काष्ठा i915_request *rq, काष्ठा i915_vma *vma)
+अणु
+	वापस __i915_request_aरुको_exclusive(rq, &vma->active);
+पूर्ण
 
-int __i915_vma_move_to_active(struct i915_vma *vma, struct i915_request *rq)
-{
-	int err;
+पूर्णांक __i915_vma_move_to_active(काष्ठा i915_vma *vma, काष्ठा i915_request *rq)
+अणु
+	पूर्णांक err;
 
 	GEM_BUG_ON(!i915_vma_is_pinned(vma));
 
-	/* Wait for the vma to be bound before we start! */
-	err = __i915_request_await_bind(rq, vma);
-	if (err)
-		return err;
+	/* Wait क्रम the vma to be bound beक्रमe we start! */
+	err = __i915_request_aरुको_bind(rq, vma);
+	अगर (err)
+		वापस err;
 
-	return i915_active_add_request(&vma->active, rq);
-}
+	वापस i915_active_add_request(&vma->active, rq);
+पूर्ण
 
-int i915_vma_move_to_active(struct i915_vma *vma,
-			    struct i915_request *rq,
-			    unsigned int flags)
-{
-	struct drm_i915_gem_object *obj = vma->obj;
-	int err;
+पूर्णांक i915_vma_move_to_active(काष्ठा i915_vma *vma,
+			    काष्ठा i915_request *rq,
+			    अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा drm_i915_gem_object *obj = vma->obj;
+	पूर्णांक err;
 
-	assert_object_held(obj);
+	निश्चित_object_held(obj);
 
 	err = __i915_vma_move_to_active(vma, rq);
-	if (unlikely(err))
-		return err;
+	अगर (unlikely(err))
+		वापस err;
 
-	if (flags & EXEC_OBJECT_WRITE) {
-		struct intel_frontbuffer *front;
+	अगर (flags & EXEC_OBJECT_WRITE) अणु
+		काष्ठा पूर्णांकel_frontbuffer *front;
 
-		front = __intel_frontbuffer_get(obj);
-		if (unlikely(front)) {
-			if (intel_frontbuffer_invalidate(front, ORIGIN_CS))
-				i915_active_add_request(&front->write, rq);
-			intel_frontbuffer_put(front);
-		}
+		front = __पूर्णांकel_frontbuffer_get(obj);
+		अगर (unlikely(front)) अणु
+			अगर (पूर्णांकel_frontbuffer_invalidate(front, ORIGIN_CS))
+				i915_active_add_request(&front->ग_लिखो, rq);
+			पूर्णांकel_frontbuffer_put(front);
+		पूर्ण
 
 		dma_resv_add_excl_fence(vma->resv, &rq->fence);
-		obj->write_domain = I915_GEM_DOMAIN_RENDER;
-		obj->read_domains = 0;
-	} else {
-		if (!(flags & __EXEC_OBJECT_NO_RESERVE)) {
+		obj->ग_लिखो_करोमुख्य = I915_GEM_DOMAIN_RENDER;
+		obj->पढ़ो_करोमुख्यs = 0;
+	पूर्ण अन्यथा अणु
+		अगर (!(flags & __EXEC_OBJECT_NO_RESERVE)) अणु
 			err = dma_resv_reserve_shared(vma->resv, 1);
-			if (unlikely(err))
-				return err;
-		}
+			अगर (unlikely(err))
+				वापस err;
+		पूर्ण
 
 		dma_resv_add_shared_fence(vma->resv, &rq->fence);
-		obj->write_domain = 0;
-	}
+		obj->ग_लिखो_करोमुख्य = 0;
+	पूर्ण
 
-	if (flags & EXEC_OBJECT_NEEDS_FENCE && vma->fence)
+	अगर (flags & EXEC_OBJECT_NEEDS_FENCE && vma->fence)
 		i915_active_add_request(&vma->fence->active, rq);
 
-	obj->read_domains |= I915_GEM_GPU_DOMAINS;
+	obj->पढ़ो_करोमुख्यs |= I915_GEM_GPU_DOMAINS;
 	obj->mm.dirty = true;
 
 	GEM_BUG_ON(!i915_vma_is_active(vma));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __i915_vma_evict(struct i915_vma *vma)
-{
+व्योम __i915_vma_evict(काष्ठा i915_vma *vma)
+अणु
 	GEM_BUG_ON(i915_vma_is_pinned(vma));
 
-	if (i915_vma_is_map_and_fenceable(vma)) {
-		/* Force a pagefault for domain tracking on next user access */
+	अगर (i915_vma_is_map_and_fenceable(vma)) अणु
+		/* Force a pagefault क्रम करोमुख्य tracking on next user access */
 		i915_vma_revoke_mmap(vma);
 
 		/*
-		 * Check that we have flushed all writes through the GGTT
-		 * before the unbind, other due to non-strict nature of those
-		 * indirect writes they may end up referencing the GGTT PTE
+		 * Check that we have flushed all ग_लिखोs through the GGTT
+		 * beक्रमe the unbind, other due to non-strict nature of those
+		 * indirect ग_लिखोs they may end up referencing the GGTT PTE
 		 * after the unbind.
 		 *
 		 * Note that we may be concurrently poking at the GGTT_WRITE
-		 * bit from set-domain, as we mark all GGTT vma associated
-		 * with an object. We know this is for another vma, as we
-		 * are currently unbinding this one -- so if this vma will be
+		 * bit from set-करोमुख्य, as we mark all GGTT vma associated
+		 * with an object. We know this is क्रम another vma, as we
+		 * are currently unbinding this one -- so अगर this vma will be
 		 * reused, it will be refaulted and have its dirty bit set
-		 * before the next write.
+		 * beक्रमe the next ग_लिखो.
 		 */
-		i915_vma_flush_writes(vma);
+		i915_vma_flush_ग_लिखोs(vma);
 
 		/* release the fence reg _after_ flushing */
 		i915_vma_revoke_fence(vma);
 
 		__i915_vma_iounmap(vma);
 		clear_bit(I915_VMA_CAN_FENCE_BIT, __i915_vma_flags(vma));
-	}
+	पूर्ण
 	GEM_BUG_ON(vma->fence);
 	GEM_BUG_ON(i915_vma_has_userfault(vma));
 
-	if (likely(atomic_read(&vma->vm->open))) {
+	अगर (likely(atomic_पढ़ो(&vma->vm->खोलो))) अणु
 		trace_i915_vma_unbind(vma);
 		vma->ops->unbind_vma(vma->vm, vma);
-	}
+	पूर्ण
 	atomic_and(~(I915_VMA_BIND_MASK | I915_VMA_ERROR | I915_VMA_GGTT_WRITE),
 		   &vma->flags);
 
 	i915_vma_detach(vma);
 	vma_unbind_pages(vma);
-}
+पूर्ण
 
-int __i915_vma_unbind(struct i915_vma *vma)
-{
-	int ret;
+पूर्णांक __i915_vma_unbind(काष्ठा i915_vma *vma)
+अणु
+	पूर्णांक ret;
 
-	lockdep_assert_held(&vma->vm->mutex);
+	lockdep_निश्चित_held(&vma->vm->mutex);
 
-	if (!drm_mm_node_allocated(&vma->node))
-		return 0;
+	अगर (!drm_mm_node_allocated(&vma->node))
+		वापस 0;
 
-	if (i915_vma_is_pinned(vma)) {
-		vma_print_allocator(vma, "is pinned");
-		return -EAGAIN;
-	}
+	अगर (i915_vma_is_pinned(vma)) अणु
+		vma_prपूर्णांक_allocator(vma, "is pinned");
+		वापस -EAGAIN;
+	पूर्ण
 
 	/*
-	 * After confirming that no one else is pinning this vma, wait for
-	 * any laggards who may have crept in during the wait (through
+	 * After confirming that no one अन्यथा is pinning this vma, रुको क्रम
+	 * any laggards who may have crept in during the रुको (through
 	 * a residual pin skipping the vm->mutex) to complete.
 	 */
 	ret = i915_vma_sync(vma);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	GEM_BUG_ON(i915_vma_is_active(vma));
 	__i915_vma_evict(vma);
 
-	drm_mm_remove_node(&vma->node); /* pairs with i915_vma_release() */
-	return 0;
-}
+	drm_mm_हटाओ_node(&vma->node); /* pairs with i915_vma_release() */
+	वापस 0;
+पूर्ण
 
-int i915_vma_unbind(struct i915_vma *vma)
-{
-	struct i915_address_space *vm = vma->vm;
-	intel_wakeref_t wakeref = 0;
-	int err;
+पूर्णांक i915_vma_unbind(काष्ठा i915_vma *vma)
+अणु
+	काष्ठा i915_address_space *vm = vma->vm;
+	पूर्णांकel_wakeref_t wakeref = 0;
+	पूर्णांक err;
 
-	/* Optimistic wait before taking the mutex */
+	/* Optimistic रुको beक्रमe taking the mutex */
 	err = i915_vma_sync(vma);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!drm_mm_node_allocated(&vma->node))
-		return 0;
+	अगर (!drm_mm_node_allocated(&vma->node))
+		वापस 0;
 
-	if (i915_vma_is_pinned(vma)) {
-		vma_print_allocator(vma, "is pinned");
-		return -EAGAIN;
-	}
+	अगर (i915_vma_is_pinned(vma)) अणु
+		vma_prपूर्णांक_allocator(vma, "is pinned");
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND))
+	अगर (i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND))
 		/* XXX not always required: nop_clear_range */
-		wakeref = intel_runtime_pm_get(&vm->i915->runtime_pm);
+		wakeref = पूर्णांकel_runसमय_pm_get(&vm->i915->runसमय_pm);
 
-	err = mutex_lock_interruptible_nested(&vma->vm->mutex, !wakeref);
-	if (err)
-		goto out_rpm;
+	err = mutex_lock_पूर्णांकerruptible_nested(&vma->vm->mutex, !wakeref);
+	अगर (err)
+		जाओ out_rpm;
 
 	err = __i915_vma_unbind(vma);
 	mutex_unlock(&vm->mutex);
 
 out_rpm:
-	if (wakeref)
-		intel_runtime_pm_put(&vm->i915->runtime_pm, wakeref);
-	return err;
-}
+	अगर (wakeref)
+		पूर्णांकel_runसमय_pm_put(&vm->i915->runसमय_pm, wakeref);
+	वापस err;
+पूर्ण
 
-struct i915_vma *i915_vma_make_unshrinkable(struct i915_vma *vma)
-{
+काष्ठा i915_vma *i915_vma_make_unshrinkable(काष्ठा i915_vma *vma)
+अणु
 	i915_gem_object_make_unshrinkable(vma->obj);
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-void i915_vma_make_shrinkable(struct i915_vma *vma)
-{
+व्योम i915_vma_make_shrinkable(काष्ठा i915_vma *vma)
+अणु
 	i915_gem_object_make_shrinkable(vma->obj);
-}
+पूर्ण
 
-void i915_vma_make_purgeable(struct i915_vma *vma)
-{
+व्योम i915_vma_make_purgeable(काष्ठा i915_vma *vma)
+अणु
 	i915_gem_object_make_purgeable(vma->obj);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftests/i915_vma.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftests/i915_vma.c"
+#पूर्ण_अगर
 
-static void i915_global_vma_shrink(void)
-{
+अटल व्योम i915_global_vma_shrink(व्योम)
+अणु
 	kmem_cache_shrink(global.slab_vmas);
-}
+पूर्ण
 
-static void i915_global_vma_exit(void)
-{
+अटल व्योम i915_global_vma_निकास(व्योम)
+अणु
 	kmem_cache_destroy(global.slab_vmas);
-}
+पूर्ण
 
-static struct i915_global_vma global = { {
+अटल काष्ठा i915_global_vma global = अणु अणु
 	.shrink = i915_global_vma_shrink,
-	.exit = i915_global_vma_exit,
-} };
+	.निकास = i915_global_vma_निकास,
+पूर्ण पूर्ण;
 
-int __init i915_global_vma_init(void)
-{
+पूर्णांक __init i915_global_vma_init(व्योम)
+अणु
 	global.slab_vmas = KMEM_CACHE(i915_vma, SLAB_HWCACHE_ALIGN);
-	if (!global.slab_vmas)
-		return -ENOMEM;
+	अगर (!global.slab_vmas)
+		वापस -ENOMEM;
 
-	i915_global_register(&global.base);
-	return 0;
-}
+	i915_global_रेजिस्टर(&global.base);
+	वापस 0;
+पूर्ण

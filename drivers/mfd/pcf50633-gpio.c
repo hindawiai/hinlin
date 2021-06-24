@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* NXP PCF50633 GPIO Driver
  *
  * (C) 2006-2008 by Openmoko, Inc.
- * Author: Balaji Rao <balajirrao@openmoko.org>
+ * Author: Balaji Rao <balajirrao@खोलोmoko.org>
  * All rights reserved.
  *
- * Broken down from monstrous PCF50633 driver mainly by
+ * Broken करोwn from monstrous PCF50633 driver मुख्यly by
  * Harald Welte, Andy Green and Werner Almesberger
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include <linux/mfd/pcf50633/core.h>
-#include <linux/mfd/pcf50633/gpio.h>
-#include <linux/mfd/pcf50633/pmic.h>
+#समावेश <linux/mfd/pcf50633/core.h>
+#समावेश <linux/mfd/pcf50633/gpपन.स>
+#समावेश <linux/mfd/pcf50633/pmic.h>
 
-static const u8 pcf50633_regulator_registers[PCF50633_NUM_REGULATORS] = {
+अटल स्थिर u8 pcf50633_regulator_रेजिस्टरs[PCF50633_NUM_REGULATORS] = अणु
 	[PCF50633_REGULATOR_AUTO]	= PCF50633_REG_AUTOOUT,
 	[PCF50633_REGULATOR_DOWN1]	= PCF50633_REG_DOWN1OUT,
 	[PCF50633_REGULATOR_DOWN2]	= PCF50633_REG_DOWN2OUT,
@@ -28,64 +29,64 @@ static const u8 pcf50633_regulator_registers[PCF50633_NUM_REGULATORS] = {
 	[PCF50633_REGULATOR_LDO5]	= PCF50633_REG_LDO5OUT,
 	[PCF50633_REGULATOR_LDO6]	= PCF50633_REG_LDO6OUT,
 	[PCF50633_REGULATOR_HCLDO]	= PCF50633_REG_HCLDOOUT,
-};
+पूर्ण;
 
-int pcf50633_gpio_set(struct pcf50633 *pcf, int gpio, u8 val)
-{
+पूर्णांक pcf50633_gpio_set(काष्ठा pcf50633 *pcf, पूर्णांक gpio, u8 val)
+अणु
 	u8 reg;
 
 	reg = gpio - PCF50633_GPIO1 + PCF50633_REG_GPIO1CFG;
 
-	return pcf50633_reg_set_bit_mask(pcf, reg, 0x07, val);
-}
+	वापस pcf50633_reg_set_bit_mask(pcf, reg, 0x07, val);
+पूर्ण
 EXPORT_SYMBOL_GPL(pcf50633_gpio_set);
 
-u8 pcf50633_gpio_get(struct pcf50633 *pcf, int gpio)
-{
+u8 pcf50633_gpio_get(काष्ठा pcf50633 *pcf, पूर्णांक gpio)
+अणु
 	u8 reg, val;
 
 	reg = gpio - PCF50633_GPIO1 + PCF50633_REG_GPIO1CFG;
-	val = pcf50633_reg_read(pcf, reg) & 0x07;
+	val = pcf50633_reg_पढ़ो(pcf, reg) & 0x07;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcf50633_gpio_get);
 
-int pcf50633_gpio_invert_set(struct pcf50633 *pcf, int gpio, int invert)
-{
+पूर्णांक pcf50633_gpio_invert_set(काष्ठा pcf50633 *pcf, पूर्णांक gpio, पूर्णांक invert)
+अणु
 	u8 val, reg;
 
 	reg = gpio - PCF50633_GPIO1 + PCF50633_REG_GPIO1CFG;
 	val = !!invert << 3;
 
-	return pcf50633_reg_set_bit_mask(pcf, reg, 1 << 3, val);
-}
+	वापस pcf50633_reg_set_bit_mask(pcf, reg, 1 << 3, val);
+पूर्ण
 EXPORT_SYMBOL_GPL(pcf50633_gpio_invert_set);
 
-int pcf50633_gpio_invert_get(struct pcf50633 *pcf, int gpio)
-{
+पूर्णांक pcf50633_gpio_invert_get(काष्ठा pcf50633 *pcf, पूर्णांक gpio)
+अणु
 	u8 reg, val;
 
 	reg = gpio - PCF50633_GPIO1 + PCF50633_REG_GPIO1CFG;
-	val = pcf50633_reg_read(pcf, reg);
+	val = pcf50633_reg_पढ़ो(pcf, reg);
 
-	return val & (1 << 3);
-}
+	वापस val & (1 << 3);
+पूर्ण
 EXPORT_SYMBOL_GPL(pcf50633_gpio_invert_get);
 
-int pcf50633_gpio_power_supply_set(struct pcf50633 *pcf,
-					int gpio, int regulator, int on)
-{
+पूर्णांक pcf50633_gpio_घातer_supply_set(काष्ठा pcf50633 *pcf,
+					पूर्णांक gpio, पूर्णांक regulator, पूर्णांक on)
+अणु
 	u8 reg, val, mask;
 
-	/* the *ENA register is always one after the *OUT register */
-	reg = pcf50633_regulator_registers[regulator] + 1;
+	/* the *ENA रेजिस्टर is always one after the *OUT रेजिस्टर */
+	reg = pcf50633_regulator_रेजिस्टरs[regulator] + 1;
 
 	val = !!on << (gpio - PCF50633_GPIO1);
 	mask = 1 << (gpio - PCF50633_GPIO1);
 
-	return pcf50633_reg_set_bit_mask(pcf, reg, mask, val);
-}
-EXPORT_SYMBOL_GPL(pcf50633_gpio_power_supply_set);
+	वापस pcf50633_reg_set_bit_mask(pcf, reg, mask, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(pcf50633_gpio_घातer_supply_set);
 
 MODULE_LICENSE("GPL");

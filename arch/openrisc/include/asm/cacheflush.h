@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -11,63 +12,63 @@
  * et al.
  */
 
-#ifndef __ASM_CACHEFLUSH_H
-#define __ASM_CACHEFLUSH_H
+#अगर_अघोषित __ASM_CACHEFLUSH_H
+#घोषणा __ASM_CACHEFLUSH_H
 
-#include <linux/mm.h>
+#समावेश <linux/mm.h>
 
 /*
- * Helper function for flushing or invalidating entire pages from data
- * and instruction caches. SMP needs a little extra work, since we need
+ * Helper function क्रम flushing or invalidating entire pages from data
+ * and inकाष्ठाion caches. SMP needs a little extra work, since we need
  * to flush the pages on all cpus.
  */
-extern void local_dcache_page_flush(struct page *page);
-extern void local_icache_page_inv(struct page *page);
+बाह्य व्योम local_dcache_page_flush(काष्ठा page *page);
+बाह्य व्योम local_icache_page_inv(काष्ठा page *page);
 
 /*
- * Data cache flushing always happen on the local cpu. Instruction cache
- * invalidations need to be broadcasted to all other cpu in the system in
- * case of SMP configurations.
+ * Data cache flushing always happen on the local cpu. Inकाष्ठाion cache
+ * invalidations need to be broadcasted to all other cpu in the प्रणाली in
+ * हाल of SMP configurations.
  */
-#ifndef CONFIG_SMP
-#define dcache_page_flush(page)      local_dcache_page_flush(page)
-#define icache_page_inv(page)        local_icache_page_inv(page)
-#else  /* CONFIG_SMP */
-#define dcache_page_flush(page)      local_dcache_page_flush(page)
-#define icache_page_inv(page)        smp_icache_page_inv(page)
-extern void smp_icache_page_inv(struct page *page);
-#endif /* CONFIG_SMP */
+#अगर_अघोषित CONFIG_SMP
+#घोषणा dcache_page_flush(page)      local_dcache_page_flush(page)
+#घोषणा icache_page_inv(page)        local_icache_page_inv(page)
+#अन्यथा  /* CONFIG_SMP */
+#घोषणा dcache_page_flush(page)      local_dcache_page_flush(page)
+#घोषणा icache_page_inv(page)        smp_icache_page_inv(page)
+बाह्य व्योम smp_icache_page_inv(काष्ठा page *page);
+#पूर्ण_अगर /* CONFIG_SMP */
 
 /*
- * Synchronizes caches. Whenever a cpu writes executable code to memory, this
+ * Synchronizes caches. Whenever a cpu ग_लिखोs executable code to memory, this
  * should be called to make sure the processor sees the newly written code.
  */
-static inline void sync_icache_dcache(struct page *page)
-{
-	if (!IS_ENABLED(CONFIG_DCACHE_WRITETHROUGH))
+अटल अंतरभूत व्योम sync_icache_dcache(काष्ठा page *page)
+अणु
+	अगर (!IS_ENABLED(CONFIG_DCACHE_WRITETHROUGH))
 		dcache_page_flush(page);
 	icache_page_inv(page);
-}
+पूर्ण
 
 /*
  * Pages with this bit set need not be flushed/invalidated, since
  * they have not changed since last flush. New pages start with
- * PG_arch_1 not set and are therefore dirty by default.
+ * PG_arch_1 not set and are thereक्रमe dirty by शेष.
  */
-#define PG_dc_clean                  PG_arch_1
+#घोषणा PG_dc_clean                  PG_arch_1
 
-#define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
-static inline void flush_dcache_page(struct page *page)
-{
+#घोषणा ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
+अटल अंतरभूत व्योम flush_dcache_page(काष्ठा page *page)
+अणु
 	clear_bit(PG_dc_clean, &page->flags);
-}
+पूर्ण
 
-#define flush_icache_user_page(vma, page, addr, len)	\
-do {							\
-	if (vma->vm_flags & VM_EXEC)			\
+#घोषणा flush_icache_user_page(vma, page, addr, len)	\
+करो अणु							\
+	अगर (vma->vm_flags & VM_EXEC)			\
 		sync_icache_dcache(page);		\
-} while (0)
+पूर्ण जबतक (0)
 
-#include <asm-generic/cacheflush.h>
+#समावेश <यंत्र-generic/cacheflush.h>
 
-#endif /* __ASM_CACHEFLUSH_H */
+#पूर्ण_अगर /* __ASM_CACHEFLUSH_H */

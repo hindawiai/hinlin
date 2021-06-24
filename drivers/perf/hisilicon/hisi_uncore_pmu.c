@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HiSilicon SoC Hardware event counters support
  *
@@ -8,296 +9,296 @@
  *
  * This code is based on the uncore PMUs like arm-cci and arm-ccn.
  */
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
-#include <linux/bug.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <asm/cputype.h>
-#include <asm/local64.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/local64.h>
 
-#include "hisi_uncore_pmu.h"
+#समावेश "hisi_uncore_pmu.h"
 
-#define HISI_GET_EVENTID(ev) (ev->hw.config_base & 0xff)
-#define HISI_MAX_PERIOD(nr) (GENMASK_ULL((nr) - 1, 0))
+#घोषणा HISI_GET_EVENTID(ev) (ev->hw.config_base & 0xff)
+#घोषणा HISI_MAX_PERIOD(nr) (GENMASK_ULL((nr) - 1, 0))
 
 /*
- * PMU format attributes
+ * PMU क्रमmat attributes
  */
-ssize_t hisi_format_sysfs_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct dev_ext_attribute *eattr;
+sमाप_प्रकार hisi_क्रमmat_sysfs_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *eattr;
 
-	eattr = container_of(attr, struct dev_ext_attribute, attr);
+	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
 
-	return sysfs_emit(buf, "%s\n", (char *)eattr->var);
-}
-EXPORT_SYMBOL_GPL(hisi_format_sysfs_show);
+	वापस sysfs_emit(buf, "%s\n", (अक्षर *)eattr->var);
+पूर्ण
+EXPORT_SYMBOL_GPL(hisi_क्रमmat_sysfs_show);
 
 /*
  * PMU event attributes
  */
-ssize_t hisi_event_sysfs_show(struct device *dev,
-			      struct device_attribute *attr, char *page)
-{
-	struct dev_ext_attribute *eattr;
+sमाप_प्रकार hisi_event_sysfs_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *page)
+अणु
+	काष्ठा dev_ext_attribute *eattr;
 
-	eattr = container_of(attr, struct dev_ext_attribute, attr);
+	eattr = container_of(attr, काष्ठा dev_ext_attribute, attr);
 
-	return sysfs_emit(page, "config=0x%lx\n", (unsigned long)eattr->var);
-}
+	वापस sysfs_emit(page, "config=0x%lx\n", (अचिन्हित दीर्घ)eattr->var);
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_event_sysfs_show);
 
 /*
  * sysfs cpumask attributes. For uncore PMU, we only have a single CPU to show
  */
-ssize_t hisi_cpumask_sysfs_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(dev_get_drvdata(dev));
+sमाप_प्रकार hisi_cpumask_sysfs_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(dev_get_drvdata(dev));
 
-	return sysfs_emit(buf, "%d\n", hisi_pmu->on_cpu);
-}
+	वापस sysfs_emit(buf, "%d\n", hisi_pmu->on_cpu);
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_cpumask_sysfs_show);
 
-static bool hisi_validate_event_group(struct perf_event *event)
-{
-	struct perf_event *sibling, *leader = event->group_leader;
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	/* Include count for the event */
-	int counters = 1;
+अटल bool hisi_validate_event_group(काष्ठा perf_event *event)
+अणु
+	काष्ठा perf_event *sibling, *leader = event->group_leader;
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	/* Include count क्रम the event */
+	पूर्णांक counters = 1;
 
-	if (!is_software_event(leader)) {
+	अगर (!is_software_event(leader)) अणु
 		/*
 		 * We must NOT create groups containing mixed PMUs, although
 		 * software events are acceptable
 		 */
-		if (leader->pmu != event->pmu)
-			return false;
+		अगर (leader->pmu != event->pmu)
+			वापस false;
 
-		/* Increment counter for the leader */
-		if (leader != event)
+		/* Increment counter क्रम the leader */
+		अगर (leader != event)
 			counters++;
-	}
+	पूर्ण
 
-	for_each_sibling_event(sibling, event->group_leader) {
-		if (is_software_event(sibling))
-			continue;
-		if (sibling->pmu != event->pmu)
-			return false;
-		/* Increment counter for each sibling */
+	क्रम_each_sibling_event(sibling, event->group_leader) अणु
+		अगर (is_software_event(sibling))
+			जारी;
+		अगर (sibling->pmu != event->pmu)
+			वापस false;
+		/* Increment counter क्रम each sibling */
 		counters++;
-	}
+	पूर्ण
 
 	/* The group can not count events more than the counters in the HW */
-	return counters <= hisi_pmu->num_counters;
-}
+	वापस counters <= hisi_pmu->num_counters;
+पूर्ण
 
-int hisi_uncore_pmu_get_event_idx(struct perf_event *event)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	unsigned long *used_mask = hisi_pmu->pmu_events.used_mask;
+पूर्णांक hisi_uncore_pmu_get_event_idx(काष्ठा perf_event *event)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	अचिन्हित दीर्घ *used_mask = hisi_pmu->pmu_events.used_mask;
 	u32 num_counters = hisi_pmu->num_counters;
-	int idx;
+	पूर्णांक idx;
 
 	idx = find_first_zero_bit(used_mask, num_counters);
-	if (idx == num_counters)
-		return -EAGAIN;
+	अगर (idx == num_counters)
+		वापस -EAGAIN;
 
 	set_bit(idx, used_mask);
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_get_event_idx);
 
-ssize_t hisi_uncore_pmu_identifier_attr_show(struct device *dev,
-					     struct device_attribute *attr,
-					     char *page)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(dev_get_drvdata(dev));
+sमाप_प्रकार hisi_uncore_pmu_identअगरier_attr_show(काष्ठा device *dev,
+					     काष्ठा device_attribute *attr,
+					     अक्षर *page)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(dev_get_drvdata(dev));
 
-	return sysfs_emit(page, "0x%08x\n", hisi_pmu->identifier);
-}
-EXPORT_SYMBOL_GPL(hisi_uncore_pmu_identifier_attr_show);
+	वापस sysfs_emit(page, "0x%08x\n", hisi_pmu->identअगरier);
+पूर्ण
+EXPORT_SYMBOL_GPL(hisi_uncore_pmu_identअगरier_attr_show);
 
-static void hisi_uncore_pmu_clear_event_idx(struct hisi_pmu *hisi_pmu, int idx)
-{
+अटल व्योम hisi_uncore_pmu_clear_event_idx(काष्ठा hisi_pmu *hisi_pmu, पूर्णांक idx)
+अणु
 	clear_bit(idx, hisi_pmu->pmu_events.used_mask);
-}
+पूर्ण
 
-static irqreturn_t hisi_uncore_pmu_isr(int irq, void *data)
-{
-	struct hisi_pmu *hisi_pmu = data;
-	struct perf_event *event;
-	unsigned long overflown;
-	int idx;
+अटल irqवापस_t hisi_uncore_pmu_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = data;
+	काष्ठा perf_event *event;
+	अचिन्हित दीर्घ overflown;
+	पूर्णांक idx;
 
-	overflown = hisi_pmu->ops->get_int_status(hisi_pmu);
-	if (!overflown)
-		return IRQ_NONE;
+	overflown = hisi_pmu->ops->get_पूर्णांक_status(hisi_pmu);
+	अगर (!overflown)
+		वापस IRQ_NONE;
 
 	/*
-	 * Find the counter index which overflowed if the bit was set
+	 * Find the counter index which overflowed अगर the bit was set
 	 * and handle it.
 	 */
-	for_each_set_bit(idx, &overflown, hisi_pmu->num_counters) {
+	क्रम_each_set_bit(idx, &overflown, hisi_pmu->num_counters) अणु
 		/* Write 1 to clear the IRQ status flag */
-		hisi_pmu->ops->clear_int_status(hisi_pmu, idx);
-		/* Get the corresponding event struct */
+		hisi_pmu->ops->clear_पूर्णांक_status(hisi_pmu, idx);
+		/* Get the corresponding event काष्ठा */
 		event = hisi_pmu->pmu_events.hw_events[idx];
-		if (!event)
-			continue;
+		अगर (!event)
+			जारी;
 
 		hisi_uncore_pmu_event_update(event);
 		hisi_uncore_pmu_set_event_period(event);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int hisi_uncore_pmu_init_irq(struct hisi_pmu *hisi_pmu,
-			     struct platform_device *pdev)
-{
-	int irq, ret;
+पूर्णांक hisi_uncore_pmu_init_irq(काष्ठा hisi_pmu *hisi_pmu,
+			     काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक irq, ret;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	ret = devm_request_irq(&pdev->dev, irq, hisi_uncore_pmu_isr,
 			       IRQF_NOBALANCING | IRQF_NO_THREAD,
 			       dev_name(&pdev->dev), hisi_pmu);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev,
 			"Fail to request IRQ: %d ret: %d.\n", irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	hisi_pmu->irq = irq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_init_irq);
 
-int hisi_uncore_pmu_event_init(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hisi_pmu *hisi_pmu;
+पूर्णांक hisi_uncore_pmu_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hisi_pmu *hisi_pmu;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	अगर (event->attr.type != event->pmu->type)
+		वापस -ENOENT;
 
 	/*
-	 * We do not support sampling as the counters are all
+	 * We करो not support sampling as the counters are all
 	 * shared by all CPU cores in a CPU die(SCCL). Also we
-	 * do not support attach to a task(per-process mode)
+	 * करो not support attach to a task(per-process mode)
 	 */
-	if (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
-		return -EOPNOTSUPP;
+	अगर (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
+		वापस -EOPNOTSUPP;
 
 	/*
-	 *  The uncore counters not specific to any CPU, so cannot
+	 *  The uncore counters not specअगरic to any CPU, so cannot
 	 *  support per-task
 	 */
-	if (event->cpu < 0)
-		return -EINVAL;
+	अगर (event->cpu < 0)
+		वापस -EINVAL;
 
 	/*
-	 * Validate if the events in group does not exceed the
+	 * Validate अगर the events in group करोes not exceed the
 	 * available counters in hardware.
 	 */
-	if (!hisi_validate_event_group(event))
-		return -EINVAL;
+	अगर (!hisi_validate_event_group(event))
+		वापस -EINVAL;
 
 	hisi_pmu = to_hisi_pmu(event->pmu);
-	if (event->attr.config > hisi_pmu->check_event)
-		return -EINVAL;
+	अगर (event->attr.config > hisi_pmu->check_event)
+		वापस -EINVAL;
 
-	if (hisi_pmu->on_cpu == -1)
-		return -EINVAL;
+	अगर (hisi_pmu->on_cpu == -1)
+		वापस -EINVAL;
 	/*
-	 * We don't assign an index until we actually place the event onto
-	 * hardware. Use -1 to signify that we haven't decided where to put it
+	 * We करोn't assign an index until we actually place the event onto
+	 * hardware. Use -1 to signअगरy that we haven't decided where to put it
 	 * yet.
 	 */
 	hwc->idx		= -1;
 	hwc->config_base	= event->attr.config;
 
-	/* Enforce to use the same CPU for all events in this PMU */
+	/* Enक्रमce to use the same CPU क्रम all events in this PMU */
 	event->cpu = hisi_pmu->on_cpu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_event_init);
 
 /*
- * Set the counter to count the event that we're interested in,
- * and enable interrupt and counter.
+ * Set the counter to count the event that we're पूर्णांकerested in,
+ * and enable पूर्णांकerrupt and counter.
  */
-static void hisi_uncore_pmu_enable_event(struct perf_event *event)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम hisi_uncore_pmu_enable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	hisi_pmu->ops->write_evtype(hisi_pmu, hwc->idx,
+	hisi_pmu->ops->ग_लिखो_evtype(hisi_pmu, hwc->idx,
 				    HISI_GET_EVENTID(event));
 
-	if (hisi_pmu->ops->enable_filter)
+	अगर (hisi_pmu->ops->enable_filter)
 		hisi_pmu->ops->enable_filter(event);
 
-	hisi_pmu->ops->enable_counter_int(hisi_pmu, hwc);
+	hisi_pmu->ops->enable_counter_पूर्णांक(hisi_pmu, hwc);
 	hisi_pmu->ops->enable_counter(hisi_pmu, hwc);
-}
+पूर्ण
 
 /*
- * Disable counter and interrupt.
+ * Disable counter and पूर्णांकerrupt.
  */
-static void hisi_uncore_pmu_disable_event(struct perf_event *event)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम hisi_uncore_pmu_disable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
 	hisi_pmu->ops->disable_counter(hisi_pmu, hwc);
-	hisi_pmu->ops->disable_counter_int(hisi_pmu, hwc);
+	hisi_pmu->ops->disable_counter_पूर्णांक(hisi_pmu, hwc);
 
-	if (hisi_pmu->ops->disable_filter)
+	अगर (hisi_pmu->ops->disable_filter)
 		hisi_pmu->ops->disable_filter(event);
-}
+पूर्ण
 
-void hisi_uncore_pmu_set_event_period(struct perf_event *event)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+व्योम hisi_uncore_pmu_set_event_period(काष्ठा perf_event *event)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
 	/*
 	 * The HiSilicon PMU counters support 32 bits or 48 bits, depending on
-	 * the PMU. We reduce it to 2^(counter_bits - 1) to account for the
-	 * extreme interrupt latency. So we could hopefully handle the overflow
-	 * interrupt before another 2^(counter_bits - 1) events occur and the
+	 * the PMU. We reduce it to 2^(counter_bits - 1) to account क्रम the
+	 * extreme पूर्णांकerrupt latency. So we could hopefully handle the overflow
+	 * पूर्णांकerrupt beक्रमe another 2^(counter_bits - 1) events occur and the
 	 * counter overtakes its previous value.
 	 */
 	u64 val = BIT_ULL(hisi_pmu->counter_bits - 1);
 
 	local64_set(&hwc->prev_count, val);
 	/* Write start value to the hardware event counter */
-	hisi_pmu->ops->write_counter(hisi_pmu, hwc, val);
-}
+	hisi_pmu->ops->ग_लिखो_counter(hisi_pmu, hwc, val);
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_set_event_period);
 
-void hisi_uncore_pmu_event_update(struct perf_event *event)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+व्योम hisi_uncore_pmu_event_update(काष्ठा perf_event *event)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	u64 delta, prev_raw_count, new_raw_count;
 
-	do {
-		/* Read the count from the counter register */
-		new_raw_count = hisi_pmu->ops->read_counter(hisi_pmu, hwc);
-		prev_raw_count = local64_read(&hwc->prev_count);
-	} while (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
+	करो अणु
+		/* Read the count from the counter रेजिस्टर */
+		new_raw_count = hisi_pmu->ops->पढ़ो_counter(hisi_pmu, hwc);
+		prev_raw_count = local64_पढ़ो(&hwc->prev_count);
+	पूर्ण जबतक (local64_cmpxchg(&hwc->prev_count, prev_raw_count,
 				 new_raw_count) != prev_raw_count);
 	/*
 	 * compute the delta
@@ -305,110 +306,110 @@ void hisi_uncore_pmu_event_update(struct perf_event *event)
 	delta = (new_raw_count - prev_raw_count) &
 		HISI_MAX_PERIOD(hisi_pmu->counter_bits);
 	local64_add(delta, &event->count);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_event_update);
 
-void hisi_uncore_pmu_start(struct perf_event *event, int flags)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+व्योम hisi_uncore_pmu_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	if (WARN_ON_ONCE(!(hwc->state & PERF_HES_STOPPED)))
-		return;
+	अगर (WARN_ON_ONCE(!(hwc->state & PERF_HES_STOPPED)))
+		वापस;
 
 	WARN_ON_ONCE(!(hwc->state & PERF_HES_UPTODATE));
 	hwc->state = 0;
 	hisi_uncore_pmu_set_event_period(event);
 
-	if (flags & PERF_EF_RELOAD) {
-		u64 prev_raw_count =  local64_read(&hwc->prev_count);
+	अगर (flags & PERF_EF_RELOAD) अणु
+		u64 prev_raw_count =  local64_पढ़ो(&hwc->prev_count);
 
-		hisi_pmu->ops->write_counter(hisi_pmu, hwc, prev_raw_count);
-	}
+		hisi_pmu->ops->ग_लिखो_counter(hisi_pmu, hwc, prev_raw_count);
+	पूर्ण
 
 	hisi_uncore_pmu_enable_event(event);
 	perf_event_update_userpage(event);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_start);
 
-void hisi_uncore_pmu_stop(struct perf_event *event, int flags)
-{
-	struct hw_perf_event *hwc = &event->hw;
+व्योम hisi_uncore_pmu_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
 	hisi_uncore_pmu_disable_event(event);
 	WARN_ON_ONCE(hwc->state & PERF_HES_STOPPED);
 	hwc->state |= PERF_HES_STOPPED;
 
-	if (hwc->state & PERF_HES_UPTODATE)
-		return;
+	अगर (hwc->state & PERF_HES_UPTODATE)
+		वापस;
 
 	/* Read hardware counter and update the perf counter statistics */
 	hisi_uncore_pmu_event_update(event);
 	hwc->state |= PERF_HES_UPTODATE;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_stop);
 
-int hisi_uncore_pmu_add(struct perf_event *event, int flags)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
-	int idx;
+पूर्णांक hisi_uncore_pmu_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक idx;
 
 	hwc->state = PERF_HES_STOPPED | PERF_HES_UPTODATE;
 
-	/* Get an available counter index for counting */
+	/* Get an available counter index क्रम counting */
 	idx = hisi_pmu->ops->get_event_idx(event);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
 	event->hw.idx = idx;
 	hisi_pmu->pmu_events.hw_events[idx] = event;
 
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		hisi_uncore_pmu_start(event, PERF_EF_RELOAD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_add);
 
-void hisi_uncore_pmu_del(struct perf_event *event, int flags)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+व्योम hisi_uncore_pmu_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
 	hisi_uncore_pmu_stop(event, PERF_EF_UPDATE);
 	hisi_uncore_pmu_clear_event_idx(hisi_pmu, hwc->idx);
 	perf_event_update_userpage(event);
-	hisi_pmu->pmu_events.hw_events[hwc->idx] = NULL;
-}
+	hisi_pmu->pmu_events.hw_events[hwc->idx] = शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_del);
 
-void hisi_uncore_pmu_read(struct perf_event *event)
-{
+व्योम hisi_uncore_pmu_पढ़ो(काष्ठा perf_event *event)
+अणु
 	/* Read hardware counter and update the perf counter statistics */
 	hisi_uncore_pmu_event_update(event);
-}
-EXPORT_SYMBOL_GPL(hisi_uncore_pmu_read);
+पूर्ण
+EXPORT_SYMBOL_GPL(hisi_uncore_pmu_पढ़ो);
 
-void hisi_uncore_pmu_enable(struct pmu *pmu)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(pmu);
-	int enabled = bitmap_weight(hisi_pmu->pmu_events.used_mask,
+व्योम hisi_uncore_pmu_enable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(pmu);
+	पूर्णांक enabled = biपंचांगap_weight(hisi_pmu->pmu_events.used_mask,
 				    hisi_pmu->num_counters);
 
-	if (!enabled)
-		return;
+	अगर (!enabled)
+		वापस;
 
 	hisi_pmu->ops->start_counters(hisi_pmu);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_enable);
 
-void hisi_uncore_pmu_disable(struct pmu *pmu)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(pmu);
+व्योम hisi_uncore_pmu_disable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = to_hisi_pmu(pmu);
 
 	hisi_pmu->ops->stop_counters(hisi_pmu);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_disable);
 
 
@@ -425,88 +426,88 @@ EXPORT_SYMBOL_GPL(hisi_uncore_pmu_disable);
  * - For non-MT parts:
  *   SCCL is Aff2[7:0], CCL is Aff1[7:0]
  */
-static void hisi_read_sccl_and_ccl_id(int *scclp, int *cclp)
-{
-	u64 mpidr = read_cpuid_mpidr();
-	int aff3 = MPIDR_AFFINITY_LEVEL(mpidr, 3);
-	int aff2 = MPIDR_AFFINITY_LEVEL(mpidr, 2);
-	int aff1 = MPIDR_AFFINITY_LEVEL(mpidr, 1);
+अटल व्योम hisi_पढ़ो_sccl_and_ccl_id(पूर्णांक *scclp, पूर्णांक *cclp)
+अणु
+	u64 mpidr = पढ़ो_cpuid_mpidr();
+	पूर्णांक aff3 = MPIDR_AFFINITY_LEVEL(mpidr, 3);
+	पूर्णांक aff2 = MPIDR_AFFINITY_LEVEL(mpidr, 2);
+	पूर्णांक aff1 = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 	bool mt = mpidr & MPIDR_MT_BITMASK;
-	int sccl, ccl;
+	पूर्णांक sccl, ccl;
 
-	if (mt && read_cpuid_part_number() == HISI_CPU_PART_TSV110) {
+	अगर (mt && पढ़ो_cpuid_part_number() == HISI_CPU_PART_TSV110) अणु
 		sccl = aff2 >> 3;
 		ccl = aff2 & 0x7;
-	} else if (mt) {
+	पूर्ण अन्यथा अगर (mt) अणु
 		sccl = aff3;
 		ccl = aff2;
-	} else {
+	पूर्ण अन्यथा अणु
 		sccl = aff2;
 		ccl = aff1;
-	}
+	पूर्ण
 
-	if (scclp)
+	अगर (scclp)
 		*scclp = sccl;
-	if (cclp)
+	अगर (cclp)
 		*cclp = ccl;
-}
+पूर्ण
 
 /*
  * Check whether the CPU is associated with this uncore PMU
  */
-static bool hisi_pmu_cpu_is_associated_pmu(struct hisi_pmu *hisi_pmu)
-{
-	int sccl_id, ccl_id;
+अटल bool hisi_pmu_cpu_is_associated_pmu(काष्ठा hisi_pmu *hisi_pmu)
+अणु
+	पूर्णांक sccl_id, ccl_id;
 
-	if (hisi_pmu->ccl_id == -1) {
+	अगर (hisi_pmu->ccl_id == -1) अणु
 		/* If CCL_ID is -1, the PMU only shares the same SCCL */
-		hisi_read_sccl_and_ccl_id(&sccl_id, NULL);
+		hisi_पढ़ो_sccl_and_ccl_id(&sccl_id, शून्य);
 
-		return sccl_id == hisi_pmu->sccl_id;
-	}
+		वापस sccl_id == hisi_pmu->sccl_id;
+	पूर्ण
 
-	hisi_read_sccl_and_ccl_id(&sccl_id, &ccl_id);
+	hisi_पढ़ो_sccl_and_ccl_id(&sccl_id, &ccl_id);
 
-	return sccl_id == hisi_pmu->sccl_id && ccl_id == hisi_pmu->ccl_id;
-}
+	वापस sccl_id == hisi_pmu->sccl_id && ccl_id == hisi_pmu->ccl_id;
+पूर्ण
 
-int hisi_uncore_pmu_online_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct hisi_pmu *hisi_pmu = hlist_entry_safe(node, struct hisi_pmu,
+पूर्णांक hisi_uncore_pmu_online_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = hlist_entry_safe(node, काष्ठा hisi_pmu,
 						     node);
 
-	if (!hisi_pmu_cpu_is_associated_pmu(hisi_pmu))
-		return 0;
+	अगर (!hisi_pmu_cpu_is_associated_pmu(hisi_pmu))
+		वापस 0;
 
 	cpumask_set_cpu(cpu, &hisi_pmu->associated_cpus);
 
-	/* If another CPU is already managing this PMU, simply return. */
-	if (hisi_pmu->on_cpu != -1)
-		return 0;
+	/* If another CPU is alपढ़ोy managing this PMU, simply वापस. */
+	अगर (hisi_pmu->on_cpu != -1)
+		वापस 0;
 
-	/* Use this CPU in cpumask for event counting */
+	/* Use this CPU in cpumask क्रम event counting */
 	hisi_pmu->on_cpu = cpu;
 
-	/* Overflow interrupt also should use the same CPU */
-	WARN_ON(irq_set_affinity_hint(hisi_pmu->irq, cpumask_of(cpu)));
+	/* Overflow पूर्णांकerrupt also should use the same CPU */
+	WARN_ON(irq_set_affinity_hपूर्णांक(hisi_pmu->irq, cpumask_of(cpu)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_online_cpu);
 
-int hisi_uncore_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct hisi_pmu *hisi_pmu = hlist_entry_safe(node, struct hisi_pmu,
+पूर्णांक hisi_uncore_pmu_offline_cpu(अचिन्हित पूर्णांक cpu, काष्ठा hlist_node *node)
+अणु
+	काष्ठा hisi_pmu *hisi_pmu = hlist_entry_safe(node, काष्ठा hisi_pmu,
 						     node);
 	cpumask_t pmu_online_cpus;
-	unsigned int target;
+	अचिन्हित पूर्णांक target;
 
-	if (!cpumask_test_and_clear_cpu(cpu, &hisi_pmu->associated_cpus))
-		return 0;
+	अगर (!cpumask_test_and_clear_cpu(cpu, &hisi_pmu->associated_cpus))
+		वापस 0;
 
-	/* Nothing to do if this CPU doesn't own the PMU */
-	if (hisi_pmu->on_cpu != cpu)
-		return 0;
+	/* Nothing to करो अगर this CPU करोesn't own the PMU */
+	अगर (hisi_pmu->on_cpu != cpu)
+		वापस 0;
 
 	/* Give up ownership of the PMU */
 	hisi_pmu->on_cpu = -1;
@@ -515,16 +516,16 @@ int hisi_uncore_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
 	cpumask_and(&pmu_online_cpus, &hisi_pmu->associated_cpus,
 		    cpu_online_mask);
 	target = cpumask_any_but(&pmu_online_cpus, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
+	अगर (target >= nr_cpu_ids)
+		वापस 0;
 
 	perf_pmu_migrate_context(&hisi_pmu->pmu, cpu, target);
-	/* Use this CPU for event counting */
+	/* Use this CPU क्रम event counting */
 	hisi_pmu->on_cpu = target;
-	WARN_ON(irq_set_affinity_hint(hisi_pmu->irq, cpumask_of(target)));
+	WARN_ON(irq_set_affinity_hपूर्णांक(hisi_pmu->irq, cpumask_of(target)));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_offline_cpu);
 
 MODULE_LICENSE("GPL v2");

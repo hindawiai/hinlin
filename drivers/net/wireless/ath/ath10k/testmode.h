@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (c) 2014 Qualcomm Atheros, Inc.
  */
 
-#include "core.h"
+#समावेश "core.h"
 
-#ifdef CONFIG_NL80211_TESTMODE
+#अगर_घोषित CONFIG_NL80211_TESTMODE
 
-void ath10k_testmode_destroy(struct ath10k *ar);
+व्योम ath10k_tesपंचांगode_destroy(काष्ठा ath10k *ar);
 
-bool ath10k_tm_event_wmi(struct ath10k *ar, u32 cmd_id, struct sk_buff *skb);
-int ath10k_tm_cmd(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		  void *data, int len);
+bool ath10k_पंचांग_event_wmi(काष्ठा ath10k *ar, u32 cmd_id, काष्ठा sk_buff *skb);
+पूर्णांक ath10k_पंचांग_cmd(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		  व्योम *data, पूर्णांक len);
 
-#else
+#अन्यथा
 
-static inline void ath10k_testmode_destroy(struct ath10k *ar)
-{
-}
+अटल अंतरभूत व्योम ath10k_tesपंचांगode_destroy(काष्ठा ath10k *ar)
+अणु
+पूर्ण
 
-static inline bool ath10k_tm_event_wmi(struct ath10k *ar, u32 cmd_id,
-				       struct sk_buff *skb)
-{
-	return false;
-}
+अटल अंतरभूत bool ath10k_पंचांग_event_wmi(काष्ठा ath10k *ar, u32 cmd_id,
+				       काष्ठा sk_buff *skb)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int ath10k_tm_cmd(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif,
-				void *data, int len)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ath10k_पंचांग_cmd(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर,
+				व्योम *data, पूर्णांक len)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

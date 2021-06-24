@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Texas Instruments Incorporated -  http://www.ti.com/
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
@@ -6,249 +7,249 @@
  * Based on pwm_bl.c
  */
 
-#include <linux/backlight.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-struct led_bl_data {
-	struct device		*dev;
-	struct backlight_device	*bl_dev;
-	struct led_classdev	**leds;
+काष्ठा led_bl_data अणु
+	काष्ठा device		*dev;
+	काष्ठा backlight_device	*bl_dev;
+	काष्ठा led_classdev	**leds;
 	bool			enabled;
-	int			nb_leds;
-	unsigned int		*levels;
-	unsigned int		default_brightness;
-	unsigned int		max_brightness;
-};
+	पूर्णांक			nb_leds;
+	अचिन्हित पूर्णांक		*levels;
+	अचिन्हित पूर्णांक		शेष_brightness;
+	अचिन्हित पूर्णांक		max_brightness;
+पूर्ण;
 
-static void led_bl_set_brightness(struct led_bl_data *priv, int level)
-{
-	int i;
-	int bkl_brightness;
+अटल व्योम led_bl_set_brightness(काष्ठा led_bl_data *priv, पूर्णांक level)
+अणु
+	पूर्णांक i;
+	पूर्णांक bkl_brightness;
 
-	if (priv->levels)
+	अगर (priv->levels)
 		bkl_brightness = priv->levels[level];
-	else
+	अन्यथा
 		bkl_brightness = level;
 
-	for (i = 0; i < priv->nb_leds; i++)
+	क्रम (i = 0; i < priv->nb_leds; i++)
 		led_set_brightness(priv->leds[i], bkl_brightness);
 
 	priv->enabled = true;
-}
+पूर्ण
 
-static void led_bl_power_off(struct led_bl_data *priv)
-{
-	int i;
+अटल व्योम led_bl_घातer_off(काष्ठा led_bl_data *priv)
+अणु
+	पूर्णांक i;
 
-	if (!priv->enabled)
-		return;
+	अगर (!priv->enabled)
+		वापस;
 
-	for (i = 0; i < priv->nb_leds; i++)
+	क्रम (i = 0; i < priv->nb_leds; i++)
 		led_set_brightness(priv->leds[i], LED_OFF);
 
 	priv->enabled = false;
-}
+पूर्ण
 
-static int led_bl_update_status(struct backlight_device *bl)
-{
-	struct led_bl_data *priv = bl_get_data(bl);
-	int brightness = backlight_get_brightness(bl);
+अटल पूर्णांक led_bl_update_status(काष्ठा backlight_device *bl)
+अणु
+	काष्ठा led_bl_data *priv = bl_get_data(bl);
+	पूर्णांक brightness = backlight_get_brightness(bl);
 
-	if (brightness > 0)
+	अगर (brightness > 0)
 		led_bl_set_brightness(priv, brightness);
-	else
-		led_bl_power_off(priv);
+	अन्यथा
+		led_bl_घातer_off(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct backlight_ops led_bl_ops = {
+अटल स्थिर काष्ठा backlight_ops led_bl_ops = अणु
 	.update_status	= led_bl_update_status,
-};
+पूर्ण;
 
-static int led_bl_get_leds(struct device *dev,
-			   struct led_bl_data *priv)
-{
-	int i, nb_leds, ret;
-	struct device_node *node = dev->of_node;
-	struct led_classdev **leds;
-	unsigned int max_brightness;
-	unsigned int default_brightness;
+अटल पूर्णांक led_bl_get_leds(काष्ठा device *dev,
+			   काष्ठा led_bl_data *priv)
+अणु
+	पूर्णांक i, nb_leds, ret;
+	काष्ठा device_node *node = dev->of_node;
+	काष्ठा led_classdev **leds;
+	अचिन्हित पूर्णांक max_brightness;
+	अचिन्हित पूर्णांक शेष_brightness;
 
-	ret = of_count_phandle_with_args(node, "leds", NULL);
-	if (ret < 0) {
+	ret = of_count_phandle_with_args(node, "leds", शून्य);
+	अगर (ret < 0) अणु
 		dev_err(dev, "Unable to get led count\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	nb_leds = ret;
-	if (nb_leds < 1) {
+	अगर (nb_leds < 1) अणु
 		dev_err(dev, "At least one LED must be specified!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	leds = devm_kzalloc(dev, sizeof(struct led_classdev *) * nb_leds,
+	leds = devm_kzalloc(dev, माप(काष्ठा led_classdev *) * nb_leds,
 			    GFP_KERNEL);
-	if (!leds)
-		return -ENOMEM;
+	अगर (!leds)
+		वापस -ENOMEM;
 
-	for (i = 0; i < nb_leds; i++) {
+	क्रम (i = 0; i < nb_leds; i++) अणु
 		leds[i] = devm_of_led_get(dev, i);
-		if (IS_ERR(leds[i]))
-			return PTR_ERR(leds[i]);
-	}
+		अगर (IS_ERR(leds[i]))
+			वापस PTR_ERR(leds[i]);
+	पूर्ण
 
 	/* check that the LEDs all have the same brightness range */
 	max_brightness = leds[0]->max_brightness;
-	for (i = 1; i < nb_leds; i++) {
-		if (max_brightness != leds[i]->max_brightness) {
+	क्रम (i = 1; i < nb_leds; i++) अणु
+		अगर (max_brightness != leds[i]->max_brightness) अणु
 			dev_err(dev, "LEDs must have identical ranges\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* get the default brightness from the first LED from the list */
-	default_brightness = leds[0]->brightness;
+	/* get the शेष brightness from the first LED from the list */
+	शेष_brightness = leds[0]->brightness;
 
 	priv->nb_leds = nb_leds;
 	priv->leds = leds;
 	priv->max_brightness = max_brightness;
-	priv->default_brightness = default_brightness;
+	priv->शेष_brightness = शेष_brightness;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int led_bl_parse_levels(struct device *dev,
-			   struct led_bl_data *priv)
-{
-	struct device_node *node = dev->of_node;
-	int num_levels;
+अटल पूर्णांक led_bl_parse_levels(काष्ठा device *dev,
+			   काष्ठा led_bl_data *priv)
+अणु
+	काष्ठा device_node *node = dev->of_node;
+	पूर्णांक num_levels;
 	u32 value;
-	int ret;
+	पूर्णांक ret;
 
-	if (!node)
-		return -ENODEV;
+	अगर (!node)
+		वापस -ENODEV;
 
 	num_levels = of_property_count_u32_elems(node, "brightness-levels");
-	if (num_levels > 1) {
-		int i;
-		unsigned int db;
-		u32 *levels = NULL;
+	अगर (num_levels > 1) अणु
+		पूर्णांक i;
+		अचिन्हित पूर्णांक db;
+		u32 *levels = शून्य;
 
-		levels = devm_kzalloc(dev, sizeof(u32) * num_levels,
+		levels = devm_kzalloc(dev, माप(u32) * num_levels,
 				      GFP_KERNEL);
-		if (!levels)
-			return -ENOMEM;
+		अगर (!levels)
+			वापस -ENOMEM;
 
-		ret = of_property_read_u32_array(node, "brightness-levels",
+		ret = of_property_पढ़ो_u32_array(node, "brightness-levels",
 						levels,
 						num_levels);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		/*
 		 * Try to map actual LED brightness to backlight brightness
 		 * level
 		 */
-		db = priv->default_brightness;
-		for (i = 0 ; i < num_levels; i++) {
-			if ((i && db > levels[i-1]) && db <= levels[i])
-				break;
-		}
-		priv->default_brightness = i;
+		db = priv->शेष_brightness;
+		क्रम (i = 0 ; i < num_levels; i++) अणु
+			अगर ((i && db > levels[i-1]) && db <= levels[i])
+				अवरोध;
+		पूर्ण
+		priv->शेष_brightness = i;
 		priv->max_brightness = num_levels - 1;
 		priv->levels = levels;
-	} else if (num_levels >= 0)
+	पूर्ण अन्यथा अगर (num_levels >= 0)
 		dev_warn(dev, "Not enough levels defined\n");
 
-	ret = of_property_read_u32(node, "default-brightness-level", &value);
-	if (!ret && value <= priv->max_brightness)
-		priv->default_brightness = value;
-	else if (!ret  && value > priv->max_brightness)
+	ret = of_property_पढ़ो_u32(node, "default-brightness-level", &value);
+	अगर (!ret && value <= priv->max_brightness)
+		priv->शेष_brightness = value;
+	अन्यथा अगर (!ret  && value > priv->max_brightness)
 		dev_warn(dev, "Invalid default brightness. Ignoring it\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int led_bl_probe(struct platform_device *pdev)
-{
-	struct backlight_properties props;
-	struct led_bl_data *priv;
-	int ret, i;
+अटल पूर्णांक led_bl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा backlight_properties props;
+	काष्ठा led_bl_data *priv;
+	पूर्णांक ret, i;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	priv->dev = &pdev->dev;
 
 	ret = led_bl_get_leds(&pdev->dev, priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = led_bl_parse_levels(&pdev->dev, priv);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Failed to parse DT data\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = priv->max_brightness;
-	props.brightness = priv->default_brightness;
-	props.power = (priv->default_brightness > 0) ? FB_BLANK_POWERDOWN :
+	props.brightness = priv->शेष_brightness;
+	props.घातer = (priv->शेष_brightness > 0) ? FB_BLANK_POWERDOWN :
 		      FB_BLANK_UNBLANK;
-	priv->bl_dev = backlight_device_register(dev_name(&pdev->dev),
+	priv->bl_dev = backlight_device_रेजिस्टर(dev_name(&pdev->dev),
 			&pdev->dev, priv, &led_bl_ops, &props);
-	if (IS_ERR(priv->bl_dev)) {
+	अगर (IS_ERR(priv->bl_dev)) अणु
 		dev_err(&pdev->dev, "Failed to register backlight\n");
-		return PTR_ERR(priv->bl_dev);
-	}
+		वापस PTR_ERR(priv->bl_dev);
+	पूर्ण
 
-	for (i = 0; i < priv->nb_leds; i++)
+	क्रम (i = 0; i < priv->nb_leds; i++)
 		led_sysfs_disable(priv->leds[i]);
 
 	backlight_update_status(priv->bl_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int led_bl_remove(struct platform_device *pdev)
-{
-	struct led_bl_data *priv = platform_get_drvdata(pdev);
-	struct backlight_device *bl = priv->bl_dev;
-	int i;
+अटल पूर्णांक led_bl_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा led_bl_data *priv = platक्रमm_get_drvdata(pdev);
+	काष्ठा backlight_device *bl = priv->bl_dev;
+	पूर्णांक i;
 
-	backlight_device_unregister(bl);
+	backlight_device_unरेजिस्टर(bl);
 
-	led_bl_power_off(priv);
-	for (i = 0; i < priv->nb_leds; i++)
+	led_bl_घातer_off(priv);
+	क्रम (i = 0; i < priv->nb_leds; i++)
 		led_sysfs_enable(priv->leds[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id led_bl_of_match[] = {
-	{ .compatible = "led-backlight" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id led_bl_of_match[] = अणु
+	अणु .compatible = "led-backlight" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, led_bl_of_match);
 
-static struct platform_driver led_bl_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver led_bl_driver = अणु
+	.driver		= अणु
 		.name		= "led-backlight",
 		.of_match_table	= of_match_ptr(led_bl_of_match),
-	},
+	पूर्ण,
 	.probe		= led_bl_probe,
-	.remove		= led_bl_remove,
-};
+	.हटाओ		= led_bl_हटाओ,
+पूर्ण;
 
-module_platform_driver(led_bl_driver);
+module_platक्रमm_driver(led_bl_driver);
 
 MODULE_DESCRIPTION("LED based Backlight Driver");
 MODULE_LICENSE("GPL");

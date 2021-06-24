@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,96 +22,96 @@
  *
  */
 
-#ifndef PP_HWMGR_PPT_H
-#define PP_HWMGR_PPT_H
+#अगर_अघोषित PP_HWMGR_PPT_H
+#घोषणा PP_HWMGR_PPT_H
 
-#include "hardwaremanager.h"
-#include "smumgr.h"
-#include "atom-types.h"
+#समावेश "hardwaremanager.h"
+#समावेश "smumgr.h"
+#समावेश "atom-types.h"
 
-struct phm_ppt_v1_clock_voltage_dependency_record {
-	uint32_t clk;
-	uint8_t  vddInd;
-	uint8_t  vddciInd;
-	uint8_t  mvddInd;
-	uint16_t vdd_offset;
-	uint16_t vddc;
-	uint16_t vddgfx;
-	uint16_t vddci;
-	uint16_t mvdd;
-	uint8_t  phases;
-	uint8_t  cks_enable;
-	uint8_t  cks_voffset;
-	uint32_t sclk_offset;
-};
+काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t clk;
+	uपूर्णांक8_t  vddInd;
+	uपूर्णांक8_t  vddciInd;
+	uपूर्णांक8_t  mvddInd;
+	uपूर्णांक16_t vdd_offset;
+	uपूर्णांक16_t vddc;
+	uपूर्णांक16_t vddgfx;
+	uपूर्णांक16_t vddci;
+	uपूर्णांक16_t mvdd;
+	uपूर्णांक8_t  phases;
+	uपूर्णांक8_t  cks_enable;
+	uपूर्णांक8_t  cks_voffset;
+	uपूर्णांक32_t sclk_offset;
+पूर्ण;
 
-typedef struct phm_ppt_v1_clock_voltage_dependency_record phm_ppt_v1_clock_voltage_dependency_record;
+प्रकार काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_record phm_ppt_v1_घड़ी_voltage_dependency_record;
 
-struct phm_ppt_v1_clock_voltage_dependency_table {
-	uint32_t count;                                            /* Number of entries. */
-	phm_ppt_v1_clock_voltage_dependency_record entries[];	   /* Dynamically allocate count entries. */
-};
+काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table अणु
+	uपूर्णांक32_t count;                                            /* Number of entries. */
+	phm_ppt_v1_घड़ी_voltage_dependency_record entries[];	   /* Dynamically allocate count entries. */
+पूर्ण;
 
-typedef struct phm_ppt_v1_clock_voltage_dependency_table phm_ppt_v1_clock_voltage_dependency_table;
+प्रकार काष्ठा phm_ppt_v1_घड़ी_voltage_dependency_table phm_ppt_v1_घड़ी_voltage_dependency_table;
 
 
-/* Multimedia Clock Voltage Dependency records and table */
-struct phm_ppt_v1_mm_clock_voltage_dependency_record {
-	uint32_t  dclk;                                              /* UVD D-clock */
-	uint32_t  vclk;                                              /* UVD V-clock */
-	uint32_t  eclk;                                              /* VCE clock */
-	uint32_t  aclk;                                              /* ACP clock */
-	uint32_t  samclock;                                          /* SAMU clock */
-	uint8_t	vddcInd;
-	uint16_t vddgfx_offset;
-	uint16_t vddc;
-	uint16_t vddgfx;
-	uint8_t phases;
-};
-typedef struct phm_ppt_v1_mm_clock_voltage_dependency_record phm_ppt_v1_mm_clock_voltage_dependency_record;
+/* Mulसमयdia Clock Voltage Dependency records and table */
+काष्ठा phm_ppt_v1_mm_घड़ी_voltage_dependency_record अणु
+	uपूर्णांक32_t  dclk;                                              /* UVD D-घड़ी */
+	uपूर्णांक32_t  vclk;                                              /* UVD V-घड़ी */
+	uपूर्णांक32_t  eclk;                                              /* VCE घड़ी */
+	uपूर्णांक32_t  aclk;                                              /* ACP घड़ी */
+	uपूर्णांक32_t  samघड़ी;                                          /* SAMU घड़ी */
+	uपूर्णांक8_t	vddcInd;
+	uपूर्णांक16_t vddgfx_offset;
+	uपूर्णांक16_t vddc;
+	uपूर्णांक16_t vddgfx;
+	uपूर्णांक8_t phases;
+पूर्ण;
+प्रकार काष्ठा phm_ppt_v1_mm_घड़ी_voltage_dependency_record phm_ppt_v1_mm_घड़ी_voltage_dependency_record;
 
-struct phm_ppt_v1_mm_clock_voltage_dependency_table {
-	uint32_t count;													/* Number of entries. */
-	phm_ppt_v1_mm_clock_voltage_dependency_record entries[];		/* Dynamically allocate count entries. */
-};
-typedef struct phm_ppt_v1_mm_clock_voltage_dependency_table phm_ppt_v1_mm_clock_voltage_dependency_table;
+काष्ठा phm_ppt_v1_mm_घड़ी_voltage_dependency_table अणु
+	uपूर्णांक32_t count;													/* Number of entries. */
+	phm_ppt_v1_mm_घड़ी_voltage_dependency_record entries[];		/* Dynamically allocate count entries. */
+पूर्ण;
+प्रकार काष्ठा phm_ppt_v1_mm_घड़ी_voltage_dependency_table phm_ppt_v1_mm_घड़ी_voltage_dependency_table;
 
-struct phm_ppt_v1_voltage_lookup_record {
-	uint16_t us_calculated;
-	uint16_t us_vdd;												/* Base voltage */
-	uint16_t us_cac_low;
-	uint16_t us_cac_mid;
-	uint16_t us_cac_high;
-};
-typedef struct phm_ppt_v1_voltage_lookup_record phm_ppt_v1_voltage_lookup_record;
+काष्ठा phm_ppt_v1_voltage_lookup_record अणु
+	uपूर्णांक16_t us_calculated;
+	uपूर्णांक16_t us_vdd;												/* Base voltage */
+	uपूर्णांक16_t us_cac_low;
+	uपूर्णांक16_t us_cac_mid;
+	uपूर्णांक16_t us_cac_high;
+पूर्ण;
+प्रकार काष्ठा phm_ppt_v1_voltage_lookup_record phm_ppt_v1_voltage_lookup_record;
 
-struct phm_ppt_v1_voltage_lookup_table {
-	uint32_t count;
+काष्ठा phm_ppt_v1_voltage_lookup_table अणु
+	uपूर्णांक32_t count;
 	phm_ppt_v1_voltage_lookup_record entries[];    /* Dynamically allocate count entries. */
-};
-typedef struct phm_ppt_v1_voltage_lookup_table phm_ppt_v1_voltage_lookup_table;
+पूर्ण;
+प्रकार काष्ठा phm_ppt_v1_voltage_lookup_table phm_ppt_v1_voltage_lookup_table;
 
 /* PCIE records and Table */
 
-struct phm_ppt_v1_pcie_record {
-	uint8_t gen_speed;
-	uint8_t lane_width;
-	uint16_t usreserved;
-	uint16_t reserved;
-	uint32_t pcie_sclk;
-};
-typedef struct phm_ppt_v1_pcie_record phm_ppt_v1_pcie_record;
+काष्ठा phm_ppt_v1_pcie_record अणु
+	uपूर्णांक8_t gen_speed;
+	uपूर्णांक8_t lane_width;
+	uपूर्णांक16_t usreserved;
+	uपूर्णांक16_t reserved;
+	uपूर्णांक32_t pcie_sclk;
+पूर्ण;
+प्रकार काष्ठा phm_ppt_v1_pcie_record phm_ppt_v1_pcie_record;
 
-struct phm_ppt_v1_pcie_table {
-	uint32_t count;                                            /* Number of entries. */
+काष्ठा phm_ppt_v1_pcie_table अणु
+	uपूर्णांक32_t count;                                            /* Number of entries. */
 	phm_ppt_v1_pcie_record entries[];			   /* Dynamically allocate count entries. */
-};
-typedef struct phm_ppt_v1_pcie_table phm_ppt_v1_pcie_table;
+पूर्ण;
+प्रकार काष्ठा phm_ppt_v1_pcie_table phm_ppt_v1_pcie_table;
 
-struct phm_ppt_v1_gpio_table {
-	uint8_t vrhot_triggered_sclk_dpm_index;           /* SCLK DPM level index to switch to when VRHot is triggered */
-};
-typedef struct phm_ppt_v1_gpio_table phm_ppt_v1_gpio_table;
+काष्ठा phm_ppt_v1_gpio_table अणु
+	uपूर्णांक8_t vrhot_triggered_sclk_dpm_index;           /* SCLK DPM level index to चयन to when VRHot is triggered */
+पूर्ण;
+प्रकार काष्ठा phm_ppt_v1_gpio_table phm_ppt_v1_gpio_table;
 
-#endif
+#पूर्ण_अगर
 

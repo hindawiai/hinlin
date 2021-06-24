@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/blk-mq.h>
-#include <linux/blk-pm.h>
-#include <linux/blkdev.h>
-#include <linux/pm_runtime.h>
-#include "blk-mq.h"
-#include "blk-mq-tag.h"
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/blk-pm.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश "blk-mq.h"
+#समावेश "blk-mq-tag.h"
 
 /**
- * blk_pm_runtime_init - Block layer runtime PM initialization routine
+ * blk_pm_runसमय_init - Block layer runसमय PM initialization routine
  * @q: the queue of the device
- * @dev: the device the queue belongs to
+ * @dev: the device the queue beदीर्घs to
  *
  * Description:
- *    Initialize runtime-PM-related fields for @q and start auto suspend for
- *    @dev. Drivers that want to take advantage of request-based runtime PM
+ *    Initialize runसमय-PM-related fields क्रम @q and start स्वतः suspend क्रम
+ *    @dev. Drivers that want to take advantage of request-based runसमय PM
  *    should call this function after @dev has been initialized, and its
- *    request queue @q has been allocated, and runtime PM for it can not happen
- *    yet(either due to disabled/forbidden or its usage_count > 0). In most
- *    cases, driver should call this function before any I/O has taken place.
+ *    request queue @q has been allocated, and runसमय PM क्रम it can not happen
+ *    yet(either due to disabled/क्रमbidden or its usage_count > 0). In most
+ *    हालs, driver should call this function beक्रमe any I/O has taken place.
  *
- *    This function takes care of setting up using auto suspend for the device,
- *    the autosuspend delay is set to -1 to make runtime suspend impossible
- *    until an updated value is either set by user or by driver. Drivers do
- *    not need to touch other autosuspend settings.
+ *    This function takes care of setting up using स्वतः suspend क्रम the device,
+ *    the स्वतःsuspend delay is set to -1 to make runसमय suspend impossible
+ *    until an updated value is either set by user or by driver. Drivers करो
+ *    not need to touch other स्वतःsuspend settings.
  *
- *    The block layer runtime PM is request based, so only works for drivers
+ *    The block layer runसमय PM is request based, so only works क्रम drivers
  *    that use request as their IO unit instead of those directly use bio's.
  */
-void blk_pm_runtime_init(struct request_queue *q, struct device *dev)
-{
+व्योम blk_pm_runसमय_init(काष्ठा request_queue *q, काष्ठा device *dev)
+अणु
 	q->dev = dev;
 	q->rpm_status = RPM_ACTIVE;
-	pm_runtime_set_autosuspend_delay(q->dev, -1);
-	pm_runtime_use_autosuspend(q->dev);
-}
-EXPORT_SYMBOL(blk_pm_runtime_init);
+	pm_runसमय_set_स्वतःsuspend_delay(q->dev, -1);
+	pm_runसमय_use_स्वतःsuspend(q->dev);
+पूर्ण
+EXPORT_SYMBOL(blk_pm_runसमय_init);
 
 /**
- * blk_pre_runtime_suspend - Pre runtime suspend check
+ * blk_pre_runसमय_suspend - Pre runसमय suspend check
  * @q: the queue of the device
  *
  * Description:
- *    This function will check if runtime suspend is allowed for the device
- *    by examining if there are any requests pending in the queue. If there
- *    are requests pending, the device can not be runtime suspended; otherwise,
+ *    This function will check अगर runसमय suspend is allowed क्रम the device
+ *    by examining अगर there are any requests pending in the queue. If there
+ *    are requests pending, the device can not be runसमय suspended; otherwise,
  *    the queue's status will be updated to SUSPENDING and the driver can
  *    proceed to suspend the device.
  *
- *    For the not allowed case, we mark last busy for the device so that
- *    runtime PM core will try to autosuspend it some time later.
+ *    For the not allowed हाल, we mark last busy क्रम the device so that
+ *    runसमय PM core will try to स्वतःsuspend it some समय later.
  *
  *    This function should be called near the start of the device's
- *    runtime_suspend callback.
+ *    runसमय_suspend callback.
  *
  * Return:
- *    0		- OK to runtime suspend the device
- *    -EBUSY	- Device should not be runtime suspended
+ *    0		- OK to runसमय suspend the device
+ *    -EBUSY	- Device should not be runसमय suspended
  */
-int blk_pre_runtime_suspend(struct request_queue *q)
-{
-	int ret = 0;
+पूर्णांक blk_pre_runसमय_suspend(काष्ठा request_queue *q)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!q->dev)
-		return ret;
+	अगर (!q->dev)
+		वापस ret;
 
 	WARN_ON_ONCE(q->rpm_status != RPM_ACTIVE);
 
@@ -72,153 +73,153 @@ int blk_pre_runtime_suspend(struct request_queue *q)
 	spin_unlock_irq(&q->queue_lock);
 
 	/*
-	 * Increase the pm_only counter before checking whether any
-	 * non-PM blk_queue_enter() calls are in progress to avoid that any
-	 * new non-PM blk_queue_enter() calls succeed before the pm_only
+	 * Increase the pm_only counter beक्रमe checking whether any
+	 * non-PM blk_queue_enter() calls are in progress to aव्योम that any
+	 * new non-PM blk_queue_enter() calls succeed beक्रमe the pm_only
 	 * counter is decreased again.
 	 */
 	blk_set_pm_only(q);
 	ret = -EBUSY;
 	/* Switch q_usage_counter from per-cpu to atomic mode. */
-	blk_freeze_queue_start(q);
+	blk_मुक्तze_queue_start(q);
 	/*
 	 * Wait until atomic mode has been reached. Since that
 	 * involves calling call_rcu(), it is guaranteed that later
 	 * blk_queue_enter() calls see the pm-only state. See also
 	 * http://lwn.net/Articles/573497/.
 	 */
-	percpu_ref_switch_to_atomic_sync(&q->q_usage_counter);
-	if (percpu_ref_is_zero(&q->q_usage_counter))
+	percpu_ref_चयन_to_atomic_sync(&q->q_usage_counter);
+	अगर (percpu_ref_is_zero(&q->q_usage_counter))
 		ret = 0;
 	/* Switch q_usage_counter back to per-cpu mode. */
-	blk_mq_unfreeze_queue(q);
+	blk_mq_unमुक्तze_queue(q);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		spin_lock_irq(&q->queue_lock);
 		q->rpm_status = RPM_ACTIVE;
-		pm_runtime_mark_last_busy(q->dev);
+		pm_runसमय_mark_last_busy(q->dev);
 		spin_unlock_irq(&q->queue_lock);
 
 		blk_clear_pm_only(q);
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(blk_pre_runtime_suspend);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(blk_pre_runसमय_suspend);
 
 /**
- * blk_post_runtime_suspend - Post runtime suspend processing
+ * blk_post_runसमय_suspend - Post runसमय suspend processing
  * @q: the queue of the device
- * @err: return value of the device's runtime_suspend function
+ * @err: वापस value of the device's runसमय_suspend function
  *
  * Description:
- *    Update the queue's runtime status according to the return value of the
- *    device's runtime suspend function and mark last busy for the device so
- *    that PM core will try to auto suspend the device at a later time.
+ *    Update the queue's runसमय status according to the वापस value of the
+ *    device's runसमय suspend function and mark last busy क्रम the device so
+ *    that PM core will try to स्वतः suspend the device at a later समय.
  *
  *    This function should be called near the end of the device's
- *    runtime_suspend callback.
+ *    runसमय_suspend callback.
  */
-void blk_post_runtime_suspend(struct request_queue *q, int err)
-{
-	if (!q->dev)
-		return;
+व्योम blk_post_runसमय_suspend(काष्ठा request_queue *q, पूर्णांक err)
+अणु
+	अगर (!q->dev)
+		वापस;
 
 	spin_lock_irq(&q->queue_lock);
-	if (!err) {
+	अगर (!err) अणु
 		q->rpm_status = RPM_SUSPENDED;
-	} else {
+	पूर्ण अन्यथा अणु
 		q->rpm_status = RPM_ACTIVE;
-		pm_runtime_mark_last_busy(q->dev);
-	}
+		pm_runसमय_mark_last_busy(q->dev);
+	पूर्ण
 	spin_unlock_irq(&q->queue_lock);
 
-	if (err)
+	अगर (err)
 		blk_clear_pm_only(q);
-}
-EXPORT_SYMBOL(blk_post_runtime_suspend);
+पूर्ण
+EXPORT_SYMBOL(blk_post_runसमय_suspend);
 
 /**
- * blk_pre_runtime_resume - Pre runtime resume processing
+ * blk_pre_runसमय_resume - Pre runसमय resume processing
  * @q: the queue of the device
  *
  * Description:
- *    Update the queue's runtime status to RESUMING in preparation for the
- *    runtime resume of the device.
+ *    Update the queue's runसमय status to RESUMING in preparation क्रम the
+ *    runसमय resume of the device.
  *
  *    This function should be called near the start of the device's
- *    runtime_resume callback.
+ *    runसमय_resume callback.
  */
-void blk_pre_runtime_resume(struct request_queue *q)
-{
-	if (!q->dev)
-		return;
+व्योम blk_pre_runसमय_resume(काष्ठा request_queue *q)
+अणु
+	अगर (!q->dev)
+		वापस;
 
 	spin_lock_irq(&q->queue_lock);
 	q->rpm_status = RPM_RESUMING;
 	spin_unlock_irq(&q->queue_lock);
-}
-EXPORT_SYMBOL(blk_pre_runtime_resume);
+पूर्ण
+EXPORT_SYMBOL(blk_pre_runसमय_resume);
 
 /**
- * blk_post_runtime_resume - Post runtime resume processing
+ * blk_post_runसमय_resume - Post runसमय resume processing
  * @q: the queue of the device
- * @err: return value of the device's runtime_resume function
+ * @err: वापस value of the device's runसमय_resume function
  *
  * Description:
- *    Update the queue's runtime status according to the return value of the
- *    device's runtime_resume function. If the resume was successful, call
- *    blk_set_runtime_active() to do the real work of restarting the queue.
+ *    Update the queue's runसमय status according to the वापस value of the
+ *    device's runसमय_resume function. If the resume was successful, call
+ *    blk_set_runसमय_active() to करो the real work of restarting the queue.
  *
  *    This function should be called near the end of the device's
- *    runtime_resume callback.
+ *    runसमय_resume callback.
  */
-void blk_post_runtime_resume(struct request_queue *q, int err)
-{
-	if (!q->dev)
-		return;
-	if (!err) {
-		blk_set_runtime_active(q);
-	} else {
+व्योम blk_post_runसमय_resume(काष्ठा request_queue *q, पूर्णांक err)
+अणु
+	अगर (!q->dev)
+		वापस;
+	अगर (!err) अणु
+		blk_set_runसमय_active(q);
+	पूर्ण अन्यथा अणु
 		spin_lock_irq(&q->queue_lock);
 		q->rpm_status = RPM_SUSPENDED;
 		spin_unlock_irq(&q->queue_lock);
-	}
-}
-EXPORT_SYMBOL(blk_post_runtime_resume);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(blk_post_runसमय_resume);
 
 /**
- * blk_set_runtime_active - Force runtime status of the queue to be active
+ * blk_set_runसमय_active - Force runसमय status of the queue to be active
  * @q: the queue of the device
  *
- * If the device is left runtime suspended during system suspend the resume
- * hook typically resumes the device and corrects runtime status
- * accordingly. However, that does not affect the queue runtime PM status
+ * If the device is left runसमय suspended during प्रणाली suspend the resume
+ * hook typically resumes the device and corrects runसमय status
+ * accordingly. However, that करोes not affect the queue runसमय PM status
  * which is still "suspended". This prevents processing requests from the
  * queue.
  *
  * This function can be used in driver's resume hook to correct queue
- * runtime PM status and re-enable peeking requests from the queue. It
- * should be called before first request is added to the queue.
+ * runसमय PM status and re-enable peeking requests from the queue. It
+ * should be called beक्रमe first request is added to the queue.
  *
- * This function is also called by blk_post_runtime_resume() for successful
- * runtime resumes.  It does everything necessary to restart the queue.
+ * This function is also called by blk_post_runसमय_resume() क्रम successful
+ * runसमय resumes.  It करोes everything necessary to restart the queue.
  */
-void blk_set_runtime_active(struct request_queue *q)
-{
-	int old_status;
+व्योम blk_set_runसमय_active(काष्ठा request_queue *q)
+अणु
+	पूर्णांक old_status;
 
-	if (!q->dev)
-		return;
+	अगर (!q->dev)
+		वापस;
 
 	spin_lock_irq(&q->queue_lock);
 	old_status = q->rpm_status;
 	q->rpm_status = RPM_ACTIVE;
-	pm_runtime_mark_last_busy(q->dev);
-	pm_request_autosuspend(q->dev);
+	pm_runसमय_mark_last_busy(q->dev);
+	pm_request_स्वतःsuspend(q->dev);
 	spin_unlock_irq(&q->queue_lock);
 
-	if (old_status != RPM_ACTIVE)
+	अगर (old_status != RPM_ACTIVE)
 		blk_clear_pm_only(q);
-}
-EXPORT_SYMBOL(blk_set_runtime_active);
+पूर्ण
+EXPORT_SYMBOL(blk_set_runसमय_active);

@@ -1,9 +1,10 @@
-#ifndef __LINUX_RWLOCK_API_SMP_H
-#define __LINUX_RWLOCK_API_SMP_H
+<शैली गुरु>
+#अगर_अघोषित __LINUX_RWLOCK_API_SMP_H
+#घोषणा __LINUX_RWLOCK_API_SMP_H
 
-#ifndef __LINUX_SPINLOCK_API_SMP_H
+#अगर_अघोषित __LINUX_SPINLOCK_API_SMP_H
 # error "please don't include this file directly"
-#endif
+#पूर्ण_अगर
 
 /*
  * include/linux/rwlock_api_smp.h
@@ -15,264 +16,264 @@
  * Released under the General Public License (GPL).
  */
 
-void __lockfunc _raw_read_lock(rwlock_t *lock)		__acquires(lock);
-void __lockfunc _raw_write_lock(rwlock_t *lock)		__acquires(lock);
-void __lockfunc _raw_read_lock_bh(rwlock_t *lock)	__acquires(lock);
-void __lockfunc _raw_write_lock_bh(rwlock_t *lock)	__acquires(lock);
-void __lockfunc _raw_read_lock_irq(rwlock_t *lock)	__acquires(lock);
-void __lockfunc _raw_write_lock_irq(rwlock_t *lock)	__acquires(lock);
-unsigned long __lockfunc _raw_read_lock_irqsave(rwlock_t *lock)
+व्योम __lockfunc _raw_पढ़ो_lock(rwlock_t *lock)		__acquires(lock);
+व्योम __lockfunc _raw_ग_लिखो_lock(rwlock_t *lock)		__acquires(lock);
+व्योम __lockfunc _raw_पढ़ो_lock_bh(rwlock_t *lock)	__acquires(lock);
+व्योम __lockfunc _raw_ग_लिखो_lock_bh(rwlock_t *lock)	__acquires(lock);
+व्योम __lockfunc _raw_पढ़ो_lock_irq(rwlock_t *lock)	__acquires(lock);
+व्योम __lockfunc _raw_ग_लिखो_lock_irq(rwlock_t *lock)	__acquires(lock);
+अचिन्हित दीर्घ __lockfunc _raw_पढ़ो_lock_irqsave(rwlock_t *lock)
 							__acquires(lock);
-unsigned long __lockfunc _raw_write_lock_irqsave(rwlock_t *lock)
+अचिन्हित दीर्घ __lockfunc _raw_ग_लिखो_lock_irqsave(rwlock_t *lock)
 							__acquires(lock);
-int __lockfunc _raw_read_trylock(rwlock_t *lock);
-int __lockfunc _raw_write_trylock(rwlock_t *lock);
-void __lockfunc _raw_read_unlock(rwlock_t *lock)	__releases(lock);
-void __lockfunc _raw_write_unlock(rwlock_t *lock)	__releases(lock);
-void __lockfunc _raw_read_unlock_bh(rwlock_t *lock)	__releases(lock);
-void __lockfunc _raw_write_unlock_bh(rwlock_t *lock)	__releases(lock);
-void __lockfunc _raw_read_unlock_irq(rwlock_t *lock)	__releases(lock);
-void __lockfunc _raw_write_unlock_irq(rwlock_t *lock)	__releases(lock);
-void __lockfunc
-_raw_read_unlock_irqrestore(rwlock_t *lock, unsigned long flags)
+पूर्णांक __lockfunc _raw_पढ़ो_trylock(rwlock_t *lock);
+पूर्णांक __lockfunc _raw_ग_लिखो_trylock(rwlock_t *lock);
+व्योम __lockfunc _raw_पढ़ो_unlock(rwlock_t *lock)	__releases(lock);
+व्योम __lockfunc _raw_ग_लिखो_unlock(rwlock_t *lock)	__releases(lock);
+व्योम __lockfunc _raw_पढ़ो_unlock_bh(rwlock_t *lock)	__releases(lock);
+व्योम __lockfunc _raw_ग_लिखो_unlock_bh(rwlock_t *lock)	__releases(lock);
+व्योम __lockfunc _raw_पढ़ो_unlock_irq(rwlock_t *lock)	__releases(lock);
+व्योम __lockfunc _raw_ग_लिखो_unlock_irq(rwlock_t *lock)	__releases(lock);
+व्योम __lockfunc
+_raw_पढ़ो_unlock_irqrestore(rwlock_t *lock, अचिन्हित दीर्घ flags)
 							__releases(lock);
-void __lockfunc
-_raw_write_unlock_irqrestore(rwlock_t *lock, unsigned long flags)
+व्योम __lockfunc
+_raw_ग_लिखो_unlock_irqrestore(rwlock_t *lock, अचिन्हित दीर्घ flags)
 							__releases(lock);
 
-#ifdef CONFIG_INLINE_READ_LOCK
-#define _raw_read_lock(lock) __raw_read_lock(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_LOCK
+#घोषणा _raw_पढ़ो_lock(lock) __raw_पढ़ो_lock(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_LOCK
-#define _raw_write_lock(lock) __raw_write_lock(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_LOCK
+#घोषणा _raw_ग_लिखो_lock(lock) __raw_ग_लिखो_lock(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_LOCK_BH
-#define _raw_read_lock_bh(lock) __raw_read_lock_bh(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_LOCK_BH
+#घोषणा _raw_पढ़ो_lock_bh(lock) __raw_पढ़ो_lock_bh(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_LOCK_BH
-#define _raw_write_lock_bh(lock) __raw_write_lock_bh(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_LOCK_BH
+#घोषणा _raw_ग_लिखो_lock_bh(lock) __raw_ग_लिखो_lock_bh(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_LOCK_IRQ
-#define _raw_read_lock_irq(lock) __raw_read_lock_irq(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_LOCK_IRQ
+#घोषणा _raw_पढ़ो_lock_irq(lock) __raw_पढ़ो_lock_irq(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_LOCK_IRQ
-#define _raw_write_lock_irq(lock) __raw_write_lock_irq(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_LOCK_IRQ
+#घोषणा _raw_ग_लिखो_lock_irq(lock) __raw_ग_लिखो_lock_irq(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_LOCK_IRQSAVE
-#define _raw_read_lock_irqsave(lock) __raw_read_lock_irqsave(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_LOCK_IRQSAVE
+#घोषणा _raw_पढ़ो_lock_irqsave(lock) __raw_पढ़ो_lock_irqsave(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_LOCK_IRQSAVE
-#define _raw_write_lock_irqsave(lock) __raw_write_lock_irqsave(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_LOCK_IRQSAVE
+#घोषणा _raw_ग_लिखो_lock_irqsave(lock) __raw_ग_लिखो_lock_irqsave(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_TRYLOCK
-#define _raw_read_trylock(lock) __raw_read_trylock(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_TRYLOCK
+#घोषणा _raw_पढ़ो_trylock(lock) __raw_पढ़ो_trylock(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_TRYLOCK
-#define _raw_write_trylock(lock) __raw_write_trylock(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_TRYLOCK
+#घोषणा _raw_ग_लिखो_trylock(lock) __raw_ग_लिखो_trylock(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_UNLOCK
-#define _raw_read_unlock(lock) __raw_read_unlock(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_UNLOCK
+#घोषणा _raw_पढ़ो_unlock(lock) __raw_पढ़ो_unlock(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_UNLOCK
-#define _raw_write_unlock(lock) __raw_write_unlock(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_UNLOCK
+#घोषणा _raw_ग_लिखो_unlock(lock) __raw_ग_लिखो_unlock(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_UNLOCK_BH
-#define _raw_read_unlock_bh(lock) __raw_read_unlock_bh(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_UNLOCK_BH
+#घोषणा _raw_पढ़ो_unlock_bh(lock) __raw_पढ़ो_unlock_bh(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_UNLOCK_BH
-#define _raw_write_unlock_bh(lock) __raw_write_unlock_bh(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_UNLOCK_BH
+#घोषणा _raw_ग_लिखो_unlock_bh(lock) __raw_ग_लिखो_unlock_bh(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_UNLOCK_IRQ
-#define _raw_read_unlock_irq(lock) __raw_read_unlock_irq(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_UNLOCK_IRQ
+#घोषणा _raw_पढ़ो_unlock_irq(lock) __raw_पढ़ो_unlock_irq(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_UNLOCK_IRQ
-#define _raw_write_unlock_irq(lock) __raw_write_unlock_irq(lock)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_UNLOCK_IRQ
+#घोषणा _raw_ग_लिखो_unlock_irq(lock) __raw_ग_लिखो_unlock_irq(lock)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_READ_UNLOCK_IRQRESTORE
-#define _raw_read_unlock_irqrestore(lock, flags) \
-	__raw_read_unlock_irqrestore(lock, flags)
-#endif
+#अगर_घोषित CONFIG_INLINE_READ_UNLOCK_IRQRESTORE
+#घोषणा _raw_पढ़ो_unlock_irqrestore(lock, flags) \
+	__raw_पढ़ो_unlock_irqrestore(lock, flags)
+#पूर्ण_अगर
 
-#ifdef CONFIG_INLINE_WRITE_UNLOCK_IRQRESTORE
-#define _raw_write_unlock_irqrestore(lock, flags) \
-	__raw_write_unlock_irqrestore(lock, flags)
-#endif
+#अगर_घोषित CONFIG_INLINE_WRITE_UNLOCK_IRQRESTORE
+#घोषणा _raw_ग_लिखो_unlock_irqrestore(lock, flags) \
+	__raw_ग_लिखो_unlock_irqrestore(lock, flags)
+#पूर्ण_अगर
 
-static inline int __raw_read_trylock(rwlock_t *lock)
-{
+अटल अंतरभूत पूर्णांक __raw_पढ़ो_trylock(rwlock_t *lock)
+अणु
 	preempt_disable();
-	if (do_raw_read_trylock(lock)) {
-		rwlock_acquire_read(&lock->dep_map, 0, 1, _RET_IP_);
-		return 1;
-	}
+	अगर (करो_raw_पढ़ो_trylock(lock)) अणु
+		rwlock_acquire_पढ़ो(&lock->dep_map, 0, 1, _RET_IP_);
+		वापस 1;
+	पूर्ण
 	preempt_enable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int __raw_write_trylock(rwlock_t *lock)
-{
+अटल अंतरभूत पूर्णांक __raw_ग_लिखो_trylock(rwlock_t *lock)
+अणु
 	preempt_disable();
-	if (do_raw_write_trylock(lock)) {
+	अगर (करो_raw_ग_लिखो_trylock(lock)) अणु
 		rwlock_acquire(&lock->dep_map, 0, 1, _RET_IP_);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	preempt_enable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * If lockdep is enabled then we use the non-preemption spin-ops
- * even on CONFIG_PREEMPT, because lockdep assumes that interrupts are
- * not re-enabled during lock-acquire (which the preempt-spin-ops do):
+ * even on CONFIG_PREEMPT, because lockdep assumes that पूर्णांकerrupts are
+ * not re-enabled during lock-acquire (which the preempt-spin-ops करो):
  */
-#if !defined(CONFIG_GENERIC_LOCKBREAK) || defined(CONFIG_DEBUG_LOCK_ALLOC)
+#अगर !defined(CONFIG_GENERIC_LOCKBREAK) || defined(CONFIG_DEBUG_LOCK_ALLOC)
 
-static inline void __raw_read_lock(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_पढ़ो_lock(rwlock_t *lock)
+अणु
 	preempt_disable();
-	rwlock_acquire_read(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED(lock, do_raw_read_trylock, do_raw_read_lock);
-}
+	rwlock_acquire_पढ़ो(&lock->dep_map, 0, 0, _RET_IP_);
+	LOCK_CONTENDED(lock, करो_raw_पढ़ो_trylock, करो_raw_पढ़ो_lock);
+पूर्ण
 
-static inline unsigned long __raw_read_lock_irqsave(rwlock_t *lock)
-{
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ __raw_पढ़ो_lock_irqsave(rwlock_t *lock)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	preempt_disable();
-	rwlock_acquire_read(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED_FLAGS(lock, do_raw_read_trylock, do_raw_read_lock,
-			     do_raw_read_lock_flags, &flags);
-	return flags;
-}
+	rwlock_acquire_पढ़ो(&lock->dep_map, 0, 0, _RET_IP_);
+	LOCK_CONTENDED_FLAGS(lock, करो_raw_पढ़ो_trylock, करो_raw_पढ़ो_lock,
+			     करो_raw_पढ़ो_lock_flags, &flags);
+	वापस flags;
+पूर्ण
 
-static inline void __raw_read_lock_irq(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_पढ़ो_lock_irq(rwlock_t *lock)
+अणु
 	local_irq_disable();
 	preempt_disable();
-	rwlock_acquire_read(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED(lock, do_raw_read_trylock, do_raw_read_lock);
-}
+	rwlock_acquire_पढ़ो(&lock->dep_map, 0, 0, _RET_IP_);
+	LOCK_CONTENDED(lock, करो_raw_पढ़ो_trylock, करो_raw_पढ़ो_lock);
+पूर्ण
 
-static inline void __raw_read_lock_bh(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_पढ़ो_lock_bh(rwlock_t *lock)
+अणु
 	__local_bh_disable_ip(_RET_IP_, SOFTIRQ_LOCK_OFFSET);
-	rwlock_acquire_read(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED(lock, do_raw_read_trylock, do_raw_read_lock);
-}
+	rwlock_acquire_पढ़ो(&lock->dep_map, 0, 0, _RET_IP_);
+	LOCK_CONTENDED(lock, करो_raw_पढ़ो_trylock, करो_raw_पढ़ो_lock);
+पूर्ण
 
-static inline unsigned long __raw_write_lock_irqsave(rwlock_t *lock)
-{
-	unsigned long flags;
+अटल अंतरभूत अचिन्हित दीर्घ __raw_ग_लिखो_lock_irqsave(rwlock_t *lock)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	preempt_disable();
 	rwlock_acquire(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED_FLAGS(lock, do_raw_write_trylock, do_raw_write_lock,
-			     do_raw_write_lock_flags, &flags);
-	return flags;
-}
+	LOCK_CONTENDED_FLAGS(lock, करो_raw_ग_लिखो_trylock, करो_raw_ग_लिखो_lock,
+			     करो_raw_ग_लिखो_lock_flags, &flags);
+	वापस flags;
+पूर्ण
 
-static inline void __raw_write_lock_irq(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_ग_लिखो_lock_irq(rwlock_t *lock)
+अणु
 	local_irq_disable();
 	preempt_disable();
 	rwlock_acquire(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED(lock, do_raw_write_trylock, do_raw_write_lock);
-}
+	LOCK_CONTENDED(lock, करो_raw_ग_लिखो_trylock, करो_raw_ग_लिखो_lock);
+पूर्ण
 
-static inline void __raw_write_lock_bh(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_ग_लिखो_lock_bh(rwlock_t *lock)
+अणु
 	__local_bh_disable_ip(_RET_IP_, SOFTIRQ_LOCK_OFFSET);
 	rwlock_acquire(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED(lock, do_raw_write_trylock, do_raw_write_lock);
-}
+	LOCK_CONTENDED(lock, करो_raw_ग_लिखो_trylock, करो_raw_ग_लिखो_lock);
+पूर्ण
 
-static inline void __raw_write_lock(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_ग_लिखो_lock(rwlock_t *lock)
+अणु
 	preempt_disable();
 	rwlock_acquire(&lock->dep_map, 0, 0, _RET_IP_);
-	LOCK_CONTENDED(lock, do_raw_write_trylock, do_raw_write_lock);
-}
+	LOCK_CONTENDED(lock, करो_raw_ग_लिखो_trylock, करो_raw_ग_लिखो_lock);
+पूर्ण
 
-#endif /* !CONFIG_GENERIC_LOCKBREAK || CONFIG_DEBUG_LOCK_ALLOC */
+#पूर्ण_अगर /* !CONFIG_GENERIC_LOCKBREAK || CONFIG_DEBUG_LOCK_ALLOC */
 
-static inline void __raw_write_unlock(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_ग_लिखो_unlock(rwlock_t *lock)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_write_unlock(lock);
+	करो_raw_ग_लिखो_unlock(lock);
 	preempt_enable();
-}
+पूर्ण
 
-static inline void __raw_read_unlock(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_पढ़ो_unlock(rwlock_t *lock)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_read_unlock(lock);
+	करो_raw_पढ़ो_unlock(lock);
 	preempt_enable();
-}
+पूर्ण
 
-static inline void
-__raw_read_unlock_irqrestore(rwlock_t *lock, unsigned long flags)
-{
+अटल अंतरभूत व्योम
+__raw_पढ़ो_unlock_irqrestore(rwlock_t *lock, अचिन्हित दीर्घ flags)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_read_unlock(lock);
+	करो_raw_पढ़ो_unlock(lock);
 	local_irq_restore(flags);
 	preempt_enable();
-}
+पूर्ण
 
-static inline void __raw_read_unlock_irq(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_पढ़ो_unlock_irq(rwlock_t *lock)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_read_unlock(lock);
+	करो_raw_पढ़ो_unlock(lock);
 	local_irq_enable();
 	preempt_enable();
-}
+पूर्ण
 
-static inline void __raw_read_unlock_bh(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_पढ़ो_unlock_bh(rwlock_t *lock)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_read_unlock(lock);
+	करो_raw_पढ़ो_unlock(lock);
 	__local_bh_enable_ip(_RET_IP_, SOFTIRQ_LOCK_OFFSET);
-}
+पूर्ण
 
-static inline void __raw_write_unlock_irqrestore(rwlock_t *lock,
-					     unsigned long flags)
-{
+अटल अंतरभूत व्योम __raw_ग_लिखो_unlock_irqrestore(rwlock_t *lock,
+					     अचिन्हित दीर्घ flags)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_write_unlock(lock);
+	करो_raw_ग_लिखो_unlock(lock);
 	local_irq_restore(flags);
 	preempt_enable();
-}
+पूर्ण
 
-static inline void __raw_write_unlock_irq(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_ग_लिखो_unlock_irq(rwlock_t *lock)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_write_unlock(lock);
+	करो_raw_ग_लिखो_unlock(lock);
 	local_irq_enable();
 	preempt_enable();
-}
+पूर्ण
 
-static inline void __raw_write_unlock_bh(rwlock_t *lock)
-{
+अटल अंतरभूत व्योम __raw_ग_लिखो_unlock_bh(rwlock_t *lock)
+अणु
 	rwlock_release(&lock->dep_map, _RET_IP_);
-	do_raw_write_unlock(lock);
+	करो_raw_ग_लिखो_unlock(lock);
 	__local_bh_enable_ip(_RET_IP_, SOFTIRQ_LOCK_OFFSET);
-}
+पूर्ण
 
-#endif /* __LINUX_RWLOCK_API_SMP_H */
+#पूर्ण_अगर /* __LINUX_RWLOCK_API_SMP_H */

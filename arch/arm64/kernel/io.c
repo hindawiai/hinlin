@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Based on arch/arm/kernel/io.c
  *
  * Copyright (C) 2012 ARM Ltd.
  */
 
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/io.h>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
 
 /*
  * Copy data from IO memory space to "real" memory space.
  */
-void __memcpy_fromio(void *to, const volatile void __iomem *from, size_t count)
-{
-	while (count && !IS_ALIGNED((unsigned long)from, 8)) {
-		*(u8 *)to = __raw_readb(from);
+व्योम __स_नकल_fromio(व्योम *to, स्थिर अस्थिर व्योम __iomem *from, माप_प्रकार count)
+अणु
+	जबतक (count && !IS_ALIGNED((अचिन्हित दीर्घ)from, 8)) अणु
+		*(u8 *)to = __raw_पढ़ोb(from);
 		from++;
 		to++;
 		count--;
-	}
+	पूर्ण
 
-	while (count >= 8) {
-		*(u64 *)to = __raw_readq(from);
+	जबतक (count >= 8) अणु
+		*(u64 *)to = __raw_पढ़ोq(from);
 		from += 8;
 		to += 8;
 		count -= 8;
-	}
+	पूर्ण
 
-	while (count) {
-		*(u8 *)to = __raw_readb(from);
+	जबतक (count) अणु
+		*(u8 *)to = __raw_पढ़ोb(from);
 		from++;
 		to++;
 		count--;
-	}
-}
-EXPORT_SYMBOL(__memcpy_fromio);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(__स_नकल_fromio);
 
 /*
  * Copy data from "real" memory space to IO memory space.
  */
-void __memcpy_toio(volatile void __iomem *to, const void *from, size_t count)
-{
-	while (count && !IS_ALIGNED((unsigned long)to, 8)) {
-		__raw_writeb(*(u8 *)from, to);
+व्योम __स_नकल_toio(अस्थिर व्योम __iomem *to, स्थिर व्योम *from, माप_प्रकार count)
+अणु
+	जबतक (count && !IS_ALIGNED((अचिन्हित दीर्घ)to, 8)) अणु
+		__raw_ग_लिखोb(*(u8 *)from, to);
 		from++;
 		to++;
 		count--;
-	}
+	पूर्ण
 
-	while (count >= 8) {
-		__raw_writeq(*(u64 *)from, to);
+	जबतक (count >= 8) अणु
+		__raw_ग_लिखोq(*(u64 *)from, to);
 		from += 8;
 		to += 8;
 		count -= 8;
-	}
+	पूर्ण
 
-	while (count) {
-		__raw_writeb(*(u8 *)from, to);
+	जबतक (count) अणु
+		__raw_ग_लिखोb(*(u8 *)from, to);
 		from++;
 		to++;
 		count--;
-	}
-}
-EXPORT_SYMBOL(__memcpy_toio);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(__स_नकल_toio);
 
 /*
  * "memset" on IO memory space.
  */
-void __memset_io(volatile void __iomem *dst, int c, size_t count)
-{
+व्योम __स_रखो_io(अस्थिर व्योम __iomem *dst, पूर्णांक c, माप_प्रकार count)
+अणु
 	u64 qc = (u8)c;
 
 	qc |= qc << 8;
 	qc |= qc << 16;
 	qc |= qc << 32;
 
-	while (count && !IS_ALIGNED((unsigned long)dst, 8)) {
-		__raw_writeb(c, dst);
+	जबतक (count && !IS_ALIGNED((अचिन्हित दीर्घ)dst, 8)) अणु
+		__raw_ग_लिखोb(c, dst);
 		dst++;
 		count--;
-	}
+	पूर्ण
 
-	while (count >= 8) {
-		__raw_writeq(qc, dst);
+	जबतक (count >= 8) अणु
+		__raw_ग_लिखोq(qc, dst);
 		dst += 8;
 		count -= 8;
-	}
+	पूर्ण
 
-	while (count) {
-		__raw_writeb(c, dst);
+	जबतक (count) अणु
+		__raw_ग_लिखोb(c, dst);
 		dst++;
 		count--;
-	}
-}
-EXPORT_SYMBOL(__memset_io);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(__स_रखो_io);

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#if !defined(_NETVSC_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _NETVSC_TRACE_H
+#अगर !defined(_NETVSC_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _NETVSC_TRACE_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM netvsc
-#define TRACE_INCLUDE_FILE netvsc_trace
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM netvsc
+#घोषणा TRACE_INCLUDE_खाता netvsc_trace
 
 TRACE_DEFINE_ENUM(RNDIS_MSG_PACKET);
 TRACE_DEFINE_ENUM(RNDIS_MSG_INDICATE);
@@ -23,25 +24,25 @@ TRACE_DEFINE_ENUM(RNDIS_MSG_RESET_C);
 TRACE_DEFINE_ENUM(RNDIS_MSG_KEEPALIVE);
 TRACE_DEFINE_ENUM(RNDIS_MSG_KEEPALIVE_C);
 
-#define show_rndis_type(type)					\
-	__print_symbolic(type,					\
-		 { RNDIS_MSG_PACKET,	  "PACKET" },		\
-		 { RNDIS_MSG_INDICATE,	  "INDICATE", },	\
-		 { RNDIS_MSG_INIT,	  "INIT", },		\
-		 { RNDIS_MSG_INIT_C,	  "INIT_C", },		\
-		 { RNDIS_MSG_HALT,	  "HALT", },		\
-		 { RNDIS_MSG_QUERY,	  "QUERY", },		\
-		 { RNDIS_MSG_QUERY_C,	  "QUERY_C", },		\
-		 { RNDIS_MSG_SET,	  "SET", },		\
-		 { RNDIS_MSG_SET_C,	  "SET_C", },		\
-		 { RNDIS_MSG_RESET,	  "RESET", },		\
-		 { RNDIS_MSG_RESET_C,	  "RESET_C", },		\
-		 { RNDIS_MSG_KEEPALIVE,	  "KEEPALIVE", },	\
-		 { RNDIS_MSG_KEEPALIVE_C, "KEEPALIVE_C", })
+#घोषणा show_rndis_type(type)					\
+	__prपूर्णांक_symbolic(type,					\
+		 अणु RNDIS_MSG_PACKET,	  "PACKET" पूर्ण,		\
+		 अणु RNDIS_MSG_INDICATE,	  "INDICATE", पूर्ण,	\
+		 अणु RNDIS_MSG_INIT,	  "INIT", पूर्ण,		\
+		 अणु RNDIS_MSG_INIT_C,	  "INIT_C", पूर्ण,		\
+		 अणु RNDIS_MSG_HALT,	  "HALT", पूर्ण,		\
+		 अणु RNDIS_MSG_QUERY,	  "QUERY", पूर्ण,		\
+		 अणु RNDIS_MSG_QUERY_C,	  "QUERY_C", पूर्ण,		\
+		 अणु RNDIS_MSG_SET,	  "SET", पूर्ण,		\
+		 अणु RNDIS_MSG_SET_C,	  "SET_C", पूर्ण,		\
+		 अणु RNDIS_MSG_RESET,	  "RESET", पूर्ण,		\
+		 अणु RNDIS_MSG_RESET_C,	  "RESET_C", पूर्ण,		\
+		 अणु RNDIS_MSG_KEEPALIVE,	  "KEEPALIVE", पूर्ण,	\
+		 अणु RNDIS_MSG_KEEPALIVE_C, "KEEPALIVE_C", पूर्ण)
 
 DECLARE_EVENT_CLASS(rndis_msg_class,
-       TP_PROTO(const struct net_device *ndev, u16 q,
-		const struct rndis_message *msg),
+       TP_PROTO(स्थिर काष्ठा net_device *ndev, u16 q,
+		स्थिर काष्ठा rndis_message *msg),
        TP_ARGS(ndev, q, msg),
        TP_STRUCT__entry(
 	       __string( name, ndev->name  )
@@ -57,20 +58,20 @@ DECLARE_EVENT_CLASS(rndis_msg_class,
 	       __entry->msg_type = msg->ndis_msg_type;
 	       __entry->msg_len	 = msg->msg_len;
        ),
-       TP_printk("dev=%s q=%u req=%#x type=%s msg_len=%u",
+       TP_prपूर्णांकk("dev=%s q=%u req=%#x type=%s msg_len=%u",
 		 __get_str(name), __entry->queue, __entry->req_id,
 		 show_rndis_type(__entry->msg_type), __entry->msg_len)
 );
 
 DEFINE_EVENT(rndis_msg_class, rndis_send,
-       TP_PROTO(const struct net_device *ndev, u16 q,
-		const struct rndis_message *msg),
+       TP_PROTO(स्थिर काष्ठा net_device *ndev, u16 q,
+		स्थिर काष्ठा rndis_message *msg),
        TP_ARGS(ndev, q, msg)
 );
 
 DEFINE_EVENT(rndis_msg_class, rndis_recv,
-       TP_PROTO(const struct net_device *ndev, u16 q,
-		const struct rndis_message *msg),
+       TP_PROTO(स्थिर काष्ठा net_device *ndev, u16 q,
+		स्थिर काष्ठा rndis_message *msg),
        TP_ARGS(ndev, q, msg)
 );
 
@@ -91,30 +92,30 @@ TRACE_DEFINE_ENUM(NVSP_MSG4_TYPE_SEND_VF_ASSOCIATION);
 TRACE_DEFINE_ENUM(NVSP_MSG4_TYPE_SWITCH_DATA_PATH);
 
 TRACE_DEFINE_ENUM(NVSP_MSG5_TYPE_SUBCHANNEL);
-TRACE_DEFINE_ENUM(NVSP_MSG5_TYPE_SEND_INDIRECTION_TABLE);
+TRACE_DEFINE_ENUM(NVSP_MSG5_TYPE_SEND_INसूचीECTION_TABLE);
 
-#define show_nvsp_type(type)								\
-	__print_symbolic(type,								\
-		  { NVSP_MSG_TYPE_INIT,			   "INIT" },			\
-		  { NVSP_MSG_TYPE_INIT_COMPLETE,	   "INIT_COMPLETE" },		\
-		  { NVSP_MSG1_TYPE_SEND_NDIS_VER,	   "SEND_NDIS_VER" },		\
-		  { NVSP_MSG1_TYPE_SEND_RECV_BUF,	   "SEND_RECV_BUF" },		\
-		  { NVSP_MSG1_TYPE_SEND_RECV_BUF_COMPLETE, "SEND_RECV_BUF_COMPLETE" },	\
-		  { NVSP_MSG1_TYPE_REVOKE_RECV_BUF,	   "REVOKE_RECV_BUF" },		\
-		  { NVSP_MSG1_TYPE_SEND_SEND_BUF,	   "SEND_SEND_BUF" },		\
-		  { NVSP_MSG1_TYPE_SEND_SEND_BUF_COMPLETE, "SEND_SEND_BUF_COMPLETE" },	\
-		  { NVSP_MSG1_TYPE_REVOKE_SEND_BUF,	   "REVOKE_SEND_BUF" },		\
-		  { NVSP_MSG1_TYPE_SEND_RNDIS_PKT,	   "SEND_RNDIS_PKT" },		\
-		  { NVSP_MSG1_TYPE_SEND_RNDIS_PKT_COMPLETE, "SEND_RNDIS_PKT_COMPLETE" },\
-		  { NVSP_MSG2_TYPE_SEND_NDIS_CONFIG,	   "SEND_NDIS_CONFIG" },	\
-		  { NVSP_MSG4_TYPE_SEND_VF_ASSOCIATION,	   "SEND_VF_ASSOCIATION" },	\
-		  { NVSP_MSG4_TYPE_SWITCH_DATA_PATH,	   "SWITCH_DATA_PATH" },	\
-		  { NVSP_MSG5_TYPE_SUBCHANNEL,		    "SUBCHANNEL" },		\
-		  { NVSP_MSG5_TYPE_SEND_INDIRECTION_TABLE,  "SEND_INDIRECTION_TABLE" })
+#घोषणा show_nvsp_type(type)								\
+	__prपूर्णांक_symbolic(type,								\
+		  अणु NVSP_MSG_TYPE_INIT,			   "INIT" पूर्ण,			\
+		  अणु NVSP_MSG_TYPE_INIT_COMPLETE,	   "INIT_COMPLETE" पूर्ण,		\
+		  अणु NVSP_MSG1_TYPE_SEND_NDIS_VER,	   "SEND_NDIS_VER" पूर्ण,		\
+		  अणु NVSP_MSG1_TYPE_SEND_RECV_BUF,	   "SEND_RECV_BUF" पूर्ण,		\
+		  अणु NVSP_MSG1_TYPE_SEND_RECV_BUF_COMPLETE, "SEND_RECV_BUF_COMPLETE" पूर्ण,	\
+		  अणु NVSP_MSG1_TYPE_REVOKE_RECV_BUF,	   "REVOKE_RECV_BUF" पूर्ण,		\
+		  अणु NVSP_MSG1_TYPE_SEND_SEND_BUF,	   "SEND_SEND_BUF" पूर्ण,		\
+		  अणु NVSP_MSG1_TYPE_SEND_SEND_BUF_COMPLETE, "SEND_SEND_BUF_COMPLETE" पूर्ण,	\
+		  अणु NVSP_MSG1_TYPE_REVOKE_SEND_BUF,	   "REVOKE_SEND_BUF" पूर्ण,		\
+		  अणु NVSP_MSG1_TYPE_SEND_RNDIS_PKT,	   "SEND_RNDIS_PKT" पूर्ण,		\
+		  अणु NVSP_MSG1_TYPE_SEND_RNDIS_PKT_COMPLETE, "SEND_RNDIS_PKT_COMPLETE" पूर्ण,\
+		  अणु NVSP_MSG2_TYPE_SEND_NDIS_CONFIG,	   "SEND_NDIS_CONFIG" पूर्ण,	\
+		  अणु NVSP_MSG4_TYPE_SEND_VF_ASSOCIATION,	   "SEND_VF_ASSOCIATION" पूर्ण,	\
+		  अणु NVSP_MSG4_TYPE_SWITCH_DATA_PATH,	   "SWITCH_DATA_PATH" पूर्ण,	\
+		  अणु NVSP_MSG5_TYPE_SUBCHANNEL,		    "SUBCHANNEL" पूर्ण,		\
+		  अणु NVSP_MSG5_TYPE_SEND_INसूचीECTION_TABLE,  "SEND_INDIRECTION_TABLE" पूर्ण)
 
 TRACE_EVENT(nvsp_send,
-	TP_PROTO(const struct net_device *ndev,
-		 const struct nvsp_message *msg),
+	TP_PROTO(स्थिर काष्ठा net_device *ndev,
+		 स्थिर काष्ठा nvsp_message *msg),
 	TP_ARGS(ndev, msg),
 	TP_STRUCT__entry(
 		__string( name,	ndev->name  )
@@ -124,15 +125,15 @@ TRACE_EVENT(nvsp_send,
 		__assign_str(name, ndev->name);
 		__entry->msg_type = msg->hdr.msg_type;
 	),
-	TP_printk("dev=%s type=%s",
+	TP_prपूर्णांकk("dev=%s type=%s",
 		  __get_str(name),
 		  show_nvsp_type(__entry->msg_type))
 );
 
 TRACE_EVENT(nvsp_send_pkt,
-	TP_PROTO(const struct net_device *ndev,
-		 const struct vmbus_channel *chan,
-		 const struct nvsp_1_message_send_rndis_packet *rpkt),
+	TP_PROTO(स्थिर काष्ठा net_device *ndev,
+		 स्थिर काष्ठा vmbus_channel *chan,
+		 स्थिर काष्ठा nvsp_1_message_send_rndis_packet *rpkt),
 	TP_ARGS(ndev, chan, rpkt),
 	TP_STRUCT__entry(
 		__string( name,	ndev->name    )
@@ -148,16 +149,16 @@ TRACE_EVENT(nvsp_send_pkt,
 		__entry->section_index = rpkt->send_buf_section_index;
 		__entry->section_size = rpkt->send_buf_section_size;
 	),
-	TP_printk("dev=%s qid=%u type=%s section=%u size=%d",
+	TP_prपूर्णांकk("dev=%s qid=%u type=%s section=%u size=%d",
 		  __get_str(name), __entry->qid,
 		  __entry->channel_type ? "CONTROL" : "DATA",
 		  __entry->section_index, __entry->section_size)
 );
 
 TRACE_EVENT(nvsp_recv,
-	TP_PROTO(const struct net_device *ndev,
-		 const struct vmbus_channel *chan,
-		 const struct nvsp_message *msg),
+	TP_PROTO(स्थिर काष्ठा net_device *ndev,
+		 स्थिर काष्ठा vmbus_channel *chan,
+		 स्थिर काष्ठा nvsp_message *msg),
 	TP_ARGS(ndev, chan, msg),
 	TP_STRUCT__entry(
 		__string( name,	ndev->name  )
@@ -169,14 +170,14 @@ TRACE_EVENT(nvsp_recv,
 		__entry->qid = chan->offermsg.offer.sub_channel_index;
 		__entry->msg_type = msg->hdr.msg_type;
 	),
-	TP_printk("dev=%s qid=%u type=%s",
+	TP_prपूर्णांकk("dev=%s qid=%u type=%s",
 		  __get_str(name), __entry->qid,
 		  show_nvsp_type(__entry->msg_type))
 );
 
-#endif /* _NETVSC_TRACE_H */
+#पूर्ण_अगर /* _NETVSC_TRACE_H */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../drivers/net/hyperv
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH ../../drivers/net/hyperv
+#समावेश <trace/define_trace.h>

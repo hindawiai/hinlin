@@ -1,727 +1,728 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 // Copyright (C) 2018 Facebook
 
-#define _GNU_SOURCE
-#include <errno.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
-#include <net/if.h>
-#include <linux/rtnetlink.h>
-#include <linux/socket.h>
-#include <linux/tc_act/tc_bpf.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <समय.स>
+#समावेश <unistd.h>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
+#समावेश <net/अगर.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/tc_act/tc_bpf.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
 
-#include "bpf/nlattr.h"
-#include "main.h"
-#include "netlink_dumper.h"
+#समावेश "bpf/nlattr.h"
+#समावेश "main.h"
+#समावेश "netlink_dumper.h"
 
-#ifndef SOL_NETLINK
-#define SOL_NETLINK 270
-#endif
+#अगर_अघोषित SOL_NETLINK
+#घोषणा SOL_NETLINK 270
+#पूर्ण_अगर
 
-struct ip_devname_ifindex {
-	char	devname[64];
-	int	ifindex;
-};
+काष्ठा ip_devname_अगरindex अणु
+	अक्षर	devname[64];
+	पूर्णांक	अगरindex;
+पूर्ण;
 
-struct bpf_netdev_t {
-	struct ip_devname_ifindex *devices;
-	int	used_len;
-	int	array_len;
-	int	filter_idx;
-};
+काष्ठा bpf_netdev_t अणु
+	काष्ठा ip_devname_अगरindex *devices;
+	पूर्णांक	used_len;
+	पूर्णांक	array_len;
+	पूर्णांक	filter_idx;
+पूर्ण;
 
-struct tc_kind_handle {
-	char	kind[64];
-	int	handle;
-};
+काष्ठा tc_kind_handle अणु
+	अक्षर	kind[64];
+	पूर्णांक	handle;
+पूर्ण;
 
-struct bpf_tcinfo_t {
-	struct tc_kind_handle	*handle_array;
-	int			used_len;
-	int			array_len;
+काष्ठा bpf_tcinfo_t अणु
+	काष्ठा tc_kind_handle	*handle_array;
+	पूर्णांक			used_len;
+	पूर्णांक			array_len;
 	bool			is_qdisc;
-};
+पूर्ण;
 
-struct bpf_filter_t {
-	const char	*kind;
-	const char	*devname;
-	int		ifindex;
-};
+काष्ठा bpf_filter_t अणु
+	स्थिर अक्षर	*kind;
+	स्थिर अक्षर	*devname;
+	पूर्णांक		अगरindex;
+पूर्ण;
 
-struct bpf_attach_info {
+काष्ठा bpf_attach_info अणु
 	__u32 flow_dissector_id;
-};
+पूर्ण;
 
-enum net_attach_type {
+क्रमागत net_attach_type अणु
 	NET_ATTACH_TYPE_XDP,
 	NET_ATTACH_TYPE_XDP_GENERIC,
 	NET_ATTACH_TYPE_XDP_DRIVER,
 	NET_ATTACH_TYPE_XDP_OFFLOAD,
-};
+पूर्ण;
 
-static const char * const attach_type_strings[] = {
+अटल स्थिर अक्षर * स्थिर attach_type_strings[] = अणु
 	[NET_ATTACH_TYPE_XDP]		= "xdp",
 	[NET_ATTACH_TYPE_XDP_GENERIC]	= "xdpgeneric",
 	[NET_ATTACH_TYPE_XDP_DRIVER]	= "xdpdrv",
 	[NET_ATTACH_TYPE_XDP_OFFLOAD]	= "xdpoffload",
-};
+पूर्ण;
 
-const size_t net_attach_type_size = ARRAY_SIZE(attach_type_strings);
+स्थिर माप_प्रकार net_attach_type_size = ARRAY_SIZE(attach_type_strings);
 
-static enum net_attach_type parse_attach_type(const char *str)
-{
-	enum net_attach_type type;
+अटल क्रमागत net_attach_type parse_attach_type(स्थिर अक्षर *str)
+अणु
+	क्रमागत net_attach_type type;
 
-	for (type = 0; type < net_attach_type_size; type++) {
-		if (attach_type_strings[type] &&
+	क्रम (type = 0; type < net_attach_type_size; type++) अणु
+		अगर (attach_type_strings[type] &&
 		    is_prefix(str, attach_type_strings[type]))
-			return type;
-	}
+			वापस type;
+	पूर्ण
 
-	return net_attach_type_size;
-}
+	वापस net_attach_type_size;
+पूर्ण
 
-typedef int (*dump_nlmsg_t)(void *cookie, void *msg, struct nlattr **tb);
+प्रकार पूर्णांक (*dump_nlmsg_t)(व्योम *cookie, व्योम *msg, काष्ठा nlattr **tb);
 
-typedef int (*__dump_nlmsg_t)(struct nlmsghdr *nlmsg, dump_nlmsg_t, void *cookie);
+प्रकार पूर्णांक (*__dump_nlmsg_t)(काष्ठा nlmsghdr *nlmsg, dump_nlmsg_t, व्योम *cookie);
 
-static int netlink_open(__u32 *nl_pid)
-{
-	struct sockaddr_nl sa;
+अटल पूर्णांक netlink_खोलो(__u32 *nl_pid)
+अणु
+	काष्ठा sockaddr_nl sa;
 	socklen_t addrlen;
-	int one = 1, ret;
-	int sock;
+	पूर्णांक one = 1, ret;
+	पूर्णांक sock;
 
-	memset(&sa, 0, sizeof(sa));
+	स_रखो(&sa, 0, माप(sa));
 	sa.nl_family = AF_NETLINK;
 
 	sock = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-	if (sock < 0)
-		return -errno;
+	अगर (sock < 0)
+		वापस -त्रुटि_सं;
 
-	if (setsockopt(sock, SOL_NETLINK, NETLINK_EXT_ACK,
-		       &one, sizeof(one)) < 0) {
+	अगर (setsockopt(sock, SOL_NETLINK, NETLINK_EXT_ACK,
+		       &one, माप(one)) < 0) अणु
 		p_err("Netlink error reporting not supported");
-	}
+	पूर्ण
 
-	if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		ret = -errno;
-		goto cleanup;
-	}
+	अगर (bind(sock, (काष्ठा sockaddr *)&sa, माप(sa)) < 0) अणु
+		ret = -त्रुटि_सं;
+		जाओ cleanup;
+	पूर्ण
 
-	addrlen = sizeof(sa);
-	if (getsockname(sock, (struct sockaddr *)&sa, &addrlen) < 0) {
-		ret = -errno;
-		goto cleanup;
-	}
+	addrlen = माप(sa);
+	अगर (माला_लोockname(sock, (काष्ठा sockaddr *)&sa, &addrlen) < 0) अणु
+		ret = -त्रुटि_सं;
+		जाओ cleanup;
+	पूर्ण
 
-	if (addrlen != sizeof(sa)) {
+	अगर (addrlen != माप(sa)) अणु
 		ret = -LIBBPF_ERRNO__INTERNAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	*nl_pid = sa.nl_pid;
-	return sock;
+	वापस sock;
 
 cleanup:
-	close(sock);
-	return ret;
-}
+	बंद(sock);
+	वापस ret;
+पूर्ण
 
-static int netlink_recv(int sock, __u32 nl_pid, __u32 seq,
+अटल पूर्णांक netlink_recv(पूर्णांक sock, __u32 nl_pid, __u32 seq,
 			    __dump_nlmsg_t _fn, dump_nlmsg_t fn,
-			    void *cookie)
-{
+			    व्योम *cookie)
+अणु
 	bool multipart = true;
-	struct nlmsgerr *err;
-	struct nlmsghdr *nh;
-	char buf[4096];
-	int len, ret;
+	काष्ठा nlmsgerr *err;
+	काष्ठा nlmsghdr *nh;
+	अक्षर buf[4096];
+	पूर्णांक len, ret;
 
-	while (multipart) {
+	जबतक (multipart) अणु
 		multipart = false;
-		len = recv(sock, buf, sizeof(buf), 0);
-		if (len < 0) {
-			ret = -errno;
-			goto done;
-		}
+		len = recv(sock, buf, माप(buf), 0);
+		अगर (len < 0) अणु
+			ret = -त्रुटि_सं;
+			जाओ करोne;
+		पूर्ण
 
-		if (len == 0)
-			break;
+		अगर (len == 0)
+			अवरोध;
 
-		for (nh = (struct nlmsghdr *)buf; NLMSG_OK(nh, (unsigned int)len);
-		     nh = NLMSG_NEXT(nh, len)) {
-			if (nh->nlmsg_pid != nl_pid) {
+		क्रम (nh = (काष्ठा nlmsghdr *)buf; NLMSG_OK(nh, (अचिन्हित पूर्णांक)len);
+		     nh = NLMSG_NEXT(nh, len)) अणु
+			अगर (nh->nlmsg_pid != nl_pid) अणु
 				ret = -LIBBPF_ERRNO__WRNGPID;
-				goto done;
-			}
-			if (nh->nlmsg_seq != seq) {
+				जाओ करोne;
+			पूर्ण
+			अगर (nh->nlmsg_seq != seq) अणु
 				ret = -LIBBPF_ERRNO__INVSEQ;
-				goto done;
-			}
-			if (nh->nlmsg_flags & NLM_F_MULTI)
+				जाओ करोne;
+			पूर्ण
+			अगर (nh->nlmsg_flags & NLM_F_MULTI)
 				multipart = true;
-			switch (nh->nlmsg_type) {
-			case NLMSG_ERROR:
-				err = (struct nlmsgerr *)NLMSG_DATA(nh);
-				if (!err->error)
-					continue;
+			चयन (nh->nlmsg_type) अणु
+			हाल NLMSG_ERROR:
+				err = (काष्ठा nlmsgerr *)NLMSG_DATA(nh);
+				अगर (!err->error)
+					जारी;
 				ret = err->error;
 				libbpf_nla_dump_errormsg(nh);
-				goto done;
-			case NLMSG_DONE:
-				return 0;
-			default:
-				break;
-			}
-			if (_fn) {
+				जाओ करोne;
+			हाल NLMSG_DONE:
+				वापस 0;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अगर (_fn) अणु
 				ret = _fn(nh, fn, cookie);
-				if (ret)
-					return ret;
-			}
-		}
-	}
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	ret = 0;
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
-static int __dump_class_nlmsg(struct nlmsghdr *nlh,
+अटल पूर्णांक __dump_class_nlmsg(काष्ठा nlmsghdr *nlh,
 			      dump_nlmsg_t dump_class_nlmsg,
-			      void *cookie)
-{
-	struct nlattr *tb[TCA_MAX + 1], *attr;
-	struct tcmsg *t = NLMSG_DATA(nlh);
-	int len;
+			      व्योम *cookie)
+अणु
+	काष्ठा nlattr *tb[TCA_MAX + 1], *attr;
+	काष्ठा tcmsg *t = NLMSG_DATA(nlh);
+	पूर्णांक len;
 
-	len = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*t));
-	attr = (struct nlattr *) ((void *) t + NLMSG_ALIGN(sizeof(*t)));
-	if (libbpf_nla_parse(tb, TCA_MAX, attr, len, NULL) != 0)
-		return -LIBBPF_ERRNO__NLPARSE;
+	len = nlh->nlmsg_len - NLMSG_LENGTH(माप(*t));
+	attr = (काष्ठा nlattr *) ((व्योम *) t + NLMSG_ALIGN(माप(*t)));
+	अगर (libbpf_nla_parse(tb, TCA_MAX, attr, len, शून्य) != 0)
+		वापस -LIBBPF_ERRNO__NLPARSE;
 
-	return dump_class_nlmsg(cookie, t, tb);
-}
+	वापस dump_class_nlmsg(cookie, t, tb);
+पूर्ण
 
-static int netlink_get_class(int sock, unsigned int nl_pid, int ifindex,
-			     dump_nlmsg_t dump_class_nlmsg, void *cookie)
-{
-	struct {
-		struct nlmsghdr nlh;
-		struct tcmsg t;
-	} req = {
-		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+अटल पूर्णांक netlink_get_class(पूर्णांक sock, अचिन्हित पूर्णांक nl_pid, पूर्णांक अगरindex,
+			     dump_nlmsg_t dump_class_nlmsg, व्योम *cookie)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nlh;
+		काष्ठा tcmsg t;
+	पूर्ण req = अणु
+		.nlh.nlmsg_len = NLMSG_LENGTH(माप(काष्ठा tcmsg)),
 		.nlh.nlmsg_type = RTM_GETTCLASS,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.t.tcm_family = AF_UNSPEC,
-		.t.tcm_ifindex = ifindex,
-	};
-	int seq = time(NULL);
+		.t.tcm_अगरindex = अगरindex,
+	पूर्ण;
+	पूर्णांक seq = समय(शून्य);
 
 	req.nlh.nlmsg_seq = seq;
-	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
-		return -errno;
+	अगर (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
+		वापस -त्रुटि_सं;
 
-	return netlink_recv(sock, nl_pid, seq, __dump_class_nlmsg,
+	वापस netlink_recv(sock, nl_pid, seq, __dump_class_nlmsg,
 			    dump_class_nlmsg, cookie);
-}
+पूर्ण
 
-static int __dump_qdisc_nlmsg(struct nlmsghdr *nlh,
+अटल पूर्णांक __dump_qdisc_nlmsg(काष्ठा nlmsghdr *nlh,
 			      dump_nlmsg_t dump_qdisc_nlmsg,
-			      void *cookie)
-{
-	struct nlattr *tb[TCA_MAX + 1], *attr;
-	struct tcmsg *t = NLMSG_DATA(nlh);
-	int len;
+			      व्योम *cookie)
+अणु
+	काष्ठा nlattr *tb[TCA_MAX + 1], *attr;
+	काष्ठा tcmsg *t = NLMSG_DATA(nlh);
+	पूर्णांक len;
 
-	len = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*t));
-	attr = (struct nlattr *) ((void *) t + NLMSG_ALIGN(sizeof(*t)));
-	if (libbpf_nla_parse(tb, TCA_MAX, attr, len, NULL) != 0)
-		return -LIBBPF_ERRNO__NLPARSE;
+	len = nlh->nlmsg_len - NLMSG_LENGTH(माप(*t));
+	attr = (काष्ठा nlattr *) ((व्योम *) t + NLMSG_ALIGN(माप(*t)));
+	अगर (libbpf_nla_parse(tb, TCA_MAX, attr, len, शून्य) != 0)
+		वापस -LIBBPF_ERRNO__NLPARSE;
 
-	return dump_qdisc_nlmsg(cookie, t, tb);
-}
+	वापस dump_qdisc_nlmsg(cookie, t, tb);
+पूर्ण
 
-static int netlink_get_qdisc(int sock, unsigned int nl_pid, int ifindex,
-			     dump_nlmsg_t dump_qdisc_nlmsg, void *cookie)
-{
-	struct {
-		struct nlmsghdr nlh;
-		struct tcmsg t;
-	} req = {
-		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+अटल पूर्णांक netlink_get_qdisc(पूर्णांक sock, अचिन्हित पूर्णांक nl_pid, पूर्णांक अगरindex,
+			     dump_nlmsg_t dump_qdisc_nlmsg, व्योम *cookie)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nlh;
+		काष्ठा tcmsg t;
+	पूर्ण req = अणु
+		.nlh.nlmsg_len = NLMSG_LENGTH(माप(काष्ठा tcmsg)),
 		.nlh.nlmsg_type = RTM_GETQDISC,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.t.tcm_family = AF_UNSPEC,
-		.t.tcm_ifindex = ifindex,
-	};
-	int seq = time(NULL);
+		.t.tcm_अगरindex = अगरindex,
+	पूर्ण;
+	पूर्णांक seq = समय(शून्य);
 
 	req.nlh.nlmsg_seq = seq;
-	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
-		return -errno;
+	अगर (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
+		वापस -त्रुटि_सं;
 
-	return netlink_recv(sock, nl_pid, seq, __dump_qdisc_nlmsg,
+	वापस netlink_recv(sock, nl_pid, seq, __dump_qdisc_nlmsg,
 			    dump_qdisc_nlmsg, cookie);
-}
+पूर्ण
 
-static int __dump_filter_nlmsg(struct nlmsghdr *nlh,
+अटल पूर्णांक __dump_filter_nlmsg(काष्ठा nlmsghdr *nlh,
 			       dump_nlmsg_t dump_filter_nlmsg,
-			       void *cookie)
-{
-	struct nlattr *tb[TCA_MAX + 1], *attr;
-	struct tcmsg *t = NLMSG_DATA(nlh);
-	int len;
+			       व्योम *cookie)
+अणु
+	काष्ठा nlattr *tb[TCA_MAX + 1], *attr;
+	काष्ठा tcmsg *t = NLMSG_DATA(nlh);
+	पूर्णांक len;
 
-	len = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*t));
-	attr = (struct nlattr *) ((void *) t + NLMSG_ALIGN(sizeof(*t)));
-	if (libbpf_nla_parse(tb, TCA_MAX, attr, len, NULL) != 0)
-		return -LIBBPF_ERRNO__NLPARSE;
+	len = nlh->nlmsg_len - NLMSG_LENGTH(माप(*t));
+	attr = (काष्ठा nlattr *) ((व्योम *) t + NLMSG_ALIGN(माप(*t)));
+	अगर (libbpf_nla_parse(tb, TCA_MAX, attr, len, शून्य) != 0)
+		वापस -LIBBPF_ERRNO__NLPARSE;
 
-	return dump_filter_nlmsg(cookie, t, tb);
-}
+	वापस dump_filter_nlmsg(cookie, t, tb);
+पूर्ण
 
-static int netlink_get_filter(int sock, unsigned int nl_pid, int ifindex, int handle,
-			      dump_nlmsg_t dump_filter_nlmsg, void *cookie)
-{
-	struct {
-		struct nlmsghdr nlh;
-		struct tcmsg t;
-	} req = {
-		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct tcmsg)),
+अटल पूर्णांक netlink_get_filter(पूर्णांक sock, अचिन्हित पूर्णांक nl_pid, पूर्णांक अगरindex, पूर्णांक handle,
+			      dump_nlmsg_t dump_filter_nlmsg, व्योम *cookie)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nlh;
+		काष्ठा tcmsg t;
+	पूर्ण req = अणु
+		.nlh.nlmsg_len = NLMSG_LENGTH(माप(काष्ठा tcmsg)),
 		.nlh.nlmsg_type = RTM_GETTFILTER,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
 		.t.tcm_family = AF_UNSPEC,
-		.t.tcm_ifindex = ifindex,
+		.t.tcm_अगरindex = अगरindex,
 		.t.tcm_parent = handle,
-	};
-	int seq = time(NULL);
+	पूर्ण;
+	पूर्णांक seq = समय(शून्य);
 
 	req.nlh.nlmsg_seq = seq;
-	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
-		return -errno;
+	अगर (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
+		वापस -त्रुटि_सं;
 
-	return netlink_recv(sock, nl_pid, seq, __dump_filter_nlmsg,
+	वापस netlink_recv(sock, nl_pid, seq, __dump_filter_nlmsg,
 			    dump_filter_nlmsg, cookie);
-}
+पूर्ण
 
-static int __dump_link_nlmsg(struct nlmsghdr *nlh,
-			     dump_nlmsg_t dump_link_nlmsg, void *cookie)
-{
-	struct nlattr *tb[IFLA_MAX + 1], *attr;
-	struct ifinfomsg *ifi = NLMSG_DATA(nlh);
-	int len;
+अटल पूर्णांक __dump_link_nlmsg(काष्ठा nlmsghdr *nlh,
+			     dump_nlmsg_t dump_link_nlmsg, व्योम *cookie)
+अणु
+	काष्ठा nlattr *tb[IFLA_MAX + 1], *attr;
+	काष्ठा अगरinfomsg *अगरi = NLMSG_DATA(nlh);
+	पूर्णांक len;
 
-	len = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi));
-	attr = (struct nlattr *) ((void *) ifi + NLMSG_ALIGN(sizeof(*ifi)));
-	if (libbpf_nla_parse(tb, IFLA_MAX, attr, len, NULL) != 0)
-		return -LIBBPF_ERRNO__NLPARSE;
+	len = nlh->nlmsg_len - NLMSG_LENGTH(माप(*अगरi));
+	attr = (काष्ठा nlattr *) ((व्योम *) अगरi + NLMSG_ALIGN(माप(*अगरi)));
+	अगर (libbpf_nla_parse(tb, IFLA_MAX, attr, len, शून्य) != 0)
+		वापस -LIBBPF_ERRNO__NLPARSE;
 
-	return dump_link_nlmsg(cookie, ifi, tb);
-}
+	वापस dump_link_nlmsg(cookie, अगरi, tb);
+पूर्ण
 
-static int netlink_get_link(int sock, unsigned int nl_pid,
-			    dump_nlmsg_t dump_link_nlmsg, void *cookie)
-{
-	struct {
-		struct nlmsghdr nlh;
-		struct ifinfomsg ifm;
-	} req = {
-		.nlh.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifinfomsg)),
+अटल पूर्णांक netlink_get_link(पूर्णांक sock, अचिन्हित पूर्णांक nl_pid,
+			    dump_nlmsg_t dump_link_nlmsg, व्योम *cookie)
+अणु
+	काष्ठा अणु
+		काष्ठा nlmsghdr nlh;
+		काष्ठा अगरinfomsg अगरm;
+	पूर्ण req = अणु
+		.nlh.nlmsg_len = NLMSG_LENGTH(माप(काष्ठा अगरinfomsg)),
 		.nlh.nlmsg_type = RTM_GETLINK,
 		.nlh.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST,
-		.ifm.ifi_family = AF_PACKET,
-	};
-	int seq = time(NULL);
+		.अगरm.अगरi_family = AF_PACKET,
+	पूर्ण;
+	पूर्णांक seq = समय(शून्य);
 
 	req.nlh.nlmsg_seq = seq;
-	if (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
-		return -errno;
+	अगर (send(sock, &req, req.nlh.nlmsg_len, 0) < 0)
+		वापस -त्रुटि_सं;
 
-	return netlink_recv(sock, nl_pid, seq, __dump_link_nlmsg,
+	वापस netlink_recv(sock, nl_pid, seq, __dump_link_nlmsg,
 			    dump_link_nlmsg, cookie);
-}
+पूर्ण
 
-static int dump_link_nlmsg(void *cookie, void *msg, struct nlattr **tb)
-{
-	struct bpf_netdev_t *netinfo = cookie;
-	struct ifinfomsg *ifinfo = msg;
+अटल पूर्णांक dump_link_nlmsg(व्योम *cookie, व्योम *msg, काष्ठा nlattr **tb)
+अणु
+	काष्ठा bpf_netdev_t *netinfo = cookie;
+	काष्ठा अगरinfomsg *अगरinfo = msg;
 
-	if (netinfo->filter_idx > 0 && netinfo->filter_idx != ifinfo->ifi_index)
-		return 0;
+	अगर (netinfo->filter_idx > 0 && netinfo->filter_idx != अगरinfo->अगरi_index)
+		वापस 0;
 
-	if (netinfo->used_len == netinfo->array_len) {
-		netinfo->devices = realloc(netinfo->devices,
+	अगर (netinfo->used_len == netinfo->array_len) अणु
+		netinfo->devices = पुनः_स्मृति(netinfo->devices,
 			(netinfo->array_len + 16) *
-			sizeof(struct ip_devname_ifindex));
-		if (!netinfo->devices)
-			return -ENOMEM;
+			माप(काष्ठा ip_devname_अगरindex));
+		अगर (!netinfo->devices)
+			वापस -ENOMEM;
 
 		netinfo->array_len += 16;
-	}
-	netinfo->devices[netinfo->used_len].ifindex = ifinfo->ifi_index;
-	snprintf(netinfo->devices[netinfo->used_len].devname,
-		 sizeof(netinfo->devices[netinfo->used_len].devname),
+	पूर्ण
+	netinfo->devices[netinfo->used_len].अगरindex = अगरinfo->अगरi_index;
+	snम_लिखो(netinfo->devices[netinfo->used_len].devname,
+		 माप(netinfo->devices[netinfo->used_len].devname),
 		 "%s",
 		 tb[IFLA_IFNAME]
 			 ? libbpf_nla_getattr_str(tb[IFLA_IFNAME])
 			 : "");
 	netinfo->used_len++;
 
-	return do_xdp_dump(ifinfo, tb);
-}
+	वापस करो_xdp_dump(अगरinfo, tb);
+पूर्ण
 
-static int dump_class_qdisc_nlmsg(void *cookie, void *msg, struct nlattr **tb)
-{
-	struct bpf_tcinfo_t *tcinfo = cookie;
-	struct tcmsg *info = msg;
+अटल पूर्णांक dump_class_qdisc_nlmsg(व्योम *cookie, व्योम *msg, काष्ठा nlattr **tb)
+अणु
+	काष्ठा bpf_tcinfo_t *tcinfo = cookie;
+	काष्ठा tcmsg *info = msg;
 
-	if (tcinfo->is_qdisc) {
+	अगर (tcinfo->is_qdisc) अणु
 		/* skip clsact qdisc */
-		if (tb[TCA_KIND] &&
-		    strcmp(libbpf_nla_data(tb[TCA_KIND]), "clsact") == 0)
-			return 0;
-		if (info->tcm_handle == 0)
-			return 0;
-	}
+		अगर (tb[TCA_KIND] &&
+		    म_भेद(libbpf_nla_data(tb[TCA_KIND]), "clsact") == 0)
+			वापस 0;
+		अगर (info->tcm_handle == 0)
+			वापस 0;
+	पूर्ण
 
-	if (tcinfo->used_len == tcinfo->array_len) {
-		tcinfo->handle_array = realloc(tcinfo->handle_array,
-			(tcinfo->array_len + 16) * sizeof(struct tc_kind_handle));
-		if (!tcinfo->handle_array)
-			return -ENOMEM;
+	अगर (tcinfo->used_len == tcinfo->array_len) अणु
+		tcinfo->handle_array = पुनः_स्मृति(tcinfo->handle_array,
+			(tcinfo->array_len + 16) * माप(काष्ठा tc_kind_handle));
+		अगर (!tcinfo->handle_array)
+			वापस -ENOMEM;
 
 		tcinfo->array_len += 16;
-	}
+	पूर्ण
 	tcinfo->handle_array[tcinfo->used_len].handle = info->tcm_handle;
-	snprintf(tcinfo->handle_array[tcinfo->used_len].kind,
-		 sizeof(tcinfo->handle_array[tcinfo->used_len].kind),
+	snम_लिखो(tcinfo->handle_array[tcinfo->used_len].kind,
+		 माप(tcinfo->handle_array[tcinfo->used_len].kind),
 		 "%s",
 		 tb[TCA_KIND]
 			 ? libbpf_nla_getattr_str(tb[TCA_KIND])
 			 : "unknown");
 	tcinfo->used_len++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dump_filter_nlmsg(void *cookie, void *msg, struct nlattr **tb)
-{
-	const struct bpf_filter_t *filter_info = cookie;
+अटल पूर्णांक dump_filter_nlmsg(व्योम *cookie, व्योम *msg, काष्ठा nlattr **tb)
+अणु
+	स्थिर काष्ठा bpf_filter_t *filter_info = cookie;
 
-	return do_filter_dump((struct tcmsg *)msg, tb, filter_info->kind,
-			      filter_info->devname, filter_info->ifindex);
-}
+	वापस करो_filter_dump((काष्ठा tcmsg *)msg, tb, filter_info->kind,
+			      filter_info->devname, filter_info->अगरindex);
+पूर्ण
 
-static int show_dev_tc_bpf(int sock, unsigned int nl_pid,
-			   struct ip_devname_ifindex *dev)
-{
-	struct bpf_filter_t filter_info;
-	struct bpf_tcinfo_t tcinfo;
-	int i, handle, ret = 0;
+अटल पूर्णांक show_dev_tc_bpf(पूर्णांक sock, अचिन्हित पूर्णांक nl_pid,
+			   काष्ठा ip_devname_अगरindex *dev)
+अणु
+	काष्ठा bpf_filter_t filter_info;
+	काष्ठा bpf_tcinfo_t tcinfo;
+	पूर्णांक i, handle, ret = 0;
 
-	tcinfo.handle_array = NULL;
+	tcinfo.handle_array = शून्य;
 	tcinfo.used_len = 0;
 	tcinfo.array_len = 0;
 
 	tcinfo.is_qdisc = false;
-	ret = netlink_get_class(sock, nl_pid, dev->ifindex,
+	ret = netlink_get_class(sock, nl_pid, dev->अगरindex,
 				dump_class_qdisc_nlmsg, &tcinfo);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	tcinfo.is_qdisc = true;
-	ret = netlink_get_qdisc(sock, nl_pid, dev->ifindex,
+	ret = netlink_get_qdisc(sock, nl_pid, dev->अगरindex,
 				dump_class_qdisc_nlmsg, &tcinfo);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	filter_info.devname = dev->devname;
-	filter_info.ifindex = dev->ifindex;
-	for (i = 0; i < tcinfo.used_len; i++) {
+	filter_info.अगरindex = dev->अगरindex;
+	क्रम (i = 0; i < tcinfo.used_len; i++) अणु
 		filter_info.kind = tcinfo.handle_array[i].kind;
-		ret = netlink_get_filter(sock, nl_pid, dev->ifindex,
+		ret = netlink_get_filter(sock, nl_pid, dev->अगरindex,
 					 tcinfo.handle_array[i].handle,
 					 dump_filter_nlmsg, &filter_info);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	/* root, ingress and egress handle */
 	handle = TC_H_ROOT;
 	filter_info.kind = "root";
-	ret = netlink_get_filter(sock, nl_pid, dev->ifindex, handle,
+	ret = netlink_get_filter(sock, nl_pid, dev->अगरindex, handle,
 				 dump_filter_nlmsg, &filter_info);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	handle = TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_INGRESS);
 	filter_info.kind = "clsact/ingress";
-	ret = netlink_get_filter(sock, nl_pid, dev->ifindex, handle,
+	ret = netlink_get_filter(sock, nl_pid, dev->अगरindex, handle,
 				 dump_filter_nlmsg, &filter_info);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	handle = TC_H_MAKE(TC_H_CLSACT, TC_H_MIN_EGRESS);
 	filter_info.kind = "clsact/egress";
-	ret = netlink_get_filter(sock, nl_pid, dev->ifindex, handle,
+	ret = netlink_get_filter(sock, nl_pid, dev->अगरindex, handle,
 				 dump_filter_nlmsg, &filter_info);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 out:
-	free(tcinfo.handle_array);
-	return 0;
-}
+	मुक्त(tcinfo.handle_array);
+	वापस 0;
+पूर्ण
 
-static int query_flow_dissector(struct bpf_attach_info *attach_info)
-{
+अटल पूर्णांक query_flow_dissector(काष्ठा bpf_attach_info *attach_info)
+अणु
 	__u32 attach_flags;
 	__u32 prog_ids[1];
 	__u32 prog_cnt;
-	int err;
-	int fd;
+	पूर्णांक err;
+	पूर्णांक fd;
 
-	fd = open("/proc/self/ns/net", O_RDONLY);
-	if (fd < 0) {
+	fd = खोलो("/proc/self/ns/net", O_RDONLY);
+	अगर (fd < 0) अणु
 		p_err("can't open /proc/self/ns/net: %s",
-		      strerror(errno));
-		return -1;
-	}
+		      म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 	prog_cnt = ARRAY_SIZE(prog_ids);
 	err = bpf_prog_query(fd, BPF_FLOW_DISSECTOR, 0,
 			     &attach_flags, prog_ids, &prog_cnt);
-	close(fd);
-	if (err) {
-		if (errno == EINVAL) {
+	बंद(fd);
+	अगर (err) अणु
+		अगर (त्रुटि_सं == EINVAL) अणु
 			/* Older kernel's don't support querying
 			 * flow dissector programs.
 			 */
-			errno = 0;
-			return 0;
-		}
-		p_err("can't query prog: %s", strerror(errno));
-		return -1;
-	}
+			त्रुटि_सं = 0;
+			वापस 0;
+		पूर्ण
+		p_err("can't query prog: %s", म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	if (prog_cnt == 1)
+	अगर (prog_cnt == 1)
 		attach_info->flow_dissector_id = prog_ids[0];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int net_parse_dev(int *argc, char ***argv)
-{
-	int ifindex;
+अटल पूर्णांक net_parse_dev(पूर्णांक *argc, अक्षर ***argv)
+अणु
+	पूर्णांक अगरindex;
 
-	if (is_prefix(**argv, "dev")) {
+	अगर (is_prefix(**argv, "dev")) अणु
 		NEXT_ARGP();
 
-		ifindex = if_nametoindex(**argv);
-		if (!ifindex)
+		अगरindex = अगर_nametoindex(**argv);
+		अगर (!अगरindex)
 			p_err("invalid devname %s", **argv);
 
 		NEXT_ARGP();
-	} else {
+	पूर्ण अन्यथा अणु
 		p_err("expected 'dev', got: '%s'?", **argv);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return ifindex;
-}
+	वापस अगरindex;
+पूर्ण
 
-static int do_attach_detach_xdp(int progfd, enum net_attach_type attach_type,
-				int ifindex, bool overwrite)
-{
+अटल पूर्णांक करो_attach_detach_xdp(पूर्णांक progfd, क्रमागत net_attach_type attach_type,
+				पूर्णांक अगरindex, bool overग_लिखो)
+अणु
 	__u32 flags = 0;
 
-	if (!overwrite)
+	अगर (!overग_लिखो)
 		flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
-	if (attach_type == NET_ATTACH_TYPE_XDP_GENERIC)
+	अगर (attach_type == NET_ATTACH_TYPE_XDP_GENERIC)
 		flags |= XDP_FLAGS_SKB_MODE;
-	if (attach_type == NET_ATTACH_TYPE_XDP_DRIVER)
+	अगर (attach_type == NET_ATTACH_TYPE_XDP_DRIVER)
 		flags |= XDP_FLAGS_DRV_MODE;
-	if (attach_type == NET_ATTACH_TYPE_XDP_OFFLOAD)
+	अगर (attach_type == NET_ATTACH_TYPE_XDP_OFFLOAD)
 		flags |= XDP_FLAGS_HW_MODE;
 
-	return bpf_set_link_xdp_fd(ifindex, progfd, flags);
-}
+	वापस bpf_set_link_xdp_fd(अगरindex, progfd, flags);
+पूर्ण
 
-static int do_attach(int argc, char **argv)
-{
-	enum net_attach_type attach_type;
-	int progfd, ifindex, err = 0;
-	bool overwrite = false;
+अटल पूर्णांक करो_attach(पूर्णांक argc, अक्षर **argv)
+अणु
+	क्रमागत net_attach_type attach_type;
+	पूर्णांक progfd, अगरindex, err = 0;
+	bool overग_लिखो = false;
 
 	/* parse attach args */
-	if (!REQ_ARGS(5))
-		return -EINVAL;
+	अगर (!REQ_ARGS(5))
+		वापस -EINVAL;
 
 	attach_type = parse_attach_type(*argv);
-	if (attach_type == net_attach_type_size) {
+	अगर (attach_type == net_attach_type_size) अणु
 		p_err("invalid net attach/detach type: %s", *argv);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	NEXT_ARG();
 
 	progfd = prog_parse_fd(&argc, &argv);
-	if (progfd < 0)
-		return -EINVAL;
+	अगर (progfd < 0)
+		वापस -EINVAL;
 
-	ifindex = net_parse_dev(&argc, &argv);
-	if (ifindex < 1) {
+	अगरindex = net_parse_dev(&argc, &argv);
+	अगर (अगरindex < 1) अणु
 		err = -EINVAL;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	if (argc) {
-		if (is_prefix(*argv, "overwrite")) {
-			overwrite = true;
-		} else {
+	अगर (argc) अणु
+		अगर (is_prefix(*argv, "overwrite")) अणु
+			overग_लिखो = true;
+		पूर्ण अन्यथा अणु
 			p_err("expected 'overwrite', got: '%s'?", *argv);
 			err = -EINVAL;
-			goto cleanup;
-		}
-	}
+			जाओ cleanup;
+		पूर्ण
+	पूर्ण
 
 	/* attach xdp prog */
-	if (is_prefix("xdp", attach_type_strings[attach_type]))
-		err = do_attach_detach_xdp(progfd, attach_type, ifindex,
-					   overwrite);
-	if (err) {
+	अगर (is_prefix("xdp", attach_type_strings[attach_type]))
+		err = करो_attach_detach_xdp(progfd, attach_type, अगरindex,
+					   overग_लिखो);
+	अगर (err) अणु
 		p_err("interface %s attach failed: %s",
-		      attach_type_strings[attach_type], strerror(-err));
-		goto cleanup;
-	}
+		      attach_type_strings[attach_type], म_त्रुटि(-err));
+		जाओ cleanup;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_null(json_wtr);
 cleanup:
-	close(progfd);
-	return err;
-}
+	बंद(progfd);
+	वापस err;
+पूर्ण
 
-static int do_detach(int argc, char **argv)
-{
-	enum net_attach_type attach_type;
-	int progfd, ifindex, err = 0;
+अटल पूर्णांक करो_detach(पूर्णांक argc, अक्षर **argv)
+अणु
+	क्रमागत net_attach_type attach_type;
+	पूर्णांक progfd, अगरindex, err = 0;
 
 	/* parse detach args */
-	if (!REQ_ARGS(3))
-		return -EINVAL;
+	अगर (!REQ_ARGS(3))
+		वापस -EINVAL;
 
 	attach_type = parse_attach_type(*argv);
-	if (attach_type == net_attach_type_size) {
+	अगर (attach_type == net_attach_type_size) अणु
 		p_err("invalid net attach/detach type: %s", *argv);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	NEXT_ARG();
 
-	ifindex = net_parse_dev(&argc, &argv);
-	if (ifindex < 1)
-		return -EINVAL;
+	अगरindex = net_parse_dev(&argc, &argv);
+	अगर (अगरindex < 1)
+		वापस -EINVAL;
 
 	/* detach xdp prog */
 	progfd = -1;
-	if (is_prefix("xdp", attach_type_strings[attach_type]))
-		err = do_attach_detach_xdp(progfd, attach_type, ifindex, NULL);
+	अगर (is_prefix("xdp", attach_type_strings[attach_type]))
+		err = करो_attach_detach_xdp(progfd, attach_type, अगरindex, शून्य);
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		p_err("interface %s detach failed: %s",
-		      attach_type_strings[attach_type], strerror(-err));
-		return err;
-	}
+		      attach_type_strings[attach_type], म_त्रुटि(-err));
+		वापस err;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_null(json_wtr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_show(int argc, char **argv)
-{
-	struct bpf_attach_info attach_info = {};
-	int i, sock, ret, filter_idx = -1;
-	struct bpf_netdev_t dev_array;
-	unsigned int nl_pid = 0;
-	char err_buf[256];
+अटल पूर्णांक करो_show(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_attach_info attach_info = अणुपूर्ण;
+	पूर्णांक i, sock, ret, filter_idx = -1;
+	काष्ठा bpf_netdev_t dev_array;
+	अचिन्हित पूर्णांक nl_pid = 0;
+	अक्षर err_buf[256];
 
-	if (argc == 2) {
+	अगर (argc == 2) अणु
 		filter_idx = net_parse_dev(&argc, &argv);
-		if (filter_idx < 1)
-			return -1;
-	} else if (argc != 0) {
+		अगर (filter_idx < 1)
+			वापस -1;
+	पूर्ण अन्यथा अगर (argc != 0) अणु
 		usage();
-	}
+	पूर्ण
 
 	ret = query_flow_dissector(&attach_info);
-	if (ret)
-		return -1;
+	अगर (ret)
+		वापस -1;
 
-	sock = netlink_open(&nl_pid);
-	if (sock < 0) {
-		fprintf(stderr, "failed to open netlink sock\n");
-		return -1;
-	}
+	sock = netlink_खोलो(&nl_pid);
+	अगर (sock < 0) अणु
+		ख_लिखो(मानक_त्रुटि, "failed to open netlink sock\n");
+		वापस -1;
+	पूर्ण
 
-	dev_array.devices = NULL;
+	dev_array.devices = शून्य;
 	dev_array.used_len = 0;
 	dev_array.array_len = 0;
 	dev_array.filter_idx = filter_idx;
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_array(json_wtr);
 	NET_START_OBJECT;
 	NET_START_ARRAY("xdp", "%s:\n");
 	ret = netlink_get_link(sock, nl_pid, dump_link_nlmsg, &dev_array);
 	NET_END_ARRAY("\n");
 
-	if (!ret) {
+	अगर (!ret) अणु
 		NET_START_ARRAY("tc", "%s:\n");
-		for (i = 0; i < dev_array.used_len; i++) {
+		क्रम (i = 0; i < dev_array.used_len; i++) अणु
 			ret = show_dev_tc_bpf(sock, nl_pid,
 					      &dev_array.devices[i]);
-			if (ret)
-				break;
-		}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
 		NET_END_ARRAY("\n");
-	}
+	पूर्ण
 
 	NET_START_ARRAY("flow_dissector", "%s:\n");
-	if (attach_info.flow_dissector_id > 0)
+	अगर (attach_info.flow_dissector_id > 0)
 		NET_DUMP_UINT("id", "id %u", attach_info.flow_dissector_id);
 	NET_END_ARRAY("\n");
 
 	NET_END_OBJECT;
-	if (json_output)
+	अगर (json_output)
 		jsonw_end_array(json_wtr);
 
-	if (ret) {
-		if (json_output)
+	अगर (ret) अणु
+		अगर (json_output)
 			jsonw_null(json_wtr);
-		libbpf_strerror(ret, err_buf, sizeof(err_buf));
-		fprintf(stderr, "Error: %s\n", err_buf);
-	}
-	free(dev_array.devices);
-	close(sock);
-	return ret;
-}
+		libbpf_म_त्रुटि(ret, err_buf, माप(err_buf));
+		ख_लिखो(मानक_त्रुटि, "Error: %s\n", err_buf);
+	पूर्ण
+	मुक्त(dev_array.devices);
+	बंद(sock);
+	वापस ret;
+पूर्ण
 
-static int do_help(int argc, char **argv)
-{
-	if (json_output) {
+अटल पूर्णांक करो_help(पूर्णांक argc, अक्षर **argv)
+अणु
+	अगर (json_output) अणु
 		jsonw_null(json_wtr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fprintf(stderr,
+	ख_लिखो(मानक_त्रुटि,
 		"Usage: %1$s %2$s { show | list } [dev <devname>]\n"
 		"       %1$s %2$s attach ATTACH_TYPE PROG dev <devname> [ overwrite ]\n"
 		"       %1$s %2$s detach ATTACH_TYPE dev <devname>\n"
@@ -738,19 +739,19 @@ static int do_help(int argc, char **argv)
 		"",
 		bin_name, argv[-2]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct cmd cmds[] = {
-	{ "show",	do_show },
-	{ "list",	do_show },
-	{ "attach",	do_attach },
-	{ "detach",	do_detach },
-	{ "help",	do_help },
-	{ 0 }
-};
+अटल स्थिर काष्ठा cmd cmds[] = अणु
+	अणु "show",	करो_show पूर्ण,
+	अणु "list",	करो_show पूर्ण,
+	अणु "attach",	करो_attach पूर्ण,
+	अणु "detach",	करो_detach पूर्ण,
+	अणु "help",	करो_help पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-int do_net(int argc, char **argv)
-{
-	return cmd_select(cmds, argc, argv, do_help);
-}
+पूर्णांक करो_net(पूर्णांक argc, अक्षर **argv)
+अणु
+	वापस cmd_select(cmds, argc, argv, करो_help);
+पूर्ण

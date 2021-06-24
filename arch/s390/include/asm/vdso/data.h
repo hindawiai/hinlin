@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __S390_ASM_VDSO_DATA_H
-#define __S390_ASM_VDSO_DATA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __S390_ASM_VDSO_DATA_H
+#घोषणा __S390_ASM_VDSO_DATA_H
 
-#include <linux/types.h>
-#include <vdso/datapage.h>
+#समावेश <linux/types.h>
+#समावेश <vdso/datapage.h>
 
-struct arch_vdso_data {
+काष्ठा arch_vdso_data अणु
 	__s64 tod_steering_delta;
 	__u64 tod_steering_end;
-};
+पूर्ण;
 
-#endif /* __S390_ASM_VDSO_DATA_H */
+#पूर्ण_अगर /* __S390_ASM_VDSO_DATA_H */

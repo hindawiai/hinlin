@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
-#ifndef __PVRUSB2_IOREAD_H
-#define __PVRUSB2_IOREAD_H
+#अगर_अघोषित __PVRUSB2_IOREAD_H
+#घोषणा __PVRUSB2_IOREAD_H
 
-#include "pvrusb2-io.h"
+#समावेश "pvrusb2-io.h"
 
-struct pvr2_ioread;
+काष्ठा pvr2_ioपढ़ो;
 
-struct pvr2_ioread *pvr2_ioread_create(void);
-void pvr2_ioread_destroy(struct pvr2_ioread *);
-int pvr2_ioread_setup(struct pvr2_ioread *,struct pvr2_stream *);
-struct pvr2_stream *pvr2_ioread_get_stream(struct pvr2_ioread *);
-void pvr2_ioread_set_sync_key(struct pvr2_ioread *,
-			      const char *sync_key_ptr,
-			      unsigned int sync_key_len);
-int pvr2_ioread_set_enabled(struct pvr2_ioread *,int fl);
-int pvr2_ioread_read(struct pvr2_ioread *,void __user *buf,unsigned int cnt);
-int pvr2_ioread_avail(struct pvr2_ioread *);
+काष्ठा pvr2_ioपढ़ो *pvr2_ioपढ़ो_create(व्योम);
+व्योम pvr2_ioपढ़ो_destroy(काष्ठा pvr2_ioपढ़ो *);
+पूर्णांक pvr2_ioपढ़ो_setup(काष्ठा pvr2_ioपढ़ो *,काष्ठा pvr2_stream *);
+काष्ठा pvr2_stream *pvr2_ioपढ़ो_get_stream(काष्ठा pvr2_ioपढ़ो *);
+व्योम pvr2_ioपढ़ो_set_sync_key(काष्ठा pvr2_ioपढ़ो *,
+			      स्थिर अक्षर *sync_key_ptr,
+			      अचिन्हित पूर्णांक sync_key_len);
+पूर्णांक pvr2_ioपढ़ो_set_enabled(काष्ठा pvr2_ioपढ़ो *,पूर्णांक fl);
+पूर्णांक pvr2_ioपढ़ो_पढ़ो(काष्ठा pvr2_ioपढ़ो *,व्योम __user *buf,अचिन्हित पूर्णांक cnt);
+पूर्णांक pvr2_ioपढ़ो_avail(काष्ठा pvr2_ioपढ़ो *);
 
-#endif /* __PVRUSB2_IOREAD_H */
+#पूर्ण_अगर /* __PVRUSB2_IOREAD_H */

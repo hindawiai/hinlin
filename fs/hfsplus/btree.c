@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/hfsplus/btree.c
  *
@@ -6,23 +7,23 @@
  * Brad Boyer (flar@allandria.com)
  * (C) 2003 Ardis Technologies <roman@ardistech.com>
  *
- * Handle opening/closing btree
+ * Handle खोलोing/closing btree
  */
 
-#include <linux/slab.h>
-#include <linux/pagemap.h>
-#include <linux/log2.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/log2.h>
 
-#include "hfsplus_fs.h"
-#include "hfsplus_raw.h"
+#समावेश "hfsplus_fs.h"
+#समावेश "hfsplus_raw.h"
 
 /*
  * Initial source code of clump size calculation is gotten
- * from http://opensource.apple.com/tarballs/diskdev_cmds/
+ * from http://खोलोsource.apple.com/tarballs/diskdev_cmds/
  */
-#define CLUMP_ENTRIES	15
+#घोषणा CLUMP_ENTRIES	15
 
-static short clumptbl[CLUMP_ENTRIES * 3] = {
+अटल लघु clumptbl[CLUMP_ENTRIES * 3] = अणु
 /*
  *	    Volume	Attributes	 Catalog	 Extents
  *	     Size	Clump (MB)	Clump (MB)	Clump (MB)
@@ -34,30 +35,30 @@ static short clumptbl[CLUMP_ENTRIES * 3] = {
 	/*
 	 * For volumes 16GB and larger, we want to make sure that a full OS
 	 * install won't require fragmentation of the Catalog or Attributes
-	 * B-trees.  We do this by making the clump sizes sufficiently large,
-	 * and by leaving a gap after the B-trees for them to grow into.
+	 * B-trees.  We करो this by making the clump sizes sufficiently large,
+	 * and by leaving a gap after the B-trees क्रम them to grow पूर्णांकo.
 	 *
 	 * For SnowLeopard 10A298, a FullNetInstall with all packages selected
 	 * results in:
 	 * Catalog B-tree Header
 	 *	nodeSize:          8192
 	 *	totalNodes:       31616
-	 *	freeNodes:         1978
+	 *	मुक्तNodes:         1978
 	 * (used = 231.55 MB)
 	 * Attributes B-tree Header
 	 *	nodeSize:          8192
 	 *	totalNodes:       63232
-	 *	freeNodes:          958
+	 *	मुक्तNodes:          958
 	 * (used = 486.52 MB)
 	 *
 	 * We also want Time Machine backup volumes to have a sufficiently
 	 * large clump size to reduce fragmentation.
 	 *
-	 * The series of numbers for Catalog and Attribute form a geometric
-	 * series. For Catalog (16GB to 512GB), each term is 8**(1/5) times
+	 * The series of numbers क्रम Catalog and Attribute क्रमm a geometric
+	 * series. For Catalog (16GB to 512GB), each term is 8**(1/5) बार
 	 * the previous term.  For Attributes (16GB to 512GB), each term is
-	 * 4**(1/5) times the previous term.  For 1TB to 16TB, each term is
-	 * 2**(1/5) times the previous term.
+	 * 4**(1/5) बार the previous term.  For 1TB to 16TB, each term is
+	 * 2**(1/5) बार the previous term.
 	 */
 	/*  16GB */	 64,		 32,		 5,
 	/*  32GB */	 84,		 49,		 6,
@@ -70,171 +71,171 @@ static short clumptbl[CLUMP_ENTRIES * 3] = {
 	/*   4TB */	388,		388,		20,
 	/*   8TB */	446,		446,		25,
 	/*  16TB */	512,		512,		32
-};
+पूर्ण;
 
 u32 hfsplus_calc_btree_clump_size(u32 block_size, u32 node_size,
-					u64 sectors, int file_id)
-{
+					u64 sectors, पूर्णांक file_id)
+अणु
 	u32 mod = max(node_size, block_size);
 	u32 clump_size;
-	int column;
-	int i;
+	पूर्णांक column;
+	पूर्णांक i;
 
-	/* Figure out which column of the above table to use for this file. */
-	switch (file_id) {
-	case HFSPLUS_ATTR_CNID:
+	/* Figure out which column of the above table to use क्रम this file. */
+	चयन (file_id) अणु
+	हाल HFSPLUS_ATTR_CNID:
 		column = 0;
-		break;
-	case HFSPLUS_CAT_CNID:
+		अवरोध;
+	हाल HFSPLUS_CAT_CNID:
 		column = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		column = 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * The default clump size is 0.8% of the volume size. And
+	 * The शेष clump size is 0.8% of the volume size. And
 	 * it must also be a multiple of the node and block size.
 	 */
-	if (sectors < 0x200000) {
+	अगर (sectors < 0x200000) अणु
 		clump_size = sectors << 2;	/*  0.8 %  */
-		if (clump_size < (8 * node_size))
+		अगर (clump_size < (8 * node_size))
 			clump_size = 8 * node_size;
-	} else {
-		/* turn exponent into table index... */
-		for (i = 0, sectors = sectors >> 22;
+	पूर्ण अन्यथा अणु
+		/* turn exponent पूर्णांकo table index... */
+		क्रम (i = 0, sectors = sectors >> 22;
 		     sectors && (i < CLUMP_ENTRIES - 1);
-		     ++i, sectors = sectors >> 1) {
+		     ++i, sectors = sectors >> 1) अणु
 			/* empty body */
-		}
+		पूर्ण
 
 		clump_size = clumptbl[column + (i) * 3] * 1024 * 1024;
-	}
+	पूर्ण
 
 	/*
 	 * Round the clump size to a multiple of node and block size.
-	 * NOTE: This rounds down.
+	 * NOTE: This rounds करोwn.
 	 */
 	clump_size /= mod;
 	clump_size *= mod;
 
 	/*
-	 * Rounding down could have rounded down to 0 if the block size was
+	 * Rounding करोwn could have rounded करोwn to 0 अगर the block size was
 	 * greater than the clump size.  If so, just use one block or node.
 	 */
-	if (clump_size == 0)
+	अगर (clump_size == 0)
 		clump_size = mod;
 
-	return clump_size;
-}
+	वापस clump_size;
+पूर्ण
 
-/* Get a reference to a B*Tree and do some initial checks */
-struct hfs_btree *hfs_btree_open(struct super_block *sb, u32 id)
-{
-	struct hfs_btree *tree;
-	struct hfs_btree_header_rec *head;
-	struct address_space *mapping;
-	struct inode *inode;
-	struct page *page;
-	unsigned int size;
+/* Get a reference to a B*Tree and करो some initial checks */
+काष्ठा hfs_btree *hfs_btree_खोलो(काष्ठा super_block *sb, u32 id)
+अणु
+	काष्ठा hfs_btree *tree;
+	काष्ठा hfs_btree_header_rec *head;
+	काष्ठा address_space *mapping;
+	काष्ठा inode *inode;
+	काष्ठा page *page;
+	अचिन्हित पूर्णांक size;
 
-	tree = kzalloc(sizeof(*tree), GFP_KERNEL);
-	if (!tree)
-		return NULL;
+	tree = kzalloc(माप(*tree), GFP_KERNEL);
+	अगर (!tree)
+		वापस शून्य;
 
 	mutex_init(&tree->tree_lock);
 	spin_lock_init(&tree->hash_lock);
 	tree->sb = sb;
 	tree->cnid = id;
 	inode = hfsplus_iget(sb, id);
-	if (IS_ERR(inode))
-		goto free_tree;
+	अगर (IS_ERR(inode))
+		जाओ मुक्त_tree;
 	tree->inode = inode;
 
-	if (!HFSPLUS_I(tree->inode)->first_blocks) {
+	अगर (!HFSPLUS_I(tree->inode)->first_blocks) अणु
 		pr_err("invalid btree extent records (0 size)\n");
-		goto free_inode;
-	}
+		जाओ मुक्त_inode;
+	पूर्ण
 
 	mapping = tree->inode->i_mapping;
-	page = read_mapping_page(mapping, 0, NULL);
-	if (IS_ERR(page))
-		goto free_inode;
+	page = पढ़ो_mapping_page(mapping, 0, शून्य);
+	अगर (IS_ERR(page))
+		जाओ मुक्त_inode;
 
 	/* Load the header */
-	head = (struct hfs_btree_header_rec *)(kmap(page) +
-		sizeof(struct hfs_bnode_desc));
+	head = (काष्ठा hfs_btree_header_rec *)(kmap(page) +
+		माप(काष्ठा hfs_bnode_desc));
 	tree->root = be32_to_cpu(head->root);
 	tree->leaf_count = be32_to_cpu(head->leaf_count);
 	tree->leaf_head = be32_to_cpu(head->leaf_head);
 	tree->leaf_tail = be32_to_cpu(head->leaf_tail);
 	tree->node_count = be32_to_cpu(head->node_count);
-	tree->free_nodes = be32_to_cpu(head->free_nodes);
+	tree->मुक्त_nodes = be32_to_cpu(head->मुक्त_nodes);
 	tree->attributes = be32_to_cpu(head->attributes);
 	tree->node_size = be16_to_cpu(head->node_size);
 	tree->max_key_len = be16_to_cpu(head->max_key_len);
 	tree->depth = be16_to_cpu(head->depth);
 
-	/* Verify the tree and set the correct compare function */
-	switch (id) {
-	case HFSPLUS_EXT_CNID:
-		if (tree->max_key_len != HFSPLUS_EXT_KEYLEN - sizeof(u16)) {
+	/* Verअगरy the tree and set the correct compare function */
+	चयन (id) अणु
+	हाल HFSPLUS_EXT_CNID:
+		अगर (tree->max_key_len != HFSPLUS_EXT_KEYLEN - माप(u16)) अणु
 			pr_err("invalid extent max_key_len %d\n",
 				tree->max_key_len);
-			goto fail_page;
-		}
-		if (tree->attributes & HFS_TREE_VARIDXKEYS) {
+			जाओ fail_page;
+		पूर्ण
+		अगर (tree->attributes & HFS_TREE_VARIDXKEYS) अणु
 			pr_err("invalid extent btree flag\n");
-			goto fail_page;
-		}
+			जाओ fail_page;
+		पूर्ण
 
 		tree->keycmp = hfsplus_ext_cmp_key;
-		break;
-	case HFSPLUS_CAT_CNID:
-		if (tree->max_key_len != HFSPLUS_CAT_KEYLEN - sizeof(u16)) {
+		अवरोध;
+	हाल HFSPLUS_CAT_CNID:
+		अगर (tree->max_key_len != HFSPLUS_CAT_KEYLEN - माप(u16)) अणु
 			pr_err("invalid catalog max_key_len %d\n",
 				tree->max_key_len);
-			goto fail_page;
-		}
-		if (!(tree->attributes & HFS_TREE_VARIDXKEYS)) {
+			जाओ fail_page;
+		पूर्ण
+		अगर (!(tree->attributes & HFS_TREE_VARIDXKEYS)) अणु
 			pr_err("invalid catalog btree flag\n");
-			goto fail_page;
-		}
+			जाओ fail_page;
+		पूर्ण
 
-		if (test_bit(HFSPLUS_SB_HFSX, &HFSPLUS_SB(sb)->flags) &&
+		अगर (test_bit(HFSPLUS_SB_HFSX, &HFSPLUS_SB(sb)->flags) &&
 		    (head->key_type == HFSPLUS_KEY_BINARY))
 			tree->keycmp = hfsplus_cat_bin_cmp_key;
-		else {
-			tree->keycmp = hfsplus_cat_case_cmp_key;
+		अन्यथा अणु
+			tree->keycmp = hfsplus_cat_हाल_cmp_key;
 			set_bit(HFSPLUS_SB_CASEFOLD, &HFSPLUS_SB(sb)->flags);
-		}
-		break;
-	case HFSPLUS_ATTR_CNID:
-		if (tree->max_key_len != HFSPLUS_ATTR_KEYLEN - sizeof(u16)) {
+		पूर्ण
+		अवरोध;
+	हाल HFSPLUS_ATTR_CNID:
+		अगर (tree->max_key_len != HFSPLUS_ATTR_KEYLEN - माप(u16)) अणु
 			pr_err("invalid attributes max_key_len %d\n",
 				tree->max_key_len);
-			goto fail_page;
-		}
+			जाओ fail_page;
+		पूर्ण
 		tree->keycmp = hfsplus_attr_bin_cmp_key;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("unknown B*Tree requested\n");
-		goto fail_page;
-	}
+		जाओ fail_page;
+	पूर्ण
 
-	if (!(tree->attributes & HFS_TREE_BIGKEYS)) {
+	अगर (!(tree->attributes & HFS_TREE_BIGKEYS)) अणु
 		pr_err("invalid btree flag\n");
-		goto fail_page;
-	}
+		जाओ fail_page;
+	पूर्ण
 
 	size = tree->node_size;
-	if (!is_power_of_2(size))
-		goto fail_page;
-	if (!tree->node_count)
-		goto fail_page;
+	अगर (!is_घातer_of_2(size))
+		जाओ fail_page;
+	अगर (!tree->node_count)
+		जाओ fail_page;
 
-	tree->node_size_shift = ffs(size) - 1;
+	tree->node_size_shअगरt = ffs(size) - 1;
 
 	tree->pages_per_bnode =
 		(tree->node_size + PAGE_SIZE - 1) >>
@@ -242,88 +243,88 @@ struct hfs_btree *hfs_btree_open(struct super_block *sb, u32 id)
 
 	kunmap(page);
 	put_page(page);
-	return tree;
+	वापस tree;
 
  fail_page:
 	put_page(page);
- free_inode:
+ मुक्त_inode:
 	tree->inode->i_mapping->a_ops = &hfsplus_aops;
 	iput(tree->inode);
- free_tree:
-	kfree(tree);
-	return NULL;
-}
+ मुक्त_tree:
+	kमुक्त(tree);
+	वापस शून्य;
+पूर्ण
 
 /* Release resources used by a btree */
-void hfs_btree_close(struct hfs_btree *tree)
-{
-	struct hfs_bnode *node;
-	int i;
+व्योम hfs_btree_बंद(काष्ठा hfs_btree *tree)
+अणु
+	काष्ठा hfs_bnode *node;
+	पूर्णांक i;
 
-	if (!tree)
-		return;
+	अगर (!tree)
+		वापस;
 
-	for (i = 0; i < NODE_HASH_SIZE; i++) {
-		while ((node = tree->node_hash[i])) {
+	क्रम (i = 0; i < NODE_HASH_SIZE; i++) अणु
+		जबतक ((node = tree->node_hash[i])) अणु
 			tree->node_hash[i] = node->next_hash;
-			if (atomic_read(&node->refcnt))
+			अगर (atomic_पढ़ो(&node->refcnt))
 				pr_crit("node %d:%d "
 						"still has %d user(s)!\n",
 					node->tree->cnid, node->this,
-					atomic_read(&node->refcnt));
-			hfs_bnode_free(node);
+					atomic_पढ़ो(&node->refcnt));
+			hfs_bnode_मुक्त(node);
 			tree->node_hash_cnt--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	iput(tree->inode);
-	kfree(tree);
-}
+	kमुक्त(tree);
+पूर्ण
 
-int hfs_btree_write(struct hfs_btree *tree)
-{
-	struct hfs_btree_header_rec *head;
-	struct hfs_bnode *node;
-	struct page *page;
+पूर्णांक hfs_btree_ग_लिखो(काष्ठा hfs_btree *tree)
+अणु
+	काष्ठा hfs_btree_header_rec *head;
+	काष्ठा hfs_bnode *node;
+	काष्ठा page *page;
 
 	node = hfs_bnode_find(tree, 0);
-	if (IS_ERR(node))
+	अगर (IS_ERR(node))
 		/* panic? */
-		return -EIO;
+		वापस -EIO;
 	/* Load the header */
 	page = node->page[0];
-	head = (struct hfs_btree_header_rec *)(kmap(page) +
-		sizeof(struct hfs_bnode_desc));
+	head = (काष्ठा hfs_btree_header_rec *)(kmap(page) +
+		माप(काष्ठा hfs_bnode_desc));
 
 	head->root = cpu_to_be32(tree->root);
 	head->leaf_count = cpu_to_be32(tree->leaf_count);
 	head->leaf_head = cpu_to_be32(tree->leaf_head);
 	head->leaf_tail = cpu_to_be32(tree->leaf_tail);
 	head->node_count = cpu_to_be32(tree->node_count);
-	head->free_nodes = cpu_to_be32(tree->free_nodes);
+	head->मुक्त_nodes = cpu_to_be32(tree->मुक्त_nodes);
 	head->attributes = cpu_to_be32(tree->attributes);
 	head->depth = cpu_to_be16(tree->depth);
 
 	kunmap(page);
 	set_page_dirty(page);
 	hfs_bnode_put(node);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct hfs_bnode *hfs_bmap_new_bmap(struct hfs_bnode *prev, u32 idx)
-{
-	struct hfs_btree *tree = prev->tree;
-	struct hfs_bnode *node;
-	struct hfs_bnode_desc desc;
+अटल काष्ठा hfs_bnode *hfs_bmap_new_bmap(काष्ठा hfs_bnode *prev, u32 idx)
+अणु
+	काष्ठा hfs_btree *tree = prev->tree;
+	काष्ठा hfs_bnode *node;
+	काष्ठा hfs_bnode_desc desc;
 	__be32 cnid;
 
 	node = hfs_bnode_create(tree, idx);
-	if (IS_ERR(node))
-		return node;
+	अगर (IS_ERR(node))
+		वापस node;
 
-	tree->free_nodes--;
+	tree->मुक्त_nodes--;
 	prev->next = idx;
 	cnid = cpu_to_be32(idx);
-	hfs_bnode_write(prev, &cnid, offsetof(struct hfs_bnode_desc, next), 4);
+	hfs_bnode_ग_लिखो(prev, &cnid, दुरत्व(काष्ठा hfs_bnode_desc, next), 4);
 
 	node->type = HFS_NODE_MAP;
 	node->num_recs = 1;
@@ -334,61 +335,61 @@ static struct hfs_bnode *hfs_bmap_new_bmap(struct hfs_bnode *prev, u32 idx)
 	desc.height = 0;
 	desc.num_recs = cpu_to_be16(1);
 	desc.reserved = 0;
-	hfs_bnode_write(node, &desc, 0, sizeof(desc));
-	hfs_bnode_write_u16(node, 14, 0x8000);
-	hfs_bnode_write_u16(node, tree->node_size - 2, 14);
-	hfs_bnode_write_u16(node, tree->node_size - 4, tree->node_size - 6);
+	hfs_bnode_ग_लिखो(node, &desc, 0, माप(desc));
+	hfs_bnode_ग_लिखो_u16(node, 14, 0x8000);
+	hfs_bnode_ग_लिखो_u16(node, tree->node_size - 2, 14);
+	hfs_bnode_ग_लिखो_u16(node, tree->node_size - 4, tree->node_size - 6);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-/* Make sure @tree has enough space for the @rsvd_nodes */
-int hfs_bmap_reserve(struct hfs_btree *tree, int rsvd_nodes)
-{
-	struct inode *inode = tree->inode;
-	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+/* Make sure @tree has enough space क्रम the @rsvd_nodes */
+पूर्णांक hfs_bmap_reserve(काष्ठा hfs_btree *tree, पूर्णांक rsvd_nodes)
+अणु
+	काष्ठा inode *inode = tree->inode;
+	काष्ठा hfsplus_inode_info *hip = HFSPLUS_I(inode);
 	u32 count;
-	int res;
+	पूर्णांक res;
 
-	if (rsvd_nodes <= 0)
-		return 0;
+	अगर (rsvd_nodes <= 0)
+		वापस 0;
 
-	while (tree->free_nodes < rsvd_nodes) {
+	जबतक (tree->मुक्त_nodes < rsvd_nodes) अणु
 		res = hfsplus_file_extend(inode, hfs_bnode_need_zeroout(tree));
-		if (res)
-			return res;
+		अगर (res)
+			वापस res;
 		hip->phys_size = inode->i_size =
 			(loff_t)hip->alloc_blocks <<
-				HFSPLUS_SB(tree->sb)->alloc_blksz_shift;
+				HFSPLUS_SB(tree->sb)->alloc_blksz_shअगरt;
 		hip->fs_blocks =
-			hip->alloc_blocks << HFSPLUS_SB(tree->sb)->fs_shift;
+			hip->alloc_blocks << HFSPLUS_SB(tree->sb)->fs_shअगरt;
 		inode_set_bytes(inode, inode->i_size);
-		count = inode->i_size >> tree->node_size_shift;
-		tree->free_nodes += count - tree->node_count;
+		count = inode->i_size >> tree->node_size_shअगरt;
+		tree->मुक्त_nodes += count - tree->node_count;
 		tree->node_count = count;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct hfs_bnode *hfs_bmap_alloc(struct hfs_btree *tree)
-{
-	struct hfs_bnode *node, *next_node;
-	struct page **pagep;
+काष्ठा hfs_bnode *hfs_bmap_alloc(काष्ठा hfs_btree *tree)
+अणु
+	काष्ठा hfs_bnode *node, *next_node;
+	काष्ठा page **pagep;
 	u32 nidx, idx;
-	unsigned off;
+	अचिन्हित off;
 	u16 off16;
 	u16 len;
 	u8 *data, byte, m;
-	int i, res;
+	पूर्णांक i, res;
 
 	res = hfs_bmap_reserve(tree, 1);
-	if (res)
-		return ERR_PTR(res);
+	अगर (res)
+		वापस ERR_PTR(res);
 
 	nidx = 0;
 	node = hfs_bnode_find(tree, nidx);
-	if (IS_ERR(node))
-		return node;
+	अगर (IS_ERR(node))
+		वापस node;
 	len = hfs_brec_lenoff(node, 2, &off16);
 	off = off16;
 
@@ -398,42 +399,42 @@ struct hfs_bnode *hfs_bmap_alloc(struct hfs_btree *tree)
 	off &= ~PAGE_MASK;
 	idx = 0;
 
-	for (;;) {
-		while (len) {
+	क्रम (;;) अणु
+		जबतक (len) अणु
 			byte = data[off];
-			if (byte != 0xff) {
-				for (m = 0x80, i = 0; i < 8; m >>= 1, i++) {
-					if (!(byte & m)) {
+			अगर (byte != 0xff) अणु
+				क्रम (m = 0x80, i = 0; i < 8; m >>= 1, i++) अणु
+					अगर (!(byte & m)) अणु
 						idx += i;
 						data[off] |= m;
 						set_page_dirty(*pagep);
 						kunmap(*pagep);
-						tree->free_nodes--;
+						tree->मुक्त_nodes--;
 						mark_inode_dirty(tree->inode);
 						hfs_bnode_put(node);
-						return hfs_bnode_create(tree,
+						वापस hfs_bnode_create(tree,
 							idx);
-					}
-				}
-			}
-			if (++off >= PAGE_SIZE) {
+					पूर्ण
+				पूर्ण
+			पूर्ण
+			अगर (++off >= PAGE_SIZE) अणु
 				kunmap(*pagep);
 				data = kmap(*++pagep);
 				off = 0;
-			}
+			पूर्ण
 			idx += 8;
 			len--;
-		}
+		पूर्ण
 		kunmap(*pagep);
 		nidx = node->next;
-		if (!nidx) {
+		अगर (!nidx) अणु
 			hfs_dbg(BNODE_MOD, "create new bmap node\n");
 			next_node = hfs_bmap_new_bmap(node, idx);
-		} else
+		पूर्ण अन्यथा
 			next_node = hfs_bnode_find(tree, nidx);
 		hfs_bnode_put(node);
-		if (IS_ERR(next_node))
-			return next_node;
+		अगर (IS_ERR(next_node))
+			वापस next_node;
 		node = next_node;
 
 		len = hfs_brec_lenoff(node, 0, &off16);
@@ -442,13 +443,13 @@ struct hfs_bnode *hfs_bmap_alloc(struct hfs_btree *tree)
 		pagep = node->page + (off >> PAGE_SHIFT);
 		data = kmap(*pagep);
 		off &= ~PAGE_MASK;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hfs_bmap_free(struct hfs_bnode *node)
-{
-	struct hfs_btree *tree;
-	struct page *page;
+व्योम hfs_bmap_मुक्त(काष्ठा hfs_bnode *node)
+अणु
+	काष्ठा hfs_btree *tree;
+	काष्ठा page *page;
 	u16 off, len;
 	u32 nidx;
 	u8 *data, byte, m;
@@ -458,54 +459,54 @@ void hfs_bmap_free(struct hfs_bnode *node)
 	tree = node->tree;
 	nidx = node->this;
 	node = hfs_bnode_find(tree, 0);
-	if (IS_ERR(node))
-		return;
+	अगर (IS_ERR(node))
+		वापस;
 	len = hfs_brec_lenoff(node, 2, &off);
-	while (nidx >= len * 8) {
+	जबतक (nidx >= len * 8) अणु
 		u32 i;
 
 		nidx -= len * 8;
 		i = node->next;
-		if (!i) {
+		अगर (!i) अणु
 			/* panic */;
 			pr_crit("unable to free bnode %u. "
 					"bmap not found!\n",
 				node->this);
 			hfs_bnode_put(node);
-			return;
-		}
+			वापस;
+		पूर्ण
 		hfs_bnode_put(node);
 		node = hfs_bnode_find(tree, i);
-		if (IS_ERR(node))
-			return;
-		if (node->type != HFS_NODE_MAP) {
+		अगर (IS_ERR(node))
+			वापस;
+		अगर (node->type != HFS_NODE_MAP) अणु
 			/* panic */;
 			pr_crit("invalid bmap found! "
 					"(%u,%d)\n",
 				node->this, node->type);
 			hfs_bnode_put(node);
-			return;
-		}
+			वापस;
+		पूर्ण
 		len = hfs_brec_lenoff(node, 0, &off);
-	}
+	पूर्ण
 	off += node->page_offset + nidx / 8;
 	page = node->page[off >> PAGE_SHIFT];
 	data = kmap(page);
 	off &= ~PAGE_MASK;
 	m = 1 << (~nidx & 7);
 	byte = data[off];
-	if (!(byte & m)) {
+	अगर (!(byte & m)) अणु
 		pr_crit("trying to free free bnode "
 				"%u(%d)\n",
 			node->this, node->type);
 		kunmap(page);
 		hfs_bnode_put(node);
-		return;
-	}
+		वापस;
+	पूर्ण
 	data[off] = byte & ~m;
 	set_page_dirty(page);
 	kunmap(page);
 	hfs_bnode_put(node);
-	tree->free_nodes++;
+	tree->मुक्त_nodes++;
 	mark_inode_dirty(tree->inode);
-}
+पूर्ण

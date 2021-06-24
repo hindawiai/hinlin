@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Name: hwtimer.c - ACPI Power Management Timer Interface
+ * Name: hwसमयr.c - ACPI Power Management Timer Interface
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#define EXPORT_ACPI_INTERFACES
+#घोषणा EXPORT_ACPI_INTERFACES
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_HARDWARE
+#घोषणा _COMPONENT          ACPI_HARDWARE
 ACPI_MODULE_NAME("hwtimer")
 
-#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /******************************************************************************
  *
- * FUNCTION:    acpi_get_timer_resolution
+ * FUNCTION:    acpi_get_समयr_resolution
  *
- * PARAMETERS:  resolution          - Where the resolution is returned
+ * PARAMETERS:  resolution          - Where the resolution is वापसed
  *
- * RETURN:      Status and timer resolution
+ * RETURN:      Status and समयr resolution
  *
  * DESCRIPTION: Obtains resolution of the ACPI PM Timer (24 or 32 bits).
  *
  ******************************************************************************/
-acpi_status acpi_get_timer_resolution(u32 * resolution)
-{
-	ACPI_FUNCTION_TRACE(acpi_get_timer_resolution);
+acpi_status acpi_get_समयr_resolution(u32 * resolution)
+अणु
+	ACPI_FUNCTION_TRACE(acpi_get_समयr_resolution);
 
-	if (!resolution) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!resolution) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	if ((acpi_gbl_FADT.flags & ACPI_FADT_32BIT_TIMER) == 0) {
+	अगर ((acpi_gbl_FADT.flags & ACPI_FADT_32BIT_TIMER) == 0) अणु
 		*resolution = 24;
-	} else {
+	पूर्ण अन्यथा अणु
 		*resolution = 32;
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_get_timer_resolution)
+ACPI_EXPORT_SYMBOL(acpi_get_समयr_resolution)
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_get_timer
+ * FUNCTION:    acpi_get_समयr
  *
- * PARAMETERS:  ticks               - Where the timer value is returned
+ * PARAMETERS:  ticks               - Where the समयr value is वापसed
  *
- * RETURN:      Status and current timer value (ticks)
+ * RETURN:      Status and current समयr value (ticks)
  *
  * DESCRIPTION: Obtains current value of ACPI PM Timer (in ticks).
  *
  ******************************************************************************/
-acpi_status acpi_get_timer(u32 * ticks)
-{
+acpi_status acpi_get_समयr(u32 * ticks)
+अणु
 	acpi_status status;
-	u64 timer_value;
+	u64 समयr_value;
 
-	ACPI_FUNCTION_TRACE(acpi_get_timer);
+	ACPI_FUNCTION_TRACE(acpi_get_समयr);
 
-	if (!ticks) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!ticks) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/* ACPI 5.0A: PM Timer is optional */
 
-	if (!acpi_gbl_FADT.xpm_timer_block.address) {
-		return_ACPI_STATUS(AE_SUPPORT);
-	}
+	अगर (!acpi_gbl_FADT.xpm_समयr_block.address) अणु
+		वापस_ACPI_STATUS(AE_SUPPORT);
+	पूर्ण
 
-	status = acpi_hw_read(&timer_value, &acpi_gbl_FADT.xpm_timer_block);
-	if (ACPI_SUCCESS(status)) {
+	status = acpi_hw_पढ़ो(&समयr_value, &acpi_gbl_FADT.xpm_समयr_block);
+	अगर (ACPI_SUCCESS(status)) अणु
 
 		/* ACPI PM Timer is defined to be 32 bits (PM_TMR_LEN) */
 
-		*ticks = (u32)timer_value;
-	}
+		*ticks = (u32)समयr_value;
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_get_timer)
+ACPI_EXPORT_SYMBOL(acpi_get_समयr)
 
 /******************************************************************************
  *
- * FUNCTION:    acpi_get_timer_duration
+ * FUNCTION:    acpi_get_समयr_duration
  *
- * PARAMETERS:  start_ticks         - Starting timestamp
- *              end_ticks           - End timestamp
- *              time_elapsed        - Where the elapsed time is returned
+ * PARAMETERS:  start_ticks         - Starting बारtamp
+ *              end_ticks           - End बारtamp
+ *              समय_elapsed        - Where the elapsed समय is वापसed
  *
- * RETURN:      Status and time_elapsed
+ * RETURN:      Status and समय_elapsed
  *
- * DESCRIPTION: Computes the time elapsed (in microseconds) between two
- *              PM Timer time stamps, taking into account the possibility of
- *              rollovers, the timer resolution, and timer frequency.
+ * DESCRIPTION: Computes the समय elapsed (in microseconds) between two
+ *              PM Timer समय stamps, taking पूर्णांकo account the possibility of
+ *              rollovers, the समयr resolution, and समयr frequency.
  *
- *              The PM Timer's clock ticks at roughly 3.6 times per
- *              _microsecond_, and its clock continues through Cx state
- *              transitions (unlike many CPU timestamp counters) -- making it
- *              a versatile and accurate timer.
+ *              The PM Timer's घड़ी ticks at roughly 3.6 बार per
+ *              _microsecond_, and its घड़ी जारीs through Cx state
+ *              transitions (unlike many CPU बारtamp counters) -- making it
+ *              a versatile and accurate समयr.
  *
- *              Note that this function accommodates only a single timer
- *              rollover. Thus for 24-bit timers, this function should only
- *              be used for calculating durations less than ~4.6 seconds
- *              (~20 minutes for 32-bit timers) -- calculations below:
+ *              Note that this function accommodates only a single समयr
+ *              rollover. Thus क्रम 24-bit समयrs, this function should only
+ *              be used क्रम calculating durations less than ~4.6 seconds
+ *              (~20 minutes क्रम 32-bit समयrs) -- calculations below:
  *
  *              2**24 Ticks / 3,600,000 Ticks/Sec = 4.66 sec
  *              2**32 Ticks / 3,600,000 Ticks/Sec = 1193 sec or 19.88 minutes
  *
  ******************************************************************************/
 acpi_status
-acpi_get_timer_duration(u32 start_ticks, u32 end_ticks, u32 *time_elapsed)
-{
+acpi_get_समयr_duration(u32 start_ticks, u32 end_ticks, u32 *समय_elapsed)
+अणु
 	acpi_status status;
 	u64 delta_ticks;
 	u64 quotient;
 
-	ACPI_FUNCTION_TRACE(acpi_get_timer_duration);
+	ACPI_FUNCTION_TRACE(acpi_get_समयr_duration);
 
-	if (!time_elapsed) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!समय_elapsed) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
 	/* ACPI 5.0A: PM Timer is optional */
 
-	if (!acpi_gbl_FADT.xpm_timer_block.address) {
-		return_ACPI_STATUS(AE_SUPPORT);
-	}
+	अगर (!acpi_gbl_FADT.xpm_समयr_block.address) अणु
+		वापस_ACPI_STATUS(AE_SUPPORT);
+	पूर्ण
 
-	if (start_ticks == end_ticks) {
-		*time_elapsed = 0;
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (start_ticks == end_ticks) अणु
+		*समय_elapsed = 0;
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
 	 * Compute Tick Delta:
-	 * Handle (max one) timer rollovers on 24-bit versus 32-bit timers.
+	 * Handle (max one) समयr rollovers on 24-bit versus 32-bit समयrs.
 	 */
 	delta_ticks = end_ticks;
-	if (start_ticks > end_ticks) {
-		if ((acpi_gbl_FADT.flags & ACPI_FADT_32BIT_TIMER) == 0) {
+	अगर (start_ticks > end_ticks) अणु
+		अगर ((acpi_gbl_FADT.flags & ACPI_FADT_32BIT_TIMER) == 0) अणु
 
 			/* 24-bit Timer */
 
 			delta_ticks |= (u64)1 << 24;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* 32-bit Timer */
 
 			delta_ticks |= (u64)1 << 32;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	delta_ticks -= start_ticks;
 
 	/*
-	 * Compute Duration (Requires a 64-bit multiply and divide):
+	 * Compute Duration (Requires a 64-bit multiply and भागide):
 	 *
-	 * time_elapsed (microseconds) =
+	 * समय_elapsed (microseconds) =
 	 *  (delta_ticks * ACPI_USEC_PER_SEC) / ACPI_PM_TIMER_FREQUENCY;
 	 */
-	status = acpi_ut_short_divide(delta_ticks * ACPI_USEC_PER_SEC,
-				      ACPI_PM_TIMER_FREQUENCY, &quotient, NULL);
+	status = acpi_ut_लघु_भागide(delta_ticks * ACPI_USEC_PER_SEC,
+				      ACPI_PM_TIMER_FREQUENCY, &quotient, शून्य);
 
-	*time_elapsed = (u32)quotient;
-	return_ACPI_STATUS(status);
-}
+	*समय_elapsed = (u32)quotient;
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_get_timer_duration)
-#endif				/* !ACPI_REDUCED_HARDWARE */
+ACPI_EXPORT_SYMBOL(acpi_get_समयr_duration)
+#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */

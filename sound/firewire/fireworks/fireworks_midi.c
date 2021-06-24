@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * fireworks_midi.c - a part of driver for Fireworks based devices
+ * fireworks_midi.c - a part of driver क्रम Fireworks based devices
  *
  * Copyright (c) 2009-2010 Clemens Ladisch
  * Copyright (c) 2013-2014 Takashi Sakamoto
  */
-#include "fireworks.h"
+#समावेश "fireworks.h"
 
-static int midi_open(struct snd_rawmidi_substream *substream)
-{
-	struct snd_efw *efw = substream->rmidi->private_data;
-	int err;
+अटल पूर्णांक midi_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->rmidi->निजी_data;
+	पूर्णांक err;
 
 	err = snd_efw_stream_lock_try(efw);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
 	mutex_lock(&efw->mutex);
 	err = snd_efw_stream_reserve_duplex(efw, 0, 0, 0);
-	if (err >= 0) {
+	अगर (err >= 0) अणु
 		++efw->substreams_counter;
 		err = snd_efw_stream_start_duplex(efw);
-		if (err < 0)
+		अगर (err < 0)
 			--efw->substreams_counter;
-	}
+	पूर्ण
 	mutex_unlock(&efw->mutex);
-	if (err < 0)
+	अगर (err < 0)
 		snd_efw_stream_lock_release(efw);
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int midi_close(struct snd_rawmidi_substream *substream)
-{
-	struct snd_efw *efw = substream->rmidi->private_data;
+अटल पूर्णांक midi_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_efw *efw = substream->rmidi->निजी_data;
 
 	mutex_lock(&efw->mutex);
 	--efw->substreams_counter;
@@ -41,82 +42,82 @@ static int midi_close(struct snd_rawmidi_substream *substream)
 	mutex_unlock(&efw->mutex);
 
 	snd_efw_stream_lock_release(efw);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void midi_capture_trigger(struct snd_rawmidi_substream *substrm, int up)
-{
-	struct snd_efw *efw = substrm->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम midi_capture_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
+अणु
+	काष्ठा snd_efw *efw = substrm->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&efw->lock, flags);
 
-	if (up)
+	अगर (up)
 		amdtp_am824_midi_trigger(&efw->tx_stream,
 					  substrm->number, substrm);
-	else
+	अन्यथा
 		amdtp_am824_midi_trigger(&efw->tx_stream,
-					  substrm->number, NULL);
+					  substrm->number, शून्य);
 
 	spin_unlock_irqrestore(&efw->lock, flags);
-}
+पूर्ण
 
-static void midi_playback_trigger(struct snd_rawmidi_substream *substrm, int up)
-{
-	struct snd_efw *efw = substrm->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम midi_playback_trigger(काष्ठा snd_rawmidi_substream *substrm, पूर्णांक up)
+अणु
+	काष्ठा snd_efw *efw = substrm->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&efw->lock, flags);
 
-	if (up)
+	अगर (up)
 		amdtp_am824_midi_trigger(&efw->rx_stream,
 					 substrm->number, substrm);
-	else
+	अन्यथा
 		amdtp_am824_midi_trigger(&efw->rx_stream,
-					 substrm->number, NULL);
+					 substrm->number, शून्य);
 
 	spin_unlock_irqrestore(&efw->lock, flags);
-}
+पूर्ण
 
-static void set_midi_substream_names(struct snd_efw *efw,
-				     struct snd_rawmidi_str *str)
-{
-	struct snd_rawmidi_substream *subs;
+अटल व्योम set_midi_substream_names(काष्ठा snd_efw *efw,
+				     काष्ठा snd_rawmidi_str *str)
+अणु
+	काष्ठा snd_rawmidi_substream *subs;
 
-	list_for_each_entry(subs, &str->substreams, list) {
-		snprintf(subs->name, sizeof(subs->name),
-			 "%s MIDI %d", efw->card->shortname, subs->number + 1);
-	}
-}
+	list_क्रम_each_entry(subs, &str->substreams, list) अणु
+		snम_लिखो(subs->name, माप(subs->name),
+			 "%s MIDI %d", efw->card->लघुname, subs->number + 1);
+	पूर्ण
+पूर्ण
 
-int snd_efw_create_midi_devices(struct snd_efw *efw)
-{
-	static const struct snd_rawmidi_ops capture_ops = {
-		.open		= midi_open,
-		.close		= midi_close,
+पूर्णांक snd_efw_create_midi_devices(काष्ठा snd_efw *efw)
+अणु
+	अटल स्थिर काष्ठा snd_rawmidi_ops capture_ops = अणु
+		.खोलो		= midi_खोलो,
+		.बंद		= midi_बंद,
 		.trigger	= midi_capture_trigger,
-	};
-	static const struct snd_rawmidi_ops playback_ops = {
-		.open		= midi_open,
-		.close		= midi_close,
+	पूर्ण;
+	अटल स्थिर काष्ठा snd_rawmidi_ops playback_ops = अणु
+		.खोलो		= midi_खोलो,
+		.बंद		= midi_बंद,
 		.trigger	= midi_playback_trigger,
-	};
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_str *str;
-	int err;
+	पूर्ण;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_str *str;
+	पूर्णांक err;
 
 	/* create midi ports */
 	err = snd_rawmidi_new(efw->card, efw->card->driver, 0,
 			      efw->midi_out_ports, efw->midi_in_ports,
 			      &rmidi);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	snprintf(rmidi->name, sizeof(rmidi->name),
-		 "%s MIDI", efw->card->shortname);
-	rmidi->private_data = efw;
+	snम_लिखो(rmidi->name, माप(rmidi->name),
+		 "%s MIDI", efw->card->लघुname);
+	rmidi->निजी_data = efw;
 
-	if (efw->midi_in_ports > 0) {
+	अगर (efw->midi_in_ports > 0) अणु
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_INPUT;
 
 		snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT,
@@ -125,9 +126,9 @@ int snd_efw_create_midi_devices(struct snd_efw *efw)
 		str = &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT];
 
 		set_midi_substream_names(efw, str);
-	}
+	पूर्ण
 
-	if (efw->midi_out_ports > 0) {
+	अगर (efw->midi_out_ports > 0) अणु
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT;
 
 		snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT,
@@ -136,10 +137,10 @@ int snd_efw_create_midi_devices(struct snd_efw *efw)
 		str = &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT];
 
 		set_midi_substream_names(efw, str);
-	}
+	पूर्ण
 
-	if ((efw->midi_out_ports > 0) && (efw->midi_in_ports > 0))
+	अगर ((efw->midi_out_ports > 0) && (efw->midi_in_ports > 0))
 		rmidi->info_flags |= SNDRV_RAWMIDI_INFO_DUPLEX;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

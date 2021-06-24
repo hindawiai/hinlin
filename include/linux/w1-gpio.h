@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * w1-gpio interface to platform code
+ * w1-gpio पूर्णांकerface to platक्रमm code
  *
  * Copyright (C) 2007 Ville Syrjala <syrjala@sci.fi>
  */
-#ifndef _LINUX_W1_GPIO_H
-#define _LINUX_W1_GPIO_H
+#अगर_अघोषित _LINUX_W1_GPIO_H
+#घोषणा _LINUX_W1_GPIO_H
 
-struct gpio_desc;
+काष्ठा gpio_desc;
 
 /**
- * struct w1_gpio_platform_data - Platform-dependent data for w1-gpio
+ * काष्ठा w1_gpio_platक्रमm_data - Platक्रमm-dependent data क्रम w1-gpio
  */
-struct w1_gpio_platform_data {
-	struct gpio_desc *gpiod;
-	struct gpio_desc *pullup_gpiod;
-	void (*enable_external_pullup)(int enable);
-	unsigned int pullup_duration;
-};
+काष्ठा w1_gpio_platक्रमm_data अणु
+	काष्ठा gpio_desc *gpiod;
+	काष्ठा gpio_desc *pullup_gpiod;
+	व्योम (*enable_बाह्यal_pullup)(पूर्णांक enable);
+	अचिन्हित पूर्णांक pullup_duration;
+पूर्ण;
 
-#endif /* _LINUX_W1_GPIO_H */
+#पूर्ण_अगर /* _LINUX_W1_GPIO_H */

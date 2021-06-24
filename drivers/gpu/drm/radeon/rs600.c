@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,105 +26,105 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-/* RS600 / Radeon X1250/X1270 integrated GPU
+/* RS600 / Radeon X1250/X1270 पूर्णांकegrated GPU
  *
- * This file gather function specific to RS600 which is the IGP of
- * the X1250/X1270 family supporting intel CPU (while RS690/RS740
+ * This file gather function specअगरic to RS600 which is the IGP of
+ * the X1250/X1270 family supporting पूर्णांकel CPU (जबतक RS690/RS740
  * is the X1250/X1270 supporting AMD CPU). The display engine are
  * the avivo one, bios is an atombios, 3D block are the one of the
- * R4XX family. The GART is different from the RS400 one and is very
- * close to the one of the R600 family (R600 likely being an evolution
+ * R4XX family. The GART is dअगरferent from the RS400 one and is very
+ * बंद to the one of the R600 family (R600 likely being an evolution
  * of the RS600 GART block).
  */
 
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/pci.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_device.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "atom.h"
-#include "radeon.h"
-#include "radeon_asic.h"
-#include "radeon_audio.h"
-#include "rs600_reg_safe.h"
-#include "rs600d.h"
+#समावेश "atom.h"
+#समावेश "radeon.h"
+#समावेश "radeon_asic.h"
+#समावेश "radeon_audio.h"
+#समावेश "rs600_reg_safe.h"
+#समावेश "rs600d.h"
 
-static void rs600_gpu_init(struct radeon_device *rdev);
-int rs600_mc_wait_for_idle(struct radeon_device *rdev);
+अटल व्योम rs600_gpu_init(काष्ठा radeon_device *rdev);
+पूर्णांक rs600_mc_रुको_क्रम_idle(काष्ठा radeon_device *rdev);
 
-static const u32 crtc_offsets[2] =
-{
+अटल स्थिर u32 crtc_offsets[2] =
+अणु
 	0,
 	AVIVO_D2CRTC_H_TOTAL - AVIVO_D1CRTC_H_TOTAL
-};
+पूर्ण;
 
-static bool avivo_is_in_vblank(struct radeon_device *rdev, int crtc)
-{
-	if (RREG32(AVIVO_D1CRTC_STATUS + crtc_offsets[crtc]) & AVIVO_D1CRTC_V_BLANK)
-		return true;
-	else
-		return false;
-}
+अटल bool avivo_is_in_vblank(काष्ठा radeon_device *rdev, पूर्णांक crtc)
+अणु
+	अगर (RREG32(AVIVO_D1CRTC_STATUS + crtc_offsets[crtc]) & AVIVO_D1CRTC_V_BLANK)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static bool avivo_is_counter_moving(struct radeon_device *rdev, int crtc)
-{
+अटल bool avivo_is_counter_moving(काष्ठा radeon_device *rdev, पूर्णांक crtc)
+अणु
 	u32 pos1, pos2;
 
 	pos1 = RREG32(AVIVO_D1CRTC_STATUS_POSITION + crtc_offsets[crtc]);
 	pos2 = RREG32(AVIVO_D1CRTC_STATUS_POSITION + crtc_offsets[crtc]);
 
-	if (pos1 != pos2)
-		return true;
-	else
-		return false;
-}
+	अगर (pos1 != pos2)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
 /**
- * avivo_wait_for_vblank - vblank wait asic callback.
+ * avivo_रुको_क्रम_vblank - vblank रुको asic callback.
  *
- * @rdev: radeon_device pointer
- * @crtc: crtc to wait for vblank on
+ * @rdev: radeon_device poपूर्णांकer
+ * @crtc: crtc to रुको क्रम vblank on
  *
- * Wait for vblank on the requested crtc (r5xx-r7xx).
+ * Wait क्रम vblank on the requested crtc (r5xx-r7xx).
  */
-void avivo_wait_for_vblank(struct radeon_device *rdev, int crtc)
-{
-	unsigned i = 0;
+व्योम avivo_रुको_क्रम_vblank(काष्ठा radeon_device *rdev, पूर्णांक crtc)
+अणु
+	अचिन्हित i = 0;
 
-	if (crtc >= rdev->num_crtc)
-		return;
+	अगर (crtc >= rdev->num_crtc)
+		वापस;
 
-	if (!(RREG32(AVIVO_D1CRTC_CONTROL + crtc_offsets[crtc]) & AVIVO_CRTC_EN))
-		return;
+	अगर (!(RREG32(AVIVO_D1CRTC_CONTROL + crtc_offsets[crtc]) & AVIVO_CRTC_EN))
+		वापस;
 
-	/* depending on when we hit vblank, we may be close to active; if so,
-	 * wait for another frame.
+	/* depending on when we hit vblank, we may be बंद to active; अगर so,
+	 * रुको क्रम another frame.
 	 */
-	while (avivo_is_in_vblank(rdev, crtc)) {
-		if (i++ % 100 == 0) {
-			if (!avivo_is_counter_moving(rdev, crtc))
-				break;
-		}
-	}
+	जबतक (avivo_is_in_vblank(rdev, crtc)) अणु
+		अगर (i++ % 100 == 0) अणु
+			अगर (!avivo_is_counter_moving(rdev, crtc))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	while (!avivo_is_in_vblank(rdev, crtc)) {
-		if (i++ % 100 == 0) {
-			if (!avivo_is_counter_moving(rdev, crtc))
-				break;
-		}
-	}
-}
+	जबतक (!avivo_is_in_vblank(rdev, crtc)) अणु
+		अगर (i++ % 100 == 0) अणु
+			अगर (!avivo_is_counter_moving(rdev, crtc))
+				अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void rs600_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base, bool async)
-{
-	struct radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
-	u32 tmp = RREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset);
-	int i;
+व्योम rs600_page_flip(काष्ठा radeon_device *rdev, पूर्णांक crtc_id, u64 crtc_base, bool async)
+अणु
+	काष्ठा radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
+	u32 पंचांगp = RREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset);
+	पूर्णांक i;
 
 	/* Lock the graphics update lock */
-	tmp |= AVIVO_D1GRPH_UPDATE_LOCK;
-	WREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset, tmp);
+	पंचांगp |= AVIVO_D1GRPH_UPDATE_LOCK;
+	WREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset, पंचांगp);
 
 	/* update the scanout addresses */
 	WREG32(AVIVO_D1GRPH_FLIP_CONTROL + radeon_crtc->crtc_offset,
@@ -133,347 +134,347 @@ void rs600_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base, boo
 	WREG32(AVIVO_D1GRPH_PRIMARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
 	       (u32)crtc_base);
 
-	/* Wait for update_pending to go high. */
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if (RREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset) & AVIVO_D1GRPH_SURFACE_UPDATE_PENDING)
-			break;
+	/* Wait क्रम update_pending to go high. */
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर (RREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset) & AVIVO_D1GRPH_SURFACE_UPDATE_PENDING)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 	DRM_DEBUG("Update pending now high. Unlocking vupdate_lock.\n");
 
-	/* Unlock the lock, so double-buffering can take place inside vblank */
-	tmp &= ~AVIVO_D1GRPH_UPDATE_LOCK;
-	WREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset, tmp);
-}
+	/* Unlock the lock, so द्विगुन-buffering can take place inside vblank */
+	पंचांगp &= ~AVIVO_D1GRPH_UPDATE_LOCK;
+	WREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset, पंचांगp);
+पूर्ण
 
-bool rs600_page_flip_pending(struct radeon_device *rdev, int crtc_id)
-{
-	struct radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
+bool rs600_page_flip_pending(काष्ठा radeon_device *rdev, पूर्णांक crtc_id)
+अणु
+	काष्ठा radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
 
 	/* Return current update_pending status: */
-	return !!(RREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset) &
+	वापस !!(RREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset) &
 		AVIVO_D1GRPH_SURFACE_UPDATE_PENDING);
-}
+पूर्ण
 
-void avivo_program_fmt(struct drm_encoder *encoder)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct drm_connector *connector = radeon_get_connector_for_encoder(encoder);
-	int bpc = 0;
-	u32 tmp = 0;
-	enum radeon_connector_dither dither = RADEON_FMT_DITHER_DISABLE;
+व्योम avivo_program_fmt(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	काष्ठा drm_connector *connector = radeon_get_connector_क्रम_encoder(encoder);
+	पूर्णांक bpc = 0;
+	u32 पंचांगp = 0;
+	क्रमागत radeon_connector_dither dither = RADEON_FMT_DITHER_DISABLE;
 
-	if (connector) {
-		struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+	अगर (connector) अणु
+		काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 		bpc = radeon_get_monitor_bpc(connector);
 		dither = radeon_connector->dither;
-	}
+	पूर्ण
 
 	/* LVDS FMT is set up by atom */
-	if (radeon_encoder->devices & ATOM_DEVICE_LCD_SUPPORT)
-		return;
+	अगर (radeon_encoder->devices & ATOM_DEVICE_LCD_SUPPORT)
+		वापस;
 
-	if (bpc == 0)
-		return;
+	अगर (bpc == 0)
+		वापस;
 
-	switch (bpc) {
-	case 6:
-		if (dither == RADEON_FMT_DITHER_ENABLE)
+	चयन (bpc) अणु
+	हाल 6:
+		अगर (dither == RADEON_FMT_DITHER_ENABLE)
 			/* XXX sort out optimal dither settings */
-			tmp |= AVIVO_TMDS_BIT_DEPTH_CONTROL_SPATIAL_DITHER_EN;
-		else
-			tmp |= AVIVO_TMDS_BIT_DEPTH_CONTROL_TRUNCATE_EN;
-		break;
-	case 8:
-		if (dither == RADEON_FMT_DITHER_ENABLE)
+			पंचांगp |= AVIVO_TMDS_BIT_DEPTH_CONTROL_SPATIAL_DITHER_EN;
+		अन्यथा
+			पंचांगp |= AVIVO_TMDS_BIT_DEPTH_CONTROL_TRUNCATE_EN;
+		अवरोध;
+	हाल 8:
+		अगर (dither == RADEON_FMT_DITHER_ENABLE)
 			/* XXX sort out optimal dither settings */
-			tmp |= (AVIVO_TMDS_BIT_DEPTH_CONTROL_SPATIAL_DITHER_EN |
+			पंचांगp |= (AVIVO_TMDS_BIT_DEPTH_CONTROL_SPATIAL_DITHER_EN |
 				AVIVO_TMDS_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH);
-		else
-			tmp |= (AVIVO_TMDS_BIT_DEPTH_CONTROL_TRUNCATE_EN |
+		अन्यथा
+			पंचांगp |= (AVIVO_TMDS_BIT_DEPTH_CONTROL_TRUNCATE_EN |
 				AVIVO_TMDS_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH);
-		break;
-	case 10:
-	default:
+		अवरोध;
+	हाल 10:
+	शेष:
 		/* not needed */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (radeon_encoder->encoder_id) {
-	case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_TMDS1:
-		WREG32(AVIVO_TMDSA_BIT_DEPTH_CONTROL, tmp);
-		break;
-	case ENCODER_OBJECT_ID_INTERNAL_LVTM1:
-		WREG32(AVIVO_LVTMA_BIT_DEPTH_CONTROL, tmp);
-		break;
-	case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DVO1:
-		WREG32(AVIVO_DVOA_BIT_DEPTH_CONTROL, tmp);
-		break;
-	case ENCODER_OBJECT_ID_INTERNAL_DDI:
-		WREG32(AVIVO_DDIA_BIT_DEPTH_CONTROL, tmp);
-		break;
-	default:
-		break;
-	}
-}
+	चयन (radeon_encoder->encoder_id) अणु
+	हाल ENCODER_OBJECT_ID_INTERNAL_KLDSCP_TMDS1:
+		WREG32(AVIVO_TMDSA_BIT_DEPTH_CONTROL, पंचांगp);
+		अवरोध;
+	हाल ENCODER_OBJECT_ID_INTERNAL_LVTM1:
+		WREG32(AVIVO_LVTMA_BIT_DEPTH_CONTROL, पंचांगp);
+		अवरोध;
+	हाल ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DVO1:
+		WREG32(AVIVO_DVOA_BIT_DEPTH_CONTROL, पंचांगp);
+		अवरोध;
+	हाल ENCODER_OBJECT_ID_INTERNAL_DDI:
+		WREG32(AVIVO_DDIA_BIT_DEPTH_CONTROL, पंचांगp);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void rs600_pm_misc(struct radeon_device *rdev)
-{
-	int requested_index = rdev->pm.requested_power_state_index;
-	struct radeon_power_state *ps = &rdev->pm.power_state[requested_index];
-	struct radeon_voltage *voltage = &ps->clock_info[0].voltage;
-	u32 tmp, dyn_pwrmgt_sclk_length, dyn_sclk_vol_cntl;
+व्योम rs600_pm_misc(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक requested_index = rdev->pm.requested_घातer_state_index;
+	काष्ठा radeon_घातer_state *ps = &rdev->pm.घातer_state[requested_index];
+	काष्ठा radeon_voltage *voltage = &ps->घड़ी_info[0].voltage;
+	u32 पंचांगp, dyn_pwrmgt_sclk_length, dyn_sclk_vol_cntl;
 	u32 hdp_dyn_cntl, /*mc_host_dyn_cntl,*/ dyn_backbias_cntl;
 
-	if ((voltage->type == VOLTAGE_GPIO) && (voltage->gpio.valid)) {
-		if (ps->misc & ATOM_PM_MISCINFO_VOLTAGE_DROP_SUPPORT) {
-			tmp = RREG32(voltage->gpio.reg);
-			if (voltage->active_high)
-				tmp |= voltage->gpio.mask;
-			else
-				tmp &= ~(voltage->gpio.mask);
-			WREG32(voltage->gpio.reg, tmp);
-			if (voltage->delay)
+	अगर ((voltage->type == VOLTAGE_GPIO) && (voltage->gpio.valid)) अणु
+		अगर (ps->misc & ATOM_PM_MISCINFO_VOLTAGE_DROP_SUPPORT) अणु
+			पंचांगp = RREG32(voltage->gpio.reg);
+			अगर (voltage->active_high)
+				पंचांगp |= voltage->gpio.mask;
+			अन्यथा
+				पंचांगp &= ~(voltage->gpio.mask);
+			WREG32(voltage->gpio.reg, पंचांगp);
+			अगर (voltage->delay)
 				udelay(voltage->delay);
-		} else {
-			tmp = RREG32(voltage->gpio.reg);
-			if (voltage->active_high)
-				tmp &= ~voltage->gpio.mask;
-			else
-				tmp |= voltage->gpio.mask;
-			WREG32(voltage->gpio.reg, tmp);
-			if (voltage->delay)
+		पूर्ण अन्यथा अणु
+			पंचांगp = RREG32(voltage->gpio.reg);
+			अगर (voltage->active_high)
+				पंचांगp &= ~voltage->gpio.mask;
+			अन्यथा
+				पंचांगp |= voltage->gpio.mask;
+			WREG32(voltage->gpio.reg, पंचांगp);
+			अगर (voltage->delay)
 				udelay(voltage->delay);
-		}
-	} else if (voltage->type == VOLTAGE_VDDC)
+		पूर्ण
+	पूर्ण अन्यथा अगर (voltage->type == VOLTAGE_VDDC)
 		radeon_atom_set_voltage(rdev, voltage->vddc_id, SET_VOLTAGE_TYPE_ASIC_VDDC);
 
 	dyn_pwrmgt_sclk_length = RREG32_PLL(DYN_PWRMGT_SCLK_LENGTH);
 	dyn_pwrmgt_sclk_length &= ~REDUCED_POWER_SCLK_HILEN(0xf);
 	dyn_pwrmgt_sclk_length &= ~REDUCED_POWER_SCLK_LOLEN(0xf);
-	if (ps->misc & ATOM_PM_MISCINFO_ASIC_REDUCED_SPEED_SCLK_EN) {
-		if (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_CLOCK_DIVIDER_BY_2) {
+	अगर (ps->misc & ATOM_PM_MISCINFO_ASIC_REDUCED_SPEED_SCLK_EN) अणु
+		अगर (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_CLOCK_DIVIDER_BY_2) अणु
 			dyn_pwrmgt_sclk_length |= REDUCED_POWER_SCLK_HILEN(2);
 			dyn_pwrmgt_sclk_length |= REDUCED_POWER_SCLK_LOLEN(2);
-		} else if (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_CLOCK_DIVIDER_BY_4) {
+		पूर्ण अन्यथा अगर (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_CLOCK_DIVIDER_BY_4) अणु
 			dyn_pwrmgt_sclk_length |= REDUCED_POWER_SCLK_HILEN(4);
 			dyn_pwrmgt_sclk_length |= REDUCED_POWER_SCLK_LOLEN(4);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dyn_pwrmgt_sclk_length |= REDUCED_POWER_SCLK_HILEN(1);
 		dyn_pwrmgt_sclk_length |= REDUCED_POWER_SCLK_LOLEN(1);
-	}
+	पूर्ण
 	WREG32_PLL(DYN_PWRMGT_SCLK_LENGTH, dyn_pwrmgt_sclk_length);
 
 	dyn_sclk_vol_cntl = RREG32_PLL(DYN_SCLK_VOL_CNTL);
-	if (ps->misc & ATOM_PM_MISCINFO_ASIC_DYNAMIC_VOLTAGE_EN) {
+	अगर (ps->misc & ATOM_PM_MISCINFO_ASIC_DYNAMIC_VOLTAGE_EN) अणु
 		dyn_sclk_vol_cntl |= IO_CG_VOLTAGE_DROP;
-		if (voltage->delay) {
+		अगर (voltage->delay) अणु
 			dyn_sclk_vol_cntl |= VOLTAGE_DROP_SYNC;
 			dyn_sclk_vol_cntl |= VOLTAGE_DELAY_SEL(voltage->delay);
-		} else
+		पूर्ण अन्यथा
 			dyn_sclk_vol_cntl &= ~VOLTAGE_DROP_SYNC;
-	} else
+	पूर्ण अन्यथा
 		dyn_sclk_vol_cntl &= ~IO_CG_VOLTAGE_DROP;
 	WREG32_PLL(DYN_SCLK_VOL_CNTL, dyn_sclk_vol_cntl);
 
 	hdp_dyn_cntl = RREG32_PLL(HDP_DYN_CNTL);
-	if (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_HDP_BLOCK_EN)
+	अगर (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_HDP_BLOCK_EN)
 		hdp_dyn_cntl &= ~HDP_FORCEON;
-	else
+	अन्यथा
 		hdp_dyn_cntl |= HDP_FORCEON;
 	WREG32_PLL(HDP_DYN_CNTL, hdp_dyn_cntl);
-#if 0
-	/* mc_host_dyn seems to cause hangs from time to time */
+#अगर 0
+	/* mc_host_dyn seems to cause hangs from समय to समय */
 	mc_host_dyn_cntl = RREG32_PLL(MC_HOST_DYN_CNTL);
-	if (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_MC_HOST_BLOCK_EN)
+	अगर (ps->misc & ATOM_PM_MISCINFO_DYNAMIC_MC_HOST_BLOCK_EN)
 		mc_host_dyn_cntl &= ~MC_HOST_FORCEON;
-	else
+	अन्यथा
 		mc_host_dyn_cntl |= MC_HOST_FORCEON;
 	WREG32_PLL(MC_HOST_DYN_CNTL, mc_host_dyn_cntl);
-#endif
+#पूर्ण_अगर
 	dyn_backbias_cntl = RREG32_PLL(DYN_BACKBIAS_CNTL);
-	if (ps->misc & ATOM_PM_MISCINFO2_DYNAMIC_BACK_BIAS_EN)
+	अगर (ps->misc & ATOM_PM_MISCINFO2_DYNAMIC_BACK_BIAS_EN)
 		dyn_backbias_cntl |= IO_CG_BACKBIAS_EN;
-	else
+	अन्यथा
 		dyn_backbias_cntl &= ~IO_CG_BACKBIAS_EN;
 	WREG32_PLL(DYN_BACKBIAS_CNTL, dyn_backbias_cntl);
 
 	/* set pcie lanes */
-	if ((rdev->flags & RADEON_IS_PCIE) &&
+	अगर ((rdev->flags & RADEON_IS_PCIE) &&
 	    !(rdev->flags & RADEON_IS_IGP) &&
 	    rdev->asic->pm.set_pcie_lanes &&
 	    (ps->pcie_lanes !=
-	     rdev->pm.power_state[rdev->pm.current_power_state_index].pcie_lanes)) {
+	     rdev->pm.घातer_state[rdev->pm.current_घातer_state_index].pcie_lanes)) अणु
 		radeon_set_pcie_lanes(rdev,
 				      ps->pcie_lanes);
 		DRM_DEBUG("Setting: p: %d\n", ps->pcie_lanes);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rs600_pm_prepare(struct radeon_device *rdev)
-{
-	struct drm_device *ddev = rdev->ddev;
-	struct drm_crtc *crtc;
-	struct radeon_crtc *radeon_crtc;
-	u32 tmp;
+व्योम rs600_pm_prepare(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_device *ddev = rdev->ddev;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा radeon_crtc *radeon_crtc;
+	u32 पंचांगp;
 
 	/* disable any active CRTCs */
-	list_for_each_entry(crtc, &ddev->mode_config.crtc_list, head) {
+	list_क्रम_each_entry(crtc, &ddev->mode_config.crtc_list, head) अणु
 		radeon_crtc = to_radeon_crtc(crtc);
-		if (radeon_crtc->enabled) {
-			tmp = RREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset);
-			tmp |= AVIVO_CRTC_DISP_READ_REQUEST_DISABLE;
-			WREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset, tmp);
-		}
-	}
-}
+		अगर (radeon_crtc->enabled) अणु
+			पंचांगp = RREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset);
+			पंचांगp |= AVIVO_CRTC_DISP_READ_REQUEST_DISABLE;
+			WREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset, पंचांगp);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void rs600_pm_finish(struct radeon_device *rdev)
-{
-	struct drm_device *ddev = rdev->ddev;
-	struct drm_crtc *crtc;
-	struct radeon_crtc *radeon_crtc;
-	u32 tmp;
+व्योम rs600_pm_finish(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_device *ddev = rdev->ddev;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा radeon_crtc *radeon_crtc;
+	u32 पंचांगp;
 
 	/* enable any active CRTCs */
-	list_for_each_entry(crtc, &ddev->mode_config.crtc_list, head) {
+	list_क्रम_each_entry(crtc, &ddev->mode_config.crtc_list, head) अणु
 		radeon_crtc = to_radeon_crtc(crtc);
-		if (radeon_crtc->enabled) {
-			tmp = RREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset);
-			tmp &= ~AVIVO_CRTC_DISP_READ_REQUEST_DISABLE;
-			WREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset, tmp);
-		}
-	}
-}
+		अगर (radeon_crtc->enabled) अणु
+			पंचांगp = RREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset);
+			पंचांगp &= ~AVIVO_CRTC_DISP_READ_REQUEST_DISABLE;
+			WREG32(AVIVO_D1CRTC_CONTROL + radeon_crtc->crtc_offset, पंचांगp);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* hpd for digital panel detect/disconnect */
-bool rs600_hpd_sense(struct radeon_device *rdev, enum radeon_hpd_id hpd)
-{
-	u32 tmp;
+/* hpd क्रम digital panel detect/disconnect */
+bool rs600_hpd_sense(काष्ठा radeon_device *rdev, क्रमागत radeon_hpd_id hpd)
+अणु
+	u32 पंचांगp;
 	bool connected = false;
 
-	switch (hpd) {
-	case RADEON_HPD_1:
-		tmp = RREG32(R_007D04_DC_HOT_PLUG_DETECT1_INT_STATUS);
-		if (G_007D04_DC_HOT_PLUG_DETECT1_SENSE(tmp))
+	चयन (hpd) अणु
+	हाल RADEON_HPD_1:
+		पंचांगp = RREG32(R_007D04_DC_HOT_PLUG_DETECT1_INT_STATUS);
+		अगर (G_007D04_DC_HOT_PLUG_DETECT1_SENSE(पंचांगp))
 			connected = true;
-		break;
-	case RADEON_HPD_2:
-		tmp = RREG32(R_007D14_DC_HOT_PLUG_DETECT2_INT_STATUS);
-		if (G_007D14_DC_HOT_PLUG_DETECT2_SENSE(tmp))
+		अवरोध;
+	हाल RADEON_HPD_2:
+		पंचांगp = RREG32(R_007D14_DC_HOT_PLUG_DETECT2_INT_STATUS);
+		अगर (G_007D14_DC_HOT_PLUG_DETECT2_SENSE(पंचांगp))
 			connected = true;
-		break;
-	default:
-		break;
-	}
-	return connected;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस connected;
+पूर्ण
 
-void rs600_hpd_set_polarity(struct radeon_device *rdev,
-			    enum radeon_hpd_id hpd)
-{
-	u32 tmp;
+व्योम rs600_hpd_set_polarity(काष्ठा radeon_device *rdev,
+			    क्रमागत radeon_hpd_id hpd)
+अणु
+	u32 पंचांगp;
 	bool connected = rs600_hpd_sense(rdev, hpd);
 
-	switch (hpd) {
-	case RADEON_HPD_1:
-		tmp = RREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL);
-		if (connected)
-			tmp &= ~S_007D08_DC_HOT_PLUG_DETECT1_INT_POLARITY(1);
-		else
-			tmp |= S_007D08_DC_HOT_PLUG_DETECT1_INT_POLARITY(1);
-		WREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL, tmp);
-		break;
-	case RADEON_HPD_2:
-		tmp = RREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL);
-		if (connected)
-			tmp &= ~S_007D18_DC_HOT_PLUG_DETECT2_INT_POLARITY(1);
-		else
-			tmp |= S_007D18_DC_HOT_PLUG_DETECT2_INT_POLARITY(1);
-		WREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL, tmp);
-		break;
-	default:
-		break;
-	}
-}
+	चयन (hpd) अणु
+	हाल RADEON_HPD_1:
+		पंचांगp = RREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL);
+		अगर (connected)
+			पंचांगp &= ~S_007D08_DC_HOT_PLUG_DETECT1_INT_POLARITY(1);
+		अन्यथा
+			पंचांगp |= S_007D08_DC_HOT_PLUG_DETECT1_INT_POLARITY(1);
+		WREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL, पंचांगp);
+		अवरोध;
+	हाल RADEON_HPD_2:
+		पंचांगp = RREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL);
+		अगर (connected)
+			पंचांगp &= ~S_007D18_DC_HOT_PLUG_DETECT2_INT_POLARITY(1);
+		अन्यथा
+			पंचांगp |= S_007D18_DC_HOT_PLUG_DETECT2_INT_POLARITY(1);
+		WREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL, पंचांगp);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void rs600_hpd_init(struct radeon_device *rdev)
-{
-	struct drm_device *dev = rdev->ddev;
-	struct drm_connector *connector;
-	unsigned enable = 0;
+व्योम rs600_hpd_init(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_device *dev = rdev->ddev;
+	काष्ठा drm_connector *connector;
+	अचिन्हित enable = 0;
 
-	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
-		struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-		switch (radeon_connector->hpd.hpd) {
-		case RADEON_HPD_1:
+	list_क्रम_each_entry(connector, &dev->mode_config.connector_list, head) अणु
+		काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+		चयन (radeon_connector->hpd.hpd) अणु
+		हाल RADEON_HPD_1:
 			WREG32(R_007D00_DC_HOT_PLUG_DETECT1_CONTROL,
 			       S_007D00_DC_HOT_PLUG_DETECT1_EN(1));
-			break;
-		case RADEON_HPD_2:
+			अवरोध;
+		हाल RADEON_HPD_2:
 			WREG32(R_007D10_DC_HOT_PLUG_DETECT2_CONTROL,
 			       S_007D10_DC_HOT_PLUG_DETECT2_EN(1));
-			break;
-		default:
-			break;
-		}
-		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अगर (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
 			enable |= 1 << radeon_connector->hpd.hpd;
 		radeon_hpd_set_polarity(rdev, radeon_connector->hpd.hpd);
-	}
+	पूर्ण
 	radeon_irq_kms_enable_hpd(rdev, enable);
-}
+पूर्ण
 
-void rs600_hpd_fini(struct radeon_device *rdev)
-{
-	struct drm_device *dev = rdev->ddev;
-	struct drm_connector *connector;
-	unsigned disable = 0;
+व्योम rs600_hpd_fini(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_device *dev = rdev->ddev;
+	काष्ठा drm_connector *connector;
+	अचिन्हित disable = 0;
 
-	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
-		struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-		switch (radeon_connector->hpd.hpd) {
-		case RADEON_HPD_1:
+	list_क्रम_each_entry(connector, &dev->mode_config.connector_list, head) अणु
+		काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+		चयन (radeon_connector->hpd.hpd) अणु
+		हाल RADEON_HPD_1:
 			WREG32(R_007D00_DC_HOT_PLUG_DETECT1_CONTROL,
 			       S_007D00_DC_HOT_PLUG_DETECT1_EN(0));
-			break;
-		case RADEON_HPD_2:
+			अवरोध;
+		हाल RADEON_HPD_2:
 			WREG32(R_007D10_DC_HOT_PLUG_DETECT2_CONTROL,
 			       S_007D10_DC_HOT_PLUG_DETECT2_EN(0));
-			break;
-		default:
-			break;
-		}
-		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अगर (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
 			disable |= 1 << radeon_connector->hpd.hpd;
-	}
+	पूर्ण
 	radeon_irq_kms_disable_hpd(rdev, disable);
-}
+पूर्ण
 
-int rs600_asic_reset(struct radeon_device *rdev, bool hard)
-{
-	struct rv515_mc_save save;
-	u32 status, tmp;
-	int ret = 0;
+पूर्णांक rs600_asic_reset(काष्ठा radeon_device *rdev, bool hard)
+अणु
+	काष्ठा rv515_mc_save save;
+	u32 status, पंचांगp;
+	पूर्णांक ret = 0;
 
 	status = RREG32(R_000E40_RBBM_STATUS);
-	if (!G_000E40_GUI_ACTIVE(status)) {
-		return 0;
-	}
+	अगर (!G_000E40_GUI_ACTIVE(status)) अणु
+		वापस 0;
+	पूर्ण
 	/* Stops all mc clients */
 	rv515_mc_stop(rdev, &save);
 	status = RREG32(R_000E40_RBBM_STATUS);
 	dev_info(rdev->dev, "(%s:%d) RBBM_STATUS=0x%08X\n", __func__, __LINE__, status);
 	/* stop CP */
 	WREG32(RADEON_CP_CSQ_CNTL, 0);
-	tmp = RREG32(RADEON_CP_RB_CNTL);
-	WREG32(RADEON_CP_RB_CNTL, tmp | RADEON_RB_RPTR_WR_ENA);
+	पंचांगp = RREG32(RADEON_CP_RB_CNTL);
+	WREG32(RADEON_CP_RB_CNTL, पंचांगp | RADEON_RB_RPTR_WR_ENA);
 	WREG32(RADEON_CP_RB_RPTR_WR, 0);
 	WREG32(RADEON_CP_RB_WPTR, 0);
-	WREG32(RADEON_CP_RB_CNTL, tmp);
+	WREG32(RADEON_CP_RB_CNTL, पंचांगp);
 	pci_save_state(rdev->pdev);
 	/* disable bus mastering */
 	pci_clear_master(rdev->pdev);
@@ -505,75 +506,75 @@ int rs600_asic_reset(struct radeon_device *rdev, bool hard)
 	dev_info(rdev->dev, "(%s:%d) RBBM_STATUS=0x%08X\n", __func__, __LINE__, status);
 	/* restore PCI & busmastering */
 	pci_restore_state(rdev->pdev);
-	/* Check if GPU is idle */
-	if (G_000E40_GA_BUSY(status) || G_000E40_VAP_BUSY(status)) {
+	/* Check अगर GPU is idle */
+	अगर (G_000E40_GA_BUSY(status) || G_000E40_VAP_BUSY(status)) अणु
 		dev_err(rdev->dev, "failed to reset GPU\n");
 		ret = -1;
-	} else
+	पूर्ण अन्यथा
 		dev_info(rdev->dev, "GPU reset succeed\n");
 	rv515_mc_resume(rdev, &save);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * GART.
  */
-void rs600_gart_tlb_flush(struct radeon_device *rdev)
-{
-	uint32_t tmp;
+व्योम rs600_gart_tlb_flush(काष्ठा radeon_device *rdev)
+अणु
+	uपूर्णांक32_t पंचांगp;
 
-	tmp = RREG32_MC(R_000100_MC_PT0_CNTL);
-	tmp &= C_000100_INVALIDATE_ALL_L1_TLBS & C_000100_INVALIDATE_L2_CACHE;
-	WREG32_MC(R_000100_MC_PT0_CNTL, tmp);
+	पंचांगp = RREG32_MC(R_000100_MC_PT0_CNTL);
+	पंचांगp &= C_000100_INVALIDATE_ALL_L1_TLBS & C_000100_INVALIDATE_L2_CACHE;
+	WREG32_MC(R_000100_MC_PT0_CNTL, पंचांगp);
 
-	tmp = RREG32_MC(R_000100_MC_PT0_CNTL);
-	tmp |= S_000100_INVALIDATE_ALL_L1_TLBS(1) | S_000100_INVALIDATE_L2_CACHE(1);
-	WREG32_MC(R_000100_MC_PT0_CNTL, tmp);
+	पंचांगp = RREG32_MC(R_000100_MC_PT0_CNTL);
+	पंचांगp |= S_000100_INVALIDATE_ALL_L1_TLBS(1) | S_000100_INVALIDATE_L2_CACHE(1);
+	WREG32_MC(R_000100_MC_PT0_CNTL, पंचांगp);
 
-	tmp = RREG32_MC(R_000100_MC_PT0_CNTL);
-	tmp &= C_000100_INVALIDATE_ALL_L1_TLBS & C_000100_INVALIDATE_L2_CACHE;
-	WREG32_MC(R_000100_MC_PT0_CNTL, tmp);
-	tmp = RREG32_MC(R_000100_MC_PT0_CNTL);
-}
+	पंचांगp = RREG32_MC(R_000100_MC_PT0_CNTL);
+	पंचांगp &= C_000100_INVALIDATE_ALL_L1_TLBS & C_000100_INVALIDATE_L2_CACHE;
+	WREG32_MC(R_000100_MC_PT0_CNTL, पंचांगp);
+	पंचांगp = RREG32_MC(R_000100_MC_PT0_CNTL);
+पूर्ण
 
-static int rs600_gart_init(struct radeon_device *rdev)
-{
-	int r;
+अटल पूर्णांक rs600_gart_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
-	if (rdev->gart.robj) {
+	अगर (rdev->gart.robj) अणु
 		WARN(1, "RS600 GART already initialized\n");
-		return 0;
-	}
-	/* Initialize common gart structure */
+		वापस 0;
+	पूर्ण
+	/* Initialize common gart काष्ठाure */
 	r = radeon_gart_init(rdev);
-	if (r) {
-		return r;
-	}
+	अगर (r) अणु
+		वापस r;
+	पूर्ण
 	rdev->gart.table_size = rdev->gart.num_gpu_pages * 8;
-	return radeon_gart_table_vram_alloc(rdev);
-}
+	वापस radeon_gart_table_vram_alloc(rdev);
+पूर्ण
 
-static int rs600_gart_enable(struct radeon_device *rdev)
-{
-	u32 tmp;
-	int r, i;
+अटल पूर्णांक rs600_gart_enable(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
+	पूर्णांक r, i;
 
-	if (rdev->gart.robj == NULL) {
+	अगर (rdev->gart.robj == शून्य) अणु
 		dev_err(rdev->dev, "No VRAM object for PCIE GART.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	r = radeon_gart_table_vram_pin(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	/* Enable bus master */
-	tmp = RREG32(RADEON_BUS_CNTL) & ~RS600_BUS_MASTER_DIS;
-	WREG32(RADEON_BUS_CNTL, tmp);
-	/* FIXME: setup default page */
+	पंचांगp = RREG32(RADEON_BUS_CNTL) & ~RS600_BUS_MASTER_DIS;
+	WREG32(RADEON_BUS_CNTL, पंचांगp);
+	/* FIXME: setup शेष page */
 	WREG32_MC(R_000100_MC_PT0_CNTL,
 		  (S_000100_EFFECTIVE_L2_CACHE_SIZE(6) |
 		   S_000100_EFFECTIVE_L2_QUEUE_SIZE(6)));
 
-	for (i = 0; i < 19; i++) {
+	क्रम (i = 0; i < 19; i++) अणु
 		WREG32_MC(R_00016C_MC_PT0_CLIENT0_CNTL + i,
 			  S_00016C_ENABLE_TRANSLATION_MODE_OVERRIDE(1) |
 			  S_00016C_SYSTEM_ACCESS_MODE_MASK(
@@ -583,14 +584,14 @@ static int rs600_gart_enable(struct radeon_device *rdev)
 			  S_00016C_EFFECTIVE_L1_CACHE_SIZE(3) |
 			  S_00016C_ENABLE_FRAGMENT_PROCESSING(1) |
 			  S_00016C_EFFECTIVE_L1_QUEUE_SIZE(3));
-	}
+	पूर्ण
 	/* enable first context */
 	WREG32_MC(R_000102_MC_PT0_CONTEXT0_CNTL,
 		  S_000102_ENABLE_PAGE_TABLE(1) |
 		  S_000102_PAGE_TABLE_DEPTH(V_000102_PAGE_TABLE_FLAT));
 
 	/* disable all other contexts */
-	for (i = 1; i < 8; i++)
+	क्रम (i = 1; i < 8; i++)
 		WREG32_MC(R_000102_MC_PT0_CONTEXT0_CNTL + i, 0);
 
 	/* setup the page table */
@@ -605,160 +606,160 @@ static int rs600_gart_enable(struct radeon_device *rdev)
 	WREG32_MC(R_000114_MC_PT0_SYSTEM_APERTURE_HIGH_ADDR, rdev->mc.vram_end);
 
 	/* enable page tables */
-	tmp = RREG32_MC(R_000100_MC_PT0_CNTL);
-	WREG32_MC(R_000100_MC_PT0_CNTL, (tmp | S_000100_ENABLE_PT(1)));
-	tmp = RREG32_MC(R_000009_MC_CNTL1);
-	WREG32_MC(R_000009_MC_CNTL1, (tmp | S_000009_ENABLE_PAGE_TABLES(1)));
+	पंचांगp = RREG32_MC(R_000100_MC_PT0_CNTL);
+	WREG32_MC(R_000100_MC_PT0_CNTL, (पंचांगp | S_000100_ENABLE_PT(1)));
+	पंचांगp = RREG32_MC(R_000009_MC_CNTL1);
+	WREG32_MC(R_000009_MC_CNTL1, (पंचांगp | S_000009_ENABLE_PAGE_TABLES(1)));
 	rs600_gart_tlb_flush(rdev);
 	DRM_INFO("PCIE GART of %uM enabled (table at 0x%016llX).\n",
-		 (unsigned)(rdev->mc.gtt_size >> 20),
-		 (unsigned long long)rdev->gart.table_addr);
-	rdev->gart.ready = true;
-	return 0;
-}
+		 (अचिन्हित)(rdev->mc.gtt_size >> 20),
+		 (अचिन्हित दीर्घ दीर्घ)rdev->gart.table_addr);
+	rdev->gart.पढ़ोy = true;
+	वापस 0;
+पूर्ण
 
-static void rs600_gart_disable(struct radeon_device *rdev)
-{
-	u32 tmp;
+अटल व्योम rs600_gart_disable(काष्ठा radeon_device *rdev)
+अणु
+	u32 पंचांगp;
 
 	/* FIXME: disable out of gart access */
 	WREG32_MC(R_000100_MC_PT0_CNTL, 0);
-	tmp = RREG32_MC(R_000009_MC_CNTL1);
-	WREG32_MC(R_000009_MC_CNTL1, tmp & C_000009_ENABLE_PAGE_TABLES);
+	पंचांगp = RREG32_MC(R_000009_MC_CNTL1);
+	WREG32_MC(R_000009_MC_CNTL1, पंचांगp & C_000009_ENABLE_PAGE_TABLES);
 	radeon_gart_table_vram_unpin(rdev);
-}
+पूर्ण
 
-static void rs600_gart_fini(struct radeon_device *rdev)
-{
+अटल व्योम rs600_gart_fini(काष्ठा radeon_device *rdev)
+अणु
 	radeon_gart_fini(rdev);
 	rs600_gart_disable(rdev);
-	radeon_gart_table_vram_free(rdev);
-}
+	radeon_gart_table_vram_मुक्त(rdev);
+पूर्ण
 
-uint64_t rs600_gart_get_page_entry(uint64_t addr, uint32_t flags)
-{
+uपूर्णांक64_t rs600_gart_get_page_entry(uपूर्णांक64_t addr, uपूर्णांक32_t flags)
+अणु
 	addr = addr & 0xFFFFFFFFFFFFF000ULL;
 	addr |= R600_PTE_SYSTEM;
-	if (flags & RADEON_GART_PAGE_VALID)
+	अगर (flags & RADEON_GART_PAGE_VALID)
 		addr |= R600_PTE_VALID;
-	if (flags & RADEON_GART_PAGE_READ)
+	अगर (flags & RADEON_GART_PAGE_READ)
 		addr |= R600_PTE_READABLE;
-	if (flags & RADEON_GART_PAGE_WRITE)
+	अगर (flags & RADEON_GART_PAGE_WRITE)
 		addr |= R600_PTE_WRITEABLE;
-	if (flags & RADEON_GART_PAGE_SNOOP)
+	अगर (flags & RADEON_GART_PAGE_SNOOP)
 		addr |= R600_PTE_SNOOPED;
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-void rs600_gart_set_page(struct radeon_device *rdev, unsigned i,
-			 uint64_t entry)
-{
-	void __iomem *ptr = (void *)rdev->gart.ptr;
-	writeq(entry, ptr + (i * 8));
-}
+व्योम rs600_gart_set_page(काष्ठा radeon_device *rdev, अचिन्हित i,
+			 uपूर्णांक64_t entry)
+अणु
+	व्योम __iomem *ptr = (व्योम *)rdev->gart.ptr;
+	ग_लिखोq(entry, ptr + (i * 8));
+पूर्ण
 
-int rs600_irq_set(struct radeon_device *rdev)
-{
-	uint32_t tmp = 0;
-	uint32_t mode_int = 0;
+पूर्णांक rs600_irq_set(काष्ठा radeon_device *rdev)
+अणु
+	uपूर्णांक32_t पंचांगp = 0;
+	uपूर्णांक32_t mode_पूर्णांक = 0;
 	u32 hpd1 = RREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL) &
 		~S_007D08_DC_HOT_PLUG_DETECT1_INT_EN(1);
 	u32 hpd2 = RREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL) &
 		~S_007D18_DC_HOT_PLUG_DETECT2_INT_EN(1);
 	u32 hdmi0;
-	if (ASIC_IS_DCE2(rdev))
+	अगर (ASIC_IS_DCE2(rdev))
 		hdmi0 = RREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL) &
 			~S_007408_HDMI0_AZ_FORMAT_WTRIG_MASK(1);
-	else
+	अन्यथा
 		hdmi0 = 0;
 
-	if (!rdev->irq.installed) {
+	अगर (!rdev->irq.installed) अणु
 		WARN(1, "Can't enable IRQ/MSI because no handler is installed\n");
 		WREG32(R_000040_GEN_INT_CNTL, 0);
-		return -EINVAL;
-	}
-	if (atomic_read(&rdev->irq.ring_int[RADEON_RING_TYPE_GFX_INDEX])) {
-		tmp |= S_000040_SW_INT_EN(1);
-	}
-	if (rdev->irq.crtc_vblank_int[0] ||
-	    atomic_read(&rdev->irq.pflip[0])) {
-		mode_int |= S_006540_D1MODE_VBLANK_INT_MASK(1);
-	}
-	if (rdev->irq.crtc_vblank_int[1] ||
-	    atomic_read(&rdev->irq.pflip[1])) {
-		mode_int |= S_006540_D2MODE_VBLANK_INT_MASK(1);
-	}
-	if (rdev->irq.hpd[0]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (atomic_पढ़ो(&rdev->irq.ring_पूर्णांक[RADEON_RING_TYPE_GFX_INDEX])) अणु
+		पंचांगp |= S_000040_SW_INT_EN(1);
+	पूर्ण
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[0] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[0])) अणु
+		mode_पूर्णांक |= S_006540_D1MODE_VBLANK_INT_MASK(1);
+	पूर्ण
+	अगर (rdev->irq.crtc_vblank_पूर्णांक[1] ||
+	    atomic_पढ़ो(&rdev->irq.pflip[1])) अणु
+		mode_पूर्णांक |= S_006540_D2MODE_VBLANK_INT_MASK(1);
+	पूर्ण
+	अगर (rdev->irq.hpd[0]) अणु
 		hpd1 |= S_007D08_DC_HOT_PLUG_DETECT1_INT_EN(1);
-	}
-	if (rdev->irq.hpd[1]) {
+	पूर्ण
+	अगर (rdev->irq.hpd[1]) अणु
 		hpd2 |= S_007D18_DC_HOT_PLUG_DETECT2_INT_EN(1);
-	}
-	if (rdev->irq.afmt[0]) {
+	पूर्ण
+	अगर (rdev->irq.afmt[0]) अणु
 		hdmi0 |= S_007408_HDMI0_AZ_FORMAT_WTRIG_MASK(1);
-	}
-	WREG32(R_000040_GEN_INT_CNTL, tmp);
-	WREG32(R_006540_DxMODE_INT_MASK, mode_int);
+	पूर्ण
+	WREG32(R_000040_GEN_INT_CNTL, पंचांगp);
+	WREG32(R_006540_DxMODE_INT_MASK, mode_पूर्णांक);
 	WREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL, hpd1);
 	WREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL, hpd2);
-	if (ASIC_IS_DCE2(rdev))
+	अगर (ASIC_IS_DCE2(rdev))
 		WREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL, hdmi0);
 
-	/* posting read */
+	/* posting पढ़ो */
 	RREG32(R_000040_GEN_INT_CNTL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u32 rs600_irq_ack(struct radeon_device *rdev)
-{
-	uint32_t irqs = RREG32(R_000044_GEN_INT_STATUS);
-	uint32_t irq_mask = S_000044_SW_INT(1);
-	u32 tmp;
+अटल अंतरभूत u32 rs600_irq_ack(काष्ठा radeon_device *rdev)
+अणु
+	uपूर्णांक32_t irqs = RREG32(R_000044_GEN_INT_STATUS);
+	uपूर्णांक32_t irq_mask = S_000044_SW_INT(1);
+	u32 पंचांगp;
 
-	if (G_000044_DISPLAY_INT_STAT(irqs)) {
-		rdev->irq.stat_regs.r500.disp_int = RREG32(R_007EDC_DISP_INTERRUPT_STATUS);
-		if (G_007EDC_LB_D1_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
+	अगर (G_000044_DISPLAY_INT_STAT(irqs)) अणु
+		rdev->irq.stat_regs.r500.disp_पूर्णांक = RREG32(R_007EDC_DISP_INTERRUPT_STATUS);
+		अगर (G_007EDC_LB_D1_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
 			WREG32(R_006534_D1MODE_VBLANK_STATUS,
 				S_006534_D1MODE_VBLANK_ACK(1));
-		}
-		if (G_007EDC_LB_D2_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
+		पूर्ण
+		अगर (G_007EDC_LB_D2_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
 			WREG32(R_006D34_D2MODE_VBLANK_STATUS,
 				S_006D34_D2MODE_VBLANK_ACK(1));
-		}
-		if (G_007EDC_DC_HOT_PLUG_DETECT1_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
-			tmp = RREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL);
-			tmp |= S_007D08_DC_HOT_PLUG_DETECT1_INT_ACK(1);
-			WREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL, tmp);
-		}
-		if (G_007EDC_DC_HOT_PLUG_DETECT2_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
-			tmp = RREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL);
-			tmp |= S_007D18_DC_HOT_PLUG_DETECT2_INT_ACK(1);
-			WREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL, tmp);
-		}
-	} else {
-		rdev->irq.stat_regs.r500.disp_int = 0;
-	}
+		पूर्ण
+		अगर (G_007EDC_DC_HOT_PLUG_DETECT1_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
+			पंचांगp = RREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL);
+			पंचांगp |= S_007D08_DC_HOT_PLUG_DETECT1_INT_ACK(1);
+			WREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL, पंचांगp);
+		पूर्ण
+		अगर (G_007EDC_DC_HOT_PLUG_DETECT2_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
+			पंचांगp = RREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL);
+			पंचांगp |= S_007D18_DC_HOT_PLUG_DETECT2_INT_ACK(1);
+			WREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL, पंचांगp);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		rdev->irq.stat_regs.r500.disp_पूर्णांक = 0;
+	पूर्ण
 
-	if (ASIC_IS_DCE2(rdev)) {
+	अगर (ASIC_IS_DCE2(rdev)) अणु
 		rdev->irq.stat_regs.r500.hdmi0_status = RREG32(R_007404_HDMI0_STATUS) &
 			S_007404_HDMI0_AZ_FORMAT_WTRIG(1);
-		if (G_007404_HDMI0_AZ_FORMAT_WTRIG(rdev->irq.stat_regs.r500.hdmi0_status)) {
-			tmp = RREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL);
-			tmp |= S_007408_HDMI0_AZ_FORMAT_WTRIG_ACK(1);
-			WREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL, tmp);
-		}
-	} else
+		अगर (G_007404_HDMI0_AZ_FORMAT_WTRIG(rdev->irq.stat_regs.r500.hdmi0_status)) अणु
+			पंचांगp = RREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL);
+			पंचांगp |= S_007408_HDMI0_AZ_FORMAT_WTRIG_ACK(1);
+			WREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL, पंचांगp);
+		पूर्ण
+	पूर्ण अन्यथा
 		rdev->irq.stat_regs.r500.hdmi0_status = 0;
 
-	if (irqs) {
+	अगर (irqs) अणु
 		WREG32(R_000044_GEN_INT_STATUS, irqs);
-	}
-	return irqs & irq_mask;
-}
+	पूर्ण
+	वापस irqs & irq_mask;
+पूर्ण
 
-void rs600_irq_disable(struct radeon_device *rdev)
-{
+व्योम rs600_irq_disable(काष्ठा radeon_device *rdev)
+अणु
 	u32 hdmi0 = RREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL) &
 		~S_007408_HDMI0_AZ_FORMAT_WTRIG_MASK(1);
 	WREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL, hdmi0);
@@ -767,111 +768,111 @@ void rs600_irq_disable(struct radeon_device *rdev)
 	/* Wait and acknowledge irq */
 	mdelay(1);
 	rs600_irq_ack(rdev);
-}
+पूर्ण
 
-int rs600_irq_process(struct radeon_device *rdev)
-{
+पूर्णांक rs600_irq_process(काष्ठा radeon_device *rdev)
+अणु
 	u32 status, msi_rearm;
 	bool queue_hotplug = false;
 	bool queue_hdmi = false;
 
 	status = rs600_irq_ack(rdev);
-	if (!status &&
-	    !rdev->irq.stat_regs.r500.disp_int &&
-	    !rdev->irq.stat_regs.r500.hdmi0_status) {
-		return IRQ_NONE;
-	}
-	while (status ||
-	       rdev->irq.stat_regs.r500.disp_int ||
-	       rdev->irq.stat_regs.r500.hdmi0_status) {
-		/* SW interrupt */
-		if (G_000044_SW_INT(status)) {
+	अगर (!status &&
+	    !rdev->irq.stat_regs.r500.disp_पूर्णांक &&
+	    !rdev->irq.stat_regs.r500.hdmi0_status) अणु
+		वापस IRQ_NONE;
+	पूर्ण
+	जबतक (status ||
+	       rdev->irq.stat_regs.r500.disp_पूर्णांक ||
+	       rdev->irq.stat_regs.r500.hdmi0_status) अणु
+		/* SW पूर्णांकerrupt */
+		अगर (G_000044_SW_INT(status)) अणु
 			radeon_fence_process(rdev, RADEON_RING_TYPE_GFX_INDEX);
-		}
-		/* Vertical blank interrupts */
-		if (G_007EDC_LB_D1_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
-			if (rdev->irq.crtc_vblank_int[0]) {
+		पूर्ण
+		/* Vertical blank पूर्णांकerrupts */
+		अगर (G_007EDC_LB_D1_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
+			अगर (rdev->irq.crtc_vblank_पूर्णांक[0]) अणु
 				drm_handle_vblank(rdev->ddev, 0);
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
-			}
-			if (atomic_read(&rdev->irq.pflip[0]))
+			पूर्ण
+			अगर (atomic_पढ़ो(&rdev->irq.pflip[0]))
 				radeon_crtc_handle_vblank(rdev, 0);
-		}
-		if (G_007EDC_LB_D2_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
-			if (rdev->irq.crtc_vblank_int[1]) {
+		पूर्ण
+		अगर (G_007EDC_LB_D2_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
+			अगर (rdev->irq.crtc_vblank_पूर्णांक[1]) अणु
 				drm_handle_vblank(rdev->ddev, 1);
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
-			}
-			if (atomic_read(&rdev->irq.pflip[1]))
+			पूर्ण
+			अगर (atomic_पढ़ो(&rdev->irq.pflip[1]))
 				radeon_crtc_handle_vblank(rdev, 1);
-		}
-		if (G_007EDC_DC_HOT_PLUG_DETECT1_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
+		पूर्ण
+		अगर (G_007EDC_DC_HOT_PLUG_DETECT1_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
 			queue_hotplug = true;
 			DRM_DEBUG("HPD1\n");
-		}
-		if (G_007EDC_DC_HOT_PLUG_DETECT2_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
+		पूर्ण
+		अगर (G_007EDC_DC_HOT_PLUG_DETECT2_INTERRUPT(rdev->irq.stat_regs.r500.disp_पूर्णांक)) अणु
 			queue_hotplug = true;
 			DRM_DEBUG("HPD2\n");
-		}
-		if (G_007404_HDMI0_AZ_FORMAT_WTRIG(rdev->irq.stat_regs.r500.hdmi0_status)) {
+		पूर्ण
+		अगर (G_007404_HDMI0_AZ_FORMAT_WTRIG(rdev->irq.stat_regs.r500.hdmi0_status)) अणु
 			queue_hdmi = true;
 			DRM_DEBUG("HDMI0\n");
-		}
+		पूर्ण
 		status = rs600_irq_ack(rdev);
-	}
-	if (queue_hotplug)
+	पूर्ण
+	अगर (queue_hotplug)
 		schedule_delayed_work(&rdev->hotplug_work, 0);
-	if (queue_hdmi)
+	अगर (queue_hdmi)
 		schedule_work(&rdev->audio_work);
-	if (rdev->msi_enabled) {
-		switch (rdev->family) {
-		case CHIP_RS600:
-		case CHIP_RS690:
-		case CHIP_RS740:
+	अगर (rdev->msi_enabled) अणु
+		चयन (rdev->family) अणु
+		हाल CHIP_RS600:
+		हाल CHIP_RS690:
+		हाल CHIP_RS740:
 			msi_rearm = RREG32(RADEON_BUS_CNTL) & ~RS600_MSI_REARM;
 			WREG32(RADEON_BUS_CNTL, msi_rearm);
 			WREG32(RADEON_BUS_CNTL, msi_rearm | RS600_MSI_REARM);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WREG32(RADEON_MSI_REARM_EN, RV370_MSI_REARM_EN);
-			break;
-		}
-	}
-	return IRQ_HANDLED;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
-u32 rs600_get_vblank_counter(struct radeon_device *rdev, int crtc)
-{
-	if (crtc == 0)
-		return RREG32(R_0060A4_D1CRTC_STATUS_FRAME_COUNT);
-	else
-		return RREG32(R_0068A4_D2CRTC_STATUS_FRAME_COUNT);
-}
+u32 rs600_get_vblank_counter(काष्ठा radeon_device *rdev, पूर्णांक crtc)
+अणु
+	अगर (crtc == 0)
+		वापस RREG32(R_0060A4_D1CRTC_STATUS_FRAME_COUNT);
+	अन्यथा
+		वापस RREG32(R_0068A4_D2CRTC_STATUS_FRAME_COUNT);
+पूर्ण
 
-int rs600_mc_wait_for_idle(struct radeon_device *rdev)
-{
-	unsigned i;
+पूर्णांक rs600_mc_रुको_क्रम_idle(काष्ठा radeon_device *rdev)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if (G_000000_MC_IDLE(RREG32_MC(R_000000_MC_STATUS)))
-			return 0;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर (G_000000_MC_IDLE(RREG32_MC(R_000000_MC_STATUS)))
+			वापस 0;
 		udelay(1);
-	}
-	return -1;
-}
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static void rs600_gpu_init(struct radeon_device *rdev)
-{
+अटल व्योम rs600_gpu_init(काष्ठा radeon_device *rdev)
+अणु
 	r420_pipes_init(rdev);
-	/* Wait for mc idle */
-	if (rs600_mc_wait_for_idle(rdev))
+	/* Wait क्रम mc idle */
+	अगर (rs600_mc_रुको_क्रम_idle(rdev))
 		dev_warn(rdev->dev, "Wait MC idle timeout before updating MC.\n");
-}
+पूर्ण
 
-static void rs600_mc_init(struct radeon_device *rdev)
-{
+अटल व्योम rs600_mc_init(काष्ठा radeon_device *rdev)
+अणु
 	u64 base;
 
 	rdev->mc.aper_base = pci_resource_start(rdev->pdev, 0);
@@ -888,28 +889,28 @@ static void rs600_mc_init(struct radeon_device *rdev)
 	rdev->mc.gtt_base_align = 0;
 	radeon_gtt_location(rdev, &rdev->mc);
 	radeon_update_bandwidth_info(rdev);
-}
+पूर्ण
 
-void rs600_bandwidth_update(struct radeon_device *rdev)
-{
-	struct drm_display_mode *mode0 = NULL;
-	struct drm_display_mode *mode1 = NULL;
+व्योम rs600_bandwidth_update(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा drm_display_mode *mode0 = शून्य;
+	काष्ठा drm_display_mode *mode1 = शून्य;
 	u32 d1mode_priority_a_cnt, d2mode_priority_a_cnt;
 	/* FIXME: implement full support */
 
-	if (!rdev->mode_info.mode_config_initialized)
-		return;
+	अगर (!rdev->mode_info.mode_config_initialized)
+		वापस;
 
 	radeon_update_display_priority(rdev);
 
-	if (rdev->mode_info.crtcs[0]->base.enabled)
+	अगर (rdev->mode_info.crtcs[0]->base.enabled)
 		mode0 = &rdev->mode_info.crtcs[0]->base.mode;
-	if (rdev->mode_info.crtcs[1]->base.enabled)
+	अगर (rdev->mode_info.crtcs[1]->base.enabled)
 		mode1 = &rdev->mode_info.crtcs[1]->base.mode;
 
 	rs690_line_buffer_adjust(rdev, mode0, mode1);
 
-	if (rdev->disp_priority == 2) {
+	अगर (rdev->disp_priority == 2) अणु
 		d1mode_priority_a_cnt = RREG32(R_006548_D1MODE_PRIORITY_A_CNT);
 		d2mode_priority_a_cnt = RREG32(R_006D48_D2MODE_PRIORITY_A_CNT);
 		d1mode_priority_a_cnt |= S_006548_D1MODE_PRIORITY_A_ALWAYS_ON(1);
@@ -918,12 +919,12 @@ void rs600_bandwidth_update(struct radeon_device *rdev)
 		WREG32(R_00654C_D1MODE_PRIORITY_B_CNT, d1mode_priority_a_cnt);
 		WREG32(R_006D48_D2MODE_PRIORITY_A_CNT, d2mode_priority_a_cnt);
 		WREG32(R_006D4C_D2MODE_PRIORITY_B_CNT, d2mode_priority_a_cnt);
-	}
-}
+	पूर्ण
+पूर्ण
 
-uint32_t rs600_mc_rreg(struct radeon_device *rdev, uint32_t reg)
-{
-	unsigned long flags;
+uपूर्णांक32_t rs600_mc_rreg(काष्ठा radeon_device *rdev, uपूर्णांक32_t reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 r;
 
 	spin_lock_irqsave(&rdev->mc_idx_lock, flags);
@@ -931,38 +932,38 @@ uint32_t rs600_mc_rreg(struct radeon_device *rdev, uint32_t reg)
 		S_000070_MC_IND_CITF_ARB0(1));
 	r = RREG32(R_000074_MC_IND_DATA);
 	spin_unlock_irqrestore(&rdev->mc_idx_lock, flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void rs600_mc_wreg(struct radeon_device *rdev, uint32_t reg, uint32_t v)
-{
-	unsigned long flags;
+व्योम rs600_mc_wreg(काष्ठा radeon_device *rdev, uपूर्णांक32_t reg, uपूर्णांक32_t v)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rdev->mc_idx_lock, flags);
 	WREG32(R_000070_MC_IND_INDEX, S_000070_MC_IND_ADDR(reg) |
 		S_000070_MC_IND_CITF_ARB0(1) | S_000070_MC_IND_WR_EN(1));
 	WREG32(R_000074_MC_IND_DATA, v);
 	spin_unlock_irqrestore(&rdev->mc_idx_lock, flags);
-}
+पूर्ण
 
-void rs600_set_safe_registers(struct radeon_device *rdev)
-{
+व्योम rs600_set_safe_रेजिस्टरs(काष्ठा radeon_device *rdev)
+अणु
 	rdev->config.r300.reg_safe_bm = rs600_reg_safe_bm;
 	rdev->config.r300.reg_safe_bm_size = ARRAY_SIZE(rs600_reg_safe_bm);
-}
+पूर्ण
 
-static void rs600_mc_program(struct radeon_device *rdev)
-{
-	struct rv515_mc_save save;
+अटल व्योम rs600_mc_program(काष्ठा radeon_device *rdev)
+अणु
+	काष्ठा rv515_mc_save save;
 
 	/* Stops all mc clients */
 	rv515_mc_stop(rdev, &save);
 
-	/* Wait for mc idle */
-	if (rs600_mc_wait_for_idle(rdev))
+	/* Wait क्रम mc idle */
+	अगर (rs600_mc_रुको_क्रम_idle(rdev))
 		dev_warn(rdev->dev, "Wait MC idle timeout before updating MC.\n");
 
-	/* FIXME: What does AGP means for such chipset ? */
+	/* FIXME: What करोes AGP means क्रम such chipset ? */
 	WREG32_MC(R_000005_MC_AGP_LOCATION, 0x0FFFFFFF);
 	WREG32_MC(R_000006_AGP_BASE, 0);
 	WREG32_MC(R_000007_AGP_BASE_2, 0);
@@ -974,107 +975,107 @@ static void rs600_mc_program(struct radeon_device *rdev)
 		S_000134_HDP_FB_START(rdev->mc.vram_start >> 16));
 
 	rv515_mc_resume(rdev, &save);
-}
+पूर्ण
 
-static int rs600_startup(struct radeon_device *rdev)
-{
-	int r;
+अटल पूर्णांक rs600_startup(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
 	rs600_mc_program(rdev);
-	/* Resume clock */
-	rv515_clock_startup(rdev);
+	/* Resume घड़ी */
+	rv515_घड़ी_startup(rdev);
 	/* Initialize GPU configuration (# pipes, ...) */
 	rs600_gpu_init(rdev);
 	/* Initialize GART (initialize after TTM so we can allocate
 	 * memory through TTM but finalize after TTM) */
 	r = rs600_gart_enable(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* allocate wb buffer */
 	r = radeon_wb_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = radeon_fence_driver_start_ring(rdev, RADEON_RING_TYPE_GFX_INDEX);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing CP fences (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/* Enable IRQ */
-	if (!rdev->irq.installed) {
+	अगर (!rdev->irq.installed) अणु
 		r = radeon_irq_kms_init(rdev);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	rs600_irq_set(rdev);
 	rdev->config.r300.hdp_cntl = RREG32(RADEON_HOST_PATH_CNTL);
 	/* 1M ring buffer */
 	r = r100_cp_init(rdev, 1024 * 1024);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing CP (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_ib_pool_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "IB initialization failed (%d).\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	r = radeon_audio_init(rdev);
-	if (r) {
+	अगर (r) अणु
 		dev_err(rdev->dev, "failed initializing audio\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rs600_resume(struct radeon_device *rdev)
-{
-	int r;
+पूर्णांक rs600_resume(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
 	/* Make sur GART are not working */
 	rs600_gart_disable(rdev);
-	/* Resume clock before doing reset */
-	rv515_clock_startup(rdev);
-	/* Reset gpu before posting otherwise ATOM will enter infinite loop */
-	if (radeon_asic_reset(rdev)) {
+	/* Resume घड़ी beक्रमe करोing reset */
+	rv515_घड़ी_startup(rdev);
+	/* Reset gpu beक्रमe posting otherwise ATOM will enter infinite loop */
+	अगर (radeon_asic_reset(rdev)) अणु
 		dev_warn(rdev->dev, "GPU reset failed ! (0xE40=0x%08X, 0x7C0=0x%08X)\n",
 			RREG32(R_000E40_RBBM_STATUS),
 			RREG32(R_0007C0_CP_STAT));
-	}
+	पूर्ण
 	/* post */
 	atom_asic_init(rdev->mode_info.atom_context);
-	/* Resume clock after posting */
-	rv515_clock_startup(rdev);
-	/* Initialize surface registers */
+	/* Resume घड़ी after posting */
+	rv515_घड़ी_startup(rdev);
+	/* Initialize surface रेजिस्टरs */
 	radeon_surface_init(rdev);
 
 	rdev->accel_working = true;
 	r = rs600_startup(rdev);
-	if (r) {
+	अगर (r) अणु
 		rdev->accel_working = false;
-	}
-	return r;
-}
+	पूर्ण
+	वापस r;
+पूर्ण
 
-int rs600_suspend(struct radeon_device *rdev)
-{
+पूर्णांक rs600_suspend(काष्ठा radeon_device *rdev)
+अणु
 	radeon_pm_suspend(rdev);
 	radeon_audio_fini(rdev);
 	r100_cp_disable(rdev);
 	radeon_wb_disable(rdev);
 	rs600_irq_disable(rdev);
 	rs600_gart_disable(rdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rs600_fini(struct radeon_device *rdev)
-{
+व्योम rs600_fini(काष्ठा radeon_device *rdev)
+अणु
 	radeon_pm_fini(rdev);
 	radeon_audio_fini(rdev);
 	r100_cp_fini(rdev);
@@ -1086,70 +1087,70 @@ void rs600_fini(struct radeon_device *rdev)
 	radeon_fence_driver_fini(rdev);
 	radeon_bo_fini(rdev);
 	radeon_atombios_fini(rdev);
-	kfree(rdev->bios);
-	rdev->bios = NULL;
-}
+	kमुक्त(rdev->bios);
+	rdev->bios = शून्य;
+पूर्ण
 
-int rs600_init(struct radeon_device *rdev)
-{
-	int r;
+पूर्णांक rs600_init(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक r;
 
 	/* Disable VGA */
 	rv515_vga_render_disable(rdev);
-	/* Initialize scratch registers */
+	/* Initialize scratch रेजिस्टरs */
 	radeon_scratch_init(rdev);
-	/* Initialize surface registers */
+	/* Initialize surface रेजिस्टरs */
 	radeon_surface_init(rdev);
-	/* restore some register to sane defaults */
+	/* restore some रेजिस्टर to sane शेषs */
 	r100_restore_sanity(rdev);
 	/* BIOS */
-	if (!radeon_get_bios(rdev)) {
-		if (ASIC_IS_AVIVO(rdev))
-			return -EINVAL;
-	}
-	if (rdev->is_atom_bios) {
+	अगर (!radeon_get_bios(rdev)) अणु
+		अगर (ASIC_IS_AVIVO(rdev))
+			वापस -EINVAL;
+	पूर्ण
+	अगर (rdev->is_atom_bios) अणु
 		r = radeon_atombios_init(rdev);
-		if (r)
-			return r;
-	} else {
+		अगर (r)
+			वापस r;
+	पूर्ण अन्यथा अणु
 		dev_err(rdev->dev, "Expecting atombios for RS600 GPU\n");
-		return -EINVAL;
-	}
-	/* Reset gpu before posting otherwise ATOM will enter infinite loop */
-	if (radeon_asic_reset(rdev)) {
+		वापस -EINVAL;
+	पूर्ण
+	/* Reset gpu beक्रमe posting otherwise ATOM will enter infinite loop */
+	अगर (radeon_asic_reset(rdev)) अणु
 		dev_warn(rdev->dev,
 			"GPU reset failed ! (0xE40=0x%08X, 0x7C0=0x%08X)\n",
 			RREG32(R_000E40_RBBM_STATUS),
 			RREG32(R_0007C0_CP_STAT));
-	}
-	/* check if cards are posted or not */
-	if (radeon_boot_test_post_card(rdev) == false)
-		return -EINVAL;
+	पूर्ण
+	/* check अगर cards are posted or not */
+	अगर (radeon_boot_test_post_card(rdev) == false)
+		वापस -EINVAL;
 
-	/* Initialize clocks */
-	radeon_get_clock_info(rdev->ddev);
+	/* Initialize घड़ीs */
+	radeon_get_घड़ी_info(rdev->ddev);
 	/* initialize memory controller */
 	rs600_mc_init(rdev);
 	r100_debugfs_rbbm_init(rdev);
 	/* Fence driver */
 	r = radeon_fence_driver_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	/* Memory manager */
 	r = radeon_bo_init(rdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	r = rs600_gart_init(rdev);
-	if (r)
-		return r;
-	rs600_set_safe_registers(rdev);
+	अगर (r)
+		वापस r;
+	rs600_set_safe_रेजिस्टरs(rdev);
 
-	/* Initialize power management */
+	/* Initialize घातer management */
 	radeon_pm_init(rdev);
 
 	rdev->accel_working = true;
 	r = rs600_startup(rdev);
-	if (r) {
+	अगर (r) अणु
 		/* Somethings want wront with the accel init stop accel */
 		dev_err(rdev->dev, "Disabling GPU acceleration\n");
 		r100_cp_fini(rdev);
@@ -1158,6 +1159,6 @@ int rs600_init(struct radeon_device *rdev)
 		rs600_gart_fini(rdev);
 		radeon_irq_kms_fini(rdev);
 		rdev->accel_working = false;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Sean Young <sean@mess.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pwm.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <media/rc-core.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/rc-core.h>
 
-#define DRIVER_NAME	"pwm-ir-tx"
-#define DEVICE_NAME	"PWM IR Transmitter"
+#घोषणा DRIVER_NAME	"pwm-ir-tx"
+#घोषणा DEVICE_NAME	"PWM IR Transmitter"
 
-struct pwm_ir {
-	struct pwm_device *pwm;
-	unsigned int carrier;
-	unsigned int duty_cycle;
-};
+काष्ठा pwm_ir अणु
+	काष्ठा pwm_device *pwm;
+	अचिन्हित पूर्णांक carrier;
+	अचिन्हित पूर्णांक duty_cycle;
+पूर्ण;
 
-static const struct of_device_id pwm_ir_of_match[] = {
-	{ .compatible = "pwm-ir-tx", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id pwm_ir_of_match[] = अणु
+	अणु .compatible = "pwm-ir-tx", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pwm_ir_of_match);
 
-static int pwm_ir_set_duty_cycle(struct rc_dev *dev, u32 duty_cycle)
-{
-	struct pwm_ir *pwm_ir = dev->priv;
+अटल पूर्णांक pwm_ir_set_duty_cycle(काष्ठा rc_dev *dev, u32 duty_cycle)
+अणु
+	काष्ठा pwm_ir *pwm_ir = dev->priv;
 
 	pwm_ir->duty_cycle = duty_cycle;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwm_ir_set_carrier(struct rc_dev *dev, u32 carrier)
-{
-	struct pwm_ir *pwm_ir = dev->priv;
+अटल पूर्णांक pwm_ir_set_carrier(काष्ठा rc_dev *dev, u32 carrier)
+अणु
+	काष्ठा pwm_ir *pwm_ir = dev->priv;
 
-	if (!carrier)
-		return -EINVAL;
+	अगर (!carrier)
+		वापस -EINVAL;
 
 	pwm_ir->carrier = carrier;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pwm_ir_tx(struct rc_dev *dev, unsigned int *txbuf,
-		     unsigned int count)
-{
-	struct pwm_ir *pwm_ir = dev->priv;
-	struct pwm_device *pwm = pwm_ir->pwm;
-	int i, duty, period;
-	ktime_t edge;
-	long delta;
+अटल पूर्णांक pwm_ir_tx(काष्ठा rc_dev *dev, अचिन्हित पूर्णांक *txbuf,
+		     अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा pwm_ir *pwm_ir = dev->priv;
+	काष्ठा pwm_device *pwm = pwm_ir->pwm;
+	पूर्णांक i, duty, period;
+	kसमय_प्रकार edge;
+	दीर्घ delta;
 
 	period = DIV_ROUND_CLOSEST(NSEC_PER_SEC, pwm_ir->carrier);
 	duty = DIV_ROUND_CLOSEST(pwm_ir->duty_cycle * period, 100);
 
 	pwm_config(pwm, duty, period);
 
-	edge = ktime_get();
+	edge = kसमय_get();
 
-	for (i = 0; i < count; i++) {
-		if (i % 2) // space
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (i % 2) // space
 			pwm_disable(pwm);
-		else
+		अन्यथा
 			pwm_enable(pwm);
 
-		edge = ktime_add_us(edge, txbuf[i]);
-		delta = ktime_us_delta(edge, ktime_get());
-		if (delta > 0)
+		edge = kसमय_add_us(edge, txbuf[i]);
+		delta = kसमय_us_delta(edge, kसमय_get());
+		अगर (delta > 0)
 			usleep_range(delta, delta + 10);
-	}
+	पूर्ण
 
 	pwm_disable(pwm);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int pwm_ir_probe(struct platform_device *pdev)
-{
-	struct pwm_ir *pwm_ir;
-	struct rc_dev *rcdev;
-	int rc;
+अटल पूर्णांक pwm_ir_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pwm_ir *pwm_ir;
+	काष्ठा rc_dev *rcdev;
+	पूर्णांक rc;
 
-	pwm_ir = devm_kmalloc(&pdev->dev, sizeof(*pwm_ir), GFP_KERNEL);
-	if (!pwm_ir)
-		return -ENOMEM;
+	pwm_ir = devm_kदो_स्मृति(&pdev->dev, माप(*pwm_ir), GFP_KERNEL);
+	अगर (!pwm_ir)
+		वापस -ENOMEM;
 
-	pwm_ir->pwm = devm_pwm_get(&pdev->dev, NULL);
-	if (IS_ERR(pwm_ir->pwm))
-		return PTR_ERR(pwm_ir->pwm);
+	pwm_ir->pwm = devm_pwm_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(pwm_ir->pwm))
+		वापस PTR_ERR(pwm_ir->pwm);
 
 	pwm_ir->carrier = 38000;
 	pwm_ir->duty_cycle = 50;
 
 	rcdev = devm_rc_allocate_device(&pdev->dev, RC_DRIVER_IR_RAW_TX);
-	if (!rcdev)
-		return -ENOMEM;
+	अगर (!rcdev)
+		वापस -ENOMEM;
 
 	rcdev->priv = pwm_ir;
 	rcdev->driver_name = DRIVER_NAME;
@@ -109,21 +110,21 @@ static int pwm_ir_probe(struct platform_device *pdev)
 	rcdev->s_tx_duty_cycle = pwm_ir_set_duty_cycle;
 	rcdev->s_tx_carrier = pwm_ir_set_carrier;
 
-	rc = devm_rc_register_device(&pdev->dev, rcdev);
-	if (rc < 0)
+	rc = devm_rc_रेजिस्टर_device(&pdev->dev, rcdev);
+	अगर (rc < 0)
 		dev_err(&pdev->dev, "failed to register rc device\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct platform_driver pwm_ir_driver = {
+अटल काष्ठा platक्रमm_driver pwm_ir_driver = अणु
 	.probe = pwm_ir_probe,
-	.driver = {
+	.driver = अणु
 		.name	= DRIVER_NAME,
 		.of_match_table = of_match_ptr(pwm_ir_of_match),
-	},
-};
-module_platform_driver(pwm_ir_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(pwm_ir_driver);
 
 MODULE_DESCRIPTION("PWM IR Transmitter");
 MODULE_AUTHOR("Sean Young <sean@mess.org>");

@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Copyright (C) 2021 Álvaro Fernández Rojas <noltari@gmail.com>
+ * Copyright (C) 2021 थlvaro Fernथँndez Rojas <noltari@gmail.com>
  * Copyright (C) 2016 Jonas Gorski <jonas.gorski@gmail.com>
  */
 
-#ifndef __PINCTRL_BCM63XX_H__
-#define __PINCTRL_BCM63XX_H__
+#अगर_अघोषित __PINCTRL_BCM63XX_H__
+#घोषणा __PINCTRL_BCM63XX_H__
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#define BCM63XX_BANK_GPIOS 32
+#घोषणा BCM63XX_BANK_GPIOS 32
 
-struct bcm63xx_pinctrl_soc {
-	struct pinctrl_ops *pctl_ops;
-	struct pinmux_ops *pmx_ops;
+काष्ठा bcm63xx_pinctrl_soc अणु
+	काष्ठा pinctrl_ops *pctl_ops;
+	काष्ठा pinmux_ops *pmx_ops;
 
-	const struct pinctrl_pin_desc *pins;
-	unsigned npins;
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	अचिन्हित npins;
 
-	unsigned int ngpios;
-};
+	अचिन्हित पूर्णांक ngpios;
+पूर्ण;
 
-struct bcm63xx_pinctrl {
-	struct device *dev;
-	struct regmap *regs;
+काष्ठा bcm63xx_pinctrl अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regs;
 
-	struct pinctrl_desc pctl_desc;
-	struct pinctrl_dev *pctl_dev;
+	काष्ठा pinctrl_desc pctl_desc;
+	काष्ठा pinctrl_dev *pctl_dev;
 
-	void *driver_data;
-};
+	व्योम *driver_data;
+पूर्ण;
 
-static inline unsigned int bcm63xx_bank_pin(unsigned int pin)
-{
-	return pin % BCM63XX_BANK_GPIOS;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक bcm63xx_bank_pin(अचिन्हित पूर्णांक pin)
+अणु
+	वापस pin % BCM63XX_BANK_GPIOS;
+पूर्ण
 
-int bcm63xx_pinctrl_probe(struct platform_device *pdev,
-			  const struct bcm63xx_pinctrl_soc *soc,
-			  void *driver_data);
+पूर्णांक bcm63xx_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
+			  स्थिर काष्ठा bcm63xx_pinctrl_soc *soc,
+			  व्योम *driver_data);
 
-#endif /* __PINCTRL_BCM63XX_H__ */
+#पूर्ण_अगर /* __PINCTRL_BCM63XX_H__ */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Freescale MXS I2C bus driver
  *
@@ -10,70 +11,70 @@
  * Copyright (C) 2009-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/completion.h>
-#include <linux/platform_device.h>
-#include <linux/jiffies.h>
-#include <linux/io.h>
-#include <linux/stmp_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/dma/mxs-dma.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/sपंचांगp_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma/mxs-dma.h>
 
-#define DRIVER_NAME "mxs-i2c"
+#घोषणा DRIVER_NAME "mxs-i2c"
 
-#define MXS_I2C_CTRL0		(0x00)
-#define MXS_I2C_CTRL0_SET	(0x04)
-#define MXS_I2C_CTRL0_CLR	(0x08)
+#घोषणा MXS_I2C_CTRL0		(0x00)
+#घोषणा MXS_I2C_CTRL0_SET	(0x04)
+#घोषणा MXS_I2C_CTRL0_CLR	(0x08)
 
-#define MXS_I2C_CTRL0_SFTRST			0x80000000
-#define MXS_I2C_CTRL0_RUN			0x20000000
-#define MXS_I2C_CTRL0_SEND_NAK_ON_LAST		0x02000000
-#define MXS_I2C_CTRL0_PIO_MODE			0x01000000
-#define MXS_I2C_CTRL0_RETAIN_CLOCK		0x00200000
-#define MXS_I2C_CTRL0_POST_SEND_STOP		0x00100000
-#define MXS_I2C_CTRL0_PRE_SEND_START		0x00080000
-#define MXS_I2C_CTRL0_MASTER_MODE		0x00020000
-#define MXS_I2C_CTRL0_DIRECTION			0x00010000
-#define MXS_I2C_CTRL0_XFER_COUNT(v)		((v) & 0x0000FFFF)
+#घोषणा MXS_I2C_CTRL0_SFTRST			0x80000000
+#घोषणा MXS_I2C_CTRL0_RUN			0x20000000
+#घोषणा MXS_I2C_CTRL0_SEND_NAK_ON_LAST		0x02000000
+#घोषणा MXS_I2C_CTRL0_PIO_MODE			0x01000000
+#घोषणा MXS_I2C_CTRL0_RETAIN_CLOCK		0x00200000
+#घोषणा MXS_I2C_CTRL0_POST_SEND_STOP		0x00100000
+#घोषणा MXS_I2C_CTRL0_PRE_SEND_START		0x00080000
+#घोषणा MXS_I2C_CTRL0_MASTER_MODE		0x00020000
+#घोषणा MXS_I2C_CTRL0_सूचीECTION			0x00010000
+#घोषणा MXS_I2C_CTRL0_XFER_COUNT(v)		((v) & 0x0000FFFF)
 
-#define MXS_I2C_TIMING0		(0x10)
-#define MXS_I2C_TIMING1		(0x20)
-#define MXS_I2C_TIMING2		(0x30)
+#घोषणा MXS_I2C_TIMING0		(0x10)
+#घोषणा MXS_I2C_TIMING1		(0x20)
+#घोषणा MXS_I2C_TIMING2		(0x30)
 
-#define MXS_I2C_CTRL1		(0x40)
-#define MXS_I2C_CTRL1_SET	(0x44)
-#define MXS_I2C_CTRL1_CLR	(0x48)
+#घोषणा MXS_I2C_CTRL1		(0x40)
+#घोषणा MXS_I2C_CTRL1_SET	(0x44)
+#घोषणा MXS_I2C_CTRL1_CLR	(0x48)
 
-#define MXS_I2C_CTRL1_CLR_GOT_A_NAK		0x10000000
-#define MXS_I2C_CTRL1_BUS_FREE_IRQ		0x80
-#define MXS_I2C_CTRL1_DATA_ENGINE_CMPLT_IRQ	0x40
-#define MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ		0x20
-#define MXS_I2C_CTRL1_OVERSIZE_XFER_TERM_IRQ	0x10
-#define MXS_I2C_CTRL1_EARLY_TERM_IRQ		0x08
-#define MXS_I2C_CTRL1_MASTER_LOSS_IRQ		0x04
-#define MXS_I2C_CTRL1_SLAVE_STOP_IRQ		0x02
-#define MXS_I2C_CTRL1_SLAVE_IRQ			0x01
+#घोषणा MXS_I2C_CTRL1_CLR_GOT_A_NAK		0x10000000
+#घोषणा MXS_I2C_CTRL1_BUS_FREE_IRQ		0x80
+#घोषणा MXS_I2C_CTRL1_DATA_ENGINE_CMPLT_IRQ	0x40
+#घोषणा MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ		0x20
+#घोषणा MXS_I2C_CTRL1_OVERSIZE_XFER_TERM_IRQ	0x10
+#घोषणा MXS_I2C_CTRL1_EARLY_TERM_IRQ		0x08
+#घोषणा MXS_I2C_CTRL1_MASTER_LOSS_IRQ		0x04
+#घोषणा MXS_I2C_CTRL1_SLAVE_STOP_IRQ		0x02
+#घोषणा MXS_I2C_CTRL1_SLAVE_IRQ			0x01
 
-#define MXS_I2C_STAT		(0x50)
-#define MXS_I2C_STAT_GOT_A_NAK			0x10000000
-#define MXS_I2C_STAT_BUS_BUSY			0x00000800
-#define MXS_I2C_STAT_CLK_GEN_BUSY		0x00000400
+#घोषणा MXS_I2C_STAT		(0x50)
+#घोषणा MXS_I2C_STAT_GOT_A_NAK			0x10000000
+#घोषणा MXS_I2C_STAT_BUS_BUSY			0x00000800
+#घोषणा MXS_I2C_STAT_CLK_GEN_BUSY		0x00000400
 
-#define MXS_I2C_DATA(i2c)	((i2c->dev_type == MXS_I2C_V1) ? 0x60 : 0xa0)
+#घोषणा MXS_I2C_DATA(i2c)	((i2c->dev_type == MXS_I2C_V1) ? 0x60 : 0xa0)
 
-#define MXS_I2C_DEBUG0_CLR(i2c)	((i2c->dev_type == MXS_I2C_V1) ? 0x78 : 0xb8)
+#घोषणा MXS_I2C_DEBUG0_CLR(i2c)	((i2c->dev_type == MXS_I2C_V1) ? 0x78 : 0xb8)
 
-#define MXS_I2C_DEBUG0_DMAREQ	0x80000000
+#घोषणा MXS_I2C_DEBUG0_DMAREQ	0x80000000
 
-#define MXS_I2C_IRQ_MASK	(MXS_I2C_CTRL1_DATA_ENGINE_CMPLT_IRQ | \
+#घोषणा MXS_I2C_IRQ_MASK	(MXS_I2C_CTRL1_DATA_ENGINE_CMPLT_IRQ | \
 				 MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ | \
 				 MXS_I2C_CTRL1_EARLY_TERM_IRQ | \
 				 MXS_I2C_CTRL1_MASTER_LOSS_IRQ | \
@@ -81,120 +82,120 @@
 				 MXS_I2C_CTRL1_SLAVE_IRQ)
 
 
-#define MXS_CMD_I2C_SELECT	(MXS_I2C_CTRL0_RETAIN_CLOCK |	\
+#घोषणा MXS_CMD_I2C_SELECT	(MXS_I2C_CTRL0_RETAIN_CLOCK |	\
 				 MXS_I2C_CTRL0_PRE_SEND_START |	\
 				 MXS_I2C_CTRL0_MASTER_MODE |	\
-				 MXS_I2C_CTRL0_DIRECTION |	\
+				 MXS_I2C_CTRL0_सूचीECTION |	\
 				 MXS_I2C_CTRL0_XFER_COUNT(1))
 
-#define MXS_CMD_I2C_WRITE	(MXS_I2C_CTRL0_PRE_SEND_START |	\
+#घोषणा MXS_CMD_I2C_WRITE	(MXS_I2C_CTRL0_PRE_SEND_START |	\
 				 MXS_I2C_CTRL0_MASTER_MODE |	\
-				 MXS_I2C_CTRL0_DIRECTION)
+				 MXS_I2C_CTRL0_सूचीECTION)
 
-#define MXS_CMD_I2C_READ	(MXS_I2C_CTRL0_SEND_NAK_ON_LAST | \
+#घोषणा MXS_CMD_I2C_READ	(MXS_I2C_CTRL0_SEND_NAK_ON_LAST | \
 				 MXS_I2C_CTRL0_MASTER_MODE)
 
-enum mxs_i2c_devtype {
+क्रमागत mxs_i2c_devtype अणु
 	MXS_I2C_UNKNOWN = 0,
 	MXS_I2C_V1,
 	MXS_I2C_V2,
-};
+पूर्ण;
 
 /**
- * struct mxs_i2c_dev - per device, private MXS-I2C data
+ * काष्ठा mxs_i2c_dev - per device, निजी MXS-I2C data
  *
  * @dev: driver model device node
  * @dev_type: distinguish i.MX23/i.MX28 features
- * @regs: IO registers pointer
- * @cmd_complete: completion object for transaction wait
- * @cmd_err: error code for last transaction
- * @adapter: i2c subsystem adapter node
+ * @regs: IO रेजिस्टरs poपूर्णांकer
+ * @cmd_complete: completion object क्रम transaction रुको
+ * @cmd_err: error code क्रम last transaction
+ * @adapter: i2c subप्रणाली adapter node
  */
-struct mxs_i2c_dev {
-	struct device *dev;
-	enum mxs_i2c_devtype dev_type;
-	void __iomem *regs;
-	struct completion cmd_complete;
-	int cmd_err;
-	struct i2c_adapter adapter;
+काष्ठा mxs_i2c_dev अणु
+	काष्ठा device *dev;
+	क्रमागत mxs_i2c_devtype dev_type;
+	व्योम __iomem *regs;
+	काष्ठा completion cmd_complete;
+	पूर्णांक cmd_err;
+	काष्ठा i2c_adapter adapter;
 
-	uint32_t timing0;
-	uint32_t timing1;
-	uint32_t timing2;
+	uपूर्णांक32_t timing0;
+	uपूर्णांक32_t timing1;
+	uपूर्णांक32_t timing2;
 
 	/* DMA support components */
-	struct dma_chan			*dmach;
-	uint32_t			pio_data[2];
-	uint32_t			addr_data;
-	struct scatterlist		sg_io[2];
-	bool				dma_read;
-};
+	काष्ठा dma_chan			*dmach;
+	uपूर्णांक32_t			pio_data[2];
+	uपूर्णांक32_t			addr_data;
+	काष्ठा scatterlist		sg_io[2];
+	bool				dma_पढ़ो;
+पूर्ण;
 
-static int mxs_i2c_reset(struct mxs_i2c_dev *i2c)
-{
-	int ret = stmp_reset_block(i2c->regs);
-	if (ret)
-		return ret;
+अटल पूर्णांक mxs_i2c_reset(काष्ठा mxs_i2c_dev *i2c)
+अणु
+	पूर्णांक ret = sपंचांगp_reset_block(i2c->regs);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Configure timing for the I2C block. The I2C TIMING2 register has to
+	 * Configure timing क्रम the I2C block. The I2C TIMING2 रेजिस्टर has to
 	 * be programmed with this particular magic number. The rest is derived
 	 * from the XTAL speed and requested I2C speed.
 	 *
 	 * For details, see i.MX233 [25.4.2 - 25.4.4] and i.MX28 [27.5.2 - 27.5.4].
 	 */
-	writel(i2c->timing0, i2c->regs + MXS_I2C_TIMING0);
-	writel(i2c->timing1, i2c->regs + MXS_I2C_TIMING1);
-	writel(i2c->timing2, i2c->regs + MXS_I2C_TIMING2);
+	ग_लिखोl(i2c->timing0, i2c->regs + MXS_I2C_TIMING0);
+	ग_लिखोl(i2c->timing1, i2c->regs + MXS_I2C_TIMING1);
+	ग_लिखोl(i2c->timing2, i2c->regs + MXS_I2C_TIMING2);
 
-	writel(MXS_I2C_IRQ_MASK << 8, i2c->regs + MXS_I2C_CTRL1_SET);
+	ग_लिखोl(MXS_I2C_IRQ_MASK << 8, i2c->regs + MXS_I2C_CTRL1_SET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mxs_i2c_dma_finish(struct mxs_i2c_dev *i2c)
-{
-	if (i2c->dma_read) {
+अटल व्योम mxs_i2c_dma_finish(काष्ठा mxs_i2c_dev *i2c)
+अणु
+	अगर (i2c->dma_पढ़ो) अणु
 		dma_unmap_sg(i2c->dev, &i2c->sg_io[0], 1, DMA_TO_DEVICE);
 		dma_unmap_sg(i2c->dev, &i2c->sg_io[1], 1, DMA_FROM_DEVICE);
-	} else {
+	पूर्ण अन्यथा अणु
 		dma_unmap_sg(i2c->dev, i2c->sg_io, 2, DMA_TO_DEVICE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mxs_i2c_dma_irq_callback(void *param)
-{
-	struct mxs_i2c_dev *i2c = param;
+अटल व्योम mxs_i2c_dma_irq_callback(व्योम *param)
+अणु
+	काष्ठा mxs_i2c_dev *i2c = param;
 
 	complete(&i2c->cmd_complete);
 	mxs_i2c_dma_finish(i2c);
-}
+पूर्ण
 
-static int mxs_i2c_dma_setup_xfer(struct i2c_adapter *adap,
-			struct i2c_msg *msg, uint32_t flags)
-{
-	struct dma_async_tx_descriptor *desc;
-	struct mxs_i2c_dev *i2c = i2c_get_adapdata(adap);
+अटल पूर्णांक mxs_i2c_dma_setup_xfer(काष्ठा i2c_adapter *adap,
+			काष्ठा i2c_msg *msg, uपूर्णांक32_t flags)
+अणु
+	काष्ठा dma_async_tx_descriptor *desc;
+	काष्ठा mxs_i2c_dev *i2c = i2c_get_adapdata(adap);
 
 	i2c->addr_data = i2c_8bit_addr_from_msg(msg);
 
-	if (msg->flags & I2C_M_RD) {
-		i2c->dma_read = true;
+	अगर (msg->flags & I2C_M_RD) अणु
+		i2c->dma_पढ़ो = true;
 
 		/*
 		 * SELECT command.
 		 */
 
-		/* Queue the PIO register write transfer. */
+		/* Queue the PIO रेजिस्टर ग_लिखो transfer. */
 		i2c->pio_data[0] = MXS_CMD_I2C_SELECT;
 		desc = dmaengine_prep_slave_sg(i2c->dmach,
-					(struct scatterlist *)&i2c->pio_data[0],
+					(काष्ठा scatterlist *)&i2c->pio_data[0],
 					1, DMA_TRANS_NONE, 0);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(i2c->dev,
 				"Failed to get PIO reg. write descriptor.\n");
-			goto select_init_pio_fail;
-		}
+			जाओ select_init_pio_fail;
+		पूर्ण
 
 		/* Queue the DMA data transfer. */
 		sg_init_one(&i2c->sg_io[0], &i2c->addr_data, 1);
@@ -203,27 +204,27 @@ static int mxs_i2c_dma_setup_xfer(struct i2c_adapter *adap,
 					DMA_MEM_TO_DEV,
 					DMA_PREP_INTERRUPT |
 					MXS_DMA_CTRL_WAIT4END);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(i2c->dev,
 				"Failed to get DMA data write descriptor.\n");
-			goto select_init_dma_fail;
-		}
+			जाओ select_init_dma_fail;
+		पूर्ण
 
 		/*
 		 * READ command.
 		 */
 
-		/* Queue the PIO register write transfer. */
+		/* Queue the PIO रेजिस्टर ग_लिखो transfer. */
 		i2c->pio_data[1] = flags | MXS_CMD_I2C_READ |
 				MXS_I2C_CTRL0_XFER_COUNT(msg->len);
 		desc = dmaengine_prep_slave_sg(i2c->dmach,
-					(struct scatterlist *)&i2c->pio_data[1],
+					(काष्ठा scatterlist *)&i2c->pio_data[1],
 					1, DMA_TRANS_NONE, DMA_PREP_INTERRUPT);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(i2c->dev,
 				"Failed to get PIO reg. write descriptor.\n");
-			goto select_init_dma_fail;
-		}
+			जाओ select_init_dma_fail;
+		पूर्ण
 
 		/* Queue the DMA data transfer. */
 		sg_init_one(&i2c->sg_io[1], msg->buf, msg->len);
@@ -232,29 +233,29 @@ static int mxs_i2c_dma_setup_xfer(struct i2c_adapter *adap,
 					DMA_DEV_TO_MEM,
 					DMA_PREP_INTERRUPT |
 					MXS_DMA_CTRL_WAIT4END);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(i2c->dev,
 				"Failed to get DMA data write descriptor.\n");
-			goto read_init_dma_fail;
-		}
-	} else {
-		i2c->dma_read = false;
+			जाओ पढ़ो_init_dma_fail;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		i2c->dma_पढ़ो = false;
 
 		/*
 		 * WRITE command.
 		 */
 
-		/* Queue the PIO register write transfer. */
+		/* Queue the PIO रेजिस्टर ग_लिखो transfer. */
 		i2c->pio_data[0] = flags | MXS_CMD_I2C_WRITE |
 				MXS_I2C_CTRL0_XFER_COUNT(msg->len + 1);
 		desc = dmaengine_prep_slave_sg(i2c->dmach,
-					(struct scatterlist *)&i2c->pio_data[0],
+					(काष्ठा scatterlist *)&i2c->pio_data[0],
 					1, DMA_TRANS_NONE, 0);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(i2c->dev,
 				"Failed to get PIO reg. write descriptor.\n");
-			goto write_init_pio_fail;
-		}
+			जाओ ग_लिखो_init_pio_fail;
+		पूर्ण
 
 		/* Queue the DMA data transfer. */
 		sg_init_table(i2c->sg_io, 2);
@@ -265,12 +266,12 @@ static int mxs_i2c_dma_setup_xfer(struct i2c_adapter *adap,
 					DMA_MEM_TO_DEV,
 					DMA_PREP_INTERRUPT |
 					MXS_DMA_CTRL_WAIT4END);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(i2c->dev,
 				"Failed to get DMA data write descriptor.\n");
-			goto write_init_dma_fail;
-		}
-	}
+			जाओ ग_लिखो_init_dma_fail;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * The last descriptor must have this callback,
@@ -282,170 +283,170 @@ static int mxs_i2c_dma_setup_xfer(struct i2c_adapter *adap,
 	/* Start the transfer. */
 	dmaengine_submit(desc);
 	dma_async_issue_pending(i2c->dmach);
-	return 0;
+	वापस 0;
 
 /* Read failpath. */
-read_init_dma_fail:
+पढ़ो_init_dma_fail:
 	dma_unmap_sg(i2c->dev, &i2c->sg_io[1], 1, DMA_FROM_DEVICE);
 select_init_dma_fail:
 	dma_unmap_sg(i2c->dev, &i2c->sg_io[0], 1, DMA_TO_DEVICE);
 select_init_pio_fail:
 	dmaengine_terminate_all(i2c->dmach);
-	return -EINVAL;
+	वापस -EINVAL;
 
 /* Write failpath. */
-write_init_dma_fail:
+ग_लिखो_init_dma_fail:
 	dma_unmap_sg(i2c->dev, i2c->sg_io, 2, DMA_TO_DEVICE);
-write_init_pio_fail:
+ग_लिखो_init_pio_fail:
 	dmaengine_terminate_all(i2c->dmach);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int mxs_i2c_pio_wait_xfer_end(struct mxs_i2c_dev *i2c)
-{
-	unsigned long timeout = jiffies + msecs_to_jiffies(1000);
+अटल पूर्णांक mxs_i2c_pio_रुको_xfer_end(काष्ठा mxs_i2c_dev *i2c)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(1000);
 
-	while (readl(i2c->regs + MXS_I2C_CTRL0) & MXS_I2C_CTRL0_RUN) {
-		if (readl(i2c->regs + MXS_I2C_CTRL1) &
+	जबतक (पढ़ोl(i2c->regs + MXS_I2C_CTRL0) & MXS_I2C_CTRL0_RUN) अणु
+		अगर (पढ़ोl(i2c->regs + MXS_I2C_CTRL1) &
 				MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ)
-			return -ENXIO;
-		if (time_after(jiffies, timeout))
-			return -ETIMEDOUT;
+			वापस -ENXIO;
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -ETIMEDOUT;
 		cond_resched();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxs_i2c_pio_check_error_state(struct mxs_i2c_dev *i2c)
-{
+अटल पूर्णांक mxs_i2c_pio_check_error_state(काष्ठा mxs_i2c_dev *i2c)
+अणु
 	u32 state;
 
-	state = readl(i2c->regs + MXS_I2C_CTRL1_CLR) & MXS_I2C_IRQ_MASK;
+	state = पढ़ोl(i2c->regs + MXS_I2C_CTRL1_CLR) & MXS_I2C_IRQ_MASK;
 
-	if (state & MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ)
+	अगर (state & MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ)
 		i2c->cmd_err = -ENXIO;
-	else if (state & (MXS_I2C_CTRL1_EARLY_TERM_IRQ |
+	अन्यथा अगर (state & (MXS_I2C_CTRL1_EARLY_TERM_IRQ |
 			  MXS_I2C_CTRL1_MASTER_LOSS_IRQ |
 			  MXS_I2C_CTRL1_SLAVE_STOP_IRQ |
 			  MXS_I2C_CTRL1_SLAVE_IRQ))
 		i2c->cmd_err = -EIO;
 
-	return i2c->cmd_err;
-}
+	वापस i2c->cmd_err;
+पूर्ण
 
-static void mxs_i2c_pio_trigger_cmd(struct mxs_i2c_dev *i2c, u32 cmd)
-{
+अटल व्योम mxs_i2c_pio_trigger_cmd(काष्ठा mxs_i2c_dev *i2c, u32 cmd)
+अणु
 	u32 reg;
 
-	writel(cmd, i2c->regs + MXS_I2C_CTRL0);
+	ग_लिखोl(cmd, i2c->regs + MXS_I2C_CTRL0);
 
-	/* readback makes sure the write is latched into hardware */
-	reg = readl(i2c->regs + MXS_I2C_CTRL0);
+	/* पढ़ोback makes sure the ग_लिखो is latched पूर्णांकo hardware */
+	reg = पढ़ोl(i2c->regs + MXS_I2C_CTRL0);
 	reg |= MXS_I2C_CTRL0_RUN;
-	writel(reg, i2c->regs + MXS_I2C_CTRL0);
-}
+	ग_लिखोl(reg, i2c->regs + MXS_I2C_CTRL0);
+पूर्ण
 
 /*
  * Start WRITE transaction on the I2C bus. By studying i.MX23 datasheet,
- * CTRL0::PIO_MODE bit description clarifies the order in which the registers
- * must be written during PIO mode operation. First, the CTRL0 register has
+ * CTRL0::PIO_MODE bit description clarअगरies the order in which the रेजिस्टरs
+ * must be written during PIO mode operation. First, the CTRL0 रेजिस्टर has
  * to be programmed with all the necessary bits but the RUN bit. Then the
- * payload has to be written into the DATA register. Finally, the transmission
+ * payload has to be written पूर्णांकo the DATA रेजिस्टर. Finally, the transmission
  * is executed by setting the RUN bit in CTRL0.
  */
-static void mxs_i2c_pio_trigger_write_cmd(struct mxs_i2c_dev *i2c, u32 cmd,
+अटल व्योम mxs_i2c_pio_trigger_ग_लिखो_cmd(काष्ठा mxs_i2c_dev *i2c, u32 cmd,
 					  u32 data)
-{
-	writel(cmd, i2c->regs + MXS_I2C_CTRL0);
+अणु
+	ग_लिखोl(cmd, i2c->regs + MXS_I2C_CTRL0);
 
-	if (i2c->dev_type == MXS_I2C_V1)
-		writel(MXS_I2C_CTRL0_PIO_MODE, i2c->regs + MXS_I2C_CTRL0_SET);
+	अगर (i2c->dev_type == MXS_I2C_V1)
+		ग_लिखोl(MXS_I2C_CTRL0_PIO_MODE, i2c->regs + MXS_I2C_CTRL0_SET);
 
-	writel(data, i2c->regs + MXS_I2C_DATA(i2c));
-	writel(MXS_I2C_CTRL0_RUN, i2c->regs + MXS_I2C_CTRL0_SET);
-}
+	ग_लिखोl(data, i2c->regs + MXS_I2C_DATA(i2c));
+	ग_लिखोl(MXS_I2C_CTRL0_RUN, i2c->regs + MXS_I2C_CTRL0_SET);
+पूर्ण
 
-static int mxs_i2c_pio_setup_xfer(struct i2c_adapter *adap,
-			struct i2c_msg *msg, uint32_t flags)
-{
-	struct mxs_i2c_dev *i2c = i2c_get_adapdata(adap);
-	uint32_t addr_data = i2c_8bit_addr_from_msg(msg);
-	uint32_t data = 0;
-	int i, ret, xlen = 0, xmit = 0;
-	uint32_t start;
+अटल पूर्णांक mxs_i2c_pio_setup_xfer(काष्ठा i2c_adapter *adap,
+			काष्ठा i2c_msg *msg, uपूर्णांक32_t flags)
+अणु
+	काष्ठा mxs_i2c_dev *i2c = i2c_get_adapdata(adap);
+	uपूर्णांक32_t addr_data = i2c_8bit_addr_from_msg(msg);
+	uपूर्णांक32_t data = 0;
+	पूर्णांक i, ret, xlen = 0, xmit = 0;
+	uपूर्णांक32_t start;
 
 	/* Mute IRQs coming from this block. */
-	writel(MXS_I2C_IRQ_MASK << 8, i2c->regs + MXS_I2C_CTRL1_CLR);
+	ग_लिखोl(MXS_I2C_IRQ_MASK << 8, i2c->regs + MXS_I2C_CTRL1_CLR);
 
 	/*
 	 * MX23 idea:
 	 * - Enable CTRL0::PIO_MODE (1 << 24)
 	 * - Enable CTRL1::ACK_MODE (1 << 27)
 	 *
-	 * WARNING! The MX23 is broken in some way, even if it claims
+	 * WARNING! The MX23 is broken in some way, even अगर it claims
 	 * to support PIO, when we try to transfer any amount of data
 	 * that is not aligned to 4 bytes, the DMA engine will have
 	 * bits in DEBUG1::DMA_BYTES_ENABLES still set even after the
 	 * transfer. This in turn will mess up the next transfer as
-	 * the block it emit one byte write onto the bus terminated
+	 * the block it emit one byte ग_लिखो onto the bus terminated
 	 * with a NAK+STOP. A possible workaround is to reset the IP
 	 * block after every PIO transmission, which might just work.
 	 *
 	 * NOTE: The CTRL0::PIO_MODE description is important, since
 	 * it outlines how the PIO mode is really supposed to work.
 	 */
-	if (msg->flags & I2C_M_RD) {
+	अगर (msg->flags & I2C_M_RD) अणु
 		/*
 		 * PIO READ transfer:
 		 *
 		 * This transfer MUST be limited to 4 bytes maximum. It is not
 		 * possible to transfer more than four bytes via PIO, since we
-		 * can not in any way make sure we can read the data from the
-		 * DATA register fast enough. Besides, the RX FIFO is only four
-		 * bytes deep, thus we can only really read up to four bytes at
-		 * time. Finally, there is no bit indicating us that new data
+		 * can not in any way make sure we can पढ़ो the data from the
+		 * DATA रेजिस्टर fast enough. Besides, the RX FIFO is only four
+		 * bytes deep, thus we can only really पढ़ो up to four bytes at
+		 * समय. Finally, there is no bit indicating us that new data
 		 * arrived at the FIFO and can thus be fetched from the DATA
-		 * register.
+		 * रेजिस्टर.
 		 */
 		BUG_ON(msg->len > 4);
 
 		/* SELECT command. */
-		mxs_i2c_pio_trigger_write_cmd(i2c, MXS_CMD_I2C_SELECT,
+		mxs_i2c_pio_trigger_ग_लिखो_cmd(i2c, MXS_CMD_I2C_SELECT,
 					      addr_data);
 
-		ret = mxs_i2c_pio_wait_xfer_end(i2c);
-		if (ret) {
+		ret = mxs_i2c_pio_रुको_xfer_end(i2c);
+		अगर (ret) अणु
 			dev_dbg(i2c->dev,
 				"PIO: Failed to send SELECT command!\n");
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		/* READ command. */
 		mxs_i2c_pio_trigger_cmd(i2c,
 					MXS_CMD_I2C_READ | flags |
 					MXS_I2C_CTRL0_XFER_COUNT(msg->len));
 
-		ret = mxs_i2c_pio_wait_xfer_end(i2c);
-		if (ret) {
+		ret = mxs_i2c_pio_रुको_xfer_end(i2c);
+		अगर (ret) अणु
 			dev_dbg(i2c->dev,
 				"PIO: Failed to send READ command!\n");
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
-		data = readl(i2c->regs + MXS_I2C_DATA(i2c));
-		for (i = 0; i < msg->len; i++) {
+		data = पढ़ोl(i2c->regs + MXS_I2C_DATA(i2c));
+		क्रम (i = 0; i < msg->len; i++) अणु
 			msg->buf[i] = data & 0xff;
 			data >>= 8;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * PIO WRITE transfer:
 		 *
-		 * The code below implements clock stretching to circumvent
+		 * The code below implements घड़ी stretching to circumvent
 		 * the possibility of kernel not being able to supply data
 		 * fast enough. It is possible to transfer arbitrary amount
-		 * of data using PIO write.
+		 * of data using PIO ग_लिखो.
 		 */
 
 		/*
@@ -459,35 +460,35 @@ static int mxs_i2c_pio_setup_xfer(struct i2c_adapter *adap,
 		/* Start the transfer with START condition. */
 		start = MXS_I2C_CTRL0_PRE_SEND_START;
 
-		/* If the transfer is long, use clock stretching. */
-		if (msg->len > 3)
+		/* If the transfer is दीर्घ, use घड़ी stretching. */
+		अगर (msg->len > 3)
 			start |= MXS_I2C_CTRL0_RETAIN_CLOCK;
 
-		for (i = 0; i < msg->len; i++) {
+		क्रम (i = 0; i < msg->len; i++) अणु
 			data >>= 8;
 			data |= (msg->buf[i] << 24);
 
 			xmit = 0;
 
 			/* This is the last transfer of the message. */
-			if (i + 1 == msg->len) {
+			अगर (i + 1 == msg->len) अणु
 				/* Add optional STOP flag. */
 				start |= flags;
 				/* Remove RETAIN_CLOCK bit. */
 				start &= ~MXS_I2C_CTRL0_RETAIN_CLOCK;
 				xmit = 1;
-			}
+			पूर्ण
 
-			/* Four bytes are ready in the "data" variable. */
-			if ((i & 3) == 2)
+			/* Four bytes are पढ़ोy in the "data" variable. */
+			अगर ((i & 3) == 2)
 				xmit = 1;
 
-			/* Nothing interesting happened, continue stuffing. */
-			if (!xmit)
-				continue;
+			/* Nothing पूर्णांकeresting happened, जारी stuffing. */
+			अगर (!xmit)
+				जारी;
 
 			/*
-			 * Compute the size of the transfer and shift the
+			 * Compute the size of the transfer and shअगरt the
 			 * data accordingly.
 			 *
 			 * i = (4k + 0) .... xlen = 2
@@ -496,9 +497,9 @@ static int mxs_i2c_pio_setup_xfer(struct i2c_adapter *adap,
 			 * i = (4k + 3) .... xlen = 1
 			 */
 
-			if ((i % 4) == 3)
+			अगर ((i % 4) == 3)
 				xlen = 1;
-			else
+			अन्यथा
 				xlen = (i % 4) + 2;
 
 			data >>= (4 - xlen) * 8;
@@ -510,61 +511,61 @@ static int mxs_i2c_pio_setup_xfer(struct i2c_adapter *adap,
 				start & MXS_I2C_CTRL0_POST_SEND_STOP ? "E" : "",
 				start & MXS_I2C_CTRL0_RETAIN_CLOCK ? "C" : "");
 
-			writel(MXS_I2C_DEBUG0_DMAREQ,
+			ग_लिखोl(MXS_I2C_DEBUG0_DMAREQ,
 			       i2c->regs + MXS_I2C_DEBUG0_CLR(i2c));
 
-			mxs_i2c_pio_trigger_write_cmd(i2c,
+			mxs_i2c_pio_trigger_ग_लिखो_cmd(i2c,
 				start | MXS_I2C_CTRL0_MASTER_MODE |
-				MXS_I2C_CTRL0_DIRECTION |
+				MXS_I2C_CTRL0_सूचीECTION |
 				MXS_I2C_CTRL0_XFER_COUNT(xlen), data);
 
 			/* The START condition is sent only once. */
 			start &= ~MXS_I2C_CTRL0_PRE_SEND_START;
 
-			/* Wait for the end of the transfer. */
-			ret = mxs_i2c_pio_wait_xfer_end(i2c);
-			if (ret) {
+			/* Wait क्रम the end of the transfer. */
+			ret = mxs_i2c_pio_रुको_xfer_end(i2c);
+			अगर (ret) अणु
 				dev_dbg(i2c->dev,
 					"PIO: Failed to finish WRITE cmd!\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Check NAK here. */
-			ret = readl(i2c->regs + MXS_I2C_STAT) &
+			ret = पढ़ोl(i2c->regs + MXS_I2C_STAT) &
 				    MXS_I2C_STAT_GOT_A_NAK;
-			if (ret) {
+			अगर (ret) अणु
 				ret = -ENXIO;
-				goto cleanup;
-			}
-		}
-	}
+				जाओ cleanup;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* make sure we capture any occurred error into cmd_err */
+	/* make sure we capture any occurred error पूर्णांकo cmd_err */
 	ret = mxs_i2c_pio_check_error_state(i2c);
 
 cleanup:
-	/* Clear any dangling IRQs and re-enable interrupts. */
-	writel(MXS_I2C_IRQ_MASK, i2c->regs + MXS_I2C_CTRL1_CLR);
-	writel(MXS_I2C_IRQ_MASK << 8, i2c->regs + MXS_I2C_CTRL1_SET);
+	/* Clear any dangling IRQs and re-enable पूर्णांकerrupts. */
+	ग_लिखोl(MXS_I2C_IRQ_MASK, i2c->regs + MXS_I2C_CTRL1_CLR);
+	ग_लिखोl(MXS_I2C_IRQ_MASK << 8, i2c->regs + MXS_I2C_CTRL1_SET);
 
 	/* Clear the PIO_MODE on i.MX23 */
-	if (i2c->dev_type == MXS_I2C_V1)
-		writel(MXS_I2C_CTRL0_PIO_MODE, i2c->regs + MXS_I2C_CTRL0_CLR);
+	अगर (i2c->dev_type == MXS_I2C_V1)
+		ग_लिखोl(MXS_I2C_CTRL0_PIO_MODE, i2c->regs + MXS_I2C_CTRL0_CLR);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Low level master read/write transaction.
+ * Low level master पढ़ो/ग_लिखो transaction.
  */
-static int mxs_i2c_xfer_msg(struct i2c_adapter *adap, struct i2c_msg *msg,
-				int stop)
-{
-	struct mxs_i2c_dev *i2c = i2c_get_adapdata(adap);
-	int ret;
-	int flags;
-	int use_pio = 0;
-	unsigned long time_left;
+अटल पूर्णांक mxs_i2c_xfer_msg(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msg,
+				पूर्णांक stop)
+अणु
+	काष्ठा mxs_i2c_dev *i2c = i2c_get_adapdata(adap);
+	पूर्णांक ret;
+	पूर्णांक flags;
+	पूर्णांक use_pio = 0;
+	अचिन्हित दीर्घ समय_left;
 
 	flags = stop ? MXS_I2C_CTRL0_POST_SEND_STOP : 0;
 
@@ -572,273 +573,273 @@ static int mxs_i2c_xfer_msg(struct i2c_adapter *adap, struct i2c_msg *msg,
 		msg->addr, msg->len, msg->flags, stop);
 
 	/*
-	 * The MX28 I2C IP block can only do PIO READ for transfer of to up
-	 * 4 bytes of length. The write transfer is not limited as it can use
-	 * clock stretching to avoid FIFO underruns.
+	 * The MX28 I2C IP block can only करो PIO READ क्रम transfer of to up
+	 * 4 bytes of length. The ग_लिखो transfer is not limited as it can use
+	 * घड़ी stretching to aव्योम FIFO underruns.
 	 */
-	if ((msg->flags & I2C_M_RD) && (msg->len <= 4))
+	अगर ((msg->flags & I2C_M_RD) && (msg->len <= 4))
 		use_pio = 1;
-	if (!(msg->flags & I2C_M_RD) && (msg->len < 7))
+	अगर (!(msg->flags & I2C_M_RD) && (msg->len < 7))
 		use_pio = 1;
 
 	i2c->cmd_err = 0;
-	if (use_pio) {
+	अगर (use_pio) अणु
 		ret = mxs_i2c_pio_setup_xfer(adap, msg, flags);
-		/* No need to reset the block if NAK was received. */
-		if (ret && (ret != -ENXIO))
+		/* No need to reset the block अगर NAK was received. */
+		अगर (ret && (ret != -ENXIO))
 			mxs_i2c_reset(i2c);
-	} else {
+	पूर्ण अन्यथा अणु
 		reinit_completion(&i2c->cmd_complete);
 		ret = mxs_i2c_dma_setup_xfer(adap, msg, flags);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		time_left = wait_for_completion_timeout(&i2c->cmd_complete,
-						msecs_to_jiffies(1000));
-		if (!time_left)
-			goto timeout;
+		समय_left = रुको_क्रम_completion_समयout(&i2c->cmd_complete,
+						msecs_to_jअगरfies(1000));
+		अगर (!समय_left)
+			जाओ समयout;
 
 		ret = i2c->cmd_err;
-	}
+	पूर्ण
 
-	if (ret == -ENXIO) {
+	अगर (ret == -ENXIO) अणु
 		/*
 		 * If the transfer fails with a NAK from the slave the
-		 * controller halts until it gets told to return to idle state.
+		 * controller halts until it माला_लो told to वापस to idle state.
 		 */
-		writel(MXS_I2C_CTRL1_CLR_GOT_A_NAK,
+		ग_लिखोl(MXS_I2C_CTRL1_CLR_GOT_A_NAK,
 		       i2c->regs + MXS_I2C_CTRL1_SET);
-	}
+	पूर्ण
 
 	/*
 	 * WARNING!
 	 * The i.MX23 is strange. After each and every operation, it's I2C IP
 	 * block must be reset, otherwise the IP block will misbehave. This can
 	 * be observed on the bus by the block sending out one single byte onto
-	 * the bus. In case such an error happens, bit 27 will be set in the
-	 * DEBUG0 register. This bit is not documented in the i.MX23 datasheet
+	 * the bus. In हाल such an error happens, bit 27 will be set in the
+	 * DEBUG0 रेजिस्टर. This bit is not करोcumented in the i.MX23 datasheet
 	 * and is marked as "TBD" instead. To reset this bit to a correct state,
-	 * reset the whole block. Since the block reset does not take long, do
+	 * reset the whole block. Since the block reset करोes not take दीर्घ, करो
 	 * reset the block after every transfer to play safe.
 	 */
-	if (i2c->dev_type == MXS_I2C_V1)
+	अगर (i2c->dev_type == MXS_I2C_V1)
 		mxs_i2c_reset(i2c);
 
 	dev_dbg(i2c->dev, "Done with err=%d\n", ret);
 
-	return ret;
+	वापस ret;
 
-timeout:
+समयout:
 	dev_dbg(i2c->dev, "Timeout!\n");
 	mxs_i2c_dma_finish(i2c);
 	ret = mxs_i2c_reset(i2c);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int mxs_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[],
-			int num)
-{
-	int i;
-	int err;
+अटल पूर्णांक mxs_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg msgs[],
+			पूर्णांक num)
+अणु
+	पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		err = mxs_i2c_xfer_msg(adap, &msgs[i], i == (num - 1));
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static u32 mxs_i2c_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32 mxs_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
-static irqreturn_t mxs_i2c_isr(int this_irq, void *dev_id)
-{
-	struct mxs_i2c_dev *i2c = dev_id;
-	u32 stat = readl(i2c->regs + MXS_I2C_CTRL1) & MXS_I2C_IRQ_MASK;
+अटल irqवापस_t mxs_i2c_isr(पूर्णांक this_irq, व्योम *dev_id)
+अणु
+	काष्ठा mxs_i2c_dev *i2c = dev_id;
+	u32 stat = पढ़ोl(i2c->regs + MXS_I2C_CTRL1) & MXS_I2C_IRQ_MASK;
 
-	if (!stat)
-		return IRQ_NONE;
+	अगर (!stat)
+		वापस IRQ_NONE;
 
-	if (stat & MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ)
+	अगर (stat & MXS_I2C_CTRL1_NO_SLAVE_ACK_IRQ)
 		i2c->cmd_err = -ENXIO;
-	else if (stat & (MXS_I2C_CTRL1_EARLY_TERM_IRQ |
+	अन्यथा अगर (stat & (MXS_I2C_CTRL1_EARLY_TERM_IRQ |
 		    MXS_I2C_CTRL1_MASTER_LOSS_IRQ |
 		    MXS_I2C_CTRL1_SLAVE_STOP_IRQ | MXS_I2C_CTRL1_SLAVE_IRQ))
-		/* MXS_I2C_CTRL1_OVERSIZE_XFER_TERM_IRQ is only for slaves */
+		/* MXS_I2C_CTRL1_OVERSIZE_XFER_TERM_IRQ is only क्रम slaves */
 		i2c->cmd_err = -EIO;
 
-	writel(stat, i2c->regs + MXS_I2C_CTRL1_CLR);
+	ग_लिखोl(stat, i2c->regs + MXS_I2C_CTRL1_CLR);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct i2c_algorithm mxs_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm mxs_i2c_algo = अणु
 	.master_xfer = mxs_i2c_xfer,
 	.functionality = mxs_i2c_func,
-};
+पूर्ण;
 
-static const struct i2c_adapter_quirks mxs_i2c_quirks = {
+अटल स्थिर काष्ठा i2c_adapter_quirks mxs_i2c_quirks = अणु
 	.flags = I2C_AQ_NO_ZERO_LEN,
-};
+पूर्ण;
 
-static void mxs_i2c_derive_timing(struct mxs_i2c_dev *i2c, uint32_t speed)
-{
-	/* The I2C block clock runs at 24MHz */
-	const uint32_t clk = 24000000;
-	uint32_t divider;
-	uint16_t high_count, low_count, rcv_count, xmit_count;
-	uint32_t bus_free, leadin;
-	struct device *dev = i2c->dev;
+अटल व्योम mxs_i2c_derive_timing(काष्ठा mxs_i2c_dev *i2c, uपूर्णांक32_t speed)
+अणु
+	/* The I2C block घड़ी runs at 24MHz */
+	स्थिर uपूर्णांक32_t clk = 24000000;
+	uपूर्णांक32_t भागider;
+	uपूर्णांक16_t high_count, low_count, rcv_count, xmit_count;
+	uपूर्णांक32_t bus_मुक्त, leadin;
+	काष्ठा device *dev = i2c->dev;
 
-	divider = DIV_ROUND_UP(clk, speed);
+	भागider = DIV_ROUND_UP(clk, speed);
 
-	if (divider < 25) {
+	अगर (भागider < 25) अणु
 		/*
-		 * limit the divider, so that min(low_count, high_count)
+		 * limit the भागider, so that min(low_count, high_count)
 		 * is >= 1
 		 */
-		divider = 25;
+		भागider = 25;
 		dev_warn(dev,
 			"Speed too high (%u.%03u kHz), using %u.%03u kHz\n",
 			speed / 1000, speed % 1000,
-			clk / divider / 1000, clk / divider % 1000);
-	} else if (divider > 1897) {
+			clk / भागider / 1000, clk / भागider % 1000);
+	पूर्ण अन्यथा अगर (भागider > 1897) अणु
 		/*
-		 * limit the divider, so that max(low_count, high_count)
+		 * limit the भागider, so that max(low_count, high_count)
 		 * cannot exceed 1023
 		 */
-		divider = 1897;
+		भागider = 1897;
 		dev_warn(dev,
 			"Speed too low (%u.%03u kHz), using %u.%03u kHz\n",
 			speed / 1000, speed % 1000,
-			clk / divider / 1000, clk / divider % 1000);
-	}
+			clk / भागider / 1000, clk / भागider % 1000);
+	पूर्ण
 
 	/*
-	 * The I2C spec specifies the following timing data:
+	 * The I2C spec specअगरies the following timing data:
 	 *                          standard mode  fast mode Bitfield name
 	 * tLOW (SCL LOW period)     4700 ns        1300 ns
 	 * tHIGH (SCL HIGH period)   4000 ns         600 ns
-	 * tSU;DAT (data setup time)  250 ns         100 ns
-	 * tHD;STA (START hold time) 4000 ns         600 ns
-	 * tBUF (bus free time)      4700 ns        1300 ns
+	 * tSU;DAT (data setup समय)  250 ns         100 ns
+	 * tHD;STA (START hold समय) 4000 ns         600 ns
+	 * tBUF (bus मुक्त समय)      4700 ns        1300 ns
 	 *
 	 * The hardware (of the i.MX28 at least) seems to add 2 additional
-	 * clock cycles to the low_count and 7 cycles to the high_count.
-	 * This is compensated for by subtracting the respective constants
-	 * from the values written to the timing registers.
+	 * घड़ी cycles to the low_count and 7 cycles to the high_count.
+	 * This is compensated क्रम by subtracting the respective स्थिरants
+	 * from the values written to the timing रेजिस्टरs.
 	 */
-	if (speed > I2C_MAX_STANDARD_MODE_FREQ) {
+	अगर (speed > I2C_MAX_STANDARD_MODE_FREQ) अणु
 		/* fast mode */
-		low_count = DIV_ROUND_CLOSEST(divider * 13, (13 + 6));
-		high_count = DIV_ROUND_CLOSEST(divider * 6, (13 + 6));
+		low_count = DIV_ROUND_CLOSEST(भागider * 13, (13 + 6));
+		high_count = DIV_ROUND_CLOSEST(भागider * 6, (13 + 6));
 		leadin = DIV_ROUND_UP(600 * (clk / 1000000), 1000);
-		bus_free = DIV_ROUND_UP(1300 * (clk / 1000000), 1000);
-	} else {
+		bus_मुक्त = DIV_ROUND_UP(1300 * (clk / 1000000), 1000);
+	पूर्ण अन्यथा अणु
 		/* normal mode */
-		low_count = DIV_ROUND_CLOSEST(divider * 47, (47 + 40));
-		high_count = DIV_ROUND_CLOSEST(divider * 40, (47 + 40));
+		low_count = DIV_ROUND_CLOSEST(भागider * 47, (47 + 40));
+		high_count = DIV_ROUND_CLOSEST(भागider * 40, (47 + 40));
 		leadin = DIV_ROUND_UP(4700 * (clk / 1000000), 1000);
-		bus_free = DIV_ROUND_UP(4700 * (clk / 1000000), 1000);
-	}
+		bus_मुक्त = DIV_ROUND_UP(4700 * (clk / 1000000), 1000);
+	पूर्ण
 	rcv_count = high_count * 3 / 8;
 	xmit_count = low_count * 3 / 8;
 
 	dev_dbg(dev,
 		"speed=%u(actual %u) divider=%u low=%u high=%u xmit=%u rcv=%u leadin=%u bus_free=%u\n",
-		speed, clk / divider, divider, low_count, high_count,
-		xmit_count, rcv_count, leadin, bus_free);
+		speed, clk / भागider, भागider, low_count, high_count,
+		xmit_count, rcv_count, leadin, bus_मुक्त);
 
 	low_count -= 2;
 	high_count -= 7;
 	i2c->timing0 = (high_count << 16) | rcv_count;
 	i2c->timing1 = (low_count << 16) | xmit_count;
-	i2c->timing2 = (bus_free << 16 | leadin);
-}
+	i2c->timing2 = (bus_मुक्त << 16 | leadin);
+पूर्ण
 
-static int mxs_i2c_get_ofdata(struct mxs_i2c_dev *i2c)
-{
-	uint32_t speed;
-	struct device *dev = i2c->dev;
-	struct device_node *node = dev->of_node;
-	int ret;
+अटल पूर्णांक mxs_i2c_get_ofdata(काष्ठा mxs_i2c_dev *i2c)
+अणु
+	uपूर्णांक32_t speed;
+	काष्ठा device *dev = i2c->dev;
+	काष्ठा device_node *node = dev->of_node;
+	पूर्णांक ret;
 
-	ret = of_property_read_u32(node, "clock-frequency", &speed);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(node, "clock-frequency", &speed);
+	अगर (ret) अणु
 		dev_warn(dev, "No I2C speed selected, using 100kHz\n");
 		speed = I2C_MAX_STANDARD_MODE_FREQ;
-	}
+	पूर्ण
 
 	mxs_i2c_derive_timing(i2c, speed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id mxs_i2c_dt_ids[] = {
-	{ .compatible = "fsl,imx23-i2c", .data = (void *)MXS_I2C_V1, },
-	{ .compatible = "fsl,imx28-i2c", .data = (void *)MXS_I2C_V2, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id mxs_i2c_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx23-i2c", .data = (व्योम *)MXS_I2C_V1, पूर्ण,
+	अणु .compatible = "fsl,imx28-i2c", .data = (व्योम *)MXS_I2C_V2, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mxs_i2c_dt_ids);
 
-static int mxs_i2c_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct mxs_i2c_dev *i2c;
-	struct i2c_adapter *adap;
-	int err, irq;
+अटल पूर्णांक mxs_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा mxs_i2c_dev *i2c;
+	काष्ठा i2c_adapter *adap;
+	पूर्णांक err, irq;
 
-	i2c = devm_kzalloc(dev, sizeof(*i2c), GFP_KERNEL);
-	if (!i2c)
-		return -ENOMEM;
+	i2c = devm_kzalloc(dev, माप(*i2c), GFP_KERNEL);
+	अगर (!i2c)
+		वापस -ENOMEM;
 
-	i2c->dev_type = (enum mxs_i2c_devtype)of_device_get_match_data(&pdev->dev);
+	i2c->dev_type = (क्रमागत mxs_i2c_devtype)of_device_get_match_data(&pdev->dev);
 
-	i2c->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(i2c->regs))
-		return PTR_ERR(i2c->regs);
+	i2c->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(i2c->regs))
+		वापस PTR_ERR(i2c->regs);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	err = devm_request_irq(dev, irq, mxs_i2c_isr, 0, dev_name(dev), i2c);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	i2c->dev = dev;
 
 	init_completion(&i2c->cmd_complete);
 
-	if (dev->of_node) {
+	अगर (dev->of_node) अणु
 		err = mxs_i2c_get_ofdata(i2c);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/* Setup the DMA */
 	i2c->dmach = dma_request_chan(dev, "rx-tx");
-	if (IS_ERR(i2c->dmach)) {
+	अगर (IS_ERR(i2c->dmach)) अणु
 		dev_err(dev, "Failed to request dma\n");
-		return PTR_ERR(i2c->dmach);
-	}
+		वापस PTR_ERR(i2c->dmach);
+	पूर्ण
 
-	platform_set_drvdata(pdev, i2c);
+	platक्रमm_set_drvdata(pdev, i2c);
 
-	/* Do reset to enforce correct startup after pinmuxing */
+	/* Do reset to enक्रमce correct startup after pinmuxing */
 	err = mxs_i2c_reset(i2c);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	adap = &i2c->adapter;
-	strlcpy(adap->name, "MXS I2C adapter", sizeof(adap->name));
+	strlcpy(adap->name, "MXS I2C adapter", माप(adap->name));
 	adap->owner = THIS_MODULE;
 	adap->algo = &mxs_i2c_algo;
 	adap->quirks = &mxs_i2c_quirks;
@@ -847,49 +848,49 @@ static int mxs_i2c_probe(struct platform_device *pdev)
 	adap->dev.of_node = pdev->dev.of_node;
 	i2c_set_adapdata(adap, i2c);
 	err = i2c_add_numbered_adapter(adap);
-	if (err) {
-		writel(MXS_I2C_CTRL0_SFTRST,
+	अगर (err) अणु
+		ग_लिखोl(MXS_I2C_CTRL0_SFTRST,
 				i2c->regs + MXS_I2C_CTRL0_SET);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mxs_i2c_remove(struct platform_device *pdev)
-{
-	struct mxs_i2c_dev *i2c = platform_get_drvdata(pdev);
+अटल पूर्णांक mxs_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mxs_i2c_dev *i2c = platक्रमm_get_drvdata(pdev);
 
 	i2c_del_adapter(&i2c->adapter);
 
-	if (i2c->dmach)
+	अगर (i2c->dmach)
 		dma_release_channel(i2c->dmach);
 
-	writel(MXS_I2C_CTRL0_SFTRST, i2c->regs + MXS_I2C_CTRL0_SET);
+	ग_लिखोl(MXS_I2C_CTRL0_SFTRST, i2c->regs + MXS_I2C_CTRL0_SET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mxs_i2c_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mxs_i2c_driver = अणु
+	.driver = अणु
 		   .name = DRIVER_NAME,
 		   .of_match_table = mxs_i2c_dt_ids,
-		   },
+		   पूर्ण,
 	.probe = mxs_i2c_probe,
-	.remove = mxs_i2c_remove,
-};
+	.हटाओ = mxs_i2c_हटाओ,
+पूर्ण;
 
-static int __init mxs_i2c_init(void)
-{
-	return platform_driver_register(&mxs_i2c_driver);
-}
+अटल पूर्णांक __init mxs_i2c_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mxs_i2c_driver);
+पूर्ण
 subsys_initcall(mxs_i2c_init);
 
-static void __exit mxs_i2c_exit(void)
-{
-	platform_driver_unregister(&mxs_i2c_driver);
-}
-module_exit(mxs_i2c_exit);
+अटल व्योम __निकास mxs_i2c_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mxs_i2c_driver);
+पूर्ण
+module_निकास(mxs_i2c_निकास);
 
 MODULE_AUTHOR("Marek Vasut <marex@denx.de>");
 MODULE_AUTHOR("Wolfram Sang <kernel@pengutronix.de>");

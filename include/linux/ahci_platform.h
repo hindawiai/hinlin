@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * AHCI SATA platform driver
+ * AHCI SATA platक्रमm driver
  *
  * Copyright 2004-2005  Red Hat, Inc.
  *   Jeff Garzik <jgarzik@pobox.com>
@@ -8,39 +9,39 @@
  *   Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#ifndef _AHCI_PLATFORM_H
-#define _AHCI_PLATFORM_H
+#अगर_अघोषित _AHCI_PLATFORM_H
+#घोषणा _AHCI_PLATFORM_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-struct device;
-struct ata_port_info;
-struct ahci_host_priv;
-struct platform_device;
-struct scsi_host_template;
+काष्ठा device;
+काष्ठा ata_port_info;
+काष्ठा ahci_host_priv;
+काष्ठा platक्रमm_device;
+काष्ठा scsi_host_ढाँचा;
 
-int ahci_platform_enable_phys(struct ahci_host_priv *hpriv);
-void ahci_platform_disable_phys(struct ahci_host_priv *hpriv);
-int ahci_platform_enable_clks(struct ahci_host_priv *hpriv);
-void ahci_platform_disable_clks(struct ahci_host_priv *hpriv);
-int ahci_platform_enable_regulators(struct ahci_host_priv *hpriv);
-void ahci_platform_disable_regulators(struct ahci_host_priv *hpriv);
-int ahci_platform_enable_resources(struct ahci_host_priv *hpriv);
-void ahci_platform_disable_resources(struct ahci_host_priv *hpriv);
-struct ahci_host_priv *ahci_platform_get_resources(
-	struct platform_device *pdev, unsigned int flags);
-int ahci_platform_init_host(struct platform_device *pdev,
-			    struct ahci_host_priv *hpriv,
-			    const struct ata_port_info *pi_template,
-			    struct scsi_host_template *sht);
+पूर्णांक ahci_platक्रमm_enable_phys(काष्ठा ahci_host_priv *hpriv);
+व्योम ahci_platक्रमm_disable_phys(काष्ठा ahci_host_priv *hpriv);
+पूर्णांक ahci_platक्रमm_enable_clks(काष्ठा ahci_host_priv *hpriv);
+व्योम ahci_platक्रमm_disable_clks(काष्ठा ahci_host_priv *hpriv);
+पूर्णांक ahci_platक्रमm_enable_regulators(काष्ठा ahci_host_priv *hpriv);
+व्योम ahci_platक्रमm_disable_regulators(काष्ठा ahci_host_priv *hpriv);
+पूर्णांक ahci_platक्रमm_enable_resources(काष्ठा ahci_host_priv *hpriv);
+व्योम ahci_platक्रमm_disable_resources(काष्ठा ahci_host_priv *hpriv);
+काष्ठा ahci_host_priv *ahci_platक्रमm_get_resources(
+	काष्ठा platक्रमm_device *pdev, अचिन्हित पूर्णांक flags);
+पूर्णांक ahci_platक्रमm_init_host(काष्ठा platक्रमm_device *pdev,
+			    काष्ठा ahci_host_priv *hpriv,
+			    स्थिर काष्ठा ata_port_info *pi_ढाँचा,
+			    काष्ठा scsi_host_ढाँचा *sht);
 
-void ahci_platform_shutdown(struct platform_device *pdev);
+व्योम ahci_platक्रमm_shutकरोwn(काष्ठा platक्रमm_device *pdev);
 
-int ahci_platform_suspend_host(struct device *dev);
-int ahci_platform_resume_host(struct device *dev);
-int ahci_platform_suspend(struct device *dev);
-int ahci_platform_resume(struct device *dev);
+पूर्णांक ahci_platक्रमm_suspend_host(काष्ठा device *dev);
+पूर्णांक ahci_platक्रमm_resume_host(काष्ठा device *dev);
+पूर्णांक ahci_platक्रमm_suspend(काष्ठा device *dev);
+पूर्णांक ahci_platक्रमm_resume(काष्ठा device *dev);
 
-#define AHCI_PLATFORM_GET_RESETS	0x01
+#घोषणा AHCI_PLATFORM_GET_RESETS	0x01
 
-#endif /* _AHCI_PLATFORM_H */
+#पूर्ण_अगर /* _AHCI_PLATFORM_H */

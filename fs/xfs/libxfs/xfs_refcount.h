@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_REFCOUNT_H__
-#define __XFS_REFCOUNT_H__
+#अगर_अघोषित __XFS_REFCOUNT_H__
+#घोषणा __XFS_REFCOUNT_H__
 
-extern int xfs_refcount_lookup_le(struct xfs_btree_cur *cur,
-		xfs_agblock_t bno, int *stat);
-extern int xfs_refcount_lookup_ge(struct xfs_btree_cur *cur,
-		xfs_agblock_t bno, int *stat);
-extern int xfs_refcount_lookup_eq(struct xfs_btree_cur *cur,
-		xfs_agblock_t bno, int *stat);
-extern int xfs_refcount_get_rec(struct xfs_btree_cur *cur,
-		struct xfs_refcount_irec *irec, int *stat);
+बाह्य पूर्णांक xfs_refcount_lookup_le(काष्ठा xfs_btree_cur *cur,
+		xfs_agblock_t bno, पूर्णांक *stat);
+बाह्य पूर्णांक xfs_refcount_lookup_ge(काष्ठा xfs_btree_cur *cur,
+		xfs_agblock_t bno, पूर्णांक *stat);
+बाह्य पूर्णांक xfs_refcount_lookup_eq(काष्ठा xfs_btree_cur *cur,
+		xfs_agblock_t bno, पूर्णांक *stat);
+बाह्य पूर्णांक xfs_refcount_get_rec(काष्ठा xfs_btree_cur *cur,
+		काष्ठा xfs_refcount_irec *irec, पूर्णांक *stat);
 
-enum xfs_refcount_intent_type {
+क्रमागत xfs_refcount_पूर्णांकent_type अणु
 	XFS_REFCOUNT_INCREASE = 1,
 	XFS_REFCOUNT_DECREASE,
 	XFS_REFCOUNT_ALLOC_COW,
 	XFS_REFCOUNT_FREE_COW,
-};
+पूर्ण;
 
-struct xfs_refcount_intent {
-	struct list_head			ri_list;
-	enum xfs_refcount_intent_type		ri_type;
+काष्ठा xfs_refcount_पूर्णांकent अणु
+	काष्ठा list_head			ri_list;
+	क्रमागत xfs_refcount_पूर्णांकent_type		ri_type;
 	xfs_fsblock_t				ri_startblock;
 	xfs_extlen_t				ri_blockcount;
-};
+पूर्ण;
 
-void xfs_refcount_increase_extent(struct xfs_trans *tp,
-		struct xfs_bmbt_irec *irec);
-void xfs_refcount_decrease_extent(struct xfs_trans *tp,
-		struct xfs_bmbt_irec *irec);
+व्योम xfs_refcount_increase_extent(काष्ठा xfs_trans *tp,
+		काष्ठा xfs_bmbt_irec *irec);
+व्योम xfs_refcount_decrease_extent(काष्ठा xfs_trans *tp,
+		काष्ठा xfs_bmbt_irec *irec);
 
-extern void xfs_refcount_finish_one_cleanup(struct xfs_trans *tp,
-		struct xfs_btree_cur *rcur, int error);
-extern int xfs_refcount_finish_one(struct xfs_trans *tp,
-		enum xfs_refcount_intent_type type, xfs_fsblock_t startblock,
+बाह्य व्योम xfs_refcount_finish_one_cleanup(काष्ठा xfs_trans *tp,
+		काष्ठा xfs_btree_cur *rcur, पूर्णांक error);
+बाह्य पूर्णांक xfs_refcount_finish_one(काष्ठा xfs_trans *tp,
+		क्रमागत xfs_refcount_पूर्णांकent_type type, xfs_fsblock_t startblock,
 		xfs_extlen_t blockcount, xfs_fsblock_t *new_fsb,
-		xfs_extlen_t *new_len, struct xfs_btree_cur **pcur);
+		xfs_extlen_t *new_len, काष्ठा xfs_btree_cur **pcur);
 
-extern int xfs_refcount_find_shared(struct xfs_btree_cur *cur,
+बाह्य पूर्णांक xfs_refcount_find_shared(काष्ठा xfs_btree_cur *cur,
 		xfs_agblock_t agbno, xfs_extlen_t aglen, xfs_agblock_t *fbno,
 		xfs_extlen_t *flen, bool find_end_of_shared);
 
-void xfs_refcount_alloc_cow_extent(struct xfs_trans *tp, xfs_fsblock_t fsb,
+व्योम xfs_refcount_alloc_cow_extent(काष्ठा xfs_trans *tp, xfs_fsblock_t fsb,
 		xfs_extlen_t len);
-void xfs_refcount_free_cow_extent(struct xfs_trans *tp, xfs_fsblock_t fsb,
+व्योम xfs_refcount_मुक्त_cow_extent(काष्ठा xfs_trans *tp, xfs_fsblock_t fsb,
 		xfs_extlen_t len);
-extern int xfs_refcount_recover_cow_leftovers(struct xfs_mount *mp,
+बाह्य पूर्णांक xfs_refcount_recover_cow_leftovers(काष्ठा xfs_mount *mp,
 		xfs_agnumber_t agno);
 
 /*
@@ -58,22 +59,22 @@ extern int xfs_refcount_recover_cow_leftovers(struct xfs_mount *mp,
  * many in a single transaction and we'll exceed the transaction's
  * reservation and crash the fs.  Each record adds 12 bytes to the
  * log (plus any key updates) so we'll conservatively assume 32 bytes
- * per record.  We must also leave space for btree splits on both ends
- * of the range and space for the CUD and a new CUI.
+ * per record.  We must also leave space क्रम btree splits on both ends
+ * of the range and space क्रम the CUD and a new CUI.
  */
-#define XFS_REFCOUNT_ITEM_OVERHEAD	32
+#घोषणा XFS_REFCOUNT_ITEM_OVERHEAD	32
 
-static inline xfs_fileoff_t xfs_refcount_max_unmap(int log_res)
-{
-	return (log_res * 3 / 4) / XFS_REFCOUNT_ITEM_OVERHEAD;
-}
+अटल अंतरभूत xfs_fileoff_t xfs_refcount_max_unmap(पूर्णांक log_res)
+अणु
+	वापस (log_res * 3 / 4) / XFS_REFCOUNT_ITEM_OVERHEAD;
+पूर्ण
 
-extern int xfs_refcount_has_record(struct xfs_btree_cur *cur,
+बाह्य पूर्णांक xfs_refcount_has_record(काष्ठा xfs_btree_cur *cur,
 		xfs_agblock_t bno, xfs_extlen_t len, bool *exists);
-union xfs_btree_rec;
-extern void xfs_refcount_btrec_to_irec(union xfs_btree_rec *rec,
-		struct xfs_refcount_irec *irec);
-extern int xfs_refcount_insert(struct xfs_btree_cur *cur,
-		struct xfs_refcount_irec *irec, int *stat);
+जोड़ xfs_btree_rec;
+बाह्य व्योम xfs_refcount_btrec_to_irec(जोड़ xfs_btree_rec *rec,
+		काष्ठा xfs_refcount_irec *irec);
+बाह्य पूर्णांक xfs_refcount_insert(काष्ठा xfs_btree_cur *cur,
+		काष्ठा xfs_refcount_irec *irec, पूर्णांक *stat);
 
-#endif	/* __XFS_REFCOUNT_H__ */
+#पूर्ण_अगर	/* __XFS_REFCOUNT_H__ */

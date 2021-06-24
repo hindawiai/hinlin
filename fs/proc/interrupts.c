@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irqnr.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqnr.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
 
 /*
- * /proc/interrupts
+ * /proc/पूर्णांकerrupts
  */
-static void *int_seq_start(struct seq_file *f, loff_t *pos)
-{
-	return (*pos <= nr_irqs) ? pos : NULL;
-}
+अटल व्योम *पूर्णांक_seq_start(काष्ठा seq_file *f, loff_t *pos)
+अणु
+	वापस (*pos <= nr_irqs) ? pos : शून्य;
+पूर्ण
 
-static void *int_seq_next(struct seq_file *f, void *v, loff_t *pos)
-{
+अटल व्योम *पूर्णांक_seq_next(काष्ठा seq_file *f, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	if (*pos > nr_irqs)
-		return NULL;
-	return pos;
-}
+	अगर (*pos > nr_irqs)
+		वापस शून्य;
+	वापस pos;
+पूर्ण
 
-static void int_seq_stop(struct seq_file *f, void *v)
-{
-	/* Nothing to do */
-}
+अटल व्योम पूर्णांक_seq_stop(काष्ठा seq_file *f, व्योम *v)
+अणु
+	/* Nothing to करो */
+पूर्ण
 
-static const struct seq_operations int_seq_ops = {
-	.start = int_seq_start,
-	.next  = int_seq_next,
-	.stop  = int_seq_stop,
-	.show  = show_interrupts
-};
+अटल स्थिर काष्ठा seq_operations पूर्णांक_seq_ops = अणु
+	.start = पूर्णांक_seq_start,
+	.next  = पूर्णांक_seq_next,
+	.stop  = पूर्णांक_seq_stop,
+	.show  = show_पूर्णांकerrupts
+पूर्ण;
 
-static int __init proc_interrupts_init(void)
-{
-	proc_create_seq("interrupts", 0, NULL, &int_seq_ops);
-	return 0;
-}
-fs_initcall(proc_interrupts_init);
+अटल पूर्णांक __init proc_पूर्णांकerrupts_init(व्योम)
+अणु
+	proc_create_seq("interrupts", 0, शून्य, &पूर्णांक_seq_ops);
+	वापस 0;
+पूर्ण
+fs_initcall(proc_पूर्णांकerrupts_init);

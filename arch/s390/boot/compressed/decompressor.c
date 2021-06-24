@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Definitions and wrapper functions for kernel decompressor
+ * Definitions and wrapper functions क्रम kernel decompressor
  *
  * Copyright IBM Corp. 2010
  *
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <asm/page.h>
-#include "decompressor.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/page.h>
+#समावेश "decompressor.h"
 
 /*
  * gzip declarations
  */
-#define STATIC static
+#घोषणा STATIC अटल
 
-#undef memset
-#undef memcpy
-#undef memmove
-#define memmove memmove
-#define memzero(s, n) memset((s), 0, (n))
+#अघोषित स_रखो
+#अघोषित स_नकल
+#अघोषित स_हटाओ
+#घोषणा स_हटाओ स_हटाओ
+#घोषणा memzero(s, n) स_रखो((s), 0, (n))
 
 /* Symbols defined by linker scripts */
-extern char _end[];
-extern unsigned char _compressed_start[];
-extern unsigned char _compressed_end[];
+बाह्य अक्षर _end[];
+बाह्य अचिन्हित अक्षर _compressed_start[];
+बाह्य अचिन्हित अक्षर _compressed_end[];
 
-#ifdef CONFIG_HAVE_KERNEL_BZIP2
-#define BOOT_HEAP_SIZE	0x400000
-#else
-#define BOOT_HEAP_SIZE	0x10000
-#endif
+#अगर_घोषित CONFIG_HAVE_KERNEL_BZIP2
+#घोषणा BOOT_HEAP_SIZE	0x400000
+#अन्यथा
+#घोषणा BOOT_HEAP_SIZE	0x10000
+#पूर्ण_अगर
 
-static unsigned long free_mem_ptr = (unsigned long) _end;
-static unsigned long free_mem_end_ptr = (unsigned long) _end + BOOT_HEAP_SIZE;
+अटल अचिन्हित दीर्घ मुक्त_mem_ptr = (अचिन्हित दीर्घ) _end;
+अटल अचिन्हित दीर्घ मुक्त_mem_end_ptr = (अचिन्हित दीर्घ) _end + BOOT_HEAP_SIZE;
 
-#ifdef CONFIG_KERNEL_GZIP
-#include "../../../../lib/decompress_inflate.c"
-#endif
+#अगर_घोषित CONFIG_KERNEL_GZIP
+#समावेश "../../../../lib/decompress_inflate.c"
+#पूर्ण_अगर
 
-#ifdef CONFIG_KERNEL_BZIP2
-#include "../../../../lib/decompress_bunzip2.c"
-#endif
+#अगर_घोषित CONFIG_KERNEL_BZIP2
+#समावेश "../../../../lib/decompress_bunzip2.c"
+#पूर्ण_अगर
 
-#ifdef CONFIG_KERNEL_LZ4
-#include "../../../../lib/decompress_unlz4.c"
-#endif
+#अगर_घोषित CONFIG_KERNEL_LZ4
+#समावेश "../../../../lib/decompress_unlz4.c"
+#पूर्ण_अगर
 
-#ifdef CONFIG_KERNEL_LZMA
-#include "../../../../lib/decompress_unlzma.c"
-#endif
+#अगर_घोषित CONFIG_KERNEL_LZMA
+#समावेश "../../../../lib/decompress_unlzma.c"
+#पूर्ण_अगर
 
-#ifdef CONFIG_KERNEL_LZO
-#include "../../../../lib/decompress_unlzo.c"
-#endif
+#अगर_घोषित CONFIG_KERNEL_LZO
+#समावेश "../../../../lib/decompress_unlzo.c"
+#पूर्ण_अगर
 
-#ifdef CONFIG_KERNEL_XZ
-#include "../../../../lib/decompress_unxz.c"
-#endif
+#अगर_घोषित CONFIG_KERNEL_XZ
+#समावेश "../../../../lib/decompress_unxz.c"
+#पूर्ण_अगर
 
-#define decompress_offset ALIGN((unsigned long)_end + BOOT_HEAP_SIZE, PAGE_SIZE)
+#घोषणा decompress_offset ALIGN((अचिन्हित दीर्घ)_end + BOOT_HEAP_SIZE, PAGE_SIZE)
 
-unsigned long mem_safe_offset(void)
-{
+अचिन्हित दीर्घ mem_safe_offset(व्योम)
+अणु
 	/*
-	 * due to 4MB HEAD_SIZE for bzip2
+	 * due to 4MB HEAD_SIZE क्रम bzip2
 	 * 'decompress_offset + vmlinux.image_size' could be larger than
 	 * kernel at final position + its .bss, so take the larger of two
 	 */
-	return max(decompress_offset + vmlinux.image_size,
-		   vmlinux.default_lma + vmlinux.image_size + vmlinux.bss_size);
-}
+	वापस max(decompress_offset + vmlinux.image_size,
+		   vmlinux.शेष_lma + vmlinux.image_size + vmlinux.bss_size);
+पूर्ण
 
-void *decompress_kernel(void)
-{
-	void *output = (void *)decompress_offset;
+व्योम *decompress_kernel(व्योम)
+अणु
+	व्योम *output = (व्योम *)decompress_offset;
 
 	__decompress(_compressed_start, _compressed_end - _compressed_start,
-		     NULL, NULL, output, 0, NULL, error);
-	return output;
-}
+		     शून्य, शून्य, output, 0, शून्य, error);
+	वापस output;
+पूर्ण

@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bpf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bpf.h>
 
-#include <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PROG_ARRAY);
-	__uint(max_entries, 3);
-	__uint(key_size, sizeof(__u32));
-	__uint(value_size, sizeof(__u32));
-} jmp_table SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PROG_ARRAY);
+	__uपूर्णांक(max_entries, 3);
+	__uपूर्णांक(key_size, माप(__u32));
+	__uपूर्णांक(value_size, माप(__u32));
+पूर्ण jmp_table SEC(".maps");
 
-static volatile int selector;
+अटल अस्थिर पूर्णांक selector;
 
-#define TAIL_FUNC(x)				\
+#घोषणा TAIL_FUNC(x)				\
 	SEC("classifier/" #x)			\
-	int bpf_func_##x(struct __sk_buff *skb)	\
-	{					\
-		return x;			\
-	}
+	पूर्णांक bpf_func_##x(काष्ठा __sk_buff *skb)	\
+	अणु					\
+		वापस x;			\
+	पूर्ण
 TAIL_FUNC(0)
 TAIL_FUNC(1)
 TAIL_FUNC(2)
 
 SEC("classifier")
-int entry(struct __sk_buff *skb)
-{
-	int idx = 0;
+पूर्णांक entry(काष्ठा __sk_buff *skb)
+अणु
+	पूर्णांक idx = 0;
 
-	if (selector == 1234)
+	अगर (selector == 1234)
 		idx = 1;
-	else if (selector == 5678)
+	अन्यथा अगर (selector == 5678)
 		idx = 2;
 
 	bpf_tail_call(skb, &jmp_table, idx);
-	return 3;
-}
+	वापस 3;
+पूर्ण
 
-char __license[] SEC("license") = "GPL";
-int _version SEC("version") = 1;
+अक्षर __license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = 1;

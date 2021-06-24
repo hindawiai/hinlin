@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * asm/leon_pci.h
+ * यंत्र/leon_pci.h
  *
  * Copyright (C) 2011 Aeroflex Gaisler AB, Daniel Hellstrom
  */
 
-#ifndef _ASM_LEON_PCI_H_
-#define _ASM_LEON_PCI_H_
+#अगर_अघोषित _ASM_LEON_PCI_H_
+#घोषणा _ASM_LEON_PCI_H_
 
 /* PCI related definitions */
-struct leon_pci_info {
-	struct pci_ops *ops;
-	struct resource	io_space;
-	struct resource	mem_space;
-	struct resource	busn;
-	int (*map_irq)(const struct pci_dev *dev, u8 slot, u8 pin);
-};
+काष्ठा leon_pci_info अणु
+	काष्ठा pci_ops *ops;
+	काष्ठा resource	io_space;
+	काष्ठा resource	mem_space;
+	काष्ठा resource	busn;
+	पूर्णांक (*map_irq)(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin);
+पूर्ण;
 
-void leon_pci_init(struct platform_device *ofdev,
-		   struct leon_pci_info *info);
+व्योम leon_pci_init(काष्ठा platक्रमm_device *ofdev,
+		   काष्ठा leon_pci_info *info);
 
-#endif /* _ASM_LEON_PCI_H_ */
+#पूर्ण_अगर /* _ASM_LEON_PCI_H_ */

@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Generic part shared by ipv4 and ipv6 backends.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nft_fib.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nft_fib.h>
 
-const struct nla_policy nft_fib_policy[NFTA_FIB_MAX + 1] = {
-	[NFTA_FIB_DREG]		= { .type = NLA_U32 },
-	[NFTA_FIB_RESULT]	= { .type = NLA_U32 },
-	[NFTA_FIB_FLAGS]	= { .type = NLA_U32 },
-};
+स्थिर काष्ठा nla_policy nft_fib_policy[NFTA_FIB_MAX + 1] = अणु
+	[NFTA_FIB_DREG]		= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_FIB_RESULT]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_FIB_FLAGS]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 EXPORT_SYMBOL(nft_fib_policy);
 
-#define NFTA_FIB_F_ALL (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR | \
+#घोषणा NFTA_FIB_F_ALL (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR | \
 			NFTA_FIB_F_MARK | NFTA_FIB_F_IIF | NFTA_FIB_F_OIF | \
 			NFTA_FIB_F_PRESENT)
 
-int nft_fib_validate(const struct nft_ctx *ctx, const struct nft_expr *expr,
-		     const struct nft_data **data)
-{
-	const struct nft_fib *priv = nft_expr_priv(expr);
-	unsigned int hooks;
+पूर्णांक nft_fib_validate(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+		     स्थिर काष्ठा nft_data **data)
+अणु
+	स्थिर काष्ठा nft_fib *priv = nft_expr_priv(expr);
+	अचिन्हित पूर्णांक hooks;
 
-	switch (priv->result) {
-	case NFT_FIB_RESULT_OIF:
-	case NFT_FIB_RESULT_OIFNAME:
+	चयन (priv->result) अणु
+	हाल NFT_FIB_RESULT_OIF:
+	हाल NFT_FIB_RESULT_OIFNAME:
 		hooks = (1 << NF_INET_PRE_ROUTING);
-		break;
-	case NFT_FIB_RESULT_ADDRTYPE:
-		if (priv->flags & NFTA_FIB_F_IIF)
+		अवरोध;
+	हाल NFT_FIB_RESULT_ADDRTYPE:
+		अगर (priv->flags & NFTA_FIB_F_IIF)
 			hooks = (1 << NF_INET_PRE_ROUTING) |
 				(1 << NF_INET_LOCAL_IN) |
 				(1 << NF_INET_FORWARD);
-		else if (priv->flags & NFTA_FIB_F_OIF)
+		अन्यथा अगर (priv->flags & NFTA_FIB_F_OIF)
 			hooks = (1 << NF_INET_LOCAL_OUT) |
 				(1 << NF_INET_POST_ROUTING) |
 				(1 << NF_INET_FORWARD);
-		else
+		अन्यथा
 			hooks = (1 << NF_INET_LOCAL_IN) |
 				(1 << NF_INET_LOCAL_OUT) |
 				(1 << NF_INET_FORWARD) |
 				(1 << NF_INET_PRE_ROUTING) |
 				(1 << NF_INET_POST_ROUTING);
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return nft_chain_validate_hooks(ctx->chain, hooks);
-}
+	वापस nft_chain_validate_hooks(ctx->chain, hooks);
+पूर्ण
 EXPORT_SYMBOL_GPL(nft_fib_validate);
 
-int nft_fib_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
-		 const struct nlattr * const tb[])
-{
-	struct nft_fib *priv = nft_expr_priv(expr);
-	unsigned int len;
-	int err;
+पूर्णांक nft_fib_init(स्थिर काष्ठा nft_ctx *ctx, स्थिर काष्ठा nft_expr *expr,
+		 स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_fib *priv = nft_expr_priv(expr);
+	अचिन्हित पूर्णांक len;
+	पूर्णांक err;
 
-	if (!tb[NFTA_FIB_DREG] || !tb[NFTA_FIB_RESULT] || !tb[NFTA_FIB_FLAGS])
-		return -EINVAL;
+	अगर (!tb[NFTA_FIB_DREG] || !tb[NFTA_FIB_RESULT] || !tb[NFTA_FIB_FLAGS])
+		वापस -EINVAL;
 
 	priv->flags = ntohl(nla_get_be32(tb[NFTA_FIB_FLAGS]));
 
-	if (priv->flags == 0 || (priv->flags & ~NFTA_FIB_F_ALL))
-		return -EINVAL;
+	अगर (priv->flags == 0 || (priv->flags & ~NFTA_FIB_F_ALL))
+		वापस -EINVAL;
 
-	if ((priv->flags & (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR)) ==
+	अगर ((priv->flags & (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR)) ==
 			   (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR))
-		return -EINVAL;
-	if ((priv->flags & (NFTA_FIB_F_IIF | NFTA_FIB_F_OIF)) ==
+		वापस -EINVAL;
+	अगर ((priv->flags & (NFTA_FIB_F_IIF | NFTA_FIB_F_OIF)) ==
 			   (NFTA_FIB_F_IIF | NFTA_FIB_F_OIF))
-		return -EINVAL;
-	if ((priv->flags & (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR)) == 0)
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर ((priv->flags & (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR)) == 0)
+		वापस -EINVAL;
 
 	priv->result = ntohl(nla_get_be32(tb[NFTA_FIB_RESULT]));
 
-	switch (priv->result) {
-	case NFT_FIB_RESULT_OIF:
-		if (priv->flags & NFTA_FIB_F_OIF)
-			return -EINVAL;
-		len = sizeof(int);
-		break;
-	case NFT_FIB_RESULT_OIFNAME:
-		if (priv->flags & NFTA_FIB_F_OIF)
-			return -EINVAL;
+	चयन (priv->result) अणु
+	हाल NFT_FIB_RESULT_OIF:
+		अगर (priv->flags & NFTA_FIB_F_OIF)
+			वापस -EINVAL;
+		len = माप(पूर्णांक);
+		अवरोध;
+	हाल NFT_FIB_RESULT_OIFNAME:
+		अगर (priv->flags & NFTA_FIB_F_OIF)
+			वापस -EINVAL;
 		len = IFNAMSIZ;
-		break;
-	case NFT_FIB_RESULT_ADDRTYPE:
-		len = sizeof(u32);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल NFT_FIB_RESULT_ADDRTYPE:
+		len = माप(u32);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	err = nft_parse_register_store(ctx, tb[NFTA_FIB_DREG], &priv->dreg,
-				       NULL, NFT_DATA_VALUE, len);
-	if (err < 0)
-		return err;
+	err = nft_parse_रेजिस्टर_store(ctx, tb[NFTA_FIB_DREG], &priv->dreg,
+				       शून्य, NFT_DATA_VALUE, len);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nft_fib_init);
 
-int nft_fib_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct nft_fib *priv = nft_expr_priv(expr);
+पूर्णांक nft_fib_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_fib *priv = nft_expr_priv(expr);
 
-	if (nft_dump_register(skb, NFTA_FIB_DREG, priv->dreg))
-		return -1;
+	अगर (nft_dump_रेजिस्टर(skb, NFTA_FIB_DREG, priv->dreg))
+		वापस -1;
 
-	if (nla_put_be32(skb, NFTA_FIB_RESULT, htonl(priv->result)))
-		return -1;
+	अगर (nla_put_be32(skb, NFTA_FIB_RESULT, htonl(priv->result)))
+		वापस -1;
 
-	if (nla_put_be32(skb, NFTA_FIB_FLAGS, htonl(priv->flags)))
-		return -1;
+	अगर (nla_put_be32(skb, NFTA_FIB_FLAGS, htonl(priv->flags)))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nft_fib_dump);
 
-void nft_fib_store_result(void *reg, const struct nft_fib *priv,
-			  const struct net_device *dev)
-{
+व्योम nft_fib_store_result(व्योम *reg, स्थिर काष्ठा nft_fib *priv,
+			  स्थिर काष्ठा net_device *dev)
+अणु
 	u32 *dreg = reg;
-	int index;
+	पूर्णांक index;
 
-	switch (priv->result) {
-	case NFT_FIB_RESULT_OIF:
-		index = dev ? dev->ifindex : 0;
+	चयन (priv->result) अणु
+	हाल NFT_FIB_RESULT_OIF:
+		index = dev ? dev->अगरindex : 0;
 		*dreg = (priv->flags & NFTA_FIB_F_PRESENT) ? !!index : index;
-		break;
-	case NFT_FIB_RESULT_OIFNAME:
-		if (priv->flags & NFTA_FIB_F_PRESENT)
+		अवरोध;
+	हाल NFT_FIB_RESULT_OIFNAME:
+		अगर (priv->flags & NFTA_FIB_F_PRESENT)
 			*dreg = !!dev;
-		else
-			strncpy(reg, dev ? dev->name : "", IFNAMSIZ);
-		break;
-	default:
+		अन्यथा
+			म_नकलन(reg, dev ? dev->name : "", IFNAMSIZ);
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
 		*dreg = 0;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(nft_fib_store_result);
 
 MODULE_LICENSE("GPL");

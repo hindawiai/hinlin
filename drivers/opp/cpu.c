@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic OPP helper interface for CPU device
+ * Generic OPP helper पूर्णांकerface क्रम CPU device
  *
  * Copyright (C) 2009-2014 Texas Instruments Incorporated.
  *	Nishanth Menon
@@ -8,70 +9,70 @@
  *	Kevin Hilman
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/cpu.h>
-#include <linux/cpufreq.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
 
-#include "opp.h"
+#समावेश "opp.h"
 
-#ifdef CONFIG_CPU_FREQ
+#अगर_घोषित CONFIG_CPU_FREQ
 
 /**
- * dev_pm_opp_init_cpufreq_table() - create a cpufreq table for a device
- * @dev:	device for which we do this operation
- * @table:	Cpufreq table returned back to caller
+ * dev_pm_opp_init_cpufreq_table() - create a cpufreq table क्रम a device
+ * @dev:	device क्रम which we करो this operation
+ * @table:	Cpufreq table वापसed back to caller
  *
- * Generate a cpufreq table for a provided device- this assumes that the
- * opp table is already initialized and ready for usage.
+ * Generate a cpufreq table क्रम a provided device- this assumes that the
+ * opp table is alपढ़ोy initialized and पढ़ोy क्रम usage.
  *
- * This function allocates required memory for the cpufreq table. It is
- * expected that the caller does the required maintenance such as freeing
+ * This function allocates required memory क्रम the cpufreq table. It is
+ * expected that the caller करोes the required मुख्यtenance such as मुक्तing
  * the table as required.
  *
- * Returns -EINVAL for bad pointers, -ENODEV if the device is not found, -ENOMEM
- * if no memory available for the operation (table is not populated), returns 0
- * if successful and table is populated.
+ * Returns -EINVAL क्रम bad poपूर्णांकers, -ENODEV अगर the device is not found, -ENOMEM
+ * अगर no memory available क्रम the operation (table is not populated), वापसs 0
+ * अगर successful and table is populated.
  *
- * WARNING: It is  important for the callers to ensure refreshing their copy of
- * the table if any of the mentioned functions have been invoked in the interim.
+ * WARNING: It is  important क्रम the callers to ensure refreshing their copy of
+ * the table अगर any of the mentioned functions have been invoked in the पूर्णांकerim.
  */
-int dev_pm_opp_init_cpufreq_table(struct device *dev,
-				  struct cpufreq_frequency_table **table)
-{
-	struct dev_pm_opp *opp;
-	struct cpufreq_frequency_table *freq_table = NULL;
-	int i, max_opps, ret = 0;
-	unsigned long rate;
+पूर्णांक dev_pm_opp_init_cpufreq_table(काष्ठा device *dev,
+				  काष्ठा cpufreq_frequency_table **table)
+अणु
+	काष्ठा dev_pm_opp *opp;
+	काष्ठा cpufreq_frequency_table *freq_table = शून्य;
+	पूर्णांक i, max_opps, ret = 0;
+	अचिन्हित दीर्घ rate;
 
 	max_opps = dev_pm_opp_get_opp_count(dev);
-	if (max_opps <= 0)
-		return max_opps ? max_opps : -ENODATA;
+	अगर (max_opps <= 0)
+		वापस max_opps ? max_opps : -ENODATA;
 
-	freq_table = kcalloc((max_opps + 1), sizeof(*freq_table), GFP_KERNEL);
-	if (!freq_table)
-		return -ENOMEM;
+	freq_table = kसुस्मृति((max_opps + 1), माप(*freq_table), GFP_KERNEL);
+	अगर (!freq_table)
+		वापस -ENOMEM;
 
-	for (i = 0, rate = 0; i < max_opps; i++, rate++) {
+	क्रम (i = 0, rate = 0; i < max_opps; i++, rate++) अणु
 		/* find next rate */
-		opp = dev_pm_opp_find_freq_ceil(dev, &rate);
-		if (IS_ERR(opp)) {
+		opp = dev_pm_opp_find_freq_उच्चमान(dev, &rate);
+		अगर (IS_ERR(opp)) अणु
 			ret = PTR_ERR(opp);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		freq_table[i].driver_data = i;
 		freq_table[i].frequency = rate / 1000;
 
 		/* Is Boost/turbo opp ? */
-		if (dev_pm_opp_is_turbo(opp))
+		अगर (dev_pm_opp_is_turbo(opp))
 			freq_table[i].flags = CPUFREQ_BOOST_FREQ;
 
 		dev_pm_opp_put(opp);
-	}
+	पूर्ण
 
 	freq_table[i].driver_data = i;
 	freq_table[i].frequency = CPUFREQ_TABLE_END;
@@ -79,158 +80,158 @@ int dev_pm_opp_init_cpufreq_table(struct device *dev,
 	*table = &freq_table[0];
 
 out:
-	if (ret)
-		kfree(freq_table);
+	अगर (ret)
+		kमुक्त(freq_table);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_init_cpufreq_table);
 
 /**
- * dev_pm_opp_free_cpufreq_table() - free the cpufreq table
- * @dev:	device for which we do this operation
- * @table:	table to free
+ * dev_pm_opp_मुक्त_cpufreq_table() - मुक्त the cpufreq table
+ * @dev:	device क्रम which we करो this operation
+ * @table:	table to मुक्त
  *
  * Free up the table allocated by dev_pm_opp_init_cpufreq_table
  */
-void dev_pm_opp_free_cpufreq_table(struct device *dev,
-				   struct cpufreq_frequency_table **table)
-{
-	if (!table)
-		return;
+व्योम dev_pm_opp_मुक्त_cpufreq_table(काष्ठा device *dev,
+				   काष्ठा cpufreq_frequency_table **table)
+अणु
+	अगर (!table)
+		वापस;
 
-	kfree(*table);
-	*table = NULL;
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_free_cpufreq_table);
-#endif	/* CONFIG_CPU_FREQ */
+	kमुक्त(*table);
+	*table = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_मुक्त_cpufreq_table);
+#पूर्ण_अगर	/* CONFIG_CPU_FREQ */
 
-void _dev_pm_opp_cpumask_remove_table(const struct cpumask *cpumask,
-				      int last_cpu)
-{
-	struct device *cpu_dev;
-	int cpu;
+व्योम _dev_pm_opp_cpumask_हटाओ_table(स्थिर काष्ठा cpumask *cpumask,
+				      पूर्णांक last_cpu)
+अणु
+	काष्ठा device *cpu_dev;
+	पूर्णांक cpu;
 
 	WARN_ON(cpumask_empty(cpumask));
 
-	for_each_cpu(cpu, cpumask) {
-		if (cpu == last_cpu)
-			break;
+	क्रम_each_cpu(cpu, cpumask) अणु
+		अगर (cpu == last_cpu)
+			अवरोध;
 
 		cpu_dev = get_cpu_device(cpu);
-		if (!cpu_dev) {
+		अगर (!cpu_dev) अणु
 			pr_err("%s: failed to get cpu%d device\n", __func__,
 			       cpu);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		dev_pm_opp_remove_table(cpu_dev);
-	}
-}
+		dev_pm_opp_हटाओ_table(cpu_dev);
+	पूर्ण
+पूर्ण
 
 /**
- * dev_pm_opp_cpumask_remove_table() - Removes OPP table for @cpumask
- * @cpumask:	cpumask for which OPP table needs to be removed
+ * dev_pm_opp_cpumask_हटाओ_table() - Removes OPP table क्रम @cpumask
+ * @cpumask:	cpumask क्रम which OPP table needs to be हटाओd
  *
- * This removes the OPP tables for CPUs present in the @cpumask.
- * This should be used to remove all the OPPs entries associated with
+ * This हटाओs the OPP tables क्रम CPUs present in the @cpumask.
+ * This should be used to हटाओ all the OPPs entries associated with
  * the cpus in @cpumask.
  */
-void dev_pm_opp_cpumask_remove_table(const struct cpumask *cpumask)
-{
-	_dev_pm_opp_cpumask_remove_table(cpumask, -1);
-}
-EXPORT_SYMBOL_GPL(dev_pm_opp_cpumask_remove_table);
+व्योम dev_pm_opp_cpumask_हटाओ_table(स्थिर काष्ठा cpumask *cpumask)
+अणु
+	_dev_pm_opp_cpumask_हटाओ_table(cpumask, -1);
+पूर्ण
+EXPORT_SYMBOL_GPL(dev_pm_opp_cpumask_हटाओ_table);
 
 /**
  * dev_pm_opp_set_sharing_cpus() - Mark OPP table as shared by few CPUs
- * @cpu_dev:	CPU device for which we do this operation
+ * @cpu_dev:	CPU device क्रम which we करो this operation
  * @cpumask:	cpumask of the CPUs which share the OPP table with @cpu_dev
  *
  * This marks OPP table of the @cpu_dev as shared by the CPUs present in
  * @cpumask.
  *
- * Returns -ENODEV if OPP table isn't already present.
+ * Returns -ENODEV अगर OPP table isn't alपढ़ोy present.
  */
-int dev_pm_opp_set_sharing_cpus(struct device *cpu_dev,
-				const struct cpumask *cpumask)
-{
-	struct opp_device *opp_dev;
-	struct opp_table *opp_table;
-	struct device *dev;
-	int cpu, ret = 0;
+पूर्णांक dev_pm_opp_set_sharing_cpus(काष्ठा device *cpu_dev,
+				स्थिर काष्ठा cpumask *cpumask)
+अणु
+	काष्ठा opp_device *opp_dev;
+	काष्ठा opp_table *opp_table;
+	काष्ठा device *dev;
+	पूर्णांक cpu, ret = 0;
 
 	opp_table = _find_opp_table(cpu_dev);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	for_each_cpu(cpu, cpumask) {
-		if (cpu == cpu_dev->id)
-			continue;
+	क्रम_each_cpu(cpu, cpumask) अणु
+		अगर (cpu == cpu_dev->id)
+			जारी;
 
 		dev = get_cpu_device(cpu);
-		if (!dev) {
+		अगर (!dev) अणु
 			dev_err(cpu_dev, "%s: failed to get cpu%d device\n",
 				__func__, cpu);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		opp_dev = _add_opp_dev(dev, opp_table);
-		if (!opp_dev) {
+		अगर (!opp_dev) अणु
 			dev_err(dev, "%s: failed to add opp-dev for cpu%d device\n",
 				__func__, cpu);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Mark opp-table as multiple CPUs are sharing it now */
 		opp_table->shared_opp = OPP_TABLE_ACCESS_SHARED;
-	}
+	पूर्ण
 
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_set_sharing_cpus);
 
 /**
  * dev_pm_opp_get_sharing_cpus() - Get cpumask of CPUs sharing OPPs with @cpu_dev
- * @cpu_dev:	CPU device for which we do this operation
- * @cpumask:	cpumask to update with information of sharing CPUs
+ * @cpu_dev:	CPU device क्रम which we करो this operation
+ * @cpumask:	cpumask to update with inक्रमmation of sharing CPUs
  *
  * This updates the @cpumask with CPUs that are sharing OPPs with @cpu_dev.
  *
- * Returns -ENODEV if OPP table isn't already present and -EINVAL if the OPP
+ * Returns -ENODEV अगर OPP table isn't alपढ़ोy present and -EINVAL अगर the OPP
  * table's status is access-unknown.
  */
-int dev_pm_opp_get_sharing_cpus(struct device *cpu_dev, struct cpumask *cpumask)
-{
-	struct opp_device *opp_dev;
-	struct opp_table *opp_table;
-	int ret = 0;
+पूर्णांक dev_pm_opp_get_sharing_cpus(काष्ठा device *cpu_dev, काष्ठा cpumask *cpumask)
+अणु
+	काष्ठा opp_device *opp_dev;
+	काष्ठा opp_table *opp_table;
+	पूर्णांक ret = 0;
 
 	opp_table = _find_opp_table(cpu_dev);
-	if (IS_ERR(opp_table))
-		return PTR_ERR(opp_table);
+	अगर (IS_ERR(opp_table))
+		वापस PTR_ERR(opp_table);
 
-	if (opp_table->shared_opp == OPP_TABLE_ACCESS_UNKNOWN) {
+	अगर (opp_table->shared_opp == OPP_TABLE_ACCESS_UNKNOWN) अणु
 		ret = -EINVAL;
-		goto put_opp_table;
-	}
+		जाओ put_opp_table;
+	पूर्ण
 
 	cpumask_clear(cpumask);
 
-	if (opp_table->shared_opp == OPP_TABLE_ACCESS_SHARED) {
+	अगर (opp_table->shared_opp == OPP_TABLE_ACCESS_SHARED) अणु
 		mutex_lock(&opp_table->lock);
-		list_for_each_entry(opp_dev, &opp_table->dev_list, node)
+		list_क्रम_each_entry(opp_dev, &opp_table->dev_list, node)
 			cpumask_set_cpu(opp_dev->dev->id, cpumask);
 		mutex_unlock(&opp_table->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		cpumask_set_cpu(cpu_dev->id, cpumask);
-	}
+	पूर्ण
 
 put_opp_table:
 	dev_pm_opp_put_opp_table(opp_table);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(dev_pm_opp_get_sharing_cpus);

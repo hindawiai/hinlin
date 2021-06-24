@@ -1,474 +1,475 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/pm_runtime.h>
-#include <linux/soc/mediatek/mtk-cmdq.h>
-#include <linux/soc/mediatek/mtk-mmsys.h>
-#include <linux/soc/mediatek/mtk-mutex.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/soc/mediatek/mtk-cmdq.h>
+#समावेश <linux/soc/mediatek/mtk-mmsys.h>
+#समावेश <linux/soc/mediatek/mtk-mutex.h>
 
-#include <asm/barrier.h>
-#include <soc/mediatek/smi.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <soc/mediatek/smi.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "mtk_drm_drv.h"
-#include "mtk_drm_crtc.h"
-#include "mtk_drm_ddp_comp.h"
-#include "mtk_drm_gem.h"
-#include "mtk_drm_plane.h"
+#समावेश "mtk_drm_drv.h"
+#समावेश "mtk_drm_crtc.h"
+#समावेश "mtk_drm_ddp_comp.h"
+#समावेश "mtk_drm_gem.h"
+#समावेश "mtk_drm_plane.h"
 
 /*
- * struct mtk_drm_crtc - MediaTek specific crtc structure.
+ * काष्ठा mtk_drm_crtc - MediaTek specअगरic crtc काष्ठाure.
  * @base: crtc object.
  * @enabled: records whether crtc_enable succeeded
- * @planes: array of 4 drm_plane structures, one for each overlay plane
+ * @planes: array of 4 drm_plane काष्ठाures, one क्रम each overlay plane
  * @pending_planes: whether any plane has pending changes to be applied
- * @mmsys_dev: pointer to the mmsys device for configuration registers
+ * @mmsys_dev: poपूर्णांकer to the mmsys device क्रम configuration रेजिस्टरs
  * @mutex: handle to one of the ten disp_mutex streams
  * @ddp_comp_nr: number of components in ddp_comp
- * @ddp_comp: array of pointers the mtk_ddp_comp structures used by this crtc
+ * @ddp_comp: array of poपूर्णांकers the mtk_ddp_comp काष्ठाures used by this crtc
  *
  * TODO: Needs update: this header is missing a bunch of member descriptions.
  */
-struct mtk_drm_crtc {
-	struct drm_crtc			base;
+काष्ठा mtk_drm_crtc अणु
+	काष्ठा drm_crtc			base;
 	bool				enabled;
 
 	bool				pending_needs_vblank;
-	struct drm_pending_vblank_event	*event;
+	काष्ठा drm_pending_vblank_event	*event;
 
-	struct drm_plane		*planes;
-	unsigned int			layer_nr;
+	काष्ठा drm_plane		*planes;
+	अचिन्हित पूर्णांक			layer_nr;
 	bool				pending_planes;
 	bool				pending_async_planes;
 
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
-	struct cmdq_client		*cmdq_client;
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
+	काष्ठा cmdq_client		*cmdq_client;
 	u32				cmdq_event;
-#endif
+#पूर्ण_अगर
 
-	struct device			*mmsys_dev;
-	struct mtk_mutex		*mutex;
-	unsigned int			ddp_comp_nr;
-	struct mtk_ddp_comp		**ddp_comp;
+	काष्ठा device			*mmsys_dev;
+	काष्ठा mtk_mutex		*mutex;
+	अचिन्हित पूर्णांक			ddp_comp_nr;
+	काष्ठा mtk_ddp_comp		**ddp_comp;
 
-	/* lock for display hardware access */
-	struct mutex			hw_lock;
+	/* lock क्रम display hardware access */
+	काष्ठा mutex			hw_lock;
 	bool				config_updating;
-};
+पूर्ण;
 
-struct mtk_crtc_state {
-	struct drm_crtc_state		base;
+काष्ठा mtk_crtc_state अणु
+	काष्ठा drm_crtc_state		base;
 
 	bool				pending_config;
-	unsigned int			pending_width;
-	unsigned int			pending_height;
-	unsigned int			pending_vrefresh;
-};
+	अचिन्हित पूर्णांक			pending_width;
+	अचिन्हित पूर्णांक			pending_height;
+	अचिन्हित पूर्णांक			pending_vrefresh;
+पूर्ण;
 
-static inline struct mtk_drm_crtc *to_mtk_crtc(struct drm_crtc *c)
-{
-	return container_of(c, struct mtk_drm_crtc, base);
-}
+अटल अंतरभूत काष्ठा mtk_drm_crtc *to_mtk_crtc(काष्ठा drm_crtc *c)
+अणु
+	वापस container_of(c, काष्ठा mtk_drm_crtc, base);
+पूर्ण
 
-static inline struct mtk_crtc_state *to_mtk_crtc_state(struct drm_crtc_state *s)
-{
-	return container_of(s, struct mtk_crtc_state, base);
-}
+अटल अंतरभूत काष्ठा mtk_crtc_state *to_mtk_crtc_state(काष्ठा drm_crtc_state *s)
+अणु
+	वापस container_of(s, काष्ठा mtk_crtc_state, base);
+पूर्ण
 
-static void mtk_drm_crtc_finish_page_flip(struct mtk_drm_crtc *mtk_crtc)
-{
-	struct drm_crtc *crtc = &mtk_crtc->base;
-	unsigned long flags;
+अटल व्योम mtk_drm_crtc_finish_page_flip(काष्ठा mtk_drm_crtc *mtk_crtc)
+अणु
+	काष्ठा drm_crtc *crtc = &mtk_crtc->base;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&crtc->dev->event_lock, flags);
 	drm_crtc_send_vblank_event(crtc, mtk_crtc->event);
 	drm_crtc_vblank_put(crtc);
-	mtk_crtc->event = NULL;
+	mtk_crtc->event = शून्य;
 	spin_unlock_irqrestore(&crtc->dev->event_lock, flags);
-}
+पूर्ण
 
-static void mtk_drm_finish_page_flip(struct mtk_drm_crtc *mtk_crtc)
-{
+अटल व्योम mtk_drm_finish_page_flip(काष्ठा mtk_drm_crtc *mtk_crtc)
+अणु
 	drm_crtc_handle_vblank(&mtk_crtc->base);
-	if (!mtk_crtc->config_updating && mtk_crtc->pending_needs_vblank) {
+	अगर (!mtk_crtc->config_updating && mtk_crtc->pending_needs_vblank) अणु
 		mtk_drm_crtc_finish_page_flip(mtk_crtc);
 		mtk_crtc->pending_needs_vblank = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mtk_drm_crtc_destroy(struct drm_crtc *crtc)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+अटल व्योम mtk_drm_crtc_destroy(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
 
 	mtk_mutex_put(mtk_crtc->mutex);
 
 	drm_crtc_cleanup(crtc);
-}
+पूर्ण
 
-static void mtk_drm_crtc_reset(struct drm_crtc *crtc)
-{
-	struct mtk_crtc_state *state;
+अटल व्योम mtk_drm_crtc_reset(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा mtk_crtc_state *state;
 
-	if (crtc->state)
+	अगर (crtc->state)
 		__drm_atomic_helper_crtc_destroy_state(crtc->state);
 
-	kfree(to_mtk_crtc_state(crtc->state));
-	crtc->state = NULL;
+	kमुक्त(to_mtk_crtc_state(crtc->state));
+	crtc->state = शून्य;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (state)
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (state)
 		__drm_atomic_helper_crtc_reset(crtc, &state->base);
-}
+पूर्ण
 
-static struct drm_crtc_state *mtk_drm_crtc_duplicate_state(struct drm_crtc *crtc)
-{
-	struct mtk_crtc_state *state;
+अटल काष्ठा drm_crtc_state *mtk_drm_crtc_duplicate_state(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा mtk_crtc_state *state;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &state->base);
 
 	WARN_ON(state->base.crtc != crtc);
 	state->base.crtc = crtc;
 
-	return &state->base;
-}
+	वापस &state->base;
+पूर्ण
 
-static void mtk_drm_crtc_destroy_state(struct drm_crtc *crtc,
-				       struct drm_crtc_state *state)
-{
+अटल व्योम mtk_drm_crtc_destroy_state(काष्ठा drm_crtc *crtc,
+				       काष्ठा drm_crtc_state *state)
+अणु
 	__drm_atomic_helper_crtc_destroy_state(state);
-	kfree(to_mtk_crtc_state(state));
-}
+	kमुक्त(to_mtk_crtc_state(state));
+पूर्ण
 
-static bool mtk_drm_crtc_mode_fixup(struct drm_crtc *crtc,
-				    const struct drm_display_mode *mode,
-				    struct drm_display_mode *adjusted_mode)
-{
-	/* Nothing to do here, but this callback is mandatory. */
-	return true;
-}
+अटल bool mtk_drm_crtc_mode_fixup(काष्ठा drm_crtc *crtc,
+				    स्थिर काष्ठा drm_display_mode *mode,
+				    काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	/* Nothing to करो here, but this callback is mandatory. */
+	वापस true;
+पूर्ण
 
-static void mtk_drm_crtc_mode_set_nofb(struct drm_crtc *crtc)
-{
-	struct mtk_crtc_state *state = to_mtk_crtc_state(crtc->state);
+अटल व्योम mtk_drm_crtc_mode_set_nofb(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा mtk_crtc_state *state = to_mtk_crtc_state(crtc->state);
 
 	state->pending_width = crtc->mode.hdisplay;
 	state->pending_height = crtc->mode.vdisplay;
 	state->pending_vrefresh = drm_mode_vrefresh(&crtc->mode);
-	wmb();	/* Make sure the above parameters are set before update */
+	wmb();	/* Make sure the above parameters are set beक्रमe update */
 	state->pending_config = true;
-}
+पूर्ण
 
-static int mtk_crtc_ddp_clk_enable(struct mtk_drm_crtc *mtk_crtc)
-{
-	int ret;
-	int i;
+अटल पूर्णांक mtk_crtc_ddp_clk_enable(काष्ठा mtk_drm_crtc *mtk_crtc)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++) {
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++) अणु
 		ret = mtk_ddp_comp_clk_enable(mtk_crtc->ddp_comp[i]);
-		if (ret) {
+		अगर (ret) अणु
 			DRM_ERROR("Failed to enable clock %d: %d\n", i, ret);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	while (--i >= 0)
+	जबतक (--i >= 0)
 		mtk_ddp_comp_clk_disable(mtk_crtc->ddp_comp[i]);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mtk_crtc_ddp_clk_disable(struct mtk_drm_crtc *mtk_crtc)
-{
-	int i;
+अटल व्योम mtk_crtc_ddp_clk_disable(काष्ठा mtk_drm_crtc *mtk_crtc)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++)
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++)
 		mtk_ddp_comp_clk_disable(mtk_crtc->ddp_comp[i]);
-}
+पूर्ण
 
-static
-struct mtk_ddp_comp *mtk_drm_ddp_comp_for_plane(struct drm_crtc *crtc,
-						struct drm_plane *plane,
-						unsigned int *local_layer)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	struct mtk_ddp_comp *comp;
-	int i, count = 0;
-	unsigned int local_index = plane - mtk_crtc->planes;
+अटल
+काष्ठा mtk_ddp_comp *mtk_drm_ddp_comp_क्रम_plane(काष्ठा drm_crtc *crtc,
+						काष्ठा drm_plane *plane,
+						अचिन्हित पूर्णांक *local_layer)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_ddp_comp *comp;
+	पूर्णांक i, count = 0;
+	अचिन्हित पूर्णांक local_index = plane - mtk_crtc->planes;
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++) {
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++) अणु
 		comp = mtk_crtc->ddp_comp[i];
-		if (local_index < (count + mtk_ddp_comp_layer_nr(comp))) {
+		अगर (local_index < (count + mtk_ddp_comp_layer_nr(comp))) अणु
 			*local_layer = local_index - count;
-			return comp;
-		}
+			वापस comp;
+		पूर्ण
 		count += mtk_ddp_comp_layer_nr(comp);
-	}
+	पूर्ण
 
 	WARN(1, "Failed to find component for plane %d\n", plane->index);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
-static void ddp_cmdq_cb(struct cmdq_cb_data data)
-{
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
+अटल व्योम ddp_cmdq_cb(काष्ठा cmdq_cb_data data)
+अणु
 	cmdq_pkt_destroy(data.data);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int mtk_crtc_ddp_hw_init(struct mtk_drm_crtc *mtk_crtc)
-{
-	struct drm_crtc *crtc = &mtk_crtc->base;
-	struct drm_connector *connector;
-	struct drm_encoder *encoder;
-	struct drm_connector_list_iter conn_iter;
-	unsigned int width, height, vrefresh, bpc = MTK_MAX_BPC;
-	int ret;
-	int i;
+अटल पूर्णांक mtk_crtc_ddp_hw_init(काष्ठा mtk_drm_crtc *mtk_crtc)
+अणु
+	काष्ठा drm_crtc *crtc = &mtk_crtc->base;
+	काष्ठा drm_connector *connector;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा drm_connector_list_iter conn_iter;
+	अचिन्हित पूर्णांक width, height, vrefresh, bpc = MTK_MAX_BPC;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (WARN_ON(!crtc->state))
-		return -EINVAL;
+	अगर (WARN_ON(!crtc->state))
+		वापस -EINVAL;
 
 	width = crtc->state->adjusted_mode.hdisplay;
 	height = crtc->state->adjusted_mode.vdisplay;
 	vrefresh = drm_mode_vrefresh(&crtc->state->adjusted_mode);
 
-	drm_for_each_encoder(encoder, crtc->dev) {
-		if (encoder->crtc != crtc)
-			continue;
+	drm_क्रम_each_encoder(encoder, crtc->dev) अणु
+		अगर (encoder->crtc != crtc)
+			जारी;
 
 		drm_connector_list_iter_begin(crtc->dev, &conn_iter);
-		drm_for_each_connector_iter(connector, &conn_iter) {
-			if (connector->encoder != encoder)
-				continue;
-			if (connector->display_info.bpc != 0 &&
+		drm_क्रम_each_connector_iter(connector, &conn_iter) अणु
+			अगर (connector->encoder != encoder)
+				जारी;
+			अगर (connector->display_info.bpc != 0 &&
 			    bpc > connector->display_info.bpc)
 				bpc = connector->display_info.bpc;
-		}
+		पूर्ण
 		drm_connector_list_iter_end(&conn_iter);
-	}
+	पूर्ण
 
-	ret = pm_runtime_get_sync(crtc->dev->dev);
-	if (ret < 0) {
+	ret = pm_runसमय_get_sync(crtc->dev->dev);
+	अगर (ret < 0) अणु
 		DRM_ERROR("Failed to enable power domain: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = mtk_mutex_prepare(mtk_crtc->mutex);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_ERROR("Failed to enable mutex clock: %d\n", ret);
-		goto err_pm_runtime_put;
-	}
+		जाओ err_pm_runसमय_put;
+	पूर्ण
 
 	ret = mtk_crtc_ddp_clk_enable(mtk_crtc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		DRM_ERROR("Failed to enable component clocks: %d\n", ret);
-		goto err_mutex_unprepare;
-	}
+		जाओ err_mutex_unprepare;
+	पूर्ण
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr - 1; i++) {
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr - 1; i++) अणु
 		mtk_mmsys_ddp_connect(mtk_crtc->mmsys_dev,
 				      mtk_crtc->ddp_comp[i]->id,
 				      mtk_crtc->ddp_comp[i + 1]->id);
 		mtk_mutex_add_comp(mtk_crtc->mutex,
 					mtk_crtc->ddp_comp[i]->id);
-	}
+	पूर्ण
 	mtk_mutex_add_comp(mtk_crtc->mutex, mtk_crtc->ddp_comp[i]->id);
 	mtk_mutex_enable(mtk_crtc->mutex);
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++) {
-		struct mtk_ddp_comp *comp = mtk_crtc->ddp_comp[i];
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++) अणु
+		काष्ठा mtk_ddp_comp *comp = mtk_crtc->ddp_comp[i];
 
-		if (i == 1)
+		अगर (i == 1)
 			mtk_ddp_comp_bgclr_in_on(comp);
 
-		mtk_ddp_comp_config(comp, width, height, vrefresh, bpc, NULL);
+		mtk_ddp_comp_config(comp, width, height, vrefresh, bpc, शून्य);
 		mtk_ddp_comp_start(comp);
-	}
+	पूर्ण
 
 	/* Initially configure all planes */
-	for (i = 0; i < mtk_crtc->layer_nr; i++) {
-		struct drm_plane *plane = &mtk_crtc->planes[i];
-		struct mtk_plane_state *plane_state;
-		struct mtk_ddp_comp *comp;
-		unsigned int local_layer;
+	क्रम (i = 0; i < mtk_crtc->layer_nr; i++) अणु
+		काष्ठा drm_plane *plane = &mtk_crtc->planes[i];
+		काष्ठा mtk_plane_state *plane_state;
+		काष्ठा mtk_ddp_comp *comp;
+		अचिन्हित पूर्णांक local_layer;
 
 		plane_state = to_mtk_plane_state(plane->state);
-		comp = mtk_drm_ddp_comp_for_plane(crtc, plane, &local_layer);
-		if (comp)
+		comp = mtk_drm_ddp_comp_क्रम_plane(crtc, plane, &local_layer);
+		अगर (comp)
 			mtk_ddp_comp_layer_config(comp, local_layer,
-						  plane_state, NULL);
-	}
+						  plane_state, शून्य);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_mutex_unprepare:
 	mtk_mutex_unprepare(mtk_crtc->mutex);
-err_pm_runtime_put:
-	pm_runtime_put(crtc->dev->dev);
-	return ret;
-}
+err_pm_runसमय_put:
+	pm_runसमय_put(crtc->dev->dev);
+	वापस ret;
+पूर्ण
 
-static void mtk_crtc_ddp_hw_fini(struct mtk_drm_crtc *mtk_crtc)
-{
-	struct drm_device *drm = mtk_crtc->base.dev;
-	struct drm_crtc *crtc = &mtk_crtc->base;
-	int i;
+अटल व्योम mtk_crtc_ddp_hw_fini(काष्ठा mtk_drm_crtc *mtk_crtc)
+अणु
+	काष्ठा drm_device *drm = mtk_crtc->base.dev;
+	काष्ठा drm_crtc *crtc = &mtk_crtc->base;
+	पूर्णांक i;
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++) {
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++) अणु
 		mtk_ddp_comp_stop(mtk_crtc->ddp_comp[i]);
-		if (i == 1)
+		अगर (i == 1)
 			mtk_ddp_comp_bgclr_in_off(mtk_crtc->ddp_comp[i]);
-	}
+	पूर्ण
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++)
-		mtk_mutex_remove_comp(mtk_crtc->mutex,
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++)
+		mtk_mutex_हटाओ_comp(mtk_crtc->mutex,
 					   mtk_crtc->ddp_comp[i]->id);
 	mtk_mutex_disable(mtk_crtc->mutex);
-	for (i = 0; i < mtk_crtc->ddp_comp_nr - 1; i++) {
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr - 1; i++) अणु
 		mtk_mmsys_ddp_disconnect(mtk_crtc->mmsys_dev,
 					 mtk_crtc->ddp_comp[i]->id,
 					 mtk_crtc->ddp_comp[i + 1]->id);
-		mtk_mutex_remove_comp(mtk_crtc->mutex,
+		mtk_mutex_हटाओ_comp(mtk_crtc->mutex,
 					   mtk_crtc->ddp_comp[i]->id);
-	}
-	mtk_mutex_remove_comp(mtk_crtc->mutex, mtk_crtc->ddp_comp[i]->id);
+	पूर्ण
+	mtk_mutex_हटाओ_comp(mtk_crtc->mutex, mtk_crtc->ddp_comp[i]->id);
 	mtk_crtc_ddp_clk_disable(mtk_crtc);
 	mtk_mutex_unprepare(mtk_crtc->mutex);
 
-	pm_runtime_put(drm->dev);
+	pm_runसमय_put(drm->dev);
 
-	if (crtc->state->event && !crtc->state->active) {
+	अगर (crtc->state->event && !crtc->state->active) अणु
 		spin_lock_irq(&crtc->dev->event_lock);
 		drm_crtc_send_vblank_event(crtc, crtc->state->event);
-		crtc->state->event = NULL;
+		crtc->state->event = शून्य;
 		spin_unlock_irq(&crtc->dev->event_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mtk_crtc_ddp_config(struct drm_crtc *crtc,
-				struct cmdq_pkt *cmdq_handle)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	struct mtk_crtc_state *state = to_mtk_crtc_state(mtk_crtc->base.state);
-	struct mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
-	unsigned int i;
-	unsigned int local_layer;
+अटल व्योम mtk_crtc_ddp_config(काष्ठा drm_crtc *crtc,
+				काष्ठा cmdq_pkt *cmdq_handle)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_crtc_state *state = to_mtk_crtc_state(mtk_crtc->base.state);
+	काष्ठा mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक local_layer;
 
 	/*
-	 * TODO: instead of updating the registers here, we should prepare
-	 * working registers in atomic_commit and let the hardware command
-	 * queue update module registers on vblank.
+	 * TODO: instead of updating the रेजिस्टरs here, we should prepare
+	 * working रेजिस्टरs in atomic_commit and let the hardware command
+	 * queue update module रेजिस्टरs on vblank.
 	 */
-	if (state->pending_config) {
+	अगर (state->pending_config) अणु
 		mtk_ddp_comp_config(comp, state->pending_width,
 				    state->pending_height,
 				    state->pending_vrefresh, 0,
 				    cmdq_handle);
 
 		state->pending_config = false;
-	}
+	पूर्ण
 
-	if (mtk_crtc->pending_planes) {
-		for (i = 0; i < mtk_crtc->layer_nr; i++) {
-			struct drm_plane *plane = &mtk_crtc->planes[i];
-			struct mtk_plane_state *plane_state;
+	अगर (mtk_crtc->pending_planes) अणु
+		क्रम (i = 0; i < mtk_crtc->layer_nr; i++) अणु
+			काष्ठा drm_plane *plane = &mtk_crtc->planes[i];
+			काष्ठा mtk_plane_state *plane_state;
 
 			plane_state = to_mtk_plane_state(plane->state);
 
-			if (!plane_state->pending.config)
-				continue;
+			अगर (!plane_state->pending.config)
+				जारी;
 
-			comp = mtk_drm_ddp_comp_for_plane(crtc, plane,
+			comp = mtk_drm_ddp_comp_क्रम_plane(crtc, plane,
 							  &local_layer);
 
-			if (comp)
+			अगर (comp)
 				mtk_ddp_comp_layer_config(comp, local_layer,
 							  plane_state,
 							  cmdq_handle);
 			plane_state->pending.config = false;
-		}
+		पूर्ण
 		mtk_crtc->pending_planes = false;
-	}
+	पूर्ण
 
-	if (mtk_crtc->pending_async_planes) {
-		for (i = 0; i < mtk_crtc->layer_nr; i++) {
-			struct drm_plane *plane = &mtk_crtc->planes[i];
-			struct mtk_plane_state *plane_state;
+	अगर (mtk_crtc->pending_async_planes) अणु
+		क्रम (i = 0; i < mtk_crtc->layer_nr; i++) अणु
+			काष्ठा drm_plane *plane = &mtk_crtc->planes[i];
+			काष्ठा mtk_plane_state *plane_state;
 
 			plane_state = to_mtk_plane_state(plane->state);
 
-			if (!plane_state->pending.async_config)
-				continue;
+			अगर (!plane_state->pending.async_config)
+				जारी;
 
-			comp = mtk_drm_ddp_comp_for_plane(crtc, plane,
+			comp = mtk_drm_ddp_comp_क्रम_plane(crtc, plane,
 							  &local_layer);
 
-			if (comp)
+			अगर (comp)
 				mtk_ddp_comp_layer_config(comp, local_layer,
 							  plane_state,
 							  cmdq_handle);
 			plane_state->pending.async_config = false;
-		}
+		पूर्ण
 		mtk_crtc->pending_async_planes = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mtk_drm_crtc_update_config(struct mtk_drm_crtc *mtk_crtc,
+अटल व्योम mtk_drm_crtc_update_config(काष्ठा mtk_drm_crtc *mtk_crtc,
 				       bool needs_vblank)
-{
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
-	struct cmdq_pkt *cmdq_handle;
-#endif
-	struct drm_crtc *crtc = &mtk_crtc->base;
-	struct mtk_drm_private *priv = crtc->dev->dev_private;
-	unsigned int pending_planes = 0, pending_async_planes = 0;
-	int i;
+अणु
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
+	काष्ठा cmdq_pkt *cmdq_handle;
+#पूर्ण_अगर
+	काष्ठा drm_crtc *crtc = &mtk_crtc->base;
+	काष्ठा mtk_drm_निजी *priv = crtc->dev->dev_निजी;
+	अचिन्हित पूर्णांक pending_planes = 0, pending_async_planes = 0;
+	पूर्णांक i;
 
 	mutex_lock(&mtk_crtc->hw_lock);
 	mtk_crtc->config_updating = true;
-	if (needs_vblank)
+	अगर (needs_vblank)
 		mtk_crtc->pending_needs_vblank = true;
 
-	for (i = 0; i < mtk_crtc->layer_nr; i++) {
-		struct drm_plane *plane = &mtk_crtc->planes[i];
-		struct mtk_plane_state *plane_state;
+	क्रम (i = 0; i < mtk_crtc->layer_nr; i++) अणु
+		काष्ठा drm_plane *plane = &mtk_crtc->planes[i];
+		काष्ठा mtk_plane_state *plane_state;
 
 		plane_state = to_mtk_plane_state(plane->state);
-		if (plane_state->pending.dirty) {
+		अगर (plane_state->pending.dirty) अणु
 			plane_state->pending.config = true;
 			plane_state->pending.dirty = false;
 			pending_planes |= BIT(i);
-		} else if (plane_state->pending.async_dirty) {
+		पूर्ण अन्यथा अगर (plane_state->pending.async_dirty) अणु
 			plane_state->pending.async_config = true;
 			plane_state->pending.async_dirty = false;
 			pending_async_planes |= BIT(i);
-		}
-	}
-	if (pending_planes)
+		पूर्ण
+	पूर्ण
+	अगर (pending_planes)
 		mtk_crtc->pending_planes = true;
-	if (pending_async_planes)
+	अगर (pending_async_planes)
 		mtk_crtc->pending_async_planes = true;
 
-	if (priv->data->shadow_register) {
+	अगर (priv->data->shaकरोw_रेजिस्टर) अणु
 		mtk_mutex_acquire(mtk_crtc->mutex);
-		mtk_crtc_ddp_config(crtc, NULL);
+		mtk_crtc_ddp_config(crtc, शून्य);
 		mtk_mutex_release(mtk_crtc->mutex);
-	}
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
-	if (mtk_crtc->cmdq_client) {
+	पूर्ण
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
+	अगर (mtk_crtc->cmdq_client) अणु
 		mbox_flush(mtk_crtc->cmdq_client->chan, 2000);
 		cmdq_handle = cmdq_pkt_create(mtk_crtc->cmdq_client, PAGE_SIZE);
 		cmdq_pkt_clear_event(cmdq_handle, mtk_crtc->cmdq_event);
@@ -476,164 +477,164 @@ static void mtk_drm_crtc_update_config(struct mtk_drm_crtc *mtk_crtc,
 		mtk_crtc_ddp_config(crtc, cmdq_handle);
 		cmdq_pkt_finalize(cmdq_handle);
 		cmdq_pkt_flush_async(cmdq_handle, ddp_cmdq_cb, cmdq_handle);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	mtk_crtc->config_updating = false;
 	mutex_unlock(&mtk_crtc->hw_lock);
-}
+पूर्ण
 
-static void mtk_crtc_ddp_irq(void *data)
-{
-	struct drm_crtc *crtc = data;
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	struct mtk_drm_private *priv = crtc->dev->dev_private;
+अटल व्योम mtk_crtc_ddp_irq(व्योम *data)
+अणु
+	काष्ठा drm_crtc *crtc = data;
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_drm_निजी *priv = crtc->dev->dev_निजी;
 
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
-	if (!priv->data->shadow_register && !mtk_crtc->cmdq_client)
-#else
-	if (!priv->data->shadow_register)
-#endif
-		mtk_crtc_ddp_config(crtc, NULL);
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
+	अगर (!priv->data->shaकरोw_रेजिस्टर && !mtk_crtc->cmdq_client)
+#अन्यथा
+	अगर (!priv->data->shaकरोw_रेजिस्टर)
+#पूर्ण_अगर
+		mtk_crtc_ddp_config(crtc, शून्य);
 
 	mtk_drm_finish_page_flip(mtk_crtc);
-}
+पूर्ण
 
-static int mtk_drm_crtc_enable_vblank(struct drm_crtc *crtc)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	struct mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
+अटल पूर्णांक mtk_drm_crtc_enable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
 
 	mtk_ddp_comp_enable_vblank(comp, mtk_crtc_ddp_irq, &mtk_crtc->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_drm_crtc_disable_vblank(struct drm_crtc *crtc)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	struct mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
+अटल व्योम mtk_drm_crtc_disable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
 
 	mtk_ddp_comp_disable_vblank(comp);
-}
+पूर्ण
 
-int mtk_drm_crtc_plane_check(struct drm_crtc *crtc, struct drm_plane *plane,
-			     struct mtk_plane_state *state)
-{
-	unsigned int local_layer;
-	struct mtk_ddp_comp *comp;
+पूर्णांक mtk_drm_crtc_plane_check(काष्ठा drm_crtc *crtc, काष्ठा drm_plane *plane,
+			     काष्ठा mtk_plane_state *state)
+अणु
+	अचिन्हित पूर्णांक local_layer;
+	काष्ठा mtk_ddp_comp *comp;
 
-	comp = mtk_drm_ddp_comp_for_plane(crtc, plane, &local_layer);
-	if (comp)
-		return mtk_ddp_comp_layer_check(comp, local_layer, state);
-	return 0;
-}
+	comp = mtk_drm_ddp_comp_क्रम_plane(crtc, plane, &local_layer);
+	अगर (comp)
+		वापस mtk_ddp_comp_layer_check(comp, local_layer, state);
+	वापस 0;
+पूर्ण
 
-void mtk_drm_crtc_async_update(struct drm_crtc *crtc, struct drm_plane *plane,
-			       struct drm_atomic_state *state)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	const struct drm_plane_helper_funcs *plane_helper_funcs =
-			plane->helper_private;
+व्योम mtk_drm_crtc_async_update(काष्ठा drm_crtc *crtc, काष्ठा drm_plane *plane,
+			       काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	स्थिर काष्ठा drm_plane_helper_funcs *plane_helper_funcs =
+			plane->helper_निजी;
 
-	if (!mtk_crtc->enabled)
-		return;
+	अगर (!mtk_crtc->enabled)
+		वापस;
 
 	plane_helper_funcs->atomic_update(plane, state);
 	mtk_drm_crtc_update_config(mtk_crtc, false);
-}
+पूर्ण
 
-static void mtk_drm_crtc_atomic_enable(struct drm_crtc *crtc,
-				       struct drm_atomic_state *state)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	struct mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
-	int ret;
+अटल व्योम mtk_drm_crtc_atomic_enable(काष्ठा drm_crtc *crtc,
+				       काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
+	पूर्णांक ret;
 
 	DRM_DEBUG_DRIVER("%s %d\n", __func__, crtc->base.id);
 
 	ret = mtk_smi_larb_get(comp->larb_dev);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Failed to get larb: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ret = mtk_crtc_ddp_hw_init(mtk_crtc);
-	if (ret) {
+	अगर (ret) अणु
 		mtk_smi_larb_put(comp->larb_dev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	drm_crtc_vblank_on(crtc);
 	mtk_crtc->enabled = true;
-}
+पूर्ण
 
-static void mtk_drm_crtc_atomic_disable(struct drm_crtc *crtc,
-					struct drm_atomic_state *state)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	struct mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
-	int i;
+अटल व्योम mtk_drm_crtc_atomic_disable(काष्ठा drm_crtc *crtc,
+					काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_ddp_comp *comp = mtk_crtc->ddp_comp[0];
+	पूर्णांक i;
 
 	DRM_DEBUG_DRIVER("%s %d\n", __func__, crtc->base.id);
-	if (!mtk_crtc->enabled)
-		return;
+	अगर (!mtk_crtc->enabled)
+		वापस;
 
 	/* Set all pending plane state to disabled */
-	for (i = 0; i < mtk_crtc->layer_nr; i++) {
-		struct drm_plane *plane = &mtk_crtc->planes[i];
-		struct mtk_plane_state *plane_state;
+	क्रम (i = 0; i < mtk_crtc->layer_nr; i++) अणु
+		काष्ठा drm_plane *plane = &mtk_crtc->planes[i];
+		काष्ठा mtk_plane_state *plane_state;
 
 		plane_state = to_mtk_plane_state(plane->state);
 		plane_state->pending.enable = false;
 		plane_state->pending.config = true;
-	}
+	पूर्ण
 	mtk_crtc->pending_planes = true;
 
 	mtk_drm_crtc_update_config(mtk_crtc, false);
-	/* Wait for planes to be disabled */
-	drm_crtc_wait_one_vblank(crtc);
+	/* Wait क्रम planes to be disabled */
+	drm_crtc_रुको_one_vblank(crtc);
 
 	drm_crtc_vblank_off(crtc);
 	mtk_crtc_ddp_hw_fini(mtk_crtc);
 	mtk_smi_larb_put(comp->larb_dev);
 
 	mtk_crtc->enabled = false;
-}
+पूर्ण
 
-static void mtk_drm_crtc_atomic_begin(struct drm_crtc *crtc,
-				      struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+अटल व्योम mtk_drm_crtc_atomic_begin(काष्ठा drm_crtc *crtc,
+				      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
-	struct mtk_crtc_state *mtk_crtc_state = to_mtk_crtc_state(crtc_state);
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	काष्ठा mtk_crtc_state *mtk_crtc_state = to_mtk_crtc_state(crtc_state);
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
 
-	if (mtk_crtc->event && mtk_crtc_state->base.event)
+	अगर (mtk_crtc->event && mtk_crtc_state->base.event)
 		DRM_ERROR("new event while there is still a pending event\n");
 
-	if (mtk_crtc_state->base.event) {
+	अगर (mtk_crtc_state->base.event) अणु
 		mtk_crtc_state->base.event->pipe = drm_crtc_index(crtc);
 		WARN_ON(drm_crtc_vblank_get(crtc) != 0);
 		mtk_crtc->event = mtk_crtc_state->base.event;
-		mtk_crtc_state->base.event = NULL;
-	}
-}
+		mtk_crtc_state->base.event = शून्य;
+	पूर्ण
+पूर्ण
 
-static void mtk_drm_crtc_atomic_flush(struct drm_crtc *crtc,
-				      struct drm_atomic_state *state)
-{
-	struct mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
-	int i;
+अटल व्योम mtk_drm_crtc_atomic_flush(काष्ठा drm_crtc *crtc,
+				      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा mtk_drm_crtc *mtk_crtc = to_mtk_crtc(crtc);
+	पूर्णांक i;
 
-	if (crtc->state->color_mgmt_changed)
-		for (i = 0; i < mtk_crtc->ddp_comp_nr; i++) {
+	अगर (crtc->state->color_mgmt_changed)
+		क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++) अणु
 			mtk_ddp_gamma_set(mtk_crtc->ddp_comp[i], crtc->state);
-			mtk_ddp_ctm_set(mtk_crtc->ddp_comp[i], crtc->state);
-		}
+			mtk_ddp_cपंचांग_set(mtk_crtc->ddp_comp[i], crtc->state);
+		पूर्ण
 	mtk_drm_crtc_update_config(mtk_crtc, !!mtk_crtc->event);
-}
+पूर्ण
 
-static const struct drm_crtc_funcs mtk_crtc_funcs = {
+अटल स्थिर काष्ठा drm_crtc_funcs mtk_crtc_funcs = अणु
 	.set_config		= drm_atomic_helper_set_config,
 	.page_flip		= drm_atomic_helper_page_flip,
 	.destroy		= mtk_drm_crtc_destroy,
@@ -642,217 +643,217 @@ static const struct drm_crtc_funcs mtk_crtc_funcs = {
 	.atomic_destroy_state	= mtk_drm_crtc_destroy_state,
 	.enable_vblank		= mtk_drm_crtc_enable_vblank,
 	.disable_vblank		= mtk_drm_crtc_disable_vblank,
-};
+पूर्ण;
 
-static const struct drm_crtc_helper_funcs mtk_crtc_helper_funcs = {
+अटल स्थिर काष्ठा drm_crtc_helper_funcs mtk_crtc_helper_funcs = अणु
 	.mode_fixup	= mtk_drm_crtc_mode_fixup,
 	.mode_set_nofb	= mtk_drm_crtc_mode_set_nofb,
 	.atomic_begin	= mtk_drm_crtc_atomic_begin,
 	.atomic_flush	= mtk_drm_crtc_atomic_flush,
 	.atomic_enable	= mtk_drm_crtc_atomic_enable,
 	.atomic_disable	= mtk_drm_crtc_atomic_disable,
-};
+पूर्ण;
 
-static int mtk_drm_crtc_init(struct drm_device *drm,
-			     struct mtk_drm_crtc *mtk_crtc,
-			     unsigned int pipe)
-{
-	struct drm_plane *primary = NULL;
-	struct drm_plane *cursor = NULL;
-	int i, ret;
+अटल पूर्णांक mtk_drm_crtc_init(काष्ठा drm_device *drm,
+			     काष्ठा mtk_drm_crtc *mtk_crtc,
+			     अचिन्हित पूर्णांक pipe)
+अणु
+	काष्ठा drm_plane *primary = शून्य;
+	काष्ठा drm_plane *cursor = शून्य;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < mtk_crtc->layer_nr; i++) {
-		if (mtk_crtc->planes[i].type == DRM_PLANE_TYPE_PRIMARY)
+	क्रम (i = 0; i < mtk_crtc->layer_nr; i++) अणु
+		अगर (mtk_crtc->planes[i].type == DRM_PLANE_TYPE_PRIMARY)
 			primary = &mtk_crtc->planes[i];
-		else if (mtk_crtc->planes[i].type == DRM_PLANE_TYPE_CURSOR)
+		अन्यथा अगर (mtk_crtc->planes[i].type == DRM_PLANE_TYPE_CURSOR)
 			cursor = &mtk_crtc->planes[i];
-	}
+	पूर्ण
 
 	ret = drm_crtc_init_with_planes(drm, &mtk_crtc->base, primary, cursor,
-					&mtk_crtc_funcs, NULL);
-	if (ret)
-		goto err_cleanup_crtc;
+					&mtk_crtc_funcs, शून्य);
+	अगर (ret)
+		जाओ err_cleanup_crtc;
 
 	drm_crtc_helper_add(&mtk_crtc->base, &mtk_crtc_helper_funcs);
 
-	return 0;
+	वापस 0;
 
 err_cleanup_crtc:
 	drm_crtc_cleanup(&mtk_crtc->base);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_drm_crtc_num_comp_planes(struct mtk_drm_crtc *mtk_crtc,
-					int comp_idx)
-{
-	struct mtk_ddp_comp *comp;
+अटल पूर्णांक mtk_drm_crtc_num_comp_planes(काष्ठा mtk_drm_crtc *mtk_crtc,
+					पूर्णांक comp_idx)
+अणु
+	काष्ठा mtk_ddp_comp *comp;
 
-	if (comp_idx > 1)
-		return 0;
+	अगर (comp_idx > 1)
+		वापस 0;
 
 	comp = mtk_crtc->ddp_comp[comp_idx];
-	if (!comp->funcs)
-		return 0;
+	अगर (!comp->funcs)
+		वापस 0;
 
-	if (comp_idx == 1 && !comp->funcs->bgclr_in_on)
-		return 0;
+	अगर (comp_idx == 1 && !comp->funcs->bgclr_in_on)
+		वापस 0;
 
-	return mtk_ddp_comp_layer_nr(comp);
-}
+	वापस mtk_ddp_comp_layer_nr(comp);
+पूर्ण
 
-static inline
-enum drm_plane_type mtk_drm_crtc_plane_type(unsigned int plane_idx,
-					    unsigned int num_planes)
-{
-	if (plane_idx == 0)
-		return DRM_PLANE_TYPE_PRIMARY;
-	else if (plane_idx == (num_planes - 1))
-		return DRM_PLANE_TYPE_CURSOR;
-	else
-		return DRM_PLANE_TYPE_OVERLAY;
+अटल अंतरभूत
+क्रमागत drm_plane_type mtk_drm_crtc_plane_type(अचिन्हित पूर्णांक plane_idx,
+					    अचिन्हित पूर्णांक num_planes)
+अणु
+	अगर (plane_idx == 0)
+		वापस DRM_PLANE_TYPE_PRIMARY;
+	अन्यथा अगर (plane_idx == (num_planes - 1))
+		वापस DRM_PLANE_TYPE_CURSOR;
+	अन्यथा
+		वापस DRM_PLANE_TYPE_OVERLAY;
 
-}
+पूर्ण
 
-static int mtk_drm_crtc_init_comp_planes(struct drm_device *drm_dev,
-					 struct mtk_drm_crtc *mtk_crtc,
-					 int comp_idx, int pipe)
-{
-	int num_planes = mtk_drm_crtc_num_comp_planes(mtk_crtc, comp_idx);
-	struct mtk_ddp_comp *comp = mtk_crtc->ddp_comp[comp_idx];
-	int i, ret;
+अटल पूर्णांक mtk_drm_crtc_init_comp_planes(काष्ठा drm_device *drm_dev,
+					 काष्ठा mtk_drm_crtc *mtk_crtc,
+					 पूर्णांक comp_idx, पूर्णांक pipe)
+अणु
+	पूर्णांक num_planes = mtk_drm_crtc_num_comp_planes(mtk_crtc, comp_idx);
+	काष्ठा mtk_ddp_comp *comp = mtk_crtc->ddp_comp[comp_idx];
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_planes; i++) {
+	क्रम (i = 0; i < num_planes; i++) अणु
 		ret = mtk_plane_init(drm_dev,
 				&mtk_crtc->planes[mtk_crtc->layer_nr],
 				BIT(pipe),
 				mtk_drm_crtc_plane_type(mtk_crtc->layer_nr,
 							num_planes),
 				mtk_ddp_comp_supported_rotations(comp));
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		mtk_crtc->layer_nr++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int mtk_drm_crtc_create(struct drm_device *drm_dev,
-			const enum mtk_ddp_comp_id *path, unsigned int path_len)
-{
-	struct mtk_drm_private *priv = drm_dev->dev_private;
-	struct device *dev = drm_dev->dev;
-	struct mtk_drm_crtc *mtk_crtc;
-	unsigned int num_comp_planes = 0;
-	int pipe = priv->num_pipes;
-	int ret;
-	int i;
-	bool has_ctm = false;
-	uint gamma_lut_size = 0;
+पूर्णांक mtk_drm_crtc_create(काष्ठा drm_device *drm_dev,
+			स्थिर क्रमागत mtk_ddp_comp_id *path, अचिन्हित पूर्णांक path_len)
+अणु
+	काष्ठा mtk_drm_निजी *priv = drm_dev->dev_निजी;
+	काष्ठा device *dev = drm_dev->dev;
+	काष्ठा mtk_drm_crtc *mtk_crtc;
+	अचिन्हित पूर्णांक num_comp_planes = 0;
+	पूर्णांक pipe = priv->num_pipes;
+	पूर्णांक ret;
+	पूर्णांक i;
+	bool has_cपंचांग = false;
+	uपूर्णांक gamma_lut_size = 0;
 
-	if (!path)
-		return 0;
+	अगर (!path)
+		वापस 0;
 
-	for (i = 0; i < path_len; i++) {
-		enum mtk_ddp_comp_id comp_id = path[i];
-		struct device_node *node;
+	क्रम (i = 0; i < path_len; i++) अणु
+		क्रमागत mtk_ddp_comp_id comp_id = path[i];
+		काष्ठा device_node *node;
 
 		node = priv->comp_node[comp_id];
-		if (!node) {
+		अगर (!node) अणु
 			dev_info(dev,
 				 "Not creating crtc %d because component %d is disabled or missing\n",
 				 pipe, comp_id);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	mtk_crtc = devm_kzalloc(dev, sizeof(*mtk_crtc), GFP_KERNEL);
-	if (!mtk_crtc)
-		return -ENOMEM;
+	mtk_crtc = devm_kzalloc(dev, माप(*mtk_crtc), GFP_KERNEL);
+	अगर (!mtk_crtc)
+		वापस -ENOMEM;
 
 	mtk_crtc->mmsys_dev = priv->mmsys_dev;
 	mtk_crtc->ddp_comp_nr = path_len;
-	mtk_crtc->ddp_comp = devm_kmalloc_array(dev, mtk_crtc->ddp_comp_nr,
-						sizeof(*mtk_crtc->ddp_comp),
+	mtk_crtc->ddp_comp = devm_kदो_स्मृति_array(dev, mtk_crtc->ddp_comp_nr,
+						माप(*mtk_crtc->ddp_comp),
 						GFP_KERNEL);
-	if (!mtk_crtc->ddp_comp)
-		return -ENOMEM;
+	अगर (!mtk_crtc->ddp_comp)
+		वापस -ENOMEM;
 
 	mtk_crtc->mutex = mtk_mutex_get(priv->mutex_dev);
-	if (IS_ERR(mtk_crtc->mutex)) {
+	अगर (IS_ERR(mtk_crtc->mutex)) अणु
 		ret = PTR_ERR(mtk_crtc->mutex);
 		dev_err(dev, "Failed to get mutex: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++) {
-		enum mtk_ddp_comp_id comp_id = path[i];
-		struct mtk_ddp_comp *comp;
-		struct device_node *node;
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++) अणु
+		क्रमागत mtk_ddp_comp_id comp_id = path[i];
+		काष्ठा mtk_ddp_comp *comp;
+		काष्ठा device_node *node;
 
 		node = priv->comp_node[comp_id];
 		comp = &priv->ddp_comp[comp_id];
-		if (!comp) {
+		अगर (!comp) अणु
 			dev_err(dev, "Component %pOF not initialized\n", node);
 			ret = -ENODEV;
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		mtk_crtc->ddp_comp[i] = comp;
 
-		if (comp->funcs) {
-			if (comp->funcs->gamma_set)
+		अगर (comp->funcs) अणु
+			अगर (comp->funcs->gamma_set)
 				gamma_lut_size = MTK_LUT_SIZE;
 
-			if (comp->funcs->ctm_set)
-				has_ctm = true;
-		}
-	}
+			अगर (comp->funcs->cपंचांग_set)
+				has_cपंचांग = true;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++)
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++)
 		num_comp_planes += mtk_drm_crtc_num_comp_planes(mtk_crtc, i);
 
-	mtk_crtc->planes = devm_kcalloc(dev, num_comp_planes,
-					sizeof(struct drm_plane), GFP_KERNEL);
+	mtk_crtc->planes = devm_kसुस्मृति(dev, num_comp_planes,
+					माप(काष्ठा drm_plane), GFP_KERNEL);
 
-	for (i = 0; i < mtk_crtc->ddp_comp_nr; i++) {
+	क्रम (i = 0; i < mtk_crtc->ddp_comp_nr; i++) अणु
 		ret = mtk_drm_crtc_init_comp_planes(drm_dev, mtk_crtc, i,
 						    pipe);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = mtk_drm_crtc_init(drm_dev, mtk_crtc, pipe);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (gamma_lut_size)
+	अगर (gamma_lut_size)
 		drm_mode_crtc_set_gamma_size(&mtk_crtc->base, gamma_lut_size);
-	drm_crtc_enable_color_mgmt(&mtk_crtc->base, 0, has_ctm, gamma_lut_size);
+	drm_crtc_enable_color_mgmt(&mtk_crtc->base, 0, has_cपंचांग, gamma_lut_size);
 	priv->num_pipes++;
 	mutex_init(&mtk_crtc->hw_lock);
 
-#if IS_REACHABLE(CONFIG_MTK_CMDQ)
+#अगर IS_REACHABLE(CONFIG_MTK_CMDQ)
 	mtk_crtc->cmdq_client =
 			cmdq_mbox_create(mtk_crtc->mmsys_dev,
 					 drm_crtc_index(&mtk_crtc->base));
-	if (IS_ERR(mtk_crtc->cmdq_client)) {
+	अगर (IS_ERR(mtk_crtc->cmdq_client)) अणु
 		dev_dbg(dev, "mtk_crtc %d failed to create mailbox client, writing register by CPU now\n",
 			drm_crtc_index(&mtk_crtc->base));
-		mtk_crtc->cmdq_client = NULL;
-	}
+		mtk_crtc->cmdq_client = शून्य;
+	पूर्ण
 
-	if (mtk_crtc->cmdq_client) {
-		ret = of_property_read_u32_index(priv->mutex_node,
+	अगर (mtk_crtc->cmdq_client) अणु
+		ret = of_property_पढ़ो_u32_index(priv->mutex_node,
 						 "mediatek,gce-events",
 						 drm_crtc_index(&mtk_crtc->base),
 						 &mtk_crtc->cmdq_event);
-		if (ret) {
+		अगर (ret) अणु
 			dev_dbg(dev, "mtk_crtc %d failed to get mediatek,gce-events property\n",
 				drm_crtc_index(&mtk_crtc->base));
 			cmdq_mbox_destroy(mtk_crtc->cmdq_client);
-			mtk_crtc->cmdq_client = NULL;
-		}
-	}
-#endif
-	return 0;
-}
+			mtk_crtc->cmdq_client = शून्य;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण

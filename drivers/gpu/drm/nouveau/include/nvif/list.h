@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
- * Copyright © 2010 Intel Corporation
- * Copyright © 2010 Francisco Jerez <currojerez@riseup.net>
+ * Copyright तऊ 2010 Intel Corporation
+ * Copyright तऊ 2010 Francisco Jerez <currojerez@riseup.net>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,56 +24,56 @@
  *
  */
 
-/* Modified by Ben Skeggs <bskeggs@redhat.com> to match kernel list APIs */
+/* Modअगरied by Ben Skeggs <bskeggs@redhat.com> to match kernel list APIs */
 
-#ifndef _XORG_LIST_H_
-#define _XORG_LIST_H_
+#अगर_अघोषित _XORG_LIST_H_
+#घोषणा _XORG_LIST_H_
 
 /**
- * @file Classic doubly-link circular list implementation.
+ * @file Classic करोubly-link circular list implementation.
  * For real usage examples of the linked list, see the file test/list.c
  *
  * Example:
- * We need to keep a list of struct foo in the parent struct bar, i.e. what
+ * We need to keep a list of काष्ठा foo in the parent काष्ठा bar, i.e. what
  * we want is something like this.
  *
- *     struct bar {
+ *     काष्ठा bar अणु
  *          ...
- *          struct foo *list_of_foos; -----> struct foo {}, struct foo {}, struct foo{}
+ *          काष्ठा foo *list_of_foos; -----> काष्ठा foo अणुपूर्ण, काष्ठा foo अणुपूर्ण, काष्ठा fooअणुपूर्ण
  *          ...
- *     }
+ *     पूर्ण
  *
  * We need one list head in bar and a list element in all list_of_foos (both are of
  * data type 'struct list_head').
  *
- *     struct bar {
+ *     काष्ठा bar अणु
  *          ...
- *          struct list_head list_of_foos;
+ *          काष्ठा list_head list_of_foos;
  *          ...
- *     }
+ *     पूर्ण
  *
- *     struct foo {
+ *     काष्ठा foo अणु
  *          ...
- *          struct list_head entry;
+ *          काष्ठा list_head entry;
  *          ...
- *     }
+ *     पूर्ण
  *
  * Now we initialize the list head:
  *
- *     struct bar bar;
+ *     काष्ठा bar bar;
  *     ...
  *     INIT_LIST_HEAD(&bar.list_of_foos);
  *
  * Then we create the first element and add it to this list:
  *
- *     struct foo *foo = malloc(...);
+ *     काष्ठा foo *foo = दो_स्मृति(...);
  *     ....
  *     list_add(&foo->entry, &bar.list_of_foos);
  *
- * Repeat the above for each element you want to add to the list. Deleting
+ * Repeat the above क्रम each element you want to add to the list. Deleting
  * works with the element itself.
  *      list_del(&foo->entry);
- *      free(foo);
+ *      मुक्त(foo);
  *
  * Note: calling list_del(&bar.list_of_foos) will set bar.list_of_foos to an empty
  * list again.
@@ -80,36 +81,36 @@
  * Looping through the list requires a 'struct foo' as iterator and the
  * name of the field the subnodes use.
  *
- * struct foo *iterator;
- * list_for_each_entry(iterator, &bar.list_of_foos, entry) {
- *      if (iterator->something == ...)
+ * काष्ठा foo *iterator;
+ * list_क्रम_each_entry(iterator, &bar.list_of_foos, entry) अणु
+ *      अगर (iterator->something == ...)
  *             ...
- * }
+ * पूर्ण
  *
- * Note: You must not call list_del() on the iterator if you continue the
- * loop. You need to run the safe for-each loop instead:
+ * Note: You must not call list_del() on the iterator अगर you जारी the
+ * loop. You need to run the safe क्रम-each loop instead:
  *
- * struct foo *iterator, *next;
- * list_for_each_entry_safe(iterator, next, &bar.list_of_foos, entry) {
- *      if (...)
+ * काष्ठा foo *iterator, *next;
+ * list_क्रम_each_entry_safe(iterator, next, &bar.list_of_foos, entry) अणु
+ *      अगर (...)
  *              list_del(&iterator->entry);
- * }
+ * पूर्ण
  *
  */
 
 /**
- * The linkage struct for list nodes. This struct must be part of your
- * to-be-linked struct. struct list_head is required for both the head of the
- * list and for each list node.
+ * The linkage काष्ठा क्रम list nodes. This काष्ठा must be part of your
+ * to-be-linked काष्ठा. काष्ठा list_head is required क्रम both the head of the
+ * list and क्रम each list node.
  *
- * Position and name of the struct list_head field is irrelevant.
+ * Position and name of the काष्ठा list_head field is irrelevant.
  * There are no requirements that elements of a list are of the same type.
- * There are no requirements for a list head, any struct list_head can be a list
+ * There are no requirements क्रम a list head, any काष्ठा list_head can be a list
  * head.
  */
-struct list_head {
-    struct list_head *next, *prev;
-};
+काष्ठा list_head अणु
+    काष्ठा list_head *next, *prev;
+पूर्ण;
 
 /**
  * Initialize the list as an empty list.
@@ -119,235 +120,235 @@ struct list_head {
  *
  * @param The list to initialized.
  */
-#define LIST_HEAD_INIT(name) { &(name), &(name) }
+#घोषणा LIST_HEAD_INIT(name) अणु &(name), &(name) पूर्ण
 
-#define LIST_HEAD(name) \
-	struct list_head name = LIST_HEAD_INIT(name)
+#घोषणा LIST_HEAD(name) \
+	काष्ठा list_head name = LIST_HEAD_INIT(name)
 
-static inline void
-INIT_LIST_HEAD(struct list_head *list)
-{
+अटल अंतरभूत व्योम
+INIT_LIST_HEAD(काष्ठा list_head *list)
+अणु
     list->next = list->prev = list;
-}
+पूर्ण
 
-static inline void
-__list_add(struct list_head *entry,
-                struct list_head *prev, struct list_head *next)
-{
+अटल अंतरभूत व्योम
+__list_add(काष्ठा list_head *entry,
+                काष्ठा list_head *prev, काष्ठा list_head *next)
+अणु
     next->prev = entry;
     entry->next = next;
     entry->prev = prev;
     prev->next = entry;
-}
+पूर्ण
 
 /**
- * Insert a new element after the given list head. The new element does not
+ * Insert a new element after the given list head. The new element करोes not
  * need to be initialised as empty list.
  * The list changes from:
- *      head → some element → ...
+ *      head ै some element ै ...
  * to
- *      head → new element → older element → ...
+ *      head ै new element ै older element ै ...
  *
  * Example:
- * struct foo *newfoo = malloc(...);
+ * काष्ठा foo *newfoo = दो_स्मृति(...);
  * list_add(&newfoo->entry, &bar->list_of_foos);
  *
  * @param entry The new element to prepend to the list.
  * @param head The existing list.
  */
-static inline void
-list_add(struct list_head *entry, struct list_head *head)
-{
+अटल अंतरभूत व्योम
+list_add(काष्ठा list_head *entry, काष्ठा list_head *head)
+अणु
     __list_add(entry, head, head->next);
-}
+पूर्ण
 
 /**
  * Append a new element to the end of the list given with this list head.
  *
  * The list changes from:
- *      head → some element → ... → lastelement
+ *      head ै some element ै ... ै lastelement
  * to
- *      head → some element → ... → lastelement → new element
+ *      head ै some element ै ... ै lastelement ै new element
  *
  * Example:
- * struct foo *newfoo = malloc(...);
+ * काष्ठा foo *newfoo = दो_स्मृति(...);
  * list_add_tail(&newfoo->entry, &bar->list_of_foos);
  *
  * @param entry The new element to prepend to the list.
  * @param head The existing list.
  */
-static inline void
-list_add_tail(struct list_head *entry, struct list_head *head)
-{
+अटल अंतरभूत व्योम
+list_add_tail(काष्ठा list_head *entry, काष्ठा list_head *head)
+अणु
     __list_add(entry, head->prev, head);
-}
+पूर्ण
 
-static inline void
-__list_del(struct list_head *prev, struct list_head *next)
-{
+अटल अंतरभूत व्योम
+__list_del(काष्ठा list_head *prev, काष्ठा list_head *next)
+अणु
     next->prev = prev;
     prev->next = next;
-}
+पूर्ण
 
 /**
  * Remove the element from the list it is in. Using this function will reset
- * the pointers to/from this element so it is removed from the list. It does
- * NOT free the element itself or manipulate it otherwise.
+ * the poपूर्णांकers to/from this element so it is हटाओd from the list. It करोes
+ * NOT मुक्त the element itself or manipulate it otherwise.
  *
  * Using list_del on a pure list head (like in the example at the top of
- * this file) will NOT remove the first element from
+ * this file) will NOT हटाओ the first element from
  * the list but rather reset the list as empty list.
  *
  * Example:
  * list_del(&foo->entry);
  *
- * @param entry The element to remove.
+ * @param entry The element to हटाओ.
  */
-static inline void
-list_del(struct list_head *entry)
-{
+अटल अंतरभूत व्योम
+list_del(काष्ठा list_head *entry)
+अणु
     __list_del(entry->prev, entry->next);
-}
+पूर्ण
 
-static inline void
-list_del_init(struct list_head *entry)
-{
+अटल अंतरभूत व्योम
+list_del_init(काष्ठा list_head *entry)
+अणु
     __list_del(entry->prev, entry->next);
     INIT_LIST_HEAD(entry);
-}
+पूर्ण
 
-static inline void list_move_tail(struct list_head *list,
-				  struct list_head *head)
-{
+अटल अंतरभूत व्योम list_move_tail(काष्ठा list_head *list,
+				  काष्ठा list_head *head)
+अणु
 	__list_del(list->prev, list->next);
 	list_add_tail(list, head);
-}
+पूर्ण
 
 /**
- * Check if the list is empty.
+ * Check अगर the list is empty.
  *
  * Example:
  * list_empty(&bar->list_of_foos);
  *
- * @return True if the list contains one or more elements or False otherwise.
+ * @वापस True अगर the list contains one or more elements or False otherwise.
  */
-static inline bool
-list_empty(struct list_head *head)
-{
-    return head->next == head;
-}
+अटल अंतरभूत bool
+list_empty(काष्ठा list_head *head)
+अणु
+    वापस head->next == head;
+पूर्ण
 
 /**
- * Returns a pointer to the container of this list element.
+ * Returns a poपूर्णांकer to the container of this list element.
  *
  * Example:
- * struct foo* f;
- * f = container_of(&foo->entry, struct foo, entry);
- * assert(f == foo);
+ * काष्ठा foo* f;
+ * f = container_of(&foo->entry, काष्ठा foo, entry);
+ * निश्चित(f == foo);
  *
- * @param ptr Pointer to the struct list_head.
+ * @param ptr Poपूर्णांकer to the काष्ठा list_head.
  * @param type Data type of the list element.
- * @param member Member name of the struct list_head field in the list element.
- * @return A pointer to the data struct containing the list head.
+ * @param member Member name of the काष्ठा list_head field in the list element.
+ * @वापस A poपूर्णांकer to the data काष्ठा containing the list head.
  */
-#ifndef container_of
-#define container_of(ptr, type, member) \
-    (type *)((char *)(ptr) - (char *) &((type *)0)->member)
-#endif
+#अगर_अघोषित container_of
+#घोषणा container_of(ptr, type, member) \
+    (type *)((अक्षर *)(ptr) - (अक्षर *) &((type *)0)->member)
+#पूर्ण_अगर
 
 /**
  * Alias of container_of
  */
-#define list_entry(ptr, type, member) \
+#घोषणा list_entry(ptr, type, member) \
     container_of(ptr, type, member)
 
 /**
- * Retrieve the first list entry for the given list pointer.
+ * Retrieve the first list entry क्रम the given list poपूर्णांकer.
  *
  * Example:
- * struct foo *first;
- * first = list_first_entry(&bar->list_of_foos, struct foo, list_of_foos);
+ * काष्ठा foo *first;
+ * first = list_first_entry(&bar->list_of_foos, काष्ठा foo, list_of_foos);
  *
  * @param ptr The list head
  * @param type Data type of the list element to retrieve
- * @param member Member name of the struct list_head field in the list element.
- * @return A pointer to the first list element.
+ * @param member Member name of the काष्ठा list_head field in the list element.
+ * @वापस A poपूर्णांकer to the first list element.
  */
-#define list_first_entry(ptr, type, member) \
+#घोषणा list_first_entry(ptr, type, member) \
     list_entry((ptr)->next, type, member)
 
 /**
- * Retrieve the last list entry for the given listpointer.
+ * Retrieve the last list entry क्रम the given listpoपूर्णांकer.
  *
  * Example:
- * struct foo *first;
- * first = list_last_entry(&bar->list_of_foos, struct foo, list_of_foos);
+ * काष्ठा foo *first;
+ * first = list_last_entry(&bar->list_of_foos, काष्ठा foo, list_of_foos);
  *
  * @param ptr The list head
  * @param type Data type of the list element to retrieve
- * @param member Member name of the struct list_head field in the list element.
- * @return A pointer to the last list element.
+ * @param member Member name of the काष्ठा list_head field in the list element.
+ * @वापस A poपूर्णांकer to the last list element.
  */
-#define list_last_entry(ptr, type, member) \
+#घोषणा list_last_entry(ptr, type, member) \
     list_entry((ptr)->prev, type, member)
 
-#define __container_of(ptr, sample, member)				\
-    (void *)container_of((ptr), typeof(*(sample)), member)
+#घोषणा __container_of(ptr, sample, member)				\
+    (व्योम *)container_of((ptr), typeof(*(sample)), member)
 
 /**
- * Loop through the list given by head and set pos to struct in the list.
+ * Loop through the list given by head and set pos to काष्ठा in the list.
  *
  * Example:
- * struct foo *iterator;
- * list_for_each_entry(iterator, &bar->list_of_foos, entry) {
- *      [modify iterator]
- * }
+ * काष्ठा foo *iterator;
+ * list_क्रम_each_entry(iterator, &bar->list_of_foos, entry) अणु
+ *      [modअगरy iterator]
+ * पूर्ण
  *
- * This macro is not safe for node deletion. Use list_for_each_entry_safe
+ * This macro is not safe क्रम node deletion. Use list_क्रम_each_entry_safe
  * instead.
  *
  * @param pos Iterator variable of the type of the list elements.
  * @param head List head
- * @param member Member name of the struct list_head in the list elements.
+ * @param member Member name of the काष्ठा list_head in the list elements.
  *
  */
-#define list_for_each_entry(pos, head, member)				\
-    for (pos = __container_of((head)->next, pos, member);		\
+#घोषणा list_क्रम_each_entry(pos, head, member)				\
+    क्रम (pos = __container_of((head)->next, pos, member);		\
 	 &pos->member != (head);					\
 	 pos = __container_of(pos->member.next, pos, member))
 
 /**
- * Loop through the list, keeping a backup pointer to the element. This
- * macro allows for the deletion of a list element while looping through the
+ * Loop through the list, keeping a backup poपूर्णांकer to the element. This
+ * macro allows क्रम the deletion of a list element जबतक looping through the
  * list.
  *
- * See list_for_each_entry for more details.
+ * See list_क्रम_each_entry क्रम more details.
  */
-#define list_for_each_entry_safe(pos, tmp, head, member)		\
-    for (pos = __container_of((head)->next, pos, member),		\
-	 tmp = __container_of(pos->member.next, pos, member);		\
+#घोषणा list_क्रम_each_entry_safe(pos, पंचांगp, head, member)		\
+    क्रम (pos = __container_of((head)->next, pos, member),		\
+	 पंचांगp = __container_of(pos->member.next, pos, member);		\
 	 &pos->member != (head);					\
-	 pos = tmp, tmp = __container_of(pos->member.next, tmp, member))
+	 pos = पंचांगp, पंचांगp = __container_of(pos->member.next, पंचांगp, member))
 
 
-#define list_for_each_entry_reverse(pos, head, member)			\
-	for (pos = __container_of((head)->prev, pos, member);		\
+#घोषणा list_क्रम_each_entry_reverse(pos, head, member)			\
+	क्रम (pos = __container_of((head)->prev, pos, member);		\
 	     &pos->member != (head);					\
 	     pos = __container_of(pos->member.prev, pos, member))
 
-#define list_for_each_entry_continue(pos, head, member)			\
-	for (pos = __container_of(pos->member.next, pos, member);	\
+#घोषणा list_क्रम_each_entry_जारी(pos, head, member)			\
+	क्रम (pos = __container_of(pos->member.next, pos, member);	\
 	     &pos->member != (head);					\
 	     pos = __container_of(pos->member.next, pos, member))
 
-#define list_for_each_entry_continue_reverse(pos, head, member)		\
-	for (pos = __container_of(pos->member.prev, pos, member);	\
+#घोषणा list_क्रम_each_entry_जारी_reverse(pos, head, member)		\
+	क्रम (pos = __container_of(pos->member.prev, pos, member);	\
 	     &pos->member != (head);					\
 	     pos = __container_of(pos->member.prev, pos, member))
 
-#define list_for_each_entry_from(pos, head, member)			\
-	for (;								\
+#घोषणा list_क्रम_each_entry_from(pos, head, member)			\
+	क्रम (;								\
 	     &pos->member != (head);					\
 	     pos = __container_of(pos->member.next, pos, member))
 
-#endif
+#पूर्ण_अगर

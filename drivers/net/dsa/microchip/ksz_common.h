@@ -1,100 +1,101 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Microchip switch driver common header
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Microchip चयन driver common header
  *
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
-#ifndef __KSZ_COMMON_H
-#define __KSZ_COMMON_H
+#अगर_अघोषित __KSZ_COMMON_H
+#घोषणा __KSZ_COMMON_H
 
-#include <linux/etherdevice.h>
-#include <linux/kernel.h>
-#include <linux/mutex.h>
-#include <linux/phy.h>
-#include <linux/regmap.h>
-#include <net/dsa.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/regmap.h>
+#समावेश <net/dsa.h>
 
-struct vlan_table {
+काष्ठा vlan_table अणु
 	u32 table[3];
-};
+पूर्ण;
 
-struct ksz_port_mib {
-	struct mutex cnt_mutex;		/* structure access */
+काष्ठा ksz_port_mib अणु
+	काष्ठा mutex cnt_mutex;		/* काष्ठाure access */
 	u8 cnt_ptr;
 	u64 *counters;
-};
+पूर्ण;
 
-struct ksz_port {
+काष्ठा ksz_port अणु
 	u16 member;
 	u16 vid_member;
-	int stp_state;
-	struct phy_device phydev;
+	पूर्णांक stp_state;
+	काष्ठा phy_device phydev;
 
 	u32 on:1;			/* port is not disabled by hardware */
 	u32 phy:1;			/* port has a PHY */
 	u32 fiber:1;			/* port is fiber */
 	u32 sgmii:1;			/* port is SGMII */
-	u32 force:1;
-	u32 read:1;			/* read MIB counters in background */
-	u32 freeze:1;			/* MIB counter freeze is enabled */
+	u32 क्रमce:1;
+	u32 पढ़ो:1;			/* पढ़ो MIB counters in background */
+	u32 मुक्तze:1;			/* MIB counter मुक्तze is enabled */
 
-	struct ksz_port_mib mib;
-	phy_interface_t interface;
-};
+	काष्ठा ksz_port_mib mib;
+	phy_पूर्णांकerface_t पूर्णांकerface;
+पूर्ण;
 
-struct ksz_device {
-	struct dsa_switch *ds;
-	struct ksz_platform_data *pdata;
-	const char *name;
+काष्ठा ksz_device अणु
+	काष्ठा dsa_चयन *ds;
+	काष्ठा ksz_platक्रमm_data *pdata;
+	स्थिर अक्षर *name;
 
-	struct mutex dev_mutex;		/* device access */
-	struct mutex regmap_mutex;	/* regmap access */
-	struct mutex alu_mutex;		/* ALU access */
-	struct mutex vlan_mutex;	/* vlan access */
-	const struct ksz_dev_ops *dev_ops;
+	काष्ठा mutex dev_mutex;		/* device access */
+	काष्ठा mutex regmap_mutex;	/* regmap access */
+	काष्ठा mutex alu_mutex;		/* ALU access */
+	काष्ठा mutex vlan_mutex;	/* vlan access */
+	स्थिर काष्ठा ksz_dev_ops *dev_ops;
 
-	struct device *dev;
-	struct regmap *regmap[3];
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap[3];
 
-	void *priv;
+	व्योम *priv;
 
-	struct gpio_desc *reset_gpio;	/* Optional reset GPIO */
+	काष्ठा gpio_desc *reset_gpio;	/* Optional reset GPIO */
 
-	/* chip specific data */
+	/* chip specअगरic data */
 	u32 chip_id;
-	int num_vlans;
-	int num_alus;
-	int num_statics;
-	int cpu_port;			/* port connected to CPU */
-	int cpu_ports;			/* port bitmap can be cpu port */
-	int phy_port_cnt;
-	int port_cnt;
+	पूर्णांक num_vlans;
+	पूर्णांक num_alus;
+	पूर्णांक num_अटलs;
+	पूर्णांक cpu_port;			/* port connected to CPU */
+	पूर्णांक cpu_ports;			/* port biपंचांगap can be cpu port */
+	पूर्णांक phy_port_cnt;
+	पूर्णांक port_cnt;
 	u8 reg_mib_cnt;
-	int mib_cnt;
-	const struct mib_names *mib_names;
-	phy_interface_t compat_interface;
+	पूर्णांक mib_cnt;
+	स्थिर काष्ठा mib_names *mib_names;
+	phy_पूर्णांकerface_t compat_पूर्णांकerface;
 	u32 regs_size;
 	bool phy_errata_9477;
 	bool synclko_125;
 
-	struct vlan_table *vlan_cache;
+	काष्ठा vlan_table *vlan_cache;
 
-	struct ksz_port *ports;
-	struct delayed_work mib_read;
-	unsigned long mib_read_interval;
+	काष्ठा ksz_port *ports;
+	काष्ठा delayed_work mib_पढ़ो;
+	अचिन्हित दीर्घ mib_पढ़ो_पूर्णांकerval;
 	u16 br_member;
 	u16 member;
 	u16 mirror_rx;
 	u16 mirror_tx;
-	u32 features;			/* chip specific features */
+	u32 features;			/* chip specअगरic features */
 	u32 overrides;			/* chip functions set by user */
 	u16 host_mask;
 	u16 port_mask;
-};
+पूर्ण;
 
-struct alu_struct {
+काष्ठा alu_काष्ठा अणु
 	/* entry 1 */
-	u8	is_static:1;
+	u8	is_अटल:1;
 	u8	is_src_filter:1;
 	u8	is_dst_filter:1;
 	u8	prio_age:3;
@@ -104,227 +105,227 @@ struct alu_struct {
 	u8	is_override:1;
 	u8	is_use_fid:1;
 	u32	_reserv_1_1:23;
-	u8	port_forward:7;
+	u8	port_क्रमward:7;
 	/* entry 3 & 4*/
 	u32	_reserv_2_1:9;
 	u8	fid:7;
 	u8	mac[ETH_ALEN];
-};
+पूर्ण;
 
-struct ksz_dev_ops {
-	u32 (*get_port_addr)(int port, int offset);
-	void (*cfg_port_member)(struct ksz_device *dev, int port, u8 member);
-	void (*flush_dyn_mac_table)(struct ksz_device *dev, int port);
-	void (*port_cleanup)(struct ksz_device *dev, int port);
-	void (*port_setup)(struct ksz_device *dev, int port, bool cpu_port);
-	void (*r_phy)(struct ksz_device *dev, u16 phy, u16 reg, u16 *val);
-	void (*w_phy)(struct ksz_device *dev, u16 phy, u16 reg, u16 val);
-	int (*r_dyn_mac_table)(struct ksz_device *dev, u16 addr, u8 *mac_addr,
-			       u8 *fid, u8 *src_port, u8 *timestamp,
+काष्ठा ksz_dev_ops अणु
+	u32 (*get_port_addr)(पूर्णांक port, पूर्णांक offset);
+	व्योम (*cfg_port_member)(काष्ठा ksz_device *dev, पूर्णांक port, u8 member);
+	व्योम (*flush_dyn_mac_table)(काष्ठा ksz_device *dev, पूर्णांक port);
+	व्योम (*port_cleanup)(काष्ठा ksz_device *dev, पूर्णांक port);
+	व्योम (*port_setup)(काष्ठा ksz_device *dev, पूर्णांक port, bool cpu_port);
+	व्योम (*r_phy)(काष्ठा ksz_device *dev, u16 phy, u16 reg, u16 *val);
+	व्योम (*w_phy)(काष्ठा ksz_device *dev, u16 phy, u16 reg, u16 val);
+	पूर्णांक (*r_dyn_mac_table)(काष्ठा ksz_device *dev, u16 addr, u8 *mac_addr,
+			       u8 *fid, u8 *src_port, u8 *बारtamp,
 			       u16 *entries);
-	int (*r_sta_mac_table)(struct ksz_device *dev, u16 addr,
-			       struct alu_struct *alu);
-	void (*w_sta_mac_table)(struct ksz_device *dev, u16 addr,
-				struct alu_struct *alu);
-	void (*r_mib_cnt)(struct ksz_device *dev, int port, u16 addr,
+	पूर्णांक (*r_sta_mac_table)(काष्ठा ksz_device *dev, u16 addr,
+			       काष्ठा alu_काष्ठा *alu);
+	व्योम (*w_sta_mac_table)(काष्ठा ksz_device *dev, u16 addr,
+				काष्ठा alu_काष्ठा *alu);
+	व्योम (*r_mib_cnt)(काष्ठा ksz_device *dev, पूर्णांक port, u16 addr,
 			  u64 *cnt);
-	void (*r_mib_pkt)(struct ksz_device *dev, int port, u16 addr,
+	व्योम (*r_mib_pkt)(काष्ठा ksz_device *dev, पूर्णांक port, u16 addr,
 			  u64 *dropped, u64 *cnt);
-	void (*freeze_mib)(struct ksz_device *dev, int port, bool freeze);
-	void (*port_init_cnt)(struct ksz_device *dev, int port);
-	int (*shutdown)(struct ksz_device *dev);
-	int (*detect)(struct ksz_device *dev);
-	int (*init)(struct ksz_device *dev);
-	void (*exit)(struct ksz_device *dev);
-};
+	व्योम (*मुक्तze_mib)(काष्ठा ksz_device *dev, पूर्णांक port, bool मुक्तze);
+	व्योम (*port_init_cnt)(काष्ठा ksz_device *dev, पूर्णांक port);
+	पूर्णांक (*shutकरोwn)(काष्ठा ksz_device *dev);
+	पूर्णांक (*detect)(काष्ठा ksz_device *dev);
+	पूर्णांक (*init)(काष्ठा ksz_device *dev);
+	व्योम (*निकास)(काष्ठा ksz_device *dev);
+पूर्ण;
 
-struct ksz_device *ksz_switch_alloc(struct device *base, void *priv);
-int ksz_switch_register(struct ksz_device *dev,
-			const struct ksz_dev_ops *ops);
-void ksz_switch_remove(struct ksz_device *dev);
+काष्ठा ksz_device *ksz_चयन_alloc(काष्ठा device *base, व्योम *priv);
+पूर्णांक ksz_चयन_रेजिस्टर(काष्ठा ksz_device *dev,
+			स्थिर काष्ठा ksz_dev_ops *ops);
+व्योम ksz_चयन_हटाओ(काष्ठा ksz_device *dev);
 
-int ksz8_switch_register(struct ksz_device *dev);
-int ksz9477_switch_register(struct ksz_device *dev);
+पूर्णांक ksz8_चयन_रेजिस्टर(काष्ठा ksz_device *dev);
+पूर्णांक ksz9477_चयन_रेजिस्टर(काष्ठा ksz_device *dev);
 
-void ksz_update_port_member(struct ksz_device *dev, int port);
-void ksz_init_mib_timer(struct ksz_device *dev);
+व्योम ksz_update_port_member(काष्ठा ksz_device *dev, पूर्णांक port);
+व्योम ksz_init_mib_समयr(काष्ठा ksz_device *dev);
 
 /* Common DSA access functions */
 
-int ksz_phy_read16(struct dsa_switch *ds, int addr, int reg);
-int ksz_phy_write16(struct dsa_switch *ds, int addr, int reg, u16 val);
-void ksz_mac_link_down(struct dsa_switch *ds, int port, unsigned int mode,
-		       phy_interface_t interface);
-int ksz_sset_count(struct dsa_switch *ds, int port, int sset);
-void ksz_get_ethtool_stats(struct dsa_switch *ds, int port, uint64_t *buf);
-int ksz_port_bridge_join(struct dsa_switch *ds, int port,
-			 struct net_device *br);
-void ksz_port_bridge_leave(struct dsa_switch *ds, int port,
-			   struct net_device *br);
-void ksz_port_fast_age(struct dsa_switch *ds, int port);
-int ksz_port_fdb_dump(struct dsa_switch *ds, int port, dsa_fdb_dump_cb_t *cb,
-		      void *data);
-int ksz_port_mdb_add(struct dsa_switch *ds, int port,
-		     const struct switchdev_obj_port_mdb *mdb);
-int ksz_port_mdb_del(struct dsa_switch *ds, int port,
-		     const struct switchdev_obj_port_mdb *mdb);
-int ksz_enable_port(struct dsa_switch *ds, int port, struct phy_device *phy);
+पूर्णांक ksz_phy_पढ़ो16(काष्ठा dsa_चयन *ds, पूर्णांक addr, पूर्णांक reg);
+पूर्णांक ksz_phy_ग_लिखो16(काष्ठा dsa_चयन *ds, पूर्णांक addr, पूर्णांक reg, u16 val);
+व्योम ksz_mac_link_करोwn(काष्ठा dsa_चयन *ds, पूर्णांक port, अचिन्हित पूर्णांक mode,
+		       phy_पूर्णांकerface_t पूर्णांकerface);
+पूर्णांक ksz_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक sset);
+व्योम ksz_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port, uपूर्णांक64_t *buf);
+पूर्णांक ksz_port_bridge_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 काष्ठा net_device *br);
+व्योम ksz_port_bridge_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   काष्ठा net_device *br);
+व्योम ksz_port_fast_age(काष्ठा dsa_चयन *ds, पूर्णांक port);
+पूर्णांक ksz_port_fdb_dump(काष्ठा dsa_चयन *ds, पूर्णांक port, dsa_fdb_dump_cb_t *cb,
+		      व्योम *data);
+पूर्णांक ksz_port_mdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb);
+पूर्णांक ksz_port_mdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb);
+पूर्णांक ksz_enable_port(काष्ठा dsa_चयन *ds, पूर्णांक port, काष्ठा phy_device *phy);
 
-/* Common register access functions */
+/* Common रेजिस्टर access functions */
 
-static inline int ksz_read8(struct ksz_device *dev, u32 reg, u8 *val)
-{
-	unsigned int value;
-	int ret = regmap_read(dev->regmap[0], reg, &value);
-
-	*val = value;
-	return ret;
-}
-
-static inline int ksz_read16(struct ksz_device *dev, u32 reg, u16 *val)
-{
-	unsigned int value;
-	int ret = regmap_read(dev->regmap[1], reg, &value);
+अटल अंतरभूत पूर्णांक ksz_पढ़ो8(काष्ठा ksz_device *dev, u32 reg, u8 *val)
+अणु
+	अचिन्हित पूर्णांक value;
+	पूर्णांक ret = regmap_पढ़ो(dev->regmap[0], reg, &value);
 
 	*val = value;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int ksz_read32(struct ksz_device *dev, u32 reg, u32 *val)
-{
-	unsigned int value;
-	int ret = regmap_read(dev->regmap[2], reg, &value);
+अटल अंतरभूत पूर्णांक ksz_पढ़ो16(काष्ठा ksz_device *dev, u32 reg, u16 *val)
+अणु
+	अचिन्हित पूर्णांक value;
+	पूर्णांक ret = regmap_पढ़ो(dev->regmap[1], reg, &value);
 
 	*val = value;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int ksz_read64(struct ksz_device *dev, u32 reg, u64 *val)
-{
+अटल अंतरभूत पूर्णांक ksz_पढ़ो32(काष्ठा ksz_device *dev, u32 reg, u32 *val)
+अणु
+	अचिन्हित पूर्णांक value;
+	पूर्णांक ret = regmap_पढ़ो(dev->regmap[2], reg, &value);
+
+	*val = value;
+	वापस ret;
+पूर्ण
+
+अटल अंतरभूत पूर्णांक ksz_पढ़ो64(काष्ठा ksz_device *dev, u32 reg, u64 *val)
+अणु
 	u32 value[2];
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_bulk_read(dev->regmap[2], reg, value, 2);
-	if (!ret) {
-		/* Ick! ToDo: Add 64bit R/W to regmap on 32bit systems */
+	ret = regmap_bulk_पढ़ो(dev->regmap[2], reg, value, 2);
+	अगर (!ret) अणु
+		/* Ick! ToDo: Add 64bit R/W to regmap on 32bit प्रणालीs */
 		value[0] = swab32(value[0]);
 		value[1] = swab32(value[1]);
 		*val = swab64((u64)*value);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int ksz_write8(struct ksz_device *dev, u32 reg, u8 value)
-{
-	return regmap_write(dev->regmap[0], reg, value);
-}
+अटल अंतरभूत पूर्णांक ksz_ग_लिखो8(काष्ठा ksz_device *dev, u32 reg, u8 value)
+अणु
+	वापस regmap_ग_लिखो(dev->regmap[0], reg, value);
+पूर्ण
 
-static inline int ksz_write16(struct ksz_device *dev, u32 reg, u16 value)
-{
-	return regmap_write(dev->regmap[1], reg, value);
-}
+अटल अंतरभूत पूर्णांक ksz_ग_लिखो16(काष्ठा ksz_device *dev, u32 reg, u16 value)
+अणु
+	वापस regmap_ग_लिखो(dev->regmap[1], reg, value);
+पूर्ण
 
-static inline int ksz_write32(struct ksz_device *dev, u32 reg, u32 value)
-{
-	return regmap_write(dev->regmap[2], reg, value);
-}
+अटल अंतरभूत पूर्णांक ksz_ग_लिखो32(काष्ठा ksz_device *dev, u32 reg, u32 value)
+अणु
+	वापस regmap_ग_लिखो(dev->regmap[2], reg, value);
+पूर्ण
 
-static inline int ksz_write64(struct ksz_device *dev, u32 reg, u64 value)
-{
+अटल अंतरभूत पूर्णांक ksz_ग_लिखो64(काष्ठा ksz_device *dev, u32 reg, u64 value)
+अणु
 	u32 val[2];
 
-	/* Ick! ToDo: Add 64bit R/W to regmap on 32bit systems */
+	/* Ick! ToDo: Add 64bit R/W to regmap on 32bit प्रणालीs */
 	value = swab64(value);
 	val[0] = swab32(value & 0xffffffffULL);
 	val[1] = swab32(value >> 32ULL);
 
-	return regmap_bulk_write(dev->regmap[2], reg, val, 2);
-}
+	वापस regmap_bulk_ग_लिखो(dev->regmap[2], reg, val, 2);
+पूर्ण
 
-static inline void ksz_pread8(struct ksz_device *dev, int port, int offset,
+अटल अंतरभूत व्योम ksz_pपढ़ो8(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक offset,
 			      u8 *data)
-{
-	ksz_read8(dev, dev->dev_ops->get_port_addr(port, offset), data);
-}
+अणु
+	ksz_पढ़ो8(dev, dev->dev_ops->get_port_addr(port, offset), data);
+पूर्ण
 
-static inline void ksz_pread16(struct ksz_device *dev, int port, int offset,
+अटल अंतरभूत व्योम ksz_pपढ़ो16(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक offset,
 			       u16 *data)
-{
-	ksz_read16(dev, dev->dev_ops->get_port_addr(port, offset), data);
-}
+अणु
+	ksz_पढ़ो16(dev, dev->dev_ops->get_port_addr(port, offset), data);
+पूर्ण
 
-static inline void ksz_pread32(struct ksz_device *dev, int port, int offset,
+अटल अंतरभूत व्योम ksz_pपढ़ो32(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक offset,
 			       u32 *data)
-{
-	ksz_read32(dev, dev->dev_ops->get_port_addr(port, offset), data);
-}
+अणु
+	ksz_पढ़ो32(dev, dev->dev_ops->get_port_addr(port, offset), data);
+पूर्ण
 
-static inline void ksz_pwrite8(struct ksz_device *dev, int port, int offset,
+अटल अंतरभूत व्योम ksz_pग_लिखो8(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक offset,
 			       u8 data)
-{
-	ksz_write8(dev, dev->dev_ops->get_port_addr(port, offset), data);
-}
+अणु
+	ksz_ग_लिखो8(dev, dev->dev_ops->get_port_addr(port, offset), data);
+पूर्ण
 
-static inline void ksz_pwrite16(struct ksz_device *dev, int port, int offset,
+अटल अंतरभूत व्योम ksz_pग_लिखो16(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक offset,
 				u16 data)
-{
-	ksz_write16(dev, dev->dev_ops->get_port_addr(port, offset), data);
-}
+अणु
+	ksz_ग_लिखो16(dev, dev->dev_ops->get_port_addr(port, offset), data);
+पूर्ण
 
-static inline void ksz_pwrite32(struct ksz_device *dev, int port, int offset,
+अटल अंतरभूत व्योम ksz_pग_लिखो32(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक offset,
 				u32 data)
-{
-	ksz_write32(dev, dev->dev_ops->get_port_addr(port, offset), data);
-}
+अणु
+	ksz_ग_लिखो32(dev, dev->dev_ops->get_port_addr(port, offset), data);
+पूर्ण
 
-static inline void ksz_regmap_lock(void *__mtx)
-{
-	struct mutex *mtx = __mtx;
+अटल अंतरभूत व्योम ksz_regmap_lock(व्योम *__mtx)
+अणु
+	काष्ठा mutex *mtx = __mtx;
 	mutex_lock(mtx);
-}
+पूर्ण
 
-static inline void ksz_regmap_unlock(void *__mtx)
-{
-	struct mutex *mtx = __mtx;
+अटल अंतरभूत व्योम ksz_regmap_unlock(व्योम *__mtx)
+अणु
+	काष्ठा mutex *mtx = __mtx;
 	mutex_unlock(mtx);
-}
+पूर्ण
 
 /* Regmap tables generation */
-#define KSZ_SPI_OP_RD		3
-#define KSZ_SPI_OP_WR		2
+#घोषणा KSZ_SPI_OP_RD		3
+#घोषणा KSZ_SPI_OP_WR		2
 
-#define swabnot_used(x)		0
+#घोषणा swabnot_used(x)		0
 
-#define KSZ_SPI_OP_FLAG_MASK(opcode, swp, regbits, regpad)		\
+#घोषणा KSZ_SPI_OP_FLAG_MASK(opcode, swp, regbits, regpad)		\
 	swab##swp((opcode) << ((regbits) + (regpad)))
 
-#define KSZ_REGMAP_ENTRY(width, swp, regbits, regpad, regalign)		\
-	{								\
+#घोषणा KSZ_REGMAP_ENTRY(width, swp, regbits, regpad, regalign)		\
+	अणु								\
 		.name = #width,						\
 		.val_bits = (width),					\
 		.reg_stride = 1,					\
 		.reg_bits = (regbits) + (regalign),			\
 		.pad_bits = (regpad),					\
-		.max_register = BIT(regbits) - 1,			\
+		.max_रेजिस्टर = BIT(regbits) - 1,			\
 		.cache_type = REGCACHE_NONE,				\
-		.read_flag_mask =					\
+		.पढ़ो_flag_mask =					\
 			KSZ_SPI_OP_FLAG_MASK(KSZ_SPI_OP_RD, swp,	\
 					     regbits, regpad),		\
-		.write_flag_mask =					\
+		.ग_लिखो_flag_mask =					\
 			KSZ_SPI_OP_FLAG_MASK(KSZ_SPI_OP_WR, swp,	\
 					     regbits, regpad),		\
 		.lock = ksz_regmap_lock,				\
 		.unlock = ksz_regmap_unlock,				\
-		.reg_format_endian = REGMAP_ENDIAN_BIG,			\
-		.val_format_endian = REGMAP_ENDIAN_BIG			\
-	}
+		.reg_क्रमmat_endian = REGMAP_ENDIAN_BIG,			\
+		.val_क्रमmat_endian = REGMAP_ENDIAN_BIG			\
+	पूर्ण
 
-#define KSZ_REGMAP_TABLE(ksz, swp, regbits, regpad, regalign)		\
-	static const struct regmap_config ksz##_regmap_config[] = {	\
+#घोषणा KSZ_REGMAP_TABLE(ksz, swp, regbits, regpad, regalign)		\
+	अटल स्थिर काष्ठा regmap_config ksz##_regmap_config[] = अणु	\
 		KSZ_REGMAP_ENTRY(8, swp, (regbits), (regpad), (regalign)), \
 		KSZ_REGMAP_ENTRY(16, swp, (regbits), (regpad), (regalign)), \
 		KSZ_REGMAP_ENTRY(32, swp, (regbits), (regpad), (regalign)), \
-	}
+	पूर्ण
 
-#endif
+#पूर्ण_अगर

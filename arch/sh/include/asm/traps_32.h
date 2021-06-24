@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_TRAPS_32_H
-#define __ASM_SH_TRAPS_32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_TRAPS_32_H
+#घोषणा __ASM_SH_TRAPS_32_H
 
-#include <linux/types.h>
-#include <asm/mmu.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/mmu.h>
 
-#ifdef CONFIG_CPU_HAS_SR_RB
-#define lookup_exception_vector()	\
-({					\
-	unsigned long _vec;		\
+#अगर_घोषित CONFIG_CPU_HAS_SR_RB
+#घोषणा lookup_exception_vector()	\
+(अणु					\
+	अचिन्हित दीर्घ _vec;		\
 					\
-	__asm__ __volatile__ (		\
+	__यंत्र__ __अस्थिर__ (		\
 		"stc r2_bank, %0\n\t"	\
 		: "=r" (_vec)		\
 	);				\
 					\
 	_vec;				\
-})
-#else
-#define lookup_exception_vector()	\
-({					\
-	unsigned long _vec;		\
-	__asm__ __volatile__ (		\
+पूर्ण)
+#अन्यथा
+#घोषणा lookup_exception_vector()	\
+(अणु					\
+	अचिन्हित दीर्घ _vec;		\
+	__यंत्र__ __अस्थिर__ (		\
 		"mov r4, %0\n\t"	\
 		: "=r" (_vec)		\
 	);				\
 					\
 	_vec;				\
-})
-#endif
+पूर्ण)
+#पूर्ण_अगर
 
-static inline void trigger_address_error(void)
-{
-	__asm__ __volatile__ (
+अटल अंतरभूत व्योम trigger_address_error(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ (
 		"ldc %0, sr\n\t"
 		"mov.l @%1, %0"
 		:
 		: "r" (0x10000000), "r" (0x80000001)
 	);
-}
+पूर्ण
 
-asmlinkage void do_address_error(struct pt_regs *regs,
-				 unsigned long writeaccess,
-				 unsigned long address);
-asmlinkage void do_divide_error(unsigned long r4);
-asmlinkage void do_reserved_inst(void);
-asmlinkage void do_illegal_slot_inst(void);
-asmlinkage void do_exception_error(void);
+यंत्रlinkage व्योम करो_address_error(काष्ठा pt_regs *regs,
+				 अचिन्हित दीर्घ ग_लिखोaccess,
+				 अचिन्हित दीर्घ address);
+यंत्रlinkage व्योम करो_भागide_error(अचिन्हित दीर्घ r4);
+यंत्रlinkage व्योम करो_reserved_inst(व्योम);
+यंत्रlinkage व्योम करो_illegal_slot_inst(व्योम);
+यंत्रlinkage व्योम करो_exception_error(व्योम);
 
-#define BUILD_TRAP_HANDLER(name)					\
-asmlinkage void name##_trap_handler(unsigned long r4, unsigned long r5,	\
-				    unsigned long r6, unsigned long r7,	\
-				    struct pt_regs __regs)
+#घोषणा BUILD_TRAP_HANDLER(name)					\
+यंत्रlinkage व्योम name##_trap_handler(अचिन्हित दीर्घ r4, अचिन्हित दीर्घ r5,	\
+				    अचिन्हित दीर्घ r6, अचिन्हित दीर्घ r7,	\
+				    काष्ठा pt_regs __regs)
 
-#define TRAP_HANDLER_DECL				\
-	struct pt_regs *regs = RELOC_HIDE(&__regs, 0);	\
-	unsigned int vec = regs->tra;			\
-	(void)vec;
+#घोषणा TRAP_HANDLER_DECL				\
+	काष्ठा pt_regs *regs = RELOC_HIDE(&__regs, 0);	\
+	अचिन्हित पूर्णांक vec = regs->tra;			\
+	(व्योम)vec;
 
-#endif /* __ASM_SH_TRAPS_32_H */
+#पूर्ण_अगर /* __ASM_SH_TRAPS_32_H */

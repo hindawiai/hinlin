@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __CGROUP_INTERNAL_H
-#define __CGROUP_INTERNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __CGROUP_INTERNAL_H
+#घोषणा __CGROUP_INTERNAL_H
 
-#include <linux/cgroup.h>
-#include <linux/kernfs.h>
-#include <linux/workqueue.h>
-#include <linux/list.h>
-#include <linux/refcount.h>
-#include <linux/fs_parser.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/kernfs.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/list.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/fs_parser.h>
 
-#define TRACE_CGROUP_PATH_LEN 1024
-extern spinlock_t trace_cgroup_path_lock;
-extern char trace_cgroup_path[TRACE_CGROUP_PATH_LEN];
-extern bool cgroup_debug;
-extern void __init enable_debug_cgroup(void);
+#घोषणा TRACE_CGROUP_PATH_LEN 1024
+बाह्य spinlock_t trace_cgroup_path_lock;
+बाह्य अक्षर trace_cgroup_path[TRACE_CGROUP_PATH_LEN];
+बाह्य bool cgroup_debug;
+बाह्य व्योम __init enable_debug_cgroup(व्योम);
 
 /*
  * cgroup_path() takes a spin lock. It is good practice not to take
- * spin locks within trace point handlers, as they are mostly hidden
- * from normal view. As cgroup_path() can take the kernfs_rename_lock
+ * spin locks within trace poपूर्णांक handlers, as they are mostly hidden
+ * from normal view. As cgroup_path() can take the kernfs_नाम_lock
  * spin lock, it is best to not call that function from the trace event
  * handler.
  *
- * Note: trace_cgroup_##type##_enabled() is a static branch that will only
+ * Note: trace_cgroup_##type##_enabled() is a अटल branch that will only
  *       be set when the trace event is enabled.
  */
-#define TRACE_CGROUP_PATH(type, cgrp, ...)				\
-	do {								\
-		if (trace_cgroup_##type##_enabled()) {			\
-			unsigned long flags;				\
+#घोषणा TRACE_CGROUP_PATH(type, cgrp, ...)				\
+	करो अणु								\
+		अगर (trace_cgroup_##type##_enabled()) अणु			\
+			अचिन्हित दीर्घ flags;				\
 			spin_lock_irqsave(&trace_cgroup_path_lock,	\
 					  flags);			\
 			cgroup_path(cgrp, trace_cgroup_path,		\
@@ -37,243 +38,243 @@ extern void __init enable_debug_cgroup(void);
 					    ##__VA_ARGS__);		\
 			spin_unlock_irqrestore(&trace_cgroup_path_lock, \
 					       flags);			\
-		}							\
-	} while (0)
+		पूर्ण							\
+	पूर्ण जबतक (0)
 
 /*
- * The cgroup filesystem superblock creation/mount context.
+ * The cgroup fileप्रणाली superblock creation/mount context.
  */
-struct cgroup_fs_context {
-	struct kernfs_fs_context kfc;
-	struct cgroup_root	*root;
-	struct cgroup_namespace	*ns;
-	unsigned int	flags;			/* CGRP_ROOT_* flags */
+काष्ठा cgroup_fs_context अणु
+	काष्ठा kernfs_fs_context kfc;
+	काष्ठा cgroup_root	*root;
+	काष्ठा cgroup_namespace	*ns;
+	अचिन्हित पूर्णांक	flags;			/* CGRP_ROOT_* flags */
 
 	/* cgroup1 bits */
 	bool		cpuset_clone_children;
-	bool		none;			/* User explicitly requested empty subsystem */
+	bool		none;			/* User explicitly requested empty subप्रणाली */
 	bool		all_ss;			/* Seen 'all' option */
-	u16		subsys_mask;		/* Selected subsystems */
-	char		*name;			/* Hierarchy name */
-	char		*release_agent;		/* Path for release notifications */
-};
+	u16		subsys_mask;		/* Selected subप्रणालीs */
+	अक्षर		*name;			/* Hierarchy name */
+	अक्षर		*release_agent;		/* Path क्रम release notअगरications */
+पूर्ण;
 
-static inline struct cgroup_fs_context *cgroup_fc2context(struct fs_context *fc)
-{
-	struct kernfs_fs_context *kfc = fc->fs_private;
+अटल अंतरभूत काष्ठा cgroup_fs_context *cgroup_fc2context(काष्ठा fs_context *fc)
+अणु
+	काष्ठा kernfs_fs_context *kfc = fc->fs_निजी;
 
-	return container_of(kfc, struct cgroup_fs_context, kfc);
-}
+	वापस container_of(kfc, काष्ठा cgroup_fs_context, kfc);
+पूर्ण
 
 /*
- * A cgroup can be associated with multiple css_sets as different tasks may
- * belong to different cgroups on different hierarchies.  In the other
+ * A cgroup can be associated with multiple css_sets as dअगरferent tasks may
+ * beदीर्घ to dअगरferent cgroups on dअगरferent hierarchies.  In the other
  * direction, a css_set is naturally associated with multiple cgroups.
- * This M:N relationship is represented by the following link structure
- * which exists for each association and allows traversing the associations
+ * This M:N relationship is represented by the following link काष्ठाure
+ * which exists क्रम each association and allows traversing the associations
  * from both sides.
  */
-struct cgrp_cset_link {
+काष्ठा cgrp_cset_link अणु
 	/* the cgroup and css_set this link associates */
-	struct cgroup		*cgrp;
-	struct css_set		*cset;
+	काष्ठा cgroup		*cgrp;
+	काष्ठा css_set		*cset;
 
 	/* list of cgrp_cset_links anchored at cgrp->cset_links */
-	struct list_head	cset_link;
+	काष्ठा list_head	cset_link;
 
 	/* list of cgrp_cset_links anchored at css_set->cgrp_links */
-	struct list_head	cgrp_link;
-};
+	काष्ठा list_head	cgrp_link;
+पूर्ण;
 
 /* used to track tasks and csets during migration */
-struct cgroup_taskset {
+काष्ठा cgroup_taskset अणु
 	/* the src and dst cset list running through cset->mg_node */
-	struct list_head	src_csets;
-	struct list_head	dst_csets;
+	काष्ठा list_head	src_csets;
+	काष्ठा list_head	dst_csets;
 
 	/* the number of tasks in the set */
-	int			nr_tasks;
+	पूर्णांक			nr_tasks;
 
 	/* the subsys currently being processed */
-	int			ssid;
+	पूर्णांक			ssid;
 
 	/*
-	 * Fields for cgroup_taskset_*() iteration.
+	 * Fields क्रम cgroup_taskset_*() iteration.
 	 *
-	 * Before migration is committed, the target migration tasks are on
+	 * Beक्रमe migration is committed, the target migration tasks are on
 	 * ->mg_tasks of the csets on ->src_csets.  After, on ->mg_tasks of
-	 * the csets on ->dst_csets.  ->csets point to either ->src_csets
+	 * the csets on ->dst_csets.  ->csets poपूर्णांक to either ->src_csets
 	 * or ->dst_csets depending on whether migration is committed.
 	 *
-	 * ->cur_csets and ->cur_task point to the current task position
+	 * ->cur_csets and ->cur_task poपूर्णांक to the current task position
 	 * during iteration.
 	 */
-	struct list_head	*csets;
-	struct css_set		*cur_cset;
-	struct task_struct	*cur_task;
-};
+	काष्ठा list_head	*csets;
+	काष्ठा css_set		*cur_cset;
+	काष्ठा task_काष्ठा	*cur_task;
+पूर्ण;
 
 /* migration context also tracks preloading */
-struct cgroup_mgctx {
+काष्ठा cgroup_mgctx अणु
 	/*
 	 * Preloaded source and destination csets.  Used to guarantee
 	 * atomic success or failure on actual migration.
 	 */
-	struct list_head	preloaded_src_csets;
-	struct list_head	preloaded_dst_csets;
+	काष्ठा list_head	preloaded_src_csets;
+	काष्ठा list_head	preloaded_dst_csets;
 
 	/* tasks and csets to migrate */
-	struct cgroup_taskset	tset;
+	काष्ठा cgroup_taskset	tset;
 
-	/* subsystems affected by migration */
+	/* subप्रणालीs affected by migration */
 	u16			ss_mask;
-};
+पूर्ण;
 
-#define CGROUP_TASKSET_INIT(tset)						\
-{										\
+#घोषणा CGROUP_TASKSET_INIT(tset)						\
+अणु										\
 	.src_csets		= LIST_HEAD_INIT(tset.src_csets),		\
 	.dst_csets		= LIST_HEAD_INIT(tset.dst_csets),		\
 	.csets			= &tset.src_csets,				\
-}
+पूर्ण
 
-#define CGROUP_MGCTX_INIT(name)							\
-{										\
+#घोषणा CGROUP_MGCTX_INIT(name)							\
+अणु										\
 	LIST_HEAD_INIT(name.preloaded_src_csets),				\
 	LIST_HEAD_INIT(name.preloaded_dst_csets),				\
 	CGROUP_TASKSET_INIT(name.tset),						\
-}
+पूर्ण
 
-#define DEFINE_CGROUP_MGCTX(name)						\
-	struct cgroup_mgctx name = CGROUP_MGCTX_INIT(name)
+#घोषणा DEFINE_CGROUP_MGCTX(name)						\
+	काष्ठा cgroup_mgctx name = CGROUP_MGCTX_INIT(name)
 
-extern struct mutex cgroup_mutex;
-extern spinlock_t css_set_lock;
-extern struct cgroup_subsys *cgroup_subsys[];
-extern struct list_head cgroup_roots;
-extern struct file_system_type cgroup_fs_type;
+बाह्य काष्ठा mutex cgroup_mutex;
+बाह्य spinlock_t css_set_lock;
+बाह्य काष्ठा cgroup_subsys *cgroup_subsys[];
+बाह्य काष्ठा list_head cgroup_roots;
+बाह्य काष्ठा file_प्रणाली_type cgroup_fs_type;
 
 /* iterate across the hierarchies */
-#define for_each_root(root)						\
-	list_for_each_entry((root), &cgroup_roots, root_list)
+#घोषणा क्रम_each_root(root)						\
+	list_क्रम_each_entry((root), &cgroup_roots, root_list)
 
 /**
- * for_each_subsys - iterate all enabled cgroup subsystems
+ * क्रम_each_subsys - iterate all enabled cgroup subप्रणालीs
  * @ss: the iteration cursor
  * @ssid: the index of @ss, CGROUP_SUBSYS_COUNT after reaching the end
  */
-#define for_each_subsys(ss, ssid)					\
-	for ((ssid) = 0; (ssid) < CGROUP_SUBSYS_COUNT &&		\
+#घोषणा क्रम_each_subsys(ss, ssid)					\
+	क्रम ((ssid) = 0; (ssid) < CGROUP_SUBSYS_COUNT &&		\
 	     (((ss) = cgroup_subsys[ssid]) || true); (ssid)++)
 
-static inline bool cgroup_is_dead(const struct cgroup *cgrp)
-{
-	return !(cgrp->self.flags & CSS_ONLINE);
-}
+अटल अंतरभूत bool cgroup_is_dead(स्थिर काष्ठा cgroup *cgrp)
+अणु
+	वापस !(cgrp->self.flags & CSS_ONLINE);
+पूर्ण
 
-static inline bool notify_on_release(const struct cgroup *cgrp)
-{
-	return test_bit(CGRP_NOTIFY_ON_RELEASE, &cgrp->flags);
-}
+अटल अंतरभूत bool notअगरy_on_release(स्थिर काष्ठा cgroup *cgrp)
+अणु
+	वापस test_bit(CGRP_NOTIFY_ON_RELEASE, &cgrp->flags);
+पूर्ण
 
-void put_css_set_locked(struct css_set *cset);
+व्योम put_css_set_locked(काष्ठा css_set *cset);
 
-static inline void put_css_set(struct css_set *cset)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम put_css_set(काष्ठा css_set *cset)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Ensure that the refcount doesn't hit zero while any readers
-	 * can see it. Similar to atomic_dec_and_lock(), but for an
+	 * Ensure that the refcount करोesn't hit zero जबतक any पढ़ोers
+	 * can see it. Similar to atomic_dec_and_lock(), but क्रम an
 	 * rwlock
 	 */
-	if (refcount_dec_not_one(&cset->refcount))
-		return;
+	अगर (refcount_dec_not_one(&cset->refcount))
+		वापस;
 
 	spin_lock_irqsave(&css_set_lock, flags);
 	put_css_set_locked(cset);
 	spin_unlock_irqrestore(&css_set_lock, flags);
-}
+पूर्ण
 
 /*
- * refcounted get/put for css_set objects
+ * refcounted get/put क्रम css_set objects
  */
-static inline void get_css_set(struct css_set *cset)
-{
+अटल अंतरभूत व्योम get_css_set(काष्ठा css_set *cset)
+अणु
 	refcount_inc(&cset->refcount);
-}
+पूर्ण
 
-bool cgroup_ssid_enabled(int ssid);
-bool cgroup_on_dfl(const struct cgroup *cgrp);
-bool cgroup_is_thread_root(struct cgroup *cgrp);
-bool cgroup_is_threaded(struct cgroup *cgrp);
+bool cgroup_ssid_enabled(पूर्णांक ssid);
+bool cgroup_on_dfl(स्थिर काष्ठा cgroup *cgrp);
+bool cgroup_is_thपढ़ो_root(काष्ठा cgroup *cgrp);
+bool cgroup_is_thपढ़ोed(काष्ठा cgroup *cgrp);
 
-struct cgroup_root *cgroup_root_from_kf(struct kernfs_root *kf_root);
-struct cgroup *task_cgroup_from_root(struct task_struct *task,
-				     struct cgroup_root *root);
-struct cgroup *cgroup_kn_lock_live(struct kernfs_node *kn, bool drain_offline);
-void cgroup_kn_unlock(struct kernfs_node *kn);
-int cgroup_path_ns_locked(struct cgroup *cgrp, char *buf, size_t buflen,
-			  struct cgroup_namespace *ns);
+काष्ठा cgroup_root *cgroup_root_from_kf(काष्ठा kernfs_root *kf_root);
+काष्ठा cgroup *task_cgroup_from_root(काष्ठा task_काष्ठा *task,
+				     काष्ठा cgroup_root *root);
+काष्ठा cgroup *cgroup_kn_lock_live(काष्ठा kernfs_node *kn, bool drain_offline);
+व्योम cgroup_kn_unlock(काष्ठा kernfs_node *kn);
+पूर्णांक cgroup_path_ns_locked(काष्ठा cgroup *cgrp, अक्षर *buf, माप_प्रकार buflen,
+			  काष्ठा cgroup_namespace *ns);
 
-void cgroup_free_root(struct cgroup_root *root);
-void init_cgroup_root(struct cgroup_fs_context *ctx);
-int cgroup_setup_root(struct cgroup_root *root, u16 ss_mask);
-int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask);
-int cgroup_do_get_tree(struct fs_context *fc);
+व्योम cgroup_मुक्त_root(काष्ठा cgroup_root *root);
+व्योम init_cgroup_root(काष्ठा cgroup_fs_context *ctx);
+पूर्णांक cgroup_setup_root(काष्ठा cgroup_root *root, u16 ss_mask);
+पूर्णांक rebind_subप्रणालीs(काष्ठा cgroup_root *dst_root, u16 ss_mask);
+पूर्णांक cgroup_करो_get_tree(काष्ठा fs_context *fc);
 
-int cgroup_migrate_vet_dst(struct cgroup *dst_cgrp);
-void cgroup_migrate_finish(struct cgroup_mgctx *mgctx);
-void cgroup_migrate_add_src(struct css_set *src_cset, struct cgroup *dst_cgrp,
-			    struct cgroup_mgctx *mgctx);
-int cgroup_migrate_prepare_dst(struct cgroup_mgctx *mgctx);
-int cgroup_migrate(struct task_struct *leader, bool threadgroup,
-		   struct cgroup_mgctx *mgctx);
+पूर्णांक cgroup_migrate_vet_dst(काष्ठा cgroup *dst_cgrp);
+व्योम cgroup_migrate_finish(काष्ठा cgroup_mgctx *mgctx);
+व्योम cgroup_migrate_add_src(काष्ठा css_set *src_cset, काष्ठा cgroup *dst_cgrp,
+			    काष्ठा cgroup_mgctx *mgctx);
+पूर्णांक cgroup_migrate_prepare_dst(काष्ठा cgroup_mgctx *mgctx);
+पूर्णांक cgroup_migrate(काष्ठा task_काष्ठा *leader, bool thपढ़ोgroup,
+		   काष्ठा cgroup_mgctx *mgctx);
 
-int cgroup_attach_task(struct cgroup *dst_cgrp, struct task_struct *leader,
-		       bool threadgroup);
-struct task_struct *cgroup_procs_write_start(char *buf, bool threadgroup,
+पूर्णांक cgroup_attach_task(काष्ठा cgroup *dst_cgrp, काष्ठा task_काष्ठा *leader,
+		       bool thपढ़ोgroup);
+काष्ठा task_काष्ठा *cgroup_procs_ग_लिखो_start(अक्षर *buf, bool thपढ़ोgroup,
 					     bool *locked)
-	__acquires(&cgroup_threadgroup_rwsem);
-void cgroup_procs_write_finish(struct task_struct *task, bool locked)
-	__releases(&cgroup_threadgroup_rwsem);
+	__acquires(&cgroup_thपढ़ोgroup_rwsem);
+व्योम cgroup_procs_ग_लिखो_finish(काष्ठा task_काष्ठा *task, bool locked)
+	__releases(&cgroup_thपढ़ोgroup_rwsem);
 
-void cgroup_lock_and_drain_offline(struct cgroup *cgrp);
+व्योम cgroup_lock_and_drain_offline(काष्ठा cgroup *cgrp);
 
-int cgroup_mkdir(struct kernfs_node *parent_kn, const char *name, umode_t mode);
-int cgroup_rmdir(struct kernfs_node *kn);
-int cgroup_show_path(struct seq_file *sf, struct kernfs_node *kf_node,
-		     struct kernfs_root *kf_root);
+पूर्णांक cgroup_सूची_गढ़ो(काष्ठा kernfs_node *parent_kn, स्थिर अक्षर *name, umode_t mode);
+पूर्णांक cgroup_सूची_हटाओ(काष्ठा kernfs_node *kn);
+पूर्णांक cgroup_show_path(काष्ठा seq_file *sf, काष्ठा kernfs_node *kf_node,
+		     काष्ठा kernfs_root *kf_root);
 
-int __cgroup_task_count(const struct cgroup *cgrp);
-int cgroup_task_count(const struct cgroup *cgrp);
+पूर्णांक __cgroup_task_count(स्थिर काष्ठा cgroup *cgrp);
+पूर्णांक cgroup_task_count(स्थिर काष्ठा cgroup *cgrp);
 
 /*
  * rstat.c
  */
-int cgroup_rstat_init(struct cgroup *cgrp);
-void cgroup_rstat_exit(struct cgroup *cgrp);
-void cgroup_rstat_boot(void);
-void cgroup_base_stat_cputime_show(struct seq_file *seq);
+पूर्णांक cgroup_rstat_init(काष्ठा cgroup *cgrp);
+व्योम cgroup_rstat_निकास(काष्ठा cgroup *cgrp);
+व्योम cgroup_rstat_boot(व्योम);
+व्योम cgroup_base_stat_cpuसमय_show(काष्ठा seq_file *seq);
 
 /*
  * namespace.c
  */
-extern const struct proc_ns_operations cgroupns_operations;
+बाह्य स्थिर काष्ठा proc_ns_operations cgroupns_operations;
 
 /*
  * cgroup-v1.c
  */
-extern struct cftype cgroup1_base_files[];
-extern struct kernfs_syscall_ops cgroup1_kf_syscall_ops;
-extern const struct fs_parameter_spec cgroup1_fs_parameters[];
+बाह्य काष्ठा cftype cgroup1_base_files[];
+बाह्य काष्ठा kernfs_syscall_ops cgroup1_kf_syscall_ops;
+बाह्य स्थिर काष्ठा fs_parameter_spec cgroup1_fs_parameters[];
 
-int proc_cgroupstats_show(struct seq_file *m, void *v);
-bool cgroup1_ssid_disabled(int ssid);
-void cgroup1_pidlist_destroy_all(struct cgroup *cgrp);
-void cgroup1_release_agent(struct work_struct *work);
-void cgroup1_check_for_release(struct cgroup *cgrp);
-int cgroup1_parse_param(struct fs_context *fc, struct fs_parameter *param);
-int cgroup1_get_tree(struct fs_context *fc);
-int cgroup1_reconfigure(struct fs_context *ctx);
+पूर्णांक proc_cgroupstats_show(काष्ठा seq_file *m, व्योम *v);
+bool cgroup1_ssid_disabled(पूर्णांक ssid);
+व्योम cgroup1_pidlist_destroy_all(काष्ठा cgroup *cgrp);
+व्योम cgroup1_release_agent(काष्ठा work_काष्ठा *work);
+व्योम cgroup1_check_क्रम_release(काष्ठा cgroup *cgrp);
+पूर्णांक cgroup1_parse_param(काष्ठा fs_context *fc, काष्ठा fs_parameter *param);
+पूर्णांक cgroup1_get_tree(काष्ठा fs_context *fc);
+पूर्णांक cgroup1_reconfigure(काष्ठा fs_context *ctx);
 
-#endif /* __CGROUP_INTERNAL_H */
+#पूर्ण_अगर /* __CGROUP_INTERNAL_H */

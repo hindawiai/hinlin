@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * include/asm-generic/xor.h
+ * include/यंत्र-generic/xor.h
  *
  * Generic optimized RAID-5 checksumming functions.
  */
 
-#include <linux/prefetch.h>
+#समावेश <linux/prefetch.h>
 
-static void
-xor_8regs_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_8regs_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
+	करो अणु
 		p1[0] ^= p2[0];
 		p1[1] ^= p2[1];
 		p1[2] ^= p2[2];
@@ -23,16 +24,16 @@ xor_8regs_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 		p1[7] ^= p2[7];
 		p1 += 8;
 		p2 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_8regs_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_8regs_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
+	करो अणु
 		p1[0] ^= p2[0] ^ p3[0];
 		p1[1] ^= p2[1] ^ p3[1];
 		p1[2] ^= p2[2] ^ p3[2];
@@ -44,16 +45,16 @@ xor_8regs_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p1 += 8;
 		p2 += 8;
 		p3 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_8regs_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_8regs_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
+	करो अणु
 		p1[0] ^= p2[0] ^ p3[0] ^ p4[0];
 		p1[1] ^= p2[1] ^ p3[1] ^ p4[1];
 		p1[2] ^= p2[2] ^ p3[2] ^ p4[2];
@@ -66,16 +67,16 @@ xor_8regs_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p2 += 8;
 		p3 += 8;
 		p4 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_8regs_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_8regs_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
+	करो अणु
 		p1[0] ^= p2[0] ^ p3[0] ^ p4[0] ^ p5[0];
 		p1[1] ^= p2[1] ^ p3[1] ^ p4[1] ^ p5[1];
 		p1[2] ^= p2[2] ^ p3[2] ^ p4[2] ^ p5[2];
@@ -89,18 +90,18 @@ xor_8regs_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p3 += 8;
 		p4 += 8;
 		p5 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_32regs_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_32regs_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -125,19 +126,19 @@ xor_32regs_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 		p1[7] = d7;
 		p1 += 8;
 		p2 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_32regs_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_32regs_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -171,19 +172,19 @@ xor_32regs_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p1 += 8;
 		p2 += 8;
 		p3 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_32regs_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_32regs_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -226,19 +227,19 @@ xor_32regs_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p2 += 8;
 		p3 += 8;
 		p4 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_32regs_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	long lines = bytes / (sizeof (long)) / 8;
+अटल व्योम
+xor_32regs_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8;
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -290,17 +291,17 @@ xor_32regs_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p3 += 8;
 		p4 += 8;
 		p5 += 8;
-	} while (--lines > 0);
-}
+	पूर्ण जबतक (--lines > 0);
+पूर्ण
 
-static void
-xor_8regs_p_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_8regs_p_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 	prefetchw(p1);
 	prefetch(p2);
 
-	do {
+	करो अणु
 		prefetchw(p1+8);
 		prefetch(p2+8);
  once_more:
@@ -314,21 +315,21 @@ xor_8regs_p_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 		p1[7] ^= p2[7];
 		p1 += 8;
 		p2 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static void
-xor_8regs_p_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_8regs_p_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 	prefetchw(p1);
 	prefetch(p2);
 	prefetch(p3);
 
-	do {
+	करो अणु
 		prefetchw(p1+8);
 		prefetch(p2+8);
 		prefetch(p3+8);
@@ -344,23 +345,23 @@ xor_8regs_p_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p1 += 8;
 		p2 += 8;
 		p3 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static void
-xor_8regs_p_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_8regs_p_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 
 	prefetchw(p1);
 	prefetch(p2);
 	prefetch(p3);
 	prefetch(p4);
 
-	do {
+	करो अणु
 		prefetchw(p1+8);
 		prefetch(p2+8);
 		prefetch(p3+8);
@@ -378,16 +379,16 @@ xor_8regs_p_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p2 += 8;
 		p3 += 8;
 		p4 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static void
-xor_8regs_p_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_8regs_p_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 
 	prefetchw(p1);
 	prefetch(p2);
@@ -395,7 +396,7 @@ xor_8regs_p_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	prefetch(p4);
 	prefetch(p5);
 
-	do {
+	करो अणु
 		prefetchw(p1+8);
 		prefetch(p2+8);
 		prefetch(p3+8);
@@ -415,27 +416,27 @@ xor_8regs_p_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p3 += 8;
 		p4 += 8;
 		p5 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static void
-xor_32regs_p_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_32regs_p_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 
 	prefetchw(p1);
 	prefetch(p2);
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
 
 		prefetchw(p1+8);
 		prefetch(p2+8);
  once_more:
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -460,30 +461,30 @@ xor_32regs_p_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 		p1[7] = d7;
 		p1 += 8;
 		p2 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static void
-xor_32regs_p_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_32regs_p_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 
 	prefetchw(p1);
 	prefetch(p2);
 	prefetch(p3);
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
 
 		prefetchw(p1+8);
 		prefetch(p2+8);
 		prefetch(p3+8);
  once_more:
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -517,32 +518,32 @@ xor_32regs_p_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p1 += 8;
 		p2 += 8;
 		p3 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static void
-xor_32regs_p_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_32regs_p_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 
 	prefetchw(p1);
 	prefetch(p2);
 	prefetch(p3);
 	prefetch(p4);
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
 
 		prefetchw(p1+8);
 		prefetch(p2+8);
 		prefetch(p3+8);
 		prefetch(p4+8);
  once_more:
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -585,16 +586,16 @@ xor_32regs_p_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p2 += 8;
 		p3 += 8;
 		p4 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static void
-xor_32regs_p_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	    unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	long lines = bytes / (sizeof (long)) / 8 - 1;
+अटल व्योम
+xor_32regs_p_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	    अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	दीर्घ lines = bytes / (माप (दीर्घ)) / 8 - 1;
 
 	prefetchw(p1);
 	prefetch(p2);
@@ -602,8 +603,8 @@ xor_32regs_p_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	prefetch(p4);
 	prefetch(p5);
 
-	do {
-		register long d0, d1, d2, d3, d4, d5, d6, d7;
+	करो अणु
+		रेजिस्टर दीर्घ d0, d1, d2, d3, d4, d5, d6, d7;
 
 		prefetchw(p1+8);
 		prefetch(p2+8);
@@ -611,8 +612,8 @@ xor_32regs_p_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		prefetch(p4+8);
 		prefetch(p5+8);
  once_more:
-		d0 = p1[0];	/* Pull the stuff into registers	*/
-		d1 = p1[1];	/*  ... in bursts, if possible.		*/
+		d0 = p1[0];	/* Pull the stuff पूर्णांकo रेजिस्टरs	*/
+		d1 = p1[1];	/*  ... in bursts, अगर possible.		*/
 		d2 = p1[2];
 		d3 = p1[3];
 		d4 = p1[4];
@@ -664,47 +665,47 @@ xor_32regs_p_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 		p3 += 8;
 		p4 += 8;
 		p5 += 8;
-	} while (--lines > 0);
-	if (lines == 0)
-		goto once_more;
-}
+	पूर्ण जबतक (--lines > 0);
+	अगर (lines == 0)
+		जाओ once_more;
+पूर्ण
 
-static struct xor_block_template xor_block_8regs = {
+अटल काष्ठा xor_block_ढाँचा xor_block_8regs = अणु
 	.name = "8regs",
-	.do_2 = xor_8regs_2,
-	.do_3 = xor_8regs_3,
-	.do_4 = xor_8regs_4,
-	.do_5 = xor_8regs_5,
-};
+	.करो_2 = xor_8regs_2,
+	.करो_3 = xor_8regs_3,
+	.करो_4 = xor_8regs_4,
+	.करो_5 = xor_8regs_5,
+पूर्ण;
 
-static struct xor_block_template xor_block_32regs = {
+अटल काष्ठा xor_block_ढाँचा xor_block_32regs = अणु
 	.name = "32regs",
-	.do_2 = xor_32regs_2,
-	.do_3 = xor_32regs_3,
-	.do_4 = xor_32regs_4,
-	.do_5 = xor_32regs_5,
-};
+	.करो_2 = xor_32regs_2,
+	.करो_3 = xor_32regs_3,
+	.करो_4 = xor_32regs_4,
+	.करो_5 = xor_32regs_5,
+पूर्ण;
 
-static struct xor_block_template xor_block_8regs_p __maybe_unused = {
+अटल काष्ठा xor_block_ढाँचा xor_block_8regs_p __maybe_unused = अणु
 	.name = "8regs_prefetch",
-	.do_2 = xor_8regs_p_2,
-	.do_3 = xor_8regs_p_3,
-	.do_4 = xor_8regs_p_4,
-	.do_5 = xor_8regs_p_5,
-};
+	.करो_2 = xor_8regs_p_2,
+	.करो_3 = xor_8regs_p_3,
+	.करो_4 = xor_8regs_p_4,
+	.करो_5 = xor_8regs_p_5,
+पूर्ण;
 
-static struct xor_block_template xor_block_32regs_p __maybe_unused = {
+अटल काष्ठा xor_block_ढाँचा xor_block_32regs_p __maybe_unused = अणु
 	.name = "32regs_prefetch",
-	.do_2 = xor_32regs_p_2,
-	.do_3 = xor_32regs_p_3,
-	.do_4 = xor_32regs_p_4,
-	.do_5 = xor_32regs_p_5,
-};
+	.करो_2 = xor_32regs_p_2,
+	.करो_3 = xor_32regs_p_3,
+	.करो_4 = xor_32regs_p_4,
+	.करो_5 = xor_32regs_p_5,
+पूर्ण;
 
-#define XOR_TRY_TEMPLATES			\
-	do {					\
+#घोषणा XOR_TRY_TEMPLATES			\
+	करो अणु					\
 		xor_speed(&xor_block_8regs);	\
 		xor_speed(&xor_block_8regs_p);	\
 		xor_speed(&xor_block_32regs);	\
 		xor_speed(&xor_block_32regs_p);	\
-	} while (0)
+	पूर्ण जबतक (0)

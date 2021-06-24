@@ -1,28 +1,29 @@
-#ifndef _ASM_ARM64_VMALLOC_H
-#define _ASM_ARM64_VMALLOC_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_ARM64_VMALLOC_H
+#घोषणा _ASM_ARM64_VMALLOC_H
 
-#include <asm/page.h>
+#समावेश <यंत्र/page.h>
 
-#ifdef CONFIG_HAVE_ARCH_HUGE_VMAP
+#अगर_घोषित CONFIG_HAVE_ARCH_HUGE_VMAP
 
-#define arch_vmap_pud_supported arch_vmap_pud_supported
-static inline bool arch_vmap_pud_supported(pgprot_t prot)
-{
+#घोषणा arch_vmap_pud_supported arch_vmap_pud_supported
+अटल अंतरभूत bool arch_vmap_pud_supported(pgprot_t prot)
+अणु
 	/*
 	 * Only 4k granule supports level 1 block mappings.
-	 * SW table walks can't handle removal of intermediate entries.
+	 * SW table walks can't handle removal of पूर्णांकermediate entries.
 	 */
-	return IS_ENABLED(CONFIG_ARM64_4K_PAGES) &&
+	वापस IS_ENABLED(CONFIG_ARM64_4K_PAGES) &&
 	       !IS_ENABLED(CONFIG_PTDUMP_DEBUGFS);
-}
+पूर्ण
 
-#define arch_vmap_pmd_supported arch_vmap_pmd_supported
-static inline bool arch_vmap_pmd_supported(pgprot_t prot)
-{
+#घोषणा arch_vmap_pmd_supported arch_vmap_pmd_supported
+अटल अंतरभूत bool arch_vmap_pmd_supported(pgprot_t prot)
+अणु
 	/* See arch_vmap_pud_supported() */
-	return !IS_ENABLED(CONFIG_PTDUMP_DEBUGFS);
-}
+	वापस !IS_ENABLED(CONFIG_PTDUMP_DEBUGFS);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_ARM64_VMALLOC_H */
+#पूर्ण_अगर /* _ASM_ARM64_VMALLOC_H */

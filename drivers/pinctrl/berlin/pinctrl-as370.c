@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Synaptics AS370 pinctrl driver
  *
@@ -7,14 +8,14 @@
  * Author: Jisheng Zhang <jszhang@kernel.org>
  */
 
-#include <linux/init.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include "berlin.h"
+#समावेश "berlin.h"
 
-static const struct berlin_desc_group as370_soc_pinctrl_groups[] = {
+अटल स्थिर काष्ठा berlin_desc_group as370_soc_pinctrl_groups[] = अणु
 	BERLIN_PINCTRL_GROUP("I2S1_BCLKIO", 0x0, 0x3, 0x00,
 			BERLIN_PINCTRL_FUNCTION(0x0, "gpio"), /* GPIO0 */
 			BERLIN_PINCTRL_FUNCTION(0x1, "i2s1"), /* BCLKIO */
@@ -313,56 +314,56 @@ static const struct berlin_desc_group as370_soc_pinctrl_groups[] = {
 			BERLIN_PINCTRL_FUNCTION(0x0, "gpio"), /* GPIO63 */
 			BERLIN_PINCTRL_FUNCTION(0x1, "sd0"), /* WP */
 			BERLIN_PINCTRL_FUNCTION(0x3, "pwm")), /* PWM3 */
-};
+पूर्ण;
 
-static const struct berlin_pinctrl_desc as370_soc_pinctrl_data = {
+अटल स्थिर काष्ठा berlin_pinctrl_desc as370_soc_pinctrl_data = अणु
 	.groups = as370_soc_pinctrl_groups,
 	.ngroups = ARRAY_SIZE(as370_soc_pinctrl_groups),
-};
+पूर्ण;
 
-static const struct of_device_id as370_pinctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id as370_pinctrl_match[] = अणु
+	अणु
 		.compatible = "syna,as370-soc-pinctrl",
 		.data = &as370_soc_pinctrl_data,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int as370_pinctrl_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match =
+अटल पूर्णांक as370_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match =
 		of_match_device(as370_pinctrl_match, &pdev->dev);
-	struct regmap_config *rmconfig;
-	struct regmap *regmap;
-	struct resource *res;
-	void __iomem *base;
+	काष्ठा regmap_config *rmconfig;
+	काष्ठा regmap *regmap;
+	काष्ठा resource *res;
+	व्योम __iomem *base;
 
-	rmconfig = devm_kzalloc(&pdev->dev, sizeof(*rmconfig), GFP_KERNEL);
-	if (!rmconfig)
-		return -ENOMEM;
+	rmconfig = devm_kzalloc(&pdev->dev, माप(*rmconfig), GFP_KERNEL);
+	अगर (!rmconfig)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	rmconfig->reg_bits = 32,
 	rmconfig->val_bits = 32,
 	rmconfig->reg_stride = 4,
-	rmconfig->max_register = resource_size(res);
+	rmconfig->max_रेजिस्टर = resource_size(res);
 
 	regmap = devm_regmap_init_mmio(&pdev->dev, base, rmconfig);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	return berlin_pinctrl_probe_regmap(pdev, match->data, regmap);
-}
+	वापस berlin_pinctrl_probe_regmap(pdev, match->data, regmap);
+पूर्ण
 
-static struct platform_driver as370_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver as370_pinctrl_driver = अणु
 	.probe	= as370_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name = "as370-pinctrl",
 		.of_match_table = as370_pinctrl_match,
-	},
-};
-builtin_platform_driver(as370_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(as370_pinctrl_driver);

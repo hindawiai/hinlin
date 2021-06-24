@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <linux/reboot.h>
-#include <linux/pm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/pm.h>
 
-static void __iomem *msm_ps_hold;
-static int deassert_pshold(struct notifier_block *nb, unsigned long action,
-			   void *data)
-{
-	writel(0, msm_ps_hold);
+अटल व्योम __iomem *msm_ps_hold;
+अटल पूर्णांक deनिश्चित_pshold(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
+			   व्योम *data)
+अणु
+	ग_लिखोl(0, msm_ps_hold);
 	mdelay(10000);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block restart_nb = {
-	.notifier_call = deassert_pshold,
+अटल काष्ठा notअगरier_block restart_nb = अणु
+	.notअगरier_call = deनिश्चित_pshold,
 	.priority = 128,
-};
+पूर्ण;
 
-static void do_msm_poweroff(void)
-{
-	deassert_pshold(&restart_nb, 0, NULL);
-}
+अटल व्योम करो_msm_घातeroff(व्योम)
+अणु
+	deनिश्चित_pshold(&restart_nb, 0, शून्य);
+पूर्ण
 
-static int msm_restart_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *mem;
+अटल पूर्णांक msm_restart_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *mem;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	msm_ps_hold = devm_ioremap_resource(dev, mem);
-	if (IS_ERR(msm_ps_hold))
-		return PTR_ERR(msm_ps_hold);
+	अगर (IS_ERR(msm_ps_hold))
+		वापस PTR_ERR(msm_ps_hold);
 
-	register_restart_handler(&restart_nb);
+	रेजिस्टर_restart_handler(&restart_nb);
 
-	pm_power_off = do_msm_poweroff;
+	pm_घातer_off = करो_msm_घातeroff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id of_msm_restart_match[] = {
-	{ .compatible = "qcom,pshold", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_msm_restart_match[] = अणु
+	अणु .compatible = "qcom,pshold", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_msm_restart_match);
 
-static struct platform_driver msm_restart_driver = {
+अटल काष्ठा platक्रमm_driver msm_restart_driver = अणु
 	.probe = msm_restart_probe,
-	.driver = {
+	.driver = अणु
 		.name = "msm-restart",
 		.of_match_table = of_match_ptr(of_msm_restart_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init msm_restart_init(void)
-{
-	return platform_driver_register(&msm_restart_driver);
-}
+अटल पूर्णांक __init msm_restart_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&msm_restart_driver);
+पूर्ण
 device_initcall(msm_restart_init);

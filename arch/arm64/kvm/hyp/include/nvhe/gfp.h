@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef __KVM_HYP_GFP_H
-#define __KVM_HYP_GFP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित __KVM_HYP_GFP_H
+#घोषणा __KVM_HYP_GFP_H
 
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
-#include <nvhe/memory.h>
-#include <nvhe/spinlock.h>
+#समावेश <nvhe/memory.h>
+#समावेश <nvhe/spinlock.h>
 
-#define HYP_NO_ORDER	UINT_MAX
+#घोषणा HYP_NO_ORDER	अच_पूर्णांक_उच्च
 
-struct hyp_pool {
+काष्ठा hyp_pool अणु
 	/*
 	 * Spinlock protecting concurrent changes to the memory pool as well as
-	 * the struct hyp_page of the pool's pages until we have a proper atomic
+	 * the काष्ठा hyp_page of the pool's pages until we have a proper atomic
 	 * API at EL2.
 	 */
 	hyp_spinlock_t lock;
-	struct list_head free_area[MAX_ORDER];
+	काष्ठा list_head मुक्त_area[MAX_ORDER];
 	phys_addr_t range_start;
 	phys_addr_t range_end;
-	unsigned int max_order;
-};
+	अचिन्हित पूर्णांक max_order;
+पूर्ण;
 
-static inline void hyp_page_ref_inc(struct hyp_page *p)
-{
-	struct hyp_pool *pool = hyp_page_to_pool(p);
+अटल अंतरभूत व्योम hyp_page_ref_inc(काष्ठा hyp_page *p)
+अणु
+	काष्ठा hyp_pool *pool = hyp_page_to_pool(p);
 
 	hyp_spin_lock(&pool->lock);
 	p->refcount++;
 	hyp_spin_unlock(&pool->lock);
-}
+पूर्ण
 
-static inline int hyp_page_ref_dec_and_test(struct hyp_page *p)
-{
-	struct hyp_pool *pool = hyp_page_to_pool(p);
-	int ret;
+अटल अंतरभूत पूर्णांक hyp_page_ref_dec_and_test(काष्ठा hyp_page *p)
+अणु
+	काष्ठा hyp_pool *pool = hyp_page_to_pool(p);
+	पूर्णांक ret;
 
 	hyp_spin_lock(&pool->lock);
 	p->refcount--;
 	ret = (p->refcount == 0);
 	hyp_spin_unlock(&pool->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void hyp_set_page_refcounted(struct hyp_page *p)
-{
-	struct hyp_pool *pool = hyp_page_to_pool(p);
+अटल अंतरभूत व्योम hyp_set_page_refcounted(काष्ठा hyp_page *p)
+अणु
+	काष्ठा hyp_pool *pool = hyp_page_to_pool(p);
 
 	hyp_spin_lock(&pool->lock);
-	if (p->refcount) {
+	अगर (p->refcount) अणु
 		hyp_spin_unlock(&pool->lock);
 		BUG();
-	}
+	पूर्ण
 	p->refcount = 1;
 	hyp_spin_unlock(&pool->lock);
-}
+पूर्ण
 
 /* Allocation */
-void *hyp_alloc_pages(struct hyp_pool *pool, unsigned int order);
-void hyp_get_page(void *addr);
-void hyp_put_page(void *addr);
+व्योम *hyp_alloc_pages(काष्ठा hyp_pool *pool, अचिन्हित पूर्णांक order);
+व्योम hyp_get_page(व्योम *addr);
+व्योम hyp_put_page(व्योम *addr);
 
-/* Used pages cannot be freed */
-int hyp_pool_init(struct hyp_pool *pool, u64 pfn, unsigned int nr_pages,
-		  unsigned int reserved_pages);
-#endif /* __KVM_HYP_GFP_H */
+/* Used pages cannot be मुक्तd */
+पूर्णांक hyp_pool_init(काष्ठा hyp_pool *pool, u64 pfn, अचिन्हित पूर्णांक nr_pages,
+		  अचिन्हित पूर्णांक reserved_pages);
+#पूर्ण_अगर /* __KVM_HYP_GFP_H */

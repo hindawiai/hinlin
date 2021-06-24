@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * Copyright 2016-2020 HabanaLabs, Ltd.
+ * Copyright 2016-2020 HabanaLअसल, Ltd.
  * All Rights Reserved.
  *
  */
 
-#ifndef GAUDI_CORESIGHT_H
-#define GAUDI_CORESIGHT_H
+#अगर_अघोषित GAUDI_CORESIGHT_H
+#घोषणा GAUDI_CORESIGHT_H
 
-enum gaudi_debug_stm_regs_index {
+क्रमागत gaudi_debug_sपंचांग_regs_index अणु
 	GAUDI_STM_FIRST = 0,
 	GAUDI_STM_MME0_ACC = GAUDI_STM_FIRST,
 	GAUDI_STM_MME0_SBAB,
@@ -57,9 +58,9 @@ enum gaudi_debug_stm_regs_index {
 	GAUDI_STM_TPC6_EML,
 	GAUDI_STM_TPC7_EML,
 	GAUDI_STM_LAST = GAUDI_STM_TPC7_EML
-};
+पूर्ण;
 
-enum gaudi_debug_etf_regs_index {
+क्रमागत gaudi_debug_etf_regs_index अणु
 	GAUDI_ETF_FIRST = 0,
 	GAUDI_ETF_MME0_ACC = GAUDI_ETF_FIRST,
 	GAUDI_ETF_MME0_SBAB,
@@ -110,9 +111,9 @@ enum gaudi_debug_etf_regs_index {
 	GAUDI_ETF_TPC6_EML,
 	GAUDI_ETF_TPC7_EML,
 	GAUDI_ETF_LAST = GAUDI_ETF_TPC7_EML
-};
+पूर्ण;
 
-enum gaudi_debug_funnel_regs_index {
+क्रमागत gaudi_debug_funnel_regs_index अणु
 	GAUDI_FUNNEL_FIRST = 0,
 	GAUDI_FUNNEL_MME0_ACC = GAUDI_FUNNEL_FIRST,
 	GAUDI_FUNNEL_MME1_ACC,
@@ -191,9 +192,9 @@ enum gaudi_debug_funnel_regs_index {
 	GAUDI_FUNNEL_TPC6_EML,
 	GAUDI_FUNNEL_TPC7_EML,
 	GAUDI_FUNNEL_LAST = GAUDI_FUNNEL_TPC7_EML
-};
+पूर्ण;
 
-enum gaudi_debug_bmon_regs_index {
+क्रमागत gaudi_debug_bmon_regs_index अणु
 	GAUDI_BMON_FIRST = 0,
 	GAUDI_BMON_MME0_ACC_0 = GAUDI_BMON_FIRST,
 	GAUDI_BMON_MME0_SBAB_0,
@@ -317,9 +318,9 @@ enum gaudi_debug_bmon_regs_index {
 	GAUDI_BMON_TPC7_EML_2,
 	GAUDI_BMON_TPC7_EML_3,
 	GAUDI_BMON_LAST = GAUDI_BMON_TPC7_EML_3
-};
+पूर्ण;
 
-enum gaudi_debug_spmu_regs_index {
+क्रमागत gaudi_debug_spmu_regs_index अणु
 	GAUDI_SPMU_FIRST = 0,
 	GAUDI_SPMU_MME0_ACC = GAUDI_SPMU_FIRST,
 	GAUDI_SPMU_MME0_SBAB,
@@ -362,6 +363,6 @@ enum gaudi_debug_spmu_regs_index {
 	GAUDI_SPMU_TPC6_EML,
 	GAUDI_SPMU_TPC7_EML,
 	GAUDI_SPMU_LAST = GAUDI_SPMU_TPC7_EML
-};
+पूर्ण;
 
-#endif /* GAUDI_CORESIGHT_H */
+#पूर्ण_अगर /* GAUDI_CORESIGHT_H */

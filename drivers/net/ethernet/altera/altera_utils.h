@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Altera TSE SGDMA and MSGDMA Linux driver
  * Copyright (C) 2014 Altera Corporation. All rights reserved
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#ifndef __ALTERA_UTILS_H__
-#define __ALTERA_UTILS_H__
+#अगर_अघोषित __ALTERA_UTILS_H__
+#घोषणा __ALTERA_UTILS_H__
 
-void tse_set_bit(void __iomem *ioaddr, size_t offs, u32 bit_mask);
-void tse_clear_bit(void __iomem *ioaddr, size_t offs, u32 bit_mask);
-int tse_bit_is_set(void __iomem *ioaddr, size_t offs, u32 bit_mask);
-int tse_bit_is_clear(void __iomem *ioaddr, size_t offs, u32 bit_mask);
+व्योम tse_set_bit(व्योम __iomem *ioaddr, माप_प्रकार offs, u32 bit_mask);
+व्योम tse_clear_bit(व्योम __iomem *ioaddr, माप_प्रकार offs, u32 bit_mask);
+पूर्णांक tse_bit_is_set(व्योम __iomem *ioaddr, माप_प्रकार offs, u32 bit_mask);
+पूर्णांक tse_bit_is_clear(व्योम __iomem *ioaddr, माप_प्रकार offs, u32 bit_mask);
 
-#endif /* __ALTERA_UTILS_H__*/
+#पूर्ण_अगर /* __ALTERA_UTILS_H__*/

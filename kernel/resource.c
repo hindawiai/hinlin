@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *	linux/kernel/resource.c
  *
@@ -8,313 +9,313 @@
  * Arbitrary resource management.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/export.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/fs.h>
-#include <linux/proc_fs.h>
-#include <linux/pseudo_fs.h>
-#include <linux/sched.h>
-#include <linux/seq_file.h>
-#include <linux/device.h>
-#include <linux/pfn.h>
-#include <linux/mm.h>
-#include <linux/mount.h>
-#include <linux/resource_ext.h>
-#include <uapi/linux/magic.h>
-#include <asm/io.h>
+#समावेश <linux/export.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/pseuकरो_fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/device.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/resource_ext.h>
+#समावेश <uapi/linux/magic.h>
+#समावेश <यंत्र/पन.स>
 
 
-struct resource ioport_resource = {
+काष्ठा resource ioport_resource = अणु
 	.name	= "PCI IO",
 	.start	= 0,
 	.end	= IO_SPACE_LIMIT,
 	.flags	= IORESOURCE_IO,
-};
+पूर्ण;
 EXPORT_SYMBOL(ioport_resource);
 
-struct resource iomem_resource = {
+काष्ठा resource iomem_resource = अणु
 	.name	= "PCI mem",
 	.start	= 0,
 	.end	= -1,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 EXPORT_SYMBOL(iomem_resource);
 
-/* constraints to be met while allocating resources */
-struct resource_constraint {
-	resource_size_t min, max, align;
-	resource_size_t (*alignf)(void *, const struct resource *,
-			resource_size_t, resource_size_t);
-	void *alignf_data;
-};
+/* स्थिरraपूर्णांकs to be met जबतक allocating resources */
+काष्ठा resource_स्थिरraपूर्णांक अणु
+	resource_माप_प्रकार min, max, align;
+	resource_माप_प्रकार (*alignf)(व्योम *, स्थिर काष्ठा resource *,
+			resource_माप_प्रकार, resource_माप_प्रकार);
+	व्योम *alignf_data;
+पूर्ण;
 
-static DEFINE_RWLOCK(resource_lock);
+अटल DEFINE_RWLOCK(resource_lock);
 
 /*
- * For memory hotplug, there is no way to free resource entries allocated
- * by boot mem after the system is up. So for reusing the resource entry
+ * For memory hotplug, there is no way to मुक्त resource entries allocated
+ * by boot mem after the प्रणाली is up. So क्रम reusing the resource entry
  * we need to remember the resource.
  */
-static struct resource *bootmem_resource_free;
-static DEFINE_SPINLOCK(bootmem_resource_lock);
+अटल काष्ठा resource *booपंचांगem_resource_मुक्त;
+अटल DEFINE_SPINLOCK(booपंचांगem_resource_lock);
 
-static struct resource *next_resource(struct resource *p)
-{
-	if (p->child)
-		return p->child;
-	while (!p->sibling && p->parent)
+अटल काष्ठा resource *next_resource(काष्ठा resource *p)
+अणु
+	अगर (p->child)
+		वापस p->child;
+	जबतक (!p->sibling && p->parent)
 		p = p->parent;
-	return p->sibling;
-}
+	वापस p->sibling;
+पूर्ण
 
-static void *r_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct resource *p = v;
+अटल व्योम *r_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा resource *p = v;
 	(*pos)++;
-	return (void *)next_resource(p);
-}
+	वापस (व्योम *)next_resource(p);
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 
-enum { MAX_IORES_LEVEL = 5 };
+क्रमागत अणु MAX_IORES_LEVEL = 5 पूर्ण;
 
-static void *r_start(struct seq_file *m, loff_t *pos)
+अटल व्योम *r_start(काष्ठा seq_file *m, loff_t *pos)
 	__acquires(resource_lock)
-{
-	struct resource *p = PDE_DATA(file_inode(m->file));
+अणु
+	काष्ठा resource *p = PDE_DATA(file_inode(m->file));
 	loff_t l = 0;
-	read_lock(&resource_lock);
-	for (p = p->child; p && l < *pos; p = r_next(m, p, &l))
+	पढ़ो_lock(&resource_lock);
+	क्रम (p = p->child; p && l < *pos; p = r_next(m, p, &l))
 		;
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void r_stop(struct seq_file *m, void *v)
+अटल व्योम r_stop(काष्ठा seq_file *m, व्योम *v)
 	__releases(resource_lock)
-{
-	read_unlock(&resource_lock);
-}
+अणु
+	पढ़ो_unlock(&resource_lock);
+पूर्ण
 
-static int r_show(struct seq_file *m, void *v)
-{
-	struct resource *root = PDE_DATA(file_inode(m->file));
-	struct resource *r = v, *p;
-	unsigned long long start, end;
-	int width = root->end < 0x10000 ? 4 : 8;
-	int depth;
+अटल पूर्णांक r_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा resource *root = PDE_DATA(file_inode(m->file));
+	काष्ठा resource *r = v, *p;
+	अचिन्हित दीर्घ दीर्घ start, end;
+	पूर्णांक width = root->end < 0x10000 ? 4 : 8;
+	पूर्णांक depth;
 
-	for (depth = 0, p = r; depth < MAX_IORES_LEVEL; depth++, p = p->parent)
-		if (p->parent == root)
-			break;
+	क्रम (depth = 0, p = r; depth < MAX_IORES_LEVEL; depth++, p = p->parent)
+		अगर (p->parent == root)
+			अवरोध;
 
-	if (file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN)) {
+	अगर (file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN)) अणु
 		start = r->start;
 		end = r->end;
-	} else {
+	पूर्ण अन्यथा अणु
 		start = end = 0;
-	}
+	पूर्ण
 
-	seq_printf(m, "%*s%0*llx-%0*llx : %s\n",
+	seq_म_लिखो(m, "%*s%0*llx-%0*llx : %s\n",
 			depth * 2, "",
 			width, start,
 			width, end,
 			r->name ? r->name : "<BAD>");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations resource_op = {
+अटल स्थिर काष्ठा seq_operations resource_op = अणु
 	.start	= r_start,
 	.next	= r_next,
 	.stop	= r_stop,
 	.show	= r_show,
-};
+पूर्ण;
 
-static int __init ioresources_init(void)
-{
-	proc_create_seq_data("ioports", 0, NULL, &resource_op,
+अटल पूर्णांक __init ioresources_init(व्योम)
+अणु
+	proc_create_seq_data("ioports", 0, शून्य, &resource_op,
 			&ioport_resource);
-	proc_create_seq_data("iomem", 0, NULL, &resource_op, &iomem_resource);
-	return 0;
-}
+	proc_create_seq_data("iomem", 0, शून्य, &resource_op, &iomem_resource);
+	वापस 0;
+पूर्ण
 __initcall(ioresources_init);
 
-#endif /* CONFIG_PROC_FS */
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-static void free_resource(struct resource *res)
-{
-	if (!res)
-		return;
+अटल व्योम मुक्त_resource(काष्ठा resource *res)
+अणु
+	अगर (!res)
+		वापस;
 
-	if (!PageSlab(virt_to_head_page(res))) {
-		spin_lock(&bootmem_resource_lock);
-		res->sibling = bootmem_resource_free;
-		bootmem_resource_free = res;
-		spin_unlock(&bootmem_resource_lock);
-	} else {
-		kfree(res);
-	}
-}
+	अगर (!PageSlab(virt_to_head_page(res))) अणु
+		spin_lock(&booपंचांगem_resource_lock);
+		res->sibling = booपंचांगem_resource_मुक्त;
+		booपंचांगem_resource_मुक्त = res;
+		spin_unlock(&booपंचांगem_resource_lock);
+	पूर्ण अन्यथा अणु
+		kमुक्त(res);
+	पूर्ण
+पूर्ण
 
-static struct resource *alloc_resource(gfp_t flags)
-{
-	struct resource *res = NULL;
+अटल काष्ठा resource *alloc_resource(gfp_t flags)
+अणु
+	काष्ठा resource *res = शून्य;
 
-	spin_lock(&bootmem_resource_lock);
-	if (bootmem_resource_free) {
-		res = bootmem_resource_free;
-		bootmem_resource_free = res->sibling;
-	}
-	spin_unlock(&bootmem_resource_lock);
+	spin_lock(&booपंचांगem_resource_lock);
+	अगर (booपंचांगem_resource_मुक्त) अणु
+		res = booपंचांगem_resource_मुक्त;
+		booपंचांगem_resource_मुक्त = res->sibling;
+	पूर्ण
+	spin_unlock(&booपंचांगem_resource_lock);
 
-	if (res)
-		memset(res, 0, sizeof(struct resource));
-	else
-		res = kzalloc(sizeof(struct resource), flags);
+	अगर (res)
+		स_रखो(res, 0, माप(काष्ठा resource));
+	अन्यथा
+		res = kzalloc(माप(काष्ठा resource), flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-/* Return the conflict entry if you can't request it */
-static struct resource * __request_resource(struct resource *root, struct resource *new)
-{
-	resource_size_t start = new->start;
-	resource_size_t end = new->end;
-	struct resource *tmp, **p;
+/* Return the conflict entry अगर you can't request it */
+अटल काष्ठा resource * __request_resource(काष्ठा resource *root, काष्ठा resource *new)
+अणु
+	resource_माप_प्रकार start = new->start;
+	resource_माप_प्रकार end = new->end;
+	काष्ठा resource *पंचांगp, **p;
 
-	if (end < start)
-		return root;
-	if (start < root->start)
-		return root;
-	if (end > root->end)
-		return root;
+	अगर (end < start)
+		वापस root;
+	अगर (start < root->start)
+		वापस root;
+	अगर (end > root->end)
+		वापस root;
 	p = &root->child;
-	for (;;) {
-		tmp = *p;
-		if (!tmp || tmp->start > end) {
-			new->sibling = tmp;
+	क्रम (;;) अणु
+		पंचांगp = *p;
+		अगर (!पंचांगp || पंचांगp->start > end) अणु
+			new->sibling = पंचांगp;
 			*p = new;
 			new->parent = root;
-			return NULL;
-		}
-		p = &tmp->sibling;
-		if (tmp->end < start)
-			continue;
-		return tmp;
-	}
-}
+			वापस शून्य;
+		पूर्ण
+		p = &पंचांगp->sibling;
+		अगर (पंचांगp->end < start)
+			जारी;
+		वापस पंचांगp;
+	पूर्ण
+पूर्ण
 
-static int __release_resource(struct resource *old, bool release_child)
-{
-	struct resource *tmp, **p, *chd;
+अटल पूर्णांक __release_resource(काष्ठा resource *old, bool release_child)
+अणु
+	काष्ठा resource *पंचांगp, **p, *chd;
 
 	p = &old->parent->child;
-	for (;;) {
-		tmp = *p;
-		if (!tmp)
-			break;
-		if (tmp == old) {
-			if (release_child || !(tmp->child)) {
-				*p = tmp->sibling;
-			} else {
-				for (chd = tmp->child;; chd = chd->sibling) {
-					chd->parent = tmp->parent;
-					if (!(chd->sibling))
-						break;
-				}
-				*p = tmp->child;
-				chd->sibling = tmp->sibling;
-			}
-			old->parent = NULL;
-			return 0;
-		}
-		p = &tmp->sibling;
-	}
-	return -EINVAL;
-}
+	क्रम (;;) अणु
+		पंचांगp = *p;
+		अगर (!पंचांगp)
+			अवरोध;
+		अगर (पंचांगp == old) अणु
+			अगर (release_child || !(पंचांगp->child)) अणु
+				*p = पंचांगp->sibling;
+			पूर्ण अन्यथा अणु
+				क्रम (chd = पंचांगp->child;; chd = chd->sibling) अणु
+					chd->parent = पंचांगp->parent;
+					अगर (!(chd->sibling))
+						अवरोध;
+				पूर्ण
+				*p = पंचांगp->child;
+				chd->sibling = पंचांगp->sibling;
+			पूर्ण
+			old->parent = शून्य;
+			वापस 0;
+		पूर्ण
+		p = &पंचांगp->sibling;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void __release_child_resources(struct resource *r)
-{
-	struct resource *tmp, *p;
-	resource_size_t size;
+अटल व्योम __release_child_resources(काष्ठा resource *r)
+अणु
+	काष्ठा resource *पंचांगp, *p;
+	resource_माप_प्रकार size;
 
 	p = r->child;
-	r->child = NULL;
-	while (p) {
-		tmp = p;
+	r->child = शून्य;
+	जबतक (p) अणु
+		पंचांगp = p;
 		p = p->sibling;
 
-		tmp->parent = NULL;
-		tmp->sibling = NULL;
-		__release_child_resources(tmp);
+		पंचांगp->parent = शून्य;
+		पंचांगp->sibling = शून्य;
+		__release_child_resources(पंचांगp);
 
-		printk(KERN_DEBUG "release child resource %pR\n", tmp);
+		prपूर्णांकk(KERN_DEBUG "release child resource %pR\n", पंचांगp);
 		/* need to restore size, and keep flags */
-		size = resource_size(tmp);
-		tmp->start = 0;
-		tmp->end = size - 1;
-	}
-}
+		size = resource_size(पंचांगp);
+		पंचांगp->start = 0;
+		पंचांगp->end = size - 1;
+	पूर्ण
+पूर्ण
 
-void release_child_resources(struct resource *r)
-{
-	write_lock(&resource_lock);
+व्योम release_child_resources(काष्ठा resource *r)
+अणु
+	ग_लिखो_lock(&resource_lock);
 	__release_child_resources(r);
-	write_unlock(&resource_lock);
-}
+	ग_लिखो_unlock(&resource_lock);
+पूर्ण
 
 /**
  * request_resource_conflict - request and reserve an I/O or memory resource
  * @root: root resource descriptor
  * @new: resource descriptor desired by caller
  *
- * Returns 0 for success, conflict resource on error.
+ * Returns 0 क्रम success, conflict resource on error.
  */
-struct resource *request_resource_conflict(struct resource *root, struct resource *new)
-{
-	struct resource *conflict;
+काष्ठा resource *request_resource_conflict(काष्ठा resource *root, काष्ठा resource *new)
+अणु
+	काष्ठा resource *conflict;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 	conflict = __request_resource(root, new);
-	write_unlock(&resource_lock);
-	return conflict;
-}
+	ग_लिखो_unlock(&resource_lock);
+	वापस conflict;
+पूर्ण
 
 /**
  * request_resource - request and reserve an I/O or memory resource
  * @root: root resource descriptor
  * @new: resource descriptor desired by caller
  *
- * Returns 0 for success, negative error code on error.
+ * Returns 0 क्रम success, negative error code on error.
  */
-int request_resource(struct resource *root, struct resource *new)
-{
-	struct resource *conflict;
+पूर्णांक request_resource(काष्ठा resource *root, काष्ठा resource *new)
+अणु
+	काष्ठा resource *conflict;
 
 	conflict = request_resource_conflict(root, new);
-	return conflict ? -EBUSY : 0;
-}
+	वापस conflict ? -EBUSY : 0;
+पूर्ण
 
 EXPORT_SYMBOL(request_resource);
 
 /**
  * release_resource - release a previously reserved resource
- * @old: resource pointer
+ * @old: resource poपूर्णांकer
  */
-int release_resource(struct resource *old)
-{
-	int retval;
+पूर्णांक release_resource(काष्ठा resource *old)
+अणु
+	पूर्णांक retval;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 	retval = __release_resource(old, true);
-	write_unlock(&resource_lock);
-	return retval;
-}
+	ग_लिखो_unlock(&resource_lock);
+	वापस retval;
+पूर्ण
 
 EXPORT_SYMBOL(release_resource);
 
@@ -322,87 +323,87 @@ EXPORT_SYMBOL(release_resource);
  * find_next_iomem_res - Finds the lowest iomem resource that covers part of
  *			 [@start..@end].
  *
- * If a resource is found, returns 0 and @*res is overwritten with the part
- * of the resource that's within [@start..@end]; if none is found, returns
- * -ENODEV.  Returns -EINVAL for invalid parameters.
+ * If a resource is found, वापसs 0 and @*res is overwritten with the part
+ * of the resource that's within [@start..@end]; अगर none is found, वापसs
+ * -ENODEV.  Returns -EINVAL क्रम invalid parameters.
  *
- * @start:	start address of the resource searched for
+ * @start:	start address of the resource searched क्रम
  * @end:	end address of same resource
  * @flags:	flags which the resource must have
  * @desc:	descriptor the resource must have
- * @res:	return ptr, if resource found
+ * @res:	वापस ptr, अगर resource found
  *
- * The caller must specify @start, @end, @flags, and @desc
+ * The caller must specअगरy @start, @end, @flags, and @desc
  * (which may be IORES_DESC_NONE).
  */
-static int find_next_iomem_res(resource_size_t start, resource_size_t end,
-			       unsigned long flags, unsigned long desc,
-			       struct resource *res)
-{
-	struct resource *p;
+अटल पूर्णांक find_next_iomem_res(resource_माप_प्रकार start, resource_माप_प्रकार end,
+			       अचिन्हित दीर्घ flags, अचिन्हित दीर्घ desc,
+			       काष्ठा resource *res)
+अणु
+	काष्ठा resource *p;
 
-	if (!res)
-		return -EINVAL;
+	अगर (!res)
+		वापस -EINVAL;
 
-	if (start >= end)
-		return -EINVAL;
+	अगर (start >= end)
+		वापस -EINVAL;
 
-	read_lock(&resource_lock);
+	पढ़ो_lock(&resource_lock);
 
-	for (p = iomem_resource.child; p; p = next_resource(p)) {
-		/* If we passed the resource we are looking for, stop */
-		if (p->start > end) {
-			p = NULL;
-			break;
-		}
+	क्रम (p = iomem_resource.child; p; p = next_resource(p)) अणु
+		/* If we passed the resource we are looking क्रम, stop */
+		अगर (p->start > end) अणु
+			p = शून्य;
+			अवरोध;
+		पूर्ण
 
-		/* Skip until we find a range that matches what we look for */
-		if (p->end < start)
-			continue;
+		/* Skip until we find a range that matches what we look क्रम */
+		अगर (p->end < start)
+			जारी;
 
-		if ((p->flags & flags) != flags)
-			continue;
-		if ((desc != IORES_DESC_NONE) && (desc != p->desc))
-			continue;
+		अगर ((p->flags & flags) != flags)
+			जारी;
+		अगर ((desc != IORES_DESC_NONE) && (desc != p->desc))
+			जारी;
 
-		/* Found a match, break */
-		break;
-	}
+		/* Found a match, अवरोध */
+		अवरोध;
+	पूर्ण
 
-	if (p) {
+	अगर (p) अणु
 		/* copy data */
-		*res = (struct resource) {
+		*res = (काष्ठा resource) अणु
 			.start = max(start, p->start),
 			.end = min(end, p->end),
 			.flags = p->flags,
 			.desc = p->desc,
 			.parent = p->parent,
-		};
-	}
+		पूर्ण;
+	पूर्ण
 
-	read_unlock(&resource_lock);
-	return p ? 0 : -ENODEV;
-}
+	पढ़ो_unlock(&resource_lock);
+	वापस p ? 0 : -ENODEV;
+पूर्ण
 
-static int __walk_iomem_res_desc(resource_size_t start, resource_size_t end,
-				 unsigned long flags, unsigned long desc,
-				 void *arg,
-				 int (*func)(struct resource *, void *))
-{
-	struct resource res;
-	int ret = -EINVAL;
+अटल पूर्णांक __walk_iomem_res_desc(resource_माप_प्रकार start, resource_माप_प्रकार end,
+				 अचिन्हित दीर्घ flags, अचिन्हित दीर्घ desc,
+				 व्योम *arg,
+				 पूर्णांक (*func)(काष्ठा resource *, व्योम *))
+अणु
+	काष्ठा resource res;
+	पूर्णांक ret = -EINVAL;
 
-	while (start < end &&
-	       !find_next_iomem_res(start, end, flags, desc, &res)) {
+	जबतक (start < end &&
+	       !find_next_iomem_res(start, end, flags, desc, &res)) अणु
 		ret = (*func)(&res, arg);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		start = res.end + 1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * walk_iomem_res_desc - Walks through iomem resources and calls func()
@@ -412,8 +413,8 @@ static int __walk_iomem_res_desc(resource_size_t start, resource_size_t end,
  * @flags: I/O resource flags
  * @start: start addr
  * @end: end addr
- * @arg: function argument for the callback @func
- * @func: callback function that is called for each qualifying resource area
+ * @arg: function argument क्रम the callback @func
+ * @func: callback function that is called क्रम each qualअगरying resource area
  *
  * All the memory ranges which overlap start,end and also match flags and
  * desc are valid candidates.
@@ -421,334 +422,334 @@ static int __walk_iomem_res_desc(resource_size_t start, resource_size_t end,
  * NOTE: For a new descriptor search, define a new IORES_DESC in
  * <linux/ioport.h> and set it in 'desc' of a target resource entry.
  */
-int walk_iomem_res_desc(unsigned long desc, unsigned long flags, u64 start,
-		u64 end, void *arg, int (*func)(struct resource *, void *))
-{
-	return __walk_iomem_res_desc(start, end, flags, desc, arg, func);
-}
+पूर्णांक walk_iomem_res_desc(अचिन्हित दीर्घ desc, अचिन्हित दीर्घ flags, u64 start,
+		u64 end, व्योम *arg, पूर्णांक (*func)(काष्ठा resource *, व्योम *))
+अणु
+	वापस __walk_iomem_res_desc(start, end, flags, desc, arg, func);
+पूर्ण
 EXPORT_SYMBOL_GPL(walk_iomem_res_desc);
 
 /*
  * This function calls the @func callback against all memory ranges of type
  * System RAM which are marked as IORESOURCE_SYSTEM_RAM and IORESOUCE_BUSY.
- * Now, this function is only for System RAM, it deals with full ranges and
+ * Now, this function is only क्रम System RAM, it deals with full ranges and
  * not PFNs. If resources are not PFN-aligned, dealing with PFNs can truncate
  * ranges.
  */
-int walk_system_ram_res(u64 start, u64 end, void *arg,
-			int (*func)(struct resource *, void *))
-{
-	unsigned long flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
+पूर्णांक walk_प्रणाली_ram_res(u64 start, u64 end, व्योम *arg,
+			पूर्णांक (*func)(काष्ठा resource *, व्योम *))
+अणु
+	अचिन्हित दीर्घ flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
 
-	return __walk_iomem_res_desc(start, end, flags, IORES_DESC_NONE, arg,
+	वापस __walk_iomem_res_desc(start, end, flags, IORES_DESC_NONE, arg,
 				     func);
-}
+पूर्ण
 
 /*
  * This function calls the @func callback against all memory ranges, which
  * are ranges marked as IORESOURCE_MEM and IORESOUCE_BUSY.
  */
-int walk_mem_res(u64 start, u64 end, void *arg,
-		 int (*func)(struct resource *, void *))
-{
-	unsigned long flags = IORESOURCE_MEM | IORESOURCE_BUSY;
+पूर्णांक walk_mem_res(u64 start, u64 end, व्योम *arg,
+		 पूर्णांक (*func)(काष्ठा resource *, व्योम *))
+अणु
+	अचिन्हित दीर्घ flags = IORESOURCE_MEM | IORESOURCE_BUSY;
 
-	return __walk_iomem_res_desc(start, end, flags, IORES_DESC_NONE, arg,
+	वापस __walk_iomem_res_desc(start, end, flags, IORES_DESC_NONE, arg,
 				     func);
-}
+पूर्ण
 
 /*
  * This function calls the @func callback against all memory ranges of type
  * System RAM which are marked as IORESOURCE_SYSTEM_RAM and IORESOUCE_BUSY.
- * It is to be used only for System RAM.
+ * It is to be used only क्रम System RAM.
  */
-int walk_system_ram_range(unsigned long start_pfn, unsigned long nr_pages,
-			  void *arg, int (*func)(unsigned long, unsigned long, void *))
-{
-	resource_size_t start, end;
-	unsigned long flags;
-	struct resource res;
-	unsigned long pfn, end_pfn;
-	int ret = -EINVAL;
+पूर्णांक walk_प्रणाली_ram_range(अचिन्हित दीर्घ start_pfn, अचिन्हित दीर्घ nr_pages,
+			  व्योम *arg, पूर्णांक (*func)(अचिन्हित दीर्घ, अचिन्हित दीर्घ, व्योम *))
+अणु
+	resource_माप_प्रकार start, end;
+	अचिन्हित दीर्घ flags;
+	काष्ठा resource res;
+	अचिन्हित दीर्घ pfn, end_pfn;
+	पूर्णांक ret = -EINVAL;
 
 	start = (u64) start_pfn << PAGE_SHIFT;
 	end = ((u64)(start_pfn + nr_pages) << PAGE_SHIFT) - 1;
 	flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
-	while (start < end &&
-	       !find_next_iomem_res(start, end, flags, IORES_DESC_NONE, &res)) {
+	जबतक (start < end &&
+	       !find_next_iomem_res(start, end, flags, IORES_DESC_NONE, &res)) अणु
 		pfn = PFN_UP(res.start);
 		end_pfn = PFN_DOWN(res.end + 1);
-		if (end_pfn > pfn)
+		अगर (end_pfn > pfn)
 			ret = (*func)(pfn, end_pfn - pfn, arg);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		start = res.end + 1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int __is_ram(unsigned long pfn, unsigned long nr_pages, void *arg)
-{
-	return 1;
-}
+अटल पूर्णांक __is_ram(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ nr_pages, व्योम *arg)
+अणु
+	वापस 1;
+पूर्ण
 
 /*
- * This generic page_is_ram() returns true if specified address is
- * registered as System RAM in iomem_resource list.
+ * This generic page_is_ram() वापसs true अगर specअगरied address is
+ * रेजिस्टरed as System RAM in iomem_resource list.
  */
-int __weak page_is_ram(unsigned long pfn)
-{
-	return walk_system_ram_range(pfn, 1, NULL, __is_ram) == 1;
-}
+पूर्णांक __weak page_is_ram(अचिन्हित दीर्घ pfn)
+अणु
+	वापस walk_प्रणाली_ram_range(pfn, 1, शून्य, __is_ram) == 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(page_is_ram);
 
-static int __region_intersects(resource_size_t start, size_t size,
-			unsigned long flags, unsigned long desc)
-{
-	struct resource res;
-	int type = 0; int other = 0;
-	struct resource *p;
+अटल पूर्णांक __region_पूर्णांकersects(resource_माप_प्रकार start, माप_प्रकार size,
+			अचिन्हित दीर्घ flags, अचिन्हित दीर्घ desc)
+अणु
+	काष्ठा resource res;
+	पूर्णांक type = 0; पूर्णांक other = 0;
+	काष्ठा resource *p;
 
 	res.start = start;
 	res.end = start + size - 1;
 
-	for (p = iomem_resource.child; p ; p = p->sibling) {
+	क्रम (p = iomem_resource.child; p ; p = p->sibling) अणु
 		bool is_type = (((p->flags & flags) == flags) &&
 				((desc == IORES_DESC_NONE) ||
 				 (desc == p->desc)));
 
-		if (resource_overlaps(p, &res))
+		अगर (resource_overlaps(p, &res))
 			is_type ? type++ : other++;
-	}
+	पूर्ण
 
-	if (type == 0)
-		return REGION_DISJOINT;
+	अगर (type == 0)
+		वापस REGION_DISJOINT;
 
-	if (other == 0)
-		return REGION_INTERSECTS;
+	अगर (other == 0)
+		वापस REGION_INTERSECTS;
 
-	return REGION_MIXED;
-}
+	वापस REGION_MIXED;
+पूर्ण
 
 /**
- * region_intersects() - determine intersection of region with known resources
+ * region_पूर्णांकersects() - determine पूर्णांकersection of region with known resources
  * @start: region start address
  * @size: size of region
  * @flags: flags of resource (in iomem_resource)
  * @desc: descriptor of resource (in iomem_resource) or IORES_DESC_NONE
  *
- * Check if the specified region partially overlaps or fully eclipses a
- * resource identified by @flags and @desc (optional with IORES_DESC_NONE).
- * Return REGION_DISJOINT if the region does not overlap @flags/@desc,
- * return REGION_MIXED if the region overlaps @flags/@desc and another
- * resource, and return REGION_INTERSECTS if the region overlaps @flags/@desc
+ * Check अगर the specअगरied region partially overlaps or fully eclipses a
+ * resource identअगरied by @flags and @desc (optional with IORES_DESC_NONE).
+ * Return REGION_DISJOINT अगर the region करोes not overlap @flags/@desc,
+ * वापस REGION_MIXED अगर the region overlaps @flags/@desc and another
+ * resource, and वापस REGION_INTERSECTS अगर the region overlaps @flags/@desc
  * and no other defined resource. Note that REGION_INTERSECTS is also
- * returned in the case when the specified region overlaps RAM and undefined
+ * वापसed in the हाल when the specअगरied region overlaps RAM and undefined
  * memory holes.
  *
- * region_intersect() is used by memory remapping functions to ensure
+ * region_पूर्णांकersect() is used by memory remapping functions to ensure
  * the user is not remapping RAM and is a vast speed up over walking
  * through the resource table page by page.
  */
-int region_intersects(resource_size_t start, size_t size, unsigned long flags,
-		      unsigned long desc)
-{
-	int ret;
+पूर्णांक region_पूर्णांकersects(resource_माप_प्रकार start, माप_प्रकार size, अचिन्हित दीर्घ flags,
+		      अचिन्हित दीर्घ desc)
+अणु
+	पूर्णांक ret;
 
-	read_lock(&resource_lock);
-	ret = __region_intersects(start, size, flags, desc);
-	read_unlock(&resource_lock);
+	पढ़ो_lock(&resource_lock);
+	ret = __region_पूर्णांकersects(start, size, flags, desc);
+	पढ़ो_unlock(&resource_lock);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(region_intersects);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(region_पूर्णांकersects);
 
-void __weak arch_remove_reservations(struct resource *avail)
-{
-}
+व्योम __weak arch_हटाओ_reservations(काष्ठा resource *avail)
+अणु
+पूर्ण
 
-static resource_size_t simple_align_resource(void *data,
-					     const struct resource *avail,
-					     resource_size_t size,
-					     resource_size_t align)
-{
-	return avail->start;
-}
+अटल resource_माप_प्रकार simple_align_resource(व्योम *data,
+					     स्थिर काष्ठा resource *avail,
+					     resource_माप_प्रकार size,
+					     resource_माप_प्रकार align)
+अणु
+	वापस avail->start;
+पूर्ण
 
-static void resource_clip(struct resource *res, resource_size_t min,
-			  resource_size_t max)
-{
-	if (res->start < min)
+अटल व्योम resource_clip(काष्ठा resource *res, resource_माप_प्रकार min,
+			  resource_माप_प्रकार max)
+अणु
+	अगर (res->start < min)
 		res->start = min;
-	if (res->end > max)
+	अगर (res->end > max)
 		res->end = max;
-}
+पूर्ण
 
 /*
  * Find empty slot in the resource tree with the given range and
- * alignment constraints
+ * alignment स्थिरraपूर्णांकs
  */
-static int __find_resource(struct resource *root, struct resource *old,
-			 struct resource *new,
-			 resource_size_t  size,
-			 struct resource_constraint *constraint)
-{
-	struct resource *this = root->child;
-	struct resource tmp = *new, avail, alloc;
+अटल पूर्णांक __find_resource(काष्ठा resource *root, काष्ठा resource *old,
+			 काष्ठा resource *new,
+			 resource_माप_प्रकार  size,
+			 काष्ठा resource_स्थिरraपूर्णांक *स्थिरraपूर्णांक)
+अणु
+	काष्ठा resource *this = root->child;
+	काष्ठा resource पंचांगp = *new, avail, alloc;
 
-	tmp.start = root->start;
+	पंचांगp.start = root->start;
 	/*
 	 * Skip past an allocated resource that starts at 0, since the assignment
-	 * of this->start - 1 to tmp->end below would cause an underflow.
+	 * of this->start - 1 to पंचांगp->end below would cause an underflow.
 	 */
-	if (this && this->start == root->start) {
-		tmp.start = (this == old) ? old->start : this->end + 1;
+	अगर (this && this->start == root->start) अणु
+		पंचांगp.start = (this == old) ? old->start : this->end + 1;
 		this = this->sibling;
-	}
-	for(;;) {
-		if (this)
-			tmp.end = (this == old) ?  this->end : this->start - 1;
-		else
-			tmp.end = root->end;
+	पूर्ण
+	क्रम(;;) अणु
+		अगर (this)
+			पंचांगp.end = (this == old) ?  this->end : this->start - 1;
+		अन्यथा
+			पंचांगp.end = root->end;
 
-		if (tmp.end < tmp.start)
-			goto next;
+		अगर (पंचांगp.end < पंचांगp.start)
+			जाओ next;
 
-		resource_clip(&tmp, constraint->min, constraint->max);
-		arch_remove_reservations(&tmp);
+		resource_clip(&पंचांगp, स्थिरraपूर्णांक->min, स्थिरraपूर्णांक->max);
+		arch_हटाओ_reservations(&पंचांगp);
 
-		/* Check for overflow after ALIGN() */
-		avail.start = ALIGN(tmp.start, constraint->align);
-		avail.end = tmp.end;
+		/* Check क्रम overflow after ALIGN() */
+		avail.start = ALIGN(पंचांगp.start, स्थिरraपूर्णांक->align);
+		avail.end = पंचांगp.end;
 		avail.flags = new->flags & ~IORESOURCE_UNSET;
-		if (avail.start >= tmp.start) {
+		अगर (avail.start >= पंचांगp.start) अणु
 			alloc.flags = avail.flags;
-			alloc.start = constraint->alignf(constraint->alignf_data, &avail,
-					size, constraint->align);
+			alloc.start = स्थिरraपूर्णांक->alignf(स्थिरraपूर्णांक->alignf_data, &avail,
+					size, स्थिरraपूर्णांक->align);
 			alloc.end = alloc.start + size - 1;
-			if (alloc.start <= alloc.end &&
-			    resource_contains(&avail, &alloc)) {
+			अगर (alloc.start <= alloc.end &&
+			    resource_contains(&avail, &alloc)) अणु
 				new->start = alloc.start;
 				new->end = alloc.end;
-				return 0;
-			}
-		}
+				वापस 0;
+			पूर्ण
+		पूर्ण
 
-next:		if (!this || this->end == root->end)
-			break;
+next:		अगर (!this || this->end == root->end)
+			अवरोध;
 
-		if (this != old)
-			tmp.start = this->end + 1;
+		अगर (this != old)
+			पंचांगp.start = this->end + 1;
 		this = this->sibling;
-	}
-	return -EBUSY;
-}
+	पूर्ण
+	वापस -EBUSY;
+पूर्ण
 
 /*
  * Find empty slot in the resource tree given range and alignment.
  */
-static int find_resource(struct resource *root, struct resource *new,
-			resource_size_t size,
-			struct resource_constraint  *constraint)
-{
-	return  __find_resource(root, NULL, new, size, constraint);
-}
+अटल पूर्णांक find_resource(काष्ठा resource *root, काष्ठा resource *new,
+			resource_माप_प्रकार size,
+			काष्ठा resource_स्थिरraपूर्णांक  *स्थिरraपूर्णांक)
+अणु
+	वापस  __find_resource(root, शून्य, new, size, स्थिरraपूर्णांक);
+पूर्ण
 
 /**
- * reallocate_resource - allocate a slot in the resource tree given range & alignment.
- *	The resource will be relocated if the new size cannot be reallocated in the
+ * पुनः_स्मृतिate_resource - allocate a slot in the resource tree given range & alignment.
+ *	The resource will be relocated अगर the new size cannot be पुनः_स्मृतिated in the
  *	current location.
  *
  * @root: root resource descriptor
  * @old:  resource descriptor desired by caller
  * @newsize: new size of the resource descriptor
- * @constraint: the size and alignment constraints to be met.
+ * @स्थिरraपूर्णांक: the size and alignment स्थिरraपूर्णांकs to be met.
  */
-static int reallocate_resource(struct resource *root, struct resource *old,
-			       resource_size_t newsize,
-			       struct resource_constraint *constraint)
-{
-	int err=0;
-	struct resource new = *old;
-	struct resource *conflict;
+अटल पूर्णांक पुनः_स्मृतिate_resource(काष्ठा resource *root, काष्ठा resource *old,
+			       resource_माप_प्रकार newsize,
+			       काष्ठा resource_स्थिरraपूर्णांक *स्थिरraपूर्णांक)
+अणु
+	पूर्णांक err=0;
+	काष्ठा resource new = *old;
+	काष्ठा resource *conflict;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 
-	if ((err = __find_resource(root, old, &new, newsize, constraint)))
-		goto out;
+	अगर ((err = __find_resource(root, old, &new, newsize, स्थिरraपूर्णांक)))
+		जाओ out;
 
-	if (resource_contains(&new, old)) {
+	अगर (resource_contains(&new, old)) अणु
 		old->start = new.start;
 		old->end = new.end;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (old->child) {
+	अगर (old->child) अणु
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (resource_contains(old, &new)) {
+	अगर (resource_contains(old, &new)) अणु
 		old->start = new.start;
 		old->end = new.end;
-	} else {
+	पूर्ण अन्यथा अणु
 		__release_resource(old, true);
 		*old = new;
 		conflict = __request_resource(root, old);
 		BUG_ON(conflict);
-	}
+	पूर्ण
 out:
-	write_unlock(&resource_lock);
-	return err;
-}
+	ग_लिखो_unlock(&resource_lock);
+	वापस err;
+पूर्ण
 
 
 /**
  * allocate_resource - allocate empty slot in the resource tree given range & alignment.
- * 	The resource will be reallocated with a new size if it was already allocated
+ * 	The resource will be पुनः_स्मृतिated with a new size अगर it was alपढ़ोy allocated
  * @root: root resource descriptor
  * @new: resource descriptor desired by caller
  * @size: requested resource region size
  * @min: minimum boundary to allocate
  * @max: maximum boundary to allocate
  * @align: alignment requested, in bytes
- * @alignf: alignment function, optional, called if not NULL
+ * @alignf: alignment function, optional, called अगर not शून्य
  * @alignf_data: arbitrary data to pass to the @alignf function
  */
-int allocate_resource(struct resource *root, struct resource *new,
-		      resource_size_t size, resource_size_t min,
-		      resource_size_t max, resource_size_t align,
-		      resource_size_t (*alignf)(void *,
-						const struct resource *,
-						resource_size_t,
-						resource_size_t),
-		      void *alignf_data)
-{
-	int err;
-	struct resource_constraint constraint;
+पूर्णांक allocate_resource(काष्ठा resource *root, काष्ठा resource *new,
+		      resource_माप_प्रकार size, resource_माप_प्रकार min,
+		      resource_माप_प्रकार max, resource_माप_प्रकार align,
+		      resource_माप_प्रकार (*alignf)(व्योम *,
+						स्थिर काष्ठा resource *,
+						resource_माप_प्रकार,
+						resource_माप_प्रकार),
+		      व्योम *alignf_data)
+अणु
+	पूर्णांक err;
+	काष्ठा resource_स्थिरraपूर्णांक स्थिरraपूर्णांक;
 
-	if (!alignf)
+	अगर (!alignf)
 		alignf = simple_align_resource;
 
-	constraint.min = min;
-	constraint.max = max;
-	constraint.align = align;
-	constraint.alignf = alignf;
-	constraint.alignf_data = alignf_data;
+	स्थिरraपूर्णांक.min = min;
+	स्थिरraपूर्णांक.max = max;
+	स्थिरraपूर्णांक.align = align;
+	स्थिरraपूर्णांक.alignf = alignf;
+	स्थिरraपूर्णांक.alignf_data = alignf_data;
 
-	if ( new->parent ) {
-		/* resource is already allocated, try reallocating with
-		   the new constraints */
-		return reallocate_resource(root, new, size, &constraint);
-	}
+	अगर ( new->parent ) अणु
+		/* resource is alपढ़ोy allocated, try पुनः_स्मृतिating with
+		   the new स्थिरraपूर्णांकs */
+		वापस पुनः_स्मृतिate_resource(root, new, size, &स्थिरraपूर्णांक);
+	पूर्ण
 
-	write_lock(&resource_lock);
-	err = find_resource(root, new, size, &constraint);
-	if (err >= 0 && __request_resource(root, new))
+	ग_लिखो_lock(&resource_lock);
+	err = find_resource(root, new, size, &स्थिरraपूर्णांक);
+	अगर (err >= 0 && __request_resource(root, new))
 		err = -EBUSY;
-	write_unlock(&resource_lock);
-	return err;
-}
+	ग_लिखो_unlock(&resource_lock);
+	वापस err;
+पूर्ण
 
 EXPORT_SYMBOL(allocate_resource);
 
@@ -757,81 +758,81 @@ EXPORT_SYMBOL(allocate_resource);
  * @root: root resource descriptor
  * @start: resource start address
  *
- * Returns a pointer to the resource if found, NULL otherwise
+ * Returns a poपूर्णांकer to the resource अगर found, शून्य otherwise
  */
-struct resource *lookup_resource(struct resource *root, resource_size_t start)
-{
-	struct resource *res;
+काष्ठा resource *lookup_resource(काष्ठा resource *root, resource_माप_प्रकार start)
+अणु
+	काष्ठा resource *res;
 
-	read_lock(&resource_lock);
-	for (res = root->child; res; res = res->sibling) {
-		if (res->start == start)
-			break;
-	}
-	read_unlock(&resource_lock);
+	पढ़ो_lock(&resource_lock);
+	क्रम (res = root->child; res; res = res->sibling) अणु
+		अगर (res->start == start)
+			अवरोध;
+	पूर्ण
+	पढ़ो_unlock(&resource_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
- * Insert a resource into the resource tree. If successful, return NULL,
- * otherwise return the conflicting resource (compare to __request_resource())
+ * Insert a resource पूर्णांकo the resource tree. If successful, वापस शून्य,
+ * otherwise वापस the conflicting resource (compare to __request_resource())
  */
-static struct resource * __insert_resource(struct resource *parent, struct resource *new)
-{
-	struct resource *first, *next;
+अटल काष्ठा resource * __insert_resource(काष्ठा resource *parent, काष्ठा resource *new)
+अणु
+	काष्ठा resource *first, *next;
 
-	for (;; parent = first) {
+	क्रम (;; parent = first) अणु
 		first = __request_resource(parent, new);
-		if (!first)
-			return first;
+		अगर (!first)
+			वापस first;
 
-		if (first == parent)
-			return first;
-		if (WARN_ON(first == new))	/* duplicated insertion */
-			return first;
+		अगर (first == parent)
+			वापस first;
+		अगर (WARN_ON(first == new))	/* duplicated insertion */
+			वापस first;
 
-		if ((first->start > new->start) || (first->end < new->end))
-			break;
-		if ((first->start == new->start) && (first->end == new->end))
-			break;
-	}
+		अगर ((first->start > new->start) || (first->end < new->end))
+			अवरोध;
+		अगर ((first->start == new->start) && (first->end == new->end))
+			अवरोध;
+	पूर्ण
 
-	for (next = first; ; next = next->sibling) {
+	क्रम (next = first; ; next = next->sibling) अणु
 		/* Partial overlap? Bad, and unfixable */
-		if (next->start < new->start || next->end > new->end)
-			return next;
-		if (!next->sibling)
-			break;
-		if (next->sibling->start > new->end)
-			break;
-	}
+		अगर (next->start < new->start || next->end > new->end)
+			वापस next;
+		अगर (!next->sibling)
+			अवरोध;
+		अगर (next->sibling->start > new->end)
+			अवरोध;
+	पूर्ण
 
 	new->parent = parent;
 	new->sibling = next->sibling;
 	new->child = first;
 
-	next->sibling = NULL;
-	for (next = first; next; next = next->sibling)
+	next->sibling = शून्य;
+	क्रम (next = first; next; next = next->sibling)
 		next->parent = new;
 
-	if (parent->child == first) {
+	अगर (parent->child == first) अणु
 		parent->child = new;
-	} else {
+	पूर्ण अन्यथा अणु
 		next = parent->child;
-		while (next->sibling != first)
+		जबतक (next->sibling != first)
 			next = next->sibling;
 		next->sibling = new;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * insert_resource_conflict - Inserts resource in the resource tree
  * @parent: parent of the new resource
  * @new: new resource to insert
  *
- * Returns 0 on success, conflict resource if the resource can't be inserted.
+ * Returns 0 on success, conflict resource अगर the resource can't be inserted.
  *
  * This function is equivalent to request_resource_conflict when no conflict
  * happens. If a conflict happens, and the conflicting resources
@@ -839,169 +840,169 @@ static struct resource * __insert_resource(struct resource *parent, struct resou
  * resource is inserted and the conflicting resources become children of
  * the new resource.
  *
- * This function is intended for producers of resources, such as FW modules
+ * This function is पूर्णांकended क्रम producers of resources, such as FW modules
  * and bus drivers.
  */
-struct resource *insert_resource_conflict(struct resource *parent, struct resource *new)
-{
-	struct resource *conflict;
+काष्ठा resource *insert_resource_conflict(काष्ठा resource *parent, काष्ठा resource *new)
+अणु
+	काष्ठा resource *conflict;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 	conflict = __insert_resource(parent, new);
-	write_unlock(&resource_lock);
-	return conflict;
-}
+	ग_लिखो_unlock(&resource_lock);
+	वापस conflict;
+पूर्ण
 
 /**
  * insert_resource - Inserts a resource in the resource tree
  * @parent: parent of the new resource
  * @new: new resource to insert
  *
- * Returns 0 on success, -EBUSY if the resource can't be inserted.
+ * Returns 0 on success, -EBUSY अगर the resource can't be inserted.
  *
- * This function is intended for producers of resources, such as FW modules
+ * This function is पूर्णांकended क्रम producers of resources, such as FW modules
  * and bus drivers.
  */
-int insert_resource(struct resource *parent, struct resource *new)
-{
-	struct resource *conflict;
+पूर्णांक insert_resource(काष्ठा resource *parent, काष्ठा resource *new)
+अणु
+	काष्ठा resource *conflict;
 
 	conflict = insert_resource_conflict(parent, new);
-	return conflict ? -EBUSY : 0;
-}
+	वापस conflict ? -EBUSY : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(insert_resource);
 
 /**
- * insert_resource_expand_to_fit - Insert a resource into the resource tree
+ * insert_resource_expand_to_fit - Insert a resource पूर्णांकo the resource tree
  * @root: root resource descriptor
  * @new: new resource to insert
  *
- * Insert a resource into the resource tree, possibly expanding it in order
+ * Insert a resource पूर्णांकo the resource tree, possibly expanding it in order
  * to make it encompass any conflicting resources.
  */
-void insert_resource_expand_to_fit(struct resource *root, struct resource *new)
-{
-	if (new->parent)
-		return;
+व्योम insert_resource_expand_to_fit(काष्ठा resource *root, काष्ठा resource *new)
+अणु
+	अगर (new->parent)
+		वापस;
 
-	write_lock(&resource_lock);
-	for (;;) {
-		struct resource *conflict;
+	ग_लिखो_lock(&resource_lock);
+	क्रम (;;) अणु
+		काष्ठा resource *conflict;
 
 		conflict = __insert_resource(root, new);
-		if (!conflict)
-			break;
-		if (conflict == root)
-			break;
+		अगर (!conflict)
+			अवरोध;
+		अगर (conflict == root)
+			अवरोध;
 
 		/* Ok, expand resource to cover the conflict, then try again .. */
-		if (conflict->start < new->start)
+		अगर (conflict->start < new->start)
 			new->start = conflict->start;
-		if (conflict->end > new->end)
+		अगर (conflict->end > new->end)
 			new->end = conflict->end;
 
-		printk("Expanded resource %s due to conflict with %s\n", new->name, conflict->name);
-	}
-	write_unlock(&resource_lock);
-}
+		prपूर्णांकk("Expanded resource %s due to conflict with %s\n", new->name, conflict->name);
+	पूर्ण
+	ग_लिखो_unlock(&resource_lock);
+पूर्ण
 
 /**
- * remove_resource - Remove a resource in the resource tree
- * @old: resource to remove
+ * हटाओ_resource - Remove a resource in the resource tree
+ * @old: resource to हटाओ
  *
- * Returns 0 on success, -EINVAL if the resource is not valid.
+ * Returns 0 on success, -EINVAL अगर the resource is not valid.
  *
- * This function removes a resource previously inserted by insert_resource()
- * or insert_resource_conflict(), and moves the children (if any) up to
- * where they were before.  insert_resource() and insert_resource_conflict()
- * insert a new resource, and move any conflicting resources down to the
+ * This function हटाओs a resource previously inserted by insert_resource()
+ * or insert_resource_conflict(), and moves the children (अगर any) up to
+ * where they were beक्रमe.  insert_resource() and insert_resource_conflict()
+ * insert a new resource, and move any conflicting resources करोwn to the
  * children of the new resource.
  *
- * insert_resource(), insert_resource_conflict() and remove_resource() are
- * intended for producers of resources, such as FW modules and bus drivers.
+ * insert_resource(), insert_resource_conflict() and हटाओ_resource() are
+ * पूर्णांकended क्रम producers of resources, such as FW modules and bus drivers.
  */
-int remove_resource(struct resource *old)
-{
-	int retval;
+पूर्णांक हटाओ_resource(काष्ठा resource *old)
+अणु
+	पूर्णांक retval;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 	retval = __release_resource(old, false);
-	write_unlock(&resource_lock);
-	return retval;
-}
-EXPORT_SYMBOL_GPL(remove_resource);
+	ग_लिखो_unlock(&resource_lock);
+	वापस retval;
+पूर्ण
+EXPORT_SYMBOL_GPL(हटाओ_resource);
 
-static int __adjust_resource(struct resource *res, resource_size_t start,
-				resource_size_t size)
-{
-	struct resource *tmp, *parent = res->parent;
-	resource_size_t end = start + size - 1;
-	int result = -EBUSY;
+अटल पूर्णांक __adjust_resource(काष्ठा resource *res, resource_माप_प्रकार start,
+				resource_माप_प्रकार size)
+अणु
+	काष्ठा resource *पंचांगp, *parent = res->parent;
+	resource_माप_प्रकार end = start + size - 1;
+	पूर्णांक result = -EBUSY;
 
-	if (!parent)
-		goto skip;
+	अगर (!parent)
+		जाओ skip;
 
-	if ((start < parent->start) || (end > parent->end))
-		goto out;
+	अगर ((start < parent->start) || (end > parent->end))
+		जाओ out;
 
-	if (res->sibling && (res->sibling->start <= end))
-		goto out;
+	अगर (res->sibling && (res->sibling->start <= end))
+		जाओ out;
 
-	tmp = parent->child;
-	if (tmp != res) {
-		while (tmp->sibling != res)
-			tmp = tmp->sibling;
-		if (start <= tmp->end)
-			goto out;
-	}
+	पंचांगp = parent->child;
+	अगर (पंचांगp != res) अणु
+		जबतक (पंचांगp->sibling != res)
+			पंचांगp = पंचांगp->sibling;
+		अगर (start <= पंचांगp->end)
+			जाओ out;
+	पूर्ण
 
 skip:
-	for (tmp = res->child; tmp; tmp = tmp->sibling)
-		if ((tmp->start < start) || (tmp->end > end))
-			goto out;
+	क्रम (पंचांगp = res->child; पंचांगp; पंचांगp = पंचांगp->sibling)
+		अगर ((पंचांगp->start < start) || (पंचांगp->end > end))
+			जाओ out;
 
 	res->start = start;
 	res->end = end;
 	result = 0;
 
  out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * adjust_resource - modify a resource's start and size
- * @res: resource to modify
+ * adjust_resource - modअगरy a resource's start and size
+ * @res: resource to modअगरy
  * @start: new start value
  * @size: new size
  *
  * Given an existing resource, change its start and size to match the
- * arguments.  Returns 0 on success, -EBUSY if it can't fit.
+ * arguments.  Returns 0 on success, -EBUSY अगर it can't fit.
  * Existing children of the resource are assumed to be immutable.
  */
-int adjust_resource(struct resource *res, resource_size_t start,
-		    resource_size_t size)
-{
-	int result;
+पूर्णांक adjust_resource(काष्ठा resource *res, resource_माप_प्रकार start,
+		    resource_माप_प्रकार size)
+अणु
+	पूर्णांक result;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 	result = __adjust_resource(res, start, size);
-	write_unlock(&resource_lock);
-	return result;
-}
+	ग_लिखो_unlock(&resource_lock);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(adjust_resource);
 
-static void __init
-__reserve_region_with_split(struct resource *root, resource_size_t start,
-			    resource_size_t end, const char *name)
-{
-	struct resource *parent = root;
-	struct resource *conflict;
-	struct resource *res = alloc_resource(GFP_ATOMIC);
-	struct resource *next_res = NULL;
-	int type = resource_type(root);
+अटल व्योम __init
+__reserve_region_with_split(काष्ठा resource *root, resource_माप_प्रकार start,
+			    resource_माप_प्रकार end, स्थिर अक्षर *name)
+अणु
+	काष्ठा resource *parent = root;
+	काष्ठा resource *conflict;
+	काष्ठा resource *res = alloc_resource(GFP_ATOMIC);
+	काष्ठा resource *next_res = शून्य;
+	पूर्णांक type = resource_type(root);
 
-	if (!res)
-		return;
+	अगर (!res)
+		वापस;
 
 	res->name = name;
 	res->start = start;
@@ -1009,97 +1010,97 @@ __reserve_region_with_split(struct resource *root, resource_size_t start,
 	res->flags = type | IORESOURCE_BUSY;
 	res->desc = IORES_DESC_NONE;
 
-	while (1) {
+	जबतक (1) अणु
 
 		conflict = __request_resource(parent, res);
-		if (!conflict) {
-			if (!next_res)
-				break;
+		अगर (!conflict) अणु
+			अगर (!next_res)
+				अवरोध;
 			res = next_res;
-			next_res = NULL;
-			continue;
-		}
+			next_res = शून्य;
+			जारी;
+		पूर्ण
 
 		/* conflict covered whole area */
-		if (conflict->start <= res->start &&
-				conflict->end >= res->end) {
-			free_resource(res);
+		अगर (conflict->start <= res->start &&
+				conflict->end >= res->end) अणु
+			मुक्त_resource(res);
 			WARN_ON(next_res);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* failed, split and try again */
-		if (conflict->start > res->start) {
+		अगर (conflict->start > res->start) अणु
 			end = res->end;
 			res->end = conflict->start - 1;
-			if (conflict->end < end) {
+			अगर (conflict->end < end) अणु
 				next_res = alloc_resource(GFP_ATOMIC);
-				if (!next_res) {
-					free_resource(res);
-					break;
-				}
+				अगर (!next_res) अणु
+					मुक्त_resource(res);
+					अवरोध;
+				पूर्ण
 				next_res->name = name;
 				next_res->start = conflict->end + 1;
 				next_res->end = end;
 				next_res->flags = type | IORESOURCE_BUSY;
 				next_res->desc = IORES_DESC_NONE;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			res->start = conflict->end + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 
-void __init
-reserve_region_with_split(struct resource *root, resource_size_t start,
-			  resource_size_t end, const char *name)
-{
-	int abort = 0;
+व्योम __init
+reserve_region_with_split(काष्ठा resource *root, resource_माप_प्रकार start,
+			  resource_माप_प्रकार end, स्थिर अक्षर *name)
+अणु
+	पूर्णांक पात = 0;
 
-	write_lock(&resource_lock);
-	if (root->start > start || root->end < end) {
+	ग_लिखो_lock(&resource_lock);
+	अगर (root->start > start || root->end < end) अणु
 		pr_err("requested range [0x%llx-0x%llx] not in root %pr\n",
-		       (unsigned long long)start, (unsigned long long)end,
+		       (अचिन्हित दीर्घ दीर्घ)start, (अचिन्हित दीर्घ दीर्घ)end,
 		       root);
-		if (start > root->end || end < root->start)
-			abort = 1;
-		else {
-			if (end > root->end)
+		अगर (start > root->end || end < root->start)
+			पात = 1;
+		अन्यथा अणु
+			अगर (end > root->end)
 				end = root->end;
-			if (start < root->start)
+			अगर (start < root->start)
 				start = root->start;
 			pr_err("fixing request to [0x%llx-0x%llx]\n",
-			       (unsigned long long)start,
-			       (unsigned long long)end);
-		}
+			       (अचिन्हित दीर्घ दीर्घ)start,
+			       (अचिन्हित दीर्घ दीर्घ)end);
+		पूर्ण
 		dump_stack();
-	}
-	if (!abort)
+	पूर्ण
+	अगर (!पात)
 		__reserve_region_with_split(root, start, end, name);
-	write_unlock(&resource_lock);
-}
+	ग_लिखो_unlock(&resource_lock);
+पूर्ण
 
 /**
  * resource_alignment - calculate resource's alignment
- * @res: resource pointer
+ * @res: resource poपूर्णांकer
  *
  * Returns alignment on success, 0 (invalid alignment) on failure.
  */
-resource_size_t resource_alignment(struct resource *res)
-{
-	switch (res->flags & (IORESOURCE_SIZEALIGN | IORESOURCE_STARTALIGN)) {
-	case IORESOURCE_SIZEALIGN:
-		return resource_size(res);
-	case IORESOURCE_STARTALIGN:
-		return res->start;
-	default:
-		return 0;
-	}
-}
+resource_माप_प्रकार resource_alignment(काष्ठा resource *res)
+अणु
+	चयन (res->flags & (IORESOURCE_SIZEALIGN | IORESOURCE_STARTALIGN)) अणु
+	हाल IORESOURCE_SIZEALIGN:
+		वापस resource_size(res);
+	हाल IORESOURCE_STARTALIGN:
+		वापस res->start;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
- * This is compatibility stuff for IO resources.
+ * This is compatibility stuff क्रम IO resources.
  *
  * Note how this, unlike the above, knows about
  * the IO flag meanings (busy etc).
@@ -1109,107 +1110,107 @@ resource_size_t resource_alignment(struct resource *res)
  * release_region releases a matching busy region.
  */
 
-static DECLARE_WAIT_QUEUE_HEAD(muxed_resource_wait);
+अटल DECLARE_WAIT_QUEUE_HEAD(muxed_resource_रुको);
 
-static struct inode *iomem_inode;
+अटल काष्ठा inode *iomem_inode;
 
-#ifdef CONFIG_IO_STRICT_DEVMEM
-static void revoke_iomem(struct resource *res)
-{
+#अगर_घोषित CONFIG_IO_STRICT_DEVMEM
+अटल व्योम revoke_iomem(काष्ठा resource *res)
+अणु
 	/* pairs with smp_store_release() in iomem_init_inode() */
-	struct inode *inode = smp_load_acquire(&iomem_inode);
+	काष्ठा inode *inode = smp_load_acquire(&iomem_inode);
 
 	/*
 	 * Check that the initialization has completed. Losing the race
-	 * is ok because it means drivers are claiming resources before
+	 * is ok because it means drivers are claiming resources beक्रमe
 	 * the fs_initcall level of init and prevent iomem_get_mapping users
 	 * from establishing mappings.
 	 */
-	if (!inode)
-		return;
+	अगर (!inode)
+		वापस;
 
 	/*
 	 * The expectation is that the driver has successfully marked
-	 * the resource busy by this point, so devmem_is_allowed()
-	 * should start returning false, however for performance this
-	 * does not iterate the entire resource range.
+	 * the resource busy by this poपूर्णांक, so devmem_is_allowed()
+	 * should start वापसing false, however क्रम perक्रमmance this
+	 * करोes not iterate the entire resource range.
 	 */
-	if (devmem_is_allowed(PHYS_PFN(res->start)) &&
-	    devmem_is_allowed(PHYS_PFN(res->end))) {
+	अगर (devmem_is_allowed(PHYS_PFN(res->start)) &&
+	    devmem_is_allowed(PHYS_PFN(res->end))) अणु
 		/*
 		 * *cringe* iomem=relaxed says "go ahead, what's the
 		 * worst that can happen?"
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	unmap_mapping_range(inode->i_mapping, res->start, resource_size(res), 1);
-}
-#else
-static void revoke_iomem(struct resource *res) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम revoke_iomem(काष्ठा resource *res) अणुपूर्ण
+#पूर्ण_अगर
 
-struct address_space *iomem_get_mapping(void)
-{
+काष्ठा address_space *iomem_get_mapping(व्योम)
+अणु
 	/*
-	 * This function is only called from file open paths, hence guaranteed
-	 * that fs_initcalls have completed and no need to check for NULL. But
-	 * since revoke_iomem can be called before the initcall we still need
+	 * This function is only called from file खोलो paths, hence guaranteed
+	 * that fs_initcalls have completed and no need to check क्रम शून्य. But
+	 * since revoke_iomem can be called beक्रमe the initcall we still need
 	 * the barrier to appease checkers.
 	 */
-	return smp_load_acquire(&iomem_inode)->i_mapping;
-}
+	वापस smp_load_acquire(&iomem_inode)->i_mapping;
+पूर्ण
 
-static int __request_region_locked(struct resource *res, struct resource *parent,
-				   resource_size_t start, resource_size_t n,
-				   const char *name, int flags)
-{
-	DECLARE_WAITQUEUE(wait, current);
+अटल पूर्णांक __request_region_locked(काष्ठा resource *res, काष्ठा resource *parent,
+				   resource_माप_प्रकार start, resource_माप_प्रकार n,
+				   स्थिर अक्षर *name, पूर्णांक flags)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
 
 	res->name = name;
 	res->start = start;
 	res->end = start + n - 1;
 
-	for (;;) {
-		struct resource *conflict;
+	क्रम (;;) अणु
+		काष्ठा resource *conflict;
 
 		res->flags = resource_type(parent) | resource_ext_type(parent);
 		res->flags |= IORESOURCE_BUSY | flags;
 		res->desc = parent->desc;
 
 		conflict = __request_resource(parent, res);
-		if (!conflict)
-			break;
+		अगर (!conflict)
+			अवरोध;
 		/*
 		 * mm/hmm.c reserves physical addresses which then
 		 * become unavailable to other users.  Conflicts are
-		 * not expected.  Warn to aid debugging if encountered.
+		 * not expected.  Warn to aid debugging अगर encountered.
 		 */
-		if (conflict->desc == IORES_DESC_DEVICE_PRIVATE_MEMORY) {
+		अगर (conflict->desc == IORES_DESC_DEVICE_PRIVATE_MEMORY) अणु
 			pr_warn("Unaddressable device %s %pR conflicts with %pR",
 				conflict->name, conflict, res);
-		}
-		if (conflict != parent) {
-			if (!(conflict->flags & IORESOURCE_BUSY)) {
+		पूर्ण
+		अगर (conflict != parent) अणु
+			अगर (!(conflict->flags & IORESOURCE_BUSY)) अणु
 				parent = conflict;
-				continue;
-			}
-		}
-		if (conflict->flags & flags & IORESOURCE_MUXED) {
-			add_wait_queue(&muxed_resource_wait, &wait);
-			write_unlock(&resource_lock);
+				जारी;
+			पूर्ण
+		पूर्ण
+		अगर (conflict->flags & flags & IORESOURCE_MUXED) अणु
+			add_रुको_queue(&muxed_resource_रुको, &रुको);
+			ग_लिखो_unlock(&resource_lock);
 			set_current_state(TASK_UNINTERRUPTIBLE);
 			schedule();
-			remove_wait_queue(&muxed_resource_wait, &wait);
-			write_lock(&resource_lock);
-			continue;
-		}
+			हटाओ_रुको_queue(&muxed_resource_रुको, &रुको);
+			ग_लिखो_lock(&resource_lock);
+			जारी;
+		पूर्ण
 		/* Uhhuh, that didn't work out.. */
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * __request_region - create a new busy resource region
@@ -1219,30 +1220,30 @@ static int __request_region_locked(struct resource *res, struct resource *parent
  * @name: reserving caller's ID string
  * @flags: IO resource flags
  */
-struct resource *__request_region(struct resource *parent,
-				  resource_size_t start, resource_size_t n,
-				  const char *name, int flags)
-{
-	struct resource *res = alloc_resource(GFP_KERNEL);
-	int ret;
+काष्ठा resource *__request_region(काष्ठा resource *parent,
+				  resource_माप_प्रकार start, resource_माप_प्रकार n,
+				  स्थिर अक्षर *name, पूर्णांक flags)
+अणु
+	काष्ठा resource *res = alloc_resource(GFP_KERNEL);
+	पूर्णांक ret;
 
-	if (!res)
-		return NULL;
+	अगर (!res)
+		वापस शून्य;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 	ret = __request_region_locked(res, parent, start, n, name, flags);
-	write_unlock(&resource_lock);
+	ग_लिखो_unlock(&resource_lock);
 
-	if (ret) {
-		free_resource(res);
-		return NULL;
-	}
+	अगर (ret) अणु
+		मुक्त_resource(res);
+		वापस शून्य;
+	पूर्ण
 
-	if (parent == &iomem_resource)
+	अगर (parent == &iomem_resource)
 		revoke_iomem(res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(__request_region);
 
 /**
@@ -1253,148 +1254,148 @@ EXPORT_SYMBOL(__request_region);
  *
  * The described resource region must match a currently busy region.
  */
-void __release_region(struct resource *parent, resource_size_t start,
-		      resource_size_t n)
-{
-	struct resource **p;
-	resource_size_t end;
+व्योम __release_region(काष्ठा resource *parent, resource_माप_प्रकार start,
+		      resource_माप_प्रकार n)
+अणु
+	काष्ठा resource **p;
+	resource_माप_प्रकार end;
 
 	p = &parent->child;
 	end = start + n - 1;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 
-	for (;;) {
-		struct resource *res = *p;
+	क्रम (;;) अणु
+		काष्ठा resource *res = *p;
 
-		if (!res)
-			break;
-		if (res->start <= start && res->end >= end) {
-			if (!(res->flags & IORESOURCE_BUSY)) {
+		अगर (!res)
+			अवरोध;
+		अगर (res->start <= start && res->end >= end) अणु
+			अगर (!(res->flags & IORESOURCE_BUSY)) अणु
 				p = &res->child;
-				continue;
-			}
-			if (res->start != start || res->end != end)
-				break;
+				जारी;
+			पूर्ण
+			अगर (res->start != start || res->end != end)
+				अवरोध;
 			*p = res->sibling;
-			write_unlock(&resource_lock);
-			if (res->flags & IORESOURCE_MUXED)
-				wake_up(&muxed_resource_wait);
-			free_resource(res);
-			return;
-		}
+			ग_लिखो_unlock(&resource_lock);
+			अगर (res->flags & IORESOURCE_MUXED)
+				wake_up(&muxed_resource_रुको);
+			मुक्त_resource(res);
+			वापस;
+		पूर्ण
 		p = &res->sibling;
-	}
+	पूर्ण
 
-	write_unlock(&resource_lock);
+	ग_लिखो_unlock(&resource_lock);
 
-	printk(KERN_WARNING "Trying to free nonexistent resource "
-		"<%016llx-%016llx>\n", (unsigned long long)start,
-		(unsigned long long)end);
-}
+	prपूर्णांकk(KERN_WARNING "Trying to free nonexistent resource "
+		"<%016llx-%016llx>\n", (अचिन्हित दीर्घ दीर्घ)start,
+		(अचिन्हित दीर्घ दीर्घ)end);
+पूर्ण
 EXPORT_SYMBOL(__release_region);
 
-#ifdef CONFIG_MEMORY_HOTREMOVE
+#अगर_घोषित CONFIG_MEMORY_HOTREMOVE
 /**
  * release_mem_region_adjustable - release a previously reserved memory region
  * @start: resource start address
  * @size: resource region size
  *
- * This interface is intended for memory hot-delete.  The requested region
+ * This पूर्णांकerface is पूर्णांकended क्रम memory hot-delete.  The requested region
  * is released from a currently busy memory resource.  The requested region
- * must either match exactly or fit into a single busy resource entry.  In
- * the latter case, the remaining resource is adjusted accordingly.
+ * must either match exactly or fit पूर्णांकo a single busy resource entry.  In
+ * the latter हाल, the reमुख्यing resource is adjusted accordingly.
  * Existing children of the busy memory resource must be immutable in the
  * request.
  *
  * Note:
  * - Additional release conditions, such as overlapping region, can be
- *   supported after they are confirmed as valid cases.
- * - When a busy memory resource gets split into two entries, the code
- *   assumes that all children remain in the lower address entry for
+ *   supported after they are confirmed as valid हालs.
+ * - When a busy memory resource माला_लो split पूर्णांकo two entries, the code
+ *   assumes that all children reमुख्य in the lower address entry क्रम
  *   simplicity.  Enhance this logic when necessary.
  */
-void release_mem_region_adjustable(resource_size_t start, resource_size_t size)
-{
-	struct resource *parent = &iomem_resource;
-	struct resource *new_res = NULL;
+व्योम release_mem_region_adjustable(resource_माप_प्रकार start, resource_माप_प्रकार size)
+अणु
+	काष्ठा resource *parent = &iomem_resource;
+	काष्ठा resource *new_res = शून्य;
 	bool alloc_nofail = false;
-	struct resource **p;
-	struct resource *res;
-	resource_size_t end;
+	काष्ठा resource **p;
+	काष्ठा resource *res;
+	resource_माप_प्रकार end;
 
 	end = start + size - 1;
-	if (WARN_ON_ONCE((start < parent->start) || (end > parent->end)))
-		return;
+	अगर (WARN_ON_ONCE((start < parent->start) || (end > parent->end)))
+		वापस;
 
 	/*
-	 * We free up quite a lot of memory on memory hotunplug (esp., memap),
-	 * just before releasing the region. This is highly unlikely to
+	 * We मुक्त up quite a lot of memory on memory hotunplug (esp., memap),
+	 * just beक्रमe releasing the region. This is highly unlikely to
 	 * fail - let's play save and make it never fail as the caller cannot
-	 * perform any error handling (e.g., trying to re-add memory will fail
+	 * perक्रमm any error handling (e.g., trying to re-add memory will fail
 	 * similarly).
 	 */
 retry:
 	new_res = alloc_resource(GFP_KERNEL | (alloc_nofail ? __GFP_NOFAIL : 0));
 
 	p = &parent->child;
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 
-	while ((res = *p)) {
-		if (res->start >= end)
-			break;
+	जबतक ((res = *p)) अणु
+		अगर (res->start >= end)
+			अवरोध;
 
-		/* look for the next resource if it does not fit into */
-		if (res->start > start || res->end < end) {
+		/* look क्रम the next resource अगर it करोes not fit पूर्णांकo */
+		अगर (res->start > start || res->end < end) अणु
 			p = &res->sibling;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * All memory regions added from memory-hotplug path have the
-		 * flag IORESOURCE_SYSTEM_RAM. If the resource does not have
+		 * flag IORESOURCE_SYSTEM_RAM. If the resource करोes not have
 		 * this flag, we know that we are dealing with a resource coming
 		 * from HMM/devm. HMM/devm use another mechanism to add/release
 		 * a resource. This goes via devm_request_mem_region and
 		 * devm_release_mem_region.
 		 * HMM/devm take care to release their resources when they want,
-		 * so if we are dealing with them, let us just back off here.
+		 * so अगर we are dealing with them, let us just back off here.
 		 */
-		if (!(res->flags & IORESOURCE_SYSRAM)) {
-			break;
-		}
+		अगर (!(res->flags & IORESOURCE_SYSRAM)) अणु
+			अवरोध;
+		पूर्ण
 
-		if (!(res->flags & IORESOURCE_MEM))
-			break;
+		अगर (!(res->flags & IORESOURCE_MEM))
+			अवरोध;
 
-		if (!(res->flags & IORESOURCE_BUSY)) {
+		अगर (!(res->flags & IORESOURCE_BUSY)) अणु
 			p = &res->child;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* found the target resource; let's adjust accordingly */
-		if (res->start == start && res->end == end) {
-			/* free the whole entry */
+		अगर (res->start == start && res->end == end) अणु
+			/* मुक्त the whole entry */
 			*p = res->sibling;
-			free_resource(res);
-		} else if (res->start == start && res->end != end) {
+			मुक्त_resource(res);
+		पूर्ण अन्यथा अगर (res->start == start && res->end != end) अणु
 			/* adjust the start */
 			WARN_ON_ONCE(__adjust_resource(res, end + 1,
 						       res->end - end));
-		} else if (res->start != start && res->end == end) {
+		पूर्ण अन्यथा अगर (res->start != start && res->end == end) अणु
 			/* adjust the end */
 			WARN_ON_ONCE(__adjust_resource(res, res->start,
 						       start - res->start));
-		} else {
-			/* split into two entries - we need a new resource */
-			if (!new_res) {
+		पूर्ण अन्यथा अणु
+			/* split पूर्णांकo two entries - we need a new resource */
+			अगर (!new_res) अणु
 				new_res = alloc_resource(GFP_ATOMIC);
-				if (!new_res) {
+				अगर (!new_res) अणु
 					alloc_nofail = true;
-					write_unlock(&resource_lock);
-					goto retry;
-				}
-			}
+					ग_लिखो_unlock(&resource_lock);
+					जाओ retry;
+				पूर्ण
+			पूर्ण
 			new_res->name = res->name;
 			new_res->start = end + 1;
 			new_res->end = res->end;
@@ -1402,506 +1403,506 @@ retry:
 			new_res->desc = res->desc;
 			new_res->parent = res->parent;
 			new_res->sibling = res->sibling;
-			new_res->child = NULL;
+			new_res->child = शून्य;
 
-			if (WARN_ON_ONCE(__adjust_resource(res, res->start,
+			अगर (WARN_ON_ONCE(__adjust_resource(res, res->start,
 							   start - res->start)))
-				break;
+				अवरोध;
 			res->sibling = new_res;
-			new_res = NULL;
-		}
+			new_res = शून्य;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	write_unlock(&resource_lock);
-	free_resource(new_res);
-}
-#endif	/* CONFIG_MEMORY_HOTREMOVE */
+	ग_लिखो_unlock(&resource_lock);
+	मुक्त_resource(new_res);
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_MEMORY_HOTREMOVE */
 
-#ifdef CONFIG_MEMORY_HOTPLUG
-static bool system_ram_resources_mergeable(struct resource *r1,
-					   struct resource *r2)
-{
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+अटल bool प्रणाली_ram_resources_mergeable(काष्ठा resource *r1,
+					   काष्ठा resource *r2)
+अणु
 	/* We assume either r1 or r2 is IORESOURCE_SYSRAM_MERGEABLE. */
-	return r1->flags == r2->flags && r1->end + 1 == r2->start &&
+	वापस r1->flags == r2->flags && r1->end + 1 == r2->start &&
 	       r1->name == r2->name && r1->desc == r2->desc &&
 	       !r1->child && !r2->child;
-}
+पूर्ण
 
 /**
- * merge_system_ram_resource - mark the System RAM resource mergeable and try to
+ * merge_प्रणाली_ram_resource - mark the System RAM resource mergeable and try to
  *	merge it with adjacent, mergeable resources
  * @res: resource descriptor
  *
- * This interface is intended for memory hotplug, whereby lots of contiguous
- * system ram resources are added (e.g., via add_memory*()) by a driver, and
- * the actual resource boundaries are not of interest (e.g., it might be
- * relevant for DIMMs). Only resources that are marked mergeable, that have the
- * same parent, and that don't have any children are considered. All mergeable
+ * This पूर्णांकerface is पूर्णांकended क्रम memory hotplug, whereby lots of contiguous
+ * प्रणाली ram resources are added (e.g., via add_memory*()) by a driver, and
+ * the actual resource boundaries are not of पूर्णांकerest (e.g., it might be
+ * relevant क्रम DIMMs). Only resources that are marked mergeable, that have the
+ * same parent, and that करोn't have any children are considered. All mergeable
  * resources must be immutable during the request.
  *
  * Note:
- * - The caller has to make sure that no pointers to resources that are
+ * - The caller has to make sure that no poपूर्णांकers to resources that are
  *   marked mergeable are used anymore after this call - the resource might
- *   be freed and the pointer might be stale!
+ *   be मुक्तd and the poपूर्णांकer might be stale!
  * - release_mem_region_adjustable() will split on demand on memory hotunplug
  */
-void merge_system_ram_resource(struct resource *res)
-{
-	const unsigned long flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
-	struct resource *cur;
+व्योम merge_प्रणाली_ram_resource(काष्ठा resource *res)
+अणु
+	स्थिर अचिन्हित दीर्घ flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
+	काष्ठा resource *cur;
 
-	if (WARN_ON_ONCE((res->flags & flags) != flags))
-		return;
+	अगर (WARN_ON_ONCE((res->flags & flags) != flags))
+		वापस;
 
-	write_lock(&resource_lock);
+	ग_लिखो_lock(&resource_lock);
 	res->flags |= IORESOURCE_SYSRAM_MERGEABLE;
 
 	/* Try to merge with next item in the list. */
 	cur = res->sibling;
-	if (cur && system_ram_resources_mergeable(res, cur)) {
+	अगर (cur && प्रणाली_ram_resources_mergeable(res, cur)) अणु
 		res->end = cur->end;
 		res->sibling = cur->sibling;
-		free_resource(cur);
-	}
+		मुक्त_resource(cur);
+	पूर्ण
 
 	/* Try to merge with previous item in the list. */
 	cur = res->parent->child;
-	while (cur && cur->sibling != res)
+	जबतक (cur && cur->sibling != res)
 		cur = cur->sibling;
-	if (cur && system_ram_resources_mergeable(cur, res)) {
+	अगर (cur && प्रणाली_ram_resources_mergeable(cur, res)) अणु
 		cur->end = res->end;
 		cur->sibling = res->sibling;
-		free_resource(res);
-	}
-	write_unlock(&resource_lock);
-}
-#endif	/* CONFIG_MEMORY_HOTPLUG */
+		मुक्त_resource(res);
+	पूर्ण
+	ग_लिखो_unlock(&resource_lock);
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_MEMORY_HOTPLUG */
 
 /*
  * Managed region resource
  */
-static void devm_resource_release(struct device *dev, void *ptr)
-{
-	struct resource **r = ptr;
+अटल व्योम devm_resource_release(काष्ठा device *dev, व्योम *ptr)
+अणु
+	काष्ठा resource **r = ptr;
 
 	release_resource(*r);
-}
+पूर्ण
 
 /**
  * devm_request_resource() - request and reserve an I/O or memory resource
- * @dev: device for which to request the resource
+ * @dev: device क्रम which to request the resource
  * @root: root of the resource tree from which to request the resource
  * @new: descriptor of the resource to request
  *
  * This is a device-managed version of request_resource(). There is usually
  * no need to release resources requested by this function explicitly since
  * that will be taken care of when the device is unbound from its driver.
- * If for some reason the resource needs to be released explicitly, because
- * of ordering issues for example, drivers must call devm_release_resource()
+ * If क्रम some reason the resource needs to be released explicitly, because
+ * of ordering issues क्रम example, drivers must call devm_release_resource()
  * rather than the regular release_resource().
  *
  * When a conflict is detected between any existing resources and the newly
- * requested resource, an error message will be printed.
+ * requested resource, an error message will be prपूर्णांकed.
  *
  * Returns 0 on success or a negative error code on failure.
  */
-int devm_request_resource(struct device *dev, struct resource *root,
-			  struct resource *new)
-{
-	struct resource *conflict, **ptr;
+पूर्णांक devm_request_resource(काष्ठा device *dev, काष्ठा resource *root,
+			  काष्ठा resource *new)
+अणु
+	काष्ठा resource *conflict, **ptr;
 
-	ptr = devres_alloc(devm_resource_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	ptr = devres_alloc(devm_resource_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस -ENOMEM;
 
 	*ptr = new;
 
 	conflict = request_resource_conflict(root, new);
-	if (conflict) {
+	अगर (conflict) अणु
 		dev_err(dev, "resource collision: %pR conflicts with %s %pR\n",
 			new, conflict->name, conflict);
-		devres_free(ptr);
-		return -EBUSY;
-	}
+		devres_मुक्त(ptr);
+		वापस -EBUSY;
+	पूर्ण
 
 	devres_add(dev, ptr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(devm_request_resource);
 
-static int devm_resource_match(struct device *dev, void *res, void *data)
-{
-	struct resource **ptr = res;
+अटल पूर्णांक devm_resource_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा resource **ptr = res;
 
-	return *ptr == data;
-}
+	वापस *ptr == data;
+पूर्ण
 
 /**
  * devm_release_resource() - release a previously requested resource
- * @dev: device for which to release the resource
+ * @dev: device क्रम which to release the resource
  * @new: descriptor of the resource to release
  *
  * Releases a resource previously requested using devm_request_resource().
  */
-void devm_release_resource(struct device *dev, struct resource *new)
-{
+व्योम devm_release_resource(काष्ठा device *dev, काष्ठा resource *new)
+अणु
 	WARN_ON(devres_release(dev, devm_resource_release, devm_resource_match,
 			       new));
-}
+पूर्ण
 EXPORT_SYMBOL(devm_release_resource);
 
-struct region_devres {
-	struct resource *parent;
-	resource_size_t start;
-	resource_size_t n;
-};
+काष्ठा region_devres अणु
+	काष्ठा resource *parent;
+	resource_माप_प्रकार start;
+	resource_माप_प्रकार n;
+पूर्ण;
 
-static void devm_region_release(struct device *dev, void *res)
-{
-	struct region_devres *this = res;
+अटल व्योम devm_region_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा region_devres *this = res;
 
 	__release_region(this->parent, this->start, this->n);
-}
+पूर्ण
 
-static int devm_region_match(struct device *dev, void *res, void *match_data)
-{
-	struct region_devres *this = res, *match = match_data;
+अटल पूर्णांक devm_region_match(काष्ठा device *dev, व्योम *res, व्योम *match_data)
+अणु
+	काष्ठा region_devres *this = res, *match = match_data;
 
-	return this->parent == match->parent &&
+	वापस this->parent == match->parent &&
 		this->start == match->start && this->n == match->n;
-}
+पूर्ण
 
-struct resource *
-__devm_request_region(struct device *dev, struct resource *parent,
-		      resource_size_t start, resource_size_t n, const char *name)
-{
-	struct region_devres *dr = NULL;
-	struct resource *res;
+काष्ठा resource *
+__devm_request_region(काष्ठा device *dev, काष्ठा resource *parent,
+		      resource_माप_प्रकार start, resource_माप_प्रकार n, स्थिर अक्षर *name)
+अणु
+	काष्ठा region_devres *dr = शून्य;
+	काष्ठा resource *res;
 
-	dr = devres_alloc(devm_region_release, sizeof(struct region_devres),
+	dr = devres_alloc(devm_region_release, माप(काष्ठा region_devres),
 			  GFP_KERNEL);
-	if (!dr)
-		return NULL;
+	अगर (!dr)
+		वापस शून्य;
 
 	dr->parent = parent;
 	dr->start = start;
 	dr->n = n;
 
 	res = __request_region(parent, start, n, name, 0);
-	if (res)
+	अगर (res)
 		devres_add(dev, dr);
-	else
-		devres_free(dr);
+	अन्यथा
+		devres_मुक्त(dr);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(__devm_request_region);
 
-void __devm_release_region(struct device *dev, struct resource *parent,
-			   resource_size_t start, resource_size_t n)
-{
-	struct region_devres match_data = { parent, start, n };
+व्योम __devm_release_region(काष्ठा device *dev, काष्ठा resource *parent,
+			   resource_माप_प्रकार start, resource_माप_प्रकार n)
+अणु
+	काष्ठा region_devres match_data = अणु parent, start, n पूर्ण;
 
 	__release_region(parent, start, n);
 	WARN_ON(devres_destroy(dev, devm_region_release, devm_region_match,
 			       &match_data));
-}
+पूर्ण
 EXPORT_SYMBOL(__devm_release_region);
 
 /*
  * Reserve I/O ports or memory based on "reserve=" kernel parameter.
  */
-#define MAXRESERVE 4
-static int __init reserve_setup(char *str)
-{
-	static int reserved;
-	static struct resource reserve[MAXRESERVE];
+#घोषणा MAXRESERVE 4
+अटल पूर्णांक __init reserve_setup(अक्षर *str)
+अणु
+	अटल पूर्णांक reserved;
+	अटल काष्ठा resource reserve[MAXRESERVE];
 
-	for (;;) {
-		unsigned int io_start, io_num;
-		int x = reserved;
-		struct resource *parent;
+	क्रम (;;) अणु
+		अचिन्हित पूर्णांक io_start, io_num;
+		पूर्णांक x = reserved;
+		काष्ठा resource *parent;
 
-		if (get_option(&str, &io_start) != 2)
-			break;
-		if (get_option(&str, &io_num) == 0)
-			break;
-		if (x < MAXRESERVE) {
-			struct resource *res = reserve + x;
+		अगर (get_option(&str, &io_start) != 2)
+			अवरोध;
+		अगर (get_option(&str, &io_num) == 0)
+			अवरोध;
+		अगर (x < MAXRESERVE) अणु
+			काष्ठा resource *res = reserve + x;
 
 			/*
 			 * If the region starts below 0x10000, we assume it's
 			 * I/O port space; otherwise assume it's memory.
 			 */
-			if (io_start < 0x10000) {
+			अगर (io_start < 0x10000) अणु
 				res->flags = IORESOURCE_IO;
 				parent = &ioport_resource;
-			} else {
+			पूर्ण अन्यथा अणु
 				res->flags = IORESOURCE_MEM;
 				parent = &iomem_resource;
-			}
+			पूर्ण
 			res->name = "reserved";
 			res->start = io_start;
 			res->end = io_start + io_num - 1;
 			res->flags |= IORESOURCE_BUSY;
 			res->desc = IORES_DESC_NONE;
-			res->child = NULL;
-			if (request_resource(parent, res) == 0)
+			res->child = शून्य;
+			अगर (request_resource(parent, res) == 0)
 				reserved = x+1;
-		}
-	}
-	return 1;
-}
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 __setup("reserve=", reserve_setup);
 
 /*
- * Check if the requested addr and size spans more than any slot in the
+ * Check अगर the requested addr and size spans more than any slot in the
  * iomem resource tree.
  */
-int iomem_map_sanity_check(resource_size_t addr, unsigned long size)
-{
-	struct resource *p = &iomem_resource;
-	int err = 0;
+पूर्णांक iomem_map_sanity_check(resource_माप_प्रकार addr, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा resource *p = &iomem_resource;
+	पूर्णांक err = 0;
 	loff_t l;
 
-	read_lock(&resource_lock);
-	for (p = p->child; p ; p = r_next(NULL, p, &l)) {
+	पढ़ो_lock(&resource_lock);
+	क्रम (p = p->child; p ; p = r_next(शून्य, p, &l)) अणु
 		/*
 		 * We can probably skip the resources without
 		 * IORESOURCE_IO attribute?
 		 */
-		if (p->start >= addr + size)
-			continue;
-		if (p->end < addr)
-			continue;
-		if (PFN_DOWN(p->start) <= PFN_DOWN(addr) &&
+		अगर (p->start >= addr + size)
+			जारी;
+		अगर (p->end < addr)
+			जारी;
+		अगर (PFN_DOWN(p->start) <= PFN_DOWN(addr) &&
 		    PFN_DOWN(p->end) >= PFN_DOWN(addr + size - 1))
-			continue;
+			जारी;
 		/*
-		 * if a resource is "BUSY", it's not a hardware resource
-		 * but a driver mapping of such a resource; we don't want
-		 * to warn for those; some drivers legitimately map only
+		 * अगर a resource is "BUSY", it's not a hardware resource
+		 * but a driver mapping of such a resource; we करोn't want
+		 * to warn क्रम those; some drivers legitimately map only
 		 * partial hardware resources. (example: vesafb)
 		 */
-		if (p->flags & IORESOURCE_BUSY)
-			continue;
+		अगर (p->flags & IORESOURCE_BUSY)
+			जारी;
 
-		printk(KERN_WARNING "resource sanity check: requesting [mem %#010llx-%#010llx], which spans more than %s %pR\n",
-		       (unsigned long long)addr,
-		       (unsigned long long)(addr + size - 1),
+		prपूर्णांकk(KERN_WARNING "resource sanity check: requesting [mem %#010llx-%#010llx], which spans more than %s %pR\n",
+		       (अचिन्हित दीर्घ दीर्घ)addr,
+		       (अचिन्हित दीर्घ दीर्घ)(addr + size - 1),
 		       p->name, p);
 		err = -1;
-		break;
-	}
-	read_unlock(&resource_lock);
+		अवरोध;
+	पूर्ण
+	पढ़ो_unlock(&resource_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_STRICT_DEVMEM
-static int strict_iomem_checks = 1;
-#else
-static int strict_iomem_checks;
-#endif
+#अगर_घोषित CONFIG_STRICT_DEVMEM
+अटल पूर्णांक strict_iomem_checks = 1;
+#अन्यथा
+अटल पूर्णांक strict_iomem_checks;
+#पूर्ण_अगर
 
 /*
- * check if an address is reserved in the iomem resource tree
- * returns true if reserved, false if not reserved.
+ * check अगर an address is reserved in the iomem resource tree
+ * वापसs true अगर reserved, false अगर not reserved.
  */
 bool iomem_is_exclusive(u64 addr)
-{
-	struct resource *p = &iomem_resource;
+अणु
+	काष्ठा resource *p = &iomem_resource;
 	bool err = false;
 	loff_t l;
-	int size = PAGE_SIZE;
+	पूर्णांक size = PAGE_SIZE;
 
-	if (!strict_iomem_checks)
-		return false;
+	अगर (!strict_iomem_checks)
+		वापस false;
 
 	addr = addr & PAGE_MASK;
 
-	read_lock(&resource_lock);
-	for (p = p->child; p ; p = r_next(NULL, p, &l)) {
+	पढ़ो_lock(&resource_lock);
+	क्रम (p = p->child; p ; p = r_next(शून्य, p, &l)) अणु
 		/*
 		 * We can probably skip the resources without
 		 * IORESOURCE_IO attribute?
 		 */
-		if (p->start >= addr + size)
-			break;
-		if (p->end < addr)
-			continue;
+		अगर (p->start >= addr + size)
+			अवरोध;
+		अगर (p->end < addr)
+			जारी;
 		/*
-		 * A resource is exclusive if IORESOURCE_EXCLUSIVE is set
+		 * A resource is exclusive अगर IORESOURCE_EXCLUSIVE is set
 		 * or CONFIG_IO_STRICT_DEVMEM is enabled and the
 		 * resource is busy.
 		 */
-		if ((p->flags & IORESOURCE_BUSY) == 0)
-			continue;
-		if (IS_ENABLED(CONFIG_IO_STRICT_DEVMEM)
-				|| p->flags & IORESOURCE_EXCLUSIVE) {
+		अगर ((p->flags & IORESOURCE_BUSY) == 0)
+			जारी;
+		अगर (IS_ENABLED(CONFIG_IO_STRICT_DEVMEM)
+				|| p->flags & IORESOURCE_EXCLUSIVE) अणु
 			err = true;
-			break;
-		}
-	}
-	read_unlock(&resource_lock);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&resource_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct resource_entry *resource_list_create_entry(struct resource *res,
-						  size_t extra_size)
-{
-	struct resource_entry *entry;
+काष्ठा resource_entry *resource_list_create_entry(काष्ठा resource *res,
+						  माप_प्रकार extra_size)
+अणु
+	काष्ठा resource_entry *entry;
 
-	entry = kzalloc(sizeof(*entry) + extra_size, GFP_KERNEL);
-	if (entry) {
+	entry = kzalloc(माप(*entry) + extra_size, GFP_KERNEL);
+	अगर (entry) अणु
 		INIT_LIST_HEAD(&entry->node);
 		entry->res = res ? res : &entry->__res;
-	}
+	पूर्ण
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 EXPORT_SYMBOL(resource_list_create_entry);
 
-void resource_list_free(struct list_head *head)
-{
-	struct resource_entry *entry, *tmp;
+व्योम resource_list_मुक्त(काष्ठा list_head *head)
+अणु
+	काष्ठा resource_entry *entry, *पंचांगp;
 
-	list_for_each_entry_safe(entry, tmp, head, node)
+	list_क्रम_each_entry_safe(entry, पंचांगp, head, node)
 		resource_list_destroy_entry(entry);
-}
-EXPORT_SYMBOL(resource_list_free);
+पूर्ण
+EXPORT_SYMBOL(resource_list_मुक्त);
 
-#ifdef CONFIG_DEVICE_PRIVATE
-static struct resource *__request_free_mem_region(struct device *dev,
-		struct resource *base, unsigned long size, const char *name)
-{
-	resource_size_t end, addr;
-	struct resource *res;
-	struct region_devres *dr = NULL;
+#अगर_घोषित CONFIG_DEVICE_PRIVATE
+अटल काष्ठा resource *__request_मुक्त_mem_region(काष्ठा device *dev,
+		काष्ठा resource *base, अचिन्हित दीर्घ size, स्थिर अक्षर *name)
+अणु
+	resource_माप_प्रकार end, addr;
+	काष्ठा resource *res;
+	काष्ठा region_devres *dr = शून्य;
 
 	size = ALIGN(size, 1UL << PA_SECTION_SHIFT);
-	end = min_t(unsigned long, base->end, (1UL << MAX_PHYSMEM_BITS) - 1);
+	end = min_t(अचिन्हित दीर्घ, base->end, (1UL << MAX_PHYSMEM_BITS) - 1);
 	addr = end - size + 1UL;
 
 	res = alloc_resource(GFP_KERNEL);
-	if (!res)
-		return ERR_PTR(-ENOMEM);
+	अगर (!res)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (dev) {
+	अगर (dev) अणु
 		dr = devres_alloc(devm_region_release,
-				sizeof(struct region_devres), GFP_KERNEL);
-		if (!dr) {
-			free_resource(res);
-			return ERR_PTR(-ENOMEM);
-		}
-	}
+				माप(काष्ठा region_devres), GFP_KERNEL);
+		अगर (!dr) अणु
+			मुक्त_resource(res);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
+	पूर्ण
 
-	write_lock(&resource_lock);
-	for (; addr > size && addr >= base->start; addr -= size) {
-		if (__region_intersects(addr, size, 0, IORES_DESC_NONE) !=
+	ग_लिखो_lock(&resource_lock);
+	क्रम (; addr > size && addr >= base->start; addr -= size) अणु
+		अगर (__region_पूर्णांकersects(addr, size, 0, IORES_DESC_NONE) !=
 				REGION_DISJOINT)
-			continue;
+			जारी;
 
-		if (__request_region_locked(res, &iomem_resource, addr, size,
+		अगर (__request_region_locked(res, &iomem_resource, addr, size,
 						name, 0))
-			break;
+			अवरोध;
 
-		if (dev) {
+		अगर (dev) अणु
 			dr->parent = &iomem_resource;
 			dr->start = addr;
 			dr->n = size;
 			devres_add(dev, dr);
-		}
+		पूर्ण
 
 		res->desc = IORES_DESC_DEVICE_PRIVATE_MEMORY;
-		write_unlock(&resource_lock);
+		ग_लिखो_unlock(&resource_lock);
 
 		/*
 		 * A driver is claiming this region so revoke any mappings.
 		 */
 		revoke_iomem(res);
-		return res;
-	}
-	write_unlock(&resource_lock);
+		वापस res;
+	पूर्ण
+	ग_लिखो_unlock(&resource_lock);
 
-	free_resource(res);
-	if (dr)
-		devres_free(dr);
+	मुक्त_resource(res);
+	अगर (dr)
+		devres_मुक्त(dr);
 
-	return ERR_PTR(-ERANGE);
-}
+	वापस ERR_PTR(-दुस्फल);
+पूर्ण
 
 /**
- * devm_request_free_mem_region - find free region for device private memory
+ * devm_request_मुक्त_mem_region - find मुक्त region क्रम device निजी memory
  *
- * @dev: device struct to bind the resource to
+ * @dev: device काष्ठा to bind the resource to
  * @size: size in bytes of the device memory to add
  * @base: resource tree to look in
  *
  * This function tries to find an empty range of physical address big enough to
  * contain the new resource, so that it can later be hotplugged as ZONE_DEVICE
- * memory, which in turn allocates struct pages.
+ * memory, which in turn allocates काष्ठा pages.
  */
-struct resource *devm_request_free_mem_region(struct device *dev,
-		struct resource *base, unsigned long size)
-{
-	return __request_free_mem_region(dev, base, size, dev_name(dev));
-}
-EXPORT_SYMBOL_GPL(devm_request_free_mem_region);
+काष्ठा resource *devm_request_मुक्त_mem_region(काष्ठा device *dev,
+		काष्ठा resource *base, अचिन्हित दीर्घ size)
+अणु
+	वापस __request_मुक्त_mem_region(dev, base, size, dev_name(dev));
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_request_मुक्त_mem_region);
 
-struct resource *request_free_mem_region(struct resource *base,
-		unsigned long size, const char *name)
-{
-	return __request_free_mem_region(NULL, base, size, name);
-}
-EXPORT_SYMBOL_GPL(request_free_mem_region);
+काष्ठा resource *request_मुक्त_mem_region(काष्ठा resource *base,
+		अचिन्हित दीर्घ size, स्थिर अक्षर *name)
+अणु
+	वापस __request_मुक्त_mem_region(शून्य, base, size, name);
+पूर्ण
+EXPORT_SYMBOL_GPL(request_मुक्त_mem_region);
 
-#endif /* CONFIG_DEVICE_PRIVATE */
+#पूर्ण_अगर /* CONFIG_DEVICE_PRIVATE */
 
-static int __init strict_iomem(char *str)
-{
-	if (strstr(str, "relaxed"))
+अटल पूर्णांक __init strict_iomem(अक्षर *str)
+अणु
+	अगर (म_माला(str, "relaxed"))
 		strict_iomem_checks = 0;
-	if (strstr(str, "strict"))
+	अगर (म_माला(str, "strict"))
 		strict_iomem_checks = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int iomem_fs_init_fs_context(struct fs_context *fc)
-{
-	return init_pseudo(fc, DEVMEM_MAGIC) ? 0 : -ENOMEM;
-}
+अटल पूर्णांक iomem_fs_init_fs_context(काष्ठा fs_context *fc)
+अणु
+	वापस init_pseuकरो(fc, DEVMEM_MAGIC) ? 0 : -ENOMEM;
+पूर्ण
 
-static struct file_system_type iomem_fs_type = {
+अटल काष्ठा file_प्रणाली_type iomem_fs_type = अणु
 	.name		= "iomem",
 	.owner		= THIS_MODULE,
 	.init_fs_context = iomem_fs_init_fs_context,
-	.kill_sb	= kill_anon_super,
-};
+	.समाप्त_sb	= समाप्त_anon_super,
+पूर्ण;
 
-static int __init iomem_init_inode(void)
-{
-	static struct vfsmount *iomem_vfs_mount;
-	static int iomem_fs_cnt;
-	struct inode *inode;
-	int rc;
+अटल पूर्णांक __init iomem_init_inode(व्योम)
+अणु
+	अटल काष्ठा vfsmount *iomem_vfs_mount;
+	अटल पूर्णांक iomem_fs_cnt;
+	काष्ठा inode *inode;
+	पूर्णांक rc;
 
 	rc = simple_pin_fs(&iomem_fs_type, &iomem_vfs_mount, &iomem_fs_cnt);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_err("Cannot mount iomem pseudo filesystem: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	inode = alloc_anon_inode(iomem_vfs_mount->mnt_sb);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		rc = PTR_ERR(inode);
 		pr_err("Cannot allocate inode for iomem: %d\n", rc);
 		simple_release_fs(&iomem_vfs_mount, &iomem_fs_cnt);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
 	 * Publish iomem revocation inode initialized.
@@ -1909,8 +1910,8 @@ static int __init iomem_init_inode(void)
 	 */
 	smp_store_release(&iomem_inode, inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 fs_initcall(iomem_init_inode);
 

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __HAL_PHY_REG_H__
-#define __HAL_PHY_REG_H__
+#अगर_अघोषित __HAL_PHY_REG_H__
+#घोषणा __HAL_PHY_REG_H__
 
-/* for PutRFRegsetting & GetRFRegSetting BitMask */
-/* if (RTL92SE_FPGA_VERIFY == 1) */
+/* क्रम PutRFRegsetting & GetRFRegSetting BitMask */
+/* अगर (RTL92SE_FPGA_VERIFY == 1) */
 /* define		bRFRegOffsetMask	0xfff */
-/* else */
-#define			bRFRegOffsetMask	0xfffff
-/* endif */
+/* अन्यथा */
+#घोषणा			bRFRegOffsetMask	0xfffff
+/* endअगर */
 
-#endif /* __HAL_PHY_REG_H__ */
+#पूर्ण_अगर /* __HAL_PHY_REG_H__ */

@@ -1,14 +1,15 @@
-/* set_timer latency test
+<शैली गुरु>
+/* set_समयr latency test
  *		John Stultz (john.stultz@linaro.org)
  *              (C) Copyright Linaro 2014
  *              Licensed under the GPLv2
  *
- *   This test makes sure the set_timer api is correct
+ *   This test makes sure the set_समयr api is correct
  *
  *  To build:
- *	$ gcc set-timer-lat.c -o set-timer-lat -lrt
+ *	$ gcc set-समयr-lat.c -o set-समयr-lat -lrt
  *
- *   This program is free software: you can redistribute it and/or modify
+ *   This program is मुक्त software: you can redistribute it and/or modअगरy
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -16,268 +17,268 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU General Public License क्रम more details.
  */
 
 
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <time.h>
-#include <string.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include "../kselftest.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <समय.स>
+#समावेश <माला.स>
+#समावेश <संकेत.स>
+#समावेश <मानककोष.स>
+#समावेश <pthपढ़ो.h>
+#समावेश "../kselftest.h"
 
-#define CLOCK_REALTIME			0
-#define CLOCK_MONOTONIC			1
-#define CLOCK_PROCESS_CPUTIME_ID	2
-#define CLOCK_THREAD_CPUTIME_ID		3
-#define CLOCK_MONOTONIC_RAW		4
-#define CLOCK_REALTIME_COARSE		5
-#define CLOCK_MONOTONIC_COARSE		6
-#define CLOCK_BOOTTIME			7
-#define CLOCK_REALTIME_ALARM		8
-#define CLOCK_BOOTTIME_ALARM		9
-#define CLOCK_HWSPECIFIC		10
-#define CLOCK_TAI			11
-#define NR_CLOCKIDS			12
-
-
-#define NSEC_PER_SEC 1000000000ULL
-#define UNRESONABLE_LATENCY 40000000 /* 40ms in nanosecs */
-
-#define TIMER_SECS 1
-int alarmcount;
-int clock_id;
-struct timespec start_time;
-long long max_latency_ns;
-int timer_fired_early;
-
-char *clockstring(int clockid)
-{
-	switch (clockid) {
-	case CLOCK_REALTIME:
-		return "CLOCK_REALTIME";
-	case CLOCK_MONOTONIC:
-		return "CLOCK_MONOTONIC";
-	case CLOCK_PROCESS_CPUTIME_ID:
-		return "CLOCK_PROCESS_CPUTIME_ID";
-	case CLOCK_THREAD_CPUTIME_ID:
-		return "CLOCK_THREAD_CPUTIME_ID";
-	case CLOCK_MONOTONIC_RAW:
-		return "CLOCK_MONOTONIC_RAW";
-	case CLOCK_REALTIME_COARSE:
-		return "CLOCK_REALTIME_COARSE";
-	case CLOCK_MONOTONIC_COARSE:
-		return "CLOCK_MONOTONIC_COARSE";
-	case CLOCK_BOOTTIME:
-		return "CLOCK_BOOTTIME";
-	case CLOCK_REALTIME_ALARM:
-		return "CLOCK_REALTIME_ALARM";
-	case CLOCK_BOOTTIME_ALARM:
-		return "CLOCK_BOOTTIME_ALARM";
-	case CLOCK_TAI:
-		return "CLOCK_TAI";
-	};
-	return "UNKNOWN_CLOCKID";
-}
+#घोषणा CLOCK_REALTIME			0
+#घोषणा CLOCK_MONOTONIC			1
+#घोषणा CLOCK_PROCESS_CPUTIME_ID	2
+#घोषणा CLOCK_THREAD_CPUTIME_ID		3
+#घोषणा CLOCK_MONOTONIC_RAW		4
+#घोषणा CLOCK_REALTIME_COARSE		5
+#घोषणा CLOCK_MONOTONIC_COARSE		6
+#घोषणा CLOCK_BOOTTIME			7
+#घोषणा CLOCK_REALTIME_ALARM		8
+#घोषणा CLOCK_BOOTTIME_ALARM		9
+#घोषणा CLOCK_HWSPECIFIC		10
+#घोषणा CLOCK_TAI			11
+#घोषणा NR_CLOCKIDS			12
 
 
-long long timespec_sub(struct timespec a, struct timespec b)
-{
-	long long ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
+#घोषणा NSEC_PER_SEC 1000000000ULL
+#घोषणा UNRESONABLE_LATENCY 40000000 /* 40ms in nanosecs */
+
+#घोषणा TIMER_SECS 1
+पूर्णांक alarmcount;
+पूर्णांक घड़ी_id;
+काष्ठा बारpec start_समय;
+दीर्घ दीर्घ max_latency_ns;
+पूर्णांक समयr_fired_early;
+
+अक्षर *घड़ीstring(पूर्णांक घड़ीid)
+अणु
+	चयन (घड़ीid) अणु
+	हाल CLOCK_REALTIME:
+		वापस "CLOCK_REALTIME";
+	हाल CLOCK_MONOTONIC:
+		वापस "CLOCK_MONOTONIC";
+	हाल CLOCK_PROCESS_CPUTIME_ID:
+		वापस "CLOCK_PROCESS_CPUTIME_ID";
+	हाल CLOCK_THREAD_CPUTIME_ID:
+		वापस "CLOCK_THREAD_CPUTIME_ID";
+	हाल CLOCK_MONOTONIC_RAW:
+		वापस "CLOCK_MONOTONIC_RAW";
+	हाल CLOCK_REALTIME_COARSE:
+		वापस "CLOCK_REALTIME_COARSE";
+	हाल CLOCK_MONOTONIC_COARSE:
+		वापस "CLOCK_MONOTONIC_COARSE";
+	हाल CLOCK_BOOTTIME:
+		वापस "CLOCK_BOOTTIME";
+	हाल CLOCK_REALTIME_ALARM:
+		वापस "CLOCK_REALTIME_ALARM";
+	हाल CLOCK_BOOTTIME_ALARM:
+		वापस "CLOCK_BOOTTIME_ALARM";
+	हाल CLOCK_TAI:
+		वापस "CLOCK_TAI";
+	पूर्ण;
+	वापस "UNKNOWN_CLOCKID";
+पूर्ण
+
+
+दीर्घ दीर्घ बारpec_sub(काष्ठा बारpec a, काष्ठा बारpec b)
+अणु
+	दीर्घ दीर्घ ret = NSEC_PER_SEC * b.tv_sec + b.tv_nsec;
 
 	ret -= NSEC_PER_SEC * a.tv_sec + a.tv_nsec;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-void sigalarm(int signo)
-{
-	long long delta_ns;
-	struct timespec ts;
+व्योम sigalarm(पूर्णांक signo)
+अणु
+	दीर्घ दीर्घ delta_ns;
+	काष्ठा बारpec ts;
 
-	clock_gettime(clock_id, &ts);
+	घड़ी_समय_लो(घड़ी_id, &ts);
 	alarmcount++;
 
-	delta_ns = timespec_sub(start_time, ts);
+	delta_ns = बारpec_sub(start_समय, ts);
 	delta_ns -= NSEC_PER_SEC * TIMER_SECS * alarmcount;
 
-	if (delta_ns < 0)
-		timer_fired_early = 1;
+	अगर (delta_ns < 0)
+		समयr_fired_early = 1;
 
-	if (delta_ns > max_latency_ns)
+	अगर (delta_ns > max_latency_ns)
 		max_latency_ns = delta_ns;
-}
+पूर्ण
 
-void describe_timer(int flags, int interval)
-{
-	printf("%-22s %s %s ",
-			clockstring(clock_id),
+व्योम describe_समयr(पूर्णांक flags, पूर्णांक पूर्णांकerval)
+अणु
+	म_लिखो("%-22s %s %s ",
+			घड़ीstring(घड़ी_id),
 			flags ? "ABSTIME":"RELTIME",
-			interval ? "PERIODIC":"ONE-SHOT");
-}
+			पूर्णांकerval ? "PERIODIC":"ONE-SHOT");
+पूर्ण
 
-int setup_timer(int clock_id, int flags, int interval, timer_t *tm1)
-{
-	struct sigevent se;
-	struct itimerspec its1, its2;
-	int err;
+पूर्णांक setup_समयr(पूर्णांक घड़ी_id, पूर्णांक flags, पूर्णांक पूर्णांकerval, समयr_t *पंचांग1)
+अणु
+	काष्ठा sigevent se;
+	काष्ठा iसमयrspec its1, its2;
+	पूर्णांक err;
 
-	/* Set up timer: */
-	memset(&se, 0, sizeof(se));
-	se.sigev_notify = SIGEV_SIGNAL;
+	/* Set up समयr: */
+	स_रखो(&se, 0, माप(se));
+	se.sigev_notअगरy = SIGEV_SIGNAL;
 	se.sigev_signo = SIGRTMAX;
-	se.sigev_value.sival_int = 0;
+	se.sigev_value.sival_पूर्णांक = 0;
 
 	max_latency_ns = 0;
 	alarmcount = 0;
-	timer_fired_early = 0;
+	समयr_fired_early = 0;
 
-	err = timer_create(clock_id, &se, tm1);
-	if (err) {
-		if ((clock_id == CLOCK_REALTIME_ALARM) ||
-		    (clock_id == CLOCK_BOOTTIME_ALARM)) {
-			printf("%-22s %s missing CAP_WAKE_ALARM?    : [UNSUPPORTED]\n",
-					clockstring(clock_id),
+	err = समयr_create(घड़ी_id, &se, पंचांग1);
+	अगर (err) अणु
+		अगर ((घड़ी_id == CLOCK_REALTIME_ALARM) ||
+		    (घड़ी_id == CLOCK_BOOTTIME_ALARM)) अणु
+			म_लिखो("%-22s %s missing CAP_WAKE_ALARM?    : [UNSUPPORTED]\n",
+					घड़ीstring(घड़ी_id),
 					flags ? "ABSTIME":"RELTIME");
-			/* Indicate timer isn't set, so caller doesn't wait */
-			return 1;
-		}
-		printf("%s - timer_create() failed\n", clockstring(clock_id));
-		return -1;
-	}
+			/* Indicate समयr isn't set, so caller doesn't रुको */
+			वापस 1;
+		पूर्ण
+		म_लिखो("%s - timer_create() failed\n", घड़ीstring(घड़ी_id));
+		वापस -1;
+	पूर्ण
 
-	clock_gettime(clock_id, &start_time);
-	if (flags) {
-		its1.it_value = start_time;
+	घड़ी_समय_लो(घड़ी_id, &start_समय);
+	अगर (flags) अणु
+		its1.it_value = start_समय;
 		its1.it_value.tv_sec += TIMER_SECS;
-	} else {
+	पूर्ण अन्यथा अणु
 		its1.it_value.tv_sec = TIMER_SECS;
 		its1.it_value.tv_nsec = 0;
-	}
-	its1.it_interval.tv_sec = interval;
-	its1.it_interval.tv_nsec = 0;
+	पूर्ण
+	its1.it_पूर्णांकerval.tv_sec = पूर्णांकerval;
+	its1.it_पूर्णांकerval.tv_nsec = 0;
 
-	err = timer_settime(*tm1, flags, &its1, &its2);
-	if (err) {
-		printf("%s - timer_settime() failed\n", clockstring(clock_id));
-		return -1;
-	}
+	err = समयr_समय_रखो(*पंचांग1, flags, &its1, &its2);
+	अगर (err) अणु
+		म_लिखो("%s - timer_settime() failed\n", घड़ीstring(घड़ी_id));
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int check_timer_latency(int flags, int interval)
-{
-	int err = 0;
+पूर्णांक check_समयr_latency(पूर्णांक flags, पूर्णांक पूर्णांकerval)
+अणु
+	पूर्णांक err = 0;
 
-	describe_timer(flags, interval);
-	printf("timer fired early: %7d : ", timer_fired_early);
-	if (!timer_fired_early) {
-		printf("[OK]\n");
-	} else {
-		printf("[FAILED]\n");
+	describe_समयr(flags, पूर्णांकerval);
+	म_लिखो("timer fired early: %7d : ", समयr_fired_early);
+	अगर (!समयr_fired_early) अणु
+		म_लिखो("[OK]\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("[FAILED]\n");
 		err = -1;
-	}
+	पूर्ण
 
-	describe_timer(flags, interval);
-	printf("max latency: %10lld ns : ", max_latency_ns);
+	describe_समयr(flags, पूर्णांकerval);
+	म_लिखो("max latency: %10lld ns : ", max_latency_ns);
 
-	if (max_latency_ns < UNRESONABLE_LATENCY) {
-		printf("[OK]\n");
-	} else {
-		printf("[FAILED]\n");
+	अगर (max_latency_ns < UNRESONABLE_LATENCY) अणु
+		म_लिखो("[OK]\n");
+	पूर्ण अन्यथा अणु
+		म_लिखो("[FAILED]\n");
 		err = -1;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-int check_alarmcount(int flags, int interval)
-{
-	describe_timer(flags, interval);
-	printf("count: %19d : ", alarmcount);
-	if (alarmcount == 1) {
-		printf("[OK]\n");
-		return 0;
-	}
-	printf("[FAILED]\n");
-	return -1;
-}
+पूर्णांक check_alarmcount(पूर्णांक flags, पूर्णांक पूर्णांकerval)
+अणु
+	describe_समयr(flags, पूर्णांकerval);
+	म_लिखो("count: %19d : ", alarmcount);
+	अगर (alarmcount == 1) अणु
+		म_लिखो("[OK]\n");
+		वापस 0;
+	पूर्ण
+	म_लिखो("[FAILED]\n");
+	वापस -1;
+पूर्ण
 
-int do_timer(int clock_id, int flags)
-{
-	timer_t tm1;
-	const int interval = TIMER_SECS;
-	int err;
+पूर्णांक करो_समयr(पूर्णांक घड़ी_id, पूर्णांक flags)
+अणु
+	समयr_t पंचांग1;
+	स्थिर पूर्णांक पूर्णांकerval = TIMER_SECS;
+	पूर्णांक err;
 
-	err = setup_timer(clock_id, flags, interval, &tm1);
-	/* Unsupported case - return 0 to not fail the test */
-	if (err)
-		return err == 1 ? 0 : err;
+	err = setup_समयr(घड़ी_id, flags, पूर्णांकerval, &पंचांग1);
+	/* Unsupported हाल - वापस 0 to not fail the test */
+	अगर (err)
+		वापस err == 1 ? 0 : err;
 
-	while (alarmcount < 5)
+	जबतक (alarmcount < 5)
 		sleep(1);
 
-	timer_delete(tm1);
-	return check_timer_latency(flags, interval);
-}
+	समयr_delete(पंचांग1);
+	वापस check_समयr_latency(flags, पूर्णांकerval);
+पूर्ण
 
-int do_timer_oneshot(int clock_id, int flags)
-{
-	timer_t tm1;
-	const int interval = 0;
-	struct timeval timeout;
-	int err;
+पूर्णांक करो_समयr_oneshot(पूर्णांक घड़ी_id, पूर्णांक flags)
+अणु
+	समयr_t पंचांग1;
+	स्थिर पूर्णांक पूर्णांकerval = 0;
+	काष्ठा समयval समयout;
+	पूर्णांक err;
 
-	err = setup_timer(clock_id, flags, interval, &tm1);
-	/* Unsupported case - return 0 to not fail the test */
-	if (err)
-		return err == 1 ? 0 : err;
+	err = setup_समयr(घड़ी_id, flags, पूर्णांकerval, &पंचांग1);
+	/* Unsupported हाल - वापस 0 to not fail the test */
+	अगर (err)
+		वापस err == 1 ? 0 : err;
 
-	memset(&timeout, 0, sizeof(timeout));
-	timeout.tv_sec = 5;
-	do {
-		err = select(0, NULL, NULL, NULL, &timeout);
-	} while (err == -1 && errno == EINTR);
+	स_रखो(&समयout, 0, माप(समयout));
+	समयout.tv_sec = 5;
+	करो अणु
+		err = select(0, शून्य, शून्य, शून्य, &समयout);
+	पूर्ण जबतक (err == -1 && त्रुटि_सं == EINTR);
 
-	timer_delete(tm1);
-	err = check_timer_latency(flags, interval);
-	err |= check_alarmcount(flags, interval);
-	return err;
-}
+	समयr_delete(पंचांग1);
+	err = check_समयr_latency(flags, पूर्णांकerval);
+	err |= check_alarmcount(flags, पूर्णांकerval);
+	वापस err;
+पूर्ण
 
-int main(void)
-{
-	struct sigaction act;
-	int signum = SIGRTMAX;
-	int ret = 0;
+पूर्णांक मुख्य(व्योम)
+अणु
+	काष्ठा sigaction act;
+	पूर्णांक signum = SIGRTMAX;
+	पूर्णांक ret = 0;
 
-	/* Set up signal handler: */
+	/* Set up संकेत handler: */
 	sigfillset(&act.sa_mask);
 	act.sa_flags = 0;
 	act.sa_handler = sigalarm;
-	sigaction(signum, &act, NULL);
+	sigaction(signum, &act, शून्य);
 
-	printf("Setting timers for every %i seconds\n", TIMER_SECS);
-	for (clock_id = 0; clock_id < NR_CLOCKIDS; clock_id++) {
+	म_लिखो("Setting timers for every %i seconds\n", TIMER_SECS);
+	क्रम (घड़ी_id = 0; घड़ी_id < NR_CLOCKIDS; घड़ी_id++) अणु
 
-		if ((clock_id == CLOCK_PROCESS_CPUTIME_ID) ||
-				(clock_id == CLOCK_THREAD_CPUTIME_ID) ||
-				(clock_id == CLOCK_MONOTONIC_RAW) ||
-				(clock_id == CLOCK_REALTIME_COARSE) ||
-				(clock_id == CLOCK_MONOTONIC_COARSE) ||
-				(clock_id == CLOCK_HWSPECIFIC))
-			continue;
+		अगर ((घड़ी_id == CLOCK_PROCESS_CPUTIME_ID) ||
+				(घड़ी_id == CLOCK_THREAD_CPUTIME_ID) ||
+				(घड़ी_id == CLOCK_MONOTONIC_RAW) ||
+				(घड़ी_id == CLOCK_REALTIME_COARSE) ||
+				(घड़ी_id == CLOCK_MONOTONIC_COARSE) ||
+				(घड़ी_id == CLOCK_HWSPECIFIC))
+			जारी;
 
-		ret |= do_timer(clock_id, TIMER_ABSTIME);
-		ret |= do_timer(clock_id, 0);
-		ret |= do_timer_oneshot(clock_id, TIMER_ABSTIME);
-		ret |= do_timer_oneshot(clock_id, 0);
-	}
-	if (ret)
-		return ksft_exit_fail();
-	return ksft_exit_pass();
-}
+		ret |= करो_समयr(घड़ी_id, TIMER_ABSTIME);
+		ret |= करो_समयr(घड़ी_id, 0);
+		ret |= करो_समयr_oneshot(घड़ी_id, TIMER_ABSTIME);
+		ret |= करो_समयr_oneshot(घड़ी_id, 0);
+	पूर्ण
+	अगर (ret)
+		वापस ksft_निकास_fail();
+	वापस ksft_निकास_pass();
+पूर्ण

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/sound/rt286.h -- Platform data for RT286
+ * linux/sound/rt286.h -- Platक्रमm data क्रम RT286
  *
  * Copyright 2013 Realtek Microelectronics
  */
 
-#ifndef __LINUX_SND_RT298_H
-#define __LINUX_SND_RT298_H
+#अगर_अघोषित __LINUX_SND_RT298_H
+#घोषणा __LINUX_SND_RT298_H
 
-struct rt298_platform_data {
+काष्ठा rt298_platक्रमm_data अणु
 	bool cbj_en; /*combo jack enable*/
 	bool gpio2_en; /*GPIO2 enable*/
-	bool suspend_power_off; /* power is off during suspend */
-};
+	bool suspend_घातer_off; /* घातer is off during suspend */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

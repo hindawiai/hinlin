@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-static int is_branch_cond(const char *cond)
-{
-	if (cond[0] == '\0')
-		return 1;
+अटल पूर्णांक is_branch_cond(स्थिर अक्षर *cond)
+अणु
+	अगर (cond[0] == '\0')
+		वापस 1;
 
-	if (cond[0] == 'a' && cond[1] == '\0')
-		return 1;
+	अगर (cond[0] == 'a' && cond[1] == '\0')
+		वापस 1;
 
-	if (cond[0] == 'c' &&
+	अगर (cond[0] == 'c' &&
 	    (cond[1] == 'c' || cond[1] == 's') &&
 	    cond[2] == '\0')
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'e' &&
+	अगर (cond[0] == 'e' &&
 	    (cond[1] == '\0' ||
 	     (cond[1] == 'q' && cond[2] == '\0')))
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'g' &&
+	अगर (cond[0] == 'g' &&
 	    (cond[1] == '\0' ||
 	     (cond[1] == 't' && cond[2] == '\0') ||
 	     (cond[1] == 'e' && cond[2] == '\0') ||
 	     (cond[1] == 'e' && cond[2] == 'u' && cond[3] == '\0')))
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'l' &&
+	अगर (cond[0] == 'l' &&
 	    (cond[1] == '\0' ||
 	     (cond[1] == 't' && cond[2] == '\0') ||
 	     (cond[1] == 'u' && cond[2] == '\0') ||
 	     (cond[1] == 'e' && cond[2] == '\0') ||
 	     (cond[1] == 'e' && cond[2] == 'u' && cond[3] == '\0')))
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'n' &&
+	अगर (cond[0] == 'n' &&
 	    (cond[1] == '\0' ||
 	     (cond[1] == 'e' && cond[2] == '\0') ||
 	     (cond[1] == 'z' && cond[2] == '\0') ||
 	     (cond[1] == 'e' && cond[2] == 'g' && cond[3] == '\0')))
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'b' &&
+	अगर (cond[0] == 'b' &&
 	    cond[1] == 'p' &&
 	    cond[2] == 'o' &&
 	    cond[3] == 's' &&
 	    cond[4] == '\0')
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'v' &&
+	अगर (cond[0] == 'v' &&
 	    (cond[1] == 'c' || cond[1] == 's') &&
 	    cond[2] == '\0')
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'b' &&
+	अगर (cond[0] == 'b' &&
 	    cond[1] == 'z' &&
 	    cond[2] == '\0')
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int is_branch_reg_cond(const char *cond)
-{
-	if ((cond[0] == 'n' || cond[0] == 'l') &&
+अटल पूर्णांक is_branch_reg_cond(स्थिर अक्षर *cond)
+अणु
+	अगर ((cond[0] == 'n' || cond[0] == 'l') &&
 	    cond[1] == 'z' &&
 	    cond[2] == '\0')
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'z' &&
+	अगर (cond[0] == 'z' &&
 	    cond[1] == '\0')
-		return 1;
+		वापस 1;
 
-	if ((cond[0] == 'g' || cond[0] == 'l') &&
+	अगर ((cond[0] == 'g' || cond[0] == 'l') &&
 	    cond[1] == 'e' &&
 	    cond[2] == 'z' &&
 	    cond[3] == '\0')
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'g' &&
+	अगर (cond[0] == 'g' &&
 	    cond[1] == 'z' &&
 	    cond[2] == '\0')
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int is_branch_float_cond(const char *cond)
-{
-	if (cond[0] == '\0')
-		return 1;
+अटल पूर्णांक is_branch_भग्न_cond(स्थिर अक्षर *cond)
+अणु
+	अगर (cond[0] == '\0')
+		वापस 1;
 
-	if ((cond[0] == 'a' || cond[0] == 'e' ||
+	अगर ((cond[0] == 'a' || cond[0] == 'e' ||
 	     cond[0] == 'z' || cond[0] == 'g' ||
 	     cond[0] == 'l' || cond[0] == 'n' ||
 	     cond[0] == 'o' || cond[0] == 'u') &&
 	    cond[1] == '\0')
-		return 1;
+		वापस 1;
 
-	if (((cond[0] == 'g' && cond[1] == 'e') ||
+	अगर (((cond[0] == 'g' && cond[1] == 'e') ||
 	     (cond[0] == 'l' && (cond[1] == 'e' ||
 				 cond[1] == 'g')) ||
 	     (cond[0] == 'n' && (cond[1] == 'e' ||
@@ -106,64 +107,64 @@ static int is_branch_float_cond(const char *cond)
 				 cond[1] == 'g' ||
 				 cond[1] == 'l'))) &&
 	    cond[2] == '\0')
-		return 1;
+		वापस 1;
 
-	if (cond[0] == 'u' &&
+	अगर (cond[0] == 'u' &&
 	    (cond[1] == 'g' || cond[1] == 'l') &&
 	    cond[2] == 'e' &&
 	    cond[3] == '\0')
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ins_ops *sparc__associate_instruction_ops(struct arch *arch, const char *name)
-{
-	struct ins_ops *ops = NULL;
+अटल काष्ठा ins_ops *sparc__associate_inकाष्ठाion_ops(काष्ठा arch *arch, स्थिर अक्षर *name)
+अणु
+	काष्ठा ins_ops *ops = शून्य;
 
-	if (!strcmp(name, "call") ||
-	    !strcmp(name, "jmp") ||
-	    !strcmp(name, "jmpl")) {
+	अगर (!म_भेद(name, "call") ||
+	    !म_भेद(name, "jmp") ||
+	    !म_भेद(name, "jmpl")) अणु
 		ops = &call_ops;
-	} else if (!strcmp(name, "ret") ||
-		   !strcmp(name, "retl") ||
-		   !strcmp(name, "return")) {
+	पूर्ण अन्यथा अगर (!म_भेद(name, "ret") ||
+		   !म_भेद(name, "retl") ||
+		   !म_भेद(name, "return")) अणु
 		ops = &ret_ops;
-	} else if (!strcmp(name, "mov")) {
+	पूर्ण अन्यथा अगर (!म_भेद(name, "mov")) अणु
 		ops = &mov_ops;
-	} else {
-		if (name[0] == 'c' &&
+	पूर्ण अन्यथा अणु
+		अगर (name[0] == 'c' &&
 		    (name[1] == 'w' || name[1] == 'x'))
 			name += 2;
 
-		if (name[0] == 'b') {
-			const char *cond = name + 1;
+		अगर (name[0] == 'b') अणु
+			स्थिर अक्षर *cond = name + 1;
 
-			if (cond[0] == 'r') {
-				if (is_branch_reg_cond(cond + 1))
+			अगर (cond[0] == 'r') अणु
+				अगर (is_branch_reg_cond(cond + 1))
 					ops = &jump_ops;
-			} else if (is_branch_cond(cond)) {
+			पूर्ण अन्यथा अगर (is_branch_cond(cond)) अणु
 				ops = &jump_ops;
-			}
-		} else if (name[0] == 'f' && name[1] == 'b') {
-			if (is_branch_float_cond(name + 2))
+			पूर्ण
+		पूर्ण अन्यथा अगर (name[0] == 'f' && name[1] == 'b') अणु
+			अगर (is_branch_भग्न_cond(name + 2))
 				ops = &jump_ops;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ops)
+	अगर (ops)
 		arch__associate_ins_ops(arch, name, ops);
 
-	return ops;
-}
+	वापस ops;
+पूर्ण
 
-static int sparc__annotate_init(struct arch *arch, char *cpuid __maybe_unused)
-{
-	if (!arch->initialized) {
+अटल पूर्णांक sparc__annotate_init(काष्ठा arch *arch, अक्षर *cpuid __maybe_unused)
+अणु
+	अगर (!arch->initialized) अणु
 		arch->initialized = true;
-		arch->associate_instruction_ops = sparc__associate_instruction_ops;
-		arch->objdump.comment_char = '#';
-	}
+		arch->associate_inकाष्ठाion_ops = sparc__associate_inकाष्ठाion_ops;
+		arch->objdump.comment_अक्षर = '#';
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

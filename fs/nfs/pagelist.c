@@ -1,381 +1,382 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/fs/nfs/pagelist.c
  *
- * A set of helper functions for managing NFS read and write requests.
- * The main purpose of these routines is to provide support for the
- * coalescing of several requests into a single RPC call.
+ * A set of helper functions क्रम managing NFS पढ़ो and ग_लिखो requests.
+ * The मुख्य purpose of these routines is to provide support क्रम the
+ * coalescing of several requests पूर्णांकo a single RPC call.
  *
  * Copyright 2000, 2001 (c) Trond Myklebust <trond.myklebust@fys.uio.no>
  *
  */
 
-#include <linux/slab.h>
-#include <linux/file.h>
-#include <linux/sched.h>
-#include <linux/sunrpc/clnt.h>
-#include <linux/nfs.h>
-#include <linux/nfs3.h>
-#include <linux/nfs4.h>
-#include <linux/nfs_fs.h>
-#include <linux/nfs_page.h>
-#include <linux/nfs_mount.h>
-#include <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/file.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/nfs.h>
+#समावेश <linux/nfs3.h>
+#समावेश <linux/nfs4.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/nfs_page.h>
+#समावेश <linux/nfs_mount.h>
+#समावेश <linux/export.h>
 
-#include "internal.h"
-#include "pnfs.h"
-#include "nfstrace.h"
+#समावेश "internal.h"
+#समावेश "pnfs.h"
+#समावेश "nfstrace.h"
 
-#define NFSDBG_FACILITY		NFSDBG_PAGECACHE
+#घोषणा NFSDBG_FACILITY		NFSDBG_PAGECACHE
 
-static struct kmem_cache *nfs_page_cachep;
-static const struct rpc_call_ops nfs_pgio_common_ops;
+अटल काष्ठा kmem_cache *nfs_page_cachep;
+अटल स्थिर काष्ठा rpc_call_ops nfs_pgio_common_ops;
 
-static struct nfs_pgio_mirror *
-nfs_pgio_get_mirror(struct nfs_pageio_descriptor *desc, u32 idx)
-{
-	if (desc->pg_ops->pg_get_mirror)
-		return desc->pg_ops->pg_get_mirror(desc, idx);
-	return &desc->pg_mirrors[0];
-}
+अटल काष्ठा nfs_pgio_mirror *
+nfs_pgio_get_mirror(काष्ठा nfs_pageio_descriptor *desc, u32 idx)
+अणु
+	अगर (desc->pg_ops->pg_get_mirror)
+		वापस desc->pg_ops->pg_get_mirror(desc, idx);
+	वापस &desc->pg_mirrors[0];
+पूर्ण
 
-struct nfs_pgio_mirror *
-nfs_pgio_current_mirror(struct nfs_pageio_descriptor *desc)
-{
-	return nfs_pgio_get_mirror(desc, desc->pg_mirror_idx);
-}
+काष्ठा nfs_pgio_mirror *
+nfs_pgio_current_mirror(काष्ठा nfs_pageio_descriptor *desc)
+अणु
+	वापस nfs_pgio_get_mirror(desc, desc->pg_mirror_idx);
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_pgio_current_mirror);
 
-static u32
-nfs_pgio_set_current_mirror(struct nfs_pageio_descriptor *desc, u32 idx)
-{
-	if (desc->pg_ops->pg_set_mirror)
-		return desc->pg_ops->pg_set_mirror(desc, idx);
-	return desc->pg_mirror_idx;
-}
+अटल u32
+nfs_pgio_set_current_mirror(काष्ठा nfs_pageio_descriptor *desc, u32 idx)
+अणु
+	अगर (desc->pg_ops->pg_set_mirror)
+		वापस desc->pg_ops->pg_set_mirror(desc, idx);
+	वापस desc->pg_mirror_idx;
+पूर्ण
 
-void nfs_pgheader_init(struct nfs_pageio_descriptor *desc,
-		       struct nfs_pgio_header *hdr,
-		       void (*release)(struct nfs_pgio_header *hdr))
-{
-	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+व्योम nfs_pgheader_init(काष्ठा nfs_pageio_descriptor *desc,
+		       काष्ठा nfs_pgio_header *hdr,
+		       व्योम (*release)(काष्ठा nfs_pgio_header *hdr))
+अणु
+	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 
 
 	hdr->req = nfs_list_entry(mirror->pg_list.next);
 	hdr->inode = desc->pg_inode;
-	hdr->cred = nfs_req_openctx(hdr->req)->cred;
+	hdr->cred = nfs_req_खोलोctx(hdr->req)->cred;
 	hdr->io_start = req_offset(hdr->req);
 	hdr->good_bytes = mirror->pg_count;
 	hdr->io_completion = desc->pg_io_completion;
 	hdr->dreq = desc->pg_dreq;
 	hdr->release = release;
 	hdr->completion_ops = desc->pg_completion_ops;
-	if (hdr->completion_ops->init_hdr)
+	अगर (hdr->completion_ops->init_hdr)
 		hdr->completion_ops->init_hdr(hdr);
 
 	hdr->pgio_mirror_idx = desc->pg_mirror_idx;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_pgheader_init);
 
-void nfs_set_pgio_error(struct nfs_pgio_header *hdr, int error, loff_t pos)
-{
-	unsigned int new = pos - hdr->io_start;
+व्योम nfs_set_pgio_error(काष्ठा nfs_pgio_header *hdr, पूर्णांक error, loff_t pos)
+अणु
+	अचिन्हित पूर्णांक new = pos - hdr->io_start;
 
 	trace_nfs_pgio_error(hdr, error, pos);
-	if (hdr->good_bytes > new) {
+	अगर (hdr->good_bytes > new) अणु
 		hdr->good_bytes = new;
-		clear_bit(NFS_IOHDR_EOF, &hdr->flags);
-		if (!test_and_set_bit(NFS_IOHDR_ERROR, &hdr->flags))
+		clear_bit(NFS_IOHDR_खातापूर्ण, &hdr->flags);
+		अगर (!test_and_set_bit(NFS_IOHDR_ERROR, &hdr->flags))
 			hdr->error = error;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline struct nfs_page *
-nfs_page_alloc(void)
-{
-	struct nfs_page	*p = kmem_cache_zalloc(nfs_page_cachep, GFP_KERNEL);
-	if (p)
+अटल अंतरभूत काष्ठा nfs_page *
+nfs_page_alloc(व्योम)
+अणु
+	काष्ठा nfs_page	*p = kmem_cache_zalloc(nfs_page_cachep, GFP_KERNEL);
+	अगर (p)
 		INIT_LIST_HEAD(&p->wb_list);
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static inline void
-nfs_page_free(struct nfs_page *p)
-{
-	kmem_cache_free(nfs_page_cachep, p);
-}
+अटल अंतरभूत व्योम
+nfs_page_मुक्त(काष्ठा nfs_page *p)
+अणु
+	kmem_cache_मुक्त(nfs_page_cachep, p);
+पूर्ण
 
 /**
- * nfs_iocounter_wait - wait for i/o to complete
+ * nfs_iocounter_रुको - रुको क्रम i/o to complete
  * @l_ctx: nfs_lock_context with io_counter to use
  *
- * returns -ERESTARTSYS if interrupted by a fatal signal.
- * Otherwise returns 0 once the io_count hits 0.
+ * वापसs -ERESTARTSYS अगर पूर्णांकerrupted by a fatal संकेत.
+ * Otherwise वापसs 0 once the io_count hits 0.
  */
-int
-nfs_iocounter_wait(struct nfs_lock_context *l_ctx)
-{
-	return wait_var_event_killable(&l_ctx->io_count,
-				       !atomic_read(&l_ctx->io_count));
-}
+पूर्णांक
+nfs_iocounter_रुको(काष्ठा nfs_lock_context *l_ctx)
+अणु
+	वापस रुको_var_event_समाप्तable(&l_ctx->io_count,
+				       !atomic_पढ़ो(&l_ctx->io_count));
+पूर्ण
 
 /**
- * nfs_async_iocounter_wait - wait on a rpc_waitqueue for I/O
+ * nfs_async_iocounter_रुको - रुको on a rpc_रुकोqueue क्रम I/O
  * to complete
- * @task: the rpc_task that should wait
+ * @task: the rpc_task that should रुको
  * @l_ctx: nfs_lock_context with io_counter to check
  *
- * Returns true if there is outstanding I/O to wait on and the
+ * Returns true अगर there is outstanding I/O to रुको on and the
  * task has been put to sleep.
  */
 bool
-nfs_async_iocounter_wait(struct rpc_task *task, struct nfs_lock_context *l_ctx)
-{
-	struct inode *inode = d_inode(l_ctx->open_context->dentry);
+nfs_async_iocounter_रुको(काष्ठा rpc_task *task, काष्ठा nfs_lock_context *l_ctx)
+अणु
+	काष्ठा inode *inode = d_inode(l_ctx->खोलो_context->dentry);
 	bool ret = false;
 
-	if (atomic_read(&l_ctx->io_count) > 0) {
-		rpc_sleep_on(&NFS_SERVER(inode)->uoc_rpcwaitq, task, NULL);
+	अगर (atomic_पढ़ो(&l_ctx->io_count) > 0) अणु
+		rpc_sleep_on(&NFS_SERVER(inode)->uoc_rpcरुकोq, task, शून्य);
 		ret = true;
-	}
+	पूर्ण
 
-	if (atomic_read(&l_ctx->io_count) == 0) {
-		rpc_wake_up_queued_task(&NFS_SERVER(inode)->uoc_rpcwaitq, task);
+	अगर (atomic_पढ़ो(&l_ctx->io_count) == 0) अणु
+		rpc_wake_up_queued_task(&NFS_SERVER(inode)->uoc_rpcरुकोq, task);
 		ret = false;
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(nfs_async_iocounter_wait);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(nfs_async_iocounter_रुको);
 
 /*
  * nfs_page_lock_head_request - page lock the head of the page group
  * @req: any member of the page group
  */
-struct nfs_page *
-nfs_page_group_lock_head(struct nfs_page *req)
-{
-	struct nfs_page *head = req->wb_head;
+काष्ठा nfs_page *
+nfs_page_group_lock_head(काष्ठा nfs_page *req)
+अणु
+	काष्ठा nfs_page *head = req->wb_head;
 
-	while (!nfs_lock_request(head)) {
-		int ret = nfs_wait_on_request(head);
-		if (ret < 0)
-			return ERR_PTR(ret);
-	}
-	if (head != req)
+	जबतक (!nfs_lock_request(head)) अणु
+		पूर्णांक ret = nfs_रुको_on_request(head);
+		अगर (ret < 0)
+			वापस ERR_PTR(ret);
+	पूर्ण
+	अगर (head != req)
 		kref_get(&head->wb_kref);
-	return head;
-}
+	वापस head;
+पूर्ण
 
 /*
- * nfs_unroll_locks -  unlock all newly locked reqs and wait on @req
+ * nfs_unroll_locks -  unlock all newly locked reqs and रुको on @req
  * @head: head request of page group, must be holding head lock
- * @req: request that couldn't lock and needs to wait on the req bit lock
+ * @req: request that couldn't lock and needs to रुको on the req bit lock
  *
- * This is a helper function for nfs_lock_and_join_requests
- * returns 0 on success, < 0 on error.
+ * This is a helper function क्रम nfs_lock_and_join_requests
+ * वापसs 0 on success, < 0 on error.
  */
-static void
-nfs_unroll_locks(struct nfs_page *head, struct nfs_page *req)
-{
-	struct nfs_page *tmp;
+अटल व्योम
+nfs_unroll_locks(काष्ठा nfs_page *head, काष्ठा nfs_page *req)
+अणु
+	काष्ठा nfs_page *पंचांगp;
 
 	/* relinquish all the locks successfully grabbed this run */
-	for (tmp = head->wb_this_page ; tmp != req; tmp = tmp->wb_this_page) {
-		if (!kref_read(&tmp->wb_kref))
-			continue;
-		nfs_unlock_and_release_request(tmp);
-	}
-}
+	क्रम (पंचांगp = head->wb_this_page ; पंचांगp != req; पंचांगp = पंचांगp->wb_this_page) अणु
+		अगर (!kref_पढ़ो(&पंचांगp->wb_kref))
+			जारी;
+		nfs_unlock_and_release_request(पंचांगp);
+	पूर्ण
+पूर्ण
 
 /*
  * nfs_page_group_lock_subreq -  try to lock a subrequest
  * @head: head request of page group
  * @subreq: request to lock
  *
- * This is a helper function for nfs_lock_and_join_requests which
+ * This is a helper function क्रम nfs_lock_and_join_requests which
  * must be called with the head request and page group both locked.
- * On error, it returns with the page group unlocked.
+ * On error, it वापसs with the page group unlocked.
  */
-static int
-nfs_page_group_lock_subreq(struct nfs_page *head, struct nfs_page *subreq)
-{
-	int ret;
+अटल पूर्णांक
+nfs_page_group_lock_subreq(काष्ठा nfs_page *head, काष्ठा nfs_page *subreq)
+अणु
+	पूर्णांक ret;
 
-	if (!kref_get_unless_zero(&subreq->wb_kref))
-		return 0;
-	while (!nfs_lock_request(subreq)) {
+	अगर (!kref_get_unless_zero(&subreq->wb_kref))
+		वापस 0;
+	जबतक (!nfs_lock_request(subreq)) अणु
 		nfs_page_group_unlock(head);
-		ret = nfs_wait_on_request(subreq);
-		if (!ret)
+		ret = nfs_रुको_on_request(subreq);
+		अगर (!ret)
 			ret = nfs_page_group_lock(head);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			nfs_unroll_locks(head, subreq);
 			nfs_release_request(subreq);
-			return ret;
-		}
-	}
-	return 0;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * nfs_page_group_lock_subrequests -  try to lock the subrequests
  * @head: head request of page group
  *
- * This is a helper function for nfs_lock_and_join_requests which
+ * This is a helper function क्रम nfs_lock_and_join_requests which
  * must be called with the head request locked.
  */
-int nfs_page_group_lock_subrequests(struct nfs_page *head)
-{
-	struct nfs_page *subreq;
-	int ret;
+पूर्णांक nfs_page_group_lock_subrequests(काष्ठा nfs_page *head)
+अणु
+	काष्ठा nfs_page *subreq;
+	पूर्णांक ret;
 
 	ret = nfs_page_group_lock(head);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	/* lock each request in the page group */
-	for (subreq = head->wb_this_page; subreq != head;
-			subreq = subreq->wb_this_page) {
+	क्रम (subreq = head->wb_this_page; subreq != head;
+			subreq = subreq->wb_this_page) अणु
 		ret = nfs_page_group_lock_subreq(head, subreq);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 	nfs_page_group_unlock(head);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * nfs_page_set_headlock - set the request PG_HEADLOCK
  * @req: request that is to be locked
  *
- * this lock must be held when modifying req->wb_head
+ * this lock must be held when modअगरying req->wb_head
  *
- * return 0 on success, < 0 on error
+ * वापस 0 on success, < 0 on error
  */
-int
-nfs_page_set_headlock(struct nfs_page *req)
-{
-	if (!test_and_set_bit(PG_HEADLOCK, &req->wb_flags))
-		return 0;
+पूर्णांक
+nfs_page_set_headlock(काष्ठा nfs_page *req)
+अणु
+	अगर (!test_and_set_bit(PG_HEADLOCK, &req->wb_flags))
+		वापस 0;
 
 	set_bit(PG_CONTENDED1, &req->wb_flags);
 	smp_mb__after_atomic();
-	return wait_on_bit_lock(&req->wb_flags, PG_HEADLOCK,
+	वापस रुको_on_bit_lock(&req->wb_flags, PG_HEADLOCK,
 				TASK_UNINTERRUPTIBLE);
-}
+पूर्ण
 
 /*
  * nfs_page_clear_headlock - clear the request PG_HEADLOCK
  * @req: request that is to be locked
  */
-void
-nfs_page_clear_headlock(struct nfs_page *req)
-{
-	smp_mb__before_atomic();
+व्योम
+nfs_page_clear_headlock(काष्ठा nfs_page *req)
+अणु
+	smp_mb__beक्रमe_atomic();
 	clear_bit(PG_HEADLOCK, &req->wb_flags);
 	smp_mb__after_atomic();
-	if (!test_bit(PG_CONTENDED1, &req->wb_flags))
-		return;
+	अगर (!test_bit(PG_CONTENDED1, &req->wb_flags))
+		वापस;
 	wake_up_bit(&req->wb_flags, PG_HEADLOCK);
-}
+पूर्ण
 
 /*
  * nfs_page_group_lock - lock the head of the page group
  * @req: request in group that is to be locked
  *
- * this lock must be held when traversing or modifying the page
+ * this lock must be held when traversing or modअगरying the page
  * group list
  *
- * return 0 on success, < 0 on error
+ * वापस 0 on success, < 0 on error
  */
-int
-nfs_page_group_lock(struct nfs_page *req)
-{
-	int ret;
+पूर्णांक
+nfs_page_group_lock(काष्ठा nfs_page *req)
+अणु
+	पूर्णांक ret;
 
 	ret = nfs_page_set_headlock(req);
-	if (ret || req->wb_head == req)
-		return ret;
-	return nfs_page_set_headlock(req->wb_head);
-}
+	अगर (ret || req->wb_head == req)
+		वापस ret;
+	वापस nfs_page_set_headlock(req->wb_head);
+पूर्ण
 
 /*
  * nfs_page_group_unlock - unlock the head of the page group
  * @req: request in group that is to be unlocked
  */
-void
-nfs_page_group_unlock(struct nfs_page *req)
-{
-	if (req != req->wb_head)
+व्योम
+nfs_page_group_unlock(काष्ठा nfs_page *req)
+अणु
+	अगर (req != req->wb_head)
 		nfs_page_clear_headlock(req->wb_head);
 	nfs_page_clear_headlock(req);
-}
+पूर्ण
 
 /*
  * nfs_page_group_sync_on_bit_locked
  *
  * must be called with page group lock held
  */
-static bool
-nfs_page_group_sync_on_bit_locked(struct nfs_page *req, unsigned int bit)
-{
-	struct nfs_page *head = req->wb_head;
-	struct nfs_page *tmp;
+अटल bool
+nfs_page_group_sync_on_bit_locked(काष्ठा nfs_page *req, अचिन्हित पूर्णांक bit)
+अणु
+	काष्ठा nfs_page *head = req->wb_head;
+	काष्ठा nfs_page *पंचांगp;
 
 	WARN_ON_ONCE(!test_bit(PG_HEADLOCK, &head->wb_flags));
 	WARN_ON_ONCE(test_and_set_bit(bit, &req->wb_flags));
 
-	tmp = req->wb_this_page;
-	while (tmp != req) {
-		if (!test_bit(bit, &tmp->wb_flags))
-			return false;
-		tmp = tmp->wb_this_page;
-	}
+	पंचांगp = req->wb_this_page;
+	जबतक (पंचांगp != req) अणु
+		अगर (!test_bit(bit, &पंचांगp->wb_flags))
+			वापस false;
+		पंचांगp = पंचांगp->wb_this_page;
+	पूर्ण
 
 	/* true! reset all bits */
-	tmp = req;
-	do {
-		clear_bit(bit, &tmp->wb_flags);
-		tmp = tmp->wb_this_page;
-	} while (tmp != req);
+	पंचांगp = req;
+	करो अणु
+		clear_bit(bit, &पंचांगp->wb_flags);
+		पंचांगp = पंचांगp->wb_this_page;
+	पूर्ण जबतक (पंचांगp != req);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * nfs_page_group_sync_on_bit - set bit on current request, but only
- *   return true if the bit is set for all requests in page group
+ *   वापस true अगर the bit is set क्रम all requests in page group
  * @req - request in page group
  * @bit - PG_* bit that is used to sync page group
  */
-bool nfs_page_group_sync_on_bit(struct nfs_page *req, unsigned int bit)
-{
+bool nfs_page_group_sync_on_bit(काष्ठा nfs_page *req, अचिन्हित पूर्णांक bit)
+अणु
 	bool ret;
 
 	nfs_page_group_lock(req);
 	ret = nfs_page_group_sync_on_bit_locked(req, bit);
 	nfs_page_group_unlock(req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * nfs_page_group_init - Initialize the page group linkage for @req
+ * nfs_page_group_init - Initialize the page group linkage क्रम @req
  * @req - a new nfs request
- * @prev - the previous request in page group, or NULL if @req is the first
+ * @prev - the previous request in page group, or शून्य अगर @req is the first
  *         or only request in the group (the head).
  */
-static inline void
-nfs_page_group_init(struct nfs_page *req, struct nfs_page *prev)
-{
-	struct inode *inode;
+अटल अंतरभूत व्योम
+nfs_page_group_init(काष्ठा nfs_page *req, काष्ठा nfs_page *prev)
+अणु
+	काष्ठा inode *inode;
 	WARN_ON_ONCE(prev == req);
 
-	if (!prev) {
+	अगर (!prev) अणु
 		/* a head request */
 		req->wb_head = req;
 		req->wb_this_page = req;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* a subrequest */
 		WARN_ON_ONCE(prev->wb_this_page != prev->wb_head);
 		WARN_ON_ONCE(!test_bit(PG_HEADLOCK, &prev->wb_head->wb_flags));
@@ -387,126 +388,126 @@ nfs_page_group_init(struct nfs_page *req, struct nfs_page *prev)
 		 * nfs_page_group_destroy is called */
 		kref_get(&req->wb_head->wb_kref);
 
-		/* grab extra ref and bump the request count if head request
-		 * has extra ref from the write/commit path to handle handoff
-		 * between write and commit lists. */
-		if (test_bit(PG_INODE_REF, &prev->wb_head->wb_flags)) {
+		/* grab extra ref and bump the request count अगर head request
+		 * has extra ref from the ग_लिखो/commit path to handle hanकरोff
+		 * between ग_लिखो and commit lists. */
+		अगर (test_bit(PG_INODE_REF, &prev->wb_head->wb_flags)) अणु
 			inode = page_file_mapping(req->wb_page)->host;
 			set_bit(PG_INODE_REF, &req->wb_flags);
 			kref_get(&req->wb_kref);
-			atomic_long_inc(&NFS_I(inode)->nrequests);
-		}
-	}
-}
+			atomic_दीर्घ_inc(&NFS_I(inode)->nrequests);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * nfs_page_group_destroy - sync the destruction of page groups
- * @req - request that no longer needs the page group
+ * nfs_page_group_destroy - sync the deकाष्ठाion of page groups
+ * @req - request that no दीर्घer needs the page group
  *
  * releases the page group reference from each member once all
  * members have called this function.
  */
-static void
-nfs_page_group_destroy(struct kref *kref)
-{
-	struct nfs_page *req = container_of(kref, struct nfs_page, wb_kref);
-	struct nfs_page *head = req->wb_head;
-	struct nfs_page *tmp, *next;
+अटल व्योम
+nfs_page_group_destroy(काष्ठा kref *kref)
+अणु
+	काष्ठा nfs_page *req = container_of(kref, काष्ठा nfs_page, wb_kref);
+	काष्ठा nfs_page *head = req->wb_head;
+	काष्ठा nfs_page *पंचांगp, *next;
 
-	if (!nfs_page_group_sync_on_bit(req, PG_TEARDOWN))
-		goto out;
+	अगर (!nfs_page_group_sync_on_bit(req, PG_TEARDOWN))
+		जाओ out;
 
-	tmp = req;
-	do {
-		next = tmp->wb_this_page;
-		/* unlink and free */
-		tmp->wb_this_page = tmp;
-		tmp->wb_head = tmp;
-		nfs_free_request(tmp);
-		tmp = next;
-	} while (tmp != req);
+	पंचांगp = req;
+	करो अणु
+		next = पंचांगp->wb_this_page;
+		/* unlink and मुक्त */
+		पंचांगp->wb_this_page = पंचांगp;
+		पंचांगp->wb_head = पंचांगp;
+		nfs_मुक्त_request(पंचांगp);
+		पंचांगp = next;
+	पूर्ण जबतक (पंचांगp != req);
 out:
 	/* subrequests must release the ref on the head request */
-	if (head != req)
+	अगर (head != req)
 		nfs_release_request(head);
-}
+पूर्ण
 
-static struct nfs_page *
-__nfs_create_request(struct nfs_lock_context *l_ctx, struct page *page,
-		   unsigned int pgbase, unsigned int offset,
-		   unsigned int count)
-{
-	struct nfs_page		*req;
-	struct nfs_open_context *ctx = l_ctx->open_context;
+अटल काष्ठा nfs_page *
+__nfs_create_request(काष्ठा nfs_lock_context *l_ctx, काष्ठा page *page,
+		   अचिन्हित पूर्णांक pgbase, अचिन्हित पूर्णांक offset,
+		   अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा nfs_page		*req;
+	काष्ठा nfs_खोलो_context *ctx = l_ctx->खोलो_context;
 
-	if (test_bit(NFS_CONTEXT_BAD, &ctx->flags))
-		return ERR_PTR(-EBADF);
-	/* try to allocate the request struct */
+	अगर (test_bit(NFS_CONTEXT_BAD, &ctx->flags))
+		वापस ERR_PTR(-EBADF);
+	/* try to allocate the request काष्ठा */
 	req = nfs_page_alloc();
-	if (req == NULL)
-		return ERR_PTR(-ENOMEM);
+	अगर (req == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
 	req->wb_lock_context = l_ctx;
 	refcount_inc(&l_ctx->count);
 	atomic_inc(&l_ctx->io_count);
 
-	/* Initialize the request struct. Initially, we assume a
-	 * long write-back delay. This will be adjusted in
-	 * update_nfs_request below if the region is not locked. */
+	/* Initialize the request काष्ठा. Initially, we assume a
+	 * दीर्घ ग_लिखो-back delay. This will be adjusted in
+	 * update_nfs_request below अगर the region is not locked. */
 	req->wb_page    = page;
-	if (page) {
+	अगर (page) अणु
 		req->wb_index = page_index(page);
 		get_page(page);
-	}
+	पूर्ण
 	req->wb_offset  = offset;
 	req->wb_pgbase	= pgbase;
 	req->wb_bytes   = count;
 	kref_init(&req->wb_kref);
 	req->wb_nio = 0;
-	return req;
-}
+	वापस req;
+पूर्ण
 
 /**
- * nfs_create_request - Create an NFS read/write request.
- * @ctx: open context to use
- * @page: page to write
- * @offset: starting offset within the page for the write
- * @count: number of bytes to read/write
+ * nfs_create_request - Create an NFS पढ़ो/ग_लिखो request.
+ * @ctx: खोलो context to use
+ * @page: page to ग_लिखो
+ * @offset: starting offset within the page क्रम the ग_लिखो
+ * @count: number of bytes to पढ़ो/ग_लिखो
  *
  * The page must be locked by the caller. This makes sure we never
- * create two different requests for the same page.
+ * create two dअगरferent requests क्रम the same page.
  * User should ensure it is safe to sleep in this function.
  */
-struct nfs_page *
-nfs_create_request(struct nfs_open_context *ctx, struct page *page,
-		   unsigned int offset, unsigned int count)
-{
-	struct nfs_lock_context *l_ctx = nfs_get_lock_context(ctx);
-	struct nfs_page *ret;
+काष्ठा nfs_page *
+nfs_create_request(काष्ठा nfs_खोलो_context *ctx, काष्ठा page *page,
+		   अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा nfs_lock_context *l_ctx = nfs_get_lock_context(ctx);
+	काष्ठा nfs_page *ret;
 
-	if (IS_ERR(l_ctx))
-		return ERR_CAST(l_ctx);
+	अगर (IS_ERR(l_ctx))
+		वापस ERR_CAST(l_ctx);
 	ret = __nfs_create_request(l_ctx, page, offset, offset, count);
-	if (!IS_ERR(ret))
-		nfs_page_group_init(ret, NULL);
+	अगर (!IS_ERR(ret))
+		nfs_page_group_init(ret, शून्य);
 	nfs_put_lock_context(l_ctx);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct nfs_page *
-nfs_create_subreq(struct nfs_page *req,
-		  unsigned int pgbase,
-		  unsigned int offset,
-		  unsigned int count)
-{
-	struct nfs_page *last;
-	struct nfs_page *ret;
+अटल काष्ठा nfs_page *
+nfs_create_subreq(काष्ठा nfs_page *req,
+		  अचिन्हित पूर्णांक pgbase,
+		  अचिन्हित पूर्णांक offset,
+		  अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा nfs_page *last;
+	काष्ठा nfs_page *ret;
 
 	ret = __nfs_create_request(req->wb_lock_context, req->wb_page,
 			pgbase, offset, count);
-	if (!IS_ERR(ret)) {
+	अगर (!IS_ERR(ret)) अणु
 		/* find the last request */
-		for (last = req->wb_head;
+		क्रम (last = req->wb_head;
 		     last->wb_this_page != req->wb_head;
 		     last = last->wb_this_page)
 			;
@@ -515,75 +516,75 @@ nfs_create_subreq(struct nfs_page *req,
 		ret->wb_index = req->wb_index;
 		nfs_page_group_init(ret, last);
 		ret->wb_nio = req->wb_nio;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
  * nfs_unlock_request - Unlock request and wake up sleepers.
- * @req: pointer to request
+ * @req: poपूर्णांकer to request
  */
-void nfs_unlock_request(struct nfs_page *req)
-{
-	if (!NFS_WBACK_BUSY(req)) {
-		printk(KERN_ERR "NFS: Invalid unlock attempted\n");
+व्योम nfs_unlock_request(काष्ठा nfs_page *req)
+अणु
+	अगर (!NFS_WBACK_BUSY(req)) अणु
+		prपूर्णांकk(KERN_ERR "NFS: Invalid unlock attempted\n");
 		BUG();
-	}
-	smp_mb__before_atomic();
+	पूर्ण
+	smp_mb__beक्रमe_atomic();
 	clear_bit(PG_BUSY, &req->wb_flags);
 	smp_mb__after_atomic();
-	if (!test_bit(PG_CONTENDED2, &req->wb_flags))
-		return;
+	अगर (!test_bit(PG_CONTENDED2, &req->wb_flags))
+		वापस;
 	wake_up_bit(&req->wb_flags, PG_BUSY);
-}
+पूर्ण
 
 /**
  * nfs_unlock_and_release_request - Unlock request and release the nfs_page
- * @req: pointer to request
+ * @req: poपूर्णांकer to request
  */
-void nfs_unlock_and_release_request(struct nfs_page *req)
-{
+व्योम nfs_unlock_and_release_request(काष्ठा nfs_page *req)
+अणु
 	nfs_unlock_request(req);
 	nfs_release_request(req);
-}
+पूर्ण
 
 /*
  * nfs_clear_request - Free up all resources allocated to the request
  * @req:
  *
- * Release page and open context resources associated with a read/write
+ * Release page and खोलो context resources associated with a पढ़ो/ग_लिखो
  * request after it has completed.
  */
-static void nfs_clear_request(struct nfs_page *req)
-{
-	struct page *page = req->wb_page;
-	struct nfs_lock_context *l_ctx = req->wb_lock_context;
-	struct nfs_open_context *ctx;
+अटल व्योम nfs_clear_request(काष्ठा nfs_page *req)
+अणु
+	काष्ठा page *page = req->wb_page;
+	काष्ठा nfs_lock_context *l_ctx = req->wb_lock_context;
+	काष्ठा nfs_खोलो_context *ctx;
 
-	if (page != NULL) {
+	अगर (page != शून्य) अणु
 		put_page(page);
-		req->wb_page = NULL;
-	}
-	if (l_ctx != NULL) {
-		if (atomic_dec_and_test(&l_ctx->io_count)) {
+		req->wb_page = शून्य;
+	पूर्ण
+	अगर (l_ctx != शून्य) अणु
+		अगर (atomic_dec_and_test(&l_ctx->io_count)) अणु
 			wake_up_var(&l_ctx->io_count);
-			ctx = l_ctx->open_context;
-			if (test_bit(NFS_CONTEXT_UNLOCK, &ctx->flags))
-				rpc_wake_up(&NFS_SERVER(d_inode(ctx->dentry))->uoc_rpcwaitq);
-		}
+			ctx = l_ctx->खोलो_context;
+			अगर (test_bit(NFS_CONTEXT_UNLOCK, &ctx->flags))
+				rpc_wake_up(&NFS_SERVER(d_inode(ctx->dentry))->uoc_rpcरुकोq);
+		पूर्ण
 		nfs_put_lock_context(l_ctx);
-		req->wb_lock_context = NULL;
-	}
-}
+		req->wb_lock_context = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * nfs_free_request - Release the count on an NFS read/write request
+ * nfs_मुक्त_request - Release the count on an NFS पढ़ो/ग_लिखो request
  * @req: request to release
  *
  * Note: Should never be called with the spinlock held!
  */
-void nfs_free_request(struct nfs_page *req)
-{
+व्योम nfs_मुक्त_request(काष्ठा nfs_page *req)
+अणु
 	WARN_ON_ONCE(req->wb_this_page != req);
 
 	/* extra debug: make sure no sync bits are still set */
@@ -593,122 +594,122 @@ void nfs_free_request(struct nfs_page *req)
 	WARN_ON_ONCE(test_bit(PG_WB_END, &req->wb_flags));
 	WARN_ON_ONCE(test_bit(PG_REMOVE, &req->wb_flags));
 
-	/* Release struct file and open context */
+	/* Release काष्ठा file and खोलो context */
 	nfs_clear_request(req);
-	nfs_page_free(req);
-}
+	nfs_page_मुक्त(req);
+पूर्ण
 
-void nfs_release_request(struct nfs_page *req)
-{
+व्योम nfs_release_request(काष्ठा nfs_page *req)
+अणु
 	kref_put(&req->wb_kref, nfs_page_group_destroy);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_release_request);
 
 /**
- * nfs_wait_on_request - Wait for a request to complete.
- * @req: request to wait upon.
+ * nfs_रुको_on_request - Wait क्रम a request to complete.
+ * @req: request to रुको upon.
  *
- * Interruptible by fatal signals only.
- * The user is responsible for holding a count on the request.
+ * Interruptible by fatal संकेतs only.
+ * The user is responsible क्रम holding a count on the request.
  */
-int
-nfs_wait_on_request(struct nfs_page *req)
-{
-	if (!test_bit(PG_BUSY, &req->wb_flags))
-		return 0;
+पूर्णांक
+nfs_रुको_on_request(काष्ठा nfs_page *req)
+अणु
+	अगर (!test_bit(PG_BUSY, &req->wb_flags))
+		वापस 0;
 	set_bit(PG_CONTENDED2, &req->wb_flags);
 	smp_mb__after_atomic();
-	return wait_on_bit_io(&req->wb_flags, PG_BUSY,
+	वापस रुको_on_bit_io(&req->wb_flags, PG_BUSY,
 			      TASK_UNINTERRUPTIBLE);
-}
-EXPORT_SYMBOL_GPL(nfs_wait_on_request);
+पूर्ण
+EXPORT_SYMBOL_GPL(nfs_रुको_on_request);
 
 /*
- * nfs_generic_pg_test - determine if requests can be coalesced
- * @desc: pointer to descriptor
- * @prev: previous request in desc, or NULL
+ * nfs_generic_pg_test - determine अगर requests can be coalesced
+ * @desc: poपूर्णांकer to descriptor
+ * @prev: previous request in desc, or शून्य
  * @req: this request
  *
- * Returns zero if @req cannot be coalesced into @desc, otherwise it returns
+ * Returns zero अगर @req cannot be coalesced पूर्णांकo @desc, otherwise it वापसs
  * the size of the request.
  */
-size_t nfs_generic_pg_test(struct nfs_pageio_descriptor *desc,
-			   struct nfs_page *prev, struct nfs_page *req)
-{
-	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+माप_प्रकार nfs_generic_pg_test(काष्ठा nfs_pageio_descriptor *desc,
+			   काष्ठा nfs_page *prev, काष्ठा nfs_page *req)
+अणु
+	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 
 
-	if (mirror->pg_count > mirror->pg_bsize) {
+	अगर (mirror->pg_count > mirror->pg_bsize) अणु
 		/* should never happen */
 		WARN_ON_ONCE(1);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * Limit the request size so that we can still allocate a page array
-	 * for it without upsetting the slab allocator.
+	 * क्रम it without upsetting the slab allocator.
 	 */
-	if (((mirror->pg_count + req->wb_bytes) >> PAGE_SHIFT) *
-			sizeof(struct page *) > PAGE_SIZE)
-		return 0;
+	अगर (((mirror->pg_count + req->wb_bytes) >> PAGE_SHIFT) *
+			माप(काष्ठा page *) > PAGE_SIZE)
+		वापस 0;
 
-	return min(mirror->pg_bsize - mirror->pg_count, (size_t)req->wb_bytes);
-}
+	वापस min(mirror->pg_bsize - mirror->pg_count, (माप_प्रकार)req->wb_bytes);
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_generic_pg_test);
 
-struct nfs_pgio_header *nfs_pgio_header_alloc(const struct nfs_rw_ops *ops)
-{
-	struct nfs_pgio_header *hdr = ops->rw_alloc_header();
+काष्ठा nfs_pgio_header *nfs_pgio_header_alloc(स्थिर काष्ठा nfs_rw_ops *ops)
+अणु
+	काष्ठा nfs_pgio_header *hdr = ops->rw_alloc_header();
 
-	if (hdr) {
+	अगर (hdr) अणु
 		INIT_LIST_HEAD(&hdr->pages);
 		hdr->rw_ops = ops;
-	}
-	return hdr;
-}
+	पूर्ण
+	वापस hdr;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_pgio_header_alloc);
 
 /**
- * nfs_pgio_data_destroy - make @hdr suitable for reuse
+ * nfs_pgio_data_destroy - make @hdr suitable क्रम reuse
  *
  * Frees memory and releases refs from nfs_generic_pgio, so that it may
  * be called again.
  *
  * @hdr: A header that has had nfs_generic_pgio called
  */
-static void nfs_pgio_data_destroy(struct nfs_pgio_header *hdr)
-{
-	if (hdr->args.context)
-		put_nfs_open_context(hdr->args.context);
-	if (hdr->page_array.pagevec != hdr->page_array.page_array)
-		kfree(hdr->page_array.pagevec);
-}
+अटल व्योम nfs_pgio_data_destroy(काष्ठा nfs_pgio_header *hdr)
+अणु
+	अगर (hdr->args.context)
+		put_nfs_खोलो_context(hdr->args.context);
+	अगर (hdr->page_array.pagevec != hdr->page_array.page_array)
+		kमुक्त(hdr->page_array.pagevec);
+पूर्ण
 
 /*
- * nfs_pgio_header_free - Free a read or write header
- * @hdr: The header to free
+ * nfs_pgio_header_मुक्त - Free a पढ़ो or ग_लिखो header
+ * @hdr: The header to मुक्त
  */
-void nfs_pgio_header_free(struct nfs_pgio_header *hdr)
-{
+व्योम nfs_pgio_header_मुक्त(काष्ठा nfs_pgio_header *hdr)
+अणु
 	nfs_pgio_data_destroy(hdr);
-	hdr->rw_ops->rw_free_header(hdr);
-}
-EXPORT_SYMBOL_GPL(nfs_pgio_header_free);
+	hdr->rw_ops->rw_मुक्त_header(hdr);
+पूर्ण
+EXPORT_SYMBOL_GPL(nfs_pgio_header_मुक्त);
 
 /**
- * nfs_pgio_rpcsetup - Set up arguments for a pageio call
+ * nfs_pgio_rpcsetup - Set up arguments क्रम a pageio call
  * @hdr: The pageio hdr
- * @count: Number of bytes to read
- * @how: How to commit data (writes only)
- * @cinfo: Commit information for the call (writes only)
+ * @count: Number of bytes to पढ़ो
+ * @how: How to commit data (ग_लिखोs only)
+ * @cinfo: Commit inक्रमmation क्रम the call (ग_लिखोs only)
  */
-static void nfs_pgio_rpcsetup(struct nfs_pgio_header *hdr,
-			      unsigned int count,
-			      int how, struct nfs_commit_info *cinfo)
-{
-	struct nfs_page *req = hdr->req;
+अटल व्योम nfs_pgio_rpcsetup(काष्ठा nfs_pgio_header *hdr,
+			      अचिन्हित पूर्णांक count,
+			      पूर्णांक how, काष्ठा nfs_commit_info *cinfo)
+अणु
+	काष्ठा nfs_page *req = hdr->req;
 
-	/* Set up the RPC argument and reply structs
+	/* Set up the RPC argument and reply काष्ठाs
 	 * NB: take care not to mess about with hdr->commit et al. */
 
 	hdr->args.fh     = NFS_FH(hdr->inode);
@@ -718,52 +719,52 @@ static void nfs_pgio_rpcsetup(struct nfs_pgio_header *hdr,
 	hdr->args.pgbase = req->wb_pgbase;
 	hdr->args.pages  = hdr->page_array.pagevec;
 	hdr->args.count  = count;
-	hdr->args.context = get_nfs_open_context(nfs_req_openctx(req));
+	hdr->args.context = get_nfs_खोलो_context(nfs_req_खोलोctx(req));
 	hdr->args.lock_context = req->wb_lock_context;
 	hdr->args.stable  = NFS_UNSTABLE;
-	switch (how & (FLUSH_STABLE | FLUSH_COND_STABLE)) {
-	case 0:
-		break;
-	case FLUSH_COND_STABLE:
-		if (nfs_reqs_to_commit(cinfo))
-			break;
+	चयन (how & (FLUSH_STABLE | FLUSH_COND_STABLE)) अणु
+	हाल 0:
+		अवरोध;
+	हाल FLUSH_COND_STABLE:
+		अगर (nfs_reqs_to_commit(cinfo))
+			अवरोध;
 		fallthrough;
-	default:
-		hdr->args.stable = NFS_FILE_SYNC;
-	}
+	शेष:
+		hdr->args.stable = NFS_खाता_SYNC;
+	पूर्ण
 
 	hdr->res.fattr   = &hdr->fattr;
 	hdr->res.count   = 0;
 	hdr->res.eof     = 0;
 	hdr->res.verf    = &hdr->verf;
 	nfs_fattr_init(&hdr->fattr);
-}
+पूर्ण
 
 /**
  * nfs_pgio_prepare - Prepare pageio hdr to go over the wire
  * @task: The current task
  * @calldata: pageio header to prepare
  */
-static void nfs_pgio_prepare(struct rpc_task *task, void *calldata)
-{
-	struct nfs_pgio_header *hdr = calldata;
-	int err;
+अटल व्योम nfs_pgio_prepare(काष्ठा rpc_task *task, व्योम *calldata)
+अणु
+	काष्ठा nfs_pgio_header *hdr = calldata;
+	पूर्णांक err;
 	err = NFS_PROTO(hdr->inode)->pgio_rpc_prepare(task, hdr);
-	if (err)
-		rpc_exit(task, err);
-}
+	अगर (err)
+		rpc_निकास(task, err);
+पूर्ण
 
-int nfs_initiate_pgio(struct rpc_clnt *clnt, struct nfs_pgio_header *hdr,
-		      const struct cred *cred, const struct nfs_rpc_ops *rpc_ops,
-		      const struct rpc_call_ops *call_ops, int how, int flags)
-{
-	struct rpc_task *task;
-	struct rpc_message msg = {
+पूर्णांक nfs_initiate_pgio(काष्ठा rpc_clnt *clnt, काष्ठा nfs_pgio_header *hdr,
+		      स्थिर काष्ठा cred *cred, स्थिर काष्ठा nfs_rpc_ops *rpc_ops,
+		      स्थिर काष्ठा rpc_call_ops *call_ops, पूर्णांक how, पूर्णांक flags)
+अणु
+	काष्ठा rpc_task *task;
+	काष्ठा rpc_message msg = अणु
 		.rpc_argp = &hdr->args,
 		.rpc_resp = &hdr->res,
 		.rpc_cred = cred,
-	};
-	struct rpc_task_setup task_setup_data = {
+	पूर्ण;
+	काष्ठा rpc_task_setup task_setup_data = अणु
 		.rpc_client = clnt,
 		.task = &hdr->task,
 		.rpc_message = &msg,
@@ -771,74 +772,74 @@ int nfs_initiate_pgio(struct rpc_clnt *clnt, struct nfs_pgio_header *hdr,
 		.callback_data = hdr,
 		.workqueue = nfsiod_workqueue,
 		.flags = RPC_TASK_ASYNC | flags,
-	};
+	पूर्ण;
 
 	hdr->rw_ops->rw_initiate(hdr, &msg, rpc_ops, &task_setup_data, how);
 
-	dprintk("NFS: initiated pgio call "
+	dprपूर्णांकk("NFS: initiated pgio call "
 		"(req %s/%llu, %u bytes @ offset %llu)\n",
 		hdr->inode->i_sb->s_id,
-		(unsigned long long)NFS_FILEID(hdr->inode),
+		(अचिन्हित दीर्घ दीर्घ)NFS_खाताID(hdr->inode),
 		hdr->args.count,
-		(unsigned long long)hdr->args.offset);
+		(अचिन्हित दीर्घ दीर्घ)hdr->args.offset);
 
 	task = rpc_run_task(&task_setup_data);
-	if (IS_ERR(task))
-		return PTR_ERR(task);
+	अगर (IS_ERR(task))
+		वापस PTR_ERR(task);
 	rpc_put_task(task);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_initiate_pgio);
 
 /**
  * nfs_pgio_error - Clean up from a pageio error
  * @hdr: pageio header
  */
-static void nfs_pgio_error(struct nfs_pgio_header *hdr)
-{
+अटल व्योम nfs_pgio_error(काष्ठा nfs_pgio_header *hdr)
+अणु
 	set_bit(NFS_IOHDR_REDO, &hdr->flags);
 	hdr->completion_ops->completion(hdr);
-}
+पूर्ण
 
 /**
  * nfs_pgio_release - Release pageio data
  * @calldata: The pageio header to release
  */
-static void nfs_pgio_release(void *calldata)
-{
-	struct nfs_pgio_header *hdr = calldata;
+अटल व्योम nfs_pgio_release(व्योम *calldata)
+अणु
+	काष्ठा nfs_pgio_header *hdr = calldata;
 	hdr->completion_ops->completion(hdr);
-}
+पूर्ण
 
-static void nfs_pageio_mirror_init(struct nfs_pgio_mirror *mirror,
-				   unsigned int bsize)
-{
+अटल व्योम nfs_pageio_mirror_init(काष्ठा nfs_pgio_mirror *mirror,
+				   अचिन्हित पूर्णांक bsize)
+अणु
 	INIT_LIST_HEAD(&mirror->pg_list);
 	mirror->pg_bytes_written = 0;
 	mirror->pg_count = 0;
 	mirror->pg_bsize = bsize;
 	mirror->pg_base = 0;
 	mirror->pg_recoalesce = 0;
-}
+पूर्ण
 
 /**
  * nfs_pageio_init - initialise a page io descriptor
- * @desc: pointer to descriptor
- * @inode: pointer to inode
- * @pg_ops: pointer to pageio operations
- * @compl_ops: pointer to pageio completion operations
- * @rw_ops: pointer to nfs read/write operations
+ * @desc: poपूर्णांकer to descriptor
+ * @inode: poपूर्णांकer to inode
+ * @pg_ops: poपूर्णांकer to pageio operations
+ * @compl_ops: poपूर्णांकer to pageio completion operations
+ * @rw_ops: poपूर्णांकer to nfs पढ़ो/ग_लिखो operations
  * @bsize: io block size
- * @io_flags: extra parameters for the io function
+ * @io_flags: extra parameters क्रम the io function
  */
-void nfs_pageio_init(struct nfs_pageio_descriptor *desc,
-		     struct inode *inode,
-		     const struct nfs_pageio_ops *pg_ops,
-		     const struct nfs_pgio_completion_ops *compl_ops,
-		     const struct nfs_rw_ops *rw_ops,
-		     size_t bsize,
-		     int io_flags)
-{
+व्योम nfs_pageio_init(काष्ठा nfs_pageio_descriptor *desc,
+		     काष्ठा inode *inode,
+		     स्थिर काष्ठा nfs_pageio_ops *pg_ops,
+		     स्थिर काष्ठा nfs_pgio_completion_ops *compl_ops,
+		     स्थिर काष्ठा nfs_rw_ops *rw_ops,
+		     माप_प्रकार bsize,
+		     पूर्णांक io_flags)
+अणु
 	desc->pg_moreio = 0;
 	desc->pg_inode = inode;
 	desc->pg_ops = pg_ops;
@@ -846,123 +847,123 @@ void nfs_pageio_init(struct nfs_pageio_descriptor *desc,
 	desc->pg_rw_ops = rw_ops;
 	desc->pg_ioflags = io_flags;
 	desc->pg_error = 0;
-	desc->pg_lseg = NULL;
-	desc->pg_io_completion = NULL;
-	desc->pg_dreq = NULL;
+	desc->pg_lseg = शून्य;
+	desc->pg_io_completion = शून्य;
+	desc->pg_dreq = शून्य;
 	desc->pg_bsize = bsize;
 
 	desc->pg_mirror_count = 1;
 	desc->pg_mirror_idx = 0;
 
-	desc->pg_mirrors_dynamic = NULL;
-	desc->pg_mirrors = desc->pg_mirrors_static;
+	desc->pg_mirrors_dynamic = शून्य;
+	desc->pg_mirrors = desc->pg_mirrors_अटल;
 	nfs_pageio_mirror_init(&desc->pg_mirrors[0], bsize);
 	desc->pg_maxretrans = 0;
-}
+पूर्ण
 
 /**
  * nfs_pgio_result - Basic pageio error handling
  * @task: The task that ran
  * @calldata: Pageio header to check
  */
-static void nfs_pgio_result(struct rpc_task *task, void *calldata)
-{
-	struct nfs_pgio_header *hdr = calldata;
-	struct inode *inode = hdr->inode;
+अटल व्योम nfs_pgio_result(काष्ठा rpc_task *task, व्योम *calldata)
+अणु
+	काष्ठा nfs_pgio_header *hdr = calldata;
+	काष्ठा inode *inode = hdr->inode;
 
-	dprintk("NFS: %s: %5u, (status %d)\n", __func__,
+	dprपूर्णांकk("NFS: %s: %5u, (status %d)\n", __func__,
 		task->tk_pid, task->tk_status);
 
-	if (hdr->rw_ops->rw_done(task, hdr, inode) != 0)
-		return;
-	if (task->tk_status < 0)
+	अगर (hdr->rw_ops->rw_करोne(task, hdr, inode) != 0)
+		वापस;
+	अगर (task->tk_status < 0)
 		nfs_set_pgio_error(hdr, task->tk_status, hdr->args.offset);
-	else
+	अन्यथा
 		hdr->rw_ops->rw_result(task, hdr);
-}
+पूर्ण
 
 /*
- * Create an RPC task for the given read or write request and kick it.
+ * Create an RPC task क्रम the given पढ़ो or ग_लिखो request and kick it.
  * The page must have been locked by the caller.
  *
  * It may happen that the page we're passed is not marked dirty.
- * This is the case if nfs_updatepage detects a conflicting request
+ * This is the हाल अगर nfs_updatepage detects a conflicting request
  * that has been written but not committed.
  */
-int nfs_generic_pgio(struct nfs_pageio_descriptor *desc,
-		     struct nfs_pgio_header *hdr)
-{
-	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+पूर्णांक nfs_generic_pgio(काष्ठा nfs_pageio_descriptor *desc,
+		     काष्ठा nfs_pgio_header *hdr)
+अणु
+	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 
-	struct nfs_page		*req;
-	struct page		**pages,
+	काष्ठा nfs_page		*req;
+	काष्ठा page		**pages,
 				*last_page;
-	struct list_head *head = &mirror->pg_list;
-	struct nfs_commit_info cinfo;
-	struct nfs_page_array *pg_array = &hdr->page_array;
-	unsigned int pagecount, pageused;
+	काष्ठा list_head *head = &mirror->pg_list;
+	काष्ठा nfs_commit_info cinfo;
+	काष्ठा nfs_page_array *pg_array = &hdr->page_array;
+	अचिन्हित पूर्णांक pagecount, pageused;
 	gfp_t gfp_flags = GFP_KERNEL;
 
 	pagecount = nfs_page_array_len(mirror->pg_base, mirror->pg_count);
 	pg_array->npages = pagecount;
 
-	if (pagecount <= ARRAY_SIZE(pg_array->page_array))
+	अगर (pagecount <= ARRAY_SIZE(pg_array->page_array))
 		pg_array->pagevec = pg_array->page_array;
-	else {
-		pg_array->pagevec = kcalloc(pagecount, sizeof(struct page *), gfp_flags);
-		if (!pg_array->pagevec) {
+	अन्यथा अणु
+		pg_array->pagevec = kसुस्मृति(pagecount, माप(काष्ठा page *), gfp_flags);
+		अगर (!pg_array->pagevec) अणु
 			pg_array->npages = 0;
 			nfs_pgio_error(hdr);
 			desc->pg_error = -ENOMEM;
-			return desc->pg_error;
-		}
-	}
+			वापस desc->pg_error;
+		पूर्ण
+	पूर्ण
 
 	nfs_init_cinfo(&cinfo, desc->pg_inode, desc->pg_dreq);
 	pages = hdr->page_array.pagevec;
-	last_page = NULL;
+	last_page = शून्य;
 	pageused = 0;
-	while (!list_empty(head)) {
+	जबतक (!list_empty(head)) अणु
 		req = nfs_list_entry(head->next);
 		nfs_list_move_request(req, &hdr->pages);
 
-		if (!last_page || last_page != req->wb_page) {
+		अगर (!last_page || last_page != req->wb_page) अणु
 			pageused++;
-			if (pageused > pagecount)
-				break;
+			अगर (pageused > pagecount)
+				अवरोध;
 			*pages++ = last_page = req->wb_page;
-		}
-	}
-	if (WARN_ON_ONCE(pageused != pagecount)) {
+		पूर्ण
+	पूर्ण
+	अगर (WARN_ON_ONCE(pageused != pagecount)) अणु
 		nfs_pgio_error(hdr);
 		desc->pg_error = -EINVAL;
-		return desc->pg_error;
-	}
+		वापस desc->pg_error;
+	पूर्ण
 
-	if ((desc->pg_ioflags & FLUSH_COND_STABLE) &&
+	अगर ((desc->pg_ioflags & FLUSH_COND_STABLE) &&
 	    (desc->pg_moreio || nfs_reqs_to_commit(&cinfo)))
 		desc->pg_ioflags &= ~FLUSH_COND_STABLE;
 
-	/* Set up the argument struct */
+	/* Set up the argument काष्ठा */
 	nfs_pgio_rpcsetup(hdr, mirror->pg_count, desc->pg_ioflags, &cinfo);
 	desc->pg_rpc_callops = &nfs_pgio_common_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_generic_pgio);
 
-static int nfs_generic_pg_pgios(struct nfs_pageio_descriptor *desc)
-{
-	struct nfs_pgio_header *hdr;
-	int ret;
+अटल पूर्णांक nfs_generic_pg_pgios(काष्ठा nfs_pageio_descriptor *desc)
+अणु
+	काष्ठा nfs_pgio_header *hdr;
+	पूर्णांक ret;
 
 	hdr = nfs_pgio_header_alloc(desc->pg_rw_ops);
-	if (!hdr) {
+	अगर (!hdr) अणु
 		desc->pg_error = -ENOMEM;
-		return desc->pg_error;
-	}
-	nfs_pgheader_init(desc, hdr, nfs_pgio_header_free);
+		वापस desc->pg_error;
+	पूर्ण
+	nfs_pgheader_init(desc, hdr, nfs_pgio_header_मुक्त);
 	ret = nfs_generic_pgio(desc, hdr);
-	if (ret == 0)
+	अगर (ret == 0)
 		ret = nfs_initiate_pgio(NFS_CLIENT(hdr->inode),
 					hdr,
 					hdr->cred,
@@ -970,379 +971,379 @@ static int nfs_generic_pg_pgios(struct nfs_pageio_descriptor *desc)
 					desc->pg_rpc_callops,
 					desc->pg_ioflags,
 					RPC_TASK_CRED_NOREF);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct nfs_pgio_mirror *
-nfs_pageio_alloc_mirrors(struct nfs_pageio_descriptor *desc,
-		unsigned int mirror_count)
-{
-	struct nfs_pgio_mirror *ret;
-	unsigned int i;
+अटल काष्ठा nfs_pgio_mirror *
+nfs_pageio_alloc_mirrors(काष्ठा nfs_pageio_descriptor *desc,
+		अचिन्हित पूर्णांक mirror_count)
+अणु
+	काष्ठा nfs_pgio_mirror *ret;
+	अचिन्हित पूर्णांक i;
 
-	kfree(desc->pg_mirrors_dynamic);
-	desc->pg_mirrors_dynamic = NULL;
-	if (mirror_count == 1)
-		return desc->pg_mirrors_static;
-	ret = kmalloc_array(mirror_count, sizeof(*ret), GFP_KERNEL);
-	if (ret != NULL) {
-		for (i = 0; i < mirror_count; i++)
+	kमुक्त(desc->pg_mirrors_dynamic);
+	desc->pg_mirrors_dynamic = शून्य;
+	अगर (mirror_count == 1)
+		वापस desc->pg_mirrors_अटल;
+	ret = kदो_स्मृति_array(mirror_count, माप(*ret), GFP_KERNEL);
+	अगर (ret != शून्य) अणु
+		क्रम (i = 0; i < mirror_count; i++)
 			nfs_pageio_mirror_init(&ret[i], desc->pg_bsize);
 		desc->pg_mirrors_dynamic = ret;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
- * nfs_pageio_setup_mirroring - determine if mirroring is to be used
+ * nfs_pageio_setup_mirroring - determine अगर mirroring is to be used
  *				by calling the pg_get_mirror_count op
  */
-static void nfs_pageio_setup_mirroring(struct nfs_pageio_descriptor *pgio,
-				       struct nfs_page *req)
-{
-	unsigned int mirror_count = 1;
+अटल व्योम nfs_pageio_setup_mirroring(काष्ठा nfs_pageio_descriptor *pgio,
+				       काष्ठा nfs_page *req)
+अणु
+	अचिन्हित पूर्णांक mirror_count = 1;
 
-	if (pgio->pg_ops->pg_get_mirror_count)
+	अगर (pgio->pg_ops->pg_get_mirror_count)
 		mirror_count = pgio->pg_ops->pg_get_mirror_count(pgio, req);
-	if (mirror_count == pgio->pg_mirror_count || pgio->pg_error < 0)
-		return;
+	अगर (mirror_count == pgio->pg_mirror_count || pgio->pg_error < 0)
+		वापस;
 
-	if (!mirror_count || mirror_count > NFS_PAGEIO_DESCRIPTOR_MIRROR_MAX) {
+	अगर (!mirror_count || mirror_count > NFS_PAGEIO_DESCRIPTOR_MIRROR_MAX) अणु
 		pgio->pg_error = -EINVAL;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pgio->pg_mirrors = nfs_pageio_alloc_mirrors(pgio, mirror_count);
-	if (pgio->pg_mirrors == NULL) {
+	अगर (pgio->pg_mirrors == शून्य) अणु
 		pgio->pg_error = -ENOMEM;
-		pgio->pg_mirrors = pgio->pg_mirrors_static;
+		pgio->pg_mirrors = pgio->pg_mirrors_अटल;
 		mirror_count = 1;
-	}
+	पूर्ण
 	pgio->pg_mirror_count = mirror_count;
-}
+पूर्ण
 
-static void nfs_pageio_cleanup_mirroring(struct nfs_pageio_descriptor *pgio)
-{
+अटल व्योम nfs_pageio_cleanup_mirroring(काष्ठा nfs_pageio_descriptor *pgio)
+अणु
 	pgio->pg_mirror_count = 1;
 	pgio->pg_mirror_idx = 0;
-	pgio->pg_mirrors = pgio->pg_mirrors_static;
-	kfree(pgio->pg_mirrors_dynamic);
-	pgio->pg_mirrors_dynamic = NULL;
-}
+	pgio->pg_mirrors = pgio->pg_mirrors_अटल;
+	kमुक्त(pgio->pg_mirrors_dynamic);
+	pgio->pg_mirrors_dynamic = शून्य;
+पूर्ण
 
-static bool nfs_match_lock_context(const struct nfs_lock_context *l1,
-		const struct nfs_lock_context *l2)
-{
-	return l1->lockowner == l2->lockowner;
-}
+अटल bool nfs_match_lock_context(स्थिर काष्ठा nfs_lock_context *l1,
+		स्थिर काष्ठा nfs_lock_context *l2)
+अणु
+	वापस l1->lockowner == l2->lockowner;
+पूर्ण
 
 /**
- * nfs_coalesce_size - test two requests for compatibility
- * @prev: pointer to nfs_page
- * @req: pointer to nfs_page
- * @pgio: pointer to nfs_pagio_descriptor
+ * nfs_coalesce_size - test two requests क्रम compatibility
+ * @prev: poपूर्णांकer to nfs_page
+ * @req: poपूर्णांकer to nfs_page
+ * @pgio: poपूर्णांकer to nfs_pagio_descriptor
  *
- * The nfs_page structures 'prev' and 'req' are compared to ensure that the
+ * The nfs_page काष्ठाures 'prev' and 'req' are compared to ensure that the
  * page data area they describe is contiguous, and that their RPC
- * credentials, NFSv4 open state, and lockowners are the same.
+ * credentials, NFSv4 खोलो state, and lockowners are the same.
  *
  * Returns size of the request that can be coalesced
  */
-static unsigned int nfs_coalesce_size(struct nfs_page *prev,
-				      struct nfs_page *req,
-				      struct nfs_pageio_descriptor *pgio)
-{
-	struct file_lock_context *flctx;
+अटल अचिन्हित पूर्णांक nfs_coalesce_size(काष्ठा nfs_page *prev,
+				      काष्ठा nfs_page *req,
+				      काष्ठा nfs_pageio_descriptor *pgio)
+अणु
+	काष्ठा file_lock_context *flctx;
 
-	if (prev) {
-		if (!nfs_match_open_context(nfs_req_openctx(req), nfs_req_openctx(prev)))
-			return 0;
-		flctx = d_inode(nfs_req_openctx(req)->dentry)->i_flctx;
-		if (flctx != NULL &&
+	अगर (prev) अणु
+		अगर (!nfs_match_खोलो_context(nfs_req_खोलोctx(req), nfs_req_खोलोctx(prev)))
+			वापस 0;
+		flctx = d_inode(nfs_req_खोलोctx(req)->dentry)->i_flctx;
+		अगर (flctx != शून्य &&
 		    !(list_empty_careful(&flctx->flc_posix) &&
 		      list_empty_careful(&flctx->flc_flock)) &&
 		    !nfs_match_lock_context(req->wb_lock_context,
 					    prev->wb_lock_context))
-			return 0;
-		if (req_offset(req) != req_offset(prev) + prev->wb_bytes)
-			return 0;
-		if (req->wb_page == prev->wb_page) {
-			if (req->wb_pgbase != prev->wb_pgbase + prev->wb_bytes)
-				return 0;
-		} else {
-			if (req->wb_pgbase != 0 ||
+			वापस 0;
+		अगर (req_offset(req) != req_offset(prev) + prev->wb_bytes)
+			वापस 0;
+		अगर (req->wb_page == prev->wb_page) अणु
+			अगर (req->wb_pgbase != prev->wb_pgbase + prev->wb_bytes)
+				वापस 0;
+		पूर्ण अन्यथा अणु
+			अगर (req->wb_pgbase != 0 ||
 			    prev->wb_pgbase + prev->wb_bytes != PAGE_SIZE)
-				return 0;
-		}
-	}
-	return pgio->pg_ops->pg_test(pgio, prev, req);
-}
+				वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस pgio->pg_ops->pg_test(pgio, prev, req);
+पूर्ण
 
 /**
- * nfs_pageio_do_add_request - Attempt to coalesce a request into a page list.
+ * nfs_pageio_करो_add_request - Attempt to coalesce a request पूर्णांकo a page list.
  * @desc: destination io descriptor
  * @req: request
  *
- * If the request 'req' was successfully coalesced into the existing list
- * of pages 'desc', it returns the size of req.
+ * If the request 'req' was successfully coalesced पूर्णांकo the existing list
+ * of pages 'desc', it वापसs the size of req.
  */
-static unsigned int
-nfs_pageio_do_add_request(struct nfs_pageio_descriptor *desc,
-		struct nfs_page *req)
-{
-	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
-	struct nfs_page *prev = NULL;
-	unsigned int size;
+अटल अचिन्हित पूर्णांक
+nfs_pageio_करो_add_request(काष्ठा nfs_pageio_descriptor *desc,
+		काष्ठा nfs_page *req)
+अणु
+	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+	काष्ठा nfs_page *prev = शून्य;
+	अचिन्हित पूर्णांक size;
 
-	if (list_empty(&mirror->pg_list)) {
-		if (desc->pg_ops->pg_init)
+	अगर (list_empty(&mirror->pg_list)) अणु
+		अगर (desc->pg_ops->pg_init)
 			desc->pg_ops->pg_init(desc, req);
-		if (desc->pg_error < 0)
-			return 0;
+		अगर (desc->pg_error < 0)
+			वापस 0;
 		mirror->pg_base = req->wb_pgbase;
 		mirror->pg_count = 0;
 		mirror->pg_recoalesce = 0;
-	} else
+	पूर्ण अन्यथा
 		prev = nfs_list_entry(mirror->pg_list.prev);
 
-	if (desc->pg_maxretrans && req->wb_nio > desc->pg_maxretrans) {
-		if (NFS_SERVER(desc->pg_inode)->flags & NFS_MOUNT_SOFTERR)
+	अगर (desc->pg_maxretrans && req->wb_nio > desc->pg_maxretrans) अणु
+		अगर (NFS_SERVER(desc->pg_inode)->flags & NFS_MOUNT_SOFTERR)
 			desc->pg_error = -ETIMEDOUT;
-		else
+		अन्यथा
 			desc->pg_error = -EIO;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	size = nfs_coalesce_size(prev, req, desc);
-	if (size < req->wb_bytes)
-		return size;
+	अगर (size < req->wb_bytes)
+		वापस size;
 	nfs_list_move_request(req, &mirror->pg_list);
 	mirror->pg_count += req->wb_bytes;
-	return req->wb_bytes;
-}
+	वापस req->wb_bytes;
+पूर्ण
 
 /*
- * Helper for nfs_pageio_add_request and nfs_pageio_complete
+ * Helper क्रम nfs_pageio_add_request and nfs_pageio_complete
  */
-static void nfs_pageio_doio(struct nfs_pageio_descriptor *desc)
-{
-	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+अटल व्योम nfs_pageio_करोio(काष्ठा nfs_pageio_descriptor *desc)
+अणु
+	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 
-	if (!list_empty(&mirror->pg_list)) {
-		int error = desc->pg_ops->pg_doio(desc);
-		if (error < 0)
+	अगर (!list_empty(&mirror->pg_list)) अणु
+		पूर्णांक error = desc->pg_ops->pg_करोio(desc);
+		अगर (error < 0)
 			desc->pg_error = error;
-		if (list_empty(&mirror->pg_list))
+		अगर (list_empty(&mirror->pg_list))
 			mirror->pg_bytes_written += mirror->pg_count;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-nfs_pageio_cleanup_request(struct nfs_pageio_descriptor *desc,
-		struct nfs_page *req)
-{
+अटल व्योम
+nfs_pageio_cleanup_request(काष्ठा nfs_pageio_descriptor *desc,
+		काष्ठा nfs_page *req)
+अणु
 	LIST_HEAD(head);
 
 	nfs_list_move_request(req, &head);
 	desc->pg_completion_ops->error_cleanup(&head, desc->pg_error);
-}
+पूर्ण
 
 /**
- * __nfs_pageio_add_request - Attempt to coalesce a request into a page list.
+ * __nfs_pageio_add_request - Attempt to coalesce a request पूर्णांकo a page list.
  * @desc: destination io descriptor
  * @req: request
  *
- * This may split a request into subrequests which are all part of the
+ * This may split a request पूर्णांकo subrequests which are all part of the
  * same page group. If so, it will submit @req as the last one, to ensure
- * the pointer to @req is still valid in case of failure.
+ * the poपूर्णांकer to @req is still valid in हाल of failure.
  *
- * Returns true if the request 'req' was successfully coalesced into the
+ * Returns true अगर the request 'req' was successfully coalesced पूर्णांकo the
  * existing list of pages 'desc'.
  */
-static int __nfs_pageio_add_request(struct nfs_pageio_descriptor *desc,
-			   struct nfs_page *req)
-{
-	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
-	struct nfs_page *subreq;
-	unsigned int size, subreq_size;
+अटल पूर्णांक __nfs_pageio_add_request(काष्ठा nfs_pageio_descriptor *desc,
+			   काष्ठा nfs_page *req)
+अणु
+	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+	काष्ठा nfs_page *subreq;
+	अचिन्हित पूर्णांक size, subreq_size;
 
 	nfs_page_group_lock(req);
 
 	subreq = req;
 	subreq_size = subreq->wb_bytes;
-	for(;;) {
-		size = nfs_pageio_do_add_request(desc, subreq);
-		if (size == subreq_size) {
+	क्रम(;;) अणु
+		size = nfs_pageio_करो_add_request(desc, subreq);
+		अगर (size == subreq_size) अणु
 			/* We successfully submitted a request */
-			if (subreq == req)
-				break;
+			अगर (subreq == req)
+				अवरोध;
 			req->wb_pgbase += size;
 			req->wb_bytes -= size;
 			req->wb_offset += size;
 			subreq_size = req->wb_bytes;
 			subreq = req;
-			continue;
-		}
-		if (WARN_ON_ONCE(subreq != req)) {
+			जारी;
+		पूर्ण
+		अगर (WARN_ON_ONCE(subreq != req)) अणु
 			nfs_page_group_unlock(req);
 			nfs_pageio_cleanup_request(desc, subreq);
 			subreq = req;
 			subreq_size = req->wb_bytes;
 			nfs_page_group_lock(req);
-		}
-		if (!size) {
-			/* Can't coalesce any more, so do I/O */
+		पूर्ण
+		अगर (!size) अणु
+			/* Can't coalesce any more, so करो I/O */
 			nfs_page_group_unlock(req);
 			desc->pg_moreio = 1;
-			nfs_pageio_doio(desc);
-			if (desc->pg_error < 0 || mirror->pg_recoalesce)
-				return 0;
-			/* retry add_request for this subreq */
+			nfs_pageio_करोio(desc);
+			अगर (desc->pg_error < 0 || mirror->pg_recoalesce)
+				वापस 0;
+			/* retry add_request क्रम this subreq */
 			nfs_page_group_lock(req);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		subreq = nfs_create_subreq(req, req->wb_pgbase,
 				req->wb_offset, size);
-		if (IS_ERR(subreq))
-			goto err_ptr;
+		अगर (IS_ERR(subreq))
+			जाओ err_ptr;
 		subreq_size = size;
-	}
+	पूर्ण
 
 	nfs_page_group_unlock(req);
-	return 1;
+	वापस 1;
 err_ptr:
 	desc->pg_error = PTR_ERR(subreq);
 	nfs_page_group_unlock(req);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfs_do_recoalesce(struct nfs_pageio_descriptor *desc)
-{
-	struct nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
+अटल पूर्णांक nfs_करो_recoalesce(काष्ठा nfs_pageio_descriptor *desc)
+अणु
+	काष्ठा nfs_pgio_mirror *mirror = nfs_pgio_current_mirror(desc);
 	LIST_HEAD(head);
 
-	do {
+	करो अणु
 		list_splice_init(&mirror->pg_list, &head);
 
-		while (!list_empty(&head)) {
-			struct nfs_page *req;
+		जबतक (!list_empty(&head)) अणु
+			काष्ठा nfs_page *req;
 
-			req = list_first_entry(&head, struct nfs_page, wb_list);
-			if (__nfs_pageio_add_request(desc, req))
-				continue;
-			if (desc->pg_error < 0) {
+			req = list_first_entry(&head, काष्ठा nfs_page, wb_list);
+			अगर (__nfs_pageio_add_request(desc, req))
+				जारी;
+			अगर (desc->pg_error < 0) अणु
 				list_splice_tail(&head, &mirror->pg_list);
 				mirror->pg_recoalesce = 1;
-				return 0;
-			}
-			break;
-		}
-	} while (mirror->pg_recoalesce);
-	return 1;
-}
+				वापस 0;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (mirror->pg_recoalesce);
+	वापस 1;
+पूर्ण
 
-static int nfs_pageio_add_request_mirror(struct nfs_pageio_descriptor *desc,
-		struct nfs_page *req)
-{
-	int ret;
+अटल पूर्णांक nfs_pageio_add_request_mirror(काष्ठा nfs_pageio_descriptor *desc,
+		काष्ठा nfs_page *req)
+अणु
+	पूर्णांक ret;
 
-	do {
+	करो अणु
 		ret = __nfs_pageio_add_request(desc, req);
-		if (ret)
-			break;
-		if (desc->pg_error < 0)
-			break;
-		ret = nfs_do_recoalesce(desc);
-	} while (ret);
+		अगर (ret)
+			अवरोध;
+		अगर (desc->pg_error < 0)
+			अवरोध;
+		ret = nfs_करो_recoalesce(desc);
+	पूर्ण जबतक (ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nfs_pageio_error_cleanup(struct nfs_pageio_descriptor *desc)
-{
+अटल व्योम nfs_pageio_error_cleanup(काष्ठा nfs_pageio_descriptor *desc)
+अणु
 	u32 midx;
-	struct nfs_pgio_mirror *mirror;
+	काष्ठा nfs_pgio_mirror *mirror;
 
-	if (!desc->pg_error)
-		return;
+	अगर (!desc->pg_error)
+		वापस;
 
-	for (midx = 0; midx < desc->pg_mirror_count; midx++) {
+	क्रम (midx = 0; midx < desc->pg_mirror_count; midx++) अणु
 		mirror = nfs_pgio_get_mirror(desc, midx);
 		desc->pg_completion_ops->error_cleanup(&mirror->pg_list,
 				desc->pg_error);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int nfs_pageio_add_request(struct nfs_pageio_descriptor *desc,
-			   struct nfs_page *req)
-{
+पूर्णांक nfs_pageio_add_request(काष्ठा nfs_pageio_descriptor *desc,
+			   काष्ठा nfs_page *req)
+अणु
 	u32 midx;
-	unsigned int pgbase, offset, bytes;
-	struct nfs_page *dupreq;
+	अचिन्हित पूर्णांक pgbase, offset, bytes;
+	काष्ठा nfs_page *dupreq;
 
 	pgbase = req->wb_pgbase;
 	offset = req->wb_offset;
 	bytes = req->wb_bytes;
 
 	nfs_pageio_setup_mirroring(desc, req);
-	if (desc->pg_error < 0)
-		goto out_failed;
+	अगर (desc->pg_error < 0)
+		जाओ out_failed;
 
 	/* Create the mirror instances first, and fire them off */
-	for (midx = 1; midx < desc->pg_mirror_count; midx++) {
+	क्रम (midx = 1; midx < desc->pg_mirror_count; midx++) अणु
 		nfs_page_group_lock(req);
 
 		dupreq = nfs_create_subreq(req,
 				pgbase, offset, bytes);
 
 		nfs_page_group_unlock(req);
-		if (IS_ERR(dupreq)) {
+		अगर (IS_ERR(dupreq)) अणु
 			desc->pg_error = PTR_ERR(dupreq);
-			goto out_failed;
-		}
+			जाओ out_failed;
+		पूर्ण
 
 		nfs_pgio_set_current_mirror(desc, midx);
-		if (!nfs_pageio_add_request_mirror(desc, dupreq))
-			goto out_cleanup_subreq;
-	}
+		अगर (!nfs_pageio_add_request_mirror(desc, dupreq))
+			जाओ out_cleanup_subreq;
+	पूर्ण
 
 	nfs_pgio_set_current_mirror(desc, 0);
-	if (!nfs_pageio_add_request_mirror(desc, req))
-		goto out_failed;
+	अगर (!nfs_pageio_add_request_mirror(desc, req))
+		जाओ out_failed;
 
-	return 1;
+	वापस 1;
 
 out_cleanup_subreq:
 	nfs_pageio_cleanup_request(desc, dupreq);
 out_failed:
 	nfs_pageio_error_cleanup(desc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * nfs_pageio_complete_mirror - Complete I/O on the current mirror of an
  *				nfs_pageio_descriptor
- * @desc: pointer to io descriptor
- * @mirror_idx: pointer to mirror index
+ * @desc: poपूर्णांकer to io descriptor
+ * @mirror_idx: poपूर्णांकer to mirror index
  */
-static void nfs_pageio_complete_mirror(struct nfs_pageio_descriptor *desc,
+अटल व्योम nfs_pageio_complete_mirror(काष्ठा nfs_pageio_descriptor *desc,
 				       u32 mirror_idx)
-{
-	struct nfs_pgio_mirror *mirror;
+अणु
+	काष्ठा nfs_pgio_mirror *mirror;
 	u32 restore_idx;
 
 	restore_idx = nfs_pgio_set_current_mirror(desc, mirror_idx);
 	mirror = nfs_pgio_current_mirror(desc);
 
-	for (;;) {
-		nfs_pageio_doio(desc);
-		if (desc->pg_error < 0 || !mirror->pg_recoalesce)
-			break;
-		if (!nfs_do_recoalesce(desc))
-			break;
-	}
+	क्रम (;;) अणु
+		nfs_pageio_करोio(desc);
+		अगर (desc->pg_error < 0 || !mirror->pg_recoalesce)
+			अवरोध;
+		अगर (!nfs_करो_recoalesce(desc))
+			अवरोध;
+	पूर्ण
 	nfs_pgio_set_current_mirror(desc, restore_idx);
-}
+पूर्ण
 
 /*
  * nfs_pageio_resend - Transfer requests to new descriptor and resend
@@ -1354,110 +1355,110 @@ static void nfs_pageio_complete_mirror(struct nfs_pageio_descriptor *desc,
  *
  * Returns 0 on success and < 0 on error.
  */
-int nfs_pageio_resend(struct nfs_pageio_descriptor *desc,
-		      struct nfs_pgio_header *hdr)
-{
+पूर्णांक nfs_pageio_resend(काष्ठा nfs_pageio_descriptor *desc,
+		      काष्ठा nfs_pgio_header *hdr)
+अणु
 	LIST_HEAD(pages);
 
 	desc->pg_io_completion = hdr->io_completion;
 	desc->pg_dreq = hdr->dreq;
 	list_splice_init(&hdr->pages, &pages);
-	while (!list_empty(&pages)) {
-		struct nfs_page *req = nfs_list_entry(pages.next);
+	जबतक (!list_empty(&pages)) अणु
+		काष्ठा nfs_page *req = nfs_list_entry(pages.next);
 
-		if (!nfs_pageio_add_request(desc, req))
-			break;
-	}
+		अगर (!nfs_pageio_add_request(desc, req))
+			अवरोध;
+	पूर्ण
 	nfs_pageio_complete(desc);
-	if (!list_empty(&pages)) {
-		int err = desc->pg_error < 0 ? desc->pg_error : -EIO;
+	अगर (!list_empty(&pages)) अणु
+		पूर्णांक err = desc->pg_error < 0 ? desc->pg_error : -EIO;
 		hdr->completion_ops->error_cleanup(&pages, err);
 		nfs_set_pgio_error(hdr, err, hdr->io_start);
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nfs_pageio_resend);
 
 /**
  * nfs_pageio_complete - Complete I/O then cleanup an nfs_pageio_descriptor
- * @desc: pointer to io descriptor
+ * @desc: poपूर्णांकer to io descriptor
  */
-void nfs_pageio_complete(struct nfs_pageio_descriptor *desc)
-{
+व्योम nfs_pageio_complete(काष्ठा nfs_pageio_descriptor *desc)
+अणु
 	u32 midx;
 
-	for (midx = 0; midx < desc->pg_mirror_count; midx++)
+	क्रम (midx = 0; midx < desc->pg_mirror_count; midx++)
 		nfs_pageio_complete_mirror(desc, midx);
 
-	if (desc->pg_error < 0)
+	अगर (desc->pg_error < 0)
 		nfs_pageio_error_cleanup(desc);
-	if (desc->pg_ops->pg_cleanup)
+	अगर (desc->pg_ops->pg_cleanup)
 		desc->pg_ops->pg_cleanup(desc);
 	nfs_pageio_cleanup_mirroring(desc);
-}
+पूर्ण
 
 /**
  * nfs_pageio_cond_complete - Conditional I/O completion
- * @desc: pointer to io descriptor
+ * @desc: poपूर्णांकer to io descriptor
  * @index: page index
  *
- * It is important to ensure that processes don't try to take locks
+ * It is important to ensure that processes करोn't try to take locks
  * on non-contiguous ranges of pages as that might deadlock. This
- * function should be called before attempting to wait on a locked
- * nfs_page. It will complete the I/O if the page index 'index'
+ * function should be called beक्रमe attempting to रुको on a locked
+ * nfs_page. It will complete the I/O अगर the page index 'index'
  * is not contiguous with the existing list of pages in 'desc'.
  */
-void nfs_pageio_cond_complete(struct nfs_pageio_descriptor *desc, pgoff_t index)
-{
-	struct nfs_pgio_mirror *mirror;
-	struct nfs_page *prev;
+व्योम nfs_pageio_cond_complete(काष्ठा nfs_pageio_descriptor *desc, pgoff_t index)
+अणु
+	काष्ठा nfs_pgio_mirror *mirror;
+	काष्ठा nfs_page *prev;
 	u32 midx;
 
-	for (midx = 0; midx < desc->pg_mirror_count; midx++) {
+	क्रम (midx = 0; midx < desc->pg_mirror_count; midx++) अणु
 		mirror = nfs_pgio_get_mirror(desc, midx);
-		if (!list_empty(&mirror->pg_list)) {
+		अगर (!list_empty(&mirror->pg_list)) अणु
 			prev = nfs_list_entry(mirror->pg_list.prev);
-			if (index != prev->wb_index + 1) {
+			अगर (index != prev->wb_index + 1) अणु
 				nfs_pageio_complete(desc);
-				break;
-			}
-		}
-	}
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * nfs_pageio_stop_mirroring - stop using mirroring (set mirror count to 1)
  */
-void nfs_pageio_stop_mirroring(struct nfs_pageio_descriptor *pgio)
-{
+व्योम nfs_pageio_stop_mirroring(काष्ठा nfs_pageio_descriptor *pgio)
+अणु
 	nfs_pageio_complete(pgio);
-}
+पूर्ण
 
-int __init nfs_init_nfspagecache(void)
-{
+पूर्णांक __init nfs_init_nfspagecache(व्योम)
+अणु
 	nfs_page_cachep = kmem_cache_create("nfs_page",
-					    sizeof(struct nfs_page),
+					    माप(काष्ठा nfs_page),
 					    0, SLAB_HWCACHE_ALIGN,
-					    NULL);
-	if (nfs_page_cachep == NULL)
-		return -ENOMEM;
+					    शून्य);
+	अगर (nfs_page_cachep == शून्य)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nfs_destroy_nfspagecache(void)
-{
+व्योम nfs_destroy_nfspagecache(व्योम)
+अणु
 	kmem_cache_destroy(nfs_page_cachep);
-}
+पूर्ण
 
-static const struct rpc_call_ops nfs_pgio_common_ops = {
+अटल स्थिर काष्ठा rpc_call_ops nfs_pgio_common_ops = अणु
 	.rpc_call_prepare = nfs_pgio_prepare,
-	.rpc_call_done = nfs_pgio_result,
+	.rpc_call_करोne = nfs_pgio_result,
 	.rpc_release = nfs_pgio_release,
-};
+पूर्ण;
 
-const struct nfs_pageio_ops nfs_pgio_rw_ops = {
+स्थिर काष्ठा nfs_pageio_ops nfs_pgio_rw_ops = अणु
 	.pg_test = nfs_generic_pg_test,
-	.pg_doio = nfs_generic_pg_pgios,
-};
+	.pg_करोio = nfs_generic_pg_pgios,
+पूर्ण;

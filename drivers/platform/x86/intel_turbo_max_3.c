@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Intel Turbo Boost Max Technology 3.0 legacy (non HWP) enumeration driver
+ * Intel Turbo Boost Max Technology 3.0 legacy (non HWP) क्रमागतeration driver
  * Copyright (c) 2017, Intel Corporation.
  * All rights reserved.
  *
- * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+ * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.पूर्णांकel.com>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/cpufeature.h>
-#include <linux/cpuhotplug.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/topology.h>
-#include <linux/workqueue.h>
+#समावेश <linux/cpufeature.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/workqueue.h>
 
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
 
-#define MSR_OC_MAILBOX			0x150
-#define MSR_OC_MAILBOX_CMD_OFFSET	32
-#define MSR_OC_MAILBOX_RSP_OFFSET	32
-#define MSR_OC_MAILBOX_BUSY_BIT		63
-#define OC_MAILBOX_FC_CONTROL_CMD	0x1C
+#घोषणा MSR_OC_MAILBOX			0x150
+#घोषणा MSR_OC_MAILBOX_CMD_OFFSET	32
+#घोषणा MSR_OC_MAILBOX_RSP_OFFSET	32
+#घोषणा MSR_OC_MAILBOX_BUSY_BIT		63
+#घोषणा OC_MAILBOX_FC_CONTROL_CMD	0x1C
 
 /*
  * Typical latency to get mail box response is ~3us, It takes +3 us to
- * process reading mailbox after issuing mailbox write on a Broadwell 3.4 GHz
- * system. So for most of the time, the first mailbox read should have the
- * response, but to avoid some boundary cases retry twice.
+ * process पढ़ोing mailbox after issuing mailbox ग_लिखो on a Broadwell 3.4 GHz
+ * प्रणाली. So क्रम most of the समय, the first mailbox पढ़ो should have the
+ * response, but to aव्योम some boundary हालs retry twice.
  */
-#define OC_MAILBOX_RETRY_COUNT		2
+#घोषणा OC_MAILBOX_RETRY_COUNT		2
 
-static int get_oc_core_priority(unsigned int cpu)
-{
+अटल पूर्णांक get_oc_core_priority(अचिन्हित पूर्णांक cpu)
+अणु
 	u64 value, cmd = OC_MAILBOX_FC_CONTROL_CMD;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	/* Issue favored core read command */
+	/* Issue favored core पढ़ो command */
 	value = cmd << MSR_OC_MAILBOX_CMD_OFFSET;
 	/* Set the busy bit to indicate OS is trying to issue command */
 	value |=  BIT_ULL(MSR_OC_MAILBOX_BUSY_BIT);
 	ret = wrmsrl_safe(MSR_OC_MAILBOX, value);
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("cpu %d OC mailbox write failed\n", cpu);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < OC_MAILBOX_RETRY_COUNT; ++i) {
+	क्रम (i = 0; i < OC_MAILBOX_RETRY_COUNT; ++i) अणु
 		ret = rdmsrl_safe(MSR_OC_MAILBOX, &value);
-		if (ret) {
+		अगर (ret) अणु
 			pr_debug("cpu %d OC mailbox read failed\n", cpu);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (value & BIT_ULL(MSR_OC_MAILBOX_BUSY_BIT)) {
+		अगर (value & BIT_ULL(MSR_OC_MAILBOX_BUSY_BIT)) अणु
 			pr_debug("cpu %d OC mailbox still processing\n", cpu);
 			ret = -EBUSY;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if ((value >> MSR_OC_MAILBOX_RSP_OFFSET) & 0xff) {
+		अगर ((value >> MSR_OC_MAILBOX_RSP_OFFSET) & 0xff) अणु
 			pr_debug("cpu %d OC mailbox cmd failed\n", cpu);
 			ret = -ENXIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = value & 0xff;
 		pr_debug("cpu %d max_ratio %d\n", cpu, ret);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * The work item is needed to avoid CPU hotplug locking issues. The function
- * itmt_legacy_set_priority() is called from CPU online callback, so can't
- * call sched_set_itmt_support() from there as this function will aquire
+ * The work item is needed to aव्योम CPU hotplug locking issues. The function
+ * iपंचांगt_legacy_set_priority() is called from CPU online callback, so can't
+ * call sched_set_iपंचांगt_support() from there as this function will aquire
  * hotplug locks in its path.
  */
-static void itmt_legacy_work_fn(struct work_struct *work)
-{
-	sched_set_itmt_support();
-}
+अटल व्योम iपंचांगt_legacy_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	sched_set_iपंचांगt_support();
+पूर्ण
 
-static DECLARE_WORK(sched_itmt_work, itmt_legacy_work_fn);
+अटल DECLARE_WORK(sched_iपंचांगt_work, iपंचांगt_legacy_work_fn);
 
-static int itmt_legacy_cpu_online(unsigned int cpu)
-{
-	static u32 max_highest_perf = 0, min_highest_perf = U32_MAX;
-	int priority;
+अटल पूर्णांक iपंचांगt_legacy_cpu_online(अचिन्हित पूर्णांक cpu)
+अणु
+	अटल u32 max_highest_perf = 0, min_highest_perf = U32_MAX;
+	पूर्णांक priority;
 
 	priority = get_oc_core_priority(cpu);
-	if (priority < 0)
-		return 0;
+	अगर (priority < 0)
+		वापस 0;
 
-	sched_set_itmt_core_prio(priority, cpu);
+	sched_set_iपंचांगt_core_prio(priority, cpu);
 
-	/* Enable ITMT feature when a core with different priority is found */
-	if (max_highest_perf <= min_highest_perf) {
-		if (priority > max_highest_perf)
+	/* Enable ITMT feature when a core with dअगरferent priority is found */
+	अगर (max_highest_perf <= min_highest_perf) अणु
+		अगर (priority > max_highest_perf)
 			max_highest_perf = priority;
 
-		if (priority < min_highest_perf)
+		अगर (priority < min_highest_perf)
 			min_highest_perf = priority;
 
-		if (max_highest_perf > min_highest_perf)
-			schedule_work(&sched_itmt_work);
-	}
+		अगर (max_highest_perf > min_highest_perf)
+			schedule_work(&sched_iपंचांगt_work);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct x86_cpu_id itmt_legacy_cpu_ids[] = {
-	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_X,	NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_X,	NULL),
-	{}
-};
+अटल स्थिर काष्ठा x86_cpu_id iपंचांगt_legacy_cpu_ids[] = अणु
+	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_X,	शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_X,	शून्य),
+	अणुपूर्ण
+पूर्ण;
 
-static int __init itmt_legacy_init(void)
-{
-	const struct x86_cpu_id *id;
-	int ret;
+अटल पूर्णांक __init iपंचांगt_legacy_init(व्योम)
+अणु
+	स्थिर काष्ठा x86_cpu_id *id;
+	पूर्णांक ret;
 
-	id = x86_match_cpu(itmt_legacy_cpu_ids);
-	if (!id)
-		return -ENODEV;
+	id = x86_match_cpu(iपंचांगt_legacy_cpu_ids);
+	अगर (!id)
+		वापस -ENODEV;
 
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN,
 				"platform/x86/turbo_max_3:online",
-				itmt_legacy_cpu_online,	NULL);
-	if (ret < 0)
-		return ret;
+				iपंचांगt_legacy_cpu_online,	शून्य);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
-late_initcall(itmt_legacy_init)
+	वापस 0;
+पूर्ण
+late_initcall(iपंचांगt_legacy_init)

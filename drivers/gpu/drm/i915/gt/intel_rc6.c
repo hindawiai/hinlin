@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "i915_drv.h"
-#include "i915_vgpu.h"
-#include "intel_gt.h"
-#include "intel_gt_pm.h"
-#include "intel_rc6.h"
-#include "intel_sideband.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_vgpu.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_gt_pm.h"
+#समावेश "intel_rc6.h"
+#समावेश "intel_sideband.h"
 
 /**
  * DOC: RC6
  *
- * RC6 is a special power stage which allows the GPU to enter an very
- * low-voltage mode when idle, using down to 0V while at this stage.  This
- * stage is entered automatically when the GPU is idle when RC6 support is
- * enabled, and as soon as new workload arises GPU wakes up automatically as
+ * RC6 is a special घातer stage which allows the GPU to enter an very
+ * low-voltage mode when idle, using करोwn to 0V जबतक at this stage.  This
+ * stage is entered स्वतःmatically when the GPU is idle when RC6 support is
+ * enabled, and as soon as new workload arises GPU wakes up स्वतःmatically as
  * well.
  *
- * There are different RC6 modes available in Intel GPU, which differentiate
+ * There are dअगरferent RC6 modes available in Intel GPU, which dअगरferentiate
  * among each other with the latency required to enter and leave RC6 and
- * voltage consumed by the GPU in different states.
+ * voltage consumed by the GPU in dअगरferent states.
  *
  * The combination of the following flags define which states GPU is allowed
- * to enter, while RC6 is the normal RC6 state, RC6p is the deep RC6, and
+ * to enter, जबतक RC6 is the normal RC6 state, RC6p is the deep RC6, and
  * RC6pp is deepest RC6. Their support by hardware varies according to the
- * GPU, BIOS, chipset and platform. RC6 is usually the safest one and the one
- * which brings the most power savings; deeper states save more power, but
- * require higher latency to switch to and wake up.
+ * GPU, BIOS, chipset and platक्रमm. RC6 is usually the safest one and the one
+ * which brings the most घातer savings; deeper states save more घातer, but
+ * require higher latency to चयन to and wake up.
  */
 
-static struct intel_gt *rc6_to_gt(struct intel_rc6 *rc6)
-{
-	return container_of(rc6, struct intel_gt, rc6);
-}
+अटल काष्ठा पूर्णांकel_gt *rc6_to_gt(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	वापस container_of(rc6, काष्ठा पूर्णांकel_gt, rc6);
+पूर्ण
 
-static struct intel_uncore *rc6_to_uncore(struct intel_rc6 *rc)
-{
-	return rc6_to_gt(rc)->uncore;
-}
+अटल काष्ठा पूर्णांकel_uncore *rc6_to_uncore(काष्ठा पूर्णांकel_rc6 *rc)
+अणु
+	वापस rc6_to_gt(rc)->uncore;
+पूर्ण
 
-static struct drm_i915_private *rc6_to_i915(struct intel_rc6 *rc)
-{
-	return rc6_to_gt(rc)->i915;
-}
+अटल काष्ठा drm_i915_निजी *rc6_to_i915(काष्ठा पूर्णांकel_rc6 *rc)
+अणु
+	वापस rc6_to_gt(rc)->i915;
+पूर्ण
 
-static void set(struct intel_uncore *uncore, i915_reg_t reg, u32 val)
-{
-	intel_uncore_write_fw(uncore, reg, val);
-}
+अटल व्योम set(काष्ठा पूर्णांकel_uncore *uncore, i915_reg_t reg, u32 val)
+अणु
+	पूर्णांकel_uncore_ग_लिखो_fw(uncore, reg, val);
+पूर्ण
 
-static void gen11_rc6_enable(struct intel_rc6 *rc6)
-{
-	struct intel_gt *gt = rc6_to_gt(rc6);
-	struct intel_uncore *uncore = gt->uncore;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम gen11_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = rc6_to_gt(rc6);
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 	u32 pg_enable;
-	int i;
+	पूर्णांक i;
 
 	/* 2b: Program RC6 thresholds.*/
 	set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 54 << 16 | 85);
@@ -68,7 +69,7 @@ static void gen11_rc6_enable(struct intel_rc6 *rc6)
 
 	set(uncore, GEN6_RC_EVALUATION_INTERVAL, 125000); /* 12500 * 1280ns */
 	set(uncore, GEN6_RC_IDLE_HYSTERSIS, 25); /* 25 * 1280ns */
-	for_each_engine(engine, rc6_to_gt(rc6), id)
+	क्रम_each_engine(engine, rc6_to_gt(rc6), id)
 		set(uncore, RING_MAX_IDLE(engine->mmio_base), 10);
 
 	set(uncore, GUC_MAX_IDLE_COUNT, 0xA);
@@ -81,19 +82,19 @@ static void gen11_rc6_enable(struct intel_rc6 *rc6)
 	 * 2c: Program Coarse Power Gating Policies.
 	 *
 	 * Bspec's guidance is to use 25us (really 25 * 1280ns) here. What we
-	 * use instead is a more conservative estimate for the maximum time
-	 * it takes us to service a CS interrupt and submit a new ELSP - that
-	 * is the time which the GPU is idle waiting for the CPU to select the
+	 * use instead is a more conservative estimate क्रम the maximum समय
+	 * it takes us to service a CS पूर्णांकerrupt and submit a new ELSP - that
+	 * is the समय which the GPU is idle रुकोing क्रम the CPU to select the
 	 * next request to execute. If the idle hysteresis is less than that
-	 * interrupt service latency, the hardware will automatically gate
-	 * the power well and we will then incur the wake up cost on top of
+	 * पूर्णांकerrupt service latency, the hardware will स्वतःmatically gate
+	 * the घातer well and we will then incur the wake up cost on top of
 	 * the service latency. A similar guide from plane_state is that we
-	 * do not want the enable hysteresis to less than the wakeup latency.
+	 * करो not want the enable hysteresis to less than the wakeup latency.
 	 *
-	 * igt/gem_exec_nop/sequential provides a rough estimate for the
-	 * service latency, and puts it under 10us for Icelake, similar to
+	 * igt/gem_exec_nop/sequential provides a rough estimate क्रम the
+	 * service latency, and माला_दो it under 10us क्रम Icelake, similar to
 	 * Broadwell+, To be conservative, we want to factor in a context
-	 * switch on top (due to ksoftirqd).
+	 * चयन on top (due to ksoftirqd).
 	 */
 	set(uncore, GEN9_MEDIA_PG_IDLE_HYSTERESIS, 60);
 	set(uncore, GEN9_RENDER_PG_IDLE_HYSTERESIS, 60);
@@ -109,39 +110,39 @@ static void gen11_rc6_enable(struct intel_rc6 *rc6)
 		GEN9_MEDIA_PG_ENABLE |
 		GEN11_MEDIA_SAMPLER_PG_ENABLE;
 
-	if (INTEL_GEN(gt->i915) >= 12) {
-		for (i = 0; i < I915_MAX_VCS; i++)
-			if (HAS_ENGINE(gt, _VCS(i)))
+	अगर (INTEL_GEN(gt->i915) >= 12) अणु
+		क्रम (i = 0; i < I915_MAX_VCS; i++)
+			अगर (HAS_ENGINE(gt, _VCS(i)))
 				pg_enable |= (VDN_HCP_POWERGATE_ENABLE(i) |
 					      VDN_MFX_POWERGATE_ENABLE(i));
-	}
+	पूर्ण
 
 	set(uncore, GEN9_PG_ENABLE, pg_enable);
-}
+पूर्ण
 
-static void gen9_rc6_enable(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम gen9_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
 	/* 2b: Program RC6 thresholds.*/
-	if (INTEL_GEN(rc6_to_i915(rc6)) >= 10) {
+	अगर (INTEL_GEN(rc6_to_i915(rc6)) >= 10) अणु
 		set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 54 << 16 | 85);
 		set(uncore, GEN10_MEDIA_WAKE_RATE_LIMIT, 150);
-	} else if (IS_SKYLAKE(rc6_to_i915(rc6))) {
+	पूर्ण अन्यथा अगर (IS_SKYLAKE(rc6_to_i915(rc6))) अणु
 		/*
 		 * WaRsDoubleRc6WrlWithCoarsePowerGating:skl Doubling WRL only
 		 * when CPG is enabled
 		 */
 		set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 108 << 16);
-	} else {
+	पूर्ण अन्यथा अणु
 		set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 54 << 16);
-	}
+	पूर्ण
 
 	set(uncore, GEN6_RC_EVALUATION_INTERVAL, 125000); /* 12500 * 1280ns */
 	set(uncore, GEN6_RC_IDLE_HYSTERSIS, 25); /* 25 * 1280ns */
-	for_each_engine(engine, rc6_to_gt(rc6), id)
+	क्रम_each_engine(engine, rc6_to_gt(rc6), id)
 		set(uncore, RING_MAX_IDLE(engine->mmio_base), 10);
 
 	set(uncore, GUC_MAX_IDLE_COUNT, 0xA);
@@ -152,21 +153,21 @@ static void gen9_rc6_enable(struct intel_rc6 *rc6)
 	 * 2c: Program Coarse Power Gating Policies.
 	 *
 	 * Bspec's guidance is to use 25us (really 25 * 1280ns) here. What we
-	 * use instead is a more conservative estimate for the maximum time
-	 * it takes us to service a CS interrupt and submit a new ELSP - that
-	 * is the time which the GPU is idle waiting for the CPU to select the
+	 * use instead is a more conservative estimate क्रम the maximum समय
+	 * it takes us to service a CS पूर्णांकerrupt and submit a new ELSP - that
+	 * is the समय which the GPU is idle रुकोing क्रम the CPU to select the
 	 * next request to execute. If the idle hysteresis is less than that
-	 * interrupt service latency, the hardware will automatically gate
-	 * the power well and we will then incur the wake up cost on top of
+	 * पूर्णांकerrupt service latency, the hardware will स्वतःmatically gate
+	 * the घातer well and we will then incur the wake up cost on top of
 	 * the service latency. A similar guide from plane_state is that we
-	 * do not want the enable hysteresis to less than the wakeup latency.
+	 * करो not want the enable hysteresis to less than the wakeup latency.
 	 *
-	 * igt/gem_exec_nop/sequential provides a rough estimate for the
-	 * service latency, and puts it around 10us for Broadwell (and other
-	 * big core) and around 40us for Broxton (and other low power cores).
-	 * [Note that for legacy ringbuffer submission, this is less than 1us!]
-	 * However, the wakeup latency on Broxton is closer to 100us. To be
-	 * conservative, we have to factor in a context switch on top (due
+	 * igt/gem_exec_nop/sequential provides a rough estimate क्रम the
+	 * service latency, and माला_दो it around 10us क्रम Broadwell (and other
+	 * big core) and around 40us क्रम Broxton (and other low घातer cores).
+	 * [Note that क्रम legacy ringbuffer submission, this is less than 1us!]
+	 * However, the wakeup latency on Broxton is बंदr to 100us. To be
+	 * conservative, we have to factor in a context चयन on top (due
 	 * to ksoftirqd).
 	 */
 	set(uncore, GEN9_MEDIA_PG_IDLE_HYSTERESIS, 250);
@@ -184,41 +185,41 @@ static void gen9_rc6_enable(struct intel_rc6 *rc6)
 	 * WaRsDisableCoarsePowerGating:skl,cnl
 	 *   - Render/Media PG need to be disabled with RC6.
 	 */
-	if (!NEEDS_WaRsDisableCoarsePowerGating(rc6_to_i915(rc6)))
+	अगर (!NEEDS_WaRsDisableCoarsePowerGating(rc6_to_i915(rc6)))
 		set(uncore, GEN9_PG_ENABLE,
 		    GEN9_RENDER_PG_ENABLE | GEN9_MEDIA_PG_ENABLE);
-}
+पूर्ण
 
-static void gen8_rc6_enable(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम gen8_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
 	/* 2b: Program RC6 thresholds.*/
 	set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 40 << 16);
 	set(uncore, GEN6_RC_EVALUATION_INTERVAL, 125000); /* 12500 * 1280ns */
 	set(uncore, GEN6_RC_IDLE_HYSTERSIS, 25); /* 25 * 1280ns */
-	for_each_engine(engine, rc6_to_gt(rc6), id)
+	क्रम_each_engine(engine, rc6_to_gt(rc6), id)
 		set(uncore, RING_MAX_IDLE(engine->mmio_base), 10);
 	set(uncore, GEN6_RC_SLEEP, 0);
-	set(uncore, GEN6_RC6_THRESHOLD, 625); /* 800us/1.28 for TO */
+	set(uncore, GEN6_RC6_THRESHOLD, 625); /* 800us/1.28 क्रम TO */
 
 	/* 3: Enable RC6 */
 	rc6->ctl_enable =
 	    GEN6_RC_CTL_HW_ENABLE |
 	    GEN7_RC_CTL_TO_MODE |
 	    GEN6_RC_CTL_RC6_ENABLE;
-}
+पूर्ण
 
-static void gen6_rc6_enable(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम gen6_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 	u32 rc6vids, rc6_mask;
-	int ret;
+	पूर्णांक ret;
 
 	set(uncore, GEN6_RC1_WAKE_RATE_LIMIT, 1000 << 16);
 	set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 40 << 16 | 30);
@@ -226,7 +227,7 @@ static void gen6_rc6_enable(struct intel_rc6 *rc6)
 	set(uncore, GEN6_RC_EVALUATION_INTERVAL, 125000);
 	set(uncore, GEN6_RC_IDLE_HYSTERSIS, 25);
 
-	for_each_engine(engine, rc6_to_gt(rc6), id)
+	क्रम_each_engine(engine, rc6_to_gt(rc6), id)
 		set(uncore, RING_MAX_IDLE(engine->mmio_base), 10);
 
 	set(uncore, GEN6_RC_SLEEP, 0);
@@ -235,11 +236,11 @@ static void gen6_rc6_enable(struct intel_rc6 *rc6)
 	set(uncore, GEN6_RC6p_THRESHOLD, 150000);
 	set(uncore, GEN6_RC6pp_THRESHOLD, 64000); /* unused */
 
-	/* We don't use those on Haswell */
+	/* We करोn't use those on Haswell */
 	rc6_mask = GEN6_RC_CTL_RC6_ENABLE;
-	if (HAS_RC6p(i915))
+	अगर (HAS_RC6p(i915))
 		rc6_mask |= GEN6_RC_CTL_RC6p_ENABLE;
-	if (HAS_RC6pp(i915))
+	अगर (HAS_RC6pp(i915))
 		rc6_mask |= GEN6_RC_CTL_RC6pp_ENABLE;
 	rc6->ctl_enable =
 	    rc6_mask |
@@ -247,111 +248,111 @@ static void gen6_rc6_enable(struct intel_rc6 *rc6)
 	    GEN6_RC_CTL_HW_ENABLE;
 
 	rc6vids = 0;
-	ret = sandybridge_pcode_read(i915, GEN6_PCODE_READ_RC6VIDS,
-				     &rc6vids, NULL);
-	if (IS_GEN(i915, 6) && ret) {
+	ret = sandybridge_pcode_पढ़ो(i915, GEN6_PCODE_READ_RC6VIDS,
+				     &rc6vids, शून्य);
+	अगर (IS_GEN(i915, 6) && ret) अणु
 		drm_dbg(&i915->drm, "Couldn't check for BIOS workaround\n");
-	} else if (IS_GEN(i915, 6) &&
-		   (GEN6_DECODE_RC6_VID(rc6vids & 0xff) < 450)) {
+	पूर्ण अन्यथा अगर (IS_GEN(i915, 6) &&
+		   (GEN6_DECODE_RC6_VID(rc6vids & 0xff) < 450)) अणु
 		drm_dbg(&i915->drm,
 			"You should update your BIOS. Correcting minimum rc6 voltage (%dmV->%dmV)\n",
 			GEN6_DECODE_RC6_VID(rc6vids & 0xff), 450);
 		rc6vids &= 0xffff00;
 		rc6vids |= GEN6_ENCODE_RC6_VID(450);
-		ret = sandybridge_pcode_write(i915, GEN6_PCODE_WRITE_RC6VIDS, rc6vids);
-		if (ret)
+		ret = sandybridge_pcode_ग_लिखो(i915, GEN6_PCODE_WRITE_RC6VIDS, rc6vids);
+		अगर (ret)
 			drm_err(&i915->drm,
 				"Couldn't fix incorrect rc6 voltage\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Check that the pcbr address is not empty. */
-static int chv_rc6_init(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
-	resource_size_t pctx_paddr, paddr;
-	resource_size_t pctx_size = 32 * SZ_1K;
+अटल पूर्णांक chv_rc6_init(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
+	resource_माप_प्रकार pctx_paddr, paddr;
+	resource_माप_प्रकार pctx_size = 32 * SZ_1K;
 	u32 pcbr;
 
-	pcbr = intel_uncore_read(uncore, VLV_PCBR);
-	if ((pcbr >> VLV_PCBR_ADDR_SHIFT) == 0) {
+	pcbr = पूर्णांकel_uncore_पढ़ो(uncore, VLV_PCBR);
+	अगर ((pcbr >> VLV_PCBR_ADDR_SHIFT) == 0) अणु
 		drm_dbg(&i915->drm, "BIOS didn't set up PCBR, fixing up\n");
 		paddr = i915->dsm.end + 1 - pctx_size;
 		GEM_BUG_ON(paddr > U32_MAX);
 
 		pctx_paddr = (paddr & ~4095);
-		intel_uncore_write(uncore, VLV_PCBR, pctx_paddr);
-	}
+		पूर्णांकel_uncore_ग_लिखो(uncore, VLV_PCBR, pctx_paddr);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vlv_rc6_init(struct intel_rc6 *rc6)
-{
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct drm_i915_gem_object *pctx;
-	resource_size_t pctx_paddr;
-	resource_size_t pctx_size = 24 * SZ_1K;
+अटल पूर्णांक vlv_rc6_init(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा drm_i915_gem_object *pctx;
+	resource_माप_प्रकार pctx_paddr;
+	resource_माप_प्रकार pctx_size = 24 * SZ_1K;
 	u32 pcbr;
 
-	pcbr = intel_uncore_read(uncore, VLV_PCBR);
-	if (pcbr) {
-		/* BIOS set it up already, grab the pre-alloc'd space */
-		resource_size_t pcbr_offset;
+	pcbr = पूर्णांकel_uncore_पढ़ो(uncore, VLV_PCBR);
+	अगर (pcbr) अणु
+		/* BIOS set it up alपढ़ोy, grab the pre-alloc'd space */
+		resource_माप_प्रकार pcbr_offset;
 
 		pcbr_offset = (pcbr & ~4095) - i915->dsm.start;
-		pctx = i915_gem_object_create_stolen_for_preallocated(i915,
+		pctx = i915_gem_object_create_stolen_क्रम_pपुनः_स्मृतिated(i915,
 								      pcbr_offset,
 								      pctx_size);
-		if (IS_ERR(pctx))
-			return PTR_ERR(pctx);
+		अगर (IS_ERR(pctx))
+			वापस PTR_ERR(pctx);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	drm_dbg(&i915->drm, "BIOS didn't set up PCBR, fixing up\n");
 
 	/*
-	 * From the Gunit register HAS:
-	 * The Gfx driver is expected to program this register and ensure
+	 * From the Gunit रेजिस्टर HAS:
+	 * The Gfx driver is expected to program this रेजिस्टर and ensure
 	 * proper allocation within Gfx stolen memory.  For example, this
-	 * register should be programmed such than the PCBR range does not
-	 * overlap with other ranges, such as the frame buffer, protected
+	 * रेजिस्टर should be programmed such than the PCBR range करोes not
+	 * overlap with other ranges, such as the frame buffer, रक्षित
 	 * memory, or any other relevant ranges.
 	 */
 	pctx = i915_gem_object_create_stolen(i915, pctx_size);
-	if (IS_ERR(pctx)) {
+	अगर (IS_ERR(pctx)) अणु
 		drm_dbg(&i915->drm,
 			"not enough stolen space for PCTX, disabling\n");
-		return PTR_ERR(pctx);
-	}
+		वापस PTR_ERR(pctx);
+	पूर्ण
 
 	GEM_BUG_ON(range_overflows_end_t(u64,
 					 i915->dsm.start,
 					 pctx->stolen->start,
 					 U32_MAX));
 	pctx_paddr = i915->dsm.start + pctx->stolen->start;
-	intel_uncore_write(uncore, VLV_PCBR, pctx_paddr);
+	पूर्णांकel_uncore_ग_लिखो(uncore, VLV_PCBR, pctx_paddr);
 
 out:
 	rc6->pctx = pctx;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void chv_rc6_enable(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम chv_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
 	/* 2a: Program RC6 thresholds.*/
 	set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 40 << 16);
 	set(uncore, GEN6_RC_EVALUATION_INTERVAL, 125000); /* 12500 * 1280ns */
 	set(uncore, GEN6_RC_IDLE_HYSTERSIS, 25); /* 25 * 1280ns */
 
-	for_each_engine(engine, rc6_to_gt(rc6), id)
+	क्रम_each_engine(engine, rc6_to_gt(rc6), id)
 		set(uncore, RING_MAX_IDLE(engine->mmio_base), 10);
 	set(uncore, GEN6_RC_SLEEP, 0);
 
@@ -366,19 +367,19 @@ static void chv_rc6_enable(struct intel_rc6 *rc6)
 
 	/* 3: Enable RC6 */
 	rc6->ctl_enable = GEN7_RC_CTL_TO_MODE;
-}
+पूर्ण
 
-static void vlv_rc6_enable(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम vlv_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
 	set(uncore, GEN6_RC6_WAKE_RATE_LIMIT, 0x00280000);
 	set(uncore, GEN6_RC_EVALUATION_INTERVAL, 125000);
 	set(uncore, GEN6_RC_IDLE_HYSTERSIS, 25);
 
-	for_each_engine(engine, rc6_to_gt(rc6), id)
+	क्रम_each_engine(engine, rc6_to_gt(rc6), id)
 		set(uncore, RING_MAX_IDLE(engine->mmio_base), 10);
 
 	set(uncore, GEN6_RC6_THRESHOLD, 0x557);
@@ -393,17 +394,17 @@ static void vlv_rc6_enable(struct intel_rc6 *rc6)
 
 	rc6->ctl_enable =
 	    GEN7_RC_CTL_TO_MODE | VLV_RC_CTL_CTX_RST_PARALLEL;
-}
+पूर्ण
 
-static bool bxt_check_bios_rc6_setup(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
+अटल bool bxt_check_bios_rc6_setup(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
 	u32 rc6_ctx_base, rc_ctl, rc_sw_target;
 	bool enable_rc6 = true;
 
-	rc_ctl = intel_uncore_read(uncore, GEN6_RC_CONTROL);
-	rc_sw_target = intel_uncore_read(uncore, GEN6_RC_STATE);
+	rc_ctl = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RC_CONTROL);
+	rc_sw_target = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RC_STATE);
 	rc_sw_target &= RC_SW_TARGET_STATE_MASK;
 	rc_sw_target >>= RC_SW_TARGET_STATE_SHIFT;
 	drm_dbg(&i915->drm, "BIOS enabled RC states: "
@@ -412,350 +413,350 @@ static bool bxt_check_bios_rc6_setup(struct intel_rc6 *rc6)
 			 onoff(rc_ctl & GEN6_RC_CTL_RC6_ENABLE),
 			 rc_sw_target);
 
-	if (!(intel_uncore_read(uncore, RC6_LOCATION) & RC6_CTX_IN_DRAM)) {
+	अगर (!(पूर्णांकel_uncore_पढ़ो(uncore, RC6_LOCATION) & RC6_CTX_IN_DRAM)) अणु
 		drm_dbg(&i915->drm, "RC6 Base location not set properly.\n");
 		enable_rc6 = false;
-	}
+	पूर्ण
 
 	/*
-	 * The exact context size is not known for BXT, so assume a page size
-	 * for this check.
+	 * The exact context size is not known क्रम BXT, so assume a page size
+	 * क्रम this check.
 	 */
 	rc6_ctx_base =
-		intel_uncore_read(uncore, RC6_CTX_BASE) & RC6_CTX_BASE_MASK;
-	if (!(rc6_ctx_base >= i915->dsm_reserved.start &&
-	      rc6_ctx_base + PAGE_SIZE < i915->dsm_reserved.end)) {
+		पूर्णांकel_uncore_पढ़ो(uncore, RC6_CTX_BASE) & RC6_CTX_BASE_MASK;
+	अगर (!(rc6_ctx_base >= i915->dsm_reserved.start &&
+	      rc6_ctx_base + PAGE_SIZE < i915->dsm_reserved.end)) अणु
 		drm_dbg(&i915->drm, "RC6 Base address not as expected.\n");
 		enable_rc6 = false;
-	}
+	पूर्ण
 
-	if (!((intel_uncore_read(uncore, PWRCTX_MAXCNT_RCSUNIT) & IDLE_TIME_MASK) > 1 &&
-	      (intel_uncore_read(uncore, PWRCTX_MAXCNT_VCSUNIT0) & IDLE_TIME_MASK) > 1 &&
-	      (intel_uncore_read(uncore, PWRCTX_MAXCNT_BCSUNIT) & IDLE_TIME_MASK) > 1 &&
-	      (intel_uncore_read(uncore, PWRCTX_MAXCNT_VECSUNIT) & IDLE_TIME_MASK) > 1)) {
+	अगर (!((पूर्णांकel_uncore_पढ़ो(uncore, PWRCTX_MAXCNT_RCSUNIT) & IDLE_TIME_MASK) > 1 &&
+	      (पूर्णांकel_uncore_पढ़ो(uncore, PWRCTX_MAXCNT_VCSUNIT0) & IDLE_TIME_MASK) > 1 &&
+	      (पूर्णांकel_uncore_पढ़ो(uncore, PWRCTX_MAXCNT_BCSUNIT) & IDLE_TIME_MASK) > 1 &&
+	      (पूर्णांकel_uncore_पढ़ो(uncore, PWRCTX_MAXCNT_VECSUNIT) & IDLE_TIME_MASK) > 1)) अणु
 		drm_dbg(&i915->drm,
 			"Engine Idle wait time not set properly.\n");
 		enable_rc6 = false;
-	}
+	पूर्ण
 
-	if (!intel_uncore_read(uncore, GEN8_PUSHBUS_CONTROL) ||
-	    !intel_uncore_read(uncore, GEN8_PUSHBUS_ENABLE) ||
-	    !intel_uncore_read(uncore, GEN8_PUSHBUS_SHIFT)) {
+	अगर (!पूर्णांकel_uncore_पढ़ो(uncore, GEN8_PUSHBUS_CONTROL) ||
+	    !पूर्णांकel_uncore_पढ़ो(uncore, GEN8_PUSHBUS_ENABLE) ||
+	    !पूर्णांकel_uncore_पढ़ो(uncore, GEN8_PUSHBUS_SHIFT)) अणु
 		drm_dbg(&i915->drm, "Pushbus not setup properly.\n");
 		enable_rc6 = false;
-	}
+	पूर्ण
 
-	if (!intel_uncore_read(uncore, GEN6_GFXPAUSE)) {
+	अगर (!पूर्णांकel_uncore_पढ़ो(uncore, GEN6_GFXPAUSE)) अणु
 		drm_dbg(&i915->drm, "GFX pause not setup properly.\n");
 		enable_rc6 = false;
-	}
+	पूर्ण
 
-	if (!intel_uncore_read(uncore, GEN8_MISC_CTRL0)) {
+	अगर (!पूर्णांकel_uncore_पढ़ो(uncore, GEN8_MISC_CTRL0)) अणु
 		drm_dbg(&i915->drm, "GPM control not setup properly.\n");
 		enable_rc6 = false;
-	}
+	पूर्ण
 
-	return enable_rc6;
-}
+	वापस enable_rc6;
+पूर्ण
 
-static bool rc6_supported(struct intel_rc6 *rc6)
-{
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
+अटल bool rc6_supported(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
 
-	if (!HAS_RC6(i915))
-		return false;
+	अगर (!HAS_RC6(i915))
+		वापस false;
 
-	if (intel_vgpu_active(i915))
-		return false;
+	अगर (पूर्णांकel_vgpu_active(i915))
+		वापस false;
 
-	if (is_mock_gt(rc6_to_gt(rc6)))
-		return false;
+	अगर (is_mock_gt(rc6_to_gt(rc6)))
+		वापस false;
 
-	if (IS_GEN9_LP(i915) && !bxt_check_bios_rc6_setup(rc6)) {
+	अगर (IS_GEN9_LP(i915) && !bxt_check_bios_rc6_setup(rc6)) अणु
 		drm_notice(&i915->drm,
 			   "RC6 and powersaving disabled by BIOS\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void rpm_get(struct intel_rc6 *rc6)
-{
+अटल व्योम rpm_get(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
 	GEM_BUG_ON(rc6->wakeref);
-	pm_runtime_get_sync(rc6_to_i915(rc6)->drm.dev);
+	pm_runसमय_get_sync(rc6_to_i915(rc6)->drm.dev);
 	rc6->wakeref = true;
-}
+पूर्ण
 
-static void rpm_put(struct intel_rc6 *rc6)
-{
+अटल व्योम rpm_put(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
 	GEM_BUG_ON(!rc6->wakeref);
-	pm_runtime_put(rc6_to_i915(rc6)->drm.dev);
+	pm_runसमय_put(rc6_to_i915(rc6)->drm.dev);
 	rc6->wakeref = false;
-}
+पूर्ण
 
-static bool pctx_corrupted(struct intel_rc6 *rc6)
-{
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
+अटल bool pctx_corrupted(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
 
-	if (!NEEDS_RC6_CTX_CORRUPTION_WA(i915))
-		return false;
+	अगर (!NEEDS_RC6_CTX_CORRUPTION_WA(i915))
+		वापस false;
 
-	if (intel_uncore_read(rc6_to_uncore(rc6), GEN8_RC6_CTX_INFO))
-		return false;
+	अगर (पूर्णांकel_uncore_पढ़ो(rc6_to_uncore(rc6), GEN8_RC6_CTX_INFO))
+		वापस false;
 
 	drm_notice(&i915->drm,
 		   "RC6 context corruption, disabling runtime power management\n");
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void __intel_rc6_disable(struct intel_rc6 *rc6)
-{
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
+अटल व्योम __पूर्णांकel_rc6_disable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
 
-	intel_uncore_forcewake_get(uncore, FORCEWAKE_ALL);
-	if (INTEL_GEN(i915) >= 9)
+	पूर्णांकel_uncore_क्रमcewake_get(uncore, FORCEWAKE_ALL);
+	अगर (INTEL_GEN(i915) >= 9)
 		set(uncore, GEN9_PG_ENABLE, 0);
 	set(uncore, GEN6_RC_CONTROL, 0);
 	set(uncore, GEN6_RC_STATE, 0);
-	intel_uncore_forcewake_put(uncore, FORCEWAKE_ALL);
-}
+	पूर्णांकel_uncore_क्रमcewake_put(uncore, FORCEWAKE_ALL);
+पूर्ण
 
-void intel_rc6_init(struct intel_rc6 *rc6)
-{
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
-	int err;
+व्योम पूर्णांकel_rc6_init(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
+	पूर्णांक err;
 
-	/* Disable runtime-pm until we can save the GPU state with rc6 pctx */
+	/* Disable runसमय-pm until we can save the GPU state with rc6 pctx */
 	rpm_get(rc6);
 
-	if (!rc6_supported(rc6))
-		return;
+	अगर (!rc6_supported(rc6))
+		वापस;
 
-	if (IS_CHERRYVIEW(i915))
+	अगर (IS_CHERRYVIEW(i915))
 		err = chv_rc6_init(rc6);
-	else if (IS_VALLEYVIEW(i915))
+	अन्यथा अगर (IS_VALLEYVIEW(i915))
 		err = vlv_rc6_init(rc6);
-	else
+	अन्यथा
 		err = 0;
 
-	/* Sanitize rc6, ensure it is disabled before we are ready. */
-	__intel_rc6_disable(rc6);
+	/* Sanitize rc6, ensure it is disabled beक्रमe we are पढ़ोy. */
+	__पूर्णांकel_rc6_disable(rc6);
 
 	rc6->supported = err == 0;
-}
+पूर्ण
 
-void intel_rc6_sanitize(struct intel_rc6 *rc6)
-{
-	memset(rc6->prev_hw_residency, 0, sizeof(rc6->prev_hw_residency));
+व्योम पूर्णांकel_rc6_sanitize(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	स_रखो(rc6->prev_hw_residency, 0, माप(rc6->prev_hw_residency));
 
-	if (rc6->enabled) { /* unbalanced suspend/resume */
+	अगर (rc6->enabled) अणु /* unbalanced suspend/resume */
 		rpm_get(rc6);
 		rc6->enabled = false;
-	}
+	पूर्ण
 
-	if (rc6->supported)
-		__intel_rc6_disable(rc6);
-}
+	अगर (rc6->supported)
+		__पूर्णांकel_rc6_disable(rc6);
+पूर्ण
 
-void intel_rc6_enable(struct intel_rc6 *rc6)
-{
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
+व्योम पूर्णांकel_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
 
-	if (!rc6->supported)
-		return;
+	अगर (!rc6->supported)
+		वापस;
 
 	GEM_BUG_ON(rc6->enabled);
 
-	intel_uncore_forcewake_get(uncore, FORCEWAKE_ALL);
+	पूर्णांकel_uncore_क्रमcewake_get(uncore, FORCEWAKE_ALL);
 
-	if (IS_CHERRYVIEW(i915))
+	अगर (IS_CHERRYVIEW(i915))
 		chv_rc6_enable(rc6);
-	else if (IS_VALLEYVIEW(i915))
+	अन्यथा अगर (IS_VALLEYVIEW(i915))
 		vlv_rc6_enable(rc6);
-	else if (INTEL_GEN(i915) >= 11)
+	अन्यथा अगर (INTEL_GEN(i915) >= 11)
 		gen11_rc6_enable(rc6);
-	else if (INTEL_GEN(i915) >= 9)
+	अन्यथा अगर (INTEL_GEN(i915) >= 9)
 		gen9_rc6_enable(rc6);
-	else if (IS_BROADWELL(i915))
+	अन्यथा अगर (IS_BROADWELL(i915))
 		gen8_rc6_enable(rc6);
-	else if (INTEL_GEN(i915) >= 6)
+	अन्यथा अगर (INTEL_GEN(i915) >= 6)
 		gen6_rc6_enable(rc6);
 
 	rc6->manual = rc6->ctl_enable & GEN6_RC_CTL_RC6_ENABLE;
-	if (NEEDS_RC6_CTX_CORRUPTION_WA(i915))
+	अगर (NEEDS_RC6_CTX_CORRUPTION_WA(i915))
 		rc6->ctl_enable = 0;
 
-	intel_uncore_forcewake_put(uncore, FORCEWAKE_ALL);
+	पूर्णांकel_uncore_क्रमcewake_put(uncore, FORCEWAKE_ALL);
 
-	if (unlikely(pctx_corrupted(rc6)))
-		return;
+	अगर (unlikely(pctx_corrupted(rc6)))
+		वापस;
 
-	/* rc6 is ready, runtime-pm is go! */
+	/* rc6 is पढ़ोy, runसमय-pm is go! */
 	rpm_put(rc6);
 	rc6->enabled = true;
-}
+पूर्ण
 
-void intel_rc6_unpark(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
+व्योम पूर्णांकel_rc6_unpark(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
 
-	if (!rc6->enabled)
-		return;
+	अगर (!rc6->enabled)
+		वापस;
 
-	/* Restore HW timers for automatic RC6 entry while busy */
+	/* Restore HW समयrs क्रम स्वतःmatic RC6 entry जबतक busy */
 	set(uncore, GEN6_RC_CONTROL, rc6->ctl_enable);
-}
+पूर्ण
 
-void intel_rc6_park(struct intel_rc6 *rc6)
-{
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	unsigned int target;
+व्योम पूर्णांकel_rc6_park(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	अचिन्हित पूर्णांक target;
 
-	if (!rc6->enabled)
-		return;
+	अगर (!rc6->enabled)
+		वापस;
 
-	if (unlikely(pctx_corrupted(rc6))) {
-		intel_rc6_disable(rc6);
-		return;
-	}
+	अगर (unlikely(pctx_corrupted(rc6))) अणु
+		पूर्णांकel_rc6_disable(rc6);
+		वापस;
+	पूर्ण
 
-	if (!rc6->manual)
-		return;
+	अगर (!rc6->manual)
+		वापस;
 
-	/* Turn off the HW timers and go directly to rc6 */
+	/* Turn off the HW समयrs and go directly to rc6 */
 	set(uncore, GEN6_RC_CONTROL, GEN6_RC_CTL_RC6_ENABLE);
 
-	if (HAS_RC6pp(rc6_to_i915(rc6)))
+	अगर (HAS_RC6pp(rc6_to_i915(rc6)))
 		target = 0x6; /* deepest rc6 */
-	else if (HAS_RC6p(rc6_to_i915(rc6)))
+	अन्यथा अगर (HAS_RC6p(rc6_to_i915(rc6)))
 		target = 0x5; /* deep rc6 */
-	else
+	अन्यथा
 		target = 0x4; /* normal rc6 */
 	set(uncore, GEN6_RC_STATE, target << RC_SW_TARGET_STATE_SHIFT);
-}
+पूर्ण
 
-void intel_rc6_disable(struct intel_rc6 *rc6)
-{
-	if (!rc6->enabled)
-		return;
+व्योम पूर्णांकel_rc6_disable(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	अगर (!rc6->enabled)
+		वापस;
 
 	rpm_get(rc6);
 	rc6->enabled = false;
 
-	__intel_rc6_disable(rc6);
-}
+	__पूर्णांकel_rc6_disable(rc6);
+पूर्ण
 
-void intel_rc6_fini(struct intel_rc6 *rc6)
-{
-	struct drm_i915_gem_object *pctx;
+व्योम पूर्णांकel_rc6_fini(काष्ठा पूर्णांकel_rc6 *rc6)
+अणु
+	काष्ठा drm_i915_gem_object *pctx;
 
-	intel_rc6_disable(rc6);
+	पूर्णांकel_rc6_disable(rc6);
 
 	pctx = fetch_and_zero(&rc6->pctx);
-	if (pctx)
+	अगर (pctx)
 		i915_gem_object_put(pctx);
 
-	if (rc6->wakeref)
+	अगर (rc6->wakeref)
 		rpm_put(rc6);
-}
+पूर्ण
 
-static u64 vlv_residency_raw(struct intel_uncore *uncore, const i915_reg_t reg)
-{
-	u32 lower, upper, tmp;
-	int loop = 2;
+अटल u64 vlv_residency_raw(काष्ठा पूर्णांकel_uncore *uncore, स्थिर i915_reg_t reg)
+अणु
+	u32 lower, upper, पंचांगp;
+	पूर्णांक loop = 2;
 
 	/*
-	 * The register accessed do not need forcewake. We borrow
+	 * The रेजिस्टर accessed करो not need क्रमcewake. We borrow
 	 * uncore lock to prevent concurrent access to range reg.
 	 */
-	lockdep_assert_held(&uncore->lock);
+	lockdep_निश्चित_held(&uncore->lock);
 
 	/*
 	 * vlv and chv residency counters are 40 bits in width.
 	 * With a control bit, we can choose between upper or lower
-	 * 32bit window into this counter.
+	 * 32bit winकरोw पूर्णांकo this counter.
 	 *
-	 * Although we always use the counter in high-range mode elsewhere,
-	 * userspace may attempt to read the value before rc6 is initialised,
-	 * before we have set the default VLV_COUNTER_CONTROL value. So always
+	 * Although we always use the counter in high-range mode अन्यथाwhere,
+	 * userspace may attempt to पढ़ो the value beक्रमe rc6 is initialised,
+	 * beक्रमe we have set the शेष VLV_COUNTER_CONTROL value. So always
 	 * set the high bit to be safe.
 	 */
 	set(uncore, VLV_COUNTER_CONTROL,
 	    _MASKED_BIT_ENABLE(VLV_COUNT_RANGE_HIGH));
-	upper = intel_uncore_read_fw(uncore, reg);
-	do {
-		tmp = upper;
+	upper = पूर्णांकel_uncore_पढ़ो_fw(uncore, reg);
+	करो अणु
+		पंचांगp = upper;
 
 		set(uncore, VLV_COUNTER_CONTROL,
 		    _MASKED_BIT_DISABLE(VLV_COUNT_RANGE_HIGH));
-		lower = intel_uncore_read_fw(uncore, reg);
+		lower = पूर्णांकel_uncore_पढ़ो_fw(uncore, reg);
 
 		set(uncore, VLV_COUNTER_CONTROL,
 		    _MASKED_BIT_ENABLE(VLV_COUNT_RANGE_HIGH));
-		upper = intel_uncore_read_fw(uncore, reg);
-	} while (upper != tmp && --loop);
+		upper = पूर्णांकel_uncore_पढ़ो_fw(uncore, reg);
+	पूर्ण जबतक (upper != पंचांगp && --loop);
 
 	/*
-	 * Everywhere else we always use VLV_COUNTER_CONTROL with the
+	 * Everywhere अन्यथा we always use VLV_COUNTER_CONTROL with the
 	 * VLV_COUNT_RANGE_HIGH bit set - so it is safe to leave it set
 	 * now.
 	 */
 
-	return lower | (u64)upper << 8;
-}
+	वापस lower | (u64)upper << 8;
+पूर्ण
 
-u64 intel_rc6_residency_ns(struct intel_rc6 *rc6, const i915_reg_t reg)
-{
-	struct drm_i915_private *i915 = rc6_to_i915(rc6);
-	struct intel_uncore *uncore = rc6_to_uncore(rc6);
-	u64 time_hw, prev_hw, overflow_hw;
-	unsigned int fw_domains;
-	unsigned long flags;
-	unsigned int i;
-	u32 mul, div;
+u64 पूर्णांकel_rc6_residency_ns(काष्ठा पूर्णांकel_rc6 *rc6, स्थिर i915_reg_t reg)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rc6_to_i915(rc6);
+	काष्ठा पूर्णांकel_uncore *uncore = rc6_to_uncore(rc6);
+	u64 समय_hw, prev_hw, overflow_hw;
+	अचिन्हित पूर्णांक fw_करोमुख्यs;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक i;
+	u32 mul, भाग;
 
-	if (!rc6->supported)
-		return 0;
+	अगर (!rc6->supported)
+		वापस 0;
 
 	/*
-	 * Store previous hw counter values for counter wrap-around handling.
+	 * Store previous hw counter values क्रम counter wrap-around handling.
 	 *
-	 * There are only four interesting registers and they live next to each
+	 * There are only four पूर्णांकeresting रेजिस्टरs and they live next to each
 	 * other so we can use the relative address, compared to the smallest
-	 * one as the index into driver storage.
+	 * one as the index पूर्णांकo driver storage.
 	 */
 	i = (i915_mmio_reg_offset(reg) -
-	     i915_mmio_reg_offset(GEN6_GT_GFX_RC6_LOCKED)) / sizeof(u32);
-	if (drm_WARN_ON_ONCE(&i915->drm, i >= ARRAY_SIZE(rc6->cur_residency)))
-		return 0;
+	     i915_mmio_reg_offset(GEN6_GT_GFX_RC6_LOCKED)) / माप(u32);
+	अगर (drm_WARN_ON_ONCE(&i915->drm, i >= ARRAY_SIZE(rc6->cur_residency)))
+		वापस 0;
 
-	fw_domains = intel_uncore_forcewake_for_reg(uncore, reg, FW_REG_READ);
+	fw_करोमुख्यs = पूर्णांकel_uncore_क्रमcewake_क्रम_reg(uncore, reg, FW_REG_READ);
 
 	spin_lock_irqsave(&uncore->lock, flags);
-	intel_uncore_forcewake_get__locked(uncore, fw_domains);
+	पूर्णांकel_uncore_क्रमcewake_get__locked(uncore, fw_करोमुख्यs);
 
-	/* On VLV and CHV, residency time is in CZ units rather than 1.28us */
-	if (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915)) {
+	/* On VLV and CHV, residency समय is in CZ units rather than 1.28us */
+	अगर (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915)) अणु
 		mul = 1000000;
-		div = i915->czclk_freq;
+		भाग = i915->czclk_freq;
 		overflow_hw = BIT_ULL(40);
-		time_hw = vlv_residency_raw(uncore, reg);
-	} else {
-		/* 833.33ns units on Gen9LP, 1.28us elsewhere. */
-		if (IS_GEN9_LP(i915)) {
+		समय_hw = vlv_residency_raw(uncore, reg);
+	पूर्ण अन्यथा अणु
+		/* 833.33ns units on Gen9LP, 1.28us अन्यथाwhere. */
+		अगर (IS_GEN9_LP(i915)) अणु
 			mul = 10000;
-			div = 12;
-		} else {
+			भाग = 12;
+		पूर्ण अन्यथा अणु
 			mul = 1280;
-			div = 1;
-		}
+			भाग = 1;
+		पूर्ण
 
 		overflow_hw = BIT_ULL(32);
-		time_hw = intel_uncore_read_fw(uncore, reg);
-	}
+		समय_hw = पूर्णांकel_uncore_पढ़ो_fw(uncore, reg);
+	पूर्ण
 
 	/*
 	 * Counter wrap handling.
@@ -764,29 +765,29 @@ u64 intel_rc6_residency_ns(struct intel_rc6 *rc6, const i915_reg_t reg)
 	 * can still wrap.
 	 */
 	prev_hw = rc6->prev_hw_residency[i];
-	rc6->prev_hw_residency[i] = time_hw;
+	rc6->prev_hw_residency[i] = समय_hw;
 
 	/* RC6 delta from last sample. */
-	if (time_hw >= prev_hw)
-		time_hw -= prev_hw;
-	else
-		time_hw += overflow_hw - prev_hw;
+	अगर (समय_hw >= prev_hw)
+		समय_hw -= prev_hw;
+	अन्यथा
+		समय_hw += overflow_hw - prev_hw;
 
 	/* Add delta to RC6 extended raw driver copy. */
-	time_hw += rc6->cur_residency[i];
-	rc6->cur_residency[i] = time_hw;
+	समय_hw += rc6->cur_residency[i];
+	rc6->cur_residency[i] = समय_hw;
 
-	intel_uncore_forcewake_put__locked(uncore, fw_domains);
+	पूर्णांकel_uncore_क्रमcewake_put__locked(uncore, fw_करोमुख्यs);
 	spin_unlock_irqrestore(&uncore->lock, flags);
 
-	return mul_u64_u32_div(time_hw, mul, div);
-}
+	वापस mul_u64_u32_भाग(समय_hw, mul, भाग);
+पूर्ण
 
-u64 intel_rc6_residency_us(struct intel_rc6 *rc6, i915_reg_t reg)
-{
-	return DIV_ROUND_UP_ULL(intel_rc6_residency_ns(rc6, reg), 1000);
-}
+u64 पूर्णांकel_rc6_residency_us(काष्ठा पूर्णांकel_rc6 *rc6, i915_reg_t reg)
+अणु
+	वापस DIV_ROUND_UP_ULL(पूर्णांकel_rc6_residency_ns(rc6, reg), 1000);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftest_rc6.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftest_rc6.c"
+#पूर्ण_अगर

@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __UM_NET_USER_H__
-#define __UM_NET_USER_H__
+#अगर_अघोषित __UM_NET_USER_H__
+#घोषणा __UM_NET_USER_H__
 
-#define ETH_ADDR_LEN (6)
-#define ETH_HEADER_ETHERTAP (16)
-#define ETH_HEADER_OTHER (26) /* 14 for ethernet + VLAN + MPLS for crazy people */
-#define ETH_MAX_PACKET (1500)
+#घोषणा ETH_ADDR_LEN (6)
+#घोषणा ETH_HEADER_ETHERTAP (16)
+#घोषणा ETH_HEADER_OTHER (26) /* 14 क्रम ethernet + VLAN + MPLS क्रम crazy people */
+#घोषणा ETH_MAX_PACKET (1500)
 
-#define UML_NET_VERSION (4)
+#घोषणा UML_NET_VERSION (4)
 
-struct net_user_info {
-	int (*init)(void *, void *);
-	int (*open)(void *);
-	void (*close)(int, void *);
-	void (*remove)(void *);
-	void (*add_address)(unsigned char *, unsigned char *, void *);
-	void (*delete_address)(unsigned char *, unsigned char *, void *);
-	int max_packet;
-	int mtu;
-};
+काष्ठा net_user_info अणु
+	पूर्णांक (*init)(व्योम *, व्योम *);
+	पूर्णांक (*खोलो)(व्योम *);
+	व्योम (*बंद)(पूर्णांक, व्योम *);
+	व्योम (*हटाओ)(व्योम *);
+	व्योम (*add_address)(अचिन्हित अक्षर *, अचिन्हित अक्षर *, व्योम *);
+	व्योम (*delete_address)(अचिन्हित अक्षर *, अचिन्हित अक्षर *, व्योम *);
+	पूर्णांक max_packet;
+	पूर्णांक mtu;
+पूर्ण;
 
-extern void ether_user_init(void *data, void *dev);
-extern void iter_addresses(void *d, void (*cb)(unsigned char *,
-					       unsigned char *, void *),
-			   void *arg);
+बाह्य व्योम ether_user_init(व्योम *data, व्योम *dev);
+बाह्य व्योम iter_addresses(व्योम *d, व्योम (*cb)(अचिन्हित अक्षर *,
+					       अचिन्हित अक्षर *, व्योम *),
+			   व्योम *arg);
 
-extern void *get_output_buffer(int *len_out);
-extern void free_output_buffer(void *buffer);
+बाह्य व्योम *get_output_buffer(पूर्णांक *len_out);
+बाह्य व्योम मुक्त_output_buffer(व्योम *buffer);
 
-extern int tap_open_common(void *dev, char *gate_addr);
-extern void tap_check_ips(char *gate_addr, unsigned char *eth_addr);
+बाह्य पूर्णांक tap_खोलो_common(व्योम *dev, अक्षर *gate_addr);
+बाह्य व्योम tap_check_ips(अक्षर *gate_addr, अचिन्हित अक्षर *eth_addr);
 
-extern void read_output(int fd, char *output_out, int len);
+बाह्य व्योम पढ़ो_output(पूर्णांक fd, अक्षर *output_out, पूर्णांक len);
 
-extern int net_read(int fd, void *buf, int len);
-extern int net_recvfrom(int fd, void *buf, int len);
-extern int net_write(int fd, void *buf, int len);
-extern int net_send(int fd, void *buf, int len);
-extern int net_sendto(int fd, void *buf, int len, void *to, int sock_len);
+बाह्य पूर्णांक net_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len);
+बाह्य पूर्णांक net_recvfrom(पूर्णांक fd, व्योम *buf, पूर्णांक len);
+बाह्य पूर्णांक net_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len);
+बाह्य पूर्णांक net_send(पूर्णांक fd, व्योम *buf, पूर्णांक len);
+बाह्य पूर्णांक net_sendto(पूर्णांक fd, व्योम *buf, पूर्णांक len, व्योम *to, पूर्णांक sock_len);
 
-extern void open_addr(unsigned char *addr, unsigned char *netmask, void *arg);
-extern void close_addr(unsigned char *addr, unsigned char *netmask, void *arg);
+बाह्य व्योम खोलो_addr(अचिन्हित अक्षर *addr, अचिन्हित अक्षर *neपंचांगask, व्योम *arg);
+बाह्य व्योम बंद_addr(अचिन्हित अक्षर *addr, अचिन्हित अक्षर *neपंचांगask, व्योम *arg);
 
-extern char *split_if_spec(char *str, ...);
+बाह्य अक्षर *split_अगर_spec(अक्षर *str, ...);
 
-extern int dev_netmask(void *d, void *m);
+बाह्य पूर्णांक dev_neपंचांगask(व्योम *d, व्योम *m);
 
-#endif
+#पूर्ण_अगर

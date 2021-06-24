@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Analog Devices LTC2947 high precision power and energy monitor over SPI
+ * Analog Devices LTC2947 high precision घातer and energy monitor over SPI
  *
  * Copyright 2019 Analog Devices Inc.
  */
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
 
-#include "ltc2947.h"
+#समावेश "ltc2947.h"
 
-static const struct regmap_config ltc2947_regmap_config = {
+अटल स्थिर काष्ठा regmap_config ltc2947_regmap_config = अणु
 	.reg_bits = 16,
 	.val_bits = 8,
-	.read_flag_mask = BIT(0),
-};
+	.पढ़ो_flag_mask = BIT(0),
+पूर्ण;
 
-static int ltc2947_probe(struct spi_device *spi)
-{
-	struct regmap *map;
+अटल पूर्णांक ltc2947_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *map;
 
 	map = devm_regmap_init_spi(spi, &ltc2947_regmap_config);
-	if (IS_ERR(map))
-		return PTR_ERR(map);
+	अगर (IS_ERR(map))
+		वापस PTR_ERR(map);
 
-	return ltc2947_core_probe(map, spi_get_device_id(spi)->name);
-}
+	वापस ltc2947_core_probe(map, spi_get_device_id(spi)->name);
+पूर्ण
 
-static const struct spi_device_id ltc2947_id[] = {
-	{"ltc2947", 0},
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id ltc2947_id[] = अणु
+	अणु"ltc2947", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ltc2947_id);
 
-static struct spi_driver ltc2947_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ltc2947_driver = अणु
+	.driver = अणु
 		.name = "ltc2947",
 		.of_match_table = ltc2947_of_match,
 		.pm = &ltc2947_pm_ops,
-	},
+	पूर्ण,
 	.probe = ltc2947_probe,
 	.id_table = ltc2947_id,
-};
+पूर्ण;
 module_spi_driver(ltc2947_driver);
 
 MODULE_AUTHOR("Nuno Sa <nuno.sa@analog.com>");

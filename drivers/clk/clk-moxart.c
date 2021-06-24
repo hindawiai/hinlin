@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * MOXA ART SoCs clock driver.
+ * MOXA ART SoCs घड़ी driver.
  *
  * Copyright (C) 2013 Jonas Jensen
  *
@@ -10,91 +11,91 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/clkdev.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/clkdev.h>
 
-static void __init moxart_of_pll_clk_init(struct device_node *node)
-{
-	void __iomem *base;
-	struct clk_hw *hw;
-	struct clk *ref_clk;
-	unsigned int mul;
-	const char *name = node->name;
-	const char *parent_name;
+अटल व्योम __init moxart_of_pll_clk_init(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *base;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk *ref_clk;
+	अचिन्हित पूर्णांक mul;
+	स्थिर अक्षर *name = node->name;
+	स्थिर अक्षर *parent_name;
 
-	of_property_read_string(node, "clock-output-names", &name);
+	of_property_पढ़ो_string(node, "clock-output-names", &name);
 	parent_name = of_clk_get_parent_name(node, 0);
 
 	base = of_iomap(node, 0);
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("%pOF: of_iomap failed\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	mul = readl(base + 0x30) >> 3 & 0x3f;
+	mul = पढ़ोl(base + 0x30) >> 3 & 0x3f;
 	iounmap(base);
 
 	ref_clk = of_clk_get(node, 0);
-	if (IS_ERR(ref_clk)) {
+	अगर (IS_ERR(ref_clk)) अणु
 		pr_err("%pOF: of_clk_get failed\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	hw = clk_hw_register_fixed_factor(NULL, name, parent_name, 0, mul, 1);
-	if (IS_ERR(hw)) {
+	hw = clk_hw_रेजिस्टर_fixed_factor(शून्य, name, parent_name, 0, mul, 1);
+	अगर (IS_ERR(hw)) अणु
 		pr_err("%pOF: failed to register clock\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	clk_hw_register_clkdev(hw, NULL, name);
+	clk_hw_रेजिस्टर_clkdev(hw, शून्य, name);
 	of_clk_add_hw_provider(node, of_clk_hw_simple_get, hw);
-}
-CLK_OF_DECLARE(moxart_pll_clock, "moxa,moxart-pll-clock",
+पूर्ण
+CLK_OF_DECLARE(moxart_pll_घड़ी, "moxa,moxart-pll-clock",
 	       moxart_of_pll_clk_init);
 
-static void __init moxart_of_apb_clk_init(struct device_node *node)
-{
-	void __iomem *base;
-	struct clk_hw *hw;
-	struct clk *pll_clk;
-	unsigned int div, val;
-	unsigned int div_idx[] = { 2, 3, 4, 6, 8};
-	const char *name = node->name;
-	const char *parent_name;
+अटल व्योम __init moxart_of_apb_clk_init(काष्ठा device_node *node)
+अणु
+	व्योम __iomem *base;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk *pll_clk;
+	अचिन्हित पूर्णांक भाग, val;
+	अचिन्हित पूर्णांक भाग_idx[] = अणु 2, 3, 4, 6, 8पूर्ण;
+	स्थिर अक्षर *name = node->name;
+	स्थिर अक्षर *parent_name;
 
-	of_property_read_string(node, "clock-output-names", &name);
+	of_property_पढ़ो_string(node, "clock-output-names", &name);
 	parent_name = of_clk_get_parent_name(node, 0);
 
 	base = of_iomap(node, 0);
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("%pOF: of_iomap failed\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	val = readl(base + 0xc) >> 4 & 0x7;
+	val = पढ़ोl(base + 0xc) >> 4 & 0x7;
 	iounmap(base);
 
-	if (val > 4)
+	अगर (val > 4)
 		val = 0;
-	div = div_idx[val] * 2;
+	भाग = भाग_idx[val] * 2;
 
 	pll_clk = of_clk_get(node, 0);
-	if (IS_ERR(pll_clk)) {
+	अगर (IS_ERR(pll_clk)) अणु
 		pr_err("%pOF: of_clk_get failed\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	hw = clk_hw_register_fixed_factor(NULL, name, parent_name, 0, 1, div);
-	if (IS_ERR(hw)) {
+	hw = clk_hw_रेजिस्टर_fixed_factor(शून्य, name, parent_name, 0, 1, भाग);
+	अगर (IS_ERR(hw)) अणु
 		pr_err("%pOF: failed to register clock\n", node);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	clk_hw_register_clkdev(hw, NULL, name);
+	clk_hw_रेजिस्टर_clkdev(hw, शून्य, name);
 	of_clk_add_hw_provider(node, of_clk_hw_simple_get, hw);
-}
-CLK_OF_DECLARE(moxart_apb_clock, "moxa,moxart-apb-clock",
+पूर्ण
+CLK_OF_DECLARE(moxart_apb_घड़ी, "moxa,moxart-apb-clock",
 	       moxart_of_apb_clk_init);

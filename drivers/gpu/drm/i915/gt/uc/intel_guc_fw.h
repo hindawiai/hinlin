@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2017-2019 Intel Corporation
+ * Copyright तऊ 2017-2019 Intel Corporation
  */
 
-#ifndef _INTEL_GUC_FW_H_
-#define _INTEL_GUC_FW_H_
+#अगर_अघोषित _INTEL_GUC_FW_H_
+#घोषणा _INTEL_GUC_FW_H_
 
-struct intel_guc;
+काष्ठा पूर्णांकel_guc;
 
-int intel_guc_fw_upload(struct intel_guc *guc);
+पूर्णांक पूर्णांकel_guc_fw_upload(काष्ठा पूर्णांकel_guc *guc);
 
-#endif
+#पूर्ण_अगर

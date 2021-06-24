@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
@@ -13,43 +14,43 @@
  *	NESSIE submission, 2000.
  *
  * This software implements the "tweaked" version of Anubis.
- * Only the S-box and (consequently) the rounds constants have been
+ * Only the S-box and (consequently) the rounds स्थिरants have been
  * changed.
  *
- * The original authors have disclaimed all copyright interest in this
- * code and thus put it in the public domain. The subsequent authors
+ * The original authors have disclaimed all copyright पूर्णांकerest in this
+ * code and thus put it in the खुला करोमुख्य. The subsequent authors
  * have put this under the GNU General Public License.
  *
  * By Aaron Grothe ajgrothe@yahoo.com, October 28, 2004
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <asm/byteorder.h>
-#include <linux/crypto.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/types.h>
 
-#define ANUBIS_MIN_KEY_SIZE	16
-#define ANUBIS_MAX_KEY_SIZE	40
-#define ANUBIS_BLOCK_SIZE	16
-#define ANUBIS_MAX_N		10
-#define ANUBIS_MAX_ROUNDS	(8 + ANUBIS_MAX_N)
+#घोषणा ANUBIS_MIN_KEY_SIZE	16
+#घोषणा ANUBIS_MAX_KEY_SIZE	40
+#घोषणा ANUBIS_BLOCK_SIZE	16
+#घोषणा ANUBIS_MAX_N		10
+#घोषणा ANUBIS_MAX_ROUNDS	(8 + ANUBIS_MAX_N)
 
-struct anubis_ctx {
-	int key_len; // in bits
-	int R;
+काष्ठा anubis_ctx अणु
+	पूर्णांक key_len; // in bits
+	पूर्णांक R;
 	u32 E[ANUBIS_MAX_ROUNDS + 1][4];
 	u32 D[ANUBIS_MAX_ROUNDS + 1][4];
-};
+पूर्ण;
 
-static const u32 T0[256] = {
+अटल स्थिर u32 T0[256] = अणु
 	0xba69d2bbU, 0x54a84de5U, 0x2f5ebce2U, 0x74e8cd25U,
 	0x53a651f7U, 0xd3bb6bd0U, 0xd2b96fd6U, 0x4d9a29b3U,
 	0x50a05dfdU, 0xac458acfU, 0x8d070e09U, 0xbf63c6a5U,
@@ -114,9 +115,9 @@ static const u32 T0[256] = {
 	0xbc65caafU, 0x9c254a6fU, 0x6ad4b561U, 0x40801d9dU,
 	0xcf831b98U, 0xa259b2ebU, 0x801d3a27U, 0x4f9e21bfU,
 	0x1f3e7c42U, 0xca890f86U, 0xaa4992dbU, 0x42841591U,
-};
+पूर्ण;
 
-static const u32 T1[256] = {
+अटल स्थिर u32 T1[256] = अणु
 	0x69babbd2U, 0xa854e54dU, 0x5e2fe2bcU, 0xe87425cdU,
 	0xa653f751U, 0xbbd3d06bU, 0xb9d2d66fU, 0x9a4db329U,
 	0xa050fd5dU, 0x45accf8aU, 0x078d090eU, 0x63bfa5c6U,
@@ -181,9 +182,9 @@ static const u32 T1[256] = {
 	0x65bcafcaU, 0x259c6f4aU, 0xd46a61b5U, 0x80409d1dU,
 	0x83cf981bU, 0x59a2ebb2U, 0x1d80273aU, 0x9e4fbf21U,
 	0x3e1f427cU, 0x89ca860fU, 0x49aadb92U, 0x84429115U,
-};
+पूर्ण;
 
-static const u32 T2[256] = {
+अटल स्थिर u32 T2[256] = अणु
 	0xd2bbba69U, 0x4de554a8U, 0xbce22f5eU, 0xcd2574e8U,
 	0x51f753a6U, 0x6bd0d3bbU, 0x6fd6d2b9U, 0x29b34d9aU,
 	0x5dfd50a0U, 0x8acfac45U, 0x0e098d07U, 0xc6a5bf63U,
@@ -248,9 +249,9 @@ static const u32 T2[256] = {
 	0xcaafbc65U, 0x4a6f9c25U, 0xb5616ad4U, 0x1d9d4080U,
 	0x1b98cf83U, 0xb2eba259U, 0x3a27801dU, 0x21bf4f9eU,
 	0x7c421f3eU, 0x0f86ca89U, 0x92dbaa49U, 0x15914284U,
-};
+पूर्ण;
 
-static const u32 T3[256] = {
+अटल स्थिर u32 T3[256] = अणु
 	0xbbd269baU, 0xe54da854U, 0xe2bc5e2fU, 0x25cde874U,
 	0xf751a653U, 0xd06bbbd3U, 0xd66fb9d2U, 0xb3299a4dU,
 	0xfd5da050U, 0xcf8a45acU, 0x090e078dU, 0xa5c663bfU,
@@ -315,9 +316,9 @@ static const u32 T3[256] = {
 	0xafca65bcU, 0x6f4a259cU, 0x61b5d46aU, 0x9d1d8040U,
 	0x981b83cfU, 0xebb259a2U, 0x273a1d80U, 0xbf219e4fU,
 	0x427c3e1fU, 0x860f89caU, 0xdb9249aaU, 0x91158442U,
-};
+पूर्ण;
 
-static const u32 T4[256] = {
+अटल स्थिर u32 T4[256] = अणु
 	0xbabababaU, 0x54545454U, 0x2f2f2f2fU, 0x74747474U,
 	0x53535353U, 0xd3d3d3d3U, 0xd2d2d2d2U, 0x4d4d4d4dU,
 	0x50505050U, 0xacacacacU, 0x8d8d8d8dU, 0xbfbfbfbfU,
@@ -382,9 +383,9 @@ static const u32 T4[256] = {
 	0xbcbcbcbcU, 0x9c9c9c9cU, 0x6a6a6a6aU, 0x40404040U,
 	0xcfcfcfcfU, 0xa2a2a2a2U, 0x80808080U, 0x4f4f4f4fU,
 	0x1f1f1f1fU, 0xcacacacaU, 0xaaaaaaaaU, 0x42424242U,
-};
+पूर्ण;
 
-static const u32 T5[256] = {
+अटल स्थिर u32 T5[256] = अणु
 	0x00000000U, 0x01020608U, 0x02040c10U, 0x03060a18U,
 	0x04081820U, 0x050a1e28U, 0x060c1430U, 0x070e1238U,
 	0x08103040U, 0x09123648U, 0x0a143c50U, 0x0b163a58U,
@@ -449,45 +450,45 @@ static const u32 T5[256] = {
 	0xf4f502f3U, 0xf5f704fbU, 0xf6f10ee3U, 0xf7f308ebU,
 	0xf8ed2a93U, 0xf9ef2c9bU, 0xfae92683U, 0xfbeb208bU,
 	0xfce532b3U, 0xfde734bbU, 0xfee13ea3U, 0xffe338abU,
-};
+पूर्ण;
 
-static const u32 rc[] = {
+अटल स्थिर u32 rc[] = अणु
 	0xba542f74U, 0x53d3d24dU, 0x50ac8dbfU, 0x70529a4cU,
 	0xead597d1U, 0x33515ba6U, 0xde48a899U, 0xdb32b7fcU,
 	0xe39e919bU, 0xe2bb416eU, 0xa5cb6b95U, 0xa1f3b102U,
 	0xccc41d14U, 0xc363da5dU, 0x5fdc7dcdU, 0x7f5a6c5cU,
 	0xf726ffedU, 0xe89d6f8eU, 0x19a0f089U,
-};
+पूर्ण;
 
-static int anubis_setkey(struct crypto_tfm *tfm, const u8 *in_key,
-			 unsigned int key_len)
-{
-	struct anubis_ctx *ctx = crypto_tfm_ctx(tfm);
-	const __be32 *key = (const __be32 *)in_key;
-	int N, R, i, r;
+अटल पूर्णांक anubis_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *in_key,
+			 अचिन्हित पूर्णांक key_len)
+अणु
+	काष्ठा anubis_ctx *ctx = crypto_tfm_ctx(tfm);
+	स्थिर __be32 *key = (स्थिर __be32 *)in_key;
+	पूर्णांक N, R, i, r;
 	u32 kappa[ANUBIS_MAX_N];
-	u32 inter[ANUBIS_MAX_N];
+	u32 पूर्णांकer[ANUBIS_MAX_N];
 
-	switch (key_len) {
-		case 16: case 20: case 24: case 28:
-		case 32: case 36: case 40:
-			break;
-		default:
-			return -EINVAL;
-	}
+	चयन (key_len) अणु
+		हाल 16: हाल 20: हाल 24: हाल 28:
+		हाल 32: हाल 36: हाल 40:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+	पूर्ण
 
 	ctx->key_len = key_len * 8;
 	N = ctx->key_len >> 5;
 	ctx->R = R = 8 + N;
 
 	/* * map cipher key to initial key state (mu): */
-	for (i = 0; i < N; i++)
+	क्रम (i = 0; i < N; i++)
 		kappa[i] = be32_to_cpu(key[i]);
 
 	/*
 	 * generate R + 1 round keys:
 	 */
-	for (r = 0; r <= R; r++) {
+	क्रम (r = 0; r <= R; r++) अणु
 		u32 K0, K1, K2, K3;
 		/*
 		 * generate r-th round key K^r:
@@ -496,7 +497,7 @@ static int anubis_setkey(struct crypto_tfm *tfm, const u8 *in_key,
 		K1 = T4[(kappa[N - 1] >> 16) & 0xff];
 		K2 = T4[(kappa[N - 1] >>  8) & 0xff];
 		K3 = T4[(kappa[N - 1]      ) & 0xff];
-		for (i = N - 2; i >= 0; i--) {
+		क्रम (i = N - 2; i >= 0; i--) अणु
 			K0 = T4[(kappa[i] >> 24)       ] ^
 				(T5[(K0 >> 24)       ] & 0xff000000U) ^
 				(T5[(K0 >> 16) & 0xff] & 0x00ff0000U) ^
@@ -517,7 +518,7 @@ static int anubis_setkey(struct crypto_tfm *tfm, const u8 *in_key,
 				(T5[(K3 >> 16) & 0xff] & 0x00ff0000U) ^
 				(T5[(K3 >>  8) & 0xff] & 0x0000ff00U) ^
 				(T5[(K3      ) & 0xff] & 0x000000ffU);
-		}
+		पूर्ण
 
 		ctx->E[r][0] = K0;
 		ctx->E[r][1] = K1;
@@ -525,124 +526,124 @@ static int anubis_setkey(struct crypto_tfm *tfm, const u8 *in_key,
 		ctx->E[r][3] = K3;
 
 		/*
-		 * compute kappa^{r+1} from kappa^r:
+		 * compute kappa^अणुr+1पूर्ण from kappa^r:
 		 */
-		if (r == R)
-			break;
-		for (i = 0; i < N; i++) {
-			int j = i;
-			inter[i]  = T0[(kappa[j--] >> 24)       ];
-			if (j < 0)
+		अगर (r == R)
+			अवरोध;
+		क्रम (i = 0; i < N; i++) अणु
+			पूर्णांक j = i;
+			पूर्णांकer[i]  = T0[(kappa[j--] >> 24)       ];
+			अगर (j < 0)
 				j = N - 1;
-			inter[i] ^= T1[(kappa[j--] >> 16) & 0xff];
-			if (j < 0)
+			पूर्णांकer[i] ^= T1[(kappa[j--] >> 16) & 0xff];
+			अगर (j < 0)
 				j = N - 1;
-			inter[i] ^= T2[(kappa[j--] >>  8) & 0xff];
-			if (j < 0)
+			पूर्णांकer[i] ^= T2[(kappa[j--] >>  8) & 0xff];
+			अगर (j < 0)
 				j = N - 1;
-			inter[i] ^= T3[(kappa[j  ]      ) & 0xff];
-		}
-		kappa[0] = inter[0] ^ rc[r];
-		for (i = 1; i < N; i++)
-			kappa[i] = inter[i];
-	}
+			पूर्णांकer[i] ^= T3[(kappa[j  ]      ) & 0xff];
+		पूर्ण
+		kappa[0] = पूर्णांकer[0] ^ rc[r];
+		क्रम (i = 1; i < N; i++)
+			kappa[i] = पूर्णांकer[i];
+	पूर्ण
 
 	/*
 	 * generate inverse key schedule: K'^0 = K^R, K'^R =
-	 * 				  K^0, K'^r = theta(K^{R-r}):
+	 * 				  K^0, K'^r = theta(K^अणुR-rपूर्ण):
 	 */
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		ctx->D[0][i] = ctx->E[R][i];
 		ctx->D[R][i] = ctx->E[0][i];
-	}
-	for (r = 1; r < R; r++) {
-		for (i = 0; i < 4; i++) {
+	पूर्ण
+	क्रम (r = 1; r < R; r++) अणु
+		क्रम (i = 0; i < 4; i++) अणु
 			u32 v = ctx->E[R - r][i];
 			ctx->D[r][i] =
 				T0[T4[(v >> 24)       ] & 0xff] ^
 				T1[T4[(v >> 16) & 0xff] & 0xff] ^
 				T2[T4[(v >>  8) & 0xff] & 0xff] ^
 				T3[T4[(v      ) & 0xff] & 0xff];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void anubis_crypt(u32 roundKey[ANUBIS_MAX_ROUNDS + 1][4],
-		u8 *ciphertext, const u8 *plaintext, const int R)
-{
-	const __be32 *src = (const __be32 *)plaintext;
+अटल व्योम anubis_crypt(u32 roundKey[ANUBIS_MAX_ROUNDS + 1][4],
+		u8 *ciphertext, स्थिर u8 *plaपूर्णांकext, स्थिर पूर्णांक R)
+अणु
+	स्थिर __be32 *src = (स्थिर __be32 *)plaपूर्णांकext;
 	__be32 *dst = (__be32 *)ciphertext;
-	int i, r;
+	पूर्णांक i, r;
 	u32 state[4];
-	u32 inter[4];
+	u32 पूर्णांकer[4];
 
 	/*
-	 * map plaintext block to cipher state (mu)
+	 * map plaपूर्णांकext block to cipher state (mu)
 	 * and add initial round key (sigma[K^0]):
 	 */
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		state[i] = be32_to_cpu(src[i]) ^ roundKey[0][i];
 
 	/*
 	 * R - 1 full rounds:
 	 */
 
-	for (r = 1; r < R; r++) {
-		inter[0] =
+	क्रम (r = 1; r < R; r++) अणु
+		पूर्णांकer[0] =
 			T0[(state[0] >> 24)       ] ^
 			T1[(state[1] >> 24)       ] ^
 			T2[(state[2] >> 24)       ] ^
 			T3[(state[3] >> 24)       ] ^
 			roundKey[r][0];
-		inter[1] =
+		पूर्णांकer[1] =
 			T0[(state[0] >> 16) & 0xff] ^
 			T1[(state[1] >> 16) & 0xff] ^
 			T2[(state[2] >> 16) & 0xff] ^
 			T3[(state[3] >> 16) & 0xff] ^
 			roundKey[r][1];
-		inter[2] =
+		पूर्णांकer[2] =
 			T0[(state[0] >>  8) & 0xff] ^
 			T1[(state[1] >>  8) & 0xff] ^
 			T2[(state[2] >>  8) & 0xff] ^
 			T3[(state[3] >>  8) & 0xff] ^
 			roundKey[r][2];
-		inter[3] =
+		पूर्णांकer[3] =
 			T0[(state[0]      ) & 0xff] ^
 			T1[(state[1]      ) & 0xff] ^
 			T2[(state[2]      ) & 0xff] ^
 			T3[(state[3]      ) & 0xff] ^
 			roundKey[r][3];
-		state[0] = inter[0];
-		state[1] = inter[1];
-		state[2] = inter[2];
-		state[3] = inter[3];
-	}
+		state[0] = पूर्णांकer[0];
+		state[1] = पूर्णांकer[1];
+		state[2] = पूर्णांकer[2];
+		state[3] = पूर्णांकer[3];
+	पूर्ण
 
 	/*
 	 * last round:
 	 */
 
-	inter[0] =
+	पूर्णांकer[0] =
 		(T0[(state[0] >> 24)       ] & 0xff000000U) ^
 		(T1[(state[1] >> 24)       ] & 0x00ff0000U) ^
 		(T2[(state[2] >> 24)       ] & 0x0000ff00U) ^
 		(T3[(state[3] >> 24)       ] & 0x000000ffU) ^
 		roundKey[R][0];
-	inter[1] =
+	पूर्णांकer[1] =
 		(T0[(state[0] >> 16) & 0xff] & 0xff000000U) ^
 		(T1[(state[1] >> 16) & 0xff] & 0x00ff0000U) ^
 		(T2[(state[2] >> 16) & 0xff] & 0x0000ff00U) ^
 		(T3[(state[3] >> 16) & 0xff] & 0x000000ffU) ^
 		roundKey[R][1];
-	inter[2] =
+	पूर्णांकer[2] =
 		(T0[(state[0] >>  8) & 0xff] & 0xff000000U) ^
 		(T1[(state[1] >>  8) & 0xff] & 0x00ff0000U) ^
 		(T2[(state[2] >>  8) & 0xff] & 0x0000ff00U) ^
 		(T3[(state[3] >>  8) & 0xff] & 0x000000ffU) ^
 		roundKey[R][2];
-	inter[3] =
+	पूर्णांकer[3] =
 		(T0[(state[0]      ) & 0xff] & 0xff000000U) ^
 		(T1[(state[1]      ) & 0xff] & 0x00ff0000U) ^
 		(T2[(state[2]      ) & 0xff] & 0x0000ff00U) ^
@@ -650,56 +651,56 @@ static void anubis_crypt(u32 roundKey[ANUBIS_MAX_ROUNDS + 1][4],
 		roundKey[R][3];
 
 	/*
-	 * map cipher state to ciphertext block (mu^{-1}):
+	 * map cipher state to ciphertext block (mu^अणु-1पूर्ण):
 	 */
 
-	for (i = 0; i < 4; i++)
-		dst[i] = cpu_to_be32(inter[i]);
-}
+	क्रम (i = 0; i < 4; i++)
+		dst[i] = cpu_to_be32(पूर्णांकer[i]);
+पूर्ण
 
-static void anubis_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct anubis_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम anubis_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा anubis_ctx *ctx = crypto_tfm_ctx(tfm);
 	anubis_crypt(ctx->E, dst, src, ctx->R);
-}
+पूर्ण
 
-static void anubis_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct anubis_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम anubis_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा anubis_ctx *ctx = crypto_tfm_ctx(tfm);
 	anubis_crypt(ctx->D, dst, src, ctx->R);
-}
+पूर्ण
 
-static struct crypto_alg anubis_alg = {
+अटल काष्ठा crypto_alg anubis_alg = अणु
 	.cra_name		=	"anubis",
 	.cra_driver_name	=	"anubis-generic",
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	ANUBIS_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof (struct anubis_ctx),
+	.cra_ctxsize		=	माप (काष्ठा anubis_ctx),
 	.cra_alignmask		=	3,
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{ .cipher = {
+	.cra_u			=	अणु .cipher = अणु
 	.cia_min_keysize	=	ANUBIS_MIN_KEY_SIZE,
 	.cia_max_keysize	=	ANUBIS_MAX_KEY_SIZE,
 	.cia_setkey		= 	anubis_setkey,
 	.cia_encrypt		=	anubis_encrypt,
-	.cia_decrypt		=	anubis_decrypt } }
-};
+	.cia_decrypt		=	anubis_decrypt पूर्ण पूर्ण
+पूर्ण;
 
-static int __init anubis_mod_init(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init anubis_mod_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	ret = crypto_register_alg(&anubis_alg);
-	return ret;
-}
+	ret = crypto_रेजिस्टर_alg(&anubis_alg);
+	वापस ret;
+पूर्ण
 
-static void __exit anubis_mod_fini(void)
-{
-	crypto_unregister_alg(&anubis_alg);
-}
+अटल व्योम __निकास anubis_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&anubis_alg);
+पूर्ण
 
 subsys_initcall(anubis_mod_init);
-module_exit(anubis_mod_fini);
+module_निकास(anubis_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Anubis Cryptographic Algorithm");

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __AU1X00_PROM_H
-#define __AU1X00_PROM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __AU1X00_PROM_H
+#घोषणा __AU1X00_PROM_H
 
-extern int prom_argc;
-extern char **prom_argv;
-extern char **prom_envp;
+बाह्य पूर्णांक prom_argc;
+बाह्य अक्षर **prom_argv;
+बाह्य अक्षर **prom_envp;
 
-extern void prom_init_cmdline(void);
-extern char *prom_getenv(char *envname);
-extern int prom_get_ethernet_addr(char *ethernet_addr);
+बाह्य व्योम prom_init_cmdline(व्योम);
+बाह्य अक्षर *prom_दो_पर्या(अक्षर *envname);
+बाह्य पूर्णांक prom_get_ethernet_addr(अक्षर *ethernet_addr);
 
-#endif
+#पूर्ण_अगर

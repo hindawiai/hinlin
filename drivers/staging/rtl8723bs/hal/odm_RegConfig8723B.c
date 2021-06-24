@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#include "odm_precomp.h"
+#समावेश "odm_precomp.h"
 
-void odm_ConfigRFReg_8723B(
-	struct dm_odm_t *pDM_Odm,
+व्योम odm_ConfigRFReg_8723B(
+	काष्ठा dm_odm_t *pDM_Odm,
 	u32 Addr,
 	u32 Data,
-	enum odm_rf_radio_path_e RF_PATH,
+	क्रमागत odm_rf_radio_path_e RF_PATH,
 	u32 RegAddr
 )
-{
-	if (Addr == 0xfe || Addr == 0xffe)
+अणु
+	अगर (Addr == 0xfe || Addr == 0xffe)
 		msleep(50);
-	else {
+	अन्यथा अणु
 		PHY_SetRFReg(pDM_Odm->Adapter, RF_PATH, RegAddr, bRFRegOffsetMask, Data);
-		/*  Add 1us delay between BB/RF register setting. */
+		/*  Add 1us delay between BB/RF रेजिस्टर setting. */
 		udelay(1);
 
 		/* For disable/enable test in high temperature, the B6 value will fail to fill. Suggestion by BB Stanley, 2013.06.25. */
-		if (Addr == 0xb6) {
+		अगर (Addr == 0xb6) अणु
 			u32 getvalue = 0;
 			u8 count = 0;
 
@@ -33,7 +34,7 @@ void odm_ConfigRFReg_8723B(
 
 			udelay(1);
 
-			while ((getvalue>>8) != (Data>>8)) {
+			जबतक ((getvalue>>8) != (Data>>8)) अणु
 				count++;
 				PHY_SetRFReg(pDM_Odm->Adapter, RF_PATH, RegAddr, bRFRegOffsetMask, Data);
 				udelay(1);
@@ -49,12 +50,12 @@ void odm_ConfigRFReg_8723B(
 						count
 					)
 				);
-				if (count > 5)
-					break;
-			}
-		}
+				अगर (count > 5)
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (Addr == 0xb2) {
+		अगर (Addr == 0xb2) अणु
 			u32 getvalue = 0;
 			u8 count = 0;
 
@@ -64,7 +65,7 @@ void odm_ConfigRFReg_8723B(
 
 			udelay(1);
 
-			while (getvalue != Data) {
+			जबतक (getvalue != Data) अणु
 				count++;
 				PHY_SetRFReg(
 					pDM_Odm->Adapter,
@@ -98,25 +99,25 @@ void odm_ConfigRFReg_8723B(
 					)
 				);
 
-				if (count > 5)
-					break;
-			}
-		}
-	}
-}
+				अगर (count > 5)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-void odm_ConfigRF_RadioA_8723B(struct dm_odm_t *pDM_Odm, u32 Addr, u32 Data)
-{
+व्योम odm_ConfigRF_RadioA_8723B(काष्ठा dm_odm_t *pDM_Odm, u32 Addr, u32 Data)
+अणु
 	u32  content = 0x1000; /*  RF_Content: radioa_txt */
-	u32 maskforPhySet = (u32)(content&0xE000);
+	u32 maskक्रमPhySet = (u32)(content&0xE000);
 
 	odm_ConfigRFReg_8723B(
 		pDM_Odm,
 		Addr,
 		Data,
 		ODM_RF_PATH_A,
-		Addr|maskforPhySet
+		Addr|maskक्रमPhySet
 	);
 
 	ODM_RT_TRACE(
@@ -129,11 +130,11 @@ void odm_ConfigRF_RadioA_8723B(struct dm_odm_t *pDM_Odm, u32 Addr, u32 Data)
 			Data
 		)
 	);
-}
+पूर्ण
 
-void odm_ConfigMAC_8723B(struct dm_odm_t *pDM_Odm, u32 Addr, u8 Data)
-{
-	rtw_write8(pDM_Odm->Adapter, Addr, Data);
+व्योम odm_ConfigMAC_8723B(काष्ठा dm_odm_t *pDM_Odm, u32 Addr, u8 Data)
+अणु
+	rtw_ग_लिखो8(pDM_Odm->Adapter, Addr, Data);
 	ODM_RT_TRACE(
 		pDM_Odm,
 		ODM_COMP_INIT,
@@ -144,17 +145,17 @@ void odm_ConfigMAC_8723B(struct dm_odm_t *pDM_Odm, u32 Addr, u8 Data)
 			Data
 		)
 	);
-}
+पूर्ण
 
-void odm_ConfigBB_AGC_8723B(
-	struct dm_odm_t *pDM_Odm,
+व्योम odm_ConfigBB_AGC_8723B(
+	काष्ठा dm_odm_t *pDM_Odm,
 	u32 Addr,
-	u32 Bitmask,
+	u32 Biपंचांगask,
 	u32 Data
 )
-{
-	PHY_SetBBReg(pDM_Odm->Adapter, Addr, Bitmask, Data);
-	/*  Add 1us delay between BB/RF register setting. */
+अणु
+	PHY_SetBBReg(pDM_Odm->Adapter, Addr, Biपंचांगask, Data);
+	/*  Add 1us delay between BB/RF रेजिस्टर setting. */
 	udelay(1);
 
 	ODM_RT_TRACE(
@@ -167,23 +168,23 @@ void odm_ConfigBB_AGC_8723B(
 			Data
 		)
 	);
-}
+पूर्ण
 
-void odm_ConfigBB_PHY_REG_PG_8723B(
-	struct dm_odm_t *pDM_Odm,
+व्योम odm_ConfigBB_PHY_REG_PG_8723B(
+	काष्ठा dm_odm_t *pDM_Odm,
 	u32 Band,
 	u32 RfPath,
 	u32 TxNum,
 	u32 Addr,
-	u32 Bitmask,
+	u32 Biपंचांगask,
 	u32 Data
 )
-{
-	if (Addr == 0xfe || Addr == 0xffe)
+अणु
+	अगर (Addr == 0xfe || Addr == 0xffe)
 		msleep(50);
-	else {
-		PHY_StoreTxPowerByRate(pDM_Odm->Adapter, Band, RfPath, TxNum, Addr, Bitmask, Data);
-	}
+	अन्यथा अणु
+		PHY_StoreTxPowerByRate(pDM_Odm->Adapter, Band, RfPath, TxNum, Addr, Biपंचांगask, Data);
+	पूर्ण
 	ODM_RT_TRACE(
 		pDM_Odm,
 		ODM_COMP_INIT,
@@ -191,42 +192,42 @@ void odm_ConfigBB_PHY_REG_PG_8723B(
 		(
 			"===> ODM_ConfigBBWithHeaderFile: [PHY_REG] %08X %08X %08X\n",
 			Addr,
-			Bitmask,
+			Biपंचांगask,
 			Data
 		)
 	);
-}
+पूर्ण
 
-void odm_ConfigBB_PHY_8723B(
-	struct dm_odm_t *pDM_Odm,
+व्योम odm_ConfigBB_PHY_8723B(
+	काष्ठा dm_odm_t *pDM_Odm,
 	u32 Addr,
-	u32 Bitmask,
+	u32 Biपंचांगask,
 	u32 Data
 )
-{
-	if (Addr == 0xfe)
+अणु
+	अगर (Addr == 0xfe)
 		msleep(50);
-	else if (Addr == 0xfd)
+	अन्यथा अगर (Addr == 0xfd)
 		mdelay(5);
-	else if (Addr == 0xfc)
+	अन्यथा अगर (Addr == 0xfc)
 		mdelay(1);
-	else if (Addr == 0xfb)
+	अन्यथा अगर (Addr == 0xfb)
 		udelay(50);
-	else if (Addr == 0xfa)
+	अन्यथा अगर (Addr == 0xfa)
 		udelay(5);
-	else if (Addr == 0xf9)
+	अन्यथा अगर (Addr == 0xf9)
 		udelay(1);
-	else {
-		PHY_SetBBReg(pDM_Odm->Adapter, Addr, Bitmask, Data);
-	}
+	अन्यथा अणु
+		PHY_SetBBReg(pDM_Odm->Adapter, Addr, Biपंचांगask, Data);
+	पूर्ण
 
-	/*  Add 1us delay between BB/RF register setting. */
+	/*  Add 1us delay between BB/RF रेजिस्टर setting. */
 	udelay(1);
 	ODM_RT_TRACE(pDM_Odm, ODM_COMP_INIT, ODM_DBG_TRACE, ("===> ODM_ConfigBBWithHeaderFile: [PHY_REG] %08X %08X\n", Addr, Data));
-}
+पूर्ण
 
-void odm_ConfigBB_TXPWR_LMT_8723B(
-	struct dm_odm_t *pDM_Odm,
+व्योम odm_ConfigBB_TXPWR_LMT_8723B(
+	काष्ठा dm_odm_t *pDM_Odm,
 	u8 *Regulation,
 	u8 *Band,
 	u8 *Bandwidth,
@@ -235,7 +236,7 @@ void odm_ConfigBB_TXPWR_LMT_8723B(
 	u8 *Channel,
 	u8 *PowerLimit
 )
-{
+अणु
 	PHY_SetTxPowerLimit(
 		pDM_Odm->Adapter,
 		Regulation,
@@ -246,4 +247,4 @@ void odm_ConfigBB_TXPWR_LMT_8723B(
 		Channel,
 		PowerLimit
 	);
-}
+पूर्ण

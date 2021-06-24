@@ -1,3 +1,4 @@
+<शैली गुरु>
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -5,17 +6,17 @@
  *
  * Copyright (C) 2005 Rusty Russell, IBM Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -30,455 +31,455 @@
  * IN THE SOFTWARE.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/wait.h>
-#include <linux/interrupt.h>
-#include <linux/kthread.h>
-#include <linux/sched.h>
-#include <linux/err.h>
-#include <xen/xenbus.h>
-#include <asm/xen/hypervisor.h>
-#include <xen/events.h>
-#include <xen/page.h>
-#include "xenbus.h"
+#समावेश <linux/रुको.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/err.h>
+#समावेश <xen/xenbus.h>
+#समावेश <यंत्र/xen/hypervisor.h>
+#समावेश <xen/events.h>
+#समावेश <xen/page.h>
+#समावेश "xenbus.h"
 
 /* A list of replies. Currently only one will ever be outstanding. */
 LIST_HEAD(xs_reply_list);
 
-/* A list of write requests. */
-LIST_HEAD(xb_write_list);
-DECLARE_WAIT_QUEUE_HEAD(xb_waitq);
-DEFINE_MUTEX(xb_write_mutex);
+/* A list of ग_लिखो requests. */
+LIST_HEAD(xb_ग_लिखो_list);
+DECLARE_WAIT_QUEUE_HEAD(xb_रुकोq);
+DEFINE_MUTEX(xb_ग_लिखो_mutex);
 
-/* Protect xenbus reader thread against save/restore. */
+/* Protect xenbus पढ़ोer thपढ़ो against save/restore. */
 DEFINE_MUTEX(xs_response_mutex);
 
-static int xenbus_irq;
-static struct task_struct *xenbus_task;
+अटल पूर्णांक xenbus_irq;
+अटल काष्ठा task_काष्ठा *xenbus_task;
 
-static irqreturn_t wake_waiting(int irq, void *unused)
-{
-	wake_up(&xb_waitq);
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t wake_रुकोing(पूर्णांक irq, व्योम *unused)
+अणु
+	wake_up(&xb_रुकोq);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int check_indexes(XENSTORE_RING_IDX cons, XENSTORE_RING_IDX prod)
-{
-	return ((prod - cons) <= XENSTORE_RING_SIZE);
-}
+अटल पूर्णांक check_indexes(XENSTORE_RING_IDX cons, XENSTORE_RING_IDX prod)
+अणु
+	वापस ((prod - cons) <= XENSTORE_RING_SIZE);
+पूर्ण
 
-static void *get_output_chunk(XENSTORE_RING_IDX cons,
+अटल व्योम *get_output_chunk(XENSTORE_RING_IDX cons,
 			      XENSTORE_RING_IDX prod,
-			      char *buf, uint32_t *len)
-{
+			      अक्षर *buf, uपूर्णांक32_t *len)
+अणु
 	*len = XENSTORE_RING_SIZE - MASK_XENSTORE_IDX(prod);
-	if ((XENSTORE_RING_SIZE - (prod - cons)) < *len)
+	अगर ((XENSTORE_RING_SIZE - (prod - cons)) < *len)
 		*len = XENSTORE_RING_SIZE - (prod - cons);
-	return buf + MASK_XENSTORE_IDX(prod);
-}
+	वापस buf + MASK_XENSTORE_IDX(prod);
+पूर्ण
 
-static const void *get_input_chunk(XENSTORE_RING_IDX cons,
+अटल स्थिर व्योम *get_input_chunk(XENSTORE_RING_IDX cons,
 				   XENSTORE_RING_IDX prod,
-				   const char *buf, uint32_t *len)
-{
+				   स्थिर अक्षर *buf, uपूर्णांक32_t *len)
+अणु
 	*len = XENSTORE_RING_SIZE - MASK_XENSTORE_IDX(cons);
-	if ((prod - cons) < *len)
+	अगर ((prod - cons) < *len)
 		*len = prod - cons;
-	return buf + MASK_XENSTORE_IDX(cons);
-}
+	वापस buf + MASK_XENSTORE_IDX(cons);
+पूर्ण
 
-static int xb_data_to_write(void)
-{
-	struct xenstore_domain_interface *intf = xen_store_interface;
+अटल पूर्णांक xb_data_to_ग_लिखो(व्योम)
+अणु
+	काष्ठा xenstore_करोमुख्य_पूर्णांकerface *पूर्णांकf = xen_store_पूर्णांकerface;
 
-	return (intf->req_prod - intf->req_cons) != XENSTORE_RING_SIZE &&
-		!list_empty(&xb_write_list);
-}
+	वापस (पूर्णांकf->req_prod - पूर्णांकf->req_cons) != XENSTORE_RING_SIZE &&
+		!list_empty(&xb_ग_लिखो_list);
+पूर्ण
 
 /**
- * xb_write - low level write
+ * xb_ग_लिखो - low level ग_लिखो
  * @data: buffer to send
  * @len: length of buffer
  *
  * Returns number of bytes written or -err.
  */
-static int xb_write(const void *data, unsigned int len)
-{
-	struct xenstore_domain_interface *intf = xen_store_interface;
+अटल पूर्णांक xb_ग_लिखो(स्थिर व्योम *data, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा xenstore_करोमुख्य_पूर्णांकerface *पूर्णांकf = xen_store_पूर्णांकerface;
 	XENSTORE_RING_IDX cons, prod;
-	unsigned int bytes = 0;
+	अचिन्हित पूर्णांक bytes = 0;
 
-	while (len != 0) {
-		void *dst;
-		unsigned int avail;
+	जबतक (len != 0) अणु
+		व्योम *dst;
+		अचिन्हित पूर्णांक avail;
 
-		/* Read indexes, then verify. */
-		cons = intf->req_cons;
-		prod = intf->req_prod;
-		if (!check_indexes(cons, prod)) {
-			intf->req_cons = intf->req_prod = 0;
-			return -EIO;
-		}
-		if (!xb_data_to_write())
-			return bytes;
+		/* Read indexes, then verअगरy. */
+		cons = पूर्णांकf->req_cons;
+		prod = पूर्णांकf->req_prod;
+		अगर (!check_indexes(cons, prod)) अणु
+			पूर्णांकf->req_cons = पूर्णांकf->req_prod = 0;
+			वापस -EIO;
+		पूर्ण
+		अगर (!xb_data_to_ग_लिखो())
+			वापस bytes;
 
-		/* Must write data /after/ reading the consumer index. */
+		/* Must ग_लिखो data /after/ पढ़ोing the consumer index. */
 		virt_mb();
 
-		dst = get_output_chunk(cons, prod, intf->req, &avail);
-		if (avail == 0)
-			continue;
-		if (avail > len)
+		dst = get_output_chunk(cons, prod, पूर्णांकf->req, &avail);
+		अगर (avail == 0)
+			जारी;
+		अगर (avail > len)
 			avail = len;
 
-		memcpy(dst, data, avail);
+		स_नकल(dst, data, avail);
 		data += avail;
 		len -= avail;
 		bytes += avail;
 
 		/* Other side must not see new producer until data is there. */
 		virt_wmb();
-		intf->req_prod += avail;
+		पूर्णांकf->req_prod += avail;
 
 		/* Implies mb(): other side will see the updated producer. */
-		if (prod <= intf->req_cons)
-			notify_remote_via_evtchn(xen_store_evtchn);
-	}
+		अगर (prod <= पूर्णांकf->req_cons)
+			notअगरy_remote_via_evtchn(xen_store_evtchn);
+	पूर्ण
 
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
-static int xb_data_to_read(void)
-{
-	struct xenstore_domain_interface *intf = xen_store_interface;
-	return (intf->rsp_cons != intf->rsp_prod);
-}
+अटल पूर्णांक xb_data_to_पढ़ो(व्योम)
+अणु
+	काष्ठा xenstore_करोमुख्य_पूर्णांकerface *पूर्णांकf = xen_store_पूर्णांकerface;
+	वापस (पूर्णांकf->rsp_cons != पूर्णांकf->rsp_prod);
+पूर्ण
 
-static int xb_read(void *data, unsigned int len)
-{
-	struct xenstore_domain_interface *intf = xen_store_interface;
+अटल पूर्णांक xb_पढ़ो(व्योम *data, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा xenstore_करोमुख्य_पूर्णांकerface *पूर्णांकf = xen_store_पूर्णांकerface;
 	XENSTORE_RING_IDX cons, prod;
-	unsigned int bytes = 0;
+	अचिन्हित पूर्णांक bytes = 0;
 
-	while (len != 0) {
-		unsigned int avail;
-		const char *src;
+	जबतक (len != 0) अणु
+		अचिन्हित पूर्णांक avail;
+		स्थिर अक्षर *src;
 
-		/* Read indexes, then verify. */
-		cons = intf->rsp_cons;
-		prod = intf->rsp_prod;
-		if (cons == prod)
-			return bytes;
+		/* Read indexes, then verअगरy. */
+		cons = पूर्णांकf->rsp_cons;
+		prod = पूर्णांकf->rsp_prod;
+		अगर (cons == prod)
+			वापस bytes;
 
-		if (!check_indexes(cons, prod)) {
-			intf->rsp_cons = intf->rsp_prod = 0;
-			return -EIO;
-		}
+		अगर (!check_indexes(cons, prod)) अणु
+			पूर्णांकf->rsp_cons = पूर्णांकf->rsp_prod = 0;
+			वापस -EIO;
+		पूर्ण
 
-		src = get_input_chunk(cons, prod, intf->rsp, &avail);
-		if (avail == 0)
-			continue;
-		if (avail > len)
+		src = get_input_chunk(cons, prod, पूर्णांकf->rsp, &avail);
+		अगर (avail == 0)
+			जारी;
+		अगर (avail > len)
 			avail = len;
 
-		/* Must read data /after/ reading the producer index. */
+		/* Must पढ़ो data /after/ पढ़ोing the producer index. */
 		virt_rmb();
 
-		memcpy(data, src, avail);
+		स_नकल(data, src, avail);
 		data += avail;
 		len -= avail;
 		bytes += avail;
 
-		/* Other side must not see free space until we've copied out */
+		/* Other side must not see मुक्त space until we've copied out */
 		virt_mb();
-		intf->rsp_cons += avail;
+		पूर्णांकf->rsp_cons += avail;
 
 		/* Implies mb(): other side will see the updated consumer. */
-		if (intf->rsp_prod - cons >= XENSTORE_RING_SIZE)
-			notify_remote_via_evtchn(xen_store_evtchn);
-	}
+		अगर (पूर्णांकf->rsp_prod - cons >= XENSTORE_RING_SIZE)
+			notअगरy_remote_via_evtchn(xen_store_evtchn);
+	पूर्ण
 
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
-static int process_msg(void)
-{
-	static struct {
-		struct xsd_sockmsg msg;
-		char *body;
-		union {
-			void *alloc;
-			struct xs_watch_event *watch;
-		};
+अटल पूर्णांक process_msg(व्योम)
+अणु
+	अटल काष्ठा अणु
+		काष्ठा xsd_sockmsg msg;
+		अक्षर *body;
+		जोड़ अणु
+			व्योम *alloc;
+			काष्ठा xs_watch_event *watch;
+		पूर्ण;
 		bool in_msg;
 		bool in_hdr;
-		unsigned int read;
-	} state;
-	struct xb_req_data *req;
-	int err;
-	unsigned int len;
+		अचिन्हित पूर्णांक पढ़ो;
+	पूर्ण state;
+	काष्ठा xb_req_data *req;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक len;
 
-	if (!state.in_msg) {
+	अगर (!state.in_msg) अणु
 		state.in_msg = true;
 		state.in_hdr = true;
-		state.read = 0;
+		state.पढ़ो = 0;
 
 		/*
-		 * We must disallow save/restore while reading a message.
-		 * A partial read across s/r leaves us out of sync with
+		 * We must disallow save/restore जबतक पढ़ोing a message.
+		 * A partial पढ़ो across s/r leaves us out of sync with
 		 * xenstored.
-		 * xs_response_mutex is locked as long as we are processing one
-		 * message. state.in_msg will be true as long as we are holding
+		 * xs_response_mutex is locked as दीर्घ as we are processing one
+		 * message. state.in_msg will be true as दीर्घ as we are holding
 		 * the lock here.
 		 */
 		mutex_lock(&xs_response_mutex);
 
-		if (!xb_data_to_read()) {
+		अगर (!xb_data_to_पढ़ो()) अणु
 			/* We raced with save/restore: pending data 'gone'. */
 			mutex_unlock(&xs_response_mutex);
 			state.in_msg = false;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (state.in_hdr) {
-		if (state.read != sizeof(state.msg)) {
-			err = xb_read((void *)&state.msg + state.read,
-				      sizeof(state.msg) - state.read);
-			if (err < 0)
-				goto out;
-			state.read += err;
-			if (state.read != sizeof(state.msg))
-				return 0;
-			if (state.msg.len > XENSTORE_PAYLOAD_MAX) {
+	अगर (state.in_hdr) अणु
+		अगर (state.पढ़ो != माप(state.msg)) अणु
+			err = xb_पढ़ो((व्योम *)&state.msg + state.पढ़ो,
+				      माप(state.msg) - state.पढ़ो);
+			अगर (err < 0)
+				जाओ out;
+			state.पढ़ो += err;
+			अगर (state.पढ़ो != माप(state.msg))
+				वापस 0;
+			अगर (state.msg.len > XENSTORE_PAYLOAD_MAX) अणु
 				err = -EINVAL;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		len = state.msg.len + 1;
-		if (state.msg.type == XS_WATCH_EVENT)
-			len += sizeof(*state.watch);
+		अगर (state.msg.type == XS_WATCH_EVENT)
+			len += माप(*state.watch);
 
-		state.alloc = kmalloc(len, GFP_NOIO | __GFP_HIGH);
-		if (!state.alloc)
-			return -ENOMEM;
+		state.alloc = kदो_स्मृति(len, GFP_NOIO | __GFP_HIGH);
+		अगर (!state.alloc)
+			वापस -ENOMEM;
 
-		if (state.msg.type == XS_WATCH_EVENT)
+		अगर (state.msg.type == XS_WATCH_EVENT)
 			state.body = state.watch->body;
-		else
+		अन्यथा
 			state.body = state.alloc;
 		state.in_hdr = false;
-		state.read = 0;
-	}
+		state.पढ़ो = 0;
+	पूर्ण
 
-	err = xb_read(state.body + state.read, state.msg.len - state.read);
-	if (err < 0)
-		goto out;
+	err = xb_पढ़ो(state.body + state.पढ़ो, state.msg.len - state.पढ़ो);
+	अगर (err < 0)
+		जाओ out;
 
-	state.read += err;
-	if (state.read != state.msg.len)
-		return 0;
+	state.पढ़ो += err;
+	अगर (state.पढ़ो != state.msg.len)
+		वापस 0;
 
 	state.body[state.msg.len] = '\0';
 
-	if (state.msg.type == XS_WATCH_EVENT) {
+	अगर (state.msg.type == XS_WATCH_EVENT) अणु
 		state.watch->len = state.msg.len;
 		err = xs_watch_msg(state.watch);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -ENOENT;
-		mutex_lock(&xb_write_mutex);
-		list_for_each_entry(req, &xs_reply_list, list) {
-			if (req->msg.req_id == state.msg.req_id) {
+		mutex_lock(&xb_ग_लिखो_mutex);
+		list_क्रम_each_entry(req, &xs_reply_list, list) अणु
+			अगर (req->msg.req_id == state.msg.req_id) अणु
 				list_del(&req->list);
 				err = 0;
-				break;
-			}
-		}
-		mutex_unlock(&xb_write_mutex);
-		if (err)
-			goto out;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		mutex_unlock(&xb_ग_लिखो_mutex);
+		अगर (err)
+			जाओ out;
 
-		if (req->state == xb_req_state_wait_reply) {
+		अगर (req->state == xb_req_state_रुको_reply) अणु
 			req->msg.req_id = req->caller_req_id;
 			req->msg.type = state.msg.type;
 			req->msg.len = state.msg.len;
 			req->body = state.body;
-			/* write body, then update state */
+			/* ग_लिखो body, then update state */
 			virt_wmb();
 			req->state = xb_req_state_got_reply;
 			req->cb(req);
-		} else
-			kfree(req);
-	}
+		पूर्ण अन्यथा
+			kमुक्त(req);
+	पूर्ण
 
 	mutex_unlock(&xs_response_mutex);
 
 	state.in_msg = false;
-	state.alloc = NULL;
-	return err;
+	state.alloc = शून्य;
+	वापस err;
 
  out:
 	mutex_unlock(&xs_response_mutex);
 	state.in_msg = false;
-	kfree(state.alloc);
-	state.alloc = NULL;
-	return err;
-}
+	kमुक्त(state.alloc);
+	state.alloc = शून्य;
+	वापस err;
+पूर्ण
 
-static int process_writes(void)
-{
-	static struct {
-		struct xb_req_data *req;
-		int idx;
-		unsigned int written;
-	} state;
-	void *base;
-	unsigned int len;
-	int err = 0;
+अटल पूर्णांक process_ग_लिखोs(व्योम)
+अणु
+	अटल काष्ठा अणु
+		काष्ठा xb_req_data *req;
+		पूर्णांक idx;
+		अचिन्हित पूर्णांक written;
+	पूर्ण state;
+	व्योम *base;
+	अचिन्हित पूर्णांक len;
+	पूर्णांक err = 0;
 
-	if (!xb_data_to_write())
-		return 0;
+	अगर (!xb_data_to_ग_लिखो())
+		वापस 0;
 
-	mutex_lock(&xb_write_mutex);
+	mutex_lock(&xb_ग_लिखो_mutex);
 
-	if (!state.req) {
-		state.req = list_first_entry(&xb_write_list,
-					     struct xb_req_data, list);
+	अगर (!state.req) अणु
+		state.req = list_first_entry(&xb_ग_लिखो_list,
+					     काष्ठा xb_req_data, list);
 		state.idx = -1;
 		state.written = 0;
-	}
+	पूर्ण
 
-	if (state.req->state == xb_req_state_aborted)
-		goto out_err;
+	अगर (state.req->state == xb_req_state_पातed)
+		जाओ out_err;
 
-	while (state.idx < state.req->num_vecs) {
-		if (state.idx < 0) {
+	जबतक (state.idx < state.req->num_vecs) अणु
+		अगर (state.idx < 0) अणु
 			base = &state.req->msg;
-			len = sizeof(state.req->msg);
-		} else {
+			len = माप(state.req->msg);
+		पूर्ण अन्यथा अणु
 			base = state.req->vec[state.idx].iov_base;
 			len = state.req->vec[state.idx].iov_len;
-		}
-		err = xb_write(base + state.written, len - state.written);
-		if (err < 0)
-			goto out_err;
+		पूर्ण
+		err = xb_ग_लिखो(base + state.written, len - state.written);
+		अगर (err < 0)
+			जाओ out_err;
 		state.written += err;
-		if (state.written != len)
-			goto out;
+		अगर (state.written != len)
+			जाओ out;
 
 		state.idx++;
 		state.written = 0;
-	}
+	पूर्ण
 
 	list_del(&state.req->list);
-	state.req->state = xb_req_state_wait_reply;
+	state.req->state = xb_req_state_रुको_reply;
 	list_add_tail(&state.req->list, &xs_reply_list);
-	state.req = NULL;
+	state.req = शून्य;
 
  out:
-	mutex_unlock(&xb_write_mutex);
+	mutex_unlock(&xb_ग_लिखो_mutex);
 
-	return 0;
+	वापस 0;
 
  out_err:
 	state.req->msg.type = XS_ERROR;
 	state.req->err = err;
 	list_del(&state.req->list);
-	if (state.req->state == xb_req_state_aborted)
-		kfree(state.req);
-	else {
-		/* write err, then update state */
+	अगर (state.req->state == xb_req_state_पातed)
+		kमुक्त(state.req);
+	अन्यथा अणु
+		/* ग_लिखो err, then update state */
 		virt_wmb();
 		state.req->state = xb_req_state_got_reply;
 		wake_up(&state.req->wq);
-	}
+	पूर्ण
 
-	mutex_unlock(&xb_write_mutex);
+	mutex_unlock(&xb_ग_लिखो_mutex);
 
-	state.req = NULL;
+	state.req = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xb_thread_work(void)
-{
-	return xb_data_to_read() || xb_data_to_write();
-}
+अटल पूर्णांक xb_thपढ़ो_work(व्योम)
+अणु
+	वापस xb_data_to_पढ़ो() || xb_data_to_ग_लिखो();
+पूर्ण
 
-static int xenbus_thread(void *unused)
-{
-	int err;
+अटल पूर्णांक xenbus_thपढ़ो(व्योम *unused)
+अणु
+	पूर्णांक err;
 
-	while (!kthread_should_stop()) {
-		if (wait_event_interruptible(xb_waitq, xb_thread_work()))
-			continue;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		अगर (रुको_event_पूर्णांकerruptible(xb_रुकोq, xb_thपढ़ो_work()))
+			जारी;
 
 		err = process_msg();
-		if (err == -ENOMEM)
+		अगर (err == -ENOMEM)
 			schedule();
-		else if (err)
+		अन्यथा अगर (err)
 			pr_warn_ratelimited("error %d while reading message\n",
 					    err);
 
-		err = process_writes();
-		if (err)
+		err = process_ग_लिखोs();
+		अगर (err)
 			pr_warn_ratelimited("error %d while writing message\n",
 					    err);
-	}
+	पूर्ण
 
-	xenbus_task = NULL;
-	return 0;
-}
+	xenbus_task = शून्य;
+	वापस 0;
+पूर्ण
 
 /**
- * xb_init_comms - Set up interrupt handler off store event channel.
+ * xb_init_comms - Set up पूर्णांकerrupt handler off store event channel.
  */
-int xb_init_comms(void)
-{
-	struct xenstore_domain_interface *intf = xen_store_interface;
+पूर्णांक xb_init_comms(व्योम)
+अणु
+	काष्ठा xenstore_करोमुख्य_पूर्णांकerface *पूर्णांकf = xen_store_पूर्णांकerface;
 
-	if (intf->req_prod != intf->req_cons)
+	अगर (पूर्णांकf->req_prod != पूर्णांकf->req_cons)
 		pr_err("request ring is not quiescent (%08x:%08x)!\n",
-		       intf->req_cons, intf->req_prod);
+		       पूर्णांकf->req_cons, पूर्णांकf->req_prod);
 
-	if (intf->rsp_prod != intf->rsp_cons) {
+	अगर (पूर्णांकf->rsp_prod != पूर्णांकf->rsp_cons) अणु
 		pr_warn("response ring is not quiescent (%08x:%08x): fixing up\n",
-			intf->rsp_cons, intf->rsp_prod);
-		/* breaks kdump */
-		if (!reset_devices)
-			intf->rsp_cons = intf->rsp_prod;
-	}
+			पूर्णांकf->rsp_cons, पूर्णांकf->rsp_prod);
+		/* अवरोधs kdump */
+		अगर (!reset_devices)
+			पूर्णांकf->rsp_cons = पूर्णांकf->rsp_prod;
+	पूर्ण
 
-	if (xenbus_irq) {
-		/* Already have an irq; assume we're resuming */
+	अगर (xenbus_irq) अणु
+		/* Alपढ़ोy have an irq; assume we're resuming */
 		rebind_evtchn_irq(xen_store_evtchn, xenbus_irq);
-	} else {
-		int err;
+	पूर्ण अन्यथा अणु
+		पूर्णांक err;
 
-		err = bind_evtchn_to_irqhandler(xen_store_evtchn, wake_waiting,
-						0, "xenbus", &xb_waitq);
-		if (err < 0) {
+		err = bind_evtchn_to_irqhandler(xen_store_evtchn, wake_रुकोing,
+						0, "xenbus", &xb_रुकोq);
+		अगर (err < 0) अणु
 			pr_err("request irq failed %i\n", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		xenbus_irq = err;
 
-		if (!xenbus_task) {
-			xenbus_task = kthread_run(xenbus_thread, NULL,
+		अगर (!xenbus_task) अणु
+			xenbus_task = kthपढ़ो_run(xenbus_thपढ़ो, शून्य,
 						  "xenbus");
-			if (IS_ERR(xenbus_task))
-				return PTR_ERR(xenbus_task);
-		}
-	}
+			अगर (IS_ERR(xenbus_task))
+				वापस PTR_ERR(xenbus_task);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xb_deinit_comms(void)
-{
-	unbind_from_irqhandler(xenbus_irq, &xb_waitq);
+व्योम xb_deinit_comms(व्योम)
+अणु
+	unbind_from_irqhandler(xenbus_irq, &xb_रुकोq);
 	xenbus_irq = 0;
-}
+पूर्ण

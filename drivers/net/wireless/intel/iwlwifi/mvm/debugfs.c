@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2012-2014, 2018-2021 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#include <linux/vmalloc.h>
-#include <linux/ieee80211.h>
-#include <linux/netdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/ieee80211.h>
+#समावेश <linux/netdevice.h>
 
-#include "mvm.h"
-#include "sta.h"
-#include "iwl-io.h"
-#include "debugfs.h"
-#include "iwl-modparams.h"
-#include "fw/error-dump.h"
+#समावेश "mvm.h"
+#समावेश "sta.h"
+#समावेश "iwl-io.h"
+#समावेश "debugfs.h"
+#समावेश "iwl-modparams.h"
+#समावेश "fw/error-dump.h"
 
-static ssize_t iwl_dbgfs_ctdp_budget_read(struct file *file,
-					  char __user *user_buf,
-					  size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	char buf[16];
-	int pos, budget;
+अटल sमाप_प्रकार iwl_dbgfs_ctdp_budget_पढ़ो(काष्ठा file *file,
+					  अक्षर __user *user_buf,
+					  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अक्षर buf[16];
+	पूर्णांक pos, budget;
 
-	if (!iwl_mvm_is_ctdp_supported(mvm))
-		return -EOPNOTSUPP;
+	अगर (!iwl_mvm_is_ctdp_supported(mvm))
+		वापस -EOPNOTSUPP;
 
-	if (!iwl_mvm_firmware_running(mvm) ||
+	अगर (!iwl_mvm_firmware_running(mvm) ||
 	    mvm->fwrt.cur_fw_img != IWL_UCODE_REGULAR)
-		return -EIO;
+		वापस -EIO;
 
 	mutex_lock(&mvm->mutex);
 	budget = iwl_mvm_ctdp_command(mvm, CTDP_CMD_OPERATION_REPORT, 0);
 	mutex_unlock(&mvm->mutex);
 
-	if (budget < 0)
-		return budget;
+	अगर (budget < 0)
+		वापस budget;
 
-	pos = scnprintf(buf, sizeof(buf), "%d\n", budget);
+	pos = scnम_लिखो(buf, माप(buf), "%d\n", budget);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t iwl_dbgfs_stop_ctdp_write(struct iwl_mvm *mvm, char *buf,
-					 size_t count, loff_t *ppos)
-{
-	int ret;
+अटल sमाप_प्रकार iwl_dbgfs_stop_ctdp_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+					 माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 
-	if (!iwl_mvm_is_ctdp_supported(mvm))
-		return -EOPNOTSUPP;
+	अगर (!iwl_mvm_is_ctdp_supported(mvm))
+		वापस -EOPNOTSUPP;
 
-	if (!iwl_mvm_firmware_running(mvm) ||
+	अगर (!iwl_mvm_firmware_running(mvm) ||
 	    mvm->fwrt.cur_fw_img != IWL_UCODE_REGULAR)
-		return -EIO;
+		वापस -EIO;
 
 	mutex_lock(&mvm->mutex);
 	ret = iwl_mvm_ctdp_command(mvm, CTDP_CMD_OPERATION_STOP, 0);
 	mutex_unlock(&mvm->mutex);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_force_ctkill_write(struct iwl_mvm *mvm, char *buf,
-					    size_t count, loff_t *ppos)
-{
-	if (!iwl_mvm_firmware_running(mvm) ||
+अटल sमाप_प्रकार iwl_dbgfs_क्रमce_ctसमाप्त_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+					    माप_प्रकार count, loff_t *ppos)
+अणु
+	अगर (!iwl_mvm_firmware_running(mvm) ||
 	    mvm->fwrt.cur_fw_img != IWL_UCODE_REGULAR)
-		return -EIO;
+		वापस -EIO;
 
-	iwl_mvm_enter_ctkill(mvm);
+	iwl_mvm_enter_ctसमाप्त(mvm);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_tx_flush_write(struct iwl_mvm *mvm, char *buf,
-					size_t count, loff_t *ppos)
-{
-	int ret;
+अटल sमाप_प्रकार iwl_dbgfs_tx_flush_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 	u32 flush_arg;
 
-	if (!iwl_mvm_firmware_running(mvm) ||
+	अगर (!iwl_mvm_firmware_running(mvm) ||
 	    mvm->fwrt.cur_fw_img != IWL_UCODE_REGULAR)
-		return -EIO;
+		वापस -EIO;
 
-	if (kstrtou32(buf, 0, &flush_arg))
-		return -EINVAL;
+	अगर (kstrtou32(buf, 0, &flush_arg))
+		वापस -EINVAL;
 
-	if (iwl_mvm_has_new_tx_api(mvm)) {
+	अगर (iwl_mvm_has_new_tx_api(mvm)) अणु
 		IWL_DEBUG_TX_QUEUES(mvm,
 				    "FLUSHING all tids queues on sta_id = %d\n",
 				    flush_arg);
@@ -94,8 +95,8 @@ static ssize_t iwl_dbgfs_tx_flush_write(struct iwl_mvm *mvm, char *buf,
 		ret = iwl_mvm_flush_sta_tids(mvm, flush_arg, 0xFFFF)
 			? : count;
 		mutex_unlock(&mvm->mutex);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	IWL_DEBUG_TX_QUEUES(mvm, "FLUSHING queues mask to flush = 0x%x\n",
 			    flush_arg);
@@ -104,121 +105,121 @@ static ssize_t iwl_dbgfs_tx_flush_write(struct iwl_mvm *mvm, char *buf,
 	ret =  iwl_mvm_flush_tx_path(mvm, flush_arg) ? : count;
 	mutex_unlock(&mvm->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_sta_drain_write(struct iwl_mvm *mvm, char *buf,
-					 size_t count, loff_t *ppos)
-{
-	struct iwl_mvm_sta *mvmsta;
-	int sta_id, drain, ret;
+अटल sमाप_प्रकार iwl_dbgfs_sta_drain_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+					 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm_sta *mvmsta;
+	पूर्णांक sta_id, drain, ret;
 
-	if (!iwl_mvm_firmware_running(mvm) ||
+	अगर (!iwl_mvm_firmware_running(mvm) ||
 	    mvm->fwrt.cur_fw_img != IWL_UCODE_REGULAR)
-		return -EIO;
+		वापस -EIO;
 
-	if (sscanf(buf, "%d %d", &sta_id, &drain) != 2)
-		return -EINVAL;
-	if (sta_id < 0 || sta_id >= mvm->fw->ucode_capa.num_stations)
-		return -EINVAL;
-	if (drain < 0 || drain > 1)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%d %d", &sta_id, &drain) != 2)
+		वापस -EINVAL;
+	अगर (sta_id < 0 || sta_id >= mvm->fw->ucode_capa.num_stations)
+		वापस -EINVAL;
+	अगर (drain < 0 || drain > 1)
+		वापस -EINVAL;
 
 	mutex_lock(&mvm->mutex);
 
-	mvmsta = iwl_mvm_sta_from_staid_protected(mvm, sta_id);
+	mvmsta = iwl_mvm_sta_from_staid_रक्षित(mvm, sta_id);
 
-	if (!mvmsta)
+	अगर (!mvmsta)
 		ret = -ENOENT;
-	else
+	अन्यथा
 		ret = iwl_mvm_drain_sta(mvm, mvmsta, drain) ? : count;
 
 	mutex_unlock(&mvm->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_sram_read(struct file *file, char __user *user_buf,
-				   size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	const struct fw_img *img;
-	unsigned int ofs, len;
-	size_t ret;
+अटल sमाप_प्रकार iwl_dbgfs_sram_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	स्थिर काष्ठा fw_img *img;
+	अचिन्हित पूर्णांक ofs, len;
+	माप_प्रकार ret;
 	u8 *ptr;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EINVAL;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EINVAL;
 
-	/* default is to dump the entire data segment */
+	/* शेष is to dump the entire data segment */
 	img = &mvm->fw->img[mvm->fwrt.cur_fw_img];
 	ofs = img->sec[IWL_UCODE_SECTION_DATA].offset;
 	len = img->sec[IWL_UCODE_SECTION_DATA].len;
 
-	if (mvm->dbgfs_sram_len) {
+	अगर (mvm->dbgfs_sram_len) अणु
 		ofs = mvm->dbgfs_sram_offset;
 		len = mvm->dbgfs_sram_len;
-	}
+	पूर्ण
 
 	ptr = kzalloc(len, GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	iwl_trans_read_mem_bytes(mvm->trans, ofs, ptr, len);
+	iwl_trans_पढ़ो_mem_bytes(mvm->trans, ofs, ptr, len);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, ptr, len);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, ptr, len);
 
-	kfree(ptr);
+	kमुक्त(ptr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_sram_write(struct iwl_mvm *mvm, char *buf,
-				    size_t count, loff_t *ppos)
-{
-	const struct fw_img *img;
+अटल sमाप_प्रकार iwl_dbgfs_sram_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+				    माप_प्रकार count, loff_t *ppos)
+अणु
+	स्थिर काष्ठा fw_img *img;
 	u32 offset, len;
 	u32 img_offset, img_len;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EINVAL;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EINVAL;
 
 	img = &mvm->fw->img[mvm->fwrt.cur_fw_img];
 	img_offset = img->sec[IWL_UCODE_SECTION_DATA].offset;
 	img_len = img->sec[IWL_UCODE_SECTION_DATA].len;
 
-	if (sscanf(buf, "%x,%x", &offset, &len) == 2) {
-		if ((offset & 0x3) || (len & 0x3))
-			return -EINVAL;
+	अगर (माला_पूछो(buf, "%x,%x", &offset, &len) == 2) अणु
+		अगर ((offset & 0x3) || (len & 0x3))
+			वापस -EINVAL;
 
-		if (offset + len > img_offset + img_len)
-			return -EINVAL;
+		अगर (offset + len > img_offset + img_len)
+			वापस -EINVAL;
 
 		mvm->dbgfs_sram_offset = offset;
 		mvm->dbgfs_sram_len = len;
-	} else {
+	पूर्ण अन्यथा अणु
 		mvm->dbgfs_sram_offset = 0;
 		mvm->dbgfs_sram_len = 0;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_set_nic_temperature_read(struct file *file,
-						  char __user *user_buf,
-						  size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	char buf[16];
-	int pos;
+अटल sमाप_प्रकार iwl_dbgfs_set_nic_temperature_पढ़ो(काष्ठा file *file,
+						  अक्षर __user *user_buf,
+						  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अक्षर buf[16];
+	पूर्णांक pos;
 
-	if (!mvm->temperature_test)
-		pos = scnprintf(buf , sizeof(buf), "disabled\n");
-	else
-		pos = scnprintf(buf , sizeof(buf), "%d\n", mvm->temperature);
+	अगर (!mvm->temperature_test)
+		pos = scnम_लिखो(buf , माप(buf), "disabled\n");
+	अन्यथा
+		pos = scnम_लिखो(buf , माप(buf), "%d\n", mvm->temperature);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
 /*
  * Set NIC Temperature
@@ -227,38 +228,38 @@ static ssize_t iwl_dbgfs_set_nic_temperature_read(struct file *file,
  * IWL_MVM_DEBUG_SET_TEMPERATURE_MAX
  * Disable: IWL_MVM_DEBUG_SET_TEMPERATURE_DISABLE
  */
-static ssize_t iwl_dbgfs_set_nic_temperature_write(struct iwl_mvm *mvm,
-						   char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_set_nic_temperature_ग_लिखो(काष्ठा iwl_mvm *mvm,
+						   अक्षर *buf, माप_प्रकार count,
 						   loff_t *ppos)
-{
-	int temperature;
+अणु
+	पूर्णांक temperature;
 
-	if (!iwl_mvm_firmware_running(mvm) && !mvm->temperature_test)
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm) && !mvm->temperature_test)
+		वापस -EIO;
 
-	if (kstrtoint(buf, 10, &temperature))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 10, &temperature))
+		वापस -EINVAL;
 	/* not a legal temperature */
-	if ((temperature > IWL_MVM_DEBUG_SET_TEMPERATURE_MAX &&
+	अगर ((temperature > IWL_MVM_DEBUG_SET_TEMPERATURE_MAX &&
 	     temperature != IWL_MVM_DEBUG_SET_TEMPERATURE_DISABLE) ||
 	    temperature < IWL_MVM_DEBUG_SET_TEMPERATURE_MIN)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&mvm->mutex);
-	if (temperature == IWL_MVM_DEBUG_SET_TEMPERATURE_DISABLE) {
-		if (!mvm->temperature_test)
-			goto out;
+	अगर (temperature == IWL_MVM_DEBUG_SET_TEMPERATURE_DISABLE) अणु
+		अगर (!mvm->temperature_test)
+			जाओ out;
 
 		mvm->temperature_test = false;
-		/* Since we can't read the temp while awake, just set
+		/* Since we can't पढ़ो the temp जबतक awake, just set
 		 * it to zero until we get the next RX stats from the
 		 * firmware.
 		 */
 		mvm->temperature = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		mvm->temperature_test = true;
 		mvm->temperature = temperature;
-	}
+	पूर्ण
 	IWL_DEBUG_TEMP(mvm, "%sabling debug set temperature (temp = %d)\n",
 		       mvm->temperature_test ? "En" : "Dis" ,
 		       mvm->temperature);
@@ -268,245 +269,245 @@ static ssize_t iwl_dbgfs_set_nic_temperature_write(struct iwl_mvm *mvm,
 out:
 	mutex_unlock(&mvm->mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_nic_temp_read(struct file *file,
-				       char __user *user_buf,
-				       size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	char buf[16];
-	int pos, ret;
+अटल sमाप_प्रकार iwl_dbgfs_nic_temp_पढ़ो(काष्ठा file *file,
+				       अक्षर __user *user_buf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अक्षर buf[16];
+	पूर्णांक pos, ret;
 	s32 temp;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
 	mutex_lock(&mvm->mutex);
 	ret = iwl_mvm_get_temp(mvm, &temp);
 	mutex_unlock(&mvm->mutex);
 
-	if (ret)
-		return -EIO;
+	अगर (ret)
+		वापस -EIO;
 
-	pos = scnprintf(buf , sizeof(buf), "%d\n", temp);
+	pos = scnम_लिखो(buf , माप(buf), "%d\n", temp);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-#ifdef CONFIG_ACPI
-static ssize_t iwl_dbgfs_sar_geo_profile_read(struct file *file,
-					      char __user *user_buf,
-					      size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	char buf[256];
-	int pos = 0;
-	int bufsz = sizeof(buf);
-	int tbl_idx;
+#अगर_घोषित CONFIG_ACPI
+अटल sमाप_प्रकार iwl_dbgfs_sar_geo_profile_पढ़ो(काष्ठा file *file,
+					      अक्षर __user *user_buf,
+					      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अक्षर buf[256];
+	पूर्णांक pos = 0;
+	पूर्णांक bufsz = माप(buf);
+	पूर्णांक tbl_idx;
 	u8 *value;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
 	mutex_lock(&mvm->mutex);
 	tbl_idx = iwl_mvm_get_sar_geo_profile(mvm);
-	if (tbl_idx < 0) {
+	अगर (tbl_idx < 0) अणु
 		mutex_unlock(&mvm->mutex);
-		return tbl_idx;
-	}
+		वापस tbl_idx;
+	पूर्ण
 
-	if (!tbl_idx) {
-		pos = scnprintf(buf, bufsz,
+	अगर (!tbl_idx) अणु
+		pos = scnम_लिखो(buf, bufsz,
 				"SAR geographic profile disabled\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		value = &mvm->fwrt.geo_profiles[tbl_idx - 1].values[0];
 
-		pos += scnprintf(buf + pos, bufsz - pos,
+		pos += scnम_लिखो(buf + pos, bufsz - pos,
 				 "Use geographic profile %d\n", tbl_idx);
-		pos += scnprintf(buf + pos, bufsz - pos,
+		pos += scnम_लिखो(buf + pos, bufsz - pos,
 				 "2.4GHz:\n\tChain A offset: %hhu dBm\n\tChain B offset: %hhu dBm\n\tmax tx power: %hhu dBm\n",
 				 value[1], value[2], value[0]);
-		pos += scnprintf(buf + pos, bufsz - pos,
+		pos += scnम_लिखो(buf + pos, bufsz - pos,
 				 "5.2GHz:\n\tChain A offset: %hhu dBm\n\tChain B offset: %hhu dBm\n\tmax tx power: %hhu dBm\n",
 				 value[4], value[5], value[3]);
-	}
+	पूर्ण
 	mutex_unlock(&mvm->mutex);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
-#endif
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
+#पूर्ण_अगर
 
-static ssize_t iwl_dbgfs_stations_read(struct file *file, char __user *user_buf,
-				       size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct ieee80211_sta *sta;
-	char buf[400];
-	int i, pos = 0, bufsz = sizeof(buf);
+अटल sमाप_प्रकार iwl_dbgfs_stations_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा ieee80211_sta *sta;
+	अक्षर buf[400];
+	पूर्णांक i, pos = 0, bufsz = माप(buf);
 
 	mutex_lock(&mvm->mutex);
 
-	for (i = 0; i < mvm->fw->ucode_capa.num_stations; i++) {
-		pos += scnprintf(buf + pos, bufsz - pos, "%.2d: ", i);
-		sta = rcu_dereference_protected(mvm->fw_id_to_mac_id[i],
+	क्रम (i = 0; i < mvm->fw->ucode_capa.num_stations; i++) अणु
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "%.2d: ", i);
+		sta = rcu_dereference_रक्षित(mvm->fw_id_to_mac_id[i],
 						lockdep_is_held(&mvm->mutex));
-		if (!sta)
-			pos += scnprintf(buf + pos, bufsz - pos, "N/A\n");
-		else if (IS_ERR(sta))
-			pos += scnprintf(buf + pos, bufsz - pos, "%ld\n",
+		अगर (!sta)
+			pos += scnम_लिखो(buf + pos, bufsz - pos, "N/A\n");
+		अन्यथा अगर (IS_ERR(sta))
+			pos += scnम_लिखो(buf + pos, bufsz - pos, "%ld\n",
 					 PTR_ERR(sta));
-		else
-			pos += scnprintf(buf + pos, bufsz - pos, "%pM\n",
+		अन्यथा
+			pos += scnम_लिखो(buf + pos, bufsz - pos, "%pM\n",
 					 sta->addr);
-	}
+	पूर्ण
 
 	mutex_unlock(&mvm->mutex);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t iwl_dbgfs_rs_data_read(struct file *file, char __user *user_buf,
-				      size_t count, loff_t *ppos)
-{
-	struct ieee80211_sta *sta = file->private_data;
-	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
-	struct iwl_lq_sta_rs_fw *lq_sta = &mvmsta->lq_sta.rs_fw;
-	struct iwl_mvm *mvm = lq_sta->pers.drv;
-	static const size_t bufsz = 2048;
-	char *buff;
-	int desc = 0;
-	ssize_t ret;
+अटल sमाप_प्रकार iwl_dbgfs_rs_data_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_sta *sta = file->निजी_data;
+	काष्ठा iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
+	काष्ठा iwl_lq_sta_rs_fw *lq_sta = &mvmsta->lq_sta.rs_fw;
+	काष्ठा iwl_mvm *mvm = lq_sta->pers.drv;
+	अटल स्थिर माप_प्रकार bufsz = 2048;
+	अक्षर *buff;
+	पूर्णांक desc = 0;
+	sमाप_प्रकार ret;
 
-	buff = kmalloc(bufsz, GFP_KERNEL);
-	if (!buff)
-		return -ENOMEM;
+	buff = kदो_स्मृति(bufsz, GFP_KERNEL);
+	अगर (!buff)
+		वापस -ENOMEM;
 
 	mutex_lock(&mvm->mutex);
 
-	desc += scnprintf(buff + desc, bufsz - desc, "sta_id %d\n",
+	desc += scnम_लिखो(buff + desc, bufsz - desc, "sta_id %d\n",
 			  lq_sta->pers.sta_id);
-	desc += scnprintf(buff + desc, bufsz - desc,
+	desc += scnम_लिखो(buff + desc, bufsz - desc,
 			  "fixed rate 0x%X\n",
 			  lq_sta->pers.dbg_fixed_rate);
-	desc += scnprintf(buff + desc, bufsz - desc,
+	desc += scnम_लिखो(buff + desc, bufsz - desc,
 			  "A-MPDU size limit %d\n",
 			  lq_sta->pers.dbg_agg_frame_count_lim);
-	desc += scnprintf(buff + desc, bufsz - desc,
+	desc += scnम_लिखो(buff + desc, bufsz - desc,
 			  "valid_tx_ant %s%s%s\n",
 		(iwl_mvm_get_valid_tx_ant(mvm) & ANT_A) ? "ANT_A," : "",
 		(iwl_mvm_get_valid_tx_ant(mvm) & ANT_B) ? "ANT_B," : "",
 		(iwl_mvm_get_valid_tx_ant(mvm) & ANT_C) ? "ANT_C" : "");
-	desc += scnprintf(buff + desc, bufsz - desc,
+	desc += scnम_लिखो(buff + desc, bufsz - desc,
 			  "last tx rate=0x%X ",
 			  lq_sta->last_rate_n_flags);
 
-	desc += rs_pretty_print_rate(buff + desc, bufsz - desc,
+	desc += rs_pretty_prपूर्णांक_rate(buff + desc, bufsz - desc,
 				     lq_sta->last_rate_n_flags);
-	if (desc < bufsz - 1)
+	अगर (desc < bufsz - 1)
 		buff[desc++] = '\n';
 	mutex_unlock(&mvm->mutex);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buff, desc);
-	kfree(buff);
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buff, desc);
+	kमुक्त(buff);
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_amsdu_len_write(struct ieee80211_sta *sta,
-					 char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_amsdu_len_ग_लिखो(काष्ठा ieee80211_sta *sta,
+					 अक्षर *buf, माप_प्रकार count,
 					 loff_t *ppos)
-{
-	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
-	int i;
+अणु
+	काष्ठा iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
+	पूर्णांक i;
 	u16 amsdu_len;
 
-	if (kstrtou16(buf, 0, &amsdu_len))
-		return -EINVAL;
+	अगर (kstrtou16(buf, 0, &amsdu_len))
+		वापस -EINVAL;
 
 	/* only change from debug set <-> debug unset */
-	if ((amsdu_len && mvmsta->orig_amsdu_len) ||
+	अगर ((amsdu_len && mvmsta->orig_amsdu_len) ||
 	    (!!amsdu_len && mvmsta->orig_amsdu_len))
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (amsdu_len) {
+	अगर (amsdu_len) अणु
 		mvmsta->orig_amsdu_len = sta->max_amsdu_len;
 		sta->max_amsdu_len = amsdu_len;
-		for (i = 0; i < ARRAY_SIZE(sta->max_tid_amsdu_len); i++)
+		क्रम (i = 0; i < ARRAY_SIZE(sta->max_tid_amsdu_len); i++)
 			sta->max_tid_amsdu_len[i] = amsdu_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		sta->max_amsdu_len = mvmsta->orig_amsdu_len;
 		mvmsta->orig_amsdu_len = 0;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_amsdu_len_read(struct file *file,
-					char __user *user_buf,
-					size_t count, loff_t *ppos)
-{
-	struct ieee80211_sta *sta = file->private_data;
-	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
+अटल sमाप_प्रकार iwl_dbgfs_amsdu_len_पढ़ो(काष्ठा file *file,
+					अक्षर __user *user_buf,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ieee80211_sta *sta = file->निजी_data;
+	काष्ठा iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
 
-	char buf[32];
-	int pos;
+	अक्षर buf[32];
+	पूर्णांक pos;
 
-	pos = scnprintf(buf, sizeof(buf), "current %d ", sta->max_amsdu_len);
-	pos += scnprintf(buf + pos, sizeof(buf) - pos, "stored %d\n",
+	pos = scnम_लिखो(buf, माप(buf), "current %d ", sta->max_amsdu_len);
+	pos += scnम_लिखो(buf + pos, माप(buf) - pos, "stored %d\n",
 			 mvmsta->orig_amsdu_len);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t iwl_dbgfs_disable_power_off_read(struct file *file,
-						char __user *user_buf,
-						size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	char buf[64];
-	int bufsz = sizeof(buf);
-	int pos = 0;
+अटल sमाप_प्रकार iwl_dbgfs_disable_घातer_off_पढ़ो(काष्ठा file *file,
+						अक्षर __user *user_buf,
+						माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अक्षर buf[64];
+	पूर्णांक bufsz = माप(buf);
+	पूर्णांक pos = 0;
 
-	pos += scnprintf(buf+pos, bufsz-pos, "disable_power_off_d0=%d\n",
-			 mvm->disable_power_off);
-	pos += scnprintf(buf+pos, bufsz-pos, "disable_power_off_d3=%d\n",
-			 mvm->disable_power_off_d3);
+	pos += scnम_लिखो(buf+pos, bufsz-pos, "disable_power_off_d0=%d\n",
+			 mvm->disable_घातer_off);
+	pos += scnम_लिखो(buf+pos, bufsz-pos, "disable_power_off_d3=%d\n",
+			 mvm->disable_घातer_off_d3);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t iwl_dbgfs_disable_power_off_write(struct iwl_mvm *mvm, char *buf,
-						 size_t count, loff_t *ppos)
-{
-	int ret, val;
+अटल sमाप_प्रकार iwl_dbgfs_disable_घातer_off_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+						 माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret, val;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
-	if (!strncmp("disable_power_off_d0=", buf, 21)) {
-		if (sscanf(buf + 21, "%d", &val) != 1)
-			return -EINVAL;
-		mvm->disable_power_off = val;
-	} else if (!strncmp("disable_power_off_d3=", buf, 21)) {
-		if (sscanf(buf + 21, "%d", &val) != 1)
-			return -EINVAL;
-		mvm->disable_power_off_d3 = val;
-	} else {
-		return -EINVAL;
-	}
+	अगर (!म_भेदन("disable_power_off_d0=", buf, 21)) अणु
+		अगर (माला_पूछो(buf + 21, "%d", &val) != 1)
+			वापस -EINVAL;
+		mvm->disable_घातer_off = val;
+	पूर्ण अन्यथा अगर (!म_भेदन("disable_power_off_d3=", buf, 21)) अणु
+		अगर (माला_पूछो(buf + 21, "%d", &val) != 1)
+			वापस -EINVAL;
+		mvm->disable_घातer_off_d3 = val;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&mvm->mutex);
-	ret = iwl_mvm_power_update_device(mvm);
+	ret = iwl_mvm_घातer_update_device(mvm);
 	mutex_unlock(&mvm->mutex);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static
-int iwl_mvm_coex_dump_mbox(struct iwl_bt_coex_profile_notif *notif, char *buf,
-			   int pos, int bufsz)
-{
-	pos += scnprintf(buf+pos, bufsz-pos, "MBOX dw0:\n");
+अटल
+पूर्णांक iwl_mvm_coex_dump_mbox(काष्ठा iwl_bt_coex_profile_notअगर *notअगर, अक्षर *buf,
+			   पूर्णांक pos, पूर्णांक bufsz)
+अणु
+	pos += scnम_लिखो(buf+pos, bufsz-pos, "MBOX dw0:\n");
 
 	BT_MBOX_PRINT(0, LE_SLAVE_LAT, false);
 	BT_MBOX_PRINT(0, LE_PROF1, false);
@@ -520,7 +521,7 @@ int iwl_mvm_coex_dump_mbox(struct iwl_bt_coex_profile_notif *notif, char *buf,
 	BT_MBOX_PRINT(0, LE_MAX_TX_POWER, false);
 	BT_MBOX_PRINT(0, OPEN_CON_1, true);
 
-	pos += scnprintf(buf+pos, bufsz-pos, "MBOX dw1:\n");
+	pos += scnम_लिखो(buf+pos, bufsz-pos, "MBOX dw1:\n");
 
 	BT_MBOX_PRINT(1, BR_MAX_TX_POWER, false);
 	BT_MBOX_PRINT(1, IP_SR, false);
@@ -529,7 +530,7 @@ int iwl_mvm_coex_dump_mbox(struct iwl_bt_coex_profile_notif *notif, char *buf,
 	BT_MBOX_PRINT(1, MSG_TYPE, false);
 	BT_MBOX_PRINT(1, SSN, true);
 
-	pos += scnprintf(buf+pos, bufsz-pos, "MBOX dw2:\n");
+	pos += scnम_लिखो(buf+pos, bufsz-pos, "MBOX dw2:\n");
 
 	BT_MBOX_PRINT(2, SNIFF_ACT, false);
 	BT_MBOX_PRINT(2, PAG, false);
@@ -542,7 +543,7 @@ int iwl_mvm_coex_dump_mbox(struct iwl_bt_coex_profile_notif *notif, char *buf,
 	BT_MBOX_PRINT(2, ESCO_RE_TX, false);
 	BT_MBOX_PRINT(2, SCO_DURATION, true);
 
-	pos += scnprintf(buf+pos, bufsz-pos, "MBOX dw3:\n");
+	pos += scnम_लिखो(buf+pos, bufsz-pos, "MBOX dw3:\n");
 
 	BT_MBOX_PRINT(3, SCO_STATE, false);
 	BT_MBOX_PRINT(3, SNIFF_STATE, false);
@@ -559,221 +560,221 @@ int iwl_mvm_coex_dump_mbox(struct iwl_bt_coex_profile_notif *notif, char *buf,
 	BT_MBOX_PRINT(3, SSN_2, false);
 	BT_MBOX_PRINT(3, UPDATE_REQUEST, true);
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static ssize_t iwl_dbgfs_bt_notif_read(struct file *file, char __user *user_buf,
-				       size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct iwl_bt_coex_profile_notif *notif = &mvm->last_bt_notif;
-	char *buf;
-	int ret, pos = 0, bufsz = sizeof(char) * 1024;
+अटल sमाप_प्रकार iwl_dbgfs_bt_notअगर_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा iwl_bt_coex_profile_notअगर *notअगर = &mvm->last_bt_notअगर;
+	अक्षर *buf;
+	पूर्णांक ret, pos = 0, bufsz = माप(अक्षर) * 1024;
 
-	buf = kmalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(bufsz, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	mutex_lock(&mvm->mutex);
 
-	pos += iwl_mvm_coex_dump_mbox(notif, buf, pos, bufsz);
+	pos += iwl_mvm_coex_dump_mbox(notअगर, buf, pos, bufsz);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "bt_ci_compliance = %d\n",
-			 notif->bt_ci_compliance);
-	pos += scnprintf(buf + pos, bufsz - pos, "primary_ch_lut = %d\n",
-			 le32_to_cpu(notif->primary_ch_lut));
-	pos += scnprintf(buf + pos, bufsz - pos, "secondary_ch_lut = %d\n",
-			 le32_to_cpu(notif->secondary_ch_lut));
-	pos += scnprintf(buf + pos,
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "bt_ci_compliance = %d\n",
+			 notअगर->bt_ci_compliance);
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "primary_ch_lut = %d\n",
+			 le32_to_cpu(notअगर->primary_ch_lut));
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "secondary_ch_lut = %d\n",
+			 le32_to_cpu(notअगर->secondary_ch_lut));
+	pos += scnम_लिखो(buf + pos,
 			 bufsz - pos, "bt_activity_grading = %d\n",
-			 le32_to_cpu(notif->bt_activity_grading));
-	pos += scnprintf(buf + pos, bufsz - pos, "bt_rrc = %d\n",
-			 notif->rrc_status & 0xF);
-	pos += scnprintf(buf + pos, bufsz - pos, "bt_ttc = %d\n",
-			 notif->ttc_status & 0xF);
+			 le32_to_cpu(notअगर->bt_activity_grading));
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "bt_rrc = %d\n",
+			 notअगर->rrc_status & 0xF);
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "bt_ttc = %d\n",
+			 notअगर->ttc_status & 0xF);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "sync_sco = %d\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "sync_sco = %d\n",
 			 IWL_MVM_BT_COEX_SYNC2SCO);
-	pos += scnprintf(buf + pos, bufsz - pos, "mplut = %d\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "mplut = %d\n",
 			 IWL_MVM_BT_COEX_MPLUT);
 
 	mutex_unlock(&mvm->mutex);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-	kfree(buf);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+	kमुक्त(buf);
 
-	return ret;
-}
-#undef BT_MBOX_PRINT
+	वापस ret;
+पूर्ण
+#अघोषित BT_MBOX_PRINT
 
-static ssize_t iwl_dbgfs_bt_cmd_read(struct file *file, char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct iwl_bt_coex_ci_cmd *cmd = &mvm->last_bt_ci_cmd;
-	char buf[256];
-	int bufsz = sizeof(buf);
-	int pos = 0;
+अटल sमाप_प्रकार iwl_dbgfs_bt_cmd_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा iwl_bt_coex_ci_cmd *cmd = &mvm->last_bt_ci_cmd;
+	अक्षर buf[256];
+	पूर्णांक bufsz = माप(buf);
+	पूर्णांक pos = 0;
 
 	mutex_lock(&mvm->mutex);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "Channel inhibition CMD\n");
-	pos += scnprintf(buf + pos, bufsz - pos,
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Channel inhibition CMD\n");
+	pos += scnम_लिखो(buf + pos, bufsz - pos,
 			 "\tPrimary Channel Bitmap 0x%016llx\n",
 			 le64_to_cpu(cmd->bt_primary_ci));
-	pos += scnprintf(buf + pos, bufsz - pos,
+	pos += scnम_लिखो(buf + pos, bufsz - pos,
 			 "\tSecondary Channel Bitmap 0x%016llx\n",
 			 le64_to_cpu(cmd->bt_secondary_ci));
 
 	mutex_unlock(&mvm->mutex);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_bt_tx_prio_write(struct iwl_mvm *mvm, char *buf,
-			   size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार
+iwl_dbgfs_bt_tx_prio_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
 	u32 bt_tx_prio;
 
-	if (sscanf(buf, "%u", &bt_tx_prio) != 1)
-		return -EINVAL;
-	if (bt_tx_prio > 4)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%u", &bt_tx_prio) != 1)
+		वापस -EINVAL;
+	अगर (bt_tx_prio > 4)
+		वापस -EINVAL;
 
 	mvm->bt_tx_prio = bt_tx_prio;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_bt_force_ant_write(struct iwl_mvm *mvm, char *buf,
-			     size_t count, loff_t *ppos)
-{
-	static const char * const modes_str[BT_FORCE_ANT_MAX] = {
+अटल sमाप_प्रकार
+iwl_dbgfs_bt_क्रमce_ant_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+			     माप_प्रकार count, loff_t *ppos)
+अणु
+	अटल स्थिर अक्षर * स्थिर modes_str[BT_FORCE_ANT_MAX] = अणु
 		[BT_FORCE_ANT_DIS] = "dis",
 		[BT_FORCE_ANT_AUTO] = "auto",
 		[BT_FORCE_ANT_BT] = "bt",
 		[BT_FORCE_ANT_WIFI] = "wifi",
-	};
-	int ret, bt_force_ant_mode;
+	पूर्ण;
+	पूर्णांक ret, bt_क्रमce_ant_mode;
 
 	ret = match_string(modes_str, ARRAY_SIZE(modes_str), buf);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	bt_force_ant_mode = ret;
+	bt_क्रमce_ant_mode = ret;
 	ret = 0;
 	mutex_lock(&mvm->mutex);
-	if (mvm->bt_force_ant_mode == bt_force_ant_mode)
-		goto out;
+	अगर (mvm->bt_क्रमce_ant_mode == bt_क्रमce_ant_mode)
+		जाओ out;
 
-	mvm->bt_force_ant_mode = bt_force_ant_mode;
+	mvm->bt_क्रमce_ant_mode = bt_क्रमce_ant_mode;
 	IWL_DEBUG_COEX(mvm, "Force mode: %s\n",
-		       modes_str[mvm->bt_force_ant_mode]);
+		       modes_str[mvm->bt_क्रमce_ant_mode]);
 
-	if (iwl_mvm_firmware_running(mvm))
+	अगर (iwl_mvm_firmware_running(mvm))
 		ret = iwl_mvm_send_bt_init_conf(mvm);
-	else
+	अन्यथा
 		ret = 0;
 
 out:
 	mutex_unlock(&mvm->mutex);
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_fw_ver_read(struct file *file, char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	char *buff, *pos, *endpos;
-	static const size_t bufsz = 1024;
-	int ret;
+अटल sमाप_प्रकार iwl_dbgfs_fw_ver_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अक्षर *buff, *pos, *endpos;
+	अटल स्थिर माप_प्रकार bufsz = 1024;
+	पूर्णांक ret;
 
-	buff = kmalloc(bufsz, GFP_KERNEL);
-	if (!buff)
-		return -ENOMEM;
+	buff = kदो_स्मृति(bufsz, GFP_KERNEL);
+	अगर (!buff)
+		वापस -ENOMEM;
 
 	pos = buff;
 	endpos = pos + bufsz;
 
-	pos += scnprintf(pos, endpos - pos, "FW prefix: %s\n",
+	pos += scnम_लिखो(pos, endpos - pos, "FW prefix: %s\n",
 			 mvm->trans->cfg->fw_name_pre);
-	pos += scnprintf(pos, endpos - pos, "FW: %s\n",
-			 mvm->fwrt.fw->human_readable);
-	pos += scnprintf(pos, endpos - pos, "Device: %s\n",
+	pos += scnम_लिखो(pos, endpos - pos, "FW: %s\n",
+			 mvm->fwrt.fw->human_पढ़ोable);
+	pos += scnम_लिखो(pos, endpos - pos, "Device: %s\n",
 			 mvm->fwrt.trans->name);
-	pos += scnprintf(pos, endpos - pos, "Bus: %s\n",
+	pos += scnम_लिखो(pos, endpos - pos, "Bus: %s\n",
 			 mvm->fwrt.dev->bus->name);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buff, pos - buff);
-	kfree(buff);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buff, pos - buff);
+	kमुक्त(buff);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_phy_integration_ver_read(struct file *file,
-						  char __user *user_buf,
-						  size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	char *buf;
-	size_t bufsz;
-	int pos;
-	ssize_t ret;
+अटल sमाप_प्रकार iwl_dbgfs_phy_पूर्णांकegration_ver_पढ़ो(काष्ठा file *file,
+						  अक्षर __user *user_buf,
+						  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अक्षर *buf;
+	माप_प्रकार bufsz;
+	पूर्णांक pos;
+	sमाप_प्रकार ret;
 
-	bufsz = mvm->fw->phy_integration_ver_len + 2;
-	buf = kmalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	bufsz = mvm->fw->phy_पूर्णांकegration_ver_len + 2;
+	buf = kदो_स्मृति(bufsz, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	pos = scnprintf(buf, bufsz, "%.*s\n", mvm->fw->phy_integration_ver_len,
-			mvm->fw->phy_integration_ver);
+	pos = scnम_लिखो(buf, bufsz, "%.*s\n", mvm->fw->phy_पूर्णांकegration_ver_len,
+			mvm->fw->phy_पूर्णांकegration_ver);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, pos);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
 
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-#define PRINT_STATS_LE32(_struct, _memb)				\
-			 pos += scnprintf(buf + pos, bufsz - pos,	\
+#घोषणा PRINT_STATS_LE32(_काष्ठा, _memb)				\
+			 pos += scnम_लिखो(buf + pos, bufsz - pos,	\
 					  fmt_table, #_memb,		\
-					  le32_to_cpu(_struct->_memb))
+					  le32_to_cpu(_काष्ठा->_memb))
 
-static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
-					  char __user *user_buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_fw_rx_stats_पढ़ो(काष्ठा file *file,
+					  अक्षर __user *user_buf, माप_प्रकार count,
 					  loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	static const char *fmt_table = "\t%-30s %10u\n";
-	static const char *fmt_header = "%-32s\n";
-	int pos = 0;
-	char *buf;
-	int ret;
-	size_t bufsz;
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	अटल स्थिर अक्षर *fmt_table = "\t%-30s %10u\n";
+	अटल स्थिर अक्षर *fmt_header = "%-32s\n";
+	पूर्णांक pos = 0;
+	अक्षर *buf;
+	पूर्णांक ret;
+	माप_प्रकार bufsz;
 
-	if (iwl_mvm_has_new_rx_stats_api(mvm))
-		bufsz = ((sizeof(struct mvm_statistics_rx) /
-			  sizeof(__le32)) * 43) + (4 * 33) + 1;
-	else
+	अगर (iwl_mvm_has_new_rx_stats_api(mvm))
+		bufsz = ((माप(काष्ठा mvm_statistics_rx) /
+			  माप(__le32)) * 43) + (4 * 33) + 1;
+	अन्यथा
 		/* 43 = size of each data line; 33 = size of each header */
-		bufsz = ((sizeof(struct mvm_statistics_rx_v3) /
-			  sizeof(__le32)) * 43) + (4 * 33) + 1;
+		bufsz = ((माप(काष्ठा mvm_statistics_rx_v3) /
+			  माप(__le32)) * 43) + (4 * 33) + 1;
 
 	buf = kzalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	mutex_lock(&mvm->mutex);
 
-	if (iwl_mvm_firmware_running(mvm))
+	अगर (iwl_mvm_firmware_running(mvm))
 		iwl_mvm_request_statistics(mvm, false);
 
-	pos += scnprintf(buf + pos, bufsz - pos, fmt_header,
+	pos += scnम_लिखो(buf + pos, bufsz - pos, fmt_header,
 			 "Statistics_Rx - OFDM");
-	if (!iwl_mvm_has_new_rx_stats_api(mvm)) {
-		struct mvm_statistics_rx_phy_v2 *ofdm = &mvm->rx_stats_v3.ofdm;
+	अगर (!iwl_mvm_has_new_rx_stats_api(mvm)) अणु
+		काष्ठा mvm_statistics_rx_phy_v2 *ofdm = &mvm->rx_stats_v3.ofdm;
 
 		PRINT_STATS_LE32(ofdm, ina_cnt);
 		PRINT_STATS_LE32(ofdm, fina_cnt);
@@ -784,31 +785,31 @@ static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
 		PRINT_STATS_LE32(ofdm, crc32_good);
 		PRINT_STATS_LE32(ofdm, false_alarm_cnt);
 		PRINT_STATS_LE32(ofdm, fina_sync_err_cnt);
-		PRINT_STATS_LE32(ofdm, sfd_timeout);
-		PRINT_STATS_LE32(ofdm, fina_timeout);
+		PRINT_STATS_LE32(ofdm, sfd_समयout);
+		PRINT_STATS_LE32(ofdm, fina_समयout);
 		PRINT_STATS_LE32(ofdm, unresponded_rts);
 		PRINT_STATS_LE32(ofdm, rxe_frame_lmt_overrun);
 		PRINT_STATS_LE32(ofdm, sent_ack_cnt);
 		PRINT_STATS_LE32(ofdm, sent_cts_cnt);
 		PRINT_STATS_LE32(ofdm, sent_ba_rsp_cnt);
-		PRINT_STATS_LE32(ofdm, dsp_self_kill);
-		PRINT_STATS_LE32(ofdm, mh_format_err);
-		PRINT_STATS_LE32(ofdm, re_acq_main_rssi_sum);
+		PRINT_STATS_LE32(ofdm, dsp_self_समाप्त);
+		PRINT_STATS_LE32(ofdm, mh_क्रमmat_err);
+		PRINT_STATS_LE32(ofdm, re_acq_मुख्य_rssi_sum);
 		PRINT_STATS_LE32(ofdm, reserved);
-	} else {
-		struct mvm_statistics_rx_phy *ofdm = &mvm->rx_stats.ofdm;
+	पूर्ण अन्यथा अणु
+		काष्ठा mvm_statistics_rx_phy *ofdm = &mvm->rx_stats.ofdm;
 
 		PRINT_STATS_LE32(ofdm, unresponded_rts);
 		PRINT_STATS_LE32(ofdm, rxe_frame_lmt_overrun);
 		PRINT_STATS_LE32(ofdm, sent_ba_rsp_cnt);
-		PRINT_STATS_LE32(ofdm, dsp_self_kill);
+		PRINT_STATS_LE32(ofdm, dsp_self_समाप्त);
 		PRINT_STATS_LE32(ofdm, reserved);
-	}
+	पूर्ण
 
-	pos += scnprintf(buf + pos, bufsz - pos, fmt_header,
+	pos += scnम_लिखो(buf + pos, bufsz - pos, fmt_header,
 			 "Statistics_Rx - CCK");
-	if (!iwl_mvm_has_new_rx_stats_api(mvm)) {
-		struct mvm_statistics_rx_phy_v2 *cck = &mvm->rx_stats_v3.cck;
+	अगर (!iwl_mvm_has_new_rx_stats_api(mvm)) अणु
+		काष्ठा mvm_statistics_rx_phy_v2 *cck = &mvm->rx_stats_v3.cck;
 
 		PRINT_STATS_LE32(cck, ina_cnt);
 		PRINT_STATS_LE32(cck, fina_cnt);
@@ -819,31 +820,31 @@ static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
 		PRINT_STATS_LE32(cck, crc32_good);
 		PRINT_STATS_LE32(cck, false_alarm_cnt);
 		PRINT_STATS_LE32(cck, fina_sync_err_cnt);
-		PRINT_STATS_LE32(cck, sfd_timeout);
-		PRINT_STATS_LE32(cck, fina_timeout);
+		PRINT_STATS_LE32(cck, sfd_समयout);
+		PRINT_STATS_LE32(cck, fina_समयout);
 		PRINT_STATS_LE32(cck, unresponded_rts);
 		PRINT_STATS_LE32(cck, rxe_frame_lmt_overrun);
 		PRINT_STATS_LE32(cck, sent_ack_cnt);
 		PRINT_STATS_LE32(cck, sent_cts_cnt);
 		PRINT_STATS_LE32(cck, sent_ba_rsp_cnt);
-		PRINT_STATS_LE32(cck, dsp_self_kill);
-		PRINT_STATS_LE32(cck, mh_format_err);
-		PRINT_STATS_LE32(cck, re_acq_main_rssi_sum);
+		PRINT_STATS_LE32(cck, dsp_self_समाप्त);
+		PRINT_STATS_LE32(cck, mh_क्रमmat_err);
+		PRINT_STATS_LE32(cck, re_acq_मुख्य_rssi_sum);
 		PRINT_STATS_LE32(cck, reserved);
-	} else {
-		struct mvm_statistics_rx_phy *cck = &mvm->rx_stats.cck;
+	पूर्ण अन्यथा अणु
+		काष्ठा mvm_statistics_rx_phy *cck = &mvm->rx_stats.cck;
 
 		PRINT_STATS_LE32(cck, unresponded_rts);
 		PRINT_STATS_LE32(cck, rxe_frame_lmt_overrun);
 		PRINT_STATS_LE32(cck, sent_ba_rsp_cnt);
-		PRINT_STATS_LE32(cck, dsp_self_kill);
+		PRINT_STATS_LE32(cck, dsp_self_समाप्त);
 		PRINT_STATS_LE32(cck, reserved);
-	}
+	पूर्ण
 
-	pos += scnprintf(buf + pos, bufsz - pos, fmt_header,
+	pos += scnम_लिखो(buf + pos, bufsz - pos, fmt_header,
 			 "Statistics_Rx - GENERAL");
-	if (!iwl_mvm_has_new_rx_stats_api(mvm)) {
-		struct mvm_statistics_rx_non_phy_v3 *general =
+	अगर (!iwl_mvm_has_new_rx_stats_api(mvm)) अणु
+		काष्ठा mvm_statistics_rx_non_phy_v3 *general =
 			&mvm->rx_stats_v3.general;
 
 		PRINT_STATS_LE32(general, bogus_cts);
@@ -853,12 +854,12 @@ static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
 		PRINT_STATS_LE32(general, non_channel_beacons);
 		PRINT_STATS_LE32(general, channel_beacons);
 		PRINT_STATS_LE32(general, num_missed_bcon);
-		PRINT_STATS_LE32(general, adc_rx_saturation_time);
-		PRINT_STATS_LE32(general, ina_detection_search_time);
+		PRINT_STATS_LE32(general, adc_rx_saturation_समय);
+		PRINT_STATS_LE32(general, ina_detection_search_समय);
 		PRINT_STATS_LE32(general, beacon_silence_rssi_a);
 		PRINT_STATS_LE32(general, beacon_silence_rssi_b);
 		PRINT_STATS_LE32(general, beacon_silence_rssi_c);
-		PRINT_STATS_LE32(general, interference_data_flag);
+		PRINT_STATS_LE32(general, पूर्णांकerference_data_flag);
 		PRINT_STATS_LE32(general, channel_load);
 		PRINT_STATS_LE32(general, dsp_false_alarms);
 		PRINT_STATS_LE32(general, beacon_rssi_a);
@@ -867,11 +868,11 @@ static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
 		PRINT_STATS_LE32(general, beacon_energy_a);
 		PRINT_STATS_LE32(general, beacon_energy_b);
 		PRINT_STATS_LE32(general, beacon_energy_c);
-		PRINT_STATS_LE32(general, num_bt_kills);
+		PRINT_STATS_LE32(general, num_bt_समाप्तs);
 		PRINT_STATS_LE32(general, mac_id);
 		PRINT_STATS_LE32(general, directed_data_mpdu);
-	} else {
-		struct mvm_statistics_rx_non_phy *general =
+	पूर्ण अन्यथा अणु
+		काष्ठा mvm_statistics_rx_non_phy *general =
 			&mvm->rx_stats.general;
 
 		PRINT_STATS_LE32(general, bogus_cts);
@@ -879,12 +880,12 @@ static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
 		PRINT_STATS_LE32(general, non_channel_beacons);
 		PRINT_STATS_LE32(general, channel_beacons);
 		PRINT_STATS_LE32(general, num_missed_bcon);
-		PRINT_STATS_LE32(general, adc_rx_saturation_time);
-		PRINT_STATS_LE32(general, ina_detection_search_time);
+		PRINT_STATS_LE32(general, adc_rx_saturation_समय);
+		PRINT_STATS_LE32(general, ina_detection_search_समय);
 		PRINT_STATS_LE32(general, beacon_silence_rssi_a);
 		PRINT_STATS_LE32(general, beacon_silence_rssi_b);
 		PRINT_STATS_LE32(general, beacon_silence_rssi_c);
-		PRINT_STATS_LE32(general, interference_data_flag);
+		PRINT_STATS_LE32(general, पूर्णांकerference_data_flag);
 		PRINT_STATS_LE32(general, channel_load);
 		PRINT_STATS_LE32(general, beacon_rssi_a);
 		PRINT_STATS_LE32(general, beacon_rssi_b);
@@ -892,14 +893,14 @@ static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
 		PRINT_STATS_LE32(general, beacon_energy_a);
 		PRINT_STATS_LE32(general, beacon_energy_b);
 		PRINT_STATS_LE32(general, beacon_energy_c);
-		PRINT_STATS_LE32(general, num_bt_kills);
+		PRINT_STATS_LE32(general, num_bt_समाप्तs);
 		PRINT_STATS_LE32(general, mac_id);
-	}
+	पूर्ण
 
-	pos += scnprintf(buf + pos, bufsz - pos, fmt_header,
+	pos += scnम_लिखो(buf + pos, bufsz - pos, fmt_header,
 			 "Statistics_Rx - HT");
-	if (!iwl_mvm_has_new_rx_stats_api(mvm)) {
-		struct mvm_statistics_rx_ht_phy_v1 *ht =
+	अगर (!iwl_mvm_has_new_rx_stats_api(mvm)) अणु
+		काष्ठा mvm_statistics_rx_ht_phy_v1 *ht =
 			&mvm->rx_stats_v3.ofdm_ht;
 
 		PRINT_STATS_LE32(ht, plcp_err);
@@ -907,194 +908,194 @@ static ssize_t iwl_dbgfs_fw_rx_stats_read(struct file *file,
 		PRINT_STATS_LE32(ht, early_overrun_err);
 		PRINT_STATS_LE32(ht, crc32_good);
 		PRINT_STATS_LE32(ht, crc32_err);
-		PRINT_STATS_LE32(ht, mh_format_err);
+		PRINT_STATS_LE32(ht, mh_क्रमmat_err);
 		PRINT_STATS_LE32(ht, agg_crc32_good);
 		PRINT_STATS_LE32(ht, agg_mpdu_cnt);
 		PRINT_STATS_LE32(ht, agg_cnt);
 		PRINT_STATS_LE32(ht, unsupport_mcs);
-	} else {
-		struct mvm_statistics_rx_ht_phy *ht =
+	पूर्ण अन्यथा अणु
+		काष्ठा mvm_statistics_rx_ht_phy *ht =
 			&mvm->rx_stats.ofdm_ht;
 
-		PRINT_STATS_LE32(ht, mh_format_err);
+		PRINT_STATS_LE32(ht, mh_क्रमmat_err);
 		PRINT_STATS_LE32(ht, agg_mpdu_cnt);
 		PRINT_STATS_LE32(ht, agg_cnt);
 		PRINT_STATS_LE32(ht, unsupport_mcs);
-	}
+	पूर्ण
 
 	mutex_unlock(&mvm->mutex);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-	kfree(buf);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+	kमुक्त(buf);
 
-	return ret;
-}
-#undef PRINT_STAT_LE32
+	वापस ret;
+पूर्ण
+#अघोषित PRINT_STAT_LE32
 
-static ssize_t iwl_dbgfs_frame_stats_read(struct iwl_mvm *mvm,
-					  char __user *user_buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_frame_stats_पढ़ो(काष्ठा iwl_mvm *mvm,
+					  अक्षर __user *user_buf, माप_प्रकार count,
 					  loff_t *ppos,
-					  struct iwl_mvm_frame_stats *stats)
-{
-	char *buff, *pos, *endpos;
-	int idx, i;
-	int ret;
-	static const size_t bufsz = 1024;
+					  काष्ठा iwl_mvm_frame_stats *stats)
+अणु
+	अक्षर *buff, *pos, *endpos;
+	पूर्णांक idx, i;
+	पूर्णांक ret;
+	अटल स्थिर माप_प्रकार bufsz = 1024;
 
-	buff = kmalloc(bufsz, GFP_KERNEL);
-	if (!buff)
-		return -ENOMEM;
+	buff = kदो_स्मृति(bufsz, GFP_KERNEL);
+	अगर (!buff)
+		वापस -ENOMEM;
 
 	spin_lock_bh(&mvm->drv_stats_lock);
 
 	pos = buff;
 	endpos = pos + bufsz;
 
-	pos += scnprintf(pos, endpos - pos,
+	pos += scnम_लिखो(pos, endpos - pos,
 			 "Legacy/HT/VHT\t:\t%d/%d/%d\n",
 			 stats->legacy_frames,
 			 stats->ht_frames,
 			 stats->vht_frames);
-	pos += scnprintf(pos, endpos - pos, "20/40/80\t:\t%d/%d/%d\n",
+	pos += scnम_लिखो(pos, endpos - pos, "20/40/80\t:\t%d/%d/%d\n",
 			 stats->bw_20_frames,
 			 stats->bw_40_frames,
 			 stats->bw_80_frames);
-	pos += scnprintf(pos, endpos - pos, "NGI/SGI\t\t:\t%d/%d\n",
+	pos += scnम_लिखो(pos, endpos - pos, "NGI/SGI\t\t:\t%d/%d\n",
 			 stats->ngi_frames,
 			 stats->sgi_frames);
-	pos += scnprintf(pos, endpos - pos, "SISO/MIMO2\t:\t%d/%d\n",
+	pos += scnम_लिखो(pos, endpos - pos, "SISO/MIMO2\t:\t%d/%d\n",
 			 stats->siso_frames,
 			 stats->mimo2_frames);
-	pos += scnprintf(pos, endpos - pos, "FAIL/SCSS\t:\t%d/%d\n",
+	pos += scnम_लिखो(pos, endpos - pos, "FAIL/SCSS\t:\t%d/%d\n",
 			 stats->fail_frames,
 			 stats->success_frames);
-	pos += scnprintf(pos, endpos - pos, "MPDUs agg\t:\t%d\n",
+	pos += scnम_लिखो(pos, endpos - pos, "MPDUs agg\t:\t%d\n",
 			 stats->agg_frames);
-	pos += scnprintf(pos, endpos - pos, "A-MPDUs\t\t:\t%d\n",
+	pos += scnम_लिखो(pos, endpos - pos, "A-MPDUs\t\t:\t%d\n",
 			 stats->ampdu_count);
-	pos += scnprintf(pos, endpos - pos, "Avg MPDUs/A-MPDU:\t%d\n",
+	pos += scnम_लिखो(pos, endpos - pos, "Avg MPDUs/A-MPDU:\t%d\n",
 			 stats->ampdu_count > 0 ?
 			 (stats->agg_frames / stats->ampdu_count) : 0);
 
-	pos += scnprintf(pos, endpos - pos, "Last Rates\n");
+	pos += scnम_लिखो(pos, endpos - pos, "Last Rates\n");
 
 	idx = stats->last_frame_idx - 1;
-	for (i = 0; i < ARRAY_SIZE(stats->last_rates); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(stats->last_rates); i++) अणु
 		idx = (idx + 1) % ARRAY_SIZE(stats->last_rates);
-		if (stats->last_rates[idx] == 0)
-			continue;
-		pos += scnprintf(pos, endpos - pos, "Rate[%d]: ",
-				 (int)(ARRAY_SIZE(stats->last_rates) - i));
-		pos += rs_pretty_print_rate(pos, endpos - pos,
+		अगर (stats->last_rates[idx] == 0)
+			जारी;
+		pos += scnम_लिखो(pos, endpos - pos, "Rate[%d]: ",
+				 (पूर्णांक)(ARRAY_SIZE(stats->last_rates) - i));
+		pos += rs_pretty_prपूर्णांक_rate(pos, endpos - pos,
 					    stats->last_rates[idx]);
-		if (pos < endpos - 1)
+		अगर (pos < endpos - 1)
 			*pos++ = '\n';
-	}
+	पूर्ण
 	spin_unlock_bh(&mvm->drv_stats_lock);
 
-	ret = simple_read_from_buffer(user_buf, count, ppos, buff, pos - buff);
-	kfree(buff);
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buff, pos - buff);
+	kमुक्त(buff);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_drv_rx_stats_read(struct file *file,
-					   char __user *user_buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_drv_rx_stats_पढ़ो(काष्ठा file *file,
+					   अक्षर __user *user_buf, माप_प्रकार count,
 					   loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
 
-	return iwl_dbgfs_frame_stats_read(mvm, user_buf, count, ppos,
+	वापस iwl_dbgfs_frame_stats_पढ़ो(mvm, user_buf, count, ppos,
 					  &mvm->drv_rx_stats);
-}
+पूर्ण
 
-static ssize_t iwl_dbgfs_fw_restart_write(struct iwl_mvm *mvm, char *buf,
-					  size_t count, loff_t *ppos)
-{
-	int __maybe_unused ret;
+अटल sमाप_प्रकार iwl_dbgfs_fw_restart_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+					  माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक __maybe_unused ret;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
 	mutex_lock(&mvm->mutex);
 
 	/* allow one more restart that we're provoking here */
-	if (mvm->fw_restart >= 0)
+	अगर (mvm->fw_restart >= 0)
 		mvm->fw_restart++;
 
-	/* take the return value to make compiler happy - it will fail anyway */
-	ret = iwl_mvm_send_cmd_pdu(mvm, REPLY_ERROR, 0, 0, NULL);
+	/* take the वापस value to make compiler happy - it will fail anyway */
+	ret = iwl_mvm_send_cmd_pdu(mvm, REPLY_ERROR, 0, 0, शून्य);
 
 	mutex_unlock(&mvm->mutex);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_fw_nmi_write(struct iwl_mvm *mvm, char *buf,
-				      size_t count, loff_t *ppos)
-{
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+अटल sमाप_प्रकार iwl_dbgfs_fw_nmi_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
-	iwl_force_nmi(mvm->trans);
+	iwl_क्रमce_nmi(mvm->trans);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_scan_ant_rxchain_read(struct file *file,
-				char __user *user_buf,
-				size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	int pos = 0;
-	char buf[32];
-	const size_t bufsz = sizeof(buf);
+अटल sमाप_प्रकार
+iwl_dbgfs_scan_ant_rxchain_पढ़ो(काष्ठा file *file,
+				अक्षर __user *user_buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	पूर्णांक pos = 0;
+	अक्षर buf[32];
+	स्थिर माप_प्रकार bufsz = माप(buf);
 
-	/* print which antennas were set for the scan command by the user */
-	pos += scnprintf(buf + pos, bufsz - pos, "Antennas for scan: ");
-	if (mvm->scan_rx_ant & ANT_A)
-		pos += scnprintf(buf + pos, bufsz - pos, "A");
-	if (mvm->scan_rx_ant & ANT_B)
-		pos += scnprintf(buf + pos, bufsz - pos, "B");
-	if (mvm->scan_rx_ant & ANT_C)
-		pos += scnprintf(buf + pos, bufsz - pos, "C");
-	pos += scnprintf(buf + pos, bufsz - pos, " (%hhx)\n", mvm->scan_rx_ant);
+	/* prपूर्णांक which antennas were set क्रम the scan command by the user */
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Antennas for scan: ");
+	अगर (mvm->scan_rx_ant & ANT_A)
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "A");
+	अगर (mvm->scan_rx_ant & ANT_B)
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "B");
+	अगर (mvm->scan_rx_ant & ANT_C)
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "C");
+	pos += scnम_लिखो(buf + pos, bufsz - pos, " (%hhx)\n", mvm->scan_rx_ant);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_scan_ant_rxchain_write(struct iwl_mvm *mvm, char *buf,
-				 size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार
+iwl_dbgfs_scan_ant_rxchain_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
 	u8 scan_rx_ant;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
-	if (sscanf(buf, "%hhx", &scan_rx_ant) != 1)
-		return -EINVAL;
-	if (scan_rx_ant > ANT_ABC)
-		return -EINVAL;
-	if (scan_rx_ant & ~(iwl_mvm_get_valid_rx_ant(mvm)))
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%hhx", &scan_rx_ant) != 1)
+		वापस -EINVAL;
+	अगर (scan_rx_ant > ANT_ABC)
+		वापस -EINVAL;
+	अगर (scan_rx_ant & ~(iwl_mvm_get_valid_rx_ant(mvm)))
+		वापस -EINVAL;
 
-	if (mvm->scan_rx_ant != scan_rx_ant) {
+	अगर (mvm->scan_rx_ant != scan_rx_ant) अणु
 		mvm->scan_rx_ant = scan_rx_ant;
-		if (fw_has_capa(&mvm->fw->ucode_capa,
+		अगर (fw_has_capa(&mvm->fw->ucode_capa,
 				IWL_UCODE_TLV_CAPA_UMAC_SCAN))
 			iwl_mvm_config_scan(mvm);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_indirection_tbl_write(struct iwl_mvm *mvm,
-					       char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_indirection_tbl_ग_लिखो(काष्ठा iwl_mvm *mvm,
+					       अक्षर *buf, माप_प्रकार count,
 					       loff_t *ppos)
-{
-	struct iwl_rss_config_cmd cmd = {
+अणु
+	काष्ठा iwl_rss_config_cmd cmd = अणु
 		.flags = cpu_to_le32(IWL_RSS_ENABLE),
 		.hash_mask = IWL_RSS_HASH_TYPE_IPV4_TCP |
 			     IWL_RSS_HASH_TYPE_IPV4_UDP |
@@ -1102,296 +1103,296 @@ static ssize_t iwl_dbgfs_indirection_tbl_write(struct iwl_mvm *mvm,
 			     IWL_RSS_HASH_TYPE_IPV6_TCP |
 			     IWL_RSS_HASH_TYPE_IPV6_UDP |
 			     IWL_RSS_HASH_TYPE_IPV6_PAYLOAD,
-	};
-	int ret, i, num_repeats, nbytes = count / 2;
+	पूर्ण;
+	पूर्णांक ret, i, num_repeats, nbytes = count / 2;
 
 	ret = hex2bin(cmd.indirection_table, buf, nbytes);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * The input is the redirection table, partial or full.
-	 * Repeat the pattern if needed.
-	 * For example, input of 01020F will be repeated 42 times,
+	 * Repeat the pattern अगर needed.
+	 * For example, input of 01020F will be repeated 42 बार,
 	 * indirecting RSS hash results to queues 1, 2, 15 (skipping
 	 * queues 3 - 14).
 	 */
 	num_repeats = ARRAY_SIZE(cmd.indirection_table) / nbytes;
-	for (i = 1; i < num_repeats; i++)
-		memcpy(&cmd.indirection_table[i * nbytes],
+	क्रम (i = 1; i < num_repeats; i++)
+		स_नकल(&cmd.indirection_table[i * nbytes],
 		       cmd.indirection_table, nbytes);
-	/* handle cut in the middle pattern for the last places */
-	memcpy(&cmd.indirection_table[i * nbytes], cmd.indirection_table,
+	/* handle cut in the middle pattern क्रम the last places */
+	स_नकल(&cmd.indirection_table[i * nbytes], cmd.indirection_table,
 	       ARRAY_SIZE(cmd.indirection_table) % nbytes);
 
-	netdev_rss_key_fill(cmd.secret_key, sizeof(cmd.secret_key));
+	netdev_rss_key_fill(cmd.secret_key, माप(cmd.secret_key));
 
 	mutex_lock(&mvm->mutex);
-	if (iwl_mvm_firmware_running(mvm))
+	अगर (iwl_mvm_firmware_running(mvm))
 		ret = iwl_mvm_send_cmd_pdu(mvm, RSS_CONFIG_CMD, 0,
-					   sizeof(cmd), &cmd);
-	else
+					   माप(cmd), &cmd);
+	अन्यथा
 		ret = 0;
 	mutex_unlock(&mvm->mutex);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_inject_packet_write(struct iwl_mvm *mvm,
-					     char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_inject_packet_ग_लिखो(काष्ठा iwl_mvm *mvm,
+					     अक्षर *buf, माप_प्रकार count,
 					     loff_t *ppos)
-{
-	struct iwl_op_mode *opmode = container_of((void *)mvm,
-						  struct iwl_op_mode,
-						  op_mode_specific);
-	struct iwl_rx_cmd_buffer rxb = {
+अणु
+	काष्ठा iwl_op_mode *opmode = container_of((व्योम *)mvm,
+						  काष्ठा iwl_op_mode,
+						  op_mode_specअगरic);
+	काष्ठा iwl_rx_cmd_buffer rxb = अणु
 		._rx_page_order = 0,
 		.truesize = 0, /* not used */
 		._offset = 0,
-	};
-	struct iwl_rx_packet *pkt;
-	int bin_len = count / 2;
-	int ret = -EINVAL;
+	पूर्ण;
+	काष्ठा iwl_rx_packet *pkt;
+	पूर्णांक bin_len = count / 2;
+	पूर्णांक ret = -EINVAL;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
 	/* supporting only MQ RX */
-	if (!mvm->trans->trans_cfg->mq_rx_supported)
-		return -ENOTSUPP;
+	अगर (!mvm->trans->trans_cfg->mq_rx_supported)
+		वापस -ENOTSUPP;
 
 	rxb._page = alloc_pages(GFP_ATOMIC, 0);
-	if (!rxb._page)
-		return -ENOMEM;
+	अगर (!rxb._page)
+		वापस -ENOMEM;
 	pkt = rxb_addr(&rxb);
 
 	ret = hex2bin(page_address(rxb._page), buf, bin_len);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	/* avoid invalid memory access and malformed packet */
-	if (bin_len < sizeof(*pkt) ||
-	    bin_len != sizeof(*pkt) + iwl_rx_packet_payload_len(pkt))
-		goto out;
+	/* aव्योम invalid memory access and malक्रमmed packet */
+	अगर (bin_len < माप(*pkt) ||
+	    bin_len != माप(*pkt) + iwl_rx_packet_payload_len(pkt))
+		जाओ out;
 
 	local_bh_disable();
-	iwl_mvm_rx_mq(opmode, NULL, &rxb);
+	iwl_mvm_rx_mq(opmode, शून्य, &rxb);
 	local_bh_enable();
 	ret = 0;
 
 out:
-	iwl_free_rxb(&rxb);
+	iwl_मुक्त_rxb(&rxb);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static int _iwl_dbgfs_inject_beacon_ie(struct iwl_mvm *mvm, char *bin, int len)
-{
-	struct ieee80211_vif *vif;
-	struct iwl_mvm_vif *mvmvif;
-	struct sk_buff *beacon;
-	struct ieee80211_tx_info *info;
-	struct iwl_mac_beacon_cmd beacon_cmd = {};
+अटल पूर्णांक _iwl_dbgfs_inject_beacon_ie(काष्ठा iwl_mvm *mvm, अक्षर *bin, पूर्णांक len)
+अणु
+	काष्ठा ieee80211_vअगर *vअगर;
+	काष्ठा iwl_mvm_vअगर *mvmvअगर;
+	काष्ठा sk_buff *beacon;
+	काष्ठा ieee80211_tx_info *info;
+	काष्ठा iwl_mac_beacon_cmd beacon_cmd = अणुपूर्ण;
 	u8 rate;
 	u16 flags;
-	int i;
+	पूर्णांक i;
 
 	len /= 2;
 
 	/* Element len should be represented by u8 */
-	if (len >= U8_MAX)
-		return -EINVAL;
+	अगर (len >= U8_MAX)
+		वापस -EINVAL;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
-	if (!iwl_mvm_has_new_tx_api(mvm) &&
+	अगर (!iwl_mvm_has_new_tx_api(mvm) &&
 	    !fw_has_api(&mvm->fw->ucode_capa,
 			IWL_UCODE_TLV_API_NEW_BEACON_TEMPLATE))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&mvm->mutex);
 
-	for (i = 0; i < NUM_MAC_INDEX_DRIVER; i++) {
-		vif = iwl_mvm_rcu_dereference_vif_id(mvm, i, false);
-		if (!vif)
-			continue;
+	क्रम (i = 0; i < NUM_MAC_INDEX_DRIVER; i++) अणु
+		vअगर = iwl_mvm_rcu_dereference_vअगर_id(mvm, i, false);
+		अगर (!vअगर)
+			जारी;
 
-		if (vif->type == NL80211_IFTYPE_AP)
-			break;
-	}
+		अगर (vअगर->type == NL80211_IFTYPE_AP)
+			अवरोध;
+	पूर्ण
 
-	if (i == NUM_MAC_INDEX_DRIVER || !vif)
-		goto out_err;
+	अगर (i == NUM_MAC_INDEX_DRIVER || !vअगर)
+		जाओ out_err;
 
 	mvm->hw->extra_beacon_tailroom = len;
 
-	beacon = ieee80211_beacon_get_template(mvm->hw, vif, NULL);
-	if (!beacon)
-		goto out_err;
+	beacon = ieee80211_beacon_get_ढाँचा(mvm->hw, vअगर, शून्य);
+	अगर (!beacon)
+		जाओ out_err;
 
-	if (len && hex2bin(skb_put_zero(beacon, len), bin, len)) {
-		dev_kfree_skb(beacon);
-		goto out_err;
-	}
+	अगर (len && hex2bin(skb_put_zero(beacon, len), bin, len)) अणु
+		dev_kमुक्त_skb(beacon);
+		जाओ out_err;
+	पूर्ण
 
 	mvm->beacon_inject_active = true;
 
-	mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	mvmvअगर = iwl_mvm_vअगर_from_mac80211(vअगर);
 	info = IEEE80211_SKB_CB(beacon);
-	rate = iwl_mvm_mac_ctxt_get_lowest_rate(info, vif);
+	rate = iwl_mvm_mac_ctxt_get_lowest_rate(info, vअगर);
 	flags = iwl_mvm_mac80211_idx_to_hwrate(rate);
 
-	if (rate == IWL_FIRST_CCK_RATE)
+	अगर (rate == IWL_FIRST_CCK_RATE)
 		flags |= IWL_MAC_BEACON_CCK;
 
 	beacon_cmd.flags = cpu_to_le16(flags);
 	beacon_cmd.byte_cnt = cpu_to_le16((u16)beacon->len);
-	beacon_cmd.template_id = cpu_to_le32((u32)mvmvif->id);
+	beacon_cmd.ढाँचा_id = cpu_to_le32((u32)mvmvअगर->id);
 
 	iwl_mvm_mac_ctxt_set_tim(mvm, &beacon_cmd.tim_idx,
 				 &beacon_cmd.tim_size,
 				 beacon->data, beacon->len);
 
 	iwl_mvm_mac_ctxt_send_beacon_cmd(mvm, beacon, &beacon_cmd,
-					 sizeof(beacon_cmd));
+					 माप(beacon_cmd));
 	mutex_unlock(&mvm->mutex);
 
-	dev_kfree_skb(beacon);
+	dev_kमुक्त_skb(beacon);
 
-	return 0;
+	वापस 0;
 
 out_err:
 	mutex_unlock(&mvm->mutex);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t iwl_dbgfs_inject_beacon_ie_write(struct iwl_mvm *mvm,
-						char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_inject_beacon_ie_ग_लिखो(काष्ठा iwl_mvm *mvm,
+						अक्षर *buf, माप_प्रकार count,
 						loff_t *ppos)
-{
-	int ret = _iwl_dbgfs_inject_beacon_ie(mvm, buf, count);
+अणु
+	पूर्णांक ret = _iwl_dbgfs_inject_beacon_ie(mvm, buf, count);
 
 	mvm->hw->extra_beacon_tailroom = 0;
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_inject_beacon_ie_restore_write(struct iwl_mvm *mvm,
-							char *buf,
-							size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_inject_beacon_ie_restore_ग_लिखो(काष्ठा iwl_mvm *mvm,
+							अक्षर *buf,
+							माप_प्रकार count,
 							loff_t *ppos)
-{
-	int ret = _iwl_dbgfs_inject_beacon_ie(mvm, NULL, 0);
+अणु
+	पूर्णांक ret = _iwl_dbgfs_inject_beacon_ie(mvm, शून्य, 0);
 
 	mvm->hw->extra_beacon_tailroom = 0;
 	mvm->beacon_inject_active = false;
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_fw_dbg_conf_read(struct file *file,
-					  char __user *user_buf,
-					  size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	int conf;
-	char buf[8];
-	const size_t bufsz = sizeof(buf);
-	int pos = 0;
+अटल sमाप_प्रकार iwl_dbgfs_fw_dbg_conf_पढ़ो(काष्ठा file *file,
+					  अक्षर __user *user_buf,
+					  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	पूर्णांक conf;
+	अक्षर buf[8];
+	स्थिर माप_प्रकार bufsz = माप(buf);
+	पूर्णांक pos = 0;
 
 	mutex_lock(&mvm->mutex);
 	conf = mvm->fwrt.dump.conf;
 	mutex_unlock(&mvm->mutex);
 
-	pos += scnprintf(buf + pos, bufsz - pos, "%d\n", conf);
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "%d\n", conf);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t iwl_dbgfs_fw_dbg_conf_write(struct iwl_mvm *mvm,
-					   char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_fw_dbg_conf_ग_लिखो(काष्ठा iwl_mvm *mvm,
+					   अक्षर *buf, माप_प्रकार count,
 					   loff_t *ppos)
-{
-	unsigned int conf_id;
-	int ret;
+अणु
+	अचिन्हित पूर्णांक conf_id;
+	पूर्णांक ret;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
-	ret = kstrtouint(buf, 0, &conf_id);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(buf, 0, &conf_id);
+	अगर (ret)
+		वापस ret;
 
-	if (WARN_ON(conf_id >= FW_DBG_CONF_MAX))
-		return -EINVAL;
+	अगर (WARN_ON(conf_id >= FW_DBG_CONF_MAX))
+		वापस -EINVAL;
 
 	mutex_lock(&mvm->mutex);
 	ret = iwl_fw_start_dbg_conf(&mvm->fwrt, conf_id);
 	mutex_unlock(&mvm->mutex);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_fw_dbg_collect_write(struct iwl_mvm *mvm,
-					      char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_fw_dbg_collect_ग_लिखो(काष्ठा iwl_mvm *mvm,
+					      अक्षर *buf, माप_प्रकार count,
 					      loff_t *ppos)
-{
-	if (count == 0)
-		return 0;
+अणु
+	अगर (count == 0)
+		वापस 0;
 
-	iwl_dbg_tlv_time_point(&mvm->fwrt, IWL_FW_INI_TIME_POINT_USER_TRIGGER,
-			       NULL);
+	iwl_dbg_tlv_समय_poपूर्णांक(&mvm->fwrt, IWL_FW_INI_TIME_POINT_USER_TRIGGER,
+			       शून्य);
 
 	iwl_fw_dbg_collect(&mvm->fwrt, FW_DBG_TRIGGER_USER, buf,
-			   (count - 1), NULL);
+			   (count - 1), शून्य);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_dbg_time_point_write(struct iwl_mvm *mvm,
-					      char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_dbg_समय_poपूर्णांक_ग_लिखो(काष्ठा iwl_mvm *mvm,
+					      अक्षर *buf, माप_प्रकार count,
 					      loff_t *ppos)
-{
-	u32 timepoint;
+अणु
+	u32 समयpoपूर्णांक;
 
-	if (kstrtou32(buf, 0, &timepoint))
-		return -EINVAL;
+	अगर (kstrtou32(buf, 0, &समयpoपूर्णांक))
+		वापस -EINVAL;
 
-	if (timepoint == IWL_FW_INI_TIME_POINT_INVALID ||
-	    timepoint >= IWL_FW_INI_TIME_POINT_NUM)
-		return -EINVAL;
+	अगर (समयpoपूर्णांक == IWL_FW_INI_TIME_POINT_INVALID ||
+	    समयpoपूर्णांक >= IWL_FW_INI_TIME_POINT_NUM)
+		वापस -EINVAL;
 
-	iwl_dbg_tlv_time_point(&mvm->fwrt, timepoint, NULL);
+	iwl_dbg_tlv_समय_poपूर्णांक(&mvm->fwrt, समयpoपूर्णांक, शून्य);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-#define ADD_TEXT(...) pos += scnprintf(buf + pos, bufsz - pos, __VA_ARGS__)
-#ifdef CONFIG_IWLWIFI_BCAST_FILTERING
-static ssize_t iwl_dbgfs_bcast_filters_read(struct file *file,
-					    char __user *user_buf,
-					    size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct iwl_bcast_filter_cmd cmd;
-	const struct iwl_fw_bcast_filter *filter;
-	char *buf;
-	int bufsz = 1024;
-	int i, j, pos = 0;
-	ssize_t ret;
+#घोषणा ADD_TEXT(...) pos += scnम_लिखो(buf + pos, bufsz - pos, __VA_ARGS__)
+#अगर_घोषित CONFIG_IWLWIFI_BCAST_FILTERING
+अटल sमाप_प्रकार iwl_dbgfs_bcast_filters_पढ़ो(काष्ठा file *file,
+					    अक्षर __user *user_buf,
+					    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा iwl_bcast_filter_cmd cmd;
+	स्थिर काष्ठा iwl_fw_bcast_filter *filter;
+	अक्षर *buf;
+	पूर्णांक bufsz = 1024;
+	पूर्णांक i, j, pos = 0;
+	sमाप_प्रकार ret;
 
 	buf = kzalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	mutex_lock(&mvm->mutex);
-	if (!iwl_mvm_bcast_filter_build_cmd(mvm, &cmd)) {
+	अगर (!iwl_mvm_bcast_filter_build_cmd(mvm, &cmd)) अणु
 		ADD_TEXT("None\n");
 		mutex_unlock(&mvm->mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mutex_unlock(&mvm->mutex);
 
-	for (i = 0; cmd.filters[i].attrs[0].mask; i++) {
+	क्रम (i = 0; cmd.filters[i].attrs[0].mask; i++) अणु
 		filter = &cmd.filters[i];
 
 		ADD_TEXT("Filter [%d]:\n", i);
@@ -1399,12 +1400,12 @@ static ssize_t iwl_dbgfs_bcast_filters_read(struct file *file,
 		ADD_TEXT("\tFrame Type: %s\n",
 			 filter->frame_type ? "IPv4" : "Generic");
 
-		for (j = 0; j < ARRAY_SIZE(filter->attrs); j++) {
-			const struct iwl_fw_bcast_filter_attr *attr;
+		क्रम (j = 0; j < ARRAY_SIZE(filter->attrs); j++) अणु
+			स्थिर काष्ठा iwl_fw_bcast_filter_attr *attr;
 
 			attr = &filter->attrs[j];
-			if (!attr->mask)
-				break;
+			अगर (!attr->mask)
+				अवरोध;
 
 			ADD_TEXT("\tAttr [%d]: offset=%d (from %s), mask=0x%x, value=0x%x reserved=0x%x\n",
 				 j, attr->offset,
@@ -1413,502 +1414,502 @@ static ssize_t iwl_dbgfs_bcast_filters_read(struct file *file,
 				 be32_to_cpu(attr->mask),
 				 be32_to_cpu(attr->val),
 				 le16_to_cpu(attr->reserved1));
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-	kfree(buf);
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_bcast_filters_write(struct iwl_mvm *mvm, char *buf,
-					     size_t count, loff_t *ppos)
-{
-	int pos, next_pos;
-	struct iwl_fw_bcast_filter filter = {};
-	struct iwl_bcast_filter_cmd cmd;
+अटल sमाप_प्रकार iwl_dbgfs_bcast_filters_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+					     माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक pos, next_pos;
+	काष्ठा iwl_fw_bcast_filter filter = अणुपूर्ण;
+	काष्ठा iwl_bcast_filter_cmd cmd;
 	u32 filter_id, attr_id, mask, value;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (sscanf(buf, "%d %hhi %hhi %n", &filter_id, &filter.discard,
+	अगर (माला_पूछो(buf, "%d %hhi %hhi %n", &filter_id, &filter.discard,
 		   &filter.frame_type, &pos) != 3)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (filter_id >= ARRAY_SIZE(mvm->dbgfs_bcast_filtering.cmd.filters) ||
+	अगर (filter_id >= ARRAY_SIZE(mvm->dbgfs_bcast_filtering.cmd.filters) ||
 	    filter.frame_type > BCAST_FILTER_FRAME_TYPE_IPV4)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	for (attr_id = 0; attr_id < ARRAY_SIZE(filter.attrs);
-	     attr_id++) {
-		struct iwl_fw_bcast_filter_attr *attr =
+	क्रम (attr_id = 0; attr_id < ARRAY_SIZE(filter.attrs);
+	     attr_id++) अणु
+		काष्ठा iwl_fw_bcast_filter_attr *attr =
 				&filter.attrs[attr_id];
 
-		if (pos >= count)
-			break;
+		अगर (pos >= count)
+			अवरोध;
 
-		if (sscanf(&buf[pos], "%hhi %hhi %i %i %n",
+		अगर (माला_पूछो(&buf[pos], "%hhi %hhi %i %i %n",
 			   &attr->offset, &attr->offset_type,
 			   &mask, &value, &next_pos) != 4)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		attr->mask = cpu_to_be32(mask);
 		attr->val = cpu_to_be32(value);
-		if (mask)
+		अगर (mask)
 			filter.num_attrs++;
 
 		pos += next_pos;
-	}
+	पूर्ण
 
 	mutex_lock(&mvm->mutex);
-	memcpy(&mvm->dbgfs_bcast_filtering.cmd.filters[filter_id],
-	       &filter, sizeof(filter));
+	स_नकल(&mvm->dbgfs_bcast_filtering.cmd.filters[filter_id],
+	       &filter, माप(filter));
 
 	/* send updated bcast filtering configuration */
-	if (iwl_mvm_firmware_running(mvm) &&
+	अगर (iwl_mvm_firmware_running(mvm) &&
 	    mvm->dbgfs_bcast_filtering.override &&
 	    iwl_mvm_bcast_filter_build_cmd(mvm, &cmd))
 		err = iwl_mvm_send_cmd_pdu(mvm, BCAST_FILTER_CMD, 0,
-					   sizeof(cmd), &cmd);
+					   माप(cmd), &cmd);
 	mutex_unlock(&mvm->mutex);
 
-	return err ?: count;
-}
+	वापस err ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_bcast_filters_macs_read(struct file *file,
-						 char __user *user_buf,
-						 size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct iwl_bcast_filter_cmd cmd;
-	char *buf;
-	int bufsz = 1024;
-	int i, pos = 0;
-	ssize_t ret;
+अटल sमाप_प्रकार iwl_dbgfs_bcast_filters_macs_पढ़ो(काष्ठा file *file,
+						 अक्षर __user *user_buf,
+						 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा iwl_bcast_filter_cmd cmd;
+	अक्षर *buf;
+	पूर्णांक bufsz = 1024;
+	पूर्णांक i, pos = 0;
+	sमाप_प्रकार ret;
 
 	buf = kzalloc(bufsz, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	mutex_lock(&mvm->mutex);
-	if (!iwl_mvm_bcast_filter_build_cmd(mvm, &cmd)) {
+	अगर (!iwl_mvm_bcast_filter_build_cmd(mvm, &cmd)) अणु
 		ADD_TEXT("None\n");
 		mutex_unlock(&mvm->mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mutex_unlock(&mvm->mutex);
 
-	for (i = 0; i < ARRAY_SIZE(cmd.macs); i++) {
-		const struct iwl_fw_bcast_mac *mac = &cmd.macs[i];
+	क्रम (i = 0; i < ARRAY_SIZE(cmd.macs); i++) अणु
+		स्थिर काष्ठा iwl_fw_bcast_mac *mac = &cmd.macs[i];
 
 		ADD_TEXT("Mac [%d]: discard=%d attached_filters=0x%x\n",
-			 i, mac->default_discard, mac->attached_filters);
-	}
+			 i, mac->शेष_discard, mac->attached_filters);
+	पूर्ण
 out:
-	ret = simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-	kfree(buf);
-	return ret;
-}
+	ret = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_bcast_filters_macs_write(struct iwl_mvm *mvm,
-						  char *buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_bcast_filters_macs_ग_लिखो(काष्ठा iwl_mvm *mvm,
+						  अक्षर *buf, माप_प्रकार count,
 						  loff_t *ppos)
-{
-	struct iwl_bcast_filter_cmd cmd;
-	struct iwl_fw_bcast_mac mac = {};
+अणु
+	काष्ठा iwl_bcast_filter_cmd cmd;
+	काष्ठा iwl_fw_bcast_mac mac = अणुपूर्ण;
 	u32 mac_id, attached_filters;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (!mvm->bcast_filters)
-		return -ENOENT;
+	अगर (!mvm->bcast_filters)
+		वापस -ENOENT;
 
-	if (sscanf(buf, "%d %hhi %i", &mac_id, &mac.default_discard,
+	अगर (माला_पूछो(buf, "%d %hhi %i", &mac_id, &mac.शेष_discard,
 		   &attached_filters) != 3)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (mac_id >= ARRAY_SIZE(cmd.macs) ||
-	    mac.default_discard > 1 ||
+	अगर (mac_id >= ARRAY_SIZE(cmd.macs) ||
+	    mac.शेष_discard > 1 ||
 	    attached_filters >= BIT(ARRAY_SIZE(cmd.filters)))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mac.attached_filters = cpu_to_le16(attached_filters);
 
 	mutex_lock(&mvm->mutex);
-	memcpy(&mvm->dbgfs_bcast_filtering.cmd.macs[mac_id],
-	       &mac, sizeof(mac));
+	स_नकल(&mvm->dbgfs_bcast_filtering.cmd.macs[mac_id],
+	       &mac, माप(mac));
 
 	/* send updated bcast filtering configuration */
-	if (iwl_mvm_firmware_running(mvm) &&
+	अगर (iwl_mvm_firmware_running(mvm) &&
 	    mvm->dbgfs_bcast_filtering.override &&
 	    iwl_mvm_bcast_filter_build_cmd(mvm, &cmd))
 		err = iwl_mvm_send_cmd_pdu(mvm, BCAST_FILTER_CMD, 0,
-					   sizeof(cmd), &cmd);
+					   माप(cmd), &cmd);
 	mutex_unlock(&mvm->mutex);
 
-	return err ?: count;
-}
-#endif
+	वापस err ?: count;
+पूर्ण
+#पूर्ण_अगर
 
-#define MVM_DEBUGFS_WRITE_FILE_OPS(name, bufsz) \
-	_MVM_DEBUGFS_WRITE_FILE_OPS(name, bufsz, struct iwl_mvm)
-#define MVM_DEBUGFS_READ_WRITE_FILE_OPS(name, bufsz) \
-	_MVM_DEBUGFS_READ_WRITE_FILE_OPS(name, bufsz, struct iwl_mvm)
-#define MVM_DEBUGFS_ADD_FILE_ALIAS(alias, name, parent, mode) do {	\
+#घोषणा MVM_DEBUGFS_WRITE_खाता_OPS(name, bufsz) \
+	_MVM_DEBUGFS_WRITE_खाता_OPS(name, bufsz, काष्ठा iwl_mvm)
+#घोषणा MVM_DEBUGFS_READ_WRITE_खाता_OPS(name, bufsz) \
+	_MVM_DEBUGFS_READ_WRITE_खाता_OPS(name, bufsz, काष्ठा iwl_mvm)
+#घोषणा MVM_DEBUGFS_ADD_खाता_ALIAS(alias, name, parent, mode) करो अणु	\
 		debugfs_create_file(alias, mode, parent, mvm,		\
 				    &iwl_dbgfs_##name##_ops);		\
-	} while (0)
-#define MVM_DEBUGFS_ADD_FILE(name, parent, mode) \
-	MVM_DEBUGFS_ADD_FILE_ALIAS(#name, name, parent, mode)
+	पूर्ण जबतक (0)
+#घोषणा MVM_DEBUGFS_ADD_खाता(name, parent, mode) \
+	MVM_DEBUGFS_ADD_खाता_ALIAS(#name, name, parent, mode)
 
-#define MVM_DEBUGFS_WRITE_STA_FILE_OPS(name, bufsz) \
-	_MVM_DEBUGFS_WRITE_FILE_OPS(name, bufsz, struct ieee80211_sta)
-#define MVM_DEBUGFS_READ_WRITE_STA_FILE_OPS(name, bufsz) \
-	_MVM_DEBUGFS_READ_WRITE_FILE_OPS(name, bufsz, struct ieee80211_sta)
+#घोषणा MVM_DEBUGFS_WRITE_STA_खाता_OPS(name, bufsz) \
+	_MVM_DEBUGFS_WRITE_खाता_OPS(name, bufsz, काष्ठा ieee80211_sta)
+#घोषणा MVM_DEBUGFS_READ_WRITE_STA_खाता_OPS(name, bufsz) \
+	_MVM_DEBUGFS_READ_WRITE_खाता_OPS(name, bufsz, काष्ठा ieee80211_sta)
 
-#define MVM_DEBUGFS_ADD_STA_FILE_ALIAS(alias, name, parent, mode) do {	\
+#घोषणा MVM_DEBUGFS_ADD_STA_खाता_ALIAS(alias, name, parent, mode) करो अणु	\
 		debugfs_create_file(alias, mode, parent, sta,		\
 				    &iwl_dbgfs_##name##_ops);		\
-	} while (0)
-#define MVM_DEBUGFS_ADD_STA_FILE(name, parent, mode) \
-	MVM_DEBUGFS_ADD_STA_FILE_ALIAS(#name, name, parent, mode)
+	पूर्ण जबतक (0)
+#घोषणा MVM_DEBUGFS_ADD_STA_खाता(name, parent, mode) \
+	MVM_DEBUGFS_ADD_STA_खाता_ALIAS(#name, name, parent, mode)
 
-static ssize_t
-iwl_dbgfs_prph_reg_read(struct file *file,
-			char __user *user_buf,
-			size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	int pos = 0;
-	char buf[32];
-	const size_t bufsz = sizeof(buf);
+अटल sमाप_प्रकार
+iwl_dbgfs_prph_reg_पढ़ो(काष्ठा file *file,
+			अक्षर __user *user_buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	पूर्णांक pos = 0;
+	अक्षर buf[32];
+	स्थिर माप_प्रकार bufsz = माप(buf);
 
-	if (!mvm->dbgfs_prph_reg_addr)
-		return -EINVAL;
+	अगर (!mvm->dbgfs_prph_reg_addr)
+		वापस -EINVAL;
 
-	pos += scnprintf(buf + pos, bufsz - pos, "Reg 0x%x: (0x%x)\n",
+	pos += scnम_लिखो(buf + pos, bufsz - pos, "Reg 0x%x: (0x%x)\n",
 		mvm->dbgfs_prph_reg_addr,
-		iwl_read_prph(mvm->trans, mvm->dbgfs_prph_reg_addr));
+		iwl_पढ़ो_prph(mvm->trans, mvm->dbgfs_prph_reg_addr));
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_prph_reg_write(struct iwl_mvm *mvm, char *buf,
-			 size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार
+iwl_dbgfs_prph_reg_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
 	u8 args;
 	u32 value;
 
-	args = sscanf(buf, "%i %i", &mvm->dbgfs_prph_reg_addr, &value);
-	/* if we only want to set the reg address - nothing more to do */
-	if (args == 1)
-		goto out;
+	args = माला_पूछो(buf, "%i %i", &mvm->dbgfs_prph_reg_addr, &value);
+	/* अगर we only want to set the reg address - nothing more to करो */
+	अगर (args == 1)
+		जाओ out;
 
 	/* otherwise, make sure we have both address and value */
-	if (args != 2)
-		return -EINVAL;
+	अगर (args != 2)
+		वापस -EINVAL;
 
-	iwl_write_prph(mvm->trans, mvm->dbgfs_prph_reg_addr, value);
+	iwl_ग_लिखो_prph(mvm->trans, mvm->dbgfs_prph_reg_addr, value);
 
 out:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_send_echo_cmd_write(struct iwl_mvm *mvm, char *buf,
-			      size_t count, loff_t *ppos)
-{
-	int ret;
+अटल sमाप_प्रकार
+iwl_dbgfs_send_echo_cmd_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
 	mutex_lock(&mvm->mutex);
-	ret = iwl_mvm_send_cmd_pdu(mvm, ECHO_CMD, 0, 0, NULL);
+	ret = iwl_mvm_send_cmd_pdu(mvm, ECHO_CMD, 0, 0, शून्य);
 	mutex_unlock(&mvm->mutex);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-struct iwl_mvm_sniffer_apply {
-	struct iwl_mvm *mvm;
+काष्ठा iwl_mvm_snअगरfer_apply अणु
+	काष्ठा iwl_mvm *mvm;
 	u8 *bssid;
 	u16 aid;
-};
+पूर्ण;
 
-static bool iwl_mvm_sniffer_apply(struct iwl_notif_wait_data *notif_data,
-				  struct iwl_rx_packet *pkt, void *data)
-{
-	struct iwl_mvm_sniffer_apply *apply = data;
+अटल bool iwl_mvm_snअगरfer_apply(काष्ठा iwl_notअगर_रुको_data *notअगर_data,
+				  काष्ठा iwl_rx_packet *pkt, व्योम *data)
+अणु
+	काष्ठा iwl_mvm_snअगरfer_apply *apply = data;
 
 	apply->mvm->cur_aid = cpu_to_le16(apply->aid);
-	memcpy(apply->mvm->cur_bssid, apply->bssid,
-	       sizeof(apply->mvm->cur_bssid));
+	स_नकल(apply->mvm->cur_bssid, apply->bssid,
+	       माप(apply->mvm->cur_bssid));
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_he_sniffer_params_write(struct iwl_mvm *mvm, char *buf,
-				  size_t count, loff_t *ppos)
-{
-	struct iwl_notification_wait wait;
-	struct iwl_he_monitor_cmd he_mon_cmd = {};
-	struct iwl_mvm_sniffer_apply apply = {
+अटल sमाप_प्रकार
+iwl_dbgfs_he_snअगरfer_params_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_notअगरication_रुको रुको;
+	काष्ठा iwl_he_monitor_cmd he_mon_cmd = अणुपूर्ण;
+	काष्ठा iwl_mvm_snअगरfer_apply apply = अणु
 		.mvm = mvm,
-	};
-	u16 wait_cmds[] = {
+	पूर्ण;
+	u16 रुको_cmds[] = अणु
 		iwl_cmd_id(HE_AIR_SNIFFER_CONFIG_CMD, DATA_PATH_GROUP, 0),
-	};
+	पूर्ण;
 	u32 aid;
-	int ret;
+	पूर्णांक ret;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
-	ret = sscanf(buf, "%x %2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx", &aid,
+	ret = माला_पूछो(buf, "%x %2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx", &aid,
 		     &he_mon_cmd.bssid[0], &he_mon_cmd.bssid[1],
 		     &he_mon_cmd.bssid[2], &he_mon_cmd.bssid[3],
 		     &he_mon_cmd.bssid[4], &he_mon_cmd.bssid[5]);
-	if (ret != 7)
-		return -EINVAL;
+	अगर (ret != 7)
+		वापस -EINVAL;
 
 	he_mon_cmd.aid = cpu_to_le16(aid);
 
 	apply.aid = aid;
-	apply.bssid = (void *)he_mon_cmd.bssid;
+	apply.bssid = (व्योम *)he_mon_cmd.bssid;
 
 	mutex_lock(&mvm->mutex);
 
 	/*
-	 * Use the notification waiter to get our function triggered
+	 * Use the notअगरication रुकोer to get our function triggered
 	 * in sequence with other RX. This ensures that frames we get
-	 * on the RX queue _before_ the new configuration is applied
-	 * still have mvm->cur_aid pointing to the old AID, and that
+	 * on the RX queue _beक्रमe_ the new configuration is applied
+	 * still have mvm->cur_aid poपूर्णांकing to the old AID, and that
 	 * frames on the RX queue _after_ the firmware processed the
 	 * new configuration (and sent the response, synchronously)
 	 * get mvm->cur_aid correctly set to the new AID.
 	 */
-	iwl_init_notification_wait(&mvm->notif_wait, &wait,
-				   wait_cmds, ARRAY_SIZE(wait_cmds),
-				   iwl_mvm_sniffer_apply, &apply);
+	iwl_init_notअगरication_रुको(&mvm->notअगर_रुको, &रुको,
+				   रुको_cmds, ARRAY_SIZE(रुको_cmds),
+				   iwl_mvm_snअगरfer_apply, &apply);
 
 	ret = iwl_mvm_send_cmd_pdu(mvm, iwl_cmd_id(HE_AIR_SNIFFER_CONFIG_CMD,
 						   DATA_PATH_GROUP, 0), 0,
-				   sizeof(he_mon_cmd), &he_mon_cmd);
+				   माप(he_mon_cmd), &he_mon_cmd);
 
-	/* no need to really wait, we already did anyway */
-	iwl_remove_notification(&mvm->notif_wait, &wait);
+	/* no need to really रुको, we alपढ़ोy did anyway */
+	iwl_हटाओ_notअगरication(&mvm->notअगर_रुको, &रुको);
 
 	mutex_unlock(&mvm->mutex);
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_he_sniffer_params_read(struct file *file, char __user *user_buf,
-				 size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
+अटल sमाप_प्रकार
+iwl_dbgfs_he_snअगरfer_params_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
 	u8 buf[32];
-	int len;
+	पूर्णांक len;
 
-	len = scnprintf(buf, sizeof(buf),
+	len = scnम_लिखो(buf, माप(buf),
 			"%d %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n",
 			le16_to_cpu(mvm->cur_aid), mvm->cur_bssid[0],
 			mvm->cur_bssid[1], mvm->cur_bssid[2], mvm->cur_bssid[3],
 			mvm->cur_bssid[4], mvm->cur_bssid[5]);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_uapsd_noagg_bssids_read(struct file *file, char __user *user_buf,
-				  size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
+अटल sमाप_प्रकार
+iwl_dbgfs_uapsd_noagg_bssids_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
 	u8 buf[IWL_MVM_UAPSD_NOAGG_BSSIDS_NUM * ETH_ALEN * 3 + 1];
-	unsigned int pos = 0;
-	size_t bufsz = sizeof(buf);
-	int i;
+	अचिन्हित पूर्णांक pos = 0;
+	माप_प्रकार bufsz = माप(buf);
+	पूर्णांक i;
 
 	mutex_lock(&mvm->mutex);
 
-	for (i = 0; i < IWL_MVM_UAPSD_NOAGG_LIST_LEN; i++)
-		pos += scnprintf(buf + pos, bufsz - pos, "%pM\n",
+	क्रम (i = 0; i < IWL_MVM_UAPSD_NOAGG_LIST_LEN; i++)
+		pos += scnम_लिखो(buf + pos, bufsz - pos, "%pM\n",
 				 mvm->uapsd_noagg_bssids[i].addr);
 
 	mutex_unlock(&mvm->mutex);
 
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-static ssize_t
-iwl_dbgfs_ltr_config_write(struct iwl_mvm *mvm,
-			   char *buf, size_t count, loff_t *ppos)
-{
-	int ret;
-	struct iwl_ltr_config_cmd ltr_config = {0};
+अटल sमाप_प्रकार
+iwl_dbgfs_ltr_config_ग_लिखो(काष्ठा iwl_mvm *mvm,
+			   अक्षर *buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret;
+	काष्ठा iwl_ltr_config_cmd ltr_config = अणु0पूर्ण;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
-	if (sscanf(buf, "%x,%x,%x,%x,%x,%x,%x",
+	अगर (माला_पूछो(buf, "%x,%x,%x,%x,%x,%x,%x",
 		   &ltr_config.flags,
-		   &ltr_config.static_long,
-		   &ltr_config.static_short,
+		   &ltr_config.अटल_दीर्घ,
+		   &ltr_config.अटल_लघु,
 		   &ltr_config.ltr_cfg_values[0],
 		   &ltr_config.ltr_cfg_values[1],
 		   &ltr_config.ltr_cfg_values[2],
-		   &ltr_config.ltr_cfg_values[3]) != 7) {
-		return -EINVAL;
-	}
+		   &ltr_config.ltr_cfg_values[3]) != 7) अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&mvm->mutex);
-	ret = iwl_mvm_send_cmd_pdu(mvm, LTR_CONFIG, 0, sizeof(ltr_config),
+	ret = iwl_mvm_send_cmd_pdu(mvm, LTR_CONFIG, 0, माप(ltr_config),
 				   &ltr_config);
 	mutex_unlock(&mvm->mutex);
 
-	if (ret)
+	अगर (ret)
 		IWL_ERR(mvm, "failed to send ltr configuration cmd\n");
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
-static ssize_t iwl_dbgfs_rfi_freq_table_write(struct iwl_mvm *mvm, char *buf,
-					      size_t count, loff_t *ppos)
-{
-	int ret = 0;
+अटल sमाप_प्रकार iwl_dbgfs_rfi_freq_table_ग_लिखो(काष्ठा iwl_mvm *mvm, अक्षर *buf,
+					      माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret = 0;
 	u16 op_id;
 
-	if (kstrtou16(buf, 10, &op_id))
-		return -EINVAL;
+	अगर (kstrtou16(buf, 10, &op_id))
+		वापस -EINVAL;
 
-	/* value zero triggers re-sending the default table to the device */
-	if (!op_id) {
+	/* value zero triggers re-sending the शेष table to the device */
+	अगर (!op_id) अणु
 		mutex_lock(&mvm->mutex);
-		ret = iwl_rfi_send_config_cmd(mvm, NULL);
+		ret = iwl_rfi_send_config_cmd(mvm, शून्य);
 		mutex_unlock(&mvm->mutex);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EOPNOTSUPP; /* in the future a new table will be added */
-	}
+	पूर्ण
 
-	return ret ?: count;
-}
+	वापस ret ?: count;
+पूर्ण
 
 /* The size computation is as follows:
- * each number needs at most 3 characters, number of rows is the size of
- * the table; So, need 5 chars for the "freq: " part and each tuple afterwards
- * needs 6 characters for numbers and 5 for the punctuation around.
+ * each number needs at most 3 अक्षरacters, number of rows is the size of
+ * the table; So, need 5 अक्षरs क्रम the "freq: " part and each tuple afterwards
+ * needs 6 अक्षरacters क्रम numbers and 5 क्रम the punctuation around.
  */
-#define IWL_RFI_BUF_SIZE (IWL_RFI_LUT_INSTALLED_SIZE *\
+#घोषणा IWL_RFI_BUF_SIZE (IWL_RFI_LUT_INSTALLED_SIZE *\
 				(5 + IWL_RFI_LUT_ENTRY_CHANNELS_NUM * (6 + 5)))
 
-static ssize_t iwl_dbgfs_rfi_freq_table_read(struct file *file,
-					     char __user *user_buf,
-					     size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct iwl_rfi_freq_table_resp_cmd *resp;
+अटल sमाप_प्रकार iwl_dbgfs_rfi_freq_table_पढ़ो(काष्ठा file *file,
+					     अक्षर __user *user_buf,
+					     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा iwl_rfi_freq_table_resp_cmd *resp;
 	u32 status;
-	char buf[IWL_RFI_BUF_SIZE];
-	int i, j, pos = 0;
+	अक्षर buf[IWL_RFI_BUF_SIZE];
+	पूर्णांक i, j, pos = 0;
 
 	resp = iwl_rfi_get_freq_table(mvm);
-	if (IS_ERR(resp))
-		return PTR_ERR(resp);
+	अगर (IS_ERR(resp))
+		वापस PTR_ERR(resp);
 
 	status = le32_to_cpu(resp->status);
-	if (status != RFI_FREQ_TABLE_OK) {
-		scnprintf(buf, IWL_RFI_BUF_SIZE, "status = %d\n", status);
-		goto out;
-	}
+	अगर (status != RFI_FREQ_TABLE_OK) अणु
+		scnम_लिखो(buf, IWL_RFI_BUF_SIZE, "status = %d\n", status);
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(resp->table); i++) {
-		pos += scnprintf(buf + pos, IWL_RFI_BUF_SIZE - pos, "%d: ",
+	क्रम (i = 0; i < ARRAY_SIZE(resp->table); i++) अणु
+		pos += scnम_लिखो(buf + pos, IWL_RFI_BUF_SIZE - pos, "%d: ",
 				 resp->table[i].freq);
 
-		for (j = 0; j < ARRAY_SIZE(resp->table[i].channels); j++)
-			pos += scnprintf(buf + pos, IWL_RFI_BUF_SIZE - pos,
+		क्रम (j = 0; j < ARRAY_SIZE(resp->table[i].channels); j++)
+			pos += scnम_लिखो(buf + pos, IWL_RFI_BUF_SIZE - pos,
 					 "(%d, %d) ",
 					 resp->table[i].channels[j],
 					 resp->table[i].bands[j]);
-		pos += scnprintf(buf + pos, IWL_RFI_BUF_SIZE - pos, "\n");
-	}
+		pos += scnम_लिखो(buf + pos, IWL_RFI_BUF_SIZE - pos, "\n");
+	पूर्ण
 
 out:
-	kfree(resp);
-	return simple_read_from_buffer(user_buf, count, ppos, buf, pos);
-}
+	kमुक्त(resp);
+	वापस simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, pos);
+पूर्ण
 
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(prph_reg, 64);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(prph_reg, 64);
 
 /* Device wide debugfs entries */
-MVM_DEBUGFS_READ_FILE_OPS(ctdp_budget);
-MVM_DEBUGFS_WRITE_FILE_OPS(stop_ctdp, 8);
-MVM_DEBUGFS_WRITE_FILE_OPS(force_ctkill, 8);
-MVM_DEBUGFS_WRITE_FILE_OPS(tx_flush, 16);
-MVM_DEBUGFS_WRITE_FILE_OPS(sta_drain, 8);
-MVM_DEBUGFS_WRITE_FILE_OPS(send_echo_cmd, 8);
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(sram, 64);
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(set_nic_temperature, 64);
-MVM_DEBUGFS_READ_FILE_OPS(nic_temp);
-MVM_DEBUGFS_READ_FILE_OPS(stations);
-MVM_DEBUGFS_READ_FILE_OPS(rs_data);
-MVM_DEBUGFS_READ_FILE_OPS(bt_notif);
-MVM_DEBUGFS_READ_FILE_OPS(bt_cmd);
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(disable_power_off, 64);
-MVM_DEBUGFS_READ_FILE_OPS(fw_rx_stats);
-MVM_DEBUGFS_READ_FILE_OPS(drv_rx_stats);
-MVM_DEBUGFS_READ_FILE_OPS(fw_ver);
-MVM_DEBUGFS_READ_FILE_OPS(phy_integration_ver);
-MVM_DEBUGFS_WRITE_FILE_OPS(fw_restart, 10);
-MVM_DEBUGFS_WRITE_FILE_OPS(fw_nmi, 10);
-MVM_DEBUGFS_WRITE_FILE_OPS(bt_tx_prio, 10);
-MVM_DEBUGFS_WRITE_FILE_OPS(bt_force_ant, 10);
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(scan_ant_rxchain, 8);
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(fw_dbg_conf, 8);
-MVM_DEBUGFS_WRITE_FILE_OPS(fw_dbg_collect, 64);
-MVM_DEBUGFS_WRITE_FILE_OPS(dbg_time_point, 64);
-MVM_DEBUGFS_WRITE_FILE_OPS(indirection_tbl,
-			   (IWL_RSS_INDIRECTION_TABLE_SIZE * 2));
-MVM_DEBUGFS_WRITE_FILE_OPS(inject_packet, 512);
-MVM_DEBUGFS_WRITE_FILE_OPS(inject_beacon_ie, 512);
-MVM_DEBUGFS_WRITE_FILE_OPS(inject_beacon_ie_restore, 512);
+MVM_DEBUGFS_READ_खाता_OPS(ctdp_budget);
+MVM_DEBUGFS_WRITE_खाता_OPS(stop_ctdp, 8);
+MVM_DEBUGFS_WRITE_खाता_OPS(क्रमce_ctसमाप्त, 8);
+MVM_DEBUGFS_WRITE_खाता_OPS(tx_flush, 16);
+MVM_DEBUGFS_WRITE_खाता_OPS(sta_drain, 8);
+MVM_DEBUGFS_WRITE_खाता_OPS(send_echo_cmd, 8);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(sram, 64);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(set_nic_temperature, 64);
+MVM_DEBUGFS_READ_खाता_OPS(nic_temp);
+MVM_DEBUGFS_READ_खाता_OPS(stations);
+MVM_DEBUGFS_READ_खाता_OPS(rs_data);
+MVM_DEBUGFS_READ_खाता_OPS(bt_notअगर);
+MVM_DEBUGFS_READ_खाता_OPS(bt_cmd);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(disable_घातer_off, 64);
+MVM_DEBUGFS_READ_खाता_OPS(fw_rx_stats);
+MVM_DEBUGFS_READ_खाता_OPS(drv_rx_stats);
+MVM_DEBUGFS_READ_खाता_OPS(fw_ver);
+MVM_DEBUGFS_READ_खाता_OPS(phy_पूर्णांकegration_ver);
+MVM_DEBUGFS_WRITE_खाता_OPS(fw_restart, 10);
+MVM_DEBUGFS_WRITE_खाता_OPS(fw_nmi, 10);
+MVM_DEBUGFS_WRITE_खाता_OPS(bt_tx_prio, 10);
+MVM_DEBUGFS_WRITE_खाता_OPS(bt_क्रमce_ant, 10);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(scan_ant_rxchain, 8);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(fw_dbg_conf, 8);
+MVM_DEBUGFS_WRITE_खाता_OPS(fw_dbg_collect, 64);
+MVM_DEBUGFS_WRITE_खाता_OPS(dbg_समय_poपूर्णांक, 64);
+MVM_DEBUGFS_WRITE_खाता_OPS(indirection_tbl,
+			   (IWL_RSS_INसूचीECTION_TABLE_SIZE * 2));
+MVM_DEBUGFS_WRITE_खाता_OPS(inject_packet, 512);
+MVM_DEBUGFS_WRITE_खाता_OPS(inject_beacon_ie, 512);
+MVM_DEBUGFS_WRITE_खाता_OPS(inject_beacon_ie_restore, 512);
 
-MVM_DEBUGFS_READ_FILE_OPS(uapsd_noagg_bssids);
+MVM_DEBUGFS_READ_खाता_OPS(uapsd_noagg_bssids);
 
-#ifdef CONFIG_IWLWIFI_BCAST_FILTERING
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(bcast_filters, 256);
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(bcast_filters_macs, 256);
-#endif
+#अगर_घोषित CONFIG_IWLWIFI_BCAST_FILTERING
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(bcast_filters, 256);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(bcast_filters_macs, 256);
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-MVM_DEBUGFS_READ_FILE_OPS(sar_geo_profile);
-#endif
+#अगर_घोषित CONFIG_ACPI
+MVM_DEBUGFS_READ_खाता_OPS(sar_geo_profile);
+#पूर्ण_अगर
 
-MVM_DEBUGFS_READ_WRITE_STA_FILE_OPS(amsdu_len, 16);
+MVM_DEBUGFS_READ_WRITE_STA_खाता_OPS(amsdu_len, 16);
 
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(he_sniffer_params, 32);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(he_snअगरfer_params, 32);
 
-MVM_DEBUGFS_WRITE_FILE_OPS(ltr_config, 512);
-MVM_DEBUGFS_READ_WRITE_FILE_OPS(rfi_freq_table, 16);
+MVM_DEBUGFS_WRITE_खाता_OPS(ltr_config, 512);
+MVM_DEBUGFS_READ_WRITE_खाता_OPS(rfi_freq_table, 16);
 
-static ssize_t iwl_dbgfs_mem_read(struct file *file, char __user *user_buf,
-				  size_t count, loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct iwl_dbg_mem_access_cmd cmd = {};
-	struct iwl_dbg_mem_access_rsp *rsp;
-	struct iwl_host_cmd hcmd = {
+अटल sमाप_प्रकार iwl_dbgfs_mem_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा iwl_dbg_mem_access_cmd cmd = अणुपूर्ण;
+	काष्ठा iwl_dbg_mem_access_rsp *rsp;
+	काष्ठा iwl_host_cmd hcmd = अणु
 		.flags = CMD_WANT_SKB | CMD_SEND_IN_RFKILL,
-		.data = { &cmd, },
-		.len = { sizeof(cmd) },
-	};
-	size_t delta;
-	ssize_t ret, len;
+		.data = अणु &cmd, पूर्ण,
+		.len = अणु माप(cmd) पूर्ण,
+	पूर्ण;
+	माप_प्रकार delta;
+	sमाप_प्रकार ret, len;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
 	hcmd.id = iwl_cmd_id(*ppos >> 24 ? UMAC_RD_WR : LMAC_RD_WR,
 			     DEBUG_GROUP, 0);
@@ -1918,202 +1919,202 @@ static ssize_t iwl_dbgfs_mem_read(struct file *file, char __user *user_buf,
 	delta = *ppos & 0x3;
 	cmd.addr = cpu_to_le32(*ppos - delta);
 	cmd.len = cpu_to_le32(min(ALIGN(count + delta, 4) / 4,
-				  (size_t)DEBUG_MEM_MAX_SIZE_DWORDS));
+				  (माप_प्रकार)DEBUG_MEM_MAX_SIZE_DWORDS));
 
 	mutex_lock(&mvm->mutex);
 	ret = iwl_mvm_send_cmd(mvm, &hcmd);
 	mutex_unlock(&mvm->mutex);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	rsp = (void *)hcmd.resp_pkt->data;
-	if (le32_to_cpu(rsp->status) != DEBUG_MEM_STATUS_SUCCESS) {
+	rsp = (व्योम *)hcmd.resp_pkt->data;
+	अगर (le32_to_cpu(rsp->status) != DEBUG_MEM_STATUS_SUCCESS) अणु
 		ret = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = min((size_t)le32_to_cpu(rsp->len) << 2,
-		  iwl_rx_packet_payload_len(hcmd.resp_pkt) - sizeof(*rsp));
+	len = min((माप_प्रकार)le32_to_cpu(rsp->len) << 2,
+		  iwl_rx_packet_payload_len(hcmd.resp_pkt) - माप(*rsp));
 	len = min(len - delta, count);
-	if (len < 0) {
+	अगर (len < 0) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = len - copy_to_user(user_buf, (void *)rsp->data + delta, len);
+	ret = len - copy_to_user(user_buf, (व्योम *)rsp->data + delta, len);
 	*ppos += ret;
 
 out:
-	iwl_free_resp(&hcmd);
-	return ret;
-}
+	iwl_मुक्त_resp(&hcmd);
+	वापस ret;
+पूर्ण
 
-static ssize_t iwl_dbgfs_mem_write(struct file *file,
-				   const char __user *user_buf, size_t count,
+अटल sमाप_प्रकार iwl_dbgfs_mem_ग_लिखो(काष्ठा file *file,
+				   स्थिर अक्षर __user *user_buf, माप_प्रकार count,
 				   loff_t *ppos)
-{
-	struct iwl_mvm *mvm = file->private_data;
-	struct iwl_dbg_mem_access_cmd *cmd;
-	struct iwl_dbg_mem_access_rsp *rsp;
-	struct iwl_host_cmd hcmd = {};
-	size_t cmd_size;
-	size_t data_size;
+अणु
+	काष्ठा iwl_mvm *mvm = file->निजी_data;
+	काष्ठा iwl_dbg_mem_access_cmd *cmd;
+	काष्ठा iwl_dbg_mem_access_rsp *rsp;
+	काष्ठा iwl_host_cmd hcmd = अणुपूर्ण;
+	माप_प्रकार cmd_size;
+	माप_प्रकार data_size;
 	u32 op, len;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (!iwl_mvm_firmware_running(mvm))
-		return -EIO;
+	अगर (!iwl_mvm_firmware_running(mvm))
+		वापस -EIO;
 
 	hcmd.id = iwl_cmd_id(*ppos >> 24 ? UMAC_RD_WR : LMAC_RD_WR,
 			     DEBUG_GROUP, 0);
 
-	if (*ppos & 0x3 || count < 4) {
+	अगर (*ppos & 0x3 || count < 4) अणु
 		op = DEBUG_MEM_OP_WRITE_BYTES;
-		len = min(count, (size_t)(4 - (*ppos & 0x3)));
+		len = min(count, (माप_प्रकार)(4 - (*ppos & 0x3)));
 		data_size = len;
-	} else {
+	पूर्ण अन्यथा अणु
 		op = DEBUG_MEM_OP_WRITE;
-		len = min(count >> 2, (size_t)DEBUG_MEM_MAX_SIZE_DWORDS);
+		len = min(count >> 2, (माप_प्रकार)DEBUG_MEM_MAX_SIZE_DWORDS);
 		data_size = len << 2;
-	}
+	पूर्ण
 
-	cmd_size = sizeof(*cmd) + ALIGN(data_size, 4);
+	cmd_size = माप(*cmd) + ALIGN(data_size, 4);
 	cmd = kzalloc(cmd_size, GFP_KERNEL);
-	if (!cmd)
-		return -ENOMEM;
+	अगर (!cmd)
+		वापस -ENOMEM;
 
 	cmd->op = cpu_to_le32(op);
 	cmd->len = cpu_to_le32(len);
 	cmd->addr = cpu_to_le32(*ppos);
-	if (copy_from_user((void *)cmd->data, user_buf, data_size)) {
-		kfree(cmd);
-		return -EFAULT;
-	}
+	अगर (copy_from_user((व्योम *)cmd->data, user_buf, data_size)) अणु
+		kमुक्त(cmd);
+		वापस -EFAULT;
+	पूर्ण
 
 	hcmd.flags = CMD_WANT_SKB | CMD_SEND_IN_RFKILL,
-	hcmd.data[0] = (void *)cmd;
+	hcmd.data[0] = (व्योम *)cmd;
 	hcmd.len[0] = cmd_size;
 
 	mutex_lock(&mvm->mutex);
 	ret = iwl_mvm_send_cmd(mvm, &hcmd);
 	mutex_unlock(&mvm->mutex);
 
-	kfree(cmd);
+	kमुक्त(cmd);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	rsp = (void *)hcmd.resp_pkt->data;
-	if (rsp->status != DEBUG_MEM_STATUS_SUCCESS) {
+	rsp = (व्योम *)hcmd.resp_pkt->data;
+	अगर (rsp->status != DEBUG_MEM_STATUS_SUCCESS) अणु
 		ret = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = data_size;
 	*ppos += ret;
 
 out:
-	iwl_free_resp(&hcmd);
-	return ret;
-}
+	iwl_मुक्त_resp(&hcmd);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations iwl_dbgfs_mem_ops = {
-	.read = iwl_dbgfs_mem_read,
-	.write = iwl_dbgfs_mem_write,
-	.open = simple_open,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations iwl_dbgfs_mem_ops = अणु
+	.पढ़ो = iwl_dbgfs_mem_पढ़ो,
+	.ग_लिखो = iwl_dbgfs_mem_ग_लिखो,
+	.खोलो = simple_खोलो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-void iwl_mvm_sta_add_debugfs(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif,
-			     struct ieee80211_sta *sta,
-			     struct dentry *dir)
-{
-	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
+व्योम iwl_mvm_sta_add_debugfs(काष्ठा ieee80211_hw *hw,
+			     काष्ठा ieee80211_vअगर *vअगर,
+			     काष्ठा ieee80211_sta *sta,
+			     काष्ठा dentry *dir)
+अणु
+	काष्ठा iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
 
-	if (iwl_mvm_has_tlc_offload(mvm)) {
-		MVM_DEBUGFS_ADD_STA_FILE(rs_data, dir, 0400);
-	}
-	MVM_DEBUGFS_ADD_STA_FILE(amsdu_len, dir, 0600);
-}
+	अगर (iwl_mvm_has_tlc_offload(mvm)) अणु
+		MVM_DEBUGFS_ADD_STA_खाता(rs_data, dir, 0400);
+	पूर्ण
+	MVM_DEBUGFS_ADD_STA_खाता(amsdu_len, dir, 0600);
+पूर्ण
 
-void iwl_mvm_dbgfs_register(struct iwl_mvm *mvm)
-{
-	struct dentry *bcast_dir __maybe_unused;
-	char buf[100];
+व्योम iwl_mvm_dbgfs_रेजिस्टर(काष्ठा iwl_mvm *mvm)
+अणु
+	काष्ठा dentry *bcast_dir __maybe_unused;
+	अक्षर buf[100];
 
 	spin_lock_init(&mvm->drv_stats_lock);
 
-	MVM_DEBUGFS_ADD_FILE(tx_flush, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(sta_drain, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(sram, mvm->debugfs_dir, 0600);
-	MVM_DEBUGFS_ADD_FILE(set_nic_temperature, mvm->debugfs_dir, 0600);
-	MVM_DEBUGFS_ADD_FILE(nic_temp, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(ctdp_budget, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(stop_ctdp, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(force_ctkill, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(stations, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(bt_notif, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(bt_cmd, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(disable_power_off, mvm->debugfs_dir, 0600);
-	MVM_DEBUGFS_ADD_FILE(fw_ver, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(fw_rx_stats, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(drv_rx_stats, mvm->debugfs_dir, 0400);
-	MVM_DEBUGFS_ADD_FILE(fw_restart, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(fw_nmi, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(bt_tx_prio, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(bt_force_ant, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(scan_ant_rxchain, mvm->debugfs_dir, 0600);
-	MVM_DEBUGFS_ADD_FILE(prph_reg, mvm->debugfs_dir, 0600);
-	MVM_DEBUGFS_ADD_FILE(fw_dbg_conf, mvm->debugfs_dir, 0600);
-	MVM_DEBUGFS_ADD_FILE(fw_dbg_collect, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(send_echo_cmd, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(indirection_tbl, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(inject_packet, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(inject_beacon_ie, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(inject_beacon_ie_restore, mvm->debugfs_dir, 0200);
-	MVM_DEBUGFS_ADD_FILE(rfi_freq_table, mvm->debugfs_dir, 0600);
+	MVM_DEBUGFS_ADD_खाता(tx_flush, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(sta_drain, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(sram, mvm->debugfs_dir, 0600);
+	MVM_DEBUGFS_ADD_खाता(set_nic_temperature, mvm->debugfs_dir, 0600);
+	MVM_DEBUGFS_ADD_खाता(nic_temp, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(ctdp_budget, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(stop_ctdp, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(क्रमce_ctसमाप्त, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(stations, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(bt_notअगर, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(bt_cmd, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(disable_घातer_off, mvm->debugfs_dir, 0600);
+	MVM_DEBUGFS_ADD_खाता(fw_ver, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(fw_rx_stats, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(drv_rx_stats, mvm->debugfs_dir, 0400);
+	MVM_DEBUGFS_ADD_खाता(fw_restart, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(fw_nmi, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(bt_tx_prio, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(bt_क्रमce_ant, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(scan_ant_rxchain, mvm->debugfs_dir, 0600);
+	MVM_DEBUGFS_ADD_खाता(prph_reg, mvm->debugfs_dir, 0600);
+	MVM_DEBUGFS_ADD_खाता(fw_dbg_conf, mvm->debugfs_dir, 0600);
+	MVM_DEBUGFS_ADD_खाता(fw_dbg_collect, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(send_echo_cmd, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(indirection_tbl, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(inject_packet, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(inject_beacon_ie, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(inject_beacon_ie_restore, mvm->debugfs_dir, 0200);
+	MVM_DEBUGFS_ADD_खाता(rfi_freq_table, mvm->debugfs_dir, 0600);
 
-	if (mvm->fw->phy_integration_ver)
-		MVM_DEBUGFS_ADD_FILE(phy_integration_ver, mvm->debugfs_dir, 0400);
-#ifdef CONFIG_ACPI
-	MVM_DEBUGFS_ADD_FILE(sar_geo_profile, mvm->debugfs_dir, 0400);
-#endif
-	MVM_DEBUGFS_ADD_FILE(he_sniffer_params, mvm->debugfs_dir, 0600);
+	अगर (mvm->fw->phy_पूर्णांकegration_ver)
+		MVM_DEBUGFS_ADD_खाता(phy_पूर्णांकegration_ver, mvm->debugfs_dir, 0400);
+#अगर_घोषित CONFIG_ACPI
+	MVM_DEBUGFS_ADD_खाता(sar_geo_profile, mvm->debugfs_dir, 0400);
+#पूर्ण_अगर
+	MVM_DEBUGFS_ADD_खाता(he_snअगरfer_params, mvm->debugfs_dir, 0600);
 
-	if (fw_has_capa(&mvm->fw->ucode_capa, IWL_UCODE_TLV_CAPA_SET_LTR_GEN2))
-		MVM_DEBUGFS_ADD_FILE(ltr_config, mvm->debugfs_dir, 0200);
+	अगर (fw_has_capa(&mvm->fw->ucode_capa, IWL_UCODE_TLV_CAPA_SET_LTR_GEN2))
+		MVM_DEBUGFS_ADD_खाता(ltr_config, mvm->debugfs_dir, 0200);
 
 	debugfs_create_bool("enable_scan_iteration_notif", 0600,
-			    mvm->debugfs_dir, &mvm->scan_iter_notif_enabled);
+			    mvm->debugfs_dir, &mvm->scan_iter_notअगर_enabled);
 	debugfs_create_bool("drop_bcn_ap_mode", 0600, mvm->debugfs_dir,
 			    &mvm->drop_bcn_ap_mode);
 
-	MVM_DEBUGFS_ADD_FILE(uapsd_noagg_bssids, mvm->debugfs_dir, S_IRUSR);
+	MVM_DEBUGFS_ADD_खाता(uapsd_noagg_bssids, mvm->debugfs_dir, S_IRUSR);
 
-#ifdef CONFIG_IWLWIFI_BCAST_FILTERING
-	if (mvm->fw->ucode_capa.flags & IWL_UCODE_TLV_FLAGS_BCAST_FILTERING) {
+#अगर_घोषित CONFIG_IWLWIFI_BCAST_FILTERING
+	अगर (mvm->fw->ucode_capa.flags & IWL_UCODE_TLV_FLAGS_BCAST_FILTERING) अणु
 		bcast_dir = debugfs_create_dir("bcast_filtering",
 					       mvm->debugfs_dir);
 
 		debugfs_create_bool("override", 0600, bcast_dir,
 				    &mvm->dbgfs_bcast_filtering.override);
 
-		MVM_DEBUGFS_ADD_FILE_ALIAS("filters", bcast_filters,
+		MVM_DEBUGFS_ADD_खाता_ALIAS("filters", bcast_filters,
 					   bcast_dir, 0600);
-		MVM_DEBUGFS_ADD_FILE_ALIAS("macs", bcast_filters_macs,
+		MVM_DEBUGFS_ADD_खाता_ALIAS("macs", bcast_filters_macs,
 					   bcast_dir, 0600);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
-	MVM_DEBUGFS_ADD_FILE(d3_test, mvm->debugfs_dir, 0400);
+#अगर_घोषित CONFIG_PM_SLEEP
+	MVM_DEBUGFS_ADD_खाता(d3_test, mvm->debugfs_dir, 0400);
 	debugfs_create_bool("d3_wake_sysassert", 0600, mvm->debugfs_dir,
-			    &mvm->d3_wake_sysassert);
+			    &mvm->d3_wake_sysनिश्चित);
 	debugfs_create_u32("last_netdetect_scans", 0400, mvm->debugfs_dir,
 			   &mvm->last_netdetect_scans);
-#endif
+#पूर्ण_अगर
 
 	debugfs_create_u8("ps_disabled", 0400, mvm->debugfs_dir,
 			  &mvm->ps_disabled);
@@ -2134,9 +2135,9 @@ void iwl_mvm_dbgfs_register(struct iwl_mvm *mvm)
 			    &iwl_dbgfs_mem_ops);
 
 	/*
-	 * Create a symlink with mac80211. It will be removed when mac80211
-	 * exists (before the opmode exists which removes the target.)
+	 * Create a symlink with mac80211. It will be हटाओd when mac80211
+	 * exists (beक्रमe the opmode exists which हटाओs the target.)
 	 */
-	snprintf(buf, 100, "../../%pd2", mvm->debugfs_dir->d_parent);
+	snम_लिखो(buf, 100, "../../%pd2", mvm->debugfs_dir->d_parent);
 	debugfs_create_symlink("iwlwifi", mvm->hw->wiphy->debugfsdir, buf);
-}
+पूर्ण

@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011 Red Hat, Inc.
  *
  * This file is released under the GPL.
  */
 
-#ifndef _LINUX_DM_SPACE_MAP_DISK_H
-#define _LINUX_DM_SPACE_MAP_DISK_H
+#अगर_अघोषित _LINUX_DM_SPACE_MAP_DISK_H
+#घोषणा _LINUX_DM_SPACE_MAP_DISK_H
 
-#include "dm-block-manager.h"
+#समावेश "dm-block-manager.h"
 
-struct dm_space_map;
-struct dm_transaction_manager;
+काष्ठा dm_space_map;
+काष्ठा dm_transaction_manager;
 
 /*
- * Unfortunately we have to use two-phase construction due to the cycle
- * between the tm and sm.
+ * Unक्रमtunately we have to use two-phase स्थिरruction due to the cycle
+ * between the पंचांग and sm.
  */
-struct dm_space_map *dm_sm_disk_create(struct dm_transaction_manager *tm,
+काष्ठा dm_space_map *dm_sm_disk_create(काष्ठा dm_transaction_manager *पंचांग,
 				       dm_block_t nr_blocks);
 
-struct dm_space_map *dm_sm_disk_open(struct dm_transaction_manager *tm,
-				     void *root, size_t len);
+काष्ठा dm_space_map *dm_sm_disk_खोलो(काष्ठा dm_transaction_manager *पंचांग,
+				     व्योम *root, माप_प्रकार len);
 
-#endif /* _LINUX_DM_SPACE_MAP_DISK_H */
+#पूर्ण_अगर /* _LINUX_DM_SPACE_MAP_DISK_H */

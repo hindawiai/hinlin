@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
  *  Copyright (c) 2010, 2012-2013, NVIDIA Corporation. All rights reserved.
  */
 
-#include <linux/clk/tegra.h>
-#include <linux/kernel.h>
-#include <linux/smp.h>
+#समावेश <linux/clk/tegra.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/smp.h>
 
-#include <soc/tegra/common.h>
-#include <soc/tegra/fuse.h>
+#समावेश <soc/tegra/common.h>
+#समावेश <soc/tegra/fuse.h>
 
-#include <asm/smp_plat.h>
+#समावेश <यंत्र/smp_plat.h>
 
-#include "common.h"
-#include "sleep.h"
+#समावेश "common.h"
+#समावेश "sleep.h"
 
-static void (*tegra_hotplug_shutdown)(void);
+अटल व्योम (*tegra_hotplug_shutकरोwn)(व्योम);
 
-int tegra_cpu_kill(unsigned cpu)
-{
+पूर्णांक tegra_cpu_समाप्त(अचिन्हित cpu)
+अणु
 	cpu = cpu_logical_map(cpu);
 
 	/* Clock gate the CPU */
-	tegra_wait_cpu_in_reset(cpu);
-	tegra_disable_cpu_clock(cpu);
+	tegra_रुको_cpu_in_reset(cpu);
+	tegra_disable_cpu_घड़ी(cpu);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * platform-specific code to shutdown a CPU
+ * platक्रमm-specअगरic code to shutकरोwn a CPU
  *
  * Called with IRQs disabled
  */
-void tegra_cpu_die(unsigned int cpu)
-{
-	if (!tegra_hotplug_shutdown) {
+व्योम tegra_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
+	अगर (!tegra_hotplug_shutकरोwn) अणु
 		WARN(1, "hotplug is not yet initialized\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Clean L1 data cache */
 	tegra_disable_clean_inv_dcache(TEGRA_FLUSH_CACHE_LOUIS);
 
-	/* Shut down the current CPU. */
-	tegra_hotplug_shutdown();
+	/* Shut करोwn the current CPU. */
+	tegra_hotplug_shutकरोwn();
 
-	/* Should never return here. */
+	/* Should never वापस here. */
 	BUG();
-}
+पूर्ण
 
-static int __init tegra_hotplug_init(void)
-{
-	if (!IS_ENABLED(CONFIG_HOTPLUG_CPU))
-		return 0;
+अटल पूर्णांक __init tegra_hotplug_init(व्योम)
+अणु
+	अगर (!IS_ENABLED(CONFIG_HOTPLUG_CPU))
+		वापस 0;
 
-	if (!soc_is_tegra())
-		return 0;
+	अगर (!soc_is_tegra())
+		वापस 0;
 
-	if (IS_ENABLED(CONFIG_ARCH_TEGRA_2x_SOC) && tegra_get_chip_id() == TEGRA20)
-		tegra_hotplug_shutdown = tegra20_hotplug_shutdown;
-	if (IS_ENABLED(CONFIG_ARCH_TEGRA_3x_SOC) && tegra_get_chip_id() == TEGRA30)
-		tegra_hotplug_shutdown = tegra30_hotplug_shutdown;
-	if (IS_ENABLED(CONFIG_ARCH_TEGRA_114_SOC) && tegra_get_chip_id() == TEGRA114)
-		tegra_hotplug_shutdown = tegra30_hotplug_shutdown;
-	if (IS_ENABLED(CONFIG_ARCH_TEGRA_124_SOC) && tegra_get_chip_id() == TEGRA124)
-		tegra_hotplug_shutdown = tegra30_hotplug_shutdown;
+	अगर (IS_ENABLED(CONFIG_ARCH_TEGRA_2x_SOC) && tegra_get_chip_id() == TEGRA20)
+		tegra_hotplug_shutकरोwn = tegra20_hotplug_shutकरोwn;
+	अगर (IS_ENABLED(CONFIG_ARCH_TEGRA_3x_SOC) && tegra_get_chip_id() == TEGRA30)
+		tegra_hotplug_shutकरोwn = tegra30_hotplug_shutकरोwn;
+	अगर (IS_ENABLED(CONFIG_ARCH_TEGRA_114_SOC) && tegra_get_chip_id() == TEGRA114)
+		tegra_hotplug_shutकरोwn = tegra30_hotplug_shutकरोwn;
+	अगर (IS_ENABLED(CONFIG_ARCH_TEGRA_124_SOC) && tegra_get_chip_id() == TEGRA124)
+		tegra_hotplug_shutकरोwn = tegra30_hotplug_shutकरोwn;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 pure_initcall(tegra_hotplug_init);

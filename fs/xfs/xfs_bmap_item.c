@@ -1,550 +1,551 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2016 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_bit.h"
-#include "xfs_shared.h"
-#include "xfs_mount.h"
-#include "xfs_defer.h"
-#include "xfs_inode.h"
-#include "xfs_trans.h"
-#include "xfs_trans_priv.h"
-#include "xfs_bmap_item.h"
-#include "xfs_log.h"
-#include "xfs_bmap.h"
-#include "xfs_icache.h"
-#include "xfs_bmap_btree.h"
-#include "xfs_trans_space.h"
-#include "xfs_error.h"
-#include "xfs_log_priv.h"
-#include "xfs_log_recover.h"
-#include "xfs_quota.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_bit.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_defer.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_trans_priv.h"
+#समावेश "xfs_bmap_item.h"
+#समावेश "xfs_log.h"
+#समावेश "xfs_bmap.h"
+#समावेश "xfs_icache.h"
+#समावेश "xfs_bmap_btree.h"
+#समावेश "xfs_trans_space.h"
+#समावेश "xfs_error.h"
+#समावेश "xfs_log_priv.h"
+#समावेश "xfs_log_recover.h"
+#समावेश "xfs_quota.h"
 
 kmem_zone_t	*xfs_bui_zone;
 kmem_zone_t	*xfs_bud_zone;
 
-static const struct xfs_item_ops xfs_bui_item_ops;
+अटल स्थिर काष्ठा xfs_item_ops xfs_bui_item_ops;
 
-static inline struct xfs_bui_log_item *BUI_ITEM(struct xfs_log_item *lip)
-{
-	return container_of(lip, struct xfs_bui_log_item, bui_item);
-}
+अटल अंतरभूत काष्ठा xfs_bui_log_item *BUI_ITEM(काष्ठा xfs_log_item *lip)
+अणु
+	वापस container_of(lip, काष्ठा xfs_bui_log_item, bui_item);
+पूर्ण
 
-STATIC void
-xfs_bui_item_free(
-	struct xfs_bui_log_item	*buip)
-{
-	kmem_cache_free(xfs_bui_zone, buip);
-}
+STATIC व्योम
+xfs_bui_item_मुक्त(
+	काष्ठा xfs_bui_log_item	*buip)
+अणु
+	kmem_cache_मुक्त(xfs_bui_zone, buip);
+पूर्ण
 
 /*
- * Freeing the BUI requires that we remove it from the AIL if it has already
+ * Freeing the BUI requires that we हटाओ it from the AIL अगर it has alपढ़ोy
  * been placed there. However, the BUI may not yet have been placed in the AIL
  * when called by xfs_bui_release() from BUD processing due to the ordering of
  * committed vs unpin operations in bulk insert operations. Hence the reference
- * count to ensure only the last caller frees the BUI.
+ * count to ensure only the last caller मुक्तs the BUI.
  */
-STATIC void
+STATIC व्योम
 xfs_bui_release(
-	struct xfs_bui_log_item	*buip)
-{
-	ASSERT(atomic_read(&buip->bui_refcount) > 0);
-	if (atomic_dec_and_test(&buip->bui_refcount)) {
+	काष्ठा xfs_bui_log_item	*buip)
+अणु
+	ASSERT(atomic_पढ़ो(&buip->bui_refcount) > 0);
+	अगर (atomic_dec_and_test(&buip->bui_refcount)) अणु
 		xfs_trans_ail_delete(&buip->bui_item, SHUTDOWN_LOG_IO_ERROR);
-		xfs_bui_item_free(buip);
-	}
-}
+		xfs_bui_item_मुक्त(buip);
+	पूर्ण
+पूर्ण
 
 
-STATIC void
+STATIC व्योम
 xfs_bui_item_size(
-	struct xfs_log_item	*lip,
-	int			*nvecs,
-	int			*nbytes)
-{
-	struct xfs_bui_log_item	*buip = BUI_ITEM(lip);
+	काष्ठा xfs_log_item	*lip,
+	पूर्णांक			*nvecs,
+	पूर्णांक			*nbytes)
+अणु
+	काष्ठा xfs_bui_log_item	*buip = BUI_ITEM(lip);
 
 	*nvecs += 1;
-	*nbytes += xfs_bui_log_format_sizeof(buip->bui_format.bui_nextents);
-}
+	*nbytes += xfs_bui_log_क्रमmat_माप(buip->bui_क्रमmat.bui_nextents);
+पूर्ण
 
 /*
- * This is called to fill in the vector of log iovecs for the
- * given bui log item. We use only 1 iovec, and we point that
- * at the bui_log_format structure embedded in the bui item.
- * It is at this point that we assert that all of the extent
+ * This is called to fill in the vector of log iovecs क्रम the
+ * given bui log item. We use only 1 iovec, and we poपूर्णांक that
+ * at the bui_log_क्रमmat काष्ठाure embedded in the bui item.
+ * It is at this poपूर्णांक that we निश्चित that all of the extent
  * slots in the bui item have been filled.
  */
-STATIC void
-xfs_bui_item_format(
-	struct xfs_log_item	*lip,
-	struct xfs_log_vec	*lv)
-{
-	struct xfs_bui_log_item	*buip = BUI_ITEM(lip);
-	struct xfs_log_iovec	*vecp = NULL;
+STATIC व्योम
+xfs_bui_item_क्रमmat(
+	काष्ठा xfs_log_item	*lip,
+	काष्ठा xfs_log_vec	*lv)
+अणु
+	काष्ठा xfs_bui_log_item	*buip = BUI_ITEM(lip);
+	काष्ठा xfs_log_iovec	*vecp = शून्य;
 
-	ASSERT(atomic_read(&buip->bui_next_extent) ==
-			buip->bui_format.bui_nextents);
+	ASSERT(atomic_पढ़ो(&buip->bui_next_extent) ==
+			buip->bui_क्रमmat.bui_nextents);
 
-	buip->bui_format.bui_type = XFS_LI_BUI;
-	buip->bui_format.bui_size = 1;
+	buip->bui_क्रमmat.bui_type = XFS_LI_BUI;
+	buip->bui_क्रमmat.bui_size = 1;
 
-	xlog_copy_iovec(lv, &vecp, XLOG_REG_TYPE_BUI_FORMAT, &buip->bui_format,
-			xfs_bui_log_format_sizeof(buip->bui_format.bui_nextents));
-}
+	xlog_copy_iovec(lv, &vecp, XLOG_REG_TYPE_BUI_FORMAT, &buip->bui_क्रमmat,
+			xfs_bui_log_क्रमmat_माप(buip->bui_क्रमmat.bui_nextents));
+पूर्ण
 
 /*
  * The unpin operation is the last place an BUI is manipulated in the log. It is
- * either inserted in the AIL or aborted in the event of a log I/O error. In
- * either case, the BUI transaction has been successfully committed to make it
- * this far. Therefore, we expect whoever committed the BUI to either construct
+ * either inserted in the AIL or पातed in the event of a log I/O error. In
+ * either हाल, the BUI transaction has been successfully committed to make it
+ * this far. Thereक्रमe, we expect whoever committed the BUI to either स्थिरruct
  * and commit the BUD or drop the BUD's reference in the event of error. Simply
- * drop the log's BUI reference now that the log is done with it.
+ * drop the log's BUI reference now that the log is करोne with it.
  */
-STATIC void
+STATIC व्योम
 xfs_bui_item_unpin(
-	struct xfs_log_item	*lip,
-	int			remove)
-{
-	struct xfs_bui_log_item	*buip = BUI_ITEM(lip);
+	काष्ठा xfs_log_item	*lip,
+	पूर्णांक			हटाओ)
+अणु
+	काष्ठा xfs_bui_log_item	*buip = BUI_ITEM(lip);
 
 	xfs_bui_release(buip);
-}
+पूर्ण
 
 /*
- * The BUI has been either committed or aborted if the transaction has been
+ * The BUI has been either committed or पातed अगर the transaction has been
  * cancelled. If the transaction was cancelled, an BUD isn't going to be
- * constructed and thus we free the BUI here directly.
+ * स्थिरructed and thus we मुक्त the BUI here directly.
  */
-STATIC void
+STATIC व्योम
 xfs_bui_item_release(
-	struct xfs_log_item	*lip)
-{
+	काष्ठा xfs_log_item	*lip)
+अणु
 	xfs_bui_release(BUI_ITEM(lip));
-}
+पूर्ण
 
 /*
  * Allocate and initialize an bui item with the given number of extents.
  */
-STATIC struct xfs_bui_log_item *
+STATIC काष्ठा xfs_bui_log_item *
 xfs_bui_init(
-	struct xfs_mount		*mp)
+	काष्ठा xfs_mount		*mp)
 
-{
-	struct xfs_bui_log_item		*buip;
+अणु
+	काष्ठा xfs_bui_log_item		*buip;
 
 	buip = kmem_cache_zalloc(xfs_bui_zone, GFP_KERNEL | __GFP_NOFAIL);
 
 	xfs_log_item_init(mp, &buip->bui_item, XFS_LI_BUI, &xfs_bui_item_ops);
-	buip->bui_format.bui_nextents = XFS_BUI_MAX_FAST_EXTENTS;
-	buip->bui_format.bui_id = (uintptr_t)(void *)buip;
+	buip->bui_क्रमmat.bui_nextents = XFS_BUI_MAX_FAST_EXTENTS;
+	buip->bui_क्रमmat.bui_id = (uपूर्णांकptr_t)(व्योम *)buip;
 	atomic_set(&buip->bui_next_extent, 0);
 	atomic_set(&buip->bui_refcount, 2);
 
-	return buip;
-}
+	वापस buip;
+पूर्ण
 
-static inline struct xfs_bud_log_item *BUD_ITEM(struct xfs_log_item *lip)
-{
-	return container_of(lip, struct xfs_bud_log_item, bud_item);
-}
+अटल अंतरभूत काष्ठा xfs_bud_log_item *BUD_ITEM(काष्ठा xfs_log_item *lip)
+अणु
+	वापस container_of(lip, काष्ठा xfs_bud_log_item, bud_item);
+पूर्ण
 
-STATIC void
+STATIC व्योम
 xfs_bud_item_size(
-	struct xfs_log_item	*lip,
-	int			*nvecs,
-	int			*nbytes)
-{
+	काष्ठा xfs_log_item	*lip,
+	पूर्णांक			*nvecs,
+	पूर्णांक			*nbytes)
+अणु
 	*nvecs += 1;
-	*nbytes += sizeof(struct xfs_bud_log_format);
-}
+	*nbytes += माप(काष्ठा xfs_bud_log_क्रमmat);
+पूर्ण
 
 /*
- * This is called to fill in the vector of log iovecs for the
- * given bud log item. We use only 1 iovec, and we point that
- * at the bud_log_format structure embedded in the bud item.
- * It is at this point that we assert that all of the extent
+ * This is called to fill in the vector of log iovecs क्रम the
+ * given bud log item. We use only 1 iovec, and we poपूर्णांक that
+ * at the bud_log_क्रमmat काष्ठाure embedded in the bud item.
+ * It is at this poपूर्णांक that we निश्चित that all of the extent
  * slots in the bud item have been filled.
  */
-STATIC void
-xfs_bud_item_format(
-	struct xfs_log_item	*lip,
-	struct xfs_log_vec	*lv)
-{
-	struct xfs_bud_log_item	*budp = BUD_ITEM(lip);
-	struct xfs_log_iovec	*vecp = NULL;
+STATIC व्योम
+xfs_bud_item_क्रमmat(
+	काष्ठा xfs_log_item	*lip,
+	काष्ठा xfs_log_vec	*lv)
+अणु
+	काष्ठा xfs_bud_log_item	*budp = BUD_ITEM(lip);
+	काष्ठा xfs_log_iovec	*vecp = शून्य;
 
-	budp->bud_format.bud_type = XFS_LI_BUD;
-	budp->bud_format.bud_size = 1;
+	budp->bud_क्रमmat.bud_type = XFS_LI_BUD;
+	budp->bud_क्रमmat.bud_size = 1;
 
-	xlog_copy_iovec(lv, &vecp, XLOG_REG_TYPE_BUD_FORMAT, &budp->bud_format,
-			sizeof(struct xfs_bud_log_format));
-}
+	xlog_copy_iovec(lv, &vecp, XLOG_REG_TYPE_BUD_FORMAT, &budp->bud_क्रमmat,
+			माप(काष्ठा xfs_bud_log_क्रमmat));
+पूर्ण
 
 /*
- * The BUD is either committed or aborted if the transaction is cancelled. If
- * the transaction is cancelled, drop our reference to the BUI and free the
+ * The BUD is either committed or पातed अगर the transaction is cancelled. If
+ * the transaction is cancelled, drop our reference to the BUI and मुक्त the
  * BUD.
  */
-STATIC void
+STATIC व्योम
 xfs_bud_item_release(
-	struct xfs_log_item	*lip)
-{
-	struct xfs_bud_log_item	*budp = BUD_ITEM(lip);
+	काष्ठा xfs_log_item	*lip)
+अणु
+	काष्ठा xfs_bud_log_item	*budp = BUD_ITEM(lip);
 
 	xfs_bui_release(budp->bud_buip);
-	kmem_cache_free(xfs_bud_zone, budp);
-}
+	kmem_cache_मुक्त(xfs_bud_zone, budp);
+पूर्ण
 
-static const struct xfs_item_ops xfs_bud_item_ops = {
+अटल स्थिर काष्ठा xfs_item_ops xfs_bud_item_ops = अणु
 	.flags		= XFS_ITEM_RELEASE_WHEN_COMMITTED,
 	.iop_size	= xfs_bud_item_size,
-	.iop_format	= xfs_bud_item_format,
+	.iop_क्रमmat	= xfs_bud_item_क्रमmat,
 	.iop_release	= xfs_bud_item_release,
-};
+पूर्ण;
 
-static struct xfs_bud_log_item *
+अटल काष्ठा xfs_bud_log_item *
 xfs_trans_get_bud(
-	struct xfs_trans		*tp,
-	struct xfs_bui_log_item		*buip)
-{
-	struct xfs_bud_log_item		*budp;
+	काष्ठा xfs_trans		*tp,
+	काष्ठा xfs_bui_log_item		*buip)
+अणु
+	काष्ठा xfs_bud_log_item		*budp;
 
 	budp = kmem_cache_zalloc(xfs_bud_zone, GFP_KERNEL | __GFP_NOFAIL);
 	xfs_log_item_init(tp->t_mountp, &budp->bud_item, XFS_LI_BUD,
 			  &xfs_bud_item_ops);
 	budp->bud_buip = buip;
-	budp->bud_format.bud_bui_id = buip->bui_format.bui_id;
+	budp->bud_क्रमmat.bud_bui_id = buip->bui_क्रमmat.bui_id;
 
 	xfs_trans_add_item(tp, &budp->bud_item);
-	return budp;
-}
+	वापस budp;
+पूर्ण
 
 /*
  * Finish an bmap update and log it to the BUD. Note that the
  * transaction is marked dirty regardless of whether the bmap update
- * succeeds or fails to support the BUI/BUD lifecycle rules.
+ * succeeds or fails to support the BUI/BUD lअगरecycle rules.
  */
-static int
+अटल पूर्णांक
 xfs_trans_log_finish_bmap_update(
-	struct xfs_trans		*tp,
-	struct xfs_bud_log_item		*budp,
-	enum xfs_bmap_intent_type	type,
-	struct xfs_inode		*ip,
-	int				whichfork,
+	काष्ठा xfs_trans		*tp,
+	काष्ठा xfs_bud_log_item		*budp,
+	क्रमागत xfs_bmap_पूर्णांकent_type	type,
+	काष्ठा xfs_inode		*ip,
+	पूर्णांक				whichविभाजन,
 	xfs_fileoff_t			startoff,
 	xfs_fsblock_t			startblock,
 	xfs_filblks_t			*blockcount,
 	xfs_exntst_t			state)
-{
-	int				error;
+अणु
+	पूर्णांक				error;
 
-	error = xfs_bmap_finish_one(tp, ip, type, whichfork, startoff,
+	error = xfs_bmap_finish_one(tp, ip, type, whichविभाजन, startoff,
 			startblock, blockcount, state);
 
 	/*
 	 * Mark the transaction dirty, even on error. This ensures the
-	 * transaction is aborted, which:
+	 * transaction is पातed, which:
 	 *
-	 * 1.) releases the BUI and frees the BUD
-	 * 2.) shuts down the filesystem
+	 * 1.) releases the BUI and मुक्तs the BUD
+	 * 2.) shuts करोwn the fileप्रणाली
 	 */
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	set_bit(XFS_LI_DIRTY, &budp->bud_item.li_flags);
+	tp->t_flags |= XFS_TRANS_सूचीTY;
+	set_bit(XFS_LI_सूचीTY, &budp->bud_item.li_flags);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-/* Sort bmap intents by inode. */
-static int
-xfs_bmap_update_diff_items(
-	void				*priv,
-	const struct list_head		*a,
-	const struct list_head		*b)
-{
-	struct xfs_bmap_intent		*ba;
-	struct xfs_bmap_intent		*bb;
+/* Sort bmap पूर्णांकents by inode. */
+अटल पूर्णांक
+xfs_bmap_update_dअगरf_items(
+	व्योम				*priv,
+	स्थिर काष्ठा list_head		*a,
+	स्थिर काष्ठा list_head		*b)
+अणु
+	काष्ठा xfs_bmap_पूर्णांकent		*ba;
+	काष्ठा xfs_bmap_पूर्णांकent		*bb;
 
-	ba = container_of(a, struct xfs_bmap_intent, bi_list);
-	bb = container_of(b, struct xfs_bmap_intent, bi_list);
-	return ba->bi_owner->i_ino - bb->bi_owner->i_ino;
-}
+	ba = container_of(a, काष्ठा xfs_bmap_पूर्णांकent, bi_list);
+	bb = container_of(b, काष्ठा xfs_bmap_पूर्णांकent, bi_list);
+	वापस ba->bi_owner->i_ino - bb->bi_owner->i_ino;
+पूर्ण
 
-/* Set the map extent flags for this mapping. */
-static void
+/* Set the map extent flags क्रम this mapping. */
+अटल व्योम
 xfs_trans_set_bmap_flags(
-	struct xfs_map_extent		*bmap,
-	enum xfs_bmap_intent_type	type,
-	int				whichfork,
+	काष्ठा xfs_map_extent		*bmap,
+	क्रमागत xfs_bmap_पूर्णांकent_type	type,
+	पूर्णांक				whichविभाजन,
 	xfs_exntst_t			state)
-{
+अणु
 	bmap->me_flags = 0;
-	switch (type) {
-	case XFS_BMAP_MAP:
-	case XFS_BMAP_UNMAP:
+	चयन (type) अणु
+	हाल XFS_BMAP_MAP:
+	हाल XFS_BMAP_UNMAP:
 		bmap->me_flags = type;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ASSERT(0);
-	}
-	if (state == XFS_EXT_UNWRITTEN)
+	पूर्ण
+	अगर (state == XFS_EXT_UNWRITTEN)
 		bmap->me_flags |= XFS_BMAP_EXTENT_UNWRITTEN;
-	if (whichfork == XFS_ATTR_FORK)
+	अगर (whichविभाजन == XFS_ATTR_FORK)
 		bmap->me_flags |= XFS_BMAP_EXTENT_ATTR_FORK;
-}
+पूर्ण
 
-/* Log bmap updates in the intent item. */
-STATIC void
+/* Log bmap updates in the पूर्णांकent item. */
+STATIC व्योम
 xfs_bmap_update_log_item(
-	struct xfs_trans		*tp,
-	struct xfs_bui_log_item		*buip,
-	struct xfs_bmap_intent		*bmap)
-{
-	uint				next_extent;
-	struct xfs_map_extent		*map;
+	काष्ठा xfs_trans		*tp,
+	काष्ठा xfs_bui_log_item		*buip,
+	काष्ठा xfs_bmap_पूर्णांकent		*bmap)
+अणु
+	uपूर्णांक				next_extent;
+	काष्ठा xfs_map_extent		*map;
 
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	set_bit(XFS_LI_DIRTY, &buip->bui_item.li_flags);
+	tp->t_flags |= XFS_TRANS_सूचीTY;
+	set_bit(XFS_LI_सूचीTY, &buip->bui_item.li_flags);
 
 	/*
-	 * atomic_inc_return gives us the value after the increment;
+	 * atomic_inc_वापस gives us the value after the increment;
 	 * we want to use it as an array index so we need to subtract 1 from
 	 * it.
 	 */
-	next_extent = atomic_inc_return(&buip->bui_next_extent) - 1;
-	ASSERT(next_extent < buip->bui_format.bui_nextents);
-	map = &buip->bui_format.bui_extents[next_extent];
+	next_extent = atomic_inc_वापस(&buip->bui_next_extent) - 1;
+	ASSERT(next_extent < buip->bui_क्रमmat.bui_nextents);
+	map = &buip->bui_क्रमmat.bui_extents[next_extent];
 	map->me_owner = bmap->bi_owner->i_ino;
 	map->me_startblock = bmap->bi_bmap.br_startblock;
 	map->me_startoff = bmap->bi_bmap.br_startoff;
 	map->me_len = bmap->bi_bmap.br_blockcount;
-	xfs_trans_set_bmap_flags(map, bmap->bi_type, bmap->bi_whichfork,
+	xfs_trans_set_bmap_flags(map, bmap->bi_type, bmap->bi_whichविभाजन,
 			bmap->bi_bmap.br_state);
-}
+पूर्ण
 
-static struct xfs_log_item *
-xfs_bmap_update_create_intent(
-	struct xfs_trans		*tp,
-	struct list_head		*items,
-	unsigned int			count,
+अटल काष्ठा xfs_log_item *
+xfs_bmap_update_create_पूर्णांकent(
+	काष्ठा xfs_trans		*tp,
+	काष्ठा list_head		*items,
+	अचिन्हित पूर्णांक			count,
 	bool				sort)
-{
-	struct xfs_mount		*mp = tp->t_mountp;
-	struct xfs_bui_log_item		*buip = xfs_bui_init(mp);
-	struct xfs_bmap_intent		*bmap;
+अणु
+	काष्ठा xfs_mount		*mp = tp->t_mountp;
+	काष्ठा xfs_bui_log_item		*buip = xfs_bui_init(mp);
+	काष्ठा xfs_bmap_पूर्णांकent		*bmap;
 
 	ASSERT(count == XFS_BUI_MAX_FAST_EXTENTS);
 
 	xfs_trans_add_item(tp, &buip->bui_item);
-	if (sort)
-		list_sort(mp, items, xfs_bmap_update_diff_items);
-	list_for_each_entry(bmap, items, bi_list)
+	अगर (sort)
+		list_sort(mp, items, xfs_bmap_update_dअगरf_items);
+	list_क्रम_each_entry(bmap, items, bi_list)
 		xfs_bmap_update_log_item(tp, buip, bmap);
-	return &buip->bui_item;
-}
+	वापस &buip->bui_item;
+पूर्ण
 
 /* Get an BUD so we can process all the deferred rmap updates. */
-static struct xfs_log_item *
-xfs_bmap_update_create_done(
-	struct xfs_trans		*tp,
-	struct xfs_log_item		*intent,
-	unsigned int			count)
-{
-	return &xfs_trans_get_bud(tp, BUI_ITEM(intent))->bud_item;
-}
+अटल काष्ठा xfs_log_item *
+xfs_bmap_update_create_करोne(
+	काष्ठा xfs_trans		*tp,
+	काष्ठा xfs_log_item		*पूर्णांकent,
+	अचिन्हित पूर्णांक			count)
+अणु
+	वापस &xfs_trans_get_bud(tp, BUI_ITEM(पूर्णांकent))->bud_item;
+पूर्ण
 
 /* Process a deferred rmap update. */
-STATIC int
+STATIC पूर्णांक
 xfs_bmap_update_finish_item(
-	struct xfs_trans		*tp,
-	struct xfs_log_item		*done,
-	struct list_head		*item,
-	struct xfs_btree_cur		**state)
-{
-	struct xfs_bmap_intent		*bmap;
+	काष्ठा xfs_trans		*tp,
+	काष्ठा xfs_log_item		*करोne,
+	काष्ठा list_head		*item,
+	काष्ठा xfs_btree_cur		**state)
+अणु
+	काष्ठा xfs_bmap_पूर्णांकent		*bmap;
 	xfs_filblks_t			count;
-	int				error;
+	पूर्णांक				error;
 
-	bmap = container_of(item, struct xfs_bmap_intent, bi_list);
+	bmap = container_of(item, काष्ठा xfs_bmap_पूर्णांकent, bi_list);
 	count = bmap->bi_bmap.br_blockcount;
-	error = xfs_trans_log_finish_bmap_update(tp, BUD_ITEM(done),
+	error = xfs_trans_log_finish_bmap_update(tp, BUD_ITEM(करोne),
 			bmap->bi_type,
-			bmap->bi_owner, bmap->bi_whichfork,
+			bmap->bi_owner, bmap->bi_whichविभाजन,
 			bmap->bi_bmap.br_startoff,
 			bmap->bi_bmap.br_startblock,
 			&count,
 			bmap->bi_bmap.br_state);
-	if (!error && count > 0) {
+	अगर (!error && count > 0) अणु
 		ASSERT(bmap->bi_type == XFS_BMAP_UNMAP);
 		bmap->bi_bmap.br_blockcount = count;
-		return -EAGAIN;
-	}
-	kmem_free(bmap);
-	return error;
-}
+		वापस -EAGAIN;
+	पूर्ण
+	kmem_मुक्त(bmap);
+	वापस error;
+पूर्ण
 
 /* Abort all pending BUIs. */
-STATIC void
-xfs_bmap_update_abort_intent(
-	struct xfs_log_item		*intent)
-{
-	xfs_bui_release(BUI_ITEM(intent));
-}
+STATIC व्योम
+xfs_bmap_update_पात_पूर्णांकent(
+	काष्ठा xfs_log_item		*पूर्णांकent)
+अणु
+	xfs_bui_release(BUI_ITEM(पूर्णांकent));
+पूर्ण
 
 /* Cancel a deferred rmap update. */
-STATIC void
+STATIC व्योम
 xfs_bmap_update_cancel_item(
-	struct list_head		*item)
-{
-	struct xfs_bmap_intent		*bmap;
+	काष्ठा list_head		*item)
+अणु
+	काष्ठा xfs_bmap_पूर्णांकent		*bmap;
 
-	bmap = container_of(item, struct xfs_bmap_intent, bi_list);
-	kmem_free(bmap);
-}
+	bmap = container_of(item, काष्ठा xfs_bmap_पूर्णांकent, bi_list);
+	kmem_मुक्त(bmap);
+पूर्ण
 
-const struct xfs_defer_op_type xfs_bmap_update_defer_type = {
+स्थिर काष्ठा xfs_defer_op_type xfs_bmap_update_defer_type = अणु
 	.max_items	= XFS_BUI_MAX_FAST_EXTENTS,
-	.create_intent	= xfs_bmap_update_create_intent,
-	.abort_intent	= xfs_bmap_update_abort_intent,
-	.create_done	= xfs_bmap_update_create_done,
+	.create_पूर्णांकent	= xfs_bmap_update_create_पूर्णांकent,
+	.पात_पूर्णांकent	= xfs_bmap_update_पात_पूर्णांकent,
+	.create_करोne	= xfs_bmap_update_create_करोne,
 	.finish_item	= xfs_bmap_update_finish_item,
 	.cancel_item	= xfs_bmap_update_cancel_item,
-};
+पूर्ण;
 
 /* Is this recovered BUI ok? */
-static inline bool
+अटल अंतरभूत bool
 xfs_bui_validate(
-	struct xfs_mount		*mp,
-	struct xfs_bui_log_item		*buip)
-{
-	struct xfs_map_extent		*bmap;
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_bui_log_item		*buip)
+अणु
+	काष्ठा xfs_map_extent		*bmap;
 
 	/* Only one mapping operation per BUI... */
-	if (buip->bui_format.bui_nextents != XFS_BUI_MAX_FAST_EXTENTS)
-		return false;
+	अगर (buip->bui_क्रमmat.bui_nextents != XFS_BUI_MAX_FAST_EXTENTS)
+		वापस false;
 
-	bmap = &buip->bui_format.bui_extents[0];
+	bmap = &buip->bui_क्रमmat.bui_extents[0];
 
-	if (bmap->me_flags & ~XFS_BMAP_EXTENT_FLAGS)
-		return false;
+	अगर (bmap->me_flags & ~XFS_BMAP_EXTENT_FLAGS)
+		वापस false;
 
-	switch (bmap->me_flags & XFS_BMAP_EXTENT_TYPE_MASK) {
-	case XFS_BMAP_MAP:
-	case XFS_BMAP_UNMAP:
-		break;
-	default:
-		return false;
-	}
+	चयन (bmap->me_flags & XFS_BMAP_EXTENT_TYPE_MASK) अणु
+	हाल XFS_BMAP_MAP:
+	हाल XFS_BMAP_UNMAP:
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	if (!xfs_verify_ino(mp, bmap->me_owner))
-		return false;
+	अगर (!xfs_verअगरy_ino(mp, bmap->me_owner))
+		वापस false;
 
-	if (!xfs_verify_fileext(mp, bmap->me_startoff, bmap->me_len))
-		return false;
+	अगर (!xfs_verअगरy_fileext(mp, bmap->me_startoff, bmap->me_len))
+		वापस false;
 
-	return xfs_verify_fsbext(mp, bmap->me_startblock, bmap->me_len);
-}
+	वापस xfs_verअगरy_fsbext(mp, bmap->me_startblock, bmap->me_len);
+पूर्ण
 
 /*
- * Process a bmap update intent item that was recovered from the log.
+ * Process a bmap update पूर्णांकent item that was recovered from the log.
  * We need to update some inode's bmbt.
  */
-STATIC int
+STATIC पूर्णांक
 xfs_bui_item_recover(
-	struct xfs_log_item		*lip,
-	struct list_head		*capture_list)
-{
-	struct xfs_bmbt_irec		irec;
-	struct xfs_bui_log_item		*buip = BUI_ITEM(lip);
-	struct xfs_trans		*tp;
-	struct xfs_inode		*ip = NULL;
-	struct xfs_mount		*mp = lip->li_mountp;
-	struct xfs_map_extent		*bmap;
-	struct xfs_bud_log_item		*budp;
+	काष्ठा xfs_log_item		*lip,
+	काष्ठा list_head		*capture_list)
+अणु
+	काष्ठा xfs_bmbt_irec		irec;
+	काष्ठा xfs_bui_log_item		*buip = BUI_ITEM(lip);
+	काष्ठा xfs_trans		*tp;
+	काष्ठा xfs_inode		*ip = शून्य;
+	काष्ठा xfs_mount		*mp = lip->li_mountp;
+	काष्ठा xfs_map_extent		*bmap;
+	काष्ठा xfs_bud_log_item		*budp;
 	xfs_filblks_t			count;
 	xfs_exntst_t			state;
-	unsigned int			bui_type;
-	int				whichfork;
-	int				iext_delta;
-	int				error = 0;
+	अचिन्हित पूर्णांक			bui_type;
+	पूर्णांक				whichविभाजन;
+	पूर्णांक				iext_delta;
+	पूर्णांक				error = 0;
 
-	if (!xfs_bui_validate(mp, buip)) {
+	अगर (!xfs_bui_validate(mp, buip)) अणु
 		XFS_CORRUPTION_ERROR(__func__, XFS_ERRLEVEL_LOW, mp,
-				&buip->bui_format, sizeof(buip->bui_format));
-		return -EFSCORRUPTED;
-	}
+				&buip->bui_क्रमmat, माप(buip->bui_क्रमmat));
+		वापस -EFSCORRUPTED;
+	पूर्ण
 
-	bmap = &buip->bui_format.bui_extents[0];
+	bmap = &buip->bui_क्रमmat.bui_extents[0];
 	state = (bmap->me_flags & XFS_BMAP_EXTENT_UNWRITTEN) ?
 			XFS_EXT_UNWRITTEN : XFS_EXT_NORM;
-	whichfork = (bmap->me_flags & XFS_BMAP_EXTENT_ATTR_FORK) ?
+	whichविभाजन = (bmap->me_flags & XFS_BMAP_EXTENT_ATTR_FORK) ?
 			XFS_ATTR_FORK : XFS_DATA_FORK;
 	bui_type = bmap->me_flags & XFS_BMAP_EXTENT_TYPE_MASK;
 
 	/* Grab the inode. */
-	error = xfs_iget(mp, NULL, bmap->me_owner, 0, 0, &ip);
-	if (error)
-		return error;
+	error = xfs_iget(mp, शून्य, bmap->me_owner, 0, 0, &ip);
+	अगर (error)
+		वापस error;
 
 	error = xfs_qm_dqattach(ip);
-	if (error)
-		goto err_rele;
+	अगर (error)
+		जाओ err_rele;
 
-	if (VFS_I(ip)->i_nlink == 0)
-		xfs_iflags_set(ip, XFS_IRECOVERY);
+	अगर (VFS_I(ip)->i_nlink == 0)
+		xfs_अगरlags_set(ip, XFS_IRECOVERY);
 
-	/* Allocate transaction and do the work. */
+	/* Allocate transaction and करो the work. */
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_itruncate,
 			XFS_EXTENTADD_SPACE_RES(mp, XFS_DATA_FORK), 0, 0, &tp);
-	if (error)
-		goto err_rele;
+	अगर (error)
+		जाओ err_rele;
 
 	budp = xfs_trans_get_bud(tp, buip);
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
 	xfs_trans_ijoin(tp, ip, 0);
 
-	if (bui_type == XFS_BMAP_MAP)
+	अगर (bui_type == XFS_BMAP_MAP)
 		iext_delta = XFS_IEXT_ADD_NOSPLIT_CNT;
-	else
+	अन्यथा
 		iext_delta = XFS_IEXT_PUNCH_HOLE_CNT;
 
-	error = xfs_iext_count_may_overflow(ip, whichfork, iext_delta);
-	if (error)
-		goto err_cancel;
+	error = xfs_iext_count_may_overflow(ip, whichविभाजन, iext_delta);
+	अगर (error)
+		जाओ err_cancel;
 
 	count = bmap->me_len;
 	error = xfs_trans_log_finish_bmap_update(tp, budp, bui_type, ip,
-			whichfork, bmap->me_startoff, bmap->me_startblock,
+			whichविभाजन, bmap->me_startoff, bmap->me_startblock,
 			&count, state);
-	if (error)
-		goto err_cancel;
+	अगर (error)
+		जाओ err_cancel;
 
-	if (count > 0) {
+	अगर (count > 0) अणु
 		ASSERT(bui_type == XFS_BMAP_UNMAP);
 		irec.br_startblock = bmap->me_startblock;
 		irec.br_blockcount = count;
 		irec.br_startoff = bmap->me_startoff;
 		irec.br_state = state;
 		xfs_bmap_unmap_extent(tp, ip, &irec);
-	}
+	पूर्ण
 
 	/*
-	 * Commit transaction, which frees the transaction and saves the inode
-	 * for later replay activities.
+	 * Commit transaction, which मुक्तs the transaction and saves the inode
+	 * क्रम later replay activities.
 	 */
 	error = xfs_defer_ops_capture_and_commit(tp, ip, capture_list);
-	if (error)
-		goto err_unlock;
+	अगर (error)
+		जाओ err_unlock;
 
 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
 	xfs_irele(ip);
-	return 0;
+	वापस 0;
 
 err_cancel:
 	xfs_trans_cancel(tp);
@@ -552,150 +553,150 @@ err_unlock:
 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
 err_rele:
 	xfs_irele(ip);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 STATIC bool
 xfs_bui_item_match(
-	struct xfs_log_item	*lip,
-	uint64_t		intent_id)
-{
-	return BUI_ITEM(lip)->bui_format.bui_id == intent_id;
-}
+	काष्ठा xfs_log_item	*lip,
+	uपूर्णांक64_t		पूर्णांकent_id)
+अणु
+	वापस BUI_ITEM(lip)->bui_क्रमmat.bui_id == पूर्णांकent_id;
+पूर्ण
 
-/* Relog an intent item to push the log tail forward. */
-static struct xfs_log_item *
+/* Relog an पूर्णांकent item to push the log tail क्रमward. */
+अटल काष्ठा xfs_log_item *
 xfs_bui_item_relog(
-	struct xfs_log_item		*intent,
-	struct xfs_trans		*tp)
-{
-	struct xfs_bud_log_item		*budp;
-	struct xfs_bui_log_item		*buip;
-	struct xfs_map_extent		*extp;
-	unsigned int			count;
+	काष्ठा xfs_log_item		*पूर्णांकent,
+	काष्ठा xfs_trans		*tp)
+अणु
+	काष्ठा xfs_bud_log_item		*budp;
+	काष्ठा xfs_bui_log_item		*buip;
+	काष्ठा xfs_map_extent		*extp;
+	अचिन्हित पूर्णांक			count;
 
-	count = BUI_ITEM(intent)->bui_format.bui_nextents;
-	extp = BUI_ITEM(intent)->bui_format.bui_extents;
+	count = BUI_ITEM(पूर्णांकent)->bui_क्रमmat.bui_nextents;
+	extp = BUI_ITEM(पूर्णांकent)->bui_क्रमmat.bui_extents;
 
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	budp = xfs_trans_get_bud(tp, BUI_ITEM(intent));
-	set_bit(XFS_LI_DIRTY, &budp->bud_item.li_flags);
+	tp->t_flags |= XFS_TRANS_सूचीTY;
+	budp = xfs_trans_get_bud(tp, BUI_ITEM(पूर्णांकent));
+	set_bit(XFS_LI_सूचीTY, &budp->bud_item.li_flags);
 
 	buip = xfs_bui_init(tp->t_mountp);
-	memcpy(buip->bui_format.bui_extents, extp, count * sizeof(*extp));
+	स_नकल(buip->bui_क्रमmat.bui_extents, extp, count * माप(*extp));
 	atomic_set(&buip->bui_next_extent, count);
 	xfs_trans_add_item(tp, &buip->bui_item);
-	set_bit(XFS_LI_DIRTY, &buip->bui_item.li_flags);
-	return &buip->bui_item;
-}
+	set_bit(XFS_LI_सूचीTY, &buip->bui_item.li_flags);
+	वापस &buip->bui_item;
+पूर्ण
 
-static const struct xfs_item_ops xfs_bui_item_ops = {
+अटल स्थिर काष्ठा xfs_item_ops xfs_bui_item_ops = अणु
 	.iop_size	= xfs_bui_item_size,
-	.iop_format	= xfs_bui_item_format,
+	.iop_क्रमmat	= xfs_bui_item_क्रमmat,
 	.iop_unpin	= xfs_bui_item_unpin,
 	.iop_release	= xfs_bui_item_release,
 	.iop_recover	= xfs_bui_item_recover,
 	.iop_match	= xfs_bui_item_match,
 	.iop_relog	= xfs_bui_item_relog,
-};
+पूर्ण;
 
 /*
- * Copy an BUI format buffer from the given buf, and into the destination
- * BUI format structure.  The BUI/BUD items were designed not to need any
+ * Copy an BUI क्रमmat buffer from the given buf, and पूर्णांकo the destination
+ * BUI क्रमmat काष्ठाure.  The BUI/BUD items were deचिन्हित not to need any
  * special alignment handling.
  */
-static int
-xfs_bui_copy_format(
-	struct xfs_log_iovec		*buf,
-	struct xfs_bui_log_format	*dst_bui_fmt)
-{
-	struct xfs_bui_log_format	*src_bui_fmt;
-	uint				len;
+अटल पूर्णांक
+xfs_bui_copy_क्रमmat(
+	काष्ठा xfs_log_iovec		*buf,
+	काष्ठा xfs_bui_log_क्रमmat	*dst_bui_fmt)
+अणु
+	काष्ठा xfs_bui_log_क्रमmat	*src_bui_fmt;
+	uपूर्णांक				len;
 
 	src_bui_fmt = buf->i_addr;
-	len = xfs_bui_log_format_sizeof(src_bui_fmt->bui_nextents);
+	len = xfs_bui_log_क्रमmat_माप(src_bui_fmt->bui_nextents);
 
-	if (buf->i_len == len) {
-		memcpy(dst_bui_fmt, src_bui_fmt, len);
-		return 0;
-	}
-	XFS_ERROR_REPORT(__func__, XFS_ERRLEVEL_LOW, NULL);
-	return -EFSCORRUPTED;
-}
+	अगर (buf->i_len == len) अणु
+		स_नकल(dst_bui_fmt, src_bui_fmt, len);
+		वापस 0;
+	पूर्ण
+	XFS_ERROR_REPORT(__func__, XFS_ERRLEVEL_LOW, शून्य);
+	वापस -EFSCORRUPTED;
+पूर्ण
 
 /*
  * This routine is called to create an in-core extent bmap update
- * item from the bui format structure which was logged on disk.
- * It allocates an in-core bui, copies the extents from the format
- * structure into it, and adds the bui to the AIL with the given
+ * item from the bui क्रमmat काष्ठाure which was logged on disk.
+ * It allocates an in-core bui, copies the extents from the क्रमmat
+ * काष्ठाure पूर्णांकo it, and adds the bui to the AIL with the given
  * LSN.
  */
-STATIC int
+STATIC पूर्णांक
 xlog_recover_bui_commit_pass2(
-	struct xlog			*log,
-	struct list_head		*buffer_list,
-	struct xlog_recover_item	*item,
+	काष्ठा xlog			*log,
+	काष्ठा list_head		*buffer_list,
+	काष्ठा xlog_recover_item	*item,
 	xfs_lsn_t			lsn)
-{
-	int				error;
-	struct xfs_mount		*mp = log->l_mp;
-	struct xfs_bui_log_item		*buip;
-	struct xfs_bui_log_format	*bui_formatp;
+अणु
+	पूर्णांक				error;
+	काष्ठा xfs_mount		*mp = log->l_mp;
+	काष्ठा xfs_bui_log_item		*buip;
+	काष्ठा xfs_bui_log_क्रमmat	*bui_क्रमmatp;
 
-	bui_formatp = item->ri_buf[0].i_addr;
+	bui_क्रमmatp = item->ri_buf[0].i_addr;
 
-	if (bui_formatp->bui_nextents != XFS_BUI_MAX_FAST_EXTENTS) {
+	अगर (bui_क्रमmatp->bui_nextents != XFS_BUI_MAX_FAST_EXTENTS) अणु
 		XFS_ERROR_REPORT(__func__, XFS_ERRLEVEL_LOW, log->l_mp);
-		return -EFSCORRUPTED;
-	}
+		वापस -EFSCORRUPTED;
+	पूर्ण
 	buip = xfs_bui_init(mp);
-	error = xfs_bui_copy_format(&item->ri_buf[0], &buip->bui_format);
-	if (error) {
-		xfs_bui_item_free(buip);
-		return error;
-	}
-	atomic_set(&buip->bui_next_extent, bui_formatp->bui_nextents);
+	error = xfs_bui_copy_क्रमmat(&item->ri_buf[0], &buip->bui_क्रमmat);
+	अगर (error) अणु
+		xfs_bui_item_मुक्त(buip);
+		वापस error;
+	पूर्ण
+	atomic_set(&buip->bui_next_extent, bui_क्रमmatp->bui_nextents);
 	/*
-	 * Insert the intent into the AIL directly and drop one reference so
+	 * Insert the पूर्णांकent पूर्णांकo the AIL directly and drop one reference so
 	 * that finishing or canceling the work will drop the other.
 	 */
 	xfs_trans_ail_insert(log->l_ailp, &buip->bui_item, lsn);
 	xfs_bui_release(buip);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct xlog_recover_item_ops xlog_bui_item_ops = {
+स्थिर काष्ठा xlog_recover_item_ops xlog_bui_item_ops = अणु
 	.item_type		= XFS_LI_BUI,
 	.commit_pass2		= xlog_recover_bui_commit_pass2,
-};
+पूर्ण;
 
 /*
- * This routine is called when an BUD format structure is found in a committed
- * transaction in the log. Its purpose is to cancel the corresponding BUI if it
- * was still in the log. To do this it searches the AIL for the BUI with an id
- * equal to that in the BUD format structure. If we find it we drop the BUD
- * reference, which removes the BUI from the AIL and frees it.
+ * This routine is called when an BUD क्रमmat काष्ठाure is found in a committed
+ * transaction in the log. Its purpose is to cancel the corresponding BUI अगर it
+ * was still in the log. To करो this it searches the AIL क्रम the BUI with an id
+ * equal to that in the BUD क्रमmat काष्ठाure. If we find it we drop the BUD
+ * reference, which हटाओs the BUI from the AIL and मुक्तs it.
  */
-STATIC int
+STATIC पूर्णांक
 xlog_recover_bud_commit_pass2(
-	struct xlog			*log,
-	struct list_head		*buffer_list,
-	struct xlog_recover_item	*item,
+	काष्ठा xlog			*log,
+	काष्ठा list_head		*buffer_list,
+	काष्ठा xlog_recover_item	*item,
 	xfs_lsn_t			lsn)
-{
-	struct xfs_bud_log_format	*bud_formatp;
+अणु
+	काष्ठा xfs_bud_log_क्रमmat	*bud_क्रमmatp;
 
-	bud_formatp = item->ri_buf[0].i_addr;
-	if (item->ri_buf[0].i_len != sizeof(struct xfs_bud_log_format)) {
+	bud_क्रमmatp = item->ri_buf[0].i_addr;
+	अगर (item->ri_buf[0].i_len != माप(काष्ठा xfs_bud_log_क्रमmat)) अणु
 		XFS_ERROR_REPORT(__func__, XFS_ERRLEVEL_LOW, log->l_mp);
-		return -EFSCORRUPTED;
-	}
+		वापस -EFSCORRUPTED;
+	पूर्ण
 
-	xlog_recover_release_intent(log, XFS_LI_BUI, bud_formatp->bud_bui_id);
-	return 0;
-}
+	xlog_recover_release_पूर्णांकent(log, XFS_LI_BUI, bud_क्रमmatp->bud_bui_id);
+	वापस 0;
+पूर्ण
 
-const struct xlog_recover_item_ops xlog_bud_item_ops = {
+स्थिर काष्ठा xlog_recover_item_ops xlog_bud_item_ops = अणु
 	.item_type		= XFS_LI_BUD,
 	.commit_pass2		= xlog_recover_bud_commit_pass2,
-};
+पूर्ण;

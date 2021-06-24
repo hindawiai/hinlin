@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Abilis Systems Single DVB-T Receiver
  * Copyright (C) 2008 Pierrick Hascoet <pierrick.hascoet@abilis.com>
- * Copyright (C) 2010 Devin Heitmueller <dheitmueller@kernellabs.com>
+ * Copyright (C) 2010 Devin Heiपंचांगueller <dheiपंचांगueller@kernelद_असल.com>
  */
 
-#include <media/dvb_frontend.h>
+#समावेश <media/dvb_frontend.h>
 
-#include "as102_fe.h"
+#समावेश "as102_fe.h"
 
-struct as102_state {
-	struct dvb_frontend frontend;
-	struct as10x_demod_stats demod_stats;
+काष्ठा as102_state अणु
+	काष्ठा dvb_frontend frontend;
+	काष्ठा as10x_demod_stats demod_stats;
 
-	const struct as102_fe_ops *ops;
-	void *priv;
-	uint8_t elna_cfg;
+	स्थिर काष्ठा as102_fe_ops *ops;
+	व्योम *priv;
+	uपूर्णांक8_t elna_cfg;
 
-	/* signal strength */
-	uint16_t signal_strength;
+	/* संकेत strength */
+	uपूर्णांक16_t संकेत_strength;
 	/* bit error rate */
-	uint32_t ber;
-};
+	uपूर्णांक32_t ber;
+पूर्ण;
 
-static uint8_t as102_fe_get_code_rate(enum fe_code_rate arg)
-{
-	uint8_t c;
+अटल uपूर्णांक8_t as102_fe_get_code_rate(क्रमागत fe_code_rate arg)
+अणु
+	uपूर्णांक8_t c;
 
-	switch (arg) {
-	case FEC_1_2:
+	चयन (arg) अणु
+	हाल FEC_1_2:
 		c = CODE_RATE_1_2;
-		break;
-	case FEC_2_3:
+		अवरोध;
+	हाल FEC_2_3:
 		c = CODE_RATE_2_3;
-		break;
-	case FEC_3_4:
+		अवरोध;
+	हाल FEC_3_4:
 		c = CODE_RATE_3_4;
-		break;
-	case FEC_5_6:
+		अवरोध;
+	हाल FEC_5_6:
 		c = CODE_RATE_5_6;
-		break;
-	case FEC_7_8:
+		अवरोध;
+	हाल FEC_7_8:
 		c = CODE_RATE_7_8;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		c = CODE_RATE_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static int as102_fe_set_frontend(struct dvb_frontend *fe)
-{
-	struct as102_state *state = fe->demodulator_priv;
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	struct as10x_tune_args tune_args = { 0 };
+अटल पूर्णांक as102_fe_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	काष्ठा as10x_tune_args tune_args = अणु 0 पूर्ण;
 
 	/* set frequency */
 	tune_args.freq = c->frequency / 1000;
 
-	/* fix interleaving_mode */
-	tune_args.interleaving_mode = INTLV_NATIVE;
+	/* fix पूर्णांकerleaving_mode */
+	tune_args.पूर्णांकerleaving_mode = INTLV_NATIVE;
 
-	switch (c->bandwidth_hz) {
-	case 8000000:
+	चयन (c->bandwidth_hz) अणु
+	हाल 8000000:
 		tune_args.bandwidth = BW_8_MHZ;
-		break;
-	case 7000000:
+		अवरोध;
+	हाल 7000000:
 		tune_args.bandwidth = BW_7_MHZ;
-		break;
-	case 6000000:
+		अवरोध;
+	हाल 6000000:
 		tune_args.bandwidth = BW_6_MHZ;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		tune_args.bandwidth = BW_8_MHZ;
-	}
+	पूर्ण
 
-	switch (c->guard_interval) {
-	case GUARD_INTERVAL_1_32:
-		tune_args.guard_interval = GUARD_INT_1_32;
-		break;
-	case GUARD_INTERVAL_1_16:
-		tune_args.guard_interval = GUARD_INT_1_16;
-		break;
-	case GUARD_INTERVAL_1_8:
-		tune_args.guard_interval = GUARD_INT_1_8;
-		break;
-	case GUARD_INTERVAL_1_4:
-		tune_args.guard_interval = GUARD_INT_1_4;
-		break;
-	case GUARD_INTERVAL_AUTO:
-	default:
-		tune_args.guard_interval = GUARD_UNKNOWN;
-		break;
-	}
+	चयन (c->guard_पूर्णांकerval) अणु
+	हाल GUARD_INTERVAL_1_32:
+		tune_args.guard_पूर्णांकerval = GUARD_INT_1_32;
+		अवरोध;
+	हाल GUARD_INTERVAL_1_16:
+		tune_args.guard_पूर्णांकerval = GUARD_INT_1_16;
+		अवरोध;
+	हाल GUARD_INTERVAL_1_8:
+		tune_args.guard_पूर्णांकerval = GUARD_INT_1_8;
+		अवरोध;
+	हाल GUARD_INTERVAL_1_4:
+		tune_args.guard_पूर्णांकerval = GUARD_INT_1_4;
+		अवरोध;
+	हाल GUARD_INTERVAL_AUTO:
+	शेष:
+		tune_args.guard_पूर्णांकerval = GUARD_UNKNOWN;
+		अवरोध;
+	पूर्ण
 
-	switch (c->modulation) {
-	case QPSK:
+	चयन (c->modulation) अणु
+	हाल QPSK:
 		tune_args.modulation = CONST_QPSK;
-		break;
-	case QAM_16:
+		अवरोध;
+	हाल QAM_16:
 		tune_args.modulation = CONST_QAM16;
-		break;
-	case QAM_64:
+		अवरोध;
+	हाल QAM_64:
 		tune_args.modulation = CONST_QAM64;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		tune_args.modulation = CONST_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (c->transmission_mode) {
-	case TRANSMISSION_MODE_2K:
+	चयन (c->transmission_mode) अणु
+	हाल TRANSMISSION_MODE_2K:
 		tune_args.transmission_mode = TRANS_MODE_2K;
-		break;
-	case TRANSMISSION_MODE_8K:
+		अवरोध;
+	हाल TRANSMISSION_MODE_8K:
 		tune_args.transmission_mode = TRANS_MODE_8K;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		tune_args.transmission_mode = TRANS_MODE_UNKNOWN;
-	}
+	पूर्ण
 
-	switch (c->hierarchy) {
-	case HIERARCHY_NONE:
+	चयन (c->hierarchy) अणु
+	हाल HIERARCHY_NONE:
 		tune_args.hierarchy = HIER_NONE;
-		break;
-	case HIERARCHY_1:
+		अवरोध;
+	हाल HIERARCHY_1:
 		tune_args.hierarchy = HIER_ALPHA_1;
-		break;
-	case HIERARCHY_2:
+		अवरोध;
+	हाल HIERARCHY_2:
 		tune_args.hierarchy = HIER_ALPHA_2;
-		break;
-	case HIERARCHY_4:
+		अवरोध;
+	हाल HIERARCHY_4:
 		tune_args.hierarchy = HIER_ALPHA_4;
-		break;
-	case HIERARCHY_AUTO:
+		अवरोध;
+	हाल HIERARCHY_AUTO:
 		tune_args.hierarchy = HIER_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	pr_debug("as102: tuner parameters: freq: %d  bw: 0x%02x  gi: 0x%02x\n",
 			c->frequency,
 			tune_args.bandwidth,
-			tune_args.guard_interval);
+			tune_args.guard_पूर्णांकerval);
 
 	/*
 	 * Detect a hierarchy selection
-	 * if HP/LP are both set to FEC_NONE, HP will be selected.
+	 * अगर HP/LP are both set to FEC_NONE, HP will be selected.
 	 */
-	if ((tune_args.hierarchy != HIER_NONE) &&
+	अगर ((tune_args.hierarchy != HIER_NONE) &&
 		       ((c->code_rate_LP == FEC_NONE) ||
-			(c->code_rate_HP == FEC_NONE))) {
+			(c->code_rate_HP == FEC_NONE))) अणु
 
-		if (c->code_rate_LP == FEC_NONE) {
+		अगर (c->code_rate_LP == FEC_NONE) अणु
 			tune_args.hier_select = HIER_HIGH_PRIORITY;
 			tune_args.code_rate =
 			   as102_fe_get_code_rate(c->code_rate_HP);
-		}
+		पूर्ण
 
-		if (c->code_rate_HP == FEC_NONE) {
+		अगर (c->code_rate_HP == FEC_NONE) अणु
 			tune_args.hier_select = HIER_LOW_PRIORITY;
 			tune_args.code_rate =
 			   as102_fe_get_code_rate(c->code_rate_LP);
-		}
+		पूर्ण
 
 		pr_debug("as102: \thierarchy: 0x%02x  selected: %s  code_rate_%s: 0x%02x\n",
 			tune_args.hierarchy,
@@ -172,244 +173,244 @@ static int as102_fe_set_frontend(struct dvb_frontend *fe)
 			tune_args.hier_select == HIER_HIGH_PRIORITY ?
 			"HP" : "LP",
 			tune_args.code_rate);
-	} else {
+	पूर्ण अन्यथा अणु
 		tune_args.code_rate =
 			as102_fe_get_code_rate(c->code_rate_HP);
-	}
+	पूर्ण
 
 	/* Set frontend arguments */
-	return state->ops->set_tune(state->priv, &tune_args);
-}
+	वापस state->ops->set_tune(state->priv, &tune_args);
+पूर्ण
 
-static int as102_fe_get_frontend(struct dvb_frontend *fe,
-				 struct dtv_frontend_properties *c)
-{
-	struct as102_state *state = fe->demodulator_priv;
-	int ret = 0;
-	struct as10x_tps tps = { 0 };
+अटल पूर्णांक as102_fe_get_frontend(काष्ठा dvb_frontend *fe,
+				 काष्ठा dtv_frontend_properties *c)
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
+	पूर्णांक ret = 0;
+	काष्ठा as10x_tps tps = अणु 0 पूर्ण;
 
 	/* send abilis command: GET_TPS */
 	ret = state->ops->get_tps(state->priv, &tps);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* extract constellation */
-	switch (tps.modulation) {
-	case CONST_QPSK:
+	/* extract स्थिरellation */
+	चयन (tps.modulation) अणु
+	हाल CONST_QPSK:
 		c->modulation = QPSK;
-		break;
-	case CONST_QAM16:
+		अवरोध;
+	हाल CONST_QAM16:
 		c->modulation = QAM_16;
-		break;
-	case CONST_QAM64:
+		अवरोध;
+	हाल CONST_QAM64:
 		c->modulation = QAM_64;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* extract hierarchy */
-	switch (tps.hierarchy) {
-	case HIER_NONE:
+	चयन (tps.hierarchy) अणु
+	हाल HIER_NONE:
 		c->hierarchy = HIERARCHY_NONE;
-		break;
-	case HIER_ALPHA_1:
+		अवरोध;
+	हाल HIER_ALPHA_1:
 		c->hierarchy = HIERARCHY_1;
-		break;
-	case HIER_ALPHA_2:
+		अवरोध;
+	हाल HIER_ALPHA_2:
 		c->hierarchy = HIERARCHY_2;
-		break;
-	case HIER_ALPHA_4:
+		अवरोध;
+	हाल HIER_ALPHA_4:
 		c->hierarchy = HIERARCHY_4;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* extract code rate HP */
-	switch (tps.code_rate_HP) {
-	case CODE_RATE_1_2:
+	चयन (tps.code_rate_HP) अणु
+	हाल CODE_RATE_1_2:
 		c->code_rate_HP = FEC_1_2;
-		break;
-	case CODE_RATE_2_3:
+		अवरोध;
+	हाल CODE_RATE_2_3:
 		c->code_rate_HP = FEC_2_3;
-		break;
-	case CODE_RATE_3_4:
+		अवरोध;
+	हाल CODE_RATE_3_4:
 		c->code_rate_HP = FEC_3_4;
-		break;
-	case CODE_RATE_5_6:
+		अवरोध;
+	हाल CODE_RATE_5_6:
 		c->code_rate_HP = FEC_5_6;
-		break;
-	case CODE_RATE_7_8:
+		अवरोध;
+	हाल CODE_RATE_7_8:
 		c->code_rate_HP = FEC_7_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* extract code rate LP */
-	switch (tps.code_rate_LP) {
-	case CODE_RATE_1_2:
+	चयन (tps.code_rate_LP) अणु
+	हाल CODE_RATE_1_2:
 		c->code_rate_LP = FEC_1_2;
-		break;
-	case CODE_RATE_2_3:
+		अवरोध;
+	हाल CODE_RATE_2_3:
 		c->code_rate_LP = FEC_2_3;
-		break;
-	case CODE_RATE_3_4:
+		अवरोध;
+	हाल CODE_RATE_3_4:
 		c->code_rate_LP = FEC_3_4;
-		break;
-	case CODE_RATE_5_6:
+		अवरोध;
+	हाल CODE_RATE_5_6:
 		c->code_rate_LP = FEC_5_6;
-		break;
-	case CODE_RATE_7_8:
+		अवरोध;
+	हाल CODE_RATE_7_8:
 		c->code_rate_LP = FEC_7_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* extract guard interval */
-	switch (tps.guard_interval) {
-	case GUARD_INT_1_32:
-		c->guard_interval = GUARD_INTERVAL_1_32;
-		break;
-	case GUARD_INT_1_16:
-		c->guard_interval = GUARD_INTERVAL_1_16;
-		break;
-	case GUARD_INT_1_8:
-		c->guard_interval = GUARD_INTERVAL_1_8;
-		break;
-	case GUARD_INT_1_4:
-		c->guard_interval = GUARD_INTERVAL_1_4;
-		break;
-	}
+	/* extract guard पूर्णांकerval */
+	चयन (tps.guard_पूर्णांकerval) अणु
+	हाल GUARD_INT_1_32:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_32;
+		अवरोध;
+	हाल GUARD_INT_1_16:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_16;
+		अवरोध;
+	हाल GUARD_INT_1_8:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_8;
+		अवरोध;
+	हाल GUARD_INT_1_4:
+		c->guard_पूर्णांकerval = GUARD_INTERVAL_1_4;
+		अवरोध;
+	पूर्ण
 
 	/* extract transmission mode */
-	switch (tps.transmission_mode) {
-	case TRANS_MODE_2K:
+	चयन (tps.transmission_mode) अणु
+	हाल TRANS_MODE_2K:
 		c->transmission_mode = TRANSMISSION_MODE_2K;
-		break;
-	case TRANS_MODE_8K:
+		अवरोध;
+	हाल TRANS_MODE_8K:
 		c->transmission_mode = TRANSMISSION_MODE_8K;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int as102_fe_get_tune_settings(struct dvb_frontend *fe,
-			struct dvb_frontend_tune_settings *settings)
-{
+अटल पूर्णांक as102_fe_get_tune_settings(काष्ठा dvb_frontend *fe,
+			काष्ठा dvb_frontend_tune_settings *settings)
+अणु
 
 	settings->min_delay_ms = 1000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int as102_fe_read_status(struct dvb_frontend *fe, enum fe_status *status)
-{
-	int ret = 0;
-	struct as102_state *state = fe->demodulator_priv;
-	struct as10x_tune_status tstate = { 0 };
+अटल पूर्णांक as102_fe_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा as102_state *state = fe->demodulator_priv;
+	काष्ठा as10x_tune_status tstate = अणु 0 पूर्ण;
 
 	/* send abilis command: GET_TUNE_STATUS */
 	ret = state->ops->get_status(state->priv, &tstate);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	state->signal_strength  = tstate.signal_strength;
+	state->संकेत_strength  = tstate.संकेत_strength;
 	state->ber  = tstate.BER;
 
-	switch (tstate.tune_state) {
-	case TUNE_STATUS_SIGNAL_DVB_OK:
+	चयन (tstate.tune_state) अणु
+	हाल TUNE_STATUS_SIGNAL_DVB_OK:
 		*status = FE_HAS_SIGNAL | FE_HAS_CARRIER;
-		break;
-	case TUNE_STATUS_STREAM_DETECTED:
+		अवरोध;
+	हाल TUNE_STATUS_STREAM_DETECTED:
 		*status = FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_SYNC |
 			  FE_HAS_VITERBI;
-		break;
-	case TUNE_STATUS_STREAM_TUNED:
+		अवरोध;
+	हाल TUNE_STATUS_STREAM_TUNED:
 		*status = FE_HAS_SIGNAL | FE_HAS_CARRIER | FE_HAS_SYNC |
 			  FE_HAS_LOCK | FE_HAS_VITERBI;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*status = TUNE_STATUS_NOT_TUNED;
-	}
+	पूर्ण
 
 	pr_debug("as102: tuner status: 0x%02x, strength %d, per: %d, ber: %d\n",
-		 tstate.tune_state, tstate.signal_strength,
+		 tstate.tune_state, tstate.संकेत_strength,
 		 tstate.PER, tstate.BER);
 
-	if (!(*status & FE_HAS_LOCK)) {
-		memset(&state->demod_stats, 0, sizeof(state->demod_stats));
-		return 0;
-	}
+	अगर (!(*status & FE_HAS_LOCK)) अणु
+		स_रखो(&state->demod_stats, 0, माप(state->demod_stats));
+		वापस 0;
+	पूर्ण
 
 	ret = state->ops->get_stats(state->priv, &state->demod_stats);
-	if (ret < 0)
-		memset(&state->demod_stats, 0, sizeof(state->demod_stats));
+	अगर (ret < 0)
+		स_रखो(&state->demod_stats, 0, माप(state->demod_stats));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Note:
  * - in AS102 SNR=MER
- *   - the SNR will be returned in linear terms, i.e. not in dB
- *   - the accuracy equals ±2dB for a SNR range from 4dB to 30dB
- *   - the accuracy is >2dB for SNR values outside this range
+ *   - the SNR will be वापसed in linear terms, i.e. not in dB
+ *   - the accuracy equals तऔ2dB क्रम a SNR range from 4dB to 30dB
+ *   - the accuracy is >2dB क्रम SNR values outside this range
  */
-static int as102_fe_read_snr(struct dvb_frontend *fe, u16 *snr)
-{
-	struct as102_state *state = fe->demodulator_priv;
+अटल पूर्णांक as102_fe_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
 
 	*snr = state->demod_stats.mer;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int as102_fe_read_ber(struct dvb_frontend *fe, u32 *ber)
-{
-	struct as102_state *state = fe->demodulator_priv;
+अटल पूर्णांक as102_fe_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
 
 	*ber = state->ber;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int as102_fe_read_signal_strength(struct dvb_frontend *fe,
+अटल पूर्णांक as102_fe_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe,
 					 u16 *strength)
-{
-	struct as102_state *state = fe->demodulator_priv;
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
 
-	*strength = (((0xffff * 400) * state->signal_strength + 41000) * 2);
+	*strength = (((0xffff * 400) * state->संकेत_strength + 41000) * 2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int as102_fe_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
-{
-	struct as102_state *state = fe->demodulator_priv;
+अटल पूर्णांक as102_fe_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
 
-	if (state->demod_stats.has_started)
+	अगर (state->demod_stats.has_started)
 		*ucblocks = state->demod_stats.bad_frame_count;
-	else
+	अन्यथा
 		*ucblocks = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int as102_fe_ts_bus_ctrl(struct dvb_frontend *fe, int acquire)
-{
-	struct as102_state *state = fe->demodulator_priv;
+अटल पूर्णांक as102_fe_ts_bus_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक acquire)
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
 
-	return state->ops->stream_ctrl(state->priv, acquire,
+	वापस state->ops->stream_ctrl(state->priv, acquire,
 				      state->elna_cfg);
-}
+पूर्ण
 
-static void as102_fe_release(struct dvb_frontend *fe)
-{
-	struct as102_state *state = fe->demodulator_priv;
+अटल व्योम as102_fe_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा as102_state *state = fe->demodulator_priv;
 
-	kfree(state);
-}
+	kमुक्त(state);
+पूर्ण
 
 
-static const struct dvb_frontend_ops as102_fe_ops = {
-	.delsys = { SYS_DVBT },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops as102_fe_ops = अणु
+	.delsys = अणु SYS_DVBT पूर्ण,
+	.info = अणु
 		.name			= "Abilis AS102 DVB-T",
 		.frequency_min_hz	= 174 * MHz,
 		.frequency_max_hz	= 862 * MHz,
@@ -424,32 +425,32 @@ static const struct dvb_frontend_ops as102_fe_ops = {
 			| FE_CAN_HIERARCHY_AUTO
 			| FE_CAN_RECOVER
 			| FE_CAN_MUTE_TS
-	},
+	पूर्ण,
 
 	.set_frontend		= as102_fe_set_frontend,
 	.get_frontend		= as102_fe_get_frontend,
 	.get_tune_settings	= as102_fe_get_tune_settings,
 
-	.read_status		= as102_fe_read_status,
-	.read_snr		= as102_fe_read_snr,
-	.read_ber		= as102_fe_read_ber,
-	.read_signal_strength	= as102_fe_read_signal_strength,
-	.read_ucblocks		= as102_fe_read_ucblocks,
+	.पढ़ो_status		= as102_fe_पढ़ो_status,
+	.पढ़ो_snr		= as102_fe_पढ़ो_snr,
+	.पढ़ो_ber		= as102_fe_पढ़ो_ber,
+	.पढ़ो_संकेत_strength	= as102_fe_पढ़ो_संकेत_strength,
+	.पढ़ो_ucblocks		= as102_fe_पढ़ो_ucblocks,
 	.ts_bus_ctrl		= as102_fe_ts_bus_ctrl,
 	.release		= as102_fe_release,
-};
+पूर्ण;
 
-struct dvb_frontend *as102_attach(const char *name,
-				  const struct as102_fe_ops *ops,
-				  void *priv,
-				  uint8_t elna_cfg)
-{
-	struct as102_state *state;
-	struct dvb_frontend *fe;
+काष्ठा dvb_frontend *as102_attach(स्थिर अक्षर *name,
+				  स्थिर काष्ठा as102_fe_ops *ops,
+				  व्योम *priv,
+				  uपूर्णांक8_t elna_cfg)
+अणु
+	काष्ठा as102_state *state;
+	काष्ठा dvb_frontend *fe;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
 	fe = &state->frontend;
 	fe->demodulator_priv = state;
@@ -458,12 +459,12 @@ struct dvb_frontend *as102_attach(const char *name,
 	state->elna_cfg = elna_cfg;
 
 	/* init frontend callback ops */
-	memcpy(&fe->ops, &as102_fe_ops, sizeof(struct dvb_frontend_ops));
-	strscpy(fe->ops.info.name, name, sizeof(fe->ops.info.name));
+	स_नकल(&fe->ops, &as102_fe_ops, माप(काष्ठा dvb_frontend_ops));
+	strscpy(fe->ops.info.name, name, माप(fe->ops.info.name));
 
-	return fe;
+	वापस fe;
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(as102_attach);
 
 MODULE_DESCRIPTION("as102-fe");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Freescale SSI ALSA SoC Digital Audio Interface (DAI) debugging functions
 //
@@ -6,98 +7,98 @@
 //
 // Split from fsl_ssi.c
 
-#include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
 
-#include "fsl_ssi.h"
+#समावेश "fsl_ssi.h"
 
-void fsl_ssi_dbg_isr(struct fsl_ssi_dbg *dbg, u32 sisr)
-{
-	if (sisr & SSI_SISR_RFRC)
+व्योम fsl_ssi_dbg_isr(काष्ठा fsl_ssi_dbg *dbg, u32 sisr)
+अणु
+	अगर (sisr & SSI_SISR_RFRC)
 		dbg->stats.rfrc++;
 
-	if (sisr & SSI_SISR_TFRC)
+	अगर (sisr & SSI_SISR_TFRC)
 		dbg->stats.tfrc++;
 
-	if (sisr & SSI_SISR_CMDAU)
+	अगर (sisr & SSI_SISR_CMDAU)
 		dbg->stats.cmdau++;
 
-	if (sisr & SSI_SISR_CMDDU)
+	अगर (sisr & SSI_SISR_CMDDU)
 		dbg->stats.cmddu++;
 
-	if (sisr & SSI_SISR_RXT)
+	अगर (sisr & SSI_SISR_RXT)
 		dbg->stats.rxt++;
 
-	if (sisr & SSI_SISR_RDR1)
+	अगर (sisr & SSI_SISR_RDR1)
 		dbg->stats.rdr1++;
 
-	if (sisr & SSI_SISR_RDR0)
+	अगर (sisr & SSI_SISR_RDR0)
 		dbg->stats.rdr0++;
 
-	if (sisr & SSI_SISR_TDE1)
+	अगर (sisr & SSI_SISR_TDE1)
 		dbg->stats.tde1++;
 
-	if (sisr & SSI_SISR_TDE0)
+	अगर (sisr & SSI_SISR_TDE0)
 		dbg->stats.tde0++;
 
-	if (sisr & SSI_SISR_ROE1)
+	अगर (sisr & SSI_SISR_ROE1)
 		dbg->stats.roe1++;
 
-	if (sisr & SSI_SISR_ROE0)
+	अगर (sisr & SSI_SISR_ROE0)
 		dbg->stats.roe0++;
 
-	if (sisr & SSI_SISR_TUE1)
+	अगर (sisr & SSI_SISR_TUE1)
 		dbg->stats.tue1++;
 
-	if (sisr & SSI_SISR_TUE0)
+	अगर (sisr & SSI_SISR_TUE0)
 		dbg->stats.tue0++;
 
-	if (sisr & SSI_SISR_TFS)
+	अगर (sisr & SSI_SISR_TFS)
 		dbg->stats.tfs++;
 
-	if (sisr & SSI_SISR_RFS)
+	अगर (sisr & SSI_SISR_RFS)
 		dbg->stats.rfs++;
 
-	if (sisr & SSI_SISR_TLS)
+	अगर (sisr & SSI_SISR_TLS)
 		dbg->stats.tls++;
 
-	if (sisr & SSI_SISR_RLS)
+	अगर (sisr & SSI_SISR_RLS)
 		dbg->stats.rls++;
 
-	if (sisr & SSI_SISR_RFF1)
+	अगर (sisr & SSI_SISR_RFF1)
 		dbg->stats.rff1++;
 
-	if (sisr & SSI_SISR_RFF0)
+	अगर (sisr & SSI_SISR_RFF0)
 		dbg->stats.rff0++;
 
-	if (sisr & SSI_SISR_TFE1)
+	अगर (sisr & SSI_SISR_TFE1)
 		dbg->stats.tfe1++;
 
-	if (sisr & SSI_SISR_TFE0)
+	अगर (sisr & SSI_SISR_TFE0)
 		dbg->stats.tfe0++;
-}
+पूर्ण
 
 /*
- * Show the statistics of a flag only if its interrupt is enabled
+ * Show the statistics of a flag only अगर its पूर्णांकerrupt is enabled
  *
- * Compilers will optimize it to a no-op if the interrupt is disabled
+ * Compilers will optimize it to a no-op अगर the पूर्णांकerrupt is disabled
  */
-#define SIER_SHOW(flag, name) \
-	do { \
-		if (SSI_SIER_##flag) \
-			seq_printf(s, #name "=%u\n", ssi_dbg->stats.name); \
-	} while (0)
+#घोषणा SIER_SHOW(flag, name) \
+	करो अणु \
+		अगर (SSI_SIER_##flag) \
+			seq_म_लिखो(s, #name "=%u\n", ssi_dbg->stats.name); \
+	पूर्ण जबतक (0)
 
 
 /*
- * Display the statistics for the current SSI device
+ * Display the statistics क्रम the current SSI device
  *
- * To avoid confusion, only show those counts that are enabled
+ * To aव्योम confusion, only show those counts that are enabled
  */
-static int fsl_ssi_stats_show(struct seq_file *s, void *unused)
-{
-	struct fsl_ssi_dbg *ssi_dbg = s->private;
+अटल पूर्णांक fsl_ssi_stats_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा fsl_ssi_dbg *ssi_dbg = s->निजी;
 
 	SIER_SHOW(RFRC_EN, rfrc);
 	SIER_SHOW(TFRC_EN, tfrc);
@@ -121,20 +122,20 @@ static int fsl_ssi_stats_show(struct seq_file *s, void *unused)
 	SIER_SHOW(TFE1_EN, tfe1);
 	SIER_SHOW(TFE0_EN, tfe0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(fsl_ssi_stats);
 
-void fsl_ssi_debugfs_create(struct fsl_ssi_dbg *ssi_dbg, struct device *dev)
-{
-	ssi_dbg->dbg_dir = debugfs_create_dir(dev_name(dev), NULL);
+व्योम fsl_ssi_debugfs_create(काष्ठा fsl_ssi_dbg *ssi_dbg, काष्ठा device *dev)
+अणु
+	ssi_dbg->dbg_dir = debugfs_create_dir(dev_name(dev), शून्य);
 
 	debugfs_create_file("stats", 0444, ssi_dbg->dbg_dir, ssi_dbg,
 			    &fsl_ssi_stats_fops);
-}
+पूर्ण
 
-void fsl_ssi_debugfs_remove(struct fsl_ssi_dbg *ssi_dbg)
-{
-	debugfs_remove_recursive(ssi_dbg->dbg_dir);
-}
+व्योम fsl_ssi_debugfs_हटाओ(काष्ठा fsl_ssi_dbg *ssi_dbg)
+अणु
+	debugfs_हटाओ_recursive(ssi_dbg->dbg_dir);
+पूर्ण

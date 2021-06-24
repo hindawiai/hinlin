@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) STMicroelectronics SA 2015
  * Authors: Yannick Fertre <yannick.fertre@st.com>
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
-#include <linux/debugfs.h>
+#समावेश <linux/debugfs.h>
 
-#include "hva.h"
-#include "hva-hw.h"
+#समावेश "hva.h"
+#समावेश "hva-hw.h"
 
-static void format_ctx(struct seq_file *s, struct hva_ctx *ctx)
-{
-	struct hva_streaminfo *stream = &ctx->streaminfo;
-	struct hva_frameinfo *frame = &ctx->frameinfo;
-	struct hva_controls *ctrls = &ctx->ctrls;
-	struct hva_ctx_dbg *dbg = &ctx->dbg;
+अटल व्योम क्रमmat_ctx(काष्ठा seq_file *s, काष्ठा hva_ctx *ctx)
+अणु
+	काष्ठा hva_streaminfo *stream = &ctx->streaminfo;
+	काष्ठा hva_frameinfo *frame = &ctx->frameinfo;
+	काष्ठा hva_controls *ctrls = &ctx->ctrls;
+	काष्ठा hva_ctx_dbg *dbg = &ctx->dbg;
 	u32 bitrate_mode, aspect, entropy, vui_sar, sei_fp;
 
-	seq_printf(s, "|-%s\n  |\n", ctx->name);
+	seq_म_लिखो(s, "|-%s\n  |\n", ctx->name);
 
-	seq_printf(s, "  |-[%sframe info]\n",
+	seq_म_लिखो(s, "  |-[%sframe info]\n",
 		   ctx->flags & HVA_FLAG_FRAMEINFO ? "" : "default ");
-	seq_printf(s, "  | |- pixel format=%4.4s\n"
+	seq_म_लिखो(s, "  | |- pixel format=%4.4s\n"
 		      "  | |- wxh=%dx%d\n"
 		      "  | |- wxh (w/ encoder alignment constraint)=%dx%d\n"
 		      "  |\n",
-		      (char *)&frame->pixelformat,
+		      (अक्षर *)&frame->pixelक्रमmat,
 		      frame->width, frame->height,
 		      frame->aligned_width, frame->aligned_height);
 
-	seq_printf(s, "  |-[%sstream info]\n",
+	seq_म_लिखो(s, "  |-[%sstream info]\n",
 		   ctx->flags & HVA_FLAG_STREAMINFO ? "" : "default ");
-	seq_printf(s, "  | |- stream format=%4.4s\n"
+	seq_म_लिखो(s, "  | |- stream format=%4.4s\n"
 		      "  | |- wxh=%dx%d\n"
 		      "  | |- %s\n"
 		      "  | |- %s\n"
 		      "  |\n",
-		      (char *)&stream->streamformat,
+		      (अक्षर *)&stream->streamक्रमmat,
 		      stream->width, stream->height,
 		      stream->profile, stream->level);
 
 	bitrate_mode = V4L2_CID_MPEG_VIDEO_BITRATE_MODE;
 	aspect = V4L2_CID_MPEG_VIDEO_ASPECT;
-	seq_puts(s, "  |-[parameters]\n");
-	seq_printf(s, "  | |- %s\n"
+	seq_माला_दो(s, "  |-[parameters]\n");
+	seq_म_लिखो(s, "  | |- %s\n"
 		      "  | |- bitrate=%d bps\n"
 		      "  | |- GOP size=%d\n"
 		      "  | |- video aspect=%s\n"
@@ -53,14 +54,14 @@ static void format_ctx(struct seq_file *s, struct hva_ctx *ctx)
 		      ctrls->bitrate,
 		      ctrls->gop_size,
 		      v4l2_ctrl_get_menu(aspect)[ctrls->aspect],
-		      ctrls->time_per_frame.denominator,
-		      ctrls->time_per_frame.numerator);
+		      ctrls->समय_per_frame.denominator,
+		      ctrls->समय_per_frame.numerator);
 
 	entropy = V4L2_CID_MPEG_VIDEO_H264_ENTROPY_MODE;
 	vui_sar = V4L2_CID_MPEG_VIDEO_H264_VUI_SAR_IDC;
 	sei_fp =  V4L2_CID_MPEG_VIDEO_H264_SEI_FP_ARRANGEMENT_TYPE;
-	if (stream->streamformat == V4L2_PIX_FMT_H264) {
-		seq_printf(s, "  | |- %s entropy mode\n"
+	अगर (stream->streamक्रमmat == V4L2_PIX_FMT_H264) अणु
+		seq_म_लिखो(s, "  | |- %s entropy mode\n"
 			      "  | |- CPB size=%d kB\n"
 			      "  | |- DCT8x8 enable=%s\n"
 			      "  | |- qpmin=%d\n"
@@ -78,20 +79,20 @@ static void format_ctx(struct seq_file *s, struct hva_ctx *ctx)
 			      v4l2_ctrl_get_menu(vui_sar)[ctrls->vui_sar_idc],
 			      ctrls->sei_fp ? "true" : "false",
 			      v4l2_ctrl_get_menu(sei_fp)[ctrls->sei_fp_type]);
-	}
+	पूर्ण
 
-	if (ctx->sys_errors || ctx->encode_errors || ctx->frame_errors) {
-		seq_puts(s, "  |\n  |-[errors]\n");
-		seq_printf(s, "  | |- system=%d\n"
+	अगर (ctx->sys_errors || ctx->encode_errors || ctx->frame_errors) अणु
+		seq_माला_दो(s, "  |\n  |-[errors]\n");
+		seq_म_लिखो(s, "  | |- system=%d\n"
 			      "  | |- encoding=%d\n"
 			      "  | |- frame=%d\n",
 			      ctx->sys_errors,
 			      ctx->encode_errors,
 			      ctx->frame_errors);
-	}
+	पूर्ण
 
-	seq_puts(s, "  |\n  |-[performances]\n");
-	seq_printf(s, "  | |- frames encoded=%d\n"
+	seq_माला_दो(s, "  |\n  |-[performances]\n");
+	seq_म_लिखो(s, "  | |- frames encoded=%d\n"
 		      "  | |- avg HW processing duration (0.1ms)=%d [min=%d, max=%d]\n"
 		      "  | |- avg encoding period (0.1ms)=%d [min=%d, max=%d]\n"
 		      "  | |- avg fps (0.1Hz)=%d\n"
@@ -111,26 +112,26 @@ static void format_ctx(struct seq_file *s, struct hva_ctx *ctx)
 		      dbg->min_bitrate,
 		      dbg->max_bitrate,
 		      dbg->last_bitrate);
-}
+पूर्ण
 
 /*
- * performance debug info
+ * perक्रमmance debug info
  */
-void hva_dbg_perf_begin(struct hva_ctx *ctx)
-{
-	u64 div;
+व्योम hva_dbg_perf_begin(काष्ठा hva_ctx *ctx)
+अणु
+	u64 भाग;
 	u32 period;
 	u32 bitrate;
-	struct hva_ctx_dbg *dbg = &ctx->dbg;
-	ktime_t prev = dbg->begin;
+	काष्ठा hva_ctx_dbg *dbg = &ctx->dbg;
+	kसमय_प्रकार prev = dbg->begin;
 
-	dbg->begin = ktime_get();
+	dbg->begin = kसमय_get();
 
-	if (dbg->is_valid_period) {
+	अगर (dbg->is_valid_period) अणु
 		/* encoding period */
-		div = (u64)ktime_us_delta(dbg->begin, prev);
-		do_div(div, 100);
-		period = (u32)div;
+		भाग = (u64)kसमय_us_delta(dbg->begin, prev);
+		करो_भाग(भाग, 100);
+		period = (u32)भाग;
 		dbg->min_period = min(period, dbg->min_period);
 		dbg->max_period = max(period, dbg->max_period);
 		dbg->total_period += period;
@@ -138,68 +139,68 @@ void hva_dbg_perf_begin(struct hva_ctx *ctx)
 
 		/*
 		 * minimum and maximum bitrates are based on the
-		 * encoding period values upon a window of 32 samples
+		 * encoding period values upon a winकरोw of 32 samples
 		 */
-		dbg->window_duration += period;
-		dbg->cnt_window++;
-		if (dbg->cnt_window >= 32) {
+		dbg->winकरोw_duration += period;
+		dbg->cnt_winकरोw++;
+		अगर (dbg->cnt_winकरोw >= 32) अणु
 			/*
 			 * bitrate in kbps = (size * 8 / 1000) /
 			 *                   (duration / 10000)
 			 *                 = size * 80 / duration
 			 */
-			if (dbg->window_duration > 0) {
-				div = (u64)dbg->window_stream_size * 80;
-				do_div(div, dbg->window_duration);
-				bitrate = (u32)div;
+			अगर (dbg->winकरोw_duration > 0) अणु
+				भाग = (u64)dbg->winकरोw_stream_size * 80;
+				करो_भाग(भाग, dbg->winकरोw_duration);
+				bitrate = (u32)भाग;
 				dbg->last_bitrate = bitrate;
 				dbg->min_bitrate = min(bitrate,
 						       dbg->min_bitrate);
 				dbg->max_bitrate = max(bitrate,
 						       dbg->max_bitrate);
-			}
-			dbg->window_stream_size = 0;
-			dbg->window_duration = 0;
-			dbg->cnt_window = 0;
-		}
-	}
+			पूर्ण
+			dbg->winकरोw_stream_size = 0;
+			dbg->winकरोw_duration = 0;
+			dbg->cnt_winकरोw = 0;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * filter sequences valid for performance:
+	 * filter sequences valid क्रम perक्रमmance:
 	 * - begin/begin (no stream available) is an invalid sequence
 	 * - begin/end is a valid sequence
 	 */
 	dbg->is_valid_period = false;
-}
+पूर्ण
 
-void hva_dbg_perf_end(struct hva_ctx *ctx, struct hva_stream *stream)
-{
-	struct device *dev = ctx_to_dev(ctx);
-	u64 div;
+व्योम hva_dbg_perf_end(काष्ठा hva_ctx *ctx, काष्ठा hva_stream *stream)
+अणु
+	काष्ठा device *dev = ctx_to_dev(ctx);
+	u64 भाग;
 	u32 duration;
 	u32 bytesused;
-	u32 timestamp;
-	struct hva_ctx_dbg *dbg = &ctx->dbg;
-	ktime_t end = ktime_get();
+	u32 बारtamp;
+	काष्ठा hva_ctx_dbg *dbg = &ctx->dbg;
+	kसमय_प्रकार end = kसमय_get();
 
-	/* stream bytesused and timestamp in us */
+	/* stream bytesused and बारtamp in us */
 	bytesused = vb2_get_plane_payload(&stream->vbuf.vb2_buf, 0);
-	div = stream->vbuf.vb2_buf.timestamp;
-	do_div(div, 1000);
-	timestamp = (u32)div;
+	भाग = stream->vbuf.vb2_buf.बारtamp;
+	करो_भाग(भाग, 1000);
+	बारtamp = (u32)भाग;
 
 	/* encoding duration */
-	div = (u64)ktime_us_delta(end, dbg->begin);
+	भाग = (u64)kसमय_us_delta(end, dbg->begin);
 
 	dev_dbg(dev,
 		"%s perf stream[%d] dts=%d encoded using %d bytes in %d us",
 		ctx->name,
 		stream->vbuf.sequence,
-		timestamp,
-		bytesused, (u32)div);
+		बारtamp,
+		bytesused, (u32)भाग);
 
-	do_div(div, 100);
-	duration = (u32)div;
+	करो_भाग(भाग, 100);
+	duration = (u32)भाग;
 
 	dbg->min_duration = min(duration, dbg->min_duration);
 	dbg->max_duration = max(duration, dbg->max_duration);
@@ -211,121 +212,121 @@ void hva_dbg_perf_end(struct hva_ctx *ctx, struct hva_stream *stream)
 	 * and the total encoding periods
 	 */
 	dbg->total_stream_size += bytesused;
-	dbg->window_stream_size += bytesused;
+	dbg->winकरोw_stream_size += bytesused;
 
 	dbg->is_valid_period = true;
-}
+पूर्ण
 
-static void hva_dbg_perf_compute(struct hva_ctx *ctx)
-{
-	u64 div;
-	struct hva_ctx_dbg *dbg = &ctx->dbg;
+अटल व्योम hva_dbg_perf_compute(काष्ठा hva_ctx *ctx)
+अणु
+	u64 भाग;
+	काष्ठा hva_ctx_dbg *dbg = &ctx->dbg;
 
-	if (dbg->cnt_duration > 0) {
-		div = (u64)dbg->total_duration;
-		do_div(div, dbg->cnt_duration);
-		dbg->avg_duration = (u32)div;
-	} else {
+	अगर (dbg->cnt_duration > 0) अणु
+		भाग = (u64)dbg->total_duration;
+		करो_भाग(भाग, dbg->cnt_duration);
+		dbg->avg_duration = (u32)भाग;
+	पूर्ण अन्यथा अणु
 		dbg->avg_duration = 0;
-	}
+	पूर्ण
 
-	if (dbg->total_duration > 0) {
-		div = (u64)dbg->cnt_duration * 100000;
-		do_div(div, dbg->total_duration);
-		dbg->max_fps = (u32)div;
-	} else {
+	अगर (dbg->total_duration > 0) अणु
+		भाग = (u64)dbg->cnt_duration * 100000;
+		करो_भाग(भाग, dbg->total_duration);
+		dbg->max_fps = (u32)भाग;
+	पूर्ण अन्यथा अणु
 		dbg->max_fps = 0;
-	}
+	पूर्ण
 
-	if (dbg->cnt_period > 0) {
-		div = (u64)dbg->total_period;
-		do_div(div, dbg->cnt_period);
-		dbg->avg_period = (u32)div;
-	} else {
+	अगर (dbg->cnt_period > 0) अणु
+		भाग = (u64)dbg->total_period;
+		करो_भाग(भाग, dbg->cnt_period);
+		dbg->avg_period = (u32)भाग;
+	पूर्ण अन्यथा अणु
 		dbg->avg_period = 0;
-	}
+	पूर्ण
 
-	if (dbg->total_period > 0) {
-		div = (u64)dbg->cnt_period * 100000;
-		do_div(div, dbg->total_period);
-		dbg->avg_fps = (u32)div;
-	} else {
+	अगर (dbg->total_period > 0) अणु
+		भाग = (u64)dbg->cnt_period * 100000;
+		करो_भाग(भाग, dbg->total_period);
+		dbg->avg_fps = (u32)भाग;
+	पूर्ण अन्यथा अणु
 		dbg->avg_fps = 0;
-	}
+	पूर्ण
 
-	if (dbg->total_period > 0) {
+	अगर (dbg->total_period > 0) अणु
 		/*
 		 * bitrate in kbps = (video size * 8 / 1000) /
 		 *                   (video duration / 10000)
 		 *                 = video size * 80 / video duration
 		 */
-		div = (u64)dbg->total_stream_size * 80;
-		do_div(div, dbg->total_period);
-		dbg->avg_bitrate = (u32)div;
-	} else {
+		भाग = (u64)dbg->total_stream_size * 80;
+		करो_भाग(भाग, dbg->total_period);
+		dbg->avg_bitrate = (u32)भाग;
+	पूर्ण अन्यथा अणु
 		dbg->avg_bitrate = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * device debug info
  */
 
-static int device_show(struct seq_file *s, void *data)
-{
-	struct hva_dev *hva = s->private;
+अटल पूर्णांक device_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा hva_dev *hva = s->निजी;
 
-	seq_printf(s, "[%s]\n", hva->v4l2_dev.name);
-	seq_printf(s, "registered as /dev/video%d\n", hva->vdev->num);
+	seq_म_लिखो(s, "[%s]\n", hva->v4l2_dev.name);
+	seq_म_लिखो(s, "registered as /dev/video%d\n", hva->vdev->num);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int encoders_show(struct seq_file *s, void *data)
-{
-	struct hva_dev *hva = s->private;
-	unsigned int i = 0;
+अटल पूर्णांक encoders_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा hva_dev *hva = s->निजी;
+	अचिन्हित पूर्णांक i = 0;
 
-	seq_printf(s, "[encoders]\n|- %d registered encoders:\n",
+	seq_म_लिखो(s, "[encoders]\n|- %d registered encoders:\n",
 		   hva->nb_of_encoders);
 
-	while (hva->encoders[i]) {
-		seq_printf(s, "|- %s: %4.4s => %4.4s\n", hva->encoders[i]->name,
-			   (char *)&hva->encoders[i]->pixelformat,
-			   (char *)&hva->encoders[i]->streamformat);
+	जबतक (hva->encoders[i]) अणु
+		seq_म_लिखो(s, "|- %s: %4.4s => %4.4s\n", hva->encoders[i]->name,
+			   (अक्षर *)&hva->encoders[i]->pixelक्रमmat,
+			   (अक्षर *)&hva->encoders[i]->streamक्रमmat);
 		i++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int last_show(struct seq_file *s, void *data)
-{
-	struct hva_dev *hva = s->private;
-	struct hva_ctx *last_ctx = &hva->dbg.last_ctx;
+अटल पूर्णांक last_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा hva_dev *hva = s->निजी;
+	काष्ठा hva_ctx *last_ctx = &hva->dbg.last_ctx;
 
-	if (last_ctx->flags & HVA_FLAG_STREAMINFO) {
-		seq_puts(s, "[last encoding]\n");
+	अगर (last_ctx->flags & HVA_FLAG_STREAMINFO) अणु
+		seq_माला_दो(s, "[last encoding]\n");
 
 		hva_dbg_perf_compute(last_ctx);
-		format_ctx(s, last_ctx);
-	} else {
-		seq_puts(s, "[no information recorded about last encoding]\n");
-	}
+		क्रमmat_ctx(s, last_ctx);
+	पूर्ण अन्यथा अणु
+		seq_माला_दो(s, "[no information recorded about last encoding]\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regs_show(struct seq_file *s, void *data)
-{
-	struct hva_dev *hva = s->private;
+अटल पूर्णांक regs_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा hva_dev *hva = s->निजी;
 
 	hva_hw_dump_regs(hva, s);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define hva_dbg_create_entry(name)					 \
+#घोषणा hva_dbg_create_entry(name)					 \
 	debugfs_create_file(#name, 0444, hva->dbg.debugfs_entry, hva, \
 			    &name##_fops)
 
@@ -334,63 +335,63 @@ DEFINE_SHOW_ATTRIBUTE(encoders);
 DEFINE_SHOW_ATTRIBUTE(last);
 DEFINE_SHOW_ATTRIBUTE(regs);
 
-void hva_debugfs_create(struct hva_dev *hva)
-{
-	hva->dbg.debugfs_entry = debugfs_create_dir(HVA_NAME, NULL);
+व्योम hva_debugfs_create(काष्ठा hva_dev *hva)
+अणु
+	hva->dbg.debugfs_entry = debugfs_create_dir(HVA_NAME, शून्य);
 
 	hva_dbg_create_entry(device);
 	hva_dbg_create_entry(encoders);
 	hva_dbg_create_entry(last);
 	hva_dbg_create_entry(regs);
-}
+पूर्ण
 
-void hva_debugfs_remove(struct hva_dev *hva)
-{
-	debugfs_remove_recursive(hva->dbg.debugfs_entry);
-	hva->dbg.debugfs_entry = NULL;
-}
+व्योम hva_debugfs_हटाओ(काष्ठा hva_dev *hva)
+अणु
+	debugfs_हटाओ_recursive(hva->dbg.debugfs_entry);
+	hva->dbg.debugfs_entry = शून्य;
+पूर्ण
 
 /*
  * context (instance) debug info
  */
 
-static int ctx_show(struct seq_file *s, void *data)
-{
-	struct hva_ctx *ctx = s->private;
+अटल पूर्णांक ctx_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा hva_ctx *ctx = s->निजी;
 
-	seq_printf(s, "[running encoding %d]\n", ctx->id);
+	seq_म_लिखो(s, "[running encoding %d]\n", ctx->id);
 
 	hva_dbg_perf_compute(ctx);
-	format_ctx(s, ctx);
+	क्रमmat_ctx(s, ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(ctx);
 
-void hva_dbg_ctx_create(struct hva_ctx *ctx)
-{
-	struct hva_dev *hva = ctx->hva_dev;
-	char name[4] = "";
+व्योम hva_dbg_ctx_create(काष्ठा hva_ctx *ctx)
+अणु
+	काष्ठा hva_dev *hva = ctx->hva_dev;
+	अक्षर name[4] = "";
 
-	ctx->dbg.min_duration = UINT_MAX;
-	ctx->dbg.min_period = UINT_MAX;
-	ctx->dbg.min_bitrate = UINT_MAX;
+	ctx->dbg.min_duration = अच_पूर्णांक_उच्च;
+	ctx->dbg.min_period = अच_पूर्णांक_उच्च;
+	ctx->dbg.min_bitrate = अच_पूर्णांक_उच्च;
 
-	snprintf(name, sizeof(name), "%d", hva->instance_id);
+	snम_लिखो(name, माप(name), "%d", hva->instance_id);
 
 	ctx->dbg.debugfs_entry = debugfs_create_file(name, 0444,
 						     hva->dbg.debugfs_entry,
 						     ctx, &ctx_fops);
-}
+पूर्ण
 
-void hva_dbg_ctx_remove(struct hva_ctx *ctx)
-{
-	struct hva_dev *hva = ctx->hva_dev;
+व्योम hva_dbg_ctx_हटाओ(काष्ठा hva_ctx *ctx)
+अणु
+	काष्ठा hva_dev *hva = ctx->hva_dev;
 
-	if (ctx->flags & HVA_FLAG_STREAMINFO)
-		/* save context before removing */
-		memcpy(&hva->dbg.last_ctx, ctx, sizeof(*ctx));
+	अगर (ctx->flags & HVA_FLAG_STREAMINFO)
+		/* save context beक्रमe removing */
+		स_नकल(&hva->dbg.last_ctx, ctx, माप(*ctx));
 
-	debugfs_remove(ctx->dbg.debugfs_entry);
-}
+	debugfs_हटाओ(ctx->dbg.debugfs_entry);
+पूर्ण

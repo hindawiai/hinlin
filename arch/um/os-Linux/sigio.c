@@ -1,309 +1,310 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2008 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2008 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <poll.h>
-#include <pty.h>
-#include <sched.h>
-#include <signal.h>
-#include <string.h>
-#include <kern_util.h>
-#include <init.h>
-#include <os.h>
-#include <sigio.h>
-#include <um_malloc.h>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <poll.h>
+#समावेश <pty.h>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#समावेश <माला.स>
+#समावेश <kern_util.h>
+#समावेश <init.h>
+#समावेश <os.h>
+#समावेश <sigपन.स>
+#समावेश <um_दो_स्मृति.h>
 
 /*
  * Protected by sigio_lock(), also used by sigio_cleanup, which is an
- * exitcall.
+ * निकासcall.
  */
-static int write_sigio_pid = -1;
-static unsigned long write_sigio_stack;
+अटल पूर्णांक ग_लिखो_sigio_pid = -1;
+अटल अचिन्हित दीर्घ ग_लिखो_sigio_stack;
 
 /*
- * These arrays are initialized before the sigio thread is started, and
- * the descriptors closed after it is killed.  So, it can't see them change.
+ * These arrays are initialized beक्रमe the sigio thपढ़ो is started, and
+ * the descriptors बंदd after it is समाप्तed.  So, it can't see them change.
  * On the UML side, they are changed under the sigio_lock.
  */
-#define SIGIO_FDS_INIT {-1, -1}
+#घोषणा SIGIO_FDS_INIT अणु-1, -1पूर्ण
 
-static int write_sigio_fds[2] = SIGIO_FDS_INIT;
-static int sigio_private[2] = SIGIO_FDS_INIT;
+अटल पूर्णांक ग_लिखो_sigio_fds[2] = SIGIO_FDS_INIT;
+अटल पूर्णांक sigio_निजी[2] = SIGIO_FDS_INIT;
 
-struct pollfds {
-	struct pollfd *poll;
-	int size;
-	int used;
-};
+काष्ठा pollfds अणु
+	काष्ठा pollfd *poll;
+	पूर्णांक size;
+	पूर्णांक used;
+पूर्ण;
 
 /*
- * Protected by sigio_lock().  Used by the sigio thread, but the UML thread
+ * Protected by sigio_lock().  Used by the sigio thपढ़ो, but the UML thपढ़ो
  * synchronizes with it.
  */
-static struct pollfds current_poll;
-static struct pollfds next_poll;
-static struct pollfds all_sigio_fds;
+अटल काष्ठा pollfds current_poll;
+अटल काष्ठा pollfds next_poll;
+अटल काष्ठा pollfds all_sigio_fds;
 
-static int write_sigio_thread(void *unused)
-{
-	struct pollfds *fds, tmp;
-	struct pollfd *p;
-	int i, n, respond_fd;
-	char c;
+अटल पूर्णांक ग_लिखो_sigio_thपढ़ो(व्योम *unused)
+अणु
+	काष्ठा pollfds *fds, पंचांगp;
+	काष्ठा pollfd *p;
+	पूर्णांक i, n, respond_fd;
+	अक्षर c;
 
-	os_fix_helper_signals();
+	os_fix_helper_संकेतs();
 	fds = &current_poll;
-	while (1) {
+	जबतक (1) अणु
 		n = poll(fds->poll, fds->used, -1);
-		if (n < 0) {
-			if (errno == EINTR)
-				continue;
-			printk(UM_KERN_ERR "write_sigio_thread : poll returned "
-			       "%d, errno = %d\n", n, errno);
-		}
-		for (i = 0; i < fds->used; i++) {
+		अगर (n < 0) अणु
+			अगर (त्रुटि_सं == EINTR)
+				जारी;
+			prपूर्णांकk(UM_KERN_ERR "write_sigio_thread : poll returned "
+			       "%d, errno = %d\n", n, त्रुटि_सं);
+		पूर्ण
+		क्रम (i = 0; i < fds->used; i++) अणु
 			p = &fds->poll[i];
-			if (p->revents == 0)
-				continue;
-			if (p->fd == sigio_private[1]) {
-				CATCH_EINTR(n = read(sigio_private[1], &c,
-						     sizeof(c)));
-				if (n != sizeof(c))
-					printk(UM_KERN_ERR
+			अगर (p->revents == 0)
+				जारी;
+			अगर (p->fd == sigio_निजी[1]) अणु
+				CATCH_EINTR(n = पढ़ो(sigio_निजी[1], &c,
+						     माप(c)));
+				अगर (n != माप(c))
+					prपूर्णांकk(UM_KERN_ERR
 					       "write_sigio_thread : "
 					       "read on socket failed, "
-					       "err = %d\n", errno);
-				tmp = current_poll;
+					       "err = %d\n", त्रुटि_सं);
+				पंचांगp = current_poll;
 				current_poll = next_poll;
-				next_poll = tmp;
-				respond_fd = sigio_private[1];
-			}
-			else {
-				respond_fd = write_sigio_fds[1];
+				next_poll = पंचांगp;
+				respond_fd = sigio_निजी[1];
+			पूर्ण
+			अन्यथा अणु
+				respond_fd = ग_लिखो_sigio_fds[1];
 				fds->used--;
-				memmove(&fds->poll[i], &fds->poll[i + 1],
-					(fds->used - i) * sizeof(*fds->poll));
-			}
+				स_हटाओ(&fds->poll[i], &fds->poll[i + 1],
+					(fds->used - i) * माप(*fds->poll));
+			पूर्ण
 
-			CATCH_EINTR(n = write(respond_fd, &c, sizeof(c)));
-			if (n != sizeof(c))
-				printk(UM_KERN_ERR "write_sigio_thread : "
+			CATCH_EINTR(n = ग_लिखो(respond_fd, &c, माप(c)));
+			अगर (n != माप(c))
+				prपूर्णांकk(UM_KERN_ERR "write_sigio_thread : "
 				       "write on socket failed, err = %d\n",
-				       errno);
-		}
-	}
+				       त्रुटि_सं);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int need_poll(struct pollfds *polls, int n)
-{
-	struct pollfd *new;
+अटल पूर्णांक need_poll(काष्ठा pollfds *polls, पूर्णांक n)
+अणु
+	काष्ठा pollfd *new;
 
-	if (n <= polls->size)
-		return 0;
+	अगर (n <= polls->size)
+		वापस 0;
 
-	new = uml_kmalloc(n * sizeof(struct pollfd), UM_GFP_ATOMIC);
-	if (new == NULL) {
-		printk(UM_KERN_ERR "need_poll : failed to allocate new "
+	new = uml_kदो_स्मृति(n * माप(काष्ठा pollfd), UM_GFP_ATOMIC);
+	अगर (new == शून्य) अणु
+		prपूर्णांकk(UM_KERN_ERR "need_poll : failed to allocate new "
 		       "pollfds\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(new, polls->poll, polls->used * sizeof(struct pollfd));
-	kfree(polls->poll);
+	स_नकल(new, polls->poll, polls->used * माप(काष्ठा pollfd));
+	kमुक्त(polls->poll);
 
 	polls->poll = new;
 	polls->size = n;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Must be called with sigio_lock held, because it's needed by the marked
  * critical section.
  */
-static void update_thread(void)
-{
-	unsigned long flags;
-	int n;
-	char c;
+अटल व्योम update_thपढ़ो(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक n;
+	अक्षर c;
 
-	flags = set_signals_trace(0);
-	CATCH_EINTR(n = write(sigio_private[0], &c, sizeof(c)));
-	if (n != sizeof(c)) {
-		printk(UM_KERN_ERR "update_thread : write failed, err = %d\n",
-		       errno);
-		goto fail;
-	}
+	flags = set_संकेतs_trace(0);
+	CATCH_EINTR(n = ग_लिखो(sigio_निजी[0], &c, माप(c)));
+	अगर (n != माप(c)) अणु
+		prपूर्णांकk(UM_KERN_ERR "update_thread : write failed, err = %d\n",
+		       त्रुटि_सं);
+		जाओ fail;
+	पूर्ण
 
-	CATCH_EINTR(n = read(sigio_private[0], &c, sizeof(c)));
-	if (n != sizeof(c)) {
-		printk(UM_KERN_ERR "update_thread : read failed, err = %d\n",
-		       errno);
-		goto fail;
-	}
+	CATCH_EINTR(n = पढ़ो(sigio_निजी[0], &c, माप(c)));
+	अगर (n != माप(c)) अणु
+		prपूर्णांकk(UM_KERN_ERR "update_thread : read failed, err = %d\n",
+		       त्रुटि_सं);
+		जाओ fail;
+	पूर्ण
 
-	set_signals_trace(flags);
-	return;
+	set_संकेतs_trace(flags);
+	वापस;
  fail:
 	/* Critical section start */
-	if (write_sigio_pid != -1) {
-		os_kill_process(write_sigio_pid, 1);
-		free_stack(write_sigio_stack, 0);
-	}
-	write_sigio_pid = -1;
-	close(sigio_private[0]);
-	close(sigio_private[1]);
-	close(write_sigio_fds[0]);
-	close(write_sigio_fds[1]);
+	अगर (ग_लिखो_sigio_pid != -1) अणु
+		os_समाप्त_process(ग_लिखो_sigio_pid, 1);
+		मुक्त_stack(ग_लिखो_sigio_stack, 0);
+	पूर्ण
+	ग_लिखो_sigio_pid = -1;
+	बंद(sigio_निजी[0]);
+	बंद(sigio_निजी[1]);
+	बंद(ग_लिखो_sigio_fds[0]);
+	बंद(ग_लिखो_sigio_fds[1]);
 	/* Critical section end */
-	set_signals_trace(flags);
-}
+	set_संकेतs_trace(flags);
+पूर्ण
 
-int __add_sigio_fd(int fd)
-{
-	struct pollfd *p;
-	int err, i, n;
+पूर्णांक __add_sigio_fd(पूर्णांक fd)
+अणु
+	काष्ठा pollfd *p;
+	पूर्णांक err, i, n;
 
-	for (i = 0; i < all_sigio_fds.used; i++) {
-		if (all_sigio_fds.poll[i].fd == fd)
-			break;
-	}
-	if (i == all_sigio_fds.used)
-		return -ENOSPC;
+	क्रम (i = 0; i < all_sigio_fds.used; i++) अणु
+		अगर (all_sigio_fds.poll[i].fd == fd)
+			अवरोध;
+	पूर्ण
+	अगर (i == all_sigio_fds.used)
+		वापस -ENOSPC;
 
 	p = &all_sigio_fds.poll[i];
 
-	for (i = 0; i < current_poll.used; i++) {
-		if (current_poll.poll[i].fd == fd)
-			return 0;
-	}
+	क्रम (i = 0; i < current_poll.used; i++) अणु
+		अगर (current_poll.poll[i].fd == fd)
+			वापस 0;
+	पूर्ण
 
 	n = current_poll.used;
 	err = need_poll(&next_poll, n + 1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	memcpy(next_poll.poll, current_poll.poll,
-	       current_poll.used * sizeof(struct pollfd));
+	स_नकल(next_poll.poll, current_poll.poll,
+	       current_poll.used * माप(काष्ठा pollfd));
 	next_poll.poll[n] = *p;
 	next_poll.used = n + 1;
-	update_thread();
+	update_thपढ़ो();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int add_sigio_fd(int fd)
-{
-	int err;
+पूर्णांक add_sigio_fd(पूर्णांक fd)
+अणु
+	पूर्णांक err;
 
 	sigio_lock();
 	err = __add_sigio_fd(fd);
 	sigio_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int __ignore_sigio_fd(int fd)
-{
-	struct pollfd *p;
-	int err, i, n = 0;
+पूर्णांक __ignore_sigio_fd(पूर्णांक fd)
+अणु
+	काष्ठा pollfd *p;
+	पूर्णांक err, i, n = 0;
 
 	/*
-	 * This is called from exitcalls elsewhere in UML - if
-	 * sigio_cleanup has already run, then update_thread will hang
-	 * or fail because the thread is no longer running.
+	 * This is called from निकासcalls अन्यथाwhere in UML - अगर
+	 * sigio_cleanup has alपढ़ोy run, then update_thपढ़ो will hang
+	 * or fail because the thपढ़ो is no दीर्घer running.
 	 */
-	if (write_sigio_pid == -1)
-		return -EIO;
+	अगर (ग_लिखो_sigio_pid == -1)
+		वापस -EIO;
 
-	for (i = 0; i < current_poll.used; i++) {
-		if (current_poll.poll[i].fd == fd)
-			break;
-	}
-	if (i == current_poll.used)
-		return -ENOENT;
+	क्रम (i = 0; i < current_poll.used; i++) अणु
+		अगर (current_poll.poll[i].fd == fd)
+			अवरोध;
+	पूर्ण
+	अगर (i == current_poll.used)
+		वापस -ENOENT;
 
 	err = need_poll(&next_poll, current_poll.used - 1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < current_poll.used; i++) {
+	क्रम (i = 0; i < current_poll.used; i++) अणु
 		p = &current_poll.poll[i];
-		if (p->fd != fd)
+		अगर (p->fd != fd)
 			next_poll.poll[n++] = *p;
-	}
+	पूर्ण
 	next_poll.used = current_poll.used - 1;
 
-	update_thread();
+	update_thपढ़ो();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ignore_sigio_fd(int fd)
-{
-	int err;
+पूर्णांक ignore_sigio_fd(पूर्णांक fd)
+अणु
+	पूर्णांक err;
 
 	sigio_lock();
 	err = __ignore_sigio_fd(fd);
 	sigio_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct pollfd *setup_initial_poll(int fd)
-{
-	struct pollfd *p;
+अटल काष्ठा pollfd *setup_initial_poll(पूर्णांक fd)
+अणु
+	काष्ठा pollfd *p;
 
-	p = uml_kmalloc(sizeof(struct pollfd), UM_GFP_KERNEL);
-	if (p == NULL) {
-		printk(UM_KERN_ERR "setup_initial_poll : failed to allocate "
+	p = uml_kदो_स्मृति(माप(काष्ठा pollfd), UM_GFP_KERNEL);
+	अगर (p == शून्य) अणु
+		prपूर्णांकk(UM_KERN_ERR "setup_initial_poll : failed to allocate "
 		       "poll\n");
-		return NULL;
-	}
-	*p = ((struct pollfd) { .fd		= fd,
+		वापस शून्य;
+	पूर्ण
+	*p = ((काष्ठा pollfd) अणु .fd		= fd,
 				.events 	= POLLIN,
-				.revents 	= 0 });
-	return p;
-}
+				.revents 	= 0 पूर्ण);
+	वापस p;
+पूर्ण
 
-static void write_sigio_workaround(void)
-{
-	struct pollfd *p;
-	int err;
-	int l_write_sigio_fds[2];
-	int l_sigio_private[2];
-	int l_write_sigio_pid;
+अटल व्योम ग_लिखो_sigio_workaround(व्योम)
+अणु
+	काष्ठा pollfd *p;
+	पूर्णांक err;
+	पूर्णांक l_ग_लिखो_sigio_fds[2];
+	पूर्णांक l_sigio_निजी[2];
+	पूर्णांक l_ग_लिखो_sigio_pid;
 
-	/* We call this *tons* of times - and most ones we must just fail. */
+	/* We call this *tons* of बार - and most ones we must just fail. */
 	sigio_lock();
-	l_write_sigio_pid = write_sigio_pid;
+	l_ग_लिखो_sigio_pid = ग_लिखो_sigio_pid;
 	sigio_unlock();
 
-	if (l_write_sigio_pid != -1)
-		return;
+	अगर (l_ग_लिखो_sigio_pid != -1)
+		वापस;
 
-	err = os_pipe(l_write_sigio_fds, 1, 1);
-	if (err < 0) {
-		printk(UM_KERN_ERR "write_sigio_workaround - os_pipe 1 failed, "
+	err = os_pipe(l_ग_लिखो_sigio_fds, 1, 1);
+	अगर (err < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "write_sigio_workaround - os_pipe 1 failed, "
 		       "err = %d\n", -err);
-		return;
-	}
-	err = os_pipe(l_sigio_private, 1, 1);
-	if (err < 0) {
-		printk(UM_KERN_ERR "write_sigio_workaround - os_pipe 2 failed, "
+		वापस;
+	पूर्ण
+	err = os_pipe(l_sigio_निजी, 1, 1);
+	अगर (err < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "write_sigio_workaround - os_pipe 2 failed, "
 		       "err = %d\n", -err);
-		goto out_close1;
-	}
+		जाओ out_बंद1;
+	पूर्ण
 
-	p = setup_initial_poll(l_sigio_private[1]);
-	if (!p)
-		goto out_close2;
+	p = setup_initial_poll(l_sigio_निजी[1]);
+	अगर (!p)
+		जाओ out_बंद2;
 
 	sigio_lock();
 
@@ -311,240 +312,240 @@ static void write_sigio_workaround(void)
 	 * Did we race? Don't try to optimize this, please, it's not so likely
 	 * to happen, and no more than once at the boot.
 	 */
-	if (write_sigio_pid != -1)
-		goto out_free;
+	अगर (ग_लिखो_sigio_pid != -1)
+		जाओ out_मुक्त;
 
-	current_poll = ((struct pollfds) { .poll 	= p,
+	current_poll = ((काष्ठा pollfds) अणु .poll 	= p,
 					   .used 	= 1,
-					   .size 	= 1 });
+					   .size 	= 1 पूर्ण);
 
-	if (write_sigio_irq(l_write_sigio_fds[0]))
-		goto out_clear_poll;
+	अगर (ग_लिखो_sigio_irq(l_ग_लिखो_sigio_fds[0]))
+		जाओ out_clear_poll;
 
-	memcpy(write_sigio_fds, l_write_sigio_fds, sizeof(l_write_sigio_fds));
-	memcpy(sigio_private, l_sigio_private, sizeof(l_sigio_private));
+	स_नकल(ग_लिखो_sigio_fds, l_ग_लिखो_sigio_fds, माप(l_ग_लिखो_sigio_fds));
+	स_नकल(sigio_निजी, l_sigio_निजी, माप(l_sigio_निजी));
 
-	write_sigio_pid = run_helper_thread(write_sigio_thread, NULL,
-					    CLONE_FILES | CLONE_VM,
-					    &write_sigio_stack);
+	ग_लिखो_sigio_pid = run_helper_thपढ़ो(ग_लिखो_sigio_thपढ़ो, शून्य,
+					    CLONE_खाताS | CLONE_VM,
+					    &ग_लिखो_sigio_stack);
 
-	if (write_sigio_pid < 0)
-		goto out_clear;
+	अगर (ग_लिखो_sigio_pid < 0)
+		जाओ out_clear;
 
 	sigio_unlock();
-	return;
+	वापस;
 
 out_clear:
-	write_sigio_pid = -1;
-	write_sigio_fds[0] = -1;
-	write_sigio_fds[1] = -1;
-	sigio_private[0] = -1;
-	sigio_private[1] = -1;
+	ग_लिखो_sigio_pid = -1;
+	ग_लिखो_sigio_fds[0] = -1;
+	ग_लिखो_sigio_fds[1] = -1;
+	sigio_निजी[0] = -1;
+	sigio_निजी[1] = -1;
 out_clear_poll:
-	current_poll = ((struct pollfds) { .poll	= NULL,
+	current_poll = ((काष्ठा pollfds) अणु .poll	= शून्य,
 					   .size	= 0,
-					   .used	= 0 });
-out_free:
+					   .used	= 0 पूर्ण);
+out_मुक्त:
 	sigio_unlock();
-	kfree(p);
-out_close2:
-	close(l_sigio_private[0]);
-	close(l_sigio_private[1]);
-out_close1:
-	close(l_write_sigio_fds[0]);
-	close(l_write_sigio_fds[1]);
-}
+	kमुक्त(p);
+out_बंद2:
+	बंद(l_sigio_निजी[0]);
+	बंद(l_sigio_निजी[1]);
+out_बंद1:
+	बंद(l_ग_लिखो_sigio_fds[0]);
+	बंद(l_ग_लिखो_sigio_fds[1]);
+पूर्ण
 
-void sigio_broken(int fd)
-{
-	int err;
+व्योम sigio_broken(पूर्णांक fd)
+अणु
+	पूर्णांक err;
 
-	write_sigio_workaround();
+	ग_लिखो_sigio_workaround();
 
 	sigio_lock();
 	err = need_poll(&all_sigio_fds, all_sigio_fds.used + 1);
-	if (err) {
-		printk(UM_KERN_ERR "maybe_sigio_broken - failed to add pollfd "
+	अगर (err) अणु
+		prपूर्णांकk(UM_KERN_ERR "maybe_sigio_broken - failed to add pollfd "
 		       "for descriptor %d\n", fd);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	all_sigio_fds.poll[all_sigio_fds.used++] =
-		((struct pollfd) { .fd  	= fd,
+		((काष्ठा pollfd) अणु .fd  	= fd,
 				   .events 	= POLLIN,
-				   .revents 	= 0 });
+				   .revents 	= 0 पूर्ण);
 out:
 	sigio_unlock();
-}
+पूर्ण
 
 /* Changed during early boot */
-static int pty_output_sigio;
+अटल पूर्णांक pty_output_sigio;
 
-void maybe_sigio_broken(int fd)
-{
-	if (!isatty(fd))
-		return;
+व्योम maybe_sigio_broken(पूर्णांक fd)
+अणु
+	अगर (!isatty(fd))
+		वापस;
 
-	if (pty_output_sigio)
-		return;
+	अगर (pty_output_sigio)
+		वापस;
 
 	sigio_broken(fd);
-}
+पूर्ण
 
-static void sigio_cleanup(void)
-{
-	if (write_sigio_pid == -1)
-		return;
+अटल व्योम sigio_cleanup(व्योम)
+अणु
+	अगर (ग_लिखो_sigio_pid == -1)
+		वापस;
 
-	os_kill_process(write_sigio_pid, 1);
-	free_stack(write_sigio_stack, 0);
-	write_sigio_pid = -1;
-}
+	os_समाप्त_process(ग_लिखो_sigio_pid, 1);
+	मुक्त_stack(ग_लिखो_sigio_stack, 0);
+	ग_लिखो_sigio_pid = -1;
+पूर्ण
 
-__uml_exitcall(sigio_cleanup);
+__uml_निकासcall(sigio_cleanup);
 
 /* Used as a flag during SIGIO testing early in boot */
-static int got_sigio;
+अटल पूर्णांक got_sigio;
 
-static void __init handler(int sig)
-{
+अटल व्योम __init handler(पूर्णांक sig)
+अणु
 	got_sigio = 1;
-}
+पूर्ण
 
-struct openpty_arg {
-	int master;
-	int slave;
-	int err;
-};
+काष्ठा खोलोpty_arg अणु
+	पूर्णांक master;
+	पूर्णांक slave;
+	पूर्णांक err;
+पूर्ण;
 
-static void openpty_cb(void *arg)
-{
-	struct openpty_arg *info = arg;
+अटल व्योम खोलोpty_cb(व्योम *arg)
+अणु
+	काष्ठा खोलोpty_arg *info = arg;
 
 	info->err = 0;
-	if (openpty(&info->master, &info->slave, NULL, NULL, NULL))
-		info->err = -errno;
-}
+	अगर (खोलोpty(&info->master, &info->slave, शून्य, शून्य, शून्य))
+		info->err = -त्रुटि_सं;
+पूर्ण
 
-static int async_pty(int master, int slave)
-{
-	int flags;
+अटल पूर्णांक async_pty(पूर्णांक master, पूर्णांक slave)
+अणु
+	पूर्णांक flags;
 
 	flags = fcntl(master, F_GETFL);
-	if (flags < 0)
-		return -errno;
+	अगर (flags < 0)
+		वापस -त्रुटि_सं;
 
-	if ((fcntl(master, F_SETFL, flags | O_NONBLOCK | O_ASYNC) < 0) ||
+	अगर ((fcntl(master, F_SETFL, flags | O_NONBLOCK | O_ASYNC) < 0) ||
 	    (fcntl(master, F_SETOWN, os_getpid()) < 0))
-		return -errno;
+		वापस -त्रुटि_सं;
 
-	if ((fcntl(slave, F_SETFL, flags | O_NONBLOCK) < 0))
-		return -errno;
+	अगर ((fcntl(slave, F_SETFL, flags | O_NONBLOCK) < 0))
+		वापस -त्रुटि_सं;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init check_one_sigio(void (*proc)(int, int))
-{
-	struct sigaction old, new;
-	struct openpty_arg pty = { .master = -1, .slave = -1 };
-	int master, slave, err;
+अटल व्योम __init check_one_sigio(व्योम (*proc)(पूर्णांक, पूर्णांक))
+अणु
+	काष्ठा sigaction old, new;
+	काष्ठा खोलोpty_arg pty = अणु .master = -1, .slave = -1 पूर्ण;
+	पूर्णांक master, slave, err;
 
-	initial_thread_cb(openpty_cb, &pty);
-	if (pty.err) {
-		printk(UM_KERN_ERR "check_one_sigio failed, errno = %d\n",
+	initial_thपढ़ो_cb(खोलोpty_cb, &pty);
+	अगर (pty.err) अणु
+		prपूर्णांकk(UM_KERN_ERR "check_one_sigio failed, errno = %d\n",
 		       -pty.err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	master = pty.master;
 	slave = pty.slave;
 
-	if ((master == -1) || (slave == -1)) {
-		printk(UM_KERN_ERR "check_one_sigio failed to allocate a "
+	अगर ((master == -1) || (slave == -1)) अणु
+		prपूर्णांकk(UM_KERN_ERR "check_one_sigio failed to allocate a "
 		       "pty\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Not now, but complain so we now where we failed. */
 	err = raw(master);
-	if (err < 0) {
-		printk(UM_KERN_ERR "check_one_sigio : raw failed, errno = %d\n",
+	अगर (err < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "check_one_sigio : raw failed, errno = %d\n",
 		      -err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = async_pty(master, slave);
-	if (err < 0) {
-		printk(UM_KERN_ERR "check_one_sigio : sigio_async failed, "
+	अगर (err < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "check_one_sigio : sigio_async failed, "
 		       "err = %d\n", -err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (sigaction(SIGIO, NULL, &old) < 0) {
-		printk(UM_KERN_ERR "check_one_sigio : sigaction 1 failed, "
-		       "errno = %d\n", errno);
-		return;
-	}
+	अगर (sigaction(SIGIO, शून्य, &old) < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "check_one_sigio : sigaction 1 failed, "
+		       "errno = %d\n", त्रुटि_सं);
+		वापस;
+	पूर्ण
 
 	new = old;
 	new.sa_handler = handler;
-	if (sigaction(SIGIO, &new, NULL) < 0) {
-		printk(UM_KERN_ERR "check_one_sigio : sigaction 2 failed, "
-		       "errno = %d\n", errno);
-		return;
-	}
+	अगर (sigaction(SIGIO, &new, शून्य) < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "check_one_sigio : sigaction 2 failed, "
+		       "errno = %d\n", त्रुटि_सं);
+		वापस;
+	पूर्ण
 
 	got_sigio = 0;
 	(*proc)(master, slave);
 
-	close(master);
-	close(slave);
+	बंद(master);
+	बंद(slave);
 
-	if (sigaction(SIGIO, &old, NULL) < 0)
-		printk(UM_KERN_ERR "check_one_sigio : sigaction 3 failed, "
-		       "errno = %d\n", errno);
-}
+	अगर (sigaction(SIGIO, &old, शून्य) < 0)
+		prपूर्णांकk(UM_KERN_ERR "check_one_sigio : sigaction 3 failed, "
+		       "errno = %d\n", त्रुटि_सं);
+पूर्ण
 
-static void tty_output(int master, int slave)
-{
-	int n;
-	char buf[512];
+अटल व्योम tty_output(पूर्णांक master, पूर्णांक slave)
+अणु
+	पूर्णांक n;
+	अक्षर buf[512];
 
-	printk(UM_KERN_INFO "Checking that host ptys support output SIGIO...");
+	prपूर्णांकk(UM_KERN_INFO "Checking that host ptys support output SIGIO...");
 
-	memset(buf, 0, sizeof(buf));
+	स_रखो(buf, 0, माप(buf));
 
-	while (write(master, buf, sizeof(buf)) > 0) ;
-	if (errno != EAGAIN)
-		printk(UM_KERN_ERR "tty_output : write failed, errno = %d\n",
-		       errno);
-	while (((n = read(slave, buf, sizeof(buf))) > 0) &&
-	       !({ barrier(); got_sigio; }))
+	जबतक (ग_लिखो(master, buf, माप(buf)) > 0) ;
+	अगर (त्रुटि_सं != EAGAIN)
+		prपूर्णांकk(UM_KERN_ERR "tty_output : write failed, errno = %d\n",
+		       त्रुटि_सं);
+	जबतक (((n = पढ़ो(slave, buf, माप(buf))) > 0) &&
+	       !(अणु barrier(); got_sigio; पूर्ण))
 		;
 
-	if (got_sigio) {
-		printk(UM_KERN_CONT "Yes\n");
+	अगर (got_sigio) अणु
+		prपूर्णांकk(UM_KERN_CONT "Yes\n");
 		pty_output_sigio = 1;
-	} else if (n == -EAGAIN)
-		printk(UM_KERN_CONT "No, enabling workaround\n");
-	else
-		printk(UM_KERN_CONT "tty_output : read failed, err = %d\n", n);
-}
+	पूर्ण अन्यथा अगर (n == -EAGAIN)
+		prपूर्णांकk(UM_KERN_CONT "No, enabling workaround\n");
+	अन्यथा
+		prपूर्णांकk(UM_KERN_CONT "tty_output : read failed, err = %d\n", n);
+पूर्ण
 
-static void __init check_sigio(void)
-{
-	if ((access("/dev/ptmx", R_OK) < 0) &&
-	    (access("/dev/ptyp0", R_OK) < 0)) {
-		printk(UM_KERN_WARNING "No pseudo-terminals available - "
+अटल व्योम __init check_sigio(व्योम)
+अणु
+	अगर ((access("/dev/ptmx", R_OK) < 0) &&
+	    (access("/dev/ptyp0", R_OK) < 0)) अणु
+		prपूर्णांकk(UM_KERN_WARNING "No pseudo-terminals available - "
 		       "skipping pty SIGIO check\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	check_one_sigio(tty_output);
-}
+पूर्ण
 
-/* Here because it only does the SIGIO testing for now */
-void __init os_check_bugs(void)
-{
+/* Here because it only करोes the SIGIO testing क्रम now */
+व्योम __init os_check_bugs(व्योम)
+अणु
 	check_sigio();
-}
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,154 +22,154 @@
  *
  */
 
-#include "smumgr.h"
-#include "smu9_smumgr.h"
-#include "vega10_inc.h"
-#include "soc15_common.h"
-#include "pp_debug.h"
+#समावेश "smumgr.h"
+#समावेश "smu9_smumgr.h"
+#समावेश "vega10_inc.h"
+#समावेश "soc15_common.h"
+#समावेश "pp_debug.h"
 
 
 /* MP Apertures */
-#define MP0_Public                  0x03800000
-#define MP0_SRAM                    0x03900000
-#define MP1_Public                  0x03b00000
-#define MP1_SRAM                    0x03c00004
+#घोषणा MP0_Public                  0x03800000
+#घोषणा MP0_SRAM                    0x03900000
+#घोषणा MP1_Public                  0x03b00000
+#घोषणा MP1_SRAM                    0x03c00004
 
-#define smnMP1_FIRMWARE_FLAGS                                                                           0x3010028
+#घोषणा smnMP1_FIRMWARE_FLAGS                                                                           0x3010028
 
-bool smu9_is_smc_ram_running(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	uint32_t mp1_fw_flags;
+bool smu9_is_smc_ram_running(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	uपूर्णांक32_t mp1_fw_flags;
 
 	mp1_fw_flags = RREG32_PCIE(MP1_Public |
 				   (smnMP1_FIRMWARE_FLAGS & 0xffffffff));
 
-	if (mp1_fw_flags & MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK)
-		return true;
+	अगर (mp1_fw_flags & MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Check if SMC has responded to previous message.
+ * Check अगर SMC has responded to previous message.
  *
- * @param    smumgr  the address of the powerplay hardware manager.
- * @return   TRUE    SMC has responded, FALSE otherwise.
+ * @param    smumgr  the address of the घातerplay hardware manager.
+ * @वापस   TRUE    SMC has responded, FALSE otherwise.
  */
-static uint32_t smu9_wait_for_response(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	uint32_t reg;
-	uint32_t ret;
+अटल uपूर्णांक32_t smu9_रुको_क्रम_response(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	uपूर्णांक32_t reg;
+	uपूर्णांक32_t ret;
 
-	if (hwmgr->pp_one_vf) {
+	अगर (hwmgr->pp_one_vf) अणु
 		reg = SOC15_REG_OFFSET(MP1, 0, mmMP1_SMN_C2PMSG_103);
 
-		ret = phm_wait_for_register_unequal(hwmgr, reg,
+		ret = phm_रुको_क्रम_रेजिस्टर_unequal(hwmgr, reg,
 				0, MP1_C2PMSG_103__CONTENT_MASK);
 
-		if (ret)
+		अगर (ret)
 			pr_err("No response from smu\n");
 
-		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_103);
-	} else {
+		वापस RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_103);
+	पूर्ण अन्यथा अणु
 		reg = SOC15_REG_OFFSET(MP1, 0, mmMP1_SMN_C2PMSG_90);
 
-		ret = phm_wait_for_register_unequal(hwmgr, reg,
+		ret = phm_रुको_क्रम_रेजिस्टर_unequal(hwmgr, reg,
 				0, MP1_C2PMSG_90__CONTENT_MASK);
 
-		if (ret)
+		अगर (ret)
 			pr_err("No response from smu\n");
-		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
-	}
-}
+		वापस RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
+	पूर्ण
+पूर्ण
 
 /*
- * Send a message to the SMC, and do not wait for its response.
- * @param    smumgr  the address of the powerplay hardware manager.
+ * Send a message to the SMC, and करो not रुको क्रम its response.
+ * @param    smumgr  the address of the घातerplay hardware manager.
  * @param    msg the message to send.
- * @return   Always return 0.
+ * @वापस   Always वापस 0.
  */
-static int smu9_send_msg_to_smc_without_waiting(struct pp_hwmgr *hwmgr,
-						uint16_t msg)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
+अटल पूर्णांक smu9_send_msg_to_smc_without_रुकोing(काष्ठा pp_hwmgr *hwmgr,
+						uपूर्णांक16_t msg)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
 
-	if (hwmgr->pp_one_vf) {
+	अगर (hwmgr->pp_one_vf) अणु
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_101, msg);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_66, msg);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Send a message to the SMC, and wait for its response.
- * @param    hwmgr  the address of the powerplay hardware manager.
+ * Send a message to the SMC, and रुको क्रम its response.
+ * @param    hwmgr  the address of the घातerplay hardware manager.
  * @param    msg the message to send.
- * @return   Always return 0.
+ * @वापस   Always वापस 0.
  */
-int smu9_send_msg_to_smc(struct pp_hwmgr *hwmgr, uint16_t msg)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	uint32_t ret;
+पूर्णांक smu9_send_msg_to_smc(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक16_t msg)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	uपूर्णांक32_t ret;
 
-	smu9_wait_for_response(hwmgr);
+	smu9_रुको_क्रम_response(hwmgr);
 
-	if (hwmgr->pp_one_vf)
+	अगर (hwmgr->pp_one_vf)
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_103, 0);
-	else
+	अन्यथा
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
 
-	smu9_send_msg_to_smc_without_waiting(hwmgr, msg);
+	smu9_send_msg_to_smc_without_रुकोing(hwmgr, msg);
 
-	ret = smu9_wait_for_response(hwmgr);
-	if (ret != 1)
+	ret = smu9_रुको_क्रम_response(hwmgr);
+	अगर (ret != 1)
 		pr_err("Failed to send message: 0x%x, ret value: 0x%x\n", msg, ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Send a message to the SMC with parameter
- * @param    hwmgr:  the address of the powerplay hardware manager.
+ * @param    hwmgr:  the address of the घातerplay hardware manager.
  * @param    msg: the message to send.
  * @param    parameter: the parameter to send
- * @return   Always return 0.
+ * @वापस   Always वापस 0.
  */
-int smu9_send_msg_to_smc_with_parameter(struct pp_hwmgr *hwmgr,
-					uint16_t msg, uint32_t parameter)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	uint32_t ret;
+पूर्णांक smu9_send_msg_to_smc_with_parameter(काष्ठा pp_hwmgr *hwmgr,
+					uपूर्णांक16_t msg, uपूर्णांक32_t parameter)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	uपूर्णांक32_t ret;
 
-	smu9_wait_for_response(hwmgr);
+	smu9_रुको_क्रम_response(hwmgr);
 
-	if (hwmgr->pp_one_vf) {
+	अगर (hwmgr->pp_one_vf) अणु
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_103, 0);
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_102, parameter);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
 		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82, parameter);
-	}
+	पूर्ण
 
-	smu9_send_msg_to_smc_without_waiting(hwmgr, msg);
+	smu9_send_msg_to_smc_without_रुकोing(hwmgr, msg);
 
-	ret = smu9_wait_for_response(hwmgr);
-	if (ret != 1)
+	ret = smu9_रुको_क्रम_response(hwmgr);
+	अगर (ret != 1)
 		pr_err("Failed message: 0x%x, input parameter: 0x%x, error code: 0x%x\n", msg, parameter, ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-uint32_t smu9_get_argument(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
+uपूर्णांक32_t smu9_get_argument(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
 
-	if (hwmgr->pp_one_vf)
-		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_102);
-	else
-		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82);
-}
+	अगर (hwmgr->pp_one_vf)
+		वापस RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_102);
+	अन्यथा
+		वापस RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82);
+पूर्ण

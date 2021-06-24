@@ -1,377 +1,378 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * IDT RXS Gen.3 Serial RapidIO switch family support
+ * IDT RXS Gen.3 Serial RapidIO चयन family support
  *
  * Copyright 2016 Integrated Device Technology, Inc.
  */
 
-#include <linux/stat.h>
-#include <linux/module.h>
-#include <linux/rio.h>
-#include <linux/rio_drv.h>
-#include <linux/rio_ids.h>
-#include <linux/delay.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/module.h>
+#समावेश <linux/rपन.स>
+#समावेश <linux/rio_drv.h>
+#समावेश <linux/rio_ids.h>
+#समावेश <linux/delay.h>
 
-#include <asm/page.h>
-#include "../rio.h"
+#समावेश <यंत्र/page.h>
+#समावेश "../rio.h"
 
-#define RIO_EM_PW_STAT		0x40020
-#define RIO_PW_CTL		0x40204
-#define RIO_PW_CTL_PW_TMR		0xffffff00
-#define RIO_PW_ROUTE		0x40208
+#घोषणा RIO_EM_PW_STAT		0x40020
+#घोषणा RIO_PW_CTL		0x40204
+#घोषणा RIO_PW_CTL_PW_TMR		0xffffff00
+#घोषणा RIO_PW_ROUTE		0x40208
 
-#define RIO_EM_DEV_INT_EN	0x40030
+#घोषणा RIO_EM_DEV_INT_EN	0x40030
 
-#define RIO_PLM_SPx_IMP_SPEC_CTL(x)	(0x10100 + (x)*0x100)
-#define RIO_PLM_SPx_IMP_SPEC_CTL_SOFT_RST	0x02000000
+#घोषणा RIO_PLM_SPx_IMP_SPEC_CTL(x)	(0x10100 + (x)*0x100)
+#घोषणा RIO_PLM_SPx_IMP_SPEC_CTL_SOFT_RST	0x02000000
 
-#define RIO_PLM_SPx_PW_EN(x)	(0x10118 + (x)*0x100)
-#define RIO_PLM_SPx_PW_EN_OK2U	0x40000000
-#define RIO_PLM_SPx_PW_EN_LINIT 0x10000000
+#घोषणा RIO_PLM_SPx_PW_EN(x)	(0x10118 + (x)*0x100)
+#घोषणा RIO_PLM_SPx_PW_EN_OK2U	0x40000000
+#घोषणा RIO_PLM_SPx_PW_EN_LINIT 0x10000000
 
-#define RIO_BC_L2_Gn_ENTRYx_CSR(n, x)	(0x31000 + (n)*0x400 + (x)*0x4)
-#define RIO_SPx_L2_Gn_ENTRYy_CSR(x, n, y) \
+#घोषणा RIO_BC_L2_Gn_ENTRYx_CSR(n, x)	(0x31000 + (n)*0x400 + (x)*0x4)
+#घोषणा RIO_SPx_L2_Gn_ENTRYy_CSR(x, n, y) \
 				(0x51000 + (x)*0x2000 + (n)*0x400 + (y)*0x4)
 
-static int
-idtg3_route_add_entry(struct rio_mport *mport, u16 destid, u8 hopcount,
+अटल पूर्णांक
+idtg3_route_add_entry(काष्ठा rio_mport *mport, u16 destid, u8 hopcount,
 		       u16 table, u16 route_destid, u8 route_port)
-{
+अणु
 	u32 rval;
 	u32 entry = route_port;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	pr_debug("RIO: %s t=0x%x did_%x to p_%x\n",
 		 __func__, table, route_destid, entry);
 
-	if (route_destid > 0xFF)
-		return -EINVAL;
+	अगर (route_destid > 0xFF)
+		वापस -EINVAL;
 
-	if (route_port == RIO_INVALID_ROUTE)
+	अगर (route_port == RIO_INVALID_ROUTE)
 		entry = RIO_RT_ENTRY_DROP_PKT;
 
-	if (table == RIO_GLOBAL_TABLE) {
-		/* Use broadcast register to update all per-port tables */
-		err = rio_mport_write_config_32(mport, destid, hopcount,
+	अगर (table == RIO_GLOBAL_TABLE) अणु
+		/* Use broadcast रेजिस्टर to update all per-port tables */
+		err = rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
 				RIO_BC_L2_Gn_ENTRYx_CSR(0, route_destid),
 				entry);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/*
-	 * Verify that specified port/table number is valid
+	 * Verअगरy that specअगरied port/table number is valid
 	 */
-	err = rio_mport_read_config_32(mport, destid, hopcount,
+	err = rio_mport_पढ़ो_config_32(mport, destid, hopcount,
 				       RIO_SWP_INFO_CAR, &rval);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (table >= RIO_GET_TOTAL_PORTS(rval))
-		return -EINVAL;
+	अगर (table >= RIO_GET_TOTAL_PORTS(rval))
+		वापस -EINVAL;
 
-	err = rio_mport_write_config_32(mport, destid, hopcount,
+	err = rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
 			RIO_SPx_L2_Gn_ENTRYy_CSR(table, 0, route_destid),
 			entry);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int
-idtg3_route_get_entry(struct rio_mport *mport, u16 destid, u8 hopcount,
+अटल पूर्णांक
+idtg3_route_get_entry(काष्ठा rio_mport *mport, u16 destid, u8 hopcount,
 		       u16 table, u16 route_destid, u8 *route_port)
-{
+अणु
 	u32 rval;
-	int err;
+	पूर्णांक err;
 
-	if (route_destid > 0xFF)
-		return -EINVAL;
+	अगर (route_destid > 0xFF)
+		वापस -EINVAL;
 
-	err = rio_mport_read_config_32(mport, destid, hopcount,
+	err = rio_mport_पढ़ो_config_32(mport, destid, hopcount,
 				       RIO_SWP_INFO_CAR, &rval);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
-	 * This switch device does not have the dedicated global routing table.
-	 * It is substituted by reading routing table of the ingress port of
-	 * maintenance read requests.
+	 * This चयन device करोes not have the dedicated global routing table.
+	 * It is substituted by पढ़ोing routing table of the ingress port of
+	 * मुख्यtenance पढ़ो requests.
 	 */
-	if (table == RIO_GLOBAL_TABLE)
+	अगर (table == RIO_GLOBAL_TABLE)
 		table = RIO_GET_PORT_NUM(rval);
-	else if (table >= RIO_GET_TOTAL_PORTS(rval))
-		return -EINVAL;
+	अन्यथा अगर (table >= RIO_GET_TOTAL_PORTS(rval))
+		वापस -EINVAL;
 
-	err = rio_mport_read_config_32(mport, destid, hopcount,
+	err = rio_mport_पढ़ो_config_32(mport, destid, hopcount,
 			RIO_SPx_L2_Gn_ENTRYy_CSR(table, 0, route_destid),
 			&rval);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (rval == RIO_RT_ENTRY_DROP_PKT)
+	अगर (rval == RIO_RT_ENTRY_DROP_PKT)
 		*route_port = RIO_INVALID_ROUTE;
-	else
+	अन्यथा
 		*route_port = (u8)rval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-idtg3_route_clr_table(struct rio_mport *mport, u16 destid, u8 hopcount,
+अटल पूर्णांक
+idtg3_route_clr_table(काष्ठा rio_mport *mport, u16 destid, u8 hopcount,
 		       u16 table)
-{
+अणु
 	u32 i;
 	u32 rval;
-	int err;
+	पूर्णांक err;
 
-	if (table == RIO_GLOBAL_TABLE) {
-		for (i = 0; i <= 0xff; i++) {
-			err = rio_mport_write_config_32(mport, destid, hopcount,
+	अगर (table == RIO_GLOBAL_TABLE) अणु
+		क्रम (i = 0; i <= 0xff; i++) अणु
+			err = rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
 						RIO_BC_L2_Gn_ENTRYx_CSR(0, i),
 						RIO_RT_ENTRY_DROP_PKT);
-			if (err)
-				break;
-		}
+			अगर (err)
+				अवरोध;
+		पूर्ण
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = rio_mport_read_config_32(mport, destid, hopcount,
+	err = rio_mport_पढ़ो_config_32(mport, destid, hopcount,
 				       RIO_SWP_INFO_CAR, &rval);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (table >= RIO_GET_TOTAL_PORTS(rval))
-		return -EINVAL;
+	अगर (table >= RIO_GET_TOTAL_PORTS(rval))
+		वापस -EINVAL;
 
-	for (i = 0; i <= 0xff; i++) {
-		err = rio_mport_write_config_32(mport, destid, hopcount,
+	क्रम (i = 0; i <= 0xff; i++) अणु
+		err = rio_mport_ग_लिखो_config_32(mport, destid, hopcount,
 					RIO_SPx_L2_Gn_ENTRYy_CSR(table, 0, i),
 					RIO_RT_ENTRY_DROP_PKT);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * This routine performs device-specific initialization only.
- * All standard EM configuration should be performed at upper level.
+ * This routine perक्रमms device-specअगरic initialization only.
+ * All standard EM configuration should be perक्रमmed at upper level.
  */
-static int
-idtg3_em_init(struct rio_dev *rdev)
-{
-	int i, tmp;
+अटल पूर्णांक
+idtg3_em_init(काष्ठा rio_dev *rdev)
+अणु
+	पूर्णांक i, पंचांगp;
 	u32 rval;
 
 	pr_debug("RIO: %s [%d:%d]\n", __func__, rdev->destid, rdev->hopcount);
 
-	/* Disable assertion of interrupt signal */
-	rio_write_config_32(rdev, RIO_EM_DEV_INT_EN, 0);
+	/* Disable निश्चितion of पूर्णांकerrupt संकेत */
+	rio_ग_लिखो_config_32(rdev, RIO_EM_DEV_INT_EN, 0);
 
-	/* Disable port-write event notifications during initialization */
-	rio_write_config_32(rdev, rdev->em_efptr + RIO_EM_PW_TX_CTRL,
+	/* Disable port-ग_लिखो event notअगरications during initialization */
+	rio_ग_लिखो_config_32(rdev, rdev->em_efptr + RIO_EM_PW_TX_CTRL,
 			    RIO_EM_PW_TX_CTRL_PW_DIS);
 
-	/* Configure Port-Write notifications for hot-swap events */
-	tmp = RIO_GET_TOTAL_PORTS(rdev->swpinfo);
-	for (i = 0; i < tmp; i++) {
+	/* Configure Port-Write notअगरications क्रम hot-swap events */
+	पंचांगp = RIO_GET_TOTAL_PORTS(rdev->swpinfo);
+	क्रम (i = 0; i < पंचांगp; i++) अणु
 
-		rio_read_config_32(rdev,
+		rio_पढ़ो_config_32(rdev,
 			RIO_DEV_PORT_N_ERR_STS_CSR(rdev, i),
 			&rval);
-		if (rval & RIO_PORT_N_ERR_STS_PORT_UA)
-			continue;
+		अगर (rval & RIO_PORT_N_ERR_STS_PORT_UA)
+			जारी;
 
-		/* Clear events signaled before enabling notification */
-		rio_write_config_32(rdev,
+		/* Clear events संकेतed beक्रमe enabling notअगरication */
+		rio_ग_लिखो_config_32(rdev,
 			rdev->em_efptr + RIO_EM_PN_ERR_DETECT(i), 0);
 
-		/* Enable event notifications */
-		rio_write_config_32(rdev,
+		/* Enable event notअगरications */
+		rio_ग_लिखो_config_32(rdev,
 			rdev->em_efptr + RIO_EM_PN_ERRRATE_EN(i),
 			RIO_EM_PN_ERRRATE_EN_OK2U | RIO_EM_PN_ERRRATE_EN_U2OK);
-		/* Enable port-write generation on events */
-		rio_write_config_32(rdev, RIO_PLM_SPx_PW_EN(i),
+		/* Enable port-ग_लिखो generation on events */
+		rio_ग_लिखो_config_32(rdev, RIO_PLM_SPx_PW_EN(i),
 			RIO_PLM_SPx_PW_EN_OK2U | RIO_PLM_SPx_PW_EN_LINIT);
 
-	}
+	पूर्ण
 
 	/* Set Port-Write destination port */
-	tmp = RIO_GET_PORT_NUM(rdev->swpinfo);
-	rio_write_config_32(rdev, RIO_PW_ROUTE, 1 << tmp);
+	पंचांगp = RIO_GET_PORT_NUM(rdev->swpinfo);
+	rio_ग_लिखो_config_32(rdev, RIO_PW_ROUTE, 1 << पंचांगp);
 
 
-	/* Enable sending port-write event notifications */
-	rio_write_config_32(rdev, rdev->em_efptr + RIO_EM_PW_TX_CTRL, 0);
+	/* Enable sending port-ग_लिखो event notअगरications */
+	rio_ग_लिखो_config_32(rdev, rdev->em_efptr + RIO_EM_PW_TX_CTRL, 0);
 
 	/* set TVAL = ~50us */
-	rio_write_config_32(rdev,
+	rio_ग_लिखो_config_32(rdev,
 		rdev->phys_efptr + RIO_PORT_LINKTO_CTL_CSR, 0x8e << 8);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * idtg3_em_handler - device-specific error handler
+ * idtg3_em_handler - device-specअगरic error handler
  *
- * If the link is down (PORT_UNINIT) does nothing - this is considered
+ * If the link is करोwn (PORT_UNINIT) करोes nothing - this is considered
  * as link partner removal from the port.
  *
  * If the link is up (PORT_OK) - situation is handled as *new* device insertion.
- * In this case ERR_STOP bits are cleared by issuing soft reset command to the
+ * In this हाल ERR_STOP bits are cleared by issuing soft reset command to the
  * reporting port. Inbound and outbound ackIDs are cleared by the reset as well.
  * This way the port is synchronized with freshly inserted device (assuming it
- * was reset/powered-up on insertion).
+ * was reset/घातered-up on insertion).
  *
  * TODO: This is not sufficient in a situation when a link between two devices
- * was down and up again (e.g. cable disconnect). For that situation full ackID
+ * was करोwn and up again (e.g. cable disconnect). For that situation full ackID
  * realignment process has to be implemented.
  */
-static int
-idtg3_em_handler(struct rio_dev *rdev, u8 pnum)
-{
+अटल पूर्णांक
+idtg3_em_handler(काष्ठा rio_dev *rdev, u8 pnum)
+अणु
 	u32 err_status;
 	u32 rval;
 
-	rio_read_config_32(rdev,
+	rio_पढ़ो_config_32(rdev,
 			RIO_DEV_PORT_N_ERR_STS_CSR(rdev, pnum),
 			&err_status);
 
-	/* Do nothing for device/link removal */
-	if (err_status & RIO_PORT_N_ERR_STS_PORT_UNINIT)
-		return 0;
+	/* Do nothing क्रम device/link removal */
+	अगर (err_status & RIO_PORT_N_ERR_STS_PORT_UNINIT)
+		वापस 0;
 
 	/* When link is OK we have a device insertion.
-	 * Request port soft reset to clear errors if they present.
+	 * Request port soft reset to clear errors अगर they present.
 	 * Inbound and outbound ackIDs will be 0 after reset.
 	 */
-	if (err_status & (RIO_PORT_N_ERR_STS_OUT_ES |
-				RIO_PORT_N_ERR_STS_INP_ES)) {
-		rio_read_config_32(rdev, RIO_PLM_SPx_IMP_SPEC_CTL(pnum), &rval);
-		rio_write_config_32(rdev, RIO_PLM_SPx_IMP_SPEC_CTL(pnum),
+	अगर (err_status & (RIO_PORT_N_ERR_STS_OUT_ES |
+				RIO_PORT_N_ERR_STS_INP_ES)) अणु
+		rio_पढ़ो_config_32(rdev, RIO_PLM_SPx_IMP_SPEC_CTL(pnum), &rval);
+		rio_ग_लिखो_config_32(rdev, RIO_PLM_SPx_IMP_SPEC_CTL(pnum),
 				    rval | RIO_PLM_SPx_IMP_SPEC_CTL_SOFT_RST);
 		udelay(10);
-		rio_write_config_32(rdev, RIO_PLM_SPx_IMP_SPEC_CTL(pnum), rval);
+		rio_ग_लिखो_config_32(rdev, RIO_PLM_SPx_IMP_SPEC_CTL(pnum), rval);
 		msleep(500);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct rio_switch_ops idtg3_switch_ops = {
+अटल काष्ठा rio_चयन_ops idtg3_चयन_ops = अणु
 	.owner = THIS_MODULE,
 	.add_entry = idtg3_route_add_entry,
 	.get_entry = idtg3_route_get_entry,
 	.clr_table = idtg3_route_clr_table,
 	.em_init   = idtg3_em_init,
 	.em_handle = idtg3_em_handler,
-};
+पूर्ण;
 
-static int idtg3_probe(struct rio_dev *rdev, const struct rio_device_id *id)
-{
+अटल पूर्णांक idtg3_probe(काष्ठा rio_dev *rdev, स्थिर काष्ठा rio_device_id *id)
+अणु
 	pr_debug("RIO: %s for %s\n", __func__, rio_name(rdev));
 
-	spin_lock(&rdev->rswitch->lock);
+	spin_lock(&rdev->rचयन->lock);
 
-	if (rdev->rswitch->ops) {
-		spin_unlock(&rdev->rswitch->lock);
-		return -EINVAL;
-	}
+	अगर (rdev->rचयन->ops) अणु
+		spin_unlock(&rdev->rचयन->lock);
+		वापस -EINVAL;
+	पूर्ण
 
-	rdev->rswitch->ops = &idtg3_switch_ops;
+	rdev->rचयन->ops = &idtg3_चयन_ops;
 
-	if (rdev->do_enum) {
+	अगर (rdev->करो_क्रमागत) अणु
 		/* Disable hierarchical routing support: Existing fabric
-		 * enumeration/discovery process (see rio-scan.c) uses 8-bit
+		 * क्रमागतeration/discovery process (see rio-scan.c) uses 8-bit
 		 * flat destination ID routing only.
 		 */
-		rio_write_config_32(rdev, 0x5000 + RIO_BC_RT_CTL_CSR, 0);
-	}
+		rio_ग_लिखो_config_32(rdev, 0x5000 + RIO_BC_RT_CTL_CSR, 0);
+	पूर्ण
 
-	spin_unlock(&rdev->rswitch->lock);
+	spin_unlock(&rdev->rचयन->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void idtg3_remove(struct rio_dev *rdev)
-{
+अटल व्योम idtg3_हटाओ(काष्ठा rio_dev *rdev)
+अणु
 	pr_debug("RIO: %s for %s\n", __func__, rio_name(rdev));
-	spin_lock(&rdev->rswitch->lock);
-	if (rdev->rswitch->ops == &idtg3_switch_ops)
-		rdev->rswitch->ops = NULL;
-	spin_unlock(&rdev->rswitch->lock);
-}
+	spin_lock(&rdev->rचयन->lock);
+	अगर (rdev->rचयन->ops == &idtg3_चयन_ops)
+		rdev->rचयन->ops = शून्य;
+	spin_unlock(&rdev->rचयन->lock);
+पूर्ण
 
 /*
- * Gen3 switches repeat sending PW messages until a corresponding event flag
- * is cleared. Use shutdown notification to disable generation of port-write
- * messages if their destination node is shut down.
+ * Gen3 चयनes repeat sending PW messages until a corresponding event flag
+ * is cleared. Use shutकरोwn notअगरication to disable generation of port-ग_लिखो
+ * messages अगर their destination node is shut करोwn.
  */
-static void idtg3_shutdown(struct rio_dev *rdev)
-{
-	int i;
+अटल व्योम idtg3_shutकरोwn(काष्ठा rio_dev *rdev)
+अणु
+	पूर्णांक i;
 	u32 rval;
 	u16 destid;
 
-	/* Currently the enumerator node acts also as PW handler */
-	if (!rdev->do_enum)
-		return;
+	/* Currently the क्रमागतerator node acts also as PW handler */
+	अगर (!rdev->करो_क्रमागत)
+		वापस;
 
 	pr_debug("RIO: %s(%s)\n", __func__, rio_name(rdev));
 
-	rio_read_config_32(rdev, RIO_PW_ROUTE, &rval);
+	rio_पढ़ो_config_32(rdev, RIO_PW_ROUTE, &rval);
 	i = RIO_GET_PORT_NUM(rdev->swpinfo);
 
-	/* Check port-write destination port */
-	if (!((1 << i) & rval))
-		return;
+	/* Check port-ग_लिखो destination port */
+	अगर (!((1 << i) & rval))
+		वापस;
 
-	/* Disable sending port-write event notifications if PW destID
-	 * matches to one of the enumerator node
+	/* Disable sending port-ग_लिखो event notअगरications अगर PW destID
+	 * matches to one of the क्रमागतerator node
 	 */
-	rio_read_config_32(rdev, rdev->em_efptr + RIO_EM_PW_TGT_DEVID, &rval);
+	rio_पढ़ो_config_32(rdev, rdev->em_efptr + RIO_EM_PW_TGT_DEVID, &rval);
 
-	if (rval & RIO_EM_PW_TGT_DEVID_DEV16)
+	अगर (rval & RIO_EM_PW_TGT_DEVID_DEV16)
 		destid = rval >> 16;
-	else
+	अन्यथा
 		destid = ((rval & RIO_EM_PW_TGT_DEVID_D8) >> 16);
 
-	if (rdev->net->hport->host_deviceid == destid) {
-		rio_write_config_32(rdev,
+	अगर (rdev->net->hport->host_deviceid == destid) अणु
+		rio_ग_लिखो_config_32(rdev,
 				    rdev->em_efptr + RIO_EM_PW_TX_CTRL, 0);
 		pr_debug("RIO: %s(%s) PW transmission disabled\n",
 			 __func__, rio_name(rdev));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct rio_device_id idtg3_id_table[] = {
-	{RIO_DEVICE(RIO_DID_IDTRXS1632, RIO_VID_IDT)},
-	{RIO_DEVICE(RIO_DID_IDTRXS2448, RIO_VID_IDT)},
-	{ 0, }	/* terminate list */
-};
+अटल स्थिर काष्ठा rio_device_id idtg3_id_table[] = अणु
+	अणुRIO_DEVICE(RIO_DID_IDTRXS1632, RIO_VID_IDT)पूर्ण,
+	अणुRIO_DEVICE(RIO_DID_IDTRXS2448, RIO_VID_IDT)पूर्ण,
+	अणु 0, पूर्ण	/* terminate list */
+पूर्ण;
 
-static struct rio_driver idtg3_driver = {
+अटल काष्ठा rio_driver idtg3_driver = अणु
 	.name = "idt_gen3",
 	.id_table = idtg3_id_table,
 	.probe = idtg3_probe,
-	.remove = idtg3_remove,
-	.shutdown = idtg3_shutdown,
-};
+	.हटाओ = idtg3_हटाओ,
+	.shutकरोwn = idtg3_shutकरोwn,
+पूर्ण;
 
-static int __init idtg3_init(void)
-{
-	return rio_register_driver(&idtg3_driver);
-}
+अटल पूर्णांक __init idtg3_init(व्योम)
+अणु
+	वापस rio_रेजिस्टर_driver(&idtg3_driver);
+पूर्ण
 
-static void __exit idtg3_exit(void)
-{
+अटल व्योम __निकास idtg3_निकास(व्योम)
+अणु
 	pr_debug("RIO: %s\n", __func__);
-	rio_unregister_driver(&idtg3_driver);
+	rio_unरेजिस्टर_driver(&idtg3_driver);
 	pr_debug("RIO: %s done\n", __func__);
-}
+पूर्ण
 
 device_initcall(idtg3_init);
-module_exit(idtg3_exit);
+module_निकास(idtg3_निकास);
 
 MODULE_DESCRIPTION("IDT RXS Gen.3 Serial RapidIO switch family driver");
 MODULE_AUTHOR("Integrated Device Technology, Inc.");

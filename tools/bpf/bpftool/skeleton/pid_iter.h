@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
 /* Copyright (c) 2020 Facebook */
-#ifndef __PID_ITER_H
-#define __PID_ITER_H
+#अगर_अघोषित __PID_ITER_H
+#घोषणा __PID_ITER_H
 
-struct pid_iter_entry {
+काष्ठा pid_iter_entry अणु
 	__u32 id;
-	int pid;
-	char comm[16];
-};
+	पूर्णांक pid;
+	अक्षर comm[16];
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

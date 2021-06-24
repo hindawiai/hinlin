@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Philips UCB1400 GPIO driver
  *
  * Author: Marek Vasut <marek.vasut@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/ucb1400.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ucb1400.h>
 
-static int ucb1400_gpio_dir_in(struct gpio_chip *gc, unsigned off)
-{
-	struct ucb1400_gpio *gpio;
+अटल पूर्णांक ucb1400_gpio_dir_in(काष्ठा gpio_chip *gc, अचिन्हित off)
+अणु
+	काष्ठा ucb1400_gpio *gpio;
 	gpio = gpiochip_get_data(gc);
 	ucb1400_gpio_set_direction(gpio->ac97, off, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ucb1400_gpio_dir_out(struct gpio_chip *gc, unsigned off, int val)
-{
-	struct ucb1400_gpio *gpio;
+अटल पूर्णांक ucb1400_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्हित off, पूर्णांक val)
+अणु
+	काष्ठा ucb1400_gpio *gpio;
 	gpio = gpiochip_get_data(gc);
 	ucb1400_gpio_set_direction(gpio->ac97, off, 1);
 	ucb1400_gpio_set_value(gpio->ac97, off, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ucb1400_gpio_get(struct gpio_chip *gc, unsigned off)
-{
-	struct ucb1400_gpio *gpio;
+अटल पूर्णांक ucb1400_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित off)
+अणु
+	काष्ठा ucb1400_gpio *gpio;
 
 	gpio = gpiochip_get_data(gc);
-	return !!ucb1400_gpio_get_value(gpio->ac97, off);
-}
+	वापस !!ucb1400_gpio_get_value(gpio->ac97, off);
+पूर्ण
 
-static void ucb1400_gpio_set(struct gpio_chip *gc, unsigned off, int val)
-{
-	struct ucb1400_gpio *gpio;
+अटल व्योम ucb1400_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित off, पूर्णांक val)
+अणु
+	काष्ठा ucb1400_gpio *gpio;
 	gpio = gpiochip_get_data(gc);
 	ucb1400_gpio_set_value(gpio->ac97, off, val);
-}
+पूर्ण
 
-static int ucb1400_gpio_probe(struct platform_device *dev)
-{
-	struct ucb1400_gpio *ucb = dev_get_platdata(&dev->dev);
-	int err = 0;
+अटल पूर्णांक ucb1400_gpio_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा ucb1400_gpio *ucb = dev_get_platdata(&dev->dev);
+	पूर्णांक err = 0;
 
-	if (!(ucb && ucb->gpio_offset)) {
+	अगर (!(ucb && ucb->gpio_offset)) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	platform_set_drvdata(dev, ucb);
+	platक्रमm_set_drvdata(dev, ucb);
 
 	ucb->gc.label = "ucb1400_gpio";
 	ucb->gc.base = ucb->gpio_offset;
@@ -64,40 +65,40 @@ static int ucb1400_gpio_probe(struct platform_device *dev)
 	ucb->gc.can_sleep = true;
 
 	err = devm_gpiochip_add_data(&dev->dev, &ucb->gc, ucb);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
-	if (ucb->gpio_setup)
+	अगर (ucb->gpio_setup)
 		err = ucb->gpio_setup(&dev->dev, ucb->gc.ngpio);
 
 err:
-	return err;
+	वापस err;
 
-}
+पूर्ण
 
-static int ucb1400_gpio_remove(struct platform_device *dev)
-{
-	int err = 0;
-	struct ucb1400_gpio *ucb = platform_get_drvdata(dev);
+अटल पूर्णांक ucb1400_gpio_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ucb1400_gpio *ucb = platक्रमm_get_drvdata(dev);
 
-	if (ucb && ucb->gpio_teardown) {
-		err = ucb->gpio_teardown(&dev->dev, ucb->gc.ngpio);
-		if (err)
-			return err;
-	}
+	अगर (ucb && ucb->gpio_tearकरोwn) अणु
+		err = ucb->gpio_tearकरोwn(&dev->dev, ucb->gc.ngpio);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct platform_driver ucb1400_gpio_driver = {
+अटल काष्ठा platक्रमm_driver ucb1400_gpio_driver = अणु
 	.probe	= ucb1400_gpio_probe,
-	.remove	= ucb1400_gpio_remove,
-	.driver	= {
+	.हटाओ	= ucb1400_gpio_हटाओ,
+	.driver	= अणु
 		.name	= "ucb1400_gpio"
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ucb1400_gpio_driver);
+module_platक्रमm_driver(ucb1400_gpio_driver);
 
 MODULE_DESCRIPTION("Philips UCB1400 GPIO driver");
 MODULE_LICENSE("GPL");

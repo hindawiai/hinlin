@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _IP_SET_GETPORT_H
-#define _IP_SET_GETPORT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _IP_SET_GETPORT_H
+#घोषणा _IP_SET_GETPORT_H
 
-#include <linux/skbuff.h>
-#include <linux/types.h>
-#include <uapi/linux/in.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/linux/in.h>
 
-extern bool ip_set_get_ip4_port(const struct sk_buff *skb, bool src,
+बाह्य bool ip_set_get_ip4_port(स्थिर काष्ठा sk_buff *skb, bool src,
 				__be16 *port, u8 *proto);
 
-#if IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
-extern bool ip_set_get_ip6_port(const struct sk_buff *skb, bool src,
+#अगर IS_ENABLED(CONFIG_IP6_NF_IPTABLES)
+बाह्य bool ip_set_get_ip6_port(स्थिर काष्ठा sk_buff *skb, bool src,
 				__be16 *port, u8 *proto);
-#else
-static inline bool ip_set_get_ip6_port(const struct sk_buff *skb, bool src,
+#अन्यथा
+अटल अंतरभूत bool ip_set_get_ip6_port(स्थिर काष्ठा sk_buff *skb, bool src,
 				       __be16 *port, u8 *proto)
-{
-	return false;
-}
-#endif
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static inline bool ip_set_proto_with_ports(u8 proto)
-{
-	switch (proto) {
-	case IPPROTO_TCP:
-	case IPPROTO_SCTP:
-	case IPPROTO_UDP:
-	case IPPROTO_UDPLITE:
-		return true;
-	}
-	return false;
-}
+अटल अंतरभूत bool ip_set_proto_with_ports(u8 proto)
+अणु
+	चयन (proto) अणु
+	हाल IPPROTO_TCP:
+	हाल IPPROTO_SCTP:
+	हाल IPPROTO_UDP:
+	हाल IPPROTO_UDPLITE:
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-#endif /*_IP_SET_GETPORT_H*/
+#पूर्ण_अगर /*_IP_SET_GETPORT_H*/

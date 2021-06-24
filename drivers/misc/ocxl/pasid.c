@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright 2017 IBM Corp.
-#include "ocxl_internal.h"
+#समावेश "ocxl_internal.h"
 
 
-struct id_range {
-	struct list_head list;
+काष्ठा id_range अणु
+	काष्ठा list_head list;
 	u32 start;
 	u32 end;
-};
+पूर्ण;
 
-#ifdef DEBUG
-static void dump_list(struct list_head *head, char *type_str)
-{
-	struct id_range *cur;
+#अगर_घोषित DEBUG
+अटल व्योम dump_list(काष्ठा list_head *head, अक्षर *type_str)
+अणु
+	काष्ठा id_range *cur;
 
 	pr_debug("%s ranges allocated:\n", type_str);
-	list_for_each_entry(cur, head, list) {
+	list_क्रम_each_entry(cur, head, list) अणु
 		pr_debug("Range %d->%d\n", cur->start, cur->end);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static int range_alloc(struct list_head *head, u32 size, int max_id,
-		char *type_str)
-{
-	struct list_head *pos;
-	struct id_range *cur, *new;
-	int rc, last_end;
+अटल पूर्णांक range_alloc(काष्ठा list_head *head, u32 size, पूर्णांक max_id,
+		अक्षर *type_str)
+अणु
+	काष्ठा list_head *pos;
+	काष्ठा id_range *cur, *new;
+	पूर्णांक rc, last_end;
 
-	new = kmalloc(sizeof(struct id_range), GFP_KERNEL);
-	if (!new)
-		return -ENOMEM;
+	new = kदो_स्मृति(माप(काष्ठा id_range), GFP_KERNEL);
+	अगर (!new)
+		वापस -ENOMEM;
 
 	pos = head;
 	last_end = -1;
-	list_for_each_entry(cur, head, list) {
-		if ((cur->start - last_end) > size)
-			break;
+	list_क्रम_each_entry(cur, head, list) अणु
+		अगर ((cur->start - last_end) > size)
+			अवरोध;
 		last_end = cur->end;
 		pos = &cur->list;
-	}
+	पूर्ण
 
 	new->start = last_end + 1;
 	new->end = new->start + size - 1;
 
-	if (new->end > max_id) {
-		kfree(new);
+	अगर (new->end > max_id) अणु
+		kमुक्त(new);
 		rc = -ENOSPC;
-	} else {
+	पूर्ण अन्यथा अणु
 		list_add(&new->list, pos);
 		rc = new->start;
-	}
+	पूर्ण
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	dump_list(head, type_str);
-#endif
-	return rc;
-}
+#पूर्ण_अगर
+	वापस rc;
+पूर्ण
 
-static void range_free(struct list_head *head, u32 start, u32 size,
-		char *type_str)
-{
+अटल व्योम range_मुक्त(काष्ठा list_head *head, u32 start, u32 size,
+		अक्षर *type_str)
+अणु
 	bool found = false;
-	struct id_range *cur, *tmp;
+	काष्ठा id_range *cur, *पंचांगp;
 
-	list_for_each_entry_safe(cur, tmp, head, list) {
-		if (cur->start == start && cur->end == (start + size - 1)) {
+	list_क्रम_each_entry_safe(cur, पंचांगp, head, list) अणु
+		अगर (cur->start == start && cur->end == (start + size - 1)) अणु
 			found = true;
 			list_del(&cur->list);
-			kfree(cur);
-			break;
-		}
-	}
+			kमुक्त(cur);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	WARN_ON(!found);
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	dump_list(head, type_str);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-int ocxl_pasid_afu_alloc(struct ocxl_fn *fn, u32 size)
-{
-	int max_pasid;
+पूर्णांक ocxl_pasid_afu_alloc(काष्ठा ocxl_fn *fn, u32 size)
+अणु
+	पूर्णांक max_pasid;
 
-	if (fn->config.max_pasid_log < 0)
-		return -ENOSPC;
+	अगर (fn->config.max_pasid_log < 0)
+		वापस -ENOSPC;
 	max_pasid = 1 << fn->config.max_pasid_log;
-	return range_alloc(&fn->pasid_list, size, max_pasid, "afu pasid");
-}
+	वापस range_alloc(&fn->pasid_list, size, max_pasid, "afu pasid");
+पूर्ण
 
-void ocxl_pasid_afu_free(struct ocxl_fn *fn, u32 start, u32 size)
-{
-	return range_free(&fn->pasid_list, start, size, "afu pasid");
-}
+व्योम ocxl_pasid_afu_मुक्त(काष्ठा ocxl_fn *fn, u32 start, u32 size)
+अणु
+	वापस range_मुक्त(&fn->pasid_list, start, size, "afu pasid");
+पूर्ण
 
-int ocxl_actag_afu_alloc(struct ocxl_fn *fn, u32 size)
-{
-	int max_actag;
+पूर्णांक ocxl_actag_afu_alloc(काष्ठा ocxl_fn *fn, u32 size)
+अणु
+	पूर्णांक max_actag;
 
 	max_actag = fn->actag_enabled;
-	return range_alloc(&fn->actag_list, size, max_actag, "afu actag");
-}
+	वापस range_alloc(&fn->actag_list, size, max_actag, "afu actag");
+पूर्ण
 
-void ocxl_actag_afu_free(struct ocxl_fn *fn, u32 start, u32 size)
-{
-	return range_free(&fn->actag_list, start, size, "afu actag");
-}
+व्योम ocxl_actag_afu_मुक्त(काष्ठा ocxl_fn *fn, u32 start, u32 size)
+अणु
+	वापस range_मुक्त(&fn->actag_list, start, size, "afu actag");
+पूर्ण

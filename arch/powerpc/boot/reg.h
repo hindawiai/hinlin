@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _PPC_BOOT_REG_H
-#define _PPC_BOOT_REG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _PPC_BOOT_REG_H
+#घोषणा _PPC_BOOT_REG_H
 /*
  * Copyright 2007 Davud Gibson, IBM Corporation.
  */
 
-static inline u32 mfpvr(void)
-{
+अटल अंतरभूत u32 mfpvr(व्योम)
+अणु
 	u32 pvr;
-	asm volatile ("mfpvr	%0" : "=r"(pvr));
-	return pvr;
-}
+	यंत्र अस्थिर ("mfpvr	%0" : "=r"(pvr));
+	वापस pvr;
+पूर्ण
 
-#define __stringify_1(x)	#x
-#define __stringify(x)		__stringify_1(x)
+#घोषणा __stringअगरy_1(x)	#x
+#घोषणा __stringअगरy(x)		__stringअगरy_1(x)
 
-#define mfspr(rn)	({unsigned long rval; \
-			asm volatile("mfspr %0," __stringify(rn) \
-				: "=r" (rval)); rval; })
-#define mtspr(rn, v)	asm volatile("mtspr " __stringify(rn) ",%0" : : "r" (v))
+#घोषणा mfspr(rn)	(अणुअचिन्हित दीर्घ rval; \
+			यंत्र अस्थिर("mfspr %0," __stringअगरy(rn) \
+				: "=r" (rval)); rval; पूर्ण)
+#घोषणा mtspr(rn, v)	यंत्र अस्थिर("mtspr " __stringअगरy(rn) ",%0" : : "r" (v))
 
-register void *__stack_pointer asm("r1");
-#define get_sp()	(__stack_pointer)
+रेजिस्टर व्योम *__stack_poपूर्णांकer यंत्र("r1");
+#घोषणा get_sp()	(__stack_poपूर्णांकer)
 
-#endif	/* _PPC_BOOT_REG_H */
+#पूर्ण_अगर	/* _PPC_BOOT_REG_H */

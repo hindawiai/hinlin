@@ -1,529 +1,530 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
-#ifndef _EXFAT_FS_H
-#define _EXFAT_FS_H
+#अगर_अघोषित _EXFAT_FS_H
+#घोषणा _EXFAT_FS_H
 
-#include <linux/fs.h>
-#include <linux/ratelimit.h>
-#include <linux/nls.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/nls.h>
 
-#define EXFAT_SUPER_MAGIC       0x2011BAB0UL
-#define EXFAT_ROOT_INO		1
+#घोषणा EXFAT_SUPER_MAGIC       0x2011BAB0UL
+#घोषणा EXFAT_ROOT_INO		1
 
-#define EXFAT_CLUSTERS_UNTRACKED (~0u)
+#घोषणा EXFAT_CLUSTERS_UNTRACKED (~0u)
 
 /*
  * exfat error flags
  */
-enum exfat_error_mode {
-	EXFAT_ERRORS_CONT,	/* ignore error and continue */
+क्रमागत exfat_error_mode अणु
+	EXFAT_ERRORS_CONT,	/* ignore error and जारी */
 	EXFAT_ERRORS_PANIC,	/* panic on error */
 	EXFAT_ERRORS_RO,	/* remount r/o on error */
-};
+पूर्ण;
 
 /*
  * exfat nls lossy flag
  */
-enum {
+क्रमागत अणु
 	NLS_NAME_NO_LOSSY,	/* no lossy */
 	NLS_NAME_LOSSY,		/* just detected incorrect filename(s) */
 	NLS_NAME_OVERLEN,	/* the length is over than its limit */
-};
+पूर्ण;
 
-#define EXFAT_HASH_BITS		8
-#define EXFAT_HASH_SIZE		(1UL << EXFAT_HASH_BITS)
+#घोषणा EXFAT_HASH_BITS		8
+#घोषणा EXFAT_HASH_SIZE		(1UL << EXFAT_HASH_BITS)
 
 /*
  * Type Definitions
  */
-#define ES_2_ENTRIES		2
-#define ES_ALL_ENTRIES		0
+#घोषणा ES_2_ENTRIES		2
+#घोषणा ES_ALL_ENTRIES		0
 
-#define DIR_DELETED		0xFFFF0321
+#घोषणा सूची_DELETED		0xFFFF0321
 
 /* type values */
-#define TYPE_UNUSED		0x0000
-#define TYPE_DELETED		0x0001
-#define TYPE_INVALID		0x0002
-#define TYPE_CRITICAL_PRI	0x0100
-#define TYPE_BITMAP		0x0101
-#define TYPE_UPCASE		0x0102
-#define TYPE_VOLUME		0x0103
-#define TYPE_DIR		0x0104
-#define TYPE_FILE		0x011F
-#define TYPE_CRITICAL_SEC	0x0200
-#define TYPE_STREAM		0x0201
-#define TYPE_EXTEND		0x0202
-#define TYPE_ACL		0x0203
-#define TYPE_BENIGN_PRI		0x0400
-#define TYPE_GUID		0x0401
-#define TYPE_PADDING		0x0402
-#define TYPE_ACLTAB		0x0403
-#define TYPE_BENIGN_SEC		0x0800
-#define TYPE_ALL		0x0FFF
+#घोषणा TYPE_UNUSED		0x0000
+#घोषणा TYPE_DELETED		0x0001
+#घोषणा TYPE_INVALID		0x0002
+#घोषणा TYPE_CRITICAL_PRI	0x0100
+#घोषणा TYPE_BITMAP		0x0101
+#घोषणा TYPE_UPCASE		0x0102
+#घोषणा TYPE_VOLUME		0x0103
+#घोषणा TYPE_सूची		0x0104
+#घोषणा TYPE_खाता		0x011F
+#घोषणा TYPE_CRITICAL_SEC	0x0200
+#घोषणा TYPE_STREAM		0x0201
+#घोषणा TYPE_EXTEND		0x0202
+#घोषणा TYPE_ACL		0x0203
+#घोषणा TYPE_BENIGN_PRI		0x0400
+#घोषणा TYPE_GUID		0x0401
+#घोषणा TYPE_PADDING		0x0402
+#घोषणा TYPE_ACLTAB		0x0403
+#घोषणा TYPE_BENIGN_SEC		0x0800
+#घोषणा TYPE_ALL		0x0FFF
 
-#define MAX_CHARSET_SIZE	6 /* max size of multi-byte character */
-#define MAX_NAME_LENGTH		255 /* max len of file name excluding NULL */
-#define MAX_VFSNAME_BUF_SIZE	((MAX_NAME_LENGTH + 1) * MAX_CHARSET_SIZE)
+#घोषणा MAX_CHARSET_SIZE	6 /* max size of multi-byte अक्षरacter */
+#घोषणा MAX_NAME_LENGTH		255 /* max len of file name excluding शून्य */
+#घोषणा MAX_VFSNAME_BUF_SIZE	((MAX_NAME_LENGTH + 1) * MAX_CHARSET_SIZE)
 
 /* Enough size to hold 256 dentry (even 512 Byte sector) */
-#define DIR_CACHE_SIZE		(256*sizeof(struct exfat_dentry)/512+1)
+#घोषणा सूची_CACHE_SIZE		(256*माप(काष्ठा exfat_dentry)/512+1)
 
-#define EXFAT_HINT_NONE		-1
-#define EXFAT_MIN_SUBDIR	2
+#घोषणा EXFAT_HINT_NONE		-1
+#घोषणा EXFAT_MIN_SUBसूची	2
 
 /*
- * helpers for cluster size to byte conversion.
+ * helpers क्रम cluster size to byte conversion.
  */
-#define EXFAT_CLU_TO_B(b, sbi)		((b) << (sbi)->cluster_size_bits)
-#define EXFAT_B_TO_CLU(b, sbi)		((b) >> (sbi)->cluster_size_bits)
-#define EXFAT_B_TO_CLU_ROUND_UP(b, sbi)	\
+#घोषणा EXFAT_CLU_TO_B(b, sbi)		((b) << (sbi)->cluster_size_bits)
+#घोषणा EXFAT_B_TO_CLU(b, sbi)		((b) >> (sbi)->cluster_size_bits)
+#घोषणा EXFAT_B_TO_CLU_ROUND_UP(b, sbi)	\
 	(((b - 1) >> (sbi)->cluster_size_bits) + 1)
-#define EXFAT_CLU_OFFSET(off, sbi)	((off) & ((sbi)->cluster_size - 1))
+#घोषणा EXFAT_CLU_OFFSET(off, sbi)	((off) & ((sbi)->cluster_size - 1))
 
 /*
- * helpers for block size to byte conversion.
+ * helpers क्रम block size to byte conversion.
  */
-#define EXFAT_BLK_TO_B(b, sb)		((b) << (sb)->s_blocksize_bits)
-#define EXFAT_B_TO_BLK(b, sb)		((b) >> (sb)->s_blocksize_bits)
-#define EXFAT_B_TO_BLK_ROUND_UP(b, sb)	\
+#घोषणा EXFAT_BLK_TO_B(b, sb)		((b) << (sb)->s_blocksize_bits)
+#घोषणा EXFAT_B_TO_BLK(b, sb)		((b) >> (sb)->s_blocksize_bits)
+#घोषणा EXFAT_B_TO_BLK_ROUND_UP(b, sb)	\
 	(((b - 1) >> (sb)->s_blocksize_bits) + 1)
-#define EXFAT_BLK_OFFSET(off, sb)	((off) & ((sb)->s_blocksize - 1))
+#घोषणा EXFAT_BLK_OFFSET(off, sb)	((off) & ((sb)->s_blocksize - 1))
 
 /*
- * helpers for block size to dentry size conversion.
+ * helpers क्रम block size to dentry size conversion.
  */
-#define EXFAT_B_TO_DEN_IDX(b, sbi)	\
+#घोषणा EXFAT_B_TO_DEN_IDX(b, sbi)	\
 	((b) << ((sbi)->cluster_size_bits - DENTRY_SIZE_BITS))
-#define EXFAT_B_TO_DEN(b)		((b) >> DENTRY_SIZE_BITS)
-#define EXFAT_DEN_TO_B(b)		((b) << DENTRY_SIZE_BITS)
+#घोषणा EXFAT_B_TO_DEN(b)		((b) >> DENTRY_SIZE_BITS)
+#घोषणा EXFAT_DEN_TO_B(b)		((b) << DENTRY_SIZE_BITS)
 
 /*
- * helpers for fat entry.
+ * helpers क्रम fat entry.
  */
-#define FAT_ENT_SIZE (4)
-#define FAT_ENT_SIZE_BITS (2)
-#define FAT_ENT_OFFSET_SECTOR(sb, loc) (EXFAT_SB(sb)->FAT1_start_sector + \
+#घोषणा FAT_ENT_SIZE (4)
+#घोषणा FAT_ENT_SIZE_BITS (2)
+#घोषणा FAT_ENT_OFFSET_SECTOR(sb, loc) (EXFAT_SB(sb)->FAT1_start_sector + \
 	(((u64)loc << FAT_ENT_SIZE_BITS) >> sb->s_blocksize_bits))
-#define FAT_ENT_OFFSET_BYTE_IN_SECTOR(sb, loc)	\
+#घोषणा FAT_ENT_OFFSET_BYTE_IN_SECTOR(sb, loc)	\
 	((loc << FAT_ENT_SIZE_BITS) & (sb->s_blocksize - 1))
 
 /*
- * helpers for bitmap.
+ * helpers क्रम biपंचांगap.
  */
-#define CLUSTER_TO_BITMAP_ENT(clu) ((clu) - EXFAT_RESERVED_CLUSTERS)
-#define BITMAP_ENT_TO_CLUSTER(ent) ((ent) + EXFAT_RESERVED_CLUSTERS)
-#define BITS_PER_SECTOR(sb) ((sb)->s_blocksize * BITS_PER_BYTE)
-#define BITS_PER_SECTOR_MASK(sb) (BITS_PER_SECTOR(sb) - 1)
-#define BITMAP_OFFSET_SECTOR_INDEX(sb, ent) \
+#घोषणा CLUSTER_TO_BITMAP_ENT(clu) ((clu) - EXFAT_RESERVED_CLUSTERS)
+#घोषणा BITMAP_ENT_TO_CLUSTER(ent) ((ent) + EXFAT_RESERVED_CLUSTERS)
+#घोषणा BITS_PER_SECTOR(sb) ((sb)->s_blocksize * BITS_PER_BYTE)
+#घोषणा BITS_PER_SECTOR_MASK(sb) (BITS_PER_SECTOR(sb) - 1)
+#घोषणा BITMAP_OFFSET_SECTOR_INDEX(sb, ent) \
 	((ent / BITS_PER_BYTE) >> (sb)->s_blocksize_bits)
-#define BITMAP_OFFSET_BIT_IN_SECTOR(sb, ent) (ent & BITS_PER_SECTOR_MASK(sb))
-#define BITMAP_OFFSET_BYTE_IN_SECTOR(sb, ent) \
+#घोषणा BITMAP_OFFSET_BIT_IN_SECTOR(sb, ent) (ent & BITS_PER_SECTOR_MASK(sb))
+#घोषणा BITMAP_OFFSET_BYTE_IN_SECTOR(sb, ent) \
 	((ent / BITS_PER_BYTE) & ((sb)->s_blocksize - 1))
-#define BITS_PER_BYTE_MASK	0x7
-#define IGNORED_BITS_REMAINED(clu, clu_base) ((1 << ((clu) - (clu_base))) - 1)
+#घोषणा BITS_PER_BYTE_MASK	0x7
+#घोषणा IGNORED_BITS_REMAINED(clu, clu_base) ((1 << ((clu) - (clu_base))) - 1)
 
-struct exfat_dentry_namebuf {
-	char *lfn;
-	int lfnbuf_len; /* usually MAX_UNINAME_BUF_SIZE */
-};
+काष्ठा exfat_dentry_namebuf अणु
+	अक्षर *lfn;
+	पूर्णांक lfnbuf_len; /* usually MAX_UNINAME_BUF_SIZE */
+पूर्ण;
 
-/* unicode name structure */
-struct exfat_uni_name {
-	/* +3 for null and for converting */
-	unsigned short name[MAX_NAME_LENGTH + 3];
+/* unicode name काष्ठाure */
+काष्ठा exfat_uni_name अणु
+	/* +3 क्रम null and क्रम converting */
+	अचिन्हित लघु name[MAX_NAME_LENGTH + 3];
 	u16 name_hash;
-	unsigned char name_len;
-};
+	अचिन्हित अक्षर name_len;
+पूर्ण;
 
-/* directory structure */
-struct exfat_chain {
-	unsigned int dir;
-	unsigned int size;
-	unsigned char flags;
-};
+/* directory काष्ठाure */
+काष्ठा exfat_chain अणु
+	अचिन्हित पूर्णांक dir;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित अक्षर flags;
+पूर्ण;
 
-/* first empty entry hint information */
-struct exfat_hint_femp {
+/* first empty entry hपूर्णांक inक्रमmation */
+काष्ठा exfat_hपूर्णांक_femp अणु
 	/* entry index of a directory */
-	int eidx;
+	पूर्णांक eidx;
 	/* count of continuous empty entry */
-	int count;
+	पूर्णांक count;
 	/* the cluster that first empty slot exists in */
-	struct exfat_chain cur;
-};
+	काष्ठा exfat_chain cur;
+पूर्ण;
 
-/* hint structure */
-struct exfat_hint {
-	unsigned int clu;
-	union {
-		unsigned int off; /* cluster offset */
-		int eidx; /* entry index */
-	};
-};
+/* hपूर्णांक काष्ठाure */
+काष्ठा exfat_hपूर्णांक अणु
+	अचिन्हित पूर्णांक clu;
+	जोड़ अणु
+		अचिन्हित पूर्णांक off; /* cluster offset */
+		पूर्णांक eidx; /* entry index */
+	पूर्ण;
+पूर्ण;
 
-struct exfat_entry_set_cache {
-	struct super_block *sb;
-	bool modified;
-	unsigned int start_off;
-	int num_bh;
-	struct buffer_head *bh[DIR_CACHE_SIZE];
-	unsigned int num_entries;
-};
+काष्ठा exfat_entry_set_cache अणु
+	काष्ठा super_block *sb;
+	bool modअगरied;
+	अचिन्हित पूर्णांक start_off;
+	पूर्णांक num_bh;
+	काष्ठा buffer_head *bh[सूची_CACHE_SIZE];
+	अचिन्हित पूर्णांक num_entries;
+पूर्ण;
 
-struct exfat_dir_entry {
-	struct exfat_chain dir;
-	int entry;
-	unsigned int type;
-	unsigned int start_clu;
-	unsigned char flags;
-	unsigned short attr;
+काष्ठा exfat_dir_entry अणु
+	काष्ठा exfat_chain dir;
+	पूर्णांक entry;
+	अचिन्हित पूर्णांक type;
+	अचिन्हित पूर्णांक start_clu;
+	अचिन्हित अक्षर flags;
+	अचिन्हित लघु attr;
 	loff_t size;
-	unsigned int num_subdirs;
-	struct timespec64 atime;
-	struct timespec64 mtime;
-	struct timespec64 crtime;
-	struct exfat_dentry_namebuf namebuf;
-};
+	अचिन्हित पूर्णांक num_subdirs;
+	काष्ठा बारpec64 aसमय;
+	काष्ठा बारpec64 mसमय;
+	काष्ठा बारpec64 crसमय;
+	काष्ठा exfat_dentry_namebuf namebuf;
+पूर्ण;
 
 /*
  * exfat mount in-memory data
  */
-struct exfat_mount_options {
+काष्ठा exfat_mount_options अणु
 	kuid_t fs_uid;
 	kgid_t fs_gid;
-	unsigned short fs_fmask;
-	unsigned short fs_dmask;
-	/* permission for setting the [am]time */
-	unsigned short allow_utime;
-	/* charset for filename input/display */
-	char *iocharset;
-	/* on error: continue, panic, remount-ro */
-	enum exfat_error_mode errors;
-	unsigned utf8:1, /* Use of UTF-8 character set */
+	अचिन्हित लघु fs_fmask;
+	अचिन्हित लघु fs_dmask;
+	/* permission क्रम setting the [am]समय */
+	अचिन्हित लघु allow_uसमय;
+	/* अक्षरset क्रम filename input/display */
+	अक्षर *ioअक्षरset;
+	/* on error: जारी, panic, remount-ro */
+	क्रमागत exfat_error_mode errors;
+	अचिन्हित utf8:1, /* Use of UTF-8 अक्षरacter set */
 		 discard:1; /* Issue discard requests on deletions */
-	int time_offset; /* Offset of timestamps from UTC (in minutes) */
-};
+	पूर्णांक समय_offset; /* Offset of बारtamps from UTC (in minutes) */
+पूर्ण;
 
 /*
- * EXFAT file system superblock in-memory data
+ * EXFAT file प्रणाली superblock in-memory data
  */
-struct exfat_sb_info {
-	unsigned long long num_sectors; /* num of sectors in volume */
-	unsigned int num_clusters; /* num of clusters in volume */
-	unsigned int cluster_size; /* cluster size in bytes */
-	unsigned int cluster_size_bits;
-	unsigned int sect_per_clus; /* cluster size in sectors */
-	unsigned int sect_per_clus_bits;
-	unsigned long long FAT1_start_sector; /* FAT1 start sector */
-	unsigned long long FAT2_start_sector; /* FAT2 start sector */
-	unsigned long long data_start_sector; /* data area start sector */
-	unsigned int num_FAT_sectors; /* num of FAT sectors */
-	unsigned int root_dir; /* root dir cluster */
-	unsigned int dentries_per_clu; /* num of dentries per cluster */
-	unsigned int vol_flags; /* volume flags */
-	unsigned int vol_flags_persistent; /* volume flags to retain */
-	struct buffer_head *boot_bh; /* buffer_head of BOOT sector */
+काष्ठा exfat_sb_info अणु
+	अचिन्हित दीर्घ दीर्घ num_sectors; /* num of sectors in volume */
+	अचिन्हित पूर्णांक num_clusters; /* num of clusters in volume */
+	अचिन्हित पूर्णांक cluster_size; /* cluster size in bytes */
+	अचिन्हित पूर्णांक cluster_size_bits;
+	अचिन्हित पूर्णांक sect_per_clus; /* cluster size in sectors */
+	अचिन्हित पूर्णांक sect_per_clus_bits;
+	अचिन्हित दीर्घ दीर्घ FAT1_start_sector; /* FAT1 start sector */
+	अचिन्हित दीर्घ दीर्घ FAT2_start_sector; /* FAT2 start sector */
+	अचिन्हित दीर्घ दीर्घ data_start_sector; /* data area start sector */
+	अचिन्हित पूर्णांक num_FAT_sectors; /* num of FAT sectors */
+	अचिन्हित पूर्णांक root_dir; /* root dir cluster */
+	अचिन्हित पूर्णांक dentries_per_clu; /* num of dentries per cluster */
+	अचिन्हित पूर्णांक vol_flags; /* volume flags */
+	अचिन्हित पूर्णांक vol_flags_persistent; /* volume flags to retain */
+	काष्ठा buffer_head *boot_bh; /* buffer_head of BOOT sector */
 
-	unsigned int map_clu; /* allocation bitmap start cluster */
-	unsigned int map_sectors; /* num of allocation bitmap sectors */
-	struct buffer_head **vol_amap; /* allocation bitmap */
+	अचिन्हित पूर्णांक map_clu; /* allocation biपंचांगap start cluster */
+	अचिन्हित पूर्णांक map_sectors; /* num of allocation biपंचांगap sectors */
+	काष्ठा buffer_head **vol_amap; /* allocation biपंचांगap */
 
-	unsigned short *vol_utbl; /* upcase table */
+	अचिन्हित लघु *vol_utbl; /* upहाल table */
 
-	unsigned int clu_srch_ptr; /* cluster search pointer */
-	unsigned int used_clusters; /* number of used clusters */
+	अचिन्हित पूर्णांक clu_srch_ptr; /* cluster search poपूर्णांकer */
+	अचिन्हित पूर्णांक used_clusters; /* number of used clusters */
 
-	struct mutex s_lock; /* superblock lock */
-	struct mutex bitmap_lock; /* bitmap lock */
-	struct exfat_mount_options options;
-	struct nls_table *nls_io; /* Charset used for input and display */
-	struct ratelimit_state ratelimit;
+	काष्ठा mutex s_lock; /* superblock lock */
+	काष्ठा mutex biपंचांगap_lock; /* biपंचांगap lock */
+	काष्ठा exfat_mount_options options;
+	काष्ठा nls_table *nls_io; /* Charset used क्रम input and display */
+	काष्ठा ratelimit_state ratelimit;
 
 	spinlock_t inode_hash_lock;
-	struct hlist_head inode_hashtable[EXFAT_HASH_SIZE];
+	काष्ठा hlist_head inode_hashtable[EXFAT_HASH_SIZE];
 
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-#define EXFAT_CACHE_VALID	0
+#घोषणा EXFAT_CACHE_VALID	0
 
 /*
- * EXFAT file system inode in-memory data
+ * EXFAT file प्रणाली inode in-memory data
  */
-struct exfat_inode_info {
-	struct exfat_chain dir;
-	int entry;
-	unsigned int type;
-	unsigned short attr;
-	unsigned int start_clu;
-	unsigned char flags;
+काष्ठा exfat_inode_info अणु
+	काष्ठा exfat_chain dir;
+	पूर्णांक entry;
+	अचिन्हित पूर्णांक type;
+	अचिन्हित लघु attr;
+	अचिन्हित पूर्णांक start_clu;
+	अचिन्हित अक्षर flags;
 	/*
 	 * the copy of low 32bit of i_version to check
-	 * the validation of hint_stat.
+	 * the validation of hपूर्णांक_stat.
 	 */
-	unsigned int version;
+	अचिन्हित पूर्णांक version;
 
-	/* hint for cluster last accessed */
-	struct exfat_hint hint_bmap;
-	/* hint for entry index we try to lookup next time */
-	struct exfat_hint hint_stat;
-	/* hint for first empty entry */
-	struct exfat_hint_femp hint_femp;
+	/* hपूर्णांक क्रम cluster last accessed */
+	काष्ठा exfat_hपूर्णांक hपूर्णांक_bmap;
+	/* hपूर्णांक क्रम entry index we try to lookup next समय */
+	काष्ठा exfat_hपूर्णांक hपूर्णांक_stat;
+	/* hपूर्णांक क्रम first empty entry */
+	काष्ठा exfat_hपूर्णांक_femp hपूर्णांक_femp;
 
 	spinlock_t cache_lru_lock;
-	struct list_head cache_lru;
-	int nr_caches;
-	/* for avoiding the race between alloc and free */
-	unsigned int cache_valid_id;
+	काष्ठा list_head cache_lru;
+	पूर्णांक nr_caches;
+	/* क्रम aव्योमing the race between alloc and मुक्त */
+	अचिन्हित पूर्णांक cache_valid_id;
 
 	/*
 	 * NOTE: i_size_ondisk is 64bits, so must hold ->inode_lock to access.
 	 * physically allocated size.
 	 */
 	loff_t i_size_ondisk;
-	/* block-aligned i_size (used in cont_write_begin) */
+	/* block-aligned i_size (used in cont_ग_लिखो_begin) */
 	loff_t i_size_aligned;
 	/* on-disk position of directory entry or 0 */
 	loff_t i_pos;
 	/* hash by i_location */
-	struct hlist_node i_hash_fat;
+	काष्ठा hlist_node i_hash_fat;
 	/* protect bmap against truncate */
-	struct rw_semaphore truncate_lock;
-	struct inode vfs_inode;
-	/* File creation time */
-	struct timespec64 i_crtime;
-};
+	काष्ठा rw_semaphore truncate_lock;
+	काष्ठा inode vfs_inode;
+	/* File creation समय */
+	काष्ठा बारpec64 i_crसमय;
+पूर्ण;
 
-static inline struct exfat_sb_info *EXFAT_SB(struct super_block *sb)
-{
-	return sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा exfat_sb_info *EXFAT_SB(काष्ठा super_block *sb)
+अणु
+	वापस sb->s_fs_info;
+पूर्ण
 
-static inline struct exfat_inode_info *EXFAT_I(struct inode *inode)
-{
-	return container_of(inode, struct exfat_inode_info, vfs_inode);
-}
+अटल अंतरभूत काष्ठा exfat_inode_info *EXFAT_I(काष्ठा inode *inode)
+अणु
+	वापस container_of(inode, काष्ठा exfat_inode_info, vfs_inode);
+पूर्ण
 
 /*
  * If ->i_mode can't hold 0222 (i.e. ATTR_RO), we use ->i_attrs to
  * save ATTR_RO instead of ->i_mode.
  *
- * If it's directory and !sbi->options.rodir, ATTR_RO isn't read-only
- * bit, it's just used as flag for app.
+ * If it's directory and !sbi->options.rodir, ATTR_RO isn't पढ़ो-only
+ * bit, it's just used as flag क्रम app.
  */
-static inline int exfat_mode_can_hold_ro(struct inode *inode)
-{
-	struct exfat_sb_info *sbi = EXFAT_SB(inode->i_sb);
+अटल अंतरभूत पूर्णांक exfat_mode_can_hold_ro(काष्ठा inode *inode)
+अणु
+	काष्ठा exfat_sb_info *sbi = EXFAT_SB(inode->i_sb);
 
-	if (S_ISDIR(inode->i_mode))
-		return 0;
+	अगर (S_ISसूची(inode->i_mode))
+		वापस 0;
 
-	if ((~sbi->options.fs_fmask) & 0222)
-		return 1;
-	return 0;
-}
+	अगर ((~sbi->options.fs_fmask) & 0222)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /* Convert attribute bits and a mask to the UNIX mode. */
-static inline mode_t exfat_make_mode(struct exfat_sb_info *sbi,
-		unsigned short attr, mode_t mode)
-{
-	if ((attr & ATTR_READONLY) && !(attr & ATTR_SUBDIR))
+अटल अंतरभूत mode_t exfat_make_mode(काष्ठा exfat_sb_info *sbi,
+		अचिन्हित लघु attr, mode_t mode)
+अणु
+	अगर ((attr & ATTR_READONLY) && !(attr & ATTR_SUBसूची))
 		mode &= ~0222;
 
-	if (attr & ATTR_SUBDIR)
-		return (mode & ~sbi->options.fs_dmask) | S_IFDIR;
+	अगर (attr & ATTR_SUBसूची)
+		वापस (mode & ~sbi->options.fs_dmask) | S_IFसूची;
 
-	return (mode & ~sbi->options.fs_fmask) | S_IFREG;
-}
+	वापस (mode & ~sbi->options.fs_fmask) | S_IFREG;
+पूर्ण
 
-/* Return the FAT attribute byte for this inode */
-static inline unsigned short exfat_make_attr(struct inode *inode)
-{
-	unsigned short attr = EXFAT_I(inode)->attr;
+/* Return the FAT attribute byte क्रम this inode */
+अटल अंतरभूत अचिन्हित लघु exfat_make_attr(काष्ठा inode *inode)
+अणु
+	अचिन्हित लघु attr = EXFAT_I(inode)->attr;
 
-	if (S_ISDIR(inode->i_mode))
-		attr |= ATTR_SUBDIR;
-	if (exfat_mode_can_hold_ro(inode) && !(inode->i_mode & 0222))
+	अगर (S_ISसूची(inode->i_mode))
+		attr |= ATTR_SUBसूची;
+	अगर (exfat_mode_can_hold_ro(inode) && !(inode->i_mode & 0222))
 		attr |= ATTR_READONLY;
-	return attr;
-}
+	वापस attr;
+पूर्ण
 
-static inline void exfat_save_attr(struct inode *inode, unsigned short attr)
-{
-	if (exfat_mode_can_hold_ro(inode))
+अटल अंतरभूत व्योम exfat_save_attr(काष्ठा inode *inode, अचिन्हित लघु attr)
+अणु
+	अगर (exfat_mode_can_hold_ro(inode))
 		EXFAT_I(inode)->attr = attr & (ATTR_RWMASK | ATTR_READONLY);
-	else
+	अन्यथा
 		EXFAT_I(inode)->attr = attr & ATTR_RWMASK;
-}
+पूर्ण
 
-static inline bool exfat_is_last_sector_in_cluster(struct exfat_sb_info *sbi,
+अटल अंतरभूत bool exfat_is_last_sector_in_cluster(काष्ठा exfat_sb_info *sbi,
 		sector_t sec)
-{
-	return ((sec - sbi->data_start_sector + 1) &
+अणु
+	वापस ((sec - sbi->data_start_sector + 1) &
 		((1 << sbi->sect_per_clus_bits) - 1)) == 0;
-}
+पूर्ण
 
-static inline sector_t exfat_cluster_to_sector(struct exfat_sb_info *sbi,
-		unsigned int clus)
-{
-	return ((sector_t)(clus - EXFAT_RESERVED_CLUSTERS) << sbi->sect_per_clus_bits) +
+अटल अंतरभूत sector_t exfat_cluster_to_sector(काष्ठा exfat_sb_info *sbi,
+		अचिन्हित पूर्णांक clus)
+अणु
+	वापस ((sector_t)(clus - EXFAT_RESERVED_CLUSTERS) << sbi->sect_per_clus_bits) +
 		sbi->data_start_sector;
-}
+पूर्ण
 
-static inline int exfat_sector_to_cluster(struct exfat_sb_info *sbi,
+अटल अंतरभूत पूर्णांक exfat_sector_to_cluster(काष्ठा exfat_sb_info *sbi,
 		sector_t sec)
-{
-	return ((sec - sbi->data_start_sector) >> sbi->sect_per_clus_bits) +
+अणु
+	वापस ((sec - sbi->data_start_sector) >> sbi->sect_per_clus_bits) +
 		EXFAT_RESERVED_CLUSTERS;
-}
+पूर्ण
 
 /* super.c */
-int exfat_set_volume_dirty(struct super_block *sb);
-int exfat_clear_volume_dirty(struct super_block *sb);
+पूर्णांक exfat_set_volume_dirty(काष्ठा super_block *sb);
+पूर्णांक exfat_clear_volume_dirty(काष्ठा super_block *sb);
 
 /* fatent.c */
-#define exfat_get_next_cluster(sb, pclu) exfat_ent_get(sb, *(pclu), pclu)
+#घोषणा exfat_get_next_cluster(sb, pclu) exfat_ent_get(sb, *(pclu), pclu)
 
-int exfat_alloc_cluster(struct inode *inode, unsigned int num_alloc,
-		struct exfat_chain *p_chain, bool sync_bmap);
-int exfat_free_cluster(struct inode *inode, struct exfat_chain *p_chain);
-int exfat_ent_get(struct super_block *sb, unsigned int loc,
-		unsigned int *content);
-int exfat_ent_set(struct super_block *sb, unsigned int loc,
-		unsigned int content);
-int exfat_count_ext_entries(struct super_block *sb, struct exfat_chain *p_dir,
-		int entry, struct exfat_dentry *p_entry);
-int exfat_chain_cont_cluster(struct super_block *sb, unsigned int chain,
-		unsigned int len);
-int exfat_zeroed_cluster(struct inode *dir, unsigned int clu);
-int exfat_find_last_cluster(struct super_block *sb, struct exfat_chain *p_chain,
-		unsigned int *ret_clu);
-int exfat_count_num_clusters(struct super_block *sb,
-		struct exfat_chain *p_chain, unsigned int *ret_count);
+पूर्णांक exfat_alloc_cluster(काष्ठा inode *inode, अचिन्हित पूर्णांक num_alloc,
+		काष्ठा exfat_chain *p_chain, bool sync_bmap);
+पूर्णांक exfat_मुक्त_cluster(काष्ठा inode *inode, काष्ठा exfat_chain *p_chain);
+पूर्णांक exfat_ent_get(काष्ठा super_block *sb, अचिन्हित पूर्णांक loc,
+		अचिन्हित पूर्णांक *content);
+पूर्णांक exfat_ent_set(काष्ठा super_block *sb, अचिन्हित पूर्णांक loc,
+		अचिन्हित पूर्णांक content);
+पूर्णांक exfat_count_ext_entries(काष्ठा super_block *sb, काष्ठा exfat_chain *p_dir,
+		पूर्णांक entry, काष्ठा exfat_dentry *p_entry);
+पूर्णांक exfat_chain_cont_cluster(काष्ठा super_block *sb, अचिन्हित पूर्णांक chain,
+		अचिन्हित पूर्णांक len);
+पूर्णांक exfat_zeroed_cluster(काष्ठा inode *dir, अचिन्हित पूर्णांक clu);
+पूर्णांक exfat_find_last_cluster(काष्ठा super_block *sb, काष्ठा exfat_chain *p_chain,
+		अचिन्हित पूर्णांक *ret_clu);
+पूर्णांक exfat_count_num_clusters(काष्ठा super_block *sb,
+		काष्ठा exfat_chain *p_chain, अचिन्हित पूर्णांक *ret_count);
 
 /* balloc.c */
-int exfat_load_bitmap(struct super_block *sb);
-void exfat_free_bitmap(struct exfat_sb_info *sbi);
-int exfat_set_bitmap(struct inode *inode, unsigned int clu, bool sync);
-void exfat_clear_bitmap(struct inode *inode, unsigned int clu, bool sync);
-unsigned int exfat_find_free_bitmap(struct super_block *sb, unsigned int clu);
-int exfat_count_used_clusters(struct super_block *sb, unsigned int *ret_count);
-int exfat_trim_fs(struct inode *inode, struct fstrim_range *range);
+पूर्णांक exfat_load_biपंचांगap(काष्ठा super_block *sb);
+व्योम exfat_मुक्त_biपंचांगap(काष्ठा exfat_sb_info *sbi);
+पूर्णांक exfat_set_biपंचांगap(काष्ठा inode *inode, अचिन्हित पूर्णांक clu, bool sync);
+व्योम exfat_clear_biपंचांगap(काष्ठा inode *inode, अचिन्हित पूर्णांक clu, bool sync);
+अचिन्हित पूर्णांक exfat_find_मुक्त_biपंचांगap(काष्ठा super_block *sb, अचिन्हित पूर्णांक clu);
+पूर्णांक exfat_count_used_clusters(काष्ठा super_block *sb, अचिन्हित पूर्णांक *ret_count);
+पूर्णांक exfat_trim_fs(काष्ठा inode *inode, काष्ठा fstrim_range *range);
 
 /* file.c */
-extern const struct file_operations exfat_file_operations;
-int __exfat_truncate(struct inode *inode, loff_t new_size);
-void exfat_truncate(struct inode *inode, loff_t size);
-int exfat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		  struct iattr *attr);
-int exfat_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		  struct kstat *stat, unsigned int request_mask,
-		  unsigned int query_flags);
-int exfat_file_fsync(struct file *file, loff_t start, loff_t end, int datasync);
-long exfat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
-long exfat_compat_ioctl(struct file *filp, unsigned int cmd,
-				unsigned long arg);
+बाह्य स्थिर काष्ठा file_operations exfat_file_operations;
+पूर्णांक __exfat_truncate(काष्ठा inode *inode, loff_t new_size);
+व्योम exfat_truncate(काष्ठा inode *inode, loff_t size);
+पूर्णांक exfat_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		  काष्ठा iattr *attr);
+पूर्णांक exfat_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		  काष्ठा kstat *stat, अचिन्हित पूर्णांक request_mask,
+		  अचिन्हित पूर्णांक query_flags);
+पूर्णांक exfat_file_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync);
+दीर्घ exfat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+दीर्घ exfat_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+				अचिन्हित दीर्घ arg);
 
 /* namei.c */
-extern const struct dentry_operations exfat_dentry_ops;
-extern const struct dentry_operations exfat_utf8_dentry_ops;
+बाह्य स्थिर काष्ठा dentry_operations exfat_dentry_ops;
+बाह्य स्थिर काष्ठा dentry_operations exfat_utf8_dentry_ops;
 
 /* cache.c */
-int exfat_cache_init(void);
-void exfat_cache_shutdown(void);
-void exfat_cache_inval_inode(struct inode *inode);
-int exfat_get_cluster(struct inode *inode, unsigned int cluster,
-		unsigned int *fclus, unsigned int *dclus,
-		unsigned int *last_dclus, int allow_eof);
+पूर्णांक exfat_cache_init(व्योम);
+व्योम exfat_cache_shutकरोwn(व्योम);
+व्योम exfat_cache_inval_inode(काष्ठा inode *inode);
+पूर्णांक exfat_get_cluster(काष्ठा inode *inode, अचिन्हित पूर्णांक cluster,
+		अचिन्हित पूर्णांक *fclus, अचिन्हित पूर्णांक *dclus,
+		अचिन्हित पूर्णांक *last_dclus, पूर्णांक allow_eof);
 
 /* dir.c */
-extern const struct inode_operations exfat_dir_inode_operations;
-extern const struct file_operations exfat_dir_operations;
-unsigned int exfat_get_entry_type(struct exfat_dentry *p_entry);
-int exfat_init_dir_entry(struct inode *inode, struct exfat_chain *p_dir,
-		int entry, unsigned int type, unsigned int start_clu,
-		unsigned long long size);
-int exfat_init_ext_entry(struct inode *inode, struct exfat_chain *p_dir,
-		int entry, int num_entries, struct exfat_uni_name *p_uniname);
-int exfat_remove_entries(struct inode *inode, struct exfat_chain *p_dir,
-		int entry, int order, int num_entries);
-int exfat_update_dir_chksum(struct inode *inode, struct exfat_chain *p_dir,
-		int entry);
-void exfat_update_dir_chksum_with_entry_set(struct exfat_entry_set_cache *es);
-int exfat_calc_num_entries(struct exfat_uni_name *p_uniname);
-int exfat_find_dir_entry(struct super_block *sb, struct exfat_inode_info *ei,
-		struct exfat_chain *p_dir, struct exfat_uni_name *p_uniname,
-		int num_entries, unsigned int type, struct exfat_hint *hint_opt);
-int exfat_alloc_new_dir(struct inode *inode, struct exfat_chain *clu);
-int exfat_find_location(struct super_block *sb, struct exfat_chain *p_dir,
-		int entry, sector_t *sector, int *offset);
-struct exfat_dentry *exfat_get_dentry(struct super_block *sb,
-		struct exfat_chain *p_dir, int entry, struct buffer_head **bh,
+बाह्य स्थिर काष्ठा inode_operations exfat_dir_inode_operations;
+बाह्य स्थिर काष्ठा file_operations exfat_dir_operations;
+अचिन्हित पूर्णांक exfat_get_entry_type(काष्ठा exfat_dentry *p_entry);
+पूर्णांक exfat_init_dir_entry(काष्ठा inode *inode, काष्ठा exfat_chain *p_dir,
+		पूर्णांक entry, अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक start_clu,
+		अचिन्हित दीर्घ दीर्घ size);
+पूर्णांक exfat_init_ext_entry(काष्ठा inode *inode, काष्ठा exfat_chain *p_dir,
+		पूर्णांक entry, पूर्णांक num_entries, काष्ठा exfat_uni_name *p_uniname);
+पूर्णांक exfat_हटाओ_entries(काष्ठा inode *inode, काष्ठा exfat_chain *p_dir,
+		पूर्णांक entry, पूर्णांक order, पूर्णांक num_entries);
+पूर्णांक exfat_update_dir_chksum(काष्ठा inode *inode, काष्ठा exfat_chain *p_dir,
+		पूर्णांक entry);
+व्योम exfat_update_dir_chksum_with_entry_set(काष्ठा exfat_entry_set_cache *es);
+पूर्णांक exfat_calc_num_entries(काष्ठा exfat_uni_name *p_uniname);
+पूर्णांक exfat_find_dir_entry(काष्ठा super_block *sb, काष्ठा exfat_inode_info *ei,
+		काष्ठा exfat_chain *p_dir, काष्ठा exfat_uni_name *p_uniname,
+		पूर्णांक num_entries, अचिन्हित पूर्णांक type, काष्ठा exfat_hपूर्णांक *hपूर्णांक_opt);
+पूर्णांक exfat_alloc_new_dir(काष्ठा inode *inode, काष्ठा exfat_chain *clu);
+पूर्णांक exfat_find_location(काष्ठा super_block *sb, काष्ठा exfat_chain *p_dir,
+		पूर्णांक entry, sector_t *sector, पूर्णांक *offset);
+काष्ठा exfat_dentry *exfat_get_dentry(काष्ठा super_block *sb,
+		काष्ठा exfat_chain *p_dir, पूर्णांक entry, काष्ठा buffer_head **bh,
 		sector_t *sector);
-struct exfat_dentry *exfat_get_dentry_cached(struct exfat_entry_set_cache *es,
-		int num);
-struct exfat_entry_set_cache *exfat_get_dentry_set(struct super_block *sb,
-		struct exfat_chain *p_dir, int entry, unsigned int type);
-int exfat_free_dentry_set(struct exfat_entry_set_cache *es, int sync);
-int exfat_count_dir_entries(struct super_block *sb, struct exfat_chain *p_dir);
+काष्ठा exfat_dentry *exfat_get_dentry_cached(काष्ठा exfat_entry_set_cache *es,
+		पूर्णांक num);
+काष्ठा exfat_entry_set_cache *exfat_get_dentry_set(काष्ठा super_block *sb,
+		काष्ठा exfat_chain *p_dir, पूर्णांक entry, अचिन्हित पूर्णांक type);
+पूर्णांक exfat_मुक्त_dentry_set(काष्ठा exfat_entry_set_cache *es, पूर्णांक sync);
+पूर्णांक exfat_count_dir_entries(काष्ठा super_block *sb, काष्ठा exfat_chain *p_dir);
 
 /* inode.c */
-extern const struct inode_operations exfat_file_inode_operations;
-void exfat_sync_inode(struct inode *inode);
-struct inode *exfat_build_inode(struct super_block *sb,
-		struct exfat_dir_entry *info, loff_t i_pos);
-void exfat_hash_inode(struct inode *inode, loff_t i_pos);
-void exfat_unhash_inode(struct inode *inode);
-struct inode *exfat_iget(struct super_block *sb, loff_t i_pos);
-int exfat_write_inode(struct inode *inode, struct writeback_control *wbc);
-void exfat_evict_inode(struct inode *inode);
-int exfat_block_truncate_page(struct inode *inode, loff_t from);
+बाह्य स्थिर काष्ठा inode_operations exfat_file_inode_operations;
+व्योम exfat_sync_inode(काष्ठा inode *inode);
+काष्ठा inode *exfat_build_inode(काष्ठा super_block *sb,
+		काष्ठा exfat_dir_entry *info, loff_t i_pos);
+व्योम exfat_hash_inode(काष्ठा inode *inode, loff_t i_pos);
+व्योम exfat_unhash_inode(काष्ठा inode *inode);
+काष्ठा inode *exfat_iget(काष्ठा super_block *sb, loff_t i_pos);
+पूर्णांक exfat_ग_लिखो_inode(काष्ठा inode *inode, काष्ठा ग_लिखोback_control *wbc);
+व्योम exfat_evict_inode(काष्ठा inode *inode);
+पूर्णांक exfat_block_truncate_page(काष्ठा inode *inode, loff_t from);
 
 /* exfat/nls.c */
-unsigned short exfat_toupper(struct super_block *sb, unsigned short a);
-int exfat_uniname_ncmp(struct super_block *sb, unsigned short *a,
-		unsigned short *b, unsigned int len);
-int exfat_utf16_to_nls(struct super_block *sb,
-		struct exfat_uni_name *uniname, unsigned char *p_cstring,
-		int len);
-int exfat_nls_to_utf16(struct super_block *sb,
-		const unsigned char *p_cstring, const int len,
-		struct exfat_uni_name *uniname, int *p_lossy);
-int exfat_create_upcase_table(struct super_block *sb);
-void exfat_free_upcase_table(struct exfat_sb_info *sbi);
+अचिन्हित लघु exfat_बड़े(काष्ठा super_block *sb, अचिन्हित लघु a);
+पूर्णांक exfat_uniname_ncmp(काष्ठा super_block *sb, अचिन्हित लघु *a,
+		अचिन्हित लघु *b, अचिन्हित पूर्णांक len);
+पूर्णांक exfat_utf16_to_nls(काष्ठा super_block *sb,
+		काष्ठा exfat_uni_name *uniname, अचिन्हित अक्षर *p_cstring,
+		पूर्णांक len);
+पूर्णांक exfat_nls_to_utf16(काष्ठा super_block *sb,
+		स्थिर अचिन्हित अक्षर *p_cstring, स्थिर पूर्णांक len,
+		काष्ठा exfat_uni_name *uniname, पूर्णांक *p_lossy);
+पूर्णांक exfat_create_upहाल_table(काष्ठा super_block *sb);
+व्योम exfat_मुक्त_upहाल_table(काष्ठा exfat_sb_info *sbi);
 
 /* exfat/misc.c */
-void __exfat_fs_error(struct super_block *sb, int report, const char *fmt, ...)
-		__printf(3, 4) __cold;
-#define exfat_fs_error(sb, fmt, args...)          \
+व्योम __exfat_fs_error(काष्ठा super_block *sb, पूर्णांक report, स्थिर अक्षर *fmt, ...)
+		__म_लिखो(3, 4) __cold;
+#घोषणा exfat_fs_error(sb, fmt, args...)          \
 		__exfat_fs_error(sb, 1, fmt, ## args)
-#define exfat_fs_error_ratelimit(sb, fmt, args...) \
+#घोषणा exfat_fs_error_ratelimit(sb, fmt, args...) \
 		__exfat_fs_error(sb, __ratelimit(&EXFAT_SB(sb)->ratelimit), \
 		fmt, ## args)
-void exfat_msg(struct super_block *sb, const char *lv, const char *fmt, ...)
-		__printf(3, 4) __cold;
-#define exfat_err(sb, fmt, ...)						\
+व्योम exfat_msg(काष्ठा super_block *sb, स्थिर अक्षर *lv, स्थिर अक्षर *fmt, ...)
+		__म_लिखो(3, 4) __cold;
+#घोषणा exfat_err(sb, fmt, ...)						\
 	exfat_msg(sb, KERN_ERR, fmt, ##__VA_ARGS__)
-#define exfat_warn(sb, fmt, ...)					\
+#घोषणा exfat_warn(sb, fmt, ...)					\
 	exfat_msg(sb, KERN_WARNING, fmt, ##__VA_ARGS__)
-#define exfat_info(sb, fmt, ...)					\
+#घोषणा exfat_info(sb, fmt, ...)					\
 	exfat_msg(sb, KERN_INFO, fmt, ##__VA_ARGS__)
 
-void exfat_get_entry_time(struct exfat_sb_info *sbi, struct timespec64 *ts,
-		u8 tz, __le16 time, __le16 date, u8 time_cs);
-void exfat_truncate_atime(struct timespec64 *ts);
-void exfat_set_entry_time(struct exfat_sb_info *sbi, struct timespec64 *ts,
-		u8 *tz, __le16 *time, __le16 *date, u8 *time_cs);
-u16 exfat_calc_chksum16(void *data, int len, u16 chksum, int type);
-u32 exfat_calc_chksum32(void *data, int len, u32 chksum, int type);
-void exfat_update_bh(struct buffer_head *bh, int sync);
-int exfat_update_bhs(struct buffer_head **bhs, int nr_bhs, int sync);
-void exfat_chain_set(struct exfat_chain *ec, unsigned int dir,
-		unsigned int size, unsigned char flags);
-void exfat_chain_dup(struct exfat_chain *dup, struct exfat_chain *ec);
+व्योम exfat_get_entry_समय(काष्ठा exfat_sb_info *sbi, काष्ठा बारpec64 *ts,
+		u8 tz, __le16 समय, __le16 date, u8 समय_cs);
+व्योम exfat_truncate_aसमय(काष्ठा बारpec64 *ts);
+व्योम exfat_set_entry_समय(काष्ठा exfat_sb_info *sbi, काष्ठा बारpec64 *ts,
+		u8 *tz, __le16 *समय, __le16 *date, u8 *समय_cs);
+u16 exfat_calc_chksum16(व्योम *data, पूर्णांक len, u16 chksum, पूर्णांक type);
+u32 exfat_calc_chksum32(व्योम *data, पूर्णांक len, u32 chksum, पूर्णांक type);
+व्योम exfat_update_bh(काष्ठा buffer_head *bh, पूर्णांक sync);
+पूर्णांक exfat_update_bhs(काष्ठा buffer_head **bhs, पूर्णांक nr_bhs, पूर्णांक sync);
+व्योम exfat_chain_set(काष्ठा exfat_chain *ec, अचिन्हित पूर्णांक dir,
+		अचिन्हित पूर्णांक size, अचिन्हित अक्षर flags);
+व्योम exfat_chain_dup(काष्ठा exfat_chain *dup, काष्ठा exfat_chain *ec);
 
-#endif /* !_EXFAT_FS_H */
+#पूर्ण_अगर /* !_EXFAT_FS_H */

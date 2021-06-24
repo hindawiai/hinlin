@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/irq.h>
-#include <linux/interrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
 /**
  * irq_fixup_move_pending - Cleanup irq move pending from a dying CPU
  * @desc:		Interrupt descriptor to clean up
- * @force_clear:	If set clear the move pending bit unconditionally.
+ * @क्रमce_clear:	If set clear the move pending bit unconditionally.
  *			If not set, clear it only when the dying CPU is the
  *			last one in the pending mask.
  *
- * Returns true if the pending bit was set and the pending mask contains an
+ * Returns true अगर the pending bit was set and the pending mask contains an
  * online CPU other than the dying CPU.
  */
-bool irq_fixup_move_pending(struct irq_desc *desc, bool force_clear)
-{
-	struct irq_data *data = irq_desc_get_irq_data(desc);
+bool irq_fixup_move_pending(काष्ठा irq_desc *desc, bool क्रमce_clear)
+अणु
+	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
 
-	if (!irqd_is_setaffinity_pending(data))
-		return false;
+	अगर (!irqd_is_setaffinity_pending(data))
+		वापस false;
 
 	/*
 	 * The outgoing CPU might be the last online target in a pending
-	 * interrupt move. If that's the case clear the pending move bit.
+	 * पूर्णांकerrupt move. If that's the हाल clear the pending move bit.
 	 */
-	if (cpumask_any_and(desc->pending_mask, cpu_online_mask) >= nr_cpu_ids) {
+	अगर (cpumask_any_and(desc->pending_mask, cpu_online_mask) >= nr_cpu_ids) अणु
 		irqd_clr_move_pending(data);
-		return false;
-	}
-	if (force_clear)
+		वापस false;
+	पूर्ण
+	अगर (क्रमce_clear)
 		irqd_clr_move_pending(data);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void irq_move_masked_irq(struct irq_data *idata)
-{
-	struct irq_desc *desc = irq_data_to_desc(idata);
-	struct irq_data *data = &desc->irq_data;
-	struct irq_chip *chip = data->chip;
+व्योम irq_move_masked_irq(काष्ठा irq_data *idata)
+अणु
+	काष्ठा irq_desc *desc = irq_data_to_desc(idata);
+	काष्ठा irq_data *data = &desc->irq_data;
+	काष्ठा irq_chip *chip = data->chip;
 
-	if (likely(!irqd_is_setaffinity_pending(data)))
-		return;
+	अगर (likely(!irqd_is_setaffinity_pending(data)))
+		वापस;
 
 	irqd_clr_move_pending(data);
 
 	/*
-	 * Paranoia: cpu-local interrupts shouldn't be calling in here anyway.
+	 * Paranoia: cpu-local पूर्णांकerrupts shouldn't be calling in here anyway.
 	 */
-	if (irqd_is_per_cpu(data)) {
+	अगर (irqd_is_per_cpu(data)) अणु
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (unlikely(cpumask_empty(desc->pending_mask)))
-		return;
+	अगर (unlikely(cpumask_empty(desc->pending_mask)))
+		वापस;
 
-	if (!chip->irq_set_affinity)
-		return;
+	अगर (!chip->irq_set_affinity)
+		वापस;
 
-	assert_raw_spin_locked(&desc->lock);
+	निश्चित_raw_spin_locked(&desc->lock);
 
 	/*
 	 * If there was a valid mask to work with, please
-	 * do the disable, re-program, enable sequence.
-	 * This is *not* particularly important for level triggered
-	 * but in a edge trigger case, we might be setting rte
+	 * करो the disable, re-program, enable sequence.
+	 * This is *not* particularly important क्रम level triggered
+	 * but in a edge trigger हाल, we might be setting rte
 	 * when an active trigger is coming in. This could
 	 * cause some ioapics to mal-function.
 	 * Being paranoid i guess!
@@ -74,46 +75,46 @@ void irq_move_masked_irq(struct irq_data *idata)
 	 * For correct operation this depends on the caller
 	 * masking the irqs.
 	 */
-	if (cpumask_any_and(desc->pending_mask, cpu_online_mask) < nr_cpu_ids) {
-		int ret;
+	अगर (cpumask_any_and(desc->pending_mask, cpu_online_mask) < nr_cpu_ids) अणु
+		पूर्णांक ret;
 
-		ret = irq_do_set_affinity(data, desc->pending_mask, false);
+		ret = irq_करो_set_affinity(data, desc->pending_mask, false);
 		/*
 		 * If the there is a cleanup pending in the underlying
-		 * vector management, reschedule the move for the next
-		 * interrupt. Leave desc->pending_mask intact.
+		 * vector management, reschedule the move क्रम the next
+		 * पूर्णांकerrupt. Leave desc->pending_mask पूर्णांकact.
 		 */
-		if (ret == -EBUSY) {
+		अगर (ret == -EBUSY) अणु
 			irqd_set_move_pending(data);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	cpumask_clear(desc->pending_mask);
-}
+पूर्ण
 
-void __irq_move_irq(struct irq_data *idata)
-{
+व्योम __irq_move_irq(काष्ठा irq_data *idata)
+अणु
 	bool masked;
 
 	/*
 	 * Get top level irq_data when CONFIG_IRQ_DOMAIN_HIERARCHY is enabled,
 	 * and it should be optimized away when CONFIG_IRQ_DOMAIN_HIERARCHY is
-	 * disabled. So we avoid an "#ifdef CONFIG_IRQ_DOMAIN_HIERARCHY" here.
+	 * disabled. So we aव्योम an "#ifdef CONFIG_IRQ_DOMAIN_HIERARCHY" here.
 	 */
 	idata = irq_desc_get_irq_data(irq_data_to_desc(idata));
 
-	if (unlikely(irqd_irq_disabled(idata)))
-		return;
+	अगर (unlikely(irqd_irq_disabled(idata)))
+		वापस;
 
 	/*
-	 * Be careful vs. already masked interrupts. If this is a
-	 * threaded interrupt with ONESHOT set, we can end up with an
-	 * interrupt storm.
+	 * Be careful vs. alपढ़ोy masked पूर्णांकerrupts. If this is a
+	 * thपढ़ोed पूर्णांकerrupt with ONESHOT set, we can end up with an
+	 * पूर्णांकerrupt storm.
 	 */
 	masked = irqd_irq_masked(idata);
-	if (!masked)
+	अगर (!masked)
 		idata->chip->irq_mask(idata);
 	irq_move_masked_irq(idata);
-	if (!masked)
+	अगर (!masked)
 		idata->chip->irq_unmask(idata);
-}
+पूर्ण

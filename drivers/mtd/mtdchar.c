@@ -1,1233 +1,1234 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 1999-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/mutex.h>
-#include <linux/backing-dev.h>
-#include <linux/compat.h>
-#include <linux/mount.h>
-#include <linux/blkpg.h>
-#include <linux/magic.h>
-#include <linux/major.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/map.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/major.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/map.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "mtdcore.h"
+#समावेश "mtdcore.h"
 
 /*
- * Data structure to hold the pointer to the mtd device as well
- * as mode information of various use cases.
+ * Data काष्ठाure to hold the poपूर्णांकer to the mtd device as well
+ * as mode inक्रमmation of various use हालs.
  */
-struct mtd_file_info {
-	struct mtd_info *mtd;
-	enum mtd_file_modes mode;
-};
+काष्ठा mtd_file_info अणु
+	काष्ठा mtd_info *mtd;
+	क्रमागत mtd_file_modes mode;
+पूर्ण;
 
-static loff_t mtdchar_lseek(struct file *file, loff_t offset, int orig)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	return fixed_size_llseek(file, offset, orig, mfi->mtd->size);
-}
+अटल loff_t mtdअक्षर_lseek(काष्ठा file *file, loff_t offset, पूर्णांक orig)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	वापस fixed_size_llseek(file, offset, orig, mfi->mtd->size);
+पूर्ण
 
-static int mtdchar_open(struct inode *inode, struct file *file)
-{
-	int minor = iminor(inode);
-	int devnum = minor >> 1;
-	int ret = 0;
-	struct mtd_info *mtd;
-	struct mtd_file_info *mfi;
+अटल पूर्णांक mtdअक्षर_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक minor = iminor(inode);
+	पूर्णांक devnum = minor >> 1;
+	पूर्णांक ret = 0;
+	काष्ठा mtd_info *mtd;
+	काष्ठा mtd_file_info *mfi;
 
 	pr_debug("MTD_open\n");
 
-	/* You can't open the RO devices RW */
-	if ((file->f_mode & FMODE_WRITE) && (minor & 1))
-		return -EACCES;
+	/* You can't खोलो the RO devices RW */
+	अगर ((file->f_mode & FMODE_WRITE) && (minor & 1))
+		वापस -EACCES;
 
-	mtd = get_mtd_device(NULL, devnum);
+	mtd = get_mtd_device(शून्य, devnum);
 
-	if (IS_ERR(mtd))
-		return PTR_ERR(mtd);
+	अगर (IS_ERR(mtd))
+		वापस PTR_ERR(mtd);
 
-	if (mtd->type == MTD_ABSENT) {
+	अगर (mtd->type == MTD_ABSENT) अणु
 		ret = -ENODEV;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
-	/* You can't open it RW if it's not a writeable device */
-	if ((file->f_mode & FMODE_WRITE) && !(mtd->flags & MTD_WRITEABLE)) {
+	/* You can't open it RW if it's not a ग_लिखोable device */
+	अगर ((file->f_mode & FMODE_WRITE) && !(mtd->flags & MTD_WRITEABLE)) अणु
 		ret = -EACCES;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
-	mfi = kzalloc(sizeof(*mfi), GFP_KERNEL);
-	if (!mfi) {
+	mfi = kzalloc(माप(*mfi), GFP_KERNEL);
+	अगर (!mfi) अणु
 		ret = -ENOMEM;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 	mfi->mtd = mtd;
-	file->private_data = mfi;
-	return 0;
+	file->निजी_data = mfi;
+	वापस 0;
 
 out1:
 	put_mtd_device(mtd);
-	return ret;
-} /* mtdchar_open */
+	वापस ret;
+पूर्ण /* mtdअक्षर_खोलो */
 
 /*====================================================================*/
 
-static int mtdchar_close(struct inode *inode, struct file *file)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
+अटल पूर्णांक mtdअक्षर_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
 
 	pr_debug("MTD_close\n");
 
-	/* Only sync if opened RW */
-	if ((file->f_mode & FMODE_WRITE))
+	/* Only sync अगर खोलोed RW */
+	अगर ((file->f_mode & FMODE_WRITE))
 		mtd_sync(mtd);
 
 	put_mtd_device(mtd);
-	file->private_data = NULL;
-	kfree(mfi);
+	file->निजी_data = शून्य;
+	kमुक्त(mfi);
 
-	return 0;
-} /* mtdchar_close */
+	वापस 0;
+पूर्ण /* mtdअक्षर_बंद */
 
 /* Back in June 2001, dwmw2 wrote:
  *
  *   FIXME: This _really_ needs to die. In 2.5, we should lock the
- *   userspace buffer down and use it directly with readv/writev.
+ *   userspace buffer करोwn and use it directly with पढ़ोv/ग_लिखोv.
  *
- * The implementation below, using mtd_kmalloc_up_to, mitigates
- * allocation failures when the system is under low-memory situations
- * or if memory is highly fragmented at the cost of reducing the
- * performance of the requested transfer due to a smaller buffer size.
+ * The implementation below, using mtd_kदो_स्मृति_up_to, mitigates
+ * allocation failures when the प्रणाली is under low-memory situations
+ * or अगर memory is highly fragmented at the cost of reducing the
+ * perक्रमmance of the requested transfer due to a smaller buffer size.
  *
  * A more complex but more memory-efficient implementation based on
  * get_user_pages and iovecs to cover extents of those pages is a
- * longer-term goal, as intimated by dwmw2 above. However, for the
- * write case, this requires yet more complex head and tail transfer
+ * दीर्घer-term goal, as पूर्णांकimated by dwmw2 above. However, क्रम the
+ * ग_लिखो हाल, this requires yet more complex head and tail transfer
  * handling when those head and tail offsets and sizes are such that
- * alignment requirements are not met in the NAND subdriver.
+ * alignment requirements are not met in the न_अंकD subdriver.
  */
 
-static ssize_t mtdchar_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार mtdअक्षर_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 			loff_t *ppos)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
-	size_t retlen;
-	size_t total_retlen=0;
-	int ret=0;
-	int len;
-	size_t size = count;
-	char *kbuf;
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	माप_प्रकार retlen;
+	माप_प्रकार total_retlen=0;
+	पूर्णांक ret=0;
+	पूर्णांक len;
+	माप_प्रकार size = count;
+	अक्षर *kbuf;
 
 	pr_debug("MTD_read\n");
 
-	if (*ppos + count > mtd->size) {
-		if (*ppos < mtd->size)
+	अगर (*ppos + count > mtd->size) अणु
+		अगर (*ppos < mtd->size)
 			count = mtd->size - *ppos;
-		else
+		अन्यथा
 			count = 0;
-	}
+	पूर्ण
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	kbuf = mtd_kmalloc_up_to(mtd, &size);
-	if (!kbuf)
-		return -ENOMEM;
+	kbuf = mtd_kदो_स्मृति_up_to(mtd, &size);
+	अगर (!kbuf)
+		वापस -ENOMEM;
 
-	while (count) {
-		len = min_t(size_t, count, size);
+	जबतक (count) अणु
+		len = min_t(माप_प्रकार, count, size);
 
-		switch (mfi->mode) {
-		case MTD_FILE_MODE_OTP_FACTORY:
-			ret = mtd_read_fact_prot_reg(mtd, *ppos, len,
+		चयन (mfi->mode) अणु
+		हाल MTD_खाता_MODE_OTP_FACTORY:
+			ret = mtd_पढ़ो_fact_prot_reg(mtd, *ppos, len,
 						     &retlen, kbuf);
-			break;
-		case MTD_FILE_MODE_OTP_USER:
-			ret = mtd_read_user_prot_reg(mtd, *ppos, len,
+			अवरोध;
+		हाल MTD_खाता_MODE_OTP_USER:
+			ret = mtd_पढ़ो_user_prot_reg(mtd, *ppos, len,
 						     &retlen, kbuf);
-			break;
-		case MTD_FILE_MODE_RAW:
-		{
-			struct mtd_oob_ops ops = {};
+			अवरोध;
+		हाल MTD_खाता_MODE_RAW:
+		अणु
+			काष्ठा mtd_oob_ops ops = अणुपूर्ण;
 
 			ops.mode = MTD_OPS_RAW;
 			ops.datbuf = kbuf;
-			ops.oobbuf = NULL;
+			ops.oobbuf = शून्य;
 			ops.len = len;
 
-			ret = mtd_read_oob(mtd, *ppos, &ops);
+			ret = mtd_पढ़ो_oob(mtd, *ppos, &ops);
 			retlen = ops.retlen;
-			break;
-		}
-		default:
-			ret = mtd_read(mtd, *ppos, len, &retlen, kbuf);
-		}
-		/* Nand returns -EBADMSG on ECC errors, but it returns
+			अवरोध;
+		पूर्ण
+		शेष:
+			ret = mtd_पढ़ो(mtd, *ppos, len, &retlen, kbuf);
+		पूर्ण
+		/* Nand वापसs -EBADMSG on ECC errors, but it वापसs
 		 * the data. For our userspace tools it is important
 		 * to dump areas with ECC errors!
-		 * For kernel internal usage it also might return -EUCLEAN
-		 * to signal the caller that a bitflip has occurred and has
+		 * For kernel पूर्णांकernal usage it also might वापस -EUCLEAN
+		 * to संकेत the caller that a bitflip has occurred and has
 		 * been corrected by the ECC algorithm.
-		 * Userspace software which accesses NAND this way
-		 * must be aware of the fact that it deals with NAND
+		 * Userspace software which accesses न_अंकD this way
+		 * must be aware of the fact that it deals with न_अंकD
 		 */
-		if (!ret || mtd_is_bitflip_or_eccerr(ret)) {
+		अगर (!ret || mtd_is_bitflip_or_eccerr(ret)) अणु
 			*ppos += retlen;
-			if (copy_to_user(buf, kbuf, retlen)) {
-				kfree(kbuf);
-				return -EFAULT;
-			}
-			else
+			अगर (copy_to_user(buf, kbuf, retlen)) अणु
+				kमुक्त(kbuf);
+				वापस -EFAULT;
+			पूर्ण
+			अन्यथा
 				total_retlen += retlen;
 
 			count -= retlen;
 			buf += retlen;
-			if (retlen == 0)
+			अगर (retlen == 0)
 				count = 0;
-		}
-		else {
-			kfree(kbuf);
-			return ret;
-		}
+		पूर्ण
+		अन्यथा अणु
+			kमुक्त(kbuf);
+			वापस ret;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	kfree(kbuf);
-	return total_retlen;
-} /* mtdchar_read */
+	kमुक्त(kbuf);
+	वापस total_retlen;
+पूर्ण /* mtdअक्षर_पढ़ो */
 
-static ssize_t mtdchar_write(struct file *file, const char __user *buf, size_t count,
+अटल sमाप_प्रकार mtdअक्षर_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count,
 			loff_t *ppos)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
-	size_t size = count;
-	char *kbuf;
-	size_t retlen;
-	size_t total_retlen=0;
-	int ret=0;
-	int len;
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	माप_प्रकार size = count;
+	अक्षर *kbuf;
+	माप_प्रकार retlen;
+	माप_प्रकार total_retlen=0;
+	पूर्णांक ret=0;
+	पूर्णांक len;
 
 	pr_debug("MTD_write\n");
 
-	if (*ppos >= mtd->size)
-		return -ENOSPC;
+	अगर (*ppos >= mtd->size)
+		वापस -ENOSPC;
 
-	if (*ppos + count > mtd->size)
+	अगर (*ppos + count > mtd->size)
 		count = mtd->size - *ppos;
 
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	kbuf = mtd_kmalloc_up_to(mtd, &size);
-	if (!kbuf)
-		return -ENOMEM;
+	kbuf = mtd_kदो_स्मृति_up_to(mtd, &size);
+	अगर (!kbuf)
+		वापस -ENOMEM;
 
-	while (count) {
-		len = min_t(size_t, count, size);
+	जबतक (count) अणु
+		len = min_t(माप_प्रकार, count, size);
 
-		if (copy_from_user(kbuf, buf, len)) {
-			kfree(kbuf);
-			return -EFAULT;
-		}
+		अगर (copy_from_user(kbuf, buf, len)) अणु
+			kमुक्त(kbuf);
+			वापस -EFAULT;
+		पूर्ण
 
-		switch (mfi->mode) {
-		case MTD_FILE_MODE_OTP_FACTORY:
+		चयन (mfi->mode) अणु
+		हाल MTD_खाता_MODE_OTP_FACTORY:
 			ret = -EROFS;
-			break;
-		case MTD_FILE_MODE_OTP_USER:
-			ret = mtd_write_user_prot_reg(mtd, *ppos, len,
+			अवरोध;
+		हाल MTD_खाता_MODE_OTP_USER:
+			ret = mtd_ग_लिखो_user_prot_reg(mtd, *ppos, len,
 						      &retlen, kbuf);
-			break;
+			अवरोध;
 
-		case MTD_FILE_MODE_RAW:
-		{
-			struct mtd_oob_ops ops = {};
+		हाल MTD_खाता_MODE_RAW:
+		अणु
+			काष्ठा mtd_oob_ops ops = अणुपूर्ण;
 
 			ops.mode = MTD_OPS_RAW;
 			ops.datbuf = kbuf;
-			ops.oobbuf = NULL;
+			ops.oobbuf = शून्य;
 			ops.ooboffs = 0;
 			ops.len = len;
 
-			ret = mtd_write_oob(mtd, *ppos, &ops);
+			ret = mtd_ग_लिखो_oob(mtd, *ppos, &ops);
 			retlen = ops.retlen;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		default:
-			ret = mtd_write(mtd, *ppos, len, &retlen, kbuf);
-		}
+		शेष:
+			ret = mtd_ग_लिखो(mtd, *ppos, len, &retlen, kbuf);
+		पूर्ण
 
 		/*
-		 * Return -ENOSPC only if no data could be written at all.
-		 * Otherwise just return the number of bytes that actually
+		 * Return -ENOSPC only अगर no data could be written at all.
+		 * Otherwise just वापस the number of bytes that actually
 		 * have been written.
 		 */
-		if ((ret == -ENOSPC) && (total_retlen))
-			break;
+		अगर ((ret == -ENOSPC) && (total_retlen))
+			अवरोध;
 
-		if (!ret) {
+		अगर (!ret) अणु
 			*ppos += retlen;
 			total_retlen += retlen;
 			count -= retlen;
 			buf += retlen;
-		}
-		else {
-			kfree(kbuf);
-			return ret;
-		}
-	}
+		पूर्ण
+		अन्यथा अणु
+			kमुक्त(kbuf);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	kfree(kbuf);
-	return total_retlen;
-} /* mtdchar_write */
+	kमुक्त(kbuf);
+	वापस total_retlen;
+पूर्ण /* mtdअक्षर_ग_लिखो */
 
 /*======================================================================
 
-    IOCTL calls for getting device parameters.
+    IOCTL calls क्रम getting device parameters.
 
 ======================================================================*/
 
-static int otp_select_filemode(struct mtd_file_info *mfi, int mode)
-{
-	struct mtd_info *mtd = mfi->mtd;
-	size_t retlen;
+अटल पूर्णांक otp_select_filemode(काष्ठा mtd_file_info *mfi, पूर्णांक mode)
+अणु
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	माप_प्रकार retlen;
 
-	switch (mode) {
-	case MTD_OTP_FACTORY:
-		if (mtd_read_fact_prot_reg(mtd, -1, 0, &retlen, NULL) ==
+	चयन (mode) अणु
+	हाल MTD_OTP_FACTORY:
+		अगर (mtd_पढ़ो_fact_prot_reg(mtd, -1, 0, &retlen, शून्य) ==
 				-EOPNOTSUPP)
-			return -EOPNOTSUPP;
+			वापस -EOPNOTSUPP;
 
-		mfi->mode = MTD_FILE_MODE_OTP_FACTORY;
-		break;
-	case MTD_OTP_USER:
-		if (mtd_read_user_prot_reg(mtd, -1, 0, &retlen, NULL) ==
+		mfi->mode = MTD_खाता_MODE_OTP_FACTORY;
+		अवरोध;
+	हाल MTD_OTP_USER:
+		अगर (mtd_पढ़ो_user_prot_reg(mtd, -1, 0, &retlen, शून्य) ==
 				-EOPNOTSUPP)
-			return -EOPNOTSUPP;
+			वापस -EOPNOTSUPP;
 
-		mfi->mode = MTD_FILE_MODE_OTP_USER;
-		break;
-	case MTD_OTP_OFF:
-		mfi->mode = MTD_FILE_MODE_NORMAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+		mfi->mode = MTD_खाता_MODE_OTP_USER;
+		अवरोध;
+	हाल MTD_OTP_OFF:
+		mfi->mode = MTD_खाता_MODE_NORMAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdchar_writeoob(struct file *file, struct mtd_info *mtd,
-	uint64_t start, uint32_t length, void __user *ptr,
-	uint32_t __user *retp)
-{
-	struct mtd_info *master  = mtd_get_master(mtd);
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_oob_ops ops = {};
-	uint32_t retlen;
-	int ret = 0;
+अटल पूर्णांक mtdअक्षर_ग_लिखोoob(काष्ठा file *file, काष्ठा mtd_info *mtd,
+	uपूर्णांक64_t start, uपूर्णांक32_t length, व्योम __user *ptr,
+	uपूर्णांक32_t __user *retp)
+अणु
+	काष्ठा mtd_info *master  = mtd_get_master(mtd);
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_oob_ops ops = अणुपूर्ण;
+	uपूर्णांक32_t retlen;
+	पूर्णांक ret = 0;
 
-	if (length > 4096)
-		return -EINVAL;
+	अगर (length > 4096)
+		वापस -EINVAL;
 
-	if (!master->_write_oob)
-		return -EOPNOTSUPP;
+	अगर (!master->_ग_लिखो_oob)
+		वापस -EOPNOTSUPP;
 
 	ops.ooblen = length;
-	ops.ooboffs = start & (mtd->writesize - 1);
-	ops.datbuf = NULL;
-	ops.mode = (mfi->mode == MTD_FILE_MODE_RAW) ? MTD_OPS_RAW :
+	ops.ooboffs = start & (mtd->ग_लिखोsize - 1);
+	ops.datbuf = शून्य;
+	ops.mode = (mfi->mode == MTD_खाता_MODE_RAW) ? MTD_OPS_RAW :
 		MTD_OPS_PLACE_OOB;
 
-	if (ops.ooboffs && ops.ooblen > (mtd->oobsize - ops.ooboffs))
-		return -EINVAL;
+	अगर (ops.ooboffs && ops.ooblen > (mtd->oobsize - ops.ooboffs))
+		वापस -EINVAL;
 
 	ops.oobbuf = memdup_user(ptr, length);
-	if (IS_ERR(ops.oobbuf))
-		return PTR_ERR(ops.oobbuf);
+	अगर (IS_ERR(ops.oobbuf))
+		वापस PTR_ERR(ops.oobbuf);
 
-	start &= ~((uint64_t)mtd->writesize - 1);
-	ret = mtd_write_oob(mtd, start, &ops);
+	start &= ~((uपूर्णांक64_t)mtd->ग_लिखोsize - 1);
+	ret = mtd_ग_लिखो_oob(mtd, start, &ops);
 
-	if (ops.oobretlen > 0xFFFFFFFFU)
+	अगर (ops.oobretlen > 0xFFFFFFFFU)
 		ret = -EOVERFLOW;
 	retlen = ops.oobretlen;
-	if (copy_to_user(retp, &retlen, sizeof(length)))
+	अगर (copy_to_user(retp, &retlen, माप(length)))
 		ret = -EFAULT;
 
-	kfree(ops.oobbuf);
-	return ret;
-}
+	kमुक्त(ops.oobbuf);
+	वापस ret;
+पूर्ण
 
-static int mtdchar_readoob(struct file *file, struct mtd_info *mtd,
-	uint64_t start, uint32_t length, void __user *ptr,
-	uint32_t __user *retp)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_oob_ops ops = {};
-	int ret = 0;
+अटल पूर्णांक mtdअक्षर_पढ़ोoob(काष्ठा file *file, काष्ठा mtd_info *mtd,
+	uपूर्णांक64_t start, uपूर्णांक32_t length, व्योम __user *ptr,
+	uपूर्णांक32_t __user *retp)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_oob_ops ops = अणुपूर्ण;
+	पूर्णांक ret = 0;
 
-	if (length > 4096)
-		return -EINVAL;
+	अगर (length > 4096)
+		वापस -EINVAL;
 
 	ops.ooblen = length;
-	ops.ooboffs = start & (mtd->writesize - 1);
-	ops.datbuf = NULL;
-	ops.mode = (mfi->mode == MTD_FILE_MODE_RAW) ? MTD_OPS_RAW :
+	ops.ooboffs = start & (mtd->ग_लिखोsize - 1);
+	ops.datbuf = शून्य;
+	ops.mode = (mfi->mode == MTD_खाता_MODE_RAW) ? MTD_OPS_RAW :
 		MTD_OPS_PLACE_OOB;
 
-	if (ops.ooboffs && ops.ooblen > (mtd->oobsize - ops.ooboffs))
-		return -EINVAL;
+	अगर (ops.ooboffs && ops.ooblen > (mtd->oobsize - ops.ooboffs))
+		वापस -EINVAL;
 
-	ops.oobbuf = kmalloc(length, GFP_KERNEL);
-	if (!ops.oobbuf)
-		return -ENOMEM;
+	ops.oobbuf = kदो_स्मृति(length, GFP_KERNEL);
+	अगर (!ops.oobbuf)
+		वापस -ENOMEM;
 
-	start &= ~((uint64_t)mtd->writesize - 1);
-	ret = mtd_read_oob(mtd, start, &ops);
+	start &= ~((uपूर्णांक64_t)mtd->ग_लिखोsize - 1);
+	ret = mtd_पढ़ो_oob(mtd, start, &ops);
 
-	if (put_user(ops.oobretlen, retp))
+	अगर (put_user(ops.oobretlen, retp))
 		ret = -EFAULT;
-	else if (ops.oobretlen && copy_to_user(ptr, ops.oobbuf,
+	अन्यथा अगर (ops.oobretlen && copy_to_user(ptr, ops.oobbuf,
 					    ops.oobretlen))
 		ret = -EFAULT;
 
-	kfree(ops.oobbuf);
+	kमुक्त(ops.oobbuf);
 
 	/*
-	 * NAND returns -EBADMSG on ECC errors, but it returns the OOB
+	 * न_अंकD वापसs -EBADMSG on ECC errors, but it वापसs the OOB
 	 * data. For our userspace tools it is important to dump areas
 	 * with ECC errors!
-	 * For kernel internal usage it also might return -EUCLEAN
-	 * to signal the caller that a bitflip has occurred and has
+	 * For kernel पूर्णांकernal usage it also might वापस -EUCLEAN
+	 * to संकेत the caller that a bitflip has occurred and has
 	 * been corrected by the ECC algorithm.
 	 *
-	 * Note: currently the standard NAND function, nand_read_oob_std,
-	 * does not calculate ECC for the OOB area, so do not rely on
+	 * Note: currently the standard न_अंकD function, nand_पढ़ो_oob_std,
+	 * करोes not calculate ECC क्रम the OOB area, so करो not rely on
 	 * this behavior unless you have replaced it with your own.
 	 */
-	if (mtd_is_bitflip_or_eccerr(ret))
-		return 0;
+	अगर (mtd_is_bitflip_or_eccerr(ret))
+		वापस 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Copies (and truncates, if necessary) OOB layout information to the
- * deprecated layout struct, nand_ecclayout_user. This is necessary only to
- * support the deprecated API ioctl ECCGETLAYOUT while allowing all new
+ * Copies (and truncates, अगर necessary) OOB layout inक्रमmation to the
+ * deprecated layout काष्ठा, nand_ecclayout_user. This is necessary only to
+ * support the deprecated API ioctl ECCGETLAYOUT जबतक allowing all new
  * functionality to use mtd_ooblayout_ops flexibly (i.e. mtd_ooblayout_ops
  * can describe any kind of OOB layout with almost zero overhead from a
- * memory usage point of view).
+ * memory usage poपूर्णांक of view).
  */
-static int shrink_ecclayout(struct mtd_info *mtd,
-			    struct nand_ecclayout_user *to)
-{
-	struct mtd_oob_region oobregion;
-	int i, section = 0, ret;
+अटल पूर्णांक shrink_ecclayout(काष्ठा mtd_info *mtd,
+			    काष्ठा nand_ecclayout_user *to)
+अणु
+	काष्ठा mtd_oob_region oobregion;
+	पूर्णांक i, section = 0, ret;
 
-	if (!mtd || !to)
-		return -EINVAL;
+	अगर (!mtd || !to)
+		वापस -EINVAL;
 
-	memset(to, 0, sizeof(*to));
+	स_रखो(to, 0, माप(*to));
 
 	to->eccbytes = 0;
-	for (i = 0; i < MTD_MAX_ECCPOS_ENTRIES;) {
+	क्रम (i = 0; i < MTD_MAX_ECCPOS_ENTRIES;) अणु
 		u32 eccpos;
 
 		ret = mtd_ooblayout_ecc(mtd, section++, &oobregion);
-		if (ret < 0) {
-			if (ret != -ERANGE)
-				return ret;
+		अगर (ret < 0) अणु
+			अगर (ret != -दुस्फल)
+				वापस ret;
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		eccpos = oobregion.offset;
-		for (; i < MTD_MAX_ECCPOS_ENTRIES &&
-		       eccpos < oobregion.offset + oobregion.length; i++) {
+		क्रम (; i < MTD_MAX_ECCPOS_ENTRIES &&
+		       eccpos < oobregion.offset + oobregion.length; i++) अणु
 			to->eccpos[i] = eccpos++;
 			to->eccbytes++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES; i++) {
-		ret = mtd_ooblayout_free(mtd, i, &oobregion);
-		if (ret < 0) {
-			if (ret != -ERANGE)
-				return ret;
+	क्रम (i = 0; i < MTD_MAX_OOBFREE_ENTRIES; i++) अणु
+		ret = mtd_ooblayout_मुक्त(mtd, i, &oobregion);
+		अगर (ret < 0) अणु
+			अगर (ret != -दुस्फल)
+				वापस ret;
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		to->oobfree[i].offset = oobregion.offset;
-		to->oobfree[i].length = oobregion.length;
-		to->oobavail += to->oobfree[i].length;
-	}
+		to->oobमुक्त[i].offset = oobregion.offset;
+		to->oobमुक्त[i].length = oobregion.length;
+		to->oobavail += to->oobमुक्त[i].length;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_oobinfo(struct mtd_info *mtd, struct nand_oobinfo *to)
-{
-	struct mtd_oob_region oobregion;
-	int i, section = 0, ret;
+अटल पूर्णांक get_oobinfo(काष्ठा mtd_info *mtd, काष्ठा nand_oobinfo *to)
+अणु
+	काष्ठा mtd_oob_region oobregion;
+	पूर्णांक i, section = 0, ret;
 
-	if (!mtd || !to)
-		return -EINVAL;
+	अगर (!mtd || !to)
+		वापस -EINVAL;
 
-	memset(to, 0, sizeof(*to));
+	स_रखो(to, 0, माप(*to));
 
 	to->eccbytes = 0;
-	for (i = 0; i < ARRAY_SIZE(to->eccpos);) {
+	क्रम (i = 0; i < ARRAY_SIZE(to->eccpos);) अणु
 		u32 eccpos;
 
 		ret = mtd_ooblayout_ecc(mtd, section++, &oobregion);
-		if (ret < 0) {
-			if (ret != -ERANGE)
-				return ret;
+		अगर (ret < 0) अणु
+			अगर (ret != -दुस्फल)
+				वापस ret;
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (oobregion.length + i > ARRAY_SIZE(to->eccpos))
-			return -EINVAL;
+		अगर (oobregion.length + i > ARRAY_SIZE(to->eccpos))
+			वापस -EINVAL;
 
 		eccpos = oobregion.offset;
-		for (; eccpos < oobregion.offset + oobregion.length; i++) {
+		क्रम (; eccpos < oobregion.offset + oobregion.length; i++) अणु
 			to->eccpos[i] = eccpos++;
 			to->eccbytes++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 8; i++) {
-		ret = mtd_ooblayout_free(mtd, i, &oobregion);
-		if (ret < 0) {
-			if (ret != -ERANGE)
-				return ret;
+	क्रम (i = 0; i < 8; i++) अणु
+		ret = mtd_ooblayout_मुक्त(mtd, i, &oobregion);
+		अगर (ret < 0) अणु
+			अगर (ret != -दुस्फल)
+				वापस ret;
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		to->oobfree[i][0] = oobregion.offset;
-		to->oobfree[i][1] = oobregion.length;
-	}
+		to->oobमुक्त[i][0] = oobregion.offset;
+		to->oobमुक्त[i][1] = oobregion.length;
+	पूर्ण
 
-	to->useecc = MTD_NANDECC_AUTOPLACE;
+	to->useecc = MTD_न_अंकDECC_AUTOPLACE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdchar_blkpg_ioctl(struct mtd_info *mtd,
-			       struct blkpg_ioctl_arg *arg)
-{
-	struct blkpg_partition p;
+अटल पूर्णांक mtdअक्षर_blkpg_ioctl(काष्ठा mtd_info *mtd,
+			       काष्ठा blkpg_ioctl_arg *arg)
+अणु
+	काष्ठा blkpg_partition p;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (copy_from_user(&p, arg->data, sizeof(p)))
-		return -EFAULT;
+	अगर (copy_from_user(&p, arg->data, माप(p)))
+		वापस -EFAULT;
 
-	switch (arg->op) {
-	case BLKPG_ADD_PARTITION:
+	चयन (arg->op) अणु
+	हाल BLKPG_ADD_PARTITION:
 
 		/* Only master mtd device must be used to add partitions */
-		if (mtd_is_partition(mtd))
-			return -EINVAL;
+		अगर (mtd_is_partition(mtd))
+			वापस -EINVAL;
 
 		/* Sanitize user input */
 		p.devname[BLKPG_DEVNAMELTH - 1] = '\0';
 
-		return mtd_add_partition(mtd, p.devname, p.start, p.length);
+		वापस mtd_add_partition(mtd, p.devname, p.start, p.length);
 
-	case BLKPG_DEL_PARTITION:
+	हाल BLKPG_DEL_PARTITION:
 
-		if (p.pno < 0)
-			return -EINVAL;
+		अगर (p.pno < 0)
+			वापस -EINVAL;
 
-		return mtd_del_partition(mtd, p.pno);
+		वापस mtd_del_partition(mtd, p.pno);
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int mtdchar_write_ioctl(struct mtd_info *mtd,
-		struct mtd_write_req __user *argp)
-{
-	struct mtd_info *master = mtd_get_master(mtd);
-	struct mtd_write_req req;
-	struct mtd_oob_ops ops = {};
-	const void __user *usr_data, *usr_oob;
-	int ret;
+अटल पूर्णांक mtdअक्षर_ग_लिखो_ioctl(काष्ठा mtd_info *mtd,
+		काष्ठा mtd_ग_लिखो_req __user *argp)
+अणु
+	काष्ठा mtd_info *master = mtd_get_master(mtd);
+	काष्ठा mtd_ग_लिखो_req req;
+	काष्ठा mtd_oob_ops ops = अणुपूर्ण;
+	स्थिर व्योम __user *usr_data, *usr_oob;
+	पूर्णांक ret;
 
-	if (copy_from_user(&req, argp, sizeof(req)))
-		return -EFAULT;
+	अगर (copy_from_user(&req, argp, माप(req)))
+		वापस -EFAULT;
 
-	usr_data = (const void __user *)(uintptr_t)req.usr_data;
-	usr_oob = (const void __user *)(uintptr_t)req.usr_oob;
+	usr_data = (स्थिर व्योम __user *)(uपूर्णांकptr_t)req.usr_data;
+	usr_oob = (स्थिर व्योम __user *)(uपूर्णांकptr_t)req.usr_oob;
 
-	if (!master->_write_oob)
-		return -EOPNOTSUPP;
+	अगर (!master->_ग_लिखो_oob)
+		वापस -EOPNOTSUPP;
 	ops.mode = req.mode;
-	ops.len = (size_t)req.len;
-	ops.ooblen = (size_t)req.ooblen;
+	ops.len = (माप_प्रकार)req.len;
+	ops.ooblen = (माप_प्रकार)req.ooblen;
 	ops.ooboffs = 0;
 
-	if (usr_data) {
+	अगर (usr_data) अणु
 		ops.datbuf = memdup_user(usr_data, ops.len);
-		if (IS_ERR(ops.datbuf))
-			return PTR_ERR(ops.datbuf);
-	} else {
-		ops.datbuf = NULL;
-	}
+		अगर (IS_ERR(ops.datbuf))
+			वापस PTR_ERR(ops.datbuf);
+	पूर्ण अन्यथा अणु
+		ops.datbuf = शून्य;
+	पूर्ण
 
-	if (usr_oob) {
+	अगर (usr_oob) अणु
 		ops.oobbuf = memdup_user(usr_oob, ops.ooblen);
-		if (IS_ERR(ops.oobbuf)) {
-			kfree(ops.datbuf);
-			return PTR_ERR(ops.oobbuf);
-		}
-	} else {
-		ops.oobbuf = NULL;
-	}
+		अगर (IS_ERR(ops.oobbuf)) अणु
+			kमुक्त(ops.datbuf);
+			वापस PTR_ERR(ops.oobbuf);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ops.oobbuf = शून्य;
+	पूर्ण
 
-	ret = mtd_write_oob(mtd, (loff_t)req.start, &ops);
+	ret = mtd_ग_लिखो_oob(mtd, (loff_t)req.start, &ops);
 
-	kfree(ops.datbuf);
-	kfree(ops.oobbuf);
+	kमुक्त(ops.datbuf);
+	kमुक्त(ops.oobbuf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtdchar_ioctl(struct file *file, u_int cmd, u_long arg)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
-	struct mtd_info *master = mtd_get_master(mtd);
-	void __user *argp = (void __user *)arg;
-	int ret = 0;
-	struct mtd_info_user info;
+अटल पूर्णांक mtdअक्षर_ioctl(काष्ठा file *file, u_पूर्णांक cmd, u_दीर्घ arg)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	काष्ठा mtd_info *master = mtd_get_master(mtd);
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक ret = 0;
+	काष्ठा mtd_info_user info;
 
 	pr_debug("MTD_ioctl\n");
 
 	/*
-	 * Check the file mode to require "dangerous" commands to have write
+	 * Check the file mode to require "dangerous" commands to have ग_लिखो
 	 * permissions.
 	 */
-	switch (cmd) {
+	चयन (cmd) अणु
 	/* "safe" commands */
-	case MEMGETREGIONCOUNT:
-	case MEMGETREGIONINFO:
-	case MEMGETINFO:
-	case MEMREADOOB:
-	case MEMREADOOB64:
-	case MEMISLOCKED:
-	case MEMGETOOBSEL:
-	case MEMGETBADBLOCK:
-	case OTPSELECT:
-	case OTPGETREGIONCOUNT:
-	case OTPGETREGIONINFO:
-	case ECCGETLAYOUT:
-	case ECCGETSTATS:
-	case MTDFILEMODE:
-	case BLKPG:
-	case BLKRRPART:
-		break;
+	हाल MEMGETREGIONCOUNT:
+	हाल MEMGETREGIONINFO:
+	हाल MEMGETINFO:
+	हाल MEMREADOOB:
+	हाल MEMREADOOB64:
+	हाल MEMISLOCKED:
+	हाल MEMGETOOBSEL:
+	हाल MEMGETBADBLOCK:
+	हाल OTPSELECT:
+	हाल OTPGETREGIONCOUNT:
+	हाल OTPGETREGIONINFO:
+	हाल ECCGETLAYOUT:
+	हाल ECCGETSTATS:
+	हाल MTDखाताMODE:
+	हाल BLKPG:
+	हाल BLKRRPART:
+		अवरोध;
 
 	/* "dangerous" commands */
-	case MEMERASE:
-	case MEMERASE64:
-	case MEMLOCK:
-	case MEMUNLOCK:
-	case MEMSETBADBLOCK:
-	case MEMWRITEOOB:
-	case MEMWRITEOOB64:
-	case MEMWRITE:
-	case OTPLOCK:
-	case OTPERASE:
-		if (!(file->f_mode & FMODE_WRITE))
-			return -EPERM;
-		break;
+	हाल MEMERASE:
+	हाल MEMERASE64:
+	हाल MEMLOCK:
+	हाल MEMUNLOCK:
+	हाल MEMSETBADBLOCK:
+	हाल MEMWRITEOOB:
+	हाल MEMWRITEOOB64:
+	हाल MEMWRITE:
+	हाल OTPLOCK:
+	हाल OTPERASE:
+		अगर (!(file->f_mode & FMODE_WRITE))
+			वापस -EPERM;
+		अवरोध;
 
-	default:
-		return -ENOTTY;
-	}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
 
-	switch (cmd) {
-	case MEMGETREGIONCOUNT:
-		if (copy_to_user(argp, &(mtd->numeraseregions), sizeof(int)))
-			return -EFAULT;
-		break;
+	चयन (cmd) अणु
+	हाल MEMGETREGIONCOUNT:
+		अगर (copy_to_user(argp, &(mtd->numeraseregions), माप(पूर्णांक)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case MEMGETREGIONINFO:
-	{
-		uint32_t ur_idx;
-		struct mtd_erase_region_info *kr;
-		struct region_info_user __user *ur = argp;
+	हाल MEMGETREGIONINFO:
+	अणु
+		uपूर्णांक32_t ur_idx;
+		काष्ठा mtd_erase_region_info *kr;
+		काष्ठा region_info_user __user *ur = argp;
 
-		if (get_user(ur_idx, &(ur->regionindex)))
-			return -EFAULT;
+		अगर (get_user(ur_idx, &(ur->regionindex)))
+			वापस -EFAULT;
 
-		if (ur_idx >= mtd->numeraseregions)
-			return -EINVAL;
+		अगर (ur_idx >= mtd->numeraseregions)
+			वापस -EINVAL;
 
 		kr = &(mtd->eraseregions[ur_idx]);
 
-		if (put_user(kr->offset, &(ur->offset))
+		अगर (put_user(kr->offset, &(ur->offset))
 		    || put_user(kr->erasesize, &(ur->erasesize))
 		    || put_user(kr->numblocks, &(ur->numblocks)))
-			return -EFAULT;
+			वापस -EFAULT;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMGETINFO:
-		memset(&info, 0, sizeof(info));
+	हाल MEMGETINFO:
+		स_रखो(&info, 0, माप(info));
 		info.type	= mtd->type;
 		info.flags	= mtd->flags;
 		info.size	= mtd->size;
 		info.erasesize	= mtd->erasesize;
-		info.writesize	= mtd->writesize;
+		info.ग_लिखोsize	= mtd->ग_लिखोsize;
 		info.oobsize	= mtd->oobsize;
 		/* The below field is obsolete */
 		info.padding	= 0;
-		if (copy_to_user(argp, &info, sizeof(struct mtd_info_user)))
-			return -EFAULT;
-		break;
+		अगर (copy_to_user(argp, &info, माप(काष्ठा mtd_info_user)))
+			वापस -EFAULT;
+		अवरोध;
 
-	case MEMERASE:
-	case MEMERASE64:
-	{
-		struct erase_info *erase;
+	हाल MEMERASE:
+	हाल MEMERASE64:
+	अणु
+		काष्ठा erase_info *erase;
 
-		erase=kzalloc(sizeof(struct erase_info),GFP_KERNEL);
-		if (!erase)
+		erase=kzalloc(माप(काष्ठा erase_info),GFP_KERNEL);
+		अगर (!erase)
 			ret = -ENOMEM;
-		else {
-			if (cmd == MEMERASE64) {
-				struct erase_info_user64 einfo64;
+		अन्यथा अणु
+			अगर (cmd == MEMERASE64) अणु
+				काष्ठा erase_info_user64 einfo64;
 
-				if (copy_from_user(&einfo64, argp,
-					    sizeof(struct erase_info_user64))) {
-					kfree(erase);
-					return -EFAULT;
-				}
+				अगर (copy_from_user(&einfo64, argp,
+					    माप(काष्ठा erase_info_user64))) अणु
+					kमुक्त(erase);
+					वापस -EFAULT;
+				पूर्ण
 				erase->addr = einfo64.start;
 				erase->len = einfo64.length;
-			} else {
-				struct erase_info_user einfo32;
+			पूर्ण अन्यथा अणु
+				काष्ठा erase_info_user einfo32;
 
-				if (copy_from_user(&einfo32, argp,
-					    sizeof(struct erase_info_user))) {
-					kfree(erase);
-					return -EFAULT;
-				}
+				अगर (copy_from_user(&einfo32, argp,
+					    माप(काष्ठा erase_info_user))) अणु
+					kमुक्त(erase);
+					वापस -EFAULT;
+				पूर्ण
 				erase->addr = einfo32.start;
 				erase->len = einfo32.length;
-			}
+			पूर्ण
 
 			ret = mtd_erase(mtd, erase);
-			kfree(erase);
-		}
-		break;
-	}
+			kमुक्त(erase);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case MEMWRITEOOB:
-	{
-		struct mtd_oob_buf buf;
-		struct mtd_oob_buf __user *buf_user = argp;
+	हाल MEMWRITEOOB:
+	अणु
+		काष्ठा mtd_oob_buf buf;
+		काष्ठा mtd_oob_buf __user *buf_user = argp;
 
-		/* NOTE: writes return length to buf_user->length */
-		if (copy_from_user(&buf, argp, sizeof(buf)))
+		/* NOTE: ग_लिखोs वापस length to buf_user->length */
+		अगर (copy_from_user(&buf, argp, माप(buf)))
 			ret = -EFAULT;
-		else
-			ret = mtdchar_writeoob(file, mtd, buf.start, buf.length,
+		अन्यथा
+			ret = mtdअक्षर_ग_लिखोoob(file, mtd, buf.start, buf.length,
 				buf.ptr, &buf_user->length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMREADOOB:
-	{
-		struct mtd_oob_buf buf;
-		struct mtd_oob_buf __user *buf_user = argp;
+	हाल MEMREADOOB:
+	अणु
+		काष्ठा mtd_oob_buf buf;
+		काष्ठा mtd_oob_buf __user *buf_user = argp;
 
-		/* NOTE: writes return length to buf_user->start */
-		if (copy_from_user(&buf, argp, sizeof(buf)))
+		/* NOTE: ग_लिखोs वापस length to buf_user->start */
+		अगर (copy_from_user(&buf, argp, माप(buf)))
 			ret = -EFAULT;
-		else
-			ret = mtdchar_readoob(file, mtd, buf.start, buf.length,
+		अन्यथा
+			ret = mtdअक्षर_पढ़ोoob(file, mtd, buf.start, buf.length,
 				buf.ptr, &buf_user->start);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMWRITEOOB64:
-	{
-		struct mtd_oob_buf64 buf;
-		struct mtd_oob_buf64 __user *buf_user = argp;
+	हाल MEMWRITEOOB64:
+	अणु
+		काष्ठा mtd_oob_buf64 buf;
+		काष्ठा mtd_oob_buf64 __user *buf_user = argp;
 
-		if (copy_from_user(&buf, argp, sizeof(buf)))
+		अगर (copy_from_user(&buf, argp, माप(buf)))
 			ret = -EFAULT;
-		else
-			ret = mtdchar_writeoob(file, mtd, buf.start, buf.length,
-				(void __user *)(uintptr_t)buf.usr_ptr,
+		अन्यथा
+			ret = mtdअक्षर_ग_लिखोoob(file, mtd, buf.start, buf.length,
+				(व्योम __user *)(uपूर्णांकptr_t)buf.usr_ptr,
 				&buf_user->length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMREADOOB64:
-	{
-		struct mtd_oob_buf64 buf;
-		struct mtd_oob_buf64 __user *buf_user = argp;
+	हाल MEMREADOOB64:
+	अणु
+		काष्ठा mtd_oob_buf64 buf;
+		काष्ठा mtd_oob_buf64 __user *buf_user = argp;
 
-		if (copy_from_user(&buf, argp, sizeof(buf)))
+		अगर (copy_from_user(&buf, argp, माप(buf)))
 			ret = -EFAULT;
-		else
-			ret = mtdchar_readoob(file, mtd, buf.start, buf.length,
-				(void __user *)(uintptr_t)buf.usr_ptr,
+		अन्यथा
+			ret = mtdअक्षर_पढ़ोoob(file, mtd, buf.start, buf.length,
+				(व्योम __user *)(uपूर्णांकptr_t)buf.usr_ptr,
 				&buf_user->length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMWRITE:
-	{
-		ret = mtdchar_write_ioctl(mtd,
-		      (struct mtd_write_req __user *)arg);
-		break;
-	}
+	हाल MEMWRITE:
+	अणु
+		ret = mtdअक्षर_ग_लिखो_ioctl(mtd,
+		      (काष्ठा mtd_ग_लिखो_req __user *)arg);
+		अवरोध;
+	पूर्ण
 
-	case MEMLOCK:
-	{
-		struct erase_info_user einfo;
+	हाल MEMLOCK:
+	अणु
+		काष्ठा erase_info_user einfo;
 
-		if (copy_from_user(&einfo, argp, sizeof(einfo)))
-			return -EFAULT;
+		अगर (copy_from_user(&einfo, argp, माप(einfo)))
+			वापस -EFAULT;
 
 		ret = mtd_lock(mtd, einfo.start, einfo.length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMUNLOCK:
-	{
-		struct erase_info_user einfo;
+	हाल MEMUNLOCK:
+	अणु
+		काष्ठा erase_info_user einfo;
 
-		if (copy_from_user(&einfo, argp, sizeof(einfo)))
-			return -EFAULT;
+		अगर (copy_from_user(&einfo, argp, माप(einfo)))
+			वापस -EFAULT;
 
 		ret = mtd_unlock(mtd, einfo.start, einfo.length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMISLOCKED:
-	{
-		struct erase_info_user einfo;
+	हाल MEMISLOCKED:
+	अणु
+		काष्ठा erase_info_user einfo;
 
-		if (copy_from_user(&einfo, argp, sizeof(einfo)))
-			return -EFAULT;
+		अगर (copy_from_user(&einfo, argp, माप(einfo)))
+			वापस -EFAULT;
 
 		ret = mtd_is_locked(mtd, einfo.start, einfo.length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Legacy interface */
-	case MEMGETOOBSEL:
-	{
-		struct nand_oobinfo oi;
+	/* Legacy पूर्णांकerface */
+	हाल MEMGETOOBSEL:
+	अणु
+		काष्ठा nand_oobinfo oi;
 
-		if (!master->ooblayout)
-			return -EOPNOTSUPP;
+		अगर (!master->ooblayout)
+			वापस -EOPNOTSUPP;
 
 		ret = get_oobinfo(mtd, &oi);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (copy_to_user(argp, &oi, sizeof(struct nand_oobinfo)))
-			return -EFAULT;
-		break;
-	}
+		अगर (copy_to_user(argp, &oi, माप(काष्ठा nand_oobinfo)))
+			वापस -EFAULT;
+		अवरोध;
+	पूर्ण
 
-	case MEMGETBADBLOCK:
-	{
+	हाल MEMGETBADBLOCK:
+	अणु
 		loff_t offs;
 
-		if (copy_from_user(&offs, argp, sizeof(loff_t)))
-			return -EFAULT;
-		return mtd_block_isbad(mtd, offs);
-	}
+		अगर (copy_from_user(&offs, argp, माप(loff_t)))
+			वापस -EFAULT;
+		वापस mtd_block_isbad(mtd, offs);
+	पूर्ण
 
-	case MEMSETBADBLOCK:
-	{
+	हाल MEMSETBADBLOCK:
+	अणु
 		loff_t offs;
 
-		if (copy_from_user(&offs, argp, sizeof(loff_t)))
-			return -EFAULT;
-		return mtd_block_markbad(mtd, offs);
-	}
+		अगर (copy_from_user(&offs, argp, माप(loff_t)))
+			वापस -EFAULT;
+		वापस mtd_block_markbad(mtd, offs);
+	पूर्ण
 
-	case OTPSELECT:
-	{
-		int mode;
-		if (copy_from_user(&mode, argp, sizeof(int)))
-			return -EFAULT;
+	हाल OTPSELECT:
+	अणु
+		पूर्णांक mode;
+		अगर (copy_from_user(&mode, argp, माप(पूर्णांक)))
+			वापस -EFAULT;
 
-		mfi->mode = MTD_FILE_MODE_NORMAL;
+		mfi->mode = MTD_खाता_MODE_NORMAL;
 
 		ret = otp_select_filemode(mfi, mode);
 
 		file->f_pos = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case OTPGETREGIONCOUNT:
-	case OTPGETREGIONINFO:
-	{
-		struct otp_info *buf = kmalloc(4096, GFP_KERNEL);
-		size_t retlen;
-		if (!buf)
-			return -ENOMEM;
-		switch (mfi->mode) {
-		case MTD_FILE_MODE_OTP_FACTORY:
+	हाल OTPGETREGIONCOUNT:
+	हाल OTPGETREGIONINFO:
+	अणु
+		काष्ठा otp_info *buf = kदो_स्मृति(4096, GFP_KERNEL);
+		माप_प्रकार retlen;
+		अगर (!buf)
+			वापस -ENOMEM;
+		चयन (mfi->mode) अणु
+		हाल MTD_खाता_MODE_OTP_FACTORY:
 			ret = mtd_get_fact_prot_info(mtd, 4096, &retlen, buf);
-			break;
-		case MTD_FILE_MODE_OTP_USER:
+			अवरोध;
+		हाल MTD_खाता_MODE_OTP_USER:
 			ret = mtd_get_user_prot_info(mtd, 4096, &retlen, buf);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			break;
-		}
-		if (!ret) {
-			if (cmd == OTPGETREGIONCOUNT) {
-				int nbr = retlen / sizeof(struct otp_info);
-				ret = copy_to_user(argp, &nbr, sizeof(int));
-			} else
+			अवरोध;
+		पूर्ण
+		अगर (!ret) अणु
+			अगर (cmd == OTPGETREGIONCOUNT) अणु
+				पूर्णांक nbr = retlen / माप(काष्ठा otp_info);
+				ret = copy_to_user(argp, &nbr, माप(पूर्णांक));
+			पूर्ण अन्यथा
 				ret = copy_to_user(argp, buf, retlen);
-			if (ret)
+			अगर (ret)
 				ret = -EFAULT;
-		}
-		kfree(buf);
-		break;
-	}
+		पूर्ण
+		kमुक्त(buf);
+		अवरोध;
+	पूर्ण
 
-	case OTPLOCK:
-	case OTPERASE:
-	{
-		struct otp_info oinfo;
+	हाल OTPLOCK:
+	हाल OTPERASE:
+	अणु
+		काष्ठा otp_info oinfo;
 
-		if (mfi->mode != MTD_FILE_MODE_OTP_USER)
-			return -EINVAL;
-		if (copy_from_user(&oinfo, argp, sizeof(oinfo)))
-			return -EFAULT;
-		if (cmd == OTPLOCK)
+		अगर (mfi->mode != MTD_खाता_MODE_OTP_USER)
+			वापस -EINVAL;
+		अगर (copy_from_user(&oinfo, argp, माप(oinfo)))
+			वापस -EFAULT;
+		अगर (cmd == OTPLOCK)
 			ret = mtd_lock_user_prot_reg(mtd, oinfo.start, oinfo.length);
-		else
+		अन्यथा
 			ret = mtd_erase_user_prot_reg(mtd, oinfo.start, oinfo.length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* This ioctl is being deprecated - it truncates the ECC layout */
-	case ECCGETLAYOUT:
-	{
-		struct nand_ecclayout_user *usrlay;
+	हाल ECCGETLAYOUT:
+	अणु
+		काष्ठा nand_ecclayout_user *usrlay;
 
-		if (!master->ooblayout)
-			return -EOPNOTSUPP;
+		अगर (!master->ooblayout)
+			वापस -EOPNOTSUPP;
 
-		usrlay = kmalloc(sizeof(*usrlay), GFP_KERNEL);
-		if (!usrlay)
-			return -ENOMEM;
+		usrlay = kदो_स्मृति(माप(*usrlay), GFP_KERNEL);
+		अगर (!usrlay)
+			वापस -ENOMEM;
 
 		shrink_ecclayout(mtd, usrlay);
 
-		if (copy_to_user(argp, usrlay, sizeof(*usrlay)))
+		अगर (copy_to_user(argp, usrlay, माप(*usrlay)))
 			ret = -EFAULT;
-		kfree(usrlay);
-		break;
-	}
+		kमुक्त(usrlay);
+		अवरोध;
+	पूर्ण
 
-	case ECCGETSTATS:
-	{
-		if (copy_to_user(argp, &mtd->ecc_stats,
-				 sizeof(struct mtd_ecc_stats)))
-			return -EFAULT;
-		break;
-	}
+	हाल ECCGETSTATS:
+	अणु
+		अगर (copy_to_user(argp, &mtd->ecc_stats,
+				 माप(काष्ठा mtd_ecc_stats)))
+			वापस -EFAULT;
+		अवरोध;
+	पूर्ण
 
-	case MTDFILEMODE:
-	{
+	हाल MTDखाताMODE:
+	अणु
 		mfi->mode = 0;
 
-		switch(arg) {
-		case MTD_FILE_MODE_OTP_FACTORY:
-		case MTD_FILE_MODE_OTP_USER:
+		चयन(arg) अणु
+		हाल MTD_खाता_MODE_OTP_FACTORY:
+		हाल MTD_खाता_MODE_OTP_USER:
 			ret = otp_select_filemode(mfi, arg);
-			break;
+			अवरोध;
 
-		case MTD_FILE_MODE_RAW:
-			if (!mtd_has_oob(mtd))
-				return -EOPNOTSUPP;
+		हाल MTD_खाता_MODE_RAW:
+			अगर (!mtd_has_oob(mtd))
+				वापस -EOPNOTSUPP;
 			mfi->mode = arg;
-			break;
+			अवरोध;
 
-		case MTD_FILE_MODE_NORMAL:
-			break;
-		default:
+		हाल MTD_खाता_MODE_NORMAL:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-		}
+		पूर्ण
 		file->f_pos = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case BLKPG:
-	{
-		struct blkpg_ioctl_arg __user *blk_arg = argp;
-		struct blkpg_ioctl_arg a;
+	हाल BLKPG:
+	अणु
+		काष्ठा blkpg_ioctl_arg __user *blk_arg = argp;
+		काष्ठा blkpg_ioctl_arg a;
 
-		if (copy_from_user(&a, blk_arg, sizeof(a)))
+		अगर (copy_from_user(&a, blk_arg, माप(a)))
 			ret = -EFAULT;
-		else
-			ret = mtdchar_blkpg_ioctl(mtd, &a);
-		break;
-	}
+		अन्यथा
+			ret = mtdअक्षर_blkpg_ioctl(mtd, &a);
+		अवरोध;
+	पूर्ण
 
-	case BLKRRPART:
-	{
-		/* No reread partition feature. Just return ok */
+	हाल BLKRRPART:
+	अणु
+		/* No reपढ़ो partition feature. Just वापस ok */
 		ret = 0;
-		break;
-	}
-	}
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	return ret;
-} /* memory_ioctl */
+	वापस ret;
+पूर्ण /* memory_ioctl */
 
-static long mtdchar_unlocked_ioctl(struct file *file, u_int cmd, u_long arg)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
-	struct mtd_info *master = mtd_get_master(mtd);
-	int ret;
+अटल दीर्घ mtdअक्षर_unlocked_ioctl(काष्ठा file *file, u_पूर्णांक cmd, u_दीर्घ arg)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	काष्ठा mtd_info *master = mtd_get_master(mtd);
+	पूर्णांक ret;
 
 	mutex_lock(&master->master.chrdev_lock);
-	ret = mtdchar_ioctl(file, cmd, arg);
+	ret = mtdअक्षर_ioctl(file, cmd, arg);
 	mutex_unlock(&master->master.chrdev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
-struct mtd_oob_buf32 {
-	u_int32_t start;
-	u_int32_t length;
-	compat_caddr_t ptr;	/* unsigned char* */
-};
+काष्ठा mtd_oob_buf32 अणु
+	u_पूर्णांक32_t start;
+	u_पूर्णांक32_t length;
+	compat_caddr_t ptr;	/* अचिन्हित अक्षर* */
+पूर्ण;
 
-#define MEMWRITEOOB32		_IOWR('M', 3, struct mtd_oob_buf32)
-#define MEMREADOOB32		_IOWR('M', 4, struct mtd_oob_buf32)
+#घोषणा MEMWRITEOOB32		_IOWR('M', 3, काष्ठा mtd_oob_buf32)
+#घोषणा MEMREADOOB32		_IOWR('M', 4, काष्ठा mtd_oob_buf32)
 
-static long mtdchar_compat_ioctl(struct file *file, unsigned int cmd,
-	unsigned long arg)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
-	struct mtd_info *master = mtd_get_master(mtd);
-	void __user *argp = compat_ptr(arg);
-	int ret = 0;
+अटल दीर्घ mtdअक्षर_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+	अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	काष्ठा mtd_info *master = mtd_get_master(mtd);
+	व्योम __user *argp = compat_ptr(arg);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&master->master.chrdev_lock);
 
-	switch (cmd) {
-	case MEMWRITEOOB32:
-	{
-		struct mtd_oob_buf32 buf;
-		struct mtd_oob_buf32 __user *buf_user = argp;
+	चयन (cmd) अणु
+	हाल MEMWRITEOOB32:
+	अणु
+		काष्ठा mtd_oob_buf32 buf;
+		काष्ठा mtd_oob_buf32 __user *buf_user = argp;
 
-		if (!(file->f_mode & FMODE_WRITE)) {
+		अगर (!(file->f_mode & FMODE_WRITE)) अणु
 			ret = -EPERM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (copy_from_user(&buf, argp, sizeof(buf)))
+		अगर (copy_from_user(&buf, argp, माप(buf)))
 			ret = -EFAULT;
-		else
-			ret = mtdchar_writeoob(file, mtd, buf.start,
+		अन्यथा
+			ret = mtdअक्षर_ग_लिखोoob(file, mtd, buf.start,
 				buf.length, compat_ptr(buf.ptr),
 				&buf_user->length);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case MEMREADOOB32:
-	{
-		struct mtd_oob_buf32 buf;
-		struct mtd_oob_buf32 __user *buf_user = argp;
+	हाल MEMREADOOB32:
+	अणु
+		काष्ठा mtd_oob_buf32 buf;
+		काष्ठा mtd_oob_buf32 __user *buf_user = argp;
 
-		/* NOTE: writes return length to buf->start */
-		if (copy_from_user(&buf, argp, sizeof(buf)))
+		/* NOTE: ग_लिखोs वापस length to buf->start */
+		अगर (copy_from_user(&buf, argp, माप(buf)))
 			ret = -EFAULT;
-		else
-			ret = mtdchar_readoob(file, mtd, buf.start,
+		अन्यथा
+			ret = mtdअक्षर_पढ़ोoob(file, mtd, buf.start,
 				buf.length, compat_ptr(buf.ptr),
 				&buf_user->start);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case BLKPG:
-	{
+	हाल BLKPG:
+	अणु
 		/* Convert from blkpg_compat_ioctl_arg to blkpg_ioctl_arg */
-		struct blkpg_compat_ioctl_arg __user *uarg = argp;
-		struct blkpg_compat_ioctl_arg compat_arg;
-		struct blkpg_ioctl_arg a;
+		काष्ठा blkpg_compat_ioctl_arg __user *uarg = argp;
+		काष्ठा blkpg_compat_ioctl_arg compat_arg;
+		काष्ठा blkpg_ioctl_arg a;
 
-		if (copy_from_user(&compat_arg, uarg, sizeof(compat_arg))) {
+		अगर (copy_from_user(&compat_arg, uarg, माप(compat_arg))) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		memset(&a, 0, sizeof(a));
+		स_रखो(&a, 0, माप(a));
 		a.op = compat_arg.op;
 		a.flags = compat_arg.flags;
 		a.datalen = compat_arg.datalen;
 		a.data = compat_ptr(compat_arg.data);
 
-		ret = mtdchar_blkpg_ioctl(mtd, &a);
-		break;
-	}
+		ret = mtdअक्षर_blkpg_ioctl(mtd, &a);
+		अवरोध;
+	पूर्ण
 
-	default:
-		ret = mtdchar_ioctl(file, cmd, (unsigned long)argp);
-	}
+	शेष:
+		ret = mtdअक्षर_ioctl(file, cmd, (अचिन्हित दीर्घ)argp);
+	पूर्ण
 
 	mutex_unlock(&master->master.chrdev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif /* CONFIG_COMPAT */
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
 /*
  * try to determine where a shared mapping can be made
- * - only supported for NOMMU at the moment (MMU can't doesn't copy private
+ * - only supported क्रम NOMMU at the moment (MMU can't doesn't copy निजी
  *   mappings)
  */
-#ifndef CONFIG_MMU
-static unsigned long mtdchar_get_unmapped_area(struct file *file,
-					   unsigned long addr,
-					   unsigned long len,
-					   unsigned long pgoff,
-					   unsigned long flags)
-{
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
-	unsigned long offset;
-	int ret;
+#अगर_अघोषित CONFIG_MMU
+अटल अचिन्हित दीर्घ mtdअक्षर_get_unmapped_area(काष्ठा file *file,
+					   अचिन्हित दीर्घ addr,
+					   अचिन्हित दीर्घ len,
+					   अचिन्हित दीर्घ pgoff,
+					   अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	अचिन्हित दीर्घ offset;
+	पूर्णांक ret;
 
-	if (addr != 0)
-		return (unsigned long) -EINVAL;
+	अगर (addr != 0)
+		वापस (अचिन्हित दीर्घ) -EINVAL;
 
-	if (len > mtd->size || pgoff >= (mtd->size >> PAGE_SHIFT))
-		return (unsigned long) -EINVAL;
+	अगर (len > mtd->size || pgoff >= (mtd->size >> PAGE_SHIFT))
+		वापस (अचिन्हित दीर्घ) -EINVAL;
 
 	offset = pgoff << PAGE_SHIFT;
-	if (offset > mtd->size - len)
-		return (unsigned long) -EINVAL;
+	अगर (offset > mtd->size - len)
+		वापस (अचिन्हित दीर्घ) -EINVAL;
 
 	ret = mtd_get_unmapped_area(mtd, len, offset, flags);
-	return ret == -EOPNOTSUPP ? -ENODEV : ret;
-}
+	वापस ret == -EOPNOTSUPP ? -ENODEV : ret;
+पूर्ण
 
-static unsigned mtdchar_mmap_capabilities(struct file *file)
-{
-	struct mtd_file_info *mfi = file->private_data;
+अटल अचिन्हित mtdअक्षर_mmap_capabilities(काष्ठा file *file)
+अणु
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
 
-	return mtd_mmap_capabilities(mfi->mtd);
-}
-#endif
+	वापस mtd_mmap_capabilities(mfi->mtd);
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * set up a mapping for shared memory segments
+ * set up a mapping क्रम shared memory segments
  */
-static int mtdchar_mmap(struct file *file, struct vm_area_struct *vma)
-{
-#ifdef CONFIG_MMU
-	struct mtd_file_info *mfi = file->private_data;
-	struct mtd_info *mtd = mfi->mtd;
-	struct map_info *map = mtd->priv;
+अटल पूर्णांक mtdअक्षर_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+#अगर_घोषित CONFIG_MMU
+	काष्ठा mtd_file_info *mfi = file->निजी_data;
+	काष्ठा mtd_info *mtd = mfi->mtd;
+	काष्ठा map_info *map = mtd->priv;
 
         /* This is broken because it assumes the MTD device is map-based
-	   and that mtd->priv is a valid struct map_info.  It should be
+	   and that mtd->priv is a valid काष्ठा map_info.  It should be
 	   replaced with something that uses the mtd_get_unmapped_area()
 	   operation properly. */
-	if (0 /*mtd->type == MTD_RAM || mtd->type == MTD_ROM*/) {
-#ifdef pgprot_noncached
-		if (file->f_flags & O_DSYNC || map->phys >= __pa(high_memory))
+	अगर (0 /*mtd->type == MTD_RAM || mtd->type == MTD_ROM*/) अणु
+#अगर_घोषित pgprot_noncached
+		अगर (file->f_flags & O_DSYNC || map->phys >= __pa(high_memory))
 			vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-#endif
-		return vm_iomap_memory(vma, map->phys, map->size);
-	}
-	return -ENODEV;
-#else
-	return vma->vm_flags & VM_SHARED ? 0 : -EACCES;
-#endif
-}
+#पूर्ण_अगर
+		वापस vm_iomap_memory(vma, map->phys, map->size);
+	पूर्ण
+	वापस -ENODEV;
+#अन्यथा
+	वापस vma->vm_flags & VM_SHARED ? 0 : -EACCES;
+#पूर्ण_अगर
+पूर्ण
 
-static const struct file_operations mtd_fops = {
+अटल स्थिर काष्ठा file_operations mtd_fops = अणु
 	.owner		= THIS_MODULE,
-	.llseek		= mtdchar_lseek,
-	.read		= mtdchar_read,
-	.write		= mtdchar_write,
-	.unlocked_ioctl	= mtdchar_unlocked_ioctl,
-#ifdef CONFIG_COMPAT
-	.compat_ioctl	= mtdchar_compat_ioctl,
-#endif
-	.open		= mtdchar_open,
-	.release	= mtdchar_close,
-	.mmap		= mtdchar_mmap,
-#ifndef CONFIG_MMU
-	.get_unmapped_area = mtdchar_get_unmapped_area,
-	.mmap_capabilities = mtdchar_mmap_capabilities,
-#endif
-};
+	.llseek		= mtdअक्षर_lseek,
+	.पढ़ो		= mtdअक्षर_पढ़ो,
+	.ग_लिखो		= mtdअक्षर_ग_लिखो,
+	.unlocked_ioctl	= mtdअक्षर_unlocked_ioctl,
+#अगर_घोषित CONFIG_COMPAT
+	.compat_ioctl	= mtdअक्षर_compat_ioctl,
+#पूर्ण_अगर
+	.खोलो		= mtdअक्षर_खोलो,
+	.release	= mtdअक्षर_बंद,
+	.mmap		= mtdअक्षर_mmap,
+#अगर_अघोषित CONFIG_MMU
+	.get_unmapped_area = mtdअक्षर_get_unmapped_area,
+	.mmap_capabilities = mtdअक्षर_mmap_capabilities,
+#पूर्ण_अगर
+पूर्ण;
 
-int __init init_mtdchar(void)
-{
-	int ret;
+पूर्णांक __init init_mtdअक्षर(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = __register_chrdev(MTD_CHAR_MAJOR, 0, 1 << MINORBITS,
+	ret = __रेजिस्टर_chrdev(MTD_CHAR_MAJOR, 0, 1 << MINORBITS,
 				   "mtd", &mtd_fops);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Can't allocate major number %d for MTD\n",
 		       MTD_CHAR_MAJOR);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __exit cleanup_mtdchar(void)
-{
-	__unregister_chrdev(MTD_CHAR_MAJOR, 0, 1 << MINORBITS, "mtd");
-}
+व्योम __निकास cleanup_mtdअक्षर(व्योम)
+अणु
+	__unरेजिस्टर_chrdev(MTD_CHAR_MAJOR, 0, 1 << MINORBITS, "mtd");
+पूर्ण
 
 MODULE_ALIAS_CHARDEV_MAJOR(MTD_CHAR_MAJOR);

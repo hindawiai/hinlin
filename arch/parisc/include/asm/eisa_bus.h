@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * eisa_bus.h interface between the eisa BA driver and the bus enumerator
+ * eisa_bus.h पूर्णांकerface between the eisa BA driver and the bus क्रमागतerator
  *
  * Copyright (c) 2002 Daniel Engstrom <5116@telia.com>
  */
 
-#ifndef ASM_EISA_H
-#define ASM_EISA_H
+#अगर_अघोषित ASM_EISA_H
+#घोषणा ASM_EISA_H
 
-extern void eisa_make_irq_level(int num);
-extern void eisa_make_irq_edge(int num);
-extern int eisa_enumerator(unsigned long eeprom_addr,
-			   struct resource *io_parent, 
-			   struct resource *mem_parent);
-extern int eisa_eeprom_init(unsigned long addr);
+बाह्य व्योम eisa_make_irq_level(पूर्णांक num);
+बाह्य व्योम eisa_make_irq_edge(पूर्णांक num);
+बाह्य पूर्णांक eisa_क्रमागतerator(अचिन्हित दीर्घ eeprom_addr,
+			   काष्ठा resource *io_parent, 
+			   काष्ठा resource *mem_parent);
+बाह्य पूर्णांक eisa_eeprom_init(अचिन्हित दीर्घ addr);
 
-#endif
+#पूर्ण_अगर

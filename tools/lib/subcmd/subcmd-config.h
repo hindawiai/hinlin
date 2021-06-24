@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_SUBCMD_CONFIG_H
-#define __PERF_SUBCMD_CONFIG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_SUBCMD_CONFIG_H
+#घोषणा __PERF_SUBCMD_CONFIG_H
 
-struct subcmd_config {
-	const char *exec_name;
-	const char *prefix;
-	const char *exec_path;
-	const char *exec_path_env;
-	const char *pager_env;
-};
+काष्ठा subcmd_config अणु
+	स्थिर अक्षर *exec_name;
+	स्थिर अक्षर *prefix;
+	स्थिर अक्षर *exec_path;
+	स्थिर अक्षर *exec_path_env;
+	स्थिर अक्षर *pager_env;
+पूर्ण;
 
-extern struct subcmd_config subcmd_config;
+बाह्य काष्ठा subcmd_config subcmd_config;
 
-#endif /* __PERF_SUBCMD_CONFIG_H */
+#पूर्ण_अगर /* __PERF_SUBCMD_CONFIG_H */

@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/arm/mach-footbridge/ebsa285.c
  *
  * EBSA285 machine fixup
  */
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/leds.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/leds.h>
 
-#include <asm/hardware/dec21285.h>
-#include <asm/mach-types.h>
+#समावेश <यंत्र/hardware/dec21285.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "common.h"
+#समावेश "common.h"
 
 /* LEDs */
-#if defined(CONFIG_NEW_LEDS) && defined(CONFIG_LEDS_CLASS)
-#define XBUS_AMBER_L	BIT(0)
-#define XBUS_GREEN_L	BIT(1)
-#define XBUS_RED_L	BIT(2)
-#define XBUS_TOGGLE	BIT(7)
+#अगर defined(CONFIG_NEW_LEDS) && defined(CONFIG_LEDS_CLASS)
+#घोषणा XBUS_AMBER_L	BIT(0)
+#घोषणा XBUS_GREEN_L	BIT(1)
+#घोषणा XBUS_RED_L	BIT(2)
+#घोषणा XBUS_TOGGLE	BIT(7)
 
-struct ebsa285_led {
-	struct led_classdev     cdev;
+काष्ठा ebsa285_led अणु
+	काष्ठा led_classdev     cdev;
 	u8                      mask;
-};
+पूर्ण;
 
 /*
- * The triggers lines up below will only be used if the
+ * The triggers lines up below will only be used अगर the
  * LED triggers are compiled in.
  */
-static const struct {
-	const char *name;
-	const char *trigger;
-} ebsa285_leds[] = {
-	{ "ebsa285:amber", "cpu0", },
-	{ "ebsa285:green", "heartbeat", },
-	{ "ebsa285:red",},
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *trigger;
+पूर्ण ebsa285_leds[] = अणु
+	अणु "ebsa285:amber", "cpu0", पूर्ण,
+	अणु "ebsa285:green", "heartbeat", पूर्ण,
+	अणु "ebsa285:red",पूर्ण,
+पूर्ण;
 
-static unsigned char hw_led_state;
-static void __iomem *xbus;
+अटल अचिन्हित अक्षर hw_led_state;
+अटल व्योम __iomem *xbus;
 
-static void ebsa285_led_set(struct led_classdev *cdev,
-		enum led_brightness b)
-{
-	struct ebsa285_led *led = container_of(cdev,
-			struct ebsa285_led, cdev);
+अटल व्योम ebsa285_led_set(काष्ठा led_classdev *cdev,
+		क्रमागत led_brightness b)
+अणु
+	काष्ठा ebsa285_led *led = container_of(cdev,
+			काष्ठा ebsa285_led, cdev);
 
-	if (b == LED_OFF)
+	अगर (b == LED_OFF)
 		hw_led_state |= led->mask;
-	else
+	अन्यथा
 		hw_led_state &= ~led->mask;
-	writeb(hw_led_state, xbus);
-}
+	ग_लिखोb(hw_led_state, xbus);
+पूर्ण
 
-static enum led_brightness ebsa285_led_get(struct led_classdev *cdev)
-{
-	struct ebsa285_led *led = container_of(cdev,
-			struct ebsa285_led, cdev);
+अटल क्रमागत led_brightness ebsa285_led_get(काष्ठा led_classdev *cdev)
+अणु
+	काष्ठा ebsa285_led *led = container_of(cdev,
+			काष्ठा ebsa285_led, cdev);
 
-	return hw_led_state & led->mask ? LED_OFF : LED_FULL;
-}
+	वापस hw_led_state & led->mask ? LED_OFF : LED_FULL;
+पूर्ण
 
-static int __init ebsa285_leds_init(void)
-{
-	int i;
+अटल पूर्णांक __init ebsa285_leds_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!machine_is_ebsa285())
-		return -ENODEV;
+	अगर (!machine_is_ebsa285())
+		वापस -ENODEV;
 
 	xbus = ioremap(XBUS_CS2, SZ_4K);
-	if (!xbus)
-		return -ENOMEM;
+	अगर (!xbus)
+		वापस -ENOMEM;
 
 	/* 3 LEDS all off */
 	hw_led_state = XBUS_AMBER_L | XBUS_GREEN_L | XBUS_RED_L;
-	writeb(hw_led_state, xbus);
+	ग_लिखोb(hw_led_state, xbus);
 
-	for (i = 0; i < ARRAY_SIZE(ebsa285_leds); i++) {
-		struct ebsa285_led *led;
+	क्रम (i = 0; i < ARRAY_SIZE(ebsa285_leds); i++) अणु
+		काष्ठा ebsa285_led *led;
 
-		led = kzalloc(sizeof(*led), GFP_KERNEL);
-		if (!led)
-			break;
+		led = kzalloc(माप(*led), GFP_KERNEL);
+		अगर (!led)
+			अवरोध;
 
 		led->cdev.name = ebsa285_leds[i].name;
 		led->cdev.brightness_set = ebsa285_led_set;
 		led->cdev.brightness_get = ebsa285_led_get;
-		led->cdev.default_trigger = ebsa285_leds[i].trigger;
+		led->cdev.शेष_trigger = ebsa285_leds[i].trigger;
 		led->mask = BIT(i);
 
-		if (led_classdev_register(NULL, &led->cdev) < 0) {
-			kfree(led);
-			break;
-		}
-	}
+		अगर (led_classdev_रेजिस्टर(शून्य, &led->cdev) < 0) अणु
+			kमुक्त(led);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Since we may have triggers on any subsystem, defer registration
- * until after subsystem_init.
+ * Since we may have triggers on any subप्रणाली, defer registration
+ * until after subप्रणाली_init.
  */
 fs_initcall(ebsa285_leds_init);
-#endif
+#पूर्ण_अगर
 
 MACHINE_START(EBSA285, "EBSA285")
-	/* Maintainer: Russell King */
+	/* Maपूर्णांकainer: Russell King */
 	.atag_offset	= 0x100,
 	.video_start	= 0x000a0000,
 	.video_end	= 0x000bffff,
 	.map_io		= footbridge_map_io,
-	.init_early	= footbridge_sched_clock,
+	.init_early	= footbridge_sched_घड़ी,
 	.init_irq	= footbridge_init_irq,
-	.init_time	= footbridge_timer_init,
+	.init_समय	= footbridge_समयr_init,
 	.restart	= footbridge_restart,
 MACHINE_END
 

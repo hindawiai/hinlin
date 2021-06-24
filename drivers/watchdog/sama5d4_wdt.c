@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Atmel SAMA5D4 Watchdog Timer
+ * Driver क्रम Aपंचांगel SAMA5D4 Watchकरोg Timer
  *
  * Copyright (C) 2015-2019 Microchip Technology Inc. and its subsidiaries
  */
 
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/watchdog.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/watchकरोg.h>
 
-#include "at91sam9_wdt.h"
+#समावेश "at91sam9_wdt.h"
 
-/* minimum and maximum watchdog timeout, in seconds */
-#define MIN_WDT_TIMEOUT		1
-#define MAX_WDT_TIMEOUT		16
-#define WDT_DEFAULT_TIMEOUT	MAX_WDT_TIMEOUT
+/* minimum and maximum watchकरोg समयout, in seconds */
+#घोषणा MIN_WDT_TIMEOUT		1
+#घोषणा MAX_WDT_TIMEOUT		16
+#घोषणा WDT_DEFAULT_TIMEOUT	MAX_WDT_TIMEOUT
 
-#define WDT_SEC2TICKS(s)	((s) ? (((s) << 8) - 1) : 0)
+#घोषणा WDT_SEC2TICKS(s)	((s) ? (((s) << 8) - 1) : 0)
 
-struct sama5d4_wdt {
-	struct watchdog_device	wdd;
-	void __iomem		*reg_base;
+काष्ठा sama5d4_wdt अणु
+	काष्ठा watchकरोg_device	wdd;
+	व्योम __iomem		*reg_base;
 	u32			mr;
 	u32			ir;
-	unsigned long		last_ping;
+	अचिन्हित दीर्घ		last_ping;
 	bool			need_irq;
 	bool			sam9x60_support;
-};
+पूर्ण;
 
-static int wdt_timeout;
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल पूर्णांक wdt_समयout;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 
-module_param(wdt_timeout, int, 0);
-MODULE_PARM_DESC(wdt_timeout,
+module_param(wdt_समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(wdt_समयout,
 	"Watchdog timeout in seconds. (default = "
 	__MODULE_STRING(WDT_DEFAULT_TIMEOUT) ")");
 
@@ -49,333 +50,333 @@ MODULE_PARM_DESC(nowayout,
 	"Watchdog cannot be stopped once started (default="
 	__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-#define wdt_enabled (!(wdt->mr & AT91_WDT_WDDIS))
+#घोषणा wdt_enabled (!(wdt->mr & AT91_WDT_WDDIS))
 
-#define wdt_read(wdt, field) \
-	readl_relaxed((wdt)->reg_base + (field))
+#घोषणा wdt_पढ़ो(wdt, field) \
+	पढ़ोl_relaxed((wdt)->reg_base + (field))
 
-/* 4 slow clock periods is 4/32768 = 122.07µs*/
-#define WDT_DELAY	usecs_to_jiffies(123)
+/* 4 slow घड़ी periods is 4/32768 = 122.07तगs*/
+#घोषणा WDT_DELAY	usecs_to_jअगरfies(123)
 
-static void wdt_write(struct sama5d4_wdt *wdt, u32 field, u32 val)
-{
+अटल व्योम wdt_ग_लिखो(काष्ठा sama5d4_wdt *wdt, u32 field, u32 val)
+अणु
 	/*
-	 * WDT_CR and WDT_MR must not be modified within three slow clock
-	 * periods following a restart of the watchdog performed by a write
+	 * WDT_CR and WDT_MR must not be modअगरied within three slow घड़ी
+	 * periods following a restart of the watchकरोg perक्रमmed by a ग_लिखो
 	 * access in WDT_CR.
 	 */
-	while (time_before(jiffies, wdt->last_ping + WDT_DELAY))
+	जबतक (समय_beक्रमe(jअगरfies, wdt->last_ping + WDT_DELAY))
 		usleep_range(30, 125);
-	writel_relaxed(val, wdt->reg_base + field);
-	wdt->last_ping = jiffies;
-}
+	ग_लिखोl_relaxed(val, wdt->reg_base + field);
+	wdt->last_ping = jअगरfies;
+पूर्ण
 
-static void wdt_write_nosleep(struct sama5d4_wdt *wdt, u32 field, u32 val)
-{
-	if (time_before(jiffies, wdt->last_ping + WDT_DELAY))
+अटल व्योम wdt_ग_लिखो_nosleep(काष्ठा sama5d4_wdt *wdt, u32 field, u32 val)
+अणु
+	अगर (समय_beक्रमe(jअगरfies, wdt->last_ping + WDT_DELAY))
 		udelay(123);
-	writel_relaxed(val, wdt->reg_base + field);
-	wdt->last_ping = jiffies;
-}
+	ग_लिखोl_relaxed(val, wdt->reg_base + field);
+	wdt->last_ping = jअगरfies;
+पूर्ण
 
-static int sama5d4_wdt_start(struct watchdog_device *wdd)
-{
-	struct sama5d4_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल पूर्णांक sama5d4_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा sama5d4_wdt *wdt = watchकरोg_get_drvdata(wdd);
 
-	if (wdt->sam9x60_support) {
-		writel_relaxed(wdt->ir, wdt->reg_base + AT91_SAM9X60_IER);
+	अगर (wdt->sam9x60_support) अणु
+		ग_लिखोl_relaxed(wdt->ir, wdt->reg_base + AT91_SAM9X60_IER);
 		wdt->mr &= ~AT91_SAM9X60_WDDIS;
-	} else {
+	पूर्ण अन्यथा अणु
 		wdt->mr &= ~AT91_WDT_WDDIS;
-	}
-	wdt_write(wdt, AT91_WDT_MR, wdt->mr);
+	पूर्ण
+	wdt_ग_लिखो(wdt, AT91_WDT_MR, wdt->mr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sama5d4_wdt_stop(struct watchdog_device *wdd)
-{
-	struct sama5d4_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल पूर्णांक sama5d4_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा sama5d4_wdt *wdt = watchकरोg_get_drvdata(wdd);
 
-	if (wdt->sam9x60_support) {
-		writel_relaxed(wdt->ir, wdt->reg_base + AT91_SAM9X60_IDR);
+	अगर (wdt->sam9x60_support) अणु
+		ग_लिखोl_relaxed(wdt->ir, wdt->reg_base + AT91_SAM9X60_IDR);
 		wdt->mr |= AT91_SAM9X60_WDDIS;
-	} else {
+	पूर्ण अन्यथा अणु
 		wdt->mr |= AT91_WDT_WDDIS;
-	}
-	wdt_write(wdt, AT91_WDT_MR, wdt->mr);
+	पूर्ण
+	wdt_ग_लिखो(wdt, AT91_WDT_MR, wdt->mr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sama5d4_wdt_ping(struct watchdog_device *wdd)
-{
-	struct sama5d4_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल पूर्णांक sama5d4_wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा sama5d4_wdt *wdt = watchकरोg_get_drvdata(wdd);
 
-	wdt_write(wdt, AT91_WDT_CR, AT91_WDT_KEY | AT91_WDT_WDRSTT);
+	wdt_ग_लिखो(wdt, AT91_WDT_CR, AT91_WDT_KEY | AT91_WDT_WDRSTT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sama5d4_wdt_set_timeout(struct watchdog_device *wdd,
-				 unsigned int timeout)
-{
-	struct sama5d4_wdt *wdt = watchdog_get_drvdata(wdd);
-	u32 value = WDT_SEC2TICKS(timeout);
+अटल पूर्णांक sama5d4_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
+				 अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा sama5d4_wdt *wdt = watchकरोg_get_drvdata(wdd);
+	u32 value = WDT_SEC2TICKS(समयout);
 
-	if (wdt->sam9x60_support) {
-		wdt_write(wdt, AT91_SAM9X60_WLR,
+	अगर (wdt->sam9x60_support) अणु
+		wdt_ग_लिखो(wdt, AT91_SAM9X60_WLR,
 			  AT91_SAM9X60_SET_COUNTER(value));
 
-		wdd->timeout = timeout;
-		return 0;
-	}
+		wdd->समयout = समयout;
+		वापस 0;
+	पूर्ण
 
 	wdt->mr &= ~AT91_WDT_WDV;
 	wdt->mr |= AT91_WDT_SET_WDV(value);
 
 	/*
 	 * WDDIS has to be 0 when updating WDD/WDV. The datasheet states: When
-	 * setting the WDDIS bit, and while it is set, the fields WDV and WDD
-	 * must not be modified.
-	 * If the watchdog is enabled, then the timeout can be updated. Else,
-	 * wait that the user enables it.
+	 * setting the WDDIS bit, and जबतक it is set, the fields WDV and WDD
+	 * must not be modअगरied.
+	 * If the watchकरोg is enabled, then the समयout can be updated. Else,
+	 * रुको that the user enables it.
 	 */
-	if (wdt_enabled)
-		wdt_write(wdt, AT91_WDT_MR, wdt->mr & ~AT91_WDT_WDDIS);
+	अगर (wdt_enabled)
+		wdt_ग_लिखो(wdt, AT91_WDT_MR, wdt->mr & ~AT91_WDT_WDDIS);
 
-	wdd->timeout = timeout;
+	wdd->समयout = समयout;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info sama5d4_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info sama5d4_wdt_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE | WDIOF_KEEPALIVEPING,
 	.identity = "Atmel SAMA5D4 Watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops sama5d4_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops sama5d4_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = sama5d4_wdt_start,
 	.stop = sama5d4_wdt_stop,
 	.ping = sama5d4_wdt_ping,
-	.set_timeout = sama5d4_wdt_set_timeout,
-};
+	.set_समयout = sama5d4_wdt_set_समयout,
+पूर्ण;
 
-static irqreturn_t sama5d4_wdt_irq_handler(int irq, void *dev_id)
-{
-	struct sama5d4_wdt *wdt = platform_get_drvdata(dev_id);
+अटल irqवापस_t sama5d4_wdt_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sama5d4_wdt *wdt = platक्रमm_get_drvdata(dev_id);
 	u32 reg;
 
-	if (wdt->sam9x60_support)
-		reg = wdt_read(wdt, AT91_SAM9X60_ISR);
-	else
-		reg = wdt_read(wdt, AT91_WDT_SR);
+	अगर (wdt->sam9x60_support)
+		reg = wdt_पढ़ो(wdt, AT91_SAM9X60_ISR);
+	अन्यथा
+		reg = wdt_पढ़ो(wdt, AT91_WDT_SR);
 
-	if (reg) {
+	अगर (reg) अणु
 		pr_crit("Atmel Watchdog Software Reset\n");
 		emergency_restart();
 		pr_crit("Reboot didn't succeed\n");
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int of_sama5d4_wdt_init(struct device_node *np, struct sama5d4_wdt *wdt)
-{
-	const char *tmp;
+अटल पूर्णांक of_sama5d4_wdt_init(काष्ठा device_node *np, काष्ठा sama5d4_wdt *wdt)
+अणु
+	स्थिर अक्षर *पंचांगp;
 
-	if (wdt->sam9x60_support)
+	अगर (wdt->sam9x60_support)
 		wdt->mr = AT91_SAM9X60_WDDIS;
-	else
+	अन्यथा
 		wdt->mr = AT91_WDT_WDDIS;
 
-	if (!of_property_read_string(np, "atmel,watchdog-type", &tmp) &&
-	    !strcmp(tmp, "software"))
+	अगर (!of_property_पढ़ो_string(np, "atmel,watchdog-type", &पंचांगp) &&
+	    !म_भेद(पंचांगp, "software"))
 		wdt->need_irq = true;
 
-	if (of_property_read_bool(np, "atmel,idle-halt"))
+	अगर (of_property_पढ़ो_bool(np, "atmel,idle-halt"))
 		wdt->mr |= AT91_WDT_WDIDLEHLT;
 
-	if (of_property_read_bool(np, "atmel,dbg-halt"))
+	अगर (of_property_पढ़ो_bool(np, "atmel,dbg-halt"))
 		wdt->mr |= AT91_WDT_WDDBGHLT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sama5d4_wdt_init(struct sama5d4_wdt *wdt)
-{
+अटल पूर्णांक sama5d4_wdt_init(काष्ठा sama5d4_wdt *wdt)
+अणु
 	u32 reg, val;
 
 	val = WDT_SEC2TICKS(WDT_DEFAULT_TIMEOUT);
 	/*
 	 * When booting and resuming, the bootloader may have changed the
-	 * watchdog configuration.
-	 * If the watchdog is already running, we can safely update it.
+	 * watchकरोg configuration.
+	 * If the watchकरोg is alपढ़ोy running, we can safely update it.
 	 * Else, we have to disable it properly.
 	 */
-	if (!wdt_enabled) {
-		reg = wdt_read(wdt, AT91_WDT_MR);
-		if (wdt->sam9x60_support && (!(reg & AT91_SAM9X60_WDDIS)))
-			wdt_write_nosleep(wdt, AT91_WDT_MR,
+	अगर (!wdt_enabled) अणु
+		reg = wdt_पढ़ो(wdt, AT91_WDT_MR);
+		अगर (wdt->sam9x60_support && (!(reg & AT91_SAM9X60_WDDIS)))
+			wdt_ग_लिखो_nosleep(wdt, AT91_WDT_MR,
 					  reg | AT91_SAM9X60_WDDIS);
-		else if (!wdt->sam9x60_support &&
+		अन्यथा अगर (!wdt->sam9x60_support &&
 			 (!(reg & AT91_WDT_WDDIS)))
-			wdt_write_nosleep(wdt, AT91_WDT_MR,
+			wdt_ग_लिखो_nosleep(wdt, AT91_WDT_MR,
 					  reg | AT91_WDT_WDDIS);
-	}
+	पूर्ण
 
-	if (wdt->sam9x60_support) {
-		if (wdt->need_irq)
+	अगर (wdt->sam9x60_support) अणु
+		अगर (wdt->need_irq)
 			wdt->ir = AT91_SAM9X60_PERINT;
-		else
+		अन्यथा
 			wdt->mr |= AT91_SAM9X60_PERIODRST;
 
-		wdt_write(wdt, AT91_SAM9X60_IER, wdt->ir);
-		wdt_write(wdt, AT91_SAM9X60_WLR, AT91_SAM9X60_SET_COUNTER(val));
-	} else {
+		wdt_ग_लिखो(wdt, AT91_SAM9X60_IER, wdt->ir);
+		wdt_ग_लिखो(wdt, AT91_SAM9X60_WLR, AT91_SAM9X60_SET_COUNTER(val));
+	पूर्ण अन्यथा अणु
 		wdt->mr |= AT91_WDT_SET_WDD(WDT_SEC2TICKS(MAX_WDT_TIMEOUT));
 		wdt->mr |= AT91_WDT_SET_WDV(val);
 
-		if (wdt->need_irq)
+		अगर (wdt->need_irq)
 			wdt->mr |= AT91_WDT_WDFIEN;
-		else
+		अन्यथा
 			wdt->mr |= AT91_WDT_WDRSTEN;
-	}
+	पूर्ण
 
-	wdt_write_nosleep(wdt, AT91_WDT_MR, wdt->mr);
+	wdt_ग_लिखो_nosleep(wdt, AT91_WDT_MR, wdt->mr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sama5d4_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct watchdog_device *wdd;
-	struct sama5d4_wdt *wdt;
-	void __iomem *regs;
+अटल पूर्णांक sama5d4_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा watchकरोg_device *wdd;
+	काष्ठा sama5d4_wdt *wdt;
+	व्योम __iomem *regs;
 	u32 irq = 0;
-	int ret;
+	पूर्णांक ret;
 
-	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
-	if (!wdt)
-		return -ENOMEM;
+	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
+	अगर (!wdt)
+		वापस -ENOMEM;
 
 	wdd = &wdt->wdd;
-	wdd->timeout = WDT_DEFAULT_TIMEOUT;
+	wdd->समयout = WDT_DEFAULT_TIMEOUT;
 	wdd->info = &sama5d4_wdt_info;
 	wdd->ops = &sama5d4_wdt_ops;
-	wdd->min_timeout = MIN_WDT_TIMEOUT;
-	wdd->max_timeout = MAX_WDT_TIMEOUT;
-	wdt->last_ping = jiffies;
+	wdd->min_समयout = MIN_WDT_TIMEOUT;
+	wdd->max_समयout = MAX_WDT_TIMEOUT;
+	wdt->last_ping = jअगरfies;
 	wdt->sam9x60_support = of_device_is_compatible(dev->of_node,
 						       "microchip,sam9x60-wdt");
 
-	watchdog_set_drvdata(wdd, wdt);
+	watchकरोg_set_drvdata(wdd, wdt);
 
-	regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
 	wdt->reg_base = regs;
 
 	ret = of_sama5d4_wdt_init(dev->of_node, wdt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (wdt->need_irq) {
+	अगर (wdt->need_irq) अणु
 		irq = irq_of_parse_and_map(dev->of_node, 0);
-		if (!irq) {
+		अगर (!irq) अणु
 			dev_warn(dev, "failed to get IRQ from DT\n");
 			wdt->need_irq = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (wdt->need_irq) {
+	अगर (wdt->need_irq) अणु
 		ret = devm_request_irq(dev, irq, sama5d4_wdt_irq_handler,
 				       IRQF_SHARED | IRQF_IRQPOLL |
 				       IRQF_NO_SUSPEND, pdev->name, pdev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "cannot register interrupt handler\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	watchdog_init_timeout(wdd, wdt_timeout, dev);
+	watchकरोg_init_समयout(wdd, wdt_समयout, dev);
 
 	ret = sama5d4_wdt_init(wdt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	watchdog_set_nowayout(wdd, nowayout);
+	watchकरोg_set_nowayout(wdd, nowayout);
 
-	watchdog_stop_on_unregister(wdd);
-	ret = devm_watchdog_register_device(dev, wdd);
-	if (ret)
-		return ret;
+	watchकरोg_stop_on_unरेजिस्टर(wdd);
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, wdt);
+	platक्रमm_set_drvdata(pdev, wdt);
 
 	dev_info(dev, "initialized (timeout = %d sec, nowayout = %d)\n",
-		 wdd->timeout, nowayout);
+		 wdd->समयout, nowayout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sama5d4_wdt_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sama5d4_wdt_of_match[] = अणु
+	अणु
 		.compatible = "atmel,sama5d4-wdt",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "microchip,sam9x60-wdt",
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sama5d4_wdt_of_match);
 
-#ifdef CONFIG_PM_SLEEP
-static int sama5d4_wdt_suspend_late(struct device *dev)
-{
-	struct sama5d4_wdt *wdt = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sama5d4_wdt_suspend_late(काष्ठा device *dev)
+अणु
+	काष्ठा sama5d4_wdt *wdt = dev_get_drvdata(dev);
 
-	if (watchdog_active(&wdt->wdd))
+	अगर (watchकरोg_active(&wdt->wdd))
 		sama5d4_wdt_stop(&wdt->wdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sama5d4_wdt_resume_early(struct device *dev)
-{
-	struct sama5d4_wdt *wdt = dev_get_drvdata(dev);
+अटल पूर्णांक sama5d4_wdt_resume_early(काष्ठा device *dev)
+अणु
+	काष्ठा sama5d4_wdt *wdt = dev_get_drvdata(dev);
 
 	/*
-	 * FIXME: writing MR also pings the watchdog which may not be desired.
-	 * This should only be done when the registers are lost on suspend but
-	 * there is no way to get this information right now.
+	 * FIXME: writing MR also pings the watchकरोg which may not be desired.
+	 * This should only be करोne when the रेजिस्टरs are lost on suspend but
+	 * there is no way to get this inक्रमmation right now.
 	 */
 	sama5d4_wdt_init(wdt);
 
-	if (watchdog_active(&wdt->wdd))
+	अगर (watchकरोg_active(&wdt->wdd))
 		sama5d4_wdt_start(&wdt->wdd);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops sama5d4_wdt_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops sama5d4_wdt_pm_ops = अणु
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(sama5d4_wdt_suspend_late,
 			sama5d4_wdt_resume_early)
-};
+पूर्ण;
 
-static struct platform_driver sama5d4_wdt_driver = {
+अटल काष्ठा platक्रमm_driver sama5d4_wdt_driver = अणु
 	.probe		= sama5d4_wdt_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= "sama5d4_wdt",
 		.pm	= &sama5d4_wdt_pm_ops,
 		.of_match_table = sama5d4_wdt_of_match,
-	}
-};
-module_platform_driver(sama5d4_wdt_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(sama5d4_wdt_driver);
 
 MODULE_AUTHOR("Atmel Corporation");
 MODULE_DESCRIPTION("Atmel SAMA5D4 Watchdog Timer driver");

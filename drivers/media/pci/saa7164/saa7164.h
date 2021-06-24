@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Driver for the NXP SAA7164 PCIe bridge
+ *  Driver क्रम the NXP SAA7164 PCIe bridge
  *
- *  Copyright (c) 2010-2015 Steven Toth <stoth@kernellabs.com>
+ *  Copyright (c) 2010-2015 Steven Toth <stoth@kernelद_असल.com>
  */
 
 /*
@@ -10,126 +11,126 @@
 	*******************
 
 	saa7164_core.c/buffer.c/cards.c/i2c.c/dvb.c
-		|	: Standard Linux driver framework for creating
-		|	: exposing and managing interfaces to the rest
+		|	: Standard Linux driver framework क्रम creating
+		|	: exposing and managing पूर्णांकerfaces to the rest
 		|	: of the kernel or userland. Also uses _fw.c to load
-		|	: firmware direct into the PCIe bus, bypassing layers.
+		|	: firmware direct पूर्णांकo the PCIe bus, bypassing layers.
 		V
-	saa7164_api..()	: Translate kernel specific functions/features
-		|	: into command buffers.
+	saa7164_api..()	: Translate kernel specअगरic functions/features
+		|	: पूर्णांकo command buffers.
 		V
 	saa7164_cmd..()	: Manages the flow of command packets on/off,
-		|	: the bus. Deal with bus errors, timeouts etc.
+		|	: the bus. Deal with bus errors, समयouts etc.
 		V
-	saa7164_bus..() : Manage a read/write memory ring buffer in the
+	saa7164_bus..() : Manage a पढ़ो/ग_लिखो memory ring buffer in the
 		|	: PCIe Address space.
 		|
 		|		saa7164_fw...()	: Load any firmware
-		|			|	: direct into the device
+		|			|	: direct पूर्णांकo the device
 		V			V
 	<- ----------------- PCIe address space -------------------- ->
 */
 
-#include <linux/pci.h>
-#include <linux/i2c.h>
-#include <linux/kdev_t.h>
-#include <linux/mutex.h>
-#include <linux/crc32.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
 
-#include <media/tuner.h>
-#include <media/tveeprom.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_net.h>
-#include <media/dvbdev.h>
-#include <media/dmxdev.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-event.h>
+#समावेश <media/tuner.h>
+#समावेश <media/tveeprom.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_net.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-event.h>
 
-#include "saa7164-reg.h"
-#include "saa7164-types.h"
+#समावेश "saa7164-reg.h"
+#समावेश "saa7164-types.h"
 
-#define SAA7164_MAXBOARDS 8
+#घोषणा SAA7164_MAXBOARDS 8
 
-#define UNSET (-1U)
-#define SAA7164_BOARD_NOAUTO			UNSET
-#define SAA7164_BOARD_UNKNOWN			0
-#define SAA7164_BOARD_UNKNOWN_REV2		1
-#define SAA7164_BOARD_UNKNOWN_REV3		2
-#define SAA7164_BOARD_HAUPPAUGE_HVR2250		3
-#define SAA7164_BOARD_HAUPPAUGE_HVR2200		4
-#define SAA7164_BOARD_HAUPPAUGE_HVR2200_2	5
-#define SAA7164_BOARD_HAUPPAUGE_HVR2200_3	6
-#define SAA7164_BOARD_HAUPPAUGE_HVR2250_2	7
-#define SAA7164_BOARD_HAUPPAUGE_HVR2250_3	8
-#define SAA7164_BOARD_HAUPPAUGE_HVR2200_4	9
-#define SAA7164_BOARD_HAUPPAUGE_HVR2200_5	10
-#define SAA7164_BOARD_HAUPPAUGE_HVR2255proto	11
-#define SAA7164_BOARD_HAUPPAUGE_HVR2255		12
-#define SAA7164_BOARD_HAUPPAUGE_HVR2205		13
+#घोषणा UNSET (-1U)
+#घोषणा SAA7164_BOARD_NOAUTO			UNSET
+#घोषणा SAA7164_BOARD_UNKNOWN			0
+#घोषणा SAA7164_BOARD_UNKNOWN_REV2		1
+#घोषणा SAA7164_BOARD_UNKNOWN_REV3		2
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2250		3
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2200		4
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2200_2	5
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2200_3	6
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2250_2	7
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2250_3	8
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2200_4	9
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2200_5	10
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2255proto	11
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2255		12
+#घोषणा SAA7164_BOARD_HAUPPAUGE_HVR2205		13
 
-#define SAA7164_MAX_UNITS		8
-#define SAA7164_TS_NUMBER_OF_LINES	312
-#define SAA7164_PS_NUMBER_OF_LINES	256
-#define SAA7164_PT_ENTRIES		16 /* (312 * 188) / 4096 */
-#define SAA7164_MAX_ENCODER_BUFFERS	64 /* max 5secs of latency at 6Mbps */
-#define SAA7164_MAX_VBI_BUFFERS		64
+#घोषणा SAA7164_MAX_UNITS		8
+#घोषणा SAA7164_TS_NUMBER_OF_LINES	312
+#घोषणा SAA7164_PS_NUMBER_OF_LINES	256
+#घोषणा SAA7164_PT_ENTRIES		16 /* (312 * 188) / 4096 */
+#घोषणा SAA7164_MAX_ENCODER_BUFFERS	64 /* max 5secs of latency at 6Mbps */
+#घोषणा SAA7164_MAX_VBI_BUFFERS		64
 
 /* Port related defines */
-#define SAA7164_PORT_TS1	(0)
-#define SAA7164_PORT_TS2	(SAA7164_PORT_TS1 + 1)
-#define SAA7164_PORT_ENC1	(SAA7164_PORT_TS2 + 1)
-#define SAA7164_PORT_ENC2	(SAA7164_PORT_ENC1 + 1)
-#define SAA7164_PORT_VBI1	(SAA7164_PORT_ENC2 + 1)
-#define SAA7164_PORT_VBI2	(SAA7164_PORT_VBI1 + 1)
-#define SAA7164_MAX_PORTS	(SAA7164_PORT_VBI2 + 1)
+#घोषणा SAA7164_PORT_TS1	(0)
+#घोषणा SAA7164_PORT_TS2	(SAA7164_PORT_TS1 + 1)
+#घोषणा SAA7164_PORT_ENC1	(SAA7164_PORT_TS2 + 1)
+#घोषणा SAA7164_PORT_ENC2	(SAA7164_PORT_ENC1 + 1)
+#घोषणा SAA7164_PORT_VBI1	(SAA7164_PORT_ENC2 + 1)
+#घोषणा SAA7164_PORT_VBI2	(SAA7164_PORT_VBI1 + 1)
+#घोषणा SAA7164_MAX_PORTS	(SAA7164_PORT_VBI2 + 1)
 
-#define DBGLVL_FW    4
-#define DBGLVL_DVB   8
-#define DBGLVL_I2C  16
-#define DBGLVL_API  32
-#define DBGLVL_CMD  64
-#define DBGLVL_BUS 128
-#define DBGLVL_IRQ 256
-#define DBGLVL_BUF 512
-#define DBGLVL_ENC 1024
-#define DBGLVL_VBI 2048
-#define DBGLVL_THR 4096
-#define DBGLVL_CPU 8192
+#घोषणा DBGLVL_FW    4
+#घोषणा DBGLVL_DVB   8
+#घोषणा DBGLVL_I2C  16
+#घोषणा DBGLVL_API  32
+#घोषणा DBGLVL_CMD  64
+#घोषणा DBGLVL_BUS 128
+#घोषणा DBGLVL_IRQ 256
+#घोषणा DBGLVL_BUF 512
+#घोषणा DBGLVL_ENC 1024
+#घोषणा DBGLVL_VBI 2048
+#घोषणा DBGLVL_THR 4096
+#घोषणा DBGLVL_CPU 8192
 
-#define SAA7164_NORMS \
+#घोषणा SAA7164_NORMS \
 	(V4L2_STD_NTSC_M | V4L2_STD_NTSC_M_JP)
 
 /* TV frequency range copied from tuner-core.c */
-#define SAA7164_TV_MIN_FREQ (44U * 16U)
-#define SAA7164_TV_MAX_FREQ (958U * 16U)
+#घोषणा SAA7164_TV_MIN_FREQ (44U * 16U)
+#घोषणा SAA7164_TV_MAX_FREQ (958U * 16U)
 
-enum port_t {
+क्रमागत port_t अणु
 	SAA7164_MPEG_UNDEFINED = 0,
 	SAA7164_MPEG_DVB,
 	SAA7164_MPEG_ENCODER,
 	SAA7164_MPEG_VBI,
-};
+पूर्ण;
 
-enum saa7164_i2c_bus_nr {
+क्रमागत saa7164_i2c_bus_nr अणु
 	SAA7164_I2C_BUS_0 = 0,
 	SAA7164_I2C_BUS_1,
 	SAA7164_I2C_BUS_2,
-};
+पूर्ण;
 
-enum saa7164_buffer_flags {
+क्रमागत saa7164_buffer_flags अणु
 	SAA7164_BUFFER_UNDEFINED = 0,
 	SAA7164_BUFFER_FREE,
 	SAA7164_BUFFER_BUSY,
 	SAA7164_BUFFER_FULL
-};
+पूर्ण;
 
-enum saa7164_unit_type {
+क्रमागत saa7164_unit_type अणु
 	SAA7164_UNIT_UNDEFINED = 0,
 	SAA7164_UNIT_DIGITAL_DEMODULATOR,
 	SAA7164_UNIT_ANALOG_DEMODULATOR,
@@ -137,68 +138,68 @@ enum saa7164_unit_type {
 	SAA7164_UNIT_EEPROM,
 	SAA7164_UNIT_ZILOG_IRBLASTER,
 	SAA7164_UNIT_ENCODER,
-};
+पूर्ण;
 
-/* The PCIe bridge doesn't grant direct access to i2c.
+/* The PCIe bridge करोesn't grant direct access to i2c.
  * Instead, you address i2c devices using a uniqely
  * allocated 'unitid' value via a messaging API. This
  * is a problem. The kernel and existing demod/tuner
- * drivers expect to talk 'i2c', so we have to maintain
+ * drivers expect to talk 'i2c', so we have to मुख्यtain
  * a translation layer, and a series of functions to
- * convert i2c bus + device address into a unit id.
+ * convert i2c bus + device address पूर्णांकo a unit id.
  */
-struct saa7164_unit {
-	enum saa7164_unit_type type;
+काष्ठा saa7164_unit अणु
+	क्रमागत saa7164_unit_type type;
 	u8	id;
-	char	*name;
-	enum saa7164_i2c_bus_nr i2c_bus_nr;
+	अक्षर	*name;
+	क्रमागत saa7164_i2c_bus_nr i2c_bus_nr;
 	u8	i2c_bus_addr;
 	u8	i2c_reg_len;
-};
+पूर्ण;
 
-struct saa7164_board {
-	char	*name;
-	enum port_t porta, portb, portc,
+काष्ठा saa7164_board अणु
+	अक्षर	*name;
+	क्रमागत port_t porta, portb, portc,
 		portd, porte, portf;
-	enum {
+	क्रमागत अणु
 		SAA7164_CHIP_UNDEFINED = 0,
 		SAA7164_CHIP_REV2,
 		SAA7164_CHIP_REV3,
-	} chiprev;
-	struct	saa7164_unit unit[SAA7164_MAX_UNITS];
-};
+	पूर्ण chiprev;
+	काष्ठा	saa7164_unit unit[SAA7164_MAX_UNITS];
+पूर्ण;
 
-struct saa7164_subid {
-	u16     subvendor;
+काष्ठा saa7164_subid अणु
+	u16     subvenकरोr;
 	u16     subdevice;
 	u32     card;
-};
+पूर्ण;
 
-struct saa7164_encoder_fh {
-	struct v4l2_fh fh;
-	struct saa7164_port *port;
-	atomic_t v4l_reading;
-};
+काष्ठा saa7164_encoder_fh अणु
+	काष्ठा v4l2_fh fh;
+	काष्ठा saa7164_port *port;
+	atomic_t v4l_पढ़ोing;
+पूर्ण;
 
-struct saa7164_vbi_fh {
-	struct v4l2_fh fh;
-	struct saa7164_port *port;
-	atomic_t v4l_reading;
-};
+काष्ठा saa7164_vbi_fh अणु
+	काष्ठा v4l2_fh fh;
+	काष्ठा saa7164_port *port;
+	atomic_t v4l_पढ़ोing;
+पूर्ण;
 
-struct saa7164_histogram_bucket {
+काष्ठा saa7164_histogram_bucket अणु
 	u32 val;
 	u32 count;
-	u64 update_time;
-};
+	u64 update_समय;
+पूर्ण;
 
-struct saa7164_histogram {
-	char name[32];
-	struct saa7164_histogram_bucket counter1[64];
-};
+काष्ठा saa7164_histogram अणु
+	अक्षर name[32];
+	काष्ठा saa7164_histogram_bucket counter1[64];
+पूर्ण;
 
-struct saa7164_user_buffer {
-	struct list_head list;
+काष्ठा saa7164_user_buffer अणु
+	काष्ठा list_head list;
 
 	/* Attributes */
 	u8  *data;
@@ -206,9 +207,9 @@ struct saa7164_user_buffer {
 	u32 actual_size;
 
 	u32 crc;
-};
+पूर्ण;
 
-struct saa7164_fw_status {
+काष्ठा saa7164_fw_status अणु
 
 	/* RISC Core details */
 	u32	status;
@@ -216,7 +217,7 @@ struct saa7164_fw_status {
 	u32	spec;
 	u32	inst;
 	u32	cpuload;
-	u32	remainheap;
+	u32	reमुख्यheap;
 
 	/* Firmware version */
 	u32	version;
@@ -224,38 +225,38 @@ struct saa7164_fw_status {
 	u32	sub;
 	u32	rel;
 	u32	buildnr;
-};
+पूर्ण;
 
-struct saa7164_dvb {
-	struct mutex lock;
-	struct dvb_adapter adapter;
-	struct dvb_frontend *frontend;
-	struct dvb_demux demux;
-	struct dmxdev dmxdev;
-	struct dmx_frontend fe_hw;
-	struct dmx_frontend fe_mem;
-	struct dvb_net net;
-	int feeding;
-};
+काष्ठा saa7164_dvb अणु
+	काष्ठा mutex lock;
+	काष्ठा dvb_adapter adapter;
+	काष्ठा dvb_frontend *frontend;
+	काष्ठा dvb_demux demux;
+	काष्ठा dmxdev dmxdev;
+	काष्ठा dmx_frontend fe_hw;
+	काष्ठा dmx_frontend fe_mem;
+	काष्ठा dvb_net net;
+	पूर्णांक feeding;
+पूर्ण;
 
-struct saa7164_i2c {
-	struct saa7164_dev		*dev;
+काष्ठा saa7164_i2c अणु
+	काष्ठा saa7164_dev		*dev;
 
-	enum saa7164_i2c_bus_nr		nr;
+	क्रमागत saa7164_i2c_bus_nr		nr;
 
 	/* I2C I/O */
-	struct i2c_adapter		i2c_adap;
-	struct i2c_client		i2c_client;
+	काष्ठा i2c_adapter		i2c_adap;
+	काष्ठा i2c_client		i2c_client;
 	u32				i2c_rc;
-};
+पूर्ण;
 
-struct saa7164_tvnorm {
-	char		*name;
+काष्ठा saa7164_tvnorm अणु
+	अक्षर		*name;
 	v4l2_std_id	id;
-};
+पूर्ण;
 
-struct saa7164_encoder_params {
-	struct saa7164_tvnorm encodernorm;
+काष्ठा saa7164_encoder_params अणु
+	काष्ठा saa7164_tvnorm encodernorm;
 	u32 height;
 	u32 width;
 	u32 is_50hz;
@@ -269,10 +270,10 @@ struct saa7164_encoder_params {
 	u32 ctl_aspect;
 	u32 refdist;
 	u32 gop_size;
-};
+पूर्ण;
 
-struct saa7164_vbi_params {
-	struct saa7164_tvnorm encodernorm;
+काष्ठा saa7164_vbi_params अणु
+	काष्ठा saa7164_tvnorm encodernorm;
 	u32 height;
 	u32 width;
 	u32 is_50hz;
@@ -286,29 +287,29 @@ struct saa7164_vbi_params {
 	u32 ctl_aspect;
 	u32 refdist;
 	u32 gop_size;
-};
+पूर्ण;
 
-struct saa7164_port;
+काष्ठा saa7164_port;
 
-struct saa7164_buffer {
-	struct list_head list;
+काष्ठा saa7164_buffer अणु
+	काष्ठा list_head list;
 
 	/* Note of which h/w buffer list index position we occupy */
-	int idx;
+	पूर्णांक idx;
 
-	struct saa7164_port *port;
+	काष्ठा saa7164_port *port;
 
-	/* Hardware Specific */
+	/* Hardware Specअगरic */
 	/* PCI Memory allocations */
-	enum saa7164_buffer_flags flags; /* Free, Busy, Full */
+	क्रमागत saa7164_buffer_flags flags; /* Free, Busy, Full */
 
 	/* A block of page align PCI memory */
 	u32 pci_size;	/* PCI allocation size in bytes */
 	u64 *cpu;	/* Virtual address */
 	dma_addr_t dma;	/* Physical address */
-	u32 crc;	/* Checksum for the entire buffer data */
+	u32 crc;	/* Checksum क्रम the entire buffer data */
 
-	/* A page table that splits the block into a number of entries */
+	/* A page table that splits the block पूर्णांकo a number of entries */
 	u32 pt_size;		/* PCI allocation size in bytes */
 	u64 *pt_cpu;		/* Virtual address */
 	dma_addr_t pt_dma;	/* Physical address */
@@ -316,23 +317,23 @@ struct saa7164_buffer {
 	/* Encoder fops */
 	u32 pos;
 	u32 actual_size;
-};
+पूर्ण;
 
-struct saa7164_port {
+काष्ठा saa7164_port अणु
 
-	struct saa7164_dev *dev;
-	enum port_t type;
-	int nr;
+	काष्ठा saa7164_dev *dev;
+	क्रमागत port_t type;
+	पूर्णांक nr;
 
 	/* --- Generic port attributes --- */
 
 	/* HW stream parameters */
-	struct tmHWStreamParameters hw_streamingparams;
+	काष्ठा पंचांगHWStreamParameters hw_streamingparams;
 
 	/* DMA configuration values, is seeded during initialization */
-	struct tmComResDMATermDescrHeader hwcfg;
+	काष्ठा पंचांगComResDMATermDescrHeader hwcfg;
 
-	/* hardware specific registers */
+	/* hardware specअगरic रेजिस्टरs */
 	u32 bufcounter;
 	u32 pitch;
 	u32 bufsize;
@@ -343,41 +344,41 @@ struct saa7164_port {
 
 	u32 numpte;	/* Number of entries in array, only valid in head */
 
-	struct mutex dmaqueue_lock;
-	struct saa7164_buffer dmaqueue;
+	काष्ठा mutex dmaqueue_lock;
+	काष्ठा saa7164_buffer dmaqueue;
 
 	u64 last_irq_msecs, last_svc_msecs;
-	u64 last_irq_msecs_diff, last_svc_msecs_diff;
+	u64 last_irq_msecs_dअगरf, last_svc_msecs_dअगरf;
 	u32 last_svc_wp;
 	u32 last_svc_rp;
-	u64 last_irq_svc_msecs_diff;
-	u64 last_read_msecs, last_read_msecs_diff;
-	u64 last_poll_msecs, last_poll_msecs_diff;
+	u64 last_irq_svc_msecs_dअगरf;
+	u64 last_पढ़ो_msecs, last_पढ़ो_msecs_dअगरf;
+	u64 last_poll_msecs, last_poll_msecs_dअगरf;
 
-	struct saa7164_histogram irq_interval;
-	struct saa7164_histogram svc_interval;
-	struct saa7164_histogram irq_svc_interval;
-	struct saa7164_histogram read_interval;
-	struct saa7164_histogram poll_interval;
+	काष्ठा saa7164_histogram irq_पूर्णांकerval;
+	काष्ठा saa7164_histogram svc_पूर्णांकerval;
+	काष्ठा saa7164_histogram irq_svc_पूर्णांकerval;
+	काष्ठा saa7164_histogram पढ़ो_पूर्णांकerval;
+	काष्ठा saa7164_histogram poll_पूर्णांकerval;
 
-	/* --- DVB Transport Specific --- */
-	struct saa7164_dvb dvb;
-	struct i2c_client *i2c_client_demod;
-	struct i2c_client *i2c_client_tuner;
+	/* --- DVB Transport Specअगरic --- */
+	काष्ठा saa7164_dvb dvb;
+	काष्ठा i2c_client *i2c_client_demod;
+	काष्ठा i2c_client *i2c_client_tuner;
 
 	/* --- Encoder/V4L related attributes --- */
 	/* Encoder */
 	/* Defaults established in saa7164-encoder.c */
-	struct saa7164_tvnorm encodernorm;
-	struct v4l2_ctrl_handler ctrl_handler;
+	काष्ठा saa7164_tvnorm encodernorm;
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
 	v4l2_std_id std;
 	u32 height;
 	u32 width;
 	u32 freq;
 	u8 mux_input;
 	u8 encoder_profile;
-	u8 video_format;
-	u8 audio_format;
+	u8 video_क्रमmat;
+	u8 audio_क्रमmat;
 	u8 video_resolution;
 	u16 ctl_brightness;
 	u16 ctl_contrast;
@@ -386,27 +387,27 @@ struct saa7164_port {
 	u16 ctl_sharpness;
 	s8 ctl_volume;
 
-	struct tmComResAFeatureDescrHeader audfeat;
-	struct tmComResEncoderDescrHeader encunit;
-	struct tmComResProcDescrHeader vidproc;
-	struct tmComResExtDevDescrHeader ifunit;
-	struct tmComResTunerDescrHeader tunerunit;
+	काष्ठा पंचांगComResAFeatureDescrHeader audfeat;
+	काष्ठा पंचांगComResEncoderDescrHeader encunit;
+	काष्ठा पंचांगComResProcDescrHeader vidproc;
+	काष्ठा पंचांगComResExtDevDescrHeader अगरunit;
+	काष्ठा पंचांगComResTunerDescrHeader tunerunit;
 
-	struct work_struct workenc;
+	काष्ठा work_काष्ठा workenc;
 
 	/* V4L Encoder Video */
-	struct saa7164_encoder_params encoder_params;
-	struct video_device *v4l_device;
-	atomic_t v4l_reader_count;
+	काष्ठा saa7164_encoder_params encoder_params;
+	काष्ठा video_device *v4l_device;
+	atomic_t v4l_पढ़ोer_count;
 
-	struct saa7164_buffer list_buf_used;
-	struct saa7164_buffer list_buf_free;
-	wait_queue_head_t wait_read;
+	काष्ठा saa7164_buffer list_buf_used;
+	काष्ठा saa7164_buffer list_buf_मुक्त;
+	रुको_queue_head_t रुको_पढ़ो;
 
 	/* V4L VBI */
-	struct tmComResVBIFormatDescrHeader vbi_fmt_ntsc;
-	struct saa7164_vbi_params vbi_params;
-	struct saa7164_port *enc_port;
+	काष्ठा पंचांगComResVBIFormatDescrHeader vbi_fmt_ntsc;
+	काष्ठा saa7164_vbi_params vbi_params;
+	काष्ठा saa7164_port *enc_port;
 
 	/* Debug */
 	u32 sync_errors;
@@ -414,210 +415,210 @@ struct saa7164_port {
 	u32 a_cc_errors;
 	u8 last_v_cc;
 	u8 last_a_cc;
-	u32 done_first_interrupt;
-};
+	u32 करोne_first_पूर्णांकerrupt;
+पूर्ण;
 
-struct saa7164_dev {
-	struct list_head	devlist;
+काष्ठा saa7164_dev अणु
+	काष्ठा list_head	devlist;
 	atomic_t		refcount;
 
-	struct v4l2_device v4l2_dev;
+	काष्ठा v4l2_device v4l2_dev;
 
 	/* pci stuff */
-	struct pci_dev	*pci;
-	unsigned char	pci_rev, pci_lat;
-	int		pci_bus, pci_slot;
+	काष्ठा pci_dev	*pci;
+	अचिन्हित अक्षर	pci_rev, pci_lat;
+	पूर्णांक		pci_bus, pci_slot;
 	u32		__iomem *lmmio;
 	u8		__iomem *bmmio;
 	u32		__iomem *lmmio2;
 	u8		__iomem *bmmio2;
-	int		pci_irqmask;
+	पूर्णांक		pci_irqmask;
 
 	/* board details */
-	int	nr;
-	int	hwrevision;
+	पूर्णांक	nr;
+	पूर्णांक	hwrevision;
 	u32	board;
-	char	name[16];
+	अक्षर	name[16];
 
 	/* firmware status */
-	struct saa7164_fw_status	fw_status;
+	काष्ठा saa7164_fw_status	fw_status;
 	u32				firmwareloaded;
 
-	struct tmComResHWDescr		hwdesc;
-	struct tmComResInterfaceDescr	intfdesc;
-	struct tmComResBusDescr		busdesc;
+	काष्ठा पंचांगComResHWDescr		hwdesc;
+	काष्ठा पंचांगComResInterfaceDescr	पूर्णांकfdesc;
+	काष्ठा पंचांगComResBusDescr		busdesc;
 
-	struct tmComResBusInfo		bus;
+	काष्ठा पंचांगComResBusInfo		bus;
 
-	/* Interrupt status and ack registers */
-	u32 int_status;
-	u32 int_ack;
+	/* Interrupt status and ack रेजिस्टरs */
+	u32 पूर्णांक_status;
+	u32 पूर्णांक_ack;
 	bool msi;
 
-	struct cmd			cmds[SAA_CMD_MAX_MSG_UNITS];
-	struct mutex			lock;
+	काष्ठा cmd			cmds[SAA_CMD_MAX_MSG_UNITS];
+	काष्ठा mutex			lock;
 
 	/* I2c related */
-	struct saa7164_i2c i2c_bus[3];
+	काष्ठा saa7164_i2c i2c_bus[3];
 
 	/* Transport related */
-	struct saa7164_port ports[SAA7164_MAX_PORTS];
+	काष्ठा saa7164_port ports[SAA7164_MAX_PORTS];
 
-	/* Deferred command/api interrupts handling */
-	struct work_struct workcmd;
+	/* Deferred command/api पूर्णांकerrupts handling */
+	काष्ठा work_काष्ठा workcmd;
 
-	/* A kernel thread to monitor the firmware log, used
+	/* A kernel thपढ़ो to monitor the firmware log, used
 	 * only in debug mode.
 	 */
-	struct task_struct *kthread;
+	काष्ठा task_काष्ठा *kthपढ़ो;
 
-};
+पूर्ण;
 
-extern struct list_head saa7164_devlist;
-extern unsigned int waitsecs;
-extern unsigned int encoder_buffers;
-extern unsigned int vbi_buffers;
+बाह्य काष्ठा list_head saa7164_devlist;
+बाह्य अचिन्हित पूर्णांक रुकोsecs;
+बाह्य अचिन्हित पूर्णांक encoder_buffers;
+बाह्य अचिन्हित पूर्णांक vbi_buffers;
 
 /* ----------------------------------------------------------- */
 /* saa7164-core.c                                              */
-void saa7164_dumpregs(struct saa7164_dev *dev, u32 addr);
-void saa7164_getfirmwarestatus(struct saa7164_dev *dev);
-u32 saa7164_getcurrentfirmwareversion(struct saa7164_dev *dev);
-void saa7164_histogram_update(struct saa7164_histogram *hg, u32 val);
+व्योम saa7164_dumpregs(काष्ठा saa7164_dev *dev, u32 addr);
+व्योम saa7164_getfirmwarestatus(काष्ठा saa7164_dev *dev);
+u32 saa7164_अ_लोurrentfirmwareversion(काष्ठा saa7164_dev *dev);
+व्योम saa7164_histogram_update(काष्ठा saa7164_histogram *hg, u32 val);
 
 /* ----------------------------------------------------------- */
 /* saa7164-fw.c                                                */
-int saa7164_downloadfirmware(struct saa7164_dev *dev);
+पूर्णांक saa7164_करोwnloadfirmware(काष्ठा saa7164_dev *dev);
 
 /* ----------------------------------------------------------- */
 /* saa7164-i2c.c                                               */
-extern int saa7164_i2c_register(struct saa7164_i2c *bus);
-extern int saa7164_i2c_unregister(struct saa7164_i2c *bus);
-extern void saa7164_call_i2c_clients(struct saa7164_i2c *bus,
-	unsigned int cmd, void *arg);
+बाह्य पूर्णांक saa7164_i2c_रेजिस्टर(काष्ठा saa7164_i2c *bus);
+बाह्य पूर्णांक saa7164_i2c_unरेजिस्टर(काष्ठा saa7164_i2c *bus);
+बाह्य व्योम saa7164_call_i2c_clients(काष्ठा saa7164_i2c *bus,
+	अचिन्हित पूर्णांक cmd, व्योम *arg);
 
 /* ----------------------------------------------------------- */
 /* saa7164-bus.c                                               */
-int saa7164_bus_setup(struct saa7164_dev *dev);
-void saa7164_bus_dump(struct saa7164_dev *dev);
-int saa7164_bus_set(struct saa7164_dev *dev, struct tmComResInfo* msg,
-	void *buf);
-int saa7164_bus_get(struct saa7164_dev *dev, struct tmComResInfo* msg,
-	void *buf, int peekonly);
+पूर्णांक saa7164_bus_setup(काष्ठा saa7164_dev *dev);
+व्योम saa7164_bus_dump(काष्ठा saa7164_dev *dev);
+पूर्णांक saa7164_bus_set(काष्ठा saa7164_dev *dev, काष्ठा पंचांगComResInfo* msg,
+	व्योम *buf);
+पूर्णांक saa7164_bus_get(काष्ठा saa7164_dev *dev, काष्ठा पंचांगComResInfo* msg,
+	व्योम *buf, पूर्णांक peekonly);
 
 /* ----------------------------------------------------------- */
 /* saa7164-cmd.c                                               */
-int saa7164_cmd_send(struct saa7164_dev *dev,
-	u8 id, enum tmComResCmd command, u16 controlselector,
-	u16 size, void *buf);
-void saa7164_cmd_signal(struct saa7164_dev *dev, u8 seqno);
-int saa7164_irq_dequeue(struct saa7164_dev *dev);
+पूर्णांक saa7164_cmd_send(काष्ठा saa7164_dev *dev,
+	u8 id, क्रमागत पंचांगComResCmd command, u16 controlselector,
+	u16 size, व्योम *buf);
+व्योम saa7164_cmd_संकेत(काष्ठा saa7164_dev *dev, u8 seqno);
+पूर्णांक saa7164_irq_dequeue(काष्ठा saa7164_dev *dev);
 
 /* ----------------------------------------------------------- */
 /* saa7164-api.c                                               */
-int saa7164_api_get_fw_version(struct saa7164_dev *dev, u32 *version);
-int saa7164_api_enum_subdevs(struct saa7164_dev *dev);
-int saa7164_api_i2c_read(struct saa7164_i2c *bus, u8 addr, u32 reglen, u8 *reg,
+पूर्णांक saa7164_api_get_fw_version(काष्ठा saa7164_dev *dev, u32 *version);
+पूर्णांक saa7164_api_क्रमागत_subdevs(काष्ठा saa7164_dev *dev);
+पूर्णांक saa7164_api_i2c_पढ़ो(काष्ठा saa7164_i2c *bus, u8 addr, u32 reglen, u8 *reg,
 	u32 datalen, u8 *data);
-int saa7164_api_i2c_write(struct saa7164_i2c *bus, u8 addr,
+पूर्णांक saa7164_api_i2c_ग_लिखो(काष्ठा saa7164_i2c *bus, u8 addr,
 	u32 datalen, u8 *data);
-int saa7164_api_dif_write(struct saa7164_i2c *bus, u8 addr,
+पूर्णांक saa7164_api_dअगर_ग_लिखो(काष्ठा saa7164_i2c *bus, u8 addr,
 	u32 datalen, u8 *data);
-int saa7164_api_read_eeprom(struct saa7164_dev *dev, u8 *buf, int buflen);
-int saa7164_api_set_gpiobit(struct saa7164_dev *dev, u8 unitid, u8 pin);
-int saa7164_api_clear_gpiobit(struct saa7164_dev *dev, u8 unitid, u8 pin);
-int saa7164_api_transition_port(struct saa7164_port *port, u8 mode);
-int saa7164_api_initialize_dif(struct saa7164_port *port);
-int saa7164_api_configure_dif(struct saa7164_port *port, u32 std);
-int saa7164_api_set_encoder(struct saa7164_port *port);
-int saa7164_api_get_encoder(struct saa7164_port *port);
-int saa7164_api_set_aspect_ratio(struct saa7164_port *port);
-int saa7164_api_set_usercontrol(struct saa7164_port *port, u8 ctl);
-int saa7164_api_get_usercontrol(struct saa7164_port *port, u8 ctl);
-int saa7164_api_set_videomux(struct saa7164_port *port);
-int saa7164_api_audio_mute(struct saa7164_port *port, int mute);
-int saa7164_api_set_audio_volume(struct saa7164_port *port, s8 level);
-int saa7164_api_set_audio_std(struct saa7164_port *port);
-int saa7164_api_set_audio_detection(struct saa7164_port *port, int autodetect);
-int saa7164_api_get_videomux(struct saa7164_port *port);
-int saa7164_api_set_vbi_format(struct saa7164_port *port);
-int saa7164_api_set_debug(struct saa7164_dev *dev, u8 level);
-int saa7164_api_collect_debug(struct saa7164_dev *dev);
-int saa7164_api_get_load_info(struct saa7164_dev *dev,
-	struct tmFwInfoStruct *i);
+पूर्णांक saa7164_api_पढ़ो_eeprom(काष्ठा saa7164_dev *dev, u8 *buf, पूर्णांक buflen);
+पूर्णांक saa7164_api_set_gpiobit(काष्ठा saa7164_dev *dev, u8 unitid, u8 pin);
+पूर्णांक saa7164_api_clear_gpiobit(काष्ठा saa7164_dev *dev, u8 unitid, u8 pin);
+पूर्णांक saa7164_api_transition_port(काष्ठा saa7164_port *port, u8 mode);
+पूर्णांक saa7164_api_initialize_dअगर(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_configure_dअगर(काष्ठा saa7164_port *port, u32 std);
+पूर्णांक saa7164_api_set_encoder(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_get_encoder(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_set_aspect_ratio(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_set_usercontrol(काष्ठा saa7164_port *port, u8 ctl);
+पूर्णांक saa7164_api_get_usercontrol(काष्ठा saa7164_port *port, u8 ctl);
+पूर्णांक saa7164_api_set_videomux(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_audio_mute(काष्ठा saa7164_port *port, पूर्णांक mute);
+पूर्णांक saa7164_api_set_audio_volume(काष्ठा saa7164_port *port, s8 level);
+पूर्णांक saa7164_api_set_audio_std(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_set_audio_detection(काष्ठा saa7164_port *port, पूर्णांक स्वतःdetect);
+पूर्णांक saa7164_api_get_videomux(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_set_vbi_क्रमmat(काष्ठा saa7164_port *port);
+पूर्णांक saa7164_api_set_debug(काष्ठा saa7164_dev *dev, u8 level);
+पूर्णांक saa7164_api_collect_debug(काष्ठा saa7164_dev *dev);
+पूर्णांक saa7164_api_get_load_info(काष्ठा saa7164_dev *dev,
+	काष्ठा पंचांगFwInfoStruct *i);
 
 /* ----------------------------------------------------------- */
 /* saa7164-cards.c                                             */
-extern struct saa7164_board saa7164_boards[];
-extern const unsigned int saa7164_bcount;
+बाह्य काष्ठा saa7164_board saa7164_boards[];
+बाह्य स्थिर अचिन्हित पूर्णांक saa7164_bcount;
 
-extern struct saa7164_subid saa7164_subids[];
-extern const unsigned int saa7164_idcount;
+बाह्य काष्ठा saa7164_subid saa7164_subids[];
+बाह्य स्थिर अचिन्हित पूर्णांक saa7164_idcount;
 
-extern void saa7164_card_list(struct saa7164_dev *dev);
-extern void saa7164_gpio_setup(struct saa7164_dev *dev);
-extern void saa7164_card_setup(struct saa7164_dev *dev);
+बाह्य व्योम saa7164_card_list(काष्ठा saa7164_dev *dev);
+बाह्य व्योम saa7164_gpio_setup(काष्ठा saa7164_dev *dev);
+बाह्य व्योम saa7164_card_setup(काष्ठा saa7164_dev *dev);
 
-extern int saa7164_i2caddr_to_reglen(struct saa7164_i2c *bus, int addr);
-extern int saa7164_i2caddr_to_unitid(struct saa7164_i2c *bus, int addr);
-extern char *saa7164_unitid_name(struct saa7164_dev *dev, u8 unitid);
+बाह्य पूर्णांक saa7164_i2caddr_to_reglen(काष्ठा saa7164_i2c *bus, पूर्णांक addr);
+बाह्य पूर्णांक saa7164_i2caddr_to_unitid(काष्ठा saa7164_i2c *bus, पूर्णांक addr);
+बाह्य अक्षर *saa7164_unitid_name(काष्ठा saa7164_dev *dev, u8 unitid);
 
 /* ----------------------------------------------------------- */
 /* saa7164-dvb.c                                               */
-extern int saa7164_dvb_register(struct saa7164_port *port);
-extern int saa7164_dvb_unregister(struct saa7164_port *port);
+बाह्य पूर्णांक saa7164_dvb_रेजिस्टर(काष्ठा saa7164_port *port);
+बाह्य पूर्णांक saa7164_dvb_unरेजिस्टर(काष्ठा saa7164_port *port);
 
 /* ----------------------------------------------------------- */
 /* saa7164-buffer.c                                            */
-extern struct saa7164_buffer *saa7164_buffer_alloc(
-	struct saa7164_port *port, u32 len);
-extern int saa7164_buffer_dealloc(struct saa7164_buffer *buf);
-extern void saa7164_buffer_display(struct saa7164_buffer *buf);
-extern int saa7164_buffer_activate(struct saa7164_buffer *buf, int i);
-extern int saa7164_buffer_cfg_port(struct saa7164_port *port);
-extern struct saa7164_user_buffer *saa7164_buffer_alloc_user(
-	struct saa7164_dev *dev, u32 len);
-extern void saa7164_buffer_dealloc_user(struct saa7164_user_buffer *buf);
-extern int saa7164_buffer_zero_offsets(struct saa7164_port *port, int i);
+बाह्य काष्ठा saa7164_buffer *saa7164_buffer_alloc(
+	काष्ठा saa7164_port *port, u32 len);
+बाह्य पूर्णांक saa7164_buffer_dealloc(काष्ठा saa7164_buffer *buf);
+बाह्य व्योम saa7164_buffer_display(काष्ठा saa7164_buffer *buf);
+बाह्य पूर्णांक saa7164_buffer_activate(काष्ठा saa7164_buffer *buf, पूर्णांक i);
+बाह्य पूर्णांक saa7164_buffer_cfg_port(काष्ठा saa7164_port *port);
+बाह्य काष्ठा saa7164_user_buffer *saa7164_buffer_alloc_user(
+	काष्ठा saa7164_dev *dev, u32 len);
+बाह्य व्योम saa7164_buffer_dealloc_user(काष्ठा saa7164_user_buffer *buf);
+बाह्य पूर्णांक saa7164_buffer_zero_offsets(काष्ठा saa7164_port *port, पूर्णांक i);
 
 /* ----------------------------------------------------------- */
 /* saa7164-encoder.c                                            */
-int saa7164_s_std(struct saa7164_port *port, v4l2_std_id id);
-int saa7164_g_std(struct saa7164_port *port, v4l2_std_id *id);
-int saa7164_enum_input(struct file *file, void *priv, struct v4l2_input *i);
-int saa7164_g_input(struct saa7164_port *port, unsigned int *i);
-int saa7164_s_input(struct saa7164_port *port, unsigned int i);
-int saa7164_g_tuner(struct file *file, void *priv, struct v4l2_tuner *t);
-int saa7164_s_tuner(struct file *file, void *priv, const struct v4l2_tuner *t);
-int saa7164_g_frequency(struct saa7164_port *port, struct v4l2_frequency *f);
-int saa7164_s_frequency(struct saa7164_port *port,
-			const struct v4l2_frequency *f);
-int saa7164_encoder_register(struct saa7164_port *port);
-void saa7164_encoder_unregister(struct saa7164_port *port);
+पूर्णांक saa7164_s_std(काष्ठा saa7164_port *port, v4l2_std_id id);
+पूर्णांक saa7164_g_std(काष्ठा saa7164_port *port, v4l2_std_id *id);
+पूर्णांक saa7164_क्रमागत_input(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_input *i);
+पूर्णांक saa7164_g_input(काष्ठा saa7164_port *port, अचिन्हित पूर्णांक *i);
+पूर्णांक saa7164_s_input(काष्ठा saa7164_port *port, अचिन्हित पूर्णांक i);
+पूर्णांक saa7164_g_tuner(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_tuner *t);
+पूर्णांक saa7164_s_tuner(काष्ठा file *file, व्योम *priv, स्थिर काष्ठा v4l2_tuner *t);
+पूर्णांक saa7164_g_frequency(काष्ठा saa7164_port *port, काष्ठा v4l2_frequency *f);
+पूर्णांक saa7164_s_frequency(काष्ठा saa7164_port *port,
+			स्थिर काष्ठा v4l2_frequency *f);
+पूर्णांक saa7164_encoder_रेजिस्टर(काष्ठा saa7164_port *port);
+व्योम saa7164_encoder_unरेजिस्टर(काष्ठा saa7164_port *port);
 
 /* ----------------------------------------------------------- */
 /* saa7164-vbi.c                                            */
-int saa7164_vbi_register(struct saa7164_port *port);
-void saa7164_vbi_unregister(struct saa7164_port *port);
+पूर्णांक saa7164_vbi_रेजिस्टर(काष्ठा saa7164_port *port);
+व्योम saa7164_vbi_unरेजिस्टर(काष्ठा saa7164_port *port);
 
 /* ----------------------------------------------------------- */
 
-extern unsigned int crc_checking;
+बाह्य अचिन्हित पूर्णांक crc_checking;
 
-extern unsigned int saa_debug;
-#define dprintk(level, fmt, arg...)\
-	do { if (saa_debug & level)\
-		printk(KERN_DEBUG "%s: " fmt, dev->name, ## arg);\
-	} while (0)
+बाह्य अचिन्हित पूर्णांक saa_debug;
+#घोषणा dprपूर्णांकk(level, fmt, arg...)\
+	करो अणु अगर (saa_debug & level)\
+		prपूर्णांकk(KERN_DEBUG "%s: " fmt, dev->name, ## arg);\
+	पूर्ण जबतक (0)
 
-#define log_warn(fmt, arg...)\
-	do { \
-		printk(KERN_WARNING "%s: " fmt, dev->name, ## arg);\
-	} while (0)
+#घोषणा log_warn(fmt, arg...)\
+	करो अणु \
+		prपूर्णांकk(KERN_WARNING "%s: " fmt, dev->name, ## arg);\
+	पूर्ण जबतक (0)
 
-#define saa7164_readl(reg) readl(dev->lmmio + ((reg) >> 2))
-#define saa7164_writel(reg, value) writel((value), dev->lmmio + ((reg) >> 2))
+#घोषणा saa7164_पढ़ोl(reg) पढ़ोl(dev->lmmio + ((reg) >> 2))
+#घोषणा saa7164_ग_लिखोl(reg, value) ग_लिखोl((value), dev->lmmio + ((reg) >> 2))
 
-#define saa7164_readb(reg)             readl(dev->bmmio + (reg))
-#define saa7164_writeb(reg, value)     writel((value), dev->bmmio + (reg))
+#घोषणा saa7164_पढ़ोb(reg)             पढ़ोl(dev->bmmio + (reg))
+#घोषणा saa7164_ग_लिखोb(reg, value)     ग_लिखोl((value), dev->bmmio + (reg))
 

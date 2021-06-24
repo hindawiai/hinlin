@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Some low level IO code, and hacks for various block layer limitations
+ * Some low level IO code, and hacks क्रम various block layer limitations
  *
  * Copyright 2010, 2011 Kent Overstreet <kent.overstreet@gmail.com>
  * Copyright 2012 Google, Inc.
  */
 
-#include "bcache.h"
-#include "bset.h"
-#include "debug.h"
+#समावेश "bcache.h"
+#समावेश "bset.h"
+#समावेश "debug.h"
 
-#include <linux/blkdev.h>
+#समावेश <linux/blkdev.h>
 
 /* Bios with headers */
 
-void bch_bbio_free(struct bio *bio, struct cache_set *c)
-{
-	struct bbio *b = container_of(bio, struct bbio, bio);
+व्योम bch_bbio_मुक्त(काष्ठा bio *bio, काष्ठा cache_set *c)
+अणु
+	काष्ठा bbio *b = container_of(bio, काष्ठा bbio, bio);
 
-	mempool_free(b, &c->bio_meta);
-}
+	mempool_मुक्त(b, &c->bio_meta);
+पूर्ण
 
-struct bio *bch_bbio_alloc(struct cache_set *c)
-{
-	struct bbio *b = mempool_alloc(&c->bio_meta, GFP_NOIO);
-	struct bio *bio = &b->bio;
+काष्ठा bio *bch_bbio_alloc(काष्ठा cache_set *c)
+अणु
+	काष्ठा bbio *b = mempool_alloc(&c->bio_meta, GFP_NOIO);
+	काष्ठा bio *bio = &b->bio;
 
-	bio_init(bio, bio->bi_inline_vecs, meta_bucket_pages(&c->cache->sb));
+	bio_init(bio, bio->bi_अंतरभूत_vecs, meta_bucket_pages(&c->cache->sb));
 
-	return bio;
-}
+	वापस bio;
+पूर्ण
 
-void __bch_submit_bbio(struct bio *bio, struct cache_set *c)
-{
-	struct bbio *b = container_of(bio, struct bbio, bio);
+व्योम __bch_submit_bbio(काष्ठा bio *bio, काष्ठा cache_set *c)
+अणु
+	काष्ठा bbio *b = container_of(bio, काष्ठा bbio, bio);
 
 	bio->bi_iter.bi_sector	= PTR_OFFSET(&b->key, 0);
 	bio_set_dev(bio, c->cache->bdev);
 
-	b->submit_time_us = local_clock_us();
-	closure_bio_submit(c, bio, bio->bi_private);
-}
+	b->submit_समय_us = local_घड़ी_us();
+	closure_bio_submit(c, bio, bio->bi_निजी);
+पूर्ण
 
-void bch_submit_bbio(struct bio *bio, struct cache_set *c,
-		     struct bkey *k, unsigned int ptr)
-{
-	struct bbio *b = container_of(bio, struct bbio, bio);
+व्योम bch_submit_bbio(काष्ठा bio *bio, काष्ठा cache_set *c,
+		     काष्ठा bkey *k, अचिन्हित पूर्णांक ptr)
+अणु
+	काष्ठा bbio *b = container_of(bio, काष्ठा bbio, bio);
 
 	bch_bkey_copy_single_ptr(&b->key, k, ptr);
 	__bch_submit_bbio(bio, c);
-}
+पूर्ण
 
 /* IO errors */
-void bch_count_backing_io_errors(struct cached_dev *dc, struct bio *bio)
-{
-	unsigned int errors;
+व्योम bch_count_backing_io_errors(काष्ठा cached_dev *dc, काष्ठा bio *bio)
+अणु
+	अचिन्हित पूर्णांक errors;
 
 	WARN_ONCE(!dc, "NULL pointer of struct cached_dev");
 
@@ -64,111 +65,111 @@ void bch_count_backing_io_errors(struct cached_dev *dc, struct bio *bio)
 	 * raid code, which is not a real hardware media failure. So
 	 * we shouldn't count failed REQ_RAHEAD bio to dc->io_errors.
 	 */
-	if (bio->bi_opf & REQ_RAHEAD) {
+	अगर (bio->bi_opf & REQ_RAHEAD) अणु
 		pr_warn_ratelimited("%s: Read-ahead I/O failed on backing device, ignore\n",
 				    dc->backing_dev_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	errors = atomic_add_return(1, &dc->io_errors);
-	if (errors < dc->error_limit)
+	errors = atomic_add_वापस(1, &dc->io_errors);
+	अगर (errors < dc->error_limit)
 		pr_err("%s: IO error on backing device, unrecoverable\n",
 			dc->backing_dev_name);
-	else
+	अन्यथा
 		bch_cached_dev_error(dc);
-}
+पूर्ण
 
-void bch_count_io_errors(struct cache *ca,
+व्योम bch_count_io_errors(काष्ठा cache *ca,
 			 blk_status_t error,
-			 int is_read,
-			 const char *m)
-{
+			 पूर्णांक is_पढ़ो,
+			 स्थिर अक्षर *m)
+अणु
 	/*
-	 * The halflife of an error is:
+	 * The halflअगरe of an error is:
 	 * log2(1/2)/log2(127/128) * refresh ~= 88 * refresh
 	 */
 
-	if (ca->set->error_decay) {
-		unsigned int count = atomic_inc_return(&ca->io_count);
+	अगर (ca->set->error_decay) अणु
+		अचिन्हित पूर्णांक count = atomic_inc_वापस(&ca->io_count);
 
-		while (count > ca->set->error_decay) {
-			unsigned int errors;
-			unsigned int old = count;
-			unsigned int new = count - ca->set->error_decay;
+		जबतक (count > ca->set->error_decay) अणु
+			अचिन्हित पूर्णांक errors;
+			अचिन्हित पूर्णांक old = count;
+			अचिन्हित पूर्णांक new = count - ca->set->error_decay;
 
 			/*
-			 * First we subtract refresh from count; each time we
-			 * successfully do so, we rescale the errors once:
+			 * First we subtract refresh from count; each समय we
+			 * successfully करो so, we rescale the errors once:
 			 */
 
 			count = atomic_cmpxchg(&ca->io_count, old, new);
 
-			if (count == old) {
+			अगर (count == old) अणु
 				count = new;
 
-				errors = atomic_read(&ca->io_errors);
-				do {
+				errors = atomic_पढ़ो(&ca->io_errors);
+				करो अणु
 					old = errors;
-					new = ((uint64_t) errors * 127) / 128;
+					new = ((uपूर्णांक64_t) errors * 127) / 128;
 					errors = atomic_cmpxchg(&ca->io_errors,
 								old, new);
-				} while (old != errors);
-			}
-		}
-	}
+				पूर्ण जबतक (old != errors);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (error) {
-		unsigned int errors = atomic_add_return(1 << IO_ERROR_SHIFT,
+	अगर (error) अणु
+		अचिन्हित पूर्णांक errors = atomic_add_वापस(1 << IO_ERROR_SHIFT,
 						    &ca->io_errors);
 		errors >>= IO_ERROR_SHIFT;
 
-		if (errors < ca->set->error_limit)
+		अगर (errors < ca->set->error_limit)
 			pr_err("%s: IO error on %s%s\n",
 			       ca->cache_dev_name, m,
-			       is_read ? ", recovering." : ".");
-		else
+			       is_पढ़ो ? ", recovering." : ".");
+		अन्यथा
 			bch_cache_set_error(ca->set,
 					    "%s: too many IO errors %s\n",
 					    ca->cache_dev_name, m);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void bch_bbio_count_io_errors(struct cache_set *c, struct bio *bio,
-			      blk_status_t error, const char *m)
-{
-	struct bbio *b = container_of(bio, struct bbio, bio);
-	struct cache *ca = c->cache;
-	int is_read = (bio_data_dir(bio) == READ ? 1 : 0);
+व्योम bch_bbio_count_io_errors(काष्ठा cache_set *c, काष्ठा bio *bio,
+			      blk_status_t error, स्थिर अक्षर *m)
+अणु
+	काष्ठा bbio *b = container_of(bio, काष्ठा bbio, bio);
+	काष्ठा cache *ca = c->cache;
+	पूर्णांक is_पढ़ो = (bio_data_dir(bio) == READ ? 1 : 0);
 
-	unsigned int threshold = op_is_write(bio_op(bio))
-		? c->congested_write_threshold_us
-		: c->congested_read_threshold_us;
+	अचिन्हित पूर्णांक threshold = op_is_ग_लिखो(bio_op(bio))
+		? c->congested_ग_लिखो_threshold_us
+		: c->congested_पढ़ो_threshold_us;
 
-	if (threshold) {
-		unsigned int t = local_clock_us();
-		int us = t - b->submit_time_us;
-		int congested = atomic_read(&c->congested);
+	अगर (threshold) अणु
+		अचिन्हित पूर्णांक t = local_घड़ी_us();
+		पूर्णांक us = t - b->submit_समय_us;
+		पूर्णांक congested = atomic_पढ़ो(&c->congested);
 
-		if (us > (int) threshold) {
-			int ms = us / 1024;
+		अगर (us > (पूर्णांक) threshold) अणु
+			पूर्णांक ms = us / 1024;
 
 			c->congested_last_us = t;
 
 			ms = min(ms, CONGESTED_MAX + congested);
 			atomic_sub(ms, &c->congested);
-		} else if (congested < 0)
+		पूर्ण अन्यथा अगर (congested < 0)
 			atomic_inc(&c->congested);
-	}
+	पूर्ण
 
-	bch_count_io_errors(ca, error, is_read, m);
-}
+	bch_count_io_errors(ca, error, is_पढ़ो, m);
+पूर्ण
 
-void bch_bbio_endio(struct cache_set *c, struct bio *bio,
-		    blk_status_t error, const char *m)
-{
-	struct closure *cl = bio->bi_private;
+व्योम bch_bbio_endio(काष्ठा cache_set *c, काष्ठा bio *bio,
+		    blk_status_t error, स्थिर अक्षर *m)
+अणु
+	काष्ठा closure *cl = bio->bi_निजी;
 
 	bch_bbio_count_io_errors(c, bio, error, m);
 	bio_put(bio);
 	closure_put(cl);
-}
+पूर्ण

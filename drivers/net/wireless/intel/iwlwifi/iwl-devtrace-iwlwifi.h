@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /******************************************************************************
  *
  * Copyright(c) 2009 - 2014 Intel Corporation. All rights reserved.
@@ -6,24 +7,24 @@
  * Copyright(c) 2016 - 2017 Intel Deutschland GmbH
  * Copyright(c) 2018        Intel Corporation
  *
- * Contact Information:
- *  Intel Linux Wireless <linuxwifi@intel.com>
+ * Contact Inक्रमmation:
+ *  Intel Linux Wireless <linuxwअगरi@पूर्णांकel.com>
  * Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
  *
  *****************************************************************************/
 
-#if !defined(__IWLWIFI_DEVICE_TRACE_IWLWIFI) || defined(TRACE_HEADER_MULTI_READ)
-#define __IWLWIFI_DEVICE_TRACE_IWLWIFI
+#अगर !defined(__IWLWIFI_DEVICE_TRACE_IWLWIFI) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __IWLWIFI_DEVICE_TRACE_IWLWIFI
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM iwlwifi
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM iwlwअगरi
 
-TRACE_EVENT(iwlwifi_dev_hcmd,
-	TP_PROTO(const struct device *dev,
-		 struct iwl_host_cmd *cmd, u16 total_size,
-		 struct iwl_cmd_header_wide *hdr),
+TRACE_EVENT(iwlwअगरi_dev_hcmd,
+	TP_PROTO(स्थिर काष्ठा device *dev,
+		 काष्ठा iwl_host_cmd *cmd, u16 total_size,
+		 काष्ठा iwl_cmd_header_wide *hdr),
 	TP_ARGS(dev, cmd, total_size, hdr),
 	TP_STRUCT__entry(
 		DEV_ENTRY
@@ -31,69 +32,69 @@ TRACE_EVENT(iwlwifi_dev_hcmd,
 		__field(u32, flags)
 	),
 	TP_fast_assign(
-		int i, offset = sizeof(struct iwl_cmd_header);
+		पूर्णांक i, offset = माप(काष्ठा iwl_cmd_header);
 
-		if (hdr->group_id)
-			offset = sizeof(struct iwl_cmd_header_wide);
+		अगर (hdr->group_id)
+			offset = माप(काष्ठा iwl_cmd_header_wide);
 
 		DEV_ASSIGN;
 		__entry->flags = cmd->flags;
-		memcpy(__get_dynamic_array(hcmd), hdr, offset);
+		स_नकल(__get_dynamic_array(hcmd), hdr, offset);
 
-		for (i = 0; i < IWL_MAX_CMD_TBS_PER_TFD; i++) {
-			if (!cmd->len[i])
-				continue;
-			memcpy((u8 *)__get_dynamic_array(hcmd) + offset,
+		क्रम (i = 0; i < IWL_MAX_CMD_TBS_PER_TFD; i++) अणु
+			अगर (!cmd->len[i])
+				जारी;
+			स_नकल((u8 *)__get_dynamic_array(hcmd) + offset,
 			       cmd->data[i], cmd->len[i]);
 			offset += cmd->len[i];
-		}
+		पूर्ण
 	),
-	TP_printk("[%s] hcmd %#.2x.%#.2x (%ssync)",
+	TP_prपूर्णांकk("[%s] hcmd %#.2x.%#.2x (%ssync)",
 		  __get_str(dev), ((u8 *)__get_dynamic_array(hcmd))[1],
 		  ((u8 *)__get_dynamic_array(hcmd))[0],
 		  __entry->flags & CMD_ASYNC ? "a" : "")
 );
 
-TRACE_EVENT(iwlwifi_dev_rx,
-	TP_PROTO(const struct device *dev, const struct iwl_trans *trans,
-		 struct iwl_rx_packet *pkt, size_t len),
+TRACE_EVENT(iwlwअगरi_dev_rx,
+	TP_PROTO(स्थिर काष्ठा device *dev, स्थिर काष्ठा iwl_trans *trans,
+		 काष्ठा iwl_rx_packet *pkt, माप_प्रकार len),
 	TP_ARGS(dev, trans, pkt, len),
 	TP_STRUCT__entry(
 		DEV_ENTRY
 		__field(u16, cmd)
 		__field(u8, hdr_offset)
 		__dynamic_array(u8, rxbuf,
-				iwl_rx_trace_len(trans, pkt, len, NULL))
+				iwl_rx_trace_len(trans, pkt, len, शून्य))
 	),
 	TP_fast_assign(
-		size_t hdr_offset = 0;
+		माप_प्रकार hdr_offset = 0;
 
 		DEV_ASSIGN;
 		__entry->cmd = WIDE_ID(pkt->hdr.group_id, pkt->hdr.cmd);
-		memcpy(__get_dynamic_array(rxbuf), pkt,
+		स_नकल(__get_dynamic_array(rxbuf), pkt,
 		       iwl_rx_trace_len(trans, pkt, len, &hdr_offset));
 		__entry->hdr_offset = hdr_offset;
 	),
-	TP_printk("[%s] RX cmd %#.2x",
+	TP_prपूर्णांकk("[%s] RX cmd %#.2x",
 		  __get_str(dev), __entry->cmd)
 );
 
-TRACE_EVENT(iwlwifi_dev_tx,
-	TP_PROTO(const struct device *dev, struct sk_buff *skb,
-		 void *tfd, size_t tfdlen,
-		 void *buf0, size_t buf0_len,
-		 int hdr_len),
+TRACE_EVENT(iwlwअगरi_dev_tx,
+	TP_PROTO(स्थिर काष्ठा device *dev, काष्ठा sk_buff *skb,
+		 व्योम *tfd, माप_प्रकार tfdlen,
+		 व्योम *buf0, माप_प्रकार buf0_len,
+		 पूर्णांक hdr_len),
 	TP_ARGS(dev, skb, tfd, tfdlen, buf0, buf0_len, hdr_len),
 	TP_STRUCT__entry(
 		DEV_ENTRY
-		__field(void *, skbaddr)
-		__field(size_t, framelen)
+		__field(व्योम *, skbaddr)
+		__field(माप_प्रकार, framelen)
 		__dynamic_array(u8, tfd, tfdlen)
 
 		/*
 		 * Do not insert between or below these items,
 		 * we want to keep the frame together (except
-		 * for the possible padding).
+		 * क्रम the possible padding).
 		 */
 		__dynamic_array(u8, buf0, buf0_len)
 		__dynamic_array(u8, buf1, hdr_len > 0 && iwl_trace_data(skb) ?
@@ -103,43 +104,43 @@ TRACE_EVENT(iwlwifi_dev_tx,
 		DEV_ASSIGN;
 		__entry->skbaddr = skb;
 		__entry->framelen = buf0_len;
-		if (hdr_len > 0)
+		अगर (hdr_len > 0)
 			__entry->framelen += skb->len - hdr_len;
-		memcpy(__get_dynamic_array(tfd), tfd, tfdlen);
-		memcpy(__get_dynamic_array(buf0), buf0, buf0_len);
-		if (hdr_len > 0 && !iwl_trace_data(skb))
+		स_नकल(__get_dynamic_array(tfd), tfd, tfdlen);
+		स_नकल(__get_dynamic_array(buf0), buf0, buf0_len);
+		अगर (hdr_len > 0 && !iwl_trace_data(skb))
 			skb_copy_bits(skb, hdr_len,
 				      __get_dynamic_array(buf1),
 				      skb->len - hdr_len);
 	),
-	TP_printk("[%s] TX %.2x (%zu bytes) skbaddr=%p",
+	TP_prपूर्णांकk("[%s] TX %.2x (%zu bytes) skbaddr=%p",
 		  __get_str(dev), ((u8 *)__get_dynamic_array(buf0))[0],
 		  __entry->framelen, __entry->skbaddr)
 );
 
-TRACE_EVENT(iwlwifi_dev_ucode_event,
-	TP_PROTO(const struct device *dev, u32 time, u32 data, u32 ev),
-	TP_ARGS(dev, time, data, ev),
+TRACE_EVENT(iwlwअगरi_dev_ucode_event,
+	TP_PROTO(स्थिर काष्ठा device *dev, u32 समय, u32 data, u32 ev),
+	TP_ARGS(dev, समय, data, ev),
 	TP_STRUCT__entry(
 		DEV_ENTRY
 
-		__field(u32, time)
+		__field(u32, समय)
 		__field(u32, data)
 		__field(u32, ev)
 	),
 	TP_fast_assign(
 		DEV_ASSIGN;
-		__entry->time = time;
+		__entry->समय = समय;
 		__entry->data = data;
 		__entry->ev = ev;
 	),
-	TP_printk("[%s] EVT_LOGT:%010u:0x%08x:%04u",
-		  __get_str(dev), __entry->time, __entry->data, __entry->ev)
+	TP_prपूर्णांकk("[%s] EVT_LOGT:%010u:0x%08x:%04u",
+		  __get_str(dev), __entry->समय, __entry->data, __entry->ev)
 );
-#endif /* __IWLWIFI_DEVICE_TRACE_IWLWIFI */
+#पूर्ण_अगर /* __IWLWIFI_DEVICE_TRACE_IWLWIFI */
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE iwl-devtrace-iwlwifi
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता iwl-devtrace-iwlwअगरi
+#समावेश <trace/define_trace.h>

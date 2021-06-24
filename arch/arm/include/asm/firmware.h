@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 Samsung Electronics.
  * Kyungmin Park <kyungmin.park@samsung.com>
  * Tomasz Figa <t.figa@samsung.com>
  */
 
-#ifndef __ASM_ARM_FIRMWARE_H
-#define __ASM_ARM_FIRMWARE_H
+#अगर_अघोषित __ASM_ARM_FIRMWARE_H
+#घोषणा __ASM_ARM_FIRMWARE_H
 
-#include <linux/bug.h>
+#समावेश <linux/bug.h>
 
 /*
- * struct firmware_ops
+ * काष्ठा firmware_ops
  *
- * A structure to specify available firmware operations.
+ * A काष्ठाure to specअगरy available firmware operations.
  *
- * A filled up structure can be registered with register_firmware_ops().
+ * A filled up काष्ठाure can be रेजिस्टरed with रेजिस्टर_firmware_ops().
  */
-struct firmware_ops {
+काष्ठा firmware_ops अणु
 	/*
-	 * Inform the firmware we intend to enter CPU idle mode
+	 * Inक्रमm the firmware we पूर्णांकend to enter CPU idle mode
 	 */
-	int (*prepare_idle)(unsigned long mode);
+	पूर्णांक (*prepare_idle)(अचिन्हित दीर्घ mode);
 	/*
 	 * Enters CPU idle mode
 	 */
-	int (*do_idle)(unsigned long mode);
+	पूर्णांक (*करो_idle)(अचिन्हित दीर्घ mode);
 	/*
-	 * Sets boot address of specified physical CPU
+	 * Sets boot address of specअगरied physical CPU
 	 */
-	int (*set_cpu_boot_addr)(int cpu, unsigned long boot_addr);
+	पूर्णांक (*set_cpu_boot_addr)(पूर्णांक cpu, अचिन्हित दीर्घ boot_addr);
 	/*
-	 * Gets boot address of specified physical CPU
+	 * Gets boot address of specअगरied physical CPU
 	 */
-	int (*get_cpu_boot_addr)(int cpu, unsigned long *boot_addr);
+	पूर्णांक (*get_cpu_boot_addr)(पूर्णांक cpu, अचिन्हित दीर्घ *boot_addr);
 	/*
-	 * Boots specified physical CPU
+	 * Boots specअगरied physical CPU
 	 */
-	int (*cpu_boot)(int cpu);
+	पूर्णांक (*cpu_boot)(पूर्णांक cpu);
 	/*
 	 * Initializes L2 cache
 	 */
-	int (*l2x0_init)(void);
+	पूर्णांक (*l2x0_init)(व्योम);
 	/*
-	 * Enter system-wide suspend.
+	 * Enter प्रणाली-wide suspend.
 	 */
-	int (*suspend)(void);
+	पूर्णांक (*suspend)(व्योम);
 	/*
-	 * Restore state of privileged hardware after system-wide suspend.
+	 * Restore state of privileged hardware after प्रणाली-wide suspend.
 	 */
-	int (*resume)(void);
-};
+	पूर्णांक (*resume)(व्योम);
+पूर्ण;
 
-/* Global pointer for current firmware_ops structure, can't be NULL. */
-extern const struct firmware_ops *firmware_ops;
+/* Global poपूर्णांकer क्रम current firmware_ops काष्ठाure, can't be शून्य. */
+बाह्य स्थिर काष्ठा firmware_ops *firmware_ops;
 
 /*
  * call_firmware_op(op, ...)
  *
- * Checks if firmware operation is present and calls it,
- * otherwise returns -ENOSYS
+ * Checks अगर firmware operation is present and calls it,
+ * otherwise वापसs -ENOSYS
  */
-#define call_firmware_op(op, ...)					\
+#घोषणा call_firmware_op(op, ...)					\
 	((firmware_ops->op) ? firmware_ops->op(__VA_ARGS__) : (-ENOSYS))
 
 /*
- * register_firmware_ops(ops)
+ * रेजिस्टर_firmware_ops(ops)
  *
- * A function to register platform firmware_ops struct.
+ * A function to रेजिस्टर platक्रमm firmware_ops काष्ठा.
  */
-static inline void register_firmware_ops(const struct firmware_ops *ops)
-{
+अटल अंतरभूत व्योम रेजिस्टर_firmware_ops(स्थिर काष्ठा firmware_ops *ops)
+अणु
 	BUG_ON(!ops);
 
 	firmware_ops = ops;
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

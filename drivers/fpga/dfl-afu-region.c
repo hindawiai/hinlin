@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for FPGA Accelerated Function Unit (AFU) MMIO Region Management
+ * Driver क्रम FPGA Accelerated Function Unit (AFU) MMIO Region Management
  *
  * Copyright (C) 2017-2018 Intel Corporation, Inc.
  *
  * Authors:
- *   Wu Hao <hao.wu@intel.com>
- *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+ *   Wu Hao <hao.wu@पूर्णांकel.com>
+ *   Xiao Guangrong <guangrong.xiao@linux.पूर्णांकel.com>
  */
-#include "dfl-afu.h"
+#समावेश "dfl-afu.h"
 
 /**
- * afu_mmio_region_init - init function for afu mmio region support
- * @pdata: afu platform device's pdata.
+ * afu_mmio_region_init - init function क्रम afu mmio region support
+ * @pdata: afu platक्रमm device's pdata.
  */
-void afu_mmio_region_init(struct dfl_feature_platform_data *pdata)
-{
-	struct dfl_afu *afu = dfl_fpga_pdata_get_private(pdata);
+व्योम afu_mmio_region_init(काष्ठा dfl_feature_platक्रमm_data *pdata)
+अणु
+	काष्ठा dfl_afu *afu = dfl_fpga_pdata_get_निजी(pdata);
 
 	INIT_LIST_HEAD(&afu->regions);
-}
+पूर्ण
 
-#define for_each_region(region, afu)	\
-	list_for_each_entry((region), &(afu)->regions, node)
+#घोषणा क्रम_each_region(region, afu)	\
+	list_क्रम_each_entry((region), &(afu)->regions, node)
 
-static struct dfl_afu_mmio_region *get_region_by_index(struct dfl_afu *afu,
+अटल काष्ठा dfl_afu_mmio_region *get_region_by_index(काष्ठा dfl_afu *afu,
 						       u32 region_index)
-{
-	struct dfl_afu_mmio_region *region;
+अणु
+	काष्ठा dfl_afu_mmio_region *region;
 
-	for_each_region(region, afu)
-		if (region->index == region_index)
-			return region;
+	क्रम_each_region(region, afu)
+		अगर (region->index == region_index)
+			वापस region;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * afu_mmio_region_add - add a mmio region to given feature dev.
@@ -46,16 +47,16 @@ static struct dfl_afu_mmio_region *get_region_by_index(struct dfl_afu *afu,
  *
  * Return: 0 on success, negative error code otherwise.
  */
-int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
+पूर्णांक afu_mmio_region_add(काष्ठा dfl_feature_platक्रमm_data *pdata,
 			u32 region_index, u64 region_size, u64 phys, u32 flags)
-{
-	struct dfl_afu_mmio_region *region;
-	struct dfl_afu *afu;
-	int ret = 0;
+अणु
+	काष्ठा dfl_afu_mmio_region *region;
+	काष्ठा dfl_afu *afu;
+	पूर्णांक ret = 0;
 
-	region = devm_kzalloc(&pdata->dev->dev, sizeof(*region), GFP_KERNEL);
-	if (!region)
-		return -ENOMEM;
+	region = devm_kzalloc(&pdata->dev->dev, माप(*region), GFP_KERNEL);
+	अगर (!region)
+		वापस -ENOMEM;
 
 	region->index = region_index;
 	region->size = region_size;
@@ -64,14 +65,14 @@ int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
 
 	mutex_lock(&pdata->lock);
 
-	afu = dfl_fpga_pdata_get_private(pdata);
+	afu = dfl_fpga_pdata_get_निजी(pdata);
 
-	/* check if @index already exists */
-	if (get_region_by_index(afu, region_index)) {
+	/* check अगर @index alपढ़ोy exists */
+	अगर (get_region_by_index(afu, region_index)) अणु
 		mutex_unlock(&pdata->lock);
 		ret = -EEXIST;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	region_size = PAGE_ALIGN(region_size);
 	region->offset = afu->region_cur_offset;
@@ -81,86 +82,86 @@ int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
 	afu->num_regions++;
 	mutex_unlock(&pdata->lock);
 
-	return 0;
+	वापस 0;
 
-exit:
-	devm_kfree(&pdata->dev->dev, region);
-	return ret;
-}
+निकास:
+	devm_kमुक्त(&pdata->dev->dev, region);
+	वापस ret;
+पूर्ण
 
 /**
  * afu_mmio_region_destroy - destroy all mmio regions under given feature dev.
- * @pdata: afu platform device's pdata.
+ * @pdata: afu platक्रमm device's pdata.
  */
-void afu_mmio_region_destroy(struct dfl_feature_platform_data *pdata)
-{
-	struct dfl_afu *afu = dfl_fpga_pdata_get_private(pdata);
-	struct dfl_afu_mmio_region *tmp, *region;
+व्योम afu_mmio_region_destroy(काष्ठा dfl_feature_platक्रमm_data *pdata)
+अणु
+	काष्ठा dfl_afu *afu = dfl_fpga_pdata_get_निजी(pdata);
+	काष्ठा dfl_afu_mmio_region *पंचांगp, *region;
 
-	list_for_each_entry_safe(region, tmp, &afu->regions, node)
-		devm_kfree(&pdata->dev->dev, region);
-}
+	list_क्रम_each_entry_safe(region, पंचांगp, &afu->regions, node)
+		devm_kमुक्त(&pdata->dev->dev, region);
+पूर्ण
 
 /**
  * afu_mmio_region_get_by_index - find an afu region by index.
- * @pdata: afu platform device's pdata.
+ * @pdata: afu platक्रमm device's pdata.
  * @region_index: region index.
- * @pregion: ptr to region for result.
+ * @pregion: ptr to region क्रम result.
  *
  * Return: 0 on success, negative error code otherwise.
  */
-int afu_mmio_region_get_by_index(struct dfl_feature_platform_data *pdata,
+पूर्णांक afu_mmio_region_get_by_index(काष्ठा dfl_feature_platक्रमm_data *pdata,
 				 u32 region_index,
-				 struct dfl_afu_mmio_region *pregion)
-{
-	struct dfl_afu_mmio_region *region;
-	struct dfl_afu *afu;
-	int ret = 0;
+				 काष्ठा dfl_afu_mmio_region *pregion)
+अणु
+	काष्ठा dfl_afu_mmio_region *region;
+	काष्ठा dfl_afu *afu;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&pdata->lock);
-	afu = dfl_fpga_pdata_get_private(pdata);
+	afu = dfl_fpga_pdata_get_निजी(pdata);
 	region = get_region_by_index(afu, region_index);
-	if (!region) {
+	अगर (!region) अणु
 		ret = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	*pregion = *region;
-exit:
+निकास:
 	mutex_unlock(&pdata->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * afu_mmio_region_get_by_offset - find an afu mmio region by offset and size
  *
- * @pdata: afu platform device's pdata.
+ * @pdata: afu platक्रमm device's pdata.
  * @offset: region offset from start of the device fd.
  * @size: region size.
- * @pregion: ptr to region for result.
+ * @pregion: ptr to region क्रम result.
  *
  * Find the region which fully contains the region described by input
  * parameters (offset and size) from the feature dev's region linked list.
  *
  * Return: 0 on success, negative error code otherwise.
  */
-int afu_mmio_region_get_by_offset(struct dfl_feature_platform_data *pdata,
+पूर्णांक afu_mmio_region_get_by_offset(काष्ठा dfl_feature_platक्रमm_data *pdata,
 				  u64 offset, u64 size,
-				  struct dfl_afu_mmio_region *pregion)
-{
-	struct dfl_afu_mmio_region *region;
-	struct dfl_afu *afu;
-	int ret = 0;
+				  काष्ठा dfl_afu_mmio_region *pregion)
+अणु
+	काष्ठा dfl_afu_mmio_region *region;
+	काष्ठा dfl_afu *afu;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&pdata->lock);
-	afu = dfl_fpga_pdata_get_private(pdata);
-	for_each_region(region, afu)
-		if (region->offset <= offset &&
-		    region->offset + region->size >= offset + size) {
+	afu = dfl_fpga_pdata_get_निजी(pdata);
+	क्रम_each_region(region, afu)
+		अगर (region->offset <= offset &&
+		    region->offset + region->size >= offset + size) अणु
 			*pregion = *region;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 	ret = -EINVAL;
-exit:
+निकास:
 	mutex_unlock(&pdata->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण

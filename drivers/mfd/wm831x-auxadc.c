@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * wm831x-auxadc.c  --  AUXADC for Wolfson WM831x PMICs
+ * wm831x-auxadc.c  --  AUXADC क्रम Wolfson WM831x PMICs
  *
  * Copyright 2009-2011 Wolfson Microelectronics PLC.
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/mfd/core.h>
-#include <linux/slab.h>
-#include <linux/list.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
 
-#include <linux/mfd/wm831x/core.h>
-#include <linux/mfd/wm831x/pdata.h>
-#include <linux/mfd/wm831x/irq.h>
-#include <linux/mfd/wm831x/auxadc.h>
-#include <linux/mfd/wm831x/otp.h>
-#include <linux/mfd/wm831x/regulator.h>
+#समावेश <linux/mfd/wm831x/core.h>
+#समावेश <linux/mfd/wm831x/pdata.h>
+#समावेश <linux/mfd/wm831x/irq.h>
+#समावेश <linux/mfd/wm831x/auxadc.h>
+#समावेश <linux/mfd/wm831x/otp.h>
+#समावेश <linux/mfd/wm831x/regulator.h>
 
-struct wm831x_auxadc_req {
-	struct list_head list;
-	enum wm831x_auxadc input;
-	int val;
-	struct completion done;
-};
+काष्ठा wm831x_auxadc_req अणु
+	काष्ठा list_head list;
+	क्रमागत wm831x_auxadc input;
+	पूर्णांक val;
+	काष्ठा completion करोne;
+पूर्ण;
 
-static int wm831x_auxadc_read_irq(struct wm831x *wm831x,
-				  enum wm831x_auxadc input)
-{
-	struct wm831x_auxadc_req *req;
-	int ret;
+अटल पूर्णांक wm831x_auxadc_पढ़ो_irq(काष्ठा wm831x *wm831x,
+				  क्रमागत wm831x_auxadc input)
+अणु
+	काष्ठा wm831x_auxadc_req *req;
+	पूर्णांक ret;
 	bool ena = false;
 
-	req = kzalloc(sizeof(*req), GFP_KERNEL);
-	if (!req)
-		return -ENOMEM;
+	req = kzalloc(माप(*req), GFP_KERNEL);
+	अगर (!req)
+		वापस -ENOMEM;
 
-	init_completion(&req->done);
+	init_completion(&req->करोne);
 	req->input = input;
 	req->val = -ETIMEDOUT;
 
@@ -50,47 +51,47 @@ static int wm831x_auxadc_read_irq(struct wm831x *wm831x,
 
 	ena = !wm831x->auxadc_active;
 
-	if (ena) {
+	अगर (ena) अणु
 		ret = wm831x_set_bits(wm831x, WM831X_AUXADC_CONTROL,
 				      WM831X_AUX_ENA, WM831X_AUX_ENA);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(wm831x->dev, "Failed to enable AUXADC: %d\n",
 				ret);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* Enable the conversion if not already running */
-	if (!(wm831x->auxadc_active & (1 << input))) {
+	/* Enable the conversion अगर not alपढ़ोy running */
+	अगर (!(wm831x->auxadc_active & (1 << input))) अणु
 		ret = wm831x_set_bits(wm831x, WM831X_AUXADC_SOURCE,
 				      1 << input, 1 << input);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(wm831x->dev,
 				"Failed to set AUXADC source: %d\n", ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		wm831x->auxadc_active |= 1 << input;
-	}
+	पूर्ण
 
 	/* We convert at the fastest rate possible */
-	if (ena) {
+	अगर (ena) अणु
 		ret = wm831x_set_bits(wm831x, WM831X_AUXADC_CONTROL,
 				      WM831X_AUX_CVT_ENA |
 				      WM831X_AUX_RATE_MASK,
 				      WM831X_AUX_CVT_ENA |
 				      WM831X_AUX_RATE_MASK);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(wm831x->dev, "Failed to start AUXADC: %d\n",
 				ret);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&wm831x->auxadc_lock);
 
-	/* Wait for an interrupt */
-	wait_for_completion_timeout(&req->done, msecs_to_jiffies(500));
+	/* Wait क्रम an पूर्णांकerrupt */
+	रुको_क्रम_completion_समयout(&req->करोne, msecs_to_jअगरfies(500));
 
 	mutex_lock(&wm831x->auxadc_lock);
 	ret = req->val;
@@ -99,28 +100,28 @@ out:
 	list_del(&req->list);
 	mutex_unlock(&wm831x->auxadc_lock);
 
-	kfree(req);
+	kमुक्त(req);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t wm831x_auxadc_irq(int irq, void *irq_data)
-{
-	struct wm831x *wm831x = irq_data;
-	struct wm831x_auxadc_req *req;
-	int ret, input, val;
+अटल irqवापस_t wm831x_auxadc_irq(पूर्णांक irq, व्योम *irq_data)
+अणु
+	काष्ठा wm831x *wm831x = irq_data;
+	काष्ठा wm831x_auxadc_req *req;
+	पूर्णांक ret, input, val;
 
-	ret = wm831x_reg_read(wm831x, WM831X_AUXADC_DATA);
-	if (ret < 0) {
+	ret = wm831x_reg_पढ़ो(wm831x, WM831X_AUXADC_DATA);
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev,
 			"Failed to read AUXADC data: %d\n", ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	input = ((ret & WM831X_AUX_DATA_SRC_MASK)
 		 >> WM831X_AUX_DATA_SRC_SHIFT) - 1;
 
-	if (input == 14)
+	अगर (input == 14)
 		input = WM831X_AUX_CAL;
 
 	val = ret & WM831X_AUX_DATA_MASK;
@@ -132,163 +133,163 @@ static irqreturn_t wm831x_auxadc_irq(int irq, void *irq_data)
 			1 << input, 0);
 	wm831x->auxadc_active &= ~(1 << input);
 
-	/* Turn off the entire convertor if idle */
-	if (!wm831x->auxadc_active)
-		wm831x_reg_write(wm831x, WM831X_AUXADC_CONTROL, 0);
+	/* Turn off the entire convertor अगर idle */
+	अगर (!wm831x->auxadc_active)
+		wm831x_reg_ग_लिखो(wm831x, WM831X_AUXADC_CONTROL, 0);
 
-	/* Wake up any threads waiting for this request */
-	list_for_each_entry(req, &wm831x->auxadc_pending, list) {
-		if (req->input == input) {
+	/* Wake up any thपढ़ोs रुकोing क्रम this request */
+	list_क्रम_each_entry(req, &wm831x->auxadc_pending, list) अणु
+		अगर (req->input == input) अणु
 			req->val = val;
-			complete(&req->done);
-		}
-	}
+			complete(&req->करोne);
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&wm831x->auxadc_lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int wm831x_auxadc_read_polled(struct wm831x *wm831x,
-				     enum wm831x_auxadc input)
-{
-	int ret, src, timeout;
+अटल पूर्णांक wm831x_auxadc_पढ़ो_polled(काष्ठा wm831x *wm831x,
+				     क्रमागत wm831x_auxadc input)
+अणु
+	पूर्णांक ret, src, समयout;
 
 	mutex_lock(&wm831x->auxadc_lock);
 
 	ret = wm831x_set_bits(wm831x, WM831X_AUXADC_CONTROL,
 			      WM831X_AUX_ENA, WM831X_AUX_ENA);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev, "Failed to enable AUXADC: %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* We force a single source at present */
+	/* We क्रमce a single source at present */
 	src = input;
-	ret = wm831x_reg_write(wm831x, WM831X_AUXADC_SOURCE,
+	ret = wm831x_reg_ग_लिखो(wm831x, WM831X_AUXADC_SOURCE,
 			       1 << src);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev, "Failed to set AUXADC source: %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = wm831x_set_bits(wm831x, WM831X_AUXADC_CONTROL,
 			      WM831X_AUX_CVT_ENA, WM831X_AUX_CVT_ENA);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev, "Failed to start AUXADC: %d\n", ret);
-		goto disable;
-	}
+		जाओ disable;
+	पूर्ण
 
-	/* If we're not using interrupts then poll the
-	 * interrupt status register */
-	timeout = 5;
-	while (timeout) {
+	/* If we're not using पूर्णांकerrupts then poll the
+	 * पूर्णांकerrupt status रेजिस्टर */
+	समयout = 5;
+	जबतक (समयout) अणु
 		msleep(1);
 
-		ret = wm831x_reg_read(wm831x,
+		ret = wm831x_reg_पढ़ो(wm831x,
 				      WM831X_INTERRUPT_STATUS_1);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(wm831x->dev,
 				"ISR 1 read failed: %d\n", ret);
-			goto disable;
-		}
+			जाओ disable;
+		पूर्ण
 
 		/* Did it complete? */
-		if (ret & WM831X_AUXADC_DATA_EINT) {
-			wm831x_reg_write(wm831x,
+		अगर (ret & WM831X_AUXADC_DATA_EINT) अणु
+			wm831x_reg_ग_लिखो(wm831x,
 					 WM831X_INTERRUPT_STATUS_1,
 					 WM831X_AUXADC_DATA_EINT);
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			dev_err(wm831x->dev,
 				"AUXADC conversion timeout\n");
 			ret = -EBUSY;
-			goto disable;
-		}
-	}
+			जाओ disable;
+		पूर्ण
+	पूर्ण
 
-	ret = wm831x_reg_read(wm831x, WM831X_AUXADC_DATA);
-	if (ret < 0) {
+	ret = wm831x_reg_पढ़ो(wm831x, WM831X_AUXADC_DATA);
+	अगर (ret < 0) अणु
 		dev_err(wm831x->dev,
 			"Failed to read AUXADC data: %d\n", ret);
-		goto disable;
-	}
+		जाओ disable;
+	पूर्ण
 
 	src = ((ret & WM831X_AUX_DATA_SRC_MASK)
 	       >> WM831X_AUX_DATA_SRC_SHIFT) - 1;
 
-	if (src == 14)
+	अगर (src == 14)
 		src = WM831X_AUX_CAL;
 
-	if (src != input) {
+	अगर (src != input) अणु
 		dev_err(wm831x->dev, "Data from source %d not %d\n",
 			src, input);
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret &= WM831X_AUX_DATA_MASK;
-	}
+	पूर्ण
 
 disable:
 	wm831x_set_bits(wm831x, WM831X_AUXADC_CONTROL, WM831X_AUX_ENA, 0);
 out:
 	mutex_unlock(&wm831x->auxadc_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * wm831x_auxadc_read: Read a value from the WM831x AUXADC
+ * wm831x_auxadc_पढ़ो: Read a value from the WM831x AUXADC
  *
- * @wm831x: Device to read from.
- * @input: AUXADC input to read.
+ * @wm831x: Device to पढ़ो from.
+ * @input: AUXADC input to पढ़ो.
  */
-int wm831x_auxadc_read(struct wm831x *wm831x, enum wm831x_auxadc input)
-{
-	return wm831x->auxadc_read(wm831x, input);
-}
-EXPORT_SYMBOL_GPL(wm831x_auxadc_read);
+पूर्णांक wm831x_auxadc_पढ़ो(काष्ठा wm831x *wm831x, क्रमागत wm831x_auxadc input)
+अणु
+	वापस wm831x->auxadc_पढ़ो(wm831x, input);
+पूर्ण
+EXPORT_SYMBOL_GPL(wm831x_auxadc_पढ़ो);
 
 /**
- * wm831x_auxadc_read_uv: Read a voltage from the WM831x AUXADC
+ * wm831x_auxadc_पढ़ो_uv: Read a voltage from the WM831x AUXADC
  *
- * @wm831x: Device to read from.
- * @input: AUXADC input to read.
+ * @wm831x: Device to पढ़ो from.
+ * @input: AUXADC input to पढ़ो.
  */
-int wm831x_auxadc_read_uv(struct wm831x *wm831x, enum wm831x_auxadc input)
-{
-	int ret;
+पूर्णांक wm831x_auxadc_पढ़ो_uv(काष्ठा wm831x *wm831x, क्रमागत wm831x_auxadc input)
+अणु
+	पूर्णांक ret;
 
-	ret = wm831x_auxadc_read(wm831x, input);
-	if (ret < 0)
-		return ret;
+	ret = wm831x_auxadc_पढ़ो(wm831x, input);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret *= 1465;
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(wm831x_auxadc_read_uv);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(wm831x_auxadc_पढ़ो_uv);
 
-void wm831x_auxadc_init(struct wm831x *wm831x)
-{
-	int ret;
+व्योम wm831x_auxadc_init(काष्ठा wm831x *wm831x)
+अणु
+	पूर्णांक ret;
 
 	mutex_init(&wm831x->auxadc_lock);
 	INIT_LIST_HEAD(&wm831x->auxadc_pending);
 
-	if (wm831x->irq) {
-		wm831x->auxadc_read = wm831x_auxadc_read_irq;
+	अगर (wm831x->irq) अणु
+		wm831x->auxadc_पढ़ो = wm831x_auxadc_पढ़ो_irq;
 
-		ret = request_threaded_irq(wm831x_irq(wm831x,
+		ret = request_thपढ़ोed_irq(wm831x_irq(wm831x,
 						      WM831X_IRQ_AUXADC_DATA),
-					   NULL, wm831x_auxadc_irq,
+					   शून्य, wm831x_auxadc_irq,
 					   IRQF_ONESHOT,
 					   "auxadc", wm831x);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(wm831x->dev, "AUXADC IRQ request failed: %d\n",
 				ret);
-			wm831x->auxadc_read = NULL;
-		}
-	}
+			wm831x->auxadc_पढ़ो = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (!wm831x->auxadc_read)
-		wm831x->auxadc_read = wm831x_auxadc_read_polled;
-}
+	अगर (!wm831x->auxadc_पढ़ो)
+		wm831x->auxadc_पढ़ो = wm831x_auxadc_पढ़ो_polled;
+पूर्ण

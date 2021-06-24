@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,85 +20,85 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/firmware.h>
-#include <core/memory.h>
-#include <subdev/mmu.h>
-#include <engine/sec2.h>
+#समावेश <core/firmware.h>
+#समावेश <core/memory.h>
+#समावेश <subdev/mmu.h>
+#समावेश <engine/sec2.h>
 
-#include <nvfw/acr.h>
-#include <nvfw/flcn.h>
+#समावेश <nvfw/acr.h>
+#समावेश <nvfw/flcn.h>
 
-void
-gp102_acr_wpr_patch(struct nvkm_acr *acr, s64 adjust)
-{
-	struct wpr_header_v1 hdr;
-	struct lsb_header_v1 lsb;
-	struct nvkm_acr_lsfw *lsfw;
+व्योम
+gp102_acr_wpr_patch(काष्ठा nvkm_acr *acr, s64 adjust)
+अणु
+	काष्ठा wpr_header_v1 hdr;
+	काष्ठा lsb_header_v1 lsb;
+	काष्ठा nvkm_acr_lsfw *lsfw;
 	u32 offset = 0;
 
-	do {
-		nvkm_robj(acr->wpr, offset, &hdr, sizeof(hdr));
+	करो अणु
+		nvkm_robj(acr->wpr, offset, &hdr, माप(hdr));
 		wpr_header_v1_dump(&acr->subdev, &hdr);
 
-		list_for_each_entry(lsfw, &acr->lsfw, head) {
-			if (lsfw->id != hdr.falcon_id)
-				continue;
+		list_क्रम_each_entry(lsfw, &acr->lsfw, head) अणु
+			अगर (lsfw->id != hdr.falcon_id)
+				जारी;
 
-			nvkm_robj(acr->wpr, hdr.lsb_offset, &lsb, sizeof(lsb));
+			nvkm_robj(acr->wpr, hdr.lsb_offset, &lsb, माप(lsb));
 			lsb_header_v1_dump(&acr->subdev, &lsb);
 
 			lsfw->func->bld_patch(acr, lsb.tail.bl_data_off, adjust);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		offset += sizeof(hdr);
-	} while (hdr.falcon_id != WPR_HEADER_V1_FALCON_ID_INVALID);
-}
+		offset += माप(hdr);
+	पूर्ण जबतक (hdr.falcon_id != WPR_HEADER_V1_FALCON_ID_INVALID);
+पूर्ण
 
-int
-gp102_acr_wpr_build_lsb(struct nvkm_acr *acr, struct nvkm_acr_lsfw *lsfw)
-{
-	struct lsb_header_v1 hdr;
+पूर्णांक
+gp102_acr_wpr_build_lsb(काष्ठा nvkm_acr *acr, काष्ठा nvkm_acr_lsfw *lsfw)
+अणु
+	काष्ठा lsb_header_v1 hdr;
 
-	if (WARN_ON(lsfw->sig->size != sizeof(hdr.signature)))
-		return -EINVAL;
+	अगर (WARN_ON(lsfw->sig->size != माप(hdr.signature)))
+		वापस -EINVAL;
 
-	memcpy(&hdr.signature, lsfw->sig->data, lsfw->sig->size);
+	स_नकल(&hdr.signature, lsfw->sig->data, lsfw->sig->size);
 	gm200_acr_wpr_build_lsb_tail(lsfw, &hdr.tail);
 
-	nvkm_wobj(acr->wpr, lsfw->offset.lsb, &hdr, sizeof(hdr));
-	return 0;
-}
+	nvkm_wobj(acr->wpr, lsfw->offset.lsb, &hdr, माप(hdr));
+	वापस 0;
+पूर्ण
 
-int
-gp102_acr_wpr_build(struct nvkm_acr *acr, struct nvkm_acr_lsf *rtos)
-{
-	struct nvkm_acr_lsfw *lsfw;
+पूर्णांक
+gp102_acr_wpr_build(काष्ठा nvkm_acr *acr, काष्ठा nvkm_acr_lsf *rtos)
+अणु
+	काष्ठा nvkm_acr_lsfw *lsfw;
 	u32 offset = 0;
-	int ret;
+	पूर्णांक ret;
 
-	/* Fill per-LSF structures. */
-	list_for_each_entry(lsfw, &acr->lsfw, head) {
-		struct lsf_signature_v1 *sig = (void *)lsfw->sig->data;
-		struct wpr_header_v1 hdr = {
+	/* Fill per-LSF काष्ठाures. */
+	list_क्रम_each_entry(lsfw, &acr->lsfw, head) अणु
+		काष्ठा lsf_signature_v1 *sig = (व्योम *)lsfw->sig->data;
+		काष्ठा wpr_header_v1 hdr = अणु
 			.falcon_id = lsfw->id,
 			.lsb_offset = lsfw->offset.lsb,
 			.bootstrap_owner = NVKM_ACR_LSF_SEC2,
 			.lazy_bootstrap = rtos && lsfw->id != rtos->id,
 			.bin_version = sig->version,
 			.status = WPR_HEADER_V1_STATUS_COPY,
-		};
+		पूर्ण;
 
 		/* Write WPR header. */
-		nvkm_wobj(acr->wpr, offset, &hdr, sizeof(hdr));
-		offset += sizeof(hdr);
+		nvkm_wobj(acr->wpr, offset, &hdr, माप(hdr));
+		offset += माप(hdr);
 
 		/* Write LSB header. */
 		ret = gp102_acr_wpr_build_lsb(acr, lsfw);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* Write ucode image. */
 		nvkm_wobj(acr->wpr, lsfw->offset.img,
@@ -105,44 +106,44 @@ gp102_acr_wpr_build(struct nvkm_acr *acr, struct nvkm_acr_lsf *rtos)
 				    lsfw->img.size);
 
 		/* Write bootloader data. */
-		lsfw->func->bld_write(acr, lsfw->offset.bld, lsfw);
-	}
+		lsfw->func->bld_ग_लिखो(acr, lsfw->offset.bld, lsfw);
+	पूर्ण
 
 	/* Finalise WPR. */
 	nvkm_wo32(acr->wpr, offset, WPR_HEADER_V1_FALCON_ID_INVALID);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-gp102_acr_wpr_alloc(struct nvkm_acr *acr, u32 wpr_size)
-{
-	int ret = nvkm_memory_new(acr->subdev.device, NVKM_MEM_TARGET_INST,
+पूर्णांक
+gp102_acr_wpr_alloc(काष्ठा nvkm_acr *acr, u32 wpr_size)
+अणु
+	पूर्णांक ret = nvkm_memory_new(acr->subdev.device, NVKM_MEM_TARGET_INST,
 				  ALIGN(wpr_size, 0x40000) << 1, 0x40000, true,
 				  &acr->wpr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	acr->shadow_start = nvkm_memory_addr(acr->wpr);
-	acr->wpr_start = acr->shadow_start + (nvkm_memory_size(acr->wpr) >> 1);
+	acr->shaकरोw_start = nvkm_memory_addr(acr->wpr);
+	acr->wpr_start = acr->shaकरोw_start + (nvkm_memory_size(acr->wpr) >> 1);
 	acr->wpr_end = acr->wpr_start + (nvkm_memory_size(acr->wpr) >> 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 u32
-gp102_acr_wpr_layout(struct nvkm_acr *acr)
-{
-	struct nvkm_acr_lsfw *lsfw;
+gp102_acr_wpr_layout(काष्ठा nvkm_acr *acr)
+अणु
+	काष्ठा nvkm_acr_lsfw *lsfw;
 	u32 wpr = 0;
 
-	wpr += 11 /* MAX_LSF */ * sizeof(struct wpr_header_v1);
+	wpr += 11 /* MAX_LSF */ * माप(काष्ठा wpr_header_v1);
 	wpr  = ALIGN(wpr, 256);
 
 	wpr += 0x100; /* Shared sub-WPR headers. */
 
-	list_for_each_entry(lsfw, &acr->lsfw, head) {
+	list_क्रम_each_entry(lsfw, &acr->lsfw, head) अणु
 		wpr  = ALIGN(wpr, 256);
 		lsfw->offset.lsb = wpr;
-		wpr += sizeof(struct lsb_header_v1);
+		wpr += माप(काष्ठा lsb_header_v1);
 
 		wpr  = ALIGN(wpr, 4096);
 		lsfw->offset.img = wpr;
@@ -152,24 +153,24 @@ gp102_acr_wpr_layout(struct nvkm_acr *acr)
 		lsfw->offset.bld = wpr;
 		lsfw->bl_data_size = ALIGN(lsfw->func->bld_size, 256);
 		wpr += lsfw->bl_data_size;
-	}
+	पूर्ण
 
-	return wpr;
-}
+	वापस wpr;
+पूर्ण
 
-int
-gp102_acr_wpr_parse(struct nvkm_acr *acr)
-{
-	const struct wpr_header_v1 *hdr = (void *)acr->wpr_fw->data;
+पूर्णांक
+gp102_acr_wpr_parse(काष्ठा nvkm_acr *acr)
+अणु
+	स्थिर काष्ठा wpr_header_v1 *hdr = (व्योम *)acr->wpr_fw->data;
 
-	while (hdr->falcon_id != WPR_HEADER_V1_FALCON_ID_INVALID) {
+	जबतक (hdr->falcon_id != WPR_HEADER_V1_FALCON_ID_INVALID) अणु
 		wpr_header_v1_dump(&acr->subdev, hdr);
-		if (!nvkm_acr_lsfw_add(NULL, acr, NULL, (hdr++)->falcon_id))
-			return -ENOMEM;
-	}
+		अगर (!nvkm_acr_lsfw_add(शून्य, acr, शून्य, (hdr++)->falcon_id))
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 MODULE_FIRMWARE("nvidia/gp102/acr/unload_bl.bin");
 MODULE_FIRMWARE("nvidia/gp102/acr/ucode_unload.bin");
@@ -183,39 +184,39 @@ MODULE_FIRMWARE("nvidia/gp106/acr/ucode_unload.bin");
 MODULE_FIRMWARE("nvidia/gp107/acr/unload_bl.bin");
 MODULE_FIRMWARE("nvidia/gp107/acr/ucode_unload.bin");
 
-static const struct nvkm_acr_hsf_fwif
-gp102_acr_unload_fwif[] = {
-	{ 0, nvkm_acr_hsfw_load, &gm200_acr_unload_0 },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_acr_hsf_fwअगर
+gp102_acr_unload_fwअगर[] = अणु
+	अणु 0, nvkm_acr_hsfw_load, &gm200_acr_unload_0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gp102_acr_load_load(struct nvkm_acr *acr, struct nvkm_acr_hsfw *hsfw)
-{
-	struct flcn_acr_desc_v1 *desc = (void *)&hsfw->image[hsfw->data_addr];
+पूर्णांक
+gp102_acr_load_load(काष्ठा nvkm_acr *acr, काष्ठा nvkm_acr_hsfw *hsfw)
+अणु
+	काष्ठा flcn_acr_desc_v1 *desc = (व्योम *)&hsfw->image[hsfw->data_addr];
 
 	desc->wpr_region_id = 1;
 	desc->regions.no_regions = 2;
 	desc->regions.region_props[0].start_addr = acr->wpr_start >> 8;
 	desc->regions.region_props[0].end_addr = acr->wpr_end >> 8;
 	desc->regions.region_props[0].region_id = 1;
-	desc->regions.region_props[0].read_mask = 0xf;
-	desc->regions.region_props[0].write_mask = 0xc;
+	desc->regions.region_props[0].पढ़ो_mask = 0xf;
+	desc->regions.region_props[0].ग_लिखो_mask = 0xc;
 	desc->regions.region_props[0].client_mask = 0x2;
-	desc->regions.region_props[0].shadow_mem_start_addr =
-		acr->shadow_start >> 8;
+	desc->regions.region_props[0].shaकरोw_mem_start_addr =
+		acr->shaकरोw_start >> 8;
 	flcn_acr_desc_v1_dump(&acr->subdev, desc);
 
-	return gm200_acr_hsfw_load(acr, hsfw,
+	वापस gm200_acr_hsfw_load(acr, hsfw,
 				  &acr->subdev.device->sec2->falcon);
-}
+पूर्ण
 
-static const struct nvkm_acr_hsf_func
-gp102_acr_load_0 = {
+अटल स्थिर काष्ठा nvkm_acr_hsf_func
+gp102_acr_load_0 = अणु
 	.load = gp102_acr_load_load,
 	.boot = gm200_acr_load_boot,
 	.bld = gm200_acr_hsfw_bld,
-};
+पूर्ण;
 
 MODULE_FIRMWARE("nvidia/gp102/acr/bl.bin");
 MODULE_FIRMWARE("nvidia/gp102/acr/ucode_load.bin");
@@ -229,16 +230,16 @@ MODULE_FIRMWARE("nvidia/gp106/acr/ucode_load.bin");
 MODULE_FIRMWARE("nvidia/gp107/acr/bl.bin");
 MODULE_FIRMWARE("nvidia/gp107/acr/ucode_load.bin");
 
-static const struct nvkm_acr_hsf_fwif
-gp102_acr_load_fwif[] = {
-	{ 0, nvkm_acr_hsfw_load, &gp102_acr_load_0 },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_acr_hsf_fwअगर
+gp102_acr_load_fwअगर[] = अणु
+	अणु 0, nvkm_acr_hsfw_load, &gp102_acr_load_0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct nvkm_acr_func
-gp102_acr = {
-	.load = gp102_acr_load_fwif,
-	.unload = gp102_acr_unload_fwif,
+अटल स्थिर काष्ठा nvkm_acr_func
+gp102_acr = अणु
+	.load = gp102_acr_load_fwअगर,
+	.unload = gp102_acr_unload_fwअगर,
 	.wpr_parse = gp102_acr_wpr_parse,
 	.wpr_layout = gp102_acr_wpr_layout,
 	.wpr_alloc = gp102_acr_wpr_alloc,
@@ -246,38 +247,38 @@ gp102_acr = {
 	.wpr_patch = gp102_acr_wpr_patch,
 	.wpr_check = gm200_acr_wpr_check,
 	.init = gm200_acr_init,
-};
+पूर्ण;
 
-int
-gp102_acr_load(struct nvkm_acr *acr, int ver, const struct nvkm_acr_fwif *fwif)
-{
-	struct nvkm_subdev *subdev = &acr->subdev;
-	const struct nvkm_acr_hsf_fwif *hsfwif;
+पूर्णांक
+gp102_acr_load(काष्ठा nvkm_acr *acr, पूर्णांक ver, स्थिर काष्ठा nvkm_acr_fwअगर *fwअगर)
+अणु
+	काष्ठा nvkm_subdev *subdev = &acr->subdev;
+	स्थिर काष्ठा nvkm_acr_hsf_fwअगर *hsfwअगर;
 
-	hsfwif = nvkm_firmware_load(subdev, fwif->func->load, "AcrLoad",
+	hsfwअगर = nvkm_firmware_load(subdev, fwअगर->func->load, "AcrLoad",
 				    acr, "acr/bl", "acr/ucode_load", "load");
-	if (IS_ERR(hsfwif))
-		return PTR_ERR(hsfwif);
+	अगर (IS_ERR(hsfwअगर))
+		वापस PTR_ERR(hsfwअगर);
 
-	hsfwif = nvkm_firmware_load(subdev, fwif->func->unload, "AcrUnload",
+	hsfwअगर = nvkm_firmware_load(subdev, fwअगर->func->unload, "AcrUnload",
 				    acr, "acr/unload_bl", "acr/ucode_unload",
 				    "unload");
-	if (IS_ERR(hsfwif))
-		return PTR_ERR(hsfwif);
+	अगर (IS_ERR(hsfwअगर))
+		वापस PTR_ERR(hsfwअगर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_acr_fwif
-gp102_acr_fwif[] = {
-	{  0, gp102_acr_load, &gp102_acr },
-	{ -1, gm200_acr_nofw, &gm200_acr },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_acr_fwअगर
+gp102_acr_fwअगर[] = अणु
+	अणु  0, gp102_acr_load, &gp102_acr पूर्ण,
+	अणु -1, gm200_acr_nofw, &gm200_acr पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gp102_acr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_acr **pacr)
-{
-	return nvkm_acr_new_(gp102_acr_fwif, device, type, inst, pacr);
-}
+पूर्णांक
+gp102_acr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_acr **pacr)
+अणु
+	वापस nvkm_acr_new_(gp102_acr_fwअगर, device, type, inst, pacr);
+पूर्ण

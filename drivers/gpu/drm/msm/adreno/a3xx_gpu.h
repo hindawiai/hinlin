@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#ifndef __A3XX_GPU_H__
-#define __A3XX_GPU_H__
+#अगर_अघोषित __A3XX_GPU_H__
+#घोषणा __A3XX_GPU_H__
 
-#include "adreno_gpu.h"
+#समावेश "adreno_gpu.h"
 
 /* arrg, somehow fb.h is getting pulled in: */
-#undef ROP_COPY
-#undef ROP_XOR
+#अघोषित ROP_COPY
+#अघोषित ROP_XOR
 
-#include "a3xx.xml.h"
+#समावेश "a3xx.xml.h"
 
-struct a3xx_gpu {
-	struct adreno_gpu base;
+काष्ठा a3xx_gpu अणु
+	काष्ठा adreno_gpu base;
 
-	/* if OCMEM is used for GMEM: */
-	struct adreno_ocmem ocmem;
-};
-#define to_a3xx_gpu(x) container_of(x, struct a3xx_gpu, base)
+	/* अगर OCMEM is used क्रम GMEM: */
+	काष्ठा adreno_ocmem ocmem;
+पूर्ण;
+#घोषणा to_a3xx_gpu(x) container_of(x, काष्ठा a3xx_gpu, base)
 
-#endif /* __A3XX_GPU_H__ */
+#पूर्ण_अगर /* __A3XX_GPU_H__ */

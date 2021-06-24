@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  linux/drivers/net/ethernet/ibm/ehea/ehea_hw.h
  *
- *  eHEA ethernet device driver for IBM eServer System p
+ *  eHEA ethernet device driver क्रम IBM eServer System p
  *
  *  (C) Copyright IBM Corp. 2006
  *
@@ -12,17 +13,17 @@
  *       Thomas Klein <tklein@de.ibm.com>
  */
 
-#ifndef __EHEA_HW_H__
-#define __EHEA_HW_H__
+#अगर_अघोषित __EHEA_HW_H__
+#घोषणा __EHEA_HW_H__
 
-#define QPX_SQA_VALUE   EHEA_BMASK_IBM(48, 63)
-#define QPX_RQ1A_VALUE  EHEA_BMASK_IBM(48, 63)
-#define QPX_RQ2A_VALUE  EHEA_BMASK_IBM(48, 63)
-#define QPX_RQ3A_VALUE  EHEA_BMASK_IBM(48, 63)
+#घोषणा QPX_SQA_VALUE   EHEA_BMASK_IBM(48, 63)
+#घोषणा QPX_RQ1A_VALUE  EHEA_BMASK_IBM(48, 63)
+#घोषणा QPX_RQ2A_VALUE  EHEA_BMASK_IBM(48, 63)
+#घोषणा QPX_RQ3A_VALUE  EHEA_BMASK_IBM(48, 63)
 
-#define QPTEMM_OFFSET(x) offsetof(struct ehea_qptemm, x)
+#घोषणा QPTEMM_OFFSET(x) दुरत्व(काष्ठा ehea_qptemm, x)
 
-struct ehea_qptemm {
+काष्ठा ehea_qptemm अणु
 	u64 qpx_hcr;
 	u64 qpx_c;
 	u64 qpx_herr;
@@ -78,13 +79,13 @@ struct ehea_qptemm {
 	u64 qpx_reserved9[(0x400 - 0x378) / 8];
 	u64 reserved_ext[(0x500 - 0x400) / 8];
 	u64 reserved2[(0x1000 - 0x500) / 8];
-};
+पूर्ण;
 
-#define MRx_HCR_LPARID_VALID EHEA_BMASK_IBM(0, 0)
+#घोषणा MRx_HCR_LPARID_VALID EHEA_BMASK_IBM(0, 0)
 
-#define MRMWMM_OFFSET(x) offsetof(struct ehea_mrmwmm, x)
+#घोषणा MRMWMM_OFFSET(x) दुरत्व(काष्ठा ehea_mrmwmm, x)
 
-struct ehea_mrmwmm {
+काष्ठा ehea_mrmwmm अणु
 	u64 mrx_hcr;
 	u64 mrx_c;
 	u64 mrx_herr;
@@ -95,11 +96,11 @@ struct ehea_mrmwmm {
 	u64 reserved3;
 	u64 reserved4[(0x200 - 0x40) / 8];
 	u64 mrx_ctl[64];
-};
+पूर्ण;
 
-#define QPEDMM_OFFSET(x) offsetof(struct ehea_qpedmm, x)
+#घोषणा QPEDMM_OFFSET(x) दुरत्व(काष्ठा ehea_qpedmm, x)
 
-struct ehea_qpedmm {
+काष्ठा ehea_qpedmm अणु
 
 	u64 reserved0[(0x400) / 8];
 	u64 qpedx_phh;
@@ -131,16 +132,16 @@ struct ehea_qpedmm {
 	u64 qpedx_rrl3;
 	u64 qpedx_rrrkey3;
 	u64 qpedx_rrva3;
-};
+पूर्ण;
 
-#define CQX_FECADDER EHEA_BMASK_IBM(32, 63)
-#define CQX_FEC_CQE_CNT EHEA_BMASK_IBM(32, 63)
-#define CQX_N1_GENERATE_COMP_EVENT EHEA_BMASK_IBM(0, 0)
-#define CQX_EP_EVENT_PENDING EHEA_BMASK_IBM(0, 0)
+#घोषणा CQX_FECADDER EHEA_BMASK_IBM(32, 63)
+#घोषणा CQX_FEC_CQE_CNT EHEA_BMASK_IBM(32, 63)
+#घोषणा CQX_N1_GENERATE_COMP_EVENT EHEA_BMASK_IBM(0, 0)
+#घोषणा CQX_EP_EVENT_PENDING EHEA_BMASK_IBM(0, 0)
 
-#define CQTEMM_OFFSET(x) offsetof(struct ehea_cqtemm, x)
+#घोषणा CQTEMM_OFFSET(x) दुरत्व(काष्ठा ehea_cqtemm, x)
 
-struct ehea_cqtemm {
+काष्ठा ehea_cqtemm अणु
 	u64 cqx_hcr;
 	u64 cqx_c;
 	u64 cqx_herr;
@@ -155,11 +156,11 @@ struct ehea_cqtemm {
 	u64 cqx_n0;
 	u64 cqx_n1;
 	u64 reserved2[(0x1000 - 0x60) / 8];
-};
+पूर्ण;
 
-#define EQTEMM_OFFSET(x) offsetof(struct ehea_eqtemm, x)
+#घोषणा EQTEMM_OFFSET(x) दुरत्व(काष्ठा ehea_eqtemm, x)
 
-struct ehea_eqtemm {
+काष्ठा ehea_eqtemm अणु
 	u64 eqx_hcr;
 	u64 eqx_c;
 	u64 eqx_herr;
@@ -173,81 +174,81 @@ struct ehea_eqtemm {
 	u64 eqx_xisbi;
 	u64 eqx_xisc;
 	u64 eqx_it;
-};
+पूर्ण;
 
 /*
  * These access functions will be changed when the dissuccsion about
- * the new access methods for POWER has settled.
+ * the new access methods क्रम POWER has settled.
  */
 
-static inline u64 epa_load(struct h_epa epa, u32 offset)
-{
-	return __raw_readq((void __iomem *)(epa.addr + offset));
-}
+अटल अंतरभूत u64 epa_load(काष्ठा h_epa epa, u32 offset)
+अणु
+	वापस __raw_पढ़ोq((व्योम __iomem *)(epa.addr + offset));
+पूर्ण
 
-static inline void epa_store(struct h_epa epa, u32 offset, u64 value)
-{
-	__raw_writeq(value, (void __iomem *)(epa.addr + offset));
+अटल अंतरभूत व्योम epa_store(काष्ठा h_epa epa, u32 offset, u64 value)
+अणु
+	__raw_ग_लिखोq(value, (व्योम __iomem *)(epa.addr + offset));
 	epa_load(epa, offset);	/* synchronize explicitly to eHEA */
-}
+पूर्ण
 
-static inline void epa_store_acc(struct h_epa epa, u32 offset, u64 value)
-{
-	__raw_writeq(value, (void __iomem *)(epa.addr + offset));
-}
+अटल अंतरभूत व्योम epa_store_acc(काष्ठा h_epa epa, u32 offset, u64 value)
+अणु
+	__raw_ग_लिखोq(value, (व्योम __iomem *)(epa.addr + offset));
+पूर्ण
 
-#define epa_store_cq(epa, offset, value)\
+#घोषणा epa_store_cq(epa, offset, value)\
 	epa_store(epa, CQTEMM_OFFSET(offset), value)
-#define epa_load_cq(epa, offset)\
+#घोषणा epa_load_cq(epa, offset)\
 	epa_load(epa, CQTEMM_OFFSET(offset))
 
-static inline void ehea_update_sqa(struct ehea_qp *qp, u16 nr_wqes)
-{
-	struct h_epa epa = qp->epas.kernel;
+अटल अंतरभूत व्योम ehea_update_sqa(काष्ठा ehea_qp *qp, u16 nr_wqes)
+अणु
+	काष्ठा h_epa epa = qp->epas.kernel;
 	epa_store_acc(epa, QPTEMM_OFFSET(qpx_sqa),
 		      EHEA_BMASK_SET(QPX_SQA_VALUE, nr_wqes));
-}
+पूर्ण
 
-static inline void ehea_update_rq3a(struct ehea_qp *qp, u16 nr_wqes)
-{
-	struct h_epa epa = qp->epas.kernel;
+अटल अंतरभूत व्योम ehea_update_rq3a(काष्ठा ehea_qp *qp, u16 nr_wqes)
+अणु
+	काष्ठा h_epa epa = qp->epas.kernel;
 	epa_store_acc(epa, QPTEMM_OFFSET(qpx_rq3a),
 		      EHEA_BMASK_SET(QPX_RQ1A_VALUE, nr_wqes));
-}
+पूर्ण
 
-static inline void ehea_update_rq2a(struct ehea_qp *qp, u16 nr_wqes)
-{
-	struct h_epa epa = qp->epas.kernel;
+अटल अंतरभूत व्योम ehea_update_rq2a(काष्ठा ehea_qp *qp, u16 nr_wqes)
+अणु
+	काष्ठा h_epa epa = qp->epas.kernel;
 	epa_store_acc(epa, QPTEMM_OFFSET(qpx_rq2a),
 		      EHEA_BMASK_SET(QPX_RQ2A_VALUE, nr_wqes));
-}
+पूर्ण
 
-static inline void ehea_update_rq1a(struct ehea_qp *qp, u16 nr_wqes)
-{
-	struct h_epa epa = qp->epas.kernel;
+अटल अंतरभूत व्योम ehea_update_rq1a(काष्ठा ehea_qp *qp, u16 nr_wqes)
+अणु
+	काष्ठा h_epa epa = qp->epas.kernel;
 	epa_store_acc(epa, QPTEMM_OFFSET(qpx_rq1a),
 		      EHEA_BMASK_SET(QPX_RQ3A_VALUE, nr_wqes));
-}
+पूर्ण
 
-static inline void ehea_update_feca(struct ehea_cq *cq, u32 nr_cqes)
-{
-	struct h_epa epa = cq->epas.kernel;
+अटल अंतरभूत व्योम ehea_update_feca(काष्ठा ehea_cq *cq, u32 nr_cqes)
+अणु
+	काष्ठा h_epa epa = cq->epas.kernel;
 	epa_store_acc(epa, CQTEMM_OFFSET(cqx_feca),
 		      EHEA_BMASK_SET(CQX_FECADDER, nr_cqes));
-}
+पूर्ण
 
-static inline void ehea_reset_cq_n1(struct ehea_cq *cq)
-{
-	struct h_epa epa = cq->epas.kernel;
+अटल अंतरभूत व्योम ehea_reset_cq_n1(काष्ठा ehea_cq *cq)
+अणु
+	काष्ठा h_epa epa = cq->epas.kernel;
 	epa_store_cq(epa, cqx_n1,
 		     EHEA_BMASK_SET(CQX_N1_GENERATE_COMP_EVENT, 1));
-}
+पूर्ण
 
-static inline void ehea_reset_cq_ep(struct ehea_cq *my_cq)
-{
-	struct h_epa epa = my_cq->epas.kernel;
+अटल अंतरभूत व्योम ehea_reset_cq_ep(काष्ठा ehea_cq *my_cq)
+अणु
+	काष्ठा h_epa epa = my_cq->epas.kernel;
 	epa_store_acc(epa, CQTEMM_OFFSET(cqx_ep),
 		      EHEA_BMASK_SET(CQX_EP_EVENT_PENDING, 0));
-}
+पूर्ण
 
-#endif	/* __EHEA_HW_H__ */
+#पूर्ण_अगर	/* __EHEA_HW_H__ */

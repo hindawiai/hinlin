@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * From setup-res.c, by:
  *	Dave Rusling (david.rusling@reo.mts.dec.com)
@@ -6,126 +7,126 @@
  *	David Miller (davem@redhat.com)
  *	Ivan Kokshaysky (ink@jurassic.park.msu.ru)
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/proc_fs.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/slab.h>
 
-#include "pci.h"
+#समावेश "pci.h"
 
-void pci_add_resource_offset(struct list_head *resources, struct resource *res,
-			     resource_size_t offset)
-{
-	struct resource_entry *entry;
+व्योम pci_add_resource_offset(काष्ठा list_head *resources, काष्ठा resource *res,
+			     resource_माप_प्रकार offset)
+अणु
+	काष्ठा resource_entry *entry;
 
 	entry = resource_list_create_entry(res, 0);
-	if (!entry) {
+	अगर (!entry) अणु
 		pr_err("PCI: can't add host bridge window %pR\n", res);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	entry->offset = offset;
 	resource_list_add_tail(entry, resources);
-}
+पूर्ण
 EXPORT_SYMBOL(pci_add_resource_offset);
 
-void pci_add_resource(struct list_head *resources, struct resource *res)
-{
+व्योम pci_add_resource(काष्ठा list_head *resources, काष्ठा resource *res)
+अणु
 	pci_add_resource_offset(resources, res, 0);
-}
+पूर्ण
 EXPORT_SYMBOL(pci_add_resource);
 
-void pci_free_resource_list(struct list_head *resources)
-{
-	resource_list_free(resources);
-}
-EXPORT_SYMBOL(pci_free_resource_list);
+व्योम pci_मुक्त_resource_list(काष्ठा list_head *resources)
+अणु
+	resource_list_मुक्त(resources);
+पूर्ण
+EXPORT_SYMBOL(pci_मुक्त_resource_list);
 
-void pci_bus_add_resource(struct pci_bus *bus, struct resource *res,
-			  unsigned int flags)
-{
-	struct pci_bus_resource *bus_res;
+व्योम pci_bus_add_resource(काष्ठा pci_bus *bus, काष्ठा resource *res,
+			  अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा pci_bus_resource *bus_res;
 
-	bus_res = kzalloc(sizeof(struct pci_bus_resource), GFP_KERNEL);
-	if (!bus_res) {
+	bus_res = kzalloc(माप(काष्ठा pci_bus_resource), GFP_KERNEL);
+	अगर (!bus_res) अणु
 		dev_err(&bus->dev, "can't add %pR resource\n", res);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bus_res->res = res;
 	bus_res->flags = flags;
 	list_add_tail(&bus_res->list, &bus->resources);
-}
+पूर्ण
 
-struct resource *pci_bus_resource_n(const struct pci_bus *bus, int n)
-{
-	struct pci_bus_resource *bus_res;
+काष्ठा resource *pci_bus_resource_n(स्थिर काष्ठा pci_bus *bus, पूर्णांक n)
+अणु
+	काष्ठा pci_bus_resource *bus_res;
 
-	if (n < PCI_BRIDGE_RESOURCE_NUM)
-		return bus->resource[n];
+	अगर (n < PCI_BRIDGE_RESOURCE_NUM)
+		वापस bus->resource[n];
 
 	n -= PCI_BRIDGE_RESOURCE_NUM;
-	list_for_each_entry(bus_res, &bus->resources, list) {
-		if (n-- == 0)
-			return bus_res->res;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(bus_res, &bus->resources, list) अणु
+		अगर (n-- == 0)
+			वापस bus_res->res;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_bus_resource_n);
 
-void pci_bus_remove_resources(struct pci_bus *bus)
-{
-	int i;
-	struct pci_bus_resource *bus_res, *tmp;
+व्योम pci_bus_हटाओ_resources(काष्ठा pci_bus *bus)
+अणु
+	पूर्णांक i;
+	काष्ठा pci_bus_resource *bus_res, *पंचांगp;
 
-	for (i = 0; i < PCI_BRIDGE_RESOURCE_NUM; i++)
-		bus->resource[i] = NULL;
+	क्रम (i = 0; i < PCI_BRIDGE_RESOURCE_NUM; i++)
+		bus->resource[i] = शून्य;
 
-	list_for_each_entry_safe(bus_res, tmp, &bus->resources, list) {
+	list_क्रम_each_entry_safe(bus_res, पंचांगp, &bus->resources, list) अणु
 		list_del(&bus_res->list);
-		kfree(bus_res);
-	}
-}
+		kमुक्त(bus_res);
+	पूर्ण
+पूर्ण
 
-int devm_request_pci_bus_resources(struct device *dev,
-				   struct list_head *resources)
-{
-	struct resource_entry *win;
-	struct resource *parent, *res;
-	int err;
+पूर्णांक devm_request_pci_bus_resources(काष्ठा device *dev,
+				   काष्ठा list_head *resources)
+अणु
+	काष्ठा resource_entry *win;
+	काष्ठा resource *parent, *res;
+	पूर्णांक err;
 
-	resource_list_for_each_entry(win, resources) {
+	resource_list_क्रम_each_entry(win, resources) अणु
 		res = win->res;
-		switch (resource_type(res)) {
-		case IORESOURCE_IO:
+		चयन (resource_type(res)) अणु
+		हाल IORESOURCE_IO:
 			parent = &ioport_resource;
-			break;
-		case IORESOURCE_MEM:
+			अवरोध;
+		हाल IORESOURCE_MEM:
 			parent = &iomem_resource;
-			break;
-		default:
-			continue;
-		}
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
 
 		err = devm_request_resource(dev, parent, res);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_request_pci_bus_resources);
 
-static struct pci_bus_region pci_32_bit = {0, 0xffffffffULL};
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-static struct pci_bus_region pci_64_bit = {0,
-				(pci_bus_addr_t) 0xffffffffffffffffULL};
-static struct pci_bus_region pci_high = {(pci_bus_addr_t) 0x100000000ULL,
-				(pci_bus_addr_t) 0xffffffffffffffffULL};
-#endif
+अटल काष्ठा pci_bus_region pci_32_bit = अणु0, 0xffffffffULLपूर्ण;
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+अटल काष्ठा pci_bus_region pci_64_bit = अणु0,
+				(pci_bus_addr_t) 0xffffffffffffffffULLपूर्ण;
+अटल काष्ठा pci_bus_region pci_high = अणु(pci_bus_addr_t) 0x100000000ULL,
+				(pci_bus_addr_t) 0xffffffffffffffffULLपूर्ण;
+#पूर्ण_अगर
 
 /*
  * @res contains CPU addresses.  Clip it so the corresponding bus addresses
@@ -133,66 +134,66 @@ static struct pci_bus_region pci_high = {(pci_bus_addr_t) 0x100000000ULL,
  * addresses of resources we allocate, e.g., we may need a resource that
  * can be mapped by a 32-bit BAR.
  */
-static void pci_clip_resource_to_region(struct pci_bus *bus,
-					struct resource *res,
-					struct pci_bus_region *region)
-{
-	struct pci_bus_region r;
+अटल व्योम pci_clip_resource_to_region(काष्ठा pci_bus *bus,
+					काष्ठा resource *res,
+					काष्ठा pci_bus_region *region)
+अणु
+	काष्ठा pci_bus_region r;
 
 	pcibios_resource_to_bus(bus, &r, res);
-	if (r.start < region->start)
+	अगर (r.start < region->start)
 		r.start = region->start;
-	if (r.end > region->end)
+	अगर (r.end > region->end)
 		r.end = region->end;
 
-	if (r.end < r.start)
+	अगर (r.end < r.start)
 		res->end = res->start - 1;
-	else
+	अन्यथा
 		pcibios_bus_to_resource(bus, res, &r);
-}
+पूर्ण
 
-static int pci_bus_alloc_from_region(struct pci_bus *bus, struct resource *res,
-		resource_size_t size, resource_size_t align,
-		resource_size_t min, unsigned long type_mask,
-		resource_size_t (*alignf)(void *,
-					  const struct resource *,
-					  resource_size_t,
-					  resource_size_t),
-		void *alignf_data,
-		struct pci_bus_region *region)
-{
-	int i, ret;
-	struct resource *r, avail;
-	resource_size_t max;
+अटल पूर्णांक pci_bus_alloc_from_region(काष्ठा pci_bus *bus, काष्ठा resource *res,
+		resource_माप_प्रकार size, resource_माप_प्रकार align,
+		resource_माप_प्रकार min, अचिन्हित दीर्घ type_mask,
+		resource_माप_प्रकार (*alignf)(व्योम *,
+					  स्थिर काष्ठा resource *,
+					  resource_माप_प्रकार,
+					  resource_माप_प्रकार),
+		व्योम *alignf_data,
+		काष्ठा pci_bus_region *region)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा resource *r, avail;
+	resource_माप_प्रकार max;
 
 	type_mask |= IORESOURCE_TYPE_BITS;
 
-	pci_bus_for_each_resource(bus, r, i) {
-		resource_size_t min_used = min;
+	pci_bus_क्रम_each_resource(bus, r, i) अणु
+		resource_माप_प्रकार min_used = min;
 
-		if (!r)
-			continue;
+		अगर (!r)
+			जारी;
 
 		/* type_mask must match */
-		if ((res->flags ^ r->flags) & type_mask)
-			continue;
+		अगर ((res->flags ^ r->flags) & type_mask)
+			जारी;
 
 		/* We cannot allocate a non-prefetching resource
 		   from a pre-fetching area */
-		if ((r->flags & IORESOURCE_PREFETCH) &&
+		अगर ((r->flags & IORESOURCE_PREFETCH) &&
 		    !(res->flags & IORESOURCE_PREFETCH))
-			continue;
+			जारी;
 
 		avail = *r;
 		pci_clip_resource_to_region(bus, &avail, region);
 
 		/*
 		 * "min" is typically PCIBIOS_MIN_IO or PCIBIOS_MIN_MEM to
-		 * protect badly documented motherboard resources, but if
-		 * this is an already-configured bridge window, its start
+		 * protect badly करोcumented motherboard resources, but अगर
+		 * this is an alपढ़ोy-configured bridge winकरोw, its start
 		 * overrides "min".
 		 */
-		if (avail.start)
+		अगर (avail.start)
 			min_used = avail.start;
 
 		max = avail.end;
@@ -200,11 +201,11 @@ static int pci_bus_alloc_from_region(struct pci_bus *bus, struct resource *res,
 		/* Ok, try it out.. */
 		ret = allocate_resource(r, res, size, min_used, max,
 					align, alignf, alignf_data);
-		if (ret == 0)
-			return 0;
-	}
-	return -ENOMEM;
-}
+		अगर (ret == 0)
+			वापस 0;
+	पूर्ण
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * pci_bus_alloc_resource - allocate a resource from a parent bus
@@ -215,74 +216,74 @@ static int pci_bus_alloc_from_region(struct pci_bus *bus, struct resource *res,
  * @min: minimum /proc/iomem address to allocate
  * @type_mask: IORESOURCE_* type flags
  * @alignf: resource alignment function
- * @alignf_data: data argument for resource alignment function
+ * @alignf_data: data argument क्रम resource alignment function
  *
  * Given the PCI bus a device resides on, the size, minimum address,
  * alignment and type, try to find an acceptable resource allocation
- * for a specific device resource.
+ * क्रम a specअगरic device resource.
  */
-int pci_bus_alloc_resource(struct pci_bus *bus, struct resource *res,
-		resource_size_t size, resource_size_t align,
-		resource_size_t min, unsigned long type_mask,
-		resource_size_t (*alignf)(void *,
-					  const struct resource *,
-					  resource_size_t,
-					  resource_size_t),
-		void *alignf_data)
-{
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-	int rc;
+पूर्णांक pci_bus_alloc_resource(काष्ठा pci_bus *bus, काष्ठा resource *res,
+		resource_माप_प्रकार size, resource_माप_प्रकार align,
+		resource_माप_प्रकार min, अचिन्हित दीर्घ type_mask,
+		resource_माप_प्रकार (*alignf)(व्योम *,
+					  स्थिर काष्ठा resource *,
+					  resource_माप_प्रकार,
+					  resource_माप_प्रकार),
+		व्योम *alignf_data)
+अणु
+#अगर_घोषित CONFIG_ARCH_DMA_ADDR_T_64BIT
+	पूर्णांक rc;
 
-	if (res->flags & IORESOURCE_MEM_64) {
+	अगर (res->flags & IORESOURCE_MEM_64) अणु
 		rc = pci_bus_alloc_from_region(bus, res, size, align, min,
 					       type_mask, alignf, alignf_data,
 					       &pci_high);
-		if (rc == 0)
-			return 0;
+		अगर (rc == 0)
+			वापस 0;
 
-		return pci_bus_alloc_from_region(bus, res, size, align, min,
+		वापस pci_bus_alloc_from_region(bus, res, size, align, min,
 						 type_mask, alignf, alignf_data,
 						 &pci_64_bit);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return pci_bus_alloc_from_region(bus, res, size, align, min,
+	वापस pci_bus_alloc_from_region(bus, res, size, align, min,
 					 type_mask, alignf, alignf_data,
 					 &pci_32_bit);
-}
+पूर्ण
 EXPORT_SYMBOL(pci_bus_alloc_resource);
 
 /*
- * The @idx resource of @dev should be a PCI-PCI bridge window.  If this
- * resource fits inside a window of an upstream bridge, do nothing.  If it
- * overlaps an upstream window but extends outside it, clip the resource so
+ * The @idx resource of @dev should be a PCI-PCI bridge winकरोw.  If this
+ * resource fits inside a winकरोw of an upstream bridge, करो nothing.  If it
+ * overlaps an upstream winकरोw but extends outside it, clip the resource so
  * it fits completely inside.
  */
-bool pci_bus_clip_resource(struct pci_dev *dev, int idx)
-{
-	struct pci_bus *bus = dev->bus;
-	struct resource *res = &dev->resource[idx];
-	struct resource orig_res = *res;
-	struct resource *r;
-	int i;
+bool pci_bus_clip_resource(काष्ठा pci_dev *dev, पूर्णांक idx)
+अणु
+	काष्ठा pci_bus *bus = dev->bus;
+	काष्ठा resource *res = &dev->resource[idx];
+	काष्ठा resource orig_res = *res;
+	काष्ठा resource *r;
+	पूर्णांक i;
 
-	pci_bus_for_each_resource(bus, r, i) {
-		resource_size_t start, end;
+	pci_bus_क्रम_each_resource(bus, r, i) अणु
+		resource_माप_प्रकार start, end;
 
-		if (!r)
-			continue;
+		अगर (!r)
+			जारी;
 
-		if (resource_type(res) != resource_type(r))
-			continue;
+		अगर (resource_type(res) != resource_type(r))
+			जारी;
 
 		start = max(r->start, res->start);
 		end = min(r->end, res->end);
 
-		if (start > end)
-			continue;	/* no overlap */
+		अगर (start > end)
+			जारी;	/* no overlap */
 
-		if (res->start == start && res->end == end)
-			return false;	/* no change */
+		अगर (res->start == start && res->end == end)
+			वापस false;	/* no change */
 
 		res->start = start;
 		res->end = end;
@@ -290,29 +291,29 @@ bool pci_bus_clip_resource(struct pci_dev *dev, int idx)
 		orig_res.flags &= ~IORESOURCE_UNSET;
 		pci_info(dev, "%pR clipped to %pR\n", &orig_res, res);
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void __weak pcibios_resource_survey_bus(struct pci_bus *bus) { }
+व्योम __weak pcibios_resource_survey_bus(काष्ठा pci_bus *bus) अणु पूर्ण
 
-void __weak pcibios_bus_add_device(struct pci_dev *pdev) { }
+व्योम __weak pcibios_bus_add_device(काष्ठा pci_dev *pdev) अणु पूर्ण
 
 /**
- * pci_bus_add_device - start driver for a single device
+ * pci_bus_add_device - start driver क्रम a single device
  * @dev: device to add
  *
  * This adds add sysfs entries and start device drivers
  */
-void pci_bus_add_device(struct pci_dev *dev)
-{
-	int retval;
+व्योम pci_bus_add_device(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक retval;
 
 	/*
 	 * Can not put in pci_device_add yet because resources
-	 * are not assigned yet for some devices.
+	 * are not asचिन्हित yet क्रम some devices.
 	 */
 	pcibios_bus_add_device(dev);
 	pci_fixup_device(pci_fixup_final, dev);
@@ -322,100 +323,100 @@ void pci_bus_add_device(struct pci_dev *dev)
 
 	dev->match_driver = true;
 	retval = device_attach(&dev->dev);
-	if (retval < 0 && retval != -EPROBE_DEFER)
+	अगर (retval < 0 && retval != -EPROBE_DEFER)
 		pci_warn(dev, "device attach failed (%d)\n", retval);
 
 	pci_dev_assign_added(dev, true);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_bus_add_device);
 
 /**
- * pci_bus_add_devices - start driver for PCI devices
- * @bus: bus to check for new devices
+ * pci_bus_add_devices - start driver क्रम PCI devices
+ * @bus: bus to check क्रम new devices
  *
- * Start driver for PCI devices and add some sysfs entries.
+ * Start driver क्रम PCI devices and add some sysfs entries.
  */
-void pci_bus_add_devices(const struct pci_bus *bus)
-{
-	struct pci_dev *dev;
-	struct pci_bus *child;
+व्योम pci_bus_add_devices(स्थिर काष्ठा pci_bus *bus)
+अणु
+	काष्ठा pci_dev *dev;
+	काष्ठा pci_bus *child;
 
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		/* Skip already-added devices */
-		if (pci_dev_is_added(dev))
-			continue;
+	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+		/* Skip alपढ़ोy-added devices */
+		अगर (pci_dev_is_added(dev))
+			जारी;
 		pci_bus_add_device(dev);
-	}
+	पूर्ण
 
-	list_for_each_entry(dev, &bus->devices, bus_list) {
-		/* Skip if device attach failed */
-		if (!pci_dev_is_added(dev))
-			continue;
+	list_क्रम_each_entry(dev, &bus->devices, bus_list) अणु
+		/* Skip अगर device attach failed */
+		अगर (!pci_dev_is_added(dev))
+			जारी;
 		child = dev->subordinate;
-		if (child)
+		अगर (child)
 			pci_bus_add_devices(child);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(pci_bus_add_devices);
 
 /** pci_walk_bus - walk devices on/under bus, calling callback.
  *  @top      bus whose devices should be walked
- *  @cb       callback to be called for each device found
- *  @userdata arbitrary pointer to be passed to callback.
+ *  @cb       callback to be called क्रम each device found
+ *  @userdata arbitrary poपूर्णांकer to be passed to callback.
  *
  *  Walk the given bus, including any bridged devices
  *  on buses under this bus.  Call the provided callback
  *  on each device found.
  *
- *  We check the return of @cb each time. If it returns anything
- *  other than 0, we break out.
+ *  We check the वापस of @cb each समय. If it वापसs anything
+ *  other than 0, we अवरोध out.
  *
  */
-void pci_walk_bus(struct pci_bus *top, int (*cb)(struct pci_dev *, void *),
-		  void *userdata)
-{
-	struct pci_dev *dev;
-	struct pci_bus *bus;
-	struct list_head *next;
-	int retval;
+व्योम pci_walk_bus(काष्ठा pci_bus *top, पूर्णांक (*cb)(काष्ठा pci_dev *, व्योम *),
+		  व्योम *userdata)
+अणु
+	काष्ठा pci_dev *dev;
+	काष्ठा pci_bus *bus;
+	काष्ठा list_head *next;
+	पूर्णांक retval;
 
 	bus = top;
-	down_read(&pci_bus_sem);
+	करोwn_पढ़ो(&pci_bus_sem);
 	next = top->devices.next;
-	for (;;) {
-		if (next == &bus->devices) {
+	क्रम (;;) अणु
+		अगर (next == &bus->devices) अणु
 			/* end of this bus, go up or finish */
-			if (bus == top)
-				break;
+			अगर (bus == top)
+				अवरोध;
 			next = bus->self->bus_list.next;
 			bus = bus->self->bus;
-			continue;
-		}
-		dev = list_entry(next, struct pci_dev, bus_list);
-		if (dev->subordinate) {
-			/* this is a pci-pci bridge, do its devices next */
+			जारी;
+		पूर्ण
+		dev = list_entry(next, काष्ठा pci_dev, bus_list);
+		अगर (dev->subordinate) अणु
+			/* this is a pci-pci bridge, करो its devices next */
 			next = dev->subordinate->devices.next;
 			bus = dev->subordinate;
-		} else
+		पूर्ण अन्यथा
 			next = dev->bus_list.next;
 
 		retval = cb(dev, userdata);
-		if (retval)
-			break;
-	}
-	up_read(&pci_bus_sem);
-}
+		अगर (retval)
+			अवरोध;
+	पूर्ण
+	up_पढ़ो(&pci_bus_sem);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_walk_bus);
 
-struct pci_bus *pci_bus_get(struct pci_bus *bus)
-{
-	if (bus)
+काष्ठा pci_bus *pci_bus_get(काष्ठा pci_bus *bus)
+अणु
+	अगर (bus)
 		get_device(&bus->dev);
-	return bus;
-}
+	वापस bus;
+पूर्ण
 
-void pci_bus_put(struct pci_bus *bus)
-{
-	if (bus)
+व्योम pci_bus_put(काष्ठा pci_bus *bus)
+अणु
+	अगर (bus)
 		put_device(&bus->dev);
-}
+पूर्ण

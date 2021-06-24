@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause */
 /*
  * Copyright (C) 2021 OpenSynergy GmbH
  */
-#ifndef VIRTIO_SND_IF_H
-#define VIRTIO_SND_IF_H
+#अगर_अघोषित VIRTIO_SND_IF_H
+#घोषणा VIRTIO_SND_IF_H
 
-#include <linux/virtio_types.h>
+#समावेश <linux/virtio_types.h>
 
 /*******************************************************************************
  * CONFIGURATION SPACE
  */
-struct virtio_snd_config {
+काष्ठा virtio_snd_config अणु
 	/* # of available physical jacks */
 	__le32 jacks;
 	/* # of available PCM streams */
 	__le32 streams;
 	/* # of available channel maps */
 	__le32 chmaps;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	/* device virtqueue indexes */
 	VIRTIO_SND_VQ_CONTROL = 0,
 	VIRTIO_SND_VQ_EVENT,
@@ -27,19 +28,19 @@ enum {
 	VIRTIO_SND_VQ_RX,
 	/* # of device virtqueues */
 	VIRTIO_SND_VQ_MAX
-};
+पूर्ण;
 
 /*******************************************************************************
  * COMMON DEFINITIONS
  */
 
 /* supported dataflow directions */
-enum {
+क्रमागत अणु
 	VIRTIO_SND_D_OUTPUT = 0,
 	VIRTIO_SND_D_INPUT
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	/* jack control request types */
 	VIRTIO_SND_R_JACK_INFO = 1,
 	VIRTIO_SND_R_JACK_REMAP,
@@ -68,101 +69,101 @@ enum {
 	VIRTIO_SND_S_BAD_MSG,
 	VIRTIO_SND_S_NOT_SUPP,
 	VIRTIO_SND_S_IO_ERR
-};
+पूर्ण;
 
 /* common header */
-struct virtio_snd_hdr {
+काष्ठा virtio_snd_hdr अणु
 	__le32 code;
-};
+पूर्ण;
 
-/* event notification */
-struct virtio_snd_event {
+/* event notअगरication */
+काष्ठा virtio_snd_event अणु
 	/* VIRTIO_SND_EVT_XXX */
-	struct virtio_snd_hdr hdr;
+	काष्ठा virtio_snd_hdr hdr;
 	/* optional event data */
 	__le32 data;
-};
+पूर्ण;
 
-/* common control request to query an item information */
-struct virtio_snd_query_info {
+/* common control request to query an item inक्रमmation */
+काष्ठा virtio_snd_query_info अणु
 	/* VIRTIO_SND_R_XXX_INFO */
-	struct virtio_snd_hdr hdr;
-	/* item start identifier */
+	काष्ठा virtio_snd_hdr hdr;
+	/* item start identअगरier */
 	__le32 start_id;
 	/* item count to query */
 	__le32 count;
-	/* item information size in bytes */
+	/* item inक्रमmation size in bytes */
 	__le32 size;
-};
+पूर्ण;
 
-/* common item information header */
-struct virtio_snd_info {
-	/* function group node id (High Definition Audio Specification 7.1.2) */
+/* common item inक्रमmation header */
+काष्ठा virtio_snd_info अणु
+	/* function group node id (High Definition Audio Specअगरication 7.1.2) */
 	__le32 hda_fn_nid;
-};
+पूर्ण;
 
 /*******************************************************************************
  * JACK CONTROL MESSAGES
  */
-struct virtio_snd_jack_hdr {
+काष्ठा virtio_snd_jack_hdr अणु
 	/* VIRTIO_SND_R_JACK_XXX */
-	struct virtio_snd_hdr hdr;
+	काष्ठा virtio_snd_hdr hdr;
 	/* 0 ... virtio_snd_config::jacks - 1 */
 	__le32 jack_id;
-};
+पूर्ण;
 
 /* supported jack features */
-enum {
+क्रमागत अणु
 	VIRTIO_SND_JACK_F_REMAP = 0
-};
+पूर्ण;
 
-struct virtio_snd_jack_info {
+काष्ठा virtio_snd_jack_info अणु
 	/* common header */
-	struct virtio_snd_info hdr;
+	काष्ठा virtio_snd_info hdr;
 	/* supported feature bit map (1 << VIRTIO_SND_JACK_F_XXX) */
 	__le32 features;
-	/* pin configuration (High Definition Audio Specification 7.3.3.31) */
+	/* pin configuration (High Definition Audio Specअगरication 7.3.3.31) */
 	__le32 hda_reg_defconf;
-	/* pin capabilities (High Definition Audio Specification 7.3.4.9) */
+	/* pin capabilities (High Definition Audio Specअगरication 7.3.4.9) */
 	__le32 hda_reg_caps;
 	/* current jack connection status (0: disconnected, 1: connected) */
 	__u8 connected;
 
 	__u8 padding[7];
-};
+पूर्ण;
 
 /* jack remapping control request */
-struct virtio_snd_jack_remap {
+काष्ठा virtio_snd_jack_remap अणु
 	/* .code = VIRTIO_SND_R_JACK_REMAP */
-	struct virtio_snd_jack_hdr hdr;
+	काष्ठा virtio_snd_jack_hdr hdr;
 	/* selected association number */
 	__le32 association;
 	/* selected sequence number */
 	__le32 sequence;
-};
+पूर्ण;
 
 /*******************************************************************************
  * PCM CONTROL MESSAGES
  */
-struct virtio_snd_pcm_hdr {
+काष्ठा virtio_snd_pcm_hdr अणु
 	/* VIRTIO_SND_R_PCM_XXX */
-	struct virtio_snd_hdr hdr;
+	काष्ठा virtio_snd_hdr hdr;
 	/* 0 ... virtio_snd_config::streams - 1 */
 	__le32 stream_id;
-};
+पूर्ण;
 
 /* supported PCM stream features */
-enum {
+क्रमागत अणु
 	VIRTIO_SND_PCM_F_SHMEM_HOST = 0,
 	VIRTIO_SND_PCM_F_SHMEM_GUEST,
 	VIRTIO_SND_PCM_F_MSG_POLLING,
 	VIRTIO_SND_PCM_F_EVT_SHMEM_PERIODS,
 	VIRTIO_SND_PCM_F_EVT_XRUNS
-};
+पूर्ण;
 
-/* supported PCM sample formats */
-enum {
-	/* analog formats (width / physical width) */
+/* supported PCM sample क्रमmats */
+क्रमागत अणु
+	/* analog क्रमmats (width / physical width) */
 	VIRTIO_SND_PCM_FMT_IMA_ADPCM = 0,	/*  4 /  4 bits */
 	VIRTIO_SND_PCM_FMT_MU_LAW,		/*  8 /  8 bits */
 	VIRTIO_SND_PCM_FMT_A_LAW,		/*  8 /  8 bits */
@@ -184,15 +185,15 @@ enum {
 	VIRTIO_SND_PCM_FMT_U32,			/* 32 / 32 bits */
 	VIRTIO_SND_PCM_FMT_FLOAT,		/* 32 / 32 bits */
 	VIRTIO_SND_PCM_FMT_FLOAT64,		/* 64 / 64 bits */
-	/* digital formats (width / physical width) */
+	/* digital क्रमmats (width / physical width) */
 	VIRTIO_SND_PCM_FMT_DSD_U8,		/*  8 /  8 bits */
 	VIRTIO_SND_PCM_FMT_DSD_U16,		/* 16 / 16 bits */
 	VIRTIO_SND_PCM_FMT_DSD_U32,		/* 32 / 32 bits */
 	VIRTIO_SND_PCM_FMT_IEC958_SUBFRAME	/* 32 / 32 bits */
-};
+पूर्ण;
 
 /* supported PCM frame rates */
-enum {
+क्रमागत अणु
 	VIRTIO_SND_PCM_RATE_5512 = 0,
 	VIRTIO_SND_PCM_RATE_8000,
 	VIRTIO_SND_PCM_RATE_11025,
@@ -207,15 +208,15 @@ enum {
 	VIRTIO_SND_PCM_RATE_176400,
 	VIRTIO_SND_PCM_RATE_192000,
 	VIRTIO_SND_PCM_RATE_384000
-};
+पूर्ण;
 
-struct virtio_snd_pcm_info {
+काष्ठा virtio_snd_pcm_info अणु
 	/* common header */
-	struct virtio_snd_info hdr;
+	काष्ठा virtio_snd_info hdr;
 	/* supported feature bit map (1 << VIRTIO_SND_PCM_F_XXX) */
 	__le32 features;
-	/* supported sample format bit map (1 << VIRTIO_SND_PCM_FMT_XXX) */
-	__le64 formats;
+	/* supported sample क्रमmat bit map (1 << VIRTIO_SND_PCM_FMT_XXX) */
+	__le64 क्रमmats;
 	/* supported frame rate bit map (1 << VIRTIO_SND_PCM_RATE_XXX) */
 	__le64 rates;
 	/* dataflow direction (VIRTIO_SND_D_XXX) */
@@ -226,12 +227,12 @@ struct virtio_snd_pcm_info {
 	__u8 channels_max;
 
 	__u8 padding[5];
-};
+पूर्ण;
 
-/* set PCM stream format */
-struct virtio_snd_pcm_set_params {
+/* set PCM stream क्रमmat */
+काष्ठा virtio_snd_pcm_set_params अणु
 	/* .code = VIRTIO_SND_R_PCM_SET_PARAMS */
-	struct virtio_snd_pcm_hdr hdr;
+	काष्ठा virtio_snd_pcm_hdr hdr;
 	/* size of the hardware buffer */
 	__le32 buffer_bytes;
 	/* size of the hardware period */
@@ -240,44 +241,44 @@ struct virtio_snd_pcm_set_params {
 	__le32 features;
 	/* selected # of channels */
 	__u8 channels;
-	/* selected sample format (VIRTIO_SND_PCM_FMT_XXX) */
-	__u8 format;
+	/* selected sample क्रमmat (VIRTIO_SND_PCM_FMT_XXX) */
+	__u8 क्रमmat;
 	/* selected frame rate (VIRTIO_SND_PCM_RATE_XXX) */
 	__u8 rate;
 
 	__u8 padding;
-};
+पूर्ण;
 
 /*******************************************************************************
  * PCM I/O MESSAGES
  */
 
 /* I/O request header */
-struct virtio_snd_pcm_xfer {
+काष्ठा virtio_snd_pcm_xfer अणु
 	/* 0 ... virtio_snd_config::streams - 1 */
 	__le32 stream_id;
-};
+पूर्ण;
 
 /* I/O request status */
-struct virtio_snd_pcm_status {
+काष्ठा virtio_snd_pcm_status अणु
 	/* VIRTIO_SND_S_XXX */
 	__le32 status;
 	/* current device latency */
 	__le32 latency_bytes;
-};
+पूर्ण;
 
 /*******************************************************************************
  * CHANNEL MAP CONTROL MESSAGES
  */
-struct virtio_snd_chmap_hdr {
+काष्ठा virtio_snd_chmap_hdr अणु
 	/* VIRTIO_SND_R_CHMAP_XXX */
-	struct virtio_snd_hdr hdr;
+	काष्ठा virtio_snd_hdr hdr;
 	/* 0 ... virtio_snd_config::chmaps - 1 */
 	__le32 chmap_id;
-};
+पूर्ण;
 
 /* standard channel position definition */
-enum {
+क्रमागत अणु
 	VIRTIO_SND_CHMAP_NONE = 0,	/* undefined */
 	VIRTIO_SND_CHMAP_NA,		/* silent */
 	VIRTIO_SND_CHMAP_MONO,		/* mono stream */
@@ -315,20 +316,20 @@ enum {
 	VIRTIO_SND_CHMAP_BC,		/* bottom center */
 	VIRTIO_SND_CHMAP_BLC,		/* bottom left center */
 	VIRTIO_SND_CHMAP_BRC		/* bottom right center */
-};
+पूर्ण;
 
 /* maximum possible number of channels */
-#define VIRTIO_SND_CHMAP_MAX_SIZE	18
+#घोषणा VIRTIO_SND_CHMAP_MAX_SIZE	18
 
-struct virtio_snd_chmap_info {
+काष्ठा virtio_snd_chmap_info अणु
 	/* common header */
-	struct virtio_snd_info hdr;
+	काष्ठा virtio_snd_info hdr;
 	/* dataflow direction (VIRTIO_SND_D_XXX) */
 	__u8 direction;
 	/* # of valid channel position values */
 	__u8 channels;
 	/* channel position values (VIRTIO_SND_CHMAP_XXX) */
 	__u8 positions[VIRTIO_SND_CHMAP_MAX_SIZE];
-};
+पूर्ण;
 
-#endif /* VIRTIO_SND_IF_H */
+#पूर्ण_अगर /* VIRTIO_SND_IF_H */

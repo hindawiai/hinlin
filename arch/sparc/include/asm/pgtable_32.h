@@ -1,436 +1,437 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SPARC_PGTABLE_H
-#define _SPARC_PGTABLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SPARC_PGTABLE_H
+#घोषणा _SPARC_PGTABLE_H
 
-/*  asm/pgtable.h:  Defines and functions used to work
+/*  यंत्र/pgtable.h:  Defines and functions used to work
  *                        with Sparc page tables.
  *
  *  Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  *  Copyright (C) 1998 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
-#include <linux/const.h>
+#समावेश <linux/स्थिर.h>
 
-#define PMD_SHIFT		18
-#define PMD_SIZE        	(1UL << PMD_SHIFT)
-#define PMD_MASK        	(~(PMD_SIZE-1))
-#define PMD_ALIGN(__addr) 	(((__addr) + ~PMD_MASK) & PMD_MASK)
+#घोषणा PMD_SHIFT		18
+#घोषणा PMD_SIZE        	(1UL << PMD_SHIFT)
+#घोषणा PMD_MASK        	(~(PMD_SIZE-1))
+#घोषणा PMD_ALIGN(__addr) 	(((__addr) + ~PMD_MASK) & PMD_MASK)
 
-#define PGDIR_SHIFT     	24
-#define PGDIR_SIZE      	(1UL << PGDIR_SHIFT)
-#define PGDIR_MASK      	(~(PGDIR_SIZE-1))
-#define PGDIR_ALIGN(__addr) 	(((__addr) + ~PGDIR_MASK) & PGDIR_MASK)
+#घोषणा PGसूची_SHIFT     	24
+#घोषणा PGसूची_SIZE      	(1UL << PGसूची_SHIFT)
+#घोषणा PGसूची_MASK      	(~(PGसूची_SIZE-1))
+#घोषणा PGसूची_ALIGN(__addr) 	(((__addr) + ~PGसूची_MASK) & PGसूची_MASK)
 
-#ifndef __ASSEMBLY__
-#include <asm-generic/pgtable-nopud.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <यंत्र-generic/pgtable-nopud.h>
 
-#include <linux/spinlock.h>
-#include <linux/mm_types.h>
-#include <asm/types.h>
-#include <asm/pgtsrmmu.h>
-#include <asm/vaddrs.h>
-#include <asm/oplib.h>
-#include <asm/cpu_type.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mm_types.h>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/pgtsrmmu.h>
+#समावेश <यंत्र/vaddrs.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/cpu_type.h>
 
 
-struct vm_area_struct;
-struct page;
+काष्ठा vm_area_काष्ठा;
+काष्ठा page;
 
-void load_mmu(void);
-unsigned long calc_highpages(void);
-unsigned long __init bootmem_init(unsigned long *pages_avail);
+व्योम load_mmu(व्योम);
+अचिन्हित दीर्घ calc_highpages(व्योम);
+अचिन्हित दीर्घ __init booपंचांगem_init(अचिन्हित दीर्घ *pages_avail);
 
-#define pte_ERROR(e)   __builtin_trap()
-#define pmd_ERROR(e)   __builtin_trap()
-#define pgd_ERROR(e)   __builtin_trap()
+#घोषणा pte_ERROR(e)   __builtin_trap()
+#घोषणा pmd_ERROR(e)   __builtin_trap()
+#घोषणा pgd_ERROR(e)   __builtin_trap()
 
-#define PTRS_PER_PTE    	64
-#define PTRS_PER_PMD    	64
-#define PTRS_PER_PGD    	256
-#define USER_PTRS_PER_PGD	PAGE_OFFSET / PGDIR_SIZE
-#define FIRST_USER_ADDRESS	0UL
-#define PTE_SIZE		(PTRS_PER_PTE*4)
+#घोषणा PTRS_PER_PTE    	64
+#घोषणा PTRS_PER_PMD    	64
+#घोषणा PTRS_PER_PGD    	256
+#घोषणा USER_PTRS_PER_PGD	PAGE_OFFSET / PGसूची_SIZE
+#घोषणा FIRST_USER_ADDRESS	0UL
+#घोषणा PTE_SIZE		(PTRS_PER_PTE*4)
 
-#define PAGE_NONE	SRMMU_PAGE_NONE
-#define PAGE_SHARED	SRMMU_PAGE_SHARED
-#define PAGE_COPY	SRMMU_PAGE_COPY
-#define PAGE_READONLY	SRMMU_PAGE_RDONLY
-#define PAGE_KERNEL	SRMMU_PAGE_KERNEL
+#घोषणा PAGE_NONE	SRMMU_PAGE_NONE
+#घोषणा PAGE_SHARED	SRMMU_PAGE_SHARED
+#घोषणा PAGE_COPY	SRMMU_PAGE_COPY
+#घोषणा PAGE_READONLY	SRMMU_PAGE_RDONLY
+#घोषणा PAGE_KERNEL	SRMMU_PAGE_KERNEL
 
 /* Top-level page directory - dummy used by init-mm.
  * srmmu.c will assign the real one (which is dynamically sized) */
-#define swapper_pg_dir NULL
+#घोषणा swapper_pg_dir शून्य
 
-void paging_init(void);
+व्योम paging_init(व्योम);
 
-extern unsigned long ptr_in_current_pgd;
+बाह्य अचिन्हित दीर्घ ptr_in_current_pgd;
 
 /*         xwr */
-#define __P000  PAGE_NONE
-#define __P001  PAGE_READONLY
-#define __P010  PAGE_COPY
-#define __P011  PAGE_COPY
-#define __P100  PAGE_READONLY
-#define __P101  PAGE_READONLY
-#define __P110  PAGE_COPY
-#define __P111  PAGE_COPY
+#घोषणा __P000  PAGE_NONE
+#घोषणा __P001  PAGE_READONLY
+#घोषणा __P010  PAGE_COPY
+#घोषणा __P011  PAGE_COPY
+#घोषणा __P100  PAGE_READONLY
+#घोषणा __P101  PAGE_READONLY
+#घोषणा __P110  PAGE_COPY
+#घोषणा __P111  PAGE_COPY
 
-#define __S000	PAGE_NONE
-#define __S001	PAGE_READONLY
-#define __S010	PAGE_SHARED
-#define __S011	PAGE_SHARED
-#define __S100	PAGE_READONLY
-#define __S101	PAGE_READONLY
-#define __S110	PAGE_SHARED
-#define __S111	PAGE_SHARED
+#घोषणा __S000	PAGE_NONE
+#घोषणा __S001	PAGE_READONLY
+#घोषणा __S010	PAGE_SHARED
+#घोषणा __S011	PAGE_SHARED
+#घोषणा __S100	PAGE_READONLY
+#घोषणा __S101	PAGE_READONLY
+#घोषणा __S110	PAGE_SHARED
+#घोषणा __S111	PAGE_SHARED
 
 /* First physical page can be anywhere, the following is needed so that
- * va-->pa and vice versa conversions work properly without performance
- * hit for all __pa()/__va() operations.
+ * va-->pa and vice versa conversions work properly without perक्रमmance
+ * hit क्रम all __pa()/__va() operations.
  */
-extern unsigned long phys_base;
-extern unsigned long pfn_base;
+बाह्य अचिन्हित दीर्घ phys_base;
+बाह्य अचिन्हित दीर्घ pfn_base;
 
 /*
  * ZERO_PAGE is a global shared page that is always zero: used
- * for zero-mapped memory areas etc..
+ * क्रम zero-mapped memory areas etc..
  */
-extern unsigned long empty_zero_page[PAGE_SIZE / sizeof(unsigned long)];
+बाह्य अचिन्हित दीर्घ empty_zero_page[PAGE_SIZE / माप(अचिन्हित दीर्घ)];
 
-#define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
+#घोषणा ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
 
 /*
- * In general all page table modifications should use the V8 atomic
- * swap instruction.  This insures the mmu and the cpu are in sync
+ * In general all page table modअगरications should use the V8 atomic
+ * swap inकाष्ठाion.  This insures the mmu and the cpu are in sync
  * with respect to ref/mod bits in the page tables.
  */
-static inline unsigned long srmmu_swap(unsigned long *addr, unsigned long value)
-{
-	__asm__ __volatile__("swap [%2], %0" :
+अटल अंतरभूत अचिन्हित दीर्घ srmmu_swap(अचिन्हित दीर्घ *addr, अचिन्हित दीर्घ value)
+अणु
+	__यंत्र__ __अस्थिर__("swap [%2], %0" :
 			"=&r" (value) : "0" (value), "r" (addr) : "memory");
-	return value;
-}
+	वापस value;
+पूर्ण
 
-/* Certain architectures need to do special things when pte's
- * within a page table are directly modified.  Thus, the following
+/* Certain architectures need to करो special things when pte's
+ * within a page table are directly modअगरied.  Thus, the following
  * hook is made available.
  */
 
-static inline void set_pte(pte_t *ptep, pte_t pteval)
-{
-	srmmu_swap((unsigned long *)ptep, pte_val(pteval));
-}
+अटल अंतरभूत व्योम set_pte(pte_t *ptep, pte_t pteval)
+अणु
+	srmmu_swap((अचिन्हित दीर्घ *)ptep, pte_val(pteval));
+पूर्ण
 
-#define set_pte_at(mm,addr,ptep,pteval) set_pte(ptep,pteval)
+#घोषणा set_pte_at(mm,addr,ptep,pteval) set_pte(ptep,pteval)
 
-static inline int srmmu_device_memory(unsigned long x)
-{
-	return ((x & 0xF0000000) != 0);
-}
+अटल अंतरभूत पूर्णांक srmmu_device_memory(अचिन्हित दीर्घ x)
+अणु
+	वापस ((x & 0xF0000000) != 0);
+पूर्ण
 
-static inline struct page *pmd_page(pmd_t pmd)
-{
-	if (srmmu_device_memory(pmd_val(pmd)))
+अटल अंतरभूत काष्ठा page *pmd_page(pmd_t pmd)
+अणु
+	अगर (srmmu_device_memory(pmd_val(pmd)))
 		BUG();
-	return pfn_to_page((pmd_val(pmd) & SRMMU_PTD_PMASK) >> (PAGE_SHIFT-4));
-}
+	वापस pfn_to_page((pmd_val(pmd) & SRMMU_PTD_PMASK) >> (PAGE_SHIFT-4));
+पूर्ण
 
-static inline unsigned long __pmd_page(pmd_t pmd)
-{
-	unsigned long v;
+अटल अंतरभूत अचिन्हित दीर्घ __pmd_page(pmd_t pmd)
+अणु
+	अचिन्हित दीर्घ v;
 
-	if (srmmu_device_memory(pmd_val(pmd)))
+	अगर (srmmu_device_memory(pmd_val(pmd)))
 		BUG();
 
 	v = pmd_val(pmd) & SRMMU_PTD_PMASK;
-	return (unsigned long)__nocache_va(v << 4);
-}
+	वापस (अचिन्हित दीर्घ)__nocache_va(v << 4);
+पूर्ण
 
-static inline unsigned long pmd_page_vaddr(pmd_t pmd)
-{
-	unsigned long v = pmd_val(pmd) & SRMMU_PTD_PMASK;
-	return (unsigned long)__nocache_va(v << 4);
-}
+अटल अंतरभूत अचिन्हित दीर्घ pmd_page_vaddr(pmd_t pmd)
+अणु
+	अचिन्हित दीर्घ v = pmd_val(pmd) & SRMMU_PTD_PMASK;
+	वापस (अचिन्हित दीर्घ)__nocache_va(v << 4);
+पूर्ण
 
-static inline unsigned long pud_page_vaddr(pud_t pud)
-{
-	if (srmmu_device_memory(pud_val(pud))) {
-		return ~0;
-	} else {
-		unsigned long v = pud_val(pud) & SRMMU_PTD_PMASK;
-		return (unsigned long)__nocache_va(v << 4);
-	}
-}
+अटल अंतरभूत अचिन्हित दीर्घ pud_page_vaddr(pud_t pud)
+अणु
+	अगर (srmmu_device_memory(pud_val(pud))) अणु
+		वापस ~0;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ v = pud_val(pud) & SRMMU_PTD_PMASK;
+		वापस (अचिन्हित दीर्घ)__nocache_va(v << 4);
+	पूर्ण
+पूर्ण
 
-static inline int pte_present(pte_t pte)
-{
-	return ((pte_val(pte) & SRMMU_ET_MASK) == SRMMU_ET_PTE);
-}
+अटल अंतरभूत पूर्णांक pte_present(pte_t pte)
+अणु
+	वापस ((pte_val(pte) & SRMMU_ET_MASK) == SRMMU_ET_PTE);
+पूर्ण
 
-static inline int pte_none(pte_t pte)
-{
-	return !pte_val(pte);
-}
+अटल अंतरभूत पूर्णांक pte_none(pte_t pte)
+अणु
+	वापस !pte_val(pte);
+पूर्ण
 
-static inline void __pte_clear(pte_t *ptep)
-{
+अटल अंतरभूत व्योम __pte_clear(pte_t *ptep)
+अणु
 	set_pte(ptep, __pte(0));
-}
+पूर्ण
 
-static inline void pte_clear(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
-{
+अटल अंतरभूत व्योम pte_clear(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
 	__pte_clear(ptep);
-}
+पूर्ण
 
-static inline int pmd_bad(pmd_t pmd)
-{
-	return (pmd_val(pmd) & SRMMU_ET_MASK) != SRMMU_ET_PTD;
-}
+अटल अंतरभूत पूर्णांक pmd_bad(pmd_t pmd)
+अणु
+	वापस (pmd_val(pmd) & SRMMU_ET_MASK) != SRMMU_ET_PTD;
+पूर्ण
 
-static inline int pmd_present(pmd_t pmd)
-{
-	return ((pmd_val(pmd) & SRMMU_ET_MASK) == SRMMU_ET_PTD);
-}
+अटल अंतरभूत पूर्णांक pmd_present(pmd_t pmd)
+अणु
+	वापस ((pmd_val(pmd) & SRMMU_ET_MASK) == SRMMU_ET_PTD);
+पूर्ण
 
-static inline int pmd_none(pmd_t pmd)
-{
-	return !pmd_val(pmd);
-}
+अटल अंतरभूत पूर्णांक pmd_none(pmd_t pmd)
+अणु
+	वापस !pmd_val(pmd);
+पूर्ण
 
-static inline void pmd_clear(pmd_t *pmdp)
-{
+अटल अंतरभूत व्योम pmd_clear(pmd_t *pmdp)
+अणु
 	set_pte((pte_t *)&pmd_val(*pmdp), __pte(0));
-}
+पूर्ण
 
-static inline int pud_none(pud_t pud)
-{
-	return !(pud_val(pud) & 0xFFFFFFF);
-}
+अटल अंतरभूत पूर्णांक pud_none(pud_t pud)
+अणु
+	वापस !(pud_val(pud) & 0xFFFFFFF);
+पूर्ण
 
-static inline int pud_bad(pud_t pud)
-{
-	return (pud_val(pud) & SRMMU_ET_MASK) != SRMMU_ET_PTD;
-}
+अटल अंतरभूत पूर्णांक pud_bad(pud_t pud)
+अणु
+	वापस (pud_val(pud) & SRMMU_ET_MASK) != SRMMU_ET_PTD;
+पूर्ण
 
-static inline int pud_present(pud_t pud)
-{
-	return ((pud_val(pud) & SRMMU_ET_MASK) == SRMMU_ET_PTD);
-}
+अटल अंतरभूत पूर्णांक pud_present(pud_t pud)
+अणु
+	वापस ((pud_val(pud) & SRMMU_ET_MASK) == SRMMU_ET_PTD);
+पूर्ण
 
-static inline void pud_clear(pud_t *pudp)
-{
+अटल अंतरभूत व्योम pud_clear(pud_t *pudp)
+अणु
 	set_pte((pte_t *)pudp, __pte(0));
-}
+पूर्ण
 
 /*
- * The following only work if pte_present() is true.
- * Undefined behaviour if not..
+ * The following only work अगर pte_present() is true.
+ * Undefined behaviour अगर not..
  */
-static inline int pte_write(pte_t pte)
-{
-	return pte_val(pte) & SRMMU_WRITE;
-}
+अटल अंतरभूत पूर्णांक pte_ग_लिखो(pte_t pte)
+अणु
+	वापस pte_val(pte) & SRMMU_WRITE;
+पूर्ण
 
-static inline int pte_dirty(pte_t pte)
-{
-	return pte_val(pte) & SRMMU_DIRTY;
-}
+अटल अंतरभूत पूर्णांक pte_dirty(pte_t pte)
+अणु
+	वापस pte_val(pte) & SRMMU_सूचीTY;
+पूर्ण
 
-static inline int pte_young(pte_t pte)
-{
-	return pte_val(pte) & SRMMU_REF;
-}
+अटल अंतरभूत पूर्णांक pte_young(pte_t pte)
+अणु
+	वापस pte_val(pte) & SRMMU_REF;
+पूर्ण
 
-static inline pte_t pte_wrprotect(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~SRMMU_WRITE);
-}
+अटल अंतरभूत pte_t pte_wrprotect(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~SRMMU_WRITE);
+पूर्ण
 
-static inline pte_t pte_mkclean(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~SRMMU_DIRTY);
-}
+अटल अंतरभूत pte_t pte_mkclean(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~SRMMU_सूचीTY);
+पूर्ण
 
-static inline pte_t pte_mkold(pte_t pte)
-{
-	return __pte(pte_val(pte) & ~SRMMU_REF);
-}
+अटल अंतरभूत pte_t pte_mkold(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) & ~SRMMU_REF);
+पूर्ण
 
-static inline pte_t pte_mkwrite(pte_t pte)
-{
-	return __pte(pte_val(pte) | SRMMU_WRITE);
-}
+अटल अंतरभूत pte_t pte_mkग_लिखो(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | SRMMU_WRITE);
+पूर्ण
 
-static inline pte_t pte_mkdirty(pte_t pte)
-{
-	return __pte(pte_val(pte) | SRMMU_DIRTY);
-}
+अटल अंतरभूत pte_t pte_सूची_गढ़ोty(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | SRMMU_सूचीTY);
+पूर्ण
 
-static inline pte_t pte_mkyoung(pte_t pte)
-{
-	return __pte(pte_val(pte) | SRMMU_REF);
-}
+अटल अंतरभूत pte_t pte_mkyoung(pte_t pte)
+अणु
+	वापस __pte(pte_val(pte) | SRMMU_REF);
+पूर्ण
 
-#define pfn_pte(pfn, prot)		mk_pte(pfn_to_page(pfn), prot)
+#घोषणा pfn_pte(pfn, prot)		mk_pte(pfn_to_page(pfn), prot)
 
-static inline unsigned long pte_pfn(pte_t pte)
-{
-	if (srmmu_device_memory(pte_val(pte))) {
-		/* Just return something that will cause
-		 * pfn_valid() to return false.  This makes
+अटल अंतरभूत अचिन्हित दीर्घ pte_pfn(pte_t pte)
+अणु
+	अगर (srmmu_device_memory(pte_val(pte))) अणु
+		/* Just वापस something that will cause
+		 * pfn_valid() to वापस false.  This makes
 		 * copy_one_pte() to just directly copy to
 		 * PTE over.
 		 */
-		return ~0UL;
-	}
-	return (pte_val(pte) & SRMMU_PTE_PMASK) >> (PAGE_SHIFT-4);
-}
+		वापस ~0UL;
+	पूर्ण
+	वापस (pte_val(pte) & SRMMU_PTE_PMASK) >> (PAGE_SHIFT-4);
+पूर्ण
 
-#define pte_page(pte)	pfn_to_page(pte_pfn(pte))
+#घोषणा pte_page(pte)	pfn_to_page(pte_pfn(pte))
 
 /*
  * Conversion functions: convert a page and protection to a page entry,
  * and a page entry and page directory to the page they refer to.
  */
-static inline pte_t mk_pte(struct page *page, pgprot_t pgprot)
-{
-	return __pte((page_to_pfn(page) << (PAGE_SHIFT-4)) | pgprot_val(pgprot));
-}
+अटल अंतरभूत pte_t mk_pte(काष्ठा page *page, pgprot_t pgprot)
+अणु
+	वापस __pte((page_to_pfn(page) << (PAGE_SHIFT-4)) | pgprot_val(pgprot));
+पूर्ण
 
-static inline pte_t mk_pte_phys(unsigned long page, pgprot_t pgprot)
-{
-	return __pte(((page) >> 4) | pgprot_val(pgprot));
-}
+अटल अंतरभूत pte_t mk_pte_phys(अचिन्हित दीर्घ page, pgprot_t pgprot)
+अणु
+	वापस __pte(((page) >> 4) | pgprot_val(pgprot));
+पूर्ण
 
-static inline pte_t mk_pte_io(unsigned long page, pgprot_t pgprot, int space)
-{
-	return __pte(((page) >> 4) | (space << 28) | pgprot_val(pgprot));
-}
+अटल अंतरभूत pte_t mk_pte_io(अचिन्हित दीर्घ page, pgprot_t pgprot, पूर्णांक space)
+अणु
+	वापस __pte(((page) >> 4) | (space << 28) | pgprot_val(pgprot));
+पूर्ण
 
-#define pgprot_noncached pgprot_noncached
-static inline pgprot_t pgprot_noncached(pgprot_t prot)
-{
+#घोषणा pgprot_noncached pgprot_noncached
+अटल अंतरभूत pgprot_t pgprot_noncached(pgprot_t prot)
+अणु
 	pgprot_val(prot) &= ~pgprot_val(__pgprot(SRMMU_CACHE));
-	return prot;
-}
+	वापस prot;
+पूर्ण
 
-static pte_t pte_modify(pte_t pte, pgprot_t newprot) __attribute_const__;
-static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
-{
-	return __pte((pte_val(pte) & SRMMU_CHG_MASK) |
+अटल pte_t pte_modअगरy(pte_t pte, pgprot_t newprot) __attribute_स्थिर__;
+अटल अंतरभूत pte_t pte_modअगरy(pte_t pte, pgprot_t newprot)
+अणु
+	वापस __pte((pte_val(pte) & SRMMU_CHG_MASK) |
 		pgprot_val(newprot));
-}
+पूर्ण
 
 /* only used by the huge vmap code, should never be called */
-#define pud_page(pud)			NULL
+#घोषणा pud_page(pud)			शून्य
 
-struct seq_file;
-void mmu_info(struct seq_file *m);
+काष्ठा seq_file;
+व्योम mmu_info(काष्ठा seq_file *m);
 
 /* Fault handler stuff... */
-#define FAULT_CODE_PROT     0x1
-#define FAULT_CODE_WRITE    0x2
-#define FAULT_CODE_USER     0x4
+#घोषणा FAULT_CODE_PROT     0x1
+#घोषणा FAULT_CODE_WRITE    0x2
+#घोषणा FAULT_CODE_USER     0x4
 
-#define update_mmu_cache(vma, address, ptep) do { } while (0)
+#घोषणा update_mmu_cache(vma, address, ptep) करो अणु पूर्ण जबतक (0)
 
-void srmmu_mapiorange(unsigned int bus, unsigned long xpa,
-                      unsigned long xva, unsigned int len);
-void srmmu_unmapiorange(unsigned long virt_addr, unsigned int len);
+व्योम srmmu_mapiorange(अचिन्हित पूर्णांक bus, अचिन्हित दीर्घ xpa,
+                      अचिन्हित दीर्घ xva, अचिन्हित पूर्णांक len);
+व्योम srmmu_unmapiorange(अचिन्हित दीर्घ virt_addr, अचिन्हित पूर्णांक len);
 
 /* Encode and de-code a swap entry */
-static inline unsigned long __swp_type(swp_entry_t entry)
-{
-	return (entry.val >> SRMMU_SWP_TYPE_SHIFT) & SRMMU_SWP_TYPE_MASK;
-}
+अटल अंतरभूत अचिन्हित दीर्घ __swp_type(swp_entry_t entry)
+अणु
+	वापस (entry.val >> SRMMU_SWP_TYPE_SHIFT) & SRMMU_SWP_TYPE_MASK;
+पूर्ण
 
-static inline unsigned long __swp_offset(swp_entry_t entry)
-{
-	return (entry.val >> SRMMU_SWP_OFF_SHIFT) & SRMMU_SWP_OFF_MASK;
-}
+अटल अंतरभूत अचिन्हित दीर्घ __swp_offset(swp_entry_t entry)
+अणु
+	वापस (entry.val >> SRMMU_SWP_OFF_SHIFT) & SRMMU_SWP_OFF_MASK;
+पूर्ण
 
-static inline swp_entry_t __swp_entry(unsigned long type, unsigned long offset)
-{
-	return (swp_entry_t) {
+अटल अंतरभूत swp_entry_t __swp_entry(अचिन्हित दीर्घ type, अचिन्हित दीर्घ offset)
+अणु
+	वापस (swp_entry_t) अणु
 		(type & SRMMU_SWP_TYPE_MASK) << SRMMU_SWP_TYPE_SHIFT
-		| (offset & SRMMU_SWP_OFF_MASK) << SRMMU_SWP_OFF_SHIFT };
-}
+		| (offset & SRMMU_SWP_OFF_MASK) << SRMMU_SWP_OFF_SHIFT पूर्ण;
+पूर्ण
 
-#define __pte_to_swp_entry(pte)		((swp_entry_t) { pte_val(pte) })
-#define __swp_entry_to_pte(x)		((pte_t) { (x).val })
+#घोषणा __pte_to_swp_entry(pte)		((swp_entry_t) अणु pte_val(pte) पूर्ण)
+#घोषणा __swp_entry_to_pte(x)		((pte_t) अणु (x).val पूर्ण)
 
-static inline unsigned long
-__get_phys (unsigned long addr)
-{
-	switch (sparc_cpu_model){
-	case sun4m:
-	case sun4d:
-		return ((srmmu_get_pte (addr) & 0xffffff00) << 4);
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत अचिन्हित दीर्घ
+__get_phys (अचिन्हित दीर्घ addr)
+अणु
+	चयन (sparc_cpu_model)अणु
+	हाल sun4m:
+	हाल sun4d:
+		वापस ((srmmu_get_pte (addr) & 0xffffff00) << 4);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline int
-__get_iospace (unsigned long addr)
-{
-	switch (sparc_cpu_model){
-	case sun4m:
-	case sun4d:
-		return (srmmu_get_pte (addr) >> 28);
-	default:
-		return -1;
-	}
-}
+अटल अंतरभूत पूर्णांक
+__get_iospace (अचिन्हित दीर्घ addr)
+अणु
+	चयन (sparc_cpu_model)अणु
+	हाल sun4m:
+	हाल sun4d:
+		वापस (srmmu_get_pte (addr) >> 28);
+	शेष:
+		वापस -1;
+	पूर्ण
+पूर्ण
 
-extern unsigned long *sparc_valid_addr_bitmap;
+बाह्य अचिन्हित दीर्घ *sparc_valid_addr_biपंचांगap;
 
 /* Needs to be defined here and not in linux/mm.h, as it is arch dependent */
-#define kern_addr_valid(addr) \
-	(test_bit(__pa((unsigned long)(addr))>>20, sparc_valid_addr_bitmap))
+#घोषणा kern_addr_valid(addr) \
+	(test_bit(__pa((अचिन्हित दीर्घ)(addr))>>20, sparc_valid_addr_biपंचांगap))
 
 /*
  * For sparc32&64, the pfn in io_remap_pfn_range() carries <iospace> in
  * its high 4 bits.  These macros/functions put it there or get it from there.
  */
-#define MK_IOSPACE_PFN(space, pfn)	(pfn | (space << (BITS_PER_LONG - 4)))
-#define GET_IOSPACE(pfn)		(pfn >> (BITS_PER_LONG - 4))
-#define GET_PFN(pfn)			(pfn & 0x0fffffffUL)
+#घोषणा MK_IOSPACE_PFN(space, pfn)	(pfn | (space << (BITS_PER_LONG - 4)))
+#घोषणा GET_IOSPACE(pfn)		(pfn >> (BITS_PER_LONG - 4))
+#घोषणा GET_PFN(pfn)			(pfn & 0x0fffffffUL)
 
-int remap_pfn_range(struct vm_area_struct *, unsigned long, unsigned long,
-		    unsigned long, pgprot_t);
+पूर्णांक remap_pfn_range(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+		    अचिन्हित दीर्घ, pgprot_t);
 
-static inline int io_remap_pfn_range(struct vm_area_struct *vma,
-				     unsigned long from, unsigned long pfn,
-				     unsigned long size, pgprot_t prot)
-{
-	unsigned long long offset, space, phys_base;
+अटल अंतरभूत पूर्णांक io_remap_pfn_range(काष्ठा vm_area_काष्ठा *vma,
+				     अचिन्हित दीर्घ from, अचिन्हित दीर्घ pfn,
+				     अचिन्हित दीर्घ size, pgprot_t prot)
+अणु
+	अचिन्हित दीर्घ दीर्घ offset, space, phys_base;
 
-	offset = ((unsigned long long) GET_PFN(pfn)) << PAGE_SHIFT;
+	offset = ((अचिन्हित दीर्घ दीर्घ) GET_PFN(pfn)) << PAGE_SHIFT;
 	space = GET_IOSPACE(pfn);
 	phys_base = offset | (space << 32ULL);
 
-	return remap_pfn_range(vma, from, phys_base >> PAGE_SHIFT, size, prot);
-}
-#define io_remap_pfn_range io_remap_pfn_range
+	वापस remap_pfn_range(vma, from, phys_base >> PAGE_SHIFT, size, prot);
+पूर्ण
+#घोषणा io_remap_pfn_range io_remap_pfn_range
 
-#define __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS
-#define ptep_set_access_flags(__vma, __address, __ptep, __entry, __dirty) \
-({									  \
-	int __changed = !pte_same(*(__ptep), __entry);			  \
-	if (__changed) {						  \
+#घोषणा __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS
+#घोषणा ptep_set_access_flags(__vma, __address, __ptep, __entry, __dirty) \
+(अणु									  \
+	पूर्णांक __changed = !pte_same(*(__ptep), __entry);			  \
+	अगर (__changed) अणु						  \
 		set_pte_at((__vma)->vm_mm, (__address), __ptep, __entry); \
 		flush_tlb_page(__vma, __address);			  \
-	}								  \
+	पूर्ण								  \
 	__changed;							  \
-})
+पूर्ण)
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#define VMALLOC_START           _AC(0xfe600000,UL)
-#define VMALLOC_END             _AC(0xffc00000,UL)
+#घोषणा VMALLOC_START           _AC(0xfe600000,UL)
+#घोषणा VMALLOC_END             _AC(0xffc00000,UL)
 
-/* We provide our own get_unmapped_area to cope with VA holes for userland */
-#define HAVE_ARCH_UNMAPPED_AREA
+/* We provide our own get_unmapped_area to cope with VA holes क्रम userland */
+#घोषणा HAVE_ARCH_UNMAPPED_AREA
 
-#endif /* !(_SPARC_PGTABLE_H) */
+#पूर्ण_अगर /* !(_SPARC_PGTABLE_H) */

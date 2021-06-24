@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * PS3 BD/DVD/CD-ROM Storage Driver
  *
@@ -6,65 +7,65 @@
  * Copyright 2007 Sony Corp.
  */
 
-#include <linux/cdrom.h>
-#include <linux/highmem.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_dbg.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_eh.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_eh.h>
 
-#include <asm/lv1call.h>
-#include <asm/ps3stor.h>
-
-
-#define DEVICE_NAME			"ps3rom"
-
-#define BOUNCE_SIZE			(64*1024)
-
-#define PS3ROM_MAX_SECTORS		(BOUNCE_SIZE >> 9)
+#समावेश <यंत्र/lv1call.h>
+#समावेश <यंत्र/ps3stor.h>
 
 
-struct ps3rom_private {
-	struct ps3_storage_device *dev;
-	struct scsi_cmnd *curr_cmd;
-};
+#घोषणा DEVICE_NAME			"ps3rom"
+
+#घोषणा BOUNCE_SIZE			(64*1024)
+
+#घोषणा PS3ROM_MAX_SECTORS		(BOUNCE_SIZE >> 9)
 
 
-#define LV1_STORAGE_SEND_ATAPI_COMMAND	(1)
+काष्ठा ps3rom_निजी अणु
+	काष्ठा ps3_storage_device *dev;
+	काष्ठा scsi_cmnd *curr_cmd;
+पूर्ण;
 
-struct lv1_atapi_cmnd_block {
+
+#घोषणा LV1_STORAGE_SEND_ATAPI_COMMAND	(1)
+
+काष्ठा lv1_atapi_cmnd_block अणु
 	u8	pkt[32];	/* packet command block           */
-	u32	pktlen;		/* should be 12 for ATAPI 8020    */
+	u32	pktlen;		/* should be 12 क्रम ATAPI 8020    */
 	u32	blocks;
 	u32	block_size;
 	u32	proto;		/* transfer mode                  */
 	u32	in_out;		/* transfer direction             */
 	u64	buffer;		/* parameter except command block */
 	u32	arglen;		/* length above                   */
-};
+पूर्ण;
 
-enum lv1_atapi_proto {
+क्रमागत lv1_atapi_proto अणु
 	NON_DATA_PROTO     = 0,
 	PIO_DATA_IN_PROTO  = 1,
 	PIO_DATA_OUT_PROTO = 2,
 	DMA_PROTO = 3
-};
+पूर्ण;
 
-enum lv1_atapi_in_out {
-	DIR_WRITE = 0,		/* memory -> device */
-	DIR_READ = 1		/* device -> memory */
-};
+क्रमागत lv1_atapi_in_out अणु
+	सूची_WRITE = 0,		/* memory -> device */
+	सूची_READ = 1		/* device -> memory */
+पूर्ण;
 
 
-static int ps3rom_slave_configure(struct scsi_device *scsi_dev)
-{
-	struct ps3rom_private *priv = shost_priv(scsi_dev->host);
-	struct ps3_storage_device *dev = priv->dev;
+अटल पूर्णांक ps3rom_slave_configure(काष्ठा scsi_device *scsi_dev)
+अणु
+	काष्ठा ps3rom_निजी *priv = shost_priv(scsi_dev->host);
+	काष्ठा ps3_storage_device *dev = priv->dev;
 
 	dev_dbg(&dev->sbd.core, "%s:%u: id %u, lun %llu, channel %u\n", __func__,
 		__LINE__, scsi_dev->id, scsi_dev->lun, scsi_dev->channel);
@@ -73,201 +74,201 @@ static int ps3rom_slave_configure(struct scsi_device *scsi_dev)
 	 * ATAPI SFF8020 devices use MODE_SENSE_10,
 	 * so we can prohibit MODE_SENSE_6
 	 */
-	scsi_dev->use_10_for_ms = 1;
+	scsi_dev->use_10_क्रम_ms = 1;
 
-	/* we don't support {READ,WRITE}_6 */
-	scsi_dev->use_10_for_rw = 1;
+	/* we करोn't support अणुREAD,WRITEपूर्ण_6 */
+	scsi_dev->use_10_क्रम_rw = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ps3rom_atapi_request(struct ps3_storage_device *dev,
-				struct scsi_cmnd *cmd)
-{
-	struct lv1_atapi_cmnd_block atapi_cmnd;
-	unsigned char opcode = cmd->cmnd[0];
-	int res;
+अटल पूर्णांक ps3rom_atapi_request(काष्ठा ps3_storage_device *dev,
+				काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा lv1_atapi_cmnd_block atapi_cmnd;
+	अचिन्हित अक्षर opcode = cmd->cmnd[0];
+	पूर्णांक res;
 	u64 lpar;
 
 	dev_dbg(&dev->sbd.core, "%s:%u: send ATAPI command 0x%02x\n", __func__,
 		__LINE__, opcode);
 
-	memset(&atapi_cmnd, 0, sizeof(struct lv1_atapi_cmnd_block));
-	memcpy(&atapi_cmnd.pkt, cmd->cmnd, 12);
+	स_रखो(&atapi_cmnd, 0, माप(काष्ठा lv1_atapi_cmnd_block));
+	स_नकल(&atapi_cmnd.pkt, cmd->cmnd, 12);
 	atapi_cmnd.pktlen = 12;
 	atapi_cmnd.block_size = 1; /* transfer size is block_size * blocks */
 	atapi_cmnd.blocks = atapi_cmnd.arglen = scsi_bufflen(cmd);
 	atapi_cmnd.buffer = dev->bounce_lpar;
 
-	switch (cmd->sc_data_direction) {
-	case DMA_FROM_DEVICE:
-		if (scsi_bufflen(cmd) >= CD_FRAMESIZE)
+	चयन (cmd->sc_data_direction) अणु
+	हाल DMA_FROM_DEVICE:
+		अगर (scsi_bufflen(cmd) >= CD_FRAMESIZE)
 			atapi_cmnd.proto = DMA_PROTO;
-		else
+		अन्यथा
 			atapi_cmnd.proto = PIO_DATA_IN_PROTO;
-		atapi_cmnd.in_out = DIR_READ;
-		break;
+		atapi_cmnd.in_out = सूची_READ;
+		अवरोध;
 
-	case DMA_TO_DEVICE:
-		if (scsi_bufflen(cmd) >= CD_FRAMESIZE)
+	हाल DMA_TO_DEVICE:
+		अगर (scsi_bufflen(cmd) >= CD_FRAMESIZE)
 			atapi_cmnd.proto = DMA_PROTO;
-		else
+		अन्यथा
 			atapi_cmnd.proto = PIO_DATA_OUT_PROTO;
-		atapi_cmnd.in_out = DIR_WRITE;
+		atapi_cmnd.in_out = सूची_WRITE;
 		scsi_sg_copy_to_buffer(cmd, dev->bounce_buf, dev->bounce_size);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		atapi_cmnd.proto = NON_DATA_PROTO;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	lpar = ps3_mm_phys_to_lpar(__pa(&atapi_cmnd));
 	res = lv1_storage_send_device_command(dev->sbd.dev_id,
 					      LV1_STORAGE_SEND_ATAPI_COMMAND,
-					      lpar, sizeof(atapi_cmnd),
+					      lpar, माप(atapi_cmnd),
 					      atapi_cmnd.buffer,
 					      atapi_cmnd.arglen, &dev->tag);
-	if (res == LV1_DENIED_BY_POLICY) {
+	अगर (res == LV1_DENIED_BY_POLICY) अणु
 		dev_dbg(&dev->sbd.core,
 			"%s:%u: ATAPI command 0x%02x denied by policy\n",
 			__func__, __LINE__, opcode);
-		return DID_ERROR << 16;
-	}
+		वापस DID_ERROR << 16;
+	पूर्ण
 
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core,
 			"%s:%u: ATAPI command 0x%02x failed %d\n", __func__,
 			__LINE__, opcode, res);
-		return DID_ERROR << 16;
-	}
+		वापस DID_ERROR << 16;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline unsigned int srb10_lba(const struct scsi_cmnd *cmd)
-{
-	return cmd->cmnd[2] << 24 | cmd->cmnd[3] << 16 | cmd->cmnd[4] << 8 |
+अटल अंतरभूत अचिन्हित पूर्णांक srb10_lba(स्थिर काष्ठा scsi_cmnd *cmd)
+अणु
+	वापस cmd->cmnd[2] << 24 | cmd->cmnd[3] << 16 | cmd->cmnd[4] << 8 |
 	       cmd->cmnd[5];
-}
+पूर्ण
 
-static inline unsigned int srb10_len(const struct scsi_cmnd *cmd)
-{
-	return cmd->cmnd[7] << 8 | cmd->cmnd[8];
-}
+अटल अंतरभूत अचिन्हित पूर्णांक srb10_len(स्थिर काष्ठा scsi_cmnd *cmd)
+अणु
+	वापस cmd->cmnd[7] << 8 | cmd->cmnd[8];
+पूर्ण
 
-static int ps3rom_read_request(struct ps3_storage_device *dev,
-			       struct scsi_cmnd *cmd, u32 start_sector,
+अटल पूर्णांक ps3rom_पढ़ो_request(काष्ठा ps3_storage_device *dev,
+			       काष्ठा scsi_cmnd *cmd, u32 start_sector,
 			       u32 sectors)
-{
-	int res;
+अणु
+	पूर्णांक res;
 
 	dev_dbg(&dev->sbd.core, "%s:%u: read %u sectors starting at %u\n",
 		__func__, __LINE__, sectors, start_sector);
 
-	res = lv1_storage_read(dev->sbd.dev_id,
+	res = lv1_storage_पढ़ो(dev->sbd.dev_id,
 			       dev->regions[dev->region_idx].id, start_sector,
 			       sectors, 0, dev->bounce_lpar, &dev->tag);
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: read failed %d\n", __func__,
 			__LINE__, res);
-		return DID_ERROR << 16;
-	}
+		वापस DID_ERROR << 16;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ps3rom_write_request(struct ps3_storage_device *dev,
-				struct scsi_cmnd *cmd, u32 start_sector,
+अटल पूर्णांक ps3rom_ग_लिखो_request(काष्ठा ps3_storage_device *dev,
+				काष्ठा scsi_cmnd *cmd, u32 start_sector,
 				u32 sectors)
-{
-	int res;
+अणु
+	पूर्णांक res;
 
 	dev_dbg(&dev->sbd.core, "%s:%u: write %u sectors starting at %u\n",
 		__func__, __LINE__, sectors, start_sector);
 
 	scsi_sg_copy_to_buffer(cmd, dev->bounce_buf, dev->bounce_size);
 
-	res = lv1_storage_write(dev->sbd.dev_id,
+	res = lv1_storage_ग_लिखो(dev->sbd.dev_id,
 				dev->regions[dev->region_idx].id, start_sector,
 				sectors, 0, dev->bounce_lpar, &dev->tag);
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: write failed %d\n", __func__,
 			__LINE__, res);
-		return DID_ERROR << 16;
-	}
+		वापस DID_ERROR << 16;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ps3rom_queuecommand_lck(struct scsi_cmnd *cmd,
-			       void (*done)(struct scsi_cmnd *))
-{
-	struct ps3rom_private *priv = shost_priv(cmd->device->host);
-	struct ps3_storage_device *dev = priv->dev;
-	unsigned char opcode;
-	int res;
+अटल पूर्णांक ps3rom_queuecommand_lck(काष्ठा scsi_cmnd *cmd,
+			       व्योम (*करोne)(काष्ठा scsi_cmnd *))
+अणु
+	काष्ठा ps3rom_निजी *priv = shost_priv(cmd->device->host);
+	काष्ठा ps3_storage_device *dev = priv->dev;
+	अचिन्हित अक्षर opcode;
+	पूर्णांक res;
 
 	priv->curr_cmd = cmd;
-	cmd->scsi_done = done;
+	cmd->scsi_करोne = करोne;
 
 	opcode = cmd->cmnd[0];
 	/*
 	 * While we can submit READ/WRITE SCSI commands as ATAPI commands,
-	 * it's recommended for various reasons (performance, error handling,
-	 * ...) to use lv1_storage_{read,write}() instead
+	 * it's recommended क्रम various reasons (perक्रमmance, error handling,
+	 * ...) to use lv1_storage_अणुपढ़ो,ग_लिखोपूर्ण() instead
 	 */
-	switch (opcode) {
-	case READ_10:
-		res = ps3rom_read_request(dev, cmd, srb10_lba(cmd),
+	चयन (opcode) अणु
+	हाल READ_10:
+		res = ps3rom_पढ़ो_request(dev, cmd, srb10_lba(cmd),
 					  srb10_len(cmd));
-		break;
+		अवरोध;
 
-	case WRITE_10:
-		res = ps3rom_write_request(dev, cmd, srb10_lba(cmd),
+	हाल WRITE_10:
+		res = ps3rom_ग_लिखो_request(dev, cmd, srb10_lba(cmd),
 					   srb10_len(cmd));
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		res = ps3rom_atapi_request(dev, cmd);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (res) {
-		memset(cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
+	अगर (res) अणु
+		स_रखो(cmd->sense_buffer, 0, SCSI_SENSE_BUFFERSIZE);
 		cmd->result = res;
 		cmd->sense_buffer[0] = 0x70;
 		cmd->sense_buffer[2] = ILLEGAL_REQUEST;
-		priv->curr_cmd = NULL;
-		cmd->scsi_done(cmd);
-	}
+		priv->curr_cmd = शून्य;
+		cmd->scsi_करोne(cmd);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEF_SCSI_QCMD(ps3rom_queuecommand)
+अटल DEF_SCSI_QCMD(ps3rom_queuecommand)
 
-static int decode_lv1_status(u64 status, unsigned char *sense_key,
-			     unsigned char *asc, unsigned char *ascq)
-{
-	if (((status >> 24) & 0xff) != SAM_STAT_CHECK_CONDITION)
-		return -1;
+अटल पूर्णांक decode_lv1_status(u64 status, अचिन्हित अक्षर *sense_key,
+			     अचिन्हित अक्षर *asc, अचिन्हित अक्षर *ascq)
+अणु
+	अगर (((status >> 24) & 0xff) != SAM_STAT_CHECK_CONDITION)
+		वापस -1;
 
 	*sense_key = (status >> 16) & 0xff;
 	*asc       = (status >>  8) & 0xff;
 	*ascq      =  status        & 0xff;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t ps3rom_interrupt(int irq, void *data)
-{
-	struct ps3_storage_device *dev = data;
-	struct Scsi_Host *host;
-	struct ps3rom_private *priv;
-	struct scsi_cmnd *cmd;
-	int res;
+अटल irqवापस_t ps3rom_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ps3_storage_device *dev = data;
+	काष्ठा Scsi_Host *host;
+	काष्ठा ps3rom_निजी *priv;
+	काष्ठा scsi_cmnd *cmd;
+	पूर्णांक res;
 	u64 tag, status;
-	unsigned char sense_key, asc, ascq;
+	अचिन्हित अक्षर sense_key, asc, ascq;
 
 	res = lv1_storage_get_async_status(dev->sbd.dev_id, &tag, &status);
 	/*
@@ -276,59 +277,59 @@ static irqreturn_t ps3rom_interrupt(int irq, void *data)
 	 * so, upper layer should issue REQUEST_SENSE to check the sense data
 	 */
 
-	if (tag != dev->tag)
+	अगर (tag != dev->tag)
 		dev_err(&dev->sbd.core,
 			"%s:%u: tag mismatch, got %llx, expected %llx\n",
 			__func__, __LINE__, tag, dev->tag);
 
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: res=%d status=0x%llx\n",
 			__func__, __LINE__, res, status);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	host = ps3_system_bus_get_drvdata(&dev->sbd);
+	host = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
 	priv = shost_priv(host);
 	cmd = priv->curr_cmd;
 
-	if (!status) {
+	अगर (!status) अणु
 		/* OK, completed */
-		if (cmd->sc_data_direction == DMA_FROM_DEVICE) {
-			int len;
+		अगर (cmd->sc_data_direction == DMA_FROM_DEVICE) अणु
+			पूर्णांक len;
 
 			len = scsi_sg_copy_from_buffer(cmd,
 						       dev->bounce_buf,
 						       dev->bounce_size);
 
 			scsi_set_resid(cmd, scsi_bufflen(cmd) - len);
-		}
+		पूर्ण
 		cmd->result = DID_OK << 16;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (cmd->cmnd[0] == REQUEST_SENSE) {
+	अगर (cmd->cmnd[0] == REQUEST_SENSE) अणु
 		/* SCSI spec says request sense should never get error */
 		dev_err(&dev->sbd.core, "%s:%u: end error without autosense\n",
 			__func__, __LINE__);
 		cmd->result = DID_ERROR << 16 | SAM_STAT_CHECK_CONDITION;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (decode_lv1_status(status, &sense_key, &asc, &ascq)) {
+	अगर (decode_lv1_status(status, &sense_key, &asc, &ascq)) अणु
 		cmd->result = DID_ERROR << 16;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	scsi_build_sense_buffer(0, cmd->sense_buffer, sense_key, asc, ascq);
 	cmd->result = SAM_STAT_CHECK_CONDITION;
 
-done:
-	priv->curr_cmd = NULL;
-	cmd->scsi_done(cmd);
-	return IRQ_HANDLED;
-}
+करोne:
+	priv->curr_cmd = शून्य;
+	cmd->scsi_करोne(cmd);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct scsi_host_template ps3rom_host_template = {
+अटल काष्ठा scsi_host_ढाँचा ps3rom_host_ढाँचा = अणु
 	.name =			DEVICE_NAME,
 	.slave_configure =	ps3rom_slave_configure,
 	.queuecommand =		ps3rom_queuecommand,
@@ -338,43 +339,43 @@ static struct scsi_host_template ps3rom_host_template = {
 	.emulated =             1,		/* only sg driver uses this */
 	.max_sectors =		PS3ROM_MAX_SECTORS,
 	.module =		THIS_MODULE,
-};
+पूर्ण;
 
 
-static int ps3rom_probe(struct ps3_system_bus_device *_dev)
-{
-	struct ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
-	int error;
-	struct Scsi_Host *host;
-	struct ps3rom_private *priv;
+अटल पूर्णांक ps3rom_probe(काष्ठा ps3_प्रणाली_bus_device *_dev)
+अणु
+	काष्ठा ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
+	पूर्णांक error;
+	काष्ठा Scsi_Host *host;
+	काष्ठा ps3rom_निजी *priv;
 
-	if (dev->blk_size != CD_FRAMESIZE) {
+	अगर (dev->blk_size != CD_FRAMESIZE) अणु
 		dev_err(&dev->sbd.core,
 			"%s:%u: cannot handle block size %llu\n", __func__,
 			__LINE__, dev->blk_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev->bounce_size = BOUNCE_SIZE;
-	dev->bounce_buf = kmalloc(BOUNCE_SIZE, GFP_DMA);
-	if (!dev->bounce_buf)
-		return -ENOMEM;
+	dev->bounce_buf = kदो_स्मृति(BOUNCE_SIZE, GFP_DMA);
+	अगर (!dev->bounce_buf)
+		वापस -ENOMEM;
 
-	error = ps3stor_setup(dev, ps3rom_interrupt);
-	if (error)
-		goto fail_free_bounce;
+	error = ps3stor_setup(dev, ps3rom_पूर्णांकerrupt);
+	अगर (error)
+		जाओ fail_मुक्त_bounce;
 
-	host = scsi_host_alloc(&ps3rom_host_template,
-			       sizeof(struct ps3rom_private));
-	if (!host) {
+	host = scsi_host_alloc(&ps3rom_host_ढाँचा,
+			       माप(काष्ठा ps3rom_निजी));
+	अगर (!host) अणु
 		dev_err(&dev->sbd.core, "%s:%u: scsi_host_alloc failed\n",
 			__func__, __LINE__);
 		error = -ENOMEM;
-		goto fail_teardown;
-	}
+		जाओ fail_tearकरोwn;
+	पूर्ण
 
 	priv = shost_priv(host);
-	ps3_system_bus_set_drvdata(&dev->sbd, host);
+	ps3_प्रणाली_bus_set_drvdata(&dev->sbd, host);
 	priv->dev = dev;
 
 	/* One device/LUN per SCSI bus */
@@ -382,59 +383,59 @@ static int ps3rom_probe(struct ps3_system_bus_device *_dev)
 	host->max_lun = 1;
 
 	error = scsi_add_host(host, &dev->sbd.core);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&dev->sbd.core, "%s:%u: scsi_host_alloc failed %d\n",
 			__func__, __LINE__, error);
 		error = -ENODEV;
-		goto fail_host_put;
-	}
+		जाओ fail_host_put;
+	पूर्ण
 
 	scsi_scan_host(host);
-	return 0;
+	वापस 0;
 
 fail_host_put:
 	scsi_host_put(host);
-	ps3_system_bus_set_drvdata(&dev->sbd, NULL);
-fail_teardown:
-	ps3stor_teardown(dev);
-fail_free_bounce:
-	kfree(dev->bounce_buf);
-	return error;
-}
+	ps3_प्रणाली_bus_set_drvdata(&dev->sbd, शून्य);
+fail_tearकरोwn:
+	ps3stor_tearकरोwn(dev);
+fail_मुक्त_bounce:
+	kमुक्त(dev->bounce_buf);
+	वापस error;
+पूर्ण
 
-static void ps3rom_remove(struct ps3_system_bus_device *_dev)
-{
-	struct ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
-	struct Scsi_Host *host = ps3_system_bus_get_drvdata(&dev->sbd);
+अटल व्योम ps3rom_हटाओ(काष्ठा ps3_प्रणाली_bus_device *_dev)
+अणु
+	काष्ठा ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
+	काष्ठा Scsi_Host *host = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
 
-	scsi_remove_host(host);
-	ps3stor_teardown(dev);
+	scsi_हटाओ_host(host);
+	ps3stor_tearकरोwn(dev);
 	scsi_host_put(host);
-	ps3_system_bus_set_drvdata(&dev->sbd, NULL);
-	kfree(dev->bounce_buf);
-}
+	ps3_प्रणाली_bus_set_drvdata(&dev->sbd, शून्य);
+	kमुक्त(dev->bounce_buf);
+पूर्ण
 
-static struct ps3_system_bus_driver ps3rom = {
+अटल काष्ठा ps3_प्रणाली_bus_driver ps3rom = अणु
 	.match_id	= PS3_MATCH_ID_STOR_ROM,
 	.core.name	= DEVICE_NAME,
 	.core.owner	= THIS_MODULE,
 	.probe		= ps3rom_probe,
-	.remove		= ps3rom_remove
-};
+	.हटाओ		= ps3rom_हटाओ
+पूर्ण;
 
 
-static int __init ps3rom_init(void)
-{
-	return ps3_system_bus_driver_register(&ps3rom);
-}
+अटल पूर्णांक __init ps3rom_init(व्योम)
+अणु
+	वापस ps3_प्रणाली_bus_driver_रेजिस्टर(&ps3rom);
+पूर्ण
 
-static void __exit ps3rom_exit(void)
-{
-	ps3_system_bus_driver_unregister(&ps3rom);
-}
+अटल व्योम __निकास ps3rom_निकास(व्योम)
+अणु
+	ps3_प्रणाली_bus_driver_unरेजिस्टर(&ps3rom);
+पूर्ण
 
 module_init(ps3rom_init);
-module_exit(ps3rom_exit);
+module_निकास(ps3rom_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("PS3 BD/DVD/CD-ROM Storage Driver");

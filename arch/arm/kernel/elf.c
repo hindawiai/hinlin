@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/personality.h>
-#include <linux/binfmts.h>
-#include <linux/elf.h>
-#include <linux/elf-fdpic.h>
-#include <asm/system_info.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/elf-fdpic.h>
+#समावेश <यंत्र/प्रणाली_info.h>
 
-int elf_check_arch(const struct elf32_hdr *x)
-{
-	unsigned int eflags;
+पूर्णांक elf_check_arch(स्थिर काष्ठा elf32_hdr *x)
+अणु
+	अचिन्हित पूर्णांक eflags;
 
 	/* Make sure it's an ARM executable */
-	if (x->e_machine != EM_ARM)
-		return 0;
+	अगर (x->e_machine != EM_ARM)
+		वापस 0;
 
 	/* Make sure the entry address is reasonable */
-	if (x->e_entry & 1) {
-		if (!(elf_hwcap & HWCAP_THUMB))
-			return 0;
-	} else if (x->e_entry & 3)
-		return 0;
+	अगर (x->e_entry & 1) अणु
+		अगर (!(elf_hwcap & HWCAP_THUMB))
+			वापस 0;
+	पूर्ण अन्यथा अगर (x->e_entry & 3)
+		वापस 0;
 
 	eflags = x->e_flags;
-	if ((eflags & EF_ARM_EABI_MASK) == EF_ARM_EABI_UNKNOWN) {
-		unsigned int flt_fmt;
+	अगर ((eflags & EF_ARM_EABI_MASK) == EF_ARM_EABI_UNKNOWN) अणु
+		अचिन्हित पूर्णांक flt_fmt;
 
-		/* APCS26 is only allowed if the CPU supports it */
-		if ((eflags & EF_ARM_APCS_26) && !(elf_hwcap & HWCAP_26BIT))
-			return 0;
+		/* APCS26 is only allowed अगर the CPU supports it */
+		अगर ((eflags & EF_ARM_APCS_26) && !(elf_hwcap & HWCAP_26BIT))
+			वापस 0;
 
 		flt_fmt = eflags & (EF_ARM_VFP_FLOAT | EF_ARM_SOFT_FLOAT);
 
 		/* VFP requires the supporting code */
-		if (flt_fmt == EF_ARM_VFP_FLOAT && !(elf_hwcap & HWCAP_VFP))
-			return 0;
-	}
-	return 1;
-}
+		अगर (flt_fmt == EF_ARM_VFP_FLOAT && !(elf_hwcap & HWCAP_VFP))
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(elf_check_arch);
 
-void elf_set_personality(const struct elf32_hdr *x)
-{
-	unsigned int eflags = x->e_flags;
-	unsigned int personality = current->personality & ~PER_MASK;
+व्योम elf_set_personality(स्थिर काष्ठा elf32_hdr *x)
+अणु
+	अचिन्हित पूर्णांक eflags = x->e_flags;
+	अचिन्हित पूर्णांक personality = current->personality & ~PER_MASK;
 
 	/*
 	 * We only support Linux ELF executables, so always set the
@@ -52,82 +53,82 @@ void elf_set_personality(const struct elf32_hdr *x)
 	personality |= PER_LINUX;
 
 	/*
-	 * APCS-26 is only valid for OABI executables
+	 * APCS-26 is only valid क्रम OABI executables
 	 */
-	if ((eflags & EF_ARM_EABI_MASK) == EF_ARM_EABI_UNKNOWN &&
+	अगर ((eflags & EF_ARM_EABI_MASK) == EF_ARM_EABI_UNKNOWN &&
 	    (eflags & EF_ARM_APCS_26))
 		personality &= ~ADDR_LIMIT_32BIT;
-	else
+	अन्यथा
 		personality |= ADDR_LIMIT_32BIT;
 
 	set_personality(personality);
 
 	/*
 	 * Since the FPA coprocessor uses CP1 and CP2, and iWMMXt uses CP0
-	 * and CP1, we only enable access to the iWMMXt coprocessor if the
-	 * binary is EABI or softfloat (and thus, guaranteed not to use
-	 * FPA instructions.)
+	 * and CP1, we only enable access to the iWMMXt coprocessor अगर the
+	 * binary is EABI or softभग्न (and thus, guaranteed not to use
+	 * FPA inकाष्ठाions.)
 	 */
-	if (elf_hwcap & HWCAP_IWMMXT &&
-	    eflags & (EF_ARM_EABI_MASK | EF_ARM_SOFT_FLOAT)) {
-		set_thread_flag(TIF_USING_IWMMXT);
-	} else {
-		clear_thread_flag(TIF_USING_IWMMXT);
-	}
-}
+	अगर (elf_hwcap & HWCAP_IWMMXT &&
+	    eflags & (EF_ARM_EABI_MASK | EF_ARM_SOFT_FLOAT)) अणु
+		set_thपढ़ो_flag(TIF_USING_IWMMXT);
+	पूर्ण अन्यथा अणु
+		clear_thपढ़ो_flag(TIF_USING_IWMMXT);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(elf_set_personality);
 
 /*
- * An executable for which elf_read_implies_exec() returns TRUE will
- * have the READ_IMPLIES_EXEC personality flag set automatically.
+ * An executable क्रम which elf_पढ़ो_implies_exec() वापसs TRUE will
+ * have the READ_IMPLIES_EXEC personality flag set स्वतःmatically.
  *
- * The decision process for determining the results are:
+ * The decision process क्रम determining the results are:
  *
- *                 CPU: | lacks NX*  | has NX     |
- * ELF:                 |            |            |
+ * त  त  त  त  त  त     त CPU: | lacks NX* त | has NX     |
+ * ELF: त  त  त  त     त  त  त | त  त  त  त  त  त | त  त  त  त  त   |
  * ---------------------|------------|------------|
- * missing PT_GNU_STACK | exec-all   | exec-all   |
- * PT_GNU_STACK == RWX  | exec-all   | exec-stack |
- * PT_GNU_STACK == RW   | exec-all   | exec-none  |
+ * missing PT_GNU_STACK | exec-all त  | exec-all  त |
+ * PT_GNU_STACK == RWX त | exec-all त  | exec-stackत |
+ * PT_GNU_STACK == RW त  | exec-all  त | exec-none  |
  *
  *  exec-all  : all PROT_READ user mappings are executable, except when
- *              backed by files on a noexec-filesystem.
+ *              backed by files on a noexec-fileप्रणाली.
  *  exec-none : only PROT_EXEC user mappings are executable.
  *  exec-stack: only the stack and PROT_EXEC user mappings are executable.
  *
  *  *this column has no architectural effect: NX markings are ignored by
  *   hardware, but may have behavioral effects when "wants X" collides with
- *   "cannot be X" constraints in memory permission flags, as in
+ *   "cannot be X" स्थिरraपूर्णांकs in memory permission flags, as in
  *   https://lkml.kernel.org/r/20190418055759.GA3155@mellanox.com
  *
  */
-int arm_elf_read_implies_exec(int executable_stack)
-{
-	if (executable_stack == EXSTACK_DEFAULT)
-		return 1;
-	if (cpu_architecture() < CPU_ARCH_ARMv6)
-		return 1;
-	return 0;
-}
-EXPORT_SYMBOL(arm_elf_read_implies_exec);
+पूर्णांक arm_elf_पढ़ो_implies_exec(पूर्णांक executable_stack)
+अणु
+	अगर (executable_stack == EXSTACK_DEFAULT)
+		वापस 1;
+	अगर (cpu_architecture() < CPU_ARCH_ARMv6)
+		वापस 1;
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(arm_elf_पढ़ो_implies_exec);
 
-#if defined(CONFIG_MMU) && defined(CONFIG_BINFMT_ELF_FDPIC)
+#अगर defined(CONFIG_MMU) && defined(CONFIG_BINFMT_ELF_FDPIC)
 
-void elf_fdpic_arch_lay_out_mm(struct elf_fdpic_params *exec_params,
-			       struct elf_fdpic_params *interp_params,
-			       unsigned long *start_stack,
-			       unsigned long *start_brk)
-{
+व्योम elf_fdpic_arch_lay_out_mm(काष्ठा elf_fdpic_params *exec_params,
+			       काष्ठा elf_fdpic_params *पूर्णांकerp_params,
+			       अचिन्हित दीर्घ *start_stack,
+			       अचिन्हित दीर्घ *start_brk)
+अणु
 	elf_set_personality(&exec_params->hdr);
 
 	exec_params->load_addr = 0x8000;
-	interp_params->load_addr = ELF_ET_DYN_BASE;
+	पूर्णांकerp_params->load_addr = ELF_ET_DYN_BASE;
 	*start_stack = TASK_SIZE - SZ_16M;
 
-	if ((exec_params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) == ELF_FDPIC_FLAG_INDEPENDENT) {
+	अगर ((exec_params->flags & ELF_FDPIC_FLAG_ARRANGEMENT) == ELF_FDPIC_FLAG_INDEPENDENT) अणु
 		exec_params->flags &= ~ELF_FDPIC_FLAG_ARRANGEMENT;
 		exec_params->flags |= ELF_FDPIC_FLAG_CONSTDISP;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
- * linux/include/asm-arm/hardware/amba_clcd.h -- Integrator LCD panel.
+ * linux/include/यंत्र-arm/hardware/amba_clcd.h -- Integrator LCD panel.
  *
  * David A Rusling
  *
  * Copyright (C) 2001 ARM Limited
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/fb.h>
-#include <linux/amba/clcd-regs.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/amba/clcd-regs.h>
 
-enum {
-	/* individual formats */
+क्रमागत अणु
+	/* inभागidual क्रमmats */
 	CLCD_CAP_RGB444		= (1 << 0),
 	CLCD_CAP_RGB5551	= (1 << 1),
 	CLCD_CAP_RGB565		= (1 << 2),
@@ -36,47 +37,47 @@ enum {
 				  CLCD_CAP_BGR565 | CLCD_CAP_BGR888,
 
 	CLCD_CAP_ALL		= CLCD_CAP_BGR | CLCD_CAP_RGB,
-};
+पूर्ण;
 
-struct backlight_device;
+काष्ठा backlight_device;
 
-struct clcd_panel {
-	struct fb_videomode	mode;
-	signed short		width;	/* width in mm */
-	signed short		height;	/* height in mm */
+काष्ठा clcd_panel अणु
+	काष्ठा fb_videomode	mode;
+	चिन्हित लघु		width;	/* width in mm */
+	चिन्हित लघु		height;	/* height in mm */
 	u32			tim2;
 	u32			tim3;
 	u32			cntl;
 	u32			caps;
-	unsigned int		bpp:8,
+	अचिन्हित पूर्णांक		bpp:8,
 				fixedtimings:1,
 				grayscale:1;
-	unsigned int		connector;
-	struct backlight_device	*backlight;
+	अचिन्हित पूर्णांक		connector;
+	काष्ठा backlight_device	*backlight;
 	/*
-	 * If the B/R lines are switched between the CLCD
+	 * If the B/R lines are चयनed between the CLCD
 	 * and the panel we need to know this and not try to
-	 * compensate with the BGR bit in the control register.
+	 * compensate with the BGR bit in the control रेजिस्टर.
 	 */
 	bool			bgr_connection;
-};
+पूर्ण;
 
-struct clcd_regs {
+काष्ठा clcd_regs अणु
 	u32			tim0;
 	u32			tim1;
 	u32			tim2;
 	u32			tim3;
 	u32			cntl;
-	unsigned long		pixclock;
-};
+	अचिन्हित दीर्घ		pixघड़ी;
+पूर्ण;
 
-struct clcd_fb;
+काष्ठा clcd_fb;
 
 /*
- * the board-type specific routines
+ * the board-type specअगरic routines
  */
-struct clcd_board {
-	const char *name;
+काष्ठा clcd_board अणु
+	स्थिर अक्षर *name;
 
 	/*
 	 * Optional.  Hardware capability flags.
@@ -84,69 +85,69 @@ struct clcd_board {
 	u32	caps;
 
 	/*
-	 * Optional.  Check whether the var structure is acceptable
-	 * for this display.
+	 * Optional.  Check whether the var काष्ठाure is acceptable
+	 * क्रम this display.
 	 */
-	int	(*check)(struct clcd_fb *fb, struct fb_var_screeninfo *var);
+	पूर्णांक	(*check)(काष्ठा clcd_fb *fb, काष्ठा fb_var_screeninfo *var);
 
 	/*
-	 * Compulsory.  Decode fb->fb.var into regs->*.  In the case of
-	 * fixed timing, set regs->* to the register values required.
+	 * Compulsory.  Decode fb->fb.var पूर्णांकo regs->*.  In the हाल of
+	 * fixed timing, set regs->* to the रेजिस्टर values required.
 	 */
-	void	(*decode)(struct clcd_fb *fb, struct clcd_regs *regs);
+	व्योम	(*decode)(काष्ठा clcd_fb *fb, काष्ठा clcd_regs *regs);
 
 	/*
 	 * Optional.  Disable any extra display hardware.
 	 */
-	void	(*disable)(struct clcd_fb *);
+	व्योम	(*disable)(काष्ठा clcd_fb *);
 
 	/*
 	 * Optional.  Enable any extra display hardware.
 	 */
-	void	(*enable)(struct clcd_fb *);
+	व्योम	(*enable)(काष्ठा clcd_fb *);
 
 	/*
-	 * Setup platform specific parts of CLCD driver
+	 * Setup platक्रमm specअगरic parts of CLCD driver
 	 */
-	int	(*setup)(struct clcd_fb *);
+	पूर्णांक	(*setup)(काष्ठा clcd_fb *);
 
 	/*
 	 * mmap the framebuffer memory
 	 */
-	int	(*mmap)(struct clcd_fb *, struct vm_area_struct *);
+	पूर्णांक	(*mmap)(काष्ठा clcd_fb *, काष्ठा vm_area_काष्ठा *);
 
 	/*
-	 * Remove platform specific parts of CLCD driver
+	 * Remove platक्रमm specअगरic parts of CLCD driver
 	 */
-	void	(*remove)(struct clcd_fb *);
-};
+	व्योम	(*हटाओ)(काष्ठा clcd_fb *);
+पूर्ण;
 
-struct amba_device;
-struct clk;
+काष्ठा amba_device;
+काष्ठा clk;
 
-/* this data structure describes each frame buffer device we find */
-struct clcd_fb {
-	struct fb_info		fb;
-	struct amba_device	*dev;
-	struct clk		*clk;
-	struct clcd_panel	*panel;
-	struct clcd_board	*board;
-	void			*board_data;
-	void __iomem		*regs;
+/* this data काष्ठाure describes each frame buffer device we find */
+काष्ठा clcd_fb अणु
+	काष्ठा fb_info		fb;
+	काष्ठा amba_device	*dev;
+	काष्ठा clk		*clk;
+	काष्ठा clcd_panel	*panel;
+	काष्ठा clcd_board	*board;
+	व्योम			*board_data;
+	व्योम __iomem		*regs;
 	u16			off_ienb;
 	u16			off_cntl;
 	u32			clcd_cntl;
 	u32			cmap[16];
 	bool			clk_enabled;
-};
+पूर्ण;
 
-static inline void clcdfb_decode(struct clcd_fb *fb, struct clcd_regs *regs)
-{
-	struct fb_var_screeninfo *var = &fb->fb.var;
+अटल अंतरभूत व्योम clcdfb_decode(काष्ठा clcd_fb *fb, काष्ठा clcd_regs *regs)
+अणु
+	काष्ठा fb_var_screeninfo *var = &fb->fb.var;
 	u32 val, cpl;
 
 	/*
-	 * Program the CLCD controller registers and start the CLCD
+	 * Program the CLCD controller रेजिस्टरs and start the CLCD
 	 */
 	val = ((var->xres / 16) - 1) << 2;
 	val |= (var->hsync_len - 1) << 8;
@@ -155,7 +156,7 @@ static inline void clcdfb_decode(struct clcd_fb *fb, struct clcd_regs *regs)
 	regs->tim0 = val;
 
 	val = var->yres;
-	if (fb->panel->cntl & CNTL_LCDDUAL)
+	अगर (fb->panel->cntl & CNTL_LCDDUAL)
 		val /= 2;
 	val -= 1;
 	val |= (var->vsync_len - 1) << 10;
@@ -167,14 +168,14 @@ static inline void clcdfb_decode(struct clcd_fb *fb, struct clcd_regs *regs)
 	val |= var->sync & FB_SYNC_HOR_HIGH_ACT  ? 0 : TIM2_IHS;
 	val |= var->sync & FB_SYNC_VERT_HIGH_ACT ? 0 : TIM2_IVS;
 
-	cpl = var->xres_virtual;
-	if (fb->panel->cntl & CNTL_LCDTFT)	  /* TFT */
+	cpl = var->xres_भव;
+	अगर (fb->panel->cntl & CNTL_LCDTFT)	  /* TFT */
 		/* / 1 */;
-	else if (!var->grayscale)		  /* STN color */
+	अन्यथा अगर (!var->grayscale)		  /* STN color */
 		cpl = cpl * 8 / 3;
-	else if (fb->panel->cntl & CNTL_LCDMONO8) /* STN monochrome, 8bit */
+	अन्यथा अगर (fb->panel->cntl & CNTL_LCDMONO8) /* STN monochrome, 8bit */
 		cpl /= 8;
-	else					  /* STN monochrome, 4bit */
+	अन्यथा					  /* STN monochrome, 4bit */
 		cpl /= 4;
 
 	regs->tim2 = val | ((cpl - 1) << 16);
@@ -182,70 +183,70 @@ static inline void clcdfb_decode(struct clcd_fb *fb, struct clcd_regs *regs)
 	regs->tim3 = fb->panel->tim3;
 
 	val = fb->panel->cntl;
-	if (var->grayscale)
+	अगर (var->grayscale)
 		val |= CNTL_LCDBW;
 
-	if (fb->panel->caps && fb->board->caps && var->bits_per_pixel >= 16) {
+	अगर (fb->panel->caps && fb->board->caps && var->bits_per_pixel >= 16) अणु
 		/*
-		 * if board and panel supply capabilities, we can support
+		 * अगर board and panel supply capabilities, we can support
 		 * changing BGR/RGB depending on supplied parameters. Here
-		 * we switch to what the framebuffer is providing if need
-		 * be, so if the framebuffer is BGR but the display connection
-		 * is RGB (first case) we switch it around. Vice versa mutatis
-		 * mutandis if the framebuffer is RGB but the display connection
+		 * we चयन to what the framebuffer is providing अगर need
+		 * be, so अगर the framebuffer is BGR but the display connection
+		 * is RGB (first हाल) we चयन it around. Vice versa mutatis
+		 * mutandis अगर the framebuffer is RGB but the display connection
 		 * is BGR, we flip it around.
 		 */
-		if (var->red.offset == 0)
+		अगर (var->red.offset == 0)
 			val &= ~CNTL_BGR;
-		else
+		अन्यथा
 			val |= CNTL_BGR;
-		if (fb->panel->bgr_connection)
+		अगर (fb->panel->bgr_connection)
 			val ^= CNTL_BGR;
-	}
+	पूर्ण
 
-	switch (var->bits_per_pixel) {
-	case 1:
+	चयन (var->bits_per_pixel) अणु
+	हाल 1:
 		val |= CNTL_LCDBPP1;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		val |= CNTL_LCDBPP2;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		val |= CNTL_LCDBPP4;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		val |= CNTL_LCDBPP8;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		/*
 		 * PL110 cannot choose between 5551 and 565 modes in its
-		 * control register.  It is possible to use 565 with
-		 * custom external wiring.
+		 * control रेजिस्टर.  It is possible to use 565 with
+		 * custom बाह्यal wiring.
 		 */
-		if (amba_part(fb->dev) == 0x110 ||
+		अगर (amba_part(fb->dev) == 0x110 ||
 		    var->green.length == 5)
 			val |= CNTL_LCDBPP16;
-		else if (var->green.length == 6)
+		अन्यथा अगर (var->green.length == 6)
 			val |= CNTL_LCDBPP16_565;
-		else
+		अन्यथा
 			val |= CNTL_LCDBPP16_444;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		val |= CNTL_LCDBPP24;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	regs->cntl = val;
-	regs->pixclock = var->pixclock;
-}
+	regs->pixघड़ी = var->pixघड़ी;
+पूर्ण
 
-static inline int clcdfb_check(struct clcd_fb *fb, struct fb_var_screeninfo *var)
-{
-	var->xres_virtual = var->xres = (var->xres + 15) & ~15;
-	var->yres_virtual = var->yres = (var->yres + 1) & ~1;
+अटल अंतरभूत पूर्णांक clcdfb_check(काष्ठा clcd_fb *fb, काष्ठा fb_var_screeninfo *var)
+अणु
+	var->xres_भव = var->xres = (var->xres + 15) & ~15;
+	var->yres_भव = var->yres = (var->yres + 1) & ~1;
 
-#define CHECK(e,l,h) (var->e < l || var->e > h)
-	if (CHECK(right_margin, (5+1), 256) ||	/* back porch */
+#घोषणा CHECK(e,l,h) (var->e < l || var->e > h)
+	अगर (CHECK(right_margin, (5+1), 256) ||	/* back porch */
 	    CHECK(left_margin, (5+1), 256) ||	/* front porch */
 	    CHECK(hsync_len, (5+1), 256) ||
 	    var->xres > 4096 ||
@@ -253,26 +254,26 @@ static inline int clcdfb_check(struct clcd_fb *fb, struct fb_var_screeninfo *var
 	    var->upper_margin > 255 ||		/* front porch */
 	    var->vsync_len > 32 ||
 	    var->yres > 1024)
-		return -EINVAL;
-#undef CHECK
+		वापस -EINVAL;
+#अघोषित CHECK
 
 	/* single panel mode: PCD = max(PCD, 1) */
 	/* dual panel mode: PCD = max(PCD, 5) */
 
 	/*
 	 * You can't change the grayscale setting, and
-	 * we can only do non-interlaced video.
+	 * we can only करो non-पूर्णांकerlaced video.
 	 */
-	if (var->grayscale != fb->fb.var.grayscale ||
+	अगर (var->grayscale != fb->fb.var.grayscale ||
 	    (var->vmode & FB_VMODE_MASK) != FB_VMODE_NONINTERLACED)
-		return -EINVAL;
+		वापस -EINVAL;
 
-#define CHECK(e) (var->e != fb->fb.var.e)
-	if (fb->panel->fixedtimings &&
+#घोषणा CHECK(e) (var->e != fb->fb.var.e)
+	अगर (fb->panel->fixedtimings &&
 	    (CHECK(xres)		||
 	     CHECK(yres)		||
 	     CHECK(bits_per_pixel)	||
-	     CHECK(pixclock)		||
+	     CHECK(pixघड़ी)		||
 	     CHECK(left_margin)		||
 	     CHECK(right_margin)	||
 	     CHECK(upper_margin)	||
@@ -280,11 +281,11 @@ static inline int clcdfb_check(struct clcd_fb *fb, struct fb_var_screeninfo *var
 	     CHECK(hsync_len)		||
 	     CHECK(vsync_len)		||
 	     CHECK(sync)))
-		return -EINVAL;
-#undef CHECK
+		वापस -EINVAL;
+#अघोषित CHECK
 
 	var->nonstd = 0;
 	var->accel_flags = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IRQ_PRIVATE_H_INCLUDED__
-#define __IRQ_PRIVATE_H_INCLUDED__
+#अगर_अघोषित __IRQ_PRIVATE_H_INCLUDED__
+#घोषणा __IRQ_PRIVATE_H_INCLUDED__
 
-#include "irq_public.h"
+#समावेश "irq_public.h"
 
-#include "device_access.h"
+#समावेश "device_access.h"
 
-#include "assert_support.h"
+#समावेश "assert_support.h"
 
-STORAGE_CLASS_IRQ_C void irq_reg_store(
-    const irq_ID_t		ID,
-    const unsigned int	reg,
-    const hrt_data		value)
-{
-	assert(ID < N_IRQ_ID);
-	assert(IRQ_BASE[ID] != (hrt_address) - 1);
-	ia_css_device_store_uint32(IRQ_BASE[ID] + reg * sizeof(hrt_data), value);
-	return;
-}
+STORAGE_CLASS_IRQ_C व्योम irq_reg_store(
+    स्थिर irq_ID_t		ID,
+    स्थिर अचिन्हित पूर्णांक	reg,
+    स्थिर hrt_data		value)
+अणु
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(IRQ_BASE[ID] != (hrt_address) - 1);
+	ia_css_device_store_uपूर्णांक32(IRQ_BASE[ID] + reg * माप(hrt_data), value);
+	वापस;
+पूर्ण
 
 STORAGE_CLASS_IRQ_C hrt_data irq_reg_load(
-    const irq_ID_t		ID,
-    const unsigned int	reg)
-{
-	assert(ID < N_IRQ_ID);
-	assert(IRQ_BASE[ID] != (hrt_address) - 1);
-	return ia_css_device_load_uint32(IRQ_BASE[ID] + reg * sizeof(hrt_data));
-}
+    स्थिर irq_ID_t		ID,
+    स्थिर अचिन्हित पूर्णांक	reg)
+अणु
+	निश्चित(ID < N_IRQ_ID);
+	निश्चित(IRQ_BASE[ID] != (hrt_address) - 1);
+	वापस ia_css_device_load_uपूर्णांक32(IRQ_BASE[ID] + reg * माप(hrt_data));
+पूर्ण
 
-#endif /* __IRQ_PRIVATE_H_INCLUDED__ */
+#पूर्ण_अगर /* __IRQ_PRIVATE_H_INCLUDED__ */

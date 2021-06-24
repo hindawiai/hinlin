@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -9,40 +10,40 @@
 *******************************************************************************
 ******************************************************************************/
 
-#include "dlm_internal.h"
-#include "lockspace.h"
-#include "member.h"
-#include "lowcomms.h"
-#include "midcomms.h"
-#include "rcom.h"
-#include "recover.h"
-#include "dir.h"
-#include "config.h"
-#include "memory.h"
-#include "lock.h"
-#include "util.h"
+#समावेश "dlm_internal.h"
+#समावेश "lockspace.h"
+#समावेश "member.h"
+#समावेश "lowcomms.h"
+#समावेश "midcomms.h"
+#समावेश "rcom.h"
+#समावेश "recover.h"
+#समावेश "dir.h"
+#समावेश "config.h"
+#समावेश "memory.h"
+#समावेश "lock.h"
+#समावेश "util.h"
 
-static int rcom_response(struct dlm_ls *ls)
-{
-	return test_bit(LSFL_RCOM_READY, &ls->ls_flags);
-}
+अटल पूर्णांक rcom_response(काष्ठा dlm_ls *ls)
+अणु
+	वापस test_bit(LSFL_RCOM_READY, &ls->ls_flags);
+पूर्ण
 
-static int create_rcom(struct dlm_ls *ls, int to_nodeid, int type, int len,
-		       struct dlm_rcom **rc_ret, struct dlm_mhandle **mh_ret)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	char *mb;
-	int mb_len = sizeof(struct dlm_rcom) + len;
+अटल पूर्णांक create_rcom(काष्ठा dlm_ls *ls, पूर्णांक to_nodeid, पूर्णांक type, पूर्णांक len,
+		       काष्ठा dlm_rcom **rc_ret, काष्ठा dlm_mhandle **mh_ret)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	अक्षर *mb;
+	पूर्णांक mb_len = माप(काष्ठा dlm_rcom) + len;
 
 	mh = dlm_lowcomms_get_buffer(to_nodeid, mb_len, GFP_NOFS, &mb);
-	if (!mh) {
-		log_print("create_rcom to %d type %d len %d ENOBUFS",
+	अगर (!mh) अणु
+		log_prपूर्णांक("create_rcom to %d type %d len %d ENOBUFS",
 			  to_nodeid, type, len);
-		return -ENOBUFS;
-	}
+		वापस -ENOBUFS;
+	पूर्ण
 
-	rc = (struct dlm_rcom *) mb;
+	rc = (काष्ठा dlm_rcom *) mb;
 
 	rc->rc_header.h_version = (DLM_HEADER_MAJOR | DLM_HEADER_MINOR);
 	rc->rc_header.h_lockspace = ls->ls_global_id;
@@ -58,321 +59,321 @@ static int create_rcom(struct dlm_ls *ls, int to_nodeid, int type, int len,
 
 	*mh_ret = mh;
 	*rc_ret = rc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void send_rcom(struct dlm_ls *ls, struct dlm_mhandle *mh,
-		      struct dlm_rcom *rc)
-{
+अटल व्योम send_rcom(काष्ठा dlm_ls *ls, काष्ठा dlm_mhandle *mh,
+		      काष्ठा dlm_rcom *rc)
+अणु
 	dlm_rcom_out(rc);
 	dlm_lowcomms_commit_buffer(mh);
-}
+पूर्ण
 
-static void set_rcom_status(struct dlm_ls *ls, struct rcom_status *rs,
-			    uint32_t flags)
-{
+अटल व्योम set_rcom_status(काष्ठा dlm_ls *ls, काष्ठा rcom_status *rs,
+			    uपूर्णांक32_t flags)
+अणु
 	rs->rs_flags = cpu_to_le32(flags);
-}
+पूर्ण
 
 /* When replying to a status request, a node also sends back its
    configuration values.  The requesting node then checks that the remote
    node is configured the same way as itself. */
 
-static void set_rcom_config(struct dlm_ls *ls, struct rcom_config *rf,
-			    uint32_t num_slots)
-{
+अटल व्योम set_rcom_config(काष्ठा dlm_ls *ls, काष्ठा rcom_config *rf,
+			    uपूर्णांक32_t num_slots)
+अणु
 	rf->rf_lvblen = cpu_to_le32(ls->ls_lvblen);
 	rf->rf_lsflags = cpu_to_le32(ls->ls_exflags);
 
 	rf->rf_our_slot = cpu_to_le16(ls->ls_slot);
 	rf->rf_num_slots = cpu_to_le16(num_slots);
 	rf->rf_generation =  cpu_to_le32(ls->ls_generation);
-}
+पूर्ण
 
-static int check_rcom_config(struct dlm_ls *ls, struct dlm_rcom *rc, int nodeid)
-{
-	struct rcom_config *rf = (struct rcom_config *) rc->rc_buf;
+अटल पूर्णांक check_rcom_config(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc, पूर्णांक nodeid)
+अणु
+	काष्ठा rcom_config *rf = (काष्ठा rcom_config *) rc->rc_buf;
 
-	if ((rc->rc_header.h_version & 0xFFFF0000) != DLM_HEADER_MAJOR) {
+	अगर ((rc->rc_header.h_version & 0xFFFF0000) != DLM_HEADER_MAJOR) अणु
 		log_error(ls, "version mismatch: %x nodeid %d: %x",
 			  DLM_HEADER_MAJOR | DLM_HEADER_MINOR, nodeid,
 			  rc->rc_header.h_version);
-		return -EPROTO;
-	}
+		वापस -EPROTO;
+	पूर्ण
 
-	if (le32_to_cpu(rf->rf_lvblen) != ls->ls_lvblen ||
-	    le32_to_cpu(rf->rf_lsflags) != ls->ls_exflags) {
+	अगर (le32_to_cpu(rf->rf_lvblen) != ls->ls_lvblen ||
+	    le32_to_cpu(rf->rf_lsflags) != ls->ls_exflags) अणु
 		log_error(ls, "config mismatch: %d,%x nodeid %d: %d,%x",
 			  ls->ls_lvblen, ls->ls_exflags, nodeid,
 			  le32_to_cpu(rf->rf_lvblen),
 			  le32_to_cpu(rf->rf_lsflags));
-		return -EPROTO;
-	}
-	return 0;
-}
+		वापस -EPROTO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void allow_sync_reply(struct dlm_ls *ls, uint64_t *new_seq)
-{
+अटल व्योम allow_sync_reply(काष्ठा dlm_ls *ls, uपूर्णांक64_t *new_seq)
+अणु
 	spin_lock(&ls->ls_rcom_spin);
 	*new_seq = ++ls->ls_rcom_seq;
 	set_bit(LSFL_RCOM_WAIT, &ls->ls_flags);
 	spin_unlock(&ls->ls_rcom_spin);
-}
+पूर्ण
 
-static void disallow_sync_reply(struct dlm_ls *ls)
-{
+अटल व्योम disallow_sync_reply(काष्ठा dlm_ls *ls)
+अणु
 	spin_lock(&ls->ls_rcom_spin);
 	clear_bit(LSFL_RCOM_WAIT, &ls->ls_flags);
 	clear_bit(LSFL_RCOM_READY, &ls->ls_flags);
 	spin_unlock(&ls->ls_rcom_spin);
-}
+पूर्ण
 
 /*
- * low nodeid gathers one slot value at a time from each node.
- * it sets need_slots=0, and saves rf_our_slot returned from each
+ * low nodeid gathers one slot value at a समय from each node.
+ * it sets need_slots=0, and saves rf_our_slot वापसed from each
  * rcom_config.
  *
  * other nodes gather all slot values at once from the low nodeid.
- * they set need_slots=1, and ignore the rf_our_slot returned from each
- * rcom_config.  they use the rf_num_slots returned from the low
+ * they set need_slots=1, and ignore the rf_our_slot वापसed from each
+ * rcom_config.  they use the rf_num_slots वापसed from the low
  * node's rcom_config.
  */
 
-int dlm_rcom_status(struct dlm_ls *ls, int nodeid, uint32_t status_flags)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	int error = 0;
+पूर्णांक dlm_rcom_status(काष्ठा dlm_ls *ls, पूर्णांक nodeid, uपूर्णांक32_t status_flags)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	पूर्णांक error = 0;
 
 	ls->ls_recover_nodeid = nodeid;
 
-	if (nodeid == dlm_our_nodeid()) {
+	अगर (nodeid == dlm_our_nodeid()) अणु
 		rc = ls->ls_recover_buf;
 		rc->rc_result = dlm_recover_status(ls);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 retry:
 	error = create_rcom(ls, nodeid, DLM_RCOM_STATUS,
-			    sizeof(struct rcom_status), &rc, &mh);
-	if (error)
-		goto out;
+			    माप(काष्ठा rcom_status), &rc, &mh);
+	अगर (error)
+		जाओ out;
 
-	set_rcom_status(ls, (struct rcom_status *)rc->rc_buf, status_flags);
+	set_rcom_status(ls, (काष्ठा rcom_status *)rc->rc_buf, status_flags);
 
 	allow_sync_reply(ls, &rc->rc_id);
-	memset(ls->ls_recover_buf, 0, LOWCOMMS_MAX_TX_BUFFER_LEN);
+	स_रखो(ls->ls_recover_buf, 0, LOWCOMMS_MAX_TX_BUFFER_LEN);
 
 	send_rcom(ls, mh, rc);
 
-	error = dlm_wait_function(ls, &rcom_response);
+	error = dlm_रुको_function(ls, &rcom_response);
 	disallow_sync_reply(ls);
-	if (error == -ETIMEDOUT)
-		goto retry;
-	if (error)
-		goto out;
+	अगर (error == -ETIMEDOUT)
+		जाओ retry;
+	अगर (error)
+		जाओ out;
 
 	rc = ls->ls_recover_buf;
 
-	if (rc->rc_result == -ESRCH) {
+	अगर (rc->rc_result == -ESRCH) अणु
 		/* we pretend the remote lockspace exists with 0 status */
 		log_debug(ls, "remote node %d not ready", nodeid);
 		rc->rc_result = 0;
 		error = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		error = check_rcom_config(ls, rc, nodeid);
-	}
+	पूर्ण
 
-	/* the caller looks at rc_result for the remote recovery status */
+	/* the caller looks at rc_result क्रम the remote recovery status */
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void receive_rcom_status(struct dlm_ls *ls, struct dlm_rcom *rc_in)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	struct rcom_status *rs;
-	uint32_t status;
-	int nodeid = rc_in->rc_header.h_nodeid;
-	int len = sizeof(struct rcom_config);
-	int num_slots = 0;
-	int error;
+अटल व्योम receive_rcom_status(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc_in)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	काष्ठा rcom_status *rs;
+	uपूर्णांक32_t status;
+	पूर्णांक nodeid = rc_in->rc_header.h_nodeid;
+	पूर्णांक len = माप(काष्ठा rcom_config);
+	पूर्णांक num_slots = 0;
+	पूर्णांक error;
 
-	if (!dlm_slots_version(&rc_in->rc_header)) {
+	अगर (!dlm_slots_version(&rc_in->rc_header)) अणु
 		status = dlm_recover_status(ls);
-		goto do_create;
-	}
+		जाओ करो_create;
+	पूर्ण
 
-	rs = (struct rcom_status *)rc_in->rc_buf;
+	rs = (काष्ठा rcom_status *)rc_in->rc_buf;
 
-	if (!(le32_to_cpu(rs->rs_flags) & DLM_RSF_NEED_SLOTS)) {
+	अगर (!(le32_to_cpu(rs->rs_flags) & DLM_RSF_NEED_SLOTS)) अणु
 		status = dlm_recover_status(ls);
-		goto do_create;
-	}
+		जाओ करो_create;
+	पूर्ण
 
 	spin_lock(&ls->ls_recover_lock);
 	status = ls->ls_recover_status;
 	num_slots = ls->ls_num_slots;
 	spin_unlock(&ls->ls_recover_lock);
-	len += num_slots * sizeof(struct rcom_slot);
+	len += num_slots * माप(काष्ठा rcom_slot);
 
- do_create:
+ करो_create:
 	error = create_rcom(ls, nodeid, DLM_RCOM_STATUS_REPLY,
 			    len, &rc, &mh);
-	if (error)
-		return;
+	अगर (error)
+		वापस;
 
 	rc->rc_id = rc_in->rc_id;
 	rc->rc_seq_reply = rc_in->rc_seq;
 	rc->rc_result = status;
 
-	set_rcom_config(ls, (struct rcom_config *)rc->rc_buf, num_slots);
+	set_rcom_config(ls, (काष्ठा rcom_config *)rc->rc_buf, num_slots);
 
-	if (!num_slots)
-		goto do_send;
+	अगर (!num_slots)
+		जाओ करो_send;
 
 	spin_lock(&ls->ls_recover_lock);
-	if (ls->ls_num_slots != num_slots) {
+	अगर (ls->ls_num_slots != num_slots) अणु
 		spin_unlock(&ls->ls_recover_lock);
 		log_debug(ls, "receive_rcom_status num_slots %d to %d",
 			  num_slots, ls->ls_num_slots);
 		rc->rc_result = 0;
-		set_rcom_config(ls, (struct rcom_config *)rc->rc_buf, 0);
-		goto do_send;
-	}
+		set_rcom_config(ls, (काष्ठा rcom_config *)rc->rc_buf, 0);
+		जाओ करो_send;
+	पूर्ण
 
 	dlm_slots_copy_out(ls, rc);
 	spin_unlock(&ls->ls_recover_lock);
 
- do_send:
+ करो_send:
 	send_rcom(ls, mh, rc);
-}
+पूर्ण
 
-static void receive_sync_reply(struct dlm_ls *ls, struct dlm_rcom *rc_in)
-{
+अटल व्योम receive_sync_reply(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc_in)
+अणु
 	spin_lock(&ls->ls_rcom_spin);
-	if (!test_bit(LSFL_RCOM_WAIT, &ls->ls_flags) ||
-	    rc_in->rc_id != ls->ls_rcom_seq) {
+	अगर (!test_bit(LSFL_RCOM_WAIT, &ls->ls_flags) ||
+	    rc_in->rc_id != ls->ls_rcom_seq) अणु
 		log_debug(ls, "reject reply %d from %d seq %llx expect %llx",
 			  rc_in->rc_type, rc_in->rc_header.h_nodeid,
-			  (unsigned long long)rc_in->rc_id,
-			  (unsigned long long)ls->ls_rcom_seq);
-		goto out;
-	}
-	memcpy(ls->ls_recover_buf, rc_in, rc_in->rc_header.h_length);
+			  (अचिन्हित दीर्घ दीर्घ)rc_in->rc_id,
+			  (अचिन्हित दीर्घ दीर्घ)ls->ls_rcom_seq);
+		जाओ out;
+	पूर्ण
+	स_नकल(ls->ls_recover_buf, rc_in, rc_in->rc_header.h_length);
 	set_bit(LSFL_RCOM_READY, &ls->ls_flags);
 	clear_bit(LSFL_RCOM_WAIT, &ls->ls_flags);
-	wake_up(&ls->ls_wait_general);
+	wake_up(&ls->ls_रुको_general);
  out:
 	spin_unlock(&ls->ls_rcom_spin);
-}
+पूर्ण
 
-int dlm_rcom_names(struct dlm_ls *ls, int nodeid, char *last_name, int last_len)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	int error = 0;
+पूर्णांक dlm_rcom_names(काष्ठा dlm_ls *ls, पूर्णांक nodeid, अक्षर *last_name, पूर्णांक last_len)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	पूर्णांक error = 0;
 
 	ls->ls_recover_nodeid = nodeid;
 
 retry:
 	error = create_rcom(ls, nodeid, DLM_RCOM_NAMES, last_len, &rc, &mh);
-	if (error)
-		goto out;
-	memcpy(rc->rc_buf, last_name, last_len);
+	अगर (error)
+		जाओ out;
+	स_नकल(rc->rc_buf, last_name, last_len);
 
 	allow_sync_reply(ls, &rc->rc_id);
-	memset(ls->ls_recover_buf, 0, LOWCOMMS_MAX_TX_BUFFER_LEN);
+	स_रखो(ls->ls_recover_buf, 0, LOWCOMMS_MAX_TX_BUFFER_LEN);
 
 	send_rcom(ls, mh, rc);
 
-	error = dlm_wait_function(ls, &rcom_response);
+	error = dlm_रुको_function(ls, &rcom_response);
 	disallow_sync_reply(ls);
-	if (error == -ETIMEDOUT)
-		goto retry;
+	अगर (error == -ETIMEDOUT)
+		जाओ retry;
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void receive_rcom_names(struct dlm_ls *ls, struct dlm_rcom *rc_in)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	int error, inlen, outlen, nodeid;
+अटल व्योम receive_rcom_names(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc_in)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	पूर्णांक error, inlen, outlen, nodeid;
 
 	nodeid = rc_in->rc_header.h_nodeid;
-	inlen = rc_in->rc_header.h_length - sizeof(struct dlm_rcom);
-	outlen = LOWCOMMS_MAX_TX_BUFFER_LEN - sizeof(struct dlm_rcom);
+	inlen = rc_in->rc_header.h_length - माप(काष्ठा dlm_rcom);
+	outlen = LOWCOMMS_MAX_TX_BUFFER_LEN - माप(काष्ठा dlm_rcom);
 
 	error = create_rcom(ls, nodeid, DLM_RCOM_NAMES_REPLY, outlen, &rc, &mh);
-	if (error)
-		return;
+	अगर (error)
+		वापस;
 	rc->rc_id = rc_in->rc_id;
 	rc->rc_seq_reply = rc_in->rc_seq;
 
 	dlm_copy_master_names(ls, rc_in->rc_buf, inlen, rc->rc_buf, outlen,
 			      nodeid);
 	send_rcom(ls, mh, rc);
-}
+पूर्ण
 
-int dlm_send_rcom_lookup(struct dlm_rsb *r, int dir_nodeid)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	struct dlm_ls *ls = r->res_ls;
-	int error;
+पूर्णांक dlm_send_rcom_lookup(काष्ठा dlm_rsb *r, पूर्णांक dir_nodeid)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	काष्ठा dlm_ls *ls = r->res_ls;
+	पूर्णांक error;
 
 	error = create_rcom(ls, dir_nodeid, DLM_RCOM_LOOKUP, r->res_length,
 			    &rc, &mh);
-	if (error)
-		goto out;
-	memcpy(rc->rc_buf, r->res_name, r->res_length);
-	rc->rc_id = (unsigned long) r->res_id;
+	अगर (error)
+		जाओ out;
+	स_नकल(rc->rc_buf, r->res_name, r->res_length);
+	rc->rc_id = (अचिन्हित दीर्घ) r->res_id;
 
 	send_rcom(ls, mh, rc);
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void receive_rcom_lookup(struct dlm_ls *ls, struct dlm_rcom *rc_in)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	int error, ret_nodeid, nodeid = rc_in->rc_header.h_nodeid;
-	int len = rc_in->rc_header.h_length - sizeof(struct dlm_rcom);
+अटल व्योम receive_rcom_lookup(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc_in)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	पूर्णांक error, ret_nodeid, nodeid = rc_in->rc_header.h_nodeid;
+	पूर्णांक len = rc_in->rc_header.h_length - माप(काष्ठा dlm_rcom);
 
 	error = create_rcom(ls, nodeid, DLM_RCOM_LOOKUP_REPLY, 0, &rc, &mh);
-	if (error)
-		return;
+	अगर (error)
+		वापस;
 
 	/* Old code would send this special id to trigger a debug dump. */
-	if (rc_in->rc_id == 0xFFFFFFFF) {
+	अगर (rc_in->rc_id == 0xFFFFFFFF) अणु
 		log_error(ls, "receive_rcom_lookup dump from %d", nodeid);
 		dlm_dump_rsb_name(ls, rc_in->rc_buf, len);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	error = dlm_master_lookup(ls, nodeid, rc_in->rc_buf, len,
-				  DLM_LU_RECOVER_MASTER, &ret_nodeid, NULL);
-	if (error)
+				  DLM_LU_RECOVER_MASTER, &ret_nodeid, शून्य);
+	अगर (error)
 		ret_nodeid = error;
 	rc->rc_result = ret_nodeid;
 	rc->rc_id = rc_in->rc_id;
 	rc->rc_seq_reply = rc_in->rc_seq;
 
 	send_rcom(ls, mh, rc);
-}
+पूर्ण
 
-static void receive_rcom_lookup_reply(struct dlm_ls *ls, struct dlm_rcom *rc_in)
-{
+अटल व्योम receive_rcom_lookup_reply(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc_in)
+अणु
 	dlm_recover_master_reply(ls, rc_in);
-}
+पूर्ण
 
-static void pack_rcom_lock(struct dlm_rsb *r, struct dlm_lkb *lkb,
-			   struct rcom_lock *rl)
-{
-	memset(rl, 0, sizeof(*rl));
+अटल व्योम pack_rcom_lock(काष्ठा dlm_rsb *r, काष्ठा dlm_lkb *lkb,
+			   काष्ठा rcom_lock *rl)
+अणु
+	स_रखो(rl, 0, माप(*rl));
 
 	rl->rl_ownpid = cpu_to_le32(lkb->lkb_ownpid);
 	rl->rl_lkid = cpu_to_le32(lkb->lkb_id);
@@ -382,87 +383,87 @@ static void pack_rcom_lock(struct dlm_rsb *r, struct dlm_lkb *lkb,
 	rl->rl_rqmode = lkb->lkb_rqmode;
 	rl->rl_grmode = lkb->lkb_grmode;
 	rl->rl_status = lkb->lkb_status;
-	rl->rl_wait_type = cpu_to_le16(lkb->lkb_wait_type);
+	rl->rl_रुको_type = cpu_to_le16(lkb->lkb_रुको_type);
 
-	if (lkb->lkb_bastfn)
+	अगर (lkb->lkb_bastfn)
 		rl->rl_asts |= DLM_CB_BAST;
-	if (lkb->lkb_astfn)
+	अगर (lkb->lkb_astfn)
 		rl->rl_asts |= DLM_CB_CAST;
 
 	rl->rl_namelen = cpu_to_le16(r->res_length);
-	memcpy(rl->rl_name, r->res_name, r->res_length);
+	स_नकल(rl->rl_name, r->res_name, r->res_length);
 
 	/* FIXME: might we have an lvb without DLM_LKF_VALBLK set ?
 	   If so, receive_rcom_lock_args() won't take this copy. */
 
-	if (lkb->lkb_lvbptr)
-		memcpy(rl->rl_lvb, lkb->lkb_lvbptr, r->res_ls->ls_lvblen);
-}
+	अगर (lkb->lkb_lvbptr)
+		स_नकल(rl->rl_lvb, lkb->lkb_lvbptr, r->res_ls->ls_lvblen);
+पूर्ण
 
-int dlm_send_rcom_lock(struct dlm_rsb *r, struct dlm_lkb *lkb)
-{
-	struct dlm_ls *ls = r->res_ls;
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	struct rcom_lock *rl;
-	int error, len = sizeof(struct rcom_lock);
+पूर्णांक dlm_send_rcom_lock(काष्ठा dlm_rsb *r, काष्ठा dlm_lkb *lkb)
+अणु
+	काष्ठा dlm_ls *ls = r->res_ls;
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	काष्ठा rcom_lock *rl;
+	पूर्णांक error, len = माप(काष्ठा rcom_lock);
 
-	if (lkb->lkb_lvbptr)
+	अगर (lkb->lkb_lvbptr)
 		len += ls->ls_lvblen;
 
 	error = create_rcom(ls, r->res_nodeid, DLM_RCOM_LOCK, len, &rc, &mh);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	rl = (struct rcom_lock *) rc->rc_buf;
+	rl = (काष्ठा rcom_lock *) rc->rc_buf;
 	pack_rcom_lock(r, lkb, rl);
-	rc->rc_id = (unsigned long) r;
+	rc->rc_id = (अचिन्हित दीर्घ) r;
 
 	send_rcom(ls, mh, rc);
  out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* needs at least dlm_rcom + rcom_lock */
-static void receive_rcom_lock(struct dlm_ls *ls, struct dlm_rcom *rc_in)
-{
-	struct dlm_rcom *rc;
-	struct dlm_mhandle *mh;
-	int error, nodeid = rc_in->rc_header.h_nodeid;
+अटल व्योम receive_rcom_lock(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc_in)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा dlm_mhandle *mh;
+	पूर्णांक error, nodeid = rc_in->rc_header.h_nodeid;
 
 	dlm_recover_master_copy(ls, rc_in);
 
 	error = create_rcom(ls, nodeid, DLM_RCOM_LOCK_REPLY,
-			    sizeof(struct rcom_lock), &rc, &mh);
-	if (error)
-		return;
+			    माप(काष्ठा rcom_lock), &rc, &mh);
+	अगर (error)
+		वापस;
 
-	/* We send back the same rcom_lock struct we received, but
+	/* We send back the same rcom_lock काष्ठा we received, but
 	   dlm_recover_master_copy() has filled in rl_remid and rl_result */
 
-	memcpy(rc->rc_buf, rc_in->rc_buf, sizeof(struct rcom_lock));
+	स_नकल(rc->rc_buf, rc_in->rc_buf, माप(काष्ठा rcom_lock));
 	rc->rc_id = rc_in->rc_id;
 	rc->rc_seq_reply = rc_in->rc_seq;
 
 	send_rcom(ls, mh, rc);
-}
+पूर्ण
 
-/* If the lockspace doesn't exist then still send a status message
+/* If the lockspace करोesn't exist then still send a status message
    back; it's possible that it just doesn't have its global_id yet. */
 
-int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
-{
-	struct dlm_rcom *rc;
-	struct rcom_config *rf;
-	struct dlm_mhandle *mh;
-	char *mb;
-	int mb_len = sizeof(struct dlm_rcom) + sizeof(struct rcom_config);
+पूर्णांक dlm_send_ls_not_पढ़ोy(पूर्णांक nodeid, काष्ठा dlm_rcom *rc_in)
+अणु
+	काष्ठा dlm_rcom *rc;
+	काष्ठा rcom_config *rf;
+	काष्ठा dlm_mhandle *mh;
+	अक्षर *mb;
+	पूर्णांक mb_len = माप(काष्ठा dlm_rcom) + माप(काष्ठा rcom_config);
 
 	mh = dlm_lowcomms_get_buffer(nodeid, mb_len, GFP_NOFS, &mb);
-	if (!mh)
-		return -ENOBUFS;
+	अगर (!mh)
+		वापस -ENOBUFS;
 
-	rc = (struct dlm_rcom *) mb;
+	rc = (काष्ठा dlm_rcom *) mb;
 
 	rc->rc_header.h_version = (DLM_HEADER_MAJOR | DLM_HEADER_MINOR);
 	rc->rc_header.h_lockspace = rc_in->rc_header.h_lockspace;
@@ -475,18 +476,18 @@ int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
 	rc->rc_seq_reply = rc_in->rc_seq;
 	rc->rc_result = -ESRCH;
 
-	rf = (struct rcom_config *) rc->rc_buf;
+	rf = (काष्ठा rcom_config *) rc->rc_buf;
 	rf->rf_lvblen = cpu_to_le32(~0U);
 
 	dlm_rcom_out(rc);
 	dlm_lowcomms_commit_buffer(mh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Ignore messages for stage Y before we set
- * recover_status bit for stage X:
+ * Ignore messages क्रम stage Y beक्रमe we set
+ * recover_status bit क्रम stage X:
  *
  * recover_status = 0
  *
@@ -499,7 +500,7 @@ int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
  *
  * recover_status |= NODES
  *
- * dlm_recover_members_wait()
+ * dlm_recover_members_रुको()
  *
  * dlm_recover_directory()
  * - send NAMES
@@ -507,9 +508,9 @@ int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
  * - ignore LOOKUP, LOOKUP_REPLY
  * - ignore LOCK, LOCK_REPLY
  *
- * recover_status |= DIR
+ * recover_status |= सूची
  *
- * dlm_recover_directory_wait()
+ * dlm_recover_directory_रुको()
  *
  * dlm_recover_masters()
  * - send LOOKUP
@@ -521,7 +522,7 @@ int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
  *
  * recover_status |= LOCKS
  *
- * dlm_recover_locks_wait()
+ * dlm_recover_locks_रुको()
  *
  * recover_status |= DONE
  */
@@ -529,39 +530,39 @@ int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
 /* Called by dlm_recv; corresponds to dlm_receive_message() but special
    recovery-only comms are sent through here. */
 
-void dlm_receive_rcom(struct dlm_ls *ls, struct dlm_rcom *rc, int nodeid)
-{
-	int lock_size = sizeof(struct dlm_rcom) + sizeof(struct rcom_lock);
-	int stop, reply = 0, names = 0, lookup = 0, lock = 0;
-	uint32_t status;
-	uint64_t seq;
+व्योम dlm_receive_rcom(काष्ठा dlm_ls *ls, काष्ठा dlm_rcom *rc, पूर्णांक nodeid)
+अणु
+	पूर्णांक lock_size = माप(काष्ठा dlm_rcom) + माप(काष्ठा rcom_lock);
+	पूर्णांक stop, reply = 0, names = 0, lookup = 0, lock = 0;
+	uपूर्णांक32_t status;
+	uपूर्णांक64_t seq;
 
-	switch (rc->rc_type) {
-	case DLM_RCOM_STATUS_REPLY:
+	चयन (rc->rc_type) अणु
+	हाल DLM_RCOM_STATUS_REPLY:
 		reply = 1;
-		break;
-	case DLM_RCOM_NAMES:
+		अवरोध;
+	हाल DLM_RCOM_NAMES:
 		names = 1;
-		break;
-	case DLM_RCOM_NAMES_REPLY:
+		अवरोध;
+	हाल DLM_RCOM_NAMES_REPLY:
 		names = 1;
 		reply = 1;
-		break;
-	case DLM_RCOM_LOOKUP:
+		अवरोध;
+	हाल DLM_RCOM_LOOKUP:
 		lookup = 1;
-		break;
-	case DLM_RCOM_LOOKUP_REPLY:
+		अवरोध;
+	हाल DLM_RCOM_LOOKUP_REPLY:
 		lookup = 1;
 		reply = 1;
-		break;
-	case DLM_RCOM_LOCK:
+		अवरोध;
+	हाल DLM_RCOM_LOCK:
 		lock = 1;
-		break;
-	case DLM_RCOM_LOCK_REPLY:
+		अवरोध;
+	हाल DLM_RCOM_LOCK_REPLY:
 		lock = 1;
 		reply = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_lock(&ls->ls_recover_lock);
 	status = ls->ls_recover_status;
@@ -569,72 +570,72 @@ void dlm_receive_rcom(struct dlm_ls *ls, struct dlm_rcom *rc, int nodeid)
 	seq = ls->ls_recover_seq;
 	spin_unlock(&ls->ls_recover_lock);
 
-	if (stop && (rc->rc_type != DLM_RCOM_STATUS))
-		goto ignore;
+	अगर (stop && (rc->rc_type != DLM_RCOM_STATUS))
+		जाओ ignore;
 
-	if (reply && (rc->rc_seq_reply != seq))
-		goto ignore;
+	अगर (reply && (rc->rc_seq_reply != seq))
+		जाओ ignore;
 
-	if (!(status & DLM_RS_NODES) && (names || lookup || lock))
-		goto ignore;
+	अगर (!(status & DLM_RS_NODES) && (names || lookup || lock))
+		जाओ ignore;
 
-	if (!(status & DLM_RS_DIR) && (lookup || lock))
-		goto ignore;
+	अगर (!(status & DLM_RS_सूची) && (lookup || lock))
+		जाओ ignore;
 
-	switch (rc->rc_type) {
-	case DLM_RCOM_STATUS:
+	चयन (rc->rc_type) अणु
+	हाल DLM_RCOM_STATUS:
 		receive_rcom_status(ls, rc);
-		break;
+		अवरोध;
 
-	case DLM_RCOM_NAMES:
+	हाल DLM_RCOM_NAMES:
 		receive_rcom_names(ls, rc);
-		break;
+		अवरोध;
 
-	case DLM_RCOM_LOOKUP:
+	हाल DLM_RCOM_LOOKUP:
 		receive_rcom_lookup(ls, rc);
-		break;
+		अवरोध;
 
-	case DLM_RCOM_LOCK:
-		if (rc->rc_header.h_length < lock_size)
-			goto Eshort;
+	हाल DLM_RCOM_LOCK:
+		अगर (rc->rc_header.h_length < lock_size)
+			जाओ Eलघु;
 		receive_rcom_lock(ls, rc);
-		break;
+		अवरोध;
 
-	case DLM_RCOM_STATUS_REPLY:
+	हाल DLM_RCOM_STATUS_REPLY:
 		receive_sync_reply(ls, rc);
-		break;
+		अवरोध;
 
-	case DLM_RCOM_NAMES_REPLY:
+	हाल DLM_RCOM_NAMES_REPLY:
 		receive_sync_reply(ls, rc);
-		break;
+		अवरोध;
 
-	case DLM_RCOM_LOOKUP_REPLY:
+	हाल DLM_RCOM_LOOKUP_REPLY:
 		receive_rcom_lookup_reply(ls, rc);
-		break;
+		अवरोध;
 
-	case DLM_RCOM_LOCK_REPLY:
-		if (rc->rc_header.h_length < lock_size)
-			goto Eshort;
+	हाल DLM_RCOM_LOCK_REPLY:
+		अगर (rc->rc_header.h_length < lock_size)
+			जाओ Eलघु;
 		dlm_recover_process_copy(ls, rc);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		log_error(ls, "receive_rcom bad type %d", rc->rc_type);
-	}
-	return;
+	पूर्ण
+	वापस;
 
 ignore:
 	log_limit(ls, "dlm_receive_rcom ignore msg %d "
 		  "from %d %llu %llu recover seq %llu sts %x gen %u",
 		   rc->rc_type,
 		   nodeid,
-		   (unsigned long long)rc->rc_seq,
-		   (unsigned long long)rc->rc_seq_reply,
-		   (unsigned long long)seq,
+		   (अचिन्हित दीर्घ दीर्घ)rc->rc_seq,
+		   (अचिन्हित दीर्घ दीर्घ)rc->rc_seq_reply,
+		   (अचिन्हित दीर्घ दीर्घ)seq,
 		   status, ls->ls_generation);
-	return;
-Eshort:
+	वापस;
+Eलघु:
 	log_error(ls, "recovery message %d from %d is too short",
 		  rc->rc_type, nodeid);
-}
+पूर्ण
 

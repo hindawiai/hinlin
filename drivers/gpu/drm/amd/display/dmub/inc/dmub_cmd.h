@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,246 +24,246 @@
  *
  */
 
-#ifndef _DMUB_CMD_H_
-#define _DMUB_CMD_H_
+#अगर_अघोषित _DMUB_CMD_H_
+#घोषणा _DMUB_CMD_H_
 
-#if defined(_TEST_HARNESS) || defined(FPGA_USB4)
-#include "dmub_fw_types.h"
-#include "include_legacy/atomfirmware.h"
+#अगर defined(_TEST_HARNESS) || defined(FPGA_USB4)
+#समावेश "dmub_fw_types.h"
+#समावेश "include_legacy/atomfirmware.h"
 
-#if defined(_TEST_HARNESS)
-#include <string.h>
-#endif
-#else
+#अगर defined(_TEST_HARNESS)
+#समावेश <माला.स>
+#पूर्ण_अगर
+#अन्यथा
 
-#include <asm/byteorder.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <stdarg.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <मानकतर्क.स>
 
-#include "atomfirmware.h"
+#समावेश "atomfirmware.h"
 
-#endif // defined(_TEST_HARNESS) || defined(FPGA_USB4)
+#पूर्ण_अगर // defined(_TEST_HARNESS) || defined(FPGA_USB4)
 
 /* Firmware versioning. */
-#ifdef DMUB_EXPOSE_VERSION
-#define DMUB_FW_VERSION_GIT_HASH 0x23db9b126
-#define DMUB_FW_VERSION_MAJOR 0
-#define DMUB_FW_VERSION_MINOR 0
-#define DMUB_FW_VERSION_REVISION 62
-#define DMUB_FW_VERSION_TEST 0
-#define DMUB_FW_VERSION_VBIOS 0
-#define DMUB_FW_VERSION_HOTFIX 0
-#define DMUB_FW_VERSION_UCODE (((DMUB_FW_VERSION_MAJOR & 0xFF) << 24) | \
+#अगर_घोषित DMUB_EXPOSE_VERSION
+#घोषणा DMUB_FW_VERSION_GIT_HASH 0x23db9b126
+#घोषणा DMUB_FW_VERSION_MAJOR 0
+#घोषणा DMUB_FW_VERSION_MINOR 0
+#घोषणा DMUB_FW_VERSION_REVISION 62
+#घोषणा DMUB_FW_VERSION_TEST 0
+#घोषणा DMUB_FW_VERSION_VBIOS 0
+#घोषणा DMUB_FW_VERSION_HOTFIX 0
+#घोषणा DMUB_FW_VERSION_UCODE (((DMUB_FW_VERSION_MAJOR & 0xFF) << 24) | \
 		((DMUB_FW_VERSION_MINOR & 0xFF) << 16) | \
 		((DMUB_FW_VERSION_REVISION & 0xFF) << 8) | \
 		((DMUB_FW_VERSION_TEST & 0x1) << 7) | \
 		((DMUB_FW_VERSION_VBIOS & 0x1) << 6) | \
 		(DMUB_FW_VERSION_HOTFIX & 0x3F))
 
-#endif
+#पूर्ण_अगर
 
 //<DMUB_TYPES>==================================================================
 /* Basic type definitions. */
 
-#define __forceinline inline
+#घोषणा __क्रमceअंतरभूत अंतरभूत
 
 /**
  * Flag from driver to indicate that ABM should be disabled gradually
  * by slowly reversing all backlight programming and pixel compensation.
  */
-#define SET_ABM_PIPE_GRADUALLY_DISABLE           0
+#घोषणा SET_ABM_PIPE_GRADUALLY_DISABLE           0
 
 /**
  * Flag from driver to indicate that ABM should be disabled immediately
- * and undo all backlight programming and pixel compensation.
+ * and unकरो all backlight programming and pixel compensation.
  */
-#define SET_ABM_PIPE_IMMEDIATELY_DISABLE         255
+#घोषणा SET_ABM_PIPE_IMMEDIATELY_DISABLE         255
 
 /**
  * Flag from driver to indicate that ABM should be disabled immediately
  * and keep the current backlight programming and pixel compensation.
  */
-#define SET_ABM_PIPE_IMMEDIATE_KEEP_GAIN_DISABLE 254
+#घोषणा SET_ABM_PIPE_IMMEDIATE_KEEP_GAIN_DISABLE 254
 
 /**
  * Flag from driver to set the current ABM pipe index or ABM operating level.
  */
-#define SET_ABM_PIPE_NORMAL                      1
+#घोषणा SET_ABM_PIPE_NORMAL                      1
 
 /**
  * Number of ambient light levels in ABM algorithm.
  */
-#define NUM_AMBI_LEVEL                  5
+#घोषणा NUM_AMBI_LEVEL                  5
 
 /**
  * Number of operating/aggression levels in ABM algorithm.
  */
-#define NUM_AGGR_LEVEL                  4
+#घोषणा NUM_AGGR_LEVEL                  4
 
 /**
  * Number of segments in the gamma curve.
  */
-#define NUM_POWER_FN_SEGS               8
+#घोषणा NUM_POWER_FN_SEGS               8
 
 /**
  * Number of segments in the backlight curve.
  */
-#define NUM_BL_CURVE_SEGS               16
+#घोषणा NUM_BL_CURVE_SEGS               16
 
 /* Maximum number of streams on any ASIC. */
-#define DMUB_MAX_STREAMS 6
+#घोषणा DMUB_MAX_STREAMS 6
 
 /* Maximum number of planes on any ASIC. */
-#define DMUB_MAX_PLANES 6
+#घोषणा DMUB_MAX_PLANES 6
 
-/* Trace buffer offset for entry */
-#define TRACE_BUFFER_ENTRY_OFFSET  16
+/* Trace buffer offset क्रम entry */
+#घोषणा TRACE_BUFFER_ENTRY_OFFSET  16
 
 /**
  * ABM backlight control version legacy
  */
-#define DMUB_CMD_ABM_SET_BACKLIGHT_VERSION_UNKNOWN 0x0
+#घोषणा DMUB_CMD_ABM_SET_BACKLIGHT_VERSION_UNKNOWN 0x0
 
 /**
  * ABM backlight control version with multi edp support
  */
-#define DMUB_CMD_ABM_SET_BACKLIGHT_VERSION_1 0x1
+#घोषणा DMUB_CMD_ABM_SET_BACKLIGHT_VERSION_1 0x1
 
 /**
  * Physical framebuffer address location, 64-bit.
  */
-#ifndef PHYSICAL_ADDRESS_LOC
-#define PHYSICAL_ADDRESS_LOC union large_integer
-#endif
+#अगर_अघोषित PHYSICAL_ADDRESS_LOC
+#घोषणा PHYSICAL_ADDRESS_LOC जोड़ large_पूर्णांकeger
+#पूर्ण_अगर
 
 /**
- * OS/FW agnostic memcpy
+ * OS/FW agnostic स_नकल
  */
-#ifndef dmub_memcpy
-#define dmub_memcpy(dest, source, bytes) memcpy((dest), (source), (bytes))
-#endif
+#अगर_अघोषित dmub_स_नकल
+#घोषणा dmub_स_नकल(dest, source, bytes) स_नकल((dest), (source), (bytes))
+#पूर्ण_अगर
 
 /**
- * OS/FW agnostic memset
+ * OS/FW agnostic स_रखो
  */
-#ifndef dmub_memset
-#define dmub_memset(dest, val, bytes) memset((dest), (val), (bytes))
-#endif
+#अगर_अघोषित dmub_स_रखो
+#घोषणा dmub_स_रखो(dest, val, bytes) स_रखो((dest), (val), (bytes))
+#पूर्ण_अगर
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#अगर defined(__cplusplus)
+बाह्य "C" अणु
+#पूर्ण_अगर
 
 /**
  * OS/FW agnostic udelay
  */
-#ifndef dmub_udelay
-#define dmub_udelay(microseconds) udelay(microseconds)
-#endif
+#अगर_अघोषित dmub_udelay
+#घोषणा dmub_udelay(microseconds) udelay(microseconds)
+#पूर्ण_अगर
 
 /**
- * union dmub_addr - DMUB physical/virtual 64-bit address.
+ * जोड़ dmub_addr - DMUB physical/भव 64-bit address.
  */
-union dmub_addr {
-	struct {
-		uint32_t low_part; /**< Lower 32 bits */
-		uint32_t high_part; /**< Upper 32 bits */
-	} u; /*<< Low/high bit access */
-	uint64_t quad_part; /*<< 64 bit address */
-};
+जोड़ dmub_addr अणु
+	काष्ठा अणु
+		uपूर्णांक32_t low_part; /**< Lower 32 bits */
+		uपूर्णांक32_t high_part; /**< Upper 32 bits */
+	पूर्ण u; /*<< Low/high bit access */
+	uपूर्णांक64_t quad_part; /*<< 64 bit address */
+पूर्ण;
 
 /**
  * Flags that can be set by driver to change some PSR behaviour.
  */
-union dmub_psr_debug_flags {
+जोड़ dmub_psr_debug_flags अणु
 	/**
 	 * Debug flags.
 	 */
-	struct {
+	काष्ठा अणु
 		/**
 		 * Enable visual confirm in FW.
 		 */
-		uint32_t visual_confirm : 1;
+		uपूर्णांक32_t visual_confirm : 1;
 		/**
-		 * Use HW Lock Mgr object to do HW locking in FW.
+		 * Use HW Lock Mgr object to करो HW locking in FW.
 		 */
-		uint32_t use_hw_lock_mgr : 1;
+		uपूर्णांक32_t use_hw_lock_mgr : 1;
 
 		/**
 		 * Unused.
 		 * TODO: Remove.
 		 */
-		uint32_t log_line_nums : 1;
-	} bitfields;
+		uपूर्णांक32_t log_line_nums : 1;
+	पूर्ण bitfields;
 
 	/**
-	 * Union for debug flags.
+	 * Union क्रम debug flags.
 	 */
-	uint32_t u32All;
-};
+	uपूर्णांक32_t u32All;
+पूर्ण;
 
 /**
  * DMUB feature capabilities.
  * After DMUB init, driver will query FW capabilities prior to enabling certain features.
  */
-struct dmub_feature_caps {
+काष्ठा dmub_feature_caps अणु
 	/**
 	 * Max PSR version supported by FW.
 	 */
-	uint8_t psr;
-	uint8_t reserved[7];
-};
+	uपूर्णांक8_t psr;
+	uपूर्णांक8_t reserved[7];
+पूर्ण;
 
-#if defined(__cplusplus)
-}
-#endif
+#अगर defined(__cplusplus)
+पूर्ण
+#पूर्ण_अगर
 
 //==============================================================================
 //</DMUB_TYPES>=================================================================
 //==============================================================================
 //< DMUB_META>==================================================================
 //==============================================================================
-#pragma pack(push, 1)
+#आशय pack(push, 1)
 
-/* Magic value for identifying dmub_fw_meta_info */
-#define DMUB_FW_META_MAGIC 0x444D5542
+/* Magic value क्रम identअगरying dmub_fw_meta_info */
+#घोषणा DMUB_FW_META_MAGIC 0x444D5542
 
 /* Offset from the end of the file to the dmub_fw_meta_info */
-#define DMUB_FW_META_OFFSET 0x24
+#घोषणा DMUB_FW_META_OFFSET 0x24
 
 /**
- * struct dmub_fw_meta_info - metadata associated with fw binary
+ * काष्ठा dmub_fw_meta_info - metadata associated with fw binary
  *
  * NOTE: This should be considered a stable API. Fields should
  *       not be repurposed or reordered. New fields should be
- *       added instead to extend the structure.
+ *       added instead to extend the काष्ठाure.
  *
- * @magic_value: magic value identifying DMUB firmware meta info
+ * @magic_value: magic value identअगरying DMUB firmware meta info
  * @fw_region_size: size of the firmware state region
  * @trace_buffer_size: size of the tracebuffer region
- * @fw_version: the firmware version information
- * @dal_fw: 1 if the firmware is DAL
+ * @fw_version: the firmware version inक्रमmation
+ * @dal_fw: 1 अगर the firmware is DAL
  */
-struct dmub_fw_meta_info {
-	uint32_t magic_value; /**< magic value identifying DMUB firmware meta info */
-	uint32_t fw_region_size; /**< size of the firmware state region */
-	uint32_t trace_buffer_size; /**< size of the tracebuffer region */
-	uint32_t fw_version; /**< the firmware version information */
-	uint8_t dal_fw; /**< 1 if the firmware is DAL */
-	uint8_t reserved[3]; /**< padding bits */
-};
+काष्ठा dmub_fw_meta_info अणु
+	uपूर्णांक32_t magic_value; /**< magic value identअगरying DMUB firmware meta info */
+	uपूर्णांक32_t fw_region_size; /**< size of the firmware state region */
+	uपूर्णांक32_t trace_buffer_size; /**< size of the tracebuffer region */
+	uपूर्णांक32_t fw_version; /**< the firmware version inक्रमmation */
+	uपूर्णांक8_t dal_fw; /**< 1 अगर the firmware is DAL */
+	uपूर्णांक8_t reserved[3]; /**< padding bits */
+पूर्ण;
 
 /**
- * union dmub_fw_meta - ensures that dmub_fw_meta_info remains 64 bytes
+ * जोड़ dmub_fw_meta - ensures that dmub_fw_meta_info reमुख्यs 64 bytes
  */
-union dmub_fw_meta {
-	struct dmub_fw_meta_info info; /**< metadata info */
-	uint8_t reserved[64]; /**< padding bits */
-};
+जोड़ dmub_fw_meta अणु
+	काष्ठा dmub_fw_meta_info info; /**< metadata info */
+	uपूर्णांक8_t reserved[64]; /**< padding bits */
+पूर्ण;
 
-#pragma pack(pop)
+#आशय pack(pop)
 
 //==============================================================================
 //< DMUB Trace Buffer>================================================================
@@ -270,74 +271,74 @@ union dmub_fw_meta {
 /**
  * dmub_trace_code_t - firmware trace code, 32-bits
  */
-typedef uint32_t dmub_trace_code_t;
+प्रकार uपूर्णांक32_t dmub_trace_code_t;
 
 /**
- * struct dmcub_trace_buf_entry - Firmware trace entry
+ * काष्ठा dmcub_trace_buf_entry - Firmware trace entry
  */
-struct dmcub_trace_buf_entry {
-	dmub_trace_code_t trace_code; /**< trace code for the event */
-	uint32_t tick_count; /**< the tick count at time of trace */
-	uint32_t param0; /**< trace defined parameter 0 */
-	uint32_t param1; /**< trace defined parameter 1 */
-};
+काष्ठा dmcub_trace_buf_entry अणु
+	dmub_trace_code_t trace_code; /**< trace code क्रम the event */
+	uपूर्णांक32_t tick_count; /**< the tick count at समय of trace */
+	uपूर्णांक32_t param0; /**< trace defined parameter 0 */
+	uपूर्णांक32_t param1; /**< trace defined parameter 1 */
+पूर्ण;
 
 //==============================================================================
 //< DMUB_STATUS>================================================================
 //==============================================================================
 
 /**
- * DMCUB scratch registers can be used to determine firmware status.
- * Current scratch register usage is as follows:
+ * DMCUB scratch रेजिस्टरs can be used to determine firmware status.
+ * Current scratch रेजिस्टर usage is as follows:
  *
- * SCRATCH0: FW Boot Status register
- * SCRATCH15: FW Boot Options register
+ * SCRATCH0: FW Boot Status रेजिस्टर
+ * SCRATCH15: FW Boot Options रेजिस्टर
  */
 
 /**
- * union dmub_fw_boot_status - Status bit definitions for SCRATCH0.
+ * जोड़ dmub_fw_boot_status - Status bit definitions क्रम SCRATCH0.
  */
-union dmub_fw_boot_status {
-	struct {
-		uint32_t dal_fw : 1; /**< 1 if DAL FW */
-		uint32_t mailbox_rdy : 1; /**< 1 if mailbox ready */
-		uint32_t optimized_init_done : 1; /**< 1 if optimized init done */
-		uint32_t restore_required : 1; /**< 1 if driver should call restore */
-	} bits; /**< status bits */
-	uint32_t all; /**< 32-bit access to status bits */
-};
+जोड़ dmub_fw_boot_status अणु
+	काष्ठा अणु
+		uपूर्णांक32_t dal_fw : 1; /**< 1 अगर DAL FW */
+		uपूर्णांक32_t mailbox_rdy : 1; /**< 1 अगर mailbox पढ़ोy */
+		uपूर्णांक32_t optimized_init_करोne : 1; /**< 1 अगर optimized init करोne */
+		uपूर्णांक32_t restore_required : 1; /**< 1 अगर driver should call restore */
+	पूर्ण bits; /**< status bits */
+	uपूर्णांक32_t all; /**< 32-bit access to status bits */
+पूर्ण;
 
 /**
- * enum dmub_fw_boot_status_bit - Enum bit definitions for SCRATCH0.
+ * क्रमागत dmub_fw_boot_status_bit - Enum bit definitions क्रम SCRATCH0.
  */
-enum dmub_fw_boot_status_bit {
-	DMUB_FW_BOOT_STATUS_BIT_DAL_FIRMWARE = (1 << 0), /**< 1 if DAL FW */
-	DMUB_FW_BOOT_STATUS_BIT_MAILBOX_READY = (1 << 1), /**< 1 if mailbox ready */
-	DMUB_FW_BOOT_STATUS_BIT_OPTIMIZED_INIT_DONE = (1 << 2), /**< 1 if init done */
-	DMUB_FW_BOOT_STATUS_BIT_RESTORE_REQUIRED = (1 << 3), /**< 1 if driver should call restore */
-};
+क्रमागत dmub_fw_boot_status_bit अणु
+	DMUB_FW_BOOT_STATUS_BIT_DAL_FIRMWARE = (1 << 0), /**< 1 अगर DAL FW */
+	DMUB_FW_BOOT_STATUS_BIT_MAILBOX_READY = (1 << 1), /**< 1 अगर mailbox पढ़ोy */
+	DMUB_FW_BOOT_STATUS_BIT_OPTIMIZED_INIT_DONE = (1 << 2), /**< 1 अगर init करोne */
+	DMUB_FW_BOOT_STATUS_BIT_RESTORE_REQUIRED = (1 << 3), /**< 1 अगर driver should call restore */
+पूर्ण;
 
 /**
- * union dmub_fw_boot_options - Boot option definitions for SCRATCH15
+ * जोड़ dmub_fw_boot_options - Boot option definitions क्रम SCRATCH15
  */
-union dmub_fw_boot_options {
-	struct {
-		uint32_t pemu_env : 1; /**< 1 if PEMU */
-		uint32_t fpga_env : 1; /**< 1 if FPGA */
-		uint32_t optimized_init : 1; /**< 1 if optimized init */
-		uint32_t skip_phy_access : 1; /**< 1 if PHY access should be skipped */
-		uint32_t disable_clk_gate: 1; /**< 1 if clock gating should be disabled */
-		uint32_t skip_phy_init_panel_sequence: 1; /**< 1 to skip panel init seq */
-		uint32_t reserved : 26; /**< reserved */
-	} bits; /**< boot bits */
-	uint32_t all; /**< 32-bit access to bits */
-};
+जोड़ dmub_fw_boot_options अणु
+	काष्ठा अणु
+		uपूर्णांक32_t pemu_env : 1; /**< 1 अगर PEMU */
+		uपूर्णांक32_t fpga_env : 1; /**< 1 अगर FPGA */
+		uपूर्णांक32_t optimized_init : 1; /**< 1 अगर optimized init */
+		uपूर्णांक32_t skip_phy_access : 1; /**< 1 अगर PHY access should be skipped */
+		uपूर्णांक32_t disable_clk_gate: 1; /**< 1 अगर घड़ी gating should be disabled */
+		uपूर्णांक32_t skip_phy_init_panel_sequence: 1; /**< 1 to skip panel init seq */
+		uपूर्णांक32_t reserved : 26; /**< reserved */
+	पूर्ण bits; /**< boot bits */
+	uपूर्णांक32_t all; /**< 32-bit access to bits */
+पूर्ण;
 
-enum dmub_fw_boot_options_bit {
-	DMUB_FW_BOOT_OPTION_BIT_PEMU_ENV = (1 << 0), /**< 1 if PEMU */
-	DMUB_FW_BOOT_OPTION_BIT_FPGA_ENV = (1 << 1), /**< 1 if FPGA */
-	DMUB_FW_BOOT_OPTION_BIT_OPTIMIZED_INIT_DONE = (1 << 2), /**< 1 if optimized init done */
-};
+क्रमागत dmub_fw_boot_options_bit अणु
+	DMUB_FW_BOOT_OPTION_BIT_PEMU_ENV = (1 << 0), /**< 1 अगर PEMU */
+	DMUB_FW_BOOT_OPTION_BIT_FPGA_ENV = (1 << 1), /**< 1 अगर FPGA */
+	DMUB_FW_BOOT_OPTION_BIT_OPTIMIZED_INIT_DONE = (1 << 2), /**< 1 अगर optimized init करोne */
+पूर्ण;
 
 //==============================================================================
 //</DMUB_STATUS>================================================================
@@ -346,12 +347,12 @@ enum dmub_fw_boot_options_bit {
 //==============================================================================
 
 /*
- * enum dmub_cmd_vbios_type - VBIOS commands.
+ * क्रमागत dmub_cmd_vbios_type - VBIOS commands.
  *
  * Command IDs should be treated as stable ABI.
- * Do not reuse or modify IDs.
+ * Do not reuse or modअगरy IDs.
  */
-enum dmub_cmd_vbios_type {
+क्रमागत dmub_cmd_vbios_type अणु
 	/**
 	 * Configures the DIG encoder.
 	 */
@@ -361,15 +362,15 @@ enum dmub_cmd_vbios_type {
 	 */
 	DMUB_CMD__VBIOS_DIG1_TRANSMITTER_CONTROL = 1,
 	/**
-	 * Sets the pixel clock/symbol clock.
+	 * Sets the pixel घड़ी/symbol घड़ी.
 	 */
 	DMUB_CMD__VBIOS_SET_PIXEL_CLOCK = 2,
 	/**
-	 * Enables or disables power gating.
+	 * Enables or disables घातer gating.
 	 */
 	DMUB_CMD__VBIOS_ENABLE_DISP_POWER_GATING = 3,
 	DMUB_CMD__VBIOS_LVTMA_CONTROL = 15,
-};
+पूर्ण;
 
 //==============================================================================
 //</DMUB_VBIOS>=================================================================
@@ -378,47 +379,47 @@ enum dmub_cmd_vbios_type {
 //==============================================================================
 
 /**
- * The shifts and masks below may alternatively be used to format and read
- * the command register bits.
+ * The shअगरts and masks below may alternatively be used to क्रमmat and पढ़ो
+ * the command रेजिस्टर bits.
  */
 
-#define DMUB_GPINT_DATA_PARAM_MASK 0xFFFF
-#define DMUB_GPINT_DATA_PARAM_SHIFT 0
+#घोषणा DMUB_GPINT_DATA_PARAM_MASK 0xFFFF
+#घोषणा DMUB_GPINT_DATA_PARAM_SHIFT 0
 
-#define DMUB_GPINT_DATA_COMMAND_CODE_MASK 0xFFF
-#define DMUB_GPINT_DATA_COMMAND_CODE_SHIFT 16
+#घोषणा DMUB_GPINT_DATA_COMMAND_CODE_MASK 0xFFF
+#घोषणा DMUB_GPINT_DATA_COMMAND_CODE_SHIFT 16
 
-#define DMUB_GPINT_DATA_STATUS_MASK 0xF
-#define DMUB_GPINT_DATA_STATUS_SHIFT 28
+#घोषणा DMUB_GPINT_DATA_STATUS_MASK 0xF
+#घोषणा DMUB_GPINT_DATA_STATUS_SHIFT 28
 
 /**
  * Command responses.
  */
 
 /**
- * Return response for DMUB_GPINT__STOP_FW command.
+ * Return response क्रम DMUB_GPINT__STOP_FW command.
  */
-#define DMUB_GPINT__STOP_FW_RESPONSE 0xDEADDEAD
+#घोषणा DMUB_GPINT__STOP_FW_RESPONSE 0xDEADDEAD
 
 /**
- * union dmub_gpint_data_register - Format for sending a command via the GPINT.
+ * जोड़ dmub_gpपूर्णांक_data_रेजिस्टर - Format क्रम sending a command via the GPINT.
  */
-union dmub_gpint_data_register {
-	struct {
-		uint32_t param : 16; /**< 16-bit parameter */
-		uint32_t command_code : 12; /**< GPINT command */
-		uint32_t status : 4; /**< Command status bit */
-	} bits; /**< GPINT bit access */
-	uint32_t all; /**< GPINT  32-bit access */
-};
+जोड़ dmub_gpपूर्णांक_data_रेजिस्टर अणु
+	काष्ठा अणु
+		uपूर्णांक32_t param : 16; /**< 16-bit parameter */
+		uपूर्णांक32_t command_code : 12; /**< GPINT command */
+		uपूर्णांक32_t status : 4; /**< Command status bit */
+	पूर्ण bits; /**< GPINT bit access */
+	uपूर्णांक32_t all; /**< GPINT  32-bit access */
+पूर्ण;
 
 /*
- * enum dmub_gpint_command - GPINT command to DMCUB FW
+ * क्रमागत dmub_gpपूर्णांक_command - GPINT command to DMCUB FW
  *
  * Command IDs should be treated as stable ABI.
- * Do not reuse or modify IDs.
+ * Do not reuse or modअगरy IDs.
  */
-enum dmub_gpint_command {
+क्रमागत dmub_gpपूर्णांक_command अणु
 	/**
 	 * Invalid command, ignored.
 	 */
@@ -435,22 +436,22 @@ enum dmub_gpint_command {
 	DMUB_GPINT__STOP_FW = 2,
 	/**
 	 * DESC: Get PSR state from FW.
-	 * RETURN: PSR state enum. This enum may need to be converted to the legacy PSR state value.
+	 * RETURN: PSR state क्रमागत. This क्रमागत may need to be converted to the legacy PSR state value.
 	 */
 	DMUB_GPINT__GET_PSR_STATE = 7,
 	/**
-	 * DESC: Notifies DMCUB of the currently active streams.
+	 * DESC: Notअगरies DMCUB of the currently active streams.
 	 * ARGS: Stream mask, 1 bit per active stream index.
 	 */
 	DMUB_GPINT__IDLE_OPT_NOTIFY_STREAM_MASK = 8,
 	/**
 	 * DESC: Start PSR residency counter. Stop PSR resdiency counter and get value.
-	 * ARGS: We can measure residency from various points. The argument will specify the residency mode.
-	 *       By default, it is measured from after we powerdown the PHY, to just before we powerup the PHY.
+	 * ARGS: We can measure residency from various poपूर्णांकs. The argument will specअगरy the residency mode.
+	 *       By शेष, it is measured from after we घातerकरोwn the PHY, to just beक्रमe we घातerup the PHY.
 	 * RETURN: PSR residency in milli-percent.
 	 */
 	DMUB_GPINT__PSR_RESIDENCY = 9,
-};
+पूर्ण;
 
 //==============================================================================
 //</DMUB_GPINT>=================================================================
@@ -461,52 +462,52 @@ enum dmub_gpint_command {
 /**
  * Size in bytes of each DMUB command.
  */
-#define DMUB_RB_CMD_SIZE 64
+#घोषणा DMUB_RB_CMD_SIZE 64
 
 /**
  * Maximum number of items in the DMUB ringbuffer.
  */
-#define DMUB_RB_MAX_ENTRY 128
+#घोषणा DMUB_RB_MAX_ENTRY 128
 
 /**
  * Ringbuffer size in bytes.
  */
-#define DMUB_RB_SIZE (DMUB_RB_CMD_SIZE * DMUB_RB_MAX_ENTRY)
+#घोषणा DMUB_RB_SIZE (DMUB_RB_CMD_SIZE * DMUB_RB_MAX_ENTRY)
 
 /**
- * REG_SET mask for reg offload.
+ * REG_SET mask क्रम reg offload.
  */
-#define REG_SET_MASK 0xFFFF
+#घोषणा REG_SET_MASK 0xFFFF
 
 /*
- * enum dmub_cmd_type - DMUB inbox command.
+ * क्रमागत dmub_cmd_type - DMUB inbox command.
  *
  * Command IDs should be treated as stable ABI.
- * Do not reuse or modify IDs.
+ * Do not reuse or modअगरy IDs.
  */
-enum dmub_cmd_type {
+क्रमागत dmub_cmd_type अणु
 	/**
 	 * Invalid command.
 	 */
-	DMUB_CMD__NULL = 0,
+	DMUB_CMD__शून्य = 0,
 	/**
-	 * Read modify write register sequence offload.
+	 * Read modअगरy ग_लिखो रेजिस्टर sequence offload.
 	 */
 	DMUB_CMD__REG_SEQ_READ_MODIFY_WRITE = 1,
 	/**
-	 * Field update register sequence offload.
+	 * Field update रेजिस्टर sequence offload.
 	 */
 	DMUB_CMD__REG_SEQ_FIELD_UPDATE_SEQ = 2,
 	/**
-	 * Burst write sequence offload.
+	 * Burst ग_लिखो sequence offload.
 	 */
 	DMUB_CMD__REG_SEQ_BURST_WRITE = 3,
 	/**
-	 * Reg wait sequence offload.
+	 * Reg रुको sequence offload.
 	 */
 	DMUB_CMD__REG_REG_WAIT = 4,
 	/**
-	 * Workaround to avoid HUBP underflow during NV12 playback.
+	 * Workaround to aव्योम HUBP underflow during NV12 playback.
 	 */
 	DMUB_CMD__PLAT_54186_WA = 5,
 	/**
@@ -514,19 +515,19 @@ enum dmub_cmd_type {
 	 */
 	DMUB_CMD__QUERY_FEATURE_CAPS = 6,
 	/**
-	 * Command type used for all PSR commands.
+	 * Command type used क्रम all PSR commands.
 	 */
 	DMUB_CMD__PSR = 64,
 	/**
-	 * Command type used for all MALL commands.
+	 * Command type used क्रम all MALL commands.
 	 */
 	DMUB_CMD__MALL = 65,
 	/**
-	 * Command type used for all ABM commands.
+	 * Command type used क्रम all ABM commands.
 	 */
 	DMUB_CMD__ABM = 66,
 	/**
-	 * Command type used for HW locking in FW.
+	 * Command type used क्रम HW locking in FW.
 	 */
 	DMUB_CMD__HW_LOCK = 69,
 	/**
@@ -534,344 +535,344 @@ enum dmub_cmd_type {
 	 */
 	DMUB_CMD__DP_AUX_ACCESS = 70,
 	/**
-	 * Command type used for OUTBOX1 notification enable
+	 * Command type used क्रम OUTBOX1 notअगरication enable
 	 */
 	DMUB_CMD__OUTBOX1_ENABLE = 71,
 	/**
-	 * Command type used for all VBIOS interface commands.
+	 * Command type used क्रम all VBIOS पूर्णांकerface commands.
 	 */
 	DMUB_CMD__VBIOS = 128,
-};
+पूर्ण;
 
 /**
- * enum dmub_out_cmd_type - DMUB outbox commands.
+ * क्रमागत dmub_out_cmd_type - DMUB outbox commands.
  */
-enum dmub_out_cmd_type {
+क्रमागत dmub_out_cmd_type अणु
 	/**
 	 * Invalid outbox command, ignored.
 	 */
-	DMUB_OUT_CMD__NULL = 0,
+	DMUB_OUT_CMD__शून्य = 0,
 	/**
-	 * Command type used for DP AUX Reply data notification
+	 * Command type used क्रम DP AUX Reply data notअगरication
 	 */
 	DMUB_OUT_CMD__DP_AUX_REPLY = 1,
 	/**
-	 * Command type used for DP HPD event notification
+	 * Command type used क्रम DP HPD event notअगरication
 	 */
 	DMUB_OUT_CMD__DP_HPD_NOTIFY = 2,
-};
+पूर्ण;
 
-#pragma pack(push, 1)
+#आशय pack(push, 1)
 
 /**
- * struct dmub_cmd_header - Common command header fields.
+ * काष्ठा dmub_cmd_header - Common command header fields.
  */
-struct dmub_cmd_header {
-	unsigned int type : 8; /**< command type */
-	unsigned int sub_type : 8; /**< command sub type */
-	unsigned int ret_status : 1; /**< 1 if returned data, 0 otherwise */
-	unsigned int reserved0 : 7; /**< reserved bits */
-	unsigned int payload_bytes : 6;  /* payload excluding header - up to 60 bytes */
-	unsigned int reserved1 : 2; /**< reserved bits */
-};
+काष्ठा dmub_cmd_header अणु
+	अचिन्हित पूर्णांक type : 8; /**< command type */
+	अचिन्हित पूर्णांक sub_type : 8; /**< command sub type */
+	अचिन्हित पूर्णांक ret_status : 1; /**< 1 अगर वापसed data, 0 otherwise */
+	अचिन्हित पूर्णांक reserved0 : 7; /**< reserved bits */
+	अचिन्हित पूर्णांक payload_bytes : 6;  /* payload excluding header - up to 60 bytes */
+	अचिन्हित पूर्णांक reserved1 : 2; /**< reserved bits */
+पूर्ण;
 
 /*
- * struct dmub_cmd_read_modify_write_sequence - Read modify write
+ * काष्ठा dmub_cmd_पढ़ो_modअगरy_ग_लिखो_sequence - Read modअगरy ग_लिखो
  *
- * 60 payload bytes can hold up to 5 sets of read modify writes,
+ * 60 payload bytes can hold up to 5 sets of पढ़ो modअगरy ग_लिखोs,
  * each take 3 dwords.
  *
- * number of sequences = header.payload_bytes / sizeof(struct dmub_cmd_read_modify_write_sequence)
+ * number of sequences = header.payload_bytes / माप(काष्ठा dmub_cmd_पढ़ो_modअगरy_ग_लिखो_sequence)
  *
- * modify_mask = 0xffff'ffff means all fields are going to be updated.  in this case
- * command parser will skip the read and we can use modify_mask = 0xffff'ffff as reg write
+ * modअगरy_mask = 0xffff'ffff means all fields are going to be updated.  in this हाल
+ * command parser will skip the पढ़ो and we can use modअगरy_mask = 0xffff'ffff as reg ग_लिखो
  */
-struct dmub_cmd_read_modify_write_sequence {
-	uint32_t addr; /**< register address */
-	uint32_t modify_mask; /**< modify mask */
-	uint32_t modify_value; /**< modify value */
-};
+काष्ठा dmub_cmd_पढ़ो_modअगरy_ग_लिखो_sequence अणु
+	uपूर्णांक32_t addr; /**< रेजिस्टर address */
+	uपूर्णांक32_t modअगरy_mask; /**< modअगरy mask */
+	uपूर्णांक32_t modअगरy_value; /**< modअगरy value */
+पूर्ण;
 
 /**
- * Maximum number of ops in read modify write sequence.
+ * Maximum number of ops in पढ़ो modअगरy ग_लिखो sequence.
  */
-#define DMUB_READ_MODIFY_WRITE_SEQ__MAX 5
+#घोषणा DMUB_READ_MODIFY_WRITE_SEQ__MAX 5
 
 /**
- * struct dmub_cmd_read_modify_write_sequence - Read modify write command.
+ * काष्ठा dmub_cmd_पढ़ो_modअगरy_ग_लिखो_sequence - Read modअगरy ग_लिखो command.
  */
-struct dmub_rb_cmd_read_modify_write {
-	struct dmub_cmd_header header;  /**< command header */
+काष्ठा dmub_rb_cmd_पढ़ो_modअगरy_ग_लिखो अणु
+	काष्ठा dmub_cmd_header header;  /**< command header */
 	/**
-	 * Read modify write sequence.
+	 * Read modअगरy ग_लिखो sequence.
 	 */
-	struct dmub_cmd_read_modify_write_sequence seq[DMUB_READ_MODIFY_WRITE_SEQ__MAX];
-};
+	काष्ठा dmub_cmd_पढ़ो_modअगरy_ग_लिखो_sequence seq[DMUB_READ_MODIFY_WRITE_SEQ__MAX];
+पूर्ण;
 
 /*
- * Update a register with specified masks and values sequeunce
+ * Update a रेजिस्टर with specअगरied masks and values sequeunce
  *
  * 60 payload bytes can hold address + up to 7 sets of mask/value combo, each take 2 dword
  *
- * number of field update sequence = (header.payload_bytes - sizeof(addr)) / sizeof(struct read_modify_write_sequence)
+ * number of field update sequence = (header.payload_bytes - माप(addr)) / माप(काष्ठा पढ़ो_modअगरy_ग_लिखो_sequence)
  *
  *
  * USE CASE:
- *   1. auto-increment register where additional read would update pointer and produce wrong result
- *   2. toggle a bit without read in the middle
+ *   1. स्वतः-increment रेजिस्टर where additional पढ़ो would update poपूर्णांकer and produce wrong result
+ *   2. toggle a bit without पढ़ो in the middle
  */
 
-struct dmub_cmd_reg_field_update_sequence {
-	uint32_t modify_mask; /**< 0xffff'ffff to skip initial read */
-	uint32_t modify_value; /**< value to update with */
-};
+काष्ठा dmub_cmd_reg_field_update_sequence अणु
+	uपूर्णांक32_t modअगरy_mask; /**< 0xffff'ffff to skip initial पढ़ो */
+	uपूर्णांक32_t modअगरy_value; /**< value to update with */
+पूर्ण;
 
 /**
  * Maximum number of ops in field update sequence.
  */
-#define DMUB_REG_FIELD_UPDATE_SEQ__MAX 7
+#घोषणा DMUB_REG_FIELD_UPDATE_SEQ__MAX 7
 
 /**
- * struct dmub_rb_cmd_reg_field_update_sequence - Field update command.
+ * काष्ठा dmub_rb_cmd_reg_field_update_sequence - Field update command.
  */
-struct dmub_rb_cmd_reg_field_update_sequence {
-	struct dmub_cmd_header header; /**< command header */
-	uint32_t addr; /**< register address */
+काष्ठा dmub_rb_cmd_reg_field_update_sequence अणु
+	काष्ठा dmub_cmd_header header; /**< command header */
+	uपूर्णांक32_t addr; /**< रेजिस्टर address */
 	/**
 	 * Field update sequence.
 	 */
-	struct dmub_cmd_reg_field_update_sequence seq[DMUB_REG_FIELD_UPDATE_SEQ__MAX];
-};
+	काष्ठा dmub_cmd_reg_field_update_sequence seq[DMUB_REG_FIELD_UPDATE_SEQ__MAX];
+पूर्ण;
 
 
 /**
- * Maximum number of burst write values.
+ * Maximum number of burst ग_लिखो values.
  */
-#define DMUB_BURST_WRITE_VALUES__MAX  14
+#घोषणा DMUB_BURST_WRITE_VALUES__MAX  14
 
 /*
- * struct dmub_rb_cmd_burst_write - Burst write
+ * काष्ठा dmub_rb_cmd_burst_ग_लिखो - Burst ग_लिखो
  *
- * support use case such as writing out LUTs.
+ * support use हाल such as writing out LUTs.
  *
- * 60 payload bytes can hold up to 14 values to write to given address
+ * 60 payload bytes can hold up to 14 values to ग_लिखो to given address
  *
- * number of payload = header.payload_bytes / sizeof(struct read_modify_write_sequence)
+ * number of payload = header.payload_bytes / माप(काष्ठा पढ़ो_modअगरy_ग_लिखो_sequence)
  */
-struct dmub_rb_cmd_burst_write {
-	struct dmub_cmd_header header; /**< command header */
-	uint32_t addr; /**< register start address */
+काष्ठा dmub_rb_cmd_burst_ग_लिखो अणु
+	काष्ठा dmub_cmd_header header; /**< command header */
+	uपूर्णांक32_t addr; /**< रेजिस्टर start address */
 	/**
-	 * Burst write register values.
+	 * Burst ग_लिखो रेजिस्टर values.
 	 */
-	uint32_t write_values[DMUB_BURST_WRITE_VALUES__MAX];
-};
+	uपूर्णांक32_t ग_लिखो_values[DMUB_BURST_WRITE_VALUES__MAX];
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_common - Common command header
+ * काष्ठा dmub_rb_cmd_common - Common command header
  */
-struct dmub_rb_cmd_common {
-	struct dmub_cmd_header header; /**< command header */
+काष्ठा dmub_rb_cmd_common अणु
+	काष्ठा dmub_cmd_header header; /**< command header */
 	/**
 	 * Padding to RB_CMD_SIZE
 	 */
-	uint8_t cmd_buffer[DMUB_RB_CMD_SIZE - sizeof(struct dmub_cmd_header)];
-};
+	uपूर्णांक8_t cmd_buffer[DMUB_RB_CMD_SIZE - माप(काष्ठा dmub_cmd_header)];
+पूर्ण;
 
 /**
- * struct dmub_cmd_reg_wait_data - Register wait data
+ * काष्ठा dmub_cmd_reg_रुको_data - Register रुको data
  */
-struct dmub_cmd_reg_wait_data {
-	uint32_t addr; /**< Register address */
-	uint32_t mask; /**< Mask for register bits */
-	uint32_t condition_field_value; /**< Value to wait for */
-	uint32_t time_out_us; /**< Time out for reg wait in microseconds */
-};
+काष्ठा dmub_cmd_reg_रुको_data अणु
+	uपूर्णांक32_t addr; /**< Register address */
+	uपूर्णांक32_t mask; /**< Mask क्रम रेजिस्टर bits */
+	uपूर्णांक32_t condition_field_value; /**< Value to रुको क्रम */
+	uपूर्णांक32_t समय_out_us; /**< Time out क्रम reg रुको in microseconds */
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_reg_wait - Register wait command
+ * काष्ठा dmub_rb_cmd_reg_रुको - Register रुको command
  */
-struct dmub_rb_cmd_reg_wait {
-	struct dmub_cmd_header header; /**< Command header */
-	struct dmub_cmd_reg_wait_data reg_wait; /**< Register wait data */
-};
+काष्ठा dmub_rb_cmd_reg_रुको अणु
+	काष्ठा dmub_cmd_header header; /**< Command header */
+	काष्ठा dmub_cmd_reg_रुको_data reg_रुको; /**< Register रुको data */
+पूर्ण;
 
 /**
- * struct dmub_cmd_PLAT_54186_wa - Underflow workaround
+ * काष्ठा dmub_cmd_PLAT_54186_wa - Underflow workaround
  *
- * Reprograms surface parameters to avoid underflow.
+ * Reprograms surface parameters to aव्योम underflow.
  */
-struct dmub_cmd_PLAT_54186_wa {
-	uint32_t DCSURF_SURFACE_CONTROL; /**< reg value */
-	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH; /**< reg value */
-	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS; /**< reg value */
-	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH_C; /**< reg value */
-	uint32_t DCSURF_PRIMARY_SURFACE_ADDRESS_C; /**< reg value */
-	struct {
-		uint8_t hubp_inst : 4; /**< HUBP instance */
-		uint8_t tmz_surface : 1; /**< TMZ enable or disable */
-		uint8_t immediate :1; /**< Immediate flip */
-		uint8_t vmid : 4; /**< VMID */
-		uint8_t grph_stereo : 1; /**< 1 if stereo */
-		uint32_t reserved : 21; /**< Reserved */
-	} flip_params; /**< Pageflip parameters */
-	uint32_t reserved[9]; /**< Reserved bits */
-};
+काष्ठा dmub_cmd_PLAT_54186_wa अणु
+	uपूर्णांक32_t DCSURF_SURFACE_CONTROL; /**< reg value */
+	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH; /**< reg value */
+	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS; /**< reg value */
+	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS_HIGH_C; /**< reg value */
+	uपूर्णांक32_t DCSURF_PRIMARY_SURFACE_ADDRESS_C; /**< reg value */
+	काष्ठा अणु
+		uपूर्णांक8_t hubp_inst : 4; /**< HUBP instance */
+		uपूर्णांक8_t पंचांगz_surface : 1; /**< TMZ enable or disable */
+		uपूर्णांक8_t immediate :1; /**< Immediate flip */
+		uपूर्णांक8_t vmid : 4; /**< VMID */
+		uपूर्णांक8_t grph_stereo : 1; /**< 1 अगर stereo */
+		uपूर्णांक32_t reserved : 21; /**< Reserved */
+	पूर्ण flip_params; /**< Pageflip parameters */
+	uपूर्णांक32_t reserved[9]; /**< Reserved bits */
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_PLAT_54186_wa - Underflow workaround command
+ * काष्ठा dmub_rb_cmd_PLAT_54186_wa - Underflow workaround command
  */
-struct dmub_rb_cmd_PLAT_54186_wa {
-	struct dmub_cmd_header header; /**< Command header */
-	struct dmub_cmd_PLAT_54186_wa flip; /**< Flip data */
-};
+काष्ठा dmub_rb_cmd_PLAT_54186_wa अणु
+	काष्ठा dmub_cmd_header header; /**< Command header */
+	काष्ठा dmub_cmd_PLAT_54186_wa flip; /**< Flip data */
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_mall - MALL command data.
+ * काष्ठा dmub_rb_cmd_mall - MALL command data.
  */
-struct dmub_rb_cmd_mall {
-	struct dmub_cmd_header header; /**< Common command header */
-	union dmub_addr cursor_copy_src; /**< Cursor copy address */
-	union dmub_addr cursor_copy_dst; /**< Cursor copy destination */
-	uint32_t tmr_delay; /**< Timer delay */
-	uint32_t tmr_scale; /**< Timer scale */
-	uint16_t cursor_width; /**< Cursor width in pixels */
-	uint16_t cursor_pitch; /**< Cursor pitch in pixels */
-	uint16_t cursor_height; /**< Cursor height in pixels */
-	uint8_t cursor_bpp; /**< Cursor bits per pixel */
-	uint8_t debug_bits; /**< Debug bits */
+काष्ठा dmub_rb_cmd_mall अणु
+	काष्ठा dmub_cmd_header header; /**< Common command header */
+	जोड़ dmub_addr cursor_copy_src; /**< Cursor copy address */
+	जोड़ dmub_addr cursor_copy_dst; /**< Cursor copy destination */
+	uपूर्णांक32_t पंचांगr_delay; /**< Timer delay */
+	uपूर्णांक32_t पंचांगr_scale; /**< Timer scale */
+	uपूर्णांक16_t cursor_width; /**< Cursor width in pixels */
+	uपूर्णांक16_t cursor_pitch; /**< Cursor pitch in pixels */
+	uपूर्णांक16_t cursor_height; /**< Cursor height in pixels */
+	uपूर्णांक8_t cursor_bpp; /**< Cursor bits per pixel */
+	uपूर्णांक8_t debug_bits; /**< Debug bits */
 
-	uint8_t reserved1; /**< Reserved bits */
-	uint8_t reserved2; /**< Reserved bits */
-};
+	uपूर्णांक8_t reserved1; /**< Reserved bits */
+	uपूर्णांक8_t reserved2; /**< Reserved bits */
+पूर्ण;
 
 /**
- * struct dmub_cmd_digx_encoder_control_data - Encoder control data.
+ * काष्ठा dmub_cmd_digx_encoder_control_data - Encoder control data.
  */
-struct dmub_cmd_digx_encoder_control_data {
-	union dig_encoder_control_parameters_v1_5 dig; /**< payload */
-};
+काष्ठा dmub_cmd_digx_encoder_control_data अणु
+	जोड़ dig_encoder_control_parameters_v1_5 dig; /**< payload */
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_digx_encoder_control - Encoder control command.
+ * काष्ठा dmub_rb_cmd_digx_encoder_control - Encoder control command.
  */
-struct dmub_rb_cmd_digx_encoder_control {
-	struct dmub_cmd_header header;  /**< header */
-	struct dmub_cmd_digx_encoder_control_data encoder_control; /**< payload */
-};
+काष्ठा dmub_rb_cmd_digx_encoder_control अणु
+	काष्ठा dmub_cmd_header header;  /**< header */
+	काष्ठा dmub_cmd_digx_encoder_control_data encoder_control; /**< payload */
+पूर्ण;
 
 /**
- * struct dmub_cmd_set_pixel_clock_data - Set pixel clock data.
+ * काष्ठा dmub_cmd_set_pixel_घड़ी_data - Set pixel घड़ी data.
  */
-struct dmub_cmd_set_pixel_clock_data {
-	struct set_pixel_clock_parameter_v1_7 clk; /**< payload */
-};
+काष्ठा dmub_cmd_set_pixel_घड़ी_data अणु
+	काष्ठा set_pixel_घड़ी_parameter_v1_7 clk; /**< payload */
+पूर्ण;
 
 /**
- * struct dmub_cmd_set_pixel_clock_data - Set pixel clock command.
+ * काष्ठा dmub_cmd_set_pixel_घड़ी_data - Set pixel घड़ी command.
  */
-struct dmub_rb_cmd_set_pixel_clock {
-	struct dmub_cmd_header header; /**< header */
-	struct dmub_cmd_set_pixel_clock_data pixel_clock; /**< payload */
-};
+काष्ठा dmub_rb_cmd_set_pixel_घड़ी अणु
+	काष्ठा dmub_cmd_header header; /**< header */
+	काष्ठा dmub_cmd_set_pixel_घड़ी_data pixel_घड़ी; /**< payload */
+पूर्ण;
 
 /**
- * struct dmub_cmd_enable_disp_power_gating_data - Display power gating.
+ * काष्ठा dmub_cmd_enable_disp_घातer_gating_data - Display घातer gating.
  */
-struct dmub_cmd_enable_disp_power_gating_data {
-	struct enable_disp_power_gating_parameters_v2_1 pwr; /**< payload */
-};
+काष्ठा dmub_cmd_enable_disp_घातer_gating_data अणु
+	काष्ठा enable_disp_घातer_gating_parameters_v2_1 pwr; /**< payload */
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_enable_disp_power_gating - Display power command.
+ * काष्ठा dmub_rb_cmd_enable_disp_घातer_gating - Display घातer command.
  */
-struct dmub_rb_cmd_enable_disp_power_gating {
-	struct dmub_cmd_header header; /**< header */
-	struct dmub_cmd_enable_disp_power_gating_data power_gating;  /**< payload */
-};
+काष्ठा dmub_rb_cmd_enable_disp_घातer_gating अणु
+	काष्ठा dmub_cmd_header header; /**< header */
+	काष्ठा dmub_cmd_enable_disp_घातer_gating_data घातer_gating;  /**< payload */
+पूर्ण;
 
 /**
- * struct dmub_dig_transmitter_control_data_v1_7 - Transmitter control.
+ * काष्ठा dmub_dig_transmitter_control_data_v1_7 - Transmitter control.
  */
-struct dmub_dig_transmitter_control_data_v1_7 {
-	uint8_t phyid; /**< 0=UNIPHYA, 1=UNIPHYB, 2=UNIPHYC, 3=UNIPHYD, 4=UNIPHYE, 5=UNIPHYF */
-	uint8_t action; /**< Defined as ATOM_TRANSMITER_ACTION_xxx */
-	union {
-		uint8_t digmode; /**< enum atom_encode_mode_def */
-		uint8_t dplaneset; /**< DP voltage swing and pre-emphasis value, "DP_LANE_SET__xDB_y_zV" */
-	} mode_laneset;
-	uint8_t lanenum; /**< Number of lanes */
-	union {
-		uint32_t symclk_10khz; /**< Symbol Clock in 10Khz */
-	} symclk_units;
-	uint8_t hpdsel; /**< =1: HPD1, =2: HPD2, ..., =6: HPD6, =0: HPD is not assigned */
-	uint8_t digfe_sel; /**< DIG front-end selection, bit0 means DIG0 FE is enabled */
-	uint8_t connobj_id; /**< Connector Object Id defined in ObjectId.h */
-	uint8_t reserved0; /**< For future use */
-	uint8_t reserved1; /**< For future use */
-	uint8_t reserved2[3]; /**< For future use */
-	uint32_t reserved3[11]; /**< For future use */
-};
+काष्ठा dmub_dig_transmitter_control_data_v1_7 अणु
+	uपूर्णांक8_t phyid; /**< 0=UNIPHYA, 1=UNIPHYB, 2=UNIPHYC, 3=UNIPHYD, 4=UNIPHYE, 5=UNIPHYF */
+	uपूर्णांक8_t action; /**< Defined as ATOM_TRANSMITER_ACTION_xxx */
+	जोड़ अणु
+		uपूर्णांक8_t digmode; /**< क्रमागत atom_encode_mode_def */
+		uपूर्णांक8_t dplaneset; /**< DP voltage swing and pre-emphasis value, "DP_LANE_SET__xDB_y_zV" */
+	पूर्ण mode_laneset;
+	uपूर्णांक8_t lanक्रमागत; /**< Number of lanes */
+	जोड़ अणु
+		uपूर्णांक32_t symclk_10khz; /**< Symbol Clock in 10Khz */
+	पूर्ण symclk_units;
+	uपूर्णांक8_t hpdsel; /**< =1: HPD1, =2: HPD2, ..., =6: HPD6, =0: HPD is not asचिन्हित */
+	uपूर्णांक8_t digfe_sel; /**< DIG front-end selection, bit0 means DIG0 FE is enabled */
+	uपूर्णांक8_t connobj_id; /**< Connector Object Id defined in ObjectId.h */
+	uपूर्णांक8_t reserved0; /**< For future use */
+	uपूर्णांक8_t reserved1; /**< For future use */
+	uपूर्णांक8_t reserved2[3]; /**< For future use */
+	uपूर्णांक32_t reserved3[11]; /**< For future use */
+पूर्ण;
 
 /**
- * union dmub_cmd_dig1_transmitter_control_data - Transmitter control data.
+ * जोड़ dmub_cmd_dig1_transmitter_control_data - Transmitter control data.
  */
-union dmub_cmd_dig1_transmitter_control_data {
-	struct dig_transmitter_control_parameters_v1_6 dig; /**< payload */
-	struct dmub_dig_transmitter_control_data_v1_7 dig_v1_7;  /**< payload 1.7 */
-};
+जोड़ dmub_cmd_dig1_transmitter_control_data अणु
+	काष्ठा dig_transmitter_control_parameters_v1_6 dig; /**< payload */
+	काष्ठा dmub_dig_transmitter_control_data_v1_7 dig_v1_7;  /**< payload 1.7 */
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_dig1_transmitter_control - Transmitter control command.
+ * काष्ठा dmub_rb_cmd_dig1_transmitter_control - Transmitter control command.
  */
-struct dmub_rb_cmd_dig1_transmitter_control {
-	struct dmub_cmd_header header; /**< header */
-	union dmub_cmd_dig1_transmitter_control_data transmitter_control; /**< payload */
-};
+काष्ठा dmub_rb_cmd_dig1_transmitter_control अणु
+	काष्ठा dmub_cmd_header header; /**< header */
+	जोड़ dmub_cmd_dig1_transmitter_control_data transmitter_control; /**< payload */
+पूर्ण;
 
 /**
- * struct dmub_rb_cmd_dpphy_init - DPPHY init.
+ * काष्ठा dmub_rb_cmd_dpphy_init - DPPHY init.
  */
-struct dmub_rb_cmd_dpphy_init {
-	struct dmub_cmd_header header; /**< header */
-	uint8_t reserved[60]; /**< reserved bits */
-};
+काष्ठा dmub_rb_cmd_dpphy_init अणु
+	काष्ठा dmub_cmd_header header; /**< header */
+	uपूर्णांक8_t reserved[60]; /**< reserved bits */
+पूर्ण;
 
 /**
- * enum dp_aux_request_action - DP AUX request command listing.
+ * क्रमागत dp_aux_request_action - DP AUX request command listing.
  *
- * 4 AUX request command bits are shifted to high nibble.
+ * 4 AUX request command bits are shअगरted to high nibble.
  */
-enum dp_aux_request_action {
-	/** I2C-over-AUX write request */
+क्रमागत dp_aux_request_action अणु
+	/** I2C-over-AUX ग_लिखो request */
 	DP_AUX_REQ_ACTION_I2C_WRITE		= 0x00,
-	/** I2C-over-AUX read request */
+	/** I2C-over-AUX पढ़ो request */
 	DP_AUX_REQ_ACTION_I2C_READ		= 0x10,
-	/** I2C-over-AUX write status request */
+	/** I2C-over-AUX ग_लिखो status request */
 	DP_AUX_REQ_ACTION_I2C_STATUS_REQ	= 0x20,
-	/** I2C-over-AUX write request with MOT=1 */
+	/** I2C-over-AUX ग_लिखो request with MOT=1 */
 	DP_AUX_REQ_ACTION_I2C_WRITE_MOT		= 0x40,
-	/** I2C-over-AUX read request with MOT=1 */
+	/** I2C-over-AUX पढ़ो request with MOT=1 */
 	DP_AUX_REQ_ACTION_I2C_READ_MOT		= 0x50,
-	/** I2C-over-AUX write status request with MOT=1 */
+	/** I2C-over-AUX ग_लिखो status request with MOT=1 */
 	DP_AUX_REQ_ACTION_I2C_STATUS_REQ_MOT	= 0x60,
-	/** Native AUX write request */
+	/** Native AUX ग_लिखो request */
 	DP_AUX_REQ_ACTION_DPCD_WRITE		= 0x80,
-	/** Native AUX read request */
+	/** Native AUX पढ़ो request */
 	DP_AUX_REQ_ACTION_DPCD_READ		= 0x90
-};
+पूर्ण;
 
 /**
- * enum aux_return_code_type - DP AUX process return code listing.
+ * क्रमागत aux_वापस_code_type - DP AUX process वापस code listing.
  */
-enum aux_return_code_type {
+क्रमागत aux_वापस_code_type अणु
 	/** AUX process succeeded */
 	AUX_RET_SUCCESS = 0,
 	/** AUX process failed with unknown reason */
 	AUX_RET_ERROR_UNKNOWN,
 	/** AUX process completed with invalid reply */
 	AUX_RET_ERROR_INVALID_REPLY,
-	/** AUX process timed out */
+	/** AUX process समयd out */
 	AUX_RET_ERROR_TIMEOUT,
 	/** HPD was low during AUX process */
 	AUX_RET_ERROR_HPD_DISCON,
@@ -881,155 +882,155 @@ enum aux_return_code_type {
 	AUX_RET_ERROR_INVALID_OPERATION,
 	/** AUX process not available */
 	AUX_RET_ERROR_PROTOCOL_ERROR,
-};
+पूर्ण;
 
 /**
- * enum aux_channel_type - DP AUX channel type listing.
+ * क्रमागत aux_channel_type - DP AUX channel type listing.
  */
-enum aux_channel_type {
+क्रमागत aux_channel_type अणु
 	/** AUX thru Legacy DP AUX */
 	AUX_CHANNEL_LEGACY_DDC,
 	/** AUX thru DPIA DP tunneling */
 	AUX_CHANNEL_DPIA
-};
+पूर्ण;
 
 /**
- * struct aux_transaction_parameters - DP AUX request transaction data
+ * काष्ठा aux_transaction_parameters - DP AUX request transaction data
  */
-struct aux_transaction_parameters {
-	uint8_t is_i2c_over_aux; /**< 0=native AUX, 1=I2C-over-AUX */
-	uint8_t action; /**< enum dp_aux_request_action */
-	uint8_t length; /**< DP AUX request data length */
-	uint8_t reserved; /**< For future use */
-	uint32_t address; /**< DP AUX address */
-	uint8_t data[16]; /**< DP AUX write data */
-};
+काष्ठा aux_transaction_parameters अणु
+	uपूर्णांक8_t is_i2c_over_aux; /**< 0=native AUX, 1=I2C-over-AUX */
+	uपूर्णांक8_t action; /**< क्रमागत dp_aux_request_action */
+	uपूर्णांक8_t length; /**< DP AUX request data length */
+	uपूर्णांक8_t reserved; /**< For future use */
+	uपूर्णांक32_t address; /**< DP AUX address */
+	uपूर्णांक8_t data[16]; /**< DP AUX ग_लिखो data */
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__DP_AUX_ACCESS command.
  */
-struct dmub_cmd_dp_aux_control_data {
-	uint8_t instance; /**< AUX instance or DPIA instance */
-	uint8_t manual_acq_rel_enable; /**< manual control for acquiring or releasing AUX channel */
-	uint8_t sw_crc_enabled; /**< Use software CRC for tunneling packet instead of hardware CRC */
-	uint8_t reserved0; /**< For future use */
-	uint16_t timeout; /**< timeout time in us */
-	uint16_t reserved1; /**< For future use */
-	enum aux_channel_type type; /**< enum aux_channel_type */
-	struct aux_transaction_parameters dpaux; /**< struct aux_transaction_parameters */
-};
+काष्ठा dmub_cmd_dp_aux_control_data अणु
+	uपूर्णांक8_t instance; /**< AUX instance or DPIA instance */
+	uपूर्णांक8_t manual_acq_rel_enable; /**< manual control क्रम acquiring or releasing AUX channel */
+	uपूर्णांक8_t sw_crc_enabled; /**< Use software CRC क्रम tunneling packet instead of hardware CRC */
+	uपूर्णांक8_t reserved0; /**< For future use */
+	uपूर्णांक16_t समयout; /**< समयout समय in us */
+	uपूर्णांक16_t reserved1; /**< For future use */
+	क्रमागत aux_channel_type type; /**< क्रमागत aux_channel_type */
+	काष्ठा aux_transaction_parameters dpaux; /**< काष्ठा aux_transaction_parameters */
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__DP_AUX_ACCESS command.
  */
-struct dmub_rb_cmd_dp_aux_access {
+काष्ठा dmub_rb_cmd_dp_aux_access अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__DP_AUX_ACCESS command.
 	 */
-	struct dmub_cmd_dp_aux_control_data aux_control;
-};
+	काष्ठा dmub_cmd_dp_aux_control_data aux_control;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__OUTBOX1_ENABLE command.
  */
-struct dmub_rb_cmd_outbox1_enable {
+काष्ठा dmub_rb_cmd_outbox1_enable अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
-	 *  enable: 0x0 -> disable outbox1 notification (default value)
-	 *			0x1 -> enable outbox1 notification
+	 *  enable: 0x0 -> disable outbox1 notअगरication (शेष value)
+	 *			0x1 -> enable outbox1 notअगरication
 	 */
-	uint32_t enable;
-};
+	uपूर्णांक32_t enable;
+पूर्ण;
 
 /* DP AUX Reply command - OutBox Cmd */
 /**
  * Data passed to driver from FW in a DMUB_OUT_CMD__DP_AUX_REPLY command.
  */
-struct aux_reply_data {
+काष्ठा aux_reply_data अणु
 	/**
 	 * Aux cmd
 	 */
-	uint8_t command;
+	uपूर्णांक8_t command;
 	/**
 	 * Aux reply data length (max: 16 bytes)
 	 */
-	uint8_t length;
+	uपूर्णांक8_t length;
 	/**
 	 * Alignment only
 	 */
-	uint8_t pad[2];
+	uपूर्णांक8_t pad[2];
 	/**
 	 * Aux reply data
 	 */
-	uint8_t data[16];
-};
+	uपूर्णांक8_t data[16];
+पूर्ण;
 
 /**
  * Control Data passed to driver from FW in a DMUB_OUT_CMD__DP_AUX_REPLY command.
  */
-struct aux_reply_control_data {
+काष्ठा aux_reply_control_data अणु
 	/**
-	 * Reserved for future use
+	 * Reserved क्रम future use
 	 */
-	uint32_t handle;
+	uपूर्णांक32_t handle;
 	/**
 	 * Aux Instance
 	 */
-	uint8_t instance;
+	uपूर्णांक8_t instance;
 	/**
-	 * Aux transaction result: definition in enum aux_return_code_type
+	 * Aux transaction result: definition in क्रमागत aux_वापस_code_type
 	 */
-	uint8_t result;
+	uपूर्णांक8_t result;
 	/**
 	 * Alignment only
 	 */
-	uint16_t pad;
-};
+	uपूर्णांक16_t pad;
+पूर्ण;
 
 /**
  * Definition of a DMUB_OUT_CMD__DP_AUX_REPLY command.
  */
-struct dmub_rb_cmd_dp_aux_reply {
+काष्ठा dmub_rb_cmd_dp_aux_reply अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Control Data passed to driver from FW in a DMUB_OUT_CMD__DP_AUX_REPLY command.
 	 */
-	struct aux_reply_control_data control;
+	काष्ठा aux_reply_control_data control;
 	/**
 	 * Data passed to driver from FW in a DMUB_OUT_CMD__DP_AUX_REPLY command.
 	 */
-	struct aux_reply_data reply_data;
-};
+	काष्ठा aux_reply_data reply_data;
+पूर्ण;
 
-/* DP HPD Notify command - OutBox Cmd */
+/* DP HPD Notअगरy command - OutBox Cmd */
 /**
  * DP HPD Type
  */
-enum dp_hpd_type {
+क्रमागत dp_hpd_type अणु
 	/**
 	 * Normal DP HPD
 	 */
 	DP_HPD = 0,
 	/**
-	 * DP HPD short pulse
+	 * DP HPD लघु pulse
 	 */
 	DP_IRQ
-};
+पूर्ण;
 
 /**
  * DP HPD Status
  */
-enum dp_hpd_status {
+क्रमागत dp_hpd_status अणु
 	/**
 	 * DP_HPD status low
 	 */
@@ -1038,53 +1039,53 @@ enum dp_hpd_status {
 	 * DP_HPD status high
 	 */
 	DP_HPD_PLUG
-};
+पूर्ण;
 
 /**
  * Data passed to driver from FW in a DMUB_OUT_CMD__DP_HPD_NOTIFY command.
  */
-struct dp_hpd_data {
+काष्ठा dp_hpd_data अणु
 	/**
 	 * DP HPD instance
 	 */
-	uint8_t instance;
+	uपूर्णांक8_t instance;
 	/**
 	 * HPD type
 	 */
-	uint8_t hpd_type;
+	uपूर्णांक8_t hpd_type;
 	/**
-	 * HPD status: only for type: DP_HPD to indicate status
+	 * HPD status: only क्रम type: DP_HPD to indicate status
 	 */
-	uint8_t hpd_status;
+	uपूर्णांक8_t hpd_status;
 	/**
 	 * Alignment only
 	 */
-	uint8_t pad;
-};
+	uपूर्णांक8_t pad;
+पूर्ण;
 
 /**
  * Definition of a DMUB_OUT_CMD__DP_HPD_NOTIFY command.
  */
-struct dmub_rb_cmd_dp_hpd_notify {
+काष्ठा dmub_rb_cmd_dp_hpd_notअगरy अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Data passed to driver from FW in a DMUB_OUT_CMD__DP_HPD_NOTIFY command.
 	 */
-	struct dp_hpd_data hpd_data;
-};
+	काष्ठा dp_hpd_data hpd_data;
+पूर्ण;
 
 /*
  * Command IDs should be treated as stable ABI.
- * Do not reuse or modify IDs.
+ * Do not reuse or modअगरy IDs.
  */
 
 /**
  * PSR command sub-types.
  */
-enum dmub_cmd_psr_type {
+क्रमागत dmub_cmd_psr_type अणु
 	/**
 	 * Set PSR version support.
 	 */
@@ -1106,7 +1107,7 @@ enum dmub_cmd_psr_type {
 	/**
 	 * Set PSR level.
 	 * PSR level is a 16-bit value dicated by driver that
-	 * will enable/disable different functionality.
+	 * will enable/disable dअगरferent functionality.
 	 */
 	DMUB_CMD__PSR_SET_LEVEL			= 4,
 
@@ -1114,12 +1115,12 @@ enum dmub_cmd_psr_type {
 	 * Forces PSR enabled until an explicit PSR disable call.
 	 */
 	DMUB_CMD__PSR_FORCE_STATIC		= 5,
-};
+पूर्ण;
 
 /**
  * PSR versions.
  */
-enum psr_version {
+क्रमागत psr_version अणु
 	/**
 	 * PSR version 1.
 	 */
@@ -1128,12 +1129,12 @@ enum psr_version {
 	 * PSR not supported.
 	 */
 	PSR_VERSION_UNSUPPORTED			= 0xFFFFFFFF,
-};
+पूर्ण;
 
 /**
- * enum dmub_cmd_mall_type - MALL commands
+ * क्रमागत dmub_cmd_mall_type - MALL commands
  */
-enum dmub_cmd_mall_type {
+क्रमागत dmub_cmd_mall_type अणु
 	/**
 	 * Allows display refresh from MALL.
 	 */
@@ -1143,263 +1144,263 @@ enum dmub_cmd_mall_type {
 	 */
 	DMUB_CMD__MALL_ACTION_DISALLOW = 1,
 	/**
-	 * Cursor copy for MALL.
+	 * Cursor copy क्रम MALL.
 	 */
 	DMUB_CMD__MALL_ACTION_COPY_CURSOR = 2,
 	/**
 	 * Controls DF requests.
 	 */
 	DMUB_CMD__MALL_ACTION_NO_DF_REQ = 3,
-};
+पूर्ण;
 
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__PSR_COPY_SETTINGS command.
  */
-struct dmub_cmd_psr_copy_settings_data {
+काष्ठा dmub_cmd_psr_copy_settings_data अणु
 	/**
 	 * Flags that can be set by driver to change some PSR behaviour.
 	 */
-	union dmub_psr_debug_flags debug;
+	जोड़ dmub_psr_debug_flags debug;
 	/**
-	 * 16-bit value dicated by driver that will enable/disable different functionality.
+	 * 16-bit value dicated by driver that will enable/disable dअगरferent functionality.
 	 */
-	uint16_t psr_level;
+	uपूर्णांक16_t psr_level;
 	/**
 	 * DPP HW instance.
 	 */
-	uint8_t dpp_inst;
+	uपूर्णांक8_t dpp_inst;
 	/**
 	 * MPCC HW instance.
 	 * Not used in dmub fw,
-	 * dmub fw will get active opp by reading odm registers.
+	 * dmub fw will get active opp by पढ़ोing odm रेजिस्टरs.
 	 */
-	uint8_t mpcc_inst;
+	uपूर्णांक8_t mpcc_inst;
 	/**
 	 * OPP HW instance.
 	 * Not used in dmub fw,
-	 * dmub fw will get active opp by reading odm registers.
+	 * dmub fw will get active opp by पढ़ोing odm रेजिस्टरs.
 	 */
-	uint8_t opp_inst;
+	uपूर्णांक8_t opp_inst;
 	/**
 	 * OTG HW instance.
 	 */
-	uint8_t otg_inst;
+	uपूर्णांक8_t otg_inst;
 	/**
 	 * DIG FE HW instance.
 	 */
-	uint8_t digfe_inst;
+	uपूर्णांक8_t digfe_inst;
 	/**
 	 * DIG BE HW instance.
 	 */
-	uint8_t digbe_inst;
+	uपूर्णांक8_t digbe_inst;
 	/**
 	 * DP PHY HW instance.
 	 */
-	uint8_t dpphy_inst;
+	uपूर्णांक8_t dpphy_inst;
 	/**
 	 * AUX HW instance.
 	 */
-	uint8_t aux_inst;
+	uपूर्णांक8_t aux_inst;
 	/**
-	 * Determines if SMU optimzations are enabled/disabled.
+	 * Determines अगर SMU optimzations are enabled/disabled.
 	 */
-	uint8_t smu_optimizations_en;
+	uपूर्णांक8_t smu_optimizations_en;
 	/**
 	 * Unused.
 	 * TODO: Remove.
 	 */
-	uint8_t frame_delay;
+	uपूर्णांक8_t frame_delay;
 	/**
-	 * If RFB setup time is greater than the total VBLANK time,
-	 * it is not possible for the sink to capture the video frame
-	 * in the same frame the SDP is sent. In this case,
+	 * If RFB setup समय is greater than the total VBLANK समय,
+	 * it is not possible क्रम the sink to capture the video frame
+	 * in the same frame the SDP is sent. In this हाल,
 	 * the frame capture indication bit should be set and an extra
-	 * static frame should be transmitted to the sink.
+	 * अटल frame should be transmitted to the sink.
 	 */
-	uint8_t frame_cap_ind;
+	uपूर्णांक8_t frame_cap_ind;
 	/**
 	 * Explicit padding to 4 byte boundary.
 	 */
-	uint8_t pad[2];
+	uपूर्णांक8_t pad[2];
 	/**
 	 * Multi-display optimizations are implemented on certain ASICs.
 	 */
-	uint8_t multi_disp_optimizations_en;
+	uपूर्णांक8_t multi_disp_optimizations_en;
 	/**
 	 * The last possible line SDP may be transmitted without violating
-	 * the RFB setup time or entering the active video frame.
+	 * the RFB setup समय or entering the active video frame.
 	 */
-	uint16_t init_sdp_deadline;
+	uपूर्णांक16_t init_sdp_deadline;
 	/**
 	 * Explicit padding to 4 byte boundary.
 	 */
-	uint16_t pad2;
+	uपूर्णांक16_t pad2;
 	/**
 	 * Length of each horizontal line in us.
 	 */
-	uint32_t line_time_in_us;
+	uपूर्णांक32_t line_समय_in_us;
 	/**
 	 * FEC enable status in driver
 	 */
-	uint8_t fec_enable_status;
+	uपूर्णांक8_t fec_enable_status;
 	/**
-	 * FEC re-enable delay when PSR exit.
-	 * unit is 100us, range form 0~255(0xFF).
+	 * FEC re-enable delay when PSR निकास.
+	 * unit is 100us, range क्रमm 0~255(0xFF).
 	 */
-	uint8_t fec_enable_delay_in100us;
+	uपूर्णांक8_t fec_enable_delay_in100us;
 	/**
 	 * Explicit padding to 4 byte boundary.
 	 */
-	uint8_t pad3[2];
-};
+	uपूर्णांक8_t pad3[2];
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__PSR_COPY_SETTINGS command.
  */
-struct dmub_rb_cmd_psr_copy_settings {
+काष्ठा dmub_rb_cmd_psr_copy_settings अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__PSR_COPY_SETTINGS command.
 	 */
-	struct dmub_cmd_psr_copy_settings_data psr_copy_settings_data;
-};
+	काष्ठा dmub_cmd_psr_copy_settings_data psr_copy_settings_data;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__PSR_SET_LEVEL command.
  */
-struct dmub_cmd_psr_set_level_data {
+काष्ठा dmub_cmd_psr_set_level_data अणु
 	/**
-	 * 16-bit value dicated by driver that will enable/disable different functionality.
+	 * 16-bit value dicated by driver that will enable/disable dअगरferent functionality.
 	 */
-	uint16_t psr_level;
+	uपूर्णांक16_t psr_level;
 	/**
 	 * Explicit padding to 4 byte boundary.
 	 */
-	uint8_t pad[2];
-};
+	uपूर्णांक8_t pad[2];
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__PSR_SET_LEVEL command.
  */
-struct dmub_rb_cmd_psr_set_level {
+काष्ठा dmub_rb_cmd_psr_set_level अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Definition of a DMUB_CMD__PSR_SET_LEVEL command.
 	 */
-	struct dmub_cmd_psr_set_level_data psr_set_level_data;
-};
+	काष्ठा dmub_cmd_psr_set_level_data psr_set_level_data;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__PSR_ENABLE command.
  * PSR enable/disable is controlled using the sub_type.
  */
-struct dmub_rb_cmd_psr_enable {
+काष्ठा dmub_rb_cmd_psr_enable अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
-};
+	काष्ठा dmub_cmd_header header;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__PSR_SET_VERSION command.
  */
-struct dmub_cmd_psr_set_version_data {
+काष्ठा dmub_cmd_psr_set_version_data अणु
 	/**
 	 * PSR version that FW should implement.
 	 */
-	enum psr_version version;
-};
+	क्रमागत psr_version version;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__PSR_SET_VERSION command.
  */
-struct dmub_rb_cmd_psr_set_version {
+काष्ठा dmub_rb_cmd_psr_set_version अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__PSR_SET_VERSION command.
 	 */
-	struct dmub_cmd_psr_set_version_data psr_set_version_data;
-};
+	काष्ठा dmub_cmd_psr_set_version_data psr_set_version_data;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__PSR_FORCE_STATIC command.
  */
-struct dmub_rb_cmd_psr_force_static {
+काष्ठा dmub_rb_cmd_psr_क्रमce_अटल अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
-};
+	काष्ठा dmub_cmd_header header;
+पूर्ण;
 
 /**
  * Set of HW components that can be locked.
  */
-union dmub_hw_lock_flags {
+जोड़ dmub_hw_lock_flags अणु
 	/**
 	 * Set of HW components that can be locked.
 	 */
-	struct {
+	काष्ठा अणु
 		/**
 		 * Lock/unlock OTG master update lock.
 		 */
-		uint8_t lock_pipe   : 1;
+		uपूर्णांक8_t lock_pipe   : 1;
 		/**
 		 * Lock/unlock cursor.
 		 */
-		uint8_t lock_cursor : 1;
+		uपूर्णांक8_t lock_cursor : 1;
 		/**
 		 * Lock/unlock global update lock.
 		 */
-		uint8_t lock_dig    : 1;
+		uपूर्णांक8_t lock_dig    : 1;
 		/**
 		 * Triple buffer lock requires additional hw programming to usual OTG master lock.
 		 */
-		uint8_t triple_buffer_lock : 1;
-	} bits;
+		uपूर्णांक8_t triple_buffer_lock : 1;
+	पूर्ण bits;
 
 	/**
-	 * Union for HW Lock flags.
+	 * Union क्रम HW Lock flags.
 	 */
-	uint8_t u8All;
-};
+	uपूर्णांक8_t u8All;
+पूर्ण;
 
 /**
  * Instances of HW to be locked.
  */
-struct dmub_hw_lock_inst_flags {
+काष्ठा dmub_hw_lock_inst_flags अणु
 	/**
-	 * OTG HW instance for OTG master update lock.
+	 * OTG HW instance क्रम OTG master update lock.
 	 */
-	uint8_t otg_inst;
+	uपूर्णांक8_t otg_inst;
 	/**
-	 * OPP instance for cursor lock.
+	 * OPP instance क्रम cursor lock.
 	 */
-	uint8_t opp_inst;
+	uपूर्णांक8_t opp_inst;
 	/**
-	 * OTG HW instance for global update lock.
+	 * OTG HW instance क्रम global update lock.
 	 * TODO: Remove, and re-use otg_inst.
 	 */
-	uint8_t dig_inst;
+	uपूर्णांक8_t dig_inst;
 	/**
 	 * Explicit pad to 4 byte boundary.
 	 */
-	uint8_t pad;
-};
+	uपूर्णांक8_t pad;
+पूर्ण;
 
 /**
  * Clients that can acquire the HW Lock Manager.
  */
-enum hw_lock_client {
+क्रमागत hw_lock_client अणु
 	/**
 	 * Driver is the client of HW Lock Manager.
 	 */
@@ -1412,60 +1413,60 @@ enum hw_lock_client {
 	 * Invalid client.
 	 */
 	HW_LOCK_CLIENT_INVALID = 0xFFFFFFFF,
-};
+पूर्ण;
 
 /**
  * Data passed to HW Lock Mgr in a DMUB_CMD__HW_LOCK command.
  */
-struct dmub_cmd_lock_hw_data {
+काष्ठा dmub_cmd_lock_hw_data अणु
 	/**
-	 * Specifies the client accessing HW Lock Manager.
+	 * Specअगरies the client accessing HW Lock Manager.
 	 */
-	enum hw_lock_client client;
+	क्रमागत hw_lock_client client;
 	/**
 	 * HW instances to be locked.
 	 */
-	struct dmub_hw_lock_inst_flags inst_flags;
+	काष्ठा dmub_hw_lock_inst_flags inst_flags;
 	/**
 	 * Which components to be locked.
 	 */
-	union dmub_hw_lock_flags hw_locks;
+	जोड़ dmub_hw_lock_flags hw_locks;
 	/**
-	 * Specifies lock/unlock.
+	 * Specअगरies lock/unlock.
 	 */
-	uint8_t lock;
+	uपूर्णांक8_t lock;
 	/**
 	 * HW can be unlocked separately from releasing the HW Lock Mgr.
-	 * This flag is set if the client wishes to release the object.
+	 * This flag is set अगर the client wishes to release the object.
 	 */
-	uint8_t should_release;
+	uपूर्णांक8_t should_release;
 	/**
 	 * Explicit padding to 4 byte boundary.
 	 */
-	uint8_t pad;
-};
+	uपूर्णांक8_t pad;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__HW_LOCK command.
  * Command is used by driver and FW.
  */
-struct dmub_rb_cmd_lock_hw {
+काष्ठा dmub_rb_cmd_lock_hw अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Data passed to HW Lock Mgr in a DMUB_CMD__HW_LOCK command.
 	 */
-	struct dmub_cmd_lock_hw_data lock_hw_data;
-};
+	काष्ठा dmub_cmd_lock_hw_data lock_hw_data;
+पूर्ण;
 
 /**
  * ABM command sub-types.
  */
-enum dmub_cmd_abm_type {
+क्रमागत dmub_cmd_abm_type अणु
 	/**
-	 * Initialize parameters for ABM algorithm.
+	 * Initialize parameters क्रम ABM algorithm.
 	 * Data is passed through an indirect buffer.
 	 */
 	DMUB_CMD__ABM_INIT_CONFIG	= 0,
@@ -1486,501 +1487,501 @@ enum dmub_cmd_abm_type {
 	 */
 	DMUB_CMD__ABM_SET_AMBIENT_LEVEL	= 4,
 	/**
-	 * Enable/disable fractional duty cycle for backlight PWM.
+	 * Enable/disable fractional duty cycle क्रम backlight PWM.
 	 */
 	DMUB_CMD__ABM_SET_PWM_FRAC	= 5,
-};
+पूर्ण;
 
 /**
- * Parameters for ABM2.4 algorithm. Passed from driver to FW via an indirect buffer.
+ * Parameters क्रम ABM2.4 algorithm. Passed from driver to FW via an indirect buffer.
  * Requirements:
  *  - Padded explicitly to 32-bit boundary.
- *  - Must ensure this structure matches the one on driver-side,
+ *  - Must ensure this काष्ठाure matches the one on driver-side,
  *    otherwise it won't be aligned.
  */
-struct abm_config_table {
+काष्ठा abm_config_table अणु
 	/**
-	 * Gamma curve thresholds, used for crgb conversion.
+	 * Gamma curve thresholds, used क्रम crgb conversion.
 	 */
-	uint16_t crgb_thresh[NUM_POWER_FN_SEGS];                 // 0B
+	uपूर्णांक16_t crgb_thresh[NUM_POWER_FN_SEGS];                 // 0B
 	/**
-	 * Gamma curve offsets, used for crgb conversion.
+	 * Gamma curve offsets, used क्रम crgb conversion.
 	 */
-	uint16_t crgb_offset[NUM_POWER_FN_SEGS];                 // 16B
+	uपूर्णांक16_t crgb_offset[NUM_POWER_FN_SEGS];                 // 16B
 	/**
-	 * Gamma curve slopes, used for crgb conversion.
+	 * Gamma curve slopes, used क्रम crgb conversion.
 	 */
-	uint16_t crgb_slope[NUM_POWER_FN_SEGS];                  // 32B
+	uपूर्णांक16_t crgb_slope[NUM_POWER_FN_SEGS];                  // 32B
 	/**
 	 * Custom backlight curve thresholds.
 	 */
-	uint16_t backlight_thresholds[NUM_BL_CURVE_SEGS];        // 48B
+	uपूर्णांक16_t backlight_thresholds[NUM_BL_CURVE_SEGS];        // 48B
 	/**
 	 * Custom backlight curve offsets.
 	 */
-	uint16_t backlight_offsets[NUM_BL_CURVE_SEGS];           // 78B
+	uपूर्णांक16_t backlight_offsets[NUM_BL_CURVE_SEGS];           // 78B
 	/**
 	 * Ambient light thresholds.
 	 */
-	uint16_t ambient_thresholds_lux[NUM_AMBI_LEVEL];         // 112B
+	uपूर्णांक16_t ambient_thresholds_lux[NUM_AMBI_LEVEL];         // 112B
 	/**
 	 * Minimum programmable backlight.
 	 */
-	uint16_t min_abm_backlight;                              // 122B
+	uपूर्णांक16_t min_abm_backlight;                              // 122B
 	/**
 	 * Minimum reduction values.
 	 */
-	uint8_t min_reduction[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL];   // 124B
+	uपूर्णांक8_t min_reduction[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL];   // 124B
 	/**
 	 * Maximum reduction values.
 	 */
-	uint8_t max_reduction[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL];   // 144B
+	uपूर्णांक8_t max_reduction[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL];   // 144B
 	/**
 	 * Bright positive gain.
 	 */
-	uint8_t bright_pos_gain[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL]; // 164B
+	uपूर्णांक8_t bright_pos_gain[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL]; // 164B
 	/**
 	 * Dark negative gain.
 	 */
-	uint8_t dark_pos_gain[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL];   // 184B
+	uपूर्णांक8_t dark_pos_gain[NUM_AMBI_LEVEL][NUM_AGGR_LEVEL];   // 184B
 	/**
 	 * Hybrid factor.
 	 */
-	uint8_t hybrid_factor[NUM_AGGR_LEVEL];                   // 204B
+	uपूर्णांक8_t hybrid_factor[NUM_AGGR_LEVEL];                   // 204B
 	/**
 	 * Contrast factor.
 	 */
-	uint8_t contrast_factor[NUM_AGGR_LEVEL];                 // 208B
+	uपूर्णांक8_t contrast_factor[NUM_AGGR_LEVEL];                 // 208B
 	/**
 	 * Deviation gain.
 	 */
-	uint8_t deviation_gain[NUM_AGGR_LEVEL];                  // 212B
+	uपूर्णांक8_t deviation_gain[NUM_AGGR_LEVEL];                  // 212B
 	/**
 	 * Minimum knee.
 	 */
-	uint8_t min_knee[NUM_AGGR_LEVEL];                        // 216B
+	uपूर्णांक8_t min_knee[NUM_AGGR_LEVEL];                        // 216B
 	/**
 	 * Maximum knee.
 	 */
-	uint8_t max_knee[NUM_AGGR_LEVEL];                        // 220B
+	uपूर्णांक8_t max_knee[NUM_AGGR_LEVEL];                        // 220B
 	/**
 	 * Unused.
 	 */
-	uint8_t iir_curve[NUM_AMBI_LEVEL];                       // 224B
+	uपूर्णांक8_t iir_curve[NUM_AMBI_LEVEL];                       // 224B
 	/**
 	 * Explicit padding to 4 byte boundary.
 	 */
-	uint8_t pad3[3];                                         // 229B
+	uपूर्णांक8_t pad3[3];                                         // 229B
 	/**
 	 * Backlight ramp reduction.
 	 */
-	uint16_t blRampReduction[NUM_AGGR_LEVEL];                // 232B
+	uपूर्णांक16_t blRampReduction[NUM_AGGR_LEVEL];                // 232B
 	/**
 	 * Backlight ramp start.
 	 */
-	uint16_t blRampStart[NUM_AGGR_LEVEL];                    // 240B
-};
+	uपूर्णांक16_t blRampStart[NUM_AGGR_LEVEL];                    // 240B
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__ABM_SET_PIPE command.
  */
-struct dmub_cmd_abm_set_pipe_data {
+काष्ठा dmub_cmd_abm_set_pipe_data अणु
 	/**
 	 * OTG HW instance.
 	 */
-	uint8_t otg_inst;
+	uपूर्णांक8_t otg_inst;
 
 	/**
 	 * Panel Control HW instance.
 	 */
-	uint8_t panel_inst;
+	uपूर्णांक8_t panel_inst;
 
 	/**
-	 * Controls how ABM will interpret a set pipe or set level command.
+	 * Controls how ABM will पूर्णांकerpret a set pipe or set level command.
 	 */
-	uint8_t set_pipe_option;
+	uपूर्णांक8_t set_pipe_option;
 
 	/**
 	 * Unused.
 	 * TODO: Remove.
 	 */
-	uint8_t ramping_boundary;
-};
+	uपूर्णांक8_t ramping_boundary;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__ABM_SET_PIPE command.
  */
-struct dmub_rb_cmd_abm_set_pipe {
+काष्ठा dmub_rb_cmd_abm_set_pipe अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__ABM_SET_PIPE command.
 	 */
-	struct dmub_cmd_abm_set_pipe_data abm_set_pipe_data;
-};
+	काष्ठा dmub_cmd_abm_set_pipe_data abm_set_pipe_data;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__ABM_SET_BACKLIGHT command.
  */
-struct dmub_cmd_abm_set_backlight_data {
+काष्ठा dmub_cmd_abm_set_backlight_data अणु
 	/**
 	 * Number of frames to ramp to backlight user level.
 	 */
-	uint32_t frame_ramp;
+	uपूर्णांक32_t frame_ramp;
 
 	/**
 	 * Requested backlight level from user.
 	 */
-	uint32_t backlight_user_level;
+	uपूर्णांक32_t backlight_user_level;
 
 	/**
 	 * Backlight data version.
 	 */
-	uint8_t version;
+	uपूर्णांक8_t version;
 
 	/**
 	 * Panel Control HW instance mask.
 	 * Bit 0 is Panel Control HW instance 0.
 	 * Bit 1 is Panel Control HW instance 1.
 	 */
-	uint8_t panel_mask;
+	uपूर्णांक8_t panel_mask;
 
 	/**
 	 * Explicit padding to 4 byte boundary.
 	 */
-	uint8_t pad[2];
-};
+	uपूर्णांक8_t pad[2];
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__ABM_SET_BACKLIGHT command.
  */
-struct dmub_rb_cmd_abm_set_backlight {
+काष्ठा dmub_rb_cmd_abm_set_backlight अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__ABM_SET_BACKLIGHT command.
 	 */
-	struct dmub_cmd_abm_set_backlight_data abm_set_backlight_data;
-};
+	काष्ठा dmub_cmd_abm_set_backlight_data abm_set_backlight_data;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__ABM_SET_LEVEL command.
  */
-struct dmub_cmd_abm_set_level_data {
+काष्ठा dmub_cmd_abm_set_level_data अणु
 	/**
 	 * Set current ABM operating/aggression level.
 	 */
-	uint32_t level;
-};
+	uपूर्णांक32_t level;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__ABM_SET_LEVEL command.
  */
-struct dmub_rb_cmd_abm_set_level {
+काष्ठा dmub_rb_cmd_abm_set_level अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__ABM_SET_LEVEL command.
 	 */
-	struct dmub_cmd_abm_set_level_data abm_set_level_data;
-};
+	काष्ठा dmub_cmd_abm_set_level_data abm_set_level_data;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__ABM_SET_AMBIENT_LEVEL command.
  */
-struct dmub_cmd_abm_set_ambient_level_data {
+काष्ठा dmub_cmd_abm_set_ambient_level_data अणु
 	/**
-	 * Ambient light sensor reading from OS.
+	 * Ambient light sensor पढ़ोing from OS.
 	 */
-	uint32_t ambient_lux;
-};
+	uपूर्णांक32_t ambient_lux;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__ABM_SET_AMBIENT_LEVEL command.
  */
-struct dmub_rb_cmd_abm_set_ambient_level {
+काष्ठा dmub_rb_cmd_abm_set_ambient_level अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__ABM_SET_AMBIENT_LEVEL command.
 	 */
-	struct dmub_cmd_abm_set_ambient_level_data abm_set_ambient_level_data;
-};
+	काष्ठा dmub_cmd_abm_set_ambient_level_data abm_set_ambient_level_data;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__ABM_SET_PWM_FRAC command.
  */
-struct dmub_cmd_abm_set_pwm_frac_data {
+काष्ठा dmub_cmd_abm_set_pwm_frac_data अणु
 	/**
-	 * Enable/disable fractional duty cycle for backlight PWM.
-	 * TODO: Convert to uint8_t.
+	 * Enable/disable fractional duty cycle क्रम backlight PWM.
+	 * TODO: Convert to uपूर्णांक8_t.
 	 */
-	uint32_t fractional_pwm;
-};
+	uपूर्णांक32_t fractional_pwm;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__ABM_SET_PWM_FRAC command.
  */
-struct dmub_rb_cmd_abm_set_pwm_frac {
+काष्ठा dmub_rb_cmd_abm_set_pwm_frac अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__ABM_SET_PWM_FRAC command.
 	 */
-	struct dmub_cmd_abm_set_pwm_frac_data abm_set_pwm_frac_data;
-};
+	काष्ठा dmub_cmd_abm_set_pwm_frac_data abm_set_pwm_frac_data;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__ABM_INIT_CONFIG command.
  */
-struct dmub_cmd_abm_init_config_data {
+काष्ठा dmub_cmd_abm_init_config_data अणु
 	/**
 	 * Location of indirect buffer used to pass init data to ABM.
 	 */
-	union dmub_addr src;
+	जोड़ dmub_addr src;
 
 	/**
 	 * Indirect buffer length.
 	 */
-	uint16_t bytes;
-};
+	uपूर्णांक16_t bytes;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__ABM_INIT_CONFIG command.
  */
-struct dmub_rb_cmd_abm_init_config {
+काष्ठा dmub_rb_cmd_abm_init_config अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__ABM_INIT_CONFIG command.
 	 */
-	struct dmub_cmd_abm_init_config_data abm_init_config_data;
-};
+	काष्ठा dmub_cmd_abm_init_config_data abm_init_config_data;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__QUERY_FEATURE_CAPS command.
  */
-struct dmub_cmd_query_feature_caps_data {
+काष्ठा dmub_cmd_query_feature_caps_data अणु
 	/**
 	 * DMUB feature capabilities.
 	 * After DMUB init, driver will query FW capabilities prior to enabling certain features.
 	 */
-	struct dmub_feature_caps feature_caps;
-};
+	काष्ठा dmub_feature_caps feature_caps;
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__QUERY_FEATURE_CAPS command.
  */
-struct dmub_rb_cmd_query_feature_caps {
+काष्ठा dmub_rb_cmd_query_feature_caps अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__QUERY_FEATURE_CAPS command.
 	 */
-	struct dmub_cmd_query_feature_caps_data query_feature_caps_data;
-};
+	काष्ठा dmub_cmd_query_feature_caps_data query_feature_caps_data;
+पूर्ण;
 
-struct dmub_optc_state {
-	uint32_t v_total_max;
-	uint32_t v_total_min;
-	uint32_t v_total_mid;
-	uint32_t v_total_mid_frame_num;
-	uint32_t tg_inst;
-	uint32_t enable_manual_trigger;
-	uint32_t clear_force_vsync;
-};
+काष्ठा dmub_optc_state अणु
+	uपूर्णांक32_t v_total_max;
+	uपूर्णांक32_t v_total_min;
+	uपूर्णांक32_t v_total_mid;
+	uपूर्णांक32_t v_total_mid_frame_num;
+	uपूर्णांक32_t tg_inst;
+	uपूर्णांक32_t enable_manual_trigger;
+	uपूर्णांक32_t clear_क्रमce_vsync;
+पूर्ण;
 
-struct dmub_rb_cmd_drr_update {
-		struct dmub_cmd_header header;
-		struct dmub_optc_state dmub_optc_state_req;
-};
+काष्ठा dmub_rb_cmd_drr_update अणु
+		काष्ठा dmub_cmd_header header;
+		काष्ठा dmub_optc_state dmub_optc_state_req;
+पूर्ण;
 
 /**
  * Data passed from driver to FW in a DMUB_CMD__VBIOS_LVTMA_CONTROL command.
  */
-struct dmub_cmd_lvtma_control_data {
-	uint8_t uc_pwr_action; /**< LVTMA_ACTION */
-	uint8_t reserved_0[3]; /**< For future use */
-	uint8_t panel_inst; /**< LVTMA control instance */
-	uint8_t reserved_1[3]; /**< For future use */
-};
+काष्ठा dmub_cmd_lvपंचांगa_control_data अणु
+	uपूर्णांक8_t uc_pwr_action; /**< LVTMA_ACTION */
+	uपूर्णांक8_t reserved_0[3]; /**< For future use */
+	uपूर्णांक8_t panel_inst; /**< LVTMA control instance */
+	uपूर्णांक8_t reserved_1[3]; /**< For future use */
+पूर्ण;
 
 /**
  * Definition of a DMUB_CMD__VBIOS_LVTMA_CONTROL command.
  */
-struct dmub_rb_cmd_lvtma_control {
+काष्ठा dmub_rb_cmd_lvपंचांगa_control अणु
 	/**
 	 * Command header.
 	 */
-	struct dmub_cmd_header header;
+	काष्ठा dmub_cmd_header header;
 	/**
 	 * Data passed from driver to FW in a DMUB_CMD__VBIOS_LVTMA_CONTROL command.
 	 */
-	struct dmub_cmd_lvtma_control_data data;
-};
+	काष्ठा dmub_cmd_lvपंचांगa_control_data data;
+पूर्ण;
 
 /**
- * union dmub_rb_cmd - DMUB inbox command.
+ * जोड़ dmub_rb_cmd - DMUB inbox command.
  */
-union dmub_rb_cmd {
-	struct dmub_rb_cmd_lock_hw lock_hw;
+जोड़ dmub_rb_cmd अणु
+	काष्ठा dmub_rb_cmd_lock_hw lock_hw;
 	/**
 	 * Elements shared with all commands.
 	 */
-	struct dmub_rb_cmd_common cmd_common;
+	काष्ठा dmub_rb_cmd_common cmd_common;
 	/**
 	 * Definition of a DMUB_CMD__REG_SEQ_READ_MODIFY_WRITE command.
 	 */
-	struct dmub_rb_cmd_read_modify_write read_modify_write;
+	काष्ठा dmub_rb_cmd_पढ़ो_modअगरy_ग_लिखो पढ़ो_modअगरy_ग_लिखो;
 	/**
 	 * Definition of a DMUB_CMD__REG_SEQ_FIELD_UPDATE_SEQ command.
 	 */
-	struct dmub_rb_cmd_reg_field_update_sequence reg_field_update_seq;
+	काष्ठा dmub_rb_cmd_reg_field_update_sequence reg_field_update_seq;
 	/**
 	 * Definition of a DMUB_CMD__REG_SEQ_BURST_WRITE command.
 	 */
-	struct dmub_rb_cmd_burst_write burst_write;
+	काष्ठा dmub_rb_cmd_burst_ग_लिखो burst_ग_लिखो;
 	/**
 	 * Definition of a DMUB_CMD__REG_REG_WAIT command.
 	 */
-	struct dmub_rb_cmd_reg_wait reg_wait;
+	काष्ठा dmub_rb_cmd_reg_रुको reg_रुको;
 	/**
 	 * Definition of a DMUB_CMD__VBIOS_DIGX_ENCODER_CONTROL command.
 	 */
-	struct dmub_rb_cmd_digx_encoder_control digx_encoder_control;
+	काष्ठा dmub_rb_cmd_digx_encoder_control digx_encoder_control;
 	/**
 	 * Definition of a DMUB_CMD__VBIOS_SET_PIXEL_CLOCK command.
 	 */
-	struct dmub_rb_cmd_set_pixel_clock set_pixel_clock;
+	काष्ठा dmub_rb_cmd_set_pixel_घड़ी set_pixel_घड़ी;
 	/**
 	 * Definition of a DMUB_CMD__VBIOS_ENABLE_DISP_POWER_GATING command.
 	 */
-	struct dmub_rb_cmd_enable_disp_power_gating enable_disp_power_gating;
+	काष्ठा dmub_rb_cmd_enable_disp_घातer_gating enable_disp_घातer_gating;
 	/**
 	 * Definition of a DMUB_CMD__VBIOS_DPPHY_INIT command.
 	 */
-	struct dmub_rb_cmd_dpphy_init dpphy_init;
+	काष्ठा dmub_rb_cmd_dpphy_init dpphy_init;
 	/**
 	 * Definition of a DMUB_CMD__VBIOS_DIG1_TRANSMITTER_CONTROL command.
 	 */
-	struct dmub_rb_cmd_dig1_transmitter_control dig1_transmitter_control;
+	काष्ठा dmub_rb_cmd_dig1_transmitter_control dig1_transmitter_control;
 	/**
 	 * Definition of a DMUB_CMD__PSR_SET_VERSION command.
 	 */
-	struct dmub_rb_cmd_psr_set_version psr_set_version;
+	काष्ठा dmub_rb_cmd_psr_set_version psr_set_version;
 	/**
 	 * Definition of a DMUB_CMD__PSR_COPY_SETTINGS command.
 	 */
-	struct dmub_rb_cmd_psr_copy_settings psr_copy_settings;
+	काष्ठा dmub_rb_cmd_psr_copy_settings psr_copy_settings;
 	/**
 	 * Definition of a DMUB_CMD__PSR_ENABLE command.
 	 */
-	struct dmub_rb_cmd_psr_enable psr_enable;
+	काष्ठा dmub_rb_cmd_psr_enable psr_enable;
 	/**
 	 * Definition of a DMUB_CMD__PSR_SET_LEVEL command.
 	 */
-	struct dmub_rb_cmd_psr_set_level psr_set_level;
+	काष्ठा dmub_rb_cmd_psr_set_level psr_set_level;
 	/**
 	 * Definition of a DMUB_CMD__PSR_FORCE_STATIC command.
 	 */
-	struct dmub_rb_cmd_psr_force_static psr_force_static;
+	काष्ठा dmub_rb_cmd_psr_क्रमce_अटल psr_क्रमce_अटल;
 	/**
 	 * Definition of a DMUB_CMD__PLAT_54186_WA command.
 	 */
-	struct dmub_rb_cmd_PLAT_54186_wa PLAT_54186_wa;
+	काष्ठा dmub_rb_cmd_PLAT_54186_wa PLAT_54186_wa;
 	/**
 	 * Definition of a DMUB_CMD__MALL command.
 	 */
-	struct dmub_rb_cmd_mall mall;
+	काष्ठा dmub_rb_cmd_mall mall;
 	/**
 	 * Definition of a DMUB_CMD__ABM_SET_PIPE command.
 	 */
-	struct dmub_rb_cmd_abm_set_pipe abm_set_pipe;
+	काष्ठा dmub_rb_cmd_abm_set_pipe abm_set_pipe;
 
 	/**
 	 * Definition of a DMUB_CMD__ABM_SET_BACKLIGHT command.
 	 */
-	struct dmub_rb_cmd_abm_set_backlight abm_set_backlight;
+	काष्ठा dmub_rb_cmd_abm_set_backlight abm_set_backlight;
 
 	/**
 	 * Definition of a DMUB_CMD__ABM_SET_LEVEL command.
 	 */
-	struct dmub_rb_cmd_abm_set_level abm_set_level;
+	काष्ठा dmub_rb_cmd_abm_set_level abm_set_level;
 
 	/**
 	 * Definition of a DMUB_CMD__ABM_SET_AMBIENT_LEVEL command.
 	 */
-	struct dmub_rb_cmd_abm_set_ambient_level abm_set_ambient_level;
+	काष्ठा dmub_rb_cmd_abm_set_ambient_level abm_set_ambient_level;
 
 	/**
 	 * Definition of a DMUB_CMD__ABM_SET_PWM_FRAC command.
 	 */
-	struct dmub_rb_cmd_abm_set_pwm_frac abm_set_pwm_frac;
+	काष्ठा dmub_rb_cmd_abm_set_pwm_frac abm_set_pwm_frac;
 
 	/**
 	 * Definition of a DMUB_CMD__ABM_INIT_CONFIG command.
 	 */
-	struct dmub_rb_cmd_abm_init_config abm_init_config;
+	काष्ठा dmub_rb_cmd_abm_init_config abm_init_config;
 
 	/**
 	 * Definition of a DMUB_CMD__DP_AUX_ACCESS command.
 	 */
-	struct dmub_rb_cmd_dp_aux_access dp_aux_access;
+	काष्ठा dmub_rb_cmd_dp_aux_access dp_aux_access;
 
 	/**
 	 * Definition of a DMUB_CMD__OUTBOX1_ENABLE command.
 	 */
-	struct dmub_rb_cmd_outbox1_enable outbox1_enable;
+	काष्ठा dmub_rb_cmd_outbox1_enable outbox1_enable;
 
 	/**
 	 * Definition of a DMUB_CMD__QUERY_FEATURE_CAPS command.
 	 */
-	struct dmub_rb_cmd_query_feature_caps query_feature_caps;
-	struct dmub_rb_cmd_drr_update drr_update;
+	काष्ठा dmub_rb_cmd_query_feature_caps query_feature_caps;
+	काष्ठा dmub_rb_cmd_drr_update drr_update;
 	/**
 	 * Definition of a DMUB_CMD__VBIOS_LVTMA_CONTROL command.
 	 */
-	struct dmub_rb_cmd_lvtma_control lvtma_control;
-};
+	काष्ठा dmub_rb_cmd_lvपंचांगa_control lvपंचांगa_control;
+पूर्ण;
 
 /**
- * union dmub_rb_out_cmd - Outbox command
+ * जोड़ dmub_rb_out_cmd - Outbox command
  */
-union dmub_rb_out_cmd {
+जोड़ dmub_rb_out_cmd अणु
 	/**
 	 * Parameters common to every command.
 	 */
-	struct dmub_rb_cmd_common cmd_common;
+	काष्ठा dmub_rb_cmd_common cmd_common;
 	/**
 	 * AUX reply command.
 	 */
-	struct dmub_rb_cmd_dp_aux_reply dp_aux_reply;
+	काष्ठा dmub_rb_cmd_dp_aux_reply dp_aux_reply;
 	/**
-	 * HPD notify command.
+	 * HPD notअगरy command.
 	 */
-	struct dmub_rb_cmd_dp_hpd_notify dp_hpd_notify;
-};
-#pragma pack(pop)
+	काष्ठा dmub_rb_cmd_dp_hpd_notअगरy dp_hpd_notअगरy;
+पूर्ण;
+#आशय pack(pop)
 
 
 //==============================================================================
@@ -1989,252 +1990,252 @@ union dmub_rb_out_cmd {
 //< DMUB_RB>====================================================================
 //==============================================================================
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#अगर defined(__cplusplus)
+बाह्य "C" अणु
+#पूर्ण_अगर
 
 /**
- * struct dmub_rb_init_params - Initialization params for DMUB ringbuffer
+ * काष्ठा dmub_rb_init_params - Initialization params क्रम DMUB ringbuffer
  */
-struct dmub_rb_init_params {
-	void *ctx; /**< Caller provided context pointer */
-	void *base_address; /**< CPU base address for ring's data */
-	uint32_t capacity; /**< Ringbuffer capacity in bytes */
-	uint32_t read_ptr; /**< Initial read pointer for consumer in bytes */
-	uint32_t write_ptr; /**< Initial write pointer for producer in bytes */
-};
+काष्ठा dmub_rb_init_params अणु
+	व्योम *ctx; /**< Caller provided context poपूर्णांकer */
+	व्योम *base_address; /**< CPU base address क्रम ring's data */
+	uपूर्णांक32_t capacity; /**< Ringbuffer capacity in bytes */
+	uपूर्णांक32_t पढ़ो_ptr; /**< Initial पढ़ो poपूर्णांकer क्रम consumer in bytes */
+	uपूर्णांक32_t ग_लिखो_ptr; /**< Initial ग_लिखो poपूर्णांकer क्रम producer in bytes */
+पूर्ण;
 
 /**
- * struct dmub_rb - Inbox or outbox DMUB ringbuffer
+ * काष्ठा dmub_rb - Inbox or outbox DMUB ringbuffer
  */
-struct dmub_rb {
-	void *base_address; /**< CPU address for the ring's data */
-	uint32_t rptr; /**< Read pointer for consumer in bytes */
-	uint32_t wrpt; /**< Write pointer for producer in bytes */
-	uint32_t capacity; /**< Ringbuffer capacity in bytes */
+काष्ठा dmub_rb अणु
+	व्योम *base_address; /**< CPU address क्रम the ring's data */
+	uपूर्णांक32_t rptr; /**< Read poपूर्णांकer क्रम consumer in bytes */
+	uपूर्णांक32_t wrpt; /**< Write poपूर्णांकer क्रम producer in bytes */
+	uपूर्णांक32_t capacity; /**< Ringbuffer capacity in bytes */
 
-	void *ctx; /**< Caller provided context pointer */
-	void *dmub; /**< Pointer to the DMUB interface */
-};
+	व्योम *ctx; /**< Caller provided context poपूर्णांकer */
+	व्योम *dmub; /**< Poपूर्णांकer to the DMUB पूर्णांकerface */
+पूर्ण;
 
 /**
- * @brief Checks if the ringbuffer is empty.
+ * @brief Checks अगर the ringbuffer is empty.
  *
  * @param rb DMUB Ringbuffer
- * @return true if empty
- * @return false otherwise
+ * @वापस true अगर empty
+ * @वापस false otherwise
  */
-static inline bool dmub_rb_empty(struct dmub_rb *rb)
-{
-	return (rb->wrpt == rb->rptr);
-}
+अटल अंतरभूत bool dmub_rb_empty(काष्ठा dmub_rb *rb)
+अणु
+	वापस (rb->wrpt == rb->rptr);
+पूर्ण
 
 /**
- * @brief Checks if the ringbuffer is full
+ * @brief Checks अगर the ringbuffer is full
  *
  * @param rb DMUB Ringbuffer
- * @return true if full
- * @return false otherwise
+ * @वापस true अगर full
+ * @वापस false otherwise
  */
-static inline bool dmub_rb_full(struct dmub_rb *rb)
-{
-	uint32_t data_count;
+अटल अंतरभूत bool dmub_rb_full(काष्ठा dmub_rb *rb)
+अणु
+	uपूर्णांक32_t data_count;
 
-	if (rb->wrpt >= rb->rptr)
+	अगर (rb->wrpt >= rb->rptr)
 		data_count = rb->wrpt - rb->rptr;
-	else
+	अन्यथा
 		data_count = rb->capacity - (rb->rptr - rb->wrpt);
 
-	return (data_count == (rb->capacity - DMUB_RB_CMD_SIZE));
-}
+	वापस (data_count == (rb->capacity - DMUB_RB_CMD_SIZE));
+पूर्ण
 
 /**
- * @brief Pushes a command into the ringbuffer
+ * @brief Pushes a command पूर्णांकo the ringbuffer
  *
  * @param rb DMUB ringbuffer
  * @param cmd The command to push
- * @return true if the ringbuffer was not full
- * @return false otherwise
+ * @वापस true अगर the ringbuffer was not full
+ * @वापस false otherwise
  */
-static inline bool dmub_rb_push_front(struct dmub_rb *rb,
-				      const union dmub_rb_cmd *cmd)
-{
-	uint64_t volatile *dst = (uint64_t volatile *)(rb->base_address) + rb->wrpt / sizeof(uint64_t);
-	const uint64_t *src = (const uint64_t *)cmd;
-	uint8_t i;
+अटल अंतरभूत bool dmub_rb_push_front(काष्ठा dmub_rb *rb,
+				      स्थिर जोड़ dmub_rb_cmd *cmd)
+अणु
+	uपूर्णांक64_t अस्थिर *dst = (uपूर्णांक64_t अस्थिर *)(rb->base_address) + rb->wrpt / माप(uपूर्णांक64_t);
+	स्थिर uपूर्णांक64_t *src = (स्थिर uपूर्णांक64_t *)cmd;
+	uपूर्णांक8_t i;
 
-	if (dmub_rb_full(rb))
-		return false;
+	अगर (dmub_rb_full(rb))
+		वापस false;
 
 	// copying data
-	for (i = 0; i < DMUB_RB_CMD_SIZE / sizeof(uint64_t); i++)
+	क्रम (i = 0; i < DMUB_RB_CMD_SIZE / माप(uपूर्णांक64_t); i++)
 		*dst++ = *src++;
 
 	rb->wrpt += DMUB_RB_CMD_SIZE;
 
-	if (rb->wrpt >= rb->capacity)
+	अगर (rb->wrpt >= rb->capacity)
 		rb->wrpt %= rb->capacity;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * @brief Pushes a command into the DMUB outbox ringbuffer
+ * @brief Pushes a command पूर्णांकo the DMUB outbox ringbuffer
  *
  * @param rb DMUB outbox ringbuffer
  * @param cmd Outbox command
- * @return true if not full
- * @return false otherwise
+ * @वापस true अगर not full
+ * @वापस false otherwise
  */
-static inline bool dmub_rb_out_push_front(struct dmub_rb *rb,
-				      const union dmub_rb_out_cmd *cmd)
-{
-	uint8_t *dst = (uint8_t *)(rb->base_address) + rb->wrpt;
-	const uint8_t *src = (uint8_t *)cmd;
+अटल अंतरभूत bool dmub_rb_out_push_front(काष्ठा dmub_rb *rb,
+				      स्थिर जोड़ dmub_rb_out_cmd *cmd)
+अणु
+	uपूर्णांक8_t *dst = (uपूर्णांक8_t *)(rb->base_address) + rb->wrpt;
+	स्थिर uपूर्णांक8_t *src = (uपूर्णांक8_t *)cmd;
 
-	if (dmub_rb_full(rb))
-		return false;
+	अगर (dmub_rb_full(rb))
+		वापस false;
 
-	dmub_memcpy(dst, src, DMUB_RB_CMD_SIZE);
+	dmub_स_नकल(dst, src, DMUB_RB_CMD_SIZE);
 
 	rb->wrpt += DMUB_RB_CMD_SIZE;
 
-	if (rb->wrpt >= rb->capacity)
+	अगर (rb->wrpt >= rb->capacity)
 		rb->wrpt %= rb->capacity;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * @brief Returns the next unprocessed command in the ringbuffer.
  *
  * @param rb DMUB ringbuffer
- * @param cmd The command to return
- * @return true if not empty
- * @return false otherwise
+ * @param cmd The command to वापस
+ * @वापस true अगर not empty
+ * @वापस false otherwise
  */
-static inline bool dmub_rb_front(struct dmub_rb *rb,
-				 union dmub_rb_cmd  **cmd)
-{
-	uint8_t *rb_cmd = (uint8_t *)(rb->base_address) + rb->rptr;
+अटल अंतरभूत bool dmub_rb_front(काष्ठा dmub_rb *rb,
+				 जोड़ dmub_rb_cmd  **cmd)
+अणु
+	uपूर्णांक8_t *rb_cmd = (uपूर्णांक8_t *)(rb->base_address) + rb->rptr;
 
-	if (dmub_rb_empty(rb))
-		return false;
+	अगर (dmub_rb_empty(rb))
+		वापस false;
 
-	*cmd = (union dmub_rb_cmd *)rb_cmd;
+	*cmd = (जोड़ dmub_rb_cmd *)rb_cmd;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * @brief Returns the next unprocessed command in the outbox.
  *
  * @param rb DMUB outbox ringbuffer
- * @param cmd The outbox command to return
- * @return true if not empty
- * @return false otherwise
+ * @param cmd The outbox command to वापस
+ * @वापस true अगर not empty
+ * @वापस false otherwise
  */
-static inline bool dmub_rb_out_front(struct dmub_rb *rb,
-				 union dmub_rb_out_cmd  *cmd)
-{
-	const uint64_t volatile *src = (const uint64_t volatile *)(rb->base_address) + rb->rptr / sizeof(uint64_t);
-	uint64_t *dst = (uint64_t *)cmd;
-	uint8_t i;
+अटल अंतरभूत bool dmub_rb_out_front(काष्ठा dmub_rb *rb,
+				 जोड़ dmub_rb_out_cmd  *cmd)
+अणु
+	स्थिर uपूर्णांक64_t अस्थिर *src = (स्थिर uपूर्णांक64_t अस्थिर *)(rb->base_address) + rb->rptr / माप(uपूर्णांक64_t);
+	uपूर्णांक64_t *dst = (uपूर्णांक64_t *)cmd;
+	uपूर्णांक8_t i;
 
-	if (dmub_rb_empty(rb))
-		return false;
+	अगर (dmub_rb_empty(rb))
+		वापस false;
 
 	// copying data
-	for (i = 0; i < DMUB_RB_CMD_SIZE / sizeof(uint64_t); i++)
+	क्रम (i = 0; i < DMUB_RB_CMD_SIZE / माप(uपूर्णांक64_t); i++)
 		*dst++ = *src++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * @brief Removes the front entry in the ringbuffer.
  *
  * @param rb DMUB ringbuffer
- * @return true if the command was removed
- * @return false if there were no commands
+ * @वापस true अगर the command was हटाओd
+ * @वापस false अगर there were no commands
  */
-static inline bool dmub_rb_pop_front(struct dmub_rb *rb)
-{
-	if (dmub_rb_empty(rb))
-		return false;
+अटल अंतरभूत bool dmub_rb_pop_front(काष्ठा dmub_rb *rb)
+अणु
+	अगर (dmub_rb_empty(rb))
+		वापस false;
 
 	rb->rptr += DMUB_RB_CMD_SIZE;
 
-	if (rb->rptr >= rb->capacity)
+	अगर (rb->rptr >= rb->capacity)
 		rb->rptr %= rb->capacity;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * @brief Flushes commands in the ringbuffer to framebuffer memory.
  *
- * Avoids a race condition where DMCUB accesses memory while
- * there are still writes in flight to framebuffer.
+ * Aव्योमs a race condition where DMCUB accesses memory जबतक
+ * there are still ग_लिखोs in flight to framebuffer.
  *
  * @param rb DMUB ringbuffer
  */
-static inline void dmub_rb_flush_pending(const struct dmub_rb *rb)
-{
-	uint32_t rptr = rb->rptr;
-	uint32_t wptr = rb->wrpt;
+अटल अंतरभूत व्योम dmub_rb_flush_pending(स्थिर काष्ठा dmub_rb *rb)
+अणु
+	uपूर्णांक32_t rptr = rb->rptr;
+	uपूर्णांक32_t wptr = rb->wrpt;
 
-	while (rptr != wptr) {
-		uint64_t volatile *data = (uint64_t volatile *)rb->base_address + rptr / sizeof(uint64_t);
-		uint8_t i;
+	जबतक (rptr != wptr) अणु
+		uपूर्णांक64_t अस्थिर *data = (uपूर्णांक64_t अस्थिर *)rb->base_address + rptr / माप(uपूर्णांक64_t);
+		uपूर्णांक8_t i;
 
-		for (i = 0; i < DMUB_RB_CMD_SIZE / sizeof(uint64_t); i++)
+		क्रम (i = 0; i < DMUB_RB_CMD_SIZE / माप(uपूर्णांक64_t); i++)
 			*data++;
 
 		rptr += DMUB_RB_CMD_SIZE;
-		if (rptr >= rb->capacity)
+		अगर (rptr >= rb->capacity)
 			rptr %= rb->capacity;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * @brief Initializes a DMCUB ringbuffer
  *
  * @param rb DMUB ringbuffer
- * @param init_params initial configuration for the ringbuffer
+ * @param init_params initial configuration क्रम the ringbuffer
  */
-static inline void dmub_rb_init(struct dmub_rb *rb,
-				struct dmub_rb_init_params *init_params)
-{
+अटल अंतरभूत व्योम dmub_rb_init(काष्ठा dmub_rb *rb,
+				काष्ठा dmub_rb_init_params *init_params)
+अणु
 	rb->base_address = init_params->base_address;
 	rb->capacity = init_params->capacity;
-	rb->rptr = init_params->read_ptr;
-	rb->wrpt = init_params->write_ptr;
-}
+	rb->rptr = init_params->पढ़ो_ptr;
+	rb->wrpt = init_params->ग_लिखो_ptr;
+पूर्ण
 
 /**
- * @brief Copies output data from in/out commands into the given command.
+ * @brief Copies output data from in/out commands पूर्णांकo the given command.
  *
  * @param rb DMUB ringbuffer
- * @param cmd Command to copy data into
+ * @param cmd Command to copy data पूर्णांकo
  */
-static inline void dmub_rb_get_return_data(struct dmub_rb *rb,
-					   union dmub_rb_cmd *cmd)
-{
-	// Copy rb entry back into command
-	uint8_t *rd_ptr = (rb->rptr == 0) ?
-		(uint8_t *)rb->base_address + rb->capacity - DMUB_RB_CMD_SIZE :
-		(uint8_t *)rb->base_address + rb->rptr - DMUB_RB_CMD_SIZE;
+अटल अंतरभूत व्योम dmub_rb_get_वापस_data(काष्ठा dmub_rb *rb,
+					   जोड़ dmub_rb_cmd *cmd)
+अणु
+	// Copy rb entry back पूर्णांकo command
+	uपूर्णांक8_t *rd_ptr = (rb->rptr == 0) ?
+		(uपूर्णांक8_t *)rb->base_address + rb->capacity - DMUB_RB_CMD_SIZE :
+		(uपूर्णांक8_t *)rb->base_address + rb->rptr - DMUB_RB_CMD_SIZE;
 
-	dmub_memcpy(cmd, rd_ptr, DMUB_RB_CMD_SIZE);
-}
+	dmub_स_नकल(cmd, rd_ptr, DMUB_RB_CMD_SIZE);
+पूर्ण
 
-#if defined(__cplusplus)
-}
-#endif
+#अगर defined(__cplusplus)
+पूर्ण
+#पूर्ण_अगर
 
 //==============================================================================
 //</DMUB_RB>====================================================================
 //==============================================================================
 
-#endif /* _DMUB_CMD_H_ */
+#पूर्ण_अगर /* _DMUB_CMD_H_ */

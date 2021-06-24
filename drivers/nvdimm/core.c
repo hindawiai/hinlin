@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
-#include <linux/libnvdimm.h>
-#include <linux/suspend.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/blkdev.h>
-#include <linux/device.h>
-#include <linux/ctype.h>
-#include <linux/ndctl.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include "nd-core.h"
-#include "nd.h"
+#समावेश <linux/libnvdimm.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/device.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/ndctl.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश "nd-core.h"
+#समावेश "nd.h"
 
 LIST_HEAD(nvdimm_bus_list);
 DEFINE_MUTEX(nvdimm_bus_list_mutex);
 
-void nvdimm_bus_lock(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+व्योम nvdimm_bus_lock(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
 
-	if (!nvdimm_bus)
-		return;
+	अगर (!nvdimm_bus)
+		वापस;
 	mutex_lock(&nvdimm_bus->reconfig_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(nvdimm_bus_lock);
 
-void nvdimm_bus_unlock(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+व्योम nvdimm_bus_unlock(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
 
-	if (!nvdimm_bus)
-		return;
+	अगर (!nvdimm_bus)
+		वापस;
 	mutex_unlock(&nvdimm_bus->reconfig_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(nvdimm_bus_unlock);
 
-bool is_nvdimm_bus_locked(struct device *dev)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+bool is_nvdimm_bus_locked(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
 
-	if (!nvdimm_bus)
-		return false;
-	return mutex_is_locked(&nvdimm_bus->reconfig_mutex);
-}
+	अगर (!nvdimm_bus)
+		वापस false;
+	वापस mutex_is_locked(&nvdimm_bus->reconfig_mutex);
+पूर्ण
 EXPORT_SYMBOL(is_nvdimm_bus_locked);
 
-struct nvdimm_map {
-	struct nvdimm_bus *nvdimm_bus;
-	struct list_head list;
-	resource_size_t offset;
-	unsigned long flags;
-	size_t size;
-	union {
-		void *mem;
-		void __iomem *iomem;
-	};
-	struct kref kref;
-};
+काष्ठा nvdimm_map अणु
+	काष्ठा nvdimm_bus *nvdimm_bus;
+	काष्ठा list_head list;
+	resource_माप_प्रकार offset;
+	अचिन्हित दीर्घ flags;
+	माप_प्रकार size;
+	जोड़ अणु
+		व्योम *mem;
+		व्योम __iomem *iomem;
+	पूर्ण;
+	काष्ठा kref kref;
+पूर्ण;
 
-static struct nvdimm_map *find_nvdimm_map(struct device *dev,
-		resource_size_t offset)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct nvdimm_map *nvdimm_map;
+अटल काष्ठा nvdimm_map *find_nvdimm_map(काष्ठा device *dev,
+		resource_माप_प्रकार offset)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा nvdimm_map *nvdimm_map;
 
-	list_for_each_entry(nvdimm_map, &nvdimm_bus->mapping_list, list)
-		if (nvdimm_map->offset == offset)
-			return nvdimm_map;
-	return NULL;
-}
+	list_क्रम_each_entry(nvdimm_map, &nvdimm_bus->mapping_list, list)
+		अगर (nvdimm_map->offset == offset)
+			वापस nvdimm_map;
+	वापस शून्य;
+पूर्ण
 
-static struct nvdimm_map *alloc_nvdimm_map(struct device *dev,
-		resource_size_t offset, size_t size, unsigned long flags)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct nvdimm_map *nvdimm_map;
+अटल काष्ठा nvdimm_map *alloc_nvdimm_map(काष्ठा device *dev,
+		resource_माप_प्रकार offset, माप_प्रकार size, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा nvdimm_map *nvdimm_map;
 
-	nvdimm_map = kzalloc(sizeof(*nvdimm_map), GFP_KERNEL);
-	if (!nvdimm_map)
-		return NULL;
+	nvdimm_map = kzalloc(माप(*nvdimm_map), GFP_KERNEL);
+	अगर (!nvdimm_map)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&nvdimm_map->list);
 	nvdimm_map->nvdimm_bus = nvdimm_bus;
@@ -91,526 +92,526 @@ static struct nvdimm_map *alloc_nvdimm_map(struct device *dev,
 	nvdimm_map->size = size;
 	kref_init(&nvdimm_map->kref);
 
-	if (!request_mem_region(offset, size, dev_name(&nvdimm_bus->dev))) {
+	अगर (!request_mem_region(offset, size, dev_name(&nvdimm_bus->dev))) अणु
 		dev_err(&nvdimm_bus->dev, "failed to request %pa + %zd for %s\n",
 				&offset, size, dev_name(dev));
-		goto err_request_region;
-	}
+		जाओ err_request_region;
+	पूर्ण
 
-	if (flags)
+	अगर (flags)
 		nvdimm_map->mem = memremap(offset, size, flags);
-	else
+	अन्यथा
 		nvdimm_map->iomem = ioremap(offset, size);
 
-	if (!nvdimm_map->mem)
-		goto err_map;
+	अगर (!nvdimm_map->mem)
+		जाओ err_map;
 
 	dev_WARN_ONCE(dev, !is_nvdimm_bus_locked(dev), "%s: bus unlocked!",
 			__func__);
 	list_add(&nvdimm_map->list, &nvdimm_bus->mapping_list);
 
-	return nvdimm_map;
+	वापस nvdimm_map;
 
  err_map:
 	release_mem_region(offset, size);
  err_request_region:
-	kfree(nvdimm_map);
-	return NULL;
-}
+	kमुक्त(nvdimm_map);
+	वापस शून्य;
+पूर्ण
 
-static void nvdimm_map_release(struct kref *kref)
-{
-	struct nvdimm_bus *nvdimm_bus;
-	struct nvdimm_map *nvdimm_map;
+अटल व्योम nvdimm_map_release(काष्ठा kref *kref)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus;
+	काष्ठा nvdimm_map *nvdimm_map;
 
-	nvdimm_map = container_of(kref, struct nvdimm_map, kref);
+	nvdimm_map = container_of(kref, काष्ठा nvdimm_map, kref);
 	nvdimm_bus = nvdimm_map->nvdimm_bus;
 
 	dev_dbg(&nvdimm_bus->dev, "%pa\n", &nvdimm_map->offset);
 	list_del(&nvdimm_map->list);
-	if (nvdimm_map->flags)
+	अगर (nvdimm_map->flags)
 		memunmap(nvdimm_map->mem);
-	else
+	अन्यथा
 		iounmap(nvdimm_map->iomem);
 	release_mem_region(nvdimm_map->offset, nvdimm_map->size);
-	kfree(nvdimm_map);
-}
+	kमुक्त(nvdimm_map);
+पूर्ण
 
-static void nvdimm_map_put(void *data)
-{
-	struct nvdimm_map *nvdimm_map = data;
-	struct nvdimm_bus *nvdimm_bus = nvdimm_map->nvdimm_bus;
+अटल व्योम nvdimm_map_put(व्योम *data)
+अणु
+	काष्ठा nvdimm_map *nvdimm_map = data;
+	काष्ठा nvdimm_bus *nvdimm_bus = nvdimm_map->nvdimm_bus;
 
 	nvdimm_bus_lock(&nvdimm_bus->dev);
 	kref_put(&nvdimm_map->kref, nvdimm_map_release);
 	nvdimm_bus_unlock(&nvdimm_bus->dev);
-}
+पूर्ण
 
 /**
  * devm_nvdimm_memremap - map a resource that is shared across regions
  * @dev: device that will own a reference to the shared mapping
  * @offset: physical base address of the mapping
  * @size: mapping size
- * @flags: memremap flags, or, if zero, perform an ioremap instead
+ * @flags: memremap flags, or, अगर zero, perक्रमm an ioremap instead
  */
-void *devm_nvdimm_memremap(struct device *dev, resource_size_t offset,
-		size_t size, unsigned long flags)
-{
-	struct nvdimm_map *nvdimm_map;
+व्योम *devm_nvdimm_memremap(काष्ठा device *dev, resource_माप_प्रकार offset,
+		माप_प्रकार size, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा nvdimm_map *nvdimm_map;
 
 	nvdimm_bus_lock(dev);
 	nvdimm_map = find_nvdimm_map(dev, offset);
-	if (!nvdimm_map)
+	अगर (!nvdimm_map)
 		nvdimm_map = alloc_nvdimm_map(dev, offset, size, flags);
-	else
+	अन्यथा
 		kref_get(&nvdimm_map->kref);
 	nvdimm_bus_unlock(dev);
 
-	if (!nvdimm_map)
-		return NULL;
+	अगर (!nvdimm_map)
+		वापस शून्य;
 
-	if (devm_add_action_or_reset(dev, nvdimm_map_put, nvdimm_map))
-		return NULL;
+	अगर (devm_add_action_or_reset(dev, nvdimm_map_put, nvdimm_map))
+		वापस शून्य;
 
-	return nvdimm_map->mem;
-}
+	वापस nvdimm_map->mem;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_nvdimm_memremap);
 
-u64 nd_fletcher64(void *addr, size_t len, bool le)
-{
+u64 nd_fletcher64(व्योम *addr, माप_प्रकार len, bool le)
+अणु
 	u32 *buf = addr;
 	u32 lo32 = 0;
 	u64 hi32 = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < len / sizeof(u32); i++) {
+	क्रम (i = 0; i < len / माप(u32); i++) अणु
 		lo32 += le ? le32_to_cpu((__le32) buf[i]) : buf[i];
 		hi32 += lo32;
-	}
+	पूर्ण
 
-	return hi32 << 32 | lo32;
-}
+	वापस hi32 << 32 | lo32;
+पूर्ण
 EXPORT_SYMBOL_GPL(nd_fletcher64);
 
-struct nvdimm_bus_descriptor *to_nd_desc(struct nvdimm_bus *nvdimm_bus)
-{
-	/* struct nvdimm_bus definition is private to libnvdimm */
-	return nvdimm_bus->nd_desc;
-}
+काष्ठा nvdimm_bus_descriptor *to_nd_desc(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
+	/* काष्ठा nvdimm_bus definition is निजी to libnvdimm */
+	वापस nvdimm_bus->nd_desc;
+पूर्ण
 EXPORT_SYMBOL_GPL(to_nd_desc);
 
-struct device *to_nvdimm_bus_dev(struct nvdimm_bus *nvdimm_bus)
-{
-	/* struct nvdimm_bus definition is private to libnvdimm */
-	return &nvdimm_bus->dev;
-}
+काष्ठा device *to_nvdimm_bus_dev(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
+	/* काष्ठा nvdimm_bus definition is निजी to libnvdimm */
+	वापस &nvdimm_bus->dev;
+पूर्ण
 EXPORT_SYMBOL_GPL(to_nvdimm_bus_dev);
 
-static bool is_uuid_sep(char sep)
-{
-	if (sep == '\n' || sep == '-' || sep == ':' || sep == '\0')
-		return true;
-	return false;
-}
+अटल bool is_uuid_sep(अक्षर sep)
+अणु
+	अगर (sep == '\n' || sep == '-' || sep == ':' || sep == '\0')
+		वापस true;
+	वापस false;
+पूर्ण
 
-static int nd_uuid_parse(struct device *dev, u8 *uuid_out, const char *buf,
-		size_t len)
-{
-	const char *str = buf;
+अटल पूर्णांक nd_uuid_parse(काष्ठा device *dev, u8 *uuid_out, स्थिर अक्षर *buf,
+		माप_प्रकार len)
+अणु
+	स्थिर अक्षर *str = buf;
 	u8 uuid[16];
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 16; i++) {
-		if (!isxdigit(str[0]) || !isxdigit(str[1])) {
+	क्रम (i = 0; i < 16; i++) अणु
+		अगर (!है_षष्ठादशक(str[0]) || !है_षष्ठादशक(str[1])) अणु
 			dev_dbg(dev, "pos: %d buf[%zd]: %c buf[%zd]: %c\n",
 					i, str - buf, str[0],
 					str + 1 - buf, str[1]);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		uuid[i] = (hex_to_bin(str[0]) << 4) | hex_to_bin(str[1]);
 		str += 2;
-		if (is_uuid_sep(*str))
+		अगर (is_uuid_sep(*str))
 			str++;
-	}
+	पूर्ण
 
-	memcpy(uuid_out, uuid, sizeof(uuid));
-	return 0;
-}
+	स_नकल(uuid_out, uuid, माप(uuid));
+	वापस 0;
+पूर्ण
 
 /**
- * nd_uuid_store: common implementation for writing 'uuid' sysfs attributes
- * @dev: container device for the uuid property
+ * nd_uuid_store: common implementation क्रम writing 'uuid' sysfs attributes
+ * @dev: container device क्रम the uuid property
  * @uuid_out: uuid buffer to replace
  * @buf: raw sysfs buffer to parse
  *
- * Enforce that uuids can only be changed while the device is disabled
+ * Enक्रमce that uuids can only be changed जबतक the device is disabled
  * (driver detached)
  * LOCKING: expects nd_device_lock() is held on entry
  */
-int nd_uuid_store(struct device *dev, u8 **uuid_out, const char *buf,
-		size_t len)
-{
+पूर्णांक nd_uuid_store(काष्ठा device *dev, u8 **uuid_out, स्थिर अक्षर *buf,
+		माप_प्रकार len)
+अणु
 	u8 uuid[16];
-	int rc;
+	पूर्णांक rc;
 
-	if (dev->driver)
-		return -EBUSY;
+	अगर (dev->driver)
+		वापस -EBUSY;
 
 	rc = nd_uuid_parse(dev, uuid, buf, len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	kfree(*uuid_out);
-	*uuid_out = kmemdup(uuid, sizeof(uuid), GFP_KERNEL);
-	if (!(*uuid_out))
-		return -ENOMEM;
+	kमुक्त(*uuid_out);
+	*uuid_out = kmemdup(uuid, माप(uuid), GFP_KERNEL);
+	अगर (!(*uuid_out))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-ssize_t nd_size_select_show(unsigned long current_size,
-		const unsigned long *supported, char *buf)
-{
-	ssize_t len = 0;
-	int i;
+sमाप_प्रकार nd_size_select_show(अचिन्हित दीर्घ current_size,
+		स्थिर अचिन्हित दीर्घ *supported, अक्षर *buf)
+अणु
+	sमाप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; supported[i]; i++)
-		if (current_size == supported[i])
-			len += sprintf(buf + len, "[%ld] ", supported[i]);
-		else
-			len += sprintf(buf + len, "%ld ", supported[i]);
-	len += sprintf(buf + len, "\n");
-	return len;
-}
+	क्रम (i = 0; supported[i]; i++)
+		अगर (current_size == supported[i])
+			len += प्र_लिखो(buf + len, "[%ld] ", supported[i]);
+		अन्यथा
+			len += प्र_लिखो(buf + len, "%ld ", supported[i]);
+	len += प्र_लिखो(buf + len, "\n");
+	वापस len;
+पूर्ण
 
-ssize_t nd_size_select_store(struct device *dev, const char *buf,
-		unsigned long *current_size, const unsigned long *supported)
-{
-	unsigned long lbasize;
-	int rc, i;
+sमाप_प्रकार nd_size_select_store(काष्ठा device *dev, स्थिर अक्षर *buf,
+		अचिन्हित दीर्घ *current_size, स्थिर अचिन्हित दीर्घ *supported)
+अणु
+	अचिन्हित दीर्घ lbasize;
+	पूर्णांक rc, i;
 
-	if (dev->driver)
-		return -EBUSY;
+	अगर (dev->driver)
+		वापस -EBUSY;
 
-	rc = kstrtoul(buf, 0, &lbasize);
-	if (rc)
-		return rc;
+	rc = kम_से_अदीर्घ(buf, 0, &lbasize);
+	अगर (rc)
+		वापस rc;
 
-	for (i = 0; supported[i]; i++)
-		if (lbasize == supported[i])
-			break;
+	क्रम (i = 0; supported[i]; i++)
+		अगर (lbasize == supported[i])
+			अवरोध;
 
-	if (supported[i]) {
+	अगर (supported[i]) अणु
 		*current_size = lbasize;
-		return 0;
-	} else {
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static ssize_t commands_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int cmd, len = 0;
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+अटल sमाप_प्रकार commands_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक cmd, len = 0;
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
 
-	for_each_set_bit(cmd, &nd_desc->cmd_mask, BITS_PER_LONG)
-		len += sprintf(buf + len, "%s ", nvdimm_bus_cmd_name(cmd));
-	len += sprintf(buf + len, "\n");
-	return len;
-}
-static DEVICE_ATTR_RO(commands);
+	क्रम_each_set_bit(cmd, &nd_desc->cmd_mask, BITS_PER_LONG)
+		len += प्र_लिखो(buf + len, "%s ", nvdimm_bus_cmd_name(cmd));
+	len += प्र_लिखो(buf + len, "\n");
+	वापस len;
+पूर्ण
+अटल DEVICE_ATTR_RO(commands);
 
-static const char *nvdimm_bus_provider(struct nvdimm_bus *nvdimm_bus)
-{
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-	struct device *parent = nvdimm_bus->dev.parent;
+अटल स्थिर अक्षर *nvdimm_bus_provider(काष्ठा nvdimm_bus *nvdimm_bus)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+	काष्ठा device *parent = nvdimm_bus->dev.parent;
 
-	if (nd_desc->provider_name)
-		return nd_desc->provider_name;
-	else if (parent)
-		return dev_name(parent);
-	else
-		return "unknown";
-}
+	अगर (nd_desc->provider_name)
+		वापस nd_desc->provider_name;
+	अन्यथा अगर (parent)
+		वापस dev_name(parent);
+	अन्यथा
+		वापस "unknown";
+पूर्ण
 
-static ssize_t provider_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+अटल sमाप_प्रकार provider_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
 
-	return sprintf(buf, "%s\n", nvdimm_bus_provider(nvdimm_bus));
-}
-static DEVICE_ATTR_RO(provider);
+	वापस प्र_लिखो(buf, "%s\n", nvdimm_bus_provider(nvdimm_bus));
+पूर्ण
+अटल DEVICE_ATTR_RO(provider);
 
-static int flush_namespaces(struct device *dev, void *data)
-{
+अटल पूर्णांक flush_namespaces(काष्ठा device *dev, व्योम *data)
+अणु
 	nd_device_lock(dev);
 	nd_device_unlock(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int flush_regions_dimms(struct device *dev, void *data)
-{
+अटल पूर्णांक flush_regions_dimms(काष्ठा device *dev, व्योम *data)
+अणु
 	nd_device_lock(dev);
 	nd_device_unlock(dev);
-	device_for_each_child(dev, NULL, flush_namespaces);
-	return 0;
-}
+	device_क्रम_each_child(dev, शून्य, flush_namespaces);
+	वापस 0;
+पूर्ण
 
-static ssize_t wait_probe_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-	int rc;
+अटल sमाप_प्रकार रुको_probe_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+	पूर्णांक rc;
 
-	if (nd_desc->flush_probe) {
+	अगर (nd_desc->flush_probe) अणु
 		rc = nd_desc->flush_probe(nd_desc);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 	nd_synchronize();
-	device_for_each_child(dev, NULL, flush_regions_dimms);
-	return sprintf(buf, "1\n");
-}
-static DEVICE_ATTR_RO(wait_probe);
+	device_क्रम_each_child(dev, शून्य, flush_regions_dimms);
+	वापस प्र_लिखो(buf, "1\n");
+पूर्ण
+अटल DEVICE_ATTR_RO(रुको_probe);
 
-static struct attribute *nvdimm_bus_attributes[] = {
+अटल काष्ठा attribute *nvdimm_bus_attributes[] = अणु
 	&dev_attr_commands.attr,
-	&dev_attr_wait_probe.attr,
+	&dev_attr_रुको_probe.attr,
 	&dev_attr_provider.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nvdimm_bus_attribute_group = {
+अटल स्थिर काष्ठा attribute_group nvdimm_bus_attribute_group = अणु
 	.attrs = nvdimm_bus_attributes,
-};
+पूर्ण;
 
-static ssize_t capability_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-	enum nvdimm_fwa_capability cap;
+अटल sमाप_प्रकार capability_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+	क्रमागत nvdimm_fwa_capability cap;
 
-	if (!nd_desc->fw_ops)
-		return -EOPNOTSUPP;
+	अगर (!nd_desc->fw_ops)
+		वापस -EOPNOTSUPP;
 
 	nvdimm_bus_lock(dev);
 	cap = nd_desc->fw_ops->capability(nd_desc);
 	nvdimm_bus_unlock(dev);
 
-	switch (cap) {
-	case NVDIMM_FWA_CAP_QUIESCE:
-		return sprintf(buf, "quiesce\n");
-	case NVDIMM_FWA_CAP_LIVE:
-		return sprintf(buf, "live\n");
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (cap) अणु
+	हाल NVDIMM_FWA_CAP_QUIESCE:
+		वापस प्र_लिखो(buf, "quiesce\n");
+	हाल NVDIMM_FWA_CAP_LIVE:
+		वापस प्र_लिखो(buf, "live\n");
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static DEVICE_ATTR_RO(capability);
+अटल DEVICE_ATTR_RO(capability);
 
-static ssize_t activate_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-	enum nvdimm_fwa_capability cap;
-	enum nvdimm_fwa_state state;
+अटल sमाप_प्रकार activate_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+	क्रमागत nvdimm_fwa_capability cap;
+	क्रमागत nvdimm_fwa_state state;
 
-	if (!nd_desc->fw_ops)
-		return -EOPNOTSUPP;
+	अगर (!nd_desc->fw_ops)
+		वापस -EOPNOTSUPP;
 
 	nvdimm_bus_lock(dev);
 	cap = nd_desc->fw_ops->capability(nd_desc);
 	state = nd_desc->fw_ops->activate_state(nd_desc);
 	nvdimm_bus_unlock(dev);
 
-	if (cap < NVDIMM_FWA_CAP_QUIESCE)
-		return -EOPNOTSUPP;
+	अगर (cap < NVDIMM_FWA_CAP_QUIESCE)
+		वापस -EOPNOTSUPP;
 
-	switch (state) {
-	case NVDIMM_FWA_IDLE:
-		return sprintf(buf, "idle\n");
-	case NVDIMM_FWA_BUSY:
-		return sprintf(buf, "busy\n");
-	case NVDIMM_FWA_ARMED:
-		return sprintf(buf, "armed\n");
-	case NVDIMM_FWA_ARM_OVERFLOW:
-		return sprintf(buf, "overflow\n");
-	default:
-		return -ENXIO;
-	}
-}
+	चयन (state) अणु
+	हाल NVDIMM_FWA_IDLE:
+		वापस प्र_लिखो(buf, "idle\n");
+	हाल NVDIMM_FWA_BUSY:
+		वापस प्र_लिखो(buf, "busy\n");
+	हाल NVDIMM_FWA_ARMED:
+		वापस प्र_लिखो(buf, "armed\n");
+	हाल NVDIMM_FWA_ARM_OVERFLOW:
+		वापस प्र_लिखो(buf, "overflow\n");
+	शेष:
+		वापस -ENXIO;
+	पूर्ण
+पूर्ण
 
-static int exec_firmware_activate(void *data)
-{
-	struct nvdimm_bus_descriptor *nd_desc = data;
+अटल पूर्णांक exec_firmware_activate(व्योम *data)
+अणु
+	काष्ठा nvdimm_bus_descriptor *nd_desc = data;
 
-	return nd_desc->fw_ops->activate(nd_desc);
-}
+	वापस nd_desc->fw_ops->activate(nd_desc);
+पूर्ण
 
-static ssize_t activate_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-	enum nvdimm_fwa_state state;
+अटल sमाप_प्रकार activate_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+	क्रमागत nvdimm_fwa_state state;
 	bool quiesce;
-	ssize_t rc;
+	sमाप_प्रकार rc;
 
-	if (!nd_desc->fw_ops)
-		return -EOPNOTSUPP;
+	अगर (!nd_desc->fw_ops)
+		वापस -EOPNOTSUPP;
 
-	if (sysfs_streq(buf, "live"))
+	अगर (sysfs_streq(buf, "live"))
 		quiesce = false;
-	else if (sysfs_streq(buf, "quiesce"))
+	अन्यथा अगर (sysfs_streq(buf, "quiesce"))
 		quiesce = true;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	nvdimm_bus_lock(dev);
 	state = nd_desc->fw_ops->activate_state(nd_desc);
 
-	switch (state) {
-	case NVDIMM_FWA_BUSY:
+	चयन (state) अणु
+	हाल NVDIMM_FWA_BUSY:
 		rc = -EBUSY;
-		break;
-	case NVDIMM_FWA_ARMED:
-	case NVDIMM_FWA_ARM_OVERFLOW:
-		if (quiesce)
+		अवरोध;
+	हाल NVDIMM_FWA_ARMED:
+	हाल NVDIMM_FWA_ARM_OVERFLOW:
+		अगर (quiesce)
 			rc = hibernate_quiet_exec(exec_firmware_activate, nd_desc);
-		else
+		अन्यथा
 			rc = nd_desc->fw_ops->activate(nd_desc);
-		break;
-	case NVDIMM_FWA_IDLE:
-	default:
+		अवरोध;
+	हाल NVDIMM_FWA_IDLE:
+	शेष:
 		rc = -ENXIO;
-	}
+	पूर्ण
 	nvdimm_bus_unlock(dev);
 
-	if (rc == 0)
+	अगर (rc == 0)
 		rc = len;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static DEVICE_ATTR_ADMIN_RW(activate);
+अटल DEVICE_ATTR_ADMIN_RW(activate);
 
-static umode_t nvdimm_bus_firmware_visible(struct kobject *kobj, struct attribute *a, int n)
-{
-	struct device *dev = container_of(kobj, typeof(*dev), kobj);
-	struct nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
-	struct nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
-	enum nvdimm_fwa_capability cap;
+अटल umode_t nvdimm_bus_firmware_visible(काष्ठा kobject *kobj, काष्ठा attribute *a, पूर्णांक n)
+अणु
+	काष्ठा device *dev = container_of(kobj, typeof(*dev), kobj);
+	काष्ठा nvdimm_bus *nvdimm_bus = to_nvdimm_bus(dev);
+	काष्ठा nvdimm_bus_descriptor *nd_desc = nvdimm_bus->nd_desc;
+	क्रमागत nvdimm_fwa_capability cap;
 
 	/*
 	 * Both 'activate' and 'capability' disappear when no ops
 	 * detected, or a negative capability is indicated.
 	 */
-	if (!nd_desc->fw_ops)
-		return 0;
+	अगर (!nd_desc->fw_ops)
+		वापस 0;
 
 	nvdimm_bus_lock(dev);
 	cap = nd_desc->fw_ops->capability(nd_desc);
 	nvdimm_bus_unlock(dev);
 
-	if (cap < NVDIMM_FWA_CAP_QUIESCE)
-		return 0;
+	अगर (cap < NVDIMM_FWA_CAP_QUIESCE)
+		वापस 0;
 
-	return a->mode;
-}
-static struct attribute *nvdimm_bus_firmware_attributes[] = {
+	वापस a->mode;
+पूर्ण
+अटल काष्ठा attribute *nvdimm_bus_firmware_attributes[] = अणु
 	&dev_attr_activate.attr,
 	&dev_attr_capability.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nvdimm_bus_firmware_attribute_group = {
+अटल स्थिर काष्ठा attribute_group nvdimm_bus_firmware_attribute_group = अणु
 	.name = "firmware",
 	.attrs = nvdimm_bus_firmware_attributes,
 	.is_visible = nvdimm_bus_firmware_visible,
-};
+पूर्ण;
 
-const struct attribute_group *nvdimm_bus_attribute_groups[] = {
+स्थिर काष्ठा attribute_group *nvdimm_bus_attribute_groups[] = अणु
 	&nvdimm_bus_attribute_group,
 	&nvdimm_bus_firmware_attribute_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-int nvdimm_bus_add_badrange(struct nvdimm_bus *nvdimm_bus, u64 addr, u64 length)
-{
-	return badrange_add(&nvdimm_bus->badrange, addr, length);
-}
+पूर्णांक nvdimm_bus_add_badrange(काष्ठा nvdimm_bus *nvdimm_bus, u64 addr, u64 length)
+अणु
+	वापस badrange_add(&nvdimm_bus->badrange, addr, length);
+पूर्ण
 EXPORT_SYMBOL_GPL(nvdimm_bus_add_badrange);
 
-#ifdef CONFIG_BLK_DEV_INTEGRITY
-int nd_integrity_init(struct gendisk *disk, unsigned long meta_size)
-{
-	struct blk_integrity bi;
+#अगर_घोषित CONFIG_BLK_DEV_INTEGRITY
+पूर्णांक nd_पूर्णांकegrity_init(काष्ठा gendisk *disk, अचिन्हित दीर्घ meta_size)
+अणु
+	काष्ठा blk_पूर्णांकegrity bi;
 
-	if (meta_size == 0)
-		return 0;
+	अगर (meta_size == 0)
+		वापस 0;
 
-	memset(&bi, 0, sizeof(bi));
+	स_रखो(&bi, 0, माप(bi));
 
 	bi.tuple_size = meta_size;
 	bi.tag_size = meta_size;
 
-	blk_integrity_register(disk, &bi);
-	blk_queue_max_integrity_segments(disk->queue, 1);
+	blk_पूर्णांकegrity_रेजिस्टर(disk, &bi);
+	blk_queue_max_पूर्णांकegrity_segments(disk->queue, 1);
 
-	return 0;
-}
-EXPORT_SYMBOL(nd_integrity_init);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(nd_पूर्णांकegrity_init);
 
-#else /* CONFIG_BLK_DEV_INTEGRITY */
-int nd_integrity_init(struct gendisk *disk, unsigned long meta_size)
-{
-	return 0;
-}
-EXPORT_SYMBOL(nd_integrity_init);
+#अन्यथा /* CONFIG_BLK_DEV_INTEGRITY */
+पूर्णांक nd_पूर्णांकegrity_init(काष्ठा gendisk *disk, अचिन्हित दीर्घ meta_size)
+अणु
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(nd_पूर्णांकegrity_init);
 
-#endif
+#पूर्ण_अगर
 
-static __init int libnvdimm_init(void)
-{
-	int rc;
+अटल __init पूर्णांक libnvdimm_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = nvdimm_bus_init();
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = nvdimm_init();
-	if (rc)
-		goto err_dimm;
+	अगर (rc)
+		जाओ err_dimm;
 	rc = nd_region_init();
-	if (rc)
-		goto err_region;
+	अगर (rc)
+		जाओ err_region;
 
 	nd_label_init();
 
-	return 0;
+	वापस 0;
  err_region:
-	nvdimm_exit();
+	nvdimm_निकास();
  err_dimm:
-	nvdimm_bus_exit();
-	return rc;
-}
+	nvdimm_bus_निकास();
+	वापस rc;
+पूर्ण
 
-static __exit void libnvdimm_exit(void)
-{
+अटल __निकास व्योम libnvdimm_निकास(व्योम)
+अणु
 	WARN_ON(!list_empty(&nvdimm_bus_list));
-	nd_region_exit();
-	nvdimm_exit();
-	nvdimm_bus_exit();
-	nvdimm_devs_exit();
-}
+	nd_region_निकास();
+	nvdimm_निकास();
+	nvdimm_bus_निकास();
+	nvdimm_devs_निकास();
+पूर्ण
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Intel Corporation");
 subsys_initcall(libnvdimm_init);
-module_exit(libnvdimm_exit);
+module_निकास(libnvdimm_निकास);

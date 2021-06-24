@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2007-2013 Solarflare Communications Inc.
  */
 
-#ifndef EF4_ENUM_H
-#define EF4_ENUM_H
+#अगर_अघोषित EF4_ENUM_H
+#घोषणा EF4_ENUM_H
 
 /**
- * enum ef4_loopback_mode - loopback modes
+ * क्रमागत ef4_loopback_mode - loopback modes
  * @LOOPBACK_NONE: no loopback
  * @LOOPBACK_DATA: data path loopback
  * @LOOPBACK_GMAC: loopback within GMAC
  * @LOOPBACK_XGMII: loopback after XMAC
  * @LOOPBACK_XGXS: loopback within BPX after XGXS
- * @LOOPBACK_XAUI: loopback within BPX before XAUI serdes
+ * @LOOPBACK_XAUI: loopback within BPX beक्रमe XAUI serdes
  * @LOOPBACK_GMII: loopback within BPX after GMAC
  * @LOOPBACK_SGMII: loopback within BPX within SGMII
  * @LOOPBACK_XGBR: loopback within BPX within XGBR
- * @LOOPBACK_XFI: loopback within BPX before XFI serdes
+ * @LOOPBACK_XFI: loopback within BPX beक्रमe XFI serdes
  * @LOOPBACK_XAUI_FAR: loopback within BPX after XAUI serdes
- * @LOOPBACK_GMII_FAR: loopback within BPX before SGMII
+ * @LOOPBACK_GMII_FAR: loopback within BPX beक्रमe SGMII
  * @LOOPBACK_SGMII_FAR: loopback within BPX after SGMII
  * @LOOPBACK_XFI_FAR: loopback after XFI serdes
- * @LOOPBACK_GPHY: loopback within 1G PHY at unspecified level
+ * @LOOPBACK_GPHY: loopback within 1G PHY at unspecअगरied level
  * @LOOPBACK_PHYXS: loopback within 10G PHY at PHYXS level
  * @LOOPBACK_PCS: loopback within 10G PHY at PCS level
  * @LOOPBACK_PMAPMD: loopback within 10G PHY at PMAPMD level
@@ -37,8 +38,8 @@
  * @LOOPBACK_XFI_WS_FAR: wireside loopback including XFI serdes
  * @LOOPBACK_PHYXS_WS: wireside loopback within 10G PHY at PHYXS level
  */
-/* Please keep up-to-date w.r.t the following two #defines */
-enum ef4_loopback_mode {
+/* Please keep up-to-date w.r.t the following two #घोषणाs */
+क्रमागत ef4_loopback_mode अणु
 	LOOPBACK_NONE = 0,
 	LOOPBACK_DATA = 1,
 	LOOPBACK_GMAC = 2,
@@ -67,11 +68,11 @@ enum ef4_loopback_mode {
 	LOOPBACK_XFI_WS_FAR = 25,
 	LOOPBACK_PHYXS_WS = 26,
 	LOOPBACK_MAX
-};
-#define LOOPBACK_TEST_MAX LOOPBACK_PMAPMD
+पूर्ण;
+#घोषणा LOOPBACK_TEST_MAX LOOPBACK_PMAPMD
 
 /* These loopbacks occur within the controller */
-#define LOOPBACKS_INTERNAL ((1 << LOOPBACK_DATA) |		\
+#घोषणा LOOPBACKS_INTERNAL ((1 << LOOPBACK_DATA) |		\
 			    (1 << LOOPBACK_GMAC) |		\
 			    (1 << LOOPBACK_XGMII)|		\
 			    (1 << LOOPBACK_XGXS) |		\
@@ -92,7 +93,7 @@ enum ef4_loopback_mode {
 			    (1 << LOOPBACK_XFI_WS) |		\
 			    (1 << LOOPBACK_XFI_WS_FAR))
 
-#define LOOPBACKS_WS ((1 << LOOPBACK_XGMII_WS) |		\
+#घोषणा LOOPBACKS_WS ((1 << LOOPBACK_XGMII_WS) |		\
 		      (1 << LOOPBACK_XAUI_WS) |			\
 		      (1 << LOOPBACK_XAUI_WS_FAR) |		\
 		      (1 << LOOPBACK_XAUI_WS_NEAR) |		\
@@ -101,53 +102,53 @@ enum ef4_loopback_mode {
 		      (1 << LOOPBACK_XFI_WS_FAR) |		\
 		      (1 << LOOPBACK_PHYXS_WS))
 
-#define LOOPBACKS_EXTERNAL(_efx)					\
+#घोषणा LOOPBACKS_EXTERNAL(_efx)					\
 	((_efx)->loopback_modes & ~LOOPBACKS_INTERNAL &			\
 	 ~(1 << LOOPBACK_NONE))
 
-#define LOOPBACK_MASK(_efx)			\
+#घोषणा LOOPBACK_MASK(_efx)			\
 	(1 << (_efx)->loopback_mode)
 
-#define LOOPBACK_INTERNAL(_efx)				\
+#घोषणा LOOPBACK_INTERNAL(_efx)				\
 	(!!(LOOPBACKS_INTERNAL & LOOPBACK_MASK(_efx)))
 
-#define LOOPBACK_EXTERNAL(_efx)				\
+#घोषणा LOOPBACK_EXTERNAL(_efx)				\
 	(!!(LOOPBACK_MASK(_efx) & LOOPBACKS_EXTERNAL(_efx)))
 
-#define LOOPBACK_CHANGED(_from, _to, _mask)				\
+#घोषणा LOOPBACK_CHANGED(_from, _to, _mask)				\
 	(!!((LOOPBACK_MASK(_from) ^ LOOPBACK_MASK(_to)) & (_mask)))
 
-#define LOOPBACK_OUT_OF(_from, _to, _mask)				\
+#घोषणा LOOPBACK_OUT_OF(_from, _to, _mask)				\
 	((LOOPBACK_MASK(_from) & (_mask)) && !(LOOPBACK_MASK(_to) & (_mask)))
 
 /*****************************************************************************/
 
 /**
- * enum reset_type - reset types
+ * क्रमागत reset_type - reset types
  *
  * %RESET_TYPE_INVSIBLE, %RESET_TYPE_ALL, %RESET_TYPE_WORLD and
- * %RESET_TYPE_DISABLE specify the method/scope of the reset.  The
- * other valuesspecify reasons, which ef4_schedule_reset() will choose
- * a method for.
+ * %RESET_TYPE_DISABLE specअगरy the method/scope of the reset.  The
+ * other valuesspecअगरy reasons, which ef4_schedule_reset() will choose
+ * a method क्रम.
  *
  * Reset methods are numbered in order of increasing scope.
  *
  * @RESET_TYPE_INVISIBLE: Reset datapath and MAC
  * @RESET_TYPE_RECOVER_OR_ALL: Try to recover. Apply RESET_TYPE_ALL
- * if unsuccessful.
+ * अगर unsuccessful.
  * @RESET_TYPE_ALL: Reset datapath, MAC and PHY
  * @RESET_TYPE_WORLD: Reset as much as possible
- * @RESET_TYPE_RECOVER_OR_DISABLE: Try to recover. Apply RESET_TYPE_DISABLE if
+ * @RESET_TYPE_RECOVER_OR_DISABLE: Try to recover. Apply RESET_TYPE_DISABLE अगर
  * unsuccessful.
  * @RESET_TYPE_DATAPATH: Reset datapath only.
  * @RESET_TYPE_DISABLE: Reset datapath, MAC and PHY; leave NIC disabled
- * @RESET_TYPE_TX_WATCHDOG: reset due to TX watchdog
- * @RESET_TYPE_INT_ERROR: reset due to internal error
+ * @RESET_TYPE_TX_WATCHDOG: reset due to TX watchकरोg
+ * @RESET_TYPE_INT_ERROR: reset due to पूर्णांकernal error
  * @RESET_TYPE_RX_RECOVERY: reset to recover from RX datapath errors
  * @RESET_TYPE_DMA_ERROR: DMA error
  * @RESET_TYPE_TX_SKIP: hardware completed empty tx descriptors
  */
-enum reset_type {
+क्रमागत reset_type अणु
 	RESET_TYPE_INVISIBLE,
 	RESET_TYPE_RECOVER_OR_ALL,
 	RESET_TYPE_ALL,
@@ -162,6 +163,6 @@ enum reset_type {
 	RESET_TYPE_DMA_ERROR,
 	RESET_TYPE_TX_SKIP,
 	RESET_TYPE_MAX,
-};
+पूर्ण;
 
-#endif /* EF4_ENUM_H */
+#पूर्ण_अगर /* EF4_ENUM_H */

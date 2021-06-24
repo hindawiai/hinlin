@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* RxRPC kernel service interface definitions
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* RxRPC kernel service पूर्णांकerface definitions
  *
  * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _NET_RXRPC_H
-#define _NET_RXRPC_H
+#अगर_अघोषित _NET_RXRPC_H
+#घोषणा _NET_RXRPC_H
 
-#include <linux/rxrpc.h>
-#include <linux/ktime.h>
+#समावेश <linux/rxrpc.h>
+#समावेश <linux/kसमय.स>
 
-struct key;
-struct sock;
-struct socket;
-struct rxrpc_call;
+काष्ठा key;
+काष्ठा sock;
+काष्ठा socket;
+काष्ठा rxrpc_call;
 
-enum rxrpc_interruptibility {
-	RXRPC_INTERRUPTIBLE,	/* Call is interruptible */
-	RXRPC_PREINTERRUPTIBLE,	/* Call can be cancelled whilst waiting for a slot */
-	RXRPC_UNINTERRUPTIBLE,	/* Call should not be interruptible at all */
-};
+क्रमागत rxrpc_पूर्णांकerruptibility अणु
+	RXRPC_INTERRUPTIBLE,	/* Call is पूर्णांकerruptible */
+	RXRPC_PREINTERRUPTIBLE,	/* Call can be cancelled whilst रुकोing क्रम a slot */
+	RXRPC_UNINTERRUPTIBLE,	/* Call should not be पूर्णांकerruptible at all */
+पूर्ण;
 
 /*
- * Debug ID counter for tracing.
+ * Debug ID counter क्रम tracing.
  */
-extern atomic_t rxrpc_debug_id;
+बाह्य atomic_t rxrpc_debug_id;
 
-typedef void (*rxrpc_notify_rx_t)(struct sock *, struct rxrpc_call *,
-				  unsigned long);
-typedef void (*rxrpc_notify_end_tx_t)(struct sock *, struct rxrpc_call *,
-				      unsigned long);
-typedef void (*rxrpc_notify_new_call_t)(struct sock *, struct rxrpc_call *,
-					unsigned long);
-typedef void (*rxrpc_discard_new_call_t)(struct rxrpc_call *, unsigned long);
-typedef void (*rxrpc_user_attach_call_t)(struct rxrpc_call *, unsigned long);
+प्रकार व्योम (*rxrpc_notअगरy_rx_t)(काष्ठा sock *, काष्ठा rxrpc_call *,
+				  अचिन्हित दीर्घ);
+प्रकार व्योम (*rxrpc_notअगरy_end_tx_t)(काष्ठा sock *, काष्ठा rxrpc_call *,
+				      अचिन्हित दीर्घ);
+प्रकार व्योम (*rxrpc_notअगरy_new_call_t)(काष्ठा sock *, काष्ठा rxrpc_call *,
+					अचिन्हित दीर्घ);
+प्रकार व्योम (*rxrpc_discard_new_call_t)(काष्ठा rxrpc_call *, अचिन्हित दीर्घ);
+प्रकार व्योम (*rxrpc_user_attach_call_t)(काष्ठा rxrpc_call *, अचिन्हित दीर्घ);
 
-void rxrpc_kernel_new_call_notification(struct socket *,
-					rxrpc_notify_new_call_t,
+व्योम rxrpc_kernel_new_call_notअगरication(काष्ठा socket *,
+					rxrpc_notअगरy_new_call_t,
 					rxrpc_discard_new_call_t);
-struct rxrpc_call *rxrpc_kernel_begin_call(struct socket *,
-					   struct sockaddr_rxrpc *,
-					   struct key *,
-					   unsigned long,
+काष्ठा rxrpc_call *rxrpc_kernel_begin_call(काष्ठा socket *,
+					   काष्ठा sockaddr_rxrpc *,
+					   काष्ठा key *,
+					   अचिन्हित दीर्घ,
 					   s64,
 					   gfp_t,
-					   rxrpc_notify_rx_t,
+					   rxrpc_notअगरy_rx_t,
 					   bool,
-					   enum rxrpc_interruptibility,
-					   unsigned int);
-int rxrpc_kernel_send_data(struct socket *, struct rxrpc_call *,
-			   struct msghdr *, size_t,
-			   rxrpc_notify_end_tx_t);
-int rxrpc_kernel_recv_data(struct socket *, struct rxrpc_call *,
-			   struct iov_iter *, size_t *, bool, u32 *, u16 *);
-bool rxrpc_kernel_abort_call(struct socket *, struct rxrpc_call *,
-			     u32, int, const char *);
-void rxrpc_kernel_end_call(struct socket *, struct rxrpc_call *);
-void rxrpc_kernel_get_peer(struct socket *, struct rxrpc_call *,
-			   struct sockaddr_rxrpc *);
-bool rxrpc_kernel_get_srtt(struct socket *, struct rxrpc_call *, u32 *);
-int rxrpc_kernel_charge_accept(struct socket *, rxrpc_notify_rx_t,
-			       rxrpc_user_attach_call_t, unsigned long, gfp_t,
-			       unsigned int);
-void rxrpc_kernel_set_tx_length(struct socket *, struct rxrpc_call *, s64);
-bool rxrpc_kernel_check_life(const struct socket *, const struct rxrpc_call *);
-u32 rxrpc_kernel_get_epoch(struct socket *, struct rxrpc_call *);
-bool rxrpc_kernel_get_reply_time(struct socket *, struct rxrpc_call *,
-				 ktime_t *);
-bool rxrpc_kernel_call_is_complete(struct rxrpc_call *);
-void rxrpc_kernel_set_max_life(struct socket *, struct rxrpc_call *,
-			       unsigned long);
+					   क्रमागत rxrpc_पूर्णांकerruptibility,
+					   अचिन्हित पूर्णांक);
+पूर्णांक rxrpc_kernel_send_data(काष्ठा socket *, काष्ठा rxrpc_call *,
+			   काष्ठा msghdr *, माप_प्रकार,
+			   rxrpc_notअगरy_end_tx_t);
+पूर्णांक rxrpc_kernel_recv_data(काष्ठा socket *, काष्ठा rxrpc_call *,
+			   काष्ठा iov_iter *, माप_प्रकार *, bool, u32 *, u16 *);
+bool rxrpc_kernel_पात_call(काष्ठा socket *, काष्ठा rxrpc_call *,
+			     u32, पूर्णांक, स्थिर अक्षर *);
+व्योम rxrpc_kernel_end_call(काष्ठा socket *, काष्ठा rxrpc_call *);
+व्योम rxrpc_kernel_get_peer(काष्ठा socket *, काष्ठा rxrpc_call *,
+			   काष्ठा sockaddr_rxrpc *);
+bool rxrpc_kernel_get_srtt(काष्ठा socket *, काष्ठा rxrpc_call *, u32 *);
+पूर्णांक rxrpc_kernel_अक्षरge_accept(काष्ठा socket *, rxrpc_notअगरy_rx_t,
+			       rxrpc_user_attach_call_t, अचिन्हित दीर्घ, gfp_t,
+			       अचिन्हित पूर्णांक);
+व्योम rxrpc_kernel_set_tx_length(काष्ठा socket *, काष्ठा rxrpc_call *, s64);
+bool rxrpc_kernel_check_lअगरe(स्थिर काष्ठा socket *, स्थिर काष्ठा rxrpc_call *);
+u32 rxrpc_kernel_get_epoch(काष्ठा socket *, काष्ठा rxrpc_call *);
+bool rxrpc_kernel_get_reply_समय(काष्ठा socket *, काष्ठा rxrpc_call *,
+				 kसमय_प्रकार *);
+bool rxrpc_kernel_call_is_complete(काष्ठा rxrpc_call *);
+व्योम rxrpc_kernel_set_max_lअगरe(काष्ठा socket *, काष्ठा rxrpc_call *,
+			       अचिन्हित दीर्घ);
 
-int rxrpc_sock_set_min_security_level(struct sock *sk, unsigned int val);
+पूर्णांक rxrpc_sock_set_min_security_level(काष्ठा sock *sk, अचिन्हित पूर्णांक val);
 
-#endif /* _NET_RXRPC_H */
+#पूर्ण_अगर /* _NET_RXRPC_H */

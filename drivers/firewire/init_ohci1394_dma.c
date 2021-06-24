@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * init_ohci1394_dma.c - Initializes physical DMA on all OHCI 1394 controllers
  *
@@ -6,291 +7,291 @@
  *
  * Derived from drivers/ieee1394/ohci1394.c and arch/x86/kernel/early-quirks.c
  * this file has functions to:
- * - scan the PCI very early on boot for all OHCI 1394-compliant controllers
+ * - scan the PCI very early on boot क्रम all OHCI 1394-compliant controllers
  * - reset and initialize them and make them join the IEEE1394 bus and
  * - enable physical DMA on them to allow remote debugging
  *
  * All code and data is marked as __init and __initdata, respective as
  * during boot, all OHCI1394 controllers may be claimed by the firewire
- * stack and at this point, this code should not touch them anymore.
+ * stack and at this poपूर्णांक, this code should not touch them anymore.
  *
  * To use physical DMA after the initialization of the firewire stack,
  * be sure that the stack enables it and (re-)attach after the bus reset
  * which may be caused by the firewire stack initialization.
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>		/* for PCI defines */
-#include <linux/string.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>		/* क्रम PCI defines */
+#समावेश <linux/माला.स>
 
-#include <asm/pci-direct.h>	/* for direct PCI config space access */
-#include <asm/fixmap.h>
+#समावेश <यंत्र/pci-direct.h>	/* क्रम direct PCI config space access */
+#समावेश <यंत्र/fixmap.h>
 
-#include <linux/init_ohci1394_dma.h>
-#include "ohci.h"
+#समावेश <linux/init_ohci1394_dma.h>
+#समावेश "ohci.h"
 
-int __initdata init_ohci1394_dma_early;
+पूर्णांक __initdata init_ohci1394_dma_early;
 
-struct ohci {
-	void __iomem *registers;
-};
+काष्ठा ohci अणु
+	व्योम __iomem *रेजिस्टरs;
+पूर्ण;
 
-static inline void reg_write(const struct ohci *ohci, int offset, u32 data)
-{
-	writel(data, ohci->registers + offset);
-}
+अटल अंतरभूत व्योम reg_ग_लिखो(स्थिर काष्ठा ohci *ohci, पूर्णांक offset, u32 data)
+अणु
+	ग_लिखोl(data, ohci->रेजिस्टरs + offset);
+पूर्ण
 
-static inline u32 reg_read(const struct ohci *ohci, int offset)
-{
-	return readl(ohci->registers + offset);
-}
+अटल अंतरभूत u32 reg_पढ़ो(स्थिर काष्ठा ohci *ohci, पूर्णांक offset)
+अणु
+	वापस पढ़ोl(ohci->रेजिस्टरs + offset);
+पूर्ण
 
-#define OHCI_LOOP_COUNT		100	/* Number of loops for reg read waits */
+#घोषणा OHCI_LOOP_COUNT		100	/* Number of loops क्रम reg पढ़ो रुकोs */
 
-/* Reads a PHY register of an OHCI-1394 controller */
-static inline u8 __init get_phy_reg(struct ohci *ohci, u8 addr)
-{
-	int i;
+/* Reads a PHY रेजिस्टर of an OHCI-1394 controller */
+अटल अंतरभूत u8 __init get_phy_reg(काष्ठा ohci *ohci, u8 addr)
+अणु
+	पूर्णांक i;
 	u32 r;
 
-	reg_write(ohci, OHCI1394_PhyControl, (addr << 8) | 0x00008000);
+	reg_ग_लिखो(ohci, OHCI1394_PhyControl, (addr << 8) | 0x00008000);
 
-	for (i = 0; i < OHCI_LOOP_COUNT; i++) {
-		if (reg_read(ohci, OHCI1394_PhyControl) & 0x80000000)
-			break;
+	क्रम (i = 0; i < OHCI_LOOP_COUNT; i++) अणु
+		अगर (reg_पढ़ो(ohci, OHCI1394_PhyControl) & 0x80000000)
+			अवरोध;
 		mdelay(1);
-	}
-	r = reg_read(ohci, OHCI1394_PhyControl);
+	पूर्ण
+	r = reg_पढ़ो(ohci, OHCI1394_PhyControl);
 
-	return (r & 0x00ff0000) >> 16;
-}
+	वापस (r & 0x00ff0000) >> 16;
+पूर्ण
 
-/* Writes to a PHY register of an OHCI-1394 controller */
-static inline void __init set_phy_reg(struct ohci *ohci, u8 addr, u8 data)
-{
-	int i;
+/* Writes to a PHY रेजिस्टर of an OHCI-1394 controller */
+अटल अंतरभूत व्योम __init set_phy_reg(काष्ठा ohci *ohci, u8 addr, u8 data)
+अणु
+	पूर्णांक i;
 
-	reg_write(ohci, OHCI1394_PhyControl, (addr << 8) | data | 0x00004000);
+	reg_ग_लिखो(ohci, OHCI1394_PhyControl, (addr << 8) | data | 0x00004000);
 
-	for (i = 0; i < OHCI_LOOP_COUNT; i++) {
-		if (!(reg_read(ohci, OHCI1394_PhyControl) & 0x00004000))
-			break;
+	क्रम (i = 0; i < OHCI_LOOP_COUNT; i++) अणु
+		अगर (!(reg_पढ़ो(ohci, OHCI1394_PhyControl) & 0x00004000))
+			अवरोध;
 		mdelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Resets an OHCI-1394 controller (for sane state before initialization) */
-static inline void __init init_ohci1394_soft_reset(struct ohci *ohci)
-{
-	int i;
+/* Resets an OHCI-1394 controller (क्रम sane state beक्रमe initialization) */
+अटल अंतरभूत व्योम __init init_ohci1394_soft_reset(काष्ठा ohci *ohci)
+अणु
+	पूर्णांक i;
 
-	reg_write(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_softReset);
+	reg_ग_लिखो(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_softReset);
 
-	for (i = 0; i < OHCI_LOOP_COUNT; i++) {
-		if (!(reg_read(ohci, OHCI1394_HCControlSet)
+	क्रम (i = 0; i < OHCI_LOOP_COUNT; i++) अणु
+		अगर (!(reg_पढ़ो(ohci, OHCI1394_HCControlSet)
 				   & OHCI1394_HCControl_softReset))
-			break;
+			अवरोध;
 		mdelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define OHCI1394_MAX_AT_REQ_RETRIES	0xf
-#define OHCI1394_MAX_AT_RESP_RETRIES	0x2
-#define OHCI1394_MAX_PHYS_RESP_RETRIES	0x8
+#घोषणा OHCI1394_MAX_AT_REQ_RETRIES	0xf
+#घोषणा OHCI1394_MAX_AT_RESP_RETRIES	0x2
+#घोषणा OHCI1394_MAX_PHYS_RESP_RETRIES	0x8
 
-/* Basic OHCI-1394 register and port inititalization */
-static inline void __init init_ohci1394_initialize(struct ohci *ohci)
-{
+/* Basic OHCI-1394 रेजिस्टर and port inititalization */
+अटल अंतरभूत व्योम __init init_ohci1394_initialize(काष्ठा ohci *ohci)
+अणु
 	u32 bus_options;
-	int num_ports, i;
+	पूर्णांक num_ports, i;
 
-	/* Put some defaults to these undefined bus options */
-	bus_options = reg_read(ohci, OHCI1394_BusOptions);
+	/* Put some शेषs to these undefined bus options */
+	bus_options = reg_पढ़ो(ohci, OHCI1394_BusOptions);
 	bus_options |=  0x60000000; /* Enable CMC and ISC */
-	bus_options &= ~0x00ff0000; /* XXX: Set cyc_clk_acc to zero for now */
+	bus_options &= ~0x00ff0000; /* XXX: Set cyc_clk_acc to zero क्रम now */
 	bus_options &= ~0x18000000; /* Disable PMC and BMC */
-	reg_write(ohci, OHCI1394_BusOptions, bus_options);
+	reg_ग_लिखो(ohci, OHCI1394_BusOptions, bus_options);
 
 	/* Set the bus number */
-	reg_write(ohci, OHCI1394_NodeID, 0x0000ffc0);
+	reg_ग_लिखो(ohci, OHCI1394_NodeID, 0x0000ffc0);
 
-	/* Enable posted writes */
-	reg_write(ohci, OHCI1394_HCControlSet,
+	/* Enable posted ग_लिखोs */
+	reg_ग_लिखो(ohci, OHCI1394_HCControlSet,
 			OHCI1394_HCControl_postedWriteEnable);
 
-	/* Clear link control register */
-	reg_write(ohci, OHCI1394_LinkControlClear, 0xffffffff);
+	/* Clear link control रेजिस्टर */
+	reg_ग_लिखो(ohci, OHCI1394_LinkControlClear, 0xffffffff);
 
 	/* enable phys */
-	reg_write(ohci, OHCI1394_LinkControlSet,
+	reg_ग_लिखो(ohci, OHCI1394_LinkControlSet,
 			OHCI1394_LinkControl_rcvPhyPkt);
 
-	/* Don't accept phy packets into AR request context */
-	reg_write(ohci, OHCI1394_LinkControlClear, 0x00000400);
+	/* Don't accept phy packets पूर्णांकo AR request context */
+	reg_ग_लिखो(ohci, OHCI1394_LinkControlClear, 0x00000400);
 
-	/* Clear the Isochonouys interrupt masks */
-	reg_write(ohci, OHCI1394_IsoRecvIntMaskClear, 0xffffffff);
-	reg_write(ohci, OHCI1394_IsoRecvIntEventClear, 0xffffffff);
-	reg_write(ohci, OHCI1394_IsoXmitIntMaskClear, 0xffffffff);
-	reg_write(ohci, OHCI1394_IsoXmitIntEventClear, 0xffffffff);
+	/* Clear the Isochonouys पूर्णांकerrupt masks */
+	reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntMaskClear, 0xffffffff);
+	reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntEventClear, 0xffffffff);
+	reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntMaskClear, 0xffffffff);
+	reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntEventClear, 0xffffffff);
 
-	/* Accept asynchronous transfer requests from all nodes for now */
-	reg_write(ohci, OHCI1394_AsReqFilterHiSet, 0x80000000);
+	/* Accept asynchronous transfer requests from all nodes क्रम now */
+	reg_ग_लिखो(ohci, OHCI1394_AsReqFilterHiSet, 0x80000000);
 
-	/* Specify asynchronous transfer retries */
-	reg_write(ohci, OHCI1394_ATRetries,
+	/* Specअगरy asynchronous transfer retries */
+	reg_ग_लिखो(ohci, OHCI1394_ATRetries,
 		  OHCI1394_MAX_AT_REQ_RETRIES |
 		  (OHCI1394_MAX_AT_RESP_RETRIES<<4) |
 		  (OHCI1394_MAX_PHYS_RESP_RETRIES<<8));
 
-	/* We don't want hardware swapping */
-	reg_write(ohci, OHCI1394_HCControlClear,
+	/* We करोn't want hardware swapping */
+	reg_ग_लिखो(ohci, OHCI1394_HCControlClear,
 		  OHCI1394_HCControl_noByteSwapData);
 
 	/* Enable link */
-	reg_write(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_linkEnable);
+	reg_ग_लिखो(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_linkEnable);
 
 	/* If anything is connected to a port, make sure it is enabled */
 	num_ports = get_phy_reg(ohci, 2) & 0xf;
-	for (i = 0; i < num_ports; i++) {
-		unsigned int status;
+	क्रम (i = 0; i < num_ports; i++) अणु
+		अचिन्हित पूर्णांक status;
 
 		set_phy_reg(ohci, 7, i);
 		status = get_phy_reg(ohci, 8);
 
-		if (status & 0x20)
+		अगर (status & 0x20)
 			set_phy_reg(ohci, 8, status & ~1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * init_ohci1394_wait_for_busresets - wait until bus resets are completed
+ * init_ohci1394_रुको_क्रम_busresets - रुको until bus resets are completed
  *
  * OHCI1394 initialization itself and any device going on- or offline
  * and any cable issue cause a IEEE1394 bus reset. The OHCI1394 spec
- * specifies that physical DMA is disabled on each bus reset and it
+ * specअगरies that physical DMA is disabled on each bus reset and it
  * has to be enabled after each bus reset when needed. We resort
- * to polling here because on early boot, we have no interrupts.
+ * to polling here because on early boot, we have no पूर्णांकerrupts.
  */
-static inline void __init init_ohci1394_wait_for_busresets(struct ohci *ohci)
-{
-	int i, events;
+अटल अंतरभूत व्योम __init init_ohci1394_रुको_क्रम_busresets(काष्ठा ohci *ohci)
+अणु
+	पूर्णांक i, events;
 
-	for (i = 0; i < 9; i++) {
+	क्रम (i = 0; i < 9; i++) अणु
 		mdelay(200);
-		events = reg_read(ohci, OHCI1394_IntEventSet);
-		if (events & OHCI1394_busReset)
-			reg_write(ohci, OHCI1394_IntEventClear,
+		events = reg_पढ़ो(ohci, OHCI1394_IntEventSet);
+		अगर (events & OHCI1394_busReset)
+			reg_ग_लिखो(ohci, OHCI1394_IntEventClear,
 					OHCI1394_busReset);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * init_ohci1394_enable_physical_dma - Enable physical DMA for remote debugging
- * This enables remote DMA access over IEEE1394 from every host for the low
+ * init_ohci1394_enable_physical_dma - Enable physical DMA क्रम remote debugging
+ * This enables remote DMA access over IEEE1394 from every host क्रम the low
  * 4GB of address space. DMA accesses above 4GB are not available currently.
  */
-static inline void __init init_ohci1394_enable_physical_dma(struct ohci *ohci)
-{
-	reg_write(ohci, OHCI1394_PhyReqFilterHiSet, 0xffffffff);
-	reg_write(ohci, OHCI1394_PhyReqFilterLoSet, 0xffffffff);
-	reg_write(ohci, OHCI1394_PhyUpperBound, 0xffff0000);
-}
+अटल अंतरभूत व्योम __init init_ohci1394_enable_physical_dma(काष्ठा ohci *ohci)
+अणु
+	reg_ग_लिखो(ohci, OHCI1394_PhyReqFilterHiSet, 0xffffffff);
+	reg_ग_लिखो(ohci, OHCI1394_PhyReqFilterLoSet, 0xffffffff);
+	reg_ग_लिखो(ohci, OHCI1394_PhyUpperBound, 0xffff0000);
+पूर्ण
 
 /**
  * init_ohci1394_reset_and_init_dma - init controller and enable DMA
  * This initializes the given controller and enables physical DMA engine in it.
  */
-static inline void __init init_ohci1394_reset_and_init_dma(struct ohci *ohci)
-{
+अटल अंतरभूत व्योम __init init_ohci1394_reset_and_init_dma(काष्ठा ohci *ohci)
+अणु
 	/* Start off with a soft reset, clears everything to a sane state. */
 	init_ohci1394_soft_reset(ohci);
 
-	/* Accessing some registers without LPS enabled may cause lock up */
-	reg_write(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_LPS);
+	/* Accessing some रेजिस्टरs without LPS enabled may cause lock up */
+	reg_ग_लिखो(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_LPS);
 
-	/* Disable and clear interrupts */
-	reg_write(ohci, OHCI1394_IntEventClear, 0xffffffff);
-	reg_write(ohci, OHCI1394_IntMaskClear, 0xffffffff);
+	/* Disable and clear पूर्णांकerrupts */
+	reg_ग_लिखो(ohci, OHCI1394_IntEventClear, 0xffffffff);
+	reg_ग_लिखो(ohci, OHCI1394_IntMaskClear, 0xffffffff);
 
 	mdelay(50); /* Wait 50msec to make sure we have full link enabled */
 
 	init_ohci1394_initialize(ohci);
 	/*
 	 * The initialization causes at least one IEEE1394 bus reset. Enabling
-	 * physical DMA only works *after* *all* bus resets have calmed down:
+	 * physical DMA only works *after* *all* bus resets have calmed करोwn:
 	 */
-	init_ohci1394_wait_for_busresets(ohci);
+	init_ohci1394_रुको_क्रम_busresets(ohci);
 
-	/* We had to wait and do this now if we want to debug early problems */
+	/* We had to रुको and करो this now अगर we want to debug early problems */
 	init_ohci1394_enable_physical_dma(ohci);
-}
+पूर्ण
 
 /**
- * init_ohci1394_controller - Map the registers of the controller and init DMA
- * This maps the registers of the specified controller and initializes it
+ * init_ohci1394_controller - Map the रेजिस्टरs of the controller and init DMA
+ * This maps the रेजिस्टरs of the specअगरied controller and initializes it
  */
-static inline void __init init_ohci1394_controller(int num, int slot, int func)
-{
-	unsigned long ohci_base;
-	struct ohci ohci;
+अटल अंतरभूत व्योम __init init_ohci1394_controller(पूर्णांक num, पूर्णांक slot, पूर्णांक func)
+अणु
+	अचिन्हित दीर्घ ohci_base;
+	काष्ठा ohci ohci;
 
-	printk(KERN_INFO "init_ohci1394_dma: initializing OHCI-1394"
+	prपूर्णांकk(KERN_INFO "init_ohci1394_dma: initializing OHCI-1394"
 			 " at %02x:%02x.%x\n", num, slot, func);
 
-	ohci_base = read_pci_config(num, slot, func, PCI_BASE_ADDRESS_0+(0<<2))
+	ohci_base = पढ़ो_pci_config(num, slot, func, PCI_BASE_ADDRESS_0+(0<<2))
 						   & PCI_BASE_ADDRESS_MEM_MASK;
 
 	set_fixmap_nocache(FIX_OHCI1394_BASE, ohci_base);
 
-	ohci.registers = (void __iomem *)fix_to_virt(FIX_OHCI1394_BASE);
+	ohci.रेजिस्टरs = (व्योम __iomem *)fix_to_virt(FIX_OHCI1394_BASE);
 
 	init_ohci1394_reset_and_init_dma(&ohci);
-}
+पूर्ण
 
 /**
- * debug_init_ohci1394_dma - scan for OHCI1394 controllers and init DMA on them
- * Scans the whole PCI space for OHCI1394 controllers and inits DMA on them
+ * debug_init_ohci1394_dma - scan क्रम OHCI1394 controllers and init DMA on them
+ * Scans the whole PCI space क्रम OHCI1394 controllers and inits DMA on them
  */
-void __init init_ohci1394_dma_on_all_controllers(void)
-{
-	int num, slot, func;
+व्योम __init init_ohci1394_dma_on_all_controllers(व्योम)
+अणु
+	पूर्णांक num, slot, func;
 	u32 class;
 
-	if (!early_pci_allowed())
-		return;
+	अगर (!early_pci_allowed())
+		वापस;
 
-	/* Poor man's PCI discovery, the only thing we can do at early boot */
-	for (num = 0; num < 32; num++) {
-		for (slot = 0; slot < 32; slot++) {
-			for (func = 0; func < 8; func++) {
-				class = read_pci_config(num, slot, func,
+	/* Poor man's PCI discovery, the only thing we can करो at early boot */
+	क्रम (num = 0; num < 32; num++) अणु
+		क्रम (slot = 0; slot < 32; slot++) अणु
+			क्रम (func = 0; func < 8; func++) अणु
+				class = पढ़ो_pci_config(num, slot, func,
 							PCI_CLASS_REVISION);
-				if (class == 0xffffffff)
-					continue; /* No device at this func */
+				अगर (class == 0xffffffff)
+					जारी; /* No device at this func */
 
-				if (class>>8 != PCI_CLASS_SERIAL_FIREWIRE_OHCI)
-					continue; /* Not an OHCI-1394 device */
+				अगर (class>>8 != PCI_CLASS_SERIAL_FIREWIRE_OHCI)
+					जारी; /* Not an OHCI-1394 device */
 
 				init_ohci1394_controller(num, slot, func);
-				break; /* Assume one controller per device */
-			}
-		}
-	}
-	printk(KERN_INFO "init_ohci1394_dma: finished initializing OHCI DMA\n");
-}
+				अवरोध; /* Assume one controller per device */
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "init_ohci1394_dma: finished initializing OHCI DMA\n");
+पूर्ण
 
 /**
  * setup_init_ohci1394_early - enables early OHCI1394 DMA initialization
  */
-static int __init setup_ohci1394_dma(char *opt)
-{
-	if (!strcmp(opt, "early"))
+अटल पूर्णांक __init setup_ohci1394_dma(अक्षर *opt)
+अणु
+	अगर (!म_भेद(opt, "early"))
 		init_ohci1394_dma_early = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* passing ohci1394_dma=early on boot causes early OHCI1394 DMA initialization */
 early_param("ohci1394_dma", setup_ohci1394_dma);

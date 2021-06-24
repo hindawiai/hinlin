@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP2XXX powerdomain definitions
+ * OMAP2XXX घातerकरोमुख्य definitions
  *
  * Copyright (C) 2007-2008, 2011 Texas Instruments, Inc.
  * Copyright (C) 2007-2011 Nokia Corporation
  *
- * Paul Walmsley, Jouni Högander
+ * Paul Walmsley, Jouni Hथघgander
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
 
-#include "soc.h"
-#include "powerdomain.h"
-#include "powerdomains2xxx_3xxx_data.h"
+#समावेश "soc.h"
+#समावेश "powerdomain.h"
+#समावेश "powerdomains2xxx_3xxx_data.h"
 
-#include "prcm-common.h"
-#include "prm2xxx_3xxx.h"
-#include "prm-regbits-24xx.h"
+#समावेश "prcm-common.h"
+#समावेश "prm2xxx_3xxx.h"
+#समावेश "prm-regbits-24xx.h"
 
-/* 24XX powerdomains and dependencies */
+/* 24XX घातerकरोमुख्यs and dependencies */
 
-/* Powerdomains */
+/* Powerकरोमुख्यs */
 
-static struct powerdomain dsp_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य dsp_pwrdm = अणु
 	.name		  = "dsp_pwrdm",
 	.prcm_offs	  = OMAP24XX_DSP_MOD,
 	.pwrsts		  = PWRSTS_OFF_RET_ON,
 	.pwrsts_logic_ret = PWRSTS_RET,
 	.banks		  = 1,
-	.pwrsts_mem_ret	  = {
+	.pwrsts_mem_ret	  = अणु
 		[0] = PWRSTS_RET,
-	},
-	.pwrsts_mem_on	  = {
+	पूर्ण,
+	.pwrsts_mem_on	  = अणु
 		[0] = PWRSTS_ON,
-	},
-	.voltdm		  = { .name = "core" },
-};
+	पूर्ण,
+	.voltdm		  = अणु .name = "core" पूर्ण,
+पूर्ण;
 
-static struct powerdomain mpu_24xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य mpu_24xx_pwrdm = अणु
 	.name		  = "mpu_pwrdm",
 	.prcm_offs	  = MPU_MOD,
 	.pwrsts		  = PWRSTS_OFF_RET_ON,
 	.pwrsts_logic_ret = PWRSTS_OFF_RET,
 	.banks		  = 1,
-	.pwrsts_mem_ret	  = {
+	.pwrsts_mem_ret	  = अणु
 		[0] = PWRSTS_RET,
-	},
-	.pwrsts_mem_on	  = {
+	पूर्ण,
+	.pwrsts_mem_on	  = अणु
 		[0] = PWRSTS_ON,
-	},
-	.voltdm		  = { .name = "core" },
-};
+	पूर्ण,
+	.voltdm		  = अणु .name = "core" पूर्ण,
+पूर्ण;
 
-static struct powerdomain core_24xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य core_24xx_pwrdm = अणु
 	.name		  = "core_pwrdm",
 	.prcm_offs	  = CORE_MOD,
 	.pwrsts		  = PWRSTS_OFF_RET_ON,
 	.pwrsts_logic_ret = PWRSTS_RET,
 	.banks		  = 3,
-	.pwrsts_mem_ret	  = {
+	.pwrsts_mem_ret	  = अणु
 		[0] = PWRSTS_OFF_RET,	 /* MEM1RETSTATE */
 		[1] = PWRSTS_OFF_RET,	 /* MEM2RETSTATE */
 		[2] = PWRSTS_OFF_RET,	 /* MEM3RETSTATE */
-	},
-	.pwrsts_mem_on	  = {
+	पूर्ण,
+	.pwrsts_mem_on	  = अणु
 		[0] = PWRSTS_OFF_RET_ON, /* MEM1ONSTATE */
 		[1] = PWRSTS_OFF_RET_ON, /* MEM2ONSTATE */
 		[2] = PWRSTS_OFF_RET_ON, /* MEM3ONSTATE */
-	},
-	.voltdm		  = { .name = "core" },
-};
+	पूर्ण,
+	.voltdm		  = अणु .name = "core" पूर्ण,
+पूर्ण;
 
 
 /*
- * 2430-specific powerdomains
+ * 2430-specअगरic घातerकरोमुख्यs
  */
 
 /* XXX 2430 KILLDOMAINWKUP bit?  No current users apparently */
 
-static struct powerdomain mdm_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य mdm_pwrdm = अणु
 	.name		  = "mdm_pwrdm",
 	.prcm_offs	  = OMAP2430_MDM_MOD,
 	.pwrsts		  = PWRSTS_OFF_RET_ON,
 	.pwrsts_logic_ret = PWRSTS_RET,
 	.banks		  = 1,
-	.pwrsts_mem_ret	  = {
+	.pwrsts_mem_ret	  = अणु
 		[0] = PWRSTS_RET, /* MEMRETSTATE */
-	},
-	.pwrsts_mem_on	  = {
+	पूर्ण,
+	.pwrsts_mem_on	  = अणु
 		[0] = PWRSTS_ON,  /* MEMONSTATE */
-	},
-	.voltdm		  = { .name = "core" },
-};
+	पूर्ण,
+	.voltdm		  = अणु .name = "core" पूर्ण,
+पूर्ण;
 
 /*
  *
  */
 
-static struct powerdomain *powerdomains_omap24xx[] __initdata = {
+अटल काष्ठा घातerकरोमुख्य *घातerकरोमुख्यs_omap24xx[] __initdata = अणु
 	&wkup_omap2_pwrdm,
 	&gfx_omap2_pwrdm,
 	&dsp_pwrdm,
 	&mpu_24xx_pwrdm,
 	&core_24xx_pwrdm,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct powerdomain *powerdomains_omap2430[] __initdata = {
+अटल काष्ठा घातerकरोमुख्य *घातerकरोमुख्यs_omap2430[] __initdata = अणु
 	&mdm_pwrdm,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-void __init omap242x_powerdomains_init(void)
-{
-	if (!cpu_is_omap2420())
-		return;
+व्योम __init omap242x_घातerकरोमुख्यs_init(व्योम)
+अणु
+	अगर (!cpu_is_omap2420())
+		वापस;
 
-	pwrdm_register_platform_funcs(&omap2_pwrdm_operations);
-	pwrdm_register_pwrdms(powerdomains_omap24xx);
+	pwrdm_रेजिस्टर_platक्रमm_funcs(&omap2_pwrdm_operations);
+	pwrdm_रेजिस्टर_pwrdms(घातerकरोमुख्यs_omap24xx);
 	pwrdm_complete_init();
-}
+पूर्ण
 
-void __init omap243x_powerdomains_init(void)
-{
-	if (!cpu_is_omap2430())
-		return;
+व्योम __init omap243x_घातerकरोमुख्यs_init(व्योम)
+अणु
+	अगर (!cpu_is_omap2430())
+		वापस;
 
-	pwrdm_register_platform_funcs(&omap2_pwrdm_operations);
-	pwrdm_register_pwrdms(powerdomains_omap24xx);
-	pwrdm_register_pwrdms(powerdomains_omap2430);
+	pwrdm_रेजिस्टर_platक्रमm_funcs(&omap2_pwrdm_operations);
+	pwrdm_रेजिस्टर_pwrdms(घातerकरोमुख्यs_omap24xx);
+	pwrdm_रेजिस्टर_pwrdms(घातerकरोमुख्यs_omap2430);
 	pwrdm_complete_init();
-}
+पूर्ण

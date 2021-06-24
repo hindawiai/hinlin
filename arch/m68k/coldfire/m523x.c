@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /***************************************************************************/
 
 /*
- *	m523x.c  -- platform support for ColdFire 523x based boards
+ *	m523x.c  -- platक्रमm support क्रम ColdFire 523x based boards
  *
- *	Sub-architcture dependent initialization code for the Freescale
+ *	Sub-architcture dependent initialization code क्रम the Freescale
  *	523x CPUs.
  *
  *	Copyright (C) 1999-2005, Greg Ungerer (gerg@snapgear.com)
@@ -13,14 +14,14 @@
 
 /***************************************************************************/
 
-#include <linux/kernel.h>
-#include <linux/param.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <asm/machdep.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
-#include <asm/mcfclk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/param.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
+#समावेश <यंत्र/mcfclk.h>
 
 /***************************************************************************/
 
@@ -37,7 +38,7 @@ DEFINE_CLK(mcfqspi0, "mcfqspi.0", MCF_BUSCLK);
 DEFINE_CLK(fec0, "fec.0", MCF_BUSCLK);
 DEFINE_CLK(mcfi2c0, "imx1-i2c.0", MCF_BUSCLK);
 
-struct clk *mcf_clks[] = {
+काष्ठा clk *mcf_clks[] = अणु
 	&clk_pll,
 	&clk_sys,
 	&clk_mcfpit0,
@@ -50,56 +51,56 @@ struct clk *mcf_clks[] = {
 	&clk_mcfqspi0,
 	&clk_fec0,
 	&clk_mcfi2c0,
-	NULL
-};
+	शून्य
+पूर्ण;
 
 /***************************************************************************/
 
-static void __init m523x_qspi_init(void)
-{
-#if IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI)
+अटल व्योम __init m523x_qspi_init(व्योम)
+अणु
+#अगर IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI)
 	u16 par;
 
-	/* setup QSPS pins for QSPI with gpio CS control */
-	writeb(0x1f, MCFGPIO_PAR_QSPI);
+	/* setup QSPS pins क्रम QSPI with gpio CS control */
+	ग_लिखोb(0x1f, MCFGPIO_PAR_QSPI);
 	/* and CS2 & CS3 as gpio */
-	par = readw(MCFGPIO_PAR_TIMER);
+	par = पढ़ोw(MCFGPIO_PAR_TIMER);
 	par &= 0x3f3f;
-	writew(par, MCFGPIO_PAR_TIMER);
-#endif /* IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI) */
-}
+	ग_लिखोw(par, MCFGPIO_PAR_TIMER);
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_SPI_COLDFIRE_QSPI) */
+पूर्ण
 
 /***************************************************************************/
 
-static void __init m523x_i2c_init(void)
-{
-#if IS_ENABLED(CONFIG_I2C_IMX)
+अटल व्योम __init m523x_i2c_init(व्योम)
+अणु
+#अगर IS_ENABLED(CONFIG_I2C_IMX)
 	u8 par;
 
-	/* setup Port AS Pin Assignment Register for I2C */
+	/* setup Port AS Pin Assignment Register क्रम I2C */
 	/*  set PASPA0 to SCL and PASPA1 to SDA */
-	par = readb(MCFGPIO_PAR_FECI2C);
+	par = पढ़ोb(MCFGPIO_PAR_FECI2C);
 	par |= 0x0f;
-	writeb(par, MCFGPIO_PAR_FECI2C);
-#endif /* IS_ENABLED(CONFIG_I2C_IMX) */
-}
+	ग_लिखोb(par, MCFGPIO_PAR_FECI2C);
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_I2C_IMX) */
+पूर्ण
 
 /***************************************************************************/
 
-static void __init m523x_fec_init(void)
-{
+अटल व्योम __init m523x_fec_init(व्योम)
+अणु
 	/* Set multi-function pins to ethernet use */
-	writeb(readb(MCFGPIO_PAR_FECI2C) | 0xf0, MCFGPIO_PAR_FECI2C);
-}
+	ग_लिखोb(पढ़ोb(MCFGPIO_PAR_FECI2C) | 0xf0, MCFGPIO_PAR_FECI2C);
+पूर्ण
 
 /***************************************************************************/
 
-void __init config_BSP(char *commandp, int size)
-{
-	mach_sched_init = hw_timer_init;
+व्योम __init config_BSP(अक्षर *commandp, पूर्णांक size)
+अणु
+	mach_sched_init = hw_समयr_init;
 	m523x_fec_init();
 	m523x_qspi_init();
 	m523x_i2c_init();
-}
+पूर्ण
 
 /***************************************************************************/

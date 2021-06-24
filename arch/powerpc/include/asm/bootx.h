@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This file describes the structure passed from the BootX application
- * (for MacOS) when it is used to boot Linux.
+ * This file describes the काष्ठाure passed from the BootX application
+ * (क्रम MacOS) when it is used to boot Linux.
  *
  * Written by Benjamin Herrenschmidt.
  */
 
-#ifndef __ASM_BOOTX_H__
-#define __ASM_BOOTX_H__
+#अगर_अघोषित __ASM_BOOTX_H__
+#घोषणा __ASM_BOOTX_H__
 
-#include <uapi/asm/bootx.h>
+#समावेश <uapi/यंत्र/bootx.h>
 
-/* (*) The format of the colormap is 256 * 3 * 2 bytes. Each color index
- * is represented by 3 short words containing a 16 bits (unsigned) color
- * component. Later versions may contain the gamma table for direct-color
+/* (*) The क्रमmat of the colormap is 256 * 3 * 2 bytes. Each color index
+ * is represented by 3 लघु words containing a 16 bits (अचिन्हित) color
+ * component. Later versions may contain the gamma table क्रम direct-color
  * devices here.
  */
-#define BOOTX_COLORTABLE_SIZE    (256UL*3UL*2UL)
+#घोषणा BOOTX_COLORTABLE_SIZE    (256UL*3UL*2UL)
 
-/* BootX passes the device-tree using a format that comes from earlier
+/* BootX passes the device-tree using a क्रमmat that comes from earlier
  * ppc32 kernels. This used to match what is in prom.h, but not anymore
  * so we now define it here
  */
-struct bootx_dt_prop {
+काष्ठा bootx_dt_prop अणु
 	u32	name;
-	int	length;
+	पूर्णांक	length;
 	u32	value;
 	u32	next;
-};
+पूर्ण;
 
-struct bootx_dt_node {
+काष्ठा bootx_dt_node अणु
 	u32	unused0;
 	u32	unused1;
 	u32	phandle;	/* not really available */
@@ -44,8 +45,8 @@ struct bootx_dt_node {
 	u32	sibling;
 	u32	next;
 	u32	allnext;
-};
+पूर्ण;
 
-extern void bootx_init(unsigned long r4, unsigned long phys);
+बाह्य व्योम bootx_init(अचिन्हित दीर्घ r4, अचिन्हित दीर्घ phys);
 
-#endif
+#पूर्ण_अगर

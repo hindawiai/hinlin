@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * DVB USB library - provides a generic interface for a DVB USB device driver.
+ * DVB USB library - provides a generic पूर्णांकerface क्रम a DVB USB device driver.
  *
  * dvb-usb-init.c
  *
  * Copyright (C) 2004-6 Patrick Boettcher (patrick.boettcher@posteo.de)
  *
- * see Documentation/driver-api/media/drivers/dvb-usb.rst for more information
+ * see Documentation/driver-api/media/drivers/dvb-usb.rst क्रम more inक्रमmation
  */
-#include "dvb-usb-common.h"
+#समावेश "dvb-usb-common.h"
 
 /* debug */
-int dvb_usb_debug;
-module_param_named(debug, dvb_usb_debug, int, 0644);
+पूर्णांक dvb_usb_debug;
+module_param_named(debug, dvb_usb_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "set debugging level (1=info,xfer=2,pll=4,ts=8,err=16,rc=32,fw=64,mem=128,uxfer=256  (or-able))." DVB_USB_DEBUG_STATUS);
 
-int dvb_usb_disable_rc_polling;
-module_param_named(disable_rc_polling, dvb_usb_disable_rc_polling, int, 0644);
+पूर्णांक dvb_usb_disable_rc_polling;
+module_param_named(disable_rc_polling, dvb_usb_disable_rc_polling, पूर्णांक, 0644);
 MODULE_PARM_DESC(disable_rc_polling, "disable remote control polling (default: 0).");
 
-static int dvb_usb_force_pid_filter_usage;
-module_param_named(force_pid_filter_usage, dvb_usb_force_pid_filter_usage, int, 0444);
-MODULE_PARM_DESC(force_pid_filter_usage, "force all dvb-usb-devices to use a PID filter, if any (default: 0).");
+अटल पूर्णांक dvb_usb_क्रमce_pid_filter_usage;
+module_param_named(क्रमce_pid_filter_usage, dvb_usb_क्रमce_pid_filter_usage, पूर्णांक, 0444);
+MODULE_PARM_DESC(क्रमce_pid_filter_usage, "force all dvb-usb-devices to use a PID filter, if any (default: 0).");
 
-static int dvb_usb_adapter_init(struct dvb_usb_device *d, short *adapter_nrs)
-{
-	struct dvb_usb_adapter *adap;
-	int ret, n, o;
+अटल पूर्णांक dvb_usb_adapter_init(काष्ठा dvb_usb_device *d, लघु *adapter_nrs)
+अणु
+	काष्ठा dvb_usb_adapter *adap;
+	पूर्णांक ret, n, o;
 
-	for (n = 0; n < d->props.num_adapters; n++) {
+	क्रम (n = 0; n < d->props.num_adapters; n++) अणु
 		adap = &d->adapter[n];
 		adap->dev = d;
 		adap->id  = n;
 
-		memcpy(&adap->props, &d->props.adapter[n], sizeof(struct dvb_usb_adapter_properties));
+		स_नकल(&adap->props, &d->props.adapter[n], माप(काष्ठा dvb_usb_adapter_properties));
 
-		for (o = 0; o < adap->props.num_frontends; o++) {
-			struct dvb_usb_adapter_fe_properties *props = &adap->props.fe[o];
+		क्रम (o = 0; o < adap->props.num_frontends; o++) अणु
+			काष्ठा dvb_usb_adapter_fe_properties *props = &adap->props.fe[o];
 			/* speed - when running at FULL speed we need a HW PID filter */
-			if (d->udev->speed == USB_SPEED_FULL && !(props->caps & DVB_USB_ADAP_HAS_PID_FILTER)) {
+			अगर (d->udev->speed == USB_SPEED_FULL && !(props->caps & DVB_USB_ADAP_HAS_PID_FILTER)) अणु
 				err("This USB2.0 device cannot be run on a USB1.1 port. (it lacks a hardware PID filter)");
-				return -ENODEV;
-			}
+				वापस -ENODEV;
+			पूर्ण
 
-			if ((d->udev->speed == USB_SPEED_FULL && props->caps & DVB_USB_ADAP_HAS_PID_FILTER) ||
-				(props->caps & DVB_USB_ADAP_NEED_PID_FILTERING)) {
+			अगर ((d->udev->speed == USB_SPEED_FULL && props->caps & DVB_USB_ADAP_HAS_PID_FILTER) ||
+				(props->caps & DVB_USB_ADAP_NEED_PID_FILTERING)) अणु
 				info("will use the device's hardware PID filter (table count: %d).", props->pid_filter_count);
 				adap->fe_adap[o].pid_filtering  = 1;
 				adap->fe_adap[o].max_feed_count = props->pid_filter_count;
-			} else {
+			पूर्ण अन्यथा अणु
 				info("will pass the complete MPEG2 transport stream to the software demuxer.");
 				adap->fe_adap[o].pid_filtering  = 0;
 				adap->fe_adap[o].max_feed_count = 255;
-			}
+			पूर्ण
 
-			if (!adap->fe_adap[o].pid_filtering &&
-				dvb_usb_force_pid_filter_usage &&
-				props->caps & DVB_USB_ADAP_HAS_PID_FILTER) {
+			अगर (!adap->fe_adap[o].pid_filtering &&
+				dvb_usb_क्रमce_pid_filter_usage &&
+				props->caps & DVB_USB_ADAP_HAS_PID_FILTER) अणु
 				info("pid filter enabled by module option.");
 				adap->fe_adap[o].pid_filtering  = 1;
 				adap->fe_adap[o].max_feed_count = props->pid_filter_count;
-			}
+			पूर्ण
 
-			if (props->size_of_priv > 0) {
+			अगर (props->size_of_priv > 0) अणु
 				adap->fe_adap[o].priv = kzalloc(props->size_of_priv, GFP_KERNEL);
-				if (adap->fe_adap[o].priv == NULL) {
+				अगर (adap->fe_adap[o].priv == शून्य) अणु
 					err("no memory for priv for adapter %d fe %d.", n, o);
-					return -ENOMEM;
-				}
-			}
-		}
+					वापस -ENOMEM;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (adap->props.size_of_priv > 0) {
+		अगर (adap->props.size_of_priv > 0) अणु
 			adap->priv = kzalloc(adap->props.size_of_priv, GFP_KERNEL);
-			if (adap->priv == NULL) {
+			अगर (adap->priv == शून्य) अणु
 				err("no memory for priv for adapter %d.", n);
-				return -ENOMEM;
-			}
-		}
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण
 
 		ret = dvb_usb_adapter_stream_init(adap);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = dvb_usb_adapter_dvb_init(adap, adapter_nrs);
-		if (ret)
-			goto dvb_init_err;
+		अगर (ret)
+			जाओ dvb_init_err;
 
 		ret = dvb_usb_adapter_frontend_init(adap);
-		if (ret)
-			goto frontend_init_err;
+		अगर (ret)
+			जाओ frontend_init_err;
 
-		/* use exclusive FE lock if there is multiple shared FEs */
-		if (adap->fe_adap[1].fe)
+		/* use exclusive FE lock अगर there is multiple shared FEs */
+		अगर (adap->fe_adap[1].fe)
 			adap->dvb_adap.mfe_shared = 1;
 
 		d->num_adapters_initialized++;
 		d->state |= DVB_USB_STATE_DVB;
-	}
+	पूर्ण
 
 	/*
 	 * when reloading the driver w/o replugging the device
-	 * sometimes a timeout occurs, this helps
+	 * someबार a समयout occurs, this helps
 	 */
-	if (d->props.generic_bulk_ctrl_endpoint != 0) {
-		usb_clear_halt(d->udev, usb_sndbulkpipe(d->udev, d->props.generic_bulk_ctrl_endpoint));
-		usb_clear_halt(d->udev, usb_rcvbulkpipe(d->udev, d->props.generic_bulk_ctrl_endpoint));
-	}
+	अगर (d->props.generic_bulk_ctrl_endpoपूर्णांक != 0) अणु
+		usb_clear_halt(d->udev, usb_sndbulkpipe(d->udev, d->props.generic_bulk_ctrl_endpoपूर्णांक));
+		usb_clear_halt(d->udev, usb_rcvbulkpipe(d->udev, d->props.generic_bulk_ctrl_endpoपूर्णांक));
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 frontend_init_err:
-	dvb_usb_adapter_dvb_exit(adap);
+	dvb_usb_adapter_dvb_निकास(adap);
 dvb_init_err:
-	dvb_usb_adapter_stream_exit(adap);
-	return ret;
-}
+	dvb_usb_adapter_stream_निकास(adap);
+	वापस ret;
+पूर्ण
 
-static int dvb_usb_adapter_exit(struct dvb_usb_device *d)
-{
-	int n;
+अटल पूर्णांक dvb_usb_adapter_निकास(काष्ठा dvb_usb_device *d)
+अणु
+	पूर्णांक n;
 
-	for (n = 0; n < d->num_adapters_initialized; n++) {
-		dvb_usb_adapter_frontend_exit(&d->adapter[n]);
-		dvb_usb_adapter_dvb_exit(&d->adapter[n]);
-		dvb_usb_adapter_stream_exit(&d->adapter[n]);
-		kfree(d->adapter[n].priv);
-	}
+	क्रम (n = 0; n < d->num_adapters_initialized; n++) अणु
+		dvb_usb_adapter_frontend_निकास(&d->adapter[n]);
+		dvb_usb_adapter_dvb_निकास(&d->adapter[n]);
+		dvb_usb_adapter_stream_निकास(&d->adapter[n]);
+		kमुक्त(d->adapter[n].priv);
+	पूर्ण
 	d->num_adapters_initialized = 0;
 	d->state &= ~DVB_USB_STATE_DVB;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* general initialization functions */
-static int dvb_usb_exit(struct dvb_usb_device *d)
-{
+अटल पूर्णांक dvb_usb_निकास(काष्ठा dvb_usb_device *d)
+अणु
 	deb_info("state before exiting everything: %x\n", d->state);
-	dvb_usb_remote_exit(d);
-	dvb_usb_adapter_exit(d);
-	dvb_usb_i2c_exit(d);
+	dvb_usb_remote_निकास(d);
+	dvb_usb_adapter_निकास(d);
+	dvb_usb_i2c_निकास(d);
 	deb_info("state should be zero now: %x\n", d->state);
 	d->state = DVB_USB_STATE_INIT;
 
-	if (d->priv != NULL && d->props.priv_destroy != NULL)
+	अगर (d->priv != शून्य && d->props.priv_destroy != शून्य)
 		d->props.priv_destroy(d);
 
-	kfree(d->priv);
-	kfree(d);
-	return 0;
-}
+	kमुक्त(d->priv);
+	kमुक्त(d);
+	वापस 0;
+पूर्ण
 
-static int dvb_usb_init(struct dvb_usb_device *d, short *adapter_nums)
-{
-	int ret = 0;
+अटल पूर्णांक dvb_usb_init(काष्ठा dvb_usb_device *d, लघु *adapter_nums)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_init(&d->data_mutex);
 	mutex_init(&d->usb_mutex);
@@ -161,186 +162,186 @@ static int dvb_usb_init(struct dvb_usb_device *d, short *adapter_nums)
 
 	d->state = DVB_USB_STATE_INIT;
 
-	if (d->props.size_of_priv > 0) {
+	अगर (d->props.size_of_priv > 0) अणु
 		d->priv = kzalloc(d->props.size_of_priv, GFP_KERNEL);
-		if (d->priv == NULL) {
+		अगर (d->priv == शून्य) अणु
 			err("no memory for priv in 'struct dvb_usb_device'");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		if (d->props.priv_init != NULL) {
+		अगर (d->props.priv_init != शून्य) अणु
 			ret = d->props.priv_init(d);
-			if (ret != 0)
-				goto err_priv_init;
-		}
-	}
+			अगर (ret != 0)
+				जाओ err_priv_init;
+		पूर्ण
+	पूर्ण
 
 	/* check the capabilities and set appropriate variables */
-	dvb_usb_device_power_ctrl(d, 1);
+	dvb_usb_device_घातer_ctrl(d, 1);
 
 	ret = dvb_usb_i2c_init(d);
-	if (ret)
-		goto err_i2c_init;
+	अगर (ret)
+		जाओ err_i2c_init;
 	ret = dvb_usb_adapter_init(d, adapter_nums);
-	if (ret)
-		goto err_adapter_init;
+	अगर (ret)
+		जाओ err_adapter_init;
 
-	if ((ret = dvb_usb_remote_init(d)))
+	अगर ((ret = dvb_usb_remote_init(d)))
 		err("could not initialize remote control.");
 
-	dvb_usb_device_power_ctrl(d, 0);
+	dvb_usb_device_घातer_ctrl(d, 0);
 
-	return 0;
+	वापस 0;
 
 err_adapter_init:
-	dvb_usb_adapter_exit(d);
+	dvb_usb_adapter_निकास(d);
 err_i2c_init:
-	dvb_usb_i2c_exit(d);
-	if (d->priv && d->props.priv_destroy)
+	dvb_usb_i2c_निकास(d);
+	अगर (d->priv && d->props.priv_destroy)
 		d->props.priv_destroy(d);
 err_priv_init:
-	kfree(d->priv);
-	d->priv = NULL;
-	return ret;
-}
+	kमुक्त(d->priv);
+	d->priv = शून्य;
+	वापस ret;
+पूर्ण
 
 /* determine the name and the state of the just found USB device */
-static const struct dvb_usb_device_description *dvb_usb_find_device(struct usb_device *udev, const struct dvb_usb_device_properties *props, int *cold)
-{
-	int i, j;
-	const struct dvb_usb_device_description *desc = NULL;
+अटल स्थिर काष्ठा dvb_usb_device_description *dvb_usb_find_device(काष्ठा usb_device *udev, स्थिर काष्ठा dvb_usb_device_properties *props, पूर्णांक *cold)
+अणु
+	पूर्णांक i, j;
+	स्थिर काष्ठा dvb_usb_device_description *desc = शून्य;
 
 	*cold = -1;
 
-	for (i = 0; i < props->num_device_descs; i++) {
+	क्रम (i = 0; i < props->num_device_descs; i++) अणु
 
-		for (j = 0; j < DVB_USB_ID_MAX_NUM && props->devices[i].cold_ids[j] != NULL; j++) {
-			deb_info("check for cold %x %x\n", props->devices[i].cold_ids[j]->idVendor, props->devices[i].cold_ids[j]->idProduct);
-			if (props->devices[i].cold_ids[j]->idVendor  == le16_to_cpu(udev->descriptor.idVendor) &&
-				props->devices[i].cold_ids[j]->idProduct == le16_to_cpu(udev->descriptor.idProduct)) {
+		क्रम (j = 0; j < DVB_USB_ID_MAX_NUM && props->devices[i].cold_ids[j] != शून्य; j++) अणु
+			deb_info("check for cold %x %x\n", props->devices[i].cold_ids[j]->idVenकरोr, props->devices[i].cold_ids[j]->idProduct);
+			अगर (props->devices[i].cold_ids[j]->idVenकरोr  == le16_to_cpu(udev->descriptor.idVenकरोr) &&
+				props->devices[i].cold_ids[j]->idProduct == le16_to_cpu(udev->descriptor.idProduct)) अणु
 				*cold = 1;
 				desc = &props->devices[i];
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (desc != NULL)
-			break;
+		अगर (desc != शून्य)
+			अवरोध;
 
-		for (j = 0; j < DVB_USB_ID_MAX_NUM && props->devices[i].warm_ids[j] != NULL; j++) {
-			deb_info("check for warm %x %x\n", props->devices[i].warm_ids[j]->idVendor, props->devices[i].warm_ids[j]->idProduct);
-			if (props->devices[i].warm_ids[j]->idVendor == le16_to_cpu(udev->descriptor.idVendor) &&
-				props->devices[i].warm_ids[j]->idProduct == le16_to_cpu(udev->descriptor.idProduct)) {
+		क्रम (j = 0; j < DVB_USB_ID_MAX_NUM && props->devices[i].warm_ids[j] != शून्य; j++) अणु
+			deb_info("check for warm %x %x\n", props->devices[i].warm_ids[j]->idVenकरोr, props->devices[i].warm_ids[j]->idProduct);
+			अगर (props->devices[i].warm_ids[j]->idVenकरोr == le16_to_cpu(udev->descriptor.idVenकरोr) &&
+				props->devices[i].warm_ids[j]->idProduct == le16_to_cpu(udev->descriptor.idProduct)) अणु
 				*cold = 0;
 				desc = &props->devices[i];
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (desc != NULL && props->identify_state != NULL)
-		props->identify_state(udev, props, &desc, cold);
+	अगर (desc != शून्य && props->identअगरy_state != शून्य)
+		props->identअगरy_state(udev, props, &desc, cold);
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-int dvb_usb_device_power_ctrl(struct dvb_usb_device *d, int onoff)
-{
-	if (onoff)
-		d->powered++;
-	else
-		d->powered--;
+पूर्णांक dvb_usb_device_घातer_ctrl(काष्ठा dvb_usb_device *d, पूर्णांक onoff)
+अणु
+	अगर (onoff)
+		d->घातered++;
+	अन्यथा
+		d->घातered--;
 
-	if (d->powered == 0 || (onoff && d->powered == 1)) { /* when switching from 1 to 0 or from 0 to 1 */
+	अगर (d->घातered == 0 || (onoff && d->घातered == 1)) अणु /* when चयनing from 1 to 0 or from 0 to 1 */
 		deb_info("power control: %d\n", onoff);
-		if (d->props.power_ctrl)
-			return d->props.power_ctrl(d, onoff);
-	}
-	return 0;
-}
+		अगर (d->props.घातer_ctrl)
+			वापस d->props.घातer_ctrl(d, onoff);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * USB
  */
-int dvb_usb_device_init(struct usb_interface *intf,
-			const struct dvb_usb_device_properties *props,
-			struct module *owner, struct dvb_usb_device **du,
-			short *adapter_nums)
-{
-	struct usb_device *udev = interface_to_usbdev(intf);
-	struct dvb_usb_device *d = NULL;
-	const struct dvb_usb_device_description *desc = NULL;
+पूर्णांक dvb_usb_device_init(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा dvb_usb_device_properties *props,
+			काष्ठा module *owner, काष्ठा dvb_usb_device **du,
+			लघु *adapter_nums)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	काष्ठा dvb_usb_device *d = शून्य;
+	स्थिर काष्ठा dvb_usb_device_description *desc = शून्य;
 
-	int ret = -ENOMEM, cold = 0;
+	पूर्णांक ret = -ENOMEM, cold = 0;
 
-	if (du != NULL)
-		*du = NULL;
+	अगर (du != शून्य)
+		*du = शून्य;
 
-	d = kzalloc(sizeof(*d), GFP_KERNEL);
-	if (!d) {
+	d = kzalloc(माप(*d), GFP_KERNEL);
+	अगर (!d) अणु
 		err("no memory for 'struct dvb_usb_device'");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(&d->props, props, sizeof(struct dvb_usb_device_properties));
+	स_नकल(&d->props, props, माप(काष्ठा dvb_usb_device_properties));
 
 	desc = dvb_usb_find_device(udev, &d->props, &cold);
-	if (!desc) {
+	अगर (!desc) अणु
 		deb_err("something went very wrong, device was not found in current device list - let's see what comes next.\n");
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (cold) {
+	अगर (cold) अणु
 		info("found a '%s' in cold state, will try to load a firmware", desc->name);
-		ret = dvb_usb_download_firmware(udev, props);
-		if (!props->no_reconnect || ret != 0)
-			goto error;
-	}
+		ret = dvb_usb_करोwnload_firmware(udev, props);
+		अगर (!props->no_reconnect || ret != 0)
+			जाओ error;
+	पूर्ण
 
 	info("found a '%s' in warm state.", desc->name);
 	d->udev = udev;
 	d->desc = desc;
 	d->owner = owner;
 
-	usb_set_intfdata(intf, d);
+	usb_set_पूर्णांकfdata(पूर्णांकf, d);
 
 	ret = dvb_usb_init(d, adapter_nums);
-	if (ret) {
+	अगर (ret) अणु
 		info("%s error while loading driver (%d)", desc->name, ret);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (du)
+	अगर (du)
 		*du = d;
 
 	info("%s successfully initialized and connected.", desc->name);
-	return 0;
+	वापस 0;
 
  error:
-	usb_set_intfdata(intf, NULL);
-	kfree(d);
-	return ret;
-}
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	kमुक्त(d);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(dvb_usb_device_init);
 
-void dvb_usb_device_exit(struct usb_interface *intf)
-{
-	struct dvb_usb_device *d = usb_get_intfdata(intf);
-	const char *default_name = "generic DVB-USB module";
-	char name[40];
+व्योम dvb_usb_device_निकास(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा dvb_usb_device *d = usb_get_पूर्णांकfdata(पूर्णांकf);
+	स्थिर अक्षर *शेष_name = "generic DVB-USB module";
+	अक्षर name[40];
 
-	usb_set_intfdata(intf, NULL);
-	if (d != NULL && d->desc != NULL) {
-		strscpy(name, d->desc->name, sizeof(name));
-		dvb_usb_exit(d);
-	} else {
-		strscpy(name, default_name, sizeof(name));
-	}
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	अगर (d != शून्य && d->desc != शून्य) अणु
+		strscpy(name, d->desc->name, माप(name));
+		dvb_usb_निकास(d);
+	पूर्ण अन्यथा अणु
+		strscpy(name, शेष_name, माप(name));
+	पूर्ण
 	info("%s successfully deinitialized and disconnected.", name);
 
-}
-EXPORT_SYMBOL(dvb_usb_device_exit);
+पूर्ण
+EXPORT_SYMBOL(dvb_usb_device_निकास);
 
 MODULE_VERSION("1.0");
 MODULE_AUTHOR("Patrick Boettcher <patrick.boettcher@posteo.de>");

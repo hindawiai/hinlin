@@ -1,583 +1,584 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * NFS server file handle treatment.
+ * NFS server file handle treaपंचांगent.
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  * Portions Copyright (C) 1999 G. Allen Morris III <gam3@acm.org>
- * Extensive rewrite by Neil Brown <neilb@cse.unsw.edu.au> Southern-Spring 1999
- * ... and again Southern-Winter 2001 to support export_operations
+ * Extensive reग_लिखो by Neil Brown <neilb@cse.unsw.edu.au> Southern-Spring 1999
+ * ... and again Southern-Wपूर्णांकer 2001 to support export_operations
  */
 
-#include <linux/exportfs.h>
+#समावेश <linux/exportfs.h>
 
-#include <linux/sunrpc/svcauth_gss.h>
-#include "nfsd.h"
-#include "vfs.h"
-#include "auth.h"
-#include "trace.h"
+#समावेश <linux/sunrpc/svcauth_gss.h>
+#समावेश "nfsd.h"
+#समावेश "vfs.h"
+#समावेश "auth.h"
+#समावेश "trace.h"
 
-#define NFSDDBG_FACILITY		NFSDDBG_FH
+#घोषणा NFSDDBG_FACILITY		NFSDDBG_FH
 
 
 /*
  * our acceptability function.
- * if NOSUBTREECHECK, accept anything
- * if not, require that we can walk up to exp->ex_dentry
- * doing some checks on the 'x' bits
+ * अगर NOSUBTREECHECK, accept anything
+ * अगर not, require that we can walk up to exp->ex_dentry
+ * करोing some checks on the 'x' bits
  */
-static int nfsd_acceptable(void *expv, struct dentry *dentry)
-{
-	struct svc_export *exp = expv;
-	int rv;
-	struct dentry *tdentry;
-	struct dentry *parent;
+अटल पूर्णांक nfsd_acceptable(व्योम *expv, काष्ठा dentry *dentry)
+अणु
+	काष्ठा svc_export *exp = expv;
+	पूर्णांक rv;
+	काष्ठा dentry *tdentry;
+	काष्ठा dentry *parent;
 
-	if (exp->ex_flags & NFSEXP_NOSUBTREECHECK)
-		return 1;
+	अगर (exp->ex_flags & NFSEXP_NOSUBTREECHECK)
+		वापस 1;
 
 	tdentry = dget(dentry);
-	while (tdentry != exp->ex_path.dentry && !IS_ROOT(tdentry)) {
+	जबतक (tdentry != exp->ex_path.dentry && !IS_ROOT(tdentry)) अणु
 		/* make sure parents give x permission to user */
-		int err;
+		पूर्णांक err;
 		parent = dget_parent(tdentry);
 		err = inode_permission(&init_user_ns,
 				       d_inode(parent), MAY_EXEC);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dput(parent);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		dput(tdentry);
 		tdentry = parent;
-	}
-	if (tdentry != exp->ex_path.dentry)
-		dprintk("nfsd_acceptable failed at %p %pd\n", tdentry, tdentry);
+	पूर्ण
+	अगर (tdentry != exp->ex_path.dentry)
+		dprपूर्णांकk("nfsd_acceptable failed at %p %pd\n", tdentry, tdentry);
 	rv = (tdentry == exp->ex_path.dentry);
 	dput(tdentry);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-/* Type check. The correct error return for type mismatches does not seem to be
- * generally agreed upon. SunOS seems to use EISDIR if file isn't S_IFREG; a
- * comment in the NFSv3 spec says this is incorrect (implementation notes for
- * the write call).
+/* Type check. The correct error वापस क्रम type mismatches करोes not seem to be
+ * generally agreed upon. SunOS seems to use EISसूची अगर file isn't S_IFREG; a
+ * comment in the NFSv3 spec says this is incorrect (implementation notes क्रम
+ * the ग_लिखो call).
  */
-static inline __be32
-nfsd_mode_check(struct svc_rqst *rqstp, struct dentry *dentry,
+अटल अंतरभूत __be32
+nfsd_mode_check(काष्ठा svc_rqst *rqstp, काष्ठा dentry *dentry,
 		umode_t requested)
-{
+अणु
 	umode_t mode = d_inode(dentry)->i_mode & S_IFMT;
 
-	if (requested == 0) /* the caller doesn't care */
-		return nfs_ok;
-	if (mode == requested) {
-		if (mode == S_IFDIR && !d_can_lookup(dentry)) {
+	अगर (requested == 0) /* the caller करोesn't care */
+		वापस nfs_ok;
+	अगर (mode == requested) अणु
+		अगर (mode == S_IFसूची && !d_can_lookup(dentry)) अणु
 			WARN_ON_ONCE(1);
-			return nfserr_notdir;
-		}
-		return nfs_ok;
-	}
+			वापस nfserr_notdir;
+		पूर्ण
+		वापस nfs_ok;
+	पूर्ण
 	/*
-	 * v4 has an error more specific than err_notdir which we should
-	 * return in preference to err_notdir:
+	 * v4 has an error more specअगरic than err_notdir which we should
+	 * वापस in preference to err_notdir:
 	 */
-	if (rqstp->rq_vers == 4 && mode == S_IFLNK)
-		return nfserr_symlink;
-	if (requested == S_IFDIR)
-		return nfserr_notdir;
-	if (mode == S_IFDIR)
-		return nfserr_isdir;
-	return nfserr_inval;
-}
+	अगर (rqstp->rq_vers == 4 && mode == S_IFLNK)
+		वापस nfserr_symlink;
+	अगर (requested == S_IFसूची)
+		वापस nfserr_notdir;
+	अगर (mode == S_IFसूची)
+		वापस nfserr_isdir;
+	वापस nfserr_inval;
+पूर्ण
 
-static bool nfsd_originating_port_ok(struct svc_rqst *rqstp, int flags)
-{
-	if (flags & NFSEXP_INSECURE_PORT)
-		return true;
-	/* We don't require gss requests to use low ports: */
-	if (rqstp->rq_cred.cr_flavor >= RPC_AUTH_GSS)
-		return true;
-	return test_bit(RQ_SECURE, &rqstp->rq_flags);
-}
+अटल bool nfsd_originating_port_ok(काष्ठा svc_rqst *rqstp, पूर्णांक flags)
+अणु
+	अगर (flags & NFSEXP_INSECURE_PORT)
+		वापस true;
+	/* We करोn't require gss requests to use low ports: */
+	अगर (rqstp->rq_cred.cr_flavor >= RPC_AUTH_GSS)
+		वापस true;
+	वापस test_bit(RQ_SECURE, &rqstp->rq_flags);
+पूर्ण
 
-static __be32 nfsd_setuser_and_check_port(struct svc_rqst *rqstp,
-					  struct svc_export *exp)
-{
-	int flags = nfsexp_flags(rqstp, exp);
+अटल __be32 nfsd_setuser_and_check_port(काष्ठा svc_rqst *rqstp,
+					  काष्ठा svc_export *exp)
+अणु
+	पूर्णांक flags = nfsexp_flags(rqstp, exp);
 
-	/* Check if the request originated from a secure port. */
-	if (!nfsd_originating_port_ok(rqstp, flags)) {
-		RPC_IFDEBUG(char buf[RPC_MAX_ADDRBUFLEN]);
-		dprintk("nfsd: request from insecure port %s!\n",
-		        svc_print_addr(rqstp, buf, sizeof(buf)));
-		return nfserr_perm;
-	}
+	/* Check अगर the request originated from a secure port. */
+	अगर (!nfsd_originating_port_ok(rqstp, flags)) अणु
+		RPC_IFDEBUG(अक्षर buf[RPC_MAX_ADDRBUFLEN]);
+		dprपूर्णांकk("nfsd: request from insecure port %s!\n",
+		        svc_prपूर्णांक_addr(rqstp, buf, माप(buf)));
+		वापस nfserr_perm;
+	पूर्ण
 
-	/* Set user creds for this exportpoint */
-	return nfserrno(nfsd_setuser(rqstp, exp));
-}
+	/* Set user creds क्रम this exportpoपूर्णांक */
+	वापस nfsत्रुटि_सं(nfsd_setuser(rqstp, exp));
+पूर्ण
 
-static inline __be32 check_pseudo_root(struct svc_rqst *rqstp,
-	struct dentry *dentry, struct svc_export *exp)
-{
-	if (!(exp->ex_flags & NFSEXP_V4ROOT))
-		return nfs_ok;
+अटल अंतरभूत __be32 check_pseuकरो_root(काष्ठा svc_rqst *rqstp,
+	काष्ठा dentry *dentry, काष्ठा svc_export *exp)
+अणु
+	अगर (!(exp->ex_flags & NFSEXP_V4ROOT))
+		वापस nfs_ok;
 	/*
-	 * v2/v3 clients have no need for the V4ROOT export--they use
+	 * v2/v3 clients have no need क्रम the V4ROOT export--they use
 	 * the mount protocl instead; also, further V4ROOT checks may be
-	 * in v4-specific code, in which case v2/v3 clients could bypass
+	 * in v4-specअगरic code, in which हाल v2/v3 clients could bypass
 	 * them.
 	 */
-	if (!nfsd_v4client(rqstp))
-		return nfserr_stale;
+	अगर (!nfsd_v4client(rqstp))
+		वापस nfserr_stale;
 	/*
 	 * We're exposing only the directories and symlinks that have to be
 	 * traversed on the way to real exports:
 	 */
-	if (unlikely(!d_is_dir(dentry) &&
+	अगर (unlikely(!d_is_dir(dentry) &&
 		     !d_is_symlink(dentry)))
-		return nfserr_stale;
+		वापस nfserr_stale;
 	/*
-	 * A pseudoroot export gives permission to access only one
+	 * A pseuकरोroot export gives permission to access only one
 	 * single directory; the kernel has to make another upcall
-	 * before granting access to anything else under it:
+	 * beक्रमe granting access to anything अन्यथा under it:
 	 */
-	if (unlikely(dentry != exp->ex_path.dentry))
-		return nfserr_stale;
-	return nfs_ok;
-}
+	अगर (unlikely(dentry != exp->ex_path.dentry))
+		वापस nfserr_stale;
+	वापस nfs_ok;
+पूर्ण
 
 /*
  * Use the given filehandle to look up the corresponding export and
  * dentry.  On success, the results are used to set fh_export and
  * fh_dentry.
  */
-static __be32 nfsd_set_fh_dentry(struct svc_rqst *rqstp, struct svc_fh *fhp)
-{
-	struct knfsd_fh	*fh = &fhp->fh_handle;
-	struct fid *fid = NULL, sfid;
-	struct svc_export *exp;
-	struct dentry *dentry;
-	int fileid_type;
-	int data_left = fh->fh_size/4;
+अटल __be32 nfsd_set_fh_dentry(काष्ठा svc_rqst *rqstp, काष्ठा svc_fh *fhp)
+अणु
+	काष्ठा knfsd_fh	*fh = &fhp->fh_handle;
+	काष्ठा fid *fid = शून्य, sfid;
+	काष्ठा svc_export *exp;
+	काष्ठा dentry *dentry;
+	पूर्णांक fileid_type;
+	पूर्णांक data_left = fh->fh_size/4;
 	__be32 error;
 
 	error = nfserr_stale;
-	if (rqstp->rq_vers > 2)
+	अगर (rqstp->rq_vers > 2)
 		error = nfserr_badhandle;
-	if (rqstp->rq_vers == 4 && fh->fh_size == 0)
-		return nfserr_nofilehandle;
+	अगर (rqstp->rq_vers == 4 && fh->fh_size == 0)
+		वापस nfserr_nofilehandle;
 
-	if (fh->fh_version == 1) {
-		int len;
+	अगर (fh->fh_version == 1) अणु
+		पूर्णांक len;
 
-		if (--data_left < 0)
-			return error;
-		if (fh->fh_auth_type != 0)
-			return error;
+		अगर (--data_left < 0)
+			वापस error;
+		अगर (fh->fh_auth_type != 0)
+			वापस error;
 		len = key_len(fh->fh_fsid_type) / 4;
-		if (len == 0)
-			return error;
-		if  (fh->fh_fsid_type == FSID_MAJOR_MINOR) {
+		अगर (len == 0)
+			वापस error;
+		अगर  (fh->fh_fsid_type == FSID_MAJOR_MINOR) अणु
 			/* deprecated, convert to type 3 */
 			len = key_len(FSID_ENCODE_DEV)/4;
 			fh->fh_fsid_type = FSID_ENCODE_DEV;
 			/*
-			 * struct knfsd_fh uses host-endian fields, which are
-			 * sometimes used to hold net-endian values. This
-			 * confuses sparse, so we must use __force here to
+			 * काष्ठा knfsd_fh uses host-endian fields, which are
+			 * someबार used to hold net-endian values. This
+			 * confuses sparse, so we must use __क्रमce here to
 			 * keep it from complaining.
 			 */
-			fh->fh_fsid[0] = new_encode_dev(MKDEV(ntohl((__force __be32)fh->fh_fsid[0]),
-							ntohl((__force __be32)fh->fh_fsid[1])));
+			fh->fh_fsid[0] = new_encode_dev(MKDEV(ntohl((__क्रमce __be32)fh->fh_fsid[0]),
+							ntohl((__क्रमce __be32)fh->fh_fsid[1])));
 			fh->fh_fsid[1] = fh->fh_fsid[2];
-		}
+		पूर्ण
 		data_left -= len;
-		if (data_left < 0)
-			return error;
+		अगर (data_left < 0)
+			वापस error;
 		exp = rqst_exp_find(rqstp, fh->fh_fsid_type, fh->fh_fsid);
-		fid = (struct fid *)(fh->fh_fsid + len);
-	} else {
+		fid = (काष्ठा fid *)(fh->fh_fsid + len);
+	पूर्ण अन्यथा अणु
 		__u32 tfh[2];
 		dev_t xdev;
 		ino_t xino;
 
-		if (fh->fh_size != NFS_FHSIZE)
-			return error;
-		/* assume old filehandle format */
+		अगर (fh->fh_size != NFS_FHSIZE)
+			वापस error;
+		/* assume old filehandle क्रमmat */
 		xdev = old_decode_dev(fh->ofh_xdev);
 		xino = u32_to_ino_t(fh->ofh_xino);
-		mk_fsid(FSID_DEV, tfh, xdev, xino, 0, NULL);
+		mk_fsid(FSID_DEV, tfh, xdev, xino, 0, शून्य);
 		exp = rqst_exp_find(rqstp, FSID_DEV, tfh);
-	}
+	पूर्ण
 
 	error = nfserr_stale;
-	if (IS_ERR(exp)) {
+	अगर (IS_ERR(exp)) अणु
 		trace_nfsd_set_fh_dentry_badexport(rqstp, fhp, PTR_ERR(exp));
 
-		if (PTR_ERR(exp) == -ENOENT)
-			return error;
+		अगर (PTR_ERR(exp) == -ENOENT)
+			वापस error;
 
-		return nfserrno(PTR_ERR(exp));
-	}
+		वापस nfsत्रुटि_सं(PTR_ERR(exp));
+	पूर्ण
 
-	if (exp->ex_flags & NFSEXP_NOSUBTREECHECK) {
+	अगर (exp->ex_flags & NFSEXP_NOSUBTREECHECK) अणु
 		/* Elevate privileges so that the lack of 'r' or 'x'
 		 * permission on some parent directory will
 		 * not stop exportfs_decode_fh from being able
-		 * to reconnect a directory into the dentry cache.
+		 * to reconnect a directory पूर्णांकo the dentry cache.
 		 * The same problem can affect "SUBTREECHECK" exports,
 		 * but as nfsd_acceptable depends on correct
 		 * access control settings being in effect, we cannot
-		 * fix that case easily.
+		 * fix that हाल easily.
 		 */
-		struct cred *new = prepare_creds();
-		if (!new) {
-			error =  nfserrno(-ENOMEM);
-			goto out;
-		}
+		काष्ठा cred *new = prepare_creds();
+		अगर (!new) अणु
+			error =  nfsत्रुटि_सं(-ENOMEM);
+			जाओ out;
+		पूर्ण
 		new->cap_effective =
-			cap_raise_nfsd_set(new->cap_effective,
+			cap_उठाओ_nfsd_set(new->cap_effective,
 					   new->cap_permitted);
 		put_cred(override_creds(new));
 		put_cred(new);
-	} else {
+	पूर्ण अन्यथा अणु
 		error = nfsd_setuser_and_check_port(rqstp, exp);
-		if (error)
-			goto out;
-	}
+		अगर (error)
+			जाओ out;
+	पूर्ण
 
 	/*
 	 * Look up the dentry using the NFS file handle.
 	 */
 	error = nfserr_stale;
-	if (rqstp->rq_vers > 2)
+	अगर (rqstp->rq_vers > 2)
 		error = nfserr_badhandle;
 
-	if (fh->fh_version != 1) {
+	अगर (fh->fh_version != 1) अणु
 		sfid.i32.ino = fh->ofh_ino;
 		sfid.i32.gen = fh->ofh_generation;
 		sfid.i32.parent_ino = fh->ofh_dirino;
 		fid = &sfid;
 		data_left = 3;
-		if (fh->ofh_dirino == 0)
-			fileid_type = FILEID_INO32_GEN;
-		else
-			fileid_type = FILEID_INO32_GEN_PARENT;
-	} else
+		अगर (fh->ofh_dirino == 0)
+			fileid_type = खाताID_INO32_GEN;
+		अन्यथा
+			fileid_type = खाताID_INO32_GEN_PARENT;
+	पूर्ण अन्यथा
 		fileid_type = fh->fh_fileid_type;
 
-	if (fileid_type == FILEID_ROOT)
+	अगर (fileid_type == खाताID_ROOT)
 		dentry = dget(exp->ex_path.dentry);
-	else {
+	अन्यथा अणु
 		dentry = exportfs_decode_fh_raw(exp->ex_path.mnt, fid,
 						data_left, fileid_type,
 						nfsd_acceptable, exp);
-		if (IS_ERR_OR_NULL(dentry)) {
+		अगर (IS_ERR_OR_शून्य(dentry)) अणु
 			trace_nfsd_set_fh_dentry_badhandle(rqstp, fhp,
 					dentry ?  PTR_ERR(dentry) : -ESTALE);
-			switch (PTR_ERR(dentry)) {
-			case -ENOMEM:
-			case -ETIMEDOUT:
-				break;
-			default:
+			चयन (PTR_ERR(dentry)) अणु
+			हाल -ENOMEM:
+			हाल -ETIMEDOUT:
+				अवरोध;
+			शेष:
 				dentry = ERR_PTR(-ESTALE);
-			}
-		}
-	}
-	if (dentry == NULL)
-		goto out;
-	if (IS_ERR(dentry)) {
-		if (PTR_ERR(dentry) != -EINVAL)
-			error = nfserrno(PTR_ERR(dentry));
-		goto out;
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (dentry == शून्य)
+		जाओ out;
+	अगर (IS_ERR(dentry)) अणु
+		अगर (PTR_ERR(dentry) != -EINVAL)
+			error = nfsत्रुटि_सं(PTR_ERR(dentry));
+		जाओ out;
+	पूर्ण
 
-	if (d_is_dir(dentry) &&
-			(dentry->d_flags & DCACHE_DISCONNECTED)) {
-		printk("nfsd: find_fh_dentry returned a DISCONNECTED directory: %pd2\n",
+	अगर (d_is_dir(dentry) &&
+			(dentry->d_flags & DCACHE_DISCONNECTED)) अणु
+		prपूर्णांकk("nfsd: find_fh_dentry returned a DISCONNECTED directory: %pd2\n",
 				dentry);
-	}
+	पूर्ण
 
 	fhp->fh_dentry = dentry;
 	fhp->fh_export = exp;
 
-	switch (rqstp->rq_vers) {
-	case 4:
-		if (dentry->d_sb->s_export_op->flags & EXPORT_OP_NOATOMIC_ATTR)
+	चयन (rqstp->rq_vers) अणु
+	हाल 4:
+		अगर (dentry->d_sb->s_export_op->flags & EXPORT_OP_NOATOMIC_ATTR)
 			fhp->fh_no_atomic_attr = true;
-		break;
-	case 3:
-		if (dentry->d_sb->s_export_op->flags & EXPORT_OP_NOWCC)
+		अवरोध;
+	हाल 3:
+		अगर (dentry->d_sb->s_export_op->flags & EXPORT_OP_NOWCC)
 			fhp->fh_no_wcc = true;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		fhp->fh_no_wcc = true;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
 	exp_put(exp);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * fh_verify - filehandle lookup and access checking
- * @rqstp: pointer to current rpc request
- * @fhp: filehandle to be verified
- * @type: expected type of object pointed to by filehandle
+ * fh_verअगरy - filehandle lookup and access checking
+ * @rqstp: poपूर्णांकer to current rpc request
+ * @fhp: filehandle to be verअगरied
+ * @type: expected type of object poपूर्णांकed to by filehandle
  * @access: type of access needed to object
  *
  * Look up a dentry from the on-the-wire filehandle, check the client's
  * access to the export, and set the current task's credentials.
  *
- * Regardless of success or failure of fh_verify(), fh_put() should be
+ * Regardless of success or failure of fh_verअगरy(), fh_put() should be
  * called on @fhp when the caller is finished with the filehandle.
  *
- * fh_verify() may be called multiple times on a given filehandle, for
+ * fh_verअगरy() may be called multiple बार on a given filehandle, क्रम
  * example, when processing an NFSv4 compound.  The first call will look
  * up a dentry using the on-the-wire filehandle.  Subsequent calls will
- * skip the lookup and just perform the other checks and possibly change
+ * skip the lookup and just perक्रमm the other checks and possibly change
  * the current task's credentials.
  *
- * @type specifies the type of object expected using one of the S_IF*
- * constants defined in include/linux/stat.h.  The caller may use zero
- * to indicate that it doesn't care, or a negative integer to indicate
+ * @type specअगरies the type of object expected using one of the S_IF*
+ * स्थिरants defined in include/linux/स्थिति.स.  The caller may use zero
+ * to indicate that it करोesn't care, or a negative पूर्णांकeger to indicate
  * that it expects something not of the given type.
  *
- * @access is formed from the NFSD_MAY_* constants defined in
+ * @access is क्रमmed from the NFSD_MAY_* स्थिरants defined in
  * fs/nfsd/vfs.h.
  */
 __be32
-fh_verify(struct svc_rqst *rqstp, struct svc_fh *fhp, umode_t type, int access)
-{
-	struct svc_export *exp = NULL;
-	struct dentry	*dentry;
+fh_verअगरy(काष्ठा svc_rqst *rqstp, काष्ठा svc_fh *fhp, umode_t type, पूर्णांक access)
+अणु
+	काष्ठा svc_export *exp = शून्य;
+	काष्ठा dentry	*dentry;
 	__be32		error;
 
-	dprintk("nfsd: fh_verify(%s)\n", SVCFH_fmt(fhp));
+	dprपूर्णांकk("nfsd: fh_verify(%s)\n", SVCFH_fmt(fhp));
 
-	if (!fhp->fh_dentry) {
+	अगर (!fhp->fh_dentry) अणु
 		error = nfsd_set_fh_dentry(rqstp, fhp);
-		if (error)
-			goto out;
-	}
+		अगर (error)
+			जाओ out;
+	पूर्ण
 	dentry = fhp->fh_dentry;
 	exp = fhp->fh_export;
 	/*
-	 * We still have to do all these permission checks, even when
-	 * fh_dentry is already set:
-	 * 	- fh_verify may be called multiple times with different
+	 * We still have to करो all these permission checks, even when
+	 * fh_dentry is alपढ़ोy set:
+	 * 	- fh_verअगरy may be called multiple बार with dअगरferent
 	 * 	  "access" arguments (e.g. nfsd_proc_create calls
-	 * 	  fh_verify(...,NFSD_MAY_EXEC) first, then later (in
-	 * 	  nfsd_create) calls fh_verify(...,NFSD_MAY_CREATE).
-	 *	- in the NFSv4 case, the filehandle may have been filled
+	 * 	  fh_verअगरy(...,NFSD_MAY_EXEC) first, then later (in
+	 * 	  nfsd_create) calls fh_verअगरy(...,NFSD_MAY_CREATE).
+	 *	- in the NFSv4 हाल, the filehandle may have been filled
 	 *	  in by fh_compose, and given a dentry, but further
-	 *	  compound operations performed with that filehandle
-	 *	  still need permissions checks.  In the worst case, a
-	 *	  mountpoint crossing may have changed the export
-	 *	  options, and we may now need to use a different uid
-	 *	  (for example, if different id-squashing options are in
-	 *	  effect on the new filesystem).
+	 *	  compound operations perक्रमmed with that filehandle
+	 *	  still need permissions checks.  In the worst हाल, a
+	 *	  mountpoपूर्णांक crossing may have changed the export
+	 *	  options, and we may now need to use a dअगरferent uid
+	 *	  (क्रम example, अगर dअगरferent id-squashing options are in
+	 *	  effect on the new fileप्रणाली).
 	 */
-	error = check_pseudo_root(rqstp, dentry, exp);
-	if (error)
-		goto out;
+	error = check_pseuकरो_root(rqstp, dentry, exp);
+	अगर (error)
+		जाओ out;
 
 	error = nfsd_setuser_and_check_port(rqstp, exp);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	error = nfsd_mode_check(rqstp, dentry, type);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	/*
-	 * pseudoflavor restrictions are not enforced on NLM,
-	 * which clients virtually always use auth_sys for,
-	 * even while using RPCSEC_GSS for NFS.
+	 * pseuकरोflavor restrictions are not enक्रमced on NLM,
+	 * which clients भवly always use auth_sys क्रम,
+	 * even जबतक using RPCSEC_GSS क्रम NFS.
 	 */
-	if (access & NFSD_MAY_LOCK || access & NFSD_MAY_BYPASS_GSS)
-		goto skip_pseudoflavor_check;
+	अगर (access & NFSD_MAY_LOCK || access & NFSD_MAY_BYPASS_GSS)
+		जाओ skip_pseuकरोflavor_check;
 	/*
 	 * Clients may expect to be able to use auth_sys during mount,
-	 * even if they use gss for everything else; see section 2.3.2
+	 * even अगर they use gss क्रम everything अन्यथा; see section 2.3.2
 	 * of rfc 2623.
 	 */
-	if (access & NFSD_MAY_BYPASS_GSS_ON_ROOT
+	अगर (access & NFSD_MAY_BYPASS_GSS_ON_ROOT
 			&& exp->ex_path.dentry == dentry)
-		goto skip_pseudoflavor_check;
+		जाओ skip_pseuकरोflavor_check;
 
 	error = check_nfsd_access(exp, rqstp);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-skip_pseudoflavor_check:
+skip_pseuकरोflavor_check:
 	/* Finally, check access permissions. */
 	error = nfsd_permission(rqstp, exp, dentry, access);
 
-	if (error) {
-		dprintk("fh_verify: %pd2 permission failure, "
+	अगर (error) अणु
+		dprपूर्णांकk("fh_verify: %pd2 permission failure, "
 			"acc=%x, error=%d\n",
 			dentry,
 			access, ntohl(error));
-	}
+	पूर्ण
 out:
-	if (error == nfserr_stale)
+	अगर (error == nfserr_stale)
 		nfsd_stats_fh_stale_inc(exp);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 
 /*
- * Compose a file handle for an NFS reply.
+ * Compose a file handle क्रम an NFS reply.
  *
  * Note that when first composed, the dentry may not yet have
- * an inode.  In this case a call to fh_update should be made
- * before the fh goes out on the wire ...
+ * an inode.  In this हाल a call to fh_update should be made
+ * beक्रमe the fh goes out on the wire ...
  */
-static void _fh_update(struct svc_fh *fhp, struct svc_export *exp,
-		struct dentry *dentry)
-{
-	if (dentry != exp->ex_path.dentry) {
-		struct fid *fid = (struct fid *)
+अटल व्योम _fh_update(काष्ठा svc_fh *fhp, काष्ठा svc_export *exp,
+		काष्ठा dentry *dentry)
+अणु
+	अगर (dentry != exp->ex_path.dentry) अणु
+		काष्ठा fid *fid = (काष्ठा fid *)
 			(fhp->fh_handle.fh_fsid + fhp->fh_handle.fh_size/4 - 1);
-		int maxsize = (fhp->fh_maxsize - fhp->fh_handle.fh_size)/4;
-		int subtreecheck = !(exp->ex_flags & NFSEXP_NOSUBTREECHECK);
+		पूर्णांक maxsize = (fhp->fh_maxsize - fhp->fh_handle.fh_size)/4;
+		पूर्णांक subtreecheck = !(exp->ex_flags & NFSEXP_NOSUBTREECHECK);
 
 		fhp->fh_handle.fh_fileid_type =
 			exportfs_encode_fh(dentry, fid, &maxsize, subtreecheck);
 		fhp->fh_handle.fh_size += maxsize * 4;
-	} else {
-		fhp->fh_handle.fh_fileid_type = FILEID_ROOT;
-	}
-}
+	पूर्ण अन्यथा अणु
+		fhp->fh_handle.fh_fileid_type = खाताID_ROOT;
+	पूर्ण
+पूर्ण
 
 /*
- * for composing old style file handles
+ * क्रम composing old style file handles
  */
-static inline void _fh_update_old(struct dentry *dentry,
-				  struct svc_export *exp,
-				  struct knfsd_fh *fh)
-{
+अटल अंतरभूत व्योम _fh_update_old(काष्ठा dentry *dentry,
+				  काष्ठा svc_export *exp,
+				  काष्ठा knfsd_fh *fh)
+अणु
 	fh->ofh_ino = ino_t_to_u32(d_inode(dentry)->i_ino);
 	fh->ofh_generation = d_inode(dentry)->i_generation;
-	if (d_is_dir(dentry) ||
+	अगर (d_is_dir(dentry) ||
 	    (exp->ex_flags & NFSEXP_NOSUBTREECHECK))
 		fh->ofh_dirino = 0;
-}
+पूर्ण
 
-static bool is_root_export(struct svc_export *exp)
-{
-	return exp->ex_path.dentry == exp->ex_path.dentry->d_sb->s_root;
-}
+अटल bool is_root_export(काष्ठा svc_export *exp)
+अणु
+	वापस exp->ex_path.dentry == exp->ex_path.dentry->d_sb->s_root;
+पूर्ण
 
-static struct super_block *exp_sb(struct svc_export *exp)
-{
-	return exp->ex_path.dentry->d_sb;
-}
+अटल काष्ठा super_block *exp_sb(काष्ठा svc_export *exp)
+अणु
+	वापस exp->ex_path.dentry->d_sb;
+पूर्ण
 
-static bool fsid_type_ok_for_exp(u8 fsid_type, struct svc_export *exp)
-{
-	switch (fsid_type) {
-	case FSID_DEV:
-		if (!old_valid_dev(exp_sb(exp)->s_dev))
-			return false;
+अटल bool fsid_type_ok_क्रम_exp(u8 fsid_type, काष्ठा svc_export *exp)
+अणु
+	चयन (fsid_type) अणु
+	हाल FSID_DEV:
+		अगर (!old_valid_dev(exp_sb(exp)->s_dev))
+			वापस false;
 		fallthrough;
-	case FSID_MAJOR_MINOR:
-	case FSID_ENCODE_DEV:
-		return exp_sb(exp)->s_type->fs_flags & FS_REQUIRES_DEV;
-	case FSID_NUM:
-		return exp->ex_flags & NFSEXP_FSID;
-	case FSID_UUID8:
-	case FSID_UUID16:
-		if (!is_root_export(exp))
-			return false;
+	हाल FSID_MAJOR_MINOR:
+	हाल FSID_ENCODE_DEV:
+		वापस exp_sb(exp)->s_type->fs_flags & FS_REQUIRES_DEV;
+	हाल FSID_NUM:
+		वापस exp->ex_flags & NFSEXP_FSID;
+	हाल FSID_UUID8:
+	हाल FSID_UUID16:
+		अगर (!is_root_export(exp))
+			वापस false;
 		fallthrough;
-	case FSID_UUID4_INUM:
-	case FSID_UUID16_INUM:
-		return exp->ex_uuid != NULL;
-	}
-	return true;
-}
+	हाल FSID_UUID4_INUM:
+	हाल FSID_UUID16_INUM:
+		वापस exp->ex_uuid != शून्य;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 
-static void set_version_and_fsid_type(struct svc_fh *fhp, struct svc_export *exp, struct svc_fh *ref_fh)
-{
+अटल व्योम set_version_and_fsid_type(काष्ठा svc_fh *fhp, काष्ठा svc_export *exp, काष्ठा svc_fh *ref_fh)
+अणु
 	u8 version;
 	u8 fsid_type;
 retry:
 	version = 1;
-	if (ref_fh && ref_fh->fh_export == exp) {
+	अगर (ref_fh && ref_fh->fh_export == exp) अणु
 		version = ref_fh->fh_handle.fh_version;
 		fsid_type = ref_fh->fh_handle.fh_fsid_type;
 
-		ref_fh = NULL;
+		ref_fh = शून्य;
 
-		switch (version) {
-		case 0xca:
+		चयन (version) अणु
+		हाल 0xca:
 			fsid_type = FSID_DEV;
-			break;
-		case 1:
-			break;
-		default:
-			goto retry;
-		}
+			अवरोध;
+		हाल 1:
+			अवरोध;
+		शेष:
+			जाओ retry;
+		पूर्ण
 
 		/*
-		 * As the fsid -> filesystem mapping was guided by
-		 * user-space, there is no guarantee that the filesystem
-		 * actually supports that fsid type. If it doesn't we
+		 * As the fsid -> fileप्रणाली mapping was guided by
+		 * user-space, there is no guarantee that the fileप्रणाली
+		 * actually supports that fsid type. If it करोesn't we
 		 * loop around again without ref_fh set.
 		 */
-		if (!fsid_type_ok_for_exp(fsid_type, exp))
-			goto retry;
-	} else if (exp->ex_flags & NFSEXP_FSID) {
+		अगर (!fsid_type_ok_क्रम_exp(fsid_type, exp))
+			जाओ retry;
+	पूर्ण अन्यथा अगर (exp->ex_flags & NFSEXP_FSID) अणु
 		fsid_type = FSID_NUM;
-	} else if (exp->ex_uuid) {
-		if (fhp->fh_maxsize >= 64) {
-			if (is_root_export(exp))
+	पूर्ण अन्यथा अगर (exp->ex_uuid) अणु
+		अगर (fhp->fh_maxsize >= 64) अणु
+			अगर (is_root_export(exp))
 				fsid_type = FSID_UUID16;
-			else
+			अन्यथा
 				fsid_type = FSID_UUID16_INUM;
-		} else {
-			if (is_root_export(exp))
+		पूर्ण अन्यथा अणु
+			अगर (is_root_export(exp))
 				fsid_type = FSID_UUID8;
-			else
+			अन्यथा
 				fsid_type = FSID_UUID4_INUM;
-		}
-	} else if (!old_valid_dev(exp_sb(exp)->s_dev))
-		/* for newer device numbers, we must use a newer fsid format */
+		पूर्ण
+	पूर्ण अन्यथा अगर (!old_valid_dev(exp_sb(exp)->s_dev))
+		/* क्रम newer device numbers, we must use a newer fsid क्रमmat */
 		fsid_type = FSID_ENCODE_DEV;
-	else
+	अन्यथा
 		fsid_type = FSID_DEV;
 	fhp->fh_handle.fh_version = version;
-	if (version)
+	अगर (version)
 		fhp->fh_handle.fh_fsid_type = fsid_type;
-}
+पूर्ण
 
 __be32
-fh_compose(struct svc_fh *fhp, struct svc_export *exp, struct dentry *dentry,
-	   struct svc_fh *ref_fh)
-{
+fh_compose(काष्ठा svc_fh *fhp, काष्ठा svc_export *exp, काष्ठा dentry *dentry,
+	   काष्ठा svc_fh *ref_fh)
+अणु
 	/* ref_fh is a reference file handle.
-	 * if it is non-null and for the same filesystem, then we should compose
+	 * अगर it is non-null and क्रम the same fileप्रणाली, then we should compose
 	 * a filehandle which is of the same version, where possible.
-	 * Currently, that means that if ref_fh->fh_handle.fh_version == 0xca
+	 * Currently, that means that अगर ref_fh->fh_handle.fh_version == 0xca
 	 * Then create a 32byte filehandle using nfs_fhbase_old
 	 *
 	 */
 
-	struct inode * inode = d_inode(dentry);
+	काष्ठा inode * inode = d_inode(dentry);
 	dev_t ex_dev = exp_sb(exp)->s_dev;
 
-	dprintk("nfsd: fh_compose(exp %02x:%02x/%ld %pd2, ino=%ld)\n",
+	dprपूर्णांकk("nfsd: fh_compose(exp %02x:%02x/%ld %pd2, ino=%ld)\n",
 		MAJOR(ex_dev), MINOR(ex_dev),
-		(long) d_inode(exp->ex_path.dentry)->i_ino,
+		(दीर्घ) d_inode(exp->ex_path.dentry)->i_ino,
 		dentry,
 		(inode ? inode->i_ino : 0));
 
 	/* Choose filehandle version and fsid type based on
-	 * the reference filehandle (if it is in the same export)
+	 * the reference filehandle (अगर it is in the same export)
 	 * or the export options.
 	 */
 	set_version_and_fsid_type(fhp, exp, ref_fh);
@@ -585,24 +586,24 @@ fh_compose(struct svc_fh *fhp, struct svc_export *exp, struct dentry *dentry,
 	/* If we have a ref_fh, then copy the fh_no_wcc setting from it. */
 	fhp->fh_no_wcc = ref_fh ? ref_fh->fh_no_wcc : false;
 
-	if (ref_fh == fhp)
+	अगर (ref_fh == fhp)
 		fh_put(ref_fh);
 
-	if (fhp->fh_locked || fhp->fh_dentry) {
-		printk(KERN_ERR "fh_compose: fh %pd2 not initialized!\n",
+	अगर (fhp->fh_locked || fhp->fh_dentry) अणु
+		prपूर्णांकk(KERN_ERR "fh_compose: fh %pd2 not initialized!\n",
 		       dentry);
-	}
-	if (fhp->fh_maxsize < NFS_FHSIZE)
-		printk(KERN_ERR "fh_compose: called with maxsize %d! %pd2\n",
+	पूर्ण
+	अगर (fhp->fh_maxsize < NFS_FHSIZE)
+		prपूर्णांकk(KERN_ERR "fh_compose: called with maxsize %d! %pd2\n",
 		       fhp->fh_maxsize,
 		       dentry);
 
-	fhp->fh_dentry = dget(dentry); /* our internal copy */
+	fhp->fh_dentry = dget(dentry); /* our पूर्णांकernal copy */
 	fhp->fh_export = exp_get(exp);
 
-	if (fhp->fh_handle.fh_version == 0xca) {
+	अगर (fhp->fh_handle.fh_version == 0xca) अणु
 		/* old style filehandle please */
-		memset(&fhp->fh_handle.fh_base, 0, NFS_FHSIZE);
+		स_रखो(&fhp->fh_handle.fh_base, 0, NFS_FHSIZE);
 		fhp->fh_handle.fh_size = NFS_FHSIZE;
 		fhp->fh_handle.ofh_dcookie = 0xfeebbaca;
 		fhp->fh_handle.ofh_dev =  old_encode_dev(ex_dev);
@@ -610,9 +611,9 @@ fh_compose(struct svc_fh *fhp, struct svc_export *exp, struct dentry *dentry,
 		fhp->fh_handle.ofh_xino =
 			ino_t_to_u32(d_inode(exp->ex_path.dentry)->i_ino);
 		fhp->fh_handle.ofh_dirino = ino_t_to_u32(parent_ino(dentry));
-		if (inode)
+		अगर (inode)
 			_fh_update_old(dentry, exp, &fhp->fh_handle);
-	} else {
+	पूर्ण अन्यथा अणु
 		fhp->fh_handle.fh_size =
 			key_len(fhp->fh_handle.fh_fsid_type) + 4;
 		fhp->fh_handle.fh_auth_type = 0;
@@ -623,84 +624,84 @@ fh_compose(struct svc_fh *fhp, struct svc_export *exp, struct dentry *dentry,
 			d_inode(exp->ex_path.dentry)->i_ino,
 			exp->ex_fsid, exp->ex_uuid);
 
-		if (inode)
+		अगर (inode)
 			_fh_update(fhp, exp, dentry);
-		if (fhp->fh_handle.fh_fileid_type == FILEID_INVALID) {
+		अगर (fhp->fh_handle.fh_fileid_type == खाताID_INVALID) अणु
 			fh_put(fhp);
-			return nfserr_opnotsupp;
-		}
-	}
+			वापस nfserr_opnotsupp;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Update file handle information after changing a dentry.
+ * Update file handle inक्रमmation after changing a dentry.
  * This is only called by nfsd_create, nfsd_create_v3 and nfsd_proc_create
  */
 __be32
-fh_update(struct svc_fh *fhp)
-{
-	struct dentry *dentry;
+fh_update(काष्ठा svc_fh *fhp)
+अणु
+	काष्ठा dentry *dentry;
 
-	if (!fhp->fh_dentry)
-		goto out_bad;
+	अगर (!fhp->fh_dentry)
+		जाओ out_bad;
 
 	dentry = fhp->fh_dentry;
-	if (d_really_is_negative(dentry))
-		goto out_negative;
-	if (fhp->fh_handle.fh_version != 1) {
+	अगर (d_really_is_negative(dentry))
+		जाओ out_negative;
+	अगर (fhp->fh_handle.fh_version != 1) अणु
 		_fh_update_old(dentry, fhp->fh_export, &fhp->fh_handle);
-	} else {
-		if (fhp->fh_handle.fh_fileid_type != FILEID_ROOT)
-			return 0;
+	पूर्ण अन्यथा अणु
+		अगर (fhp->fh_handle.fh_fileid_type != खाताID_ROOT)
+			वापस 0;
 
 		_fh_update(fhp, fhp->fh_export, dentry);
-		if (fhp->fh_handle.fh_fileid_type == FILEID_INVALID)
-			return nfserr_opnotsupp;
-	}
-	return 0;
+		अगर (fhp->fh_handle.fh_fileid_type == खाताID_INVALID)
+			वापस nfserr_opnotsupp;
+	पूर्ण
+	वापस 0;
 out_bad:
-	printk(KERN_ERR "fh_update: fh not verified!\n");
-	return nfserr_serverfault;
+	prपूर्णांकk(KERN_ERR "fh_update: fh not verified!\n");
+	वापस nfserr_serverfault;
 out_negative:
-	printk(KERN_ERR "fh_update: %pd2 still negative!\n",
+	prपूर्णांकk(KERN_ERR "fh_update: %pd2 still negative!\n",
 		dentry);
-	return nfserr_serverfault;
-}
+	वापस nfserr_serverfault;
+पूर्ण
 
 /*
  * Release a file handle.
  */
-void
-fh_put(struct svc_fh *fhp)
-{
-	struct dentry * dentry = fhp->fh_dentry;
-	struct svc_export * exp = fhp->fh_export;
-	if (dentry) {
+व्योम
+fh_put(काष्ठा svc_fh *fhp)
+अणु
+	काष्ठा dentry * dentry = fhp->fh_dentry;
+	काष्ठा svc_export * exp = fhp->fh_export;
+	अगर (dentry) अणु
 		fh_unlock(fhp);
-		fhp->fh_dentry = NULL;
+		fhp->fh_dentry = शून्य;
 		dput(dentry);
 		fh_clear_wcc(fhp);
-	}
-	fh_drop_write(fhp);
-	if (exp) {
+	पूर्ण
+	fh_drop_ग_लिखो(fhp);
+	अगर (exp) अणु
 		exp_put(exp);
-		fhp->fh_export = NULL;
-	}
+		fhp->fh_export = शून्य;
+	पूर्ण
 	fhp->fh_no_wcc = false;
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * Shorthand for dprintk()'s
+ * Shorthand क्रम dprपूर्णांकk()'s
  */
-char * SVCFH_fmt(struct svc_fh *fhp)
-{
-	struct knfsd_fh *fh = &fhp->fh_handle;
+अक्षर * SVCFH_fmt(काष्ठा svc_fh *fhp)
+अणु
+	काष्ठा knfsd_fh *fh = &fhp->fh_handle;
 
-	static char buf[80];
-	sprintf(buf, "%d: %08x %08x %08x %08x %08x %08x",
+	अटल अक्षर buf[80];
+	प्र_लिखो(buf, "%d: %08x %08x %08x %08x %08x %08x",
 		fh->fh_size,
 		fh->fh_base.fh_pad[0],
 		fh->fh_base.fh_pad[1],
@@ -708,33 +709,33 @@ char * SVCFH_fmt(struct svc_fh *fhp)
 		fh->fh_base.fh_pad[3],
 		fh->fh_base.fh_pad[4],
 		fh->fh_base.fh_pad[5]);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-enum fsid_source fsid_source(const struct svc_fh *fhp)
-{
-	if (fhp->fh_handle.fh_version != 1)
-		return FSIDSOURCE_DEV;
-	switch(fhp->fh_handle.fh_fsid_type) {
-	case FSID_DEV:
-	case FSID_ENCODE_DEV:
-	case FSID_MAJOR_MINOR:
-		if (exp_sb(fhp->fh_export)->s_type->fs_flags & FS_REQUIRES_DEV)
-			return FSIDSOURCE_DEV;
-		break;
-	case FSID_NUM:
-		if (fhp->fh_export->ex_flags & NFSEXP_FSID)
-			return FSIDSOURCE_FSID;
-		break;
-	default:
-		break;
-	}
-	/* either a UUID type filehandle, or the filehandle doesn't
+क्रमागत fsid_source fsid_source(स्थिर काष्ठा svc_fh *fhp)
+अणु
+	अगर (fhp->fh_handle.fh_version != 1)
+		वापस FSIDSOURCE_DEV;
+	चयन(fhp->fh_handle.fh_fsid_type) अणु
+	हाल FSID_DEV:
+	हाल FSID_ENCODE_DEV:
+	हाल FSID_MAJOR_MINOR:
+		अगर (exp_sb(fhp->fh_export)->s_type->fs_flags & FS_REQUIRES_DEV)
+			वापस FSIDSOURCE_DEV;
+		अवरोध;
+	हाल FSID_NUM:
+		अगर (fhp->fh_export->ex_flags & NFSEXP_FSID)
+			वापस FSIDSOURCE_FSID;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	/* either a UUID type filehandle, or the filehandle करोesn't
 	 * match the export.
 	 */
-	if (fhp->fh_export->ex_flags & NFSEXP_FSID)
-		return FSIDSOURCE_FSID;
-	if (fhp->fh_export->ex_uuid)
-		return FSIDSOURCE_UUID;
-	return FSIDSOURCE_DEV;
-}
+	अगर (fhp->fh_export->ex_flags & NFSEXP_FSID)
+		वापस FSIDSOURCE_FSID;
+	अगर (fhp->fh_export->ex_uuid)
+		वापस FSIDSOURCE_UUID;
+	वापस FSIDSOURCE_DEV;
+पूर्ण

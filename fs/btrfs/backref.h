@@ -1,158 +1,159 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2011 STRATO.  All rights reserved.
  */
 
-#ifndef BTRFS_BACKREF_H
-#define BTRFS_BACKREF_H
+#अगर_अघोषित BTRFS_BACKREF_H
+#घोषणा BTRFS_BACKREF_H
 
-#include <linux/btrfs.h>
-#include "ulist.h"
-#include "disk-io.h"
-#include "extent_io.h"
+#समावेश <linux/btrfs.h>
+#समावेश "ulist.h"
+#समावेश "disk-io.h"
+#समावेश "extent_io.h"
 
-struct inode_fs_paths {
-	struct btrfs_path		*btrfs_path;
-	struct btrfs_root		*fs_root;
-	struct btrfs_data_container	*fspath;
-};
+काष्ठा inode_fs_paths अणु
+	काष्ठा btrfs_path		*btrfs_path;
+	काष्ठा btrfs_root		*fs_root;
+	काष्ठा btrfs_data_container	*fspath;
+पूर्ण;
 
-typedef int (iterate_extent_inodes_t)(u64 inum, u64 offset, u64 root,
-		void *ctx);
+प्रकार पूर्णांक (iterate_extent_inodes_t)(u64 inum, u64 offset, u64 root,
+		व्योम *ctx);
 
-int extent_from_logical(struct btrfs_fs_info *fs_info, u64 logical,
-			struct btrfs_path *path, struct btrfs_key *found_key,
+पूर्णांक extent_from_logical(काष्ठा btrfs_fs_info *fs_info, u64 logical,
+			काष्ठा btrfs_path *path, काष्ठा btrfs_key *found_key,
 			u64 *flags);
 
-int tree_backref_for_extent(unsigned long *ptr, struct extent_buffer *eb,
-			    struct btrfs_key *key, struct btrfs_extent_item *ei,
+पूर्णांक tree_backref_क्रम_extent(अचिन्हित दीर्घ *ptr, काष्ठा extent_buffer *eb,
+			    काष्ठा btrfs_key *key, काष्ठा btrfs_extent_item *ei,
 			    u32 item_size, u64 *out_root, u8 *out_level);
 
-int iterate_extent_inodes(struct btrfs_fs_info *fs_info,
+पूर्णांक iterate_extent_inodes(काष्ठा btrfs_fs_info *fs_info,
 				u64 extent_item_objectid,
-				u64 extent_offset, int search_commit_root,
-				iterate_extent_inodes_t *iterate, void *ctx,
+				u64 extent_offset, पूर्णांक search_commit_root,
+				iterate_extent_inodes_t *iterate, व्योम *ctx,
 				bool ignore_offset);
 
-int iterate_inodes_from_logical(u64 logical, struct btrfs_fs_info *fs_info,
-				struct btrfs_path *path,
-				iterate_extent_inodes_t *iterate, void *ctx,
+पूर्णांक iterate_inodes_from_logical(u64 logical, काष्ठा btrfs_fs_info *fs_info,
+				काष्ठा btrfs_path *path,
+				iterate_extent_inodes_t *iterate, व्योम *ctx,
 				bool ignore_offset);
 
-int paths_from_inode(u64 inum, struct inode_fs_paths *ipath);
+पूर्णांक paths_from_inode(u64 inum, काष्ठा inode_fs_paths *ipath);
 
-int btrfs_find_all_leafs(struct btrfs_trans_handle *trans,
-			 struct btrfs_fs_info *fs_info, u64 bytenr,
-			 u64 time_seq, struct ulist **leafs,
-			 const u64 *extent_item_pos, bool ignore_offset);
-int btrfs_find_all_roots(struct btrfs_trans_handle *trans,
-			 struct btrfs_fs_info *fs_info, u64 bytenr,
-			 u64 time_seq, struct ulist **roots, bool ignore_offset);
-char *btrfs_ref_to_path(struct btrfs_root *fs_root, struct btrfs_path *path,
-			u32 name_len, unsigned long name_off,
-			struct extent_buffer *eb_in, u64 parent,
-			char *dest, u32 size);
+पूर्णांक btrfs_find_all_leafs(काष्ठा btrfs_trans_handle *trans,
+			 काष्ठा btrfs_fs_info *fs_info, u64 bytenr,
+			 u64 समय_seq, काष्ठा ulist **leafs,
+			 स्थिर u64 *extent_item_pos, bool ignore_offset);
+पूर्णांक btrfs_find_all_roots(काष्ठा btrfs_trans_handle *trans,
+			 काष्ठा btrfs_fs_info *fs_info, u64 bytenr,
+			 u64 समय_seq, काष्ठा ulist **roots, bool ignore_offset);
+अक्षर *btrfs_ref_to_path(काष्ठा btrfs_root *fs_root, काष्ठा btrfs_path *path,
+			u32 name_len, अचिन्हित दीर्घ name_off,
+			काष्ठा extent_buffer *eb_in, u64 parent,
+			अक्षर *dest, u32 size);
 
-struct btrfs_data_container *init_data_container(u32 total_bytes);
-struct inode_fs_paths *init_ipath(s32 total_bytes, struct btrfs_root *fs_root,
-					struct btrfs_path *path);
-void free_ipath(struct inode_fs_paths *ipath);
+काष्ठा btrfs_data_container *init_data_container(u32 total_bytes);
+काष्ठा inode_fs_paths *init_ipath(s32 total_bytes, काष्ठा btrfs_root *fs_root,
+					काष्ठा btrfs_path *path);
+व्योम मुक्त_ipath(काष्ठा inode_fs_paths *ipath);
 
-int btrfs_find_one_extref(struct btrfs_root *root, u64 inode_objectid,
-			  u64 start_off, struct btrfs_path *path,
-			  struct btrfs_inode_extref **ret_extref,
+पूर्णांक btrfs_find_one_extref(काष्ठा btrfs_root *root, u64 inode_objectid,
+			  u64 start_off, काष्ठा btrfs_path *path,
+			  काष्ठा btrfs_inode_extref **ret_extref,
 			  u64 *found_off);
-int btrfs_check_shared(struct btrfs_root *root, u64 inum, u64 bytenr,
-		struct ulist *roots, struct ulist *tmp_ulist);
+पूर्णांक btrfs_check_shared(काष्ठा btrfs_root *root, u64 inum, u64 bytenr,
+		काष्ठा ulist *roots, काष्ठा ulist *पंचांगp_ulist);
 
-int __init btrfs_prelim_ref_init(void);
-void __cold btrfs_prelim_ref_exit(void);
+पूर्णांक __init btrfs_prelim_ref_init(व्योम);
+व्योम __cold btrfs_prelim_ref_निकास(व्योम);
 
-struct prelim_ref {
-	struct rb_node rbnode;
+काष्ठा prelim_ref अणु
+	काष्ठा rb_node rbnode;
 	u64 root_id;
-	struct btrfs_key key_for_search;
-	int level;
-	int count;
-	struct extent_inode_elem *inode_list;
+	काष्ठा btrfs_key key_क्रम_search;
+	पूर्णांक level;
+	पूर्णांक count;
+	काष्ठा extent_inode_elem *inode_list;
 	u64 parent;
 	u64 wanted_disk_byte;
-};
+पूर्ण;
 
 /*
  * Iterate backrefs of one extent.
  *
  * Now it only supports iteration of tree block in commit root.
  */
-struct btrfs_backref_iter {
+काष्ठा btrfs_backref_iter अणु
 	u64 bytenr;
-	struct btrfs_path *path;
-	struct btrfs_fs_info *fs_info;
-	struct btrfs_key cur_key;
+	काष्ठा btrfs_path *path;
+	काष्ठा btrfs_fs_info *fs_info;
+	काष्ठा btrfs_key cur_key;
 	u32 item_ptr;
 	u32 cur_ptr;
 	u32 end_ptr;
-};
+पूर्ण;
 
-struct btrfs_backref_iter *btrfs_backref_iter_alloc(
-		struct btrfs_fs_info *fs_info, gfp_t gfp_flag);
+काष्ठा btrfs_backref_iter *btrfs_backref_iter_alloc(
+		काष्ठा btrfs_fs_info *fs_info, gfp_t gfp_flag);
 
-static inline void btrfs_backref_iter_free(struct btrfs_backref_iter *iter)
-{
-	if (!iter)
-		return;
-	btrfs_free_path(iter->path);
-	kfree(iter);
-}
+अटल अंतरभूत व्योम btrfs_backref_iter_मुक्त(काष्ठा btrfs_backref_iter *iter)
+अणु
+	अगर (!iter)
+		वापस;
+	btrfs_मुक्त_path(iter->path);
+	kमुक्त(iter);
+पूर्ण
 
-static inline struct extent_buffer *btrfs_backref_get_eb(
-		struct btrfs_backref_iter *iter)
-{
-	if (!iter)
-		return NULL;
-	return iter->path->nodes[0];
-}
+अटल अंतरभूत काष्ठा extent_buffer *btrfs_backref_get_eb(
+		काष्ठा btrfs_backref_iter *iter)
+अणु
+	अगर (!iter)
+		वापस शून्य;
+	वापस iter->path->nodes[0];
+पूर्ण
 
 /*
- * For metadata with EXTENT_ITEM key (non-skinny) case, the first inline data
- * is btrfs_tree_block_info, without a btrfs_extent_inline_ref header.
+ * For metadata with EXTENT_ITEM key (non-skinny) हाल, the first अंतरभूत data
+ * is btrfs_tree_block_info, without a btrfs_extent_अंतरभूत_ref header.
  *
- * This helper determines if that's the case.
+ * This helper determines अगर that's the हाल.
  */
-static inline bool btrfs_backref_has_tree_block_info(
-		struct btrfs_backref_iter *iter)
-{
-	if (iter->cur_key.type == BTRFS_EXTENT_ITEM_KEY &&
-	    iter->cur_ptr - iter->item_ptr == sizeof(struct btrfs_extent_item))
-		return true;
-	return false;
-}
+अटल अंतरभूत bool btrfs_backref_has_tree_block_info(
+		काष्ठा btrfs_backref_iter *iter)
+अणु
+	अगर (iter->cur_key.type == BTRFS_EXTENT_ITEM_KEY &&
+	    iter->cur_ptr - iter->item_ptr == माप(काष्ठा btrfs_extent_item))
+		वापस true;
+	वापस false;
+पूर्ण
 
-int btrfs_backref_iter_start(struct btrfs_backref_iter *iter, u64 bytenr);
+पूर्णांक btrfs_backref_iter_start(काष्ठा btrfs_backref_iter *iter, u64 bytenr);
 
-int btrfs_backref_iter_next(struct btrfs_backref_iter *iter);
+पूर्णांक btrfs_backref_iter_next(काष्ठा btrfs_backref_iter *iter);
 
-static inline bool btrfs_backref_iter_is_inline_ref(
-		struct btrfs_backref_iter *iter)
-{
-	if (iter->cur_key.type == BTRFS_EXTENT_ITEM_KEY ||
+अटल अंतरभूत bool btrfs_backref_iter_is_अंतरभूत_ref(
+		काष्ठा btrfs_backref_iter *iter)
+अणु
+	अगर (iter->cur_key.type == BTRFS_EXTENT_ITEM_KEY ||
 	    iter->cur_key.type == BTRFS_METADATA_ITEM_KEY)
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-static inline void btrfs_backref_iter_release(struct btrfs_backref_iter *iter)
-{
+अटल अंतरभूत व्योम btrfs_backref_iter_release(काष्ठा btrfs_backref_iter *iter)
+अणु
 	iter->bytenr = 0;
 	iter->item_ptr = 0;
 	iter->cur_ptr = 0;
 	iter->end_ptr = 0;
 	btrfs_release_path(iter->path);
-	memset(&iter->cur_key, 0, sizeof(iter->cur_key));
-}
+	स_रखो(&iter->cur_key, 0, माप(iter->cur_key));
+पूर्ण
 
 /*
- * Backref cache related structures
+ * Backref cache related काष्ठाures
  *
  * The whole objective of backref_cache is to build a bi-directional map
  * of tree blocks (represented by backref_node) and all their parents.
@@ -161,177 +162,177 @@ static inline void btrfs_backref_iter_release(struct btrfs_backref_iter *iter)
 /*
  * Represent a tree block in the backref cache
  */
-struct btrfs_backref_node {
-	struct {
-		struct rb_node rb_node;
+काष्ठा btrfs_backref_node अणु
+	काष्ठा अणु
+		काष्ठा rb_node rb_node;
 		u64 bytenr;
-	}; /* Use rb_simple_node for search/insert */
+	पूर्ण; /* Use rb_simple_node क्रम search/insert */
 
 	u64 new_bytenr;
 	/* Objectid of tree block owner, can be not uptodate */
 	u64 owner;
 	/* Link to pending, changed or detached list */
-	struct list_head list;
+	काष्ठा list_head list;
 
 	/* List of upper level edges, which link this node to its parents */
-	struct list_head upper;
+	काष्ठा list_head upper;
 	/* List of lower level edges, which link this node to its children */
-	struct list_head lower;
+	काष्ठा list_head lower;
 
-	/* NULL if this node is not tree root */
-	struct btrfs_root *root;
+	/* शून्य अगर this node is not tree root */
+	काष्ठा btrfs_root *root;
 	/* Extent buffer got by COWing the block */
-	struct extent_buffer *eb;
+	काष्ठा extent_buffer *eb;
 	/* Level of the tree block */
-	unsigned int level:8;
+	अचिन्हित पूर्णांक level:8;
 	/* Is the block in a non-shareable tree */
-	unsigned int cowonly:1;
-	/* 1 if no child node is in the cache */
-	unsigned int lowest:1;
+	अचिन्हित पूर्णांक cowonly:1;
+	/* 1 अगर no child node is in the cache */
+	अचिन्हित पूर्णांक lowest:1;
 	/* Is the extent buffer locked */
-	unsigned int locked:1;
+	अचिन्हित पूर्णांक locked:1;
 	/* Has the block been processed */
-	unsigned int processed:1;
+	अचिन्हित पूर्णांक processed:1;
 	/* Have backrefs of this block been checked */
-	unsigned int checked:1;
+	अचिन्हित पूर्णांक checked:1;
 	/*
-	 * 1 if corresponding block has been COWed but some upper level block
-	 * pointers may not point to the new location
+	 * 1 अगर corresponding block has been COWed but some upper level block
+	 * poपूर्णांकers may not poपूर्णांक to the new location
 	 */
-	unsigned int pending:1;
-	/* 1 if the backref node isn't connected to any other backref node */
-	unsigned int detached:1;
+	अचिन्हित पूर्णांक pending:1;
+	/* 1 अगर the backref node isn't connected to any other backref node */
+	अचिन्हित पूर्णांक detached:1;
 
 	/*
-	 * For generic purpose backref cache, where we only care if it's a reloc
-	 * root, doesn't care the source subvolid.
+	 * For generic purpose backref cache, where we only care अगर it's a reloc
+	 * root, करोesn't care the source subvolid.
 	 */
-	unsigned int is_reloc_root:1;
-};
+	अचिन्हित पूर्णांक is_reloc_root:1;
+पूर्ण;
 
-#define LOWER	0
-#define UPPER	1
+#घोषणा LOWER	0
+#घोषणा UPPER	1
 
 /*
  * Represent an edge connecting upper and lower backref nodes.
  */
-struct btrfs_backref_edge {
+काष्ठा btrfs_backref_edge अणु
 	/*
 	 * list[LOWER] is linked to btrfs_backref_node::upper of lower level
 	 * node, and list[UPPER] is linked to btrfs_backref_node::lower of
 	 * upper level node.
 	 *
-	 * Also, build_backref_tree() uses list[UPPER] for pending edges, before
+	 * Also, build_backref_tree() uses list[UPPER] क्रम pending edges, beक्रमe
 	 * linking list[UPPER] to its upper level nodes.
 	 */
-	struct list_head list[2];
+	काष्ठा list_head list[2];
 
 	/* Two related nodes */
-	struct btrfs_backref_node *node[2];
-};
+	काष्ठा btrfs_backref_node *node[2];
+पूर्ण;
 
-struct btrfs_backref_cache {
+काष्ठा btrfs_backref_cache अणु
 	/* Red black tree of all backref nodes in the cache */
-	struct rb_root rb_root;
+	काष्ठा rb_root rb_root;
 	/* For passing backref nodes to btrfs_reloc_cow_block */
-	struct btrfs_backref_node *path[BTRFS_MAX_LEVEL];
+	काष्ठा btrfs_backref_node *path[BTRFS_MAX_LEVEL];
 	/*
-	 * List of blocks that have been COWed but some block pointers in upper
+	 * List of blocks that have been COWed but some block poपूर्णांकers in upper
 	 * level blocks may not reflect the new location
 	 */
-	struct list_head pending[BTRFS_MAX_LEVEL];
+	काष्ठा list_head pending[BTRFS_MAX_LEVEL];
 	/* List of backref nodes with no child node */
-	struct list_head leaves;
+	काष्ठा list_head leaves;
 	/* List of blocks that have been COWed in current transaction */
-	struct list_head changed;
+	काष्ठा list_head changed;
 	/* List of detached backref node. */
-	struct list_head detached;
+	काष्ठा list_head detached;
 
 	u64 last_trans;
 
-	int nr_nodes;
-	int nr_edges;
+	पूर्णांक nr_nodes;
+	पूर्णांक nr_edges;
 
 	/* List of unchecked backref edges during backref cache build */
-	struct list_head pending_edge;
+	काष्ठा list_head pending_edge;
 
 	/* List of useless backref nodes during backref cache build */
-	struct list_head useless_node;
+	काष्ठा list_head useless_node;
 
-	struct btrfs_fs_info *fs_info;
+	काष्ठा btrfs_fs_info *fs_info;
 
 	/*
-	 * Whether this cache is for relocation
+	 * Whether this cache is क्रम relocation
 	 *
-	 * Reloction backref cache require more info for reloc root compared
+	 * Reloction backref cache require more info क्रम reloc root compared
 	 * to generic backref cache.
 	 */
-	unsigned int is_reloc;
-};
+	अचिन्हित पूर्णांक is_reloc;
+पूर्ण;
 
-void btrfs_backref_init_cache(struct btrfs_fs_info *fs_info,
-			      struct btrfs_backref_cache *cache, int is_reloc);
-struct btrfs_backref_node *btrfs_backref_alloc_node(
-		struct btrfs_backref_cache *cache, u64 bytenr, int level);
-struct btrfs_backref_edge *btrfs_backref_alloc_edge(
-		struct btrfs_backref_cache *cache);
+व्योम btrfs_backref_init_cache(काष्ठा btrfs_fs_info *fs_info,
+			      काष्ठा btrfs_backref_cache *cache, पूर्णांक is_reloc);
+काष्ठा btrfs_backref_node *btrfs_backref_alloc_node(
+		काष्ठा btrfs_backref_cache *cache, u64 bytenr, पूर्णांक level);
+काष्ठा btrfs_backref_edge *btrfs_backref_alloc_edge(
+		काष्ठा btrfs_backref_cache *cache);
 
-#define		LINK_LOWER	(1 << 0)
-#define		LINK_UPPER	(1 << 1)
-static inline void btrfs_backref_link_edge(struct btrfs_backref_edge *edge,
-					   struct btrfs_backref_node *lower,
-					   struct btrfs_backref_node *upper,
-					   int link_which)
-{
+#घोषणा		LINK_LOWER	(1 << 0)
+#घोषणा		LINK_UPPER	(1 << 1)
+अटल अंतरभूत व्योम btrfs_backref_link_edge(काष्ठा btrfs_backref_edge *edge,
+					   काष्ठा btrfs_backref_node *lower,
+					   काष्ठा btrfs_backref_node *upper,
+					   पूर्णांक link_which)
+अणु
 	ASSERT(upper && lower && upper->level == lower->level + 1);
 	edge->node[LOWER] = lower;
 	edge->node[UPPER] = upper;
-	if (link_which & LINK_LOWER)
+	अगर (link_which & LINK_LOWER)
 		list_add_tail(&edge->list[LOWER], &lower->upper);
-	if (link_which & LINK_UPPER)
+	अगर (link_which & LINK_UPPER)
 		list_add_tail(&edge->list[UPPER], &upper->lower);
-}
+पूर्ण
 
-static inline void btrfs_backref_free_node(struct btrfs_backref_cache *cache,
-					   struct btrfs_backref_node *node)
-{
-	if (node) {
+अटल अंतरभूत व्योम btrfs_backref_मुक्त_node(काष्ठा btrfs_backref_cache *cache,
+					   काष्ठा btrfs_backref_node *node)
+अणु
+	अगर (node) अणु
 		ASSERT(list_empty(&node->list));
 		ASSERT(list_empty(&node->lower));
-		ASSERT(node->eb == NULL);
+		ASSERT(node->eb == शून्य);
 		cache->nr_nodes--;
 		btrfs_put_root(node->root);
-		kfree(node);
-	}
-}
+		kमुक्त(node);
+	पूर्ण
+पूर्ण
 
-static inline void btrfs_backref_free_edge(struct btrfs_backref_cache *cache,
-					   struct btrfs_backref_edge *edge)
-{
-	if (edge) {
+अटल अंतरभूत व्योम btrfs_backref_मुक्त_edge(काष्ठा btrfs_backref_cache *cache,
+					   काष्ठा btrfs_backref_edge *edge)
+अणु
+	अगर (edge) अणु
 		cache->nr_edges--;
-		kfree(edge);
-	}
-}
+		kमुक्त(edge);
+	पूर्ण
+पूर्ण
 
-static inline void btrfs_backref_unlock_node_buffer(
-		struct btrfs_backref_node *node)
-{
-	if (node->locked) {
+अटल अंतरभूत व्योम btrfs_backref_unlock_node_buffer(
+		काष्ठा btrfs_backref_node *node)
+अणु
+	अगर (node->locked) अणु
 		btrfs_tree_unlock(node->eb);
 		node->locked = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void btrfs_backref_drop_node_buffer(
-		struct btrfs_backref_node *node)
-{
-	if (node->eb) {
+अटल अंतरभूत व्योम btrfs_backref_drop_node_buffer(
+		काष्ठा btrfs_backref_node *node)
+अणु
+	अगर (node->eb) अणु
 		btrfs_backref_unlock_node_buffer(node);
-		free_extent_buffer(node->eb);
-		node->eb = NULL;
-	}
-}
+		मुक्त_extent_buffer(node->eb);
+		node->eb = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * Drop the backref node from cache without cleaning up its children
@@ -340,42 +341,42 @@ static inline void btrfs_backref_drop_node_buffer(
  * This can only be called on node without parent edges.
  * The children edges are still kept as is.
  */
-static inline void btrfs_backref_drop_node(struct btrfs_backref_cache *tree,
-					   struct btrfs_backref_node *node)
-{
+अटल अंतरभूत व्योम btrfs_backref_drop_node(काष्ठा btrfs_backref_cache *tree,
+					   काष्ठा btrfs_backref_node *node)
+अणु
 	ASSERT(list_empty(&node->upper));
 
 	btrfs_backref_drop_node_buffer(node);
 	list_del_init(&node->list);
 	list_del_init(&node->lower);
-	if (!RB_EMPTY_NODE(&node->rb_node))
+	अगर (!RB_EMPTY_NODE(&node->rb_node))
 		rb_erase(&node->rb_node, &tree->rb_root);
-	btrfs_backref_free_node(tree, node);
-}
+	btrfs_backref_मुक्त_node(tree, node);
+पूर्ण
 
-void btrfs_backref_cleanup_node(struct btrfs_backref_cache *cache,
-				struct btrfs_backref_node *node);
+व्योम btrfs_backref_cleanup_node(काष्ठा btrfs_backref_cache *cache,
+				काष्ठा btrfs_backref_node *node);
 
-void btrfs_backref_release_cache(struct btrfs_backref_cache *cache);
+व्योम btrfs_backref_release_cache(काष्ठा btrfs_backref_cache *cache);
 
-static inline void btrfs_backref_panic(struct btrfs_fs_info *fs_info,
-				       u64 bytenr, int errno)
-{
-	btrfs_panic(fs_info, errno,
+अटल अंतरभूत व्योम btrfs_backref_panic(काष्ठा btrfs_fs_info *fs_info,
+				       u64 bytenr, पूर्णांक त्रुटि_सं)
+अणु
+	btrfs_panic(fs_info, त्रुटि_सं,
 		    "Inconsistency in backref cache found at offset %llu",
 		    bytenr);
-}
+पूर्ण
 
-int btrfs_backref_add_tree_node(struct btrfs_backref_cache *cache,
-				struct btrfs_path *path,
-				struct btrfs_backref_iter *iter,
-				struct btrfs_key *node_key,
-				struct btrfs_backref_node *cur);
+पूर्णांक btrfs_backref_add_tree_node(काष्ठा btrfs_backref_cache *cache,
+				काष्ठा btrfs_path *path,
+				काष्ठा btrfs_backref_iter *iter,
+				काष्ठा btrfs_key *node_key,
+				काष्ठा btrfs_backref_node *cur);
 
-int btrfs_backref_finish_upper_links(struct btrfs_backref_cache *cache,
-				     struct btrfs_backref_node *start);
+पूर्णांक btrfs_backref_finish_upper_links(काष्ठा btrfs_backref_cache *cache,
+				     काष्ठा btrfs_backref_node *start);
 
-void btrfs_backref_error_cleanup(struct btrfs_backref_cache *cache,
-				 struct btrfs_backref_node *node);
+व्योम btrfs_backref_error_cleanup(काष्ठा btrfs_backref_cache *cache,
+				 काष्ठा btrfs_backref_node *node);
 
-#endif
+#पूर्ण_अगर

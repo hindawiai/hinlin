@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <stddef.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct Small {
-	int x;
-};
+काष्ठा Small अणु
+	पूर्णांक x;
+पूर्ण;
 
-struct Big {
-	int x;
-	int y;
-};
+काष्ठा Big अणु
+	पूर्णांक x;
+	पूर्णांक y;
+पूर्ण;
 
-__noinline int foo(const struct Big *big)
-{
-	if (!big)
-		return 0;
+__noअंतरभूत पूर्णांक foo(स्थिर काष्ठा Big *big)
+अणु
+	अगर (!big)
+		वापस 0;
 
-	return bpf_get_prandom_u32() < big->y;
-}
+	वापस bpf_get_pअक्रमom_u32() < big->y;
+पूर्ण
 
 SEC("cgroup_skb/ingress")
-int test_cls(struct __sk_buff *skb)
-{
-	const struct Small small = {.x = skb->len };
+पूर्णांक test_cls(काष्ठा __sk_buff *skb)
+अणु
+	स्थिर काष्ठा Small small = अणु.x = skb->len पूर्ण;
 
-	return foo((struct Big *)&small) ? 1 : 0;
-}
+	वापस foo((काष्ठा Big *)&small) ? 1 : 0;
+पूर्ण

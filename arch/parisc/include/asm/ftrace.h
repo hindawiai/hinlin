@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_PARISC_FTRACE_H
-#define _ASM_PARISC_FTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_PARISC_FTRACE_H
+#घोषणा _ASM_PARISC_FTRACE_H
 
-#ifndef __ASSEMBLY__
-extern void mcount(void);
+#अगर_अघोषित __ASSEMBLY__
+बाह्य व्योम mcount(व्योम);
 
-#define MCOUNT_ADDR		((unsigned long)mcount)
-#define MCOUNT_INSN_SIZE	4
-#define CC_USING_NOP_MCOUNT
-#define ARCH_SUPPORTS_FTRACE_OPS 1
-extern unsigned long sys_call_table[];
+#घोषणा MCOUNT_ADDR		((अचिन्हित दीर्घ)mcount)
+#घोषणा MCOUNT_INSN_SIZE	4
+#घोषणा CC_USING_NOP_MCOUNT
+#घोषणा ARCH_SUPPORTS_FTRACE_OPS 1
+बाह्य अचिन्हित दीर्घ sys_call_table[];
 
-extern unsigned long return_address(unsigned int);
+बाह्य अचिन्हित दीर्घ वापस_address(अचिन्हित पूर्णांक);
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-extern void ftrace_caller(void);
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+बाह्य व्योम ftrace_caller(व्योम);
 
-struct dyn_arch_ftrace {
-};
+काष्ठा dyn_arch_ftrace अणु
+पूर्ण;
 
-unsigned long ftrace_call_adjust(unsigned long addr);
+अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr);
 
-#endif
+#पूर्ण_अगर
 
-#define ftrace_return_address(n) return_address(n)
+#घोषणा ftrace_वापस_address(n) वापस_address(n)
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_PARISC_FTRACE_H */
+#पूर्ण_अगर /* _ASM_PARISC_FTRACE_H */

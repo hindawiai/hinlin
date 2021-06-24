@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2020 BAIKAL ELECTRONICS, JSC
  *
@@ -6,89 +7,89 @@
  *   Serge Semin <Sergey.Semin@baikalelectronics.ru>
  *   Dmitry Dunaev <dmitry.dunaev@baikalelectronics.ru>
  *
- * Baikal-T1 CCU PLL interface driver
+ * Baikal-T1 CCU PLL पूर्णांकerface driver
  */
 
-#define pr_fmt(fmt) "bt1-ccu-pll: " fmt
+#घोषणा pr_fmt(fmt) "bt1-ccu-pll: " fmt
 
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/limits.h>
-#include <linux/bits.h>
-#include <linux/bitfield.h>
-#include <linux/slab.h>
-#include <linux/clk-provider.h>
-#include <linux/of.h>
-#include <linux/spinlock.h>
-#include <linux/regmap.h>
-#include <linux/iopoll.h>
-#include <linux/time64.h>
-#include <linux/rational.h>
-#include <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/bits.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/समय64.h>
+#समावेश <linux/rational.h>
+#समावेश <linux/debugfs.h>
 
-#include "ccu-pll.h"
+#समावेश "ccu-pll.h"
 
-#define CCU_PLL_CTL			0x000
-#define CCU_PLL_CTL_EN			BIT(0)
-#define CCU_PLL_CTL_RST			BIT(1)
-#define CCU_PLL_CTL_CLKR_FLD		2
-#define CCU_PLL_CTL_CLKR_MASK		GENMASK(7, CCU_PLL_CTL_CLKR_FLD)
-#define CCU_PLL_CTL_CLKF_FLD		8
-#define CCU_PLL_CTL_CLKF_MASK		GENMASK(20, CCU_PLL_CTL_CLKF_FLD)
-#define CCU_PLL_CTL_CLKOD_FLD		21
-#define CCU_PLL_CTL_CLKOD_MASK		GENMASK(24, CCU_PLL_CTL_CLKOD_FLD)
-#define CCU_PLL_CTL_BYPASS		BIT(30)
-#define CCU_PLL_CTL_LOCK		BIT(31)
-#define CCU_PLL_CTL1			0x004
-#define CCU_PLL_CTL1_BWADJ_FLD		3
-#define CCU_PLL_CTL1_BWADJ_MASK		GENMASK(14, CCU_PLL_CTL1_BWADJ_FLD)
+#घोषणा CCU_PLL_CTL			0x000
+#घोषणा CCU_PLL_CTL_EN			BIT(0)
+#घोषणा CCU_PLL_CTL_RST			BIT(1)
+#घोषणा CCU_PLL_CTL_CLKR_FLD		2
+#घोषणा CCU_PLL_CTL_CLKR_MASK		GENMASK(7, CCU_PLL_CTL_CLKR_FLD)
+#घोषणा CCU_PLL_CTL_CLKF_FLD		8
+#घोषणा CCU_PLL_CTL_CLKF_MASK		GENMASK(20, CCU_PLL_CTL_CLKF_FLD)
+#घोषणा CCU_PLL_CTL_CLKOD_FLD		21
+#घोषणा CCU_PLL_CTL_CLKOD_MASK		GENMASK(24, CCU_PLL_CTL_CLKOD_FLD)
+#घोषणा CCU_PLL_CTL_BYPASS		BIT(30)
+#घोषणा CCU_PLL_CTL_LOCK		BIT(31)
+#घोषणा CCU_PLL_CTL1			0x004
+#घोषणा CCU_PLL_CTL1_BWADJ_FLD		3
+#घोषणा CCU_PLL_CTL1_BWADJ_MASK		GENMASK(14, CCU_PLL_CTL1_BWADJ_FLD)
 
-#define CCU_PLL_LOCK_CHECK_RETRIES	50
+#घोषणा CCU_PLL_LOCK_CHECK_RETRIES	50
 
-#define CCU_PLL_NR_MAX \
+#घोषणा CCU_PLL_NR_MAX \
 	((CCU_PLL_CTL_CLKR_MASK >> CCU_PLL_CTL_CLKR_FLD) + 1)
-#define CCU_PLL_NF_MAX \
+#घोषणा CCU_PLL_NF_MAX \
 	((CCU_PLL_CTL_CLKF_MASK >> (CCU_PLL_CTL_CLKF_FLD + 1)) + 1)
-#define CCU_PLL_OD_MAX \
+#घोषणा CCU_PLL_OD_MAX \
 	((CCU_PLL_CTL_CLKOD_MASK >> CCU_PLL_CTL_CLKOD_FLD) + 1)
-#define CCU_PLL_NB_MAX \
+#घोषणा CCU_PLL_NB_MAX \
 	((CCU_PLL_CTL1_BWADJ_MASK >> CCU_PLL_CTL1_BWADJ_FLD) + 1)
-#define CCU_PLL_FDIV_MIN		427000UL
-#define CCU_PLL_FDIV_MAX		3500000000UL
-#define CCU_PLL_FOUT_MIN		200000000UL
-#define CCU_PLL_FOUT_MAX		2500000000UL
-#define CCU_PLL_FVCO_MIN		700000000UL
-#define CCU_PLL_FVCO_MAX		3500000000UL
-#define CCU_PLL_CLKOD_FACTOR		2
+#घोषणा CCU_PLL_FDIV_MIN		427000UL
+#घोषणा CCU_PLL_FDIV_MAX		3500000000UL
+#घोषणा CCU_PLL_FOUT_MIN		200000000UL
+#घोषणा CCU_PLL_FOUT_MAX		2500000000UL
+#घोषणा CCU_PLL_FVCO_MIN		700000000UL
+#घोषणा CCU_PLL_FVCO_MAX		3500000000UL
+#घोषणा CCU_PLL_CLKOD_FACTOR		2
 
-static inline unsigned long ccu_pll_lock_delay_us(unsigned long ref_clk,
-						  unsigned long nr)
-{
+अटल अंतरभूत अचिन्हित दीर्घ ccu_pll_lock_delay_us(अचिन्हित दीर्घ ref_clk,
+						  अचिन्हित दीर्घ nr)
+अणु
 	u64 us = 500ULL * nr * USEC_PER_SEC;
 
-	do_div(us, ref_clk);
+	करो_भाग(us, ref_clk);
 
-	return us;
-}
+	वापस us;
+पूर्ण
 
-static inline unsigned long ccu_pll_calc_freq(unsigned long ref_clk,
-					      unsigned long nr,
-					      unsigned long nf,
-					      unsigned long od)
-{
-	u64 tmp = ref_clk;
+अटल अंतरभूत अचिन्हित दीर्घ ccu_pll_calc_freq(अचिन्हित दीर्घ ref_clk,
+					      अचिन्हित दीर्घ nr,
+					      अचिन्हित दीर्घ nf,
+					      अचिन्हित दीर्घ od)
+अणु
+	u64 पंचांगp = ref_clk;
 
-	do_div(tmp, nr);
-	tmp *= nf;
-	do_div(tmp, od);
+	करो_भाग(पंचांगp, nr);
+	पंचांगp *= nf;
+	करो_भाग(पंचांगp, od);
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static int ccu_pll_reset(struct ccu_pll *pll, unsigned long ref_clk,
-			 unsigned long nr)
-{
-	unsigned long ud, ut;
+अटल पूर्णांक ccu_pll_reset(काष्ठा ccu_pll *pll, अचिन्हित दीर्घ ref_clk,
+			 अचिन्हित दीर्घ nr)
+अणु
+	अचिन्हित दीर्घ ud, ut;
 	u32 val;
 
 	ud = ccu_pll_lock_delay_us(ref_clk, nr);
@@ -97,83 +98,83 @@ static int ccu_pll_reset(struct ccu_pll *pll, unsigned long ref_clk,
 	regmap_update_bits(pll->sys_regs, pll->reg_ctl,
 			   CCU_PLL_CTL_RST, CCU_PLL_CTL_RST);
 
-	return regmap_read_poll_timeout_atomic(pll->sys_regs, pll->reg_ctl, val,
+	वापस regmap_पढ़ो_poll_समयout_atomic(pll->sys_regs, pll->reg_ctl, val,
 					       val & CCU_PLL_CTL_LOCK, ud, ut);
-}
+पूर्ण
 
-static int ccu_pll_enable(struct clk_hw *hw)
-{
-	struct clk_hw *parent_hw = clk_hw_get_parent(hw);
-	struct ccu_pll *pll = to_ccu_pll(hw);
-	unsigned long flags;
+अटल पूर्णांक ccu_pll_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_hw *parent_hw = clk_hw_get_parent(hw);
+	काष्ठा ccu_pll *pll = to_ccu_pll(hw);
+	अचिन्हित दीर्घ flags;
 	u32 val = 0;
-	int ret;
+	पूर्णांक ret;
 
-	if (!parent_hw) {
+	अगर (!parent_hw) अणु
 		pr_err("Can't enable '%s' with no parent", clk_hw_get_name(hw));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	regmap_read(pll->sys_regs, pll->reg_ctl, &val);
-	if (val & CCU_PLL_CTL_EN)
-		return 0;
+	regmap_पढ़ो(pll->sys_regs, pll->reg_ctl, &val);
+	अगर (val & CCU_PLL_CTL_EN)
+		वापस 0;
 
 	spin_lock_irqsave(&pll->lock, flags);
-	regmap_write(pll->sys_regs, pll->reg_ctl, val | CCU_PLL_CTL_EN);
+	regmap_ग_लिखो(pll->sys_regs, pll->reg_ctl, val | CCU_PLL_CTL_EN);
 	ret = ccu_pll_reset(pll, clk_hw_get_rate(parent_hw),
 			    FIELD_GET(CCU_PLL_CTL_CLKR_MASK, val) + 1);
 	spin_unlock_irqrestore(&pll->lock, flags);
-	if (ret)
+	अगर (ret)
 		pr_err("PLL '%s' reset timed out\n", clk_hw_get_name(hw));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ccu_pll_disable(struct clk_hw *hw)
-{
-	struct ccu_pll *pll = to_ccu_pll(hw);
-	unsigned long flags;
+अटल व्योम ccu_pll_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_pll *pll = to_ccu_pll(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pll->lock, flags);
 	regmap_update_bits(pll->sys_regs, pll->reg_ctl, CCU_PLL_CTL_EN, 0);
 	spin_unlock_irqrestore(&pll->lock, flags);
-}
+पूर्ण
 
-static int ccu_pll_is_enabled(struct clk_hw *hw)
-{
-	struct ccu_pll *pll = to_ccu_pll(hw);
+अटल पूर्णांक ccu_pll_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_pll *pll = to_ccu_pll(hw);
 	u32 val = 0;
 
-	regmap_read(pll->sys_regs, pll->reg_ctl, &val);
+	regmap_पढ़ो(pll->sys_regs, pll->reg_ctl, &val);
 
-	return !!(val & CCU_PLL_CTL_EN);
-}
+	वापस !!(val & CCU_PLL_CTL_EN);
+पूर्ण
 
-static unsigned long ccu_pll_recalc_rate(struct clk_hw *hw,
-					 unsigned long parent_rate)
-{
-	struct ccu_pll *pll = to_ccu_pll(hw);
-	unsigned long nr, nf, od;
+अटल अचिन्हित दीर्घ ccu_pll_recalc_rate(काष्ठा clk_hw *hw,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा ccu_pll *pll = to_ccu_pll(hw);
+	अचिन्हित दीर्घ nr, nf, od;
 	u32 val = 0;
 
-	regmap_read(pll->sys_regs, pll->reg_ctl, &val);
+	regmap_पढ़ो(pll->sys_regs, pll->reg_ctl, &val);
 	nr = FIELD_GET(CCU_PLL_CTL_CLKR_MASK, val) + 1;
 	nf = FIELD_GET(CCU_PLL_CTL_CLKF_MASK, val) + 1;
 	od = FIELD_GET(CCU_PLL_CTL_CLKOD_MASK, val) + 1;
 
-	return ccu_pll_calc_freq(parent_rate, nr, nf, od);
-}
+	वापस ccu_pll_calc_freq(parent_rate, nr, nf, od);
+पूर्ण
 
-static void ccu_pll_calc_factors(unsigned long rate, unsigned long parent_rate,
-				 unsigned long *nr, unsigned long *nf,
-				 unsigned long *od)
-{
-	unsigned long err, freq, min_err = ULONG_MAX;
-	unsigned long num, denom, n1, d1, nri;
-	unsigned long nr_max, nf_max, od_max;
+अटल व्योम ccu_pll_calc_factors(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate,
+				 अचिन्हित दीर्घ *nr, अचिन्हित दीर्घ *nf,
+				 अचिन्हित दीर्घ *od)
+अणु
+	अचिन्हित दीर्घ err, freq, min_err = अच_दीर्घ_उच्च;
+	अचिन्हित दीर्घ num, denom, n1, d1, nri;
+	अचिन्हित दीर्घ nr_max, nf_max, od_max;
 
 	/*
-	 * Make sure PLL is working with valid input signal (Fdiv). If
+	 * Make sure PLL is working with valid input संकेत (Fभाग). If
 	 * you want to speed the function up just reduce CCU_PLL_NR_MAX.
 	 * This will cause a worse approximation though.
 	 */
@@ -181,12 +182,12 @@ static void ccu_pll_calc_factors(unsigned long rate, unsigned long parent_rate,
 	nr_max = min(parent_rate / CCU_PLL_FDIV_MIN, CCU_PLL_NR_MAX);
 
 	/*
-	 * Find a closest [nr;nf;od] vector taking into account the
+	 * Find a बंदst [nr;nf;od] vector taking पूर्णांकo account the
 	 * limitations like: 1) 700MHz <= Fvco <= 3.5GHz, 2) PLL Od is
 	 * either 1 or even number within the acceptable range (alas 1s
 	 * is also excluded by the next loop).
 	 */
-	for (; nri <= nr_max; ++nri) {
+	क्रम (; nri <= nr_max; ++nri) अणु
 		/* Use Od factor to fulfill the limitation 2). */
 		num = CCU_PLL_CLKOD_FACTOR * rate;
 		denom = parent_rate / nri;
@@ -194,9 +195,9 @@ static void ccu_pll_calc_factors(unsigned long rate, unsigned long parent_rate,
 		/*
 		 * Make sure Fvco is within the acceptable range to fulfill
 		 * the condition 1). Note due to the CCU_PLL_CLKOD_FACTOR value
-		 * the actual upper limit is also divided by that factor.
-		 * It's not big problem for us since practically there is no
-		 * need in clocks with that high frequency.
+		 * the actual upper limit is also भागided by that factor.
+		 * It's not big problem क्रम us since practically there is no
+		 * need in घड़ीs with that high frequency.
 		 */
 		nf_max = min(CCU_PLL_FVCO_MAX / denom, CCU_PLL_NF_MAX);
 		od_max = CCU_PLL_OD_MAX / CCU_PLL_CLKOD_FACTOR;
@@ -205,51 +206,51 @@ static void ccu_pll_calc_factors(unsigned long rate, unsigned long parent_rate,
 		 * Bypass the out-of-bound values, which can't be properly
 		 * handled by the rational fraction approximation algorithm.
 		 */
-		if (num / denom >= nf_max) {
+		अगर (num / denom >= nf_max) अणु
 			n1 = nf_max;
 			d1 = 1;
-		} else if (denom / num >= od_max) {
+		पूर्ण अन्यथा अगर (denom / num >= od_max) अणु
 			n1 = 1;
 			d1 = od_max;
-		} else {
+		पूर्ण अन्यथा अणु
 			rational_best_approximation(num, denom, nf_max, od_max,
 						    &n1, &d1);
-		}
+		पूर्ण
 
 		/* Select the best approximation of the target rate. */
 		freq = ccu_pll_calc_freq(parent_rate, nri, n1, d1);
-		err = abs((int64_t)freq - num);
-		if (err < min_err) {
+		err = असल((पूर्णांक64_t)freq - num);
+		अगर (err < min_err) अणु
 			min_err = err;
 			*nr = nri;
 			*nf = n1;
 			*od = CCU_PLL_CLKOD_FACTOR * d1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static long ccu_pll_round_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long *parent_rate)
-{
-	unsigned long nr = 1, nf = 1, od = 1;
+अटल दीर्घ ccu_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *parent_rate)
+अणु
+	अचिन्हित दीर्घ nr = 1, nf = 1, od = 1;
 
 	ccu_pll_calc_factors(rate, *parent_rate, &nr, &nf, &od);
 
-	return ccu_pll_calc_freq(*parent_rate, nr, nf, od);
-}
+	वापस ccu_pll_calc_freq(*parent_rate, nr, nf, od);
+पूर्ण
 
 /*
- * This method is used for PLLs, which support the on-the-fly dividers
- * adjustment. So there is no need in gating such clocks.
+ * This method is used क्रम PLLs, which support the on-the-fly भागiders
+ * adjusपंचांगent. So there is no need in gating such घड़ीs.
  */
-static int ccu_pll_set_rate_reset(struct clk_hw *hw, unsigned long rate,
-				  unsigned long parent_rate)
-{
-	struct ccu_pll *pll = to_ccu_pll(hw);
-	unsigned long nr, nf, od;
-	unsigned long flags;
+अटल पूर्णांक ccu_pll_set_rate_reset(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा ccu_pll *pll = to_ccu_pll(hw);
+	अचिन्हित दीर्घ nr, nf, od;
+	अचिन्हित दीर्घ flags;
 	u32 mask, val;
-	int ret;
+	पूर्णांक ret;
 
 	ccu_pll_calc_factors(rate, parent_rate, &nr, &nf, &od);
 
@@ -263,29 +264,29 @@ static int ccu_pll_set_rate_reset(struct clk_hw *hw, unsigned long rate,
 	regmap_update_bits(pll->sys_regs, pll->reg_ctl, mask, val);
 	ret = ccu_pll_reset(pll, parent_rate, nr);
 	spin_unlock_irqrestore(&pll->lock, flags);
-	if (ret)
+	अगर (ret)
 		pr_err("PLL '%s' reset timed out\n", clk_hw_get_name(hw));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This method is used for PLLs, which don't support the on-the-fly dividers
- * adjustment. So the corresponding clocks are supposed to be gated first.
+ * This method is used क्रम PLLs, which करोn't support the on-the-fly भागiders
+ * adjusपंचांगent. So the corresponding घड़ीs are supposed to be gated first.
  */
-static int ccu_pll_set_rate_norst(struct clk_hw *hw, unsigned long rate,
-				  unsigned long parent_rate)
-{
-	struct ccu_pll *pll = to_ccu_pll(hw);
-	unsigned long nr, nf, od;
-	unsigned long flags;
+अटल पूर्णांक ccu_pll_set_rate_norst(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा ccu_pll *pll = to_ccu_pll(hw);
+	अचिन्हित दीर्घ nr, nf, od;
+	अचिन्हित दीर्घ flags;
 	u32 mask, val;
 
 	ccu_pll_calc_factors(rate, parent_rate, &nr, &nf, &od);
 
 	/*
-	 * Disable PLL if it was enabled by default or left enabled by the
-	 * system bootloader.
+	 * Disable PLL अगर it was enabled by शेष or left enabled by the
+	 * प्रणाली bootloader.
 	 */
 	mask = CCU_PLL_CTL_CLKR_MASK | CCU_PLL_CTL_CLKF_MASK |
 	       CCU_PLL_CTL_CLKOD_MASK | CCU_PLL_CTL_EN;
@@ -297,55 +298,55 @@ static int ccu_pll_set_rate_norst(struct clk_hw *hw, unsigned long rate,
 	regmap_update_bits(pll->sys_regs, pll->reg_ctl, mask, val);
 	spin_unlock_irqrestore(&pll->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-struct ccu_pll_dbgfs_bit {
-	struct ccu_pll *pll;
-	const char *name;
-	unsigned int reg;
+काष्ठा ccu_pll_dbgfs_bit अणु
+	काष्ठा ccu_pll *pll;
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक reg;
 	u32 mask;
-};
+पूर्ण;
 
-struct ccu_pll_dbgfs_fld {
-	struct ccu_pll *pll;
-	const char *name;
-	unsigned int reg;
-	unsigned int lsb;
+काष्ठा ccu_pll_dbgfs_fld अणु
+	काष्ठा ccu_pll *pll;
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक reg;
+	अचिन्हित पूर्णांक lsb;
 	u32 mask;
 	u32 min;
 	u32 max;
-};
+पूर्ण;
 
-#define CCU_PLL_DBGFS_BIT_ATTR(_name, _reg, _mask)	\
-	{						\
+#घोषणा CCU_PLL_DBGFS_BIT_ATTR(_name, _reg, _mask)	\
+	अणु						\
 		.name = _name,				\
 		.reg = _reg,				\
 		.mask = _mask				\
-	}
+	पूर्ण
 
-#define CCU_PLL_DBGFS_FLD_ATTR(_name, _reg, _lsb, _mask, _min, _max)	\
-	{								\
+#घोषणा CCU_PLL_DBGFS_FLD_ATTR(_name, _reg, _lsb, _mask, _min, _max)	\
+	अणु								\
 		.name = _name,						\
 		.reg = _reg,						\
 		.lsb = _lsb,						\
 		.mask = _mask,						\
 		.min = _min,						\
 		.max = _max						\
-	}
+	पूर्ण
 
-static const struct ccu_pll_dbgfs_bit ccu_pll_bits[] = {
+अटल स्थिर काष्ठा ccu_pll_dbgfs_bit ccu_pll_bits[] = अणु
 	CCU_PLL_DBGFS_BIT_ATTR("pll_en", CCU_PLL_CTL, CCU_PLL_CTL_EN),
 	CCU_PLL_DBGFS_BIT_ATTR("pll_rst", CCU_PLL_CTL, CCU_PLL_CTL_RST),
 	CCU_PLL_DBGFS_BIT_ATTR("pll_bypass", CCU_PLL_CTL, CCU_PLL_CTL_BYPASS),
 	CCU_PLL_DBGFS_BIT_ATTR("pll_lock", CCU_PLL_CTL, CCU_PLL_CTL_LOCK)
-};
+पूर्ण;
 
-#define CCU_PLL_DBGFS_BIT_NUM	ARRAY_SIZE(ccu_pll_bits)
+#घोषणा CCU_PLL_DBGFS_BIT_NUM	ARRAY_SIZE(ccu_pll_bits)
 
-static const struct ccu_pll_dbgfs_fld ccu_pll_flds[] = {
+अटल स्थिर काष्ठा ccu_pll_dbgfs_fld ccu_pll_flds[] = अणु
 	CCU_PLL_DBGFS_FLD_ATTR("pll_nr", CCU_PLL_CTL, CCU_PLL_CTL_CLKR_FLD,
 				CCU_PLL_CTL_CLKR_MASK, 1, CCU_PLL_NR_MAX),
 	CCU_PLL_DBGFS_FLD_ATTR("pll_nf", CCU_PLL_CTL, CCU_PLL_CTL_CLKF_FLD,
@@ -354,37 +355,37 @@ static const struct ccu_pll_dbgfs_fld ccu_pll_flds[] = {
 				CCU_PLL_CTL_CLKOD_MASK, 1, CCU_PLL_OD_MAX),
 	CCU_PLL_DBGFS_FLD_ATTR("pll_nb", CCU_PLL_CTL1, CCU_PLL_CTL1_BWADJ_FLD,
 				CCU_PLL_CTL1_BWADJ_MASK, 1, CCU_PLL_NB_MAX)
-};
+पूर्ण;
 
-#define CCU_PLL_DBGFS_FLD_NUM	ARRAY_SIZE(ccu_pll_flds)
+#घोषणा CCU_PLL_DBGFS_FLD_NUM	ARRAY_SIZE(ccu_pll_flds)
 
 /*
- * It can be dangerous to change the PLL settings behind clock framework back,
- * therefore we don't provide any kernel config based compile time option for
+ * It can be dangerous to change the PLL settings behind घड़ी framework back,
+ * thereक्रमe we करोn't provide any kernel config based compile समय option क्रम
  * this feature to enable.
  */
-#undef CCU_PLL_ALLOW_WRITE_DEBUGFS
-#ifdef CCU_PLL_ALLOW_WRITE_DEBUGFS
+#अघोषित CCU_PLL_ALLOW_WRITE_DEBUGFS
+#अगर_घोषित CCU_PLL_ALLOW_WRITE_DEBUGFS
 
-static int ccu_pll_dbgfs_bit_set(void *priv, u64 val)
-{
-	const struct ccu_pll_dbgfs_bit *bit = priv;
-	struct ccu_pll *pll = bit->pll;
-	unsigned long flags;
+अटल पूर्णांक ccu_pll_dbgfs_bit_set(व्योम *priv, u64 val)
+अणु
+	स्थिर काष्ठा ccu_pll_dbgfs_bit *bit = priv;
+	काष्ठा ccu_pll *pll = bit->pll;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pll->lock, flags);
 	regmap_update_bits(pll->sys_regs, pll->reg_ctl + bit->reg,
 			   bit->mask, val ? bit->mask : 0);
 	spin_unlock_irqrestore(&pll->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ccu_pll_dbgfs_fld_set(void *priv, u64 val)
-{
-	struct ccu_pll_dbgfs_fld *fld = priv;
-	struct ccu_pll *pll = fld->pll;
-	unsigned long flags;
+अटल पूर्णांक ccu_pll_dbgfs_fld_set(व्योम *priv, u64 val)
+अणु
+	काष्ठा ccu_pll_dbgfs_fld *fld = priv;
+	काष्ठा ccu_pll *pll = fld->pll;
+	अचिन्हित दीर्घ flags;
 	u32 data;
 
 	val = clamp_t(u64, val, fld->min, fld->max);
@@ -395,88 +396,88 @@ static int ccu_pll_dbgfs_fld_set(void *priv, u64 val)
 			   data);
 	spin_unlock_irqrestore(&pll->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define ccu_pll_dbgfs_mode	0644
+#घोषणा ccu_pll_dbgfs_mode	0644
 
-#else /* !CCU_PLL_ALLOW_WRITE_DEBUGFS */
+#अन्यथा /* !CCU_PLL_ALLOW_WRITE_DEBUGFS */
 
-#define ccu_pll_dbgfs_bit_set	NULL
-#define ccu_pll_dbgfs_fld_set	NULL
-#define ccu_pll_dbgfs_mode	0444
+#घोषणा ccu_pll_dbgfs_bit_set	शून्य
+#घोषणा ccu_pll_dbgfs_fld_set	शून्य
+#घोषणा ccu_pll_dbgfs_mode	0444
 
-#endif /* !CCU_PLL_ALLOW_WRITE_DEBUGFS */
+#पूर्ण_अगर /* !CCU_PLL_ALLOW_WRITE_DEBUGFS */
 
-static int ccu_pll_dbgfs_bit_get(void *priv, u64 *val)
-{
-	struct ccu_pll_dbgfs_bit *bit = priv;
-	struct ccu_pll *pll = bit->pll;
+अटल पूर्णांक ccu_pll_dbgfs_bit_get(व्योम *priv, u64 *val)
+अणु
+	काष्ठा ccu_pll_dbgfs_bit *bit = priv;
+	काष्ठा ccu_pll *pll = bit->pll;
 	u32 data = 0;
 
-	regmap_read(pll->sys_regs, pll->reg_ctl + bit->reg, &data);
+	regmap_पढ़ो(pll->sys_regs, pll->reg_ctl + bit->reg, &data);
 	*val = !!(data & bit->mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_DEBUGFS_ATTRIBUTE(ccu_pll_dbgfs_bit_fops,
 	ccu_pll_dbgfs_bit_get, ccu_pll_dbgfs_bit_set, "%llu\n");
 
-static int ccu_pll_dbgfs_fld_get(void *priv, u64 *val)
-{
-	struct ccu_pll_dbgfs_fld *fld = priv;
-	struct ccu_pll *pll = fld->pll;
+अटल पूर्णांक ccu_pll_dbgfs_fld_get(व्योम *priv, u64 *val)
+अणु
+	काष्ठा ccu_pll_dbgfs_fld *fld = priv;
+	काष्ठा ccu_pll *pll = fld->pll;
 	u32 data = 0;
 
-	regmap_read(pll->sys_regs, pll->reg_ctl + fld->reg, &data);
+	regmap_पढ़ो(pll->sys_regs, pll->reg_ctl + fld->reg, &data);
 	*val = ((data & fld->mask) >> fld->lsb) + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_DEBUGFS_ATTRIBUTE(ccu_pll_dbgfs_fld_fops,
 	ccu_pll_dbgfs_fld_get, ccu_pll_dbgfs_fld_set, "%llu\n");
 
-static void ccu_pll_debug_init(struct clk_hw *hw, struct dentry *dentry)
-{
-	struct ccu_pll *pll = to_ccu_pll(hw);
-	struct ccu_pll_dbgfs_bit *bits;
-	struct ccu_pll_dbgfs_fld *flds;
-	int idx;
+अटल व्योम ccu_pll_debug_init(काष्ठा clk_hw *hw, काष्ठा dentry *dentry)
+अणु
+	काष्ठा ccu_pll *pll = to_ccu_pll(hw);
+	काष्ठा ccu_pll_dbgfs_bit *bits;
+	काष्ठा ccu_pll_dbgfs_fld *flds;
+	पूर्णांक idx;
 
-	bits = kcalloc(CCU_PLL_DBGFS_BIT_NUM, sizeof(*bits), GFP_KERNEL);
-	if (!bits)
-		return;
+	bits = kसुस्मृति(CCU_PLL_DBGFS_BIT_NUM, माप(*bits), GFP_KERNEL);
+	अगर (!bits)
+		वापस;
 
-	for (idx = 0; idx < CCU_PLL_DBGFS_BIT_NUM; ++idx) {
+	क्रम (idx = 0; idx < CCU_PLL_DBGFS_BIT_NUM; ++idx) अणु
 		bits[idx] = ccu_pll_bits[idx];
 		bits[idx].pll = pll;
 
 		debugfs_create_file_unsafe(bits[idx].name, ccu_pll_dbgfs_mode,
 					   dentry, &bits[idx],
 					   &ccu_pll_dbgfs_bit_fops);
-	}
+	पूर्ण
 
-	flds = kcalloc(CCU_PLL_DBGFS_FLD_NUM, sizeof(*flds), GFP_KERNEL);
-	if (!flds)
-		return;
+	flds = kसुस्मृति(CCU_PLL_DBGFS_FLD_NUM, माप(*flds), GFP_KERNEL);
+	अगर (!flds)
+		वापस;
 
-	for (idx = 0; idx < CCU_PLL_DBGFS_FLD_NUM; ++idx) {
+	क्रम (idx = 0; idx < CCU_PLL_DBGFS_FLD_NUM; ++idx) अणु
 		flds[idx] = ccu_pll_flds[idx];
 		flds[idx].pll = pll;
 
 		debugfs_create_file_unsafe(flds[idx].name, ccu_pll_dbgfs_mode,
 					   dentry, &flds[idx],
 					   &ccu_pll_dbgfs_fld_fops);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* !CONFIG_DEBUG_FS */
+#अन्यथा /* !CONFIG_DEBUG_FS */
 
-#define ccu_pll_debug_init NULL
+#घोषणा ccu_pll_debug_init शून्य
 
-#endif /* !CONFIG_DEBUG_FS */
+#पूर्ण_अगर /* !CONFIG_DEBUG_FS */
 
-static const struct clk_ops ccu_pll_gate_to_set_ops = {
+अटल स्थिर काष्ठा clk_ops ccu_pll_gate_to_set_ops = अणु
 	.enable = ccu_pll_enable,
 	.disable = ccu_pll_disable,
 	.is_enabled = ccu_pll_is_enabled,
@@ -484,9 +485,9 @@ static const struct clk_ops ccu_pll_gate_to_set_ops = {
 	.round_rate = ccu_pll_round_rate,
 	.set_rate = ccu_pll_set_rate_norst,
 	.debug_init = ccu_pll_debug_init
-};
+पूर्ण;
 
-static const struct clk_ops ccu_pll_straight_set_ops = {
+अटल स्थिर काष्ठा clk_ops ccu_pll_straight_set_ops = अणु
 	.enable = ccu_pll_enable,
 	.disable = ccu_pll_disable,
 	.is_enabled = ccu_pll_is_enabled,
@@ -494,25 +495,25 @@ static const struct clk_ops ccu_pll_straight_set_ops = {
 	.round_rate = ccu_pll_round_rate,
 	.set_rate = ccu_pll_set_rate_reset,
 	.debug_init = ccu_pll_debug_init
-};
+पूर्ण;
 
-struct ccu_pll *ccu_pll_hw_register(const struct ccu_pll_init_data *pll_init)
-{
-	struct clk_parent_data parent_data = { };
-	struct clk_init_data hw_init = { };
-	struct ccu_pll *pll;
-	int ret;
+काष्ठा ccu_pll *ccu_pll_hw_रेजिस्टर(स्थिर काष्ठा ccu_pll_init_data *pll_init)
+अणु
+	काष्ठा clk_parent_data parent_data = अणु पूर्ण;
+	काष्ठा clk_init_data hw_init = अणु पूर्ण;
+	काष्ठा ccu_pll *pll;
+	पूर्णांक ret;
 
-	if (!pll_init)
-		return ERR_PTR(-EINVAL);
+	अगर (!pll_init)
+		वापस ERR_PTR(-EINVAL);
 
-	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
-	if (!pll)
-		return ERR_PTR(-ENOMEM);
+	pll = kzalloc(माप(*pll), GFP_KERNEL);
+	अगर (!pll)
+		वापस ERR_PTR(-ENOMEM);
 
 	/*
-	 * Note since Baikal-T1 System Controller registers are MMIO-backed
-	 * we won't check the regmap IO operations return status, because it
+	 * Note since Baikal-T1 System Controller रेजिस्टरs are MMIO-backed
+	 * we won't check the regmap IO operations वापस status, because it
 	 * must be zero anyway.
 	 */
 	pll->hw.init = &hw_init;
@@ -525,34 +526,34 @@ struct ccu_pll *ccu_pll_hw_register(const struct ccu_pll_init_data *pll_init)
 	hw_init.name = pll_init->name;
 	hw_init.flags = pll_init->flags;
 
-	if (hw_init.flags & CLK_SET_RATE_GATE)
+	अगर (hw_init.flags & CLK_SET_RATE_GATE)
 		hw_init.ops = &ccu_pll_gate_to_set_ops;
-	else
+	अन्यथा
 		hw_init.ops = &ccu_pll_straight_set_ops;
 
-	if (!pll_init->parent_name) {
+	अगर (!pll_init->parent_name) अणु
 		ret = -EINVAL;
-		goto err_free_pll;
-	}
+		जाओ err_मुक्त_pll;
+	पूर्ण
 	parent_data.fw_name = pll_init->parent_name;
 	hw_init.parent_data = &parent_data;
 	hw_init.num_parents = 1;
 
-	ret = of_clk_hw_register(pll_init->np, &pll->hw);
-	if (ret)
-		goto err_free_pll;
+	ret = of_clk_hw_रेजिस्टर(pll_init->np, &pll->hw);
+	अगर (ret)
+		जाओ err_मुक्त_pll;
 
-	return pll;
+	वापस pll;
 
-err_free_pll:
-	kfree(pll);
+err_मुक्त_pll:
+	kमुक्त(pll);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-void ccu_pll_hw_unregister(struct ccu_pll *pll)
-{
-	clk_hw_unregister(&pll->hw);
+व्योम ccu_pll_hw_unरेजिस्टर(काष्ठा ccu_pll *pll)
+अणु
+	clk_hw_unरेजिस्टर(&pll->hw);
 
-	kfree(pll);
-}
+	kमुक्त(pll);
+पूर्ण

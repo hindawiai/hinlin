@@ -1,898 +1,899 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Device driver for the Apple Desktop Bus
- * and the /dev/adb device on macintoshes.
+ * Device driver क्रम the Apple Desktop Bus
+ * and the /dev/adb device on macपूर्णांकoshes.
  *
  * Copyright (C) 1996 Paul Mackerras.
  *
- * Modified to declare controllers as structures, added
- * client notification of bus reset and handles PowerBook
+ * Modअगरied to declare controllers as काष्ठाures, added
+ * client notअगरication of bus reset and handles PowerBook
  * sleep, by Benjamin Herrenschmidt.
  *
- * To do:
+ * To करो:
  *
  * - /sys/bus/adb to list the devices and infos
  * - more /dev/adb to allow userland to receive the
- *   flow of auto-polling datas from a given device.
- * - move bus probe to a kernel thread
+ *   flow of स्वतः-polling datas from a given device.
+ * - move bus probe to a kernel thपढ़ो
  */
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/adb.h>
-#include <linux/cuda.h>
-#include <linux/pmu.h>
-#include <linux/notifier.h>
-#include <linux/wait.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/device.h>
-#include <linux/kthread.h>
-#include <linux/platform_device.h>
-#include <linux/mutex.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/adb.h>
+#समावेश <linux/cuda.h>
+#समावेश <linux/pmu.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mutex.h>
 
-#include <linux/uaccess.h>
-#ifdef CONFIG_PPC
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#endif
+#समावेश <linux/uaccess.h>
+#अगर_घोषित CONFIG_PPC
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#पूर्ण_अगर
 
 
 EXPORT_SYMBOL(adb_client_list);
 
-extern struct adb_driver via_macii_driver;
-extern struct adb_driver via_cuda_driver;
-extern struct adb_driver adb_iop_driver;
-extern struct adb_driver via_pmu_driver;
-extern struct adb_driver macio_adb_driver;
+बाह्य काष्ठा adb_driver via_macii_driver;
+बाह्य काष्ठा adb_driver via_cuda_driver;
+बाह्य काष्ठा adb_driver adb_iop_driver;
+बाह्य काष्ठा adb_driver via_pmu_driver;
+बाह्य काष्ठा adb_driver macio_adb_driver;
 
-static DEFINE_MUTEX(adb_mutex);
-static struct adb_driver *adb_driver_list[] = {
-#ifdef CONFIG_ADB_MACII
+अटल DEFINE_MUTEX(adb_mutex);
+अटल काष्ठा adb_driver *adb_driver_list[] = अणु
+#अगर_घोषित CONFIG_ADB_MACII
 	&via_macii_driver,
-#endif
-#ifdef CONFIG_ADB_CUDA
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ADB_CUDA
 	&via_cuda_driver,
-#endif
-#ifdef CONFIG_ADB_IOP
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ADB_IOP
 	&adb_iop_driver,
-#endif
-#ifdef CONFIG_ADB_PMU
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ADB_PMU
 	&via_pmu_driver,
-#endif
-#ifdef CONFIG_ADB_MACIO
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ADB_MACIO
 	&macio_adb_driver,
-#endif
-	NULL
-};
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
-static struct class *adb_dev_class;
+अटल काष्ठा class *adb_dev_class;
 
-static struct adb_driver *adb_controller;
+अटल काष्ठा adb_driver *adb_controller;
 BLOCKING_NOTIFIER_HEAD(adb_client_list);
-static int adb_got_sleep;
-static int adb_inited;
-static DEFINE_SEMAPHORE(adb_probe_mutex);
-static int sleepy_trackpad;
-static int autopoll_devs;
-int __adb_probe_sync;
+अटल पूर्णांक adb_got_sleep;
+अटल पूर्णांक adb_inited;
+अटल DEFINE_SEMAPHORE(adb_probe_mutex);
+अटल पूर्णांक sleepy_trackpad;
+अटल पूर्णांक स्वतःpoll_devs;
+पूर्णांक __adb_probe_sync;
 
-static int adb_scan_bus(void);
-static int do_adb_reset_bus(void);
-static void adbdev_init(void);
-static int try_handler_change(int, int);
+अटल पूर्णांक adb_scan_bus(व्योम);
+अटल पूर्णांक करो_adb_reset_bus(व्योम);
+अटल व्योम adbdev_init(व्योम);
+अटल पूर्णांक try_handler_change(पूर्णांक, पूर्णांक);
 
-static struct adb_handler {
-	void (*handler)(unsigned char *, int, int);
-	int original_address;
-	int handler_id;
-	int busy;
-} adb_handler[16];
+अटल काष्ठा adb_handler अणु
+	व्योम (*handler)(अचिन्हित अक्षर *, पूर्णांक, पूर्णांक);
+	पूर्णांक original_address;
+	पूर्णांक handler_id;
+	पूर्णांक busy;
+पूर्ण adb_handler[16];
 
 /*
  * The adb_handler_mutex mutex protects all accesses to the original_address
- * and handler_id fields of adb_handler[i] for all i, and changes to the
+ * and handler_id fields of adb_handler[i] क्रम all i, and changes to the
  * handler field.
- * Accesses to the handler field are protected by the adb_handler_lock
+ * Accesses to the handler field are रक्षित by the adb_handler_lock
  * rwlock.  It is held across all calls to any handler, so that by the
- * time adb_unregister returns, we know that the old handler isn't being
+ * समय adb_unरेजिस्टर वापसs, we know that the old handler isn't being
  * called.
  */
-static DEFINE_MUTEX(adb_handler_mutex);
-static DEFINE_RWLOCK(adb_handler_lock);
+अटल DEFINE_MUTEX(adb_handler_mutex);
+अटल DEFINE_RWLOCK(adb_handler_lock);
 
-#if 0
-static void printADBreply(struct adb_request *req)
-{
-        int i;
+#अगर 0
+अटल व्योम prपूर्णांकADBreply(काष्ठा adb_request *req)
+अणु
+        पूर्णांक i;
 
-        printk("adb reply (%d)", req->reply_len);
-        for(i = 0; i < req->reply_len; i++)
-                printk(" %x", req->reply[i]);
-        printk("\n");
+        prपूर्णांकk("adb reply (%d)", req->reply_len);
+        क्रम(i = 0; i < req->reply_len; i++)
+                prपूर्णांकk(" %x", req->reply[i]);
+        prपूर्णांकk("\n");
 
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int adb_scan_bus(void)
-{
-	int i, highFree=0, noMovement;
-	int devmask = 0;
-	struct adb_request req;
+अटल पूर्णांक adb_scan_bus(व्योम)
+अणु
+	पूर्णांक i, highFree=0, noMovement;
+	पूर्णांक devmask = 0;
+	काष्ठा adb_request req;
 	
-	/* assumes adb_handler[] is all zeroes at this point */
-	for (i = 1; i < 16; i++) {
-		/* see if there is anything at address i */
-		adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+	/* assumes adb_handler[] is all zeroes at this poपूर्णांक */
+	क्रम (i = 1; i < 16; i++) अणु
+		/* see अगर there is anything at address i */
+		adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
                             (i << 4) | 0xf);
-		if (req.reply_len > 1)
+		अगर (req.reply_len > 1)
 			/* one or more devices at this address */
 			adb_handler[i].original_address = i;
-		else if (i > highFree)
+		अन्यथा अगर (i > highFree)
 			highFree = i;
-	}
+	पूर्ण
 
-	/* Note we reset noMovement to 0 each time we move a device */
-	for (noMovement = 1; noMovement < 2 && highFree > 0; noMovement++) {
-		for (i = 1; i < 16; i++) {
-			if (adb_handler[i].original_address == 0)
-				continue;
+	/* Note we reset noMovement to 0 each समय we move a device */
+	क्रम (noMovement = 1; noMovement < 2 && highFree > 0; noMovement++) अणु
+		क्रम (i = 1; i < 16; i++) अणु
+			अगर (adb_handler[i].original_address == 0)
+				जारी;
 			/*
 			 * Send a "talk register 3" command to address i
-			 * to provoke a collision if there is more than
+			 * to provoke a collision अगर there is more than
 			 * one device at this address.
 			 */
-			adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+			adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
 				    (i << 4) | 0xf);
 			/*
 			 * Move the device(s) which didn't detect a
 			 * collision to address `highFree'.  Hopefully
 			 * this only moves one device.
 			 */
-			adb_request(&req, NULL, ADBREQ_SYNC, 3,
+			adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 				    (i<< 4) | 0xb, (highFree | 0x60), 0xfe);
 			/*
-			 * See if anybody actually moved. This is suggested
+			 * See अगर anybody actually moved. This is suggested
 			 * by HW TechNote 01:
 			 *
-			 * https://developer.apple.com/technotes/hw/hw_01.html
+			 * https://developer.apple.com/technotes/hw/hw_01.hपंचांगl
 			 */
-			adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+			adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
 				    (highFree << 4) | 0xf);
-			if (req.reply_len <= 1) continue;
+			अगर (req.reply_len <= 1) जारी;
 			/*
 			 * Test whether there are any device(s) left
 			 * at address i.
 			 */
-			adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+			adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
 				    (i << 4) | 0xf);
-			if (req.reply_len > 1) {
+			अगर (req.reply_len > 1) अणु
 				/*
 				 * There are still one or more devices
 				 * left at address i.  Register the one(s)
 				 * we moved to `highFree', and find a new
-				 * value for highFree.
+				 * value क्रम highFree.
 				 */
 				adb_handler[highFree].original_address =
 					adb_handler[i].original_address;
-				while (highFree > 0 &&
+				जबतक (highFree > 0 &&
 				       adb_handler[highFree].original_address)
 					highFree--;
-				if (highFree <= 0)
-					break;
+				अगर (highFree <= 0)
+					अवरोध;
 
 				noMovement = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
 				 * No devices left at address i; move the
 				 * one(s) we moved to `highFree' back to i.
 				 */
-				adb_request(&req, NULL, ADBREQ_SYNC, 3,
+				adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 					    (highFree << 4) | 0xb,
 					    (i | 0x60), 0xfe);
-			}
-		}	
-	}
+			पूर्ण
+		पूर्ण	
+	पूर्ण
 
 	/* Now fill in the handler_id field of the adb_handler entries. */
-	for (i = 1; i < 16; i++) {
-		if (adb_handler[i].original_address == 0)
-			continue;
-		adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+	क्रम (i = 1; i < 16; i++) अणु
+		अगर (adb_handler[i].original_address == 0)
+			जारी;
+		adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
 			    (i << 4) | 0xf);
 		adb_handler[i].handler_id = req.reply[2];
-		printk(KERN_DEBUG "adb device [%d]: %d 0x%X\n", i,
+		prपूर्णांकk(KERN_DEBUG "adb device [%d]: %d 0x%X\n", i,
 		       adb_handler[i].original_address,
 		       adb_handler[i].handler_id);
 		devmask |= 1 << i;
-	}
-	return devmask;
-}
+	पूर्ण
+	वापस devmask;
+पूर्ण
 
 /*
  * This kernel task handles ADB probing. It dies once probing is
  * completed.
  */
-static int
-adb_probe_task(void *x)
-{
+अटल पूर्णांक
+adb_probe_task(व्योम *x)
+अणु
 	pr_debug("adb: starting probe task...\n");
-	do_adb_reset_bus();
+	करो_adb_reset_bus();
 	pr_debug("adb: finished probe task...\n");
 
 	up(&adb_probe_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-__adb_probe_task(struct work_struct *bullshit)
-{
-	kthread_run(adb_probe_task, NULL, "kadbprobe");
-}
+अटल व्योम
+__adb_probe_task(काष्ठा work_काष्ठा *bullshit)
+अणु
+	kthपढ़ो_run(adb_probe_task, शून्य, "kadbprobe");
+पूर्ण
 
-static DECLARE_WORK(adb_reset_work, __adb_probe_task);
+अटल DECLARE_WORK(adb_reset_work, __adb_probe_task);
 
-int
-adb_reset_bus(void)
-{
-	if (__adb_probe_sync) {
-		do_adb_reset_bus();
-		return 0;
-	}
+पूर्णांक
+adb_reset_bus(व्योम)
+अणु
+	अगर (__adb_probe_sync) अणु
+		करो_adb_reset_bus();
+		वापस 0;
+	पूर्ण
 
-	down(&adb_probe_mutex);
+	करोwn(&adb_probe_mutex);
 	schedule_work(&adb_reset_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /*
- * notify clients before sleep
+ * notअगरy clients beक्रमe sleep
  */
-static int __adb_suspend(struct platform_device *dev, pm_message_t state)
-{
+अटल पूर्णांक __adb_suspend(काष्ठा platक्रमm_device *dev, pm_message_t state)
+अणु
 	adb_got_sleep = 1;
-	/* We need to get a lock on the probe thread */
-	down(&adb_probe_mutex);
-	/* Stop autopoll */
-	if (adb_controller->autopoll)
-		adb_controller->autopoll(0);
-	blocking_notifier_call_chain(&adb_client_list, ADB_MSG_POWERDOWN, NULL);
+	/* We need to get a lock on the probe thपढ़ो */
+	करोwn(&adb_probe_mutex);
+	/* Stop स्वतःpoll */
+	अगर (adb_controller->स्वतःpoll)
+		adb_controller->स्वतःpoll(0);
+	blocking_notअगरier_call_chain(&adb_client_list, ADB_MSG_POWERDOWN, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adb_suspend(struct device *dev)
-{
-	return __adb_suspend(to_platform_device(dev), PMSG_SUSPEND);
-}
+अटल पूर्णांक adb_suspend(काष्ठा device *dev)
+अणु
+	वापस __adb_suspend(to_platक्रमm_device(dev), PMSG_SUSPEND);
+पूर्ण
 
-static int adb_freeze(struct device *dev)
-{
-	return __adb_suspend(to_platform_device(dev), PMSG_FREEZE);
-}
+अटल पूर्णांक adb_मुक्तze(काष्ठा device *dev)
+अणु
+	वापस __adb_suspend(to_platक्रमm_device(dev), PMSG_FREEZE);
+पूर्ण
 
-static int adb_poweroff(struct device *dev)
-{
-	return __adb_suspend(to_platform_device(dev), PMSG_HIBERNATE);
-}
+अटल पूर्णांक adb_घातeroff(काष्ठा device *dev)
+अणु
+	वापस __adb_suspend(to_platक्रमm_device(dev), PMSG_HIBERNATE);
+पूर्ण
 
 /*
  * reset bus after sleep
  */
-static int __adb_resume(struct platform_device *dev)
-{
+अटल पूर्णांक __adb_resume(काष्ठा platक्रमm_device *dev)
+अणु
 	adb_got_sleep = 0;
 	up(&adb_probe_mutex);
 	adb_reset_bus();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adb_resume(struct device *dev)
-{
-	return __adb_resume(to_platform_device(dev));
-}
-#endif /* CONFIG_PM */
+अटल पूर्णांक adb_resume(काष्ठा device *dev)
+अणु
+	वापस __adb_resume(to_platक्रमm_device(dev));
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static int __init adb_init(void)
-{
-	struct adb_driver *driver;
-	int i;
+अटल पूर्णांक __init adb_init(व्योम)
+अणु
+	काष्ठा adb_driver *driver;
+	पूर्णांक i;
 
-#ifdef CONFIG_PPC32
-	if (!machine_is(chrp) && !machine_is(powermac))
-		return 0;
-#endif
-#ifdef CONFIG_MAC
-	if (!MACH_IS_MAC)
-		return 0;
-#endif
+#अगर_घोषित CONFIG_PPC32
+	अगर (!machine_is(chrp) && !machine_is(घातermac))
+		वापस 0;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MAC
+	अगर (!MACH_IS_MAC)
+		वापस 0;
+#पूर्ण_अगर
 
-	/* xmon may do early-init */
-	if (adb_inited)
-		return 0;
+	/* xmon may करो early-init */
+	अगर (adb_inited)
+		वापस 0;
 	adb_inited = 1;
 		
-	adb_controller = NULL;
+	adb_controller = शून्य;
 
 	i = 0;
-	while ((driver = adb_driver_list[i++]) != NULL) {
-		if (!driver->probe()) {
+	जबतक ((driver = adb_driver_list[i++]) != शून्य) अणु
+		अगर (!driver->probe()) अणु
 			adb_controller = driver;
-			break;
-		}
-	}
-	if (adb_controller != NULL && adb_controller->init &&
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (adb_controller != शून्य && adb_controller->init &&
 	    adb_controller->init())
-		adb_controller = NULL;
-	if (adb_controller == NULL) {
+		adb_controller = शून्य;
+	अगर (adb_controller == शून्य) अणु
 		pr_warn("Warning: no ADB interface detected\n");
-	} else {
-#ifdef CONFIG_PPC
-		if (of_machine_is_compatible("AAPL,PowerBook1998") ||
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_PPC
+		अगर (of_machine_is_compatible("AAPL,PowerBook1998") ||
 			of_machine_is_compatible("PowerBook1,1"))
 			sleepy_trackpad = 1;
-#endif /* CONFIG_PPC */
+#पूर्ण_अगर /* CONFIG_PPC */
 
 		adbdev_init();
 		adb_reset_bus();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 device_initcall(adb_init);
 
-static int
-do_adb_reset_bus(void)
-{
-	int ret;
+अटल पूर्णांक
+करो_adb_reset_bus(व्योम)
+अणु
+	पूर्णांक ret;
 	
-	if (adb_controller == NULL)
-		return -ENXIO;
+	अगर (adb_controller == शून्य)
+		वापस -ENXIO;
 		
-	if (adb_controller->autopoll)
-		adb_controller->autopoll(0);
+	अगर (adb_controller->स्वतःpoll)
+		adb_controller->स्वतःpoll(0);
 
-	blocking_notifier_call_chain(&adb_client_list,
-		ADB_MSG_PRE_RESET, NULL);
+	blocking_notअगरier_call_chain(&adb_client_list,
+		ADB_MSG_PRE_RESET, शून्य);
 
-	if (sleepy_trackpad) {
-		/* Let the trackpad settle down */
+	अगर (sleepy_trackpad) अणु
+		/* Let the trackpad settle करोwn */
 		msleep(500);
-	}
+	पूर्ण
 
 	mutex_lock(&adb_handler_mutex);
-	write_lock_irq(&adb_handler_lock);
-	memset(adb_handler, 0, sizeof(adb_handler));
-	write_unlock_irq(&adb_handler_lock);
+	ग_लिखो_lock_irq(&adb_handler_lock);
+	स_रखो(adb_handler, 0, माप(adb_handler));
+	ग_लिखो_unlock_irq(&adb_handler_lock);
 
 	/* That one is still a bit synchronous, oh well... */
-	if (adb_controller->reset_bus)
+	अगर (adb_controller->reset_bus)
 		ret = adb_controller->reset_bus();
-	else
+	अन्यथा
 		ret = 0;
 
-	if (sleepy_trackpad) {
-		/* Let the trackpad settle down */
+	अगर (sleepy_trackpad) अणु
+		/* Let the trackpad settle करोwn */
 		msleep(1500);
-	}
+	पूर्ण
 
-	if (!ret) {
-		autopoll_devs = adb_scan_bus();
-		if (adb_controller->autopoll)
-			adb_controller->autopoll(autopoll_devs);
-	}
+	अगर (!ret) अणु
+		स्वतःpoll_devs = adb_scan_bus();
+		अगर (adb_controller->स्वतःpoll)
+			adb_controller->स्वतःpoll(स्वतःpoll_devs);
+	पूर्ण
 	mutex_unlock(&adb_handler_mutex);
 
-	blocking_notifier_call_chain(&adb_client_list,
-		ADB_MSG_POST_RESET, NULL);
+	blocking_notअगरier_call_chain(&adb_client_list,
+		ADB_MSG_POST_RESET, शून्य);
 	
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-adb_poll(void)
-{
-	if ((adb_controller == NULL)||(adb_controller->poll == NULL))
-		return;
+व्योम
+adb_poll(व्योम)
+अणु
+	अगर ((adb_controller == शून्य)||(adb_controller->poll == शून्य))
+		वापस;
 	adb_controller->poll();
-}
+पूर्ण
 EXPORT_SYMBOL(adb_poll);
 
-static void adb_sync_req_done(struct adb_request *req)
-{
-	struct completion *comp = req->arg;
+अटल व्योम adb_sync_req_करोne(काष्ठा adb_request *req)
+अणु
+	काष्ठा completion *comp = req->arg;
 
 	complete(comp);
-}
+पूर्ण
 
-int
-adb_request(struct adb_request *req, void (*done)(struct adb_request *),
-	    int flags, int nbytes, ...)
-{
-	va_list list;
-	int i;
-	int rc;
-	struct completion comp;
+पूर्णांक
+adb_request(काष्ठा adb_request *req, व्योम (*करोne)(काष्ठा adb_request *),
+	    पूर्णांक flags, पूर्णांक nbytes, ...)
+अणु
+	बहु_सूची list;
+	पूर्णांक i;
+	पूर्णांक rc;
+	काष्ठा completion comp;
 
-	if ((adb_controller == NULL) || (adb_controller->send_request == NULL))
-		return -ENXIO;
-	if (nbytes < 1)
-		return -EINVAL;
+	अगर ((adb_controller == शून्य) || (adb_controller->send_request == शून्य))
+		वापस -ENXIO;
+	अगर (nbytes < 1)
+		वापस -EINVAL;
 
 	req->nbytes = nbytes+1;
-	req->done = done;
+	req->करोne = करोne;
 	req->reply_expected = flags & ADBREQ_REPLY;
 	req->data[0] = ADB_PACKET;
-	va_start(list, nbytes);
-	for (i = 0; i < nbytes; ++i)
-		req->data[i+1] = va_arg(list, int);
-	va_end(list);
+	बहु_शुरू(list, nbytes);
+	क्रम (i = 0; i < nbytes; ++i)
+		req->data[i+1] = बहु_तर्क(list, पूर्णांक);
+	बहु_पूर्ण(list);
 
-	if (flags & ADBREQ_NOSEND)
-		return 0;
+	अगर (flags & ADBREQ_NOSEND)
+		वापस 0;
 
 	/* Synchronous requests block using an on-stack completion */
-	if (flags & ADBREQ_SYNC) {
-		WARN_ON(done);
-		req->done = adb_sync_req_done;
+	अगर (flags & ADBREQ_SYNC) अणु
+		WARN_ON(करोne);
+		req->करोne = adb_sync_req_करोne;
 		req->arg = &comp;
 		init_completion(&comp);
-	}
+	पूर्ण
 
 	rc = adb_controller->send_request(req, 0);
 
-	if ((flags & ADBREQ_SYNC) && !rc && !req->complete)
-		wait_for_completion(&comp);
+	अगर ((flags & ADBREQ_SYNC) && !rc && !req->complete)
+		रुको_क्रम_completion(&comp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL(adb_request);
 
- /* Ultimately this should return the number of devices with
-    the given default id.
-    And it does it now ! Note: changed behaviour: This function
-    will now register if default_id _and_ handler_id both match
-    but handler_id can be left to 0 to match with default_id only.
+ /* Ultimately this should वापस the number of devices with
+    the given शेष id.
+    And it करोes it now ! Note: changed behaviour: This function
+    will now रेजिस्टर अगर शेष_id _and_ handler_id both match
+    but handler_id can be left to 0 to match with शेष_id only.
     When handler_id is set, this function will try to adjust
-    the handler_id id it doesn't match. */
-int
-adb_register(int default_id, int handler_id, struct adb_ids *ids,
-	     void (*handler)(unsigned char *, int, int))
-{
-	int i;
+    the handler_id id it करोesn't match. */
+पूर्णांक
+adb_रेजिस्टर(पूर्णांक शेष_id, पूर्णांक handler_id, काष्ठा adb_ids *ids,
+	     व्योम (*handler)(अचिन्हित अक्षर *, पूर्णांक, पूर्णांक))
+अणु
+	पूर्णांक i;
 
 	mutex_lock(&adb_handler_mutex);
 	ids->nids = 0;
-	for (i = 1; i < 16; i++) {
-		if ((adb_handler[i].original_address == default_id) &&
+	क्रम (i = 1; i < 16; i++) अणु
+		अगर ((adb_handler[i].original_address == शेष_id) &&
 		    (!handler_id || (handler_id == adb_handler[i].handler_id) || 
-		    try_handler_change(i, handler_id))) {
-			if (adb_handler[i].handler != 0) {
+		    try_handler_change(i, handler_id))) अणु
+			अगर (adb_handler[i].handler != 0) अणु
 				pr_err("Two handlers for ADB device %d\n",
-				       default_id);
-				continue;
-			}
-			write_lock_irq(&adb_handler_lock);
+				       शेष_id);
+				जारी;
+			पूर्ण
+			ग_लिखो_lock_irq(&adb_handler_lock);
 			adb_handler[i].handler = handler;
-			write_unlock_irq(&adb_handler_lock);
+			ग_लिखो_unlock_irq(&adb_handler_lock);
 			ids->id[ids->nids++] = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&adb_handler_mutex);
-	return ids->nids;
-}
-EXPORT_SYMBOL(adb_register);
+	वापस ids->nids;
+पूर्ण
+EXPORT_SYMBOL(adb_रेजिस्टर);
 
-int
-adb_unregister(int index)
-{
-	int ret = -ENODEV;
+पूर्णांक
+adb_unरेजिस्टर(पूर्णांक index)
+अणु
+	पूर्णांक ret = -ENODEV;
 
 	mutex_lock(&adb_handler_mutex);
-	write_lock_irq(&adb_handler_lock);
-	if (adb_handler[index].handler) {
-		while(adb_handler[index].busy) {
-			write_unlock_irq(&adb_handler_lock);
+	ग_लिखो_lock_irq(&adb_handler_lock);
+	अगर (adb_handler[index].handler) अणु
+		जबतक(adb_handler[index].busy) अणु
+			ग_लिखो_unlock_irq(&adb_handler_lock);
 			yield();
-			write_lock_irq(&adb_handler_lock);
-		}
+			ग_लिखो_lock_irq(&adb_handler_lock);
+		पूर्ण
 		ret = 0;
-		adb_handler[index].handler = NULL;
-	}
-	write_unlock_irq(&adb_handler_lock);
+		adb_handler[index].handler = शून्य;
+	पूर्ण
+	ग_लिखो_unlock_irq(&adb_handler_lock);
 	mutex_unlock(&adb_handler_mutex);
-	return ret;
-}
-EXPORT_SYMBOL(adb_unregister);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(adb_unरेजिस्टर);
 
-void
-adb_input(unsigned char *buf, int nb, int autopoll)
-{
-	int i, id;
-	static int dump_adb_input;
-	unsigned long flags;
+व्योम
+adb_input(अचिन्हित अक्षर *buf, पूर्णांक nb, पूर्णांक स्वतःpoll)
+अणु
+	पूर्णांक i, id;
+	अटल पूर्णांक dump_adb_input;
+	अचिन्हित दीर्घ flags;
 	
-	void (*handler)(unsigned char *, int, int);
+	व्योम (*handler)(अचिन्हित अक्षर *, पूर्णांक, पूर्णांक);
 
 	/* We skip keystrokes and mouse moves when the sleep process
-	 * has been started. We stop autopoll, but this is another security
+	 * has been started. We stop स्वतःpoll, but this is another security
 	 */
-	if (adb_got_sleep)
-		return;
+	अगर (adb_got_sleep)
+		वापस;
 		
 	id = buf[0] >> 4;
-	if (dump_adb_input) {
+	अगर (dump_adb_input) अणु
 		pr_info("adb packet: ");
-		for (i = 0; i < nb; ++i)
+		क्रम (i = 0; i < nb; ++i)
 			pr_cont(" %x", buf[i]);
 		pr_cont(", id = %d\n", id);
-	}
-	write_lock_irqsave(&adb_handler_lock, flags);
+	पूर्ण
+	ग_लिखो_lock_irqsave(&adb_handler_lock, flags);
 	handler = adb_handler[id].handler;
-	if (handler != NULL)
+	अगर (handler != शून्य)
 		adb_handler[id].busy = 1;
-	write_unlock_irqrestore(&adb_handler_lock, flags);
-	if (handler != NULL) {
-		(*handler)(buf, nb, autopoll);
+	ग_लिखो_unlock_irqrestore(&adb_handler_lock, flags);
+	अगर (handler != शून्य) अणु
+		(*handler)(buf, nb, स्वतःpoll);
 		wmb();
 		adb_handler[id].busy = 0;
-	}
+	पूर्ण
 		
-}
+पूर्ण
 
-/* Try to change handler to new_id. Will return 1 if successful. */
-static int try_handler_change(int address, int new_id)
-{
-	struct adb_request req;
+/* Try to change handler to new_id. Will वापस 1 अगर successful. */
+अटल पूर्णांक try_handler_change(पूर्णांक address, पूर्णांक new_id)
+अणु
+	काष्ठा adb_request req;
 
-	if (adb_handler[address].handler_id == new_id)
-	    return 1;
-	adb_request(&req, NULL, ADBREQ_SYNC, 3,
+	अगर (adb_handler[address].handler_id == new_id)
+	    वापस 1;
+	adb_request(&req, शून्य, ADBREQ_SYNC, 3,
 	    ADB_WRITEREG(address, 3), address | 0x20, new_id);
-	adb_request(&req, NULL, ADBREQ_SYNC | ADBREQ_REPLY, 1,
+	adb_request(&req, शून्य, ADBREQ_SYNC | ADBREQ_REPLY, 1,
 	    ADB_READREG(address, 3));
-	if (req.reply_len < 2)
-	    return 0;
-	if (req.reply[2] != new_id)
-	    return 0;
+	अगर (req.reply_len < 2)
+	    वापस 0;
+	अगर (req.reply[2] != new_id)
+	    वापस 0;
 	adb_handler[address].handler_id = req.reply[2];
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int
-adb_try_handler_change(int address, int new_id)
-{
-	int ret;
+पूर्णांक
+adb_try_handler_change(पूर्णांक address, पूर्णांक new_id)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&adb_handler_mutex);
 	ret = try_handler_change(address, new_id);
 	mutex_unlock(&adb_handler_mutex);
-	if (ret)
+	अगर (ret)
 		pr_debug("adb handler change: [%d] 0x%X\n", address, new_id);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(adb_try_handler_change);
 
-int
-adb_get_infos(int address, int *original_address, int *handler_id)
-{
+पूर्णांक
+adb_get_infos(पूर्णांक address, पूर्णांक *original_address, पूर्णांक *handler_id)
+अणु
 	mutex_lock(&adb_handler_mutex);
 	*original_address = adb_handler[address].original_address;
 	*handler_id = adb_handler[address].handler_id;
 	mutex_unlock(&adb_handler_mutex);
 
-	return (*original_address != 0);
-}
+	वापस (*original_address != 0);
+पूर्ण
 
 
 /*
  * /dev/adb device driver.
  */
 
-#define ADB_MAJOR	56	/* major number for /dev/adb */
+#घोषणा ADB_MAJOR	56	/* major number क्रम /dev/adb */
 
-struct adbdev_state {
+काष्ठा adbdev_state अणु
 	spinlock_t	lock;
 	atomic_t	n_pending;
-	struct adb_request *completed;
-  	wait_queue_head_t wait_queue;
-	int		inuse;
-};
+	काष्ठा adb_request *completed;
+  	रुको_queue_head_t रुको_queue;
+	पूर्णांक		inuse;
+पूर्ण;
 
-static void adb_write_done(struct adb_request *req)
-{
-	struct adbdev_state *state = (struct adbdev_state *) req->arg;
-	unsigned long flags;
+अटल व्योम adb_ग_लिखो_करोne(काष्ठा adb_request *req)
+अणु
+	काष्ठा adbdev_state *state = (काष्ठा adbdev_state *) req->arg;
+	अचिन्हित दीर्घ flags;
 
-	if (!req->complete) {
+	अगर (!req->complete) अणु
 		req->reply_len = 0;
 		req->complete = 1;
-	}
+	पूर्ण
 	spin_lock_irqsave(&state->lock, flags);
 	atomic_dec(&state->n_pending);
-	if (!state->inuse) {
-		kfree(req);
-		if (atomic_read(&state->n_pending) == 0) {
+	अगर (!state->inuse) अणु
+		kमुक्त(req);
+		अगर (atomic_पढ़ो(&state->n_pending) == 0) अणु
 			spin_unlock_irqrestore(&state->lock, flags);
-			kfree(state);
-			return;
-		}
-	} else {
-		struct adb_request **ap = &state->completed;
-		while (*ap != NULL)
+			kमुक्त(state);
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा adb_request **ap = &state->completed;
+		जबतक (*ap != शून्य)
 			ap = &(*ap)->next;
-		req->next = NULL;
+		req->next = शून्य;
 		*ap = req;
-		wake_up_interruptible(&state->wait_queue);
-	}
+		wake_up_पूर्णांकerruptible(&state->रुको_queue);
+	पूर्ण
 	spin_unlock_irqrestore(&state->lock, flags);
-}
+पूर्ण
 
-static int
-do_adb_query(struct adb_request *req)
-{
-	int	ret = -EINVAL;
+अटल पूर्णांक
+करो_adb_query(काष्ठा adb_request *req)
+अणु
+	पूर्णांक	ret = -EINVAL;
 
-	switch(req->data[1]) {
-	case ADB_QUERY_GETDEVINFO:
-		if (req->nbytes < 3)
-			break;
+	चयन(req->data[1]) अणु
+	हाल ADB_QUERY_GETDEVINFO:
+		अगर (req->nbytes < 3)
+			अवरोध;
 		mutex_lock(&adb_handler_mutex);
 		req->reply[0] = adb_handler[req->data[2]].original_address;
 		req->reply[1] = adb_handler[req->data[2]].handler_id;
 		mutex_unlock(&adb_handler_mutex);
 		req->complete = 1;
 		req->reply_len = 2;
-		adb_write_done(req);
+		adb_ग_लिखो_करोne(req);
 		ret = 0;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int adb_open(struct inode *inode, struct file *file)
-{
-	struct adbdev_state *state;
-	int ret = 0;
+अटल पूर्णांक adb_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा adbdev_state *state;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&adb_mutex);
-	if (iminor(inode) > 0 || adb_controller == NULL) {
+	अगर (iminor(inode) > 0 || adb_controller == शून्य) अणु
 		ret = -ENXIO;
-		goto out;
-	}
-	state = kmalloc(sizeof(struct adbdev_state), GFP_KERNEL);
-	if (state == 0) {
+		जाओ out;
+	पूर्ण
+	state = kदो_स्मृति(माप(काष्ठा adbdev_state), GFP_KERNEL);
+	अगर (state == 0) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
-	file->private_data = state;
+		जाओ out;
+	पूर्ण
+	file->निजी_data = state;
 	spin_lock_init(&state->lock);
 	atomic_set(&state->n_pending, 0);
-	state->completed = NULL;
-	init_waitqueue_head(&state->wait_queue);
+	state->completed = शून्य;
+	init_रुकोqueue_head(&state->रुको_queue);
 	state->inuse = 1;
 
 out:
 	mutex_unlock(&adb_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adb_release(struct inode *inode, struct file *file)
-{
-	struct adbdev_state *state = file->private_data;
-	unsigned long flags;
+अटल पूर्णांक adb_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा adbdev_state *state = file->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&adb_mutex);
-	if (state) {
-		file->private_data = NULL;
+	अगर (state) अणु
+		file->निजी_data = शून्य;
 		spin_lock_irqsave(&state->lock, flags);
-		if (atomic_read(&state->n_pending) == 0
-		    && state->completed == NULL) {
+		अगर (atomic_पढ़ो(&state->n_pending) == 0
+		    && state->completed == शून्य) अणु
 			spin_unlock_irqrestore(&state->lock, flags);
-			kfree(state);
-		} else {
+			kमुक्त(state);
+		पूर्ण अन्यथा अणु
 			state->inuse = 0;
 			spin_unlock_irqrestore(&state->lock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&adb_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t adb_read(struct file *file, char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	int ret = 0;
-	struct adbdev_state *state = file->private_data;
-	struct adb_request *req;
-	DECLARE_WAITQUEUE(wait, current);
-	unsigned long flags;
+अटल sमाप_प्रकार adb_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा adbdev_state *state = file->निजी_data;
+	काष्ठा adb_request *req;
+	DECLARE_WAITQUEUE(रुको, current);
+	अचिन्हित दीर्घ flags;
 
-	if (count < 2)
-		return -EINVAL;
-	if (count > sizeof(req->reply))
-		count = sizeof(req->reply);
+	अगर (count < 2)
+		वापस -EINVAL;
+	अगर (count > माप(req->reply))
+		count = माप(req->reply);
 
-	req = NULL;
+	req = शून्य;
 	spin_lock_irqsave(&state->lock, flags);
-	add_wait_queue(&state->wait_queue, &wait);
+	add_रुको_queue(&state->रुको_queue, &रुको);
 	set_current_state(TASK_INTERRUPTIBLE);
 
-	for (;;) {
+	क्रम (;;) अणु
 		req = state->completed;
-		if (req != NULL)
+		अगर (req != शून्य)
 			state->completed = req->next;
-		else if (atomic_read(&state->n_pending) == 0)
+		अन्यथा अगर (atomic_पढ़ो(&state->n_pending) == 0)
 			ret = -EIO;
-		if (req != NULL || ret != 0)
-			break;
+		अगर (req != शून्य || ret != 0)
+			अवरोध;
 		
-		if (file->f_flags & O_NONBLOCK) {
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			ret = -EAGAIN;
-			break;
-		}
-		if (signal_pending(current)) {
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock_irqrestore(&state->lock, flags);
 		schedule();
 		spin_lock_irqsave(&state->lock, flags);
-	}
+	पूर्ण
 
 	set_current_state(TASK_RUNNING);
-	remove_wait_queue(&state->wait_queue, &wait);
+	हटाओ_रुको_queue(&state->रुको_queue, &रुको);
 	spin_unlock_irqrestore(&state->lock, flags);
 	
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = req->reply_len;
-	if (ret > count)
+	अगर (ret > count)
 		ret = count;
-	if (ret > 0 && copy_to_user(buf, req->reply, ret))
+	अगर (ret > 0 && copy_to_user(buf, req->reply, ret))
 		ret = -EFAULT;
 
-	kfree(req);
-	return ret;
-}
+	kमुक्त(req);
+	वापस ret;
+पूर्ण
 
-static ssize_t adb_write(struct file *file, const char __user *buf,
-			 size_t count, loff_t *ppos)
-{
-	int ret/*, i*/;
-	struct adbdev_state *state = file->private_data;
-	struct adb_request *req;
+अटल sमाप_प्रकार adb_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret/*, i*/;
+	काष्ठा adbdev_state *state = file->निजी_data;
+	काष्ठा adb_request *req;
 
-	if (count < 2 || count > sizeof(req->data))
-		return -EINVAL;
-	if (adb_controller == NULL)
-		return -ENXIO;
+	अगर (count < 2 || count > माप(req->data))
+		वापस -EINVAL;
+	अगर (adb_controller == शून्य)
+		वापस -ENXIO;
 
-	req = kmalloc(sizeof(struct adb_request),
+	req = kदो_स्मृति(माप(काष्ठा adb_request),
 					     GFP_KERNEL);
-	if (req == NULL)
-		return -ENOMEM;
+	अगर (req == शून्य)
+		वापस -ENOMEM;
 
 	req->nbytes = count;
-	req->done = adb_write_done;
-	req->arg = (void *) state;
+	req->करोne = adb_ग_लिखो_करोne;
+	req->arg = (व्योम *) state;
 	req->complete = 0;
 	
 	ret = -EFAULT;
-	if (copy_from_user(req->data, buf, count))
-		goto out;
+	अगर (copy_from_user(req->data, buf, count))
+		जाओ out;
 
 	atomic_inc(&state->n_pending);
 
-	/* If a probe is in progress or we are sleeping, wait for it to complete */
-	down(&adb_probe_mutex);
+	/* If a probe is in progress or we are sleeping, रुको क्रम it to complete */
+	करोwn(&adb_probe_mutex);
 
 	/* Queries are special requests sent to the ADB driver itself */
-	if (req->data[0] == ADB_QUERY) {
-		if (count > 1)
-			ret = do_adb_query(req);
-		else
+	अगर (req->data[0] == ADB_QUERY) अणु
+		अगर (count > 1)
+			ret = करो_adb_query(req);
+		अन्यथा
 			ret = -EINVAL;
 		up(&adb_probe_mutex);
-	}
-	/* Special case for ADB_BUSRESET request, all others are sent to
+	पूर्ण
+	/* Special हाल क्रम ADB_BUSRESET request, all others are sent to
 	   the controller */
-	else if ((req->data[0] == ADB_PACKET) && (count > 1)
-		&& (req->data[1] == ADB_BUSRESET)) {
-		ret = do_adb_reset_bus();
+	अन्यथा अगर ((req->data[0] == ADB_PACKET) && (count > 1)
+		&& (req->data[1] == ADB_BUSRESET)) अणु
+		ret = करो_adb_reset_bus();
 		up(&adb_probe_mutex);
 		atomic_dec(&state->n_pending);
-		if (ret == 0)
+		अगर (ret == 0)
 			ret = count;
-		goto out;
-	} else {	
+		जाओ out;
+	पूर्ण अन्यथा अणु	
 		req->reply_expected = ((req->data[1] & 0xc) == 0xc);
-		if (adb_controller && adb_controller->send_request)
+		अगर (adb_controller && adb_controller->send_request)
 			ret = adb_controller->send_request(req, 0);
-		else
+		अन्यथा
 			ret = -ENXIO;
 		up(&adb_probe_mutex);
-	}
+	पूर्ण
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		atomic_dec(&state->n_pending);
-		goto out;
-	}
-	return count;
+		जाओ out;
+	पूर्ण
+	वापस count;
 
 out:
-	kfree(req);
-	return ret;
-}
+	kमुक्त(req);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations adb_fops = {
+अटल स्थिर काष्ठा file_operations adb_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.read		= adb_read,
-	.write		= adb_write,
-	.open		= adb_open,
+	.पढ़ो		= adb_पढ़ो,
+	.ग_लिखो		= adb_ग_लिखो,
+	.खोलो		= adb_खोलो,
 	.release	= adb_release,
-};
+पूर्ण;
 
-#ifdef CONFIG_PM
-static const struct dev_pm_ops adb_dev_pm_ops = {
+#अगर_घोषित CONFIG_PM
+अटल स्थिर काष्ठा dev_pm_ops adb_dev_pm_ops = अणु
 	.suspend = adb_suspend,
 	.resume = adb_resume,
 	/* Hibernate hooks */
-	.freeze = adb_freeze,
+	.मुक्तze = adb_मुक्तze,
 	.thaw = adb_resume,
-	.poweroff = adb_poweroff,
+	.घातeroff = adb_घातeroff,
 	.restore = adb_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct platform_driver adb_pfdrv = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver adb_pfdrv = अणु
+	.driver = अणु
 		.name = "adb",
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		.pm = &adb_dev_pm_ops,
-#endif
-	},
-};
+#पूर्ण_अगर
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device adb_pfdev = {
+अटल काष्ठा platक्रमm_device adb_pfdev = अणु
 	.name = "adb",
-};
+पूर्ण;
 
-static int __init
-adb_dummy_probe(struct platform_device *dev)
-{
-	if (dev == &adb_pfdev)
-		return 0;
-	return -ENODEV;
-}
+अटल पूर्णांक __init
+adb_dummy_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	अगर (dev == &adb_pfdev)
+		वापस 0;
+	वापस -ENODEV;
+पूर्ण
 
-static void __init
-adbdev_init(void)
-{
-	if (register_chrdev(ADB_MAJOR, "adb", &adb_fops)) {
+अटल व्योम __init
+adbdev_init(व्योम)
+अणु
+	अगर (रेजिस्टर_chrdev(ADB_MAJOR, "adb", &adb_fops)) अणु
 		pr_err("adb: unable to get major %d\n", ADB_MAJOR);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	adb_dev_class = class_create(THIS_MODULE, "adb");
-	if (IS_ERR(adb_dev_class))
-		return;
-	device_create(adb_dev_class, NULL, MKDEV(ADB_MAJOR, 0), NULL, "adb");
+	अगर (IS_ERR(adb_dev_class))
+		वापस;
+	device_create(adb_dev_class, शून्य, MKDEV(ADB_MAJOR, 0), शून्य, "adb");
 
-	platform_device_register(&adb_pfdev);
-	platform_driver_probe(&adb_pfdrv, adb_dummy_probe);
-}
+	platक्रमm_device_रेजिस्टर(&adb_pfdev);
+	platक्रमm_driver_probe(&adb_pfdrv, adb_dummy_probe);
+पूर्ण

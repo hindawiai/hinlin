@@ -1,630 +1,631 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/sched/signal.h>
-#include <linux/spinlock.h>
-#include <linux/mutex.h>
-#include <linux/list.h>
-#include <linux/wait.h>
-#include <linux/poll.h>
-#include <linux/tcp.h>
-#include <linux/uaccess.h>
-#include <linux/debugfs.h>
-#include <linux/caif/caif_socket.h>
-#include <linux/pkt_sched.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/caif_dev.h>
-#include <net/caif/cfpkt.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/caअगर/caअगर_socket.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/caअगर_dev.h>
+#समावेश <net/caअगर/cfpkt.h>
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(AF_CAIF);
 
 /*
  * CAIF state is re-using the TCP socket states.
- * caif_states stored in sk_state reflect the state as reported by
- * the CAIF stack, while sk_socket->state is the state of the socket.
+ * caअगर_states stored in sk_state reflect the state as reported by
+ * the CAIF stack, जबतक sk_socket->state is the state of the socket.
  */
-enum caif_states {
+क्रमागत caअगर_states अणु
 	CAIF_CONNECTED		= TCP_ESTABLISHED,
 	CAIF_CONNECTING	= TCP_SYN_SENT,
 	CAIF_DISCONNECTED	= TCP_CLOSE
-};
+पूर्ण;
 
-#define TX_FLOW_ON_BIT	1
-#define RX_FLOW_ON_BIT	2
+#घोषणा TX_FLOW_ON_BIT	1
+#घोषणा RX_FLOW_ON_BIT	2
 
-struct caifsock {
-	struct sock sk; /* must be first member */
-	struct cflayer layer;
+काष्ठा caअगरsock अणु
+	काष्ठा sock sk; /* must be first member */
+	काष्ठा cflayer layer;
 	u32 flow_state;
-	struct caif_connect_request conn_req;
-	struct mutex readlock;
-	struct dentry *debugfs_socket_dir;
-	int headroom, tailroom, maxframe;
-};
+	काष्ठा caअगर_connect_request conn_req;
+	काष्ठा mutex पढ़ोlock;
+	काष्ठा dentry *debugfs_socket_dir;
+	पूर्णांक headroom, tailroom, maxframe;
+पूर्ण;
 
-static int rx_flow_is_on(struct caifsock *cf_sk)
-{
-	return test_bit(RX_FLOW_ON_BIT,
-			(void *) &cf_sk->flow_state);
-}
+अटल पूर्णांक rx_flow_is_on(काष्ठा caअगरsock *cf_sk)
+अणु
+	वापस test_bit(RX_FLOW_ON_BIT,
+			(व्योम *) &cf_sk->flow_state);
+पूर्ण
 
-static int tx_flow_is_on(struct caifsock *cf_sk)
-{
-	return test_bit(TX_FLOW_ON_BIT,
-			(void *) &cf_sk->flow_state);
-}
+अटल पूर्णांक tx_flow_is_on(काष्ठा caअगरsock *cf_sk)
+अणु
+	वापस test_bit(TX_FLOW_ON_BIT,
+			(व्योम *) &cf_sk->flow_state);
+पूर्ण
 
-static void set_rx_flow_off(struct caifsock *cf_sk)
-{
+अटल व्योम set_rx_flow_off(काष्ठा caअगरsock *cf_sk)
+अणु
 	 clear_bit(RX_FLOW_ON_BIT,
-		 (void *) &cf_sk->flow_state);
-}
+		 (व्योम *) &cf_sk->flow_state);
+पूर्ण
 
-static void set_rx_flow_on(struct caifsock *cf_sk)
-{
+अटल व्योम set_rx_flow_on(काष्ठा caअगरsock *cf_sk)
+अणु
 	 set_bit(RX_FLOW_ON_BIT,
-			(void *) &cf_sk->flow_state);
-}
+			(व्योम *) &cf_sk->flow_state);
+पूर्ण
 
-static void set_tx_flow_off(struct caifsock *cf_sk)
-{
+अटल व्योम set_tx_flow_off(काष्ठा caअगरsock *cf_sk)
+अणु
 	 clear_bit(TX_FLOW_ON_BIT,
-		(void *) &cf_sk->flow_state);
-}
+		(व्योम *) &cf_sk->flow_state);
+पूर्ण
 
-static void set_tx_flow_on(struct caifsock *cf_sk)
-{
+अटल व्योम set_tx_flow_on(काष्ठा caअगरsock *cf_sk)
+अणु
 	 set_bit(TX_FLOW_ON_BIT,
-		(void *) &cf_sk->flow_state);
-}
+		(व्योम *) &cf_sk->flow_state);
+पूर्ण
 
-static void caif_read_lock(struct sock *sk)
-{
-	struct caifsock *cf_sk;
-	cf_sk = container_of(sk, struct caifsock, sk);
-	mutex_lock(&cf_sk->readlock);
-}
+अटल व्योम caअगर_पढ़ो_lock(काष्ठा sock *sk)
+अणु
+	काष्ठा caअगरsock *cf_sk;
+	cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	mutex_lock(&cf_sk->पढ़ोlock);
+पूर्ण
 
-static void caif_read_unlock(struct sock *sk)
-{
-	struct caifsock *cf_sk;
-	cf_sk = container_of(sk, struct caifsock, sk);
-	mutex_unlock(&cf_sk->readlock);
-}
+अटल व्योम caअगर_पढ़ो_unlock(काष्ठा sock *sk)
+अणु
+	काष्ठा caअगरsock *cf_sk;
+	cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	mutex_unlock(&cf_sk->पढ़ोlock);
+पूर्ण
 
-static int sk_rcvbuf_lowwater(struct caifsock *cf_sk)
-{
+अटल पूर्णांक sk_rcvbuf_lowwater(काष्ठा caअगरsock *cf_sk)
+अणु
 	/* A quarter of full buffer is used a low water mark */
-	return cf_sk->sk.sk_rcvbuf / 4;
-}
+	वापस cf_sk->sk.sk_rcvbuf / 4;
+पूर्ण
 
-static void caif_flow_ctrl(struct sock *sk, int mode)
-{
-	struct caifsock *cf_sk;
-	cf_sk = container_of(sk, struct caifsock, sk);
-	if (cf_sk->layer.dn && cf_sk->layer.dn->modemcmd)
+अटल व्योम caअगर_flow_ctrl(काष्ठा sock *sk, पूर्णांक mode)
+अणु
+	काष्ठा caअगरsock *cf_sk;
+	cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	अगर (cf_sk->layer.dn && cf_sk->layer.dn->modemcmd)
 		cf_sk->layer.dn->modemcmd(cf_sk->layer.dn, mode);
-}
+पूर्ण
 
 /*
  * Copied from sock.c:sock_queue_rcv_skb(), but changed so packets are
  * not dropped, but CAIF is sending flow off instead.
  */
-static void caif_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
-{
-	int err;
-	unsigned long flags;
-	struct sk_buff_head *list = &sk->sk_receive_queue;
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
+अटल व्योम caअगर_queue_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff_head *list = &sk->sk_receive_queue;
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
 	bool queued = false;
 
-	if (atomic_read(&sk->sk_rmem_alloc) + skb->truesize >=
-		(unsigned int)sk->sk_rcvbuf && rx_flow_is_on(cf_sk)) {
+	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) + skb->truesize >=
+		(अचिन्हित पूर्णांक)sk->sk_rcvbuf && rx_flow_is_on(cf_sk)) अणु
 		net_dbg_ratelimited("sending flow OFF (queue len = %d %d)\n",
-				    atomic_read(&cf_sk->sk.sk_rmem_alloc),
+				    atomic_पढ़ो(&cf_sk->sk.sk_rmem_alloc),
 				    sk_rcvbuf_lowwater(cf_sk));
 		set_rx_flow_off(cf_sk);
-		caif_flow_ctrl(sk, CAIF_MODEMCMD_FLOW_OFF_REQ);
-	}
+		caअगर_flow_ctrl(sk, CAIF_MODEMCMD_FLOW_OFF_REQ);
+	पूर्ण
 
 	err = sk_filter(sk, skb);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (!sk_rmem_schedule(sk, skb, skb->truesize) && rx_flow_is_on(cf_sk)) {
+	अगर (!sk_rmem_schedule(sk, skb, skb->truesize) && rx_flow_is_on(cf_sk)) अणु
 		set_rx_flow_off(cf_sk);
 		net_dbg_ratelimited("sending flow OFF due to rmem_schedule\n");
-		caif_flow_ctrl(sk, CAIF_MODEMCMD_FLOW_OFF_REQ);
-	}
-	skb->dev = NULL;
+		caअगर_flow_ctrl(sk, CAIF_MODEMCMD_FLOW_OFF_REQ);
+	पूर्ण
+	skb->dev = शून्य;
 	skb_set_owner_r(skb, sk);
 	spin_lock_irqsave(&list->lock, flags);
 	queued = !sock_flag(sk, SOCK_DEAD);
-	if (queued)
+	अगर (queued)
 		__skb_queue_tail(list, skb);
 	spin_unlock_irqrestore(&list->lock, flags);
 out:
-	if (queued)
-		sk->sk_data_ready(sk);
-	else
-		kfree_skb(skb);
-}
+	अगर (queued)
+		sk->sk_data_पढ़ोy(sk);
+	अन्यथा
+		kमुक्त_skb(skb);
+पूर्ण
 
 /* Packet Receive Callback function called from CAIF Stack */
-static int caif_sktrecv_cb(struct cflayer *layr, struct cfpkt *pkt)
-{
-	struct caifsock *cf_sk;
-	struct sk_buff *skb;
+अटल पूर्णांक caअगर_sktrecv_cb(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
+अणु
+	काष्ठा caअगरsock *cf_sk;
+	काष्ठा sk_buff *skb;
 
-	cf_sk = container_of(layr, struct caifsock, layer);
+	cf_sk = container_of(layr, काष्ठा caअगरsock, layer);
 	skb = cfpkt_tonative(pkt);
 
-	if (unlikely(cf_sk->sk.sk_state != CAIF_CONNECTED)) {
-		kfree_skb(skb);
-		return 0;
-	}
-	caif_queue_rcv_skb(&cf_sk->sk, skb);
-	return 0;
-}
+	अगर (unlikely(cf_sk->sk.sk_state != CAIF_CONNECTED)) अणु
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
+	caअगर_queue_rcv_skb(&cf_sk->sk, skb);
+	वापस 0;
+पूर्ण
 
-static void cfsk_hold(struct cflayer *layr)
-{
-	struct caifsock *cf_sk = container_of(layr, struct caifsock, layer);
+अटल व्योम cfsk_hold(काष्ठा cflayer *layr)
+अणु
+	काष्ठा caअगरsock *cf_sk = container_of(layr, काष्ठा caअगरsock, layer);
 	sock_hold(&cf_sk->sk);
-}
+पूर्ण
 
-static void cfsk_put(struct cflayer *layr)
-{
-	struct caifsock *cf_sk = container_of(layr, struct caifsock, layer);
+अटल व्योम cfsk_put(काष्ठा cflayer *layr)
+अणु
+	काष्ठा caअगरsock *cf_sk = container_of(layr, काष्ठा caअगरsock, layer);
 	sock_put(&cf_sk->sk);
-}
+पूर्ण
 
 /* Packet Control Callback function called from CAIF */
-static void caif_ctrl_cb(struct cflayer *layr,
-			 enum caif_ctrlcmd flow,
-			 int phyid)
-{
-	struct caifsock *cf_sk = container_of(layr, struct caifsock, layer);
-	switch (flow) {
-	case CAIF_CTRLCMD_FLOW_ON_IND:
+अटल व्योम caअगर_ctrl_cb(काष्ठा cflayer *layr,
+			 क्रमागत caअगर_ctrlcmd flow,
+			 पूर्णांक phyid)
+अणु
+	काष्ठा caअगरsock *cf_sk = container_of(layr, काष्ठा caअगरsock, layer);
+	चयन (flow) अणु
+	हाल CAIF_CTRLCMD_FLOW_ON_IND:
 		/* OK from modem to start sending again */
 		set_tx_flow_on(cf_sk);
 		cf_sk->sk.sk_state_change(&cf_sk->sk);
-		break;
+		अवरोध;
 
-	case CAIF_CTRLCMD_FLOW_OFF_IND:
+	हाल CAIF_CTRLCMD_FLOW_OFF_IND:
 		/* Modem asks us to shut up */
 		set_tx_flow_off(cf_sk);
 		cf_sk->sk.sk_state_change(&cf_sk->sk);
-		break;
+		अवरोध;
 
-	case CAIF_CTRLCMD_INIT_RSP:
+	हाल CAIF_CTRLCMD_INIT_RSP:
 		/* We're now connected */
-		caif_client_register_refcnt(&cf_sk->layer,
+		caअगर_client_रेजिस्टर_refcnt(&cf_sk->layer,
 						cfsk_hold, cfsk_put);
 		cf_sk->sk.sk_state = CAIF_CONNECTED;
 		set_tx_flow_on(cf_sk);
-		cf_sk->sk.sk_shutdown = 0;
+		cf_sk->sk.sk_shutकरोwn = 0;
 		cf_sk->sk.sk_state_change(&cf_sk->sk);
-		break;
+		अवरोध;
 
-	case CAIF_CTRLCMD_DEINIT_RSP:
+	हाल CAIF_CTRLCMD_DEINIT_RSP:
 		/* We're now disconnected */
 		cf_sk->sk.sk_state = CAIF_DISCONNECTED;
 		cf_sk->sk.sk_state_change(&cf_sk->sk);
-		break;
+		अवरोध;
 
-	case CAIF_CTRLCMD_INIT_FAIL_RSP:
+	हाल CAIF_CTRLCMD_INIT_FAIL_RSP:
 		/* Connect request failed */
 		cf_sk->sk.sk_err = ECONNREFUSED;
 		cf_sk->sk.sk_state = CAIF_DISCONNECTED;
-		cf_sk->sk.sk_shutdown = SHUTDOWN_MASK;
+		cf_sk->sk.sk_shutकरोwn = SHUTDOWN_MASK;
 		/*
 		 * Socket "standards" seems to require POLLOUT to
 		 * be set at connect failure.
 		 */
 		set_tx_flow_on(cf_sk);
 		cf_sk->sk.sk_state_change(&cf_sk->sk);
-		break;
+		अवरोध;
 
-	case CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND:
-		/* Modem has closed this connection, or device is down. */
-		cf_sk->sk.sk_shutdown = SHUTDOWN_MASK;
+	हाल CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND:
+		/* Modem has बंदd this connection, or device is करोwn. */
+		cf_sk->sk.sk_shutकरोwn = SHUTDOWN_MASK;
 		cf_sk->sk.sk_err = ECONNRESET;
 		set_rx_flow_on(cf_sk);
 		cf_sk->sk.sk_error_report(&cf_sk->sk);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_debug("Unexpected flow command %d\n", flow);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void caif_check_flow_release(struct sock *sk)
-{
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
+अटल व्योम caअगर_check_flow_release(काष्ठा sock *sk)
+अणु
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
 
-	if (rx_flow_is_on(cf_sk))
-		return;
+	अगर (rx_flow_is_on(cf_sk))
+		वापस;
 
-	if (atomic_read(&sk->sk_rmem_alloc) <= sk_rcvbuf_lowwater(cf_sk)) {
+	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc) <= sk_rcvbuf_lowwater(cf_sk)) अणु
 			set_rx_flow_on(cf_sk);
-			caif_flow_ctrl(sk, CAIF_MODEMCMD_FLOW_ON_REQ);
-	}
-}
+			caअगर_flow_ctrl(sk, CAIF_MODEMCMD_FLOW_ON_REQ);
+	पूर्ण
+पूर्ण
 
 /*
- * Copied from unix_dgram_recvmsg, but removed credit checks,
+ * Copied from unix_dgram_recvmsg, but हटाओd credit checks,
  * changed locking, address handling and added MSG_TRUNC.
  */
-static int caif_seqpkt_recvmsg(struct socket *sock, struct msghdr *m,
-			       size_t len, int flags)
+अटल पूर्णांक caअगर_seqpkt_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *m,
+			       माप_प्रकार len, पूर्णांक flags)
 
-{
-	struct sock *sk = sock->sk;
-	struct sk_buff *skb;
-	int ret;
-	int copylen;
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret;
+	पूर्णांक copylen;
 
 	ret = -EOPNOTSUPP;
-	if (flags & MSG_OOB)
-		goto read_error;
+	अगर (flags & MSG_OOB)
+		जाओ पढ़ो_error;
 
 	skb = skb_recv_datagram(sk, flags, 0 , &ret);
-	if (!skb)
-		goto read_error;
+	अगर (!skb)
+		जाओ पढ़ो_error;
 	copylen = skb->len;
-	if (len < copylen) {
+	अगर (len < copylen) अणु
 		m->msg_flags |= MSG_TRUNC;
 		copylen = len;
-	}
+	पूर्ण
 
 	ret = skb_copy_datagram_msg(skb, 0, m, copylen);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
 	ret = (flags & MSG_TRUNC) ? skb->len : copylen;
-out_free:
-	skb_free_datagram(sk, skb);
-	caif_check_flow_release(sk);
-	return ret;
+out_मुक्त:
+	skb_मुक्त_datagram(sk, skb);
+	caअगर_check_flow_release(sk);
+	वापस ret;
 
-read_error:
-	return ret;
-}
+पढ़ो_error:
+	वापस ret;
+पूर्ण
 
 
-/* Copied from unix_stream_wait_data, identical except for lock call. */
-static long caif_stream_data_wait(struct sock *sk, long timeo)
-{
-	DEFINE_WAIT(wait);
+/* Copied from unix_stream_रुको_data, identical except क्रम lock call. */
+अटल दीर्घ caअगर_stream_data_रुको(काष्ठा sock *sk, दीर्घ समयo)
+अणु
+	DEFINE_WAIT(रुको);
 	lock_sock(sk);
 
-	for (;;) {
-		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	क्रम (;;) अणु
+		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
 
-		if (!skb_queue_empty(&sk->sk_receive_queue) ||
+		अगर (!skb_queue_empty(&sk->sk_receive_queue) ||
 			sk->sk_err ||
 			sk->sk_state != CAIF_CONNECTED ||
 			sock_flag(sk, SOCK_DEAD) ||
-			(sk->sk_shutdown & RCV_SHUTDOWN) ||
-			signal_pending(current) ||
-			!timeo)
-			break;
+			(sk->sk_shutकरोwn & RCV_SHUTDOWN) ||
+			संकेत_pending(current) ||
+			!समयo)
+			अवरोध;
 
 		sk_set_bit(SOCKWQ_ASYNC_WAITDATA, sk);
 		release_sock(sk);
-		timeo = schedule_timeout(timeo);
+		समयo = schedule_समयout(समयo);
 		lock_sock(sk);
 
-		if (sock_flag(sk, SOCK_DEAD))
-			break;
+		अगर (sock_flag(sk, SOCK_DEAD))
+			अवरोध;
 
 		sk_clear_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	}
+	पूर्ण
 
-	finish_wait(sk_sleep(sk), &wait);
+	finish_रुको(sk_sleep(sk), &रुको);
 	release_sock(sk);
-	return timeo;
-}
+	वापस समयo;
+पूर्ण
 
 
 /*
- * Copied from unix_stream_recvmsg, but removed credit checks,
+ * Copied from unix_stream_recvmsg, but हटाओd credit checks,
  * changed locking calls, changed address handling.
  */
-static int caif_stream_recvmsg(struct socket *sock, struct msghdr *msg,
-			       size_t size, int flags)
-{
-	struct sock *sk = sock->sk;
-	int copied = 0;
-	int target;
-	int err = 0;
-	long timeo;
+अटल पूर्णांक caअगर_stream_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			       माप_प्रकार size, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	पूर्णांक copied = 0;
+	पूर्णांक target;
+	पूर्णांक err = 0;
+	दीर्घ समयo;
 
 	err = -EOPNOTSUPP;
-	if (flags&MSG_OOB)
-		goto out;
+	अगर (flags&MSG_OOB)
+		जाओ out;
 
 	/*
 	 * Lock the socket to prevent queue disordering
-	 * while sleeps in memcpy_tomsg
+	 * जबतक sleeps in स_नकल_tomsg
 	 */
 	err = -EAGAIN;
-	if (sk->sk_state == CAIF_CONNECTING)
-		goto out;
+	अगर (sk->sk_state == CAIF_CONNECTING)
+		जाओ out;
 
-	caif_read_lock(sk);
+	caअगर_पढ़ो_lock(sk);
 	target = sock_rcvlowat(sk, flags&MSG_WAITALL, size);
-	timeo = sock_rcvtimeo(sk, flags&MSG_DONTWAIT);
+	समयo = sock_rcvसमयo(sk, flags&MSG_DONTWAIT);
 
-	do {
-		int chunk;
-		struct sk_buff *skb;
+	करो अणु
+		पूर्णांक chunk;
+		काष्ठा sk_buff *skb;
 
 		lock_sock(sk);
-		if (sock_flag(sk, SOCK_DEAD)) {
+		अगर (sock_flag(sk, SOCK_DEAD)) अणु
 			err = -ECONNRESET;
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 		skb = skb_dequeue(&sk->sk_receive_queue);
-		caif_check_flow_release(sk);
+		caअगर_check_flow_release(sk);
 
-		if (skb == NULL) {
-			if (copied >= target)
-				goto unlock;
+		अगर (skb == शून्य) अणु
+			अगर (copied >= target)
+				जाओ unlock;
 			/*
 			 *	POSIX 1003.1g mandates this order.
 			 */
 			err = sock_error(sk);
-			if (err)
-				goto unlock;
+			अगर (err)
+				जाओ unlock;
 			err = -ECONNRESET;
-			if (sk->sk_shutdown & RCV_SHUTDOWN)
-				goto unlock;
+			अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+				जाओ unlock;
 
 			err = -EPIPE;
-			if (sk->sk_state != CAIF_CONNECTED)
-				goto unlock;
-			if (sock_flag(sk, SOCK_DEAD))
-				goto unlock;
+			अगर (sk->sk_state != CAIF_CONNECTED)
+				जाओ unlock;
+			अगर (sock_flag(sk, SOCK_DEAD))
+				जाओ unlock;
 
 			release_sock(sk);
 
 			err = -EAGAIN;
-			if (!timeo)
-				break;
+			अगर (!समयo)
+				अवरोध;
 
-			caif_read_unlock(sk);
+			caअगर_पढ़ो_unlock(sk);
 
-			timeo = caif_stream_data_wait(sk, timeo);
+			समयo = caअगर_stream_data_रुको(sk, समयo);
 
-			if (signal_pending(current)) {
-				err = sock_intr_errno(timeo);
-				goto out;
-			}
-			caif_read_lock(sk);
-			continue;
+			अगर (संकेत_pending(current)) अणु
+				err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+				जाओ out;
+			पूर्ण
+			caअगर_पढ़ो_lock(sk);
+			जारी;
 unlock:
 			release_sock(sk);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		release_sock(sk);
-		chunk = min_t(unsigned int, skb->len, size);
-		if (memcpy_to_msg(msg, skb->data, chunk)) {
+		chunk = min_t(अचिन्हित पूर्णांक, skb->len, size);
+		अगर (स_नकल_to_msg(msg, skb->data, chunk)) अणु
 			skb_queue_head(&sk->sk_receive_queue, skb);
-			if (copied == 0)
+			अगर (copied == 0)
 				copied = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		copied += chunk;
 		size -= chunk;
 
-		/* Mark read part of skb as used */
-		if (!(flags & MSG_PEEK)) {
+		/* Mark पढ़ो part of skb as used */
+		अगर (!(flags & MSG_PEEK)) अणु
 			skb_pull(skb, chunk);
 
-			/* put the skb back if we didn't use it up. */
-			if (skb->len) {
+			/* put the skb back अगर we didn't use it up. */
+			अगर (skb->len) अणु
 				skb_queue_head(&sk->sk_receive_queue, skb);
-				break;
-			}
-			kfree_skb(skb);
+				अवरोध;
+			पूर्ण
+			kमुक्त_skb(skb);
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * It is questionable, see note in unix_dgram_recvmsg.
 			 */
-			/* put message back and return */
+			/* put message back and वापस */
 			skb_queue_head(&sk->sk_receive_queue, skb);
-			break;
-		}
-	} while (size);
-	caif_read_unlock(sk);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (size);
+	caअगर_पढ़ो_unlock(sk);
 
 out:
-	return copied ? : err;
-}
+	वापस copied ? : err;
+पूर्ण
 
 /*
- * Copied from sock.c:sock_wait_for_wmem, but change to wait for
+ * Copied from sock.c:sock_रुको_क्रम_wmem, but change to रुको क्रम
  * CAIF flow-on and sock_writable.
  */
-static long caif_wait_for_flow_on(struct caifsock *cf_sk,
-				  int wait_writeable, long timeo, int *err)
-{
-	struct sock *sk = &cf_sk->sk;
-	DEFINE_WAIT(wait);
-	for (;;) {
+अटल दीर्घ caअगर_रुको_क्रम_flow_on(काष्ठा caअगरsock *cf_sk,
+				  पूर्णांक रुको_ग_लिखोable, दीर्घ समयo, पूर्णांक *err)
+अणु
+	काष्ठा sock *sk = &cf_sk->sk;
+	DEFINE_WAIT(रुको);
+	क्रम (;;) अणु
 		*err = 0;
-		if (tx_flow_is_on(cf_sk) &&
-			(!wait_writeable || sock_writeable(&cf_sk->sk)))
-			break;
+		अगर (tx_flow_is_on(cf_sk) &&
+			(!रुको_ग_लिखोable || sock_ग_लिखोable(&cf_sk->sk)))
+			अवरोध;
 		*err = -ETIMEDOUT;
-		if (!timeo)
-			break;
+		अगर (!समयo)
+			अवरोध;
 		*err = -ERESTARTSYS;
-		if (signal_pending(current))
-			break;
-		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+		अगर (संकेत_pending(current))
+			अवरोध;
+		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
 		*err = -ECONNRESET;
-		if (sk->sk_shutdown & SHUTDOWN_MASK)
-			break;
+		अगर (sk->sk_shutकरोwn & SHUTDOWN_MASK)
+			अवरोध;
 		*err = -sk->sk_err;
-		if (sk->sk_err)
-			break;
+		अगर (sk->sk_err)
+			अवरोध;
 		*err = -EPIPE;
-		if (cf_sk->sk.sk_state != CAIF_CONNECTED)
-			break;
-		timeo = schedule_timeout(timeo);
-	}
-	finish_wait(sk_sleep(sk), &wait);
-	return timeo;
-}
+		अगर (cf_sk->sk.sk_state != CAIF_CONNECTED)
+			अवरोध;
+		समयo = schedule_समयout(समयo);
+	पूर्ण
+	finish_रुको(sk_sleep(sk), &रुको);
+	वापस समयo;
+पूर्ण
 
 /*
  * Transmit a SKB. The device may temporarily request re-transmission
- * by returning EAGAIN.
+ * by वापसing EAGAIN.
  */
-static int transmit_skb(struct sk_buff *skb, struct caifsock *cf_sk,
-			int noblock, long timeo)
-{
-	struct cfpkt *pkt;
+अटल पूर्णांक transmit_skb(काष्ठा sk_buff *skb, काष्ठा caअगरsock *cf_sk,
+			पूर्णांक noblock, दीर्घ समयo)
+अणु
+	काष्ठा cfpkt *pkt;
 
-	pkt = cfpkt_fromnative(CAIF_DIR_OUT, skb);
-	memset(skb->cb, 0, sizeof(struct caif_payload_info));
+	pkt = cfpkt_fromnative(CAIF_सूची_OUT, skb);
+	स_रखो(skb->cb, 0, माप(काष्ठा caअगर_payload_info));
 	cfpkt_set_prio(pkt, cf_sk->sk.sk_priority);
 
-	if (cf_sk->layer.dn == NULL) {
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+	अगर (cf_sk->layer.dn == शून्य) अणु
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
-	return cf_sk->layer.dn->transmit(cf_sk->layer.dn, pkt);
-}
+	वापस cf_sk->layer.dn->transmit(cf_sk->layer.dn, pkt);
+पूर्ण
 
 /* Copied from af_unix:unix_dgram_sendmsg, and adapted to CAIF */
-static int caif_seqpkt_sendmsg(struct socket *sock, struct msghdr *msg,
-			       size_t len)
-{
-	struct sock *sk = sock->sk;
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
-	int buffer_size;
-	int ret = 0;
-	struct sk_buff *skb = NULL;
-	int noblock;
-	long timeo;
-	caif_assert(cf_sk);
+अटल पूर्णांक caअगर_seqpkt_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			       माप_प्रकार len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	पूर्णांक buffer_size;
+	पूर्णांक ret = 0;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक noblock;
+	दीर्घ समयo;
+	caअगर_निश्चित(cf_sk);
 	ret = sock_error(sk);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = -EOPNOTSUPP;
-	if (msg->msg_flags&MSG_OOB)
-		goto err;
+	अगर (msg->msg_flags&MSG_OOB)
+		जाओ err;
 
 	ret = -EOPNOTSUPP;
-	if (msg->msg_namelen)
-		goto err;
+	अगर (msg->msg_namelen)
+		जाओ err;
 
 	ret = -EINVAL;
-	if (unlikely(msg->msg_iter.iov->iov_base == NULL))
-		goto err;
+	अगर (unlikely(msg->msg_iter.iov->iov_base == शून्य))
+		जाओ err;
 	noblock = msg->msg_flags & MSG_DONTWAIT;
 
-	timeo = sock_sndtimeo(sk, noblock);
-	timeo = caif_wait_for_flow_on(container_of(sk, struct caifsock, sk),
-				1, timeo, &ret);
+	समयo = sock_sndसमयo(sk, noblock);
+	समयo = caअगर_रुको_क्रम_flow_on(container_of(sk, काष्ठा caअगरsock, sk),
+				1, समयo, &ret);
 
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 	ret = -EPIPE;
-	if (cf_sk->sk.sk_state != CAIF_CONNECTED ||
+	अगर (cf_sk->sk.sk_state != CAIF_CONNECTED ||
 		sock_flag(sk, SOCK_DEAD) ||
-		(sk->sk_shutdown & RCV_SHUTDOWN))
-		goto err;
+		(sk->sk_shutकरोwn & RCV_SHUTDOWN))
+		जाओ err;
 
-	/* Error if trying to write more than maximum frame size. */
+	/* Error अगर trying to ग_लिखो more than maximum frame size. */
 	ret = -EMSGSIZE;
-	if (len > cf_sk->maxframe && cf_sk->sk.sk_protocol != CAIFPROTO_RFM)
-		goto err;
+	अगर (len > cf_sk->maxframe && cf_sk->sk.sk_protocol != CAIFPROTO_RFM)
+		जाओ err;
 
 	buffer_size = len + cf_sk->headroom + cf_sk->tailroom;
 
 	ret = -ENOMEM;
 	skb = sock_alloc_send_skb(sk, buffer_size, noblock, &ret);
 
-	if (!skb || skb_tailroom(skb) < buffer_size)
-		goto err;
+	अगर (!skb || skb_tailroom(skb) < buffer_size)
+		जाओ err;
 
 	skb_reserve(skb, cf_sk->headroom);
 
-	ret = memcpy_from_msg(skb_put(skb, len), msg, len);
+	ret = स_नकल_from_msg(skb_put(skb, len), msg, len);
 
-	if (ret)
-		goto err;
-	ret = transmit_skb(skb, cf_sk, noblock, timeo);
-	if (ret < 0)
-		/* skb is already freed */
-		return ret;
+	अगर (ret)
+		जाओ err;
+	ret = transmit_skb(skb, cf_sk, noblock, समयo);
+	अगर (ret < 0)
+		/* skb is alपढ़ोy मुक्तd */
+		वापस ret;
 
-	return len;
+	वापस len;
 err:
-	kfree_skb(skb);
-	return ret;
-}
+	kमुक्त_skb(skb);
+	वापस ret;
+पूर्ण
 
 /*
  * Copied from unix_stream_sendmsg and adapted to CAIF:
- * Changed removed permission handling and added waiting for flow on
+ * Changed हटाओd permission handling and added रुकोing क्रम flow on
  * and other minor adaptations.
  */
-static int caif_stream_sendmsg(struct socket *sock, struct msghdr *msg,
-			       size_t len)
-{
-	struct sock *sk = sock->sk;
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
-	int err, size;
-	struct sk_buff *skb;
-	int sent = 0;
-	long timeo;
+अटल पूर्णांक caअगर_stream_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			       माप_प्रकार len)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	पूर्णांक err, size;
+	काष्ठा sk_buff *skb;
+	पूर्णांक sent = 0;
+	दीर्घ समयo;
 
 	err = -EOPNOTSUPP;
-	if (unlikely(msg->msg_flags&MSG_OOB))
-		goto out_err;
+	अगर (unlikely(msg->msg_flags&MSG_OOB))
+		जाओ out_err;
 
-	if (unlikely(msg->msg_namelen))
-		goto out_err;
+	अगर (unlikely(msg->msg_namelen))
+		जाओ out_err;
 
-	timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
-	timeo = caif_wait_for_flow_on(cf_sk, 1, timeo, &err);
+	समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
+	समयo = caअगर_रुको_क्रम_flow_on(cf_sk, 1, समयo, &err);
 
-	if (unlikely(sk->sk_shutdown & SEND_SHUTDOWN))
-		goto pipe_err;
+	अगर (unlikely(sk->sk_shutकरोwn & SEND_SHUTDOWN))
+		जाओ pipe_err;
 
-	while (sent < len) {
+	जबतक (sent < len) अणु
 
 		size = len-sent;
 
-		if (size > cf_sk->maxframe)
+		अगर (size > cf_sk->maxframe)
 			size = cf_sk->maxframe;
 
 		/* If size is more than half of sndbuf, chop up message */
-		if (size > ((sk->sk_sndbuf >> 1) - 64))
+		अगर (size > ((sk->sk_sndbuf >> 1) - 64))
 			size = (sk->sk_sndbuf >> 1) - 64;
 
-		if (size > SKB_MAX_ALLOC)
+		अगर (size > SKB_MAX_ALLOC)
 			size = SKB_MAX_ALLOC;
 
 		skb = sock_alloc_send_skb(sk,
@@ -632,94 +633,94 @@ static int caif_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 					cf_sk->tailroom,
 					msg->msg_flags&MSG_DONTWAIT,
 					&err);
-		if (skb == NULL)
-			goto out_err;
+		अगर (skb == शून्य)
+			जाओ out_err;
 
 		skb_reserve(skb, cf_sk->headroom);
 		/*
 		 *	If you pass two values to the sock_alloc_send_skb
 		 *	it tries to grab the large buffer with GFP_NOFS
-		 *	(which can fail easily), and if it fails grab the
+		 *	(which can fail easily), and अगर it fails grab the
 		 *	fallback size buffer which is under a page and will
 		 *	succeed. [Alan]
 		 */
-		size = min_t(int, size, skb_tailroom(skb));
+		size = min_t(पूर्णांक, size, skb_tailroom(skb));
 
-		err = memcpy_from_msg(skb_put(skb, size), msg, size);
-		if (err) {
-			kfree_skb(skb);
-			goto out_err;
-		}
+		err = स_नकल_from_msg(skb_put(skb, size), msg, size);
+		अगर (err) अणु
+			kमुक्त_skb(skb);
+			जाओ out_err;
+		पूर्ण
 		err = transmit_skb(skb, cf_sk,
-				msg->msg_flags&MSG_DONTWAIT, timeo);
-		if (err < 0)
-			/* skb is already freed */
-			goto pipe_err;
+				msg->msg_flags&MSG_DONTWAIT, समयo);
+		अगर (err < 0)
+			/* skb is alपढ़ोy मुक्तd */
+			जाओ pipe_err;
 
 		sent += size;
-	}
+	पूर्ण
 
-	return sent;
+	वापस sent;
 
 pipe_err:
-	if (sent == 0 && !(msg->msg_flags&MSG_NOSIGNAL))
+	अगर (sent == 0 && !(msg->msg_flags&MSG_NOSIGNAL))
 		send_sig(SIGPIPE, current, 0);
 	err = -EPIPE;
 out_err:
-	return sent ? : err;
-}
+	वापस sent ? : err;
+पूर्ण
 
-static int setsockopt(struct socket *sock, int lvl, int opt, sockptr_t ov,
-		unsigned int ol)
-{
-	struct sock *sk = sock->sk;
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
-	int linksel;
+अटल पूर्णांक setsockopt(काष्ठा socket *sock, पूर्णांक lvl, पूर्णांक opt, sockptr_t ov,
+		अचिन्हित पूर्णांक ol)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	पूर्णांक linksel;
 
-	if (cf_sk->sk.sk_socket->state != SS_UNCONNECTED)
-		return -ENOPROTOOPT;
+	अगर (cf_sk->sk.sk_socket->state != SS_UNCONNECTED)
+		वापस -ENOPROTOOPT;
 
-	switch (opt) {
-	case CAIFSO_LINK_SELECT:
-		if (ol < sizeof(int))
-			return -EINVAL;
-		if (lvl != SOL_CAIF)
-			goto bad_sol;
-		if (copy_from_sockptr(&linksel, ov, sizeof(int)))
-			return -EINVAL;
+	चयन (opt) अणु
+	हाल CAIFSO_LINK_SELECT:
+		अगर (ol < माप(पूर्णांक))
+			वापस -EINVAL;
+		अगर (lvl != SOL_CAIF)
+			जाओ bad_sol;
+		अगर (copy_from_sockptr(&linksel, ov, माप(पूर्णांक)))
+			वापस -EINVAL;
 		lock_sock(&(cf_sk->sk));
 		cf_sk->conn_req.link_selector = linksel;
 		release_sock(&cf_sk->sk);
-		return 0;
+		वापस 0;
 
-	case CAIFSO_REQ_PARAM:
-		if (lvl != SOL_CAIF)
-			goto bad_sol;
-		if (cf_sk->sk.sk_protocol != CAIFPROTO_UTIL)
-			return -ENOPROTOOPT;
+	हाल CAIFSO_REQ_PARAM:
+		अगर (lvl != SOL_CAIF)
+			जाओ bad_sol;
+		अगर (cf_sk->sk.sk_protocol != CAIFPROTO_UTIL)
+			वापस -ENOPROTOOPT;
 		lock_sock(&(cf_sk->sk));
-		if (ol > sizeof(cf_sk->conn_req.param.data) ||
-		    copy_from_sockptr(&cf_sk->conn_req.param.data, ov, ol)) {
+		अगर (ol > माप(cf_sk->conn_req.param.data) ||
+		    copy_from_sockptr(&cf_sk->conn_req.param.data, ov, ol)) अणु
 			release_sock(&cf_sk->sk);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		cf_sk->conn_req.param.size = ol;
 		release_sock(&cf_sk->sk);
-		return 0;
+		वापस 0;
 
-	default:
-		return -ENOPROTOOPT;
-	}
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 bad_sol:
-	return -ENOPROTOOPT;
+	वापस -ENOPROTOOPT;
 
-}
+पूर्ण
 
 /*
- * caif_connect() - Connect a CAIF Socket
- * Copied and modified af_irda.c:irda_connect().
+ * caअगर_connect() - Connect a CAIF Socket
+ * Copied and modअगरied af_irda.c:irda_connect().
  *
  * Note : by consulting "errno", the user space caller may learn the cause
  * of the failure. Most of them are visible in the function, others may come
@@ -728,395 +729,395 @@ bad_sol:
  *  o -ESOCKTNOSUPPORT: bad socket type or protocol
  *  o -EINVAL: bad socket address, or CAIF link type
  *  o -ECONNREFUSED: remote end refused the connection.
- *  o -EINPROGRESS: connect request sent but timed out (or non-blocking)
- *  o -EISCONN: already connected.
- *  o -ETIMEDOUT: Connection timed out (send timeout)
+ *  o -EINPROGRESS: connect request sent but समयd out (or non-blocking)
+ *  o -EISCONN: alपढ़ोy connected.
+ *  o -ETIMEDOUT: Connection समयd out (send समयout)
  *  o -ENODEV: No link layer to send request
- *  o -ECONNRESET: Received Shutdown indication or lost link layer
+ *  o -ECONNRESET: Received Shutकरोwn indication or lost link layer
  *  o -ENOMEM: Out of memory
  *
  *  State Strategy:
  *  o sk_state: holds the CAIF_* protocol state, it's updated by
- *	caif_ctrl_cb.
+ *	caअगर_ctrl_cb.
  *  o sock->state: holds the SS_* socket state and is updated by connect and
  *	disconnect.
  */
-static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
-			int addr_len, int flags)
-{
-	struct sock *sk = sock->sk;
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
-	long timeo;
-	int err;
-	int ifindex, headroom, tailroom;
-	unsigned int mtu;
-	struct net_device *dev;
+अटल पूर्णांक caअगर_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+			पूर्णांक addr_len, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	दीर्घ समयo;
+	पूर्णांक err;
+	पूर्णांक अगरindex, headroom, tailroom;
+	अचिन्हित पूर्णांक mtu;
+	काष्ठा net_device *dev;
 
 	lock_sock(sk);
 
 	err = -EINVAL;
-	if (addr_len < offsetofend(struct sockaddr, sa_family))
-		goto out;
+	अगर (addr_len < दुरत्वend(काष्ठा sockaddr, sa_family))
+		जाओ out;
 
 	err = -EAFNOSUPPORT;
-	if (uaddr->sa_family != AF_CAIF)
-		goto out;
+	अगर (uaddr->sa_family != AF_CAIF)
+		जाओ out;
 
-	switch (sock->state) {
-	case SS_UNCONNECTED:
-		/* Normal case, a fresh connect */
-		caif_assert(sk->sk_state == CAIF_DISCONNECTED);
-		break;
-	case SS_CONNECTING:
-		switch (sk->sk_state) {
-		case CAIF_CONNECTED:
+	चयन (sock->state) अणु
+	हाल SS_UNCONNECTED:
+		/* Normal हाल, a fresh connect */
+		caअगर_निश्चित(sk->sk_state == CAIF_DISCONNECTED);
+		अवरोध;
+	हाल SS_CONNECTING:
+		चयन (sk->sk_state) अणु
+		हाल CAIF_CONNECTED:
 			sock->state = SS_CONNECTED;
 			err = -EISCONN;
-			goto out;
-		case CAIF_DISCONNECTED:
+			जाओ out;
+		हाल CAIF_DISCONNECTED:
 			/* Reconnect allowed */
-			break;
-		case CAIF_CONNECTING:
+			अवरोध;
+		हाल CAIF_CONNECTING:
 			err = -EALREADY;
-			if (flags & O_NONBLOCK)
-				goto out;
-			goto wait_connect;
-		}
-		break;
-	case SS_CONNECTED:
-		caif_assert(sk->sk_state == CAIF_CONNECTED ||
+			अगर (flags & O_NONBLOCK)
+				जाओ out;
+			जाओ रुको_connect;
+		पूर्ण
+		अवरोध;
+	हाल SS_CONNECTED:
+		caअगर_निश्चित(sk->sk_state == CAIF_CONNECTED ||
 				sk->sk_state == CAIF_DISCONNECTED);
-		if (sk->sk_shutdown & SHUTDOWN_MASK) {
+		अगर (sk->sk_shutकरोwn & SHUTDOWN_MASK) अणु
 			/* Allow re-connect after SHUTDOWN_IND */
-			caif_disconnect_client(sock_net(sk), &cf_sk->layer);
-			caif_free_client(&cf_sk->layer);
-			break;
-		}
+			caअगर_disconnect_client(sock_net(sk), &cf_sk->layer);
+			caअगर_मुक्त_client(&cf_sk->layer);
+			अवरोध;
+		पूर्ण
 		/* No reconnect on a seqpacket socket */
 		err = -EISCONN;
-		goto out;
-	case SS_DISCONNECTING:
-	case SS_FREE:
-		caif_assert(1); /*Should never happen */
-		break;
-	}
+		जाओ out;
+	हाल SS_DISCONNECTING:
+	हाल SS_FREE:
+		caअगर_निश्चित(1); /*Should never happen */
+		अवरोध;
+	पूर्ण
 	sk->sk_state = CAIF_DISCONNECTED;
 	sock->state = SS_UNCONNECTED;
-	sk_stream_kill_queues(&cf_sk->sk);
+	sk_stream_समाप्त_queues(&cf_sk->sk);
 
 	err = -EINVAL;
-	if (addr_len != sizeof(struct sockaddr_caif))
-		goto out;
+	अगर (addr_len != माप(काष्ठा sockaddr_caअगर))
+		जाओ out;
 
-	memcpy(&cf_sk->conn_req.sockaddr, uaddr,
-		sizeof(struct sockaddr_caif));
+	स_नकल(&cf_sk->conn_req.sockaddr, uaddr,
+		माप(काष्ठा sockaddr_caअगर));
 
 	/* Move to connecting socket, start sending Connect Requests */
 	sock->state = SS_CONNECTING;
 	sk->sk_state = CAIF_CONNECTING;
 
 	/* Check priority value comming from socket */
-	/* if priority value is out of range it will be ajusted */
-	if (cf_sk->sk.sk_priority > CAIF_PRIO_MAX)
+	/* अगर priority value is out of range it will be ajusted */
+	अगर (cf_sk->sk.sk_priority > CAIF_PRIO_MAX)
 		cf_sk->conn_req.priority = CAIF_PRIO_MAX;
-	else if (cf_sk->sk.sk_priority < CAIF_PRIO_MIN)
+	अन्यथा अगर (cf_sk->sk.sk_priority < CAIF_PRIO_MIN)
 		cf_sk->conn_req.priority = CAIF_PRIO_MIN;
-	else
+	अन्यथा
 		cf_sk->conn_req.priority = cf_sk->sk.sk_priority;
 
-	/*ifindex = id of the interface.*/
-	cf_sk->conn_req.ifindex = cf_sk->sk.sk_bound_dev_if;
+	/*अगरindex = id of the पूर्णांकerface.*/
+	cf_sk->conn_req.अगरindex = cf_sk->sk.sk_bound_dev_अगर;
 
-	cf_sk->layer.receive = caif_sktrecv_cb;
+	cf_sk->layer.receive = caअगर_sktrecv_cb;
 
-	err = caif_connect_client(sock_net(sk), &cf_sk->conn_req,
-				&cf_sk->layer, &ifindex, &headroom, &tailroom);
+	err = caअगर_connect_client(sock_net(sk), &cf_sk->conn_req,
+				&cf_sk->layer, &अगरindex, &headroom, &tailroom);
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		cf_sk->sk.sk_socket->state = SS_UNCONNECTED;
 		cf_sk->sk.sk_state = CAIF_DISCONNECTED;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = -ENODEV;
-	rcu_read_lock();
-	dev = dev_get_by_index_rcu(sock_net(sk), ifindex);
-	if (!dev) {
-		rcu_read_unlock();
-		goto out;
-	}
+	rcu_पढ़ो_lock();
+	dev = dev_get_by_index_rcu(sock_net(sk), अगरindex);
+	अगर (!dev) अणु
+		rcu_पढ़ो_unlock();
+		जाओ out;
+	पूर्ण
 	cf_sk->headroom = LL_RESERVED_SPACE_EXTRA(dev, headroom);
 	mtu = dev->mtu;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	cf_sk->tailroom = tailroom;
 	cf_sk->maxframe = mtu - (headroom + tailroom);
-	if (cf_sk->maxframe < 1) {
+	अगर (cf_sk->maxframe < 1) अणु
 		pr_warn("CAIF Interface MTU too small (%d)\n", dev->mtu);
 		err = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = -EINPROGRESS;
-wait_connect:
+रुको_connect:
 
-	if (sk->sk_state != CAIF_CONNECTED && (flags & O_NONBLOCK))
-		goto out;
+	अगर (sk->sk_state != CAIF_CONNECTED && (flags & O_NONBLOCK))
+		जाओ out;
 
-	timeo = sock_sndtimeo(sk, flags & O_NONBLOCK);
+	समयo = sock_sndसमयo(sk, flags & O_NONBLOCK);
 
 	release_sock(sk);
 	err = -ERESTARTSYS;
-	timeo = wait_event_interruptible_timeout(*sk_sleep(sk),
+	समयo = रुको_event_पूर्णांकerruptible_समयout(*sk_sleep(sk),
 			sk->sk_state != CAIF_CONNECTING,
-			timeo);
+			समयo);
 	lock_sock(sk);
-	if (timeo < 0)
-		goto out; /* -ERESTARTSYS */
+	अगर (समयo < 0)
+		जाओ out; /* -ERESTARTSYS */
 
 	err = -ETIMEDOUT;
-	if (timeo == 0 && sk->sk_state != CAIF_CONNECTED)
-		goto out;
-	if (sk->sk_state != CAIF_CONNECTED) {
+	अगर (समयo == 0 && sk->sk_state != CAIF_CONNECTED)
+		जाओ out;
+	अगर (sk->sk_state != CAIF_CONNECTED) अणु
 		sock->state = SS_UNCONNECTED;
 		err = sock_error(sk);
-		if (!err)
+		अगर (!err)
 			err = -ECONNREFUSED;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	sock->state = SS_CONNECTED;
 	err = 0;
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * caif_release() - Disconnect a CAIF Socket
- * Copied and modified af_irda.c:irda_release().
+ * caअगर_release() - Disconnect a CAIF Socket
+ * Copied and modअगरied af_irda.c:irda_release().
  */
-static int caif_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
+अटल पूर्णांक caअगर_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
 
-	if (!sk)
-		return 0;
+	अगर (!sk)
+		वापस 0;
 
 	set_tx_flow_off(cf_sk);
 
 	/*
-	 * Ensure that packets are not queued after this point in time.
-	 * caif_queue_rcv_skb checks SOCK_DEAD holding the queue lock,
+	 * Ensure that packets are not queued after this poपूर्णांक in समय.
+	 * caअगर_queue_rcv_skb checks SOCK_DEAD holding the queue lock,
 	 * this ensures no packets when sock is dead.
 	 */
 	spin_lock_bh(&sk->sk_receive_queue.lock);
 	sock_set_flag(sk, SOCK_DEAD);
 	spin_unlock_bh(&sk->sk_receive_queue.lock);
-	sock->sk = NULL;
+	sock->sk = शून्य;
 
 	WARN_ON(IS_ERR(cf_sk->debugfs_socket_dir));
-	debugfs_remove_recursive(cf_sk->debugfs_socket_dir);
+	debugfs_हटाओ_recursive(cf_sk->debugfs_socket_dir);
 
 	lock_sock(&(cf_sk->sk));
 	sk->sk_state = CAIF_DISCONNECTED;
-	sk->sk_shutdown = SHUTDOWN_MASK;
+	sk->sk_shutकरोwn = SHUTDOWN_MASK;
 
-	caif_disconnect_client(sock_net(sk), &cf_sk->layer);
+	caअगर_disconnect_client(sock_net(sk), &cf_sk->layer);
 	cf_sk->sk.sk_socket->state = SS_DISCONNECTING;
-	wake_up_interruptible_poll(sk_sleep(sk), EPOLLERR|EPOLLHUP);
+	wake_up_पूर्णांकerruptible_poll(sk_sleep(sk), EPOLLERR|EPOLLHUP);
 
 	sock_orphan(sk);
-	sk_stream_kill_queues(&cf_sk->sk);
+	sk_stream_समाप्त_queues(&cf_sk->sk);
 	release_sock(sk);
 	sock_put(sk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Copied from af_unix.c:unix_poll(), added CAIF tx_flow handling */
-static __poll_t caif_poll(struct file *file,
-			      struct socket *sock, poll_table *wait)
-{
-	struct sock *sk = sock->sk;
+अटल __poll_t caअगर_poll(काष्ठा file *file,
+			      काष्ठा socket *sock, poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
 	__poll_t mask;
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
 
-	sock_poll_wait(file, sock, wait);
+	sock_poll_रुको(file, sock, रुको);
 	mask = 0;
 
 	/* exceptional events? */
-	if (sk->sk_err)
+	अगर (sk->sk_err)
 		mask |= EPOLLERR;
-	if (sk->sk_shutdown == SHUTDOWN_MASK)
+	अगर (sk->sk_shutकरोwn == SHUTDOWN_MASK)
 		mask |= EPOLLHUP;
-	if (sk->sk_shutdown & RCV_SHUTDOWN)
+	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
 		mask |= EPOLLRDHUP;
 
-	/* readable? */
-	if (!skb_queue_empty_lockless(&sk->sk_receive_queue) ||
-		(sk->sk_shutdown & RCV_SHUTDOWN))
+	/* पढ़ोable? */
+	अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue) ||
+		(sk->sk_shutकरोwn & RCV_SHUTDOWN))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
 	/*
-	 * we set writable also when the other side has shut down the
+	 * we set writable also when the other side has shut करोwn the
 	 * connection. This prevents stuck sockets.
 	 */
-	if (sock_writeable(sk) && tx_flow_is_on(cf_sk))
+	अगर (sock_ग_लिखोable(sk) && tx_flow_is_on(cf_sk))
 		mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static const struct proto_ops caif_seqpacket_ops = {
+अटल स्थिर काष्ठा proto_ops caअगर_seqpacket_ops = अणु
 	.family = PF_CAIF,
 	.owner = THIS_MODULE,
-	.release = caif_release,
+	.release = caअगर_release,
 	.bind = sock_no_bind,
-	.connect = caif_connect,
+	.connect = caअगर_connect,
 	.socketpair = sock_no_socketpair,
 	.accept = sock_no_accept,
 	.getname = sock_no_getname,
-	.poll = caif_poll,
+	.poll = caअगर_poll,
 	.ioctl = sock_no_ioctl,
 	.listen = sock_no_listen,
-	.shutdown = sock_no_shutdown,
+	.shutकरोwn = sock_no_shutकरोwn,
 	.setsockopt = setsockopt,
-	.sendmsg = caif_seqpkt_sendmsg,
-	.recvmsg = caif_seqpkt_recvmsg,
+	.sendmsg = caअगर_seqpkt_sendmsg,
+	.recvmsg = caअगर_seqpkt_recvmsg,
 	.mmap = sock_no_mmap,
 	.sendpage = sock_no_sendpage,
-};
+पूर्ण;
 
-static const struct proto_ops caif_stream_ops = {
+अटल स्थिर काष्ठा proto_ops caअगर_stream_ops = अणु
 	.family = PF_CAIF,
 	.owner = THIS_MODULE,
-	.release = caif_release,
+	.release = caअगर_release,
 	.bind = sock_no_bind,
-	.connect = caif_connect,
+	.connect = caअगर_connect,
 	.socketpair = sock_no_socketpair,
 	.accept = sock_no_accept,
 	.getname = sock_no_getname,
-	.poll = caif_poll,
+	.poll = caअगर_poll,
 	.ioctl = sock_no_ioctl,
 	.listen = sock_no_listen,
-	.shutdown = sock_no_shutdown,
+	.shutकरोwn = sock_no_shutकरोwn,
 	.setsockopt = setsockopt,
-	.sendmsg = caif_stream_sendmsg,
-	.recvmsg = caif_stream_recvmsg,
+	.sendmsg = caअगर_stream_sendmsg,
+	.recvmsg = caअगर_stream_recvmsg,
 	.mmap = sock_no_mmap,
 	.sendpage = sock_no_sendpage,
-};
+पूर्ण;
 
 /* This function is called when a socket is finally destroyed. */
-static void caif_sock_destructor(struct sock *sk)
-{
-	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
-	caif_assert(!refcount_read(&sk->sk_wmem_alloc));
-	caif_assert(sk_unhashed(sk));
-	caif_assert(!sk->sk_socket);
-	if (!sock_flag(sk, SOCK_DEAD)) {
+अटल व्योम caअगर_sock_deकाष्ठाor(काष्ठा sock *sk)
+अणु
+	काष्ठा caअगरsock *cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
+	caअगर_निश्चित(!refcount_पढ़ो(&sk->sk_wmem_alloc));
+	caअगर_निश्चित(sk_unhashed(sk));
+	caअगर_निश्चित(!sk->sk_socket);
+	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
 		pr_debug("Attempt to release alive CAIF socket: %p\n", sk);
-		return;
-	}
-	sk_stream_kill_queues(&cf_sk->sk);
-	caif_free_client(&cf_sk->layer);
-}
+		वापस;
+	पूर्ण
+	sk_stream_समाप्त_queues(&cf_sk->sk);
+	caअगर_मुक्त_client(&cf_sk->layer);
+पूर्ण
 
-static int caif_create(struct net *net, struct socket *sock, int protocol,
-		       int kern)
-{
-	struct sock *sk = NULL;
-	struct caifsock *cf_sk = NULL;
-	static struct proto prot = {.name = "PF_CAIF",
+अटल पूर्णांक caअगर_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
+		       पूर्णांक kern)
+अणु
+	काष्ठा sock *sk = शून्य;
+	काष्ठा caअगरsock *cf_sk = शून्य;
+	अटल काष्ठा proto prot = अणु.name = "PF_CAIF",
 		.owner = THIS_MODULE,
-		.obj_size = sizeof(struct caifsock),
-		.useroffset = offsetof(struct caifsock, conn_req.param),
-		.usersize = sizeof_field(struct caifsock, conn_req.param)
-	};
+		.obj_size = माप(काष्ठा caअगरsock),
+		.useroffset = दुरत्व(काष्ठा caअगरsock, conn_req.param),
+		.usersize = माप_field(काष्ठा caअगरsock, conn_req.param)
+	पूर्ण;
 
-	if (!capable(CAP_SYS_ADMIN) && !capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN) && !capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 	/*
-	 * The sock->type specifies the socket type to use.
+	 * The sock->type specअगरies the socket type to use.
 	 * The CAIF socket is a packet stream in the sense
 	 * that it is packet based. CAIF trusts the reliability
 	 * of the link, no resending is implemented.
 	 */
-	if (sock->type == SOCK_SEQPACKET)
-		sock->ops = &caif_seqpacket_ops;
-	else if (sock->type == SOCK_STREAM)
-		sock->ops = &caif_stream_ops;
-	else
-		return -ESOCKTNOSUPPORT;
+	अगर (sock->type == SOCK_SEQPACKET)
+		sock->ops = &caअगर_seqpacket_ops;
+	अन्यथा अगर (sock->type == SOCK_STREAM)
+		sock->ops = &caअगर_stream_ops;
+	अन्यथा
+		वापस -ESOCKTNOSUPPORT;
 
-	if (protocol < 0 || protocol >= CAIFPROTO_MAX)
-		return -EPROTONOSUPPORT;
+	अगर (protocol < 0 || protocol >= CAIFPROTO_MAX)
+		वापस -EPROTONOSUPPORT;
 	/*
 	 * Set the socket state to unconnected.	 The socket state
 	 * is really not used at all in the net/core or socket.c but the
 	 * initialization makes sure that sock->state is not uninitialized.
 	 */
 	sk = sk_alloc(net, PF_CAIF, GFP_KERNEL, &prot, kern);
-	if (!sk)
-		return -ENOMEM;
+	अगर (!sk)
+		वापस -ENOMEM;
 
-	cf_sk = container_of(sk, struct caifsock, sk);
+	cf_sk = container_of(sk, काष्ठा caअगरsock, sk);
 
 	/* Store the protocol */
-	sk->sk_protocol = (unsigned char) protocol;
+	sk->sk_protocol = (अचिन्हित अक्षर) protocol;
 
-	/* Initialize default priority for well-known cases */
-	switch (protocol) {
-	case CAIFPROTO_AT:
+	/* Initialize शेष priority क्रम well-known हालs */
+	चयन (protocol) अणु
+	हाल CAIFPROTO_AT:
 		sk->sk_priority = TC_PRIO_CONTROL;
-		break;
-	case CAIFPROTO_RFM:
+		अवरोध;
+	हाल CAIFPROTO_RFM:
 		sk->sk_priority = TC_PRIO_INTERACTIVE_BULK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sk->sk_priority = TC_PRIO_BESTEFFORT;
-	}
+	पूर्ण
 
 	/*
-	 * Lock in order to try to stop someone from opening the socket
+	 * Lock in order to try to stop someone from खोलोing the socket
 	 * too early.
 	 */
 	lock_sock(&(cf_sk->sk));
 
-	/* Initialize the nozero default sock structure data. */
+	/* Initialize the nozero शेष sock काष्ठाure data. */
 	sock_init_data(sock, sk);
-	sk->sk_destruct = caif_sock_destructor;
+	sk->sk_deकाष्ठा = caअगर_sock_deकाष्ठाor;
 
-	mutex_init(&cf_sk->readlock); /* single task reading lock */
-	cf_sk->layer.ctrlcmd = caif_ctrl_cb;
+	mutex_init(&cf_sk->पढ़ोlock); /* single task पढ़ोing lock */
+	cf_sk->layer.ctrlcmd = caअगर_ctrl_cb;
 	cf_sk->sk.sk_socket->state = SS_UNCONNECTED;
 	cf_sk->sk.sk_state = CAIF_DISCONNECTED;
 
 	set_tx_flow_off(cf_sk);
 	set_rx_flow_on(cf_sk);
 
-	/* Set default options on configuration */
+	/* Set शेष options on configuration */
 	cf_sk->conn_req.link_selector = CAIF_LINK_LOW_LATENCY;
 	cf_sk->conn_req.protocol = protocol;
 	release_sock(&cf_sk->sk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct net_proto_family caif_family_ops = {
+अटल स्थिर काष्ठा net_proto_family caअगर_family_ops = अणु
 	.family = PF_CAIF,
-	.create = caif_create,
+	.create = caअगर_create,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init caif_sktinit_module(void)
-{
-	return sock_register(&caif_family_ops);
-}
+अटल पूर्णांक __init caअगर_sktinit_module(व्योम)
+अणु
+	वापस sock_रेजिस्टर(&caअगर_family_ops);
+पूर्ण
 
-static void __exit caif_sktexit_module(void)
-{
-	sock_unregister(PF_CAIF);
-}
-module_init(caif_sktinit_module);
-module_exit(caif_sktexit_module);
+अटल व्योम __निकास caअगर_sktनिकास_module(व्योम)
+अणु
+	sock_unरेजिस्टर(PF_CAIF);
+पूर्ण
+module_init(caअगर_sktinit_module);
+module_निकास(caअगर_sktनिकास_module);

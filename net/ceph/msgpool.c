@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ceph/ceph_debug.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ceph/ceph_debug.h>
 
-#include <linux/err.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/err.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <linux/ceph/messenger.h>
-#include <linux/ceph/msgpool.h>
+#समावेश <linux/ceph/messenger.h>
+#समावेश <linux/ceph/msgpool.h>
 
-static void *msgpool_alloc(gfp_t gfp_mask, void *arg)
-{
-	struct ceph_msgpool *pool = arg;
-	struct ceph_msg *msg;
+अटल व्योम *msgpool_alloc(gfp_t gfp_mask, व्योम *arg)
+अणु
+	काष्ठा ceph_msgpool *pool = arg;
+	काष्ठा ceph_msg *msg;
 
 	msg = ceph_msg_new2(pool->type, pool->front_len, pool->max_data_items,
 			    gfp_mask, true);
-	if (!msg) {
-		dout("msgpool_alloc %s failed\n", pool->name);
-	} else {
-		dout("msgpool_alloc %s %p\n", pool->name, msg);
+	अगर (!msg) अणु
+		करोut("msgpool_alloc %s failed\n", pool->name);
+	पूर्ण अन्यथा अणु
+		करोut("msgpool_alloc %s %p\n", pool->name, msg);
 		msg->pool = pool;
-	}
-	return msg;
-}
+	पूर्ण
+	वापस msg;
+पूर्ण
 
-static void msgpool_free(void *element, void *arg)
-{
-	struct ceph_msgpool *pool = arg;
-	struct ceph_msg *msg = element;
+अटल व्योम msgpool_मुक्त(व्योम *element, व्योम *arg)
+अणु
+	काष्ठा ceph_msgpool *pool = arg;
+	काष्ठा ceph_msg *msg = element;
 
-	dout("msgpool_release %s %p\n", pool->name, msg);
-	msg->pool = NULL;
+	करोut("msgpool_release %s %p\n", pool->name, msg);
+	msg->pool = शून्य;
 	ceph_msg_put(msg);
-}
+पूर्ण
 
-int ceph_msgpool_init(struct ceph_msgpool *pool, int type,
-		      int front_len, int max_data_items, int size,
-		      const char *name)
-{
-	dout("msgpool %s init\n", name);
+पूर्णांक ceph_msgpool_init(काष्ठा ceph_msgpool *pool, पूर्णांक type,
+		      पूर्णांक front_len, पूर्णांक max_data_items, पूर्णांक size,
+		      स्थिर अक्षर *name)
+अणु
+	करोut("msgpool %s init\n", name);
 	pool->type = type;
 	pool->front_len = front_len;
 	pool->max_data_items = max_data_items;
-	pool->pool = mempool_create(size, msgpool_alloc, msgpool_free, pool);
-	if (!pool->pool)
-		return -ENOMEM;
+	pool->pool = mempool_create(size, msgpool_alloc, msgpool_मुक्त, pool);
+	अगर (!pool->pool)
+		वापस -ENOMEM;
 	pool->name = name;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ceph_msgpool_destroy(struct ceph_msgpool *pool)
-{
-	dout("msgpool %s destroy\n", pool->name);
+व्योम ceph_msgpool_destroy(काष्ठा ceph_msgpool *pool)
+अणु
+	करोut("msgpool %s destroy\n", pool->name);
 	mempool_destroy(pool->pool);
-}
+पूर्ण
 
-struct ceph_msg *ceph_msgpool_get(struct ceph_msgpool *pool, int front_len,
-				  int max_data_items)
-{
-	struct ceph_msg *msg;
+काष्ठा ceph_msg *ceph_msgpool_get(काष्ठा ceph_msgpool *pool, पूर्णांक front_len,
+				  पूर्णांक max_data_items)
+अणु
+	काष्ठा ceph_msg *msg;
 
-	if (front_len > pool->front_len ||
-	    max_data_items > pool->max_data_items) {
+	अगर (front_len > pool->front_len ||
+	    max_data_items > pool->max_data_items) अणु
 		pr_warn_ratelimited("%s need %d/%d, pool %s has %d/%d\n",
 		    __func__, front_len, max_data_items, pool->name,
 		    pool->front_len, pool->max_data_items);
 		WARN_ON_ONCE(1);
 
 		/* try to alloc a fresh message */
-		return ceph_msg_new2(pool->type, front_len, max_data_items,
+		वापस ceph_msg_new2(pool->type, front_len, max_data_items,
 				     GFP_NOFS, false);
-	}
+	पूर्ण
 
 	msg = mempool_alloc(pool->pool, GFP_NOFS);
-	dout("msgpool_get %s %p\n", pool->name, msg);
-	return msg;
-}
+	करोut("msgpool_get %s %p\n", pool->name, msg);
+	वापस msg;
+पूर्ण
 
-void ceph_msgpool_put(struct ceph_msgpool *pool, struct ceph_msg *msg)
-{
-	dout("msgpool_put %s %p\n", pool->name, msg);
+व्योम ceph_msgpool_put(काष्ठा ceph_msgpool *pool, काष्ठा ceph_msg *msg)
+अणु
+	करोut("msgpool_put %s %p\n", pool->name, msg);
 
 	/* reset msg front_len; user may have changed it */
 	msg->front.iov_len = pool->front_len;
@@ -90,5 +91,5 @@ void ceph_msgpool_put(struct ceph_msgpool *pool, struct ceph_msg *msg)
 	msg->num_data_items = 0;
 
 	kref_init(&msg->kref);  /* retake single ref */
-	mempool_free(msg, pool->pool);
-}
+	mempool_मुक्त(msg, pool->pool);
+पूर्ण

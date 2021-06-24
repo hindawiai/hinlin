@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef DDK750_POWER_H__
-#define DDK750_POWER_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित DDK750_POWER_H__
+#घोषणा DDK750_POWER_H__
 
-enum dpms {
+क्रमागत dpms अणु
 	crtDPMS_ON = 0x0,
 	crtDPMS_STANDBY = 0x1,
 	crtDPMS_SUSPEND = 0x2,
 	crtDPMS_OFF = 0x3,
-};
+पूर्ण;
 
-#define set_DAC(off) {							\
+#घोषणा set_DAC(off) अणु							\
 	poke32(MISC_CTRL,						\
 	       (peek32(MISC_CTRL) & ~MISC_CTRL_DAC_POWER_OFF) | (off)); \
-}
+पूर्ण
 
-void ddk750_set_dpms(enum dpms state);
-void sm750_set_power_mode(unsigned int powerMode);
-void sm750_set_current_gate(unsigned int gate);
+व्योम ddk750_set_dpms(क्रमागत dpms state);
+व्योम sm750_set_घातer_mode(अचिन्हित पूर्णांक घातerMode);
+व्योम sm750_set_current_gate(अचिन्हित पूर्णांक gate);
 
 /*
  * This function enable/disable the 2D engine.
  */
-void sm750_enable_2d_engine(unsigned int enable);
+व्योम sm750_enable_2d_engine(अचिन्हित पूर्णांक enable);
 
 /*
  * This function enable/disable the DMA Engine
  */
-void sm750_enable_dma(unsigned int enable);
+व्योम sm750_enable_dma(अचिन्हित पूर्णांक enable);
 
 /*
  * This function enable/disable the GPIO Engine
  */
-void sm750_enable_gpio(unsigned int enable);
+व्योम sm750_enable_gpio(अचिन्हित पूर्णांक enable);
 
 /*
  * This function enable/disable the I2C Engine
  */
-void sm750_enable_i2c(unsigned int enable);
+व्योम sm750_enable_i2c(अचिन्हित पूर्णांक enable);
 
-#endif
+#पूर्ण_अगर
